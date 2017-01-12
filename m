@@ -1,607 +1,282 @@
-From: Ondrej Mosnacek <omosnacek@gmail.com>
-Subject: [RFC PATCH 6/6] dm-crypt: Add bulk crypto processing support
-Date: Thu, 12 Jan 2017 13:59:58 +0100
-Message-ID: <75887e6759ac308a017c83b7fa377516dcd5e2a3.1484215956.git.omosnacek@gmail.com>
-References: <cover.1484215956.git.omosnacek@gmail.com>
-Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <cover.1484215956.git.omosnacek@gmail.com>
-In-Reply-To: <cover.1484215956.git.omosnacek@gmail.com>
-References: <cover.1484215956.git.omosnacek@gmail.com>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: Ondrej Mosnacek <omosnacek@gmail.com>, linux-crypto@vger.kernel.org, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Milan Broz <gmazyland@gmail.com>, Mikulas Patocka <mpatocka@redhat.com>, Binoy Jayan <binoy.jayan@linaro.org>
+From: Heinz Mauelshagen <heinzm@redhat.com>
+Subject: Re: [PATCH] dm raid: fix transient device failure
+ processing
+Date: Thu, 12 Jan 2017 17:50:48 +0100
+Message-ID: <3b588c53-7a51-9210-d921-cc17a521fb8c@redhat.com>
+References: <20161222202601.20274-1-heinzm@redhat.com>
+	<30EAC121-D4D9-4F6B-A98C-CD4F425F9AE9@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <30EAC121-D4D9-4F6B-A98C-CD4F425F9AE9@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Brassow Jonathan <jbrassow@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This patch converts dm-crypt to use bulk requests when invoking skcipher
-operations, allowing the crypto drivers to process multiple sectors at once,
-while reducing the overhead caused by the small sector size.
-
-The new code detects if multiple sectors from a bio are contigously stored
-within a single page (which should almost always be the case), and in such case
-processes all these sectors via a single bulk request.
-
-Note that the bio can also consist of several (likely consecutive) pages, which
-could be all bundled in a single request. However, since we need to specify an
-upper bound on how many sectors we are going to send at once (and this bound
-may affect the amount of memory allocated per single request), it is best to
-just limit the request bundling to a single page.
-
-Note that if the 'keycount' parameter of the cipher specification is set to a
-value other than 1, dm-crypt still sends only one sector in each request, since
-in such case the neighboring sectors are encrypted with different keys.
-
-This change causes a detectable read/write speedup (about 5-10%) on a ramdisk
-when AES-NI accelerated ciphers are used.
-
-Signed-off-by: Ondrej Mosnacek <omosnacek@gmail.com>
----
- drivers/md/dm-crypt.c | 254 ++++++++++++++++++++++++++++++++------------------
- 1 file changed, 165 insertions(+), 89 deletions(-)
-
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 7c6c572..d3f69e1 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -37,6 +37,9 @@
- 
- #define DM_MSG_PREFIX "crypt"
- 
-+/* for now, we only bundle consecutve sectors within a single page */
-+#define MAX_CONSEC_SECTORS (1 << (PAGE_SHIFT - SECTOR_SHIFT))
-+
- /*
-  * context holding the current state of a multi-part conversion
-  */
-@@ -48,7 +51,7 @@ struct convert_context {
- 	struct bvec_iter iter_out;
- 	sector_t cc_sector;
- 	atomic_t cc_pending;
--	struct skcipher_request *req;
-+	struct skcipher_bulk_request *req;
- };
- 
- /*
-@@ -73,6 +76,7 @@ struct dm_crypt_request {
- 	struct scatterlist sg_in;
- 	struct scatterlist sg_out;
- 	sector_t iv_sector;
-+	sector_t sector_count;
- };
- 
- struct crypt_config;
-@@ -83,9 +87,9 @@ struct crypt_iv_operations {
- 	void (*dtr)(struct crypt_config *cc);
- 	int (*init)(struct crypt_config *cc);
- 	int (*wipe)(struct crypt_config *cc);
--	int (*generator)(struct crypt_config *cc, u8 *iv,
-+	int (*generator)(struct crypt_config *cc, u8 *iv, unsigned int sector,
- 			 struct dm_crypt_request *dmreq);
--	int (*post)(struct crypt_config *cc, u8 *iv,
-+	int (*post)(struct crypt_config *cc, u8 *iv, unsigned int sector,
- 		    struct dm_crypt_request *dmreq);
- };
- 
-@@ -163,14 +167,14 @@ struct crypt_config {
- 	/*
- 	 * Layout of each crypto request:
- 	 *
--	 *   struct skcipher_request
-+	 *   struct skcipher_bulk_request
- 	 *      context
- 	 *      padding
- 	 *   struct dm_crypt_request
- 	 *      padding
--	 *   IV
-+	 *   IVs
- 	 *
--	 * The padding is added so that dm_crypt_request and the IV are
-+	 * The padding is added so that dm_crypt_request and the IVs are
- 	 * correctly aligned.
- 	 */
- 	unsigned int dmreq_start;
-@@ -245,20 +249,24 @@ static struct crypto_skcipher *any_tfm(struct crypt_config *cc)
-  * http://article.gmane.org/gmane.linux.kernel.device-mapper.dm-crypt/454
-  */
- 
--static int crypt_iv_plain_gen(struct crypt_config *cc, u8 *iv,
-+static int crypt_iv_plain_gen(struct crypt_config *cc, u8 *ivs, unsigned int i,
- 			      struct dm_crypt_request *dmreq)
- {
-+	u8 *iv = ivs + i * cc->iv_size;
-+
- 	memset(iv, 0, cc->iv_size);
--	*(__le32 *)iv = cpu_to_le32(dmreq->iv_sector & 0xffffffff);
-+	*(__le32 *)iv = cpu_to_le32((dmreq->iv_sector + i) & 0xffffffff);
- 
- 	return 0;
- }
- 
--static int crypt_iv_plain64_gen(struct crypt_config *cc, u8 *iv,
--				struct dm_crypt_request *dmreq)
-+static int crypt_iv_plain64_gen(struct crypt_config *cc, u8 *ivs,
-+				unsigned int i, struct dm_crypt_request *dmreq)
- {
-+	u8 *iv = ivs + i * cc->iv_size;
-+
- 	memset(iv, 0, cc->iv_size);
--	*(__le64 *)iv = cpu_to_le64(dmreq->iv_sector);
-+	*(__le64 *)iv = cpu_to_le64(dmreq->iv_sector + i);
- 
- 	return 0;
- }
-@@ -410,13 +418,14 @@ static int crypt_iv_essiv_ctr(struct crypt_config *cc, struct dm_target *ti,
- 	return err;
- }
- 
--static int crypt_iv_essiv_gen(struct crypt_config *cc, u8 *iv,
-+static int crypt_iv_essiv_gen(struct crypt_config *cc, u8 *ivs, unsigned int i,
- 			      struct dm_crypt_request *dmreq)
- {
- 	struct crypto_cipher *essiv_tfm = cc->iv_private;
-+	u8 *iv = ivs + i * cc->iv_size;
- 
- 	memset(iv, 0, cc->iv_size);
--	*(__le64 *)iv = cpu_to_le64(dmreq->iv_sector);
-+	*(__le64 *)iv = cpu_to_le64(dmreq->iv_sector + i);
- 	crypto_cipher_encrypt_one(essiv_tfm, iv, iv);
- 
- 	return 0;
-@@ -450,22 +459,26 @@ static void crypt_iv_benbi_dtr(struct crypt_config *cc)
- {
- }
- 
--static int crypt_iv_benbi_gen(struct crypt_config *cc, u8 *iv,
-+static int crypt_iv_benbi_gen(struct crypt_config *cc, u8 *ivs, unsigned int i,
- 			      struct dm_crypt_request *dmreq)
- {
-+	u8 *iv = ivs + i * cc->iv_size;
-+	u64 sector = (u64)(dmreq->iv_sector + i);
- 	__be64 val;
- 
- 	memset(iv, 0, cc->iv_size - sizeof(u64)); /* rest is cleared below */
- 
--	val = cpu_to_be64(((u64)dmreq->iv_sector << cc->iv_gen_private.benbi.shift) + 1);
-+	val = cpu_to_be64((sector << cc->iv_gen_private.benbi.shift) + 1);
- 	put_unaligned(val, (__be64 *)(iv + cc->iv_size - sizeof(u64)));
- 
- 	return 0;
- }
- 
--static int crypt_iv_null_gen(struct crypt_config *cc, u8 *iv,
-+static int crypt_iv_null_gen(struct crypt_config *cc, u8 *ivs, unsigned int i,
- 			     struct dm_crypt_request *dmreq)
- {
-+	u8 *iv = ivs + i * cc->iv_size;
-+
- 	memset(iv, 0, cc->iv_size);
- 
- 	return 0;
-@@ -534,8 +547,7 @@ static int crypt_iv_lmk_wipe(struct crypt_config *cc)
- }
- 
- static int crypt_iv_lmk_one(struct crypt_config *cc, u8 *iv,
--			    struct dm_crypt_request *dmreq,
--			    u8 *data)
-+			    u64 sector, u8 *data)
- {
- 	struct iv_lmk_private *lmk = &cc->iv_gen_private.lmk;
- 	SHASH_DESC_ON_STACK(desc, lmk->hash_tfm);
-@@ -562,8 +574,8 @@ static int crypt_iv_lmk_one(struct crypt_config *cc, u8 *iv,
- 		return r;
- 
- 	/* Sector is cropped to 56 bits here */
--	buf[0] = cpu_to_le32(dmreq->iv_sector & 0xFFFFFFFF);
--	buf[1] = cpu_to_le32((((u64)dmreq->iv_sector >> 32) & 0x00FFFFFF) | 0x80000000);
-+	buf[0] = cpu_to_le32(sector & 0xFFFFFFFF);
-+	buf[1] = cpu_to_le32(((sector >> 32) & 0x00FFFFFF) | 0x80000000);
- 	buf[2] = cpu_to_le32(4024);
- 	buf[3] = 0;
- 	r = crypto_shash_update(desc, (u8 *)buf, sizeof(buf));
-@@ -582,39 +594,43 @@ static int crypt_iv_lmk_one(struct crypt_config *cc, u8 *iv,
- 	return 0;
- }
- 
--static int crypt_iv_lmk_gen(struct crypt_config *cc, u8 *iv,
-+static int crypt_iv_lmk_gen(struct crypt_config *cc, u8 *ivs, unsigned int i,
- 			    struct dm_crypt_request *dmreq)
- {
--	u8 *src;
-+	u8 *iv = ivs + i * cc->iv_size;
-+	u8 *mapped, *src;
- 	int r = 0;
- 
- 	if (bio_data_dir(dmreq->ctx->bio_in) == WRITE) {
--		src = kmap_atomic(sg_page(&dmreq->sg_in));
--		r = crypt_iv_lmk_one(cc, iv, dmreq, src + dmreq->sg_in.offset);
--		kunmap_atomic(src);
-+		mapped = kmap_atomic(sg_page(&dmreq->sg_in));
-+		src = mapped + dmreq->sg_in.offset + i * (1 << SECTOR_SHIFT);
-+		r = crypt_iv_lmk_one(cc, iv, dmreq->iv_sector + i, src);
-+		kunmap_atomic(mapped);
- 	} else
- 		memset(iv, 0, cc->iv_size);
- 
- 	return r;
- }
- 
--static int crypt_iv_lmk_post(struct crypt_config *cc, u8 *iv,
-+static int crypt_iv_lmk_post(struct crypt_config *cc, u8 *ivs, unsigned int i,
- 			     struct dm_crypt_request *dmreq)
- {
--	u8 *dst;
-+	u8 *iv = ivs + i * cc->iv_size;
-+	u8 *mapped, *dst;
- 	int r;
- 
- 	if (bio_data_dir(dmreq->ctx->bio_in) == WRITE)
- 		return 0;
- 
--	dst = kmap_atomic(sg_page(&dmreq->sg_out));
--	r = crypt_iv_lmk_one(cc, iv, dmreq, dst + dmreq->sg_out.offset);
-+	mapped = kmap_atomic(sg_page(&dmreq->sg_out));
-+	dst = mapped + dmreq->sg_out.offset + i * (1 << SECTOR_SHIFT);
-+	r = crypt_iv_lmk_one(cc, iv, dmreq->iv_sector + i, dst);
- 
- 	/* Tweak the first block of plaintext sector */
- 	if (!r)
--		crypto_xor(dst + dmreq->sg_out.offset, iv, cc->iv_size);
-+		crypto_xor(dst, iv, cc->iv_size);
- 
--	kunmap_atomic(dst);
-+	kunmap_atomic(mapped);
- 	return r;
- }
- 
-@@ -682,11 +698,10 @@ static int crypt_iv_tcw_wipe(struct crypt_config *cc)
- }
- 
- static int crypt_iv_tcw_whitening(struct crypt_config *cc,
--				  struct dm_crypt_request *dmreq,
--				  u8 *data)
-+				  u64 iv_sector, u8 *data)
- {
- 	struct iv_tcw_private *tcw = &cc->iv_gen_private.tcw;
--	__le64 sector = cpu_to_le64(dmreq->iv_sector);
-+	__le64 sector = cpu_to_le64(iv_sector);
- 	u8 buf[TCW_WHITENING_SIZE];
- 	SHASH_DESC_ON_STACK(desc, tcw->crc32_tfm);
- 	int i, r;
-@@ -721,19 +736,21 @@ static int crypt_iv_tcw_whitening(struct crypt_config *cc,
- 	return r;
- }
- 
--static int crypt_iv_tcw_gen(struct crypt_config *cc, u8 *iv,
-+static int crypt_iv_tcw_gen(struct crypt_config *cc, u8 *ivs, unsigned int i,
- 			    struct dm_crypt_request *dmreq)
- {
- 	struct iv_tcw_private *tcw = &cc->iv_gen_private.tcw;
--	__le64 sector = cpu_to_le64(dmreq->iv_sector);
--	u8 *src;
-+	__le64 sector = cpu_to_le64(dmreq->iv_sector + i);
-+	u8 *iv = ivs + i * cc->iv_size;
-+	u8 *mapped, *src;
- 	int r = 0;
- 
- 	/* Remove whitening from ciphertext */
- 	if (bio_data_dir(dmreq->ctx->bio_in) != WRITE) {
--		src = kmap_atomic(sg_page(&dmreq->sg_in));
--		r = crypt_iv_tcw_whitening(cc, dmreq, src + dmreq->sg_in.offset);
--		kunmap_atomic(src);
-+		mapped = kmap_atomic(sg_page(&dmreq->sg_in));
-+		src = mapped + dmreq->sg_in.offset + i * (1 << SECTOR_SHIFT);
-+		r = crypt_iv_tcw_whitening(cc, dmreq->iv_sector + i, src);
-+		kunmap_atomic(mapped);
- 	}
- 
- 	/* Calculate IV */
-@@ -745,19 +762,20 @@ static int crypt_iv_tcw_gen(struct crypt_config *cc, u8 *iv,
- 	return r;
- }
- 
--static int crypt_iv_tcw_post(struct crypt_config *cc, u8 *iv,
-+static int crypt_iv_tcw_post(struct crypt_config *cc, u8 *ivs, unsigned int i,
- 			     struct dm_crypt_request *dmreq)
- {
--	u8 *dst;
-+	u8 *mapped, *dst;
- 	int r;
- 
- 	if (bio_data_dir(dmreq->ctx->bio_in) != WRITE)
- 		return 0;
- 
- 	/* Apply whitening on ciphertext */
--	dst = kmap_atomic(sg_page(&dmreq->sg_out));
--	r = crypt_iv_tcw_whitening(cc, dmreq, dst + dmreq->sg_out.offset);
--	kunmap_atomic(dst);
-+	mapped = kmap_atomic(sg_page(&dmreq->sg_out));
-+	dst = mapped + dmreq->sg_out.offset + i * (1 << SECTOR_SHIFT);
-+	r = crypt_iv_tcw_whitening(cc, dmreq->iv_sector + i, dst);
-+	kunmap_atomic(mapped);
- 
- 	return r;
- }
-@@ -821,16 +839,22 @@ static void crypt_convert_init(struct crypt_config *cc,
- 	init_completion(&ctx->restart);
- }
- 
-+static unsigned int crypt_max_bulk_sectors(struct crypt_config *cc)
-+{
-+	/* go by one sector only if tfms_count > 1: */
-+	return cc->tfms_count == 1 ? MAX_CONSEC_SECTORS : 1;
-+}
-+
- static struct dm_crypt_request *dmreq_of_req(struct crypt_config *cc,
--					     struct skcipher_request *req)
-+					     struct skcipher_bulk_request *req)
- {
- 	return (struct dm_crypt_request *)((char *)req + cc->dmreq_start);
- }
- 
--static struct skcipher_request *req_of_dmreq(struct crypt_config *cc,
--					       struct dm_crypt_request *dmreq)
-+static struct skcipher_bulk_request *req_of_dmreq(
-+		struct crypt_config *cc, struct dm_crypt_request *dmreq)
- {
--	return (struct skcipher_request *)((char *)dmreq - cc->dmreq_start);
-+	return (struct skcipher_bulk_request *)((u8 *)dmreq - cc->dmreq_start);
- }
- 
- static u8 *iv_of_dmreq(struct crypt_config *cc,
-@@ -840,48 +864,53 @@ static u8 *iv_of_dmreq(struct crypt_config *cc,
- 		crypto_skcipher_alignmask(any_tfm(cc)) + 1);
- }
- 
--static int crypt_convert_block(struct crypt_config *cc,
--			       struct convert_context *ctx,
--			       struct skcipher_request *req)
-+static int crypt_convert_sectors(struct crypt_config *cc,
-+				 struct convert_context *ctx,
-+				 struct page *page_in, struct page *page_out,
-+				 unsigned int off_in, unsigned int off_out,
-+				 sector_t sectors)
- {
--	struct bio_vec bv_in = bio_iter_iovec(ctx->bio_in, ctx->iter_in);
--	struct bio_vec bv_out = bio_iter_iovec(ctx->bio_out, ctx->iter_out);
-+	unsigned int cryptlen = (1 << SECTOR_SHIFT) * (unsigned int)sectors;
-+	struct skcipher_bulk_request *req = ctx->req;
- 	struct dm_crypt_request *dmreq;
-+	unsigned int i;
- 	u8 *iv;
- 	int r;
- 
--	dmreq = dmreq_of_req(cc, req);
-+	dmreq = dmreq_of_req(cc, ctx->req);
- 	iv = iv_of_dmreq(cc, dmreq);
- 
- 	dmreq->iv_sector = ctx->cc_sector;
-+	dmreq->sector_count = sectors;
- 	dmreq->ctx = ctx;
-+
- 	sg_init_table(&dmreq->sg_in, 1);
--	sg_set_page(&dmreq->sg_in, bv_in.bv_page, 1 << SECTOR_SHIFT,
--		    bv_in.bv_offset);
-+	sg_set_page(&dmreq->sg_in, page_in, cryptlen, off_in);
- 
- 	sg_init_table(&dmreq->sg_out, 1);
--	sg_set_page(&dmreq->sg_out, bv_out.bv_page, 1 << SECTOR_SHIFT,
--		    bv_out.bv_offset);
-+	sg_set_page(&dmreq->sg_out, page_out, cryptlen, off_out);
- 
--	bio_advance_iter(ctx->bio_in, &ctx->iter_in, 1 << SECTOR_SHIFT);
--	bio_advance_iter(ctx->bio_out, &ctx->iter_out, 1 << SECTOR_SHIFT);
--
--	if (cc->iv_gen_ops) {
--		r = cc->iv_gen_ops->generator(cc, iv, dmreq);
--		if (r < 0)
--			return r;
--	}
-+	if (cc->iv_gen_ops)
-+		for (i = 0; i < sectors; i++) {
-+			r = cc->iv_gen_ops->generator(cc, iv, i, dmreq);
-+			if (r < 0)
-+				return r;
-+		}
- 
--	skcipher_request_set_crypt(req, &dmreq->sg_in, &dmreq->sg_out,
--				   1 << SECTOR_SHIFT, iv);
-+	skcipher_bulk_request_set_crypt(req, &dmreq->sg_in, &dmreq->sg_out,
-+					sectors, 1 << SECTOR_SHIFT, NULL, iv);
- 
- 	if (bio_data_dir(ctx->bio_in) == WRITE)
--		r = crypto_skcipher_encrypt(req);
-+		r = crypto_skcipher_encrypt_bulk(req);
- 	else
--		r = crypto_skcipher_decrypt(req);
-+		r = crypto_skcipher_decrypt_bulk(req);
- 
- 	if (!r && cc->iv_gen_ops && cc->iv_gen_ops->post)
--		r = cc->iv_gen_ops->post(cc, iv, dmreq);
-+		for (i = 0; i < sectors; i++) {
-+			r = cc->iv_gen_ops->post(cc, iv, i, dmreq);
-+			if (r < 0)
-+				return r;
-+		}
- 
- 	return r;
- }
-@@ -897,23 +926,25 @@ static void crypt_alloc_req(struct crypt_config *cc,
- 	if (!ctx->req)
- 		ctx->req = mempool_alloc(cc->req_pool, GFP_NOIO);
- 
--	skcipher_request_set_tfm(ctx->req, cc->tfms[key_index]);
-+	skcipher_bulk_request_set_maxmsgs(ctx->req, crypt_max_bulk_sectors(cc));
-+	skcipher_bulk_request_set_tfm(ctx->req, cc->tfms[key_index]);
- 
- 	/*
- 	 * Use REQ_MAY_BACKLOG so a cipher driver internally backlogs
- 	 * requests if driver request queue is full.
- 	 */
--	skcipher_request_set_callback(ctx->req,
-+	skcipher_bulk_request_set_callback(ctx->req,
- 	    CRYPTO_TFM_REQ_MAY_BACKLOG | CRYPTO_TFM_REQ_MAY_SLEEP,
- 	    kcryptd_async_done, dmreq_of_req(cc, ctx->req));
- }
- 
- static void crypt_free_req(struct crypt_config *cc,
--			   struct skcipher_request *req, struct bio *base_bio)
-+			   struct skcipher_bulk_request *req,
-+			   struct bio *base_bio)
- {
- 	struct dm_crypt_io *io = dm_per_bio_data(base_bio, cc->per_bio_data_size);
- 
--	if ((struct skcipher_request *)(io + 1) != req)
-+	if ((struct skcipher_bulk_request *)(io + 1) != req)
- 		mempool_free(req, cc->req_pool);
- }
- 
-@@ -923,6 +954,11 @@ static void crypt_free_req(struct crypt_config *cc,
- static int crypt_convert(struct crypt_config *cc,
- 			 struct convert_context *ctx)
- {
-+	struct bio_vec bv_in, bv_out;
-+	struct page *page_in, *page_out;
-+	unsigned int off_in, off_out;
-+	unsigned int maxsectors = crypt_max_bulk_sectors(cc);
-+	sector_t sectors;
- 	int r;
- 
- 	atomic_set(&ctx->cc_pending, 1);
-@@ -933,7 +969,41 @@ static int crypt_convert(struct crypt_config *cc,
- 
- 		atomic_inc(&ctx->cc_pending);
- 
--		r = crypt_convert_block(cc, ctx, ctx->req);
-+		bv_in = bio_iter_iovec(ctx->bio_in, ctx->iter_in);
-+		bv_out = bio_iter_iovec(ctx->bio_out, ctx->iter_out);
-+
-+		page_in = bv_in.bv_page;
-+		page_out = bv_out.bv_page;
-+
-+		off_in = bv_in.bv_offset;
-+		off_out = bv_out.bv_offset;
-+
-+		bio_advance_iter(ctx->bio_in, &ctx->iter_in,
-+				 1 << SECTOR_SHIFT);
-+		bio_advance_iter(ctx->bio_out, &ctx->iter_out,
-+				 1 << SECTOR_SHIFT);
-+		sectors = 1;
-+
-+		/* count consecutive sectors: */
-+		while (sectors < maxsectors &&
-+				ctx->iter_in.bi_size && ctx->iter_out.bi_size) {
-+
-+			bv_in = bio_iter_iovec(ctx->bio_in, ctx->iter_in);
-+			bv_out = bio_iter_iovec(ctx->bio_out, ctx->iter_out);
-+
-+			if (bv_in.bv_page != page_in ||
-+			    bv_out.bv_page != page_out)
-+				break;
-+
-+			bio_advance_iter(ctx->bio_in, &ctx->iter_in,
-+					 1 << SECTOR_SHIFT);
-+			bio_advance_iter(ctx->bio_out, &ctx->iter_out,
-+					 1 << SECTOR_SHIFT);
-+			++sectors;
-+		}
-+
-+		r = crypt_convert_sectors(cc, ctx, page_in, page_out,
-+					  off_in, off_out, sectors);
- 
- 		switch (r) {
- 		/*
-@@ -950,14 +1020,14 @@ static int crypt_convert(struct crypt_config *cc,
- 		 */
- 		case -EINPROGRESS:
- 			ctx->req = NULL;
--			ctx->cc_sector++;
-+			ctx->cc_sector += sectors;
- 			continue;
- 		/*
- 		 * The request was already processed (synchronously).
- 		 */
- 		case 0:
- 			atomic_dec(&ctx->cc_pending);
--			ctx->cc_sector++;
-+			ctx->cc_sector += sectors;
- 			cond_resched();
- 			continue;
- 
-@@ -1360,6 +1430,7 @@ static void kcryptd_async_done(struct crypto_async_request *async_req,
- 	struct convert_context *ctx = dmreq->ctx;
- 	struct dm_crypt_io *io = container_of(ctx, struct dm_crypt_io, ctx);
- 	struct crypt_config *cc = io->cc;
-+	unsigned int i;
- 
- 	/*
- 	 * A request from crypto driver backlog is going to be processed now,
-@@ -1372,10 +1443,12 @@ static void kcryptd_async_done(struct crypto_async_request *async_req,
- 	}
- 
- 	if (!error && cc->iv_gen_ops && cc->iv_gen_ops->post)
--		error = cc->iv_gen_ops->post(cc, iv_of_dmreq(cc, dmreq), dmreq);
--
--	if (error < 0)
--		io->error = -EIO;
-+		for (i = 0; i < dmreq->sector_count; i++) {
-+			error = cc->iv_gen_ops->post(cc, iv_of_dmreq(cc, dmreq),
-+						     i, dmreq);
-+			if (error < 0)
-+				io->error = -EIO;
-+		}
- 
- 	crypt_free_req(cc, req_of_dmreq(cc, dmreq), io->base_bio);
- 
-@@ -1865,7 +1938,7 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- {
- 	struct crypt_config *cc;
- 	int key_size;
--	unsigned int opt_params;
-+	unsigned int opt_params, iv_space;
- 	unsigned long long tmpll;
- 	int ret;
- 	size_t iv_size_padding;
-@@ -1900,8 +1973,9 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	if (ret < 0)
- 		goto bad;
- 
--	cc->dmreq_start = sizeof(struct skcipher_request);
--	cc->dmreq_start += crypto_skcipher_reqsize(any_tfm(cc));
-+	cc->dmreq_start = sizeof(struct skcipher_bulk_request);
-+	cc->dmreq_start += crypto_skcipher_bulk_reqsize(
-+				any_tfm(cc), crypt_max_bulk_sectors(cc));
- 	cc->dmreq_start = ALIGN(cc->dmreq_start, __alignof__(struct dm_crypt_request));
- 
- 	if (crypto_skcipher_alignmask(any_tfm(cc)) < CRYPTO_MINALIGN) {
-@@ -1917,9 +1991,11 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 		iv_size_padding = crypto_skcipher_alignmask(any_tfm(cc));
- 	}
- 
-+	iv_space = cc->iv_size * crypt_max_bulk_sectors(cc);
-+
- 	ret = -ENOMEM;
- 	cc->req_pool = mempool_create_kmalloc_pool(MIN_IOS, cc->dmreq_start +
--			sizeof(struct dm_crypt_request) + iv_size_padding + cc->iv_size);
-+			sizeof(struct dm_crypt_request) + iv_size_padding + iv_space);
- 	if (!cc->req_pool) {
- 		ti->error = "Cannot allocate crypt request mempool";
- 		goto bad;
-@@ -1927,7 +2003,7 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 
- 	cc->per_bio_data_size = ti->per_io_data_size =
- 		ALIGN(sizeof(struct dm_crypt_io) + cc->dmreq_start +
--		      sizeof(struct dm_crypt_request) + iv_size_padding + cc->iv_size,
-+		      sizeof(struct dm_crypt_request) + iv_size_padding + iv_space,
- 		      ARCH_KMALLOC_MINALIGN);
- 
- 	cc->page_pool = mempool_create_page_pool(BIO_MAX_PAGES, 0);
-@@ -2067,7 +2143,7 @@ static int crypt_map(struct dm_target *ti, struct bio *bio)
- 
- 	io = dm_per_bio_data(bio, cc->per_bio_data_size);
- 	crypt_io_init(io, cc, bio, dm_target_offset(ti, bio->bi_iter.bi_sector));
--	io->ctx.req = (struct skcipher_request *)(io + 1);
-+	io->ctx.req = (struct skcipher_bulk_request *)(io + 1);
- 
- 	if (bio_data_dir(io->base_bio) == READ) {
- 		if (kcryptd_io_read(io, GFP_NOWAIT))
--- 
-2.9.3
+Ckl0IG5lZWRzIHJlc3BlY3RpdmUgcHJlcmVxdWlzaXRlIHBhdGNoZXMgdG8gYWRkIHJhaWQ0LzUv
+NiBqb3VybmFsIGRldmljZSAKc3VwcG9ydCByYWlzaW5nIHZlcnNpb24gdG8gMS4xMC4wLgoKV2ls
+bCBzZXBlcmF0ZSBtaW5vciBjbGVhbnVwcyBvdXQgYW5kIHJlc3VibWl0LgoKSGVpbnoKCgpPbiAw
+MS8wNS8yMDE3IDAyOjU4IEFNLCBCcmFzc293IEpvbmF0aGFuIHdyb3RlOgo+IEkgdGhpbmsgdGhp
+cyBwYXRjaCBpcyBub3QgaW5saW5lIHdpdGggdXBzdHJlYW0uICAoVmVyc2lvbiAxLjEwLjAgaXMg
+bm90IHlldCBhdmFpbGFibGUgdXBzdHJlYW0gLSBjdXJyZW50bHkgMS45LjEuKQo+Cj4gSWYgeW91
+IGFyZSByZXN1Ym1pdHRpbmcgdGhlIHBhdGNoLCBpdOKAmWQgYmUgZ3JlYXQgaWYgeW91IGNvdWxk
+IHNlcGFyYXRlIHRoZSBjbGVhbi11cCAoZS5nLiBzL2RldlswXS9tZC8pIGZyb20gdGhlIG5lY2Vz
+c2FyeSBjaGFuZ2VzLgo+Cj4gICBicmFzc293Cj4KPj4gT24gRGVjIDIyLCAyMDE2LCBhdCAyOjI2
+IFBNLCBIZWlueiBNYXVlbHNoYWdlbiA8aGVpbnptQHJlZGhhdC5jb20+IHdyb3RlOgo+Pgo+PiBU
+aGlzIHBhdGNoIGFkZHJlc3NlcyB0aGUgZm9sbG93aW5nIDMgZmFpbHVyZSBzY2VuYXJpb3M6Cj4+
+Cj4+IDEpIElmIGEgKHRyYW5zaWVudGx5KSBpbmFjY2Vzc2libGUgbWV0YWRhdGEgZGV2aWNlIGlz
+IGJlaW5nIHBhc3NlZCBpbnRvIHRoZQo+PiBjb25zdHJ1Y3RvciAoZS5nLiBhIGRldmljZSB0dXBs
+ZSAnMjU0OjQgMjU0OjUnKSwgaXQgaXMgcHJvY2Vzc2VkIGFzIGlmCj4+ICctIC0nIHdhcyBnaXZl
+bi4gIFRoaXMgZXJyb25lb3VzbHkgcmVzdWx0cyBpbiBhIHN0YXR1cyB0YWJsZSBsaW5lIGNvbnRh
+aW5pbmcKPj4gJy0gLScsIHdoaWNoIG1pc3Rha2VubHkgZGlmZmVycyBmcm9tIHdoYXQgaGFzIGJl
+ZW4gcGFzc2VkIGluLiAgQXMgYSByZXN1bHQsCj4+IHVzZXJzcGFjZSBsaWJkZXZtYXBwZXIgcHV0
+cyB0aGUgZGV2aWNlIHR1cGxlIHNlcGVyYXRlIGZyb20gdGhlIFJBSUQgZGV2aWNlCj4+IHRodXMg
+bm90IHByb2Nlc3NpbmcgdGhlIGRlcGVuZGVuY2llcyBwcm9wZXJseS4KPj4KPj4gMikgRmFsc2Ug
+aGVhbHRoIHN0YXR1cyBjaGFyICdBJyBpbnN0ZWFkIG9mICdEJyBpcyBlbWl0dGVkIG9uIHRoZSBz
+dGF0dXMKPj4gc3RhdHVzIGluZm8gbGluZSBmb3IgdGhlIG1ldGEvZGF0YSBkZXZpY2UgdHVwbGUg
+aW4gdGhpcyBtZXRhZGF0YSBkZXZpY2UKPj4gZmFpbHVyZSBjYXNlLgo+Pgo+PiAzKSBJZiB0aGUg
+bWV0YWRhdGEgZGV2aWNlIGlzIGFjY2Vzc2libGUgd2hlbiBwYXNzZWQgaW50byB0aGUgY29uc3Ry
+dWN0b3IKPj4gYnV0IHRoZSBkYXRhIGRldmljZSAocGFydGlhbGx5KSBpc24ndCwgdGhhdCBsZWcg
+bWF5IGJlIHNldCBmYXVsdHkgYnkgdGhlCj4+IHJhaWQgcGVyc29uYWxpdHkgb24gYWNjZXNzIHRv
+IHRoZSAocGFydGlhbGx5KSB1bmF2YWlsYWJsZSBsZWcuICBSZXN0b3JlCj4+IHRyaWVkIGluIGEg
+c2Vjb25kIHJhaWQgZGV2aWNlIHJlc3VtZSBvbiBzdWNoIGZhaWxlZCBsZWcgKHN0YXR1cyBjaGFy
+ICdEJykKPj4gZmFpbHMgYWZ0ZXIgdGhlIChwYXJ0aWFsKSBsZWcgcmV0dXJuZWQuCj4+Cj4+IEZp
+eGVzIGZvciBhZm9yZW1lbnRpb25lZCBmYWlsdXJlIHNjZW5hcmlvczoKPj4KPj4gLSBkb24ndCBy
+ZWxlYXNlIHBhc3NlZCBpbiBkZXZpY2VzIGluIHRoZSBjb25zdHJ1Y3RvciB0aHVzIGFsbG93aW5n
+IHRoZQo+PiAgIHN0YXR1cyB0YWJsZSBsaW5lIHRvIGUuZy4gY29udGFpbiAnMjU0OjQgMjU0OjUn
+IHJhdGhlciB0aGFuICctIC0nCj4+Cj4+IC0gZW1pdCBkZXZpY2Ugc3RhdHVzIGNoYXIgJ0QnIHJh
+dGhlciB0aGFuICdBJyBmb3IgdGhlIGRldmljZSB0dXBsZQo+PiAgIHdpdGggdGhlIGZhaWxlZCBt
+ZXRhZGF0YSBkZXZpY2Ugb24gdGhlIHN0YXR1cyBpbmZvIGxpbmUKPj4KPj4gLSB3aGVuIGF0dGVt
+cHRpbmcgdG8gcmVzdG9yZSBmYXVsdHkgZGV2aWNlcyBpbiBhIHNlY29uZCByZXN1bWUsIGFsbG93
+IHRoZQo+PiAgIGRldmljZSBob3QgcmVtb3ZlIGZ1bmN0aW9uIHRvIHN1Y2NlZWQgYnkgc2V0dGlu
+ZyB0aGUgZGV2aWNlIHRvIG5vdCBpbi1zeW5jCj4+Cj4+IEluIGNhc2UgdXNlcnNwYWNlIGludGVu
+dGlvbmFsbHkgcGFzc2VzICctIC0nIGludG8gdGhlIGNvbnN0cnVjdG9yIHRvIGF2b2lkIHRoYXQK
+Pj4gZGV2aWNlIHR1cGxlIChlLmcuIHRvIHNwbGl0IG9mZiBhIHJhaWQxIGxlZyB0ZW1wb3Jhcmls
+eSBmb3IgbGF0ZXIgcmUtYWRkaXRpb24pLAo+PiB0aGUgc3RhdHVzIHRhYmxlIGxpbmUgd2lsbCBj
+b3JyZWN0bHkgc2hvdyAnLSAtJyBhbmQgdGhlIHN0YXR1cyBpbmZvIGxpbmUgd2lsbAo+PiBwcm92
+aWRlIGEgJy0nIGRldmljZSBoZWFsdGggY2hhcmFjdGVyIGZvciB0aGUgbm9uLWRlZmluZWQgZGV2
+aWNlIHR1cGxlLgo+Pgo+PiBDbGVhbnVwczoKPj4KPj4gLSB1c2UgcnMtPm1kLmRldl9zZWN0b3Jz
+IHRocm91Z2hvdXQgaW5zdGVhZCBvZiBycy0+ZGV2WzBdLnJkZXYuc2VjdG9ycyB0byBiZQo+PiAg
+IHByZXBhcmVkIGZvciB1c2Vyc3BhY2UgZXZlciBwYXNzaW5nIGluICctIC0nIGZvciB0aGUgZmly
+c3QgdHVwbGUKPj4KPj4gLSBhdm9pZCBzeW5jX3BhZ2VfaW8oKSBpbiBmYXZvdXIgb2YgcmVhZF9k
+aXNrX3NiKCkKPj4KPj4gLSBjb25zaXN0ZW50bHkgdXNlIG1kZGV2LT4gaW5zdGVhZCBvZiByZGV2
+LT5tZGRldiBvbiBiaXRtYXAgc2V0dXAKPj4KPj4KPj4gVGhpcyBwYXRjaCBpcyBvbiB0b3Agb2YK
+Pj4gIltQQVRDSF0gZG0gcmFpZDogY2hhbmdlIHJhaWQ0LzUvNiBqb3VybmFsIGRldmljZSBzdGF0
+dXMgaGVhbHRoIGNoYXIgdG8gJ0EnIHJhdGhlciB0aGFuICdKJyIKPj4gZGF0ZWQgMTIvMTMvMjAx
+Ni4KPj4KPj4gUmVzb2x2ZXM6IHJoYnoxNDA0NDI1Cj4+Cj4+IFNpZ25lZC1vZmYtYnk6IEhlaW56
+IE1hdWVsc2hhZ2VuIDxoZWluem1AcmVkaGF0LmNvbT4KPj4gLS0tCj4+IERvY3VtZW50YXRpb24v
+ZGV2aWNlLW1hcHBlci9kbS1yYWlkLnR4dCB8ICAgNCArKwo+PiBkcml2ZXJzL21kL2RtLXJhaWQu
+YyAgICAgICAgICAgICAgICAgICAgfCAxMjEgKysrKysrKysrKysrKysrLS0tLS0tLS0tLS0tLS0t
+LS0KPj4gMiBmaWxlcyBjaGFuZ2VkLCA2MCBpbnNlcnRpb25zKCspLCA2NSBkZWxldGlvbnMoLSkK
+Pj4KPj4gZGlmZiAtLWdpdCBhL0RvY3VtZW50YXRpb24vZGV2aWNlLW1hcHBlci9kbS1yYWlkLnR4
+dCBiL0RvY3VtZW50YXRpb24vZGV2aWNlLW1hcHBlci9kbS1yYWlkLnR4dAo+PiBpbmRleCA4ZTZk
+OTEwLi5mMGY0M2E3IDEwMDY0NAo+PiAtLS0gYS9Eb2N1bWVudGF0aW9uL2RldmljZS1tYXBwZXIv
+ZG0tcmFpZC50eHQKPj4gKysrIGIvRG9jdW1lbnRhdGlvbi9kZXZpY2UtbWFwcGVyL2RtLXJhaWQu
+dHh0Cj4+IEBAIC0zMjcsMyArMzI3LDcgQEAgVmVyc2lvbiBIaXN0b3J5Cj4+IAlhbmQgc2V0IHNp
+emUgcmVkdWN0aW9uLgo+PiAxLjkuMSAgIEZpeCBhY3RpdmF0aW9uIG9mIGV4aXN0aW5nIFJBSUQg
+NC8xMCBtYXBwZWQgZGV2aWNlcwo+PiAxLjEwLjAgIEFkZCBzdXBwb3J0IGZvciByYWlkNC81LzYg
+am91cm5hbCBkZXZpY2UKPj4gKzEuMTAuMSAgRG9uJ3QgZW1pdCAnLSAtJyBvbiB0aGUgc3RhdHVz
+IHRhYmxlIGxpbmUgaW4gY2FzZSB0aGUgY29uc3RydWN0b3IKPj4gKyAgICAgICAgZmFpbHMgcmVh
+ZGluZyBhIHN1cGVyYmxvY2suIENvcnJlY3RseSBlbWl0ICdtYWo6bWluMSBtYWo6bWluMicgYW5k
+Cj4+ICsgICAgICAgICdEJyBvbiB0aGUgc3RhdHVzIGxpbmUuICBJZiAnLSAtJyBpcyBwYXNzZWQg
+aW50byB0aGUgY29uc3RydWN0b3IsIGVtaXQKPj4gKyAgICAgICAgJy0gLScgb24gdGhlIHRhYmxl
+IGxpbmUgYW5kICctJyBhcyB0aGUgc3RhdHVzIGxpbmUgaGVhbHRoIGNoYXJhY3Rlci4KPj4gZGlm
+ZiAtLWdpdCBhL2RyaXZlcnMvbWQvZG0tcmFpZC5jIGIvZHJpdmVycy9tZC9kbS1yYWlkLmMKPj4g
+aW5kZXggMjViYjVhYi4uZjI5YWJiMiAxMDA2NDQKPj4gLS0tIGEvZHJpdmVycy9tZC9kbS1yYWlk
+LmMKPj4gKysrIGIvZHJpdmVycy9tZC9kbS1yYWlkLmMKPj4gQEAgLTM4OCw3ICszODgsNyBAQCBz
+dGF0aWMgYm9vbCByc19pc19yZXNoYXBhYmxlKHN0cnVjdCByYWlkX3NldCAqcnMpCj4+IC8qIFJl
+dHVybiB0cnVlLCBpZiByYWlkIHNldCBpbiBAcnMgaXMgcmVjb3ZlcmluZyAqLwo+PiBzdGF0aWMg
+Ym9vbCByc19pc19yZWNvdmVyaW5nKHN0cnVjdCByYWlkX3NldCAqcnMpCj4+IHsKPj4gLQlyZXR1
+cm4gcnMtPm1kLnJlY292ZXJ5X2NwIDwgcnMtPmRldlswXS5yZGV2LnNlY3RvcnM7Cj4+ICsJcmV0
+dXJuIHJzLT5tZC5yZWNvdmVyeV9jcCA8IHJzLT5tZC5kZXZfc2VjdG9yczsKPj4gfQo+Pgo+PiAv
+KiBSZXR1cm4gdHJ1ZSwgaWYgcmFpZCBzZXQgaW4gQHJzIGlzIHJlc2hhcGluZyAqLwo+PiBAQCAt
+MTU3Niw5ICsxNTc2LDkgQEAgc3RhdGljIHZvaWQgcnNfc2V0dXBfcmVjb3Zlcnkoc3RydWN0IHJh
+aWRfc2V0ICpycywgc2VjdG9yX3QgZGV2X3NlY3RvcnMpCj4+IAllbHNlIGlmIChkZXZfc2VjdG9y
+cyA9PSBNYXhTZWN0b3IpCj4+IAkJLyogUHJldmVudCByZWNvdmVyeSAqLwo+PiAJCV9fcnNfc2V0
+dXBfcmVjb3ZlcnkocnMsIE1heFNlY3Rvcik7Cj4+IC0JZWxzZSBpZiAocnMtPmRldlswXS5yZGV2
+LnNlY3RvcnMgPCBkZXZfc2VjdG9ycykKPj4gKwllbHNlIGlmIChycy0+bWQuZGV2X3NlY3RvcnMg
+PCBkZXZfc2VjdG9ycykKPj4gCQkvKiBHcm93biByYWlkIHNldCAqLwo+PiAtCQlfX3JzX3NldHVw
+X3JlY292ZXJ5KHJzLCBycy0+ZGV2WzBdLnJkZXYuc2VjdG9ycyk7Cj4+ICsJCV9fcnNfc2V0dXBf
+cmVjb3ZlcnkocnMsIHJzLT5tZC5kZXZfc2VjdG9ycyk7Cj4+IAllbHNlCj4+IAkJX19yc19zZXR1
+cF9yZWNvdmVyeShycywgTWF4U2VjdG9yKTsKPj4gfQo+PiBAQCAtMTkxNywxOCArMTkxNywyMSBA
+QCBzdGF0aWMgaW50IHJzX2NoZWNrX3Jlc2hhcGUoc3RydWN0IHJhaWRfc2V0ICpycykKPj4gCXJl
+dHVybiAtRVBFUk07Cj4+IH0KPj4KPj4gLXN0YXRpYyBpbnQgcmVhZF9kaXNrX3NiKHN0cnVjdCBt
+ZF9yZGV2ICpyZGV2LCBpbnQgc2l6ZSkKPj4gK3N0YXRpYyBpbnQgcmVhZF9kaXNrX3NiKHN0cnVj
+dCBtZF9yZGV2ICpyZGV2LCBpbnQgc2l6ZSwgYm9vbCBmb3JjZV9yZWxvYWQpCj4+IHsKPj4gCUJV
+R19PTighcmRldi0+c2JfcGFnZSk7Cj4+Cj4+IC0JaWYgKHJkZXYtPnNiX2xvYWRlZCkKPj4gKwlp
+ZiAocmRldi0+c2JfbG9hZGVkICYmICFmb3JjZV9yZWxvYWQpCj4+IAkJcmV0dXJuIDA7Cj4+Cj4+
+ICsJcmRldi0+c2JfbG9hZGVkID0gMDsKPj4gKwo+PiAJaWYgKCFzeW5jX3BhZ2VfaW8ocmRldiwg
+MCwgc2l6ZSwgcmRldi0+c2JfcGFnZSwgUkVRX09QX1JFQUQsIDAsIHRydWUpKSB7Cj4+IAkJRE1F
+UlIoIkZhaWxlZCB0byByZWFkIHN1cGVyYmxvY2sgb2YgZGV2aWNlIGF0IHBvc2l0aW9uICVkIiwK
+Pj4gCQkgICAgICByZGV2LT5yYWlkX2Rpc2spOwo+PiAJCW1kX2Vycm9yKHJkZXYtPm1kZGV2LCBy
+ZGV2KTsKPj4gLQkJcmV0dXJuIC1FSU5WQUw7Cj4+ICsJCXNldF9iaXQoRmF1bHR5LCAmcmRldi0+
+ZmxhZ3MpOwo+PiArCQlyZXR1cm4gLUVJTzsKPj4gCX0KPj4KPj4gCXJkZXYtPnNiX2xvYWRlZCA9
+IDE7Cj4+IEBAIC0yMDU2LDcgKzIwNTksNyBAQCBzdGF0aWMgaW50IHN1cGVyX2xvYWQoc3RydWN0
+IG1kX3JkZXYgKnJkZXYsIHN0cnVjdCBtZF9yZGV2ICpyZWZkZXYpCj4+IAkJcmV0dXJuIC1FSU5W
+QUw7Cj4+IAl9Cj4+Cj4+IC0JciA9IHJlYWRfZGlza19zYihyZGV2LCByZGV2LT5zYl9zaXplKTsK
+Pj4gKwlyID0gcmVhZF9kaXNrX3NiKHJkZXYsIHJkZXYtPnNiX3NpemUsIGZhbHNlKTsKPj4gCWlm
+IChyKQo+PiAJCXJldHVybiByOwo+Pgo+PiBAQCAtMjMyMyw3ICsyMzI2LDcgQEAgc3RhdGljIGlu
+dCBzdXBlcl92YWxpZGF0ZShzdHJ1Y3QgcmFpZF9zZXQgKnJzLCBzdHJ1Y3QgbWRfcmRldiAqcmRl
+dikKPj4gCXN0cnVjdCBtZGRldiAqbWRkZXYgPSAmcnMtPm1kOwo+PiAJc3RydWN0IGRtX3JhaWRf
+c3VwZXJibG9jayAqc2I7Cj4+Cj4+IC0JaWYgKHJzX2lzX3JhaWQwKHJzKSB8fCAhcmRldi0+c2Jf
+cGFnZSkKPj4gKwlpZiAocnNfaXNfcmFpZDAocnMpIHx8ICFyZGV2LT5zYl9wYWdlIHx8IHJkZXYt
+PnJhaWRfZGlzayA8IDApCj4+IAkJcmV0dXJuIDA7Cj4+Cj4+IAlzYiA9IHBhZ2VfYWRkcmVzcyhy
+ZGV2LT5zYl9wYWdlKTsKPj4gQEAgLTIzNDgsNyArMjM1MSw3IEBAIHN0YXRpYyBpbnQgc3VwZXJf
+dmFsaWRhdGUoc3RydWN0IHJhaWRfc2V0ICpycywgc3RydWN0IG1kX3JkZXYgKnJkZXYpCj4+Cj4+
+IAkvKiBFbmFibGUgYml0bWFwIGNyZWF0aW9uIGZvciBSQUlEIGxldmVscyAhPSAwICovCj4+IAlt
+ZGRldi0+Yml0bWFwX2luZm8ub2Zmc2V0ID0gcnRfaXNfcmFpZDAocnMtPnJhaWRfdHlwZSkgPyAw
+IDogdG9fc2VjdG9yKDQwOTYpOwo+PiAtCXJkZXYtPm1kZGV2LT5iaXRtYXBfaW5mby5kZWZhdWx0
+X29mZnNldCA9IG1kZGV2LT5iaXRtYXBfaW5mby5vZmZzZXQ7Cj4+ICsJbWRkZXYtPmJpdG1hcF9p
+bmZvLmRlZmF1bHRfb2Zmc2V0ID0gbWRkZXYtPmJpdG1hcF9pbmZvLm9mZnNldDsKPj4KPj4gCWlm
+ICghdGVzdF9hbmRfY2xlYXJfYml0KEZpcnN0VXNlLCAmcmRldi0+ZmxhZ3MpKSB7Cj4+IAkJLyog
+UmV0cmlldmUgZGV2aWNlIHNpemUgc3RvcmVkIGluIHN1cGVyYmxvY2sgdG8gYmUgcHJlcGFyZWQg
+Zm9yIHNocmluayAqLwo+PiBAQCAtMjM4NiwxMiArMjM4OSwxMSBAQCBzdGF0aWMgaW50IHN1cGVy
+X3ZhbGlkYXRlKHN0cnVjdCByYWlkX3NldCAqcnMsIHN0cnVjdCBtZF9yZGV2ICpyZGV2KQo+PiBz
+dGF0aWMgaW50IGFuYWx5c2Vfc3VwZXJibG9ja3Moc3RydWN0IGRtX3RhcmdldCAqdGksIHN0cnVj
+dCByYWlkX3NldCAqcnMpCj4+IHsKPj4gCWludCByOwo+PiAtCXN0cnVjdCByYWlkX2RldiAqZGV2
+Owo+PiAtCXN0cnVjdCBtZF9yZGV2ICpyZGV2LCAqdG1wLCAqZnJlc2hlc3Q7Cj4+ICsJc3RydWN0
+IG1kX3JkZXYgKnJkZXYsICpmcmVzaGVzdDsKPj4gCXN0cnVjdCBtZGRldiAqbWRkZXYgPSAmcnMt
+Pm1kOwo+Pgo+PiAJZnJlc2hlc3QgPSBOVUxMOwo+PiAtCXJkZXZfZm9yX2VhY2hfc2FmZShyZGV2
+LCB0bXAsIG1kZGV2KSB7Cj4+ICsJcmRldl9mb3JfZWFjaChyZGV2LCBtZGRldikgewo+PiAJCWlm
+ICh0ZXN0X2JpdChKb3VybmFsLCAmcmRldi0+ZmxhZ3MpKQo+PiAJCQljb250aW51ZTsKPj4KPj4g
+QEAgLTI0MDEsOSArMjQwMyw4IEBAIHN0YXRpYyBpbnQgYW5hbHlzZV9zdXBlcmJsb2NrcyhzdHJ1
+Y3QgZG1fdGFyZ2V0ICp0aSwgc3RydWN0IHJhaWRfc2V0ICpycykKPj4gCQkgKiB0aG91Z2ggaXQg
+d2VyZSBuZXcuCVRoaXMgaXMgdGhlIGludGVuZGVkIGVmZmVjdAo+PiAJCSAqIG9mIHRoZSAic3lu
+YyIgZGlyZWN0aXZlLgo+PiAJCSAqCj4+IC0JCSAqIFdoZW4gcmVzaGFwaW5nIGNhcGFiaWxpdHkg
+aXMgYWRkZWQsIHdlIG11c3QgZW5zdXJlCj4+IC0JCSAqIHRoYXQgdGhlICJzeW5jIiBkaXJlY3Rp
+dmUgaXMgZGlzYWxsb3dlZCBkdXJpbmcgdGhlCj4+IC0JCSAqIHJlc2hhcGUuCj4+ICsJCSAqIFdp
+dGggcmVzaGFwaW5nIGNhcGFiaWxpdHkgYWRkZWQsIHdlIG11c3QgZW5zdXJlIHRoYXQKPj4gKwkJ
+ICogdGhhdCB0aGUgInN5bmMiIGRpcmVjdGl2ZSBpcyBkaXNhbGxvd2VkIGR1cmluZyB0aGUgcmVz
+aGFwZS4KPj4gCQkgKi8KPj4gCQlpZiAodGVzdF9iaXQoX19DVFJfRkxBR19TWU5DLCAmcnMtPmN0
+cl9mbGFncykpCj4+IAkJCWNvbnRpbnVlOwo+PiBAQCAtMjQyMCw2ICsyNDIxLDcgQEAgc3RhdGlj
+IGludCBhbmFseXNlX3N1cGVyYmxvY2tzKHN0cnVjdCBkbV90YXJnZXQgKnRpLCBzdHJ1Y3QgcmFp
+ZF9zZXQgKnJzKQo+PiAJCWNhc2UgMDoKPj4gCQkJYnJlYWs7Cj4+IAkJZGVmYXVsdDoKPj4gKwkJ
+CS8qIFRoaXMgaXMgYSBmYWlsdXJlIHRvIHJlYWQgdGhlIHN1cGVyYmxvY2sgb2ZmIHRoZSBtZXRh
+ZGF0YSBkZXZpY2UuICovCj4+IAkJCS8qCj4+IAkJCSAqIFdlIGhhdmUgdG8ga2VlcCBhbnkgcmFp
+ZDAgZGF0YS9tZXRhZGF0YSBkZXZpY2UgcGFpcnMgb3IKPj4gCQkJICogdGhlIE1EIHJhaWQwIHBl
+cnNvbmFsaXR5IHdpbGwgZmFpbCB0byBzdGFydCB0aGUgYXJyYXkuCj4+IEBAIC0yNDI3LDMzICsy
+NDI5LDE3IEBAIHN0YXRpYyBpbnQgYW5hbHlzZV9zdXBlcmJsb2NrcyhzdHJ1Y3QgZG1fdGFyZ2V0
+ICp0aSwgc3RydWN0IHJhaWRfc2V0ICpycykKPj4gCQkJaWYgKHJzX2lzX3JhaWQwKHJzKSkKPj4g
+CQkJCWNvbnRpbnVlOwo+Pgo+PiAtCQkJZGV2ID0gY29udGFpbmVyX29mKHJkZXYsIHN0cnVjdCBy
+YWlkX2RldiwgcmRldik7Cj4+IC0JCQlpZiAoZGV2LT5tZXRhX2RldikKPj4gLQkJCQlkbV9wdXRf
+ZGV2aWNlKHRpLCBkZXYtPm1ldGFfZGV2KTsKPj4gLQo+PiAtCQkJZGV2LT5tZXRhX2RldiA9IE5V
+TEw7Cj4+IC0JCQlyZGV2LT5tZXRhX2JkZXYgPSBOVUxMOwo+PiAtCj4+IC0JCQlpZiAocmRldi0+
+c2JfcGFnZSkKPj4gLQkJCQlwdXRfcGFnZShyZGV2LT5zYl9wYWdlKTsKPj4gLQo+PiAtCQkJcmRl
+di0+c2JfcGFnZSA9IE5VTEw7Cj4+IC0KPj4gLQkJCXJkZXYtPnNiX2xvYWRlZCA9IDA7Cj4+IC0K
+Pj4gCQkJLyoKPj4gLQkJCSAqIFdlIG1pZ2h0IGJlIGFibGUgdG8gc2FsdmFnZSB0aGUgZGF0YSBk
+ZXZpY2UKPj4gLQkJCSAqIGV2ZW4gdGhvdWdoIHRoZSBtZXRhIGRldmljZSBoYXMgZmFpbGVkLiAg
+Rm9yCj4+IC0JCQkgKiBub3csIHdlIGJlaGF2ZSBhcyB0aG91Z2ggJy0gLScgaGFkIGJlZW4KPj4g
+LQkJCSAqIHNldCBmb3IgdGhpcyBkZXZpY2UgaW4gdGhlIHRhYmxlLgo+PiArCQkJICogV2Uga2Vl
+cCB0aGUgZG1fZGV2cyB0byBiZSBhYmxlIHRvIGVtaXQgdGhlIGRldmljZSB0dXBsZQo+PiArCQkJ
+ICogcHJvcGVybHkgb24gdGhlIHRhYmxlIGxpbmUgaW4gcmFpZF9zdGF0dXMoKSAocmF0aGVyIHRo
+YW4KPj4gKwkJCSAqIG1pc3Rha2VubHkgYWN0aW5nIGFzIGlmICctIC0nIGdvdCBwYXNzZWQgaW50
+byB0aGUgY29uc3RydWN0b3IpLgo+PiArCQkJICoKPj4gKwkJCSAqIFRoZSByZGV2IGhhcyB0byBz
+dGF5IG9uIHRoZSBzYW1lX3NldCBsaXN0IHRvIGFsbG93IGZvcgo+PiArCQkJICogdGhlIGF0dGVt
+cHQgdG8gcmVzdG9yZSBmYXVsdHkgZGV2aWNlcyBvbiBzZWNvbmQgcmVzdW1lLgo+PiAJCQkgKi8K
+Pj4gLQkJCWlmIChkZXYtPmRhdGFfZGV2KQo+PiAtCQkJCWRtX3B1dF9kZXZpY2UodGksIGRldi0+
+ZGF0YV9kZXYpOwo+PiAtCj4+IC0JCQlkZXYtPmRhdGFfZGV2ID0gTlVMTDsKPj4gLQkJCXJkZXYt
+PmJkZXYgPSBOVUxMOwo+PiAtCj4+IC0JCQlsaXN0X2RlbCgmcmRldi0+c2FtZV9zZXQpOwo+PiAr
+CQkJc2V0X2JpdChGYXVsdHksICZyZGV2LT5mbGFncyk7Cj4+ICsJCQlyZGV2LT5yYWlkX2Rpc2sg
+PSByZGV2LT5zYXZlZF9yYWlkX2Rpc2sgPSAtMTsKPj4gKwkJCWJyZWFrOwo+PiAJCX0KPj4gCX0K
+Pj4KPj4gQEAgLTI5MjQsNyArMjkxMCw3IEBAIHN0YXRpYyBpbnQgcmFpZF9jdHIoc3RydWN0IGRt
+X3RhcmdldCAqdGksIHVuc2lnbmVkIGludCBhcmdjLCBjaGFyICoqYXJndikKPj4gCWlmIChyKQo+
+PiAJCWdvdG8gYmFkOwo+Pgo+PiAtCWNhbGN1bGF0ZWRfZGV2X3NlY3RvcnMgPSBycy0+ZGV2WzBd
+LnJkZXYuc2VjdG9yczsKPj4gKwljYWxjdWxhdGVkX2Rldl9zZWN0b3JzID0gcnMtPm1kLmRldl9z
+ZWN0b3JzOwo+Pgo+PiAJLyoKPj4gCSAqIEJhY2t1cCBhbnkgbmV3IHJhaWQgc2V0IGxldmVsLCBs
+YXlvdXQsIC4uLgo+PiBAQCAtMjkzNyw3ICsyOTIzLDcgQEAgc3RhdGljIGludCByYWlkX2N0cihz
+dHJ1Y3QgZG1fdGFyZ2V0ICp0aSwgdW5zaWduZWQgaW50IGFyZ2MsIGNoYXIgKiphcmd2KQo+PiAJ
+aWYgKHIpCj4+IAkJZ290byBiYWQ7Cj4+Cj4+IC0JcmVzaXplID0gY2FsY3VsYXRlZF9kZXZfc2Vj
+dG9ycyAhPSBycy0+ZGV2WzBdLnJkZXYuc2VjdG9yczsKPj4gKwlyZXNpemUgPSBjYWxjdWxhdGVk
+X2Rldl9zZWN0b3JzICE9IHJzLT5tZC5kZXZfc2VjdG9yczsKPj4KPj4gCUlOSVRfV09SSygmcnMt
+Pm1kLmV2ZW50X3dvcmssIGRvX3RhYmxlX2V2ZW50KTsKPj4gCXRpLT5wcml2YXRlID0gcnM7Cj4+
+IEBAIC0zMDE0LDcgKzMwMDAsNyBAQCBzdGF0aWMgaW50IHJhaWRfY3RyKHN0cnVjdCBkbV90YXJn
+ZXQgKnRpLCB1bnNpZ25lZCBpbnQgYXJnYywgY2hhciAqKmFyZ3YpCj4+IAkJICogaXMgYW4gaW5z
+dGFudCBvcGVyYXRpb24gYXMgb3Bvc2VkIHRvIGFuIG9uZ29pbmcgcmVzaGFwZS4KPj4gCQkgKi8K
+Pj4KPj4gLQkJLyogV2UgY2FuJ3QgcmVzaGFwZSBhIGpvcnVuYWxlZCByYWRpNC81LzYgKi8KPj4g
+KwkJLyogV2UgY2FuJ3QgcmVzaGFwZSBhIGpvdXJuYWxlZCByYWRpNC81LzYgKi8KPj4gCQlpZiAo
+dGVzdF9iaXQoX19DVFJfRkxBR19KT1VSTkFMX0RFViwgJnJzLT5jdHJfZmxhZ3MpKSB7Cj4+IAkJ
+CXRpLT5lcnJvciA9ICJDYW4ndCByZXNoYXBlIGEgam91cm5hbGVkIHJhaWQ0LzUvNiBzZXQiOwo+
+PiAJCQlyID0gLUVQRVJNOwo+PiBAQCAtMzE2NiwxNyArMzE1MiwyMCBAQCBzdGF0aWMgY29uc3Qg
+Y2hhciAqZGVjaXBoZXJfc3luY19hY3Rpb24oc3RydWN0IG1kZGV2ICptZGRldikKPj4gfQo+Pgo+
+PiAvKgo+PiAtICogUmV0dXJuIHN0YXR1cyBzdHJpbmcgQHJkZXYKPj4gKyAqIFJldHVybiBzdGF0
+dXMgc3RyaW5nIGZvciBAcmRldgo+PiAgICoKPj4gICAqIFN0YXR1cyBjaGFyYWN0ZXJzOgo+PiAg
+ICoKPj4gICAqICAnRCcgPSBEZWFkL0ZhaWxlZCByYWlkIHNldCBjb21wb25lbnQgb3IgcmFpZDQv
+NS82IGpvdXJuYWwgZGV2aWNlCj4+ICAgKiAgJ2EnID0gQWxpdmUgYnV0IG5vdCBpbi1zeW5jCj4+
+ICAgKiAgJ0EnID0gQWxpdmUgYW5kIGluLXN5bmMgcmFpZCBzZXQgY29tcG9uZW50IG9yIGFsaXZl
+IHJhaWQ0LzUvNiBqb3VybmFsIGRldmljZQo+PiArICogICctJyA9IE5vbi1leGlzdGluZyBkZXZp
+Y2UgKGkuZS4gdXNwYWNlIHBhc3NlZCAnLSAtJyBpbnRvIHRoZSBjdHIpCj4+ICAgKi8KPj4gc3Rh
+dGljIGNvbnN0IGNoYXIgKl9fcmFpZF9kZXZfc3RhdHVzKHN0cnVjdCBtZF9yZGV2ICpyZGV2LCBi
+b29sIGFycmF5X2luX3N5bmMpCj4+IHsKPj4gLQlpZiAodGVzdF9iaXQoRmF1bHR5LCAmcmRldi0+
+ZmxhZ3MpKQo+PiArCWlmICghcmRldi0+YmRldikKPj4gKwkJcmV0dXJuICItIjsKPj4gKwllbHNl
+IGlmICh0ZXN0X2JpdChGYXVsdHksICZyZGV2LT5mbGFncykpCj4+IAkJcmV0dXJuICJEIjsKPj4g
+CWVsc2UgaWYgKHRlc3RfYml0KEpvdXJuYWwsICZyZGV2LT5mbGFncykpCj4+IAkJcmV0dXJuICJB
+IjsKPj4gQEAgLTMyODEsNyArMzI3MCw2IEBAIHN0YXRpYyB2b2lkIHJhaWRfc3RhdHVzKHN0cnVj
+dCBkbV90YXJnZXQgKnRpLCBzdGF0dXNfdHlwZV90IHR5cGUsCj4+IAlzZWN0b3JfdCBwcm9ncmVz
+cywgcmVzeW5jX21heF9zZWN0b3JzLCByZXN5bmNfbWlzbWF0Y2hlczsKPj4gCWNvbnN0IGNoYXIg
+KnN5bmNfYWN0aW9uOwo+PiAJc3RydWN0IHJhaWRfdHlwZSAqcnQ7Cj4+IC0Jc3RydWN0IG1kX3Jk
+ZXYgKnJkZXY7Cj4+Cj4+IAlzd2l0Y2ggKHR5cGUpIHsKPj4gCWNhc2UgU1RBVFVTVFlQRV9JTkZP
+Ogo+PiBAQCAtMzMwMiwxMCArMzI5MCw5IEBAIHN0YXRpYyB2b2lkIHJhaWRfc3RhdHVzKHN0cnVj
+dCBkbV90YXJnZXQgKnRpLCBzdGF0dXNfdHlwZV90IHR5cGUsCj4+IAkJCQkgICAgYXRvbWljNjRf
+cmVhZCgmbWRkZXYtPnJlc3luY19taXNtYXRjaGVzKSA6IDA7Cj4+IAkJc3luY19hY3Rpb24gPSBk
+ZWNpcGhlcl9zeW5jX2FjdGlvbigmcnMtPm1kKTsKPj4KPj4gLQkJLyogSE0gRklYTUU6IGRvIHdl
+IHdhbnQgYW5vdGhlciBzdGF0ZSBjaGFyIGZvciByYWlkMD8gSXQgc2hvd3MgJ0QnIG9yICdBJyBu
+b3cgKi8KPj4gLQkJcmRldl9mb3JfZWFjaChyZGV2LCBtZGRldikKPj4gLQkJCWlmICghdGVzdF9i
+aXQoSm91cm5hbCwgJnJkZXYtPmZsYWdzKSkKPj4gLQkJCQlETUVNSVQoX19yYWlkX2Rldl9zdGF0
+dXMocmRldiwgYXJyYXlfaW5fc3luYykpOwo+PiArCQkvKiBITSBGSVhNRTogZG8gd2Ugd2FudCBh
+bm90aGVyIHN0YXRlIGNoYXIgZm9yIHJhaWQwPyBJdCBzaG93cyAnRCcvJ0EnLyctJyBub3cgKi8K
+Pj4gKwkJZm9yIChpID0gMDsgaSA8IHJzLT5yYWlkX2Rpc2tzOyBpKyspCj4+ICsJCQlETUVNSVQo
+X19yYWlkX2Rldl9zdGF0dXMoJnJzLT5kZXZbaV0ucmRldiwgYXJyYXlfaW5fc3luYykpOwo+Pgo+
+PiAJCS8qCj4+IAkJICogSW4tc3luYy9SZXNoYXBlIHJhdGlvOgo+PiBAQCAtMzUzNiwxMSArMzUy
+MywxMiBAQCBzdGF0aWMgdm9pZCBhdHRlbXB0X3Jlc3RvcmVfb2ZfZmF1bHR5X2RldmljZXMoc3Ry
+dWN0IHJhaWRfc2V0ICpycykKPj4KPj4gCW1lbXNldChjbGVhcmVkX2ZhaWxlZF9kZXZpY2VzLCAw
+LCBzaXplb2YoY2xlYXJlZF9mYWlsZWRfZGV2aWNlcykpOwo+Pgo+PiAtCWZvciAoaSA9IDA7IGkg
+PCBycy0+bWQucmFpZF9kaXNrczsgaSsrKSB7Cj4+ICsJZm9yIChpID0gMDsgaSA8IG1kZGV2LT5y
+YWlkX2Rpc2tzOyBpKyspIHsKPj4gCQlyID0gJnJzLT5kZXZbaV0ucmRldjsKPj4gLQkJaWYgKHRl
+c3RfYml0KEZhdWx0eSwgJnItPmZsYWdzKSAmJiByLT5zYl9wYWdlICYmCj4+IC0JCSAgICBzeW5j
+X3BhZ2VfaW8ociwgMCwgci0+c2Jfc2l6ZSwgci0+c2JfcGFnZSwKPj4gLQkJCQkgUkVRX09QX1JF
+QUQsIDAsIHRydWUpKSB7Cj4+ICsJCWlmICh0ZXN0X2JpdChKb3VybmFsLCAmci0+ZmxhZ3MpKQo+
+PiArCQkJY29udGludWU7Cj4+ICsKPj4gKwkJaWYgKHRlc3RfYml0KEZhdWx0eSwgJnItPmZsYWdz
+KSAmJiAhcmVhZF9kaXNrX3NiKHIsIHItPnNiX3NpemUsIHRydWUpKSB7Cj4+IAkJCURNSU5GTygi
+RmF1bHR5ICVzIGRldmljZSAjJWQgaGFzIHJlYWRhYmxlIHN1cGVyIGJsb2NrLiIKPj4gCQkJICAg
+ICAgICIgIEF0dGVtcHRpbmcgdG8gcmV2aXZlIGl0LiIsCj4+IAkJCSAgICAgICBycy0+cmFpZF90
+eXBlLT5uYW1lLCBpKTsKPj4gQEAgLTM1NTQsMjIgKzM1NDIsMjUgQEAgc3RhdGljIHZvaWQgYXR0
+ZW1wdF9yZXN0b3JlX29mX2ZhdWx0eV9kZXZpY2VzKHN0cnVjdCByYWlkX3NldCAqcnMpCj4+IAkJ
+CSAqICc+PSAwJyAtIG1lYW5pbmcgd2UgbXVzdCBjYWxsIHRoaXMgZnVuY3Rpb24KPj4gCQkJICog
+b3Vyc2VsdmVzLgo+PiAJCQkgKi8KPj4gLQkJCWlmICgoci0+cmFpZF9kaXNrID49IDApICYmCj4+
+IC0JCQkgICAgKG1kZGV2LT5wZXJzLT5ob3RfcmVtb3ZlX2Rpc2sobWRkZXYsIHIpICE9IDApKQo+
+PiAtCQkJCS8qIEZhaWxlZCB0byByZXZpdmUgdGhpcyBkZXZpY2UsIHRyeSBuZXh0ICovCj4+IC0J
+CQkJY29udGludWU7Cj4+IC0KPj4gLQkJCXItPnJhaWRfZGlzayA9IGk7Cj4+IC0JCQlyLT5zYXZl
+ZF9yYWlkX2Rpc2sgPSBpOwo+PiAJCQlmbGFncyA9IHItPmZsYWdzOwo+PiArCQkJY2xlYXJfYml0
+KEluX3N5bmMsICZyLT5mbGFncyk7IC8qIE1hbmRhdG9yeSBmb3IgaG90IHJlbW92ZS4gKi8KPj4g
+KwkJCWlmIChyLT5yYWlkX2Rpc2sgPj0gMCkgewo+PiArCQkJCWlmIChtZGRldi0+cGVycy0+aG90
+X3JlbW92ZV9kaXNrKG1kZGV2LCByKSkgewo+PiArCQkJCQkvKiBGYWlsZWQgdG8gcmV2aXZlIHRo
+aXMgZGV2aWNlLCB0cnkgbmV4dCAqLwo+PiArCQkJCQlyLT5mbGFncyA9IGZsYWdzOwo+PiArCQkJ
+CQljb250aW51ZTsKPj4gKwkJCQl9Cj4+ICsJCQl9IGVsc2UKPj4gKwkJCQlyLT5yYWlkX2Rpc2sg
+PSByLT5zYXZlZF9yYWlkX2Rpc2sgPSBpOwo+PiArCj4+IAkJCWNsZWFyX2JpdChGYXVsdHksICZy
+LT5mbGFncyk7Cj4+IAkJCWNsZWFyX2JpdChXcml0ZUVycm9yU2VlbiwgJnItPmZsYWdzKTsKPj4g
+LQkJCWNsZWFyX2JpdChJbl9zeW5jLCAmci0+ZmxhZ3MpOwo+PiArCj4+IAkJCWlmIChtZGRldi0+
+cGVycy0+aG90X2FkZF9kaXNrKG1kZGV2LCByKSkgewo+PiAtCQkJCXItPnJhaWRfZGlzayA9IC0x
+Owo+PiAtCQkJCXItPnNhdmVkX3JhaWRfZGlzayA9IC0xOwo+PiArCQkJCXItPnJhaWRfZGlzayA9
+IHItPnNhdmVkX3JhaWRfZGlzayA9IC0xOwo+PiAJCQkJci0+ZmxhZ3MgPSBmbGFnczsKPj4gCQkJ
+fSBlbHNlIHsKPj4gKwkJCQljbGVhcl9iaXQoSW5fc3luYywgJnItPmZsYWdzKTsKPj4gCQkJCXIt
+PnJlY292ZXJ5X29mZnNldCA9IDA7Cj4+IAkJCQlzZXRfYml0KGksICh2b2lkICopIGNsZWFyZWRf
+ZmFpbGVkX2RldmljZXMpOwo+PiAJCQkJY2xlYXJlZCA9IHRydWU7Cj4+IEBAIC0zNzY5LDcgKzM3
+NjAsNyBAQCBzdGF0aWMgdm9pZCByYWlkX3Jlc3VtZShzdHJ1Y3QgZG1fdGFyZ2V0ICp0aSkKPj4K
+Pj4gc3RhdGljIHN0cnVjdCB0YXJnZXRfdHlwZSByYWlkX3RhcmdldCA9IHsKPj4gCS5uYW1lID0g
+InJhaWQiLAo+PiAtCS52ZXJzaW9uID0gezEsIDEwLCAwfSwKPj4gKwkudmVyc2lvbiA9IHsxLCAx
+MCwgMX0sCj4+IAkubW9kdWxlID0gVEhJU19NT0RVTEUsCj4+IAkuY3RyID0gcmFpZF9jdHIsCj4+
+IAkuZHRyID0gcmFpZF9kdHIsCj4+IC0tIAo+PiAyLjkuMwo+Pgo+PiAtLQo+PiBkbS1kZXZlbCBt
+YWlsaW5nIGxpc3QKPj4gZG0tZGV2ZWxAcmVkaGF0LmNvbQo+PiBodHRwczovL3d3dy5yZWRoYXQu
+Y29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWwKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApk
+bS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5m
+by9kbS1kZXZlbA==
