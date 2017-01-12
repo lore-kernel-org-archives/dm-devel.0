@@ -1,12 +1,14 @@
 From: tang.junhui@zte.com.cn
-Subject: [PATCH 00/11] multipath-tools: improve processing
-	efficiency for addition and deletion of multipath devices
-Date: Thu, 12 Jan 2017 13:52:16 +0800
-Message-ID: <1484200347-11188-1-git-send-email-tang.junhui@zte.com.cn>
+Subject: [PATCH 01/11] libmultipath: add merge_id in "struct
+	uevent" for uevents merging
+Date: Thu, 12 Jan 2017 13:52:17 +0800
+Message-ID: <1484200347-11188-2-git-send-email-tang.junhui@zte.com.cn>
+References: <1484200347-11188-1-git-send-email-tang.junhui@zte.com.cn>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1484200347-11188-1-git-send-email-tang.junhui@zte.com.cn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,65 +24,57 @@ List-Id: dm-devel.ids
 
 From: tang.junhui <tang.junhui@zte.com.cn>
 
-Hello Christophe, Ben, Hannes, Martin, Bart, and other guys:
+merge_id is used for uevents merging, it is expected to be same with wwid,
+uevents with the same merge_id will be merged, and if it is same with
+wwid, only the last uevent will call domap(). now we only merge uevents
+with label ID_SERIAL or ID_UID in uevent, which usually comming from SCSI
+or DASD device.
 
-This series of patches are modified base on:
-[PATCH 00/12] multipath-tools: improve processing efficiency for addition 
-and deletion of multipath devices
+Change-Id: Ie6b076363b3735dc7de10184b27fa799b499af0e
+Signed-off-by: tang.junhui <tang.junhui@zte.com.cn>
+---
+ libmultipath/uevent.c | 16 ++++++++++++++++
+ libmultipath/uevent.h |  1 +
+ 2 files changed, 17 insertions(+)
 
-Modifications include follows:
-
-Martin suggested me to use named constants rather than explicit numbers
-Thanks to Martin. 
-
-And Ben made several good suggestions:
-1) Use *_safe list literation in traversing a list while removing elements
-2) Do not move uevent_can_discard() to uevents listening thread in avoiding
-   of socket's buffer fills up
-3) Filter path change uevents while path addition uevent having not ever
-   been processed
-4) Remove add and change uevents if they are followed by a remove event, 
-   regardless of whether or not they have a wwid
-5) Do not change how the wwid is set, and call domap() on the device if its 
-   wwid is different from its merge_id.
-Thanks to Ben too. 
-
-The eleven patches in this series are used to improve processing
-efficiency for addition and deletion of multipath devices.
-
-This patches are tested pass by ZTE multipath automatic testing syetem.
-The modification reduces the system consumption(such as CPU) and shortens
-the processing time obviously in scene of massive multipath devices
-addition or deletion.
-
-The main processing flow of code is:
-1)uevents accumulation in uevents burst scene:
-  --[pacth]libmultipath: wait one seconds for more uevents in
-    uevent_listen() in uevents burst situations
-2)uevents filtering and merging:
-  --[pacth]multipathd: merge uevents before proccessing
-  --[pacth]libmultipath: filter uevents before proccessing
-  --[patch]multipathd: move uev_discard() to uevent.c and change its name
-    to uevent_can_discard()
-  --[patch]multipathd: move calling filter_devnode() from uev_trigger() to
-    uevent_can_discard()
-3)uevents proccessing:
-  --[pacth]multipathd: add need_do_map to indicate whether need calling
-    domap() in ev_add_path()
-  --[pacth]multipathd: add need_do_map to indicate whether need calling
-    domap() in ev_remove_path()
-  --[pacth]multipathd: proccess merged uevents
-
-There are some patches providing basic struct members or maros which
-would used in above pathes:
-  --[patch]libmultipath: add merge_id in "struct uevent" for uevents merging
-  --[patch]libmultipath: add merge_node for "struct uevent" to record
-    nodes of merged uevents
-  --[patch]libmultipath: add three list iteration macros
-
-Any comment will be welcome, and it would be appreciated if these
-patches would be considered for inclusion in the upstream
-multipath-tools.
-
-Thank you all,
-Tang Junhui
+diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
+index 7edcce1..5bde864 100644
+--- a/libmultipath/uevent.c
++++ b/libmultipath/uevent.c
+@@ -424,6 +424,22 @@ struct uevent *uevent_from_udev_device(struct udev_device *dev)
+ 			uev->devpath = uev->envp[i] + 8;
+ 		if (strcmp(name, "ACTION") == 0)
+ 			uev->action = uev->envp[i] + 7;
++
++		/*
++		 * merge_id used for uevents merging
++		 * it is expected to be same with wwid, 
++		 * uevents with the same merge_id
++		 * will be merged, and if it is same with wwid
++		 * only the last uevent will call domap()
++		 * now we only merge uevents with
++		 * label ID_SERIAL or ID_UID, which usually comming
++		 * from SCSI or DASD device
++		 */
++		if (strcmp(name, "ID_SERIAL") == 0)
++			uev->merge_id = uev->envp[i] + 10;
++		else if (strcmp(name, "ID_UID") == 0)	
++			uev->merge_id = uev->envp[i] + 7;
++
+ 		i++;
+ 		if (i == HOTPLUG_NUM_ENVP - 1)
+ 			break;
+diff --git a/libmultipath/uevent.h b/libmultipath/uevent.h
+index 9d22dcd..3f83bab 100644
+--- a/libmultipath/uevent.h
++++ b/libmultipath/uevent.h
+@@ -22,6 +22,7 @@ struct uevent {
+ 	char *devpath;
+ 	char *action;
+ 	char *kernel;
++	char *merge_id;
+ 	unsigned long seqnum;
+ 	char *envp[HOTPLUG_NUM_ENVP];
+ };
+-- 
+2.8.1.windows.1
