@@ -1,8 +1,8 @@
 From: tang.junhui@zte.com.cn
-Subject: [PATCH 01/11] libmultipath: add merge_id in "struct
-	uevent" for uevents merging
-Date: Thu, 12 Jan 2017 13:52:17 +0800
-Message-ID: <1484200347-11188-2-git-send-email-tang.junhui@zte.com.cn>
+Subject: [PATCH 03/11] libmultipath: add three list iteration
+	macros
+Date: Thu, 12 Jan 2017 13:52:19 +0800
+Message-ID: <1484200347-11188-4-git-send-email-tang.junhui@zte.com.cn>
 References: <1484200347-11188-1-git-send-email-tang.junhui@zte.com.cn>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,57 +24,66 @@ List-Id: dm-devel.ids
 
 From: tang.junhui <tang.junhui@zte.com.cn>
 
-merge_id is used for uevents merging, it is expected to be same with wwid,
-uevents with the same merge_id will be merged, and if it is same with
-wwid, only the last uevent will call domap(). now we only merge uevents
-with label ID_SERIAL or ID_UID in uevent, which usually comming from SCSI
-or DASD device.
+Add three list iteration macros, list_for_each_entry_reverse_safe
+is used for safe list iteration, and the other two macros are used
+to iterate list forwards or backwards from the given begin node to
+the given end node, which would be used in merging uevents.
 
-Change-Id: Ie6b076363b3735dc7de10184b27fa799b499af0e
+Change-Id: I8bb53fef9276bb62a5e0f4fdac6455086dc03d9b
 Signed-off-by: tang.junhui <tang.junhui@zte.com.cn>
 ---
- libmultipath/uevent.c | 16 ++++++++++++++++
- libmultipath/uevent.h |  1 +
- 2 files changed, 17 insertions(+)
+ libmultipath/list.h | 41 +++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 41 insertions(+)
 
-diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
-index 7edcce1..5bde864 100644
---- a/libmultipath/uevent.c
-+++ b/libmultipath/uevent.c
-@@ -424,6 +424,22 @@ struct uevent *uevent_from_udev_device(struct udev_device *dev)
- 			uev->devpath = uev->envp[i] + 8;
- 		if (strcmp(name, "ACTION") == 0)
- 			uev->action = uev->envp[i] + 7;
+diff --git a/libmultipath/list.h b/libmultipath/list.h
+index ceaa381..4433167 100644
+--- a/libmultipath/list.h
++++ b/libmultipath/list.h
+@@ -317,4 +317,45 @@ static inline void list_splice_tail_init(struct list_head *list,
+ 	     &pos->member != (head);					\
+ 	     pos = n, n = list_entry(n->member.next, typeof(*n), member))
+ 
++/**
++ * list_for_each_entry_reverse - iterate backwards over list of given type.
++ * @pos:	the type * to use as a loop counter.
++ * @n:		another type * to use as temporary storage
++ * @head:	the head for your list.
++ * @member:	the name of the list_struct within the struct.
++ */
++#define list_for_each_entry_reverse_safe(pos, n, head, member)	 \
++	for (pos = list_entry((head)->prev, typeof(*pos), member),	 \
++		 n = list_entry(pos->member.prev, typeof(*pos), member); \
++	     &pos->member != (head);					\
++	     pos = n, n = list_entry(n->member.prev, typeof(*n), member))
 +
-+		/*
-+		 * merge_id used for uevents merging
-+		 * it is expected to be same with wwid, 
-+		 * uevents with the same merge_id
-+		 * will be merged, and if it is same with wwid
-+		 * only the last uevent will call domap()
-+		 * now we only merge uevents with
-+		 * label ID_SERIAL or ID_UID, which usually comming
-+		 * from SCSI or DASD device
-+		 */
-+		if (strcmp(name, "ID_SERIAL") == 0)
-+			uev->merge_id = uev->envp[i] + 10;
-+		else if (strcmp(name, "ID_UID") == 0)	
-+			uev->merge_id = uev->envp[i] + 7;
++/**
++ * list_for_some_entry	-	iterate list of given interval
++ * @pos:	the type * to use as a loop counter.
++ * @n:		another type * to use as temporary storage
++ * @from:	the begin node of the iteration.
++ * @to:		the end node of the iteration.
++ * @member:	the name of the list_struct within the struct.
++ */
++#define list_for_some_entry_safe(pos, n, from, to, member)		 \
++	for (pos = list_entry((from)->next, typeof(*pos), member),	 \
++	     n = list_entry(pos->member.next, typeof(*pos), member); \
++	     &pos->member != (to);					                 \
++	     pos = n, n = list_entry(n->member.next, typeof(*n), member))
 +
- 		i++;
- 		if (i == HOTPLUG_NUM_ENVP - 1)
- 			break;
-diff --git a/libmultipath/uevent.h b/libmultipath/uevent.h
-index 9d22dcd..3f83bab 100644
---- a/libmultipath/uevent.h
-+++ b/libmultipath/uevent.h
-@@ -22,6 +22,7 @@ struct uevent {
- 	char *devpath;
- 	char *action;
- 	char *kernel;
-+	char *merge_id;
- 	unsigned long seqnum;
- 	char *envp[HOTPLUG_NUM_ENVP];
- };
++/**
++ * list_for_some_entry_reverse	-	iterate backwards list of given interval
++ * @pos:	the type * to use as a loop counter.
++ * @n:		another type * to use as temporary storage
++ * @from:	the begin node of the iteration.
++ * @to:		the end node of the iteration.
++ * @member:	the name of the list_struct within the struct.
++ */
++#define list_for_some_entry_reverse_safe(pos, n, from, to, member) \
++	for (pos = list_entry((from)->prev, typeof(*pos), member),	   \
++	     n = list_entry(pos->member.prev, typeof(*pos), member);   \
++	     &pos->member != (to);					                   \
++	     pos = n, n = list_entry(n->member.prev, typeof(*n), member))
++
+ #endif /* _LIST_H */
 -- 
 2.8.1.windows.1
