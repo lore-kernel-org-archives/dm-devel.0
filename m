@@ -1,8 +1,8 @@
 From: tang.junhui@zte.com.cn
-Subject: [PATCH 02/11] libmultipath: add merge_node for "struct
-	uevent" to record nodes of merged uevents
-Date: Thu, 12 Jan 2017 13:52:18 +0800
-Message-ID: <1484200347-11188-3-git-send-email-tang.junhui@zte.com.cn>
+Subject: [PATCH 07/11] multipathd: move calling filter_devnode()
+	from uev_trigger() to uevent_can_discard()
+Date: Thu, 12 Jan 2017 13:52:23 +0800
+Message-ID: <1484200347-11188-8-git-send-email-tang.junhui@zte.com.cn>
 References: <1484200347-11188-1-git-send-email-tang.junhui@zte.com.cn>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,52 +24,87 @@ List-Id: dm-devel.ids
 
 From: tang.junhui <tang.junhui@zte.com.cn>
 
-Add merged nodes list to store nodes of merged uevents. By Adding
-this member, after merging, the list of uevents would be linked like
-this:
-uevent
- ---------------------------
-|struct list_head node      |----->list node of un-merged uevents
- ---------------------------
-|struct list_head merge_node|----->list node of merged uevents, which
-----------------------------       moved from the origin un-merged list
-|...                        |
- ---------------------------
+Move calling filter_devnode() from uev_trigger() to uevent_can_discard()
+since they do the similar work.
 
-Change-Id: I5fbfc7656ede77e03ca35c855212e2d2d60706b2
+Change-Id: I0322443fa551b21aa3211bf1ce3fad7d37aeeab4
 Signed-off-by: tang.junhui <tang.junhui@zte.com.cn>
 ---
- libmultipath/uevent.c | 4 +++-
- libmultipath/uevent.h | 1 +
- 2 files changed, 4 insertions(+), 1 deletion(-)
+ libmultipath/uevent.c | 20 ++++++++++++++++++++
+ multipathd/main.c     |  9 ---------
+ 2 files changed, 20 insertions(+), 9 deletions(-)
 
 diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
-index 5bde864..9b6b1d1 100644
+index d6c02a6..b560a50 100644
 --- a/libmultipath/uevent.c
 +++ b/libmultipath/uevent.c
-@@ -72,8 +72,10 @@ struct uevent * alloc_uevent (void)
+@@ -47,6 +47,9 @@
+ #include "list.h"
+ #include "uevent.h"
+ #include "vector.h"
++#include "structs.h"
++#include "config.h"
++#include "blacklist.h"
+ 
+ typedef int (uev_trigger)(struct uevent *, void * trigger_data);
+ 
+@@ -86,6 +89,7 @@ uevent_can_discard(struct uevent *uev)
  {
- 	struct uevent *uev = MALLOC(sizeof(struct uevent));
+ 	char *tmp;
+ 	char a[11], b[11];
++	struct config * conf;
  
--	if (uev)
-+	if (uev) {
- 		INIT_LIST_HEAD(&uev->node);
-+		INIT_LIST_HEAD(&uev->merge_node);
+ 	/*
+ 	 * keep only block devices, discard partitions
+@@ -101,6 +105,22 @@ uevent_can_discard(struct uevent *uev)
+ 		return true;
+ 	}
+ 
++	/* 
++	 * do not filter dm devices by devnode
++	 */
++	if (!strncmp(uev->kernel, "dm-", 3))
++		return false;
++	/* 
++	 * filter paths devices by devnode
++	 */
++	conf = get_multipath_config();
++	if (filter_devnode(conf->blist_devnode, conf->elist_devnode,
++			   uev->kernel) > 0) {
++		put_multipath_config(conf);
++		return true;
 +	}
- 
- 	return uev;
++	put_multipath_config(conf);
++
+ 	return false;
  }
-diff --git a/libmultipath/uevent.h b/libmultipath/uevent.h
-index 3f83bab..9f65327 100644
---- a/libmultipath/uevent.h
-+++ b/libmultipath/uevent.h
-@@ -17,6 +17,7 @@ struct udev;
  
- struct uevent {
- 	struct list_head node;
-+	struct list_head merge_node;
- 	struct udev_device *udev;
- 	char buffer[HOTPLUG_BUFFER_SIZE + OBJECT_SIZE];
- 	char *devpath;
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 66d5c3d..24116e3 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1120,7 +1120,6 @@ uev_trigger (struct uevent * uev, void * trigger_data)
+ {
+ 	int r = 0;
+ 	struct vectors * vecs;
+-	struct config *conf;
+ 
+ 	vecs = (struct vectors *)trigger_data;
+ 
+@@ -1154,14 +1153,6 @@ uev_trigger (struct uevent * uev, void * trigger_data)
+ 	/*
+ 	 * path add/remove event
+ 	 */
+-	conf = get_multipath_config();
+-	if (filter_devnode(conf->blist_devnode, conf->elist_devnode,
+-			   uev->kernel) > 0) {
+-		put_multipath_config(conf);
+-		goto out;
+-	}
+-	put_multipath_config(conf);
+-
+ 	if (!strncmp(uev->action, "add", 3)) {
+ 		r = uev_add_path(uev, vecs, 1);
+ 		goto out;
 -- 
 2.8.1.windows.1
