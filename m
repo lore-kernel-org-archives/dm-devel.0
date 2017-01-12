@@ -1,8 +1,8 @@
 From: tang.junhui@zte.com.cn
-Subject: [PATCH 04/11] multipathd: add need_do_map to indicate
-	whether need calling domap() in ev_add_path()
-Date: Thu, 12 Jan 2017 13:52:20 +0800
-Message-ID: <1484200347-11188-5-git-send-email-tang.junhui@zte.com.cn>
+Subject: [PATCH 08/11] libmultipath: wait one seconds for more
+	uevents in uevent_listen() in uevents burst situations
+Date: Thu, 12 Jan 2017 13:52:24 +0800
+Message-ID: <1484200347-11188-9-git-send-email-tang.junhui@zte.com.cn>
 References: <1484200347-11188-1-git-send-email-tang.junhui@zte.com.cn>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,166 +24,110 @@ List-Id: dm-devel.ids
 
 From: tang.junhui <tang.junhui@zte.com.cn>
 
-Usually calling domap() in ev_add_path() is needed, but only last path
-need to call domap() in processing for merged uevents to reduce the
-count of calling domap() and promote efficiency. So add input parameter
-need_do_map to indicate whether need calling domap() in ev_add_path().
+The more uevents are merged, the higher efficiency program will performs.
+So, do not process uevents after receiving immediately in uevents burst
+situations, but continue wait one seconds for more uevents except that
+too much uevents (2048) have already been received or too much time
+eclipse (30 seconds).
 
-Change-Id: I7f33de49a1d89d91180dcb95cd94e4944ae7ff36
-Signed-off-by: tang.wenjun <tang.wenjun3@zte.com.cn>
+Change-Id: I763d491540e8114a81d12d603281540a81502742
+Signed-off-by: tang.junhui <tang.junhui@zte.com.cn>
 ---
- multipathd/cli_handlers.c |  3 ++-
- multipathd/main.c         | 47 ++++++++++++++++++++++++++++++++++++-----------
- multipathd/main.h         |  2 +-
- 3 files changed, 39 insertions(+), 13 deletions(-)
+ libmultipath/uevent.c | 42 +++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 41 insertions(+), 1 deletion(-)
 
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index b0eeca6..3a46c09 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -670,7 +670,8 @@ cli_add_path (void * v, char ** reply, int * len, void * data)
- 		pp->checkint = conf->checkint;
- 	}
- 	put_multipath_config(conf);
--	return ev_add_path(pp, vecs);
-+	return ev_add_path(pp, vecs, 1);
+diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
+index b560a50..f231dad 100644
+--- a/libmultipath/uevent.c
++++ b/libmultipath/uevent.c
+@@ -39,6 +39,7 @@
+ #include <linux/netlink.h>
+ #include <pthread.h>
+ #include <sys/mman.h>
++#include <sys/time.h>
+ #include <libudev.h>
+ #include <errno.h>
+ 
+@@ -51,6 +52,10 @@
+ #include "config.h"
+ #include "blacklist.h"
+ 
++#define MAX_ACCUMULATION_COUNT 2048
++#define MAX_ACCUMULATION_TIME 30*1000
++#define MIN_BURST_SPEED 10
 +
- blacklisted:
- 	*reply = strdup("blacklisted\n");
- 	*len = strlen(*reply) + 1;
-diff --git a/multipathd/main.c b/multipathd/main.c
-index adc3258..ebd7de1 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -608,7 +608,7 @@ ev_remove_map (char * devname, char * alias, int minor, struct vectors * vecs)
+ typedef int (uev_trigger)(struct uevent *, void * trigger_data);
+ 
+ LIST_HEAD(uevq);
+@@ -520,11 +525,43 @@ struct uevent *uevent_from_udev_device(struct udev_device *dev)
+ 	return uev;
  }
  
- static int
--uev_add_path (struct uevent *uev, struct vectors * vecs)
-+uev_add_path (struct uevent *uev, struct vectors * vecs, int need_do_map)
- {
- 	struct path *pp;
- 	int ret = 0, i;
-@@ -640,9 +640,18 @@ uev_add_path (struct uevent *uev, struct vectors * vecs)
- 			r = pathinfo(pp, conf,
- 				     DI_ALL | DI_BLACKLIST);
- 			put_multipath_config(conf);
--			if (r == PATHINFO_OK)
--				ret = ev_add_path(pp, vecs);
--			else if (r == PATHINFO_SKIPPED) {
-+			if (r == PATHINFO_OK) {
-+				/*
-+				 * Make sure merging use the correct wwid
-+				 * Othterwise calling domap()
-+				 */
-+				if (!need_do_map &&
-+				    uev->merge_id &&
-+				    strcmp(uev->merge_id, pp->wwid))
-+					need_do_map = 1;
++bool uevent_burst(struct timeval *start_time, int events)
++{
++	struct timeval diff_time, end_time;
++	unsigned long speed;
++	unsigned long eclipse_ms;
 +
-+				ret = ev_add_path(pp, vecs, need_do_map);
-+			} else if (r == PATHINFO_SKIPPED) {
- 				condlog(3, "%s: remove blacklisted path",
- 					uev->kernel);
- 				i = find_slot(vecs->pathvec, (void *)pp);
-@@ -681,7 +690,16 @@ uev_add_path (struct uevent *uev, struct vectors * vecs)
- 		conf = get_multipath_config();
- 		pp->checkint = conf->checkint;
- 		put_multipath_config(conf);
--		ret = ev_add_path(pp, vecs);
-+		/*
-+		 * Make sure merging use the correct wwid
-+		 * Othterwise calling domap()
-+		 */
-+		if (!need_do_map &&
-+		    uev->merge_id &&
-+		    strcmp(uev->merge_id, pp->wwid))
-+			need_do_map = 1;
-+
-+		ret = ev_add_path(pp, vecs, need_do_map);
- 	} else {
- 		condlog(0, "%s: failed to store path info, "
- 			"dropping event",
-@@ -699,7 +717,7 @@ uev_add_path (struct uevent *uev, struct vectors * vecs)
-  * 1: error
-  */
- int
--ev_add_path (struct path * pp, struct vectors * vecs)
-+ev_add_path (struct path * pp, struct vectors * vecs, int need_do_map)
- {
- 	struct multipath * mpp;
- 	char params[PARAMS_SIZE] = {0};
-@@ -767,6 +785,13 @@ rescan:
- 	/* persistent reservation check*/
- 	mpath_pr_event_handle(pp);
- 
-+	if (!need_do_map)
-+		return 0;
-+
-+	if (!dm_map_present(mpp->alias)) {
-+		mpp->action = ACT_CREATE;
-+		start_waiter = 1;
++	if(events > MAX_ACCUMULATION_COUNT) {
++		condlog(2, "burst got %u uevents, too much uevents, stopped", events);
++		return false;
 +	}
- 	/*
- 	 * push the map to the device-mapper
- 	 */
-@@ -995,7 +1020,7 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
- 		}
- 
- 		if (pp->initialized == INIT_REQUESTED_UDEV)
--			retval = uev_add_path(uev, vecs);
-+			retval = uev_add_path(uev, vecs, 1);
- 		else if (mpp && ro >= 0) {
- 			condlog(2, "%s: update path write_protect to '%d' (uevent)", uev->kernel, ro);
- 
-@@ -1150,7 +1175,7 @@ uev_trigger (struct uevent * uev, void * trigger_data)
- 	put_multipath_config(conf);
- 
- 	if (!strncmp(uev->action, "add", 3)) {
--		r = uev_add_path(uev, vecs);
-+		r = uev_add_path(uev, vecs, 1);
- 		goto out;
++
++	gettimeofday(&end_time, NULL);
++	timersub(&end_time, start_time, &diff_time);
++
++	eclipse_ms = diff_time.tv_sec * 1000 + diff_time.tv_usec / 1000;
++
++	if (eclipse_ms == 0)
++		return true;
++
++	if (eclipse_ms > MAX_ACCUMULATION_TIME) {
++		condlog(2, "burst continued %lu ms, too long time, stopped", eclipse_ms);
++		return false;
++	}
++
++	speed = (events * 1000) / eclipse_ms;
++	if (speed > MIN_BURST_SPEED)
++		return true;
++
++	return false;
++}
++
+ int uevent_listen(struct udev *udev)
+ {
+ 	int err = 2;
+ 	struct udev_monitor *monitor = NULL;
+ 	int fd, socket_flags, events;
++	struct timeval start_time;
+ 	int need_failback = 1;
+ 	int timeout = 30;
+ 	LIST_HEAD(uevlisten_tmp);
+@@ -578,6 +615,7 @@ int uevent_listen(struct udev *udev)
  	}
- 	if (!strncmp(uev->action, "remove", 6)) {
-@@ -1570,7 +1595,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 			conf = get_multipath_config();
- 			ret = pathinfo(pp, conf, DI_ALL | DI_BLACKLIST);
- 			if (ret == PATHINFO_OK) {
--				ev_add_path(pp, vecs);
-+				ev_add_path(pp, vecs, 1);
- 				pp->tick = 1;
- 			} else if (ret == PATHINFO_SKIPPED) {
- 				put_multipath_config(conf);
-@@ -1686,7 +1711,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+ 
+ 	events = 0;
++	gettimeofday(&start_time, NULL);
+ 	while (1) {
+ 		struct uevent *uev;
+ 		struct udev_device *dev;
+@@ -592,7 +630,8 @@ int uevent_listen(struct udev *udev)
+ 		errno = 0;
+ 		fdcount = poll(&ev_poll, 1, poll_timeout);
+ 		if (fdcount && ev_poll.revents & POLLIN) {
+-			timeout = 0;
++			timeout = uevent_burst(&start_time, events + 1) ? 1 : 0;
++
+ 			dev = udev_monitor_receive_device(monitor);
+ 			if (!dev) {
+ 				condlog(0, "failed getting udev device");
+@@ -625,6 +664,7 @@ int uevent_listen(struct udev *udev)
+ 			pthread_mutex_unlock(uevq_lockp);
+ 			events = 0;
  		}
- 		if (!disable_reinstate && reinstate_path(pp, add_active)) {
- 			condlog(3, "%s: reload map", pp->dev);
--			ev_add_path(pp, vecs);
-+			ev_add_path(pp, vecs, 1);
- 			pp->tick = 1;
- 			return 0;
- 		}
-@@ -1709,7 +1734,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 			/* Clear IO errors */
- 			if (reinstate_path(pp, 0)) {
- 				condlog(3, "%s: reload map", pp->dev);
--				ev_add_path(pp, vecs);
-+				ev_add_path(pp, vecs, 1);
- 				pp->tick = 1;
- 				return 0;
- 			}
-diff --git a/multipathd/main.h b/multipathd/main.h
-index f72580d..f810d41 100644
---- a/multipathd/main.h
-+++ b/multipathd/main.h
-@@ -22,7 +22,7 @@ void exit_daemon(void);
- const char * daemon_status(void);
- int need_to_delay_reconfig (struct vectors *);
- int reconfigure (struct vectors *);
--int ev_add_path (struct path *, struct vectors *);
-+int ev_add_path (struct path *, struct vectors *, int);
- int ev_remove_path (struct path *, struct vectors *);
- int ev_add_map (char *, char *, struct vectors *);
- int ev_remove_map (char *, char *, int, struct vectors *);
++		gettimeofday(&start_time, NULL);
+ 		timeout = 30;
+ 	}
+ 	need_failback = 0;
 -- 
 2.8.1.windows.1
