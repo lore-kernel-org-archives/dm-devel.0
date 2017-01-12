@@ -1,8 +1,8 @@
 From: tang.junhui@zte.com.cn
-Subject: [PATCH 07/11] multipathd: move calling filter_devnode()
-	from uev_trigger() to uevent_can_discard()
-Date: Thu, 12 Jan 2017 13:52:23 +0800
-Message-ID: <1484200347-11188-8-git-send-email-tang.junhui@zte.com.cn>
+Subject: [PATCH 10/11] libmultipath: filter uevents before
+	proccessing
+Date: Thu, 12 Jan 2017 13:52:26 +0800
+Message-ID: <1484200347-11188-11-git-send-email-tang.junhui@zte.com.cn>
 References: <1484200347-11188-1-git-send-email-tang.junhui@zte.com.cn>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,87 +24,100 @@ List-Id: dm-devel.ids
 
 From: tang.junhui <tang.junhui@zte.com.cn>
 
-Move calling filter_devnode() from uev_trigger() to uevent_can_discard()
-since they do the similar work.
+Before merging uevents, these uevents are going to be filtered:
+1) Change or addition uevent of a removed path (it indicate by an
+deletion uevent occurred later), and
+2) Change uevent if addition uevent of a path has not ever been
+proccessed.
 
-Change-Id: I0322443fa551b21aa3211bf1ce3fad7d37aeeab4
+Change-Id: If00c2c2e23ea466c1d4643c541ed2d8f9a0c8dea
 Signed-off-by: tang.junhui <tang.junhui@zte.com.cn>
 ---
- libmultipath/uevent.c | 20 ++++++++++++++++++++
- multipathd/main.c     |  9 ---------
- 2 files changed, 20 insertions(+), 9 deletions(-)
+ libmultipath/uevent.c | 58 +++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 58 insertions(+)
 
 diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
-index d6c02a6..b560a50 100644
+index 7282a51..838f128 100644
 --- a/libmultipath/uevent.c
 +++ b/libmultipath/uevent.c
-@@ -47,6 +47,9 @@
- #include "list.h"
- #include "uevent.h"
- #include "vector.h"
-+#include "structs.h"
-+#include "config.h"
-+#include "blacklist.h"
- 
- typedef int (uev_trigger)(struct uevent *, void * trigger_data);
- 
-@@ -86,6 +89,7 @@ uevent_can_discard(struct uevent *uev)
- {
- 	char *tmp;
- 	char a[11], b[11];
-+	struct config * conf;
- 
- 	/*
- 	 * keep only block devices, discard partitions
-@@ -101,6 +105,22 @@ uevent_can_discard(struct uevent *uev)
- 		return true;
- 	}
- 
-+	/* 
-+	 * do not filter dm devices by devnode
-+	 */
-+	if (!strncmp(uev->kernel, "dm-", 3))
-+		return false;
-+	/* 
-+	 * filter paths devices by devnode
-+	 */
-+	conf = get_multipath_config();
-+	if (filter_devnode(conf->blist_devnode, conf->elist_devnode,
-+			   uev->kernel) > 0) {
-+		put_multipath_config(conf);
-+		return true;
-+	}
-+	put_multipath_config(conf);
-+
- 	return false;
+@@ -144,6 +144,40 @@ uevent_can_discard(struct uevent *uev)
  }
  
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 66d5c3d..24116e3 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1120,7 +1120,6 @@ uev_trigger (struct uevent * uev, void * trigger_data)
+ bool
++uevent_can_filter(struct uevent *earlier, struct uevent *later)
++{
++
++	/*
++	 * filter earlier uvents if path has removed later. Eg:
++	 * "add path1 |chang path1 |add path2 |remove path1"
++	 * can filter as:
++	 * "add path2 |remove path1"
++	 * uevents "add path1" and "chang path1" are filtered out
++	 */
++	if (!strcmp(earlier->kernel, later->kernel) &&
++		!strcmp(later->action, "remove") &&
++		strncmp(later->kernel, "dm-", 3)) {
++		return true;
++	}
++
++	/*
++	 * filter change uvents if add uevents exist. Eg:
++	 * "change path1| add path1 |add path2"
++	 * can filter as:
++	 * "add path1 |add path2"
++	 * uevent "chang path1" is filtered out
++	 */
++	if (!strcmp(earlier->kernel, later->kernel) &&
++		!strcmp(earlier->action, "change") &&
++		!strcmp(later->action, "add") &&
++		strncmp(later->kernel, "dm-", 3)) {
++		return true;
++	}
++
++	return false;
++}
++
++bool
+ merge_need_stop(struct uevent *earlier, struct uevent *later)
  {
- 	int r = 0;
- 	struct vectors * vecs;
--	struct config *conf;
- 
- 	vecs = (struct vectors *)trigger_data;
- 
-@@ -1154,14 +1153,6 @@ uev_trigger (struct uevent * uev, void * trigger_data)
  	/*
- 	 * path add/remove event
- 	 */
--	conf = get_multipath_config();
--	if (filter_devnode(conf->blist_devnode, conf->elist_devnode,
--			   uev->kernel) > 0) {
--		put_multipath_config(conf);
--		goto out;
--	}
--	put_multipath_config(conf);
--
- 	if (!strncmp(uev->action, "add", 3)) {
- 		r = uev_add_path(uev, vecs, 1);
- 		goto out;
+@@ -215,6 +249,29 @@ uevent_discard(struct list_head *tmpq)
+ }
+ 
+ void
++uevent_filter(struct uevent *later, struct list_head *tmpq)
++{
++	struct uevent *earlier, *tmp;
++
++	list_for_some_entry_reverse_safe(earlier, tmp, &later->node, tmpq, node) {
++		/*
++		 * filter unnessary earlier uevents 
++		 * by the later uevent
++		 */
++		if (uevent_can_filter(earlier, later)) {
++			condlog(2, "uevent: %s-%s has filtered by uevent: %s-%s",
++				earlier->kernel, earlier->action, 
++				later->kernel, later->action);
++
++			list_del_init(&earlier->node);
++			if (earlier->udev)
++				udev_device_unref(earlier->udev);
++			FREE(earlier);
++		}
++	}
++}
++
++void
+ uevent_merge(struct uevent *later, struct list_head *tmpq)
+ {
+ 	struct uevent *earlier, *tmp;
+@@ -242,6 +299,7 @@ merge_uevq(struct list_head *tmpq)
+ 
+ 	uevent_discard(tmpq);
+ 	list_for_each_entry_reverse(later, tmpq, node) {
++		uevent_filter(later, tmpq);
+ 		uevent_merge(later, tmpq);
+ 	}
+ }
 -- 
 2.8.1.windows.1
