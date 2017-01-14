@@ -1,7 +1,8 @@
 From: heinzm@redhat.com
-Subject: [PATCH v2 4/5] dm raid: use read_disk_sb() throughout
-Date: Sat, 14 Jan 2017 03:53:10 +0100
-Message-ID: <20170114025311.22762-5-heinzm@redhat.com>
+Subject: [PATCH v2 2/5] dm raid: be prepared to accept arbitrary
+	'- -' tupples
+Date: Sat, 14 Jan 2017 03:53:08 +0100
+Message-ID: <20170114025311.22762-3-heinzm@redhat.com>
 References: <20170114025311.22762-1-heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,74 +24,91 @@ List-Id: dm-devel.ids
 
 From: Heinz Mauelshagen <heinzm@redhat.com>
 
-For consistency, call read_disk_sb() from
-attempt_restore_of_faulty_devices() instead
-of calling sync_page_io() directly.
+During raid set resize checks and setting up the recovery offset in case a raid
+set grows, calculated rd->md.dev_sectors is compared to rs->dev[0].rdev.sectors.
 
-Explicitly set device to faulty on superblock read error.
+Device 0 may not be defined in case userspace passes in '- -' for it
+(lvm2 doesn't do that so far), thus it's device sectors can't be taken
+authoritatively in this comparison and another valid device must be used
+to retrieve the device size.
+
+Use mddev->dev_sectors in checking for ongoing recovery for the same reason.
+
+Related: rhbz1404425
 
 Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
 ---
- drivers/md/dm-raid.c | 17 +++++++++--------
- 1 file changed, 9 insertions(+), 8 deletions(-)
+ drivers/md/dm-raid.c | 29 ++++++++++++++++++++++++-----
+ 1 file changed, 24 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 87c1458..424c93c 100644
+index 22a4932..f3452b1 100644
 --- a/drivers/md/dm-raid.c
 +++ b/drivers/md/dm-raid.c
-@@ -1936,18 +1936,21 @@ static int rs_check_reshape(struct raid_set *rs)
- 	return -EPERM;
+@@ -388,7 +388,7 @@ static bool rs_is_reshapable(struct raid_set *rs)
+ /* Return true, if raid set in @rs is recovering */
+ static bool rs_is_recovering(struct raid_set *rs)
+ {
+-	return rs->md.recovery_cp < rs->dev[0].rdev.sectors;
++	return rs->md.recovery_cp < rs->md.dev_sectors;
  }
  
--static int read_disk_sb(struct md_rdev *rdev, int size)
-+static int read_disk_sb(struct md_rdev *rdev, int size, bool force_reload)
- {
- 	BUG_ON(!rdev->sb_page);
+ /* Return true, if raid set in @rs is reshaping */
+@@ -1490,6 +1490,25 @@ static unsigned int rs_data_stripes(struct raid_set *rs)
+ 	return rs->raid_disks - rs->raid_type->parity_devs;
+ }
  
--	if (rdev->sb_loaded)
-+	if (rdev->sb_loaded && !force_reload)
- 		return 0;
- 
-+	rdev->sb_loaded = 0;
++/*
++ * Retrieve rdev->sectors from any valid raid device of @rs
++ * to allow userpace to pass in arbitray "- -" device tupples.
++ */
++static sector_t __rdev_sectors(struct raid_set *rs)
++{
++	int i;
 +
- 	if (!sync_page_io(rdev, 0, size, rdev->sb_page, REQ_OP_READ, 0, true)) {
- 		DMERR("Failed to read superblock of device at position %d",
- 		      rdev->raid_disk);
- 		md_error(rdev->mddev, rdev);
--		return -EINVAL;
-+		set_bit(Faulty, &rdev->flags);
-+		return -EIO;
- 	}
- 
- 	rdev->sb_loaded = 1;
-@@ -2075,7 +2078,7 @@ static int super_load(struct md_rdev *rdev, struct md_rdev *refdev)
- 		return -EINVAL;
- 	}
- 
--	r = read_disk_sb(rdev, rdev->sb_size);
-+	r = read_disk_sb(rdev, rdev->sb_size, false);
++	for (i = 0; i < rs->md.raid_disks; i++) {
++		struct md_rdev *rdev = &rs->dev[i].rdev;
++
++		if (!test_bit(Journal, &rdev->flags) &&
++		    rdev->bdev && rdev->sectors)
++			return rdev->sectors;
++	}
++
++	BUG(); /* Constructor ensures we got some. */
++}
++
+ /* Calculate the sectors per device and per array used for @rs */
+ static int rs_set_dev_and_array_sectors(struct raid_set *rs, bool use_mddev)
+ {
+@@ -1576,9 +1595,9 @@ static void rs_setup_recovery(struct raid_set *rs, sector_t dev_sectors)
+ 	else if (dev_sectors == MaxSector)
+ 		/* Prevent recovery */
+ 		__rs_setup_recovery(rs, MaxSector);
+-	else if (rs->dev[0].rdev.sectors < dev_sectors)
++	else if (__rdev_sectors(rs) < dev_sectors)
+ 		/* Grown raid set */
+-		__rs_setup_recovery(rs, rs->dev[0].rdev.sectors);
++		__rs_setup_recovery(rs, __rdev_sectors(rs));
+ 	else
+ 		__rs_setup_recovery(rs, MaxSector);
+ }
+@@ -2907,7 +2926,7 @@ static int raid_ctr(struct dm_target *ti, unsigned int argc, char **argv)
  	if (r)
- 		return r;
+ 		goto bad;
  
-@@ -2453,7 +2456,6 @@ static int analyse_superblocks(struct dm_target *ti, struct raid_set *rs)
- 			 * The rdev has to stay on the same_set list to allow for
- 			 * the attempt to restore faulty devices on second resume.
- 			 */
--			set_bit(Faulty, &rdev->flags);
- 			rdev->raid_disk = rdev->saved_raid_disk = -1;
- 			break;
- 		}
-@@ -3545,9 +3547,8 @@ static void attempt_restore_of_faulty_devices(struct raid_set *rs)
- 		if (test_bit(Journal, &r->flags))
- 			continue;
+-	calculated_dev_sectors = rs->dev[0].rdev.sectors;
++	calculated_dev_sectors = rs->md.dev_sectors;
  
--		if (test_bit(Faulty, &r->flags) && r->sb_page &&
--		    sync_page_io(r, 0, r->sb_size, r->sb_page,
--				 REQ_OP_READ, 0, true)) {
-+		if (test_bit(Faulty, &r->flags) &&
-+		    r->meta_bdev && !read_disk_sb(r, r->sb_size, true)) {
- 			DMINFO("Faulty %s device #%d has readable super block."
- 			       "  Attempting to revive it.",
- 			       rs->raid_type->name, i);
+ 	/*
+ 	 * Backup any new raid set level, layout, ...
+@@ -2920,7 +2939,7 @@ static int raid_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	if (r)
+ 		goto bad;
+ 
+-	resize = calculated_dev_sectors != rs->dev[0].rdev.sectors;
++	resize = calculated_dev_sectors != __rdev_sectors(rs);
+ 
+ 	INIT_WORK(&rs->md.event_work, do_table_event);
+ 	ti->private = rs;
 -- 
 2.9.3
