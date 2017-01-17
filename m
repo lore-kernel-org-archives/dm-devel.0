@@ -1,18 +1,15 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: deterministic io throughput in multipath
-Date: Mon, 16 Jan 2017 19:04:47 -0600
-Message-ID: <20170117010447.GW2732@octiron.msp.redhat.com>
-References: <1649d4b8538d4b4cb1efacdfe8cf31eb@BRMWP-EXMB12.corp.brocade.com>
-	<20161221160940.GG19659@octiron.msp.redhat.com>
-	<8cd4cc5f20b540a1b8312ad485711152@BRMWP-EXMB12.corp.brocade.com>
-	<20170103171159.GA2732@octiron.msp.redhat.com>
-	<4dfed25f04c04771a732580a4a8cc834@BRMWP-EXMB12.corp.brocade.com>
+From: tang.junhui@zte.com.cn
+Subject: Re: [LSF/MM TOPIC][LSF/MM ATTEND] multipath redesign
+Date: Tue, 17 Jan 2017 09:36:28 +0800
+Message-ID: <OF6841F8CE.5D9322F6-ON482580AB.00079056-482580AB.0008D27E@zte.com.cn>
+References: <00700606-3005-c82b-ee37-127417fbd201@suse.de>	<20170111222339.GC19051@redhat.com>
+	<19415684-1ec7-1926-b420-3b53ea247e1b@suse.de>	<20170112172959.GT2732@octiron.msp.redhat.com>
+	<def3ef1e-1a81-aab1-7fa8-ade1ebeaa0d5@suse.de>	<20170113160733.GA30128@redhat.com>
+	<fb08f4f6-5bb0-9014-c799-6c39c20d0219@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/mixed; boundary="===============1002487171160083337=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <4dfed25f04c04771a732580a4a8cc834@BRMWP-EXMB12.corp.brocade.com>
+In-Reply-To: <fb08f4f6-5bb0-9014-c799-6c39c20d0219@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,389 +19,192 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Muneendra Kumar M <mmandala@Brocade.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Hannes Reinecke <hare@suse.de>
+Cc: "linux-scsi@vger.kernel.org" <Linux-scsi@vger.kernel.org>, Mike Snitzer <snitzer@redhat.com>, dm-devel-bounces@redhat.com, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, "lsf-pc@lists.linux-foundation.org" <lsf-pc@lists.linux-foundation.org>
 List-Id: dm-devel.ids
 
-On Mon, Jan 16, 2017 at 11:19:19AM +0000, Muneendra Kumar M wrote:
->    Hi Ben,
->    After the below discussion we=A0 came with the approach which will mee=
-t our
->    requirement.
->    I have attached the patch which is working good in our field tests.
->    Could you please review the attached patch and provide us your valuable
->    comments .
+This is a multipart message in MIME format.
+--===============1002487171160083337==
+Content-Type: multipart/alternative;
+	boundary="=_alternative 0008D27B482580AB_="
 
-I can see a number of issues with this patch.
+This is a multipart message in MIME format.
+--=_alternative 0008D27B482580AB_=
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: base64
 
-First, some nit-picks:
-- I assume "dis_reinstante_time" should be "dis_reinstate_time"
+SGVsbG8gSGFubmVzOg0KDQpBcyBhIG11bGl0cGF0aCBkZXZlbG9wZXIsIEkgZmluZCB0aGF0IG11
+bHRpcGF0aCBpcyBnZXR0aW5nIGJpZ2dlcg0KYW5kIGhhcmRlciB0byBtYWludGFpbiBub3csIGFu
+ZCBJJ20gcmVhbGx5IGxvb2tpbmcgZm9yd2FyZCB0byB0aGlzDQpjaGFuZ2UsIGFuZCBJIGhvcGUg
+dG8gYmUgYWJsZSB0byBkZXZvdGUgbXlzZWxmIHRvIHRoaXMgY2hhbmdlIHRvby4NCkkgYW0gdmVy
+eSBpbnRlcmVzdGVkIGluIGFueSBuZXdzIG9mIHRoZSBtdWx0aXBhdGggcmVkZXNpZ24gYW5kDQpo
+b3BlIHRvIHNlZSByZXN1bHRzIHNvb24uDQoNCkkgY2FuJ3QgaW1hZ2luZSB3aGF0IHRoZSBuZXcg
+bXVsdGlwYXRoIGxvb2tzIGxpa2UsIGJ1dCBJIHN1Z2dlc3QNCnNvbWUgYmFkIHBsYWNlcyBmb3Ig
+dGhlIGN1cnJlbnQgbXVsdGlwYXRoIHdlIHNob3VsZCBhdm9pZDoNCjEpIGNvYXJzZSBncmFpbmVk
+IGxvY2s7DQoyKSB2ZWN0b3JzOw0KMykgd2FpdGVyIHRocmVhZDsNCjQpIGhpZ2ggY291cGxpbmc7
+DQo1KSB0b28gbWFueSBjb25maWd1cmF0aW9uczsNCkkgcmVhbGx5IGhvcGUgd2UgY2FuIG1ha2Ug
+YSBjbGVhbiwgZWZmaWNpZW50IGFuZCBlYXN5IHRvIHVzZQ0KbXVsdGlwYXRoLg0KDQpUaGFuayB5
+b3UNClRhbmcgSnVuaHVpDQoNCg0KDQrlj5Hku7bkuro6ICAgICAgICAgSGFubmVzIFJlaW5lY2tl
+IDxoYXJlQHN1c2UuZGU+DQrmlLbku7bkuro6ICAgICAgICAgTWlrZSBTbml0emVyIDxzbml0emVy
+QHJlZGhhdC5jb20+LCANCuaKhOmAgTogICAibGludXgtYmxvY2tAdmdlci5rZXJuZWwub3JnIiA8
+bGludXgtYmxvY2tAdmdlci5rZXJuZWwub3JnPiwgDQoibHNmLXBjQGxpc3RzLmxpbnV4LWZvdW5k
+YXRpb24ub3JnIiA8bHNmLXBjQGxpc3RzLmxpbnV4LWZvdW5kYXRpb24ub3JnPiwgDQpkZXZpY2Ut
+bWFwcGVyIGRldmVsb3BtZW50IDxkbS1kZXZlbEByZWRoYXQuY29tPiwgDQoibGludXgtc2NzaUB2
+Z2VyLmtlcm5lbC5vcmciIDxMaW51eC1zY3NpQHZnZXIua2VybmVsLm9yZz4NCuaXpeacnzogICAy
+MDE3LzAxLzE0IDAxOjUyDQrkuLvpopg6ICAgUmU6IFtkbS1kZXZlbF0gW0xTRi9NTSBUT1BJQ11b
+TFNGL01NIEFUVEVORF0gbXVsdGlwYXRoIHJlZGVzaWduDQrlj5Hku7bkuro6IGRtLWRldmVsLWJv
+dW5jZXNAcmVkaGF0LmNvbQ0KDQoNCg0KT24gMDEvMTMvMjAxNyAwNTowNyBQTSwgTWlrZSBTbml0
+emVyIHdyb3RlOg0KPiBPbiBGcmksIEphbiAxMyAyMDE3IGF0IDEwOjU2YW0gLTA1MDAsDQo+IEhh
+bm5lcyBSZWluZWNrZSA8aGFyZUBzdXNlLmRlPiB3cm90ZToNCj4gDQo+PiBPbiAwMS8xMi8yMDE3
+IDA2OjI5IFBNLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3JvdGU6DQpbIC4uIF0NCj4+PiBXaGlsZSBJ
+J3ZlIGRheWRyZWFtZWQgb2YgcmV3cml0aW5nIHRoZSBtdWx0aXBhdGggdG9vbHMgbXVsdGlwbGUg
+dGltZXMsDQo+Pj4gYW5kIGhhdmluZyBub3RoaW5nIGFnaW5zdCB5b3UgZG9pbmcgaXQgaW4gY29u
+Y2VwdCwgSSB3b3VsZCBiZSBoYXBwaWVyDQo+Pj4ga25vd2luZyB0aGF0IGl0IHdvbid0IHNpbXBs
+eSBtZWFuIHRoYXQgdGhlcmUgYXJlIHR3byBzZXRzIG9mIHRvb2xzLCANCnRoYXQNCj4+PiBib3Ro
+IG5lZWQgdG8gYmUgc3VwcG9ydGVkIHRvIGRlYWwgd2l0aCBhbGwgY3VzdG9tZXIgY29uZmlndXJh
+dGlvbnMuDQo+Pj4NCj4+IFN1cmUuIEkgZmVlbCB0aGUgcGFpbiBvZiBzdXBwb3J0aW5nIG11bHRp
+cGF0aC10b29scyBhbGwgdG9vIHN0cm9uZ2x5Lg0KPj4gSGF2aW5nIHR3byB0b29scyBmb3IgdGhl
+IHNhbWUgdGhpbmcgaXMgYWx3YXlzIGEgcGFpbiwgYW5kIEkgd291bGQgbGlrZQ0KPj4gdG8gYXZv
+aWQgdGhpcyBpZiBhdCBhbGwgcG9zc2libGUuDQo+IA0KPiBJIHdlbGNvbWUgeW91ciB3b3JrLiAg
+U2hvdWxkIGhlbHAgdXMgZm9jdXMgb24gd2hhdCBmYXQgbmVlZHMgdG8gYmUNCj4gdHJpbW1lZCBm
+cm9tIGJvdGggbXVsdGlwYXRoLXRvb2xzIGFuZCBrZXJuZWwuDQo+IA0KPiBNaWdodCBiZSBhIGdv
+b2QgdGltZSB0byBicmFuY2ggbXVsdGlwYXRoLXRvb2xzIGFuZCBnZXQgdmVyeSBhZ2dyZXNzaXZl
+DQo+IHdpdGggdHJpbW1pbmcgc3R1ZmYgdGhhdCBpcyBvdXRkYXRlZC4NCj4gDQo+IFRoaW5ncyBs
+aWtlIHRoZSBldmVudCBzdHVmZiwgdXNpbmcgc2VsZWN0IGludGVyZmFjZSwgdGhhdCBBbmR5IEdy
+b3ZlciBpcw0KPiB3b3JraW5nIG9uIChhbmQgTWlrdWxhcyBpcyB0YWtpbmcgYSBzdGFiIGF0IGZp
+bmlzaGluZy9vcHRpbWl6aW5nKSBpcw0KPiBzb21ldGhpbmcgdGhhdCBtaWdodCBoZWxwLi4uIGJ1
+dCB5b3VyIGFwcHJvYWNoIGRlc2NyaWJlZCBpbiB0aGlzIHRocmVhZA0KPiBtYXkgcHJvdmUgYmV0
+dGVyLg0KPiANCj4gUG9pbnQgaXMsIGV2ZXJ5dGhpbmcgc2hvdWxkIGJlIG9uIHRoZSB0YWJsZSBm
+b3IgcmV2aXRhbGl6aW5nIG11bHRpcGF0aA0KPiB1c2Vyc3BhY2UgKGFuZCBrZXJuZWwpIHRvIG1l
+ZXQgbmV3IHJlcXVpcmVtZW50cyAoZS5nLiBOVk1Fb0YsIGV0YykuDQo+IA0KPiBBbmQgeWVzLCBJ
+J2QgcHJlZmVyIHRvIHVsdGltYXRlbHkgc2VlIHRoZXNlIGFkdmFuY2VzIGxhbmQgaW4gdGVybXMg
+b2YgRE0NCj4gbXVsdGlwYXRoIGFkdmFuY2VzIGJ1dCB3ZSdsbCB0YWtlIGl0IGFzIGl0IGNvbWVz
+Lg0KDQpJJ20gZnVsbHkgb24gYm9hcmQgd2l0aCB0aGF0Lg0KQW5kIGl0IHdvdWxkIGJlIGdvb2Qg
+aWYgQmVuIE1hcnppbnNraSB3b3VsZCBiZSBwcmVzZW50LCB0b287DQpoZSBtaWdodCBoYXZlIHNv
+bWUgaW5zaWdodHMgd2hpY2ggYm90aCBvZiB1cyBtaWdodCBsYWNrDQoobGlrZSB0aGUgb21pbm91
+cyBkbS1ldmVudCBpbnRlcmZhY2UgaW50byBtdWx0aXBhdGhkIHdoZXJlIHdlIGJvdGgNCnN0cnVn
+Z2xlIHRvIGZpZ3VyZSBvdXQgd2hhdCBpdCdzIGZvciAuLi4pDQoNCkxvb2tpbmcgZm9yd2FyZCB0
+byB0aGF0IGRpc2N1c3Npb24uDQpBbmQgcHJvbWlzaW5nIHRvIGhhdmUgc29tZSByZXN1bHRzIGJ5
+IHRoZW4uDQoNCkNoZWVycywNCg0KSGFubmVzDQotLSANCkRyLiBIYW5uZXMgUmVpbmVja2UgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICB6U2VyaWVzICYgU3RvcmFnZQ0KaGFyZUBz
+dXNlLmRlICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
+KzQ5IDkxMSANCjc0MDUzIDY4OA0KU1VTRSBMSU5VWCBQcm9kdWN0cyBHbWJILCBNYXhmZWxkc3Ry
+LiA1LCA5MDQwOSBOw7xybmJlcmcNCkdGOiBKLiBIYXduLCBKLiBHdWlsZCwgRi4gSW1lbmTDtnJm
+ZmVyLCBIUkIgMTY3NDYgKEFHIE7DvHJuYmVyZykNCg0KLS0NCmRtLWRldmVsIG1haWxpbmcgbGlz
+dA0KZG0tZGV2ZWxAcmVkaGF0LmNvbQ0KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xp
+c3RpbmZvL2RtLWRldmVsDQoNCg0K
+--=_alternative 0008D27B482580AB_=
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: base64
 
-- The indenting in check_path_validity_err is wrong, which made it
-  confusing until I noticed that
+PHR0Pjxmb250IHNpemU9Mj5IZWxsbyBIYW5uZXM6PC9mb250PjwvdHQ+DQo8YnI+DQo8YnI+PGZv
+bnQgc2l6ZT0yIGZhY2U9InNhbnMtc2VyaWYiPkFzIGEgbXVsaXRwYXRoIGRldmVsb3BlciwgSSBm
+aW5kIHRoYXQNCm11bHRpcGF0aCBpcyBnZXR0aW5nIGJpZ2dlcjwvZm9udD4NCjxicj48Zm9udCBz
+aXplPTIgZmFjZT0ic2Fucy1zZXJpZiI+YW5kIGhhcmRlciB0byBtYWludGFpbiBub3csIGFuZCBJ
+J20NCnJlYWxseSBsb29raW5nIGZvcndhcmQgdG8gdGhpczwvZm9udD4NCjxicj48Zm9udCBzaXpl
+PTIgZmFjZT0ic2Fucy1zZXJpZiI+Y2hhbmdlLCBhbmQgSSBob3BlIHRvIGJlIGFibGUgdG8gZGV2
+b3RlDQpteXNlbGYgdG8gdGhpcyBjaGFuZ2UgdG9vLjwvZm9udD4NCjxicj48Zm9udCBzaXplPTIg
+ZmFjZT0ic2Fucy1zZXJpZiI+SSBhbSB2ZXJ5IGludGVyZXN0ZWQgaW4gYW55IG5ld3Mgb2YNCnRo
+ZSBtdWx0aXBhdGggcmVkZXNpZ24gYW5kPC9mb250Pg0KPGJyPjxmb250IHNpemU9MiBmYWNlPSJz
+YW5zLXNlcmlmIj5ob3BlIHRvIHNlZSByZXN1bHRzIHNvb24uPC9mb250Pg0KPGJyPg0KPGJyPjxm
+b250IHNpemU9MiBmYWNlPSJzYW5zLXNlcmlmIj5JIGNhbid0IGltYWdpbmUgd2hhdCB0aGUgbmV3
+IG11bHRpcGF0aA0KbG9va3MgbGlrZSwgYnV0IEkgc3VnZ2VzdDwvZm9udD4NCjxicj48Zm9udCBz
+aXplPTIgZmFjZT0ic2Fucy1zZXJpZiI+c29tZSBiYWQgcGxhY2VzIGZvciB0aGUgY3VycmVudCBt
+dWx0aXBhdGgNCndlIHNob3VsZCBhdm9pZDo8L2ZvbnQ+DQo8YnI+PGZvbnQgc2l6ZT0yIGZhY2U9
+InNhbnMtc2VyaWYiPjEpIGNvYXJzZSBncmFpbmVkIGxvY2s7PC9mb250Pg0KPGJyPjxmb250IHNp
+emU9MiBmYWNlPSJzYW5zLXNlcmlmIj4yKSB2ZWN0b3JzOzwvZm9udD4NCjxicj48Zm9udCBzaXpl
+PTIgZmFjZT0ic2Fucy1zZXJpZiI+Mykgd2FpdGVyIHRocmVhZDs8L2ZvbnQ+DQo8YnI+PGZvbnQg
+c2l6ZT0yIGZhY2U9InNhbnMtc2VyaWYiPjQpIGhpZ2ggY291cGxpbmc7PC9mb250Pg0KPGJyPjxm
+b250IHNpemU9MiBmYWNlPSJzYW5zLXNlcmlmIj41KSB0b28gbWFueSBjb25maWd1cmF0aW9uczs8
+L2ZvbnQ+DQo8YnI+PGZvbnQgc2l6ZT0yIGZhY2U9InNhbnMtc2VyaWYiPkkgcmVhbGx5IGhvcGUg
+d2UgY2FuIG1ha2UgYSBjbGVhbiwgZWZmaWNpZW50DQphbmQgZWFzeSB0byB1c2U8L2ZvbnQ+DQo8
+YnI+PGZvbnQgc2l6ZT0yIGZhY2U9InNhbnMtc2VyaWYiPm11bHRpcGF0aC48L2ZvbnQ+DQo8YnI+
+DQo8YnI+PGZvbnQgc2l6ZT0yIGZhY2U9InNhbnMtc2VyaWYiPlRoYW5rIHlvdTwvZm9udD4NCjxi
+cj48Zm9udCBzaXplPTIgZmFjZT0ic2Fucy1zZXJpZiI+VGFuZyBKdW5odWk8L2ZvbnQ+DQo8YnI+
+DQo8YnI+DQo8YnI+DQo8YnI+PGZvbnQgc2l6ZT0xIGNvbG9yPSM1ZjVmNWYgZmFjZT0ic2Fucy1z
+ZXJpZiI+5Y+R5Lu25Lq6OiAmbmJzcDsgJm5ic3A7DQombmJzcDsgJm5ic3A7IDwvZm9udD48Zm9u
+dCBzaXplPTEgZmFjZT0ic2Fucy1zZXJpZiI+SGFubmVzIFJlaW5lY2tlDQombHQ7aGFyZUBzdXNl
+LmRlJmd0OzwvZm9udD4NCjxicj48Zm9udCBzaXplPTEgY29sb3I9IzVmNWY1ZiBmYWNlPSJzYW5z
+LXNlcmlmIj7mlLbku7bkuro6ICZuYnNwOyAmbmJzcDsNCiZuYnNwOyAmbmJzcDsgPC9mb250Pjxm
+b250IHNpemU9MSBmYWNlPSJzYW5zLXNlcmlmIj5NaWtlIFNuaXR6ZXINCiZsdDtzbml0emVyQHJl
+ZGhhdC5jb20mZ3Q7LCA8L2ZvbnQ+DQo8YnI+PGZvbnQgc2l6ZT0xIGNvbG9yPSM1ZjVmNWYgZmFj
+ZT0ic2Fucy1zZXJpZiI+5oqE6YCBOiAmbmJzcDsgJm5ic3A7DQombmJzcDsgJm5ic3A7PC9mb250
+Pjxmb250IHNpemU9MSBmYWNlPSJzYW5zLXNlcmlmIj4mcXVvdDtsaW51eC1ibG9ja0B2Z2VyLmtl
+cm5lbC5vcmcmcXVvdDsNCiZsdDtsaW51eC1ibG9ja0B2Z2VyLmtlcm5lbC5vcmcmZ3Q7LCAmcXVv
+dDtsc2YtcGNAbGlzdHMubGludXgtZm91bmRhdGlvbi5vcmcmcXVvdDsNCiZsdDtsc2YtcGNAbGlz
+dHMubGludXgtZm91bmRhdGlvbi5vcmcmZ3Q7LCBkZXZpY2UtbWFwcGVyIGRldmVsb3BtZW50ICZs
+dDtkbS1kZXZlbEByZWRoYXQuY29tJmd0OywNCiZxdW90O2xpbnV4LXNjc2lAdmdlci5rZXJuZWwu
+b3JnJnF1b3Q7ICZsdDtMaW51eC1zY3NpQHZnZXIua2VybmVsLm9yZyZndDs8L2ZvbnQ+DQo8YnI+
+PGZvbnQgc2l6ZT0xIGNvbG9yPSM1ZjVmNWYgZmFjZT0ic2Fucy1zZXJpZiI+5pel5pyfOiAmbmJz
+cDsgJm5ic3A7DQombmJzcDsgJm5ic3A7IDwvZm9udD48Zm9udCBzaXplPTEgZmFjZT0ic2Fucy1z
+ZXJpZiI+MjAxNy8wMS8xNA0KMDE6NTI8L2ZvbnQ+DQo8YnI+PGZvbnQgc2l6ZT0xIGNvbG9yPSM1
+ZjVmNWYgZmFjZT0ic2Fucy1zZXJpZiI+5Li76aKYOiAmbmJzcDsgJm5ic3A7DQombmJzcDsgJm5i
+c3A7PC9mb250Pjxmb250IHNpemU9MSBmYWNlPSJzYW5zLXNlcmlmIj5SZTogW2RtLWRldmVsXQ0K
+W0xTRi9NTSBUT1BJQ11bTFNGL01NIEFUVEVORF0gbXVsdGlwYXRoIHJlZGVzaWduPC9mb250Pg0K
+PGJyPjxmb250IHNpemU9MSBjb2xvcj0jNWY1ZjVmIGZhY2U9InNhbnMtc2VyaWYiPuWPkeS7tuS6
+ujogJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNwOzwvZm9udD48Zm9udCBzaXplPTEgZmFjZT0i
+c2Fucy1zZXJpZiI+ZG0tZGV2ZWwtYm91bmNlc0ByZWRoYXQuY29tPC9mb250Pg0KPGJyPg0KPGhy
+IG5vc2hhZGU+DQo8YnI+DQo8YnI+DQo8YnI+PHR0Pjxmb250IHNpemU9Mj5PbiAwMS8xMy8yMDE3
+IDA1OjA3IFBNLCBNaWtlIFNuaXR6ZXIgd3JvdGU6PGJyPg0KJmd0OyBPbiBGcmksIEphbiAxMyAy
+MDE3IGF0IDEwOjU2YW0gLTA1MDAsPGJyPg0KJmd0OyBIYW5uZXMgUmVpbmVja2UgJmx0O2hhcmVA
+c3VzZS5kZSZndDsgd3JvdGU6PGJyPg0KJmd0OyA8YnI+DQomZ3Q7Jmd0OyBPbiAwMS8xMi8yMDE3
+IDA2OjI5IFBNLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3JvdGU6PGJyPg0KWyAuLiBdPGJyPg0KJmd0
+OyZndDsmZ3Q7IFdoaWxlIEkndmUgZGF5ZHJlYW1lZCBvZiByZXdyaXRpbmcgdGhlIG11bHRpcGF0
+aCB0b29scyBtdWx0aXBsZQ0KdGltZXMsPGJyPg0KJmd0OyZndDsmZ3Q7IGFuZCBoYXZpbmcgbm90
+aGluZyBhZ2luc3QgeW91IGRvaW5nIGl0IGluIGNvbmNlcHQsIEkgd291bGQNCmJlIGhhcHBpZXI8
+YnI+DQomZ3Q7Jmd0OyZndDsga25vd2luZyB0aGF0IGl0IHdvbid0IHNpbXBseSBtZWFuIHRoYXQg
+dGhlcmUgYXJlIHR3byBzZXRzDQpvZiB0b29scywgdGhhdDxicj4NCiZndDsmZ3Q7Jmd0OyBib3Ro
+IG5lZWQgdG8gYmUgc3VwcG9ydGVkIHRvIGRlYWwgd2l0aCBhbGwgY3VzdG9tZXIgY29uZmlndXJh
+dGlvbnMuPGJyPg0KJmd0OyZndDsmZ3Q7PGJyPg0KJmd0OyZndDsgU3VyZS4gSSBmZWVsIHRoZSBw
+YWluIG9mIHN1cHBvcnRpbmcgbXVsdGlwYXRoLXRvb2xzIGFsbCB0b28gc3Ryb25nbHkuPGJyPg0K
+Jmd0OyZndDsgSGF2aW5nIHR3byB0b29scyBmb3IgdGhlIHNhbWUgdGhpbmcgaXMgYWx3YXlzIGEg
+cGFpbiwgYW5kIEkgd291bGQNCmxpa2U8YnI+DQomZ3Q7Jmd0OyB0byBhdm9pZCB0aGlzIGlmIGF0
+IGFsbCBwb3NzaWJsZS48YnI+DQomZ3Q7IDxicj4NCiZndDsgSSB3ZWxjb21lIHlvdXIgd29yay4g
+Jm5ic3A7U2hvdWxkIGhlbHAgdXMgZm9jdXMgb24gd2hhdCBmYXQgbmVlZHMNCnRvIGJlPGJyPg0K
+Jmd0OyB0cmltbWVkIGZyb20gYm90aCBtdWx0aXBhdGgtdG9vbHMgYW5kIGtlcm5lbC48YnI+DQom
+Z3Q7IDxicj4NCiZndDsgTWlnaHQgYmUgYSBnb29kIHRpbWUgdG8gYnJhbmNoIG11bHRpcGF0aC10
+b29scyBhbmQgZ2V0IHZlcnkgYWdncmVzc2l2ZTxicj4NCiZndDsgd2l0aCB0cmltbWluZyBzdHVm
+ZiB0aGF0IGlzIG91dGRhdGVkLjxicj4NCiZndDsgPGJyPg0KJmd0OyBUaGluZ3MgbGlrZSB0aGUg
+ZXZlbnQgc3R1ZmYsIHVzaW5nIHNlbGVjdCBpbnRlcmZhY2UsIHRoYXQgQW5keSBHcm92ZXINCmlz
+PGJyPg0KJmd0OyB3b3JraW5nIG9uIChhbmQgTWlrdWxhcyBpcyB0YWtpbmcgYSBzdGFiIGF0IGZp
+bmlzaGluZy9vcHRpbWl6aW5nKQ0KaXM8YnI+DQomZ3Q7IHNvbWV0aGluZyB0aGF0IG1pZ2h0IGhl
+bHAuLi4gYnV0IHlvdXIgYXBwcm9hY2ggZGVzY3JpYmVkIGluIHRoaXMgdGhyZWFkPGJyPg0KJmd0
+OyBtYXkgcHJvdmUgYmV0dGVyLjxicj4NCiZndDsgPGJyPg0KJmd0OyBQb2ludCBpcywgZXZlcnl0
+aGluZyBzaG91bGQgYmUgb24gdGhlIHRhYmxlIGZvciByZXZpdGFsaXppbmcgbXVsdGlwYXRoPGJy
+Pg0KJmd0OyB1c2Vyc3BhY2UgKGFuZCBrZXJuZWwpIHRvIG1lZXQgbmV3IHJlcXVpcmVtZW50cyAo
+ZS5nLiBOVk1Fb0YsIGV0YykuPGJyPg0KJmd0OyA8YnI+DQomZ3Q7IEFuZCB5ZXMsIEknZCBwcmVm
+ZXIgdG8gdWx0aW1hdGVseSBzZWUgdGhlc2UgYWR2YW5jZXMgbGFuZCBpbiB0ZXJtcw0Kb2YgRE08
+YnI+DQomZ3Q7IG11bHRpcGF0aCBhZHZhbmNlcyBidXQgd2UnbGwgdGFrZSBpdCBhcyBpdCBjb21l
+cy48YnI+DQo8YnI+DQpJJ20gZnVsbHkgb24gYm9hcmQgd2l0aCB0aGF0Ljxicj4NCkFuZCBpdCB3
+b3VsZCBiZSBnb29kIGlmIEJlbiBNYXJ6aW5za2kgd291bGQgYmUgcHJlc2VudCwgdG9vOzxicj4N
+CmhlIG1pZ2h0IGhhdmUgc29tZSBpbnNpZ2h0cyB3aGljaCBib3RoIG9mIHVzIG1pZ2h0IGxhY2s8
+YnI+DQoobGlrZSB0aGUgb21pbm91cyBkbS1ldmVudCBpbnRlcmZhY2UgaW50byBtdWx0aXBhdGhk
+IHdoZXJlIHdlIGJvdGg8YnI+DQpzdHJ1Z2dsZSB0byBmaWd1cmUgb3V0IHdoYXQgaXQncyBmb3Ig
+Li4uKTxicj4NCjxicj4NCkxvb2tpbmcgZm9yd2FyZCB0byB0aGF0IGRpc2N1c3Npb24uPGJyPg0K
+QW5kIHByb21pc2luZyB0byBoYXZlIHNvbWUgcmVzdWx0cyBieSB0aGVuLjxicj4NCjxicj4NCkNo
+ZWVycyw8YnI+DQo8YnI+DQpIYW5uZXM8YnI+DQotLSA8YnI+DQpEci4gSGFubmVzIFJlaW5lY2tl
+ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7
+ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7
+ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwO3pTZXJpZXMgJmFtcDsgU3RvcmFnZTxicj4NCmhh
+cmVAc3VzZS5kZSAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJz
+cDsgJm5ic3A7DQombmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJz
+cDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJz
+cDsgJm5ic3A7ICZuYnNwOw0KJm5ic3A7ICZuYnNwOyAmbmJzcDsgKzQ5IDkxMSA3NDA1MyA2ODg8
+YnI+DQpTVVNFIExJTlVYIFByb2R1Y3RzIEdtYkgsIE1heGZlbGRzdHIuIDUsIDkwNDA5IE7DvHJu
+YmVyZzxicj4NCkdGOiBKLiBIYXduLCBKLiBHdWlsZCwgRi4gSW1lbmTDtnJmZmVyLCBIUkIgMTY3
+NDYgKEFHIE7DvHJuYmVyZyk8YnI+DQo8YnI+DQotLTxicj4NCmRtLWRldmVsIG1haWxpbmcgbGlz
+dDxicj4NCmRtLWRldmVsQHJlZGhhdC5jb208YnI+DQo8L2ZvbnQ+PC90dD48YSBocmVmPSJodHRw
+czovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWwiPjx0dD48Zm9udCBz
+aXplPTI+aHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVsPC9m
+b250PjwvdHQ+PC9hPjx0dD48Zm9udCBzaXplPTI+PGJyPg0KPC9mb250PjwvdHQ+DQo8YnI+DQo=
+--=_alternative 0008D27B482580AB_=--
 
-if (clock_gettime(CLOCK_MONOTONIC, &start_time) !=3D 0)
 
-  doesn't have an open brace, and shouldn't indent the rest of the
-  function.
-
-- You call clock_gettime in check_path, but never use the result.
-
-- In dict.c, instead of writing your own functions that are the same as
-  the *_delay_checks functions, you could make those functions generic
-  and use them for both.  To go match the other generic function names
-  they would probably be something like
-
-set_off_int_undef
-
-print_off_int_undef
-
-  You would also need to change DELAY_CHECKS_* and ERR_CHECKS_* to
-  point to some common enum that you created, the way
-  user_friendly_names_states (to name one of many) does. The generic
-  enum used by *_off_int_undef would be something like.
-
-enum no_undef {
-	NU_NO =3D -1,
-	NU_UNDEF =3D 0,
-}
-
-  The idea is to try to cut down on the number of functions that are
-  simply copy-pasting other functions in dict.c.
+--===============1002487171160083337==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
 
-Those are all minor cleanup issues, but there are some bigger problems.
-
-Instead of checking if san_path_err_threshold,
-san_path_err_threshold_window, and san_path_err_recovery_time are
-greater than zero seperately, you should probably check them all at the
-start of check_path_validity_err, and return 0 unless they all are set.
-Right now, if a user sets san_path_err_threshold and
-san_path_err_threshold_window but not san_path_err_recovery_time, their
-path will never recover after it hits the error threshold.  I pretty
-sure that you don't mean to permanently disable the paths.
-
-
-time_t is a signed type, which means that if you get the clock time in
-update_multpath and then fail to get the clock time in
-check_path_validity_err, this check:
-
-start_time.tv_sec - pp->failure_start_time) < pp->mpp->san_path_err_thresho=
-ld_window
-
-will always be true.  I realize that clock_gettime is very unlikely to
-fail.  But if it does, probably the safest thing to so is to just
-immediately return 0 in check_path_validity_err.
-
-
-The way you set path_failures in update_multipath may not get you what
-you want.  It will only count path failures found by the kernel, and not
-the path checker.  If the check_path finds the error, pp->state will be
-set to PATH_DOWN before pp->dmstate is set to PSTATE_FAILED. That means
-you will not increment path_failures. Perhaps this is what you want, but
-I would assume that you would want to count every time the path goes
-down regardless of whether multipathd or the kernel noticed it.
-
-
-I'm not super enthusiastic about how the san_path_err_threshold_window
-works.  First, it starts counting from when the path goes down, so if
-the path takes long enough to get restored, and then fails immediately,
-it can just keep failing and it will never hit the
-san_path_err_threshold_window, since it spends so much of that time with
-the path failed.  Also, the window gets set on the first error, and
-never reset until the number of errors is over the threshold.  This
-means that if you get one early error and then a bunch of errors much
-later, you will go for (2 x san_path_err_threshold) - 1 errors until you
-stop reinstating the path, because of the window reset in the middle of
-the string of errors.  It seems like a better idea would be to have
-check_path_validity_err reset path_failures as soon as it notices that
-you are past san_path_err_threshold_window, instead of waiting till the
-number of errors hits san_path_err_threshold.
-
-
-If I was going to design this, I think I would have
-san_path_err_threshold and san_path_err_recovery_time like you do, but
-instead of having a san_path_err_threshold_window, I would have
-something like san_path_err_forget_rate.  The idea is that every
-san_path_err_forget_rate number of successful path checks you decrement
-path_failures by 1. This means that there is no window after which you
-reset.  If the path failures come in faster than the forget rate, you
-will eventually hit the error threshold. This also has the benefit of
-easily not counting time when the path was down as time where the path
-wasn't having problems. But if you don't like my idea, yours will
-work fine with some polish.
-
--Ben
-
-
->    Below are the files that has been changed .
->    =A0
->    libmultipath/config.c=A0=A0=A0=A0=A0 |=A0 3 +++
->    libmultipath/config.h=A0=A0=A0=A0=A0 |=A0 9 +++++++++
->    libmultipath/configure.c=A0=A0 |=A0 3 +++
->    libmultipath/defaults.h=A0=A0=A0 |=A0 1 +
->    libmultipath/dict.c=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 | 80
->    ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++++++++
->    libmultipath/dict.h=A0=A0=A0=A0=A0=A0=A0 |=A0 1 +
->    libmultipath/propsel.c=A0=A0=A0=A0 | 44
->    ++++++++++++++++++++++++++++++++++++++++++++
->    libmultipath/propsel.h=A0=A0=A0=A0 |=A0 6 ++++++
->    libmultipath/structs.h=A0=A0=A0=A0 | 12 +++++++++++-
->    libmultipath/structs_vec.c | 10 ++++++++++
->    multipath/multipath.conf.5 | 58
->    ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
->    multipathd/main.c=A0=A0=A0=A0=A0=A0=A0=A0=A0 | 61
->    +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
->    =A0
->    We have added three new config parameters whose description is below.
->    1.san_path_err_threshold:
->    =A0=A0=A0=A0=A0=A0=A0 If set to a value greater than 0, multipathd wil=
-l watch paths and
->    check how many times a path has been failed due to errors. If the numb=
-er
->    of failures on a particular path is greater then the
->    san_path_err_threshold then the path will not=A0 reinstate=A0 till
->    san_path_err_recovery_time. These path failures should occur within a
->    san_path_err_threshold_window time frame, if not we will consider the =
-path
->    is good enough to reinstate.
->    =A0
->    2.san_path_err_threshold_window:
->    =A0=A0=A0=A0=A0=A0=A0 If set to a value greater than 0, multipathd wil=
-l check whether
->    the path failures has exceeded=A0 the san_path_err_threshold within th=
-is
->    time frame i.e san_path_err_threshold_window . If so we will not reins=
-tate
->    the path till=A0=A0=A0=A0=A0=A0=A0=A0=A0 san_path_err_recovery_time.
->    =A0
->    3.san_path_err_recovery_time:
->    If set to a value greater than 0, multipathd will make sure that when =
-path
->    failures has exceeded the san_path_err_threshold within
->    san_path_err_threshold_window then the path=A0 will be placed in failed
->    state for san_path_err_recovery_time duration. Once
->    san_path_err_recovery_time has timeout=A0 we will reinstate the failed=
- path
->    .
->    =A0
->    Regards,
->    Muneendra.
->    =A0
->    -----Original Message-----
->    From: Muneendra Kumar M
->    Sent: Wednesday, January 04, 2017 6:56 PM
->    To: 'Benjamin Marzinski' <bmarzins@redhat.com>
->    Cc: dm-devel@redhat.com
->    Subject: RE: [dm-devel] deterministic io throughput in multipath
->    =A0
->    Hi Ben,
->    Thanks for the information.
->    =A0
->    Regards,
->    Muneendra.
->    =A0
->    -----Original Message-----
->    From: Benjamin Marzinski [[1]mailto:bmarzins@redhat.com]
->    Sent: Tuesday, January 03, 2017 10:42 PM
->    To: Muneendra Kumar M <[2]mmandala@Brocade.com>
->    Cc: [3]dm-devel@redhat.com
->    Subject: Re: [dm-devel] deterministic io throughput in multipath
->    =A0
->    On Mon, Dec 26, 2016 at 09:42:48AM +0000, Muneendra Kumar M wrote:
->    > Hi Ben,
->    >
->    > If there are two paths on a dm-1 say sda and sdb as below.
->    >
->    > #=A0 multipath -ll
->    >=A0=A0=A0=A0=A0=A0=A0 mpathd (3600110d001ee7f0102050001cc0b6751) dm-1=
- SANBlaze,VLUN
->    MyLun
->    >=A0=A0=A0=A0=A0=A0=A0 size=3D8.0M features=3D'0' hwhandler=3D'0' wp=
-=3Drw
->    >=A0=A0=A0=A0=A0=A0=A0 `-+- policy=3D'round-robin 0' prio=3D50 status=
-=3Dactive
->    >=A0=A0=A0=A0=A0=A0=A0=A0=A0 |- 8:0:1:0=A0 sda 8:48 active ready=A0 ru=
-nning
->    >=A0=A0=A0=A0=A0=A0=A0=A0=A0 `- 9:0:1:0=A0 sdb 8:64 active ready=A0 ru=
-nning=A0=A0=A0=A0=A0=A0=A0=A0=A0
->    >
->    > And on sda if iam seeing lot of errors due to which the sda path is
->    fluctuating from failed state to active state and vicevera.
->    >
->    > My requirement is something like this if sda is failed for more then=
- 5
->    > times in a hour duration ,then I want to keep the sda in failed state
->    > for few hours (3hrs)
->    >
->    > And the data should travel only thorugh sdb path.
->    > Will this be possible with the below parameters.
->    =A0
->    No. delay_watch_checks sets how may path checks you watch a path that =
-has
->    recently come back from the failed state. If the path fails again with=
-in
->    this time, multipath device delays it.=A0 This means that the delay is
->    always trigger by two failures within the time limit.=A0 It's possible=
- to
->    adapt this to count numbers of failures, and act after a certain number
->    within a certain timeframe, but it would take a bit more work.
->    =A0
->    delay_wait_checks doesn't guarantee that it will delay for any set len=
-gth
->    of time.=A0 Instead, it sets the number of consecutive successful path
->    checks that must occur before the path is usable again. You could set =
-this
->    for 3 hours of path checks, but if a check failed during this time, you
->    would restart the 3 hours over again.
->    =A0
->    -Ben
->    =A0
->    > Can you just let me know what values I should add for delay_watch_ch=
-ecks
->    and delay_wait_checks.
->    >
->    > Regards,
->    > Muneendra.
->    >
->    >
->    >
->    > -----Original Message-----
->    > From: Muneendra Kumar M
->    > Sent: Thursday, December 22, 2016 11:10 AM
->    > To: 'Benjamin Marzinski' <[4]bmarzins@redhat.com>
->    > Cc: [5]dm-devel@redhat.com
->    > Subject: RE: [dm-devel] deterministic io throughput in multipath
->    >
->    > Hi Ben,
->    >
->    > Thanks for the reply.
->    > I will look into this parameters will do the internal testing and let
->    you know the results.
->    >
->    > Regards,
->    > Muneendra.
->    >
->    > -----Original Message-----
->    > From: Benjamin Marzinski [[6]mailto:bmarzins@redhat.com]
->    > Sent: Wednesday, December 21, 2016 9:40 PM
->    > To: Muneendra Kumar M <[7]mmandala@Brocade.com>
->    > Cc: [8]dm-devel@redhat.com
->    > Subject: Re: [dm-devel] deterministic io throughput in multipath
->    >
->    > Have you looked into the delay_watch_checks and delay_wait_checks
->    configuration parameters?=A0 The idea behind them is to minimize the u=
-se of
->    paths that are intermittently failing.
->    >
->    > -Ben
->    >
->    > On Mon, Dec 19, 2016 at 11:50:36AM +0000, Muneendra Kumar M wrote:
->    > >=A0=A0=A0 Customers using Linux host (mostly RHEL host) using a SAN=
- network
->    for
->    > >=A0=A0=A0 block storage, complain the Linux multipath stack is not =
-resilient
->    to
->    > >=A0=A0=A0 handle non-deterministic storage network behaviors. This =
-has caused
->    many
->    > >=A0=A0=A0 customer move away to non-linux based servers. The intent=
- of the
->    below
->    > >=A0=A0=A0 patch and the prevailing issues are given below. With the=
- below
->    design we
->    > >=A0=A0=A0 are seeing the Linux multipath stack becoming resilient t=
-o such
->    network
->    > >=A0=A0=A0 issues. We hope by getting this patch accepted will help =
-in more
->    Linux
->    > >=A0=A0=A0 server adoption that use SAN network.
->    > >
->    > >=A0=A0=A0 I have already sent the design details to the community i=
-n a
->    different
->    > >=A0=A0=A0 mail chain and the details are available in the below lin=
-k.
->    > >
->    > >=A0=A0=A0
->    [1][9]https://urldefense.proofpoint.com/v2/url?u=3Dhttps-3A__www.redha=
-t.com_archives_dm-2Ddevel_2016-2DDecember_msg00122.html&d=3DDgIDAw&c=3DIL_X=
-qQWOjubgfqINi2jTzg&r=3DE3ftc47B6BGtZ4fVaYvkuv19wKvC_Mc6nhXaA1sBIP0&m=3Dvfwp=
-Vp6e1KXtRA0ctwHYJ7cDmPsLi2C1L9pox7uexsY&s=3Dq5OI-lfefNC2CHKmyUkokgiyiPo_Uj7=
-MRu52hG3MKzM&e=3D
->    .
->    > >
->    > >=A0=A0=A0 Can you please go through the design and send the comment=
-s to us.
->    > >
->    > >=A0=A0=A0 =A0
->    > >
->    > >=A0=A0=A0 Regards,
->    > >
->    > >=A0=A0=A0 Muneendra.
->    > >
->    > >=A0=A0=A0 =A0
->    > >
->    > >=A0=A0=A0 =A0
->    > >
->    > > References
->    > >
->    > >=A0=A0=A0 Visible links
->    > >=A0=A0=A0 1.
->    > >
->    [10]https://urldefense.proofpoint.com/v2/url?u=3Dhttps-3A__www.redhat.=
-com_
->    > > ar
->    > > chives_dm-2Ddevel_2016-2DDecember_msg00122.html&d=3DDgIDAw&c=3DIL_=
-XqQWOj
->    > > ub
->    > > gfqINi2jTzg&r=3DE3ftc47B6BGtZ4fVaYvkuv19wKvC_Mc6nhXaA1sBIP0&m=3Dvf=
-wpVp6e
->    > > 1K
->    > > XtRA0ctwHYJ7cDmPsLi2C1L9pox7uexsY&s=3Dq5OI-lfefNC2CHKmyUkokgiyiPo_=
-Uj7M
->    > > Ru
->    > > 52hG3MKzM&e=3D
->    >
->    > > --
->    > > dm-devel mailing list
->    > > [11]dm-devel@redhat.com
->    > >
->    [12]https://urldefense.proofpoint.com/v2/url?u=3Dhttps-3A__www.redhat.=
-com_
->    > > ma
->    > > ilman_listinfo_dm-2Ddevel&d=3DDgIDAw&c=3DIL_XqQWOjubgfqINi2jTzg&r=
-=3DE3ftc4
->    > > 7B6BGtZ4fVaYvkuv19wKvC_Mc6nhXaA1sBIP0&m=3DvfwpVp6e1KXtRA0ctwHYJ7cD=
-mPsL
->    > > i2C1L9pox7uexsY&s=3DUyE46dXOrNTbPz_TVGtpoHl3J3h_n0uYhI4TI-PgyWg&e=
-=3D
->    =A0
-> =
-
-> References
-> =
-
->    Visible links
->    1. mailto:bmarzins@redhat.com
->    2. mailto:mmandala@brocade.com
->    3. mailto:dm-devel@redhat.com
->    4. mailto:bmarzins@redhat.com
->    5. mailto:dm-devel@redhat.com
->    6. mailto:bmarzins@redhat.com
->    7. mailto:mmandala@brocade.com
->    8. mailto:dm-devel@redhat.com
->    9. https://urldefense.proofpoint.com/v2/url?u=3Dhttps-3A__www.redhat.c=
-om_archives_dm-2Ddevel_2016-2DDecember_msg00122.html&d=3DDgIDAw&c=3DIL_XqQW=
-OjubgfqINi2jTzg&r=3DE3ftc47B6BGtZ4fVaYvkuv19wKvC_Mc6nhXaA1sBIP0&m=3DvfwpVp6=
-e1KXtRA0ctwHYJ7cDmPsLi2C1L9pox7uexsY&s=3Dq5OI-lfefNC2CHKmyUkokgiyiPo_Uj7MRu=
-52hG3MKzM&e
->   10. https://urldefense.proofpoint.com/v2/url?u=3Dhttps-3A__www.redhat.c=
-om_
->   11. mailto:dm-devel@redhat.com
->   12. https://urldefense.proofpoint.com/v2/url?u=3Dhttps-3A__www.redhat.c=
-om_
+--===============1002487171160083337==--
