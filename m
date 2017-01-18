@@ -1,57 +1,72 @@
-From: Binoy Jayan <binoy.jayan@linaro.org>
-Subject: Re: [RFC PATCH 0/6] Add bulk skcipher requests to crypto API and dm-crypt
-Date: Wed, 18 Jan 2017 22:39:45 +0530
-Message-ID: <CAHv-k_-gcj8t8xw_iCrbq-Tt0zQP+O0s+EDGm5OJQVWFuX37cw@mail.gmail.com>
-References: <cover.1484215956.git.omosnacek@gmail.com> <20170113104128.GA23497@gondor.apana.org.au>
- <CAAUqJDtqN-ugcaz4VhuW0fzLbmKt4db8ggrRmaAq_zFvO+9Lvw@mail.gmail.com>
+From: Ram Pai <linuxram@us.ibm.com>
+Subject: [RFC PATCH v2] DM: dm-inplace-compress: inplace
+	compressed DM target
+Date: Wed, 18 Jan 2017 10:31:48 -0800
+Message-ID: <1484764309-14383-1-git-send-email-linuxram@us.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <CAAUqJDtqN-ugcaz4VhuW0fzLbmKt4db8ggrRmaAq_zFvO+9Lvw@mail.gmail.com>
-Sender: linux-crypto-owner@vger.kernel.org
-To: =?UTF-8?B?T25kcmVqIE1vc27DocSNZWs=?= <omosnacek@gmail.com>, Arnd Bergmann <arnd@arndb.de>, Mark Brown <broonie@kernel.org>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>, linux-crypto@vger.kernel.org, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Milan Broz <gmazyland@gmail.com>, Mikulas Patocka <mpatocka@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Milan,
+This  patch provides a generic device-mapper inplace compression
+device.  Originally written by Shaohua Li.
+https://www.redhat.com/archives/dm-devel/2013-December/msg00143.html
 
-On 13 January 2017 at 17:31, Ondrej Mosn=C3=A1=C4=8Dek <omosnacek@gmail.com=
-> wrote:
-> 2017-01-13 11:41 GMT+01:00 Herbert Xu <herbert@gondor.apana.org.au>:
->> On Thu, Jan 12, 2017 at 01:59:52PM +0100, Ondrej Mosnacek wrote:
->>> the goal of this patchset is to allow those skcipher API users that nee=
-d to
->>> process batches of small messages (especially dm-crypt) to do so effici=
-ently.
->>
->> Please explain why this can't be done with the existing framework
->> using IV generators similar to the ones used for IPsec.
->
-> As I already mentioned in another thread, there are basically two reasons=
-:
->
-> 1) Milan would like to add authenticated encryption support to
-> dm-crypt (see [1]) and as part of this change, a new random IV mode
-> would be introduced. This mode generates a random IV for each sector
-> write, includes it in the authenticated data and stores it in the
-> sector's metadata (in a separate part of the disk). In this case
-> dm-crypt will need to have control over the IV generation (or at least
-> be able to somehow retrieve it after the crypto operation... but
-> passing RNG responsibility to drivers doesn't seem to be a good idea
-> anyway).
->
-> 2) With this API, drivers wouldn't have to provide implementations for
-> specific IV generation modes, and just implement bulk requests for the
-> common modes/algorithms (XTS, CBC, ...) while still getting
-> performance benefit.
+I have optimized and hardened the code.
 
-I just sent out v3 for the dm-crypt changes I was working on. I
-came across your patches for authenticated encryption support.
-Although I haven't looked at it entirely, I was wondering how it could
-be put together including the points Ondrej was mentioning. Will look at
-it more. Please keep me in cc when you send out the next revision if
-that is possible.
+Testing:
+-------
+This compression block device  is  tested in the following scenarios
+a) backing a ext4 filesystem 
+b) backing swap
+Its tested on a PPC64 system only.
+More    testing  is  needed on different architectures.
 
-Thanks,
-Binoy
+TODO:
+-----
+For testing, the code was modified to use GFP_ATOMIC allocations when   device
+is   used as swap. A more dynamic mechanism is needed to switch allocation
+strategy based on usage. Probably a sysfs interface?
+
+Version v1:
+	Comments from Alasdair have been incorporated.
+	https://www.redhat.com/archives/dm-devel/2013-December/msg00144.html
+
+Version v2:
+	All patches are merged into a single patch.
+	Major code re-arrangement.
+	Data and metablocks allocated based on the length of the device
+	map rather than the size of the backing device.
+        Size   of   each entry   in  the bitmap array is explicitly set
+	 to 32bits.
+	Attempt  to  reuse  the  provided  bio  buffer  space   instead  of
+	 allocating a new one.
+
+Your comments to improve the code is very much appreciated.
+
+Ram Pai (1):
+  From: Shaohua Li <shli@kernel.org>
+
+ .../device-mapper/dm-inplace-compress.txt          |  139 ++
+ drivers/md/Kconfig                                 |    6 +
+ drivers/md/Makefile                                |    2 +
+ drivers/md/dm-inplace-compress.c                   | 2104 ++++++++++++++++++++
+ drivers/md/dm-inplace-compress.h                   |  185 ++
+ 5 files changed, 2436 insertions(+)
+ create mode 100644 Documentation/device-mapper/dm-inplace-compress.txt
+ create mode 100644 drivers/md/dm-inplace-compress.c
+ create mode 100644 drivers/md/dm-inplace-compress.h
+
+-- 
+1.8.3.1
