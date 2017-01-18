@@ -1,70 +1,57 @@
-From: Jeff Moyer <jmoyer@redhat.com>
-Subject: Re: [patch] block: add blktrace C events for bio-based
-	drivers
-Date: Wed, 18 Jan 2017 11:01:46 -0500
-Message-ID: <x49ziiol5lh.fsf@segfault.boston.devel.redhat.com>
-References: <x49ziips61y.fsf@segfault.boston.devel.redhat.com>
-	<f3044f42-3134-c577-068f-bd2750528b32@kernel.dk>
+From: Binoy Jayan <binoy.jayan@linaro.org>
+Subject: Re: [RFC PATCH 0/6] Add bulk skcipher requests to crypto API and dm-crypt
+Date: Wed, 18 Jan 2017 22:39:45 +0530
+Message-ID: <CAHv-k_-gcj8t8xw_iCrbq-Tt0zQP+O0s+EDGm5OJQVWFuX37cw@mail.gmail.com>
+References: <cover.1484215956.git.omosnacek@gmail.com> <20170113104128.GA23497@gondor.apana.org.au>
+ <CAAUqJDtqN-ugcaz4VhuW0fzLbmKt4db8ggrRmaAq_zFvO+9Lvw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <f3044f42-3134-c577-068f-bd2750528b32@kernel.dk> (Jens Axboe's
-	message of "Tue, 17 Jan 2017 14:07:32 -0800")
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Jens Axboe <axboe@kernel.dk>
-Cc: linux-raid@vger.kernel.org, snitzer@redhat.com, linux-kernel@vger.kernel.org, linux-block@vger.kernel.org, dm-devel@redhat.com, shli@kernel.org, hch@lst.de, agk@redhat.com
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <CAAUqJDtqN-ugcaz4VhuW0fzLbmKt4db8ggrRmaAq_zFvO+9Lvw@mail.gmail.com>
+Sender: linux-crypto-owner@vger.kernel.org
+To: =?UTF-8?B?T25kcmVqIE1vc27DocSNZWs=?= <omosnacek@gmail.com>, Arnd Bergmann <arnd@arndb.de>, Mark Brown <broonie@kernel.org>
+Cc: Herbert Xu <herbert@gondor.apana.org.au>, linux-crypto@vger.kernel.org, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Milan Broz <gmazyland@gmail.com>, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-Hi, Jens,
+Hi Milan,
 
-Jens Axboe <axboe@kernel.dk> writes:
-
-> I like the change, hate the naming. I'd prefer one of two things:
+On 13 January 2017 at 17:31, Ondrej Mosn=C3=A1=C4=8Dek <omosnacek@gmail.com=
+> wrote:
+> 2017-01-13 11:41 GMT+01:00 Herbert Xu <herbert@gondor.apana.org.au>:
+>> On Thu, Jan 12, 2017 at 01:59:52PM +0100, Ondrej Mosnacek wrote:
+>>> the goal of this patchset is to allow those skcipher API users that nee=
+d to
+>>> process batches of small messages (especially dm-crypt) to do so effici=
+ently.
+>>
+>> Please explain why this can't be done with the existing framework
+>> using IV generators similar to the ones used for IPsec.
 >
-> - Add bio_endio_complete() instead. That name sucks too, the
->   important part is flipping the __name() to have a trace
->   version instead.
+> As I already mentioned in another thread, there are basically two reasons=
+:
+>
+> 1) Milan would like to add authenticated encryption support to
+> dm-crypt (see [1]) and as part of this change, a new random IV mode
+> would be introduced. This mode generates a random IV for each sector
+> write, includes it in the authenticated data and stores it in the
+> sector's metadata (in a separate part of the disk). In this case
+> dm-crypt will need to have control over the IV generation (or at least
+> be able to somehow retrieve it after the crypto operation... but
+> passing RNG responsibility to drivers doesn't seem to be a good idea
+> anyway).
+>
+> 2) With this API, drivers wouldn't have to provide implementations for
+> specific IV generation modes, and just implement bulk requests for the
+> common modes/algorithms (XTS, CBC, ...) while still getting
+> performance benefit.
 
-ITYM a notrace version.  By default, we want tracing for bio_endio.  The
-only callers that need the inverse of that are in the request-based
-path, and there are only 2 of them.
+I just sent out v3 for the dm-crypt changes I was working on. I
+came across your patches for authenticated encryption support.
+Although I haven't looked at it entirely, I was wondering how it could
+be put together including the points Ondrej was mentioning. Will look at
+it more. Please keep me in cc when you send out the next revision if
+that is possible.
 
-> - Mark the bio as trace completed, and keep the naming. Since
->   it's only off the completion path, that can be just marking
->   the bi_flags non-atomically.
-
-One issue with this is in generic_make_request_checks, where we can call
-bio_endio without having called trace_block_bio_queue (so you could get
-a C event with no corresponding Q).  To address that, we could make the
-flag indicate that trace_block_bio_queue was performed, and clear it in
-bio_complete, like so:
-
-	if (test_and_clear_bit(BIO_QUEUE_TRACED, &bio->bi_flags))
-		trace_block_bio_complete(...);
-
-That would solve the problem of duplicate completions, but requires
-setting the flag in the submission path and clearing it in the
-completion path.  I think the former can be done with just a
-bio_set_flag (i.e. non-atomic), right?  Of course, where to stick that
-bio_set_flag call is another bike-shedding discussion waiting to happen
-(i.e. does it go in the tracepoint itself?).
-
-Alternatively, we could set the trace_completed flag in the paths where
-we end I/O without having done the trace_block_bio_queue, but that seems
-way uglier to me.
-
-Can you think of any other options?  If we're choosing from the above,
-my preference is for adding the bio_endio_notrace(), since it's so much
-simpler.
-
-Cheers,
-Jeff
+Thanks,
+Binoy
