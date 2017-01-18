@@ -1,136 +1,68 @@
-From: Hannes Reinecke <hare@suse.de>
+From: Jens Axboe <axboe@kernel.dk>
 Subject: Re: kernel oops with blk-mq-sched latest
-Date: Wed, 18 Jan 2017 12:48:36 +0100
-Message-ID: <a27c56a6-fbe8-90a6-ebbe-dcfbce67c4ba@suse.de>
+Date: Wed, 18 Jan 2017 06:40:06 -0800
+Message-ID: <89485b8b-b0f9-3a6c-7ccb-deb161efb7fc@kernel.dk>
 References: <b6ce1c64-3577-8f86-b6a4-44a3a4ad2cbc@suse.de>
-	<55b21574-baf3-25d9-a920-299fa2d04d72@kernel.dk>
-	<10ffc7ea-564f-8eb0-ee00-5c1277c7efc3@kernel.dk>
+ <55b21574-baf3-25d9-a920-299fa2d04d72@kernel.dk>
+ <10ffc7ea-564f-8eb0-ee00-5c1277c7efc3@kernel.dk>
+ <a27c56a6-fbe8-90a6-ebbe-dcfbce67c4ba@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <10ffc7ea-564f-8eb0-ee00-5c1277c7efc3@kernel.dk>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Jens Axboe <axboe@kernel.dk>
-Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, Christoph Hellwig <hch@lst.de>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <a27c56a6-fbe8-90a6-ebbe-dcfbce67c4ba@suse.de>
+Sender: linux-block-owner@vger.kernel.org
+To: Hannes Reinecke <hare@suse.de>
+Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, Christoph Hellwig <hch@lst.de>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gMDEvMTcvMjAxNyAwMjowMCBQTSwgSmVucyBBeGJvZSB3cm90ZToKPiBPbiAwMS8xNy8yMDE3
-IDA0OjQ3IEFNLCBKZW5zIEF4Ym9lIHdyb3RlOgo+PiBPbiAwMS8xNy8yMDE3IDEyOjU3IEFNLCBI
-YW5uZXMgUmVpbmVja2Ugd3JvdGU6Cj4+PiBIaSBKZW5zLAo+Pj4KPj4+IEkgZ2F2ZSB5b3VyIGxh
-dGVzdCBwYXRjaHNldCBmcm9tCj4+Pgo+Pj4gZ2l0Lmtlcm5lbC5kay9saW51eC1ibG9jayBibGst
-bXEtc2NoZWQKPj4+Cj4+PiBJIHNlZSBhIGtlcm5lbCBvb3BzIHdoZW4gc2h1dHRpbmcgZG93bjoK
-Pj4+Cj4+PiBbIDIxMzIuNzA4OTI5XSBzeXN0ZW1kLXNodXRkb3duWzFdOiBEZXRhY2hpbmcgRE0g
-ZGV2aWNlcy4KPj4+IFsgMjEzMi45NjUxMDddIEJVRzogdW5hYmxlIHRvIGhhbmRsZSBrZXJuZWwg
-TlVMTCBwb2ludGVyIGRlcmVmZXJlbmNlIGF0Cj4+PiAwMDAwMDAwMAo+Pj4gMDAwMDAwMDEKPj4+
-IFsgMjEzMy4wMzcxODJdIElQOiBkZF9tZXJnZWRfcmVxdWVzdHMrMHg2LzB4NjAKPj4+IFsgMjEz
-My4wNzc4MTZdIFBHRCAwCj4+PiBbIDIxMzMuMDc3ODE4XQo+Pj4gWyAyMTMzLjExMzA4N10gT29w
-czogMDAwMCBbIzFdIFNNUAo+Pj4gWyBsaXN0IG9mIG1vZHVsZXMgcmVtb3ZlZCBdCj4+PiBbIDIx
-MzMuOTI1MjY1XSBDUFU6IDIwIFBJRDogMSBDb21tOiBzeXN0ZW1kLXNodXRkb3cgTm90IHRhaW50
-ZWQKPj4+IDQuMTAuMC1yYzQrICM1NDMKPj4+IFsgMjEzMy45OTAwMzRdIEhhcmR3YXJlIG5hbWU6
-IEhQIFByb0xpYW50IERMMzgwcCBHZW44LCBCSU9TIFA3MCAwOS8xOC8yMDEzCj4+PiBbIDIxMzQu
-MDUwNTIyXSB0YXNrOiBmZmZmODgwNDJkNjE0MDQwIHRhc2suc3RhY2s6IGZmZmZjOTAwMDMxNTAw
-MDAKPj4+IFsgMjEzNC4xMDY5MTVdIFJJUDogMDAxMDpkZF9tZXJnZWRfcmVxdWVzdHMrMHg2LzB4
-NjAKPj4+IFsgMjEzNC4xNTA1OTNdIFJTUDogMDAxODpmZmZmYzkwMDAzMTUzYjE4IEVGTEFHUzog
-MDAwMTAwMDIKPj4+IFsgMjEzNC4xOTg3NDBdIFJBWDogZmZmZmZmZmY4MWNjNmRlMCBSQlg6IGZm
-ZmY4ODA0Mjk2ZDUwNDAgUkNYOgo+Pj4gMDAwMDAwMDAwMDAwMDAwMQo+Pj4gWyAyMTM0LjI2Mjcw
-OF0gUkRYOiAwMDAwMDAwMDAwMDAwMDAxIFJTSTogMDAwMDAwMDAwMDAwMDAwMSBSREk6Cj4+PiBm
-ZmZmODgwNDI5NmQ1MDQwCj4+PiBbIDIxMzQuMzI2OTg3XSBSQlA6IGZmZmZjOTAwMDMxNTNiMzAg
-UjA4OiAwMDAwMDAwMDAwMDAwMDAwIFIwOToKPj4+IDAwMDAwMDAwMDAwMDAwMDAKPj4+IFsgMjEz
-NC4zOTEwNTRdIFIxMDogMDAwMDAwMDAwMDAwMDAwMCBSMTE6IDAwMDFmODE4MDAwMWY4MTUgUjEy
-Ogo+Pj4gMDAwMDAwMDAwMDAwMDAwMAo+Pj4gWyAyMTM0LjQ1NjA5NV0gUjEzOiBmZmZmODgwNDI5
-NmQ1MDQwIFIxNDogZmZmZjg4MDQwOTk4MDFmMCBSMTU6Cj4+PiAwMDAwMDAwMDAwMDAwMDA0Cj4+
-PiBbIDIxMzQuNTIxMTk2XSBGUzogIDAwMDA3ZmQ2NGQzYmY4NDAoMDAwMCkgR1M6ZmZmZjg4MDQy
-ZjkwMDAwMCgwMDAwKQo+Pj4ga25sR1M6MDAwMDAwMDAwMDAwMDAwMAo+Pj4gWyAyMTM0LjU5NTE3
-OF0gQ1M6ICAwMDEwIERTOiAwMDAwIEVTOiAwMDAwIENSMDogMDAwMDAwMDA4MDA1MDAzMwo+Pj4g
-WyAyMTM0LjY0ODYzN10gQ1IyOiAwMDAwMDAwMDAwMDAwMDAxIENSMzogMDAwMDAwMDgxYjg5MjAw
-MCBDUjQ6Cj4+PiAwMDAwMDAwMDAwMDQwNmUwCj4+PiBbIDIxMzQuNzEzMzQ5XSBDYWxsIFRyYWNl
-Ogo+Pj4gWyAyMTM0LjczNzE2OF0gID8gZWx2X2RyYWluX2VsZXZhdG9yKzB4MjkvMHhhMAo+Pj4g
-WyAyMTM0Ljc3NTgyMV0gIF9fYmxrX2RyYWluX3F1ZXVlKzB4NTIvMHgxYTAKPj4+IFsgMjEzNC44
-MTI0NzNdICBibGtfcXVldWVfYnlwYXNzX3N0YXJ0KzB4NmUvMHhhMAo+Pj4gWyAyMTM0Ljg1NDAw
-OV0gIGJsa2NnX2RlYWN0aXZhdGVfcG9saWN5KzB4MzAvMHhmMAo+Pj4gWyAyMTM0Ljg5NDk5M10g
-IGJsa190aHJvdGxfZXhpdCsweDM0LzB4NTAKPj4+IFsgMjEzNC45Mjk0NTBdICBibGtjZ19leGl0
-X3F1ZXVlKzB4MzUvMHg0MAo+Pj4gWyAyMTM0Ljk2NTA4OV0gIGJsa19yZWxlYXNlX3F1ZXVlKzB4
-MzMvMHhlMAo+Pj4gWyAyMTM1LjAwMTM2NF0gIGtvYmplY3RfY2xlYW51cCsweDYzLzB4MTcwCj4+
-PiBbIDIxMzUuMDM3NDEyXSAga29iamVjdF9wdXQrMHgyNS8weDUwCj4+PiBbIDIxMzUuMDY4NjIy
-XSAgYmxrX2NsZWFudXBfcXVldWUrMHgxOTgvMHgyNjAKPj4+IFsgMjEzNS4xMDc3ODBdICBjbGVh
-bnVwX21hcHBlZF9kZXZpY2UrMHhiNS8weGYwIFtkbV9tb2RdCj4+PiBbIDIxMzUuMTU0NzQxXSAg
-X19kbV9kZXN0cm95KzB4MWE1LzB4MjkwIFtkbV9tb2RdCj4+PiBbIDIxMzUuMTk1MDA5XSAgZG1f
-ZGVzdHJveSsweDEzLzB4MjAgW2RtX21vZF0KPj4+IFsgMjEzNS4yMzIxNDldICBkZXZfcmVtb3Zl
-KzB4ZGUvMHgxMjAgW2RtX21vZF0KPj4+IFsgMjEzNS4yNzAxODRdICA/IGRldl9zdXNwZW5kKzB4
-MjEwLzB4MjEwIFtkbV9tb2RdCj4+PiBbIDIxMzUuMzExNDc4XSAgY3RsX2lvY3RsKzB4MjBiLzB4
-NTEwIFtkbV9tb2RdCj4+PiBbIDIxMzUuMzQ5NjgwXSAgPyB0ZXJtaW5hdGVfd2FsaysweGMzLzB4
-MTQwCj4+PiBbIDIxMzUuMzg1NDQyXSAgPyBrbWVtX2NhY2hlX2ZyZWUrMHgxMC8weDI2MAo+Pj4g
-WyAyMTM1LjQyMjMxNV0gIGRtX2N0bF9pb2N0bCsweDEzLzB4MjAgW2RtX21vZF0KPj4+Cj4+PiBL
-bm93biBpc3N1ZT8KPj4KPj4gVHJ5IHdpdGggdGhpcywgbG9va3MgbGlrZSB3ZSdyZSBjYWxsaW5n
-IHRoZSBvbGQgYnlwYXNzIHBhdGggZm9yIHRoZSBuZXcKPj4gcGF0aCwgd2hpY2ggaXMgbm93IHRy
-aWdnZXJpbmcgYmVjYXVzZSBxLT5lbGV2YXRvciBpcyB0cnVlLgo+IAo+IFNob3VsZCBoYXZlIGdy
-ZXBwZWQsIHRoZXJlJ3Mgb25lIG1vcmUgcGF0aCB0aGF0IHVzZXMgdGhlIG9sZCBieXBhc3MKPiBw
-YXRoIGZvciBxLT5tcV9vcHMsIHBvdGVudGlhbGx5LiBUaGlzIG9uZSBoYW5kbGVzIHRoYXQgb25l
-LCB0b28uCj4gCj4gCj4gZGlmZiAtLWdpdCBhL2Jsb2NrL2Jsay1jZ3JvdXAuYyBiL2Jsb2NrL2Js
-ay1jZ3JvdXAuYwo+IGluZGV4IDhiYTBhZjc4MGU4OC4uMjYzMGY2NGJlZDE5IDEwMDY0NAo+IC0t
-LSBhL2Jsb2NrL2Jsay1jZ3JvdXAuYwo+ICsrKyBiL2Jsb2NrL2Jsay1jZ3JvdXAuYwo+IEBAIC0x
-MjIzLDcgKzEyMjMsMTEgQEAgaW50IGJsa2NnX2FjdGl2YXRlX3BvbGljeShzdHJ1Y3QgcmVxdWVz
-dF9xdWV1ZSAqcSwKPiAgCWlmIChibGtjZ19wb2xpY3lfZW5hYmxlZChxLCBwb2wpKQo+ICAJCXJl
-dHVybiAwOwo+ICAKPiAtCWJsa19xdWV1ZV9ieXBhc3Nfc3RhcnQocSk7Cj4gKwlpZiAocS0+bXFf
-b3BzKSB7Cj4gKwkJYmxrX21xX2ZyZWV6ZV9xdWV1ZShxKTsKPiArCQlibGtfbXFfcXVpZXNjZV9x
-dWV1ZShxKTsKPiArCX0gZWxzZQo+ICsJCWJsa19xdWV1ZV9ieXBhc3Nfc3RhcnQocSk7Cj4gIHBk
-X3ByZWFsbG9jOgo+ICAJaWYgKCFwZF9wcmVhbGxvYykgewo+ICAJCXBkX3ByZWFsbG9jID0gcG9s
-LT5wZF9hbGxvY19mbihHRlBfS0VSTkVMLCBxLT5ub2RlKTsKPiBAQCAtMTI2MSw3ICsxMjY1LDEw
-IEBAIGludCBibGtjZ19hY3RpdmF0ZV9wb2xpY3koc3RydWN0IHJlcXVlc3RfcXVldWUgKnEsCj4g
-IAo+ICAJc3Bpbl91bmxvY2tfaXJxKHEtPnF1ZXVlX2xvY2spOwo+ICBvdXRfYnlwYXNzX2VuZDoK
-PiAtCWJsa19xdWV1ZV9ieXBhc3NfZW5kKHEpOwo+ICsJaWYgKHEtPm1xX29wcykKPiArCQlibGtf
-bXFfdW5mcmVlemVfcXVldWUocSk7Cj4gKwllbHNlCj4gKwkJYmxrX3F1ZXVlX2J5cGFzc19lbmQo
-cSk7Cj4gIAlpZiAocGRfcHJlYWxsb2MpCj4gIAkJcG9sLT5wZF9mcmVlX2ZuKHBkX3ByZWFsbG9j
-KTsKPiAgCXJldHVybiByZXQ7Cj4gQEAgLTEyODQsNyArMTI5MSwxMiBAQCB2b2lkIGJsa2NnX2Rl
-YWN0aXZhdGVfcG9saWN5KHN0cnVjdCByZXF1ZXN0X3F1ZXVlICpxLAo+ICAJaWYgKCFibGtjZ19w
-b2xpY3lfZW5hYmxlZChxLCBwb2wpKQo+ICAJCXJldHVybjsKPiAgCj4gLQlibGtfcXVldWVfYnlw
-YXNzX3N0YXJ0KHEpOwo+ICsJaWYgKHEtPm1xX29wcykgewo+ICsJCWJsa19tcV9mcmVlemVfcXVl
-dWUocSk7Cj4gKwkJYmxrX21xX3F1aWVzY2VfcXVldWUocSk7Cj4gKwl9IGVsc2UKPiArCQlibGtf
-cXVldWVfYnlwYXNzX3N0YXJ0KHEpOwo+ICsKPiAgCXNwaW5fbG9ja19pcnEocS0+cXVldWVfbG9j
-ayk7Cj4gIAo+ICAJX19jbGVhcl9iaXQocG9sLT5wbGlkLCBxLT5ibGtjZ19wb2xzKTsKPiBAQCAt
-MTMwNCw3ICsxMzE2LDExIEBAIHZvaWQgYmxrY2dfZGVhY3RpdmF0ZV9wb2xpY3koc3RydWN0IHJl
-cXVlc3RfcXVldWUgKnEsCj4gIAl9Cj4gIAo+ICAJc3Bpbl91bmxvY2tfaXJxKHEtPnF1ZXVlX2xv
-Y2spOwo+IC0JYmxrX3F1ZXVlX2J5cGFzc19lbmQocSk7Cj4gKwo+ICsJaWYgKHEtPm1xX29wcykK
-PiArCQlibGtfbXFfdW5mcmVlemVfcXVldWUocSk7Cj4gKwllbHNlCj4gKwkJYmxrX3F1ZXVlX2J5
-cGFzc19lbmQocSk7Cj4gIH0KPiAgRVhQT1JUX1NZTUJPTF9HUEwoYmxrY2dfZGVhY3RpdmF0ZV9w
-b2xpY3kpOwo+ICAKPiBkaWZmIC0tZ2l0IGEvYmxvY2svZWxldmF0b3IuYyBiL2Jsb2NrL2VsZXZh
-dG9yLmMKPiBpbmRleCBkMTRjYjg3ZTY1NjQuLjQ2NDM3Mjg0MDc3NCAxMDA2NDQKPiAtLS0gYS9i
-bG9jay9lbGV2YXRvci5jCj4gKysrIGIvYmxvY2svZWxldmF0b3IuYwo+IEBAIC02MTMsNiArNjEz
-LDkgQEAgdm9pZCBlbHZfZHJhaW5fZWxldmF0b3Ioc3RydWN0IHJlcXVlc3RfcXVldWUgKnEpCj4g
-IHsKPiAgCXN0YXRpYyBpbnQgcHJpbnRlZDsKPiAgCj4gKwlpZiAoV0FSTl9PTl9PTkNFKHEtPm1x
-X29wcykpCj4gKwkJcmV0dXJuOwo+ICsKPiAgCWxvY2tkZXBfYXNzZXJ0X2hlbGQocS0+cXVldWVf
-bG9jayk7Cj4gIAo+ICAJd2hpbGUgKHEtPmVsZXZhdG9yLT50eXBlLT5vcHMuc3EuZWxldmF0b3Jf
-ZGlzcGF0Y2hfZm4ocSwgMSkpCj4gCk5lYXJseSB0aGVyZS4KWW91J3JlIG1pc3NpbmcgYSAnYmxr
-X21xX3N0YXJ0X2h3X3F1ZXVlcyhxKScgYWZ0ZXIKYmxrX21xX3VuZnJlZXplX3F1ZXVlKCk7IHdp
-dGhvdXQgaXQgdGhlIHF1ZXVlIHdpbGwgc3RhbGwgYWZ0ZXIgc3dpdGNoaW5nCnRoZSBzY2hlZHVs
-ZXIuCgpBbHNvIHdoYXQncyBxdWl0ZSBzdXNwaWNpb3VzIGlzIHRoaXM6CgpzdHJ1Y3QgYmxrY2df
-Z3EgKmJsa2dfbG9va3VwX2NyZWF0ZShzdHJ1Y3QgYmxrY2cgKmJsa2NnLAoJCQkJICAgIHN0cnVj
-dCByZXF1ZXN0X3F1ZXVlICpxKQp7CglzdHJ1Y3QgYmxrY2dfZ3EgKmJsa2c7CgoJV0FSTl9PTl9P
-TkNFKCFyY3VfcmVhZF9sb2NrX2hlbGQoKSk7Cglsb2NrZGVwX2Fzc2VydF9oZWxkKHEtPnF1ZXVl
-X2xvY2spOwoKCS8qCgkgKiBUaGlzIGNvdWxkIGJlIHRoZSBmaXJzdCBlbnRyeSBwb2ludCBvZiBi
-bGtjZyBpbXBsZW1lbnRhdGlvbiBhbmQKCSAqIHdlIHNob3VsZG4ndCBhbGxvdyBhbnl0aGluZyB0
-byBnbyB0aHJvdWdoIGZvciBhIGJ5cGFzc2luZyBxdWV1ZS4KCSAqLwoJaWYgKHVubGlrZWx5KGJs
-a19xdWV1ZV9ieXBhc3MocSkpKQoJCXJldHVybiBFUlJfUFRSKGJsa19xdWV1ZV9keWluZyhxKSA/
-IC1FTk9ERVYgOiAtRUJVU1kpOwoKd2hpY2ggbm93IHdvbid0IHdvcmsgYXMgdGhlIHJlc3BlY3Rp
-dmUgZmxhZ3MgYXJlbid0IHNldCBhbnltb3JlLgpOb3Qgc3VyZSBpZiB0aGF0J3MgYSBwcm9ibGVt
-LCB0aG91Z2guCkJ1dCB5b3UgbWlnaHQgd2FudCB0byBsb29rIGF0IHRoYXQsIHRvby4KCk5ldmVy
-dGhlbGVzcywgd2l0aCB0aGUgbWVudGlvbmVkIG1vZGlmaWNhdGlvbnMgdG8geW91ciBwYXRjaCB0
-aGUgY3Jhc2hlcwpkb24ndCBvY2N1ciBhbnltb3JlLgoKU2FkIG5ld3MgaXMgdGhhdCBpdCBkb2Vz
-bid0IGhlbHAgX3RoYXRfIG11Y2ggb24gc3Bpbm5pbmcgcnVzdCBtcHQzc2FzOwp0aGVyZSBJIHN0
-aWxsIHNlZSBhIH41MCUgcGVyZm9ybWFuY2UgcGVuYWx0eSBvbiByZWFkcy4KV3JpdGUncyBzbGln
-aHRseSBiZXR0ZXIgdGhhbiBzcSBwZXJmb3JtYW5jZSwgdGhvdWdoLgoKQ2hlZXJzLAoKSGFubmVz
-Ci0tIApEci4gSGFubmVzIFJlaW5lY2tlCQkgICBUZWFtbGVhZCBTdG9yYWdlICYgTmV0d29ya2lu
-ZwpoYXJlQHN1c2UuZGUJCQkgICAgICAgICAgICAgICArNDkgOTExIDc0MDUzIDY4OApTVVNFIExJ
-TlVYIEdtYkgsIE1heGZlbGRzdHIuIDUsIDkwNDA5IE7DvHJuYmVyZwpHRjogRi4gSW1lbmTDtnJm
-ZmVyLCBKLiBTbWl0aGFyZCwgSi4gR3VpbGQsIEQuIFVwbWFueXUsIEcuIE5vcnRvbgpIUkIgMjEy
-ODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRo
-YXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+On 01/18/2017 03:48 AM, Hannes Reinecke wrote:
+> Nearly there.
+> You're missing a 'blk_mq_start_hw_queues(q)' after
+> blk_mq_unfreeze_queue(); without it the queue will stall after switching
+> the scheduler.
+
+Yes indeed, forgot that. Needed after the quiesce.
+
+> Also what's quite suspicious is this:
+> 
+> struct blkcg_gq *blkg_lookup_create(struct blkcg *blkcg,
+> 				    struct request_queue *q)
+> {
+> 	struct blkcg_gq *blkg;
+> 
+> 	WARN_ON_ONCE(!rcu_read_lock_held());
+> 	lockdep_assert_held(q->queue_lock);
+> 
+> 	/*
+> 	 * This could be the first entry point of blkcg implementation and
+> 	 * we shouldn't allow anything to go through for a bypassing queue.
+> 	 */
+> 	if (unlikely(blk_queue_bypass(q)))
+> 		return ERR_PTR(blk_queue_dying(q) ? -ENODEV : -EBUSY);
+> 
+> which now won't work as the respective flags aren't set anymore.
+> Not sure if that's a problem, though.
+> But you might want to look at that, too.
+
+dying is still used on blk-mq, but yes, the bypass check should now be
+frozen for blk-mq. Not really directly related to the above change,
+but it should be fixed up.
+
+> Nevertheless, with the mentioned modifications to your patch the crashes
+> don't occur anymore.
+
+Great
+
+> Sad news is that it doesn't help _that_ much on spinning rust mpt3sas;
+> there I still see a ~50% performance penalty on reads.
+> Write's slightly better than sq performance, though.
+
+What is the test case? Full details please, from hardware to what you
+are running. As I've mentioned before, I don't necessarily think your
+performance issues are related to scheduling. Would be nice to get
+to the bottom of it, though. And for that, I need more details.
+
+-- 
+Jens Axboe
+
