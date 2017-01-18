@@ -1,83 +1,2599 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [dm-devel] split scsi passthrough fields out of struct request V2
-Date: Tue, 31 Jan 2017 13:58:35 -0800
-Message-ID: <2085a3e6-25fc-d104-35cb-38995d154fd2@kernel.dk>
-References: <1485365126-23210-1-git-send-email-hch@lst.de>
- <4054e944-b28d-1cd6-574f-6cd90e28c301@fb.com>
- <1485464486.2540.12.camel@sandisk.com>
- <6995c991-65a4-8dca-c36e-fb2eff277ca9@fb.com>
- <1485467235.2540.14.camel@sandisk.com>
- <e1d5f4e6-c63f-545d-710f-d4d10fa8d2e0@fb.com>
- <1485472465.2540.19.camel@sandisk.com>
- <e222c541-3239-104d-e0b0-40d19b012b66@fb.com>
- <1485474426.2540.25.camel@sandisk.com>
- <b98195e7-6e04-5a59-8b83-ce2e1c5c4e1a@fb.com>
- <1485477510.2540.27.camel@sandisk.com>
- <2d971693-b79d-c1b9-fb2a-f5dd04128c68@fb.com>
- <1485479738.2540.30.camel@sandisk.com>
- <ecca734c-7a9c-f060-9335-c2de089849c2@fb.com>
- <37ab009a-bc2d-d2ae-a875-269ab563a430@fb.com>
- <9cbf0ce5-ed79-0252-fd2d-34bebaafffa3@fb.com>
- <1485535925.4267.1.camel@sandisk.com>
- <2c696943-2a44-4f36-f0f8-0bebceb95a4a@fb.com>
- <1485825148.2669.18.camel@sandisk.com>
- <4D024E85-CDE7-4FB0-B8CA-F2B8C86CCFCB@kernel.dk>
- <1485898487.3113.7.camel@sandisk.com> <1485899692.3113.9.camel@sandisk.com>
+From: Ram Pai <linuxram@us.ibm.com>
+Subject: [RFC PATCH v2 1/1] DM: inplace compressed DM target
+Date: Wed, 18 Jan 2017 10:31:49 -0800
+Message-ID: <1484764309-14383-2-git-send-email-linuxram@us.ibm.com>
+References: <1484764309-14383-1-git-send-email-linuxram@us.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1485899692.3113.9.camel@sandisk.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Bart Van Assche <Bart.VanAssche@sandisk.com>
-Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>, "snitzer@redhat.com" <snitzer@redhat.com>, "hch@lst.de" <hch@lst.de>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "axboe@fb.com" <axboe@fb.com>, "j-nomura@ce.jp.nec.com" <j-nomura@ce.jp.nec.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1484764309-14383-1-git-send-email-linuxram@us.ibm.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 01/31/2017 01:55 PM, Bart Van Assche wrote:
-> On Tue, 2017-01-31 at 13:34 -0800, Bart Van Assche wrote:
->> On Mon, 2017-01-30 at 17:38 -0800, Jens Axboe wrote:
->>> That's a known bug in mainline. Pull it into 4.10-rc6,
->>> or use my for-next where everything is already merged. 
->>
->> Hello Jens,
->>
->> With your for-next branch (commit c2e60b3a2602) I haven't hit any block
->> layer crashes so far. The only issue I encountered that is new is a
->> memory leak triggered by the SG-IO code. These memory leak reports
->> started to appear after I started testing the mq-deadline scheduler.
->> kmemleak reported the following call stack multiple times after my tests
->> had finished:
->>
->> unreferenced object 0xffff88041119e528 (size 192):
->>   comm "multipathd", pid 2353, jiffies 4295128020 (age 1332.440s)
->>   hex dump (first 32 bytes):
->>     00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
->>     00 00 00 00 00 00 00 00 12 01 00 00 00 00 00 00  ................
->>   backtrace:
->>     [<ffffffff8165e3b5>] kmemleak_alloc+0x45/0xa0
->>     [<ffffffff811cc23d>] __kmalloc+0x15d/0x2f0
->>     [<ffffffff81310e35>] bio_alloc_bioset+0x185/0x1f0
->>     [<ffffffff813117f4>] bio_map_user_iov+0x124/0x400
->>     [<ffffffff81320b7a>] blk_rq_map_user_iov+0x11a/0x210
->>     [<ffffffff81320cbd>] blk_rq_map_user+0x4d/0x60
->>     [<ffffffff81336694>] sg_io+0x3d4/0x410
->>     [<ffffffff813369d0>] scsi_cmd_ioctl+0x300/0x490
->>     [<ffffffff81336b9d>] scsi_cmd_blk_ioctl+0x3d/0x50
->>     [<ffffffff814b4360>] sd_ioctl+0x80/0x100
->>     [<ffffffff8132ddde>] blkdev_ioctl+0x51e/0x9f0
->>     [<ffffffff8122f388>] block_ioctl+0x38/0x40
->>     [<ffffffff8120097f>] do_vfs_ioctl+0x8f/0x700
->>     [<ffffffff8120102c>] SyS_ioctl+0x3c/0x70
->>     [<ffffffff8166c4aa>] entry_SYSCALL_64_fastpath+0x18/0xad
-> 
-> After I repeated my test the above findings were confirmed: no memory leaks
-> were reported by kmemleak after a test with I/O scheduler "none" and the
-> above call stack was reported 44 times by kmemleak after a test with I/O
-> scheduler "mq-deadline".
+This is a simple DM target supporting inplace compression. Its best
+suited for SSD. The underlying disk must support 512B sector size.
+The target only supports 4k sector size.
 
-Interesting, I'll check this. Doesn't make any sense why the scheduler
-would be implicated in that, given how we run completions now. But if
-it complains, then something must be up.
+Disk layout:
+|super|...meta...|..data...|
 
+Store unit is 4k (a block). Super is 1 block, which stores meta  and
+data size and compression algorithm. Meta is a bitmap. For each data
+ block, there are 5 bits meta.
+
+Data:
+
+Data of   a block is compressed. Compressed  data  is round up to 512B,
+which is the payload. In disk, payload is  stored at  the beginning of
+logical sector  of the block. Let's look  at an example.  Say we store
+data to block A, which  is in sector  B(A*8), its orginal  size is 4k,
+compressed size is  1500.    Compressed     data (CD)  will  use three
+sectors (512B). The three  sectors  are the  payload. Payload  will be
+stored at sector B.
+
+---------------------------------------------------
+... | CD1 | CD2 | CD3 |   |   |   |   |    | ...
+---------------------------------------------------
+    ^B    ^B+1  ^B+2                  ^B+7 ^B+8
+
+For this block, we will not use sector B+3 to B+7 (a hole). We use four
+meta  bits  to  present payload  size. The compressed size (1500) isn't
+stored in meta directly. Instead, we  store  it  at  the last 32bits of
+payload. In this  example, we store it at the  end  of  sector  B+2. If
+compressed size + sizeof(32bits)  crosses a   sector, payload size will
+increase one sector.  If payload  uses 8 sectors, we store uncompressed
+data directly.
+
+If IO size is bigger than one block, we can store the data as an extent.
+Data of the  whole extent will compressed and stored in the similar way
+like above.  The first  block of the extent is the head, all others are
+the tail.  If extent is 1 block,  the  block  is head. We have 1 bit of
+meta to present if a  block  is  head  or  tail. If 4 meta bits of head
+block can't  store  extent payload size, we will borrow tail block meta
+bits to  store  payload  size.   Max  allowd extent size is 128k, so we
+don't compress/decompress too big size data.
+
+Meta:
+Modifying   data   will modify meta too. Meta will be written(flush) to
+disk   depending   on   meta   write   policy. We support writeback and
+writethrough mode.  In  writeback mode, meta will be written to disk in
+an interval or a  FLUSH  request.  In  writethrough mode, data and meta
+data will be written to disk together.
+
+Advantages:
+
+1. Simple. Since  we  store  compressed  data  in-place,  we don't need
+   complicated disk data management.
+2. Efficient. For  each  4k, we only need 5 bits meta. 1T data will use
+less than 200M meta, so we  can  load  all meta into memory. And actual
+compression size is in payload. So   if  IO doesn't need RMW and we use
+writeback meta flush, we don't  need  extra IO for meta.
+
+Disadvantages:
+
+1. hole. Since we   store  compressed data in-place, there are a lot of
+   holes (in above  example,  B+3 - B+7) Hole can impact IO, because we
+   can't do IO merge.
+
+2. 1:1 size. Compression  doesn't  change disk  size. If disk is 1T, we
+   can only store 1T data even we do compression.
+
+But this is for SSD only. Generally SSD firmware has a FTL layer to map
+disk  sectors  to flash nand. High end SSD firmware has filesystem-like
+FTL.
+
+1. hole. Disk has a lot of holes, but SSD FTL   can   still  store data
+   contiguous in nand. Even if we can't do IO   merge in  OS layer, SSD
+   firmware can do it.
+
+2. 1:1 size. On one side, we write compressed data to SSD, which means
+   less  data is  written to SSD. This will be very helpful to improve
+   SSD garbage collection, and  so write speed and life cycle. So even
+   this is a problem, the target  is still helpful. On the other side,
+   advanced SSD FTL can easily do thin provision. For example, if nand
+   is   1T   and   we   let   SSD   report   it   as   2T,   and   use
+   the  SSD  as  compressed target. In such SSD, we don't have the 1:1
+   size issue.
+
+So even if   SSD   FTL   cannot   map   non-contiguous disk sectors to
+contiguous nand, the compression target can still function well.
+
+Signed-off-by: Shaohua Li <shli@fusionio.com>
+Signed-off-by: Ram Pai <ram.n.pai@gmail.com>
+---
+ .../device-mapper/dm-inplace-compress.txt          |  139 ++
+ drivers/md/Kconfig                                 |    6 +
+ drivers/md/Makefile                                |    2 +
+ drivers/md/dm-inplace-compress.c                   | 2104 ++++++++++++++++++++
+ drivers/md/dm-inplace-compress.h                   |  185 ++
+ 5 files changed, 2436 insertions(+)
+ create mode 100644 Documentation/device-mapper/dm-inplace-compress.txt
+ create mode 100644 drivers/md/dm-inplace-compress.c
+ create mode 100644 drivers/md/dm-inplace-compress.h
+
+diff --git a/Documentation/device-mapper/dm-inplace-compress.txt b/Documentation/device-mapper/dm-inplace-compress.txt
+new file mode 100644
+index 0000000..c2eefb9
+--- /dev/null
++++ b/Documentation/device-mapper/dm-inplace-compress.txt
+@@ -0,0 +1,139 @@
++Device-Mapper's "inplace-compress" target provides inplace compression of block
++devices using the kernel compression API.
++
++Parameters: <device path> \
++	[ <#opt_params writethough> ]
++	[ <#opt_params <writeback> <meta_commit_delay> ]
++	[ <#opt_params compressor> <type> ]
++
++
++<writethrough>
++    Write data and metadata together.
++
++<writeback> <meta_commit_delay>
++    Write metadata every 'meta_commit_delay' interval.
++
++<device path>
++    This is the device that is going to be used as backend and contains the
++    compressed data.  You can specify it as a path like /dev/xxx or a device
++    number <major>:<minor>.
++
++<compressor> <type>
++    Choose the compressor algorithm. 'lzo' and '842'
++    compressors are supported.
++
++Example scripts
++===============
++
++create a inplace-compress block device using lzo compression. Write metadata
++and data together.
++[[
++#!/bin/sh
++# Create a inplace-compress device using dmsetup
++device=$1  #your backing storage eg: /dev/sdc1
++size=80000 #size of your new compressed block device
++dmsetup create comp1 --table "0 $size inplacecompress $device
++		writethrough compressor lzo"
++]]
++
++
++create a inplace-compress block device using nx-842 hardware compression. Write
++metadata periodially every 5sec.
++
++[[
++#!/bin/sh
++# Create a inplace-compress device using dmsetup
++device=$1  #your backing storage eg: /dev/sdc1
++size=80000 #size of your new compressed block device
++dmsetup create comp1 --table "0 $size inplacecompress $device
++		writeback 5 compressor 842"
++]]
++
++Description
++===========
++    This is a simple DM target supporting inplace compression. Its best suited for
++    SSD. The underlying disk must support 512B sector size, the target only
++    supports 4k sector size.
++
++    Disk layout:
++    |super|...meta...|..data...|
++
++    Store unit is 4k (a block). Super is 1 block, which stores meta and data
++    size and compression algorithm. Meta is a bitmap. For each data block,
++    there are 5 bits meta.
++
++    Data:
++
++    Data of a block is compressed. Compressed data is round up to 512B, which
++    is the payload. In disk, payload is stored at the beginning of logical
++    sector of the block. Let's look at an example. Say we store data to block
++    A, which is in sector B(A*8), its orginal size is 4k, compressed size is
++    1500. Compressed data (CD) will use 3 sectors (512B). The 3 sectors are the
++    payload. Payload will be stored at sector B.
++
++    ---------------------------------------------------
++    ... | CD1 | CD2 | CD3 |   |   |   |   |    | ...
++    ---------------------------------------------------
++        ^B    ^B+1  ^B+2                  ^B+7 ^B+8
++
++    For this block, we will not use sector B+3 to B+7 (a hole). We use 4 meta
++    bits to present payload size. The compressed size (1500) isn't stored in
++    meta directly. Instead, we store it at the last 32bits of payload. In this
++    example, we store it at the end of sector B+2. If compressed size +
++    sizeof(32bits) crosses a sector, payload size will increase one sector. If
++    payload uses 8 sectors, we store uncompressed data directly.
++
++    If IO size is bigger than one block, we can store the data as an extent.
++    Data of the whole extent will compressed and stored in the similar way like
++    above.  The first block of the extent is the head, all others are the tail.
++    If extent is 1 block, the block is head. We have 1 bit of meta to present
++    if a block is head or tail. If 4 meta bits of head block can't store extent
++    payload size, we will borrow tail block meta bits to store payload size.
++    Max allowd extent size is 128k, so we don't compress/decompress too big
++    size data.
++
++    Meta:
++    Modifying data will modify meta too. Meta will be written(flush) to disk
++    depending on meta write policy. We support writeback and writethrough mode.
++    In writeback mode, meta will be written to disk in an interval or a FLUSH
++    request.  In writethrough mode, data and meta data will be written to disk
++    together.
++
++    Advantages:
++
++    1. Simple. Since we store compressed data in-place, we don't need complicated
++    disk data management.
++    2. Efficient. For each 4k, we only need 5 bits meta. 1T data will use less than
++    200M meta, so we can load all meta into memory. And actual compression size is
++    in payload. So if IO doesn't need RMW and we use writeback meta flush, we don't
++    need extra IO for meta.
++
++    Disadvantages:
++
++    1. hole. Since we store compressed data in-place, there are a lot of holes
++    (in above example, B+3 - B+7) Hole can impact IO, because we can't do IO
++    merge.
++
++    2. 1:1 size. Compression doesn't change disk size. If disk is 1T, we can
++    only store 1T data even we do compression.
++
++    But this is for SSD only. Generally SSD firmware has a FTL layer to map
++    disk sectors to flash nand. High end SSD firmware has filesystem-like FTL.
++
++    1. hole. Disk has a lot of holes, but SSD FTL can still store data continuous
++    in nand. Even if we can't do IO merge in OS layer, SSD firmware can do it.
++
++    2. 1:1 size. On one side, we write compressed data to SSD, which means less
++    data is written to SSD. This will be very helpful to improve SSD garbage
++    collection, and so write speed and life cycle. So even this is a problem, the
++    target is still helpful. On the other side, advanced SSD FTL can easily do thin
++    provision. For example, if nand is 1T and we let SSD report it as 2T, and use
++    the SSD as compressed target. In such SSD, we don't have the 1:1 size issue.
++
++    So even if SSD FTL cannot map non-continuous disk sectors to continuous nand,
++    the compression target can still function well.
++
++
++Author:
++	Shaohua Li <shli@fusionio.com>
++	Ram Pai <ram.n.pai@gmail.com>
+diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
+index b7767da..2eece2a 100644
+--- a/drivers/md/Kconfig
++++ b/drivers/md/Kconfig
+@@ -508,4 +508,10 @@ config DM_LOG_WRITES
+ 
+ 	  If unsure, say N.
+ 
++config DM_INPLACE_COMPRESS
++	tristate "Inplace Compression target"
++	depends on BLK_DEV_DM
++	---help---
++	  Allow volume managers to compress data for SSD.
++
+ endif # MD
+diff --git a/drivers/md/Makefile b/drivers/md/Makefile
+index 3cbda1a..4525482 100644
+--- a/drivers/md/Makefile
++++ b/drivers/md/Makefile
+@@ -59,6 +59,8 @@ obj-$(CONFIG_DM_CACHE_SMQ)	+= dm-cache-smq.o
+ obj-$(CONFIG_DM_CACHE_CLEANER)	+= dm-cache-cleaner.o
+ obj-$(CONFIG_DM_ERA)		+= dm-era.o
+ obj-$(CONFIG_DM_LOG_WRITES)	+= dm-log-writes.o
++obj-$(CONFIG_DM_LOG_WRITES)	+= dm-log-writes.o
++obj-$(CONFIG_DM_INPLACE_COMPRESS)	+= dm-inplace-compress.o
+ 
+ ifeq ($(CONFIG_DM_UEVENT),y)
+ dm-mod-objs			+= dm-uevent.o
+diff --git a/drivers/md/dm-inplace-compress.c b/drivers/md/dm-inplace-compress.c
+new file mode 100644
+index 0000000..75ff28d
+--- /dev/null
++++ b/drivers/md/dm-inplace-compress.c
+@@ -0,0 +1,2104 @@
++/*
++ *  device mapper compression block device.
++ *
++ *  Released under GPL v2.
++ *
++ */
++#include <linux/module.h>
++#include <linux/init.h>
++#include <linux/blkdev.h>
++#include <linux/bio.h>
++#include <linux/slab.h>
++#include <linux/device-mapper.h>
++#include <linux/dm-io.h>
++#include <linux/crypto.h>
++#include <linux/lzo.h>
++#include <linux/kthread.h>
++#include <linux/page-flags.h>
++#include <linux/completion.h>
++#include <linux/vmalloc.h>
++#include "dm-inplace-compress.h"
++
++#define DM_MSG_PREFIX "dm-inplace-compress"
++
++static struct dm_icomp_compressor_data compressors[] = {
++	[DMCP_COMP_ALG_LZO] = {
++		.name = "lzo",
++		.comp_len = lzo_comp_len,
++		.max_comp_len = lzo_max_comp_len,
++	},
++	[DMCP_COMP_ALG_842] = {
++		.name = "842",
++		.comp_len = nx842_comp_len,
++		.max_comp_len = nx842_max_comp_len,
++	},
++};
++
++static int default_compressor = -1;
++#define DMCP_ALGO_LENGTH 9
++static char dm_icomp_algorithm[DMCP_ALGO_LENGTH] = "lzo";
++static struct kparam_string dm_icomp_compressor_kparam = {
++	.string =	dm_icomp_algorithm,
++	.maxlen =	sizeof(dm_icomp_algorithm),
++};
++static int dm_icomp_compressor_param_set(const char *,
++		const struct kernel_param *);
++static struct kernel_param_ops dm_icomp_compressor_param_ops = {
++	.set =	dm_icomp_compressor_param_set,
++	.get =	param_get_string,
++};
++module_param_cb(compress_algorithm, &dm_icomp_compressor_param_ops,
++		&dm_icomp_compressor_kparam, 0644);
++
++#define SET_REQ_STAGE(req, value) (req->stage = value)
++#define GET_REQ_STAGE(req) req->stage
++
++static int dm_icomp_get_compressor(const char *s)
++{
++	int r, val_len;
++
++	if (crypto_has_comp(s, 0, 0)) {
++		for (r = 0; r < ARRAY_SIZE(compressors); r++) {
++			val_len = strlen(compressors[r].name);
++			if (strncmp(s, compressors[r].name, val_len) == 0)
++				return r;
++		}
++	}
++	return -1;
++}
++
++static int dm_icomp_compressor_param_set(const char *val,
++		const struct kernel_param *kp)
++{
++	int ret;
++	char str[kp->str->maxlen], *s;
++	int val_len = strlen(val)+1;
++
++	strlcpy(str, val, val_len);
++	s = strim(str);
++	ret = dm_icomp_get_compressor(s);
++	if (ret < 0) {
++		DMWARN("Compressor %s not supported", s);
++		return -1;
++	}
++	DMINFO("compressor  is %s", s);
++	default_compressor = ret;
++	strlcpy(dm_icomp_algorithm, compressors[ret].name,
++		sizeof(dm_icomp_algorithm));
++	return 0;
++}
++
++static const struct kernel_param_ops dm_icomp_alloc_param_ops = {
++	.set    = param_set_ulong,
++	.get    = param_get_ulong,
++};
++
++static atomic64_t dm_icomp_total_alloc_size;
++#define DMCP_ALLOC(s) {atomic64_add(s, &dm_icomp_total_alloc_size); }
++#define DMCP_FREE_ALLOC(s) {atomic64_sub(s, &dm_icomp_total_alloc_size); }
++module_param_cb(dm_icomp_total_alloc_size, &dm_icomp_alloc_param_ops,
++				&dm_icomp_total_alloc_size, 0644);
++
++static atomic64_t dm_icomp_total_bio_save;
++#define DMCP_ALLOC_SAVE(s) {atomic64_add(s, &dm_icomp_total_bio_save); }
++module_param_cb(dm_icomp_total_bio_save, &dm_icomp_alloc_param_ops,
++				&dm_icomp_total_bio_save, 0644);
++
++
++static struct kmem_cache *dm_icomp_req_cachep;
++static struct kmem_cache *dm_icomp_io_range_cachep;
++static struct kmem_cache *dm_icomp_meta_io_cachep;
++
++static struct dm_icomp_io_worker dm_icomp_io_workers[NR_CPUS];
++static struct workqueue_struct *dm_icomp_wq;
++
++/*
++ * return the meta data bits corresponding to a block
++ * @block_index : the index of the block
++ */
++static u8 dm_icomp_get_meta(struct dm_icomp_info *info, u64 block_index)
++{
++	u64 first_bit = block_index * DMCP_META_BITS;
++	int bits, offset;
++	u32 data;
++	u8  ret = 0;
++
++	offset = first_bit & (DMCP_BITS_PER_ENTRY-1);
++	bits = min_t(u32, DMCP_META_BITS, DMCP_BITS_PER_ENTRY - offset);
++
++	data = (u32)info->meta_bitmap[first_bit >> DMCP_META_BITS];
++	ret = (data >> offset) & ((1 << bits) - 1);
++
++	if (bits < DMCP_META_BITS) {
++		data = info->meta_bitmap[(first_bit >> DMCP_META_BITS) + 1];
++		bits = DMCP_META_BITS - bits;
++		ret |= (data & ((1 << bits) - 1)) << (DMCP_META_BITS - bits);
++	}
++	return ret;
++}
++
++
++static void dm_icomp_mark_page(struct dm_icomp_info *info, u32 *addr,
++				bool dirty_meta)
++{
++	struct page *page;
++
++	page = vmalloc_to_page(addr);
++	if (!page)
++		return;
++	if (dirty_meta)
++		SetPageDirty(page);
++	else
++		ClearPageDirty(page);
++}
++
++/*
++ * set the meta data bits corresponding to a block
++ * @block_index : the index of the block
++ * @meta        : the meta data bits.
++ */
++static void dm_icomp_set_meta(struct dm_icomp_info *info, u64 block_index,
++		u8 meta, bool dirty_meta)
++{
++	u64 first_bit = block_index * DMCP_META_BITS;
++	int bits, offset;
++	u32 data;
++
++	offset = first_bit & (DMCP_BITS_PER_ENTRY-1);
++	bits = min_t(u32, DMCP_META_BITS, DMCP_BITS_PER_ENTRY - offset);
++
++
++	data = (u32)info->meta_bitmap[first_bit >> DMCP_META_BITS];
++	data &= ~(((1 << bits) - 1) << offset);
++	data |= (meta & ((1 << bits) - 1)) << offset;
++	info->meta_bitmap[first_bit >> DMCP_META_BITS] = (u32)data;
++
++	if (info->write_mode == DMCP_WRITE_BACK)
++		dm_icomp_mark_page(info,
++			&info->meta_bitmap[first_bit >> DMCP_META_BITS],
++			dirty_meta);
++
++	if (bits < DMCP_META_BITS) {
++		meta >>= bits;
++		data = (u32)
++			info->meta_bitmap[(first_bit >> DMCP_META_BITS) + 1];
++		bits = DMCP_META_BITS - bits;
++		data = (data >> bits) << bits;
++		data |= meta & ((1 << bits) - 1);
++		info->meta_bitmap[(first_bit >> DMCP_META_BITS) + 1] =
++				(u32)data;
++
++		if (info->write_mode == DMCP_WRITE_BACK)
++			dm_icomp_mark_page(info,
++			&info->meta_bitmap[(first_bit >> DMCP_META_BITS) + 1],
++			dirty_meta);
++	}
++}
++
++
++/*
++ * set the meta data bits corresponding to an extent
++ * @block : the index of the block
++ * @logical_blocks: the number of blocks in the extent
++ * @sectors: the number of sectors holding the compressed
++ *		data
++ */
++static void dm_icomp_set_extent(struct dm_icomp_req *req, u64 block,
++	u16 logical_blocks, sector_t data_sectors)
++{
++	int i;
++	u8 data;
++
++	for (i = 0; i < logical_blocks; i++) {
++		data = min_t(sector_t, data_sectors, 8);
++		data_sectors -= data;
++		if (i != 0)
++			data |= DMCP_TAIL_MASK;
++		/* For FUA, we write out meta data directly */
++		dm_icomp_set_meta(req->info, block + i, data,
++					!(req->bio->bi_opf & REQ_FUA));
++	}
++}
++
++/*
++ * get the meta data bits corresponding to an extent
++ * @block_index : the index of the block
++ * @logical_blocks: return the number of blocks in the extent
++ * @sectors: return the number of sectors holding the compressed
++ *		data
++ */
++static void dm_icomp_get_extent(struct dm_icomp_info *info, u64 block_index,
++	u64 *first_block_index, u16 *logical_sectors, u16 *data_sectors)
++{
++	u8 data;
++
++	data = dm_icomp_get_meta(info, block_index);
++	while (data & DMCP_TAIL_MASK) {
++		block_index--;
++		data = dm_icomp_get_meta(info, block_index);
++	}
++	*first_block_index = block_index;
++	*logical_sectors = DMCP_BYTES_TO_SECTOR(DMCP_BLOCK_SIZE);
++	*data_sectors = data & DMCP_LENGTH_MASK;
++	block_index++;
++	while (block_index < info->data_blocks) {
++		data = dm_icomp_get_meta(info, block_index);
++		if (!(data & DMCP_TAIL_MASK))
++			break;
++		*logical_sectors += DMCP_BYTES_TO_SECTOR(DMCP_BLOCK_SIZE);
++		*data_sectors += data & DMCP_LENGTH_MASK;
++		block_index++;
++	}
++}
++
++/*
++ * return the super block
++ */
++static int dm_icomp_access_super(struct dm_icomp_info *info, void *addr,
++		int op, int flag)
++{
++	struct dm_io_region region;
++	struct dm_io_request req;
++	unsigned long io_error = 0;
++	int ret;
++
++	region.bdev = info->dev->bdev;
++	region.sector = 0;
++	region.count = DMCP_BYTES_TO_SECTOR(DMCP_BLOCK_SIZE);
++
++	req.bi_op = op;
++	req.bi_op_flags = flag;
++	req.mem.type = DM_IO_KMEM;
++	req.mem.offset = 0;
++	req.mem.ptr.addr = addr;
++	req.notify.fn = NULL;
++	req.client = info->io_client;
++
++	ret = dm_io(&req, 1, &region, &io_error);
++	if (ret || io_error)
++		return -EIO;
++	return 0;
++}
++
++static void dm_icomp_meta_io_done(unsigned long error, void *context)
++{
++	struct dm_icomp_meta_io *meta_io = context;
++
++	meta_io->fn(meta_io->data, error);
++	kmem_cache_free(dm_icomp_meta_io_cachep, meta_io);
++}
++
++/*
++ * write meta data to the meta blocks in the backing store.
++ */
++static int dm_icomp_write_meta(struct dm_icomp_info *info, u64 start_page,
++	u64 end_page, void *data,
++	void (*fn)(void *data, unsigned long error), int rw, int flags)
++{
++	struct dm_icomp_meta_io *meta_io;
++	sector_t sector, last_sector, last_meta_sector = info->data_start-1;
++
++	WARN_ON(end_page > info->meta_bitmap_pages);
++
++	sector = DMCP_META_START_SECTOR + (start_page << (PAGE_SHIFT - 9));
++	WARN_ON(sector > last_meta_sector);
++	if (sector > last_meta_sector) {
++		fn(data, -EINVAL);
++		return -EINVAL;
++	}
++	last_sector = sector + ((end_page - start_page) << (PAGE_SHIFT - 9));
++	if (last_sector > last_meta_sector)
++		last_sector = last_meta_sector;
++
++
++	meta_io = kmem_cache_alloc(dm_icomp_meta_io_cachep, GFP_NOIO);
++	if (!meta_io) {
++		fn(data, -ENOMEM);
++		return -ENOMEM;
++	}
++	meta_io->data = data;
++	meta_io->fn = fn;
++
++	meta_io->io_region.bdev = info->dev->bdev;
++
++
++	meta_io->io_region.sector = sector;
++	meta_io->io_region.count = last_sector - sector + 1;
++	atomic64_add(DMCP_SECTOR_TO_BYTES(meta_io->io_region.count),
++				&info->meta_write_size);
++
++	meta_io->io_req.bi_op = rw;
++	meta_io->io_req.bi_op_flags = flags;
++	meta_io->io_req.mem.type = DM_IO_VMA;
++	meta_io->io_req.mem.offset = 0;
++	meta_io->io_req.mem.ptr.addr = info->meta_bitmap +
++						(start_page << PAGE_SHIFT);
++	meta_io->io_req.notify.fn = dm_icomp_meta_io_done;
++	meta_io->io_req.notify.context = meta_io;
++	meta_io->io_req.client = info->io_client;
++
++	dm_io(&meta_io->io_req, 1, &meta_io->io_region, NULL);
++	return 0;
++}
++
++struct writeback_flush_data {
++	struct completion complete;
++	atomic_t cnt;
++};
++
++static void writeback_flush_io_done(void *data, unsigned long error)
++{
++	struct writeback_flush_data *wb = data;
++
++	if (atomic_dec_return(&wb->cnt))
++		return;
++	complete(&wb->complete);
++}
++
++static void dm_icomp_flush_dirty_meta(struct dm_icomp_info *info,
++			struct writeback_flush_data *data)
++{
++	struct page *page;
++	u64 start = 0, index;
++	u32 pending = 0, cnt = 0;
++	bool dirty;
++	struct blk_plug plug;
++
++	blk_start_plug(&plug);
++	for (index = 0; index < info->meta_bitmap_pages; index++, cnt++) {
++		if (cnt == 256) {
++			cnt = 0;
++			cond_resched();
++		}
++
++		page = vmalloc_to_page((char *)(info->meta_bitmap) +
++					(index << PAGE_SHIFT));
++		if (!page)
++			DMWARN("Uable to find page for block=%llu", index);
++		dirty = TestClearPageDirty(page);
++
++		if (pending == 0 && dirty) {
++			start = index;
++			pending++;
++			continue;
++		} else if (pending == 0)
++			continue;
++		else if (pending > 0 && dirty) {
++			pending++;
++			continue;
++		}
++
++		/* pending > 0 && !dirty */
++		atomic_inc(&data->cnt);
++		dm_icomp_write_meta(info, start, start + pending, data,
++			writeback_flush_io_done, REQ_OP_WRITE, WRITE);
++		pending = 0;
++	}
++
++	if (pending > 0) {
++		atomic_inc(&data->cnt);
++		dm_icomp_write_meta(info, start, start + pending, data,
++			writeback_flush_io_done, REQ_OP_WRITE, WRITE);
++	}
++	blkdev_issue_flush(info->dev->bdev, GFP_NOIO, NULL);
++	blk_finish_plug(&plug);
++}
++
++static int dm_icomp_meta_writeback_thread(void *data)
++{
++	struct dm_icomp_info *info = data;
++	struct writeback_flush_data wb;
++
++	atomic_set(&wb.cnt, 1);
++	init_completion(&wb.complete);
++
++	while (!kthread_should_stop()) {
++		schedule_timeout_interruptible(
++			msecs_to_jiffies(info->writeback_delay * 1000));
++		dm_icomp_flush_dirty_meta(info, &wb);
++	}
++
++	dm_icomp_flush_dirty_meta(info, &wb);
++
++	writeback_flush_io_done(&wb, 0);
++	wait_for_completion(&wb.complete);
++	return 0;
++}
++
++static int dm_icomp_init_meta(struct dm_icomp_info *info, bool new)
++{
++	struct dm_io_region region;
++	struct dm_io_request req;
++	unsigned long io_error = 0;
++	struct blk_plug plug;
++	int ret;
++	ssize_t len = DIV_ROUND_UP_ULL(info->meta_bitmap_bits,
++			DMCP_BITS_PER_ENTRY);
++
++	len *= (DMCP_BITS_PER_ENTRY >> 3);
++
++	region.bdev = info->dev->bdev;
++	region.sector = DMCP_META_START_SECTOR;
++	region.count = DMCP_BYTES_TO_SECTOR(round_up(len,
++				DMCP_SECTOR_SIZE));
++
++	req.mem.type = DM_IO_VMA;
++	req.mem.offset = 0;
++	req.mem.ptr.addr = info->meta_bitmap;
++	req.notify.fn = NULL;
++	req.client = info->io_client;
++
++	blk_start_plug(&plug);
++	if (new) {
++		memset(info->meta_bitmap, 0, len);
++		req.bi_op = REQ_OP_WRITE;
++		req.bi_op_flags = REQ_FUA;
++		ret = dm_io(&req, 1, &region, &io_error);
++	} else {
++		req.bi_op = REQ_OP_READ;
++		req.bi_op_flags = READ;
++		ret = dm_io(&req, 1, &region, &io_error);
++	}
++	blk_finish_plug(&plug);
++
++	if (ret || io_error) {
++		info->ti->error = "Access metadata error";
++		return -EIO;
++	}
++
++	if (info->write_mode == DMCP_WRITE_BACK) {
++		info->writeback_tsk = kthread_run(
++			dm_icomp_meta_writeback_thread,
++			info, "dm_icomp_writeback");
++		if (!info->writeback_tsk) {
++			info->ti->error = "Create writeback thread error";
++			return -EINVAL;
++		}
++	}
++
++	return 0;
++}
++
++static int dm_icomp_alloc_compressor(struct dm_icomp_info *info)
++{
++	int i;
++
++	for_each_possible_cpu(i) {
++		info->tfm[i] = crypto_alloc_comp(
++			compressors[info->comp_alg].name, 0, 0);
++		if (IS_ERR(info->tfm[i])) {
++			info->tfm[i] = NULL;
++			goto err;
++		}
++	}
++	return 0;
++err:
++	for_each_possible_cpu(i) {
++		if (info->tfm[i]) {
++			crypto_free_comp(info->tfm[i]);
++			info->tfm[i] = NULL;
++		}
++	}
++	return -ENOMEM;
++}
++
++static void dm_icomp_free_compressor(struct dm_icomp_info *info)
++{
++	int i;
++
++	for_each_possible_cpu(i) {
++		if (info->tfm[i]) {
++			crypto_free_comp(info->tfm[i]);
++			info->tfm[i] = NULL;
++		}
++	}
++}
++
++/*
++ * create a new super block and initialize its contents.
++ */
++static int dm_icomp_read_or_create_super(struct dm_icomp_info *info)
++{
++	void *addr;
++	struct dm_icomp_super_block *super;
++	u64 total_blocks, data_blocks, meta_blocks;
++	bool new_super = false;
++	int ret;
++	ssize_t len;
++
++	info->total_sector = DMCP_BYTES_TO_SECTOR(
++			i_size_read(info->dev->bdev->bd_inode));
++	total_blocks = DMCP_SECTOR_TO_BLOCK(info->total_sector) - 1;
++
++	data_blocks =  DMCP_SECTOR_TO_BLOCK(info->ti->len);
++	meta_blocks =  ((data_blocks * DMCP_META_BITS) +
++			((DMCP_BLOCK_SIZE * 8) - 1)) / (DMCP_BLOCK_SIZE * 8);
++
++	info->data_blocks = data_blocks;
++	info->data_start = DMCP_BLOCK_TO_SECTOR(1 + meta_blocks);
++
++	DMINFO(" info->data_start=%u info->data_blocks=%llu",
++		(unsigned int)info->data_start, info->data_blocks);
++	DMINFO(" metablocks=%llu total_blocks=%llu",
++		meta_blocks, total_blocks);
++
++	if (DMCP_BLOCK_TO_SECTOR(data_blocks + meta_blocks + 1)
++			>= info->total_sector) {
++		info->ti->error =
++			"Insufficient sectors to satisfy requested size";
++		return -ENOMEM;
++	}
++
++	addr = kzalloc(DMCP_BLOCK_SIZE, GFP_KERNEL);
++	if (!addr) {
++		info->ti->error = "Cannot allocate super";
++		return -ENOMEM;
++	}
++
++	super = addr;
++	ret = dm_icomp_access_super(info, addr, REQ_OP_READ, 0);
++	if (ret)
++		goto out;
++
++	if (le64_to_cpu(super->magic) == DMCP_SUPER_MAGIC) {
++		if (le64_to_cpu(super->meta_blocks) != meta_blocks ||
++		    le64_to_cpu(super->data_blocks) != data_blocks) {
++			info->ti->error = "Super is invalid";
++			ret = -EINVAL;
++			goto out;
++		}
++		if (!crypto_has_comp(compressors[info->comp_alg].name,
++					0, 0)) {
++			info->ti->error =
++				"Compressor algorithm doesn't support";
++			ret = -EINVAL;
++			goto out;
++		}
++	} else {
++		super->magic = cpu_to_le64(DMCP_SUPER_MAGIC);
++		super->meta_blocks = cpu_to_le64(meta_blocks);
++		super->data_blocks = cpu_to_le64(data_blocks);
++		super->comp_alg = default_compressor;
++		ret = dm_icomp_access_super(info, addr, REQ_OP_WRITE,
++				REQ_FUA);
++		if (ret) {
++			info->ti->error = "Access super fails";
++			goto out;
++		}
++		new_super = true;
++	}
++
++	if (dm_icomp_alloc_compressor(info)) {
++		ret = -ENOMEM;
++		goto out;
++	}
++
++	info->meta_bitmap_bits = data_blocks * DMCP_META_BITS;
++	len = DIV_ROUND_UP_ULL(info->meta_bitmap_bits, DMCP_BITS_PER_ENTRY);
++	len *= (DMCP_BITS_PER_ENTRY >> 3);
++	info->meta_bitmap_pages = (len + PAGE_SIZE - 1) >> PAGE_SHIFT;
++	info->meta_bitmap = vzalloc(info->meta_bitmap_pages * PAGE_SIZE);
++	if (!info->meta_bitmap) {
++		ret = -ENOMEM;
++		goto bitmap_err;
++	}
++
++	ret = dm_icomp_init_meta(info, new_super);
++	if (ret)
++		goto meta_err;
++
++	return 0;
++meta_err:
++	vfree(info->meta_bitmap);
++bitmap_err:
++	dm_icomp_free_compressor(info);
++out:
++	kfree(addr);
++	return ret;
++}
++
++/*
++ * <dev> [ <writethough>/<writeback> <meta_commit_delay> ]
++ *	 [ <compressor> <type> ]
++ */
++static int dm_icomp_ctr(struct dm_target *ti, unsigned int argc, char **argv)
++{
++	struct dm_icomp_info *info;
++	char mode[15];
++	int par = 0;
++	int ret, i;
++
++	info = kzalloc(sizeof(*info), GFP_KERNEL);
++	if (!info) {
++		ti->error = "dm-inplace-compress: Cannot allocate context";
++		return -ENOMEM;
++	}
++	info->ti = ti;
++	info->comp_alg = default_compressor;
++	while (++par < argc) {
++		if (sscanf(argv[par], "%s", mode) != 1) {
++			ti->error = "Invalid argument";
++			ret = -EINVAL;
++			goto err_para;
++		}
++
++		if (strcmp(mode, "writeback") == 0) {
++			info->write_mode = DMCP_WRITE_BACK;
++			if (sscanf(argv[++par], "%u",
++				 &info->writeback_delay) != 1) {
++				ti->error = "Invalid argument";
++				ret = -EINVAL;
++				goto err_para;
++			}
++		} else if (strcmp(mode, "writethrough") == 0) {
++			info->write_mode = DMCP_WRITE_THROUGH;
++		} else if (strcmp(mode, "compressor") == 0) {
++			if (sscanf(argv[++par], "%s", mode) != 1) {
++				ti->error = "Invalid argument";
++				ret = -EINVAL;
++				goto err_para;
++			}
++			ret = dm_icomp_get_compressor(mode);
++			if (ret >= 0) {
++				DMINFO("compressor  is %s", mode);
++				info->comp_alg = ret;
++			} else {
++				ti->error = "Unsupported compressor";
++				ret = -EINVAL;
++				goto err_para;
++			}
++		}
++	}
++
++	if (dm_get_device(ti, argv[0], dm_table_get_mode(ti->table),
++							&info->dev)) {
++		ti->error = "Can't get device";
++		ret = -EINVAL;
++		goto err_para;
++	}
++
++	info->io_client = dm_io_client_create();
++	if (!info->io_client) {
++		ti->error = "Can't create io client";
++		ret = -EINVAL;
++		goto err_ioclient;
++	}
++
++	if (bdev_logical_block_size(info->dev->bdev) != 512) {
++		ti->error = "Can't logical block size too big";
++		ret = -EINVAL;
++		goto err_blocksize;
++	}
++
++	ret = dm_icomp_read_or_create_super(info);
++	if (ret)
++		goto err_blocksize;
++
++	for (i = 0; i < BITMAP_HASH_LEN; i++) {
++		info->bitmap_locks[i].io_running = 0;
++		spin_lock_init(&info->bitmap_locks[i].wait_lock);
++		INIT_LIST_HEAD(&info->bitmap_locks[i].wait_list);
++	}
++
++	atomic64_set(&info->compressed_write_size, 0);
++	atomic64_set(&info->uncompressed_write_size, 0);
++	atomic64_set(&info->meta_write_size, 0);
++	atomic64_set(&dm_icomp_total_alloc_size, 0);
++	atomic64_set(&dm_icomp_total_bio_save, 0);
++
++	ti->num_flush_bios = 1;
++	/* ti->num_discard_bios = 1; */
++	ti->private = info;
++	return 0;
++err_blocksize:
++	dm_io_client_destroy(info->io_client);
++err_ioclient:
++	dm_put_device(ti, info->dev);
++err_para:
++	kfree(info);
++	return ret;
++}
++
++static void dm_icomp_dtr(struct dm_target *ti)
++{
++	struct dm_icomp_info *info = ti->private;
++
++	if (info->write_mode == DMCP_WRITE_BACK)
++		kthread_stop(info->writeback_tsk);
++	dm_icomp_free_compressor(info);
++	vfree(info->meta_bitmap);
++	dm_io_client_destroy(info->io_client);
++	dm_put_device(ti, info->dev);
++	kfree(info);
++}
++
++/*
++ * return the range lock to this block.
++ */
++static struct dm_icomp_hash_lock *dm_icomp_block_hash_lock(
++		struct dm_icomp_info *info, u64 block_index)
++{
++	return &info->bitmap_locks[(block_index >> BITMAP_HASH_SHIFT) &
++			BITMAP_HASH_MASK];
++}
++
++/*
++ * unlock the io range correspondingg to this block.
++ */
++static struct dm_icomp_hash_lock *dm_icomp_trylock_block(
++		struct dm_icomp_info *info,
++		struct dm_icomp_req *req, u64 block_index)
++{
++	struct dm_icomp_hash_lock *hash_lock;
++
++	hash_lock = dm_icomp_block_hash_lock(req->info, block_index);
++
++	spin_lock_irq(&hash_lock->wait_lock);
++	if (!hash_lock->io_running) {
++		hash_lock->io_running = 1;
++		spin_unlock_irq(&hash_lock->wait_lock);
++		return hash_lock;
++	}
++	list_add_tail(&req->sibling, &hash_lock->wait_list);
++	spin_unlock_irq(&hash_lock->wait_lock);
++	return NULL;
++}
++
++static void dm_icomp_queue_req_list(struct dm_icomp_info *info,
++	 struct list_head *list);
++
++static void dm_icomp_unlock_block(struct dm_icomp_info *info,
++	struct dm_icomp_req *req, struct dm_icomp_hash_lock *hash_lock)
++{
++	LIST_HEAD(pending_list);
++	unsigned long flags;
++
++	spin_lock_irqsave(&hash_lock->wait_lock, flags);
++	/* wakeup all pending reqs to avoid live lock */
++	list_splice_init(&hash_lock->wait_list, &pending_list);
++	hash_lock->io_running = 0;
++	spin_unlock_irqrestore(&hash_lock->wait_lock, flags);
++
++	dm_icomp_queue_req_list(info, &pending_list);
++}
++
++/*
++ * lock all the range locks corresponding to this io request.
++ */
++static int dm_icomp_lock_req_range(struct dm_icomp_req *req)
++{
++	u64 block_index, first_block_index;
++	u64 first_lock_block, second_lock_block;
++	u16 logical_sectors, data_sectors;
++
++	block_index = DMCP_SECTOR_TO_BLOCK(req->bio->bi_iter.bi_sector);
++	req->locks[0] = dm_icomp_trylock_block(req->info, req, block_index);
++	if (!req->locks[0])
++		return 0;
++	dm_icomp_get_extent(req->info, block_index, &first_block_index,
++				&logical_sectors, &data_sectors);
++	if (dm_icomp_block_hash_lock(req->info, first_block_index) !=
++						req->locks[0]) {
++		dm_icomp_unlock_block(req->info, req, req->locks[0]);
++		first_lock_block = first_block_index;
++		second_lock_block = block_index;
++		goto two_locks;
++	}
++
++	block_index = DMCP_SECTOR_TO_BLOCK(bio_end_sector(req->bio) - 1);
++	dm_icomp_get_extent(req->info, block_index, &first_block_index,
++				&logical_sectors, &data_sectors);
++	first_block_index += DMCP_SECTOR_TO_BLOCK(logical_sectors);
++	if (dm_icomp_block_hash_lock(req->info, first_block_index) !=
++						req->locks[0]) {
++		second_lock_block = first_block_index;
++		goto second_lock;
++	}
++	req->locked_locks = 1;
++	return 1;
++
++two_locks:
++	req->locks[0] = dm_icomp_trylock_block(req->info, req,
++		first_lock_block);
++	if (!req->locks[0])
++		return 0;
++second_lock:
++	req->locks[1] = dm_icomp_trylock_block(req->info, req,
++				second_lock_block);
++	if (!req->locks[1]) {
++		dm_icomp_unlock_block(req->info, req, req->locks[0]);
++		return 0;
++	}
++	/* Don't need check if meta is changed */
++	req->locked_locks = 2;
++	return 1;
++}
++
++
++
++/*
++ * unlock all the range locks corresponding to this io request.
++ */
++static void dm_icomp_unlock_req_range(struct dm_icomp_req *req)
++{
++	int i;
++
++	for (i = req->locked_locks - 1; i >= 0; i--)
++		dm_icomp_unlock_block(req->info, req, req->locks[i]);
++}
++
++static void dm_icomp_queue_req(struct dm_icomp_info *info,
++		struct dm_icomp_req *req)
++{
++	unsigned long flags;
++	struct dm_icomp_io_worker *worker = &dm_icomp_io_workers[req->cpu];
++
++	spin_lock_irqsave(&worker->lock, flags);
++	list_add_tail(&req->sibling, &worker->pending);
++	spin_unlock_irqrestore(&worker->lock, flags);
++
++	queue_work_on(req->cpu, dm_icomp_wq, &worker->work);
++}
++
++static void dm_icomp_queue_req_list(struct dm_icomp_info *info,
++		struct list_head *list)
++{
++	struct dm_icomp_req *req;
++
++	while (!list_empty(list)) {
++		req = list_first_entry(list, struct dm_icomp_req, sibling);
++		list_del_init(&req->sibling);
++		dm_icomp_queue_req(info, req);
++	}
++}
++
++static void dm_icomp_get_req(struct dm_icomp_req *req)
++{
++	atomic_inc(&req->io_pending);
++}
++
++/*
++ * Use GFP_ATOMIC allocations if the device
++ * is used as a swap device.
++ *
++ * TODO: need a better solution.
++ * maybe a sysfs interface to change allocation types?
++ */
++#define ALLOC_FLAG GFP_NOIO
++
++static void *dm_icomp_kmalloc(size_t size)
++{
++	void *addr = kmalloc(size, ALLOC_FLAG);
++
++	if (!addr)
++		return NULL;
++	DMCP_ALLOC(size);
++	return addr;
++}
++
++static void *dm_icomp_krealloc(void *ptr, size_t size,
++		size_t origsize)
++{
++	void *addr = krealloc(ptr, size, ALLOC_FLAG);
++
++	if (!addr)
++		return NULL;
++	DMCP_FREE_ALLOC(origsize);
++	DMCP_ALLOC(size);
++	return addr;
++}
++
++static int dm_icomp_alloc_compbuffer(struct dm_icomp_io_range *io, int size)
++{
++	void *addr = dm_icomp_kmalloc(size+DMCP_SECTOR_SIZE);
++
++	if (!addr)
++		return 1;
++
++	io->comp_real_data = addr;
++	io->comp_kmap	= false;
++	io->comp_data   = io->io_req.mem.ptr.addr = PTR_ALIGN(addr,
++				DMCP_SECTOR_SIZE);
++	io->comp_len	= size+DMCP_SECTOR_SIZE;
++	return 0;
++}
++
++static int dm_icomp_realloc_compbuffer(struct dm_icomp_io_range *io, int size)
++{
++	void *addr = dm_icomp_krealloc(io->comp_real_data,
++			size+DMCP_SECTOR_SIZE, io->comp_len);
++	if (!addr)
++		return 1;
++
++	DMCP_FREE_ALLOC(io->comp_len);
++	DMCP_ALLOC(size+DMCP_SECTOR_SIZE);
++	io->comp_real_data = addr;
++	io->comp_kmap	   = false;
++	io->comp_data      = io->io_req.mem.ptr.addr = PTR_ALIGN(addr,
++				DMCP_SECTOR_SIZE);
++	io->comp_len	   = size+DMCP_SECTOR_SIZE;
++	return 0;
++}
++
++static void dm_icomp_kfree(void *addr, unsigned int size)
++{
++	kfree(addr);
++	DMCP_FREE_ALLOC(size);
++}
++
++static void dm_icomp_release_decomp_buffer(struct dm_icomp_io_range *io)
++{
++	if (!io->decomp_data)
++		return;
++
++	if (io->decomp_kmap)
++		kunmap(io->decomp_real_data);
++	else
++		dm_icomp_kfree(io->decomp_real_data, io->decomp_len);
++
++	io->decomp_data = io->decomp_real_data = NULL;
++	io->decomp_len  = 0;
++	io->decomp_kmap = false;
++}
++
++static void dm_icomp_release_comp_buffer(struct dm_icomp_io_range *io)
++{
++	if (!io->comp_data)
++		return;
++
++	if (io->comp_kmap)
++		kunmap(io->comp_real_data);
++	else
++		dm_icomp_kfree(io->comp_real_data, io->comp_len);
++
++	io->comp_real_data = io->comp_data = NULL;
++	io->comp_len = 0;
++	io->comp_kmap = false;
++}
++
++static void dm_icomp_free_io_range(struct dm_icomp_io_range *io)
++{
++	dm_icomp_release_decomp_buffer(io);
++	dm_icomp_release_comp_buffer(io);
++	kmem_cache_free(dm_icomp_io_range_cachep, io);
++}
++
++static void dm_icomp_put_req(struct dm_icomp_req *req)
++{
++	struct dm_icomp_io_range *io;
++
++	if (atomic_dec_return(&req->io_pending))
++		return;
++
++	if (GET_REQ_STAGE(req) == STAGE_INIT) /* waiting for locking */
++		return;
++
++	if (GET_REQ_STAGE(req) == STAGE_READ_DECOMP ||
++	    GET_REQ_STAGE(req) == STAGE_WRITE_COMP)
++		SET_REQ_STAGE(req, STAGE_DONE);
++
++	if (!!!req->result && GET_REQ_STAGE(req) != STAGE_DONE) {
++		dm_icomp_queue_req(req->info, req);
++		return;
++	}
++
++	while (!list_empty(&req->all_io)) {
++		io = list_entry(req->all_io.next,
++			struct dm_icomp_io_range, next);
++		list_del(&io->next);
++		dm_icomp_free_io_range(io);
++	}
++
++	dm_icomp_unlock_req_range(req);
++
++	req->bio->bi_error = req->result;
++
++	bio_endio(req->bio);
++	kmem_cache_free(dm_icomp_req_cachep, req);
++}
++
++static void dm_icomp_bio_copy(struct bio *bio, off_t bio_off, void *buf,
++		ssize_t len, bool to_buf)
++{
++	struct bio_vec bv;
++	struct bvec_iter iter;
++	off_t buf_off = 0;
++	ssize_t size;
++	void *addr;
++
++	WARN_ON(bio_off + len > DMCP_SECTOR_TO_BYTES(bio_sectors(bio)));
++
++	bio_for_each_segment(bv, bio, iter) {
++		int length = bv.bv_len;
++
++		if (bio_off > length) {
++			bio_off -= length;
++			continue;
++		}
++		addr = kmap_atomic(bv.bv_page);
++		size = min_t(ssize_t, len, length - bio_off);
++		if (to_buf)
++			memcpy(buf + buf_off, addr + bio_off + bv.bv_offset,
++			size);
++		else
++			memcpy(addr + bio_off + bv.bv_offset, buf + buf_off,
++			size);
++		kunmap_atomic(addr);
++		bio_off = 0;
++		buf_off += size;
++
++		if (len <= size)
++			break;
++
++		len -= size;
++	}
++}
++
++static void dm_icomp_io_range_done(unsigned long error, void *context)
++{
++	struct dm_icomp_io_range *io = context;
++
++	if (error)
++		io->req->result = error;
++
++	dm_icomp_put_req(io->req);
++}
++
++static inline int dm_icomp_compressor_len(struct dm_icomp_info *info, int len)
++{
++	if (compressors[info->comp_alg].comp_len)
++		return compressors[info->comp_alg].comp_len(len);
++	return len;
++}
++
++static inline int dm_icomp_compressor_maxlen(struct dm_icomp_info *info,
++		int len)
++{
++	if (compressors[info->comp_alg].max_comp_len)
++		return compressors[info->comp_alg].max_comp_len(len);
++	return len;
++}
++
++/*
++ * caller should set region.sector, region.count. bi_rw. IO always to/from
++ * comp_data
++ */
++static struct dm_icomp_io_range *dm_icomp_create_io_range(
++		struct dm_icomp_req *req)
++{
++	struct dm_icomp_io_range *io;
++
++	io = kmem_cache_alloc(dm_icomp_io_range_cachep, GFP_NOIO);
++	if (!io)
++		return NULL;
++
++	io->io_req.notify.fn = dm_icomp_io_range_done;
++	io->io_req.notify.context = io;
++	io->io_req.client = req->info->io_client;
++	io->io_req.mem.type = DM_IO_KMEM;
++	io->io_req.mem.offset = 0;
++
++	io->io_region.bdev = req->info->dev->bdev;
++	io->req = req;
++
++	io->comp_data = io->comp_real_data =
++			io->decomp_data = io->decomp_real_data = NULL;
++
++	io->data_bytes = io->comp_len =
++			io->decomp_len = io->logical_bytes = 0;
++
++	io->comp_kmap = io->decomp_kmap = false;
++	return io;
++}
++
++
++/*
++ * return an address, within the bio. The address corresponds to
++ * the requested offset 'bio_off' and is contiguous of size 'len'
++ */
++static void *get_addr(struct bio *bio,  int len, u64 bio_off, u64 *offset)
++{
++	struct bio_vec bv;
++	struct bvec_iter iter;
++	void *addr;
++
++	bio_for_each_segment(bv, bio, iter) {
++		int length = bv.bv_len;
++
++		if (bio_off > length) {
++			bio_off -= length;
++			continue;
++		}
++		addr = bv.bv_page;
++		if (bv.bv_offset + bio_off + len >= length) {
++			*offset = bv.bv_offset + bio_off;
++			return kmap(addr);
++		}
++		break;
++	}
++	return NULL;
++}
++
++
++/*
++ * create a io range for tracking  predominantly a read request.
++ * @req		: the read request
++ * @comp_len	: allocation size of the compress buffer
++ * @decomp_len	: allocation size of the decompress buffer
++ * @actual_comp_len : real size of the compress data
++ * @bio_off	: offset within the bio read buffer this request corresponds to.
++ *		try to reuse and read into the bio buffer. -1 means don't reuse.
++ */
++static struct dm_icomp_io_range *dm_icomp_create_io_read_range(
++		struct dm_icomp_req *req, int comp_len, int decomp_len,
++		long bio_off, int actual_comp_len)
++{
++	struct bio *bio = req->bio;
++	void *addr = NULL;
++	struct dm_icomp_io_range *io = dm_icomp_create_io_range(req);
++	u64 offset;
++
++	if (!io)
++		return NULL;
++
++	WARN_ON(comp_len % DMCP_SECTOR_SIZE);
++
++	/* try reusing the bio if possible */
++	if (bio_off >= 0) {
++		addr = get_addr(bio, comp_len, (u64)bio_off, &offset);
++		if (addr) {
++			io->comp_real_data =  addr;
++			io->comp_data = io->io_req.mem.ptr.addr = addr + offset;
++			io->comp_kmap = true;
++			io->comp_len  = comp_len;
++		}
++	}
++
++	if (!addr && dm_icomp_alloc_compbuffer(io, comp_len)) {
++		kmem_cache_free(dm_icomp_io_range_cachep, io);
++		return NULL;
++	}
++
++	io->data_bytes	= actual_comp_len;  /* NOTE, this value can change */
++
++	/*
++	 * note requested length for decompress buffer. Do not allocate it yet.
++	 * Value once set is final.
++	 */
++	io->logical_bytes = decomp_len;
++
++	return io;
++}
++
++/*
++ *  ensure that the io range has all its buffers; of the correct size,
++ *  allocated.
++ */
++static int dm_icomp_update_io_read_range(struct dm_icomp_io_range *io)
++{
++	WARN_ON(!io->comp_data);
++	WARN_ON(io->decomp_data || io->decomp_len);
++	io->decomp_data = dm_icomp_kmalloc(io->logical_bytes);
++	if (!io->decomp_data)
++		return 1;
++	io->decomp_real_data = io->decomp_data;
++	io->decomp_len = io->logical_bytes;
++	io->decomp_kmap = false;
++	return 0;
++}
++
++/*
++ *  resize the comp buffer to its largest possible size.
++ */
++static int dm_icomp_mod_to_max_io_range(struct dm_icomp_info *info,
++			 struct dm_icomp_io_range *io)
++{
++	unsigned int maxlen = dm_icomp_compressor_maxlen(info, io->decomp_len);
++
++	WARN_ON(maxlen > io->logical_bytes);
++
++	if (io->comp_kmap) {
++		WARN_ON(io->comp_kmap);
++		kunmap(io->comp_real_data);
++		io->comp_kmap = false;
++		io->comp_real_data = io->comp_data = NULL;
++	}
++
++	if (dm_icomp_realloc_compbuffer(io, maxlen)) {
++		DMWARN("allocation failure ");
++		io->comp_len = 0;
++		return -ENOSPC;
++	}
++	io->comp_len = maxlen;
++	return 0;
++}
++
++/*
++ * create a io range for tracking a write request.
++ * @req		: the write request
++ * @count	: size of the write in sectors.
++ * @offset	: offset within the bio read buffer this request correspond to.
++ */
++static struct dm_icomp_io_range *dm_icomp_create_io_write_range(
++	struct dm_icomp_req *req, sector_t offset, sector_t count)
++{
++	struct bio *bio = req->bio;
++	int size  = DMCP_SECTOR_TO_BYTES(count);
++	u64 of;
++	int comp_len = dm_icomp_compressor_len(req->info, size);
++	void *addr;
++	struct dm_icomp_io_range *io = dm_icomp_create_io_range(req);
++
++	if (!io)
++		return NULL;
++
++	WARN_ON(io->comp_data);
++
++	if (dm_icomp_alloc_compbuffer(io, comp_len)) {
++		kmem_cache_free(dm_icomp_io_range_cachep, io);
++		return NULL;
++	}
++
++	/* we donot know the size of the compress segment yet. */
++	io->data_bytes = 0;
++
++
++	WARN_ON(io->decomp_data);
++
++	io->decomp_kmap = false;
++
++	/* try reusing the bio buffer for decomp data. */
++	addr = get_addr(bio, size, DMCP_SECTOR_TO_BYTES(offset), &of);
++	if (addr)
++		io->decomp_kmap = true;
++	else
++		addr  = dm_icomp_kmalloc(size);
++
++	if (!addr) {
++		dm_icomp_kfree(io->comp_data, comp_len);
++		kmem_cache_free(dm_icomp_io_range_cachep, io);
++		return NULL;
++	}
++
++	io->logical_bytes = io->decomp_len = size;
++
++	if (io->decomp_kmap) {
++		io->decomp_real_data = addr;
++		io->decomp_data = addr + of;
++		DMCP_ALLOC_SAVE(size);
++	} else {
++		io->decomp_data = io->decomp_real_data = addr;
++		dm_icomp_bio_copy(req->bio, DMCP_SECTOR_TO_BYTES(offset),
++			io->decomp_data, size, true);
++	}
++
++	return io;
++}
++
++static unsigned int round_to_next_sector(unsigned int val)
++{
++	unsigned int c = round_up(val, DMCP_SECTOR_SIZE);
++
++	if ((c - val) < 2*sizeof(u32))
++		c += DMCP_SECTOR_SIZE;
++	return c;
++}
++
++/*
++ * compress and store the data in compress buffer.
++ * return value:
++ * < 0 : error
++ * == 0 : ok
++ * == 1 : ok, but comp/decomp is skipped
++ * Compressed data size is roundup of 512, which makes the payload.
++ * We store the actual compressed len in the last u32 of the payload.
++ * If there is no free space, we add 512 to the payload size.
++ */
++static int dm_icomp_io_range_compress(struct dm_icomp_info *info,
++		struct dm_icomp_io_range *io, unsigned int *comp_len)
++{
++	unsigned int actual_comp_len = io->comp_len;
++	u32 *addr;
++	struct crypto_comp *tfm =  info->tfm[get_cpu()];
++	unsigned int decomp_len = io->logical_bytes;
++	int ret;
++
++	actual_comp_len = io->comp_len;
++	ret = crypto_comp_compress(tfm, io->decomp_data, decomp_len,
++		io->comp_data, &actual_comp_len);
++
++	if (ret || round_to_next_sector(actual_comp_len) > io->comp_len) {
++		ret = dm_icomp_mod_to_max_io_range(info, io);
++		if (!ret) {
++			actual_comp_len = io->comp_len;
++			ret = crypto_comp_compress(tfm, io->decomp_data,
++				decomp_len, io->comp_data,
++				&actual_comp_len);
++		}
++	}
++
++	put_cpu();
++
++	if (ret < 0)
++		DMINFO("CO Error %d ", ret);
++
++	atomic64_add(decomp_len, &info->uncompressed_write_size);
++	io->data_bytes = *comp_len = round_to_next_sector(actual_comp_len);
++	if (ret || decomp_len < *comp_len) {
++		*comp_len = decomp_len;
++		memcpy(io->comp_data, io->decomp_data, *comp_len);
++		atomic64_add(*comp_len, &info->compressed_write_size);
++	} else {
++		atomic64_add(*comp_len, &info->compressed_write_size);
++		addr = (u32 *)((char *)io->comp_data + *comp_len);
++		addr--;
++		*addr = cpu_to_le32(actual_comp_len);
++		addr--;
++		*addr = cpu_to_le32(DMCP_COMPRESS_MAGIC);
++	}
++
++	return 0;
++}
++
++/*
++ * decompress and store the data in decompress buffer.
++ * return value:
++ * < 0 : error
++ * == 0 : ok
++ */
++static int dm_icomp_io_range_decompress(struct dm_icomp_info *info,
++		struct dm_icomp_io_range *io, unsigned int *decomp_len)
++{
++	struct crypto_comp *tfm;
++	u32 *addr;
++	int ret;
++	int comp_len = io->data_bytes;
++
++	WARN_ON(!io->data_bytes);
++
++	if (comp_len == io->logical_bytes) {
++		memcpy(io->decomp_data, io->comp_data, comp_len);
++		*decomp_len = comp_len;
++		return 0;
++	}
++
++	WARN_ON(io->comp_data != io->io_req.mem.ptr.addr);
++
++	addr = (u32 *)((char *)(io->comp_data) + comp_len);
++	addr--;
++	comp_len = le32_to_cpu(*addr);
++	addr--;
++
++	if (le32_to_cpu(*addr) == DMCP_COMPRESS_MAGIC) {
++		tfm = info->tfm[get_cpu()];
++		*decomp_len = io->logical_bytes;
++		ret = crypto_comp_decompress(tfm, io->comp_data, comp_len,
++			io->decomp_data, decomp_len);
++		WARN_ON(*decomp_len != io->decomp_len);
++		put_cpu();
++		if (ret)
++			return -EINVAL;
++		return 0;
++	}
++
++	DMWARN("Decompress Error ");
++	return -1;
++}
++
++/*
++ *  fill the bio with the corresponding decompressed data.
++ */
++static void dm_icomp_handle_read_decomp(struct dm_icomp_req *req)
++{
++	struct dm_icomp_io_range *io;
++	off_t bio_off = 0;
++	int ret;
++	sector_t bio_len  = DMCP_SECTOR_TO_BYTES(bio_sectors(req->bio));
++
++	SET_REQ_STAGE(req, STAGE_READ_DECOMP);
++
++	if (req->result)
++		return;
++
++	list_for_each_entry(io, &req->all_io, next) {
++		ssize_t dst_off = 0, src_off = 0, len;
++		unsigned int decomp_len;
++
++		io->io_region.sector -= req->info->data_start;
++
++		if (io->io_region.sector >=
++				req->bio->bi_iter.bi_sector)
++			dst_off = DMCP_SECTOR_TO_BYTES(
++				io->io_region.sector -
++				req->bio->bi_iter.bi_sector);
++		else
++			src_off = DMCP_SECTOR_TO_BYTES(
++				req->bio->bi_iter.bi_sector -
++				io->io_region.sector);
++
++		if (dm_icomp_update_io_read_range(io)) {
++			req->result = -EIO;
++			return;
++		}
++
++		/* Do decomp here */
++		ret = dm_icomp_io_range_decompress(req->info, io, &decomp_len);
++		if (ret < 0) {
++			dm_icomp_release_decomp_buffer(io);
++			dm_icomp_release_comp_buffer(io);
++			req->result = -EIO;
++			return;
++		}
++
++		len = min_t(ssize_t,
++			max_t(ssize_t, decomp_len - src_off, 0),
++			max_t(ssize_t, bio_len - dst_off, 0));
++
++		dm_icomp_bio_copy(req->bio, dst_off,
++			   io->decomp_data + src_off, len, false);
++
++		/* io range in all_io list is ordered for read IO */
++		while (bio_off < dst_off) {
++			ssize_t size = min_t(ssize_t, PAGE_SIZE,
++					dst_off - bio_off);
++			dm_icomp_bio_copy(req->bio, bio_off, empty_zero_page,
++					size, false);
++			bio_off += size;
++		}
++
++		bio_off = dst_off + len;
++		dm_icomp_release_decomp_buffer(io);
++		dm_icomp_release_comp_buffer(io);
++	}
++
++	while (bio_off < bio_len) {
++		ssize_t size = min_t(ssize_t, PAGE_SIZE, (bio_len - bio_off));
++
++		dm_icomp_bio_copy(req->bio, bio_off, empty_zero_page,
++			size, false);
++		bio_off += size;
++	}
++}
++
++
++/*
++ * read an extent
++ * @req        : the read request
++ * @block      : the block to be read
++ * @logical_sectors   : no of sectors occupied by the decompressed data
++ * @data_sectors      : no of sectors occupied by the compressed data
++ * @may_resize : the compress data size may change during its life.
++ */
++static void dm_icomp_read_one_extent(struct dm_icomp_req *req, u64 block,
++	u16 logical_sectors, u16 data_sectors, bool may_resize)
++{
++	struct dm_icomp_io_range *io;
++	long bio_off = 0, comp_len;
++	int actual_comp_len = DMCP_SECTOR_TO_BYTES(data_sectors);
++
++	if (may_resize) {
++		/*
++		 * TODO: replace this with actual_comp_len.
++		 * comp_len = actual_comp_len;
++		 * There was some corruption observed with smaller
++		 * buffers. Hence we request this large size.
++		 */
++		comp_len = DMCP_SECTOR_TO_BYTES(logical_sectors);
++		bio_off =  -1;
++	} else {
++		comp_len = actual_comp_len;
++		bio_off = DMCP_BLOCK_TO_SECTOR(block) -
++				req->bio->bi_iter.bi_sector;
++	}
++
++	io = dm_icomp_create_io_read_range(req, comp_len,
++		DMCP_SECTOR_TO_BYTES(logical_sectors),
++		bio_off,
++		actual_comp_len);
++	if (!io) {
++		req->result = -EIO;
++		return;
++	}
++
++	dm_icomp_get_req(req);
++	list_add_tail(&io->next, &req->all_io);
++
++	io->io_region.sector = DMCP_BLOCK_TO_SECTOR(block) +
++				req->info->data_start;
++	io->io_region.count = data_sectors;
++	io->io_req.mem.ptr.addr = io->comp_data;
++	io->io_req.mem.type = DM_IO_KMEM;
++	io->io_req.mem.offset = 0;
++	io->io_req.bi_op = REQ_OP_READ;
++	io->io_req.bi_op_flags = (req->bio->bi_opf & REQ_FUA);
++
++	WARN_ON((io->io_region.sector + io->io_region.count)
++		>= req->info->total_sector);
++
++	dm_io(&io->io_req, 1, &io->io_region, NULL);
++}
++
++
++/*
++ * read the data corresponding to this request.
++ * @req   : the request.
++ * @reuse : the read data may be modified. So plan accordingly.
++ */
++static void dm_icomp_handle_read_existing(struct dm_icomp_req *req, bool reuse)
++{
++	u64 block_index, first_block_index;
++	u16 logical_sectors, data_sectors;
++
++	SET_REQ_STAGE(req, STAGE_READ_EXISTING);
++
++	block_index = DMCP_SECTOR_TO_BLOCK(req->bio->bi_iter.bi_sector);
++
++	while (!!!req->result &&
++		(block_index <= DMCP_SECTOR_TO_BLOCK(
++				bio_end_sector(req->bio)-1)) &&
++		(block_index < req->info->data_blocks)) {
++
++		dm_icomp_get_extent(req->info, block_index, &first_block_index,
++			&logical_sectors, &data_sectors);
++
++		if (data_sectors)
++			dm_icomp_read_one_extent(req, first_block_index,
++				logical_sectors, data_sectors, reuse);
++
++		block_index = first_block_index +
++				DMCP_SECTOR_TO_BLOCK(logical_sectors);
++	}
++}
++
++/*
++ * read existing data
++ */
++static void dm_icomp_handle_read_read_existing(struct dm_icomp_req *req)
++{
++	dm_icomp_handle_read_existing(req, false);
++
++	if (req->result)
++		return;
++
++	/* A shortcut if all data is in already */
++	if (list_empty(&req->all_io))
++		dm_icomp_handle_read_decomp(req);
++}
++
++static void dm_icomp_handle_read_request(struct dm_icomp_req *req)
++{
++	dm_icomp_get_req(req);
++
++	if (GET_REQ_STAGE(req) == STAGE_INIT) {
++		if (!dm_icomp_lock_req_range(req)) {
++			dm_icomp_put_req(req);
++			return;
++		}
++		dm_icomp_handle_read_read_existing(req);
++	} else if (GET_REQ_STAGE(req) == STAGE_READ_EXISTING) {
++		dm_icomp_handle_read_decomp(req);
++	}
++
++	dm_icomp_put_req(req);
++}
++
++static void dm_icomp_write_meta_done(void *context, unsigned long error)
++{
++	struct dm_icomp_req *req = context;
++
++	dm_icomp_put_req(req);
++}
++
++static u64 dm_icomp_block_meta_page_index(u64 block, bool end)
++{
++	u64 bits = block * DMCP_META_BITS - !!end;
++	/*
++	 * >> 5; 32 bits per entry
++	 * << 2; each entry is 4 bytes
++	 * >> PAGE_SHIFT; PAGE_SHIFT pages
++	 */
++	return bits >> (5 - 2 + PAGE_SHIFT);
++}
++
++
++/*
++ * write compressed data to the backing storage.
++ * @io : io range
++ * @sector_start : the sector on backing storage to which the
++ *	compressed data needs to be written.
++ * @meta_start: the page index of the bits corresponding to
++ * @meta_end  : start and end blocks.
++ */
++static int dm_icomp_compress_write(struct dm_icomp_io_range *io,
++		sector_t sector_start, u64 *meta_start, u64 *meta_end)
++{
++	struct dm_icomp_req *req = io->req;
++	sector_t count = DMCP_BYTES_TO_SECTOR(io->decomp_len);
++	unsigned int comp_len, ret;
++	u64 page_index;
++
++	/* comp_data must be able to accommadate a larger compress buffer */
++	ret = dm_icomp_io_range_compress(req->info, io, &comp_len);
++	if (ret < 0) {
++		req->result = -EIO;
++		return -EIO;
++	}
++	WARN_ON(comp_len > io->comp_len);
++
++	dm_icomp_get_req(req);
++
++	io->io_req.bi_op = REQ_OP_WRITE;
++	io->io_req.bi_op_flags = (req->bio->bi_opf & REQ_FUA);
++	io->io_req.mem.ptr.addr = io->comp_data;
++	io->io_req.mem.type = DM_IO_KMEM;
++	io->io_req.mem.offset = 0;
++	io->io_region.count = DMCP_BYTES_TO_SECTOR(comp_len);
++	io->io_region.sector = sector_start + req->info->data_start;
++
++	dm_icomp_release_decomp_buffer(io);
++
++
++	WARN_ON((io->io_region.sector + io->io_region.count)
++			>= req->info->total_sector);
++	dm_io(&io->io_req, 1, &io->io_region, NULL);
++
++	/* update the meta data bits */
++	dm_icomp_set_extent(req, DMCP_SECTOR_TO_BLOCK(sector_start),
++		DMCP_SECTOR_TO_BLOCK(count), DMCP_BYTES_TO_SECTOR(comp_len));
++
++	page_index = dm_icomp_block_meta_page_index(
++		DMCP_SECTOR_TO_BLOCK(sector_start), false);
++	if (*meta_start > page_index)
++		*meta_start = page_index;
++
++	page_index = dm_icomp_block_meta_page_index(
++			DMCP_SECTOR_TO_BLOCK(sector_start + count), true);
++	if (*meta_end < page_index)
++		*meta_end = page_index;
++	return 0;
++}
++
++/*
++ * modify and write compressed data to the backing storage.
++ * @io : io range
++ * @meta_start: the page index of the bits corresponding to
++ * @meta_end  : start and end blocks.
++ */
++static int dm_icomp_handle_write_modify(struct dm_icomp_io_range *io,
++	u64 *meta_start, u64 *meta_end)
++{
++	struct dm_icomp_req *req = io->req;
++	sector_t bio_start, bio_end, buf_start, buf_end, overlap;
++	off_t bio_off, buf_off;
++	int ret;
++	unsigned int decomp_len;
++
++	io->io_region.sector -= req->info->data_start;
++
++	/* decompress original data */
++	if (dm_icomp_update_io_read_range(io)) {
++		req->result = -EIO;
++		return -EIO;
++	}
++
++	ret = dm_icomp_io_range_decompress(req->info, io, &decomp_len);
++	if (ret < 0) {
++		req->result = -EINVAL;
++		return -EIO;
++	}
++
++	bio_start = req->bio->bi_iter.bi_sector;
++	bio_end = bio_end_sector(req->bio) - 1;
++
++	buf_start = io->io_region.sector;
++	buf_end = buf_start + DMCP_BYTES_TO_SECTOR(decomp_len) - 1;
++
++	/* if no overlap, nothing to do. Just return */
++	if (bio_start >= buf_end || bio_end <= buf_start)
++		return 0;
++
++	bio_off = (buf_start > bio_start) ?  (buf_start - bio_start) : 0;
++	buf_off = (bio_start > buf_start) ?  (bio_start - buf_start) : 0;
++
++	/*
++	 * overlap = sizeof(block1) + sizeof(block2) - sizeof(left_side_shift) -
++	 *		sizeof(right_side_shift)  / 2  +  1
++	 */
++	overlap  =  (((bio_end - bio_start) + (buf_end - buf_start) -
++		abs(buf_end - bio_end) - abs(buf_start - bio_start)) >> 1) + 1;
++
++
++	dm_icomp_bio_copy(req->bio, DMCP_SECTOR_TO_BYTES(bio_off),
++		   io->decomp_data + DMCP_SECTOR_TO_BYTES(buf_off),
++		   DMCP_SECTOR_TO_BYTES(overlap), true);
++
++	return dm_icomp_compress_write(io, io->io_region.sector,
++			meta_start, meta_end);
++}
++
++
++/*
++ * create and write new extents. Each extent is not more than
++ * 256 sectors.
++ * @req : the request
++ * @sec_start: the start sector of the request
++ * @total  : the total sectors
++ * @list  : collect each 256 sector size io request in this list
++ * @meta_start: the page index of the bits corresponding to
++ * @meta_end  : start and end blocks.
++ *
++ */
++static void dm_icomp_handle_write_create(struct dm_icomp_req *req,
++	sector_t sec_start, sector_t total,
++	struct list_head *list, u64 *meta_start, u64 *meta_end)
++{
++	struct dm_icomp_io_range *io;
++	sector_t count, offset = 0;
++	int ret;
++
++	while (total) {
++
++		/* max i/o is 128kbytes i.e 256 sectors */
++		count = min_t(sector_t, total, 256);
++		io = dm_icomp_create_io_write_range(req, offset, count);
++		if (!io) {
++			req->result = -EIO;
++			return;
++		}
++
++		ret = dm_icomp_compress_write(io, sec_start, meta_start,
++			meta_end);
++		if (ret) {
++			dm_icomp_free_io_range(io);
++			return;
++		}
++
++
++		list_add_tail(&io->next, list);
++		total -= count;
++		sec_start += count;
++		offset += count;
++
++	}
++}
++
++/*
++ *  handle the write request.
++ */
++static void dm_icomp_handle_write_comp(struct dm_icomp_req *req)
++{
++	struct dm_icomp_io_range *io;
++	sector_t io_start, req_start, req_end;
++	u64 meta_start = -1L, meta_end = 0;
++	LIST_HEAD(newlist);
++
++	SET_REQ_STAGE(req, STAGE_WRITE_COMP);
++
++	if (req->result)
++		return;
++
++	req_start = req->bio->bi_iter.bi_sector;
++	list_for_each_entry(io, &req->all_io, next) {
++
++		io_start = io->io_region.sector - req->info->data_start;
++
++		if (req_start < io_start) {
++			/* fill the gap */
++			dm_icomp_handle_write_create(req, req_start,
++				(io_start - req_start), &newlist,
++				&meta_start, &meta_end);
++		}
++
++		dm_icomp_handle_write_modify(io, &meta_start, &meta_end);
++
++		req_start = io_start + DMCP_BYTES_TO_SECTOR(io->logical_bytes);
++	}
++
++	req_end =  bio_end_sector(req->bio);
++	if (req_start < req_end) {
++		/* fill the gap */
++		dm_icomp_handle_write_create(req, req_start,
++			 req_end-req_start, &newlist, &meta_start,
++			&meta_end);
++	}
++
++	list_splice_tail(&newlist, &req->all_io);
++
++	if (req->info->write_mode == DMCP_WRITE_THROUGH ||
++				(req->bio->bi_opf & REQ_FUA)) {
++		if (meta_start == -1)
++			return;
++		dm_icomp_get_req(req);
++		dm_icomp_write_meta(req->info, meta_start,
++			meta_end+1, req,
++			dm_icomp_write_meta_done,
++			REQ_OP_WRITE, req->bio->bi_opf);
++	}
++}
++
++/*
++ *  read the data, modify and write it back to the backing store.
++ */
++static void dm_icomp_handle_write_read_existing(struct dm_icomp_req *req)
++{
++	dm_icomp_handle_read_existing(req, true);
++	if (req->result)
++		return;
++
++	if (list_empty(&req->all_io))
++		dm_icomp_handle_write_comp(req);
++}
++
++static void dm_icomp_handle_write_request(struct dm_icomp_req *req)
++{
++	dm_icomp_get_req(req);
++
++	if (GET_REQ_STAGE(req) == STAGE_INIT) {
++		if (!dm_icomp_lock_req_range(req)) {
++			dm_icomp_put_req(req);
++			return;
++		}
++		dm_icomp_handle_write_read_existing(req);
++	} else if (GET_REQ_STAGE(req) == STAGE_READ_EXISTING) {
++		dm_icomp_handle_write_comp(req);
++	}
++
++	dm_icomp_put_req(req);
++}
++
++/* For writeback mode */
++static void dm_icomp_handle_flush_request(struct dm_icomp_req *req)
++{
++	struct writeback_flush_data wb;
++
++	atomic_set(&wb.cnt, 1);
++	init_completion(&wb.complete);
++
++	dm_icomp_flush_dirty_meta(req->info, &wb);
++
++	writeback_flush_io_done(&wb, 0);
++	wait_for_completion(&wb.complete);
++
++	req->bio->bi_error = 0;
++	bio_endio(req->bio);
++	kmem_cache_free(dm_icomp_req_cachep, req);
++}
++
++static void dm_icomp_handle_request(struct dm_icomp_req *req)
++{
++	if (req->bio->bi_opf & REQ_PREFLUSH)
++		dm_icomp_handle_flush_request(req);
++	else if (op_is_write(bio_op(req->bio)))
++		dm_icomp_handle_write_request(req);
++	else
++		dm_icomp_handle_read_request(req);
++}
++
++static void dm_icomp_do_request_work(struct work_struct *work)
++{
++	struct dm_icomp_io_worker *worker = container_of(work,
++				struct dm_icomp_io_worker, work);
++	LIST_HEAD(list);
++	struct dm_icomp_req *req;
++	struct blk_plug plug;
++	bool repeat;
++
++	blk_start_plug(&plug);
++again:
++	spin_lock_irq(&worker->lock);
++	list_splice_init(&worker->pending, &list);
++	spin_unlock_irq(&worker->lock);
++
++	repeat = !list_empty(&list);
++	while (!list_empty(&list)) {
++		req = list_first_entry(&list, struct dm_icomp_req, sibling);
++		list_del(&req->sibling);
++
++		schedule();
++		dm_icomp_handle_request(req);
++	}
++	if (repeat)
++		goto again;
++	blk_finish_plug(&plug);
++}
++
++static bool valid_request(struct bio *bio, struct dm_icomp_info *info)
++{
++	sector_t dev_end	=  info->ti->len;
++	sector_t req_end	=  bio_end_sector(bio) - 1;
++
++	return (req_end <= dev_end);
++}
++
++static int dm_icomp_map(struct dm_target *ti, struct bio *bio)
++{
++	struct dm_icomp_info *info = ti->private;
++	struct dm_icomp_req *req;
++
++	if ((bio->bi_opf & REQ_PREFLUSH) &&
++			info->write_mode == DMCP_WRITE_THROUGH) {
++		bio->bi_bdev = info->dev->bdev;
++		return DM_MAPIO_REMAPPED;
++	}
++
++	if (!(bio->bi_opf & REQ_PREFLUSH) && !valid_request(bio, info)) {
++		req->bio = bio;
++		req->bio->bi_error = -EINVAL;
++		bio_endio(req->bio);
++		return DM_MAPIO_SUBMITTED;
++	}
++
++	req = kmem_cache_alloc(dm_icomp_req_cachep, GFP_NOIO);
++	if (!req)
++		return -EIO;
++
++	req->bio = bio;
++	req->info = info;
++	atomic_set(&req->io_pending, 0);
++	INIT_LIST_HEAD(&req->all_io);
++	req->result = 0;
++	SET_REQ_STAGE(req, STAGE_INIT);
++	req->locked_locks = 0;
++
++	req->cpu = raw_smp_processor_id();
++	dm_icomp_queue_req(info, req);
++
++	return DM_MAPIO_SUBMITTED;
++}
++
++static void dm_icomp_status(struct dm_target *ti, status_type_t type,
++	  unsigned int status_flags, char *result, unsigned int maxlen)
++{
++	struct dm_icomp_info *info = ti->private;
++	unsigned int sz = 0;
++
++	switch (type) {
++	case STATUSTYPE_INFO:
++		DMEMIT("%lu %lu %lu",
++			atomic64_read(&info->uncompressed_write_size),
++			atomic64_read(&info->compressed_write_size),
++			atomic64_read(&info->meta_write_size));
++		break;
++	case STATUSTYPE_TABLE:
++		if (info->write_mode == DMCP_WRITE_BACK)
++			DMEMIT("%s %s %d", info->dev->name, "writeback",
++				info->writeback_delay);
++		else
++			DMEMIT("%s %s", info->dev->name, "writethrough");
++		break;
++	}
++}
++
++static int dm_icomp_iterate_devices(struct dm_target *ti,
++				  iterate_devices_callout_fn fn, void *data)
++{
++	struct dm_icomp_info *info = ti->private;
++
++	return fn(ti, info->dev, info->data_start,
++		DMCP_BLOCK_TO_SECTOR(info->data_blocks), data);
++}
++
++static void dm_icomp_io_hints(struct dm_target *ti,
++			    struct queue_limits *limits)
++{
++	/* No blk_limits_logical_block_size */
++	limits->logical_block_size = limits->physical_block_size =
++	limits->io_min = DMCP_BLOCK_SIZE;
++	limits->max_hw_sectors = DMCP_BYTES_TO_SECTOR(DMCP_MAX_SIZE);
++}
++
++static struct target_type dm_icomp_target = {
++	.name   = "inplacecompress",
++	.version = {1, 0, 0},
++	.module = THIS_MODULE,
++	.ctr    = dm_icomp_ctr,
++	.dtr    = dm_icomp_dtr,
++	.map    = dm_icomp_map,
++	.status = dm_icomp_status,
++	.iterate_devices = dm_icomp_iterate_devices,
++	.io_hints = dm_icomp_io_hints,
++};
++
++static int __init dm_icomp_init(void)
++{
++	int r;
++	int arr_size = ARRAY_SIZE(compressors);
++
++	for (r = 0; r < arr_size; r++)
++		if (crypto_has_comp(compressors[r].name, 0, 0))
++			break;
++	if (r >= arr_size) {
++		DMWARN("No crypto compressors are supported");
++		return -EINVAL;
++	}
++	default_compressor = r;
++	strlcpy(dm_icomp_algorithm, compressors[r].name,
++			sizeof(dm_icomp_algorithm));
++
++	r = -ENOMEM;
++	dm_icomp_req_cachep = kmem_cache_create("dm_icomp_requests",
++		sizeof(struct dm_icomp_req), 0, 0, NULL);
++	if (!dm_icomp_req_cachep) {
++		DMWARN("Can't create request cache");
++		goto err;
++	}
++
++	dm_icomp_io_range_cachep = kmem_cache_create("dm_icomp_io_range",
++		sizeof(struct dm_icomp_io_range), 0, 0, NULL);
++	if (!dm_icomp_io_range_cachep) {
++		DMWARN("Can't create io_range cache");
++		goto err;
++	}
++
++	dm_icomp_meta_io_cachep = kmem_cache_create("dm_icomp_meta_io",
++		sizeof(struct dm_icomp_meta_io), 0, 0, NULL);
++	if (!dm_icomp_meta_io_cachep) {
++		DMWARN("Can't create meta_io cache");
++		goto err;
++	}
++
++	dm_icomp_wq = alloc_workqueue("dm_icomp_io",
++		WQ_UNBOUND|WQ_MEM_RECLAIM|WQ_CPU_INTENSIVE, 0);
++	if (!dm_icomp_wq) {
++		DMWARN("Can't create io workqueue");
++		goto err;
++	}
++
++	r = dm_register_target(&dm_icomp_target);
++	if (r < 0) {
++		DMWARN("target registration failed");
++		goto err;
++	}
++
++	for_each_possible_cpu(r) {
++		INIT_LIST_HEAD(&dm_icomp_io_workers[r].pending);
++		spin_lock_init(&dm_icomp_io_workers[r].lock);
++		INIT_WORK(&dm_icomp_io_workers[r].work,
++				dm_icomp_do_request_work);
++	}
++	return 0;
++err:
++	kmem_cache_destroy(dm_icomp_req_cachep);
++	kmem_cache_destroy(dm_icomp_io_range_cachep);
++	kmem_cache_destroy(dm_icomp_meta_io_cachep);
++	if (dm_icomp_wq)
++		destroy_workqueue(dm_icomp_wq);
++
++	return r;
++}
++
++static void __exit dm_icomp_exit(void)
++{
++	dm_unregister_target(&dm_icomp_target);
++	kmem_cache_destroy(dm_icomp_req_cachep);
++	kmem_cache_destroy(dm_icomp_io_range_cachep);
++	kmem_cache_destroy(dm_icomp_meta_io_cachep);
++	destroy_workqueue(dm_icomp_wq);
++}
++
++module_init(dm_icomp_init);
++module_exit(dm_icomp_exit);
++
++MODULE_AUTHOR("Shaohua Li <shli@kernel.org>");
++MODULE_DESCRIPTION(DM_NAME " target with data inplace-compression");
++MODULE_LICENSE("GPL");
+diff --git a/drivers/md/dm-inplace-compress.h b/drivers/md/dm-inplace-compress.h
+new file mode 100644
+index 0000000..ab28e51
+--- /dev/null
++++ b/drivers/md/dm-inplace-compress.h
+@@ -0,0 +1,185 @@
++#ifndef __DM_INPLACE_COMPRESS_H__
++#define __DM_INPLACE_COMPRESS_H__
++#include <linux/types.h>
++
++#define DMCP_SUPER_MAGIC 0x106526c206506c09
++#define DMCP_COMPRESS_MAGIC 0xfaceecaf
++struct dm_icomp_super_block {
++	__le64 magic;
++	__le64 meta_blocks;
++	__le64 data_blocks;
++	u8 comp_alg;
++} __packed;
++
++#define DMCP_COMP_ALG_LZO 1
++#define DMCP_COMP_ALG_842 0
++
++#ifdef __KERNEL__
++/*
++ * Minium logical size of this target is 4096 byte, which is a block.
++ * Data of a block is compressed. Compressed data is round up to 512B, which is
++ * the payload. For each block, we have 5 bits meta data. bit 0 - 3 stands
++ * payload length(0 - 8 sectors). If compressed payload length is 8 sectors, we
++ * just store uncompressed data. Actual compressed data length is stored at the
++ * last 32 bits of payload if data is compressed. In disk, payload is stored at
++ * the beginning of logical sector of the block. If IO size is bigger than one
++ * block, we store the whole data as an extent. Bit 4 stands tail for an
++ * extent. Max allowed extent size is 128k.
++ */
++#define DMCP_BLOCK_SHIFT	12
++#define DMCP_BLOCK_SIZE		(1 << DMCP_BLOCK_SHIFT)
++#define DMCP_SECTOR_SHIFT	SECTOR_SHIFT
++#define DMCP_SECTOR_SIZE	(1 << SECTOR_SHIFT)
++#define DMCP_BLOCK_SECTOR_SHIFT (DMCP_BLOCK_SHIFT - DMCP_SECTOR_SHIFT)
++#define DMCP_BLOCK_TO_SECTOR(b) ((b) << DMCP_BLOCK_SECTOR_SHIFT)
++#define DMCP_SECTOR_TO_BLOCK(s) ((s) >> DMCP_BLOCK_SECTOR_SHIFT)
++#define DMCP_SECTOR_TO_BYTES(s) ((s) << DMCP_SECTOR_SHIFT)
++#define DMCP_BYTES_TO_SECTOR(b) ((b) >> DMCP_SECTOR_SHIFT)
++#define DMCP_BYTES_TO_BLOCK(b)	((b) >> DMCP_BLOCK_SHIFT)
++
++#define DMCP_MIN_SIZE	DMCP_BLOCK_SIZE
++#define DMCP_MAX_SIZE	(128 * 2 * DMCP_SECTOR_SIZE) /* 128k */
++
++#define DMCP_BITS_PER_ENTRY	32
++#define DMCP_META_BITS		5
++#define DMCP_LENGTH_BITS	4
++#define DMCP_TAIL_MASK		(1 << DMCP_LENGTH_BITS)
++#define DMCP_LENGTH_MASK	(DMCP_TAIL_MASK - 1)
++
++#define DMCP_META_START_SECTOR (DMCP_BLOCK_SIZE >> DMCP_SECTOR_SHIFT)
++
++enum DMCP_WRITE_MODE {
++	DMCP_WRITE_BACK,
++	DMCP_WRITE_THROUGH,
++};
++
++/*
++ * a lock spans 128 blocks i.e 512kbytes.
++ * max I/O is 128K, which can at-most span two locks.
++ */
++#define BITMAP_HASH_SHIFT 7
++#define BITMAP_HASH_LEN (1<<6)
++#define BITMAP_HASH_MASK (BITMAP_HASH_LEN - 1)
++struct dm_icomp_hash_lock {
++	int io_running;
++	spinlock_t wait_lock;
++	struct list_head wait_list;
++};
++
++struct dm_icomp_info {
++	struct dm_target *ti;
++	struct dm_dev *dev;
++
++	int comp_alg;
++	struct crypto_comp *tfm[NR_CPUS];
++
++	sector_t total_sector;	/* total sectors in the backing store */
++	sector_t data_start;
++	u64 data_blocks;
++	u64 no_of_sectors;
++
++	u32 *meta_bitmap;
++	u64 meta_bitmap_bits;
++	u64 meta_bitmap_pages;
++	struct dm_icomp_hash_lock bitmap_locks[BITMAP_HASH_LEN];
++
++	enum DMCP_WRITE_MODE write_mode;
++	unsigned int writeback_delay; /* second */
++	struct task_struct *writeback_tsk;
++	struct dm_io_client *io_client;
++
++	atomic64_t compressed_write_size;
++	atomic64_t uncompressed_write_size;
++	atomic64_t meta_write_size;
++};
++
++struct dm_icomp_meta_io {
++	struct dm_io_request io_req;
++	struct dm_io_region io_region;
++	void *data;
++	void (*fn)(void *data, unsigned long error);
++};
++
++struct dm_icomp_io_range {
++	struct dm_io_request io_req;
++	struct dm_io_region io_region;
++	bool decomp_kmap;	     /* Is the decomp_data kmapped'? */
++	void *decomp_data;
++	void *decomp_real_data;      /* holds the actual start of the buffer */
++	unsigned int decomp_len;     /* actual allocated/mapped length */
++	unsigned int logical_bytes;  /* decompressed size of the extent */
++	bool comp_kmap;		     /* Is the comp_data kmapped'? */
++	void *comp_data;
++	void *comp_real_data;	     /* holds the actual start of the buffer */
++	unsigned int comp_len;	     /* actual allocated/mapped length */
++	unsigned int data_bytes;     /* compressed size of the extent */
++	struct list_head next;
++	struct dm_icomp_req *req;
++};
++
++enum DMCP_REQ_STAGE {
++	STAGE_INIT,
++	STAGE_READ_EXISTING,
++	STAGE_READ_DECOMP,
++	STAGE_WRITE_COMP,
++	STAGE_DONE,
++};
++
++struct dm_icomp_req {
++	struct bio *bio;
++	struct dm_icomp_info *info;
++	struct list_head sibling;
++	struct list_head all_io;
++	atomic_t io_pending;
++	enum DMCP_REQ_STAGE stage;
++	struct dm_icomp_hash_lock *locks[2];
++	int locked_locks;
++	int result;
++	int cpu;
++	struct work_struct work;
++};
++
++struct dm_icomp_io_worker {
++	struct list_head pending;
++	spinlock_t lock;
++	struct work_struct work;
++};
++
++struct dm_icomp_compressor_data {
++	char *name;
++	int (*comp_len)(int comp_len);
++	int (*max_comp_len)(int comp_len);
++};
++
++static inline int lzo_comp_len(int comp_len)
++{
++	/* lzo compression overshoots the comp buffer
++	 * if the buffer size is insufficient.
++	 * Once that bug is fixed we can return half
++	 * the length.
++	 *
++	 * return lzo1x_worst_compress(comp_len) >> 1;
++	 *
++	 * For now its the full length.
++	 */
++	return lzo1x_worst_compress(comp_len);
++}
++
++static inline int lzo_max_comp_len(int comp_len)
++{
++	return lzo1x_worst_compress(comp_len);
++}
++
++static inline int nx842_comp_len(int comp_len)
++{
++	return (comp_len >> 1);
++}
++
++static inline int nx842_max_comp_len(int comp_len)
++{
++	return comp_len;
++}
++
++#endif /* __KERNEL__ */
++
++#endif /* __DM_INPLACE_COMPRESS_H__ */
 -- 
-Jens Axboe
+1.8.3.1
