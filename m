@@ -1,35 +1,33 @@
-From: Binoy Jayan <binoy.jayan@linaro.org>
-Subject: Re: [RFC PATCH v3] crypto: Add IV generation algorithms
-Date: Thu, 19 Jan 2017 20:33:50 +0530
-Message-ID: <CAHv-k_85e8d3_O50-DEynw=AXSfuFXfj4LT2cqVv2zqwMnG+Pw@mail.gmail.com>
-References: <1484732425-10319-1-git-send-email-binoy.jayan@linaro.org>
- <1484732425-10319-2-git-send-email-binoy.jayan@linaro.org>
- <CAOtvUMfhethgZ8TarKGDumL1W5fgjwy1Hi7f88mmCCD6vJ_hLg@mail.gmail.com>
- <CAHv-k_-7m_oiVgzB5a3_=R9+fouxUc6fyxSchGtxfUKP00eM4w@mail.gmail.com> <CAOtvUMenhgAuZXcsUPpOd5RfQh8XE9krve5YsFF3h-gK8KfDYQ@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <CAOtvUMenhgAuZXcsUPpOd5RfQh8XE9krve5YsFF3h-gK8KfDYQ@mail.gmail.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: Gilad Ben-Yossef <gilad@benyossef.com>
-Cc: Oded <oded.golombek@arm.com>, Ofir <Ofir.Drang@arm.com>, Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, linux-crypto@vger.kernel.org, Mark Brown <broonie@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Linux kernel mailing list <linux-kernel@vger.kernel.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, Rajendra <rnayak@codeaurora.org>, Milan Broz <gmazyland@gmail.com>
+From: Peter Desnoyers <pjd@ccs.neu.edu>
+Subject: Question about dmsetup / udev interactions
+Date: Thu, 19 Jan 2017 17:43:53 -0500
+Message-ID: <55BECEAF-A213-425D-87F8-9C83ABA4DDA9@ccs.neu.edu>
+Mime-Version: 1.0 (Mac OS X Mail 8.2 \(2104\))
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: Mohammad Hossein Hajkazemi <hajkazemi@gmail.com>, MAniA Abdi <mania.abdi287@gmail.com>
 List-Id: dm-devel.ids
 
-Hi Gilad,
+I'm not quite sure where to start with this. We've got a device mapper target (implementing a translation layer over shingled disk) where a lot of the functionality is up at user level. In our current design, when the target is first created it doesn't have any mapping information, and so must block all I/Os until the user space daemon has fed that information to it, after which it unblocks any pending I/Os.
 
-On 19 January 2017 at 15:17, Gilad Ben-Yossef <gilad@benyossef.com> wrote:
-> I tried adding sg_init_table() where I thought it was appropriate and
-> it didn't resolve the issue.
->
-> For what it's worth, my guess is that the difference between our
-> setups is not related to Arm but to other options or the storage I'm
-> using.
+The problem we have is a deadlock with udev - when the target device appears, udev seems to try to read its partition table, hanging until the userspace daemon sends the map down and enables I/Os. However some versions of dmsetup / libdevmapper interact with udev, so the device doesn't get created (and thus we can't feed it the map) because we're blocked on udevd.
 
-I was able to reproduce this again on my qemu setup with a 1GB virtual
-disk. That is the same thing I do with the x86 setup as well.
+At the moment we're not really sure where to start looking to figure a way out of this - would it be a udev rules change or something simple like that? Or for now should we just rebuild the LVM tools with one or two of the thirty-odd options set to a different value?
 
-> Are you using cryptd?
+Any suggestions on which direction we should start looking would be welcome.
 
-You mean config CRYPTO_CRYPTD?
-
--Binoy
+Thanks,
+.....................................................................
+ Peter Desnoyers                                  pjd@ccs.neu.edu
+ Northeastern Computer & Information Science      (617) 373-8683
