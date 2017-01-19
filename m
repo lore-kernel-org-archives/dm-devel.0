@@ -1,72 +1,53 @@
-From: Ram Pai <linuxram@us.ibm.com>
-Subject: [RFC PATCH v2] DM: dm-inplace-compress: inplace
-	compressed DM target
-Date: Wed, 18 Jan 2017 10:31:48 -0800
-Message-ID: <1484764309-14383-1-git-send-email-linuxram@us.ibm.com>
+From: Binoy Jayan <binoy.jayan@linaro.org>
+Subject: Re: [RFC PATCH v3] crypto: Add IV generation algorithms
+Date: Thu, 19 Jan 2017 10:12:23 +0530
+Message-ID: <CAHv-k_-7m_oiVgzB5a3_=R9+fouxUc6fyxSchGtxfUKP00eM4w@mail.gmail.com>
+References: <1484732425-10319-1-git-send-email-binoy.jayan@linaro.org>
+ <1484732425-10319-2-git-send-email-binoy.jayan@linaro.org> <CAOtvUMfhethgZ8TarKGDumL1W5fgjwy1Hi7f88mmCCD6vJ_hLg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <CAOtvUMfhethgZ8TarKGDumL1W5fgjwy1Hi7f88mmCCD6vJ_hLg@mail.gmail.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: Gilad Ben-Yossef <gilad@benyossef.com>
+Cc: Oded <oded.golombek@arm.com>, Ofir <Ofir.Drang@arm.com>, Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, linux-crypto@vger.kernel.org, Mark Brown <broonie@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Linux kernel mailing list <linux-kernel@vger.kernel.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, Rajendra <rnayak@codeaurora.org>, Milan Broz <gmazyland@gmail.com>
 List-Id: dm-devel.ids
 
-This  patch provides a generic device-mapper inplace compression
-device.  Originally written by Shaohua Li.
-https://www.redhat.com/archives/dm-devel/2013-December/msg00143.html
+Hi Gilad,
 
-I have optimized and hardened the code.
+On 18 January 2017 at 20:51, Gilad Ben-Yossef <gilad@benyossef.com> wrote:
+> I have some review comments and a bug report -
 
-Testing:
--------
-This compression block device  is  tested in the following scenarios
-a) backing a ext4 filesystem 
-b) backing swap
-Its tested on a PPC64 system only.
-More    testing  is  needed on different architectures.
+Thank you very much for testing this on ARM and for the comments.
 
-TODO:
------
-For testing, the code was modified to use GFP_ATOMIC allocations when   device
-is   used as swap. A more dynamic mechanism is needed to switch allocation
-strategy based on usage. Probably a sysfs interface?
+> I'm pretty sure this needs to be
+>
+>  n2 = bio_segments(ctx->bio_out);
 
-Version v1:
-	Comments from Alasdair have been incorporated.
-	https://www.redhat.com/archives/dm-devel/2013-December/msg00144.html
+Yes you are right, that was a typo :)
 
-Version v2:
-	All patches are merged into a single patch.
-	Major code re-arrangement.
-	Data and metablocks allocated based on the length of the device
-	map rather than the size of the backing device.
-        Size   of   each entry   in  the bitmap array is explicitly set
-	 to 32bits.
-	Attempt  to  reuse  the  provided  bio  buffer  space   instead  of
-	 allocating a new one.
+>> +
+>> +       rinfo.is_write = bio_data_dir(ctx->bio_in) == WRITE;
+>
+> Please consider wrapping the above boolean expression in parenthesis.
 
-Your comments to improve the code is very much appreciated.
+Well, I can do that to enhance the clarity.
 
-Ram Pai (1):
-  From: Shaohua Li <shli@kernel.org>
+>> +       rinfo.iv_sector = ctx->cc_sector;
+>> +       rinfo.nents = nents;
+>> +       rinfo.iv = iv;
+>> +
+>> +       skcipher_request_set_crypt(req, dmreq->sg_in, dmreq->sg_out,
+>
+> Also, where do the scatterlist src2 and dst2 that you use
+> sg_set_page() get sg_init_table() called on?
+> I couldn't figure it out...
 
- .../device-mapper/dm-inplace-compress.txt          |  139 ++
- drivers/md/Kconfig                                 |    6 +
- drivers/md/Makefile                                |    2 +
- drivers/md/dm-inplace-compress.c                   | 2104 ++++++++++++++++++++
- drivers/md/dm-inplace-compress.h                   |  185 ++
- 5 files changed, 2436 insertions(+)
- create mode 100644 Documentation/device-mapper/dm-inplace-compress.txt
- create mode 100644 drivers/md/dm-inplace-compress.c
- create mode 100644 drivers/md/dm-inplace-compress.h
+Thank you pointing this out. I missed out to add sg_init_table(src2, 1)
+and sg_init_table(dst2, 1), but sg_set_page is used in geniv_iter_block.
+This is probably the reason for the panic on ARM platform. However it
+ran fine under qemu-x86. May be I should setup an arm platform too
+for testing.
 
--- 
-1.8.3.1
+Regards,
+Binoy
