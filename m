@@ -1,78 +1,66 @@
-From: Gilad Ben-Yossef <gilad@benyossef.com>
-Subject: Re: [RFC PATCH v3] crypto: Add IV generation algorithms
-Date: Thu, 19 Jan 2017 11:47:33 +0200
-Message-ID: <CAOtvUMenhgAuZXcsUPpOd5RfQh8XE9krve5YsFF3h-gK8KfDYQ@mail.gmail.com>
-References: <1484732425-10319-1-git-send-email-binoy.jayan@linaro.org>
-	<1484732425-10319-2-git-send-email-binoy.jayan@linaro.org>
-	<CAOtvUMfhethgZ8TarKGDumL1W5fgjwy1Hi7f88mmCCD6vJ_hLg@mail.gmail.com>
-	<CAHv-k_-7m_oiVgzB5a3_=R9+fouxUc6fyxSchGtxfUKP00eM4w@mail.gmail.com>
+From: =?UTF-8?B?T25kcmVqIE1vc27DocSNZWs=?= <omosnacek@gmail.com>
+Subject: Re: [RFC PATCH 0/6] Add bulk skcipher requests to crypto API and dm-crypt
+Date: Thu, 19 Jan 2017 15:21:37 +0100
+Message-ID: <CAAUqJDtZNGLW-PcPKJD5vdKMZqd6+sAKrbjqVbaVTQqWwZ4cGQ@mail.gmail.com>
+References: <cover.1484215956.git.omosnacek@gmail.com> <20170113104128.GA23497@gondor.apana.org.au>
+ <CAAUqJDtqN-ugcaz4VhuW0fzLbmKt4db8ggrRmaAq_zFvO+9Lvw@mail.gmail.com>
+ <20170113142959.GA24258@gondor.apana.org.au> <CAAUqJDsrFp2CczN5Gyy=rYLSDKi7=vQTQoyh=pE1kWue=c=fvw@mail.gmail.com>
+ <20170118044828.GB4460@gondor.apana.org.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAHv-k_-7m_oiVgzB5a3_=R9+fouxUc6fyxSchGtxfUKP00eM4w@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Binoy Jayan <binoy.jayan@linaro.org>
-Cc: Rajendra <rnayak@codeaurora.org>, Herbert Xu <herbert@gondor.apana.org.au>, Oded <oded.golombek@arm.com>, Mike Snitzer <snitzer@redhat.com>, Linux kernel mailing list <linux-kernel@vger.kernel.org>, Milan Broz <gmazyland@gmail.com>, linux-raid@vger.kernel.org, dm-devel@redhat.com, Mark Brown <broonie@kernel.org>, Arnd Bergmann <arnd@arndb.de>, linux-crypto@vger.kernel.org, Shaohua Li <shli@kernel.org>, "David S. Miller" <davem@davemloft.net>, Alasdair Kergon <agk@redhat.com>, Ofir <Ofir.Drang@arm.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <20170118044828.GB4460@gondor.apana.org.au>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: linux-crypto@vger.kernel.org, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Milan Broz <gmazyland@gmail.com>, Mikulas Patocka <mpatocka@redhat.com>, Binoy Jayan <binoy.jayan@linaro.org>
 List-Id: dm-devel.ids
 
-On Thu, Jan 19, 2017 at 6:42 AM, Binoy Jayan <binoy.jayan@linaro.org> wrote:
-> Hi Gilad,
+2017-01-18 5:48 GMT+01:00 Herbert Xu <herbert@gondor.apana.org.au>:
+> I'm open to other proposals.  The basic requirement is to be able to
+> process multiple blocks as one entity at the driver level, potentially
+> generating the IVs there too.
 >
-> On 18 January 2017 at 20:51, Gilad Ben-Yossef <gilad@benyossef.com> wrote:
->> I have some review comments and a bug report -
+> It's essentially the equivalent to full IPsec offload.
+
+Hm, I just looked at what the IPsec IV generation is actually doing
+and it seems to me that it's basically a crypto template that just
+somehow transforms the IV before it is passed to the child cipher... I
+thought for a while that you were implying that there already is some
+facility in the crypto API that allows submitting multiple messages +
+some initial sequence number that is auto-incremented and IVs are
+generated from the numbers. However, I could not find anything like
+that in the code, so now I think what you meant was just that I should
+somehow pull the actual IV generators into the crypto layer so that
+the IVs can be generated inside the hardware.
+
+If all you had in mind is just an equivalent of the current IPsec IV
+generation (as I understood it), then my bulk request scheme can in
+fact support it (you'd just pass sector numbers as the IVs). Of
+course, it would require additional changes over my patchset,
+specifically the creation of crypto templates for the dm-crypt IV
+modes, so they can be implemented by drivers. However, I wanted to
+avoid this until the key management in dm-crypt is simplified...
+
+If we also want to let the drivers process an offset+count chunk of
+sectors while auto-incrementing the sector number, then something like
+Binoy's approach would indeed be necessary, where the IV generators
+would be just regular skciphers, taking the initial sector number as
+the IV (although a disadvantage would be hard-coded sector/message
+size). Note, though, that the generic implementation of such transform
+could still use bulk requests on the underlying cipher so that
+encryption/decryption is performed efficiently even if there are no
+optimized/HW drivers for the specific IV generator templates.
+
+I will now try to focus on the key management simplification and when
+it is accepted/rejected we can discuss further about the best
+approach.
+
+Cheers,
+Ondrej
+
 >
-> Thank you very much for testing this on ARM and for the comments.
-
-My pleasure. Thanks for writing the code :-)
-
->
->>> +       rinfo.iv_sector = ctx->cc_sector;
->>> +       rinfo.nents = nents;
->>> +       rinfo.iv = iv;
->>> +
->>> +       skcipher_request_set_crypt(req, dmreq->sg_in, dmreq->sg_out,
->>
->> Also, where do the scatterlist src2 and dst2 that you use
->> sg_set_page() get sg_init_table() called on?
->> I couldn't figure it out...
->
-> Thank you pointing this out. I missed out to add sg_init_table(src2, 1)
-> and sg_init_table(dst2, 1), but sg_set_page is used in geniv_iter_block.
-> This is probably the reason for the panic on ARM platform. However it
-> ran fine under qemu-x86. May be I should setup an arm platform too
-> for testing.
-
-I tried adding sg_init_table() where I thought it was appropriate and
-it didn't resolve the issue.
-
-For what it's worth, my guess is that the difference between our
-setups is not related to Arm but to other options or the storage I'm
-using.
-
-Are you using cryptd?
-
-Thanks,
-Gilad
-
->
-> Regards,
-> Binoy
-
-
-
--- 
-Gilad Ben-Yossef
-Chief Coffee Drinker
-
-"If you take a class in large-scale robotics, can you end up in a
-situation where the homework eats your dog?"
- -- Jean-Baptiste Queru
+> Thanks,
+> --
+> Email: Herbert Xu <herbert@gondor.apana.org.au>
+> Home Page: http://gondor.apana.org.au/~herbert/
+> PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
