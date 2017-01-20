@@ -1,54 +1,78 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: [PATCH RFC 0/4] dm thin: support blk-throttle on data and
- metadata device
-Date: Fri, 20 Jan 2017 10:56:18 -0500
-Message-ID: <20170120155618.GA13969@redhat.com>
-References: <1484910952-29820-1-git-send-email-houtao1@huawei.com>
- <x49bmv192th.fsf@segfault.boston.devel.redhat.com>
+From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 02/13] block, dax: introduce dax_operations
+Date: Fri, 20 Jan 2017 09:28:26 -0800
+Message-ID: <CAPcyv4ihKqqR-bzNXeeTZ--F4MbEfqnmCyiQ2s3Ngc0oq488WQ@mail.gmail.com>
+References: <148488421301.37913.12835362165895864897.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <148488422405.37913.13366670089124790849.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <x49bmv192th.fsf@segfault.boston.devel.redhat.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Jeff Moyer <jmoyer@redhat.com>
-Cc: Hou Tao <houtao1@huawei.com>, dm-devel@redhat.com, linux-block@vger.kernel.org, agk@redhat.com, snitzer@redhat.com, ejt@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <148488422405.37913.13366670089124790849.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jens Axboe <axboe-b10kYP2dOMg@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
 List-Id: dm-devel.ids
 
-On Fri, Jan 20, 2017 at 10:19:22AM -0500, Jeff Moyer wrote:
-> Hou Tao <houtao1@huawei.com> writes:
-> 
-> > Hi all,
-> >
-> > We need to throttle the O_DIRECT IO on data and metadata device
-> > of a dm-thin pool and encounter some problems. If we set the
-> > limitation on the root blkcg, the throttle works. If we set the
-> > limitation on a child blkcg, the throttle doesn't work well.
-> >
-> > The reason why the throttle doesn't work is that dm-thin defers
-> > the process of bio when the physical block of bio has not been
-> > allocated. The bio will be submitted by the pool worker, and the
-> > blkcg of the bio will be the blkcg of the pool worker, namely,
-> > the root blkcg instead of the blkcg of the original IO thread.
-> > We only set a limitation on the blkcg of the original IO thread,
-> > so the blk-throttle doesn't work well.
-> >
-> > In order to handle the situation, we add a "keep_bio_blkcg" feature
-> > to dm-thin. If the feature is enabled, the original blkcg of bio
-> > will be saved at thin_map() and will be used during blk-throttle.
-> 
-> Why is this even an option?  I would think that you would always want
-> this behavior.
+On Thu, Jan 19, 2017 at 7:50 PM, Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
+> Prepare for the removal of memcpy_to_pmem() and copy_from_iter_pmem() by
+> introducing dax_ops. This allows for driver specific overrides for the
+> routines that transfer data to a dax capable block device.
+>
+> Cc: <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+> Cc: Jens Axboe <axboe-b10kYP2dOMg@public.gmane.org>
+> Cc: Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+> Cc: Toshi Kani <toshi.kani-ZPxbGqLxI0U@public.gmane.org>
+> Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> Cc: Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>
+> Cc: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+> Signed-off-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> ---
+>  arch/powerpc/sysdev/axonram.c |    6 +++++-
+>  drivers/block/brd.c           |    6 +++++-
+>  drivers/md/dm.c               |    6 +++++-
+>  drivers/nvdimm/pmem.c         |    6 +++++-
+>  drivers/s390/block/dcssblk.c  |    6 +++++-
+>  fs/block_dev.c                |    6 ++++--
+>  include/linux/blkdev.h        |    8 ++++++--
+>  7 files changed, 35 insertions(+), 9 deletions(-)
+>
+[..]
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index 3086da5664f3..87920a379d20 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -2725,13 +2725,17 @@ static const struct pr_ops dm_pr_ops = {
+>         .pr_clear       = dm_pr_clear,
+>  };
+>
+> +static const struct dax_operations dm_dax_ops = {
+> +       .direct_access = dm_blk_direct_access,
+> +};
+> +
+>  static const struct block_device_operations dm_blk_dops = {
+>         .open = dm_blk_open,
+>         .release = dm_blk_close,
+>         .ioctl = dm_blk_ioctl,
+> -       .direct_access = dm_blk_direct_access,
+>         .getgeo = dm_blk_getgeo,
+>         .pr_ops = &dm_pr_ops,
+> +       .dax_ops = &dm_dax_ops,
+>         .owner = THIS_MODULE
+>  };
 
-Agreed that this should not be an optional feature.
-
-One thing which always bothers me is that often we have dependencies
-on finishing of these bios. So if we assign bios to their original
-cgroups and if we create a cgroup with very low limit, then its
-possible that everything slows down.
-
-I guess answer to that is its a configuration issue and don't
-create groups with too small a limits. And don't allow unprivileged
-users to specify group limits.
-
-Vivek
+I just realized we need to do a bit more plumbing to support the
+device-mapper case. We need to implement all the dax_operations at the
+dm_dax_ops level and pass in the physical sector so that device-mapper
+can look up the backing block-device to call the real dax_operation if
+it is implemented.
