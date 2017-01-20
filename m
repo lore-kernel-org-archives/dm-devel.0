@@ -1,128 +1,206 @@
-From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH 00/13] dax, pmem: move cpu cache maintenance to libnvdimm
-Date: Thu, 19 Jan 2017 19:50:13 -0800
-Message-ID: <148488421301.37913.12835362165895864897.stgit@dwillia2-desk3.amr.corp.intel.com>
+From: Dan Williams <dan.j.williams@intel.com>
+Subject: [PATCH 02/13] block, dax: introduce dax_operations
+Date: Thu, 19 Jan 2017 19:50:24 -0800
+Message-ID: <148488422405.37913.13366670089124790849.stgit@dwillia2-desk3.amr.corp.intel.com>
+References: <148488421301.37913.12835362165895864897.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Cc: Jens Axboe <axboe-b10kYP2dOMg@public.gmane.org>, Tony Luck <tony.luck-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <148488421301.37913.12835362165895864897.stgit@dwillia2-desk3.amr.corp.intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-nvdimm@lists.01.org
+Cc: Jan Kara <jack@suse.cz>, Mike Snitzer <snitzer@redhat.com>, Toshi Kani <toshi.kani@hpe.com>, Matthew Wilcox <mawilcox@microsoft.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Jens Axboe <axboe@fb.com>, Jeff Moyer <jmoyer@redhat.com>, linux-fsdevel@vger.kernel.org, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>
 List-Id: dm-devel.ids
 
-A couple weeks back, in the course of reviewing the memcpy_nocache()
-proposal from Brian, Linus subtly suggested that the pmem specific
-memcpy_to_pmem() routine be moved to be implemented at the driver
-level [1]:
+Prepare for the removal of memcpy_to_pmem() and copy_from_iter_pmem() by
+introducing dax_ops. This allows for driver specific overrides for the
+routines that transfer data to a dax capable block device.
 
-   "Quite frankly, the whole 'memcpy_nocache()' idea or (ab-)using
-    copy_user_nocache() just needs to die. It's idiotic.
-    
-    As you point out, it's also fundamentally buggy crap.
-    
-    Throw it away. There is no possible way this is ever valid or
-    portable. We're not going to lie and claim that it is.
-    
-    If some driver ends up using 'movnt' by hand, that is up to that
-    *driver*. But no way in hell should we care about this one whit in
-    the sense of <linux/uaccess.h>."
-
-This feedback also dovetails with another fs/dax.c design wart of being
-hard coded to assume the backing device is pmem. We call the pmem
-specific copy, clear, and flush routines even if the backing device
-driver is one of the other 3 dax drivers (axonram, dccssblk, or brd).
-There is no reason to spend cpu cycles flushing the cache after writing
-to brd, for example, since it is using volatile memory for storage.
-
-Moreover, the pmem driver might be fronting a volatile memory range
-published by the ACPI NFIT, or the platform might have arranged to flush
-cpu caches on power fail. This latter capability is a feature that has
-appeared in embedded storage appliances ("legacy" / pre-NFIT nvdimm
-platforms).
-
-So, this series:
-
-1/ moves what was previously named "the pmem api" out of the global
-   namespace and into "that *driver*" (libnvdimm / pmem).
-
-2/ arranges for dax to stop abusing copy_user_nocache() and implements a
-   libnvdimm-local memcpy that uses movnt
-
-3/ makes cache maintenance optional by arranging for dax to call driver
-   specific copy and flush operations only if the driver publishes them.
-
-4/ adds a module parameter that can be used to inform libnvdimm of a
-   platform-level flush-cache-on-power-fail capability.
-
-[1]: https://lists.01.org/pipermail/linux-nvdimm/2017-January/008364.html
-
-These patches have a build success notification from the 0day kbuild robot
-and pass the libnvdimm / ndctl unit tests. I am looking to take them
-through the libnvdimm tree with acks from x86, block, dm etc...
-
+Cc: <dm-devel@redhat.com>
+Cc: Jan Kara <jack@suse.cz>
+Cc: Jens Axboe <axboe@fb.com>
+Cc: Jeff Moyer <jmoyer@redhat.com>
+Cc: Christoph Hellwig <hch@lst.de>
+Cc: Toshi Kani <toshi.kani@hpe.com>
+Cc: Mike Snitzer <snitzer@redhat.com>
+Cc: Matthew Wilcox <mawilcox@microsoft.com>
+Cc: Ross Zwisler <ross.zwisler@linux.intel.com>
+Signed-off-by: Dan Williams <dan.j.williams@intel.com>
 ---
+ arch/powerpc/sysdev/axonram.c |    6 +++++-
+ drivers/block/brd.c           |    6 +++++-
+ drivers/md/dm.c               |    6 +++++-
+ drivers/nvdimm/pmem.c         |    6 +++++-
+ drivers/s390/block/dcssblk.c  |    6 +++++-
+ fs/block_dev.c                |    6 ++++--
+ include/linux/blkdev.h        |    8 ++++++--
+ 7 files changed, 35 insertions(+), 9 deletions(-)
 
-Dan Williams (13):
-      x86, dax, pmem: remove indirection around memcpy_from_pmem()
-      block, dax: introduce dax_operations
-      x86, dax, pmem: introduce 'copy_from_iter' dax operation
-      dax, pmem: introduce an optional 'flush' dax operation
-      x86, dax: replace clear_pmem() with open coded memset + dax_ops->flush
-      x86, dax, libnvdimm: move wb_cache_pmem() to libnvdimm
-      x86, libnvdimm, pmem: move arch_invalidate_pmem() to libnvdimm
-      x86, libnvdimm, dax: stop abusing __copy_user_nocache
-      libnvdimm, pmem: implement cache bypass for all copy_from_iter() operations
-      libnvdimm, pmem: fix persistence warning
-      libnvdimm, nfit: enable support for volatile ranges
-      libnvdimm, pmem: disable dax flushing when pmem is fronting a volatile region
-      libnvdimm, pmem: disable dax flushing for 'cache flush on fail' platforms
-
-
- MAINTAINERS                      |    2 
- arch/powerpc/sysdev/axonram.c    |    6 +
- arch/x86/Kconfig                 |    1 
- arch/x86/include/asm/pmem.h      |  121 ----------------------------
- arch/x86/include/asm/string_64.h |    1 
- drivers/acpi/nfit/core.c         |   15 ++-
- drivers/block/brd.c              |    6 +
- drivers/md/dm.c                  |    6 +
- drivers/nvdimm/Kconfig           |    5 +
- drivers/nvdimm/Makefile          |    2 
- drivers/nvdimm/bus.c             |   10 +-
- drivers/nvdimm/claim.c           |    9 +-
- drivers/nvdimm/core.c            |    2 
- drivers/nvdimm/dax_devs.c        |    2 
- drivers/nvdimm/dimm_devs.c       |    4 -
- drivers/nvdimm/namespace_devs.c  |    9 +-
- drivers/nvdimm/nd-core.h         |    9 ++
- drivers/nvdimm/pfn_devs.c        |    4 -
- drivers/nvdimm/pmem.c            |   46 ++++++++---
- drivers/nvdimm/pmem.h            |   20 +++++
- drivers/nvdimm/region_devs.c     |   52 ++++++++----
- drivers/nvdimm/x86-asm.S         |   71 ++++++++++++++++
- drivers/nvdimm/x86.c             |   84 +++++++++++++++++++
- drivers/s390/block/dcssblk.c     |    6 +
- fs/block_dev.c                   |    6 +
- fs/dax.c                         |   35 +++++++-
- include/linux/blkdev.h           |   10 ++
- include/linux/libnvdimm.h        |    9 ++
- include/linux/pmem.h             |  165 --------------------------------------
- include/linux/string.h           |    8 ++
- include/linux/uio.h              |    4 +
- lib/Kconfig                      |    6 +
- lib/iov_iter.c                   |   25 ++++++
- tools/testing/nvdimm/Kbuild      |    2 
- 34 files changed, 405 insertions(+), 358 deletions(-)
- delete mode 100644 arch/x86/include/asm/pmem.h
- create mode 100644 drivers/nvdimm/x86-asm.S
- create mode 100644 drivers/nvdimm/x86.c
- delete mode 100644 include/linux/pmem.h
+diff --git a/arch/powerpc/sysdev/axonram.c b/arch/powerpc/sysdev/axonram.c
+index ada29eaed6e2..d4f318e7e6f3 100644
+--- a/arch/powerpc/sysdev/axonram.c
++++ b/arch/powerpc/sysdev/axonram.c
+@@ -153,9 +153,13 @@ axon_ram_direct_access(struct block_device *device, sector_t sector,
+ 	return bank->size - offset;
+ }
+ 
++static const struct dax_operations axon_ram_dax_ops = {
++	.direct_access	= axon_ram_direct_access,
++};
++
+ static const struct block_device_operations axon_ram_devops = {
+ 	.owner		= THIS_MODULE,
+-	.direct_access	= axon_ram_direct_access
++	.dax_ops	= &axon_ram_dax_ops,
+ };
+ 
+ /**
+diff --git a/drivers/block/brd.c b/drivers/block/brd.c
+index 3adc32a3153b..9d06e5da2ab2 100644
+--- a/drivers/block/brd.c
++++ b/drivers/block/brd.c
+@@ -395,10 +395,14 @@ static long brd_direct_access(struct block_device *bdev, sector_t sector,
+ #define brd_direct_access NULL
+ #endif
+ 
++static const struct dax_operations brd_dax_ops = {
++	.direct_access = 	brd_direct_access,
++};
++
+ static const struct block_device_operations brd_fops = {
+ 	.owner =		THIS_MODULE,
+ 	.rw_page =		brd_rw_page,
+-	.direct_access =	brd_direct_access,
++	.dax_ops =		&brd_dax_ops,
+ };
+ 
+ /*
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 3086da5664f3..87920a379d20 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -2725,13 +2725,17 @@ static const struct pr_ops dm_pr_ops = {
+ 	.pr_clear	= dm_pr_clear,
+ };
+ 
++static const struct dax_operations dm_dax_ops = {
++	.direct_access = dm_blk_direct_access,
++};
++
+ static const struct block_device_operations dm_blk_dops = {
+ 	.open = dm_blk_open,
+ 	.release = dm_blk_close,
+ 	.ioctl = dm_blk_ioctl,
+-	.direct_access = dm_blk_direct_access,
+ 	.getgeo = dm_blk_getgeo,
+ 	.pr_ops = &dm_pr_ops,
++	.dax_ops = &dm_dax_ops,
+ 	.owner = THIS_MODULE
+ };
+ 
+diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
+index 0d7779384a9f..6e5442174245 100644
+--- a/drivers/nvdimm/pmem.c
++++ b/drivers/nvdimm/pmem.c
+@@ -217,11 +217,15 @@ __weak long pmem_direct_access(struct block_device *bdev, sector_t sector,
+ 	return pmem->size - pmem->pfn_pad - offset;
+ }
+ 
++static const struct dax_operations pmem_dax_ops = {
++	.direct_access = pmem_direct_access,
++};
++
+ static const struct block_device_operations pmem_fops = {
+ 	.owner =		THIS_MODULE,
+ 	.rw_page =		pmem_rw_page,
+-	.direct_access =	pmem_direct_access,
+ 	.revalidate_disk =	nvdimm_revalidate_disk,
++	.dax_ops =		&pmem_dax_ops,
+ };
+ 
+ static void pmem_release_queue(void *q)
+diff --git a/drivers/s390/block/dcssblk.c b/drivers/s390/block/dcssblk.c
+index 9d66b4fb174b..6acebe4a47f3 100644
+--- a/drivers/s390/block/dcssblk.c
++++ b/drivers/s390/block/dcssblk.c
+@@ -36,11 +36,15 @@ static long dcssblk_direct_access(struct block_device *bdev, sector_t secnum,
+ static char dcssblk_segments[DCSSBLK_PARM_LEN] = "\0";
+ 
+ static int dcssblk_major;
++
++static const struct dax_operations dcssblk_dax_ops = {
++	.direct_access 	= dcssblk_direct_access,
++};
++
+ static const struct block_device_operations dcssblk_devops = {
+ 	.owner   	= THIS_MODULE,
+ 	.open    	= dcssblk_open,
+ 	.release 	= dcssblk_release,
+-	.direct_access 	= dcssblk_direct_access,
+ };
+ 
+ struct dcssblk_dev_info {
+diff --git a/fs/block_dev.c b/fs/block_dev.c
+index 5db5d1340d69..1acfc7d25768 100644
+--- a/fs/block_dev.c
++++ b/fs/block_dev.c
+@@ -736,6 +736,7 @@ long bdev_direct_access(struct block_device *bdev, struct blk_dax_ctl *dax)
+ 	sector_t sector = dax->sector;
+ 	long avail, size = dax->size;
+ 	const struct block_device_operations *ops = bdev->bd_disk->fops;
++	const struct dax_operations *dax_ops = ops->dax_ops;
+ 
+ 	/*
+ 	 * The device driver is allowed to sleep, in order to make the
+@@ -745,7 +746,8 @@ long bdev_direct_access(struct block_device *bdev, struct blk_dax_ctl *dax)
+ 
+ 	if (size < 0)
+ 		return size;
+-	if (!blk_queue_dax(bdev_get_queue(bdev)) || !ops->direct_access)
++	if (!blk_queue_dax(bdev_get_queue(bdev)) || !dax_ops
++			|| !dax_ops->direct_access)
+ 		return -EOPNOTSUPP;
+ 	if ((sector + DIV_ROUND_UP(size, 512)) >
+ 					part_nr_sects_read(bdev->bd_part))
+@@ -753,7 +755,7 @@ long bdev_direct_access(struct block_device *bdev, struct blk_dax_ctl *dax)
+ 	sector += get_start_sect(bdev);
+ 	if (sector % (PAGE_SIZE / 512))
+ 		return -EINVAL;
+-	avail = ops->direct_access(bdev, sector, &dax->addr, &dax->pfn, size);
++	avail = dax_ops->direct_access(bdev, sector, &dax->addr, &dax->pfn, size);
+ 	if (!avail)
+ 		return -ERANGE;
+ 	if (avail > 0 && avail & ~PAGE_MASK)
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 83695641bd5e..8afce34823f5 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -1863,14 +1863,17 @@ struct blk_dax_ctl {
+ 	pfn_t pfn;
+ };
+ 
++struct dax_operations {
++	long (*direct_access)(struct block_device *, sector_t, void **, pfn_t *,
++			long);
++};
++
+ struct block_device_operations {
+ 	int (*open) (struct block_device *, fmode_t);
+ 	void (*release) (struct gendisk *, fmode_t);
+ 	int (*rw_page)(struct block_device *, sector_t, struct page *, bool);
+ 	int (*ioctl) (struct block_device *, fmode_t, unsigned, unsigned long);
+ 	int (*compat_ioctl) (struct block_device *, fmode_t, unsigned, unsigned long);
+-	long (*direct_access)(struct block_device *, sector_t, void **, pfn_t *,
+-			long);
+ 	unsigned int (*check_events) (struct gendisk *disk,
+ 				      unsigned int clearing);
+ 	/* ->media_changed() is DEPRECATED, use ->check_events() instead */
+@@ -1882,6 +1885,7 @@ struct block_device_operations {
+ 	void (*swap_slot_free_notify) (struct block_device *, unsigned long);
+ 	struct module *owner;
+ 	const struct pr_ops *pr_ops;
++	const struct dax_operations *dax_ops;
+ };
+ 
+ extern int __blkdev_driver_ioctl(struct block_device *, fmode_t, unsigned int,
