@@ -1,117 +1,35 @@
-From: Gris Ge <fge@redhat.com>
-Subject: [PATCH 2/5] multipath-tools: libmultipath: Removed
-	unused functions.
-Date: Fri, 20 Jan 2017 21:38:59 +0800
-Message-ID: <1484919542-11087-3-git-send-email-fge@redhat.com>
-References: <1484919542-11087-1-git-send-email-fge@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1484919542-11087-1-git-send-email-fge@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Gris Ge <fge@redhat.com>
+From: Geliang Tang <geliangtang@gmail.com>
+Subject: [PATCH] dm bio prison: use rb_entry()
+Date: Fri, 20 Jan 2017 22:36:54 +0800
+Message-ID: <edf46b9e198bf2b0c0a31a9b99da6e59e880cdb9.1484816756.git.geliangtang@gmail.com>
+References: <c6a809ea5820242a4ae126b03cdcd910a36e5cae.1484817152.git.geliangtang@gmail.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <c6a809ea5820242a4ae126b03cdcd910a36e5cae.1484817152.git.geliangtang@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>
+Cc: Geliang Tang <geliangtang@gmail.com>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
- * Removed these unused functions from libmultipath:
-    * write_all()
-    * read_all()
+To make the code clearer, use rb_entry() instead of container_of() to
+deal with rbtree.
 
-Signed-off-by: Gris Ge <fge@redhat.com>
+Signed-off-by: Geliang Tang <geliangtang@gmail.com>
 ---
- libmultipath/uxsock.c | 60 ---------------------------------------------------
- libmultipath/uxsock.h |  2 --
- 2 files changed, 62 deletions(-)
+ drivers/md/dm-bio-prison.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/uxsock.c b/libmultipath/uxsock.c
-index b158a56..0ca9e50 100644
---- a/libmultipath/uxsock.c
-+++ b/libmultipath/uxsock.c
-@@ -74,66 +74,6 @@ int ux_socket_listen(const char *name)
- }
+diff --git a/drivers/md/dm-bio-prison.c b/drivers/md/dm-bio-prison.c
+index 03af174..a2c8a9e 100644
+--- a/drivers/md/dm-bio-prison.c
++++ b/drivers/md/dm-bio-prison.c
+@@ -115,7 +115,7 @@ static int __bio_detain(struct dm_bio_prison *prison,
  
- /*
-- * keep writing until it's all sent
-- */
--size_t write_all(int fd, const void *buf, size_t len)
--{
--	size_t total = 0;
--
--	while (len) {
--		ssize_t n = send(fd, buf, len, MSG_NOSIGNAL);
--		if (n < 0) {
--			if ((errno == EINTR) || (errno == EAGAIN))
--				continue;
--			return total;
--		}
--		if (!n)
--			return total;
--		buf = n + (char *)buf;
--		len -= n;
--		total += n;
--	}
--	return total;
--}
--
--/*
-- * keep reading until its all read
-- */
--ssize_t read_all(int fd, void *buf, size_t len, unsigned int timeout)
--{
--	size_t total = 0;
--	ssize_t n;
--	int ret;
--	struct pollfd pfd;
--
--	while (len) {
--		pfd.fd = fd;
--		pfd.events = POLLIN;
--		ret = poll(&pfd, 1, timeout);
--		if (!ret) {
--			return -ETIMEDOUT;
--		} else if (ret < 0) {
--			if (errno == EINTR)
--				continue;
--			return -errno;
--		} else if (!(pfd.revents & POLLIN))
--			continue;
--		n = read(fd, buf, len);
--		if (n < 0) {
--			if ((errno == EINTR) || (errno == EAGAIN))
--				continue;
--			return -errno;
--		}
--		if (!n)
--			return total;
--		buf = n + (char *)buf;
--		len -= n;
--		total += n;
--	}
--	return total;
--}
--
--/*
-  * send a packet in length prefix format
-  */
- int send_packet(int fd, const char *buf)
-diff --git a/libmultipath/uxsock.h b/libmultipath/uxsock.h
-index c1cf81f..442b564 100644
---- a/libmultipath/uxsock.h
-+++ b/libmultipath/uxsock.h
-@@ -2,5 +2,3 @@
- int ux_socket_listen(const char *name);
- int send_packet(int fd, const char *buf);
- int recv_packet(int fd, char **buf, unsigned int timeout);
--size_t write_all(int fd, const void *buf, size_t len);
--ssize_t read_all(int fd, void *buf, size_t len, unsigned int timeout);
+ 	while (*new) {
+ 		struct dm_bio_prison_cell *cell =
+-			container_of(*new, struct dm_bio_prison_cell, node);
++			rb_entry(*new, struct dm_bio_prison_cell, node);
+ 
+ 		r = cmp_keys(key, &cell->key);
+ 
 -- 
-1.8.3.1
+2.9.3
