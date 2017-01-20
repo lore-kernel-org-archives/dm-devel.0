@@ -1,8 +1,8 @@
 From: Hou Tao <houtao1@huawei.com>
-Subject: [PATCH RFC 4/4] dm thin: associate bio with current task
-	if keep_bio_blkcg is enabled
-Date: Fri, 20 Jan 2017 19:15:52 +0800
-Message-ID: <1484910952-29820-5-git-send-email-houtao1@huawei.com>
+Subject: [PATCH RFC 2/4] dm thin: parse "keep_bio_blkcg" from
+	userspace tools
+Date: Fri, 20 Jan 2017 19:15:50 +0800
+Message-ID: <1484910952-29820-3-git-send-email-houtao1@huawei.com>
 References: <1484910952-29820-1-git-send-email-houtao1@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,61 +22,44 @@ To: dm-devel@redhat.com, linux-block@vger.kernel.org
 Cc: ejt@redhat.com, snitzer@redhat.com, agk@redhat.com, vgoyal@redhat.com
 List-Id: dm-devel.ids
 
-If keep_bio_blkcg is enabled, assign the io_context and the blkcg of
-current task to bio before processing the bio.
+keep_bio_blkcg feature is off by default, and it can
+be turned on by using "keep_bio_blkcg" argument.
 
 Signed-off-by: Hou Tao <houtao1@huawei.com>
 ---
- drivers/md/dm-thin.c |  5 +++++
- drivers/md/dm-thin.h | 17 +++++++++++++++++
- 2 files changed, 22 insertions(+)
- create mode 100644 drivers/md/dm-thin.h
+ drivers/md/dm-thin.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index 140cdae..0efbdbe 100644
+index 8178ee8..57d6202 100644
 --- a/drivers/md/dm-thin.c
 +++ b/drivers/md/dm-thin.c
-@@ -22,6 +22,8 @@
- #include <linux/sort.h>
- #include <linux/rbtree.h>
+@@ -2824,6 +2824,7 @@ static void pool_features_init(struct pool_features *pf)
+ 	pf->discard_enabled = true;
+ 	pf->discard_passdown = true;
+ 	pf->error_if_no_space = false;
++	pf->keep_bio_blkcg = false;
+ }
  
-+#include "dm-thin.h"
-+
- #define	DM_MSG_PREFIX	"thin"
+ static void __pool_destroy(struct pool *pool)
+@@ -3053,7 +3054,7 @@ static int parse_pool_features(struct dm_arg_set *as, struct pool_features *pf,
+ 	const char *arg_name;
  
- /*
-@@ -2629,6 +2631,9 @@ static int thin_bio_map(struct dm_target *ti, struct bio *bio)
- 	struct dm_bio_prison_cell *virt_cell, *data_cell;
- 	struct dm_cell_key key;
+ 	static struct dm_arg _args[] = {
+-		{0, 4, "Invalid number of pool feature arguments"},
++		{0, 5, "Invalid number of pool feature arguments"},
+ 	};
  
-+	if (keep_pool_bio_blkcg(tc->pool))
-+		thin_keep_bio_blkcg(bio);
-+
- 	thin_hook_bio(tc, bio);
+ 	/*
+@@ -3085,6 +3086,9 @@ static int parse_pool_features(struct dm_arg_set *as, struct pool_features *pf,
+ 		else if (!strcasecmp(arg_name, "error_if_no_space"))
+ 			pf->error_if_no_space = true;
  
- 	if (tc->requeue_mode) {
-diff --git a/drivers/md/dm-thin.h b/drivers/md/dm-thin.h
-new file mode 100644
-index 0000000..09e920a
---- /dev/null
-+++ b/drivers/md/dm-thin.h
-@@ -0,0 +1,17 @@
-+#ifndef DM_THIN_H
-+#define DM_THIN_H
++		else if (!strcasecmp(arg_name, "keep_bio_blkcg"))
++			pf->keep_bio_blkcg = true;
 +
-+#include <linux/bio.h>
-+
-+#ifdef CONFIG_BLK_CGROUP
-+static inline void thin_keep_bio_blkcg(struct bio *bio)
-+{
-+	if (!bio->bi_css)
-+		bio_associate_current(bio);
-+}
-+#else
-+static inline void thin_keep_bio_blkcg(struct bio *bio) {}
-+#endif /* CONFIG_BLK_CGROUP */
-+
-+#endif
-+
+ 		else {
+ 			ti->error = "Unrecognised pool feature requested";
+ 			r = -EINVAL;
 -- 
 2.5.0
