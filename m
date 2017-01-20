@@ -1,8 +1,8 @@
 From: Gris Ge <fge@redhat.com>
-Subject: [PATCH 5/5] multipath-tools: Perform socket client uid
-	check on IPC commands.
-Date: Fri, 20 Jan 2017 21:39:02 +0800
-Message-ID: <1484919542-11087-6-git-send-email-fge@redhat.com>
+Subject: [PATCH 2/5] multipath-tools: libmultipath: Removed
+	unused functions.
+Date: Fri, 20 Jan 2017 21:38:59 +0800
+Message-ID: <1484919542-11087-3-git-send-email-fge@redhat.com>
 References: <1484919542-11087-1-git-send-email-fge@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,118 +22,96 @@ To: dm-devel@redhat.com
 Cc: Gris Ge <fge@redhat.com>
 List-Id: dm-devel.ids
 
-Problem:
-    A non-root user could send and execute 'shutdown' IPC command to
-    multipathd.
-
-Fix:
-    Use getsockopt() to find out socket client uid, only query (list or
-    show) command are allowed for non-root(uid != 0) socket connection.
-    An error message "permission deny: need to be root" will be sent
-    otherwise.
+ * Removed these unused functions from libmultipath:
+    * write_all()
+    * read_all()
 
 Signed-off-by: Gris Ge <fge@redhat.com>
 ---
- multipathd/main.c   | 12 +++++++++++-
- multipathd/uxlsnr.c | 19 +++++++++++++++++++
- multipathd/uxlsnr.h |  4 +++-
- 3 files changed, 33 insertions(+), 2 deletions(-)
+ libmultipath/uxsock.c | 60 ---------------------------------------------------
+ libmultipath/uxsock.h |  2 --
+ 2 files changed, 62 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index adc3258..1e64afc 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -23,6 +23,7 @@
- #endif
- #include <semaphore.h>
- #include <time.h>
-+#include <stdbool.h>
- 
- /*
-  * libmultipath
-@@ -1048,7 +1049,8 @@ map_discovery (struct vectors * vecs)
+diff --git a/libmultipath/uxsock.c b/libmultipath/uxsock.c
+index b158a56..0ca9e50 100644
+--- a/libmultipath/uxsock.c
++++ b/libmultipath/uxsock.c
+@@ -74,66 +74,6 @@ int ux_socket_listen(const char *name)
  }
  
- int
--uxsock_trigger (char * str, char ** reply, int * len, void * trigger_data)
-+uxsock_trigger (char * str, char ** reply, int * len, bool is_root,
-+		void * trigger_data)
- {
- 	struct vectors * vecs;
- 	int r;
-@@ -1057,6 +1059,14 @@ uxsock_trigger (char * str, char ** reply, int * len, void * trigger_data)
- 	*len = 0;
- 	vecs = (struct vectors *)trigger_data;
- 
-+	if ((str != NULL) && (is_root == false) &&
-+	    (strncmp(str, "list", strlen("list")) != 0) &&
-+	    (strncmp(str, "show", strlen("show")) != 0)) {
-+		*reply = STRDUP("permission deny: need to be root");
-+		*len = strlen(*reply) + 1;
-+		return 1;
-+	}
-+
- 	r = parse_cmd(str, reply, len, vecs, uxsock_timeout / 1000);
- 
- 	if (r > 0) {
-diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
-index 6ca62af..98ac25a 100644
---- a/multipathd/uxlsnr.c
-+++ b/multipathd/uxlsnr.c
-@@ -22,6 +22,7 @@
- #include <poll.h>
- #include <sys/time.h>
- #include <signal.h>
-+#include <stdbool.h>
- #include "checkers.h"
- #include "memory.h"
- #include "debug.h"
-@@ -51,6 +52,23 @@ LIST_HEAD(clients);
- pthread_mutex_t client_lock = PTHREAD_MUTEX_INITIALIZER;
- struct pollfd *polls;
- 
-+static bool _socket_client_is_root(int fd);
-+
-+static bool _socket_client_is_root(int fd)
-+{
-+	socklen_t len = 0;
-+	struct ucred uc;
-+
-+	len = sizeof(struct ucred);
-+	if ((fd >= 0) &&
-+	    (getsockopt(fd, SOL_SOCKET, SO_PEERCRED, &uc, &len) == 0) &&
-+	    (uc.uid == 0))
-+			return true;
-+
-+	/* Treat error as not root client */
-+	return false;
-+}
-+
  /*
-  * handle a new client joining
+- * keep writing until it's all sent
+- */
+-size_t write_all(int fd, const void *buf, size_t len)
+-{
+-	size_t total = 0;
+-
+-	while (len) {
+-		ssize_t n = send(fd, buf, len, MSG_NOSIGNAL);
+-		if (n < 0) {
+-			if ((errno == EINTR) || (errno == EAGAIN))
+-				continue;
+-			return total;
+-		}
+-		if (!n)
+-			return total;
+-		buf = n + (char *)buf;
+-		len -= n;
+-		total += n;
+-	}
+-	return total;
+-}
+-
+-/*
+- * keep reading until its all read
+- */
+-ssize_t read_all(int fd, void *buf, size_t len, unsigned int timeout)
+-{
+-	size_t total = 0;
+-	ssize_t n;
+-	int ret;
+-	struct pollfd pfd;
+-
+-	while (len) {
+-		pfd.fd = fd;
+-		pfd.events = POLLIN;
+-		ret = poll(&pfd, 1, timeout);
+-		if (!ret) {
+-			return -ETIMEDOUT;
+-		} else if (ret < 0) {
+-			if (errno == EINTR)
+-				continue;
+-			return -errno;
+-		} else if (!(pfd.revents & POLLIN))
+-			continue;
+-		n = read(fd, buf, len);
+-		if (n < 0) {
+-			if ((errno == EINTR) || (errno == EAGAIN))
+-				continue;
+-			return -errno;
+-		}
+-		if (!n)
+-			return total;
+-		buf = n + (char *)buf;
+-		len -= n;
+-		total += n;
+-	}
+-	return total;
+-}
+-
+-/*
+  * send a packet in length prefix format
   */
-@@ -255,6 +273,7 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
- 				condlog(4, "cli[%d]: Got request [%s]",
- 					i, inbuf);
- 				uxsock_trigger(inbuf, &reply, &rlen,
-+					       _socket_client_is_root(c->fd),
- 					       trigger_data);
- 				if (reply) {
- 					if (send_packet(c->fd,
-diff --git a/multipathd/uxlsnr.h b/multipathd/uxlsnr.h
-index 4ef47d5..d51a8f9 100644
---- a/multipathd/uxlsnr.h
-+++ b/multipathd/uxlsnr.h
-@@ -1,7 +1,9 @@
- #ifndef _UXLSNR_H
- #define _UXLSNR_H
- 
--typedef int (uxsock_trigger_fn)(char *, char **, int *, void *);
-+#include <stdbool.h>
-+
-+typedef int (uxsock_trigger_fn)(char *, char **, int *, bool, void *);
- 
- void * uxsock_listen(uxsock_trigger_fn uxsock_trigger,
- 		     void * trigger_data);
+ int send_packet(int fd, const char *buf)
+diff --git a/libmultipath/uxsock.h b/libmultipath/uxsock.h
+index c1cf81f..442b564 100644
+--- a/libmultipath/uxsock.h
++++ b/libmultipath/uxsock.h
+@@ -2,5 +2,3 @@
+ int ux_socket_listen(const char *name);
+ int send_packet(int fd, const char *buf);
+ int recv_packet(int fd, char **buf, unsigned int timeout);
+-size_t write_all(int fd, const void *buf, size_t len);
+-ssize_t read_all(int fd, void *buf, size_t len, unsigned int timeout);
 -- 
 1.8.3.1
