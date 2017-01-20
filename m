@@ -1,14 +1,11 @@
 From: Gris Ge <fge@redhat.com>
-Subject: [PATCH 1/5] multipath-tools: libmultipath: fix gcc link
-	failure on rcu_register_thread_mb.
-Date: Fri, 20 Jan 2017 21:38:58 +0800
-Message-ID: <1484919542-11087-2-git-send-email-fge@redhat.com>
-References: <1484919542-11087-1-git-send-email-fge@redhat.com>
+Subject: [PATCH 0/5] [multipath-tools] Misc fixes for JSON API.
+Date: Fri, 20 Jan 2017 21:38:57 +0800
+Message-ID: <1484919542-11087-1-git-send-email-fge@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1484919542-11087-1-git-send-email-fge@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,32 +19,25 @@ To: dm-devel@redhat.com
 Cc: Gris Ge <fge@redhat.com>
 List-Id: dm-devel.ids
 
-Error:
-    ../libmultipath/libmultipath.so: undefined reference to
-    `rcu_register_thread_mb'
-    ../libmultipath/libmultipath.so: undefined reference to
-    `rcu_unregister_thread_mb'
+Patch 5/5 is a resend.
+Other patches are rework of 'multipath: Introducing multipath C API' patch set.
 
-Fix:
-    Link the libmultipath with -lurcu
+Gris Ge (5):
+  multipath-tools: libmultipath: fix gcc link failure on
+    rcu_register_thread_mb.
+  multipath-tools: libmultipath: Removed unused functions.
+  multipath-tools: New way to limit the IPC command length.
+  multipath-tools: Set errno mpath_recv_reply() when failure
+  multipath-tools: Perform socket client uid check on IPC commands.
 
-Signed-off-by: Gris Ge <fge@redhat.com>
----
- libmultipath/Makefile | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmpathcmd/mpath_cmd.c |  6 +--
+ libmultipath/Makefile   |  2 +-
+ libmultipath/uxsock.c   | 99 +++++++++++++++----------------------------------
+ libmultipath/uxsock.h   | 11 +++++-
+ multipathd/main.c       | 12 +++++-
+ multipathd/uxlsnr.c     | 27 ++++++++++++--
+ multipathd/uxlsnr.h     |  4 +-
+ 7 files changed, 80 insertions(+), 81 deletions(-)
 
-diff --git a/libmultipath/Makefile b/libmultipath/Makefile
-index b5d54d8..1f5ec25 100644
---- a/libmultipath/Makefile
-+++ b/libmultipath/Makefile
-@@ -9,7 +9,7 @@ LIBS = $(DEVLIB).$(SONAME)
- 
- CFLAGS += -I$(mpathcmddir)
- 
--LIBDEPS += -lpthread -ldl -ldevmapper -ludev -L$(mpathcmddir) -lmpathcmd
-+LIBDEPS += -lpthread -ldl -ldevmapper -ludev -L$(mpathcmddir) -lmpathcmd -lurcu
- 
- ifdef SYSTEMD
- 	CFLAGS += -DUSE_SYSTEMD=$(SYSTEMD)
 -- 
 1.8.3.1
