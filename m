@@ -1,206 +1,67 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: [PATCH 02/13] block, dax: introduce dax_operations
-Date: Thu, 19 Jan 2017 19:50:24 -0800
-Message-ID: <148488422405.37913.13366670089124790849.stgit@dwillia2-desk3.amr.corp.intel.com>
-References: <148488421301.37913.12835362165895864897.stgit@dwillia2-desk3.amr.corp.intel.com>
+From: Hou Tao <houtao1@huawei.com>
+Subject: [PATCH RFC 3/4] dm thin: show the enabled status of
+	keep_bio_blkcg feature
+Date: Fri, 20 Jan 2017 19:15:51 +0800
+Message-ID: <1484910952-29820-4-git-send-email-houtao1@huawei.com>
+References: <1484910952-29820-1-git-send-email-houtao1@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <148488421301.37913.12835362165895864897.stgit@dwillia2-desk3.amr.corp.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-nvdimm@lists.01.org
-Cc: Jan Kara <jack@suse.cz>, Mike Snitzer <snitzer@redhat.com>, Toshi Kani <toshi.kani@hpe.com>, Matthew Wilcox <mawilcox@microsoft.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Jens Axboe <axboe@fb.com>, Jeff Moyer <jmoyer@redhat.com>, linux-fsdevel@vger.kernel.org, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1484910952-29820-1-git-send-email-houtao1@huawei.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com, linux-block@vger.kernel.org
+Cc: ejt@redhat.com, snitzer@redhat.com, agk@redhat.com, vgoyal@redhat.com
 List-Id: dm-devel.ids
 
-Prepare for the removal of memcpy_to_pmem() and copy_from_iter_pmem() by
-introducing dax_ops. This allows for driver specific overrides for the
-routines that transfer data to a dax capable block device.
+If keep_bio_blkcg feature is enabled, we can ensure that
+by STATUSTYPE_TABLE or STATUSTYPE_INFO command.
 
-Cc: <dm-devel@redhat.com>
-Cc: Jan Kara <jack@suse.cz>
-Cc: Jens Axboe <axboe@fb.com>
-Cc: Jeff Moyer <jmoyer@redhat.com>
-Cc: Christoph Hellwig <hch@lst.de>
-Cc: Toshi Kani <toshi.kani@hpe.com>
-Cc: Mike Snitzer <snitzer@redhat.com>
-Cc: Matthew Wilcox <mawilcox@microsoft.com>
-Cc: Ross Zwisler <ross.zwisler@linux.intel.com>
-Signed-off-by: Dan Williams <dan.j.williams@intel.com>
+Signed-off-by: Hou Tao <houtao1@huawei.com>
 ---
- arch/powerpc/sysdev/axonram.c |    6 +++++-
- drivers/block/brd.c           |    6 +++++-
- drivers/md/dm.c               |    6 +++++-
- drivers/nvdimm/pmem.c         |    6 +++++-
- drivers/s390/block/dcssblk.c  |    6 +++++-
- fs/block_dev.c                |    6 ++++--
- include/linux/blkdev.h        |    8 ++++++--
- 7 files changed, 35 insertions(+), 9 deletions(-)
+ drivers/md/dm-thin.c | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
 
-diff --git a/arch/powerpc/sysdev/axonram.c b/arch/powerpc/sysdev/axonram.c
-index ada29eaed6e2..d4f318e7e6f3 100644
---- a/arch/powerpc/sysdev/axonram.c
-+++ b/arch/powerpc/sysdev/axonram.c
-@@ -153,9 +153,13 @@ axon_ram_direct_access(struct block_device *device, sector_t sector,
- 	return bank->size - offset;
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index 57d6202..140cdae 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -3760,7 +3760,7 @@ static void emit_flags(struct pool_features *pf, char *result,
+ {
+ 	unsigned count = !pf->zero_new_blocks + !pf->discard_enabled +
+ 		!pf->discard_passdown + (pf->mode == PM_READ_ONLY) +
+-		pf->error_if_no_space;
++		pf->error_if_no_space + pf->keep_bio_blkcg;
+ 	DMEMIT("%u ", count);
+ 
+ 	if (!pf->zero_new_blocks)
+@@ -3777,6 +3777,9 @@ static void emit_flags(struct pool_features *pf, char *result,
+ 
+ 	if (pf->error_if_no_space)
+ 		DMEMIT("error_if_no_space ");
++
++	if (pf->keep_bio_blkcg)
++		DMEMIT("keep_bio_blkcg ");
  }
- 
-+static const struct dax_operations axon_ram_dax_ops = {
-+	.direct_access	= axon_ram_direct_access,
-+};
-+
- static const struct block_device_operations axon_ram_devops = {
- 	.owner		= THIS_MODULE,
--	.direct_access	= axon_ram_direct_access
-+	.dax_ops	= &axon_ram_dax_ops,
- };
- 
- /**
-diff --git a/drivers/block/brd.c b/drivers/block/brd.c
-index 3adc32a3153b..9d06e5da2ab2 100644
---- a/drivers/block/brd.c
-+++ b/drivers/block/brd.c
-@@ -395,10 +395,14 @@ static long brd_direct_access(struct block_device *bdev, sector_t sector,
- #define brd_direct_access NULL
- #endif
- 
-+static const struct dax_operations brd_dax_ops = {
-+	.direct_access = 	brd_direct_access,
-+};
-+
- static const struct block_device_operations brd_fops = {
- 	.owner =		THIS_MODULE,
- 	.rw_page =		brd_rw_page,
--	.direct_access =	brd_direct_access,
-+	.dax_ops =		&brd_dax_ops,
- };
  
  /*
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 3086da5664f3..87920a379d20 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -2725,13 +2725,17 @@ static const struct pr_ops dm_pr_ops = {
- 	.pr_clear	= dm_pr_clear,
- };
+@@ -3885,6 +3888,9 @@ static void pool_status(struct dm_target *ti, status_type_t type,
+ 		else
+ 			DMEMIT("queue_if_no_space ");
  
-+static const struct dax_operations dm_dax_ops = {
-+	.direct_access = dm_blk_direct_access,
-+};
++		if (pool->pf.keep_bio_blkcg)
++			DMEMIT("keep_bio_blkcg ");
 +
- static const struct block_device_operations dm_blk_dops = {
- 	.open = dm_blk_open,
- 	.release = dm_blk_close,
- 	.ioctl = dm_blk_ioctl,
--	.direct_access = dm_blk_direct_access,
- 	.getgeo = dm_blk_getgeo,
- 	.pr_ops = &dm_pr_ops,
-+	.dax_ops = &dm_dax_ops,
- 	.owner = THIS_MODULE
- };
- 
-diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
-index 0d7779384a9f..6e5442174245 100644
---- a/drivers/nvdimm/pmem.c
-+++ b/drivers/nvdimm/pmem.c
-@@ -217,11 +217,15 @@ __weak long pmem_direct_access(struct block_device *bdev, sector_t sector,
- 	return pmem->size - pmem->pfn_pad - offset;
- }
- 
-+static const struct dax_operations pmem_dax_ops = {
-+	.direct_access = pmem_direct_access,
-+};
-+
- static const struct block_device_operations pmem_fops = {
- 	.owner =		THIS_MODULE,
- 	.rw_page =		pmem_rw_page,
--	.direct_access =	pmem_direct_access,
- 	.revalidate_disk =	nvdimm_revalidate_disk,
-+	.dax_ops =		&pmem_dax_ops,
- };
- 
- static void pmem_release_queue(void *q)
-diff --git a/drivers/s390/block/dcssblk.c b/drivers/s390/block/dcssblk.c
-index 9d66b4fb174b..6acebe4a47f3 100644
---- a/drivers/s390/block/dcssblk.c
-+++ b/drivers/s390/block/dcssblk.c
-@@ -36,11 +36,15 @@ static long dcssblk_direct_access(struct block_device *bdev, sector_t secnum,
- static char dcssblk_segments[DCSSBLK_PARM_LEN] = "\0";
- 
- static int dcssblk_major;
-+
-+static const struct dax_operations dcssblk_dax_ops = {
-+	.direct_access 	= dcssblk_direct_access,
-+};
-+
- static const struct block_device_operations dcssblk_devops = {
- 	.owner   	= THIS_MODULE,
- 	.open    	= dcssblk_open,
- 	.release 	= dcssblk_release,
--	.direct_access 	= dcssblk_direct_access,
- };
- 
- struct dcssblk_dev_info {
-diff --git a/fs/block_dev.c b/fs/block_dev.c
-index 5db5d1340d69..1acfc7d25768 100644
---- a/fs/block_dev.c
-+++ b/fs/block_dev.c
-@@ -736,6 +736,7 @@ long bdev_direct_access(struct block_device *bdev, struct blk_dax_ctl *dax)
- 	sector_t sector = dax->sector;
- 	long avail, size = dax->size;
- 	const struct block_device_operations *ops = bdev->bd_disk->fops;
-+	const struct dax_operations *dax_ops = ops->dax_ops;
- 
- 	/*
- 	 * The device driver is allowed to sleep, in order to make the
-@@ -745,7 +746,8 @@ long bdev_direct_access(struct block_device *bdev, struct blk_dax_ctl *dax)
- 
- 	if (size < 0)
- 		return size;
--	if (!blk_queue_dax(bdev_get_queue(bdev)) || !ops->direct_access)
-+	if (!blk_queue_dax(bdev_get_queue(bdev)) || !dax_ops
-+			|| !dax_ops->direct_access)
- 		return -EOPNOTSUPP;
- 	if ((sector + DIV_ROUND_UP(size, 512)) >
- 					part_nr_sects_read(bdev->bd_part))
-@@ -753,7 +755,7 @@ long bdev_direct_access(struct block_device *bdev, struct blk_dax_ctl *dax)
- 	sector += get_start_sect(bdev);
- 	if (sector % (PAGE_SIZE / 512))
- 		return -EINVAL;
--	avail = ops->direct_access(bdev, sector, &dax->addr, &dax->pfn, size);
-+	avail = dax_ops->direct_access(bdev, sector, &dax->addr, &dax->pfn, size);
- 	if (!avail)
- 		return -ERANGE;
- 	if (avail > 0 && avail & ~PAGE_MASK)
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 83695641bd5e..8afce34823f5 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -1863,14 +1863,17 @@ struct blk_dax_ctl {
- 	pfn_t pfn;
- };
- 
-+struct dax_operations {
-+	long (*direct_access)(struct block_device *, sector_t, void **, pfn_t *,
-+			long);
-+};
-+
- struct block_device_operations {
- 	int (*open) (struct block_device *, fmode_t);
- 	void (*release) (struct gendisk *, fmode_t);
- 	int (*rw_page)(struct block_device *, sector_t, struct page *, bool);
- 	int (*ioctl) (struct block_device *, fmode_t, unsigned, unsigned long);
- 	int (*compat_ioctl) (struct block_device *, fmode_t, unsigned, unsigned long);
--	long (*direct_access)(struct block_device *, sector_t, void **, pfn_t *,
--			long);
- 	unsigned int (*check_events) (struct gendisk *disk,
- 				      unsigned int clearing);
- 	/* ->media_changed() is DEPRECATED, use ->check_events() instead */
-@@ -1882,6 +1885,7 @@ struct block_device_operations {
- 	void (*swap_slot_free_notify) (struct block_device *, unsigned long);
- 	struct module *owner;
- 	const struct pr_ops *pr_ops;
-+	const struct dax_operations *dax_ops;
- };
- 
- extern int __blkdev_driver_ioctl(struct block_device *, fmode_t, unsigned int,
+ 		if (dm_pool_metadata_needs_check(pool->pmd))
+ 			DMEMIT("needs_check ");
+ 		else
+-- 
+2.5.0
