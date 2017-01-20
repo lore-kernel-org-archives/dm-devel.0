@@ -1,32 +1,21 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH RFC 0/4] dm thin: support blk-throttle on
- data and metadata device
-Date: Fri, 20 Jan 2017 10:41:52 -0500
-Message-ID: <20170120154152.GA2933@redhat.com>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: [PATCH RFC 0/4] dm thin: support blk-throttle on data and
+ metadata device
+Date: Fri, 20 Jan 2017 10:56:18 -0500
+Message-ID: <20170120155618.GA13969@redhat.com>
 References: <1484910952-29820-1-git-send-email-houtao1@huawei.com>
-	<x49bmv192th.fsf@segfault.boston.devel.redhat.com>
+ <x49bmv192th.fsf@segfault.boston.devel.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
 Content-Disposition: inline
 In-Reply-To: <x49bmv192th.fsf@segfault.boston.devel.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Sender: linux-block-owner@vger.kernel.org
 To: Jeff Moyer <jmoyer@redhat.com>
-Cc: ejt@redhat.com, linux-block@vger.kernel.org, dm-devel@redhat.com, agk@redhat.com, Hou Tao <houtao1@huawei.com>, vgoyal@redhat.com
+Cc: Hou Tao <houtao1@huawei.com>, dm-devel@redhat.com, linux-block@vger.kernel.org, agk@redhat.com, snitzer@redhat.com, ejt@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Jan 20 2017 at 10:19am -0500,
-Jeff Moyer <jmoyer@redhat.com> wrote:
-
+On Fri, Jan 20, 2017 at 10:19:22AM -0500, Jeff Moyer wrote:
 > Hou Tao <houtao1@huawei.com> writes:
 > 
 > > Hi all,
@@ -51,14 +40,15 @@ Jeff Moyer <jmoyer@redhat.com> wrote:
 > Why is this even an option?  I would think that you would always want
 > this behavior.
 
-Right, shouldn't be an optional feature.
+Agreed that this should not be an optional feature.
 
-Also, this implementation is very dm-thin specific.  I still have this
-line of work on my TODO because there should be a more generic way to
-wire up these associations in either block core or DM core.
+One thing which always bothers me is that often we have dependencies
+on finishing of these bios. So if we assign bios to their original
+cgroups and if we create a cgroup with very low limit, then its
+possible that everything slows down.
 
-Now that there is both dm-crypt and dm-thin specific RFC patches to fix
-this I'll see about finding a solution that works for both but that is
-more generic.
+I guess answer to that is its a configuration issue and don't
+create groups with too small a limits. And don't allow unprivileged
+users to specify group limits.
 
-Not sure how quickly I'll get to this but I'll do my best.
+Vivek
