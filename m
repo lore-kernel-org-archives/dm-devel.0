@@ -1,14 +1,14 @@
-From: Hou Tao <houtao1@huawei.com>
-Subject: [PATCH RFC 1/4] dm thin: add a pool feature
-	"keep_bio_blkcg"
-Date: Fri, 20 Jan 2017 19:15:49 +0800
-Message-ID: <1484910952-29820-2-git-send-email-houtao1@huawei.com>
-References: <1484910952-29820-1-git-send-email-houtao1@huawei.com>
+From: Gris Ge <fge@redhat.com>
+Subject: [PATCH 1/5] multipath-tools: libmultipath: fix gcc link
+	failure on rcu_register_thread_mb.
+Date: Fri, 20 Jan 2017 21:38:58 +0800
+Message-ID: <1484919542-11087-2-git-send-email-fge@redhat.com>
+References: <1484919542-11087-1-git-send-email-fge@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1484910952-29820-1-git-send-email-houtao1@huawei.com>
+In-Reply-To: <1484919542-11087-1-git-send-email-fge@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,49 +18,36 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, linux-block@vger.kernel.org
-Cc: ejt@redhat.com, snitzer@redhat.com, agk@redhat.com, vgoyal@redhat.com
+To: dm-devel@redhat.com
+Cc: Gris Ge <fge@redhat.com>
 List-Id: dm-devel.ids
 
-"keep_bio_blkcg" is used to control whether or not
-dm-thin needs to save the original blkcg of bio
+Error:
+    ../libmultipath/libmultipath.so: undefined reference to
+    `rcu_register_thread_mb'
+    ../libmultipath/libmultipath.so: undefined reference to
+    `rcu_unregister_thread_mb'
 
-Signed-off-by: Hou Tao <houtao1@huawei.com>
+Fix:
+    Link the libmultipath with -lurcu
+
+Signed-off-by: Gris Ge <fge@redhat.com>
 ---
- drivers/md/dm-thin.c | 7 +++++++
- 1 file changed, 7 insertions(+)
+ libmultipath/Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index d1c05c1..8178ee8 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -211,6 +211,7 @@ struct pool_features {
- 	bool discard_enabled:1;
- 	bool discard_passdown:1;
- 	bool error_if_no_space:1;
-+	bool keep_bio_blkcg:1;
- };
+diff --git a/libmultipath/Makefile b/libmultipath/Makefile
+index b5d54d8..1f5ec25 100644
+--- a/libmultipath/Makefile
++++ b/libmultipath/Makefile
+@@ -9,7 +9,7 @@ LIBS = $(DEVLIB).$(SONAME)
  
- struct thin_c;
-@@ -277,6 +278,7 @@ struct pool {
+ CFLAGS += -I$(mpathcmddir)
  
- static enum pool_mode get_pool_mode(struct pool *pool);
- static void metadata_operation_failed(struct pool *pool, const char *op, int r);
-+static bool keep_pool_bio_blkcg(struct pool *pool);
+-LIBDEPS += -lpthread -ldl -ldevmapper -ludev -L$(mpathcmddir) -lmpathcmd
++LIBDEPS += -lpthread -ldl -ldevmapper -ludev -L$(mpathcmddir) -lmpathcmd -lurcu
  
- /*
-  * Target context for a pool.
-@@ -2390,6 +2392,11 @@ static void noflush_work(struct thin_c *tc, void (*fn)(struct work_struct *))
- 
- /*----------------------------------------------------------------*/
- 
-+static bool keep_pool_bio_blkcg(struct pool *pool)
-+{
-+	return pool->pf.keep_bio_blkcg;
-+}
-+
- static enum pool_mode get_pool_mode(struct pool *pool)
- {
- 	return pool->pf.mode;
+ ifdef SYSTEMD
+ 	CFLAGS += -DUSE_SYSTEMD=$(SYSTEMD)
 -- 
-2.5.0
+1.8.3.1
