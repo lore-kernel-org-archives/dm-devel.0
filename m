@@ -1,46 +1,49 @@
-From: Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>
-Subject: RE: [PATCH 00/13] dax, pmem: move cpu cache maintenance to libnvdimm
-Date: Sat, 21 Jan 2017 16:28:52 +0000
-Message-ID: <BY2PR21MB0036C7BBC487D7C101F36DCFCB700@BY2PR21MB0036.namprd21.prod.outlook.com>
-References: <148488421301.37913.12835362165895864897.stgit@dwillia2-desk3.amr.corp.intel.com>
+From: Christoph Hellwig <hch@lst.de>
+Subject: Re: [PATCH 00/13] dax, pmem: move cpu cache maintenance to
+        libnvdimm
+Date: Sat, 21 Jan 2017 18:52:12 +0100
+Message-ID: <20170121175212.GA28180@lst.de>
+References: <148488421301.37913.12835362165895864897.stgit@dwillia2-desk3.amr.corp.intel.com> <BY2PR21MB0036C7BBC487D7C101F36DCFCB700@BY2PR21MB0036.namprd21.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <148488421301.37913.12835362165895864897.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Content-Language: en-US
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-Cc: Jens Axboe <axboe-b10kYP2dOMg@public.gmane.org>, Tony Luck <tony.luck-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <BY2PR21MB0036C7BBC487D7C101F36DCFCB700@BY2PR21MB0036.namprd21.prod.outlook.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Matthew Wilcox <mawilcox@microsoft.com>
+Cc: Dan Williams <dan.j.williams@intel.com>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Brian Boylston <brian.boylston@hpe.com>, Tony Luck <tony.luck@intel.com>, Jan Kara <jack@suse.cz>, Toshi Kani <toshi.kani@hpe.com>, Mike Snitzer <snitzer@redhat.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "x86@kernel.org" <x86@kernel.org>, Jeff Moyer <jmoyer@redhat.com>, Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@fb.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Ingo Molnar <mingo@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, "H. Peter Anvin" <hpa@zytor.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Ross Zwisler <ros>
 List-Id: dm-devel.ids
 
-From: Dan Williams [mailto:dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org]
-> A couple weeks back, in the course of reviewing the memcpy_nocache()
-> proposal from Brian, Linus subtly suggested that the pmem specific
-> memcpy_to_pmem() routine be moved to be implemented at the driver
-> level [1]:
+On Sat, Jan 21, 2017 at 04:28:52PM +0000, Matthew Wilcox wrote:
+> Of course, there may not be a backing device either!
 
-Of course, there may not be a backing device either!  That will depend on the filesystem.
-I see two possible routes here:
+s/backing device/block device/ ?  If so fully agreed.  I like the dax_ops
+scheme, but we should go all the way and detangle it from the block
+device.  I already brought up this issue with the fallback to direct I/O
+on I/O error series.
 
-1. Add a new address_space_operation:
+> I see two possible routes here:
+> 
+> 1. Add a new address_space_operation:
+> 
+> 	const struct dax_operations *(*get_dax_ops)(struct address_space *);
+> 
+> 2. Add two of the dax_operations to address_space_operations:
+> 
+> 	size_t (*copy_from_iter)(struct address_space *, void *, size_t, struct iov_iter *);
+> 	void (*flush)(struct address_space *, void *, size_t);
+> (we won't need ->direct_access as an address_space op because that'll be handled a different way in the brave new world that supports non-bdev-based filesystems)
 
-	const struct dax_operations *(*get_dax_ops)(struct address_space *);
-
-2. Add two of the dax_operations to address_space_operations:
-
-	size_t (*copy_from_iter)(struct address_space *, void *, size_t, struct iov_iter *);
-	void (*flush)(struct address_space *, void *, size_t);
-(we won't need ->direct_access as an address_space op because that'll be handled a different way in the brave new world that supports non-bdev-based filesystems)
-
-Obviously in either case we'd have generic bdev versions for ext4, xfs and other block based filesystems, but filesystems with a character device or a network protocol behind them would do whatever it is they need to do.
-
-I kind of prefer the second option, but does anyone else have a preference?
+And both of them are wrong.  The write_begin/write_end mistake
+notwithstanding address_space ops are operations the VM can call without
+knowing things like fs locking contexts.  The above on the other hand
+are device operations provided by the low-level driver, similar to
+block_device operations.  So what we need is to have a way to mount
+a dax device as a file system, similar to how we support that for block
+or MTD devices and can then call methods on it.  For now this will
+be a bit complicated because all current DAX-aware file systems also
+still need block device for the metadata path, so we can't just say
+you mount either a DAX or block device.  But I think we should aim
+for mounting a DAX device as the primary use case, and then deal
+with block device emulation as a generic DAX layer thing, similarly
+how we implement (bad in the rw case) block devices on top of MTD.
