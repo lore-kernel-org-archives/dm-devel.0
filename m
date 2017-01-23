@@ -1,49 +1,83 @@
-From: Herbert Xu <herbert@gondor.apana.org.au>
-Subject: Re: [RFC PATCH 0/6] Add bulk skcipher requests to crypto API and
- dm-crypt
-Date: Mon, 23 Jan 2017 21:04:52 +0800
-Message-ID: <20170123130452.GA17598@gondor.apana.org.au>
-References: <cover.1484215956.git.omosnacek@gmail.com>
- <20170113104128.GA23497@gondor.apana.org.au>
- <CAAUqJDtqN-ugcaz4VhuW0fzLbmKt4db8ggrRmaAq_zFvO+9Lvw@mail.gmail.com>
- <20170113142959.GA24258@gondor.apana.org.au>
- <CAAUqJDsrFp2CczN5Gyy=rYLSDKi7=vQTQoyh=pE1kWue=c=fvw@mail.gmail.com>
- <20170118044828.GB4460@gondor.apana.org.au>
- <CAAUqJDtZNGLW-PcPKJD5vdKMZqd6+sAKrbjqVbaVTQqWwZ4cGQ@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-crypto-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAAUqJDtZNGLW-PcPKJD5vdKMZqd6+sAKrbjqVbaVTQqWwZ4cGQ@mail.gmail.com>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Ondrej =?utf-8?B?TW9zbsOhxI1law==?= <omosnacek@gmail.com>
-Cc: linux-crypto@vger.kernel.org, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Milan Broz <gmazyland@gmail.com>, Mikulas Patocka <mpatocka@redhat.com>, Binoy Jayan <binoy.jayan@linaro.org>
+From: Christoph Hellwig <hch@lst.de>
+Subject: [PATCH 01/16] block: fix elevator init check
+Date: Mon, 23 Jan 2017 16:29:06 +0100
+Message-ID: <1485185361-29786-2-git-send-email-hch@lst.de>
+References: <1485185361-29786-1-git-send-email-hch@lst.de>
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <1485185361-29786-1-git-send-email-hch@lst.de>
+Sender: linux-block-owner@vger.kernel.org
+To: Jens Axboe <axboe@fb.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, linux-block@vger.kernel.org, linux-scsi@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Jan 19, 2017 at 03:21:37PM +0100, Ondrej Mosnáček wrote:
-> 
-> Hm, I just looked at what the IPsec IV generation is actually doing
-> and it seems to me that it's basically a crypto template that just
-> somehow transforms the IV before it is passed to the child cipher... I
-> thought for a while that you were implying that there already is some
-> facility in the crypto API that allows submitting multiple messages +
-> some initial sequence number that is auto-incremented and IVs are
-> generated from the numbers. However, I could not find anything like
-> that in the code, so now I think what you meant was just that I should
-> somehow pull the actual IV generators into the crypto layer so that
-> the IVs can be generated inside the hardware.
+We can't initalize the elevator fields for flushes as flush share space
+in struct request with the elevator data.  But currently we can't
+commnicate that a request is a flush through blk_get_request as we
+can only pass READ or WRITE, and the low-level code looks at the
+possible NULL bio to check for a flush.
 
-IPsec currently only deals with one packet at a time, but the
-point is that the IV generator handles everything transparently
-and the IV is actually part of the cipher text for the AEAD op.
+Fix this by allowing to pass any block op and flags, and by checking for
+the flush flags in __get_request.
 
-IOW it would be trivial to extend our current IPsec IV generators
-to handle multiple packets as the IVs are embedded with the cipher
-text.
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+---
+ block/blk-core.c | 26 ++++----------------------
+ 1 file changed, 4 insertions(+), 22 deletions(-)
 
-Cheers,
+diff --git a/block/blk-core.c b/block/blk-core.c
+index a61f140..732b719 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -1022,25 +1022,6 @@ int blk_update_nr_requests(struct request_queue *q, unsigned int nr)
+ 	return 0;
+ }
+ 
+-/*
+- * Determine if elevator data should be initialized when allocating the
+- * request associated with @bio.
+- */
+-static bool blk_rq_should_init_elevator(struct bio *bio)
+-{
+-	if (!bio)
+-		return true;
+-
+-	/*
+-	 * Flush requests do not use the elevator so skip initialization.
+-	 * This allows a request to share the flush and elevator data.
+-	 */
+-	if (bio->bi_opf & (REQ_PREFLUSH | REQ_FUA))
+-		return false;
+-
+-	return true;
+-}
+-
+ /**
+  * __get_request - get a free request
+  * @rl: request list to allocate from
+@@ -1119,10 +1100,13 @@ static struct request *__get_request(struct request_list *rl, unsigned int op,
+ 	 * request is freed.  This guarantees icq's won't be destroyed and
+ 	 * makes creating new ones safe.
+ 	 *
++	 * Flush requests do not use the elevator so skip initialization.
++	 * This allows a request to share the flush and elevator data.
++	 *
+ 	 * Also, lookup icq while holding queue_lock.  If it doesn't exist,
+ 	 * it will be created after releasing queue_lock.
+ 	 */
+-	if (blk_rq_should_init_elevator(bio) && !blk_queue_bypass(q)) {
++	if (!(op & (REQ_PREFLUSH | REQ_FUA)) && !blk_queue_bypass(q)) {
+ 		rq_flags |= RQF_ELVPRIV;
+ 		q->nr_rqs_elvpriv++;
+ 		if (et->icq_cache && ioc)
+@@ -1276,8 +1260,6 @@ static struct request *blk_old_get_request(struct request_queue *q, int rw,
+ {
+ 	struct request *rq;
+ 
+-	BUG_ON(rw != READ && rw != WRITE);
+-
+ 	/* create ioc upfront */
+ 	create_io_context(gfp_mask, q->node);
+ 
 -- 
-Email: Herbert Xu <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+2.1.4
+
