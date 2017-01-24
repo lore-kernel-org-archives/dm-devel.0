@@ -1,15 +1,15 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 05/16] dm: always defer request allocation to
- the owner of the request_queue
-Date: Tue, 24 Jan 2017 09:29:22 +0100
-Message-ID: <b8b5b5ad-f782-2a2e-9a7e-cef8e4b5806b@suse.de>
+Subject: Re: [PATCH 09/16] scsi: remove gfp_flags member in
+ scsi_host_cmd_pool
+Date: Tue, 24 Jan 2017 09:31:51 +0100
+Message-ID: <aa7a5e56-33a4-8590-2843-360a984f2229@suse.de>
 References: <1485185361-29786-1-git-send-email-hch@lst.de>
-	<1485185361-29786-6-git-send-email-hch@lst.de>
+	<1485185361-29786-10-git-send-email-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="windows-1252"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1485185361-29786-6-git-send-email-hch@lst.de>
+In-Reply-To: <1485185361-29786-10-git-send-email-hch@lst.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,32 +19,20 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@fb.com>
-Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, linux-scsi@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 On 01/23/2017 04:29 PM, Christoph Hellwig wrote:
-> DM already calls blk_mq_alloc_request on the request_queue of the
-> underlying device if it is a blk-mq device.  But now that we allow drivers
-> to allocate additional data and initialize it ahead of time we need to do
-> the same for all drivers.   Doing so and using the new cmd_size
-> infrastructure in the block layer greatly simplifies the dm-rq and mpath
-> code, and should also make arbitrary combinations of SQ and MQ devices
-> with SQ or MQ device mapper tables easily possible as a further step.
+> When using the slab allocator we already decide at cache creation time if
+> an allocation comes from a GFP_DMA pool using the SLAB_CACHE_DMA flag,
+> and there is no point passing the kmalloc-family only GFP_DMA flag to
+> kmem_cache_alloc.  Drop all the infrastructure for doing so.
 > =
 
 > Signed-off-by: Christoph Hellwig <hch@lst.de>
 > ---
->  drivers/md/dm-core.h          |   1 -
->  drivers/md/dm-mpath.c         | 132 ++++------------------
->  drivers/md/dm-rq.c            | 251 ++++++++++--------------------------=
-------
->  drivers/md/dm-rq.h            |   2 +-
->  drivers/md/dm-target.c        |   7 --
->  drivers/md/dm.c               |  18 +--
->  drivers/md/dm.h               |   3 +-
->  include/linux/device-mapper.h |   3 -
->  8 files changed, 81 insertions(+), 336 deletions(-)
+>  drivers/scsi/scsi.c | 14 ++++----------
+>  1 file changed, 4 insertions(+), 10 deletions(-)
 > =
 
 Reviewed-by: Hannes Reinecke <hare@suse.com>
