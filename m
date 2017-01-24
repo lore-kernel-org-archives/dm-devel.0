@@ -1,49 +1,65 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 09/16] scsi: remove gfp_flags member in
- scsi_host_cmd_pool
-Date: Tue, 24 Jan 2017 09:31:51 +0100
-Message-ID: <aa7a5e56-33a4-8590-2843-360a984f2229@suse.de>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 05/16] dm: always defer request allocation to the owner
+ of the request_queue
+Date: Tue, 24 Jan 2017 05:05:39 -0500
+Message-ID: <20170124100538.GA6991@redhat.com>
 References: <1485185361-29786-1-git-send-email-hch@lst.de>
-	<1485185361-29786-10-git-send-email-hch@lst.de>
+ <1485185361-29786-6-git-send-email-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1485185361-29786-10-git-send-email-hch@lst.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1485185361-29786-6-git-send-email-hch@lst.de>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: Jens Axboe <axboe@fb.com>, linux-block@vger.kernel.org, linux-scsi@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 01/23/2017 04:29 PM, Christoph Hellwig wrote:
-> When using the slab allocator we already decide at cache creation time if
-> an allocation comes from a GFP_DMA pool using the SLAB_CACHE_DMA flag,
-> and there is no point passing the kmalloc-family only GFP_DMA flag to
-> kmem_cache_alloc.  Drop all the infrastructure for doing so.
-> =
+On Mon, Jan 23 2017 at 10:29am -0500,
+Christoph Hellwig <hch@lst.de> wrote:
 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-> ---
->  drivers/scsi/scsi.c | 14 ++++----------
->  1 file changed, 4 insertions(+), 10 deletions(-)
-> =
+> DM already calls blk_mq_alloc_request on the request_queue of the
+> underlying device if it is a blk-mq device.  But now that we allow drivers
+> to allocate additional data and initialize it ahead of time we need to do
+> the same for all drivers.   Doing so and using the new cmd_size
+> infrastructure in the block layer greatly simplifies the dm-rq and mpath
+> code, and should also make arbitrary combinations of SQ and MQ devices
+> with SQ or MQ device mapper tables easily possible as a further step.
 
-Reviewed-by: Hannes Reinecke <hare@suse.com>
+Thanks for working (and suffering) through all of this request-based DM
+code.  Nice to have someone else be painfully aware of the complexity in
+request-based DM's old request_fn support.
 
-Cheers,
+The queue->cmd_size (per request data) definitely makes this more
+possible and is welcomed cleanup.  The only concern I have is that using
+get_request() for the old request_fn request_queue eliminates the
+guaranteed availability of requests to allow for forward progress (on
+path failure or for the purposes of swap over mpath, etc).  This isn't a
+concern for blk-mq because as you know we have a fixed set of tags (and
+associated preallocated requests).
 
-Hannes
--- =
+So I'm left unconvinced old request_fn request-based DM multipath isn't
+regressing in how request resubmission can be assured a request will be
+available when needed on retry in the face of path failure.
 
-Dr. Hannes Reinecke		   Teamlead Storage & Networking
-hare@suse.de			               +49 911 74053 688
-SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
-HRB 21284 (AG N=FCrnberg)
+dm_mod's 'reserved_rq_based_ios' module_param governs the minimum number
+of requests in the md->rq_pool (and defaults to 256 requests per
+request-based DM request_queue).  Whereas blk_init_rl()'s
+mempool_create_node() uses BLKDEV_MIN_RQ (4) yet q->nr_requests =
+BLKDEV_MAX_RQ (128).  Also, this patch eliminates the utility of
+'reserved_rq_based_ios' module_param without actually removing it.
+
+Anyway, should blk-core evolve to allow drivers to specify a custom
+min_nr of requests in the old request_fn request_queue's mempool?  Or is
+my concern overblown?
+
+Seems we're very close to making this request-based DM cleanup doable.
+Just would like some extra eyes and care/thought/guidance from yourself
+and likely Jens.
+
+Thanks,
+Mike
+
+p.s. dm.c:dm_alloc_md_mempools() could be cleaned up a bit more since
+only bio-based DM will have a pools->io_pool moving forward; but I can
+circle back to that cleanup after.
