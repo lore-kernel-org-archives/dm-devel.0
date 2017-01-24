@@ -1,23 +1,46 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH 01/16] block: fix elevator init check
-Date: Tue, 24 Jan 2017 16:10:41 +0100
-Message-ID: <20170124151041.GB27705@lst.de>
-References: <1485185361-29786-1-git-send-email-hch@lst.de> <1485185361-29786-2-git-send-email-hch@lst.de> <20170124150639.GA22198@kernel.dk>
+From: Bart Van Assche <Bart.VanAssche@sandisk.com>
+Subject: Re: [PATCH 15/16] block: split scsi_request out of struct request
+Date: Tue, 24 Jan 2017 16:31:13 +0000
+Message-ID: <1485275452.2715.1.camel@sandisk.com>
+References: <1485185361-29786-1-git-send-email-hch@lst.de>
+         <1485185361-29786-16-git-send-email-hch@lst.de>
+         <1485217979.2825.20.camel@sandisk.com> <20170124080906.GA17018@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20170124150639.GA22198@kernel.dk>
+In-Reply-To: <20170124080906.GA17018@lst.de>
+Content-Language: en-US
+Content-ID: <EABAE667807EDF4AAF19379711328B3A@sandisk.com>
 Sender: linux-block-owner@vger.kernel.org
-To: Jens Axboe <axboe@fb.com>
-Cc: Christoph Hellwig <hch@lst.de>, Mike Snitzer <snitzer@redhat.com>, linux-block@vger.kernel.org, linux-scsi@vger.kernel.org, dm-devel@redhat.com
+To: "hch@lst.de" <hch@lst.de>
+Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "axboe@fb.com" <axboe@fb.com>, "snitzer@redhat.com" <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Jan 24, 2017 at 08:06:39AM -0700, Jens Axboe wrote:
-> We check for REQ_PREFLUSH | REQ_FUA in so many places though, might not
-> be a bad idea to keep the helper but just make it take the opf and fix
-> up the other locations too. The fact that PREFLUSH|FUA is the magic to
-> check for is somewhat tribal knowledge.
+On Tue, 2017-01-24 at 09:09 +0100, hch@lst.de wrote:
+> On Tue, Jan 24, 2017 at 12:33:13AM +0000, Bart Van Assche wrote:
+> > Do we perhaps need a check before the above memcpy() call whether or no=
+t
+> > sense =3D=3D NULL?
+>=20
+> Yes, probably.  I didn't think of the case where the caller wouldn't
+> pass a sense buffer.  Just curious, what's the callstack that caused
+> this?
 
-I'll see if I can come up with something sensible.  The current
-helper using the bio and the magic 0 value is not exactly helpful.
+Hello Christoph,
+
+The call stack was as follows:
+* __scsi_execute()
+* scsi_execute_req_flags()
+* scsi_vpd_inquiry()
+* scsi_attach_vpd()
+* scsi_probe_and_add_lun()
+* __scsi_add_device()
+* ata_scsi_scan_host()
+* async_port_probe()
+* async_run_entry_fn()
+* process_one_work()
+* worker_thread()
+* kthread()
+
+Bart.=
