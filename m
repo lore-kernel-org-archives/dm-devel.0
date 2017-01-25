@@ -1,7 +1,7 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
+From: Muneendra Kumar M <mmandala@Brocade.com>
 Subject: Re: deterministic io throughput in multipath
-Date: Wed, 25 Jan 2017 03:28:46 -0600
-Message-ID: <20170125092846.GA2732@octiron.msp.redhat.com>
+Date: Wed, 25 Jan 2017 11:48:33 +0000
+Message-ID: <a029ce0e966145218e5da34796ef8356@BRMWP-EXMB11.corp.brocade.com>
 References: <1649d4b8538d4b4cb1efacdfe8cf31eb@BRMWP-EXMB12.corp.brocade.com>
 	<20161221160940.GG19659@octiron.msp.redhat.com>
 	<8cd4cc5f20b540a1b8312ad485711152@BRMWP-EXMB12.corp.brocade.com>
@@ -9,12 +9,13 @@ References: <1649d4b8538d4b4cb1efacdfe8cf31eb@BRMWP-EXMB12.corp.brocade.com>
 	<4dfed25f04c04771a732580a4a8cc834@BRMWP-EXMB12.corp.brocade.com>
 	<20170117010447.GW2732@octiron.msp.redhat.com>
 	<26d8e0b78873443c8e15b863bc33922d@BRMWP-EXMB12.corp.brocade.com>
+	<20170125092846.GA2732@octiron.msp.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <26d8e0b78873443c8e15b863bc33922d@BRMWP-EXMB12.corp.brocade.com>
+In-Reply-To: <20170125092846.GA2732@octiron.msp.redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,43 +25,65 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Muneendra Kumar M <mmandala@Brocade.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
+
+Hi Ben,
+Thanks for the review .
+I will consider the below points and will do the necessary changes.
+
+I have two general questions which may not be related to this.
+1)Is there any standard tests that we need to do to check the functionality=
+ of the multipath daemon.
+2)Iam new to git is there any standard steps which we generally  follow to =
+push the changes .
+
+Regards,
+Muneendra.
+
+
+
+-----Original Message-----
+From: Benjamin Marzinski [mailto:bmarzins@redhat.com] =
+
+Sent: Wednesday, January 25, 2017 2:59 PM
+To: Muneendra Kumar M <mmandala@Brocade.com>
+Cc: dm-devel@redhat.com
+Subject: Re: [dm-devel] deterministic io throughput in multipath
 
 This looks fine to me.  If this what you want to push, I'm o.k. with it.
 But I'd like to make some suggestions that you are free to ignore.
 
-Right now you have to check in two places to see if the path failed (in
-update_multipath and check_path). If you look at the delayed_*_checks
-code, it flags the path failures when you reinstate the path in
-check_path, since this will only happen there.
+Right now you have to check in two places to see if the path failed (in upd=
+ate_multipath and check_path). If you look at the delayed_*_checks code, it=
+ flags the path failures when you reinstate the path in check_path, since t=
+his will only happen there.
 
-Next, right now you use the disable_reinstate code to deal with the
-devices when they shouldn't be reinstated. The issue with this is that
-the path appears to be up when people look at its state, but still isn't
-being used. If you do the check early and set the path state to
-PATH_DELAYED, like delayed_*_checks does, then the path is clearly
-marked when users look to see why it isn't being used. Also, if you exit
-check_path early, then you won't be running the prioritizer on these
-likely-unstable paths.
+Next, right now you use the disable_reinstate code to deal with the devices=
+ when they shouldn't be reinstated. The issue with this is that the path ap=
+pears to be up when people look at its state, but still isn't being used. I=
+f you do the check early and set the path state to PATH_DELAYED, like delay=
+ed_*_checks does, then the path is clearly marked when users look to see wh=
+y it isn't being used. Also, if you exit check_path early, then you won't b=
+e running the prioritizer on these likely-unstable paths.
 
-Finally, the way you use dis_reinstate_time, a flakey device can get
-reinstated as soon as it comes back up, as long it was down for long
-enough, simply because pp->dis_reinstate_time reached
+Finally, the way you use dis_reinstate_time, a flakey device can get reinst=
+ated as soon as it comes back up, as long it was down for long enough, simp=
+ly because pp->dis_reinstate_time reached
 mpp->san_path_err_recovery_time while the device was failed.
-delayed_*_checks depends on a number of successful path checks, so
-you know that the device has at least been nominally functional for
-san_path_err_recovery_time.
+delayed_*_checks depends on a number of successful path checks, so you know=
+ that the device has at least been nominally functional for san_path_err_re=
+covery_time.
 
-Like I said, you don't have to change any of this to make me happy with
-your patch. But if you did change all of these, then the current
-delay_*_checks code would just end up being a special case of your code.
-I'd really like to pull out the delayed_*_checks code and just keep your
-version, since it seems more useful. It would be nice to keep the same
-functionality. But even if you don't make these changes, I still think
-we should pull out the delayed_*_checks code, since they both do the
-same general thing, and your code does it better.
+Like I said, you don't have to change any of this to make me happy with you=
+r patch. But if you did change all of these, then the current delay_*_check=
+s code would just end up being a special case of your code.
+I'd really like to pull out the delayed_*_checks code and just keep your ve=
+rsion, since it seems more useful. It would be nice to keep the same functi=
+onality. But even if you don't make these changes, I still think we should =
+pull out the delayed_*_checks code, since they both do the same general thi=
+ng, and your code does it better.
 
 -Ben
 
@@ -88,7 +111,9 @@ On Mon, Jan 23, 2017 at 11:02:42AM +0000, Muneendra Kumar M wrote:
 >    multipath/multipath.conf.5 | 57
 >    +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 >    multipathd/main.c=A0=A0=A0=A0=A0=A0=A0=A0=A0 | 70
->    +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++---
+>    =
+
+> +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++---
 >    =A0
 >    =A0
 >    Regards,
@@ -594,8 +619,10 @@ u52hG3MKzM&e
 com_
 >    >=A0=A0 11. [28]mailto:dm-devel@redhat.com
 >    >=A0=A0 12.
->    > [29]https://urldefense.proofpoint.com/v2/url?u=3Dhttps-3A__www.redha=
-t.com_
+>    > =
+
+> [29]https://urldefense.proofpoint.com/v2/url?u=3Dhttps-3A__www.redhat.co
+> m_
 >    =A0
 >    =A0
 >    =A0
@@ -645,5 +672,6 @@ e1KXtRA0ctwHYJ7cDmPsLi2C1L9pox7uexsY&s=3Dq5OI-lfefNC2CHKmyUkokgiyiPo_Uj7MRu=
 >   27. https://urldefense.proofpoint.com/v2/url?u=3Dhttps-3A__www.redhat.c=
 om_
 >   28. mailto:dm-devel@redhat.com
->   29. https://urldefense.proofpoint.com/v2/url?u=3Dhttps-3A__www.redhat.c=
-om_
+>   29. =
+
+> https://urldefense.proofpoint.com/v2/url?u=3Dhttps-3A__www.redhat.com_
