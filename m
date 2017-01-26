@@ -1,59 +1,33 @@
-From: Junichi Nomura <j-nomura@ce.jp.nec.com>
-Subject: Re: [PATCH 05/16] dm: always defer request allocation to
- the owner of the request_queue
-Date: Thu, 26 Jan 2017 04:23:00 +0000
-Message-ID: <6b3a7fb3-f8f6-4605-b153-e193b3d2b500@ce.jp.nec.com>
-References: <1485185361-29786-1-git-send-email-hch@lst.de>
-	<1485185361-29786-6-git-send-email-hch@lst.de>
-	<20170124100538.GA6991@redhat.com> <20170124142054.GA26473@lst.de>
-	<20170124163951.GA9172@redhat.com>
+From: =?UTF-8?B?T25kcmVqIE1vc27DocSNZWs=?=
+        <omosnacek+linux-crypto@gmail.com>
+Subject: Re: [PATCH] dm: switch dm-verity to async hash crypto API
+Date: Thu, 26 Jan 2017 12:34:13 +0100
+Message-ID: <CAAUqJDsC8BVnudsirn96O2qTHh4jMmYYe4YBiO83UW-PGfy+Qg@mail.gmail.com>
+References: <1485268704-31033-1-git-send-email-gilad@benyossef.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170124163951.GA9172@redhat.com>
-Content-Language: ja-JP
-Content-ID: <53783E249627D549AB718B4BE5579FAB@gisp.nec.co.jp>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@lst.de>
-Cc: Jens Axboe <axboe@fb.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <1485268704-31033-1-git-send-email-gilad@benyossef.com>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Gilad Ben-Yossef <gilad@benyossef.com>
+Cc: dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, linux-crypto@vger.kernel.org, gilad.benyossef@arm.com, Ofir <ofir.drang@arm.com>
 List-Id: dm-devel.ids
 
-On 01/25/17 01:39, Mike Snitzer wrote:
-> On Tue, Jan 24 2017 at  9:20am -0500, Christoph Hellwig <hch@lst.de> wrote:
->> On Tue, Jan 24, 2017 at 05:05:39AM -0500, Mike Snitzer wrote:
->>> possible and is welcomed cleanup.  The only concern I have is that using
->>> get_request() for the old request_fn request_queue eliminates the
->>> guaranteed availability of requests to allow for forward progress (on
->>> path failure or for the purposes of swap over mpath, etc).  This isn't a
->>> concern for blk-mq because as you know we have a fixed set of tags (and
->>> associated preallocated requests).
->>>
->>> So I'm left unconvinced old request_fn request-based DM multipath isn't
->>> regressing in how request resubmission can be assured a request will be
->>> available when needed on retry in the face of path failure.
->>
->> Mempool only need a size where we can make guaranteed requests, so for
->> get_request based drivers under dm the theoretical minimum size would be
->> one as we never rely on a second request to finish the first one,
->> and each request_queue has it's own mempool(s) to start with.
-> 
-> Fair enough.  Cc'ing Junichi just in case he sees anything we're
-> missing.
+Hi Gilad,
 
-DM multipath could not use blk_get_request() because the function
-was not callable from interrupt-disabled context. E.g. request_fn.
+2017-01-24 15:38 GMT+01:00 Gilad Ben-Yossef <gilad@benyossef.com>:
+> -       v->tfm = crypto_alloc_shash(v->alg_name, 0, 0);
+> +       v->tfm = crypto_alloc_ahash(v->alg_name, 0, CRYPTO_ALG_ASYNC);
 
-However, since the current code no longer calls blk_get_request()
-from such a context, the change should be ok.
+I believe you should pass zero as the mask here. When flags == 0 and
+mask == CRYPTO_ALG_ASYNC, you are basically saying "I want only algs
+that have flags & CRYPTO_ALG_ASYNC == 0", which means you should only
+get ahash tfms that are always synchronous (see [1]). However, since
+you set a non-NULL callback in verity_hash_init, I don't think this
+was your intention. By setting the mask to zero, you should be able to
+get also an actual async tfm.
 
--- 
-Jun'ichi Nomura, NEC Corporation / NEC Solution Innovators, Ltd.
+Thanks,
+Ondrej
+
+[1] https://lkml.org/lkml/2016/12/13/904
