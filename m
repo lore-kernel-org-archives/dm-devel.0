@@ -1,14 +1,14 @@
 From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: Re: [PATCH 08/18] scsi_dh_rdac: switch to scsi_execute_req_flags()
-Date: Wed, 25 Jan 2017 22:18:39 -0500
-Message-ID: <yq11svqa4q8.fsf@oracle.com>
+Subject: Re: [PATCH 09/18] scsi_dh_emc: switch to scsi_execute_req_flags()
+Date: Wed, 25 Jan 2017 22:19:33 -0500
+Message-ID: <yq1wpdi8q4a.fsf@oracle.com>
 References: <1485365126-23210-1-git-send-email-hch@lst.de>
-        <1485365126-23210-9-git-send-email-hch@lst.de>
+        <1485365126-23210-10-git-send-email-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain
 Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1485365126-23210-9-git-send-email-hch@lst.de> (Christoph
-        Hellwig's message of "Wed, 25 Jan 2017 18:25:16 +0100")
+In-Reply-To: <1485365126-23210-10-git-send-email-hch@lst.de> (Christoph
+        Hellwig's message of "Wed, 25 Jan 2017 18:25:17 +0100")
 Sender: linux-scsi-owner@vger.kernel.org
 To: Christoph Hellwig <hch@lst.de>
 Cc: Jens Axboe <axboe@fb.com>, Mike Snitzer <snitzer@redhat.com>, Junichi Nomura <j-nomura@ce.jp.nec.com>, linux-block@vger.kernel.org, linux-scsi@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, Hannes Reinecke <hare@suse.de>, Hannes Reinecke <hare@suse.com>
