@@ -1,16 +1,17 @@
 From: Bart Van Assche <Bart.VanAssche@sandisk.com>
-Subject: Re: [PATCH 14/18] scsi: remove __scsi_alloc_queue
-Date: Fri, 27 Jan 2017 17:58:02 +0000
-Message-ID: <1485539862.4267.17.camel@sandisk.com>
+Subject: Re: [PATCH 15/18] scsi: allocate scsi_cmnd structures as
+ part of struct request
+Date: Fri, 27 Jan 2017 18:39:46 +0000
+Message-ID: <1485542367.4267.19.camel@sandisk.com>
 References: <1485365126-23210-1-git-send-email-hch@lst.de>
-	<1485365126-23210-15-git-send-email-hch@lst.de>
+	<1485365126-23210-16-git-send-email-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1485365126-23210-15-git-send-email-hch@lst.de>
+In-Reply-To: <1485365126-23210-16-git-send-email-hch@lst.de>
 Content-Language: en-US
-Content-ID: <B88FD6E8335BBC46B28A23BC2253C310@sandisk.com>
+Content-ID: <BE554E14EF9A284CBAC0B74B0A4D7AA9@sandisk.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,26 +26,55 @@ Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-scsi@vge
 List-Id: dm-devel.ids
 
 On Wed, 2017-01-25 at 18:25 +0100, Christoph Hellwig wrote:
-> diff --git a/include/scsi/scsi_transport.h b/include/scsi/scsi_transport.h
-> index 8129239..b6e07b5 100644
-> --- a/include/scsi/scsi_transport.h
-> +++ b/include/scsi/scsi_transport.h
-> @@ -119,4 +119,6 @@ scsi_transport_device_data(struct scsi_device *sdev)
->  		+ shost->transportt->device_private_offset;
->  }
->  
-> +void __scsi_init_queue(struct Scsi_Host *shost, struct request_queue *q);
-> +
->  #endif /* SCSI_TRANSPORT_H */
+> -unsigned char *scsi_alloc_sense_buffer(struct Scsi_Host *shost, gfp_t gf=
+p_mask,
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0int numa_node)
+> +static unsigned char *scsi_alloc_sense_buffer(struct Scsi_Host *shost,
+> +=A0=A0=A0=A0=A0=A0=A0gfp_t gfp_mask, int numa_node)
+> =A0{
+> =A0=A0=A0=A0=A0=A0=A0=A0return kmem_cache_alloc_node(scsi_select_sense_ca=
+che(shost), gfp_mask,
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0n=
+uma_node);
+> @@ -697,14 +696,13 @@ static bool scsi_end_request(struct request *req, i=
+nt error,
+> =A0
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (bidi_bytes)
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0s=
+csi_release_bidi_buffers(cmd);
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0scsi_release_buffers(cmd);
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0scsi_put_command(cmd);
+> =A0
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0spin_lock_irqsave(q->queu=
+e_lock, flags);
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0blk_finish_request(req, e=
+rror);
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0spin_unlock_irqrestore(q-=
+>queue_lock, flags);
+> =A0
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0scsi_release_buffers(cmd);
+> -
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0scsi_put_command(cmd);
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0scsi_run_queue(q);
+> =A0=A0=A0=A0=A0=A0=A0=A0}
 
 Hello Christoph,
 
-Since __scsi_init_queue() modifies data in the Scsi_Host structure, have you
-considered to add the declaration for this function to <scsi/scsi_host.h>?
-If you want to keep this declaration in <scsi/scsi_transport.h> please add a
-direct include of that header file to drivers/scsi/scsi_lib.c such that the
-declaration remains visible to the compiler if someone would minimize the
-number of #include directives in SCSI header files.
+Why=A0have the=A0scsi_release_buffers() and scsi_put_command(cmd) calls been
+moved up? I haven't found an explanation for this change in the patch
+description.
+
+Please also consider to remove the cmd->request->special =3D NULL assignmen=
+ts
+via this patch. Since this patch makes the lifetime of struct scsi_cmnd and
+struct request identical these assignments are no longer needed.
+
+This patch introduces the function scsi_exit_rq(). Having two functions
+for the single-queue path that release resources (scsi_release_buffers()
+and scsi_exit_rq()) is confusing. Since every scsi_release_buffers() call
+is followed by a blk_unprep_request() call, have you considered to move
+the scsi_release_buffers() call into scsi_unprep_fn() via an additional
+patch?
 
 Thanks,
 
