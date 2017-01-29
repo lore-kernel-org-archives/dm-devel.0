@@ -1,26 +1,55 @@
-From: "hch@lst.de" <hch@lst.de>
-Subject: Re: split scsi passthrough fields out of struct request V2
-Date: Sat, 28 Jan 2017 09:29:00 +0100
-Message-ID: <20170128082900.GE4728@lst.de>
-References: <1485365126-23210-1-git-send-email-hch@lst.de> <1485552454.4267.29.camel@sandisk.com>
+From: Gilad Ben-Yossef <gilad@benyossef.com>
+Subject: Re: [PATCH] dm: switch dm-verity to async hash crypto API
+Date: Sun, 29 Jan 2017 09:39:20 +0200
+Message-ID: <CAOtvUMfx4xYQk7_NQTQsc0xxGnsKkQdGk97XY5vv2tE0aHLpfw@mail.gmail.com>
+References: <1485268704-31033-1-git-send-email-gilad@benyossef.com>
+	<CAAUqJDsC8BVnudsirn96O2qTHh4jMmYYe4YBiO83UW-PGfy+Qg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-raid-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1485552454.4267.29.camel@sandisk.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: Bart Van Assche <Bart.VanAssche@sandisk.com>
-Cc: "hch@lst.de" <hch@lst.de>, "axboe@fb.com" <axboe@fb.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "snitzer@redhat.com" <snitzer@redhat.com>, "j-nomura@ce.jp.nec.com" <j-nomura@ce.jp.nec.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CAAUqJDsC8BVnudsirn96O2qTHh4jMmYYe4YBiO83UW-PGfy+Qg@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: =?UTF-8?B?T25kcmVqIE1vc27DocSNZWs=?= <omosnacek+linux-crypto@gmail.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, gilad.benyossef@arm.com, dm-devel@redhat.com, linux-crypto@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, Ofir <ofir.drang@arm.com>
 List-Id: dm-devel.ids
 
-On Fri, Jan 27, 2017 at 09:27:53PM +0000, Bart Van Assche wrote:
-> Have you considered to convert all block drivers to the new
-> approach and to get rid of request.special? If so, do you already
-> have plans to start working on this? I'm namely wondering wheter I
-> should start working on this myself.
-
-Hi Bart,
-
-I'd love to have all drivers move of using .special (and thus reducing
-request size further).  I think the general way to do that is to convert
-them to blk-mq and not using the legacy cmd_size field.
+SGkgT2RyZWosCgpPbiBUaHUsIEphbiAyNiwgMjAxNyBhdCAxOjM0IFBNLCBPbmRyZWogTW9zbsOh
+xI1lawo8b21vc25hY2VrK2xpbnV4LWNyeXB0b0BnbWFpbC5jb20+IHdyb3RlOgo+IEhpIEdpbGFk
+LAo+Cj4gMjAxNy0wMS0yNCAxNTozOCBHTVQrMDE6MDAgR2lsYWQgQmVuLVlvc3NlZiA8Z2lsYWRA
+YmVueW9zc2VmLmNvbT46Cj4+IC0gICAgICAgdi0+dGZtID0gY3J5cHRvX2FsbG9jX3NoYXNoKHYt
+PmFsZ19uYW1lLCAwLCAwKTsKPj4gKyAgICAgICB2LT50Zm0gPSBjcnlwdG9fYWxsb2NfYWhhc2go
+di0+YWxnX25hbWUsIDAsIENSWVBUT19BTEdfQVNZTkMpOwo+Cj4gSSBiZWxpZXZlIHlvdSBzaG91
+bGQgcGFzcyB6ZXJvIGFzIHRoZSBtYXNrIGhlcmUuIFdoZW4gZmxhZ3MgPT0gMCBhbmQKPiBtYXNr
+ID09IENSWVBUT19BTEdfQVNZTkMsIHlvdSBhcmUgYmFzaWNhbGx5IHNheWluZyAiSSB3YW50IG9u
+bHkgYWxncwo+IHRoYXQgaGF2ZSBmbGFncyAmIENSWVBUT19BTEdfQVNZTkMgPT0gMCIsIHdoaWNo
+IG1lYW5zIHlvdSBzaG91bGQgb25seQo+IGdldCBhaGFzaCB0Zm1zIHRoYXQgYXJlIGFsd2F5cyBz
+eW5jaHJvbm91cyAoc2VlIFsxXSkuIEhvd2V2ZXIsIHNpbmNlCj4geW91IHNldCBhIG5vbi1OVUxM
+IGNhbGxiYWNrIGluIHZlcml0eV9oYXNoX2luaXQsIEkgZG9uJ3QgdGhpbmsgdGhpcwo+IHdhcyB5
+b3VyIGludGVudGlvbi4gQnkgc2V0dGluZyB0aGUgbWFzayB0byB6ZXJvLCB5b3Ugc2hvdWxkIGJl
+IGFibGUgdG8KPiBnZXQgYWxzbyBhbiBhY3R1YWwgYXN5bmMgdGZtLgo+Cj4gVGhhbmtzLAo+IE9u
+ZHJlago+Cj4gWzFdIGh0dHBzOi8vbGttbC5vcmcvbGttbC8yMDE2LzEyLzEzLzkwNAoKVGhhbmsg
+eW91IHZlcnkgbXVjaCBmb3IgdGhlIHJldmlldy4KCkkgYW0gdGhlIGZpcnN0IHRvIGFkbWl0IHRo
+YXQgSSBmaW5kIHRoZSBDcnlwdG8gQVBJIHZlcnkgY3J5cHRpYyAocHVuCmludGVuZGVkKS4uLiA6
+LSkKCkkgYWN0dWFsbHkgZm9sbG93ZWQgdGhlIGV4YW1wbGUgaW4gRG9jdW1lbnRhdGlvbi9jcnlw
+dG8vYXBpLWludHJvLnR4dC4KSSBzZWUgbm93IHRoZSBleGFtcGxlIGlzCm5vdCBkb2luZyB3aGF0
+IEkgdGhvdWdoIGl0IHdhcyBkb2luZy4gVGhhbmsgeW91IGZvciBjbGFyaWZ5aW5nIHRoaXMuIEkK
+d2lsbCBzZW5kIG91dCBhIDJuZCB2ZXJzaW9uLgoKVGhlIHRoaW5nIEkgZmluZCBwdXp6bGluZyBp
+biB0aGlzIGlzIHRoYXQgSSBzYXcgYSBkaWZmZXJlbmNlIGluCmxhdGVuY3kgd2hlbiBhIGFzeW5j
+IGFsZ29yeXRobQpwcm92aWRlciBkcml2ZXIgd2l0aCBoaWdoIHByaW9yaXR5ICgzMDAwKSB3YXMg
+bG9hZGVkIHZzLiBub3QuIEJhc2VkIG9uCnlvdXIgZGVzY3JpcHRpb24gSSB3b3VsZApleHBlY3Qg
+dGhlIHBlcmZvcm1hbmNlIG5vdCB0byBjaGFuZ2UuIEkgd2lsbCByZXRlc3Qgd2l0aCB0aGUgY2hh
+bmdlCmFuZCB3aWxsIHB1Ymxpc2ggdGhlIHJlc3VsdHMuCgpUaGFua3MhCkdpbGFkCgoKCgotLSAK
+R2lsYWQgQmVuLVlvc3NlZgpDaGllZiBDb2ZmZWUgRHJpbmtlcgoKIklmIHlvdSB0YWtlIGEgY2xh
+c3MgaW4gbGFyZ2Utc2NhbGUgcm9ib3RpY3MsIGNhbiB5b3UgZW5kIHVwIGluIGEKc2l0dWF0aW9u
+IHdoZXJlIHRoZSBob21ld29yayBlYXRzIHlvdXIgZG9nPyIKIC0tIEplYW4tQmFwdGlzdGUgUXVl
+cnUKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8v
+d3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
