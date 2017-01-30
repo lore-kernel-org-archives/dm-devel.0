@@ -1,55 +1,86 @@
-From: Gilad Ben-Yossef <gilad@benyossef.com>
+From: Eric Biggers <ebiggers3@gmail.com>
 Subject: Re: [PATCH] dm: switch dm-verity to async hash crypto API
-Date: Sun, 29 Jan 2017 09:39:20 +0200
-Message-ID: <CAOtvUMfx4xYQk7_NQTQsc0xxGnsKkQdGk97XY5vv2tE0aHLpfw@mail.gmail.com>
+Date: Sun, 29 Jan 2017 16:28:44 -0800
+Message-ID: <20170130002844.GB5253@zzz>
 References: <1485268704-31033-1-git-send-email-gilad@benyossef.com>
-	<CAAUqJDsC8BVnudsirn96O2qTHh4jMmYYe4YBiO83UW-PGfy+Qg@mail.gmail.com>
+ <CAAUqJDsC8BVnudsirn96O2qTHh4jMmYYe4YBiO83UW-PGfy+Qg@mail.gmail.com>
+ <CAOtvUMfx4xYQk7_NQTQsc0xxGnsKkQdGk97XY5vv2tE0aHLpfw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAAUqJDsC8BVnudsirn96O2qTHh4jMmYYe4YBiO83UW-PGfy+Qg@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: =?UTF-8?B?T25kcmVqIE1vc27DocSNZWs=?= <omosnacek+linux-crypto@gmail.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, gilad.benyossef@arm.com, dm-devel@redhat.com, linux-crypto@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, Ofir <ofir.drang@arm.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-crypto-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CAOtvUMfx4xYQk7_NQTQsc0xxGnsKkQdGk97XY5vv2tE0aHLpfw@mail.gmail.com>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Gilad Ben-Yossef <gilad@benyossef.com>
+Cc: Ondrej =?utf-8?B?TW9zbsOhxI1law==?= <omosnacek+linux-crypto@gmail.com>, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, linux-crypto@vger.kernel.org, gilad.benyossef@arm.com, Ofir <ofir.drang@arm.com>
 List-Id: dm-devel.ids
 
-SGkgT2RyZWosCgpPbiBUaHUsIEphbiAyNiwgMjAxNyBhdCAxOjM0IFBNLCBPbmRyZWogTW9zbsOh
-xI1lawo8b21vc25hY2VrK2xpbnV4LWNyeXB0b0BnbWFpbC5jb20+IHdyb3RlOgo+IEhpIEdpbGFk
-LAo+Cj4gMjAxNy0wMS0yNCAxNTozOCBHTVQrMDE6MDAgR2lsYWQgQmVuLVlvc3NlZiA8Z2lsYWRA
-YmVueW9zc2VmLmNvbT46Cj4+IC0gICAgICAgdi0+dGZtID0gY3J5cHRvX2FsbG9jX3NoYXNoKHYt
-PmFsZ19uYW1lLCAwLCAwKTsKPj4gKyAgICAgICB2LT50Zm0gPSBjcnlwdG9fYWxsb2NfYWhhc2go
-di0+YWxnX25hbWUsIDAsIENSWVBUT19BTEdfQVNZTkMpOwo+Cj4gSSBiZWxpZXZlIHlvdSBzaG91
-bGQgcGFzcyB6ZXJvIGFzIHRoZSBtYXNrIGhlcmUuIFdoZW4gZmxhZ3MgPT0gMCBhbmQKPiBtYXNr
-ID09IENSWVBUT19BTEdfQVNZTkMsIHlvdSBhcmUgYmFzaWNhbGx5IHNheWluZyAiSSB3YW50IG9u
-bHkgYWxncwo+IHRoYXQgaGF2ZSBmbGFncyAmIENSWVBUT19BTEdfQVNZTkMgPT0gMCIsIHdoaWNo
-IG1lYW5zIHlvdSBzaG91bGQgb25seQo+IGdldCBhaGFzaCB0Zm1zIHRoYXQgYXJlIGFsd2F5cyBz
-eW5jaHJvbm91cyAoc2VlIFsxXSkuIEhvd2V2ZXIsIHNpbmNlCj4geW91IHNldCBhIG5vbi1OVUxM
-IGNhbGxiYWNrIGluIHZlcml0eV9oYXNoX2luaXQsIEkgZG9uJ3QgdGhpbmsgdGhpcwo+IHdhcyB5
-b3VyIGludGVudGlvbi4gQnkgc2V0dGluZyB0aGUgbWFzayB0byB6ZXJvLCB5b3Ugc2hvdWxkIGJl
-IGFibGUgdG8KPiBnZXQgYWxzbyBhbiBhY3R1YWwgYXN5bmMgdGZtLgo+Cj4gVGhhbmtzLAo+IE9u
-ZHJlago+Cj4gWzFdIGh0dHBzOi8vbGttbC5vcmcvbGttbC8yMDE2LzEyLzEzLzkwNAoKVGhhbmsg
-eW91IHZlcnkgbXVjaCBmb3IgdGhlIHJldmlldy4KCkkgYW0gdGhlIGZpcnN0IHRvIGFkbWl0IHRo
-YXQgSSBmaW5kIHRoZSBDcnlwdG8gQVBJIHZlcnkgY3J5cHRpYyAocHVuCmludGVuZGVkKS4uLiA6
-LSkKCkkgYWN0dWFsbHkgZm9sbG93ZWQgdGhlIGV4YW1wbGUgaW4gRG9jdW1lbnRhdGlvbi9jcnlw
-dG8vYXBpLWludHJvLnR4dC4KSSBzZWUgbm93IHRoZSBleGFtcGxlIGlzCm5vdCBkb2luZyB3aGF0
-IEkgdGhvdWdoIGl0IHdhcyBkb2luZy4gVGhhbmsgeW91IGZvciBjbGFyaWZ5aW5nIHRoaXMuIEkK
-d2lsbCBzZW5kIG91dCBhIDJuZCB2ZXJzaW9uLgoKVGhlIHRoaW5nIEkgZmluZCBwdXp6bGluZyBp
-biB0aGlzIGlzIHRoYXQgSSBzYXcgYSBkaWZmZXJlbmNlIGluCmxhdGVuY3kgd2hlbiBhIGFzeW5j
-IGFsZ29yeXRobQpwcm92aWRlciBkcml2ZXIgd2l0aCBoaWdoIHByaW9yaXR5ICgzMDAwKSB3YXMg
-bG9hZGVkIHZzLiBub3QuIEJhc2VkIG9uCnlvdXIgZGVzY3JpcHRpb24gSSB3b3VsZApleHBlY3Qg
-dGhlIHBlcmZvcm1hbmNlIG5vdCB0byBjaGFuZ2UuIEkgd2lsbCByZXRlc3Qgd2l0aCB0aGUgY2hh
-bmdlCmFuZCB3aWxsIHB1Ymxpc2ggdGhlIHJlc3VsdHMuCgpUaGFua3MhCkdpbGFkCgoKCgotLSAK
-R2lsYWQgQmVuLVlvc3NlZgpDaGllZiBDb2ZmZWUgRHJpbmtlcgoKIklmIHlvdSB0YWtlIGEgY2xh
-c3MgaW4gbGFyZ2Utc2NhbGUgcm9ib3RpY3MsIGNhbiB5b3UgZW5kIHVwIGluIGEKc2l0dWF0aW9u
-IHdoZXJlIHRoZSBob21ld29yayBlYXRzIHlvdXIgZG9nPyIKIC0tIEplYW4tQmFwdGlzdGUgUXVl
-cnUKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8v
-d3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+On Sun, Jan 29, 2017 at 09:39:20AM +0200, Gilad Ben-Yossef wrote:
+> Hi Odrej,
+> 
+> On Thu, Jan 26, 2017 at 1:34 PM, Ondrej Mosnáček
+> <omosnacek+linux-crypto@gmail.com> wrote:
+> > Hi Gilad,
+> >
+> > 2017-01-24 15:38 GMT+01:00 Gilad Ben-Yossef <gilad@benyossef.com>:
+> >> -       v->tfm = crypto_alloc_shash(v->alg_name, 0, 0);
+> >> +       v->tfm = crypto_alloc_ahash(v->alg_name, 0, CRYPTO_ALG_ASYNC);
+> >
+> > I believe you should pass zero as the mask here. When flags == 0 and
+> > mask == CRYPTO_ALG_ASYNC, you are basically saying "I want only algs
+> > that have flags & CRYPTO_ALG_ASYNC == 0", which means you should only
+> > get ahash tfms that are always synchronous (see [1]). However, since
+> > you set a non-NULL callback in verity_hash_init, I don't think this
+> > was your intention. By setting the mask to zero, you should be able to
+> > get also an actual async tfm.
+> >
+> > Thanks,
+> > Ondrej
+> >
+> > [1] https://lkml.org/lkml/2016/12/13/904
+> 
+> Thank you very much for the review.
+> 
+> I am the first to admit that I find the Crypto API very cryptic (pun
+> intended)... :-)
+> 
+> I actually followed the example in Documentation/crypto/api-intro.txt.
+> I see now the example is
+> not doing what I though it was doing. Thank you for clarifying this. I
+> will send out a 2nd version.
+> 
+> The thing I find puzzling in this is that I saw a difference in
+> latency when a async algorythm
+> provider driver with high priority (3000) was loaded vs. not. Based on
+> your description I would
+> expect the performance not to change. I will retest with the change
+> and will publish the results.
+> 
+> Thanks!
+> Gilad
+
+Hi Gilad,
+
+One thing to keep in mind is that the crypto API somewhat conflates the concept
+of "is the algorithm asynchronous?" with "does this algorithm operate on virtual
+memory or physical memory?".  The shash API is both synchronous and operates on
+virtual memory, and when using it you only have access to shash algorithms.  The
+ahash API on the other hand operates on physical memory and can be used either
+synchronously or asynchronously.  In addition, both shash and ahash algorithms
+may be accessed through the ahash API, and for shash algorithms the API will
+handle translating physical addresses to virtual addresses.
+
+So simply by using the ahash API instead of the shash API, even still requiring
+a "synchronous" algorithm, you may gain access to a different implementation of
+the algorithm, thereby changing the performance.  So whenever doing any
+benchmarks I suggest including the actual driver name (cra_driver_name) of the
+algorithms used; otherwise it may be unclear why the performance changed.
+
+As for the patch, I haven't looked at it in detail, but I agree that if
+dm-verity is indeed operating on sufficiently large buffers in physically
+contiguous memory, then the ahash API would be better than the shash API.  Note,
+that it also could be useful look into supporting having multiple async requests
+issued and pending at the same time, similar to what dm-crypt does.
+
+Eric
