@@ -1,86 +1,67 @@
-From: Eric Biggers <ebiggers3@gmail.com>
-Subject: Re: [PATCH] dm: switch dm-verity to async hash crypto API
-Date: Sun, 29 Jan 2017 16:28:44 -0800
-Message-ID: <20170130002844.GB5253@zzz>
-References: <1485268704-31033-1-git-send-email-gilad@benyossef.com>
- <CAAUqJDsC8BVnudsirn96O2qTHh4jMmYYe4YBiO83UW-PGfy+Qg@mail.gmail.com>
- <CAOtvUMfx4xYQk7_NQTQsc0xxGnsKkQdGk97XY5vv2tE0aHLpfw@mail.gmail.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: split scsi passthrough fields out of struct request V2
+Date: Mon, 30 Jan 2017 07:58:24 +0100
+Message-ID: <00141930-e69b-ccfa-3f1f-4dff5cd3b680@suse.de>
+References: <1485365126-23210-1-git-send-email-hch@lst.de>
+ <1485552454.4267.29.camel@sandisk.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-crypto-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAOtvUMfx4xYQk7_NQTQsc0xxGnsKkQdGk97XY5vv2tE0aHLpfw@mail.gmail.com>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Gilad Ben-Yossef <gilad@benyossef.com>
-Cc: Ondrej =?utf-8?B?TW9zbsOhxI1law==?= <omosnacek+linux-crypto@gmail.com>, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, linux-crypto@vger.kernel.org, gilad.benyossef@arm.com, Ofir <ofir.drang@arm.com>
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <1485552454.4267.29.camel@sandisk.com>
+Sender: linux-block-owner@vger.kernel.org
+To: Bart Van Assche <Bart.VanAssche@sandisk.com>, "hch@lst.de" <hch@lst.de>, "axboe@fb.com" <axboe@fb.com>
+Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "snitzer@redhat.com" <snitzer@redhat.com>, "j-nomura@ce.jp.nec.com" <j-nomura@ce.jp.nec.com>
 List-Id: dm-devel.ids
 
-On Sun, Jan 29, 2017 at 09:39:20AM +0200, Gilad Ben-Yossef wrote:
-> Hi Odrej,
+On 01/27/2017 10:27 PM, Bart Van Assche wrote:
+> On Wed, 2017-01-25 at 18:25 +0100, Christoph Hellwig wrote:
+>> this series splits the support for SCSI passthrough commands from the
+>> main struct request used all over the block layer into a separate
+>> scsi_request structure that drivers that want to support SCSI passthough
+>> need to embedded as the first thing into their request-private data,
+>> similar to how we handle NVMe passthrough commands.
+>>
+>> To support this I've added support for that the private data after
+>> request structure to the legacy request path instead, so that it can
+>> be treated the same way as the blk-mq path.  Compare to the current
+>> scsi_cmnd allocator that actually is a major simplification.
+>>
+>> Changes since V1:
+>>  - fix handling of a NULL sense pointer in __scsi_execute
+>>  - clean up handling of the flush flags in the block layer and MD
+>>  - additional small cleanup in dm-rq
 > 
-> On Thu, Jan 26, 2017 at 1:34 PM, Ondrej MosnÃ¡Äek
-> <omosnacek+linux-crypto@gmail.com> wrote:
-> > Hi Gilad,
-> >
-> > 2017-01-24 15:38 GMT+01:00 Gilad Ben-Yossef <gilad@benyossef.com>:
-> >> -       v->tfm = crypto_alloc_shash(v->alg_name, 0, 0);
-> >> +       v->tfm = crypto_alloc_ahash(v->alg_name, 0, CRYPTO_ALG_ASYNC);
-> >
-> > I believe you should pass zero as the mask here. When flags == 0 and
-> > mask == CRYPTO_ALG_ASYNC, you are basically saying "I want only algs
-> > that have flags & CRYPTO_ALG_ASYNC == 0", which means you should only
-> > get ahash tfms that are always synchronous (see [1]). However, since
-> > you set a non-NULL callback in verity_hash_init, I don't think this
-> > was your intention. By setting the mask to zero, you should be able to
-> > get also an actual async tfm.
-> >
-> > Thanks,
-> > Ondrej
-> >
-> > [1] https://lkml.org/lkml/2016/12/13/904
+> Hello Christoph,
 > 
-> Thank you very much for the review.
+> A general comment: patch "block: allow specifying size for extra
+> command data" is a very welcome improvement but unfortunately also
+> introduces an inconsistency among block drivers. This patch series
+> namely creates two kinds of block drivers:
+> - Block drivers that use the block layer core to allocate
+>   request-private data. These block drivers set request.cmd_size
+>   to a non-zero value and do not need request.special.
+> - Block drivers that allocate request-private data themselves.
+>   These block drivers set request.cmd_size to zero and use
+>   request.special to translate a request pointer into the private
+>   data pointer.
 > 
-> I am the first to admit that I find the Crypto API very cryptic (pun
-> intended)... :-)
+> Have you considered to convert all block drivers to the new
+> approach and to get rid of request.special? If so, do you already
+> have plans to start working on this? I'm namely wondering wheter I
+> should start working on this myself.
 > 
-> I actually followed the example in Documentation/crypto/api-intro.txt.
-> I see now the example is
-> not doing what I though it was doing. Thank you for clarifying this. I
-> will send out a 2nd version.
-> 
-> The thing I find puzzling in this is that I saw a difference in
-> latency when a async algorythm
-> provider driver with high priority (3000) was loaded vs. not. Based on
-> your description I would
-> expect the performance not to change. I will retest with the change
-> and will publish the results.
-> 
-> Thanks!
-> Gilad
+I was actually looking into it, too.
+Once scsi passthrough is removed from struct request there is no
+reasonable need to rely on '->special' for anything, and we should just
+ditch it.
 
-Hi Gilad,
+Cheers,
 
-One thing to keep in mind is that the crypto API somewhat conflates the concept
-of "is the algorithm asynchronous?" with "does this algorithm operate on virtual
-memory or physical memory?".  The shash API is both synchronous and operates on
-virtual memory, and when using it you only have access to shash algorithms.  The
-ahash API on the other hand operates on physical memory and can be used either
-synchronously or asynchronously.  In addition, both shash and ahash algorithms
-may be accessed through the ahash API, and for shash algorithms the API will
-handle translating physical addresses to virtual addresses.
-
-So simply by using the ahash API instead of the shash API, even still requiring
-a "synchronous" algorithm, you may gain access to a different implementation of
-the algorithm, thereby changing the performance.  So whenever doing any
-benchmarks I suggest including the actual driver name (cra_driver_name) of the
-algorithms used; otherwise it may be unclear why the performance changed.
-
-As for the patch, I haven't looked at it in detail, but I agree that if
-dm-verity is indeed operating on sufficiently large buffers in physically
-contiguous memory, then the ahash API would be better than the shash API.  Note,
-that it also could be useful look into supporting having multiple async requests
-issued and pending at the same time, similar to what dm-crypt does.
-
-Eric
+Hannes
+-- 
+Dr. Hannes Reinecke		   Teamlead Storage & Networking
+hare@suse.de			               +49 911 74053 688
+SUSE LINUX GmbH, Maxfeldstr. 5, 90409 Nürnberg
+GF: F. Imendörffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
+HRB 21284 (AG Nürnberg)
