@@ -1,2728 +1,856 @@
-From: Ram Pai <linuxram@us.ibm.com>
-Subject: [PATCH v3 1/1] DM: inplace compressed DM target
-Date: Mon, 30 Jan 2017 23:42:13 -0800
-Message-ID: <1485848533-27778-2-git-send-email-linuxram@us.ibm.com>
-References: <1485848533-27778-1-git-send-email-linuxram@us.ibm.com>
+From: kbuild test robot <lkp@intel.com>
+Subject: Re: [PATCH v3 1/1] DM: inplace compressed DM target
+Date: Tue, 31 Jan 2017 18:32:44 +0800
+Message-ID: <201701311800.zBXU9cRN%fengguang.wu@intel.com>
+References: <1485848533-27778-2-git-send-email-linuxram@us.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1485848533-27778-1-git-send-email-linuxram@us.ibm.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org
-Cc: hbabu@us.ibm.com, shli@kernel.org, snitzer@redhat.com, agk@redhat.com, corbet@lwn.net
+Content-Type: multipart/mixed; boundary="cWoXeonUoKmBZSoM"
+Return-path: <linux-doc-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1485848533-27778-2-git-send-email-linuxram@us.ibm.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Ram Pai <linuxram@us.ibm.com>
+Cc: kbuild-all@01.org, dm-devel@redhat.com, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, agk@redhat.com, snitzer@redhat.com, corbet@lwn.net, shli@kernel.org, hbabu@us.ibm.com
 List-Id: dm-devel.ids
 
-This is a simple DM target supporting inplace compression. Its best
-suited for SSD. The underlying disk must support 512B sector size.
-The target only supports 4k sector size.
 
-Disk layout:
-|super|...meta...|..data...|
+--cWoXeonUoKmBZSoM
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-Store unit is 4k (a block). Super is 1 block, which stores meta  and
-data size and compression algorithm. Meta is a bitmap. For each data
- block, there are 5 bits meta.
+Hi Ram,
 
-Data:
+[auto build test WARNING on dm/for-next]
+[also build test WARNING on v4.10-rc6 next-20170130]
+[if your patch is applied to the wrong git tree, please drop us a note to help improve the system]
 
-Data of   a block is compressed. Compressed  data  is round up to 512B,
-which is the payload. In disk, payload is  stored at  the beginning of
-logical sector  of the block. Let's look  at an example.  Say we store
-data to block A, which  is in sector  B(A*8), its orginal  size is 4k,
-compressed size is  1500.    Compressed     data (CD)  will  use three
-sectors (512B). The three  sectors  are the  payload. Payload  will be
-stored at sector B.
+url:    https://github.com/0day-ci/linux/commits/Ram-Pai/DM-inplace-compressed-DM-target/20170131-154811
+base:   https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git for-next
+config: cris-allyesconfig (attached as .config)
+compiler: cris-linux-gcc (GCC) 6.2.0
+reproduce:
+        wget https://git.kernel.org/cgit/linux/kernel/git/wfg/lkp-tests.git/plain/sbin/make.cross -O ~/bin/make.cross
+        chmod +x ~/bin/make.cross
+        # save the attached .config to linux build tree
+        make.cross ARCH=cris 
 
----------------------------------------------------
-... | CD1 | CD2 | CD3 |   |   |   |   |    | ...
----------------------------------------------------
-    ^B    ^B+1  ^B+2                  ^B+7 ^B+8
+All warnings (new ones prefixed by >>):
 
-For this block, we will not use sector B+3 to B+7 (a hole). We use four
-meta  bits  to  present payload  size. The compressed size (1500) isn't
-stored in meta directly. Instead, we  store  it  at  the last 32bits of
-payload. In this  example, we store it at the  end  of  sector  B+2. If
-compressed size + sizeof(32bits)  crosses a   sector, payload size will
-increase one sector.  If payload  uses 8 sectors, we store uncompressed
-data directly.
+   drivers/md/dm-inplace-compress.c: In function 'dm_icomp_handle_read_decomp':
+>> drivers/md/dm-inplace-compress.c:1580:41: warning: passing argument 3 of 'dm_icomp_bio_copy' makes pointer from integer without a cast [-Wint-conversion]
+       dm_icomp_bio_copy(req->bio, bio_off, empty_zero_page,
+                                            ^~~~~~~~~~~~~~~
+   drivers/md/dm-inplace-compress.c:1133:13: note: expected 'void *' but argument is of type 'long unsigned int'
+    static void dm_icomp_bio_copy(struct bio *bio, off_t bio_off, void *buf,
+                ^~~~~~~~~~~~~~~~~
+   drivers/md/dm-inplace-compress.c:1593:40: warning: passing argument 3 of 'dm_icomp_bio_copy' makes pointer from integer without a cast [-Wint-conversion]
+      dm_icomp_bio_copy(req->bio, bio_off, empty_zero_page,
+                                           ^~~~~~~~~~~~~~~
+   drivers/md/dm-inplace-compress.c:1133:13: note: expected 'void *' but argument is of type 'long unsigned int'
+    static void dm_icomp_bio_copy(struct bio *bio, off_t bio_off, void *buf,
+                ^~~~~~~~~~~~~~~~~
+   In file included from drivers/md/dm-inplace-compress.c:12:0:
+   drivers/md/dm-inplace-compress.c: In function 'dm_icomp_status':
+   drivers/md/dm-inplace-compress.c:2090:10: warning: format '%lu' expects argument of type 'long unsigned int', but argument 4 has type 'long long int' [-Wformat=]
+      DMEMIT("%lu %lu %lu",
+             ^
+   include/linux/device-mapper.h:577:46: note: in definition of macro 'DMEMIT'
+         0 : scnprintf(result + sz, maxlen - sz, x))
+                                                 ^
+   drivers/md/dm-inplace-compress.c:2090:10: warning: format '%lu' expects argument of type 'long unsigned int', but argument 5 has type 'long long int' [-Wformat=]
+      DMEMIT("%lu %lu %lu",
+             ^
+   include/linux/device-mapper.h:577:46: note: in definition of macro 'DMEMIT'
+         0 : scnprintf(result + sz, maxlen - sz, x))
+                                                 ^
+   drivers/md/dm-inplace-compress.c:2090:10: warning: format '%lu' expects argument of type 'long unsigned int', but argument 6 has type 'long long int' [-Wformat=]
+      DMEMIT("%lu %lu %lu",
+             ^
+   include/linux/device-mapper.h:577:46: note: in definition of macro 'DMEMIT'
+         0 : scnprintf(result + sz, maxlen - sz, x))
+                                                 ^
 
-If IO size is bigger than one block, we can store the data as an extent.
-Data of the  whole extent will compressed and stored in the similar way
-like above.  The first  block of the extent is the head, all others are
-the tail.  If extent is 1 block,  the  block  is head. We have 1 bit of
-meta to present if a  block  is  head  or  tail. If 4 meta bits of head
-block can't  store  extent payload size, we will borrow tail block meta
-bits to  store  payload  size.   Max  allowd extent size is 128k, so we
-don't compress/decompress too big size data.
+vim +/dm_icomp_bio_copy +1580 drivers/md/dm-inplace-compress.c
 
-Meta:
-Modifying   data   will modify meta too. Meta will be written(flush) to
-disk   depending   on   meta   write   policy. We support writeback and
-writethrough mode.  In  writeback mode, meta will be written to disk in
-an interval or a  FLUSH  request.  In  writethrough mode, data and meta
-data will be written to disk together.
+  1564				dm_icomp_release_comp_buffer(io);
+  1565				req->result = -EIO;
+  1566				return;
+  1567			}
+  1568	
+  1569			len = min_t(ssize_t,
+  1570				max_t(ssize_t, decomp_len - src_off, 0),
+  1571				max_t(ssize_t, bio_len - dst_off, 0));
+  1572	
+  1573			dm_icomp_bio_copy(req->bio, dst_off,
+  1574				   io->decomp_data + src_off, len, false);
+  1575	
+  1576			/* io range in all_io list is ordered for read IO */
+  1577			while (bio_off < dst_off) {
+  1578				ssize_t size = min_t(ssize_t, PAGE_SIZE,
+  1579						dst_off - bio_off);
+> 1580				dm_icomp_bio_copy(req->bio, bio_off, empty_zero_page,
+  1581						size, false);
+  1582				bio_off += size;
+  1583			}
+  1584	
+  1585			bio_off = dst_off + len;
+  1586			dm_icomp_release_decomp_buffer(io);
+  1587			dm_icomp_release_comp_buffer(io);
+  1588		}
 
-Advantages:
-
-1. Simple. Since  we  store  compressed  data  in-place,  we don't need
-   complicated disk data management.
-2. Efficient. For  each  4k, we only need 5 bits meta. 1T data will use
-less than 200M meta, so we  can  load  all meta into memory. And actual
-compression size is in payload. So   if  IO doesn't need RMW and we use
-writeback meta flush, we don't  need  extra IO for meta.
-
-Disadvantages:
-
-1. hole. Since we   store  compressed data in-place, there are a lot of
-   holes (in above  example,  B+3 - B+7) Hole can impact IO, because we
-   can't do IO merge.
-
-2. 1:1 size. Compression  doesn't  change disk  size. If disk is 1T, we
-   can only store 1T data even we do compression.
-
-But this is for SSD only. Generally SSD firmware has a FTL layer to map
-disk  sectors  to flash nand. High end SSD firmware has filesystem-like
-FTL.
-
-1. hole. Disk has a lot of holes, but SSD FTL   can   still  store data
-   contiguous in nand. Even if we can't do IO   merge in  OS layer, SSD
-   firmware can do it.
-
-2. 1:1 size. On one side, we write compressed data to SSD, which means
-   less  data is  written to SSD. This will be very helpful to improve
-   SSD garbage collection, and  so write speed and life cycle. So even
-   this is a problem, the target  is still helpful. On the other side,
-   advanced SSD FTL can easily do thin provision. For example, if nand
-   is   1T   and   we   let   SSD   report   it   as   2T,   and   use
-   the  SSD  as  compressed target. In such SSD, we don't have the 1:1
-   size issue.
-
-So even if   SSD   FTL   cannot   map   non-contiguous disk sectors to
-contiguous nand, the compression target can still function well.
-
-Signed-off-by: Shaohua Li <shli@fusionio.com>
-Signed-off-by: Ram Pai  <linuxram@us.ibm.com>
 ---
- .../device-mapper/dm-inplace-compress.txt          |  155 ++
- drivers/md/Kconfig                                 |    6 +
- drivers/md/Makefile                                |    2 +
- drivers/md/dm-inplace-compress.c                   | 2214 ++++++++++++++++++++
- drivers/md/dm-inplace-compress.h                   |  187 ++
- 5 files changed, 2564 insertions(+)
- create mode 100644 Documentation/device-mapper/dm-inplace-compress.txt
- create mode 100644 drivers/md/dm-inplace-compress.c
- create mode 100644 drivers/md/dm-inplace-compress.h
+0-DAY kernel test infrastructure                Open Source Technology Center
+https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
 
-diff --git a/Documentation/device-mapper/dm-inplace-compress.txt b/Documentation/device-mapper/dm-inplace-compress.txt
-new file mode 100644
-index 0000000..1835369
---- /dev/null
-+++ b/Documentation/device-mapper/dm-inplace-compress.txt
-@@ -0,0 +1,155 @@
-+Device-Mapper's "inplace-compress" target provides inplace compression of block
-+devices using the kernel compression API.
-+
-+Parameters: <device path> \
-+	[ <#opt_params writethough> ]
-+	[ <#opt_params <writeback> <meta_commit_delay> ]
-+	[ <#opt_params compressor> <type> ]
-+	[ <#opt_params critical>  ]
-+
-+
-+<writethrough>
-+    Write data and metadata together.
-+
-+<writeback> <meta_commit_delay>
-+    Write metadata every 'meta_commit_delay' interval.
-+
-+<device path>
-+    This is the device that is going to be used as backend and contains the
-+    compressed data.  You can specify it as a path like /dev/xxx or a device
-+    number <major>:<minor>.
-+
-+<compressor> <type>
-+    Choose the compressor algorithm. 'lzo' and '842'
-+    compressors are supported.
-+
-+<critical>
-+    Block device used in critical path.
-+
-+Example scripts
-+===============
-+
-+create a inplace-compress block device using lzo compression. Write metadata
-+and data together.
-+[[
-+#!/bin/sh
-+# Create a inplace-compress device using dmsetup
-+device=$1  #your backing storage eg: /dev/sdc1
-+size=80000 #size of your new compressed block device
-+dmsetup create comp1 --table "0 $size inplacecompress $device
-+		writethrough compressor lzo"
-+]]
-+
-+
-+create a inplace-compress block device using nx-842 hardware compression. Write
-+metadata periodially every 5sec.
-+
-+[[
-+#!/bin/sh
-+# Create a inplace-compress device using dmsetup
-+device=$1  #your backing storage eg: /dev/sdc1
-+size=80000 #size of your new compressed block device
-+dmsetup create comp1 --table "0 $size inplacecompress $device
-+		writeback 5 compressor 842"
-+]]
-+
-+
-+Create a inplace-compress block device. Device is used in critical path;
-+ex: swap device.
-+
-+[[
-+#!/bin/sh
-+# Create a inplace-compress device using dmsetup
-+device=$1  #your backing storage eg: /dev/sdc1
-+size=80000 #size of your new compressed block device
-+dmsetup create comp1 --table "0 $size inplacecompress $device critical"
-+]]
-+
-+Description
-+===========
-+    This is a simple DM target supporting inplace compression. Its best suited for
-+    SSD. The underlying disk must support 512B sector size, the target only
-+    supports 4k sector size.
-+
-+    Disk layout:
-+    |super|...meta...|..data...|
-+
-+    Store unit is 4k (a block). Super is 1 block, which stores meta and data
-+    size and compression algorithm. Meta is a bitmap. For each data block,
-+    there are 5 bits meta.
-+
-+    Data:
-+
-+    Data of a block is compressed. Compressed data is round up to 512B, which
-+    is the payload. In disk, payload is stored at the beginning of logical
-+    sector of the block. Let's look at an example. Say we store data to block
-+    A, which is in sector B(A*8), its orginal size is 4k, compressed size is
-+    1500. Compressed data (CD) will use 3 sectors (512B). The 3 sectors are the
-+    payload. Payload will be stored at sector B.
-+
-+    ---------------------------------------------------
-+    ... | CD1 | CD2 | CD3 |   |   |   |   |    | ...
-+    ---------------------------------------------------
-+        ^B    ^B+1  ^B+2                  ^B+7 ^B+8
-+
-+    For this block, we will not use sector B+3 to B+7 (a hole). We use 4 meta
-+    bits to present payload size. The compressed size (1500) isn't stored in
-+    meta directly. Instead, we store it at the last 32bits of payload. In this
-+    example, we store it at the end of sector B+2. If compressed size +
-+    sizeof(32bits) crosses a sector, payload size will increase one sector. If
-+    payload uses 8 sectors, we store uncompressed data directly.
-+
-+    If IO size is bigger than one block, we can store the data as an extent.
-+    Data of the whole extent will compressed and stored in the similar way like
-+    above.  The first block of the extent is the head, all others are the tail.
-+    If extent is 1 block, the block is head. We have 1 bit of meta to present
-+    if a block is head or tail. If 4 meta bits of head block can't store extent
-+    payload size, we will borrow tail block meta bits to store payload size.
-+    Max allowd extent size is 128k, so we don't compress/decompress too big
-+    size data.
-+
-+    Meta:
-+    Modifying data will modify meta too. Meta will be written(flush) to disk
-+    depending on meta write policy. We support writeback and writethrough mode.
-+    In writeback mode, meta will be written to disk in an interval or a FLUSH
-+    request.  In writethrough mode, data and meta data will be written to disk
-+    together.
-+
-+    Advantages:
-+
-+    1. Simple. Since we store compressed data in-place, we don't need complicated
-+    disk data management.
-+    2. Efficient. For each 4k, we only need 5 bits meta. 1T data will use less than
-+    200M meta, so we can load all meta into memory. And actual compression size is
-+    in payload. So if IO doesn't need RMW and we use writeback meta flush, we don't
-+    need extra IO for meta.
-+
-+    Disadvantages:
-+
-+    1. hole. Since we store compressed data in-place, there are a lot of holes
-+    (in above example, B+3 - B+7) Hole can impact IO, because we can't do IO
-+    merge.
-+
-+    2. 1:1 size. Compression doesn't change disk size. If disk is 1T, we can
-+    only store 1T data even we do compression.
-+
-+    But this is for SSD only. Generally SSD firmware has a FTL layer to map
-+    disk sectors to flash nand. High end SSD firmware has filesystem-like FTL.
-+
-+    1. hole. Disk has a lot of holes, but SSD FTL can still store data continuous
-+    in nand. Even if we can't do IO merge in OS layer, SSD firmware can do it.
-+
-+    2. 1:1 size. On one side, we write compressed data to SSD, which means less
-+    data is written to SSD. This will be very helpful to improve SSD garbage
-+    collection, and so write speed and life cycle. So even this is a problem, the
-+    target is still helpful. On the other side, advanced SSD FTL can easily do thin
-+    provision. For example, if nand is 1T and we let SSD report it as 2T, and use
-+    the SSD as compressed target. In such SSD, we don't have the 1:1 size issue.
-+
-+    So even if SSD FTL cannot map non-continuous disk sectors to continuous nand,
-+    the compression target can still function well.
-+
-+
-+Author:
-+	Shaohua Li <shli@fusionio.com>
-+	Ram Pai <linuxram@us.ibm.com>
-diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
-index b7767da..2eece2a 100644
---- a/drivers/md/Kconfig
-+++ b/drivers/md/Kconfig
-@@ -508,4 +508,10 @@ config DM_LOG_WRITES
- 
- 	  If unsure, say N.
- 
-+config DM_INPLACE_COMPRESS
-+	tristate "Inplace Compression target"
-+	depends on BLK_DEV_DM
-+	---help---
-+	  Allow volume managers to compress data for SSD.
-+
- endif # MD
-diff --git a/drivers/md/Makefile b/drivers/md/Makefile
-index 3cbda1a..4525482 100644
---- a/drivers/md/Makefile
-+++ b/drivers/md/Makefile
-@@ -59,6 +59,8 @@ obj-$(CONFIG_DM_CACHE_SMQ)	+= dm-cache-smq.o
- obj-$(CONFIG_DM_CACHE_CLEANER)	+= dm-cache-cleaner.o
- obj-$(CONFIG_DM_ERA)		+= dm-era.o
- obj-$(CONFIG_DM_LOG_WRITES)	+= dm-log-writes.o
-+obj-$(CONFIG_DM_LOG_WRITES)	+= dm-log-writes.o
-+obj-$(CONFIG_DM_INPLACE_COMPRESS)	+= dm-inplace-compress.o
- 
- ifeq ($(CONFIG_DM_UEVENT),y)
- dm-mod-objs			+= dm-uevent.o
-diff --git a/drivers/md/dm-inplace-compress.c b/drivers/md/dm-inplace-compress.c
-new file mode 100644
-index 0000000..ba12f04
---- /dev/null
-+++ b/drivers/md/dm-inplace-compress.c
-@@ -0,0 +1,2214 @@
-+/*
-+ *  device mapper compression block device.
-+ *
-+ *  Released under GPL v2.
-+ *
-+ */
-+#include <linux/module.h>
-+#include <linux/init.h>
-+#include <linux/blkdev.h>
-+#include <linux/bio.h>
-+#include <linux/slab.h>
-+#include <linux/device-mapper.h>
-+#include <linux/dm-io.h>
-+#include <linux/crypto.h>
-+#include <linux/lzo.h>
-+#include <linux/kthread.h>
-+#include <linux/page-flags.h>
-+#include <linux/completion.h>
-+#include <linux/vmalloc.h>
-+#include "dm-inplace-compress.h"
-+
-+#define DM_MSG_PREFIX "dm-inplace-compress"
-+
-+
-+static const struct kernel_param_ops dm_icomp_alloc_param_ops = {
-+	.set    = param_set_ulong,
-+	.get    = param_get_ulong,
-+};
-+
-+static atomic64_t dm_icomp_total_alloc_size;
-+#define DMCP_ALLOC(s) {atomic64_add(s, &dm_icomp_total_alloc_size); }
-+#define DMCP_FREE_ALLOC(s) {atomic64_sub(s, &dm_icomp_total_alloc_size); }
-+module_param_cb(dm_icomp_total_alloc_size, &dm_icomp_alloc_param_ops,
-+				&dm_icomp_total_alloc_size, 0644);
-+
-+static atomic64_t dm_icomp_total_bio_save;
-+#define DMCP_ALLOC_SAVE(s) {atomic64_add(s, &dm_icomp_total_bio_save); }
-+module_param_cb(dm_icomp_total_bio_save, &dm_icomp_alloc_param_ops,
-+				&dm_icomp_total_bio_save, 0644);
-+
-+
-+static struct kmem_cache *dm_icomp_req_cachep;
-+static struct kmem_cache *dm_icomp_io_range_cachep;
-+static struct kmem_cache *dm_icomp_meta_io_cachep;
-+
-+static struct dm_icomp_io_worker dm_icomp_io_workers[NR_CPUS];
-+static struct workqueue_struct *dm_icomp_wq;
-+
-+/*
-+ *****************************************************
-+ * compressor selection logic
-+ *****************************************************
-+ */
-+static struct dm_icomp_compressor_data compressors[] = {
-+	[DMCP_COMP_ALG_LZO] = {
-+		.name = "lzo",
-+		.can_handle_overflow = false,
-+		.comp_len = lzo_comp_len,
-+		.max_comp_len = lzo_max_comp_len,
-+	},
-+	[DMCP_COMP_ALG_842] = {
-+		.name = "842",
-+		.can_handle_overflow = true,
-+		.comp_len = nx842_comp_len,
-+		.max_comp_len = nx842_max_comp_len,
-+	},
-+};
-+
-+static int default_compressor = DMCP_COMP_ALG_LZO;
-+#define DMCP_ALGO_LENGTH 9
-+static char dm_icomp_algorithm[DMCP_ALGO_LENGTH] = "lzo";
-+static struct kparam_string dm_icomp_compressor_kparam = {
-+	.string =	dm_icomp_algorithm,
-+	.maxlen =	sizeof(dm_icomp_algorithm),
-+};
-+static int dm_icomp_compressor_param_set(const char *,
-+		const struct kernel_param *);
-+static struct kernel_param_ops dm_icomp_compressor_param_ops = {
-+	.set =	dm_icomp_compressor_param_set,
-+	.get =	param_get_string,
-+};
-+module_param_cb(compress_algorithm, &dm_icomp_compressor_param_ops,
-+		&dm_icomp_compressor_kparam, 0644);
-+
-+
-+
-+static int get_comp_id(const char *s)
-+{
-+	int r, val_len;
-+
-+	if (!crypto_has_comp(s, 0, 0))
-+		return -1;
-+
-+	for (r = 0; r < ARRAY_SIZE(compressors); r++) {
-+		val_len = strlen(compressors[r].name);
-+		if (!strncmp(s, compressors[r].name, val_len))
-+			return r;
-+	}
-+	return -1;
-+}
-+
-+static const char *get_comp_name(int id)
-+{
-+	if (id < 0 || id > ARRAY_SIZE(compressors))
-+		return NULL;
-+	return compressors[id].name;
-+}
-+
-+static void set_default_compressor(int index)
-+{
-+	default_compressor = index;
-+	strlcpy(dm_icomp_algorithm, compressors[index].name,
-+			sizeof(dm_icomp_algorithm));
-+	DMINFO("compressor  is %s", dm_icomp_algorithm);
-+}
-+
-+static inline int get_default_compressor(void)
-+{
-+	return default_compressor;
-+}
-+
-+static int select_default_compressor(void)
-+{
-+	int r;
-+	int arr_size = ARRAY_SIZE(compressors);
-+
-+	for (r = 0; r < arr_size; r++)
-+		if (crypto_has_comp(compressors[r].name, 0, 0))
-+			break;
-+	if (r >= arr_size) {
-+		DMWARN("No crypto compressors are supported");
-+		return -EINVAL;
-+	}
-+	set_default_compressor(r);
-+	return 0;
-+}
-+
-+static int dm_icomp_compressor_param_set(const char *val,
-+		const struct kernel_param *kp)
-+{
-+	int ret;
-+	char str[kp->str->maxlen], *s;
-+	int val_len = strlen(val)+1;
-+
-+	strlcpy(str, val, val_len);
-+	s = strim(str);
-+	ret = get_comp_id(s);
-+	if (ret < 0) {
-+		DMWARN("Compressor %s not supported", s);
-+		return -1;
-+	}
-+	set_default_compressor(ret);
-+	return 0;
-+}
-+
-+static void free_compressor(struct dm_icomp_info *info)
-+{
-+	int i;
-+
-+	for_each_possible_cpu(i) {
-+		if (info->tfm[i]) {
-+			crypto_free_comp(info->tfm[i]);
-+			info->tfm[i] = NULL;
-+		}
-+	}
-+}
-+
-+static int alloc_compressor(struct dm_icomp_info *info)
-+{
-+	int i;
-+	const char *alg_name = get_comp_name(info->comp_alg);
-+
-+	for_each_possible_cpu(i) {
-+		info->tfm[i] = crypto_alloc_comp(
-+			alg_name, 0, 0);
-+		if (IS_ERR(info->tfm[i]))
-+			goto err;
-+	}
-+	return 0;
-+
-+err:
-+	free_compressor(info);
-+	return -ENOMEM;
-+}
-+
-+/**** END compressor select logic ****/
-+
-+
-+/*****  metadata logic ***************/
-+/*
-+ * return the meta data bits corresponding to a block
-+ * @block_index : the index of the block
-+ */
-+static u8 dm_icomp_get_meta(struct dm_icomp_info *info, u64 block_index)
-+{
-+	u64 first_bit = block_index * DMCP_META_BITS;
-+	int bits, offset;
-+	u32 data;
-+	u8  ret = 0;
-+
-+	offset = first_bit & (DMCP_BITS_PER_ENTRY-1);
-+	bits = min_t(u32, DMCP_META_BITS, DMCP_BITS_PER_ENTRY - offset);
-+
-+	data = (u32)info->meta_bitmap[first_bit >> DMCP_META_BITS];
-+	ret = (data >> offset) & ((1 << bits) - 1);
-+
-+	if (bits < DMCP_META_BITS) {
-+		data = info->meta_bitmap[(first_bit >> DMCP_META_BITS) + 1];
-+		bits = DMCP_META_BITS - bits;
-+		ret |= (data & ((1 << bits) - 1)) << (DMCP_META_BITS - bits);
-+	}
-+	return ret;
-+}
-+
-+
-+static void dm_icomp_mark_page(struct dm_icomp_info *info, u32 *addr,
-+				bool dirty_meta)
-+{
-+	struct page *page;
-+
-+	page = vmalloc_to_page(addr);
-+	if (!page)
-+		return;
-+	if (dirty_meta)
-+		SetPageDirty(page);
-+	else
-+		ClearPageDirty(page);
-+}
-+
-+/*
-+ * set the meta data bits corresponding to a block
-+ * @block_index : the index of the block
-+ * @meta        : the meta data bits.
-+ */
-+static void dm_icomp_set_meta(struct dm_icomp_info *info, u64 block_index,
-+		u8 meta, bool dirty_meta)
-+{
-+	u64 first_bit = block_index * DMCP_META_BITS;
-+	int bits, offset;
-+	u32 data;
-+
-+	offset = first_bit & (DMCP_BITS_PER_ENTRY-1);
-+	bits = min_t(u32, DMCP_META_BITS, DMCP_BITS_PER_ENTRY - offset);
-+
-+
-+	data = (u32)info->meta_bitmap[first_bit >> DMCP_META_BITS];
-+	data &= ~(((1 << bits) - 1) << offset);
-+	data |= (meta & ((1 << bits) - 1)) << offset;
-+	info->meta_bitmap[first_bit >> DMCP_META_BITS] = (u32)data;
-+
-+	if (info->write_mode == DMCP_WRITE_BACK)
-+		dm_icomp_mark_page(info,
-+			&info->meta_bitmap[first_bit >> DMCP_META_BITS],
-+			dirty_meta);
-+
-+	if (bits < DMCP_META_BITS) {
-+		meta >>= bits;
-+		data = (u32)
-+			info->meta_bitmap[(first_bit >> DMCP_META_BITS) + 1];
-+		bits = DMCP_META_BITS - bits;
-+		data = (data >> bits) << bits;
-+		data |= meta & ((1 << bits) - 1);
-+		info->meta_bitmap[(first_bit >> DMCP_META_BITS) + 1] =
-+				(u32)data;
-+
-+		if (info->write_mode == DMCP_WRITE_BACK)
-+			dm_icomp_mark_page(info,
-+			&info->meta_bitmap[(first_bit >> DMCP_META_BITS) + 1],
-+			dirty_meta);
-+	}
-+}
-+
-+
-+/*
-+ * set the meta data bits corresponding to an extent
-+ * @block : the index of the block
-+ * @logical_blocks: the number of blocks in the extent
-+ * @sectors: the number of sectors holding the compressed
-+ *		data
-+ */
-+static void dm_icomp_set_extent(struct dm_icomp_req *req, u64 block,
-+	u16 logical_blocks, sector_t data_sectors)
-+{
-+	int i;
-+	u8 data;
-+
-+	for (i = 0; i < logical_blocks; i++) {
-+		data = min_t(sector_t, data_sectors, 8);
-+		data_sectors -= data;
-+		if (i != 0)
-+			data |= DMCP_TAIL_MASK;
-+		/* For FUA, we write out meta data directly */
-+		dm_icomp_set_meta(req->info, block + i, data,
-+					!(req->bio->bi_opf & REQ_FUA));
-+	}
-+}
-+
-+/*
-+ * get the meta data bits corresponding to an extent
-+ * @block_index : the index of the block
-+ * @logical_blocks: return the number of blocks in the extent
-+ * @sectors: return the number of sectors holding the compressed
-+ *		data
-+ */
-+static void dm_icomp_get_extent(struct dm_icomp_info *info, u64 block_index,
-+	u64 *first_block_index, u16 *logical_sectors, u16 *data_sectors)
-+{
-+	u8 data;
-+
-+	data = dm_icomp_get_meta(info, block_index);
-+	while (data & DMCP_TAIL_MASK) {
-+		block_index--;
-+		data = dm_icomp_get_meta(info, block_index);
-+	}
-+	*first_block_index = block_index;
-+	*logical_sectors = DMCP_BYTES_TO_SECTOR(DMCP_BLOCK_SIZE);
-+	*data_sectors = data & DMCP_LENGTH_MASK;
-+	block_index++;
-+	while (block_index < info->data_blocks) {
-+		data = dm_icomp_get_meta(info, block_index);
-+		if (!(data & DMCP_TAIL_MASK))
-+			break;
-+		*logical_sectors += DMCP_BYTES_TO_SECTOR(DMCP_BLOCK_SIZE);
-+		*data_sectors += data & DMCP_LENGTH_MASK;
-+		block_index++;
-+	}
-+}
-+
-+/*
-+ * return the super block
-+ */
-+static int dm_icomp_access_super(struct dm_icomp_info *info, void *addr,
-+		int op, int flag)
-+{
-+	struct dm_io_region region;
-+	struct dm_io_request req;
-+	unsigned long io_error = 0;
-+	int ret;
-+
-+	region.bdev = info->dev->bdev;
-+	region.sector = 0;
-+	region.count = DMCP_BYTES_TO_SECTOR(DMCP_BLOCK_SIZE);
-+
-+	req.bi_op = op;
-+	req.bi_op_flags = flag;
-+	req.mem.type = DM_IO_KMEM;
-+	req.mem.offset = 0;
-+	req.mem.ptr.addr = addr;
-+	req.notify.fn = NULL;
-+	req.client = info->io_client;
-+
-+	ret = dm_io(&req, 1, &region, &io_error);
-+	if (ret || io_error)
-+		return -EIO;
-+	return 0;
-+}
-+
-+static void dm_icomp_meta_io_done(unsigned long error, void *context)
-+{
-+	struct dm_icomp_meta_io *meta_io = context;
-+
-+	meta_io->fn(meta_io->data, error);
-+	kmem_cache_free(dm_icomp_meta_io_cachep, meta_io);
-+}
-+
-+/*
-+ * write meta data to the meta blocks in the backing store.
-+ */
-+static int dm_icomp_write_meta(struct dm_icomp_info *info, u64 start_page,
-+	u64 end_page, void *data,
-+	void (*fn)(void *data, unsigned long error), int rw, int flags)
-+{
-+	struct dm_icomp_meta_io *meta_io;
-+	sector_t sector, last_sector, last_meta_sector = info->data_start-1;
-+
-+	WARN_ON(end_page > info->meta_bitmap_pages);
-+
-+	sector = DMCP_META_START_SECTOR + (start_page << (PAGE_SHIFT - 9));
-+	WARN_ON(sector > last_meta_sector);
-+	if (sector > last_meta_sector) {
-+		fn(data, -EINVAL);
-+		return -EINVAL;
-+	}
-+	last_sector = sector + ((end_page - start_page) << (PAGE_SHIFT - 9));
-+	if (last_sector > last_meta_sector)
-+		last_sector = last_meta_sector;
-+
-+
-+	meta_io = kmem_cache_alloc(dm_icomp_meta_io_cachep, GFP_NOIO);
-+	if (!meta_io) {
-+		fn(data, -ENOMEM);
-+		return -ENOMEM;
-+	}
-+	meta_io->data = data;
-+	meta_io->fn = fn;
-+
-+	meta_io->io_region.bdev = info->dev->bdev;
-+
-+
-+	meta_io->io_region.sector = sector;
-+	meta_io->io_region.count = last_sector - sector + 1;
-+	atomic64_add(DMCP_SECTOR_TO_BYTES(meta_io->io_region.count),
-+				&info->meta_write_size);
-+
-+	meta_io->io_req.bi_op = rw;
-+	meta_io->io_req.bi_op_flags = flags;
-+	meta_io->io_req.mem.type = DM_IO_VMA;
-+	meta_io->io_req.mem.offset = 0;
-+	meta_io->io_req.mem.ptr.addr = ((char *)(info->meta_bitmap)) +
-+						(start_page << PAGE_SHIFT);
-+	meta_io->io_req.notify.fn = dm_icomp_meta_io_done;
-+	meta_io->io_req.notify.context = meta_io;
-+	meta_io->io_req.client = info->io_client;
-+
-+	dm_io(&meta_io->io_req, 1, &meta_io->io_region, NULL);
-+	return 0;
-+}
-+
-+struct writeback_flush_data {
-+	struct completion complete;
-+	atomic_t cnt;
-+};
-+
-+static void writeback_flush_io_done(void *data, unsigned long error)
-+{
-+	struct writeback_flush_data *wb = data;
-+
-+	if (atomic_dec_return(&wb->cnt))
-+		return;
-+	complete(&wb->complete);
-+}
-+
-+static void dm_icomp_flush_dirty_meta(struct dm_icomp_info *info,
-+			struct writeback_flush_data *data)
-+{
-+	struct page *page;
-+	u64 start = 0, index;
-+	u32 pending = 0, cnt = 0;
-+	bool dirty;
-+	struct blk_plug plug;
-+
-+	blk_start_plug(&plug);
-+	for (index = 0; index < info->meta_bitmap_pages; index++, cnt++) {
-+		if (cnt == 256) {
-+			cnt = 0;
-+			cond_resched();
-+		}
-+
-+		page = vmalloc_to_page((char *)(info->meta_bitmap) +
-+					(index << PAGE_SHIFT));
-+		if (!page)
-+			DMWARN("Uable to find page for block=%llu", index);
-+		dirty = TestClearPageDirty(page);
-+
-+		if (pending == 0 && dirty) {
-+			start = index;
-+			pending++;
-+			continue;
-+		} else if (pending == 0)
-+			continue;
-+		else if (pending > 0 && dirty) {
-+			pending++;
-+			continue;
-+		}
-+
-+		/* pending > 0 && !dirty */
-+		atomic_inc(&data->cnt);
-+		dm_icomp_write_meta(info, start, start + pending, data,
-+			writeback_flush_io_done, REQ_OP_WRITE, WRITE);
-+		pending = 0;
-+	}
-+
-+	if (pending > 0) {
-+		atomic_inc(&data->cnt);
-+		dm_icomp_write_meta(info, start, start + pending, data,
-+			writeback_flush_io_done, REQ_OP_WRITE, WRITE);
-+	}
-+	blkdev_issue_flush(info->dev->bdev, GFP_NOIO, NULL);
-+	blk_finish_plug(&plug);
-+}
-+
-+static int dm_icomp_meta_writeback_thread(void *data)
-+{
-+	struct dm_icomp_info *info = data;
-+	struct writeback_flush_data wb;
-+
-+	atomic_set(&wb.cnt, 1);
-+	init_completion(&wb.complete);
-+
-+	while (!kthread_should_stop()) {
-+		schedule_timeout_interruptible(
-+			msecs_to_jiffies(info->writeback_delay * 1000));
-+		dm_icomp_flush_dirty_meta(info, &wb);
-+	}
-+
-+	dm_icomp_flush_dirty_meta(info, &wb);
-+
-+	writeback_flush_io_done(&wb, 0);
-+	wait_for_completion(&wb.complete);
-+	return 0;
-+}
-+
-+static int dm_icomp_init_meta(struct dm_icomp_info *info, bool new)
-+{
-+	struct dm_io_region region;
-+	struct dm_io_request req;
-+	unsigned long io_error = 0;
-+	struct blk_plug plug;
-+	int ret;
-+	ssize_t len = DIV_ROUND_UP_ULL(info->meta_bitmap_bits,
-+			DMCP_BITS_PER_ENTRY);
-+
-+	len *= (DMCP_BITS_PER_ENTRY >> 3);
-+
-+	region.bdev = info->dev->bdev;
-+	region.sector = DMCP_META_START_SECTOR;
-+	region.count = DMCP_BYTES_TO_SECTOR(round_up(len,
-+				DMCP_SECTOR_SIZE));
-+
-+	req.mem.type = DM_IO_VMA;
-+	req.mem.offset = 0;
-+	req.mem.ptr.addr = info->meta_bitmap;
-+	req.notify.fn = NULL;
-+	req.client = info->io_client;
-+
-+	blk_start_plug(&plug);
-+	if (new) {
-+		memset(info->meta_bitmap, 0, len);
-+		req.bi_op = REQ_OP_WRITE;
-+		req.bi_op_flags = REQ_FUA;
-+		ret = dm_io(&req, 1, &region, &io_error);
-+	} else {
-+		req.bi_op = REQ_OP_READ;
-+		req.bi_op_flags = READ;
-+		ret = dm_io(&req, 1, &region, &io_error);
-+	}
-+	blk_finish_plug(&plug);
-+
-+	if (ret || io_error) {
-+		info->ti->error = "Access metadata error";
-+		return -EIO;
-+	}
-+
-+	if (info->write_mode == DMCP_WRITE_BACK) {
-+		info->writeback_tsk = kthread_run(
-+			dm_icomp_meta_writeback_thread,
-+			info, "dm_icomp_writeback");
-+		if (!info->writeback_tsk) {
-+			info->ti->error = "Create writeback thread error";
-+			return -EINVAL;
-+		}
-+	}
-+
-+	return 0;
-+}
-+
-+/***** END metadata logic *****/
-+
-+
-+#define SET_REQ_STAGE(req, value) (req->stage = value)
-+#define GET_REQ_STAGE(req) req->stage
-+
-+
-+static void print_max_sectors_possible(struct dm_icomp_info *info)
-+{
-+	u64 total_blocks, data_blocks, meta_blocks;
-+	u64 no_pairs, pair_blocks, rem;
-+
-+	/* superblock takes away one block */
-+	total_blocks = DMCP_BYTES_TO_BLOCK(i_size_read(
-+				info->dev->bdev->bd_inode)) - 1;
-+
-+	/* number of datablocks representable by one metadata block. */
-+	data_blocks  = (DMCP_BLOCK_SIZE * 8) /  DMCP_META_BITS;
-+	meta_blocks  = 1;
-+
-+	/* how many such pairing can we make ? */
-+	pair_blocks  = data_blocks + meta_blocks;
-+	no_pairs     = total_blocks / pair_blocks;
-+
-+	/*
-+	 * these many datablocks and these many ..
-+	 * metadatablocks will support each other.
-+	 */
-+	data_blocks  *= no_pairs;
-+	meta_blocks  *= no_pairs;
-+
-+	rem = total_blocks % pair_blocks;
-+	if (rem) {
-+		/* we have some remaining blocks.
-+		 * give one to meta and remaining to data.
-+		 */
-+		meta_blocks++;
-+		data_blocks += (rem - 1);
-+	}
-+
-+	DMINFO(" This device can accommodate at most %llu sector ",
-+		DMCP_BLOCK_TO_SECTOR(data_blocks));
-+}
-+
-+
-+/*
-+ * create a new super block and initialize its contents.
-+ */
-+static int dm_icomp_read_or_create_super(struct dm_icomp_info *info)
-+{
-+	void *addr, *bitmap_addr;
-+	struct dm_icomp_super_block *super;
-+	u64 total_blocks, data_blocks, meta_blocks;
-+	bool new_super = false;
-+	int ret;
-+	ssize_t len;
-+
-+	info->total_sector = DMCP_BYTES_TO_SECTOR(
-+			i_size_read(info->dev->bdev->bd_inode));
-+	total_blocks = DMCP_SECTOR_TO_BLOCK(info->total_sector) - 1;
-+
-+	data_blocks =  DMCP_SECTOR_TO_BLOCK(info->ti->len);
-+	meta_blocks =  ((data_blocks * DMCP_META_BITS) +
-+			((DMCP_BLOCK_SIZE * 8) - 1)) / (DMCP_BLOCK_SIZE * 8);
-+
-+	info->data_blocks = data_blocks;
-+	info->data_start = DMCP_BLOCK_TO_SECTOR(1 + meta_blocks);
-+
-+	DMINFO(
-+	"data_start=%u data_blocks=%llu metablocks=%llu total_blocks=%llu",
-+		(unsigned int)info->data_start, info->data_blocks,
-+		meta_blocks, total_blocks);
-+
-+	if (DMCP_BLOCK_TO_SECTOR(data_blocks + meta_blocks + 1)
-+			>= info->total_sector) {
-+		print_max_sectors_possible(info);
-+		info->ti->error =
-+			"Insufficient sectors to satisfy requested size";
-+		return -ENOMEM;
-+	}
-+
-+	addr = kzalloc(DMCP_BLOCK_SIZE+DMCP_SECTOR_SIZE, GFP_KERNEL);
-+	if (!addr) {
-+		info->ti->error = "Cannot allocate super";
-+		return -ENOMEM;
-+	}
-+
-+	super = PTR_ALIGN(addr, DMCP_SECTOR_SIZE);
-+	ret = dm_icomp_access_super(info, super, REQ_OP_READ, REQ_FUA);
-+	if (ret)
-+		goto out;
-+
-+	if (le64_to_cpu(super->magic) == DMCP_SUPER_MAGIC) {
-+
-+		const char *alg_name;
-+
-+		if (le64_to_cpu(super->meta_blocks) != meta_blocks ||
-+		    le64_to_cpu(super->data_blocks) != data_blocks) {
-+			info->ti->error = "Super is invalid";
-+			ret = -EINVAL;
-+			goto out;
-+		}
-+
-+		alg_name = get_comp_name(super->comp_alg);
-+		if (!crypto_has_comp(alg_name, 0, 0)) {
-+			info->ti->error =
-+				"Compressor algorithm doesn't support";
-+			ret = -EINVAL;
-+			goto out;
-+		}
-+		info->comp_alg = super->comp_alg;
-+
-+	} else {
-+		super->magic = cpu_to_le64(DMCP_SUPER_MAGIC);
-+		super->meta_blocks = cpu_to_le64(meta_blocks);
-+		super->data_blocks = cpu_to_le64(data_blocks);
-+		super->comp_alg = info->comp_alg;
-+		ret = dm_icomp_access_super(info, super, REQ_OP_WRITE,
-+				REQ_FUA);
-+		if (ret) {
-+			info->ti->error = "Access super fails";
-+			goto out;
-+		}
-+		new_super = true;
-+	}
-+
-+	if (alloc_compressor(info)) {
-+		info->ti->error = "Cannot allocate compressor";
-+		ret = -ENOMEM;
-+		goto out;
-+	}
-+
-+	info->meta_bitmap_bits = data_blocks * DMCP_META_BITS;
-+	len = DIV_ROUND_UP_ULL(info->meta_bitmap_bits, DMCP_BITS_PER_ENTRY);
-+	len *= (DMCP_BITS_PER_ENTRY >> 3);
-+	info->meta_bitmap_pages = (len + PAGE_SIZE - 1) >> PAGE_SHIFT;
-+	bitmap_addr = vzalloc((info->meta_bitmap_pages * PAGE_SIZE) +
-+				DMCP_SECTOR_SIZE);
-+	if (!bitmap_addr) {
-+		info->ti->error = "Cannot allocate bitmap";
-+		ret = -ENOMEM;
-+		goto bitmap_err;
-+	}
-+	info->meta_bitmap = PTR_ALIGN(bitmap_addr, DMCP_SECTOR_SIZE);
-+
-+	ret = dm_icomp_init_meta(info, new_super);
-+	if (ret)
-+		goto meta_err;
-+
-+	return 0;
-+meta_err:
-+	vfree(bitmap_addr);
-+bitmap_err:
-+	free_compressor(info);
-+out:
-+	kfree(addr);
-+	return ret;
-+}
-+
-+/*
-+ * <dev> [ <writethough>/<writeback> <meta_commit_delay> ]
-+ *	 [ <compressor> <type> ]
-+ */
-+static int dm_icomp_ctr(struct dm_target *ti, unsigned int argc, char **argv)
-+{
-+	struct dm_icomp_info *info;
-+	char mode[15];
-+	int par = 0;
-+	int ret, i;
-+
-+	info = kzalloc(sizeof(*info), GFP_KERNEL);
-+	if (!info) {
-+		ti->error = "dm-inplace-compress: Cannot allocate context";
-+		return -ENOMEM;
-+	}
-+	info->ti = ti;
-+	info->comp_alg = get_default_compressor();
-+	info->critical = false;
-+	while (++par < argc) {
-+		if (sscanf(argv[par], "%s", mode) != 1) {
-+			ti->error = "Invalid argument";
-+			ret = -EINVAL;
-+			goto err_para;
-+		}
-+
-+		if (strcmp(mode, "writeback") == 0) {
-+			info->write_mode = DMCP_WRITE_BACK;
-+			if (kstrtouint(argv[++par], 10,
-+				 &info->writeback_delay)) {
-+				ti->error = "Invalid argument";
-+				ret = -EINVAL;
-+				goto err_para;
-+			}
-+		} else if (strcmp(mode, "writethrough") == 0) {
-+			info->write_mode = DMCP_WRITE_THROUGH;
-+		} else if (strcmp(mode, "critical") == 0) {
-+			info->critical = true;
-+		} else if (strcmp(mode, "compressor") == 0) {
-+			if (sscanf(argv[++par], "%s", mode) != 1) {
-+				ti->error = "Invalid argument";
-+				ret = -EINVAL;
-+				goto err_para;
-+			}
-+			ret = get_comp_id(mode);
-+			if (ret >= 0) {
-+				DMINFO("compressor  is %s", mode);
-+				info->comp_alg = ret;
-+			} else {
-+				ti->error = "Unsupported compressor";
-+				ret = -EINVAL;
-+				goto err_para;
-+			}
-+		}
-+	}
-+
-+	if (dm_get_device(ti, argv[0], dm_table_get_mode(ti->table),
-+							&info->dev)) {
-+		ti->error = "Can't get device";
-+		ret = -EINVAL;
-+		goto err_para;
-+	}
-+
-+	info->io_client = dm_io_client_create();
-+	if (!info->io_client) {
-+		ti->error = "Can't create io client";
-+		ret = -EINVAL;
-+		goto err_ioclient;
-+	}
-+
-+	if (bdev_logical_block_size(info->dev->bdev) != 512) {
-+		ti->error = "Can't logical block size too big";
-+		ret = -EINVAL;
-+		goto err_blocksize;
-+	}
-+
-+	if (dm_set_target_max_io_len(ti, DMCP_BYTES_TO_SECTOR(DMCP_MAX_SIZE))) {
-+		ti->error = "Failed to configure device ";
-+		ret = -EINVAL;
-+		goto err_blocksize;
-+	}
-+
-+	if (dm_icomp_read_or_create_super(info)) {
-+		ret = -EINVAL;
-+		goto err_blocksize;
-+	}
-+
-+	for (i = 0; i < BITMAP_HASH_LEN; i++) {
-+		info->bitmap_locks[i].io_running = 0;
-+		spin_lock_init(&info->bitmap_locks[i].wait_lock);
-+		INIT_LIST_HEAD(&info->bitmap_locks[i].wait_list);
-+	}
-+
-+	atomic64_set(&info->compressed_write_size, 0);
-+	atomic64_set(&info->uncompressed_write_size, 0);
-+	atomic64_set(&info->meta_write_size, 0);
-+	atomic64_set(&dm_icomp_total_alloc_size, 0);
-+	atomic64_set(&dm_icomp_total_bio_save, 0);
-+
-+	ti->num_flush_bios = 1;
-+	ti->private = info;
-+	return 0;
-+
-+err_blocksize:
-+	dm_io_client_destroy(info->io_client);
-+err_ioclient:
-+	dm_put_device(ti, info->dev);
-+err_para:
-+	kfree(info);
-+	return ret;
-+}
-+
-+static void dm_icomp_dtr(struct dm_target *ti)
-+{
-+	struct dm_icomp_info *info = ti->private;
-+
-+	if (info->write_mode == DMCP_WRITE_BACK)
-+		kthread_stop(info->writeback_tsk);
-+	free_compressor(info);
-+	vfree(info->meta_bitmap);
-+	dm_io_client_destroy(info->io_client);
-+	dm_put_device(ti, info->dev);
-+	kfree(info);
-+}
-+
-+/*
-+ * return the range lock to this block.
-+ */
-+static struct dm_icomp_hash_lock *dm_icomp_block_hash_lock(
-+		struct dm_icomp_info *info, u64 block_index)
-+{
-+	return &info->bitmap_locks[(block_index >> BITMAP_HASH_SHIFT) &
-+			BITMAP_HASH_MASK];
-+}
-+
-+/*
-+ * unlock the io range correspondingg to this block.
-+ */
-+static struct dm_icomp_hash_lock *dm_icomp_trylock_block(
-+		struct dm_icomp_info *info,
-+		struct dm_icomp_req *req, u64 block_index)
-+{
-+	struct dm_icomp_hash_lock *hash_lock;
-+
-+	hash_lock = dm_icomp_block_hash_lock(req->info, block_index);
-+
-+	spin_lock_irq(&hash_lock->wait_lock);
-+	if (!hash_lock->io_running) {
-+		hash_lock->io_running = 1;
-+		spin_unlock_irq(&hash_lock->wait_lock);
-+		return hash_lock;
-+	}
-+	list_add_tail(&req->sibling, &hash_lock->wait_list);
-+	spin_unlock_irq(&hash_lock->wait_lock);
-+	return NULL;
-+}
-+
-+static void dm_icomp_queue_req_list(struct dm_icomp_info *info,
-+	 struct list_head *list);
-+
-+static void dm_icomp_unlock_block(struct dm_icomp_info *info,
-+	struct dm_icomp_req *req, struct dm_icomp_hash_lock *hash_lock)
-+{
-+	LIST_HEAD(pending_list);
-+	unsigned long flags;
-+
-+	spin_lock_irqsave(&hash_lock->wait_lock, flags);
-+	/* wakeup all pending reqs to avoid live lock */
-+	list_splice_init(&hash_lock->wait_list, &pending_list);
-+	hash_lock->io_running = 0;
-+	spin_unlock_irqrestore(&hash_lock->wait_lock, flags);
-+
-+	dm_icomp_queue_req_list(info, &pending_list);
-+}
-+
-+/*
-+ * lock all the range locks corresponding to this io request.
-+ */
-+static int dm_icomp_lock_req_range(struct dm_icomp_req *req)
-+{
-+	u64 block_index, first_block_index;
-+	u64 first_lock_block, second_lock_block;
-+	u16 logical_sectors, data_sectors;
-+
-+	block_index = DMCP_SECTOR_TO_BLOCK(req->bio->bi_iter.bi_sector);
-+	req->locks[0] = dm_icomp_trylock_block(req->info, req, block_index);
-+	if (!req->locks[0])
-+		return 0;
-+	dm_icomp_get_extent(req->info, block_index, &first_block_index,
-+				&logical_sectors, &data_sectors);
-+	if (dm_icomp_block_hash_lock(req->info, first_block_index) !=
-+						req->locks[0]) {
-+		dm_icomp_unlock_block(req->info, req, req->locks[0]);
-+		first_lock_block = first_block_index;
-+		second_lock_block = block_index;
-+		goto two_locks;
-+	}
-+
-+	block_index = DMCP_SECTOR_TO_BLOCK(bio_end_sector(req->bio) - 1);
-+	dm_icomp_get_extent(req->info, block_index, &first_block_index,
-+				&logical_sectors, &data_sectors);
-+	first_block_index += DMCP_SECTOR_TO_BLOCK(logical_sectors);
-+	if (dm_icomp_block_hash_lock(req->info, first_block_index) !=
-+						req->locks[0]) {
-+		second_lock_block = first_block_index;
-+		goto second_lock;
-+	}
-+	req->locked_locks = 1;
-+	return 1;
-+
-+two_locks:
-+	req->locks[0] = dm_icomp_trylock_block(req->info, req,
-+		first_lock_block);
-+	if (!req->locks[0])
-+		return 0;
-+second_lock:
-+	req->locks[1] = dm_icomp_trylock_block(req->info, req,
-+				second_lock_block);
-+	if (!req->locks[1]) {
-+		dm_icomp_unlock_block(req->info, req, req->locks[0]);
-+		return 0;
-+	}
-+	/* Don't need check if meta is changed */
-+	req->locked_locks = 2;
-+	return 1;
-+}
-+
-+
-+
-+/*
-+ * unlock all the range locks corresponding to this io request.
-+ */
-+static void dm_icomp_unlock_req_range(struct dm_icomp_req *req)
-+{
-+	int i;
-+
-+	for (i = req->locked_locks - 1; i >= 0; i--)
-+		dm_icomp_unlock_block(req->info, req, req->locks[i]);
-+}
-+
-+static void dm_icomp_queue_req(struct dm_icomp_info *info,
-+		struct dm_icomp_req *req)
-+{
-+	unsigned long flags;
-+	struct dm_icomp_io_worker *worker = &dm_icomp_io_workers[req->cpu];
-+
-+	spin_lock_irqsave(&worker->lock, flags);
-+	list_add_tail(&req->sibling, &worker->pending);
-+	spin_unlock_irqrestore(&worker->lock, flags);
-+
-+	queue_work_on(req->cpu, dm_icomp_wq, &worker->work);
-+}
-+
-+static void dm_icomp_queue_req_list(struct dm_icomp_info *info,
-+		struct list_head *list)
-+{
-+	struct dm_icomp_req *req;
-+
-+	while (!list_empty(list)) {
-+		req = list_first_entry(list, struct dm_icomp_req, sibling);
-+		list_del_init(&req->sibling);
-+		dm_icomp_queue_req(info, req);
-+	}
-+}
-+
-+static void dm_icomp_get_req(struct dm_icomp_req *req)
-+{
-+	atomic_inc(&req->io_pending);
-+}
-+
-+static inline int get_alloc_flag(struct dm_icomp_info *info)
-+{
-+	/*
-+	 * Use GFP_ATOMIC allocations if the device
-+	 * is used on the critical path
-+	 */
-+	return info->critical ? GFP_ATOMIC : GFP_NOIO;
-+}
-+
-+static void *dm_icomp_kmalloc(size_t size, int alloc_flag)
-+{
-+	void *addr = kmalloc(size, alloc_flag);
-+
-+	if (!addr)
-+		return NULL;
-+	DMCP_ALLOC(size);
-+	return addr;
-+}
-+
-+static void *dm_icomp_krealloc(void *ptr, size_t size,
-+		size_t origsize, int alloc_flag)
-+{
-+	void *addr = krealloc(ptr, size, alloc_flag);
-+
-+	if (!addr)
-+		return NULL;
-+	DMCP_FREE_ALLOC(origsize);
-+	DMCP_ALLOC(size);
-+	return addr;
-+}
-+
-+static int dm_icomp_alloc_compbuffer(struct dm_icomp_io_range *io, int size)
-+{
-+	int alloc_len = size + DMCP_SECTOR_SIZE;
-+	void *addr = dm_icomp_kmalloc(alloc_len,
-+			get_alloc_flag(io->req->info));
-+
-+	if (!addr)
-+		return 1;
-+
-+	io->comp_real_data = addr;
-+	io->comp_kmap	= false;
-+	io->comp_len	= size;
-+
-+	/*
-+	 * comp_data is used to read and write from storage.
-+	 * So align it.
-+	 */
-+	io->comp_data   = io->io_req.mem.ptr.addr
-+			= PTR_ALIGN(addr, DMCP_SECTOR_SIZE);
-+
-+	return 0;
-+}
-+
-+static int dm_icomp_realloc_compbuffer(struct dm_icomp_io_range *io, int size)
-+{
-+	void *addr = dm_icomp_krealloc(io->comp_real_data,
-+			size+DMCP_SECTOR_SIZE, io->comp_len,
-+				get_alloc_flag(io->req->info));
-+	if (!addr)
-+		return 1;
-+
-+	io->comp_real_data = addr;
-+	io->comp_kmap	   = false;
-+	io->comp_data      = io->io_req.mem.ptr.addr = PTR_ALIGN(addr,
-+				DMCP_SECTOR_SIZE);
-+	io->comp_len	   = size;
-+	return 0;
-+}
-+
-+static void dm_icomp_kfree(void *addr, unsigned int size)
-+{
-+	kfree(addr);
-+	DMCP_FREE_ALLOC(size);
-+}
-+
-+static void dm_icomp_release_decomp_buffer(struct dm_icomp_io_range *io)
-+{
-+	if (!io->decomp_data)
-+		return;
-+
-+	if (io->decomp_kmap)
-+		kunmap(io->decomp_real_data);
-+	else
-+		dm_icomp_kfree(io->decomp_real_data, io->decomp_len);
-+
-+	io->decomp_data = io->decomp_real_data = NULL;
-+	io->decomp_len  = 0;
-+	io->decomp_kmap = false;
-+}
-+
-+static void dm_icomp_release_comp_buffer(struct dm_icomp_io_range *io)
-+{
-+	if (!io->comp_data)
-+		return;
-+
-+	if (io->comp_kmap)
-+		kunmap(io->comp_real_data);
-+	else
-+		dm_icomp_kfree(io->comp_real_data, io->comp_len);
-+
-+	io->comp_real_data = io->comp_data = NULL;
-+	io->comp_len = 0;
-+	io->comp_kmap = false;
-+}
-+
-+static void dm_icomp_free_io_range(struct dm_icomp_io_range *io)
-+{
-+	dm_icomp_release_decomp_buffer(io);
-+	dm_icomp_release_comp_buffer(io);
-+	kmem_cache_free(dm_icomp_io_range_cachep, io);
-+}
-+
-+static void dm_icomp_put_req(struct dm_icomp_req *req)
-+{
-+	struct dm_icomp_io_range *io;
-+
-+	if (atomic_dec_return(&req->io_pending))
-+		return;
-+
-+	if (GET_REQ_STAGE(req) == STAGE_INIT) /* waiting for locking */
-+		return;
-+
-+	if (GET_REQ_STAGE(req) == STAGE_READ_DECOMP ||
-+	    GET_REQ_STAGE(req) == STAGE_WRITE_COMP)
-+		SET_REQ_STAGE(req, STAGE_DONE);
-+
-+	if (!!!req->result && GET_REQ_STAGE(req) != STAGE_DONE) {
-+		dm_icomp_queue_req(req->info, req);
-+		return;
-+	}
-+
-+	while (!list_empty(&req->all_io)) {
-+		io = list_entry(req->all_io.next,
-+			struct dm_icomp_io_range, next);
-+		list_del(&io->next);
-+		dm_icomp_free_io_range(io);
-+	}
-+
-+	dm_icomp_unlock_req_range(req);
-+
-+	req->bio->bi_error = req->result;
-+
-+	bio_endio(req->bio);
-+	kmem_cache_free(dm_icomp_req_cachep, req);
-+}
-+
-+static void dm_icomp_bio_copy(struct bio *bio, off_t bio_off, void *buf,
-+		ssize_t len, bool to_buf)
-+{
-+	struct bio_vec bv;
-+	struct bvec_iter iter;
-+	off_t buf_off = 0;
-+	ssize_t size;
-+	void *addr;
-+
-+	WARN_ON(bio_off + len > DMCP_SECTOR_TO_BYTES(bio_sectors(bio)));
-+
-+	bio_for_each_segment(bv, bio, iter) {
-+		int length = bv.bv_len;
-+
-+		if (bio_off > length) {
-+			bio_off -= length;
-+			continue;
-+		}
-+		addr = kmap_atomic(bv.bv_page);
-+		size = min_t(ssize_t, len, length - bio_off);
-+		if (to_buf)
-+			memcpy(buf + buf_off, addr + bio_off + bv.bv_offset,
-+			size);
-+		else
-+			memcpy(addr + bio_off + bv.bv_offset, buf + buf_off,
-+			size);
-+		kunmap_atomic(addr);
-+		bio_off = 0;
-+		buf_off += size;
-+
-+		if (len <= size)
-+			break;
-+
-+		len -= size;
-+	}
-+}
-+
-+static void dm_icomp_io_range_done(unsigned long error, void *context)
-+{
-+	struct dm_icomp_io_range *io = context;
-+
-+	if (error)
-+		io->req->result = error;
-+
-+	dm_icomp_put_req(io->req);
-+}
-+
-+static inline int dm_icomp_compressor_len(struct dm_icomp_info *info, int len)
-+{
-+	if (compressors[info->comp_alg].comp_len)
-+		return compressors[info->comp_alg].comp_len(len);
-+	return len;
-+}
-+
-+static inline bool dm_icomp_can_handle_overflow(struct dm_icomp_info *info)
-+{
-+	return compressors[info->comp_alg].can_handle_overflow;
-+}
-+
-+static inline int dm_icomp_compressor_maxlen(struct dm_icomp_info *info,
-+		int len)
-+{
-+	if (compressors[info->comp_alg].max_comp_len)
-+		return compressors[info->comp_alg].max_comp_len(len);
-+	return len;
-+}
-+
-+/*
-+ * caller should set region.sector, region.count. bi_rw. IO always to/from
-+ * comp_data
-+ */
-+static struct dm_icomp_io_range *dm_icomp_create_io_range(
-+		struct dm_icomp_req *req)
-+{
-+	struct dm_icomp_io_range *io;
-+
-+	io = kmem_cache_alloc(dm_icomp_io_range_cachep, GFP_NOIO);
-+	if (!io)
-+		return NULL;
-+
-+	io->io_req.notify.fn = dm_icomp_io_range_done;
-+	io->io_req.notify.context = io;
-+	io->io_req.client = req->info->io_client;
-+	io->io_req.mem.type = DM_IO_KMEM;
-+	io->io_req.mem.offset = 0;
-+
-+	io->io_region.bdev = req->info->dev->bdev;
-+	io->req = req;
-+
-+	io->comp_data = io->comp_real_data =
-+			io->decomp_data = io->decomp_real_data = NULL;
-+
-+	io->data_bytes = io->comp_len =
-+			io->decomp_len = io->logical_bytes = 0;
-+
-+	io->comp_kmap = io->decomp_kmap = false;
-+	return io;
-+}
-+
-+
-+/*
-+ * return an address, within the bio. The address corresponds to
-+ * the requested offset 'bio_off' and is contiguous of size 'len'
-+ */
-+static void *get_addr(struct bio *bio,  int len, u64 bio_off, u64 *offset)
-+{
-+	struct bio_vec bv;
-+	struct bvec_iter iter;
-+	void *addr;
-+
-+	bio_for_each_segment(bv, bio, iter) {
-+		int length = bv.bv_len;
-+
-+		if (bio_off > length) {
-+			bio_off -= length;
-+			continue;
-+		}
-+		addr = bv.bv_page;
-+		if (bv.bv_offset + bio_off + len >= length) {
-+			*offset = bv.bv_offset + bio_off;
-+			return kmap(addr);
-+		}
-+		break;
-+	}
-+	return NULL;
-+}
-+
-+
-+/*
-+ * create a io range for tracking  predominantly a read request.
-+ * @req		: the read request
-+ * @comp_len	: allocation size of the compress buffer
-+ * @decomp_len	: allocation size of the decompress buffer
-+ * @actual_comp_len : real size of the compress data
-+ * @bio_off	: offset within the bio read buffer this request corresponds to.
-+ *		try to reuse and read into the bio buffer. -1 means don't reuse.
-+ */
-+static struct dm_icomp_io_range *dm_icomp_create_io_read_range(
-+		struct dm_icomp_req *req, int comp_len, int decomp_len,
-+		long bio_off, int actual_comp_len)
-+{
-+	struct bio *bio = req->bio;
-+	void *addr = NULL;
-+	struct dm_icomp_io_range *io = dm_icomp_create_io_range(req);
-+	u64 offset;
-+
-+	if (!io)
-+		return NULL;
-+
-+	WARN_ON(comp_len % DMCP_SECTOR_SIZE);
-+
-+	/* try reusing the bio if possible */
-+	if (bio_off >= 0) {
-+		addr = get_addr(bio, comp_len, (u64)bio_off, &offset);
-+		if (addr) {
-+			io->comp_real_data =  addr;
-+			io->comp_data = io->io_req.mem.ptr.addr = addr + offset;
-+			io->comp_kmap = true;
-+			io->comp_len  = comp_len;
-+		}
-+	}
-+
-+	if (!addr && dm_icomp_alloc_compbuffer(io, comp_len)) {
-+		kmem_cache_free(dm_icomp_io_range_cachep, io);
-+		return NULL;
-+	}
-+
-+	io->data_bytes	= actual_comp_len;  /* NOTE, this value can change */
-+
-+	/*
-+	 * note requested length for decompress buffer. Do not allocate it yet.
-+	 * Value once set is final.
-+	 */
-+	io->logical_bytes = decomp_len;
-+
-+	return io;
-+}
-+
-+/*
-+ *  ensure that the io range has all its buffers; of the correct size,
-+ *  allocated.
-+ */
-+static int dm_icomp_update_io_read_range(struct dm_icomp_io_range *io)
-+{
-+	WARN_ON(!io->comp_data);
-+	WARN_ON(io->decomp_data || io->decomp_len);
-+	io->decomp_data = dm_icomp_kmalloc(io->logical_bytes,
-+				get_alloc_flag(io->req->info));
-+	if (!io->decomp_data)
-+		return 1;
-+	io->decomp_real_data = io->decomp_data;
-+	io->decomp_len = io->logical_bytes;
-+	io->decomp_kmap = false;
-+	return 0;
-+}
-+
-+/*
-+ *  resize the comp buffer to its largest possible size.
-+ */
-+static int dm_icomp_mod_to_max_io_range(struct dm_icomp_info *info,
-+			 struct dm_icomp_io_range *io)
-+{
-+	unsigned int maxlen = dm_icomp_compressor_maxlen(info, io->decomp_len);
-+
-+	WARN_ON(maxlen > io->logical_bytes);
-+
-+	if (io->comp_kmap) {
-+		WARN_ON(io->comp_kmap);
-+		kunmap(io->comp_real_data);
-+		io->comp_kmap = false;
-+		io->comp_real_data = io->comp_data = NULL;
-+	}
-+
-+	if (dm_icomp_realloc_compbuffer(io, maxlen)) {
-+		io->comp_len = 0;
-+		return -ENOSPC;
-+	}
-+	io->comp_len = maxlen;
-+	return 0;
-+}
-+
-+/*
-+ * create a io range for tracking a write request.
-+ * @req		: the write request
-+ * @count	: size of the write in sectors.
-+ * @offset	: offset within the bio read buffer this request correspond to.
-+ */
-+static struct dm_icomp_io_range *dm_icomp_create_io_write_range(
-+	struct dm_icomp_req *req, sector_t offset, sector_t count)
-+{
-+	struct bio *bio = req->bio;
-+	int size  = DMCP_SECTOR_TO_BYTES(count);
-+	u64 of;
-+	int comp_len = dm_icomp_compressor_len(req->info, size);
-+	void *addr;
-+	struct dm_icomp_io_range *io = dm_icomp_create_io_range(req);
-+
-+	if (!io)
-+		return NULL;
-+
-+	WARN_ON(io->comp_data);
-+
-+	if (dm_icomp_alloc_compbuffer(io, comp_len)) {
-+		kmem_cache_free(dm_icomp_io_range_cachep, io);
-+		return NULL;
-+	}
-+
-+	/* we donot know the size of the compress segment yet. */
-+	io->data_bytes = 0;
-+
-+
-+	WARN_ON(io->decomp_data);
-+
-+	io->decomp_kmap = false;
-+
-+	/* try reusing the bio buffer for decomp data. */
-+	addr = get_addr(bio, size, DMCP_SECTOR_TO_BYTES(offset), &of);
-+	if (addr)
-+		io->decomp_kmap = true;
-+	else
-+		addr  = dm_icomp_kmalloc(size,
-+				get_alloc_flag(req->info));
-+
-+	if (!addr) {
-+		dm_icomp_kfree(io->comp_data, comp_len);
-+		kmem_cache_free(dm_icomp_io_range_cachep, io);
-+		return NULL;
-+	}
-+
-+	io->logical_bytes = io->decomp_len = size;
-+
-+	if (io->decomp_kmap) {
-+		io->decomp_real_data = addr;
-+		io->decomp_data = addr + of;
-+		DMCP_ALLOC_SAVE(size);
-+	} else {
-+		io->decomp_data = io->decomp_real_data = addr;
-+		dm_icomp_bio_copy(req->bio, DMCP_SECTOR_TO_BYTES(offset),
-+			io->decomp_data, size, true);
-+	}
-+
-+	return io;
-+}
-+
-+static unsigned int round_to_next_sector(unsigned int val)
-+{
-+	unsigned int c = round_up(val, DMCP_SECTOR_SIZE);
-+
-+	if ((c - val) < 2*sizeof(u32))
-+		c += DMCP_SECTOR_SIZE;
-+	return c;
-+}
-+
-+/*
-+ * compress and store the data in compress buffer.
-+ * return value:
-+ * < 0 : error
-+ * == 0 : ok
-+ * == 1 : ok, but comp/decomp is skipped
-+ * Compressed data size is roundup of 512, which makes the payload.
-+ * We store the actual compressed len in the last u32 of the payload.
-+ * If there is no free space, we add 512 to the payload size.
-+ */
-+static int dm_icomp_io_range_compress(struct dm_icomp_info *info,
-+		struct dm_icomp_io_range *io, unsigned int *comp_len)
-+{
-+	unsigned int actual_comp_len = io->comp_len;
-+	u32 *addr;
-+	struct crypto_comp *tfm =  info->tfm[get_cpu()];
-+	unsigned int decomp_len = io->logical_bytes;
-+	int ret;
-+
-+	actual_comp_len = io->comp_len;
-+	ret = crypto_comp_compress(tfm, io->decomp_data, decomp_len,
-+		io->comp_data, &actual_comp_len);
-+
-+	if (ret || round_to_next_sector(actual_comp_len) > io->comp_len) {
-+		ret = dm_icomp_mod_to_max_io_range(info, io);
-+		if (!ret) {
-+			actual_comp_len = io->comp_len;
-+			ret = crypto_comp_compress(tfm, io->decomp_data,
-+				decomp_len, io->comp_data,
-+				&actual_comp_len);
-+		}
-+	}
-+
-+	put_cpu();
-+
-+	atomic64_add(decomp_len, &info->uncompressed_write_size);
-+	io->data_bytes = *comp_len = round_to_next_sector(actual_comp_len);
-+	if (ret || decomp_len < *comp_len) {
-+		*comp_len = decomp_len;
-+		memcpy(io->comp_data, io->decomp_data, *comp_len);
-+		atomic64_add(*comp_len, &info->compressed_write_size);
-+	} else {
-+		atomic64_add(*comp_len, &info->compressed_write_size);
-+		addr = (u32 *)((char *)io->comp_data + *comp_len);
-+		addr--;
-+		*addr = cpu_to_le32(actual_comp_len);
-+		addr--;
-+		*addr = cpu_to_le32(DMCP_COMPRESS_MAGIC);
-+	}
-+
-+	return 0;
-+}
-+
-+/*
-+ * decompress and store the data in decompress buffer.
-+ * return value:
-+ * < 0 : error
-+ * == 0 : ok
-+ */
-+static int dm_icomp_io_range_decompress(struct dm_icomp_info *info,
-+		struct dm_icomp_io_range *io, unsigned int *decomp_len)
-+{
-+	struct crypto_comp *tfm;
-+	u32 *addr;
-+	int ret;
-+	int comp_len = io->data_bytes;
-+
-+	WARN_ON(!io->data_bytes);
-+
-+	if (comp_len == io->logical_bytes) {
-+		memcpy(io->decomp_data, io->comp_data, comp_len);
-+		*decomp_len = comp_len;
-+		return 0;
-+	}
-+
-+	WARN_ON(io->comp_data != io->io_req.mem.ptr.addr);
-+
-+	addr = (u32 *)((char *)(io->comp_data) + comp_len);
-+	addr--;
-+	comp_len = le32_to_cpu(*addr);
-+	addr--;
-+
-+	if (le32_to_cpu(*addr) == DMCP_COMPRESS_MAGIC) {
-+		tfm = info->tfm[get_cpu()];
-+		*decomp_len = io->logical_bytes;
-+		ret = crypto_comp_decompress(tfm, io->comp_data, comp_len,
-+			io->decomp_data, decomp_len);
-+		WARN_ON(*decomp_len != io->decomp_len);
-+		put_cpu();
-+		if (ret)
-+			return -EINVAL;
-+		return 0;
-+	}
-+
-+	DMWARN("Decompress Error ");
-+	return -1;
-+}
-+
-+/*
-+ *  fill the bio with the corresponding decompressed data.
-+ */
-+static void dm_icomp_handle_read_decomp(struct dm_icomp_req *req)
-+{
-+	struct dm_icomp_io_range *io;
-+	off_t bio_off = 0;
-+	int ret;
-+	sector_t bio_len  = DMCP_SECTOR_TO_BYTES(bio_sectors(req->bio));
-+
-+	SET_REQ_STAGE(req, STAGE_READ_DECOMP);
-+
-+	if (req->result)
-+		return;
-+
-+	list_for_each_entry(io, &req->all_io, next) {
-+		ssize_t dst_off = 0, src_off = 0, len;
-+		unsigned int decomp_len;
-+
-+		io->io_region.sector -= req->info->data_start;
-+
-+		if (io->io_region.sector >=
-+				req->bio->bi_iter.bi_sector)
-+			dst_off = DMCP_SECTOR_TO_BYTES(
-+				io->io_region.sector -
-+				req->bio->bi_iter.bi_sector);
-+		else
-+			src_off = DMCP_SECTOR_TO_BYTES(
-+				req->bio->bi_iter.bi_sector -
-+				io->io_region.sector);
-+
-+		if (dm_icomp_update_io_read_range(io)) {
-+			req->result = -EIO;
-+			return;
-+		}
-+
-+		/* Do decomp here */
-+		ret = dm_icomp_io_range_decompress(req->info, io, &decomp_len);
-+		if (ret < 0) {
-+			dm_icomp_release_decomp_buffer(io);
-+			dm_icomp_release_comp_buffer(io);
-+			req->result = -EIO;
-+			return;
-+		}
-+
-+		len = min_t(ssize_t,
-+			max_t(ssize_t, decomp_len - src_off, 0),
-+			max_t(ssize_t, bio_len - dst_off, 0));
-+
-+		dm_icomp_bio_copy(req->bio, dst_off,
-+			   io->decomp_data + src_off, len, false);
-+
-+		/* io range in all_io list is ordered for read IO */
-+		while (bio_off < dst_off) {
-+			ssize_t size = min_t(ssize_t, PAGE_SIZE,
-+					dst_off - bio_off);
-+			dm_icomp_bio_copy(req->bio, bio_off, empty_zero_page,
-+					size, false);
-+			bio_off += size;
-+		}
-+
-+		bio_off = dst_off + len;
-+		dm_icomp_release_decomp_buffer(io);
-+		dm_icomp_release_comp_buffer(io);
-+	}
-+
-+	while (bio_off < bio_len) {
-+		ssize_t size = min_t(ssize_t, PAGE_SIZE, (bio_len - bio_off));
-+
-+		dm_icomp_bio_copy(req->bio, bio_off, empty_zero_page,
-+			size, false);
-+		bio_off += size;
-+	}
-+}
-+
-+
-+/*
-+ * read an extent
-+ * @req        : the read request
-+ * @block      : the block to be read
-+ * @logical_sectors   : no of sectors occupied by the decompressed data
-+ * @data_sectors      : no of sectors occupied by the compressed data
-+ * @may_resize : the compress data size may change during its life.
-+ */
-+static void dm_icomp_read_one_extent(struct dm_icomp_req *req, u64 block,
-+	u16 logical_sectors, u16 data_sectors, bool may_resize)
-+{
-+	struct dm_icomp_io_range *io;
-+	long bio_off = 0, comp_len;
-+	int actual_comp_len = DMCP_SECTOR_TO_BYTES(data_sectors);
-+	int actual_decomp_len = DMCP_SECTOR_TO_BYTES(logical_sectors);
-+
-+	comp_len = actual_comp_len;
-+	if (may_resize && !dm_icomp_can_handle_overflow(req->info))
-+		comp_len = dm_icomp_compressor_maxlen(req->info,
-+				actual_decomp_len);
-+
-+	bio_off	 =  (may_resize) ? -1 :
-+			 DMCP_BLOCK_TO_SECTOR(block) -
-+				req->bio->bi_iter.bi_sector;
-+
-+	io = dm_icomp_create_io_read_range(req, comp_len,
-+		actual_decomp_len,
-+		bio_off,
-+		actual_comp_len);
-+	if (!io) {
-+		req->result = -EIO;
-+		return;
-+	}
-+
-+	dm_icomp_get_req(req);
-+	list_add_tail(&io->next, &req->all_io);
-+
-+	io->io_region.sector = DMCP_BLOCK_TO_SECTOR(block) +
-+				req->info->data_start;
-+	io->io_region.count = data_sectors;
-+	io->io_req.mem.ptr.addr = io->comp_data;
-+	io->io_req.mem.type = DM_IO_KMEM;
-+	io->io_req.mem.offset = 0;
-+	io->io_req.bi_op = REQ_OP_READ;
-+	io->io_req.bi_op_flags = (req->bio->bi_opf & REQ_FUA);
-+
-+	WARN_ON((io->io_region.sector + io->io_region.count)
-+		>= req->info->total_sector);
-+
-+	dm_io(&io->io_req, 1, &io->io_region, NULL);
-+}
-+
-+
-+/*
-+ * read the data corresponding to this request.
-+ * @req   : the request.
-+ * @reuse : the read data may be modified. So plan accordingly.
-+ */
-+static void dm_icomp_handle_read_existing(struct dm_icomp_req *req, bool reuse)
-+{
-+	u64 block_index, first_block_index;
-+	u16 logical_sectors, data_sectors;
-+
-+	SET_REQ_STAGE(req, STAGE_READ_EXISTING);
-+
-+	block_index = DMCP_SECTOR_TO_BLOCK(req->bio->bi_iter.bi_sector);
-+
-+	while (!!!req->result &&
-+		(block_index <= DMCP_SECTOR_TO_BLOCK(
-+				bio_end_sector(req->bio)-1)) &&
-+		(block_index < req->info->data_blocks)) {
-+
-+		dm_icomp_get_extent(req->info, block_index, &first_block_index,
-+			&logical_sectors, &data_sectors);
-+
-+		if (data_sectors)
-+			dm_icomp_read_one_extent(req, first_block_index,
-+				logical_sectors, data_sectors, reuse);
-+
-+		block_index = first_block_index +
-+				DMCP_SECTOR_TO_BLOCK(logical_sectors);
-+	}
-+}
-+
-+/*
-+ * read existing data
-+ */
-+static void dm_icomp_handle_read_read_existing(struct dm_icomp_req *req)
-+{
-+	dm_icomp_handle_read_existing(req, false);
-+
-+	if (req->result)
-+		return;
-+
-+	/* A shortcut if all data is in already */
-+	if (list_empty(&req->all_io))
-+		dm_icomp_handle_read_decomp(req);
-+}
-+
-+static void dm_icomp_handle_read_request(struct dm_icomp_req *req)
-+{
-+	dm_icomp_get_req(req);
-+
-+	if (GET_REQ_STAGE(req) == STAGE_INIT) {
-+		if (!dm_icomp_lock_req_range(req)) {
-+			dm_icomp_put_req(req);
-+			return;
-+		}
-+		dm_icomp_handle_read_read_existing(req);
-+	} else if (GET_REQ_STAGE(req) == STAGE_READ_EXISTING) {
-+		dm_icomp_handle_read_decomp(req);
-+	}
-+
-+	dm_icomp_put_req(req);
-+}
-+
-+static void dm_icomp_write_meta_done(void *context, unsigned long error)
-+{
-+	struct dm_icomp_req *req = context;
-+
-+	dm_icomp_put_req(req);
-+}
-+
-+static u64 dm_icomp_block_meta_page_index(u64 block, bool end)
-+{
-+	u64 bits = block * DMCP_META_BITS - !!end;
-+	/*
-+	 * >> 5; 32 bits per entry
-+	 * << 2; each entry is 4 bytes
-+	 * >> PAGE_SHIFT; PAGE_SHIFT pages
-+	 */
-+	return bits >> (5 - 2 + PAGE_SHIFT);
-+}
-+
-+
-+/*
-+ * write compressed data to the backing storage.
-+ * @io : io range
-+ * @sector_start : the sector on backing storage to which the
-+ *	compressed data needs to be written.
-+ * @meta_start: the page index of the bits corresponding to
-+ * @meta_end  : start and end blocks.
-+ */
-+static int dm_icomp_compress_write(struct dm_icomp_io_range *io,
-+		sector_t sector_start, u64 *meta_start, u64 *meta_end)
-+{
-+	struct dm_icomp_req *req = io->req;
-+	sector_t count = DMCP_BYTES_TO_SECTOR(io->decomp_len);
-+	unsigned int comp_len, ret;
-+	u64 page_index;
-+
-+	/* comp_data must be able to accommadate a larger compress buffer */
-+	ret = dm_icomp_io_range_compress(req->info, io, &comp_len);
-+	if (ret < 0) {
-+		req->result = -EIO;
-+		return -EIO;
-+	}
-+	WARN_ON(comp_len > io->comp_len);
-+
-+	dm_icomp_get_req(req);
-+
-+	io->io_req.bi_op = REQ_OP_WRITE;
-+	io->io_req.bi_op_flags = (req->bio->bi_opf & REQ_FUA);
-+	io->io_req.mem.ptr.addr = io->comp_data;
-+	io->io_req.mem.type = DM_IO_KMEM;
-+	io->io_req.mem.offset = 0;
-+	io->io_region.count = DMCP_BYTES_TO_SECTOR(comp_len);
-+	io->io_region.sector = sector_start + req->info->data_start;
-+
-+	dm_icomp_release_decomp_buffer(io);
-+
-+
-+	WARN_ON((io->io_region.sector + io->io_region.count)
-+			>= req->info->total_sector);
-+
-+	dm_io(&io->io_req, 1, &io->io_region, NULL);
-+
-+	/* update the meta data bits */
-+	dm_icomp_set_extent(req, DMCP_SECTOR_TO_BLOCK(sector_start),
-+		DMCP_SECTOR_TO_BLOCK(count), DMCP_BYTES_TO_SECTOR(comp_len));
-+
-+	page_index = dm_icomp_block_meta_page_index(
-+		DMCP_SECTOR_TO_BLOCK(sector_start), false);
-+	if (*meta_start > page_index)
-+		*meta_start = page_index;
-+
-+	page_index = dm_icomp_block_meta_page_index(
-+			DMCP_SECTOR_TO_BLOCK(sector_start + count), true);
-+	if (*meta_end < page_index)
-+		*meta_end = page_index;
-+	return 0;
-+}
-+
-+/*
-+ * modify and write compressed data to the backing storage.
-+ * @io : io range
-+ * @meta_start: the page index of the bits corresponding to
-+ * @meta_end  : start and end blocks.
-+ */
-+static int dm_icomp_handle_write_modify(struct dm_icomp_io_range *io,
-+	u64 *meta_start, u64 *meta_end)
-+{
-+	struct dm_icomp_req *req = io->req;
-+	sector_t bio_start, bio_end, buf_start, buf_end, overlap;
-+	off_t bio_off, buf_off;
-+	int ret;
-+	unsigned int decomp_len;
-+
-+	io->io_region.sector -= req->info->data_start;
-+
-+	/* decompress original data */
-+	if (dm_icomp_update_io_read_range(io)) {
-+		req->result = -EIO;
-+		return -EIO;
-+	}
-+
-+	ret = dm_icomp_io_range_decompress(req->info, io, &decomp_len);
-+	if (ret < 0) {
-+		req->result = -EINVAL;
-+		return -EIO;
-+	}
-+
-+	bio_start = req->bio->bi_iter.bi_sector;
-+	bio_end = bio_end_sector(req->bio) - 1;
-+
-+	buf_start = io->io_region.sector;
-+	buf_end = buf_start + DMCP_BYTES_TO_SECTOR(decomp_len) - 1;
-+
-+	/* if no overlap, nothing to do. Just return */
-+	if (bio_start >= buf_end || bio_end <= buf_start)
-+		return 0;
-+
-+	bio_off = (buf_start > bio_start) ?  (buf_start - bio_start) : 0;
-+	buf_off = (bio_start > buf_start) ?  (bio_start - buf_start) : 0;
-+
-+	/*
-+	 * overlap = sizeof(block1) + sizeof(block2) - sizeof(left_side_shift) -
-+	 *		sizeof(right_side_shift)  / 2  +  1
-+	 */
-+	overlap  =  (((bio_end - bio_start) + (buf_end - buf_start) -
-+		abs(buf_end - bio_end) - abs(buf_start - bio_start)) >> 1) + 1;
-+
-+
-+	dm_icomp_bio_copy(req->bio, DMCP_SECTOR_TO_BYTES(bio_off),
-+		   io->decomp_data + DMCP_SECTOR_TO_BYTES(buf_off),
-+		   DMCP_SECTOR_TO_BYTES(overlap), true);
-+
-+	return dm_icomp_compress_write(io, io->io_region.sector,
-+			meta_start, meta_end);
-+}
-+
-+
-+/*
-+ * create and write new extents. Each extent is not more than
-+ * 256 sectors.
-+ * @req : the request
-+ * @sec_start: the start sector of the request
-+ * @total  : the total sectors
-+ * @list  : collect each 256 sector size io request in this list
-+ * @meta_start: the page index of the bits corresponding to
-+ * @meta_end  : start and end blocks.
-+ *
-+ */
-+static void dm_icomp_handle_write_create(struct dm_icomp_req *req,
-+	sector_t sec_start, sector_t total,
-+	struct list_head *list, u64 *meta_start, u64 *meta_end)
-+{
-+	struct dm_icomp_io_range *io;
-+	sector_t count, offset = 0;
-+	int ret;
-+
-+	while (total) {
-+
-+		/* max i/o is 128kbytes i.e 256 sectors */
-+		count = min_t(sector_t, total, 256);
-+		io = dm_icomp_create_io_write_range(req, offset, count);
-+		if (!io) {
-+			req->result = -EIO;
-+			return;
-+		}
-+
-+		ret = dm_icomp_compress_write(io, sec_start, meta_start,
-+			meta_end);
-+		if (ret) {
-+			dm_icomp_free_io_range(io);
-+			return;
-+		}
-+
-+
-+		list_add_tail(&io->next, list);
-+		total -= count;
-+		sec_start += count;
-+		offset += count;
-+
-+	}
-+}
-+
-+/*
-+ *  handle the write request.
-+ */
-+static void dm_icomp_handle_write_comp(struct dm_icomp_req *req)
-+{
-+	struct dm_icomp_io_range *io;
-+	sector_t io_start, req_start, req_end;
-+	u64 meta_start = -1L, meta_end = 0;
-+	LIST_HEAD(newlist);
-+
-+	SET_REQ_STAGE(req, STAGE_WRITE_COMP);
-+
-+	if (req->result)
-+		return;
-+
-+	req_start = req->bio->bi_iter.bi_sector;
-+	list_for_each_entry(io, &req->all_io, next) {
-+
-+		io_start = io->io_region.sector - req->info->data_start;
-+
-+		if (req_start < io_start) {
-+			/* fill the gap */
-+			dm_icomp_handle_write_create(req, req_start,
-+				(io_start - req_start), &newlist,
-+				&meta_start, &meta_end);
-+		}
-+
-+		dm_icomp_handle_write_modify(io, &meta_start, &meta_end);
-+
-+		req_start = io_start + DMCP_BYTES_TO_SECTOR(io->logical_bytes);
-+	}
-+
-+	req_end =  bio_end_sector(req->bio);
-+	if (req_start < req_end) {
-+		/* fill the gap */
-+		dm_icomp_handle_write_create(req, req_start,
-+			 req_end-req_start, &newlist, &meta_start,
-+			&meta_end);
-+	}
-+
-+	list_splice_tail(&newlist, &req->all_io);
-+
-+	if (req->info->write_mode == DMCP_WRITE_THROUGH ||
-+				(req->bio->bi_opf & REQ_FUA)) {
-+		if (meta_start == -1)
-+			return;
-+		dm_icomp_get_req(req);
-+		dm_icomp_write_meta(req->info, meta_start,
-+			meta_end+1, req,
-+			dm_icomp_write_meta_done,
-+			REQ_OP_WRITE, req->bio->bi_opf);
-+	}
-+}
-+
-+/*
-+ *  read the data, modify and write it back to the backing store.
-+ */
-+static void dm_icomp_handle_write_read_existing(struct dm_icomp_req *req)
-+{
-+	dm_icomp_handle_read_existing(req, true);
-+	if (req->result)
-+		return;
-+
-+	if (list_empty(&req->all_io))
-+		dm_icomp_handle_write_comp(req);
-+}
-+
-+static void dm_icomp_handle_write_request(struct dm_icomp_req *req)
-+{
-+	dm_icomp_get_req(req);
-+
-+	if (GET_REQ_STAGE(req) == STAGE_INIT) {
-+		if (!dm_icomp_lock_req_range(req)) {
-+			dm_icomp_put_req(req);
-+			return;
-+		}
-+		dm_icomp_handle_write_read_existing(req);
-+	} else if (GET_REQ_STAGE(req) == STAGE_READ_EXISTING) {
-+		dm_icomp_handle_write_comp(req);
-+	}
-+
-+	dm_icomp_put_req(req);
-+}
-+
-+/* For writeback mode */
-+static void dm_icomp_handle_flush_request(struct dm_icomp_req *req)
-+{
-+	struct writeback_flush_data wb;
-+
-+	atomic_set(&wb.cnt, 1);
-+	init_completion(&wb.complete);
-+
-+	dm_icomp_flush_dirty_meta(req->info, &wb);
-+
-+	writeback_flush_io_done(&wb, 0);
-+	wait_for_completion(&wb.complete);
-+
-+	req->bio->bi_error = 0;
-+	bio_endio(req->bio);
-+	kmem_cache_free(dm_icomp_req_cachep, req);
-+}
-+
-+static void dm_icomp_handle_request(struct dm_icomp_req *req)
-+{
-+	if (req->bio->bi_opf & REQ_PREFLUSH)
-+		dm_icomp_handle_flush_request(req);
-+	else if (op_is_write(bio_op(req->bio)))
-+		dm_icomp_handle_write_request(req);
-+	else
-+		dm_icomp_handle_read_request(req);
-+}
-+
-+static void dm_icomp_do_request_work(struct work_struct *work)
-+{
-+	struct dm_icomp_io_worker *worker = container_of(work,
-+				struct dm_icomp_io_worker, work);
-+	LIST_HEAD(list);
-+	struct dm_icomp_req *req;
-+	struct blk_plug plug;
-+	bool repeat;
-+
-+	blk_start_plug(&plug);
-+again:
-+	spin_lock_irq(&worker->lock);
-+	list_splice_init(&worker->pending, &list);
-+	spin_unlock_irq(&worker->lock);
-+
-+	repeat = !list_empty(&list);
-+	while (!list_empty(&list)) {
-+		req = list_first_entry(&list, struct dm_icomp_req, sibling);
-+		list_del(&req->sibling);
-+
-+		schedule();
-+		dm_icomp_handle_request(req);
-+	}
-+	if (repeat)
-+		goto again;
-+	blk_finish_plug(&plug);
-+}
-+
-+static bool valid_request(struct bio *bio, struct dm_icomp_info *info)
-+{
-+	sector_t dev_end	=  info->ti->len;
-+	sector_t req_end	=  bio_end_sector(bio) - 1;
-+
-+	return (req_end <= dev_end);
-+}
-+
-+static int dm_icomp_map(struct dm_target *ti, struct bio *bio)
-+{
-+	struct dm_icomp_info *info = ti->private;
-+	struct dm_icomp_req *req;
-+
-+	if ((bio->bi_opf & REQ_PREFLUSH) &&
-+			info->write_mode == DMCP_WRITE_THROUGH) {
-+		bio->bi_bdev = info->dev->bdev;
-+		return DM_MAPIO_REMAPPED;
-+	}
-+
-+
-+	req = kmem_cache_alloc(dm_icomp_req_cachep, GFP_NOIO);
-+	if (!req)
-+		return -EIO;
-+
-+	req->bio = bio;
-+	if (!(bio->bi_opf & REQ_PREFLUSH) && !valid_request(bio, info)) {
-+		req->bio = bio;
-+		req->bio->bi_error = -EINVAL;
-+		bio_endio(req->bio);
-+		return DM_MAPIO_SUBMITTED;
-+	}
-+
-+	req->info = info;
-+	atomic_set(&req->io_pending, 0);
-+	INIT_LIST_HEAD(&req->all_io);
-+	req->result = 0;
-+	SET_REQ_STAGE(req, STAGE_INIT);
-+	req->locked_locks = 0;
-+
-+	req->cpu = raw_smp_processor_id();
-+	dm_icomp_queue_req(info, req);
-+
-+	return DM_MAPIO_SUBMITTED;
-+}
-+
-+static void dm_icomp_status(struct dm_target *ti, status_type_t type,
-+	  unsigned int status_flags, char *result, unsigned int maxlen)
-+{
-+	struct dm_icomp_info *info = ti->private;
-+	unsigned int sz = 0;
-+
-+	switch (type) {
-+	case STATUSTYPE_INFO:
-+		DMEMIT("%lu %lu %lu",
-+			atomic64_read(&info->uncompressed_write_size),
-+			atomic64_read(&info->compressed_write_size),
-+			atomic64_read(&info->meta_write_size));
-+		break;
-+	case STATUSTYPE_TABLE:
-+		if (info->write_mode == DMCP_WRITE_BACK)
-+			DMEMIT("%s %s:%d %s:%s %s:%d", info->dev->name,
-+				"writeback", info->writeback_delay,
-+				"compressor", compressors[info->comp_alg].name,
-+				"critical", info->critical);
-+		else
-+			DMEMIT("%s %s %s:%s %s:%d", info->dev->name,
-+				"writethrough",
-+				"compressor", compressors[info->comp_alg].name,
-+				"critical", info->critical);
-+		break;
-+	}
-+}
-+
-+static int dm_icomp_iterate_devices(struct dm_target *ti,
-+				  iterate_devices_callout_fn fn, void *data)
-+{
-+	struct dm_icomp_info *info = ti->private;
-+
-+	return fn(ti, info->dev, info->data_start,
-+		DMCP_BLOCK_TO_SECTOR(info->data_blocks), data);
-+}
-+
-+static void dm_icomp_io_hints(struct dm_target *ti,
-+			    struct queue_limits *limits)
-+{
-+	/* No blk_limits_logical_block_size */
-+	limits->logical_block_size = limits->physical_block_size =
-+		limits->io_min = DMCP_BLOCK_SIZE;
-+	limits->max_sectors = limits->max_hw_sectors =
-+		DMCP_BYTES_TO_SECTOR(DMCP_MAX_SIZE);
-+}
-+
-+static struct target_type dm_icomp_target = {
-+	.name   = "inplacecompress",
-+	.version = {1, 0, 0},
-+	.module = THIS_MODULE,
-+	.ctr    = dm_icomp_ctr,
-+	.dtr    = dm_icomp_dtr,
-+	.map    = dm_icomp_map,
-+	.status = dm_icomp_status,
-+	.iterate_devices = dm_icomp_iterate_devices,
-+	.io_hints = dm_icomp_io_hints,
-+};
-+
-+static int __init dm_icomp_init(void)
-+{
-+	int r;
-+
-+	if (select_default_compressor())
-+		return -EINVAL;
-+
-+	r = -ENOMEM;
-+	dm_icomp_req_cachep = kmem_cache_create("dm_icomp_requests",
-+		sizeof(struct dm_icomp_req), 0, 0, NULL);
-+	if (!dm_icomp_req_cachep) {
-+		DMWARN("Can't create request cache");
-+		goto err;
-+	}
-+
-+	dm_icomp_io_range_cachep = kmem_cache_create("dm_icomp_io_range",
-+		sizeof(struct dm_icomp_io_range), 0, 0, NULL);
-+	if (!dm_icomp_io_range_cachep) {
-+		DMWARN("Can't create io_range cache");
-+		goto err;
-+	}
-+
-+	dm_icomp_meta_io_cachep = kmem_cache_create("dm_icomp_meta_io",
-+		sizeof(struct dm_icomp_meta_io), 0, 0, NULL);
-+	if (!dm_icomp_meta_io_cachep) {
-+		DMWARN("Can't create meta_io cache");
-+		goto err;
-+	}
-+
-+	dm_icomp_wq = alloc_workqueue("dm_icomp_io",
-+		WQ_UNBOUND|WQ_MEM_RECLAIM|WQ_CPU_INTENSIVE, 0);
-+	if (!dm_icomp_wq) {
-+		DMWARN("Can't create io workqueue");
-+		goto err;
-+	}
-+
-+	r = dm_register_target(&dm_icomp_target);
-+	if (r < 0) {
-+		DMWARN("target registration failed");
-+		goto err;
-+	}
-+
-+	for_each_possible_cpu(r) {
-+		INIT_LIST_HEAD(&dm_icomp_io_workers[r].pending);
-+		spin_lock_init(&dm_icomp_io_workers[r].lock);
-+		INIT_WORK(&dm_icomp_io_workers[r].work,
-+				dm_icomp_do_request_work);
-+	}
-+	return 0;
-+err:
-+	kmem_cache_destroy(dm_icomp_req_cachep);
-+	kmem_cache_destroy(dm_icomp_io_range_cachep);
-+	kmem_cache_destroy(dm_icomp_meta_io_cachep);
-+	if (dm_icomp_wq)
-+		destroy_workqueue(dm_icomp_wq);
-+
-+	return r;
-+}
-+
-+static void __exit dm_icomp_exit(void)
-+{
-+	dm_unregister_target(&dm_icomp_target);
-+	kmem_cache_destroy(dm_icomp_req_cachep);
-+	kmem_cache_destroy(dm_icomp_io_range_cachep);
-+	kmem_cache_destroy(dm_icomp_meta_io_cachep);
-+	destroy_workqueue(dm_icomp_wq);
-+}
-+
-+module_init(dm_icomp_init);
-+module_exit(dm_icomp_exit);
-+
-+MODULE_AUTHOR("Shaohua Li <shli@kernel.org>");
-+MODULE_DESCRIPTION(DM_NAME " target with data inplace-compression");
-+MODULE_LICENSE("GPL");
-diff --git a/drivers/md/dm-inplace-compress.h b/drivers/md/dm-inplace-compress.h
-new file mode 100644
-index 0000000..757799a
---- /dev/null
-+++ b/drivers/md/dm-inplace-compress.h
-@@ -0,0 +1,187 @@
-+#ifndef __DM_INPLACE_COMPRESS_H__
-+#define __DM_INPLACE_COMPRESS_H__
-+#include <linux/types.h>
-+
-+#define DMCP_SUPER_MAGIC 0x106526c206506c09
-+#define DMCP_COMPRESS_MAGIC 0xfaceecaf
-+struct dm_icomp_super_block {
-+	__le64 magic;
-+	__le64 meta_blocks;
-+	__le64 data_blocks;
-+	u8 comp_alg;
-+} __packed;
-+
-+#define DMCP_COMP_ALG_LZO 1
-+#define DMCP_COMP_ALG_842 0
-+
-+#ifdef __KERNEL__
-+/*
-+ * Minium logical size of this target is 4096 byte, which is a block.
-+ * Data of a block is compressed. Compressed data is round up to 512B, which is
-+ * the payload. For each block, we have 5 bits meta data. bit 0 - 3 stands
-+ * payload length(0 - 8 sectors). If compressed payload length is 8 sectors, we
-+ * just store uncompressed data. Actual compressed data length is stored at the
-+ * last 32 bits of payload if data is compressed. In disk, payload is stored at
-+ * the beginning of logical sector of the block. If IO size is bigger than one
-+ * block, we store the whole data as an extent. Bit 4 stands tail for an
-+ * extent. Max allowed extent size is 128k.
-+ */
-+#define DMCP_BLOCK_SHIFT	12
-+#define DMCP_BLOCK_SIZE		(1 << DMCP_BLOCK_SHIFT)
-+#define DMCP_SECTOR_SHIFT	SECTOR_SHIFT
-+#define DMCP_SECTOR_SIZE	(1 << SECTOR_SHIFT)
-+#define DMCP_BLOCK_SECTOR_SHIFT (DMCP_BLOCK_SHIFT - DMCP_SECTOR_SHIFT)
-+#define DMCP_BLOCK_TO_SECTOR(b) ((b) << DMCP_BLOCK_SECTOR_SHIFT)
-+#define DMCP_SECTOR_TO_BLOCK(s) ((s) >> DMCP_BLOCK_SECTOR_SHIFT)
-+#define DMCP_SECTOR_TO_BYTES(s) ((s) << DMCP_SECTOR_SHIFT)
-+#define DMCP_BYTES_TO_SECTOR(b) ((b) >> DMCP_SECTOR_SHIFT)
-+#define DMCP_BYTES_TO_BLOCK(b)	((b) >> DMCP_BLOCK_SHIFT)
-+
-+#define DMCP_MIN_SIZE	DMCP_BLOCK_SIZE
-+#define DMCP_MAX_SIZE	(128 * 2 * DMCP_SECTOR_SIZE) /* 128k */
-+
-+#define DMCP_BITS_PER_ENTRY	32
-+#define DMCP_META_BITS		5
-+#define DMCP_LENGTH_BITS	4
-+#define DMCP_TAIL_MASK		(1 << DMCP_LENGTH_BITS)
-+#define DMCP_LENGTH_MASK	(DMCP_TAIL_MASK - 1)
-+
-+#define DMCP_META_START_SECTOR (DMCP_BLOCK_SIZE >> DMCP_SECTOR_SHIFT)
-+
-+enum DMCP_WRITE_MODE {
-+	DMCP_WRITE_BACK,
-+	DMCP_WRITE_THROUGH,
-+};
-+
-+/*
-+ * a lock spans 128 blocks i.e 512kbytes.
-+ * max I/O is 128K, which can at-most span two locks.
-+ */
-+#define BITMAP_HASH_SHIFT 7
-+#define BITMAP_HASH_LEN (1<<6)
-+#define BITMAP_HASH_MASK (BITMAP_HASH_LEN - 1)
-+struct dm_icomp_hash_lock {
-+	int io_running;
-+	spinlock_t wait_lock;
-+	struct list_head wait_list;
-+};
-+
-+struct dm_icomp_info {
-+	struct dm_target *ti;
-+	struct dm_dev *dev;
-+
-+	int comp_alg;
-+	bool critical;
-+	struct crypto_comp *tfm[NR_CPUS];
-+
-+	sector_t total_sector;	/* total sectors in the backing store */
-+	sector_t data_start;
-+	u64 data_blocks;
-+	u64 no_of_sectors;
-+
-+	u32 *meta_bitmap;
-+	u64 meta_bitmap_bits;
-+	u64 meta_bitmap_pages;
-+	struct dm_icomp_hash_lock bitmap_locks[BITMAP_HASH_LEN];
-+
-+	enum DMCP_WRITE_MODE write_mode;
-+	unsigned int writeback_delay; /* second */
-+	struct task_struct *writeback_tsk;
-+	struct dm_io_client *io_client;
-+
-+	atomic64_t compressed_write_size;
-+	atomic64_t uncompressed_write_size;
-+	atomic64_t meta_write_size;
-+};
-+
-+struct dm_icomp_meta_io {
-+	struct dm_io_request io_req;
-+	struct dm_io_region io_region;
-+	void *data;
-+	void (*fn)(void *data, unsigned long error);
-+};
-+
-+struct dm_icomp_io_range {
-+	struct dm_io_request io_req;
-+	struct dm_io_region io_region;
-+	bool decomp_kmap;	     /* Is the decomp_data kmapped'? */
-+	void *decomp_data;
-+	void *decomp_real_data;      /* holds the actual start of the buffer */
-+	unsigned int decomp_len;     /* actual allocated/mapped length */
-+	unsigned int logical_bytes;  /* decompressed size of the extent */
-+	bool comp_kmap;		     /* Is the comp_data kmapped'? */
-+	void *comp_data;
-+	void *comp_real_data;	     /* holds the actual start of the buffer */
-+	unsigned int comp_len;	     /* actual allocated/mapped length */
-+	unsigned int data_bytes;     /* compressed size of the extent */
-+	struct list_head next;
-+	struct dm_icomp_req *req;
-+};
-+
-+enum DMCP_REQ_STAGE {
-+	STAGE_INIT,
-+	STAGE_READ_EXISTING,
-+	STAGE_READ_DECOMP,
-+	STAGE_WRITE_COMP,
-+	STAGE_DONE,
-+};
-+
-+struct dm_icomp_req {
-+	struct bio *bio;
-+	struct dm_icomp_info *info;
-+	struct list_head sibling;
-+	struct list_head all_io;
-+	atomic_t io_pending;
-+	enum DMCP_REQ_STAGE stage;
-+	struct dm_icomp_hash_lock *locks[2];
-+	int locked_locks;
-+	int result;
-+	int cpu;
-+	struct work_struct work;
-+};
-+
-+struct dm_icomp_io_worker {
-+	struct list_head pending;
-+	spinlock_t lock;
-+	struct work_struct work;
-+};
-+
-+struct dm_icomp_compressor_data {
-+	char *name;
-+	bool can_handle_overflow;
-+	int (*comp_len)(int comp_len);
-+	int (*max_comp_len)(int comp_len);
-+};
-+
-+static inline int lzo_comp_len(int comp_len)
-+{
-+	/* lzo compression overshoots the comp buffer
-+	 * if the buffer size is insufficient.
-+	 * Once that bug is fixed we can return half
-+	 * the length.
-+	 *
-+	 * return lzo1x_worst_compress(comp_len) >> 1;
-+	 *
-+	 * For now its the full length.
-+	 */
-+	return lzo1x_worst_compress(comp_len);
-+}
-+
-+static inline int lzo_max_comp_len(int comp_len)
-+{
-+	return lzo1x_worst_compress(comp_len);
-+}
-+
-+static inline int nx842_comp_len(int comp_len)
-+{
-+	return (comp_len >> 1);
-+}
-+
-+static inline int nx842_max_comp_len(int comp_len)
-+{
-+	return comp_len;
-+}
-+
-+#endif /* __KERNEL__ */
-+
-+#endif /* __DM_INPLACE_COMPRESS_H__ */
--- 
-1.8.3.1
+--cWoXeonUoKmBZSoM
+Content-Type: application/gzip
+Content-Disposition: attachment; filename=".config.gz"
+Content-Transfer-Encoding: base64
+
+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
+
+--cWoXeonUoKmBZSoM--
