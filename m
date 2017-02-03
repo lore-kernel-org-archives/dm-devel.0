@@ -1,46 +1,26 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: unable to send mails to
- christophe.varoqui@opensvc.com using git
-Date: Fri, 3 Feb 2017 11:12:45 +0100
-Message-ID: <c83c8c77-080d-7e4a-8830-93552cdad212@suse.de>
-References: <2d3265b9e6094cb2a3807d7c248c0c1b@BRMWP-EXMB12.corp.brocade.com>
+From: Christoph Hellwig <hch@lst.de>
+Subject: Re: [PATCH] dm: don't allow ioctls to targets that don't map to
+        whole devices
+Date: Fri, 3 Feb 2017 11:34:43 +0100
+Message-ID: <20170203103443.GA29497@lst.de>
+References: <20170203100613.9023-1-hch@lst.de> <60c7f620-403c-5ec2-ae9f-e99676410b38@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <2d3265b9e6094cb2a3807d7c248c0c1b@BRMWP-EXMB12.corp.brocade.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <60c7f620-403c-5ec2-ae9f-e99676410b38@suse.de>
+Sender: linux-block-owner@vger.kernel.org
+To: Johannes Thumshirn <jthumshirn@suse.de>
+Cc: Christoph Hellwig <hch@lst.de>, axboe@kernel.dk, snitzer@redhat.com, agk@redhat.com, pbonzini@redhat.com, dm-devel@redhat.com, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 02/03/2017 10:58 AM, Muneendra Kumar M wrote:
-> Hi ,
-> =
+On Fri, Feb 03, 2017 at 11:10:10AM +0100, Johannes Thumshirn wrote:
+> On 02/03/2017 11:06 AM, Christoph Hellwig wrote:
+>> .. at least for unprivilegued users.  Before we called into the SCSI
+>> ioctl code to allow excemptions for a few SCSI passthrough ioctls,
+>> but this is pretty unsafe and except for this call dm knows nothing
+>> about SCSI ioctls.  As SCSI the SCSI ioctl code is made optionally
+>                                              ^~ duped SCSI or should it 
+> read "as in SCSI the SCSI ioctl code [...]"
 
-> Iam sending the patch to the community using the below command
-> =
-
->  =
-
-Your mail setup is incorrectly configured.
-You need to ensure that the local mail delivery agent (eg postfix) is
-configured to insert the correct hostname/alias for the machine/user.
-
-Cheers,
-
-Hannes
--- =
-
-Dr. Hannes Reinecke		   Teamlead Storage & Networking
-hare@suse.de			               +49 911 74053 688
-SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
-HRB 21284 (AG N=FCrnberg)
+Yeah, thanks.
