@@ -1,54 +1,40 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v3] dm: don't allow ioctls to targets that don't map to
- whole devices
-Date: Fri, 3 Feb 2017 11:39:22 -0500
-Message-ID: <20170203163921.GA823@redhat.com>
-References: <20170203163708.13943-1-hch@lst.de>
+From: Marian Csontos <mcsontos@redhat.com>
+Subject: Re: unable to send mails to
+ christophe.varoqui@opensvc.com using git
+Date: Fri, 3 Feb 2017 17:40:31 +0100
+Message-ID: <0fb47d0d-fce8-1c55-60b3-593056c4005f@redhat.com>
+References: <2d3265b9e6094cb2a3807d7c248c0c1b@BRMWP-EXMB12.corp.brocade.com>
+	<20170203155156.GI22981@octiron.msp.redhat.com>
+	<28ddb8f82cb84549ae9058ebca9dac54@BRMWP-EXMB12.corp.brocade.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20170203163708.13943-1-hch@lst.de>
-Sender: linux-block-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: axboe@kernel.dk, agk@redhat.com, pbonzini@redhat.com, dm-devel@redhat.com, linux-block@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <28ddb8f82cb84549ae9058ebca9dac54@BRMWP-EXMB12.corp.brocade.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com, mmandala@Brocade.com
 List-Id: dm-devel.ids
 
-On Fri, Feb 03 2017 at 11:37am -0500,
-Christoph Hellwig <hch@lst.de> wrote:
+On 02/03/2017 05:31 PM, Muneendra Kumar M wrote:
 
-> .. at least for unprivileged users.  Before we called into the SCSI
-> ioctl code to allow excemptions for a few SCSI passthrough ioctls,
-> but this is pretty unsafe and except for this call dm knows nothing
-> about SCSI ioctls.
-> 
-> As the SCSI ioctl code is now optional, we really don't want to
-> drag it in for DM, and the exception is not very useful anyway.
-> 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-> Acked-by: Mike Snitzer <snitzer@redhat.com>
-> ---
->  drivers/md/dm.c | 13 ++++++++-----
->  1 file changed, 8 insertions(+), 5 deletions(-)
-> 
-> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> index 9e958bc94fed..fd4331aa2e19 100644
-> --- a/drivers/md/dm.c
-> +++ b/drivers/md/dm.c
-> @@ -465,13 +465,16 @@ static int dm_blk_ioctl(struct block_device *bdev, fmode_t mode,
->  
->  	if (r > 0) {
->  		/*
-> -		 * Target determined this ioctl is being issued against
-> -		 * a logical partition of the parent bdev; so extra
-> -		 * validation is needed.
-> +		 * Target determined this ioctl is being issued against a
-> +		 * subset of the parent bdev; require extra privileges.
->  		 */
-> -		r = scsi_verify_blk_ioctl(NULL, cmd);
-> -		if (r)
-> +		if (!capable(CAP_SYS_RAWIO)) {
-> +			DMWARN_LIMIT(
-> +	"%s: sending ioctl %x to DM device without required privilege.\n",
+>        550 5.1.8 <root@localhost.localdomain>: Sender address rejected:
+>    Domain not
+>
+>        found (in reply to RCPT TO command)
 
-I assume you meant for v3 to remove the newline? ;)
+Hi Muneendra, you need to setup From header to send the email from an 
+address with a recognized domain.
+
+There is no localdomain domain as there is no localhost.
+
+IIUC this is one of protection measures against spam.
+
+-- Martian
