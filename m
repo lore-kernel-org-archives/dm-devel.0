@@ -1,17 +1,18 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
+From: Muneendra Kumar M <mmandala@Brocade.com>
 Subject: Re: unable to send mails to
  christophe.varoqui@opensvc.com using git
-Date: Fri, 3 Feb 2017 12:17:10 -0600
-Message-ID: <20170203181710.GK22981@octiron.msp.redhat.com>
+Date: Fri, 3 Feb 2017 18:25:11 +0000
+Message-ID: <146e1857e05b4cb1adcdfd110ab64ad9@BRMWP-EXMB12.corp.brocade.com>
 References: <2d3265b9e6094cb2a3807d7c248c0c1b@BRMWP-EXMB12.corp.brocade.com>
 	<20170203155156.GI22981@octiron.msp.redhat.com>
 	<28ddb8f82cb84549ae9058ebca9dac54@BRMWP-EXMB12.corp.brocade.com>
+	<20170203181710.GK22981@octiron.msp.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <28ddb8f82cb84549ae9058ebca9dac54@BRMWP-EXMB12.corp.brocade.com>
+In-Reply-To: <20170203181710.GK22981@octiron.msp.redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,9 +22,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Muneendra Kumar M <mmandala@Brocade.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
+
+Hi Ben,
+Is there a way where we can check whether the patch has been sent to christ=
+ophe.varoqui@opensvc.com.
+
+Like how we see in  dm-devel list.
+
+Regards,
+Muneendra.
+
+-----Original Message-----
+From: Benjamin Marzinski [mailto:bmarzins@redhat.com] =
+
+Sent: Friday, February 03, 2017 11:47 PM
+To: Muneendra Kumar M <mmandala@Brocade.com>
+Cc: dm-devel@redhat.com
+Subject: Re: [dm-devel] unable to send mails to christophe.varoqui@opensvc.=
+com using git
 
 On Fri, Feb 03, 2017 at 04:31:12PM +0000, Muneendra Kumar M wrote:
 > Hi Ben,
@@ -32,8 +51,8 @@ On Fri, Feb 03, 2017 at 04:31:12PM +0000, Muneendra Kumar M wrote:
 > Whenever I sent the mail to my gmail account iam able to receive the patc=
 h.
 
-Your patch is on the list.  I'm not sure about why you can't send a mail
-to Christophe.
+Your patch is on the list.  I'm not sure about why you can't send a mail to=
+ Christophe.
 
 -Ben
  =
@@ -43,13 +62,13 @@ to Christophe.
 > =
 
 > -----Original Message-----
-> From: Benjamin Marzinski [mailto:bmarzins@redhat.com] =
-
+> From: Benjamin Marzinski [mailto:bmarzins@redhat.com]
 > Sent: Friday, February 03, 2017 9:22 PM
 > To: Muneendra Kumar M <mmandala@Brocade.com>
 > Cc: dm-devel@redhat.com
-> Subject: Re: [dm-devel] unable to send mails to christophe.varoqui@opensv=
-c.com using git
+> Subject: Re: [dm-devel] unable to send mails to =
+
+> christophe.varoqui@opensvc.com using git
 > =
 
 > On Fri, Feb 03, 2017 at 09:58:52AM +0000, Muneendra Kumar M wrote:
@@ -282,7 +301,10 @@ ected:
 > > --
 > > dm-devel mailing list
 > > dm-devel@redhat.com
-> > https://urldefense.proofpoint.com/v2/url?u=3Dhttps-3A__www.redhat.com_ma
+> > https://urldefense.proofpoint.com/v2/url?u=3Dhttps-3A__www.redhat.com_
+> > ma =
+
 > > ilman_listinfo_dm-2Ddevel&d=3DDwIDAw&c=3DIL_XqQWOjubgfqINi2jTzg&r=3DE3f=
-tc47B6BGtZ4fVaYvkuv19wKvC_Mc6nhXaA1sBIP0&m=3DfgwQ0ID7x_eMdI37c1x7B9iVu9owKS=
-fwEUBw6CwkKys&s=3DoLRQczdQfeAaDQebrx2azulbzM53hJW56HWAEhVrdIk&e=3D
+tc4
+> > 7B6BGtZ4fVaYvkuv19wKvC_Mc6nhXaA1sBIP0&m=3DfgwQ0ID7x_eMdI37c1x7B9iVu9ow
+> > KSfwEUBw6CwkKys&s=3DoLRQczdQfeAaDQebrx2azulbzM53hJW56HWAEhVrdIk&e=3D
