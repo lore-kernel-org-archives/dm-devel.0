@@ -1,40 +1,52 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: [git pull] device mapper fixes for 4.10-rc7
-Date: Fri, 3 Feb 2017 16:18:33 -0800
-Message-ID: <CA+55aFytrfm+kGWNPdg4PYHtZhx4kVn+EJDcLMskRhVwemzROw@mail.gmail.com>
-References: <20170203191108.GA3796@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170203191108.GA3796@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Ondrej Kozina <okozina@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>
+From: Christoph Hellwig <hch@lst.de>
+Subject: [PATCH v4] dm: don't allow ioctls to targets that don't map to whole devices
+Date: Sat,  4 Feb 2017 10:45:03 +0100
+Message-ID: <20170204094503.19322-1-hch@lst.de>
+Return-path: <linux-block-owner@vger.kernel.org>
+Sender: linux-block-owner@vger.kernel.org
+To: snitzer@redhat.com, axboe@kernel.dk
+Cc: agk@redhat.com, pbonzini@redhat.com, dm-devel@redhat.com, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Fri, Feb 3, 2017 at 11:11 AM, Mike Snitzer <snitzer@redhat.com> wrote:
-> are available in the git repository at:
->
->   git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git dm-4.10-fixes
+.. at least for unprivileged users.  Before we called into the SCSI
+ioctl code to allow excemptions for a few SCSI passthrough ioctls,
+but this is pretty unsafe and except for this call dm knows nothing
+about SCSI ioctls.
 
-Hmm.
+As the SCSI ioctl code is now optional, we really don't want to
+drag it in for DM, and the exception is not very useful anyway.
 
-   "fatal: Couldn't find remote ref dm-4.10-fixes"
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+Acked-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm.c | 13 ++++++++-----
+ 1 file changed, 8 insertions(+), 5 deletions(-)
 
-Forgot to push?  And why didn't git pull-request warn about it? Have
-you cooked up your own broken script for this?
-
-There is a "dm-4.10" branch with that commit, but iirc you usually
-have signed tags so I suspect it really is a missed push, not a wrong
-name.
-
-              Linus
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 9e958bc94fed..5bd9ab06a562 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -465,13 +465,16 @@ static int dm_blk_ioctl(struct block_device *bdev, fmode_t mode,
+ 
+ 	if (r > 0) {
+ 		/*
+-		 * Target determined this ioctl is being issued against
+-		 * a logical partition of the parent bdev; so extra
+-		 * validation is needed.
++		 * Target determined this ioctl is being issued against a
++		 * subset of the parent bdev; require extra privileges.
+ 		 */
+-		r = scsi_verify_blk_ioctl(NULL, cmd);
+-		if (r)
++		if (!capable(CAP_SYS_RAWIO)) {
++			DMWARN_LIMIT(
++	"%s: sending ioctl %x to DM device without required privilege.",
++				current->comm, cmd);
++			r = -ENOIOCTLCMD;
+ 			goto out;
++		}
+ 	}
+ 
+ 	r =  __blkdev_driver_ioctl(bdev, mode, cmd, arg);
+-- 
+2.11.0
