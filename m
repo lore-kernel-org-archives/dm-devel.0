@@ -1,29 +1,40 @@
-From: Bart Van Assche <Bart.VanAssche@sandisk.com>
-Subject: Re: [PATCH v3] dm: don't allow ioctls to targets that don't map to
- whole devices
-Date: Fri, 3 Feb 2017 21:41:16 +0000
-Message-ID: <1486158062.2553.12.camel@sandisk.com>
-References: <20170203163708.13943-1-hch@lst.de>
-         <20170203163921.GA823@redhat.com> <20170203164129.GA4755@lst.de>
-         <4435311b-80e1-8764-fa12-140203e9231f@suse.de>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [git pull] device mapper fixes for 4.10-rc7
+Date: Fri, 3 Feb 2017 16:18:33 -0800
+Message-ID: <CA+55aFytrfm+kGWNPdg4PYHtZhx4kVn+EJDcLMskRhVwemzROw@mail.gmail.com>
+References: <20170203191108.GA3796@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <4435311b-80e1-8764-fa12-140203e9231f@suse.de>
-Content-Language: en-US
-Content-ID: <C88AF9547EF5EE479ECA6DA9F3E9499E@sandisk.com>
-Sender: linux-block-owner@vger.kernel.org
-To: "hch@lst.de" <hch@lst.de>, "jthumshirn@suse.de" <jthumshirn@suse.de>, "snitzer@redhat.com" <snitzer@redhat.com>
-Cc: "agk@redhat.com" <agk@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "pbonzini@redhat.com" <pbonzini@redhat.com>, "axboe@kernel.dk" <axboe@kernel.dk>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20170203191108.GA3796@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Ondrej Kozina <okozina@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, 2017-02-03 at 19:17 +0100, Johannes Thumshirn wrote:
-> Forgotten git add? git commit --amend without git add is such a classic=20
-> mistake on my side as well :-/
+On Fri, Feb 3, 2017 at 11:11 AM, Mike Snitzer <snitzer@redhat.com> wrote:
+> are available in the git repository at:
+>
+>   git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git dm-4.10-fixes
 
-Are you familiar with the -a option of git commit? Just run
+Hmm.
 
-git commit -a --amend
+   "fatal: Couldn't find remote ref dm-4.10-fixes"
 
-Bart.=
+Forgot to push?  And why didn't git pull-request warn about it? Have
+you cooked up your own broken script for this?
+
+There is a "dm-4.10" branch with that commit, but iirc you usually
+have signed tags so I suspect it really is a missed push, not a wrong
+name.
+
+              Linus
