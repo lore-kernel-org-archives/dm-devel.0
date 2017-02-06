@@ -1,8 +1,8 @@
 From: Muneendra Kumar M <mmandala@Brocade.com>
 Subject: [PATCH 1/1] multipathd: deterministic io throughput in
  multipath
-Date: Mon, 6 Feb 2017 06:18:52 +0000
-Message-ID: <e95432287786415bbeba9d217b33e825@HQ1WP-EXMB12.corp.brocade.com>
+Date: Mon, 6 Feb 2017 06:21:37 +0000
+Message-ID: <6d0345482368498a90ecc379b4b5e8d9@HQ1WP-EXMB12.corp.brocade.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -27,7 +27,7 @@ to errors.If the number of failures on a particular path is greater then the
 san_path_err_threshold then the path will not  reinstante till
 san_path_err_recovery_time.These path failures should occur within a
 san_path_err_forget_rate checks, if not we will consider the path is good enough
-to reinstantate.If it is the only available path, it will immediately be
+to reinstate.If it is the only available path, it will immediately be
 reintegrated.
 
 This helps us to place the path in failed state if we hit lot of errors on a particular path
