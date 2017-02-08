@@ -1,759 +1,492 @@
-From: Kent Overstreet <kent.overstreet@gmail.com>
-Subject: Re: v4.9, 4.4-final: 28 bioset threads on small notebook, 36 threads
- on cellphone
-Date: Tue, 7 Feb 2017 19:58:33 -0900
-Message-ID: <20170207204510.qr2l2rg42ez2hobh@moria.home.lan>
-References: <20151211104937.GA23165@amd>
- <20151211140841.GA22873@redhat.com>
- <20160220174035.GA16459@amd>
- <20160220184258.GA3753@amd>
- <20160220195136.GA27149@redhat.com>
- <20160220200432.GB22120@amd>
- <20170206125309.GA29395@amd>
- <20170207014724.74tb37jj7u66lww3@moria.home.lan>
- <20170207024906.4oswyuvxfnqkvbhr@moria.home.lan>
- <20170207203911.GA16980@amd>
+From: kbuild test robot <lkp@intel.com>
+Subject: Re: [PATCH] block: Make rescuer threads per
+ request_queue, not per bioset
+Date: Wed, 8 Feb 2017 14:22:42 +0800
+Message-ID: <201702081409.XM4ekZav%fengguang.wu@intel.com>
+References: <20170207204510.qr2l2rg42ez2hobh@moria.home.lan>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: multipart/mixed; boundary="C7zPtVaVf+AK4Oqc"
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20170207203911.GA16980@amd>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Pavel Machek <pavel@ucw.cz>
-Cc: Mike Snitzer <snitzer@redhat.com>, kernel list <linux-kernel@vger.kernel.org>, axboe@fb.com, hch@lst.de, neilb@suse.de, martin.petersen@oracle.com, dpark@posteo.net, ming.l@ssi.samsung.com, dm-devel@redhat.com, ming.lei@canonical.com, agk@redhat.com, jkosina@suse.cz, geoff@infradead.org, jim@jtan.com, pjk1939@linux.vnet.ibm.com, minchan@kernel.org, ngupta@vflare.org, oleg.drokin@intel.com, andreas.dilger@intel.com
+In-Reply-To: <20170207204510.qr2l2rg42ez2hobh@moria.home.lan>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Kent Overstreet <kent.overstreet@gmail.com>
+Cc: oleg.drokin@intel.com, ming.l@ssi.samsung.com, andreas.dilger@intel.com, martin.petersen@oracle.com, Mike Snitzer <snitzer@redhat.com>, minchan@kernel.org, jkosina@suse.cz, ming.lei@canonical.com, kernel list <linux-kernel@vger.kernel.org>, jim@jtan.com, pjk1939@linux.vnet.ibm.com, axboe@fb.com, geoff@infradead.org, dm-devel@redhat.com, kbuild-all@01.org, Pavel Machek <pavel@ucw.cz>, ngupta@vflare.org, hch@lst.de, agk@redhat.com, dpark@posteo.net
 List-Id: dm-devel.ids
 
-On Tue, Feb 07, 2017 at 09:39:11PM +0100, Pavel Machek wrote:
-> On Mon 2017-02-06 17:49:06, Kent Overstreet wrote:
-> > On Mon, Feb 06, 2017 at 04:47:24PM -0900, Kent Overstreet wrote:
-> > > On Mon, Feb 06, 2017 at 01:53:09PM +0100, Pavel Machek wrote:
-> > > > Still there on v4.9, 36 threads on nokia n900 cellphone.
-> > > > 
-> > > > So.. what needs to be done there?
-> > 
-> > > But, I just got an idea for how to handle this that might be halfway sane, maybe
-> > > I'll try and come up with a patch...
-> > 
-> > Ok, here's such a patch, only lightly tested:
-> 
-> I guess it would be nice for me to test it... but what it is against?
-> I tried after v4.10-rc5 and linux-next, but got rejects in both cases.
 
-Sorry, I forgot I had a few other patches in my branch that touch
-mempool/biosets code.
+--C7zPtVaVf+AK4Oqc
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-Also, after thinking about it more and looking at the relevant code, I'm pretty
-sure we don't need rescuer threads for block devices that just split bios - i.e.
-most of them, so I changed my patch to do that.
+Hi Kent,
 
-Tested it by ripping out the current->bio_list checks/workarounds from the
-bcache code, appears to work:
+[auto build test ERROR on linus/master]
+[also build test ERROR on v4.10-rc7]
+[cannot apply to next-20170207]
+[if your patch is applied to the wrong git tree, please drop us a note to help improve the system]
 
--- >8 --
-Subject: [PATCH] block: Make rescuer threads per request_queue, not per bioset
+url:    https://github.com/0day-ci/linux/commits/Kent-Overstreet/block-Make-rescuer-threads-per-request_queue-not-per-bioset/20170208-130414
+config: x86_64-randconfig-x014-201706 (attached as .config)
+compiler: gcc-6 (Debian 6.2.0-3) 6.2.0 20160901
+reproduce:
+        # save the attached .config to linux build tree
+        make ARCH=x86_64 
 
-Also, trigger rescuing whenever with bios on current->bio_list, instead
-of only when we block in bio_alloc_bioset(). This is more correct, and
-should result in fewer rescuer threads.
+All errors (new ones prefixed by >>):
 
-XXX: The current->bio_list plugging needs to be unified with the
-blk_plug mechanism.
+   kernel/sched/core.c: In function 'sched_submit_work':
+>> kernel/sched/core.c:3445:7: error: implicit declaration of function 'bio_list_empty' [-Werror=implicit-function-declaration]
+         !bio_list_empty(&tsk->bio_list->bios) &&
+          ^~~~~~~~~~~~~~
+>> kernel/sched/core.c:3445:36: error: dereferencing pointer to incomplete type 'struct bio_plug_list'
+         !bio_list_empty(&tsk->bio_list->bios) &&
+                                       ^~
+>> kernel/sched/core.c:3447:3: error: implicit declaration of function 'blk_punt_blocked_bios' [-Werror=implicit-function-declaration]
+      blk_punt_blocked_bios(tsk->bio_list);
+      ^~~~~~~~~~~~~~~~~~~~~
+   cc1: some warnings being treated as errors
 
-Signed-off-by: Kent Overstreet <kent.overstreet@gmail.com>
+vim +/bio_list_empty +3445 kernel/sched/core.c
+
+  3439	static inline void sched_submit_work(struct task_struct *tsk)
+  3440	{
+  3441		if (!tsk->state || tsk_is_pi_blocked(tsk))
+  3442			return;
+  3443	
+  3444		if (tsk->bio_list &&
+> 3445		    !bio_list_empty(&tsk->bio_list->bios) &&
+  3446		    tsk->bio_list->q->rescue_workqueue)
+> 3447			blk_punt_blocked_bios(tsk->bio_list);
+  3448	
+  3449		/*
+  3450		 * If we are going to sleep and we have plugged IO queued,
+
 ---
- block/bio.c                    | 105 +++--------------------------------------
- block/blk-core.c               |  69 +++++++++++++++++++++++----
- block/blk-mq.c                 |   3 +-
- block/blk-sysfs.c              |   2 +
- drivers/block/brd.c            |   2 +-
- drivers/block/drbd/drbd_main.c |   2 +-
- drivers/block/null_blk.c       |   3 +-
- drivers/block/pktcdvd.c        |   2 +-
- drivers/block/ps3vram.c        |   2 +-
- drivers/block/rsxx/dev.c       |   2 +-
- drivers/block/umem.c           |   2 +-
- drivers/block/zram/zram_drv.c  |   2 +-
- drivers/lightnvm/gennvm.c      |   2 +-
- drivers/md/bcache/super.c      |   2 +-
- drivers/md/dm.c                |   2 +-
- drivers/md/md.c                |   2 +-
- drivers/nvdimm/blk.c           |   2 +-
- drivers/nvdimm/btt.c           |   2 +-
- drivers/nvdimm/pmem.c          |   3 +-
- drivers/s390/block/dcssblk.c   |   2 +-
- drivers/s390/block/xpram.c     |   2 +-
- include/linux/bio.h            |  16 +++----
- include/linux/blkdev.h         |  16 ++++++-
- include/linux/sched.h          |   2 +-
- kernel/sched/core.c            |   6 +++
- 25 files changed, 117 insertions(+), 138 deletions(-)
+0-DAY kernel test infrastructure                Open Source Technology Center
+https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
 
-diff --git a/block/bio.c b/block/bio.c
-index 2b375020fc..9b89be1719 100644
---- a/block/bio.c
-+++ b/block/bio.c
-@@ -340,54 +340,6 @@ void bio_chain(struct bio *bio, struct bio *parent)
- }
- EXPORT_SYMBOL(bio_chain);
- 
--static void bio_alloc_rescue(struct work_struct *work)
--{
--	struct bio_set *bs = container_of(work, struct bio_set, rescue_work);
--	struct bio *bio;
--
--	while (1) {
--		spin_lock(&bs->rescue_lock);
--		bio = bio_list_pop(&bs->rescue_list);
--		spin_unlock(&bs->rescue_lock);
--
--		if (!bio)
--			break;
--
--		generic_make_request(bio);
--	}
--}
--
--static void punt_bios_to_rescuer(struct bio_set *bs)
--{
--	struct bio_list punt, nopunt;
--	struct bio *bio;
--
--	/*
--	 * In order to guarantee forward progress we must punt only bios that
--	 * were allocated from this bio_set; otherwise, if there was a bio on
--	 * there for a stacking driver higher up in the stack, processing it
--	 * could require allocating bios from this bio_set, and doing that from
--	 * our own rescuer would be bad.
--	 *
--	 * Since bio lists are singly linked, pop them all instead of trying to
--	 * remove from the middle of the list:
--	 */
--
--	bio_list_init(&punt);
--	bio_list_init(&nopunt);
--
--	while ((bio = bio_list_pop(current->bio_list)))
--		bio_list_add(bio->bi_pool == bs ? &punt : &nopunt, bio);
--
--	*current->bio_list = nopunt;
--
--	spin_lock(&bs->rescue_lock);
--	bio_list_merge(&bs->rescue_list, &punt);
--	spin_unlock(&bs->rescue_lock);
--
--	queue_work(bs->rescue_workqueue, &bs->rescue_work);
--}
--
- /**
-  * bio_alloc_bioset - allocate a bio for I/O
-  * @gfp_mask:   the GFP_ mask given to the slab allocator
-@@ -425,17 +377,20 @@ static void punt_bios_to_rescuer(struct bio_set *bs)
-  */
- struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs)
- {
--	gfp_t saved_gfp = gfp_mask;
- 	unsigned front_pad;
- 	unsigned inline_vecs;
- 	struct bio_vec *bvl = NULL;
- 	struct bio *bio;
- 	void *p;
- 
--	if (!bs) {
--		if (nr_iovecs > UIO_MAXIOV)
--			return NULL;
-+	WARN(current->bio_list &&
-+	     !current->bio_list->q->rescue_workqueue,
-+	     "allocating bio beneath generic_make_request() without rescuer");
- 
-+	if (nr_iovecs > UIO_MAXIOV)
-+		return NULL;
-+
-+	if (!bs) {
- 		p = kmalloc(sizeof(struct bio) +
- 			    nr_iovecs * sizeof(struct bio_vec),
- 			    gfp_mask);
-@@ -445,37 +400,8 @@ struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs)
- 		/* should not use nobvec bioset for nr_iovecs > 0 */
- 		if (WARN_ON_ONCE(!bs->bvec_pool && nr_iovecs > 0))
- 			return NULL;
--		/*
--		 * generic_make_request() converts recursion to iteration; this
--		 * means if we're running beneath it, any bios we allocate and
--		 * submit will not be submitted (and thus freed) until after we
--		 * return.
--		 *
--		 * This exposes us to a potential deadlock if we allocate
--		 * multiple bios from the same bio_set() while running
--		 * underneath generic_make_request(). If we were to allocate
--		 * multiple bios (say a stacking block driver that was splitting
--		 * bios), we would deadlock if we exhausted the mempool's
--		 * reserve.
--		 *
--		 * We solve this, and guarantee forward progress, with a rescuer
--		 * workqueue per bio_set. If we go to allocate and there are
--		 * bios on current->bio_list, we first try the allocation
--		 * without __GFP_DIRECT_RECLAIM; if that fails, we punt those
--		 * bios we would be blocking to the rescuer workqueue before
--		 * we retry with the original gfp_flags.
--		 */
--
--		if (current->bio_list && !bio_list_empty(current->bio_list))
--			gfp_mask &= ~__GFP_DIRECT_RECLAIM;
- 
- 		p = mempool_alloc(bs->bio_pool, gfp_mask);
--		if (!p && gfp_mask != saved_gfp) {
--			punt_bios_to_rescuer(bs);
--			gfp_mask = saved_gfp;
--			p = mempool_alloc(bs->bio_pool, gfp_mask);
--		}
--
- 		front_pad = bs->front_pad;
- 		inline_vecs = BIO_INLINE_VECS;
- 	}
-@@ -490,12 +416,6 @@ struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs)
- 		unsigned long idx = 0;
- 
- 		bvl = bvec_alloc(gfp_mask, nr_iovecs, &idx, bs->bvec_pool);
--		if (!bvl && gfp_mask != saved_gfp) {
--			punt_bios_to_rescuer(bs);
--			gfp_mask = saved_gfp;
--			bvl = bvec_alloc(gfp_mask, nr_iovecs, &idx, bs->bvec_pool);
--		}
--
- 		if (unlikely(!bvl))
- 			goto err_free;
- 
-@@ -1892,9 +1812,6 @@ mempool_t *biovec_create_pool(int pool_entries)
- 
- void bioset_free(struct bio_set *bs)
- {
--	if (bs->rescue_workqueue)
--		destroy_workqueue(bs->rescue_workqueue);
--
- 	if (bs->bio_pool)
- 		mempool_destroy(bs->bio_pool);
- 
-@@ -1921,10 +1838,6 @@ static struct bio_set *__bioset_create(unsigned int pool_size,
- 
- 	bs->front_pad = front_pad;
- 
--	spin_lock_init(&bs->rescue_lock);
--	bio_list_init(&bs->rescue_list);
--	INIT_WORK(&bs->rescue_work, bio_alloc_rescue);
--
- 	bs->bio_slab = bio_find_or_create_slab(front_pad + back_pad);
- 	if (!bs->bio_slab) {
- 		kfree(bs);
-@@ -1941,10 +1854,6 @@ static struct bio_set *__bioset_create(unsigned int pool_size,
- 			goto bad;
- 	}
- 
--	bs->rescue_workqueue = alloc_workqueue("bioset", WQ_MEM_RECLAIM, 0);
--	if (!bs->rescue_workqueue)
--		goto bad;
--
- 	return bs;
- bad:
- 	bioset_free(bs);
-diff --git a/block/blk-core.c b/block/blk-core.c
-index 61ba08c58b..2222fd40e2 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -49,6 +49,8 @@ EXPORT_TRACEPOINT_SYMBOL_GPL(block_unplug);
- 
- DEFINE_IDA(blk_queue_ida);
- 
-+static void bio_rescue_work(struct work_struct *);
-+
- /*
-  * For the allocated request tables
-  */
-@@ -643,9 +645,9 @@ void blk_exit_rl(struct request_list *rl)
- 		mempool_destroy(rl->rq_pool);
- }
- 
--struct request_queue *blk_alloc_queue(gfp_t gfp_mask)
-+struct request_queue *blk_alloc_queue(gfp_t gfp_mask, int flags)
- {
--	return blk_alloc_queue_node(gfp_mask, NUMA_NO_NODE);
-+	return blk_alloc_queue_node(gfp_mask, NUMA_NO_NODE, flags);
- }
- EXPORT_SYMBOL(blk_alloc_queue);
- 
-@@ -690,7 +692,7 @@ static void blk_rq_timed_out_timer(unsigned long data)
- 	kblockd_schedule_work(&q->timeout_work);
- }
- 
--struct request_queue *blk_alloc_queue_node(gfp_t gfp_mask, int node_id)
-+struct request_queue *blk_alloc_queue_node(gfp_t gfp_mask, int node_id, int flags)
- {
- 	struct request_queue *q;
- 	int err;
-@@ -760,11 +762,23 @@ struct request_queue *blk_alloc_queue_node(gfp_t gfp_mask, int node_id)
- 				PERCPU_REF_INIT_ATOMIC, GFP_KERNEL))
- 		goto fail_bdi;
- 
-+	spin_lock_init(&q->rescue_lock);
-+	bio_list_init(&q->rescue_list);
-+	INIT_WORK(&q->rescue_work, bio_rescue_work);
-+
-+	if (!(flags & BLK_QUEUE_NO_RESCUER)) {
-+		q->rescue_workqueue = alloc_workqueue("rescue", WQ_MEM_RECLAIM, 0);
-+		if (!q->rescue_workqueue)
-+			goto fail_ref;
-+	}
-+
- 	if (blkcg_init_queue(q))
--		goto fail_ref;
-+		goto fail_rescue;
- 
- 	return q;
- 
-+fail_rescue:
-+	destroy_workqueue(q->rescue_workqueue);
- fail_ref:
- 	percpu_ref_exit(&q->q_usage_counter);
- fail_bdi:
-@@ -823,7 +837,8 @@ blk_init_queue_node(request_fn_proc *rfn, spinlock_t *lock, int node_id)
- {
- 	struct request_queue *uninit_q, *q;
- 
--	uninit_q = blk_alloc_queue_node(GFP_KERNEL, node_id);
-+	uninit_q = blk_alloc_queue_node(GFP_KERNEL, node_id,
-+					BLK_QUEUE_NO_RESCUER);
- 	if (!uninit_q)
- 		return NULL;
- 
-@@ -1977,7 +1992,7 @@ generic_make_request_checks(struct bio *bio)
-  */
- blk_qc_t generic_make_request(struct bio *bio)
- {
--	struct bio_list bio_list_on_stack;
-+	struct bio_plug_list bio_list_on_stack;
- 	blk_qc_t ret = BLK_QC_T_NONE;
- 
- 	if (!generic_make_request_checks(bio))
-@@ -1994,7 +2009,9 @@ blk_qc_t generic_make_request(struct bio *bio)
- 	 * should be added at the tail
- 	 */
- 	if (current->bio_list) {
--		bio_list_add(current->bio_list, bio);
-+		WARN(!current->bio_list->q->rescue_workqueue,
-+		     "submitting bio beneath generic_make_request() without rescuer");
-+		bio_list_add(&current->bio_list->bios, bio);
- 		goto out;
- 	}
- 
-@@ -2013,19 +2030,23 @@ blk_qc_t generic_make_request(struct bio *bio)
- 	 * bio_list, and call into ->make_request() again.
- 	 */
- 	BUG_ON(bio->bi_next);
--	bio_list_init(&bio_list_on_stack);
-+	bio_list_init(&bio_list_on_stack.bios);
- 	current->bio_list = &bio_list_on_stack;
-+
- 	do {
- 		struct request_queue *q = bdev_get_queue(bio->bi_bdev);
- 
-+		current->bio_list->q = q;
-+
- 		if (likely(blk_queue_enter(q, false) == 0)) {
- 			ret = q->make_request_fn(q, bio);
- 
- 			blk_queue_exit(q);
- 
--			bio = bio_list_pop(current->bio_list);
-+			bio = bio_list_pop(&current->bio_list->bios);
- 		} else {
--			struct bio *bio_next = bio_list_pop(current->bio_list);
-+			struct bio *bio_next =
-+				bio_list_pop(&current->bio_list->bios);
- 
- 			bio_io_error(bio);
- 			bio = bio_next;
-@@ -2038,6 +2059,34 @@ blk_qc_t generic_make_request(struct bio *bio)
- }
- EXPORT_SYMBOL(generic_make_request);
- 
-+static void bio_rescue_work(struct work_struct *work)
-+{
-+	struct request_queue *q =
-+		container_of(work, struct request_queue, rescue_work);
-+	struct bio *bio;
-+
-+	while (1) {
-+		spin_lock(&q->rescue_lock);
-+		bio = bio_list_pop(&q->rescue_list);
-+		spin_unlock(&q->rescue_lock);
-+
-+		if (!bio)
-+			break;
-+
-+		generic_make_request(bio);
-+	}
-+}
-+
-+void blk_punt_blocked_bios(struct bio_plug_list *list)
-+{
-+	spin_lock(&list->q->rescue_lock);
-+	bio_list_merge(&list->q->rescue_list, &list->bios);
-+	bio_list_init(&list->bios);
-+	spin_unlock(&list->q->rescue_lock);
-+
-+	queue_work(list->q->rescue_workqueue, &list->q->rescue_work);
-+}
-+
- /**
-  * submit_bio - submit a bio to the block device layer for I/O
-  * @bio: The &struct bio which describes the I/O
-diff --git a/block/blk-mq.c b/block/blk-mq.c
-index c3400b5444..5e7f67c108 100644
---- a/block/blk-mq.c
-+++ b/block/blk-mq.c
-@@ -2043,7 +2043,8 @@ struct request_queue *blk_mq_init_queue(struct blk_mq_tag_set *set)
- {
- 	struct request_queue *uninit_q, *q;
- 
--	uninit_q = blk_alloc_queue_node(GFP_KERNEL, set->numa_node);
-+	uninit_q = blk_alloc_queue_node(GFP_KERNEL, set->numa_node,
-+					BLK_QUEUE_NO_RESCUER);
- 	if (!uninit_q)
- 		return ERR_PTR(-ENOMEM);
- 
-diff --git a/block/blk-sysfs.c b/block/blk-sysfs.c
-index 1dbce05759..1ab82c342b 100644
---- a/block/blk-sysfs.c
-+++ b/block/blk-sysfs.c
-@@ -821,6 +821,8 @@ static void blk_release_queue(struct kobject *kobj)
- 
- 	blk_trace_shutdown(q);
- 
-+	if (q->rescue_workqueue)
-+		destroy_workqueue(q->rescue_workqueue);
- 	if (q->bio_split)
- 		bioset_free(q->bio_split);
- 
-diff --git a/drivers/block/brd.c b/drivers/block/brd.c
-index 3adc32a315..43ff4b23e4 100644
---- a/drivers/block/brd.c
-+++ b/drivers/block/brd.c
-@@ -449,7 +449,7 @@ static struct brd_device *brd_alloc(int i)
- 	spin_lock_init(&brd->brd_lock);
- 	INIT_RADIX_TREE(&brd->brd_pages, GFP_ATOMIC);
- 
--	brd->brd_queue = blk_alloc_queue(GFP_KERNEL);
-+	brd->brd_queue = blk_alloc_queue(GFP_KERNEL, BLK_QUEUE_NO_RESCUER);
- 	if (!brd->brd_queue)
- 		goto out_free_dev;
- 
-diff --git a/drivers/block/drbd/drbd_main.c b/drivers/block/drbd/drbd_main.c
-index 83482721bc..e46821ebc6 100644
---- a/drivers/block/drbd/drbd_main.c
-+++ b/drivers/block/drbd/drbd_main.c
-@@ -2810,7 +2810,7 @@ enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsig
- 
- 	drbd_init_set_defaults(device);
- 
--	q = blk_alloc_queue(GFP_KERNEL);
-+	q = blk_alloc_queue(GFP_KERNEL, 0);
- 	if (!q)
- 		goto out_no_q;
- 	device->rq_queue = q;
-diff --git a/drivers/block/null_blk.c b/drivers/block/null_blk.c
-index c0e14e5490..0ce25ce95f 100644
---- a/drivers/block/null_blk.c
-+++ b/drivers/block/null_blk.c
-@@ -734,7 +734,8 @@ static int null_add_dev(void)
- 			goto out_cleanup_tags;
- 		}
- 	} else if (queue_mode == NULL_Q_BIO) {
--		nullb->q = blk_alloc_queue_node(GFP_KERNEL, home_node);
-+		nullb->q = blk_alloc_queue_node(GFP_KERNEL, home_node,
-+						BLK_QUEUE_NO_RESCUER);
- 		if (!nullb->q) {
- 			rv = -ENOMEM;
- 			goto out_cleanup_queues;
-diff --git a/drivers/block/pktcdvd.c b/drivers/block/pktcdvd.c
-index 1b94c1ca5c..3ab1629475 100644
---- a/drivers/block/pktcdvd.c
-+++ b/drivers/block/pktcdvd.c
-@@ -2737,7 +2737,7 @@ static int pkt_setup_dev(dev_t dev, dev_t* pkt_dev)
- 	strcpy(disk->disk_name, pd->name);
- 	disk->devnode = pktcdvd_devnode;
- 	disk->private_data = pd;
--	disk->queue = blk_alloc_queue(GFP_KERNEL);
-+	disk->queue = blk_alloc_queue(GFP_KERNEL, BLK_QUEUE_NO_RESCUER);
- 	if (!disk->queue)
- 		goto out_mem2;
- 
-diff --git a/drivers/block/ps3vram.c b/drivers/block/ps3vram.c
-index 456b4fe215..167e17058c 100644
---- a/drivers/block/ps3vram.c
-+++ b/drivers/block/ps3vram.c
-@@ -746,7 +746,7 @@ static int ps3vram_probe(struct ps3_system_bus_device *dev)
- 	ps3vram_cache_init(dev);
- 	ps3vram_proc_init(dev);
- 
--	queue = blk_alloc_queue(GFP_KERNEL);
-+	queue = blk_alloc_queue(GFP_KERNEL, BLK_QUEUE_NO_RESCUER);
- 	if (!queue) {
- 		dev_err(&dev->core, "blk_alloc_queue failed\n");
- 		error = -ENOMEM;
-diff --git a/drivers/block/rsxx/dev.c b/drivers/block/rsxx/dev.c
-index f81d70b39d..e53cea595f 100644
---- a/drivers/block/rsxx/dev.c
-+++ b/drivers/block/rsxx/dev.c
-@@ -266,7 +266,7 @@ int rsxx_setup_dev(struct rsxx_cardinfo *card)
- 		return -ENOMEM;
- 	}
- 
--	card->queue = blk_alloc_queue(GFP_KERNEL);
-+	card->queue = blk_alloc_queue(GFP_KERNEL, BLK_QUEUE_NO_RESCUER);
- 	if (!card->queue) {
- 		dev_err(CARD_TO_DEV(card), "Failed queue alloc\n");
- 		unregister_blkdev(card->major, DRIVER_NAME);
-diff --git a/drivers/block/umem.c b/drivers/block/umem.c
-index c141cc3be2..7d496364c4 100644
---- a/drivers/block/umem.c
-+++ b/drivers/block/umem.c
-@@ -890,7 +890,7 @@ static int mm_pci_probe(struct pci_dev *dev, const struct pci_device_id *id)
- 	card->bio = NULL;
- 	card->biotail = &card->bio;
- 
--	card->queue = blk_alloc_queue(GFP_KERNEL);
-+	card->queue = blk_alloc_queue(GFP_KERNEL, BLK_QUEUE_NO_RESCUER);
- 	if (!card->queue)
- 		goto failed_alloc;
- 
-diff --git a/drivers/block/zram/zram_drv.c b/drivers/block/zram/zram_drv.c
-index e5ab7d9e8c..85ab96f15f 100644
---- a/drivers/block/zram/zram_drv.c
-+++ b/drivers/block/zram/zram_drv.c
-@@ -1245,7 +1245,7 @@ static int zram_add(void)
- 
- 	init_rwsem(&zram->init_lock);
- 
--	queue = blk_alloc_queue(GFP_KERNEL);
-+	queue = blk_alloc_queue(GFP_KERNEL, BLK_QUEUE_NO_RESCUER);
- 	if (!queue) {
- 		pr_err("Error allocating disk queue for device %d\n",
- 			device_id);
-diff --git a/drivers/lightnvm/gennvm.c b/drivers/lightnvm/gennvm.c
-index ca7880082d..d36a155b42 100644
---- a/drivers/lightnvm/gennvm.c
-+++ b/drivers/lightnvm/gennvm.c
-@@ -233,7 +233,7 @@ static int gen_create_tgt(struct nvm_dev *dev, struct nvm_ioctl_create *create)
- 		goto err_reserve;
- 	}
- 
--	tqueue = blk_alloc_queue_node(GFP_KERNEL, dev->q->node);
-+	tqueue = blk_alloc_queue_node(GFP_KERNEL, dev->q->node, 0);
- 	if (!tqueue)
- 		goto err_dev;
- 	blk_queue_make_request(tqueue, tt->make_rq);
-diff --git a/drivers/md/bcache/super.c b/drivers/md/bcache/super.c
-index 3a19cbc8b2..9cdbeb54f6 100644
---- a/drivers/md/bcache/super.c
-+++ b/drivers/md/bcache/super.c
-@@ -800,7 +800,7 @@ static int bcache_device_init(struct bcache_device *d, unsigned block_size,
- 	d->disk->fops		= &bcache_ops;
- 	d->disk->private_data	= d;
- 
--	q = blk_alloc_queue(GFP_KERNEL);
-+	q = blk_alloc_queue(GFP_KERNEL, 0);
- 	if (!q)
- 		return -ENOMEM;
- 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 3086da5664..e1b22a68d9 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1490,7 +1490,7 @@ static struct mapped_device *alloc_dev(int minor)
- 	INIT_LIST_HEAD(&md->table_devices);
- 	spin_lock_init(&md->uevent_lock);
- 
--	md->queue = blk_alloc_queue_node(GFP_KERNEL, numa_node_id);
-+	md->queue = blk_alloc_queue_node(GFP_KERNEL, numa_node_id, 0);
- 	if (!md->queue)
- 		goto bad;
- 
-diff --git a/drivers/md/md.c b/drivers/md/md.c
-index 01175dac0d..0038d241d7 100644
---- a/drivers/md/md.c
-+++ b/drivers/md/md.c
-@@ -5061,7 +5061,7 @@ static int md_alloc(dev_t dev, char *name)
- 	}
- 
- 	error = -ENOMEM;
--	mddev->queue = blk_alloc_queue(GFP_KERNEL);
-+	mddev->queue = blk_alloc_queue(GFP_KERNEL, 0);
- 	if (!mddev->queue)
- 		goto abort;
- 	mddev->queue->queuedata = mddev;
-diff --git a/drivers/nvdimm/blk.c b/drivers/nvdimm/blk.c
-index 9faaa9694d..a1d2e7a6ab 100644
---- a/drivers/nvdimm/blk.c
-+++ b/drivers/nvdimm/blk.c
-@@ -264,7 +264,7 @@ static int nsblk_attach_disk(struct nd_namespace_blk *nsblk)
- 	internal_nlba = div_u64(nsblk->size, nsblk_internal_lbasize(nsblk));
- 	available_disk_size = internal_nlba * nsblk_sector_size(nsblk);
- 
--	q = blk_alloc_queue(GFP_KERNEL);
-+	q = blk_alloc_queue(GFP_KERNEL, BLK_QUEUE_NO_RESCUER);
- 	if (!q)
- 		return -ENOMEM;
- 	if (devm_add_action_or_reset(dev, nd_blk_release_queue, q))
-diff --git a/drivers/nvdimm/btt.c b/drivers/nvdimm/btt.c
-index 368795aad5..7bd6135b77 100644
---- a/drivers/nvdimm/btt.c
-+++ b/drivers/nvdimm/btt.c
-@@ -1232,7 +1232,7 @@ static int btt_blk_init(struct btt *btt)
- 	struct nd_namespace_common *ndns = nd_btt->ndns;
- 
- 	/* create a new disk and request queue for btt */
--	btt->btt_queue = blk_alloc_queue(GFP_KERNEL);
-+	btt->btt_queue = blk_alloc_queue(GFP_KERNEL, BLK_QUEUE_NO_RESCUER);
- 	if (!btt->btt_queue)
- 		return -ENOMEM;
- 
-diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
-index 5b536be5a1..314ac480bf 100644
---- a/drivers/nvdimm/pmem.c
-+++ b/drivers/nvdimm/pmem.c
-@@ -280,7 +280,8 @@ static int pmem_attach_disk(struct device *dev,
- 		return -EBUSY;
- 	}
- 
--	q = blk_alloc_queue_node(GFP_KERNEL, dev_to_node(dev));
-+	q = blk_alloc_queue_node(GFP_KERNEL, dev_to_node(dev),
-+				 BLK_QUEUE_NO_RESCUER);
- 	if (!q)
- 		return -ENOMEM;
- 
-diff --git a/drivers/s390/block/dcssblk.c b/drivers/s390/block/dcssblk.c
-index 9d66b4fb17..101e0ae2f7 100644
---- a/drivers/s390/block/dcssblk.c
-+++ b/drivers/s390/block/dcssblk.c
-@@ -612,7 +612,7 @@ dcssblk_add_store(struct device *dev, struct device_attribute *attr, const char
- 	}
- 	dev_info->gd->major = dcssblk_major;
- 	dev_info->gd->fops = &dcssblk_devops;
--	dev_info->dcssblk_queue = blk_alloc_queue(GFP_KERNEL);
-+	dev_info->dcssblk_queue = blk_alloc_queue(GFP_KERNEL, BLK_QUEUE_NO_RESCUER);
- 	dev_info->gd->queue = dev_info->dcssblk_queue;
- 	dev_info->gd->private_data = dev_info;
- 	blk_queue_make_request(dev_info->dcssblk_queue, dcssblk_make_request);
-diff --git a/drivers/s390/block/xpram.c b/drivers/s390/block/xpram.c
-index b9d7e755c8..72f52de17b 100644
---- a/drivers/s390/block/xpram.c
-+++ b/drivers/s390/block/xpram.c
-@@ -342,7 +342,7 @@ static int __init xpram_setup_blkdev(void)
- 		xpram_disks[i] = alloc_disk(1);
- 		if (!xpram_disks[i])
- 			goto out;
--		xpram_queues[i] = blk_alloc_queue(GFP_KERNEL);
-+		xpram_queues[i] = blk_alloc_queue(GFP_KERNEL, BLK_QUEUE_NO_RESCUER);
- 		if (!xpram_queues[i]) {
- 			put_disk(xpram_disks[i]);
- 			goto out;
-diff --git a/include/linux/bio.h b/include/linux/bio.h
-index 7cf8a6c70a..ac333e9528 100644
---- a/include/linux/bio.h
-+++ b/include/linux/bio.h
-@@ -656,6 +656,13 @@ static inline struct bio *bio_list_get(struct bio_list *bl)
- 	return bio;
- }
- 
-+struct bio_plug_list {
-+	struct bio_list		bios;
-+	struct request_queue	*q;
-+};
-+
-+void blk_punt_blocked_bios(struct bio_plug_list *);
-+
- /*
-  * Increment chain count for the bio. Make sure the CHAIN flag update
-  * is visible before the raised count.
-@@ -685,15 +692,6 @@ struct bio_set {
- 	mempool_t *bio_integrity_pool;
- 	mempool_t *bvec_integrity_pool;
- #endif
--
--	/*
--	 * Deadlock avoidance for stacking block drivers: see comments in
--	 * bio_alloc_bioset() for details
--	 */
--	spinlock_t		rescue_lock;
--	struct bio_list		rescue_list;
--	struct work_struct	rescue_work;
--	struct workqueue_struct	*rescue_workqueue;
- };
- 
- struct biovec_slab {
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 1ca8e8fd10..01acaf9bf9 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -570,6 +570,16 @@ struct request_queue {
- 	struct bio_set		*bio_split;
- 
- 	bool			mq_sysfs_init_done;
-+
-+	/*
-+	 * Deadlock avoidance, to deal with the plugging in
-+	 * generic_make_request() that converts recursion to iteration to avoid
-+	 * stack overflow:
-+	 */
-+	spinlock_t		rescue_lock;
-+	struct bio_list		rescue_list;
-+	struct work_struct	rescue_work;
-+	struct workqueue_struct	*rescue_workqueue;
- };
- 
- #define QUEUE_FLAG_QUEUED	1	/* uses generic tag queueing */
-@@ -1192,9 +1202,11 @@ extern int blk_rq_map_sg(struct request_queue *, struct request *, struct scatte
- extern void blk_dump_rq_flags(struct request *, char *);
- extern long nr_blockdev_pages(void);
- 
-+#define BLK_QUEUE_NO_RESCUER		1
-+
- bool __must_check blk_get_queue(struct request_queue *);
--struct request_queue *blk_alloc_queue(gfp_t);
--struct request_queue *blk_alloc_queue_node(gfp_t, int);
-+struct request_queue *blk_alloc_queue(gfp_t, int);
-+struct request_queue *blk_alloc_queue_node(gfp_t, int, int);
- extern void blk_put_queue(struct request_queue *);
- extern void blk_set_queue_dying(struct request_queue *);
- 
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index ad3ec9ec61..574ddc4f13 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -1797,7 +1797,7 @@ struct task_struct {
- 	void *journal_info;
- 
- /* stacked block device info */
--	struct bio_list *bio_list;
-+	struct bio_plug_list *bio_list;
- 
- #ifdef CONFIG_BLOCK
- /* stack plugging */
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index c56fb57f29..07309d9610 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -3440,6 +3440,12 @@ static inline void sched_submit_work(struct task_struct *tsk)
- {
- 	if (!tsk->state || tsk_is_pi_blocked(tsk))
- 		return;
-+
-+	if (tsk->bio_list &&
-+	    !bio_list_empty(&tsk->bio_list->bios) &&
-+	    tsk->bio_list->q->rescue_workqueue)
-+		blk_punt_blocked_bios(tsk->bio_list);
-+
- 	/*
- 	 * If we are going to sleep and we have plugged IO queued,
- 	 * make sure to submit it to avoid deadlocks.
--- 
-2.11.0
+--C7zPtVaVf+AK4Oqc
+Content-Type: application/gzip
+Content-Disposition: attachment; filename=".config.gz"
+Content-Transfer-Encoding: base64
+
+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
+uYrgoA3e0TlCxITCO6bR3F79DxqY5B36SwEA
+
+--C7zPtVaVf+AK4Oqc
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--C7zPtVaVf+AK4Oqc--
