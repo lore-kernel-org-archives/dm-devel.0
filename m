@@ -1,32 +1,38 @@
-From: Binoy Jayan <binoy.jayan@linaro.org>
-Subject: Re: [RFC PATCH v4] IV Generation algorithms for dm-crypt
-Date: Thu, 9 Feb 2017 14:00:36 +0530
-Message-ID: <CAHv-k__7ks245eB8ZvnTjni_+25bf_hZjCn67_h970nC2ndYQQ@mail.gmail.com>
-References: <1486463731-6224-1-git-send-email-binoy.jayan@linaro.org> <CAOtvUMcN8s886978vE6T=AE79KkZsLBnXsmhewnb5PB0UyAG3A@mail.gmail.com>
+From: Christoph Hellwig <hch@lst.de>
+Subject: Re: [PATCH 1/1] dm-zoned: Zoned block device target
+Date: Thu, 9 Feb 2017 10:36:06 +0100
+Message-ID: <20170209093606.GA8189@lst.de>
+References: <20170209041849.30964-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <CAOtvUMcN8s886978vE6T=AE79KkZsLBnXsmhewnb5PB0UyAG3A@mail.gmail.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: Gilad Ben-Yossef <gilad@benyossef.com>
-Cc: Oded <oded.golombek@arm.com>, Ofir <Ofir.Drang@arm.com>, Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, linux-crypto@vger.kernel.org, Mark Brown <broonie@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Linux kernel mailing list <linux-kernel@vger.kernel.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, Rajendra <rnayak@codeaurora.org>, Milan Broz <gmazyland@gmail.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20170209041849.30964-1-damien.lemoal@wdc.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Damien Le Moal <damien.lemoal@wdc.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On 8 February 2017 at 13:02, Gilad Ben-Yossef <gilad@benyossef.com> wrote:
->
-> Ran Bonnie++ on it last night  (Luks mode, plain64, Qemu Virt platform
-> Arm64) and it works just fine.
->
-> Tested-by: Gilad Ben-Yossef <gilad@benyossef.com>
->
+On Thu, Feb 09, 2017 at 01:18:49PM +0900, Damien Le Moal wrote:
+> +
+> +/*
+> + * Target BIO completion.
+> + */
+> +static inline void dmz_bio_end(struct bio *bio, int err)
+> +{
+> +	struct dm_zone_bioctx *bioctx =
+> +		dm_per_bio_data(bio, sizeof(struct dm_zone_bioctx));
+> +
+> +	if (atomic_dec_and_test(&bioctx->ref)) {
 
-Hi Gilad,
-
-Thank you for testing it. Do you have access to a device having crypto
-hardware with IV generation capability and associated drivers for let
-say, aes with cbc or any another mode? I was wondering if I can customize
-it to work with dm-crypt by generating IVs automatically. Please let
-me know your thoughts.
-
-Thanks,
-Binoy
+It seems like this could be simplified a bit by using bio_chain
+to chain the clones to the original bio.
