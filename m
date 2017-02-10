@@ -1,14 +1,14 @@
 From: Damien Le Moal <damien.lemoal@wdc.com>
 Subject: Re: [PATCH 1/1] dm-zoned: Zoned block device target
-Date: Fri, 10 Feb 2017 09:51:58 +0900
-Message-ID: <a35368f9-ac5d-3144-7701-11f0fb7f10e3@wdc.com>
+Date: Fri, 10 Feb 2017 10:09:47 +0900
+Message-ID: <0342cba2-6745-fddd-e318-db0adf6f1ca4@wdc.com>
 References: <20170209041849.30964-1-damien.lemoal@wdc.com>
-	<20170209093606.GA8189@lst.de>
+	<20170209152745.GA10638@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170209093606.GA8189@lst.de>
+In-Reply-To: <20170209152745.GA10638@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,29 +18,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christoph Hellwig <hch@lst.de>
-Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, Bart Van Assche <bart.vanassche@sandisk.com>, Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Christoph,
+Mike,
 
-On 2/9/17 18:36, Christoph Hellwig wrote:
-> On Thu, Feb 09, 2017 at 01:18:49PM +0900, Damien Le Moal wrote:
->> +
->> +/*
->> + * Target BIO completion.
->> + */
->> +static inline void dmz_bio_end(struct bio *bio, int err)
->> +{
->> +	struct dm_zone_bioctx *bioctx =
->> +		dm_per_bio_data(bio, sizeof(struct dm_zone_bioctx));
->> +
->> +	if (atomic_dec_and_test(&bioctx->ref)) {
+On 2/10/17 00:27, Mike Snitzer wrote:
+> Looks like this work has come a long way.  While I am _still_ not
+> hearing from any customers (or partners) that SMR is a priority I do
+> acknowledge that that obviously isn't the case for WDC and others.
 > 
-> It seems like this could be simplified a bit by using bio_chain
-> to chain the clones to the original bio.
+> So, I'll sign up for reviewing this DM target, with a focus on DM
+> interface and implementation details, _after_ I get some technical
+> review (e.g. Reviewed-by) from people like Hannes and others more
+> invested in the SMR technologies.  Basically I don't know enough about
+> the constraints of these devices to fully appreciate and catch some
+> issue in the particulars of the algorithms used to mitigate SMR's
+> quirks.
 
-Thank you for the hint. I will look into this.
+Fair enough. I understand.
+
+I would also like to let you know that I worked closely with Hannes and
+Martin and also Shaun Tauncheff (Seagate) to put together the final
+patches of the ZBC support for 4.10. I also contributed to part of the
+f2fs support for these devices, which also was included in 4.10.
+(And I also maintain the libzbc project in github)
+
+> I'd also like to understand how invested WDC is in maintaining this DM
+> target for years and years if/when I were to merge this DM target into
+> mainline.
+
+We are fully invested. I am part of the system software group in WD
+Research and one of our mission is to support Linux kernel and open
+source software in general. Bart (Van Assche), who I believe you know,
+is also a member of our group now that Sandisk and WD merger completed.
+
+Hannes and Christoph already sent some comments regarding the code. I
+will make appropriate changes and re-post the patch for review.
+
+Thank you.
 
 Best regards.
 
