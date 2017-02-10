@@ -1,14 +1,14 @@
 From: Damien Le Moal <damien.lemoal@wdc.com>
 Subject: Re: [PATCH 1/1] dm-zoned: Zoned block device target
-Date: Fri, 10 Feb 2017 10:09:47 +0900
-Message-ID: <0342cba2-6745-fddd-e318-db0adf6f1ca4@wdc.com>
+Date: Fri, 10 Feb 2017 10:24:59 +0900
+Message-ID: <e6e86f98-c9d4-c797-8dc1-f7dccd30fafe@wdc.com>
 References: <20170209041849.30964-1-damien.lemoal@wdc.com>
-	<20170209152745.GA10638@redhat.com>
+	<d2353e66-183c-1f71-7a64-52e4b862bc17@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170209152745.GA10638@redhat.com>
+In-Reply-To: <d2353e66-183c-1f71-7a64-52e4b862bc17@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,46 +18,61 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, Bart Van Assche <bart.vanassche@sandisk.com>, Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>
+To: Hannes Reinecke <hare@suse.de>, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: linux-block@vger.kernel.org, Christoph Hellwig <hch@lst.de>
 List-Id: dm-devel.ids
 
+Hannes,
+
+On 2/10/17 01:07, Hannes Reinecke wrote:
+>> +/*
+>> + * CRC32
+>> + */
+>> +static u32 dmz_sb_crc32(u32 crc, const void *buf, size_t length)
+>> +{
+>> +	unsigned char *p = (unsigned char *)buf;
+>> +	int i;
+>> +
+>> +#define CRCPOLY_LE 0xedb88320
+>> +
+>> +	while (length--) {
+>> +		crc ^= *p++;
+>> +		for (i = 0; i < 8; i++)
+>> +			crc = (crc >> 1) ^ ((crc & 1) ? CRCPOLY_LE : 0);
+>> +	}
+>> +
+>> +	return crc;
+>> +}
+>> +
+> Why do you insist on your own CRC32 implementations?
+> Don't we have enough already?
+
+Indeed. I will change this to use existing kernel API.
+
+> Have you looked at using dm-kcopyd for doing the reclaim?
+> What's inhibiting you from using it?
+
+I did look at it, and I did like it very much. It would be much more
+simple to use than open coding everything like I did. But the problem is
+that while the read part is fine, the write part is not. The reason is
+that most of the time, the zone being reclaimed is badly fragmented
+(valid blocks all over the place in the zone). Reading those valid
+blocks with kcopyd is fine, but when moving them to the target zone, the
+overall write sequence MUST be sequential, which means that
+blkdev_issue_zeroout calls must be inserted between non sequential
+regions (the indirection system is per zone, not per block, so the
+relative offsets of the blocks read in the zone being reclaimed must be
+preserved in the destination zone).
+
+I could modify kcopyd_copy to do this zeroout insertion of course. In
+fact, I think that would be the better approach. But I think that can be
+done later, once/if Mike accepts dm-zoned. Or I could re-submit dm-zoned
+together with a patch for kcopyd_copy.
+
 Mike,
+Any advice on which approach is best/more acceptable for you ?
 
-On 2/10/17 00:27, Mike Snitzer wrote:
-> Looks like this work has come a long way.  While I am _still_ not
-> hearing from any customers (or partners) that SMR is a priority I do
-> acknowledge that that obviously isn't the case for WDC and others.
-> 
-> So, I'll sign up for reviewing this DM target, with a focus on DM
-> interface and implementation details, _after_ I get some technical
-> review (e.g. Reviewed-by) from people like Hannes and others more
-> invested in the SMR technologies.  Basically I don't know enough about
-> the constraints of these devices to fully appreciate and catch some
-> issue in the particulars of the algorithms used to mitigate SMR's
-> quirks.
-
-Fair enough. I understand.
-
-I would also like to let you know that I worked closely with Hannes and
-Martin and also Shaun Tauncheff (Seagate) to put together the final
-patches of the ZBC support for 4.10. I also contributed to part of the
-f2fs support for these devices, which also was included in 4.10.
-(And I also maintain the libzbc project in github)
-
-> I'd also like to understand how invested WDC is in maintaining this DM
-> target for years and years if/when I were to merge this DM target into
-> mainline.
-
-We are fully invested. I am part of the system software group in WD
-Research and one of our mission is to support Linux kernel and open
-source software in general. Bart (Van Assche), who I believe you know,
-is also a member of our group now that Sandisk and WD merger completed.
-
-Hannes and Christoph already sent some comments regarding the code. I
-will make appropriate changes and re-post the patch for review.
-
-Thank you.
+Thanks !
 
 Best regards.
 
