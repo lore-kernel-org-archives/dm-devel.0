@@ -1,14 +1,14 @@
-From: Damien Le Moal <damien.lemoal@wdc.com>
-Subject: Re: [PATCH 1/1] dm-zoned: Zoned block device target
-Date: Fri, 10 Feb 2017 10:24:59 +0900
-Message-ID: <e6e86f98-c9d4-c797-8dc1-f7dccd30fafe@wdc.com>
-References: <20170209041849.30964-1-damien.lemoal@wdc.com>
-	<d2353e66-183c-1f71-7a64-52e4b862bc17@suse.de>
+From: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Subject: Re: [PATCH 1/5] multipath-tools: libmultipath: fix gcc
+ link failure on rcu_register_thread_mb.
+Date: Fri, 10 Feb 2017 12:33:48 +0100
+Message-ID: <CABr-GndxhwKnYbqY8zXwMs=Z2L7ZR9vd2tGYPsO=T2YVLynH9Q@mail.gmail.com>
+References: <1484919542-11087-1-git-send-email-fge@redhat.com>
+	<1484919542-11087-2-git-send-email-fge@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============5009319534316610650=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <d2353e66-183c-1f71-7a64-52e4b862bc17@suse.de>
+In-Reply-To: <1484919542-11087-2-git-send-email-fge@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,73 +18,116 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: linux-block@vger.kernel.org, Christoph Hellwig <hch@lst.de>
+To: Gris Ge <fge@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hannes,
+--===============5009319534316610650==
+Content-Type: multipart/alternative; boundary=001a1142efbeaad78a05482b78e7
 
-On 2/10/17 01:07, Hannes Reinecke wrote:
->> +/*
->> + * CRC32
->> + */
->> +static u32 dmz_sb_crc32(u32 crc, const void *buf, size_t length)
->> +{
->> +	unsigned char *p = (unsigned char *)buf;
->> +	int i;
->> +
->> +#define CRCPOLY_LE 0xedb88320
->> +
->> +	while (length--) {
->> +		crc ^= *p++;
->> +		for (i = 0; i < 8; i++)
->> +			crc = (crc >> 1) ^ ((crc & 1) ? CRCPOLY_LE : 0);
->> +	}
->> +
->> +	return crc;
->> +}
->> +
-> Why do you insist on your own CRC32 implementations?
-> Don't we have enough already?
+--001a1142efbeaad78a05482b78e7
+Content-Type: text/plain; charset=UTF-8
 
-Indeed. I will change this to use existing kernel API.
+Applied.
 
-> Have you looked at using dm-kcopyd for doing the reclaim?
-> What's inhibiting you from using it?
+On Fri, Jan 20, 2017 at 2:38 PM, Gris Ge <fge@redhat.com> wrote:
 
-I did look at it, and I did like it very much. It would be much more
-simple to use than open coding everything like I did. But the problem is
-that while the read part is fine, the write part is not. The reason is
-that most of the time, the zone being reclaimed is badly fragmented
-(valid blocks all over the place in the zone). Reading those valid
-blocks with kcopyd is fine, but when moving them to the target zone, the
-overall write sequence MUST be sequential, which means that
-blkdev_issue_zeroout calls must be inserted between non sequential
-regions (the indirection system is per zone, not per block, so the
-relative offsets of the blocks read in the zone being reclaimed must be
-preserved in the destination zone).
+> Error:
+>     ../libmultipath/libmultipath.so: undefined reference to
+>     `rcu_register_thread_mb'
+>     ../libmultipath/libmultipath.so: undefined reference to
+>     `rcu_unregister_thread_mb'
+>
+> Fix:
+>     Link the libmultipath with -lurcu
+>
+> Signed-off-by: Gris Ge <fge@redhat.com>
+> ---
+>  libmultipath/Makefile | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+>
+> diff --git a/libmultipath/Makefile b/libmultipath/Makefile
+> index b5d54d8..1f5ec25 100644
+> --- a/libmultipath/Makefile
+> +++ b/libmultipath/Makefile
+> @@ -9,7 +9,7 @@ LIBS = $(DEVLIB).$(SONAME)
+>
+>  CFLAGS += -I$(mpathcmddir)
+>
+> -LIBDEPS += -lpthread -ldl -ldevmapper -ludev -L$(mpathcmddir) -lmpathcmd
+> +LIBDEPS += -lpthread -ldl -ldevmapper -ludev -L$(mpathcmddir) -lmpathcmd
+> -lurcu
+>
+>  ifdef SYSTEMD
+>         CFLAGS += -DUSE_SYSTEMD=$(SYSTEMD)
+> --
+> 1.8.3.1
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+>
 
-I could modify kcopyd_copy to do this zeroout insertion of course. In
-fact, I think that would be the better approach. But I think that can be
-done later, once/if Mike accepts dm-zoned. Or I could re-submit dm-zoned
-together with a patch for kcopyd_copy.
+--001a1142efbeaad78a05482b78e7
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 
-Mike,
-Any advice on which approach is best/more acceptable for you ?
+<div dir=3D"ltr">Applied.</div><div class=3D"gmail_extra"><br><div class=3D=
+"gmail_quote">On Fri, Jan 20, 2017 at 2:38 PM, Gris Ge <span dir=3D"ltr">&l=
+t;<a href=3D"mailto:fge@redhat.com" target=3D"_blank">fge@redhat.com</a>&gt=
+;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 =
+.8ex;border-left:1px #ccc solid;padding-left:1ex">Error:<br>
+=C2=A0 =C2=A0 ../libmultipath/libmultipath.<wbr>so: undefined reference to<=
+br>
+=C2=A0 =C2=A0 `rcu_register_thread_mb&#39;<br>
+=C2=A0 =C2=A0 ../libmultipath/libmultipath.<wbr>so: undefined reference to<=
+br>
+=C2=A0 =C2=A0 `rcu_unregister_thread_mb&#39;<br>
+<br>
+Fix:<br>
+=C2=A0 =C2=A0 Link the libmultipath with -lurcu<br>
+<br>
+Signed-off-by: Gris Ge &lt;<a href=3D"mailto:fge@redhat.com">fge@redhat.com=
+</a>&gt;<br>
+---<br>
+=C2=A0libmultipath/Makefile | 2 +-<br>
+=C2=A01 file changed, 1 insertion(+), 1 deletion(-)<br>
+<br>
+diff --git a/libmultipath/Makefile b/libmultipath/Makefile<br>
+index b5d54d8..1f5ec25 100644<br>
+--- a/libmultipath/Makefile<br>
++++ b/libmultipath/Makefile<br>
+@@ -9,7 +9,7 @@ LIBS =3D $(DEVLIB).$(SONAME)<br>
+<br>
+=C2=A0CFLAGS +=3D -I$(mpathcmddir)<br>
+<br>
+-LIBDEPS +=3D -lpthread -ldl -ldevmapper -ludev -L$(mpathcmddir) -lmpathcmd=
+<br>
++LIBDEPS +=3D -lpthread -ldl -ldevmapper -ludev -L$(mpathcmddir) -lmpathcmd=
+ -lurcu<br>
+<br>
+=C2=A0ifdef SYSTEMD<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 CFLAGS +=3D -DUSE_SYSTEMD=3D$(SYSTEMD)<br>
+<span class=3D"HOEnZb"><font color=3D"#888888">--<br>
+1.8.3.1<br>
+<br>
+--<br>
+dm-devel mailing list<br>
+<a href=3D"mailto:dm-devel@redhat.com">dm-devel@redhat.com</a><br>
+<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" rel=3D"norefer=
+rer" target=3D"_blank">https://www.redhat.com/<wbr>mailman/listinfo/dm-deve=
+l</a><br>
+</font></span></blockquote></div><br></div>
 
-Thanks !
+--001a1142efbeaad78a05482b78e7--
 
-Best regards.
 
--- 
-Damien Le Moal, Ph.D.
-Sr. Manager, System Software Research Group,
-Western Digital Corporation
-Damien.LeMoal@wdc.com
-(+81) 0466-98-3593 (ext. 513593)
-1 kirihara-cho, Fujisawa,
-Kanagawa, 252-0888 Japan
-www.wdc.com, www.hgst.com
-Western Digital Corporation (and its subsidiaries) E-mail Confidentiality Notice & Disclaimer:
+--===============5009319534316610650==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-This e-mail and any files transmitted with it may contain confidential or legally privileged information of WDC and/or its affiliates, and are intended solely for the use of the individual or entity to which they are addressed. If you are not the intended recipient, any disclosure, copying, distribution or any action taken or omitted to be taken in reliance on it, is prohibited. If you have received this e-mail in error, please notify the sender immediately and delete the e-mail in its entirety from your system.
+
+--===============5009319534316610650==--
