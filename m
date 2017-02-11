@@ -1,8 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 5/7] multipathd: add messages on delayed path
-	addition
-Date: Fri, 10 Feb 2017 23:28:50 -0600
-Message-ID: <1486790932-30917-6-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 6/7] multipathd: allow resetting stats
+Date: Fri, 10 Feb 2017 23:28:51 -0600
+Message-ID: <1486790932-30917-7-git-send-email-bmarzins@redhat.com>
 References: <1486790932-30917-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,35 +20,124 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-When multipath delays adding a path because the device is waiting for
-udev to finish initialization, it now logs a message, so the users
-know what happened to the path.
+This patch adds two multipathd interactive commands:
+
+multipathd reset maps stats
+
+and
+
+multipathd reset map <map> stats
+
+to reset the statistics that are shown with the "show stats" commands.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/main.c | 3 +++
- 1 file changed, 3 insertions(+)
+ multipathd/cli.c          |  2 ++
+ multipathd/cli_handlers.c | 44 ++++++++++++++++++++++++++++++++++++++++++++
+ multipathd/cli_handlers.h |  2 ++
+ multipathd/main.c         |  2 ++
+ 4 files changed, 50 insertions(+)
 
+diff --git a/multipathd/cli.c b/multipathd/cli.c
+index 50161be..32d4976 100644
+--- a/multipathd/cli.c
++++ b/multipathd/cli.c
+@@ -547,6 +547,8 @@ cli_init (void) {
+ 	add_handler(LIST+BLACKLIST, NULL);
+ 	add_handler(LIST+DEVICES, NULL);
+ 	add_handler(LIST+WILDCARDS, NULL);
++	add_handler(RESET+MAPS+STATS, NULL);
++	add_handler(RESET+MAP+STATS, NULL);
+ 	add_handler(ADD+PATH, NULL);
+ 	add_handler(DEL+PATH, NULL);
+ 	add_handler(ADD+MAP, NULL);
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index b0eeca6..b20b054 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -277,6 +277,17 @@ show_config (char ** r, int * len)
+ 	return 0;
+ }
+ 
++void
++reset_stats(struct multipath * mpp)
++{
++	mpp->stat_switchgroup = 0;
++	mpp->stat_path_failures = 0;
++	mpp->stat_map_loads = 0;
++	mpp->stat_total_queueing_time = 0;
++	mpp->stat_queueing_timeouts = 0;
++	mpp->stat_map_failures = 0;
++}
++
+ int
+ cli_list_config (void * v, char ** reply, int * len, void * data)
+ {
+@@ -627,6 +638,39 @@ cli_list_daemon (void * v, char ** reply, int * len, void * data)
+ }
+ 
+ int
++cli_reset_maps_stats (void * v, char ** reply, int * len, void * data)
++{
++	struct vectors * vecs = (struct vectors *)data;
++	int i;
++	struct multipath * mpp;
++
++	condlog(3, "reset multipaths stats (operator)");
++
++	vector_foreach_slot(vecs->mpvec, mpp, i) {
++		reset_stats(mpp);
++	}
++	return 0;
++}
++
++int
++cli_reset_map_stats (void * v, char ** reply, int * len, void * data)
++{
++	struct vectors * vecs = (struct vectors *)data;
++	struct multipath * mpp;
++	char * param = get_keyparam(v, MAP);
++
++	param = convert_dev(param, 0);
++	mpp = find_mp_by_str(vecs->mpvec, param);
++
++	if (!mpp)
++		return 1;
++
++	condlog(3, "reset multipath %s stats (operator)", param);
++	reset_stats(mpp);
++	return 0;
++}
++
++int
+ cli_add_path (void * v, char ** reply, int * len, void * data)
+ {
+ 	struct vectors * vecs = (struct vectors *)data;
+diff --git a/multipathd/cli_handlers.h b/multipathd/cli_handlers.h
+index 19e003d..f4d02cc 100644
+--- a/multipathd/cli_handlers.h
++++ b/multipathd/cli_handlers.h
+@@ -19,6 +19,8 @@ int cli_list_config (void * v, char ** reply, int * len, void * data);
+ int cli_list_blacklist (void * v, char ** reply, int * len, void * data);
+ int cli_list_devices (void * v, char ** reply, int * len, void * data);
+ int cli_list_wildcards (void * v, char ** reply, int * len, void * data);
++int cli_reset_maps_stats (void * v, char ** reply, int * len, void * data);
++int cli_reset_map_stats (void * v, char ** reply, int * len, void * data);
+ int cli_add_path (void * v, char ** reply, int * len, void * data);
+ int cli_del_path (void * v, char ** reply, int * len, void * data);
+ int cli_add_map (void * v, char ** reply, int * len, void * data);
 diff --git a/multipathd/main.c b/multipathd/main.c
-index 5480e96..33b7ad6 100644
+index 33b7ad6..aa6c72e 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -485,6 +485,8 @@ ev_add_map (char * dev, char * alias, struct vectors * vecs)
- 
- 	if (mpp) {
- 		if (mpp->wait_for_udev > 1) {
-+			condlog(2, "%s: performing delayed actions",
-+				mpp->alias);
- 			if (update_map(mpp, vecs))
- 				/* setup multipathd removed the map */
- 				return 1;
-@@ -719,6 +721,7 @@ ev_add_path (struct path * pp, struct vectors * vecs)
- 	    (pathcount(mpp, PATH_UP) > 0 ||
- 	     (pathcount(mpp, PATH_GHOST) > 0 && pp->tpgs != TPGS_IMPLICIT))) {
- 		/* if wait_for_udev is set and valid paths exist */
-+		condlog(2, "%s: delaying path addition until %s is fully initialized", pp->dev, mpp->alias);
- 		mpp->wait_for_udev = 2;
- 		orphan_path(pp, "waiting for create to complete");
- 		return 0;
+@@ -1228,6 +1228,8 @@ uxlsnrloop (void * ap)
+ 	set_handler_callback(LIST+BLACKLIST, cli_list_blacklist);
+ 	set_handler_callback(LIST+DEVICES, cli_list_devices);
+ 	set_handler_callback(LIST+WILDCARDS, cli_list_wildcards);
++	set_handler_callback(RESET+MAPS+STATS, cli_reset_maps_stats);
++	set_handler_callback(RESET+MAP+STATS, cli_reset_map_stats);
+ 	set_handler_callback(ADD+PATH, cli_add_path);
+ 	set_handler_callback(DEL+PATH, cli_del_path);
+ 	set_handler_callback(ADD+MAP, cli_add_map);
 -- 
 1.8.3.1
