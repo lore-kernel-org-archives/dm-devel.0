@@ -1,7 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 3/7] libmultipath: cleanup orphan device states
-Date: Fri, 10 Feb 2017 23:28:48 -0600
-Message-ID: <1486790932-30917-4-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 4/7] multipathd: don't update priority of failed
+	paths
+Date: Fri, 10 Feb 2017 23:28:49 -0600
+Message-ID: <1486790932-30917-5-git-send-email-bmarzins@redhat.com>
 References: <1486790932-30917-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -20,36 +21,28 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-After a path device is orphaned, multipathd stops checking its state.
-However, multipathd show state still shows its old state. It should
-display "undef unknown" instead.
+Multipathd shouldn't be updating the priority of failed paths in the
+checkerloop. The current avoids this in almost all cases, but not all.
+Close the loophole.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/print.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ multipathd/main.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/print.c b/libmultipath/print.c
-index 5b03383..00a3626 100644
---- a/libmultipath/print.c
-+++ b/libmultipath/print.c
-@@ -392,7 +392,7 @@ snprint_dev_t (char * buff, size_t len, struct path * pp)
- static int
- snprint_offline (char * buff, size_t len, struct path * pp)
- {
--	if (!pp)
-+	if (!pp || !pp->mpp)
- 		return snprintf(buff, len, "unknown");
- 	else if (pp->offline)
- 		return snprintf(buff, len, "offline");
-@@ -403,7 +403,7 @@ snprint_offline (char * buff, size_t len, struct path * pp)
- static int
- snprint_chk_state (char * buff, size_t len, struct path * pp)
- {
--	if (!pp)
-+	if (!pp || !pp->mpp)
- 		return snprintf(buff, len, "undef");
+diff --git a/multipathd/main.c b/multipathd/main.c
+index adc3258..5480e96 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1457,7 +1457,8 @@ int update_prio(struct path *pp, int refresh_all)
+ 	}
+ 	oldpriority = pp->priority;
+ 	conf = get_multipath_config();
+-	pathinfo(pp, conf, DI_PRIO);
++	if (pp->state != PATH_DOWN)
++		pathinfo(pp, conf, DI_PRIO);
+ 	put_multipath_config(conf);
  
- 	switch (pp->state) {
+ 	if (pp->priority == oldpriority)
 -- 
 1.8.3.1
