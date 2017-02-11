@@ -1,16 +1,11 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH] multipath-tools: Remove trailing and leading
-	whitespaces
-Date: Fri, 10 Feb 2017 17:32:05 +0100
-Message-ID: <20a1dba0-3379-66d4-be53-b19e7d9fccd3@gmail.com>
-References: <20170210134359.6969-1-xose.vazquez@gmail.com>
-	<CABr-GncZt7BTKBe7mCXSfHFphi=5jegj8UgeTCxxFm6whwZLTQ@mail.gmail.com>
-	<a57e6aea-e68e-6737-9d6b-146b32b37541@gmail.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: [PATCH 0/7] misc patches
+Date: Fri, 10 Feb 2017 23:28:45 -0600
+Message-ID: <1486790932-30917-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <a57e6aea-e68e-6737-9d6b-146b32b37541@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,19 +15,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, "tang.junhui" <tang.junhui@zte.com.cn>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 02/10/2017 03:21 PM, Xose Vazquez Perez wrote:
-> On 02/10/2017 02:49 PM, Christophe Varoqui wrote:
-> 
->> Applied.
->> Thanks.
-> 
-> BTW, some patches from Anthony Ryan are missing:
-> https://marc.info/?l=dm-devel&m=148362960727218
-> https://marc.info/?l=dm-devel&m=148352341629223
+Here's a couple of minor features bugfixes and cleanups. The biggest
+change is that the detect_checker option now sets the checker for
+devices with detected ALUA to TUR. Also, udev wasn't correctly
+disabling rules for multipath devices that lost their last usable
+path through a table reload. This was causing lvmetad some problems
+on failing multipath devices.
 
-Tang Junhui  <tang.junhui@zte.com.cn> also sent a bunch of
-patches: https://marc.info/?a=146761168900001
+Benjamin Marzinski (7):
+  kpartx: don't keep creating recursive partitions
+  libmultipath: add detect_checker option
+  libmultipath: cleanup orphan device states
+  multipathd: don't update priority of failed paths
+  multipathd: add messages on delayed path addition
+  multipathd: allow resetting stats
+  fix udev rules for failed multipath devices
+
+ kpartx/dos.c                |  2 +-
+ libmultipath/config.c       |  3 ++
+ libmultipath/config.h       |  2 ++
+ libmultipath/defaults.h     |  1 +
+ libmultipath/devmapper.c    |  3 +-
+ libmultipath/devmapper.h    |  6 ++++
+ libmultipath/dict.c         | 10 +++++++
+ libmultipath/discovery.c    |  1 +
+ libmultipath/hwtable.c      |  1 +
+ libmultipath/print.c        |  4 +--
+ libmultipath/propsel.c      | 59 +++++++++++++++++++++++++++++++-------
+ libmultipath/propsel.h      |  1 +
+ libmultipath/structs.h      |  7 +++++
+ multipath/11-dm-mpath.rules | 69 +++++++++++++++++++++++++++++++--------------
+ multipath/multipath.conf.5  | 18 ++++++++++++
+ multipathd/cli.c            |  2 ++
+ multipathd/cli_handlers.c   | 44 +++++++++++++++++++++++++++++
+ multipathd/cli_handlers.h   |  2 ++
+ multipathd/main.c           |  8 +++++-
+ 19 files changed, 207 insertions(+), 36 deletions(-)
+
+-- 
+1.8.3.1
