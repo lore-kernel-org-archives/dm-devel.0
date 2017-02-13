@@ -1,13 +1,14 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: multipath-tools: Standardization of no_path_retry
-Date: Mon, 13 Feb 2017 07:56:59 +0100
-Message-ID: <83d9e613-186c-3bdc-ac5a-0d9668cdd5f3@suse.de>
-References: <8f166de2-104a-61ee-afc4-d667a39c3719@gmail.com>
+From: <tang.junhui@zte.com.cn>
+Subject: Re:
+	=?utf-8?q?=5BPATCH=5D_multipath-tools=3A_improve_proce?=
+	=?utf-8?q?ssing_efficiency_for_addition_and_deletion_of_multipath_?=
+	=?utf-8?q?devices?=
+Date: Mon, 13 Feb 2017 15:55:26 +0800 (CST)
+Message-ID: <201702131555269431424@zte.com.cn>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: multipart/mixed;
+	boundary="=====_001_next====="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <8f166de2-104a-61ee-afc4-d667a39c3719@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,29 +18,53 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>
+To: christophe.varoqui@opensvc.com, bmarzins@redhat.com, hare@suse.de, mwilck@suse.com
+Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, tang.junhui@zte.com.cn, tang.wenjun3@zte.com.cn
 List-Id: dm-devel.ids
 
-T24gMDIvMTIvMjAxNyAxMTo0MSBQTSwgWG9zZSBWYXpxdWV6IFBlcmV6IHdyb3RlOgo+IEhpLAo+
-IAo+IFRoZXJlIGFyZSBwbGVudHkgb2YgYXJiaXRyYXJ5IHZhbHVlczoKPiAKPiAgICAgICAxICAg
-ICAgICAgICAgICAgICAubm9fcGF0aF9yZXRyeSA9IDUsCj4gICAgICAgMSAgICAgICAgICAgICAg
-ICAgLm5vX3BhdGhfcmV0cnkgPSA2LAo+ICAgICAgIDMgICAgICAgICAgICAgICAgIC5ub19wYXRo
-X3JldHJ5ID0gMTAsCj4gICAgICAgOCAgICAgICAgICAgICAgICAgLm5vX3BhdGhfcmV0cnkgPSAx
-MiwKPiAgICAgICAyICAgICAgICAgICAgICAgICAubm9fcGF0aF9yZXRyeSA9IDE1LAo+ICAgICAg
-IDYgICAgICAgICAgICAgICAgIC5ub19wYXRoX3JldHJ5ID0gMTgsCj4gICAgICAgMSAgICAgICAg
-ICAgICAgICAgLm5vX3BhdGhfcmV0cnkgPSAyNCwKPiAgICAgIDM3ICAgICAgICAgICAgICAgICAu
-bm9fcGF0aF9yZXRyeSA9IDMwLAo+ICAgICAgIDQgICAgICAgICAgICAgICAgIC5ub19wYXRoX3Jl
-dHJ5ID0gKDMwMCAvIERFRkFVTFRfQ0hFQ0tJTlQpLAo+IAo+IAo+ICAgICAgMTkgICAgICAgICAg
-ICAgICAgIC5ub19wYXRoX3JldHJ5ID0gTk9fUEFUSF9SRVRSWV9RVUVVRSwKPiAgICAgIDE1ICAg
-ICAgIChEZWZhdWx0KSAubm9fcGF0aF9yZXRyeSA9IE5PX1BBVEhfUkVUUllfVU5ERUYsCj4gCj4g
-Cj4gCj4gQW55IHRob3VnaHRzIGFib3V0IHRoaXM/Cj4gClRoZXNlIGFyZSB0eXBpY2FsbHkgY29t
-aW5nIGZyb20gdmVuZG9yIGhhcmR3YXJlIGVudHJpZXMsIGFuZCBpbiBtb3N0CmNhc2VzIHRoZXkg
-YXJlIHNldCBvbiByZXF1ZXN0IGZyb20gdGhlIHZlbmRvci4KU28gdW5sZXNzIHNvbWVvbmUgaGFz
-IGFjdHVhbGx5IF90ZXN0ZWRfIHdpdGggYSBkaWZmZXJlbnQgc2V0dGluZyBvbiB0aGF0CmFycmF5
-IHdlIHNob3VsZCByYXRoZXIgbGVhdmUgdGhlbSBhbG9uZS4KCkNoZWVycywKCkhhbm5lcwotLSAK
-RHIuIEhhbm5lcyBSZWluZWNrZQkJICAgVGVhbWxlYWQgU3RvcmFnZSAmIE5ldHdvcmtpbmcKaGFy
-ZUBzdXNlLmRlCQkJICAgICAgICAgICAgICAgKzQ5IDkxMSA3NDA1MyA2ODgKU1VTRSBMSU5VWCBH
-bWJILCBNYXhmZWxkc3RyLiA1LCA5MDQwOSBOw7xybmJlcmcKR0Y6IEYuIEltZW5kw7ZyZmZlciwg
-Si4gU21pdGhhcmQsIEouIEd1aWxkLCBELiBVcG1hbnl1LCBHLiBOb3J0b24KSFJCIDIxMjg0IChB
-RyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNv
-bQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+
+
+--=====_001_next=====
+Content-Type: multipart/related;
+	boundary="=====_002_next====="
+
+
+--=====_002_next=====
+Content-Type: multipart/alternative;
+	boundary="=====_003_next====="
+
+
+--=====_003_next=====
+Content-Transfer-Encoding: base64 
+Content-Type: text/plain;
+	charset="UTF-8"
+
+SGVsbG8gQ2hyaXN0b3BoZSwgQmVuLCBIYW5uZXMsIE1hcnRpbiwNCg0KIA0KDQpDb3VsZCB5b3Ug
+aGF2ZSBhIHJldmlldyBmb3IgdGhpcyBwYXRjaD8NCg0KQW55IGNvbW1lbnQgd291bGQgYmUgd2Vs
+bGNvbWUhDQoNCg0KDQoNClRoYW5rcywNCg0KVGFuZyBKdW5odWk=
+
+
+--=====_003_next=====
+Content-Transfer-Encoding: base64
+Content-Type: text/html ;
+	charset="UTF-8"
+
+PGRpdiBjbGFzcz0iemNvbnRlbnRSb3ciPiA8cD5IZWxsbyBDaHJpc3RvcGhlLCBCZW4sIEhhbm5l
+cywgTWFydGluLDwvcD48cD4mbmJzcDs8L3A+PHA+Q291bGQgeW91IGhhdmUgYSByZXZpZXcgZm9y
+IHRoaXMgcGF0Y2g/PC9wPjxwPkFueSBjb21tZW50IHdvdWxkIGJlIHdlbGxjb21lITwvcD48cD48
+YnI+PC9wPjxwPlRoYW5rcyw8L3A+PHA+VGFuZyBKdW5odWk8L3A+PHA+PGJyPjwvcD48cD48YnI+
+PC9wPjxwPjxicj48L3A+PHA+PGJyPjwvcD48L2Rpdj4=
+
+
+--=====_003_next=====--
+
+--=====_002_next=====--
+
+--=====_001_next=====
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--=====_001_next=====--
