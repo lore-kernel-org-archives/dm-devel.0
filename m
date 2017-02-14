@@ -1,8 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v2 5/7] multipathd: add messages on delayed path
-	addition
-Date: Mon, 13 Feb 2017 22:06:51 -0600
-Message-ID: <1487045213-15776-6-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 1/7] kpartx: don't keep creating recursive
+	partitions
+Date: Mon, 13 Feb 2017 22:06:47 -0600
+Message-ID: <1487045213-15776-2-git-send-email-bmarzins@redhat.com>
 References: <1487045213-15776-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,37 +19,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
+Cc: Cedric Buissart <cbuissar@redhat.com>
 List-Id: dm-devel.ids
 
-When multipath delays adding a path because the device is waiting for
-udev to finish initialization, it now logs a message, so the users
-know what happened to the path.
+If the dos partition table is corrupted, kpartx can just keep creating
+the same partitions until it runs out of partition numbers. This check
+catches the recursion.
 
+Signed-off-by: Cedric Buissart <cbuissar@redhat.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/main.c | 3 +++
- 1 file changed, 3 insertions(+)
+ kpartx/dos.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 5480e96..33b7ad6 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -485,6 +485,8 @@ ev_add_map (char * dev, char * alias, struct vectors * vecs)
- 
- 	if (mpp) {
- 		if (mpp->wait_for_udev > 1) {
-+			condlog(2, "%s: performing delayed actions",
-+				mpp->alias);
- 			if (update_map(mpp, vecs))
- 				/* setup multipathd removed the map */
- 				return 1;
-@@ -719,6 +721,7 @@ ev_add_path (struct path * pp, struct vectors * vecs)
- 	    (pathcount(mpp, PATH_UP) > 0 ||
- 	     (pathcount(mpp, PATH_GHOST) > 0 && pp->tpgs != TPGS_IMPLICIT))) {
- 		/* if wait_for_udev is set and valid paths exist */
-+		condlog(2, "%s: delaying path addition until %s is fully initialized", pp->dev, mpp->alias);
- 		mpp->wait_for_udev = 2;
- 		orphan_path(pp, "waiting for create to complete");
- 		return 0;
+diff --git a/kpartx/dos.c b/kpartx/dos.c
+index 64b27b6..4985152 100644
+--- a/kpartx/dos.c
++++ b/kpartx/dos.c
+@@ -46,7 +46,7 @@ read_extended_partition(int fd, struct partition *ep, int en,
+ 		for (i=0; i<2; i++) {
+ 			memcpy(&p, bp + 0x1be + i * sizeof (p), sizeof (p));
+ 			if (is_extended(p.sys_type)) {
+-				if (p.nr_sects && !moretodo) {
++				if (p.start_sect && p.nr_sects && !moretodo) {
+ 					next = start + sector_size_mul * le32_to_cpu(p.start_sect);
+ 					moretodo = 1;
+ 				}
 -- 
 1.8.3.1
