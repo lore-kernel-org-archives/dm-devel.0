@@ -1,121 +1,88 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: v4.9, 4.4-final: 28 bioset threads on small notebook, 36 threads
- on cellphone
-Date: Tue, 14 Feb 2017 12:33:03 -0500
-Message-ID: <20170214173302.GB32503@redhat.com>
-References: <20160220184258.GA3753@amd>
- <20160220195136.GA27149@redhat.com>
- <20160220200432.GB22120@amd>
- <20170206125309.GA29395@amd>
- <20170207014724.74tb37jj7u66lww3@moria.home.lan>
- <20170207024906.4oswyuvxfnqkvbhr@moria.home.lan>
- <20170207203911.GA16980@amd>
- <20170207204510.qr2l2rg42ez2hobh@moria.home.lan>
- <20170208163407.GA3646@redhat.com>
- <20170209212523.lgrgvk2squoo6x6f@moria.home.lan>
+From: Ram Pai <linuxram@us.ibm.com>
+Subject: Re: [PATCH v4 1/1] DM: inplace compressed DM target (fwd)
+Date: Tue, 14 Feb 2017 09:56:41 -0800
+Message-ID: <20170214175641.GA10603@ram.oc3035372033.ibm.com>
+References: <alpine.DEB.2.20.1702140707530.2033@hadrien>
+Reply-To: Ram Pai <linuxram@us.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
+Return-path: <linux-raid-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20170209212523.lgrgvk2squoo6x6f@moria.home.lan>
-Sender: linux-block-owner@vger.kernel.org
-To: Kent Overstreet <kent.overstreet@gmail.com>
-Cc: Pavel Machek <pavel@ucw.cz>, kernel list <linux-kernel@vger.kernel.org>, axboe@fb.com, hch@lst.de, neilb@suse.de, martin.petersen@oracle.com, dpark@posteo.net, ming.l@ssi.samsung.com, dm-devel@redhat.com, ming.lei@canonical.com, agk@redhat.com, jkosina@suse.cz, geoff@infradead.org, jim@jtan.com, pjk1939@linux.vnet.ibm.com, minchan@kernel.org, ngupta@vflare.org, oleg.drokin@intel.com, andreas.dilger@intel.com, linux-block@vger.kernel.org
+In-Reply-To: <alpine.DEB.2.20.1702140707530.2033@hadrien>
+Sender: linux-raid-owner@vger.kernel.org
+To: Julia Lawall <julia.lawall@lip6.fr>
+Cc: linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, agk@redhat.com, snitzer@redhat.com, corbet@lwn.net, shli@kernel.org, hbabu@us.ibm.com
 List-Id: dm-devel.ids
 
-On Thu, Feb 09 2017 at  4:25pm -0500,
-Kent Overstreet <kent.overstreet@gmail.com> wrote:
+On Tue, Feb 14, 2017 at 07:09:04AM +0100, Julia Lawall wrote:
+> On line 1759, since ret is unsigned it will not be less than 0.
 
-> On Wed, Feb 08, 2017 at 11:34:07AM -0500, Mike Snitzer wrote:
-> > On Tue, Feb 07 2017 at 11:58pm -0500,
-> > Kent Overstreet <kent.overstreet@gmail.com> wrote:
-> > 
-> > > On Tue, Feb 07, 2017 at 09:39:11PM +0100, Pavel Machek wrote:
-> > > > On Mon 2017-02-06 17:49:06, Kent Overstreet wrote:
-> > > > > On Mon, Feb 06, 2017 at 04:47:24PM -0900, Kent Overstreet wrote:
-> > > > > > On Mon, Feb 06, 2017 at 01:53:09PM +0100, Pavel Machek wrote:
-> > > > > > > Still there on v4.9, 36 threads on nokia n900 cellphone.
-> > > > > > > 
-> > > > > > > So.. what needs to be done there?
-> > > > > 
-> > > > > > But, I just got an idea for how to handle this that might be halfway sane, maybe
-> > > > > > I'll try and come up with a patch...
-> > > > > 
-> > > > > Ok, here's such a patch, only lightly tested:
-> > > > 
-> > > > I guess it would be nice for me to test it... but what it is against?
-> > > > I tried after v4.10-rc5 and linux-next, but got rejects in both cases.
-> > > 
-> > > Sorry, I forgot I had a few other patches in my branch that touch
-> > > mempool/biosets code.
-> > > 
-> > > Also, after thinking about it more and looking at the relevant code, I'm pretty
-> > > sure we don't need rescuer threads for block devices that just split bios - i.e.
-> > > most of them, so I changed my patch to do that.
-> > > 
-> > > Tested it by ripping out the current->bio_list checks/workarounds from the
-> > > bcache code, appears to work:
-> > 
-> > Feedback on this patch below, but first:
-> > 
-> > There are deeper issues with the current->bio_list and rescue workqueues
-> > than thread counts.
-> > 
-> > I cannot help but feel like you (and Jens) are repeatedly ignoring the
-> > issue that has been raised numerous times, most recently:
-> > https://www.redhat.com/archives/dm-devel/2017-February/msg00059.html
-> > 
-> > FYI, this test (albeit ugly) can be used to check if the dm-snapshot
-> > deadlock is fixed:
-> > https://www.redhat.com/archives/dm-devel/2017-January/msg00064.html
-> > 
-> > This situation is the unfortunate pathological worst case for what
-> > happens when changes are merged and nobody wants to own fixing the
-> > unforseen implications/regressions.   Like everyone else in a position
-> > of Linux maintenance I've tried to stay away from owning the
-> > responsibility of a fix -- it isn't working.  Ok, I'll stop bitching
-> > now.. I do bear responsibility for not digging in myself.  We're all
-> > busy and this issue is "hard".
+Thanks fixed it. Infact noticed that dm_icomp_io_range_compress() had missed a case where
+it was supposed to return error; a negative number.  Fixed that aswell.
+
+RP
+
 > 
-> Mike, it's not my job to debug DM code for you or sift through your bug reports.
-> I don't read dm-devel, and I don't know why you think I that's my job.
+> julia
 > 
-> If there's something you think the block layer should be doing differently, post
-> patches - or at the very least, explain what you'd like to be done, with words.
-> Don't get pissy because I'm not sifting through your bug reports.
+> ---------- Forwarded message ----------
+> Date: Tue, 14 Feb 2017 09:00:39 +0800
+> From: kbuild test robot <fengguang.wu@intel.com>
+> To: kbuild@01.org
+> Cc: Julia Lawall <julia.lawall@lip6.fr>
+> Subject: Re: [PATCH v4 1/1] DM: inplace compressed DM target
 > 
-> Hell, I'm not getting paid to work on kernel code at all right now, and you
-> trying to rope me into fixing device mapper sure makes me want to work on the
-> block layer more.
+> CC: kbuild-all@01.org
+> In-Reply-To: <1487018545-5061-2-git-send-email-linuxram@us.ibm.com>
 > 
-> DM developers have a long history of working siloed off from the rest of the
-> block layer, building up their own crazy infrastructure (remember the old bio
-> splitting code?) and going to extreme lengths to avoid having to work on or
-> improve the core block layer infrastructure. It's ridiculous.
+> Hi Ram,
+> 
+> [auto build test WARNING on dm/for-next]
+> [also build test WARNING on v4.10-rc8 next-20170213]
+> [if your patch is applied to the wrong git tree, please drop us a note to help improve the system]
+> 
+> url:    https://github.com/0day-ci/linux/commits/Ram-Pai/DM-inplace-compressed-DM-target/20170214-055727
+> base:   https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git for-next
+> :::::: branch date: 3 hours ago
+> :::::: commit date: 3 hours ago
+> 
+> >> drivers/md/dm-inplace-compress.c:1759:5-8: WARNING: Unsigned expression compared with zero: ret < 0
+> 
+> git remote add linux-review https://github.com/0day-ci/linux
+> git remote update linux-review
+> git checkout e7924efaaba5efdcd28f32efbb949ed1153c932c
+> vim +1759 drivers/md/dm-inplace-compress.c
+> 
+> e7924efa Ram Pai 2017-02-13  1743   * @io : io range
+> e7924efa Ram Pai 2017-02-13  1744   * @sector_start : the sector on backing storage to which the
+> e7924efa Ram Pai 2017-02-13  1745   *	compressed data needs to be written.
+> e7924efa Ram Pai 2017-02-13  1746   * @meta_start: the page index of the bits corresponding to
+> e7924efa Ram Pai 2017-02-13  1747   * @meta_end  : start and end blocks.
+> e7924efa Ram Pai 2017-02-13  1748   */
+> e7924efa Ram Pai 2017-02-13  1749  static int dm_icomp_compress_write(struct dm_icomp_io_range *io,
+> e7924efa Ram Pai 2017-02-13  1750  		sector_t sector_start, u64 *meta_start, u64 *meta_end)
+> e7924efa Ram Pai 2017-02-13  1751  {
+> e7924efa Ram Pai 2017-02-13  1752  	struct dm_icomp_req *req = io->req;
+> e7924efa Ram Pai 2017-02-13  1753  	sector_t count = DMCP_BYTES_TO_SECTOR(io->decomp_len);
+> e7924efa Ram Pai 2017-02-13  1754  	unsigned int comp_len, ret;
+> e7924efa Ram Pai 2017-02-13  1755  	u64 page_index;
+> e7924efa Ram Pai 2017-02-13  1756
+> e7924efa Ram Pai 2017-02-13  1757  	/* comp_data must be able to accommadate a larger compress buffer */
+> e7924efa Ram Pai 2017-02-13  1758  	ret = dm_icomp_io_range_compress(req->info, io, &comp_len);
+> e7924efa Ram Pai 2017-02-13 @1759  	if (ret < 0) {
+> e7924efa Ram Pai 2017-02-13  1760  		req->result = -EIO;
+> e7924efa Ram Pai 2017-02-13  1761  		return -EIO;
+> e7924efa Ram Pai 2017-02-13  1762  	}
+> e7924efa Ram Pai 2017-02-13  1763  	WARN_ON(comp_len > io->comp_len);
+> e7924efa Ram Pai 2017-02-13  1764
+> e7924efa Ram Pai 2017-02-13  1765  	dm_icomp_get_req(req);
+> e7924efa Ram Pai 2017-02-13  1766
+> e7924efa Ram Pai 2017-02-13  1767  	io->io_req.bi_op = REQ_OP_WRITE;
+> 
+> ---
+> 0-DAY kernel test infrastructure                Open Source Technology Center
+> https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
 
-That is bullshit.  I try to help block core where/when I can (did so
-with discards and limits stacking, other fixes here and there).
+-- 
+Ram Pai
 
-Your take on what DM code is and how it evolved is way off base.  But
-that is to be expected from you.  Not going to waste time laboring over
-correcting you.
-
-> You know what would be nice? What'd really make my day is if just once I got a
-> thank you or a bit of appreciation from DM developers for the bvec iterators/bio
-> splitting work I did that cleaned up a _lot_ of crazy hairy messes. Or getting
-> rid of merge_bvec_fn, or trying to come up with a better solution for deadlocks
-> due to running under generic_make_request() now.
-
-I do appreciate the immutable biovec work you did.  Helped speed up bio
-cloning quite nicely.
-
-But you've always been hostile to DM.  You'll fabricate any excuse to
-never touch or care about it.  Repeatedly noted.  But this is a block
-core bug/regression.  Not DM.
-
-If you think I'm going to thank you for blindly breaking shit, and
-refusing to care when you're made aware of it, then you're out of your
-mind.
-
-Save your predictably hostile response.  It'll get marked as spam
-anyway.
