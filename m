@@ -1,14 +1,11 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v3 1/7] kpartx: don't keep creating recursive
-	partitions
-Date: Tue, 14 Feb 2017 20:16:51 -0600
-Message-ID: <1487125017-22049-2-git-send-email-bmarzins@redhat.com>
-References: <1487125017-22049-1-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v3 0/7] misc patches
+Date: Tue, 14 Feb 2017 20:16:50 -0600
+Message-ID: <1487125017-22049-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1487125017-22049-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,28 +18,51 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-If the dos partition table is corrupted, kpartx can just keep creating
-the same partitions until it runs out of partition numbers. This check
-catches the recursion.
+Here's a couple of minor features bugfixes and cleanups. The biggest
+change is that the detect_checker option now sets the checker for
+devices with detected ALUA to TUR. Also, udev wasn't correctly
+disabling rules for multipath devices that lost their last usable
+path through a table reload. This was causing lvmetad some problems
+on failing multipath devices.
 
-Signed-off-by: Cedric Buissart <cbuissar@redhat.com>
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- kpartx/dos.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+Differences from v2:
 
-diff --git a/kpartx/dos.c b/kpartx/dos.c
-index 64b27b6..4985152 100644
---- a/kpartx/dos.c
-+++ b/kpartx/dos.c
-@@ -46,7 +46,7 @@ read_extended_partition(int fd, struct partition *ep, int en,
- 		for (i=0; i<2; i++) {
- 			memcpy(&p, bp + 0x1be + i * sizeof (p), sizeof (p));
- 			if (is_extended(p.sys_type)) {
--				if (p.nr_sects && !moretodo) {
-+				if (p.start_sect && p.nr_sects && !moretodo) {
- 					next = start + sector_size_mul * le32_to_cpu(p.start_sect);
- 					moretodo = 1;
- 				}
+libmultipath: add detect_checker option
+----------------------------------------
+I've removed is_alua, and now just use the paths tpgs variable to
+check if the path is in ALUA mode.
+
+Benjamin Marzinski (7):
+  kpartx: don't keep creating recursive partitions
+  libmultipath: add detect_checker option
+  libmultipath: cleanup orphan device states
+  multipathd: don't update priority of failed paths
+  multipathd: add messages on delayed path addition
+  multipathd: allow resetting stats
+  fix udev rules for failed multipath devices
+
+ kpartx/dos.c                          |  2 +-
+ libmultipath/config.c                 |  3 ++
+ libmultipath/config.h                 |  2 ++
+ libmultipath/defaults.h               |  1 +
+ libmultipath/devmapper.c              |  3 +-
+ libmultipath/devmapper.h              |  6 ++++
+ libmultipath/dict.c                   | 10 ++++++
+ libmultipath/discovery.c              | 28 +++++++++++++--
+ libmultipath/hwtable.c                |  1 +
+ libmultipath/print.c                  |  4 +--
+ libmultipath/prioritizers/alua_spc3.h |  1 +
+ libmultipath/propsel.c                | 31 ++++++++++------
+ libmultipath/propsel.h                |  1 +
+ libmultipath/structs.c                |  2 ++
+ libmultipath/structs.h                |  7 ++++
+ multipath/11-dm-mpath.rules           | 67 ++++++++++++++++++++++++-----------
+ multipath/multipath.conf.5            | 18 ++++++++++
+ multipathd/cli.c                      |  2 ++
+ multipathd/cli_handlers.c             | 44 +++++++++++++++++++++++
+ multipathd/cli_handlers.h             |  2 ++
+ multipathd/main.c                     |  8 ++++-
+ 21 files changed, 206 insertions(+), 37 deletions(-)
+
 -- 
 1.8.3.1
