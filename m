@@ -1,11 +1,17 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm stats: fix a memory leak
-Date: Wed, 15 Feb 2017 12:06:19 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1702151204500.5572@file01.intranet.prod.int.rdu2.redhat.com>
+From: Keith Busch <keith.busch@intel.com>
+Subject: Re: [PATCH 1/2] Don't blacklist nvme
+Date: Wed, 15 Feb 2017 12:24:02 -0500
+Message-ID: <20170215172402.GA16197@localhost.localdomain>
+References: <1487107154-24883-1-git-send-email-keith.busch@intel.com>
+	<941dc20e-47ba-5b9d-5082-a87ff1530cb6@sandisk.com>
+	<20170214230023.GA1148@localhost.localdomain>
+	<20170215145721.GB4241@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20170215145721.GB4241@infradead.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,39 +21,21 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <msnitzer@redhat.com>
-Cc: dm-devel@redhat.com
+To: Christoph Hellwig <hch@infradead.org>
+Cc: Bart Van Assche <bart.vanassche@sandisk.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Mike
+On Wed, Feb 15, 2017 at 06:57:21AM -0800, Christoph Hellwig wrote:
+> On Tue, Feb 14, 2017 at 06:00:23PM -0500, Keith Busch wrote:
+> > Good point. I was unknowingly running with CONFIG_SCSI_DH disabled,
+> > and blissfully unaware of its existence! After enabling that option,
+> > I see what you mean.
+> 
+> Someone needs to fix that crash ASAP.  I though Hannes had patches for
+> them a long time ago in the SuSE tree, but they never went anywhere.
 
-This fixes a memory leak in dm-stats. Put it into your queue of patches 
-for Linus.
+Adding Hannes.
 
-Mikulas
-
-
-From: Mikulas Patocka <mpatocka@redhat.com>
-
-Fix a leaked array s->histogram_boundaries.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Fixes: dfcfac3e4cd9 ("dm stats: collect and report histogram of IO latencies")
-Cc: stable@vger.kernel.org	# v4.2+
-
----
- drivers/md/dm-stats.c |    1 +
- 1 file changed, 1 insertion(+)
-
-Index: linux-2.6/drivers/md/dm-stats.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-stats.c
-+++ linux-2.6/drivers/md/dm-stats.c
-@@ -175,6 +175,7 @@ static void dm_stat_free(struct rcu_head
- 	int cpu;
- 	struct dm_stat *s = container_of(head, struct dm_stat, rcu_head);
- 
-+	kfree(s->histogram_boundaries);
- 	kfree(s->program_id);
- 	kfree(s->aux_data);
- 	for_each_possible_cpu(cpu) {
+I can work around this by setting the parameters from multipath-tools
+specific to NVMe, but that seems worng. Blindly calling scsi specific
+directly from dm-mpath isn't a good idea.
