@@ -1,8 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v3 4/7] multipathd: don't update priority of
-	failed paths
-Date: Tue, 14 Feb 2017 20:16:54 -0600
-Message-ID: <1487125017-22049-5-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v3 3/7] libmultipath: cleanup orphan device states
+Date: Tue, 14 Feb 2017 20:16:53 -0600
+Message-ID: <1487125017-22049-4-git-send-email-bmarzins@redhat.com>
 References: <1487125017-22049-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,28 +20,36 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Multipathd shouldn't be updating the priority of failed paths in the
-checkerloop. The current avoids this in almost all cases, but not all.
-Close the loophole.
+After a path device is orphaned, multipathd stops checking its state.
+However, multipathd show state still shows its old state. It should
+display "undef unknown" instead.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/main.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ libmultipath/print.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index adc3258..5480e96 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1457,7 +1457,8 @@ int update_prio(struct path *pp, int refresh_all)
- 	}
- 	oldpriority = pp->priority;
- 	conf = get_multipath_config();
--	pathinfo(pp, conf, DI_PRIO);
-+	if (pp->state != PATH_DOWN)
-+		pathinfo(pp, conf, DI_PRIO);
- 	put_multipath_config(conf);
+diff --git a/libmultipath/print.c b/libmultipath/print.c
+index 5b03383..00a3626 100644
+--- a/libmultipath/print.c
++++ b/libmultipath/print.c
+@@ -392,7 +392,7 @@ snprint_dev_t (char * buff, size_t len, struct path * pp)
+ static int
+ snprint_offline (char * buff, size_t len, struct path * pp)
+ {
+-	if (!pp)
++	if (!pp || !pp->mpp)
+ 		return snprintf(buff, len, "unknown");
+ 	else if (pp->offline)
+ 		return snprintf(buff, len, "offline");
+@@ -403,7 +403,7 @@ snprint_offline (char * buff, size_t len, struct path * pp)
+ static int
+ snprint_chk_state (char * buff, size_t len, struct path * pp)
+ {
+-	if (!pp)
++	if (!pp || !pp->mpp)
+ 		return snprintf(buff, len, "undef");
  
- 	if (pp->priority == oldpriority)
+ 	switch (pp->state) {
 -- 
 1.8.3.1
