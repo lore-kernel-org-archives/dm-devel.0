@@ -1,51 +1,42 @@
-From: Keith Busch <keith.busch@intel.com>
-Subject: Re: hch's native NVMe multipathing [was: Re: [PATCH 1/2] Don't
- blacklist nvme]
-Date: Thu, 16 Feb 2017 15:40:59 -0500
-Message-ID: <20170216204058.GA1631@localhost.localdomain>
+From: Bart Van Assche <Bart.VanAssche@sandisk.com>
+Subject: Re: hch's native NVMe multipathing [was: Re: [PATCH 1/2]
+ Don't blacklist nvme]
+Date: Thu, 16 Feb 2017 20:58:13 +0000
+Message-ID: <1487278678.2612.6.camel@sandisk.com>
 References: <1487107154-24883-1-git-send-email-keith.busch@intel.com>
- <20170215145617.GA4241@infradead.org>
- <20170216025357.GA9241@redhat.com>
- <20170216142621.GA21972@infradead.org>
- <20170216151337.GA12678@redhat.com>
- <20170216173856.GB17828@localhost.localdomain>
- <1487266648.2612.3.camel@sandisk.com>
- <20170216180742.GC17828@localhost.localdomain>
- <20170216182129.GC12678@redhat.com>
+	<20170215145617.GA4241@infradead.org>
+	<20170216025357.GA9241@redhat.com>
+	<d1f39bbd-d5fe-06d7-34a7-484b723886c9@sandisk.com>
+	<20170216123702.GA12047@redhat.com>
+	<1487274356.2612.5.camel@sandisk.com>
+	<20170216202339.GB13742@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20170216182129.GC12678@redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Bart Van Assche <Bart.VanAssche@sandisk.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "hch@infradead.org" <hch@infradead.org>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20170216202339.GB13742@redhat.com>
+Content-Language: en-US
+Content-ID: <49017D85E9208840B22EDAF496D3F407@sandisk.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "snitzer@redhat.com" <snitzer@redhat.com>
+Cc: "hch@infradead.org" <hch@infradead.org>, "keith.busch@intel.com" <keith.busch@intel.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>
 List-Id: dm-devel.ids
 
-On Thu, Feb 16, 2017 at 01:21:29PM -0500, Mike Snitzer wrote:
-> Then undeprecate them.  Decisions like marking a path checker deprecated
-> were _not_ made with NVMe in mind.  They must predate NVMe.
-> 
-> multipath-tools has tables that specify all the defaults for a given
-> target backend.  NVMe will just be yet another.  Yes some user _could_
-> shoot themselves in the foot by overriding the proper configuration but
-> since when are we motivated by _not_ giving users the power to hang
-> themselves?
-> 
-> As for configurability (chosing between N valid configs/settings): At
-> some point the user will want one behaviour vs another.  Thinking
-> otherwise is just naive.  Think error timeouts, etc.  Any multipath
-> kernel implementation (which dm-multipath is BTW) will eventually find
-> itself at a crossroads where the underlying fabric could be tweaked in
-> different ways.  Thinking you can just hardcode these attributes and
-> settings is foolish.
+On Thu, 2017-02-16 at 15:23 -0500, Mike Snitzer wrote:
+> Or you can wait to rebase on v4.11-rc1 in ~2 weeks.
 
-Roger that, and I absolutely want to see this work with the existing
-framework.
+Hello Mike,
 
-I just think it'd be easier for everyone if multipath were more like
-the generic block layer, in that devices are surfaced with configurable
-policies without userspace telling it which to use. The kernel knowing
-safe defaults for a particular device is probably the more common case,
-and userspace can still tune them as needed. Of course, I accept you're
-in a better position to know if this is folly.
+I will wait until v4.11-rc1 has been released.
+
+Thanks,
+
+Bart.
