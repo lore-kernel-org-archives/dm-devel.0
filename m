@@ -1,18 +1,16 @@
 From: Mike Snitzer <snitzer@redhat.com>
 Subject: Re: [PATCH 1/2] Don't blacklist nvme
-Date: Wed, 15 Feb 2017 20:58:43 -0500
-Message-ID: <20170216015843.GA9019@redhat.com>
+Date: Wed, 15 Feb 2017 21:01:47 -0500
+Message-ID: <20170216020146.GA9078@redhat.com>
 References: <1487107154-24883-1-git-send-email-keith.busch@intel.com>
 	<941dc20e-47ba-5b9d-5082-a87ff1530cb6@sandisk.com>
 	<20170214230023.GA1148@localhost.localdomain>
-	<20170215145721.GB4241@infradead.org>
-	<20170215172402.GA16197@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20170215172402.GA16197@localhost.localdomain>
+In-Reply-To: <20170214230023.GA1148@localhost.localdomain>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,33 +24,33 @@ To: Keith Busch <keith.busch@intel.com>
 Cc: Bart Van Assche <bart.vanassche@sandisk.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Feb 15 2017 at 12:24pm -0500,
+On Tue, Feb 14 2017 at  6:00pm -0500,
 Keith Busch <keith.busch@intel.com> wrote:
 
-> On Wed, Feb 15, 2017 at 06:57:21AM -0800, Christoph Hellwig wrote:
-> > On Tue, Feb 14, 2017 at 06:00:23PM -0500, Keith Busch wrote:
-> > > Good point. I was unknowingly running with CONFIG_SCSI_DH disabled,
-> > > and blissfully unaware of its existence! After enabling that option,
-> > > I see what you mean.
+> On Tue, Feb 14, 2017 at 01:35:45PM -0800, Bart Van Assche wrote:
+> > On 02/14/2017 01:19 PM, Keith Busch wrote:
+> > > These devices are mulitpath capable, and have been able to stack with
+> > > dm-mpath since kernel 4.2.
+> > > 
+> > > -	str = STRDUP("^(ram|raw|loop|fd|md|dm-|sr|scd|st|dcssblk|nvme)[0-9]");
+> > > +	str = STRDUP("^(ram|raw|loop|fd|md|dm-|sr|scd|st|dcssblk)[0-9]");
 > > 
-> > Someone needs to fix that crash ASAP.  I though Hannes had patches for
-> > them a long time ago in the SuSE tree, but they never went anywhere.
+> > Have you checked whether dm-mpath works properly with nvme? Last time I
+> > tried that dm-mpath crashed when it called scsi_dh_attach() because that
+> > last function assumes that it is passed a SCSI device queue instead of
+> > checking whether or not the queue passed to that function is a SCSI
+> > device queue.
 > 
-> Adding Hannes.
+> Good point. I was unknowingly running with CONFIG_SCSI_DH disabled,
+> and blissfully unaware of its existence! After enabling that option,
+> I see what you mean.
 > 
-> I can work around this by setting the parameters from multipath-tools
-> specific to NVMe, but that seems worng. Blindly calling scsi specific
-> directly from dm-mpath isn't a good idea.
+> If we don't want to mess with the kernel, I can change the multipath-tools
+> to get around that by appending the following to NVMe hwentry in the
+> second patch in this series:
+> 
+> 	.retain_hwhandler = RETAIN_HWHANDLER_OFF,
+> 
+> And the problem goes away.
 
-Right, not a good idea.  Any SCSI specific code in DM multipath needs to
-be made conditional.  It has been on TODO for a while (with an eye
-toward NVMe support) but testbeds are hard to come by.
-
-All patches welcome.  But reports are also welcome, like any crash you
-hit.  Just send me email and I'll fix it up best I can.
-
-This work is very timely given NVMe over Fabrics definitely has elevated
-priority.
-
-Thanks,
-Mike
+That gives me a clue, I'll take a look.
