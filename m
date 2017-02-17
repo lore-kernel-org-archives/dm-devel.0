@@ -1,96 +1,86 @@
-From: Milan Broz <gmazyland@gmail.com>
-Subject: Re: [PATCH v2] dm: switch dm-verity to async hash crypto API
-Date: Fri, 17 Feb 2017 14:00:18 +0100
-Message-ID: <74bc1a00-6fb4-4b2f-b57b-a7fea0969eeb@gmail.com>
-References: <1486389482-26992-1-git-send-email-gilad@benyossef.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: hch's native NVMe multipathing [was: Re: [PATCH 1/2] Don't
+ blacklist nvme]
+Date: Fri, 17 Feb 2017 09:32:56 -0500
+Message-ID: <20170217143255.GA19043@redhat.com>
+References: <1487107154-24883-1-git-send-email-keith.busch@intel.com>
+ <20170215145617.GA4241@infradead.org>
+ <20170216025357.GA9241@redhat.com>
+ <20170216142621.GA21972@infradead.org>
+ <20170216151337.GA12678@redhat.com>
+ <20170217093306.GA5389@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <1486389482-26992-1-git-send-email-gilad@benyossef.com>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Gilad Ben-Yossef <gilad@benyossef.com>, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: linux-crypto@vger.kernel.org, gilad.benyossef@arm.com, ofir.drang@arm.com, Eric Biggers <ebiggers3@gmail.com>, =?UTF-8?B?T25kcmVqIE1vc27DocSNZWs=?= <omosnacek+linux-crypto@gmail.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20170217093306.GA5389@infradead.org>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Christoph Hellwig <hch@infradead.org>
+Cc: Keith Busch <keith.busch@intel.com>, dm-devel@redhat.com, linux-scsi@vger.kernel.org, linux-nvme@lists.infradead.org
 List-Id: dm-devel.ids
 
-On 02/06/2017 02:58 PM, Gilad Ben-Yossef wrote:
-> Use of the synchronous digest API limits dm-verity to using pure
-> CPU based algorithm providers and rules out the use of off CPU
-> algorithm providers which are normally asynchronous by nature,
-> potentially freeing CPU cycles.
+On Fri, Feb 17 2017 at  4:33am -0500,
+Christoph Hellwig <hch@infradead.org> wrote:
+
+> On Thu, Feb 16, 2017 at 10:13:37AM -0500, Mike Snitzer wrote:
+> > Not following what you're saying Keith did.  Please feel free to
+> > clarify.
 > 
-> This can reduce performance per Watt in situations such as during
-> boot time when a lot of concurrent file accesses are made to the
-> protected volume.
+> Keith demonstrated what it takes to support NVMe with dm.  He also
+> gave a couple presentations on it in addition to various ptches on
+> the list.
+
+Well I know very well that Keith was an early consumer of DM multipath
+for NVMe (back when Intel was looking at doing dual port NVMe drives).
+Keith's interest in NVMe support in multipath is what motivated all the
+blk-mq request-based DM multipath advances.
+
+But I'll follow-up with Keith to see if he can sweep through whatever
+patches he has and make sure I'm aware of them.
+
+> > The middle man is useful if it can support all transports.  If it only
+> > supports some then yeah the utility is certainly reduced.
 > 
-> Move DM_VERITY to the asynchronous hash API.
+> Again let's look at what multipathing involves:
+> 
+>  - discovery of multiple paths for a device, and path preferences:
+>    Storage protocol specific
+> 
+>  - handling of path state and grouping changes:
+>    Storage protocol specific
+> 
+>  - handling of path up / down events:
+>    Storage protocol / transport specific if provided
+> 
+>  - keep alive / path checking:
+>    Storage protocol specific with possible generic fallback
+> 
+>  - path selection:
+>    Generic, although building heavily on protocol / transport specific
+>    information
+> 
+> So most of the hard work is transport specific anyway.  And I fully
+> agree that generic code should be, well generic.  And with generic
+> I mean right in the block layer instead of involving a layer block
+> driver that relies on lots of low-level driver information and setup
+> from user space.
 
-Did you test that async hash completion path?
+"Lots of low-level driver information?"  You mean like SCSI's pg_init
+and such?
 
-I just tried to force async crypto by replacing "sha256"
-in mapping table with "cryptd(sha256-generic)" and it kills
-kernel immediately.
-https://mbroz.fedorapeople.org/tmp/verity-fail.png
+> > I'm going to look at removing any scsi_dh code from DM multipath
+> > (someone already proposed removing the 'retain_attached_hw_handler'
+> > feature).  Not much point having anything in DM multipath now that scsi
+> > discovery has the ability to auto-attach the right scsi_dh via scsi_dh's
+> > .match hook.
+> 
+> Great.
+> 
+> > As a side-effect it will fix Keith's scsi_dh crash (when
+> > operating on NVMe request_queue).
+> 
+> I think we'll need to have a quick fix for that ASAP, though.
 
-(I hope this trick should cause to use cryptd and use async processing.
-In previous version the parameter is properly rejected, because unsupported
-by shash api.)
-
-
-Some more comments below.
-...
-
-> -static int verity_hash_update(struct dm_verity *v, struct shash_desc *desc,
-> -			      const u8 *data, size_t len)
-> +static int verity_hash_update(struct dm_verity *v, struct ahash_request *req,
-> +				const u8 *data, size_t len,
-> +				struct verity_result *res)
->  {
-> -	int r = crypto_shash_update(desc, data, len);
-> +	struct scatterlist sg;
->  
-> -	if (unlikely(r < 0))
-> -		DMERR("crypto_shash_update failed: %d", r);
-> +	sg_init_table(&sg, 1);
-> +	sg_set_buf(&sg, data, len);
-
-why not use sg_init_one?
-
-> +	ahash_request_set_crypt(req, &sg, NULL, len);
-> +
-> +	return verity_complete_op(res, crypto_ahash_update(req));
-> +}
-
-...
-
-> -int verity_hash(struct dm_verity *v, struct shash_desc *desc,
-> +int verity_hash(struct dm_verity *v, struct ahash_request *req,
->  		const u8 *data, size_t len, u8 *digest)
->  {
->  	int r;
-> +	struct verity_result res;
->  
-> -	r = verity_hash_init(v, desc);
-> +	r = verity_hash_init(v, req, &res);
->  	if (unlikely(r < 0))
-> -		return r;
-> +		goto out;
-
-why it is changed to goto? it doesn't simplify anything in this function
-
->  
-> -	r = verity_hash_update(v, desc, data, len);
-> +	r = verity_hash_update(v, req, data, len, &res);
->  	if (unlikely(r < 0))
-> -		return r;
-> +		goto out;
-> +
-> +	r = verity_hash_final(v, req, digest, &res);
->  
-> -	return verity_hash_final(v, desc, digest);
-> +out:
-> +	return r;
->  }
-
-
-Milan
+Hannes' latest patch looked good to me.  Should take care of it.  I
+assume mkp will pick it up for the 4.11 merge window and mark for
+stable?
