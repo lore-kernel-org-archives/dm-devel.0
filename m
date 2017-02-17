@@ -1,46 +1,39 @@
-From: Khitai Pang <khitai.pang@outlook.com>
-Subject: you cannot run this tool with these options on live
-	metadata
-Date: Fri, 17 Feb 2017 08:18:35 +0000
-Message-ID: <KL1PR0601MB1941841CB807F7E33042BD3AFC5D0@KL1PR0601MB1941.apcprd06.prod.outlook.com>
+From: "hch@infradead.org" <hch@infradead.org>
+Subject: Re: [dm-devel] hch's native NVMe multipathing [was: Re: [PATCH 1/2]
+ Don't blacklist nvme]
+Date: Fri, 17 Feb 2017 01:04:20 -0800
+Message-ID: <20170217090420.GA29629@infradead.org>
+References: <1487107154-24883-1-git-send-email-keith.busch@intel.com>
+ <20170215145617.GA4241@infradead.org>
+ <20170216025357.GA9241@redhat.com>
+ <20170216142621.GA21972@infradead.org>
+ <20170216151337.GA12678@redhat.com>
+ <20170216173856.GB17828@localhost.localdomain>
+ <1487266648.2612.3.camel@sandisk.com>
+ <20170216180742.GC17828@localhost.localdomain>
+ <20170216182129.GC12678@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
-Content-ID: <FCBAB7E126FB904CB552F5267C110934@apcprd06.prod.outlook.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20170216182129.GC12678@redhat.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Keith Busch <keith.busch@intel.com>, "hch@infradead.org" <hch@infradead.org>, Bart Van Assche <Bart.VanAssche@sandisk.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>
 List-Id: dm-devel.ids
 
-Hi,
+On Thu, Feb 16, 2017 at 01:21:29PM -0500, Mike Snitzer wrote:
+> multipath-tools has tables that specify all the defaults for a given
+> target backend.  NVMe will just be yet another.
 
-After creating a LVM cache LV, I have the following devices in /dev/mapper:
+No, if we get things right it won't.  ALUA already got rid of most
+of the parameter people would have to set under normal conditions,
+and I plan to make sure the NVMe equivalent will do it for all
+parameters.  I am active in the NVMe working group and will do my
+best to get there.  There's a few others folks here that are more or
+less active there as well (Keith, Martin, Jens for example), so I
+think we have a chance.
 
-MyCache-CacheDataLV_cdata
-MyCache-CacheDataLV_cmeta
-MyCache-OriginLV
-MyCache-OriginLV_corig
-
-I want to use cache_check to check the cache metadata:
-
-# cache_check /dev/mapper/MyCache-CacheDataLV_cmeta
-syscall 'open' failed: Device or resource busy
-Note: you cannot run this tool with these options on live metadata.
-
-The same issue is seen when I try to use era_check to check the metadata 
-device of an era target.
-
-How to 'offline' the cache/metadata device?
-
-
-Thanks
-Khitai
+That beeing said Keith is right that we'll always have odd setups
+where we need to overrid things, and we will have to provide tunables
+for that.  It's no different from any other kernel subsystem in that.
