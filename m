@@ -1,17 +1,17 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH] multipath-tools: improve processing
- efficiency for addition and deletion of multipath devices
-Date: Fri, 17 Feb 2017 00:21:58 -0600
-Message-ID: <20170217062158.GW22981@octiron.msp.redhat.com>
-References: <1487228041-1228-1-git-send-email-tang.junhui@zte.com.cn>
-	<1487279855.4629.8.camel@suse.com>
-	<20170217053836.GV22981@octiron.msp.redhat.com>
+Subject: Re:
+ =?utf-8?b?562U5aSNOiBSZTogIFtQQVRDSF0gbXVsdGlwYXRoLXRv?=
+ =?utf-8?q?ols=3A_improve_processing_efficiency_for_addition_and_deletion_?=
+ =?utf-8?q?of_multipath_devices?=
+Date: Fri, 17 Feb 2017 00:32:13 -0600
+Message-ID: <20170217063213.GX22981@octiron.msp.redhat.com>
+References: <201702171124101816133@zte.com.cn>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20170217053836.GV22981@octiron.msp.redhat.com>
+In-Reply-To: <201702171124101816133@zte.com.cn>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,243 +21,222 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, tang.junhui@zte.com.cn, tang.wenjun3@zte.com.cn, bart.vanassche@sandisk.com
+To: tang.junhui@zte.com.cn
+Cc: tang.wenjun3@zte.com.cn, zhang.kai16@zte.com.cn, dm-devel@redhat.com, bart.vanassche@sandisk.com, mwilck@suse.com
 List-Id: dm-devel.ids
 
-On Thu, Feb 16, 2017 at 11:38:36PM -0600, Benjamin Marzinski wrote:
-
-Quite possibly, I shouldn't try responding to email at 11:30 PM. It
-appears that my brain has already given up for the day.
-
-> On Thu, Feb 16, 2017 at 10:17:35PM +0100, Martin Wilck wrote:
-> > Hello Tang,
-> > =
-
-> > I'm sorry to reply so late. Thanks a lot for your work, I agree with
-> > Ben that the patch is in pretty good shape now. But I have some
-> > remarks=A0left, please see below. =
-
-> >  =
-
-> > > +bool
-> > > +uevent_can_discard(struct uevent *uev)
-> > > +{
-> > > +	char *tmp;
-> > > +	char a[11], b[11];
-> > > +	struct config * conf;
-> > > +
-> > > +	/*
-> > > +	=A0* keep only block devices, discard partitions
-> > > +	=A0*/
-> > > +	tmp =3D strstr(uev->devpath, "/block/");
-> > > +	if (tmp =3D=3D NULL){
-> > > +		condlog(4, "no /block/ in '%s'", uev->devpath);
-> > > +		return true;
-> > > +	}
-> > > +	if (sscanf(tmp, "/block/%10s", a) !=3D 1 ||
-> > > +	=A0=A0=A0=A0sscanf(tmp, "/block/%10[^/]/%10s", a, b) =3D=3D 2) {
-> > > +		condlog(4, "discard event on %s", uev->devpath);
-> > > +		return true;
-> > > +	}
-> > =
-
-> > I'd like the following better for this check. It uses much less cycles.
-> > =
-
-> > static bool
-> > can_discard_by_devpath(const char *devpath)
-> > {
-> > 	static const char BLOCK[] =3D "/block/";
-> > 	const char *p;
-> > =
-
-> > 	p =3D strstr(pathstr, BLOCK);
-> > 	if (p =3D=3D NULL)
-> > 		/* not a block device */
-> > 		return true;
-> > 	p +=3D sizeof(BLOCK) - 1;
-> > 	p =3D strchr(p, '/');
-> > 	if (p =3D=3D NULL)
-> > 		/* exactly one path element after "/block/" */
-> > 		return false;
-> > 	/* If there are more path elements, it's a partition */
-> > 	return true;
-> > }
-> > =
-
-> > > +bool
-> > > +uevent_can_filter(struct uevent *earlier, struct uevent *later)
-> > > +{
-> > > +
-> > > +	/*
-> > > +	=A0* filter earlier uvents if path has removed later. Eg:
-> > > +	=A0* "add path1 |chang path1 |add path2 |remove path1"
-> > > +	=A0* can filter as:
-> > > +	=A0* "add path2 |remove path1"
-> > > +	=A0* uevents "add path1" and "chang path1" are filtered out
-> > > +	=A0*/
-> > > +	if (!strcmp(earlier->kernel, later->kernel) &&
-> > > +		!strcmp(later->action, "remove") &&
-> > > +		strncmp(later->kernel, "dm-", 3)) {
-> > > +		return true;
-> > > +	}
-> > > +
-> > > +	/*
-> > > +	=A0* filter change uvents if add uevents exist. Eg:
-> > > +	=A0* "change path1| add path1 |add path2"
-> > > +	=A0* can filter as:
-> > > +	=A0* "add path1 |add path2"
-> > > +	=A0* uevent "chang path1" is filtered out
-> > > +	=A0*/
-> > > +	if (!strcmp(earlier->kernel, later->kernel) &&
-> > > +		!strcmp(earlier->action, "change") &&
-> > > +		!strcmp(later->action, "add") &&
-> > > +		strncmp(later->kernel, "dm-", 3)) {
-> > > +		return true;
-> > > +	}
-> > > +
-> > > +	return false;
-> > > +}
-> > =
-
-> > This would be better readable and faster if you'd put the "kernel"
-> > tests first so that you need to check only "action" later:
-> > =
-
-> > 	if (!strncmp(later->kernel, "dm-", 3) ||
-> > 	=A0=A0=A0=A0strcmp(earlier->kernel, later->kernel))
-> > 		return false;
-> > =
-
-> > > +
-> > > +bool
-> > > +merge_need_stop(struct uevent *earlier, struct uevent *later)
-> > > +{
-> > > +	/*
-> > > +	=A0* dm uevent do not try to merge with left uevents
-> > > +	=A0*/
-> > > +	if (!strncmp(later->kernel, "dm-", 3))
-> > > +		return true;
-> > > +
-> > > +	/*
-> > > +	=A0* we can not make a jugement without wwid,
-> > > +	=A0* so it is sensible to stop merging
-> > > +	=A0*/
-> > > +	if (!earlier->wwid || !later->wwid)
-> > > +		return true;
-> > > +	/*
-> > > +	=A0* uevents merging stoped
-> > > +	=A0* when we meet an opposite action uevent from the same LUN
-> > > to AVOID
-> > > +	=A0* "add path1 |remove path1 |add path2 |remove path2 |add
-> > > path3"
-> > > +	=A0* to merge as "remove path1, path2" and "add path1, path2,
-> > > path3"
-> > > +	=A0* OR
-> > > +	=A0* "remove path1 |add path1 |remove path2 |add path2 |remove
-> > > path3"
-> > > +	=A0* to merge as "add path1, path2" and "remove path1, path2,
-> > > path3"
-> > > +	=A0* SO
-> > > +	=A0* when we meet a non-change uevent from the same LUN
-> > > +	=A0* with the same wwid and different action
-> > > +	=A0* it would be better to stop merging.
-> > > +	=A0*/
-> > > +	if (!strcmp(earlier->wwid, later->wwid) &&
-> > > +	=A0=A0=A0=A0strcmp(earlier->action, later->action) &&
-> > > +	=A0=A0=A0=A0strcmp(earlier->action, "change") &&
-> > > +	=A0=A0=A0=A0strcmp(later->action, "change"))
-> > > +		return true;
-> > > +
-> > > +	return false;
-> > > +}
-> > =
-
-> > I know you discussed this with Ben before, but still have some trouble
-> > with it.=A0
-> > =
-
-> > The first case should have been reduced to "remove path1 | remove path2
-> > | add path3" by filtering beforehand.=A0I suppose you want to avoid this
-> > sequence because it could leave us without paths temporarily, causing
-> > multipathd to destroy the map. But I don't understand what "stop
-> > merging" buys you here - if you process the events one-by-one, you may
-> > also have 0 paths at some point. =
-
-> =
-
-> Well, because of the filtering , you will never actually stop merging
-> in this case, like you mentioned.
-
-Or, if I actually read better, I would see that you will stop merging.
-I can't think of any problems in theory with merging adds after removes
-in the simple case at least.
-
-> > In the second case, we know all events in the sequence have the same
-> > WWID; in this case I think it would be safe to filter away "remove"
-> > events by subsequent "add" events, ending up with "add path1| add
-> > path2| remove path3". But I may be overlooking something here.
-> =
-
-> We can't filter out the remove path events in this case. If you have
-> =
-
-> add sdb | remove sdb
-> =
-
-> You know that sdb in the remove event is referring to the same device as
-> sdb in the add event. If you have
-> =
-
-> remove sdb | add sdb
-> =
-
-> There is no guarantee that sdb in the add event is referring to the same
-> LUN as sdb in the remove event. Once the device gets removed that name
-> can get reused for anything.
-
-Or you could change the filtering code to verify that the wwids matched.
-However, while the device would be for the same LUN, it might be a
-different I_T Nexus, so you still don't want to filter the remove of that
-specific device. =
-
- =
-
--Ben
-
-> > =
-
-> > The dangerous thing if you have simultaneous remove and add events for
-> > the same LUN is that processing the "add" events is likely to fail in
-> > domap(). If you get "add path1 | remove path2", once you process "add
-> > path1", "path2" may not exist in the kernel any more, and "domap" will
-> > fail if you try to set up both; you may end up removing the map
-> > completely. IMHO the only safe way to process events in this situation
-> > is to merge the events into a single domap() call.
-> > =
-
-> > I know you want to avoid that in this patch, but I think it will be a
-> > logical further improvement.
-> > =
-
-> > Anyway, AFAICS your patch doesn't introduce a regression wrt the
-> > current code here; unless I'm overlooking something, my arguments would
-> > apply to sequential event processing as well.
-> > =
-
-> > Regards
-> > Martin
-> > =
-
-> > -- =
-
-> > Dr. Martin Wilck <mwilck@suse.com>, Tel.=A0+49 (0)911 74053 2107
-> > SUSE Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
-> > HRB 21284 (AG N=FCrnberg)
-> =
-
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+T24gRnJpLCBGZWIgMTcsIDIwMTcgYXQgMTE6MjQ6MTBBTSArMDgwMCwgdGFuZy5qdW5odWlAenRl
+LmNvbS5jbiB3cm90ZToKPiAgICBIZWxsb8KgTWFydGluLAo+IAo+ICAgIFRoYW5rcyBmb3IgeW91
+ciByZXNwb25zaWJsZSwKPiAKPiAgICDvvJ7CoEknZMKgbGlrZcKgdGhlwqBmb2xsb3dpbmfCoGJl
+dHRlcsKgZm9ywqB0aGlzwqBjaGVjay7CoEl0wqB1c2VzwqBtdWNowqBsZXNzwqBjeWNsZXMuCj4g
+Cj4gICAg77yewqAgc3RhdGljwqBib29sCj4gICAg77yewqBjYW5fZGlzY2FyZF9ieV9kZXZwYXRo
+KGNvbnN0wqBjaGFywqAqZGV2cGF0aCkKPiAKPiAgICDvvJ7CoFRoaXPCoHdvdWxkwqBiZcKgYmV0
+dGVywqByZWFkYWJsZcKgYW5kwqBmYXN0ZXLCoGlmwqB5b3UnZMKgcHV0wqB0aGXCoCJrZXJuZWwi
+Cj4gICAg77yewqB0ZXN0c8KgZmlyc3TCoHNvwqB0aGF0wqB5b3XCoG5lZWTCoHRvwqBjaGVja8Kg
+b25secKgImFjdGlvbiLCoGxhdGVyOgo+IAo+ICAgIO+8nsKgwqDCoMKgwqBpZsKgKCFzdHJuY21w
+KGxhdGVyLe+8nmtlcm5lbCzCoCJkbS0iLMKgMynCoHx8Cj4gICAg77yewqAgwqAgwqAgwqAgc3Ry
+Y21wKGVhcmxpZXIt77yea2VybmVsLMKgbGF0ZXIt77yea2VybmVsKSkKPiAgICDvvJ7CoMKgwqDC
+oMKgwqDCoMKgcmV0dXJuwqBmYWxzZTsKPiAKPiAgICBZZXMsIEkgdGhpbmsgdGhlc2UgY29kZXMg
+Y2FuIGJlIHJld29ya2VkLCBidXQgc2luY2UgdGhleSBoYXZlIG5vIGxvZ2ljYWwKPiAKPiAgICBl
+ZmZlY3QswqBhbmQgdGhpcyBwYXRjaCB0YWtlcyB0b28gbG9uZyB0aW1lLCBjYW4geW91IGNvbW1p
+dCBhwqBuZXcgcGF0Y2jCoAo+IAo+ICAgIHRvIHJld29ya8KgdGhlc2UgY29kZXM/Cj4gCj4gICAg
+77yeIFRoZSBmaXJzdCBjYXNlIHNob3VsZCBoYXZlIGJlZW4gcmVkdWNlZCB0byAicmVtb3ZlIHBh
+dGgxIHwgcmVtb3ZlIHBhdGgyCj4gCj4gICAg77yeIHwgYWRkIHBhdGgzIiBieSBmaWx0ZXJpbmcg
+YmVmb3JlaGFuZC4gSSBzdXBwb3NlIHlvdSB3YW50IHRvIGF2b2lkIHRoaXMKPiAKPiAgICDvvJ4g
+c2VxdWVuY2UgYmVjYXVzZSBpdCBjb3VsZCBsZWF2ZSB1cyB3aXRob3V0IHBhdGhzIHRlbXBvcmFy
+aWx5LCBjYXVzaW5nCj4gCj4gICAg77yeIG11bHRpcGF0aGQgdG8gZGVzdHJveSB0aGUgbWFwLiBC
+dXQgSSBkb24ndCB1bmRlcnN0YW5kIHdoYXQgInN0b3AKPiAKPiAgICDvvJ4gbWVyZ2luZyIgYnV5
+cyB5b3UgaGVyZSAtIGlmIHlvdSBwcm9jZXNzIHRoZSBldmVudHMgb25lLWJ5LW9uZSwgeW91IG1h
+eQo+IAo+ICAgIO+8niBhbHNvIGhhdmUgMCBwYXRocyBhdCBzb21lIHBvaW50LsKgCj4gCj4gICAg
+77yewqAKPiAKPiAgICDvvJ4gSW4gdGhlIHNlY29uZCBjYXNlLCB3ZSBrbm93IGFsbCBldmVudHMg
+aW4gdGhlIHNlcXVlbmNlIGhhdmUgdGhlIHNhbWUKPiAKPiAgICDvvJ4gV1dJRDsgaW4gdGhpcyBj
+YXNlIEkgdGhpbmsgaXQgd291bGQgYmUgc2FmZSB0byBmaWx0ZXIgYXdheSAicmVtb3ZlIgo+IAo+
+ICAgIO+8niBldmVudHMgYnkgc3Vic2VxdWVudCAiYWRkIiBldmVudHMsIGVuZGluZyB1cCB3aXRo
+ICJhZGQgcGF0aDF8IGFkZAo+IAo+ICAgIO+8niBwYXRoMnwgcmVtb3ZlIHBhdGgzIi4gQnV0IEkg
+bWF5IGJlIG92ZXJsb29raW5nIHNvbWV0aGluZyBoZXJlLgo+IAo+ICAgIO+8niBUaGUgZGFuZ2Vy
+b3VzIHRoaW5nIGlmIHlvdSBoYXZlIHNpbXVsdGFuZW91cyByZW1vdmUgYW5kIGFkZCBldmVudHMg
+Zm9yCj4gCj4gICAg77yeIHRoZSBzYW1lIExVTiBpcyB0aGF0IHByb2Nlc3NpbmcgdGhlICJhZGQi
+IGV2ZW50cyBpcyBsaWtlbHkgdG8gZmFpbCBpbgo+IAo+ICAgIO+8niBkb21hcCgpLiBJZiB5b3Ug
+Z2V0ICJhZGQgcGF0aDEgfCByZW1vdmUgcGF0aDIiLCBvbmNlIHlvdSBwcm9jZXNzICJhZGQKPiAK
+PiAgICDvvJ4gcGF0aDEiLCAicGF0aDIiIG1heSBub3QgZXhpc3QgaW4gdGhlIGtlcm5lbCBhbnkg
+bW9yZSwgYW5kICJkb21hcCIgd2lsbAo+IAo+ICAgIO+8niBmYWlsIGlmIHlvdSB0cnkgdG8gc2V0
+IHVwIGJvdGg7IHlvdSBtYXkgZW5kIHVwIHJlbW92aW5nIHRoZSBtYXAKPiAKPiAgICDvvJ4gY29t
+cGxldGVseS4gSU1ITyB0aGUgb25seSBzYWZlIHdheSB0byBwcm9jZXNzIGV2ZW50cyBpbiB0aGlz
+IHNpdHVhdGlvbgo+IAo+ICAgIO+8niBpcyB0byBtZXJnZSB0aGUgZXZlbnRzIGludG8gYSBzaW5n
+bGUgZG9tYXAoKSBjYWxsLgo+IAo+ICAgICJjYXNlIDI6wqByZW1vdmUgcGF0aDEgfGFkZCBwYXRo
+MSB8cmVtb3ZlIHBhdGgyIHxhZGQgcGF0aDIgfHJlbW92ZSBwYXRoMyIKPiAKPiAgICBTaW5jZSB0
+aGUgbWVyZ2VyaW5nIGlzIHN0YXJ0aW5nIGZyb20gdGhlIGxhdGVzdCB0byB0aGUgZWFyaWVzdCB1
+ZXZlbnQsIMKgc28KPiAgICB0aGUKPiAKPiAgICB1ZXZlbnTCoCJyZW1vdmUgcGF0aDMiIHRyeSB0
+byBtZXJnZXIgb3RoZXIgdWV2ZW50cywgaWYgd2UgZG8gbm90IHN0b3AKPiAgICBtZXJnZXJpbmcs
+wqAKPiAKPiAgICB1ZXZlbnTCoCJyZW1vdmUgcGF0aDMiIHdvdWxkIG1lcmdlIMKgdWV2ZW50ICJy
+ZW1vdmXCoHBhdGgyIiBhbmTCoHVldmVudMKgCj4gCj4gICAgInJlbW92ZcKgcGF0aDEiLsKgVWV2
+ZW50ICJhZGQgwqBwYXRoMiIgd291bGQgbWVyZ2UgImFkZCDCoHBhdGgxIi7CoAo+IAo+ICAgIFRo
+ZSByZXN1bHQgaXMgdGhhdCB3ZcKgZ2V0IHR3byBtZXJnZWQgdWV2ZW50czoKPiAKPiAgICAxKcKg
+YWRkwqBwYXRoMizCoHBhdGgxCj4gCj4gICAgMinCoHJlbW92ZSBwYXRoMyzCoHBhdGgyLCBwYXRo
+McKgCj4gCj4gICAgVGhlbiB3ZSBwcm9jZXNzIHRoZSBtZXJnZWQgdWV2ZW50cyBmcm9tIHRoZSBl
+YXJsaWVyIHRvIGxhdGVyLCBXZSB0cnkgdG8KPiAgICDigJ1hZGTCoAo+IAo+ICAgIHBhdGgywqBw
+YXRoMeKAnCwgYW5kIHdlIHdvdWxkIGNyZWF0ZSBvciByZWxvYWQgYSBtYXAgZGV2aWNlIHdpdGgg
+cGF0aDEgYW5kCj4gICAgcGF0aDIuwqAKPiAKPiAgICBOZXh0IHdlwqBwcm9jZXNzIOKAncKgcmVt
+b3ZlwqBwYXRoMyzCoHBhdGgyLCBwYXRoMeKAnCwgc28gcGF0aDEsIHBhdGgyIGFuZCBwYXRoMwo+
+ICAgIGFyZcKgCj4gCj4gICAgYWxsIHJlbW92ZWQgZnJvbSB0aGUgbWFwIGRldmljZSwgdGhpcyBp
+cyB3cm9uZywgwqB0aGUgY29ycmVjdCByZXN1bHQgaXMKPiAgICB0aGF0IHRoZSBwYXRoMQo+IAo+
+ICAgIGFuZCBwYXRoMiBzaG91bGQgYmUgc3RpbGwgaW4gdGhlIG1hcCBkZXZpY2UuCj4gCj4gICAg
+SnVzdCBhcyB5b3Ugc2F5LCB0aGlzIHBhdGNoIGlzIGp1c3QgYcKgc2hhcGUsIHdlIG5lZWQgbW9y
+ZSB0ZXN0aW5nLCBhbmQKPiAgICBtYXliZcKgCj4gCj4gICAgbW9yZcKgcGF0Y2hlcyBhcmUgbmVl
+ZGVkIHRvIG1ha2UgaXQgYmV0dGVyLgoKQnV0IGluIHRoZW9yeSwgeW91IGNvdWxkIGhhdmUgb25l
+IG1lcmdlZCB1ZXZlbnQgd2hlcmUgeW91CgpyZW1vdmUgcGF0aDEsIGFkZCBwYXRoMSwgcmVtb3Zl
+IHBhdGgyLCBhZGQgcGF0aDIsIHJlbW92ZSBwYXRoMywgYW5kIHRoZW4KY2FsbCBkb21hcCBvbmUg
+dGltZS4KCkFzIGxvbmcgYXMgeW91IGtlZXAgdGhlbSBpbiByaWdodCBvcmRlciwgSSB0aGluayB5
+b3UgY291bGQganVzdCBtZXJnZQphZGQgYW5kIHJlbW92ZSBldmVudHMuIEJ1dCB3aGF0IHlvdSBo
+YXZlIHJpZ2h0IG5vdyBoYW5kbGVzIHRoZSBjb21tb24KY2FzZXMsIHdoaWNoIGFyZSBidXJzdHMg
+b2YgYWRkL2NoYWdlIGV2ZW50cywgYW5kIGJ1cnN0cyBvZiByZW1vdmUgZXZlbnRzLgoKLUJlbgoK
+PiAKPiAgICBUaGFuayB5b3UsCj4gCj4gICAgVGFuZyBKdW5odWkKPiAKPiAgICDCoAo+IAo+ICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIOWOn+Wni+mCruS7tgo+ICAgIOWPkeS7
+tuS6uu+8miDvvJxtd2lsY2tAc3VzZS5jb23vvJ47Cj4gICAg5pS25Lu25Lq677ya5ZSQ5Yab6L6J
+MTAwNzQxMzY7IO+8nGNocmlzdG9waGUudmFyb3F1aUBvcGVuc3ZjLmNvbe+8njsKPiAgICDvvJxi
+bWFyemluc0ByZWRoYXQuY29t77yeOyDvvJxoYXJlQHN1c2UuZGXvvJ47IO+8nGJhcnQudmFuYXNz
+Y2hlQHNhbmRpc2suY29t77yeOwo+ICAgIOaKhOmAgeS6uu+8muW8oOWHrzEwMDcyNTAwOyDvvJxk
+bS1kZXZlbEByZWRoYXQuY29t77yeO+WUkOaWh+S/ijEwMTQ0MTQ5Owo+ICAgIOaXpSDmnJ8g77ya
+MjAxN+W5tDAy5pyIMTfml6UgMDU6MjIKPiAgICDkuLsg6aKYIO+8mlJlOiBbZG0tZGV2ZWxdIFtQ
+QVRDSF0gbXVsdGlwYXRoLXRvb2xzOiBpbXByb3ZlIHByb2Nlc3NpbmcKPiAgICBlZmZpY2llbmN5
+IGZvciBhZGRpdGlvbiBhbmQgZGVsZXRpb24gb2YgbXVsdGlwYXRoIGRldmljZXMKPiAKPiAgICBI
+ZWxsb8KgVGFuZywKPiAKPiAgICBJJ23CoHNvcnJ5wqB0b8KgcmVwbHnCoHNvwqBsYXRlLsKgVGhh
+bmtzwqBhwqBsb3TCoGZvcsKgeW91csKgd29yayzCoEnCoGFncmVlwqB3aXRoCj4gICAgQmVuwqB0
+aGF0wqB0aGXCoHBhdGNowqBpc8KgaW7CoHByZXR0ecKgZ29vZMKgc2hhcGXCoG5vdy7CoEJ1dMKg
+ScKgaGF2ZcKgc29tZQo+ICAgIHJlbWFya3PCoGxlZnQswqBwbGVhc2XCoHNlZcKgYmVsb3cuwqAK
+PiAgICDCoAo+ICAgIO+8nsKgK2Jvb2wKPiAgICDvvJ7CoCt1ZXZlbnRfY2FuX2Rpc2NhcmQoc3Ry
+dWN0wqB1ZXZlbnTCoCp1ZXYpCj4gICAg77yewqArewo+ICAgIO+8nsKgK8KgwqDCoMKgY2hhcsKg
+KnRtcDsKPiAgICDvvJ7CoCvCoMKgwqDCoGNoYXLCoGFbMTFdLMKgYlsxMV07Cj4gICAg77yewqAr
+wqDCoMKgwqBzdHJ1Y3TCoGNvbmZpZ8KgKsKgY29uZjsKPiAgICDvvJ7CoCsKPiAgICDvvJ7CoCvC
+oMKgwqDCoC8qCj4gICAg77yewqArwqDCoMKgwqDCoCrCoGtlZXDCoG9ubHnCoGJsb2NrwqBkZXZp
+Y2VzLMKgZGlzY2FyZMKgcGFydGl0aW9ucwo+ICAgIO+8nsKgK8KgwqDCoMKgwqAqLwo+ICAgIO+8
+nsKgK8KgwqDCoMKgdG1wwqA9wqBzdHJzdHIodWV2Le+8nmRldnBhdGgswqAiL2Jsb2NrLyIpOwo+
+ICAgIO+8nsKgK8KgwqDCoMKgaWbCoCh0bXDCoD09wqBOVUxMKXsKPiAgICDvvJ7CoCvCoMKgwqDC
+oMKgwqDCoMKgY29uZGxvZyg0LMKgIm5vwqAvYmxvY2svwqBpbsKgJyVzJyIswqB1ZXYt77yeZGV2
+cGF0aCk7Cj4gICAg77yewqArwqDCoMKgwqDCoMKgwqDCoHJldHVybsKgdHJ1ZTsKPiAgICDvvJ7C
+oCvCoMKgwqDCoH0KPiAgICDvvJ7CoCvCoMKgwqDCoGlmwqAoc3NjYW5mKHRtcCzCoCIvYmxvY2sv
+JTEwcyIswqBhKcKgIT3CoDHCoHx8Cj4gICAg77yewqArwqDCoMKgwqDCoMKgwqDCoHNzY2FuZih0
+bXAswqAiL2Jsb2NrLyUxMFteL10vJTEwcyIswqBhLMKgYinCoD09wqAyKcKgewo+ICAgIO+8nsKg
+K8KgwqDCoMKgwqDCoMKgwqBjb25kbG9nKDQswqAiZGlzY2FyZMKgZXZlbnTCoG9uwqAlcyIswqB1
+ZXYt77yeZGV2cGF0aCk7Cj4gICAg77yewqArwqDCoMKgwqDCoMKgwqDCoHJldHVybsKgdHJ1ZTsK
+PiAgICDvvJ7CoCvCoMKgwqDCoH0KPiAKPiAgICBJJ2TCoGxpa2XCoHRoZcKgZm9sbG93aW5nwqBi
+ZXR0ZXLCoGZvcsKgdGhpc8KgY2hlY2suwqBJdMKgdXNlc8KgbXVjaMKgbGVzc8KgY3ljbGVzLgo+
+IAo+ICAgIHN0YXRpY8KgYm9vbAo+ICAgIGNhbl9kaXNjYXJkX2J5X2RldnBhdGgoY29uc3TCoGNo
+YXLCoCpkZXZwYXRoKQo+ICAgIHsKPiAgICDCoMKgwqDCoHN0YXRpY8KgY29uc3TCoGNoYXLCoEJM
+T0NLW13CoD3CoCIvYmxvY2svIjsKPiAgICDCoMKgwqDCoGNvbnN0wqBjaGFywqAqcDsKPiAKPiAg
+ICDCoMKgwqDCoHDCoD3CoHN0cnN0cihwYXRoc3RyLMKgQkxPQ0spOwo+ICAgIMKgwqDCoMKgaWbC
+oChwwqA9PcKgTlVMTCkKPiAgICDCoMKgwqDCoMKgwqDCoMKgLyrCoG5vdMKgYcKgYmxvY2vCoGRl
+dmljZcKgKi8KPiAgICDCoMKgwqDCoMKgwqDCoMKgcmV0dXJuwqB0cnVlOwo+ICAgIMKgwqDCoMKg
+cMKgKz3CoHNpemVvZihCTE9DSynCoC3CoDE7Cj4gICAgwqDCoMKgwqBwwqA9wqBzdHJjaHIocCzC
+oCcvJyk7Cj4gICAgwqDCoMKgwqBpZsKgKHDCoD09wqBOVUxMKQo+ICAgIMKgwqDCoMKgwqDCoMKg
+wqAvKsKgZXhhY3RsecKgb25lwqBwYXRowqBlbGVtZW50wqBhZnRlcsKgIi9ibG9jay8iwqAqLwo+
+ICAgIMKgwqDCoMKgwqDCoMKgwqByZXR1cm7CoGZhbHNlOwo+ICAgIMKgwqDCoMKgLyrCoElmwqB0
+aGVyZcKgYXJlwqBtb3JlwqBwYXRowqBlbGVtZW50cyzCoGl0J3PCoGHCoHBhcnRpdGlvbsKgKi8K
+PiAgICDCoMKgwqDCoHJldHVybsKgdHJ1ZTsKPiAgICB9Cj4gCj4gICAg77yewqArYm9vbAo+ICAg
+IO+8nsKgK3VldmVudF9jYW5fZmlsdGVyKHN0cnVjdMKgdWV2ZW50wqAqZWFybGllcizCoHN0cnVj
+dMKgdWV2ZW50wqAqbGF0ZXIpCj4gICAg77yewqArewo+ICAgIO+8nsKgKwo+ICAgIO+8nsKgK8Kg
+wqDCoMKgLyoKPiAgICDvvJ7CoCvCoMKgwqDCoMKgKsKgZmlsdGVywqBlYXJsaWVywqB1dmVudHPC
+oGlmwqBwYXRowqBoYXPCoHJlbW92ZWTCoGxhdGVyLsKgRWc6Cj4gICAg77yewqArwqDCoMKgwqDC
+oCrCoCJhZGTCoHBhdGgxwqB8Y2hhbmfCoHBhdGgxwqB8YWRkwqBwYXRoMsKgfHJlbW92ZcKgcGF0
+aDEiCj4gICAg77yewqArwqDCoMKgwqDCoCrCoGNhbsKgZmlsdGVywqBhczoKPiAgICDvvJ7CoCvC
+oMKgwqDCoMKgKsKgImFkZMKgcGF0aDLCoHxyZW1vdmXCoHBhdGgxIgo+ICAgIO+8nsKgK8KgwqDC
+oMKgwqAqwqB1ZXZlbnRzwqAiYWRkwqBwYXRoMSLCoGFuZMKgImNoYW5nwqBwYXRoMSLCoGFyZcKg
+ZmlsdGVyZWTCoG91dAo+ICAgIO+8nsKgK8KgwqDCoMKgwqAqLwo+ICAgIO+8nsKgK8KgwqDCoMKg
+aWbCoCghc3RyY21wKGVhcmxpZXIt77yea2VybmVsLMKgbGF0ZXIt77yea2VybmVsKcKgJiYKPiAg
+ICDvvJ7CoCvCoMKgwqDCoMKgwqDCoMKgIXN0cmNtcChsYXRlci3vvJ5hY3Rpb24swqAicmVtb3Zl
+IinCoCYmCj4gICAg77yewqArwqDCoMKgwqDCoMKgwqDCoHN0cm5jbXAobGF0ZXIt77yea2VybmVs
+LMKgImRtLSIswqAzKSnCoHsKPiAgICDvvJ7CoCvCoMKgwqDCoMKgwqDCoMKgcmV0dXJuwqB0cnVl
+Owo+ICAgIO+8nsKgK8KgwqDCoMKgfQo+ICAgIO+8nsKgKwo+ICAgIO+8nsKgK8KgwqDCoMKgLyoK
+PiAgICDvvJ7CoCvCoMKgwqDCoMKgKsKgZmlsdGVywqBjaGFuZ2XCoHV2ZW50c8KgaWbCoGFkZMKg
+dWV2ZW50c8KgZXhpc3QuwqBFZzoKPiAgICDvvJ7CoCvCoMKgwqDCoMKgKsKgImNoYW5nZcKgcGF0
+aDF8wqBhZGTCoHBhdGgxwqB8YWRkwqBwYXRoMiIKPiAgICDvvJ7CoCvCoMKgwqDCoMKgKsKgY2Fu
+wqBmaWx0ZXLCoGFzOgo+ICAgIO+8nsKgK8KgwqDCoMKgwqAqwqAiYWRkwqBwYXRoMcKgfGFkZMKg
+cGF0aDIiCj4gICAg77yewqArwqDCoMKgwqDCoCrCoHVldmVudMKgImNoYW5nwqBwYXRoMSLCoGlz
+wqBmaWx0ZXJlZMKgb3V0Cj4gICAg77yewqArwqDCoMKgwqDCoCovCj4gICAg77yewqArwqDCoMKg
+wqBpZsKgKCFzdHJjbXAoZWFybGllci3vvJ5rZXJuZWwswqBsYXRlci3vvJ5rZXJuZWwpwqAmJgo+
+ICAgIO+8nsKgK8KgwqDCoMKgwqDCoMKgwqAhc3RyY21wKGVhcmxpZXIt77yeYWN0aW9uLMKgImNo
+YW5nZSIpwqAmJgo+ICAgIO+8nsKgK8KgwqDCoMKgwqDCoMKgwqAhc3RyY21wKGxhdGVyLe+8nmFj
+dGlvbizCoCJhZGQiKcKgJiYKPiAgICDvvJ7CoCvCoMKgwqDCoMKgwqDCoMKgc3RybmNtcChsYXRl
+ci3vvJ5rZXJuZWwswqAiZG0tIizCoDMpKcKgewo+ICAgIO+8nsKgK8KgwqDCoMKgwqDCoMKgwqBy
+ZXR1cm7CoHRydWU7Cj4gICAg77yewqArwqDCoMKgwqB9Cj4gICAg77yewqArCj4gICAg77yewqAr
+wqDCoMKgwqByZXR1cm7CoGZhbHNlOwo+ICAgIO+8nsKgK30KPiAKPiAgICBUaGlzwqB3b3VsZMKg
+YmXCoGJldHRlcsKgcmVhZGFibGXCoGFuZMKgZmFzdGVywqBpZsKgeW91J2TCoHB1dMKgdGhlwqAi
+a2VybmVsIgo+ICAgIHRlc3RzwqBmaXJzdMKgc2/CoHRoYXTCoHlvdcKgbmVlZMKgdG/CoGNoZWNr
+wqBvbmx5wqAiYWN0aW9uIsKgbGF0ZXI6Cj4gCj4gICAgwqDCoMKgwqBpZsKgKCFzdHJuY21wKGxh
+dGVyLe+8nmtlcm5lbCzCoCJkbS0iLMKgMynCoHx8Cj4gICAgwqDCoMKgwqDCoMKgwqDCoHN0cmNt
+cChlYXJsaWVyLe+8nmtlcm5lbCzCoGxhdGVyLe+8nmtlcm5lbCkpCj4gICAgwqDCoMKgwqDCoMKg
+wqDCoHJldHVybsKgZmFsc2U7Cj4gCj4gICAg77yewqArCj4gICAg77yewqArYm9vbAo+ICAgIO+8
+nsKgK21lcmdlX25lZWRfc3RvcChzdHJ1Y3TCoHVldmVudMKgKmVhcmxpZXIswqBzdHJ1Y3TCoHVl
+dmVudMKgKmxhdGVyKQo+ICAgIO+8nsKgK3sKPiAgICDvvJ7CoCvCoMKgwqDCoC8qCj4gICAg77ye
+wqArwqDCoMKgwqDCoCrCoGRtwqB1ZXZlbnTCoGRvwqBub3TCoHRyecKgdG/CoG1lcmdlwqB3aXRo
+wqBsZWZ0wqB1ZXZlbnRzCj4gICAg77yewqArwqDCoMKgwqDCoCovCj4gICAg77yewqArwqDCoMKg
+wqBpZsKgKCFzdHJuY21wKGxhdGVyLe+8nmtlcm5lbCzCoCJkbS0iLMKgMykpCj4gICAg77yewqAr
+wqDCoMKgwqDCoMKgwqDCoHJldHVybsKgdHJ1ZTsKPiAgICDvvJ7CoCsKPiAgICDvvJ7CoCvCoMKg
+wqDCoC8qCj4gICAg77yewqArwqDCoMKgwqDCoCrCoHdlwqBjYW7CoG5vdMKgbWFrZcKgYcKganVn
+ZW1lbnTCoHdpdGhvdXTCoHd3aWQsCj4gICAg77yewqArwqDCoMKgwqDCoCrCoHNvwqBpdMKgaXPC
+oHNlbnNpYmxlwqB0b8Kgc3RvcMKgbWVyZ2luZwo+ICAgIO+8nsKgK8KgwqDCoMKgwqAqLwo+ICAg
+IO+8nsKgK8KgwqDCoMKgaWbCoCghZWFybGllci3vvJ53d2lkwqB8fMKgIWxhdGVyLe+8nnd3aWQp
+Cj4gICAg77yewqArwqDCoMKgwqDCoMKgwqDCoHJldHVybsKgdHJ1ZTsKPiAgICDvvJ7CoCvCoMKg
+wqDCoC8qCj4gICAg77yewqArwqDCoMKgwqDCoCrCoHVldmVudHPCoG1lcmdpbmfCoHN0b3BlZAo+
+ICAgIO+8nsKgK8KgwqDCoMKgwqAqwqB3aGVuwqB3ZcKgbWVldMKgYW7CoG9wcG9zaXRlwqBhY3Rp
+b27CoHVldmVudMKgZnJvbcKgdGhlwqBzYW1lwqBMVU4KPiAgICDvvJ7CoHRvwqBBVk9JRAo+ICAg
+IO+8nsKgK8KgwqDCoMKgwqAqwqAiYWRkwqBwYXRoMcKgfHJlbW92ZcKgcGF0aDHCoHxhZGTCoHBh
+dGgywqB8cmVtb3ZlwqBwYXRoMsKgfGFkZAo+ICAgIO+8nsKgcGF0aDMiCj4gICAg77yewqArwqDC
+oMKgwqDCoCrCoHRvwqBtZXJnZcKgYXPCoCJyZW1vdmXCoHBhdGgxLMKgcGF0aDIiwqBhbmTCoCJh
+ZGTCoHBhdGgxLMKgcGF0aDIsCj4gICAg77yewqBwYXRoMyIKPiAgICDvvJ7CoCvCoMKgwqDCoMKg
+KsKgT1IKPiAgICDvvJ7CoCvCoMKgwqDCoMKgKsKgInJlbW92ZcKgcGF0aDHCoHxhZGTCoHBhdGgx
+wqB8cmVtb3ZlwqBwYXRoMsKgfGFkZMKgcGF0aDLCoHxyZW1vdmUKPiAgICDvvJ7CoHBhdGgzIgo+
+ICAgIO+8nsKgK8KgwqDCoMKgwqAqwqB0b8KgbWVyZ2XCoGFzwqAiYWRkwqBwYXRoMSzCoHBhdGgy
+IsKgYW5kwqAicmVtb3ZlwqBwYXRoMSzCoHBhdGgyLAo+ICAgIO+8nsKgcGF0aDMiCj4gICAg77ye
+wqArwqDCoMKgwqDCoCrCoFNPCj4gICAg77yewqArwqDCoMKgwqDCoCrCoHdoZW7CoHdlwqBtZWV0
+wqBhwqBub24tY2hhbmdlwqB1ZXZlbnTCoGZyb23CoHRoZcKgc2FtZcKgTFVOCj4gICAg77yewqAr
+wqDCoMKgwqDCoCrCoHdpdGjCoHRoZcKgc2FtZcKgd3dpZMKgYW5kwqBkaWZmZXJlbnTCoGFjdGlv
+bgo+ICAgIO+8nsKgK8KgwqDCoMKgwqAqwqBpdMKgd291bGTCoGJlwqBiZXR0ZXLCoHRvwqBzdG9w
+wqBtZXJnaW5nLgo+ICAgIO+8nsKgK8KgwqDCoMKgwqAqLwo+ICAgIO+8nsKgK8KgwqDCoMKgaWbC
+oCghc3RyY21wKGVhcmxpZXIt77yed3dpZCzCoGxhdGVyLe+8nnd3aWQpwqAmJgo+ICAgIO+8nsKg
+K8KgwqDCoMKgwqDCoMKgwqBzdHJjbXAoZWFybGllci3vvJ5hY3Rpb24swqBsYXRlci3vvJ5hY3Rp
+b24pwqAmJgo+ICAgIO+8nsKgK8KgwqDCoMKgwqDCoMKgwqBzdHJjbXAoZWFybGllci3vvJ5hY3Rp
+b24swqAiY2hhbmdlIinCoCYmCj4gICAg77yewqArwqDCoMKgwqDCoMKgwqDCoHN0cmNtcChsYXRl
+ci3vvJ5hY3Rpb24swqAiY2hhbmdlIikpCj4gICAg77yewqArwqDCoMKgwqDCoMKgwqDCoHJldHVy
+bsKgdHJ1ZTsKPiAgICDvvJ7CoCsKPiAgICDvvJ7CoCvCoMKgwqDCoHJldHVybsKgZmFsc2U7Cj4g
+ICAg77yewqArfQo+IAo+ICAgIEnCoGtub3fCoHlvdcKgZGlzY3Vzc2VkwqB0aGlzwqB3aXRowqBC
+ZW7CoGJlZm9yZSzCoGJ1dMKgc3RpbGzCoGhhdmXCoHNvbWXCoHRyb3VibGUKPiAgICB3aXRowqBp
+dC7CoAo+IAo+ICAgIFRoZcKgZmlyc3TCoGNhc2XCoHNob3VsZMKgaGF2ZcKgYmVlbsKgcmVkdWNl
+ZMKgdG/CoCJyZW1vdmXCoHBhdGgxwqB8wqByZW1vdmXCoHBhdGgyCj4gICAgfMKgYWRkwqBwYXRo
+MyLCoGJ5wqBmaWx0ZXJpbmfCoGJlZm9yZWhhbmQuwqBJwqBzdXBwb3NlwqB5b3XCoHdhbnTCoHRv
+wqBhdm9pZMKgdGhpcwo+ICAgIHNlcXVlbmNlwqBiZWNhdXNlwqBpdMKgY291bGTCoGxlYXZlwqB1
+c8Kgd2l0aG91dMKgcGF0aHPCoHRlbXBvcmFyaWx5LMKgY2F1c2luZwo+ICAgIG11bHRpcGF0aGTC
+oHRvwqBkZXN0cm95wqB0aGXCoG1hcC7CoEJ1dMKgScKgZG9uJ3TCoHVuZGVyc3RhbmTCoHdoYXTC
+oCJzdG9wCj4gICAgbWVyZ2luZyLCoGJ1eXPCoHlvdcKgaGVyZcKgLcKgaWbCoHlvdcKgcHJvY2Vz
+c8KgdGhlwqBldmVudHPCoG9uZS1ieS1vbmUswqB5b3XCoG1heQo+ICAgIGFsc2/CoGhhdmXCoDDC
+oHBhdGhzwqBhdMKgc29tZcKgcG9pbnQuwqAKPiAKPiAgICBJbsKgdGhlwqBzZWNvbmTCoGNhc2Us
+wqB3ZcKga25vd8KgYWxswqBldmVudHPCoGluwqB0aGXCoHNlcXVlbmNlwqBoYXZlwqB0aGXCoHNh
+bWUKPiAgICBXV0lEO8KgaW7CoHRoaXPCoGNhc2XCoEnCoHRoaW5rwqBpdMKgd291bGTCoGJlwqBz
+YWZlwqB0b8KgZmlsdGVywqBhd2F5wqAicmVtb3ZlIgo+ICAgIGV2ZW50c8KgYnnCoHN1YnNlcXVl
+bnTCoCJhZGQiwqBldmVudHMswqBlbmRpbmfCoHVwwqB3aXRowqAiYWRkwqBwYXRoMXzCoGFkZAo+
+ICAgIHBhdGgyfMKgcmVtb3ZlwqBwYXRoMyIuwqBCdXTCoEnCoG1hecKgYmXCoG92ZXJsb29raW5n
+wqBzb21ldGhpbmfCoGhlcmUuCj4gCj4gICAgVGhlwqBkYW5nZXJvdXPCoHRoaW5nwqBpZsKgeW91
+wqBoYXZlwqBzaW11bHRhbmVvdXPCoHJlbW92ZcKgYW5kwqBhZGTCoGV2ZW50c8KgZm9yCj4gICAg
+dGhlwqBzYW1lwqBMVU7CoGlzwqB0aGF0wqBwcm9jZXNzaW5nwqB0aGXCoCJhZGQiwqBldmVudHPC
+oGlzwqBsaWtlbHnCoHRvwqBmYWlswqBpbgo+ICAgIGRvbWFwKCkuwqBJZsKgeW91wqBnZXTCoCJh
+ZGTCoHBhdGgxwqB8wqByZW1vdmXCoHBhdGgyIizCoG9uY2XCoHlvdcKgcHJvY2Vzc8KgImFkZAo+
+ICAgIHBhdGgxIizCoCJwYXRoMiLCoG1hecKgbm90wqBleGlzdMKgaW7CoHRoZcKga2VybmVswqBh
+bnnCoG1vcmUswqBhbmTCoCJkb21hcCLCoHdpbGwKPiAgICBmYWlswqBpZsKgeW91wqB0cnnCoHRv
+wqBzZXTCoHVwwqBib3RoO8KgeW91wqBtYXnCoGVuZMKgdXDCoHJlbW92aW5nwqB0aGXCoG1hcAo+
+ICAgIGNvbXBsZXRlbHkuwqBJTUhPwqB0aGXCoG9ubHnCoHNhZmXCoHdhecKgdG/CoHByb2Nlc3PC
+oGV2ZW50c8KgaW7CoHRoaXPCoHNpdHVhdGlvbgo+ICAgIGlzwqB0b8KgbWVyZ2XCoHRoZcKgZXZl
+bnRzwqBpbnRvwqBhwqBzaW5nbGXCoGRvbWFwKCnCoGNhbGwuCj4gCj4gICAgScKga25vd8KgeW91
+wqB3YW50wqB0b8KgYXZvaWTCoHRoYXTCoGluwqB0aGlzwqBwYXRjaCzCoGJ1dMKgScKgdGhpbmvC
+oGl0wqB3aWxswqBiZcKgYQo+ICAgIGxvZ2ljYWzCoGZ1cnRoZXLCoGltcHJvdmVtZW50Lgo+IAo+
+ICAgIEFueXdheSzCoEFGQUlDU8KgeW91csKgcGF0Y2jCoGRvZXNuJ3TCoGludHJvZHVjZcKgYcKg
+cmVncmVzc2lvbsKgd3J0wqB0aGUKPiAgICBjdXJyZW50wqBjb2RlwqBoZXJlO8KgdW5sZXNzwqBJ
+J23CoG92ZXJsb29raW5nwqBzb21ldGhpbmcswqBtecKgYXJndW1lbnRzwqB3b3VsZAo+ICAgIGFw
+cGx5wqB0b8Kgc2VxdWVudGlhbMKgZXZlbnTCoHByb2Nlc3NpbmfCoGFzwqB3ZWxsLgo+IAo+ICAg
+IFJlZ2FyZHMKPiAgICBNYXJ0aW4KPiAKPiAgICAtLcKgCj4gICAgRHIuwqBNYXJ0aW7CoFdpbGNr
+wqDvvJxtd2lsY2tAc3VzZS5jb23vvJ4swqBUZWwuwqArNDnCoCgwKTkxMcKgNzQwNTPCoDIxMDcK
+PiAgICBTVVNFwqBMaW51eMKgR21iSCzCoEdGOsKgRmVsaXjCoEltZW5kw7ZyZmZlcizCoEphbmXC
+oFNtaXRoYXJkLMKgR3JhaGFtwqBOb3J0b24KPiAgICBIUkLCoDIxMjg0wqAoQUfCoE7DvHJuYmVy
+ZykKPiAKPiAgICAtLQo+ICAgIGRtLWRldmVswqBtYWlsaW5nwqBsaXN0Cj4gICAgZG0tZGV2ZWxA
+cmVkaGF0LmNvbQo+ICAgIGh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9k
+bS1kZXZlbAoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0
+dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
