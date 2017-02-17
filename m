@@ -1,75 +1,100 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [dm-devel] hch's native NVMe multipathing [was: Re: [PATCH 1/2]
- Don't blacklist nvme]
-Date: Fri, 17 Feb 2017 01:33:06 -0800
-Message-ID: <20170217093306.GA5389@infradead.org>
-References: <1487107154-24883-1-git-send-email-keith.busch@intel.com>
- <20170215145617.GA4241@infradead.org>
- <20170216025357.GA9241@redhat.com>
- <20170216142621.GA21972@infradead.org>
- <20170216151337.GA12678@redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH] multipath-tools: improve processing
+ efficiency for addition and deletion of multipath devices
+Date: Fri, 17 Feb 2017 10:48:44 +0100
+Message-ID: <1487324924.4629.14.camel@suse.com>
+References: <1487228041-1228-1-git-send-email-tang.junhui@zte.com.cn>
+	<1487279855.4629.8.camel@suse.com>
+	<20170217053836.GV22981@octiron.msp.redhat.com>
+	<20170217062158.GW22981@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20170216151337.GA12678@redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Christoph Hellwig <hch@infradead.org>, Keith Busch <keith.busch@intel.com>, dm-devel@redhat.com, linux-scsi@vger.kernel.org, linux-nvme@lists.infradead.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20170217062158.GW22981@octiron.msp.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: zhang.kai16@zte.com.cn, dm-devel@redhat.com, tang.junhui@zte.com.cn, tang.wenjun3@zte.com.cn, bart.vanassche@sandisk.com
 List-Id: dm-devel.ids
 
-On Thu, Feb 16, 2017 at 10:13:37AM -0500, Mike Snitzer wrote:
-> Not following what you're saying Keith did.  Please feel free to
-> clarify.
-
-Keith demonstrated what it takes to support NVMe with dm.  He also
-gave a couple presentations on it in addition to various ptches on
-the list.
-
-> The middle man is useful if it can support all transports.  If it only
-> supports some then yeah the utility is certainly reduced.
-
-Again let's look at what multipathing involves:
-
- - discovery of multiple paths for a device, and path preferences:
-   Storage protocol specific
-
- - handling of path state and grouping changes:
-   Storage protocol specific
-
- - handling of path up / down events:
-   Storage protocol / transport specific if provided
-
- - keep alive / path checking:
-   Storage protocol specific with possible generic fallback
-
- - path selection:
-   Generic, although building heavily on protocol / transport specific
-   information
-
-So most of the hard work is transport specific anyway.  And I fully
-agree that generic code should be, well generic.  And with generic
-I mean right in the block layer instead of involving a layer block
-driver that relies on lots of low-level driver information and setup
-from user space.
-	
-> I'm going to look at removing any scsi_dh code from DM multipath
-> (someone already proposed removing the 'retain_attached_hw_handler'
-> feature).  Not much point having anything in DM multipath now that scsi
-> discovery has the ability to auto-attach the right scsi_dh via scsi_dh's
-> .match hook.
-
-Great.
-
-> As a side-effect it will fix Keith's scsi_dh crash (when
-> operating on NVMe request_queue).
-
-I think we'll need to have a quick fix for that ASAP, though.
-
-> My hope is that your NVMe equivalent for scsi_dh will "just work" (TM)
-> like scsi_dh auto-attach does.  There isn't a finished ALUA equivalent
-> standard for NVMe so I'd imagine at this point you have a single device
-> handler for NVMe to do error translation?
-
-Yes, error translation for the block layer, but most importantly
-discovery of multiple paths to the same namespace.
+T24gRnJpLCAyMDE3LTAyLTE3IGF0IDAwOjIxIC0wNjAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cj4gT24gVGh1LCBGZWIgMTYsIDIwMTcgYXQgMTE6Mzg6MzZQTSAtMDYwMCwgQmVuamFtaW4g
+TWFyemluc2tpIHdyb3RlOgo+ID4gPiA+ICsKPiA+ID4gPiArYm9vbAo+ID4gPiA+ICttZXJnZV9u
+ZWVkX3N0b3Aoc3RydWN0IHVldmVudCAqZWFybGllciwgc3RydWN0IHVldmVudCAqbGF0ZXIpCj4g
+PiA+ID4gK3sKPiA+ID4gPiArCS8qCj4gPiA+ID4gKwnCoCogZG0gdWV2ZW50IGRvIG5vdCB0cnkg
+dG8gbWVyZ2Ugd2l0aCBsZWZ0IHVldmVudHMKPiA+ID4gPiArCcKgKi8KPiA+ID4gPiArCWlmICgh
+c3RybmNtcChsYXRlci0+a2VybmVsLCAiZG0tIiwgMykpCj4gPiA+ID4gKwkJcmV0dXJuIHRydWU7
+Cj4gPiA+ID4gKwo+ID4gPiA+ICsJLyoKPiA+ID4gPiArCcKgKiB3ZSBjYW4gbm90IG1ha2UgYSBq
+dWdlbWVudCB3aXRob3V0IHd3aWQsCj4gPiA+ID4gKwnCoCogc28gaXQgaXMgc2Vuc2libGUgdG8g
+c3RvcCBtZXJnaW5nCj4gPiA+ID4gKwnCoCovCj4gPiA+ID4gKwlpZiAoIWVhcmxpZXItPnd3aWQg
+fHwgIWxhdGVyLT53d2lkKQo+ID4gPiA+ICsJCXJldHVybiB0cnVlOwo+ID4gPiA+ICsJLyoKPiA+
+ID4gPiArCcKgKiB1ZXZlbnRzIG1lcmdpbmcgc3RvcGVkCj4gPiA+ID4gKwnCoCogd2hlbiB3ZSBt
+ZWV0IGFuIG9wcG9zaXRlIGFjdGlvbiB1ZXZlbnQgZnJvbSB0aGUKPiA+ID4gPiBzYW1lIExVTgo+
+ID4gPiA+IHRvIEFWT0lECj4gPiA+ID4gKwnCoCogImFkZCBwYXRoMSB8cmVtb3ZlIHBhdGgxIHxh
+ZGQgcGF0aDIgfHJlbW92ZSBwYXRoMgo+ID4gPiA+IHxhZGQKPiA+ID4gPiBwYXRoMyIKPiA+ID4g
+PiArCcKgKiB0byBtZXJnZSBhcyAicmVtb3ZlIHBhdGgxLCBwYXRoMiIgYW5kICJhZGQgcGF0aDEs
+Cj4gPiA+ID4gcGF0aDIsCj4gPiA+ID4gcGF0aDMiCj4gPiA+ID4gKwnCoCogT1IKPiA+ID4gPiAr
+CcKgKiAicmVtb3ZlIHBhdGgxIHxhZGQgcGF0aDEgfHJlbW92ZSBwYXRoMiB8YWRkIHBhdGgyCj4g
+PiA+ID4gfHJlbW92ZQo+ID4gPiA+IHBhdGgzIgo+ID4gPiA+ICsJwqAqIHRvIG1lcmdlIGFzICJh
+ZGQgcGF0aDEsIHBhdGgyIiBhbmQgInJlbW92ZSBwYXRoMSwKPiA+ID4gPiBwYXRoMiwKPiA+ID4g
+PiBwYXRoMyIKPiA+ID4gPiArCcKgKiBTTwo+ID4gPiA+ICsJwqAqIHdoZW4gd2UgbWVldCBhIG5v
+bi1jaGFuZ2UgdWV2ZW50IGZyb20gdGhlIHNhbWUgTFVOCj4gPiA+ID4gKwnCoCogd2l0aCB0aGUg
+c2FtZSB3d2lkIGFuZCBkaWZmZXJlbnQgYWN0aW9uCj4gPiA+ID4gKwnCoCogaXQgd291bGQgYmUg
+YmV0dGVyIHRvIHN0b3AgbWVyZ2luZy4KPiA+ID4gPiArCcKgKi8KPiA+ID4gPiArCWlmICghc3Ry
+Y21wKGVhcmxpZXItPnd3aWQsIGxhdGVyLT53d2lkKSAmJgo+ID4gPiA+ICsJwqDCoMKgwqBzdHJj
+bXAoZWFybGllci0+YWN0aW9uLCBsYXRlci0+YWN0aW9uKSAmJgo+ID4gPiA+ICsJwqDCoMKgwqBz
+dHJjbXAoZWFybGllci0+YWN0aW9uLCAiY2hhbmdlIikgJiYKPiA+ID4gPiArCcKgwqDCoMKgc3Ry
+Y21wKGxhdGVyLT5hY3Rpb24sICJjaGFuZ2UiKSkKPiA+ID4gPiArCQlyZXR1cm4gdHJ1ZTsKPiA+
+ID4gPiArCj4gPiA+ID4gKwlyZXR1cm4gZmFsc2U7Cj4gPiA+ID4gK30KPiA+ID4gCj4gPiA+IEkg
+a25vdyB5b3UgZGlzY3Vzc2VkIHRoaXMgd2l0aCBCZW4gYmVmb3JlLCBidXQgc3RpbGwgaGF2ZSBz
+b21lCj4gPiA+IHRyb3VibGUKPiA+ID4gd2l0aCBpdC7CoAo+ID4gPiAKPiA+ID4gVGhlIGZpcnN0
+IGNhc2Ugc2hvdWxkIGhhdmUgYmVlbiByZWR1Y2VkIHRvICJyZW1vdmUgcGF0aDEgfCByZW1vdmUK
+PiA+ID4gcGF0aDIKPiA+ID4gPiBhZGQgcGF0aDMiIGJ5IGZpbHRlcmluZyBiZWZvcmVoYW5kLsKg
+SSBzdXBwb3NlIHlvdSB3YW50IHRvIGF2b2lkCj4gPiA+ID4gdGhpcwo+ID4gPiAKPiA+ID4gc2Vx
+dWVuY2UgYmVjYXVzZSBpdCBjb3VsZCBsZWF2ZSB1cyB3aXRob3V0IHBhdGhzIHRlbXBvcmFyaWx5
+LAo+ID4gPiBjYXVzaW5nCj4gPiA+IG11bHRpcGF0aGQgdG8gZGVzdHJveSB0aGUgbWFwLiBCdXQg
+SSBkb24ndCB1bmRlcnN0YW5kIHdoYXQgInN0b3AKPiA+ID4gbWVyZ2luZyIgYnV5cyB5b3UgaGVy
+ZSAtIGlmIHlvdSBwcm9jZXNzIHRoZSBldmVudHMgb25lLWJ5LW9uZSwKPiA+ID4geW91IG1heQo+
+ID4gPiBhbHNvIGhhdmUgMCBwYXRocyBhdCBzb21lIHBvaW50LsKgCj4gPiAKPiA+IFdlbGwsIGJl
+Y2F1c2Ugb2YgdGhlIGZpbHRlcmluZyAsIHlvdSB3aWxsIG5ldmVyIGFjdHVhbGx5IHN0b3AKPiA+
+IG1lcmdpbmcKPiA+IGluIHRoaXMgY2FzZSwgbGlrZSB5b3UgbWVudGlvbmVkLgo+IAo+IE9yLCBp
+ZiBJIGFjdHVhbGx5IHJlYWQgYmV0dGVyLCBJIHdvdWxkIHNlZSB0aGF0IHlvdSB3aWxsIHN0b3AK
+PiBtZXJnaW5nLgo+IEkgY2FuJ3QgdGhpbmsgb2YgYW55IHByb2JsZW1zIGluIHRoZW9yeSB3aXRo
+IG1lcmdpbmcgYWRkcyBhZnRlcgo+IHJlbW92ZXMKPiBpbiB0aGUgc2ltcGxlIGNhc2UgYXQgbGVh
+c3QuCj4gCj4gPiA+IEluIHRoZSBzZWNvbmQgY2FzZSwgd2Uga25vdyBhbGwgZXZlbnRzIGluIHRo
+ZSBzZXF1ZW5jZSBoYXZlIHRoZQo+ID4gPiBzYW1lCj4gPiA+IFdXSUQ7IGluIHRoaXMgY2FzZSBJ
+IHRoaW5rIGl0IHdvdWxkIGJlIHNhZmUgdG8gZmlsdGVyIGF3YXkKPiA+ID4gInJlbW92ZSIKPiA+
+ID4gZXZlbnRzIGJ5IHN1YnNlcXVlbnQgImFkZCIgZXZlbnRzLCBlbmRpbmcgdXAgd2l0aCAiYWRk
+IHBhdGgxfCBhZGQKPiA+ID4gcGF0aDJ8IHJlbW92ZSBwYXRoMyIuIEJ1dCBJIG1heSBiZSBvdmVy
+bG9va2luZyBzb21ldGhpbmcgaGVyZS4KPiA+IAo+ID4gV2UgY2FuJ3QgZmlsdGVyIG91dCB0aGUg
+cmVtb3ZlIHBhdGggZXZlbnRzIGluIHRoaXMgY2FzZS4gSWYgeW91Cj4gPiBoYXZlCj4gPiAKPiA+
+IGFkZCBzZGIgfCByZW1vdmUgc2RiCj4gPiAKPiA+IFlvdSBrbm93IHRoYXQgc2RiIGluIHRoZSBy
+ZW1vdmUgZXZlbnQgaXMgcmVmZXJyaW5nIHRvIHRoZSBzYW1lCj4gPiBkZXZpY2UgYXMKPiA+IHNk
+YiBpbiB0aGUgYWRkIGV2ZW50LiBJZiB5b3UgaGF2ZQo+ID4gCj4gPiByZW1vdmUgc2RiIHwgYWRk
+IHNkYgo+ID4gCj4gPiBUaGVyZSBpcyBubyBndWFyYW50ZWUgdGhhdCBzZGIgaW4gdGhlIGFkZCBl
+dmVudCBpcyByZWZlcnJpbmcgdG8gdGhlCj4gPiBzYW1lCj4gPiBMVU4gYXMgc2RiIGluIHRoZSBy
+ZW1vdmUgZXZlbnQuIE9uY2UgdGhlIGRldmljZSBnZXRzIHJlbW92ZWQgdGhhdAo+ID4gbmFtZQo+
+ID4gY2FuIGdldCByZXVzZWQgZm9yIGFueXRoaW5nLgo+IAo+IE9yIHlvdSBjb3VsZCBjaGFuZ2Ug
+dGhlIGZpbHRlcmluZyBjb2RlIHRvIHZlcmlmeSB0aGF0IHRoZSB3d2lkcwo+IG1hdGNoZWQuCgpB
+RkFJQ1MgdGhpcyBpcyBhbHJlYWR5IHRoZSBjYXNlIGluIHRoaXMgY29kZSBwYXRoLiBtZXJnZV9u
+ZWVkc19zdG9wKCkKaXMgcnVuIGFmdGVyIGRldGVybWluaW5nIHRoZSBXV0lELCBhbmQgd2lsbCBv
+bmx5IGV2ZXIgYWN0IG9uIGRldmljZXMKd2l0aCB0aGUgc2FtZSBXV0lELgoKPiBIb3dldmVyLCB3
+aGlsZSB0aGUgZGV2aWNlIHdvdWxkIGJlIGZvciB0aGUgc2FtZSBMVU4sIGl0IG1pZ2h0IGJlIGEK
+PiBkaWZmZXJlbnQgSV9UIE5leHVzLCBzbyB5b3Ugc3RpbGwgZG9uJ3Qgd2FudCB0byBmaWx0ZXIg
+dGhlIHJlbW92ZSBvZgo+IHRoYXQKPiBzcGVjaWZpYyBkZXZpY2UuwqAKCkkgZmlndXJlIHRoaXMg
+Y291bGQgYmUgaGFuZGxlZCBpbiB1ZXZfYWRkX3BhdGgoKSBieSBub3Qgc2ltcGx5CnJldHVybmlu
+ZyBpZiBhbiBhZGQgZXZlbnQgZm9yIGFuIGFscmVhZHkgZXhpc3RpbmcgZGV2aWNlIHdhcwplbmNv
+dW50ZXJlZC4gQnV0IEkgYWdyZWUgdGhhdCB3b3VsZCBiZSBhbm90aGVyLCBzZXBhcmF0ZSwgcGF0
+Y2guCgpSZWdhcmRzCk1hcnRpbgoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNv
+bT4sIFRlbC7CoCs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxp
+eCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChB
+RyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNv
+bQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
