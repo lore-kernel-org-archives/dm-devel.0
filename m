@@ -1,15 +1,15 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 2/2] Fill NVMe specific path info
-Date: Mon, 20 Feb 2017 11:57:59 -0600
-Message-ID: <20170220175759.GA22981@octiron.msp.redhat.com>
+Subject: Re: [PATCH 1/2] Don't blacklist nvme
+Date: Mon, 20 Feb 2017 12:17:02 -0600
+Message-ID: <20170220181702.GB22981@octiron.msp.redhat.com>
 References: <1487107154-24883-1-git-send-email-keith.busch@intel.com>
-	<1487107154-24883-2-git-send-email-keith.busch@intel.com>
+	<20170215145617.GA4241@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1487107154-24883-2-git-send-email-keith.busch@intel.com>
+In-Reply-To: <20170215145617.GA4241@infradead.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,128 +19,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Keith Busch <keith.busch@intel.com>
-Cc: dm-devel@redhat.com
+To: Christoph Hellwig <hch@infradead.org>
+Cc: Keith Busch <keith.busch@intel.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Feb 14, 2017 at 04:19:14PM -0500, Keith Busch wrote:
-> Signed-off-by: Keith Busch <keith.busch@intel.com>
-> ---
-> Pat of this is dependent on udev updates. Pull request sent to systemd here:
+On Wed, Feb 15, 2017 at 06:56:17AM -0800, Christoph Hellwig wrote:
+> On Tue, Feb 14, 2017 at 04:19:13PM -0500, Keith Busch wrote:
+> > These devices are mulitpath capable, and have been able to stack with
+> > dm-mpath since kernel 4.2.
 > 
->   https://github.com/systemd/systemd/pull/5348
-> 
-> Can always add that line by hand in the mean time.
-> 
->  libmultipath/discovery.c | 36 ++++++++++++++++++++++++++++++++++++
->  libmultipath/hwtable.c   |  9 +++++++++
->  libmultipath/structs.h   |  1 +
->  3 files changed, 46 insertions(+)
-> 
-> diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-> index d1aec31..db7b04a 100644
-> --- a/libmultipath/discovery.c
-> +++ b/libmultipath/discovery.c
-> @@ -1187,6 +1187,37 @@ scsi_sysfs_pathinfo (struct path * pp, vector hwtable)
->  }
->  
->  static int
-> +nvme_sysfs_pathinfo (struct path * pp, vector hwtable)
-> +{
-> +	struct udev_device *parent, *nvme = NULL;
-> +
-> +	parent = pp->udev;
-> +	while (parent) {
-> +		const char *subsys = udev_device_get_subsystem(parent);
-> +
-> +		if (subsys && !strncmp(subsys, "nvme", 4)) {
-> +			nvme = parent;
-> +			break;
-> +		}
-> +		parent = udev_device_get_parent(parent);
-> +	}
-> +	if (!nvme)
-> +		return 1;
-> +
-> +	snprintf(pp->vendor_id, SCSI_VENDOR_SIZE, "NVME");
-> +	snprintf(pp->product_id, SCSI_PRODUCT_SIZE, "%s", udev_device_get_sysattr_value(nvme, "model"));
-> +	snprintf(pp->serial, SERIAL_SIZE, "%s", udev_device_get_sysattr_value(nvme, "serial"));
-> +	snprintf(pp->rev, SCSI_REV_SIZE, "%s", udev_device_get_sysattr_value(nvme, "firmware_rev"));
-> +	snprintf(pp->wwid, WWID_SIZE, "%s", udev_device_get_sysattr_value(pp->udev, "wwid"));
+> Can we make this conditional on something?  I have native NVMe
+> multipathing almost ready for the next merge window which is a lot easier
+> to use and faster than dm.  So I don't want us to be locked into this
+> mode just before that.
 
-With your udev rules change, you shouldn't need to set the wwid here. It
-should just get dealt with by the get_uid call in pathinfo (or with
-the new uevent merging code, before multipathd ever calls pathinfo).
+It seems to me that it already is conditional. Keith just made
+multipath-tools default to using NVMe devices. If you don't want it to,
+you can add them back to the blacklist.
 
-Otherwise, it looks good to me.
+blacklist {
+	devnode "^nvme[0-9]"
+}
+
+Just like you could turn it on before by overriding the blacklist
+(except that it wouldn't work without the device handler fix and the
+rest of Keith's code to setup NVMe devices correctly, which I trust is
+unobjectionable).
 
 -Ben
 
-> +
-> +	condlog(3, "%s: vendor:%s product:%s serial:%s rev:%s wwid:%s", pp->dev,
-> +		pp->vendor_id, pp->product_id, pp->serial, pp->rev, pp->wwid);
-> +	pp->hwe = find_hwe(hwtable, pp->vendor_id, pp->product_id, NULL);
-> +
-> +	return 0;
-> +}
-> +
-> +static int
->  rbd_sysfs_pathinfo (struct path * pp, vector hwtable)
->  {
->  	sprintf(pp->vendor_id, "Ceph");
-> @@ -1405,6 +1436,8 @@ sysfs_pathinfo(struct path * pp, vector hwtable)
->  		pp->bus = SYSFS_BUS_SCSI;
->  	if (!strncmp(pp->dev,"rbd", 3))
->  		pp->bus = SYSFS_BUS_RBD;
-> +	if (!strncmp(pp->dev,"nvme", 4))
-> +		pp->bus = SYSFS_BUS_NVME;
->  
->  	if (pp->bus == SYSFS_BUS_UNDEF)
->  		return 0;
-> @@ -1420,6 +1453,9 @@ sysfs_pathinfo(struct path * pp, vector hwtable)
->  	} else if (pp->bus == SYSFS_BUS_RBD) {
->  		if (rbd_sysfs_pathinfo(pp, hwtable))
->  			return 1;
-> +	} else if (pp->bus == SYSFS_BUS_NVME) {
-> +		if (nvme_sysfs_pathinfo(pp, hwtable))
-> +			return 1;
->  	}
->  	return 0;
->  }
-> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-> index f5a5f7b..c55998a 100644
-> --- a/libmultipath/hwtable.c
-> +++ b/libmultipath/hwtable.c
-> @@ -1073,6 +1073,15 @@ static struct hwentry default_hw[] = {
->  		.prio_name     = PRIO_ALUA,
->  		.no_path_retry = 30,
->  	},
-> +	/*
-> +	 * Generic NVMe devices
-> +	 */
-> +	{
-> +		.vendor	       = "NVME",
-> +		.product       = ".*",
-> +		.uid_attribute = "ID_WWN",
-> +		.checker_name  = DIRECTIO,
-> +	},
->  #if 0
->  	/*
->  	 * Copy this TEMPLATE to add new hardware.
-> diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-> index 6edd927..dfd65ae 100644
-> --- a/libmultipath/structs.h
-> +++ b/libmultipath/structs.h
-> @@ -53,6 +53,7 @@ enum sysfs_buses {
->  	SYSFS_BUS_CCW,
->  	SYSFS_BUS_CCISS,
->  	SYSFS_BUS_RBD,
-> +	SYSFS_BUS_NVME,
->  };
->  
->  enum pathstates {
-> -- 
-> 2.5.5
 > 
 > --
 > dm-devel mailing list
