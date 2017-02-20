@@ -1,62 +1,117 @@
-From: Milan Broz <gmazyland@gmail.com>
-Subject: Re: [PATCH v3] dm: switch dm-verity to async hash crypto API
-Date: Mon, 20 Feb 2017 13:51:24 +0100
-Message-ID: <1e21d973-b345-54a9-8115-cc3e30364051@gmail.com>
-References: <1487508367-16036-1-git-send-email-gilad@benyossef.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: sync valgrind.h with 3.12
+	upstream
+Date: Mon, 20 Feb 2017 14:37:30 +0100
+Message-ID: <20170220133730.3535-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <1487508367-16036-1-git-send-email-gilad@benyossef.com>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Gilad Ben-Yossef <gilad@benyossef.com>, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, MIKE Snitzer <snitzer@redhat.com>
-Cc: linux-crypto@vger.kernel.org, gilad.benyossef@arm.com, Ofir Drang <ofir.drang@arm.com>, Eric Biggers <ebiggers3@gmail.com>, =?UTF-8?B?T25kcmVqIE1vc27DocSNZWs=?= <omosnacek+linux-crypto@gmail.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Cc: Bart Van Assche <bart.vanassche@sandisk.com>, device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-On 02/19/2017 01:46 PM, Gilad Ben-Yossef wrote:
-> Use of the synchronous digest API limits dm-verity to using pure
-> CPU based algorithm providers and rules out the use of off CPU
-> algorithm providers which are normally asynchronous by nature,
-> potentially freeing CPU cycles.
-> 
-> This can reduce performance per Watt in situations such as during
-> boot time when a lot of concurrent file accesses are made to the
-> protected volume.
-> 
-> Move DM_VERITY to the asynchronous hash API.
-> 
-> Signed-off-by: Gilad Ben-Yossef <gilad@benyossef.com>
-> CC: Eric Biggers <ebiggers3@gmail.com>
-> CC: Ondrej Mosnáček <omosnacek+linux-crypto@gmail.com>
-> CC: Milan Broz <gmazyland@gmail.com>
-> ---
-> 
-> The patch was tested on an Armv7 based dual core Zynq ZC706 development
-> board with SHA256-asm, SHA256-neon synchronous providers with no visible
-> degradation of performance, with cryptd based asynchronous versions of the 
-> same and with an off tree Arm CryptoCell asynchronous provider.
-> 
-> Changes from v2:
-> 
-> - Use completion to potentially wait also on crypto_ahash_init() as it
->   may finish asynchronously as well in some drivers, such as cryptd, as
->   discovered by Milan Broz.
+Cc: Bart Van Assche <bart.vanassche@sandisk.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ third-party/valgrind/valgrind.h | 40 +++++++++++++++++++++++++++++++++++++---
+ 1 file changed, 37 insertions(+), 3 deletions(-)
 
-This version survived my simple veritysetup test (in cryptsetup package)
-with forced async path so I think it is ok for 4.12 queue...
-
-Thanks,
-Milan
-
-
-> - Use sg_init_one() where apropriate as pointed out by Milan Broz.
-> 
-> Changes from v1:
-> 
-> - Use a 0 mask to allocate crypto alg indicating we welcome async algo 
->   providers, as suggested by Ondrej Mosnáček.
-> - Fix use of un-initialized completion when using async provider for IO
->   blocks hashing
-> - Pass flag indicating we are OK with crypto provider backlog
-> - Re-factor checking for need to wait into a common function
-> 
+diff --git a/third-party/valgrind/valgrind.h b/third-party/valgrind/valgrind.h
+index 4b8ef75..6892007 100644
+--- a/third-party/valgrind/valgrind.h
++++ b/third-party/valgrind/valgrind.h
+@@ -89,7 +89,7 @@
+         || (__VALGRIND_MAJOR__ == 3 && __VALGRIND_MINOR__ >= 6))
+ */
+ #define __VALGRIND_MAJOR__    3
+-#define __VALGRIND_MINOR__    11
++#define __VALGRIND_MINOR__    12
+ 
+ 
+ #include <stdarg.h>
+@@ -946,7 +946,7 @@ typedef
+                      "move %0, $11\n\t"     /*result*/            \
+                      : "=r" (_zzq_result)                         \
+                      : "r" (_zzq_default), "r" (&_zzq_args[0])    \
+-                     : "$11", "$12");                             \
++                     : "$11", "$12", "memory");                   \
+     _zzq_result;                                                  \
+   })
+ 
+@@ -1017,7 +1017,7 @@ typedef
+                          "move %0, $11\n\t"     /*result*/          \
+                          : "=r" (_zzq_result)                       \
+                          : "r" (_zzq_default), "r" (&_zzq_args[0])  \
+-                         : "$11", "$12");                           \
++                         : "$11", "$12", "memory");                 \
+     _zzq_result;                                                    \
+   })
+ 
+@@ -6759,6 +6759,7 @@ __inline
+ VALGRIND_PRINTF(const char *format, ...)
+ {
+ #if defined(NVALGRIND)
++   if (format) *(volatile const char *)format;   /* avoid compiler warning */
+    return 0;
+ #else /* NVALGRIND */
+ #if defined(_MSC_VER) || defined(__MINGW64__)
+@@ -6797,6 +6798,7 @@ __inline
+ VALGRIND_PRINTF_BACKTRACE(const char *format, ...)
+ {
+ #if defined(NVALGRIND)
++   if (format) *(volatile const char *)format;   /* avoid compiler warning */
+    return 0;
+ #else /* NVALGRIND */
+ #if defined(_MSC_VER) || defined(__MINGW64__)
+@@ -7007,6 +7009,38 @@ VALGRIND_PRINTF_BACKTRACE(const char *format, ...)
+     VALGRIND_DO_CLIENT_REQUEST_STMT(VG_USERREQ__CREATE_MEMPOOL,   \
+                                     pool, rzB, is_zeroed, 0, 0)
+ 
++/* Create a memory pool with some flags specifying extended behaviour.
++   When flags is zero, the behaviour is identical to VALGRIND_CREATE_MEMPOOL.
++   
++   The flag VALGRIND_MEMPOOL_METAPOOL specifies that the pieces of memory 
++   associated with the pool using VALGRIND_MEMPOOL_ALLOC  will be used
++   by the application as superblocks to dole out MALLOC_LIKE blocks using
++   VALGRIND_MALLOCLIKE_BLOCK. In other words, a meta pool is a "2 levels"
++   pool : first level is the blocks described by VALGRIND_MEMPOOL_ALLOC.
++   The second level blocks are described using VALGRIND_MALLOCLIKE_BLOCK.
++   Note that the association between the pool and the second level blocks
++   is implicit : second level blocks will be located inside first level
++   blocks. It is necessary to use the VALGRIND_MEMPOOL_METAPOOL flag
++   for such 2 levels pools, as otherwise valgrind will detect overlapping
++   memory blocks, and will abort execution (e.g. during leak search).
++
++   Such a meta pool can also be marked as an 'auto free' pool using the flag
++   VALGRIND_MEMPOOL_AUTO_FREE, which must be OR-ed together with the
++   VALGRIND_MEMPOOL_METAPOOL. For an 'auto free' pool, VALGRIND_MEMPOOL_FREE
++   will automatically free the second level blocks that are contained
++   inside the first level block freed with VALGRIND_MEMPOOL_FREE.
++   In other words, calling VALGRIND_MEMPOOL_FREE will cause implicit calls
++   to VALGRIND_FREELIKE_BLOCK for all the second level blocks included
++   in the first level block.
++   Note: it is an error to use the VALGRIND_MEMPOOL_AUTO_FREE flag
++   without the VALGRIND_MEMPOOL_METAPOOL flag.
++*/
++#define VALGRIND_MEMPOOL_AUTO_FREE  1
++#define VALGRIND_MEMPOOL_METAPOOL   2
++#define VALGRIND_CREATE_MEMPOOL_EXT(pool, rzB, is_zeroed, flags)        \
++   VALGRIND_DO_CLIENT_REQUEST_STMT(VG_USERREQ__CREATE_MEMPOOL,          \
++                                   pool, rzB, is_zeroed, flags, 0)
++
+ /* Destroy a memory pool. */
+ #define VALGRIND_DESTROY_MEMPOOL(pool)                            \
+     VALGRIND_DO_CLIENT_REQUEST_STMT(VG_USERREQ__DESTROY_MEMPOOL,  \
+-- 
+2.11.1
