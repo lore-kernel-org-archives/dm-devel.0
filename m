@@ -1,17 +1,11 @@
-From: <tang.junhui@zte.com.cn>
-Subject: Re:
-	=?utf-8?b?562U5aSNOiBSZTogIFtQQVRDSF0gbXVsdGlwYXRoLXRv?=
-	=?utf-8?q?ols=3A_improve_processing_efficiency_for_addition_and_de?=
-	=?utf-8?q?letion_of_multipath_devices?=
-Date: Tue, 21 Feb 2017 13:34:10 +0800 (CST)
-Message-ID: <201702211334103169589@zte.com.cn>
+From: Muneendra Kumar M <mmandala@Brocade.com>
+Subject: scsi timeout on multipath
+Date: Tue, 21 Feb 2017 13:27:48 +0000
+Message-ID: <b7f976b8e7df4dc680fd85699c09b22f@BRMWP-EXMB12.corp.brocade.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
-	boundary="=====_001_next====="
+Content-Type: multipart/mixed; boundary="===============3681096063248536025=="
 Return-path: <dm-devel-bounces@redhat.com>
-References: 1487228041-1228-1-git-send-email-tang.junhui@zte.com.cn,
-	1487279855.4629.8.camel@suse.com, 201702171124101816133@zte.com.cn,
-	1487588902.4446.7.camel@suse.com
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,206 +15,253 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: mwilck@suse.com
-Cc: dm-devel@redhat.com
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-
-
---=====_001_next=====
-Content-Type: multipart/related;
-	boundary="=====_002_next====="
-
-
---=====_002_next=====
+--===============3681096063248536025==
+Content-Language: en-US
 Content-Type: multipart/alternative;
-	boundary="=====_003_next====="
+	boundary="_000_b7f976b8e7df4dc680fd85699c09b22fBRMWPEXMB12corpbrocadec_"
+
+--_000_b7f976b8e7df4dc680fd85699c09b22fBRMWPEXMB12corpbrocadec_
+Content-Type: text/plain; charset="us-ascii"
+
+Hi ,
+On a multipath network if we see a scsi timeout  on a particular path at what instance we will mark the path as failed.
+
+Whether we will mark the path as failed when SCSI mid level failed to attempts error recovery by doing the below steps.
+
+*        the SCSI command that has timed out is aborted
+
+*        a SCSI device reset is attempted
+
+*        a SCSI bus reset is attempted. Note this may have an adverse effect on other devices sharing that SCSI bus.
+
+*        a SCSI host (bus adapter) reset is attempted. This is an attempt to re-initialize the adapter card associated with the SCSI device that has the timed out command.
+Any info here will help me a lot.
+
+Regards,
+Muneendra.
 
 
---=====_003_next=====
-Content-Type: text/plain;
-	charset="UTF-8"
-Content-Transfer-Encoding: base64 
+--_000_b7f976b8e7df4dc680fd85699c09b22fBRMWPEXMB12corpbrocadec_
+Content-Type: text/html; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 
-SGVsbG8gTWFydGluLA0KDQoNCg0KDQoNClRoaXMgZXhtYXBsZSBzaG93cyB3aHkgd2UgbmVlZCAg
-dG8gc3RvcCBtZXJnaW5nLA0KDQpZZXMsICBJdCdzIGZpbmUgc2luY2Ugd2UgaGF2ZSAic3RvcCBt
-ZXJnaW5nIiBpbiBjdXJyZW50IGNvZGUuDQoNCg0KDQoNClJlZ2FyZHNUYW5nDQoNCg0KDQoNCg0K
-DQoNCg0KDQoNCg0KDQrljp/lp4vpgq7ku7YNCg0KDQoNCuWPkeS7tuS6uu+8miDvvJxtd2lsY2tA
-c3VzZS5jb23vvJ4NCuaUtuS7tuS6uu+8miDvvJxkbS1kZXZlbEByZWRoYXQuY29t77yeDQrml6Ug
-5pyfIO+8mjIwMTflubQwMuaciDIw5pelIDE5OjI0DQrkuLsg6aKYIO+8mlJlOiBbZG0tZGV2ZWxd
-IOetlOWkjTogUmU6ICBbUEFUQ0hdIG11bHRpcGF0aC10b29sczogaW1wcm92ZSBwcm9jZXNzaW5n
-IGVmZmljaWVuY3kgZm9yIGFkZGl0aW9uIGFuZCBkZWxldGlvbiBvZiBtdWx0aXBhdGggZGV2aWNl
-cw0KDQoNCg0KDQoNCkhlbGxvIFRhbmcsDQoNCu+8niBJbiB0aGUgc2Vjb25kIGNhc2UsIHdlIGtu
-b3cgYWxsIGV2ZW50cyBpbiB0aGUgc2VxdWVuY2UgaGF2ZSB0aGUNCu+8niBzYW1lDQrvvJ4g77ye
-IFdXSUQgaW4gdGhpcyBjYXNlIEkgdGhpbmsgaXQgd291bGQgYmUgc2FmZSB0byBmaWx0ZXIgYXdh
-eSAicmVtb3ZlIg0K77yeIO+8niBldmVudHMgYnkgc3Vic2VxdWVudCAiYWRkIiBldmVudHMsIGVu
-ZGluZyB1cCB3aXRoICJhZGQgcGF0aDF8IGFkZA0K77yeIO+8niBwYXRoMnwgcmVtb3ZlIHBhdGgz
-Ii4gQnV0IEkgbWF5IGJlIG92ZXJsb29raW5nIHNvbWV0aGluZyBoZXJlLg0K77yeIA0K77yeIO+8
-niBUaGUgZGFuZ2Vyb3VzIHRoaW5nIGlmIHlvdSBoYXZlIHNpbXVsdGFuZW91cyByZW1vdmUgYW5k
-IGFkZCBldmVudHMNCu+8niBmb3INCu+8niDvvJ4gdGhlIHNhbWUgTFVOIGlzIHRoYXQgcHJvY2Vz
-c2luZyB0aGUgImFkZCIgZXZlbnRzIGlzIGxpa2VseSB0byBmYWlsDQrvvJ4gaW4NCu+8niDvvJ4g
-ZG9tYXAoKS4gSWYgeW91IGdldCAiYWRkIHBhdGgxIHwgcmVtb3ZlIHBhdGgyIiwgb25jZSB5b3Ug
-cHJvY2Vzcw0K77yeICJhZGQNCu+8niDvvJ4gcGF0aDEiLCAicGF0aDIiIG1heSBub3QgZXhpc3Qg
-aW4gdGhlIGtlcm5lbCBhbnkgbW9yZSwgYW5kICJkb21hcCINCu+8niB3aWxsDQrvvJ4g77yeIGZh
-aWwgaWYgeW91IHRyeSB0byBzZXQgdXAgYm90aCB5b3UgbWF5IGVuZCB1cCByZW1vdmluZyB0aGUg
-bWFwDQrvvJ4g77yeIGNvbXBsZXRlbHkuIElNSE8gdGhlIG9ubHkgc2FmZSB3YXkgdG8gcHJvY2Vz
-cyBldmVudHMgaW4gdGhpcw0K77yeIHNpdHVhdGlvbg0K77yeIO+8niBpcyB0byBtZXJnZSB0aGUg
-ZXZlbnRzIGludG8gYSBzaW5nbGUgZG9tYXAoKSBjYWxsLg0K77yeIA0K77yeICJjYXNlIDI6IHJl
-bW92ZSBwYXRoMSB8YWRkIHBhdGgxIHxyZW1vdmUgcGF0aDIgfGFkZCBwYXRoMiB8cmVtb3ZlDQrv
-vJ4gcGF0aDMiDQrvvJ4gU2luY2UgdGhlIG1lcmdlcmluZyBpcyBzdGFydGluZyBmcm9tIHRoZSBs
-YXRlc3QgdG8gdGhlIGVhcmllc3QNCu+8niB1ZXZlbnQsICBzbyB0aGUNCu+8niB1ZXZlbnQgInJl
-bW92ZSBwYXRoMyIgdHJ5IHRvIG1lcmdlciBvdGhlciB1ZXZlbnRzLCBpZiB3ZSBkbyBub3Qgc3Rv
-cA0K77yeIG1lcmdlcmluZywgDQrvvJ4gdWV2ZW50ICJyZW1vdmUgcGF0aDMiIHdvdWxkIG1lcmdl
-ICB1ZXZlbnQgInJlbW92ZSBwYXRoMiIgYW5kIHVldmVudCANCu+8niAicmVtb3ZlIHBhdGgxIi4g
-VWV2ZW50ICJhZGQgIHBhdGgyIiB3b3VsZCBtZXJnZSAiYWRkICBwYXRoMSIuIA0K77yeIFRoZSBy
-ZXN1bHQgaXMgdGhhdCB3ZSBnZXQgdHdvIG1lcmdlZCB1ZXZlbnRzOg0K77yeIDEpIGFkZCBwYXRo
-MiwgcGF0aDENCu+8niAyKSByZW1vdmUgcGF0aDMsIHBhdGgyLCBwYXRoMSANCg0K77yeIFRoZW4g
-d2UgcHJvY2VzcyB0aGUgbWVyZ2VkIHVldmVudHMgZnJvbSB0aGUgZWFybGllciB0byBsYXRlciwg
-V2UgdHJ5DQrvvJ4gdG8g4oCdYWRkIA0K77yeIHBhdGgyIHBhdGgx4oCcLCBhbmQgd2Ugd291bGQg
-Y3JlYXRlIG9yIHJlbG9hZCBhIG1hcCBkZXZpY2Ugd2l0aCBwYXRoMQ0K77yeIGFuZCBwYXRoMi4g
-DQrvvJ4gTmV4dCB3ZSBwcm9jZXNzIOKAnSByZW1vdmUgcGF0aDMsIHBhdGgyLCBwYXRoMeKAnCwg
-c28gcGF0aDEsIHBhdGgyIGFuZA0K77yeIHBhdGgzIGFyZSANCu+8niBhbGwgcmVtb3ZlZCBmcm9t
-IHRoZSBtYXAgZGV2aWNlLCB0aGlzIGlzIHdyb25nLCAgdGhlIGNvcnJlY3QgcmVzdWx0DQrvvJ4g
-aXMgdGhhdCB0aGUgcGF0aDENCu+8niBhbmQgcGF0aDIgc2hvdWxkIGJlIHN0aWxsIGluIHRoZSBt
-YXAgZGV2aWNlLg0KDQpJIGRvbid0IHVuZGVyc3RhbmQgdGhhdC4gVGhpcyB3b3VsZCBtZWFuIHRo
-YXQgeW91J2QgcmUtb3JkZXIgInJlbW92ZQ0KcGF0aDEgfCBhZGQgcGF0aDEiIGludG8gImFkZCBw
-YXRoMXwgcmVtb3ZlIHBhdGgxIiwgYW5kIHRoZSBzYW1lIGZvcg0KcGF0aDIuIFRoYXQgbWF5IG9i
-dmlvdXNseSBuZXZlciBoYXBwZW4uIFlvdXIgInN0b3AgbWVyZ2luZyIgbG9naWMNCmZvcmJpZHMg
-aXQsIGFuZCB0aGF0J3MgZmluZSBmb3IgbWUgZm9yIG5vdy4NCg0KUmVnYXJkcw0KTWFydGluDQoN
-Ci0tIA0KRHIuIE1hcnRpbiBXaWxjayDvvJxtd2lsY2tAc3VzZS5jb23vvJ4sIFRlbC4gKzQ5ICgw
-KTkxMSA3NDA1MyAyMTA3DQpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIs
-IEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24NCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQ0K
-DQotLQ0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0DQpkbS1kZXZlbEByZWRoYXQuY29tDQpodHRwczov
-L3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+<html xmlns:v=3D"urn:schemas-microsoft-com:vml" xmlns:o=3D"urn:schemas-micr=
+osoft-com:office:office" xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
+xmlns:m=3D"http://schemas.microsoft.com/office/2004/12/omml" xmlns=3D"http:=
+//www.w3.org/TR/REC-html40">
+<head>
+<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dus-ascii"=
+>
+<meta name=3D"Generator" content=3D"Microsoft Word 15 (filtered medium)">
+<style><!--
+/* Font Definitions */
+@font-face
+	{font-family:Wingdings;
+	panose-1:5 0 0 0 0 0 0 0 0 0;}
+@font-face
+	{font-family:"Cambria Math";
+	panose-1:2 4 5 3 5 4 6 3 2 4;}
+@font-face
+	{font-family:Calibri;
+	panose-1:2 15 5 2 2 2 4 3 2 4;}
+/* Style Definitions */
+p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{margin:0in;
+	margin-bottom:.0001pt;
+	font-size:11.0pt;
+	font-family:"Calibri",sans-serif;}
+a:link, span.MsoHyperlink
+	{mso-style-priority:99;
+	color:#0563C1;
+	text-decoration:underline;}
+a:visited, span.MsoHyperlinkFollowed
+	{mso-style-priority:99;
+	color:#954F72;
+	text-decoration:underline;}
+p
+	{mso-style-priority:99;
+	mso-margin-top-alt:auto;
+	margin-right:0in;
+	mso-margin-bottom-alt:auto;
+	margin-left:0in;
+	font-size:12.0pt;
+	font-family:"Times New Roman",serif;}
+span.EmailStyle17
+	{mso-style-type:personal;
+	font-family:"Calibri",sans-serif;
+	color:windowtext;}
+span.EmailStyle18
+	{mso-style-type:personal-reply;
+	font-family:"Calibri",sans-serif;
+	color:#1F497D;}
+.MsoChpDefault
+	{mso-style-type:export-only;
+	font-size:10.0pt;}
+@page WordSection1
+	{size:8.5in 11.0in;
+	margin:1.0in 1.0in 1.0in 1.0in;}
+div.WordSection1
+	{page:WordSection1;}
+/* List Definitions */
+@list l0
+	{mso-list-id:930167181;
+	mso-list-template-ids:292036308;}
+@list l0:level1
+	{mso-level-number-format:bullet;
+	mso-level-text:\F0B7;
+	mso-level-tab-stop:.5in;
+	mso-level-number-position:left;
+	text-indent:-.25in;
+	mso-ansi-font-size:10.0pt;
+	font-family:Symbol;}
+@list l0:level2
+	{mso-level-number-format:bullet;
+	mso-level-text:o;
+	mso-level-tab-stop:1.0in;
+	mso-level-number-position:left;
+	text-indent:-.25in;
+	mso-ansi-font-size:10.0pt;
+	font-family:"Courier New";
+	mso-bidi-font-family:"Times New Roman";}
+@list l0:level3
+	{mso-level-number-format:bullet;
+	mso-level-text:\F0A7;
+	mso-level-tab-stop:1.5in;
+	mso-level-number-position:left;
+	text-indent:-.25in;
+	mso-ansi-font-size:10.0pt;
+	font-family:Wingdings;}
+@list l0:level4
+	{mso-level-number-format:bullet;
+	mso-level-text:\F0A7;
+	mso-level-tab-stop:2.0in;
+	mso-level-number-position:left;
+	text-indent:-.25in;
+	mso-ansi-font-size:10.0pt;
+	font-family:Wingdings;}
+@list l0:level5
+	{mso-level-number-format:bullet;
+	mso-level-text:\F0A7;
+	mso-level-tab-stop:2.5in;
+	mso-level-number-position:left;
+	text-indent:-.25in;
+	mso-ansi-font-size:10.0pt;
+	font-family:Wingdings;}
+@list l0:level6
+	{mso-level-number-format:bullet;
+	mso-level-text:\F0A7;
+	mso-level-tab-stop:3.0in;
+	mso-level-number-position:left;
+	text-indent:-.25in;
+	mso-ansi-font-size:10.0pt;
+	font-family:Wingdings;}
+@list l0:level7
+	{mso-level-number-format:bullet;
+	mso-level-text:\F0A7;
+	mso-level-tab-stop:3.5in;
+	mso-level-number-position:left;
+	text-indent:-.25in;
+	mso-ansi-font-size:10.0pt;
+	font-family:Wingdings;}
+@list l0:level8
+	{mso-level-number-format:bullet;
+	mso-level-text:\F0A7;
+	mso-level-tab-stop:4.0in;
+	mso-level-number-position:left;
+	text-indent:-.25in;
+	mso-ansi-font-size:10.0pt;
+	font-family:Wingdings;}
+@list l0:level9
+	{mso-level-number-format:bullet;
+	mso-level-text:\F0A7;
+	mso-level-tab-stop:4.5in;
+	mso-level-number-position:left;
+	text-indent:-.25in;
+	mso-ansi-font-size:10.0pt;
+	font-family:Wingdings;}
+ol
+	{margin-bottom:0in;}
+ul
+	{margin-bottom:0in;}
+--></style><!--[if gte mso 9]><xml>
+<o:shapedefaults v:ext=3D"edit" spidmax=3D"1026" />
+</xml><![endif]--><!--[if gte mso 9]><xml>
+<o:shapelayout v:ext=3D"edit">
+<o:idmap v:ext=3D"edit" data=3D"1" />
+</o:shapelayout></xml><![endif]-->
+</head>
+<body lang=3D"EN-US" link=3D"#0563C1" vlink=3D"#954F72">
+<div class=3D"WordSection1">
+<p class=3D"MsoNormal"><span style=3D"color:#1F497D">Hi ,<o:p></o:p></span>=
+</p>
+<p class=3D"MsoNormal"><span style=3D"color:#1F497D">On a multipath network=
+ if we see a scsi timeout&nbsp; on a particular path at what instance we wi=
+ll mark the path as failed.<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"color:#1F497D"><o:p>&nbsp;</o:p></spa=
+n></p>
+<p class=3D"MsoNormal"><span style=3D"color:#1F497D">Whether we will mark t=
+he path as failed when
+</span><span style=3D"color:#1F497D">SCSI mid level failed to attempts erro=
+r recovery by doing the below steps.<o:p></o:p></span></p>
+<p style=3D"margin-left:.5in;text-indent:-.25in;mso-list:l0 level1 lfo1;bac=
+kground:white">
+<![if !supportLists]><span style=3D"font-size:10.0pt;font-family:Symbol;col=
+or:#1F497D"><span style=3D"mso-list:Ignore">&middot;<span style=3D"font:7.0=
+pt &quot;Times New Roman&quot;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span></span></span><![endif]><span style=3D"font-size:11.0pt;font-family:=
+&quot;Calibri&quot;,sans-serif;color:#1F497D">the SCSI command that has tim=
+ed out is aborted&nbsp;<o:p></o:p></span></p>
+<p style=3D"margin-left:.5in;text-indent:-.25in;mso-list:l0 level1 lfo1;bac=
+kground:white">
+<![if !supportLists]><span style=3D"font-size:10.0pt;font-family:Symbol;col=
+or:#1F497D"><span style=3D"mso-list:Ignore">&middot;<span style=3D"font:7.0=
+pt &quot;Times New Roman&quot;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span></span></span><![endif]><span style=3D"font-size:11.0pt;font-family:=
+&quot;Calibri&quot;,sans-serif;color:#1F497D">a SCSI device reset is attemp=
+ted<o:p></o:p></span></p>
+<p style=3D"margin-left:.5in;text-indent:-.25in;mso-list:l0 level1 lfo1;bac=
+kground:white">
+<![if !supportLists]><span style=3D"font-size:10.0pt;font-family:Symbol;col=
+or:#1F497D"><span style=3D"mso-list:Ignore">&middot;<span style=3D"font:7.0=
+pt &quot;Times New Roman&quot;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span></span></span><![endif]><span style=3D"font-size:11.0pt;font-family:=
+&quot;Calibri&quot;,sans-serif;color:#1F497D">a SCSI bus reset is attempted=
+. Note this may have an adverse effect on other devices sharing that SCSI b=
+us.<o:p></o:p></span></p>
+<p style=3D"margin-left:.5in;text-indent:-.25in;mso-list:l0 level1 lfo1;bac=
+kground:white">
+<![if !supportLists]><span style=3D"font-size:10.0pt;font-family:Symbol;col=
+or:#1F497D"><span style=3D"mso-list:Ignore">&middot;<span style=3D"font:7.0=
+pt &quot;Times New Roman&quot;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span></span></span><![endif]><span style=3D"font-size:11.0pt;font-family:=
+&quot;Calibri&quot;,sans-serif;color:#1F497D">a SCSI host (bus adapter) res=
+et is attempted. This is an attempt to re-initialize the adapter card assoc=
+iated with the SCSI device that has the timed
+ out command.<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"color:#1F497D">Any info here will hel=
+p me a lot.<o:p></o:p></span></p>
+<p class=3D"MsoNormal"><span style=3D"color:#1F497D"><o:p>&nbsp;</o:p></spa=
+n></p>
+<p class=3D"MsoNormal"><span style=3D"color:#1F497D">Regards,<o:p></o:p></s=
+pan></p>
+<p class=3D"MsoNormal"><span style=3D"color:#1F497D">Muneendra.<o:p></o:p><=
+/span></p>
+<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
+</div>
+</body>
+</html>
+
+--_000_b7f976b8e7df4dc680fd85699c09b22fBRMWPEXMB12corpbrocadec_--
 
 
---=====_003_next=====
-Content-Type: text/html ;
-	charset="UTF-8"
-Content-Transfer-Encoding: base64
-
-PGRpdiBjbGFzcz0iemNvbnRlbnRSb3ciPiA8cD5IZWxsbyZuYnNwOzxzcGFuIHN0eWxlPSJsaW5l
-LWhlaWdodDogMjFweDsiPk1hcnRpbiw8L3NwYW4+PGJyPjwvcD48cD48c3BhbiBzdHlsZT0ibGlu
-ZS1oZWlnaHQ6IDIxcHg7Ij48YnI+PC9zcGFuPjwvcD48cD48c3BhbiBzdHlsZT0ibGluZS1oZWln
-aHQ6IDIxcHg7Ij5UaGlzIGV4bWFwbGUgc2hvd3Mgd2h5IHdlIG5lZWQgPHNwYW4gc3R5bGU9Imxp
-bmUtaGVpZ2h0OiAyMXB4OyI+Jm5ic3A7dG8gc3RvcCZuYnNwO21lcmdpbmcsPC9zcGFuPjwvc3Bh
-bj48L3A+PHA+PHNwYW4gc3R5bGU9ImxpbmUtaGVpZ2h0OiAyMXB4OyI+PHNwYW4gc3R5bGU9Imxp
-bmUtaGVpZ2h0OiAyMXB4OyI+WWVzLCZuYnNwOzxzcGFuIHN0eWxlPSJsaW5lLWhlaWdodDogMjFw
-eDsiPiZuYnNwO0l0J3MgZmluZSBzaW5jZSB3ZSBoYXZlICI8c3BhbiBzdHlsZT0ibGluZS1oZWln
-aHQ6IDIxcHg7Ij5zdG9wJm5ic3A7bWVyZ2luZzwvc3Bhbj4iIGluIGN1cnJlbnQgY29kZS48L3Nw
-YW4+PC9zcGFuPjwvc3Bhbj48L3A+PHA+PHNwYW4gc3R5bGU9ImxpbmUtaGVpZ2h0OiAyMXB4OyI+
-PHNwYW4gc3R5bGU9ImxpbmUtaGVpZ2h0OiAyMXB4OyI+PHNwYW4gc3R5bGU9ImxpbmUtaGVpZ2h0
-OiAyMXB4OyI+PGJyPjwvc3Bhbj48L3NwYW4+PC9zcGFuPjwvcD48cD48c3BhbiBzdHlsZT0ibGlu
-ZS1oZWlnaHQ6IDIxcHg7Ij5SZWdhcmRzPC9zcGFuPjxiciBzdHlsZT0id2hpdGUtc3BhY2U6IG5v
-cm1hbDsiPlRhbmc8L3A+PHA+PGJyPjwvcD48cD48YnI+PC9wPjxwPjxicj48L3A+PGRpdj48ZGl2
-IGNsYXNzPSJ6aGlzdG9yeVJvdyIgc3R5bGU9ImRpc3BsYXk6YmxvY2siPjxkaXYgY2xhc3M9Inpo
-aXN0b3J5RGVzIiBzdHlsZT0id2lkdGg6IDEwMCU7IGhlaWdodDogMjhweDsgbGluZS1oZWlnaHQ6
-IDI4cHg7IGJhY2tncm91bmQtY29sb3I6ICNFMEU1RTk7IGNvbG9yOiAjMTM4OEZGOyB0ZXh0LWFs
-aWduOiBjZW50ZXI7IiBsYW5ndWFnZS1kYXRhPSJIaXN0b3J5T3JnVHh0Ij7ljp/lp4vpgq7ku7Y8
-L2Rpdj48ZGl2IGlkPSJ6d3JpdGVIaXN0b3J5Q29udGFpbmVyIj48ZGl2IGNsYXNzPSJjb250cm9s
-LWdyb3VwIHpoaXN0b3J5UGFuZWwiPjxkaXYgY2xhc3M9InpoaXN0b3J5SGVhZGVyIiBzdHlsZT0i
-cGFkZGluZzogOHB4OyBiYWNrZ3JvdW5kLWNvbG9yOiAjRjVGNkY4OyI+PGRpdj48c3Ryb25nIGxh
-bmd1YWdlLWRhdGE9Ikhpc3RvcnlTZW5kZXJUeHQiPuWPkeS7tuS6uu+8mjwvc3Ryb25nPjxzcGFu
-IGNsYXNzPSJ6cmVhZFVzZXJOYW1lIj4g77ycbXdpbGNrQHN1c2UuY29t77yeOzwvc3Bhbj48L2Rp
-dj48ZGl2PjxzdHJvbmcgbGFuZ3VhZ2UtZGF0YT0iSGlzdG9yeVRPVHh0Ij7mlLbku7bkurrvvJo8
-L3N0cm9uZz48c3BhbiBjbGFzcz0ienJlYWRVc2VyTmFtZSIgc3R5bGU9ImRpc3BsYXk6IGlubGlu
-ZS1ibG9jazsiPiDvvJxkbS1kZXZlbEByZWRoYXQuY29t77yeOzwvc3Bhbj48L2Rpdj48ZGl2Pjxz
-dHJvbmcgbGFuZ3VhZ2UtZGF0YT0iSGlzdG9yeURhdGVUeHQiPuaXpSDmnJ8g77yaPC9zdHJvbmc+
-PHNwYW4gY2xhc3M9IiI+MjAxN+W5tDAy5pyIMjDml6UgMTk6MjQ8L3NwYW4+PC9kaXY+PGRpdj48
-c3Ryb25nIGxhbmd1YWdlLWRhdGE9Ikhpc3RvcnlTdWJqZWN0VHh0Ij7kuLsg6aKYIO+8mjwvc3Ry
-b25nPjxzcGFuIGNsYXNzPSJ6cmVhZFRpdGxlIj48c3Ryb25nPlJlOiBbZG0tZGV2ZWxdIOetlOWk
-jTogUmU6ICZuYnNwO1tQQVRDSF0gbXVsdGlwYXRoLXRvb2xzOiBpbXByb3ZlIHByb2Nlc3Npbmcg
-ZWZmaWNpZW5jeSBmb3IgYWRkaXRpb24gYW5kIGRlbGV0aW9uIG9mIG11bHRpcGF0aCBkZXZpY2Vz
-PC9zdHJvbmc+PC9zcGFuPjwvZGl2PjwvZGl2PjxwIGNsYXNzPSJ6aGlzdG9yeUNvbnRlbnQiPjxi
-cj48L3A+PGRpdj5IZWxsbyZuYnNwO1RhbmcsPGJyPjxicj7vvJ4mbmJzcDtJbiZuYnNwO3RoZSZu
-YnNwO3NlY29uZCZuYnNwO2Nhc2UsJm5ic3A7d2UmbmJzcDtrbm93Jm5ic3A7YWxsJm5ic3A7ZXZl
-bnRzJm5ic3A7aW4mbmJzcDt0aGUmbmJzcDtzZXF1ZW5jZSZuYnNwO2hhdmUmbmJzcDt0aGU8YnI+
-77yeJm5ic3A7c2FtZTxicj7vvJ4mbmJzcDvvvJ4mbmJzcDtXV0lEOyZuYnNwO2luJm5ic3A7dGhp
-cyZuYnNwO2Nhc2UmbmJzcDtJJm5ic3A7dGhpbmsmbmJzcDtpdCZuYnNwO3dvdWxkJm5ic3A7YmUm
-bmJzcDtzYWZlJm5ic3A7dG8mbmJzcDtmaWx0ZXImbmJzcDthd2F5Jm5ic3A7InJlbW92ZSI8YnI+
-77yeJm5ic3A777yeJm5ic3A7ZXZlbnRzJm5ic3A7YnkmbmJzcDtzdWJzZXF1ZW50Jm5ic3A7ImFk
-ZCImbmJzcDtldmVudHMsJm5ic3A7ZW5kaW5nJm5ic3A7dXAmbmJzcDt3aXRoJm5ic3A7ImFkZCZu
-YnNwO3BhdGgxfCZuYnNwO2FkZDxicj7vvJ4mbmJzcDvvvJ4mbmJzcDtwYXRoMnwmbmJzcDtyZW1v
-dmUmbmJzcDtwYXRoMyIuJm5ic3A7QnV0Jm5ic3A7SSZuYnNwO21heSZuYnNwO2JlJm5ic3A7b3Zl
-cmxvb2tpbmcmbmJzcDtzb21ldGhpbmcmbmJzcDtoZXJlLjxicj7vvJ4mbmJzcDs8YnI+77yeJm5i
-c3A777yeJm5ic3A7VGhlJm5ic3A7ZGFuZ2Vyb3VzJm5ic3A7dGhpbmcmbmJzcDtpZiZuYnNwO3lv
-dSZuYnNwO2hhdmUmbmJzcDtzaW11bHRhbmVvdXMmbmJzcDtyZW1vdmUmbmJzcDthbmQmbmJzcDth
-ZGQmbmJzcDtldmVudHM8YnI+77yeJm5ic3A7Zm9yPGJyPu+8niZuYnNwO++8niZuYnNwO3RoZSZu
-YnNwO3NhbWUmbmJzcDtMVU4mbmJzcDtpcyZuYnNwO3RoYXQmbmJzcDtwcm9jZXNzaW5nJm5ic3A7
-dGhlJm5ic3A7ImFkZCImbmJzcDtldmVudHMmbmJzcDtpcyZuYnNwO2xpa2VseSZuYnNwO3RvJm5i
-c3A7ZmFpbDxicj7vvJ4mbmJzcDtpbjxicj7vvJ4mbmJzcDvvvJ4mbmJzcDtkb21hcCgpLiZuYnNw
-O0lmJm5ic3A7eW91Jm5ic3A7Z2V0Jm5ic3A7ImFkZCZuYnNwO3BhdGgxJm5ic3A7fCZuYnNwO3Jl
-bW92ZSZuYnNwO3BhdGgyIiwmbmJzcDtvbmNlJm5ic3A7eW91Jm5ic3A7cHJvY2Vzczxicj7vvJ4m
-bmJzcDsiYWRkPGJyPu+8niZuYnNwO++8niZuYnNwO3BhdGgxIiwmbmJzcDsicGF0aDIiJm5ic3A7
-bWF5Jm5ic3A7bm90Jm5ic3A7ZXhpc3QmbmJzcDtpbiZuYnNwO3RoZSZuYnNwO2tlcm5lbCZuYnNw
-O2FueSZuYnNwO21vcmUsJm5ic3A7YW5kJm5ic3A7ImRvbWFwIjxicj7vvJ4mbmJzcDt3aWxsPGJy
-Pu+8niZuYnNwO++8niZuYnNwO2ZhaWwmbmJzcDtpZiZuYnNwO3lvdSZuYnNwO3RyeSZuYnNwO3Rv
-Jm5ic3A7c2V0Jm5ic3A7dXAmbmJzcDtib3RoOyZuYnNwO3lvdSZuYnNwO21heSZuYnNwO2VuZCZu
-YnNwO3VwJm5ic3A7cmVtb3ZpbmcmbmJzcDt0aGUmbmJzcDttYXA8YnI+77yeJm5ic3A777yeJm5i
-c3A7Y29tcGxldGVseS4mbmJzcDtJTUhPJm5ic3A7dGhlJm5ic3A7b25seSZuYnNwO3NhZmUmbmJz
-cDt3YXkmbmJzcDt0byZuYnNwO3Byb2Nlc3MmbmJzcDtldmVudHMmbmJzcDtpbiZuYnNwO3RoaXM8
-YnI+77yeJm5ic3A7c2l0dWF0aW9uPGJyPu+8niZuYnNwO++8niZuYnNwO2lzJm5ic3A7dG8mbmJz
-cDttZXJnZSZuYnNwO3RoZSZuYnNwO2V2ZW50cyZuYnNwO2ludG8mbmJzcDthJm5ic3A7c2luZ2xl
-Jm5ic3A7ZG9tYXAoKSZuYnNwO2NhbGwuPGJyPu+8niZuYnNwOzxicj7vvJ4mbmJzcDsiY2FzZSZu
-YnNwOzI6Jm5ic3A7cmVtb3ZlJm5ic3A7cGF0aDEmbmJzcDt8YWRkJm5ic3A7cGF0aDEmbmJzcDt8
-cmVtb3ZlJm5ic3A7cGF0aDImbmJzcDt8YWRkJm5ic3A7cGF0aDImbmJzcDt8cmVtb3ZlPGJyPu+8
-niZuYnNwO3BhdGgzIjxicj7vvJ4mbmJzcDtTaW5jZSZuYnNwO3RoZSZuYnNwO21lcmdlcmluZyZu
-YnNwO2lzJm5ic3A7c3RhcnRpbmcmbmJzcDtmcm9tJm5ic3A7dGhlJm5ic3A7bGF0ZXN0Jm5ic3A7
-dG8mbmJzcDt0aGUmbmJzcDtlYXJpZXN0PGJyPu+8niZuYnNwO3VldmVudCwmbmJzcDsmbmJzcDtz
-byZuYnNwO3RoZTxicj7vvJ4mbmJzcDt1ZXZlbnQmbmJzcDsicmVtb3ZlJm5ic3A7cGF0aDMiJm5i
-c3A7dHJ5Jm5ic3A7dG8mbmJzcDttZXJnZXImbmJzcDtvdGhlciZuYnNwO3VldmVudHMsJm5ic3A7
-aWYmbmJzcDt3ZSZuYnNwO2RvJm5ic3A7bm90Jm5ic3A7c3RvcDxicj7vvJ4mbmJzcDttZXJnZXJp
-bmcsJm5ic3A7PGJyPu+8niZuYnNwO3VldmVudCZuYnNwOyJyZW1vdmUmbmJzcDtwYXRoMyImbmJz
-cDt3b3VsZCZuYnNwO21lcmdlJm5ic3A7Jm5ic3A7dWV2ZW50Jm5ic3A7InJlbW92ZSZuYnNwO3Bh
-dGgyIiZuYnNwO2FuZCZuYnNwO3VldmVudCZuYnNwOzxicj7vvJ4mbmJzcDsicmVtb3ZlJm5ic3A7
-cGF0aDEiLiZuYnNwO1VldmVudCZuYnNwOyJhZGQmbmJzcDsmbmJzcDtwYXRoMiImbmJzcDt3b3Vs
-ZCZuYnNwO21lcmdlJm5ic3A7ImFkZCZuYnNwOyZuYnNwO3BhdGgxIi4mbmJzcDs8YnI+77yeJm5i
-c3A7VGhlJm5ic3A7cmVzdWx0Jm5ic3A7aXMmbmJzcDt0aGF0Jm5ic3A7d2UmbmJzcDtnZXQmbmJz
-cDt0d28mbmJzcDttZXJnZWQmbmJzcDt1ZXZlbnRzOjxicj7vvJ4mbmJzcDsxKSZuYnNwO2FkZCZu
-YnNwO3BhdGgyLCZuYnNwO3BhdGgxPGJyPu+8niZuYnNwOzIpJm5ic3A7cmVtb3ZlJm5ic3A7cGF0
-aDMsJm5ic3A7cGF0aDIsJm5ic3A7cGF0aDEmbmJzcDs8YnI+PGJyPu+8niZuYnNwO1RoZW4mbmJz
-cDt3ZSZuYnNwO3Byb2Nlc3MmbmJzcDt0aGUmbmJzcDttZXJnZWQmbmJzcDt1ZXZlbnRzJm5ic3A7
-ZnJvbSZuYnNwO3RoZSZuYnNwO2VhcmxpZXImbmJzcDt0byZuYnNwO2xhdGVyLCZuYnNwO1dlJm5i
-c3A7dHJ5PGJyPu+8niZuYnNwO3RvJm5ic3A74oCdYWRkJm5ic3A7PGJyPu+8niZuYnNwO3BhdGgy
-Jm5ic3A7cGF0aDHigJwsJm5ic3A7YW5kJm5ic3A7d2UmbmJzcDt3b3VsZCZuYnNwO2NyZWF0ZSZu
-YnNwO29yJm5ic3A7cmVsb2FkJm5ic3A7YSZuYnNwO21hcCZuYnNwO2RldmljZSZuYnNwO3dpdGgm
-bmJzcDtwYXRoMTxicj7vvJ4mbmJzcDthbmQmbmJzcDtwYXRoMi4mbmJzcDs8YnI+77yeJm5ic3A7
-TmV4dCZuYnNwO3dlJm5ic3A7cHJvY2VzcyZuYnNwO+KAnSZuYnNwO3JlbW92ZSZuYnNwO3BhdGgz
-LCZuYnNwO3BhdGgyLCZuYnNwO3BhdGgx4oCcLCZuYnNwO3NvJm5ic3A7cGF0aDEsJm5ic3A7cGF0
-aDImbmJzcDthbmQ8YnI+77yeJm5ic3A7cGF0aDMmbmJzcDthcmUmbmJzcDs8YnI+77yeJm5ic3A7
-YWxsJm5ic3A7cmVtb3ZlZCZuYnNwO2Zyb20mbmJzcDt0aGUmbmJzcDttYXAmbmJzcDtkZXZpY2Us
-Jm5ic3A7dGhpcyZuYnNwO2lzJm5ic3A7d3JvbmcsJm5ic3A7Jm5ic3A7dGhlJm5ic3A7Y29ycmVj
-dCZuYnNwO3Jlc3VsdDxicj7vvJ4mbmJzcDtpcyZuYnNwO3RoYXQmbmJzcDt0aGUmbmJzcDtwYXRo
-MTxicj7vvJ4mbmJzcDthbmQmbmJzcDtwYXRoMiZuYnNwO3Nob3VsZCZuYnNwO2JlJm5ic3A7c3Rp
-bGwmbmJzcDtpbiZuYnNwO3RoZSZuYnNwO21hcCZuYnNwO2RldmljZS48YnI+PGJyPkkmbmJzcDtk
-b24ndCZuYnNwO3VuZGVyc3RhbmQmbmJzcDt0aGF0LiZuYnNwO1RoaXMmbmJzcDt3b3VsZCZuYnNw
-O21lYW4mbmJzcDt0aGF0Jm5ic3A7eW91J2QmbmJzcDtyZS1vcmRlciZuYnNwOyJyZW1vdmU8YnI+
-cGF0aDEmbmJzcDt8Jm5ic3A7YWRkJm5ic3A7cGF0aDEiJm5ic3A7aW50byZuYnNwOyJhZGQmbmJz
-cDtwYXRoMXwmbmJzcDtyZW1vdmUmbmJzcDtwYXRoMSIsJm5ic3A7YW5kJm5ic3A7dGhlJm5ic3A7
-c2FtZSZuYnNwO2Zvcjxicj5wYXRoMi4mbmJzcDtUaGF0Jm5ic3A7bWF5Jm5ic3A7b2J2aW91c2x5
-Jm5ic3A7bmV2ZXImbmJzcDtoYXBwZW4uJm5ic3A7WW91ciZuYnNwOyJzdG9wJm5ic3A7bWVyZ2lu
-ZyImbmJzcDtsb2dpYzxicj5mb3JiaWRzJm5ic3A7aXQsJm5ic3A7YW5kJm5ic3A7dGhhdCdzJm5i
-c3A7ZmluZSZuYnNwO2ZvciZuYnNwO21lJm5ic3A7Zm9yJm5ic3A7bm93Ljxicj48YnI+UmVnYXJk
-czxicj5NYXJ0aW48YnI+PGJyPi0tJm5ic3A7PGJyPkRyLiZuYnNwO01hcnRpbiZuYnNwO1dpbGNr
-Jm5ic3A777ycbXdpbGNrQHN1c2UuY29t77yeLCZuYnNwO1RlbC4mbmJzcDsrNDkmbmJzcDsoMCk5
-MTEmbmJzcDs3NDA1MyZuYnNwOzIxMDc8YnI+U1VTRSZuYnNwO0xpbnV4Jm5ic3A7R21iSCwmbmJz
-cDtHRjombmJzcDtGZWxpeCZuYnNwO0ltZW5kw7ZyZmZlciwmbmJzcDtKYW5lJm5ic3A7U21pdGhh
-cmQsJm5ic3A7R3JhaGFtJm5ic3A7Tm9ydG9uPGJyPkhSQiZuYnNwOzIxMjg0Jm5ic3A7KEFHJm5i
-c3A7TsO8cm5iZXJnKTxicj48YnI+LS08YnI+ZG0tZGV2ZWwmbmJzcDttYWlsaW5nJm5ic3A7bGlz
-dDxicj5kbS1kZXZlbEByZWRoYXQuY29tPGJyPmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1h
-bi9saXN0aW5mby9kbS1kZXZlbDwvZGl2PjxwPjxicj48L3A+PC9kaXY+PC9kaXY+PC9kaXY+PC9k
-aXY+PHA+PGJyPjwvcD4gPC9kaXY+
-
-
---=====_003_next=====--
-
---=====_002_next=====--
-
---=====_001_next=====
+--===============3681096063248536025==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---=====_001_next=====--
+--===============3681096063248536025==--
