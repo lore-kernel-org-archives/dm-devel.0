@@ -1,11 +1,12 @@
-From: Muneendra Kumar M <mmandala@Brocade.com>
-Subject: scsi timeout on multipath
-Date: Tue, 21 Feb 2017 13:27:48 +0000
-Message-ID: <b7f976b8e7df4dc680fd85699c09b22f@BRMWP-EXMB12.corp.brocade.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [git pull] device mapper changes for 4.11
+Date: Tue, 21 Feb 2017 14:26:05 -0500
+Message-ID: <20170221192604.GA95281@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============3681096063248536025=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,253 +16,102 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Heinz Mauelshagen <heinzm@redhat.com>, Joe Thornber <ejt@redhat.com>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Alasdair G Kergon <agk@redhat.com>, Bhumika Goyal <bhumirks@gmail.com>
 List-Id: dm-devel.ids
 
---===============3681096063248536025==
-Content-Language: en-US
-Content-Type: multipart/alternative;
-	boundary="_000_b7f976b8e7df4dc680fd85699c09b22fBRMWPEXMB12corpbrocadec_"
+Hi Linus,
 
---_000_b7f976b8e7df4dc680fd85699c09b22fBRMWPEXMB12corpbrocadec_
-Content-Type: text/plain; charset="us-ascii"
+The following changes since commit 7a308bb3016f57e5be11a677d15b821536419d36:
 
-Hi ,
-On a multipath network if we see a scsi timeout  on a particular path at what instance we will mark the path as failed.
+  Linux 4.10-rc5 (2017-01-22 12:54:15 -0800)
 
-Whether we will mark the path as failed when SCSI mid level failed to attempts error recovery by doing the below steps.
+are available in the git repository at:
 
-*        the SCSI command that has timed out is aborted
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/dm-4.11-changes
 
-*        a SCSI device reset is attempted
+for you to fetch changes up to d67a5f4b5947aba4bfe9a80a2b86079c215ca755:
 
-*        a SCSI bus reset is attempted. Note this may have an adverse effect on other devices sharing that SCSI bus.
+  dm: flush queued bios when process blocks to avoid deadlock (2017-02-17 00:54:10 -0500)
 
-*        a SCSI host (bus adapter) reset is attempted. This is an attempt to re-initialize the adapter card associated with the SCSI device that has the timed out command.
-Any info here will help me a lot.
+Please pull, thanks.
+Mike
 
-Regards,
-Muneendra.
+----------------------------------------------------------------
+- Fix dm-raid transient device failure processing and other smaller
+  tweaks.
 
+- Add journal support to the DM raid target to close the 'write hole' on
+  raid 4/5/6.
 
---_000_b7f976b8e7df4dc680fd85699c09b22fBRMWPEXMB12corpbrocadec_
-Content-Type: text/html; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+- Fix dm-cache corruption, due to rounding bug, when cache exceeds 2TB.
 
-<html xmlns:v=3D"urn:schemas-microsoft-com:vml" xmlns:o=3D"urn:schemas-micr=
-osoft-com:office:office" xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
-xmlns:m=3D"http://schemas.microsoft.com/office/2004/12/omml" xmlns=3D"http:=
-//www.w3.org/TR/REC-html40">
-<head>
-<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dus-ascii"=
->
-<meta name=3D"Generator" content=3D"Microsoft Word 15 (filtered medium)">
-<style><!--
-/* Font Definitions */
-@font-face
-	{font-family:Wingdings;
-	panose-1:5 0 0 0 0 0 0 0 0 0;}
-@font-face
-	{font-family:"Cambria Math";
-	panose-1:2 4 5 3 5 4 6 3 2 4;}
-@font-face
-	{font-family:Calibri;
-	panose-1:2 15 5 2 2 2 4 3 2 4;}
-/* Style Definitions */
-p.MsoNormal, li.MsoNormal, div.MsoNormal
-	{margin:0in;
-	margin-bottom:.0001pt;
-	font-size:11.0pt;
-	font-family:"Calibri",sans-serif;}
-a:link, span.MsoHyperlink
-	{mso-style-priority:99;
-	color:#0563C1;
-	text-decoration:underline;}
-a:visited, span.MsoHyperlinkFollowed
-	{mso-style-priority:99;
-	color:#954F72;
-	text-decoration:underline;}
-p
-	{mso-style-priority:99;
-	mso-margin-top-alt:auto;
-	margin-right:0in;
-	mso-margin-bottom-alt:auto;
-	margin-left:0in;
-	font-size:12.0pt;
-	font-family:"Times New Roman",serif;}
-span.EmailStyle17
-	{mso-style-type:personal;
-	font-family:"Calibri",sans-serif;
-	color:windowtext;}
-span.EmailStyle18
-	{mso-style-type:personal-reply;
-	font-family:"Calibri",sans-serif;
-	color:#1F497D;}
-.MsoChpDefault
-	{mso-style-type:export-only;
-	font-size:10.0pt;}
-@page WordSection1
-	{size:8.5in 11.0in;
-	margin:1.0in 1.0in 1.0in 1.0in;}
-div.WordSection1
-	{page:WordSection1;}
-/* List Definitions */
-@list l0
-	{mso-list-id:930167181;
-	mso-list-template-ids:292036308;}
-@list l0:level1
-	{mso-level-number-format:bullet;
-	mso-level-text:\F0B7;
-	mso-level-tab-stop:.5in;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	mso-ansi-font-size:10.0pt;
-	font-family:Symbol;}
-@list l0:level2
-	{mso-level-number-format:bullet;
-	mso-level-text:o;
-	mso-level-tab-stop:1.0in;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	mso-ansi-font-size:10.0pt;
-	font-family:"Courier New";
-	mso-bidi-font-family:"Times New Roman";}
-@list l0:level3
-	{mso-level-number-format:bullet;
-	mso-level-text:\F0A7;
-	mso-level-tab-stop:1.5in;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	mso-ansi-font-size:10.0pt;
-	font-family:Wingdings;}
-@list l0:level4
-	{mso-level-number-format:bullet;
-	mso-level-text:\F0A7;
-	mso-level-tab-stop:2.0in;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	mso-ansi-font-size:10.0pt;
-	font-family:Wingdings;}
-@list l0:level5
-	{mso-level-number-format:bullet;
-	mso-level-text:\F0A7;
-	mso-level-tab-stop:2.5in;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	mso-ansi-font-size:10.0pt;
-	font-family:Wingdings;}
-@list l0:level6
-	{mso-level-number-format:bullet;
-	mso-level-text:\F0A7;
-	mso-level-tab-stop:3.0in;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	mso-ansi-font-size:10.0pt;
-	font-family:Wingdings;}
-@list l0:level7
-	{mso-level-number-format:bullet;
-	mso-level-text:\F0A7;
-	mso-level-tab-stop:3.5in;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	mso-ansi-font-size:10.0pt;
-	font-family:Wingdings;}
-@list l0:level8
-	{mso-level-number-format:bullet;
-	mso-level-text:\F0A7;
-	mso-level-tab-stop:4.0in;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	mso-ansi-font-size:10.0pt;
-	font-family:Wingdings;}
-@list l0:level9
-	{mso-level-number-format:bullet;
-	mso-level-text:\F0A7;
-	mso-level-tab-stop:4.5in;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	mso-ansi-font-size:10.0pt;
-	font-family:Wingdings;}
-ol
-	{margin-bottom:0in;}
-ul
-	{margin-bottom:0in;}
---></style><!--[if gte mso 9]><xml>
-<o:shapedefaults v:ext=3D"edit" spidmax=3D"1026" />
-</xml><![endif]--><!--[if gte mso 9]><xml>
-<o:shapelayout v:ext=3D"edit">
-<o:idmap v:ext=3D"edit" data=3D"1" />
-</o:shapelayout></xml><![endif]-->
-</head>
-<body lang=3D"EN-US" link=3D"#0563C1" vlink=3D"#954F72">
-<div class=3D"WordSection1">
-<p class=3D"MsoNormal"><span style=3D"color:#1F497D">Hi ,<o:p></o:p></span>=
-</p>
-<p class=3D"MsoNormal"><span style=3D"color:#1F497D">On a multipath network=
- if we see a scsi timeout&nbsp; on a particular path at what instance we wi=
-ll mark the path as failed.<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"color:#1F497D"><o:p>&nbsp;</o:p></spa=
-n></p>
-<p class=3D"MsoNormal"><span style=3D"color:#1F497D">Whether we will mark t=
-he path as failed when
-</span><span style=3D"color:#1F497D">SCSI mid level failed to attempts erro=
-r recovery by doing the below steps.<o:p></o:p></span></p>
-<p style=3D"margin-left:.5in;text-indent:-.25in;mso-list:l0 level1 lfo1;bac=
-kground:white">
-<![if !supportLists]><span style=3D"font-size:10.0pt;font-family:Symbol;col=
-or:#1F497D"><span style=3D"mso-list:Ignore">&middot;<span style=3D"font:7.0=
-pt &quot;Times New Roman&quot;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-</span></span></span><![endif]><span style=3D"font-size:11.0pt;font-family:=
-&quot;Calibri&quot;,sans-serif;color:#1F497D">the SCSI command that has tim=
-ed out is aborted&nbsp;<o:p></o:p></span></p>
-<p style=3D"margin-left:.5in;text-indent:-.25in;mso-list:l0 level1 lfo1;bac=
-kground:white">
-<![if !supportLists]><span style=3D"font-size:10.0pt;font-family:Symbol;col=
-or:#1F497D"><span style=3D"mso-list:Ignore">&middot;<span style=3D"font:7.0=
-pt &quot;Times New Roman&quot;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-</span></span></span><![endif]><span style=3D"font-size:11.0pt;font-family:=
-&quot;Calibri&quot;,sans-serif;color:#1F497D">a SCSI device reset is attemp=
-ted<o:p></o:p></span></p>
-<p style=3D"margin-left:.5in;text-indent:-.25in;mso-list:l0 level1 lfo1;bac=
-kground:white">
-<![if !supportLists]><span style=3D"font-size:10.0pt;font-family:Symbol;col=
-or:#1F497D"><span style=3D"mso-list:Ignore">&middot;<span style=3D"font:7.0=
-pt &quot;Times New Roman&quot;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-</span></span></span><![endif]><span style=3D"font-size:11.0pt;font-family:=
-&quot;Calibri&quot;,sans-serif;color:#1F497D">a SCSI bus reset is attempted=
-. Note this may have an adverse effect on other devices sharing that SCSI b=
-us.<o:p></o:p></span></p>
-<p style=3D"margin-left:.5in;text-indent:-.25in;mso-list:l0 level1 lfo1;bac=
-kground:white">
-<![if !supportLists]><span style=3D"font-size:10.0pt;font-family:Symbol;col=
-or:#1F497D"><span style=3D"mso-list:Ignore">&middot;<span style=3D"font:7.0=
-pt &quot;Times New Roman&quot;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-</span></span></span><![endif]><span style=3D"font-size:11.0pt;font-family:=
-&quot;Calibri&quot;,sans-serif;color:#1F497D">a SCSI host (bus adapter) res=
-et is attempted. This is an attempt to re-initialize the adapter card assoc=
-iated with the SCSI device that has the timed
- out command.<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"color:#1F497D">Any info here will hel=
-p me a lot.<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"color:#1F497D"><o:p>&nbsp;</o:p></spa=
-n></p>
-<p class=3D"MsoNormal"><span style=3D"color:#1F497D">Regards,<o:p></o:p></s=
-pan></p>
-<p class=3D"MsoNormal"><span style=3D"color:#1F497D">Muneendra.<o:p></o:p><=
-/span></p>
-<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-</div>
-</body>
-</html>
+- Add 'metadata2' feature to dm-cache to separate the dirty bitset out
+  from other cache metadata.  This improves speed of shutting down
+  a large cache device (which implies writing out dirty bits).
 
---_000_b7f976b8e7df4dc680fd85699c09b22fBRMWPEXMB12corpbrocadec_--
+- Fix a memory leak during dm-stats data structure destruction.
 
+- Fix a DM multipath round-robin path selector performance regression
+  that was caused by less precise balancing across all paths.
 
---===============3681096063248536025==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+- Lastly, introduce a DM core fix for a long-standing DM snapshot
+  deadlock that is rooted in the complexity of the device stack used in
+  conjunction with block core maintaining bios on current->bio_list to
+  manage recursion in generic_make_request().  A more comprehensive fix
+  to block core (and its hook in the cpu scheduler) would be wonderful
+  but this DM-specific fix is pragmatic considering how difficult it has
+  been to make progress on a generic fix.
 
+----------------------------------------------------------------
+Bhumika Goyal (1):
+      dm space map metadata: constify dm_space_map structures
 
---===============3681096063248536025==--
+Heinz Mauelshagen (5):
+      dm raid: fix transient device failure processing
+      dm raid: be prepared to accept arbitrary '- -' tuples
+      dm raid: add raid4/5/6 journaling support
+      dm raid: use read_disk_sb() throughout
+      dm raid: use mddev rather than rdev->mddev
+
+Joe Thornber (10):
+      dm cache: fix corruption seen when using cache > 2TB
+      dm block manager: add unlikely() annotations on dm_bufio error paths
+      dm space map common: memcpy the disk root to ensure it's arch aligned
+      dm btree: use GFP_NOFS in dm_btree_del()
+      dm bitset: introduce cursor api
+      dm cache metadata: use bitset cursor api to load discard bitset
+      dm cache metadata: add "metadata2" feature
+      dm bitset: add dm_bitset_new()
+      dm cache metadata: use dm_bitset_new() to create the dirty bitset in format 2
+      dm persistent data: add cursor skip functions to the cursor APIs
+
+Mike Snitzer (4):
+      dm raid: cleanup awkward branching in raid_message() option processing
+      dm cache metadata: name the cache block that couldn't be loaded
+      dm cache metadata: use cursor api in blocks_are_clean_separate_dirty()
+      dm round robin: revert "use percpu 'repeat_count' and 'current_path'"
+
+Mikulas Patocka (2):
+      dm stats: fix a leaked s->histogram_boundaries array
+      dm: flush queued bios when process blocks to avoid deadlock
+
+ Documentation/device-mapper/cache.txt              |   4 +
+ Documentation/device-mapper/dm-raid.txt            |  17 +
+ drivers/md/dm-cache-metadata.c                     | 353 +++++++++++++++++----
+ drivers/md/dm-cache-metadata.h                     |  11 +-
+ drivers/md/dm-cache-target.c                       |  44 +--
+ drivers/md/dm-raid.c                               | 296 ++++++++++++-----
+ drivers/md/dm-round-robin.c                        |  67 +---
+ drivers/md/dm-stats.c                              |   1 +
+ drivers/md/dm.c                                    |  55 ++++
+ drivers/md/persistent-data/dm-array.c              |  21 ++
+ drivers/md/persistent-data/dm-array.h              |   1 +
+ drivers/md/persistent-data/dm-bitset.c             | 146 +++++++++
+ drivers/md/persistent-data/dm-bitset.h             |  39 +++
+ drivers/md/persistent-data/dm-block-manager.c      |   8 +-
+ drivers/md/persistent-data/dm-btree.c              |  18 +-
+ drivers/md/persistent-data/dm-btree.h              |   1 +
+ drivers/md/persistent-data/dm-space-map-common.c   |  16 +-
+ drivers/md/persistent-data/dm-space-map-metadata.c |   4 +-
+ 18 files changed, 875 insertions(+), 227 deletions(-)
