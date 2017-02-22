@@ -1,44 +1,40 @@
-From: Binoy Jayan <binoy.jayan@linaro.org>
-Subject: Re: [RFC PATCH v4] IV Generation algorithms for dm-crypt
-Date: Wed, 22 Feb 2017 11:42:28 +0530
-Message-ID: <CAHv-k_8rgArzV2uQ64h1ZTNRpssX1jMf=RwuPoBmsjQ0FhCsWA@mail.gmail.com>
-References: <1486463731-6224-1-git-send-email-binoy.jayan@linaro.org> <CAOtvUMcN8s886978vE6T=AE79KkZsLBnXsmhewnb5PB0UyAG3A@mail.gmail.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: multipath-tools: Fixes/features for upstream
+Date: Wed, 22 Feb 2017 17:20:12 +0100
+Message-ID: <12aa21e4-4757-9b73-29d9-f8dc99b59d63@gmail.com>
+References: <20161124224427.12609-1-xose.vazquez@gmail.com>
+	<1480064411.23852.1.camel@suse.com>
+	<CABr-Gne32p_=xy7rrZ9ZgvPnEbkocYF=mded-8HEk37pofgTug@mail.gmail.com>
+	<20161202035207.GG3099@octiron.msp.redhat.com>
+	<7340eba3-ae61-9933-597e-56c176d22bef@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <CAOtvUMcN8s886978vE6T=AE79KkZsLBnXsmhewnb5PB0UyAG3A@mail.gmail.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: Gilad Ben-Yossef <gilad@benyossef.com>
-Cc: Oded <oded.golombek@arm.com>, Ofir <Ofir.Drang@arm.com>, Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, linux-crypto@vger.kernel.org, Mark Brown <broonie@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Linux kernel mailing list <linux-kernel@vger.kernel.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, Rajendra <rnayak@codeaurora.org>, Milan Broz <gmazyland@gmail.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <7340eba3-ae61-9933-597e-56c176d22bef@gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>, Hannes Reinecke <hare@suse.de>, Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Herbert,
+On 12/07/2016 11:48 PM, Xose Vazquez Perez wrote:
 
-On 8 February 2017 at 13:02, Gilad Ben-Yossef <gilad@benyossef.com> wrote:
-> On Tue, Feb 7, 2017 at 12:35 PM, Binoy Jayan <binoy.jayan@linaro.org> wrote:
->> ===============================================================================
->> dm-crypt optimization for larger block sizes
->> ===============================================================================
->>
->> Currently, the iv generation algorithms are implemented in dm-crypt.c. The goal
->> is to move these algorithms from the dm layer to the kernel crypto layer by
->> implementing them as template ciphers so they can be used in relation with
->> algorithms like aes, and with multiple modes like cbc, ecb etc. As part of this
->> patchset, the iv-generation code is moved from the dm layer to the crypto layer
->> and adapt the dm-layer to send a whole 'bio' (as defined in the block layer)
->> at a time. Each bio contains the in memory representation of physically
->> contiguous disk blocks. Since the bio itself may not be contiguous in main
->> memory, the dm layer sets up a chained scatterlist of these blocks split into
->> physically contiguous segments in memory so that DMA can be performed.
+> On 12/02/2016 04:52 AM, Benjamin Marzinski wrote:
+> 
+>> I don't really see the need for this change. But we wouldn't be pulling
+>> it in until the next major RHEL release [...]
+> 
+> BTW, do you(SUSE/RH) have any distro fixes/features pending for upstream?
 
-> Ran Bonnie++ on it last night  (Luks mode, plain64, Qemu Virt platform
-> Arm64) and it works just fine.
->
-> Tested-by: Gilad Ben-Yossef <gilad@benyossef.com>
+I looked over the SUSE branch time ago, and there were ~30 patches
+diverging from master. If you have a while, could you please send them to
+upstream?
 
-I was wondering if this is near to be ready for submission (apart from
-the testmgr.c
-changes) or I need to make some changes to make it similar to the IPSec offload?
-
-Thanks,
-Binoy
+Thank you.
