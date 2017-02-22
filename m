@@ -1,13 +1,12 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
 Subject: Re: [PATCHv2] Fill NVMe specific path info
-Date: Tue, 21 Feb 2017 18:01:24 -0600
-Message-ID: <20170222000124.GD22981@octiron.msp.redhat.com>
+Date: Wed, 22 Feb 2017 02:00:19 +0100
+Message-ID: <5aa304c3-9ce3-0acb-65f9-0898bcd37e11@gmail.com>
 References: <1487715151-1179-1-git-send-email-keith.busch@intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 In-Reply-To: <1487715151-1179-1-git-send-email-keith.busch@intel.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -18,15 +17,15 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Keith Busch <keith.busch@intel.com>
-Cc: dm-devel@redhat.com, linux-nvme@lists.infradead.org
+To: Keith Busch <keith.busch@intel.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-ACK
+On 02/21/2017 11:12 PM, Keith Busch wrote:
 
--Ben
+multipath-tools project does not use Patchwork.
+CC: Christophe Varoqui
 
-On Tue, Feb 21, 2017 at 05:12:31PM -0500, Keith Busch wrote:
 > Signed-off-by: Keith Busch <keith.busch@intel.com>
 > ---
 > v1->v2:
@@ -134,10 +133,4 @@ On Tue, Feb 21, 2017 at 05:12:31PM -0500, Keith Busch wrote:
 >  };
 >  
 >  enum pathstates {
-> -- 
-> 2.5.5
 > 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
