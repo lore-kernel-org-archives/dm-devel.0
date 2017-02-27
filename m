@@ -1,14 +1,11 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v4 4/6] multipathd: add messages on delayed path
-	addition
-Date: Mon, 27 Feb 2017 12:26:41 -0600
-Message-ID: <1488220003-20541-5-git-send-email-bmarzins@redhat.com>
-References: <1488220003-20541-1-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v4 0/6] misc patches
+Date: Mon, 27 Feb 2017 12:26:37 -0600
+Message-ID: <1488220003-20541-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1488220003-20541-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,35 +18,45 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-When multipath delays adding a path because the device is waiting for
-udev to finish initialization, it now logs a message, so the users
-know what happened to the path.
+Here's a couple of minor features bugfixes and cleanups. The biggest
+change is that the detect_checker option now sets the checker for
+devices with detected ALUA to TUR. Also, udev wasn't correctly
+disabling rules for multipath devices that lost their last usable
+path through a table reload. This was causing lvmetad some problems
+on failing multipath devices.
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- multipathd/main.c | 3 +++
- 1 file changed, 3 insertions(+)
+Differences from v3:
+Rebased patches
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 553d1d1..1d73f9d 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -486,6 +486,8 @@ ev_add_map (char * dev, char * alias, struct vectors * vecs)
- 
- 	if (mpp) {
- 		if (mpp->wait_for_udev > 1) {
-+			condlog(2, "%s: performing delayed actions",
-+				mpp->alias);
- 			if (update_map(mpp, vecs))
- 				/* setup multipathd removed the map */
- 				return 1;
-@@ -720,6 +722,7 @@ ev_add_path (struct path * pp, struct vectors * vecs)
- 	    (pathcount(mpp, PATH_UP) > 0 ||
- 	     (pathcount(mpp, PATH_GHOST) > 0 && pp->tpgs != TPGS_IMPLICIT))) {
- 		/* if wait_for_udev is set and valid paths exist */
-+		condlog(2, "%s: delaying path addition until %s is fully initialized", pp->dev, mpp->alias);
- 		mpp->wait_for_udev = 2;
- 		orphan_path(pp, "waiting for create to complete");
- 		return 0;
+Benjamin Marzinski (6):
+  libmultipath: add detect_checker option
+  libmultipath: cleanup orphan device states
+  multipathd: don't update priority of failed paths
+  multipathd: add messages on delayed path addition
+  multipathd: allow resetting stats
+  fix udev rules for failed multipath devices
+
+ libmultipath/config.c                 |  3 ++
+ libmultipath/config.h                 |  2 ++
+ libmultipath/defaults.h               |  1 +
+ libmultipath/devmapper.c              |  3 +-
+ libmultipath/devmapper.h              |  6 ++++
+ libmultipath/dict.c                   | 10 ++++++
+ libmultipath/discovery.c              | 28 +++++++++++++--
+ libmultipath/hwtable.c                |  1 +
+ libmultipath/print.c                  |  4 +--
+ libmultipath/prioritizers/alua_spc3.h |  1 +
+ libmultipath/propsel.c                | 31 ++++++++++------
+ libmultipath/propsel.h                |  1 +
+ libmultipath/structs.c                |  2 ++
+ libmultipath/structs.h                |  7 ++++
+ multipath/11-dm-mpath.rules           | 67 ++++++++++++++++++++++++-----------
+ multipath/multipath.conf.5            | 18 ++++++++++
+ multipathd/cli.c                      |  2 ++
+ multipathd/cli_handlers.c             | 44 +++++++++++++++++++++++
+ multipathd/cli_handlers.h             |  2 ++
+ multipathd/main.c                     |  8 ++++-
+ 20 files changed, 205 insertions(+), 36 deletions(-)
+
 -- 
 1.8.3.1
