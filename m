@@ -1,13 +1,12 @@
 From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH] multipath-tools: fix misspellings
-Date: Mon, 27 Feb 2017 06:35:35 +0100
-Message-ID: <CABr-Gnfc572h0W+H4BEv7O8t1pVa5arY4_okkjcQKj1doPwW=Q@mail.gmail.com>
-References: <20170216192308.16546-1-xose.vazquez@gmail.com>
-	<20170216192308.16546-2-xose.vazquez@gmail.com>
+Subject: Re: [PATCH 1/2] Don't blacklist nvme
+Date: Mon, 27 Feb 2017 06:37:54 +0100
+Message-ID: <CABr-Gncn88-yNY7Zebu1RP5PMgdjCqMJuvCG0wLLv84hf31=-Q@mail.gmail.com>
+References: <1487107154-24883-1-git-send-email-keith.busch@intel.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============3825579446818024065=="
+Content-Type: multipart/mixed; boundary="===============6073420047843643204=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170216192308.16546-2-xose.vazquez@gmail.com>
+In-Reply-To: <1487107154-24883-1-git-send-email-keith.busch@intel.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,95 +16,126 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: Keith Busch <keith.busch@intel.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============3825579446818024065==
-Content-Type: multipart/alternative; boundary=001a11c00044e2b1ed05497c724f
+--===============6073420047843643204==
+Content-Type: multipart/alternative; boundary=94eb2c1924d225bbed05497c7b8e
 
---001a11c00044e2b1ed05497c724f
+--94eb2c1924d225bbed05497c7b8e
 Content-Type: text/plain; charset=UTF-8
 
 Applied.
 
-On Thu, Feb 16, 2017 at 8:23 PM, Xose Vazquez Perez <xose.vazquez@gmail.com>
-wrote:
+On Tue, Feb 14, 2017 at 10:19 PM, Keith Busch <keith.busch@intel.com> wrote:
 
-> debuging->debugging
+> These devices are mulitpath capable, and have been able to stack with
+> dm-mpath since kernel 4.2.
 >
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: device-mapper development <dm-devel@redhat.com>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+> Signed-off-by: Keith Busch <keith.busch@intel.com>
 > ---
->  multipathd/Makefile | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
+>  libmultipath/blacklist.c   | 2 +-
+>  multipath/multipath.conf.5 | 2 +-
+>  2 files changed, 2 insertions(+), 2 deletions(-)
 >
-> diff --git a/multipathd/Makefile b/multipathd/Makefile
-> index ae06f9e..d57f6d5 100644
-> --- a/multipathd/Makefile
-> +++ b/multipathd/Makefile
-> @@ -1,7 +1,7 @@
->  include ../Makefile.inc
+> diff --git a/libmultipath/blacklist.c b/libmultipath/blacklist.c
+> index 36af282..ee396e2 100644
+> --- a/libmultipath/blacklist.c
+> +++ b/libmultipath/blacklist.c
+> @@ -169,7 +169,7 @@ setup_default_blist (struct config * conf)
+>         char * str;
+>         int i;
 >
->  #
-> -# debuging stuff
-> +# debugging stuff
->  #
->  #CFLAGS += -DLCKDBG
->  #CFLAGS += -D_DEBUG_
+> -       str = STRDUP("^(ram|raw|loop|fd|md|dm-|sr|scd|st|dcssblk|nvme)[0-
+> 9]");
+> +       str = STRDUP("^(ram|raw|loop|fd|md|dm-|sr|scd|st|dcssblk)[0-9]");
+>         if (!str)
+>                 return 1;
+>         if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
+> diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+> index 7de8bc7..d6c6c52 100644
+> --- a/multipath/multipath.conf.5
+> +++ b/multipath/multipath.conf.5
+> @@ -943,7 +943,7 @@ The following keywords are recognized:
+>  Regular expression of the device nodes to be excluded.
+>  .RS
+>  .TP
+> -The default is: \fB^(ram|raw|loop|fd|md|dm-|sr|scd|st|dcssblk|nvme)[0-9]\fR
+> and \fB^(td|hd|vd)[a-z]\fR
+> +The default is: \fB^(ram|raw|loop|fd|md|dm-|sr|scd|st|dcssblk)[0-9]\fR
+> and \fB^(td|hd|vd)[a-z]\fR
+>  .RE
+>  .TP
+>  .B wwid
 > --
-> 2.11.1
+> 2.5.5
 >
 >
 
---001a11c00044e2b1ed05497c724f
+--94eb2c1924d225bbed05497c7b8e
 Content-Type: text/html; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 
 <div dir=3D"ltr">Applied.</div><div class=3D"gmail_extra"><br><div class=3D=
-"gmail_quote">On Thu, Feb 16, 2017 at 8:23 PM, Xose Vazquez Perez <span dir=
-=3D"ltr">&lt;<a href=3D"mailto:xose.vazquez@gmail.com" target=3D"_blank">xo=
-se.vazquez@gmail.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_qu=
-ote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex=
-">debuging-&gt;debugging<br>
+"gmail_quote">On Tue, Feb 14, 2017 at 10:19 PM, Keith Busch <span dir=3D"lt=
+r">&lt;<a href=3D"mailto:keith.busch@intel.com" target=3D"_blank">keith.bus=
+ch@intel.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" sty=
+le=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex">These =
+devices are mulitpath capable, and have been able to stack with<br>
+dm-mpath since kernel 4.2.<br>
 <br>
-Cc: Christophe Varoqui &lt;<a href=3D"mailto:christophe.varoqui@opensvc.com=
-">christophe.varoqui@opensvc.<wbr>com</a>&gt;<br>
-Cc: device-mapper development &lt;<a href=3D"mailto:dm-devel@redhat.com">dm=
--devel@redhat.com</a>&gt;<br>
-Signed-off-by: Xose Vazquez Perez &lt;<a href=3D"mailto:xose.vazquez@gmail.=
-com">xose.vazquez@gmail.com</a>&gt;<br>
+Signed-off-by: Keith Busch &lt;<a href=3D"mailto:keith.busch@intel.com">kei=
+th.busch@intel.com</a>&gt;<br>
 ---<br>
-=C2=A0multipathd/Makefile | 2 +-<br>
-=C2=A01 file changed, 1 insertion(+), 1 deletion(-)<br>
+=C2=A0libmultipath/blacklist.c=C2=A0 =C2=A0| 2 +-<br>
+=C2=A0multipath/multipath.conf.5 | 2 +-<br>
+=C2=A02 files changed, 2 insertions(+), 2 deletions(-)<br>
 <br>
-diff --git a/multipathd/Makefile b/multipathd/Makefile<br>
-index ae06f9e..d57f6d5 100644<br>
---- a/multipathd/Makefile<br>
-+++ b/multipathd/Makefile<br>
-@@ -1,7 +1,7 @@<br>
-=C2=A0include ../Makefile.inc<br>
+diff --git a/libmultipath/blacklist.c b/libmultipath/blacklist.c<br>
+index 36af282..ee396e2 100644<br>
+--- a/libmultipath/blacklist.c<br>
++++ b/libmultipath/blacklist.c<br>
+@@ -169,7 +169,7 @@ setup_default_blist (struct config * conf)<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 char * str;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 int i;<br>
 <br>
-=C2=A0#<br>
--# debuging stuff<br>
-+# debugging stuff<br>
-=C2=A0#<br>
-=C2=A0#CFLAGS +=3D -DLCKDBG<br>
-=C2=A0#CFLAGS +=3D -D_DEBUG_<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0str =3D STRDUP(&quot;^(ram|raw|loop|fd|md|<wbr>=
+dm-|sr|scd|st|dcssblk|nvme)[0-<wbr>9]&quot;);<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0str =3D STRDUP(&quot;^(ram|raw|loop|fd|md|<wbr>=
+dm-|sr|scd|st|dcssblk)[0-9]&quot;);<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (!str)<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return 1;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (store_ble(conf-&gt;blist_<wbr>devnode, str,=
+ ORIGIN_DEFAULT))<br>
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5<br>
+index 7de8bc7..d6c6c52 100644<br>
+--- a/multipath/multipath.conf.5<br>
++++ b/multipath/multipath.conf.5<br>
+@@ -943,7 +943,7 @@ The following keywords are recognized:<br>
+=C2=A0Regular expression of the device nodes to be excluded.<br>
+=C2=A0.RS<br>
+=C2=A0.TP<br>
+-The default is: \fB^(ram|raw|loop|fd|md|dm-|<wbr>sr|scd|st|dcssblk|nvme)[0=
+-9]\<wbr>fR and \fB^(td|hd|vd)[a-z]\fR<br>
++The default is: \fB^(ram|raw|loop|fd|md|dm-|<wbr>sr|scd|st|dcssblk)[0-9]\f=
+R and \fB^(td|hd|vd)[a-z]\fR<br>
+=C2=A0.RE<br>
+=C2=A0.TP<br>
+=C2=A0.B wwid<br>
 <span class=3D"HOEnZb"><font color=3D"#888888">--<br>
-2.11.1<br>
+2.5.5<br>
 <br>
 </font></span></blockquote></div><br></div>
 
---001a11c00044e2b1ed05497c724f--
+--94eb2c1924d225bbed05497c7b8e--
 
 
---===============3825579446818024065==
+--===============6073420047843643204==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============3825579446818024065==--
+--===============6073420047843643204==--
