@@ -1,13 +1,11 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v4 5/6] multipathd: allow resetting stats
-Date: Mon, 27 Feb 2017 12:26:42 -0600
-Message-ID: <1488220003-20541-6-git-send-email-bmarzins@redhat.com>
-References: <1488220003-20541-1-git-send-email-bmarzins@redhat.com>
+From: heinzm@redhat.com
+Subject: [PATCH] dm raid: fix data corruption on reshape request
+Date: Mon, 27 Feb 2017 20:46:27 +0100
+Message-ID: <20170227194627.22657-1-heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1488220003-20541-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,127 +15,83 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: heinzm@redhat.com
 List-Id: dm-devel.ids
 
-This patch adds two multipathd interactive commands:
+From: Heinz Mauelshagen <heinzm@redhat.com>
 
-multipathd reset maps stats
+The lvm2 sequence to process constructor flags triggering
+a rebuild or a reshape is defined as:
 
-and
+- load with table flags (e.g. rebuild/delta_disks/data_offset)
+- clear out the flags in lvm2
+- store the lvm2 metadata reloading the adjusted mapping
+  in order to prevent requesting a rebuild or a reshape
+  over and over again on activation
 
-multipathd reset map <map> stats
+Currently, loading an inactive table with those flags dm-raid directly
+starts the rebuild/reshape thus updating the raid metadata on resume about
+the progress.  The aforementioned second reload to reset the flags accesses
+the versatile progress state kept in raid superblocks in the constructor.
+Because the active mapping is still processing the reshape, that position
+will be stale by the time the device is resumed.
 
-to reset the statistics that are shown with the "show stats" commands.
+In case of reshaping, this causes data corruption by processing already
+reshaped stripes again.  In case of rebuilds it does _not_ cause data
+corruption but involves superfluous rebuilds.
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+Fix by keeping the raid set frozen during the first table load and allowing
+it during the second.
+
+This patch is based on
+
+https://patchwork.kernel.org/patch/9485615 "dm raid: fix transient device failure processing"
+https://patchwork.kernel.org/patch/9454975 "dm raid: journal device support"
+
+Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
 ---
- multipathd/cli.c          |  2 ++
- multipathd/cli_handlers.c | 44 ++++++++++++++++++++++++++++++++++++++++++++
- multipathd/cli_handlers.h |  2 ++
- multipathd/main.c         |  2 ++
- 4 files changed, 50 insertions(+)
+ drivers/md/dm-raid.c | 14 ++++++++++++--
+ 1 file changed, 12 insertions(+), 2 deletions(-)
 
-diff --git a/multipathd/cli.c b/multipathd/cli.c
-index 50161be..32d4976 100644
---- a/multipathd/cli.c
-+++ b/multipathd/cli.c
-@@ -547,6 +547,8 @@ cli_init (void) {
- 	add_handler(LIST+BLACKLIST, NULL);
- 	add_handler(LIST+DEVICES, NULL);
- 	add_handler(LIST+WILDCARDS, NULL);
-+	add_handler(RESET+MAPS+STATS, NULL);
-+	add_handler(RESET+MAP+STATS, NULL);
- 	add_handler(ADD+PATH, NULL);
- 	add_handler(DEL+PATH, NULL);
- 	add_handler(ADD+MAP, NULL);
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index b0eeca6..b20b054 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -277,6 +277,17 @@ show_config (char ** r, int * len)
- 	return 0;
- }
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index b8f978e..f750493 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -92,6 +92,8 @@ struct raid_dev {
+ #define CTR_FLAG_DATA_OFFSET		(1 << __CTR_FLAG_DATA_OFFSET)
+ #define CTR_FLAG_RAID10_USE_NEAR_SETS	(1 << __CTR_FLAG_RAID10_USE_NEAR_SETS)
  
-+void
-+reset_stats(struct multipath * mpp)
-+{
-+	mpp->stat_switchgroup = 0;
-+	mpp->stat_path_failures = 0;
-+	mpp->stat_map_loads = 0;
-+	mpp->stat_total_queueing_time = 0;
-+	mpp->stat_queueing_timeouts = 0;
-+	mpp->stat_map_failures = 0;
-+}
-+
- int
- cli_list_config (void * v, char ** reply, int * len, void * data)
- {
-@@ -627,6 +638,39 @@ cli_list_daemon (void * v, char ** reply, int * len, void * data)
- }
++#define RESUME_STAY_FROZEN_FLAGS	(CTR_FLAG_DELTA_DISKS | \
++					 CTR_FLAG_DATA_OFFSET)
+ /*
+  * Definitions of various constructor flags to
+  * be used in checks of valid / invalid flags
+@@ -3643,7 +3645,15 @@ static void raid_resume(struct dm_target *ti)
+ 	mddev->ro = 0;
+ 	mddev->in_sync = 0;
  
- int
-+cli_reset_maps_stats (void * v, char ** reply, int * len, void * data)
-+{
-+	struct vectors * vecs = (struct vectors *)data;
-+	int i;
-+	struct multipath * mpp;
-+
-+	condlog(3, "reset multipaths stats (operator)");
-+
-+	vector_foreach_slot(vecs->mpvec, mpp, i) {
-+		reset_stats(mpp);
-+	}
-+	return 0;
-+}
-+
-+int
-+cli_reset_map_stats (void * v, char ** reply, int * len, void * data)
-+{
-+	struct vectors * vecs = (struct vectors *)data;
-+	struct multipath * mpp;
-+	char * param = get_keyparam(v, MAP);
-+
-+	param = convert_dev(param, 0);
-+	mpp = find_mp_by_str(vecs->mpvec, param);
-+
-+	if (!mpp)
-+		return 1;
-+
-+	condlog(3, "reset multipath %s stats (operator)", param);
-+	reset_stats(mpp);
-+	return 0;
-+}
-+
-+int
- cli_add_path (void * v, char ** reply, int * len, void * data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
-diff --git a/multipathd/cli_handlers.h b/multipathd/cli_handlers.h
-index 19e003d..f4d02cc 100644
---- a/multipathd/cli_handlers.h
-+++ b/multipathd/cli_handlers.h
-@@ -19,6 +19,8 @@ int cli_list_config (void * v, char ** reply, int * len, void * data);
- int cli_list_blacklist (void * v, char ** reply, int * len, void * data);
- int cli_list_devices (void * v, char ** reply, int * len, void * data);
- int cli_list_wildcards (void * v, char ** reply, int * len, void * data);
-+int cli_reset_maps_stats (void * v, char ** reply, int * len, void * data);
-+int cli_reset_map_stats (void * v, char ** reply, int * len, void * data);
- int cli_add_path (void * v, char ** reply, int * len, void * data);
- int cli_del_path (void * v, char ** reply, int * len, void * data);
- int cli_add_map (void * v, char ** reply, int * len, void * data);
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 1d73f9d..e317a4c 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1238,6 +1238,8 @@ uxlsnrloop (void * ap)
- 	set_handler_callback(LIST+BLACKLIST, cli_list_blacklist);
- 	set_handler_callback(LIST+DEVICES, cli_list_devices);
- 	set_handler_callback(LIST+WILDCARDS, cli_list_wildcards);
-+	set_handler_callback(RESET+MAPS+STATS, cli_reset_maps_stats);
-+	set_handler_callback(RESET+MAP+STATS, cli_reset_map_stats);
- 	set_handler_callback(ADD+PATH, cli_add_path);
- 	set_handler_callback(DEL+PATH, cli_del_path);
- 	set_handler_callback(ADD+MAP, cli_add_map);
+-	clear_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
++	/*
++	 * Keep the RAID set frozen in case flags respective to
++	 * reshape or rebuild are set until an imminent inactive
++	 * table load/resume occurs.  This ensures that the
++	 * constructor for the inactive table retrieves an
++	 * up-to-date reshape_position.
++	 */
++	if (!(rs->ctr_flags & RESUME_STAY_FROZEN_FLAGS))
++		clear_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
+ 
+ 	if (mddev->suspended)
+ 		mddev_resume(mddev);
+@@ -3651,7 +3661,7 @@ static void raid_resume(struct dm_target *ti)
+ 
+ static struct target_type raid_target = {
+ 	.name = "raid",
+-	.version = {1, 9, 1},
++	.version = {1, 10, 2},
+ 	.module = THIS_MODULE,
+ 	.ctr = raid_ctr,
+ 	.dtr = raid_dtr,
 -- 
-1.8.3.1
+2.9.3
