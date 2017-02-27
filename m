@@ -1,12 +1,13 @@
 From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH 1/2] Don't blacklist nvme
-Date: Mon, 27 Feb 2017 06:37:54 +0100
-Message-ID: <CABr-Gncn88-yNY7Zebu1RP5PMgdjCqMJuvCG0wLLv84hf31=-Q@mail.gmail.com>
-References: <1487107154-24883-1-git-send-email-keith.busch@intel.com>
+Subject: Re: [PATCH v2] multipath-tools: add availability of
+ service-time and queue-length to multipath.conf.5
+Date: Mon, 27 Feb 2017 06:46:02 +0100
+Message-ID: <CABr-Gnfae1rsKrxsLrJxVoJHLhrHD3MZOPVgqjskSM41Q1=_pA@mail.gmail.com>
+References: <20170221213108.4126-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============6073420047843643204=="
+Content-Type: multipart/mixed; boundary="===============2314102605048886335=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1487107154-24883-1-git-send-email-keith.busch@intel.com>
+In-Reply-To: <20170221213108.4126-1-xose.vazquez@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,126 +17,131 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Keith Busch <keith.busch@intel.com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============6073420047843643204==
-Content-Type: multipart/alternative; boundary=94eb2c1924d225bbed05497c7b8e
+--===============2314102605048886335==
+Content-Type: multipart/alternative; boundary=001a11c0004444619005497c983b
 
---94eb2c1924d225bbed05497c7b8e
+--001a11c0004444619005497c983b
 Content-Type: text/plain; charset=UTF-8
 
 Applied.
 
-On Tue, Feb 14, 2017 at 10:19 PM, Keith Busch <keith.busch@intel.com> wrote:
+On Tue, Feb 21, 2017 at 10:31 PM, Xose Vazquez Perez <xose.vazquez@gmail.com
+> wrote:
 
-> These devices are mulitpath capable, and have been able to stack with
-> dm-mpath since kernel 4.2.
+> https://kernelnewbies.org/Linux_2_6_31#head-7a4afa809f53cf9a2df884c745f4f8
+> 150e24645a
 >
-> Signed-off-by: Keith Busch <keith.busch@intel.com>
+> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> Cc: device-mapper development <dm-devel@redhat.com>
+> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 > ---
->  libmultipath/blacklist.c   | 2 +-
->  multipath/multipath.conf.5 | 2 +-
->  2 files changed, 2 insertions(+), 2 deletions(-)
+> v2 - remove XXX tags
+> ---
+>  multipath/multipath.conf.5 | 6 ++----
+>  1 file changed, 2 insertions(+), 4 deletions(-)
 >
-> diff --git a/libmultipath/blacklist.c b/libmultipath/blacklist.c
-> index 36af282..ee396e2 100644
-> --- a/libmultipath/blacklist.c
-> +++ b/libmultipath/blacklist.c
-> @@ -169,7 +169,7 @@ setup_default_blist (struct config * conf)
->         char * str;
->         int i;
->
-> -       str = STRDUP("^(ram|raw|loop|fd|md|dm-|sr|scd|st|dcssblk|nvme)[0-
-> 9]");
-> +       str = STRDUP("^(ram|raw|loop|fd|md|dm-|sr|scd|st|dcssblk)[0-9]");
->         if (!str)
->                 return 1;
->         if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
 > diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-> index 7de8bc7..d6c6c52 100644
+> index 7de8bc7..4961c06 100644
 > --- a/multipath/multipath.conf.5
 > +++ b/multipath/multipath.conf.5
-> @@ -943,7 +943,7 @@ The following keywords are recognized:
->  Regular expression of the device nodes to be excluded.
->  .RS
+> @@ -166,14 +166,12 @@ Loop through every path in the path group, sending
+> the same amount of I/O to
+>  each. Some aspects of behavior can be controlled with the attributes:
+>  \fIrr_min_io\fR, \fIrr_min_io_rq\fR and \fIrr_weight\fR.
 >  .TP
-> -The default is: \fB^(ram|raw|loop|fd|md|dm-|sr|scd|st|dcssblk|nvme)[0-9]\fR
-> and \fB^(td|hd|vd)[a-z]\fR
-> +The default is: \fB^(ram|raw|loop|fd|md|dm-|sr|scd|st|dcssblk)[0-9]\fR
-> and \fB^(td|hd|vd)[a-z]\fR
->  .RE
+> -.\" XXX
+>  .I "queue-length 0"
+> -(Since ??? kernel) Choose the path for the next bunch of I/O based on the
+> amount
+> +(Since 2.6.31 kernel) Choose the path for the next bunch of I/O based on
+> the amount
+>  of outstanding I/O to the path.
 >  .TP
->  .B wwid
+> -.\" XXX
+>  .I "service-time 0"
+> -(Since ??? kernel) Choose the path for the next bunch of I/O based on the
+> amount
+> +(Since 2.6.31 kernel) Choose the path for the next bunch of I/O based on
+> the amount
+>  of outstanding I/O to the path and its relative throughput.
+>  .TP
+>  The default is: \fBservice-time 0\fR
 > --
-> 2.5.5
+> 2.11.1
 >
 >
 
---94eb2c1924d225bbed05497c7b8e
+--001a11c0004444619005497c983b
 Content-Type: text/html; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 
 <div dir=3D"ltr">Applied.</div><div class=3D"gmail_extra"><br><div class=3D=
-"gmail_quote">On Tue, Feb 14, 2017 at 10:19 PM, Keith Busch <span dir=3D"lt=
-r">&lt;<a href=3D"mailto:keith.busch@intel.com" target=3D"_blank">keith.bus=
-ch@intel.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" sty=
-le=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex">These =
-devices are mulitpath capable, and have been able to stack with<br>
-dm-mpath since kernel 4.2.<br>
+"gmail_quote">On Tue, Feb 21, 2017 at 10:31 PM, Xose Vazquez Perez <span di=
+r=3D"ltr">&lt;<a href=3D"mailto:xose.vazquez@gmail.com" target=3D"_blank">x=
+ose.vazquez@gmail.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_q=
+uote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1e=
+x"><span class=3D""><a href=3D"https://kernelnewbies.org/Linux_2_6_31#head-=
+7a4afa809f53cf9a2df884c745f4f8150e24645a" rel=3D"noreferrer" target=3D"_bla=
+nk">https://kernelnewbies.org/<wbr>Linux_2_6_31#head-<wbr>7a4afa809f53cf9a2=
+df884c745f4f8<wbr>150e24645a</a><br>
 <br>
-Signed-off-by: Keith Busch &lt;<a href=3D"mailto:keith.busch@intel.com">kei=
-th.busch@intel.com</a>&gt;<br>
+Cc: Christophe Varoqui &lt;<a href=3D"mailto:christophe.varoqui@opensvc.com=
+">christophe.varoqui@opensvc.<wbr>com</a>&gt;<br>
+Cc: device-mapper development &lt;<a href=3D"mailto:dm-devel@redhat.com">dm=
+-devel@redhat.com</a>&gt;<br>
+Signed-off-by: Xose Vazquez Perez &lt;<a href=3D"mailto:xose.vazquez@gmail.=
+com">xose.vazquez@gmail.com</a>&gt;<br>
 ---<br>
-=C2=A0libmultipath/blacklist.c=C2=A0 =C2=A0| 2 +-<br>
-=C2=A0multipath/multipath.conf.5 | 2 +-<br>
-=C2=A02 files changed, 2 insertions(+), 2 deletions(-)<br>
+</span>v2 - remove XXX tags<br>
+---<br>
+=C2=A0multipath/multipath.conf.5 | 6 ++----<br>
+=C2=A01 file changed, 2 insertions(+), 4 deletions(-)<br>
 <br>
-diff --git a/libmultipath/blacklist.c b/libmultipath/blacklist.c<br>
-index 36af282..ee396e2 100644<br>
---- a/libmultipath/blacklist.c<br>
-+++ b/libmultipath/blacklist.c<br>
-@@ -169,7 +169,7 @@ setup_default_blist (struct config * conf)<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 char * str;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 int i;<br>
-<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0str =3D STRDUP(&quot;^(ram|raw|loop|fd|md|<wbr>=
-dm-|sr|scd|st|dcssblk|nvme)[0-<wbr>9]&quot;);<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0str =3D STRDUP(&quot;^(ram|raw|loop|fd|md|<wbr>=
-dm-|sr|scd|st|dcssblk)[0-9]&quot;);<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (!str)<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return 1;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (store_ble(conf-&gt;blist_<wbr>devnode, str,=
- ORIGIN_DEFAULT))<br>
 diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5<br>
-index 7de8bc7..d6c6c52 100644<br>
+index 7de8bc7..4961c06 100644<br>
 --- a/multipath/multipath.conf.5<br>
 +++ b/multipath/multipath.conf.5<br>
-@@ -943,7 +943,7 @@ The following keywords are recognized:<br>
-=C2=A0Regular expression of the device nodes to be excluded.<br>
-=C2=A0.RS<br>
+@@ -166,14 +166,12 @@ Loop through every path in the path group, sending th=
+e same amount of I/O to<br>
+<span class=3D"">=C2=A0each. Some aspects of behavior can be controlled wit=
+h the attributes:<br>
+</span>=C2=A0\fIrr_min_io\fR, \fIrr_min_io_rq\fR and \fIrr_weight\fR.<br>
 =C2=A0.TP<br>
--The default is: \fB^(ram|raw|loop|fd|md|dm-|<wbr>sr|scd|st|dcssblk|nvme)[0=
--9]\<wbr>fR and \fB^(td|hd|vd)[a-z]\fR<br>
-+The default is: \fB^(ram|raw|loop|fd|md|dm-|<wbr>sr|scd|st|dcssblk)[0-9]\f=
-R and \fB^(td|hd|vd)[a-z]\fR<br>
-=C2=A0.RE<br>
+-.\&quot; XXX<br>
+<span class=3D"">=C2=A0.I &quot;queue-length 0&quot;<br>
+-(Since ??? kernel) Choose the path for the next bunch of I/O based on the =
+amount<br>
++(Since 2.6.31 kernel) Choose the path for the next bunch of I/O based on t=
+he amount<br>
+=C2=A0of outstanding I/O to the path.<br>
 =C2=A0.TP<br>
-=C2=A0.B wwid<br>
-<span class=3D"HOEnZb"><font color=3D"#888888">--<br>
-2.5.5<br>
+</span>-.\&quot; XXX<br>
+<div class=3D"HOEnZb"><div class=3D"h5">=C2=A0.I &quot;service-time 0&quot;=
 <br>
-</font></span></blockquote></div><br></div>
+-(Since ??? kernel) Choose the path for the next bunch of I/O based on the =
+amount<br>
++(Since 2.6.31 kernel) Choose the path for the next bunch of I/O based on t=
+he amount<br>
+=C2=A0of outstanding I/O to the path and its relative throughput.<br>
+=C2=A0.TP<br>
+=C2=A0The default is: \fBservice-time 0\fR<br>
+--<br>
+2.11.1<br>
+<br>
+</div></div></blockquote></div><br></div>
 
---94eb2c1924d225bbed05497c7b8e--
+--001a11c0004444619005497c983b--
 
 
---===============6073420047843643204==
+--===============2314102605048886335==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============6073420047843643204==--
+--===============2314102605048886335==--
