@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 21/33] libmultipath: setup_feature: handle
-	"retain_attached_hw_handler"
-Date: Tue, 28 Feb 2017 17:23:17 +0100
-Message-ID: <20170228162329.14517-22-mwilck@suse.com>
+Subject: [PATCH 27/33] libmultipath: differentiate ACT_NOTHING
+	and ACT_IMPOSSIBLE
+Date: Tue, 28 Feb 2017 17:23:23 +0100
+Message-ID: <20170228162329.14517-28-mwilck@suse.com>
 References: <20170228162329.14517-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,27 +24,71 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.de>
 
+select_action uses ACT_NOTHING for two different cases,
+1) if changes can't be applied for some reason, and
+2) if nothing needs to be done. Introduce ACT_IMPOSSIBLE
+for case 1).
+
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/structs.c | 6 ++++++
- 1 file changed, 6 insertions(+)
+ libmultipath/configure.c | 7 ++++---
+ libmultipath/configure.h | 1 +
+ libmultipath/print.c     | 2 +-
+ 3 files changed, 6 insertions(+), 4 deletions(-)
 
-diff --git a/libmultipath/structs.c b/libmultipath/structs.c
-index c2565239..e225f8b4 100644
---- a/libmultipath/structs.c
-+++ b/libmultipath/structs.c
-@@ -504,6 +504,12 @@ void setup_feature(struct multipath *mpp, char *feature)
- 		else
- 			condlog(1, "%s: ignoring feature queue_if_no_path because no_path_retry = %d",
- 				mpp->alias, mpp->no_path_retry);
-+	} else if (!strcmp(feature, "retain_attached_hw_handler")) {
-+		if (mpp->retain_hwhandler != RETAIN_HWHANDLER_OFF)
-+			mpp->retain_hwhandler = RETAIN_HWHANDLER_ON;
-+		else
-+			condlog(1, "%s: ignoring feature 'retain_attached_hw_handler'",
-+				mpp->alias);
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index b400bb96..025947a8 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -464,13 +464,13 @@ select_action (struct multipath * mpp, vector curmp, int force_reload)
+ 		/* reset alias to existing alias */
+ 		FREE(mpp->alias);
+ 		mpp->alias = STRDUP(cmpp->alias);
+-		mpp->action = ACT_NOTHING;
++		mpp->action = ACT_IMPOSSIBLE;
+ 		return;
  	}
- }
  
+ 	if (pathcount(mpp, PATH_UP) == 0) {
+-		mpp->action = ACT_NOTHING;
+-		condlog(3, "%s: set ACT_NOTHING (no usable path)",
++		mpp->action = ACT_IMPOSSIBLE;
++		condlog(3, "%s: set ACT_IMPOSSIBLE (no usable path)",
+ 			mpp->alias);
+ 		return;
+ 	}
+@@ -671,6 +671,7 @@ int domap(struct multipath *mpp, char *params, int is_daemon)
+ 	switch (mpp->action) {
+ 	case ACT_REJECT:
+ 	case ACT_NOTHING:
++	case ACT_IMPOSSIBLE:
+ 		return DOMAP_EXIST;
+ 
+ 	case ACT_SWITCHPG:
+diff --git a/libmultipath/configure.h b/libmultipath/configure.h
+index 442c956d..fb078a61 100644
+--- a/libmultipath/configure.h
++++ b/libmultipath/configure.h
+@@ -20,6 +20,7 @@ enum actions {
+ 	ACT_RESIZE,
+ 	ACT_FORCERENAME,
+ 	ACT_DRY_RUN,
++	ACT_IMPOSSIBLE,
+ };
+ 
+ #define FLUSH_ONE 1
+diff --git a/libmultipath/print.c b/libmultipath/print.c
+index 00a36267..7c2a1588 100644
+--- a/libmultipath/print.c
++++ b/libmultipath/print.c
+@@ -996,7 +996,7 @@ int snprint_multipath_topology(char *buff, int len, struct multipath *mpp,
+ 
+ 	if (verbosity > 1 &&
+ 	    mpp->action != ACT_NOTHING &&
+-	    mpp->action != ACT_UNDEF)
++	    mpp->action != ACT_UNDEF && mpp->action != ACT_IMPOSSIBLE)
+ 			c += sprintf(c, "%%A: ");
+ 
+ 	c += sprintf(c, "%%n");
 -- 
 2.11.0
