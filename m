@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 05/33] Invalid error code when using multipathd
-	CLI
-Date: Tue, 28 Feb 2017 17:23:01 +0100
-Message-ID: <20170228162329.14517-6-mwilck@suse.com>
+Subject: [PATCH 28/33] libmultipath: coalesce_paths: trigger
+	uevent if nothing done
+Date: Tue, 28 Feb 2017 17:23:24 +0100
+Message-ID: <20170228162329.14517-29-mwilck@suse.com>
 References: <20170228162329.14517-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,76 +19,64 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: Martin Wilck <mwilck@suse.de>
 List-Id: dm-devel.ids
 
-From: Hannes Reinecke <hare@suse.de>
+From: Martin Wilck <mwilck@suse.de>
 
-When calling the multipathd CLI we're getting the message
+The previous patches skip RELOAD actions if there's nothing
+to be done. I found a corner case where this may lead to imporperly
+initialized device nodes (in my case a by-label link hadn't been
+reset to the partition on the multipath device by udev).
+Triggering an extra "change" event on the device fixes
+this situation.
 
-error -1 receiving packet
-
-instead of the actual error number.
-Problem is a confusion about the return values between
-libmpathcmd and uxsock.c.
-uxsock.c is assuming a negative return value to be the errno,
-but libmpathcmd is returning -1 on error and setting errno.
-
-Signed-off-by: Hannes Reinecke <hare@suse.com>
+Signed-off-by: Martin Wilck <mwilck@suse.de>
 ---
- libmpathcmd/mpath_cmd.c | 4 ++++
- libmultipath/uxsock.c   | 9 +++++++--
- 2 files changed, 11 insertions(+), 2 deletions(-)
+ libmultipath/configure.c | 24 ++++++++++++++++++++++++
+ 1 file changed, 24 insertions(+)
 
-diff --git a/libmpathcmd/mpath_cmd.c b/libmpathcmd/mpath_cmd.c
-index 856e6b48..1496b682 100644
---- a/libmpathcmd/mpath_cmd.c
-+++ b/libmpathcmd/mpath_cmd.c
-@@ -141,7 +141,11 @@ int mpath_recv_reply(int fd, char **reply, unsigned int timeout)
- 	*reply = NULL;
- 	len = mpath_recv_reply_len(fd, timeout);
- 	if (len <= 0)
-+		return len;
-+	if (len > MAX_REPLY_LEN) {
-+		errno = EINVAL;
- 		return -1;
-+	}
- 	*reply = malloc(len);
- 	if (!*reply)
- 		return -1;
-diff --git a/libmultipath/uxsock.c b/libmultipath/uxsock.c
-index 492f4b9c..7e5a1449 100644
---- a/libmultipath/uxsock.c
-+++ b/libmultipath/uxsock.c
-@@ -88,7 +88,9 @@ int ux_socket_listen(const char *name)
-  */
- int send_packet(int fd, const char *buf)
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 025947a8..d9554553 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -411,6 +411,18 @@ get_udev_for_mpp(const struct multipath *mpp)
+ 	return udd;
+ }
+ 
++static void
++trigger_udev_change(const struct multipath *mpp)
++{
++	static const char change[] = "change";
++	struct udev_device *udd = get_udev_for_mpp(mpp);
++	if (!udd)
++		return;
++	condlog(3, "triggering %s uevent for %s", change, mpp->alias);
++	sysfs_attr_set_value(udd, "uevent", change, sizeof(change)-1);
++	udev_device_unref(udd);
++}
++
+ static int
+ is_mpp_known_to_udev(const struct multipath *mpp)
  {
--	return mpath_send_cmd(fd, buf);
-+	if (mpath_send_cmd(fd, buf) < 0)
-+		return -errno;
-+	return 0;
- }
+@@ -949,6 +961,18 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
+ 		if (r == DOMAP_DRY)
+ 			continue;
  
- static int _recv_packet(int fd, char **buf, unsigned int timeout, ssize_t limit)
-@@ -98,8 +100,10 @@ static int _recv_packet(int fd, char **buf, unsigned int timeout, ssize_t limit)
- 
- 	*buf = NULL;
- 	len = mpath_recv_reply_len(fd, timeout);
--	if (len <= 0)
-+	if (len == 0)
- 		return len;
-+	if (len < 0)
-+		return -errno;
- 	if ((limit > 0) && (len > limit))
- 		return -EINVAL;
- 	(*buf) = MALLOC(len);
-@@ -109,6 +113,7 @@ static int _recv_packet(int fd, char **buf, unsigned int timeout, ssize_t limit)
- 	if (err != 0) {
- 		FREE(*buf);
- 		(*buf) = NULL;
-+		return -errno;
- 	}
- 	return err;
- }
++		if (r == DOMAP_EXIST && mpp->action == ACT_NOTHING &&
++		    force_reload == FORCE_RELOAD_WEAK)
++			/*
++			 * First time we're called, and no changes applied.
++			 * domap() was a noop. But we can't be sure that
++			 * udev has already finished setting up this device
++			 * (udev in initrd may have been shut down while
++			 * processing this device or its children).
++			 * Trigger a change event, just in case.
++			 */
++			trigger_udev_change(find_mp_by_wwid(curmp, mpp->wwid));
++
+ 		conf = get_multipath_config();
+ 		allow_queueing = conf->allow_queueing;
+ 		put_multipath_config(conf);
 -- 
 2.11.0
