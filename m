@@ -1,16 +1,12 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH] Avoid that reloading a map sporadically
- triggers I/O errors
-Date: Mon, 27 Feb 2017 22:06:31 +0100
-Message-ID: <CABr-GncajX5CaazYUaWWzRZTUMfed5ViFqoEUA7swSbr9nV_ww@mail.gmail.com>
-References: <85315cb2-6908-70c6-78b7-06b6c1071f6b@sandisk.com>
-	<d044817b-ea55-f42f-3895-5c539260ed80@sandisk.com>
-	<20170104195643.GK2732@octiron.msp.redhat.com>
-	<f95d0a86-5165-2c92-e824-449212bad9eb@sandisk.com>
+From: tang.junhui@zte.com.cn
+Subject: [PATCH] multipath-tools: improve processing efficiency
+	for addition and deletion of multipath devices
+Date: Tue, 28 Feb 2017 15:05:49 +0800
+Message-ID: <1488265549-1936-1-git-send-email-tang.junhui@zte.com.cn>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1084102170794511700=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <f95d0a86-5165-2c92-e824-449212bad9eb@sandisk.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,166 +16,1020 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <bart.vanassche@sandisk.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: zhang.kai16@zte.com.cn, "tang.junhui" <tang.junhui@zte.com.cn>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============1084102170794511700==
-Content-Type: multipart/alternative; boundary=001a113534422c01b105498974d5
+From: "tang.junhui" <tang.junhui@zte.com.cn>
 
---001a113534422c01b105498974d5
-Content-Type: text/plain; charset=UTF-8
+This patch used to improve processing efficiency for addition and deletion
+of multipath devices.
 
-Oh yes, sorry, this patch slipped past my cursor.
+This patch is tested pass by ZTE multipath automatic testing system.
+The modification reduces the system consumption(such as CPU) and shortens
+the processing time obviously in scene of massive multipath devices
+addition or deletion.
 
-This patch highlights the lack of consistency in function prototypes in
-devmapper.c : some using "no_flush", others using "flush".
+The main processing flow of code is:
+1) add uid_attrs configuration in the defaults section:
+   It is configured udev attribute which providing a unique path identifier
+   for corresponding type of path devices. If this field is configured and
+   matched with type of device, it would override any other methods
+   providing for device unique identifier in config file, and it would
+   activate merging uevents according to the identifier to promote effiecncy
+   in processing uevents. Tt has no default value, so defaultly only uevents
+   filtering works, and uevents merging does not works, if users want to
+   identify path by udev attribute and to activate merging uevents for SCSI
+   and DAS device, they can set it's value as:
+   "sd:ID_SERIAL dasd:ID_UID"
+2) uevents accumulation in uevents burst scene:
+   wait one seconds for more uevents in uevent_listen() in uevents burst
+   situations
+3) uevents preparing, filtering and merging:
+   discard unuse uevents and fetch path idendifier from uevents;
+   filter uevents;
+   merge uevents.
+4) uevents proccessing:
+   proccess the merged uevents in uev->merge_node list without calling
+   domap();
+   proccess the last uevents uev with calling domap().
 
-Anyway, your patch is now applied.
-Thanks.
+Signed-off-by: tang.junhui <tang.junhui@zte.com.cn>
+---
+ libmultipath/config.c      |   3 +
+ libmultipath/config.h      |   1 +
+ libmultipath/dict.c        |   3 +
+ libmultipath/discovery.c   |   5 +-
+ libmultipath/discovery.h   |   2 +-
+ libmultipath/list.h        |  41 ++++++
+ libmultipath/propsel.c     |   7 +
+ libmultipath/uevent.c      | 320 +++++++++++++++++++++++++++++++++++++++++++--
+ libmultipath/uevent.h      |   2 +
+ libmultipath/util.c        |  42 ++++++
+ libmultipath/util.h        |   1 +
+ multipath/multipath.conf.5 |  18 +++
+ multipathd/cli_handlers.c  |   4 +-
+ multipathd/main.c          |  93 +++++--------
+ multipathd/main.h          |   4 +-
+ 15 files changed, 471 insertions(+), 75 deletions(-)
 
-On Mon, Feb 27, 2017 at 4:18 PM, Bart Van Assche <bart.vanassche@sandisk.com
-> wrote:
-
-> Hello Christophe,
->
-> The patch below was posted more than three months ago but has not yet
-> received any feedback from you. Had I sent this patch to the right person?
-> Do you perhaps want me to repost it?
->
-> Bart.
->
->
-> On 01/04/17 11:56, Benjamin Marzinski wrote:
->
->> On Wed, Dec 07, 2016 at 03:37:44PM -0800, Bart Van Assche wrote:
->>
->> ACK
->>
->> -Ben
->>
->> Christophe and Hannes, do you want to comment on this patch?
->>>
->>> Thanks,
->>>
->>> Bart.
->>>
->>> On 11/18/2016 01:33 PM, Bart Van Assche wrote:
->>>
->>>> Avoid that reloading a map while there are no paths triggers a flush
->>>> and hence unwanted I/O errors if 'queue_if_no_path' is enabled.
->>>>
->>>> Fixes: commit d569988e7528 ("libmultipath: Fixup 'DM_DEVICE_RELOAD'
->>>> handling")
->>>> Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
->>>> Cc: Hannes Reinecke <hare@suse.de>
->>>> ---
->>>> libmultipath/devmapper.c | 2 +-
->>>> 1 file changed, 1 insertion(+), 1 deletion(-)
->>>>
->>>> diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
->>>> index f92ebce..31f1962 100644
->>>> --- a/libmultipath/devmapper.c
->>>> +++ b/libmultipath/devmapper.c
->>>> @@ -390,7 +390,7 @@ int dm_addmap_reload(struct multipath *mpp, char
->>>> *params, int flush)
->>>>                               params, ADDMAP_RO, SKIP_KPARTX_OFF);
->>>>         }
->>>>         if (r)
->>>> -               r = dm_simplecmd(DM_DEVICE_RESUME, mpp->alias, flush,
->>>> +               r = dm_simplecmd(DM_DEVICE_RESUME, mpp->alias, !flush,
->>>>                                  1, udev_flags, 0);
->>>>         return r;
->>>> }
->>>>
->>>
->
-
---001a113534422c01b105498974d5
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">Oh yes, sorry, this patch slipped past my cursor.<div><br>=
-</div><div>This patch highlights the lack of consistency in function protot=
-ypes in devmapper.c : some using &quot;no_flush&quot;, others using &quot;f=
-lush&quot;.</div><div><br></div><div>Anyway, your patch is now applied.</di=
-v><div>Thanks.</div></div><div class=3D"gmail_extra"><br><div class=3D"gmai=
-l_quote">On Mon, Feb 27, 2017 at 4:18 PM, Bart Van Assche <span dir=3D"ltr"=
->&lt;<a href=3D"mailto:bart.vanassche@sandisk.com" target=3D"_blank">bart.v=
-anassche@sandisk.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_qu=
-ote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex=
-">Hello Christophe,<br>
-<br>
-The patch below was posted more than three months ago but has not yet recei=
-ved any feedback from you. Had I sent this patch to the right person? Do yo=
-u perhaps want me to repost it?<span class=3D"HOEnZb"><font color=3D"#88888=
-8"><br>
-<br>
-Bart.</font></span><div class=3D"HOEnZb"><div class=3D"h5"><br>
-<br>
-On 01/04/17 11:56, Benjamin Marzinski wrote:<br>
-<blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1p=
-x #ccc solid;padding-left:1ex">
-On Wed, Dec 07, 2016 at 03:37:44PM -0800, Bart Van Assche wrote:<br>
-<br>
-ACK<br>
-<br>
--Ben<br>
-<br>
-<blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1p=
-x #ccc solid;padding-left:1ex">
-Christophe and Hannes, do you want to comment on this patch?<br>
-<br>
-Thanks,<br>
-<br>
-Bart.<br>
-<br>
-On 11/18/2016 01:33 PM, Bart Van Assche wrote:<br>
-<blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1p=
-x #ccc solid;padding-left:1ex">
-Avoid that reloading a map while there are no paths triggers a flush<br>
-and hence unwanted I/O errors if &#39;queue_if_no_path&#39; is enabled.<br>
-<br>
-Fixes: commit d569988e7528 (&quot;libmultipath: Fixup &#39;DM_DEVICE_RELOAD=
-&#39; handling&quot;)<br>
-Signed-off-by: Bart Van Assche &lt;<a href=3D"mailto:bart.vanassche@sandisk=
-.com" target=3D"_blank">bart.vanassche@sandisk.com</a>&gt;<br>
-Cc: Hannes Reinecke &lt;<a href=3D"mailto:hare@suse.de" target=3D"_blank">h=
-are@suse.de</a>&gt;<br>
----<br>
-libmultipath/devmapper.c | 2 +-<br>
-1 file changed, 1 insertion(+), 1 deletion(-)<br>
-<br>
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c<br>
-index f92ebce..31f1962 100644<br>
---- a/libmultipath/devmapper.c<br>
-+++ b/libmultipath/devmapper.c<br>
-@@ -390,7 +390,7 @@ int dm_addmap_reload(struct multipath *mpp, char *param=
-s, int flush)<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 params, ADDMAP_RO, SKIP_KPARTX_OFF);<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 }<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (r)<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0r =3D dm_simplecmd(=
-DM_DEVICE_RESUME, mpp-&gt;alias, flush,<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0r =3D dm_simplecmd(=
-DM_DEVICE_RESUME, mpp-&gt;alias, !flush,<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A01, udev_flags, 0);<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 return r;<br>
-}<br>
-</blockquote></blockquote></blockquote>
-<br>
-</div></div></blockquote></div><br></div>
-
---001a113534422c01b105498974d5--
-
-
---===============1084102170794511700==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============1084102170794511700==--
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index 9d3f3e1..bb6619b 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -493,6 +493,9 @@ free_config (struct config * conf)
+ 	if (conf->uid_attribute)
+ 		FREE(conf->uid_attribute);
+ 
++	if (conf->uid_attrs)
++		FREE(conf->uid_attrs);
++
+ 	if (conf->getuid)
+ 		FREE(conf->getuid);
+ 
+diff --git a/libmultipath/config.h b/libmultipath/config.h
+index 9a90745..4f1d596 100644
+--- a/libmultipath/config.h
++++ b/libmultipath/config.h
+@@ -164,6 +164,7 @@ struct config {
+ 
+ 	char * multipath_dir;
+ 	char * selector;
++	char * uid_attrs;
+ 	char * uid_attribute;
+ 	char * getuid;
+ 	char * features;
+diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+index bababdb..82066f6 100644
+--- a/libmultipath/dict.c
++++ b/libmultipath/dict.c
+@@ -249,6 +249,8 @@ declare_ovr_snprint(selector, print_str)
+ declare_mp_handler(selector, set_str)
+ declare_mp_snprint(selector, print_str)
+ 
++declare_def_handler(uid_attrs, set_str)
++declare_def_snprint(uid_attrs, print_str)
+ declare_def_handler(uid_attribute, set_str)
+ declare_def_snprint_defstr(uid_attribute, print_str, DEFAULT_UID_ATTRIBUTE)
+ declare_ovr_handler(uid_attribute, set_str)
+@@ -1396,6 +1398,7 @@ init_keywords(vector keywords)
+ 	install_keyword("multipath_dir", &def_multipath_dir_handler, &snprint_def_multipath_dir);
+ 	install_keyword("path_selector", &def_selector_handler, &snprint_def_selector);
+ 	install_keyword("path_grouping_policy", &def_pgpolicy_handler, &snprint_def_pgpolicy);
++	install_keyword("uid_attrs", &def_uid_attrs_handler, &snprint_def_uid_attrs);
+ 	install_keyword("uid_attribute", &def_uid_attribute_handler, &snprint_def_uid_attribute);
+ 	install_keyword("getuid_callout", &def_getuid_handler, &snprint_def_getuid);
+ 	install_keyword("prio", &def_prio_name_handler, &snprint_def_prio_name);
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 4e99845..7398040 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -34,7 +34,7 @@
+ 
+ int
+ alloc_path_with_pathinfo (struct config *conf, struct udev_device *udevice,
+-			  int flag, struct path **pp_ptr)
++			  char *wwid, int flag, struct path **pp_ptr)
+ {
+ 	int err = PATHINFO_FAILED;
+ 	struct path * pp;
+@@ -52,6 +52,9 @@ alloc_path_with_pathinfo (struct config *conf, struct udev_device *udevice,
+ 	if (!pp)
+ 		return PATHINFO_FAILED;
+ 
++	if(wwid)
++		strncpy(pp->wwid, wwid, sizeof(pp->wwid));
++
+ 	if (safe_sprintf(pp->dev, "%s", devname)) {
+ 		condlog(0, "pp->dev too small");
+ 	} else {
+diff --git a/libmultipath/discovery.h b/libmultipath/discovery.h
+index 3039268..d16a69a 100644
+--- a/libmultipath/discovery.h
++++ b/libmultipath/discovery.h
+@@ -37,7 +37,7 @@ int path_offline (struct path *);
+ int get_state (struct path * pp, struct config * conf, int daemon);
+ int pathinfo (struct path * pp, struct config * conf, int mask);
+ int alloc_path_with_pathinfo (struct config *conf, struct udev_device *udevice,
+-			      int flag, struct path **pp_ptr);
++			      char *wwid, int flag, struct path **pp_ptr);
+ int store_pathinfo (vector pathvec, struct config *conf,
+ 		    struct udev_device *udevice, int flag,
+ 		    struct path **pp_ptr);
+diff --git a/libmultipath/list.h b/libmultipath/list.h
+index ceaa381..2b1dcf3 100644
+--- a/libmultipath/list.h
++++ b/libmultipath/list.h
+@@ -317,4 +317,45 @@ static inline void list_splice_tail_init(struct list_head *list,
+ 	     &pos->member != (head);					\
+ 	     pos = n, n = list_entry(n->member.next, typeof(*n), member))
+ 
++/**
++ * list_for_each_entry_reverse_safe - iterate backwards over list of given type safe against removal of list entry
++ * @pos:	the type * to use as a loop counter.
++ * @n:		another type * to use as temporary storage
++ * @head:	the head for your list.
++ * @member:	the name of the list_struct within the struct.
++ */
++#define list_for_each_entry_reverse_safe(pos, n, head, member)          \
++	for (pos = list_entry((head)->prev, typeof(*pos), member),      \
++		 n = list_entry(pos->member.prev, typeof(*pos), member);\
++	     &pos->member != (head);                                    \
++	     pos = n, n = list_entry(n->member.prev, typeof(*n), member))
++
++/**
++ * list_for_some_entry_safe - iterate list from the given begin node to the given end node safe against removal of list entry
++ * @pos:	the type * to use as a loop counter.
++ * @n:		another type * to use as temporary storage
++ * @from:	the begin node of the iteration.
++ * @to:		the end node of the iteration.
++ * @member:	the name of the list_struct within the struct.
++ */
++#define list_for_some_entry_safe(pos, n, from, to, member)              \
++	for (pos = list_entry((from)->next, typeof(*pos), member),      \
++	     n = list_entry(pos->member.next, typeof(*pos), member);    \
++	     &pos->member != (to);                                      \
++	     pos = n, n = list_entry(n->member.next, typeof(*n), member))
++
++/**
++ * list_for_some_entry_reverse_safe - iterate backwards list from the given begin node to the given end node safe against removal of list entry
++ * @pos:	the type * to use as a loop counter.
++ * @n:		another type * to use as temporary storage
++ * @from:	the begin node of the iteration.
++ * @to:		the end node of the iteration.
++ * @member:	the name of the list_struct within the struct.
++ */
++#define list_for_some_entry_reverse_safe(pos, n, from, to, member)      \
++	for (pos = list_entry((from)->prev, typeof(*pos), member),      \
++	     n = list_entry(pos->member.prev, typeof(*pos), member);    \
++	     &pos->member != (to);                                      \
++	     pos = n, n = list_entry(n->member.prev, typeof(*n), member))
++
+ #endif /* _LIST_H */
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index bba8194..38eb424 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -18,6 +18,7 @@
+ #include "prio.h"
+ #include "discovery.h"
+ #include "dict.h"
++#include "util.h"
+ #include "prioritizers/alua_rtpg.h"
+ #include <inttypes.h>
+ 
+@@ -344,6 +345,12 @@ int select_getuid(struct config *conf, struct path *pp)
+ {
+ 	char *origin;
+ 
++	pp->uid_attribute = parse_uid_attribute_by_attrs(conf->uid_attrs, pp->dev);
++	if (pp->uid_attribute) {
++		origin = "(setting: multipath.conf defaults section)";
++		goto out;
++	}
++
+ 	pp_set_ovr(getuid);
+ 	pp_set_ovr(uid_attribute);
+ 	pp_set_hwe(getuid);
+diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
+index 7edcce1..6e2527b 100644
+--- a/libmultipath/uevent.c
++++ b/libmultipath/uevent.c
+@@ -24,6 +24,7 @@
+ 
+ #include <unistd.h>
+ #include <stdio.h>
++#include <stdbool.h>
+ #include <errno.h>
+ #include <stdlib.h>
+ #include <stddef.h>
+@@ -38,6 +39,7 @@
+ #include <linux/netlink.h>
+ #include <pthread.h>
+ #include <sys/mman.h>
++#include <sys/time.h>
+ #include <libudev.h>
+ #include <errno.h>
+ 
+@@ -46,6 +48,14 @@
+ #include "list.h"
+ #include "uevent.h"
+ #include "vector.h"
++#include "structs.h"
++#include "util.h"
++#include "config.h"
++#include "blacklist.h"
++
++#define MAX_ACCUMULATION_COUNT 2048
++#define MAX_ACCUMULATION_TIME 30*1000
++#define MIN_BURST_SPEED 10
+ 
+ typedef int (uev_trigger)(struct uevent *, void * trigger_data);
+ 
+@@ -72,48 +82,301 @@ struct uevent * alloc_uevent (void)
+ {
+ 	struct uevent *uev = MALLOC(sizeof(struct uevent));
+ 
+-	if (uev)
++	if (uev) {
+ 		INIT_LIST_HEAD(&uev->node);
++		INIT_LIST_HEAD(&uev->merge_node);
++	}
+ 
+ 	return uev;
+ }
+ 
+ void
+-service_uevq(struct list_head *tmpq)
++uevq_cleanup(struct list_head *tmpq)
+ {
+ 	struct uevent *uev, *tmp;
+ 
+ 	list_for_each_entry_safe(uev, tmp, tmpq, node) {
+ 		list_del_init(&uev->node);
+ 
+-		if (my_uev_trigger && my_uev_trigger(uev, my_trigger_data))
+-			condlog(0, "uevent trigger error");
+-
+ 		if (uev->udev)
+ 			udev_device_unref(uev->udev);
+ 		FREE(uev);
+ 	}
+ }
+ 
+-static void uevent_cleanup(void *arg)
++void
++uevent_get_wwid(struct uevent *uev)
+ {
+-	struct udev *udev = arg;
++	int i;
++	char *uid_attribute;
++	struct config * conf;
+ 
+-	condlog(3, "Releasing uevent_listen() resources");
+-	udev_unref(udev);
++	conf = get_multipath_config();
++	uid_attribute = parse_uid_attribute_by_attrs(conf->uid_attrs, uev->kernel);
++	put_multipath_config(conf);	
++
++	if (!uid_attribute)
++		return;
++
++	for (i = 0; uev->envp[i] != NULL; i++) {
++		if (!strncmp(uev->envp[i], uid_attribute, strlen(uid_attribute)) &&
++		    strlen(uev->envp[i]) > strlen(uid_attribute) &&
++		    uev->envp[i][strlen(uid_attribute)] == '=') {
++			uev->wwid = uev->envp[i] + strlen(uid_attribute) + 1;
++			break;
++		}
++	}
++	free(uid_attribute);
++}
++
++bool
++uevent_need_merge(void)
++{
++	struct config * conf;
++	bool need_merge = false;
++
++	conf = get_multipath_config();
++	if (conf->uid_attrs)
++		need_merge = true;
++	put_multipath_config(conf);	
++
++	return need_merge;
++}
++
++bool
++uevent_can_discard(struct uevent *uev)
++{
++	char *tmp;
++	char a[11], b[11];
++	struct config * conf;
++
++	/*
++	 * keep only block devices, discard partitions
++	 */
++	tmp = strstr(uev->devpath, "/block/");
++	if (tmp == NULL){
++		condlog(4, "no /block/ in '%s'", uev->devpath);
++		return true;
++	}
++	if (sscanf(tmp, "/block/%10s", a) != 1 ||
++	    sscanf(tmp, "/block/%10[^/]/%10s", a, b) == 2) {
++		condlog(4, "discard event on %s", uev->devpath);
++		return true;
++	}
++
++	/* 
++	 * do not filter dm devices by devnode
++	 */
++	if (!strncmp(uev->kernel, "dm-", 3))
++		return false;
++	/* 
++	 * filter paths devices by devnode
++	 */
++	conf = get_multipath_config();
++	if (filter_devnode(conf->blist_devnode, conf->elist_devnode,
++			   uev->kernel) > 0) {
++		put_multipath_config(conf);
++		return true;
++	}
++	put_multipath_config(conf);
++
++	return false;
++}
++
++bool
++uevent_can_filter(struct uevent *earlier, struct uevent *later)
++{
++
++	/*
++	 * filter earlier uvents if path has removed later. Eg:
++	 * "add path1 |chang path1 |add path2 |remove path1"
++	 * can filter as:
++	 * "add path2 |remove path1"
++	 * uevents "add path1" and "chang path1" are filtered out
++	 */
++	if (!strcmp(earlier->kernel, later->kernel) &&
++		!strcmp(later->action, "remove") &&
++		strncmp(later->kernel, "dm-", 3)) {
++		return true;
++	}
++
++	/*
++	 * filter change uvents if add uevents exist. Eg:
++	 * "change path1| add path1 |add path2"
++	 * can filter as:
++	 * "add path1 |add path2"
++	 * uevent "chang path1" is filtered out
++	 */
++	if (!strcmp(earlier->kernel, later->kernel) &&
++		!strcmp(earlier->action, "change") &&
++		!strcmp(later->action, "add") &&
++		strncmp(later->kernel, "dm-", 3)) {
++		return true;
++	}
++
++	return false;
++}
++
++bool
++merge_need_stop(struct uevent *earlier, struct uevent *later)
++{
++	/*
++	 * dm uevent do not try to merge with left uevents
++	 */
++	if (!strncmp(later->kernel, "dm-", 3))
++		return true;
++
++	/*
++	 * we can not make a jugement without wwid,
++	 * so it is sensible to stop merging
++	 */
++	if (!earlier->wwid || !later->wwid)
++		return true;
++	/*
++	 * uevents merging stoped
++	 * when we meet an opposite action uevent from the same LUN to AVOID
++	 * "add path1 |remove path1 |add path2 |remove path2 |add path3"
++	 * to merge as "remove path1, path2" and "add path1, path2, path3"
++	 * OR
++	 * "remove path1 |add path1 |remove path2 |add path2 |remove path3"
++	 * to merge as "add path1, path2" and "remove path1, path2, path3"
++	 * SO
++	 * when we meet a non-change uevent from the same LUN
++	 * with the same wwid and different action
++	 * it would be better to stop merging.
++	 */
++	if (!strcmp(earlier->wwid, later->wwid) &&
++	    strcmp(earlier->action, later->action) &&
++	    strcmp(earlier->action, "change") &&
++	    strcmp(later->action, "change"))
++		return true;
++
++	return false;
++}
++
++bool
++uevent_can_merge(struct uevent *earlier, struct uevent *later)
++{
++	/* merge paths uevents
++	 * whose wwids exsit and are same
++	 * and actions are same,
++	 * and actions are addition or deletion
++	 */
++	if (earlier->wwid && later->wwid &&
++	    !strcmp(earlier->wwid, later->wwid) &&
++	    !strcmp(earlier->action, later->action) &&
++	    strncmp(earlier->action, "change", 6) &&
++	    strncmp(earlier->kernel, "dm-", 3)) {
++		return true;
++	}
++
++	return false;
+ }
+ 
+ void
+-uevq_cleanup(struct list_head *tmpq)
++uevent_prepare(struct list_head *tmpq)
++{
++	struct uevent *uev, *tmp;
++
++	list_for_each_entry_reverse_safe(uev, tmp, tmpq, node) {
++		if (uevent_can_discard(uev)) {
++			list_del_init(&uev->node);
++			if (uev->udev)
++				udev_device_unref(uev->udev);
++			FREE(uev);
++			continue;
++		}
++
++		if (strncmp(uev->kernel, "dm-", 3) &&
++		    uevent_need_merge())
++			uevent_get_wwid(uev);
++	}
++}
++
++void
++uevent_filter(struct uevent *later, struct list_head *tmpq)
++{
++	struct uevent *earlier, *tmp;
++
++	list_for_some_entry_reverse_safe(earlier, tmp, &later->node, tmpq, node) {
++		/*
++		 * filter unnessary earlier uevents 
++		 * by the later uevent
++		 */
++		if (uevent_can_filter(earlier, later)) {
++			condlog(2, "uevent: %s-%s has filtered by uevent: %s-%s",
++				earlier->kernel, earlier->action, 
++				later->kernel, later->action);
++
++			list_del_init(&earlier->node);
++			if (earlier->udev)
++				udev_device_unref(earlier->udev);
++			FREE(earlier);
++		}
++	}
++}
++
++void
++uevent_merge(struct uevent *later, struct list_head *tmpq)
++{
++	struct uevent *earlier, *tmp;
++
++	list_for_some_entry_reverse_safe(earlier, tmp, &later->node, tmpq, node) {
++		if (merge_need_stop(earlier, later))
++			break;
++		/*
++		 * merge earlier uevents to the later uevent
++		 */
++		if (uevent_can_merge(earlier, later)) {
++			condlog(2, "merged uevent: %s-%s-%s with uevent: %s-%s-%s",
++				earlier->action, earlier->kernel, earlier->wwid,
++				later->action, later->kernel, later->wwid);
++
++			list_move(&earlier->node, &later->merge_node);
++		}
++	}
++}
++
++void
++merge_uevq(struct list_head *tmpq)
++{
++	struct uevent *later;
++
++	uevent_prepare(tmpq);
++	list_for_each_entry_reverse(later, tmpq, node) {
++		uevent_filter(later, tmpq);
++		if(uevent_need_merge())
++			uevent_merge(later, tmpq);
++	}
++}
++
++void
++service_uevq(struct list_head *tmpq)
+ {
+ 	struct uevent *uev, *tmp;
+ 
+ 	list_for_each_entry_safe(uev, tmp, tmpq, node) {
+ 		list_del_init(&uev->node);
++
++		if (my_uev_trigger && my_uev_trigger(uev, my_trigger_data))
++			condlog(0, "uevent trigger error");
++
++		uevq_cleanup(&uev->merge_node);
++
++		if (uev->udev)
++			udev_device_unref(uev->udev);
+ 		FREE(uev);
+ 	}
+ }
+ 
++static void uevent_cleanup(void *arg)
++{
++	struct udev *udev = arg;
++
++	condlog(3, "Releasing uevent_listen() resources");
++	udev_unref(udev);
++}
++
+ /*
+  * Service the uevent queue.
+  */
+@@ -142,6 +405,7 @@ int uevent_dispatch(int (*uev_trigger)(struct uevent *, void * trigger_data),
+ 		pthread_mutex_unlock(uevq_lockp);
+ 		if (!my_uev_trigger)
+ 			break;
++		merge_uevq(&uevq_tmp);
+ 		service_uevq(&uevq_tmp);
+ 	}
+ 	condlog(3, "Terminating uev service queue");
+@@ -442,11 +706,43 @@ struct uevent *uevent_from_udev_device(struct udev_device *dev)
+ 	return uev;
+ }
+ 
++bool uevent_burst(struct timeval *start_time, int events)
++{
++	struct timeval diff_time, end_time;
++	unsigned long speed;
++	unsigned long eclipse_ms;
++
++	if(events > MAX_ACCUMULATION_COUNT) {
++		condlog(2, "burst got %u uevents, too much uevents, stopped", events);
++		return false;
++	}
++
++	gettimeofday(&end_time, NULL);
++	timersub(&end_time, start_time, &diff_time);
++
++	eclipse_ms = diff_time.tv_sec * 1000 + diff_time.tv_usec / 1000;
++
++	if (eclipse_ms == 0)
++		return true;
++
++	if (eclipse_ms > MAX_ACCUMULATION_TIME) {
++		condlog(2, "burst continued %lu ms, too long time, stopped", eclipse_ms);
++		return false;
++	}
++
++	speed = (events * 1000) / eclipse_ms;
++	if (speed > MIN_BURST_SPEED)
++		return true;
++
++	return false;
++}
++
+ int uevent_listen(struct udev *udev)
+ {
+ 	int err = 2;
+ 	struct udev_monitor *monitor = NULL;
+ 	int fd, socket_flags, events;
++	struct timeval start_time;
+ 	int need_failback = 1;
+ 	int timeout = 30;
+ 	LIST_HEAD(uevlisten_tmp);
+@@ -500,6 +796,7 @@ int uevent_listen(struct udev *udev)
+ 	}
+ 
+ 	events = 0;
++	gettimeofday(&start_time, NULL);
+ 	while (1) {
+ 		struct uevent *uev;
+ 		struct udev_device *dev;
+@@ -514,7 +811,7 @@ int uevent_listen(struct udev *udev)
+ 		errno = 0;
+ 		fdcount = poll(&ev_poll, 1, poll_timeout);
+ 		if (fdcount && ev_poll.revents & POLLIN) {
+-			timeout = 0;
++			timeout = uevent_burst(&start_time, events + 1) ? 1 : 0;
+ 			dev = udev_monitor_receive_device(monitor);
+ 			if (!dev) {
+ 				condlog(0, "failed getting udev device");
+@@ -547,6 +844,7 @@ int uevent_listen(struct udev *udev)
+ 			pthread_mutex_unlock(uevq_lockp);
+ 			events = 0;
+ 		}
++		gettimeofday(&start_time, NULL);
+ 		timeout = 30;
+ 	}
+ 	need_failback = 0;
+diff --git a/libmultipath/uevent.h b/libmultipath/uevent.h
+index 9d22dcd..61a4207 100644
+--- a/libmultipath/uevent.h
++++ b/libmultipath/uevent.h
+@@ -17,11 +17,13 @@ struct udev;
+ 
+ struct uevent {
+ 	struct list_head node;
++	struct list_head merge_node;
+ 	struct udev_device *udev;
+ 	char buffer[HOTPLUG_BUFFER_SIZE + OBJECT_SIZE];
+ 	char *devpath;
+ 	char *action;
+ 	char *kernel;
++	char *wwid;
+ 	unsigned long seqnum;
+ 	char *envp[HOTPLUG_NUM_ENVP];
+ };
+diff --git a/libmultipath/util.c b/libmultipath/util.c
+index 1841f35..85d21fa 100644
+--- a/libmultipath/util.c
++++ b/libmultipath/util.c
+@@ -262,6 +262,48 @@ dev_t parse_devt(const char *dev_t)
+ 	return makedev(maj, min);
+ }
+ 
++char *parse_uid_attribute_by_attrs(char *uid_attrs, char *path_dev)
++{
++	char *uid_attribute;
++	char *uid_attr_record;
++	char *dev;
++	char *attr;
++	char *tmp;
++	int  count;
++
++	if(!uid_attrs || !path_dev)
++		return NULL;
++
++	count = get_word(uid_attrs, &uid_attr_record);
++	while (uid_attr_record) {
++		tmp = strrchr(uid_attr_record, ':');
++		if (!tmp) {
++			free(uid_attr_record);
++			if (!count)
++				break;
++			uid_attrs += count;
++			count = get_word(uid_attrs, &uid_attr_record);
++			continue;
++		}
++		dev = uid_attr_record;
++		attr = tmp + 1;
++		*tmp = '\0';
++
++		if(!strncmp(path_dev, dev, strlen(dev))) {
++			uid_attribute = STRDUP(attr);
++			free(uid_attr_record);
++			return uid_attribute;
++		}
++
++		free(uid_attr_record);
++		if (!count)
++			break;
++		uid_attrs += count;
++		count = get_word(uid_attrs, &uid_attr_record);
++	}
++	return NULL;
++}
++
+ void
+ setup_thread_attr(pthread_attr_t *attr, size_t stacksize, int detached)
+ {
+diff --git a/libmultipath/util.h b/libmultipath/util.h
+index f3b37ee..793f2b7 100644
+--- a/libmultipath/util.h
++++ b/libmultipath/util.h
+@@ -12,6 +12,7 @@ size_t strlcat(char *dst, const char *src, size_t size);
+ int devt2devname (char *, int, char *);
+ dev_t parse_devt(const char *dev_t);
+ char *convert_dev(char *dev, int is_path_device);
++char *parse_uid_attribute_by_attrs(char *uid_attrs, char *path_dev);
+ void setup_thread_attr(pthread_attr_t *attr, size_t stacksize, int detached);
+ 
+ #define safe_sprintf(var, format, args...)	\
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index b08bda3..efeead5 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -207,6 +207,24 @@ The default is: \fBfailover\fR
+ .
+ .
+ .TP
++.B uid_attrs
++The udev attribute providing a unique path identifier for corresponding 
++type of path devices. If this field is configured and matched with type
++of device, it would override any other methods providing for device
++unique identifier in config file, and it would activate merging uevents
++according to the identifier to promote effiecncy in processing uevents.
++Tt has no default value, if you want to identify path by udev attribute
++and to activate merging uevents for SCSI and DAS device, you can set
++it's value as:
++.RS
++.TP
++\fBuid_attrs "sd:ID_SERIAL dasd:ID_UID"\fR
++.TP
++The default is: \fB<unset>\fR
++.RE
++.
++.
++.TP
+ .B uid_attribute
+ The udev attribute providing a unique path identifier.
+ .RS
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index b20b054..9e90328 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -714,7 +714,7 @@ cli_add_path (void * v, char ** reply, int * len, void * data)
+ 		pp->checkint = conf->checkint;
+ 	}
+ 	put_multipath_config(conf);
+-	return ev_add_path(pp, vecs);
++	return ev_add_path(pp, vecs, 1);
+ blacklisted:
+ 	*reply = strdup("blacklisted\n");
+ 	*len = strlen(*reply) + 1;
+@@ -736,7 +736,7 @@ cli_del_path (void * v, char ** reply, int * len, void * data)
+ 		condlog(0, "%s: path already removed", param);
+ 		return 1;
+ 	}
+-	return ev_remove_path(pp, vecs);
++	return ev_remove_path(pp, vecs, 1);
+ }
+ 
+ int
+diff --git a/multipathd/main.c b/multipathd/main.c
+index e317a4c..0c69f3b 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -611,7 +611,7 @@ ev_remove_map (char * devname, char * alias, int minor, struct vectors * vecs)
+ }
+ 
+ static int
+-uev_add_path (struct uevent *uev, struct vectors * vecs)
++uev_add_path (struct uevent *uev, struct vectors * vecs, int need_do_map)
+ {
+ 	struct path *pp;
+ 	int ret = 0, i;
+@@ -644,7 +644,7 @@ uev_add_path (struct uevent *uev, struct vectors * vecs)
+ 				     DI_ALL | DI_BLACKLIST);
+ 			put_multipath_config(conf);
+ 			if (r == PATHINFO_OK)
+-				ret = ev_add_path(pp, vecs);
++				ret = ev_add_path(pp, vecs, need_do_map);
+ 			else if (r == PATHINFO_SKIPPED) {
+ 				condlog(3, "%s: remove blacklisted path",
+ 					uev->kernel);
+@@ -668,7 +668,7 @@ uev_add_path (struct uevent *uev, struct vectors * vecs)
+ 	 */
+ 	conf = get_multipath_config();
+ 	ret = alloc_path_with_pathinfo(conf, uev->udev,
+-				       DI_ALL, &pp);
++				       uev->wwid, DI_ALL, &pp);
+ 	put_multipath_config(conf);
+ 	if (!pp) {
+ 		if (ret == PATHINFO_SKIPPED)
+@@ -684,7 +684,7 @@ uev_add_path (struct uevent *uev, struct vectors * vecs)
+ 		conf = get_multipath_config();
+ 		pp->checkint = conf->checkint;
+ 		put_multipath_config(conf);
+-		ret = ev_add_path(pp, vecs);
++		ret = ev_add_path(pp, vecs, need_do_map);
+ 	} else {
+ 		condlog(0, "%s: failed to store path info, "
+ 			"dropping event",
+@@ -702,7 +702,7 @@ uev_add_path (struct uevent *uev, struct vectors * vecs)
+  * 1: error
+  */
+ int
+-ev_add_path (struct path * pp, struct vectors * vecs)
++ev_add_path (struct path * pp, struct vectors * vecs, int need_do_map)
+ {
+ 	struct multipath * mpp;
+ 	char params[PARAMS_SIZE] = {0};
+@@ -771,6 +771,13 @@ rescan:
+ 	/* persistent reservation check*/
+ 	mpath_pr_event_handle(pp);
+ 
++	if (!need_do_map)
++		return 0;
++
++	if (!dm_map_present(mpp->alias)) {
++		mpp->action = ACT_CREATE;
++		start_waiter = 1;
++	}
+ 	/*
+ 	 * push the map to the device-mapper
+ 	 */
+@@ -837,7 +844,7 @@ fail:
+ }
+ 
+ static int
+-uev_remove_path (struct uevent *uev, struct vectors * vecs)
++uev_remove_path (struct uevent *uev, struct vectors * vecs, int need_do_map)
+ {
+ 	struct path *pp;
+ 	int ret;
+@@ -848,7 +855,7 @@ uev_remove_path (struct uevent *uev, struct vectors * vecs)
+ 	pthread_testcancel();
+ 	pp = find_path_by_dev(vecs->pathvec, uev->kernel);
+ 	if (pp)
+-		ret = ev_remove_path(pp, vecs);
++		ret = ev_remove_path(pp, vecs, need_do_map);
+ 	lock_cleanup_pop(vecs->lock);
+ 	if (!pp) {
+ 		/* Not an error; path might have been purged earlier */
+@@ -859,7 +866,7 @@ uev_remove_path (struct uevent *uev, struct vectors * vecs)
+ }
+ 
+ int
+-ev_remove_path (struct path *pp, struct vectors * vecs)
++ev_remove_path (struct path *pp, struct vectors * vecs, int need_do_map)
+ {
+ 	struct multipath * mpp;
+ 	int i, retval = 0;
+@@ -922,6 +929,8 @@ ev_remove_path (struct path *pp, struct vectors * vecs)
+ 			goto out;
+ 		}
+ 
++		if (!need_do_map)
++			goto out;
+ 		/*
+ 		 * reload the map
+ 		 */
+@@ -999,7 +1008,7 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
+ 		}
+ 
+ 		if (pp->initialized == INIT_REQUESTED_UDEV)
+-			retval = uev_add_path(uev, vecs);
++			retval = uev_add_path(uev, vecs, 1);
+ 		else if (mpp && ro >= 0) {
+ 			condlog(2, "%s: update path write_protect to '%d' (uevent)", uev->kernel, ro);
+ 
+@@ -1020,7 +1029,7 @@ out:
+ 			int flag = DI_SYSFS | DI_WWID;
+ 
+ 			conf = get_multipath_config();
+-			retval = alloc_path_with_pathinfo(conf, uev->udev, flag, NULL);
++			retval = alloc_path_with_pathinfo(conf, uev->udev, uev->wwid, flag, NULL);
+ 			put_multipath_config(conf);
+ 
+ 			if (retval == PATHINFO_SKIPPED) {
+@@ -1090,40 +1099,15 @@ uxsock_trigger (char * str, char ** reply, int * len, bool is_root,
+ 	return r;
+ }
+ 
+-static int
+-uev_discard(char * devpath)
+-{
+-	char *tmp;
+-	char a[11], b[11];
+-
+-	/*
+-	 * keep only block devices, discard partitions
+-	 */
+-	tmp = strstr(devpath, "/block/");
+-	if (tmp == NULL){
+-		condlog(4, "no /block/ in '%s'", devpath);
+-		return 1;
+-	}
+-	if (sscanf(tmp, "/block/%10s", a) != 1 ||
+-	    sscanf(tmp, "/block/%10[^/]/%10s", a, b) == 2) {
+-		condlog(4, "discard event on %s", devpath);
+-		return 1;
+-	}
+-	return 0;
+-}
+-
+ int
+ uev_trigger (struct uevent * uev, void * trigger_data)
+ {
+ 	int r = 0;
+ 	struct vectors * vecs;
+-	struct config *conf;
++	struct uevent *merge_uev, *tmp;
+ 
+ 	vecs = (struct vectors *)trigger_data;
+ 
+-	if (uev_discard(uev->devpath))
+-		return 0;
+-
+ 	pthread_cleanup_push(config_cleanup, NULL);
+ 	pthread_mutex_lock(&config_lock);
+ 	if (running_state != DAEMON_IDLE &&
+@@ -1152,28 +1136,21 @@ uev_trigger (struct uevent * uev, void * trigger_data)
+ 	}
+ 
+ 	/*
+-	 * path add/remove event
++	 * path add/remove/change event, add/remove maybe merged
+ 	 */
+-	conf = get_multipath_config();
+-	if (filter_devnode(conf->blist_devnode, conf->elist_devnode,
+-			   uev->kernel) > 0) {
+-		put_multipath_config(conf);
+-		goto out;
++	list_for_each_entry_safe(merge_uev, tmp, &uev->merge_node, node) {
++		if (!strncmp(merge_uev->action, "add", 3))
++			r += uev_add_path(merge_uev, vecs, 0);
++		if (!strncmp(merge_uev->action, "remove", 6))
++			r += uev_remove_path(merge_uev, vecs, 0);
+ 	}
+-	put_multipath_config(conf);
+ 
+-	if (!strncmp(uev->action, "add", 3)) {
+-		r = uev_add_path(uev, vecs);
+-		goto out;
+-	}
+-	if (!strncmp(uev->action, "remove", 6)) {
+-		r = uev_remove_path(uev, vecs);
+-		goto out;
+-	}
+-	if (!strncmp(uev->action, "change", 6)) {
+-		r = uev_update_path(uev, vecs);
+-		goto out;
+-	}
++	if (!strncmp(uev->action, "add", 3))
++		r += uev_add_path(uev, vecs, 1);
++	if (!strncmp(uev->action, "remove", 6))
++		r += uev_remove_path(uev, vecs, 1);
++	if (!strncmp(uev->action, "change", 6))
++		r += uev_update_path(uev, vecs);
+ 
+ out:
+ 	return r;
+@@ -1663,7 +1640,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+ 			conf = get_multipath_config();
+ 			ret = pathinfo(pp, conf, DI_ALL | DI_BLACKLIST);
+ 			if (ret == PATHINFO_OK) {
+-				ev_add_path(pp, vecs);
++				ev_add_path(pp, vecs, 1);
+ 				pp->tick = 1;
+ 			} else if (ret == PATHINFO_SKIPPED) {
+ 				put_multipath_config(conf);
+@@ -1785,7 +1762,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+ 		}
+ 		if (!disable_reinstate && reinstate_path(pp, add_active)) {
+ 			condlog(3, "%s: reload map", pp->dev);
+-			ev_add_path(pp, vecs);
++			ev_add_path(pp, vecs, 1);
+ 			pp->tick = 1;
+ 			return 0;
+ 		}
+@@ -1808,7 +1785,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+ 			/* Clear IO errors */
+ 			if (reinstate_path(pp, 0)) {
+ 				condlog(3, "%s: reload map", pp->dev);
+-				ev_add_path(pp, vecs);
++				ev_add_path(pp, vecs, 1);
+ 				pp->tick = 1;
+ 				return 0;
+ 			}
+diff --git a/multipathd/main.h b/multipathd/main.h
+index f72580d..094b04f 100644
+--- a/multipathd/main.h
++++ b/multipathd/main.h
+@@ -22,8 +22,8 @@ void exit_daemon(void);
+ const char * daemon_status(void);
+ int need_to_delay_reconfig (struct vectors *);
+ int reconfigure (struct vectors *);
+-int ev_add_path (struct path *, struct vectors *);
+-int ev_remove_path (struct path *, struct vectors *);
++int ev_add_path (struct path *, struct vectors *, int);
++int ev_remove_path (struct path *, struct vectors *, int);
+ int ev_add_map (char *, char *, struct vectors *);
+ int ev_remove_map (char *, char *, int, struct vectors *);
+ void sync_map_state (struct multipath *);
+-- 
+2.8.1.windows.1
