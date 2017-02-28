@@ -1,8 +1,7 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 03/33] Add support for "multipath=off" and
-	"nompath" on kernel cmdline
-Date: Tue, 28 Feb 2017 17:22:59 +0100
-Message-ID: <20170228162329.14517-4-mwilck@suse.com>
+Subject: [PATCH 02/33] multipathd: start daemon after udev trigger
+Date: Tue, 28 Feb 2017 17:22:58 +0100
+Message-ID: <20170228162329.14517-3-mwilck@suse.com>
 References: <20170228162329.14517-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,48 +18,42 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: Martin Wilck <mwilck@suse.de>
 List-Id: dm-devel.ids
 
-From: Martin Wilck <mwilck@suse.de>
+From: Hannes Reinecke <hare@suse.de>
 
-Add support for disabling multipathd startup from the kernel command line.
-This is useful for debugging purposes.
+As multipath now relies on udev for device enumeration it needs
+to be started after udev trigger has finished sending all events.
+Otherwise the daemon will not find any devices during startup
+(as udev trigger hasn't been called yet and the udev database is empty).
+But after switchover from the initrd there will already be some
+multipath device-mapper tables, for which the daemon cannot find
+any device. Consequently the daemon will be removing these tables,
+only to recreate them later on once udev trigger has run.
+This induces a short window during which the device mapper devices
+won't be present, causing systemd to umount devices or drop into
+emergency mode.
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
+Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- multipath/multipath.rules     | 5 +++++
- multipathd/multipathd.service | 2 ++
- 2 files changed, 7 insertions(+)
+ multipathd/multipathd.service | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
-diff --git a/multipath/multipath.rules b/multipath/multipath.rules
-index c8fb7e68..86defc0c 100644
---- a/multipath/multipath.rules
-+++ b/multipath/multipath.rules
-@@ -3,6 +3,11 @@ SUBSYSTEM!="block", GOTO="end_mpath"
- ACTION!="add|change", GOTO="end_mpath"
- KERNEL!="sd*|dasd*", GOTO="end_mpath"
- 
-+IMPORT{cmdline}="nompath"
-+ENV{nompath}=="?*", GOTO="end_mpath"
-+IMPORT{cmdline}="multipath"
-+ENV{multipath}=="off", GOTO="end_mpath"
-+
- ENV{DEVTYPE}!="partition", GOTO="test_dev"
- IMPORT{parent}="DM_MULTIPATH_DEVICE_PATH"
- ENV{DM_MULTIPATH_DEVICE_PATH}=="1", ENV{ID_FS_TYPE}="none", \
 diff --git a/multipathd/multipathd.service b/multipathd/multipathd.service
-index 126012b8..fd66cf62 100644
+index be13138c..126012b8 100644
 --- a/multipathd/multipathd.service
 +++ b/multipathd/multipathd.service
-@@ -6,6 +6,8 @@ Before=local-fs-pre.target blk-availability.service
- After=multipathd.socket systemd-udev-trigger.service systemd-udev-settle.service
+@@ -1,8 +1,9 @@
+ [Unit]
+ Description=Device-Mapper Multipath Device Controller
++Wants=systemd-udev-trigger.service systemd-udev-settle.service
+ Before=iscsi.service iscsid.service lvm2-lvmetad.service lvm2-activation-early.service
+-Before=local-fs-pre.target systemd-udev-trigger.service blk-availability.service
+-After=multipathd.socket systemd-udevd.service
++Before=local-fs-pre.target blk-availability.service
++After=multipathd.socket systemd-udev-trigger.service systemd-udev-settle.service
  DefaultDependencies=no
  Conflicts=shutdown.target
-+ConditionKernelCommandLine=!nompath
-+ConditionKernelCommandLine=!multipath=off
  
- [Service]
- Type=notify
 -- 
 2.11.0
