@@ -1,8 +1,7 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 26/33] libmultipath: reload map if not known to
-	udev
-Date: Tue, 28 Feb 2017 17:23:22 +0100
-Message-ID: <20170228162329.14517-27-mwilck@suse.com>
+Subject: [PATCH 14/33] multipath -ll: set DI_SERIAL
+Date: Tue, 28 Feb 2017 17:23:10 +0100
+Message-ID: <20170228162329.14517-15-mwilck@suse.com>
 References: <20170228162329.14517-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,76 +23,29 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.de>
 
-The previous changes skip map reload if the existing kernel
-state appears correct. Sometimes, boot time race conditions
-may cause a device to be correctly set up in the kernel but
-not in udev. Check this condition, and reload map in this case.
+Without DI_SERIAL, multipath -ll will not be able to obtain correct
+PG priorities in certain configurations (e.g. prio "weightedpath",
+prio_args "serial..."). We do not set DI_SERIAL for the multipath -l
+case, where information is supposed to come from sysfs+device mapper
+only.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/configure.c | 36 ++++++++++++++++++++++++++++++++++++
- 1 file changed, 36 insertions(+)
+ multipath/main.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index fb5a5a92..b400bb96 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -39,6 +39,7 @@
- #include "util.h"
- #include "uxsock.h"
- #include "wwids.h"
-+#include "sysfs.h"
+diff --git a/multipath/main.c b/multipath/main.c
+index 5811630c..8ce87a08 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -367,7 +367,7 @@ configure (struct config *conf, enum mpath_cmds cmd,
  
- /* group paths in pg by host adapter
-  */
-@@ -390,6 +391,35 @@ pgcmp (struct multipath * mpp, struct multipath * cmpp)
- 	return r;
- }
- 
-+static struct udev_device *
-+get_udev_for_mpp(const struct multipath *mpp)
-+{
-+	dev_t devnum;
-+	struct udev_device *udd;
-+
-+	if (!mpp || !mpp->dmi) {
-+		condlog(1, "%s called with empty mpp", __func__);
-+		return NULL;
-+	}
-+
-+	devnum = makedev(mpp->dmi->major, mpp->dmi->minor);
-+	udd = udev_device_new_from_devnum(udev, 'b', devnum);
-+	if (!udd) {
-+		condlog(1, "failed to get udev device for %s", mpp->alias);
-+		return NULL;
-+	}
-+	return udd;
-+}
-+
-+static int
-+is_mpp_known_to_udev(const struct multipath *mpp)
-+{
-+	struct udev_device *udd = get_udev_for_mpp(mpp);
-+	int ret = (udd != NULL);
-+	udev_device_unref(udd);
-+	return ret;
-+}
-+
- static void
- select_action (struct multipath * mpp, vector curmp, int force_reload)
- {
-@@ -529,6 +559,12 @@ select_action (struct multipath * mpp, vector curmp, int force_reload)
- 			mpp->alias);
- 		return;
- 	}
-+	if (!is_mpp_known_to_udev(cmpp)) {
-+		mpp->action = ACT_RELOAD;
-+		condlog(3, "%s: set ACT_RELOAD (udev device not initialized)",
-+			mpp->alias);
-+		return;
-+	}
- 	mpp->action = ACT_NOTHING;
- 	condlog(3, "%s: set ACT_NOTHING (map unchanged)",
- 		mpp->alias);
+ 	if (cmd == CMD_LIST_LONG)
+ 		/* extended path info '-ll' */
+-		di_flag |= DI_SYSFS | DI_CHECKER;
++		di_flag |= DI_SYSFS | DI_CHECKER | DI_SERIAL;
+ 	else if (cmd == CMD_LIST_SHORT)
+ 		/* minimum path info '-l' */
+ 		di_flag |= DI_SYSFS;
 -- 
 2.11.0
