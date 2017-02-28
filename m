@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 11/33] multipathd: issue systemd READY after
-	initial configuration
-Date: Tue, 28 Feb 2017 17:23:07 +0100
-Message-ID: <20170228162329.14517-12-mwilck@suse.com>
+Subject: [PATCH 12/33] libmultipath/discovery: do not cache
+	'access_state' sysfs attribute
+Date: Tue, 28 Feb 2017 17:23:08 +0100
+Message-ID: <20170228162329.14517-13-mwilck@suse.com>
 References: <20170228162329.14517-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,51 +23,41 @@ List-Id: dm-devel.ids
 
 From: Hannes Reinecke <hare@suse.de>
 
-We should be issueing systemd READY only after the initial
-configuration has been completed, otherwise systemd might
-continue while the multipath devices are not setup up properly.
+When reading the 'access_state' sysfs attribute we should not be
+using libudev as this will cache the value, causing us to lose
+any update to the attribute.
 
 
 Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- multipathd/main.c | 11 +++++++----
- 1 file changed, 7 insertions(+), 4 deletions(-)
+ libmultipath/discovery.c | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 86d73f7b..cf44778b 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -2361,6 +2361,7 @@ child (void * param)
- 	int i;
- #ifdef USE_SYSTEMD
- 	unsigned long checkint;
-+	int startup_done = 0;
- #endif
- 	int rc;
- 	int pid_fd = -1;
-@@ -2509,10 +2510,6 @@ child (void * param)
- 	}
- 	pthread_attr_destroy(&misc_attr);
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index bd8ab557..4d4fc895 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -210,8 +210,6 @@ declare_sysfs_get_str(devtype);
+ declare_sysfs_get_str(vendor);
+ declare_sysfs_get_str(model);
+ declare_sysfs_get_str(rev);
+-declare_sysfs_get_str(access_state);
+-declare_sysfs_get_str(preferred_path);
  
--#ifdef USE_SYSTEMD
--	sd_notify(0, "READY=1");
--#endif
--
- 	while (running_state != DAEMON_SHUTDOWN) {
- 		pthread_cleanup_push(config_cleanup, NULL);
- 		pthread_mutex_lock(&config_lock);
-@@ -2534,6 +2531,12 @@ child (void * param)
- 			}
- 			lock_cleanup_pop(vecs->lock);
- 			post_config_state(DAEMON_IDLE);
-+#ifdef USE_SYSTEMD
-+			if (!startup_done) {
-+				sd_notify(0, "READY=1");
-+				startup_done = 1;
-+			}
-+#endif
- 		}
- 	}
+ int
+ sysfs_set_max_sectors_kb(struct multipath *mpp)
+@@ -527,10 +525,10 @@ sysfs_get_asymmetric_access_state(struct path *pp, char *buff, int buflen)
+ 	if (!parent)
+ 		return -1;
  
+-	if (sysfs_get_access_state(parent, buff, buflen) <= 0)
++	if (sysfs_attr_get_value(parent, "access_state", buff, buflen) <= 0)
+ 		return -1;
+ 
+-	if (sysfs_get_preferred_path(parent, value, 16) <= 0)
++	if (sysfs_attr_get_value(parent, "preferred_path", value, 16) <= 0)
+ 		return 0;
+ 
+ 	preferred = strtoul(value, &eptr, 0);
 -- 
 2.11.0
