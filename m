@@ -1,7 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 31/33] multipathd: fixup check for new path states
-Date: Tue, 28 Feb 2017 17:23:27 +0100
-Message-ID: <20170228162329.14517-32-mwilck@suse.com>
+Subject: [PATCH 23/33] libmultipath: disassemble_map: treat minio
+	like assemble_map does
+Date: Tue, 28 Feb 2017 17:23:19 +0100
+Message-ID: <20170228162329.14517-24-mwilck@suse.com>
 References: <20170228162329.14517-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -18,31 +19,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: Martin Wilck <mwilck@suse.de>
 List-Id: dm-devel.ids
 
-From: Hannes Reinecke <hare@suse.de>
+From: Martin Wilck <mwilck@suse.de>
 
-When testing for new path states we should be making sure to
-always using the same path state mask. Otherwise we'll miss
-out any states.
+Rather than using 0 for everything except round-robin, read back
+the actual minio value from DM.
 
-Signed-off-by: Hannes Reinecke <hare@suse.com>
+Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/dmparser.c | 10 ++++------
+ 1 file changed, 4 insertions(+), 6 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index e2e73749..aa359b4a 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1735,7 +1735,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 		pp->checkint = conf->checkint;
- 		put_multipath_config(conf);
+diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
+index 4940e8cf..469e60d2 100644
+--- a/libmultipath/dmparser.c
++++ b/libmultipath/dmparser.c
+@@ -392,19 +392,17 @@ int disassemble_map(vector pathvec, char *params, struct multipath *mpp,
  
--		if (newstate == PATH_DOWN || newstate == PATH_SHAKY || newstate == PATH_TIMEOUT) {
-+		if (newstate != PATH_UP && newstate != PATH_GHOST) {
- 			/*
- 			 * proactively fail path in the DM
- 			 */
+ 			for (k = 0; k < num_paths_args; k++)
+ 				if (k == 0) {
++					p += get_word(p, &word);
++					def_minio = atoi(word);
++					FREE(word);
++
+ 					if (!strncmp(mpp->selector,
+ 						     "round-robin", 11)) {
+-						p += get_word(p, &word);
+-						def_minio = atoi(word);
+ 
+ 						if (mpp->rr_weight == RR_WEIGHT_PRIO
+ 						    && pp->priority > 0)
+ 							def_minio /= pp->priority;
+ 
+-						FREE(word);
+-					} else {
+-						p += get_word(p, NULL);
+-						def_minio = 0;
+ 					}
+ 
+ 					if (def_minio != mpp->minio)
 -- 
 2.11.0
