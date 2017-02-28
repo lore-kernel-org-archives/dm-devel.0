@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 16/33] multipath: ignore -i if find_multipaths is
-	set
-Date: Tue, 28 Feb 2017 17:23:12 +0100
-Message-ID: <20170228162329.14517-17-mwilck@suse.com>
+Subject: [PATCH 05/33] Invalid error code when using multipathd
+	CLI
+Date: Tue, 28 Feb 2017 17:23:01 +0100
+Message-ID: <20170228162329.14517-6-mwilck@suse.com>
 References: <20170228162329.14517-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,57 +21,74 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-multipath's logic for detecing new multipath devices with find_multipaths
-currently doesn't work reliably. If paths for a new device are added
-sequentially, the first one will be classified as non-multpath (and passed on
-to systemd for further processing) while subsequent ones will be seen as
-multipath devices. If the paths are added simultaneously (such as at udev
-trigger time after switching from the initrd to the rootfs, if device
-detection is already finished), whether or not additional paths will be seen
-when the udev rules for a given paths are processed is random.
-A proper implementation of this device detection would require some sort of
-information passing between multipathd and multipath, timeouts waiting for
-additional paths to appear when a single one is detected, retriggering of
-uevents if the status of a given paths changes, and more fine-grained
-treatment of "orphaned" paths in multipathd. All of that is currently
-non-existent.
+From: Hannes Reinecke <hare@suse.de>
 
-Currently, our only option is to rely on the wwids file for device setup with
-find_multipaths. In practice, that means that multipath maps will only be
-set up for such devices that have been set up manually by the user before.
-This is the behavior of multipath [-c|-u] without the "-i" option.
+When calling the multipathd CLI we're getting the message
 
-But "-i" is useful for the !find_multipaths case, where the expectation is
-that all non-blacklisted devices are multipathed by default. Because we
-can't change the multipath invocation in the udev rules file
-depending on the find_multipaths setting, just ignore "-i" if find_multipaths
-is set.
+error -1 receiving packet
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
+instead of the actual error number.
+Problem is a confusion about the return values between
+libmpathcmd and uxsock.c.
+uxsock.c is assuming a negative return value to be the errno,
+but libmpathcmd is returning -1 on error and setting errno.
+
+Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- multipath/main.c | 10 ++++++++++
- 1 file changed, 10 insertions(+)
+ libmpathcmd/mpath_cmd.c | 4 ++++
+ libmultipath/uxsock.c   | 9 +++++++--
+ 2 files changed, 11 insertions(+), 2 deletions(-)
 
-diff --git a/multipath/main.c b/multipath/main.c
-index 8ce87a08..ed57135a 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -619,6 +619,16 @@ main (int argc, char *argv[])
- 		}
- 	}
- 
-+	/*
-+	 * FIXME: new device detection with find_multipaths currently
-+	 * doesn't work reliably.
-+	 */
-+	if (cmd ==  CMD_VALID_PATH &&
-+	    conf->find_multipaths && conf->ignore_wwids) {
-+		condlog(2, "ignoring -i flag because find_multipath is set in multipath.conf");
-+		conf->ignore_wwids = 0;
+diff --git a/libmpathcmd/mpath_cmd.c b/libmpathcmd/mpath_cmd.c
+index 856e6b48..1496b682 100644
+--- a/libmpathcmd/mpath_cmd.c
++++ b/libmpathcmd/mpath_cmd.c
+@@ -141,7 +141,11 @@ int mpath_recv_reply(int fd, char **reply, unsigned int timeout)
+ 	*reply = NULL;
+ 	len = mpath_recv_reply_len(fd, timeout);
+ 	if (len <= 0)
++		return len;
++	if (len > MAX_REPLY_LEN) {
++		errno = EINVAL;
+ 		return -1;
 +	}
-+
- 	if (getuid() != 0) {
- 		fprintf(stderr, "need to be root\n");
- 		exit(1);
+ 	*reply = malloc(len);
+ 	if (!*reply)
+ 		return -1;
+diff --git a/libmultipath/uxsock.c b/libmultipath/uxsock.c
+index 492f4b9c..7e5a1449 100644
+--- a/libmultipath/uxsock.c
++++ b/libmultipath/uxsock.c
+@@ -88,7 +88,9 @@ int ux_socket_listen(const char *name)
+  */
+ int send_packet(int fd, const char *buf)
+ {
+-	return mpath_send_cmd(fd, buf);
++	if (mpath_send_cmd(fd, buf) < 0)
++		return -errno;
++	return 0;
+ }
+ 
+ static int _recv_packet(int fd, char **buf, unsigned int timeout, ssize_t limit)
+@@ -98,8 +100,10 @@ static int _recv_packet(int fd, char **buf, unsigned int timeout, ssize_t limit)
+ 
+ 	*buf = NULL;
+ 	len = mpath_recv_reply_len(fd, timeout);
+-	if (len <= 0)
++	if (len == 0)
+ 		return len;
++	if (len < 0)
++		return -errno;
+ 	if ((limit > 0) && (len > limit))
+ 		return -EINVAL;
+ 	(*buf) = MALLOC(len);
+@@ -109,6 +113,7 @@ static int _recv_packet(int fd, char **buf, unsigned int timeout, ssize_t limit)
+ 	if (err != 0) {
+ 		FREE(*buf);
+ 		(*buf) = NULL;
++		return -errno;
+ 	}
+ 	return err;
+ }
 -- 
 2.11.0
