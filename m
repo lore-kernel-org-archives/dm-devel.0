@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 22/33] libmultipath: disassemble_map: skip
-	no_path_retry check
-Date: Tue, 28 Feb 2017 17:23:18 +0100
-Message-ID: <20170228162329.14517-23-mwilck@suse.com>
+Subject: [PATCH 25/33] libmultipath: sysfs_attr_set_value: use
+	const char*
+Date: Tue, 28 Feb 2017 17:23:21 +0100
+Message-ID: <20170228162329.14517-26-mwilck@suse.com>
 References: <20170228162329.14517-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,30 +24,39 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.de>
 
-mpp->no_path_retry is already checked in setup_feature() itself,
-no need to do it here as well. This allows using setup_feature()
-for other features except queue_if_no_path.
+The value argument in syfs_attr_set_value should be const char*.
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
+Signed-off-by: Martin Wilck <mwilck@suse.de>
 ---
- libmultipath/dmparser.c | 5 +----
- 1 file changed, 1 insertion(+), 4 deletions(-)
+ libmultipath/sysfs.c | 2 +-
+ libmultipath/sysfs.h | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
-index 274eb947..4940e8cf 100644
---- a/libmultipath/dmparser.c
-+++ b/libmultipath/dmparser.c
-@@ -183,10 +183,7 @@ int disassemble_map(vector pathvec, char *params, struct multipath *mpp,
- 			FREE(word);
- 			return 1;
- 		}
--		if ((mpp->no_path_retry == NO_PATH_RETRY_UNDEF) ||
--			(mpp->no_path_retry == NO_PATH_RETRY_FAIL) ||
--			(mpp->no_path_retry == NO_PATH_RETRY_QUEUE))
--			setup_feature(mpp, word);
-+		setup_feature(mpp, word);
+diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
+index 9cf03117..97e09977 100644
+--- a/libmultipath/sysfs.c
++++ b/libmultipath/sysfs.c
+@@ -154,7 +154,7 @@ ssize_t sysfs_bin_attr_get_value(struct udev_device *dev, const char *attr_name,
+ }
  
- 		FREE(word);
- 	}
+ ssize_t sysfs_attr_set_value(struct udev_device *dev, const char *attr_name,
+-			     char * value, size_t value_len)
++			     const char * value, size_t value_len)
+ {
+ 	char devpath[PATH_SIZE];
+ 	struct stat statbuf;
+diff --git a/libmultipath/sysfs.h b/libmultipath/sysfs.h
+index 2588c247..75c0f9c1 100644
+--- a/libmultipath/sysfs.h
++++ b/libmultipath/sysfs.h
+@@ -6,7 +6,7 @@
+ #define _LIBMULTIPATH_SYSFS_H
+ 
+ ssize_t sysfs_attr_set_value(struct udev_device *dev, const char *attr_name,
+-			     char * value, size_t value_len);
++			     const char * value, size_t value_len);
+ ssize_t sysfs_attr_get_value(struct udev_device *dev, const char *attr_name,
+ 			     char * value, size_t value_len);
+ ssize_t sysfs_bin_attr_get_value(struct udev_device *dev, const char *attr_name,
 -- 
 2.11.0
