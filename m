@@ -1,7 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 33/33] Make libdmmp build optional
-Date: Tue, 28 Feb 2017 17:23:29 +0100
-Message-ID: <20170228162329.14517-34-mwilck@suse.com>
+Subject: [PATCH 19/33] libmultipath: setup_features: log msg if
+	queue_if_no_path is ignored
+Date: Tue, 28 Feb 2017 17:23:15 +0100
+Message-ID: <20170228162329.14517-20-mwilck@suse.com>
 References: <20170228162329.14517-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -18,49 +19,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: Martin Wilck <mwilck@suse.de>
 List-Id: dm-devel.ids
+
+From: Martin Wilck <mwilck@suse.de>
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- Makefile     | 6 +++++-
- Makefile.inc | 3 +++
- 2 files changed, 8 insertions(+), 1 deletion(-)
+ libmultipath/propsel.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
-diff --git a/Makefile b/Makefile
-index 9f8bf775..cfee0d07 100644
---- a/Makefile
-+++ b/Makefile
-@@ -30,12 +30,16 @@ BUILDDIRS = \
- 	libmultipath/prioritizers \
- 	libmultipath/checkers \
- 	libmpathpersist \
--	libdmmp \
- 	multipath \
- 	multipathd \
- 	mpathpersist \
- 	kpartx
- 
-+ifneq ($(ENABLE_LIBDMMP),0)
-+BUILDDIRS += \
-+	libdmmp
-+endif
-+
- all: recurse
- 
- recurse:
-diff --git a/Makefile.inc b/Makefile.inc
-index b5e910f9..740081e3 100644
---- a/Makefile.inc
-+++ b/Makefile.inc
-@@ -11,6 +11,9 @@
- #
- # Uncomment to disable RADOS support (e.g. if rados headers are missing).
- # ENABLE_RADOS = 0
-+#
-+# Uncomment to disable libdmmp support
-+# ENABLE_LIBDMMP = 0
- 
- ifeq ($(TOPDIR),)
- 	TOPDIR	= ..
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index bba8194c..0c499339 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -288,7 +288,9 @@ out:
+ 			condlog(1, "%s: config error, overriding 'no_path_retry' value",
+ 				mp->alias);
+ 			mp->no_path_retry = NO_PATH_RETRY_QUEUE;
+-		}
++		} else if (mp->no_path_retry != NO_PATH_RETRY_QUEUE)
++			condlog(1, "%s: config error, ignoring 'queue_if_no_path' because no_path_retry=%d",
++				mp->alias, mp->no_path_retry);
+ 	}
+ 	return 0;
+ }
 -- 
 2.11.0
