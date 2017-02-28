@@ -1,7 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 30/33] tur: Add pthread_testcancel()
-Date: Tue, 28 Feb 2017 17:23:26 +0100
-Message-ID: <20170228162329.14517-31-mwilck@suse.com>
+Subject: [PATCH 32/33] libmultipath/checkers: make RADOS checker
+	optional
+Date: Tue, 28 Feb 2017 17:23:28 +0100
+Message-ID: <20170228162329.14517-33-mwilck@suse.com>
 References: <20170228162329.14517-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -20,29 +21,47 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-From: Hannes Reinecke <hare@suse.de>
+Some distros lack the rados header files. Use
+"make ENABLE_RADOS=0" on such distributions to build
+multipath-tools in such cases. The default (to enable RADOS
+support) remains unchanged.
 
-When the ioctl returns we need to check if a cancellation has
-been requested; otherwise we'd be re-setting the state and
-overwrite any pending values.
-
-
-Signed-off-by: Hannes Reinecke <hare@suse.com>
+Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/checkers/tur.c | 1 +
- 1 file changed, 1 insertion(+)
+ Makefile.inc                   | 3 +++
+ libmultipath/checkers/Makefile | 6 ++++--
+ 2 files changed, 7 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
-index d9a9e67d..b4a5cb2f 100644
---- a/libmultipath/checkers/tur.c
-+++ b/libmultipath/checkers/tur.c
-@@ -268,6 +268,7 @@ static void *tur_thread(void *ctx)
- 	pthread_mutex_unlock(&ct->lock);
+diff --git a/Makefile.inc b/Makefile.inc
+index 93d8e340..b5e910f9 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -8,6 +8,9 @@
+ #
+ # WITH_LOCAL_LIBDM	= 1
+ # WITH_LOCAL_LIBSYSFS	= 1
++#
++# Uncomment to disable RADOS support (e.g. if rados headers are missing).
++# ENABLE_RADOS = 0
  
- 	state = tur_check(ct->fd, ct->timeout, copy_msg_to_tcc, ct->message);
-+	pthread_testcancel();
+ ifeq ($(TOPDIR),)
+ 	TOPDIR	= ..
+diff --git a/libmultipath/checkers/Makefile b/libmultipath/checkers/Makefile
+index 11ab76f6..4970fc07 100644
+--- a/libmultipath/checkers/Makefile
++++ b/libmultipath/checkers/Makefile
+@@ -13,8 +13,10 @@ LIBS= \
+ 	libcheckdirectio.so \
+ 	libcheckemc_clariion.so \
+ 	libcheckhp_sw.so \
+-	libcheckrdac.so \
+-	libcheckrbd.so
++	libcheckrdac.so
++ifneq ($(ENABLE_RADOS),0)
++LIBS += libcheckrbd.so
++endif
  
- 	/* TUR checker done */
- 	pthread_mutex_lock(&ct->lock);
+ all: $(LIBS)
+ 
 -- 
 2.11.0
