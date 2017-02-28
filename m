@@ -1,7 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 14/33] multipath -ll: set DI_SERIAL
-Date: Tue, 28 Feb 2017 17:23:10 +0100
-Message-ID: <20170228162329.14517-15-mwilck@suse.com>
+Subject: [PATCH 20/33] libmultipath: setup_feature: print log msg
+	if no_path_retry cant be set
+Date: Tue, 28 Feb 2017 17:23:16 +0100
+Message-ID: <20170228162329.14517-21-mwilck@suse.com>
 References: <20170228162329.14517-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,29 +24,24 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.de>
 
-Without DI_SERIAL, multipath -ll will not be able to obtain correct
-PG priorities in certain configurations (e.g. prio "weightedpath",
-prio_args "serial..."). We do not set DI_SERIAL for the multipath -l
-case, where information is supposed to come from sysfs+device mapper
-only.
-
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipath/main.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/structs.c | 3 +++
+ 1 file changed, 3 insertions(+)
 
-diff --git a/multipath/main.c b/multipath/main.c
-index 5811630c..8ce87a08 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -367,7 +367,7 @@ configure (struct config *conf, enum mpath_cmds cmd,
+diff --git a/libmultipath/structs.c b/libmultipath/structs.c
+index 4419510d..c2565239 100644
+--- a/libmultipath/structs.c
++++ b/libmultipath/structs.c
+@@ -501,6 +501,9 @@ void setup_feature(struct multipath *mpp, char *feature)
+ 	if (!strncmp(feature, "queue_if_no_path", 16)) {
+ 		if (mpp->no_path_retry <= NO_PATH_RETRY_UNDEF)
+ 			mpp->no_path_retry = NO_PATH_RETRY_QUEUE;
++		else
++			condlog(1, "%s: ignoring feature queue_if_no_path because no_path_retry = %d",
++				mpp->alias, mpp->no_path_retry);
+ 	}
+ }
  
- 	if (cmd == CMD_LIST_LONG)
- 		/* extended path info '-ll' */
--		di_flag |= DI_SYSFS | DI_CHECKER;
-+		di_flag |= DI_SYSFS | DI_CHECKER | DI_SERIAL;
- 	else if (cmd == CMD_LIST_SHORT)
- 		/* minimum path info '-l' */
- 		di_flag |= DI_SYSFS;
 -- 
 2.11.0
