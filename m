@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 13/33] libmultipath: use existing alias from
-	bindings file
-Date: Tue, 28 Feb 2017 17:23:09 +0100
-Message-ID: <20170228162329.14517-14-mwilck@suse.com>
+Subject: [PATCH 06/33] multipathd: set timeout for CLI commands
+	correctly
+Date: Tue, 28 Feb 2017 17:23:02 +0100
+Message-ID: <20170228162329.14517-7-mwilck@suse.com>
 References: <20170228162329.14517-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,43 +23,28 @@ List-Id: dm-devel.ids
 
 From: Hannes Reinecke <hare@suse.de>
 
-If the bindings file has been edited by hand not all entries conform
-to the user_friendly_prefix setting. So if we don't find a matching
-alias we need to check if the wwid is set to a different alias; if
-so we need to use that.
-Otherwise we'll end up with duplicate entries in the bindings file.
+The CLI command timeout wasn't set correctly for CLI commands,
+causing it to timeout prematurely before the CLI response
+could be received.
 
 
 Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- libmultipath/alias.c | 8 ++++++++
- 1 file changed, 8 insertions(+)
+ multipathd/main.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/alias.c b/libmultipath/alias.c
-index 12afef8f..fd6b7f91 100644
---- a/libmultipath/alias.c
-+++ b/libmultipath/alias.c
-@@ -107,6 +107,7 @@ lookup_binding(FILE *f, char *map_wwid, char **map_alias, char *prefix)
- 
- 	*map_alias = NULL;
- 
-+	rewind(f);
- 	while (fgets(buf, LINE_MAX, f)) {
- 		char *c, *alias, *wwid;
- 		int curr_id;
-@@ -280,6 +281,13 @@ use_existing_alias (char *wwid, char *file, char *alias_old,
- 		goto out;
+diff --git a/multipathd/main.c b/multipathd/main.c
+index e317a4c9..86d73f7b 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1070,7 +1070,7 @@ uxsock_trigger (char * str, char ** reply, int * len, bool is_root,
+ 		return 1;
  	}
  
-+	id = lookup_binding(f, wwid, &alias, NULL);
-+	if (alias) {
-+		condlog(3, "Use existing binding [%s] for WWID [%s]",
-+			alias, wwid);
-+		goto out;
-+	}
-+
- 	/* allocate the existing alias in the bindings file */
- 	id = scan_devname(alias_old, prefix);
- 	if (id <= 0)
+-	r = parse_cmd(str, reply, len, vecs, uxsock_timeout / 1000);
++	r = parse_cmd(str, reply, len, vecs, uxsock_timeout);
+ 
+ 	if (r > 0) {
+ 		if (r == ETIMEDOUT)
 -- 
 2.11.0
