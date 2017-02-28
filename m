@@ -1,8 +1,7 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 25/33] libmultipath: sysfs_attr_set_value: use
-	const char*
-Date: Tue, 28 Feb 2017 17:23:21 +0100
-Message-ID: <20170228162329.14517-26-mwilck@suse.com>
+Subject: [PATCH 31/33] multipathd: fixup check for new path states
+Date: Tue, 28 Feb 2017 17:23:27 +0100
+Message-ID: <20170228162329.14517-32-mwilck@suse.com>
 References: <20170228162329.14517-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,44 +18,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: Martin Wilck <mwilck@suse.de>
 List-Id: dm-devel.ids
 
-From: Martin Wilck <mwilck@suse.de>
+From: Hannes Reinecke <hare@suse.de>
 
-The value argument in syfs_attr_set_value should be const char*.
+When testing for new path states we should be making sure to
+always using the same path state mask. Otherwise we'll miss
+out any states.
 
-Signed-off-by: Martin Wilck <mwilck@suse.de>
+Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- libmultipath/sysfs.c | 2 +-
- libmultipath/sysfs.h | 2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
+ multipathd/main.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
-index 9cf03117..97e09977 100644
---- a/libmultipath/sysfs.c
-+++ b/libmultipath/sysfs.c
-@@ -154,7 +154,7 @@ ssize_t sysfs_bin_attr_get_value(struct udev_device *dev, const char *attr_name,
- }
+diff --git a/multipathd/main.c b/multipathd/main.c
+index e2e73749..aa359b4a 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1735,7 +1735,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+ 		pp->checkint = conf->checkint;
+ 		put_multipath_config(conf);
  
- ssize_t sysfs_attr_set_value(struct udev_device *dev, const char *attr_name,
--			     char * value, size_t value_len)
-+			     const char * value, size_t value_len)
- {
- 	char devpath[PATH_SIZE];
- 	struct stat statbuf;
-diff --git a/libmultipath/sysfs.h b/libmultipath/sysfs.h
-index 2588c247..75c0f9c1 100644
---- a/libmultipath/sysfs.h
-+++ b/libmultipath/sysfs.h
-@@ -6,7 +6,7 @@
- #define _LIBMULTIPATH_SYSFS_H
- 
- ssize_t sysfs_attr_set_value(struct udev_device *dev, const char *attr_name,
--			     char * value, size_t value_len);
-+			     const char * value, size_t value_len);
- ssize_t sysfs_attr_get_value(struct udev_device *dev, const char *attr_name,
- 			     char * value, size_t value_len);
- ssize_t sysfs_bin_attr_get_value(struct udev_device *dev, const char *attr_name,
+-		if (newstate == PATH_DOWN || newstate == PATH_SHAKY || newstate == PATH_TIMEOUT) {
++		if (newstate != PATH_UP && newstate != PATH_GHOST) {
+ 			/*
+ 			 * proactively fail path in the DM
+ 			 */
 -- 
 2.11.0
