@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 07/33] libmultipath: fall back to search paths by
-	devt
-Date: Tue, 28 Feb 2017 17:23:03 +0100
-Message-ID: <20170228162329.14517-8-mwilck@suse.com>
+Subject: [PATCH 10/33] multipath: avoid crash when using modified
+	configuration
+Date: Tue, 28 Feb 2017 17:23:06 +0100
+Message-ID: <20170228162329.14517-11-mwilck@suse.com>
 References: <20170228162329.14517-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,63 +23,78 @@ List-Id: dm-devel.ids
 
 From: Hannes Reinecke <hare@suse.de>
 
-When removing path the device might already be gone from sysfs,
-so we cannot lookup the device name. However, we still should
-have the path vector available, so we should be trying to look
-it up by using the device number.
+Occasionally multipath would crash when using a modified configuration.
 
 
 Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- libmultipath/discovery.c | 11 +++++++++--
- libmultipath/dmparser.c  | 11 +++++++----
- 2 files changed, 16 insertions(+), 6 deletions(-)
+ libmultipath/discovery.c |  2 +-
+ multipath/main.c         | 10 ++++------
+ 2 files changed, 5 insertions(+), 7 deletions(-)
 
 diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 4e99845e..e4186de1 100644
+index e4186de1..bd8ab557 100644
 --- a/libmultipath/discovery.c
 +++ b/libmultipath/discovery.c
-@@ -120,8 +120,15 @@ path_discover (vector pathvec, struct config * conf,
+@@ -1801,7 +1801,7 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
+ {
+ 	int path_state;
  
- 	pp = find_path_by_dev(pathvec, (char *)devname);
- 	if (!pp) {
--		return store_pathinfo(pathvec, conf,
--				      udevice, flag, NULL);
-+		char devt[BLK_DEV_SIZE];
-+		dev_t devnum = udev_device_get_devnum(udevice);
-+
-+		snprintf(devt, BLK_DEV_SIZE, "%d:%d",
-+			 major(devnum), minor(devnum));
-+		pp = find_path_by_devt(pathvec, devt);
-+		if (!pp)
-+			return store_pathinfo(pathvec, conf,
-+					      udevice, flag, NULL);
+-	if (!pp)
++	if (!pp || !conf)
+ 		return PATHINFO_FAILED;
+ 
+ 	/*
+diff --git a/multipath/main.c b/multipath/main.c
+index befe4c53..5811630c 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -266,7 +266,8 @@ get_dm_mpvec (enum mpath_cmds cmd, vector curmp, vector pathvec, char * refwwid)
+  *   1: Failure
+  */
+ static int
+-configure (enum mpath_cmds cmd, enum devtypes dev_type, char *devpath)
++configure (struct config *conf, enum mpath_cmds cmd,
++	   enum devtypes dev_type, char *devpath)
+ {
+ 	vector curmp = NULL;
+ 	vector pathvec = NULL;
+@@ -275,7 +276,6 @@ configure (enum mpath_cmds cmd, enum devtypes dev_type, char *devpath)
+ 	int di_flag = 0;
+ 	char * refwwid = NULL;
+ 	char * dev = NULL;
+-	struct config *conf;
+ 
+ 	/*
+ 	 * allocate core vectors to store paths and multipaths
+@@ -295,7 +295,6 @@ configure (enum mpath_cmds cmd, enum devtypes dev_type, char *devpath)
+ 	/*
+ 	 * if we have a blacklisted device parameter, exit early
+ 	 */
+-	conf = get_multipath_config();
+ 	if (dev && (dev_type == DEV_DEVNODE ||
+ 		    dev_type == DEV_UEVENT) &&
+ 	    cmd != CMD_REMOVE_WWID &&
+@@ -304,10 +303,9 @@ configure (enum mpath_cmds cmd, enum devtypes dev_type, char *devpath)
+ 		if (cmd == CMD_VALID_PATH)
+ 			printf("%s is not a valid multipath device path\n",
+ 			       devpath);
+-		put_multipath_config(conf);
+ 		goto out;
  	}
- 	return pathinfo(pp, conf, flag);
- }
-diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
-index b504961f..274eb947 100644
---- a/libmultipath/dmparser.c
-+++ b/libmultipath/dmparser.c
-@@ -330,12 +330,15 @@ int disassemble_map(vector pathvec, char *params, struct multipath *mpp,
- 			if (devt2devname(devname, FILE_NAME_SIZE, word)) {
- 				condlog(2, "%s: cannot find block device",
- 					word);
--				FREE(word);
--				continue;
-+				devname[0] = '\0';
- 			}
+-	put_multipath_config(conf);
++
+ 	/*
+ 	 * scope limiting must be translated into a wwid
+ 	 * failing the translation is fatal (by policy)
+@@ -730,7 +728,7 @@ main (int argc, char *argv[])
+ 		r = dm_flush_maps(retries);
+ 		goto out;
+ 	}
+-	while ((r = configure(cmd, dev_type, dev)) < 0)
++	while ((r = configure(conf, cmd, dev_type, dev)) < 0)
+ 		condlog(3, "restart multipath configuration process");
  
--			if (pathvec)
--				pp = find_path_by_dev(pathvec, devname);
-+			if (pathvec) {
-+				if (strlen(devname))
-+					pp = find_path_by_dev(pathvec, devname);
-+				else
-+					pp = find_path_by_devt(pathvec, word);
-+			}
- 
- 			if (!pp) {
- 				pp = alloc_path();
+ out:
 -- 
 2.11.0
