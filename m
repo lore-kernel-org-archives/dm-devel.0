@@ -1,14 +1,15 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 32/33] libmultipath/checkers: make RADOS checker
-	optional
-Date: Tue, 28 Feb 2017 17:23:28 +0100
-Message-ID: <20170228162329.14517-33-mwilck@suse.com>
-References: <20170228162329.14517-1-mwilck@suse.com>
+From: Milan Broz <gmazyland@gmail.com>
+Subject: Re: [RFC PATCH v4] IV Generation algorithms for dm-crypt
+Date: Tue, 28 Feb 2017 22:05:21 +0100
+Message-ID: <68f70534-a309-46ba-a84d-8acc1e6620e5@gmail.com>
+References: <1486463731-6224-1-git-send-email-binoy.jayan@linaro.org>
+	<CAOtvUMcN8s886978vE6T=AE79KkZsLBnXsmhewnb5PB0UyAG3A@mail.gmail.com>
+	<CAHv-k_8rgArzV2uQ64h1ZTNRpssX1jMf=RwuPoBmsjQ0FhCsWA@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170228162329.14517-1-mwilck@suse.com>
+In-Reply-To: <CAHv-k_8rgArzV2uQ64h1ZTNRpssX1jMf=RwuPoBmsjQ0FhCsWA@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,50 +19,40 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Binoy Jayan <binoy.jayan@linaro.org>
+Cc: Rajendra <rnayak@codeaurora.org>, Herbert Xu <herbert@gondor.apana.org.au>, Oded <oded.golombek@arm.com>, Mike Snitzer <snitzer@redhat.com>, Linux kernel mailing list <linux-kernel@vger.kernel.org>, Ondrej Mosnacek <omosnace@redhat.com>, linux-raid@vger.kernel.org, Gilad Ben-Yossef <gilad@benyossef.com>, dm-devel@redhat.com, Mark Brown <broonie@kernel.org>, Arnd Bergmann <arnd@arndb.de>, linux-crypto@vger.kernel.org, Shaohua Li <shli@kernel.org>, "David S. Miller" <davem@davemloft.net>, Alasdair Kergon <agk@redhat.com>, Ofir <Ofir.Drang@arm.com>
 List-Id: dm-devel.ids
 
-Some distros lack the rados header files. Use
-"make ENABLE_RADOS=0" on such distributions to build
-multipath-tools in such cases. The default (to enable RADOS
-support) remains unchanged.
+On 02/22/2017 07:12 AM, Binoy Jayan wrote:
+> 
+> I was wondering if this is near to be ready for submission (apart from
+> the testmgr.c
+> changes) or I need to make some changes to make it similar to the IPSec offload?
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- Makefile.inc                   | 3 +++
- libmultipath/checkers/Makefile | 6 ++++--
- 2 files changed, 7 insertions(+), 2 deletions(-)
+I just tried this and except it registers the IV for every new device again, it works...
+(After a while you have many duplicate entries in /proc/crypto.)
 
-diff --git a/Makefile.inc b/Makefile.inc
-index 93d8e340..b5e910f9 100644
---- a/Makefile.inc
-+++ b/Makefile.inc
-@@ -8,6 +8,9 @@
- #
- # WITH_LOCAL_LIBDM	= 1
- # WITH_LOCAL_LIBSYSFS	= 1
-+#
-+# Uncomment to disable RADOS support (e.g. if rados headers are missing).
-+# ENABLE_RADOS = 0
- 
- ifeq ($(TOPDIR),)
- 	TOPDIR	= ..
-diff --git a/libmultipath/checkers/Makefile b/libmultipath/checkers/Makefile
-index 11ab76f6..4970fc07 100644
---- a/libmultipath/checkers/Makefile
-+++ b/libmultipath/checkers/Makefile
-@@ -13,8 +13,10 @@ LIBS= \
- 	libcheckdirectio.so \
- 	libcheckemc_clariion.so \
- 	libcheckhp_sw.so \
--	libcheckrdac.so \
--	libcheckrbd.so
-+	libcheckrdac.so
-+ifneq ($(ENABLE_RADOS),0)
-+LIBS += libcheckrbd.so
-+endif
- 
- all: $(LIBS)
- 
--- 
-2.11.0
+But I would like to see some summary why such a big patch is needed in the first place.
+(During an internal discussions seems that people are already lost in mails and
+patches here, so Ondra promised me to send some summary mail soon here.)
+
+IIRC the first initial problem was dmcrypt performance on some embedded
+crypto processors that are not able to cope with small crypto requests effectively.
+
+Do you have some real performance numbers that proves that such a patch is adequate?
+
+I would really like to see the performance issue fixed but I am really not sure
+this approach works for everyone. It would be better to avoid repeating this exercise later.
+IIRC Ondra's "bulk" mode, despite rejected, shows that there is a potential
+to speedup things even for crypt drivers that do not support own IV generators.
+
+I like the patch is now contained inside dmcrypt, but it still exposes IVs that
+are designed just for old, insecure, compatibility-only containers.
+
+I really do not think every compatible crap must be accessible through crypto API.
+(I wrote the dmcrypt lrw and tcw compatibility IVs and I would never do that this way
+if I know it is accessible outside of dmcrypt internals...)
+Even the ESSIV is something that was born to fix predictive IVs (CBC watermarking
+attacks) for disk encryption only, no reason to expose it outside of disk encryption.
+
+Milan
