@@ -1,56 +1,84 @@
-From: Milan Broz <gmazyland@gmail.com>
-Subject: Re: [RFC PATCH v4] IV Generation algorithms for dm-crypt
-Date: Wed, 1 Mar 2017 16:38:09 +0100
-Message-ID: <c835926e-c2bd-8a52-34db-6c605301bc2b@gmail.com>
-References: <1486463731-6224-1-git-send-email-binoy.jayan@linaro.org>
- <CAOtvUMcN8s886978vE6T=AE79KkZsLBnXsmhewnb5PB0UyAG3A@mail.gmail.com>
- <CAHv-k_8rgArzV2uQ64h1ZTNRpssX1jMf=RwuPoBmsjQ0FhCsWA@mail.gmail.com>
- <68f70534-a309-46ba-a84d-8acc1e6620e5@gmail.com>
- <CAOtvUMf3c0fUjABmbfMrbs0W4gyhKVZyc_tZH3rQg65zF18YMg@mail.gmail.com>
- <b563eb97-82ba-69d2-c4c5-66bc716a7507@gmail.com>
- <CAOtvUMePYT7OJDKL7i0y3y6Jvqsxyx6Je6g9aGKVq6PLZ_-Z8w@mail.gmail.com>
- <2aef6e54-805f-e09b-ae66-c198f8c05335@gmail.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: [PATCH] uevent_can_discard: optimize devpath check
+Date: Wed,  1 Mar 2017 18:22:19 +0100
+Message-ID: <20170301172219.9683-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <2aef6e54-805f-e09b-ae66-c198f8c05335@gmail.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: Gilad Ben-Yossef <gilad@benyossef.com>
-Cc: Binoy Jayan <binoy.jayan@linaro.org>, Oded <oded.golombek@arm.com>, Ofir <Ofir.Drang@arm.com>, Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, linux-crypto@vger.kernel.org, Mark Brown <broonie@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Linux kernel mailing list <linux-kernel@vger.kernel.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, Rajendra <rnayak@codeaurora.org>, Ondrej Mosnacek <omosnace@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: tang.junhui@zte.com.cn, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+This uses roughly 10% cycles of the sscanf-based implementation.
 
-On 03/01/2017 02:04 PM, Milan Broz wrote:
-> On 03/01/2017 01:42 PM, Gilad Ben-Yossef wrote:
-> ...
-> 
->> I can certainly understand if you don't wont to take the patch until
->> we have results with
->> dm-crypt itself but the difference between 8 separate invocation of
->> the engine for 512
->> bytes of XTS and a single invocation for 4KB are pretty big.
-> 
-> Yes, I know it. But the same can be achieved if we just implement
-> 4k sector encryption in dmcrypt. It is incompatible with LUKS1
-> (but next LUKS version will support it) but I think this is not
-> a problem for now.
-> 
-> If the underlying device supports atomic write of 4k sectors, then
-> there should not be a problem.
-> 
-> This is one of the speed-up I would like to compare with the IV approach,
-> because everyone should benefit from 4k sectors in the end.
-> And no crypto API changes are needed here.
-> 
-> (I have an old patch for this, so I will try to revive it.)
+Improves: ee8888f0 "multipath-tools: improve processing efficiency..."
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ libmultipath/uevent.c | 37 +++++++++++++++++++++++--------------
+ 1 file changed, 23 insertions(+), 14 deletions(-)
 
-If anyone interested, simple experimental patch for larger sector size
-(up to the page size) for dmcrypt is in this branch:
-
-http://git.kernel.org/cgit/linux/kernel/git/mbroz/linux.git/log/?h=dm-crypt-4k-sector
-
-It would be nice to check what performance gain could be provided
-by this simple approach.
-
-Milan
+diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
+index 6e2527bd..367e129a 100644
+--- a/libmultipath/uevent.c
++++ b/libmultipath/uevent.c
+@@ -143,26 +143,35 @@ uevent_need_merge(void)
+ 	return need_merge;
+ }
+ 
++static bool
++uevent_can_discard_by_devpath(const char *devpath)
++{
++	static const char BLOCK[] = "/block/";
++	const char *tmp = strstr(devpath, BLOCK);
++
++	if (tmp == NULL) {
++		condlog(4, "no /block/ in '%s'", devpath);
++		return true;
++	}
++	tmp += sizeof(BLOCK) - 1;
++	if (*tmp == '\0')
++		/* just ".../block/" - discard */
++		return true;
++	/*
++	 * If there are more path elements after ".../block/xyz",
++	 * it's a partition - discard it; but don't discard ".../block/sda/".
++	 */
++	tmp = strchr(tmp, '/');
++	return tmp != NULL && *(tmp + 1) != '\0';
++}
++
+ bool
+ uevent_can_discard(struct uevent *uev)
+ {
+-	char *tmp;
+-	char a[11], b[11];
+ 	struct config * conf;
+ 
+-	/*
+-	 * keep only block devices, discard partitions
+-	 */
+-	tmp = strstr(uev->devpath, "/block/");
+-	if (tmp == NULL){
+-		condlog(4, "no /block/ in '%s'", uev->devpath);
++	if (uevent_can_discard_by_devpath(uev->devpath))
+ 		return true;
+-	}
+-	if (sscanf(tmp, "/block/%10s", a) != 1 ||
+-	    sscanf(tmp, "/block/%10[^/]/%10s", a, b) == 2) {
+-		condlog(4, "discard event on %s", uev->devpath);
+-		return true;
+-	}
+ 
+ 	/* 
+ 	 * do not filter dm devices by devnode
+-- 
+2.12.0
