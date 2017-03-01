@@ -1,83 +1,56 @@
-From: Ondrej Mosnacek <omosnace@redhat.com>
+From: Milan Broz <gmazyland@gmail.com>
 Subject: Re: [RFC PATCH v4] IV Generation algorithms for dm-crypt
-Date: Wed, 1 Mar 2017 14:21:51 +0100
-Message-ID: <CAFqZXNugEK0do+BYC061i4CidMVgg8_BZue8gUVa2g7_RYsAEw@mail.gmail.com>
+Date: Wed, 1 Mar 2017 16:38:09 +0100
+Message-ID: <c835926e-c2bd-8a52-34db-6c605301bc2b@gmail.com>
 References: <1486463731-6224-1-git-send-email-binoy.jayan@linaro.org>
  <CAOtvUMcN8s886978vE6T=AE79KkZsLBnXsmhewnb5PB0UyAG3A@mail.gmail.com>
  <CAHv-k_8rgArzV2uQ64h1ZTNRpssX1jMf=RwuPoBmsjQ0FhCsWA@mail.gmail.com>
- <68f70534-a309-46ba-a84d-8acc1e6620e5@gmail.com> <CAOtvUMf3c0fUjABmbfMrbs0W4gyhKVZyc_tZH3rQg65zF18YMg@mail.gmail.com>
- <b563eb97-82ba-69d2-c4c5-66bc716a7507@gmail.com> <CAOtvUMePYT7OJDKL7i0y3y6Jvqsxyx6Je6g9aGKVq6PLZ_-Z8w@mail.gmail.com>
+ <68f70534-a309-46ba-a84d-8acc1e6620e5@gmail.com>
+ <CAOtvUMf3c0fUjABmbfMrbs0W4gyhKVZyc_tZH3rQg65zF18YMg@mail.gmail.com>
+ <b563eb97-82ba-69d2-c4c5-66bc716a7507@gmail.com>
+ <CAOtvUMePYT7OJDKL7i0y3y6Jvqsxyx6Je6g9aGKVq6PLZ_-Z8w@mail.gmail.com>
+ <2aef6e54-805f-e09b-ae66-c198f8c05335@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <CAOtvUMePYT7OJDKL7i0y3y6Jvqsxyx6Je6g9aGKVq6PLZ_-Z8w@mail.gmail.com>
-Sender: linux-crypto-owner@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <2aef6e54-805f-e09b-ae66-c198f8c05335@gmail.com>
+Sender: linux-raid-owner@vger.kernel.org
 To: Gilad Ben-Yossef <gilad@benyossef.com>
-Cc: Milan Broz <gmazyland@gmail.com>, Binoy Jayan <binoy.jayan@linaro.org>, Oded <oded.golombek@arm.com>, Ofir <Ofir.Drang@arm.com>, Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, linux-crypto@vger.kernel.org, Mark Brown <broonie@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Linux kernel mailing list <linux-kernel@vger.kernel.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, Rajendra <rnayak@codeaurora.org>
+Cc: Binoy Jayan <binoy.jayan@linaro.org>, Oded <oded.golombek@arm.com>, Ofir <Ofir.Drang@arm.com>, Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, linux-crypto@vger.kernel.org, Mark Brown <broonie@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Linux kernel mailing list <linux-kernel@vger.kernel.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, Rajendra <rnayak@codeaurora.org>, Ondrej Mosnacek <omosnace@redhat.com>
 List-Id: dm-devel.ids
 
-2017-03-01 13:42 GMT+01:00 Gilad Ben-Yossef <gilad@benyossef.com>:
-> It really is an observation about overhead of context switches between
-> dm-crypt and
-> whatever/wherever you handle crypto - be it an off CPU hardware engine
-> or a bunch
-> of parallel kernel threads running on other cores. You really want to
-> burst as much as
-> possible.
 
-[...]
+On 03/01/2017 02:04 PM, Milan Broz wrote:
+> On 03/01/2017 01:42 PM, Gilad Ben-Yossef wrote:
+> ...
+> 
+>> I can certainly understand if you don't wont to take the patch until
+>> we have results with
+>> dm-crypt itself but the difference between 8 separate invocation of
+>> the engine for 512
+>> bytes of XTS and a single invocation for 4KB are pretty big.
+> 
+> Yes, I know it. But the same can be achieved if we just implement
+> 4k sector encryption in dmcrypt. It is incompatible with LUKS1
+> (but next LUKS version will support it) but I think this is not
+> a problem for now.
+> 
+> If the underlying device supports atomic write of 4k sectors, then
+> there should not be a problem.
+> 
+> This is one of the speed-up I would like to compare with the IV approach,
+> because everyone should benefit from 4k sectors in the end.
+> And no crypto API changes are needed here.
+> 
+> (I have an old patch for this, so I will try to revive it.)
 
->> For XTS you need just simple linear IV. No problem with that, implementation
->> in crypto API and hw is trivial.
->>
->> But for compatible IV (that provides compatibility with loopAES and very old TrueCrypt),
->> these should be never ever implemented again anywhere.
->
->>
->> Specifically "tcw" is broken, insecure and provided here just to help people to migrate
->> from old Truecrypt containers. Even Truecrypt followers removed it from the codebase.
->> (It is basically combination of IV and slight modification of CBC mode. All
->> recent version switched to XTS and plain IV.)
->>
->> So building abstraction over something known to be broken and that is now intentionally
->> isolated inside dmcrypt is, in my opinion, really not a good idea.
->>
->
-> I don't think anyone is interested in these modes. How do you support
-> XTS and essiv in
-> a generic way without supporting this broken modes is not something
-> I'm clear on though.
+If anyone interested, simple experimental patch for larger sector size
+(up to the page size) for dmcrypt is in this branch:
 
-Wouldn't adopting a bulk request API (something like what I tried to
-do here [1]) that allows users to supply multiple messages, each with
-their own IV, fulfill this purpose? That way, we wouldn't need to
-introduce any new modes into Crypto API and the drivers/accelerators
-would only need to provide bulk implementations of common modes
-(xts(aes), cbc(aes), ...) to provide better performance for dm-crypt
-(and possibly other users, too).
+http://git.kernel.org/cgit/linux/kernel/git/mbroz/linux.git/log/?h=dm-crypt-4k-sector
 
-I'm not sure how exactly these crypto accelerators work, but wouldn't
-it help if the drivers simply get more messages (in our case sectors)
-in a single call? I wonder, would (efficiently) supporting such a
-scheme require changes in the HW itself or could it be achieved just
-by modifying driver code (let's say specifically for your CryptoCell
-accelerator)?
+It would be nice to check what performance gain could be provided
+by this simple approach.
 
-Thanks,
-Ondrej
-
-[1] https://www.mail-archive.com/linux-crypto@vger.kernel.org/msg23007.html
-
->
-> Thanks,
-> Gilad
->
->
->
-> --
-> Gilad Ben-Yossef
-> Chief Coffee Drinker
->
-> "If you take a class in large-scale robotics, can you end up in a
-> situation where the homework eats your dog?"
->  -- Jean-Baptiste Queru
+Milan
