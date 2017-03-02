@@ -1,14 +1,20 @@
-From: <tang.junhui@zte.com.cn>
-Subject: Re:
-	=?utf-8?q?=5BPATCH=5D_uevent=5Fcan=5Fdiscard=3A_optimi?=
-	=?utf-8?q?ze_devpath_check?=
-Date: Thu, 2 Mar 2017 16:35:34 +0800 (CST)
-Message-ID: <201703021635342010121@zte.com.cn>
+From: Gilad Ben-Yossef <gilad@benyossef.com>
+Subject: Re: [RFC PATCH v4] IV Generation algorithms for dm-crypt
+Date: Thu, 2 Mar 2017 16:01:03 +0200
+Message-ID: <CAOtvUMf9Ph5Q=Pq_d3OpjSN1eXRNFLFmxcFgnm+KRKYskQ-d2w@mail.gmail.com>
+References: <1486463731-6224-1-git-send-email-binoy.jayan@linaro.org>
+	<CAOtvUMcN8s886978vE6T=AE79KkZsLBnXsmhewnb5PB0UyAG3A@mail.gmail.com>
+	<CAHv-k_8rgArzV2uQ64h1ZTNRpssX1jMf=RwuPoBmsjQ0FhCsWA@mail.gmail.com>
+	<68f70534-a309-46ba-a84d-8acc1e6620e5@gmail.com>
+	<CAOtvUMf3c0fUjABmbfMrbs0W4gyhKVZyc_tZH3rQg65zF18YMg@mail.gmail.com>
+	<b563eb97-82ba-69d2-c4c5-66bc716a7507@gmail.com>
+	<CAOtvUMePYT7OJDKL7i0y3y6Jvqsxyx6Je6g9aGKVq6PLZ_-Z8w@mail.gmail.com>
+	<CAFqZXNugEK0do+BYC061i4CidMVgg8_BZue8gUVa2g7_RYsAEw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
-	boundary="=====_001_next====="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-References: 20170301172219.9683-1-mwilck@suse.com
+In-Reply-To: <CAFqZXNugEK0do+BYC061i4CidMVgg8_BZue8gUVa2g7_RYsAEw@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,145 +24,57 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: mwilck@suse.com
-Cc: dm-devel@redhat.com
+To: Ondrej Mosnacek <omosnace@redhat.com>
+Cc: Binoy Jayan <binoy.jayan@linaro.org>, Rajendra <rnayak@codeaurora.org>, Herbert Xu <herbert@gondor.apana.org.au>, Oded <oded.golombek@arm.com>, Mike Snitzer <snitzer@redhat.com>, Linux kernel mailing list <linux-kernel@vger.kernel.org>, Milan Broz <gmazyland@gmail.com>, linux-raid@vger.kernel.org, dm-devel@redhat.com, Mark Brown <broonie@kernel.org>, Arnd Bergmann <arnd@arndb.de>, linux-crypto@vger.kernel.org, Shaohua Li <shli@kernel.org>, "David S. Miller" <davem@davemloft.net>, Alasdair Kergon <agk@redhat.com>, Ofir <Ofir.Drang@arm.com>
 List-Id: dm-devel.ids
 
+On Wed, Mar 1, 2017 at 3:21 PM, Ondrej Mosnacek <omosnace@redhat.com> wrote:
+> 2017-03-01 13:42 GMT+01:00 Gilad Ben-Yossef <gilad@benyossef.com>:
+>
+> Wouldn't adopting a bulk request API (something like what I tried to
+> do here [1]) that allows users to supply multiple messages, each with
+> their own IV, fulfill this purpose? That way, we wouldn't need to
+> introduce any new modes into Crypto API and the drivers/accelerators
+> would only need to provide bulk implementations of common modes
+> (xts(aes), cbc(aes), ...) to provide better performance for dm-crypt
+> (and possibly other users, too).
+>
+> I'm not sure how exactly these crypto accelerators work, but wouldn't
+> it help if the drivers simply get more messages (in our case sectors)
+> in a single call? I wonder, would (efficiently) supporting such a
+> scheme require changes in the HW itself or could it be achieved just
+> by modifying driver code (let's say specifically for your CryptoCell
+> accelerator)?
+>
+> [1] https://www.mail-archive.com/linux-crypto@vger.kernel.org/msg23007.html
+>
 
 
---=====_001_next=====
-Content-Type: multipart/related;
-	boundary="=====_002_next====="
+From a general perspective - that is things are expect to be true not
+just for CryptoCell but for most HW crypto engines,
+you want two things - for the HW engine to be able to burst work for a
+long time and than rest for a long time vs. a stop and go scheme
+(engine utilization)
+and for the average IO transaction to be relatively long (bus utilization)
+
+So, a big cluster size i.e. Milan's proposal) works great - you get both.
+
+Submitting a series of sequential small clusters where the HW can
+calculate the IV (e.g. Binoy's proposal) works great if the HW
+supports it - you get both.
+
+A batched series of small clusters + IV is less favorable - if your HW
+engines has lots of parallel context processing (this is expensive for
+HW) you might enjoy engine utilization but the bus utilization will be
+low - lots of small transactions.
+
+Gilad
 
 
---=====_002_next=====
-Content-Type: multipart/alternative;
-	boundary="=====_003_next====="
+-- 
+Gilad Ben-Yossef
+Chief Coffee Drinker
 
-
---=====_003_next=====
-Content-Transfer-Encoding: base64 
-Content-Type: text/plain;
-	charset="UTF-8"
-
-SXQgIGxvb2tzIGZpbmUgdG8gbWUuDQoNCg0KDQoNClJlZ2FyZHMsDQoNClRhbmcgSnVuaHVpDQoN
-Cg0KDQoNCu+8niBUaGlzIHVzZXMgcm91Z2hseSAxMCUgY3ljbGVzIG9mIHRoZSBzc2NhbmYtYmFz
-ZWQgaW1wbGVtZW50YXRpb24uDQoNCu+8niANCg0K77yeIEltcHJvdmVzOiBlZTg4ODhmMCAibXVs
-dGlwYXRoLXRvb2xzOiBpbXByb3ZlIHByb2Nlc3NpbmcgZWZmaWNpZW5jeS4uLiINCg0K77yeIFNp
-Z25lZC1vZmYtYnk6IE1hcnRpbiBXaWxjayDvvJxtd2lsY2tAc3VzZS5jb23vvJ4NCg0K77yeIC0t
-LQ0KDQrvvJ4gIGxpYm11bHRpcGF0aC91ZXZlbnQuYyB8IDM3ICsrKysrKysrKysrKysrKysrKysr
-KysrLS0tLS0tLS0tLS0tLS0NCg0K77yeICAxIGZpbGUgY2hhbmdlZCwgMjMgaW5zZXJ0aW9ucygr
-KSwgMTQgZGVsZXRpb25zKC0pDQoNCu+8niANCg0K77yeIGRpZmYgLS1naXQgYS9saWJtdWx0aXBh
-dGgvdWV2ZW50LmMgYi9saWJtdWx0aXBhdGgvdWV2ZW50LmMNCg0K77yeIGluZGV4IDZlMjUyN2Jk
-Li4zNjdlMTI5YSAxMDA2NDQNCg0K77yeIC0tLSBhL2xpYm11bHRpcGF0aC91ZXZlbnQuYw0KDQrv
-vJ4gKysrIGIvbGlibXVsdGlwYXRoL3VldmVudC5jDQoNCu+8niBAQCAtMTQzLDI2ICsxNDMsMzUg
-QEAgdWV2ZW50X25lZWRfbWVyZ2Uodm9pZCkNCg0K77yeICAgICAgcmV0dXJuIG5lZWRfbWVyZ2UN
-Cg0K77yeICB9DQoNCu+8niAgDQoNCu+8niArc3RhdGljIGJvb2wNCg0K77yeICt1ZXZlbnRfY2Fu
-X2Rpc2NhcmRfYnlfZGV2cGF0aChjb25zdCBjaGFyICpkZXZwYXRoKQ0KDQrvvJ4gK3sNCg0K77ye
-ICsgICAgc3RhdGljIGNvbnN0IGNoYXIgQkxPQ0tbXSA9ICIvYmxvY2svIg0KDQrvvJ4gKyAgICBj
-b25zdCBjaGFyICp0bXAgPSBzdHJzdHIoZGV2cGF0aCwgQkxPQ0spDQoNCu+8niArDQoNCu+8niAr
-ICAgIGlmICh0bXAgPT0gTlVMTCkgew0KDQrvvJ4gKyAgICAgICAgY29uZGxvZyg0LCAibm8gL2Js
-b2NrLyBpbiAnJXMnIiwgZGV2cGF0aCkNCg0K77yeICsgICAgICAgIHJldHVybiB0cnVlDQoNCu+8
-niArICAgIH0NCg0K77yeICsgICAgdG1wICs9IHNpemVvZihCTE9DSykgLSAxDQoNCu+8niArICAg
-IGlmICgqdG1wID09ICdcMCcpDQoNCu+8niArICAgICAgICAvKiBqdXN0ICIuLi4vYmxvY2svIiAt
-IGRpc2NhcmQgKi8NCg0K77yeICsgICAgICAgIHJldHVybiB0cnVlDQoNCu+8niArICAgIC8qDQoN
-Cu+8niArICAgICAqIElmIHRoZXJlIGFyZSBtb3JlIHBhdGggZWxlbWVudHMgYWZ0ZXIgIi4uLi9i
-bG9jay94eXoiLA0KDQrvvJ4gKyAgICAgKiBpdCdzIGEgcGFydGl0aW9uIC0gZGlzY2FyZCBpdCBi
-dXQgZG9uJ3QgZGlzY2FyZCAiLi4uL2Jsb2NrL3NkYS8iLg0KDQrvvJ4gKyAgICAgKi8NCg0K77ye
-ICsgICAgdG1wID0gc3RyY2hyKHRtcCwgJy8nKQ0KDQrvvJ4gKyAgICByZXR1cm4gdG1wICE9IE5V
-TEwgJiYgKih0bXAgKyAxKSAhPSAnXDAnDQoNCu+8niArfQ0KDQrvvJ4gKw0KDQrvvJ4gIGJvb2wN
-Cg0K77yeICB1ZXZlbnRfY2FuX2Rpc2NhcmQoc3RydWN0IHVldmVudCAqdWV2KQ0KDQrvvJ4gIHsN
-Cg0K77yeIC0gICAgY2hhciAqdG1wDQoNCu+8niAtICAgIGNoYXIgYVsxMV0sIGJbMTFdDQoNCu+8
-niAgICAgIHN0cnVjdCBjb25maWcgKiBjb25mDQoNCu+8niAgDQoNCu+8niAtICAgIC8qDQoNCu+8
-niAtICAgICAqIGtlZXAgb25seSBibG9jayBkZXZpY2VzLCBkaXNjYXJkIHBhcnRpdGlvbnMNCg0K
-77yeIC0gICAgICovDQoNCu+8niAtICAgIHRtcCA9IHN0cnN0cih1ZXYt77yeZGV2cGF0aCwgIi9i
-bG9jay8iKQ0KDQrvvJ4gLSAgICBpZiAodG1wID09IE5VTEwpew0KDQrvvJ4gLSAgICAgICAgY29u
-ZGxvZyg0LCAibm8gL2Jsb2NrLyBpbiAnJXMnIiwgdWV2Le+8nmRldnBhdGgpDQoNCu+8niArICAg
-IGlmICh1ZXZlbnRfY2FuX2Rpc2NhcmRfYnlfZGV2cGF0aCh1ZXYt77yeZGV2cGF0aCkpDQoNCu+8
-niAgICAgICAgICByZXR1cm4gdHJ1ZQ0KDQrvvJ4gLSAgICB9DQoNCu+8niAtICAgIGlmIChzc2Nh
-bmYodG1wLCAiL2Jsb2NrLyUxMHMiLCBhKSAhPSAxIHx8DQoNCu+8niAtICAgICAgICBzc2NhbmYo
-dG1wLCAiL2Jsb2NrLyUxMFteL10vJTEwcyIsIGEsIGIpID09IDIpIHsNCg0K77yeIC0gICAgICAg
-IGNvbmRsb2coNCwgImRpc2NhcmQgZXZlbnQgb24gJXMiLCB1ZXYt77yeZGV2cGF0aCkNCg0K77ye
-IC0gICAgICAgIHJldHVybiB0cnVlDQoNCu+8niAtICAgIH0NCg0K77yeICANCg0K77yeICAgICAg
-LyogDQoNCu+8niAgICAgICAqIGRvIG5vdCBmaWx0ZXIgZG0gZGV2aWNlcyBieSBkZXZub2RlDQoN
-Cu+8niAtLSANCg0K77yeIDIuMTIuMA==
-
-
---=====_003_next=====
-Content-Transfer-Encoding: base64
-Content-Type: text/html ;
-	charset="UTF-8"
-
-PGRpdiBjbGFzcz0iemNvbnRlbnRSb3ciPiA8cD5JdCAmbmJzcDtsb29rcyBmaW5lIHRvIG1lLjwv
-cD48cD48YnI+PC9wPjxwPlJlZ2FyZHMsPC9wPjxwPlRhbmcgSnVuaHVpPC9wPjxwPjxicj48L3A+
-PHA+77yeIFRoaXMgdXNlcyByb3VnaGx5IDEwJSBjeWNsZXMgb2YgdGhlIHNzY2FuZi1iYXNlZCBp
-bXBsZW1lbnRhdGlvbi48L3A+PHA+77yeJm5ic3A7PC9wPjxwPu+8niBJbXByb3ZlczogZWU4ODg4
-ZjAgIm11bHRpcGF0aC10b29sczogaW1wcm92ZSBwcm9jZXNzaW5nIGVmZmljaWVuY3kuLi4iPC9w
-PjxwPu+8niBTaWduZWQtb2ZmLWJ5OiBNYXJ0aW4gV2lsY2sg77ycbXdpbGNrQHN1c2UuY29t77ye
-PC9wPjxwPu+8niAtLS08L3A+PHA+77yeICZuYnNwO2xpYm11bHRpcGF0aC91ZXZlbnQuYyB8IDM3
-ICsrKysrKysrKysrKysrKysrKysrKysrLS0tLS0tLS0tLS0tLS08L3A+PHA+77yeICZuYnNwOzEg
-ZmlsZSBjaGFuZ2VkLCAyMyBpbnNlcnRpb25zKCspLCAxNCBkZWxldGlvbnMoLSk8L3A+PHA+77ye
-Jm5ic3A7PC9wPjxwPu+8niBkaWZmIC0tZ2l0IGEvbGlibXVsdGlwYXRoL3VldmVudC5jIGIvbGli
-bXVsdGlwYXRoL3VldmVudC5jPC9wPjxwPu+8niBpbmRleCA2ZTI1MjdiZC4uMzY3ZTEyOWEgMTAw
-NjQ0PC9wPjxwPu+8niAtLS0gYS9saWJtdWx0aXBhdGgvdWV2ZW50LmM8L3A+PHA+77yeICsrKyBi
-L2xpYm11bHRpcGF0aC91ZXZlbnQuYzwvcD48cD7vvJ4gQEAgLTE0MywyNiArMTQzLDM1IEBAIHVl
-dmVudF9uZWVkX21lcmdlKHZvaWQpPC9wPjxwPu+8niAmbmJzcDsgJm5ic3A7ICZuYnNwO3JldHVy
-biBuZWVkX21lcmdlOzwvcD48cD7vvJ4gJm5ic3A7fTwvcD48cD7vvJ4gJm5ic3A7PC9wPjxwPu+8
-niArc3RhdGljIGJvb2w8L3A+PHA+77yeICt1ZXZlbnRfY2FuX2Rpc2NhcmRfYnlfZGV2cGF0aChj
-b25zdCBjaGFyICpkZXZwYXRoKTwvcD48cD7vvJ4gK3s8L3A+PHA+77yeICsgJm5ic3A7ICZuYnNw
-O3N0YXRpYyBjb25zdCBjaGFyIEJMT0NLW10gPSAiL2Jsb2NrLyI7PC9wPjxwPu+8niArICZuYnNw
-OyAmbmJzcDtjb25zdCBjaGFyICp0bXAgPSBzdHJzdHIoZGV2cGF0aCwgQkxPQ0spOzwvcD48cD7v
-vJ4gKzwvcD48cD7vvJ4gKyAmbmJzcDsgJm5ic3A7aWYgKHRtcCA9PSBOVUxMKSB7PC9wPjxwPu+8
-niArICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwO2NvbmRsb2coNCwgIm5vIC9ibG9jay8gaW4g
-JyVzJyIsIGRldnBhdGgpOzwvcD48cD7vvJ4gKyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDty
-ZXR1cm4gdHJ1ZTs8L3A+PHA+77yeICsgJm5ic3A7ICZuYnNwO308L3A+PHA+77yeICsgJm5ic3A7
-ICZuYnNwO3RtcCArPSBzaXplb2YoQkxPQ0spIC0gMTs8L3A+PHA+77yeICsgJm5ic3A7ICZuYnNw
-O2lmICgqdG1wID09ICdcMCcpPC9wPjxwPu+8niArICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNw
-Oy8qIGp1c3QgIi4uLi9ibG9jay8iIC0gZGlzY2FyZCAqLzwvcD48cD7vvJ4gKyAmbmJzcDsgJm5i
-c3A7ICZuYnNwOyAmbmJzcDtyZXR1cm4gdHJ1ZTs8L3A+PHA+77yeICsgJm5ic3A7ICZuYnNwOy8q
-PC9wPjxwPu+8niArICZuYnNwOyAmbmJzcDsgKiBJZiB0aGVyZSBhcmUgbW9yZSBwYXRoIGVsZW1l
-bnRzIGFmdGVyICIuLi4vYmxvY2sveHl6Iiw8L3A+PHA+77yeICsgJm5ic3A7ICZuYnNwOyAqIGl0
-J3MgYSBwYXJ0aXRpb24gLSBkaXNjYXJkIGl0OyBidXQgZG9uJ3QgZGlzY2FyZCAiLi4uL2Jsb2Nr
-L3NkYS8iLjwvcD48cD7vvJ4gKyAmbmJzcDsgJm5ic3A7ICovPC9wPjxwPu+8niArICZuYnNwOyAm
-bmJzcDt0bXAgPSBzdHJjaHIodG1wLCAnLycpOzwvcD48cD7vvJ4gKyAmbmJzcDsgJm5ic3A7cmV0
-dXJuIHRtcCAhPSBOVUxMICZhbXA7JmFtcDsgKih0bXAgKyAxKSAhPSAnXDAnOzwvcD48cD7vvJ4g
-K308L3A+PHA+77yeICs8L3A+PHA+77yeICZuYnNwO2Jvb2w8L3A+PHA+77yeICZuYnNwO3VldmVu
-dF9jYW5fZGlzY2FyZChzdHJ1Y3QgdWV2ZW50ICp1ZXYpPC9wPjxwPu+8niAmbmJzcDt7PC9wPjxw
-Pu+8niAtICZuYnNwOyAmbmJzcDtjaGFyICp0bXA7PC9wPjxwPu+8niAtICZuYnNwOyAmbmJzcDtj
-aGFyIGFbMTFdLCBiWzExXTs8L3A+PHA+77yeICZuYnNwOyAmbmJzcDsgJm5ic3A7c3RydWN0IGNv
-bmZpZyAqIGNvbmY7PC9wPjxwPu+8niAmbmJzcDs8L3A+PHA+77yeIC0gJm5ic3A7ICZuYnNwOy8q
-PC9wPjxwPu+8niAtICZuYnNwOyAmbmJzcDsgKiBrZWVwIG9ubHkgYmxvY2sgZGV2aWNlcywgZGlz
-Y2FyZCBwYXJ0aXRpb25zPC9wPjxwPu+8niAtICZuYnNwOyAmbmJzcDsgKi88L3A+PHA+77yeIC0g
-Jm5ic3A7ICZuYnNwO3RtcCA9IHN0cnN0cih1ZXYt77yeZGV2cGF0aCwgIi9ibG9jay8iKTs8L3A+
-PHA+77yeIC0gJm5ic3A7ICZuYnNwO2lmICh0bXAgPT0gTlVMTCl7PC9wPjxwPu+8niAtICZuYnNw
-OyAmbmJzcDsgJm5ic3A7ICZuYnNwO2NvbmRsb2coNCwgIm5vIC9ibG9jay8gaW4gJyVzJyIsIHVl
-di3vvJ5kZXZwYXRoKTs8L3A+PHA+77yeICsgJm5ic3A7ICZuYnNwO2lmICh1ZXZlbnRfY2FuX2Rp
-c2NhcmRfYnlfZGV2cGF0aCh1ZXYt77yeZGV2cGF0aCkpPC9wPjxwPu+8niAmbmJzcDsgJm5ic3A7
-ICZuYnNwOyAmbmJzcDsgJm5ic3A7cmV0dXJuIHRydWU7PC9wPjxwPu+8niAtICZuYnNwOyAmbmJz
-cDt9PC9wPjxwPu+8niAtICZuYnNwOyAmbmJzcDtpZiAoc3NjYW5mKHRtcCwgIi9ibG9jay8lMTBz
-IiwgYSkgIT0gMSB8fDwvcD48cD7vvJ4gLSAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDtzc2Nh
-bmYodG1wLCAiL2Jsb2NrLyUxMFteL10vJTEwcyIsIGEsIGIpID09IDIpIHs8L3A+PHA+77yeIC0g
-Jm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7Y29uZGxvZyg0LCAiZGlzY2FyZCBldmVudCBvbiAl
-cyIsIHVldi3vvJ5kZXZwYXRoKTs8L3A+PHA+77yeIC0gJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5i
-c3A7cmV0dXJuIHRydWU7PC9wPjxwPu+8niAtICZuYnNwOyAmbmJzcDt9PC9wPjxwPu+8niAmbmJz
-cDs8L3A+PHA+77yeICZuYnNwOyAmbmJzcDsgJm5ic3A7LyombmJzcDs8L3A+PHA+77yeICZuYnNw
-OyAmbmJzcDsgJm5ic3A7ICogZG8gbm90IGZpbHRlciBkbSBkZXZpY2VzIGJ5IGRldm5vZGU8L3A+
-PHA+77yeIC0tJm5ic3A7PC9wPjxwPu+8niAyLjEyLjA8L3A+PHA+PGJyPjwvcD48cD48YnI+PC9w
-PjxkaXY+PGRpdiBjbGFzcz0iemhpc3RvcnlSb3ciIHN0eWxlPSJkaXNwbGF5OmJsb2NrIj48ZGl2
-IGlkPSJ6d3JpdGVIaXN0b3J5Q29udGFpbmVyIj48ZGl2IGNsYXNzPSJjb250cm9sLWdyb3VwIHpo
-aXN0b3J5UGFuZWwiPjxwPjxicj48L3A+PC9kaXY+PC9kaXY+PC9kaXY+PC9kaXY+PHA+PGJyPjwv
-cD4gPC9kaXY+
-
-
---=====_003_next=====--
-
---=====_002_next=====--
-
---=====_001_next=====
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---=====_001_next=====--
+"If you take a class in large-scale robotics, can you end up in a
+situation where the homework eats your dog?"
+ -- Jean-Baptiste Queru
