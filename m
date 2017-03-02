@@ -1,15 +1,14 @@
-From: Binoy Jayan <binoy.jayan@linaro.org>
-Subject: Re: [RFC PATCH v4] IV Generation algorithms for dm-crypt
-Date: Wed, 1 Mar 2017 23:34:49 +0530
-Message-ID: <CAHv-k_93zbve7nOBWrMERt_9sD9VfaF18Y9+P+9Tqd_rXE96gA@mail.gmail.com>
-References: <1486463731-6224-1-git-send-email-binoy.jayan@linaro.org>
-	<CAOtvUMcN8s886978vE6T=AE79KkZsLBnXsmhewnb5PB0UyAG3A@mail.gmail.com>
-	<CAHv-k_8rgArzV2uQ64h1ZTNRpssX1jMf=RwuPoBmsjQ0FhCsWA@mail.gmail.com>
-	<68f70534-a309-46ba-a84d-8acc1e6620e5@gmail.com>
+From: <tang.junhui@zte.com.cn>
+Subject: Re:
+	=?utf-8?q?=5BPATCH=5D_uevent=5Fcan=5Fdiscard=3A_optimi?=
+	=?utf-8?q?ze_devpath_check?=
+Date: Thu, 2 Mar 2017 16:35:34 +0800 (CST)
+Message-ID: <201703021635342010121@zte.com.cn>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============6998054475809986700=="
+Content-Type: multipart/mixed;
+	boundary="=====_001_next====="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <68f70534-a309-46ba-a84d-8acc1e6620e5@gmail.com>
+References: 20170301172219.9683-1-mwilck@suse.com
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,122 +18,145 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Milan Broz <gmazyland@gmail.com>
-Cc: Rajendra <rnayak@codeaurora.org>, Herbert Xu <herbert@gondor.apana.org.au>, Oded <oded.golombek@arm.com>, Mike Snitzer <snitzer@redhat.com>, Linux kernel mailing list <linux-kernel@vger.kernel.org>, Ondrej Mosnacek <omosnace@redhat.com>, linux-raid@vger.kernel.org, Gilad Ben-Yossef <gilad@benyossef.com>, dm-devel@redhat.com, Mark Brown <broonie@kernel.org>, Arnd Bergmann <arnd@arndb.de>, linux-crypto@vger.kernel.org, Shaohua Li <shli@kernel.org>, "David S. Miller" <davem@davemloft.net>, Alasdair Kergon <agk@redhat.com>, Ofir <Ofir.Drang@arm.com>
+To: mwilck@suse.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============6998054475809986700==
-Content-Type: multipart/alternative; boundary=001a11457aae0e08070549af263a
-
---001a11457aae0e08070549af263a
-Content-Type: text/plain; charset=UTF-8
-
-Hi Milan,
-
-On 1 March 2017 at 02:35, Milan Broz <gmazyland@gmail.com> wrote:
-
-> On 02/22/2017 07:12 AM, Binoy Jayan wrote:
-> >
-> > I was wondering if this is near to be ready for submission (apart from
-> > the testmgr.c
-> > changes) or I need to make some changes to make it similar to the IPSec
-> offload?
->
-> I just tried this and except it registers the IV for every new device
-> again, it works...
-> (After a while you have many duplicate entries in /proc/crypto.)
 
 
-It is because the the crypto lookup api sees that the crypto algorithm is in
-a LARVAL state and registers a new instance every time by invoking the
-".create" callback. I guess it should be solved by adding test data to
-testmgr.
-
-Do you have some real performance numbers that proves that such a patch is
-> adequate?
->
-
-While waiting to do some implementation of the hw crypto drivers to work
-with
-dm-crypt, I'll also generate some numbers to compare the performance with
-the
-original dm-crypt code with the new one with a software implementation in
-place.
+--=====_001_next=====
+Content-Type: multipart/related;
+	boundary="=====_002_next====="
 
 
-> I would really like to see the performance issue fixed but I am really not
-> sure
-> this approach works for everyone. It would be better to avoid repeating
-> this exercise later.
-> IIRC Ondra's "bulk" mode, despite rejected, shows that there is a potential
-> to speedup things even for crypt drivers that do not support own IV
-> generators.
->
-
-I think it should work for everyone (even for ciphers not supporting IVs)
-if the null IV
-mode is used. It should be upto the IV generation template to choose to
-generate IV
-or just call the underlying (base) template/cipher.
-
-Regards,
-Binoy
-
---001a11457aae0e08070549af263a
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">Hi Milan,<br><div class=3D"gmail_extra"><br><div class=3D"=
-gmail_quote">On 1 March 2017 at 02:35, Milan Broz <span dir=3D"ltr">&lt;<a =
-href=3D"mailto:gmazyland@gmail.com" target=3D"_blank">gmazyland@gmail.com</=
-a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0=
-px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex"><=
-span class=3D"gmail-">On 02/22/2017 07:12 AM, Binoy Jayan wrote:<br>
-&gt;<br>
-&gt; I was wondering if this is near to be ready for submission (apart from=
-<br>
-&gt; the testmgr.c<br>
-&gt; changes) or I need to make some changes to make it similar to the IPSe=
-c offload?<br>
-<br>
-</span>I just tried this and except it registers the IV for every new devic=
-e again, it works...<br>
-(After a while you have many duplicate entries in /proc/crypto.)</blockquot=
-e><div><br></div><div>It is because the the crypto lookup api sees that the=
- crypto algorithm is in</div><div>a LARVAL state and registers a new instan=
-ce every time by invoking the</div><div>&quot;.create&quot; callback. I gue=
-ss it should be solved by adding test data to testmgr.</div><div><br></div>=
-<blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-=
-left:1px solid rgb(204,204,204);padding-left:1ex">Do you have some real per=
-formance numbers that proves that such a patch is adequate?<br></blockquote=
-><div><br></div><div>While waiting to do some implementation of the hw cryp=
-to drivers to work with</div><div>dm-crypt, I&#39;ll also generate some num=
-bers to compare the performance with the</div><div>original dm-crypt code w=
-ith the new one with a software implementation in place.</div><div>=C2=A0</=
-div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;bor=
-der-left:1px solid rgb(204,204,204);padding-left:1ex">
-I would really like to see the performance issue fixed but I am really not =
-sure<br>
-this approach works for everyone. It would be better to avoid repeating thi=
-s exercise later.<br>
-IIRC Ondra&#39;s &quot;bulk&quot; mode, despite rejected, shows that there =
-is a potential<br>
-to speedup things even for crypt drivers that do not support own IV generat=
-ors.<br></blockquote><div><br></div><div>I think it should work for everyon=
-e (even for ciphers not supporting IVs) if the null IV</div><div>mode is us=
-ed. It should be upto the IV generation template to choose to generate IV</=
-div><div>or just call the underlying (base) template/cipher.</div><div>=C2=
-=A0</div><div>Regards,</div><div>Binoy</div><div><br></div><div><br></div><=
-/div></div></div>
-
---001a11457aae0e08070549af263a--
+--=====_002_next=====
+Content-Type: multipart/alternative;
+	boundary="=====_003_next====="
 
 
---===============6998054475809986700==
+--=====_003_next=====
+Content-Transfer-Encoding: base64 
+Content-Type: text/plain;
+	charset="UTF-8"
+
+SXQgIGxvb2tzIGZpbmUgdG8gbWUuDQoNCg0KDQoNClJlZ2FyZHMsDQoNClRhbmcgSnVuaHVpDQoN
+Cg0KDQoNCu+8niBUaGlzIHVzZXMgcm91Z2hseSAxMCUgY3ljbGVzIG9mIHRoZSBzc2NhbmYtYmFz
+ZWQgaW1wbGVtZW50YXRpb24uDQoNCu+8niANCg0K77yeIEltcHJvdmVzOiBlZTg4ODhmMCAibXVs
+dGlwYXRoLXRvb2xzOiBpbXByb3ZlIHByb2Nlc3NpbmcgZWZmaWNpZW5jeS4uLiINCg0K77yeIFNp
+Z25lZC1vZmYtYnk6IE1hcnRpbiBXaWxjayDvvJxtd2lsY2tAc3VzZS5jb23vvJ4NCg0K77yeIC0t
+LQ0KDQrvvJ4gIGxpYm11bHRpcGF0aC91ZXZlbnQuYyB8IDM3ICsrKysrKysrKysrKysrKysrKysr
+KysrLS0tLS0tLS0tLS0tLS0NCg0K77yeICAxIGZpbGUgY2hhbmdlZCwgMjMgaW5zZXJ0aW9ucygr
+KSwgMTQgZGVsZXRpb25zKC0pDQoNCu+8niANCg0K77yeIGRpZmYgLS1naXQgYS9saWJtdWx0aXBh
+dGgvdWV2ZW50LmMgYi9saWJtdWx0aXBhdGgvdWV2ZW50LmMNCg0K77yeIGluZGV4IDZlMjUyN2Jk
+Li4zNjdlMTI5YSAxMDA2NDQNCg0K77yeIC0tLSBhL2xpYm11bHRpcGF0aC91ZXZlbnQuYw0KDQrv
+vJ4gKysrIGIvbGlibXVsdGlwYXRoL3VldmVudC5jDQoNCu+8niBAQCAtMTQzLDI2ICsxNDMsMzUg
+QEAgdWV2ZW50X25lZWRfbWVyZ2Uodm9pZCkNCg0K77yeICAgICAgcmV0dXJuIG5lZWRfbWVyZ2UN
+Cg0K77yeICB9DQoNCu+8niAgDQoNCu+8niArc3RhdGljIGJvb2wNCg0K77yeICt1ZXZlbnRfY2Fu
+X2Rpc2NhcmRfYnlfZGV2cGF0aChjb25zdCBjaGFyICpkZXZwYXRoKQ0KDQrvvJ4gK3sNCg0K77ye
+ICsgICAgc3RhdGljIGNvbnN0IGNoYXIgQkxPQ0tbXSA9ICIvYmxvY2svIg0KDQrvvJ4gKyAgICBj
+b25zdCBjaGFyICp0bXAgPSBzdHJzdHIoZGV2cGF0aCwgQkxPQ0spDQoNCu+8niArDQoNCu+8niAr
+ICAgIGlmICh0bXAgPT0gTlVMTCkgew0KDQrvvJ4gKyAgICAgICAgY29uZGxvZyg0LCAibm8gL2Js
+b2NrLyBpbiAnJXMnIiwgZGV2cGF0aCkNCg0K77yeICsgICAgICAgIHJldHVybiB0cnVlDQoNCu+8
+niArICAgIH0NCg0K77yeICsgICAgdG1wICs9IHNpemVvZihCTE9DSykgLSAxDQoNCu+8niArICAg
+IGlmICgqdG1wID09ICdcMCcpDQoNCu+8niArICAgICAgICAvKiBqdXN0ICIuLi4vYmxvY2svIiAt
+IGRpc2NhcmQgKi8NCg0K77yeICsgICAgICAgIHJldHVybiB0cnVlDQoNCu+8niArICAgIC8qDQoN
+Cu+8niArICAgICAqIElmIHRoZXJlIGFyZSBtb3JlIHBhdGggZWxlbWVudHMgYWZ0ZXIgIi4uLi9i
+bG9jay94eXoiLA0KDQrvvJ4gKyAgICAgKiBpdCdzIGEgcGFydGl0aW9uIC0gZGlzY2FyZCBpdCBi
+dXQgZG9uJ3QgZGlzY2FyZCAiLi4uL2Jsb2NrL3NkYS8iLg0KDQrvvJ4gKyAgICAgKi8NCg0K77ye
+ICsgICAgdG1wID0gc3RyY2hyKHRtcCwgJy8nKQ0KDQrvvJ4gKyAgICByZXR1cm4gdG1wICE9IE5V
+TEwgJiYgKih0bXAgKyAxKSAhPSAnXDAnDQoNCu+8niArfQ0KDQrvvJ4gKw0KDQrvvJ4gIGJvb2wN
+Cg0K77yeICB1ZXZlbnRfY2FuX2Rpc2NhcmQoc3RydWN0IHVldmVudCAqdWV2KQ0KDQrvvJ4gIHsN
+Cg0K77yeIC0gICAgY2hhciAqdG1wDQoNCu+8niAtICAgIGNoYXIgYVsxMV0sIGJbMTFdDQoNCu+8
+niAgICAgIHN0cnVjdCBjb25maWcgKiBjb25mDQoNCu+8niAgDQoNCu+8niAtICAgIC8qDQoNCu+8
+niAtICAgICAqIGtlZXAgb25seSBibG9jayBkZXZpY2VzLCBkaXNjYXJkIHBhcnRpdGlvbnMNCg0K
+77yeIC0gICAgICovDQoNCu+8niAtICAgIHRtcCA9IHN0cnN0cih1ZXYt77yeZGV2cGF0aCwgIi9i
+bG9jay8iKQ0KDQrvvJ4gLSAgICBpZiAodG1wID09IE5VTEwpew0KDQrvvJ4gLSAgICAgICAgY29u
+ZGxvZyg0LCAibm8gL2Jsb2NrLyBpbiAnJXMnIiwgdWV2Le+8nmRldnBhdGgpDQoNCu+8niArICAg
+IGlmICh1ZXZlbnRfY2FuX2Rpc2NhcmRfYnlfZGV2cGF0aCh1ZXYt77yeZGV2cGF0aCkpDQoNCu+8
+niAgICAgICAgICByZXR1cm4gdHJ1ZQ0KDQrvvJ4gLSAgICB9DQoNCu+8niAtICAgIGlmIChzc2Nh
+bmYodG1wLCAiL2Jsb2NrLyUxMHMiLCBhKSAhPSAxIHx8DQoNCu+8niAtICAgICAgICBzc2NhbmYo
+dG1wLCAiL2Jsb2NrLyUxMFteL10vJTEwcyIsIGEsIGIpID09IDIpIHsNCg0K77yeIC0gICAgICAg
+IGNvbmRsb2coNCwgImRpc2NhcmQgZXZlbnQgb24gJXMiLCB1ZXYt77yeZGV2cGF0aCkNCg0K77ye
+IC0gICAgICAgIHJldHVybiB0cnVlDQoNCu+8niAtICAgIH0NCg0K77yeICANCg0K77yeICAgICAg
+LyogDQoNCu+8niAgICAgICAqIGRvIG5vdCBmaWx0ZXIgZG0gZGV2aWNlcyBieSBkZXZub2RlDQoN
+Cu+8niAtLSANCg0K77yeIDIuMTIuMA==
+
+
+--=====_003_next=====
+Content-Transfer-Encoding: base64
+Content-Type: text/html ;
+	charset="UTF-8"
+
+PGRpdiBjbGFzcz0iemNvbnRlbnRSb3ciPiA8cD5JdCAmbmJzcDtsb29rcyBmaW5lIHRvIG1lLjwv
+cD48cD48YnI+PC9wPjxwPlJlZ2FyZHMsPC9wPjxwPlRhbmcgSnVuaHVpPC9wPjxwPjxicj48L3A+
+PHA+77yeIFRoaXMgdXNlcyByb3VnaGx5IDEwJSBjeWNsZXMgb2YgdGhlIHNzY2FuZi1iYXNlZCBp
+bXBsZW1lbnRhdGlvbi48L3A+PHA+77yeJm5ic3A7PC9wPjxwPu+8niBJbXByb3ZlczogZWU4ODg4
+ZjAgIm11bHRpcGF0aC10b29sczogaW1wcm92ZSBwcm9jZXNzaW5nIGVmZmljaWVuY3kuLi4iPC9w
+PjxwPu+8niBTaWduZWQtb2ZmLWJ5OiBNYXJ0aW4gV2lsY2sg77ycbXdpbGNrQHN1c2UuY29t77ye
+PC9wPjxwPu+8niAtLS08L3A+PHA+77yeICZuYnNwO2xpYm11bHRpcGF0aC91ZXZlbnQuYyB8IDM3
+ICsrKysrKysrKysrKysrKysrKysrKysrLS0tLS0tLS0tLS0tLS08L3A+PHA+77yeICZuYnNwOzEg
+ZmlsZSBjaGFuZ2VkLCAyMyBpbnNlcnRpb25zKCspLCAxNCBkZWxldGlvbnMoLSk8L3A+PHA+77ye
+Jm5ic3A7PC9wPjxwPu+8niBkaWZmIC0tZ2l0IGEvbGlibXVsdGlwYXRoL3VldmVudC5jIGIvbGli
+bXVsdGlwYXRoL3VldmVudC5jPC9wPjxwPu+8niBpbmRleCA2ZTI1MjdiZC4uMzY3ZTEyOWEgMTAw
+NjQ0PC9wPjxwPu+8niAtLS0gYS9saWJtdWx0aXBhdGgvdWV2ZW50LmM8L3A+PHA+77yeICsrKyBi
+L2xpYm11bHRpcGF0aC91ZXZlbnQuYzwvcD48cD7vvJ4gQEAgLTE0MywyNiArMTQzLDM1IEBAIHVl
+dmVudF9uZWVkX21lcmdlKHZvaWQpPC9wPjxwPu+8niAmbmJzcDsgJm5ic3A7ICZuYnNwO3JldHVy
+biBuZWVkX21lcmdlOzwvcD48cD7vvJ4gJm5ic3A7fTwvcD48cD7vvJ4gJm5ic3A7PC9wPjxwPu+8
+niArc3RhdGljIGJvb2w8L3A+PHA+77yeICt1ZXZlbnRfY2FuX2Rpc2NhcmRfYnlfZGV2cGF0aChj
+b25zdCBjaGFyICpkZXZwYXRoKTwvcD48cD7vvJ4gK3s8L3A+PHA+77yeICsgJm5ic3A7ICZuYnNw
+O3N0YXRpYyBjb25zdCBjaGFyIEJMT0NLW10gPSAiL2Jsb2NrLyI7PC9wPjxwPu+8niArICZuYnNw
+OyAmbmJzcDtjb25zdCBjaGFyICp0bXAgPSBzdHJzdHIoZGV2cGF0aCwgQkxPQ0spOzwvcD48cD7v
+vJ4gKzwvcD48cD7vvJ4gKyAmbmJzcDsgJm5ic3A7aWYgKHRtcCA9PSBOVUxMKSB7PC9wPjxwPu+8
+niArICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwO2NvbmRsb2coNCwgIm5vIC9ibG9jay8gaW4g
+JyVzJyIsIGRldnBhdGgpOzwvcD48cD7vvJ4gKyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDty
+ZXR1cm4gdHJ1ZTs8L3A+PHA+77yeICsgJm5ic3A7ICZuYnNwO308L3A+PHA+77yeICsgJm5ic3A7
+ICZuYnNwO3RtcCArPSBzaXplb2YoQkxPQ0spIC0gMTs8L3A+PHA+77yeICsgJm5ic3A7ICZuYnNw
+O2lmICgqdG1wID09ICdcMCcpPC9wPjxwPu+8niArICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNw
+Oy8qIGp1c3QgIi4uLi9ibG9jay8iIC0gZGlzY2FyZCAqLzwvcD48cD7vvJ4gKyAmbmJzcDsgJm5i
+c3A7ICZuYnNwOyAmbmJzcDtyZXR1cm4gdHJ1ZTs8L3A+PHA+77yeICsgJm5ic3A7ICZuYnNwOy8q
+PC9wPjxwPu+8niArICZuYnNwOyAmbmJzcDsgKiBJZiB0aGVyZSBhcmUgbW9yZSBwYXRoIGVsZW1l
+bnRzIGFmdGVyICIuLi4vYmxvY2sveHl6Iiw8L3A+PHA+77yeICsgJm5ic3A7ICZuYnNwOyAqIGl0
+J3MgYSBwYXJ0aXRpb24gLSBkaXNjYXJkIGl0OyBidXQgZG9uJ3QgZGlzY2FyZCAiLi4uL2Jsb2Nr
+L3NkYS8iLjwvcD48cD7vvJ4gKyAmbmJzcDsgJm5ic3A7ICovPC9wPjxwPu+8niArICZuYnNwOyAm
+bmJzcDt0bXAgPSBzdHJjaHIodG1wLCAnLycpOzwvcD48cD7vvJ4gKyAmbmJzcDsgJm5ic3A7cmV0
+dXJuIHRtcCAhPSBOVUxMICZhbXA7JmFtcDsgKih0bXAgKyAxKSAhPSAnXDAnOzwvcD48cD7vvJ4g
+K308L3A+PHA+77yeICs8L3A+PHA+77yeICZuYnNwO2Jvb2w8L3A+PHA+77yeICZuYnNwO3VldmVu
+dF9jYW5fZGlzY2FyZChzdHJ1Y3QgdWV2ZW50ICp1ZXYpPC9wPjxwPu+8niAmbmJzcDt7PC9wPjxw
+Pu+8niAtICZuYnNwOyAmbmJzcDtjaGFyICp0bXA7PC9wPjxwPu+8niAtICZuYnNwOyAmbmJzcDtj
+aGFyIGFbMTFdLCBiWzExXTs8L3A+PHA+77yeICZuYnNwOyAmbmJzcDsgJm5ic3A7c3RydWN0IGNv
+bmZpZyAqIGNvbmY7PC9wPjxwPu+8niAmbmJzcDs8L3A+PHA+77yeIC0gJm5ic3A7ICZuYnNwOy8q
+PC9wPjxwPu+8niAtICZuYnNwOyAmbmJzcDsgKiBrZWVwIG9ubHkgYmxvY2sgZGV2aWNlcywgZGlz
+Y2FyZCBwYXJ0aXRpb25zPC9wPjxwPu+8niAtICZuYnNwOyAmbmJzcDsgKi88L3A+PHA+77yeIC0g
+Jm5ic3A7ICZuYnNwO3RtcCA9IHN0cnN0cih1ZXYt77yeZGV2cGF0aCwgIi9ibG9jay8iKTs8L3A+
+PHA+77yeIC0gJm5ic3A7ICZuYnNwO2lmICh0bXAgPT0gTlVMTCl7PC9wPjxwPu+8niAtICZuYnNw
+OyAmbmJzcDsgJm5ic3A7ICZuYnNwO2NvbmRsb2coNCwgIm5vIC9ibG9jay8gaW4gJyVzJyIsIHVl
+di3vvJ5kZXZwYXRoKTs8L3A+PHA+77yeICsgJm5ic3A7ICZuYnNwO2lmICh1ZXZlbnRfY2FuX2Rp
+c2NhcmRfYnlfZGV2cGF0aCh1ZXYt77yeZGV2cGF0aCkpPC9wPjxwPu+8niAmbmJzcDsgJm5ic3A7
+ICZuYnNwOyAmbmJzcDsgJm5ic3A7cmV0dXJuIHRydWU7PC9wPjxwPu+8niAtICZuYnNwOyAmbmJz
+cDt9PC9wPjxwPu+8niAtICZuYnNwOyAmbmJzcDtpZiAoc3NjYW5mKHRtcCwgIi9ibG9jay8lMTBz
+IiwgYSkgIT0gMSB8fDwvcD48cD7vvJ4gLSAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDtzc2Nh
+bmYodG1wLCAiL2Jsb2NrLyUxMFteL10vJTEwcyIsIGEsIGIpID09IDIpIHs8L3A+PHA+77yeIC0g
+Jm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7Y29uZGxvZyg0LCAiZGlzY2FyZCBldmVudCBvbiAl
+cyIsIHVldi3vvJ5kZXZwYXRoKTs8L3A+PHA+77yeIC0gJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5i
+c3A7cmV0dXJuIHRydWU7PC9wPjxwPu+8niAtICZuYnNwOyAmbmJzcDt9PC9wPjxwPu+8niAmbmJz
+cDs8L3A+PHA+77yeICZuYnNwOyAmbmJzcDsgJm5ic3A7LyombmJzcDs8L3A+PHA+77yeICZuYnNw
+OyAmbmJzcDsgJm5ic3A7ICogZG8gbm90IGZpbHRlciBkbSBkZXZpY2VzIGJ5IGRldm5vZGU8L3A+
+PHA+77yeIC0tJm5ic3A7PC9wPjxwPu+8niAyLjEyLjA8L3A+PHA+PGJyPjwvcD48cD48YnI+PC9w
+PjxkaXY+PGRpdiBjbGFzcz0iemhpc3RvcnlSb3ciIHN0eWxlPSJkaXNwbGF5OmJsb2NrIj48ZGl2
+IGlkPSJ6d3JpdGVIaXN0b3J5Q29udGFpbmVyIj48ZGl2IGNsYXNzPSJjb250cm9sLWdyb3VwIHpo
+aXN0b3J5UGFuZWwiPjxwPjxicj48L3A+PC9kaXY+PC9kaXY+PC9kaXY+PC9kaXY+PHA+PGJyPjwv
+cD4gPC9kaXY+
+
+
+--=====_003_next=====--
+
+--=====_002_next=====--
+
+--=====_001_next=====
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============6998054475809986700==--
+--=====_001_next=====--
