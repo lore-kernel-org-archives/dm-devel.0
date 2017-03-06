@@ -1,11 +1,21 @@
-From: Muneendra Kumar M <mmandala@Brocade.com>
-Subject: Re: scsi timeout on multipath
-Date: Fri, 3 Mar 2017 09:17:40 +0000
-Message-ID: <af3abc2148c64309a4773bc6f92016ac@BRMWP-EXMB11.corp.brocade.com>
+From: Gilad Ben-Yossef <gilad@benyossef.com>
+Subject: Re: [RFC PATCH v4] IV Generation algorithms for dm-crypt
+Date: Mon, 6 Mar 2017 16:38:00 +0200
+Message-ID: <CAOtvUMdrQA4okKhiCyVmosQ4Oc2PHO4k4wLrDz-_fCyWB1rWBw@mail.gmail.com>
+References: <1486463731-6224-1-git-send-email-binoy.jayan@linaro.org>
+	<CAOtvUMcN8s886978vE6T=AE79KkZsLBnXsmhewnb5PB0UyAG3A@mail.gmail.com>
+	<CAHv-k_8rgArzV2uQ64h1ZTNRpssX1jMf=RwuPoBmsjQ0FhCsWA@mail.gmail.com>
+	<68f70534-a309-46ba-a84d-8acc1e6620e5@gmail.com>
+	<CAOtvUMf3c0fUjABmbfMrbs0W4gyhKVZyc_tZH3rQg65zF18YMg@mail.gmail.com>
+	<b563eb97-82ba-69d2-c4c5-66bc716a7507@gmail.com>
+	<CAOtvUMePYT7OJDKL7i0y3y6Jvqsxyx6Je6g9aGKVq6PLZ_-Z8w@mail.gmail.com>
+	<2aef6e54-805f-e09b-ae66-c198f8c05335@gmail.com>
+	<c835926e-c2bd-8a52-34db-6c605301bc2b@gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1947555099070472508=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
+In-Reply-To: <c835926e-c2bd-8a52-34db-6c605301bc2b@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,286 +25,70 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Milan Broz <gmazyland@gmail.com>
+Cc: Binoy Jayan <binoy.jayan@linaro.org>, Rajendra <rnayak@codeaurora.org>, Herbert Xu <herbert@gondor.apana.org.au>, Oded <oded.golombek@arm.com>, Mike Snitzer <snitzer@redhat.com>, Linux kernel mailing list <linux-kernel@vger.kernel.org>, Ondrej Mosnacek <omosnace@redhat.com>, linux-raid@vger.kernel.org, dm-devel@redhat.com, Mark Brown <broonie@kernel.org>, Arnd Bergmann <arnd@arndb.de>, linux-crypto@vger.kernel.org, Shaohua Li <shli@kernel.org>, "David S. Miller" <davem@davemloft.net>, Alasdair Kergon <agk@redhat.com>, Ofir <Ofir.Drang@arm.com>
 List-Id: dm-devel.ids
 
---===============1947555099070472508==
-Content-Language: en-US
-Content-Type: multipart/alternative;
-	boundary="_000_af3abc2148c64309a4773bc6f92016acBRMWPEXMB11corpbrocadec_"
-
---_000_af3abc2148c64309a4773bc6f92016acBRMWPEXMB11corpbrocadec_
-Content-Type: text/plain; charset="us-ascii"
-
-Any input here will help me a lot.
-
-Regards,
-Muneendra.
-
-From: Muneendra Kumar M
-Sent: Tuesday, February 21, 2017 6:58 PM
-To: 'dm-devel@redhat.com' <dm-devel@redhat.com>
-Subject: scsi timeout on multipath
-
-Hi ,
-On a multipath network if we see a scsi timeout  on a particular path at what instance we will mark the path as failed.
-
-Whether we will mark the path as failed when SCSI mid level failed to attempts error recovery by doing the below steps.
-
-*        the SCSI command that has timed out is aborted
-
-*        a SCSI device reset is attempted
-
-*        a SCSI bus reset is attempted. Note this may have an adverse effect on other devices sharing that SCSI bus.
-
-*        a SCSI host (bus adapter) reset is attempted. This is an attempt to re-initialize the adapter card associated with the SCSI device that has the timed out command.
-Any info here will help me a lot.
-
-Regards,
-Muneendra.
-
-
---_000_af3abc2148c64309a4773bc6f92016acBRMWPEXMB11corpbrocadec_
-Content-Type: text/html; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-
-<html xmlns:v=3D"urn:schemas-microsoft-com:vml" xmlns:o=3D"urn:schemas-micr=
-osoft-com:office:office" xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
-xmlns:m=3D"http://schemas.microsoft.com/office/2004/12/omml" xmlns=3D"http:=
-//www.w3.org/TR/REC-html40">
-<head>
-<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dus-ascii"=
+On Wed, Mar 1, 2017 at 5:38 PM, Milan Broz <gmazyland@gmail.com> wrote:
 >
-<meta name=3D"Generator" content=3D"Microsoft Word 15 (filtered medium)">
-<style><!--
-/* Font Definitions */
-@font-face
-	{font-family:Wingdings;
-	panose-1:5 0 0 0 0 0 0 0 0 0;}
-@font-face
-	{font-family:"Cambria Math";
-	panose-1:2 4 5 3 5 4 6 3 2 4;}
-@font-face
-	{font-family:Calibri;
-	panose-1:2 15 5 2 2 2 4 3 2 4;}
-/* Style Definitions */
-p.MsoNormal, li.MsoNormal, div.MsoNormal
-	{margin:0in;
-	margin-bottom:.0001pt;
-	font-size:11.0pt;
-	font-family:"Calibri",sans-serif;}
-a:link, span.MsoHyperlink
-	{mso-style-priority:99;
-	color:#0563C1;
-	text-decoration:underline;}
-a:visited, span.MsoHyperlinkFollowed
-	{mso-style-priority:99;
-	color:#954F72;
-	text-decoration:underline;}
-p
-	{mso-style-priority:99;
-	mso-margin-top-alt:auto;
-	margin-right:0in;
-	mso-margin-bottom-alt:auto;
-	margin-left:0in;
-	font-size:12.0pt;
-	font-family:"Times New Roman",serif;}
-span.EmailStyle18
-	{mso-style-type:personal;
-	font-family:"Calibri",sans-serif;
-	color:windowtext;}
-span.EmailStyle19
-	{mso-style-type:personal;
-	font-family:"Calibri",sans-serif;
-	color:#1F497D;}
-span.EmailStyle20
-	{mso-style-type:personal-reply;
-	font-family:"Calibri",sans-serif;
-	color:#1F497D;}
-.MsoChpDefault
-	{mso-style-type:export-only;
-	font-size:10.0pt;}
-@page WordSection1
-	{size:8.5in 11.0in;
-	margin:1.0in 1.0in 1.0in 1.0in;}
-div.WordSection1
-	{page:WordSection1;}
-/* List Definitions */
-@list l0
-	{mso-list-id:930167181;
-	mso-list-template-ids:292036308;}
-@list l0:level1
-	{mso-level-number-format:bullet;
-	mso-level-text:\F0B7;
-	mso-level-tab-stop:.5in;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	mso-ansi-font-size:10.0pt;
-	font-family:Symbol;}
-@list l0:level2
-	{mso-level-number-format:bullet;
-	mso-level-text:o;
-	mso-level-tab-stop:1.0in;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	mso-ansi-font-size:10.0pt;
-	font-family:"Courier New";
-	mso-bidi-font-family:"Times New Roman";}
-@list l0:level3
-	{mso-level-number-format:bullet;
-	mso-level-text:\F0A7;
-	mso-level-tab-stop:1.5in;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	mso-ansi-font-size:10.0pt;
-	font-family:Wingdings;}
-@list l0:level4
-	{mso-level-number-format:bullet;
-	mso-level-text:\F0A7;
-	mso-level-tab-stop:2.0in;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	mso-ansi-font-size:10.0pt;
-	font-family:Wingdings;}
-@list l0:level5
-	{mso-level-number-format:bullet;
-	mso-level-text:\F0A7;
-	mso-level-tab-stop:2.5in;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	mso-ansi-font-size:10.0pt;
-	font-family:Wingdings;}
-@list l0:level6
-	{mso-level-number-format:bullet;
-	mso-level-text:\F0A7;
-	mso-level-tab-stop:3.0in;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	mso-ansi-font-size:10.0pt;
-	font-family:Wingdings;}
-@list l0:level7
-	{mso-level-number-format:bullet;
-	mso-level-text:\F0A7;
-	mso-level-tab-stop:3.5in;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	mso-ansi-font-size:10.0pt;
-	font-family:Wingdings;}
-@list l0:level8
-	{mso-level-number-format:bullet;
-	mso-level-text:\F0A7;
-	mso-level-tab-stop:4.0in;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	mso-ansi-font-size:10.0pt;
-	font-family:Wingdings;}
-@list l0:level9
-	{mso-level-number-format:bullet;
-	mso-level-text:\F0A7;
-	mso-level-tab-stop:4.5in;
-	mso-level-number-position:left;
-	text-indent:-.25in;
-	mso-ansi-font-size:10.0pt;
-	font-family:Wingdings;}
-ol
-	{margin-bottom:0in;}
-ul
-	{margin-bottom:0in;}
---></style><!--[if gte mso 9]><xml>
-<o:shapedefaults v:ext=3D"edit" spidmax=3D"1026" />
-</xml><![endif]--><!--[if gte mso 9]><xml>
-<o:shapelayout v:ext=3D"edit">
-<o:idmap v:ext=3D"edit" data=3D"1" />
-</o:shapelayout></xml><![endif]-->
-</head>
-<body lang=3D"EN-US" link=3D"#0563C1" vlink=3D"#954F72">
-<div class=3D"WordSection1">
-<p class=3D"MsoNormal"><span style=3D"color:#1F497D">Any input here will he=
-lp me a lot.<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"color:#1F497D"><o:p>&nbsp;</o:p></spa=
-n></p>
-<p class=3D"MsoNormal"><span style=3D"color:#1F497D">Regards,<o:p></o:p></s=
-pan></p>
-<p class=3D"MsoNormal"><span style=3D"color:#1F497D">Muneendra.<o:p></o:p><=
-/span></p>
-<p class=3D"MsoNormal"><a name=3D"_MailEndCompose"><span style=3D"color:#1F=
-497D"><o:p>&nbsp;</o:p></span></a></p>
-<div>
-<div style=3D"border:none;border-top:solid #E1E1E1 1.0pt;padding:3.0pt 0in =
-0in 0in">
-<p class=3D"MsoNormal"><b>From:</b> Muneendra Kumar M <br>
-<b>Sent:</b> Tuesday, February 21, 2017 6:58 PM<br>
-<b>To:</b> 'dm-devel@redhat.com' &lt;dm-devel@redhat.com&gt;<br>
-<b>Subject:</b> scsi timeout on multipath<o:p></o:p></p>
-</div>
-</div>
-<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-<p class=3D"MsoNormal"><span style=3D"color:#1F497D">Hi ,<o:p></o:p></span>=
-</p>
-<p class=3D"MsoNormal"><span style=3D"color:#1F497D">On a multipath network=
- if we see a scsi timeout&nbsp; on a particular path at what instance we wi=
-ll mark the path as failed.<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"color:#1F497D"><o:p>&nbsp;</o:p></spa=
-n></p>
-<p class=3D"MsoNormal"><span style=3D"color:#1F497D">Whether we will mark t=
-he path as failed when SCSI mid level failed to attempts error recovery by =
-doing the below steps.<o:p></o:p></span></p>
-<p style=3D"margin-left:.5in;text-indent:-.25in;mso-list:l0 level1 lfo2;bac=
-kground:white">
-<![if !supportLists]><span style=3D"font-size:10.0pt;font-family:Symbol;col=
-or:#1F497D"><span style=3D"mso-list:Ignore">&middot;<span style=3D"font:7.0=
-pt &quot;Times New Roman&quot;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-</span></span></span><![endif]><span style=3D"font-size:11.0pt;font-family:=
-&quot;Calibri&quot;,sans-serif;color:#1F497D">the SCSI command that has tim=
-ed out is aborted&nbsp;<o:p></o:p></span></p>
-<p style=3D"margin-left:.5in;text-indent:-.25in;mso-list:l0 level1 lfo2;bac=
-kground:white">
-<![if !supportLists]><span style=3D"font-size:10.0pt;font-family:Symbol;col=
-or:#1F497D"><span style=3D"mso-list:Ignore">&middot;<span style=3D"font:7.0=
-pt &quot;Times New Roman&quot;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-</span></span></span><![endif]><span style=3D"font-size:11.0pt;font-family:=
-&quot;Calibri&quot;,sans-serif;color:#1F497D">a SCSI device reset is attemp=
-ted<o:p></o:p></span></p>
-<p style=3D"margin-left:.5in;text-indent:-.25in;mso-list:l0 level1 lfo2;bac=
-kground:white">
-<![if !supportLists]><span style=3D"font-size:10.0pt;font-family:Symbol;col=
-or:#1F497D"><span style=3D"mso-list:Ignore">&middot;<span style=3D"font:7.0=
-pt &quot;Times New Roman&quot;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-</span></span></span><![endif]><span style=3D"font-size:11.0pt;font-family:=
-&quot;Calibri&quot;,sans-serif;color:#1F497D">a SCSI bus reset is attempted=
-. Note this may have an adverse effect on other devices sharing that SCSI b=
-us.<o:p></o:p></span></p>
-<p style=3D"margin-left:.5in;text-indent:-.25in;mso-list:l0 level1 lfo2;bac=
-kground:white">
-<![if !supportLists]><span style=3D"font-size:10.0pt;font-family:Symbol;col=
-or:#1F497D"><span style=3D"mso-list:Ignore">&middot;<span style=3D"font:7.0=
-pt &quot;Times New Roman&quot;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-</span></span></span><![endif]><span style=3D"font-size:11.0pt;font-family:=
-&quot;Calibri&quot;,sans-serif;color:#1F497D">a SCSI host (bus adapter) res=
-et is attempted. This is an attempt to re-initialize the adapter card assoc=
-iated with the SCSI device that has the timed
- out command.<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"color:#1F497D">Any info here will hel=
-p me a lot.<o:p></o:p></span></p>
-<p class=3D"MsoNormal"><span style=3D"color:#1F497D"><o:p>&nbsp;</o:p></spa=
-n></p>
-<p class=3D"MsoNormal"><span style=3D"color:#1F497D">Regards,<o:p></o:p></s=
-pan></p>
-<p class=3D"MsoNormal"><span style=3D"color:#1F497D">Muneendra.<o:p></o:p><=
-/span></p>
-<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-</div>
-</body>
-</html>
-
---_000_af3abc2148c64309a4773bc6f92016acBRMWPEXMB11corpbrocadec_--
+> On 03/01/2017 02:04 PM, Milan Broz wrote:
+>> On 03/01/2017 01:42 PM, Gilad Ben-Yossef wrote:
+>> ...
+>>
+>>> I can certainly understand if you don't wont to take the patch until
+>>> we have results with
+>>> dm-crypt itself but the difference between 8 separate invocation of
+>>> the engine for 512
+>>> bytes of XTS and a single invocation for 4KB are pretty big.
+>>
+>> Yes, I know it. But the same can be achieved if we just implement
+>> 4k sector encryption in dmcrypt. It is incompatible with LUKS1
+>> (but next LUKS version will support it) but I think this is not
+>> a problem for now.
+>>
+>> If the underlying device supports atomic write of 4k sectors, then
+>> there should not be a problem.
+>>
+>> This is one of the speed-up I would like to compare with the IV approach,
+>> because everyone should benefit from 4k sectors in the end.
+>> And no crypto API changes are needed here.
+>>
+>> (I have an old patch for this, so I will try to revive it.)
+>
+> If anyone interested, simple experimental patch for larger sector size
+> (up to the page size) for dmcrypt is in this branch:
+>
+> http://git.kernel.org/cgit/linux/kernel/git/mbroz/linux.git/log/?h=dm-crypt-4k-sector
+>
+> It would be nice to check what performance gain could be provided
+> by this simple approach.
 
 
---===============1947555099070472508==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+I gave it a spin on a x86_64 with 8 CPUs with AES-NI using cryptd and
+on Arm  using CryptoCell hardware accelerator.
+
+There was no difference in performance between 512 and 4096 bytes
+cluster size on the x86_64 (800 MB loop file system)
+
+There was an improvement in latency of 3.2% between 512 and 4096 bytes
+cluster size on the Arm. I expect the performance benefits for this
+test for Binoy's patch to be the same.
+
+In both cases the very naive test was a simple dd with block size of
+4096 bytes or the raw block device.
+
+I do not know what effect having a bigger cluster size would have on
+have on other more complex file system operations.
+Is there any specific benchmark worth testing with?
 
 
---===============1947555099070472508==--
+Gilad
+
+
+-- 
+Gilad Ben-Yossef
+Chief Coffee Drinker
+
+"If you take a class in large-scale robotics, can you end up in a
+situation where the homework eats your dog?"
+ -- Jean-Baptiste Queru
