@@ -1,7 +1,7 @@
 From: NeilBrown <neilb@suse.com>
-Subject: [PATCH 1/5 v3] blk: improve order of bio handling in generic_make_request()
-Date: Fri, 10 Mar 2017 15:33:41 +1100
-Message-ID: <87a88thhsq.fsf@notabene.neil.brown.name>
+Subject: [PATCH 2/5] blk: remove bio_set arg from blk_queue_split()
+Date: Fri, 10 Mar 2017 15:34:38 +1100
+Message-ID: <877f3xhhr5.fsf@notabene.neil.brown.name>
 References: <87h93blz6g.fsf@notabene.neil.brown.name> <71562c2c-97f4-9a0a-32ec-30e0702ca575@profitbricks.com> <87lgsjj9w8.fsf@notabene.neil.brown.name> <a674456d-fb93-437e-c50e-195e7a035ba4@kernel.dk> <87r328j00i.fsf@notabene.neil.brown.name> <87d1dphhuy.fsf@notabene.neil.brown.name>
 Mime-Version: 1.0
 Content-Type: multipart/signed; boundary="=-=-=";
@@ -18,252 +18,259 @@ Content-Type: text/plain
 Content-Transfer-Encoding: quoted-printable
 
 
-To avoid recursion on the kernel stack when stacked block devices
-are in use, generic_make_request() will, when called recursively,
-queue new requests for later handling.  They will be handled when the
-make_request_fn for the current bio completes.
+blk_queue_split() is always called with the last arg being q->bio_split,
+where 'q' is the first arg.
 
-If any bios are submitted by a make_request_fn, these will ultimately
-be handled seqeuntially.  If the handling of one of those generates
-further requests, they will be added to the end of the queue.
+Also blk_queue_split() sometimes uses the passed-in 'bs' and sometimes uses
+q->bio_split.
 
-This strict first-in-first-out behaviour can lead to deadlocks in
-various ways, normally because a request might need to wait for a
-previous request to the same device to complete.  This can happen when
-they share a mempool, and can happen due to interdependencies
-particular to the device.  Both md and dm have examples where this happens.
+This is inconsistent and unnecessary.  Remove the last arg and always use
+q->bio_split inside blk_queue_split()
 
-These deadlocks can be erradicated by more selective ordering of bios.
-Specifically by handling them in depth-first order.  That is: when the
-handling of one bio generates one or more further bios, they are
-handled immediately after the parent, before any siblings of the
-parent.  That way, when generic_make_request() calls make_request_fn
-for some particular device, we can be certain that all previously
-submited requests for that device have been completely handled and are
-not waiting for anything in the queue of requests maintained in
-generic_make_request().
-
-An easy way to achieve this would be to use a last-in-first-out stack
-instead of a queue.  However this will change the order of consecutive
-bios submitted by a make_request_fn, which could have unexpected consequenc=
-es.
-Instead we take a slightly more complex approach.
-A fresh queue is created for each call to a make_request_fn.  After it comp=
-letes,
-any bios for a different device are placed on the front of the main queue, =
-followed
-by any bios for the same device, followed by all bios that were already on
-the queue before the make_request_fn was called.
-This provides the depth-first approach without reordering bios on the same =
-level.
-
-This, by itself, it not enough to remove all deadlocks.  It just makes
-it possible for drivers to take the extra step required themselves.
-
-To avoid deadlocks, drivers must never risk waiting for a request
-after submitting one to generic_make_request.  This includes never
-allocing from a mempool twice in the one call to a make_request_fn.
-
-A common pattern in drivers is to call bio_split() in a loop, handling
-the first part and then looping around to possibly split the next part.
-Instead, a driver that finds it needs to split a bio should queue
-(with generic_make_request) the second part, handle the first part,
-and then return.  The new code in generic_make_request will ensure the
-requests to underlying bios are processed first, then the second bio
-that was split off.  If it splits again, the same process happens.  In
-each case one bio will be completely handled before the next one is attempt=
-ed.
-
-With this is place, it should be possible to disable the
-punt_bios_to_recover() recovery thread for many block devices, and
-eventually it may be possible to remove it completely.
-
-Note that as some drivers look inside the bio_list, sometimes to punt
-some bios to rescuer threads, we need to make both the pendind list and the
-new list visible.  So current->bio_list is now an array of 2 lists,
-and relevant code examines both of them.
-
-Ref: http://www.spinics.net/lists/raid/msg54680.html
-Tested-by: Jinpu Wang <jinpu.wang@profitbricks.com>
-Inspired-by: Lars Ellenberg <lars.ellenberg@linbit.com>
 Signed-off-by: NeilBrown <neilb@suse.com>
 =2D--
- block/bio.c         |   11 ++++++++---
- block/blk-core.c    |   40 ++++++++++++++++++++++++++++++++--------
- drivers/md/dm.c     |   29 ++++++++++++++++-------------
- drivers/md/raid10.c |    3 ++-
- 4 files changed, 58 insertions(+), 25 deletions(-)
+ block/blk-core.c              |    2 +-
+ block/blk-merge.c             |    7 +++----
+ block/blk-mq.c                |    4 ++--
+ drivers/block/drbd/drbd_req.c |    2 +-
+ drivers/block/pktcdvd.c       |    2 +-
+ drivers/block/ps3vram.c       |    2 +-
+ drivers/block/rsxx/dev.c      |    2 +-
+ drivers/block/umem.c          |    2 +-
+ drivers/block/zram/zram_drv.c |    2 +-
+ drivers/lightnvm/rrpc.c       |    2 +-
+ drivers/md/md.c               |    2 +-
+ drivers/s390/block/dcssblk.c  |    2 +-
+ drivers/s390/block/xpram.c    |    2 +-
+ include/linux/blkdev.h        |    3 +--
+ 14 files changed, 17 insertions(+), 19 deletions(-)
 
-diff --git a/block/bio.c b/block/bio.c
-index 5eec5e08417f..84ae39f06f81 100644
-=2D-- a/block/bio.c
-+++ b/block/bio.c
-@@ -376,10 +376,13 @@ static void punt_bios_to_rescuer(struct bio_set *bs)
- 	bio_list_init(&punt);
- 	bio_list_init(&nopunt);
-=20
-=2D	while ((bio =3D bio_list_pop(current->bio_list)))
-+	while ((bio =3D bio_list_pop(&current->bio_list[0])))
- 		bio_list_add(bio->bi_pool =3D=3D bs ? &punt : &nopunt, bio);
-+	current->bio_list[0] =3D nopunt;
-=20
-=2D	*current->bio_list =3D nopunt;
-+	while ((bio =3D bio_list_pop(&current->bio_list[1])))
-+		bio_list_add(bio->bi_pool =3D=3D bs ? &punt : &nopunt, bio);
-+	current->bio_list[1] =3D nopunt;
-=20
- 	spin_lock(&bs->rescue_lock);
- 	bio_list_merge(&bs->rescue_list, &punt);
-@@ -466,7 +469,9 @@ struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iov=
-ecs, struct bio_set *bs)
- 		 * we retry with the original gfp_flags.
- 		 */
-=20
-=2D		if (current->bio_list && !bio_list_empty(current->bio_list))
-+		if (current->bio_list &&
-+		    (!bio_list_empty(&current->bio_list[0]) ||
-+		     !bio_list_empty(&current->bio_list[1])))
- 			gfp_mask &=3D ~__GFP_DIRECT_RECLAIM;
-=20
- 		p =3D mempool_alloc(bs->bio_pool, gfp_mask);
 diff --git a/block/blk-core.c b/block/blk-core.c
-index 1086dac8724c..bd2cb4ba674e 100644
+index bd2cb4ba674e..375006c94c15 100644
 =2D-- a/block/blk-core.c
 +++ b/block/blk-core.c
-@@ -1975,7 +1975,14 @@ generic_make_request_checks(struct bio *bio)
-  */
- blk_qc_t generic_make_request(struct bio *bio)
- {
-=2D	struct bio_list bio_list_on_stack;
-+	/*
-+	 * bio_list_on_stack[0] contains bios submitted by the current
-+	 * make_request_fn.
-+	 * bio_list_on_stack[1] contains bios that were submitted before
-+	 * the current make_request_fn, but that haven't been processed
-+	 * yet.
-+	 */
-+	struct bio_list bio_list_on_stack[2];
- 	blk_qc_t ret =3D BLK_QC_T_NONE;
-=20
- 	if (!generic_make_request_checks(bio))
-@@ -1992,7 +1999,7 @@ blk_qc_t generic_make_request(struct bio *bio)
- 	 * should be added at the tail
+@@ -1637,7 +1637,7 @@ static blk_qc_t blk_queue_bio(struct request_queue *q=
+, struct bio *bio)
  	 */
- 	if (current->bio_list) {
-=2D		bio_list_add(current->bio_list, bio);
-+		bio_list_add(&current->bio_list[0], bio);
- 		goto out;
- 	}
+ 	blk_queue_bounce(q, &bio);
 =20
-@@ -2011,23 +2018,40 @@ blk_qc_t generic_make_request(struct bio *bio)
- 	 * bio_list, and call into ->make_request() again.
- 	 */
- 	BUG_ON(bio->bi_next);
-=2D	bio_list_init(&bio_list_on_stack);
-=2D	current->bio_list =3D &bio_list_on_stack;
-+	bio_list_init(&bio_list_on_stack[0]);
-+	bio_list_init(&bio_list_on_stack[1]);
-+	current->bio_list =3D bio_list_on_stack;
- 	do {
- 		struct request_queue *q =3D bdev_get_queue(bio->bi_bdev);
+=2D	blk_queue_split(q, &bio, q->bio_split);
++	blk_queue_split(q, &bio);
 =20
- 		if (likely(blk_queue_enter(q, false) =3D=3D 0)) {
-+			struct bio_list lower, same;
-+
-+			/* Create a fresh bio_list for all subordinate requests */
-+			bio_list_on_stack[1] =3D bio_list_on_stack[0];
-+			bio_list_init(&bio_list_on_stack[0]);
- 			ret =3D q->make_request_fn(q, bio);
-=20
- 			blk_queue_exit(q);
-=20
-=2D			bio =3D bio_list_pop(current->bio_list);
-+			/* sort new bios into those for a lower level
-+			 * and those for the same level
-+			 */
-+			bio_list_init(&lower);
-+			bio_list_init(&same);
-+			while ((bio =3D bio_list_pop(&bio_list_on_stack[0])) !=3D NULL)
-+				if (q =3D=3D bdev_get_queue(bio->bi_bdev))
-+					bio_list_add(&same, bio);
-+				else
-+					bio_list_add(&lower, bio);
-+			/* now assemble so we handle the lowest level first */
-+			bio_list_merge(&bio_list_on_stack[0], &lower);
-+			bio_list_merge(&bio_list_on_stack[0], &same);
-+			bio_list_merge(&bio_list_on_stack[0], &bio_list_on_stack[1]);
- 		} else {
-=2D			struct bio *bio_next =3D bio_list_pop(current->bio_list);
-=2D
- 			bio_io_error(bio);
-=2D			bio =3D bio_next;
- 		}
-+		bio =3D bio_list_pop(&bio_list_on_stack[0]);
- 	} while (bio);
- 	current->bio_list =3D NULL; /* deactivate */
-=20
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index f4ffd1eb8f44..dfb75979e455 100644
-=2D-- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -989,26 +989,29 @@ static void flush_current_bio_list(struct blk_plug_cb=
- *cb, bool from_schedule)
- 	struct dm_offload *o =3D container_of(cb, struct dm_offload, cb);
- 	struct bio_list list;
- 	struct bio *bio;
-+	int i;
-=20
- 	INIT_LIST_HEAD(&o->cb.list);
-=20
- 	if (unlikely(!current->bio_list))
- 		return;
-=20
-=2D	list =3D *current->bio_list;
-=2D	bio_list_init(current->bio_list);
-=2D
-=2D	while ((bio =3D bio_list_pop(&list))) {
-=2D		struct bio_set *bs =3D bio->bi_pool;
-=2D		if (unlikely(!bs) || bs =3D=3D fs_bio_set) {
-=2D			bio_list_add(current->bio_list, bio);
-=2D			continue;
-+	for (i =3D 0; i < 2; i++) {
-+		list =3D current->bio_list[i];
-+		bio_list_init(&current->bio_list[i]);
-+
-+		while ((bio =3D bio_list_pop(&list))) {
-+			struct bio_set *bs =3D bio->bi_pool;
-+			if (unlikely(!bs) || bs =3D=3D fs_bio_set) {
-+				bio_list_add(&current->bio_list[i], bio);
-+				continue;
-+			}
-+
-+			spin_lock(&bs->rescue_lock);
-+			bio_list_add(&bs->rescue_list, bio);
-+			queue_work(bs->rescue_workqueue, &bs->rescue_work);
-+			spin_unlock(&bs->rescue_lock);
- 		}
-=2D
-=2D		spin_lock(&bs->rescue_lock);
-=2D		bio_list_add(&bs->rescue_list, bio);
-=2D		queue_work(bs->rescue_workqueue, &bs->rescue_work);
-=2D		spin_unlock(&bs->rescue_lock);
- 	}
+ 	if (bio_integrity_enabled(bio) && bio_integrity_prep(bio)) {
+ 		bio->bi_error =3D -EIO;
+diff --git a/block/blk-merge.c b/block/blk-merge.c
+index 2afa262425d1..ce8838aff7f7 100644
+=2D-- a/block/blk-merge.c
++++ b/block/blk-merge.c
+@@ -188,8 +188,7 @@ static struct bio *blk_bio_segment_split(struct request=
+_queue *q,
+ 	return do_split ? new : NULL;
  }
 =20
-diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
-index 063c43d83b72..0536658c9d40 100644
-=2D-- a/drivers/md/raid10.c
-+++ b/drivers/md/raid10.c
-@@ -974,7 +974,8 @@ static void wait_barrier(struct r10conf *conf)
- 				    !conf->barrier ||
- 				    (atomic_read(&conf->nr_pending) &&
- 				     current->bio_list &&
-=2D				     !bio_list_empty(current->bio_list)),
-+				     (!bio_list_empty(&current->bio_list[0]) ||
-+				      !bio_list_empty(&current->bio_list[1]))),
- 				    conf->resync_lock);
- 		conf->nr_waiting--;
- 		if (!conf->nr_waiting)
+=2Dvoid blk_queue_split(struct request_queue *q, struct bio **bio,
+=2D		     struct bio_set *bs)
++void blk_queue_split(struct request_queue *q, struct bio **bio)
+ {
+ 	struct bio *split, *res;
+ 	unsigned nsegs;
+@@ -197,14 +196,14 @@ void blk_queue_split(struct request_queue *q, struct =
+bio **bio,
+ 	switch (bio_op(*bio)) {
+ 	case REQ_OP_DISCARD:
+ 	case REQ_OP_SECURE_ERASE:
+=2D		split =3D blk_bio_discard_split(q, *bio, bs, &nsegs);
++		split =3D blk_bio_discard_split(q, *bio, q->bio_split, &nsegs);
+ 		break;
+ 	case REQ_OP_WRITE_ZEROES:
+ 		split =3D NULL;
+ 		nsegs =3D (*bio)->bi_phys_segments;
+ 		break;
+ 	case REQ_OP_WRITE_SAME:
+=2D		split =3D blk_bio_write_same_split(q, *bio, bs, &nsegs);
++		split =3D blk_bio_write_same_split(q, *bio, q->bio_split, &nsegs);
+ 		break;
+ 	default:
+ 		split =3D blk_bio_segment_split(q, *bio, q->bio_split, &nsegs);
+diff --git a/block/blk-mq.c b/block/blk-mq.c
+index b2fd175e84d7..ef7b289e873c 100644
+=2D-- a/block/blk-mq.c
++++ b/block/blk-mq.c
+@@ -1502,7 +1502,7 @@ static blk_qc_t blk_mq_make_request(struct request_qu=
+eue *q, struct bio *bio)
+ 		return BLK_QC_T_NONE;
+ 	}
+=20
+=2D	blk_queue_split(q, &bio, q->bio_split);
++	blk_queue_split(q, &bio);
+=20
+ 	if (!is_flush_fua && !blk_queue_nomerges(q) &&
+ 	    blk_attempt_plug_merge(q, bio, &request_count, &same_queue_rq))
+@@ -1624,7 +1624,7 @@ static blk_qc_t blk_sq_make_request(struct request_qu=
+eue *q, struct bio *bio)
+ 		return BLK_QC_T_NONE;
+ 	}
+=20
+=2D	blk_queue_split(q, &bio, q->bio_split);
++	blk_queue_split(q, &bio);
+=20
+ 	if (!is_flush_fua && !blk_queue_nomerges(q)) {
+ 		if (blk_attempt_plug_merge(q, bio, &request_count, NULL))
+diff --git a/drivers/block/drbd/drbd_req.c b/drivers/block/drbd/drbd_req.c
+index 652114ae1a8a..f6ed6f7f5ab2 100644
+=2D-- a/drivers/block/drbd/drbd_req.c
++++ b/drivers/block/drbd/drbd_req.c
+@@ -1554,7 +1554,7 @@ blk_qc_t drbd_make_request(struct request_queue *q, s=
+truct bio *bio)
+ 	struct drbd_device *device =3D (struct drbd_device *) q->queuedata;
+ 	unsigned long start_jif;
+=20
+=2D	blk_queue_split(q, &bio, q->bio_split);
++	blk_queue_split(q, &bio);
+=20
+ 	start_jif =3D jiffies;
+=20
+diff --git a/drivers/block/pktcdvd.c b/drivers/block/pktcdvd.c
+index 66d846ba85a9..98394d034c29 100644
+=2D-- a/drivers/block/pktcdvd.c
++++ b/drivers/block/pktcdvd.c
+@@ -2414,7 +2414,7 @@ static blk_qc_t pkt_make_request(struct request_queue=
+ *q, struct bio *bio)
+=20
+ 	blk_queue_bounce(q, &bio);
+=20
+=2D	blk_queue_split(q, &bio, q->bio_split);
++	blk_queue_split(q, &bio);
+=20
+ 	pd =3D q->queuedata;
+ 	if (!pd) {
+diff --git a/drivers/block/ps3vram.c b/drivers/block/ps3vram.c
+index 456b4fe21559..48072c0c1010 100644
+=2D-- a/drivers/block/ps3vram.c
++++ b/drivers/block/ps3vram.c
+@@ -606,7 +606,7 @@ static blk_qc_t ps3vram_make_request(struct request_que=
+ue *q, struct bio *bio)
+=20
+ 	dev_dbg(&dev->core, "%s\n", __func__);
+=20
+=2D	blk_queue_split(q, &bio, q->bio_split);
++	blk_queue_split(q, &bio);
+=20
+ 	spin_lock_irq(&priv->lock);
+ 	busy =3D !bio_list_empty(&priv->list);
+diff --git a/drivers/block/rsxx/dev.c b/drivers/block/rsxx/dev.c
+index f81d70b39d10..8c8024f616ae 100644
+=2D-- a/drivers/block/rsxx/dev.c
++++ b/drivers/block/rsxx/dev.c
+@@ -151,7 +151,7 @@ static blk_qc_t rsxx_make_request(struct request_queue =
+*q, struct bio *bio)
+ 	struct rsxx_bio_meta *bio_meta;
+ 	int st =3D -EINVAL;
+=20
+=2D	blk_queue_split(q, &bio, q->bio_split);
++	blk_queue_split(q, &bio);
+=20
+ 	might_sleep();
+=20
+diff --git a/drivers/block/umem.c b/drivers/block/umem.c
+index c141cc3be22b..c8d8a2f16f8e 100644
+=2D-- a/drivers/block/umem.c
++++ b/drivers/block/umem.c
+@@ -529,7 +529,7 @@ static blk_qc_t mm_make_request(struct request_queue *q=
+, struct bio *bio)
+ 		 (unsigned long long)bio->bi_iter.bi_sector,
+ 		 bio->bi_iter.bi_size);
+=20
+=2D	blk_queue_split(q, &bio, q->bio_split);
++	blk_queue_split(q, &bio);
+=20
+ 	spin_lock_irq(&card->lock);
+ 	*card->biotail =3D bio;
+diff --git a/drivers/block/zram/zram_drv.c b/drivers/block/zram/zram_drv.c
+index e27d89a36c34..973dac2a9a99 100644
+=2D-- a/drivers/block/zram/zram_drv.c
++++ b/drivers/block/zram/zram_drv.c
+@@ -880,7 +880,7 @@ static blk_qc_t zram_make_request(struct request_queue =
+*queue, struct bio *bio)
+ {
+ 	struct zram *zram =3D queue->queuedata;
+=20
+=2D	blk_queue_split(queue, &bio, queue->bio_split);
++	blk_queue_split(queue, &bio);
+=20
+ 	if (!valid_io_request(zram, bio->bi_iter.bi_sector,
+ 					bio->bi_iter.bi_size)) {
+diff --git a/drivers/lightnvm/rrpc.c b/drivers/lightnvm/rrpc.c
+index e00b1d7b976f..701fa2fafbb2 100644
+=2D-- a/drivers/lightnvm/rrpc.c
++++ b/drivers/lightnvm/rrpc.c
+@@ -999,7 +999,7 @@ static blk_qc_t rrpc_make_rq(struct request_queue *q, s=
+truct bio *bio)
+ 	struct nvm_rq *rqd;
+ 	int err;
+=20
+=2D	blk_queue_split(q, &bio, q->bio_split);
++	blk_queue_split(q, &bio);
+=20
+ 	if (bio_op(bio) =3D=3D REQ_OP_DISCARD) {
+ 		rrpc_discard(rrpc, bio);
+diff --git a/drivers/md/md.c b/drivers/md/md.c
+index 548d1b8014f8..d7d2bb51a58d 100644
+=2D-- a/drivers/md/md.c
++++ b/drivers/md/md.c
+@@ -253,7 +253,7 @@ static blk_qc_t md_make_request(struct request_queue *q=
+, struct bio *bio)
+ 	unsigned int sectors;
+ 	int cpu;
+=20
+=2D	blk_queue_split(q, &bio, q->bio_split);
++	blk_queue_split(q, &bio);
+=20
+ 	if (mddev =3D=3D NULL || mddev->pers =3D=3D NULL) {
+ 		bio_io_error(bio);
+diff --git a/drivers/s390/block/dcssblk.c b/drivers/s390/block/dcssblk.c
+index 415d10a67b7a..10ece6f3c7eb 100644
+=2D-- a/drivers/s390/block/dcssblk.c
++++ b/drivers/s390/block/dcssblk.c
+@@ -829,7 +829,7 @@ dcssblk_make_request(struct request_queue *q, struct bi=
+o *bio)
+ 	unsigned long source_addr;
+ 	unsigned long bytes_done;
+=20
+=2D	blk_queue_split(q, &bio, q->bio_split);
++	blk_queue_split(q, &bio);
+=20
+ 	bytes_done =3D 0;
+ 	dev_info =3D bio->bi_bdev->bd_disk->private_data;
+diff --git a/drivers/s390/block/xpram.c b/drivers/s390/block/xpram.c
+index b9d7e755c8a3..a48f0d40c1d2 100644
+=2D-- a/drivers/s390/block/xpram.c
++++ b/drivers/s390/block/xpram.c
+@@ -190,7 +190,7 @@ static blk_qc_t xpram_make_request(struct request_queue=
+ *q, struct bio *bio)
+ 	unsigned long page_addr;
+ 	unsigned long bytes;
+=20
+=2D	blk_queue_split(q, &bio, q->bio_split);
++	blk_queue_split(q, &bio);
+=20
+ 	if ((bio->bi_iter.bi_sector & 7) !=3D 0 ||
+ 	    (bio->bi_iter.bi_size & 4095) !=3D 0)
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 796016e63c1d..63008a246403 100644
+=2D-- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -934,8 +934,7 @@ extern int blk_insert_cloned_request(struct request_que=
+ue *q,
+ 				     struct request *rq);
+ extern int blk_rq_append_bio(struct request *rq, struct bio *bio);
+ extern void blk_delay_queue(struct request_queue *, unsigned long);
+=2Dextern void blk_queue_split(struct request_queue *, struct bio **,
+=2D			    struct bio_set *);
++extern void blk_queue_split(struct request_queue *, struct bio **);
+ extern void blk_recount_segments(struct request_queue *, struct bio *);
+ extern int scsi_verify_blk_ioctl(struct block_device *, unsigned int);
+ extern int scsi_cmd_blk_ioctl(struct block_device *, fmode_t,
 
 
 
@@ -272,18 +279,18 @@ Content-Type: application/pgp-signature; name="signature.asc"
 
 -----BEGIN PGP SIGNATURE-----
 
-iQIzBAEBCAAdFiEEG8Yp69OQ2HB7X0l6Oeye3VZigbkFAljCLKUACgkQOeye3VZi
-gbm5aRAAo58rXLq/OsHR3RgP0enR1qVYL/ULHIPPp2xlP4XIohFKB5Z/zBLxjIqL
-sDZzKVYldVOwkeFgZ7GjEyOj53l2Rhhg6Tld3CVIXYj6Km3PLN8fN+2zVLF8kAFn
-enYe4INsAEHlFUDEtPkvn6XfBR7+aZU4xsp9pZPnXCyzVmrJjV8LTLW61y2rtq2R
-/VvPIsP0s+HB4/qLYRMHPFmX3M1tLbe2bHr771ThBkIwdcLunWcD/OYztIpU1IEf
-TujOZnVZkCRVcEb6SFBZlGhmY0j8r+GDQeINGacufyL/Yj7u1jkKNF6NBxUWJg57
-6jjXavpty86ZnhhkTPyIwYMII+m4kTbf4/vJQ/F4OvGPib8yn0u+wmPEBlGENFin
-6+7eBYdp+g3o7c1vD+/13yKi2j+nynSOGcBXA84REB4qqG1I6QsRSimS89/LsEqw
-ygrXAe/jTPP1j+w1oV9mRE+ECZ3CWBPLYB/EfpYJiEFxSL8HgzqWvvYyQxWbRuXy
-EvhN1C9WVY3YyZz62ocMYWR9MqjhUEJygvBVK+N6CXo/39hYfILCsyaK13c/sPgW
-JpzLHj/a3nlWdpRBnsOJWB526iA2ujfY3BWw7AJnjNU9T5e1BreU8YBiHeyNfJXE
-NVUY1eaeT4A/qWoBp7yTrp8lb6lhNUz6OMT707yiSwTH83ro+7E=
-=Lbln
+iQIzBAEBCAAdFiEEG8Yp69OQ2HB7X0l6Oeye3VZigbkFAljCLN4ACgkQOeye3VZi
+gbmUUw//Zk5pR5F2HuKxvC0vGF1Z8HL30tAnIfrAZe7Zlx1NknAIIUGz+KXGLVsH
+CjU464jJumuSgWcfzzRbuNVMKhF9sj7pncyd3cOUK5pxGEB8jkHgxdtpRQkl0d1r
+9jM2D2Tzaxt5ICIiKs6o4edG7YvUiDrpgc803JSVrnCLPzshEoktAJ/SUlsn6EIC
+rUPFXM1NUNIwoU6W42t+1ZTH4+LcAhXn2efl9hPDFJRindAvbiFhGuW8HP5HDbb9
+LMGKn6A4l7Wf90/iRf09xSSbw7Hpez05msGniHqzsPBu9U8xx7K1i3YbN66TBcx9
+u4cUxf9J0OOO7IvgYjNsfuD5czC038rV00OHerIqx2dNhumYin+CqxS0crF9p+AN
+InrVAPdsvcmZjLdPDpZGdNnPIZ90JzqC4bfbC1L5sxR9oMrxD0Dhs8lfDxwvAj4v
+buhl1IGOMpjUwKARZWqdmcLC14pQGvoSrTlieSsguPaqpsCy1hh446oXnYhHVTGC
+gpuGQBkkaYW+Ox/VaQ0O/BzJizbslGpCd8pAWXQ7Auiaj+VvRFoLLAV+nOjeiMHd
+m6lHB2Kahzxtw7cCGEvXvF+zeDlC+BwA7imsfo7rfNmaBZcSjvcUlIbMsnwrDsVU
+Dp4qHDPxrAIGoc1qdxaiFaPjGRgnTufSEwbc2+boJl1fsBSYXJI=
+=NrWB
 -----END PGP SIGNATURE-----
 --=-=-=--
