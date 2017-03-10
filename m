@@ -1,73 +1,45 @@
-From: NeilBrown <neilb@suse.com>
-Subject: [PATCH 4/5] blk: use non-rescuing bioset for
-	q->bio_split.
-Date: Fri, 10 Mar 2017 17:00:47 +1100
-Message-ID: <148912564749.4002.12977222491155249514.stgit@noble>
-References: <148912539296.4002.219258660543808741.stgit@noble>
+From: Lars Ellenberg <lars.ellenberg@linbit.com>
+Subject: Re: [PATCH v2] blk: improve order of bio handling in generic_make_request()
+Date: Fri, 10 Mar 2017 13:34:06 +0100
+Message-ID: <CANr6vz8EbRWXq7igGCzRy9JC1Nt=MMma0h8M6nxHQtwiMDa5aQ@mail.gmail.com>
+References: <87h93blz6g.fsf@notabene.neil.brown.name> <71562c2c-97f4-9a0a-32ec-30e0702ca575@profitbricks.com>
+ <87lgsjj9w8.fsf@notabene.neil.brown.name> <a674456d-fb93-437e-c50e-195e7a035ba4@kernel.dk>
+ <87r328j00i.fsf@notabene.neil.brown.name> <87d1dphhuy.fsf@notabene.neil.brown.name>
+ <58be6551-4aa7-72ee-1616-a1545606d029@kernel.dk> <87varhg14d.fsf@notabene.neil.brown.name>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <148912539296.4002.219258660543808741.stgit@noble>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Jens Axboe <axboe@kernel.dk>
-Cc: linux-raid@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>, LKML <linux-kernel@vger.kernel.org>, linux-block@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Pavel Machek <pavel@ucw.cz>, Jack Wang <jinpu.wang@profitbricks.com>, Lars Ellenberg <lars.ellenberg@linbit.com>, Kent Overstreet <kent.overstreet@gmail.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <87varhg14d.fsf@notabene.neil.brown.name>
+Sender: linux-block-owner@vger.kernel.org
+To: NeilBrown <neilb@suse.com>
+Cc: Jens Axboe <axboe@kernel.dk>, Jack Wang <jinpu.wang@profitbricks.com>, LKML <linux-kernel@vger.kernel.org>, Kent Overstreet <kent.overstreet@gmail.com>, Pavel Machek <pavel@ucw.cz>, Mike Snitzer <snitzer@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, linux-raid@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-A rescuing bioset is only useful if there might be bios from
-that same bioset on the bio_list_on_stack queue at a time
-when bio_alloc_bioset() is called.  This never applies to
-q->bio_split.
+> --- a/block/blk-core.c
+> +++ b/block/blk-core.c
+> @@ -1975,7 +1975,14 @@ generic_make_request_checks(struct bio *bio)
+>   */
+>  blk_qc_t generic_make_request(struct bio *bio)
+>  {
+> -       struct bio_list bio_list_on_stack;
+> +       /*
+> +        * bio_list_on_stack[0] contains bios submitted by the current
+> +        * make_request_fn.
+> +        * bio_list_on_stack[1] contains bios that were submitted before
+> +        * the current make_request_fn, but that haven't been processed
+> +        * yet.
+> +        */
+> +       struct bio_list bio_list_on_stack[2];
+>         blk_qc_t ret = BLK_QC_T_NONE;
 
-Allocations from q->bio_split are only ever made from
-blk_queue_split() which is only ever called early in each of
-various make_request_fn()s.  The original bio (call this A)
-is then passed to generic_make_request() and is placed on
-the bio_list_on_stack queue, and the bio that was allocated
-from q->bio_split (B) is processed.
+May I suggest that, if you intend to assign something that is not a
+plain &(struct bio_list), but a &(struct bio_list[2]),
+you change the task member so it is renamed (current->bio_list vs
+current->bio_lists, plural, is what I did last year).
+Or you will break external modules, silently, and horribly (or,
+rather, they won't notice, but break the kernel).
+Examples of such modules would be DRBD, ZFS, quite possibly others.
 
-The processing of this may cause other bios to be passed to
-generic_make_request() or may even cause the bio B itself to
-be passed, possible after some prefix has been split off
-(using some other bioset).
+Thanks,
 
-generic_make_request() now guarantees that all of these bios
-(B and dependants) will be fully processed before the tail
-of the original bio A gets handled.  None of these early bios
-can possible trigger an allocation from the original
-q->bio_split as they are either too small to require
-splitting or (more likely) are destined for a different queue.
-
-The next time that the original q->bio_split might be used
-by this thread is when A is processed again, as it might
-still be too big to handle directly.  By this time there
-cannot be any other bios allocated from q->bio_split in the
-generic_make_request() queue.  So no rescuing will ever be
-needed.
-
-Signed-off-by: NeilBrown <neilb@suse.com>
----
- block/blk-core.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/block/blk-core.c b/block/blk-core.c
-index 430c82f646eb..fae7966e1f98 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -712,7 +712,7 @@ struct request_queue *blk_alloc_queue_node(gfp_t gfp_mask, int node_id)
- 	if (q->id < 0)
- 		goto fail_q;
- 
--	q->bio_split = bioset_create_rescued(BIO_POOL_SIZE, 0);
-+	q->bio_split = bioset_create(BIO_POOL_SIZE, 0);
- 	if (!q->bio_split)
- 		goto fail_id;
- 
+    Lars
