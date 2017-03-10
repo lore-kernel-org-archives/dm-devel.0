@@ -1,78 +1,94 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: [RFC] dm-thin: Heuristic early chunk copy before COW
-Date: Thu, 9 Mar 2017 11:51:43 +0000
-Message-ID: <20170309115142.GA17308@nim>
-References: <alpine.LRH.2.11.1703081005001.19383@mail.ewheeler.net>
+From: NeilBrown <neilb@suse.com>
+Subject: Re: [PATCH v2] blk: improve order of bio handling in generic_make_request()
+Date: Fri, 10 Mar 2017 15:32:21 +1100
+Message-ID: <87d1dphhuy.fsf@notabene.neil.brown.name>
+References: <87h93blz6g.fsf@notabene.neil.brown.name> <71562c2c-97f4-9a0a-32ec-30e0702ca575@profitbricks.com> <87lgsjj9w8.fsf@notabene.neil.brown.name> <a674456d-fb93-437e-c50e-195e7a035ba4@kernel.dk> <87r328j00i.fsf@notabene.neil.brown.name>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.11.1703081005001.19383@mail.ewheeler.net>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Eric Wheeler <dm-devel@lists.ewheeler.net>
-Cc: dm-devel@redhat.com
+Content-Type: multipart/signed; boundary="=-=-=";
+        micalg=pgp-sha256; protocol="application/pgp-signature"
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <87r328j00i.fsf@notabene.neil.brown.name>
+Sender: linux-block-owner@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>, Jack Wang <jinpu.wang@profitbricks.com>
+Cc: LKML <linux-kernel@vger.kernel.org>, Lars Ellenberg <lars.ellenberg@linbit.com>, Kent Overstreet <kent.overstreet@gmail.com>, Pavel Machek <pavel@ucw.cz>, Mike Snitzer <snitzer@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, linux-raid@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hi Eric,
-
-On Wed, Mar 08, 2017 at 10:17:51AM -0800, Eric Wheeler wrote:
-> Hello all,
-> 
-> For dm-thin volumes that are snapshotted often, there is a performance 
-> penalty for writes because of COW overhead since the modified chunk needs 
-> to be copied into a freshly allocated chunk.
-> 
-> What if we were to implement some sort of LRU for COW operations on 
-> chunks? We could then queue chunks that are commonly COWed within the 
-> inter-snapshot interval to be background copied immediately after the next 
-> snapshot. This would hide the latency and increase effective throughput 
-> when the thin device is written by its user since only the meta data would 
-> need an update because the chunk has already been copied.
-> 
-> I can imagine a simple algorithm where the COW increments the chunk LRU by 
-> 2, and decrements the LRU by 1 for all stored LRUs when the volume is 
-> snapshotted. After the snapshot, any LRU>0 would be queued for early copy.
-> 
-> The LRU would be in memory only, probably stored in a red/black tree. 
-> Pre-copied chunks would not update on-disk meta data unless a write occurs 
-> to that chunk. The allocator would need to be updated to ignore chunks 
-> that are in the LRU list which have been pre-copied (perhaps except in the 
-> case of pool free space exhaustion).
-> 
-> Does this sound viable?
-
-Yes, I can see that it would benefit some people, and presumably we'd
-only turn it on for those people.  Random thoughts:
-
-- I'm doing a lot of background work in the latest version of dm-cache
-  in idle periods and it certainly pays off.
-
-- There can be a *lot* of chunks, so holding a counter for all chunks in
-  memory is not on.  (See the hassle I had squeezing stuff into memory
-  of dm-cache).
-
-- Commonly cloned blocks can be gleaned from the metadata.  eg, by
-  walking the metadata for two snapshots and taking the common ones.
-  It might be possible to come up with a 'commonly used set' once, and
-  then keep using it for all future snaps.
-
-- Doing speculative work like this makes it harder to predict
-  performance.  At the moment any expense (ie. copy) is incurred
-  immediately as the triggering write comes in.
-
-- Could this be done from userland?  Metadata snapshots let userland see
-  the mappings, alternatively dm-era let's userland track where io has
-  gone.  A simple read then write of a block would trigger the sharing
-  to be broken.
+--=-=-=
+Content-Type: text/plain
 
 
-- Joe
+I started looking further at the improvements we can make once
+generic_make_request is fixed, and realised that I had missed an
+important detail in this patch.
+Several places test current->bio_list, and two actually edit the list.
+With this change, that cannot see the whole lists, so it could cause a
+regression.
+
+So I've revised the patch to make sure that the entire list of queued
+bios remains visible, and change the relevant code to look at both
+the new list and the old list.
+
+Following that there are some patches which make the rescuer thread
+optional, and then starts removing it from some easy-to-fix places.
+
+The series summary is below.
+
+NeilBrown
+
+
+NeilBrown (5):
+      blk: improve order of bio handling in generic_make_request()
+      blk: remove bio_set arg from blk_queue_split()
+      blk: make the bioset rescue_workqueue optional.
+      blk: use non-rescuing bioset for q->bio_split.
+      block_dev: make blkdev_dio_pool a non-rescuing bioset
+
+
+ block/bio.c                         |   39 +++++++++++++++++++++++++++------
+ block/blk-core.c                    |   42 ++++++++++++++++++++++++++++-------
+ block/blk-merge.c                   |    7 +++---
+ block/blk-mq.c                      |    4 ++-
+ drivers/block/drbd/drbd_main.c      |    2 +-
+ drivers/block/drbd/drbd_req.c       |    2 +-
+ drivers/block/pktcdvd.c             |    2 +-
+ drivers/block/ps3vram.c             |    2 +-
+ drivers/block/rsxx/dev.c            |    2 +-
+ drivers/block/umem.c                |    2 +-
+ drivers/block/zram/zram_drv.c       |    2 +-
+ drivers/lightnvm/rrpc.c             |    2 +-
+ drivers/md/bcache/super.c           |    4 ++-
+ drivers/md/dm-crypt.c               |    2 +-
+ drivers/md/dm-io.c                  |    2 +-
+ drivers/md/dm.c                     |   32 +++++++++++++++------------
+ drivers/md/md.c                     |    4 ++-
+ drivers/md/raid10.c                 |    3 ++-
+ drivers/md/raid5-cache.c            |    2 +-
+ drivers/s390/block/dcssblk.c        |    2 +-
+ drivers/s390/block/xpram.c          |    2 +-
+ drivers/target/target_core_iblock.c |    2 +-
+ fs/btrfs/extent_io.c                |    4 ++-
+ fs/xfs/xfs_super.c                  |    2 +-
+ include/linux/bio.h                 |    2 ++
+ include/linux/blkdev.h              |    3 +--
+ 26 files changed, 114 insertions(+), 60 deletions(-)
+
+--=-=-=
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCAAdFiEEG8Yp69OQ2HB7X0l6Oeye3VZigbkFAljCLFUACgkQOeye3VZi
+gbnoWA/8DKkzvIQ3LnMsWiX4lFZU4391O3AoQadW9ZNtbJwoh3+RRUWur75KTXUa
+xSlhbhMrLlbsx+BBq9tI7lKQKpHrM3WKCTlWqaEZF7ApgZiZLRstclXjb2+Obz75
+DVRSk8ypsfi6RGcFips98/Ol3TrshqBPWnQhuYSZJEAedHJx9/gCVh0d+fbijOLd
+z7KYXRZVig9jwubcn6eGu82BSFT3BscptaSnAfvinS29wuzmRXyyNcFsL69B8THZ
+BF3u6A9VHUXtiZNJAIE5xxG7xcEX/yzDsVy5d5KUwAff4Qc9P7szZclT1iCTGz/Q
+Z00bWb1XRByMmGmE9aVX+9GZy0iHmZuougz0Pv8pKIAI1l6ciZPboG9nibQM1911
+XYzdwbv88vdMcZ+iKPyuvASqA58hRB8eZx7S1xkCzBF1rIOe3d4WCxISZmt/KzFs
++ktPbyawVaeMO4Dl64bbdDhGtxg4CohdRGrUGUoGXRUSEuQKcEVnQXA9PxaRad2f
+PijZTF7n9UJH3m/DM32R1+jCYuFw0kkyV5iOslwJFp5xJ2s1wJbJoTJg65CCgTyx
+Xid1VKxhSvjXZZjqC05gJVaXwbL5rdnpFDlkbbK7mlY7yYCegQaXwuVZ+Zd6sM4l
++f8wd+NdwI9YT01WCo+Y+o0sVzrFagxsHqGjPT9ezNLJ/Wtz59Q=
+=bzg3
+-----END PGP SIGNATURE-----
+--=-=-=--
