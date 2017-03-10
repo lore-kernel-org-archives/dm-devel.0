@@ -1,105 +1,60 @@
-From: Ondrej Mosnacek <omosnace@redhat.com>
-Subject: dm-crypt IV generation (summary)
-Date: Fri, 10 Mar 2017 14:44:26 +0100
-Message-ID: <CAFqZXNs0=6+PvpGq3weRwCJkUOfSn06i_fD6ZuvXo_0rms9zeA@mail.gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v2] blk: improve order of bio handling in
+ generic_make_request()
+Date: Fri, 10 Mar 2017 09:38:22 -0500
+Message-ID: <20170310143822.GA23879@redhat.com>
+References: <87h93blz6g.fsf@notabene.neil.brown.name>
+ <71562c2c-97f4-9a0a-32ec-30e0702ca575@profitbricks.com>
+ <87lgsjj9w8.fsf@notabene.neil.brown.name>
+ <a674456d-fb93-437e-c50e-195e7a035ba4@kernel.dk>
+ <87r328j00i.fsf@notabene.neil.brown.name>
+ <87d1dphhuy.fsf@notabene.neil.brown.name>
+ <58be6551-4aa7-72ee-1616-a1545606d029@kernel.dk>
+ <87varhg14d.fsf@notabene.neil.brown.name>
+ <CANr6vz8EbRWXq7igGCzRy9JC1Nt=MMma0h8M6nxHQtwiMDa5aQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-crypto-owner@vger.kernel.org>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Milan Broz <gmazyland@gmail.com>
-Cc: linux-crypto@vger.kernel.org, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, Binoy Jayan <binoy.jayan@linaro.org>, Gilad Ben-Yossef <gilad@benyossef.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CANr6vz8EbRWXq7igGCzRy9JC1Nt=MMma0h8M6nxHQtwiMDa5aQ@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Lars Ellenberg <lars.ellenberg@linbit.com>
+Cc: NeilBrown <neilb@suse.com>, Jens Axboe <axboe@kernel.dk>, Jack Wang <jinpu.wang@profitbricks.com>, LKML <linux-kernel@vger.kernel.org>, Kent Overstreet <kent.overstreet@gmail.com>, Pavel Machek <pavel@ucw.cz>, Mikulas Patocka <mpatocka@redhat.com>, linux-raid@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hi all,
+On Fri, Mar 10 2017 at  7:34am -0500,
+Lars Ellenberg <lars.ellenberg@linbit.com> wrote:
 
-I was tasked to post a summary the whole dm-crypt IV generation
-problem and all the suggested solutions along with their drawbacks, so
-here it goes...
+> > --- a/block/blk-core.c
+> > +++ b/block/blk-core.c
+> > @@ -1975,7 +1975,14 @@ generic_make_request_checks(struct bio *bio)
+> >   */
+> >  blk_qc_t generic_make_request(struct bio *bio)
+> >  {
+> > -       struct bio_list bio_list_on_stack;
+> > +       /*
+> > +        * bio_list_on_stack[0] contains bios submitted by the current
+> > +        * make_request_fn.
+> > +        * bio_list_on_stack[1] contains bios that were submitted before
+> > +        * the current make_request_fn, but that haven't been processed
+> > +        * yet.
+> > +        */
+> > +       struct bio_list bio_list_on_stack[2];
+> >         blk_qc_t ret = BLK_QC_T_NONE;
+> 
+> May I suggest that, if you intend to assign something that is not a
+> plain &(struct bio_list), but a &(struct bio_list[2]),
+> you change the task member so it is renamed (current->bio_list vs
+> current->bio_lists, plural, is what I did last year).
+> Or you will break external modules, silently, and horribly (or,
+> rather, they won't notice, but break the kernel).
+> Examples of such modules would be DRBD, ZFS, quite possibly others.
 
-PROBLEM STATEMENT:
-Currently, dm-crypt uses a fixed 512-byte sector size and handles
-en-/decrypting of a bio by submitting a separate request to the crypto
-API for each sector. This causes a performance problem with some
-crypto drivers that have a high processing overhead for small
-requests, i.e. most crypto accelerators [1][2] and also e.g. the
-AES-NI driver [3].
+drbd is upstream -- so what is the problem?  (if you are having to
+distribute drbd independent of the upstream drbd then why is drbd
+upstream?)
 
-POSSIBLE SOLUTIONS:
-1. Move IV generator algorithms to crypto API and allow them to
-process the whole bio at once. ([5] or something equivalent)
-    ISSUES:
-        a) The 'keycount' parameter.
-            In order to support multi-key modes from Loop-AES,
-dm-crypt accepts a keycount parameter which, if it != 1, causes
-consecutive sectors to be encrypted with a different key. This
-parameter can be specified with any of the cipher modes, which makes
-porting the whole scale of modes supported by dm-crypt to crypto API
-rather messy, since a lot of dm-crypt specific stuff needs to be moved
-into the crypto drivers.
-        b) New AEAD functionality; random IV generator.
-            The soon-to-be-added AEAD functionality in dm-crypt
-introduces a new IV generator that generates IVs randomly and stores
-them as sector metadata. This means IV generation cannot be handled
-solely in the driver. Also, additional AEAD implementation of IV
-generators would be eventually needed.
+As for ZFS, worrying about ZFS kABI breakage is the last thing we should
+be doing.
 
-2. Restrict the keycount parameter to allow only reasonable
-combinations and then move IV generators to crypto API.
-    In Loop-AES, the multi-key mode always uses exactly 64 keys and
-there is no reasonable scenario where someone would like to use
-keycount != 1 with other IV mode than LMK. Thus it might be acceptable
-to only work with multiple keys in LMK (and only allow keycount == 64
-for it) and work with just one key in all other modes (and only allow
-keycount == 1 for them). I.e., the cipher format would remain the
-same, just with more restricted values.
-
-    Note that this would be basically a breaking change (the keycount
-parameter is documented [4], so there may be users somewhere that use
-it in some unusual combination...). Still, such combinations would
-have to be used explicitly, as they are never used with common
-LUKS/Loop-AES/TrueCrypt partitions (something like cryptsetup --type
-plain ... or dmsetup would have to be used directly).
-
-    Applying this change would allow implementing the IV generators as
-simple crypto algorithms that honor the usual interface (without
-setkey hacks and passing of special structures via IV).
-
-    ISSUES:
-        a) Backward incompatibility (see above).
-        b) Again need to somehow handle the new 'random' IV generator.
-
-3. Extend crypto API to allow passing multiple requests at once (each
-with a separate IV) to crypto drivers.
-    (see [3])
-    ISSUES:
-        a) HW accelerators would have to specifically support this
-scheme (unless they are somehow programmable).
-            I.e. accelerators that already have the plain64 IV
-generator hard-coded could not fully benefit from this (I don't know
-how many are already out there). However, future ones could implement
-this 'universal' IV mode and enjoy basically the same benefit.
-
-4. Implement support of 4KB sectors (or other sizes, too) in dm-crypt.
-    This would partially help, since on devices with 4K sectors the
-size of each crypto request would then be 8x bigger and overhead would
-be reduced without the need to mess with the dm-crypt IV generators.
-
-    ISSUES:
-        a) Only 4KB would be processed at once, not the whole bio (but
-it may suffice).
-        b) Partitions encrypted as 4KB sectors could not be safely
-moved to a 512B-sector device (writes would not be atomic).
-
-QUESTIONS:
-@Mike/dm-devel: Do you think it would be feasible to apply solution 2
-(thus introducing the small incompatibility)?
-
-REFERENCES:
-[1] https://nelenkov.blogspot.com/2015/05/hardware-accelerated-disk-encryption-in.html
-[2] https://lkml.org/lkml/2017/3/2/274
-[3] https://www.mail-archive.com/linux-crypto@vger.kernel.org/msg23007.html
-[4] https://gitlab.com/cryptsetup/cryptsetup/wikis/DMCrypt
-[5] https://lkml.org/lkml/2017/2/7/182
-
-Cheers,
-Ondrej
+So Nack from me on this defensive make-work for external modules.
