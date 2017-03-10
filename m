@@ -1,7 +1,7 @@
 From: NeilBrown <neilb@suse.com>
-Subject: [PATCH 4/5] blk: use non-rescuing bioset for q->bio_split.
-Date: Fri, 10 Mar 2017 15:36:20 +1100
-Message-ID: <871su5hhob.fsf@notabene.neil.brown.name>
+Subject: [PATCH 5/5] block_dev: make blkdev_dio_pool a non-rescuing bioset
+Date: Fri, 10 Mar 2017 15:37:41 +1100
+Message-ID: <87y3wdg31m.fsf@notabene.neil.brown.name>
 References: <87h93blz6g.fsf@notabene.neil.brown.name> <71562c2c-97f4-9a0a-32ec-30e0702ca575@profitbricks.com> <87lgsjj9w8.fsf@notabene.neil.brown.name> <a674456d-fb93-437e-c50e-195e7a035ba4@kernel.dk> <87r328j00i.fsf@notabene.neil.brown.name> <87d1dphhuy.fsf@notabene.neil.brown.name>
 Mime-Version: 1.0
 Content-Type: multipart/signed; boundary="=-=-=";
@@ -18,56 +18,29 @@ Content-Type: text/plain
 Content-Transfer-Encoding: quoted-printable
 
 
-A rescuing bioset is only useful if there might be bios from
-that same bioset on the bio_list_on_stack queue at a time
-when bio_alloc_bioset() is called.  This never applies to
-q->bio_split.
-
-Allocations from q->bio_split are only ever made from
-blk_queue_split() which is only ever called early in each of
-various make_request_fn()s.  The original bio (call this A)
-is then passed to generic_make_request() and is placed on
-the bio_list_on_stack queue, and the bio that was allocated
-from q->bio_split (B) is processed.
-
-The processing of this may cause other bios to be passed to
-generic_make_request() or may even cause the bio B itself to
-be passed, possible after some prefix has been split off
-(using some other bioset).
-
-generic_make_request() now guarantees that all of these bios
-(B and dependants) will be fully processed before the tail
-of the original bio A gets handled.  None of these early bios
-can possible trigger an allocation from the original
-q->bio_split as they are either too small to require
-splitting or (more likely) are destined for a different queue.
-
-The next time that the original q->bio_split might be used
-by this thread is when A is processed again, as it might
-still be too big to handle directly.  By this time there
-cannot be and other bios allocated fro q->bio_split in the
-generic_make_request() queue.  So no rescuing will ever be
-needed.
+Allocations from blkdev_dio_pool are never made under
+generic_make_request, so this bioset does not need a rescuer thread.
 
 Signed-off-by: NeilBrown <neilb@suse.com>
 =2D--
- block/blk-core.c |    2 +-
+ fs/block_dev.c |    2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/block/blk-core.c b/block/blk-core.c
-index c3992d17dc2c..375006c94c15 100644
-=2D-- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -714,7 +714,7 @@ struct request_queue *blk_alloc_queue_node(gfp_t gfp_ma=
-sk, int node_id)
- 	if (q->id < 0)
- 		goto fail_q;
+diff --git a/fs/block_dev.c b/fs/block_dev.c
+index c0ca5f0d0369..2eca00ec4370 100644
+=2D-- a/fs/block_dev.c
++++ b/fs/block_dev.c
+@@ -436,7 +436,7 @@ blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *i=
+ter)
 =20
-=2D	q->bio_split =3D bioset_create_rescued(BIO_POOL_SIZE, 0);
-+	q->bio_split =3D bioset_create(BIO_POOL_SIZE, 0);
- 	if (!q->bio_split)
- 		goto fail_id;
-=20
+ static __init int blkdev_init(void)
+ {
+=2D	blkdev_dio_pool =3D bioset_create_rescued(4, offsetof(struct blkdev_dio=
+, bio));
++	blkdev_dio_pool =3D bioset_create(4, offsetof(struct blkdev_dio, bio));
+ 	if (!blkdev_dio_pool)
+ 		return -ENOMEM;
+ 	return 0;
 
 
 
@@ -76,18 +49,18 @@ Content-Type: application/pgp-signature; name="signature.asc"
 
 -----BEGIN PGP SIGNATURE-----
 
-iQIzBAEBCAAdFiEEG8Yp69OQ2HB7X0l6Oeye3VZigbkFAljCLUQACgkQOeye3VZi
-gbmtbw//Vqna/c1XoVNNyGIbpl7CVQfYE1gHgFUo/NG9BuGrZw7iF2NRUhTr3BzS
-7vNIgMsj5feegCG6d4yKS6LGck6sYNWu62yWvjG+DuaK9PhGL7yt5xZyyxDe42y9
-2HUkQVpg8XT2UgxhpTpEHYp2TQTkz6QebGchdeU6ExmUr1hLoPi/DXAiLr48H9NQ
-bHii/ukL5BymRm9cydsEPOuHLAWndZgWNQwOq2k87AT7kXobWzEpLdoNtLZpMHc+
-aPMpAyYg6+rZRxn4WOuCvkeYlwIB8WeWWOlqolsCzSriY+974lwGv2IOSN7MxEtV
-v/Mlm/z1AHbbeNwfE6hHM5KoaemWV/gGx2zATGBiNUBV3jawkBdWhExcmvqkt+bt
-A+Fac/jOKee0WuLiFwU24sB4v128KKrXUrlNvpDGZIjhbQ3uIGDBV3zeVwPrMZhh
-8hHCfs8NiiSR2u19xbeiIwHtbrW2QtFvAPbv/RmvFZMgWammMUVUTByMHoPfjLcR
-YhQwooNnTj7Q/qorLRtxLT2Ut0ZRXBhXJIt3Bcrvq1M3lN+UQLXVDQ7s4YsKzhZL
-baATDHgykZ0jl+6dh62YSQJw8ij3O/tmme+z6bn/o3UBWujPGN8CRSkgeQogWcaX
-MOre5eE4IFu0Vlk1vG0K/5wxQpmzMldpglKXOo+0z28BMsgTaXQ=
-=taSq
+iQIzBAEBCAAdFiEEG8Yp69OQ2HB7X0l6Oeye3VZigbkFAljCLZUACgkQOeye3VZi
+gbkLmA/8CmeNbNFTvSRO6k8E9hrVRTMjSBnLDc+fqP1lIwzkjb1S6+h5iKUcTxzo
+y/OiP2NSpCf3c6BH66CRT1wgGpSCtk1gUOZwE0dX5KmjOJ09qTXZeuap+G5e78BC
+DUaBiFvSoTq68nGeZUxQ36osOBSCXZ+l0yZO3kAGZP8qOdPMyTj4qUJKvL2fIYwD
+lbrVZ1Tbm390F5lI3B6bXSmGKTIQQmf5Yvj7NoezW0iPFqq7idCXExb/eKhXpsPU
+dRc8jRP+Q9zeg7efEk9VT4MqrIbguEay8j5RmPuOhF54YT/Mle0SMXbwxszGs79Y
+418959/C+k/fs96NQ9Um5F+MzQ+TqpXX/YgieLm+gLHxINDDP/R6EOpL331cm5SL
+eakadQjHlKlyjpI1HlwUxWSc3+Cw0v8cqt3I6hI/YF0XJBCk/oWgQJTrilB3ug4I
+UKjtQkHo/NvRHXlYGDMudfaaDZFzKby+f1qkj+PiKCu5Lv4I6Cazm2htT6nvEhvi
+gz9pycu+L+pp5DRBE50SNTFwOYyZmDa8+CNajVdHx01PC+zFZPCB/xalZReZSyCF
+pOyFX48x7WeDOezpQHFd5aTMUSGWjudKGswLpk8ibBHTgc65Fe8+dyeHlwQuNuX8
+1QARp9q5fKEUt0eqN2NcT2m9Zz08HGJKr5sFXLNOoW7xH8NI7Mw=
+=7NCx
 -----END PGP SIGNATURE-----
 --=-=-=--
