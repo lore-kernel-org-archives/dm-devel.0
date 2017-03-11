@@ -1,140 +1,109 @@
-From: NeilBrown <neilb@suse.com>
-Subject: Re: [PATCH v2] blk: improve order of bio handling in
-	generic_make_request()
-Date: Sat, 11 Mar 2017 11:47:56 +1100
-Message-ID: <87shmkfxkz.fsf@notabene.neil.brown.name>
-References: <87h93blz6g.fsf@notabene.neil.brown.name>
-	<71562c2c-97f4-9a0a-32ec-30e0702ca575@profitbricks.com>
-	<87lgsjj9w8.fsf@notabene.neil.brown.name>
-	<a674456d-fb93-437e-c50e-195e7a035ba4@kernel.dk>
-	<87r328j00i.fsf@notabene.neil.brown.name>
-	<87d1dphhuy.fsf@notabene.neil.brown.name>
-	<58be6551-4aa7-72ee-1616-a1545606d029@kernel.dk>
-	<87varhg14d.fsf@notabene.neil.brown.name>
-	<CANr6vz8EbRWXq7igGCzRy9JC1Nt=MMma0h8M6nxHQtwiMDa5aQ@mail.gmail.com>
+From: Eric Wheeler <dm-devel@lists.ewheeler.net>
+Subject: Re: [dm-devel] dm-crypt: fix lost ioprio when queuing crypto bios
+ from task with ioprio
+Date: Fri, 10 Mar 2017 17:08:48 -0800 (PST)
+Message-ID: <alpine.LRH.2.11.1703101651490.21446@mail.ewheeler.net>
+References: <alpine.LRH.2.11.1612141049250.13402@mail.ewheeler.net> <alpine.LRH.2.11.1612161414280.9898@mail.ewheeler.net> <20161217155800.GA6580@redhat.com> <alpine.LRH.2.11.1612291856160.20227@mail.ewheeler.net> <20170105165518.GA7376@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============3756041316313884675=="
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CANr6vz8EbRWXq7igGCzRy9JC1Nt=MMma0h8M6nxHQtwiMDa5aQ@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Lars Ellenberg <lars.ellenberg@linbit.com>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>, LKML <linux-kernel@vger.kernel.org>, linux-raid@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Pavel Machek <pavel@ucw.cz>, Jack Wang <jinpu.wang@profitbricks.com>, Kent Overstreet <kent.overstreet@gmail.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20170105165518.GA7376@redhat.com>
+Sender: linux-block-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-bcache@vger.kernel.org, Mikulas Patocka <mpatocka@redhat.com>, Alasdair Kergon <agk@redhat.com>, Shaohua Li <shli@kernel.org>, kent.overstreet@gmail.com, Vivek Goyal <vgoyal@redhat.com>
 List-Id: dm-devel.ids
 
---===============3756041316313884675==
-Content-Type: multipart/signed; boundary="=-=-=";
-	micalg=pgp-sha256; protocol="application/pgp-signature"
+On Thu, 5 Jan 2017, Mike Snitzer wrote:
 
---=-=-=
-Content-Type: text/plain
+> On Thu, Dec 29 2016 at 11:08pm -0500,
+> Eric Wheeler <dm-devel@lists.ewheeler.net> wrote:
+> 
+> > On Sat, 17 Dec 2016, Mike Snitzer wrote:
+> > > On Fri, Dec 16 2016 at  5:29pm -0500,
+> > > Eric Wheeler <dm-devel@lists.ewheeler.net> wrote:
+> > > > On Wed, 14 Dec 2016, Eric Wheeler wrote:
+> > > > > Since dm-crypt queues writes (and sometimes reads) to a different kernel
+> > > > > thread (workqueue), the bios will dispatch from tasks with different
+> > > > > io_context->ioprio settings than the submitting task, thus giving
+> > > > > incorrect ioprio hints to the io scheduler.
+> > > > 
+> > > > The motivation of this patch is for ioprio-driven writebackup/bypass 
+> > > > hinting inside bcache when bcache is under dm-crypt which Jens is picking 
+> > > > up for 4.10:
+> > > >   https://lkml.org/lkml/2016/12/6/607
+> > > 
+> > > I now see your commits:
+> > > b71de4659fba4e42c7 bcache: introduce per-process ioprio-based bypass/writeback hints
+> > > 82e7192711c3855038 bcache: documentation for ioprio cache hinting
+> > > 
+> > > You'd think this is the type of thing that you'd have proposed to a
+> > > wider audience.  
+> > 
+> > ( Its not really relevant to this bugfix, but please see this thread since 
+> >   you were curious about a wider audience discussion: 
+> >   https://www.redhat.com/archives/dm-devel/2016-July/msg00556.html )
+> > 
+> > The note above in the previous email was intended to explain how we 
+> > discovered the dm-crypt problem, purely as an example use case.  The 
+> > stable commit note discusses the real issue: lost elevator hints.
+> > 
+> > This commit fixes elevator ioprio hints passing through dm-crypt and is 
+> > not intended to address dm-cache, nor enable a bcache feature.
+> > 
+> > All impementations using ioprio hints beneath dm-crypt would 
+> > benefit---most importantly, _CFQ_ !
+> >   
+> > As it is, all ioprio hints passing through dm-crypt are lost to the 
+> > elevator; the elevator looses those useful bits because of queuing to 
+> > another thread for crypto operations.
+> 
+> How did you test the change?
 
-On Fri, Mar 10 2017, Lars Ellenberg wrote:
+We discovered this by noticing that bcache never receives bios marked with 
+ioprios that were submitted for writing by dm-crypt, but this seems to be 
+an issue with dm-crypt specifically. Bcache gets ioprio information from 
+upper-level drivers submitting from the original process context just 
+fine. If the information is lost to bcache, it is certainly lost to the IO 
+scheduler. Of course if ioprios are mapped between processes in some other 
+way that I am missing, then please point that out for me.
 
->> --- a/block/blk-core.c
->> +++ b/block/blk-core.c
->> @@ -1975,7 +1975,14 @@ generic_make_request_checks(struct bio *bio)
->>   */
->>  blk_qc_t generic_make_request(struct bio *bio)
->>  {
->> -       struct bio_list bio_list_on_stack;
->> +       /*
->> +        * bio_list_on_stack[0] contains bios submitted by the current
->> +        * make_request_fn.
->> +        * bio_list_on_stack[1] contains bios that were submitted before
->> +        * the current make_request_fn, but that haven't been processed
->> +        * yet.
->> +        */
->> +       struct bio_list bio_list_on_stack[2];
->>         blk_qc_t ret = BLK_QC_T_NONE;
->
-> May I suggest that, if you intend to assign something that is not a
-> plain &(struct bio_list), but a &(struct bio_list[2]),
-> you change the task member so it is renamed (current->bio_list vs
-> current->bio_lists, plural, is what I did last year).
-> Or you will break external modules, silently, and horribly (or,
-> rather, they won't notice, but break the kernel).
-> Examples of such modules would be DRBD, ZFS, quite possibly others.
->
+Interestingly, before bio_ioprio was split out from bi_rw in about 
+4.2-4.4, dm-crypt reads were marked fine because they do not usually get 
+punted to another thread and complete from the submitting process. After 
+splitting bi_ioprio out of bi_rw, reads broke because the simple cloning 
+assignment of dst_bio->bi_rw = src_bio->bi_rw loses the priority bits. Of 
+course this continues now that bi_rw has been pulled and changed into 
+bi_opf.
 
-This is exactly what I didn't in my first draft (bio_list -> bio_lists),
-but then I reverted that change because it didn't seem to be worth the
-noise.
-It isn't much noise, sched.h, bcache/btree.c, md/dm-bufio.c, and
-md/raid1.c get minor changes.
-But as I'm hoping to get rid of all of those uses, renaming before
-removing seemed pointless ... though admittedly that is what I did for
-bioset_create().... I wondered about that too.
+I suspect there are other places where bi_rw assignments lost bi_ioprio 
+assignments long ago, and this probably needs some research and 
+fixup---but that is a separate issue from the dm-crypt issue.
+ 
+> Or put differently: what is the easiest test to run against a dm-crypt
+> device to verify that ioprio is being passed through?
 
-The example you give later:
-	struct bio_list *tmp = current->bio_list;
-	current->bio_list = NULL;
-	submit_bio()
-	current->bio_list = tmp;
+You would probably need to modify dm-crypt just before it calls 
+generic_make_request on the way out of writing bio's after encrypting 
+either in kcryptd_crypt_write_io_submit or dmcrypt_write and calling 
+something like WARN_ONCE if ioprio_valid(bio_prio(bio)).
 
-won't cause any problem.  Whatever lists the parent generic_make_request
-is holding onto will be untouched during the submit_bio() call, and will
-be exactly as it expects them when this caller returns.
+Then set your IO priority using ionice on some process writing with direct 
+IO to the mapper device and see if you get any warnings:
+	ionice -c3 dd bs=1 of=/dev/mapper/cryptotest if=/dev/zero oflag=direct count=1
 
-If some out-of-tree code does anything with ->bio_list that makes sense
-with the previous code, then it will still make sense with the new
-code. However there will be a few bios that it didn't get too look at.
-These will all be bios that were submitted by a device further up the
-stack (closer to the filesystem), so they *should* be irrelevant.
-I could probably come up with some weird behaviour that might have
-worked before but now wouldn't quite work the same way.  But just fixing
-bugs can sometimes affect an out-of-tree driver in a strange way because
-it was assuming those bugs.
+My guess is that you will not since bios are cloned without copying ioprio 
+information and submitted from processes different from those of the 
+calling thread.
 
-I hope that I'll soon be able to remove punt_bios_to_rescuer and
-flush_current_bio_list, after which current->bio_list  can really be
-just a list again.  I don't think it is worth changing the name for a
-transient situation.
+I am curious what you find on your end, please let me know if you have any 
+questions and thank you for your help!
 
-But thanks for the review - it encouraged me to think though the
-consequences again and I'm now more confident.
-I actually now think that change probably wasn't necessary.  It is
-safer though.  It ensures that current functionality isn't removed
-without a clear justification.
+--
+Eric Wheeler
 
-Thanks,
-NeilBrown
-
-
---=-=-=
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQIzBAEBCAAdFiEEG8Yp69OQ2HB7X0l6Oeye3VZigbkFAljDST0ACgkQOeye3VZi
-gbnqNRAAjFtXFzd/Bu+z85h3s2hXEZROkDKXsty0fgRGP1+dsGHrZIhouBiqWmqB
-spX/Ij+ccbFYOwBWjFM12yz2eWGRqrqyrIPpbh0/T7jNVT5eeD76kmBRdmv2jbl5
-1AMa/K5LS4BWhPsxzXOPMTPsV6K3CtoVs9cRmqh8phiWnjqqWhec9PkU/j1B1XBs
-oHQDi+QzMe775U8s0hOK8UtxRyb+Do1RlSWr6hW8PfZjybpG3973j5PsvzmDsAYE
-cGpirb+IeOlSa9O4Br3pdGIp7P3nJ6EPlkMrl1vLEmDbMzUjNAf+wvq/oppjamAN
-FdCF8wa2ydFCaEfiZ5SMnaNtOgnafinn3XzIQuykpQjadvWct63NVy8a96yVm9MN
-kfDRyKrTzQfct2Sr91k/u6va58OkpW6GV3ylq6j1bMKCNHOueHJzMc6A9Q5EhQe3
-/s0FLc1bW78tRSH2zKhWaaM4N0Lm2bI4WcIFI8jsIP6S2DC8pnVyvricvQ9DAArw
-gxG8Wu1FwQljN5bGlnzn/gYWOAQsJ2jhpFs8edHA4hnqUyBv6UdoJ0qxeMIhw7P8
-WFjNDRjJ9u/B7RAUBBWs2Z2ACDwIeRko7Zo3NitjRzv70EHUOx5Qc9P8qktj+tmt
-T/VoKXloIVG4WIX3+r5v3pFJPmzboW88Y/4cuUmr0uM5gERj3Ho=
-=3pLX
------END PGP SIGNATURE-----
---=-=-=--
-
-
---===============3756041316313884675==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============3756041316313884675==--
+ 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+> 
