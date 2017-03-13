@@ -1,15 +1,11 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [bug report] dm crypt: add cryptographic data
- integrity protection (authenticated encryption)
-Date: Mon, 13 Mar 2017 12:15:59 -0400
-Message-ID: <20170313161558.GA11245@redhat.com>
-References: <20170313141909.GA25761@mwanda> <20170313160814.GA11174@redhat.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: clean up libdmmp/Makefile
+Date: Mon, 13 Mar 2017 17:47:31 +0100
+Message-ID: <20170313164731.2437-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20170313160814.GA11174@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,72 +15,50 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: gmazyland@gmail.com
-Cc: dm-devel@redhat.com, Dan Carpenter <dan.carpenter@oracle.com>
+Cc: Gris Ge <fge@redhat.com>, device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-On Mon, Mar 13 2017 at 12:08pm -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
+Replace LDFLAGS with LIBDEPS, build libdmmp shared library without CFLAGS
 
-> On Mon, Mar 13 2017 at 10:19am -0400,
-> Dan Carpenter <dan.carpenter@oracle.com> wrote:
-> 
-> > Hello Milan Broz,
-> > 
-> > This is a semi-automatic email about new static checker warnings.
-> > 
-> > The patch 858516b7881e: "dm crypt: add cryptographic data integrity
-> > protection (authenticated encryption)" from Jan 4, 2017, leads to the
-> > following Smatch complaint:
-> > 
-> > drivers/md/dm-crypt.c:1390 crypt_alloc_buffer()
-> > 	 error: we previously assumed 'clone' could be null (see line 1362)
-> > 
-> > drivers/md/dm-crypt.c
-> >   1361		clone = bio_alloc_bioset(GFP_NOIO, nr_iovecs, cc->bs);
-> >   1362		if (!clone)
-> >                     ^^^^^^
-> > We can be NULL on this path.
-> > 
-> >   1363			goto return_clone;
-> >   1364	
-> >   1365		clone_init(io, clone);
-> >   1366	
-> >   1367		remaining_size = size;
-> >   1368	
-> >   1369		for (i = 0; i < nr_iovecs; i++) {
-> >   1370			page = mempool_alloc(cc->page_pool, gfp_mask);
-> >   1371			if (!page) {
-> >   1372				crypt_free_buffer_pages(cc, clone);
-> >   1373				bio_put(clone);
-> >   1374				gfp_mask |= __GFP_DIRECT_RECLAIM;
-> >   1375				goto retry;
-> >   1376			}
-> >   1377	
-> >   1378			len = (remaining_size > PAGE_SIZE) ? PAGE_SIZE : remaining_size;
-> >   1379	
-> >   1380			bio_add_page(clone, page, len, 0);
-> >   1381	
-> >   1382			remaining_size -= len;
-> >   1383		}
-> >   1384	
-> >   1385	return_clone:
-> >   1386		if (unlikely(gfp_mask & __GFP_DIRECT_RECLAIM))
-> >   1387			mutex_unlock(&cc->bio_alloc_lock);
-> >   1388	
-> >   1389		/* Allocate space for integrity tags */
-> >   1390		if (dm_crypt_integrity_io_alloc(io, clone)) {
-> >                                                     ^^^^^
-> > Oops inside new function call.
-> > 
-> >   1391			crypt_free_buffer_pages(cc, clone);
-> >   1392			bio_put(clone);
-> 
-> Thanks for the report.  This code makes no sense as is.
-> 
-> Milan, please help me understand why you're allocating memory needed for
-> integrity tags in this 'return_clone' error path.
+Cc: Gris Ge <fge@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ libdmmp/Makefile | 11 ++++++-----
+ 1 file changed, 6 insertions(+), 5 deletions(-)
 
-I folded in a fix for this, Milan please review crypt_alloc_buffer()
-changes in this revised commit:
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.12&id=8896496efaef45ca1a734782a8d7f9082299fa5d
+diff --git a/libdmmp/Makefile b/libdmmp/Makefile
+index c98ae67..aaff285 100644
+--- a/libdmmp/Makefile
++++ b/libdmmp/Makefile
+@@ -9,21 +9,22 @@ LIBDMMP_VERSION=0.1.0
+ SONAME=$(LIBDMMP_VERSION)
+ DEVLIB = libdmmp.so
+ LIBS = $(DEVLIB).$(SONAME)
+-LIBDEPS = -pthread
+ PKGFILE = libdmmp.pc
+ EXTRA_MAN_FILES = libdmmp.h.3
+ HEADERS = libdmmp/libdmmp.h
++
+ OBJS = libdmmp.o libdmmp_mp.o libdmmp_pg.o libdmmp_path.o libdmmp_misc.o
+ 
+ CFLAGS += -fvisibility=hidden -I$(libdmmpdir) -I$(mpathcmddir) \
+ 	  $(shell pkg-config --cflags json-c)
+-LDFLAGS += $(shell pkg-config --libs json-c) -L$(mpathcmddir) -lmpathcmd
++
++LIBDEPS += $(shell pkg-config --libs json-c) -L$(mpathcmddir) -lmpathcmd -pthread
+ 
+ all: $(LIBS) doc
+ 
+-$(LIBS): $(OBJS)
+-	$(CC) $(LDFLAGS) $(SHARED_FLAGS) \
+-	-Wl,-soname=$@ $(CFLAGS) -o $@ $(OBJS) $(LIBDEPS)
++$(LIBS):
++	$(CC) -c $(CFLAGS) *.c
++	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -Wl,-soname=$@ -o $@ $(OBJS) $(LIBDEPS)
+ 	$(LN) $@ $(DEVLIB)
+ 
+ install:
+-- 
+2.12.0
