@@ -1,70 +1,230 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-crypt IV generation (summary)
-Date: Mon, 13 Mar 2017 14:23:52 -0400
-Message-ID: <20170313182344.GA11766@redhat.com>
-References: <CAFqZXNs0=6+PvpGq3weRwCJkUOfSn06i_fD6ZuvXo_0rms9zeA@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-crypto-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAFqZXNs0=6+PvpGq3weRwCJkUOfSn06i_fD6ZuvXo_0rms9zeA@mail.gmail.com>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Ondrej Mosnacek <omosnace@redhat.com>
-Cc: Milan Broz <gmazyland@gmail.com>, linux-crypto@vger.kernel.org, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, Binoy Jayan <binoy.jayan@linaro.org>, Gilad Ben-Yossef <gilad@benyossef.com>
+From: Ram Pai <linuxram@us.ibm.com>
+Subject: [PATCH v5] DM: dm-inplace-compress: inplace compressed DM target
+Date: Mon, 13 Mar 2017 14:30:40 -0700
+Message-ID: <1489440641-8305-1-git-send-email-linuxram@us.ibm.com>
+Return-path: <linux-doc-owner@vger.kernel.org>
+Sender: linux-doc-owner@vger.kernel.org
+To: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com
+Cc: corbet@lwn.net, shli@kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, hbabu@us.ibm.com, linuxram@us.ibm.com, julia.lawall@lip6.fr
 List-Id: dm-devel.ids
 
-On Fri, Mar 10 2017 at  8:44am -0500,
-Ondrej Mosnacek <omosnace@redhat.com> wrote:
+This  patch   provides   a   generic  device-mapper  compression device.
+Originally written by Shaohua Li.
+https://www.redhat.com/archives/dm-devel/2013-December/msg00143.html
 
-> Hi all,
-> 
-> I was tasked to post a summary the whole dm-crypt IV generation
-> problem and all the suggested solutions along with their drawbacks, so
-> here it goes...
+I have optimized and hardened the code.
 
-Thanks for the summary.
-...
- 
-> 2. Restrict the keycount parameter to allow only reasonable
-> combinations and then move IV generators to crypto API.
->     In Loop-AES, the multi-key mode always uses exactly 64 keys and
-> there is no reasonable scenario where someone would like to use
-> keycount != 1 with other IV mode than LMK. Thus it might be acceptable
-> to only work with multiple keys in LMK (and only allow keycount == 64
-> for it) and work with just one key in all other modes (and only allow
-> keycount == 1 for them). I.e., the cipher format would remain the
-> same, just with more restricted values.
-> 
->     Note that this would be basically a breaking change (the keycount
-> parameter is documented [4], so there may be users somewhere that use
-> it in some unusual combination...). Still, such combinations would
-> have to be used explicitly, as they are never used with common
-> LUKS/Loop-AES/TrueCrypt partitions (something like cryptsetup --type
-> plain ... or dmsetup would have to be used directly).
-> 
->     Applying this change would allow implementing the IV generators as
-> simple crypto algorithms that honor the usual interface (without
-> setkey hacks and passing of special structures via IV).
-> 
->     ISSUES:
->         a) Backward incompatibility (see above).
->         b) Again need to somehow handle the new 'random' IV generator.
+I have not received any negative comments till now.  Feel confident with the
+code.  Please consider merging the code upstream.
 
-...
-> 
-> QUESTIONS:
-> @Mike/dm-devel: Do you think it would be feasible to apply solution 2
-> (thus introducing the small incompatibility)?
 
-Of all the proposals I think 2 is the best.  But I'm not in a position
-to _know_ how problematic such an incompatible change would be.  As such
-I unfortunately would need to defer to Milan, Herbert and others to say
-how risky such a change would be.  If the real-world risk is very
-limited then I think it would enable the most effective solution (moving
-the IV generators to crypto without carrying excess dm-crypt baggage).
+Testing:
+-------
+This compression block device  is   tested in  the  following scenarios
+a) backing a ext4/xfs/btrfs filesystem 
+b) backing swap
 
-The other part mentioned ("need to somehow handle the new 'random' IV
-generator"): Milan or others, do you have ideas for this?  Presummably
-that is a prereq to moving forward with restricting keycount.
+Ran 'badblocks' test on the compressed block device.
+Thoroughly stress tested on PPC64 and x86 system.
 
-Mike
+I have included a test-script that I used to test the block device.
+
+Version v5:
+	Modified the parameter list format to use token=value.
+	Fixed a coding issue noted by Julia Lawall.
+	Fixed data corruption issue when compressed size was same as the
+	original data.
+	Modified the allowed maximum I/O size to be as large as two pages,
+	without  which  larger  size  I/O  need  larger  size  buffers to 
+	temporarily hold  compressed data. This can lead  to inability to 
+	satisfy memory allocation requests.
+
+Version v4:
+	fixed kbuild errors; hopefully they are all taken care off.
+       	  - no reference to zero_page
+	  - convert all divide and mod operations to bit operations
+
+Version v3:
+	Fixed  sector  alignment  bugs  exposed  while   testing on x86.
+	Explicitly set the maximum request size  to 128K.  Without which
+	range  locking  failed,  causing  I/Os  to  stamp   each  other.
+	Fixed an occasional data corruption  caused by wrong size of the
+	compression buffer.
+	Added  a   parameter   while  creation  of  the   block  device, 
+	to  not  sleep   during  memory  allocations. This can be useful
+       	if the device is used as a swap device.
+
+Version v2:
+	All patches are merged into a single patch.
+	Major code re-arrangement.
+	Data and metablocks allocated based on the length of the device
+	map rather than the size of the backing device.
+        Size   of   each entry   in  the bitmap array is explicitly set
+	 to 32bits.
+	Attempt  to  reuse  the  provided  bio  buffer  space   instead
+	 of allocating a new one.
+
+Version v1:
+	Comments from Alasdair have been incorporated.
+	https://www.redhat.com/archives/dm-devel/2013-December/msg00144.html
+
+
+Ram Pai (1):
+  From: Shaohua Li <shli@kernel.org>
+
+ Documentation/device-mapper/dm-inplace-compress.txt |  174 +
+ drivers/md/Kconfig                                  |    6 
+ drivers/md/Makefile                                 |    2 
+ drivers/md/dm-inplace-compress.c                    | 2295 ++++++++++++++++++++
+ drivers/md/dm-inplace-compress.h                    |  194 +
+ 5 files changed, 2671 insertions(+)
+
+
+
+---------- Test script -------------
+#!/bin/bash
+# a test program to verify the correctness of
+# the dm-inplace-compression target
+# - Ram Pai
+
+compdevname="__compdev"
+usage()
+{
+	echo 
+	echo 
+        echo "$1:  -d <device path> [ -h ] [ -c <compdevicename> ]"
+        echo "-d <device path> path to the block device to "
+	echo "	back the compression device"
+	echo "-c <compdevicename>  some unique name of the compress"
+	echo " device name to be used. Defaults to $compdevname"
+        echo "-h help"
+	echo 
+	echo 
+        return
+}
+
+getsize()
+{
+	#the target will spew out the maximum size that
+	#it can accommodate for the device. So start with
+	#insane number and let it fail.
+	insane=999999999999999999990009
+	dmsetup create $2 --table \
+		"0 $insane inplacecompress device=$1, \
+		writethrough,compressor=lzo" 2>/dev/null
+	echo $(dmesg | \
+	   grep 'dm-inplace-compress:  This device can accommodate at most'\
+	   | tail -1 | awk '{print $(NF-1)}')
+}
+
+MYNAME=$(basename $0)
+OPTIND=0
+while getopts "d:c:h" args $OPTIONS
+do
+     case "$args" in
+        d)      device=$OPTARG
+                ;;
+        c)      compdevname=$OPTARG
+                ;;
+        *)      usage $MYNAME
+                exit 1
+                ;;
+        esac
+done
+
+if [ -z "$device" ]
+then
+	usage $MYNAME
+	exit 1;
+fi
+
+if [ ! -b "$device" ]
+then
+	usage $MYNAME
+	echo ERROR: $device is not a block device
+	exit 1;
+fi
+
+if [ -b "/dev/mapper/$compdevname" ]
+then
+	echo "WARNING: $compdevname already exist"
+	usage $MYNAME
+fi
+
+echo -n "ANY DATA ON $device WILL BE LOST. Continue using $device?: y/n:"
+read yesorno
+if [ "$yesorno" != "y" ]
+then
+	echo "Ok, exiting"
+	exit 1;
+fi
+
+dmsetup targets | grep inplacecompress > /dev/null
+if [ $? -ne 0 ]
+then
+	echo "Please enable dminplacecompress target in the kernel"
+	echo "Try modprobe dm-inplace-compress.ko"
+	exit 1
+fi
+
+
+
+#clean and init the device
+dd if=/dev/zero of=$device count=100 2> /dev/null
+
+dmsetup remove $compdevname 2> /dev/null
+size=$(getsize $device $compdevname)
+if [ ! -n $size ]
+then
+	echo "FAILURE: determining the maximum possible size of the device"
+	exit 1
+fi
+
+ret=0
+for mode in writethrough writeback=2
+do
+ for i in lzo 842
+ do
+	cat /proc/crypto  | grep -w "$i$" > /dev/null
+	if [ $? -ne 0 ]
+	then
+		continue
+	fi
+
+	echo "Testing: $i $mode....:"
+
+	#generate the device
+	dmsetup create $compdevname --table "0 $size inplacecompress device=$device, $mode ,compressor=$i"
+	if [ $? -ne 0 ]
+	then
+		echo "FAILURE: creating the device"
+		exit 1
+	fi
+
+	badblocks -wsv /dev/mapper/$compdevname
+	if [ $? -ne 0 ]
+	then
+		echo "FAILURE:"
+		ret=1
+	fi
+
+	##
+	##
+	## ADD MORE TESTS HERE
+	##
+	##
+
+	echo "PASS"
+	dmsetup remove $compdevname
+ done
+done
+
+if [ $ret -eq 0 ]
+then
+	echo CONGRATS IT WORKS
+	exit 0
+else
+	echo FAIL
+	exit 0
+fi
+------------------------
