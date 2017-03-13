@@ -1,12 +1,13 @@
-From: Ivan Zahariev <famzah@icdsoft.com>
-Subject: LVM gives "modprobe" errors on non-modular monolithic
-	Linux kernels
-Date: Mon, 13 Mar 2017 14:15:38 +0200
-Message-ID: <1cc4879f-a9a6-dd4c-c430-2a4dc3652e62@icdsoft.com>
+From: Dan Carpenter <dan.carpenter@oracle.com>
+Subject: [bug report] dm crypt: add cryptographic data integrity
+ protection (authenticated encryption)
+Date: Mon, 13 Mar 2017 17:19:09 +0300
+Message-ID: <20170313141909.GA25761@mwanda>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,62 +17,60 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: gmazyland@gmail.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hello,
+Hello Milan Broz,
 
-Here is an example of the problem:
+This is a semi-automatic email about new static checker warnings.
 
-    # lvconvert --yes --type cache --cachepolicy smq --cachepool
-    vg0/lv_cache_s188-vp vg0/s188
+The patch 858516b7881e: "dm crypt: add cryptographic data integrity
+protection (authenticated encryption)" from Jan 4, 2017, leads to the
+following Smatch complaint:
 
-    modprobe: ERROR: ../libkmod/libkmod.c:557 kmod_search_moddep() could
-    not open moddep file '/lib/modules/4.4.30-grsec/modules.dep.bin'
-       /sbin/modprobe failed: 1
+drivers/md/dm-crypt.c:1390 crypt_alloc_buffer()
+	 error: we previously assumed 'clone' could be null (see line 1362)
 
+drivers/md/dm-crypt.c
+  1361		clone = bio_alloc_bioset(GFP_NOIO, nr_iovecs, cc->bs);
+  1362		if (!clone)
+                    ^^^^^^
+We can be NULL on this path.
 
-Strace shows that "lvconvert" calls "modprobe" because it can't find 
-some paths in "/sys/module":
+  1363			goto return_clone;
+  1364	
+  1365		clone_init(io, clone);
+  1366	
+  1367		remaining_size = size;
+  1368	
+  1369		for (i = 0; i < nr_iovecs; i++) {
+  1370			page = mempool_alloc(cc->page_pool, gfp_mask);
+  1371			if (!page) {
+  1372				crypt_free_buffer_pages(cc, clone);
+  1373				bio_put(clone);
+  1374				gfp_mask |= __GFP_DIRECT_RECLAIM;
+  1375				goto retry;
+  1376			}
+  1377	
+  1378			len = (remaining_size > PAGE_SIZE) ? PAGE_SIZE : remaining_size;
+  1379	
+  1380			bio_add_page(clone, page, len, 0);
+  1381	
+  1382			remaining_size -= len;
+  1383		}
+  1384	
+  1385	return_clone:
+  1386		if (unlikely(gfp_mask & __GFP_DIRECT_RECLAIM))
+  1387			mutex_unlock(&cc->bio_alloc_lock);
+  1388	
+  1389		/* Allocate space for integrity tags */
+  1390		if (dm_crypt_integrity_io_alloc(io, clone)) {
+                                                    ^^^^^
+Oops inside new function call.
 
-  * /sys/module/dm_cache_smq
-  * /sys/module/dm_cache_mq
+  1391			crypt_free_buffer_pages(cc, clone);
+  1392			bio_put(clone);
 
-
-At the same time, these modules are already in the kernel. Here is a proof:
-
-    root@sm-srv228:~# zgrep -i cache /proc/config.gz |grep -i dm
-    CONFIG_DM_CACHE=y
-    CONFIG_DM_CACHE_MQ=y
-    CONFIG_DM_CACHE_SMQ=y
-    CONFIG_DM_CACHE_CLEANER=y
-
-
-So the real problem is that the modules are compiled in the monolithic 
-kernel but are not seen in "/sys/module". At the same time, even with a 
-monolithic kernel, some modules do have their corresponding directories 
-in "/sys/module", like the "dm_cache" module, for example:
-
-    root@sm-srv228:~# find /sys/module/dm_cache -type f
-    /sys/module/dm_cache/parameters/cache_copy_throttle
-
-
-My naive research concluded that non-modular monolithic Linux kernels 
-export the compiled-in modules in "/sys/module" only if one of the 
-following is true:
-
-  * the kernel module exports any parameters in the
-    "/sys/module/$module/parameters" directory
-  * or the kernel module has a "version" file "/sys/module/$module/version"
-
-
-In a nutshell, please export a "version" of all "dm_cache_*" modules, so 
-that even in monolithic Linux kernels we can have a directory in 
-"/sys/module" for them. This way the LVM2 tools won't give out sporadic 
-"modprobe" errors when ran on monolithic Linux kernels.
-
-Does all this make sense? Is the patch something trivial which we can 
-backport into our custom 4.4.30 Linux kernel?
-
-Thanks.
---Ivan
+regards,
+dan carpenter
