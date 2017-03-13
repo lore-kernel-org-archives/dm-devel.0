@@ -1,64 +1,70 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: clean up libdmmp/Makefile
-Date: Mon, 13 Mar 2017 17:47:31 +0100
-Message-ID: <20170313164731.2437-1-xose.vazquez@gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-crypt IV generation (summary)
+Date: Mon, 13 Mar 2017 14:23:52 -0400
+Message-ID: <20170313182344.GA11766@redhat.com>
+References: <CAFqZXNs0=6+PvpGq3weRwCJkUOfSn06i_fD6ZuvXo_0rms9zeA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Cc: Gris Ge <fge@redhat.com>, device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-crypto-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CAFqZXNs0=6+PvpGq3weRwCJkUOfSn06i_fD6ZuvXo_0rms9zeA@mail.gmail.com>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Ondrej Mosnacek <omosnace@redhat.com>
+Cc: Milan Broz <gmazyland@gmail.com>, linux-crypto@vger.kernel.org, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, Binoy Jayan <binoy.jayan@linaro.org>, Gilad Ben-Yossef <gilad@benyossef.com>
 List-Id: dm-devel.ids
 
-Replace LDFLAGS with LIBDEPS, build libdmmp shared library without CFLAGS
+On Fri, Mar 10 2017 at  8:44am -0500,
+Ondrej Mosnacek <omosnace@redhat.com> wrote:
 
-Cc: Gris Ge <fge@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- libdmmp/Makefile | 11 ++++++-----
- 1 file changed, 6 insertions(+), 5 deletions(-)
+> Hi all,
+> 
+> I was tasked to post a summary the whole dm-crypt IV generation
+> problem and all the suggested solutions along with their drawbacks, so
+> here it goes...
 
-diff --git a/libdmmp/Makefile b/libdmmp/Makefile
-index c98ae67..aaff285 100644
---- a/libdmmp/Makefile
-+++ b/libdmmp/Makefile
-@@ -9,21 +9,22 @@ LIBDMMP_VERSION=0.1.0
- SONAME=$(LIBDMMP_VERSION)
- DEVLIB = libdmmp.so
- LIBS = $(DEVLIB).$(SONAME)
--LIBDEPS = -pthread
- PKGFILE = libdmmp.pc
- EXTRA_MAN_FILES = libdmmp.h.3
- HEADERS = libdmmp/libdmmp.h
-+
- OBJS = libdmmp.o libdmmp_mp.o libdmmp_pg.o libdmmp_path.o libdmmp_misc.o
+Thanks for the summary.
+...
  
- CFLAGS += -fvisibility=hidden -I$(libdmmpdir) -I$(mpathcmddir) \
- 	  $(shell pkg-config --cflags json-c)
--LDFLAGS += $(shell pkg-config --libs json-c) -L$(mpathcmddir) -lmpathcmd
-+
-+LIBDEPS += $(shell pkg-config --libs json-c) -L$(mpathcmddir) -lmpathcmd -pthread
- 
- all: $(LIBS) doc
- 
--$(LIBS): $(OBJS)
--	$(CC) $(LDFLAGS) $(SHARED_FLAGS) \
--	-Wl,-soname=$@ $(CFLAGS) -o $@ $(OBJS) $(LIBDEPS)
-+$(LIBS):
-+	$(CC) -c $(CFLAGS) *.c
-+	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -Wl,-soname=$@ -o $@ $(OBJS) $(LIBDEPS)
- 	$(LN) $@ $(DEVLIB)
- 
- install:
--- 
-2.12.0
+> 2. Restrict the keycount parameter to allow only reasonable
+> combinations and then move IV generators to crypto API.
+>     In Loop-AES, the multi-key mode always uses exactly 64 keys and
+> there is no reasonable scenario where someone would like to use
+> keycount != 1 with other IV mode than LMK. Thus it might be acceptable
+> to only work with multiple keys in LMK (and only allow keycount == 64
+> for it) and work with just one key in all other modes (and only allow
+> keycount == 1 for them). I.e., the cipher format would remain the
+> same, just with more restricted values.
+> 
+>     Note that this would be basically a breaking change (the keycount
+> parameter is documented [4], so there may be users somewhere that use
+> it in some unusual combination...). Still, such combinations would
+> have to be used explicitly, as they are never used with common
+> LUKS/Loop-AES/TrueCrypt partitions (something like cryptsetup --type
+> plain ... or dmsetup would have to be used directly).
+> 
+>     Applying this change would allow implementing the IV generators as
+> simple crypto algorithms that honor the usual interface (without
+> setkey hacks and passing of special structures via IV).
+> 
+>     ISSUES:
+>         a) Backward incompatibility (see above).
+>         b) Again need to somehow handle the new 'random' IV generator.
+
+...
+> 
+> QUESTIONS:
+> @Mike/dm-devel: Do you think it would be feasible to apply solution 2
+> (thus introducing the small incompatibility)?
+
+Of all the proposals I think 2 is the best.  But I'm not in a position
+to _know_ how problematic such an incompatible change would be.  As such
+I unfortunately would need to defer to Milan, Herbert and others to say
+how risky such a change would be.  If the real-world risk is very
+limited then I think it would enable the most effective solution (moving
+the IV generators to crypto without carrying excess dm-crypt baggage).
+
+The other part mentioned ("need to somehow handle the new 'random' IV
+generator"): Milan or others, do you have ideas for this?  Presummably
+that is a prereq to moving forward with restricting keycount.
+
+Mike
