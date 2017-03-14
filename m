@@ -1,15 +1,16 @@
-From: Milan Broz <gmazyland@gmail.com>
-Subject: Re: [bug report] dm crypt: add cryptographic data
- integrity protection (authenticated encryption)
-Date: Tue, 14 Mar 2017 17:47:20 +0100
-Message-ID: <2c154feb-2bfd-0235-1355-141a414a1bcd@gmail.com>
-References: <20170313141909.GA25761@mwanda>
-	<20170313160814.GA11174@redhat.com> <20170313161558.GA11245@redhat.com>
+From: Bart Van Assche <Bart.VanAssche@sandisk.com>
+Subject: Re: [PATCH] multipathd: fix SIGUSR2 handling
+Date: Tue, 14 Mar 2017 23:29:52 +0000
+Message-ID: <1489534179.2676.18.camel@sandisk.com>
+References: <1482998174-11884-1-git-send-email-tang.junhui@zte.com.cn>
+	<20170103185909.GB2732@octiron.msp.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170313161558.GA11245@redhat.com>
+In-Reply-To: <20170103185909.GB2732@octiron.msp.redhat.com>
+Content-Language: en-US
+Content-ID: <421A39BFD0E3954ABA464DA4D5E35D04@sandisk.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,42 +20,24 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, Dan Carpenter <dan.carpenter@oracle.com>
+To: "bmarzins@redhat.com" <bmarzins@redhat.com>, "tang.junhui@zte.com.cn" <tang.junhui@zte.com.cn>
+Cc: "zhang.kai16@zte.com.cn" <zhang.kai16@zte.com.cn>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "mwilck@suse.com" <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-On 03/13/2017 05:15 PM, Mike Snitzer wrote:
-> On Mon, Mar 13 2017 at 12:08pm -0400,
-> Mike Snitzer <snitzer@redhat.com> wrote:
-...
-
->>>   1385	return_clone:
->>>   1386		if (unlikely(gfp_mask & __GFP_DIRECT_RECLAIM))
->>>   1387			mutex_unlock(&cc->bio_alloc_lock);
->>>   1388	
->>>   1389		/* Allocate space for integrity tags */
->>>   1390		if (dm_crypt_integrity_io_alloc(io, clone)) {
->>>                                                     ^^^^^
->>> Oops inside new function call.
->>>
->>>   1391			crypt_free_buffer_pages(cc, clone);
->>>   1392			bio_put(clone);
->>
->> Thanks for the report.  This code makes no sense as is.
->>
->> Milan, please help me understand why you're allocating memory needed for
->> integrity tags in this 'return_clone' error path.
+On Tue, 2017-01-03 at 12:59 -0600, Benjamin Marzinski wrote:
+> On Thu, Dec 29, 2016 at 03:56:14PM +0800, tang.junhui@zte.com.cn wrote:
+> > From: "tang.junhui" <tang.junhui@zte.com.cn>
+> > 
+> > SIGUSR2 is not blocked by default, it would cause bellow conflict
+> > in removing of the last path:
 > 
-> I folded in a fix for this, Milan please review crypt_alloc_buffer()
-> changes in this revised commit:
-> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.12&id=8896496efaef45ca1a734782a8d7f9082299fa5d
+> ACK
 
-Yes, it should be ok.
+Hello Christophe,
 
-TBH I have no idea how this happened, that error path was clearly wrong, perhaps copy&paste error :-)
+This patch was posted more than two months ago. Do you think it should
+be reposted?
 
-Thanks!
-Milan
+Thanks,
 
-
- 
+Bart.
