@@ -1,16 +1,16 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
+From: Martin Wilck <mwilck@suse.com>
 Subject: Re: [PATCH 01/33] multipathd.service: fixup Wants= and
  Before= statements
-Date: Mon, 13 Mar 2017 18:06:05 -0500
-Message-ID: <20170313230605.GG3421@octiron.msp.redhat.com>
+Date: Tue, 14 Mar 2017 08:36:37 +0100
+Message-ID: <1489476997.29218.13.camel@suse.com>
 References: <20170228162329.14517-1-mwilck@suse.com>
 	<20170228162329.14517-2-mwilck@suse.com>
+	<20170313230605.GG3421@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20170228162329.14517-2-mwilck@suse.com>
+In-Reply-To: <20170313230605.GG3421@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,52 +20,55 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Feb 28, 2017 at 05:22:57PM +0100, Martin Wilck wrote:
-> From: Hannes Reinecke <hare@suse.de>
-> 
-> With the latest LVM2 update we now have the 'lvm2-lvmetad.service'.
-> Also we need to specify 'blk-availability.service' in the 'Before='
-> statement, as just adding it to 'Wants=' assumes the multipathd
-> service should be running after the blk-availability service.
-
-As far as I can tell, The Before= command only says that if the other
-unit is started, this one will be started first. It doesn't take the
-place of Wants= or Requires=. So I think we should keep that Wants=
-line.
-
--Ben
-
-> 
-> Signed-off-by: Hannes Reinecke <hare@suse.com>
-> ---
->  multipathd/multipathd.service | 5 ++---
->  1 file changed, 2 insertions(+), 3 deletions(-)
-> 
-> diff --git a/multipathd/multipathd.service b/multipathd/multipathd.service
-> index d26577f3..be13138c 100644
-> --- a/multipathd/multipathd.service
-> +++ b/multipathd/multipathd.service
-> @@ -1,10 +1,9 @@
->  [Unit]
->  Description=Device-Mapper Multipath Device Controller
-> -Before=iscsi.service iscsid.service lvm2-activation-early.service
-> -Before=local-fs-pre.target systemd-udev-trigger.service
-> +Before=iscsi.service iscsid.service lvm2-lvmetad.service lvm2-activation-early.service
-> +Before=local-fs-pre.target systemd-udev-trigger.service blk-availability.service
->  After=multipathd.socket systemd-udevd.service
->  DefaultDependencies=no
-> -Wants=local-fs-pre.target multipathd.socket blk-availability.service
->  Conflicts=shutdown.target
->  
->  [Service]
-> -- 
-> 2.11.0
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+T24gTW9uLCAyMDE3LTAzLTEzIGF0IDE4OjA2IC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cj4gT24gVHVlLCBGZWIgMjgsIDIwMTcgYXQgMDU6MjI6NTdQTSArMDEwMCwgTWFydGluIFdp
+bGNrIHdyb3RlOgo+ID4gRnJvbTogSGFubmVzIFJlaW5lY2tlIDxoYXJlQHN1c2UuZGU+Cj4gPiAK
+PiA+IFdpdGggdGhlIGxhdGVzdCBMVk0yIHVwZGF0ZSB3ZSBub3cgaGF2ZSB0aGUgJ2x2bTItbHZt
+ZXRhZC5zZXJ2aWNlJy4KPiA+IEFsc28gd2UgbmVlZCB0byBzcGVjaWZ5ICdibGstYXZhaWxhYmls
+aXR5LnNlcnZpY2UnIGluIHRoZSAnQmVmb3JlPScKPiA+IHN0YXRlbWVudCwgYXMganVzdCBhZGRp
+bmcgaXQgdG8gJ1dhbnRzPScgYXNzdW1lcyB0aGUgbXVsdGlwYXRoZAo+ID4gc2VydmljZSBzaG91
+bGQgYmUgcnVubmluZyBhZnRlciB0aGUgYmxrLWF2YWlsYWJpbGl0eSBzZXJ2aWNlLgo+IAo+IEFz
+IGZhciBhcyBJIGNhbiB0ZWxsLCBUaGUgQmVmb3JlPSBjb21tYW5kIG9ubHkgc2F5cyB0aGF0IGlm
+IHRoZSBvdGhlcgo+IHVuaXQgaXMgc3RhcnRlZCwgdGhpcyBvbmUgd2lsbCBiZSBzdGFydGVkIGZp
+cnN0LiBJdCBkb2Vzbid0IHRha2UgdGhlCj4gcGxhY2Ugb2YgV2FudHM9IG9yIFJlcXVpcmVzPS4g
+U28gSSB0aGluayB3ZSBzaG91bGQga2VlcCB0aGF0IFdhbnRzPQo+IGxpbmUuCgpEbyB3ZSByZWFs
+bHkgIldhbnQiIGl0PyBibGstYXZhaWxhYmlsaXR5LnNlcnZpY2UgaXRzZWxmIGluY2x1ZGVzIHRo
+ZQpsaW5lICJXYW50ZWRCeT1zeXNpbml0LnRhcmdldCIuIE90aGVyd2lzZSBpdCBvbmx5IHNwZWNp
+ZmllcyAiQWZ0ZXIiCmRlcGVuZGVuY2llcyBmb3IgdmFyaW91cyBibG9jayBkZXZpY2UtcmVsYXRl
+ZCBzZXJ2aWNlcyAoZXhjZXB0IGZvcgptdWx0aXBhdGhkLnNlcnZpY2UsIHdoaWNoIGlzIHRoZSBy
+ZWFzb24gd2h5IHdlIG5lZWQgIkJlZm9yZSIgdGhlcmUpLgoKVGhlIG9ubHkgYWN0dWFsIHB1cnBv
+c2Ugb2YgImJsay1hdmFpbGFiaWxpdHkuc2VydmljZSIgaXMgdG8gcnVuCiJibGtkZWFjdGl2YXRl
+IiBvbiBzaHV0ZG93bi4gV2h5IGRvZXMgdGhhdCBkZXNlcnZlIGEgIldhbnRzIiBkZXBlbmRlbmN5
+Cm9uIHRoZSBwYXJ0IG9mIG11bHRpcGF0aGQ/IFRoZSBwcmltYXJ5IHB1cnBvc2Ugb2YgdGhlIHNl
+cnZpY2UgaXMKcmVsYXRlZCB0byBMVk0gKGh0dHBzOi8vd3d3LnJlZGhhdC5jb20vYXJjaGl2ZXMv
+bHZtLWRldmVsLzIwMTYtTm92ZW1iZXIKL21zZzAwMDkwLmh0bWwpIGJ1dCBub25lIG9mIHRoZSBM
+Vk0gc2VydmljZXMgIldhbnQiIGl0IEFGQUlDUywgc28gd2h5CnNob3VsZCBtdWx0aXBhdGg/CgpS
+ZWdhcmRzCk1hcnRpbgoKCj4gCj4gLUJlbgo+IAo+ID4gCj4gPiBTaWduZWQtb2ZmLWJ5OiBIYW5u
+ZXMgUmVpbmVja2UgPGhhcmVAc3VzZS5jb20+Cj4gPiAtLS0KPiA+IMKgbXVsdGlwYXRoZC9tdWx0
+aXBhdGhkLnNlcnZpY2UgfCA1ICsrLS0tCj4gPiDCoDEgZmlsZSBjaGFuZ2VkLCAyIGluc2VydGlv
+bnMoKyksIDMgZGVsZXRpb25zKC0pCj4gPiAKPiA+IGRpZmYgLS1naXQgYS9tdWx0aXBhdGhkL211
+bHRpcGF0aGQuc2VydmljZQo+ID4gYi9tdWx0aXBhdGhkL211bHRpcGF0aGQuc2VydmljZQo+ID4g
+aW5kZXggZDI2NTc3ZjMuLmJlMTMxMzhjIDEwMDY0NAo+ID4gLS0tIGEvbXVsdGlwYXRoZC9tdWx0
+aXBhdGhkLnNlcnZpY2UKPiA+ICsrKyBiL211bHRpcGF0aGQvbXVsdGlwYXRoZC5zZXJ2aWNlCj4g
+PiBAQCAtMSwxMCArMSw5IEBACj4gPiDCoFtVbml0XQo+ID4gwqBEZXNjcmlwdGlvbj1EZXZpY2Ut
+TWFwcGVyIE11bHRpcGF0aCBEZXZpY2UgQ29udHJvbGxlcgo+ID4gLUJlZm9yZT1pc2NzaS5zZXJ2
+aWNlIGlzY3NpZC5zZXJ2aWNlIGx2bTItYWN0aXZhdGlvbi1lYXJseS5zZXJ2aWNlCj4gPiAtQmVm
+b3JlPWxvY2FsLWZzLXByZS50YXJnZXQgc3lzdGVtZC11ZGV2LXRyaWdnZXIuc2VydmljZQo+ID4g
+K0JlZm9yZT1pc2NzaS5zZXJ2aWNlIGlzY3NpZC5zZXJ2aWNlIGx2bTItbHZtZXRhZC5zZXJ2aWNl
+IGx2bTItCj4gPiBhY3RpdmF0aW9uLWVhcmx5LnNlcnZpY2UKPiA+ICtCZWZvcmU9bG9jYWwtZnMt
+cHJlLnRhcmdldCBzeXN0ZW1kLXVkZXYtdHJpZ2dlci5zZXJ2aWNlIGJsay0KPiA+IGF2YWlsYWJp
+bGl0eS5zZXJ2aWNlCj4gPiDCoEFmdGVyPW11bHRpcGF0aGQuc29ja2V0IHN5c3RlbWQtdWRldmQu
+c2VydmljZQo+ID4gwqBEZWZhdWx0RGVwZW5kZW5jaWVzPW5vCj4gPiAtV2FudHM9bG9jYWwtZnMt
+cHJlLnRhcmdldCBtdWx0aXBhdGhkLnNvY2tldCBibGstCj4gPiBhdmFpbGFiaWxpdHkuc2Vydmlj
+ZQo+ID4gwqBDb25mbGljdHM9c2h1dGRvd24udGFyZ2V0Cj4gPiDCoAo+ID4gwqBbU2VydmljZV0K
+PiA+IC0twqAKPiA+IDIuMTEuMAo+ID4gCj4gPiAtLQo+ID4gZG0tZGV2ZWwgbWFpbGluZyBsaXN0
+Cj4gPiBkbS1kZXZlbEByZWRoYXQuY29tCj4gPiBodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxt
+YW4vbGlzdGluZm8vZG0tZGV2ZWwKPiAKPiAKCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tA
+c3VzZS5jb20+LCBUZWwuwqArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBH
+RjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAy
+MTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJl
+ZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
