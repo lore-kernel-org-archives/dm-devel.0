@@ -1,22 +1,29 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 4.9,4.10] dm: flush queued bios when process blocks to avoid
- deadlock
-Date: Wed, 15 Mar 2017 16:11:56 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1703151602170.1934@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: [PATCH 3.16,
+ 4.1] dm: flush queued bios when process blocks to avoid deadlock
+Date: Wed, 15 Mar 2017 16:22:02 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1703151618110.1934@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <stable-owner@vger.kernel.org>
-Sender: stable-owner@vger.kernel.org
-To: stable@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: stable@vger.kernel.org, Sasha Levin <sasha.levin@oracle.com>, Ben Hutchings <ben@decadent.org.uk>
 Cc: Mike Snitzer <msnitzer@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 Hi
 
-This is upstream patch d67a5f4b5947aba4bfe9a80a2b86079c215ca755, it is 
-suitable for stable branch 4.9 and 4.10.
-
-I will send modified patches for older stable branches.
+This is backport of the upstram patch 
+d67a5f4b5947aba4bfe9a80a2b86079c215ca755 for stable branches 3.16 and 4.1.
 
 Mikulas
 
@@ -58,11 +65,15 @@ Date:   Wed Feb 15 11:26:10 2017 -0500
     Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
     Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 3086da5..0ff5469c 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -972,10 +972,61 @@ void dm_accept_partial_bio(struct bio *bio, unsigned n_sectors)
+---
+ drivers/md/dm.c |   55 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 55 insertions(+)
+
+Index: linux-stable/drivers/md/dm.c
+===================================================================
+--- linux-stable.orig/drivers/md/dm.c
++++ linux-stable/drivers/md/dm.c
+@@ -1435,11 +1435,62 @@ void dm_accept_partial_bio(struct bio *b
  }
  EXPORT_SYMBOL_GPL(dm_accept_partial_bio);
  
@@ -120,11 +131,12 @@ index 3086da5..0ff5469c 100644
  {
  	int r;
  	sector_t sector;
+ 	struct mapped_device *md;
 +	struct dm_offload o;
  	struct bio *clone = &tio->clone;
  	struct dm_target *ti = tio->ti;
  
-@@ -988,7 +1039,11 @@ static void __map_bio(struct dm_target_io *tio)
+@@ -1452,7 +1503,11 @@ static void __map_bio(struct dm_target_i
  	 */
  	atomic_inc(&tio->io->io_count);
  	sector = clone->bi_iter.bi_sector;
