@@ -1,21 +1,20 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 3.10,3.12] dm: flush queued bios when process blocks to avoid
+Subject: [PATCH 4.4] dm: flush queued bios when process blocks to avoid
  deadlock
-Date: Wed, 15 Mar 2017 16:28:51 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1703151627140.1934@file01.intranet.prod.int.rdu2.redhat.com>
+Date: Wed, 15 Mar 2017 16:44:32 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1703151642410.1934@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <stable-owner@vger.kernel.org>
 Sender: stable-owner@vger.kernel.org
-To: stable@vger.kernel.org, Jiri Slaby <jslaby@suse.cz>, Willy Tarreau <w@1wt.eu>
+To: stable@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 Cc: Mike Snitzer <msnitzer@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 Hi
 
-This is backport of upstream commit 
-d67a5f4b5947aba4bfe9a80a2b86079c215ca755. It is suitable for stable 
-branches 3.10 and 3.12.
+This is backport of the upstream patch 
+d67a5f4b5947aba4bfe9a80a2b86079c215ca755 for the stable branch 4.4.
 
 Mikulas
 
@@ -65,9 +64,9 @@ Index: linux-stable/drivers/md/dm.c
 ===================================================================
 --- linux-stable.orig/drivers/md/dm.c
 +++ linux-stable/drivers/md/dm.c
-@@ -1075,11 +1075,62 @@ int dm_set_target_max_io_len(struct dm_t
+@@ -1466,11 +1466,62 @@ void dm_accept_partial_bio(struct bio *b
  }
- EXPORT_SYMBOL_GPL(dm_set_target_max_io_len);
+ EXPORT_SYMBOL_GPL(dm_accept_partial_bio);
  
 +/*
 + * Flush current->bio_list when the target map method blocks.
@@ -128,10 +127,10 @@ Index: linux-stable/drivers/md/dm.c
  	struct bio *clone = &tio->clone;
  	struct dm_target *ti = tio->ti;
  
-@@ -1093,7 +1144,11 @@ static void __map_bio(struct dm_target_i
+@@ -1483,7 +1534,11 @@ static void __map_bio(struct dm_target_i
  	 */
  	atomic_inc(&tio->io->io_count);
- 	sector = clone->bi_sector;
+ 	sector = clone->bi_iter.bi_sector;
 +
 +	dm_offload_start(&o);
  	r = ti->type->map(ti, clone);
