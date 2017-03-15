@@ -1,14 +1,13 @@
-From: Ivan Zahariev <famzah@icdsoft.com>
-Subject: Re: LVM gives "modprobe" errors on non-modular
- monolithic Linux kernels
-Date: Wed, 15 Mar 2017 09:21:59 +0200
-Message-ID: <3897df8b-c8f3-862f-849b-c86e704fcd29@icdsoft.com>
-References: <1cc4879f-a9a6-dd4c-c430-2a4dc3652e62@icdsoft.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [bug report] dm: add integrity target
+Date: Wed, 15 Mar 2017 08:23:05 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1703150821230.21627@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20170313100123.GA14298@mwanda>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1cc4879f-a9a6-dd4c-c430-2a4dc3652e62@icdsoft.com>
+In-Reply-To: <20170313100123.GA14298@mwanda>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,48 +17,49 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Dan Carpenter <dan.carpenter@oracle.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-SGkgZ3V5cywKCklzIHRoaXMgbW9yZSB3b3JrIHRoYW4gc2ltcGx5IGV4cG9ydGluZyBhICJ2ZXJz
-aW9uIiBpbiBldmVyeSAKImRtX2NhY2hlXyoiIG1vZHVsZSwgaW4gb3JkZXIgZm9yIGl0IHRvIGhh
-dmUgYSAiL3N5cy9tb2R1bGUiIHBhdGggZW50cnk/CgpTaG91bGQgSSBmaWxlIGEgYnVnIHJlZ2Fy
-ZGluZyB0aGlzPwoKQmVzdCByZWdhcmRzLgotLUl2YW4KCgpPbiAxMy4zLjIwMTcg0LMuIDE0OjE1
-INGHLiwgSXZhbiBaYWhhcmlldiB3cm90ZToKPiBIZWxsbywKPgo+IEhlcmUgaXMgYW4gZXhhbXBs
-ZSBvZiB0aGUgcHJvYmxlbToKPgo+ICAgICMgbHZjb252ZXJ0IC0teWVzIC0tdHlwZSBjYWNoZSAt
-LWNhY2hlcG9saWN5IHNtcSAtLWNhY2hlcG9vbAo+ICAgIHZnMC9sdl9jYWNoZV9zMTg4LXZwIHZn
-MC9zMTg4Cj4KPiAgICBtb2Rwcm9iZTogRVJST1I6IC4uL2xpYmttb2QvbGlia21vZC5jOjU1NyBr
-bW9kX3NlYXJjaF9tb2RkZXAoKSBjb3VsZAo+ICAgIG5vdCBvcGVuIG1vZGRlcCBmaWxlICcvbGli
-L21vZHVsZXMvNC40LjMwLWdyc2VjL21vZHVsZXMuZGVwLmJpbicKPiAgICAgICAvc2Jpbi9tb2Rw
-cm9iZSBmYWlsZWQ6IDEKPgo+Cj4gU3RyYWNlIHNob3dzIHRoYXQgImx2Y29udmVydCIgY2FsbHMg
-Im1vZHByb2JlIiBiZWNhdXNlIGl0IGNhbid0IGZpbmQgCj4gc29tZSBwYXRocyBpbiAiL3N5cy9t
-b2R1bGUiOgo+Cj4gICogL3N5cy9tb2R1bGUvZG1fY2FjaGVfc21xCj4gICogL3N5cy9tb2R1bGUv
-ZG1fY2FjaGVfbXEKPgo+Cj4gQXQgdGhlIHNhbWUgdGltZSwgdGhlc2UgbW9kdWxlcyBhcmUgYWxy
-ZWFkeSBpbiB0aGUga2VybmVsLiBIZXJlIGlzIGEgCj4gcHJvb2Y6Cj4KPiAgICByb290QHNtLXNy
-djIyODp+IyB6Z3JlcCAtaSBjYWNoZSAvcHJvYy9jb25maWcuZ3ogfGdyZXAgLWkgZG0KPiAgICBD
-T05GSUdfRE1fQ0FDSEU9eQo+ICAgIENPTkZJR19ETV9DQUNIRV9NUT15Cj4gICAgQ09ORklHX0RN
-X0NBQ0hFX1NNUT15Cj4gICAgQ09ORklHX0RNX0NBQ0hFX0NMRUFORVI9eQo+Cj4KPiBTbyB0aGUg
-cmVhbCBwcm9ibGVtIGlzIHRoYXQgdGhlIG1vZHVsZXMgYXJlIGNvbXBpbGVkIGluIHRoZSBtb25v
-bGl0aGljIAo+IGtlcm5lbCBidXQgYXJlIG5vdCBzZWVuIGluICIvc3lzL21vZHVsZSIuIEF0IHRo
-ZSBzYW1lIHRpbWUsIGV2ZW4gd2l0aCAKPiBhIG1vbm9saXRoaWMga2VybmVsLCBzb21lIG1vZHVs
-ZXMgZG8gaGF2ZSB0aGVpciBjb3JyZXNwb25kaW5nIAo+IGRpcmVjdG9yaWVzIGluICIvc3lzL21v
-ZHVsZSIsIGxpa2UgdGhlICJkbV9jYWNoZSIgbW9kdWxlLCBmb3IgZXhhbXBsZToKPgo+ICAgIHJv
-b3RAc20tc3J2MjI4On4jIGZpbmQgL3N5cy9tb2R1bGUvZG1fY2FjaGUgLXR5cGUgZgo+ICAgIC9z
-eXMvbW9kdWxlL2RtX2NhY2hlL3BhcmFtZXRlcnMvY2FjaGVfY29weV90aHJvdHRsZQo+Cj4KPiBN
-eSBuYWl2ZSByZXNlYXJjaCBjb25jbHVkZWQgdGhhdCBub24tbW9kdWxhciBtb25vbGl0aGljIExp
-bnV4IGtlcm5lbHMgCj4gZXhwb3J0IHRoZSBjb21waWxlZC1pbiBtb2R1bGVzIGluICIvc3lzL21v
-ZHVsZSIgb25seSBpZiBvbmUgb2YgdGhlIAo+IGZvbGxvd2luZyBpcyB0cnVlOgo+Cj4gICogdGhl
-IGtlcm5lbCBtb2R1bGUgZXhwb3J0cyBhbnkgcGFyYW1ldGVycyBpbiB0aGUKPiAgICAiL3N5cy9t
-b2R1bGUvJG1vZHVsZS9wYXJhbWV0ZXJzIiBkaXJlY3RvcnkKPiAgKiBvciB0aGUga2VybmVsIG1v
-ZHVsZSBoYXMgYSAidmVyc2lvbiIgZmlsZSAKPiAiL3N5cy9tb2R1bGUvJG1vZHVsZS92ZXJzaW9u
-Igo+Cj4KPiBJbiBhIG51dHNoZWxsLCBwbGVhc2UgZXhwb3J0IGEgInZlcnNpb24iIG9mIGFsbCAi
-ZG1fY2FjaGVfKiIgbW9kdWxlcywgCj4gc28gdGhhdCBldmVuIGluIG1vbm9saXRoaWMgTGludXgg
-a2VybmVscyB3ZSBjYW4gaGF2ZSBhIGRpcmVjdG9yeSBpbiAKPiAiL3N5cy9tb2R1bGUiIGZvciB0
-aGVtLiBUaGlzIHdheSB0aGUgTFZNMiB0b29scyB3b24ndCBnaXZlIG91dCAKPiBzcG9yYWRpYyAi
-bW9kcHJvYmUiIGVycm9ycyB3aGVuIHJhbiBvbiBtb25vbGl0aGljIExpbnV4IGtlcm5lbHMuCj4K
-PiBEb2VzIGFsbCB0aGlzIG1ha2Ugc2Vuc2U/IElzIHRoZSBwYXRjaCBzb21ldGhpbmcgdHJpdmlh
-bCB3aGljaCB3ZSBjYW4gCj4gYmFja3BvcnQgaW50byBvdXIgY3VzdG9tIDQuNC4zMCBMaW51eCBr
-ZXJuZWw/Cj4KPiBUaGFua3MuCj4gLS1JdmFuCgotLSAKKkl2YW4gWmFoYXJpZXYqCkhlYWQgb2Yg
-TGludXggRW5naW5lZXJpbmcgYW5kIE9wZXJhdGlvbnMKd3d3LmljZHNvZnQuY29tIDxodHRwOi8v
-d3d3LmljZHNvZnQuY29tPgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhh
-dC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+
+
+On Mon, 13 Mar 2017, Dan Carpenter wrote:
+
+> Hello Mikulas Patocka,
+> 
+> The patch dfab77c854fc: "dm: add integrity target" from Jan 4, 2017,
+> leads to the following static checker warning:
+
+Hi
+
+I already removed this condition in my code. It comes from an old version 
+where interleaving could be disabled and disabled interleaving was 
+indicated by "-1". The current version always uses interleaving, so this 
+condition is pointless.
+
+Mikulas
+
+> 	drivers/md/dm-integrity.c:2653 dm_integrity_ctr()
+> 	warn: always true condition '(ic->sb->log2_interleave_sectors != -1) => (0-255 != (-1))'
+> 
+> drivers/md/dm-integrity.c
+>   2647          if (le16_to_cpu(ic->sb->integrity_tag_size) != ic->tag_size) {
+>   2648                  r = -EINVAL;
+>   2649                  ti->error = "Invalid tag size";
+>   2650                  goto bad;
+>   2651          }
+>   2652          /* make sure that ti->max_io_len doesn't overflow */
+>   2653          if (ic->sb->log2_interleave_sectors != -1 && (ic->sb->log2_interleave_sectors < MIN_INTERLEAVE_SECTORS || ic->sb->log2_interleave_sectors > MAX_INTERLEAVE_SECTORS)) {
+>                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> Impossible!  Also this line is really really really long so it doesn't
+> even fit in my email client.  It's like a million characters long.
+> 
+>   2654                  r = -EINVAL;
+>   2655                  ti->error = "Invalid interleave_sectors in the superblock";
+>   2656                  goto bad;
+>   2657          }
+>  
+> 
+> regards,
+> dan carpenter
+> 
