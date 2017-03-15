@@ -1,29 +1,21 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 3.16,
- 4.1] dm: flush queued bios when process blocks to avoid deadlock
-Date: Wed, 15 Mar 2017 16:22:02 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1703151618110.1934@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: [PATCH 3.10,3.12] dm: flush queued bios when process blocks to avoid
+ deadlock
+Date: Wed, 15 Mar 2017 16:28:51 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1703151627140.1934@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: stable@vger.kernel.org, Sasha Levin <sasha.levin@oracle.com>, Ben Hutchings <ben@decadent.org.uk>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <stable-owner@vger.kernel.org>
+Sender: stable-owner@vger.kernel.org
+To: stable@vger.kernel.org, Jiri Slaby <jslaby@suse.cz>, Willy Tarreau <w@1wt.eu>
 Cc: Mike Snitzer <msnitzer@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 Hi
 
-This is backport of the upstram patch 
-d67a5f4b5947aba4bfe9a80a2b86079c215ca755 for stable branches 3.16 and 4.1.
+This is backport of upstream commit 
+d67a5f4b5947aba4bfe9a80a2b86079c215ca755. It is suitable for stable 
+branches 3.10 and 3.12.
 
 Mikulas
 
@@ -73,9 +65,9 @@ Index: linux-stable/drivers/md/dm.c
 ===================================================================
 --- linux-stable.orig/drivers/md/dm.c
 +++ linux-stable/drivers/md/dm.c
-@@ -1435,11 +1435,62 @@ void dm_accept_partial_bio(struct bio *b
+@@ -1075,11 +1075,62 @@ int dm_set_target_max_io_len(struct dm_t
  }
- EXPORT_SYMBOL_GPL(dm_accept_partial_bio);
+ EXPORT_SYMBOL_GPL(dm_set_target_max_io_len);
  
 +/*
 + * Flush current->bio_list when the target map method blocks.
@@ -136,10 +128,10 @@ Index: linux-stable/drivers/md/dm.c
  	struct bio *clone = &tio->clone;
  	struct dm_target *ti = tio->ti;
  
-@@ -1452,7 +1503,11 @@ static void __map_bio(struct dm_target_i
+@@ -1093,7 +1144,11 @@ static void __map_bio(struct dm_target_i
  	 */
  	atomic_inc(&tio->io->io_count);
- 	sector = clone->bi_iter.bi_sector;
+ 	sector = clone->bi_sector;
 +
 +	dm_offload_start(&o);
  	r = ti->type->map(ti, clone);
