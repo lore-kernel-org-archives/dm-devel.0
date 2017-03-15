@@ -1,16 +1,14 @@
-From: Bart Van Assche <Bart.VanAssche@sandisk.com>
-Subject: Re: [PATCH] multipathd: fix SIGUSR2 handling
-Date: Tue, 14 Mar 2017 23:29:52 +0000
-Message-ID: <1489534179.2676.18.camel@sandisk.com>
-References: <1482998174-11884-1-git-send-email-tang.junhui@zte.com.cn>
-	<20170103185909.GB2732@octiron.msp.redhat.com>
+From: Ivan Zahariev <famzah@icdsoft.com>
+Subject: Re: LVM gives "modprobe" errors on non-modular
+ monolithic Linux kernels
+Date: Wed, 15 Mar 2017 09:21:59 +0200
+Message-ID: <3897df8b-c8f3-862f-849b-c86e704fcd29@icdsoft.com>
+References: <1cc4879f-a9a6-dd4c-c430-2a4dc3652e62@icdsoft.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170103185909.GB2732@octiron.msp.redhat.com>
-Content-Language: en-US
-Content-ID: <421A39BFD0E3954ABA464DA4D5E35D04@sandisk.com>
+In-Reply-To: <1cc4879f-a9a6-dd4c-c430-2a4dc3652e62@icdsoft.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,24 +18,48 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "bmarzins@redhat.com" <bmarzins@redhat.com>, "tang.junhui@zte.com.cn" <tang.junhui@zte.com.cn>
-Cc: "zhang.kai16@zte.com.cn" <zhang.kai16@zte.com.cn>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "mwilck@suse.com" <mwilck@suse.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, 2017-01-03 at 12:59 -0600, Benjamin Marzinski wrote:
-> On Thu, Dec 29, 2016 at 03:56:14PM +0800, tang.junhui@zte.com.cn wrote:
-> > From: "tang.junhui" <tang.junhui@zte.com.cn>
-> > 
-> > SIGUSR2 is not blocked by default, it would cause bellow conflict
-> > in removing of the last path:
-> 
-> ACK
-
-Hello Christophe,
-
-This patch was posted more than two months ago. Do you think it should
-be reposted?
-
-Thanks,
-
-Bart.
+SGkgZ3V5cywKCklzIHRoaXMgbW9yZSB3b3JrIHRoYW4gc2ltcGx5IGV4cG9ydGluZyBhICJ2ZXJz
+aW9uIiBpbiBldmVyeSAKImRtX2NhY2hlXyoiIG1vZHVsZSwgaW4gb3JkZXIgZm9yIGl0IHRvIGhh
+dmUgYSAiL3N5cy9tb2R1bGUiIHBhdGggZW50cnk/CgpTaG91bGQgSSBmaWxlIGEgYnVnIHJlZ2Fy
+ZGluZyB0aGlzPwoKQmVzdCByZWdhcmRzLgotLUl2YW4KCgpPbiAxMy4zLjIwMTcg0LMuIDE0OjE1
+INGHLiwgSXZhbiBaYWhhcmlldiB3cm90ZToKPiBIZWxsbywKPgo+IEhlcmUgaXMgYW4gZXhhbXBs
+ZSBvZiB0aGUgcHJvYmxlbToKPgo+ICAgICMgbHZjb252ZXJ0IC0teWVzIC0tdHlwZSBjYWNoZSAt
+LWNhY2hlcG9saWN5IHNtcSAtLWNhY2hlcG9vbAo+ICAgIHZnMC9sdl9jYWNoZV9zMTg4LXZwIHZn
+MC9zMTg4Cj4KPiAgICBtb2Rwcm9iZTogRVJST1I6IC4uL2xpYmttb2QvbGlia21vZC5jOjU1NyBr
+bW9kX3NlYXJjaF9tb2RkZXAoKSBjb3VsZAo+ICAgIG5vdCBvcGVuIG1vZGRlcCBmaWxlICcvbGli
+L21vZHVsZXMvNC40LjMwLWdyc2VjL21vZHVsZXMuZGVwLmJpbicKPiAgICAgICAvc2Jpbi9tb2Rw
+cm9iZSBmYWlsZWQ6IDEKPgo+Cj4gU3RyYWNlIHNob3dzIHRoYXQgImx2Y29udmVydCIgY2FsbHMg
+Im1vZHByb2JlIiBiZWNhdXNlIGl0IGNhbid0IGZpbmQgCj4gc29tZSBwYXRocyBpbiAiL3N5cy9t
+b2R1bGUiOgo+Cj4gICogL3N5cy9tb2R1bGUvZG1fY2FjaGVfc21xCj4gICogL3N5cy9tb2R1bGUv
+ZG1fY2FjaGVfbXEKPgo+Cj4gQXQgdGhlIHNhbWUgdGltZSwgdGhlc2UgbW9kdWxlcyBhcmUgYWxy
+ZWFkeSBpbiB0aGUga2VybmVsLiBIZXJlIGlzIGEgCj4gcHJvb2Y6Cj4KPiAgICByb290QHNtLXNy
+djIyODp+IyB6Z3JlcCAtaSBjYWNoZSAvcHJvYy9jb25maWcuZ3ogfGdyZXAgLWkgZG0KPiAgICBD
+T05GSUdfRE1fQ0FDSEU9eQo+ICAgIENPTkZJR19ETV9DQUNIRV9NUT15Cj4gICAgQ09ORklHX0RN
+X0NBQ0hFX1NNUT15Cj4gICAgQ09ORklHX0RNX0NBQ0hFX0NMRUFORVI9eQo+Cj4KPiBTbyB0aGUg
+cmVhbCBwcm9ibGVtIGlzIHRoYXQgdGhlIG1vZHVsZXMgYXJlIGNvbXBpbGVkIGluIHRoZSBtb25v
+bGl0aGljIAo+IGtlcm5lbCBidXQgYXJlIG5vdCBzZWVuIGluICIvc3lzL21vZHVsZSIuIEF0IHRo
+ZSBzYW1lIHRpbWUsIGV2ZW4gd2l0aCAKPiBhIG1vbm9saXRoaWMga2VybmVsLCBzb21lIG1vZHVs
+ZXMgZG8gaGF2ZSB0aGVpciBjb3JyZXNwb25kaW5nIAo+IGRpcmVjdG9yaWVzIGluICIvc3lzL21v
+ZHVsZSIsIGxpa2UgdGhlICJkbV9jYWNoZSIgbW9kdWxlLCBmb3IgZXhhbXBsZToKPgo+ICAgIHJv
+b3RAc20tc3J2MjI4On4jIGZpbmQgL3N5cy9tb2R1bGUvZG1fY2FjaGUgLXR5cGUgZgo+ICAgIC9z
+eXMvbW9kdWxlL2RtX2NhY2hlL3BhcmFtZXRlcnMvY2FjaGVfY29weV90aHJvdHRsZQo+Cj4KPiBN
+eSBuYWl2ZSByZXNlYXJjaCBjb25jbHVkZWQgdGhhdCBub24tbW9kdWxhciBtb25vbGl0aGljIExp
+bnV4IGtlcm5lbHMgCj4gZXhwb3J0IHRoZSBjb21waWxlZC1pbiBtb2R1bGVzIGluICIvc3lzL21v
+ZHVsZSIgb25seSBpZiBvbmUgb2YgdGhlIAo+IGZvbGxvd2luZyBpcyB0cnVlOgo+Cj4gICogdGhl
+IGtlcm5lbCBtb2R1bGUgZXhwb3J0cyBhbnkgcGFyYW1ldGVycyBpbiB0aGUKPiAgICAiL3N5cy9t
+b2R1bGUvJG1vZHVsZS9wYXJhbWV0ZXJzIiBkaXJlY3RvcnkKPiAgKiBvciB0aGUga2VybmVsIG1v
+ZHVsZSBoYXMgYSAidmVyc2lvbiIgZmlsZSAKPiAiL3N5cy9tb2R1bGUvJG1vZHVsZS92ZXJzaW9u
+Igo+Cj4KPiBJbiBhIG51dHNoZWxsLCBwbGVhc2UgZXhwb3J0IGEgInZlcnNpb24iIG9mIGFsbCAi
+ZG1fY2FjaGVfKiIgbW9kdWxlcywgCj4gc28gdGhhdCBldmVuIGluIG1vbm9saXRoaWMgTGludXgg
+a2VybmVscyB3ZSBjYW4gaGF2ZSBhIGRpcmVjdG9yeSBpbiAKPiAiL3N5cy9tb2R1bGUiIGZvciB0
+aGVtLiBUaGlzIHdheSB0aGUgTFZNMiB0b29scyB3b24ndCBnaXZlIG91dCAKPiBzcG9yYWRpYyAi
+bW9kcHJvYmUiIGVycm9ycyB3aGVuIHJhbiBvbiBtb25vbGl0aGljIExpbnV4IGtlcm5lbHMuCj4K
+PiBEb2VzIGFsbCB0aGlzIG1ha2Ugc2Vuc2U/IElzIHRoZSBwYXRjaCBzb21ldGhpbmcgdHJpdmlh
+bCB3aGljaCB3ZSBjYW4gCj4gYmFja3BvcnQgaW50byBvdXIgY3VzdG9tIDQuNC4zMCBMaW51eCBr
+ZXJuZWw/Cj4KPiBUaGFua3MuCj4gLS1JdmFuCgotLSAKKkl2YW4gWmFoYXJpZXYqCkhlYWQgb2Yg
+TGludXggRW5naW5lZXJpbmcgYW5kIE9wZXJhdGlvbnMKd3d3LmljZHNvZnQuY29tIDxodHRwOi8v
+d3d3LmljZHNvZnQuY29tPgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhh
+dC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
