@@ -1,12 +1,13 @@
 From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH] multipath-tools: clean up libdmmp/Makefile
-Date: Thu, 16 Mar 2017 07:44:54 +0100
-Message-ID: <CABr-GndXfiJbp7W9HPLXeEhHwagM7_nh_4_z4U=kbLrYjf5-qA@mail.gmail.com>
-References: <20170313164731.2437-1-xose.vazquez@gmail.com>
+Subject: Re: [PATCH] multipath-tools: libdmmp: Fix incorrect use
+	of __attribute__
+Date: Thu, 16 Mar 2017 07:45:57 +0100
+Message-ID: <CABr-Gnch2-Ejc=yLr4F2Yu=NWx9Qte6gHkCWZb+gugK7VCeNgg@mail.gmail.com>
+References: <20170311141214.31039-1-fge@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============5905608655184564113=="
+Content-Type: multipart/mixed; boundary="===============1435339699806888784=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170313164731.2437-1-xose.vazquez@gmail.com>
+In-Reply-To: <20170311141214.31039-1-fge@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,146 +17,164 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: Gris Ge <fge@redhat.com>, device-mapper development <dm-devel@redhat.com>
+To: Gris Ge <fge@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============5905608655184564113==
-Content-Type: multipart/alternative; boundary=001a1138f4041328fb054ad366bd
+--===============1435339699806888784==
+Content-Type: multipart/alternative; boundary=94eb2c0afb62d2ec41054ad36972
 
---001a1138f4041328fb054ad366bd
+--94eb2c0afb62d2ec41054ad36972
 Content-Type: text/plain; charset=UTF-8
 
-Applied,
+Applied
 Thanks.
 
-On Mon, Mar 13, 2017 at 5:47 PM, Xose Vazquez Perez <xose.vazquez@gmail.com>
-wrote:
+On Sat, Mar 11, 2017 at 3:12 PM, Gris Ge <fge@redhat.com> wrote:
 
-> Replace LDFLAGS with LIBDEPS, build libdmmp shared library without CFLAGS
+> According to https://gcc.gnu.org/onlinedocs/gcc/Type-Attributes.html ,
+> type attributes should be placed immediately after the struct, union or
+> enum keyword.
 >
-> Cc: Gris Ge <fge@redhat.com>
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: device-mapper development <dm-devel@redhat.com>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+> Signed-off-by: Gris Ge <fge@redhat.com>
 > ---
->  libdmmp/Makefile | 11 ++++++-----
->  1 file changed, 6 insertions(+), 5 deletions(-)
+>  libdmmp/libdmmp/libdmmp.h | 8 ++++----
+>  libdmmp/libdmmp_private.h | 3 ++-
+>  2 files changed, 6 insertions(+), 5 deletions(-)
 >
-> diff --git a/libdmmp/Makefile b/libdmmp/Makefile
-> index c98ae67..aaff285 100644
-> --- a/libdmmp/Makefile
-> +++ b/libdmmp/Makefile
-> @@ -9,21 +9,22 @@ LIBDMMP_VERSION=0.1.0
->  SONAME=$(LIBDMMP_VERSION)
->  DEVLIB = libdmmp.so
->  LIBS = $(DEVLIB).$(SONAME)
-> -LIBDEPS = -pthread
->  PKGFILE = libdmmp.pc
->  EXTRA_MAN_FILES = libdmmp.h.3
->  HEADERS = libdmmp/libdmmp.h
-> +
->  OBJS = libdmmp.o libdmmp_mp.o libdmmp_pg.o libdmmp_path.o libdmmp_misc.o
+> diff --git a/libdmmp/libdmmp/libdmmp.h b/libdmmp/libdmmp/libdmmp.h
+> index 3fc8e6f..0679158 100644
+> --- a/libdmmp/libdmmp/libdmmp.h
+> +++ b/libdmmp/libdmmp/libdmmp.h
+> @@ -73,18 +73,18 @@ extern "C" {
+>   */
+>  DMMP_DLL_EXPORT const char *dmmp_log_priority_str(int priority);
 >
->  CFLAGS += -fvisibility=hidden -I$(libdmmpdir) -I$(mpathcmddir) \
->           $(shell pkg-config --cflags json-c)
-> -LDFLAGS += $(shell pkg-config --libs json-c) -L$(mpathcmddir) -lmpathcmd
-> +
-> +LIBDEPS += $(shell pkg-config --libs json-c) -L$(mpathcmddir) -lmpathcmd
-> -pthread
+> -DMMP_DLL_EXPORT struct dmmp_context;
+> +struct DMMP_DLL_EXPORT dmmp_context;
 >
->  all: $(LIBS) doc
+> -DMMP_DLL_EXPORT struct dmmp_mpath;
+> +struct DMMP_DLL_EXPORT dmmp_mpath;
 >
-> -$(LIBS): $(OBJS)
-> -       $(CC) $(LDFLAGS) $(SHARED_FLAGS) \
-> -       -Wl,-soname=$@ $(CFLAGS) -o $@ $(OBJS) $(LIBDEPS)
-> +$(LIBS):
-> +       $(CC) -c $(CFLAGS) *.c
-> +       $(CC) $(LDFLAGS) $(SHARED_FLAGS) -Wl,-soname=$@ -o $@ $(OBJS)
-> $(LIBDEPS)
->         $(LN) $@ $(DEVLIB)
+> -DMMP_DLL_EXPORT struct dmmp_path_group;
+> +struct DMMP_DLL_EXPORT dmmp_path_group;
 >
->  install:
+>  #define DMMP_PATH_GROUP_STATUS_UNKNOWN 0
+>  #define DMMP_PATH_GROUP_STATUS_ENABLED 1
+>  #define DMMP_PATH_GROUP_STATUS_DISABLED        2
+>  #define DMMP_PATH_GROUP_STATUS_ACTIVE  3
+>
+> -DMMP_DLL_EXPORT struct dmmp_path;
+> +struct DMMP_DLL_EXPORT dmmp_path;
+>
+>  #define DMMP_PATH_STATUS_UNKNOWN       0
+>  //#define DMMP_PATH_STATUS_UNCHECKED   1
+> diff --git a/libdmmp/libdmmp_private.h b/libdmmp/libdmmp_private.h
+> index e23c995..3e813cb 100644
+> --- a/libdmmp/libdmmp_private.h
+> +++ b/libdmmp/libdmmp_private.h
+> @@ -47,7 +47,8 @@ extern "C" {
+>
+>  #define _DMMP_PATH_GROUP_ID_UNKNOWN    0
+>
+> -DMMP_DLL_LOCAL struct _num_str_conv {
+> +struct DMMP_DLL_LOCAL _num_str_conv;
+> +struct _num_str_conv {
+>         const uint32_t value;
+>         const char *str;
+>  };
 > --
 > 2.12.0
 >
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
 >
 
---001a1138f4041328fb054ad366bd
+--94eb2c0afb62d2ec41054ad36972
 Content-Type: text/html; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 
-<div dir=3D"ltr">Applied,<div>Thanks.</div></div><div class=3D"gmail_extra"=
-><br><div class=3D"gmail_quote">On Mon, Mar 13, 2017 at 5:47 PM, Xose Vazqu=
-ez Perez <span dir=3D"ltr">&lt;<a href=3D"mailto:xose.vazquez@gmail.com" ta=
-rget=3D"_blank">xose.vazquez@gmail.com</a>&gt;</span> wrote:<br><blockquote=
- class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc soli=
-d;padding-left:1ex">Replace LDFLAGS with LIBDEPS, build libdmmp shared libr=
-ary without CFLAGS<br>
+<div dir=3D"ltr">Applied<div>Thanks.</div></div><div class=3D"gmail_extra">=
+<br><div class=3D"gmail_quote">On Sat, Mar 11, 2017 at 3:12 PM, Gris Ge <sp=
+an dir=3D"ltr">&lt;<a href=3D"mailto:fge@redhat.com" target=3D"_blank">fge@=
+redhat.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=
+=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex">Accordin=
+g to <a href=3D"https://gcc.gnu.org/onlinedocs/gcc/Type-Attributes.html" re=
+l=3D"noreferrer" target=3D"_blank">https://gcc.gnu.org/<wbr>onlinedocs/gcc/=
+Type-<wbr>Attributes.html</a> ,<br>
+type attributes should be placed immediately after the struct, union or<br>
+enum keyword.<br>
 <br>
-Cc: Gris Ge &lt;<a href=3D"mailto:fge@redhat.com">fge@redhat.com</a>&gt;<br=
->
-Cc: Christophe Varoqui &lt;<a href=3D"mailto:christophe.varoqui@opensvc.com=
-">christophe.varoqui@opensvc.<wbr>com</a>&gt;<br>
-Cc: device-mapper development &lt;<a href=3D"mailto:dm-devel@redhat.com">dm=
--devel@redhat.com</a>&gt;<br>
-Signed-off-by: Xose Vazquez Perez &lt;<a href=3D"mailto:xose.vazquez@gmail.=
-com">xose.vazquez@gmail.com</a>&gt;<br>
+Signed-off-by: Gris Ge &lt;<a href=3D"mailto:fge@redhat.com">fge@redhat.com=
+</a>&gt;<br>
 ---<br>
-=C2=A0libdmmp/Makefile | 11 ++++++-----<br>
-=C2=A01 file changed, 6 insertions(+), 5 deletions(-)<br>
+=C2=A0libdmmp/libdmmp/libdmmp.h | 8 ++++----<br>
+=C2=A0libdmmp/libdmmp_private.h | 3 ++-<br>
+=C2=A02 files changed, 6 insertions(+), 5 deletions(-)<br>
 <br>
-diff --git a/libdmmp/Makefile b/libdmmp/Makefile<br>
-index c98ae67..aaff285 100644<br>
---- a/libdmmp/Makefile<br>
-+++ b/libdmmp/Makefile<br>
-@@ -9,21 +9,22 @@ LIBDMMP_VERSION=3D0.1.0<br>
-=C2=A0SONAME=3D$(LIBDMMP_VERSION)<br>
-=C2=A0DEVLIB =3D libdmmp.so<br>
-=C2=A0LIBS =3D $(DEVLIB).$(SONAME)<br>
--LIBDEPS =3D -pthread<br>
-=C2=A0PKGFILE =3D libdmmp.pc<br>
-=C2=A0EXTRA_MAN_FILES =3D libdmmp.h.3<br>
-=C2=A0HEADERS =3D libdmmp/libdmmp.h<br>
-+<br>
-=C2=A0OBJS =3D libdmmp.o libdmmp_mp.o libdmmp_pg.o libdmmp_path.o libdmmp_m=
-isc.o<br>
+diff --git a/libdmmp/libdmmp/libdmmp.h b/libdmmp/libdmmp/libdmmp.h<br>
+index 3fc8e6f..0679158 100644<br>
+--- a/libdmmp/libdmmp/libdmmp.h<br>
++++ b/libdmmp/libdmmp/libdmmp.h<br>
+@@ -73,18 +73,18 @@ extern &quot;C&quot; {<br>
+=C2=A0 */<br>
+=C2=A0DMMP_DLL_EXPORT const char *dmmp_log_priority_str(int priority);<br>
 <br>
-=C2=A0CFLAGS +=3D -fvisibility=3Dhidden -I$(libdmmpdir) -I$(mpathcmddir) \<=
-br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 $(shell pkg-config --cflags json-c)<br>
--LDFLAGS +=3D $(shell pkg-config --libs json-c) -L$(mpathcmddir) -lmpathcmd=
+-DMMP_DLL_EXPORT struct dmmp_context;<br>
++struct DMMP_DLL_EXPORT dmmp_context;<br>
 <br>
-+<br>
-+LIBDEPS +=3D $(shell pkg-config --libs json-c) -L$(mpathcmddir) -lmpathcmd=
- -pthread<br>
+-DMMP_DLL_EXPORT struct dmmp_mpath;<br>
++struct DMMP_DLL_EXPORT dmmp_mpath;<br>
 <br>
-=C2=A0all: $(LIBS) doc<br>
+-DMMP_DLL_EXPORT struct dmmp_path_group;<br>
++struct DMMP_DLL_EXPORT dmmp_path_group;<br>
 <br>
--$(LIBS): $(OBJS)<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(LDFLAGS) $(SHARED_FLAGS) \<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0-Wl,-soname=3D$@ $(CFLAGS) -o $@ $(OBJS) $(LIBD=
-EPS)<br>
-+$(LIBS):<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) -c $(CFLAGS) *.c<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(LDFLAGS) $(SHARED_FLAGS) -Wl,-soname=3D=
-$@ -o $@ $(OBJS) $(LIBDEPS)<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 $(LN) $@ $(DEVLIB)<br>
+=C2=A0#define DMMP_PATH_GROUP_STATUS_UNKNOWN 0<br>
+=C2=A0#define DMMP_PATH_GROUP_STATUS_ENABLED 1<br>
+=C2=A0#define DMMP_PATH_GROUP_STATUS_<wbr>DISABLED=C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 2<br>
+=C2=A0#define DMMP_PATH_GROUP_STATUS_ACTIVE=C2=A0 3<br>
 <br>
-=C2=A0install:<br>
+-DMMP_DLL_EXPORT struct dmmp_path;<br>
++struct DMMP_DLL_EXPORT dmmp_path;<br>
+<br>
+=C2=A0#define DMMP_PATH_STATUS_UNKNOWN=C2=A0 =C2=A0 =C2=A0 =C2=A00<br>
+=C2=A0//#define DMMP_PATH_STATUS_UNCHECKED=C2=A0 =C2=A01<br>
+diff --git a/libdmmp/libdmmp_private.h b/libdmmp/libdmmp_private.h<br>
+index e23c995..3e813cb 100644<br>
+--- a/libdmmp/libdmmp_private.h<br>
++++ b/libdmmp/libdmmp_private.h<br>
+@@ -47,7 +47,8 @@ extern &quot;C&quot; {<br>
+<br>
+=C2=A0#define _DMMP_PATH_GROUP_ID_UNKNOWN=C2=A0 =C2=A0 0<br>
+<br>
+-DMMP_DLL_LOCAL struct _num_str_conv {<br>
++struct DMMP_DLL_LOCAL _num_str_conv;<br>
++struct _num_str_conv {<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 const uint32_t value;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 const char *str;<br>
+=C2=A0};<br>
 <span class=3D"HOEnZb"><font color=3D"#888888">--<br>
 2.12.0<br>
 <br>
+--<br>
+dm-devel mailing list<br>
+<a href=3D"mailto:dm-devel@redhat.com">dm-devel@redhat.com</a><br>
+<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" rel=3D"norefer=
+rer" target=3D"_blank">https://www.redhat.com/<wbr>mailman/listinfo/dm-deve=
+l</a><br>
 </font></span></blockquote></div><br></div>
 
---001a1138f4041328fb054ad366bd--
+--94eb2c0afb62d2ec41054ad36972--
 
 
---===============5905608655184564113==
+--===============1435339699806888784==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============5905608655184564113==--
+--===============1435339699806888784==--
