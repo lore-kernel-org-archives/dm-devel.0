@@ -1,12 +1,14 @@
 From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH] uevent_can_discard: optimize devpath check
-Date: Thu, 16 Mar 2017 07:42:34 +0100
-Message-ID: <CABr-GncK5N0kP4WLM50WPNFT-DQ+VFP1MR8cs377AvYN8227zA@mail.gmail.com>
-References: <20170301172219.9683-1-mwilck@suse.com>
+Subject: Re: [PATCH] multipathd: fix SIGUSR2 handling
+Date: Thu, 16 Mar 2017 07:43:51 +0100
+Message-ID: <CABr-Gne8L4yn_g4c2Vv6fZcSOa+Nbx1Rtd5YTVaitaJ8q5a6cA@mail.gmail.com>
+References: <1482998174-11884-1-git-send-email-tang.junhui@zte.com.cn>
+	<20170103185909.GB2732@octiron.msp.redhat.com>
+	<1489534179.2676.18.camel@sandisk.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============7521505892953483701=="
+Content-Type: multipart/mixed; boundary="===============7650286848736454321=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170301172219.9683-1-mwilck@suse.com>
+In-Reply-To: <1489534179.2676.18.camel@sandisk.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,199 +18,79 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: device-mapper development <dm-devel@redhat.com>, tang.junhui@zte.com.cn
+To: Bart Van Assche <Bart.VanAssche@sandisk.com>
+Cc: "tang.junhui@zte.com.cn" <tang.junhui@zte.com.cn>, "zhang.kai16@zte.com.cn" <zhang.kai16@zte.com.cn>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "mwilck@suse.com" <mwilck@suse.com>
 List-Id: dm-devel.ids
 
---===============7521505892953483701==
-Content-Type: multipart/alternative; boundary=94eb2c0b86ecb81a8e054ad35d95
+--===============7650286848736454321==
+Content-Type: multipart/alternative; boundary=94eb2c0b86ec5ab43e054ad362fe
 
---94eb2c0b86ecb81a8e054ad35d95
+--94eb2c0b86ec5ab43e054ad362fe
 Content-Type: text/plain; charset=UTF-8
 
 Applied.
 Thanks.
 
-On Wed, Mar 1, 2017 at 6:22 PM, Martin Wilck <mwilck@suse.com> wrote:
+On Wed, Mar 15, 2017 at 12:29 AM, Bart Van Assche <
+Bart.VanAssche@sandisk.com> wrote:
 
-> This uses roughly 10% cycles of the sscanf-based implementation.
+> On Tue, 2017-01-03 at 12:59 -0600, Benjamin Marzinski wrote:
+> > On Thu, Dec 29, 2016 at 03:56:14PM +0800, tang.junhui@zte.com.cn wrote:
+> > > From: "tang.junhui" <tang.junhui@zte.com.cn>
+> > >
+> > > SIGUSR2 is not blocked by default, it would cause bellow conflict
+> > > in removing of the last path:
+> >
+> > ACK
 >
-> Improves: ee8888f0 "multipath-tools: improve processing efficiency..."
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  libmultipath/uevent.c | 37 +++++++++++++++++++++++--------------
->  1 file changed, 23 insertions(+), 14 deletions(-)
+> Hello Christophe,
 >
-> diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
-> index 6e2527bd..367e129a 100644
-> --- a/libmultipath/uevent.c
-> +++ b/libmultipath/uevent.c
-> @@ -143,26 +143,35 @@ uevent_need_merge(void)
->         return need_merge;
->  }
+> This patch was posted more than two months ago. Do you think it should
+> be reposted?
 >
-> +static bool
-> +uevent_can_discard_by_devpath(const char *devpath)
-> +{
-> +       static const char BLOCK[] = "/block/";
-> +       const char *tmp = strstr(devpath, BLOCK);
-> +
-> +       if (tmp == NULL) {
-> +               condlog(4, "no /block/ in '%s'", devpath);
-> +               return true;
-> +       }
-> +       tmp += sizeof(BLOCK) - 1;
-> +       if (*tmp == '\0')
-> +               /* just ".../block/" - discard */
-> +               return true;
-> +       /*
-> +        * If there are more path elements after ".../block/xyz",
-> +        * it's a partition - discard it; but don't discard
-> ".../block/sda/".
-> +        */
-> +       tmp = strchr(tmp, '/');
-> +       return tmp != NULL && *(tmp + 1) != '\0';
-> +}
-> +
->  bool
->  uevent_can_discard(struct uevent *uev)
->  {
-> -       char *tmp;
-> -       char a[11], b[11];
->         struct config * conf;
+> Thanks,
 >
-> -       /*
-> -        * keep only block devices, discard partitions
-> -        */
-> -       tmp = strstr(uev->devpath, "/block/");
-> -       if (tmp == NULL){
-> -               condlog(4, "no /block/ in '%s'", uev->devpath);
-> +       if (uevent_can_discard_by_devpath(uev->devpath))
->                 return true;
-> -       }
-> -       if (sscanf(tmp, "/block/%10s", a) != 1 ||
-> -           sscanf(tmp, "/block/%10[^/]/%10s", a, b) == 2) {
-> -               condlog(4, "discard event on %s", uev->devpath);
-> -               return true;
-> -       }
->
->         /*
->          * do not filter dm devices by devnode
-> --
-> 2.12.0
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
+> Bart.
 
---94eb2c0b86ecb81a8e054ad35d95
+--94eb2c0b86ec5ab43e054ad362fe
 Content-Type: text/html; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 
 <div dir=3D"ltr">Applied.<div>Thanks.</div></div><div class=3D"gmail_extra"=
-><br><div class=3D"gmail_quote">On Wed, Mar 1, 2017 at 6:22 PM, Martin Wilc=
-k <span dir=3D"ltr">&lt;<a href=3D"mailto:mwilck@suse.com" target=3D"_blank=
-">mwilck@suse.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote=
-" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex">T=
-his uses roughly 10% cycles of the sscanf-based implementation.<br>
+><br><div class=3D"gmail_quote">On Wed, Mar 15, 2017 at 12:29 AM, Bart Van =
+Assche <span dir=3D"ltr">&lt;<a href=3D"mailto:Bart.VanAssche@sandisk.com" =
+target=3D"_blank">Bart.VanAssche@sandisk.com</a>&gt;</span> wrote:<br><bloc=
+kquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #cc=
+c solid;padding-left:1ex"><span class=3D"">On Tue, 2017-01-03 at 12:59 -060=
+0, Benjamin Marzinski wrote:<br>
+&gt; On Thu, Dec 29, 2016 at 03:56:14PM +0800, <a href=3D"mailto:tang.junhu=
+i@zte.com.cn">tang.junhui@zte.com.cn</a> wrote:<br>
+&gt; &gt; From: &quot;tang.junhui&quot; &lt;<a href=3D"mailto:tang.junhui@z=
+te.com.cn">tang.junhui@zte.com.cn</a>&gt;<br>
+&gt; &gt;<br>
+&gt; &gt; SIGUSR2 is not blocked by default, it would cause bellow conflict=
 <br>
-Improves: ee8888f0 &quot;multipath-tools: improve processing efficiency...&=
-quot;<br>
-Signed-off-by: Martin Wilck &lt;<a href=3D"mailto:mwilck@suse.com">mwilck@s=
-use.com</a>&gt;<br>
----<br>
-=C2=A0libmultipath/uevent.c | 37 +++++++++++++++++++++++-------<wbr>-------=
+&gt; &gt; in removing of the last path:<br>
+&gt;<br>
+&gt; ACK<br>
 <br>
-=C2=A01 file changed, 23 insertions(+), 14 deletions(-)<br>
+</span>Hello Christophe,<br>
 <br>
-diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c<br>
-index 6e2527bd..367e129a 100644<br>
---- a/libmultipath/uevent.c<br>
-+++ b/libmultipath/uevent.c<br>
-@@ -143,26 +143,35 @@ uevent_need_merge(void)<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 return need_merge;<br>
-=C2=A0}<br>
+This patch was posted more than two months ago. Do you think it should<br>
+be reposted?<br>
 <br>
-+static bool<br>
-+uevent_can_discard_by_<wbr>devpath(const char *devpath)<br>
-+{<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0static const char BLOCK[] =3D &quot;/block/&quo=
-t;;<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0const char *tmp =3D strstr(devpath, BLOCK);<br>
-+<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0if (tmp =3D=3D NULL) {<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0condlog(4, &quot;no=
- /block/ in &#39;%s&#39;&quot;, devpath);<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0return true;<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0}<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0tmp +=3D sizeof(BLOCK) - 1;<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0if (*tmp =3D=3D &#39;\0&#39;)<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0/* just &quot;.../b=
-lock/&quot; - discard */<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0return true;<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0/*<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0 * If there are more path elements after &quot;=
-.../block/xyz&quot;,<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0 * it&#39;s a partition - discard it; but don&#=
-39;t discard &quot;.../block/sda/&quot;.<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0 */<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0tmp =3D strchr(tmp, &#39;/&#39;);<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0return tmp !=3D NULL &amp;&amp; *(tmp + 1) !=3D=
- &#39;\0&#39;;<br>
-+}<br>
-+<br>
-=C2=A0bool<br>
-=C2=A0uevent_can_discard(struct uevent *uev)<br>
-=C2=A0{<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0char *tmp;<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0char a[11], b[11];<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 struct config * conf;<br>
+Thanks,<br>
 <br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0/*<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0 * keep only block devices, discard partitions<=
-br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0 */<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0tmp =3D strstr(uev-&gt;devpath, &quot;/block/&q=
-uot;);<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0if (tmp =3D=3D NULL){<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0condlog(4, &quot;no=
- /block/ in &#39;%s&#39;&quot;, uev-&gt;devpath);<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0if (uevent_can_discard_by_<wbr>devpath(uev-&gt;=
-devpath))<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return true;<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0}<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0if (sscanf(tmp, &quot;/block/%10s&quot;, a) !=
-=3D 1 ||<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0sscanf(tmp, &quot;/block/%10[^/]/=
-%10s&quot;, a, b) =3D=3D 2) {<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0condlog(4, &quot;di=
-scard event on %s&quot;, uev-&gt;devpath);<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0return true;<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0}<br>
-<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 /*<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0* do not filter dm devices by devnode<br>
-<span class=3D"HOEnZb"><font color=3D"#888888">--<br>
-2.12.0<br>
-<br>
---<br>
-dm-devel mailing list<br>
-<a href=3D"mailto:dm-devel@redhat.com">dm-devel@redhat.com</a><br>
-<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" rel=3D"norefer=
-rer" target=3D"_blank">https://www.redhat.com/<wbr>mailman/listinfo/dm-deve=
-l</a><br>
-</font></span></blockquote></div><br></div>
+Bart.</blockquote></div><br></div>
 
---94eb2c0b86ecb81a8e054ad35d95--
+--94eb2c0b86ec5ab43e054ad362fe--
 
 
---===============7521505892953483701==
+--===============7650286848736454321==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============7521505892953483701==--
+--===============7650286848736454321==--
