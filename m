@@ -1,52 +1,41 @@
-From: Matthias Kaehlcke <mka@chromium.org>
-Subject: [PATCH] dm ioctl: Remove double parentheses
-Date: Thu, 16 Mar 2017 09:48:30 -0700
-Message-ID: <20170316164830.127026-1-mka@chromium.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
-Cc: Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, Grant Grundler <grundler@chromium.org>, Michael Davidson <md@google.com>, Greg Hackmann <ghackmann@google.com>, Matthias Kaehlcke <mka@chromium.org>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 0/7] Data integrity protection with
+ dm-integrity and dm-crypt
+Date: Thu, 16 Mar 2017 15:12:24 -0400
+Message-ID: <20170316191224.GA31496@redhat.com>
+References: <cover.1483551181.git.gmazyland@gmail.com>
+	<20170316143944.19843-1-gmazyland@gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20170316143944.19843-1-gmazyland@gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Milan Broz <gmazyland@gmail.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The extra pair of parantheses is not needed and causes clang to generate
-the following warning:
+On Thu, Mar 16 2017 at 10:39am -0400,
+Milan Broz <gmazyland@gmail.com> wrote:
 
-drivers/md/dm-ioctl.c:1776:11: error: equality comparison with extraneous parentheses [-Werror,-Wparentheses-equality]
-        if ((cmd == DM_DEV_CREATE_CMD)) {
-             ~~~~^~~~~~~~~~~~~~~~~~~~
-drivers/md/dm-ioctl.c:1776:11: note: remove extraneous parentheses around the comparison to silence this warning
-        if ((cmd == DM_DEV_CREATE_CMD)) {
-            ~    ^                   ~
-drivers/md/dm-ioctl.c:1776:11: note: use '=' to turn this equality comparison into an assignment
-        if ((cmd == DM_DEV_CREATE_CMD)) {
-                 ^~
-                 =
+> These are additional patches to previously submitted integrity protection commits,
+> based on for-next branch in Mike's DM tree.
+> 
+> Most of them probably can be folded-in, patches are separated for better readability.
+> 
+> The last patch for large encryption sectors is a new feature but because it depends
+> on all previous patches it is posted in this series.
 
-Also remove another double parentheses that don't cause a warning.
+I've picked all these up and staged in linux-next and dm-4.12, see:
+https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-4.12
 
-Signed-off-by: Matthias Kaehlcke <mka@chromium.org>
----
- drivers/md/dm-ioctl.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
-
-diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-index a5a9b17f0f7f..9360036bf6d3 100644
---- a/drivers/md/dm-ioctl.c
-+++ b/drivers/md/dm-ioctl.c
-@@ -1777,12 +1777,12 @@ static int validate_params(uint cmd, struct dm_ioctl *param)
- 	    cmd == DM_LIST_VERSIONS_CMD)
- 		return 0;
- 
--	if ((cmd == DM_DEV_CREATE_CMD)) {
-+	if (cmd == DM_DEV_CREATE_CMD) {
- 		if (!*param->name) {
- 			DMWARN("name not supplied when creating device");
- 			return -EINVAL;
- 		}
--	} else if ((*param->uuid && *param->name)) {
-+	} else if (*param->uuid && *param->name) {
- 		DMWARN("only supply one of name or uuid, cmd(%u)", cmd);
- 		return -EINVAL;
- 	}
--- 
-2.12.0.367.g23dc2f6d3c-goog
+(you'll note that I folded them and tweaked headers accordingly)
