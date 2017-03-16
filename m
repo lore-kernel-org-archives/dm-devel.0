@@ -1,13 +1,14 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH] multipath-tools: libdmmp: Fix incorrect use
-	of __attribute__
-Date: Thu, 16 Mar 2017 07:45:57 +0100
-Message-ID: <CABr-Gnch2-Ejc=yLr4F2Yu=NWx9Qte6gHkCWZb+gugK7VCeNgg@mail.gmail.com>
-References: <20170311141214.31039-1-fge@redhat.com>
+From: Milan Broz <mbroz@redhat.com>
+Subject: Re: [BUG] Oops caused by FEC in 4.10.0
+Date: Thu, 16 Mar 2017 08:15:49 +0100
+Message-ID: <6f891ced-6806-1f11-bc2e-b7af6285c688@redhat.com>
+References: <CAMKhuNG_AKfY_EB9C_Y-8q7sR+9u+Mn9w-hb1YvZQBCNLC_-ww@mail.gmail.com>
+	<20170315221223.GA116381@samitolvanen.mtv.corp.google.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1435339699806888784=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170311141214.31039-1-fge@redhat.com>
+In-Reply-To: <20170315221223.GA116381@samitolvanen.mtv.corp.google.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,164 +18,115 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Gris Ge <fge@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Sami Tolvanen <samitolvanen@google.com>, michal virgovic <michalvirgovic1@gmail.com>
+Cc: dm-devel@redhat.com, agk@redhat.com, snitzer@redhat.com
 List-Id: dm-devel.ids
 
---===============1435339699806888784==
-Content-Type: multipart/alternative; boundary=94eb2c0afb62d2ec41054ad36972
+On 03/15/2017 11:12 PM, Sami Tolvanen wrote:
+> On Wed, Mar 15, 2017 at 09:22:02PM +0100, michal virgovic wrote:
+>> This oops keeps appearing.
+> 
+> This can happen if dm-verity is set up with an invalid root hash, for
+> example. Please test the attached patch, which limits recursion and should
+> allow it to fail more gracefully.
+> 
+> Sami
 
---94eb2c0afb62d2ec41054ad36972
-Content-Type: text/plain; charset=UTF-8
+Thanks Sami!
 
-Applied
-Thanks.
+I see these patches are already in Android, Why it is not upstream?
+https://android.googlesource.com/kernel/goldfish/+/21c0fe9f24b7707d2b49401f8c740c3e35c580ea%5E%21/
 
-On Sat, Mar 11, 2017 at 3:12 PM, Gris Ge <fge@redhat.com> wrote:
+We tried to finally implement FEC support in veritysetup and it would
+be nice that upstream kernel contains all patches so we do not
+need to reinvent the wheel...
 
-> According to https://gcc.gnu.org/onlinedocs/gcc/Type-Attributes.html ,
-> type attributes should be placed immediately after the struct, union or
-> enum keyword.
->
-> Signed-off-by: Gris Ge <fge@redhat.com>
+Thanks,
+Milan
+
+
+
+> 
 > ---
->  libdmmp/libdmmp/libdmmp.h | 8 ++++----
->  libdmmp/libdmmp_private.h | 3 ++-
->  2 files changed, 6 insertions(+), 5 deletions(-)
->
-> diff --git a/libdmmp/libdmmp/libdmmp.h b/libdmmp/libdmmp/libdmmp.h
-> index 3fc8e6f..0679158 100644
-> --- a/libdmmp/libdmmp/libdmmp.h
-> +++ b/libdmmp/libdmmp/libdmmp.h
-> @@ -73,18 +73,18 @@ extern "C" {
->   */
->  DMMP_DLL_EXPORT const char *dmmp_log_priority_str(int priority);
->
-> -DMMP_DLL_EXPORT struct dmmp_context;
-> +struct DMMP_DLL_EXPORT dmmp_context;
->
-> -DMMP_DLL_EXPORT struct dmmp_mpath;
-> +struct DMMP_DLL_EXPORT dmmp_mpath;
->
-> -DMMP_DLL_EXPORT struct dmmp_path_group;
-> +struct DMMP_DLL_EXPORT dmmp_path_group;
->
->  #define DMMP_PATH_GROUP_STATUS_UNKNOWN 0
->  #define DMMP_PATH_GROUP_STATUS_ENABLED 1
->  #define DMMP_PATH_GROUP_STATUS_DISABLED        2
->  #define DMMP_PATH_GROUP_STATUS_ACTIVE  3
->
-> -DMMP_DLL_EXPORT struct dmmp_path;
-> +struct DMMP_DLL_EXPORT dmmp_path;
->
->  #define DMMP_PATH_STATUS_UNKNOWN       0
->  //#define DMMP_PATH_STATUS_UNCHECKED   1
-> diff --git a/libdmmp/libdmmp_private.h b/libdmmp/libdmmp_private.h
-> index e23c995..3e813cb 100644
-> --- a/libdmmp/libdmmp_private.h
-> +++ b/libdmmp/libdmmp_private.h
-> @@ -47,7 +47,8 @@ extern "C" {
->
->  #define _DMMP_PATH_GROUP_ID_UNKNOWN    0
->
-> -DMMP_DLL_LOCAL struct _num_str_conv {
-> +struct DMMP_DLL_LOCAL _num_str_conv;
-> +struct _num_str_conv {
->         const uint32_t value;
->         const char *str;
+> 
+> dm verity fec: limit error correction recursion
+> 
+> If the hash tree itself is sufficiently corrupt in addition to data blocks,
+> it's possible for error correction to end up in a deep recursive loop,
+> which eventually causes a kernel panic. This change limits the recursion to
+> a reasonable level during a single I/O operation.
+> 
+> Fixes: a739ff3f543a ("dm verity: add support for forward error correction")
+> Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+> ---
+>  drivers/md/dm-verity-fec.c | 12 +++++++++++-
+>  drivers/md/dm-verity-fec.h |  4 ++++
+>  2 files changed, 15 insertions(+), 1 deletion(-)
+> 
+> diff --git a/drivers/md/dm-verity-fec.c b/drivers/md/dm-verity-fec.c
+> index 0f0eb8a3d922..c3cc04d89524 100644
+> --- a/drivers/md/dm-verity-fec.c
+> +++ b/drivers/md/dm-verity-fec.c
+> @@ -439,6 +439,13 @@ int verity_fec_decode(struct dm_verity *v, struct dm_verity_io *io,
+>  	if (!verity_fec_is_enabled(v))
+>  		return -EOPNOTSUPP;
+>  
+> +	if (fio->level >= DM_VERITY_FEC_MAX_RECURSION) {
+> +		DMWARN_LIMIT("%s: FEC: recursion too deep", v->data_dev->name);
+> +		return -EIO;
+> +	}
+> +
+> +	fio->level++;
+> +
+>  	if (type == DM_VERITY_BLOCK_TYPE_METADATA)
+>  		block += v->data_blocks;
+>  
+> @@ -470,7 +477,7 @@ int verity_fec_decode(struct dm_verity *v, struct dm_verity_io *io,
+>  	if (r < 0) {
+>  		r = fec_decode_rsb(v, io, fio, rsb, offset, true);
+>  		if (r < 0)
+> -			return r;
+> +			goto done;
+>  	}
+>  
+>  	if (dest)
+> @@ -480,6 +487,8 @@ int verity_fec_decode(struct dm_verity *v, struct dm_verity_io *io,
+>  		r = verity_for_bv_block(v, io, iter, fec_bv_copy);
+>  	}
+>  
+> +done:
+> +	fio->level--;
+>  	return r;
+>  }
+>  
+> @@ -520,6 +529,7 @@ void verity_fec_init_io(struct dm_verity_io *io)
+>  	memset(fio->bufs, 0, sizeof(fio->bufs));
+>  	fio->nbufs = 0;
+>  	fio->output = NULL;
+> +	fio->level = 0;
+>  }
+>  
+>  /*
+> diff --git a/drivers/md/dm-verity-fec.h b/drivers/md/dm-verity-fec.h
+> index 7fa0298b995e..bb31ce87a933 100644
+> --- a/drivers/md/dm-verity-fec.h
+> +++ b/drivers/md/dm-verity-fec.h
+> @@ -27,6 +27,9 @@
+>  #define DM_VERITY_FEC_BUF_MAX \
+>  	(1 << (PAGE_SHIFT - DM_VERITY_FEC_BUF_RS_BITS))
+>  
+> +/* maximum recursion level for verity_fec_decode */
+> +#define DM_VERITY_FEC_MAX_RECURSION	4
+> +
+>  #define DM_VERITY_OPT_FEC_DEV		"use_fec_from_device"
+>  #define DM_VERITY_OPT_FEC_BLOCKS	"fec_blocks"
+>  #define DM_VERITY_OPT_FEC_START		"fec_start"
+> @@ -58,6 +61,7 @@ struct dm_verity_fec_io {
+>  	unsigned nbufs;		/* number of buffers allocated */
+>  	u8 *output;		/* buffer for corrected output */
+>  	size_t output_pos;
+> +	unsigned level;		/* recursion level */
 >  };
-> --
-> 2.12.0
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
-
---94eb2c0afb62d2ec41054ad36972
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">Applied<div>Thanks.</div></div><div class=3D"gmail_extra">=
-<br><div class=3D"gmail_quote">On Sat, Mar 11, 2017 at 3:12 PM, Gris Ge <sp=
-an dir=3D"ltr">&lt;<a href=3D"mailto:fge@redhat.com" target=3D"_blank">fge@=
-redhat.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=
-=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex">Accordin=
-g to <a href=3D"https://gcc.gnu.org/onlinedocs/gcc/Type-Attributes.html" re=
-l=3D"noreferrer" target=3D"_blank">https://gcc.gnu.org/<wbr>onlinedocs/gcc/=
-Type-<wbr>Attributes.html</a> ,<br>
-type attributes should be placed immediately after the struct, union or<br>
-enum keyword.<br>
-<br>
-Signed-off-by: Gris Ge &lt;<a href=3D"mailto:fge@redhat.com">fge@redhat.com=
-</a>&gt;<br>
----<br>
-=C2=A0libdmmp/libdmmp/libdmmp.h | 8 ++++----<br>
-=C2=A0libdmmp/libdmmp_private.h | 3 ++-<br>
-=C2=A02 files changed, 6 insertions(+), 5 deletions(-)<br>
-<br>
-diff --git a/libdmmp/libdmmp/libdmmp.h b/libdmmp/libdmmp/libdmmp.h<br>
-index 3fc8e6f..0679158 100644<br>
---- a/libdmmp/libdmmp/libdmmp.h<br>
-+++ b/libdmmp/libdmmp/libdmmp.h<br>
-@@ -73,18 +73,18 @@ extern &quot;C&quot; {<br>
-=C2=A0 */<br>
-=C2=A0DMMP_DLL_EXPORT const char *dmmp_log_priority_str(int priority);<br>
-<br>
--DMMP_DLL_EXPORT struct dmmp_context;<br>
-+struct DMMP_DLL_EXPORT dmmp_context;<br>
-<br>
--DMMP_DLL_EXPORT struct dmmp_mpath;<br>
-+struct DMMP_DLL_EXPORT dmmp_mpath;<br>
-<br>
--DMMP_DLL_EXPORT struct dmmp_path_group;<br>
-+struct DMMP_DLL_EXPORT dmmp_path_group;<br>
-<br>
-=C2=A0#define DMMP_PATH_GROUP_STATUS_UNKNOWN 0<br>
-=C2=A0#define DMMP_PATH_GROUP_STATUS_ENABLED 1<br>
-=C2=A0#define DMMP_PATH_GROUP_STATUS_<wbr>DISABLED=C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 2<br>
-=C2=A0#define DMMP_PATH_GROUP_STATUS_ACTIVE=C2=A0 3<br>
-<br>
--DMMP_DLL_EXPORT struct dmmp_path;<br>
-+struct DMMP_DLL_EXPORT dmmp_path;<br>
-<br>
-=C2=A0#define DMMP_PATH_STATUS_UNKNOWN=C2=A0 =C2=A0 =C2=A0 =C2=A00<br>
-=C2=A0//#define DMMP_PATH_STATUS_UNCHECKED=C2=A0 =C2=A01<br>
-diff --git a/libdmmp/libdmmp_private.h b/libdmmp/libdmmp_private.h<br>
-index e23c995..3e813cb 100644<br>
---- a/libdmmp/libdmmp_private.h<br>
-+++ b/libdmmp/libdmmp_private.h<br>
-@@ -47,7 +47,8 @@ extern &quot;C&quot; {<br>
-<br>
-=C2=A0#define _DMMP_PATH_GROUP_ID_UNKNOWN=C2=A0 =C2=A0 0<br>
-<br>
--DMMP_DLL_LOCAL struct _num_str_conv {<br>
-+struct DMMP_DLL_LOCAL _num_str_conv;<br>
-+struct _num_str_conv {<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 const uint32_t value;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 const char *str;<br>
-=C2=A0};<br>
-<span class=3D"HOEnZb"><font color=3D"#888888">--<br>
-2.12.0<br>
-<br>
---<br>
-dm-devel mailing list<br>
-<a href=3D"mailto:dm-devel@redhat.com">dm-devel@redhat.com</a><br>
-<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" rel=3D"norefer=
-rer" target=3D"_blank">https://www.redhat.com/<wbr>mailman/listinfo/dm-deve=
-l</a><br>
-</font></span></blockquote></div><br></div>
-
---94eb2c0afb62d2ec41054ad36972--
-
-
---===============1435339699806888784==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============1435339699806888784==--
+>  
+>  #ifdef CONFIG_DM_VERITY_FEC
+> 
