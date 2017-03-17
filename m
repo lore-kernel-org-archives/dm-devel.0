@@ -1,44 +1,46 @@
-From: Dan Carpenter <dan.carpenter@oracle.com>
-Subject: [PATCH] dm crypt: remove an impossible condition
-Date: Fri, 17 Mar 2017 23:46:56 +0300
-Message-ID: <20170317204655.GA28261@mwanda>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm crypt: remove an impossible condition
+Date: Fri, 17 Mar 2017 17:38:19 -0400
+Message-ID: <20170317213819.GC6475@redhat.com>
+References: <20170317204655.GA28261@mwanda>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-raid-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-Sender: linux-raid-owner@vger.kernel.org
-To: Alasdair Kergon <agk@redhat.com>, Milan Broz <gmazyland@gmail.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, kernel-janitors@vger.kernel.org
+In-Reply-To: <20170317204655.GA28261@mwanda>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Dan Carpenter <dan.carpenter@oracle.com>
+Cc: kernel-janitors@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, Milan Broz <gmazyland@gmail.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Static checkers complain that it doesn't make sense to check if "sval"
-is NULL.  The intention was to check if strchr() returned NULL, but in
-that situation "sval" would be "NULL + 1" so the check doesn't work.  We
-know from the sscanf() that there is a ':' character in the string so
-the check is unnecessary and can be removed.
+On Fri, Mar 17 2017 at  4:46pm -0400,
+Dan Carpenter <dan.carpenter@oracle.com> wrote:
 
-Now that the check doesn't depend on "sval" it can be moved earlier
-for readability.
+> Static checkers complain that it doesn't make sense to check if "sval"
+> is NULL.  The intention was to check if strchr() returned NULL, but in
+> that situation "sval" would be "NULL + 1" so the check doesn't work.  We
+> know from the sscanf() that there is a ':' character in the string so
+> the check is unnecessary and can be removed.
+> 
+> Now that the check doesn't depend on "sval" it can be moved earlier
+> for readability.
+> 
+> Signed-off-by: Dan Carpenter <dan.carpenter@oracle.com>
 
-Signed-off-by: Dan Carpenter <dan.carpenter@oracle.com>
+Thanks Dan, I've folded this fix into the original commit, see:
+https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.12&id=cf22cd5f3afe7335afee5659f7450000e8fa2a15
 
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index ec09bd703b7d..eba218737bdb 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -2401,12 +2401,12 @@ static int crypt_ctr_optional(struct dm_target *ti, unsigned int argc, char **ar
- 		else if (!strcasecmp(opt_string, "submit_from_crypt_cpus"))
- 			set_bit(DM_CRYPT_NO_OFFLOAD, &cc->flags);
- 		else if (sscanf(opt_string, "integrity:%u:", &val) == 1) {
--			cc->on_disk_tag_size = val;
--			sval = strchr(opt_string + strlen("integrity:"), ':') + 1;
--			if (val == 0 || val > MAX_TAG_SIZE || !sval) {
-+			if (val == 0 || val > MAX_TAG_SIZE) {
- 				ti->error = "Invalid integrity arguments";
- 				return -EINVAL;
- 			}
-+			cc->on_disk_tag_size = val;
-+			sval = strchr(opt_string + strlen("integrity:"), ':') + 1;
- 			if (!strcasecmp(sval, "aead")) {
- 				set_bit(CRYPT_MODE_INTEGRITY_AEAD, &cc->cipher_flags);
- 			} else  if (!strncasecmp(sval, "hmac(", strlen("hmac("))) {
+I didn't add your Signed-off-by though, I can backfill that if you
+like.. it is just I didn't want to taint you with all the extensive
+changes in that commit.
+
+Mike
