@@ -1,14 +1,12 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm crypt: remove an impossible condition
-Date: Fri, 17 Mar 2017 17:38:19 -0400
-Message-ID: <20170317213819.GC6475@redhat.com>
-References: <20170317204655.GA28261@mwanda>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: arrange compilation options for
+	binaries
+Date: Fri, 17 Mar 2017 23:40:02 +0100
+Message-ID: <20170317224002.8967-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20170317204655.GA28261@mwanda>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,29 +16,70 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Dan Carpenter <dan.carpenter@oracle.com>
-Cc: kernel-janitors@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, Milan Broz <gmazyland@gmail.com>, Alasdair Kergon <agk@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-On Fri, Mar 17 2017 at  4:46pm -0400,
-Dan Carpenter <dan.carpenter@oracle.com> wrote:
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ kpartx/Makefile       | 2 +-
+ mpathpersist/Makefile | 2 +-
+ multipath/Makefile    | 2 +-
+ multipathd/Makefile   | 2 +-
+ 4 files changed, 4 insertions(+), 4 deletions(-)
 
-> Static checkers complain that it doesn't make sense to check if "sval"
-> is NULL.  The intention was to check if strchr() returned NULL, but in
-> that situation "sval" would be "NULL + 1" so the check doesn't work.  We
-> know from the sscanf() that there is a ':' character in the string so
-> the check is unnecessary and can be removed.
-> 
-> Now that the check doesn't depend on "sval" it can be moved earlier
-> for readability.
-> 
-> Signed-off-by: Dan Carpenter <dan.carpenter@oracle.com>
-
-Thanks Dan, I've folded this fix into the original commit, see:
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.12&id=cf22cd5f3afe7335afee5659f7450000e8fa2a15
-
-I didn't add your Signed-off-by though, I can backfill that if you
-like.. it is just I didn't want to taint you with all the extensive
-changes in that commit.
-
-Mike
+diff --git a/kpartx/Makefile b/kpartx/Makefile
+index 9441a2b..2e81284 100644
+--- a/kpartx/Makefile
++++ b/kpartx/Makefile
+@@ -19,7 +19,7 @@ EXEC = kpartx
+ all: $(EXEC)
+ 
+ $(EXEC): $(OBJS)
+-	$(CC) $(CFLAGS) $(OBJS) -o $(EXEC) $(LDFLAGS) $(LIBDEPS)
++	$(CC) $(CFLAGS) $(LDFLAGS) $(LIBDEPS) $(OBJS) -o $(EXEC)
+ 	$(GZIP) $(EXEC).8 > $(EXEC).8.gz
+ 
+ install: $(EXEC) $(EXEC).8
+diff --git a/mpathpersist/Makefile b/mpathpersist/Makefile
+index 47043bb..27e921e 100644
+--- a/mpathpersist/Makefile
++++ b/mpathpersist/Makefile
+@@ -12,7 +12,7 @@ OBJS = main.o
+ all: $(EXEC)
+ 
+ $(EXEC): $(OBJS)
+-	$(CC) $(OBJS) -o $(EXEC) $(LDFLAGS) $(CFLAGS) $(LIBDEPS)
++	$(CC) $(CFLAGS) $(LDFLAGS) $(LIBDEPS) $(OBJS) -o $(EXEC)
+ 	$(GZIP) $(EXEC).8 > $(EXEC).8.gz
+ 
+ install:
+diff --git a/multipath/Makefile b/multipath/Makefile
+index cad34bf..421490c 100644
+--- a/multipath/Makefile
++++ b/multipath/Makefile
+@@ -15,7 +15,7 @@ OBJS = main.o
+ all: $(EXEC)
+ 
+ $(EXEC): $(OBJS)
+-	$(CC) $(CFLAGS) $(OBJS) -o $(EXEC) $(LDFLAGS) $(LIBDEPS)
++	$(CC) $(CFLAGS) $(LDFLAGS) $(LIBDEPS) $(OBJS) -o $(EXEC)
+ 	$(GZIP) $(EXEC).8 > $(EXEC).8.gz
+ 	$(GZIP) $(EXEC).conf.5 > $(EXEC).conf.5.gz
+ 
+diff --git a/multipathd/Makefile b/multipathd/Makefile
+index d57f6d5..a3fad61 100644
+--- a/multipathd/Makefile
++++ b/multipathd/Makefile
+@@ -29,7 +29,7 @@ EXEC = multipathd
+ all : $(EXEC)
+ 
+ $(EXEC): $(OBJS)
+-	$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) -o $(EXEC) $(LIBDEPS)
++	$(CC) $(CFLAGS) $(LDFLAGS) $(LIBDEPS) $(OBJS) -o $(EXEC)
+ 	$(GZIP) $(EXEC).8 > $(EXEC).8.gz
+ 
+ install:
+-- 
+2.12.0
