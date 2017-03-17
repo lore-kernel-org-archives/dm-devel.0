@@ -1,12 +1,16 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: build objects for libdmmp and
-	libmpathpersist independently
-Date: Fri, 17 Mar 2017 16:21:46 +0100
-Message-ID: <20170317152146.10884-1-xose.vazquez@gmail.com>
+From: Milan Broz <mbroz@redhat.com>
+Subject: Re: [BUG] Oops caused by FEC in 4.10.0
+Date: Fri, 17 Mar 2017 17:29:34 +0100
+Message-ID: <6a654fb0-f6db-1ffa-a8eb-4da2eff07ada@redhat.com>
+References: <CAMKhuNG_AKfY_EB9C_Y-8q7sR+9u+Mn9w-hb1YvZQBCNLC_-ww@mail.gmail.com>
+	<20170315221223.GA116381@samitolvanen.mtv.corp.google.com>
+	<accf7e0f-1964-6e19-9453-a1c27e3666d4@redhat.com>
+	<20170317153503.GA52633@samitolvanen.mtv.corp.google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20170317153503.GA52633@samitolvanen.mtv.corp.google.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,60 +20,44 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: Sami Tolvanen <samitolvanen@google.com>
+Cc: michal virgovic <michalvirgovic1@gmail.com>, dm-devel@redhat.com, agk@redhat.com, snitzer@redhat.com
 List-Id: dm-devel.ids
 
-libdmmp:
-cc -c -O2 -g -pipe -Wall -Wextra -Wformat=2 -Werror=implicit-int -Werror=implicit-function-declaration -Werror=format-security -Wno-sign-compare -Wno-unused-parameter -Wno-clobbered -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong --param=ssp-buffer-size=4 -fPIC -DLIB_STRING=\"lib64\" -DRUN_DIR=\"run\" -I../libmultipath -I../libmpathpersist -I../libmpathcmd *.c
-new:
-cc -O2 -g -pipe -Wall -Wextra -Wformat=2 -Werror=implicit-int -Werror=implicit-function-declaration -Werror=format-security -Wno-sign-compare -Wno-unused-parameter -Wno-clobbered -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong --param=ssp-buffer-size=4 -fPIC -DLIB_STRING=\"lib64\" -DRUN_DIR=\"run\" -I../libmultipath -I../libmpathpersist -I../libmpathcmd -c -o mpath_persist.o mpath_persist.c
-cc -O2 -g -pipe -Wall -Wextra -Wformat=2 -Werror=implicit-int -Werror=implicit-function-declaration -Werror=format-security -Wno-sign-compare -Wno-unused-parameter -Wno-clobbered -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong --param=ssp-buffer-size=4 -fPIC -DLIB_STRING=\"lib64\" -DRUN_DIR=\"run\" -I../libmultipath -I../libmpathpersist -I../libmpathcmd -c -o mpath_updatepr.o mpath_updatepr.c
-cc -O2 -g -pipe -Wall -Wextra -Wformat=2 -Werror=implicit-int -Werror=implicit-function-declaration -Werror=format-security -Wno-sign-compare -Wno-unused-parameter -Wno-clobbered -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong --param=ssp-buffer-size=4 -fPIC -DLIB_STRING=\"lib64\" -DRUN_DIR=\"run\" -I../libmultipath -I../libmpathpersist -I../libmpathcmd -c -o mpath_pr_ioctl.o mpath_pr_ioctl.c
+On 03/17/2017 04:35 PM, Sami Tolvanen wrote:
+> On Fri, Mar 17, 2017 at 12:45:00PM +0100, Milan Broz wrote:
+>> it still does take at least two minutes and tons of logs until even
+>> udev scan finishes on a device with incorrect FEC attributes.
+> 
+> If dm-verity is set up with invalid arguments so that the entire partition
+> is corrupt, it does take a while to determine this with FEC as it attempts
+> to correct both metadata and data blocks before giving up. It also depends
+> on the random read performance of the underlying hardware obviously.
 
-libmpathpersist:
-cc -c -O2 -g -pipe -Wall -Wextra -Wformat=2 -Werror=implicit-int -Werror=implicit-function-declaration -Werror=format-security -Wno-sign-compare -Wno-unused-parameter -Wno-clobbered -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong --param=ssp-buffer-size=4 -fPIC -DLIB_STRING=\"lib64\" -DRUN_DIR=\"run\" -fvisibility=hidden -I../libdmmp -I../libmpathcmd -I/usr/include/json-c -c *.c
-new:
-cc -O2 -g -pipe -Wall -Wextra -Wformat=2 -Werror=implicit-int -Werror=implicit-function-declaration -Werror=format-security -Wno-sign-compare -Wno-unused-parameter -Wno-clobbered -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong --param=ssp-buffer-size=4 -fPIC -DLIB_STRING=\"lib64\" -DRUN_DIR=\"run\" -fvisibility=hidden -I../libdmmp -I../libmpathcmd -I/usr/include/json-c -c -o libdmmp.o libdmmp.c
-cc -O2 -g -pipe -Wall -Wextra -Wformat=2 -Werror=implicit-int -Werror=implicit-function-declaration -Werror=format-security -Wno-sign-compare -Wno-unused-parameter -Wno-clobbered -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong --param=ssp-buffer-size=4 -fPIC -DLIB_STRING=\"lib64\" -DRUN_DIR=\"run\" -fvisibility=hidden -I../libdmmp -I../libmpathcmd -I/usr/include/json-c -c -o libdmmp_mp.o libdmmp_mp.c
-cc -O2 -g -pipe -Wall -Wextra -Wformat=2 -Werror=implicit-int -Werror=implicit-function-declaration -Werror=format-security -Wno-sign-compare -Wno-unused-parameter -Wno-clobbered -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong --param=ssp-buffer-size=4 -fPIC -DLIB_STRING=\"lib64\" -DRUN_DIR=\"run\" -fvisibility=hidden -I../libdmmp -I../libmpathcmd -I/usr/include/json-c -c -o libdmmp_pg.o libdmmp_pg.c
-cc -O2 -g -pipe -Wall -Wextra -Wformat=2 -Werror=implicit-int -Werror=implicit-function-declaration -Werror=format-security -Wno-sign-compare -Wno-unused-parameter -Wno-clobbered -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong --param=ssp-buffer-size=4 -fPIC -DLIB_STRING=\"lib64\" -DRUN_DIR=\"run\" -fvisibility=hidden -I../libdmmp -I../libmpathcmd -I/usr/include/json-c -c -o libdmmp_path.o libdmmp_path.c
-cc -O2 -g -pipe -Wall -Wextra -Wformat=2 -Werror=implicit-int -Werror=implicit-function-declaration -Werror=format-security -Wno-sign-compare -Wno-unused-parameter -Wno-clobbered -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong --param=ssp-buffer-size=4 -fPIC -DLIB_STRING=\"lib64\" -DRUN_DIR=\"run\" -fvisibility=hidden -I../libdmmp -I../libmpathcmd -I/usr/include/json-c -c -o libdmmp_misc.o libdmmp_misc.c
+Sure, no problem with that. Just this testing device was the smallest
+possible size (4k) so almost 2 minutes for FEC repairs was quite unexpected :)
 
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- libdmmp/Makefile         | 3 +--
- libmpathpersist/Makefile | 3 +--
- 2 files changed, 2 insertions(+), 4 deletions(-)
+>> And once it is finished, dm-verity crashes on dm-device removal...
+> 
+> That's interesting, I haven't seen this before. Looks like something goes
+> wrong at the very end of dm_bufio_client_destroy. I'm not familiar enough
+> with dm_bufio internals to immediately tell why though.
+> 
+>> Could we please have all crucial fixes upstream?
+> 
+> Sorry, there are no other pending fixes remaining in our tree.
 
-diff --git a/libdmmp/Makefile b/libdmmp/Makefile
-index c7db054..082078a 100644
---- a/libdmmp/Makefile
-+++ b/libdmmp/Makefile
-@@ -22,8 +22,7 @@ LIBDEPS += $(shell pkg-config --libs json-c) -L$(mpathcmddir) -lmpathcmd -lpthre
- 
- all: $(LIBS) doc
- 
--$(LIBS):
--	$(CC) -c $(CFLAGS) *.c
-+$(LIBS): $(OBJS)
- 	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -Wl,-soname=$@ -o $@ $(OBJS) $(LIBDEPS)
- 	$(LN) $@ $(DEVLIB)
- 
-diff --git a/libmpathpersist/Makefile b/libmpathpersist/Makefile
-index 6ef5bab..96da639 100644
---- a/libmpathpersist/Makefile
-+++ b/libmpathpersist/Makefile
-@@ -13,8 +13,7 @@ OBJS = mpath_persist.o mpath_updatepr.o mpath_pr_ioctl.o
- 
- all: $(LIBS)
- 
--$(LIBS):
--	$(CC) -c $(CFLAGS) *.c
-+$(LIBS): $(OBJS)
- 	$(CC) $(LDFLAGS) $(SHARED_FLAGS) $(LIBDEPS) -Wl,-soname=$@ -o $@ $(OBJS)
- 	$(LN) $(LIBS) $(DEVLIB)
- 	$(GZIP) mpath_persistent_reserve_in.3 > mpath_persistent_reserve_in.3.gz
--- 
-2.12.0
+Ok, so it is a new bug then. Sorry for being grumpy, I was just trying
+to setup trivial verity device to test activation code in veritysetup
+(this part was not in initial commit at all) and every attempt to test
+table format ended in kernel OOPs.
+
+We should fix all this problems because it smells like a DoS problem
+(someone modifies on-disk FEC data to intentionally crash kernel).
+
+Anyway, Michal (our student intern) should help with testing
+(and veritysetup code as well), so if you have any patches, please send
+it to the dm-devel list and cc him.
+
+Thanks!
+Milan
