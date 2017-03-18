@@ -1,11 +1,14 @@
-From: heinzm@redhat.com
-Subject: [PATCH] dm raid: Documentaion
-Date: Sat, 18 Mar 2017 01:40:07 +0100
-Message-ID: <20170318004007.4210-1-heinzm@redhat.com>
+From: Dan Carpenter <dan.carpenter@oracle.com>
+Subject: Re: dm crypt: remove an impossible condition
+Date: Sat, 18 Mar 2017 07:14:22 +0300
+Message-ID: <20170318041422.GC4102@mwanda>
+References: <20170317204655.GA28261@mwanda> <20170317213819.GC6475@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20170317213819.GC6475@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,33 +18,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: heinzm@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: kernel-janitors@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, Milan Broz <gmazyland@gmail.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-From: Heinz Mauelshagen <heinzm@redhat.com>
+On Fri, Mar 17, 2017 at 05:38:19PM -0400, Mike Snitzer wrote:
+> On Fri, Mar 17 2017 at  4:46pm -0400,
+> Dan Carpenter <dan.carpenter@oracle.com> wrote:
+> 
+> > Static checkers complain that it doesn't make sense to check if "sval"
+> > is NULL.  The intention was to check if strchr() returned NULL, but in
+> > that situation "sval" would be "NULL + 1" so the check doesn't work.  We
+> > know from the sscanf() that there is a ':' character in the string so
+> > the check is unnecessary and can be removed.
+> > 
+> > Now that the check doesn't depend on "sval" it can be moved earlier
+> > for readability.
+> > 
+> > Signed-off-by: Dan Carpenter <dan.carpenter@oracle.com>
+> 
+> Thanks Dan, I've folded this fix into the original commit, see:
+> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.12&id=cf22cd5f3afe7335afee5659f7450000e8fa2a15
+> 
+> I didn't add your Signed-off-by though, I can backfill that if you
+> like.. it is just I didn't want to taint you with all the extensive
+> changes in that commit.
 
-Upstream commits d36a19541fe8f392778ac137d60f9be8dfdd8f9d
-and 2664f3c94abc7181171b7c05b2aaa76ea7d9d613 fixed a data
-corruptor related to reshape requests.
+That's fine, thanks.  Sign-off isn't really the appropriate tag anyway...
 
-Add missing version 1.10.1 to the documention.
-
-Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
----
- Documentation/device-mapper/dm-raid.txt | 1 +
- 1 file changed, 1 insertion(+)
-
-diff --git a/Documentation/device-mapper/dm-raid.txt b/Documentation/device-mapper/dm-raid.txt
-index 9ec88eb..95c4c8d 100644
---- a/Documentation/device-mapper/dm-raid.txt
-+++ b/Documentation/device-mapper/dm-raid.txt
-@@ -331,5 +331,6 @@ Version History
- 	'D' on the status line.  If '- -' is passed into the constructor, emit
- 	'- -' on the table line and '-' as the status line health character.
- 1.10.0  Add support for raid4/5/6 journal device
-+1.10.1  Fix data corruption on reshape request
- 1.11.0  Fix table line argument order
- 	(wrong raid10_copies/raid10_format sequence)
--- 
-2.9.3
+regards,
+dan carpenter
