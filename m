@@ -1,10 +1,9 @@
-From: Stanislas Oger <stanislas.oger@gmail.com>
-Subject: Kernel BUG at dm-cache-policy-mq.c
-Date: Tue, 21 Mar 2017 14:02:03 +0100
-Message-ID: <2f3fa6fc-b425-bfa2-b25a-776b7dbdd477@gmail.com>
+From: Isidro Hortelano <isidrohortelano@gmail.com>
+Subject: Multipath timeout
+Date: Tue, 21 Mar 2017 15:48:23 +0100
+Message-ID: <CADK-qE+yREb1qqmcBsoX6bVn=GPr0VYp29oE9cfG_t-A-LKxGg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============8739131130229402800=="
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -16,150 +15,137 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: Maza Benjamin <b.maza@nectardecode.com>
 List-Id: dm-devel.ids
 
-Hi,
+--===============8739131130229402800==
+Content-Type: multipart/alternative; boundary=94eb2c1112c059d981054b3ebc21
 
-We currently encounter a critical issue on a Proxmox cluster we operate, 
-which seems to be triggered by a bug in dm-cache ("kernel BUG at 
-drivers/md/dm-cache-policy-mq.c:1079!", see syslog below).
+--94eb2c1112c059d981054b3ebc21
+Content-Type: text/plain; charset=UTF-8
 
+Hi list,
 
-1/ Context
+I have the current configuration of multipath :
 
-The Proxmox cluster uses 4.4 kernel, the VM storage is a DRBD9 cluster 
-on top of lvm with SSD caching. The underlaying disks are on a MegaRAID 
-hardware RAID.
-The problem started to occur since we installed a VM (a mail server) 
-that performs many disk reads on many small files (~ 1 million), with 
-read lock using flock at each read. With the VM fully running, the IO 
-wait of the system is less than 1%.
+defaults {
+         polling_interval      5
+         user_friendly_names   yes
+         find_multipaths       yes
 
 
-2/ The problem
+}
 
-Randomly, without pre-fail signs, syslog reports a bug in 
-dm-cache-policy-mq.c (see below). A few minutes later all write 
-operations infinitely block. A few minutes after the node stopped to 
-perform write operations, the other DRBD9 nodes stop writing too. At 
-this point all the cluster is down. Reads can be done as usual, but 
-write operations are inifitinely blocking.
+blacklist {
+        devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
+        devnode "^hd[a-z]"
+        devnode "^dcssblk[0-9]*"
 
-The only way we figured out to overcome this situation is to perform a 
-hard reboot of the failing node. As soon as the failing node is down, 
-the other nodes resume to a normal activity. When the failing node is up 
-again, DRBD9 performs disk resynchronization and the cluster resume 
-normal activity, as if nothing happened.
+        device {
+                vendor "HP"
+                product "LOGICAL VOLUME.*"
+        }
 
-The bug occurred with both 4.4.35 and 4.4.40 kernels, with a frequency 
-of about once every 10 days.
+        device {
+                vendor "DGC"
+                product "LUNZ"
+        }
 
+}
+devices {
+             device {
+                vendor                  "3PARdata"
+                product                 "VV"
+                path_grouping_policy group_by_prio
+                path_selector "round-robin 0"
+                path_checker tur
+                features "0"
+                hardware_handler "1 alua"
+                prio alua
+                failback immediate
+                rr_weight uniform
+                no_path_retry 2
+                rr_min_io_rq 1
+                detect_prio yes
+                fast_io_fail_tmo 10
+                dev_loss_tmo 14
+        }
+}
 
-3/ Hardware RAID info
+I have a scsi timeout of 30 sec. by default, with this configuration how
+much time does the multipath wait for an answer from a scsi command issued?
+Regards,
 
-Basics :
-Model = LSI MegaRAID SAS 9271-4i
-Serial Number = SK64414158
-Mfg Date = 11/05/16
-Revision No = 001
+--94eb2c1112c059d981054b3ebc21
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: base64
 
-Version :
-Firmware Package Build = 23.34.0-0019
-Firmware Version = 3.460.115-6465
-Bios Version = 5.50.03.0_4.17.08.00_0x06110200
-NVDATA Version = 2.1507.03-0162
-Boot Block Version = 2.05.00.00-0010
-Bootloader Version = 07.26.26.219
-Driver Name = megaraid_sas
-Driver Version = 06.810.09.00-rc1
-
-
-4/ Syslog trace
-
-Mar 18 19:11:27 hyde kernel: [1567082.404669] kernel BUG at 
-drivers/md/dm-cache-policy-mq.c:1079!
-Mar 18 19:11:27 hyde kernel: [1567082.405274] Modules linked in: 
-binfmt_misc ipt_REJECT nf_reject_ipv4 dm_snapshot iptable_mangle veth 
-ip_set ip6table_filter ip6_tables drbd_transport_tcp(O) drbd(O) softdog 
-nfsd auth_rpcgss nfs_acl nfs lockd grace fscache sunrpc ocfs2_dlmfs 
-ocfs2_stack_o2cb ocfs2_dlm ocfs2_nodemanager ocfs2_stackglue configfs 
-ib_iser rdma_cm iw_cm ib_cm ib_sa ib_mad ib_core ib_addr iscsi_tcp 
-libiscsi_tcp libiscsi scsi_transport_iscsi openvswitch nf_defrag_ipv6 
-xt_limit xt_conntrack xt_addrtype iptable_filter xt_nat xt_tcpudp 
-xt_multiport iptable_nat nf_conntrack_ipv4 nf_defrag_ipv4 nf_nat_ipv4 
-nf_nat nf_conntrack iptable_raw ip_tables x_tables nfnetlink_log 
-nfnetlink zfs(PO) zunicode(PO) zcommon(PO) znvpair(PO) spl(O) zavl(PO) 
-dm_cache_mq dm_cache dm_thin_pool dm_persistent_data dm_bio_prison 
-dm_bufio libcrc32c intel_rapl<4>[1567082.409411] CPU: 2 PID: 16388 Comm: 
-php5-fpm Tainted: P           O    4.4.40-1-pve #1
-Mar 18 19:11:27 hyde kernel: [1567082.409912] Hardware name: Supermicro 
-Super Server/X10SRi-F, BIOS 2.0 12/17/2015
-Mar 18 19:11:27 hyde kernel: [1567082.410936] RIP: 
-0010:[<ffffffffc0376123>]  [<ffffffffc0376123>] 
-__mq_set_clear_dirty+0x43/0x80 [dm_cache_mq]
-Mar 18 19:11:27 hyde kernel: [1567082.411981] RAX: 0000000000000000 RBX: 
-ffff88003590c000 RCX: ffffc90014ba2ba0
-Mar 18 19:11:27 hyde kernel: [1567082.413031] RBP: ffff8806b85ab8f8 R08: 
-0000000000000000 R09: ffff88003590c630
-Mar 18 19:11:27 hyde kernel: [1567082.414147] R13: 00000000007429e9 R14: 
-0000000000008b7f R15: 0000000000000000
-Mar 18 19:11:27 hyde kernel: [1567082.415202] CS:  0010 DS: 0000 ES: 
-0000 CR0: 0000000080050033
-Mar 18 19:11:27 hyde kernel: [1567082.416896]  ffff8806b85ab8f8 
-ffff88003590c080 ffff88003590c000 ffff8806b85ab920
-Mar 18 19:11:27 hyde kernel: [1567082.418675] Call Trace:
-Mar 18 19:11:27 hyde kernel: [1567082.420566] [<ffffffffc0578e09>] 
-remap_cell_to_cache_dirty+0x1d9/0x240 [dm_cache]
-Mar 18 19:11:27 hyde kernel: [1567082.422520] [<ffffffffc05762a0>] ? 
-cache_resume+0x30/0x30 [dm_cache]
-Mar 18 19:11:27 hyde kernel: [1567082.425221] [<ffffffff813ca1c0>] 
-generic_make_request+0x110/0x1f0
-Mar 18 19:11:27 hyde kernel: [1567082.428555] [<ffffffff81190146>] 
-__filemap_fdatawrite_range+0xc6/0x100
-Mar 18 19:11:27 hyde kernel: [1567082.431999] [<ffffffff8121097e>] 
-____fput+0xe/0x10
-Mar 18 19:11:27 hyde kernel: [1567082.435492] Code: 08 48 8b bf 78 0d 00 
-00 48 8b b3 80 0d 00 00 e8 64 f6 ff ff 48 85 c0 74 12 48 3b 83 f8 00 00 
-00 72 09 48 3b 83 00 01 00 00 72 02 <0f> 0b 48 89 c6 48 89 df 48 89 45 
-e8 e8 4c ef ff ff 48 8b 45 e8
-Mar 18 19:11:27 hyde kernel: [1567082.445413] Modules linked in: 
-binfmt_misc ipt_REJECT nf_reject_ipv4 dm_snapshot iptable_mangle veth 
-ip_set ip6table_filter ip6_tables drbd_transport_tcp(O) drbd(O) softdog 
-nfsd auth_rpcgss nfs_acl nfs lockd grace fscache sunrpc ocfs2_dlmfs 
-ocfs2_stack_o2cb ocfs2_dlm ocfs2_nodemanager ocfs2_stackglue configfs 
-ib_iser rdma_cm iw_cm ib_cm ib_sa ib_mad ib_core ib_addr iscsi_tcp 
-libiscsi_tcp libiscsi scsi_transport_iscsi openvswitch nf_defrag_ipv6 
-xt_limit xt_conntrack xt_addrtype iptable_filter xt_nat xt_tcpudp 
-xt_multiport iptable_nat nf_conntrack_ipv4 nf_defrag_ipv4 nf_nat_ipv4 
-nf_nat nf_conntrack iptable_raw ip_tables x_tables nfnetlink_log 
-nfnetlink zfs(PO) zunicode(PO) zcommon(PO) znvpair(PO) spl(O) zavl(PO) 
-dm_cache_mq dm_cache dm_thin_pool dm_persistent_data dm_bio_prison 
-dm_bufio libcrc32c intel_rapl<4>[1567082.461675] [<ffffffff81031db1>] 
-oops_end+0xa1/0xd0
-Mar 18 19:11:27 hyde kernel: [1567082.465256] [<ffffffff810b3faf>] ? 
-select_idle_sibling+0xef/0x120
-Mar 18 19:11:27 hyde kernel: [1567082.468782] [<ffffffffc0376123>] ? 
-__mq_set_clear_dirty+0x43/0x80 [dm_cache_mq]
-Mar 18 19:11:27 hyde kernel: [1567082.472294] [<ffffffffc0579336>] 
-cache_map+0x326/0x4b0 [dm_cache]
-Mar 18 19:11:27 hyde kernel: [1567082.475703] [<ffffffff813ca1c0>] 
-generic_make_request+0x110/0x1f0
-Mar 18 19:11:27 hyde kernel: [1567082.479114] [<ffffffff81190146>] 
-__filemap_fdatawrite_range+0xc6/0x100
-Mar 18 19:11:27 hyde kernel: [1567082.482535] [<ffffffff8121097e>] 
-____fput+0xe/0x10
-Mar 18 19:11:27 hyde kernel: [1567082.485950] ---[ end trace 
-0767d58f6fa0ec61 ]---
+PGRpdiBkaXI9Imx0ciI+PGRpdj48ZGl2PkhpIGxpc3QsPGJyPjxicj48L2Rpdj5JIGhhdmUgdGhl
+IGN1cnJlbnQgY29uZmlndXJhdGlvbiBvZiBtdWx0aXBhdGggOjxicj48YnI+PGZvbnQgZmFjZT0i
+VmVyZGFuYSI+PGZvbnQgZmFjZT0iQ291cmllciBOZXcsIENvdXJpZXIsDQogICAgICAgICAgICAg
+ICAgICAgIG1vbm9zcGFjZSI+ZGVmYXVsdHMgezxicj4NCiAgICAgICAgICAgICAgICAgICAgwqDC
+oMKgwqDCoMKgwqDCoCBwb2xsaW5nX2ludGVydmFswqDCoMKgwqDCoCA8Zm9udCBmYWNlPSJDb3Vy
+aWVyIE5ldywgQ291cmllciwNCiAgICAgICAgICAgICAgICAgICAgbW9ub3NwYWNlIj41PC9mb250
+Pjxicj4NCiAgICAgICAgICAgICAgICAgICAgwqDCoMKgwqDCoMKgwqDCoCB1c2VyX2ZyaWVuZGx5
+X25hbWVzwqDCoCB5ZXM8YnI+DQogICAgICAgICAgICAgICAgICAgIMKgwqDCoMKgwqDCoMKgwqAg
+ZmluZF9tdWx0aXBhdGhzwqDCoMKgwqDCoMKgIHllczxicj4NCiAgICAgICAgICAgICAgICAgICAg
+PGJyPg0KICAgICAgICAgICAgICAgICAgICA8YnI+DQogICAgICAgICAgICAgICAgICAgIH08YnI+
+DQogICAgICAgICAgICAgICAgICAgIDxicj4NCiAgICAgICAgICAgICAgICAgICAgYmxhY2tsaXN0
+IHs8YnI+DQogICAgICAgICAgICAgICAgICAgIMKgwqDCoMKgwqDCoMKgIGRldm5vZGUNCiAgICAg
+ICAgICAgICAgICAgICAgJnF1b3Q7XihyYW18cmF3fGxvb3B8ZmR8bWR8ZG0tfHNyfHNjZHxzdClb
+MC05XSomcXVvdDs8YnI+DQogICAgICAgICAgICAgICAgICAgIMKgwqDCoMKgwqDCoMKgIGRldm5v
+ZGUgJnF1b3Q7XmhkW2Etel0mcXVvdDs8YnI+DQogICAgICAgICAgICAgICAgICAgIMKgwqDCoMKg
+wqDCoMKgIGRldm5vZGUgJnF1b3Q7XmRjc3NibGtbMC05XSomcXVvdDs8YnI+DQogICAgICAgICAg
+ICAgICAgICAgIDxicj4NCiAgICAgICAgICAgICAgICAgICAgwqDCoMKgwqDCoMKgwqAgZGV2aWNl
+IHs8YnI+DQogICAgICAgICAgICAgICAgICAgIMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oCB2ZW5kb3IgJnF1b3Q7SFAmcXVvdDs8YnI+DQogICAgICAgICAgICAgICAgICAgIMKgwqDCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBwcm9kdWN0ICZxdW90O0xPR0lDQUwgVk9MVU1FLiomcXVv
+dDs8YnI+DQogICAgICAgICAgICAgICAgICAgIMKgwqDCoMKgwqDCoMKgIH08YnI+DQogICAgICAg
+ICAgICAgICAgICAgIDxicj4NCiAgICAgICAgICAgICAgICAgICAgwqDCoMKgwqDCoMKgwqAgZGV2
+aWNlIHs8YnI+DQogICAgICAgICAgICAgICAgICAgIMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
+wqDCoCB2ZW5kb3IgJnF1b3Q7REdDJnF1b3Q7PGJyPg0KICAgICAgICAgICAgICAgICAgICDCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgcHJvZHVjdCAmcXVvdDtMVU5aJnF1b3Q7PGJyPg0K
+ICAgICAgICAgICAgICAgICAgICDCoMKgwqDCoMKgwqDCoCB9PGJyPg0KICAgICAgICAgICAgICAg
+ICAgICA8YnI+DQogICAgICAgICAgICAgICAgICAgIH08YnI+DQogICAgICAgICAgICAgICAgICAg
+IDwvZm9udD48L2ZvbnQ+PC9kaXY+ZGV2aWNlcyB7PGJyPsKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oCA8Zm9udCBmYWNlPSJWZXJkYW5hIj48Zm9udCBmYWNlPSJDb3VyaWVyIE5ldywgQ291cmllciwN
+CiAgICAgICAgICAgICAgICAgICAgbW9ub3NwYWNlIj5kZXZpY2Ugezxicj4NCiAgICAgICAgICAg
+ICAgICAgICAgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIHZlbmRvcsKgwqDCoMKgwqDC
+oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgJnF1b3Q7M1BBUmRhdGEmcXVvdDs8YnI+DQogICAgICAg
+ICAgICAgICAgICAgIMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBwcm9kdWN0wqDCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgJnF1b3Q7VlYmcXVvdDs8YnI+DQogICAgICAgICAg
+ICAgICAgICAgIMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBwYXRoX2dyb3VwaW5nX3Bv
+bGljeSBncm91cF9ieV9wcmlvPGJyPg0KICAgICAgICAgICAgICAgICAgICDCoMKgwqDCoMKgwqDC
+oMKgwqDCoMKgwqDCoMKgwqAgcGF0aF9zZWxlY3RvciAmcXVvdDtyb3VuZC1yb2JpbiAwJnF1b3Q7
+PGJyPg0KICAgICAgICAgICAgICAgICAgICDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAg
+cGF0aF9jaGVja2VyIHR1cjxicj4NCiAgICAgICAgICAgICAgICAgICAgwqDCoMKgwqDCoMKgwqDC
+oMKgwqDCoMKgwqDCoMKgIGZlYXR1cmVzICZxdW90OzAmcXVvdDs8YnI+DQogICAgICAgICAgICAg
+ICAgICAgIMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBoYXJkd2FyZV9oYW5kbGVyICZx
+dW90OzEgYWx1YSZxdW90Ozxicj4NCiAgICAgICAgICAgICAgICAgICAgwqDCoMKgwqDCoMKgwqDC
+oMKgwqDCoMKgwqDCoMKgIHByaW8gYWx1YTxicj4NCiAgICAgICAgICAgICAgICAgICAgwqDCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIGZhaWxiYWNrIGltbWVkaWF0ZTxicj4NCiAgICAgICAg
+ICAgICAgICAgICAgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIHJyX3dlaWdodCB1bmlm
+b3JtPGJyPg0KICAgICAgICAgICAgICAgICAgICDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
+wqAgbm9fcGF0aF9yZXRyeSA8Zm9udCBmYWNlPSJDb3VyaWVyIE5ldywgQ291cmllciwNCiAgICAg
+ICAgICAgICAgICAgICAgbW9ub3NwYWNlIj4yPC9mb250Pjxicj4NCiAgICAgICAgICAgICAgICAg
+ICAgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIHJyX21pbl9pb19ycSAxPGJyPg0KICAg
+ICAgICAgICAgICAgICAgICDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgZGV0ZWN0X3By
+aW8geWVzPGJyPg0KICAgICAgICAgICAgICAgICAgICDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqAgZmFzdF9pb19mYWlsX3RtbyAxMDxicj4NCiAgICAgICAgICAgICAgICAgICAgwqDCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIGRldl9sb3NzX3RtbyAxNDxicj4NCiAgICAgICAgICAg
+ICAgICAgICAgwqDCoMKgwqDCoMKgwqAgfTxicj4NCiAgICAgICAgICAgICAgICAgICAgfTwvZm9u
+dD48YnI+DQogICAgICAgICAgICAgICAgPC9mb250Pg0KICAgICAgICAgICAgICA8cD5JIGhhdmUg
+YSBzY3NpIHRpbWVvdXQgb2YgMzAgc2VjLiBieSBkZWZhdWx0LCB3aXRoIHRoaXMgY29uZmlndXJh
+dGlvbiBob3cgbXVjaCB0aW1lIGRvZXMgdGhlIG11bHRpcGF0aCB3YWl0IGZvciBhbiBhbnN3ZXIg
+ZnJvbSBhIHNjc2kgY29tbWFuZCBpc3N1ZWQ/PGJyPjwvcD48ZGl2PlJlZ2FyZHMsPGJyPjwvZGl2
+PjwvZGl2Pg0K
+--94eb2c1112c059d981054b3ebc21--
 
 
-I found a similar bug report on the <4.2 kernel 
-(https://www.redhat.com/archives/linux-lvm/2015-November/msg00017.html), 
-but it should be fixed in the 4.4 kernel.
+--===============8739131130229402800==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-Have you any idea of what can cause this issue?
 
-If you need more info on the system, please ask.
-
-Thank you,
-Stanislas.
+--===============8739131130229402800==--
