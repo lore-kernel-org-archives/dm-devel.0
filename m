@@ -1,13 +1,14 @@
 From: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Subject: Re: [PATCH] multipath-tools: arrange compilation options
-	for shared libs/objects
-Date: Thu, 23 Mar 2017 09:35:19 +0100
-Message-ID: <CABr-GncoNan5AAfb4TpVGPTWyUakcOOFoFQut5vj2+42rBpxiw@mail.gmail.com>
-References: <20170318174500.15268-1-xose.vazquez@gmail.com>
+	for binaries
+Date: Thu, 23 Mar 2017 10:09:42 +0100
+Message-ID: <CABr-GnfmGzcnW0GcqMLWs0Zg30Txw0k+3Er6zyrRpRrmcN-gwQ@mail.gmail.com>
+References: <20170317224002.8967-1-xose.vazquez@gmail.com>
+	<CABr-GndoZc+maRDaerfgUupPw4TeSgzf+aF9gZh0VNtKsjfQCA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1688544930907205889=="
+Content-Type: multipart/mixed; boundary="===============4859215335678173944=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170318174500.15268-1-xose.vazquez@gmail.com>
+In-Reply-To: <CABr-GndoZc+maRDaerfgUupPw4TeSgzf+aF9gZh0VNtKsjfQCA@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,290 +22,215 @@ To: Xose Vazquez Perez <xose.vazquez@gmail.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============1688544930907205889==
-Content-Type: multipart/alternative; boundary=94eb2c12f968d9abf3054b61c1b9
+--===============4859215335678173944==
+Content-Type: multipart/alternative; boundary=94eb2c0629b2cfef17054b623c5c
 
---94eb2c12f968d9abf3054b61c1b9
+--94eb2c0629b2cfef17054b623c5c
 Content-Type: text/plain; charset=UTF-8
 
-Merged,
-Thanks.
+And reverted:
 
-On Sat, Mar 18, 2017 at 6:45 PM, Xose Vazquez Perez <xose.vazquez@gmail.com>
-wrote:
+From http://eli.thegreenplace.net/2013/07/09/library-order-in-static-linking
+:
 
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: device-mapper development <dm-devel@redhat.com>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> ---
->  libdmmp/Makefile                   | 2 +-
->  libmpathcmd/Makefile               | 2 +-
->  libmpathpersist/Makefile           | 2 +-
->  libmultipath/Makefile              | 2 +-
->  libmultipath/checkers/Makefile     | 6 +++---
->  libmultipath/prioritizers/Makefile | 4 ++--
->  6 files changed, 9 insertions(+), 9 deletions(-)
+If object or library AA needs a symbol from library BB, then AA should come
+*before* library BB in the command-line invocation of the linker.
+
+
+
+On Thu, Mar 23, 2017 at 9:34 AM, Christophe Varoqui <
+christophe.varoqui@opensvc.com> wrote:
+
+> Merged,
+> Thanks.
 >
-> diff --git a/libdmmp/Makefile b/libdmmp/Makefile
-> index 082078a..8640bf6 100644
-> --- a/libdmmp/Makefile
-> +++ b/libdmmp/Makefile
-> @@ -23,7 +23,7 @@ LIBDEPS += $(shell pkg-config --libs json-c)
-> -L$(mpathcmddir) -lmpathcmd -lpthre
->  all: $(LIBS) doc
+> On Fri, Mar 17, 2017 at 11:40 PM, Xose Vazquez Perez <
+> xose.vazquez@gmail.com> wrote:
 >
->  $(LIBS): $(OBJS)
-> -       $(CC) $(LDFLAGS) $(SHARED_FLAGS) -Wl,-soname=$@ -o $@ $(OBJS)
-> $(LIBDEPS)
-> +       $(CC) $(SHARED_FLAGS) $(LDFLAGS) $(LIBDEPS) -Wl,-soname=$@ $(OBJS)
-> -o $@
->         $(LN) $@ $(DEVLIB)
->
->  install:
-> diff --git a/libmpathcmd/Makefile b/libmpathcmd/Makefile
-> index b8e29cb..b6c349a 100644
-> --- a/libmpathcmd/Makefile
-> +++ b/libmpathcmd/Makefile
-> @@ -9,7 +9,7 @@ OBJS = mpath_cmd.o
->  all: $(LIBS)
->
->  $(LIBS): $(OBJS)
-> -       $(CC) $(LDFLAGS) $(SHARED_FLAGS) -Wl,-soname=$@ -o $@ $(OBJS)
-> $(LIBDEPS)
-> +       $(CC) $(SHARED_FLAGS) $(LDFLAGS) $(LIBDEPS) -Wl,-soname=$@ $(OBJS)
-> -o $@
->         $(LN) $@ $(DEVLIB)
->
->  install: $(LIBS)
-> diff --git a/libmpathpersist/Makefile b/libmpathpersist/Makefile
-> index 96da639..ee4a421 100644
-> --- a/libmpathpersist/Makefile
-> +++ b/libmpathpersist/Makefile
-> @@ -14,7 +14,7 @@ OBJS = mpath_persist.o mpath_updatepr.o mpath_pr_ioctl.o
->  all: $(LIBS)
->
->  $(LIBS): $(OBJS)
-> -       $(CC) $(LDFLAGS) $(SHARED_FLAGS) $(LIBDEPS) -Wl,-soname=$@ -o $@
-> $(OBJS)
-> +       $(CC) $(SHARED_FLAGS) $(LDFLAGS) $(LIBDEPS) -Wl,-soname=$@ $(OBJS)
-> -o $@
->         $(LN) $(LIBS) $(DEVLIB)
->         $(GZIP) mpath_persistent_reserve_in.3 >
-> mpath_persistent_reserve_in.3.gz
->         $(GZIP) mpath_persistent_reserve_out.3 >
-> mpath_persistent_reserve_out.3.gz
-> diff --git a/libmultipath/Makefile b/libmultipath/Makefile
-> index 1f5ec25..c5f4052 100644
-> --- a/libmultipath/Makefile
-> +++ b/libmultipath/Makefile
-> @@ -47,7 +47,7 @@ OBJS = memory.o parser.o vector.o devmapper.o callout.o \
->  all: $(LIBS)
->
->  $(LIBS): $(OBJS)
-> -       $(CC) $(LDFLAGS) $(SHARED_FLAGS) -Wl,-soname=$@ -o $@ $(OBJS)
-> $(LIBDEPS)
-> +       $(CC) $(SHARED_FLAGS) $(LDFLAGS) $(LIBDEPS) -Wl,-soname=$@ $(OBJS)
-> -o $@
->         $(LN) $@ $(DEVLIB)
->
->  install:
-> diff --git a/libmultipath/checkers/Makefile b/libmultipath/checkers/
-> Makefile
-> index 11ab76f..3b8e27c 100644
-> --- a/libmultipath/checkers/Makefile
-> +++ b/libmultipath/checkers/Makefile
-> @@ -19,13 +19,13 @@ LIBS= \
->  all: $(LIBS)
->
->  libcheckrbd.so: rbd.o
-> -       $(CC) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^ -lrados -ludev
-> +       $(CC) $(SHARED_FLAGS) $(LDFLAGS) -o $@ $^ -lrados -ludev
->
->  libcheckdirectio.so: libsg.o directio.o
-> -       $(CC) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^ -laio
-> +       $(CC) $(SHARED_FLAGS) $(LDFLAGS) -o $@ $^ -laio
->
->  libcheck%.so: libsg.o %.o
-> -       $(CC) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^
-> +       $(CC) $(SHARED_FLAGS) $(LDFLAGS) -o $@ $^
->
->  install:
->         $(INSTALL_PROGRAM) -m 755 $(LIBS) $(DESTDIR)$(libdir)
-> diff --git a/libmultipath/prioritizers/Makefile
-> b/libmultipath/prioritizers/Makefile
-> index 36b42e4..8a5561a 100644
-> --- a/libmultipath/prioritizers/Makefile
-> +++ b/libmultipath/prioritizers/Makefile
-> @@ -23,10 +23,10 @@ LIBS = \
->  all: $(LIBS)
->
->  libprioalua.so: alua.o alua_rtpg.o
-> -       $(CC) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^
-> +       $(CC) $(SHARED_FLAGS) $(LDFLAGS) -o $@ $^
->
->  libprio%.so: %.o
-> -       $(CC) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^
-> +       $(CC) $(SHARED_FLAGS) $(LDFLAGS) -o $@ $^
->
->  install: $(LIBS)
->         $(INSTALL_PROGRAM) -m 755 libprio*.so $(DESTDIR)$(libdir)
-> --
-> 2.12.0
->
+>> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+>> Cc: device-mapper development <dm-devel@redhat.com>
+>> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+>> ---
+>>  kpartx/Makefile       | 2 +-
+>>  mpathpersist/Makefile | 2 +-
+>>  multipath/Makefile    | 2 +-
+>>  multipathd/Makefile   | 2 +-
+>>  4 files changed, 4 insertions(+), 4 deletions(-)
+>>
+>> diff --git a/kpartx/Makefile b/kpartx/Makefile
+>> index 9441a2b..2e81284 100644
+>> --- a/kpartx/Makefile
+>> +++ b/kpartx/Makefile
+>> @@ -19,7 +19,7 @@ EXEC = kpartx
+>>  all: $(EXEC)
+>>
+>>  $(EXEC): $(OBJS)
+>> -       $(CC) $(CFLAGS) $(OBJS) -o $(EXEC) $(LDFLAGS) $(LIBDEPS)
+>> +       $(CC) $(CFLAGS) $(LDFLAGS) $(LIBDEPS) $(OBJS) -o $(EXEC)
+>>         $(GZIP) $(EXEC).8 > $(EXEC).8.gz
+>>
+>>  install: $(EXEC) $(EXEC).8
+>> diff --git a/mpathpersist/Makefile b/mpathpersist/Makefile
+>> index 47043bb..27e921e 100644
+>> --- a/mpathpersist/Makefile
+>> +++ b/mpathpersist/Makefile
+>> @@ -12,7 +12,7 @@ OBJS = main.o
+>>  all: $(EXEC)
+>>
+>>  $(EXEC): $(OBJS)
+>> -       $(CC) $(OBJS) -o $(EXEC) $(LDFLAGS) $(CFLAGS) $(LIBDEPS)
+>> +       $(CC) $(CFLAGS) $(LDFLAGS) $(LIBDEPS) $(OBJS) -o $(EXEC)
+>>         $(GZIP) $(EXEC).8 > $(EXEC).8.gz
+>>
+>>  install:
+>> diff --git a/multipath/Makefile b/multipath/Makefile
+>> index cad34bf..421490c 100644
+>> --- a/multipath/Makefile
+>> +++ b/multipath/Makefile
+>> @@ -15,7 +15,7 @@ OBJS = main.o
+>>  all: $(EXEC)
+>>
+>>  $(EXEC): $(OBJS)
+>> -       $(CC) $(CFLAGS) $(OBJS) -o $(EXEC) $(LDFLAGS) $(LIBDEPS)
+>> +       $(CC) $(CFLAGS) $(LDFLAGS) $(LIBDEPS) $(OBJS) -o $(EXEC)
+>>         $(GZIP) $(EXEC).8 > $(EXEC).8.gz
+>>         $(GZIP) $(EXEC).conf.5 > $(EXEC).conf.5.gz
+>>
+>> diff --git a/multipathd/Makefile b/multipathd/Makefile
+>> index d57f6d5..a3fad61 100644
+>> --- a/multipathd/Makefile
+>> +++ b/multipathd/Makefile
+>> @@ -29,7 +29,7 @@ EXEC = multipathd
+>>  all : $(EXEC)
+>>
+>>  $(EXEC): $(OBJS)
+>> -       $(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) -o $(EXEC) $(LIBDEPS)
+>> +       $(CC) $(CFLAGS) $(LDFLAGS) $(LIBDEPS) $(OBJS) -o $(EXEC)
+>>         $(GZIP) $(EXEC).8 > $(EXEC).8.gz
+>>
+>>  install:
+>> --
+>> 2.12.0
+>>
+>>
 >
 
---94eb2c12f968d9abf3054b61c1b9
+--94eb2c0629b2cfef17054b623c5c
 Content-Type: text/html; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 
-<div dir=3D"ltr">Merged,<div>Thanks.</div></div><div class=3D"gmail_extra">=
-<br><div class=3D"gmail_quote">On Sat, Mar 18, 2017 at 6:45 PM, Xose Vazque=
-z Perez <span dir=3D"ltr">&lt;<a href=3D"mailto:xose.vazquez@gmail.com" tar=
-get=3D"_blank">xose.vazquez@gmail.com</a>&gt;</span> wrote:<br><blockquote =
-class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid=
-;padding-left:1ex">Cc: Christophe Varoqui &lt;<a href=3D"mailto:christophe.=
-varoqui@opensvc.com">christophe.varoqui@opensvc.<wbr>com</a>&gt;<br>
-Cc: device-mapper development &lt;<a href=3D"mailto:dm-devel@redhat.com">dm=
--devel@redhat.com</a>&gt;<br>
+<div dir=3D"ltr">And reverted:<div><br></div><div>From <a href=3D"http://el=
+i.thegreenplace.net/2013/07/09/library-order-in-static-linking">http://eli.=
+thegreenplace.net/2013/07/09/library-order-in-static-linking</a>:<br></div>=
+<div><br></div><div><div class=3D"gmail-section" id=3D"gmail-simple-example=
+s" style=3D"box-sizing:border-box;color:rgb(51,51,51);font-family:&quot;dro=
+id sans&quot;,sans-serif;font-size:16px"><blockquote style=3D"box-sizing:bo=
+rder-box;padding:10px 20px;margin:0px 0px 20px;border-left:5px solid rgb(23=
+8,238,238)">If object or library AA needs a symbol from library BB, then AA=
+ should come=C2=A0<em style=3D"box-sizing:border-box">before</em>=C2=A0libr=
+ary BB in the command-line invocation of the linker.</blockquote><div><br><=
+/div></div><div class=3D"gmail-section" id=3D"gmail-circular-dependency" st=
+yle=3D"box-sizing:border-box;color:rgb(51,51,51);font-family:&quot;droid sa=
+ns&quot;,sans-serif;font-size:16px"></div></div></div><div class=3D"gmail_e=
+xtra"><br><div class=3D"gmail_quote">On Thu, Mar 23, 2017 at 9:34 AM, Chris=
+tophe Varoqui <span dir=3D"ltr">&lt;<a href=3D"mailto:christophe.varoqui@op=
+ensvc.com" target=3D"_blank">christophe.varoqui@opensvc.com</a>&gt;</span> =
+wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;bord=
+er-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">Merged,<div>Thank=
+s.</div></div><div class=3D"HOEnZb"><div class=3D"h5"><div class=3D"gmail_e=
+xtra"><br><div class=3D"gmail_quote">On Fri, Mar 17, 2017 at 11:40 PM, Xose=
+ Vazquez Perez <span dir=3D"ltr">&lt;<a href=3D"mailto:xose.vazquez@gmail.c=
+om" target=3D"_blank">xose.vazquez@gmail.com</a>&gt;</span> wrote:<br><bloc=
+kquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #cc=
+c solid;padding-left:1ex">Cc: Christophe Varoqui &lt;<a href=3D"mailto:chri=
+stophe.varoqui@opensvc.com" target=3D"_blank">christophe.varoqui@opensvc.co=
+<wbr>m</a>&gt;<br>
+Cc: device-mapper development &lt;<a href=3D"mailto:dm-devel@redhat.com" ta=
+rget=3D"_blank">dm-devel@redhat.com</a>&gt;<br>
 Signed-off-by: Xose Vazquez Perez &lt;<a href=3D"mailto:xose.vazquez@gmail.=
-com">xose.vazquez@gmail.com</a>&gt;<br>
+com" target=3D"_blank">xose.vazquez@gmail.com</a>&gt;<br>
 ---<br>
-=C2=A0libdmmp/Makefile=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0| 2 +-<br>
-=C2=A0libmpathcmd/Makefile=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0| 2 +-<br>
-=C2=A0libmpathpersist/Makefile=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0| 2 =
-+-<br>
-=C2=A0libmultipath/Makefile=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- | 2 +-<br>
-=C2=A0libmultipath/checkers/Makefile=C2=A0 =C2=A0 =C2=A0| 6 +++---<br>
-=C2=A0libmultipath/prioritizers/<wbr>Makefile | 4 ++--<br>
-=C2=A06 files changed, 9 insertions(+), 9 deletions(-)<br>
+=C2=A0kpartx/Makefile=C2=A0 =C2=A0 =C2=A0 =C2=A0| 2 +-<br>
+=C2=A0mpathpersist/Makefile | 2 +-<br>
+=C2=A0multipath/Makefile=C2=A0 =C2=A0 | 2 +-<br>
+=C2=A0multipathd/Makefile=C2=A0 =C2=A0| 2 +-<br>
+=C2=A04 files changed, 4 insertions(+), 4 deletions(-)<br>
 <br>
-diff --git a/libdmmp/Makefile b/libdmmp/Makefile<br>
-index 082078a..8640bf6 100644<br>
---- a/libdmmp/Makefile<br>
-+++ b/libdmmp/Makefile<br>
-@@ -23,7 +23,7 @@ LIBDEPS +=3D $(shell pkg-config --libs json-c) -L$(mpathc=
-mddir) -lmpathcmd -lpthre<br>
-=C2=A0all: $(LIBS) doc<br>
+diff --git a/kpartx/Makefile b/kpartx/Makefile<br>
+index 9441a2b..2e81284 100644<br>
+--- a/kpartx/Makefile<br>
++++ b/kpartx/Makefile<br>
+@@ -19,7 +19,7 @@ EXEC =3D kpartx<br>
+=C2=A0all: $(EXEC)<br>
 <br>
-=C2=A0$(LIBS): $(OBJS)<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(LDFLAGS) $(SHARED_FLAGS) -Wl,-soname=3D=
-$@ -o $@ $(OBJS) $(LIBDEPS)<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(SHARED_FLAGS) $(LDFLAGS) $(LIBDEPS) -Wl=
-,-soname=3D$@ $(OBJS) -o $@<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 $(LN) $@ $(DEVLIB)<br>
+=C2=A0$(EXEC): $(OBJS)<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(CFLAGS) $(OBJS) -o $(EXEC) $(LDFLAGS) $=
+(LIBDEPS)<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(CFLAGS) $(LDFLAGS) $(LIBDEPS) $(OBJS) -=
+o $(EXEC)<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 $(GZIP) $(EXEC).8 &gt; $(EXEC).8.gz<br>
 <br>
-=C2=A0install:<br>
-diff --git a/libmpathcmd/Makefile b/libmpathcmd/Makefile<br>
-index b8e29cb..b6c349a 100644<br>
---- a/libmpathcmd/Makefile<br>
-+++ b/libmpathcmd/Makefile<br>
-@@ -9,7 +9,7 @@ OBJS =3D mpath_cmd.o<br>
-=C2=A0all: $(LIBS)<br>
+=C2=A0install: $(EXEC) $(EXEC).8<br>
+diff --git a/mpathpersist/Makefile b/mpathpersist/Makefile<br>
+index 47043bb..27e921e 100644<br>
+--- a/mpathpersist/Makefile<br>
++++ b/mpathpersist/Makefile<br>
+@@ -12,7 +12,7 @@ OBJS =3D main.o<br>
+=C2=A0all: $(EXEC)<br>
 <br>
-=C2=A0$(LIBS): $(OBJS)<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(LDFLAGS) $(SHARED_FLAGS) -Wl,-soname=3D=
-$@ -o $@ $(OBJS) $(LIBDEPS)<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(SHARED_FLAGS) $(LDFLAGS) $(LIBDEPS) -Wl=
-,-soname=3D$@ $(OBJS) -o $@<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 $(LN) $@ $(DEVLIB)<br>
-<br>
-=C2=A0install: $(LIBS)<br>
-diff --git a/libmpathpersist/Makefile b/libmpathpersist/Makefile<br>
-index 96da639..ee4a421 100644<br>
---- a/libmpathpersist/Makefile<br>
-+++ b/libmpathpersist/Makefile<br>
-@@ -14,7 +14,7 @@ OBJS =3D mpath_persist.o mpath_updatepr.o mpath_pr_ioctl.=
-o<br>
-=C2=A0all: $(LIBS)<br>
-<br>
-=C2=A0$(LIBS): $(OBJS)<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(LDFLAGS) $(SHARED_FLAGS) $(LIBDEPS) -Wl=
-,-soname=3D$@ -o $@ $(OBJS)<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(SHARED_FLAGS) $(LDFLAGS) $(LIBDEPS) -Wl=
-,-soname=3D$@ $(OBJS) -o $@<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 $(LN) $(LIBS) $(DEVLIB)<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 $(GZIP) mpath_persistent_reserve_in.3 &gt; mpat=
-h_persistent_reserve_in.3.<wbr>gz<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 $(GZIP) mpath_persistent_reserve_out.3 &gt; mpa=
-th_persistent_reserve_out.<wbr>3.gz<br>
-diff --git a/libmultipath/Makefile b/libmultipath/Makefile<br>
-index 1f5ec25..c5f4052 100644<br>
---- a/libmultipath/Makefile<br>
-+++ b/libmultipath/Makefile<br>
-@@ -47,7 +47,7 @@ OBJS =3D memory.o parser.o vector.o devmapper.o callout.o=
- \<br>
-=C2=A0all: $(LIBS)<br>
-<br>
-=C2=A0$(LIBS): $(OBJS)<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(LDFLAGS) $(SHARED_FLAGS) -Wl,-soname=3D=
-$@ -o $@ $(OBJS) $(LIBDEPS)<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(SHARED_FLAGS) $(LDFLAGS) $(LIBDEPS) -Wl=
-,-soname=3D$@ $(OBJS) -o $@<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 $(LN) $@ $(DEVLIB)<br>
+=C2=A0$(EXEC): $(OBJS)<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(OBJS) -o $(EXEC) $(LDFLAGS) $(CFLAGS) $=
+(LIBDEPS)<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(CFLAGS) $(LDFLAGS) $(LIBDEPS) $(OBJS) -=
+o $(EXEC)<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 $(GZIP) $(EXEC).8 &gt; $(EXEC).8.gz<br>
 <br>
 =C2=A0install:<br>
-diff --git a/libmultipath/checkers/<wbr>Makefile b/libmultipath/checkers/<w=
-br>Makefile<br>
-index 11ab76f..3b8e27c 100644<br>
---- a/libmultipath/checkers/<wbr>Makefile<br>
-+++ b/libmultipath/checkers/<wbr>Makefile<br>
-@@ -19,13 +19,13 @@ LIBS=3D \<br>
-=C2=A0all: $(LIBS)<br>
+diff --git a/multipath/Makefile b/multipath/Makefile<br>
+index cad34bf..421490c 100644<br>
+--- a/multipath/Makefile<br>
++++ b/multipath/Makefile<br>
+@@ -15,7 +15,7 @@ OBJS =3D main.o<br>
+=C2=A0all: $(EXEC)<br>
 <br>
-=C2=A0libcheckrbd.so: rbd.o<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^ -lrad=
-os -ludev<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(SHARED_FLAGS) $(LDFLAGS) -o $@ $^ -lrad=
-os -ludev<br>
+=C2=A0$(EXEC): $(OBJS)<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(CFLAGS) $(OBJS) -o $(EXEC) $(LDFLAGS) $=
+(LIBDEPS)<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(CFLAGS) $(LDFLAGS) $(LIBDEPS) $(OBJS) -=
+o $(EXEC)<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 $(GZIP) $(EXEC).8 &gt; $(EXEC).8.gz<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 $(GZIP) $(EXEC).conf.5 &gt; $(EXEC).conf.5.gz<b=
+r>
 <br>
-=C2=A0libcheckdirectio.so: libsg.o directio.o<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^ -laio=
+diff --git a/multipathd/Makefile b/multipathd/Makefile<br>
+index d57f6d5..a3fad61 100644<br>
+--- a/multipathd/Makefile<br>
++++ b/multipathd/Makefile<br>
+@@ -29,7 +29,7 @@ EXEC =3D multipathd<br>
+=C2=A0all : $(EXEC)<br>
 <br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(SHARED_FLAGS) $(LDFLAGS) -o $@ $^ -laio=
-<br>
-<br>
-=C2=A0libcheck%.so: libsg.o %.o<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(SHARED_FLAGS) $(LDFLAGS) -o $@ $^<br>
+=C2=A0$(EXEC): $(OBJS)<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) -o $(EXEC) $=
+(LIBDEPS)<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(CFLAGS) $(LDFLAGS) $(LIBDEPS) $(OBJS) -=
+o $(EXEC)<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 $(GZIP) $(EXEC).8 &gt; $(EXEC).8.gz<br>
 <br>
 =C2=A0install:<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 $(INSTALL_PROGRAM) -m 755 $(LIBS) $(DESTDIR)$(l=
-ibdir)<br>
-diff --git a/libmultipath/prioritizers/<wbr>Makefile b/libmultipath/priorit=
-izers/<wbr>Makefile<br>
-index 36b42e4..8a5561a 100644<br>
---- a/libmultipath/prioritizers/<wbr>Makefile<br>
-+++ b/libmultipath/prioritizers/<wbr>Makefile<br>
-@@ -23,10 +23,10 @@ LIBS =3D \<br>
-=C2=A0all: $(LIBS)<br>
-<br>
-=C2=A0libprioalua.so: alua.o alua_rtpg.o<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(SHARED_FLAGS) $(LDFLAGS) -o $@ $^<br>
-<br>
-=C2=A0libprio%.so: %.o<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(SHARED_FLAGS) $(LDFLAGS) -o $@ $^<br>
-<br>
-=C2=A0install: $(LIBS)<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 $(INSTALL_PROGRAM) -m 755 libprio*.so $(DESTDIR=
-)$(libdir)<br>
-<span class=3D"HOEnZb"><font color=3D"#888888">--<br>
+<span class=3D"m_-275185102971043105HOEnZb"><font color=3D"#888888">--<br>
 2.12.0<br>
 <br>
 </font></span></blockquote></div><br></div>
+</div></div></blockquote></div><br></div>
 
---94eb2c12f968d9abf3054b61c1b9--
+--94eb2c0629b2cfef17054b623c5c--
 
 
---===============1688544930907205889==
+--===============4859215335678173944==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============1688544930907205889==--
+--===============4859215335678173944==--
