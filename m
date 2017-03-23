@@ -1,89 +1,77 @@
-From: Lars Ellenberg <lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>
-Subject: Re: RFC: always use REQ_OP_WRITE_ZEROES for zeroing
-	offload
-Date: Thu, 23 Mar 2017 16:54:10 +0100
-Message-ID: <20170323155410.GD1138@soda.linbit>
-References: <20170323143341.31549-1-hch@lst.de>
+From: Michael McCarthy <mccarthy197310@gmail.com>
+Subject: Question about merge performance
+Date: Thu, 23 Mar 2017 12:35:37 -0400
+Message-ID: <CALpM8gRZoJLQvNxo=K=+JZ4yHAzMxzvDS9aM7uYxyrq8VqzUvg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20170323143341.31549-1-hch-jcswGhMUV9g@public.gmane.org>
-List-Unsubscribe: <http://lists.linbit.com/mailman/options/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
-List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
-List-Subscribe: <http://lists.linbit.com/mailman/listinfo/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
-Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Cc: axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Content-Type: multipart/mixed; boundary="===============3154038165671064031=="
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Mar 23, 2017 at 10:33:18AM -0400, Christoph Hellwig wrote:
-> This series makes REQ_OP_WRITE_ZEROES the only zeroing offload
-> supported by the block layer, and switches existing implementations
-> of REQ_OP_DISCARD that correctly set discard_zeroes_data to it,
-> removes incorrect discard_zeroes_data, and also switches WRITE SAME
-> based zeroing in SCSI to this new method.
-> 
-> I've done testing with ATA, SCSI and NVMe setups, but there are
-> a few things that will need more attention:
-> 
+--===============3154038165671064031==
+Content-Type: multipart/alternative; boundary=94eb2c07106a881b33054b687749
 
->  - The DRBD code in this area was very odd,
+--94eb2c07106a881b33054b687749
+Content-Type: text/plain; charset=UTF-8
 
-DRBD wants all replicas to give back identical data.
-If what comes back after a discard is "undefined",
-we cannot really use that.
+Hello, collective wisdom,
 
-We used to "stack" discard only if our local backend claimed
-"discard_zeroes_data". We replicate that IO request to the peer
-as discard, and if the peer cannot do discards itself, or has
-discard_zeroes_data == 0, the peer will use zeroout instead.
+I'm new to the list and apologize if this is not the right place to ask
+this type of question and if so, would be glad receive pointers to the
+correct one.
 
-One use-case for this is the device mapper "thin provisioning".
-At the time I wrote those "odd" hacks, dm thin targets
-would set discard_zeroes_data=0, NOT change discard granularity,
-but only actually discard (drop from the tree) whole "chunks",
-leaving partial start/end chunks in the mapping tree unchanged.
+Now the question:
 
-The logic of "only stack discard, if backend discard_zeroes_data"
-would mean that we would not be able to accept and pass down discards
-to dm-thin targets. But with data on dm-thin, you would really like
-to do the occasional fstrim.
+I'm looking for ways to improve snapshot-merge target performance. We're
+using CentOS 7.3 here. Both, the snapshot-origin and the snapshot (cow data
+holder) reside on NVMe SSDs. What we've seen in our tests is that the speed
+of the merge isn't approaching neither the throughput nor the IOPS limits
+of the NVMe devices. I suspect it might be because the merge operation is
+single threaded and uses QD of 1.
 
-Also, IO backends on the peers do not have to have the same
-characteristics.  You could have the DRBD Primary on some SSD,
-and the Secondary on some thin-pool LV,
-scheduling thin snapthots in intervals or on demand.
-
-With the logic of "use zero-out instead", fstrim would cause it to
-fully allocate what was supposed to be thinly provisioned :-(
-
-So what I did there was optionally tell DRBD that
-"discard_zeroes_data == 0" on that peer would actually mean
-"discard_zeroes_data == 1,
- IF you zero-out the partial chunks of this granularity yourself".
-
-And implemented this "discard aligned chunks of that granularity,
-and zero-out partial start/end chunks, if any".
-
-And then claim to upper layers that, yes, discard_zeroes_data=1,
-in that case, if so configured, even if our backend (dm-thin)
-would say discard_zeroes_data=0.
-
-Does that make sense?  Can we still do that?  Has something like that
-been done in block core or device mapper meanwhile?
-
-
-> and will need an audit from the maintainers.
-
-Will need to make some time for review and testing.
+Could anyone with enough knowledge about the DM code shed some light on how
+it operates during the merge? Are there any interfaces to improve the speed
+of this operation without altering the code?
 
 Thanks,
+Mike
 
-    Lars
+--94eb2c07106a881b33054b687749
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hello, collective wisdom,<div><br></div><div>I&#39;m new t=
+o the list and apologize if this is not the right place to ask this type of=
+ question and if so, would be glad receive pointers to the correct one.</di=
+v><div><br></div><div>Now the question:</div><div><br></div><div>I&#39;m lo=
+oking for ways to improve snapshot-merge target performance. We&#39;re usin=
+g=C2=A0CentOS 7.3 here. Both, the snapshot-origin and the snapshot (cow dat=
+a holder) reside on NVMe SSDs. What we&#39;ve seen in our tests is that the=
+ speed of the merge isn&#39;t approaching neither the throughput nor the IO=
+PS limits of the NVMe devices. I suspect it might be because the merge oper=
+ation is single threaded and uses QD of 1.</div><div>=C2=A0</div><div>Could=
+ anyone with enough knowledge about the DM code shed some light on how it o=
+perates during the merge? Are there any interfaces to improve the speed of =
+this operation without altering the code?<br></div><div><br></div><div>Than=
+ks,</div><div>Mike</div></div>
+
+--94eb2c07106a881b33054b687749--
+
+
+--===============3154038165671064031==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============3154038165671064031==--
