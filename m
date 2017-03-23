@@ -1,36 +1,57 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH] multipath-tools: arrange compilation options
-	for binaries
-Date: Thu, 23 Mar 2017 15:02:40 +0100
-Message-ID: <20d24d9d-566f-cd2b-8f45-86167ffdd0df@gmail.com>
-References: <20170317224002.8967-1-xose.vazquez@gmail.com>
-	<CABr-GndoZc+maRDaerfgUupPw4TeSgzf+aF9gZh0VNtKsjfQCA@mail.gmail.com>
-	<CABr-GnfmGzcnW0GcqMLWs0Zg30Txw0k+3Er6zyrRpRrmcN-gwQ@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CABr-GnfmGzcnW0GcqMLWs0Zg30Txw0k+3Er6zyrRpRrmcN-gwQ@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+From: Christoph Hellwig <hch@lst.de>
+Subject: [PATCH 02/23] block: implement splitting of REQ_OP_WRITE_ZEROES bios
+Date: Thu, 23 Mar 2017 10:33:20 -0400
+Message-ID: <20170323143341.31549-3-hch@lst.de>
+References: <20170323143341.31549-1-hch@lst.de>
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20170323143341.31549-1-hch@lst.de>
+Sender: linux-block-owner@vger.kernel.org
+To: axboe@kernel.dk, martin.petersen@oracle.com, agk@redhat.com, snitzer@redhat.com, shli@kernel.org, philipp.reisner@linbit.com, lars.ellenberg@linbit.com
+Cc: linux-block@vger.kernel.org, linux-scsi@vger.kernel.org, drbd-dev@lists.linbit.com, dm-devel@redhat.com, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 03/23/2017 10:09 AM, Christophe Varoqui wrote:
+Copy and past the REQ_OP_WRITE_SAME code to prepare to implementations
+that limit the write zeroes size.
 
-> And reverted:
-> hh
-> From http://eli.thegreenplace.net/2013/07/09/library-order-in-static-linking:
-> 
->     If object or library AA needs a symbol from library BB, then AA should
->     come /before/ library BB in the command-line invocation of the linker.
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+---
+ block/blk-merge.c | 17 +++++++++++++++--
+ 1 file changed, 15 insertions(+), 2 deletions(-)
 
-Did you get a toolchain error?
+diff --git a/block/blk-merge.c b/block/blk-merge.c
+index c62a6f0325e0..f9e5a3e0944b 100644
+--- a/block/blk-merge.c
++++ b/block/blk-merge.c
+@@ -63,6 +63,20 @@ static struct bio *blk_bio_discard_split(struct request_queue *q,
+ 	return bio_split(bio, split_sectors, GFP_NOIO, bs);
+ }
+ 
++static struct bio *blk_bio_write_zeroes_split(struct request_queue *q,
++		struct bio *bio, struct bio_set *bs, unsigned *nsegs)
++{
++	*nsegs = 1;
++
++	if (!q->limits.max_write_zeroes_sectors)
++		return NULL;
++
++	if (bio_sectors(bio) <= q->limits.max_write_zeroes_sectors)
++		return NULL;
++
++	return bio_split(bio, q->limits.max_write_zeroes_sectors, GFP_NOIO, bs);
++}
++
+ static struct bio *blk_bio_write_same_split(struct request_queue *q,
+ 					    struct bio *bio,
+ 					    struct bio_set *bs,
+@@ -209,8 +223,7 @@ void blk_queue_split(struct request_queue *q, struct bio **bio,
+ 		split = blk_bio_discard_split(q, *bio, bs, &nsegs);
+ 		break;
+ 	case REQ_OP_WRITE_ZEROES:
+-		split = NULL;
+-		nsegs = (*bio)->bi_phys_segments;
++		split = blk_bio_write_zeroes_split(q, *bio, bs, &nsegs);
+ 		break;
+ 	case REQ_OP_WRITE_SAME:
+ 		split = blk_bio_write_same_split(q, *bio, bs, &nsegs);
+-- 
+2.11.0
