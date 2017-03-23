@@ -1,14 +1,11 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH] multipath-tools: arrange compilation options
-	for binaries
-Date: Thu, 23 Mar 2017 10:09:42 +0100
-Message-ID: <CABr-GnfmGzcnW0GcqMLWs0Zg30Txw0k+3Er6zyrRpRrmcN-gwQ@mail.gmail.com>
-References: <20170317224002.8967-1-xose.vazquez@gmail.com>
-	<CABr-GndoZc+maRDaerfgUupPw4TeSgzf+aF9gZh0VNtKsjfQCA@mail.gmail.com>
+From: Shichangkuo <shi.changkuo@h3c.com>
+Subject: [multipath-tools] [BUG] segfault in uev_update_path
+Date: Thu, 23 Mar 2017 09:17:14 +0000
+Message-ID: <D1E4D02760513D4B90DC3B40FF32AF35A101A786@H3CMLB12-EX.srv.huawei-3com.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============4859215335678173944=="
+Content-Type: multipart/mixed; boundary="===============2900529260988971047=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CABr-GndoZc+maRDaerfgUupPw4TeSgzf+aF9gZh0VNtKsjfQCA@mail.gmail.com>
+Content-Language: zh-CN
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,219 +15,150 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Cc: Guozhonghua <guozhonghua@h3c.com>, Zhangguanghui <zhang.guanghui@h3c.com>
 List-Id: dm-devel.ids
 
---===============4859215335678173944==
-Content-Type: multipart/alternative; boundary=94eb2c0629b2cfef17054b623c5c
+--===============2900529260988971047==
+Content-Language: zh-CN
+Content-Type: multipart/alternative;
+	boundary="_000_D1E4D02760513D4B90DC3B40FF32AF35A101A786H3CMLB12EXsrvhu_"
 
---94eb2c0629b2cfef17054b623c5c
-Content-Type: text/plain; charset=UTF-8
+--_000_D1E4D02760513D4B90DC3B40FF32AF35A101A786H3CMLB12EXsrvhu_
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 
-And reverted:
+SGksIGFsbA0KICAgIEkgdXNlZCBtdWx0aXBhdGgtdG9vc2wgMC42LjQgZm9yIHNvbWUgdGVzdGlu
+Zy4gV2hlbiBleGVjdXRpbmcgdWRldmFkbSB0cmlnZ2VyIGNvbW1hbmQsIEkgZmluZCBzb21ldGhp
+bmcgd3Jvbmcgd2l0aCBtdWx0aXBhdGhkLiBMb2dzIGFyZSBhcyBmb2xsb3dzOg0KTWFyIDE1IDE5
+OjI2OjAwIHNlcnZlcjE1NSBtdWx0aXBhdGhkOiBzZGo6IHBhdGggd3dpZCBjaGFuZ2VkIGZyb20g
+JzM2MDAwMmFjMDAwMDAwMDAwMDAwMDAwZTcwMDAxMzA3MScgdG8gJzM2MDAwMmFjMDAwMDAwMDAw
+MDAwMDAwMjYwMDAxMzA3MScuIGRpc2FsbG93aW5nDQpNYXIgMTUgMTk6MjY6MDAgc2VydmVyMTU1
+IGtlcm5lbDogWzcwNjE4My44Mzc3MDRdIG11bHRpcGF0aGRbMTE2NTQ0MF06IHNlZ2ZhdWx0IGF0
+IDE5OCBpcCAwMDAwNTU1ZjZkMDIyNjA3IHNwIDAwMDA3ZjFmOTkyZjU5NjAgZXJyb3IgNCBpbiBt
+dWx0aXBhdGhkWzU1NWY2ZDAxODAwMCsxODAwMF0NCg0KICBBZnRlciBwYXJzaW5nIHRoZSBhZGRy
+ZXNzIHdpdGggb2JqZHVtcCwgSSB0aGluayB1ZXZfdXBkYXRlX3BhdGggYWNjZXNzaW5nIG51bGwg
+cG9pbnRlciBwcC0+bXBwIC4gQ2FsbCB0cmFjZSBtYXliZToNCnVldl90cmlnZ2VyDQp1ZXZfdXBk
+YXRlX3BhdGgNCmRtX2ZhaWxfcGF0aChwcC0+bXBwLT5hbGlhcywgcHAtPmRldl90KTsNCg0KICAg
+IEhhcyBhbnlvbmUgZXZlciBtZXQgaXQgYW5kIGhvdyB0byBmaXggaXQ/DQpUaGFua3MhDQpDaGFu
+Z2t1bw0KLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQ0K5pys6YKu5Lu25Y+K5YW26ZmE5Lu25ZCr5pyJ5p2t
+5bee5Y2O5LiJ6YCa5L+h5oqA5pyv5pyJ6ZmQ5YWs5Y+455qE5L+d5a+G5L+h5oGv77yM5LuF6ZmQ
+5LqO5Y+R6YCB57uZ5LiK6Z2i5Zyw5Z2A5Lit5YiX5Ye6DQrnmoTkuKrkurrmiJbnvqTnu4TjgILn
+poHmraLku7vkvZXlhbbku5bkurrku6Xku7vkvZXlvaLlvI/kvb/nlKjvvIjljIXmi6zkvYbkuI3p
+mZDkuo7lhajpg6jmiJbpg6jliIblnLDms4TpnLLjgIHlpI3liLbjgIENCuaIluaVo+WPke+8ieac
+rOmCruS7tuS4reeahOS/oeaBr+OAguWmguaenOaCqOmUmeaUtuS6huacrOmCruS7tu+8jOivt+aC
+qOeri+WNs+eUteivneaIlumCruS7tumAmuefpeWPkeS7tuS6uuW5tuWIoOmZpOacrA0K6YKu5Lu2
+77yBDQpUaGlzIGUtbWFpbCBhbmQgaXRzIGF0dGFjaG1lbnRzIGNvbnRhaW4gY29uZmlkZW50aWFs
+IGluZm9ybWF0aW9uIGZyb20gSDNDLCB3aGljaCBpcw0KaW50ZW5kZWQgb25seSBmb3IgdGhlIHBl
+cnNvbiBvciBlbnRpdHkgd2hvc2UgYWRkcmVzcyBpcyBsaXN0ZWQgYWJvdmUuIEFueSB1c2Ugb2Yg
+dGhlDQppbmZvcm1hdGlvbiBjb250YWluZWQgaGVyZWluIGluIGFueSB3YXkgKGluY2x1ZGluZywg
+YnV0IG5vdCBsaW1pdGVkIHRvLCB0b3RhbCBvciBwYXJ0aWFsDQpkaXNjbG9zdXJlLCByZXByb2R1
+Y3Rpb24sIG9yIGRpc3NlbWluYXRpb24pIGJ5IHBlcnNvbnMgb3RoZXIgdGhhbiB0aGUgaW50ZW5k
+ZWQNCnJlY2lwaWVudChzKSBpcyBwcm9oaWJpdGVkLiBJZiB5b3UgcmVjZWl2ZSB0aGlzIGUtbWFp
+bCBpbiBlcnJvciwgcGxlYXNlIG5vdGlmeSB0aGUgc2VuZGVyDQpieSBwaG9uZSBvciBlbWFpbCBp
+bW1lZGlhdGVseSBhbmQgZGVsZXRlIGl0IQ0K
 
-From http://eli.thegreenplace.net/2013/07/09/library-order-in-static-linking
-:
+--_000_D1E4D02760513D4B90DC3B40FF32AF35A101A786H3CMLB12EXsrvhu_
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: base64
 
-If object or library AA needs a symbol from library BB, then AA should come
-*before* library BB in the command-line invocation of the linker.
+PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
+bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
+YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
+cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
+VFIvUkVDLWh0bWw0MCI+DQo8aGVhZD4NCjxtZXRhIGh0dHAtZXF1aXY9IkNvbnRlbnQtVHlwZSIg
+Y29udGVudD0idGV4dC9odG1sOyBjaGFyc2V0PXV0Zi04Ij4NCjxtZXRhIG5hbWU9IkdlbmVyYXRv
+ciIgY29udGVudD0iTWljcm9zb2Z0IFdvcmQgMTQgKGZpbHRlcmVkIG1lZGl1bSkiPg0KPHN0eWxl
+PjwhLS0NCi8qIEZvbnQgRGVmaW5pdGlvbnMgKi8NCkBmb250LWZhY2UNCgl7Zm9udC1mYW1pbHk6
+U2ltU3VuOw0KCXBhbm9zZS0xOjIgMSA2IDAgMyAxIDEgMSAxIDE7fQ0KQGZvbnQtZmFjZQ0KCXtm
+b250LWZhbWlseTpTaW1TdW47DQoJcGFub3NlLTE6MiAxIDYgMCAzIDEgMSAxIDEgMTt9DQpAZm9u
+dC1mYWNlDQoJe2ZvbnQtZmFtaWx5OkNhbGlicmk7DQoJcGFub3NlLTE6MiAxNSA1IDIgMiAyIDQg
+MyAyIDQ7fQ0KQGZvbnQtZmFjZQ0KCXtmb250LWZhbWlseTpTaW1TdW47DQoJcGFub3NlLTE6MiAx
+IDYgMCAzIDEgMSAxIDEgMTt9DQovKiBTdHlsZSBEZWZpbml0aW9ucyAqLw0KcC5Nc29Ob3JtYWws
+IGxpLk1zb05vcm1hbCwgZGl2Lk1zb05vcm1hbA0KCXttYXJnaW46MGNtOw0KCW1hcmdpbi1ib3R0
+b206LjAwMDFwdDsNCgl0ZXh0LWFsaWduOmp1c3RpZnk7DQoJdGV4dC1qdXN0aWZ5OmludGVyLWlk
+ZW9ncmFwaDsNCglmb250LXNpemU6MTAuNXB0Ow0KCWZvbnQtZmFtaWx5OiJDYWxpYnJpIiwic2Fu
+cy1zZXJpZiI7fQ0KYTpsaW5rLCBzcGFuLk1zb0h5cGVybGluaw0KCXttc28tc3R5bGUtcHJpb3Jp
+dHk6OTk7DQoJY29sb3I6Ymx1ZTsNCgl0ZXh0LWRlY29yYXRpb246dW5kZXJsaW5lO30NCmE6dmlz
+aXRlZCwgc3Bhbi5Nc29IeXBlcmxpbmtGb2xsb3dlZA0KCXttc28tc3R5bGUtcHJpb3JpdHk6OTk7
+DQoJY29sb3I6cHVycGxlOw0KCXRleHQtZGVjb3JhdGlvbjp1bmRlcmxpbmU7fQ0Kc3Bhbi5FbWFp
+bFN0eWxlMTcNCgl7bXNvLXN0eWxlLXR5cGU6cGVyc29uYWwtY29tcG9zZTsNCglmb250LWZhbWls
+eToiQ2FsaWJyaSIsInNhbnMtc2VyaWYiOw0KCWNvbG9yOndpbmRvd3RleHQ7fQ0KLk1zb0NocERl
+ZmF1bHQNCgl7bXNvLXN0eWxlLXR5cGU6ZXhwb3J0LW9ubHk7fQ0KLyogUGFnZSBEZWZpbml0aW9u
+cyAqLw0KQHBhZ2UgV29yZFNlY3Rpb24xDQoJe3NpemU6NjEyLjBwdCA3OTIuMHB0Ow0KCW1hcmdp
+bjo3Mi4wcHQgOTAuMHB0IDcyLjBwdCA5MC4wcHQ7fQ0KZGl2LldvcmRTZWN0aW9uMQ0KCXtwYWdl
+OldvcmRTZWN0aW9uMTt9DQotLT48L3N0eWxlPjwhLS1baWYgZ3RlIG1zbyA5XT48eG1sPg0KPG86
+c2hhcGVkZWZhdWx0cyB2OmV4dD0iZWRpdCIgc3BpZG1heD0iMTAyNiIgLz4NCjwveG1sPjwhW2Vu
+ZGlmXS0tPjwhLS1baWYgZ3RlIG1zbyA5XT48eG1sPg0KPG86c2hhcGVsYXlvdXQgdjpleHQ9ImVk
+aXQiPg0KPG86aWRtYXAgdjpleHQ9ImVkaXQiIGRhdGE9IjEiIC8+DQo8L286c2hhcGVsYXlvdXQ+
+PC94bWw+PCFbZW5kaWZdLS0+DQo8L2hlYWQ+DQo8Ym9keSBsYW5nPSJaSC1DTiIgbGluaz0iYmx1
+ZSIgdmxpbms9InB1cnBsZSIgc3R5bGU9InRleHQtanVzdGlmeS10cmltOnB1bmN0dWF0aW9uIj4N
+CjxkaXYgY2xhc3M9IldvcmRTZWN0aW9uMSI+DQo8cCBjbGFzcz0iTXNvTm9ybWFsIj48c3BhbiBs
+YW5nPSJFTi1VUyI+SGksIGFsbDxvOnA+PC9vOnA+PC9zcGFuPjwvcD4NCjxwIGNsYXNzPSJNc29O
+b3JtYWwiPjxzcGFuIGxhbmc9IkVOLVVTIj4mbmJzcDsmbmJzcDsgJm5ic3A7SSB1c2VkIG11bHRp
+cGF0aC10b29zbCAwLjYuNCBmb3Igc29tZSB0ZXN0aW5nLiBXaGVuIGV4ZWN1dGluZyB1ZGV2YWRt
+IHRyaWdnZXIgY29tbWFuZCwgSSBmaW5kIHNvbWV0aGluZyB3cm9uZyB3aXRoIG11bHRpcGF0aGQu
+IExvZ3MgYXJlIGFzIGZvbGxvd3M6PG86cD48L286cD48L3NwYW4+PC9wPg0KPHAgY2xhc3M9Ik1z
+b05vcm1hbCI+PHNwYW4gbGFuZz0iRU4tVVMiPk1hciAxNSAxOToyNjowMCBzZXJ2ZXIxNTUgbXVs
+dGlwYXRoZDogc2RqOiBwYXRoIHd3aWQgY2hhbmdlZCBmcm9tICczNjAwMDJhYzAwMDAwMDAwMDAw
+MDAwMGU3MDAwMTMwNzEnIHRvICczNjAwMDJhYzAwMDAwMDAwMDAwMDAwMDI2MDAwMTMwNzEnLiBk
+aXNhbGxvd2luZzxvOnA+PC9vOnA+PC9zcGFuPjwvcD4NCjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxz
+cGFuIGxhbmc9IkVOLVVTIj5NYXIgMTUgMTk6MjY6MDAgc2VydmVyMTU1IGtlcm5lbDogWzcwNjE4
+My44Mzc3MDRdIG11bHRpcGF0aGRbMTE2NTQ0MF06IHNlZ2ZhdWx0IGF0IDE5OCBpcCAwMDAwNTU1
+ZjZkMDIyNjA3IHNwIDAwMDA3ZjFmOTkyZjU5NjAgZXJyb3IgNCBpbiBtdWx0aXBhdGhkWzU1NWY2
+ZDAxODAwMCYjNDM7MTgwMDBdPG86cD48L286cD48L3NwYW4+PC9wPg0KPHAgY2xhc3M9Ik1zb05v
+cm1hbCI+PHNwYW4gbGFuZz0iRU4tVVMiPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvcD4NCjxw
+IGNsYXNzPSJNc29Ob3JtYWwiIHN0eWxlPSJ0ZXh0LWluZGVudDoxMC41cHQiPjxzcGFuIGxhbmc9
+IkVOLVVTIj4mbmJzcDsgQWZ0ZXIgcGFyc2luZyB0aGUgYWRkcmVzcyB3aXRoIG9iamR1bXAsIEkg
+dGhpbmsgdWV2X3VwZGF0ZV9wYXRoIGFjY2Vzc2luZyBudWxsIHBvaW50ZXIgcHAtJmd0O21wcCAu
+IENhbGwgdHJhY2UgbWF5YmU6PG86cD48L286cD48L3NwYW4+PC9wPg0KPHAgY2xhc3M9Ik1zb05v
+cm1hbCI+PHNwYW4gbGFuZz0iRU4tVVMiPnVldl90cmlnZ2VyPG86cD48L286cD48L3NwYW4+PC9w
+Pg0KPHAgY2xhc3M9Ik1zb05vcm1hbCIgc3R5bGU9InRleHQtaW5kZW50OjEwLjVwdCI+PHNwYW4g
+bGFuZz0iRU4tVVMiPnVldl91cGRhdGVfcGF0aDxvOnA+PC9vOnA+PC9zcGFuPjwvcD4NCjxwIGNs
+YXNzPSJNc29Ob3JtYWwiIHN0eWxlPSJ0ZXh0LWluZGVudDoyMS4wcHQiPjxzcGFuIGxhbmc9IkVO
+LVVTIj5kbV9mYWlsX3BhdGgocHAtJmd0O21wcC0mZ3Q7YWxpYXMsIHBwLSZndDtkZXZfdCk7PG86
+cD48L286cD48L3NwYW4+PC9wPg0KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PHNwYW4gbGFuZz0iRU4t
+VVMiPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvcD4NCjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxz
+cGFuIGxhbmc9IkVOLVVTIj4mbmJzcDsgJm5ic3A7Jm5ic3A7SGFzIGFueW9uZSBldmVyIG1ldCBp
+dCBhbmQgaG93IHRvIGZpeCBpdD88bzpwPjwvbzpwPjwvc3Bhbj48L3A+DQo8cCBjbGFzcz0iTXNv
+Tm9ybWFsIj48c3BhbiBsYW5nPSJFTi1VUyI+VGhhbmtzITxvOnA+PC9vOnA+PC9zcGFuPjwvcD4N
+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxzcGFuIGxhbmc9IkVOLVVTIj5DaGFuZ2t1bzxvOnA+PC9v
+OnA+PC9zcGFuPjwvcD4NCjwvZGl2Pg0KPHNwYW4gc3R5bGU9ImZvbnQtc2l6ZTo3LjVwdDtmb250
+LWZhbWlseTrljY7mlofnu4bpu5E7Y29sb3I6Z3JheSI+PHNwYW4gbGFuZz0iRU4tVVMiPi0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS08YnI+DQo8L3NwYW4+5pys6YKu5Lu25Y+K5YW26ZmE5Lu25ZCr5pyJ5p2t
+5bee5Y2O5LiJ6YCa5L+h5oqA5pyv5pyJ6ZmQ5YWs5Y+455qE5L+d5a+G5L+h5oGv77yM5LuF6ZmQ
+5LqO5Y+R6YCB57uZ5LiK6Z2i5Zyw5Z2A5Lit5YiX5Ye6PHNwYW4gbGFuZz0iRU4tVVMiPjxicj4N
+Cjwvc3Bhbj7nmoTkuKrkurrmiJbnvqTnu4TjgILnpoHmraLku7vkvZXlhbbku5bkurrku6Xku7vk
+vZXlvaLlvI/kvb/nlKjvvIjljIXmi6zkvYbkuI3pmZDkuo7lhajpg6jmiJbpg6jliIblnLDms4Tp
+nLLjgIHlpI3liLbjgIE8c3BhbiBsYW5nPSJFTi1VUyI+PGJyPg0KPC9zcGFuPuaIluaVo+WPke+8
+ieacrOmCruS7tuS4reeahOS/oeaBr+OAguWmguaenOaCqOmUmeaUtuS6huacrOmCruS7tu+8jOiv
+t+aCqOeri+WNs+eUteivneaIlumCruS7tumAmuefpeWPkeS7tuS6uuW5tuWIoOmZpOacrDxzcGFu
+IGxhbmc9IkVOLVVTIj48YnI+DQo8L3NwYW4+6YKu5Lu277yBPHNwYW4gbGFuZz0iRU4tVVMiPjxi
+cj4NCjwvc3Bhbj48L3NwYW4+PHNwYW4gbGFuZz0iRU4tVVMiIHN0eWxlPSJmb250LXNpemU6Ny41
+cHQ7Zm9udC1mYW1pbHk6JnF1b3Q7QXJpYWwmcXVvdDssJnF1b3Q7c2Fucy1zZXJpZiZxdW90Oztj
+b2xvcjpncmF5Ij5UaGlzIGUtbWFpbCBhbmQgaXRzIGF0dGFjaG1lbnRzIGNvbnRhaW4gY29uZmlk
+ZW50aWFsIGluZm9ybWF0aW9uIGZyb20gSDNDLCB3aGljaCBpcw0KPGJyPg0KaW50ZW5kZWQgb25s
+eSBmb3IgdGhlIHBlcnNvbiBvciBlbnRpdHkgd2hvc2UgYWRkcmVzcyBpcyBsaXN0ZWQgYWJvdmUu
+IEFueSB1c2Ugb2YgdGhlDQo8YnI+DQppbmZvcm1hdGlvbiBjb250YWluZWQgaGVyZWluIGluIGFu
+eSB3YXkgKGluY2x1ZGluZywgYnV0IG5vdCBsaW1pdGVkIHRvLCB0b3RhbCBvciBwYXJ0aWFsDQo8
+YnI+DQpkaXNjbG9zdXJlLCByZXByb2R1Y3Rpb24sIG9yIGRpc3NlbWluYXRpb24pIGJ5IHBlcnNv
+bnMgb3RoZXIgdGhhbiB0aGUgaW50ZW5kZWQgPGJyPg0KcmVjaXBpZW50KHMpIGlzIHByb2hpYml0
+ZWQuIElmIHlvdSByZWNlaXZlIHRoaXMgZS1tYWlsIGluIGVycm9yLCBwbGVhc2Ugbm90aWZ5IHRo
+ZSBzZW5kZXINCjxicj4NCmJ5IHBob25lIG9yIGVtYWlsIGltbWVkaWF0ZWx5IGFuZCBkZWxldGUg
+aXQhPC9zcGFuPg0KPC9ib2R5Pg0KPC9odG1sPg0K
 
-
-
-On Thu, Mar 23, 2017 at 9:34 AM, Christophe Varoqui <
-christophe.varoqui@opensvc.com> wrote:
-
-> Merged,
-> Thanks.
->
-> On Fri, Mar 17, 2017 at 11:40 PM, Xose Vazquez Perez <
-> xose.vazquez@gmail.com> wrote:
->
->> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
->> Cc: device-mapper development <dm-devel@redhat.com>
->> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
->> ---
->>  kpartx/Makefile       | 2 +-
->>  mpathpersist/Makefile | 2 +-
->>  multipath/Makefile    | 2 +-
->>  multipathd/Makefile   | 2 +-
->>  4 files changed, 4 insertions(+), 4 deletions(-)
->>
->> diff --git a/kpartx/Makefile b/kpartx/Makefile
->> index 9441a2b..2e81284 100644
->> --- a/kpartx/Makefile
->> +++ b/kpartx/Makefile
->> @@ -19,7 +19,7 @@ EXEC = kpartx
->>  all: $(EXEC)
->>
->>  $(EXEC): $(OBJS)
->> -       $(CC) $(CFLAGS) $(OBJS) -o $(EXEC) $(LDFLAGS) $(LIBDEPS)
->> +       $(CC) $(CFLAGS) $(LDFLAGS) $(LIBDEPS) $(OBJS) -o $(EXEC)
->>         $(GZIP) $(EXEC).8 > $(EXEC).8.gz
->>
->>  install: $(EXEC) $(EXEC).8
->> diff --git a/mpathpersist/Makefile b/mpathpersist/Makefile
->> index 47043bb..27e921e 100644
->> --- a/mpathpersist/Makefile
->> +++ b/mpathpersist/Makefile
->> @@ -12,7 +12,7 @@ OBJS = main.o
->>  all: $(EXEC)
->>
->>  $(EXEC): $(OBJS)
->> -       $(CC) $(OBJS) -o $(EXEC) $(LDFLAGS) $(CFLAGS) $(LIBDEPS)
->> +       $(CC) $(CFLAGS) $(LDFLAGS) $(LIBDEPS) $(OBJS) -o $(EXEC)
->>         $(GZIP) $(EXEC).8 > $(EXEC).8.gz
->>
->>  install:
->> diff --git a/multipath/Makefile b/multipath/Makefile
->> index cad34bf..421490c 100644
->> --- a/multipath/Makefile
->> +++ b/multipath/Makefile
->> @@ -15,7 +15,7 @@ OBJS = main.o
->>  all: $(EXEC)
->>
->>  $(EXEC): $(OBJS)
->> -       $(CC) $(CFLAGS) $(OBJS) -o $(EXEC) $(LDFLAGS) $(LIBDEPS)
->> +       $(CC) $(CFLAGS) $(LDFLAGS) $(LIBDEPS) $(OBJS) -o $(EXEC)
->>         $(GZIP) $(EXEC).8 > $(EXEC).8.gz
->>         $(GZIP) $(EXEC).conf.5 > $(EXEC).conf.5.gz
->>
->> diff --git a/multipathd/Makefile b/multipathd/Makefile
->> index d57f6d5..a3fad61 100644
->> --- a/multipathd/Makefile
->> +++ b/multipathd/Makefile
->> @@ -29,7 +29,7 @@ EXEC = multipathd
->>  all : $(EXEC)
->>
->>  $(EXEC): $(OBJS)
->> -       $(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) -o $(EXEC) $(LIBDEPS)
->> +       $(CC) $(CFLAGS) $(LDFLAGS) $(LIBDEPS) $(OBJS) -o $(EXEC)
->>         $(GZIP) $(EXEC).8 > $(EXEC).8.gz
->>
->>  install:
->> --
->> 2.12.0
->>
->>
->
-
---94eb2c0629b2cfef17054b623c5c
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">And reverted:<div><br></div><div>From <a href=3D"http://el=
-i.thegreenplace.net/2013/07/09/library-order-in-static-linking">http://eli.=
-thegreenplace.net/2013/07/09/library-order-in-static-linking</a>:<br></div>=
-<div><br></div><div><div class=3D"gmail-section" id=3D"gmail-simple-example=
-s" style=3D"box-sizing:border-box;color:rgb(51,51,51);font-family:&quot;dro=
-id sans&quot;,sans-serif;font-size:16px"><blockquote style=3D"box-sizing:bo=
-rder-box;padding:10px 20px;margin:0px 0px 20px;border-left:5px solid rgb(23=
-8,238,238)">If object or library AA needs a symbol from library BB, then AA=
- should come=C2=A0<em style=3D"box-sizing:border-box">before</em>=C2=A0libr=
-ary BB in the command-line invocation of the linker.</blockquote><div><br><=
-/div></div><div class=3D"gmail-section" id=3D"gmail-circular-dependency" st=
-yle=3D"box-sizing:border-box;color:rgb(51,51,51);font-family:&quot;droid sa=
-ns&quot;,sans-serif;font-size:16px"></div></div></div><div class=3D"gmail_e=
-xtra"><br><div class=3D"gmail_quote">On Thu, Mar 23, 2017 at 9:34 AM, Chris=
-tophe Varoqui <span dir=3D"ltr">&lt;<a href=3D"mailto:christophe.varoqui@op=
-ensvc.com" target=3D"_blank">christophe.varoqui@opensvc.com</a>&gt;</span> =
-wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;bord=
-er-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">Merged,<div>Thank=
-s.</div></div><div class=3D"HOEnZb"><div class=3D"h5"><div class=3D"gmail_e=
-xtra"><br><div class=3D"gmail_quote">On Fri, Mar 17, 2017 at 11:40 PM, Xose=
- Vazquez Perez <span dir=3D"ltr">&lt;<a href=3D"mailto:xose.vazquez@gmail.c=
-om" target=3D"_blank">xose.vazquez@gmail.com</a>&gt;</span> wrote:<br><bloc=
-kquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #cc=
-c solid;padding-left:1ex">Cc: Christophe Varoqui &lt;<a href=3D"mailto:chri=
-stophe.varoqui@opensvc.com" target=3D"_blank">christophe.varoqui@opensvc.co=
-<wbr>m</a>&gt;<br>
-Cc: device-mapper development &lt;<a href=3D"mailto:dm-devel@redhat.com" ta=
-rget=3D"_blank">dm-devel@redhat.com</a>&gt;<br>
-Signed-off-by: Xose Vazquez Perez &lt;<a href=3D"mailto:xose.vazquez@gmail.=
-com" target=3D"_blank">xose.vazquez@gmail.com</a>&gt;<br>
----<br>
-=C2=A0kpartx/Makefile=C2=A0 =C2=A0 =C2=A0 =C2=A0| 2 +-<br>
-=C2=A0mpathpersist/Makefile | 2 +-<br>
-=C2=A0multipath/Makefile=C2=A0 =C2=A0 | 2 +-<br>
-=C2=A0multipathd/Makefile=C2=A0 =C2=A0| 2 +-<br>
-=C2=A04 files changed, 4 insertions(+), 4 deletions(-)<br>
-<br>
-diff --git a/kpartx/Makefile b/kpartx/Makefile<br>
-index 9441a2b..2e81284 100644<br>
---- a/kpartx/Makefile<br>
-+++ b/kpartx/Makefile<br>
-@@ -19,7 +19,7 @@ EXEC =3D kpartx<br>
-=C2=A0all: $(EXEC)<br>
-<br>
-=C2=A0$(EXEC): $(OBJS)<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(CFLAGS) $(OBJS) -o $(EXEC) $(LDFLAGS) $=
-(LIBDEPS)<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(CFLAGS) $(LDFLAGS) $(LIBDEPS) $(OBJS) -=
-o $(EXEC)<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 $(GZIP) $(EXEC).8 &gt; $(EXEC).8.gz<br>
-<br>
-=C2=A0install: $(EXEC) $(EXEC).8<br>
-diff --git a/mpathpersist/Makefile b/mpathpersist/Makefile<br>
-index 47043bb..27e921e 100644<br>
---- a/mpathpersist/Makefile<br>
-+++ b/mpathpersist/Makefile<br>
-@@ -12,7 +12,7 @@ OBJS =3D main.o<br>
-=C2=A0all: $(EXEC)<br>
-<br>
-=C2=A0$(EXEC): $(OBJS)<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(OBJS) -o $(EXEC) $(LDFLAGS) $(CFLAGS) $=
-(LIBDEPS)<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(CFLAGS) $(LDFLAGS) $(LIBDEPS) $(OBJS) -=
-o $(EXEC)<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 $(GZIP) $(EXEC).8 &gt; $(EXEC).8.gz<br>
-<br>
-=C2=A0install:<br>
-diff --git a/multipath/Makefile b/multipath/Makefile<br>
-index cad34bf..421490c 100644<br>
---- a/multipath/Makefile<br>
-+++ b/multipath/Makefile<br>
-@@ -15,7 +15,7 @@ OBJS =3D main.o<br>
-=C2=A0all: $(EXEC)<br>
-<br>
-=C2=A0$(EXEC): $(OBJS)<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(CFLAGS) $(OBJS) -o $(EXEC) $(LDFLAGS) $=
-(LIBDEPS)<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(CFLAGS) $(LDFLAGS) $(LIBDEPS) $(OBJS) -=
-o $(EXEC)<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 $(GZIP) $(EXEC).8 &gt; $(EXEC).8.gz<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 $(GZIP) $(EXEC).conf.5 &gt; $(EXEC).conf.5.gz<b=
-r>
-<br>
-diff --git a/multipathd/Makefile b/multipathd/Makefile<br>
-index d57f6d5..a3fad61 100644<br>
---- a/multipathd/Makefile<br>
-+++ b/multipathd/Makefile<br>
-@@ -29,7 +29,7 @@ EXEC =3D multipathd<br>
-=C2=A0all : $(EXEC)<br>
-<br>
-=C2=A0$(EXEC): $(OBJS)<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) -o $(EXEC) $=
-(LIBDEPS)<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0$(CC) $(CFLAGS) $(LDFLAGS) $(LIBDEPS) $(OBJS) -=
-o $(EXEC)<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 $(GZIP) $(EXEC).8 &gt; $(EXEC).8.gz<br>
-<br>
-=C2=A0install:<br>
-<span class=3D"m_-275185102971043105HOEnZb"><font color=3D"#888888">--<br>
-2.12.0<br>
-<br>
-</font></span></blockquote></div><br></div>
-</div></div></blockquote></div><br></div>
-
---94eb2c0629b2cfef17054b623c5c--
+--_000_D1E4D02760513D4B90DC3B40FF32AF35A101A786H3CMLB12EXsrvhu_--
 
 
---===============4859215335678173944==
+--===============2900529260988971047==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============4859215335678173944==--
+--===============2900529260988971047==--
