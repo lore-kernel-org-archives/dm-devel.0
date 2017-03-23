@@ -1,164 +1,135 @@
-From: Shichangkuo <shi.changkuo@h3c.com>
-Subject: [multipath-tools] [BUG] segfault in uev_update_path
-Date: Thu, 23 Mar 2017 09:17:14 +0000
-Message-ID: <D1E4D02760513D4B90DC3B40FF32AF35A101A786@H3CMLB12-EX.srv.huawei-3com.com>
+From: Ming Lei <tom.leiming@gmail.com>
+Subject: Re: [PATCH v2] block: trace completion of all bios.
+Date: Thu, 23 Mar 2017 18:43:33 +0800
+Message-ID: <20170323104331.GA16903@ming.t460p>
+References: <877f3iave6.fsf@notabene.neil.brown.name>
+ <20170322125149.GA29606@infradead.org>
+ <87shm4a4lt.fsf@notabene.neil.brown.name>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============2900529260988971047=="
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: zh-CN
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
-Cc: Guozhonghua <guozhonghua@h3c.com>, Zhangguanghui <zhang.guanghui@h3c.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <87shm4a4lt.fsf@notabene.neil.brown.name>
+Sender: linux-block-owner@vger.kernel.org
+To: NeilBrown <neilb@suse.com>
+Cc: Christoph Hellwig <hch@infradead.org>, Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Shaohua Li <shli@kernel.org>, linux-kernel@vger.kernel.org, "Martin K . Petersen" <martin.petersen@oracle.com>
 List-Id: dm-devel.ids
 
---===============2900529260988971047==
-Content-Language: zh-CN
-Content-Type: multipart/alternative;
-	boundary="_000_D1E4D02760513D4B90DC3B40FF32AF35A101A786H3CMLB12EXsrvhu_"
+On Thu, Mar 23, 2017 at 05:29:02PM +1100, NeilBrown wrote:
+> 
+> Currently only dm and md/raid5 bios trigger trace_block_bio_complete().
+> Now that we have bio_chain(), it is not possible, in general, for a
+> driver to know when the bio is really complete.  Only bio_endio()
+> knows that.
+> 
+> So move the trace_block_bio_complete() call to bio_endio().
+> 
+> Now trace_block_bio_complete() pairs with trace_block_bio_queue().
+> Any bio for which a 'queue' event is traced, will subsequently
+> generate a 'complete' event.
+> 
+> There are a few cases where completion tracing is not wanted.
+> 1/ If blk_update_request() has already generated a completion
+>    trace event at the 'request' level, there is no point generating
+>    one at the bio level too.  In this case the bi_sector and bi_size
+>    will have changed, so the bio level event would be wrong
+> 
+> 2/ If the bio hasn't actually been queued yet, but is being aborted
+>    early, then a trace event could be confusing.  Some filesystems
+>    call bio_endio() and will need to use a different interface to
+>    avoid tracing
+> 
+> 3/ The bio_integrity code interposes itself by replacing bi_end_io,
+>    then restores it and calls bio_endio() again.  This would produce
+>    two identical trace events if left like that.
+> 
+> To handle these, we provide bio_endio_notrace().  This patch only adds
+> uses of this in core code.  Separate patches will be needed to update
+> the filesystems to avoid tracing.
+> 
+> Signed-off-by: NeilBrown <neilb@suse.com>
+> ---
+>  block/bio-integrity.c |  4 ++--
+>  block/bio.c           | 46 ++++++++++++++++++++++++++++++++++++++++++++++
+>  block/blk-core.c      |  2 +-
+>  drivers/md/dm.c       |  1 -
+>  drivers/md/raid5.c    |  8 --------
+>  include/linux/bio.h   |  1 +
+>  6 files changed, 50 insertions(+), 12 deletions(-)
+> 
+> diff --git a/block/bio-integrity.c b/block/bio-integrity.c
+> index 5384713d48bc..28581e2f68fb 100644
+> --- a/block/bio-integrity.c
+> +++ b/block/bio-integrity.c
+> @@ -370,7 +370,7 @@ static void bio_integrity_verify_fn(struct work_struct *work)
+>  
+>  	/* Restore original bio completion handler */
+>  	bio->bi_end_io = bip->bip_end_io;
+> -	bio_endio(bio);
+> +	bio_endio_notrace(bio);
+>  }
+>  
+>  /**
+> @@ -397,7 +397,7 @@ void bio_integrity_endio(struct bio *bio)
+>  	 */
+>  	if (bio->bi_error) {
+>  		bio->bi_end_io = bip->bip_end_io;
+> -		bio_endio(bio);
+> +		bio_endio_notrace(bio);
+>  
+>  		return;
+>  	}
+> diff --git a/block/bio.c b/block/bio.c
+> index 5eec5e08417f..c8e5d24abd52 100644
+> --- a/block/bio.c
+> +++ b/block/bio.c
+> @@ -1811,6 +1811,45 @@ static inline bool bio_remaining_done(struct bio *bio)
+>  }
+>  
+>  /**
+> + * bio_endio_notrace - end I/O on a bio without tracing
+> + * @bio:	bio
+> + *
+> + * Description:
+> + *   bio_endio_notrace() will end I/O on the whole bio.
+> + *   bio_endio_notrace() should only be call if a completion trace
+> + *   event is not needed.  This can be the case if a request-level
+> + *   completion event has already been generated, if the bio is
+> + *   being completed early, before it was even queued.
+> + *
+> + **/
+> +void bio_endio_notrace(struct bio *bio)
+> +{
+> +again:
+> +	if (!bio_remaining_done(bio))
+> +		return;
+> +
+> +	/*
+> +	 * Need to have a real endio function for chained bios, otherwise
+> +	 * various corner cases will break (like stacking block devices that
+> +	 * save/restore bi_end_io) - however, we want to avoid unbounded
+> +	 * recursion and blowing the stack. Tail call optimization would
+> +	 * handle this, but compiling with frame pointers also disables
+> +	 * gcc's sibling call optimization.
+> +	 */
+> +	if (bio->bi_end_io == bio_chain_endio) {
+> +		bio = __bio_chain_endio(bio);
+> +		goto again;
+> +	}
+> +
+> +	if (bio->bi_bdev)
+> +		trace_block_bio_complete(bdev_get_queue(bio->bi_bdev),
+> +					 bio, bio->bi_error);
 
---_000_D1E4D02760513D4B90DC3B40FF32AF35A101A786H3CMLB12EXsrvhu_
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+The notrace version still traces?
 
-SGksIGFsbA0KICAgIEkgdXNlZCBtdWx0aXBhdGgtdG9vc2wgMC42LjQgZm9yIHNvbWUgdGVzdGlu
-Zy4gV2hlbiBleGVjdXRpbmcgdWRldmFkbSB0cmlnZ2VyIGNvbW1hbmQsIEkgZmluZCBzb21ldGhp
-bmcgd3Jvbmcgd2l0aCBtdWx0aXBhdGhkLiBMb2dzIGFyZSBhcyBmb2xsb3dzOg0KTWFyIDE1IDE5
-OjI2OjAwIHNlcnZlcjE1NSBtdWx0aXBhdGhkOiBzZGo6IHBhdGggd3dpZCBjaGFuZ2VkIGZyb20g
-JzM2MDAwMmFjMDAwMDAwMDAwMDAwMDAwZTcwMDAxMzA3MScgdG8gJzM2MDAwMmFjMDAwMDAwMDAw
-MDAwMDAwMjYwMDAxMzA3MScuIGRpc2FsbG93aW5nDQpNYXIgMTUgMTk6MjY6MDAgc2VydmVyMTU1
-IGtlcm5lbDogWzcwNjE4My44Mzc3MDRdIG11bHRpcGF0aGRbMTE2NTQ0MF06IHNlZ2ZhdWx0IGF0
-IDE5OCBpcCAwMDAwNTU1ZjZkMDIyNjA3IHNwIDAwMDA3ZjFmOTkyZjU5NjAgZXJyb3IgNCBpbiBt
-dWx0aXBhdGhkWzU1NWY2ZDAxODAwMCsxODAwMF0NCg0KICBBZnRlciBwYXJzaW5nIHRoZSBhZGRy
-ZXNzIHdpdGggb2JqZHVtcCwgSSB0aGluayB1ZXZfdXBkYXRlX3BhdGggYWNjZXNzaW5nIG51bGwg
-cG9pbnRlciBwcC0+bXBwIC4gQ2FsbCB0cmFjZSBtYXliZToNCnVldl90cmlnZ2VyDQp1ZXZfdXBk
-YXRlX3BhdGgNCmRtX2ZhaWxfcGF0aChwcC0+bXBwLT5hbGlhcywgcHAtPmRldl90KTsNCg0KICAg
-IEhhcyBhbnlvbmUgZXZlciBtZXQgaXQgYW5kIGhvdyB0byBmaXggaXQ/DQpUaGFua3MhDQpDaGFu
-Z2t1bw0KLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQ0K5pys6YKu5Lu25Y+K5YW26ZmE5Lu25ZCr5pyJ5p2t
-5bee5Y2O5LiJ6YCa5L+h5oqA5pyv5pyJ6ZmQ5YWs5Y+455qE5L+d5a+G5L+h5oGv77yM5LuF6ZmQ
-5LqO5Y+R6YCB57uZ5LiK6Z2i5Zyw5Z2A5Lit5YiX5Ye6DQrnmoTkuKrkurrmiJbnvqTnu4TjgILn
-poHmraLku7vkvZXlhbbku5bkurrku6Xku7vkvZXlvaLlvI/kvb/nlKjvvIjljIXmi6zkvYbkuI3p
-mZDkuo7lhajpg6jmiJbpg6jliIblnLDms4TpnLLjgIHlpI3liLbjgIENCuaIluaVo+WPke+8ieac
-rOmCruS7tuS4reeahOS/oeaBr+OAguWmguaenOaCqOmUmeaUtuS6huacrOmCruS7tu+8jOivt+aC
-qOeri+WNs+eUteivneaIlumCruS7tumAmuefpeWPkeS7tuS6uuW5tuWIoOmZpOacrA0K6YKu5Lu2
-77yBDQpUaGlzIGUtbWFpbCBhbmQgaXRzIGF0dGFjaG1lbnRzIGNvbnRhaW4gY29uZmlkZW50aWFs
-IGluZm9ybWF0aW9uIGZyb20gSDNDLCB3aGljaCBpcw0KaW50ZW5kZWQgb25seSBmb3IgdGhlIHBl
-cnNvbiBvciBlbnRpdHkgd2hvc2UgYWRkcmVzcyBpcyBsaXN0ZWQgYWJvdmUuIEFueSB1c2Ugb2Yg
-dGhlDQppbmZvcm1hdGlvbiBjb250YWluZWQgaGVyZWluIGluIGFueSB3YXkgKGluY2x1ZGluZywg
-YnV0IG5vdCBsaW1pdGVkIHRvLCB0b3RhbCBvciBwYXJ0aWFsDQpkaXNjbG9zdXJlLCByZXByb2R1
-Y3Rpb24sIG9yIGRpc3NlbWluYXRpb24pIGJ5IHBlcnNvbnMgb3RoZXIgdGhhbiB0aGUgaW50ZW5k
-ZWQNCnJlY2lwaWVudChzKSBpcyBwcm9oaWJpdGVkLiBJZiB5b3UgcmVjZWl2ZSB0aGlzIGUtbWFp
-bCBpbiBlcnJvciwgcGxlYXNlIG5vdGlmeSB0aGUgc2VuZGVyDQpieSBwaG9uZSBvciBlbWFpbCBp
-bW1lZGlhdGVseSBhbmQgZGVsZXRlIGl0IQ0K
+> +	if (bio->bi_end_io)
+> +		bio->bi_end_io(bio);
+> +}
+> +EXPORT_SYMBOL(bio_endio_notrace);
 
---_000_D1E4D02760513D4B90DC3B40FF32AF35A101A786H3CMLB12EXsrvhu_
-Content-Type: text/html; charset="utf-8"
-Content-Transfer-Encoding: base64
+It isn't a good idea to duplicate bio_endio here, and any change on
+bio_endio() may be needed for this _notrace version too in future.
 
-PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
-bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
-YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
-cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
-VFIvUkVDLWh0bWw0MCI+DQo8aGVhZD4NCjxtZXRhIGh0dHAtZXF1aXY9IkNvbnRlbnQtVHlwZSIg
-Y29udGVudD0idGV4dC9odG1sOyBjaGFyc2V0PXV0Zi04Ij4NCjxtZXRhIG5hbWU9IkdlbmVyYXRv
-ciIgY29udGVudD0iTWljcm9zb2Z0IFdvcmQgMTQgKGZpbHRlcmVkIG1lZGl1bSkiPg0KPHN0eWxl
-PjwhLS0NCi8qIEZvbnQgRGVmaW5pdGlvbnMgKi8NCkBmb250LWZhY2UNCgl7Zm9udC1mYW1pbHk6
-U2ltU3VuOw0KCXBhbm9zZS0xOjIgMSA2IDAgMyAxIDEgMSAxIDE7fQ0KQGZvbnQtZmFjZQ0KCXtm
-b250LWZhbWlseTpTaW1TdW47DQoJcGFub3NlLTE6MiAxIDYgMCAzIDEgMSAxIDEgMTt9DQpAZm9u
-dC1mYWNlDQoJe2ZvbnQtZmFtaWx5OkNhbGlicmk7DQoJcGFub3NlLTE6MiAxNSA1IDIgMiAyIDQg
-MyAyIDQ7fQ0KQGZvbnQtZmFjZQ0KCXtmb250LWZhbWlseTpTaW1TdW47DQoJcGFub3NlLTE6MiAx
-IDYgMCAzIDEgMSAxIDEgMTt9DQovKiBTdHlsZSBEZWZpbml0aW9ucyAqLw0KcC5Nc29Ob3JtYWws
-IGxpLk1zb05vcm1hbCwgZGl2Lk1zb05vcm1hbA0KCXttYXJnaW46MGNtOw0KCW1hcmdpbi1ib3R0
-b206LjAwMDFwdDsNCgl0ZXh0LWFsaWduOmp1c3RpZnk7DQoJdGV4dC1qdXN0aWZ5OmludGVyLWlk
-ZW9ncmFwaDsNCglmb250LXNpemU6MTAuNXB0Ow0KCWZvbnQtZmFtaWx5OiJDYWxpYnJpIiwic2Fu
-cy1zZXJpZiI7fQ0KYTpsaW5rLCBzcGFuLk1zb0h5cGVybGluaw0KCXttc28tc3R5bGUtcHJpb3Jp
-dHk6OTk7DQoJY29sb3I6Ymx1ZTsNCgl0ZXh0LWRlY29yYXRpb246dW5kZXJsaW5lO30NCmE6dmlz
-aXRlZCwgc3Bhbi5Nc29IeXBlcmxpbmtGb2xsb3dlZA0KCXttc28tc3R5bGUtcHJpb3JpdHk6OTk7
-DQoJY29sb3I6cHVycGxlOw0KCXRleHQtZGVjb3JhdGlvbjp1bmRlcmxpbmU7fQ0Kc3Bhbi5FbWFp
-bFN0eWxlMTcNCgl7bXNvLXN0eWxlLXR5cGU6cGVyc29uYWwtY29tcG9zZTsNCglmb250LWZhbWls
-eToiQ2FsaWJyaSIsInNhbnMtc2VyaWYiOw0KCWNvbG9yOndpbmRvd3RleHQ7fQ0KLk1zb0NocERl
-ZmF1bHQNCgl7bXNvLXN0eWxlLXR5cGU6ZXhwb3J0LW9ubHk7fQ0KLyogUGFnZSBEZWZpbml0aW9u
-cyAqLw0KQHBhZ2UgV29yZFNlY3Rpb24xDQoJe3NpemU6NjEyLjBwdCA3OTIuMHB0Ow0KCW1hcmdp
-bjo3Mi4wcHQgOTAuMHB0IDcyLjBwdCA5MC4wcHQ7fQ0KZGl2LldvcmRTZWN0aW9uMQ0KCXtwYWdl
-OldvcmRTZWN0aW9uMTt9DQotLT48L3N0eWxlPjwhLS1baWYgZ3RlIG1zbyA5XT48eG1sPg0KPG86
-c2hhcGVkZWZhdWx0cyB2OmV4dD0iZWRpdCIgc3BpZG1heD0iMTAyNiIgLz4NCjwveG1sPjwhW2Vu
-ZGlmXS0tPjwhLS1baWYgZ3RlIG1zbyA5XT48eG1sPg0KPG86c2hhcGVsYXlvdXQgdjpleHQ9ImVk
-aXQiPg0KPG86aWRtYXAgdjpleHQ9ImVkaXQiIGRhdGE9IjEiIC8+DQo8L286c2hhcGVsYXlvdXQ+
-PC94bWw+PCFbZW5kaWZdLS0+DQo8L2hlYWQ+DQo8Ym9keSBsYW5nPSJaSC1DTiIgbGluaz0iYmx1
-ZSIgdmxpbms9InB1cnBsZSIgc3R5bGU9InRleHQtanVzdGlmeS10cmltOnB1bmN0dWF0aW9uIj4N
-CjxkaXYgY2xhc3M9IldvcmRTZWN0aW9uMSI+DQo8cCBjbGFzcz0iTXNvTm9ybWFsIj48c3BhbiBs
-YW5nPSJFTi1VUyI+SGksIGFsbDxvOnA+PC9vOnA+PC9zcGFuPjwvcD4NCjxwIGNsYXNzPSJNc29O
-b3JtYWwiPjxzcGFuIGxhbmc9IkVOLVVTIj4mbmJzcDsmbmJzcDsgJm5ic3A7SSB1c2VkIG11bHRp
-cGF0aC10b29zbCAwLjYuNCBmb3Igc29tZSB0ZXN0aW5nLiBXaGVuIGV4ZWN1dGluZyB1ZGV2YWRt
-IHRyaWdnZXIgY29tbWFuZCwgSSBmaW5kIHNvbWV0aGluZyB3cm9uZyB3aXRoIG11bHRpcGF0aGQu
-IExvZ3MgYXJlIGFzIGZvbGxvd3M6PG86cD48L286cD48L3NwYW4+PC9wPg0KPHAgY2xhc3M9Ik1z
-b05vcm1hbCI+PHNwYW4gbGFuZz0iRU4tVVMiPk1hciAxNSAxOToyNjowMCBzZXJ2ZXIxNTUgbXVs
-dGlwYXRoZDogc2RqOiBwYXRoIHd3aWQgY2hhbmdlZCBmcm9tICczNjAwMDJhYzAwMDAwMDAwMDAw
-MDAwMGU3MDAwMTMwNzEnIHRvICczNjAwMDJhYzAwMDAwMDAwMDAwMDAwMDI2MDAwMTMwNzEnLiBk
-aXNhbGxvd2luZzxvOnA+PC9vOnA+PC9zcGFuPjwvcD4NCjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxz
-cGFuIGxhbmc9IkVOLVVTIj5NYXIgMTUgMTk6MjY6MDAgc2VydmVyMTU1IGtlcm5lbDogWzcwNjE4
-My44Mzc3MDRdIG11bHRpcGF0aGRbMTE2NTQ0MF06IHNlZ2ZhdWx0IGF0IDE5OCBpcCAwMDAwNTU1
-ZjZkMDIyNjA3IHNwIDAwMDA3ZjFmOTkyZjU5NjAgZXJyb3IgNCBpbiBtdWx0aXBhdGhkWzU1NWY2
-ZDAxODAwMCYjNDM7MTgwMDBdPG86cD48L286cD48L3NwYW4+PC9wPg0KPHAgY2xhc3M9Ik1zb05v
-cm1hbCI+PHNwYW4gbGFuZz0iRU4tVVMiPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvcD4NCjxw
-IGNsYXNzPSJNc29Ob3JtYWwiIHN0eWxlPSJ0ZXh0LWluZGVudDoxMC41cHQiPjxzcGFuIGxhbmc9
-IkVOLVVTIj4mbmJzcDsgQWZ0ZXIgcGFyc2luZyB0aGUgYWRkcmVzcyB3aXRoIG9iamR1bXAsIEkg
-dGhpbmsgdWV2X3VwZGF0ZV9wYXRoIGFjY2Vzc2luZyBudWxsIHBvaW50ZXIgcHAtJmd0O21wcCAu
-IENhbGwgdHJhY2UgbWF5YmU6PG86cD48L286cD48L3NwYW4+PC9wPg0KPHAgY2xhc3M9Ik1zb05v
-cm1hbCI+PHNwYW4gbGFuZz0iRU4tVVMiPnVldl90cmlnZ2VyPG86cD48L286cD48L3NwYW4+PC9w
-Pg0KPHAgY2xhc3M9Ik1zb05vcm1hbCIgc3R5bGU9InRleHQtaW5kZW50OjEwLjVwdCI+PHNwYW4g
-bGFuZz0iRU4tVVMiPnVldl91cGRhdGVfcGF0aDxvOnA+PC9vOnA+PC9zcGFuPjwvcD4NCjxwIGNs
-YXNzPSJNc29Ob3JtYWwiIHN0eWxlPSJ0ZXh0LWluZGVudDoyMS4wcHQiPjxzcGFuIGxhbmc9IkVO
-LVVTIj5kbV9mYWlsX3BhdGgocHAtJmd0O21wcC0mZ3Q7YWxpYXMsIHBwLSZndDtkZXZfdCk7PG86
-cD48L286cD48L3NwYW4+PC9wPg0KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PHNwYW4gbGFuZz0iRU4t
-VVMiPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvcD4NCjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxz
-cGFuIGxhbmc9IkVOLVVTIj4mbmJzcDsgJm5ic3A7Jm5ic3A7SGFzIGFueW9uZSBldmVyIG1ldCBp
-dCBhbmQgaG93IHRvIGZpeCBpdD88bzpwPjwvbzpwPjwvc3Bhbj48L3A+DQo8cCBjbGFzcz0iTXNv
-Tm9ybWFsIj48c3BhbiBsYW5nPSJFTi1VUyI+VGhhbmtzITxvOnA+PC9vOnA+PC9zcGFuPjwvcD4N
-CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxzcGFuIGxhbmc9IkVOLVVTIj5DaGFuZ2t1bzxvOnA+PC9v
-OnA+PC9zcGFuPjwvcD4NCjwvZGl2Pg0KPHNwYW4gc3R5bGU9ImZvbnQtc2l6ZTo3LjVwdDtmb250
-LWZhbWlseTrljY7mlofnu4bpu5E7Y29sb3I6Z3JheSI+PHNwYW4gbGFuZz0iRU4tVVMiPi0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS08YnI+DQo8L3NwYW4+5pys6YKu5Lu25Y+K5YW26ZmE5Lu25ZCr5pyJ5p2t
-5bee5Y2O5LiJ6YCa5L+h5oqA5pyv5pyJ6ZmQ5YWs5Y+455qE5L+d5a+G5L+h5oGv77yM5LuF6ZmQ
-5LqO5Y+R6YCB57uZ5LiK6Z2i5Zyw5Z2A5Lit5YiX5Ye6PHNwYW4gbGFuZz0iRU4tVVMiPjxicj4N
-Cjwvc3Bhbj7nmoTkuKrkurrmiJbnvqTnu4TjgILnpoHmraLku7vkvZXlhbbku5bkurrku6Xku7vk
-vZXlvaLlvI/kvb/nlKjvvIjljIXmi6zkvYbkuI3pmZDkuo7lhajpg6jmiJbpg6jliIblnLDms4Tp
-nLLjgIHlpI3liLbjgIE8c3BhbiBsYW5nPSJFTi1VUyI+PGJyPg0KPC9zcGFuPuaIluaVo+WPke+8
-ieacrOmCruS7tuS4reeahOS/oeaBr+OAguWmguaenOaCqOmUmeaUtuS6huacrOmCruS7tu+8jOiv
-t+aCqOeri+WNs+eUteivneaIlumCruS7tumAmuefpeWPkeS7tuS6uuW5tuWIoOmZpOacrDxzcGFu
-IGxhbmc9IkVOLVVTIj48YnI+DQo8L3NwYW4+6YKu5Lu277yBPHNwYW4gbGFuZz0iRU4tVVMiPjxi
-cj4NCjwvc3Bhbj48L3NwYW4+PHNwYW4gbGFuZz0iRU4tVVMiIHN0eWxlPSJmb250LXNpemU6Ny41
-cHQ7Zm9udC1mYW1pbHk6JnF1b3Q7QXJpYWwmcXVvdDssJnF1b3Q7c2Fucy1zZXJpZiZxdW90Oztj
-b2xvcjpncmF5Ij5UaGlzIGUtbWFpbCBhbmQgaXRzIGF0dGFjaG1lbnRzIGNvbnRhaW4gY29uZmlk
-ZW50aWFsIGluZm9ybWF0aW9uIGZyb20gSDNDLCB3aGljaCBpcw0KPGJyPg0KaW50ZW5kZWQgb25s
-eSBmb3IgdGhlIHBlcnNvbiBvciBlbnRpdHkgd2hvc2UgYWRkcmVzcyBpcyBsaXN0ZWQgYWJvdmUu
-IEFueSB1c2Ugb2YgdGhlDQo8YnI+DQppbmZvcm1hdGlvbiBjb250YWluZWQgaGVyZWluIGluIGFu
-eSB3YXkgKGluY2x1ZGluZywgYnV0IG5vdCBsaW1pdGVkIHRvLCB0b3RhbCBvciBwYXJ0aWFsDQo8
-YnI+DQpkaXNjbG9zdXJlLCByZXByb2R1Y3Rpb24sIG9yIGRpc3NlbWluYXRpb24pIGJ5IHBlcnNv
-bnMgb3RoZXIgdGhhbiB0aGUgaW50ZW5kZWQgPGJyPg0KcmVjaXBpZW50KHMpIGlzIHByb2hpYml0
-ZWQuIElmIHlvdSByZWNlaXZlIHRoaXMgZS1tYWlsIGluIGVycm9yLCBwbGVhc2Ugbm90aWZ5IHRo
-ZSBzZW5kZXINCjxicj4NCmJ5IHBob25lIG9yIGVtYWlsIGltbWVkaWF0ZWx5IGFuZCBkZWxldGUg
-aXQhPC9zcGFuPg0KPC9ib2R5Pg0KPC9odG1sPg0K
-
---_000_D1E4D02760513D4B90DC3B40FF32AF35A101A786H3CMLB12EXsrvhu_--
-
-
---===============2900529260988971047==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============2900529260988971047==--
+Thanks,
+Ming
