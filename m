@@ -1,13 +1,13 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH 00/33] multipath-tools fixes from SUSE
-Date: Wed, 22 Mar 2017 22:29:14 +0100
-Message-ID: <CABr-Gndb1oyBO79_b105tVSO55qftO_mh2JRvN7c35+ar=xH3g@mail.gmail.com>
-References: <20170228162329.14517-1-mwilck@suse.com>
-	<dcc49c30-0954-5737-1fae-194f29b10d94@gmail.com>
+From: NeilBrown <neilb@suse.com>
+Subject: Re: [PATCH] block: trace completion of all bios.
+Date: Thu, 23 Mar 2017 17:26:11 +1100
+Message-ID: <87var0a4qk.fsf@notabene.neil.brown.name>
+References: <877f3iave6.fsf@notabene.neil.brown.name>
+	<20170322125149.GA29606@infradead.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============6494454129573773403=="
+Content-Type: multipart/mixed; boundary="===============1667146616160257262=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <dcc49c30-0954-5737-1fae-194f29b10d94@gmail.com>
+In-Reply-To: <20170322125149.GA29606@infradead.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,61 +17,72 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>
+To: Christoph Hellwig <hch@infradead.org>
+Cc: Jens Axboe <axboe@kernel.dk>, linux-raid@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>, linux-kernel@vger.kernel.org, linux-block@vger.kernel.org, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
---===============6494454129573773403==
-Content-Type: multipart/alternative; boundary=94eb2c03373ac57ad7054b5873b6
+--===============1667146616160257262==
+Content-Type: multipart/signed; boundary="=-=-=";
+	micalg=pgp-sha256; protocol="application/pgp-signature"
 
---94eb2c03373ac57ad7054b5873b6
-Content-Type: text/plain; charset=UTF-8
+--=-=-=
+Content-Type: text/plain
 Content-Transfer-Encoding: quoted-printable
 
-Pending.
-I plan to merge the rest tomorrow.
+On Wed, Mar 22 2017, Christoph Hellwig wrote:
 
-Le 22 mars 2017 8:02 PM, "Xose Vazquez Perez" <xose.vazquez@gmail.com> a
-=C3=A9crit :
-
-> On 02/28/2017 05:22 PM, Martin Wilck wrote:
+> On Wed, Mar 22, 2017 at 01:38:09PM +1100, NeilBrown wrote:
+>>=20
+>> Currently only dm and md/raid5 bios trigger trace_block_bio_complete().
+>> Now that we have bio_chain(), it is not possible, in general, for a
+>> driver to know when the bio is really complete.  Only bio_endio()
+>> knows that.
+>>=20
+>> So move the trace_block_bio_complete() call to bio_endio().
 >
-> > As announced previously, here comes a collection of multipath-tools
-> patches
-> > that SUSE is using for SLES12 SP2.
->
-> From this bundle, only 19 of them were merged.
-> 14 are missing, or ...pending?
->
+> This will cause duplicate events for request based drivers.  You'll
+> need to have a bio_endio_notrace or similar without that the request
+> completion path can call.
 
---94eb2c03373ac57ad7054b5873b6
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+Ah... I hadn't noticed that the request completion was the same event
+type as the bio completion...  Thanks.  Also after being processed by the
+request handler, bi_sector and bi_size have changed so the trace
+messsage would be wrong.
 
-<div dir=3D"auto">Pending.<div dir=3D"auto">I plan to merge the rest tomorr=
-ow.</div></div><div class=3D"gmail_extra"><br><div class=3D"gmail_quote">Le=
-=C2=A022 mars 2017 8:02 PM, &quot;Xose Vazquez Perez&quot; &lt;<a href=3D"m=
-ailto:xose.vazquez@gmail.com">xose.vazquez@gmail.com</a>&gt; a =C3=A9crit=
-=C2=A0:<br type=3D"attribution"><blockquote class=3D"gmail_quote" style=3D"=
-margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex">On 02/28/201=
-7 05:22 PM, Martin Wilck wrote:<br>
-<br>
-&gt; As announced previously, here comes a collection of multipath-tools pa=
-tches<br>
-&gt; that SUSE is using for SLES12 SP2.<br>
-<br>
-From this bundle, only 19 of them were merged.<br>
-14 are missing, or ...pending?<br>
-</blockquote></div></div>
+I've sorted that out and will repost.
 
---94eb2c03373ac57ad7054b5873b6--
+Thanks,
+NeilBrown
 
 
---===============6494454129573773403==
+
+--=-=-=
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCAAdFiEEG8Yp69OQ2HB7X0l6Oeye3VZigbkFAljTaoQACgkQOeye3VZi
+gblMPA/7BDkJyI0XRhX6kgMqQPNr6oxAJ62va6k00/yqP5YPlKMdC6LqoOcRT8op
+07g4LKOrWS6AvY+mJCLq0YlF3OYeVWsBEZBogk5RxwIEi7nD4S7ywrcCcW7OEtX0
+TkUXfxoSdmJFZrNsDFRpgSYOw9XHzkTLe/ibXrJ0oQ/vZHfKjmRgZaUEkR1LUZ/S
+hhElbZcC3GF+NusaCkRjej9j2DCkCMjYax8P7XxrTlGqmbUz0T1AwD1mZw4+nBWL
+IpzlJMPsdBPweEvIcn+hze0aowP6WBL1XY37R/sJF0sRdo3+8+RMOzM9eN4Dhvvh
+9CYctSfx/Pbx+TeCFv2gzKhr+LzBnkq1uvzFHZGfPDMEiOa23dRamxYnchhoIeSj
+mGsCEN4YaP2kwtpqNzYC0pzQGoRwJVT3H4jYXkKqOgXImyWaj9llqM2IqPqR5P/1
+lU7Ur/D8pnRNW9ANbp6k4q/fMDshXYW0SO4y5MCau2m6f5HjbCYXyZXmKQsNlywa
+q+0NYhwEjJL+1z6HcMLUUfEXVnMsGgypvXPyrfX5u0RwFu/QFvjK7XYdkyQVBmvu
+LAc66v88jyuOJ5/RWBcEXrfRFAHHhZSaw/Oy3Y+gO9XqsRgZklpzUpkynajhJn3F
+qnIqd0FKfA5FxYEsO+mwai/frio9TQoT/pzLfsRii/iZ1Y4V6J8=
+=Ztr2
+-----END PGP SIGNATURE-----
+--=-=-=--
+
+
+--===============1667146616160257262==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============6494454129573773403==--
+--===============1667146616160257262==--
