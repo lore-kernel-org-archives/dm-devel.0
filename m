@@ -1,53 +1,89 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 06/23] dm-kcopyd: switch to use REQ_OP_WRITE_ZEROES
-Date: Thu, 23 Mar 2017 11:10:38 -0400
-Message-ID: <20170323151037.GC17127@redhat.com>
+From: Lars Ellenberg <lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>
+Subject: Re: RFC: always use REQ_OP_WRITE_ZEROES for zeroing
+	offload
+Date: Thu, 23 Mar 2017 16:54:10 +0100
+Message-ID: <20170323155410.GD1138@soda.linbit>
 References: <20170323143341.31549-1-hch@lst.de>
- <20170323143341.31549-7-hch@lst.de>
- <20170323145522.GB17127@redhat.com>
- <20170323145651.GA31771@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20170323145651.GA31771@lst.de>
-Sender: linux-block-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: axboe@kernel.dk, martin.petersen@oracle.com, agk@redhat.com, shli@kernel.org, philipp.reisner@linbit.com, lars.ellenberg@linbit.com, linux-block@vger.kernel.org, linux-scsi@vger.kernel.org, drbd-dev@lists.linbit.com, dm-devel@redhat.com, linux-raid@vger.kernel.org
+In-Reply-To: <20170323143341.31549-1-hch-jcswGhMUV9g@public.gmane.org>
+List-Unsubscribe: <http://lists.linbit.com/mailman/options/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
+List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
+List-Subscribe: <http://lists.linbit.com/mailman/listinfo/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
+Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Cc: axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
 List-Id: dm-devel.ids
 
-On Thu, Mar 23 2017 at 10:56am -0400,
-Christoph Hellwig <hch@lst.de> wrote:
-
-> On Thu, Mar 23, 2017 at 10:55:22AM -0400, Mike Snitzer wrote:
-> > See commit 70d6c400a ("dm kcopyd: add WRITE SAME support to dm_kcopyd_zero")
-> > drivers/md/dm-io.c:do_region() adjusts the WRITE SAME payload to be a
-> > single page.
-> > 
-> > So you'd want to tweak dm-io.c accordingly for WRITE ZEROES (presummably
-> > no payload?)
+On Thu, Mar 23, 2017 at 10:33:18AM -0400, Christoph Hellwig wrote:
+> This series makes REQ_OP_WRITE_ZEROES the only zeroing offload
+> supported by the block layer, and switches existing implementations
+> of REQ_OP_DISCARD that correctly set discard_zeroes_data to it,
+> removes incorrect discard_zeroes_data, and also switches WRITE SAME
+> based zeroing in SCSI to this new method.
 > 
-> Yeah, I'll look into it.
+> I've done testing with ATA, SCSI and NVMe setups, but there are
+> a few things that will need more attention:
+> 
 
-Ah, your previous 05/23 patch re-uses the discard branch in
-dm-io.c:do_region.  Looks correct.  So you should be good.
+>  - The DRBD code in this area was very odd,
 
-Not sure why you've split out the dm-kcopyd patch, likely best to just
-fold it into the previous dm support patch.
+DRBD wants all replicas to give back identical data.
+If what comes back after a discard is "undefined",
+we cannot really use that.
 
-I'll try your code out on my testbed, probably tomorrow, but in general
-the DM code looks solid (thanks for doing it!).  But I'll take a closer
-look and will report back with my Reviewed-by if all looks (and tests
-out) good.
+We used to "stack" discard only if our local backend claimed
+"discard_zeroes_data". We replicate that IO request to the peer
+as discard, and if the peer cannot do discards itself, or has
+discard_zeroes_data == 0, the peer will use zeroout instead.
 
-> Any good test case for verifying this code while I've got your
-> attention?
+One use-case for this is the device mapper "thin provisioning".
+At the time I wrote those "odd" hacks, dm thin targets
+would set discard_zeroes_data=0, NOT change discard granularity,
+but only actually discard (drop from the tree) whole "chunks",
+leaving partial start/end chunks in the mapping tree unchanged.
 
-DM thinp is the only consumer of dm_kcopyd_zero().  DM thinp
-conservatively defaults to zeroing (but we recommend
-'skip_block_zeroing' for most setups).  So anyway, just using a DM thin
-device with partial thin blocksize IO (without 'skip_block_zeroing')
-should get you coverage.
+The logic of "only stack discard, if backend discard_zeroes_data"
+would mean that we would not be able to accept and pass down discards
+to dm-thin targets. But with data on dm-thin, you would really like
+to do the occasional fstrim.
 
-The device-mapper-test-suite thin tests have thinp w/ zeroing coverage
-so I'll be sure to run those.
+Also, IO backends on the peers do not have to have the same
+characteristics.  You could have the DRBD Primary on some SSD,
+and the Secondary on some thin-pool LV,
+scheduling thin snapthots in intervals or on demand.
+
+With the logic of "use zero-out instead", fstrim would cause it to
+fully allocate what was supposed to be thinly provisioned :-(
+
+So what I did there was optionally tell DRBD that
+"discard_zeroes_data == 0" on that peer would actually mean
+"discard_zeroes_data == 1,
+ IF you zero-out the partial chunks of this granularity yourself".
+
+And implemented this "discard aligned chunks of that granularity,
+and zero-out partial start/end chunks, if any".
+
+And then claim to upper layers that, yes, discard_zeroes_data=1,
+in that case, if so configured, even if our backend (dm-thin)
+would say discard_zeroes_data=0.
+
+Does that make sense?  Can we still do that?  Has something like that
+been done in block core or device mapper meanwhile?
+
+
+> and will need an audit from the maintainers.
+
+Will need to make some time for review and testing.
+
+Thanks,
+
+    Lars
