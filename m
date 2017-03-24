@@ -1,7 +1,7 @@
 From: NeilBrown <neilb@suse.com>
-Subject: Re: [PATCH v2] block: trace completion of all bios.
-Date: Fri, 24 Mar 2017 11:06:09 +1100
-Message-ID: <87k27fa68e.fsf@notabene.neil.brown.name>
+Subject: [PATCH v3] block: trace completion of all bios.
+Date: Fri, 24 Mar 2017 11:07:47 +1100
+Message-ID: <87fui3a65o.fsf@notabene.neil.brown.name>
 References: <877f3iave6.fsf@notabene.neil.brown.name> <20170322125149.GA29606@infradead.org> <87shm4a4lt.fsf@notabene.neil.brown.name> <20170323104331.GA16903@ming.t460p>
 Mime-Version: 1.0
 Content-Type: multipart/signed; boundary="=-=-=";
@@ -9,80 +9,237 @@ Content-Type: multipart/signed; boundary="=-=-=";
 Return-path: <linux-block-owner@vger.kernel.org>
 In-Reply-To: <20170323104331.GA16903@ming.t460p>
 Sender: linux-block-owner@vger.kernel.org
-To: Ming Lei <tom.leiming@gmail.com>
-Cc: Christoph Hellwig <hch@infradead.org>, Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Shaohua Li <shli@kernel.org>, linux-kernel@vger.kernel.org, "Martin K . Petersen" <martin.petersen@oracle.com>
+To: Ming Lei <tom.leiming@gmail.com>, Christoph Hellwig <hch@infradead.org>, Jens Axboe <axboe@kernel.dk>
+Cc: linux-block@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Shaohua Li <shli@kernel.org>, linux-kernel@vger.kernel.org, "Martin K . Petersen" <martin.petersen@oracle.com>
 List-Id: dm-devel.ids
 
 --=-=-=
 Content-Type: text/plain
 Content-Transfer-Encoding: quoted-printable
 
-On Thu, Mar 23 2017, Ming Lei wrote:
 
-> On Thu, Mar 23, 2017 at 05:29:02PM +1100, NeilBrown wrote:
->>=20
->>  /**
->> + * bio_endio_notrace - end I/O on a bio without tracing
->> + * @bio:	bio
->> + *
->> + * Description:
->> + *   bio_endio_notrace() will end I/O on the whole bio.
->> + *   bio_endio_notrace() should only be call if a completion trace
->> + *   event is not needed.  This can be the case if a request-level
->> + *   completion event has already been generated, if the bio is
->> + *   being completed early, before it was even queued.
->> + *
->> + **/
->> +void bio_endio_notrace(struct bio *bio)
->> +{
->> +again:
-...
->> +
->> +	if (bio->bi_bdev)
->> +		trace_block_bio_complete(bdev_get_queue(bio->bi_bdev),
->> +					 bio, bio->bi_error);
->
-> The notrace version still traces?
+Currently only dm and md/raid5 bios trigger
+trace_block_bio_complete().  Now that we have bio_chain() and
+bio_inc_remaining(), it is not possible, in general, for a driver to
+know when the bio is really complete.  Only bio_endio() knows that.
 
-Ugh.  Thanks :-(
+So move the trace_block_bio_complete() call to bio_endio().
 
->
->> +	if (bio->bi_end_io)
->> +		bio->bi_end_io(bio);
->> +}
->> +EXPORT_SYMBOL(bio_endio_notrace);
->
-> It isn't a good idea to duplicate bio_endio here, and any change on
-> bio_endio() may be needed for this _notrace version too in future.
+Now trace_block_bio_complete() pairs with trace_block_bio_queue().
+Any bio for which a 'queue' event is traced, will subsequently
+generate a 'complete' event.
 
-I uhmed and arhhed about that.  The function is so small....
-But I've had a change of heart.  I don't think that having separate
-bio_endio() and bio_endio_notrace() is such a good idea. It is too easy
-to use the wrong one.  It is much better to make it automatically do the
-right thing.
-So following is a new patch - more thoroughly tested - which handles
-more cases, and doesn't need any follow-up changes for filesystems.
+There are a few cases where completion tracing is not wanted.
+1/ If blk_update_request() has already generated a completion
+   trace event at the 'request' level, there is no point generating
+   one at the bio level too.  In this case the bi_sector and bi_size
+   will have changed, so the bio level event would be wrong
 
-Thanks,
-Neilbrown
+2/ If the bio hasn't actually been queued yet, but is being aborted
+   early, then a trace event could be confusing.  Some filesystems
+   call bio_endio() but do not want tracing.
+
+3/ The bio_integrity code interposes itself by replacing bi_end_io,
+   then restoring it and calling bio_endio() again.  This would produce
+   two identical trace events if left like that.
+
+To handle these, we introduce a flag BIO_TRACE_COMPLETION and only
+produce the trace event when this is set.
+We address point 1 above by clearing the flag in blk_update_request().
+We address point 2 above by only setting the flag when
+generic_make_request() is called.
+We address point 3 above by clearing the flag after generating a
+completion event.
+
+When bio_split() is used on a bio, particularly in blk_queue_split(),
+there is an extra complication.  A new bio is split off the front, and
+may be handle directly without going through generic_make_request().
+The old bio, which has been advanced, is passed to
+generic_make_request(), so it will trigger a trace event a second
+time.
+Probably the best result when a split happens is to see a single
+'queue' event for the whole bio, then multiple 'complete' events - one
+for each component.  To achieve this was can:
+=2D copy the BIO_TRACE_COMPLETION flag to the new bio in bio_split()
+=2D avoid generating a 'queue' event if BIO_TRACE_COMPLETION is already set.
+This way, the split-off bio won't create a queue event, the original
+won't either even if it re-submitted to generic_make_request(),
+but both will produce completion events, each for their own range.
+
+So if generic_make_request() is called (which generates a QUEUED
+event), then bi_endio() will create a single COMPLETE event for each
+range that the bio is split into, unless the driver has explicitly
+requested it not to.
+
+Signed-off-by: NeilBrown <neilb@suse.com>
+=2D--
+ block/bio.c               | 13 +++++++++++++
+ block/blk-core.c          | 10 +++++++++-
+ drivers/md/dm.c           |  1 -
+ drivers/md/raid5.c        |  8 --------
+ include/linux/blk_types.h |  4 +++-
+ 5 files changed, 25 insertions(+), 11 deletions(-)
+
+diff --git a/block/bio.c b/block/bio.c
+index 5eec5e08417f..c1272986133e 100644
+=2D-- a/block/bio.c
++++ b/block/bio.c
+@@ -1818,6 +1818,11 @@ static inline bool bio_remaining_done(struct bio *bi=
+o)
+  *   bio_endio() will end I/O on the whole bio. bio_endio() is the preferr=
+ed
+  *   way to end I/O on a bio. No one should call bi_end_io() directly on a
+  *   bio unless they own it and thus know that it has an end_io function.
++ *
++ *   bio_endio() can be called several times on a bio that has been chained
++ *   using bio_chain().  The ->bi_end_io() function will only be call the
++ *   last time.  At this point the BLK_TA_COMPLETE tracing event will be
++ *   generated if BIO_TRACE_COMPLETION is set.
+  **/
+ void bio_endio(struct bio *bio)
+ {
+@@ -1838,6 +1843,11 @@ void bio_endio(struct bio *bio)
+ 		goto again;
+ 	}
+=20
++	if (bio->bi_bdev && bio_flagged(bio, BIO_TRACE_COMPLETION)) {
++		trace_block_bio_complete(bdev_get_queue(bio->bi_bdev),
++					 bio, bio->bi_error);
++		bio_clear_flag(bio, BIO_TRACE_COMPLETION);
++	}
+ 	if (bio->bi_end_io)
+ 		bio->bi_end_io(bio);
+ }
+@@ -1876,6 +1886,9 @@ struct bio *bio_split(struct bio *bio, int sectors,
+=20
+ 	bio_advance(bio, split->bi_iter.bi_size);
+=20
++	if (bio_flagged(bio, BIO_TRACE_COMPLETION))
++		bio_set_flag(bio, BIO_TRACE_COMPLETION);
++
+ 	return split;
+ }
+ EXPORT_SYMBOL(bio_split);
+diff --git a/block/blk-core.c b/block/blk-core.c
+index 0eeb99ef654f..b34b5b1b1bbf 100644
+=2D-- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -1936,7 +1936,13 @@ generic_make_request_checks(struct bio *bio)
+ 	if (!blkcg_bio_issue_check(q, bio))
+ 		return false;
+=20
+=2D	trace_block_bio_queue(q, bio);
++	if (!bio_flagged(bio, BIO_TRACE_COMPLETION)) {
++		trace_block_bio_queue(q, bio);
++		/* Now that enqueuing has been traced, we need to trace
++		 * completion as well.
++		 */
++		bio_set_flag(bio, BIO_TRACE_COMPLETION);
++	}
+ 	return true;
+=20
+ not_supported:
+@@ -2595,6 +2601,8 @@ bool blk_update_request(struct request *req, int erro=
+r, unsigned int nr_bytes)
+ 		if (bio_bytes =3D=3D bio->bi_iter.bi_size)
+ 			req->bio =3D bio->bi_next;
+=20
++		/* Completion has already been traced */
++		bio_clear_flag(bio, BIO_TRACE_COMPLETION);
+ 		req_bio_endio(req, bio, bio_bytes, error);
+=20
+ 		total_bytes +=3D bio_bytes;
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index f4ffd1eb8f44..f5f09ace690a 100644
+=2D-- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -810,7 +810,6 @@ static void dec_pending(struct dm_io *io, int error)
+ 			queue_io(md, bio);
+ 		} else {
+ 			/* done with normal IO or empty flush */
+=2D			trace_block_bio_complete(md->queue, bio, io_error);
+ 			bio->bi_error =3D io_error;
+ 			bio_endio(bio);
+ 		}
+diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+index 9a3b7da34137..f684cb566721 100644
+=2D-- a/drivers/md/raid5.c
++++ b/drivers/md/raid5.c
+@@ -5141,8 +5141,6 @@ static void raid5_align_endio(struct bio *bi)
+ 	rdev_dec_pending(rdev, conf->mddev);
+=20
+ 	if (!error) {
+=2D		trace_block_bio_complete(bdev_get_queue(raid_bi->bi_bdev),
+=2D					 raid_bi, 0);
+ 		bio_endio(raid_bi);
+ 		if (atomic_dec_and_test(&conf->active_aligned_reads))
+ 			wake_up(&conf->wait_for_quiescent);
+@@ -5727,10 +5725,6 @@ static void raid5_make_request(struct mddev *mddev, =
+struct bio * bi)
+ 		md_write_end(mddev);
+ 	remaining =3D raid5_dec_bi_active_stripes(bi);
+ 	if (remaining =3D=3D 0) {
+=2D
+=2D
+=2D		trace_block_bio_complete(bdev_get_queue(bi->bi_bdev),
+=2D					 bi, 0);
+ 		bio_endio(bi);
+ 	}
+ }
+@@ -6138,8 +6132,6 @@ static int  retry_aligned_read(struct r5conf *conf, s=
+truct bio *raid_bio)
+ 	}
+ 	remaining =3D raid5_dec_bi_active_stripes(raid_bio);
+ 	if (remaining =3D=3D 0) {
+=2D		trace_block_bio_complete(bdev_get_queue(raid_bio->bi_bdev),
+=2D					 raid_bio, 0);
+ 		bio_endio(raid_bio);
+ 	}
+ 	if (atomic_dec_and_test(&conf->active_aligned_reads))
+diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+index d703acb55d0f..db7a57ee0e58 100644
+=2D-- a/include/linux/blk_types.h
++++ b/include/linux/blk_types.h
+@@ -29,7 +29,7 @@ struct bio {
+ 						 * top bits REQ_OP. Use
+ 						 * accessors.
+ 						 */
+=2D	unsigned short		bi_flags;	/* status, command, etc */
++	unsigned short		bi_flags;	/* status, etc */
+ 	unsigned short		bi_ioprio;
+=20
+ 	struct bvec_iter	bi_iter;
+@@ -102,6 +102,8 @@ struct bio {
+ #define BIO_REFFED	8	/* bio has elevated ->bi_cnt */
+ #define BIO_THROTTLED	9	/* This bio has already been subjected to
+ 				 * throttling rules. Don't do it again. */
++#define BIO_TRACE_COMPLETION 10	/* bio_endio() should trace the final comp=
+letion
++				 * of this bio. */
+=20
+ /*
+  * Flags starting here get preserved by bio_reset() - this includes
+=2D-=20
+2.12.0
+
 
 --=-=-=
 Content-Type: application/pgp-signature; name="signature.asc"
 
 -----BEGIN PGP SIGNATURE-----
 
-iQIzBAEBCAAdFiEEG8Yp69OQ2HB7X0l6Oeye3VZigbkFAljUYvIACgkQOeye3VZi
-gblyJBAAu8Hh9BDcRzO+9NYJotP3FCrP9T03t5Z6tzFfEtZMqnOsz+NiOKLWDG7g
-EpkVsAStPiSVmj60BZuiipu8I4n7U3dozYEh+pOVqXYBtxo/+QbaQiEnL+8FAKyj
-u/RqM+O9j6Q7K/Jn9GsTnm5hSaXY0jUz7JZsXWKTLikQ7jtQtvEjixERybd08nmM
-T680zmJyKYleP9uliJblbaXeEL064CEANhZOJtAxfls8onHVpk+eLFH8MfQQ6Ivv
-KBHUOe1h/3DYhppHOaZqACvDy/rDq+3OsXvXHCJPpWyGfSkCePovpWU5UWyQwhnY
-fEy9rEC9kScSBnvjVtWLF0WFwhLf3tAzVDsw9woDojoK8l+gclyQyfWC9ncL0jiU
-Udq0RawVQA1sYGKj0JyNfE6Txq0TX17wDqH0JI4pNsTJJUorMNrYNTzgxa4MoioY
-29IvMNy3ykb9WmIf497G3LNN7Fy9tLir0YiZNAP3L8kp48pNVPtRa0K62mpd/VZe
-TTmdBZEW4SDZ0BkoNypWeC8j3rZ8cgLm0L7z9ce1MzFawie2JZ8au1go0HXTvTFR
-PY89lsylfvC9q2B4gnz8a11hCgYo0AyXqvFg3wrPP9BZOeTLGOaIuJONwk8aR3nq
-Vc5NNqXTub0YPPFpHaFt6kPJpgDKQEOKJ3Ra9+aA/6mSGqbJq0g=
-=m5EF
+iQIzBAEBCAAdFiEEG8Yp69OQ2HB7X0l6Oeye3VZigbkFAljUY1MACgkQOeye3VZi
+gbmwfw//UusX9UAk35sQOZ3Q5kroGVBdDa2JFmRdqi/3ZOF89LAKrsESICAfPfSX
+3YkCA/W2czj8g6XLsTMhC/qF4AQihpR25wZ+JNBAffxbFP6pl0qss1/XvkNnZnnu
+WUPrQ2CVCxHT4ZZ+IkPRtfPKA7ZsQYzlDzPt5OCGqj7d6uCSCDxmTWlOGjNY5v8H
+3kycAyZ3RfdfSpIhcpt33AqR2V1cdcQoRLpqykElM8J/l+Vvjull6q4Ozr0ky63Y
+UVRhi0JFkwjAdjM0OvEDJS6MLG7xo5vVTStfbXAkMnDApy4jWowG6NIvwBp0/yeA
+8a3Fq1bhoDGEKJ+gkB1DknQWu2qVAuXZH65BAXsPpN1RGmlWsv9SYRnZq6XRnV6b
+IuuSUkt0SjK3ZPUE/APCKZT4y+c1VRqOVpw2ny7AlBNqZ1FdCEzhWuZoJoAxv5CU
+9Fxl8Fp+vpkin33KSyflAbSr/159+iYimG2FFKQCySpRHPKrIiJnGrZGRuiHnOse
+WRIrM0stKD1MtrbsZ49/YV7yW7CKioiPwSxZdjrxhO2rIKpqtAJMXfs0nk1jEFDd
+XfvSGUgOEB+KwngPX/Xnsu63BHgwhRNUft4W37WFSqAWaMSWuOy/cuZOfVmgFWwX
+fogAF6f7Lwvt+FWVyyYyK7/HcLuBVtjyGnjtxYCnEVF0uKimhxA=
+=QTKe
 -----END PGP SIGNATURE-----
 --=-=-=--
