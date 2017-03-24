@@ -1,16 +1,15 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 00/33] multipath-tools fixes from SUSE
-Date: Fri, 24 Mar 2017 08:44:03 +0100
-Message-ID: <1490341443.23631.8.camel@suse.com>
-References: <20170228162329.14517-1-mwilck@suse.com>
-	<dcc49c30-0954-5737-1fae-194f29b10d94@gmail.com>
-	<CABr-Gndb1oyBO79_b105tVSO55qftO_mh2JRvN7c35+ar=xH3g@mail.gmail.com>
-	<CABr-GnfY_k6xCvWiuf=eQKq_3vU9jY6_WCsgd_5QrHX0q0ow7w@mail.gmail.com>
+From: Zdenek Kabelac <zkabelac@redhat.com>
+Subject: Re: Question about merge performance
+Date: Fri, 24 Mar 2017 10:43:24 +0100
+Message-ID: <d47f3058-5bb8-b6a6-92bf-a01f7de4fa9c@redhat.com>
+References: <CALpM8gRZoJLQvNxo=K=+JZ4yHAzMxzvDS9aM7uYxyrq8VqzUvg@mail.gmail.com>
+	<e25beb09-f4b0-899b-134a-c30d81d74926@redhat.com>
+	<CALpM8gR9h5YdQW_QCfxG8UxX-ZygoNv6ySgYot0fX2DSRpOJig@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CABr-GnfY_k6xCvWiuf=eQKq_3vU9jY6_WCsgd_5QrHX0q0ow7w@mail.gmail.com>
+In-Reply-To: <CALpM8gR9h5YdQW_QCfxG8UxX-ZygoNv6ySgYot0fX2DSRpOJig@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,15 +19,26 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Michael McCarthy <mccarthy197310@gmail.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gVGh1LCAyMDE3LTAzLTIzIGF0IDA5OjMwICswMTAwLCBDaHJpc3RvcGhlIFZhcm9xdWkgd3Jv
-dGU6Cj4gVGhlIGZ1bGwgc2V0IGlzIG5vdyBtZXJnZWQuCj4gVGhhbmtzLgoKVGhhbmtzIGEgbG90
-LCBDaHJpc3RvcGhlLgoKQnR3LCBhcmUgeW91IHBsYW5uaW5nIGEgdmVyc2lvbiBidW1wIGFueSB0
-aW1lIHNvb24/CgpSZWdhcmRzLApNYXJ0aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tA
-c3VzZS5jb20+LCBUZWwuwqArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBH
-RjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAy
-MTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJl
-ZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+Dne 24.3.2017 v 03:29 Michael McCarthy napsal(a):
+> I appreciate the insight. Are there any plans to enhance the code to allow
+> more parallel execution and/or allow users to experiment with QD?
+>
+
+Nope there are no plans to enhance old snapshot target - it would essentially 
+means to write completely new version of it - as the metadata format is in 
+general not enhancable.
+
+Also you should be aware the whole development is focused on 
+thin-provisioning, where all this snapshotting & merging as way more efficient.
+
+So old-snapshot should be used in couple 'corner' cases where it does make
+sense and user eventually need to pay penalty in terms of performance and
+if user needs 'speed' he should look at thin provisioning, where he also 
+automatically get  things like snapshot of snapshots and so on....
+
+Regards
+
+Zdenek
