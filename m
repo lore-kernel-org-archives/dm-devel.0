@@ -1,35 +1,57 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH 06/23] dm-kcopyd: switch to use
-	REQ_OP_WRITE_ZEROES
-Date: Mon, 27 Mar 2017 02:12:39 -0700
-Message-ID: <20170327091239.GC6879@infradead.org>
-References: <20170323143341.31549-1-hch@lst.de>
-	<20170323143341.31549-7-hch@lst.de>
-	<20170323145522.GB17127@redhat.com> <20170323145651.GA31771@lst.de>
-	<20170323151037.GC17127@redhat.com>
+From: NeilBrown <neilb@suse.com>
+Subject: Re: [PATCH v3] block: trace completion of all bios.
+Date: Mon, 27 Mar 2017 20:49:57 +1100
+Message-ID: <87zig76oca.fsf@notabene.neil.brown.name>
+References: <877f3iave6.fsf@notabene.neil.brown.name> <20170322125149.GA29606@infradead.org> <87shm4a4lt.fsf@notabene.neil.brown.name> <20170323104331.GA16903@ming.t460p> <87fui3a65o.fsf@notabene.neil.brown.name> <20170327090308.GA11757@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20170323151037.GC17127@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: axboe@kernel.dk, linux-raid@vger.kernel.org, linux-scsi@vger.kernel.org, martin.petersen@oracle.com, philipp.reisner@linbit.com, linux-block@vger.kernel.org, dm-devel@redhat.com, lars.ellenberg@linbit.com, shli@kernel.org, Christoph Hellwig <hch@lst.de>, agk@redhat.com, drbd-dev@lists.linbit.com
+Content-Type: multipart/signed; boundary="=-=-=";
+        micalg=pgp-sha256; protocol="application/pgp-signature"
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <20170327090308.GA11757@infradead.org>
+Sender: linux-raid-owner@vger.kernel.org
+Cc: Ming Lei <tom.leiming@gmail.com>, Christoph Hellwig <hch@infradead.org>, Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Shaohua Li <shli@kernel.org>, linux-kernel@vger.kernel.org, "Martin K . Petersen" <martin.petersen@oracle.com>
 List-Id: dm-devel.ids
 
-On Thu, Mar 23, 2017 at 11:10:38AM -0400, Mike Snitzer wrote:
-> Not sure why you've split out the dm-kcopyd patch, likely best to just
-> fold it into the previous dm support patch.
+--=-=-=
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 
-The dm-kcopyd patch switches to using WRITE_ZEROES instead of write
-same for dm as user of these interfaces.  The one before just adds
-WRITE_ZEROES support to dm.
+On Mon, Mar 27 2017, Christoph Hellwig wrote:
+
+> I don't really like the flag at all.  I'd much prefer a __bio_endio
+> with a 'bool trace' flag.  Also please remove the manual tracing in
+> dm.=C4=8B.  Once that is done I suspect we can also remove the
+> block_bio_complete export.
+
+Can you say why you don't like it?
+
+I find that it neatly handles all the corner cases that I found, and
+keeps the complexity local.
+
+Were we to use a flag to __bio_endio(), we would need one to
+__generic_make_request() too because we really don't want 'QUEUE' tracing
+when when blk_queue_split() (and similar code) calls it.
+
+Thanks,
+NeilBrown
+
+--=-=-=
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCAAdFiEEG8Yp69OQ2HB7X0l6Oeye3VZigbkFAljY4EUACgkQOeye3VZi
+gbnbEw//a2MwepVhHo4YrL2rtGsgG7ZwgTS+d0DZzm/F6PhzjHM6RkBMBfbzKbyV
+U95ni1J+xEf2RlNYjxfhhbRjEVbV53uFVgQg7vyFHIzN5439CNi0Fe4T8pn6hb2a
+Hq6A2hsv02DXlGk3tk5TKq4iirt211F7vJoF0ZScstKEnXJkoeJjBe7dIOfQXN7b
+E71YxwgI+9auiJxdnqEXPzi+z4jgiT3GPTyqCj9TggnxRtUkQsGHWL3mwqw66pIu
+7G/MGXqPSLUdUBXLNIQeqVBTbGjZIO0T/d+1H5vyezfP6u/UxjBySgS17hCvDgB9
+jrdGDafFXdNvVX8E8tpbEMwcFsJeX1FSNMRdwHlDDw6WQKnPQL36j330gNRxQJOM
+unhWQ/G1iJsZgCGlieEbS5FMWoy56shokwX2OiJutlzY07ZwjUwR5yZOLKfvBxgd
+Uh4mA06VDJPWol736pzxp4Q/7bRWjWqldgjOlH8pT0vPBhfd3IKLIlvmDTvPQLP3
+htO+hHssJJVwg9Q7/uWBJB08QqpT67rc5A5UVluJwO51uEDE0GGUL7Lr1XEMs0Qv
+e6xXB9fv5JYoESZQ7jBb7S43mp3Jzn9C9MjF+ShJdqzDpKhGhMIDaS94roh9dHRP
+2drK9tMP6n4FfTVph7VkBfW4CTKz2loTwIdqkAxmn0tPYodaRj8=
+=tE81
+-----END PGP SIGNATURE-----
+--=-=-=--
