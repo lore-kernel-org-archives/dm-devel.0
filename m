@@ -1,24 +1,32 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH v3] block: trace completion of all bios.
-Date: Mon, 27 Mar 2017 02:03:08 -0700
-Message-ID: <20170327090308.GA11757@infradead.org>
-References: <877f3iave6.fsf@notabene.neil.brown.name>
- <20170322125149.GA29606@infradead.org>
- <87shm4a4lt.fsf@notabene.neil.brown.name>
- <20170323104331.GA16903@ming.t460p>
- <87fui3a65o.fsf@notabene.neil.brown.name>
+From: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: RFC: always use REQ_OP_WRITE_ZEROES for zeroing
+	offload
+Date: Mon, 27 Mar 2017 02:10:56 -0700
+Message-ID: <20170327091056.GB6879@infradead.org>
+References: <20170323143341.31549-1-hch@lst.de>
+	<20170323155410.GD1138@soda.linbit>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <87fui3a65o.fsf@notabene.neil.brown.name>
-Sender: linux-kernel-owner@vger.kernel.org
-To: NeilBrown <neilb@suse.com>
-Cc: Ming Lei <tom.leiming@gmail.com>, Christoph Hellwig <hch@infradead.org>, Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Shaohua Li <shli@kernel.org>, linux-kernel@vger.kernel.org, "Martin K . Petersen" <martin.petersen@oracle.com>
+In-Reply-To: <20170323155410.GD1138-w1SgEEioFePxa46PmUWvFg@public.gmane.org>
+List-Unsubscribe: <http://lists.linbit.com/mailman/options/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
+List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
+List-Subscribe: <http://lists.linbit.com/mailman/listinfo/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
+Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: dm-devel.ids
 
-I don't really like the flag at all.  I'd much prefer a __bio_endio
-with a 'bool trace' flag.  Also please remove the manual tracing in
-dm.ċ.  Once that is done I suspect we can also remove the
-block_bio_complete export.
+It sounds like you don't want to support traditional discard at all,
+but only WRITE ZEROES.  So in many ways this series is the right way
+forward.  It would be nice if we could do a full blown
+REQ_OP_WRITE_ZEROES for dm_think that zeroes out partial blocks,
+similar to what hardware that implements WRITE SAME of zeroes
+or WRITE ZEROES would do.  I'll see if I could include that in my
+series.
