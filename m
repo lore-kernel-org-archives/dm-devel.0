@@ -1,57 +1,52 @@
-From: NeilBrown <neilb@suse.com>
-Subject: Re: [PATCH v3] block: trace completion of all bios.
-Date: Mon, 27 Mar 2017 20:49:57 +1100
-Message-ID: <87zig76oca.fsf@notabene.neil.brown.name>
-References: <877f3iave6.fsf@notabene.neil.brown.name> <20170322125149.GA29606@infradead.org> <87shm4a4lt.fsf@notabene.neil.brown.name> <20170323104331.GA16903@ming.t460p> <87fui3a65o.fsf@notabene.neil.brown.name> <20170327090308.GA11757@infradead.org>
+From: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: RFC: always use REQ_OP_WRITE_ZEROES for zeroing
+	offload
+Date: Mon, 27 Mar 2017 10:03:07 -0400
+Message-ID: <20170327140307.GA13020@redhat.com>
+References: <20170323143341.31549-1-hch@lst.de>
+	<20170323155410.GD1138@soda.linbit>
+	<20170327091056.GB6879@infradead.org>
 Mime-Version: 1.0
-Content-Type: multipart/signed; boundary="=-=-=";
-        micalg=pgp-sha256; protocol="application/pgp-signature"
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <20170327090308.GA11757@infradead.org>
-Sender: linux-raid-owner@vger.kernel.org
-Cc: Ming Lei <tom.leiming@gmail.com>, Christoph Hellwig <hch@infradead.org>, Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Shaohua Li <shli@kernel.org>, linux-kernel@vger.kernel.org, "Martin K . Petersen" <martin.petersen@oracle.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20170327091056.GB6879-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+List-Unsubscribe: <http://lists.linbit.com/mailman/options/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
+List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
+List-Subscribe: <http://lists.linbit.com/mailman/listinfo/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
+Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+To: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
 List-Id: dm-devel.ids
 
---=-=-=
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+On Mon, Mar 27 2017 at  5:10am -0400,
+Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
 
-On Mon, Mar 27 2017, Christoph Hellwig wrote:
+> It sounds like you don't want to support traditional discard at all,
+> but only WRITE ZEROES.  So in many ways this series is the right way
+> forward.  It would be nice if we could do a full blown
+> REQ_OP_WRITE_ZEROES for dm_think that zeroes out partial blocks,
+> similar to what hardware that implements WRITE SAME of zeroes
+> or WRITE ZEROES would do.  I'll see if I could include that in my
+> series.
 
-> I don't really like the flag at all.  I'd much prefer a __bio_endio
-> with a 'bool trace' flag.  Also please remove the manual tracing in
-> dm.=C4=8B.  Once that is done I suspect we can also remove the
-> block_bio_complete export.
+By "you" I assume you're referring to Lars?  Lars' approach for discard,
+when drbd is layered on dm-thinp, feels over-engineered.  Not his fault,
+the way discard and zeroing got conflated certainly lends itself to
+these ugly hacks.  SO I do appreciate that for anything to leverage
+discard_zeroes_data it needs to be reliable.  Which runs counter to how
+discard was implemented (discard may get silently dropped!)  But that is
+why dm-thinp doesn't advertise dzd.  Anyway...
 
-Can you say why you don't like it?
-
-I find that it neatly handles all the corner cases that I found, and
-keeps the complexity local.
-
-Were we to use a flag to __bio_endio(), we would need one to
-__generic_make_request() too because we really don't want 'QUEUE' tracing
-when when blk_queue_split() (and similar code) calls it.
-
-Thanks,
-NeilBrown
-
---=-=-=
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQIzBAEBCAAdFiEEG8Yp69OQ2HB7X0l6Oeye3VZigbkFAljY4EUACgkQOeye3VZi
-gbnbEw//a2MwepVhHo4YrL2rtGsgG7ZwgTS+d0DZzm/F6PhzjHM6RkBMBfbzKbyV
-U95ni1J+xEf2RlNYjxfhhbRjEVbV53uFVgQg7vyFHIzN5439CNi0Fe4T8pn6hb2a
-Hq6A2hsv02DXlGk3tk5TKq4iirt211F7vJoF0ZScstKEnXJkoeJjBe7dIOfQXN7b
-E71YxwgI+9auiJxdnqEXPzi+z4jgiT3GPTyqCj9TggnxRtUkQsGHWL3mwqw66pIu
-7G/MGXqPSLUdUBXLNIQeqVBTbGjZIO0T/d+1H5vyezfP6u/UxjBySgS17hCvDgB9
-jrdGDafFXdNvVX8E8tpbEMwcFsJeX1FSNMRdwHlDDw6WQKnPQL36j330gNRxQJOM
-unhWQ/G1iJsZgCGlieEbS5FMWoy56shokwX2OiJutlzY07ZwjUwR5yZOLKfvBxgd
-Uh4mA06VDJPWol736pzxp4Q/7bRWjWqldgjOlH8pT0vPBhfd3IKLIlvmDTvPQLP3
-htO+hHssJJVwg9Q7/uWBJB08QqpT67rc5A5UVluJwO51uEDE0GGUL7Lr1XEMs0Qv
-e6xXB9fv5JYoESZQ7jBb7S43mp3Jzn9C9MjF+ShJdqzDpKhGhMIDaS94roh9dHRP
-2drK9tMP6n4FfTVph7VkBfW4CTKz2loTwIdqkAxmn0tPYodaRj8=
-=tE81
------END PGP SIGNATURE-----
---=-=-=--
+As for the blkdev_issue_zeroout() resorting to manually zeroing the
+range, if the discard fails or dzd not supported, that certainly
+requires DM thinp to implement manual zeroing of the head and tail of
+the range if partial blocks are being zeroed.  So I welcome any advances
+there.  It is probably something that is best left to Joe or myself to
+tackle.  But I'll gladly accept patches ;)
