@@ -1,81 +1,51 @@
-From: Bart Van Assche <Bart.VanAssche@sandisk.com>
-Subject: Re: [PATCH 23/23] block: remove the discard_zeroes_data flag
-Date: Tue, 28 Mar 2017 17:00:48 +0000
-Message-ID: <1490720411.2573.11.camel@sandisk.com>
-References: <20170323143341.31549-1-hch@lst.de>
-         <20170323143341.31549-24-hch@lst.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20170323143341.31549-24-hch@lst.de>
-Content-Language: en-US
-Content-ID: <16CA47C31156C54BB5465A15C406D9BF@sandisk.com>
-Sender: linux-block-owner@vger.kernel.org
-To: "agk@redhat.com" <agk@redhat.com>, "lars.ellenberg@linbit.com" <lars.ellenberg@linbit.com>, "snitzer@redhat.com" <snitzer@redhat.com>, "hch@lst.de" <hch@lst.de>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "philipp.reisner@linbit.com" <philipp.reisner@linbit.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "shli@kernel.org" <shli@kernel.org>
-Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "drbd-dev@lists.linbit.com" <drbd-dev@lists.linbit.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>
+From: Brian Norris <briannorris@chromium.org>
+Subject: [PATCH] dm: move dm_table_destroy() to same header as dm_table_create()
+Date: Tue, 28 Mar 2017 11:31:02 -0700
+Message-ID: <20170328183102.80620-1-briannorris@chromium.org>
+Return-path: <linux-raid-owner@vger.kernel.org>
+Sender: linux-raid-owner@vger.kernel.org
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
+Cc: linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, Brian Norris <briannorris@chromium.org>
 List-Id: dm-devel.ids
 
-On Thu, 2017-03-23 at 10:33 -0400, Christoph Hellwig wrote:
-> Now that we use the proper REQ_OP_WRITE_ZEROES operation everywhere we ca=
-n
-> kill this hack.
->=20
-> [ ... ]
->
-> diff --git a/Documentation/ABI/testing/sysfs-block b/Documentation/ABI/te=
-sting/sysfs-block
-> index 2da04ce6aeef..dea212db9df3 100644
-> --- a/Documentation/ABI/testing/sysfs-block
-> +++ b/Documentation/ABI/testing/sysfs-block
-> @@ -213,14 +213,8 @@ What:		/sys/block/<disk>/queue/discard_zeroes_data
->  Date:		May 2011
->  Contact:	Martin K. Petersen <martin.petersen@oracle.com>
->  Description:
-> -		Devices that support discard functionality may return
-> -		stale or random data when a previously discarded block
-> -		is read back. This can cause problems if the filesystem
-> -		expects discarded blocks to be explicitly cleared. If a
-> -		device reports that it deterministically returns zeroes
-> -		when a discarded area is read the discard_zeroes_data
-> -		parameter will be set to one. Otherwise it will be 0 and
-> -		the result of reading a discarded area is undefined.
-> +		Will always return 0.  Don't rely on any specific behavior
-> +		for discards, and don't read this file.
-> =20
->  What:		/sys/block/<disk>/queue/write_same_max_bytes
->  Date:		January 2012
->
-> [ ... ]
->
-> --- a/block/blk-sysfs.c
-> +++ b/block/blk-sysfs.c
-> @@ -208,7 +208,7 @@ static ssize_t queue_discard_max_store(struct request=
-_queue *q,
-> =20
->  static ssize_t queue_discard_zeroes_data_show(struct request_queue *q, c=
-har *page)
->  {
-> -	return queue_var_show(queue_discard_zeroes_data(q), page);
-> +	return 0;
->  }
+If anyone is going to use dm_table_create(), they probably should be
+able to use dm_table_destroy() too. Move the dm_table_destroy()
+definition outside the private header, near dm_table_create()
 
-Hello Christoph,
+Signed-off-by: Brian Norris <briannorris@chromium.org>
+---
+ drivers/md/dm.h               | 1 -
+ include/linux/device-mapper.h | 5 +++++
+ 2 files changed, 5 insertions(+), 1 deletion(-)
 
-It seems to me like the documentation in Documentation/ABI/testing/sysfs-bl=
-ock
-and the above code are not in sync. I think the above code will cause readi=
-ng
-from the discard_zeroes_data attribute to return an empty string ("") inste=
-ad
-of "0\n".
+diff --git a/drivers/md/dm.h b/drivers/md/dm.h
+index f298b01f7ab3..c54d2f1934ce 100644
+--- a/drivers/md/dm.h
++++ b/drivers/md/dm.h
+@@ -48,7 +48,6 @@ struct dm_md_mempools;
+ /*-----------------------------------------------------------------
+  * Internal table functions.
+  *---------------------------------------------------------------*/
+-void dm_table_destroy(struct dm_table *t);
+ void dm_table_event_callback(struct dm_table *t,
+ 			     void (*fn)(void *), void *context);
+ struct dm_target *dm_table_get_target(struct dm_table *t, unsigned int index);
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index a7e6903866fd..70cb6af56f67 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -472,6 +472,11 @@ void dm_table_set_type(struct dm_table *t, unsigned type);
+ int dm_table_complete(struct dm_table *t);
+ 
+ /*
++ * Destroy the table when finished.
++ */
++void dm_table_destroy(struct dm_table *t);
++
++/*
+  * Target may require that it is never sent I/O larger than len.
+  */
+ int __must_check dm_set_target_max_io_len(struct dm_target *ti, sector_t len);
+-- 
+2.12.2.564.g063fe858b8-goog
 
-BTW, my personal preference is to remove this attribute entirely because ke=
-eping
-it will cause confusion, no matter how well we document the behavior of thi=
-s
-attribute.
-
-Thanks,
-
-Bart.=
