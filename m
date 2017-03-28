@@ -1,49 +1,81 @@
-From: Bart Van Assche <Bart.VanAssche@sandisk.com>
-Subject: Re: [PATCH 01/23] block: renumber REQ_OP_WRITE_ZEROES
-Date: Tue, 28 Mar 2017 16:12:46 +0000
-Message-ID: <1490717553.2573.4.camel@sandisk.com>
-References: <20170323143341.31549-1-hch@lst.de>
-         <20170323143341.31549-2-hch@lst.de>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [multipath-tools] [BUG] segfault in uev_update_path
+Date: Tue, 28 Mar 2017 11:42:21 -0500
+Message-ID: <20170328164221.GN3421@octiron.msp.redhat.com>
+References: <D1E4D02760513D4B90DC3B40FF32AF35A101A786@H3CMLB12-EX.srv.huawei-3com.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20170323143341.31549-2-hch@lst.de>
-Content-Language: en-US
-Content-ID: <B160B454ABBE5B4E8E2058151862CA8C@sandisk.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: "agk@redhat.com" <agk@redhat.com>, "lars.ellenberg@linbit.com" <lars.ellenberg@linbit.com>, "snitzer@redhat.com" <snitzer@redhat.com>, "hch@lst.de" <hch@lst.de>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "philipp.reisner@linbit.com" <philipp.reisner@linbit.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "shli@kernel.org" <shli@kernel.org>
-Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "drbd-dev@lists.linbit.com" <drbd-dev@lists.linbit.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <D1E4D02760513D4B90DC3B40FF32AF35A101A786@H3CMLB12-EX.srv.huawei-3com.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Shichangkuo <shi.changkuo@h3c.com>
+Cc: Guozhonghua <guozhonghua@h3c.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Zhangguanghui <zhang.guanghui@h3c.com>
 List-Id: dm-devel.ids
 
-On Thu, 2017-03-23 at 10:33 -0400, Christoph Hellwig wrote:
-> Make life easy for implementations that needs to send a data buffer
-> to the device (e.g. SCSI) by numbering it as a data out command.
->=20
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-> ---
->  include/linux/blk_types.h | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
->=20
-> diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-> index d703acb55d0f..6393c13a6498 100644
-> --- a/include/linux/blk_types.h
-> +++ b/include/linux/blk_types.h
-> @@ -160,7 +160,7 @@ enum req_opf {
->  	/* write the same sector many times */
->  	REQ_OP_WRITE_SAME	=3D 7,
->  	/* write the zero filled sector many times */
-> -	REQ_OP_WRITE_ZEROES	=3D 8,
-> +	REQ_OP_WRITE_ZEROES	=3D 9,
-> =20
->  	/* SCSI passthrough using struct scsi_request */
->  	REQ_OP_SCSI_IN		=3D 32,
-
-Hello Christoph,
-
-Since REQ_OP_WRITE_ZEROES was introduced in kernel v4.10, do we need
-"Cc: stable" and "Fixes: a6f0788ec2881" tags for this patch?
-
-Thanks,
-
-Bart.=
+T24gVGh1LCBNYXIgMjMsIDIwMTcgYXQgMDk6MTc6MTRBTSArMDAwMCwgU2hpY2hhbmdrdW8gd3Jv
+dGU6Cj4gICAgSGksIGFsbAo+IAo+ICAgIMKgwqAgwqBJIHVzZWQgbXVsdGlwYXRoLXRvb3NsIDAu
+Ni40IGZvciBzb21lIHRlc3RpbmcuIFdoZW4gZXhlY3V0aW5nICB1ZGV2YWRtCj4gICAgdHJpZ2dl
+ciBjb21tYW5kLCAgSSBmaW5kICBzb21ldGhpbmcgIHdyb25nIHdpdGggIG11bHRpcGF0aGQuIExv
+Z3MgIGFyZSAgYXMKPiAgICBmb2xsb3dzOgo+IAo+ICAgIE1hciAgMTUgIDE5OjI2OjAwICBzZXJ2
+ZXIxNTUgIG11bHRpcGF0aGQ6ICBzZGo6ICBwYXRoICB3d2lkICBjaGFuZ2VkICBmcm9tCj4gICAg
+JzM2MDAwMmFjMDAwMDAwMDAwMDAwMDAwZTcwMDAxMzA3MScgICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgICAgICAgICAgdG8KPiAgICAnMzYwMDAyYWMwMDAwMDAwMDAwMDAwMDAyNjAwMDEzMDcx
+Jy4gZGlzYWxsb3dpbmcKPiAKPiAgICBNYXIgMTUgIDE5OjI2OjAwICBzZXJ2ZXIxNTUga2VybmVs
+OiAgWzcwNjE4My44Mzc3MDRdICBtdWx0aXBhdGhkWzExNjU0NDBdOgo+ICAgIHNlZ2ZhdWx0IGF0
+ICAxOTggIGlwICAwMDAwNTU1ZjZkMDIyNjA3ICBzcCAgMDAwMDdmMWY5OTJmNTk2MCAgZXJyb3Ig
+IDQgIGluCj4gICAgbXVsdGlwYXRoZFs1NTVmNmQwMTgwMDArMTgwMDBdCj4gCj4gICAgwqAKPiAK
+PiAgICDCoCAgQWZ0ZXIgIHBhcnNpbmcgIHRoZSAgYWRkcmVzcyAgd2l0aCAgb2JqZHVtcCwgIEkg
+IHRoaW5rICB1ZXZfdXBkYXRlX3BhdGgKPiAgICBhY2Nlc3NpbmcgbnVsbCBwb2ludGVyIHBwLT5t
+cHAgLiBDYWxsIHRyYWNlIG1heWJlOgo+IAo+ICAgIHVldl90cmlnZ2VyCj4gCj4gICAgdWV2X3Vw
+ZGF0ZV9wYXRoCj4gCj4gICAgZG1fZmFpbF9wYXRoKHBwLT5tcHAtPmFsaWFzLCBwcC0+ZGV2X3Qp
+Owo+IAo+ICAgIMKgCj4gCj4gICAgwqAgwqDCoEhhcyBhbnlvbmUgZXZlciBtZXQgaXQgYW5kIGhv
+dyB0byBmaXggaXQ/CgpXZWxsLCBpZiB0aGUgd3dpZCBjaGFuZ2VzIG9uIGEgcGF0aCB0aGF0IGN1
+cnJlbnRseSBpc24ndCBwYXJ0IG9mIGEKbXVsdGlwYXRoIGRldmljZSwgdGhpcyB3b3VsZCBjZXJ0
+YWlubHkgaGFwcGVuLiBUaGUgaXNzdWUgaXMgc2ltcGx5IHRoYXQKd2UgZGVyZWZlcmVuY2UgdGhh
+dCBwb2ludGVyIHdpdGhvdXQgY2hlY2tpbmcgdGhhdCBpdCdzIG5vdCBOVUxMIGZpcnN0LgoKTm93
+IHRoZSBxdWVzdGlvbiBpcywgd2hhdCB0byB3ZSBkbyBpZiB0aGUgcGF0aCBjaGFuZ2VzIHd3aWQs
+IGJ1dCBpdCdzCm5vdCBwYXJ0IG9mIGEgbXVsdGlwYXRoIGRldmljZSB5ZXQuIFdlIGNvdWxkIHNp
+bXBseSBwcmludCBhIHdhcm5pbmcKbWVzc2FnZSB0aGF0IHRoZSB3d2lkIGhhcyBjaGFuZ2VkLCBh
+bmQgYWxsb3cgaXQgdG8gaGFwcGVuLCBzaW5jZSB0aGVyZSdzCm5vIG11bHRpcGF0aCBkZXZpY2Ug
+Y3VycmVudGx5IHVzaW5nIHRoZSBMVU4uIEhvd2V2ZXIsIEkgaGF2ZSBzZWVuIGNhc2VzCndoZXJl
+IG11bHRpcGxlIExVTnMgdGhhdCBoYXZlIGFscmVhZHkgYmVlbiBkaXNjb3ZlcmVkIGJ5IGEgbm9k
+ZSBnZXQKdW5tYXBwZWQsIGFuZCBhbGwgdGhlIHVubWFwcGVkIExVTnMgZnJvbSBhIGRldmljZSBn
+ZXQgdGhlIHNhbWUgSURfU0VSSUFMCnZhbHVlIGluIHRoZSB1ZXZlbnQgZm9yIHRoZSBtYXBwaW5n
+IGNoYW5nZS4gVGhpcyB3b3VsZCBjYXVzZQpmaW5kX211bHRpcGF0aHMgdG8gY3JlYXRlIGEgbXVs
+dGlwYXRoIGRldmljZSB0aGF0IGluY2x1ZGVzIGFsbCBvZiB0aGVzZQp1bm1hcHBlZCBkZXZpY2Vz
+LCB3aGljaCBpcyBjbGVhcmx5IHdyb25nLgoKU28sIHRoZSBiZXN0IGFuc3dlciBpcyBwcm9iYWJs
+eSB0byBibG9jayB0aGUgY2hhbmdlLCBhbmQgc2ltcGx5IG5vdCBjYWxsCmRtX2ZhaWxfcGF0aCBp
+ZiBwcC0+bXBwID09IE5VTEwuIEkgY2FuIHdyaXRlIGEgcGF0Y2ggZm9yIHRoaXMuCgotQmVuCgo+
+IAo+ICAgIFRoYW5rcyEKPiAKPiAgICBDaGFuZ2t1bwo+IAo+ICAgIC0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0KPiAgICDmnKzpgq7ku7blj4rlhbbpmYTku7blkKvmnInmna3lt57ljY7kuInpgJrkv6HmioDm
+nK/mnInpmZDlhazlj7jnmoTkv53lr4bkv6Hmga/vvIzku4XpmZDkuo7lj5HpgIHnu5nkuIrpnaLl
+nLDlnYAKPiAgICDkuK3liJflh7oKPiAgICDnmoTkuKrkurrmiJbnvqTnu4TjgILnpoHmraLku7vk
+vZXlhbbku5bkurrku6Xku7vkvZXlvaLlvI/kvb/nlKjvvIjljIXmi6zkvYbkuI3pmZDkuo7lhajp
+g6jmiJbpg6jliIblnLDms4TpnLLjgIEKPiAgICDlpI3liLbjgIEKPiAgICDmiJbmlaPlj5HvvInm
+nKzpgq7ku7bkuK3nmoTkv6Hmga/jgILlpoLmnpzmgqjplJnmlLbkuobmnKzpgq7ku7bvvIzor7fm
+gqjnq4vljbPnlLXor53miJbpgq7ku7bpgJrnn6Xlj5Hku7bkurrlubYKPiAgICDliKDpmaTmnKwK
+PiAgICDpgq7ku7bvvIEKPiAgICBUaGlzIGUtbWFpbCBhbmQgaXRzIGF0dGFjaG1lbnRzIGNvbnRh
+aW4gY29uZmlkZW50aWFsIGluZm9ybWF0aW9uIGZyb20gSDNDLAo+ICAgIHdoaWNoIGlzCj4gICAg
+aW50ZW5kZWQgb25seSBmb3IgdGhlIHBlcnNvbiBvciBlbnRpdHkgd2hvc2UgYWRkcmVzcyBpcyBs
+aXN0ZWQgYWJvdmUuIEFueQo+ICAgIHVzZSBvZiB0aGUKPiAgICBpbmZvcm1hdGlvbiBjb250YWlu
+ZWQgaGVyZWluIGluIGFueSB3YXkgKGluY2x1ZGluZywgYnV0IG5vdCBsaW1pdGVkIHRvLAo+ICAg
+IHRvdGFsIG9yIHBhcnRpYWwKPiAgICBkaXNjbG9zdXJlLCByZXByb2R1Y3Rpb24sIG9yIGRpc3Nl
+bWluYXRpb24pIGJ5IHBlcnNvbnMgb3RoZXIgdGhhbiB0aGUKPiAgICBpbnRlbmRlZAo+ICAgIHJl
+Y2lwaWVudChzKSBpcyBwcm9oaWJpdGVkLiBJZiB5b3UgcmVjZWl2ZSB0aGlzIGUtbWFpbCBpbiBl
+cnJvciwgcGxlYXNlCj4gICAgbm90aWZ5IHRoZSBzZW5kZXIKPiAgICBieSBwaG9uZSBvciBlbWFp
+bCBpbW1lZGlhdGVseSBhbmQgZGVsZXRlIGl0IQoKPiAtLQo+IGRtLWRldmVsIG1haWxpbmcgbGlz
+dAo+IGRtLWRldmVsQHJlZGhhdC5jb20KPiBodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4v
+bGlzdGluZm8vZG0tZGV2ZWwKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRo
+YXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
