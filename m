@@ -1,75 +1,43 @@
-From: Paolo Bonzini <pbonzini@redhat.com>
-Subject: Re: [PATCH 03/23] sd: implement REQ_OP_WRITE_ZEROES
-Date: Wed, 29 Mar 2017 18:53:17 +0200
-Message-ID: <fcb3c0d2-f043-ac84-30b7-d1d7afb3d63e@redhat.com>
-References: <20170323143341.31549-1-hch@lst.de>
- <20170323143341.31549-4-hch@lst.de> <1490726988.2573.16.camel@sandisk.com>
- <e19ca1bf-0908-1eb0-cb04-cd306692f216@redhat.com>
- <1490804856.3551.3.camel@sandisk.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [multipath-tools] [BUG] segfault in uev_update_path
+Date: Wed, 29 Mar 2017 23:22:42 +0200
+Message-ID: <1490822562.10580.9.camel@suse.com>
+References: <D1E4D02760513D4B90DC3B40FF32AF35A101A786@H3CMLB12-EX.srv.huawei-3com.com>
+	<20170328164221.GN3421@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <1490804856.3551.3.camel@sandisk.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Bart Van Assche <Bart.VanAssche@sandisk.com>, "agk@redhat.com" <agk@redhat.com>, "lars.ellenberg@linbit.com" <lars.ellenberg@linbit.com>, "snitzer@redhat.com" <snitzer@redhat.com>, "hch@lst.de" <hch@lst.de>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "philipp.reisner@linbit.com" <philipp.reisner@linbit.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "shli@kernel.org" <shli@kernel.org>
-Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "drbd-dev@lists.linbit.com" <drbd-dev@lists.linbit.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20170328164221.GN3421@octiron.msp.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-
-
-On 29/03/2017 18:28, Bart Van Assche wrote:
-> On Wed, 2017-03-29 at 16:51 +0200, Paolo Bonzini wrote:
->> On 28/03/2017 20:50, Bart Van Assche wrote:
->>> This means that just like the start and end of a discard must be aligned on a
->>> discard_granularity boundary, WRITE SAME commands with the UNMAP bit set must
->>> also respect that granularity. I think this means that either
->>> __blkdev_issue_zeroout() has to be modified such that it rejects unaligned
->>> REQ_OP_WRITE_ZEROES operations or that blk_bio_write_same_split() has to be
->>> modified such that it generates REQ_OP_WRITEs for the unaligned start and tail.
->>
->> I don't think this is the case.
-> 
-> Hello Paolo,
-> 
-> Can you cite the section(s) from the SCSI specs that support your view? I
-> reread the "5.49 WRITE SAME (10) command" and "4.7.3.4.4 WRITE SAME command
-> and unmap operations" sections but I have not found any explicit statement
-> that specifies the behavior for unaligned WRITE SAME commands with the UNMAP
-> bit set. It seems to me like the OPTIMAL UNMAP GRANULARITY parameter was
-> overlooked when both sections were written. Should we ask the T10 committee
-> for a clarification?
-
-From 4.7.3.4.4:
-
-------
-If unmap operations are requested in a WRITE SAME command,
-then for each specified LBA:
-
-if the Data-Out Buffer of the WRITE SAME command is the same as the
-logical block data returned by a read operation from that LBA while in
-the unmapped state (see 4.7.4.5), then:
-
-1) the device server performs the actions described in table 6; and
-
-2) if an unmap operation is not performed in step 1), then the device
-server shall perform the specified write operation to that LBA;
-------
-
-and from the description of WRITE SAME (10): "subsequent read operations
-behave as if the device server wrote the single block of user data
-received from the Data-Out Buffer to each logical block without
-modification" (I have a slightly older copy though, it's 5.45 here).
-
-It's pretty unambiguous that if the device cannot unmap (including the
-case where the request is misaligned with respect to the granularity) it
-does a write.
-
-> Another question is, if the specification of WRITE SAME + UNMAP would be
-> made unambiguous in the SBC document, whether or not we should take the risk
-> to trigger behavior that is not what we expect by sending unaligned WRITE
-> SAME + UNMAP commands to SCSI devices?
-
-Yes, I think we should.
-
-Paolo
+T24gVHVlLCAyMDE3LTAzLTI4IGF0IDExOjQyIC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cgo+IE5vdyB0aGUgcXVlc3Rpb24gaXMsIHdoYXQgdG8gd2UgZG8gaWYgdGhlIHBhdGggY2hh
+bmdlcyB3d2lkLCBidXQgaXQncwo+IG5vdCBwYXJ0IG9mIGEgbXVsdGlwYXRoIGRldmljZSB5ZXQu
+IFdlIGNvdWxkIHNpbXBseSBwcmludCBhIHdhcm5pbmcKPiBtZXNzYWdlIHRoYXQgdGhlIHd3aWQg
+aGFzIGNoYW5nZWQsIGFuZCBhbGxvdyBpdCB0byBoYXBwZW4sIHNpbmNlCj4gdGhlcmUncwo+IG5v
+IG11bHRpcGF0aCBkZXZpY2UgY3VycmVudGx5IHVzaW5nIHRoZSBMVU4uIEhvd2V2ZXIsIEkgaGF2
+ZSBzZWVuCj4gY2FzZXMKPiB3aGVyZSBtdWx0aXBsZSBMVU5zIHRoYXQgaGF2ZSBhbHJlYWR5IGJl
+ZW4gZGlzY292ZXJlZCBieSBhIG5vZGUgZ2V0Cj4gdW5tYXBwZWQsIGFuZCBhbGwgdGhlIHVubWFw
+cGVkIExVTnMgZnJvbSBhIGRldmljZSBnZXQgdGhlIHNhbWUKPiBJRF9TRVJJQUwKPiB2YWx1ZSBp
+biB0aGUgdWV2ZW50IGZvciB0aGUgbWFwcGluZyBjaGFuZ2UuIFRoaXMgd291bGQgY2F1c2UKPiBm
+aW5kX211bHRpcGF0aHMgdG8gY3JlYXRlIGEgbXVsdGlwYXRoIGRldmljZSB0aGF0IGluY2x1ZGVz
+IGFsbCBvZgo+IHRoZXNlCj4gdW5tYXBwZWQgZGV2aWNlcywgd2hpY2ggaXMgY2xlYXJseSB3cm9u
+Zy4KCmFuZCBpbiB0aGF0IHNpdXRhdGlvbiB0aGVyZSdkIGJlIG5vIHdheSB0byBkZXRlY3QgdGhh
+dCB0aGVzZSBhcmUKdW5tYXBwZWQgTFVOcyB3aGljaCBkb24ndCBxdWFsaWZ5IGFzIHBhdGhzIGZv
+ciBhIG11bHRpcGF0aCBkZXZpY2U/CgpSZWdhcmRzCk1hcnRpbgoKLS0gCkRyLiBNYXJ0aW4gV2ls
+Y2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC7CoCs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExp
+bnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBO
+b3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QK
+ZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGlu
+Zm8vZG0tZGV2ZWw=
