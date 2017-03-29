@@ -1,66 +1,55 @@
-From: Paolo Bonzini <pbonzini@redhat.com>
-Subject: Re: [PATCH 12/23] sd: handle REQ_UNMAP
-Date: Wed, 29 Mar 2017 16:57:39 +0200
-Message-ID: <dab09af5-521a-99da-9852-2d18cc28ca4f@redhat.com>
+From: Bart Van Assche <Bart.VanAssche@sandisk.com>
+Subject: Re: [PATCH 03/23] sd: implement REQ_OP_WRITE_ZEROES
+Date: Wed, 29 Mar 2017 16:28:01 +0000
+Message-ID: <1490804856.3551.3.camel@sandisk.com>
 References: <20170323143341.31549-1-hch@lst.de>
-	<20170323143341.31549-13-hch@lst.de>
-	<1490719722.2573.8.camel@sandisk.com>
+         <20170323143341.31549-4-hch@lst.de> <1490726988.2573.16.camel@sandisk.com>
+         <e19ca1bf-0908-1eb0-cb04-cd306692f216@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1490719722.2573.8.camel@sandisk.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <bart.vanassche@sandisk.com>, Alasdair G Kergon <agk@redhat.com>, "lars.ellenberg@linbit.com" <lars.ellenberg@linbit.com>, Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@lst.de>, "Martin K. Petersen" <martin.petersen@oracle.com>, "philipp.reisner@linbit.com" <philipp.reisner@linbit.com>, Jens Axboe <axboe@fb.com>, "shli@kernel.org" <shli@kernel.org>
-Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>, dm <dm-devel@redhat.com>, Linux SCSI List <linux-scsi@vger.kernel.org>, "drbd-dev@lists.linbit.com" <drbd-dev@lists.linbit.com>
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <e19ca1bf-0908-1eb0-cb04-cd306692f216@redhat.com>
+Content-Language: en-US
+Content-ID: <7F521760D57C1746ACD169C42D3C2D16@sandisk.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: "agk@redhat.com" <agk@redhat.com>, "lars.ellenberg@linbit.com" <lars.ellenberg@linbit.com>, "snitzer@redhat.com" <snitzer@redhat.com>, "hch@lst.de" <hch@lst.de>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "philipp.reisner@linbit.com" <philipp.reisner@linbit.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "pbonzini@redhat.com" <pbonzini@redhat.com>, "shli@kernel.org" <shli@kernel.org>
+Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "drbd-dev@lists.linbit.com" <drbd-dev@lists.linbit.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>
 List-Id: dm-devel.ids
 
+On Wed, 2017-03-29 at 16:51 +0200, Paolo Bonzini wrote:
+> On 28/03/2017 20:50, Bart Van Assche wrote:
+> > This means that just like the start and end of a discard must be aligne=
+d on a
+> > discard_granularity boundary, WRITE SAME commands with the UNMAP bit se=
+t must
+> > also respect that granularity. I think this means that either
+> > __blkdev_issue_zeroout() has to be modified such that it rejects unalig=
+ned
+> > REQ_OP_WRITE_ZEROES operations or that blk_bio_write_same_split() has t=
+o be
+> > modified such that it generates REQ_OP_WRITEs for the unaligned start a=
+nd tail.
+>=20
+> I don't think this is the case.
 
+Hello Paolo,
 
-On 28/03/2017 18:48, Bart Van Assche wrote:
->> +	if (rq->cmd_flags & REQ_UNMAP) {
->> +		switch (sdkp->provisioning_mode) {
->> +		case SD_LBP_WS16:
->> +			return sd_setup_write_same16_cmnd(cmd, true);
->> +		case SD_LBP_WS10:
->> +			return sd_setup_write_same10_cmnd(cmd, true);
->> +		}
->> +	}
->> +
->>  	if (sdp->no_write_same)
->>  		return BLKPREP_INVALID;
->>  	if (sdkp->ws16 || sector > 0xffffffff || nr_sectors > 0xffff)
-> Users can change the provisioning mode from user space from SD_LBP_WS16 into
-> SD_LBP_WS10 so I'm not sure it's safe to skip the (sdkp->ws16 || sector >
-> 0xffffffff || nr_sectors > 0xffff) check if REQ_UNMAP is set.
+Can you cite the section(s) from the SCSI specs that support your view? I
+reread the "5.49 WRITE SAME (10) command" and "4.7.3.4.4 WRITE SAME command
+and unmap operations" sections but I have not found any explicit statement
+that specifies the behavior for unaligned WRITE SAME commands with the UNMA=
+P
+bit set. It seems to me like=A0the OPTIMAL UNMAP GRANULARITY parameter was
+overlooked when both sections were written. Should we ask the T10 committee
+for a clarification?
 
-Yeah, if REQ_UNMAP is set you should probably check sdkp->provisioning_mode
-instead of sdkp->ws16, but apart from this it should still go through the
-checks below.
-
-Plus, if the provisioning mode is not ws10 or ws16, should
-sd_setup_write_zeroes_cmnd:
-
-1) do a WRITE SAME without UNMAP (what Christoph's code does)
-
-2) return BLKPREP_INVALID
-
-3) ignore provisioning mode and do a WRITE SAME with UNMAP
-
-4) do a WRITE SAME without UNMAP for SD_LBP_{ZERO,FULL,DISABLE},
-do a WRITE SAME with UNMAP for SD_LBP_{WS10,WS16,UNMAP}.
-
-I'm in favor of (4).  The distinction between SD_LBP_UNMAP, SD_LBP_WS10
-and SD_LBP_WS16 is as problematic as discard_zeroes_data in my opinion.
+Another question is, if the specification of WRITE SAME + UNMAP would be
+made unambiguous in the SBC document, whether or not we should take the ris=
+k
+to trigger behavior that is not what we expect by sending unaligned WRITE
+SAME + UNMAP commands to SCSI devices?
 
 Thanks,
 
-Paolo
+Bart.=
