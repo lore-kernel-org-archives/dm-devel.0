@@ -1,47 +1,37 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: amend text from
-	multipath/multipath.conf.5
-Date: Tue, 28 Mar 2017 23:37:12 +0200
-Message-ID: <20170328213712.5137-1-xose.vazquez@gmail.com>
+From: Paolo Bonzini <pbonzini@redhat.com>
+Subject: Re: [PATCH 03/23] sd: implement REQ_OP_WRITE_ZEROES
+Date: Wed, 29 Mar 2017 16:51:50 +0200
+Message-ID: <e19ca1bf-0908-1eb0-cb04-cd306692f216@redhat.com>
+References: <20170323143341.31549-1-hch@lst.de>
+ <20170323143341.31549-4-hch@lst.de> <1490726988.2573.16.camel@sandisk.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <1490726988.2573.16.camel@sandisk.com>
+Sender: linux-block-owner@vger.kernel.org
+To: Bart Van Assche <Bart.VanAssche@sandisk.com>, "agk@redhat.com" <agk@redhat.com>, "lars.ellenberg@linbit.com" <lars.ellenberg@linbit.com>, "snitzer@redhat.com" <snitzer@redhat.com>, "hch@lst.de" <hch@lst.de>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "philipp.reisner@linbit.com" <philipp.reisner@linbit.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "shli@kernel.org" <shli@kernel.org>
+Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "drbd-dev@lists.linbit.com" <drbd-dev@lists.linbit.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- multipath/multipath.conf.5 | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index 24decf7..5939688 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -213,9 +213,9 @@ type of path devices. If this field is configured and matched with type
- of device, it would override any other methods providing for device
- unique identifier in config file, and it would activate merging uevents
- according to the identifier to promote effiecncy in processing uevents.
--Tt has no default value, if you want to identify path by udev attribute
--and to activate merging uevents for SCSI and DAS device, you can set
--it's value as:
-+It has no default value, if you want to identify path by udev attribute
-+and to activate merging uevents for SCSI and DASD devices, you can set
-+its value as:
- .RS
- .TP
- \fBuid_attrs "sd:ID_SERIAL dasd:ID_UID"\fR
--- 
-2.12.1
+
+On 28/03/2017 20:50, Bart Van Assche wrote:
+> 
+> This means that just like the start and end of a discard must be aligned on a
+> discard_granularity boundary, WRITE SAME commands with the UNMAP bit set must
+> also respect that granularity. I think this means that either
+> __blkdev_issue_zeroout() has to be modified such that it rejects unaligned
+> REQ_OP_WRITE_ZEROES operations or that blk_bio_write_same_split() has to be
+> modified such that it generates REQ_OP_WRITEs for the unaligned start and tail.
+
+I don't think this is the case.
+
+Rather, Linux should try to align the WRITE SAME commands to the optimal
+unmap granularity if the zeroed area requires performing more than one
+WRITE SAME command (i.e. > maximum write same length or too large to fit
+in the CDB).  However, even in that case it can use WRITE SAME with
+UNMAP for the unaligned start and tail.  Unlike the UNMAP command, the
+SCSI standard does guarantee that zeroes are written in the unaligned parts.
+
+Paolo
