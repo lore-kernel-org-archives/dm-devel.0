@@ -1,32 +1,43 @@
-From: "hch@lst.de" <hch@lst.de>
-Subject: Re: [PATCH 23/23] block: remove the discard_zeroes_data flag
-Date: Thu, 30 Mar 2017 11:06:55 +0200
-Message-ID: <20170330090655.GF12015@lst.de>
-References: <20170323143341.31549-1-hch@lst.de> <20170323143341.31549-24-hch@lst.de> <1490720411.2573.11.camel@sandisk.com>
+From: Lars Ellenberg <lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 22/23] drbd: implement REQ_OP_WRITE_ZEROES
+Date: Thu, 30 Mar 2017 12:06:41 +0200
+Message-ID: <20170330100641.GI5939@soda.linbit>
+References: <20170323143341.31549-1-hch@lst.de>
+	<20170323143341.31549-23-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-raid-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1490720411.2573.11.camel@sandisk.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: Bart Van Assche <Bart.VanAssche@sandisk.com>
-Cc: "agk@redhat.com" <agk@redhat.com>, "lars.ellenberg@linbit.com" <lars.ellenberg@linbit.com>, "snitzer@redhat.com" <snitzer@redhat.com>, "hch@lst.de" <hch@lst.de>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "philipp.reisner@linbit.com" <philipp.reisner@linbit.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "shli@kernel.org" <shli@kernel.org>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "drbd-dev@lists.linbit.com" <drbd-dev@lists.linbit.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>
+In-Reply-To: <20170323143341.31549-23-hch-jcswGhMUV9g@public.gmane.org>
+List-Unsubscribe: <http://lists.linbit.com/mailman/options/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
+List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
+List-Subscribe: <http://lists.linbit.com/mailman/listinfo/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
+Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Cc: axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
 List-Id: dm-devel.ids
 
-On Tue, Mar 28, 2017 at 05:00:48PM +0000, Bart Van Assche wrote:
+On Thu, Mar 23, 2017 at 10:33:40AM -0400, Christoph Hellwig wrote:
+> It seems like DRBD assumes its on the wire TRIM request always zeroes data.
+> Use that fact to implement REQ_OP_WRITE_ZEROES.
 > 
-> It seems to me like the documentation in Documentation/ABI/testing/sysfs-block
-> and the above code are not in sync. I think the above code will cause reading
-> from the discard_zeroes_data attribute to return an empty string ("") instead
-> of "0\n".
+> XXX: will need a careful audit from the drbd team!
 
-Thanks, fine with me.
+Thanks, this one looks ok to me.
 
-> 
-> BTW, my personal preference is to remove this attribute entirely because keeping
-> it will cause confusion, no matter how well we document the behavior of this
-> attribute.
+The real question for me is, will the previous one (21/23)
+return != 0 (some EOPNOTSUPP or else) to DRBD in more situations than
+what we have now?  Will it make an fstrim cause thinly provisioned
+devices to suddenly be fully allocated?
+Or does it unmap "the same" as what we have now?
+Especially on top of dm-thin, but also on top of any other device.
+That's something that is not really "obvious" to me yet.
 
-Jens, any opinion?  I'd like to remove it too, but I fear it might
-break things.  We could deprecate it first with a warning when read
-and then remove it a few releases down the road.
+Cheers,
+    Lars
