@@ -1,98 +1,60 @@
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: Re: [PATCH][RFC] dm raid: Fix NULL pointer dereference
- for raid1 without bitmap
-Date: Thu, 30 Mar 2017 21:30:53 +0200
-Message-ID: <f08783e3-30bd-fe51-ef15-163d02126b5b@redhat.com>
-References: <101041490886866@webcorp01f.yandex-team.ru>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 22/23] drbd: implement REQ_OP_WRITE_ZEROES
+Date: Thu, 30 Mar 2017 19:15:50 -0400
+Message-ID: <20170330231550.GA3102@redhat.com>
+References: <20170323143341.31549-1-hch@lst.de>
+ <20170323143341.31549-23-hch@lst.de>
+ <20170330100641.GI5939@soda.linbit>
+ <20170330114408.GA15777@lst.de>
+ <20170330134957.GA508@redhat.com>
+ <yq1pogy3i6u.fsf@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <101041490886866@webcorp01f.yandex-team.ru>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: kmeaw@yandex-team.ru, linux-kernel <linux-kernel@vger.kernel.org>, dm-devel@redhat.com, linux-raid@vger.kernel.org
-Cc: =?UTF-8?B?0JDQvdC00YDQtdC5INCh0LzQtdGC0LDQvdC40L0=?= <asmetanin@yandex-team.ru>, shli@kernel.org, agk@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-raid-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <yq1pogy3i6u.fsf@oracle.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: "Martin K. Petersen" <martin.petersen@oracle.com>
+Cc: Christoph Hellwig <hch@lst.de>, axboe@kernel.dk, agk@redhat.com, shli@kernel.org, philipp.reisner@linbit.com, linux-block@vger.kernel.org, linux-scsi@vger.kernel.org, drbd-dev@lists.linbit.com, dm-devel@redhat.com, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-CkFja2VkLWJ5OiBIZWlueiBNYXVlbHNoYWdlbiA8aGVpbnptQHJlZGhhdC5jb20+CgpUaGlzIGlz
-IHRoZSBzaW1wbGVzdCB3YXkgdG8gc29sdmUgdGhlIGlzc3VlIGF0IGhhbmQKKGJpdG1hcF9sb2Fk
-KCkgcmV0dXJucyBzdWNjZXNzIHdpdGggbm9uLWV4aXN0aW5nIGJpdG1hcCkuCgpIZWluegoKT24g
-MDMvMzAvMjAxNyAwNToxNCBQTSwga21lYXdAeWFuZGV4LXRlYW0ucnUgd3JvdGU6Cj4gRnJvbTog
-RG1pdHJ5IEJpbHVub3YgPGttZWF3QHlhbmRleC10ZWFtLnJ1Pgo+Cj4gNDI1N2UwOCBpbnRyb2R1
-Y2VzIGEgYml0bWFwIHJlc2l6ZSBjYWxsIGR1cmluZyBwcmVyZXN1bWUgcGhhc2UuIFVzZXIKPiBj
-YW4gY3JlYXRlIGEgRE0gZGV2aWNlIHdpdGggInJhaWQiIHRhcmdldCBjb25maWd1cmVkIGFzIHJh
-aWQxIHdpdGggbm8KPiBtZXRhZGF0YSBkZXZpY2VzIHRvIGhvbGQgc3VwZXJibG9jay9iaXRtYXAg
-aW5mby4gSXQgY2FuIGJlIGFjaGlldmVkCj4gdXNpbmcgdGhlIGZvbGxvd2luZyBzZXF1ZW5jZToK
-Pgo+ICAgIHRydW5jYXRlIC1zIDMyTSAvZGV2L3NobS9yYWlkLXRlc3QKPiAgICBMT09QPSQobG9z
-ZXR1cCAtLXNob3cgLWYgL2Rldi9zaG0vcmFpZC10ZXN0KQo+ICAgIGRtc2V0dXAgY3JlYXRlIHJh
-aWQtdGVzdC1saW5lYXIwIC0tdGFibGUgIjAgMTAyNCBsaW5lYXIgJExPT1AgMCIKPiAgICBkbXNl
-dHVwIGNyZWF0ZSByYWlkLXRlc3QtbGluZWFyMSAtLXRhYmxlICIwIDEwMjQgbGluZWFyICRMT09Q
-IDEwMjQiCj4gICAgZG1zZXR1cCBjcmVhdGUgcmFpZC10ZXN0IC0tdGFibGUgIjAgMTAyNCByYWlk
-IHJhaWQxIDEgMjA0OCAyIC0gL2Rldi9tYXBwZXIvcmFpZC10ZXN0LWxpbmVhcjAgLSAvZGV2L21h
-cHBlci9yYWlkLXRlc3QtbGluZWFyMSIKPgo+IEl0IHJlc3VsdHMgaW4KPgo+IEtpbGxlZAo+IFsg
-NDAyOS4xMTAyMTZdIGRldmljZS1tYXBwZXI6IHJhaWQ6IElnbm9yaW5nIGNodW5rIHNpemUgcGFy
-YW1ldGVyIGZvciBSQUlEIDEKPiBbIDQwMjkuMTEwMjE3XSBkZXZpY2UtbWFwcGVyOiByYWlkOiBD
-aG9vc2luZyBkZWZhdWx0IHJlZ2lvbiBzaXplIG9mIDRNaUIKPiBbIDQwMjkuMTExMzQ5XSBtZC9y
-YWlkMTptZFg6IGFjdGl2ZSB3aXRoIDIgb3V0IG9mIDIgbWlycm9ycwo+IFsgNDAyOS4xMTQ3NzBd
-IEJVRzogdW5hYmxlIHRvIGhhbmRsZSBrZXJuZWwgTlVMTCBwb2ludGVyIGRlcmVmZXJlbmNlIGF0
-IDAwMDAwMDAwMDAwMDAwMzAKPiBbIDQwMjkuMTE0ODAyXSBJUDogYml0bWFwX3Jlc2l6ZSsweDI1
-LzB4N2MwIFttZF9tb2RdCj4gWyA0MDI5LjExNDgxNl0gUEdEIDAKPiDigKYKPiBbIDQwMjkuMTE1
-MDU5XSBIYXJkd2FyZSBuYW1lOiBBcXVhcml1cyBQcm8gUDMwIFM4NSBCVVktODY2L0I4NU0tRSwg
-QklPUyAyMzA0IDA1LzI1LzIwMTUKPiBbIDQwMjkuMTE1MDc5XSB0YXNrOiBmZmZmODgwMTVjYzI5
-YTgwIHRhc2suc3RhY2s6IGZmZmZjOTAwMDFhNWMwMDAKPiBbIDQwMjkuMTE1MDk3XSBSSVA6IDAw
-MTA6Yml0bWFwX3Jlc2l6ZSsweDI1LzB4N2MwIFttZF9tb2RdCj4gWyA0MDI5LjExNTExMl0gUlNQ
-OiAwMDE4OmZmZmZjOTAwMDFhNWZiNjggRUZMQUdTOiAwMDAxMDI0Ngo+IFsgNDAyOS4xMTUxMjdd
-IFJBWDogMDAwMDAwMDAwMDAwMDAwNSBSQlg6IDAwMDAwMDAwMDAwMDAwMDAgUkNYOiAwMDAwMDAw
-MDAwMDAwMDAwCj4gWyA0MDI5LjExNTE0Nl0gUkRYOiAwMDAwMDAwMDAwMDAwMDAwIFJTSTogMDAw
-MDAwMDAwMDAwMDQwMCBSREk6IDAwMDAwMDAwMDAwMDAwMDAKPiBbIDQwMjkuMTE1MTY2XSBSQlA6
-IGZmZmZjOTAwMDFhNWZjMjggUjA4OiAwMDAwMDAwODAwMDAwMDAwIFIwOTogMDAwMDAwMDhmZmZm
-ZmZmZgo+IFsgNDAyOS4xMTUxODVdIFIxMDogZmZmZmVhMDAwNTY2MTYwMCBSMTE6IGZmZmY4ODAx
-NWNjMjlhODAgUjEyOiBmZmZmODgwMjEyMzFmMDU4Cj4gWyA0MDI5LjExNTIwNF0gUjEzOiAwMDAw
-MDAwMDAwMDAwMDAwIFIxNDogMDAwMDAwMDAwMDAwMDAwMCBSMTU6IDAwMDAwMDAwMDAwMDAwMDAK
-PiBbIDQwMjkuMTE1MjIzXSBGUzogIDAwMDA3ZmU3M2E2YjQ3NDAoMDAwMCkgR1M6ZmZmZjg4MDIx
-ZWE4MDAwMCgwMDAwKSBrbmxHUzowMDAwMDAwMDAwMDAwMDAwCj4gWyA0MDI5LjExNTI0NV0gQ1M6
-ICAwMDEwIERTOiAwMDAwIEVTOiAwMDAwIENSMDogMDAwMDAwMDA4MDA1MDAzMwo+IFsgNDAyOS4x
-MTUyNjFdIENSMjogMDAwMDAwMDAwMDAwMDAzMCBDUjM6IDAwMDAwMDAxNTlhNzQwMDAgQ1I0OiAw
-MDAwMDAwMDAwMTQyNmUwCj4gWyA0MDI5LjExNTI4MV0gQ2FsbCBUcmFjZToKPiBbIDQwMjkuMTE1
-MjkxXSAgPyByYWlkX2l0ZXJhdGVfZGV2aWNlcysweDYzLzB4ODAgW2RtX3JhaWRdCj4gWyA0MDI5
-LjExNTMwOV0gID8gZG1fdGFibGVfYWxsX2RldmljZXNfYXR0cmlidXRlLmlzcmEuMjMrMHg0MS8w
-eDcwIFtkbV9tb2RdCj4gWyA0MDI5LjExNTMyOV0gID8gZG1fdGFibGVfc2V0X3Jlc3RyaWN0aW9u
-cysweDIyNS8weDJkMCBbZG1fbW9kXQo+IFsgNDAyOS4xMTUzNDZdICByYWlkX3ByZXJlc3VtZSsw
-eDgxLzB4MmUwIFtkbV9yYWlkXQo+IFsgNDAyOS4xMTUzNjFdICBkbV90YWJsZV9yZXN1bWVfdGFy
-Z2V0cysweDQ3LzB4ZTAgW2RtX21vZF0KPiBbIDQwMjkuMTE1Mzc4XSAgZG1fcmVzdW1lKzB4YTgv
-MHhkMCBbZG1fbW9kXQo+IFsgNDAyOS4xMTUzOTFdICBkZXZfc3VzcGVuZCsweDEyMy8weDI1MCBb
-ZG1fbW9kXQo+IFsgNDAyOS4xMTU0MDVdICA/IHRhYmxlX2xvYWQrMHgzNTAvMHgzNTAgW2RtX21v
-ZF0KPiBbIDQwMjkuMTE1NDE5XSAgY3RsX2lvY3RsKzB4MWMyLzB4NDkwIFtkbV9tb2RdCj4gWyA0
-MDI5LjExNTQzM10gIGRtX2N0bF9pb2N0bCsweGUvMHgyMCBbZG1fbW9kXQo+IFsgNDAyOS4xMTU0
-NDddICBkb192ZnNfaW9jdGwrMHg4ZC8weDVhMAo+IFsgNDAyOS4xMTU0NTldICA/IF9fX19mcHV0
-KzB4OS8weDEwCj4gWyA0MDI5LjExNTQ3MF0gID8gdGFza193b3JrX3J1bisweDc5LzB4YTAKPiBb
-IDQwMjkuMTE1NDgxXSAgU3lTX2lvY3RsKzB4M2MvMHg3MAo+IFsgNDAyOS4xMTU0OTNdICBlbnRy
-eV9TWVNDQUxMXzY0X2Zhc3RwYXRoKzB4MTMvMHg5NAo+Cj4gRnVuY3Rpb24gcmFpZF9wcmVyZXN1
-bWUgdGFrZXMgYW4gYXNzdW1wdGlvbiB0aGF0IHJhaWRfc2V0IGhhcyBhIGJpdG1hcCBlbmFibGVk
-Lgo+IENhbGwgdG8gYml0bWFwX2xvYWQoJnJzLT5tZCkgaW5zaWRlIF9fbG9hZF9kaXJ0eV9yZWdp
-b25fYml0bWFwIHdvdWxkIHJldHVybiAwIGV2ZW4KPiBpZiB0aGVyZSBpcyBubyBiaXRtYXAgcHJl
-c2VudC4KPgo+IFRoaXMgcGF0Y2ggYXZvaWRzIHJlc2l6aW5nIGFuIGFic2VudCBiaXRtYXAuCj4K
-PiBTaWduZWQtb2ZmLWJ5OiBEbWl0cnkgQmlsdW5vdiA8a21lYXdAeWFuZGV4LXRlYW0ucnU+Cj4g
-U2lnbmVkLW9mZi1ieTogQW5kcmV5IFNtZXRhbmluIDxhc21ldGFuaW5AeWFuZGV4LXRlYW0ucnU+
-Cj4gLS0tCj4gICBkcml2ZXJzL21kL2RtLXJhaWQuYyB8IDEgKwo+ICAgMSBmaWxlIGNoYW5nZWQs
-IDEgaW5zZXJ0aW9uKCspCj4KPiBkaWZmIC0tZ2l0IGEvZHJpdmVycy9tZC9kbS1yYWlkLmMgYi9k
-cml2ZXJzL21kL2RtLXJhaWQuYwo+IGluZGV4IGY4NTY0ZDYzLi42N2E1NDA1ZSAxMDA2NDQKPiAt
-LS0gYS9kcml2ZXJzL21kL2RtLXJhaWQuYwo+ICsrKyBiL2RyaXZlcnMvbWQvZG0tcmFpZC5jCj4g
-QEAgLTM3MjcsNiArMzcyNyw3IEBAIHN0YXRpYyBpbnQgcmFpZF9wcmVyZXN1bWUoc3RydWN0IGRt
-X3RhcmdldCAqdGkpCj4gICAKPiAgIAkvKiBSZXNpemUgYml0bWFwIHRvIGFkanVzdCB0byBjaGFu
-Z2VkIHJlZ2lvbiBzaXplIChha2EgTUQgYml0bWFwIGNodW5rc2l6ZSkgKi8KPiAgIAlpZiAodGVz
-dF9iaXQoUlRfRkxBR19SU19CSVRNQVBfTE9BREVELCAmcnMtPnJ1bnRpbWVfZmxhZ3MpICYmCj4g
-KwkgICAgbWRkZXYtPmJpdG1hcCAmJgo+ICAgCSAgICBtZGRldi0+Yml0bWFwX2luZm8uY2h1bmtz
-aXplICE9IHRvX2J5dGVzKHJzLT5yZXF1ZXN0ZWRfYml0bWFwX2NodW5rX3NlY3RvcnMpKSB7Cj4g
-ICAJCXIgPSBiaXRtYXBfcmVzaXplKG1kZGV2LT5iaXRtYXAsIG1kZGV2LT5kZXZfc2VjdG9ycywK
-PiAgIAkJCQkgIHRvX2J5dGVzKHJzLT5yZXF1ZXN0ZWRfYml0bWFwX2NodW5rX3NlY3RvcnMpLCAw
-KTsKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8v
-d3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+On Thu, Mar 30 2017 at 11:20am -0400,
+Martin K. Petersen <martin.petersen@oracle.com> wrote:
+
+> Mike Snitzer <snitzer@redhat.com> writes:
+> 
+> > I can work on this now.  Only question I have is: should DM thinp take
+> > care to zero any misaligned head and tail?  (I assume so but with all
+> > the back and forth between Bart, Paolo and Martin I figured I'd ask
+> > explicitly).
+> 
+> Yep, let's make sure our semantics match the hardware ditto.
+> 
+>  - So write zeroes should behave deterministically and explicitly handle
+>    any blocks that can't be cleared via deprovisioning.
+> 
+>  - And discard can work at the discard granularity in a
+>    non-deterministic fashion.
+
+I got pretty far along with implementing the DM thinp support for
+WRITE_ZEROES in terms of thinp's DISCARD support (more of an
+implementation detail.. or so I thought).
+
+But while discussing this effort with Jeff Moyer he asked: shouldn't the
+zeroed blocks be provisioned?  This is a fairly embarassing question not
+to be able to answer in the moment.  So I clearly need to learn what the
+overall intent of WRITE_ZEROES actually is.
+
+If it is meant as a replacement for WRITE_SAME (as hch switched dm-io
+over from WRITE_SAME with a payload of 0 to WRITE_ZEROES) and for the
+backing mechanism for blkdev_issue_zeroout() then I guess I have my
+answer.  Unless DM thinp can guarantee that the discarded blocks will
+always return zeroes (by zeroing before all partial block writes) my
+discard based dm-thinp implementation of WRITE_ZEROES is a complete
+throw-away (unless block zeroing is enabled.. which it never is because
+performance sucks with it).  So if an upper-level of the IO stack
+(e.g. ext4) were to assume that a block will _definitely_ have zeroes
+then DM thinp would fall short.
+
+This is all to say: I don't see a quick way forward on implementing
+performant WRITE_ZEROES support for DM thinp.
