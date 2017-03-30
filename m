@@ -1,43 +1,66 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [multipath-tools] [BUG] segfault in uev_update_path
-Date: Wed, 29 Mar 2017 23:22:42 +0200
-Message-ID: <1490822562.10580.9.camel@suse.com>
-References: <D1E4D02760513D4B90DC3B40FF32AF35A101A786@H3CMLB12-EX.srv.huawei-3com.com>
-	<20170328164221.GN3421@octiron.msp.redhat.com>
+From: "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 03/23] sd: implement REQ_OP_WRITE_ZEROES
+Date: Wed, 29 Mar 2017 22:25:33 -0400
+Message-ID: <yq1o9wj4i1u.fsf@oracle.com>
+References: <20170323143341.31549-1-hch@lst.de>
+	<20170323143341.31549-4-hch@lst.de>
+	<1490726988.2573.16.camel@sandisk.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170328164221.GN3421@octiron.msp.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+In-Reply-To: <1490726988.2573.16.camel-XdAiOPVOjttBDgjK7y7TUQ@public.gmane.org> (Bart Van Assche's message
+	of "Tue, 28 Mar 2017 18:50:01 +0000")
+List-Unsubscribe: <http://lists.linbit.com/mailman/options/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
+List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
+List-Subscribe: <http://lists.linbit.com/mailman/listinfo/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
+Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+To: Bart Van Assche <Bart.VanAssche-XdAiOPVOjttBDgjK7y7TUQ@public.gmane.org>
+Cc: "axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org" <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, "linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, "philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org" <philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, "linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org" <lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, "shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "hch-jcswGhMUV9g@public.gmane.org" <hch-jcswGhMUV9g@public.gmane.org>, "agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org" <drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
 List-Id: dm-devel.ids
 
-T24gVHVlLCAyMDE3LTAzLTI4IGF0IDExOjQyIC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cgo+IE5vdyB0aGUgcXVlc3Rpb24gaXMsIHdoYXQgdG8gd2UgZG8gaWYgdGhlIHBhdGggY2hh
-bmdlcyB3d2lkLCBidXQgaXQncwo+IG5vdCBwYXJ0IG9mIGEgbXVsdGlwYXRoIGRldmljZSB5ZXQu
-IFdlIGNvdWxkIHNpbXBseSBwcmludCBhIHdhcm5pbmcKPiBtZXNzYWdlIHRoYXQgdGhlIHd3aWQg
-aGFzIGNoYW5nZWQsIGFuZCBhbGxvdyBpdCB0byBoYXBwZW4sIHNpbmNlCj4gdGhlcmUncwo+IG5v
-IG11bHRpcGF0aCBkZXZpY2UgY3VycmVudGx5IHVzaW5nIHRoZSBMVU4uIEhvd2V2ZXIsIEkgaGF2
-ZSBzZWVuCj4gY2FzZXMKPiB3aGVyZSBtdWx0aXBsZSBMVU5zIHRoYXQgaGF2ZSBhbHJlYWR5IGJl
-ZW4gZGlzY292ZXJlZCBieSBhIG5vZGUgZ2V0Cj4gdW5tYXBwZWQsIGFuZCBhbGwgdGhlIHVubWFw
-cGVkIExVTnMgZnJvbSBhIGRldmljZSBnZXQgdGhlIHNhbWUKPiBJRF9TRVJJQUwKPiB2YWx1ZSBp
-biB0aGUgdWV2ZW50IGZvciB0aGUgbWFwcGluZyBjaGFuZ2UuIFRoaXMgd291bGQgY2F1c2UKPiBm
-aW5kX211bHRpcGF0aHMgdG8gY3JlYXRlIGEgbXVsdGlwYXRoIGRldmljZSB0aGF0IGluY2x1ZGVz
-IGFsbCBvZgo+IHRoZXNlCj4gdW5tYXBwZWQgZGV2aWNlcywgd2hpY2ggaXMgY2xlYXJseSB3cm9u
-Zy4KCmFuZCBpbiB0aGF0IHNpdXRhdGlvbiB0aGVyZSdkIGJlIG5vIHdheSB0byBkZXRlY3QgdGhh
-dCB0aGVzZSBhcmUKdW5tYXBwZWQgTFVOcyB3aGljaCBkb24ndCBxdWFsaWZ5IGFzIHBhdGhzIGZv
-ciBhIG11bHRpcGF0aCBkZXZpY2U/CgpSZWdhcmRzCk1hcnRpbgoKLS0gCkRyLiBNYXJ0aW4gV2ls
-Y2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC7CoCs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExp
-bnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBO
-b3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QK
-ZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGlu
-Zm8vZG0tZGV2ZWw=
+Bart Van Assche <Bart.VanAssche-XdAiOPVOjttBDgjK7y7TUQ@public.gmane.org> writes:
+
+Hi Bart,
+
+> A quote from SBC: "An OPTIMAL UNMAP GRANULARITY field set to a
+> non-zero value indicates the optimal granularity in logical blocks for
+> unmap requests (e.g., an UNMAP command or a WRITE SAME (16) command
+> with the UNMAP bit set to one).  An unmap request with a number of
+> logical blocks that is not a multiple of this value may result in
+> unmap operations on fewer LBAs than requested."
+
+Indeed. Fewer LBAs than requested may be *unmapped*. That does not imply
+that they are not *written*.
+
+> This means that just like the start and end of a discard must be
+> aligned on a discard_granularity boundary, WRITE SAME commands with
+> the UNMAP bit set must also respect that granularity. I think this
+> means that either __blkdev_issue_zeroout() has to be modified such
+> that it rejects unaligned REQ_OP_WRITE_ZEROES operations or that
+> blk_bio_write_same_split() has to be modified such that it generates
+> REQ_OP_WRITEs for the unaligned start and tail.
+
+No, that's not correct. SBC states:
+
+"a) if the Data-Out Buffer of the WRITE SAME command is the same as the
+   logical block data returned by a read operation from that LBA while
+   in the unmapped state, then:
+
+   1) the device server performs the actions described in table 6
+      [unmap]; and
+
+   2) if an unmap operation is not performed in step 1), then the device
+      server shall perform the specified write operation to that LBA;"
+
+I.e. With WRITE SAME it is the responsibility of the device server to
+write any LBAs described by the command that were not successfully
+unmapped.
+
+-- 
+Martin K. Petersen	Oracle Linux Engineering
