@@ -1,91 +1,41 @@
-From: kmeaw@yandex-team.ru
-Subject: [PATCH][RFC] dm raid: Fix NULL pointer dereference for raid1 without bitmap
-Date: Thu, 30 Mar 2017 18:14:26 +0300
-Message-ID: <101041490886866@webcorp01f.yandex-team.ru>
+From: "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 12/23] sd: handle REQ_UNMAP
+Date: Thu, 30 Mar 2017 11:28:32 -0400
+Message-ID: <yq1h92a3hsv.fsf@oracle.com>
+References: <20170323143341.31549-1-hch@lst.de>
+	<20170323143341.31549-13-hch@lst.de>
+	<1490719722.2573.8.camel@sandisk.com> <20170330090201.GD12015@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel <linux-kernel@vger.kernel.org>, dm-devel@redhat.com, linux-raid@vger.kernel.org
-Cc: agk@redhat.com, shli@kernel.org, =?utf-8?B?0JDQvdC00YDQtdC5INCh0LzQtdGC0LDQvdC40L0=?= <asmetanin@yandex-team.ru>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+In-Reply-To: <20170330090201.GD12015-jcswGhMUV9g@public.gmane.org> (hch-jcswGhMUV9g@public.gmane.org's message of "Thu, 30
+	Mar 2017 11:02:01 +0200")
+List-Unsubscribe: <http://lists.linbit.com/mailman/options/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
+List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
+List-Subscribe: <http://lists.linbit.com/mailman/listinfo/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
+Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+To: "hch@lst.de" <hch-jcswGhMUV9g@public.gmane.org>
+Cc: "axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org" <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, "linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, "snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org" <philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, "linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Bart Van Assche <Bart.VanAssche-XdAiOPVOjttBDgjK7y7TUQ@public.gmane.org>, "lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org" <lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, "shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org" <drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
 List-Id: dm-devel.ids
 
-From: Dmitry Bilunov <kmeaw@yandex-team.ru>
-
-4257e08 introduces a bitmap resize call during preresume phase. User
-can create a DM device with "raid" target configured as raid1 with no
-metadata devices to hold superblock/bitmap info. It can be achieved
-using the following sequence:
-
-  truncate -s 32M /dev/shm/raid-test
-  LOOP=$(losetup --show -f /dev/shm/raid-test)
-  dmsetup create raid-test-linear0 --table "0 1024 linear $LOOP 0"
-  dmsetup create raid-test-linear1 --table "0 1024 linear $LOOP 1024"
-  dmsetup create raid-test --table "0 1024 raid raid1 1 2048 2 - /dev/mapper/raid-test-linear0 - /dev/mapper/raid-test-linear1"
-
-It results in
-
-Killed
-[ 4029.110216] device-mapper: raid: Ignoring chunk size parameter for RAID 1
-[ 4029.110217] device-mapper: raid: Choosing default region size of 4MiB
-[ 4029.111349] md/raid1:mdX: active with 2 out of 2 mirrors
-[ 4029.114770] BUG: unable to handle kernel NULL pointer dereference at 0000000000000030
-[ 4029.114802] IP: bitmap_resize+0x25/0x7c0 [md_mod]
-[ 4029.114816] PGD 0
-…
-[ 4029.115059] Hardware name: Aquarius Pro P30 S85 BUY-866/B85M-E, BIOS 2304 05/25/2015
-[ 4029.115079] task: ffff88015cc29a80 task.stack: ffffc90001a5c000
-[ 4029.115097] RIP: 0010:bitmap_resize+0x25/0x7c0 [md_mod]
-[ 4029.115112] RSP: 0018:ffffc90001a5fb68 EFLAGS: 00010246
-[ 4029.115127] RAX: 0000000000000005 RBX: 0000000000000000 RCX: 0000000000000000
-[ 4029.115146] RDX: 0000000000000000 RSI: 0000000000000400 RDI: 0000000000000000
-[ 4029.115166] RBP: ffffc90001a5fc28 R08: 0000000800000000 R09: 00000008ffffffff
-[ 4029.115185] R10: ffffea0005661600 R11: ffff88015cc29a80 R12: ffff88021231f058
-[ 4029.115204] R13: 0000000000000000 R14: 0000000000000000 R15: 0000000000000000
-[ 4029.115223] FS:  00007fe73a6b4740(0000) GS:ffff88021ea80000(0000) knlGS:0000000000000000
-[ 4029.115245] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-[ 4029.115261] CR2: 0000000000000030 CR3: 0000000159a74000 CR4: 00000000001426e0
-[ 4029.115281] Call Trace:
-[ 4029.115291]  ? raid_iterate_devices+0x63/0x80 [dm_raid]
-[ 4029.115309]  ? dm_table_all_devices_attribute.isra.23+0x41/0x70 [dm_mod]
-[ 4029.115329]  ? dm_table_set_restrictions+0x225/0x2d0 [dm_mod]
-[ 4029.115346]  raid_preresume+0x81/0x2e0 [dm_raid]
-[ 4029.115361]  dm_table_resume_targets+0x47/0xe0 [dm_mod]
-[ 4029.115378]  dm_resume+0xa8/0xd0 [dm_mod]
-[ 4029.115391]  dev_suspend+0x123/0x250 [dm_mod]
-[ 4029.115405]  ? table_load+0x350/0x350 [dm_mod]
-[ 4029.115419]  ctl_ioctl+0x1c2/0x490 [dm_mod]
-[ 4029.115433]  dm_ctl_ioctl+0xe/0x20 [dm_mod]
-[ 4029.115447]  do_vfs_ioctl+0x8d/0x5a0
-[ 4029.115459]  ? ____fput+0x9/0x10
-[ 4029.115470]  ? task_work_run+0x79/0xa0
-[ 4029.115481]  SyS_ioctl+0x3c/0x70
-[ 4029.115493]  entry_SYSCALL_64_fastpath+0x13/0x94
-
-Function raid_preresume takes an assumption that raid_set has a bitmap enabled.
-Call to bitmap_load(&rs->md) inside __load_dirty_region_bitmap would return 0 even
-if there is no bitmap present.
-
-This patch avoids resizing an absent bitmap.
-
-Signed-off-by: Dmitry Bilunov <kmeaw@yandex-team.ru>
-Signed-off-by: Andrey Smetanin <asmetanin@yandex-team.ru>
----
- drivers/md/dm-raid.c | 1 +
- 1 file changed, 1 insertion(+)
-
-diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index f8564d63..67a5405e 100644
---- a/drivers/md/dm-raid.c
-+++ b/drivers/md/dm-raid.c
-@@ -3727,6 +3727,7 @@ static int raid_preresume(struct dm_target *ti)
- 
- 	/* Resize bitmap to adjust to changed region size (aka MD bitmap chunksize) */
- 	if (test_bit(RT_FLAG_RS_BITMAP_LOADED, &rs->runtime_flags) &&
-+	    mddev->bitmap &&
- 	    mddev->bitmap_info.chunksize != to_bytes(rs->requested_bitmap_chunk_sectors)) {
- 		r = bitmap_resize(mddev->bitmap, mddev->dev_sectors,
- 				  to_bytes(rs->requested_bitmap_chunk_sectors), 0);
--- 
-2.12.2
+ImhjaEBsc3QuZGUiIDxoY2hAbHN0LmRlPiB3cml0ZXM6CgpDaHJpc3RvcGgsCgo+IE9uIFR1ZSwg
+TWFyIDI4LCAyMDE3IGF0IDA0OjQ4OjU1UE0gKzAwMDAsIEJhcnQgVmFuIEFzc2NoZSB3cm90ZToK
+Pj4gPiAgCWlmIChzZHAtPm5vX3dyaXRlX3NhbWUpCj4+ID4gIAkJcmV0dXJuIEJMS1BSRVBfSU5W
+QUxJRDsKPj4gPiAgCWlmIChzZGtwLT53czE2IHx8IHNlY3RvciA+IDB4ZmZmZmZmZmYgfHwgbnJf
+c2VjdG9ycyA+IDB4ZmZmZikKPj4gCj4+IFVzZXJzIGNhbiBjaGFuZ2UgdGhlIHByb3Zpc2lvbmlu
+ZyBtb2RlIGZyb20gdXNlciBzcGFjZSBmcm9twqBTRF9MQlBfV1MxNiBpbnRvCj4+IFNEX0xCUF9X
+UzEwIHNvIEknbSBub3Qgc3VyZSBpdCdzIHNhZmUgdG8gc2tpcCB0aGUgKHNka3AtPndzMTYgfHwg
+c2VjdG9yID4KPj4gMHhmZmZmZmZmZiB8fCBucl9zZWN0b3JzID4gMHhmZmZmKSBjaGVjayBpZiBS
+RVFfVU5NQVAgaXMgc2V0Lgo+Cj4gVGhleSBjYW4sIGFuZCBpZiB0aGUgZGV2aWNlIGhhcyB0b28g
+bWFueSBzZWN0b3JzIHRoYXQgd2lsbCBhbHJlYWR5IGNhdXNlCj4gZGlzY2FyZCB0byBmYWlsLAoK
+SSdtIG5vdCBzdXJlIEkgdW5kZXJzdGFuZCB3aGF0IHlvdSBtZWFuIGJ5IHRoYXQ/CgotLSAKTWFy
+dGluIEsuIFBldGVyc2VuCU9yYWNsZSBMaW51eCBFbmdpbmVlcmluZwpfX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpkcmJkLWRldiBtYWlsaW5nIGxpc3QKZHJi
+ZC1kZXZAbGlzdHMubGluYml0LmNvbQpodHRwOi8vbGlzdHMubGluYml0LmNvbS9tYWlsbWFuL2xp
+c3RpbmZvL2RyYmQtZGV2Cg==
