@@ -1,41 +1,75 @@
-From: "hch-jcswGhMUV9g@public.gmane.org" <hch-jcswGhMUV9g@public.gmane.org>
-Subject: Re: [PATCH 12/23] sd: handle REQ_UNMAP
-Date: Fri, 31 Mar 2017 09:18:44 +0200
-Message-ID: <20170331071844.GB3308@lst.de>
-References: <20170323143341.31549-1-hch@lst.de>
-	<20170323143341.31549-13-hch@lst.de>
-	<1490719722.2573.8.camel@sandisk.com>
-	<20170330090201.GD12015@lst.de> <yq1h92a3hsv.fsf@oracle.com>
-	<20170330173020.GB24229@lst.de> <yq17f36yypg.fsf@oracle.com>
+From: Eric Biggers <ebiggers3@gmail.com>
+Subject: [PATCH] dm crypt: remove obsolete references to per-CPU
+	state
+Date: Thu, 30 Mar 2017 22:18:48 -0700
+Message-ID: <20170331051848.7845-1-ebiggers3@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <yq17f36yypg.fsf-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-List-Unsubscribe: <http://lists.linbit.com/mailman/options/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
-List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
-List-Subscribe: <http://lists.linbit.com/mailman/listinfo/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
-Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-To: "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Cc: "axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org" <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, "linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org" <philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, "linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Bart Van Assche <Bart.VanAssche-XdAiOPVOjttBDgjK7y7TUQ@public.gmane.org>, "lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org" <lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, "shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "hch-jcswGhMUV9g@public.gmane.org" <hch-jcswGhMUV9g@public.gmane.org>, "agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org" <drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Eric Biggers <ebiggers@google.com>
 List-Id: dm-devel.ids
 
-On Thu, Mar 30, 2017 at 10:19:55PM -0400, Martin K. Petersen wrote:
-> > If you manually change the provisioning mode to WS10 on a device that
-> > must use WRITE SAME (16) to be able to address all blocks you're already
-> > screwed right now, and with this patch you can screw yourself through
-> > the WRITE_ZEROES path in addition to the DISCARD path.
-> 
-> Oh, I see. We only had the LBA sanity check in place for write same, not
-> for discard.
+From: Eric Biggers <ebiggers@google.com>
 
-And btw, I'd be happy to add such a check, I'd just rather keep it out
-of this patch.  It might be a good idea if you give it a turn after
-this series given that you have all the devices that have weird
-provisioning modes while I don't..
+dm-crypt used to use separate crypto transforms for each CPU, but this
+is no longer the case.  To avoid confusion, fix up obsolete comments and
+rename setup_essiv_cpu().
+
+Signed-off-by: Eric Biggers <ebiggers@google.com>
+---
+ drivers/md/dm-crypt.c | 15 ++++++++-------
+ 1 file changed, 8 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 389a3637ffcc..a57cb41f000e 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -191,7 +191,7 @@ static void kcryptd_queue_crypt(struct dm_crypt_io *io);
+ static u8 *iv_of_dmreq(struct crypt_config *cc, struct dm_crypt_request *dmreq);
+ 
+ /*
+- * Use this to access cipher attributes that are the same for each CPU.
++ * Use this to access cipher attributes that are independent of the key.
+  */
+ static struct crypto_skcipher *any_tfm(struct crypt_config *cc)
+ {
+@@ -310,10 +310,11 @@ static int crypt_iv_essiv_wipe(struct crypt_config *cc)
+ 	return err;
+ }
+ 
+-/* Set up per cpu cipher state */
+-static struct crypto_cipher *setup_essiv_cpu(struct crypt_config *cc,
+-					     struct dm_target *ti,
+-					     u8 *salt, unsigned saltsize)
++/* Allocate the cipher for ESSIV */
++static struct crypto_cipher *alloc_essiv_cipher(struct crypt_config *cc,
++						struct dm_target *ti,
++						const u8 *salt,
++						unsigned int saltsize)
+ {
+ 	struct crypto_cipher *essiv_tfm;
+ 	int err;
+@@ -393,8 +394,8 @@ static int crypt_iv_essiv_ctr(struct crypt_config *cc, struct dm_target *ti,
+ 	cc->iv_gen_private.essiv.salt = salt;
+ 	cc->iv_gen_private.essiv.hash_tfm = hash_tfm;
+ 
+-	essiv_tfm = setup_essiv_cpu(cc, ti, salt,
+-				crypto_ahash_digestsize(hash_tfm));
++	essiv_tfm = alloc_essiv_cipher(cc, ti, salt,
++				       crypto_ahash_digestsize(hash_tfm));
+ 	if (IS_ERR(essiv_tfm)) {
+ 		crypt_iv_essiv_dtr(cc);
+ 		return PTR_ERR(essiv_tfm);
+-- 
+2.12.1
