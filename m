@@ -1,41 +1,46 @@
-From: Joe Perches <joe@perches.com>
-Subject: Re: [PATCH] dm ioctl: Remove double parentheses
-Date: Fri, 31 Mar 2017 19:07:33 -0700
-Message-ID: <1491012453.27353.25.camel@perches.com>
-References: <20170316164830.127026-1-mka@chromium.org>
-	<20170401015019.GA13986@google.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: always use REQ_OP_WRITE_ZEROES for zeroing offload
+Date: Mon, 3 Apr 2017 08:06:27 +0200
+Message-ID: <83c79b9c-362a-c12c-8a75-7e42947a77da@suse.de>
+References: <20170331163313.31821-1-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170401015019.GA13986@google.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Matthias Kaehlcke <mka@chromium.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
-Cc: Michael Davidson <md@google.com>, Grant Grundler <grundler@chromium.org>, linux-kernel@vger.kernel.org, Greg Hackmann <ghackmann@google.com>, linux-raid@vger.kernel.org, Shaohua Li <shli@kernel.org>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <20170331163313.31821-1-hch@lst.de>
+Sender: linux-raid-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>, axboe@kernel.dk, martin.petersen@oracle.com, agk@redhat.com, snitzer@redhat.com, shli@kernel.org, philipp.reisner@linbit.com, lars.ellenberg@linbit.com
+Cc: linux-block@vger.kernel.org, linux-scsi@vger.kernel.org, drbd-dev@lists.linbit.com, dm-devel@redhat.com, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Fri, 2017-03-31 at 18:50 -0700, Matthias Kaehlcke wrote:
-> El Thu, Mar 16, 2017 at 09:48:30AM -0700 Matthias Kaehlcke ha dit:
+On 03/31/2017 06:32 PM, Christoph Hellwig wrote:
+> This series makes REQ_OP_WRITE_ZEROES the only zeroing offload
+> supported by the block layer, and switches existing implementations
+> of REQ_OP_DISCARD that correctly set discard_zeroes_data to it,
+> removes incorrect discard_zeroes_data, and also switches WRITE SAME
+> based zeroing in SCSI to this new method.
 > 
-> > The extra pair of parantheses is not needed and causes clang to generate
-> > the following warning:
-> > 
-> > drivers/md/dm-ioctl.c:1776:11: error: equality comparison with extraneous parentheses [-Werror,-Wparentheses-equality]
-> >         if ((cmd == DM_DEV_CREATE_CMD)) {
-> >              ~~~~^~~~~~~~~~~~~~~~~~~~
-> > drivers/md/dm-ioctl.c:1776:11: note: remove extraneous parentheses around the comparison to silence this warning
-> >         if ((cmd == DM_DEV_CREATE_CMD)) {
-> >             ~    ^                   ~
-> > drivers/md/dm-ioctl.c:1776:11: note: use '=' to turn this equality comparison into an assignment
-> >         if ((cmd == DM_DEV_CREATE_CMD)) {
+> The series is against the block for-next tree.
+> 
+> A git tree is also avaiable at:
+> 
+>     git://git.infradead.org/users/hch/block.git discard-rework
+> 
+> Gitweb:
+> 
+>     http://git.infradead.org/users/hch/block.git/shortlog/refs/heads/discard-rework
+Thank you for doing this.
 
-There are dozens of these comparisons in the kernel.
-Are you fixing them all or just this one?
+For this series:
+
+Reviewed-by: Hannes Reinecke <hare@suse.com>
+
+Cheers,
+
+Hannes
+-- 
+Dr. Hannes Reinecke		   Teamlead Storage & Networking
+hare@suse.de			               +49 911 74053 688
+SUSE LINUX GmbH, Maxfeldstr. 5, 90409 Nürnberg
+GF: F. Imendörffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
+HRB 21284 (AG Nürnberg)
