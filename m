@@ -1,48 +1,41 @@
-From: Matthias Kaehlcke <mka@chromium.org>
-Subject: Re: [PATCH] dm ioctl: Remove double parentheses
-Date: Mon, 3 Apr 2017 09:56:53 -0700
-Message-ID: <20170403165653.GB13986@google.com>
-References: <20170316164830.127026-1-mka@chromium.org>
- <20170401015019.GA13986@google.com>
- <1491012453.27353.25.camel@perches.com>
+From: Brian Norris <briannorris@chromium.org>
+Subject: Re: dm: move dm_table_destroy() to same header as dm_table_create()
+Date: Tue, 4 Apr 2017 15:35:54 -0700
+Message-ID: <20170404223552.GA121849@google.com>
+References: <20170328183102.80620-1-briannorris@chromium.org>
+ <20170328193150.GA21445@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1491012453.27353.25.camel@perches.com>
+In-Reply-To: <20170328193150.GA21445@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Joe Perches <joe@perches.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, Grant Grundler <grundler@chromium.org>, Michael Davidson <md@google.com>, Greg Hackmann <ghackmann@google.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Enric Balletbo i Serra <enric.balletbo@collabora.com>
 List-Id: dm-devel.ids
 
-Hi Joe,
-
-El Fri, Mar 31, 2017 at 07:07:33PM -0700 Joe Perches ha dit:
-
-> On Fri, 2017-03-31 at 18:50 -0700, Matthias Kaehlcke wrote:
-> > El Thu, Mar 16, 2017 at 09:48:30AM -0700 Matthias Kaehlcke ha dit:
-> > 
-> > > The extra pair of parantheses is not needed and causes clang to generate
-> > > the following warning:
-> > > 
-> > > drivers/md/dm-ioctl.c:1776:11: error: equality comparison with extraneous parentheses [-Werror,-Wparentheses-equality]
-> > >         if ((cmd == DM_DEV_CREATE_CMD)) {
-> > >              ~~~~^~~~~~~~~~~~~~~~~~~~
-> > > drivers/md/dm-ioctl.c:1776:11: note: remove extraneous parentheses around the comparison to silence this warning
-> > >         if ((cmd == DM_DEV_CREATE_CMD)) {
-> > >             ~    ^                   ~
-> > > drivers/md/dm-ioctl.c:1776:11: note: use '=' to turn this equality comparison into an assignment
-> > >         if ((cmd == DM_DEV_CREATE_CMD)) {
+On Tue, Mar 28, 2017 at 03:31:51PM -0400, Mike Snitzer wrote:
+> On Tue, Mar 28 2017 at  2:31pm -0400,
+> Brian Norris <briannorris@chromium.org> wrote:
 > 
-> There are dozens of these comparisons in the kernel.
-> Are you fixing them all or just this one?
+> > If anyone is going to use dm_table_create(), they probably should be
+> > able to use dm_table_destroy() too. Move the dm_table_destroy()
+> > definition outside the private header, near dm_table_create()
+> > 
+> > Signed-off-by: Brian Norris <briannorris@chromium.org>
+> 
+> Not seeing why we need dm_table_create() exposed.  So I think you went
+> the wrong way with this.  Unless you have an actual need, I'd prefer to
+> see dm_table_create() moved from include/linux/device-mapper.h to
+> drivers/md/dm.h
 
-For now I focus on occurrences that pop up in my builds. So far there
-have been two more:
+We've been carrying code in our ChromeOS kernel to parse a cmdline arg
+for setting up early DM maps -- e.g., a dm-verity rootfs without using
+an initramfs. We currently use dm_table_create() from init/*.c (and we
+*should* be using dm_table_destroy() in the error paths). So I'm
+certainly not going to send the patch to do the reverse :)
 
-https://patchwork.kernel.org/patch/9626833/
-https://patchwork.kernel.org/patch/9631591/
+Enric is working on cleaning up this work to send here, so if you don't
+want to see this patch now, you may well see it later.
 
-Thanks
-
-Matthias
+Brian
