@@ -1,73 +1,54 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [multipath-tools] [BUG] segfault in uev_update_path
-Date: Tue, 4 Apr 2017 18:33:17 -0500
-Message-ID: <20170404233317.GE19236@octiron.msp.redhat.com>
-References: <D1E4D02760513D4B90DC3B40FF32AF35A101A786@H3CMLB12-EX.srv.huawei-3com.com>
-	<20170328164221.GN3421@octiron.msp.redhat.com>
-	<1490822562.10580.9.camel@suse.com>
+From: Enric Balletbo i Serra <enric.balletbo@collabora.com>
+Subject: Re: dm: move dm_table_destroy() to same header as dm_table_create()
+Date: Wed, 5 Apr 2017 10:04:20 +0200
+Message-ID: <f7e4e7e7-2402-28ef-a921-cda40174afd3@collabora.com>
+References: <20170328183102.80620-1-briannorris@chromium.org>
+ <20170328193150.GA21445@redhat.com> <20170404223552.GA121849@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1490822562.10580.9.camel@suse.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20170404223552.GA121849@google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Brian Norris <briannorris@chromium.org>, Mike Snitzer <snitzer@redhat.com>
+Cc: Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Wed, Mar 29, 2017 at 11:22:42PM +0200, Martin Wilck wrote:
-> On Tue, 2017-03-28 at 11:42 -0500, Benjamin Marzinski wrote:
-> =
+Hi,
 
-> > Now the question is, what to we do if the path changes wwid, but it's
-> > not part of a multipath device yet. We could simply print a warning
-> > message that the wwid has changed, and allow it to happen, since
-> > there's
-> > no multipath device currently using the LUN. However, I have seen
-> > cases
-> > where multiple LUNs that have already been discovered by a node get
-> > unmapped, and all the unmapped LUNs from a device get the same
-> > ID_SERIAL
-> > value in the uevent for the mapping change. This would cause
-> > find_multipaths to create a multipath device that includes all of
-> > these
-> > unmapped devices, which is clearly wrong.
-> =
+On 05/04/17 00:35, Brian Norris wrote:
+> On Tue, Mar 28, 2017 at 03:31:51PM -0400, Mike Snitzer wrote:
+>> On Tue, Mar 28 2017 at  2:31pm -0400,
+>> Brian Norris <briannorris@chromium.org> wrote:
+>>
+>>> If anyone is going to use dm_table_create(), they probably should be
+>>> able to use dm_table_destroy() too. Move the dm_table_destroy()
+>>> definition outside the private header, near dm_table_create()
+>>>
+>>> Signed-off-by: Brian Norris <briannorris@chromium.org>
+>>
+>> Not seeing why we need dm_table_create() exposed.  So I think you went
+>> the wrong way with this.  Unless you have an actual need, I'd prefer to
+>> see dm_table_create() moved from include/linux/device-mapper.h to
+>> drivers/md/dm.h
+> 
+> We've been carrying code in our ChromeOS kernel to parse a cmdline arg
+> for setting up early DM maps -- e.g., a dm-verity rootfs without using
+> an initramfs. We currently use dm_table_create() from init/*.c (and we
+> *should* be using dm_table_destroy() in the error paths). So I'm
+> certainly not going to send the patch to do the reverse :)
+> 
+> Enric is working on cleaning up this work to send here, so if you don't
+> want to see this patch now, you may well see it later.
+> 
 
-> and in that siutation there'd be no way to detect that these are
-> unmapped LUNs which don't qualify as paths for a multipath device?
+As Brian told you we have a use case that uses the dm_table_create and others
+from init/*.c, I expect have a first patches during this week, if it's ok I'll
+include this patch in my patchset so you have the overall of what we are talking
+about.
 
-Not really. They fail every checker function, but we don't check paths
-that aren't being used. Otherwise, all the sysfs parameters stay the
-same, and there's nothing special in the uevent. Discovered LUNs
-shouldn't be getting remapped in general.  The kernel spits out an
-warning message, saying that this isn't handled.
+Cheers,
+ Enric
 
--Ben
-
-> =
-
-> Regards
-> Martin
-> =
-
-> -- =
-
-> Dr. Martin Wilck <mwilck@suse.com>, Tel.=A0+49 (0)911 74053 2107
-> SUSE Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
-> HRB 21284 (AG N=FCrnberg)
-> =
-
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+> Brian
+> 
