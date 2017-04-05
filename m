@@ -1,20 +1,16 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: uid_attrs (was Re: [PATCH 04/11] multipathd: add
- need_do_map to indicate whether need calling domap() in ev_add_path())
-Date: Wed, 05 Apr 2017 22:16:33 +0200
-Message-ID: <1491423393.15890.26.camel@suse.com>
-References: <1484200347-11188-1-git-send-email-tang.junhui@zte.com.cn>
-	<1484200347-11188-5-git-send-email-tang.junhui@zte.com.cn>
-	<20170116213829.GV2732@octiron.msp.redhat.com>
-	<OF705BD11C.F27A9FC2-ON482580AB.00205EED-482580AB.002903CF@zte.com.cn>
-	<20170117161401.GX2732@octiron.msp.redhat.com>
-	<1491398766.15890.15.camel@suse.com>
-	<20170405184523.GF19236@octiron.msp.redhat.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH 04/33] multipath: do not check daemon from
+ udev rules
+Date: Wed, 5 Apr 2017 16:54:46 -0500
+Message-ID: <20170405215446.GG19236@octiron.msp.redhat.com>
+References: <20170228162329.14517-1-mwilck@suse.com>
+	<20170228162329.14517-5-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170405184523.GF19236@octiron.msp.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20170228162329.14517-5-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,71 +20,168 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: tang.junhui@zte.com.cn, tang.wenjun3@zte.com.cn, zhang.kai16@zte.com.cn, dm-devel@redhat.com, bart.vanassche@sandisk.com
+To: Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gV2VkLCAyMDE3LTA0LTA1IGF0IDEzOjQ1IC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gT24gV2VkLCBBcHIgMDUsIDIwMTcgYXQgMDM6MjY6MDZQTSArMDIwMCwgTWFydGluIFdp
-bGNrIHdyb3RlOiAKCj4gPiA+RnJvbSB0aGUgZW5kIHVzZXIgcG9pbnQgb2YgdmlldywgInVpZF9h
-dHRycyIgc2VlbXMgdG8gc2ltcGx5Cj4gZHVwbGljYXRlCj4gPiB0aGUgZnVuY3Rpb25hbGl0eSBv
-ZiAidWlkX2F0dHJpYnV0ZSIsIGp1c3QgaW4gbW9yZSBhd2t3YXJkIHN5bnRheCwKPiBhbmQKPiA+
-IHdpdGggaGlnaGVyIHByaW9yaXR5LiBBcyBhIHNpZGUgZWZmZWN0LCBpdCBlbmFibGVzIHVldmVu
-dCBtZXJnaW5nLAo+ID4gd2hpY2ggaXMgZG9jdW1lbnRlZCBpbiB0aGUgbWFuIHBhZ2UgYnV0IHVu
-ZXhwZWN0ZWQgZnJvbSB0aGUgbmFtZSBvZgo+IHRoZQo+ID4gb3B0aW9uLgo+IAo+IEl0IHNob3Vs
-ZCBwcm9iYWJseSBkbyBhIGJldHRlciBqb2Igb2YgbWFza2luZyAidWlkX2F0dHJpYnV0ZSIuIFRo
-ZQo+IHBsYWNlcyBpbiB0aGUgY29kZSB0aGF0IGN1cnJlbnRseSB1c2UgInVpZF9hdHRyaWJ1dGUi
-IHNob3VsZCBhbGwKPiBzd2l0Y2gKPiB0byB1c2luZyAidWlkX2F0dHJzIiBpZiBpdCBpcyBzZXQg
-YW5kIGFwcGxpZXMgdG8gdGhlIGRldmljZS4gCj4gSWYgdGhleQo+IGRvbid0LCB3ZSBjb3VsZCBi
-ZSBpbiBhIHNpdHVhdGlvbiB3aGVyZSAidWlkX2F0dHJzIiBhbmQKPiAidWlkX2F0dHJpYnV0ZSIK
-PiBhcmUgc2V0IHRvIGdpdmUgZGlmZmVyZW50IHd3aWRzLCBhbmQgYSBwYXRoJ3Mgd3dpZCBjb3Vs
-ZCBjaGFuZ2UgYmFzZWQKPiBvbgo+IHdoZXRoZXIgb3Igbm90IElEX1NFUklBTCB3YXMgZmlsbGVk
-IGluIHdoZW4gbXVsdGlwYXRoIGdvdAoKSSdtIG5vdCBxdWl0ZSBzdXJlIHdoYXQgeW91IG1lYW4u
-IFRoZSB3YXkgaXQncyBjdXJyZW50bHkgaW1wbGVtZW50ZWQgaXMKaW4gc2VsZWN0X2dldHVpZCgp
-LCBwcC0+dWlkX2F0dHJpYnV0ZSB3aWxsIGJlIHNldCBmcm9tIHVpZF9hdHRycyBpZiBpdApleGlz
-dHMgYW5kIG1hdGNoZXMgdGhlIGRldmljZSBuYW1lLCBhbmQgd2lsbCBoZW5jZWZvcnRoIGJlIHVz
-ZWQKZXZlcnl3aGVyZSB3aGVyZSB1aWRfYXR0cmlidXRlIGZvciB0aGlzIHBhdGggaXMgcmVmZXJl
-bmNlZC4KSSBkb24ndCBzZWUgaG93IHRoaXMgY291bGQgbGVhZCB0byBpbmNvbnNpc3RlbnQgc2V0
-dGluZ3MuCgpFdmVuIGZvciBSQkQgZGV2aWNlcywgdWlkX2F0dHJzIHdvdWxkIHRha2UgcHJlY2Vk
-ZW5jZSBpZiB1c2VycyBjb3VsZCAKdWlkX2F0dHJzPSJyYmQ6U09NRV9WQVJJQUJMRSIuIChCdHcs
-IHdoeSBkbyB3ZSBoYXJkY29kZSB0aGUgV1dJRApnZW5lcmF0aW9uIGZvciBSQkQgcmF0aGVyIHRo
-YW4gd3JpdGluZyByYmQgdWRldiBydWxlcyBhbmQgdXNpbmcgdGhlCnVkZXYgYXR0cmlidXRlcyBj
-cmVhdGVkIGJ5IHRoZW0pPwoKPiA+IEFueXdheSwgSSB3b25kZXIgaWYgaXQgd291bGQgc3RpbGwg
-YmUgcG9zc2libGUgdG8gY2hhbmdlIHRoaXMgYXQKPiA+IHRoaXMKPiA+IHBvaW50IGluIHRpbWUg
-KGkuZS4gYWZ0ZXIgInVpZF9hdHRycyIgd2FzIG1lcmdlZCkuCj4gCj4gSXQncyBhbHdheXMgcG9z
-c2libGUgdG8gY2hhbmdlIHRoaW5ncy7CoMKgQXMgZmFyIGFzIFJlZCBIYXQgZ29lcywgd2UKPiBo
-YXZlbid0IHB1bGxlZCBpbiB0aGVzZSBjaGFuZ2VzIHlldCwgYnV0IEknbSBwbGFubmluZyBvbiBy
-ZWJhc2luZwo+IEZlZG9yYQo+IHRvIHVwc3RyZWFtIHNob3J0bHkuCgpXZSdyZSBwbGFubmluZyB0
-aGUgc2FtZSBmb3Igb3BlblNVU0UgRmFjdG9yeS4gQ3VycmVudGx5IHdlJ3ZlIGxlZnQgb3V0ClRh
-bmcncyBwYXRjaCwgYnV0IHRoZSBwbGFuIGlzIHRvIHB1bGwgaW4gdXBzdHJlYW0gY2xlYW5seS4K
-Cj4gwqDCoFNvLCBpdCB3b24ndCBjYXVzZSBtZSBhbnkgcHJvYmxlbXMgaWYgdWlkX2F0dHJzCj4g
-Z29lcyBhd2F5IGFzIGxvbmcgYXMgaXQgZG9lcyBzbyBpbiB0aGUgbmVhciBmdXR1cmUuIEkgaGF2
-ZSBubyBpZGVhIGlmCj4gb3RoZXIgZGlzdHJpYnV0aW9ucyBoYXZlIHB1bGxlZCB0aGlzIGluLiBJ
-ZiBzbywgdGhlbiB1aWRfYXR0cnMKPiBwcm9iYWJseQo+IG5lZWRzIHRvIHJlbWFpbiBhY2NlcHRl
-ZCBhcyBhIHZhbGlkIG9wdGlvbiBieSBtdWx0aXBhdGguwqDCoEJ1dCBzaW5jZQo+IGFsbAo+IGNv
-cnJlY3QgY29uZmlndXJhdGlvbnMgaGF2ZSBpdCBnaXZlIHRoZSBzYW1lIGFuc3dlcnMgYXMKPiB1
-aWRfYXR0cmlidXRlLAo+IHdlIGNvdWxkIHByb2JhYmx5IGp1c3QgbWFrZSB0aGUgb3B0aW9uIGRv
-IG5vdGhpbmcuCj4gCj4gT2YgY291cnNlLCBhbGwgdGhpcyBkZXBlbmRzIG9uIHlvdXIgc29sdXRp
-b24gYWN0dWFsbHkgYmVpbmcgZW5vdWdoCj4gYmV0dGVyIHRoYW4gVGFuZydzIHRvIGp1c3RpZnkg
-cHVsbGluZyBoaXMgdmVyc2lvbiBvdXQuCgpQb2ludCB0YWtlbiA6LSkgSSBkb24ndCBoYXZlIHBh
-dGNoZXMgYXQgdGhpcyB0aW1lLiBIb3dldmVyLCBsZXQgbWUgbWFrZQphIHN1Z2dlc3Rpb24uIERv
-ZXMgInVpZF9hdHRycyIgcmVhbGx5IGhhdmUgdG8gYmUgdXNlci1jb25maWd1cmFibGU/IElNTwpj
-b25maWd1cmluZyB0aGlzIGlzIGFza2VkIHRvbyBtdWNoIGZyb20gOTklIG9mIHVzZXJzLiBJJ2Qg
-c3VnZ2VzdCB0bwpoYXJkLWNvZGUgdGhlIHZhbHVlIG9mIHVpZF9hdHRycyBhbmQgdXNlIGEgYm9v
-bGVhbiBjb25maWd1cmF0aW9uIG9wdGlvbgppbiB0aGUgZGVmYXVsdHMgc2VjdGlvbiAoImF1dG9f
-dWlkX2F0dHJpYnV0ZSIsIHNheSkgd2hpY2ggd291bGQgY29udHJvbAp3aGV0aGVyIFdXSUQgYXR0
-cmlidXRlcyBzaG91bGQgYmUgY29uZmlndXJlZCAidGhlIHVpZF9hdHRycyB3YXkiIG9yIHRoZQoi
-dHJhZGl0aW9uYWwgd2F5IiAodHJhZGl0aW9uYWwgYmVpbmcgdGhlIGZhbGxiYWNrIGlmIHVpZF9h
-dHRycyBkaWRuJ3QKbWF0Y2gsIGxpa2Ugbm93KS4gSGFyZC1jb2RpbmcgdGhpcyB3b3VsZCBoYXZl
-IHRoZSBhZHZhbnRhZ2UgdGhhdCB3ZQp3b3VsZG4ndCBiZSBib3VuZCB0byB0aGUgInNkOi4uLiIg
-c3ludGF4LiBSYXRoZXIsIHdlIGNvdWxkIGV4cGxvcmUgbW9yZQppbnRlbGxpZ2VudCB3YXlzIHRv
-IGF1dG9kZXRlY3QgdGhlIHVpZF9hdHRyaWJ1dGUgZGVwZW5kaW5nIG9uIHBhdGgKcHJvcGVydGll
-cyB3aGljaCBhcmUga25vd24gZWFybHkgb24uCgpVZXZlbnQgbWVyZ2luZyBjb3VsZCBiZSBjb250
-cm9sbGVkIGJ5IGEgc2VwYXJhdGUgY29uZmlnIG9wdGlvbiB3aGljaAp3b3VsZCBkZXBlbmQgb24g
-dGhlICJhdXRvX3VpZF9hdHRyaWJ1dGUiIG9wdGlvbi4gVGhpcyB3b3VsZCBtYWlubHkgYmUKZG9u
-ZSBmb3IgY2xhcml0eS4KClJlZ2FyZHMKTWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdp
-bGNrQHN1c2UuY29tPiwgVGVsLsKgKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGludXggR21i
-SCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpI
-UkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZl
-bEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1k
-ZXZlbA==
+On Tue, Feb 28, 2017 at 05:23:00PM +0100, Martin Wilck wrote:
+> From: Hannes Reinecke <hare@suse.de>
+> 
+> As stated previously, multipathd needs to start after udev trigger
+> has run as otherwise it won't be able to find any devices.
+> However, this also means that during udevadm trigger the daemon
+> wouldn't run, and consequently the check in the udev rules will
+> always be false, causing the device not to be marked as multipath
+> capable.
+> 
+> As it turns out, calling 'multipath' from udev rules has quite some
+> challenges. It _should_ check if a device is eligible for multipathing.
+> But it needs to work under all circumstances, even if the daemon isn't
+> running yet, as the program will be called from uevents which might
+> (and will) come in before the daemon is running.
+> To check if the daemon _should_ be run I'm checking the various
+> '.wants' directories from systemd, which carries links to the services
+> systemd will enable eventually. So if the multipathd.service is
+> listed in there it will be started, even if it isn't started yet.
+
+If we are doing this, so that udev will correctly claim multipath
+devices before multipathd has started up, it seems like it should be
+possible to relax some of the ordering restrictions for the startup. For
+instance, I assume you added the requirement that multipathd needed to
+start up before lvmetad to make sure it clamined the devices first.  If
+we don't need multipathd to be running to claim the devices, we can
+start them up in any order.
+
+-Ben
+ 
+> Signed-off-by: Hannes Reinecke <hare@suse.com>
+> ---
+>  libmultipath/util.c | 59 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+>  libmultipath/util.h |  1 +
+>  multipath/main.c    | 13 +++++++-----
+>  3 files changed, 68 insertions(+), 5 deletions(-)
+> 
+> diff --git a/libmultipath/util.c b/libmultipath/util.c
+> index 1841f359..be454cb1 100644
+> --- a/libmultipath/util.c
+> +++ b/libmultipath/util.c
+> @@ -6,13 +6,16 @@
+>  #include <sys/stat.h>
+>  #include <sys/sysmacros.h>
+>  #include <sys/types.h>
+> +#include <dirent.h>
+>  #include <unistd.h>
+> +#include <errno.h>
+>  
+>  #include "debug.h"
+>  #include "memory.h"
+>  #include "checkers.h"
+>  #include "vector.h"
+>  #include "structs.h"
+> +#include "log.h"
+>  
+>  size_t
+>  strchop(char *str)
+> @@ -279,3 +282,59 @@ setup_thread_attr(pthread_attr_t *attr, size_t stacksize, int detached)
+>  		assert(ret == 0);
+>  	}
+>  }
+> +
+> +int systemd_service_enabled_in(const char *dev, const char *prefix)
+> +{
+> +	char path[PATH_SIZE], file[PATH_SIZE], service[PATH_SIZE];
+> +	DIR *dirfd;
+> +	struct dirent *d;
+> +	int found = 0;
+> +
+> +	snprintf(service, PATH_SIZE, "multipathd.service");
+> +	snprintf(path, PATH_SIZE, "%s/systemd/system", prefix);
+> +	condlog(3, "%s: checking for %s in %s", dev, service, path);
+> +
+> +	dirfd = opendir(path);
+> +	if (dirfd == NULL)
+> +		return 0;
+> +
+> +	while ((d = readdir(dirfd)) != NULL) {
+> +		char *p;
+> +		struct stat stbuf;
+> +
+> +		if ((strcmp(d->d_name,".") == 0) ||
+> +		    (strcmp(d->d_name,"..") == 0))
+> +			continue;
+> +
+> +		if (strlen(d->d_name) < 6)
+> +			continue;
+> +
+> +		p = d->d_name + strlen(d->d_name) - 6;
+> +		if (strcmp(p, ".wants"))
+> +			continue;
+> +		snprintf(file, PATH_SIZE, "%s/%s/%s",
+> +			 path, d->d_name, service);
+> +		if (stat(file, &stbuf) == 0) {
+> +			condlog(3, "%s: found %s", dev, file);
+> +			found++;
+> +			break;
+> +		}
+> +	}
+> +	closedir(dirfd);
+> +
+> +	return found;
+> +}
+> +
+> +int systemd_service_enabled(const char *dev)
+> +{
+> +	int found = 0;
+> +
+> +	found = systemd_service_enabled_in(dev, "/etc");
+> +	if (!found)
+> +		found = systemd_service_enabled_in(dev, "/usr/lib");
+> +	if (!found)
+> +		found = systemd_service_enabled_in(dev, "/lib");
+> +	if (!found)
+> +		found = systemd_service_enabled_in(dev, "/run");
+> +	return found;
+> +}
+> diff --git a/libmultipath/util.h b/libmultipath/util.h
+> index f3b37ee9..4c1f85c3 100644
+> --- a/libmultipath/util.h
+> +++ b/libmultipath/util.h
+> @@ -13,6 +13,7 @@ int devt2devname (char *, int, char *);
+>  dev_t parse_devt(const char *dev_t);
+>  char *convert_dev(char *dev, int is_path_device);
+>  void setup_thread_attr(pthread_attr_t *attr, size_t stacksize, int detached);
+> +int systemd_service_enabled(const char *dev);
+>  
+>  #define safe_sprintf(var, format, args...)	\
+>  	snprintf(var, sizeof(var), format, ##args) >= sizeof(var)
+> diff --git a/multipath/main.c b/multipath/main.c
+> index 171c08b4..befe4c53 100644
+> --- a/multipath/main.c
+> +++ b/multipath/main.c
+> @@ -682,11 +682,14 @@ main (int argc, char *argv[])
+>  
+>  		fd = mpath_connect();
+>  		if (fd == -1) {
+> -			printf("%s is not a valid multipath device path\n",
+> -				dev);
+> -			goto out;
+> -		}
+> -		mpath_disconnect(fd);
+> +			condlog(3, "%s: daemon is not running", dev);
+> +			if (!systemd_service_enabled(dev)) {
+> +				printf("%s is not a valid "
+> +				       "multipath device path\n", dev);
+> +				goto out;
+> +			}
+> +		} else
+> +			mpath_disconnect(fd);
+>  	}
+>  	if (cmd == CMD_REMOVE_WWID && !dev) {
+>  		condlog(0, "the -w option requires a device");
+> -- 
+> 2.11.0
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
