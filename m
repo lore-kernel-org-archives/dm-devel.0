@@ -1,58 +1,51 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 13/27] block_dev: use blkdev_issue_zerout for hole punches
-Date: Wed,  5 Apr 2017 16:21:51 +0200
-Message-ID: <20170405142205.6477-14-hch@lst.de>
+From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Subject: Re: always use REQ_OP_WRITE_ZEROES for zeroing offload V2
+Date: Wed, 5 Apr 2017 16:51:42 +0200
+Message-ID: <20170405145142.GA5553@lst.de>
 References: <20170405142205.6477-1-hch@lst.de>
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20170405142205.6477-1-hch@lst.de>
-Sender: linux-block-owner@vger.kernel.org
-To: axboe@kernel.dk, martin.petersen@oracle.com, agk@redhat.com, snitzer@redhat.com, shli@kernel.org, philipp.reisner@linbit.com, lars.ellenberg@linbit.com
-Cc: linux-block@vger.kernel.org, linux-scsi@vger.kernel.org, drbd-dev@lists.linbit.com, dm-devel@redhat.com, linux-raid@vger.kernel.org
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20170405142205.6477-1-hch-jcswGhMUV9g@public.gmane.org>
+List-Unsubscribe: <http://lists.linbit.com/mailman/options/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
+List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
+List-Subscribe: <http://lists.linbit.com/mailman/listinfo/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
+Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+To: axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org, lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org
+Cc: linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
 List-Id: dm-devel.ids
 
-This gets us support for non-discard efficient write of zeroes (e.g. NVMe)
-and prepares for removing the discard_zeroes_data flag.
+Looks like the mail server crapped out under the load..
 
-Also remove a pointless discard support check, which is done in
-blkdev_issue_discard already.
+I'll resend tomorrow morning, in the meantime the git url below
+works.
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
-Reviewed-by: Martin K. Petersen <martin.petersen@oracle.com>
-
-Reviewed-by: Hannes Reinecke <hare@suse.com>
----
- fs/block_dev.c | 10 ++--------
- 1 file changed, 2 insertions(+), 8 deletions(-)
-
-diff --git a/fs/block_dev.c b/fs/block_dev.c
-index 2f704c3a816f..e405d8e58e31 100644
---- a/fs/block_dev.c
-+++ b/fs/block_dev.c
-@@ -2069,7 +2069,6 @@ static long blkdev_fallocate(struct file *file, int mode, loff_t start,
- 			     loff_t len)
- {
- 	struct block_device *bdev = I_BDEV(bdev_file_inode(file));
--	struct request_queue *q = bdev_get_queue(bdev);
- 	struct address_space *mapping;
- 	loff_t end = start + len - 1;
- 	loff_t isize;
-@@ -2108,15 +2107,10 @@ static long blkdev_fallocate(struct file *file, int mode, loff_t start,
- 					    GFP_KERNEL, BLKDEV_ZERO_NOUNMAP);
- 		break;
- 	case FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE:
--		/* Only punch if the device can do zeroing discard. */
--		if (!blk_queue_discard(q) || !q->limits.discard_zeroes_data)
--			return -EOPNOTSUPP;
--		error = blkdev_issue_discard(bdev, start >> 9, len >> 9,
--					     GFP_KERNEL, 0);
-+		error = blkdev_issue_zeroout(bdev, start >> 9, len >> 9,
-+					     GFP_KERNEL, BLKDEV_ZERO_NOFALLBACK);
- 		break;
- 	case FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE | FALLOC_FL_NO_HIDE_STALE:
--		if (!blk_queue_discard(q))
--			return -EOPNOTSUPP;
- 		error = blkdev_issue_discard(bdev, start >> 9, len >> 9,
- 					     GFP_KERNEL, 0);
- 		break;
--- 
-2.11.0
+On Wed, Apr 05, 2017 at 04:21:38PM +0200, Christoph Hellwig wrote:
+> This series makes REQ_OP_WRITE_ZEROES the only zeroing offload
+> supported by the block layer, and switches existing implementations
+> of REQ_OP_DISCARD that correctly set discard_zeroes_data to it,
+> removes incorrect discard_zeroes_data, and also switches WRITE SAME
+> based zeroing in SCSI to this new method.
+> 
+> The series is against the block for-next tree.
+> 
+> A git tree is also avaiable at:
+> 
+>     git://git.infradead.org/users/hch/block.git discard-rework.2
+> 
+> Gitweb:
+> 
+>     http://git.infradead.org/users/hch/block.git/shortlog/refs/heads/discard-rework.2
+> 
+> Changes since V2:
+>  - various spelling fixes
+>  - various reviews captured
+>  - two new patches from Martin at the end
+---end quoted text---
