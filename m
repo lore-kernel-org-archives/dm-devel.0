@@ -1,54 +1,42 @@
-From: Enric Balletbo i Serra <enric.balletbo@collabora.com>
-Subject: Re: dm: move dm_table_destroy() to same header as dm_table_create()
-Date: Wed, 5 Apr 2017 10:04:20 +0200
-Message-ID: <f7e4e7e7-2402-28ef-a921-cda40174afd3@collabora.com>
-References: <20170328183102.80620-1-briannorris@chromium.org>
- <20170328193150.GA21445@redhat.com> <20170404223552.GA121849@google.com>
+From: "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Subject: Re: always use REQ_OP_WRITE_ZEROES for zeroing offload
+Date: Wed, 05 Apr 2017 07:40:36 -0400
+Message-ID: <yq1vaqjt74b.fsf@oracle.com>
+References: <20170331163313.31821-1-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170404223552.GA121849@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Brian Norris <briannorris@chromium.org>, Mike Snitzer <snitzer@redhat.com>
-Cc: Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+In-Reply-To: <20170331163313.31821-1-hch-jcswGhMUV9g@public.gmane.org> (Christoph Hellwig's message
+	of "Fri, 31 Mar 2017 18:32:48 +0200")
+List-Unsubscribe: <http://lists.linbit.com/mailman/options/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
+List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
+List-Subscribe: <http://lists.linbit.com/mailman/listinfo/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
+Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Cc: axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org, shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
 List-Id: dm-devel.ids
 
-Hi,
+Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org> writes:
 
-On 05/04/17 00:35, Brian Norris wrote:
-> On Tue, Mar 28, 2017 at 03:31:51PM -0400, Mike Snitzer wrote:
->> On Tue, Mar 28 2017 at  2:31pm -0400,
->> Brian Norris <briannorris@chromium.org> wrote:
->>
->>> If anyone is going to use dm_table_create(), they probably should be
->>> able to use dm_table_destroy() too. Move the dm_table_destroy()
->>> definition outside the private header, near dm_table_create()
->>>
->>> Signed-off-by: Brian Norris <briannorris@chromium.org>
->>
->> Not seeing why we need dm_table_create() exposed.  So I think you went
->> the wrong way with this.  Unless you have an actual need, I'd prefer to
->> see dm_table_create() moved from include/linux/device-mapper.h to
->> drivers/md/dm.h
-> 
-> We've been carrying code in our ChromeOS kernel to parse a cmdline arg
-> for setting up early DM maps -- e.g., a dm-verity rootfs without using
-> an initramfs. We currently use dm_table_create() from init/*.c (and we
-> *should* be using dm_table_destroy() in the error paths). So I'm
-> certainly not going to send the patch to do the reverse :)
-> 
-> Enric is working on cleaning up this work to send here, so if you don't
-> want to see this patch now, you may well see it later.
-> 
+Christoph,
 
-As Brian told you we have a use case that uses the dm_table_create and others
-from init/*.c, I expect have a first patches during this week, if it's ok I'll
-include this patch in my patchset so you have the overall of what we are talking
-about.
+> This series makes REQ_OP_WRITE_ZEROES the only zeroing offload
+> supported by the block layer, and switches existing implementations
+> of REQ_OP_DISCARD that correctly set discard_zeroes_data to it,
+> removes incorrect discard_zeroes_data, and also switches WRITE SAME
+> based zeroing in SCSI to this new method.
 
-Cheers,
- Enric
+Very, very nice. I think this is the correct approach.
 
-> Brian
-> 
+I'm going to send two follow-up patches that allow us to use UNMAP for
+discards and WRITE SAME w/ UNMAP for zeroout. That appears to be the
+preferred configuration for most storage devices.
+
+-- 
+Martin K. Petersen	Oracle Linux Engineering
