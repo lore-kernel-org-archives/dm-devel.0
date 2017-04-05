@@ -1,566 +1,198 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 25/27] block: remove the discard_zeroes_data flag
-Date: Wed,  5 Apr 2017 19:21:23 +0200
-Message-ID: <20170405172125.22600-26-hch@lst.de>
-References: <20170405172125.22600-1-hch@lst.de>
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20170405172125.22600-1-hch@lst.de>
-Sender: linux-block-owner@vger.kernel.org
-To: axboe@kernel.dk, martin.petersen@oracle.com, agk@redhat.com, snitzer@redhat.com, shli@kernel.org, philipp.reisner@linbit.com, lars.ellenberg@linbit.com
-Cc: linux-block@vger.kernel.org, linux-scsi@vger.kernel.org, drbd-dev@lists.linbit.com, dm-devel@redhat.com, linux-raid@vger.kernel.org
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: uid_attrs (was Re: [PATCH 04/11] multipathd: add
+ need_do_map to indicate whether need calling domap() in ev_add_path())
+Date: Wed, 5 Apr 2017 13:45:23 -0500
+Message-ID: <20170405184523.GF19236@octiron.msp.redhat.com>
+References: <1484200347-11188-1-git-send-email-tang.junhui@zte.com.cn>
+	<1484200347-11188-5-git-send-email-tang.junhui@zte.com.cn>
+	<20170116213829.GV2732@octiron.msp.redhat.com>
+	<OF705BD11C.F27A9FC2-ON482580AB.00205EED-482580AB.002903CF@zte.com.cn>
+	<20170117161401.GX2732@octiron.msp.redhat.com>
+	<1491398766.15890.15.camel@suse.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1491398766.15890.15.camel@suse.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Martin Wilck <mwilck@suse.com>
+Cc: tang.junhui@zte.com.cn, tang.wenjun3@zte.com.cn, zhang.kai16@zte.com.cn, dm-devel@redhat.com, bart.vanassche@sandisk.com
 List-Id: dm-devel.ids
 
-Now that we use the proper REQ_OP_WRITE_ZEROES operation everywhere we can
-kill this hack.
+On Wed, Apr 05, 2017 at 03:26:06PM +0200, Martin Wilck wrote:
+> Hi Ben & Tang,
+> =
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
-Reviewed-by: Martin K. Petersen <martin.petersen@oracle.com>
-Reviewed-by: Hannes Reinecke <hare@suse.com>
----
- Documentation/ABI/testing/sysfs-block | 10 ++-----
- Documentation/block/queue-sysfs.txt   |  5 ----
- block/blk-lib.c                       |  7 +----
- block/blk-settings.c                  |  3 ---
- block/blk-sysfs.c                     |  2 +-
- block/compat_ioctl.c                  |  2 +-
- block/ioctl.c                         |  2 +-
- drivers/block/drbd/drbd_main.c        |  2 --
- drivers/block/drbd/drbd_nl.c          |  7 +----
- drivers/block/loop.c                  |  2 --
- drivers/block/mtip32xx/mtip32xx.c     |  1 -
- drivers/block/nbd.c                   |  1 -
- drivers/md/dm-cache-target.c          |  1 -
- drivers/md/dm-crypt.c                 |  1 -
- drivers/md/dm-raid.c                  |  6 ++---
- drivers/md/dm-raid1.c                 |  1 -
- drivers/md/dm-table.c                 | 19 -------------
- drivers/md/dm-thin.c                  |  2 --
- drivers/md/raid5.c                    | 50 +++++++++++------------------------
- drivers/scsi/sd.c                     |  5 ----
- drivers/target/target_core_device.c   |  2 +-
- include/linux/blkdev.h                | 15 -----------
- include/linux/device-mapper.h         |  5 ----
- 23 files changed, 27 insertions(+), 124 deletions(-)
+> On Tue, 2017-01-17 at 10:14 -0600, Benjamin Marzinski wrote:
+> > On Tue, Jan 17, 2017 at 03:28:06PM +0800, tang.junhui@zte.com.cn
+> > wrote:
+> > > =A0=A0=A0Hello Ben
+> > > =
 
-diff --git a/Documentation/ABI/testing/sysfs-block b/Documentation/ABI/testing/sysfs-block
-index 2da04ce6aeef..dea212db9df3 100644
---- a/Documentation/ABI/testing/sysfs-block
-+++ b/Documentation/ABI/testing/sysfs-block
-@@ -213,14 +213,8 @@ What:		/sys/block/<disk>/queue/discard_zeroes_data
- Date:		May 2011
- Contact:	Martin K. Petersen <martin.petersen@oracle.com>
- Description:
--		Devices that support discard functionality may return
--		stale or random data when a previously discarded block
--		is read back. This can cause problems if the filesystem
--		expects discarded blocks to be explicitly cleared. If a
--		device reports that it deterministically returns zeroes
--		when a discarded area is read the discard_zeroes_data
--		parameter will be set to one. Otherwise it will be 0 and
--		the result of reading a discarded area is undefined.
-+		Will always return 0.  Don't rely on any specific behavior
-+		for discards, and don't read this file.
- 
- What:		/sys/block/<disk>/queue/write_same_max_bytes
- Date:		January 2012
-diff --git a/Documentation/block/queue-sysfs.txt b/Documentation/block/queue-sysfs.txt
-index b7f6bdc96d73..2c1e67058fd3 100644
---- a/Documentation/block/queue-sysfs.txt
-+++ b/Documentation/block/queue-sysfs.txt
-@@ -43,11 +43,6 @@ large discards are issued, setting this value lower will make Linux issue
- smaller discards and potentially help reduce latencies induced by large
- discard operations.
- 
--discard_zeroes_data (RO)
--------------------------
--When read, this file will show if the discarded block are zeroed by the
--device or not. If its value is '1' the blocks are zeroed otherwise not.
--
- hw_sector_size (RO)
- -------------------
- This is the hardware sector size of the device, in bytes.
-diff --git a/block/blk-lib.c b/block/blk-lib.c
-index b0c6c4bcf441..e8caecd71688 100644
---- a/block/blk-lib.c
-+++ b/block/blk-lib.c
-@@ -37,17 +37,12 @@ int __blkdev_issue_discard(struct block_device *bdev, sector_t sector,
- 		return -ENXIO;
- 
- 	if (flags & BLKDEV_DISCARD_SECURE) {
--		if (flags & BLKDEV_DISCARD_ZERO)
--			return -EOPNOTSUPP;
- 		if (!blk_queue_secure_erase(q))
- 			return -EOPNOTSUPP;
- 		op = REQ_OP_SECURE_ERASE;
- 	} else {
- 		if (!blk_queue_discard(q))
- 			return -EOPNOTSUPP;
--		if ((flags & BLKDEV_DISCARD_ZERO) &&
--		    !q->limits.discard_zeroes_data)
--			return -EOPNOTSUPP;
- 		op = REQ_OP_DISCARD;
- 	}
- 
-@@ -126,7 +121,7 @@ int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
- 			&bio);
- 	if (!ret && bio) {
- 		ret = submit_bio_wait(bio);
--		if (ret == -EOPNOTSUPP && !(flags & BLKDEV_DISCARD_ZERO))
-+		if (ret == -EOPNOTSUPP)
- 			ret = 0;
- 		bio_put(bio);
- 	}
-diff --git a/block/blk-settings.c b/block/blk-settings.c
-index 1e7174ffc9d4..4fa81ed383ca 100644
---- a/block/blk-settings.c
-+++ b/block/blk-settings.c
-@@ -103,7 +103,6 @@ void blk_set_default_limits(struct queue_limits *lim)
- 	lim->discard_granularity = 0;
- 	lim->discard_alignment = 0;
- 	lim->discard_misaligned = 0;
--	lim->discard_zeroes_data = 0;
- 	lim->logical_block_size = lim->physical_block_size = lim->io_min = 512;
- 	lim->bounce_pfn = (unsigned long)(BLK_BOUNCE_ANY >> PAGE_SHIFT);
- 	lim->alignment_offset = 0;
-@@ -127,7 +126,6 @@ void blk_set_stacking_limits(struct queue_limits *lim)
- 	blk_set_default_limits(lim);
- 
- 	/* Inherit limits from component devices */
--	lim->discard_zeroes_data = 1;
- 	lim->max_segments = USHRT_MAX;
- 	lim->max_discard_segments = 1;
- 	lim->max_hw_sectors = UINT_MAX;
-@@ -609,7 +607,6 @@ int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
- 	t->io_opt = lcm_not_zero(t->io_opt, b->io_opt);
- 
- 	t->cluster &= b->cluster;
--	t->discard_zeroes_data &= b->discard_zeroes_data;
- 
- 	/* Physical block size a multiple of the logical block size? */
- 	if (t->physical_block_size & (t->logical_block_size - 1)) {
-diff --git a/block/blk-sysfs.c b/block/blk-sysfs.c
-index 45854266e398..b65ce3c65ae8 100644
---- a/block/blk-sysfs.c
-+++ b/block/blk-sysfs.c
-@@ -208,7 +208,7 @@ static ssize_t queue_discard_max_store(struct request_queue *q,
- 
- static ssize_t queue_discard_zeroes_data_show(struct request_queue *q, char *page)
- {
--	return queue_var_show(queue_discard_zeroes_data(q), page);
-+	return queue_var_show(0, page);
- }
- 
- static ssize_t queue_write_same_max_show(struct request_queue *q, char *page)
-diff --git a/block/compat_ioctl.c b/block/compat_ioctl.c
-index 570021a0dc1c..04325b81c2b4 100644
---- a/block/compat_ioctl.c
-+++ b/block/compat_ioctl.c
-@@ -685,7 +685,7 @@ long compat_blkdev_ioctl(struct file *file, unsigned cmd, unsigned long arg)
- 	case BLKALIGNOFF:
- 		return compat_put_int(arg, bdev_alignment_offset(bdev));
- 	case BLKDISCARDZEROES:
--		return compat_put_uint(arg, bdev_discard_zeroes_data(bdev));
-+		return compat_put_uint(arg, 0);
- 	case BLKFLSBUF:
- 	case BLKROSET:
- 	case BLKDISCARD:
-diff --git a/block/ioctl.c b/block/ioctl.c
-index 8ea00a41be01..0de02ee67eed 100644
---- a/block/ioctl.c
-+++ b/block/ioctl.c
-@@ -547,7 +547,7 @@ int blkdev_ioctl(struct block_device *bdev, fmode_t mode, unsigned cmd,
- 	case BLKALIGNOFF:
- 		return put_int(arg, bdev_alignment_offset(bdev));
- 	case BLKDISCARDZEROES:
--		return put_uint(arg, bdev_discard_zeroes_data(bdev));
-+		return put_uint(arg, 0);
- 	case BLKSECTGET:
- 		max_sectors = min_t(unsigned int, USHRT_MAX,
- 				    queue_max_sectors(bdev_get_queue(bdev)));
-diff --git a/drivers/block/drbd/drbd_main.c b/drivers/block/drbd/drbd_main.c
-index 8e62d9f65510..84455c365f57 100644
---- a/drivers/block/drbd/drbd_main.c
-+++ b/drivers/block/drbd/drbd_main.c
-@@ -931,7 +931,6 @@ void assign_p_sizes_qlim(struct drbd_device *device, struct p_sizes *p, struct r
- 		p->qlim->io_min = cpu_to_be32(queue_io_min(q));
- 		p->qlim->io_opt = cpu_to_be32(queue_io_opt(q));
- 		p->qlim->discard_enabled = blk_queue_discard(q);
--		p->qlim->discard_zeroes_data = queue_discard_zeroes_data(q);
- 		p->qlim->write_same_capable = !!q->limits.max_write_same_sectors;
- 	} else {
- 		q = device->rq_queue;
-@@ -941,7 +940,6 @@ void assign_p_sizes_qlim(struct drbd_device *device, struct p_sizes *p, struct r
- 		p->qlim->io_min = cpu_to_be32(queue_io_min(q));
- 		p->qlim->io_opt = cpu_to_be32(queue_io_opt(q));
- 		p->qlim->discard_enabled = 0;
--		p->qlim->discard_zeroes_data = 0;
- 		p->qlim->write_same_capable = 0;
- 	}
- }
-diff --git a/drivers/block/drbd/drbd_nl.c b/drivers/block/drbd/drbd_nl.c
-index e4516d3b971d..02255a0d68b9 100644
---- a/drivers/block/drbd/drbd_nl.c
-+++ b/drivers/block/drbd/drbd_nl.c
-@@ -1199,10 +1199,6 @@ static void decide_on_discard_support(struct drbd_device *device,
- 	struct drbd_connection *connection = first_peer_device(device)->connection;
- 	bool can_do = b ? blk_queue_discard(b) : true;
- 
--	if (can_do && b && !b->limits.discard_zeroes_data && !discard_zeroes_if_aligned) {
--		can_do = false;
--		drbd_info(device, "discard_zeroes_data=0 and discard_zeroes_if_aligned=no: disabling discards\n");
--	}
- 	if (can_do && connection->cstate >= C_CONNECTED && !(connection->agreed_features & DRBD_FF_TRIM)) {
- 		can_do = false;
- 		drbd_info(connection, "peer DRBD too old, does not support TRIM: disabling discards\n");
-@@ -1484,8 +1480,7 @@ static void sanitize_disk_conf(struct drbd_device *device, struct disk_conf *dis
- 	if (disk_conf->al_extents > drbd_al_extents_max(nbc))
- 		disk_conf->al_extents = drbd_al_extents_max(nbc);
- 
--	if (!blk_queue_discard(q)
--	    || (!q->limits.discard_zeroes_data && !disk_conf->discard_zeroes_if_aligned)) {
-+	if (!blk_queue_discard(q)) {
- 		if (disk_conf->rs_discard_granularity) {
- 			disk_conf->rs_discard_granularity = 0; /* disable feature */
- 			drbd_info(device, "rs_discard_granularity feature disabled\n");
-diff --git a/drivers/block/loop.c b/drivers/block/loop.c
-index 3bb04c1a4ba1..3081d83d2ea3 100644
---- a/drivers/block/loop.c
-+++ b/drivers/block/loop.c
-@@ -828,7 +828,6 @@ static void loop_config_discard(struct loop_device *lo)
- 		q->limits.discard_alignment = 0;
- 		blk_queue_max_discard_sectors(q, 0);
- 		blk_queue_max_write_zeroes_sectors(q, 0);
--		q->limits.discard_zeroes_data = 0;
- 		queue_flag_clear_unlocked(QUEUE_FLAG_DISCARD, q);
- 		return;
- 	}
-@@ -837,7 +836,6 @@ static void loop_config_discard(struct loop_device *lo)
- 	q->limits.discard_alignment = 0;
- 	blk_queue_max_discard_sectors(q, UINT_MAX >> 9);
- 	blk_queue_max_write_zeroes_sectors(q, UINT_MAX >> 9);
--	q->limits.discard_zeroes_data = 1;
- 	queue_flag_set_unlocked(QUEUE_FLAG_DISCARD, q);
- }
- 
-diff --git a/drivers/block/mtip32xx/mtip32xx.c b/drivers/block/mtip32xx/mtip32xx.c
-index 30076e7753bc..05e3e664ea1b 100644
---- a/drivers/block/mtip32xx/mtip32xx.c
-+++ b/drivers/block/mtip32xx/mtip32xx.c
-@@ -4025,7 +4025,6 @@ static int mtip_block_initialize(struct driver_data *dd)
- 		dd->queue->limits.discard_granularity = 4096;
- 		blk_queue_max_discard_sectors(dd->queue,
- 			MTIP_MAX_TRIM_ENTRY_LEN * MTIP_MAX_TRIM_ENTRIES);
--		dd->queue->limits.discard_zeroes_data = 0;
- 	}
- 
- 	/* Set the capacity of the device in 512 byte sectors. */
-diff --git a/drivers/block/nbd.c b/drivers/block/nbd.c
-index 03ae72985c79..b02f2362fdf7 100644
---- a/drivers/block/nbd.c
-+++ b/drivers/block/nbd.c
-@@ -1110,7 +1110,6 @@ static int nbd_dev_add(int index)
- 	queue_flag_clear_unlocked(QUEUE_FLAG_ADD_RANDOM, disk->queue);
- 	disk->queue->limits.discard_granularity = 512;
- 	blk_queue_max_discard_sectors(disk->queue, UINT_MAX);
--	disk->queue->limits.discard_zeroes_data = 0;
- 	blk_queue_max_hw_sectors(disk->queue, 65536);
- 	disk->queue->limits.max_sectors = 256;
- 
-diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
-index 9c689b34e6e7..975922c8f231 100644
---- a/drivers/md/dm-cache-target.c
-+++ b/drivers/md/dm-cache-target.c
-@@ -2773,7 +2773,6 @@ static int cache_create(struct cache_args *ca, struct cache **result)
- 
- 	ti->num_discard_bios = 1;
- 	ti->discards_supported = true;
--	ti->discard_zeroes_data_unsupported = true;
- 	ti->split_discard_bios = false;
- 
- 	cache->features = ca->features;
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 389a3637ffcc..ef1d836bd81b 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -2030,7 +2030,6 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	wake_up_process(cc->write_thread);
- 
- 	ti->num_flush_bios = 1;
--	ti->discard_zeroes_data_unsupported = true;
- 
- 	return 0;
- 
-diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index f8564d63982f..468f1380de1d 100644
---- a/drivers/md/dm-raid.c
-+++ b/drivers/md/dm-raid.c
-@@ -2813,7 +2813,9 @@ static void configure_discard_support(struct raid_set *rs)
- 	/* Assume discards not supported until after checks below. */
- 	ti->discards_supported = false;
- 
--	/* RAID level 4,5,6 require discard_zeroes_data for data integrity! */
-+	/*
-+	 * XXX: RAID level 4,5,6 require zeroing for safety.
-+	 */
- 	raid456 = (rs->md.level == 4 || rs->md.level == 5 || rs->md.level == 6);
- 
- 	for (i = 0; i < rs->raid_disks; i++) {
-@@ -2827,8 +2829,6 @@ static void configure_discard_support(struct raid_set *rs)
- 			return;
- 
- 		if (raid456) {
--			if (!q->limits.discard_zeroes_data)
--				return;
- 			if (!devices_handle_discard_safely) {
- 				DMERR("raid456 discard support disabled due to discard_zeroes_data uncertainty.");
- 				DMERR("Set dm-raid.devices_handle_discard_safely=Y to override.");
-diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c
-index 2ddc2d20e62d..a95cbb80fb34 100644
---- a/drivers/md/dm-raid1.c
-+++ b/drivers/md/dm-raid1.c
-@@ -1124,7 +1124,6 @@ static int mirror_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	ti->num_flush_bios = 1;
- 	ti->num_discard_bios = 1;
- 	ti->per_io_data_size = sizeof(struct dm_raid1_bio_record);
--	ti->discard_zeroes_data_unsupported = true;
- 
- 	ms->kmirrord_wq = alloc_workqueue("kmirrord", WQ_MEM_RECLAIM, 0);
- 	if (!ms->kmirrord_wq) {
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 5cd665c91ead..958275aca008 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -1449,22 +1449,6 @@ static bool dm_table_supports_flush(struct dm_table *t, unsigned long flush)
- 	return false;
- }
- 
--static bool dm_table_discard_zeroes_data(struct dm_table *t)
--{
--	struct dm_target *ti;
--	unsigned i = 0;
--
--	/* Ensure that all targets supports discard_zeroes_data. */
--	while (i < dm_table_get_num_targets(t)) {
--		ti = dm_table_get_target(t, i++);
--
--		if (ti->discard_zeroes_data_unsupported)
--			return false;
--	}
--
--	return true;
--}
--
- static int device_is_nonrot(struct dm_target *ti, struct dm_dev *dev,
- 			    sector_t start, sector_t len, void *data)
- {
-@@ -1620,9 +1604,6 @@ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
- 	}
- 	blk_queue_write_cache(q, wc, fua);
- 
--	if (!dm_table_discard_zeroes_data(t))
--		q->limits.discard_zeroes_data = 0;
--
- 	/* Ensure that all underlying devices are non-rotational. */
- 	if (dm_table_all_devices_attribute(t, device_is_nonrot))
- 		queue_flag_set_unlocked(QUEUE_FLAG_NONROT, q);
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index 2b266a2b5035..a5f1916f621a 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -3263,7 +3263,6 @@ static int pool_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 	 * them down to the data device.  The thin device's discard
- 	 * processing will cause mappings to be removed from the btree.
- 	 */
--	ti->discard_zeroes_data_unsupported = true;
- 	if (pf.discard_enabled && pf.discard_passdown) {
- 		ti->num_discard_bios = 1;
- 
-@@ -4119,7 +4118,6 @@ static int thin_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 	ti->per_io_data_size = sizeof(struct dm_thin_endio_hook);
- 
- 	/* In case the pool supports discards, pass them on. */
--	ti->discard_zeroes_data_unsupported = true;
- 	if (tc->pool->pf.discard_enabled) {
- 		ti->discards_supported = true;
- 		ti->num_discard_bios = 1;
-diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-index 8cf1f86dcd05..d6ae8d22d461 100644
---- a/drivers/md/raid5.c
-+++ b/drivers/md/raid5.c
-@@ -7229,7 +7229,6 @@ static int raid5_run(struct mddev *mddev)
- 
- 	if (mddev->queue) {
- 		int chunk_size;
--		bool discard_supported = true;
- 		/* read-ahead size must cover two whole stripes, which
- 		 * is 2 * (datadisks) * chunksize where 'n' is the
- 		 * number of raid devices
-@@ -7265,12 +7264,6 @@ static int raid5_run(struct mddev *mddev)
- 		blk_queue_max_discard_sectors(mddev->queue,
- 					      0xfffe * STRIPE_SECTORS);
- 
--		/*
--		 * unaligned part of discard request will be ignored, so can't
--		 * guarantee discard_zeroes_data
--		 */
--		mddev->queue->limits.discard_zeroes_data = 0;
--
- 		blk_queue_max_write_same_sectors(mddev->queue, 0);
- 		blk_queue_max_write_zeroes_sectors(mddev->queue, 0);
- 
-@@ -7279,35 +7272,24 @@ static int raid5_run(struct mddev *mddev)
- 					  rdev->data_offset << 9);
- 			disk_stack_limits(mddev->gendisk, rdev->bdev,
- 					  rdev->new_data_offset << 9);
--			/*
--			 * discard_zeroes_data is required, otherwise data
--			 * could be lost. Consider a scenario: discard a stripe
--			 * (the stripe could be inconsistent if
--			 * discard_zeroes_data is 0); write one disk of the
--			 * stripe (the stripe could be inconsistent again
--			 * depending on which disks are used to calculate
--			 * parity); the disk is broken; The stripe data of this
--			 * disk is lost.
--			 */
--			if (!blk_queue_discard(bdev_get_queue(rdev->bdev)) ||
--			    !bdev_get_queue(rdev->bdev)->
--						limits.discard_zeroes_data)
--				discard_supported = false;
--			/* Unfortunately, discard_zeroes_data is not currently
--			 * a guarantee - just a hint.  So we only allow DISCARD
--			 * if the sysadmin has confirmed that only safe devices
--			 * are in use by setting a module parameter.
--			 */
--			if (!devices_handle_discard_safely) {
--				if (discard_supported) {
--					pr_info("md/raid456: discard support disabled due to uncertainty.\n");
--					pr_info("Set raid456.devices_handle_discard_safely=Y to override.\n");
--				}
--				discard_supported = false;
--			}
- 		}
- 
--		if (discard_supported &&
-+		/*
-+		 * zeroing is required, otherwise data
-+		 * could be lost. Consider a scenario: discard a stripe
-+		 * (the stripe could be inconsistent if
-+		 * discard_zeroes_data is 0); write one disk of the
-+		 * stripe (the stripe could be inconsistent again
-+		 * depending on which disks are used to calculate
-+		 * parity); the disk is broken; The stripe data of this
-+		 * disk is lost.
-+		 *
-+		 * We only allow DISCARD if the sysadmin has confirmed that
-+		 * only safe devices are in use by setting a module parameter.
-+		 * A better idea might be to turn DISCARD into WRITE_ZEROES
-+		 * requests, as that is required to be safe.
-+		 */
-+		if (devices_handle_discard_safely &&
- 		    mddev->queue->limits.max_discard_sectors >= (stripe >> 9) &&
- 		    mddev->queue->limits.discard_granularity >= stripe)
- 			queue_flag_set_unlocked(QUEUE_FLAG_DISCARD,
-diff --git a/drivers/scsi/sd.c b/drivers/scsi/sd.c
-index 001593ed0444..bcb0cb020fd2 100644
---- a/drivers/scsi/sd.c
-+++ b/drivers/scsi/sd.c
-@@ -644,8 +644,6 @@ static void sd_config_discard(struct scsi_disk *sdkp, unsigned int mode)
- 	unsigned int logical_block_size = sdkp->device->sector_size;
- 	unsigned int max_blocks = 0;
- 
--	q->limits.discard_zeroes_data = 0;
--
- 	/*
- 	 * When LBPRZ is reported, discard alignment and granularity
- 	 * must be fixed to the logical block size. Otherwise the block
-@@ -681,19 +679,16 @@ static void sd_config_discard(struct scsi_disk *sdkp, unsigned int mode)
- 	case SD_LBP_WS16:
- 		max_blocks = min_not_zero(sdkp->max_ws_blocks,
- 					  (u32)SD_MAX_WS16_BLOCKS);
--		q->limits.discard_zeroes_data = sdkp->lbprz;
- 		break;
- 
- 	case SD_LBP_WS10:
- 		max_blocks = min_not_zero(sdkp->max_ws_blocks,
- 					  (u32)SD_MAX_WS10_BLOCKS);
--		q->limits.discard_zeroes_data = sdkp->lbprz;
- 		break;
- 
- 	case SD_LBP_ZERO:
- 		max_blocks = min_not_zero(sdkp->max_ws_blocks,
- 					  (u32)SD_MAX_WS10_BLOCKS);
--		q->limits.discard_zeroes_data = 1;
- 		break;
- 	}
- 
-diff --git a/drivers/target/target_core_device.c b/drivers/target/target_core_device.c
-index c754ae33bf7b..d2f089cfa9ae 100644
---- a/drivers/target/target_core_device.c
-+++ b/drivers/target/target_core_device.c
-@@ -851,7 +851,7 @@ bool target_configure_unmap_from_queue(struct se_dev_attrib *attrib,
- 	attrib->unmap_granularity = q->limits.discard_granularity / block_size;
- 	attrib->unmap_granularity_alignment = q->limits.discard_alignment /
- 								block_size;
--	attrib->unmap_zeroes_data = q->limits.discard_zeroes_data;
-+	attrib->unmap_zeroes_data = 0;
- 	return true;
- }
- EXPORT_SYMBOL(target_configure_unmap_from_queue);
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index a5055d760661..d5d9dd72418a 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -339,7 +339,6 @@ struct queue_limits {
- 	unsigned char		misaligned;
- 	unsigned char		discard_misaligned;
- 	unsigned char		cluster;
--	unsigned char		discard_zeroes_data;
- 	unsigned char		raid_partial_stripes_expensive;
- 	enum blk_zoned_model	zoned;
- };
-@@ -1342,7 +1341,6 @@ extern int blkdev_issue_write_same(struct block_device *bdev, sector_t sector,
- 		sector_t nr_sects, gfp_t gfp_mask, struct page *page);
- 
- #define BLKDEV_DISCARD_SECURE	(1 << 0)	/* issue a secure erase */
--#define BLKDEV_DISCARD_ZERO	(1 << 1)	/* must reliably zero data */
- 
- extern int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
- 		sector_t nr_sects, gfp_t gfp_mask, unsigned long flags);
-@@ -1542,19 +1540,6 @@ static inline int bdev_discard_alignment(struct block_device *bdev)
- 	return q->limits.discard_alignment;
- }
- 
--static inline unsigned int queue_discard_zeroes_data(struct request_queue *q)
--{
--	if (q->limits.max_discard_sectors && q->limits.discard_zeroes_data == 1)
--		return 1;
--
--	return 0;
--}
--
--static inline unsigned int bdev_discard_zeroes_data(struct block_device *bdev)
--{
--	return queue_discard_zeroes_data(bdev_get_queue(bdev));
--}
--
- static inline unsigned int bdev_write_same(struct block_device *bdev)
- {
- 	struct request_queue *q = bdev_get_queue(bdev);
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index 3829bee2302a..c7ea33e38fb9 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -296,11 +296,6 @@ struct dm_target {
- 	 * on max_io_len boundary.
- 	 */
- 	bool split_discard_bios:1;
--
--	/*
--	 * Set if this target does not return zeroes on discarded blocks.
--	 */
--	bool discard_zeroes_data_unsupported:1;
- };
- 
- /* Each target can link one of these into the table */
--- 
-2.11.0
+> > > =A0=A0=A0Thank you for your patience again.
+> > > =
+
+> > > =A0=A0=A0I'll modify code according to your suggestion as this:
+> > > =A0=A0=A01) add configuration in the defaults section
+> > > =A0=A0=A0=A0 =A0uid_attrs "sd:ID_SERIAL dasd:ID_UID"
+> > > =A0=A0=A0=A0 =A0it would override any other configurations if this
+> > > =A0=A0=A0=A0 =A0filed is configured and matched;
+> > > =
+
+> > > =A0=A0=A02) In uevent processing thread, we will assign merge_id
+> > > =A0=A0=A0=A0 =A0according the label in uevents by this configuration;
+> > > =
+
+> > > =A0=A0=A03) this patch will take back:
+> > > =A0=A0=A0=A0 =A0[PATCH 12/12] libmultipath: use existing wwid when
+> > > =A0=A0=A0=A0 =A0wwid has already been existed in uevent
+> > > =
+
+> > > =A0=A0=A04) if this field is not configured, only do filtering and
+> > > =A0=A0=A0=A0 =A0no merging works.
+> > > =
+
+> > > =A0=A0=A0Please confirm whether this modification is feasible.
+> > =
+
+> > Yes. This is perfectly reasonable solution.=A0=A0Thanks for doing all t=
+he
+> > work on this.
+> =
+
+> I'm sorry to jump upon this old discussion again. I've just recently
+> realized that with the introduction of "uid_attrs", the section on
+> "WWID generation" in multipath.conf(5) needs to be corrected. Looking
+> into that, I find it unfortunate that this new option was introduced.
+> It makes an already complex configuration exercise even more confusing
+> (try to rewrite that man page paragraph in an easily understandable way
+> and I think you'll know what I mean).
+> =
+
+> >From the end user point of view, "uid_attrs" seems to simply duplicate
+> the functionality of "uid_attribute", just in more awkward syntax, and
+> with higher priority. As a side effect, it enables uevent merging,
+> which is documented in the man page but unexpected from the name of the
+> option.
+
+It should probably do a better job of masking "uid_attribute". The
+places in the code that currently use "uid_attribute" should all switch
+to using "uid_attrs" if it is set and applies to the device. If they
+don't, we could be in a situation where "uid_attrs" and "uid_attribute"
+are set to give different wwids, and a path's wwid could change based on
+whether or not ID_SERIAL was filled in when multipath got the uevent. Of
+course, this could only happen due to user error, so it's not that
+urgent of an issue. But I completely agree with you that it is totally
+non-obvious that the way to stop uevent merging is to unset uid_attrs.
+ =
+
+> I went through Ben's reasoning from Jan 16th again:
+> =
+
+> > In general, the code to set need_do_map if the wwid and merge_id
+> > don't
+> > match only works if either none of the device in a merged set have
+> > wwids
+> > that match the merge_id, or if the last device has a wwid that
+> > matches
+> > the merge_id. If there are devices with wwids that match the
+> > merge_id,
+> > but the last device in the set isn't one of them, then some devices
+> > will
+> > not get a multipath device created for them.
+> > =
+
+> [...]
+> The easy way to fix it is to use the other possibility that I
+> mentioned
+> > before, which is to not have the merge_id, and just use the udev
+> > provided wwid, instead of fetching it from pathinfo.=A0=A0Like I
+> > mentioned,
+> > if you do this, you want to make sure that you only try to grab the
+> > wwid
+> > from the udev events for devices with the correct kernel name:
+> > ID_SERIAL
+> > only for "sd.*" devices, and ID_UID only for "dasd.*" devices. I also
+> > think that this should be configurable.
+> > =
+
+> > Otherwise, you can either go through the messy work of calling domap
+> > correctly when the last device of a set has a wwid that doesn't match
+> > the merge_id, or we can decide that this won't acutally cause
+> > problems
+> > with any known device, and punt fixing it for now. And if it causes
+> > problems with some future devices, we can deal with it then.
+> =
+
+> It appears that Tang chose Ben's proposed "easy way" to fix the problem
+> described. The key point appears to be to "use the udev provided wwid,
+> instead of fetching it from pathinfo". But the end result may be
+> confusing for users.
+> =
+
+> I didn't react at the time, but in hindsight I'd find it much better if
+> multipath's standard WWID generation procedure had been used for uevent
+> merging. I admit I don't fully grok why that's harder to implement than
+> the solution that got merged, probably because I didn't try yet :-)=A0
+
+The issue is that you can't use the standard WWID generation code and
+choose to merge uevents as early as tang wanted to. So you are left
+with, noticing that your uevents shouldn't be merged after the fact, and
+trying to untable them.
+
+IIRC, I originally described a solution that involved a larger rewrite
+of the multipathd code, where we just processed path events
+individually, but never reloaded any devices until we had finished
+processing all the queued events, and then went back through the paths
+we changed, and made the appropriate map changes all at once.  This way
+would allow you to process paths just like we always did. But I didn't
+feel strongly enough about it to actually write the code myself, when
+Tang was already working his idea.
+
+> Anyway, I wonder if it would still be possible to change this at this
+> point in time (i.e. after "uid_attrs" was merged).
+
+It's always possible to change things.  As far as Red Hat goes, we
+haven't pulled in these changes yet, but I'm planning on rebasing Fedora
+to upstream shortly.  So, it won't cause me any problems if uid_attrs
+goes away as long as it does so in the near future. I have no idea if
+other distributions have pulled this in. If so, then uid_attrs probably
+needs to remain accepted as a valid option by multipath.  But since all
+correct configurations have it give the same answers as uid_attribute,
+we could probably just make the option do nothing.
+
+Of course, all this depends on your solution actually being enough
+better than Tang's to justify pulling his version out.
+
+-Ben
+
+> Cheers,
+> Martin
+> =
+
+> PS: And while I'm nitpicking anyway:=A0The description of "uid_attrs" in
+> the man page talks about "type of device", while what's really matched
+> against is the kernel devnode name such as /dev/sdX or /dev/dasdY. The
+> reader is left clueless what to do for devices other than sd or dasd (I
+> suspect that that's actually unsupported, but the man page doesn't say
+> anything about that).
+> =
+
+> I can provide a patches for this (and for "WWID generation") but I'd
+> like to discuss the main topic of this email first.
+> =
+
+> -- =
+
+> Dr. Martin Wilck <mwilck@suse.com>, Tel.=A0+49 (0)911 74053 2107
+> SUSE Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
+> HRB 21284 (AG N=FCrnberg)
