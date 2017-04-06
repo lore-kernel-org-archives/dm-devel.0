@@ -1,45 +1,88 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-crypt IV generation (summary)
-Date: Thu, 6 Apr 2017 10:37:46 -0400
-Message-ID: <20170406143746.GA19500@redhat.com>
-References: <CAFqZXNs0=6+PvpGq3weRwCJkUOfSn06i_fD6ZuvXo_0rms9zeA@mail.gmail.com>
-	<20170406092957.GA31341@gondor.apana.org.au>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20170406092957.GA31341@gondor.apana.org.au>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: Binoy Jayan <binoy.jayan@linaro.org>, Ondrej Mosnacek <omosnace@redhat.com>, Gilad Ben-Yossef <gilad@benyossef.com>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, linux-crypto@vger.kernel.org, Milan Broz <gmazyland@gmail.com>, Alasdair Kergon <agk@redhat.com>
+From: Christoph Hellwig <hch@lst.de>
+Subject: [PATCH 03/25] nvme-fc: fix status code handling in nvme_fc_fcpio_done
+Date: Thu,  6 Apr 2017 17:39:22 +0200
+Message-ID: <20170406153944.10058-4-hch@lst.de>
+References: <20170406153944.10058-1-hch@lst.de>
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20170406153944.10058-1-hch@lst.de>
+Sender: linux-block-owner@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Josef Bacik <jbacik@fb.com>, James Smart <james.smart@broadcom.com>, Konrad Rzeszutek Wilk <konrad.wilk@oracle.com>, =?UTF-8?q?Roger=20Pau=20Monn=C3=A9?= <roger.pau@citrix.com>, linux-scsi@vger.kernel.org, linux-nvme@lists.infradead.org, linux-block@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Apr 06 2017 at  5:29am -0400,
-Herbert Xu <herbert@gondor.apana.org.au> wrote:
+nvme_complete_async_event expects the little endian status code
+including the phase bit, and a new completion handler I plan to
+introduce will do so as well.
 
-> On Fri, Mar 10, 2017 at 02:44:26PM +0100, Ondrej Mosnacek wrote:
-> > Hi all,
-> > 
-> > I was tasked to post a summary the whole dm-crypt IV generation
-> > problem and all the suggested solutions along with their drawbacks, so
-> > here it goes...
-> 
-> Thanks for the summary.  It looks good to me.
+Change the status variable into the little endian format with the
+phase bit used in the NVMe CQE to fix / enable this.
 
-There were 4 different solutions presented.  In reading each, option 2
-looked the most promising.  BUT it requires a tradeoff/decision to be
-made, please see my earlier reply where I asked for your (and/or
-Milan's) thoughts:
-https://www.spinics.net/lists/linux-crypto/msg24586.html
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+---
+ drivers/nvme/host/fc.c | 16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
 
-Thanks,
-Mike
+diff --git a/drivers/nvme/host/fc.c b/drivers/nvme/host/fc.c
+index fc42172c796a..aad7f9c0be32 100644
+--- a/drivers/nvme/host/fc.c
++++ b/drivers/nvme/host/fc.c
+@@ -1147,7 +1147,7 @@ nvme_fc_fcpio_done(struct nvmefc_fcp_req *req)
+ 	struct nvme_fc_ctrl *ctrl = op->ctrl;
+ 	struct nvme_fc_queue *queue = op->queue;
+ 	struct nvme_completion *cqe = &op->rsp_iu.cqe;
+-	u16 status = NVME_SC_SUCCESS;
++	__le16 status = cpu_to_le16(NVME_SC_SUCCESS << 1);
+ 
+ 	/*
+ 	 * WARNING:
+@@ -1182,9 +1182,9 @@ nvme_fc_fcpio_done(struct nvmefc_fcp_req *req)
+ 				sizeof(op->rsp_iu), DMA_FROM_DEVICE);
+ 
+ 	if (atomic_read(&op->state) == FCPOP_STATE_ABORTED)
+-		status = NVME_SC_ABORT_REQ | NVME_SC_DNR;
++		status = cpu_to_le16((NVME_SC_ABORT_REQ | NVME_SC_DNR) << 1);
+ 	else if (freq->status)
+-		status = NVME_SC_FC_TRANSPORT_ERROR;
++		status = cpu_to_le16(NVME_SC_FC_TRANSPORT_ERROR << 1);
+ 
+ 	/*
+ 	 * For the linux implementation, if we have an unsuccesful
+@@ -1212,7 +1212,7 @@ nvme_fc_fcpio_done(struct nvmefc_fcp_req *req)
+ 		 */
+ 		if (freq->transferred_length !=
+ 			be32_to_cpu(op->cmd_iu.data_len)) {
+-			status = NVME_SC_FC_TRANSPORT_ERROR;
++			status = cpu_to_le16(NVME_SC_FC_TRANSPORT_ERROR << 1);
+ 			goto done;
+ 		}
+ 		op->nreq.result.u64 = 0;
+@@ -1229,15 +1229,15 @@ nvme_fc_fcpio_done(struct nvmefc_fcp_req *req)
+ 					freq->transferred_length ||
+ 			     op->rsp_iu.status_code ||
+ 			     op->rqno != le16_to_cpu(cqe->command_id))) {
+-			status = NVME_SC_FC_TRANSPORT_ERROR;
++			status = cpu_to_le16(NVME_SC_FC_TRANSPORT_ERROR << 1);
+ 			goto done;
+ 		}
+ 		op->nreq.result = cqe->result;
+-		status = le16_to_cpu(cqe->status) >> 1;
++		status = cqe->status;
+ 		break;
+ 
+ 	default:
+-		status = NVME_SC_FC_TRANSPORT_ERROR;
++		status = cpu_to_le16(NVME_SC_FC_TRANSPORT_ERROR << 1);
+ 		goto done;
+ 	}
+ 
+@@ -1249,7 +1249,7 @@ nvme_fc_fcpio_done(struct nvmefc_fcp_req *req)
+ 		return;
+ 	}
+ 
+-	blk_mq_complete_request(rq, status);
++	blk_mq_complete_request(rq, le16_to_cpu(status) >> 1);
+ }
+ 
+ static int
+-- 
+2.11.0
