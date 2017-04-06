@@ -1,47 +1,32 @@
-From: Johannes Thumshirn <jthumshirn@suse.de>
-Subject: Re: [PATCH 07/25] virtio_blk: don't use req->errors
-Date: Thu, 6 Apr 2017 20:55:42 +0200
-Message-ID: <20170406185541.GE8673@linux-x5ow.site>
+From: Konrad Rzeszutek Wilk <konrad.wilk@oracle.com>
+Subject: Re: kill req->errors
+Date: Thu, 6 Apr 2017 16:00:24 -0400
+Message-ID: <20170406200024.GC6140@localhost.localdomain>
 References: <20170406153944.10058-1-hch@lst.de>
-	<20170406153944.10058-8-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20170406153944.10058-8-hch@lst.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+In-Reply-To: <20170406153944.10058-1-hch@lst.de>
+Sender: linux-scsi-owner@vger.kernel.org
 To: Christoph Hellwig <hch@lst.de>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-scsi@vger.kernel.org, Konrad Rzeszutek Wilk <konrad.wilk@oracle.com>, Josef Bacik <jbacik@fb.com>, James Smart <james.smart@broadcom.com>, linux-nvme@lists.infradead.org, linux-block@vger.kernel.org, dm-devel@redhat.com, Roger Pau =?iso-8859-1?Q?Monn=E9?= <roger.pau@citrix.com>
+Cc: Jens Axboe <axboe@kernel.dk>, Josef Bacik <jbacik@fb.com>, James Smart <james.smart@broadcom.com>, Roger Pau =?iso-8859-1?Q?Monn=E9?= <roger.pau@citrix.com>, linux-scsi@vger.kernel.org, linux-nvme@lists.infradead.org, linux-block@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Apr 06, 2017 at 05:39:26PM +0200, Christoph Hellwig wrote:
-> Remove passing req->errors (which at that point is always 0) to
-> blk_mq_complete_requestq, and rely on the virtio status code for the
-blk_mq_complete_request ^
+On Thu, Apr 06, 2017 at 05:39:19PM +0200, Christoph Hellwig wrote:
+> Currently the request structure has an errors field that is used in
+> various different ways.  The oldest drivers use it as an error count,
+> blk-mq and the generic timeout code assume that it holds a Linux
+> errno for block completions, and various drivers use it for internal
+> status values, often overwriting them with Linux errnos later,
+> that is unless they are processing passthrough requests in which
+> case they'll leave their errors in it.
+> 
+> This series kills the ->errors field and replaced it with new fields
+> in the drivers (or an odd hack in a union in struct request for
+> two bitrotting old drivers).
+> 
+> Note that this series expects that the patch to remove the mg_disk
+> driver has been applied already on top of the block for-next tree.
 
-> serial number passthrough request.
-> =
-
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-> ---
-
-Otherwise looks good,
-Reviewed-by: Johannes Thumshirn <jthumshirn@suse.de>
-
--- =
-
-Johannes Thumshirn                                          Storage
-jthumshirn@suse.de                                +49 911 74053 689
-SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
-HRB 21284 (AG N=FCrnberg)
-Key fingerprint =3D EC38 9CAB C2C4 F25D 8600 D0D0 0393 969D 2D76 0850
+You wouldn't have a git tree to easily test it? Thanks.
