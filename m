@@ -1,69 +1,140 @@
-From: Shichangkuo <shi.changkuo@h3c.com>
-Subject: Re: [PATCH 9/9] multipath: fix segfault with
-	disable_changed_wwids
-Date: Fri, 7 Apr 2017 07:28:48 +0000
-Message-ID: <D1E4D02760513D4B90DC3B40FF32AF35A101CE6F@H3CMLB12-EX.srv.huawei-3com.com>
-References: <1491545798-22183-1-git-send-email-bmarzins@redhat.com>
-	<1491545798-22183-10-git-send-email-bmarzins@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1491545798-22183-10-git-send-email-bmarzins@redhat.com>
-Content-Language: zh-CN
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>
+From: Binoy Jayan <binoy.jayan@linaro.org>
+Subject: [RFC PATCH v5] IV Generation algorithms for dm-crypt
+Date: Fri,  7 Apr 2017 16:17:43 +0530
+Message-ID: <1491562064-23591-1-git-send-email-binoy.jayan@linaro.org>
+Return-path: <linux-crypto-owner@vger.kernel.org>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Oded <oded.golombek@arm.com>, Ofir <Ofir.Drang@arm.com>
+Cc: Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, linux-crypto@vger.kernel.org, Mark Brown <broonie@kernel.org>, Arnd Bergmann <arnd@arndb.de>, linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, Rajendra <rnayak@codeaurora.org>, Milan Broz <gmazyland@gmail.com>, Gilad <gilad@benyossef.com>, Binoy Jayan <binoy.jayan@linaro.org>
 List-Id: dm-devel.ids
 
-PiAtLS0tLU9yaWdpbmFsIE1lc3NhZ2UtLS0tLQo+IEZyb206IEJlbmphbWluIE1hcnppbnNraSBb
-bWFpbHRvOmJtYXJ6aW5zQHJlZGhhdC5jb21dCj4gU2VudDogRnJpZGF5LCBBcHJpbCAwNywgMjAx
-NyAyOjE3IFBNCj4gVG86IGRldmljZS1tYXBwZXIgZGV2ZWxvcG1lbnQKPiBDYzogQ2hyaXN0b3Bo
-ZSBWYXJvcXVpOyBzaGljaGFuZ2t1byAwOTcyNyAoQ2xvdWQpCj4gU3ViamVjdDogW1BBVENIIDkv
-OV0gbXVsdGlwYXRoOiBmaXggc2VnZmF1bHQgd2l0aCBkaXNhYmxlX2NoYW5nZWRfd3dpZHMKPgo+
-IFdoZW4gYSBwYXRoIHd3aWQgY2hhbmdlcywgdWV2X3VwZGF0ZV9wYXRoIHdhcyBkZXJlZmVyZW5j
-aW5nIHBwLT5tcHAKPiB3aXRob3V0IGNoZWNraW5nIGlmIGl0IHdhcyBOVUxMLgo+Cj4gQ2M6IFNo
-aWNoYW5na3VvIDxzaGkuY2hhbmdrdW9AaDNjLmNvbT4KPiBTaWduZWQtb2ZmLWJ5OiBCZW5qYW1p
-biBNYXJ6aW5za2kgPGJtYXJ6aW5zQHJlZGhhdC5jb20+Cj4gLS0tCj4gIG11bHRpcGF0aGQvbWFp
-bi5jIHwgMyArKy0KPiAgMSBmaWxlIGNoYW5nZWQsIDIgaW5zZXJ0aW9ucygrKSwgMSBkZWxldGlv
-bigtKQo+Cj4gZGlmZiAtLWdpdCBhL211bHRpcGF0aGQvbWFpbi5jIGIvbXVsdGlwYXRoZC9tYWlu
-LmMgaW5kZXggOTk1ZTU4MC4uMGM2MWNhYQo+IDEwMDY0NAo+IC0tLSBhL211bHRpcGF0aGQvbWFp
-bi5jCj4gKysrIGIvbXVsdGlwYXRoZC9tYWluLmMKPiBAQCAtMTAwMiw3ICsxMDAyLDggQEAgdWV2
-X3VwZGF0ZV9wYXRoIChzdHJ1Y3QgdWV2ZW50ICp1ZXYsIHN0cnVjdAo+IHZlY3RvcnMgKiB2ZWNz
-KQo+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGlmICghcHAtPnd3aWRfY2hhbmdlZCkg
-ewo+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgcHAtPnd3aWRfY2hhbmdl
-ZCA9IDE7Cj4gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBwcC0+dGljayA9
-IDE7Cj4gLSAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBkbV9mYWlsX3BhdGgo
-cHAtPm1wcC0+YWxpYXMsIHBwLT5kZXZfdCk7Cj4gKyAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICBpZiAocHAtPm1wcCkKPiArICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgZG1fZmFpbF9wYXRoKHBwLT5tcHAtPmFsaWFzLCBwcC0+ZGV2X3QpOwo+
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIH0KPiAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICBnb3RvIG91dDsKPiAgICAgICAgICAgICAgICAgICAgICAgfSBlbHNlCj4gLS0KPiAx
-LjguMy4xCgpUaGFua3MgYSBsb3QgZm9yIHlvdXIgd29yay4gSXQgbG9va3MgZ29vZCB0byBtZSwg
-YW5kIEkgd2lsbCBoYXZlIGEgdGVzdCBvbiB0aGlzIHBhdGNoLgoKVGhhbmtzLCBhZ2Fpbi4KQ2hh
-bmdrdW8KLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQrmnKzpgq7ku7blj4rlhbbpmYTku7blkKvmnInmna3l
-t57ljY7kuInpgJrkv6HmioDmnK/mnInpmZDlhazlj7jnmoTkv53lr4bkv6Hmga/vvIzku4XpmZDk
-uo7lj5HpgIHnu5nkuIrpnaLlnLDlnYDkuK3liJflh7oK55qE5Liq5Lq65oiW576k57uE44CC56aB
-5q2i5Lu75L2V5YW25LuW5Lq65Lul5Lu75L2V5b2i5byP5L2/55So77yI5YyF5ous5L2G5LiN6ZmQ
-5LqO5YWo6YOo5oiW6YOo5YiG5Zyw5rOE6Zyy44CB5aSN5Yi244CBCuaIluaVo+WPke+8ieacrOmC
-ruS7tuS4reeahOS/oeaBr+OAguWmguaenOaCqOmUmeaUtuS6huacrOmCruS7tu+8jOivt+aCqOer
-i+WNs+eUteivneaIlumCruS7tumAmuefpeWPkeS7tuS6uuW5tuWIoOmZpOacrArpgq7ku7bvvIEK
-VGhpcyBlLW1haWwgYW5kIGl0cyBhdHRhY2htZW50cyBjb250YWluIGNvbmZpZGVudGlhbCBpbmZv
-cm1hdGlvbiBmcm9tIEgzQywgd2hpY2ggaXMKaW50ZW5kZWQgb25seSBmb3IgdGhlIHBlcnNvbiBv
-ciBlbnRpdHkgd2hvc2UgYWRkcmVzcyBpcyBsaXN0ZWQgYWJvdmUuIEFueSB1c2Ugb2YgdGhlCmlu
-Zm9ybWF0aW9uIGNvbnRhaW5lZCBoZXJlaW4gaW4gYW55IHdheSAoaW5jbHVkaW5nLCBidXQgbm90
-IGxpbWl0ZWQgdG8sIHRvdGFsIG9yIHBhcnRpYWwKZGlzY2xvc3VyZSwgcmVwcm9kdWN0aW9uLCBv
-ciBkaXNzZW1pbmF0aW9uKSBieSBwZXJzb25zIG90aGVyIHRoYW4gdGhlIGludGVuZGVkCnJlY2lw
-aWVudChzKSBpcyBwcm9oaWJpdGVkLiBJZiB5b3UgcmVjZWl2ZSB0aGlzIGUtbWFpbCBpbiBlcnJv
-ciwgcGxlYXNlIG5vdGlmeSB0aGUgc2VuZGVyCmJ5IHBob25lIG9yIGVtYWlsIGltbWVkaWF0ZWx5
-IGFuZCBkZWxldGUgaXQhCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0
-LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+
+===============================================================================
+dm-crypt optimization for larger block sizes
+===============================================================================
+
+Currently, the iv generation algorithms are implemented in dm-crypt.c. The goal
+is to move these algorithms from the dm layer to the kernel crypto layer by
+implementing them as template ciphers so they can be used in relation with
+algorithms like aes, and with multiple modes like cbc, ecb etc. As part of this
+patchset, the iv-generation code is moved from the dm layer to the crypto layer
+and adapt the dm-layer to send a whole 'bio' (as defined in the block layer)
+at a time. Each bio contains the in memory representation of physically
+contiguous disk blocks. Since the bio itself may not be contiguous in main
+memory, the dm layer sets up a chained scatterlist of these blocks split into
+physically contiguous segments in memory so that DMA can be performed.
+
+One challenge in doing so is that the IVs are generated based on a 512-byte
+sector number. This infact limits the block sizes to 512 bytes. But this should
+not be a problem if a hardware with iv generation support is used. The geniv
+itself splits the segments into sectors so it could choose the IV based on
+sector number. But it could be modelled in hardware effectively by not
+splitting up the segments in the bio.
+
+Another challenge faced is that dm-crypt has an option to use multiple keys.
+The key selection is done based on the sector number. If the whole bio is
+encrypted / decrypted with the same key, the encrypted volumes will not be
+compatible with the original dm-crypt [without the changes]. So, the key
+selection code is moved to crypto layer so the neighboring sectors are
+encrypted with a different key.
+
+The dm layer allocates space for iv. The hardware drivers can choose to make
+use of this space to generate their IVs sequentially or allocate it on their
+own. This can be moved to crypto layer too. Postponing this decision until
+the requirement to integrate milan's changes are clear.
+
+Interface to the crypto layer - include/crypto/geniv.h
+
+More information on test procedure can be found in v1.
+
+-------------------------------------------------------------------------------
+Peformance comparison [Tests on 1 GiB Volume] on db410c
+Test script:
+https://github.com/binoyjayan/utilities/blob/master/utils/dmtest
+dmtest -d <block device> -o out.log -s 1024 -r 384 -f 768
+-------------------------------------------------------------------------------
+
+This includes tests done with dd, fio and bonnie++ with the original dm-crypt
+and the proposed solution with algorithm 'essiv(cbc(aes-arm))' implemented
+in software. The hardware is yet to be evaluated. These tests are to make sure
+there is no drastic performance degradation on systems without hw crypto.
+
+Tests with dd [direct i/o]
+
+Sequential read            -0.134 %
+Sequential Write           +0.091 %
+
+Tests with fio [Aggregate bandwidth - aggrb]
+
+Random Read                +0.358 %
+Random Write               +0.010 %
+
+Tests with bonnie++ [768 MiB File, 384 MiB Ram]
+after mounting dm-crypt target as ext4
+
+Sequential o/p [per-char]  -2.876 %
+Sequential o/p [per-blk]   +0.992 %
+Sequential o/p [re-write]  +4.465 %
+
+Sequential i/p [per-char] -0.453 %
+Sequential i/p [per-blk]  -0.740 %
+
+Sequential create         -0.255 %
+Sequential delete         +0.042 %
+Random create             -0.007 %
+Random delete             +0.454 %
+
+NB: The '+' sign shows improvement and '-' shows degradation.
+    The tests were performed with minimal cpu load.
+    Tests with higher cpu load to be done
+
+Revisions:
+----------
+
+v1: https://patchwork.kernel.org/patch/9439175
+v2: https://patchwork.kernel.org/patch/9471923
+v3: https://lkml.org/lkml/2017/1/18/170
+v4: https://patchwork.kernel.org/patch/9559665
+
+v4 --> v5
+----------
+
+1. Fix for the multiple instance issue in /proc/crypto
+2. Few cosmetic changes including struct alignment
+3. Simplified 'struct geniv_req_info'
+
+v3 --> v4
+----------
+Fix for the bug reported by Gilad Ben-Yossef.
+The element '__ctx' in 'struct skcipher_request req' overflowed into the
+element 'struct scatterlist src' which immediately follows 'req' in
+'struct geniv_subreq' and corrupted src.
+
+v2 --> v3
+----------
+
+1. Moved iv algorithms in dm-crypt.c for control
+2. Key management code moved from dm layer to cryto layer
+   so that cipher instance selection can be made depending on key_index
+3. The revision v2 had scatterlist nodes created for every sector in the bio.
+   It is modified to create only once scatterlist node to reduce memory
+   foot print. Synchronous requests are processed sequentially. Asynchronous
+   requests are processed in parallel and is freed in the async callback.
+4. Changed allocation for sub-requests using mempool
+
+v1 --> v2
+----------
+
+1. dm-crypt changes to process larger block sizes (one segment in a bio)
+2. Incorporated changes w.r.t. comments from Herbert.
+
+Binoy Jayan (1):
+  crypto: Add IV generation algorithms
+
+ drivers/md/dm-crypt.c  | 1916 ++++++++++++++++++++++++++++++++++--------------
+ include/crypto/geniv.h |   47 ++
+ 2 files changed, 1424 insertions(+), 539 deletions(-)
+ create mode 100644 include/crypto/geniv.h
+
+-- 
+Binoy Jayan
