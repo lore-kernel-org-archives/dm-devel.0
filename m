@@ -1,23 +1,69 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: kill req->errors
-Date: Fri, 7 Apr 2017 09:11:24 +0200
-Message-ID: <20170407071124.GA26481@lst.de>
-References: <20170406153944.10058-1-hch@lst.de> <20170406200024.GC6140@localhost.localdomain>
+From: Shichangkuo <shi.changkuo@h3c.com>
+Subject: Re: [PATCH 9/9] multipath: fix segfault with
+	disable_changed_wwids
+Date: Fri, 7 Apr 2017 07:28:48 +0000
+Message-ID: <D1E4D02760513D4B90DC3B40FF32AF35A101CE6F@H3CMLB12-EX.srv.huawei-3com.com>
+References: <1491545798-22183-1-git-send-email-bmarzins@redhat.com>
+	<1491545798-22183-10-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20170406200024.GC6140@localhost.localdomain>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Konrad Rzeszutek Wilk <konrad.wilk@oracle.com>
-Cc: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>, Josef Bacik <jbacik@fb.com>, James Smart <james.smart@broadcom.com>, Roger Pau =?iso-8859-1?Q?Monn=E9?= <roger.pau@citrix.com>, linux-scsi@vger.kernel.org, linux-nvme@lists.infradead.org, linux-block@vger.kernel.org, dm-devel@redhat.com
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1491545798-22183-10-git-send-email-bmarzins@redhat.com>
+Content-Language: zh-CN
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Apr 06, 2017 at 04:00:24PM -0400, Konrad Rzeszutek Wilk wrote:
-> You wouldn't have a git tree to easily test it? Thanks.
-
-git://git.infradead.org/users/hch/block.git request-errors
-
-Gitweb:
-
-http://git.infradead.org/users/hch/block.git/shortlog/refs/heads/request-errors
+PiAtLS0tLU9yaWdpbmFsIE1lc3NhZ2UtLS0tLQo+IEZyb206IEJlbmphbWluIE1hcnppbnNraSBb
+bWFpbHRvOmJtYXJ6aW5zQHJlZGhhdC5jb21dCj4gU2VudDogRnJpZGF5LCBBcHJpbCAwNywgMjAx
+NyAyOjE3IFBNCj4gVG86IGRldmljZS1tYXBwZXIgZGV2ZWxvcG1lbnQKPiBDYzogQ2hyaXN0b3Bo
+ZSBWYXJvcXVpOyBzaGljaGFuZ2t1byAwOTcyNyAoQ2xvdWQpCj4gU3ViamVjdDogW1BBVENIIDkv
+OV0gbXVsdGlwYXRoOiBmaXggc2VnZmF1bHQgd2l0aCBkaXNhYmxlX2NoYW5nZWRfd3dpZHMKPgo+
+IFdoZW4gYSBwYXRoIHd3aWQgY2hhbmdlcywgdWV2X3VwZGF0ZV9wYXRoIHdhcyBkZXJlZmVyZW5j
+aW5nIHBwLT5tcHAKPiB3aXRob3V0IGNoZWNraW5nIGlmIGl0IHdhcyBOVUxMLgo+Cj4gQ2M6IFNo
+aWNoYW5na3VvIDxzaGkuY2hhbmdrdW9AaDNjLmNvbT4KPiBTaWduZWQtb2ZmLWJ5OiBCZW5qYW1p
+biBNYXJ6aW5za2kgPGJtYXJ6aW5zQHJlZGhhdC5jb20+Cj4gLS0tCj4gIG11bHRpcGF0aGQvbWFp
+bi5jIHwgMyArKy0KPiAgMSBmaWxlIGNoYW5nZWQsIDIgaW5zZXJ0aW9ucygrKSwgMSBkZWxldGlv
+bigtKQo+Cj4gZGlmZiAtLWdpdCBhL211bHRpcGF0aGQvbWFpbi5jIGIvbXVsdGlwYXRoZC9tYWlu
+LmMgaW5kZXggOTk1ZTU4MC4uMGM2MWNhYQo+IDEwMDY0NAo+IC0tLSBhL211bHRpcGF0aGQvbWFp
+bi5jCj4gKysrIGIvbXVsdGlwYXRoZC9tYWluLmMKPiBAQCAtMTAwMiw3ICsxMDAyLDggQEAgdWV2
+X3VwZGF0ZV9wYXRoIChzdHJ1Y3QgdWV2ZW50ICp1ZXYsIHN0cnVjdAo+IHZlY3RvcnMgKiB2ZWNz
+KQo+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGlmICghcHAtPnd3aWRfY2hhbmdlZCkg
+ewo+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgcHAtPnd3aWRfY2hhbmdl
+ZCA9IDE7Cj4gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBwcC0+dGljayA9
+IDE7Cj4gLSAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBkbV9mYWlsX3BhdGgo
+cHAtPm1wcC0+YWxpYXMsIHBwLT5kZXZfdCk7Cj4gKyAgICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgICAgICBpZiAocHAtPm1wcCkKPiArICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgICAgICAgICAgZG1fZmFpbF9wYXRoKHBwLT5tcHAtPmFsaWFzLCBwcC0+ZGV2X3QpOwo+
+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIH0KPiAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgICBnb3RvIG91dDsKPiAgICAgICAgICAgICAgICAgICAgICAgfSBlbHNlCj4gLS0KPiAx
+LjguMy4xCgpUaGFua3MgYSBsb3QgZm9yIHlvdXIgd29yay4gSXQgbG9va3MgZ29vZCB0byBtZSwg
+YW5kIEkgd2lsbCBoYXZlIGEgdGVzdCBvbiB0aGlzIHBhdGNoLgoKVGhhbmtzLCBhZ2Fpbi4KQ2hh
+bmdrdW8KLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQrmnKzpgq7ku7blj4rlhbbpmYTku7blkKvmnInmna3l
+t57ljY7kuInpgJrkv6HmioDmnK/mnInpmZDlhazlj7jnmoTkv53lr4bkv6Hmga/vvIzku4XpmZDk
+uo7lj5HpgIHnu5nkuIrpnaLlnLDlnYDkuK3liJflh7oK55qE5Liq5Lq65oiW576k57uE44CC56aB
+5q2i5Lu75L2V5YW25LuW5Lq65Lul5Lu75L2V5b2i5byP5L2/55So77yI5YyF5ous5L2G5LiN6ZmQ
+5LqO5YWo6YOo5oiW6YOo5YiG5Zyw5rOE6Zyy44CB5aSN5Yi244CBCuaIluaVo+WPke+8ieacrOmC
+ruS7tuS4reeahOS/oeaBr+OAguWmguaenOaCqOmUmeaUtuS6huacrOmCruS7tu+8jOivt+aCqOer
+i+WNs+eUteivneaIlumCruS7tumAmuefpeWPkeS7tuS6uuW5tuWIoOmZpOacrArpgq7ku7bvvIEK
+VGhpcyBlLW1haWwgYW5kIGl0cyBhdHRhY2htZW50cyBjb250YWluIGNvbmZpZGVudGlhbCBpbmZv
+cm1hdGlvbiBmcm9tIEgzQywgd2hpY2ggaXMKaW50ZW5kZWQgb25seSBmb3IgdGhlIHBlcnNvbiBv
+ciBlbnRpdHkgd2hvc2UgYWRkcmVzcyBpcyBsaXN0ZWQgYWJvdmUuIEFueSB1c2Ugb2YgdGhlCmlu
+Zm9ybWF0aW9uIGNvbnRhaW5lZCBoZXJlaW4gaW4gYW55IHdheSAoaW5jbHVkaW5nLCBidXQgbm90
+IGxpbWl0ZWQgdG8sIHRvdGFsIG9yIHBhcnRpYWwKZGlzY2xvc3VyZSwgcmVwcm9kdWN0aW9uLCBv
+ciBkaXNzZW1pbmF0aW9uKSBieSBwZXJzb25zIG90aGVyIHRoYW4gdGhlIGludGVuZGVkCnJlY2lw
+aWVudChzKSBpcyBwcm9oaWJpdGVkLiBJZiB5b3UgcmVjZWl2ZSB0aGlzIGUtbWFpbCBpbiBlcnJv
+ciwgcGxlYXNlIG5vdGlmeSB0aGUgc2VuZGVyCmJ5IHBob25lIG9yIGVtYWlsIGltbWVkaWF0ZWx5
+IGFuZCBkZWxldGUgaXQhCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0
+LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
