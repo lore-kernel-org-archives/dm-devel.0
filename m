@@ -1,48 +1,59 @@
-From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH v4 6/6] dm rq: Avoid that request processing stalls sporadically
-Date: Fri, 7 Apr 2017 11:16:54 -0700
-Message-ID: <20170407181654.27836-7-bart.vanassche@sandisk.com>
-References: <20170407181654.27836-1-bart.vanassche@sandisk.com>
+From: Somasundaram Krishnasamy <somasundaram.krishnasamy@oracle.com>
+Subject: [PATCH] dm era: Save spacemap metadata root after the
+	pre-commit
+Date: Fri,  7 Apr 2017 12:14:55 -0700
+Message-ID: <20170407191455.14118-1-somasundaram.krishnasamy@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20170407181654.27836-1-bart.vanassche@sandisk.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>
-Cc: linux-block@vger.kernel.org, linux-scsi@vger.kernel.org, Bart Van Assche <bart.vanassche@sandisk.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, neilb@suse.de
+Cc: Somasundaram Krishnasamy <somasundaram.krishnasamy@oracle.com>
 List-Id: dm-devel.ids
 
-While running the srp-test software I noticed that request
-processing stalls sporadically at the beginning of a test, namely
-when mkfs is run against a dm-mpath device. Every time when that
-happened the following command was sufficient to resume request
-processing:
+When committing era metadata to disk, it doesn't always save the latest
+spacemap metadata root in superblock. Due to this, metadata is getting
+corrupted sometimes when reopening the device. The correct order of update
+should be, pre-commit (shadows spacemap root), save the spacemap root
+(newly shadowed block) to in-core superblock and then the final commit.
 
-    echo run >/sys/kernel/debug/block/dm-0/state
-
-This patch avoids that such request processing stalls occur. The
-test I ran is as follows:
-
-    while srp-test/run_tests -d -r 30 -t 02-mq; do :; done
-
-Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
-Cc: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com
+Signed-off-by: Somasundaram Krishnasamy <somasundaram.krishnasamy@oracle.com>
 ---
- drivers/md/dm-rq.c | 1 +
- 1 file changed, 1 insertion(+)
+ drivers/md/dm-era-target.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
-index 6886bf160fb2..d19af1d21f4c 100644
---- a/drivers/md/dm-rq.c
-+++ b/drivers/md/dm-rq.c
-@@ -755,6 +755,7 @@ static int dm_mq_queue_rq(struct blk_mq_hw_ctx *hctx,
- 		/* Undo dm_start_request() before requeuing */
- 		rq_end_stats(md, rq);
- 		rq_completed(md, rq_data_dir(rq), false);
-+		blk_mq_delay_run_hw_queue(hctx, 100/*ms*/);
- 		return BLK_MQ_RQ_QUEUE_BUSY;
+diff --git a/drivers/md/dm-era-target.c b/drivers/md/dm-era-target.c
+index ad913cd4aded..330151d6ee42 100644
+--- a/drivers/md/dm-era-target.c
++++ b/drivers/md/dm-era-target.c
+@@ -957,15 +957,15 @@ static int metadata_commit(struct era_metadata *md)
+ 		}
+ 	}
+ 
+-	r = save_sm_root(md);
++	r = dm_tm_pre_commit(md->tm);
+ 	if (r) {
+-		DMERR("%s: save_sm_root failed", __func__);
++		DMERR("%s: pre commit failed", __func__);
+ 		return r;
+ 	}
+ 
+-	r = dm_tm_pre_commit(md->tm);
++	r = save_sm_root(md);
+ 	if (r) {
+-		DMERR("%s: pre commit failed", __func__);
++		DMERR("%s: save_sm_root failed", __func__);
+ 		return r;
  	}
  
 -- 
-2.12.0
+2.10.0
