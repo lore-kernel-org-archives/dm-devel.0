@@ -1,7 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 2/9] multipath-tools: remove incdir from Makefiles
-Date: Fri,  7 Apr 2017 01:16:31 -0500
-Message-ID: <1491545798-22183-3-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 9/9] multipath: fix segfault with
+	disable_changed_wwids
+Date: Fri,  7 Apr 2017 01:16:38 -0500
+Message-ID: <1491545798-22183-10-git-send-email-bmarzins@redhat.com>
 References: <1491545798-22183-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -18,76 +19,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
+Cc: Shichangkuo <shi.changkuo@h3c.com>
 List-Id: dm-devel.ids
 
-Makefile.in defines both incdir and includedir, and they are both the
-same. This patch removes incdir, and makes all the Makefiles use
-includedir.
+When a path wwid changes, uev_update_path was dereferencing pp->mpp
+without checking if it was NULL.
 
+Cc: Shichangkuo <shi.changkuo@h3c.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- Makefile.inc             | 1 -
- libmpathcmd/Makefile     | 6 +++---
- libmpathpersist/Makefile | 6 +++---
- 3 files changed, 6 insertions(+), 7 deletions(-)
+ multipathd/main.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/Makefile.inc b/Makefile.inc
-index 740081e..c8b1142 100644
---- a/Makefile.inc
-+++ b/Makefile.inc
-@@ -55,7 +55,6 @@ man8dir		= $(prefix)/usr/share/man/man8
- man5dir		= $(prefix)/usr/share/man/man5
- man3dir		= $(prefix)/usr/share/man/man3
- syslibdir	= $(prefix)/$(LIB)
--incdir		= $(prefix)/usr/include
- libdir		= $(prefix)/$(LIB)/multipath
- unitdir		= $(prefix)/$(SYSTEMDPATH)/systemd/system
- mpathpersistdir	= $(TOPDIR)/libmpathpersist
-diff --git a/libmpathcmd/Makefile b/libmpathcmd/Makefile
-index b8e29cb..9cda94c 100644
---- a/libmpathcmd/Makefile
-+++ b/libmpathcmd/Makefile
-@@ -16,13 +16,13 @@ install: $(LIBS)
- 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(syslibdir)
- 	$(INSTALL_PROGRAM) -m 755 $(LIBS) $(DESTDIR)$(syslibdir)/$(LIBS)
- 	$(LN) $(LIBS) $(DESTDIR)$(syslibdir)/$(DEVLIB)
--	$(INSTALL_PROGRAM) -d $(DESTDIR)$(incdir)
--	$(INSTALL_PROGRAM) -m 644 mpath_cmd.h $(DESTDIR)$(incdir)
-+	$(INSTALL_PROGRAM) -d $(DESTDIR)$(includedir)
-+	$(INSTALL_PROGRAM) -m 644 mpath_cmd.h $(DESTDIR)$(includedir)
- 
- uninstall:
- 	$(RM) $(DESTDIR)$(syslibdir)/$(LIBS)
- 	$(RM) $(DESTDIR)$(syslibdir)/$(DEVLIB)
--	$(RM) $(DESTDIR)$(incdir)/mpath_cmd.h
-+	$(RM) $(DESTDIR)$(includedir)/mpath_cmd.h
- 
- clean:
- 	$(RM) core *.a *.o *.so *.so.* *.gz
-diff --git a/libmpathpersist/Makefile b/libmpathpersist/Makefile
-index 96da639..857c8d8 100644
---- a/libmpathpersist/Makefile
-+++ b/libmpathpersist/Makefile
-@@ -24,17 +24,17 @@ install: $(LIBS)
- 	$(INSTALL_PROGRAM) -m 755 $(LIBS) $(DESTDIR)$(syslibdir)/$(LIBS)
- 	$(INSTALL_PROGRAM) -m 755 -d $(DESTDIR)$(syslibdir)
- 	$(INSTALL_PROGRAM) -m 755 -d $(DESTDIR)$(man3dir)
--	$(INSTALL_PROGRAM) -m 755 -d $(DESTDIR)$(incdir)
-+	$(INSTALL_PROGRAM) -m 755 -d $(DESTDIR)$(includedir)
- 	$(LN) $(LIBS) $(DESTDIR)$(syslibdir)/$(DEVLIB)
- 	$(INSTALL_PROGRAM) -m 644 mpath_persistent_reserve_in.3.gz $(DESTDIR)$(man3dir)
- 	$(INSTALL_PROGRAM) -m 644 mpath_persistent_reserve_out.3.gz $(DESTDIR)$(man3dir)
--	$(INSTALL_PROGRAM) -m 644 mpath_persist.h $(DESTDIR)$(incdir)
-+	$(INSTALL_PROGRAM) -m 644 mpath_persist.h $(DESTDIR)$(includedir)
- 
- uninstall:
- 	$(RM) $(DESTDIR)$(syslibdir)/$(LIBS)
- 	$(RM) $(DESTDIR)$(man3dir)/mpath_persistent_reserve_in.3.gz
- 	$(RM) $(DESTDIR)$(man3dir)/mpath_persistent_reserve_out.3.gz
--	$(RM) $(DESTDIR)$(incdir)/mpath_persist.h
-+	$(RM) $(DESTDIR)$(includedir)/mpath_persist.h
- 	$(RM) $(DESTDIR)$(syslibdir)/$(DEVLIB)
- 
- clean:
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 995e580..0c61caa 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1002,7 +1002,8 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
+ 				if (!pp->wwid_changed) {
+ 					pp->wwid_changed = 1;
+ 					pp->tick = 1;
+-					dm_fail_path(pp->mpp->alias, pp->dev_t);
++					if (pp->mpp)
++						dm_fail_path(pp->mpp->alias, pp->dev_t);
+ 				}
+ 				goto out;
+ 			} else
 -- 
 1.8.3.1
