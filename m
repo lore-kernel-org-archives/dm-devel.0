@@ -1,7 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 1/9] libdmmp: minor Makefile cleanup
-Date: Fri,  7 Apr 2017 01:16:30 -0500
-Message-ID: <1491545798-22183-2-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 5/9] libdmmp: move libdmmp.pc install location
+Date: Fri,  7 Apr 2017 01:16:34 -0500
+Message-ID: <1491545798-22183-6-git-send-email-bmarzins@redhat.com>
 References: <1491545798-22183-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -20,65 +20,27 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-This patch deletes the "/" after $(DESTDIR) and removes
-libdmmp_speed_test on 'make clean'
+/usr/share/pkgconfig is for non-architecture specific modules, and
+/usr/lib/pkgconfig is for architecture specific modules. libdmmp.pc is
+architecture specific, so it belongs in /usr/lib/pkgconfig
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libdmmp/Makefile      | 18 +++++++++---------
- libdmmp/test/Makefile |  2 +-
- 2 files changed, 10 insertions(+), 10 deletions(-)
+ Makefile.inc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libdmmp/Makefile b/libdmmp/Makefile
-index 082078a..1c5329a 100644
---- a/libdmmp/Makefile
-+++ b/libdmmp/Makefile
-@@ -29,27 +29,27 @@ $(LIBS): $(OBJS)
- install:
- 	$(INSTALL_PROGRAM) -m 755 $(LIBS) $(DESTDIR)$(syslibdir)/$(LIBS)
- 	$(INSTALL_PROGRAM) -m 644 -D \
--		$(HEADERS) $(DESTDIR)/$(includedir)/$(HEADERS)
--	$(LN) $(LIBS) $(DESTDIR)/$(syslibdir)/$(DEVLIB)
-+		$(HEADERS) $(DESTDIR)$(includedir)/$(HEADERS)
-+	$(LN) $(LIBS) $(DESTDIR)$(syslibdir)/$(DEVLIB)
- 	$(INSTALL_PROGRAM) -m 644 -D \
--		$(PKGFILE).in $(DESTDIR)/$(pkgconfdir)/$(PKGFILE)
-+		$(PKGFILE).in $(DESTDIR)$(pkgconfdir)/$(PKGFILE)
- 	perl -i -pe 's|__VERSION__|$(LIBDMMP_VERSION)|g' \
--		$(DESTDIR)/$(pkgconfdir)/$(PKGFILE)
-+		$(DESTDIR)$(pkgconfdir)/$(PKGFILE)
- 	perl -i -pe 's|__LIBDIR__|$(syslibdir)|g' \
--		$(DESTDIR)/$(pkgconfdir)/$(PKGFILE)
-+		$(DESTDIR)$(pkgconfdir)/$(PKGFILE)
- 	perl -i -pe 's|__INCLUDEDIR__|$(includedir)|g' \
--		$(DESTDIR)/$(pkgconfdir)/$(PKGFILE)
-+		$(DESTDIR)$(pkgconfdir)/$(PKGFILE)
- 	@for file in docs/man/*.3.gz; do \
- 		$(INSTALL_PROGRAM) -m 644 -D \
- 			$$file \
--			$(DESTDIR)/$(man3dir)/ || exit $?; \
-+			$(DESTDIR)$(man3dir)/ || exit $?; \
- 	done
+diff --git a/Makefile.inc b/Makefile.inc
+index c8b1142..8361e6c 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -62,7 +62,7 @@ mpathcmddir	= $(TOPDIR)/libmpathcmd
+ thirdpartydir	= $(TOPDIR)/third-party
+ libdmmpdir	= $(TOPDIR)/libdmmp
+ includedir	= $(prefix)/usr/include
+-pkgconfdir	= $(prefix)/usr/share/pkgconfig
++pkgconfdir	= $(prefix)/$(LIB)/pkgconfig
  
- uninstall:
- 	$(RM) $(DESTDIR)$(syslibdir)/$(LIBS)
- 	$(RM) $(DESTDIR)$(includedir)/$(HEADERS)
--	$(RM) $(DESTDIR)/$(syslibdir)/$(DEVLIB)
--	@for file in $(DESTDIR)/$(man3dir)/dmmp_*; do \
-+	$(RM) $(DESTDIR)$(syslibdir)/$(DEVLIB)
-+	@for file in $(DESTDIR)$(man3dir)/dmmp_*; do \
- 		$(RM) $$file; \
- 	done
- 	$(RM) $(DESTDIR)$(man3dir)/libdmmp.h*
-diff --git a/libdmmp/test/Makefile b/libdmmp/test/Makefile
-index 68f1af3..acfb3bf 100644
---- a/libdmmp/test/Makefile
-+++ b/libdmmp/test/Makefile
-@@ -27,4 +27,4 @@ speed_test: $(SPD_TEST_EXEC)
- 		time -p ./$(SPD_TEST_EXEC)
- 
- clean:
--	rm -f $(TEST_EXEC)
-+	rm -f $(TEST_EXEC) $(SPD_TEST_EXEC)
+ GZIP		= gzip -9 -c
+ RM		= rm -f
 -- 
 1.8.3.1
