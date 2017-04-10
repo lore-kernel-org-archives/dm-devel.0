@@ -1,64 +1,34 @@
-From: Milan Broz <gmazyland@gmail.com>
-Subject: Re: [RFC PATCH v5] IV Generation algorithms for dm-crypt
-Date: Mon, 10 Apr 2017 16:00:39 +0200
-Message-ID: <774a9713-05ef-0162-0203-461254a04f6e@gmail.com>
-References: <1491562064-23591-1-git-send-email-binoy.jayan@linaro.org>
+From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Subject: RFC: remove REQ_OP_WRITE_SAME
+Date: Mon, 10 Apr 2017 18:07:59 +0200
+Message-ID: <20170410160807.23674-1-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <1491562064-23591-1-git-send-email-binoy.jayan@linaro.org>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Binoy Jayan <binoy.jayan@linaro.org>, Oded <oded.golombek@arm.com>, Ofir <Ofir.Drang@arm.com>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, linux-crypto@vger.kernel.org, Mark Brown <broonie@kernel.org>, Arnd Bergmann <arnd@arndb.de>, linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, Rajendra <rnayak@codeaurora.org>, Milan Broz <gmazyland@gmail.com>, Gilad <gilad@benyossef.com>
+Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+List-Unsubscribe: <http://lists.linbit.com/mailman/options/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
+List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
+List-Subscribe: <http://lists.linbit.com/mailman/listinfo/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
+Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+To: axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org, lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org, target-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
 List-Id: dm-devel.ids
 
-On 04/07/2017 12:47 PM, Binoy Jayan wrote:
-> ===============================================================================
-> dm-crypt optimization for larger block sizes
-> ===============================================================================
-...
-> Tests with dd [direct i/o]
-> 
-> Sequential read            -0.134 %
-> Sequential Write           +0.091 %
-> 
-> Tests with fio [Aggregate bandwidth - aggrb]
-> 
-> Random Read                +0.358 %
-> Random Write               +0.010 %
-> 
-> Tests with bonnie++ [768 MiB File, 384 MiB Ram]
-> after mounting dm-crypt target as ext4
-> 
-> Sequential o/p [per-char]  -2.876 %
-> Sequential o/p [per-blk]   +0.992 %
-> Sequential o/p [re-write]  +4.465 %
-> 
-> Sequential i/p [per-char] -0.453 %
-> Sequential i/p [per-blk]  -0.740 %
-> 
-> Sequential create         -0.255 %
-> Sequential delete         +0.042 %
-> Random create             -0.007 %
-> Random delete             +0.454 %
-> 
-> NB: The '+' sign shows improvement and '-' shows degradation.
->     The tests were performed with minimal cpu load.
->     Tests with higher cpu load to be done
+Now that we are using REQ_OP_WRITE_ZEROES for all zeroing needs in the
+kernel there is very little use left for REQ_OP_WRITE_SAME.  We only
+have two callers left, and both just export optional protocol features
+to remote systems: DRBD and the target code.
 
-Well, it is good that there is no performance degradation but it
-would be nice to have some user of it that proves it is really
-working for your hw.
+Do we have any major users of those?  If not removing it will clean up
+a few warts in the block layer.
 
-FYI - with patch that increases dmcrypt sector size to 4k
-I can see improvement in speed usually in 5-15% with sync AES-NI
-(depends on access pattern), with dmcrypt mapped to memory
-it is even close to 20% speed up (but such a configuration is
-completely artificial).
+    git://git.infradead.org/users/hch/block.git delete-write-same
 
-I wonder why increased dmcrypt sector size does not work for your hw,
-it should help as well (and can be combiuned later with this IV approach).
-(For native 4k drives this should be used in future anyway...)
+Gitweb:
 
-Milan
+    http://git.infradead.org/users/hch/block.git/shortlog/refs/heads/delete-write-same
