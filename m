@@ -1,113 +1,413 @@
-From: NeilBrown <neilb@suse.com>
-Subject: [PATCH] dm-verity-fec: don't check for failure from mempool_alloc(GFP_NOIO)
-Date: Mon, 10 Apr 2017 12:13:00 +1000
-Message-ID: <87bms5xb6b.fsf@notabene.neil.brown.name>
-Mime-Version: 1.0
-Content-Type: multipart/signed; boundary="=-=-=";
-        micalg=pgp-sha256; protocol="application/pgp-signature"
+From: Peter Rajnoha <prajnoha@redhat.com>
+Subject: [PATCH v2] kobject: support passing in variables for synthetic uevents
+Date: Mon, 10 Apr 2017 12:31:18 +0200
+Message-ID: <20170410103118.20660-1-prajnoha@redhat.com>
+References: <20170408161837.GA27387@kroah.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20170408161837.GA27387@kroah.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: Sami Tolvanen <samitolvanen@google.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+To: gregkh@linuxfoundation.org
+Cc: jeyu@redhat.com, rusty@rustcorp.com.au, linux-kernel@vger.kernel.org, dm-devel@redhat.com, kay@redhat.com, harald@redhat.com, Peter Rajnoha <prajnoha@redhat.com>
 List-Id: dm-devel.ids
 
---=-=-=
-Content-Type: text/plain
-Content-Transfer-Encoding: quoted-printable
+This patch makes it possible to pass additional arguments in addition
+to uevent action name when writing /sys/.../uevent attribute. These
+additional arguments are then inserted into generated synthetic uevent
+as additional environment variables.
 
+Before, we were not able to pass any additional uevent environment
+variables for synthetic uevents. This made it hard to identify such uevents
+properly in userspace to make proper distinction between genuine uevents
+originating from kernel and synthetic uevents triggered from userspace.
+Also, it was not possible to pass any additional information which would
+make it possible to optimize and change the way the synthetic uevents are
+processed back in userspace based on the originating environment of the
+triggering action in userspace. With the extra additional variables, we are
+able to pass through this extra information needed and also it makes it
+possible to synchronize with such synthetic uevents as they can be clearly
+identified back in userspace.
 
-mempool_alloc() cannot fail for GFP_NOIO allocation,
-so there is no point testing for failure.
+The format for writing the uevent attribute is following:
 
-One place the code tested for failure was passing "0" as the GFP
-flags.  This is most unusually and is probably meant to be GFP_NOIO,
-so that is changed.
+        ACTION [UUID [KEY=VALUE ...]
 
-Allocation from ->extra_pool and ->prealloc_pool are repeated before
-releasing the previous allocation.  This can deadlock if the code is
-servicing a write under high memory pressure.  To avoid deadlocks,
-change these to use GFP_NOWAIT and leave the error handling in place.
+There's no change in how "ACTION" is recognized - it stays the same
+("add", "change", "remove"). The "ACTION" is the only argument required
+to generate synthetic uevent, the rest of arguments, that this patch
+adds support for, are optional.
 
-Signed-off-by: NeilBrown <neilb@suse.com>
-=2D--
- drivers/md/dm-verity-fec.c | 21 +++++----------------
- 1 file changed, 5 insertions(+), 16 deletions(-)
+The "UUID" is considered as transaction identifier so it's possible to
+use the same UUID value for one or more synthetic uevents in which case
+we logically group these uevents together for any userspace listeners.
+The "UUID" is expected to be in "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+format where "x" is a hex digit. The value appears in uevent as
+"SYNTH_UUID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" environment variable.
 
-diff --git a/drivers/md/dm-verity-fec.c b/drivers/md/dm-verity-fec.c
-index 78f36012eaca..16e224fbd356 100644
-=2D-- a/drivers/md/dm-verity-fec.c
-+++ b/drivers/md/dm-verity-fec.c
-@@ -308,19 +308,14 @@ static int fec_alloc_bufs(struct dm_verity *v, struct=
- dm_verity_fec_io *fio)
+The "KEY=VALUE" pairs can contain alphanumeric characters only. It's
+possible to define zero or more more pairs - each pair is then delimited
+by a space character " ". Each pair appears in synthetic uevents as
+"SYNTH_ARG_KEY=VALUE" environment variable. That means the KEY name gains
+"SYNTH_ARG_" prefix to avoid possible collisions with existing variables.
+To pass the "KEY=VALUE" pairs, it's also required to pass in the "UUID"
+part for the synthetic uevent first.
+
+If "UUID" is not passed in, the generated synthetic uevent gains
+"SYNTH_UUID=0" environment variable automatically so it's possible to
+identify this situation in userspace when reading generated uevent and so
+we can still make a difference between genuine and synthetic uevents.
+
+Changes from v1:
+
+- Add Documentation/ABI/testing/sysfs-uevent describing extended format
+  for writing the /sys/.../uevent file.
+
+Signed-off-by: Peter Rajnoha <prajnoha@redhat.com>
+---
+ Documentation/ABI/testing/sysfs-uevent |  47 ++++++++++
+ drivers/base/bus.c                     |  10 +-
+ drivers/base/core.c                    |   7 +-
+ include/linux/kobject.h                |   4 +-
+ kernel/module.c                        |   5 +-
+ lib/kobject_uevent.c                   | 167 ++++++++++++++++++++++++++++++---
+ 6 files changed, 207 insertions(+), 33 deletions(-)
+ create mode 100644 Documentation/ABI/testing/sysfs-uevent
+
+diff --git a/Documentation/ABI/testing/sysfs-uevent b/Documentation/ABI/testing/sysfs-uevent
+new file mode 100644
+index 0000000..95fb539
+--- /dev/null
++++ b/Documentation/ABI/testing/sysfs-uevent
+@@ -0,0 +1,47 @@
++What:           /sys/.../uevent
++Date:           March 2017
++KernelVersion:  4.11
++Contact:        Linux kernel mailing list <linux-kernel@vger.kernel.org>
++Description:
++                Enable passing additional variables for synthetic uevents that
++                are generated by writing /sys/.../uevent file.
++
++                Recognized extended format is ACTION [UUID [KEY=VALUE ...].
++
++                The ACTION is compulsory - it is the name of the uevent action
++                ("add", "change", "remove"). There is no change compared to
++                previous functionality here. The rest of the extended format
++                is optional.
++
++                You need to pass UUID first before any KEY=VALUE pairs.
++                The UUID must be in "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
++                format where 'x' is a hex digit. The UUID is considered to be
++                a transaction identifier so it's possible to use the same UUID
++                value for one or more synthetic uevents in which case we
++                logically group these uevents together for any userspace
++                listeners. The UUID value appears in uevent as
++                "SYNTH_UUID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" environment
++                variable.
++
++                If UUID is not passed in, the generated synthetic uevent gains
++                "SYNTH_UUID=0" environment variable automatically.
++
++                The KEY=VALUE pairs can contain alphanumeric characters only.
++                It's possible to define zero or more pairs - each pair is then
++                delimited by a space character ' '. Each pair appears in
++                synthetic uevent as "SYNTH_ARG_KEY=VALUE". That means the KEY
++                name gains "SYNTH_ARG_" prefix to avoid possible collisions
++                with existing variables.
++
++                Example of valid sequence written to the uevent file:
++
++                    add fe4d7c9d-b8c6-4a70-9ef1-3d8a58d18eed A=1 B=abc
++
++                This generates synthetic uevent including these variables:
++
++                    ACTION=add
++                    SYNTH_ARG_A=1
++                    SYNTH_ARG_B=abc
++                    SYNTH_UUID=fe4d7c9d-b8c6-4a70-9ef1-3d8a58d18eed
++Users:
++                udev, userspace tools generating synthetic uevents
+diff --git a/drivers/base/bus.c b/drivers/base/bus.c
+index 6470eb8..f945f2f 100644
+--- a/drivers/base/bus.c
++++ b/drivers/base/bus.c
+@@ -648,10 +648,7 @@ static void remove_probe_files(struct bus_type *bus)
+ static ssize_t uevent_store(struct device_driver *drv, const char *buf,
+ 			    size_t count)
  {
- 	unsigned n;
-=20
-=2D	if (!fio->rs) {
-=2D		fio->rs =3D mempool_alloc(v->fec->rs_pool, 0);
-=2D		if (unlikely(!fio->rs)) {
-=2D			DMERR("failed to allocate RS");
-=2D			return -ENOMEM;
-=2D		}
-=2D	}
-+	if (!fio->rs)
-+		fio->rs =3D mempool_alloc(v->fec->rs_pool, GFP_NOIO);
-=20
- 	fec_for_each_prealloc_buffer(n) {
- 		if (fio->bufs[n])
- 			continue;
-=20
-=2D		fio->bufs[n] =3D mempool_alloc(v->fec->prealloc_pool, GFP_NOIO);
-+		fio->bufs[n] =3D mempool_alloc(v->fec->prealloc_pool, GFP_NOWAIT);
- 		if (unlikely(!fio->bufs[n])) {
- 			DMERR("failed to allocate FEC buffer");
- 			return -ENOMEM;
-@@ -332,22 +327,16 @@ static int fec_alloc_bufs(struct dm_verity *v, struct=
- dm_verity_fec_io *fio)
- 		if (fio->bufs[n])
- 			continue;
-=20
-=2D		fio->bufs[n] =3D mempool_alloc(v->fec->extra_pool, GFP_NOIO);
-+		fio->bufs[n] =3D mempool_alloc(v->fec->extra_pool, GFP_NOWAIT);
- 		/* we can manage with even one buffer if necessary */
- 		if (unlikely(!fio->bufs[n]))
- 			break;
- 	}
- 	fio->nbufs =3D n;
-=20
-=2D	if (!fio->output) {
-+	if (!fio->output)
- 		fio->output =3D mempool_alloc(v->fec->output_pool, GFP_NOIO);
-=20
-=2D		if (!fio->output) {
-=2D			DMERR("failed to allocate FEC page");
-=2D			return -ENOMEM;
-=2D		}
-=2D	}
-=2D
- 	return 0;
+-	enum kobject_action action;
+-
+-	if (kobject_action_type(buf, count, &action) == 0)
+-		kobject_uevent(&drv->p->kobj, action);
++	kobject_synth_uevent(&drv->p->kobj, buf, count);
+ 	return count;
  }
-=20
-=2D-=20
-2.12.2
-
-
---=-=-=
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQIyBAEBCAAdFiEEG8Yp69OQ2HB7X0l6Oeye3VZigbkFAljq6iwACgkQOeye3VZi
-gbnW9w/4/K2S6VE7G0+ozAsiN5E7UIArJ7X2BYQg2QZ9Z8m9Aa2Ibf7wUTCgOLTZ
-C1L+U9YqzqLq0Zc/Zp9JPaZ/xDQYeMQbFGUldmYCUxH+D4bpcS2MrD72sDIrOxZS
-A3c2lcwi2MgC/Co3DTrLoBiu51qAJqjxwyO/4j0vmLe6oqfM6ItZEfQOBQpE15is
-b1i1TvOO/QZBiSQMEVyP8WzA3e71WNRcaaJQIqDxqZ41geczwNvpHr52QPJmUjQF
-qmIzbOvKIZnBWus1E3jUrDHiQKyv5peh4l8XvkDQDfRH1PEsSeEhGNTg1/GTUvEz
-yTeh6Q5/m9SVEIw9qdT+fjp8wuYkMjr9vApzJkwXbk5LYA+8+9LINTKg62GugWok
-TzqM/YI0+S/8JkPOHeQRjvsUP4yrI8yj74xFH+1R0A+RKpof9E5XNg/uVyYBKcRg
-LNIJ8oh5/RLHAw+XTJVHVSKSz/n0jvOkBNge6RECQZ/hqrdl9jyYHjnthrVyFc5s
-Aft5jfGj64OUXnVaVc4Lpyjnc8xuoaX6DdPE9RmRRL5/HdrruoHl+tnxj7p+Gaai
-EYUxPuS43zeVYdJcpHXG7TyLMmLE/rfb9XLNeH+TnywCkbYv5F3UHbATbg/uzOG5
-GO6qLb6WgiLpmcTvdymk9nUS6koBQ87/XVqlZqUIi0kiQSmCMw==
-=nL88
------END PGP SIGNATURE-----
---=-=-=--
+ static DRIVER_ATTR_WO(uevent);
+@@ -868,10 +865,7 @@ static void klist_devices_put(struct klist_node *n)
+ static ssize_t bus_uevent_store(struct bus_type *bus,
+ 				const char *buf, size_t count)
+ {
+-	enum kobject_action action;
+-
+-	if (kobject_action_type(buf, count, &action) == 0)
+-		kobject_uevent(&bus->p->subsys.kobj, action);
++	kobject_synth_uevent(&bus->p->subsys.kobj, buf, count);
+ 	return count;
+ }
+ static BUS_ATTR(uevent, S_IWUSR, NULL, bus_uevent_store);
+diff --git a/drivers/base/core.c b/drivers/base/core.c
+index 6bb60fb..96a9e82 100644
+--- a/drivers/base/core.c
++++ b/drivers/base/core.c
+@@ -981,12 +981,9 @@ static ssize_t uevent_show(struct device *dev, struct device_attribute *attr,
+ static ssize_t uevent_store(struct device *dev, struct device_attribute *attr,
+ 			    const char *buf, size_t count)
+ {
+-	enum kobject_action action;
++	if (kobject_synth_uevent(&dev->kobj, buf, count))
++		dev_err(dev, "uevent: failed to send synthetic uevent\n");
+ 
+-	if (kobject_action_type(buf, count, &action) == 0)
+-		kobject_uevent(&dev->kobj, action);
+-	else
+-		dev_err(dev, "uevent: unknown action-string\n");
+ 	return count;
+ }
+ static DEVICE_ATTR_RW(uevent);
+diff --git a/include/linux/kobject.h b/include/linux/kobject.h
+index e628459..c4b88cb 100644
+--- a/include/linux/kobject.h
++++ b/include/linux/kobject.h
+@@ -215,11 +215,9 @@ extern struct kobject *firmware_kobj;
+ int kobject_uevent(struct kobject *kobj, enum kobject_action action);
+ int kobject_uevent_env(struct kobject *kobj, enum kobject_action action,
+ 			char *envp[]);
++int kobject_synth_uevent(struct kobject *kobj, const char *buf, size_t count);
+ 
+ __printf(2, 3)
+ int add_uevent_var(struct kobj_uevent_env *env, const char *format, ...);
+ 
+-int kobject_action_type(const char *buf, size_t count,
+-			enum kobject_action *type);
+-
+ #endif /* _KOBJECT_H_ */
+diff --git a/kernel/module.c b/kernel/module.c
+index 7eba6de..a055bcb 100644
+--- a/kernel/module.c
++++ b/kernel/module.c
+@@ -1181,10 +1181,7 @@ static ssize_t store_uevent(struct module_attribute *mattr,
+ 			    struct module_kobject *mk,
+ 			    const char *buffer, size_t count)
+ {
+-	enum kobject_action action;
+-
+-	if (kobject_action_type(buffer, count, &action) == 0)
+-		kobject_uevent(&mk->kobj, action);
++	kobject_synth_uevent(&mk->kobj, buffer, count);
+ 	return count;
+ }
+ 
+diff --git a/lib/kobject_uevent.c b/lib/kobject_uevent.c
+index 9a2b811..719c155 100644
+--- a/lib/kobject_uevent.c
++++ b/lib/kobject_uevent.c
+@@ -23,6 +23,8 @@
+ #include <linux/socket.h>
+ #include <linux/skbuff.h>
+ #include <linux/netlink.h>
++#include <linux/uuid.h>
++#include <linux/ctype.h>
+ #include <net/sock.h>
+ #include <net/net_namespace.h>
+ 
+@@ -52,19 +54,13 @@ static const char *kobject_actions[] = {
+ 	[KOBJ_OFFLINE] =	"offline",
+ };
+ 
+-/**
+- * kobject_action_type - translate action string to numeric type
+- *
+- * @buf: buffer containing the action string, newline is ignored
+- * @count: length of buffer
+- * @type: pointer to the location to store the action type
+- *
+- * Returns 0 if the action string was recognized.
+- */
+-int kobject_action_type(const char *buf, size_t count,
+-			enum kobject_action *type)
++static int kobject_action_type(const char *buf, size_t count,
++			       enum kobject_action *type,
++			       const char **args)
+ {
+ 	enum kobject_action action;
++	size_t count_first;
++	const char *args_start;
+ 	int ret = -EINVAL;
+ 
+ 	if (count && (buf[count-1] == '\n' || buf[count-1] == '\0'))
+@@ -73,11 +69,20 @@ int kobject_action_type(const char *buf, size_t count,
+ 	if (!count)
+ 		goto out;
+ 
++	args_start = strnchr(buf, count, ' ');
++	if (args_start) {
++		count_first = args_start - buf;
++		args_start = args_start + 1;
++	} else
++		count_first = count;
++
+ 	for (action = 0; action < ARRAY_SIZE(kobject_actions); action++) {
+-		if (strncmp(kobject_actions[action], buf, count) != 0)
++		if (strncmp(kobject_actions[action], buf, count_first) != 0)
+ 			continue;
+-		if (kobject_actions[action][count] != '\0')
++		if (kobject_actions[action][count_first] != '\0')
+ 			continue;
++		if (args)
++			*args = args_start;
+ 		*type = action;
+ 		ret = 0;
+ 		break;
+@@ -86,6 +91,142 @@ int kobject_action_type(const char *buf, size_t count,
+ 	return ret;
+ }
+ 
++static const char *action_arg_word_end(const char *buf, const char *buf_end,
++				       char delim)
++{
++	const char *next = buf;
++
++	while (next <= buf_end && *next != delim)
++		if (!isalnum(*next++))
++			return NULL;
++
++	if (next == buf)
++		return NULL;
++
++	return next;
++}
++
++static int kobject_action_args(const char *buf, size_t count,
++			       struct kobj_uevent_env **ret_env)
++{
++	struct kobj_uevent_env *env = NULL;
++	const char *next, *buf_end, *key;
++	int key_len;
++	int r = -EINVAL;
++
++	if (count && (buf[count - 1] == '\n' || buf[count - 1] == '\0'))
++		count--;
++
++	if (!count)
++		return -EINVAL;
++
++	env = kzalloc(sizeof(*env), GFP_KERNEL);
++	if (!env)
++		return -ENOMEM;
++
++	/* first arg is UUID */
++	if (count < UUID_STRING_LEN || !uuid_is_valid(buf) ||
++	    add_uevent_var(env, "SYNTH_UUID=%.*s", UUID_STRING_LEN, buf))
++		goto out;
++
++	/*
++	 * the rest are custom environment variables in KEY=VALUE
++	 * format with ' ' delimiter between each KEY=VALUE pair
++	 */
++	next = buf + UUID_STRING_LEN;
++	buf_end = buf + count - 1;
++
++	while (next <= buf_end) {
++		if (*next != ' ')
++			goto out;
++
++		/* skip the ' ', key must follow */
++		key = ++next;
++		if (key > buf_end)
++			goto out;
++
++		buf = next;
++		next = action_arg_word_end(buf, buf_end, '=');
++		if (!next || next > buf_end || *next != '=')
++			goto out;
++		key_len = next - buf;
++
++		/* skip the '=', value must follow */
++		if (++next > buf_end)
++			goto out;
++
++		buf = next;
++		next = action_arg_word_end(buf, buf_end, ' ');
++		if (!next)
++			goto out;
++
++		if (add_uevent_var(env, "SYNTH_ARG_%.*s=%.*s",
++				   key_len, key, (int) (next - buf), buf))
++			goto out;
++	}
++
++	r = 0;
++out:
++	if (r)
++		kfree(env);
++	else
++		*ret_env = env;
++	return r;
++}
++
++/**
++ * kobject_synth_uevent - send synthetic uevent with arguments
++ *
++ * @kobj: struct kobject for which synthetic uevent is to be generated
++ * @buf: buffer containing action type and action args, newline is ignored
++ * @count: length of buffer
++ *
++ * Returns 0 if kobject_synthetic_uevent() is completed with success or the
++ * corresponding error when it fails.
++ */
++int kobject_synth_uevent(struct kobject *kobj, const char *buf, size_t count)
++{
++	char *no_uuid_envp[] = { "SYNTH_UUID=0", NULL };
++	enum kobject_action action;
++	const char *action_args;
++	struct kobj_uevent_env *env;
++	const char *msg = NULL, *devpath;
++	int r;
++
++	r = kobject_action_type(buf, count, &action, &action_args);
++	if (r) {
++		msg = "unknown uevent action string\n";
++		goto out;
++	}
++
++	if (!action_args) {
++		r = kobject_uevent_env(kobj, action, no_uuid_envp);
++		goto out;
++	}
++
++	r = kobject_action_args(action_args,
++				count - (action_args - buf), &env);
++	if (r == -EINVAL) {
++		msg = "incorrect uevent action arguments\n";
++		goto out;
++	}
++
++	if (r)
++		goto out;
++
++	r = kobject_uevent_env(kobj, action, env->envp);
++	kfree(env);
++out:
++	if (r) {
++		devpath = kobject_get_path(kobj, GFP_KERNEL);
++		printk(KERN_WARNING "synth uevent: %s: %s",
++		       devpath ?: "unknown device",
++		       msg ?: "failed to send uevent");
++		kfree(devpath);
++	}
++	return r;
++}
++
+ #ifdef CONFIG_NET
+ static int kobj_bcast_filter(struct sock *dsk, struct sk_buff *skb, void *data)
+ {
+-- 
+2.9.3
