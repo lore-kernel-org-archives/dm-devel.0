@@ -1,80 +1,76 @@
-From: Enric Balletbo i Serra <enric.balletbo@collabora.com>
-Subject: [PATCH 2/5] dm: move dm definitions outside the private header to boot dm targets.
-Date: Tue, 11 Apr 2017 17:33:41 +0200
-Message-ID: <20170411153344.27092-3-enric.balletbo@collabora.com>
-References: <20170411153344.27092-1-enric.balletbo@collabora.com>
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <20170411153344.27092-1-enric.balletbo@collabora.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Jonathan Corbet <corbet@lwn.net>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Will Drewry <wad@chromium.org>
-Cc: linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v4 6/6] dm rq: Avoid that request processing
+ stalls sporadically
+Date: Tue, 11 Apr 2017 12:09:58 -0400
+Message-ID: <20170411160958.GA19222@redhat.com>
+References: <20170407181654.27836-1-bart.vanassche@sandisk.com>
+	<20170407181654.27836-7-bart.vanassche@sandisk.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20170407181654.27836-7-bart.vanassche@sandisk.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Bart Van Assche <bart.vanassche@sandisk.com>
+Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-To boot to device-mapper targets without an initr* we should be able to
-use some dm functions, move these to the device-mapper include file so
-we can call these functions from init/*
+On Fri, Apr 07 2017 at  2:16pm -0400,
+Bart Van Assche <bart.vanassche@sandisk.com> wrote:
 
-The functions moved are:
+> While running the srp-test software I noticed that request
+> processing stalls sporadically at the beginning of a test, namely
+> when mkfs is run against a dm-mpath device. Every time when that
+> happened the following command was sufficient to resume request
+> processing:
+> 
+>     echo run >/sys/kernel/debug/block/dm-0/state
+> 
+> This patch avoids that such request processing stalls occur. The
+> test I ran is as follows:
+> 
+>     while srp-test/run_tests -d -r 30 -t 02-mq; do :; done
+> 
+> Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
+> Cc: Mike Snitzer <snitzer@redhat.com>
+> Cc: dm-devel@redhat.com
+> ---
+>  drivers/md/dm-rq.c | 1 +
+>  1 file changed, 1 insertion(+)
+> 
+> diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+> index 6886bf160fb2..d19af1d21f4c 100644
+> --- a/drivers/md/dm-rq.c
+> +++ b/drivers/md/dm-rq.c
+> @@ -755,6 +755,7 @@ static int dm_mq_queue_rq(struct blk_mq_hw_ctx *hctx,
+>  		/* Undo dm_start_request() before requeuing */
+>  		rq_end_stats(md, rq);
+>  		rq_completed(md, rq_data_dir(rq), false);
+> +		blk_mq_delay_run_hw_queue(hctx, 100/*ms*/);
+>  		return BLK_MQ_RQ_QUEUE_BUSY;
+>  	}
+>  
+> -- 
+> 2.12.0
+> 
 
-  dm_table_get_type()
-  dm_lock_md_type()
-  dm_unlock_md_type()
-  dm_set_md_type()
-  dm_get_md_type()
-  dm_setup_md_queue()
+I really appreciate your hard work Bart but this looks like a cheap
+hack.
 
-Signed-off-by: Enric Balletbo i Serra <enric.balletbo@collabora.com>
----
- drivers/md/dm.h               | 7 -------
- include/linux/device-mapper.h | 8 ++++++++
- 2 files changed, 8 insertions(+), 7 deletions(-)
+I'm clearly too late to stop this from going in (given Jens got it
+merged for -rc6) but: this has no place in dm-mq (or any blk-mq
+driver).  If it is needed it should be elevated to blk-mq core to
+trigger blk_mq_delay_run_hw_queue() when BLK_MQ_RQ_QUEUE_BUSY is
+returned from blk_mq_ops' .queue_rq.
 
-diff --git a/drivers/md/dm.h b/drivers/md/dm.h
-index c54d2f1..6b501b5 100644
---- a/drivers/md/dm.h
-+++ b/drivers/md/dm.h
-@@ -63,7 +63,6 @@ void dm_table_presuspend_undo_targets(struct dm_table *t);
- void dm_table_postsuspend_targets(struct dm_table *t);
- int dm_table_resume_targets(struct dm_table *t);
- int dm_table_any_congested(struct dm_table *t, int bdi_bits);
--unsigned dm_table_get_type(struct dm_table *t);
- struct target_type *dm_table_get_immutable_target_type(struct dm_table *t);
- struct dm_target *dm_table_get_immutable_target(struct dm_table *t);
- struct dm_target *dm_table_get_wildcard_target(struct dm_table *t);
-@@ -73,14 +72,8 @@ bool dm_table_all_blk_mq_devices(struct dm_table *t);
- void dm_table_free_md_mempools(struct dm_table *t);
- struct dm_md_mempools *dm_table_get_md_mempools(struct dm_table *t);
- 
--void dm_lock_md_type(struct mapped_device *md);
--void dm_unlock_md_type(struct mapped_device *md);
--void dm_set_md_type(struct mapped_device *md, unsigned type);
--unsigned dm_get_md_type(struct mapped_device *md);
- struct target_type *dm_get_immutable_target_type(struct mapped_device *md);
- 
--int dm_setup_md_queue(struct mapped_device *md, struct dm_table *t);
--
- /*
-  * To check the return value from dm_table_find_target().
-  */
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index 70cb6af..013ac2e 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -513,6 +513,14 @@ void dm_table_run_md_queue_async(struct dm_table *t);
- struct dm_table *dm_swap_table(struct mapped_device *md,
- 			       struct dm_table *t);
- 
-+unsigned dm_table_get_type(struct dm_table *t);
-+
-+void dm_lock_md_type(struct mapped_device *md);
-+void dm_unlock_md_type(struct mapped_device *md);
-+void dm_set_md_type(struct mapped_device *md, unsigned type);
-+unsigned dm_get_md_type(struct mapped_device *md);
-+int dm_setup_md_queue(struct mapped_device *md, struct dm_table *t);
-+
- /*
-  * A wrapper around vmalloc.
-  */
--- 
-2.9.3
-
+If this dm-mq specific commit is justified the case certainly is spelled
+out in the commit header.
