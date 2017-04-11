@@ -1,56 +1,95 @@
 From: Enric Balletbo i Serra <enric.balletbo@collabora.com>
-Subject: [PATCH 1/5] dm: move dm_table_destroy() to same header as dm_table_create()
-Date: Tue, 11 Apr 2017 17:33:40 +0200
-Message-ID: <20170411153344.27092-2-enric.balletbo@collabora.com>
+Subject: [PATCH 3/5] dm: export a table+mapped device to the ioctl interface
+Date: Tue, 11 Apr 2017 17:33:42 +0200
+Message-ID: <20170411153344.27092-4-enric.balletbo@collabora.com>
 References: <20170411153344.27092-1-enric.balletbo@collabora.com>
-Return-path: <linux-doc-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20170411153344.27092-1-enric.balletbo@collabora.com>
-Sender: linux-doc-owner@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: Jonathan Corbet <corbet@lwn.net>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Will Drewry <wad@chromium.org>
-Cc: linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Brian Norris <briannorris@chromium.org>
+Cc: linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-From: Brian Norris <briannorris@chromium.org>
+From: Will Drewry <wad@chromium.org>
 
-If anyone is going to use dm_table_create(), they probably should be
-able to use dm_table_destroy() too. Move the dm_table_destroy()
-definition outside the private header, near dm_table_create()
+One function is added which allows for a programmatically created
+mapped device to be inserted into the dm-ioctl hash table. This binds
+the device to a name and, optional, uuid which is needed by udev and
+allows for userspace management of the mapped device.
 
-Signed-off-by: Brian Norris <briannorris@chromium.org>
+Signed-off-by: Will Drewry <wad@chromium.org>
 Signed-off-by: Enric Balletbo i Serra <enric.balletbo@collabora.com>
 ---
- drivers/md/dm.h               | 1 -
- include/linux/device-mapper.h | 5 +++++
- 2 files changed, 5 insertions(+), 1 deletion(-)
+ drivers/md/dm-ioctl.c         | 39 +++++++++++++++++++++++++++++++++++++++
+ include/linux/device-mapper.h |  6 ++++++
+ 2 files changed, 45 insertions(+)
 
-diff --git a/drivers/md/dm.h b/drivers/md/dm.h
-index f298b01..c54d2f1 100644
---- a/drivers/md/dm.h
-+++ b/drivers/md/dm.h
-@@ -48,7 +48,6 @@ struct dm_md_mempools;
- /*-----------------------------------------------------------------
-  * Internal table functions.
-  *---------------------------------------------------------------*/
--void dm_table_destroy(struct dm_table *t);
- void dm_table_event_callback(struct dm_table *t,
- 			     void (*fn)(void *), void *context);
- struct dm_target *dm_table_get_target(struct dm_table *t, unsigned int index);
+diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
+index 4da6fc6..cdd7a14 100644
+--- a/drivers/md/dm-ioctl.c
++++ b/drivers/md/dm-ioctl.c
+@@ -1929,6 +1929,45 @@ void dm_interface_exit(void)
+ }
+ 
+ /**
++ * dm_ioctl_export - Permanently export a mapped device via the ioctl interface
++ * @md: Pointer to mapped_device
++ * @name: Buffer (size DM_NAME_LEN) for name
++ * @uuid: Buffer (size DM_UUID_LEN) for uuid or NULL if not desired
++ */
++int dm_ioctl_export(struct mapped_device *md, const char *name,
++		    const char *uuid)
++{
++	int r = 0;
++	struct hash_cell *hc;
++
++	if (!md) {
++		r = -ENXIO;
++		goto out;
++	}
++
++	/* The name and uuid can only be set once. */
++	mutex_lock(&dm_hash_cells_mutex);
++	hc = dm_get_mdptr(md);
++	mutex_unlock(&dm_hash_cells_mutex);
++	if (hc) {
++		DMERR("%s: already exported", dm_device_name(md));
++		r = -ENXIO;
++		goto out;
++	}
++
++	r = dm_hash_insert(name, uuid, md);
++	if (r) {
++		DMERR("%s: could not bind to '%s'", dm_device_name(md), name);
++		goto out;
++	}
++
++	/* Let udev know we've changed. */
++	dm_kobject_uevent(md, KOBJ_CHANGE, dm_get_event_nr(md));
++out:
++	return r;
++}
++
++/**
+  * dm_copy_name_and_uuid - Copy mapped device name & uuid into supplied buffers
+  * @md: Pointer to mapped_device
+  * @name: Buffer (size DM_NAME_LEN) for name
 diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index a7e6903..70cb6af 100644
+index 013ac2e..b60892e 100644
 --- a/include/linux/device-mapper.h
 +++ b/include/linux/device-mapper.h
-@@ -472,6 +472,11 @@ void dm_table_set_type(struct dm_table *t, unsigned type);
- int dm_table_complete(struct dm_table *t);
+@@ -405,6 +405,12 @@ void dm_set_mdptr(struct mapped_device *md, void *ptr);
+ void *dm_get_mdptr(struct mapped_device *md);
  
  /*
-+ * Destroy the table when finished.
++ * Export the device via the ioctl interface (uses mdptr).
 + */
-+void dm_table_destroy(struct dm_table *t);
++int dm_ioctl_export(struct mapped_device *md, const char *name,
++		    const char *uuid);
 +
 +/*
-  * Target may require that it is never sent I/O larger than len.
+  * A device can still be used while suspended, but I/O is deferred.
   */
- int __must_check dm_set_target_max_io_len(struct dm_target *ti, sector_t len);
+ int dm_suspend(struct mapped_device *md, unsigned suspend_flags);
 -- 
 2.9.3
-
