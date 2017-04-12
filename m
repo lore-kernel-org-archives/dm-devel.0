@@ -1,12 +1,16 @@
 From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH 0/9] misc cleanups and bugfixes
-Date: Wed, 12 Apr 2017 09:36:19 +0200
-Message-ID: <CABr-GnfW5t_CCdziuDi=xdAB1xQSfn4fhBSXpyMzv=Qy-YDf9Q@mail.gmail.com>
-References: <1491545798-22183-1-git-send-email-bmarzins@redhat.com>
+Subject: Re: [PATCH 00/33] multipath-tools fixes from SUSE
+Date: Wed, 12 Apr 2017 09:38:19 +0200
+Message-ID: <CABr-GnfFrcyBsW8i1cUCyvQ2PH02rV3tmfXM4eFtbG9GMavw8w@mail.gmail.com>
+References: <20170228162329.14517-1-mwilck@suse.com>
+	<dcc49c30-0954-5737-1fae-194f29b10d94@gmail.com>
+	<CABr-Gndb1oyBO79_b105tVSO55qftO_mh2JRvN7c35+ar=xH3g@mail.gmail.com>
+	<CABr-GnfY_k6xCvWiuf=eQKq_3vU9jY6_WCsgd_5QrHX0q0ow7w@mail.gmail.com>
+	<1490341443.23631.8.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============8404703549172721653=="
+Content-Type: multipart/mixed; boundary="===============7267932657098524191=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1491545798-22183-1-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1490341443.23631.8.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,108 +20,84 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Martin Wilck <mwilck@suse.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
---===============8404703549172721653==
-Content-Type: multipart/alternative; boundary=001a114753aeb3efc7054cf343aa
+--===============7267932657098524191==
+Content-Type: multipart/alternative; boundary=001a11c001ced0ea7d054cf34a25
 
---001a114753aeb3efc7054cf343aa
+--001a11c001ced0ea7d054cf34a25
 Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 
-Merged,
-thanks.
+Hi Martin,
 
-On Fri, Apr 7, 2017 at 8:16 AM, Benjamin Marzinski <bmarzins@redhat.com>
-wrote:
+The multipath tools version is now bumped to 0.7.0.
 
-> These patches are all just small cleanup and bugfixes.
+Best regards,
+Christophe
+
+On Fri, Mar 24, 2017 at 8:44 AM, Martin Wilck <mwilck@suse.com> wrote:
+
+> On Thu, 2017-03-23 at 09:30 +0100, Christophe Varoqui wrote:
+> > The full set is now merged.
+> > Thanks.
 >
-> Benjamin Marzinski (9):
->   libdmmp: minor Makefile cleanup
->   multipath-tools: remove incdir from Makefiles
->   libdmmp: don't disconnect from multipathd twice
->   multipathd: don't call strlen on NULL variables
->   libdmmp: move libdmmp.pc install location
->   multipathd: drop lock before calling uev_add_path
->   multipathd: allow devices to switch from RW to RO
->   libmultipath: don't set max_sectors_kb on reloads
->   multipath: fix segfault with disable_changed_wwids
+> Thanks a lot, Christophe.
 >
->  Makefile.inc             |  3 +--
->  libdmmp/Makefile         | 18 +++++++--------
->  libdmmp/libdmmp.c        |  1 -
->  libdmmp/test/Makefile    |  2 +-
->  libmpathcmd/Makefile     |  6 ++---
->  libmpathpersist/Makefile |  6 ++---
->  libmultipath/configure.c | 60 ++++++++++++++++++++++++++++++
-> ++++++++++++++++--
->  libmultipath/devmapper.c |  9 ++++----
->  libmultipath/discovery.c | 23 -------------------
->  libmultipath/discovery.h |  1 -
->  libmultipath/structs.h   |  1 +
->  multipathd/main.c        | 21 ++++++++++++-----
->  12 files changed, 96 insertions(+), 55 deletions(-)
+> Btw, are you planning a version bump any time soon?
+>
+> Regards,
+> Martin
 >
 > --
-> 1.8.3.1
+> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+> SUSE Linux GmbH, GF: Felix Imend=C3=B6rffer, Jane Smithard, Graham Norton
+> HRB 21284 (AG N=C3=BCrnberg)
 >
 >
 
---001a114753aeb3efc7054cf343aa
+--001a11c001ced0ea7d054cf34a25
 Content-Type: text/html; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 
-<div dir=3D"ltr">Merged,<div>thanks.</div></div><div class=3D"gmail_extra">=
-<br><div class=3D"gmail_quote">On Fri, Apr 7, 2017 at 8:16 AM, Benjamin Mar=
-zinski <span dir=3D"ltr">&lt;<a href=3D"mailto:bmarzins@redhat.com" target=
-=3D"_blank">bmarzins@redhat.com</a>&gt;</span> wrote:<br><blockquote class=
-=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padd=
-ing-left:1ex">These patches are all just small cleanup and bugfixes.<br>
+<div dir=3D"ltr"><div>Hi Martin,</div><div><br></div><div>The multipath too=
+ls version is now bumped to 0.7.0.<br></div><div><br></div><div>Best regard=
+s,</div><div>Christophe</div></div><div class=3D"gmail_extra"><br><div clas=
+s=3D"gmail_quote">On Fri, Mar 24, 2017 at 8:44 AM, Martin Wilck <span dir=
+=3D"ltr">&lt;<a href=3D"mailto:mwilck@suse.com" target=3D"_blank">mwilck@su=
+se.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"=
+margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><span class=
+=3D"">On Thu, 2017-03-23 at 09:30 +0100, Christophe Varoqui wrote:<br>
+&gt; The full set is now merged.<br>
+&gt; Thanks.<br>
 <br>
-Benjamin Marzinski (9):<br>
-=C2=A0 libdmmp: minor Makefile cleanup<br>
-=C2=A0 multipath-tools: remove incdir from Makefiles<br>
-=C2=A0 libdmmp: don&#39;t disconnect from multipathd twice<br>
-=C2=A0 multipathd: don&#39;t call strlen on NULL variables<br>
-=C2=A0 libdmmp: move libdmmp.pc install location<br>
-=C2=A0 multipathd: drop lock before calling uev_add_path<br>
-=C2=A0 multipathd: allow devices to switch from RW to RO<br>
-=C2=A0 libmultipath: don&#39;t set max_sectors_kb on reloads<br>
-=C2=A0 multipath: fix segfault with disable_changed_wwids<br>
+</span>Thanks a lot, Christophe.<br>
 <br>
-=C2=A0Makefile.inc=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0|=C2=A0 3=
- +--<br>
-=C2=A0libdmmp/Makefile=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0| 18 +++++++-------=
--<br>
-=C2=A0libdmmp/libdmmp.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 |=C2=A0 1 -<br>
-=C2=A0libdmmp/test/Makefile=C2=A0 =C2=A0 |=C2=A0 2 +-<br>
-=C2=A0libmpathcmd/Makefile=C2=A0 =C2=A0 =C2=A0|=C2=A0 6 ++---<br>
-=C2=A0libmpathpersist/Makefile |=C2=A0 6 ++---<br>
-=C2=A0libmultipath/configure.c | 60 ++++++++++++++++++++++++++++++<wbr>++++=
-++++++++++++--<br>
-=C2=A0libmultipath/devmapper.c |=C2=A0 9 ++++----<br>
-=C2=A0libmultipath/discovery.c | 23 -------------------<br>
-=C2=A0libmultipath/discovery.h |=C2=A0 1 -<br>
-=C2=A0libmultipath/structs.h=C2=A0 =C2=A0|=C2=A0 1 +<br>
-=C2=A0multipathd/main.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 | 21 ++++++++++++-----<b=
-r>
-=C2=A012 files changed, 96 insertions(+), 55 deletions(-)<br>
-<span class=3D"HOEnZb"><font color=3D"#888888"><br>
+Btw, are you planning a version bump any time soon?<br>
+<br>
+Regards,<br>
+<div class=3D"HOEnZb"><div class=3D"h5">Martin<br>
+<br>
 --<br>
-1.8.3.1<br>
+Dr. Martin Wilck &lt;<a href=3D"mailto:mwilck@suse.com">mwilck@suse.com</a>=
+&gt;, Tel.=C2=A0<a href=3D"tel:%2B49%20%280%29911%2074053%202107" value=3D"=
++49911740532107">+49 (0)911 74053 2107</a><br>
+SUSE Linux GmbH, GF: Felix Imend=C3=B6rffer, Jane Smithard, Graham Norton<b=
+r>
+HRB 21284 (AG N=C3=BCrnberg)<br>
 <br>
-</font></span></blockquote></div><br></div>
+</div></div></blockquote></div><br></div>
 
---001a114753aeb3efc7054cf343aa--
+--001a11c001ced0ea7d054cf34a25--
 
 
---===============8404703549172721653==
+--===============7267932657098524191==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============8404703549172721653==--
+--===============7267932657098524191==--
