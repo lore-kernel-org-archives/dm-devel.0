@@ -1,59 +1,136 @@
-From: Ming Lei <ming.lei@redhat.com>
-Subject: Re: [PATCH v4 6/6] dm rq: Avoid that request processing stalls
- sporadically
-Date: Wed, 12 Apr 2017 11:42:35 +0800
-Message-ID: <20170412034229.GA8835@ming.t460p>
-References: <20170407181654.27836-1-bart.vanassche@sandisk.com>
- <20170407181654.27836-7-bart.vanassche@sandisk.com>
- <20170411160958.GA19222@redhat.com>
- <1491928005.2654.6.camel@sandisk.com>
- <20170411174739.GA19620@redhat.com>
- <1491933092.2654.10.camel@sandisk.com>
- <20170411180358.GA19660@redhat.com>
- <1491934715.2654.14.camel@sandisk.com>
+From: "Nicholas A. Bellinger" <nab@linux-iscsi.org>
+Subject: Re: [PATCH 2/8] target: remove iblock WRITE_SAME passthrough support
+Date: Tue, 11 Apr 2017 22:30:41 -0700
+Message-ID: <1491975041.8231.131.camel@haakon3.risingtidesystems.com>
+References: <20170410160807.23674-1-hch@lst.de>
+         <20170410160807.23674-3-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1491934715.2654.14.camel@sandisk.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Bart Van Assche <Bart.VanAssche@sandisk.com>
-Cc: "snitzer@redhat.com" <snitzer@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "axboe@kernel.dk" <axboe@kernel.dk>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <target-devel-owner@vger.kernel.org>
+In-Reply-To: <20170410160807.23674-3-hch@lst.de>
+Sender: target-devel-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: axboe@kernel.dk, martin.petersen@oracle.com, philipp.reisner@linbit.com, lars.ellenberg@linbit.com, target-devel@vger.kernel.org, linux-block@vger.kernel.org, linux-scsi@vger.kernel.org, drbd-dev@lists.linbit.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Apr 11, 2017 at 06:18:36PM +0000, Bart Van Assche wrote:
-> On Tue, 2017-04-11 at 14:03 -0400, Mike Snitzer wrote:
-> > Rather than working so hard to use DM code against me, your argument
-> > should be: "blk-mq drivers X, Y and Z rerun the hw queue; this is a well
-> > established pattern"
-> > 
-> > I see drivers/nvme/host/fc.c:nvme_fc_start_fcp_op() does.  But that is
-> > only one other driver out of ~20 BLK_MQ_RQ_QUEUE_BUSY returns
-> > tree-wide.
-> > 
-> > Could be there are some others, but hardly a well-established pattern.
+On Mon, 2017-04-10 at 18:08 +0200, Christoph Hellwig wrote:
+> Use the pscsi driver to support arbitrary command passthrough
+> instead.
 > 
-> Hello Mike,
-> 
-> Several blk-mq drivers that can return BLK_MQ_RQ_QUEUE_BUSY from their
-> .queue_rq() implementation stop the request queue (blk_mq_stop_hw_queue())
-> before returning "busy" and restart the queue after the busy condition has
-> been cleared (blk_mq_start_stopped_hw_queues()). Examples are virtio_blk and
-> xen-blkfront. However, this approach is not appropriate for the dm-mq core
-> nor for the scsi core since both drivers already use the "stopped" state for
-> another purpose than tracking whether or not a hardware queue is busy. Hence
-> the blk_mq_delay_run_hw_queue() and blk_mq_run_hw_queue() calls in these last
-> two drivers to rerun a hardware queue after the busy state has been cleared.
 
-But looks this patch just reruns the hw queue after 100ms, which isn't
-that after the busy state has been cleared, right?
+The people who are actively using iblock_execute_write_same_direct() are
+doing so in the context of ESX VAAI BlockZero, together with
+EXTENDED_COPY and COMPARE_AND_WRITE primitives.  Just using PSCSI is not
+an option for them.
 
-Actually if BLK_MQ_RQ_QUEUE_BUSY is returned from .queue_rq(), blk-mq
-will buffer this request into hctx->dispatch and run the hw queue again,
-so looks blk_mq_delay_run_hw_queue() in this situation shouldn't have been
-needed at my 1st impression. Or maybe Bart has more stories about this usage,
-better to comments it?
+In practice though I've not seen any users of IBLOCK WRITE_SAME for
+anything other than VAAI BlockZero, so just using blkdev_issue_zeroout()
+when available, and falling back to iblock_execute_write_same() if the
+WRITE_SAME buffer contains anything other than zeros should be OK.
 
-Thanks,
-Ming
+How about something like the following below..?
+
+This would bring parity to how blkdev_issue_write_same() works atm wrt
+to synchronous bio completions.  However, most folks with a raw
+make_request or blk-mq backend driver that supports multiple GB/sec of
+zero bandwidth end up changing IBLOCK to support asynchronous
+REQ_WRITE_SAME completions anyways.
+
+I'd be happy to add support for that using __blkdev_issue_zeroout() once
+the basic conversion is in place.
+
+From ff74012eaff38f9fa0d74aca60507b9964f484ce Mon Sep 17 00:00:00 2001
+From: Nicholas Bellinger <nab@linux-iscsi.org>
+Date: Tue, 11 Apr 2017 22:21:47 -0700
+Subject: [PATCH] target/iblock: Convert WRITE_SAME to blkdev_issue_zeroout
+
+Signed-off-by: Nicholas Bellinger <nab@linux-iscsi.org>
+---
+ drivers/target/target_core_iblock.c | 44 +++++++++++++++++++++++--------------
+ 1 file changed, 27 insertions(+), 17 deletions(-)
+
+diff --git a/drivers/target/target_core_iblock.c b/drivers/target/target_core_iblock.c
+index d316ed5..5bfde20 100644
+--- a/drivers/target/target_core_iblock.c
++++ b/drivers/target/target_core_iblock.c
+@@ -86,6 +86,7 @@ static int iblock_configure_device(struct se_device *dev)
+ 	struct block_device *bd = NULL;
+ 	struct blk_integrity *bi;
+ 	fmode_t mode;
++	unsigned int max_write_zeroes_sectors;
+ 	int ret = -ENOMEM;
+ 
+ 	if (!(ib_dev->ibd_flags & IBDF_HAS_UDEV_PATH)) {
+@@ -129,7 +130,11 @@ static int iblock_configure_device(struct se_device *dev)
+ 	 * Enable write same emulation for IBLOCK and use 0xFFFF as
+ 	 * the smaller WRITE_SAME(10) only has a two-byte block count.
+ 	 */
+-	dev->dev_attrib.max_write_same_len = 0xFFFF;
++	max_write_zeroes_sectors = bdev_write_zeroes_sectors(bd);
++	if (max_write_zeroes_sectors)
++		dev->dev_attrib.max_write_same_len = max_write_zeroes_sectors;
++	else
++		dev->dev_attrib.max_write_same_len = 0xFFFF;
+ 
+ 	if (blk_queue_nonrot(q))
+ 		dev->dev_attrib.is_nonrot = 1;
+@@ -415,28 +420,31 @@ static void iblock_end_io_flush(struct bio *bio)
+ }
+ 
+ static sense_reason_t
+-iblock_execute_write_same_direct(struct block_device *bdev, struct se_cmd *cmd)
++iblock_execute_zero_out(struct block_device *bdev, struct se_cmd *cmd)
+ {
+ 	struct se_device *dev = cmd->se_dev;
+ 	struct scatterlist *sg = &cmd->t_data_sg[0];
+-	struct page *page = NULL;
+-	int ret;
++	unsigned char *buf, zero = 0x00, *p = &zero;
++	int rc, ret;
+ 
+-	if (sg->offset) {
+-		page = alloc_page(GFP_KERNEL);
+-		if (!page)
+-			return TCM_OUT_OF_RESOURCES;
+-		sg_copy_to_buffer(sg, cmd->t_data_nents, page_address(page),
+-				  dev->dev_attrib.block_size);
+-	}
++	buf = kmap(sg_page(sg)) + sg->offset;
++	if (!buf)
++		return TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
++	/*
++	 * Fall back to block_execute_write_same() slow-path if
++	 * incoming WRITE_SAME payload does not contain zeros.
++	 */
++	rc = memcmp(buf, p, cmd->data_length);
++	kunmap(sg_page(sg));
++
++	if (rc)
++		return TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
+ 
+-	ret = blkdev_issue_write_same(bdev,
++	ret = blkdev_issue_zeroout(bdev,
+ 				target_to_linux_sector(dev, cmd->t_task_lba),
+ 				target_to_linux_sector(dev,
+ 					sbc_get_write_same_sectors(cmd)),
+-				GFP_KERNEL, page ? page : sg_page(sg));
+-	if (page)
+-		__free_page(page);
++				GFP_KERNEL, false);
+ 	if (ret)
+ 		return TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
+ 
+@@ -472,8 +480,10 @@ static void iblock_end_io_flush(struct bio *bio)
+ 		return TCM_INVALID_CDB_FIELD;
+ 	}
+ 
+-	if (bdev_write_same(bdev))
+-		return iblock_execute_write_same_direct(bdev, cmd);
++	if (bdev_write_zeroes_sectors(bdev)) {
++		if (!iblock_execute_zero_out(bdev, cmd))
++			return 0;
++	}
+ 
+ 	ibr = kzalloc(sizeof(struct iblock_req), GFP_KERNEL);
+ 	if (!ibr)
