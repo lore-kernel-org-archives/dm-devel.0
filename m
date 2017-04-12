@@ -1,116 +1,109 @@
-From: Ankur Srivastava <asrivastava014@gmail.com>
-Subject: : Multipath Setup for NVMe over Fabric
-Date: Wed, 12 Apr 2017 14:50:16 +0530
-Message-ID: <CAJvSebsHo-+kroUZj3_8D710uxZci9O3KPC1fb3CVp+xPrvUjw@mail.gmail.com>
+From: Ming Lei <ming.lei@redhat.com>
+Subject: Re: [PATCH 10/25] loop: zero-fill bio on the submitting cpu
+Date: Wed, 12 Apr 2017 18:24:35 +0800
+Message-ID: <20170412102434.GB8835@ming.t460p>
+References: <20170406153944.10058-1-hch@lst.de>
+ <20170406153944.10058-11-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============4557679816134112625=="
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20170406153944.10058-11-hch@lst.de>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: Jens Axboe <axboe@kernel.dk>, Josef Bacik <jbacik@fb.com>, James Smart <james.smart@broadcom.com>, Konrad Rzeszutek Wilk <konrad.wilk@oracle.com>, Roger Pau =?iso-8859-1?Q?Monn=E9?= <roger.pau@citrix.com>, linux-scsi@vger.kernel.org, linux-nvme@lists.infradead.org, linux-block@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============4557679816134112625==
-Content-Type: multipart/alternative; boundary=94eb2c092546710360054cf4b7e3
+On Thu, Apr 06, 2017 at 05:39:29PM +0200, Christoph Hellwig wrote:
+> In thruth I've just audited which blk-mq drivers don't currently have a
+> complete callback, but I think this change is at least borderline useful.
+> 
+> Signed-off-by: Christoph Hellwig <hch@lst.de>
+> ---
+>  drivers/block/loop.c | 30 ++++++++++++++----------------
+>  drivers/block/loop.h |  1 +
+>  2 files changed, 15 insertions(+), 16 deletions(-)
+> 
+> diff --git a/drivers/block/loop.c b/drivers/block/loop.c
+> index cc981f34e017..6924ec611a49 100644
+> --- a/drivers/block/loop.c
+> +++ b/drivers/block/loop.c
+> @@ -445,32 +445,27 @@ static int lo_req_flush(struct loop_device *lo, struct request *rq)
+>  	return ret;
+>  }
+>  
+> -static inline void handle_partial_read(struct loop_cmd *cmd, long bytes)
+> +static void lo_complete_rq(struct request *rq)
+>  {
+> -	if (bytes < 0 || op_is_write(req_op(cmd->rq)))
+> -		return;
+> +	struct loop_cmd *cmd = blk_mq_rq_to_pdu(rq);
+>  
+> -	if (unlikely(bytes < blk_rq_bytes(cmd->rq))) {
+> +	if (unlikely(req_op(cmd->rq) == REQ_OP_READ && cmd->use_aio &&
+> +		     cmd->ret >= 0 && cmd->ret < blk_rq_bytes(cmd->rq))) {
+>  		struct bio *bio = cmd->rq->bio;
+>  
+> -		bio_advance(bio, bytes);
+> +		bio_advance(bio, cmd->ret);
+>  		zero_fill_bio(bio);
+>  	}
+> +
+> +	blk_mq_end_request(rq, cmd->ret < 0 ? -EIO : 0);
+>  }
+>  
+>  static void lo_rw_aio_complete(struct kiocb *iocb, long ret, long ret2)
+>  {
+>  	struct loop_cmd *cmd = container_of(iocb, struct loop_cmd, iocb);
+> -	struct request *rq = cmd->rq;
+> -
+> -	handle_partial_read(cmd, ret);
+>  
+> -	if (ret > 0)
+> -		ret = 0;
+> -	else if (ret < 0)
+> -		ret = -EIO;
+> -
+> -	blk_mq_complete_request(rq, ret);
+> +	cmd->ret = ret;
+> +	blk_mq_complete_request(cmd->rq, 0);
+>  }
+>  
+>  static int lo_rw_aio(struct loop_device *lo, struct loop_cmd *cmd,
+> @@ -1686,8 +1681,10 @@ static void loop_handle_cmd(struct loop_cmd *cmd)
+>  	ret = do_req_filebacked(lo, cmd->rq);
+>   failed:
+>  	/* complete non-aio request */
+> -	if (!cmd->use_aio || ret)
+> -		blk_mq_complete_request(cmd->rq, ret ? -EIO : 0);
+> +	if (!cmd->use_aio || ret) {
+> +		cmd->ret = ret ? -EIO : 0;
+> +		blk_mq_complete_request(cmd->rq, 0);
+> +	}
+>  }
+>  
+>  static void loop_queue_work(struct kthread_work *work)
+> @@ -1713,6 +1710,7 @@ static int loop_init_request(void *data, struct request *rq,
+>  static const struct blk_mq_ops loop_mq_ops = {
+>  	.queue_rq       = loop_queue_rq,
+>  	.init_request	= loop_init_request,
+> +	.complete	= lo_complete_rq,
+>  };
+>  
+>  static int loop_add(struct loop_device **l, int i)
+> diff --git a/drivers/block/loop.h b/drivers/block/loop.h
+> index fb2237c73e61..fecd3f97ef8c 100644
+> --- a/drivers/block/loop.h
+> +++ b/drivers/block/loop.h
+> @@ -70,6 +70,7 @@ struct loop_cmd {
+>  	struct request *rq;
+>  	struct list_head list;
+>  	bool use_aio;           /* use AIO interface to handle I/O */
+> +	long ret;
+>  	struct kiocb iocb;
+>  };
 
---94eb2c092546710360054cf4b7e3
-Content-Type: text/plain; charset=UTF-8
+Reviewed-by: Ming Lei <ming.lei@redhat.com>
 
-Hi All,
-
-I am working on NVMe over fabric and want to experiment the Multipathing
-support for the same.
-
-Setup Info:
-RHEL 7.2 with Kernel 4.9.3
-
-
-[root@localhost ~]# nvme list
-Node             SN                   Model
-          Namespace Usage                      Format           FW Rev
----------------- --------------------
----------------------------------------- ---------
--------------------------- ---------------- --------
-/dev/nvme0n1     30501b622ed15184     Linux
-   10        268.44  GB / 268.44  GB    512   B +  0 B   4.9.3
-/dev/nvme1n1     ef730272d9be107c      Linux
-     10        268.44  GB / 268.44  GB    512   B +  0 B   4.9.3
-
-
-[root@localhost ~]# ps ax | grep multipath
-1272 ?        SLl    0:00 /sbin/multipathd
-
-
-I have connected my Initiator to both the ports of Ethernet Adapter(Target)
-to get 2 IO Paths, from the above data "/dev/nvme0n1" is path 1 and
-"/dev/nvme1n1" is path 2 for the same namespace.
-
-Note: I am using Null Block device on the Target Side.
-
-But still the multipath is showing an error ie no path to Host for All the
-NVMe Drives mapped on the Initiator. Does multipathd supports NVMe over
-Fabric ??
-Or what I am missing from configuration side ??
-
-Thanks in advance!!
-
-
-BR~
-Ankur
-
---94eb2c092546710360054cf4b7e3
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">Hi All,=C2=A0<div><br></div><div>I am working on NVMe over=
- fabric and want to experiment the Multipathing support for the same.</div>=
-<div><br></div><div>Setup Info:</div><div>RHEL 7.2 with Kernel 4.9.3</div><=
-div><br></div><div><br></div><div><div>[root@localhost ~]# nvme list</div><=
-div>Node =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 SN =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Model =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Namespace Usage =C2=A0 =C2=A0=
- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Format =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 FW Rev</div><div>---------------- ---------=
------------ ---------------------------------------- --------- ------------=
--------------- ---------------- --------</div><div>/dev/nvme0n1 =C2=A0 =C2=
-=A0 30501b622ed15184 =C2=A0 =C2=A0 Linux =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A010 =C2=A0 =C2=A0 =C2=A0 =C2=A0268.44 =C2=A0GB / 268.44 =C2=
-=A0GB =C2=A0 =C2=A0512 =C2=A0 B + =C2=A00 B =C2=A0 4.9.3</div><div>/dev/nvm=
-e1n1 =C2=A0 =C2=A0 ef730272d9be107c =C2=A0 =C2=A0 =C2=A0Linux =C2=A0 =C2=A0=
- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A010 =C2=A0 =C2=A0 =C2=A0 =C2=A0268.44 =
-=C2=A0GB / 268.44 =C2=A0GB =C2=A0 =C2=A0512 =C2=A0 B + =C2=A00 B =C2=A0 4.9=
-.3</div></div><div><br></div><div><div><br></div><div>[root@localhost ~]# p=
-s ax | grep multipath</div><div>1272 ? =C2=A0 =C2=A0 =C2=A0 =C2=A0SLl =C2=
-=A0 =C2=A00:00 /sbin/multipathd</div></div><div><br></div><div><br></div><d=
-iv>I have connected my Initiator to both the ports of Ethernet Adapter(Targ=
-et) to get 2 IO Paths, from the above data &quot;/dev/nvme0n1&quot; is path=
- 1 and &quot;/dev/nvme1n1&quot; is path 2 for the same namespace.</div><div=
-><br></div><div>Note: I am using Null Block device on the Target Side.</div=
-><div><br></div><div>But still the multipath is showing an error ie no path=
- to Host for All the NVMe Drives mapped on the Initiator. Does multipathd s=
-upports NVMe over Fabric ??</div><div>Or what I am missing from configurati=
-on side ??</div><div><br></div><div>Thanks in advance!!</div><div><br></div=
-><div><br></div><div>BR~</div><div>Ankur</div><div><br></div><div><br></div=
-><div><br></div><div><br></div><div><br></div></div>
-
---94eb2c092546710360054cf4b7e3--
-
-
---===============4557679816134112625==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============4557679816134112625==--
+Thanks,
+Ming
