@@ -1,109 +1,111 @@
-From: Ming Lei <ming.lei@redhat.com>
-Subject: Re: [PATCH 10/25] loop: zero-fill bio on the submitting cpu
-Date: Wed, 12 Apr 2017 18:24:35 +0800
-Message-ID: <20170412102434.GB8835@ming.t460p>
-References: <20170406153944.10058-1-hch@lst.de>
- <20170406153944.10058-11-hch@lst.de>
+From: Bart Van Assche <Bart.VanAssche@sandisk.com>
+Subject: Re: [PATCH v4 6/6] dm rq: Avoid that request processing stalls
+ sporadically
+Date: Wed, 12 Apr 2017 18:38:07 +0000
+Message-ID: <1492022286.2764.15.camel@sandisk.com>
+References: <20170407181654.27836-1-bart.vanassche@sandisk.com>
+         <20170407181654.27836-7-bart.vanassche@sandisk.com>
+         <20170411160958.GA19222@redhat.com> <1491928005.2654.6.camel@sandisk.com>
+         <20170411174739.GA19620@redhat.com> <1491933092.2654.10.camel@sandisk.com>
+         <20170411180358.GA19660@redhat.com> <1491934715.2654.14.camel@sandisk.com>
+         <20170412034229.GA8835@ming.t460p>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20170406153944.10058-11-hch@lst.de>
+In-Reply-To: <20170412034229.GA8835@ming.t460p>
+Content-Language: en-US
+Content-ID: <050D402D8C05EC44817B4A65BF718469@namprd04.prod.outlook.com>
 Sender: linux-scsi-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: Jens Axboe <axboe@kernel.dk>, Josef Bacik <jbacik@fb.com>, James Smart <james.smart@broadcom.com>, Konrad Rzeszutek Wilk <konrad.wilk@oracle.com>, Roger Pau =?iso-8859-1?Q?Monn=E9?= <roger.pau@citrix.com>, linux-scsi@vger.kernel.org, linux-nvme@lists.infradead.org, linux-block@vger.kernel.org, dm-devel@redhat.com
+To: "ming.lei@redhat.com" <ming.lei@redhat.com>
+Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "snitzer@redhat.com" <snitzer@redhat.com>, "axboe@kernel.dk" <axboe@kernel.dk>
 List-Id: dm-devel.ids
 
-On Thu, Apr 06, 2017 at 05:39:29PM +0200, Christoph Hellwig wrote:
-> In thruth I've just audited which blk-mq drivers don't currently have a
-> complete callback, but I think this change is at least borderline useful.
-> 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-> ---
->  drivers/block/loop.c | 30 ++++++++++++++----------------
->  drivers/block/loop.h |  1 +
->  2 files changed, 15 insertions(+), 16 deletions(-)
-> 
-> diff --git a/drivers/block/loop.c b/drivers/block/loop.c
-> index cc981f34e017..6924ec611a49 100644
-> --- a/drivers/block/loop.c
-> +++ b/drivers/block/loop.c
-> @@ -445,32 +445,27 @@ static int lo_req_flush(struct loop_device *lo, struct request *rq)
->  	return ret;
->  }
->  
-> -static inline void handle_partial_read(struct loop_cmd *cmd, long bytes)
-> +static void lo_complete_rq(struct request *rq)
->  {
-> -	if (bytes < 0 || op_is_write(req_op(cmd->rq)))
-> -		return;
-> +	struct loop_cmd *cmd = blk_mq_rq_to_pdu(rq);
->  
-> -	if (unlikely(bytes < blk_rq_bytes(cmd->rq))) {
-> +	if (unlikely(req_op(cmd->rq) == REQ_OP_READ && cmd->use_aio &&
-> +		     cmd->ret >= 0 && cmd->ret < blk_rq_bytes(cmd->rq))) {
->  		struct bio *bio = cmd->rq->bio;
->  
-> -		bio_advance(bio, bytes);
-> +		bio_advance(bio, cmd->ret);
->  		zero_fill_bio(bio);
->  	}
-> +
-> +	blk_mq_end_request(rq, cmd->ret < 0 ? -EIO : 0);
->  }
->  
->  static void lo_rw_aio_complete(struct kiocb *iocb, long ret, long ret2)
->  {
->  	struct loop_cmd *cmd = container_of(iocb, struct loop_cmd, iocb);
-> -	struct request *rq = cmd->rq;
-> -
-> -	handle_partial_read(cmd, ret);
->  
-> -	if (ret > 0)
-> -		ret = 0;
-> -	else if (ret < 0)
-> -		ret = -EIO;
-> -
-> -	blk_mq_complete_request(rq, ret);
-> +	cmd->ret = ret;
-> +	blk_mq_complete_request(cmd->rq, 0);
->  }
->  
->  static int lo_rw_aio(struct loop_device *lo, struct loop_cmd *cmd,
-> @@ -1686,8 +1681,10 @@ static void loop_handle_cmd(struct loop_cmd *cmd)
->  	ret = do_req_filebacked(lo, cmd->rq);
->   failed:
->  	/* complete non-aio request */
-> -	if (!cmd->use_aio || ret)
-> -		blk_mq_complete_request(cmd->rq, ret ? -EIO : 0);
-> +	if (!cmd->use_aio || ret) {
-> +		cmd->ret = ret ? -EIO : 0;
-> +		blk_mq_complete_request(cmd->rq, 0);
-> +	}
->  }
->  
->  static void loop_queue_work(struct kthread_work *work)
-> @@ -1713,6 +1710,7 @@ static int loop_init_request(void *data, struct request *rq,
->  static const struct blk_mq_ops loop_mq_ops = {
->  	.queue_rq       = loop_queue_rq,
->  	.init_request	= loop_init_request,
-> +	.complete	= lo_complete_rq,
->  };
->  
->  static int loop_add(struct loop_device **l, int i)
-> diff --git a/drivers/block/loop.h b/drivers/block/loop.h
-> index fb2237c73e61..fecd3f97ef8c 100644
-> --- a/drivers/block/loop.h
-> +++ b/drivers/block/loop.h
-> @@ -70,6 +70,7 @@ struct loop_cmd {
->  	struct request *rq;
->  	struct list_head list;
->  	bool use_aio;           /* use AIO interface to handle I/O */
-> +	long ret;
->  	struct kiocb iocb;
->  };
+On Wed, 2017-04-12 at 11:42 +0800, Ming Lei wrote:
+> On Tue, Apr 11, 2017 at 06:18:36PM +0000, Bart Van Assche wrote:
+> > On Tue, 2017-04-11 at 14:03 -0400, Mike Snitzer wrote:
+> > > Rather than working so hard to use DM code against me, your argument
+> > > should be: "blk-mq drivers X, Y and Z rerun the hw queue; this is a w=
+ell
+> > > established pattern"
+> > >=20
+> > > I see drivers/nvme/host/fc.c:nvme_fc_start_fcp_op() does.  But that i=
+s
+> > > only one other driver out of ~20 BLK_MQ_RQ_QUEUE_BUSY returns
+> > > tree-wide.
+> > >=20
+> > > Could be there are some others, but hardly a well-established pattern=
+.
+> >=20
+> > Hello Mike,
+> >=20
+> > Several blk-mq drivers that can return BLK_MQ_RQ_QUEUE_BUSY from their
+> > .queue_rq() implementation stop the request queue=A0(blk_mq_stop_hw_que=
+ue())
+> > before returning "busy" and restart the queue after the busy condition =
+has
+> > been cleared (blk_mq_start_stopped_hw_queues()). Examples are virtio_bl=
+k and
+> > xen-blkfront. However, this approach is not appropriate for the dm-mq c=
+ore
+> > nor for the scsi core since both drivers already use the "stopped" stat=
+e for
+> > another purpose than tracking whether or not a hardware queue is busy. =
+Hence
+> > the blk_mq_delay_run_hw_queue() and blk_mq_run_hw_queue() calls in thes=
+e last
+> > two drivers to rerun a hardware queue after the busy state has been cle=
+ared.
+>=20
+> But looks this patch just reruns the hw queue after 100ms, which isn't
+> that after the busy state has been cleared, right?
 
-Reviewed-by: Ming Lei <ming.lei@redhat.com>
+Hello Ming,
 
-Thanks,
-Ming
+That patch can be considered as a first step that can be refined further, n=
+amely
+by modifying the dm-rq code further such that dm-rq queues are only rerun a=
+fter
+the busy condition has been cleared. The patch at the start of this thread =
+is
+easier to review and easier to test than any patch that would only rerun dm=
+-rq
+queues after the busy condition has been cleared.
+
+> Actually if BLK_MQ_RQ_QUEUE_BUSY is returned from .queue_rq(), blk-mq
+> will buffer this request into hctx->dispatch and run the hw queue again,
+> so looks blk_mq_delay_run_hw_queue() in this situation shouldn't have bee=
+n
+> needed at my 1st impression.
+
+If the blk-mq core would always rerun a hardware queue if a block driver
+returns BLK_MQ_RQ_QUEUE_BUSY then that would cause 100% of a single CPU cor=
+e
+to be busy with polling a hardware queue until the "busy" condition has bee=
+n
+cleared. One can see easily that that's not what the blk-mq core does. From
+blk_mq_sched_dispatch_requests():
+
+	if (!list_empty(&rq_list)) {
+		blk_mq_sched_mark_restart_hctx(hctx);
+		did_work =3D blk_mq_dispatch_rq_list(q, &rq_list);
+	}
+
+From the end of blk_mq_dispatch_rq_list():
+
+	if (!list_empty(list)) {
+		[ ... ]
+		if (!blk_mq_sched_needs_restart(hctx) &&
+		=A0=A0=A0=A0!test_bit(BLK_MQ_S_TAG_WAITING, &hctx->state))
+			blk_mq_run_hw_queue(hctx, true);
+	}
+
+In other words, the BLK_MQ_S_SCHED_RESTART flag is set before the dispatch =
+list
+is examined and only if that flag gets cleared while blk_mq_dispatch_rq_lis=
+t()
+is in progress by a concurrent blk_mq_sched_restart_hctx() call then the
+dispatch list will be rerun after a block driver returned=A0BLK_MQ_RQ_QUEUE=
+_BUSY.
+
+Bart.=
