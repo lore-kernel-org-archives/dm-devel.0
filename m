@@ -1,514 +1,225 @@
-From: Gilad Ben-Yossef <gilad@benyossef.com>
-Subject: [PATCH v3 RESEND] dm: switch dm-verity to async hash crypto API
-Date: Wed, 12 Apr 2017 10:25:05 +0300
-Message-ID: <1491981905-8821-1-git-send-email-gilad@benyossef.com>
+From: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Subject: Re: [PATCH] multipath-tools: replace multipath
+	configuration output
+Date: Wed, 12 Apr 2017 09:35:37 +0200
+Message-ID: <CABr-Gnee6+q-wco7662ptvYuUKWHgdQbEC=zFYQCi_cUHGQ+EQ@mail.gmail.com>
+References: <20170408133042.4478-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-crypto-owner@vger.kernel.org>
-Sender: linux-crypto-owner@vger.kernel.org
-To: dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: linux-crypto@vger.kernel.org, gilad.benyossef@arm.com, ofir.drang@arm.com, Milan Broz <gmazyland@gmail.com>, linux-kernel@vger.kernel.org, Eric Biggers <ebiggers3@gmail.com>, =?UTF-8?q?Ondrej=20Mosn=C3=A1=C4=8Dek?= <omosnacek+linux-crypto@gmail.com>
+Content-Type: multipart/mixed; boundary="===============8776622774873486063=="
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20170408133042.4478-1-xose.vazquez@gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Use of the synchronous digest API limits dm-verity to using pure
-CPU based algorithm providers and rules out the use of off CPU
-algorithm providers which are normally asynchronous by nature,
-potentially freeing CPU cycles.
+--===============8776622774873486063==
+Content-Type: multipart/alternative; boundary=94eb2c04f89a2d2c23054cf341ab
 
-This can reduce performance per Watt in situations such as during
-boot time when a lot of concurrent file accesses are made to the
-protected volume.
+--94eb2c04f89a2d2c23054cf341ab
+Content-Type: text/plain; charset=UTF-8
 
-Move DM_VERITY to the asynchronous hash API.
+Merged,
+thanks.
 
-Signed-off-by: Gilad Ben-Yossef <gilad@benyossef.com>
-Tested-by: Milan Broz <gmazyland@gmail.com>
-CC: Eric Biggers <ebiggers3@gmail.com>
-CC: Ondrej Mosnáček <omosnacek+linux-crypto@gmail.com>
----
+On Sat, Apr 8, 2017 at 3:30 PM, Xose Vazquez Perez <xose.vazquez@gmail.com>
+wrote:
 
-Resending since I did not get any feedback beyond Milan confirmation that
-the latest version passes his simple sanity test.
+> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> Cc: device-mapper development <dm-devel@redhat.com>
+> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+> ---
+>  libmultipath/propsel.c | 12 ++++++------
+>  1 file changed, 6 insertions(+), 6 deletions(-)
+>
+> diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+> index dd10ceb..5f70d86 100644
+> --- a/libmultipath/propsel.c
+> +++ b/libmultipath/propsel.c
+> @@ -162,7 +162,7 @@ int select_pgpolicy(struct config *conf, struct
+> multipath * mp)
+>
+>         if (conf->pgpolicy_flag > 0) {
+>                 mp->pgpolicy = conf->pgpolicy_flag;
+> -               origin = "(cmd line flag)";
+> +               origin = "(setting: multipath command line [-p] flag)";
+>                 goto out;
+>         }
+>         mp_set_mpe(pgpolicy);
+> @@ -251,18 +251,18 @@ int select_alias(struct config *conf, struct
+> multipath * mp)
+>                                 mp->alias_old, mp->alias_prefix,
+>                                 conf->bindings_read_only);
+>                 memset (mp->alias_old, 0, WWID_SIZE);
+> -               origin = "(using existing alias)";
+> +               origin = "(setting: using existing alias)";
+>         }
+>
+>         if (mp->alias == NULL) {
+>                 mp->alias = get_user_friendly_alias(mp->wwid,
+>                                 conf->bindings_file, mp->alias_prefix,
+> conf->bindings_read_only);
+> -               origin = "(user_friendly_name)";
+> +               origin = "(setting: user_friendly_name)";
+>         }
+>  out:
+>         if (mp->alias == NULL) {
+>                 mp->alias = STRDUP(mp->wwid);
+> -               origin = "(default to wwid)";
+> +               origin = "(setting: default to WWID)";
+>         }
+>         if (mp->alias)
+>                 condlog(3, "%s: alias = %s %s", mp->wwid, mp->alias,
+> origin);
+> @@ -565,7 +565,7 @@ int select_retain_hwhandler(struct config *conf,
+> struct multipath *mp)
+>
+>         if (!VERSION_GE(conf->version, minv_dm_retain)) {
+>                 mp->retain_hwhandler = RETAIN_HWHANDLER_OFF;
+> -               origin = "(requires kernel version >= 1.5.0)";
+> +               origin = "(setting: WARNING, requires kernel version >=
+> 1.5.0)";
+>                 goto out;
+>         }
+>         mp_set_ovr(retain_hwhandler);
+> @@ -614,7 +614,7 @@ int select_deferred_remove(struct config *conf, struct
+> multipath *mp)
+>
+>  #ifndef LIBDM_API_DEFERRED
+>         mp->deferred_remove = DEFERRED_REMOVE_OFF;
+> -       origin = "(not compiled with support)";
+> +       origin = "(setting: WARNING, not compiled with support)";
+>         goto out;
+>  #endif
+>         if (mp->deferred_remove == DEFERRED_REMOVE_IN_PROGRESS) {
+> --
+> 2.12.2
+>
+>
 
-The patch was tested by me on an Armv7 based dual core Zynq ZC706 development
-board with SHA256-asm, SHA256-neon synchronous providers with no visible
-degradation of performance, with cryptd based asynchronous versions of the 
-same and with an off tree Arm CryptoCell asynchronous provider.
+--94eb2c04f89a2d2c23054cf341ab
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 
-Changes from v2:
+<div dir=3D"ltr">Merged,<div>thanks.</div></div><div class=3D"gmail_extra">=
+<br><div class=3D"gmail_quote">On Sat, Apr 8, 2017 at 3:30 PM, Xose Vazquez=
+ Perez <span dir=3D"ltr">&lt;<a href=3D"mailto:xose.vazquez@gmail.com" targ=
+et=3D"_blank">xose.vazquez@gmail.com</a>&gt;</span> wrote:<br><blockquote c=
+lass=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;=
+padding-left:1ex">Cc: Christophe Varoqui &lt;<a href=3D"mailto:christophe.v=
+aroqui@opensvc.com">christophe.varoqui@opensvc.<wbr>com</a>&gt;<br>
+Cc: device-mapper development &lt;<a href=3D"mailto:dm-devel@redhat.com">dm=
+-devel@redhat.com</a>&gt;<br>
+Signed-off-by: Xose Vazquez Perez &lt;<a href=3D"mailto:xose.vazquez@gmail.=
+com">xose.vazquez@gmail.com</a>&gt;<br>
+---<br>
+=C2=A0libmultipath/propsel.c | 12 ++++++------<br>
+=C2=A01 file changed, 6 insertions(+), 6 deletions(-)<br>
+<br>
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c<br>
+index dd10ceb..5f70d86 100644<br>
+--- a/libmultipath/propsel.c<br>
++++ b/libmultipath/propsel.c<br>
+@@ -162,7 +162,7 @@ int select_pgpolicy(struct config *conf, struct multipa=
+th * mp)<br>
+<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (conf-&gt;pgpolicy_flag &gt; 0) {<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 mp-&gt;pgpolicy =3D=
+ conf-&gt;pgpolicy_flag;<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0origin =3D &quot;(c=
+md line flag)&quot;;<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0origin =3D &quot;(s=
+etting: multipath command line [-p] flag)&quot;;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 goto out;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 }<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 mp_set_mpe(pgpolicy);<br>
+@@ -251,18 +251,18 @@ int select_alias(struct config *conf, struct multipat=
+h * mp)<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 mp-&gt;alias_old, mp-&gt;alias_prefi=
+x,<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 conf-&gt;bindings_read_only);<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 memset (mp-&gt;alia=
+s_old, 0, WWID_SIZE);<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0origin =3D &quot;(u=
+sing existing alias)&quot;;<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0origin =3D &quot;(s=
+etting: using existing alias)&quot;;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 }<br>
+<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (mp-&gt;alias =3D=3D NULL) {<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 mp-&gt;alias =3D ge=
+t_user_friendly_alias(mp-&gt;<wbr>wwid,<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 conf-&gt;bindings_file, mp-&gt;alias=
+_prefix, conf-&gt;bindings_read_only);<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0origin =3D &quot;(u=
+ser_friendly_name)&quot;;<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0origin =3D &quot;(s=
+etting: user_friendly_name)&quot;;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 }<br>
+=C2=A0out:<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (mp-&gt;alias =3D=3D NULL) {<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 mp-&gt;alias =3D ST=
+RDUP(mp-&gt;wwid);<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0origin =3D &quot;(d=
+efault to wwid)&quot;;<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0origin =3D &quot;(s=
+etting: default to WWID)&quot;;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 }<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (mp-&gt;alias)<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 condlog(3, &quot;%s=
+: alias =3D %s %s&quot;, mp-&gt;wwid, mp-&gt;alias, origin);<br>
+@@ -565,7 +565,7 @@ int select_retain_hwhandler(struct config *conf, struct=
+ multipath *mp)<br>
+<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (!VERSION_GE(conf-&gt;version, minv_dm_retai=
+n)) {<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 mp-&gt;retain_hwhan=
+dler =3D RETAIN_HWHANDLER_OFF;<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0origin =3D &quot;(r=
+equires kernel version &gt;=3D 1.5.0)&quot;;<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0origin =3D &quot;(s=
+etting: WARNING, requires kernel version &gt;=3D 1.5.0)&quot;;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 goto out;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 }<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 mp_set_ovr(retain_hwhandler);<br>
+@@ -614,7 +614,7 @@ int select_deferred_remove(struct config *conf, struct =
+multipath *mp)<br>
+<br>
+=C2=A0#ifndef LIBDM_API_DEFERRED<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 mp-&gt;deferred_remove =3D DEFERRED_REMOVE_OFF;=
+<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0origin =3D &quot;(not compiled with support)&qu=
+ot;;<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0origin =3D &quot;(setting: WARNING, not compile=
+d with support)&quot;;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 goto out;<br>
+=C2=A0#endif<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (mp-&gt;deferred_remove =3D=3D DEFERRED_REMO=
+VE_IN_PROGRESS) {<br>
+<span class=3D"HOEnZb"><font color=3D"#888888">--<br>
+2.12.2<br>
+<br>
+</font></span></blockquote></div><br></div>
 
-- Use completion to potentially wait also on crypto_ahash_init() as it
-  may finish asynchronously as well in some drivers, such as cryptd, as
-  discovered by Milan Broz.
-- Use sg_init_one() where apropriate as pointed out by Milan Broz.
-
-Changes from v1:
-
-- Use a 0 mask to allocate crypto alg indicating we welcome async algo 
-  providers, as suggested by Ondrej Mosnáček.
-- Fix use of un-initialized completion when using async provider for IO
-  blocks hashing
-- Pass flag indicating we are OK with crypto provider backlog
-- Re-factor checking for need to wait into a common function
-
- drivers/md/dm-verity-fec.c    |   4 +-
- drivers/md/dm-verity-target.c | 202 +++++++++++++++++++++++++++++-------------
- drivers/md/dm-verity.h        |  23 +++--
- 3 files changed, 158 insertions(+), 71 deletions(-)
+--94eb2c04f89a2d2c23054cf341ab--
 
 
- drivers/md/dm-verity-fec.c    |   4 +-
- drivers/md/dm-verity-target.c | 201 +++++++++++++++++++++++++++++-------------
- drivers/md/dm-verity.h        |  23 +++--
- 3 files changed, 157 insertions(+), 71 deletions(-)
+--===============8776622774873486063==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-diff --git a/drivers/md/dm-verity-fec.c b/drivers/md/dm-verity-fec.c
-index 0f0eb8a..dab98fe 100644
---- a/drivers/md/dm-verity-fec.c
-+++ b/drivers/md/dm-verity-fec.c
-@@ -188,7 +188,7 @@ static int fec_decode_bufs(struct dm_verity *v, struct dm_verity_fec_io *fio,
- static int fec_is_erasure(struct dm_verity *v, struct dm_verity_io *io,
- 			  u8 *want_digest, u8 *data)
- {
--	if (unlikely(verity_hash(v, verity_io_hash_desc(v, io),
-+	if (unlikely(verity_hash(v, verity_io_hash_req(v, io),
- 				 data, 1 << v->data_dev_block_bits,
- 				 verity_io_real_digest(v, io))))
- 		return 0;
-@@ -397,7 +397,7 @@ static int fec_decode_rsb(struct dm_verity *v, struct dm_verity_io *io,
- 	}
- 
- 	/* Always re-validate the corrected block against the expected hash */
--	r = verity_hash(v, verity_io_hash_desc(v, io), fio->output,
-+	r = verity_hash(v, verity_io_hash_req(v, io), fio->output,
- 			1 << v->data_dev_block_bits,
- 			verity_io_real_digest(v, io));
- 	if (unlikely(r < 0))
-diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-index 7335d8a..97de961 100644
---- a/drivers/md/dm-verity-target.c
-+++ b/drivers/md/dm-verity-target.c
-@@ -93,81 +93,123 @@ static sector_t verity_position_at_level(struct dm_verity *v, sector_t block,
- }
- 
- /*
-- * Wrapper for crypto_shash_init, which handles verity salting.
-+ * Callback function for asynchrnous crypto API completion notification
-  */
--static int verity_hash_init(struct dm_verity *v, struct shash_desc *desc)
-+static void verity_op_done(struct crypto_async_request *base, int err)
- {
--	int r;
-+	struct verity_result *res = (struct verity_result *)base->data;
- 
--	desc->tfm = v->tfm;
--	desc->flags = CRYPTO_TFM_REQ_MAY_SLEEP;
-+	if (err == -EINPROGRESS)
-+		return;
- 
--	r = crypto_shash_init(desc);
-+	res->err = err;
-+	complete(&res->completion);
-+}
- 
--	if (unlikely(r < 0)) {
--		DMERR("crypto_shash_init failed: %d", r);
--		return r;
--	}
-+/*
-+ * Wait for async crypto API callback
-+ */
-+static inline int verity_complete_op(struct verity_result *res, int ret)
-+{
-+	switch (ret) {
-+	case 0:
-+		break;
- 
--	if (likely(v->version >= 1)) {
--		r = crypto_shash_update(desc, v->salt, v->salt_size);
-+	case -EINPROGRESS:
-+	case -EBUSY:
-+		ret = wait_for_completion_interruptible(&res->completion);
-+		if (!ret)
-+			ret = res->err;
-+		reinit_completion(&res->completion);
-+		break;
- 
--		if (unlikely(r < 0)) {
--			DMERR("crypto_shash_update failed: %d", r);
--			return r;
--		}
-+	default:
-+		DMERR("verity_wait_hash: crypto op submission failed: %d", ret);
- 	}
- 
--	return 0;
-+	if (unlikely(ret < 0))
-+		DMERR("verity_wait_hash: crypto op failed: %d", ret);
-+
-+	return ret;
- }
- 
--static int verity_hash_update(struct dm_verity *v, struct shash_desc *desc,
--			      const u8 *data, size_t len)
-+static int verity_hash_update(struct dm_verity *v, struct ahash_request *req,
-+				const u8 *data, size_t len,
-+				struct verity_result *res)
- {
--	int r = crypto_shash_update(desc, data, len);
-+	struct scatterlist sg;
- 
--	if (unlikely(r < 0))
--		DMERR("crypto_shash_update failed: %d", r);
-+	sg_init_one(&sg, data, len);
-+	ahash_request_set_crypt(req, &sg, NULL, len);
-+
-+	return verity_complete_op(res, crypto_ahash_update(req));
-+}
-+
-+/*
-+ * Wrapper for crypto_ahash_init, which handles verity salting.
-+ */
-+static int verity_hash_init(struct dm_verity *v, struct ahash_request *req,
-+				struct verity_result *res)
-+{
-+	int r;
-+
-+	ahash_request_set_tfm(req, v->tfm);
-+	ahash_request_set_callback(req, CRYPTO_TFM_REQ_MAY_SLEEP |
-+					CRYPTO_TFM_REQ_MAY_BACKLOG,
-+					verity_op_done, (void *)res);
-+	init_completion(&res->completion);
-+
-+	r = verity_complete_op(res, crypto_ahash_init(req));
-+
-+	if (unlikely(r < 0)) {
-+		DMERR("crypto_ahash_init failed: %d", r);
-+		return r;
-+	}
-+
-+	if (likely(v->version >= 1))
-+		r = verity_hash_update(v, req, v->salt, v->salt_size, res);
- 
- 	return r;
- }
- 
--static int verity_hash_final(struct dm_verity *v, struct shash_desc *desc,
--			     u8 *digest)
-+static int verity_hash_final(struct dm_verity *v, struct ahash_request *req,
-+			     u8 *digest, struct verity_result *res)
- {
- 	int r;
- 
- 	if (unlikely(!v->version)) {
--		r = crypto_shash_update(desc, v->salt, v->salt_size);
-+		r = verity_hash_update(v, req, v->salt, v->salt_size, res);
- 
- 		if (r < 0) {
--			DMERR("crypto_shash_update failed: %d", r);
--			return r;
-+			DMERR("verity_hash_final failed updating salt: %d", r);
-+			goto out;
- 		}
- 	}
- 
--	r = crypto_shash_final(desc, digest);
--
--	if (unlikely(r < 0))
--		DMERR("crypto_shash_final failed: %d", r);
--
-+	ahash_request_set_crypt(req, NULL, digest, 0);
-+	r = verity_complete_op(res, crypto_ahash_final(req));
-+out:
- 	return r;
- }
- 
--int verity_hash(struct dm_verity *v, struct shash_desc *desc,
-+int verity_hash(struct dm_verity *v, struct ahash_request *req,
- 		const u8 *data, size_t len, u8 *digest)
- {
- 	int r;
-+	struct verity_result res;
- 
--	r = verity_hash_init(v, desc);
-+	r = verity_hash_init(v, req, &res);
- 	if (unlikely(r < 0))
--		return r;
-+		goto out;
- 
--	r = verity_hash_update(v, desc, data, len);
-+	r = verity_hash_update(v, req, data, len, &res);
- 	if (unlikely(r < 0))
--		return r;
-+		goto out;
-+
-+	r = verity_hash_final(v, req, digest, &res);
- 
--	return verity_hash_final(v, desc, digest);
-+out:
-+	return r;
- }
- 
- static void verity_hash_at_level(struct dm_verity *v, sector_t block, int level,
-@@ -275,7 +317,7 @@ static int verity_verify_level(struct dm_verity *v, struct dm_verity_io *io,
- 			goto release_ret_r;
- 		}
- 
--		r = verity_hash(v, verity_io_hash_desc(v, io),
-+		r = verity_hash(v, verity_io_hash_req(v, io),
- 				data, 1 << v->hash_dev_block_bits,
- 				verity_io_real_digest(v, io));
- 		if (unlikely(r < 0))
-@@ -344,6 +386,49 @@ int verity_hash_for_block(struct dm_verity *v, struct dm_verity_io *io,
- }
- 
- /*
-+ * Calculates the digest for the given bio
-+ */
-+int verity_for_io_block(struct dm_verity *v, struct dm_verity_io *io,
-+			struct bvec_iter *iter, struct verity_result *res)
-+{
-+	unsigned int todo = 1 << v->data_dev_block_bits;
-+	struct bio *bio = dm_bio_from_per_bio_data(io, v->ti->per_io_data_size);
-+	struct scatterlist sg;
-+	struct ahash_request *req = verity_io_hash_req(v, io);
-+
-+	do {
-+		int r;
-+		unsigned int len;
-+		struct bio_vec bv = bio_iter_iovec(bio, *iter);
-+
-+		sg_init_table(&sg, 1);
-+
-+		len = bv.bv_len;
-+
-+		if (likely(len >= todo))
-+			len = todo;
-+		/*
-+		 * Operating on a single page at a time looks suboptimal
-+		 * until you consider the typical block size is 4,096B.
-+		 * Going through this loops twice should be very rare.
-+		 */
-+		sg_set_page(&sg, bv.bv_page, len, bv.bv_offset);
-+		ahash_request_set_crypt(req, &sg, NULL, len);
-+		r = verity_complete_op(res, crypto_ahash_update(req));
-+
-+		if (unlikely(r < 0)) {
-+			DMERR("verity_for_io_block crypto op failed: %d", r);
-+			return r;
-+		}
-+
-+		bio_advance_iter(bio, iter, len);
-+		todo -= len;
-+	} while (todo);
-+
-+	return 0;
-+}
-+
-+/*
-  * Calls function process for 1 << v->data_dev_block_bits bytes in the bio_vec
-  * starting from iter.
-  */
-@@ -381,12 +466,6 @@ int verity_for_bv_block(struct dm_verity *v, struct dm_verity_io *io,
- 	return 0;
- }
- 
--static int verity_bv_hash_update(struct dm_verity *v, struct dm_verity_io *io,
--				 u8 *data, size_t len)
--{
--	return verity_hash_update(v, verity_io_hash_desc(v, io), data, len);
--}
--
- static int verity_bv_zero(struct dm_verity *v, struct dm_verity_io *io,
- 			  u8 *data, size_t len)
- {
-@@ -403,10 +482,11 @@ static int verity_verify_io(struct dm_verity_io *io)
- 	struct dm_verity *v = io->v;
- 	struct bvec_iter start;
- 	unsigned b;
-+	struct verity_result res;
- 
- 	for (b = 0; b < io->n_blocks; b++) {
- 		int r;
--		struct shash_desc *desc = verity_io_hash_desc(v, io);
-+		struct ahash_request *req = verity_io_hash_req(v, io);
- 
- 		r = verity_hash_for_block(v, io, io->block + b,
- 					  verity_io_want_digest(v, io),
-@@ -427,16 +507,17 @@ static int verity_verify_io(struct dm_verity_io *io)
- 			continue;
- 		}
- 
--		r = verity_hash_init(v, desc);
-+		r = verity_hash_init(v, req, &res);
- 		if (unlikely(r < 0))
- 			return r;
- 
- 		start = io->iter;
--		r = verity_for_bv_block(v, io, &io->iter, verity_bv_hash_update);
-+		r = verity_for_io_block(v, io, &io->iter, &res);
- 		if (unlikely(r < 0))
- 			return r;
- 
--		r = verity_hash_final(v, desc, verity_io_real_digest(v, io));
-+		r = verity_hash_final(v, req, verity_io_real_digest(v, io),
-+					&res);
- 		if (unlikely(r < 0))
- 			return r;
- 
-@@ -705,7 +786,7 @@ static void verity_dtr(struct dm_target *ti)
- 	kfree(v->zero_digest);
- 
- 	if (v->tfm)
--		crypto_free_shash(v->tfm);
-+		crypto_free_ahash(v->tfm);
- 
- 	kfree(v->alg_name);
- 
-@@ -723,7 +804,7 @@ static void verity_dtr(struct dm_target *ti)
- static int verity_alloc_zero_digest(struct dm_verity *v)
- {
- 	int r = -ENOMEM;
--	struct shash_desc *desc;
-+	struct ahash_request *req;
- 	u8 *zero_data;
- 
- 	v->zero_digest = kmalloc(v->digest_size, GFP_KERNEL);
-@@ -731,9 +812,9 @@ static int verity_alloc_zero_digest(struct dm_verity *v)
- 	if (!v->zero_digest)
- 		return r;
- 
--	desc = kmalloc(v->shash_descsize, GFP_KERNEL);
-+	req = kmalloc(v->ahash_reqsize, GFP_KERNEL);
- 
--	if (!desc)
-+	if (!req)
- 		return r; /* verity_dtr will free zero_digest */
- 
- 	zero_data = kzalloc(1 << v->data_dev_block_bits, GFP_KERNEL);
-@@ -741,11 +822,11 @@ static int verity_alloc_zero_digest(struct dm_verity *v)
- 	if (!zero_data)
- 		goto out;
- 
--	r = verity_hash(v, desc, zero_data, 1 << v->data_dev_block_bits,
-+	r = verity_hash(v, req, zero_data, 1 << v->data_dev_block_bits,
- 			v->zero_digest);
- 
- out:
--	kfree(desc);
-+	kfree(req);
- 	kfree(zero_data);
- 
- 	return r;
-@@ -923,21 +1004,21 @@ static int verity_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 		goto bad;
- 	}
- 
--	v->tfm = crypto_alloc_shash(v->alg_name, 0, 0);
-+	v->tfm = crypto_alloc_ahash(v->alg_name, 0, 0);
- 	if (IS_ERR(v->tfm)) {
- 		ti->error = "Cannot initialize hash function";
- 		r = PTR_ERR(v->tfm);
- 		v->tfm = NULL;
- 		goto bad;
- 	}
--	v->digest_size = crypto_shash_digestsize(v->tfm);
-+	v->digest_size = crypto_ahash_digestsize(v->tfm);
- 	if ((1 << v->hash_dev_block_bits) < v->digest_size * 2) {
- 		ti->error = "Digest size too big";
- 		r = -EINVAL;
- 		goto bad;
- 	}
--	v->shash_descsize =
--		sizeof(struct shash_desc) + crypto_shash_descsize(v->tfm);
-+	v->ahash_reqsize = sizeof(struct ahash_request) +
-+		crypto_ahash_reqsize(v->tfm);
- 
- 	v->root_digest = kmalloc(v->digest_size, GFP_KERNEL);
- 	if (!v->root_digest) {
-@@ -1037,7 +1118,7 @@ static int verity_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 	}
- 
- 	ti->per_io_data_size = sizeof(struct dm_verity_io) +
--				v->shash_descsize + v->digest_size * 2;
-+				v->ahash_reqsize + v->digest_size * 2;
- 
- 	r = verity_fec_ctr(v);
- 	if (r)
-diff --git a/drivers/md/dm-verity.h b/drivers/md/dm-verity.h
-index fb419f4..a59e0ad 100644
---- a/drivers/md/dm-verity.h
-+++ b/drivers/md/dm-verity.h
-@@ -37,7 +37,7 @@ struct dm_verity {
- 	struct dm_target *ti;
- 	struct dm_bufio_client *bufio;
- 	char *alg_name;
--	struct crypto_shash *tfm;
-+	struct crypto_ahash *tfm;
- 	u8 *root_digest;	/* digest of the root block */
- 	u8 *salt;		/* salt: its size is salt_size */
- 	u8 *zero_digest;	/* digest for a zero block */
-@@ -52,7 +52,7 @@ struct dm_verity {
- 	unsigned char levels;	/* the number of tree levels */
- 	unsigned char version;
- 	unsigned digest_size;	/* digest size for the current hash algorithm */
--	unsigned shash_descsize;/* the size of temporary space for crypto */
-+	unsigned int ahash_reqsize;/* the size of temporary space for crypto */
- 	int hash_failed;	/* set to 1 if hash of any block failed */
- 	enum verity_mode mode;	/* mode for handling verification errors */
- 	unsigned corrupted_errs;/* Number of errors for corrupted blocks */
-@@ -81,31 +81,36 @@ struct dm_verity_io {
- 	/*
- 	 * Three variably-size fields follow this struct:
- 	 *
--	 * u8 hash_desc[v->shash_descsize];
-+	 * u8 hash_req[v->ahash_reqsize];
- 	 * u8 real_digest[v->digest_size];
- 	 * u8 want_digest[v->digest_size];
- 	 *
--	 * To access them use: verity_io_hash_desc(), verity_io_real_digest()
-+	 * To access them use: verity_io_hash_req(), verity_io_real_digest()
- 	 * and verity_io_want_digest().
- 	 */
- };
- 
--static inline struct shash_desc *verity_io_hash_desc(struct dm_verity *v,
-+struct verity_result {
-+	struct completion completion;
-+	int err;
-+};
-+
-+static inline struct ahash_request *verity_io_hash_req(struct dm_verity *v,
- 						     struct dm_verity_io *io)
- {
--	return (struct shash_desc *)(io + 1);
-+	return (struct ahash_request *)(io + 1);
- }
- 
- static inline u8 *verity_io_real_digest(struct dm_verity *v,
- 					struct dm_verity_io *io)
- {
--	return (u8 *)(io + 1) + v->shash_descsize;
-+	return (u8 *)(io + 1) + v->ahash_reqsize;
- }
- 
- static inline u8 *verity_io_want_digest(struct dm_verity *v,
- 					struct dm_verity_io *io)
- {
--	return (u8 *)(io + 1) + v->shash_descsize + v->digest_size;
-+	return (u8 *)(io + 1) + v->ahash_reqsize + v->digest_size;
- }
- 
- static inline u8 *verity_io_digest_end(struct dm_verity *v,
-@@ -120,7 +125,7 @@ extern int verity_for_bv_block(struct dm_verity *v, struct dm_verity_io *io,
- 					      struct dm_verity_io *io,
- 					      u8 *data, size_t len));
- 
--extern int verity_hash(struct dm_verity *v, struct shash_desc *desc,
-+extern int verity_hash(struct dm_verity *v, struct ahash_request *req,
- 		       const u8 *data, size_t len, u8 *digest);
- 
- extern int verity_hash_for_block(struct dm_verity *v, struct dm_verity_io *io,
--- 
-2.1.4
+
+--===============8776622774873486063==--
