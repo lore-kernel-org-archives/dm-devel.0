@@ -1,16 +1,14 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 17/33] multipathd: imply -n if
- find_multipaths is set
-Date: Wed, 12 Apr 2017 23:36:26 +0200
-Message-ID: <1492032986.4742.43.camel@suse.com>
-References: <20170228162329.14517-1-mwilck@suse.com>
-	<20170228162329.14517-18-mwilck@suse.com>
-	<20170405230328.GJ19236@octiron.msp.redhat.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: [PATCH 1/2] multipath: Merge the DELL MD3xxx device
+	configs
+Date: Wed, 12 Apr 2017 17:15:09 -0500
+Message-ID: <1492035310-27525-2-git-send-email-bmarzins@redhat.com>
+References: <1492035310-27525-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170405230328.GJ19236@octiron.msp.redhat.com>
+In-Reply-To: <1492035310-27525-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,77 +18,55 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-T24gV2VkLCAyMDE3LTA0LTA1IGF0IDE4OjAzIC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gT24gVHVlLCBGZWIgMjgsIDIwMTcgYXQgMDU6MjM6MTNQTSArMDEwMCwgTWFydGluIFdp
-bGNrIHdyb3RlOgo+ID4gQXV0b21hdGljIGRldGVjdGlvbiBvZiBuZXcgZGV2aWNlcyB3aXRoIGZp
-bmRfbXVsdGlwYXRocwo+ID4gZG9lc24ndCB3b3JrIGNvcnJlY3RseSBjdXJyZW50bHkuIFRoZXJl
-Zm9yZSwgZm9yIG5vdywKPiA+IGltcGx5IGlnbm9yZV9uZXdfZGV2cyBpZiBmaW5kX211bHRpcGF0
-aHMgaXMgc2Vlbi4KPiAKPiBJIHdvdWxkIHJhdGhlciBub3QgZG8gdGhpcyAoYXQgbGVhc3Qgb3V0
-c2lkZSBvZiB0aGUgaW5pdHJhbWZzKSwgc2luY2UKPiBpdAo+IGtlZXBzIG11bHRpcGF0aGQgZnJv
-bSBhdXRvbWF0aWNhbGx5IGNyZWF0aW5nIG11bHRpcGF0aCBkZXZpY2VzIGFzCj4gZXhwZWN0ZWQg
-d2hlbiB5b3UgZW5hYmxlIGZpbmRfbXVsdGlwYXRocy4gSSBhZG1pdCB0aGF0IHRoZXNlIHBhdGgK
-PiBkZXZpY2VzIHdvbid0IGJlIGNvcnJlY3RseSBjbGFpbWVkIGluIHVkZXYgd2hlbiB0aGV5IGFw
-cGVhciBmb3IgdGhlCj4gZmlyc3QgdGltZSwgYnV0IGl0J3MgaGFyZCB0byBiZWxpZXZlIHRoYXQg
-dGhleSBhcmUgY3JpdGljYWwgdGhlIHZlcnkKPiBmaXJzdCB0aW1lIHRoZXkgYXBwZWFyIG9uIHRo
-ZSBzeXN0ZW0uIEkgaGF2ZSBhIHBhdGNoIHRoYXQgSSBjYW4gc2VuZAo+IHVwc3RyZWFtIHRoYXQg
-dHJpZ2dlcnMgYSBjaGFuZ2UgdWV2ZW50IG9uIHBhdGggZGV2aWNlcyB3aGVuIHRoZXkgYXJlCj4g
-YWRkZWQgdG8gdGhlIHd3aWRzIGZpbGUuwqDCoFRoaXMgbWVhbnMgdGhhdCB0aGVzZSBkZXZpY2Vz
-IHdpbGwgYmUKPiBjb3JyZWN0bHkgY2xhaW1lZCBieSBtdWx0aXBhdGggYXMgc29vbiBhcyBpdCBn
-ZXRzIHNldCB1cCBvbiB0b3Agb2YKPiB0aGVtLgo+IAo+IE1hcnRpbiwgd2hhdCBkbyB5b3UgdGhp
-bmcgYWJvdXQgcmV2ZXJ0aW5nIHRoaXMgY2hhbmdlIGFuZCB0cmlnZ2VyaW5nCj4gYQo+IHVldmVu
-dCBpbnN0ZWFkPwoKSSBoYXZlbid0IGJlZW4gYWJsZSB0byBvYnRhaW4gc3RhYmxlIGJlaGF2aW9y
-IGluIG15IGV4cGVyaW1lbnRzLCB0aGF0J3MKd2h5IEkgbWFkZSB0aGlzIHBhdGNoLiBUaGUgcHJv
-YmxlbSBpcyB0aGUgY29ycmVzcG9uZGVuY2UgYmV0d2VlbiB0aGUKbXVsdGlwYXRoIGludm9jYXRp
-b24gaW4gNTYtbXVsdGlwYXRoLnJ1bGVzIGFuZCBtdWx0aXBhdGhkLiBJIGV4cGxhaW5lZAp0aGUg
-cHJvYmxlbXMgSSBoYWQgaW4gbW9yZSBkZXRhaWwgaW4gdGhlIGNvbW1pdCBtZXNzYWdlIG9mIHBh
-dGNoIDE2IG9mCnRoZSBzZXJpZXMuIAoKW05vdGU6IFNVU0UgdXNlcyAiLWkiIGluIG11bHRpcGF0
-aC5ydWxlcywgd2hlcmVhcyBGZWRvcmEvUkggZG9lcyBub3QuCkhvd2V2ZXIgd2l0aCBwYXRjaCAx
-Ni8zMyBJIGNoYW5nZWQgdGhlIGNvZGUgc3VjaCB0aGF0ICItaSIgaXMgaWdub3JlZAp3aGVuIGZp
-bmRfbXVsdGlwYXRocyBpcyB1c2VkLCBzbyB0aGF0IHRoZSBtdWx0aXBhdGggY2FsbCBpbiA1Ni0K
-bXVsdGlwYXRoLnJ1bGVzIGFjdHVhbGx5IGRvZXMgdGhlIHNhbWUgaW4gYm90aCBkaXN0cm9zIGlu
-IHRoZQpmaW5kX211bHRpcGF0aHMgY2FzZSAob25seSBjb25zaWRlcnMgcGF0aHMgZnJvbSB0aGUg
-V1dJRHMgZmlsZSkuXQoKRm9yIGEgcGF0aCB0aGF0J3Mgbm90IGluIHRoZSBXV0lEcyBmaWxlIHll
-dCwgdGhlIHVkZXYgcnVsZSB3aWxsIGFsd2F5cwpyZXR1cm4gRkFMU0UgKGJldHRlciB0aGFuIHdp
-dGggLWksIHdoZXJlIHRoZSByZXN1bHQgd291bGQgYmUKZXNzZW50aWFsbHkgcmFuZG9tKS4gVGhh
-dCBtZWFucyB0aGF0IHRoZSBwYXRoIHdpbGwgYmUgZnVydGhlciBwcm9jZXNzZWQKYnkgdWRldiBh
-bmQgc3lzdGVtZCwgYW5kIGZpbGUgc3lzdGVtcyB3aWxsIGJlIG1vdW50ZWQsIExWTSBQVnMgc2Nh
-bm5lZCwKZXRjLgoKV2hlbiBtdWx0aXBhdGhkIHRyaWVzIHRvIGdyYWIgdGhpcyBwYXRoIGxhdGVy
-LCBpdCB3aWxsIG1vc3QgbGlrZWx5IGZhY2UKYW4gRUJVU1kgZXJyb3IuIFRyaWdnZXJpbmcgYW5v
-dGhlciB1ZXZlbnQgd29uJ3QgY2hhbmdlIG11Y2ggaWYgdGhlCmRldmljZXMgYXJlIGFscmVhZHkg
-aW4gdXNlLiBJbiB0aGUgd29yc3QgY2FzZSwgdGhlIG11bHRpcGF0aCBtYXAgd2lsbApiZSBub24t
-ZnVuY3Rpb25hbCBidXQgdGhlIHBhdGhzIHdpbGwgZ2V0IFNZU1RFTURfUkVBRFk9MCBzZXQgaW4g
-dGhlIG5ldwp1ZXZlbnQsIHNvIHRoYXQgdGhlIGRldmljZSBtaWdodCBiZWNvbWUgbm9uLWFjY2Vz
-c2libGUgYnkgdGhlIHN5c3RlbQplaXRoZXIgdGhyb3VnaCBkbSAobWFwIG5vdCBzZXQgdXAgc3Vj
-Y2Vzc2Z1bGx5KSBvciBkaXJlY3RseQooU1lTVEVNRF9SRUFEWT0wKS4KCkRvaW5nIHRoaXMgcmln
-aHQgaXMgYSBoYXJkIHByb2JsZW0gSU1PLiBIYW5uZXMgYW5kIEkgdGhvdWdodCBhYm91dCBzb21l
-Cm5ldyBtZWFucyBvZiBjb21tdW5pY2F0aW9uIGJldHdlZW4gbXVsdGlwYXRoIGFuZCBtdWx0aXBh
-dGhkIHRoYXQgd291bGQKZ3VhcmFudGVlIHRoYXQgdWRldiBydWxlcyBhbmQgbXVsdGlwYXRoZCB3
-ZXJlIGluIGFncmVlbWVudCBhYm91dCBldmVyeQpwYXRoLCBzb21ldGhpbmcgZmFzdCBhbmQgKGFs
-bW9zdCkgbG9jay1sZXNzIGxpa2Ugc2hhcmVkIG1lbW9yeS4gV2UgaGF2ZQpubyBjb2RlIHlldCwg
-dGhvdWdoLiAoTm90ZTogaW1wbGVtZW50aW5nIHRoaXMgd291bGQgcmVxdWlyZSByZXZlcnRpbmcK
-b3VyIHBhdGNoICJtdWx0aXBhdGhkOiBzdGFydCBkYWVtb24gYWZ0ZXIgdWRldiB0cmlnZ2VyIiku
-CgpPbmUgb3RoZXIgaWRlYSBJIGhhZCB3YXMgdG8gaGF2ZSB0aGUgdWRldiBydWxlIHRyZWF0IGV2
-ZXJ5IHBhdGggYXMgYQptdWx0aXBhdGggZGV2aWNlIHBhdGggaW4gdGhlIGZpcnN0IHBsYWNlLCB0
-aGVuIHdhaXQgZm9yIGEgY2VydGFpbgphbW91bnQgb2YgdGltZSB3aGV0aGVyIGFkZGl0aW9uYWwg
-cGF0aHMgYXJlIGRldGVjdGVkLiBJZiB5ZXMsIG1hcHMgd2lsbApiZSBzZXQgdXAgYnkgbXVsdGlw
-YXRoZCBhbmQgYWxsIGlzIGdvb2QuIElmIG5vLCB3ZSdkIG5lZWQgdG8gcmUtdHJpZ2dlciAKdWV2
-ZW50cyBmb3IgYWxsICJzaW5nbGUtcGF0aCIgZGV2aWNlcyBhZnRlciB0aGUgdGltZW91dCwgYW5k
-IG5vdyB3ZSdkCmRpc3Rpbmd1aXNoIGJldHdlZW4gbXVsdGlwYXRoIGFuZCBub24tbXVsdGlwYXRo
-IGFzIHdlIGFyZSBub3cgZG9pbmcgaXQKd2l0aMKgIm11bHRpcGF0aCAtaSAtdSIsIHRodXMgdGhl
-IHJlbWFpbmluZyBzaW5nbGUtcGF0aCBkZXZpY2VzIHdvdWxkIGJlCmNsYXNzaWZpZWQgYXMgbm9u
-LW11bHRpcGF0aCwgYW5kIGV2ZW50dWFsbHkgYmUgcHJvY2Vzc2VkIGJ5IHN5c3RlbWQuCk9idmlv
-dXMgZHJhd2JhY2s6IHNpbmdsZS1wYXRoIGRldmljZXMsIG1vcmUgb2Z0ZW4gdGhhbiBub3QgdGhl
-IGxvY2FsClNBUyBvciBTQVRBIGRpc2tzLCB3b3VsZCBiZSBwcm9jZXNzZWQgdmVyeSBsYXRlIGlu
-IHRoZSBib290IHByb2Nlc3MuClRoaXMgY291bGQgYmUgd29ya2VkIGFyb3VuZCBieSBibGFja2xp
-c3RpbmcsIGp1c3QgbGlrZSBub3cuCgpJIGFjdHVhbGx5IGhhdmUgYW4gaW1wbGVtZW50YXRpb24g
-b2YgdGhpcyBhbHJlYWR5LCBidXQgd2UgZGVjaWRlZAphZ2FpbnN0IGl0IGZvciBTVVNFLiBJZiB5
-b3UncmUgaW50ZXJlc3RlZCwgSSBjYW4gcG9zdCBpdCBoZXJlIGFzIFBvQy4KCk1hcnRpbgoKLS0g
-CkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC7CoCs0OSAoMCk5MTEgNzQw
-NTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21p
-dGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZl
-bCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29t
-L21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+All of the Dell MD3xxx configs are identical, so we can't just use
+one config for them.
+
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/hwtable.c | 26 +-------------------------
+ 1 file changed, 1 insertion(+), 25 deletions(-)
+
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index c944015..54309ef 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -227,31 +227,7 @@ static struct hwentry default_hw[] = {
+ 		/* MD Series */
+ 	{
+ 		.vendor        = "DELL",
+-		.product       = "MD3000",
+-		.bl_product    = "Universal Xport",
+-		.pgpolicy      = GROUP_BY_PRIO,
+-		.checker_name  = RDAC,
+-		.features      = "2 pg_init_retries 50",
+-		.hwhandler     = "1 rdac",
+-		.prio_name     = PRIO_RDAC,
+-		.pgfailback    = -FAILBACK_IMMEDIATE,
+-		.no_path_retry = 30,
+-	},
+-	{
+-		.vendor        = "DELL",
+-		.product       = "(MD32xx|MD36xx)",
+-		.bl_product    = "Universal Xport",
+-		.pgpolicy      = GROUP_BY_PRIO,
+-		.checker_name  = RDAC,
+-		.features      = "2 pg_init_retries 50",
+-		.hwhandler     = "1 rdac",
+-		.prio_name     = PRIO_RDAC,
+-		.pgfailback    = -FAILBACK_IMMEDIATE,
+-		.no_path_retry = 30,
+-	},
+-	{
+-		.vendor        = "DELL",
+-		.product       = "(MD34xx|MD38xx)",
++		.product       = "^MD3",
+ 		.bl_product    = "Universal Xport",
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.checker_name  = RDAC,
+-- 
+1.8.3.1
