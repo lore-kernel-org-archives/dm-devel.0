@@ -1,13 +1,16 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: : Multipath Setup for NVMe over Fabric
-Date: Thu, 13 Apr 2017 09:41:07 +0200
-Message-ID: <1492069267.4742.45.camel@suse.com>
-References: <CAJvSebsHo-+kroUZj3_8D710uxZci9O3KPC1fb3CVp+xPrvUjw@mail.gmail.com>
+From: Johannes Thumshirn <jthumshirn@suse.de>
+Subject: Re: [PATCH 1/2] multipath: Merge the DELL MD3xxx device
+ configs
+Date: Thu, 13 Apr 2017 10:44:43 +0200
+Message-ID: <20170413084443.GC6734@linux-x5ow.site>
+References: <1492035310-27525-1-git-send-email-bmarzins@redhat.com>
+	<1492035310-27525-2-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAJvSebsHo-+kroUZj3_8D710uxZci9O3KPC1fb3CVp+xPrvUjw@mail.gmail.com>
+Content-Disposition: inline
+In-Reply-To: <1492035310-27525-2-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,41 +20,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, Ankur Srivastava <asrivastava014@gmail.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-T24gV2VkLCAyMDE3LTA0LTEyIGF0IDE0OjUwICswNTMwLCBBbmt1ciBTcml2YXN0YXZhIHdyb3Rl
-Ogo+IEhpIEFsbCzCoAo+IAo+IEkgYW0gd29ya2luZyBvbiBOVk1lIG92ZXIgZmFicmljIGFuZCB3
-YW50IHRvIGV4cGVyaW1lbnQgdGhlCj4gTXVsdGlwYXRoaW5nIHN1cHBvcnQgZm9yIHRoZSBzYW1l
-Lgo+IAo+IFNldHVwIEluZm86Cj4gUkhFTCA3LjIgd2l0aCBLZXJuZWwgNC45LjMKPiAKPiAKPiBb
-cm9vdEBsb2NhbGhvc3Qgfl0jIG52bWUgbGlzdAo+IE5vZGUgwqAgwqAgwqAgwqAgwqAgwqAgU04g
-wqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgTW9kZWwgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAg
-wqAgwqAgwqAgwqAgwqAKPiDCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCBOYW1lc3BhY2UgVXNhZ2Ug
-wqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqBGb3JtYXQgwqAgwqAgwqAgwqAgwqAKPiBG
-VyBSZXYKPiAtLS0tLS0tLS0tLS0tLS0tIC0tLS0tLS0tLS0tLS0tLS0tLS0tIC0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tCj4gLS0tLS0tLS0tLS0gLS0tLS0tLS0tIC0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tIC0tLS0tLS0tLS0tLS0tLS0gLQo+IC0tLS0tLS0KPiAvZGV2L252bWUwbjEg
-wqAgwqAgMzA1MDFiNjIyZWQxNTE4NCDCoCDCoCBMaW51eCDCoCDCoCDCoCDCoCDCoCDCoCDCoCDC
-oCDCoCDCoCDCoCDCoCDCoAo+IMKgIMKgIMKgIMKgIMKgMTAgwqAgwqAgwqAgwqAyNjguNDQgwqBH
-QiAvIDI2OC40NCDCoEdCIMKgIMKgNTEyIMKgIEIgKyDCoDAgQiDCoCA0LjkuMwo+IC9kZXYvbnZt
-ZTFuMSDCoCDCoCBlZjczMDI3MmQ5YmUxMDdjIMKgIMKgIMKgTGludXggwqAgwqAgwqAgwqAgwqAg
-wqAgwqAgwqAgwqAgwqAgwqAgwqAKPiDCoCDCoCDCoCDCoCDCoCDCoDEwIMKgIMKgIMKgIMKgMjY4
-LjQ0IMKgR0IgLyAyNjguNDQgwqBHQiDCoCDCoDUxMiDCoCBCICsgwqAwIEIgwqAKPiA0LjkuMwo+
-IAo+IAo+IFtyb290QGxvY2FsaG9zdCB+XSMgcHMgYXggfCBncmVwIG11bHRpcGF0aAo+IDEyNzIg
-PyDCoCDCoCDCoCDCoFNMbCDCoCDCoDA6MDAgL3NiaW4vbXVsdGlwYXRoZAo+IAo+IAo+IEkgaGF2
-ZSBjb25uZWN0ZWQgbXkgSW5pdGlhdG9yIHRvIGJvdGggdGhlIHBvcnRzIG9mIEV0aGVybmV0Cj4g
-QWRhcHRlcihUYXJnZXQpIHRvIGdldCAyIElPIFBhdGhzLCBmcm9tIHRoZSBhYm92ZSBkYXRhICIv
-ZGV2L252bWUwbjEiCj4gaXMgcGF0aCAxIGFuZCAiL2Rldi9udm1lMW4xIiBpcyBwYXRoIDIgZm9y
-IHRoZSBzYW1lIG5hbWVzcGFjZS4KPiAKPiBOb3RlOiBJIGFtIHVzaW5nIE51bGwgQmxvY2sgZGV2
-aWNlIG9uIHRoZSBUYXJnZXQgU2lkZS4KPiAKPiBCdXQgc3RpbGwgdGhlIG11bHRpcGF0aCBpcyBz
-aG93aW5nIGFuIGVycm9yIGllIG5vIHBhdGggdG8gSG9zdCBmb3IKPiBBbGwgdGhlIE5WTWUgRHJp
-dmVzIG1hcHBlZCBvbiB0aGUgSW5pdGlhdG9yLiBEb2VzIG11bHRpcGF0aGQgc3VwcG9ydHMKPiBO
-Vk1lIG92ZXIgRmFicmljID8/Cj4gT3Igd2hhdCBJIGFtIG1pc3NpbmcgZnJvbSBjb25maWd1cmF0
-aW9uIHNpZGUgPz8KCkkgZG9uJ3QgaGF2ZSBhbnkgcHJhY3RpY2FsIGV4cGVyaWVuY2Ugd2l0aCBO
-Vk1lb0YsIGJ1dCB5b3UgY2VydGFpbmx5Cm5lZWQgYSByZWNlbnQgdXBzdHJlYW0gbXVsdGlwYXRo
-LXRvb2xzIHZlcnNpb24gdG8gbWFrZSBpdCB3b3JrLgoKUmVnYXJkcwpNYXJ0aW4KCi0tIApEci4g
-TWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuwqArNDkgKDApOTExIDc0MDUzIDIx
-MDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJk
-LCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFp
-bGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWls
-bWFuL2xpc3RpbmZvL2RtLWRldmVs
+Hi Benjamin,
+
+On Wed, Apr 12, 2017 at 05:15:09PM -0500, Benjamin Marzinski wrote:
+> All of the Dell MD3xxx configs are identical, so we can't just use
+                                                 can? ^
+> one config for them.
+> =
+
+> Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> ---
+
+-- =
+
+Johannes Thumshirn                                          Storage
+jthumshirn@suse.de                                +49 911 74053 689
+SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
+HRB 21284 (AG N=FCrnberg)
+Key fingerprint =3D EC38 9CAB C2C4 F25D 8600 D0D0 0393 969D 2D76 0850
