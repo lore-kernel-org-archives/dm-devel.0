@@ -1,13 +1,12 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 2/2] multipath: attempt at common multipath.rules
-Date: Wed, 12 Apr 2017 17:15:10 -0500
-Message-ID: <1492035310-27525-3-git-send-email-bmarzins@redhat.com>
-References: <1492035310-27525-1-git-send-email-bmarzins@redhat.com>
+From: Eric Ren <zren@suse.com>
+Subject: [Report] crash tool cannot resolve struct dm_table
+	properly
+Date: Thu, 13 Apr 2017 10:01:58 +0800
+Message-ID: <ed7ae3a8-f053-fb4b-8523-c09b8c725ed9@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1492035310-27525-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,110 +16,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Martin Wilck <mwilck@suse.com>
+To: device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-This is a proposal to try and bring the Redhat and SuSE multipath.rules
-closer. There are a couple of changes that I'd like some input on.
+Hi Mikulas,
 
-The big change is moving the kpartx call into the multipath rules.  Half
-of the current kpartx.rules file is about creating symlinks for multiple
-types of dm devices. The other half auto-creates kpartx devices on top
-of multipath devices. Since it is only creating kpartx devices on top of
-multipath devices, I've moved the these rules into multipath.rules, or
-rather, I've replaced them with the redhat rules in multipath.rules. The
-biggest difference is the kpartx isn't run on every reload.  It works
-with the 11-dm-mpath.rules code to not run kpartx on multipathd
-generated reloads or when there aren't any working paths. It does
-remember if it didn't get to run kpartx when it was supposed to (because
-there were no valid paths or the device was suspended) and will make
-sure to run it on the next possible uevent.
+When inspecting on coredump with crash tool, I find that 'dm_table' cannot be resolved 
+properly as follows:
 
-The other change is the redhat multipath rules remove the partition
-device nodes for devices claimed by multipath. The udev rule will only
-do this one time (both to keep from running partx on every event, and so
-that if users manually reread the partition table, we don't keep
-removing them when clearly they are wanted). Redhat does this because we
-had multiple customer issues where they were using the scsi partitions
-instead of the kpartx devices. Obviously, with setting the partition
-devices to not ready and clearing their fs_type, this isn't essential,
-but it has helped make customers do the right thing.
+===
+crash> struct dm_table
+struct dm_table {
+     int undefined__;
+}
+SIZE: 4
+===
 
-Cc: Martin Wilck <mwilck@suse.com>
-Cc: Hannes Reinecke <hare@suse.de>
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- kpartx/kpartx.rules       |  8 --------
- multipath/multipath.rules | 27 ++++++++++++++++++++++++---
- 2 files changed, 24 insertions(+), 11 deletions(-)
+Looks this issue is introduced by 83d5e5b (dm: optimize use SRCU and RCU) with this code:
+===
++/*
++ * A dummy definition to make RCU happy.
++ * struct dm_table should never be dereferenced in this file.
+  + */ +struct dm_table {
++ int undefined__;
++};
++
+===
 
-diff --git a/kpartx/kpartx.rules b/kpartx/kpartx.rules
-index 48a4d6c..906e320 100644
---- a/kpartx/kpartx.rules
-+++ b/kpartx/kpartx.rules
-@@ -34,12 +34,4 @@ ENV{ID_FS_LABEL_ENC}=="?*", IMPORT{db}="ID_FS_LABEL_ENC"
- ENV{ID_FS_USAGE}=="filesystem|other", ENV{ID_FS_LABEL_ENC}=="?*", \
- 	SYMLINK+="disk/by-label/$env{ID_FS_LABEL_ENC}"
- 
--# Create dm tables for partitions
--ENV{DM_ACTION}=="PATH_FAILED|PATH_REINSTATED", GOTO="kpartx_end"
--ENV{DM_NR_VALID_PATHS}=="0", GOTO="kpartx_end"
--ENV{ENV{DM_UDEV_PRIMARY_SOURCE_FLAG}!="1", IMPORT{db}="DM_SUBSYSTEM_UDEV_FLAG1"
--ENV{DM_SUBSYSTEM_UDEV_FLAG1}=="1", GOTO="kpartx_end"
--ENV{DM_STATE}!="SUSPENDED", ENV{DM_UUID}=="mpath-*", \
--	RUN+="/sbin/kpartx -u -p -part /dev/$name"
--
- LABEL="kpartx_end"
-diff --git a/multipath/multipath.rules b/multipath/multipath.rules
-index 86defc0..10b9b2b 100644
---- a/multipath/multipath.rules
-+++ b/multipath/multipath.rules
-@@ -1,13 +1,13 @@
- # Set DM_MULTIPATH_DEVICE_PATH if the device should be handled by multipath
- SUBSYSTEM!="block", GOTO="end_mpath"
- ACTION!="add|change", GOTO="end_mpath"
--KERNEL!="sd*|dasd*", GOTO="end_mpath"
--
-+KERNEL!="sd*|dasd*|rbd*|dm-*", GOTO="end_mpath"
- IMPORT{cmdline}="nompath"
- ENV{nompath}=="?*", GOTO="end_mpath"
- IMPORT{cmdline}="multipath"
- ENV{multipath}=="off", GOTO="end_mpath"
- 
-+KERNEL=="dm-*", GOTO="check_kpartx"
- ENV{DEVTYPE}!="partition", GOTO="test_dev"
- IMPORT{parent}="DM_MULTIPATH_DEVICE_PATH"
- ENV{DM_MULTIPATH_DEVICE_PATH}=="1", ENV{ID_FS_TYPE}="none", \
-@@ -21,7 +21,28 @@ TEST!="$env{MPATH_SBIN_PATH}/multipath", ENV{MPATH_SBIN_PATH}="/usr/sbin"
- 
- ENV{DM_MULTIPATH_DEVICE_PATH}!="1", \
- 	PROGRAM=="$env{MPATH_SBIN_PATH}/multipath -u %k", \
--	ENV{DM_MULTIPATH_DEVICE_PATH}="1", ENV{ID_FS_TYPE}="none", \
-+	ENV{DM_MULTIPATH_DEVICE_PATH}="1", ENV{ID_FS_TYPE}="mpath_member", \
- 	ENV{SYSTEMD_READY}="0"
- 
-+ENV{DM_MULTIPATH_DEVICE_PATH}!="1", GOTO="end_mpath"
-+
-+IMPORT{db}="DM_MULTIPATH_WIPE_PARTS"
-+ENV{DM_MULTIPATH_WIPE_PARTS}!="1", ENV{DM_MULTIPATH_WIPE_PARTS}="1", \
-+	RUN+="/sbin/partx -d --nr 1-1024 $env{DEVNAME}"
-+GOTO="end_mpath"
-+
-+LABEL="check_kpartx"
-+
-+IMPORT{db}="DM_MULTIPATH_NEED_KPARTX"
-+ENV{DM_UDEV_PRIMARY_SOURCE_FLAG}!="1", IMPORT{db}="DM_SUBSYSTEM_UDEV_FLAG1"
-+ENV{DM_SUBSYSTEM_UDEV_FLAG1}=="1", GOTO="end_mpath"
-+ACTION!="change", GOTO="end_mpath"
-+ENV{DM_UUID}!="mpath-?*", GOTO="end_mpath"
-+ENV{DM_ACTIVATION}=="1", ENV{DM_MULTIPATH_NEED_KPARTX}="1"
-+ENV{DM_SUSPENDED}=="1", GOTO="end_mpath"
-+ENV{DM_ACTION}=="PATH_FAILED", GOTO="end_mpath"
-+ENV{DM_ACTIVATION}!="1", ENV{DM_MULTIPATH_NEED_KPARTX}!="1", GOTO="end_mpath"
-+RUN+="/sbin/kpartx -u -p -part /dev/$name"
-+ENV{DM_MULTIPATH_NEED_KPARTX}=""
-+
- LABEL="end_mpath"
--- 
-1.8.3.1
+It stops me from looking into dm_table when analyzing coredump. Is there any workaround?
+or can be fixed somehow?
+
+Regards,
+Eric
