@@ -1,46 +1,43 @@
-From: Johannes Thumshirn <jthumshirn@suse.de>
-Subject: Re: [PATCH 1/2] multipath: Merge the DELL MD3xxx device
- configs
-Date: Thu, 13 Apr 2017 10:44:43 +0200
-Message-ID: <20170413084443.GC6734@linux-x5ow.site>
-References: <1492035310-27525-1-git-send-email-bmarzins@redhat.com>
-	<1492035310-27525-2-git-send-email-bmarzins@redhat.com>
+From: Binoy Jayan <binoy.jayan@linaro.org>
+Subject: Re: [RFC PATCH v5] IV Generation algorithms for dm-crypt
+Date: Thu, 13 Apr 2017 14:16:43 +0530
+Message-ID: <CAHv-k_98gM8Je+Yi5+Yj5s=6-qxNuuYY1x=ypy_dk6gL=WqyKg@mail.gmail.com>
+References: <1491562064-23591-1-git-send-email-binoy.jayan@linaro.org> <774a9713-05ef-0162-0203-461254a04f6e@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1492035310-27525-2-git-send-email-bmarzins@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <774a9713-05ef-0162-0203-461254a04f6e@gmail.com>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Milan Broz <gmazyland@gmail.com>
+Cc: Oded <oded.golombek@arm.com>, Ofir <Ofir.Drang@arm.com>, Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, linux-crypto@vger.kernel.org, Mark Brown <broonie@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Linux kernel mailing list <linux-kernel@vger.kernel.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, Rajendra <rnayak@codeaurora.org>, Gilad <gilad@benyossef.com>
 List-Id: dm-devel.ids
 
-Hi Benjamin,
+Hi Milan,
 
-On Wed, Apr 12, 2017 at 05:15:09PM -0500, Benjamin Marzinski wrote:
-> All of the Dell MD3xxx configs are identical, so we can't just use
-                                                 can? ^
-> one config for them.
-> =
+On 10 April 2017 at 19:30, Milan Broz <gmazyland@gmail.com> wrote:
 
-> Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> ---
+Thank you for the reply.
 
--- =
+> Well, it is good that there is no performance degradation but it
+> would be nice to have some user of it that proves it is really
+> working for your hw.
 
-Johannes Thumshirn                                          Storage
-jthumshirn@suse.de                                +49 911 74053 689
-SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
-HRB 21284 (AG N=FCrnberg)
-Key fingerprint =3D EC38 9CAB C2C4 F25D 8600 D0D0 0393 969D 2D76 0850
+I have been able to get access to a hardware with IV generation support
+a few days back. The hardware I was having before did not have IV
+generation support. Will be able to come up with numbers after making
+it work with the new one.
+
+> FYI - with patch that increases dmcrypt sector size to 4k
+> I can see improvement in speed usually in 5-15% with sync AES-NI
+> (depends on access pattern), with dmcrypt mapped to memory
+> it is even close to 20% speed up (but such a configuration is
+> completely artificial).
+>
+> I wonder why increased dmcrypt sector size does not work for your hw,
+> it should help as well (and can be combiuned later with this IV approach).
+> (For native 4k drives this should be used in future anyway...)
+
+I think it should work well too with backward incompatibility.
+
+Thanks,
+Binoy
