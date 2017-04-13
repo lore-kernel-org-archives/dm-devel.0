@@ -1,43 +1,79 @@
-From: Binoy Jayan <binoy.jayan@linaro.org>
-Subject: Re: [RFC PATCH v5] IV Generation algorithms for dm-crypt
-Date: Thu, 13 Apr 2017 14:16:43 +0530
-Message-ID: <CAHv-k_98gM8Je+Yi5+Yj5s=6-qxNuuYY1x=ypy_dk6gL=WqyKg@mail.gmail.com>
-References: <1491562064-23591-1-git-send-email-binoy.jayan@linaro.org> <774a9713-05ef-0162-0203-461254a04f6e@gmail.com>
+From: Steffen Maier <maier@linux.vnet.ibm.com>
+Subject: Re: [Report] crash tool cannot resolve struct dm_table
+ properly
+Date: Thu, 13 Apr 2017 12:22:08 +0200
+Message-ID: <e9d01427-b93e-37b6-8ef4-ccc0de714d70@linux.vnet.ibm.com>
+References: <ed7ae3a8-f053-fb4b-8523-c09b8c725ed9@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <774a9713-05ef-0162-0203-461254a04f6e@gmail.com>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Milan Broz <gmazyland@gmail.com>
-Cc: Oded <oded.golombek@arm.com>, Ofir <Ofir.Drang@arm.com>, Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, linux-crypto@vger.kernel.org, Mark Brown <broonie@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Linux kernel mailing list <linux-kernel@vger.kernel.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, Rajendra <rnayak@codeaurora.org>, Gilad <gilad@benyossef.com>
+Content-Type: text/plain; charset="windows-1252"; Format="flowed"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <ed7ae3a8-f053-fb4b-8523-c09b8c725ed9@suse.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Eric Ren <zren@suse.com>, device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Milan,
-
-On 10 April 2017 at 19:30, Milan Broz <gmazyland@gmail.com> wrote:
-
-Thank you for the reply.
-
-> Well, it is good that there is no performance degradation but it
-> would be nice to have some user of it that proves it is really
-> working for your hw.
-
-I have been able to get access to a hardware with IV generation support
-a few days back. The hardware I was having before did not have IV
-generation support. Will be able to come up with numbers after making
-it work with the new one.
-
-> FYI - with patch that increases dmcrypt sector size to 4k
-> I can see improvement in speed usually in 5-15% with sync AES-NI
-> (depends on access pattern), with dmcrypt mapped to memory
-> it is even close to 20% speed up (but such a configuration is
-> completely artificial).
+On 04/13/2017 04:01 AM, Eric Ren wrote:
+> Hi Mikulas,
 >
-> I wonder why increased dmcrypt sector size does not work for your hw,
-> it should help as well (and can be combiuned later with this IV approach).
-> (For native 4k drives this should be used in future anyway...)
+> When inspecting on coredump with crash tool, I find that 'dm_table'
+> cannot be resolved properly as follows:
+>
+> =3D=3D=3D
+> crash> struct dm_table
+> struct dm_table {
+>     int undefined__;
+> }
+> SIZE: 4
+> =3D=3D=3D
+>
+> Looks this issue is introduced by 83d5e5b (dm: optimize use SRCU and
+> RCU) with this code:
+> =3D=3D=3D
+> +/*
+> + * A dummy definition to make RCU happy.
+> + * struct dm_table should never be dereferenced in this file.
+>  + */ +struct dm_table {
+> + int undefined__;
+> +};
+> +
+> =3D=3D=3D
+>
+> It stops me from looking into dm_table when analyzing coredump. Is there
+> any workaround?
+> or can be fixed somehow?
 
-I think it should work well too with backward incompatibility.
+Does this help somewhat?:
 
-Thanks,
-Binoy
+https://www.redhat.com/archives/dm-devel/2015-December/msg00042.html
+
+As workaround for eppic scripts in crash, we currently re-define struct =
+
+dm_table in eppic scripts, because "set scope dm_table_create" has not =
+
+always worked as we liked. Sometimes "whatis dm_table_create" and again =
+
+"set scope dm_table_create" worked and we put this in .crashrc, but =
+
+eventually gave up and kept our struct re-define.
+
+-- =
+
+Mit freundlichen Gr=FC=DFen / Kind regards
+Steffen Maier
+
+Linux on z Systems Development
+
+IBM Deutschland Research & Development GmbH
+Vorsitzende des Aufsichtsrats: Martina Koederitz
+Geschaeftsfuehrung: Dirk Wittkopp
+Sitz der Gesellschaft: Boeblingen
+Registergericht: Amtsgericht Stuttgart, HRB 243294
