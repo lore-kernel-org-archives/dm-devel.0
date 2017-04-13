@@ -1,16 +1,15 @@
-From: Eric Ren <zren@suse.com>
-Subject: Re: [Report] crash tool cannot resolve struct dm_table
- properly
-Date: Thu, 13 Apr 2017 22:35:37 +0800
-Message-ID: <c689b617-1e2f-5bfe-7485-ca31adefbc4c@suse.com>
-References: <ed7ae3a8-f053-fb4b-8523-c09b8c725ed9@suse.com>
-	<e9d01427-b93e-37b6-8ef4-ccc0de714d70@linux.vnet.ibm.com>
-	<e546861f-80db-400c-df2c-9db656fec956@linux.vnet.ibm.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 2/2] multipath: attempt at common
+ multipath.rules
+Date: Thu, 13 Apr 2017 17:27:04 +0200
+Message-ID: <1492097224.22602.12.camel@suse.com>
+References: <1492035310-27525-1-git-send-email-bmarzins@redhat.com>
+	<1492035310-27525-3-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <e546861f-80db-400c-df2c-9db656fec956@linux.vnet.ibm.com>
+In-Reply-To: <1492035310-27525-3-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,47 +19,51 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Steffen Maier <maier@linux.vnet.ibm.com>, device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
+To: dm-devel@redhat.com, Benjamin Marzinski <bmarzins@redhat.com>, Hannes Reinecke <hare@suse.de>
 List-Id: dm-devel.ids
 
-Hey!
-
-
-On 04/13/2017 06:29 PM, Steffen Maier wrote:
-> On 04/13/2017 12:22 PM, Steffen Maier wrote:
->> [...snip...]
->>
->> Does this help somewhat?:
->>
->> https://www.redhat.com/archives/dm-devel/2015-December/msg00042.html
-Thanks, I didn't notice that thread. Yes, it will help!
->>
->> As workaround for eppic scripts in crash, we currently re-define struct
->> dm_table in eppic scripts, because "set scope dm_table_create" has not
->> always worked as we liked. Sometimes "whatis dm_table_create" and again
->> "set scope dm_table_create" worked and we put this in .crashrc, but
->> eventually gave up and kept our struct re-define.
->
-> Before we wrote above posting, we tried this; maybe it helps in your 
-> case:
->
-> crash> set gdb on
-> gdb: on
-> gdb> ptype struct dm_table
-> type = struct dm_table {
->     int undefined__;
-> }
-> gdb> ptype 'drivers/md/dm-table.c'::dm_table
-> No symbol "dm_table" in specified context.
-> gdb: gdb request failed: ptype 'drivers/md/dm-table.c'::dm_table
-> gdb> ptype struct dm_table
-> type = struct dm_table {
->     uint64_t features;
->     struct mapped_device *md;
->     unsigned int type;
-> ...
->
-Great! thanks for your sharing:-)
-
-Regards,
-Eric
+SGkgQmVuLAoKPiBUaGlzIGlzIGEgcHJvcG9zYWwgdG8gdHJ5IGFuZCBicmluZyB0aGUgUmVkaGF0
+IGFuZCBTdVNFCj4gbXVsdGlwYXRoLnJ1bGVzCj4gY2xvc2VyLiBUaGVyZSBhcmUgYSBjb3VwbGUg
+b2YgY2hhbmdlcyB0aGF0IEknZCBsaWtlIHNvbWUgaW5wdXQgb24uCgpUaGFua3MgZm9yIG1ha2lu
+ZyB0aGlzIHNvIGV4cGxpY2l0LiBQZXJoYXBzIHdlIHNob3VsZCBoYXZlIGRvbmUgdGhlCnNhbWUg
+Zm9yIG91ciByZWNlbnQgY2hhbmdlcywgaW4gcGFydGljdWxhciBkNzE4OGZjZCAibXVsdGlwYXRo
+ZDogc3RhcnQKZGFlbW9uIGFmdGVyIHVkZXYgdHJpZ2dlciIuCgo+IFRoZSBiaWcgY2hhbmdlIGlz
+IG1vdmluZyB0aGUga3BhcnR4IGNhbGwgaW50byB0aGUgbXVsdGlwYXRoCj4gcnVsZXMuwqDCoEhh
+bGYKPiBvZiB0aGUgY3VycmVudCBrcGFydHgucnVsZXMgZmlsZSBpcyBhYm91dCBjcmVhdGluZyBz
+eW1saW5rcyBmb3IKPiBtdWx0aXBsZQo+IHR5cGVzIG9mIGRtIGRldmljZXMuIFRoZSBvdGhlciBo
+YWxmIGF1dG8tY3JlYXRlcyBrcGFydHggZGV2aWNlcyBvbgo+IHRvcAo+IG9mIG11bHRpcGF0aCBk
+ZXZpY2VzLiBTaW5jZSBpdCBpcyBvbmx5IGNyZWF0aW5nIGtwYXJ0eCBkZXZpY2VzIG9uIHRvcAo+
+IG9mCj4gbXVsdGlwYXRoIGRldmljZXMsIEkndmUgbW92ZWQgdGhlIHRoZXNlIHJ1bGVzIGludG8g
+bXVsdGlwYXRoLnJ1bGVzLAo+IG9yCj4gcmF0aGVyLCBJJ3ZlIHJlcGxhY2VkIHRoZW0gd2l0aCB0
+aGUgcmVkaGF0IHJ1bGVzIGluIG11bHRpcGF0aC5ydWxlcy4KPiBUaGUKPiBiaWdnZXN0IGRpZmZl
+cmVuY2UgaXMgdGhlIGtwYXJ0eCBpc24ndCBydW4gb24gZXZlcnkgcmVsb2FkLsKgwqBJdCB3b3Jr
+cwo+IHdpdGggdGhlIDExLWRtLW1wYXRoLnJ1bGVzIGNvZGUgdG8gbm90IHJ1biBrcGFydHggb24g
+bXVsdGlwYXRoZAo+IGdlbmVyYXRlZCByZWxvYWRzIG9yIHdoZW4gdGhlcmUgYXJlbid0IGFueSB3
+b3JraW5nIHBhdGhzLiBJdCBkb2VzCj4gcmVtZW1iZXIgaWYgaXQgZGlkbid0IGdldCB0byBydW4g
+a3BhcnR4IHdoZW4gaXQgd2FzIHN1cHBvc2VkIHRvCj4gKGJlY2F1c2UKPiB0aGVyZSB3ZXJlIG5v
+IHZhbGlkIHBhdGhzIG9yIHRoZSBkZXZpY2Ugd2FzIHN1c3BlbmRlZCkgYW5kIHdpbGwgbWFrZQo+
+IHN1cmUgdG8gcnVuIGl0IG9uIHRoZSBuZXh0IHBvc3NpYmxlIHVldmVudC4KPiAKPiBUaGUgb3Ro
+ZXIgY2hhbmdlIGlzIHRoZSByZWRoYXQgbXVsdGlwYXRoIHJ1bGVzIHJlbW92ZSB0aGUgcGFydGl0
+aW9uCj4gZGV2aWNlIG5vZGVzIGZvciBkZXZpY2VzIGNsYWltZWQgYnkgbXVsdGlwYXRoLiBUaGUg
+dWRldiBydWxlIHdpbGwKPiBvbmx5Cj4gZG8gdGhpcyBvbmUgdGltZSAoYm90aCB0byBrZWVwIGZy
+b20gcnVubmluZyBwYXJ0eCBvbiBldmVyeSBldmVudCwgYW5kCj4gc28KPiB0aGF0IGlmIHVzZXJz
+IG1hbnVhbGx5IHJlcmVhZCB0aGUgcGFydGl0aW9uIHRhYmxlLCB3ZSBkb24ndCBrZWVwCj4gcmVt
+b3ZpbmcgdGhlbSB3aGVuIGNsZWFybHkgdGhleSBhcmUgd2FudGVkKS4gUmVkaGF0IGRvZXMgdGhp
+cyBiZWNhdXNlCj4gd2UKPiBoYWQgbXVsdGlwbGUgY3VzdG9tZXIgaXNzdWVzIHdoZXJlIHRoZXkg
+d2VyZSB1c2luZyB0aGUgc2NzaQo+IHBhcnRpdGlvbnMKPiBpbnN0ZWFkIG9mIHRoZSBrcGFydHgg
+ZGV2aWNlcy4gT2J2aW91c2x5LCB3aXRoIHNldHRpbmcgdGhlIHBhcnRpdGlvbgo+IGRldmljZXMg
+dG8gbm90IHJlYWR5IGFuZCBjbGVhcmluZyB0aGVpciBmc190eXBlLCB0aGlzIGlzbid0Cj4gZXNz
+ZW50aWFsLAo+IGJ1dCBpdCBoYXMgaGVscGVkIG1ha2UgY3VzdG9tZXJzIGRvIHRoZSByaWdodCB0
+aGluZy4KPiAKPiBDYzogTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+Cj4gQ2M6IEhhbm5l
+cyBSZWluZWNrZSA8aGFyZUBzdXNlLmRlPgo+IFNpZ25lZC1vZmYtYnk6IEJlbmphbWluIE1hcnpp
+bnNraSA8Ym1hcnppbnNAcmVkaGF0LmNvbT4KPiAtLS0KPiDCoGtwYXJ0eC9rcGFydHgucnVsZXPC
+oMKgwqDCoMKgwqDCoHzCoMKgOCAtLS0tLS0tLQo+IMKgbXVsdGlwYXRoL211bHRpcGF0aC5ydWxl
+cyB8IDI3ICsrKysrKysrKysrKysrKysrKysrKysrKy0tLQo+IMKgMiBmaWxlcyBjaGFuZ2VkLCAy
+NCBpbnNlcnRpb25zKCspLCAxMSBkZWxldGlvbnMoLSkKPiAKCkFsbCBvZiB0aGlzIG1ha2VzIHNl
+bnNlIHRvIG1lLiBCdXQgSSBtYXkgbm90IG92ZXJsb29rIGFsbCB0aGUgcG9zc2libGUKcGl0ZmFs
+bHMgaW4gdGhlIHVkZXYgcnVsZXMsIHNvIHBsZWFzZSB3YWl0IGZvciBIYW5uZXMnIGNvbW1lbnRz
+LCB0b28uCgpSZWdhcmRzCk1hcnRpbgoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNl
+LmNvbT4sIFRlbC7CoCs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBG
+ZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0
+IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0
+LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
