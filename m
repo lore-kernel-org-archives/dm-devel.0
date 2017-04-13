@@ -1,13 +1,13 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 0/9] misc cleanups and bugfixes
-Date: Thu, 13 Apr 2017 16:56:26 +0200
-Message-ID: <1492095386.22602.7.camel@suse.com>
-References: <1491545798-22183-1-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 0/1] Missing RDAC patch
+Date: Thu, 13 Apr 2017 17:39:47 +0200
+Message-ID: <20170413153948.26557-1-mwilck@suse.com>
+References: <CABr-GncgE=O+XAFENX8fkg9ofa2crk27UuKVTTHKhfwku4k_ow@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1491545798-22183-1-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <CABr-GncgE=O+XAFENX8fkg9ofa2crk27UuKVTTHKhfwku4k_ow@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,35 +17,24 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: Martin Wilck <mwilck@suse.de>, dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-T24gRnJpLCAyMDE3LTA0LTA3IGF0IDAxOjE2IC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gVGhlc2UgcGF0Y2hlcyBhcmUgYWxsIGp1c3Qgc21hbGwgY2xlYW51cCBhbmQgYnVnZml4
-ZXMuCj4gCj4gQmVuamFtaW4gTWFyemluc2tpICg5KToKPiDCoCBsaWJkbW1wOiBtaW5vciBNYWtl
-ZmlsZSBjbGVhbnVwCj4gwqAgbXVsdGlwYXRoLXRvb2xzOiByZW1vdmUgaW5jZGlyIGZyb20gTWFr
-ZWZpbGVzCj4gwqAgbGliZG1tcDogZG9uJ3QgZGlzY29ubmVjdCBmcm9tIG11bHRpcGF0aGQgdHdp
-Y2UKPiDCoCBtdWx0aXBhdGhkOiBkb24ndCBjYWxsIHN0cmxlbiBvbiBOVUxMIHZhcmlhYmxlcwo+
-IMKgIGxpYmRtbXA6IG1vdmUgbGliZG1tcC5wYyBpbnN0YWxsIGxvY2F0aW9uCj4gwqAgbXVsdGlw
-YXRoZDogZHJvcCBsb2NrIGJlZm9yZSBjYWxsaW5nIHVldl9hZGRfcGF0aAo+IMKgIG11bHRpcGF0
-aGQ6IGFsbG93IGRldmljZXMgdG8gc3dpdGNoIGZyb20gUlcgdG8gUk8KPiDCoCBsaWJtdWx0aXBh
-dGg6IGRvbid0IHNldCBtYXhfc2VjdG9yc19rYiBvbiByZWxvYWRzCj4gwqAgbXVsdGlwYXRoOiBm
-aXggc2VnZmF1bHQgd2l0aCBkaXNhYmxlX2NoYW5nZWRfd3dpZHMKPiAKPiDCoE1ha2VmaWxlLmlu
-Y8KgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgfMKgwqAzICstLQo+IMKgbGliZG1tcC9NYWtlZmls
-ZcKgwqDCoMKgwqDCoMKgwqDCoHwgMTggKysrKysrKy0tLS0tLS0tCj4gwqBsaWJkbW1wL2xpYmRt
-bXAuY8KgwqDCoMKgwqDCoMKgwqB8wqDCoDEgLQo+IMKgbGliZG1tcC90ZXN0L01ha2VmaWxlwqDC
-oMKgwqB8wqDCoDIgKy0KPiDCoGxpYm1wYXRoY21kL01ha2VmaWxlwqDCoMKgwqDCoHzCoMKgNiAr
-Ky0tLQo+IMKgbGlibXBhdGhwZXJzaXN0L01ha2VmaWxlIHzCoMKgNiArKy0tLQo+IMKgbGlibXVs
-dGlwYXRoL2NvbmZpZ3VyZS5jIHwgNjAKPiArKysrKysrKysrKysrKysrKysrKysrKysrKysrKysr
-KysrKysrKysrKysrKysrLS0KPiDCoGxpYm11bHRpcGF0aC9kZXZtYXBwZXIuYyB8wqDCoDkgKysr
-Ky0tLS0KPiDCoGxpYm11bHRpcGF0aC9kaXNjb3ZlcnkuYyB8IDIzIC0tLS0tLS0tLS0tLS0tLS0t
-LS0KPiDCoGxpYm11bHRpcGF0aC9kaXNjb3ZlcnkuaCB8wqDCoDEgLQo+IMKgbGlibXVsdGlwYXRo
-L3N0cnVjdHMuaMKgwqDCoHzCoMKgMSArCj4gwqBtdWx0aXBhdGhkL21haW4uY8KgwqDCoMKgwqDC
-oMKgwqB8IDIxICsrKysrKysrKysrKy0tLS0tCj4gwqAxMiBmaWxlcyBjaGFuZ2VkLCA5NiBpbnNl
-cnRpb25zKCspLCA1NSBkZWxldGlvbnMoLSkKPiAKCkFsbCBvZiB0aGVzZSBhcmUgYXBwbGllZCBh
-bHJlYWR5LCBidXQgc3RpbGw6CgpSZXZpZXdlZC1ieTogTWFydGluIFdpbGNrIDxtd2lsY2tAc3Vz
-ZS5jb20+CgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLsKgKzQ5
-ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZl
-ciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykK
-Ci0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3
-LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+Hi Cristophe,
+
+I'm sending this on Hannes' behalf now. Sorry we didn't make it for 0.7.0.
+
+Regards,
+Martin
+
+Hannes Reinecke (1):
+  libmultipath/propsel: Do not select sysfs prioritizer for RDAC arrays
+
+ libmultipath/discovery.c |  2 +-
+ libmultipath/discovery.h |  1 +
+ libmultipath/propsel.c   | 24 ++++++++++++++++++++++--
+ 3 files changed, 24 insertions(+), 3 deletions(-)
+
+-- 
+2.12.2
