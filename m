@@ -1,14 +1,15 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH] Revert "multipathd: set timeout for CLI commands
-	correctly"
-Date: Thu, 13 Apr 2017 15:11:21 +0200
-Message-ID: <20170413131121.20635-1-mwilck@suse.com>
-References: <20170405220705.GH19236@octiron.msp.redhat.com>
+Subject: Re: [PATCH 2/9] multipath-tools: remove incdir from
+ Makefiles
+Date: Thu, 13 Apr 2017 15:29:14 +0200
+Message-ID: <1492090154.4742.61.camel@suse.com>
+References: <1491545798-22183-1-git-send-email-bmarzins@redhat.com>
+	<1491545798-22183-3-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170405220705.GH19236@octiron.msp.redhat.com>
+In-Reply-To: <1491545798-22183-3-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,33 +19,19 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@suse.de>
-Cc: Martin Wilck <mwilck@suse.de>, dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This reverts commit a002d124723cef3f2bb4fc33899d2613bdfe3924.
-
-uxsock_timeout is in ms (argument to poll()), whereas
-parse_cmd() uses the value to add to tv_sec in a struct timespec.
-So the previous code was correct.
-
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- multipathd/main.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 0c61caad..b167cb4c 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1087,7 +1087,7 @@ uxsock_trigger (char * str, char ** reply, int * len, bool is_root,
- 		return 1;
- 	}
- 
--	r = parse_cmd(str, reply, len, vecs, uxsock_timeout);
-+	r = parse_cmd(str, reply, len, vecs, uxsock_timeout / 1000);
- 
- 	if (r > 0) {
- 		if (r == ETIMEDOUT)
--- 
-2.12.2
+T24gRnJpLCAyMDE3LTA0LTA3IGF0IDAxOjE2IC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cj4gTWFrZWZpbGUuaW4gZGVmaW5lcyBib3RoIGluY2RpciBhbmQgaW5jbHVkZWRpciwgYW5k
+IHRoZXkgYXJlIGJvdGggdGhlCj4gc2FtZS4gVGhpcyBwYXRjaCByZW1vdmVzIGluY2RpciwgYW5k
+IG1ha2VzIGFsbCB0aGUgTWFrZWZpbGVzIHVzZQo+IGluY2x1ZGVkaXIuCj4gCj4gU2lnbmVkLW9m
+Zi1ieTogQmVuamFtaW4gTWFyemluc2tpIDxibWFyemluc0ByZWRoYXQuY29tPgo+IC0tLQoKVG8g
+YmUgZmFpciwgaW5jZGlyIHdhcyB0aGVyZSBiZWZvcmUgaW5jbHVkZWRpciAuLi4gYnV0IGFzIHlv
+dSBhZGRlZAppbmNkaXIgeW91cnNlbGYgaW4gYzE0NmI1OCwgeW91IHdlcmUgY2VydGFpbmx5IGF1
+dGhvcml6ZWQgdG8gcmVtb3ZlIGl0CmFnYWluIDotKQoKTWFydGluCgotLSAKRHIuIE1hcnRpbiBX
+aWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLsKgKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0Ug
+TGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFt
+IE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlz
+dApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0
+aW5mby9kbS1kZXZlbA==
