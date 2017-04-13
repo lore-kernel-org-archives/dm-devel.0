@@ -1,15 +1,16 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 2/9] multipath-tools: remove incdir from
- Makefiles
-Date: Thu, 13 Apr 2017 15:29:14 +0200
-Message-ID: <1492090154.4742.61.camel@suse.com>
-References: <1491545798-22183-1-git-send-email-bmarzins@redhat.com>
-	<1491545798-22183-3-git-send-email-bmarzins@redhat.com>
+From: Eric Ren <zren@suse.com>
+Subject: Re: [Report] crash tool cannot resolve struct dm_table
+ properly
+Date: Thu, 13 Apr 2017 22:35:37 +0800
+Message-ID: <c689b617-1e2f-5bfe-7485-ca31adefbc4c@suse.com>
+References: <ed7ae3a8-f053-fb4b-8523-c09b8c725ed9@suse.com>
+	<e9d01427-b93e-37b6-8ef4-ccc0de714d70@linux.vnet.ibm.com>
+	<e546861f-80db-400c-df2c-9db656fec956@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1491545798-22183-3-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <e546861f-80db-400c-df2c-9db656fec956@linux.vnet.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,19 +20,47 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Steffen Maier <maier@linux.vnet.ibm.com>, device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-T24gRnJpLCAyMDE3LTA0LTA3IGF0IDAxOjE2IC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gTWFrZWZpbGUuaW4gZGVmaW5lcyBib3RoIGluY2RpciBhbmQgaW5jbHVkZWRpciwgYW5k
-IHRoZXkgYXJlIGJvdGggdGhlCj4gc2FtZS4gVGhpcyBwYXRjaCByZW1vdmVzIGluY2RpciwgYW5k
-IG1ha2VzIGFsbCB0aGUgTWFrZWZpbGVzIHVzZQo+IGluY2x1ZGVkaXIuCj4gCj4gU2lnbmVkLW9m
-Zi1ieTogQmVuamFtaW4gTWFyemluc2tpIDxibWFyemluc0ByZWRoYXQuY29tPgo+IC0tLQoKVG8g
-YmUgZmFpciwgaW5jZGlyIHdhcyB0aGVyZSBiZWZvcmUgaW5jbHVkZWRpciAuLi4gYnV0IGFzIHlv
-dSBhZGRlZAppbmNkaXIgeW91cnNlbGYgaW4gYzE0NmI1OCwgeW91IHdlcmUgY2VydGFpbmx5IGF1
-dGhvcml6ZWQgdG8gcmVtb3ZlIGl0CmFnYWluIDotKQoKTWFydGluCgotLSAKRHIuIE1hcnRpbiBX
-aWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLsKgKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0Ug
-TGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFt
-IE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlz
-dApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0
-aW5mby9kbS1kZXZlbA==
+Hey!
+
+
+On 04/13/2017 06:29 PM, Steffen Maier wrote:
+> On 04/13/2017 12:22 PM, Steffen Maier wrote:
+>> [...snip...]
+>>
+>> Does this help somewhat?:
+>>
+>> https://www.redhat.com/archives/dm-devel/2015-December/msg00042.html
+Thanks, I didn't notice that thread. Yes, it will help!
+>>
+>> As workaround for eppic scripts in crash, we currently re-define struct
+>> dm_table in eppic scripts, because "set scope dm_table_create" has not
+>> always worked as we liked. Sometimes "whatis dm_table_create" and again
+>> "set scope dm_table_create" worked and we put this in .crashrc, but
+>> eventually gave up and kept our struct re-define.
+>
+> Before we wrote above posting, we tried this; maybe it helps in your 
+> case:
+>
+> crash> set gdb on
+> gdb: on
+> gdb> ptype struct dm_table
+> type = struct dm_table {
+>     int undefined__;
+> }
+> gdb> ptype 'drivers/md/dm-table.c'::dm_table
+> No symbol "dm_table" in specified context.
+> gdb: gdb request failed: ptype 'drivers/md/dm-table.c'::dm_table
+> gdb> ptype struct dm_table
+> type = struct dm_table {
+>     uint64_t features;
+>     struct mapped_device *md;
+>     unsigned int type;
+> ...
+>
+Great! thanks for your sharing:-)
+
+Regards,
+Eric
