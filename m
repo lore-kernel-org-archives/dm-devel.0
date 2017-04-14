@@ -1,59 +1,128 @@
-From: Ming Lei <ming.lei@redhat.com>
-Subject: Re: [PATCH v4 6/6] dm rq: Avoid that request processing stalls
- sporadically
-Date: Fri, 14 Apr 2017 09:13:29 +0800
-Message-ID: <20170414011324.GA29916@ming.t460p>
-References: <20170411160958.GA19222@redhat.com>
- <1491928005.2654.6.camel@sandisk.com>
- <20170411174739.GA19620@redhat.com>
- <1491933092.2654.10.camel@sandisk.com>
- <20170411180358.GA19660@redhat.com>
- <1491934715.2654.14.camel@sandisk.com>
- <20170412034229.GA8835@ming.t460p>
- <1492022286.2764.15.camel@sandisk.com>
- <20170413022030.GD8835@ming.t460p>
- <25ebc19f-f6e0-2f71-f590-8416359d2fd1@sandisk.com>
+From: Eric Ren <zren@suse.com>
+Subject: Re: [PATCH] Re: [Report] crash tool cannot resolve
+ struct dm_table properly
+Date: Fri, 14 Apr 2017 09:42:38 +0800
+Message-ID: <eb4c378e-5ea1-b1a2-f4f3-2aad2c7db599@suse.com>
+References: <ed7ae3a8-f053-fb4b-8523-c09b8c725ed9@suse.com>
+	<alpine.LRH.2.02.1704130727230.881@file01.intranet.prod.int.rdu2.redhat.com>
+	<9b535371-b391-6d36-f83d-559d405ef870@suse.com>
+	<alpine.LRH.2.02.1704131751210.16044@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <25ebc19f-f6e0-2f71-f590-8416359d2fd1@sandisk.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Bart Van Assche <bart.vanassche@sandisk.com>
-Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "snitzer@redhat.com" <snitzer@redhat.com>, "axboe@kernel.dk" <axboe@kernel.dk>
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <alpine.LRH.2.02.1704131751210.16044@file01.intranet.prod.int.rdu2.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <msnitzer@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Apr 13, 2017 at 09:59:57AM -0700, Bart Van Assche wrote:
-> On 04/12/17 19:20, Ming Lei wrote:
-> > On Wed, Apr 12, 2017 at 06:38:07PM +0000, Bart Van Assche wrote:
-> >> If the blk-mq core would always rerun a hardware queue if a block driver
-> >> returns BLK_MQ_RQ_QUEUE_BUSY then that would cause 100% of a single CPU core
-> > 
-> > It won't casue 100% CPU utilization since we restart queue in completion
-> > path and at that time at least one tag is available, then progress can be
-> > made.
-> 
-> Hello Ming,
-> 
-> Sorry but you are wrong. If .queue_rq() returns BLK_MQ_RQ_QUEUE_BUSY
-> then it's likely that calling .queue_rq() again after only a few
-> microseconds will cause it to return BLK_MQ_RQ_QUEUE_BUSY again. If you
-> don't believe me, change "if (!blk_mq_sched_needs_restart(hctx) &&
-> !test_bit(BLK_MQ_S_TAG_WAITING, &hctx->state)) blk_mq_run_hw_queue(hctx,
-> true);" into "blk_mq_run_hw_queue(hctx, true);", trigger a busy
+On 04/14/2017 05:53 AM, Mikulas Patocka wrote:
+>
+> On Thu, 13 Apr 2017, Eric Ren wrote:
+>
+>> Hi,
+>>
+>>
+>> On 04/13/2017 07:28 PM, Mikulas Patocka wrote:
+>>> On Thu, 13 Apr 2017, Eric Ren wrote:
+>>>
+>>>> Hi Mikulas,
+>>>>
+>>>> When inspecting on coredump with crash tool, I find that 'dm_table' cannot
+>>>> be
+>>>> resolved properly as follows:
+>>>>
+>>>> ===
+>>>> crash> struct dm_table
+>>>> struct dm_table {
+>>>>       int undefined__;
+>>>> }
+>>>> SIZE: 4
+>>>> ===
+>>>>
+>>>> Looks this issue is introduced by 83d5e5b (dm: optimize use SRCU and RCU)
+>>>> with
+>>>> this code:
+>>>> ===
+>>>> +/*
+>>>> + * A dummy definition to make RCU happy.
+>>>> + * struct dm_table should never be dereferenced in this file.
+>>>>    + */ +struct dm_table {
+>>>> + int undefined__;
+>>>> +};
+>>>> +
+>>>> ===
+>>>>
+>>>> It stops me from looking into dm_table when analyzing coredump. Is there
+>>>> any
+>>>> workaround?
+>>>> or can be fixed somehow?
+>>>>
+>>>> Regards,
+>>>> Eric
+>>> So, move dm_table definition to drivers/md/dm.h
+>> Thanks. So, are your going to fix this? Or should I test on your suggestion
+>> and send a patch if it works?
+>>
+>> Regards,
+>> Eric
+>>> Mikulas
+>>>
+> Hi
+>
+> It turned out that the RCU macros changed and the dummy definition is no
+> longer needed. So, we can remove it.
+Hi!
 
-Yes, that can be true, but I mean it is still OK to run the queue again
-with
+That's great, thanks!
 
-	if (!blk_mq_sched_needs_restart(hctx) &&
-	    !test_bit(BLK_MQ_S_TAG_WAITING, &hctx->state))
-			blk_mq_run_hw_queue(hctx, true);
-
-and restarting queue in __blk_mq_finish_request() when
-BLK_MQ_RQ_QUEUE_BUSY is returned from .queue_rq(). And both are in current
-blk-mq implementation.
-
-Then why do we need blk_mq_delay_run_hw_queue(hctx, 100/*ms*/) in dm?
-
-Thanks,
-Ming
+Regards,
+Eric
+>
+>
+>
+> From: Mikulas Patocka <mpatocka@redhat.com>
+>
+> dm: remove dummy dm_table definition
+>
+> This dummy structure definition was required for RCU macros, but it
+> doesn't seem to be required anymore, so delete it.
+>
+> The dummy definition confuses the crash tool, see
+> https://www.redhat.com/archives/dm-devel/2017-April/msg00197.html
+>
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+>
+> ---
+>   drivers/md/dm-ioctl.c |    8 --------
+>   1 file changed, 8 deletions(-)
+>
+> Index: linux-2.6/drivers/md/dm-ioctl.c
+> ===================================================================
+> --- linux-2.6.orig/drivers/md/dm-ioctl.c
+> +++ linux-2.6/drivers/md/dm-ioctl.c
+> @@ -37,14 +37,6 @@ struct hash_cell {
+>   	struct dm_table *new_map;
+>   };
+>   
+> -/*
+> - * A dummy definition to make RCU happy.
+> - * struct dm_table should never be dereferenced in this file.
+> - */
+> -struct dm_table {
+> -	int undefined__;
+> -};
+> -
+>   struct vers_iter {
+>       size_t param_size;
+>       struct dm_target_versions *vers, *old_vers;
+>
