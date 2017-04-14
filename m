@@ -1,225 +1,129 @@
-From: Joe Perches <joe@perches.com>
-Subject: [RFC] using #pragma push_macro and pop_macro
-Date: Mon, 17 Apr 2017 19:51:43 -0700
-Message-ID: <1492483903.8661.28.camel@perches.com>
-References: <201704180416.flAy5fPu%fengguang.wu@intel.com>
+From: "Schremmer, Steven" <Steve.Schremmer@netapp.com>
+Subject: Re: [PATCH 1/1] libmultipath/propsel: Do not select
+	sysfs	prioritizer for RDAC arrays
+Date: Fri, 14 Apr 2017 16:00:30 +0000
+Message-ID: <BN6PR06MB24810A9E80036E60A0B82F7E8C050@BN6PR06MB2481.namprd06.prod.outlook.com>
+References: <CABr-GncgE=O+XAFENX8fkg9ofa2crk27UuKVTTHKhfwku4k_ow@mail.gmail.com>
+	<20170413153948.26557-1-mwilck@suse.com>
+	<20170413153948.26557-2-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <201704180416.flAy5fPu%fengguang.wu@intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>
-Cc: kbuild-all@01.org, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20170413153948.26557-2-mwilck@suse.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: Martin Wilck <mwilck@suse.de>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, "Stewart,
+	Sean" <Sean.Stewart@netapp.com>
 List-Id: dm-devel.ids
 
-There is an argument for using these #pragmas for pr_fmt.
+I know it just got merged, but
 
-gcc/clang/icc all support push_macro and pop_macro pragmas.
+Reviewed-by: Steve Schremmer <steve.schremmer@netapp.com>
 
-As far as I can tell, these compilers are the only ones
-used to compile
-the kernel.
-
-Anyone have any objection to using these pragmas?
-
-On Tue, 2017-04-18 at 05:02 +0800, kbuild test robot wrote:
-> Hi Joe,
+> -----Original Message-----
+> From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com] On Behalf Of Martin Wilck
+> Sent: Thursday, April 13, 2017 10:40 AM
+> To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> Cc: Martin Wilck <mwilck@suse.de>; dm-devel@redhat.com; Xose Vazquez Perez <xose.vazquez@gmail.com>
+> Subject: [dm-devel] [PATCH 1/1] libmultipath/propsel: Do not select sysfs prioritizer for RDAC arrays
 > 
-> [auto build test ERROR on v4.9-rc8]
-> [also build test ERROR on next-20170413]
-> [if your patch is applied to the wrong git tree, please drop us a note to help improve the system]
+> From: Hannes Reinecke <hare@suse.de>
 > 
-> url:    https://github.com/0day-ci/linux/commits/Joe-Perches/device-mapper-Convert-printks-to-pr_-level-macros/20170418-030508
-> config: i386-allmodconfig (attached as .config)
-> compiler: gcc-6 (Debian 6.2.0-3) 6.2.0 20160901
-> reproduce:
->         # save the attached .config to linux build tree
->         make ARCH=i386 
+> Recent RDAC (NetApp E-Series) firmware implemented an internal load
+> balancer and switched to implicit ALUA.
+> Unfortunately the load balancer relies on periodic REPORT TARGET PORT
+> GROUPS from the host, so we cannot use the sysfs prioritizer here.
 > 
-> All error/warnings (new ones prefixed by >>):
+> References: bsc#1004858
 > 
->    In file included from fs/nfs/blocklayout/blocklayout.h:35:0,
->                     from fs/nfs/blocklayout/dev.c:11:
->    fs/nfs/blocklayout/dev.c: In function 'bl_free_device':
-> > > include/linux/device-mapper.h:536:34: error: expected ')' before 'DM_MSG_PREFIX'
-> 
->     #define pr_fmt(fmt) DM_NAME ": " DM_MSG_PREFIX ": " fmt
->                                      ^
-> > > include/linux/printk.h:277:18: note: in expansion of macro 'pr_fmt'
-> 
->      printk(KERN_ERR pr_fmt(fmt), ##__VA_ARGS__)
->                      ^~~~~~
-> > > fs/nfs/blocklayout/dev.c:33:5: note: in expansion of macro 'pr_err'
-> 
->         pr_err("failed to unregister PR key.\n");
->         ^~~~~~
->    fs/nfs/blocklayout/dev.c: In function 'nfs4_block_decode_volume':
-> > > include/linux/device-mapper.h:536:34: error: expected ')' before 'DM_MSG_PREFIX'
-> 
->     #define pr_fmt(fmt) DM_NAME ": " DM_MSG_PREFIX ": " fmt
->                                      ^
->    include/linux/printk.h:284:19: note: in expansion of macro 'pr_fmt'
->      printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
->                       ^~~~~~
-> > > fs/nfs/blocklayout/dev.c:81:5: note: in expansion of macro 'pr_info'
-> 
->         pr_info("signature too long: %d\n",
->         ^~~~~~~
->    fs/nfs/blocklayout/dev.c: In function 'bl_validate_designator':
-> > > include/linux/device-mapper.h:536:34: error: expected ')' before 'DM_MSG_PREFIX'
-> 
->     #define pr_fmt(fmt) DM_NAME ": " DM_MSG_PREFIX ": " fmt
->                                      ^
-> > > include/linux/printk.h:277:18: note: in expansion of macro 'pr_fmt'
-> 
->      printk(KERN_ERR pr_fmt(fmt), ##__VA_ARGS__)
->                      ^~~~~~
->    fs/nfs/blocklayout/dev.c:287:3: note: in expansion of macro 'pr_err'
->       pr_err("pNFS: unsupported designator "
->       ^~~~~~
-> > > include/linux/device-mapper.h:536:34: error: expected ')' before 'DM_MSG_PREFIX'
-> 
->     #define pr_fmt(fmt) DM_NAME ": " DM_MSG_PREFIX ": " fmt
->                                      ^
-> > > include/linux/printk.h:277:18: note: in expansion of macro 'pr_fmt'
-> 
->      printk(KERN_ERR pr_fmt(fmt), ##__VA_ARGS__)
->                      ^~~~~~
->    fs/nfs/blocklayout/dev.c:294:3: note: in expansion of macro 'pr_err'
->       pr_err("pNFS: invalid designator "
->       ^~~~~~
->    fs/nfs/blocklayout/dev.c: In function 'bl_open_udev_path':
-> > > include/linux/device-mapper.h:536:34: error: expected ')' before 'DM_MSG_PREFIX'
-> 
->     #define pr_fmt(fmt) DM_NAME ": " DM_MSG_PREFIX ": " fmt
->                                      ^
->    include/linux/printk.h:279:22: note: in expansion of macro 'pr_fmt'
->      printk(KERN_WARNING pr_fmt(fmt), ##__VA_ARGS__)
->                          ^~~~~~
->    include/linux/printk.h:280:17: note: in expansion of macro 'pr_warning'
->     #define pr_warn pr_warning
->                     ^~~~~~~~~~
-> > > fs/nfs/blocklayout/dev.c:320:3: note: in expansion of macro 'pr_warn'
-> 
->       pr_warn("pNFS: failed to open device %s (%ld)\n",
->       ^~~~~~~
->    fs/nfs/blocklayout/dev.c: In function 'bl_parse_scsi':
-> > > include/linux/device-mapper.h:536:34: error: expected ')' before 'DM_MSG_PREFIX'
-> 
->     #define pr_fmt(fmt) DM_NAME ": " DM_MSG_PREFIX ": " fmt
->                                      ^
->    include/linux/printk.h:284:19: note: in expansion of macro 'pr_fmt'
->      printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
->                       ^~~~~~
->    fs/nfs/blocklayout/dev.c:373:2: note: in expansion of macro 'pr_info'
->      pr_info("pNFS: using block device %s (reservation key 0x%llx)\n",
->      ^~~~~~~
-> > > include/linux/device-mapper.h:536:34: error: expected ')' before 'DM_MSG_PREFIX'
-> 
->     #define pr_fmt(fmt) DM_NAME ": " DM_MSG_PREFIX ": " fmt
->                                      ^
-> > > include/linux/printk.h:277:18: note: in expansion of macro 'pr_fmt'
-> 
->      printk(KERN_ERR pr_fmt(fmt), ##__VA_ARGS__)
->                      ^~~~~~
->    fs/nfs/blocklayout/dev.c:378:3: note: in expansion of macro 'pr_err'
->       pr_err("pNFS: block device %s does not support reservations.",
->       ^~~~~~
-> > > include/linux/device-mapper.h:536:34: error: expected ')' before 'DM_MSG_PREFIX'
-> 
->     #define pr_fmt(fmt) DM_NAME ": " DM_MSG_PREFIX ": " fmt
->                                      ^
-> > > include/linux/printk.h:277:18: note: in expansion of macro 'pr_fmt'
-> 
->      printk(KERN_ERR pr_fmt(fmt), ##__VA_ARGS__)
->                      ^~~~~~
->    fs/nfs/blocklayout/dev.c:386:3: note: in expansion of macro 'pr_err'
->       pr_err("pNFS: failed to register key for block device %s.",
->       ^~~~~~
-> --
->    In file included from fs/nfs/blocklayout/blocklayout.h:35:0,
->                     from fs/nfs/blocklayout/extent_tree.c:7:
->    include/linux/netdevice.h: In function 'netdev_cap_txqueue':
-> > > include/linux/device-mapper.h:536:34: error: expected ')' before 'DM_MSG_PREFIX'
-> 
->     #define pr_fmt(fmt) DM_NAME ": " DM_MSG_PREFIX ": " fmt
->                                      ^
->    include/linux/printk.h:279:22: note: in expansion of macro 'pr_fmt'
->      printk(KERN_WARNING pr_fmt(fmt), ##__VA_ARGS__)
->                          ^~~~~~
-> > > include/linux/net.h:238:3: note: in expansion of macro 'pr_warning'
-> 
->       function(__VA_ARGS__);    \
->       ^~~~~~~~
-> > > include/linux/net.h:252:2: note: in expansion of macro 'net_ratelimited_function'
-> 
->      net_ratelimited_function(pr_warn, fmt, ##__VA_ARGS__)
->      ^~~~~~~~~~~~~~~~~~~~~~~~
-> > > include/linux/net.h:252:27: note: in expansion of macro 'pr_warn'
-> 
->      net_ratelimited_function(pr_warn, fmt, ##__VA_ARGS__)
->                               ^~~~~~~
-> > > include/linux/netdevice.h:3119:3: note: in expansion of macro 'net_warn_ratelimited'
-> 
->       net_warn_ratelimited("%s selects TX queue %d, but real number of TX queues is %d\n",
->       ^~~~~~~~~~~~~~~~~~~~
->    include/net/inet_connection_sock.h: In function 'inet_csk_clear_xmit_timer':
-> > > include/linux/device-mapper.h:536:34: error: expected ')' before 'DM_MSG_PREFIX'
-> 
->     #define pr_fmt(fmt) DM_NAME ": " DM_MSG_PREFIX ": " fmt
->                                      ^
->    include/linux/dynamic_debug.h:126:35: note: in expansion of macro 'pr_fmt'
->       __dynamic_pr_debug(&descriptor, pr_fmt(fmt), \
->                                       ^~~~~~
->    include/linux/printk.h:309:2: note: in expansion of macro 'dynamic_pr_debug'
->      dynamic_pr_debug(fmt, ##__VA_ARGS__)
->      ^~~~~~~~~~~~~~~~
-> > > include/net/inet_connection_sock.h:213:3: note: in expansion of macro 'pr_debug'
-> 
->       pr_debug("%s", inet_csk_timer_bug_msg);
->       ^~~~~~~~
->    include/net/inet_connection_sock.h: In function 'inet_csk_reset_xmit_timer':
-> > > include/linux/device-mapper.h:536:34: error: expected ')' before 'DM_MSG_PREFIX'
-> 
->     #define pr_fmt(fmt) DM_NAME ": " DM_MSG_PREFIX ": " fmt
->                                      ^
->    include/linux/dynamic_debug.h:126:35: note: in expansion of macro 'pr_fmt'
->       __dynamic_pr_debug(&descriptor, pr_fmt(fmt), \
->                                       ^~~~~~
->    include/linux/printk.h:309:2: note: in expansion of macro 'dynamic_pr_debug'
->      dynamic_pr_debug(fmt, ##__VA_ARGS__)
->      ^~~~~~~~~~~~~~~~
->    include/net/inet_connection_sock.h:229:3: note: in expansion of macro 'pr_debug'
->       pr_debug("reset_xmit_timer: sk=%p %d when=0x%lx, caller=%p\n",
->       ^~~~~~~~
-> > > include/linux/device-mapper.h:536:34: error: expected ')' before 'DM_MSG_PREFIX'
-> 
->     #define pr_fmt(fmt) DM_NAME ": " DM_MSG_PREFIX ": " fmt
->                                      ^
->    include/linux/dynamic_debug.h:126:35: note: in expansion of macro 'pr_fmt'
->       __dynamic_pr_debug(&descriptor, pr_fmt(fmt), \
->                                       ^~~~~~
->    include/linux/printk.h:309:2: note: in expansion of macro 'dynamic_pr_debug'
->      dynamic_pr_debug(fmt, ##__VA_ARGS__)
->      ^~~~~~~~~~~~~~~~
->    include/net/inet_connection_sock.h:247:3: note: in expansion of macro 'pr_debug'
->       pr_debug("%s", inet_csk_timer_bug_msg);
->       ^~~~~~~~
-> 
-> vim +536 include/linux/device-mapper.h
-> 
->    530	#endif
->    531	
->    532	#ifdef pr_fmt
->    533	#undef pr_fmt
->    534	#endif
->    535	
->  > 536	#define pr_fmt(fmt) DM_NAME ": " DM_MSG_PREFIX ": " fmt
->    537	
->    538	#define DMCRIT(fmt, ...)						\
->    539		pr_crit(fmt "\n", ##__VA_ARGS__)
-> 
+> Signed-off-by: Hannes Reinecke <hare@suse.com>
 > ---
-> 0-DAY kernel test infrastructure                Open Source Technology Center
-> https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
+>  libmultipath/discovery.c |  2 +-
+>  libmultipath/discovery.h |  1 +
+>  libmultipath/propsel.c   | 24 ++++++++++++++++++++++--
+>  3 files changed, 24 insertions(+), 3 deletions(-)
+> 
+> diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+> index 8c512545..663c8eaa 100644
+> --- a/libmultipath/discovery.c
+> +++ b/libmultipath/discovery.c
+> @@ -1092,7 +1092,7 @@ get_vpd_sysfs (struct udev_device *parent, int pg, char * str, int maxlen)
+>  	return len;
+>  }
+> 
+> -static int
+> +int
+>  get_vpd_sgio (int fd, int pg, char * str, int maxlen)
+>  {
+>  	int len, buff_len;
+> diff --git a/libmultipath/discovery.h b/libmultipath/discovery.h
+> index 0563bfd9..51c23d6f 100644
+> --- a/libmultipath/discovery.h
+> +++ b/libmultipath/discovery.h
+> @@ -35,6 +35,7 @@ int path_discovery (vector pathvec, int flag);
+>  int do_tur (char *);
+>  int path_offline (struct path *);
+>  int get_state (struct path * pp, struct config * conf, int daemon);
+> +int get_vpd_sgio (int fd, int pg, char * str, int maxlen);
+>  int pathinfo (struct path * pp, struct config * conf, int mask);
+>  int alloc_path_with_pathinfo (struct config *conf, struct udev_device *udevice,
+>  			      char *wwid, int flag, struct path **pp_ptr);
+> diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+> index dd10ceba..6dd8cb96 100644
+> --- a/libmultipath/propsel.c
+> +++ b/libmultipath/propsel.c
+> @@ -370,6 +370,24 @@ out:
+>  	return 0;
+>  }
+> 
+> +/*
+> + * Current RDAC (NetApp E-Series) firmware relies
+> + * on periodic REPORT TARGET PORT GROUPS for
+> + * internal load balancing.
+> + * Using the sysfs priority checker defeats this purpose.
+> + */
+> +static int
+> +check_rdac(struct path * pp)
+> +{
+> +	int len;
+> +	char buff[44];
+> +
+> +	len = get_vpd_sgio(pp->fd, 0xC9, buff, 44);
+> +	if (len <= 0)
+> +		return 0;
+> +	return !(memcmp(buff + 4, "vac1", 4));
+> +}
+> +
+>  void
+>  detect_prio(struct config *conf, struct path * pp)
+>  {
+> @@ -379,8 +397,10 @@ detect_prio(struct config *conf, struct path * pp)
+> 
+>  	if (pp->tpgs <= 0)
+>  		return;
+> -	if (sysfs_get_asymmetric_access_state(pp, buff, 512) >= 0)
+> -		default_prio = PRIO_SYSFS;
+> +	if (pp->tpgs == 2 && !check_rdac(pp)) {
+> +		if (sysfs_get_asymmetric_access_state(pp, buff, 512) >= 0)
+> +			default_prio = PRIO_SYSFS;
+> +	}
+>  	prio_get(conf->multipath_dir, p, default_prio, DEFAULT_PRIO_ARGS);
+>  }
+> 
+> --
+> 2.12.2
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
