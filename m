@@ -1,128 +1,47 @@
-From: Eric Ren <zren@suse.com>
-Subject: Re: [PATCH] Re: [Report] crash tool cannot resolve
- struct dm_table properly
-Date: Fri, 14 Apr 2017 09:42:38 +0800
-Message-ID: <eb4c378e-5ea1-b1a2-f4f3-2aad2c7db599@suse.com>
-References: <ed7ae3a8-f053-fb4b-8523-c09b8c725ed9@suse.com>
-	<alpine.LRH.2.02.1704130727230.881@file01.intranet.prod.int.rdu2.redhat.com>
-	<9b535371-b391-6d36-f83d-559d405ef870@suse.com>
-	<alpine.LRH.2.02.1704131751210.16044@file01.intranet.prod.int.rdu2.redhat.com>
+From: "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Subject: Re: remove REQ_OP_WRITE_SAME
+Date: Thu, 13 Apr 2017 22:23:10 -0400
+Message-ID: <yq1mvbjwwvl.fsf@oracle.com>
+References: <20170412084809.8245-1-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.1704131751210.16044@file01.intranet.prod.int.rdu2.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <msnitzer@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+In-Reply-To: <20170412084809.8245-1-hch-jcswGhMUV9g@public.gmane.org> (Christoph Hellwig's message
+	of "Wed, 12 Apr 2017 10:48:01 +0200")
+List-Unsubscribe: <http://lists.linbit.com/mailman/options/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
+List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
+List-Subscribe: <http://lists.linbit.com/mailman/listinfo/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
+Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Cc: axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, target-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
 List-Id: dm-devel.ids
 
-On 04/14/2017 05:53 AM, Mikulas Patocka wrote:
->
-> On Thu, 13 Apr 2017, Eric Ren wrote:
->
->> Hi,
->>
->>
->> On 04/13/2017 07:28 PM, Mikulas Patocka wrote:
->>> On Thu, 13 Apr 2017, Eric Ren wrote:
->>>
->>>> Hi Mikulas,
->>>>
->>>> When inspecting on coredump with crash tool, I find that 'dm_table' cannot
->>>> be
->>>> resolved properly as follows:
->>>>
->>>> ===
->>>> crash> struct dm_table
->>>> struct dm_table {
->>>>       int undefined__;
->>>> }
->>>> SIZE: 4
->>>> ===
->>>>
->>>> Looks this issue is introduced by 83d5e5b (dm: optimize use SRCU and RCU)
->>>> with
->>>> this code:
->>>> ===
->>>> +/*
->>>> + * A dummy definition to make RCU happy.
->>>> + * struct dm_table should never be dereferenced in this file.
->>>>    + */ +struct dm_table {
->>>> + int undefined__;
->>>> +};
->>>> +
->>>> ===
->>>>
->>>> It stops me from looking into dm_table when analyzing coredump. Is there
->>>> any
->>>> workaround?
->>>> or can be fixed somehow?
->>>>
->>>> Regards,
->>>> Eric
->>> So, move dm_table definition to drivers/md/dm.h
->> Thanks. So, are your going to fix this? Or should I test on your suggestion
->> and send a patch if it works?
->>
->> Regards,
->> Eric
->>> Mikulas
->>>
-> Hi
->
-> It turned out that the RCU macros changed and the dummy definition is no
-> longer needed. So, we can remove it.
-Hi!
 
-That's great, thanks!
+Christoph,
 
-Regards,
-Eric
->
->
->
-> From: Mikulas Patocka <mpatocka@redhat.com>
->
-> dm: remove dummy dm_table definition
->
-> This dummy structure definition was required for RCU macros, but it
-> doesn't seem to be required anymore, so delete it.
->
-> The dummy definition confuses the crash tool, see
-> https://www.redhat.com/archives/dm-devel/2017-April/msg00197.html
->
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
->
-> ---
->   drivers/md/dm-ioctl.c |    8 --------
->   1 file changed, 8 deletions(-)
->
-> Index: linux-2.6/drivers/md/dm-ioctl.c
-> ===================================================================
-> --- linux-2.6.orig/drivers/md/dm-ioctl.c
-> +++ linux-2.6/drivers/md/dm-ioctl.c
-> @@ -37,14 +37,6 @@ struct hash_cell {
->   	struct dm_table *new_map;
->   };
->   
-> -/*
-> - * A dummy definition to make RCU happy.
-> - * struct dm_table should never be dereferenced in this file.
-> - */
-> -struct dm_table {
-> -	int undefined__;
-> -};
-> -
->   struct vers_iter {
->       size_t param_size;
->       struct dm_target_versions *vers, *old_vers;
->
+> Now that we are using REQ_OP_WRITE_ZEROES for all zeroing needs in the
+> kernel there is very little use left for REQ_OP_WRITE_SAME.  We only
+> have two callers left, and both just export optional protocol features
+> to remote systems: DRBD and the target code.
+
+While I'm not particularly married to WRITE SAME, I do think it's a
+shame that the RAID5/6 code never started using it. It does make a
+difference when initializing RAID sets.
+
+The other thing that keeps me a bit on the fence is that a bunch of the
+plumbing to handle a bio with a payload different from bi_size is needed
+for the copy offload token. I'm hoping to have those patches ready for
+4.13. Right now there are a bunch of places where handling of
+REQ_OP_COPY_IN and REQ_OP_COPY_OUT share conditionals with WRITE SAME.
+
+So I suggest postponing the decision about whether to rip out WRITE SAME
+until I finish the token stuff.
+
+-- 
+Martin K. Petersen	Oracle Linux Engineering
