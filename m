@@ -1,98 +1,59 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH] multipath-tools: replace multipath
-	configuration output
-Date: Fri, 14 Apr 2017 01:56:09 +0200
-Message-ID: <1b9e3811-796a-7d5b-b217-2224fffe3a36@gmail.com>
-References: <20170408133042.4478-1-xose.vazquez@gmail.com>
-	<CABr-Gnee6+q-wco7662ptvYuUKWHgdQbEC=zFYQCi_cUHGQ+EQ@mail.gmail.com>
+From: Ming Lei <ming.lei@redhat.com>
+Subject: Re: [PATCH v4 6/6] dm rq: Avoid that request processing stalls
+ sporadically
+Date: Fri, 14 Apr 2017 09:13:29 +0800
+Message-ID: <20170414011324.GA29916@ming.t460p>
+References: <20170411160958.GA19222@redhat.com>
+ <1491928005.2654.6.camel@sandisk.com>
+ <20170411174739.GA19620@redhat.com>
+ <1491933092.2654.10.camel@sandisk.com>
+ <20170411180358.GA19660@redhat.com>
+ <1491934715.2654.14.camel@sandisk.com>
+ <20170412034229.GA8835@ming.t460p>
+ <1492022286.2764.15.camel@sandisk.com>
+ <20170413022030.GD8835@ming.t460p>
+ <25ebc19f-f6e0-2f71-f590-8416359d2fd1@sandisk.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CABr-Gnee6+q-wco7662ptvYuUKWHgdQbEC=zFYQCi_cUHGQ+EQ@mail.gmail.com>
-Content-Language: en-GB
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <25ebc19f-f6e0-2f71-f590-8416359d2fd1@sandisk.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Bart Van Assche <bart.vanassche@sandisk.com>
+Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "snitzer@redhat.com" <snitzer@redhat.com>, "axboe@kernel.dk" <axboe@kernel.dk>
 List-Id: dm-devel.ids
 
-On 04/12/2017 09:35 AM, Christophe Varoqui wrote:
+On Thu, Apr 13, 2017 at 09:59:57AM -0700, Bart Van Assche wrote:
+> On 04/12/17 19:20, Ming Lei wrote:
+> > On Wed, Apr 12, 2017 at 06:38:07PM +0000, Bart Van Assche wrote:
+> >> If the blk-mq core would always rerun a hardware queue if a block driver
+> >> returns BLK_MQ_RQ_QUEUE_BUSY then that would cause 100% of a single CPU core
+> > 
+> > It won't casue 100% CPU utilization since we restart queue in completion
+> > path and at that time at least one tag is available, then progress can be
+> > made.
+> 
+> Hello Ming,
+> 
+> Sorry but you are wrong. If .queue_rq() returns BLK_MQ_RQ_QUEUE_BUSY
+> then it's likely that calling .queue_rq() again after only a few
+> microseconds will cause it to return BLK_MQ_RQ_QUEUE_BUSY again. If you
+> don't believe me, change "if (!blk_mq_sched_needs_restart(hctx) &&
+> !test_bit(BLK_MQ_S_TAG_WAITING, &hctx->state)) blk_mq_run_hw_queue(hctx,
+> true);" into "blk_mq_run_hw_queue(hctx, true);", trigger a busy
 
-> Merged,
+Yes, that can be true, but I mean it is still OK to run the queue again
+with
 
-No, it's missing.
+	if (!blk_mq_sched_needs_restart(hctx) &&
+	    !test_bit(BLK_MQ_S_TAG_WAITING, &hctx->state))
+			blk_mq_run_hw_queue(hctx, true);
 
-> On Sat, Apr 8, 2017 at 3:30 PM, Xose Vazquez Perez <xose.vazquez@gmail.com <mailto:xose.vazquez@gmail.com>> wrote:
-> 
->     Cc: Christophe Varoqui <christophe.varoqui@opensvc.com <mailto:christophe.varoqui@opensvc.com>>
->     Cc: device-mapper development <dm-devel@redhat.com <mailto:dm-devel@redhat.com>>
->     Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com <mailto:xose.vazquez@gmail.com>>
->     ---
->      libmultipath/propsel.c | 12 ++++++------
->      1 file changed, 6 insertions(+), 6 deletions(-)
-> 
->     diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
->     index dd10ceb..5f70d86 100644
->     --- a/libmultipath/propsel.c
->     +++ b/libmultipath/propsel.c
->     @@ -162,7 +162,7 @@ int select_pgpolicy(struct config *conf, struct multipath * mp)
-> 
->             if (conf->pgpolicy_flag > 0) {
->                     mp->pgpolicy = conf->pgpolicy_flag;
->     -               origin = "(cmd line flag)";
->     +               origin = "(setting: multipath command line [-p] flag)";
->                     goto out;
->             }
->             mp_set_mpe(pgpolicy);
->     @@ -251,18 +251,18 @@ int select_alias(struct config *conf, struct multipath * mp)
->                                     mp->alias_old, mp->alias_prefix,
->                                     conf->bindings_read_only);
->                     memset (mp->alias_old, 0, WWID_SIZE);
->     -               origin = "(using existing alias)";
->     +               origin = "(setting: using existing alias)";
->             }
-> 
->             if (mp->alias == NULL) {
->                     mp->alias = get_user_friendly_alias(mp->wwid,
->                                     conf->bindings_file, mp->alias_prefix, conf->bindings_read_only);
->     -               origin = "(user_friendly_name)";
->     +               origin = "(setting: user_friendly_name)";
->             }
->      out:
->             if (mp->alias == NULL) {
->                     mp->alias = STRDUP(mp->wwid);
->     -               origin = "(default to wwid)";
->     +               origin = "(setting: default to WWID)";
->             }
->             if (mp->alias)
->                     condlog(3, "%s: alias = %s %s", mp->wwid, mp->alias, origin);
->     @@ -565,7 +565,7 @@ int select_retain_hwhandler(struct config *conf, struct multipath *mp)
-> 
->             if (!VERSION_GE(conf->version, minv_dm_retain)) {
->                     mp->retain_hwhandler = RETAIN_HWHANDLER_OFF;
->     -               origin = "(requires kernel version >= 1.5.0)";
->     +               origin = "(setting: WARNING, requires kernel version >= 1.5.0)";
->                     goto out;
->             }
->             mp_set_ovr(retain_hwhandler);
->     @@ -614,7 +614,7 @@ int select_deferred_remove(struct config *conf, struct multipath *mp)
-> 
->      #ifndef LIBDM_API_DEFERRED
->             mp->deferred_remove = DEFERRED_REMOVE_OFF;
->     -       origin = "(not compiled with support)";
->     +       origin = "(setting: WARNING, not compiled with support)";
->             goto out;
->      #endif
->             if (mp->deferred_remove == DEFERRED_REMOVE_IN_PROGRESS) {
->     --
->     2.12.2
-> 
-> 
+and restarting queue in __blk_mq_finish_request() when
+BLK_MQ_RQ_QUEUE_BUSY is returned from .queue_rq(). And both are in current
+blk-mq implementation.
+
+Then why do we need blk_mq_delay_run_hw_queue(hctx, 100/*ms*/) in dm?
+
+Thanks,
+Ming
