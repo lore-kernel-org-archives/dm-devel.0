@@ -1,30 +1,52 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH 02/25] block: remove the blk_execute_rq return value
-Date: Mon, 17 Apr 2017 10:01:09 -0600
-Message-ID: <3257b684-8bec-f48a-e97e-5f2e8f3ca6e4@kernel.dk>
-References: <20170406153944.10058-1-hch@lst.de>
- <20170406153944.10058-3-hch@lst.de> <1492113800.24345.9.camel@sandisk.com>
- <20170414082231.GC24901@lst.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20170414082231.GC24901@lst.de>
-Sender: linux-scsi-owner@vger.kernel.org
-To: "hch@lst.de" <hch@lst.de>, Bart Van Assche <Bart.VanAssche@sandisk.com>
-Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "konrad.wilk@oracle.com" <konrad.wilk@oracle.com>, "roger.pau@citrix.com" <roger.pau@citrix.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, "jbacik@fb.com" <jbacik@fb.com>, "james.smart@broadcom.com" <james.smart@broadcom.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+From: Matthias Kaehlcke <mka@chromium.org>
+Subject: [PATCH RESEND] dm ioctl: Remove double parentheses
+Date: Mon, 17 Apr 2017 11:05:03 -0700
+Message-ID: <20170417180503.30435-1-mka@chromium.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
+Cc: Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, Grant Grundler <grundler@chromium.org>, Greg Hackmann <ghackmann@google.com>, Michael Davidson <md@google.com>, Matthias Kaehlcke <mka@chromium.org>
 List-Id: dm-devel.ids
 
-On 04/14/2017 02:22 AM, hch@lst.de wrote:
-> On Thu, Apr 13, 2017 at 08:03:22PM +0000, Bart Van Assche wrote:
->> That blk_execute_rq() call can only be reached if a few lines above 0 was
->> assigned to the "error" variable. Since nfsd4_scsi_identify_device() returns
->> the value of the "error" variable I think -EIO should be assigned to that
->> variable before the "goto out_put_request" statement is reached.
-> 
-> You're right!  I'll fix it up.
+The extra pair of parantheses is not needed and causes clang to generate
+the following warning:
 
-Are you respinning this series for 4.12?
+drivers/md/dm-ioctl.c:1776:11: error: equality comparison with extraneous parentheses [-Werror,-Wparentheses-equality]
+        if ((cmd == DM_DEV_CREATE_CMD)) {
+             ~~~~^~~~~~~~~~~~~~~~~~~~
+drivers/md/dm-ioctl.c:1776:11: note: remove extraneous parentheses around the comparison to silence this warning
+        if ((cmd == DM_DEV_CREATE_CMD)) {
+            ~    ^                   ~
+drivers/md/dm-ioctl.c:1776:11: note: use '=' to turn this equality comparison into an assignment
+        if ((cmd == DM_DEV_CREATE_CMD)) {
+                 ^~
+                 =
 
+Also remove another double parentheses that don't cause a warning.
+
+Signed-off-by: Matthias Kaehlcke <mka@chromium.org>
+---
+ drivers/md/dm-ioctl.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
+index 4da6fc6b1ffd..acd8f12439e4 100644
+--- a/drivers/md/dm-ioctl.c
++++ b/drivers/md/dm-ioctl.c
+@@ -1778,12 +1778,12 @@ static int validate_params(uint cmd, struct dm_ioctl *param)
+ 	    cmd == DM_LIST_VERSIONS_CMD)
+ 		return 0;
+ 
+-	if ((cmd == DM_DEV_CREATE_CMD)) {
++	if (cmd == DM_DEV_CREATE_CMD) {
+ 		if (!*param->name) {
+ 			DMWARN("name not supplied when creating device");
+ 			return -EINVAL;
+ 		}
+-	} else if ((*param->uuid && *param->name)) {
++	} else if (*param->uuid && *param->name) {
+ 		DMWARN("only supply one of name or uuid, cmd(%u)", cmd);
+ 		return -EINVAL;
+ 	}
 -- 
-Jens Axboe
+2.12.2.762.g0e3151a226-goog
