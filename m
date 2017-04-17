@@ -1,8 +1,7 @@
 From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: [resend PATCH v2 29/33] uio, libnvdimm,
- pmem: implement cache bypass for all copy_from_iter() operations
-Date: Mon, 17 Apr 2017 12:11:26 -0700
-Message-ID: <149245628664.10206.1096202287996099788.stgit@dwillia2-desk3.amr.corp.intel.com>
+Subject: [resend PATCH v2 30/33] libnvdimm, pmem: fix persistence warning
+Date: Mon, 17 Apr 2017 12:11:32 -0700
+Message-ID: <149245629217.10206.5073008164111171947.stgit@dwillia2-desk3.amr.corp.intel.com>
 References: <149245612770.10206.15496018295337908594.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,249 +18,39 @@ List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
 Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 To: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, hch-jcswGhMUV9g@public.gmane.org
+Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org
 List-Id: dm-devel.ids
 
-Introduce copy_from_iter_ops() to enable passing custom sub-routines to
-iterate_and_advance(). Define pmem operations that guarantee cache
-bypass to supplement the existing usage of __copy_from_iter_nocache()
-backed by arch_wb_cache_pmem().
+The pmem driver assumes if platform firmware describes the memory
+devices associated with a persistent memory range and
+CONFIG_ARCH_HAS_PMEM_API=y that it has all the mechanism necessary to
+flush data to a power-fail safe zone. We warn if the firmware does not
+describe memory devices, but we also need to warn if the architecture
+does not claim pmem support.
 
 Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
 Cc: Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Cc: Toshi Kani <toshi.kani-ZPxbGqLxI0U@public.gmane.org>
-Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
 Cc: Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>
 Cc: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Cc: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 Signed-off-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 ---
- drivers/nvdimm/Kconfig |    1 +
- drivers/nvdimm/pmem.c  |   38 +-------------------------------------
- drivers/nvdimm/pmem.h  |    7 +++++++
- drivers/nvdimm/x86.c   |   48 ++++++++++++++++++++++++++++++++++++++++++++++++
- include/linux/uio.h    |    4 ++++
- lib/Kconfig            |    3 +++
- lib/iov_iter.c         |   25 +++++++++++++++++++++++++
- 7 files changed, 89 insertions(+), 37 deletions(-)
+ drivers/nvdimm/region_devs.c |    5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/nvdimm/Kconfig b/drivers/nvdimm/Kconfig
-index 4d45196d6f94..28002298cdc8 100644
---- a/drivers/nvdimm/Kconfig
-+++ b/drivers/nvdimm/Kconfig
-@@ -38,6 +38,7 @@ config BLK_DEV_PMEM
+diff --git a/drivers/nvdimm/region_devs.c b/drivers/nvdimm/region_devs.c
+index 307a48060aa3..5976f6c0407f 100644
+--- a/drivers/nvdimm/region_devs.c
++++ b/drivers/nvdimm/region_devs.c
+@@ -970,8 +970,9 @@ int nvdimm_has_flush(struct nd_region *nd_region)
+ 	struct nd_region_data *ndrd = dev_get_drvdata(&nd_region->dev);
+ 	int i;
  
- config ARCH_HAS_PMEM_API
- 	depends on X86_64
-+	select COPY_FROM_ITER_OPS
- 	def_bool y
+-	/* no nvdimm == flushing capability unknown */
+-	if (nd_region->ndr_mappings == 0)
++	/* no nvdimm or pmem api == flushing capability unknown */
++	if (nd_region->ndr_mappings == 0
++			|| !IS_ENABLED(CONFIG_ARCH_HAS_PMEM_API))
+ 		return -ENXIO;
  
- config ND_BLK
-diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
-index 329895ca88e1..b000c6db5731 100644
---- a/drivers/nvdimm/pmem.c
-+++ b/drivers/nvdimm/pmem.c
-@@ -223,43 +223,7 @@ __weak long __pmem_direct_access(struct pmem_device *pmem, pgoff_t pgoff,
- static size_t pmem_copy_from_iter(struct dax_device *dax_dev, pgoff_t pgoff,
- 		void *addr, size_t bytes, struct iov_iter *i)
- {
--	size_t len;
--
--	/* TODO: skip the write-back by always using non-temporal stores */
--	len = copy_from_iter_nocache(addr, bytes, i);
--
--	/*
--	 * In the iovec case on x86_64 copy_from_iter_nocache() uses
--	 * non-temporal stores for the bulk of the transfer, but we need
--	 * to manually flush if the transfer is unaligned. A cached
--	 * memory copy is used when destination or size is not naturally
--	 * aligned. That is:
--	 *   - Require 8-byte alignment when size is 8 bytes or larger.
--	 *   - Require 4-byte alignment when size is 4 bytes.
--	 *
--	 * In the non-iovec case the entire destination needs to be
--	 * flushed.
--	 */
--	if (iter_is_iovec(i)) {
--		unsigned long flushed, dest = (unsigned long) addr;
--
--		if (bytes < 8) {
--			if (!IS_ALIGNED(dest, 4) || (bytes != 4))
--				arch_wb_cache_pmem(addr, 1);
--		} else {
--			if (!IS_ALIGNED(dest, 8)) {
--				dest = ALIGN(dest, boot_cpu_data.x86_clflush_size);
--				arch_wb_cache_pmem(addr, 1);
--			}
--
--			flushed = dest - (unsigned long) addr;
--			if (bytes > flushed && !IS_ALIGNED(bytes - flushed, 8))
--				arch_wb_cache_pmem(addr + bytes - 1, 1);
--		}
--	} else
--		arch_wb_cache_pmem(addr, bytes);
--
--	return len;
-+	return arch_copy_from_iter_pmem(addr, bytes, i);
- }
- 
- static const struct block_device_operations pmem_fops = {
-diff --git a/drivers/nvdimm/pmem.h b/drivers/nvdimm/pmem.h
-index 00005900c1b7..574b63fb5376 100644
---- a/drivers/nvdimm/pmem.h
-+++ b/drivers/nvdimm/pmem.h
-@@ -3,11 +3,13 @@
- #include <linux/badblocks.h>
- #include <linux/types.h>
- #include <linux/pfn_t.h>
-+#include <linux/uio.h>
- #include <linux/fs.h>
- 
- #ifdef CONFIG_ARCH_HAS_PMEM_API
- void arch_wb_cache_pmem(void *addr, size_t size);
- void arch_invalidate_pmem(void *addr, size_t size);
-+size_t arch_copy_from_iter_pmem(void *addr, size_t bytes, struct iov_iter *i);
- #else
- static inline void arch_wb_cache_pmem(void *addr, size_t size)
- {
-@@ -15,6 +17,11 @@ static inline void arch_wb_cache_pmem(void *addr, size_t size)
- static inline void arch_invalidate_pmem(void *addr, size_t size)
- {
- }
-+static inline size_t arch_copy_from_iter_pmem(void *addr, size_t bytes,
-+		struct iov_iter *i)
-+{
-+	return copy_from_iter_nocache(addr, bytes, i);
-+}
- #endif
- 
- /* this definition is in it's own header for tools/testing/nvdimm to consume */
-diff --git a/drivers/nvdimm/x86.c b/drivers/nvdimm/x86.c
-index d99b452332a9..bc145d760d43 100644
---- a/drivers/nvdimm/x86.c
-+++ b/drivers/nvdimm/x86.c
-@@ -10,6 +10,9 @@
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-  * General Public License for more details.
-  */
-+#include <linux/uio.h>
-+#include <linux/uaccess.h>
-+#include <linux/highmem.h>
- #include <asm/cacheflush.h>
- #include <asm/cpufeature.h>
- #include <asm/special_insns.h>
-@@ -105,3 +108,48 @@ void arch_memcpy_to_pmem(void *_dst, void *_src, unsigned size)
- 	}
- }
- EXPORT_SYMBOL_GPL(arch_memcpy_to_pmem);
-+
-+static int pmem_from_user(void *dst, const void __user *src, unsigned size)
-+{
-+	unsigned long flushed, dest = (unsigned long) dest;
-+	int rc = __copy_from_user_nocache(dst, src, size);
-+
-+	/*
-+	 * On x86_64 __copy_from_user_nocache() uses non-temporal stores
-+	 * for the bulk of the transfer, but we need to manually flush
-+	 * if the transfer is unaligned. A cached memory copy is used
-+	 * when destination or size is not naturally aligned. That is:
-+	 *   - Require 8-byte alignment when size is 8 bytes or larger.
-+	 *   - Require 4-byte alignment when size is 4 bytes.
-+	 */
-+	if (size < 8) {
-+		if (!IS_ALIGNED(dest, 4) || size != 4)
-+			arch_wb_cache_pmem(dst, 1);
-+	} else {
-+		if (!IS_ALIGNED(dest, 8)) {
-+			dest = ALIGN(dest, boot_cpu_data.x86_clflush_size);
-+			arch_wb_cache_pmem(dst, 1);
-+		}
-+
-+		flushed = dest - (unsigned long) dst;
-+		if (size > flushed && !IS_ALIGNED(size - flushed, 8))
-+			arch_wb_cache_pmem(dst + size - 1, 1);
-+	}
-+
-+	return rc;
-+}
-+
-+static void pmem_from_page(char *to, struct page *page, size_t offset, size_t len)
-+{
-+	char *from = kmap_atomic(page);
-+
-+	arch_memcpy_to_pmem(to, from + offset, len);
-+	kunmap_atomic(from);
-+}
-+
-+size_t arch_copy_from_iter_pmem(void *addr, size_t bytes, struct iov_iter *i)
-+{
-+	return copy_from_iter_ops(addr, bytes, i, pmem_from_user, pmem_from_page,
-+			arch_memcpy_to_pmem);
-+}
-+EXPORT_SYMBOL_GPL(arch_copy_from_iter_pmem);
-diff --git a/include/linux/uio.h b/include/linux/uio.h
-index 804e34c6f981..edb78f3fe2c8 100644
---- a/include/linux/uio.h
-+++ b/include/linux/uio.h
-@@ -91,6 +91,10 @@ size_t copy_to_iter(const void *addr, size_t bytes, struct iov_iter *i);
- size_t copy_from_iter(void *addr, size_t bytes, struct iov_iter *i);
- bool copy_from_iter_full(void *addr, size_t bytes, struct iov_iter *i);
- size_t copy_from_iter_nocache(void *addr, size_t bytes, struct iov_iter *i);
-+size_t copy_from_iter_ops(void *addr, size_t bytes, struct iov_iter *i,
-+		int (*user)(void *, const void __user *, unsigned),
-+		void (*page)(char *, struct page *, size_t, size_t),
-+		void (*copy)(void *, void *, unsigned));
- bool copy_from_iter_full_nocache(void *addr, size_t bytes, struct iov_iter *i);
- size_t iov_iter_zero(size_t bytes, struct iov_iter *);
- unsigned long iov_iter_alignment(const struct iov_iter *i);
-diff --git a/lib/Kconfig b/lib/Kconfig
-index 0c4aac6ef394..4d8f575e65b3 100644
---- a/lib/Kconfig
-+++ b/lib/Kconfig
-@@ -404,6 +404,9 @@ config DMA_VIRT_OPS
- 	depends on HAS_DMA && (!64BIT || ARCH_DMA_ADDR_T_64BIT)
- 	default n
- 
-+config COPY_FROM_ITER_OPS
-+	bool
-+
- config CHECK_SIGNATURE
- 	bool
- 
-diff --git a/lib/iov_iter.c b/lib/iov_iter.c
-index e68604ae3ced..85f8021504e3 100644
---- a/lib/iov_iter.c
-+++ b/lib/iov_iter.c
-@@ -571,6 +571,31 @@ size_t copy_from_iter(void *addr, size_t bytes, struct iov_iter *i)
- }
- EXPORT_SYMBOL(copy_from_iter);
- 
-+#ifdef CONFIG_COPY_FROM_ITER_OPS
-+size_t copy_from_iter_ops(void *addr, size_t bytes, struct iov_iter *i,
-+		int (*user)(void *, const void __user *, unsigned),
-+		void (*page)(char *, struct page *, size_t, size_t),
-+		void (*copy)(void *, void *, unsigned))
-+{
-+	char *to = addr;
-+
-+	if (unlikely(i->type & ITER_PIPE)) {
-+		WARN_ON(1);
-+		return 0;
-+	}
-+	iterate_and_advance(i, bytes, v,
-+		user((to += v.iov_len) - v.iov_len, v.iov_base,
-+				 v.iov_len),
-+		page((to += v.bv_len) - v.bv_len, v.bv_page, v.bv_offset,
-+				v.bv_len),
-+		copy((to += v.iov_len) - v.iov_len, v.iov_base, v.iov_len)
-+	)
-+
-+	return bytes;
-+}
-+EXPORT_SYMBOL_GPL(copy_from_iter_ops);
-+#endif
-+
- bool copy_from_iter_full(void *addr, size_t bytes, struct iov_iter *i)
- {
- 	char *to = addr;
+ 	for (i = 0; i < nd_region->ndr_mappings; i++)
