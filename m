@@ -1,8 +1,8 @@
 From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: [resend PATCH v2 17/33] block: remove block_device_operations
- ->direct_access()
-Date: Mon, 17 Apr 2017 12:10:21 -0700
-Message-ID: <149245622170.10206.2196597933362879172.stgit@dwillia2-desk3.amr.corp.intel.com>
+Subject: [resend PATCH v2 18/33] x86, dax,
+ pmem: remove indirection around memcpy_from_pmem()
+Date: Mon, 17 Apr 2017 12:10:27 -0700
+Message-ID: <149245622727.10206.9207175325089032123.stgit@dwillia2-desk3.amr.corp.intel.com>
 References: <149245612770.10206.15496018295337908594.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,293 +19,163 @@ List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
 Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 To: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org
+Cc: Tony Luck <tony.luck-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, hch-jcswGhMUV9g@public.gmane.org
 List-Id: dm-devel.ids
 
-Now that all the producers and consumers of dax interfaces have been
-converted to using dax_operations on a dax_device, remove the block
-device direct_access enabling.
+memcpy_from_pmem() maps directly to memcpy_mcsafe(). The wrapper
+serves no real benefit aside from affording a more generic function name
+than the x86-specific 'mcsafe'. However this would not be the first time
+that x86 terminology leaked into the global namespace. For lack of
+better name, just use memcpy_mcsafe() directly.
 
+This conversion also catches a place where we should have been using
+plain memcpy, acpi_nfit_blk_single_io().
+
+Cc: <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Cc: Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Cc: Tony Luck <tony.luck-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
+Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Cc: Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>
+Cc: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 Signed-off-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 ---
- arch/powerpc/sysdev/axonram.c |   23 ++++-----------------
- drivers/block/brd.c           |   15 --------------
- drivers/md/dm.c               |   13 ------------
- drivers/nvdimm/pmem.c         |   10 ---------
- drivers/s390/block/dcssblk.c  |   16 ---------------
- fs/block_dev.c                |   45 -----------------------------------------
- include/linux/blkdev.h        |   17 ---------------
- 7 files changed, 4 insertions(+), 135 deletions(-)
+ arch/x86/include/asm/pmem.h      |    5 -----
+ arch/x86/include/asm/string_64.h |    1 +
+ drivers/acpi/nfit/core.c         |    3 +--
+ drivers/nvdimm/claim.c           |    2 +-
+ drivers/nvdimm/pmem.c            |    2 +-
+ include/linux/pmem.h             |   23 -----------------------
+ include/linux/string.h           |    8 ++++++++
+ 7 files changed, 12 insertions(+), 32 deletions(-)
 
-diff --git a/arch/powerpc/sysdev/axonram.c b/arch/powerpc/sysdev/axonram.c
-index ad857d5e81b1..83eb56ff1d2c 100644
---- a/arch/powerpc/sysdev/axonram.c
-+++ b/arch/powerpc/sysdev/axonram.c
-@@ -139,6 +139,10 @@ axon_ram_make_request(struct request_queue *queue, struct bio *bio)
- 	return BLK_QC_T_NONE;
+diff --git a/arch/x86/include/asm/pmem.h b/arch/x86/include/asm/pmem.h
+index 529bb4a6487a..d5a22bac9988 100644
+--- a/arch/x86/include/asm/pmem.h
++++ b/arch/x86/include/asm/pmem.h
+@@ -44,11 +44,6 @@ static inline void arch_memcpy_to_pmem(void *dst, const void *src, size_t n)
+ 		BUG();
  }
  
-+static const struct block_device_operations axon_ram_devops = {
-+	.owner		= THIS_MODULE,
-+};
-+
- static long
- __axon_ram_direct_access(struct axon_ram_bank *bank, pgoff_t pgoff, long nr_pages,
- 		       void **kaddr, pfn_t *pfn)
-@@ -150,25 +154,6 @@ __axon_ram_direct_access(struct axon_ram_bank *bank, pgoff_t pgoff, long nr_page
- 	return (bank->size - offset) / PAGE_SIZE;
- }
- 
--/**
-- * axon_ram_direct_access - direct_access() method for block device
-- * @device, @sector, @data: see block_device_operations method
-- */
--static long
--axon_ram_blk_direct_access(struct block_device *device, sector_t sector,
--		       void **kaddr, pfn_t *pfn, long size)
+-static inline int arch_memcpy_from_pmem(void *dst, const void *src, size_t n)
 -{
--	struct axon_ram_bank *bank = device->bd_disk->private_data;
--
--	return __axon_ram_direct_access(bank, (sector * 512) / PAGE_SIZE,
--			size / PAGE_SIZE, kaddr, pfn) * PAGE_SIZE;
+-	return memcpy_mcsafe(dst, src, n);
 -}
 -
--static const struct block_device_operations axon_ram_devops = {
--	.owner		= THIS_MODULE,
--	.direct_access	= axon_ram_blk_direct_access
--};
--
- static long
- axon_ram_dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff, long nr_pages,
- 		       void **kaddr, pfn_t *pfn)
-diff --git a/drivers/block/brd.c b/drivers/block/brd.c
-index 60f3193c9ce2..bfa4ed2c75ef 100644
---- a/drivers/block/brd.c
-+++ b/drivers/block/brd.c
-@@ -395,18 +395,6 @@ static long __brd_direct_access(struct brd_device *brd, pgoff_t pgoff,
- 	return 1;
- }
- 
--static long brd_blk_direct_access(struct block_device *bdev, sector_t sector,
--			void **kaddr, pfn_t *pfn, long size)
--{
--	struct brd_device *brd = bdev->bd_disk->private_data;
--	long nr_pages = __brd_direct_access(brd, PHYS_PFN(sector * 512),
--			PHYS_PFN(size), kaddr, pfn);
--
--	if (nr_pages < 0)
--		return nr_pages;
--	return nr_pages * PAGE_SIZE;
--}
--
- static long brd_dax_direct_access(struct dax_device *dax_dev,
- 		pgoff_t pgoff, long nr_pages, void **kaddr, pfn_t *pfn)
- {
-@@ -418,14 +406,11 @@ static long brd_dax_direct_access(struct dax_device *dax_dev,
- static const struct dax_operations brd_dax_ops = {
- 	.direct_access = brd_dax_direct_access,
- };
--#else
--#define brd_blk_direct_access NULL
+ /**
+  * arch_wb_cache_pmem - write back a cache range with CLWB
+  * @vaddr:	virtual start address
+diff --git a/arch/x86/include/asm/string_64.h b/arch/x86/include/asm/string_64.h
+index a164862d77e3..733bae07fb29 100644
+--- a/arch/x86/include/asm/string_64.h
++++ b/arch/x86/include/asm/string_64.h
+@@ -79,6 +79,7 @@ int strcmp(const char *cs, const char *ct);
+ #define memset(s, c, n) __memset(s, c, n)
  #endif
  
- static const struct block_device_operations brd_fops = {
- 	.owner =		THIS_MODULE,
- 	.rw_page =		brd_rw_page,
--	.direct_access =	brd_blk_direct_access,
- };
++#define __HAVE_ARCH_MEMCPY_MCSAFE 1
+ __must_check int memcpy_mcsafe_unrolled(void *dst, const void *src, size_t cnt);
+ DECLARE_STATIC_KEY_FALSE(mcsafe_key);
  
- /*
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index ef4c6f8cad47..79d5f5fd823e 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -957,18 +957,6 @@ static long dm_dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff,
- 	return ret;
- }
+diff --git a/drivers/acpi/nfit/core.c b/drivers/acpi/nfit/core.c
+index c8ea9d698cd0..d0c07b2344e4 100644
+--- a/drivers/acpi/nfit/core.c
++++ b/drivers/acpi/nfit/core.c
+@@ -1783,8 +1783,7 @@ static int acpi_nfit_blk_single_io(struct nfit_blk *nfit_blk,
+ 				mmio_flush_range((void __force *)
+ 					mmio->addr.aperture + offset, c);
  
--static long dm_blk_direct_access(struct block_device *bdev, sector_t sector,
--		void **kaddr, pfn_t *pfn, long size)
--{
--	struct mapped_device *md = bdev->bd_disk->private_data;
--	struct dax_device *dax_dev = md->dax_dev;
--	long nr_pages = size / PAGE_SIZE;
--
--	nr_pages = dm_dax_direct_access(dax_dev, sector / PAGE_SECTORS,
--			nr_pages, kaddr, pfn);
--	return nr_pages < 0 ? nr_pages : nr_pages * PAGE_SIZE;
--}
--
- /*
-  * A target may call dm_accept_partial_bio only from the map routine.  It is
-  * allowed for all bio types except REQ_PREFLUSH.
-@@ -2823,7 +2811,6 @@ static const struct block_device_operations dm_blk_dops = {
- 	.open = dm_blk_open,
- 	.release = dm_blk_close,
- 	.ioctl = dm_blk_ioctl,
--	.direct_access = dm_blk_direct_access,
- 	.getgeo = dm_blk_getgeo,
- 	.pr_ops = &dm_pr_ops,
- 	.owner = THIS_MODULE
+-			memcpy_from_pmem(iobuf + copied,
+-					mmio->addr.aperture + offset, c);
++			memcpy(iobuf + copied, mmio->addr.aperture + offset, c);
+ 		}
+ 
+ 		copied += c;
+diff --git a/drivers/nvdimm/claim.c b/drivers/nvdimm/claim.c
+index ca6d572c48fc..3a35e8028b9c 100644
+--- a/drivers/nvdimm/claim.c
++++ b/drivers/nvdimm/claim.c
+@@ -239,7 +239,7 @@ static int nsio_rw_bytes(struct nd_namespace_common *ndns,
+ 	if (rw == READ) {
+ 		if (unlikely(is_bad_pmem(&nsio->bb, sector, sz_align)))
+ 			return -EIO;
+-		return memcpy_from_pmem(buf, nsio->addr + offset, size);
++		return memcpy_mcsafe(buf, nsio->addr + offset, size);
+ 	}
+ 
+ 	if (unlikely(is_bad_pmem(&nsio->bb, sector, sz_align))) {
 diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
-index fbbcf8154eec..85b85633d674 100644
+index 85b85633d674..3b3dab73d741 100644
 --- a/drivers/nvdimm/pmem.c
 +++ b/drivers/nvdimm/pmem.c
-@@ -220,19 +220,9 @@ __weak long __pmem_direct_access(struct pmem_device *pmem, pgoff_t pgoff,
- 	return PHYS_PFN(pmem->size - pmem->pfn_pad - offset);
+@@ -89,7 +89,7 @@ static int read_pmem(struct page *page, unsigned int off,
+ 	int rc;
+ 	void *mem = kmap_atomic(page);
+ 
+-	rc = memcpy_from_pmem(mem + off, pmem_addr, len);
++	rc = memcpy_mcsafe(mem + off, pmem_addr, len);
+ 	kunmap_atomic(mem);
+ 	if (rc)
+ 		return -EIO;
+diff --git a/include/linux/pmem.h b/include/linux/pmem.h
+index e856c2cb0fe8..71ecf3d46aac 100644
+--- a/include/linux/pmem.h
++++ b/include/linux/pmem.h
+@@ -31,12 +31,6 @@ static inline void arch_memcpy_to_pmem(void *dst, const void *src, size_t n)
+ 	BUG();
  }
  
--static long pmem_blk_direct_access(struct block_device *bdev, sector_t sector,
--		void **kaddr, pfn_t *pfn, long size)
+-static inline int arch_memcpy_from_pmem(void *dst, const void *src, size_t n)
 -{
--	struct pmem_device *pmem = bdev->bd_queue->queuedata;
--
--	return __pmem_direct_access(pmem, PHYS_PFN(sector * 512),
--			PHYS_PFN(size), kaddr, pfn);
+-	BUG();
+-	return -EFAULT;
 -}
 -
- static const struct block_device_operations pmem_fops = {
- 	.owner =		THIS_MODULE,
- 	.rw_page =		pmem_rw_page,
--	.direct_access =	pmem_blk_direct_access,
- 	.revalidate_disk =	nvdimm_revalidate_disk,
- };
- 
-diff --git a/drivers/s390/block/dcssblk.c b/drivers/s390/block/dcssblk.c
-index 682a9eb4934d..1586e11b979e 100644
---- a/drivers/s390/block/dcssblk.c
-+++ b/drivers/s390/block/dcssblk.c
-@@ -31,8 +31,6 @@ static int dcssblk_open(struct block_device *bdev, fmode_t mode);
- static void dcssblk_release(struct gendisk *disk, fmode_t mode);
- static blk_qc_t dcssblk_make_request(struct request_queue *q,
- 						struct bio *bio);
--static long dcssblk_blk_direct_access(struct block_device *bdev, sector_t secnum,
--			 void **kaddr, pfn_t *pfn, long size);
- static long dcssblk_dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff,
- 		long nr_pages, void **kaddr, pfn_t *pfn);
- 
-@@ -43,7 +41,6 @@ static const struct block_device_operations dcssblk_devops = {
- 	.owner   	= THIS_MODULE,
- 	.open    	= dcssblk_open,
- 	.release 	= dcssblk_release,
--	.direct_access 	= dcssblk_blk_direct_access,
- };
- 
- static const struct dax_operations dcssblk_dax_ops = {
-@@ -915,19 +912,6 @@ __dcssblk_direct_access(struct dcssblk_dev_info *dev_info, pgoff_t pgoff,
- }
- 
- static long
--dcssblk_blk_direct_access(struct block_device *bdev, sector_t secnum,
--			void **kaddr, pfn_t *pfn, long size)
--{
--	struct dcssblk_dev_info *dev_info;
--
--	dev_info = bdev->bd_disk->private_data;
--	if (!dev_info)
--		return -ENODEV;
--	return __dcssblk_direct_access(dev_info, PHYS_PFN(secnum * 512),
--			PHYS_PFN(size), kaddr, pfn) * PAGE_SIZE;
--}
--
--static long
- dcssblk_dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff,
- 		long nr_pages, void **kaddr, pfn_t *pfn)
+ static inline size_t arch_copy_from_iter_pmem(void *addr, size_t bytes,
+ 		struct iov_iter *i)
  {
-diff --git a/fs/block_dev.c b/fs/block_dev.c
-index ecbdc8f9f718..10e21465d5a9 100644
---- a/fs/block_dev.c
-+++ b/fs/block_dev.c
-@@ -718,51 +718,6 @@ int bdev_write_page(struct block_device *bdev, sector_t sector,
+@@ -65,23 +59,6 @@ static inline bool arch_has_pmem_api(void)
+ 	return IS_ENABLED(CONFIG_ARCH_HAS_PMEM_API);
  }
- EXPORT_SYMBOL_GPL(bdev_write_page);
  
--/**
-- * bdev_direct_access() - Get the address for directly-accessibly memory
-- * @bdev: The device containing the memory
-- * @dax: control and output parameters for ->direct_access
+-/*
+- * memcpy_from_pmem - read from persistent memory with error handling
+- * @dst: destination buffer
+- * @src: source buffer
+- * @size: transfer length
 - *
-- * If a block device is made up of directly addressable memory, this function
-- * will tell the caller the PFN and the address of the memory.  The address
-- * may be directly dereferenced within the kernel without the need to call
-- * ioremap(), kmap() or similar.  The PFN is suitable for inserting into
-- * page tables.
-- *
-- * Return: negative errno if an error occurs, otherwise the number of bytes
-- * accessible at this address.
+- * Returns 0 on success negative error code on failure.
 - */
--long bdev_direct_access(struct block_device *bdev, struct blk_dax_ctl *dax)
+-static inline int memcpy_from_pmem(void *dst, void const *src, size_t size)
 -{
--	sector_t sector = dax->sector;
--	long avail, size = dax->size;
--	const struct block_device_operations *ops = bdev->bd_disk->fops;
--
--	/*
--	 * The device driver is allowed to sleep, in order to make the
--	 * memory directly accessible.
--	 */
--	might_sleep();
--
--	if (size < 0)
--		return size;
--	if (!blk_queue_dax(bdev_get_queue(bdev)) || !ops->direct_access)
--		return -EOPNOTSUPP;
--	if ((sector + DIV_ROUND_UP(size, 512)) >
--					part_nr_sects_read(bdev->bd_part))
--		return -ERANGE;
--	sector += get_start_sect(bdev);
--	if (sector % (PAGE_SIZE / 512))
--		return -EINVAL;
--	avail = ops->direct_access(bdev, sector, &dax->addr, &dax->pfn, size);
--	if (!avail)
--		return -ERANGE;
--	if (avail > 0 && avail & ~PAGE_MASK)
--		return -ENXIO;
--	return min(avail, size);
+-	if (arch_has_pmem_api())
+-		return arch_memcpy_from_pmem(dst, src, size);
+-	else
+-		memcpy(dst, src, size);
+-	return 0;
 -}
--EXPORT_SYMBOL_GPL(bdev_direct_access);
 -
- int bdev_dax_pgoff(struct block_device *bdev, sector_t sector, size_t size,
- 		pgoff_t *pgoff)
- {
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 612c497d1461..848f87eb1905 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -1916,28 +1916,12 @@ static inline bool integrity_req_gap_front_merge(struct request *req,
- 
- #endif /* CONFIG_BLK_DEV_INTEGRITY */
- 
--/**
-- * struct blk_dax_ctl - control and output parameters for ->direct_access
-- * @sector: (input) offset relative to a block_device
-- * @addr: (output) kernel virtual address for @sector populated by driver
-- * @pfn: (output) page frame number for @addr populated by driver
-- * @size: (input) number of bytes requested
-- */
--struct blk_dax_ctl {
--	sector_t sector;
--	void *addr;
--	long size;
--	pfn_t pfn;
--};
--
- struct block_device_operations {
- 	int (*open) (struct block_device *, fmode_t);
- 	void (*release) (struct gendisk *, fmode_t);
- 	int (*rw_page)(struct block_device *, sector_t, struct page *, bool);
- 	int (*ioctl) (struct block_device *, fmode_t, unsigned, unsigned long);
- 	int (*compat_ioctl) (struct block_device *, fmode_t, unsigned, unsigned long);
--	long (*direct_access)(struct block_device *, sector_t, void **, pfn_t *,
--			long);
- 	unsigned int (*check_events) (struct gendisk *disk,
- 				      unsigned int clearing);
- 	/* ->media_changed() is DEPRECATED, use ->check_events() instead */
-@@ -1956,7 +1940,6 @@ extern int __blkdev_driver_ioctl(struct block_device *, fmode_t, unsigned int,
- extern int bdev_read_page(struct block_device *, sector_t, struct page *);
- extern int bdev_write_page(struct block_device *, sector_t, struct page *,
- 						struct writeback_control *);
--extern long bdev_direct_access(struct block_device *, struct blk_dax_ctl *);
- extern int bdev_dax_supported(struct super_block *, int);
- int bdev_dax_pgoff(struct block_device *, sector_t, size_t, pgoff_t *pgoff);
- #else /* CONFIG_BLOCK */
+ /**
+  * memcpy_to_pmem - copy data to persistent memory
+  * @dst: destination buffer for the copy
+diff --git a/include/linux/string.h b/include/linux/string.h
+index 26b6f6a66f83..9d6f189157e2 100644
+--- a/include/linux/string.h
++++ b/include/linux/string.h
+@@ -114,6 +114,14 @@ extern int memcmp(const void *,const void *,__kernel_size_t);
+ #ifndef __HAVE_ARCH_MEMCHR
+ extern void * memchr(const void *,int,__kernel_size_t);
+ #endif
++#ifndef __HAVE_ARCH_MEMCPY_MCSAFE
++static inline __must_check int memcpy_mcsafe(void *dst, const void *src,
++		size_t cnt)
++{
++	memcpy(dst, src, cnt);
++	return 0;
++}
++#endif
+ void *memchr_inv(const void *s, int c, size_t n);
+ char *strreplace(char *s, char old, char new);
