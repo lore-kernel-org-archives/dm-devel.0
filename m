@@ -1,152 +1,208 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: [resend PATCH v2 21/33] filesystem-dax: convert to
- dax_copy_from_iter()
-Date: Mon, 17 Apr 2017 12:10:43 -0700
-Message-ID: <149245624377.10206.2326016724409668277.stgit@dwillia2-desk3.amr.corp.intel.com>
+From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: [resend PATCH v2 23/33] dm: add ->flush() dax operation support
+Date: Mon, 17 Apr 2017 12:10:54 -0700
+Message-ID: <149245625444.10206.17427373360396242265.stgit@dwillia2-desk3.amr.corp.intel.com>
 References: <149245612770.10206.15496018295337908594.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <149245612770.10206.15496018295337908594.stgit@dwillia2-desk3.amr.corp.intel.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: linux-nvdimm@ml01.01.org
-Cc: linux-fsdevel@vger.kernel.org, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org, hch@lst.de
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <149245612770.10206.15496018295337908594.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org
 List-Id: dm-devel.ids
 
-Now that all possible providers of the dax_operations copy_from_iter
-method are implemented, switch filesytem-dax to call the driver rather
-than copy_to_iter_pmem.
+Allow device-mapper to route flush operations to the
+per-target implementation. In order for the device stacking to work we
+need a dax_dev and a pgoff relative to that device. This gives each
+layer of the stack the information it needs to look up the operation
+pointer for the next level.
 
-Signed-off-by: Dan Williams <dan.j.williams@intel.com>
+This conceptually allows for an array of mixed device drivers with
+varying flush implementations.
+
+Cc: Toshi Kani <toshi.kani-ZPxbGqLxI0U@public.gmane.org>
+Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Signed-off-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 ---
- arch/x86/include/asm/pmem.h |   50 -------------------------------------------
- fs/dax.c                    |    3 ++-
- include/linux/pmem.h        |   24 ---------------------
- 3 files changed, 2 insertions(+), 75 deletions(-)
+ drivers/dax/super.c           |   11 +++++++++++
+ drivers/md/dm-linear.c        |   15 +++++++++++++++
+ drivers/md/dm-stripe.c        |   20 ++++++++++++++++++++
+ drivers/md/dm.c               |   19 +++++++++++++++++++
+ include/linux/dax.h           |    2 ++
+ include/linux/device-mapper.h |    3 +++
+ 6 files changed, 70 insertions(+)
 
-diff --git a/arch/x86/include/asm/pmem.h b/arch/x86/include/asm/pmem.h
-index d5a22bac9988..60e8edbe0205 100644
---- a/arch/x86/include/asm/pmem.h
-+++ b/arch/x86/include/asm/pmem.h
-@@ -66,56 +66,6 @@ static inline void arch_wb_cache_pmem(void *addr, size_t size)
+diff --git a/drivers/dax/super.c b/drivers/dax/super.c
+index 73f0da8e5d27..1253c05a2e53 100644
+--- a/drivers/dax/super.c
++++ b/drivers/dax/super.c
+@@ -117,6 +117,17 @@ size_t dax_copy_from_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
  }
+ EXPORT_SYMBOL_GPL(dax_copy_from_iter);
  
- /**
-- * arch_copy_from_iter_pmem - copy data from an iterator to PMEM
-- * @addr:	PMEM destination address
-- * @bytes:	number of bytes to copy
-- * @i:		iterator with source data
-- *
-- * Copy data from the iterator 'i' to the PMEM buffer starting at 'addr'.
-- */
--static inline size_t arch_copy_from_iter_pmem(void *addr, size_t bytes,
--		struct iov_iter *i)
--{
--	size_t len;
--
--	/* TODO: skip the write-back by always using non-temporal stores */
--	len = copy_from_iter_nocache(addr, bytes, i);
--
--	/*
--	 * In the iovec case on x86_64 copy_from_iter_nocache() uses
--	 * non-temporal stores for the bulk of the transfer, but we need
--	 * to manually flush if the transfer is unaligned. A cached
--	 * memory copy is used when destination or size is not naturally
--	 * aligned. That is:
--	 *   - Require 8-byte alignment when size is 8 bytes or larger.
--	 *   - Require 4-byte alignment when size is 4 bytes.
--	 *
--	 * In the non-iovec case the entire destination needs to be
--	 * flushed.
--	 */
--	if (iter_is_iovec(i)) {
--		unsigned long flushed, dest = (unsigned long) addr;
--
--		if (bytes < 8) {
--			if (!IS_ALIGNED(dest, 4) || (bytes != 4))
--				arch_wb_cache_pmem(addr, 1);
--		} else {
--			if (!IS_ALIGNED(dest, 8)) {
--				dest = ALIGN(dest, boot_cpu_data.x86_clflush_size);
--				arch_wb_cache_pmem(addr, 1);
--			}
--
--			flushed = dest - (unsigned long) addr;
--			if (bytes > flushed && !IS_ALIGNED(bytes - flushed, 8))
--				arch_wb_cache_pmem(addr + bytes - 1, 1);
--		}
--	} else
--		arch_wb_cache_pmem(addr, bytes);
--
--	return len;
--}
--
--/**
-  * arch_clear_pmem - zero a PMEM memory range
-  * @addr:	virtual start address
-  * @size:	number of bytes to zero
-diff --git a/fs/dax.c b/fs/dax.c
-index ce9dc9c3e829..11b9909c91df 100644
---- a/fs/dax.c
-+++ b/fs/dax.c
-@@ -1061,7 +1061,8 @@ dax_iomap_actor(struct inode *inode, loff_t pos, loff_t length, void *data,
- 			map_len = end - pos;
- 
- 		if (iov_iter_rw(iter) == WRITE)
--			map_len = copy_from_iter_pmem(kaddr, map_len, iter);
-+			map_len = dax_copy_from_iter(dax_dev, pgoff, kaddr,
-+					map_len, iter);
- 		else
- 			map_len = copy_to_iter(kaddr, map_len, iter);
- 		if (map_len <= 0) {
-diff --git a/include/linux/pmem.h b/include/linux/pmem.h
-index 71ecf3d46aac..9d542a5600e4 100644
---- a/include/linux/pmem.h
-+++ b/include/linux/pmem.h
-@@ -31,13 +31,6 @@ static inline void arch_memcpy_to_pmem(void *dst, const void *src, size_t n)
- 	BUG();
- }
- 
--static inline size_t arch_copy_from_iter_pmem(void *addr, size_t bytes,
--		struct iov_iter *i)
--{
--	BUG();
--	return 0;
--}
--
- static inline void arch_clear_pmem(void *addr, size_t size)
++void dax_flush(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
++		size_t size)
++{
++	if (!dax_alive(dax_dev))
++		return;
++
++	if (dax_dev->ops->flush)
++		dax_dev->ops->flush(dax_dev, pgoff, addr, size);
++}
++EXPORT_SYMBOL_GPL(dax_flush);
++
+ bool dax_alive(struct dax_device *dax_dev)
  {
- 	BUG();
-@@ -80,23 +73,6 @@ static inline void memcpy_to_pmem(void *dst, const void *src, size_t n)
+ 	lockdep_assert_held(&dax_srcu);
+diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
+index 5fe44a0ddfab..70d8439a1b63 100644
+--- a/drivers/md/dm-linear.c
++++ b/drivers/md/dm-linear.c
+@@ -172,6 +172,20 @@ static size_t linear_dax_copy_from_iter(struct dm_target *ti, pgoff_t pgoff,
+ 	return dax_copy_from_iter(dax_dev, pgoff, addr, bytes, i);
  }
  
- /**
-- * copy_from_iter_pmem - copy data from an iterator to PMEM
-- * @addr:	PMEM destination address
-- * @bytes:	number of bytes to copy
-- * @i:		iterator with source data
-- *
-- * Copy data from the iterator 'i' to the PMEM buffer starting at 'addr'.
-- * See blkdev_issue_flush() note for memcpy_to_pmem().
-- */
--static inline size_t copy_from_iter_pmem(void *addr, size_t bytes,
--		struct iov_iter *i)
--{
--	if (arch_has_pmem_api())
--		return arch_copy_from_iter_pmem(addr, bytes, i);
--	return copy_from_iter_nocache(addr, bytes, i);
--}
--
--/**
-  * clear_pmem - zero a PMEM memory range
-  * @addr:	virtual start address
-  * @size:	number of bytes to zero
++static void linear_dax_flush(struct dm_target *ti, pgoff_t pgoff, void *addr,
++		size_t size)
++{
++	struct linear_c *lc = ti->private;
++	struct block_device *bdev = lc->dev->bdev;
++	struct dax_device *dax_dev = lc->dev->dax_dev;
++	sector_t dev_sector, sector = pgoff * PAGE_SECTORS;
++
++	dev_sector = linear_map_sector(ti, sector);
++	if (bdev_dax_pgoff(bdev, dev_sector, ALIGN(size, PAGE_SIZE), &pgoff))
++		return;
++	dax_flush(dax_dev, pgoff, addr, size);
++}
++
+ static struct target_type linear_target = {
+ 	.name   = "linear",
+ 	.version = {1, 3, 0},
+@@ -184,6 +198,7 @@ static struct target_type linear_target = {
+ 	.iterate_devices = linear_iterate_devices,
+ 	.direct_access = linear_dax_direct_access,
+ 	.dax_copy_from_iter = linear_dax_copy_from_iter,
++	.dax_flush = linear_dax_flush,
+ };
+ 
+ int __init dm_linear_init(void)
+diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
+index 4f45d23249b2..829fd438318d 100644
+--- a/drivers/md/dm-stripe.c
++++ b/drivers/md/dm-stripe.c
+@@ -349,6 +349,25 @@ static size_t stripe_dax_copy_from_iter(struct dm_target *ti, pgoff_t pgoff,
+ 	return dax_copy_from_iter(dax_dev, pgoff, addr, bytes, i);
+ }
+ 
++static void stripe_dax_flush(struct dm_target *ti, pgoff_t pgoff, void *addr,
++		size_t size)
++{
++	sector_t dev_sector, sector = pgoff * PAGE_SECTORS;
++	struct stripe_c *sc = ti->private;
++	struct dax_device *dax_dev;
++	struct block_device *bdev;
++	uint32_t stripe;
++
++	stripe_map_sector(sc, sector, &stripe, &dev_sector);
++	dev_sector += sc->stripe[stripe].physical_start;
++	dax_dev = sc->stripe[stripe].dev->dax_dev;
++	bdev = sc->stripe[stripe].dev->bdev;
++
++	if (bdev_dax_pgoff(bdev, dev_sector, ALIGN(size, PAGE_SIZE), &pgoff))
++		return;
++	dax_flush(dax_dev, pgoff, addr, size);
++}
++
+ /*
+  * Stripe status:
+  *
+@@ -468,6 +487,7 @@ static struct target_type stripe_target = {
+ 	.io_hints = stripe_io_hints,
+ 	.direct_access = stripe_dax_direct_access,
+ 	.dax_copy_from_iter = stripe_dax_copy_from_iter,
++	.dax_flush = stripe_dax_flush,
+ };
+ 
+ int __init dm_stripe_init(void)
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 8c8579efcba2..6a97711cdbdf 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -982,6 +982,24 @@ static size_t dm_dax_copy_from_iter(struct dax_device *dax_dev, pgoff_t pgoff,
+ 	return ret;
+ }
+ 
++static void dm_dax_flush(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
++		size_t size)
++{
++	struct mapped_device *md = dax_get_private(dax_dev);
++	sector_t sector = pgoff * PAGE_SECTORS;
++	struct dm_target *ti;
++	int srcu_idx;
++
++	ti = dm_dax_get_live_target(md, sector, &srcu_idx);
++
++	if (!ti)
++		goto out;
++	if (ti->type->dax_flush)
++		ti->type->dax_flush(ti, pgoff, addr, size);
++ out:
++	dm_put_live_table(md, srcu_idx);
++}
++
+ /*
+  * A target may call dm_accept_partial_bio only from the map routine.  It is
+  * allowed for all bio types except REQ_PREFLUSH.
+@@ -2844,6 +2862,7 @@ static const struct block_device_operations dm_blk_dops = {
+ static const struct dax_operations dm_dax_ops = {
+ 	.direct_access = dm_dax_direct_access,
+ 	.copy_from_iter = dm_dax_copy_from_iter,
++	.flush = dm_dax_flush,
+ };
+ 
+ /*
+diff --git a/include/linux/dax.h b/include/linux/dax.h
+index c88bbcba26d9..2a4f533ef5e7 100644
+--- a/include/linux/dax.h
++++ b/include/linux/dax.h
+@@ -36,6 +36,8 @@ long dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff, long nr_pages,
+ 		void **kaddr, pfn_t *pfn);
+ size_t dax_copy_from_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
+ 		size_t bytes, struct iov_iter *i);
++void dax_flush(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
++		size_t size);
+ 
+ /*
+  * We use lowest available bit in exceptional entry for locking, one bit for
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index e18e4277d09d..3c5eab2d2a75 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -132,6 +132,8 @@ typedef long (*dm_dax_direct_access_fn) (struct dm_target *ti, pgoff_t pgoff,
+ 		long nr_pages, void **kaddr, pfn_t *pfn);
+ typedef size_t (*dm_dax_copy_from_iter_fn)(struct dm_target *ti, pgoff_t pgoff,
+ 		void *addr, size_t bytes, struct iov_iter *i);
++typedef void (*dm_dax_flush_fn)(struct dm_target *ti, pgoff_t pgoff, void *addr,
++		size_t size);
+ #define PAGE_SECTORS (PAGE_SIZE / 512)
+ 
+ void dm_error(const char *message);
+@@ -182,6 +184,7 @@ struct target_type {
+ 	dm_io_hints_fn io_hints;
+ 	dm_dax_direct_access_fn direct_access;
+ 	dm_dax_copy_from_iter_fn dax_copy_from_iter;
++	dm_dax_flush_fn dax_flush;
+ 
+ 	/* For internal device-mapper use. */
+ 	struct list_head list;
