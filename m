@@ -1,7 +1,7 @@
 From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: [resend PATCH v2 04/33] dax: introduce dax_operations
-Date: Mon, 17 Apr 2017 12:09:11 -0700
-Message-ID: <149245615151.10206.3993711890457746918.stgit@dwillia2-desk3.amr.corp.intel.com>
+Subject: [resend PATCH v2 06/33] axon_ram: add dax_operations support
+Date: Mon, 17 Apr 2017 12:09:22 -0700
+Message-ID: <149245616209.10206.7635523768920777081.stgit@dwillia2-desk3.amr.corp.intel.com>
 References: <149245612770.10206.15496018295337908594.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -18,119 +18,143 @@ List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
 Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 To: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org
 List-Id: dm-devel.ids
 
-Track a set of dax_operations per dax_device that can be set at
-alloc_dax() time. These operations will be used to stop the abuse of
-block_device_operations for communicating dax capabilities to
-filesystems. It will also be used to replace the "pmem api" and move
-pmem-specific cache maintenance, and other dax-driver-specific
-filesystem-dax operations, to dax device methods. In particular this
-allows us to stop abusing __copy_user_nocache(), via memcpy_to_pmem(),
-with a driver specific replacement.
+Setup a dax_device to have the same lifetime as the axon_ram block
+device and add a ->direct_access() method that is equivalent to
+axon_ram_direct_access(). Once fs/dax.c has been converted to use
+dax_operations the old axon_ram_direct_access() will be removed.
 
-This is a standalone introduction of the operations. Follow on patches
-convert each dax-driver and teach fs/dax.c to use ->direct_access() from
-dax_operations instead of block_device_operations.
-
-Suggested-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
 Signed-off-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 ---
- drivers/dax/dax.h    |    4 +++-
- drivers/dax/device.c |    6 +++++-
- drivers/dax/super.c  |    6 +++++-
- include/linux/dax.h  |   10 ++++++++++
- 4 files changed, 23 insertions(+), 3 deletions(-)
+ arch/powerpc/platforms/Kconfig |    1 +
+ arch/powerpc/sysdev/axonram.c  |   48 +++++++++++++++++++++++++++++++++++-----
+ 2 files changed, 43 insertions(+), 6 deletions(-)
 
-diff --git a/drivers/dax/dax.h b/drivers/dax/dax.h
-index 246a24d68d4c..617bbc24be2b 100644
---- a/drivers/dax/dax.h
-+++ b/drivers/dax/dax.h
-@@ -13,7 +13,9 @@
- #ifndef __DAX_H__
- #define __DAX_H__
- struct dax_device;
--struct dax_device *alloc_dax(void *private, const char *host);
-+struct dax_operations;
-+struct dax_device *alloc_dax(void *private, const char *host,
-+		const struct dax_operations *ops);
- void put_dax(struct dax_device *dax_dev);
- bool dax_alive(struct dax_device *dax_dev);
- void kill_dax(struct dax_device *dax_dev);
-diff --git a/drivers/dax/device.c b/drivers/dax/device.c
-index db68f4fa8ce0..a0db055054a4 100644
---- a/drivers/dax/device.c
-+++ b/drivers/dax/device.c
-@@ -645,7 +645,11 @@ struct dev_dax *devm_create_dev_dax(struct dax_region *dax_region,
- 		goto err_id;
- 	}
+diff --git a/arch/powerpc/platforms/Kconfig b/arch/powerpc/platforms/Kconfig
+index 7e3a2ebba29b..33244e3d9375 100644
+--- a/arch/powerpc/platforms/Kconfig
++++ b/arch/powerpc/platforms/Kconfig
+@@ -284,6 +284,7 @@ config CPM2
+ config AXON_RAM
+ 	tristate "Axon DDR2 memory device driver"
+ 	depends on PPC_IBM_CELL_BLADE && BLOCK
++	select DAX
+ 	default m
+ 	help
+ 	  It registers one block device per Axon's DDR2 memory bank found
+diff --git a/arch/powerpc/sysdev/axonram.c b/arch/powerpc/sysdev/axonram.c
+index f523ac883150..ad857d5e81b1 100644
+--- a/arch/powerpc/sysdev/axonram.c
++++ b/arch/powerpc/sysdev/axonram.c
+@@ -25,6 +25,7 @@
  
--	dax_dev = alloc_dax(dev_dax, NULL);
-+	/*
-+	 * No 'host' or dax_operations since there is no access to this
-+	 * device outside of mmap of the resulting character device.
-+	 */
-+	dax_dev = alloc_dax(dev_dax, NULL, NULL);
- 	if (!dax_dev)
- 		goto err_dax;
- 
-diff --git a/drivers/dax/super.c b/drivers/dax/super.c
-index bb22956a106b..45ccfc043da8 100644
---- a/drivers/dax/super.c
-+++ b/drivers/dax/super.c
-@@ -17,6 +17,7 @@
- #include <linux/cdev.h>
- #include <linux/hash.h>
- #include <linux/slab.h>
+ #include <linux/bio.h>
+ #include <linux/blkdev.h>
 +#include <linux/dax.h>
+ #include <linux/device.h>
+ #include <linux/errno.h>
  #include <linux/fs.h>
- 
- static int nr_dax = CONFIG_NR_DEV_DAX;
-@@ -61,6 +62,7 @@ struct dax_device {
- 	const char *host;
- 	void *private;
- 	bool alive;
-+	const struct dax_operations *ops;
- };
- 
- bool dax_alive(struct dax_device *dax_dev)
-@@ -204,7 +206,8 @@ static void dax_add_host(struct dax_device *dax_dev, const char *host)
- 	spin_unlock(&dax_host_lock);
+@@ -62,6 +63,7 @@ static int azfs_major, azfs_minor;
+ struct axon_ram_bank {
+ 	struct platform_device	*device;
+ 	struct gendisk		*disk;
++	struct dax_device	*dax_dev;
+ 	unsigned int		irq_id;
+ 	unsigned long		ph_addr;
+ 	unsigned long		io_addr;
+@@ -137,25 +139,47 @@ axon_ram_make_request(struct request_queue *queue, struct bio *bio)
+ 	return BLK_QC_T_NONE;
  }
  
--struct dax_device *alloc_dax(void *private, const char *__host)
-+struct dax_device *alloc_dax(void *private, const char *__host,
-+		const struct dax_operations *ops)
++static long
++__axon_ram_direct_access(struct axon_ram_bank *bank, pgoff_t pgoff, long nr_pages,
++		       void **kaddr, pfn_t *pfn)
++{
++	resource_size_t offset = pgoff * PAGE_SIZE;
++
++	*kaddr = (void *) bank->io_addr + offset;
++	*pfn = phys_to_pfn_t(bank->ph_addr + offset, PFN_DEV);
++	return (bank->size - offset) / PAGE_SIZE;
++}
++
+ /**
+  * axon_ram_direct_access - direct_access() method for block device
+  * @device, @sector, @data: see block_device_operations method
+  */
+ static long
+-axon_ram_direct_access(struct block_device *device, sector_t sector,
++axon_ram_blk_direct_access(struct block_device *device, sector_t sector,
+ 		       void **kaddr, pfn_t *pfn, long size)
  {
- 	struct dax_device *dax_dev;
- 	const char *host;
-@@ -225,6 +228,7 @@ struct dax_device *alloc_dax(void *private, const char *__host)
- 		goto err_dev;
+ 	struct axon_ram_bank *bank = device->bd_disk->private_data;
+-	loff_t offset = (loff_t)sector << AXON_RAM_SECTOR_SHIFT;
  
- 	dax_add_host(dax_dev, host);
-+	dax_dev->ops = ops;
- 	dax_dev->private = private;
- 	return dax_dev;
+-	*kaddr = (void *) bank->io_addr + offset;
+-	*pfn = phys_to_pfn_t(bank->ph_addr + offset, PFN_DEV);
+-	return bank->size - offset;
++	return __axon_ram_direct_access(bank, (sector * 512) / PAGE_SIZE,
++			size / PAGE_SIZE, kaddr, pfn) * PAGE_SIZE;
+ }
  
-diff --git a/include/linux/dax.h b/include/linux/dax.h
-index 9b2d5ba10d7d..74ebb92b625a 100644
---- a/include/linux/dax.h
-+++ b/include/linux/dax.h
-@@ -7,6 +7,16 @@
- #include <asm/pgtable.h>
- 
- struct iomap_ops;
-+struct dax_device;
-+struct dax_operations {
-+	/*
-+	 * direct_access: translate a device-relative
-+	 * logical-page-offset into an absolute physical pfn. Return the
-+	 * number of pages available for DAX at that pfn.
-+	 */
-+	long (*direct_access)(struct dax_device *, pgoff_t, long,
-+			void **, pfn_t *);
+ static const struct block_device_operations axon_ram_devops = {
+ 	.owner		= THIS_MODULE,
+-	.direct_access	= axon_ram_direct_access
++	.direct_access	= axon_ram_blk_direct_access
 +};
++
++static long
++axon_ram_dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff, long nr_pages,
++		       void **kaddr, pfn_t *pfn)
++{
++	struct axon_ram_bank *bank = dax_get_private(dax_dev);
++
++	return __axon_ram_direct_access(bank, pgoff, nr_pages, kaddr, pfn);
++}
++
++static const struct dax_operations axon_ram_dax_ops = {
++	.direct_access = axon_ram_dax_direct_access,
+ };
  
- int dax_read_lock(void);
- void dax_read_unlock(int id);
+ /**
+@@ -219,6 +243,7 @@ static int axon_ram_probe(struct platform_device *device)
+ 		goto failed;
+ 	}
+ 
++
+ 	bank->disk->major = azfs_major;
+ 	bank->disk->first_minor = azfs_minor;
+ 	bank->disk->fops = &axon_ram_devops;
+@@ -227,6 +252,11 @@ static int axon_ram_probe(struct platform_device *device)
+ 	sprintf(bank->disk->disk_name, "%s%d",
+ 			AXON_RAM_DEVICE_NAME, axon_ram_bank_id);
+ 
++	bank->dax_dev = alloc_dax(bank, bank->disk->disk_name,
++			&axon_ram_dax_ops);
++	if (!bank->dax_dev)
++		goto failed;
++
+ 	bank->disk->queue = blk_alloc_queue(GFP_KERNEL);
+ 	if (bank->disk->queue == NULL) {
+ 		dev_err(&device->dev, "Cannot register disk queue\n");
+@@ -278,6 +308,10 @@ static int axon_ram_probe(struct platform_device *device)
+ 				del_gendisk(bank->disk);
+ 			put_disk(bank->disk);
+ 		}
++		if (bank->dax_dev) {
++			kill_dax(bank->dax_dev);
++			put_dax(bank->dax_dev);
++		}
+ 		device->dev.platform_data = NULL;
+ 		if (bank->io_addr != 0)
+ 			iounmap((void __iomem *) bank->io_addr);
+@@ -300,6 +334,8 @@ axon_ram_remove(struct platform_device *device)
+ 
+ 	device_remove_file(&device->dev, &dev_attr_ecc);
+ 	free_irq(bank->irq_id, device);
++	kill_dax(bank->dax_dev);
++	put_dax(bank->dax_dev);
+ 	del_gendisk(bank->disk);
+ 	put_disk(bank->disk);
+ 	iounmap((void __iomem *) bank->io_addr);
