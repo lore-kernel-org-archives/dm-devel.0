@@ -1,8 +1,8 @@
 From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: [resend PATCH v2 13/33] ext2, ext4,
- xfs: retrieve dax_device for iomap operations
-Date: Mon, 17 Apr 2017 12:09:59 -0700
-Message-ID: <149245619928.10206.4104560527846554979.stgit@dwillia2-desk3.amr.corp.intel.com>
+Subject: [resend PATCH v2 14/33] Revert "block: use DAX for partition table
+ reads"
+Date: Mon, 17 Apr 2017 12:10:06 -0700
+Message-ID: <149245620593.10206.1616718006783093047.stgit@dwillia2-desk3.amr.corp.intel.com>
 References: <149245612770.10206.15496018295337908594.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,134 +19,119 @@ List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
 Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 To: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org
 List-Id: dm-devel.ids
 
-In preparation for converting fs/dax.c to use dax_direct_access()
-instead of bdev_direct_access(), add the plumbing to retrieve the
-dax_device associated with a given block_device.
+commit d1a5f2b4d8a1 ("block: use DAX for partition table reads") was
+part of a stalled effort to allow dax mappings of block devices. Since
+then the device-dax mechanism has filled the role of dax-mapping static
+device ranges.
 
+Now that we are moving ->direct_access() from a block_device operation
+to a dax_inode operation we would need block devices to map and carry
+their own dax_inode reference.
+
+Unless / until we decide to revive dax mapping of raw block devices
+through the dax_inode scheme, there is no need to carry
+read_dax_sector(). Its removal in turn allows for the removal of
+bdev_direct_access() and should have been included in commit
+223757016837 ("block_dev: remove DAX leftovers").
+
+Cc: Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Signed-off-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 ---
- fs/ext2/inode.c       |    9 ++++++++-
- fs/ext4/inode.c       |    9 ++++++++-
- fs/xfs/xfs_iomap.c    |   10 ++++++++++
- include/linux/iomap.h |    1 +
- 4 files changed, 27 insertions(+), 2 deletions(-)
+ block/partition-generic.c |   17 ++---------------
+ fs/dax.c                  |   20 --------------------
+ include/linux/dax.h       |    6 ------
+ 3 files changed, 2 insertions(+), 41 deletions(-)
 
-diff --git a/fs/ext2/inode.c b/fs/ext2/inode.c
-index 128cce540645..4c9d2d44e879 100644
---- a/fs/ext2/inode.c
-+++ b/fs/ext2/inode.c
-@@ -799,6 +799,7 @@ int ext2_get_block(struct inode *inode, sector_t iblock,
- static int ext2_iomap_begin(struct inode *inode, loff_t offset, loff_t length,
- 		unsigned flags, struct iomap *iomap)
- {
-+	struct block_device *bdev;
- 	unsigned int blkbits = inode->i_blkbits;
- 	unsigned long first_block = offset >> blkbits;
- 	unsigned long max_blocks = (length + (1 << blkbits) - 1) >> blkbits;
-@@ -812,8 +813,13 @@ static int ext2_iomap_begin(struct inode *inode, loff_t offset, loff_t length,
- 		return ret;
+diff --git a/block/partition-generic.c b/block/partition-generic.c
+index 7afb9907821f..5dfac337b0f2 100644
+--- a/block/partition-generic.c
++++ b/block/partition-generic.c
+@@ -16,7 +16,6 @@
+ #include <linux/kmod.h>
+ #include <linux/ctype.h>
+ #include <linux/genhd.h>
+-#include <linux/dax.h>
+ #include <linux/blktrace_api.h>
  
- 	iomap->flags = 0;
--	iomap->bdev = inode->i_sb->s_bdev;
-+	bdev = inode->i_sb->s_bdev;
-+	iomap->bdev = bdev;
- 	iomap->offset = (u64)first_block << blkbits;
-+	if (blk_queue_dax(bdev->bd_queue))
-+		iomap->dax_dev = dax_get_by_host(bdev->bd_disk->disk_name);
-+	else
-+		iomap->dax_dev = NULL;
- 
- 	if (ret == 0) {
- 		iomap->type = IOMAP_HOLE;
-@@ -835,6 +841,7 @@ static int
- ext2_iomap_end(struct inode *inode, loff_t offset, loff_t length,
- 		ssize_t written, unsigned flags, struct iomap *iomap)
- {
-+	put_dax(iomap->dax_dev);
- 	if (iomap->type == IOMAP_MAPPED &&
- 	    written < length &&
- 	    (flags & IOMAP_WRITE))
-diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
-index 4247d8d25687..2cb2634daa99 100644
---- a/fs/ext4/inode.c
-+++ b/fs/ext4/inode.c
-@@ -3305,6 +3305,7 @@ static int ext4_releasepage(struct page *page, gfp_t wait)
- static int ext4_iomap_begin(struct inode *inode, loff_t offset, loff_t length,
- 			    unsigned flags, struct iomap *iomap)
- {
-+	struct block_device *bdev;
- 	unsigned int blkbits = inode->i_blkbits;
- 	unsigned long first_block = offset >> blkbits;
- 	unsigned long last_block = (offset + length - 1) >> blkbits;
-@@ -3373,7 +3374,12 @@ static int ext4_iomap_begin(struct inode *inode, loff_t offset, loff_t length,
- 	}
- 
- 	iomap->flags = 0;
--	iomap->bdev = inode->i_sb->s_bdev;
-+	bdev = inode->i_sb->s_bdev;
-+	iomap->bdev = bdev;
-+	if (blk_queue_dax(bdev->bd_queue))
-+		iomap->dax_dev = dax_get_by_host(bdev->bd_disk->disk_name);
-+	else
-+		iomap->dax_dev = NULL;
- 	iomap->offset = first_block << blkbits;
- 
- 	if (ret == 0) {
-@@ -3406,6 +3412,7 @@ static int ext4_iomap_end(struct inode *inode, loff_t offset, loff_t length,
- 	int blkbits = inode->i_blkbits;
- 	bool truncate = false;
- 
-+	put_dax(iomap->dax_dev);
- 	if (!(flags & IOMAP_WRITE) || (flags & IOMAP_FAULT))
- 		return 0;
- 
-diff --git a/fs/xfs/xfs_iomap.c b/fs/xfs/xfs_iomap.c
-index 288ee5b840d7..4b47403f8089 100644
---- a/fs/xfs/xfs_iomap.c
-+++ b/fs/xfs/xfs_iomap.c
-@@ -976,6 +976,7 @@ xfs_file_iomap_begin(
- 	int			nimaps = 1, error = 0;
- 	bool			shared = false, trimmed = false;
- 	unsigned		lockmode;
-+	struct block_device	*bdev;
- 
- 	if (XFS_FORCED_SHUTDOWN(mp))
- 		return -EIO;
-@@ -1063,6 +1064,14 @@ xfs_file_iomap_begin(
- 	}
- 
- 	xfs_bmbt_to_iomap(ip, iomap, &imap);
-+
-+	/* optionally associate a dax device with the iomap bdev */
-+	bdev = iomap->bdev;
-+	if (blk_queue_dax(bdev->bd_queue))
-+		iomap->dax_dev = dax_get_by_host(bdev->bd_disk->disk_name);
-+	else
-+		iomap->dax_dev = NULL;
-+
- 	if (shared)
- 		iomap->flags |= IOMAP_F_SHARED;
+ #include "partitions/check.h"
+@@ -631,24 +630,12 @@ int invalidate_partitions(struct gendisk *disk, struct block_device *bdev)
  	return 0;
-@@ -1140,6 +1149,7 @@ xfs_file_iomap_end(
- 	unsigned		flags,
- 	struct iomap		*iomap)
- {
-+	put_dax(iomap->dax_dev);
- 	if ((flags & IOMAP_WRITE) && iomap->type == IOMAP_DELALLOC)
- 		return xfs_file_iomap_end_delalloc(XFS_I(inode), offset,
- 				length, written, iomap);
-diff --git a/include/linux/iomap.h b/include/linux/iomap.h
-index 7291810067eb..f753e788da31 100644
---- a/include/linux/iomap.h
-+++ b/include/linux/iomap.h
-@@ -41,6 +41,7 @@ struct iomap {
- 	u16			type;	/* type of mapping */
- 	u16			flags;	/* flags for mapping */
- 	struct block_device	*bdev;	/* block device for I/O */
-+	struct dax_device	*dax_dev; /* dax_dev for dax operations */
- };
+ }
  
+-static struct page *read_pagecache_sector(struct block_device *bdev, sector_t n)
+-{
+-	struct address_space *mapping = bdev->bd_inode->i_mapping;
+-
+-	return read_mapping_page(mapping, (pgoff_t)(n >> (PAGE_SHIFT-9)),
+-				 NULL);
+-}
+-
+ unsigned char *read_dev_sector(struct block_device *bdev, sector_t n, Sector *p)
+ {
++	struct address_space *mapping = bdev->bd_inode->i_mapping;
+ 	struct page *page;
+ 
+-	/* don't populate page cache for dax capable devices */
+-	if (IS_DAX(bdev->bd_inode))
+-		page = read_dax_sector(bdev, n);
+-	else
+-		page = read_pagecache_sector(bdev, n);
+-
++	page = read_mapping_page(mapping, (pgoff_t)(n >> (PAGE_SHIFT-9)), NULL);
+ 	if (!IS_ERR(page)) {
+ 		if (PageError(page))
+ 			goto fail;
+diff --git a/fs/dax.c b/fs/dax.c
+index de622d4282a6..b78a6947c4f5 100644
+--- a/fs/dax.c
++++ b/fs/dax.c
+@@ -101,26 +101,6 @@ static int dax_is_empty_entry(void *entry)
+ 	return (unsigned long)entry & RADIX_DAX_EMPTY;
+ }
+ 
+-struct page *read_dax_sector(struct block_device *bdev, sector_t n)
+-{
+-	struct page *page = alloc_pages(GFP_KERNEL, 0);
+-	struct blk_dax_ctl dax = {
+-		.size = PAGE_SIZE,
+-		.sector = n & ~((((int) PAGE_SIZE) / 512) - 1),
+-	};
+-	long rc;
+-
+-	if (!page)
+-		return ERR_PTR(-ENOMEM);
+-
+-	rc = dax_map_atomic(bdev, &dax);
+-	if (rc < 0)
+-		return ERR_PTR(rc);
+-	memcpy_from_pmem(page_address(page), dax.addr, PAGE_SIZE);
+-	dax_unmap_atomic(bdev, &dax);
+-	return page;
+-}
+-
  /*
+  * DAX radix tree locking
+  */
+diff --git a/include/linux/dax.h b/include/linux/dax.h
+index 7e62e280c11f..0d0d890f9186 100644
+--- a/include/linux/dax.h
++++ b/include/linux/dax.h
+@@ -70,15 +70,9 @@ void dax_wake_mapping_entry_waiter(struct address_space *mapping,
+ 		pgoff_t index, void *entry, bool wake_all);
+ 
+ #ifdef CONFIG_FS_DAX
+-struct page *read_dax_sector(struct block_device *bdev, sector_t n);
+ int __dax_zero_page_range(struct block_device *bdev, sector_t sector,
+ 		unsigned int offset, unsigned int length);
+ #else
+-static inline struct page *read_dax_sector(struct block_device *bdev,
+-		sector_t n)
+-{
+-	return ERR_PTR(-ENXIO);
+-}
+ static inline int __dax_zero_page_range(struct block_device *bdev,
+ 		sector_t sector, unsigned int offset, unsigned int length)
+ {
