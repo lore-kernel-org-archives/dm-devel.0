@@ -1,82 +1,56 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: [resend PATCH v2 22/33] dax,
- pmem: introduce an optional 'flush' dax_operation
-Date: Mon, 17 Apr 2017 12:10:49 -0700
-Message-ID: <149245624897.10206.4616998003694591377.stgit@dwillia2-desk3.amr.corp.intel.com>
+From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: [resend PATCH v2 24/33] filesystem-dax: convert to dax_flush()
+Date: Mon, 17 Apr 2017 12:10:59 -0700
+Message-ID: <149245625960.10206.13531754204477404679.stgit@dwillia2-desk3.amr.corp.intel.com>
 References: <149245612770.10206.15496018295337908594.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <149245612770.10206.15496018295337908594.stgit@dwillia2-desk3.amr.corp.intel.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: linux-nvdimm@ml01.01.org
-Cc: Matthew Wilcox <mawilcox@microsoft.com>, linux-kernel@vger.kernel.org, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, Ross Zwisler <ross.zwisler@linux.intel.com>, hch@lst.de
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <149245612770.10206.15496018295337908594.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org
 List-Id: dm-devel.ids
 
 Filesystem-DAX flushes caches whenever it writes to the address returned
 through dax_direct_access() and when writing back dirty radix entries.
-That flushing is only required in the pmem case, so add a dax operation
-to allow pmem to take this extra action, but skip it for other dax
-capable devices that do not provide a flush routine.
+That flushing is only required in the pmem case, so the dax_flush()
+helper skips cache management work when the underlying driver does not
+specify a flush method.
 
-An example for this differentiation might be a volatile ram disk where
-there is no expectation of persistence. In fact the pmem driver itself might
-front such an address range specified by the NFIT. So, this "no flush"
-property might be something passed down by the bus / libnvdimm.
+We still do all the dirty tracking since the radix entry will already be
+there for locking purposes. However, the work to clean the entry will be
+a nop for some dax drivers.
 
-Cc: Christoph Hellwig <hch@lst.de>
-Cc: Matthew Wilcox <mawilcox@microsoft.com>
-Cc: Ross Zwisler <ross.zwisler@linux.intel.com>
-Signed-off-by: Dan Williams <dan.j.williams@intel.com>
+Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Cc: Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Cc: Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>
+Cc: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Signed-off-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 ---
- drivers/nvdimm/pmem.c |   11 +++++++++++
- include/linux/dax.h   |    2 ++
- 2 files changed, 13 insertions(+)
+ fs/dax.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
-index e501df4ab4b4..822b85fb3365 100644
---- a/drivers/nvdimm/pmem.c
-+++ b/drivers/nvdimm/pmem.c
-@@ -276,9 +276,20 @@ static long pmem_dax_direct_access(struct dax_device *dax_dev,
- 	return __pmem_direct_access(pmem, pgoff, nr_pages, kaddr, pfn);
- }
+diff --git a/fs/dax.c b/fs/dax.c
+index 11b9909c91df..edbf988de86c 100644
+--- a/fs/dax.c
++++ b/fs/dax.c
+@@ -798,7 +798,7 @@ static int dax_writeback_one(struct block_device *bdev,
+ 	}
  
-+static void pmem_dax_flush(struct dax_device *dax_dev, pgoff_t pgoff,
-+		void *addr, size_t size)
-+{
-+	/*
-+	 * TODO: move arch specific cache management into the driver
-+	 * directly.
-+	 */
-+	wb_cache_pmem(addr, size);
-+}
-+
- static const struct dax_operations pmem_dax_ops = {
- 	.direct_access = pmem_dax_direct_access,
- 	.copy_from_iter = pmem_copy_from_iter,
-+	.flush = pmem_dax_flush,
- };
- 
- static void pmem_release_queue(void *q)
-diff --git a/include/linux/dax.h b/include/linux/dax.h
-index cd8561bb21f3..c88bbcba26d9 100644
---- a/include/linux/dax.h
-+++ b/include/linux/dax.h
-@@ -19,6 +19,8 @@ struct dax_operations {
- 	/* copy_from_iter: dax-driver override for default copy_from_iter */
- 	size_t (*copy_from_iter)(struct dax_device *, pgoff_t, void *, size_t,
- 			struct iov_iter *);
-+	/* flush: optional driver-specific cache management after writes */
-+	void (*flush)(struct dax_device *, pgoff_t, void *, size_t);
- };
- 
- int dax_read_lock(void);
+ 	dax_mapping_entry_mkclean(mapping, index, pfn_t_to_pfn(pfn));
+-	wb_cache_pmem(kaddr, size);
++	dax_flush(dax_dev, pgoff, kaddr, size);
+ 	/*
+ 	 * After we have flushed the cache, we can clear the dirty tag. There
+ 	 * cannot be new dirty data in the pfn after the flush has completed as
