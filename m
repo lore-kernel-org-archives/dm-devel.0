@@ -1,8 +1,8 @@
 From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: [resend PATCH v2 25/33] x86,
- dax: replace clear_pmem() with open coded memset + dax_ops->flush
-Date: Mon, 17 Apr 2017 12:11:04 -0700
-Message-ID: <149245626477.10206.6621037965629437437.stgit@dwillia2-desk3.amr.corp.intel.com>
+Subject: [resend PATCH v2 26/33] x86, dax,
+ libnvdimm: move wb_cache_pmem() to libnvdimm
+Date: Mon, 17 Apr 2017 12:11:10 -0700
+Message-ID: <149245627028.10206.369315439901964176.stgit@dwillia2-desk3.amr.corp.intel.com>
 References: <149245612770.10206.15496018295337908594.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,13 +22,11 @@ To: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, hch-jcswGhMUV9g@public.gmane.org
 List-Id: dm-devel.ids
 
-The clear_pmem() helper simply combines a memset() plus a cache flush.
-Now that the flush routine is optionally provided by the dax device
-driver we can avoid unnecessary cache management on dax devices fronting
-volatile memory.
-
-With clear_pmem() gone we can follow on with a patch to make pmem cache
-management completely defined within the pmem driver.
+With all calls to this routine re-directed through the pmem driver, we
+can kill the pmem api indirection. arch_wb_cache_pmem() is now
+optionally supplied by an arch specific extension to libnvdimm.  Same as
+before, pmem flushing is only defined for x86_64, but it is
+straightforward to add other archs in the future.
 
 Cc: <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
@@ -37,89 +35,208 @@ Cc: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
 Cc: "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
 Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Cc: Oliver O'Halloran <oohall-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Cc: Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>
 Cc: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 Signed-off-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 ---
- arch/x86/include/asm/pmem.h |   13 -------------
- fs/dax.c                    |    3 ++-
- include/linux/pmem.h        |   21 ---------------------
- 3 files changed, 2 insertions(+), 35 deletions(-)
+ arch/x86/include/asm/pmem.h |   21 ---------------------
+ drivers/nvdimm/Makefile     |    1 +
+ drivers/nvdimm/pmem.c       |   14 +++++---------
+ drivers/nvdimm/pmem.h       |    8 ++++++++
+ drivers/nvdimm/x86.c        |   36 ++++++++++++++++++++++++++++++++++++
+ include/linux/pmem.h        |   19 -------------------
+ tools/testing/nvdimm/Kbuild |    1 +
+ 7 files changed, 51 insertions(+), 49 deletions(-)
+ create mode 100644 drivers/nvdimm/x86.c
 
 diff --git a/arch/x86/include/asm/pmem.h b/arch/x86/include/asm/pmem.h
-index 60e8edbe0205..f4c119d253f3 100644
+index f4c119d253f3..4759a179aa52 100644
 --- a/arch/x86/include/asm/pmem.h
 +++ b/arch/x86/include/asm/pmem.h
-@@ -65,19 +65,6 @@ static inline void arch_wb_cache_pmem(void *addr, size_t size)
- 		clwb(p);
+@@ -44,27 +44,6 @@ static inline void arch_memcpy_to_pmem(void *dst, const void *src, size_t n)
+ 		BUG();
  }
  
 -/**
-- * arch_clear_pmem - zero a PMEM memory range
-- * @addr:	virtual start address
-- * @size:	number of bytes to zero
+- * arch_wb_cache_pmem - write back a cache range with CLWB
+- * @vaddr:	virtual start address
+- * @size:	number of bytes to write back
 - *
-- * Write zeros into the memory range starting at 'addr' for 'size' bytes.
+- * Write back a cache range using the CLWB (cache line write back)
+- * instruction. Note that @size is internally rounded up to be cache
+- * line size aligned.
 - */
--static inline void arch_clear_pmem(void *addr, size_t size)
+-static inline void arch_wb_cache_pmem(void *addr, size_t size)
 -{
--	memset(addr, 0, size);
--	arch_wb_cache_pmem(addr, size);
+-	u16 x86_clflush_size = boot_cpu_data.x86_clflush_size;
+-	unsigned long clflush_mask = x86_clflush_size - 1;
+-	void *vend = addr + size;
+-	void *p;
+-
+-	for (p = (void *)((unsigned long)addr & ~clflush_mask);
+-	     p < vend; p += x86_clflush_size)
+-		clwb(p);
 -}
 -
  static inline void arch_invalidate_pmem(void *addr, size_t size)
  {
  	clflush_cache_range(addr, size);
-diff --git a/fs/dax.c b/fs/dax.c
-index edbf988de86c..edee7e8298bc 100644
---- a/fs/dax.c
-+++ b/fs/dax.c
-@@ -982,7 +982,8 @@ int __dax_zero_page_range(struct block_device *bdev,
- 			dax_read_unlock(id);
- 			return rc;
+diff --git a/drivers/nvdimm/Makefile b/drivers/nvdimm/Makefile
+index 909554c3f955..9eafb1dd2876 100644
+--- a/drivers/nvdimm/Makefile
++++ b/drivers/nvdimm/Makefile
+@@ -24,3 +24,4 @@ libnvdimm-$(CONFIG_ND_CLAIM) += claim.o
+ libnvdimm-$(CONFIG_BTT) += btt_devs.o
+ libnvdimm-$(CONFIG_NVDIMM_PFN) += pfn_devs.o
+ libnvdimm-$(CONFIG_NVDIMM_DAX) += dax_devs.o
++libnvdimm-$(CONFIG_X86_64) += x86.o
+diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
+index 822b85fb3365..c77a3a757729 100644
+--- a/drivers/nvdimm/pmem.c
++++ b/drivers/nvdimm/pmem.c
+@@ -245,19 +245,19 @@ static size_t pmem_copy_from_iter(struct dax_device *dax_dev, pgoff_t pgoff,
+ 
+ 		if (bytes < 8) {
+ 			if (!IS_ALIGNED(dest, 4) || (bytes != 4))
+-				wb_cache_pmem(addr, 1);
++				arch_wb_cache_pmem(addr, 1);
+ 		} else {
+ 			if (!IS_ALIGNED(dest, 8)) {
+ 				dest = ALIGN(dest, boot_cpu_data.x86_clflush_size);
+-				wb_cache_pmem(addr, 1);
++				arch_wb_cache_pmem(addr, 1);
+ 			}
+ 
+ 			flushed = dest - (unsigned long) addr;
+ 			if (bytes > flushed && !IS_ALIGNED(bytes - flushed, 8))
+-				wb_cache_pmem(addr + bytes - 1, 1);
++				arch_wb_cache_pmem(addr + bytes - 1, 1);
  		}
--		clear_pmem(kaddr + offset, size);
-+		memset(kaddr + offset, 0, size);
-+		dax_flush(dax_dev, pgoff, kaddr + offset, size);
- 		dax_read_unlock(id);
- 	}
- 	return 0;
+ 	} else
+-		wb_cache_pmem(addr, bytes);
++		arch_wb_cache_pmem(addr, bytes);
+ 
+ 	return len;
+ }
+@@ -279,11 +279,7 @@ static long pmem_dax_direct_access(struct dax_device *dax_dev,
+ static void pmem_dax_flush(struct dax_device *dax_dev, pgoff_t pgoff,
+ 		void *addr, size_t size)
+ {
+-	/*
+-	 * TODO: move arch specific cache management into the driver
+-	 * directly.
+-	 */
+-	wb_cache_pmem(addr, size);
++	arch_wb_cache_pmem(addr, size);
+ }
+ 
+ static const struct dax_operations pmem_dax_ops = {
+diff --git a/drivers/nvdimm/pmem.h b/drivers/nvdimm/pmem.h
+index 7f4dbd72a90a..c4b3371c7f88 100644
+--- a/drivers/nvdimm/pmem.h
++++ b/drivers/nvdimm/pmem.h
+@@ -5,6 +5,14 @@
+ #include <linux/pfn_t.h>
+ #include <linux/fs.h>
+ 
++#ifdef CONFIG_ARCH_HAS_PMEM_API
++void arch_wb_cache_pmem(void *addr, size_t size);
++#else
++static inline void arch_wb_cache_pmem(void *addr, size_t size)
++{
++}
++#endif
++
+ /* this definition is in it's own header for tools/testing/nvdimm to consume */
+ struct pmem_device {
+ 	/* One contiguous memory region per device */
+diff --git a/drivers/nvdimm/x86.c b/drivers/nvdimm/x86.c
+new file mode 100644
+index 000000000000..79d7267da4d2
+--- /dev/null
++++ b/drivers/nvdimm/x86.c
+@@ -0,0 +1,36 @@
++/*
++ * Copyright(c) 2015 - 2017 Intel Corporation. All rights reserved.
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of version 2 of the GNU General Public License as
++ * published by the Free Software Foundation.
++ *
++ * This program is distributed in the hope that it will be useful, but
++ * WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * General Public License for more details.
++ */
++#include <asm/cacheflush.h>
++#include <asm/cpufeature.h>
++#include <asm/special_insns.h>
++
++/**
++ * arch_wb_cache_pmem - write back a cache range with CLWB
++ * @vaddr:	virtual start address
++ * @size:	number of bytes to write back
++ *
++ * Write back a cache range using the CLWB (cache line write back)
++ * instruction.
++ */
++void arch_wb_cache_pmem(void *addr, size_t size)
++{
++	u16 x86_clflush_size = boot_cpu_data.x86_clflush_size;
++	unsigned long clflush_mask = x86_clflush_size - 1;
++	void *vend = addr + size;
++	void *p;
++
++	for (p = (void *)((unsigned long)addr & ~clflush_mask);
++	     p < vend; p += x86_clflush_size)
++		clwb(p);
++}
++EXPORT_SYMBOL_GPL(arch_wb_cache_pmem);
 diff --git a/include/linux/pmem.h b/include/linux/pmem.h
-index 9d542a5600e4..772bd02a5b52 100644
+index 772bd02a5b52..33ae761f010a 100644
 --- a/include/linux/pmem.h
 +++ b/include/linux/pmem.h
 @@ -31,11 +31,6 @@ static inline void arch_memcpy_to_pmem(void *dst, const void *src, size_t n)
  	BUG();
  }
  
--static inline void arch_clear_pmem(void *addr, size_t size)
+-static inline void arch_wb_cache_pmem(void *addr, size_t size)
 -{
 -	BUG();
 -}
 -
- static inline void arch_wb_cache_pmem(void *addr, size_t size)
+ static inline void arch_invalidate_pmem(void *addr, size_t size)
  {
  	BUG();
-@@ -73,22 +68,6 @@ static inline void memcpy_to_pmem(void *dst, const void *src, size_t n)
+@@ -80,18 +75,4 @@ static inline void invalidate_pmem(void *addr, size_t size)
+ 	if (arch_has_pmem_api())
+ 		arch_invalidate_pmem(addr, size);
  }
- 
- /**
-- * clear_pmem - zero a PMEM memory range
-- * @addr:	virtual start address
-- * @size:	number of bytes to zero
-- *
-- * Write zeros into the memory range starting at 'addr' for 'size' bytes.
-- * See blkdev_issue_flush() note for memcpy_to_pmem().
-- */
--static inline void clear_pmem(void *addr, size_t size)
--{
--	if (arch_has_pmem_api())
--		arch_clear_pmem(addr, size);
--	else
--		memset(addr, 0, size);
--}
 -
 -/**
-  * invalidate_pmem - flush a pmem range from the cache hierarchy
-  * @addr:	virtual start address
-  * @size:	bytes to invalidate (internally aligned to cache line size)
+- * wb_cache_pmem - write back processor cache for PMEM memory range
+- * @addr:	virtual start address
+- * @size:	number of bytes to write back
+- *
+- * Write back the processor cache range starting at 'addr' for 'size' bytes.
+- * See blkdev_issue_flush() note for memcpy_to_pmem().
+- */
+-static inline void wb_cache_pmem(void *addr, size_t size)
+-{
+-	if (arch_has_pmem_api())
+-		arch_wb_cache_pmem(addr, size);
+-}
+ #endif /* __PMEM_H__ */
+diff --git a/tools/testing/nvdimm/Kbuild b/tools/testing/nvdimm/Kbuild
+index 2033ad03b8cd..0e0c444737e9 100644
+--- a/tools/testing/nvdimm/Kbuild
++++ b/tools/testing/nvdimm/Kbuild
+@@ -72,6 +72,7 @@ libnvdimm-$(CONFIG_ND_CLAIM) += $(NVDIMM_SRC)/claim.o
+ libnvdimm-$(CONFIG_BTT) += $(NVDIMM_SRC)/btt_devs.o
+ libnvdimm-$(CONFIG_NVDIMM_PFN) += $(NVDIMM_SRC)/pfn_devs.o
+ libnvdimm-$(CONFIG_NVDIMM_DAX) += $(NVDIMM_SRC)/dax_devs.o
++libnvdimm-$(CONFIG_X86_64) += $(NVDIMM_SRC)/x86.o
+ libnvdimm-y += config_check.o
+ 
+ obj-m += test/
