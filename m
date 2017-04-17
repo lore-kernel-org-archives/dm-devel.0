@@ -1,183 +1,169 @@
-From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: [resend PATCH v2 07/33] brd: add dax_operations support
-Date: Mon, 17 Apr 2017 12:09:27 -0700
-Message-ID: <149245616744.10206.871365891826305046.stgit@dwillia2-desk3.amr.corp.intel.com>
+From: Dan Williams <dan.j.williams@intel.com>
+Subject: [resend PATCH v2 08/33] dcssblk: add dax_operations support
+Date: Mon, 17 Apr 2017 12:09:32 -0700
+Message-ID: <149245617283.10206.846177305206642788.stgit@dwillia2-desk3.amr.corp.intel.com>
 References: <149245612770.10206.15496018295337908594.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <149245612770.10206.15496018295337908594.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <149245612770.10206.15496018295337908594.stgit@dwillia2-desk3.amr.corp.intel.com>
+Sender: linux-block-owner@vger.kernel.org
+To: linux-nvdimm@lists.01.org
+Cc: linux-kernel@vger.kernel.org, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, hch@lst.de, Gerald Schaefer <gerald.schaefer@de.ibm.com>
 List-Id: dm-devel.ids
 
-Setup a dax_inode to have the same lifetime as the brd block device and
-add a ->direct_access() method that is equivalent to
-brd_direct_access(). Once fs/dax.c has been converted to use
-dax_operations the old brd_direct_access() will be removed.
+Setup a dax_dev to have the same lifetime as the dcssblk block device
+and add a ->direct_access() method that is equivalent to
+dcssblk_direct_access(). Once fs/dax.c has been converted to use
+dax_operations the old dcssblk_direct_access() will be removed.
 
-Signed-off-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Gerald Schaefer <gerald.schaefer@de.ibm.com>
+Signed-off-by: Dan Williams <dan.j.williams@intel.com>
 ---
- drivers/block/Kconfig |    1 +
- drivers/block/brd.c   |   65 +++++++++++++++++++++++++++++++++++++++++--------
- 2 files changed, 55 insertions(+), 11 deletions(-)
+ drivers/s390/block/Kconfig   |    1 +
+ drivers/s390/block/dcssblk.c |   54 +++++++++++++++++++++++++++++++++++-------
+ 2 files changed, 46 insertions(+), 9 deletions(-)
 
-diff --git a/drivers/block/Kconfig b/drivers/block/Kconfig
-index f744de7a0f9b..e66956fc2c88 100644
---- a/drivers/block/Kconfig
-+++ b/drivers/block/Kconfig
-@@ -339,6 +339,7 @@ config BLK_DEV_SX8
+diff --git a/drivers/s390/block/Kconfig b/drivers/s390/block/Kconfig
+index 4a3b62326183..0acb8c2f9475 100644
+--- a/drivers/s390/block/Kconfig
++++ b/drivers/s390/block/Kconfig
+@@ -14,6 +14,7 @@ config BLK_DEV_XPRAM
  
- config BLK_DEV_RAM
- 	tristate "RAM block device support"
-+	select DAX if BLK_DEV_RAM_DAX
- 	---help---
- 	  Saying Y here will allow you to use a portion of your RAM memory as
- 	  a block device, so that you can make file systems on it, read and
-diff --git a/drivers/block/brd.c b/drivers/block/brd.c
-index 3adc32a3153b..60f3193c9ce2 100644
---- a/drivers/block/brd.c
-+++ b/drivers/block/brd.c
-@@ -21,6 +21,7 @@
- #include <linux/slab.h>
- #ifdef CONFIG_BLK_DEV_RAM_DAX
+ config DCSSBLK
+ 	def_tristate m
++	select DAX
+ 	prompt "DCSSBLK support"
+ 	depends on S390 && BLOCK
+ 	help
+diff --git a/drivers/s390/block/dcssblk.c b/drivers/s390/block/dcssblk.c
+index 415d10a67b7a..682a9eb4934d 100644
+--- a/drivers/s390/block/dcssblk.c
++++ b/drivers/s390/block/dcssblk.c
+@@ -18,6 +18,7 @@
+ #include <linux/interrupt.h>
+ #include <linux/platform_device.h>
  #include <linux/pfn_t.h>
 +#include <linux/dax.h>
- #endif
+ #include <asm/extmem.h>
+ #include <asm/io.h>
  
- #include <linux/uaccess.h>
-@@ -41,6 +42,9 @@ struct brd_device {
+@@ -30,8 +31,10 @@ static int dcssblk_open(struct block_device *bdev, fmode_t mode);
+ static void dcssblk_release(struct gendisk *disk, fmode_t mode);
+ static blk_qc_t dcssblk_make_request(struct request_queue *q,
+ 						struct bio *bio);
+-static long dcssblk_direct_access(struct block_device *bdev, sector_t secnum,
++static long dcssblk_blk_direct_access(struct block_device *bdev, sector_t secnum,
+ 			 void **kaddr, pfn_t *pfn, long size);
++static long dcssblk_dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff,
++		long nr_pages, void **kaddr, pfn_t *pfn);
  
- 	struct request_queue	*brd_queue;
- 	struct gendisk		*brd_disk;
-+#ifdef CONFIG_BLK_DEV_RAM_DAX
-+	struct dax_device	*dax_dev;
-+#endif
- 	struct list_head	brd_list;
+ static char dcssblk_segments[DCSSBLK_PARM_LEN] = "\0";
  
- 	/*
-@@ -375,30 +379,53 @@ static int brd_rw_page(struct block_device *bdev, sector_t sector,
- }
- 
- #ifdef CONFIG_BLK_DEV_RAM_DAX
--static long brd_direct_access(struct block_device *bdev, sector_t sector,
--			void **kaddr, pfn_t *pfn, long size)
-+static long __brd_direct_access(struct brd_device *brd, pgoff_t pgoff,
-+		long nr_pages, void **kaddr, pfn_t *pfn)
- {
--	struct brd_device *brd = bdev->bd_disk->private_data;
- 	struct page *page;
- 
- 	if (!brd)
- 		return -ENODEV;
--	page = brd_insert_page(brd, sector);
-+	page = brd_insert_page(brd, PFN_PHYS(pgoff) / 512);
- 	if (!page)
- 		return -ENOSPC;
- 	*kaddr = page_address(page);
- 	*pfn = page_to_pfn_t(page);
- 
--	return PAGE_SIZE;
-+	return 1;
-+}
-+
-+static long brd_blk_direct_access(struct block_device *bdev, sector_t sector,
-+			void **kaddr, pfn_t *pfn, long size)
-+{
-+	struct brd_device *brd = bdev->bd_disk->private_data;
-+	long nr_pages = __brd_direct_access(brd, PHYS_PFN(sector * 512),
-+			PHYS_PFN(size), kaddr, pfn);
-+
-+	if (nr_pages < 0)
-+		return nr_pages;
-+	return nr_pages * PAGE_SIZE;
-+}
-+
-+static long brd_dax_direct_access(struct dax_device *dax_dev,
-+		pgoff_t pgoff, long nr_pages, void **kaddr, pfn_t *pfn)
-+{
-+	struct brd_device *brd = dax_get_private(dax_dev);
-+
-+	return __brd_direct_access(brd, pgoff, nr_pages, kaddr, pfn);
- }
-+
-+static const struct dax_operations brd_dax_ops = {
-+	.direct_access = brd_dax_direct_access,
+@@ -40,7 +43,11 @@ static const struct block_device_operations dcssblk_devops = {
+ 	.owner   	= THIS_MODULE,
+ 	.open    	= dcssblk_open,
+ 	.release 	= dcssblk_release,
+-	.direct_access 	= dcssblk_direct_access,
++	.direct_access 	= dcssblk_blk_direct_access,
 +};
- #else
--#define brd_direct_access NULL
-+#define brd_blk_direct_access NULL
- #endif
- 
- static const struct block_device_operations brd_fops = {
- 	.owner =		THIS_MODULE,
- 	.rw_page =		brd_rw_page,
--	.direct_access =	brd_direct_access,
-+	.direct_access =	brd_blk_direct_access,
++
++static const struct dax_operations dcssblk_dax_ops = {
++	.direct_access = dcssblk_dax_direct_access,
  };
  
- /*
-@@ -441,7 +468,9 @@ static struct brd_device *brd_alloc(int i)
- {
- 	struct brd_device *brd;
- 	struct gendisk *disk;
--
-+#ifdef CONFIG_BLK_DEV_RAM_DAX
+ struct dcssblk_dev_info {
+@@ -57,6 +64,7 @@ struct dcssblk_dev_info {
+ 	struct request_queue *dcssblk_queue;
+ 	int num_of_segments;
+ 	struct list_head seg_list;
 +	struct dax_device *dax_dev;
-+#endif
- 	brd = kzalloc(sizeof(*brd), GFP_KERNEL);
- 	if (!brd)
- 		goto out;
-@@ -469,9 +498,6 @@ static struct brd_device *brd_alloc(int i)
- 	blk_queue_max_discard_sectors(brd->brd_queue, UINT_MAX);
- 	brd->brd_queue->limits.discard_zeroes_data = 1;
- 	queue_flag_set_unlocked(QUEUE_FLAG_DISCARD, brd->brd_queue);
--#ifdef CONFIG_BLK_DEV_RAM_DAX
--	queue_flag_set_unlocked(QUEUE_FLAG_DAX, brd->brd_queue);
--#endif
- 	disk = brd->brd_disk = alloc_disk(max_part);
- 	if (!disk)
- 		goto out_free_queue;
-@@ -484,8 +510,21 @@ static struct brd_device *brd_alloc(int i)
- 	sprintf(disk->disk_name, "ram%d", i);
- 	set_capacity(disk, rd_size * 2);
+ };
  
-+#ifdef CONFIG_BLK_DEV_RAM_DAX
-+	queue_flag_set_unlocked(QUEUE_FLAG_DAX, brd->brd_queue);
-+	dax_dev = alloc_dax(brd, disk->disk_name, &brd_dax_ops);
+ struct segment_info {
+@@ -389,6 +397,8 @@ dcssblk_shared_store(struct device *dev, struct device_attribute *attr, const ch
+ 	}
+ 	list_del(&dev_info->lh);
+ 
++	kill_dax(dev_info->dax_dev);
++	put_dax(dev_info->dax_dev);
+ 	del_gendisk(dev_info->gd);
+ 	blk_cleanup_queue(dev_info->dcssblk_queue);
+ 	dev_info->gd->queue = NULL;
+@@ -525,6 +535,7 @@ dcssblk_add_store(struct device *dev, struct device_attribute *attr, const char
+ 	int rc, i, j, num_of_segments;
+ 	struct dcssblk_dev_info *dev_info;
+ 	struct segment_info *seg_info, *temp;
++	struct dax_device *dax_dev;
+ 	char *local_buf;
+ 	unsigned long seg_byte_size;
+ 
+@@ -654,6 +665,11 @@ dcssblk_add_store(struct device *dev, struct device_attribute *attr, const char
+ 	if (rc)
+ 		goto put_dev;
+ 
++	dax_dev = alloc_dax(dev_info, dev_info->gd->disk_name,
++			&dcssblk_dax_ops);
 +	if (!dax_dev)
-+		goto out_free_inode;
-+#endif
++		goto put_dev;
 +
-+
- 	return brd;
+ 	get_device(&dev_info->dev);
+ 	device_add_disk(&dev_info->dev, dev_info->gd);
  
-+#ifdef CONFIG_BLK_DEV_RAM_DAX
-+out_free_inode:
-+	kill_dax(dax_dev);
-+	put_dax(dax_dev);
-+#endif
- out_free_queue:
- 	blk_cleanup_queue(brd->brd_queue);
- out_free_dev:
-@@ -525,6 +564,10 @@ static struct brd_device *brd_init_one(int i, bool *new)
- static void brd_del_one(struct brd_device *brd)
- {
- 	list_del(&brd->brd_list);
-+#ifdef CONFIG_BLK_DEV_RAM_DAX
-+	kill_dax(brd->dax_dev);
-+	put_dax(brd->dax_dev);
-+#endif
- 	del_gendisk(brd->brd_disk);
- 	brd_free(brd);
+@@ -752,6 +768,8 @@ dcssblk_remove_store(struct device *dev, struct device_attribute *attr, const ch
+ 	}
+ 
+ 	list_del(&dev_info->lh);
++	kill_dax(dev_info->dax_dev);
++	put_dax(dev_info->dax_dev);
+ 	del_gendisk(dev_info->gd);
+ 	blk_cleanup_queue(dev_info->dcssblk_queue);
+ 	dev_info->gd->queue = NULL;
+@@ -883,21 +901,39 @@ dcssblk_make_request(struct request_queue *q, struct bio *bio)
  }
+ 
+ static long
+-dcssblk_direct_access (struct block_device *bdev, sector_t secnum,
++__dcssblk_direct_access(struct dcssblk_dev_info *dev_info, pgoff_t pgoff,
++		long nr_pages, void **kaddr, pfn_t *pfn)
++{
++	resource_size_t offset = pgoff * PAGE_SIZE;
++	unsigned long dev_sz;
++
++	dev_sz = dev_info->end - dev_info->start + 1;
++	*kaddr = (void *) dev_info->start + offset;
++	*pfn = __pfn_to_pfn_t(PFN_DOWN(dev_info->start + offset), PFN_DEV);
++
++	return (dev_sz - offset) / PAGE_SIZE;
++}
++
++static long
++dcssblk_blk_direct_access(struct block_device *bdev, sector_t secnum,
+ 			void **kaddr, pfn_t *pfn, long size)
+ {
+ 	struct dcssblk_dev_info *dev_info;
+-	unsigned long offset, dev_sz;
+ 
+ 	dev_info = bdev->bd_disk->private_data;
+ 	if (!dev_info)
+ 		return -ENODEV;
+-	dev_sz = dev_info->end - dev_info->start + 1;
+-	offset = secnum * 512;
+-	*kaddr = (void *) dev_info->start + offset;
+-	*pfn = __pfn_to_pfn_t(PFN_DOWN(dev_info->start + offset), PFN_DEV);
++	return __dcssblk_direct_access(dev_info, PHYS_PFN(secnum * 512),
++			PHYS_PFN(size), kaddr, pfn) * PAGE_SIZE;
++}
++
++static long
++dcssblk_dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff,
++		long nr_pages, void **kaddr, pfn_t *pfn)
++{
++	struct dcssblk_dev_info *dev_info = dax_get_private(dax_dev);
+ 
+-	return dev_sz - offset;
++	return __dcssblk_direct_access(dev_info, pgoff, nr_pages, kaddr, pfn);
+ }
+ 
+ static void
