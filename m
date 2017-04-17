@@ -1,223 +1,279 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: [resend PATCH v2 11/33] dm: add dax_device and dax_operations
- support
-Date: Mon, 17 Apr 2017 12:09:48 -0700
-Message-ID: <149245618859.10206.13182319600260215993.stgit@dwillia2-desk3.amr.corp.intel.com>
+From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: [resend PATCH v2 12/33] dm: teach dm-targets to use a dax_device +
+ dax_operations
+Date: Mon, 17 Apr 2017 12:09:54 -0700
+Message-ID: <149245619411.10206.663478007606647587.stgit@dwillia2-desk3.amr.corp.intel.com>
 References: <149245612770.10206.15496018295337908594.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <149245612770.10206.15496018295337908594.stgit@dwillia2-desk3.amr.corp.intel.com>
-Sender: linux-block-owner@vger.kernel.org
-To: linux-nvdimm@lists.01.org
-Cc: Mike Snitzer <snitzer@redhat.com>, Toshi Kani <toshi.kani@hpe.com>, linux-kernel@vger.kernel.org, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, hch@lst.de
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <149245612770.10206.15496018295337908594.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org
 List-Id: dm-devel.ids
 
-Allocate a dax_device to represent the capacity of a device-mapper
-instance. Provide a ->direct_access() method via the new dax_operations
-indirection that mirrors the functionality of the current direct_access
-support via block_device_operations.  Once fs/dax.c has been converted
-to use dax_operations the old dm_blk_direct_access() will be removed.
+Arrange for dm to lookup the dax services available from member devices.
+Update the dax-capable targets, linear and stripe, to route dax
+operations to the underlying device. Changes the target-internal
+->direct_access() method to more closely align with the dax_operations
+->direct_access() calling convention.
 
-A new helper dm_dax_get_live_target() is introduced to separate some of
-the dm-specifics from the direct_access implementation.
-
-This enabling is only for the top-level dm representation to upper
-layers. Converting target direct_access implementations is deferred to a
-separate patch.
-
-Cc: Toshi Kani <toshi.kani@hpe.com>
-Cc: Mike Snitzer <snitzer@redhat.com>
-Signed-off-by: Dan Williams <dan.j.williams@intel.com>
+Cc: Toshi Kani <toshi.kani-ZPxbGqLxI0U@public.gmane.org>
+Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Signed-off-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 ---
- drivers/md/Kconfig            |    1 
- drivers/md/dm-core.h          |    1 
- drivers/md/dm.c               |   84 ++++++++++++++++++++++++++++++++++-------
- include/linux/device-mapper.h |    1 
- 4 files changed, 73 insertions(+), 14 deletions(-)
+ drivers/md/dm-linear.c        |   27 +++++++++++++--------------
+ drivers/md/dm-snap.c          |    6 +++---
+ drivers/md/dm-stripe.c        |   29 ++++++++++++++---------------
+ drivers/md/dm-target.c        |    6 +++---
+ drivers/md/dm.c               |   16 ++++++----------
+ include/linux/device-mapper.h |    7 ++++---
+ 6 files changed, 43 insertions(+), 48 deletions(-)
 
-diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
-index b7767da50c26..1de8372d9459 100644
---- a/drivers/md/Kconfig
-+++ b/drivers/md/Kconfig
-@@ -200,6 +200,7 @@ config BLK_DEV_DM_BUILTIN
- config BLK_DEV_DM
- 	tristate "Device mapper support"
- 	select BLK_DEV_DM_BUILTIN
-+	select DAX
- 	---help---
- 	  Device-mapper is a low level volume manager.  It works by allowing
- 	  people to specify mappings for ranges of logical sectors.  Various
-diff --git a/drivers/md/dm-core.h b/drivers/md/dm-core.h
-index 136fda3ff9e5..538630190f66 100644
---- a/drivers/md/dm-core.h
-+++ b/drivers/md/dm-core.h
-@@ -58,6 +58,7 @@ struct mapped_device {
- 	struct target_type *immutable_target_type;
- 
- 	struct gendisk *disk;
-+	struct dax_device *dax_dev;
- 	char name[16];
- 
- 	void *interface_ptr;
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index dfb75979e455..bd56dfe43a99 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -16,6 +16,7 @@
- #include <linux/blkpg.h>
+diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
+index 4788b0b989a9..c5a52f4dae81 100644
+--- a/drivers/md/dm-linear.c
++++ b/drivers/md/dm-linear.c
+@@ -9,6 +9,7 @@
+ #include <linux/init.h>
+ #include <linux/blkdev.h>
  #include <linux/bio.h>
- #include <linux/mempool.h>
 +#include <linux/dax.h>
  #include <linux/slab.h>
- #include <linux/idr.h>
- #include <linux/hdreg.h>
-@@ -908,31 +909,68 @@ int dm_set_target_max_io_len(struct dm_target *ti, sector_t len)
- }
- EXPORT_SYMBOL_GPL(dm_set_target_max_io_len);
+ #include <linux/device-mapper.h>
  
--static long dm_blk_direct_access(struct block_device *bdev, sector_t sector,
+@@ -141,22 +142,20 @@ static int linear_iterate_devices(struct dm_target *ti,
+ 	return fn(ti, lc->dev, lc->start, ti->len, data);
+ }
+ 
+-static long linear_direct_access(struct dm_target *ti, sector_t sector,
 -				 void **kaddr, pfn_t *pfn, long size)
-+static struct dm_target *dm_dax_get_live_target(struct mapped_device *md,
-+		sector_t sector, int *srcu_idx)
- {
--	struct mapped_device *md = bdev->bd_disk->private_data;
- 	struct dm_table *map;
- 	struct dm_target *ti;
--	int srcu_idx;
--	long len, ret = -EIO;
- 
--	map = dm_get_live_table(md, &srcu_idx);
-+	map = dm_get_live_table(md, srcu_idx);
- 	if (!map)
--		goto out;
-+		return NULL;
- 
- 	ti = dm_table_find_target(map, sector);
- 	if (!dm_target_is_valid(ti))
--		goto out;
-+		return NULL;
- 
--	len = max_io_len(sector, ti) << SECTOR_SHIFT;
--	size = min(len, size);
-+	return ti;
-+}
- 
--	if (ti->type->direct_access)
--		ret = ti->type->direct_access(ti, sector, kaddr, pfn, size);
--out:
-+static long dm_dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff,
++static long linear_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
 +		long nr_pages, void **kaddr, pfn_t *pfn)
-+{
-+	struct mapped_device *md = dax_get_private(dax_dev);
-+	sector_t sector = pgoff * PAGE_SECTORS;
-+	struct dm_target *ti;
-+	long len, ret = -EIO;
-+	int srcu_idx;
-+
-+	ti = dm_dax_get_live_target(md, sector, &srcu_idx);
-+
-+	if (!ti)
-+		goto out;
-+	if (!ti->type->direct_access)
-+		goto out;
-+	len = max_io_len(sector, ti) / PAGE_SECTORS;
-+	if (len < 1)
-+		goto out;
-+	nr_pages = min(len, nr_pages);
-+	if (ti->type->direct_access) {
-+		ret = ti->type->direct_access(ti, sector, kaddr, pfn,
-+				nr_pages * PAGE_SIZE);
-+		/*
-+		 * FIXME: convert ti->type->direct_access to return
-+		 * nr_pages directly.
-+		 */
-+		if (ret >= 0)
-+			ret /= PAGE_SIZE;
-+	}
-+ out:
- 	dm_put_live_table(md, srcu_idx);
--	return min(ret, size);
-+
-+	return ret;
-+}
-+
-+static long dm_blk_direct_access(struct block_device *bdev, sector_t sector,
-+		void **kaddr, pfn_t *pfn, long size)
-+{
-+	struct mapped_device *md = bdev->bd_disk->private_data;
-+	struct dax_device *dax_dev = md->dax_dev;
-+	long nr_pages = size / PAGE_SIZE;
-+
-+	nr_pages = dm_dax_direct_access(dax_dev, sector / PAGE_SECTORS,
-+			nr_pages, kaddr, pfn);
-+	return nr_pages < 0 ? nr_pages : nr_pages * PAGE_SIZE;
- }
- 
- /*
-@@ -1437,6 +1475,7 @@ static int next_free_minor(int *minor)
- }
- 
- static const struct block_device_operations dm_blk_dops;
-+static const struct dax_operations dm_dax_ops;
- 
- static void dm_wq_work(struct work_struct *work);
- 
-@@ -1483,6 +1522,12 @@ static void cleanup_mapped_device(struct mapped_device *md)
- 	if (md->bs)
- 		bioset_free(md->bs);
- 
-+	if (md->dax_dev) {
-+		kill_dax(md->dax_dev);
-+		put_dax(md->dax_dev);
-+		md->dax_dev = NULL;
-+	}
-+
- 	if (md->disk) {
- 		spin_lock(&_minor_lock);
- 		md->disk->private_data = NULL;
-@@ -1510,6 +1555,7 @@ static void cleanup_mapped_device(struct mapped_device *md)
- static struct mapped_device *alloc_dev(int minor)
  {
- 	int r, numa_node_id = dm_get_numa_node();
-+	struct dax_device *dax_dev;
- 	struct mapped_device *md;
- 	void *old_md;
- 
-@@ -1574,6 +1620,12 @@ static struct mapped_device *alloc_dev(int minor)
- 	md->disk->queue = md->queue;
- 	md->disk->private_data = md;
- 	sprintf(md->disk->disk_name, "dm-%d", minor);
++	long ret;
+ 	struct linear_c *lc = ti->private;
+ 	struct block_device *bdev = lc->dev->bdev;
+-	struct blk_dax_ctl dax = {
+-		.sector = linear_map_sector(ti, sector),
+-		.size = size,
+-	};
+-	long ret;
+-
+-	ret = bdev_direct_access(bdev, &dax);
+-	*kaddr = dax.addr;
+-	*pfn = dax.pfn;
+-
+-	return ret;
++	struct dax_device *dax_dev = lc->dev->dax_dev;
++	sector_t dev_sector, sector = pgoff * PAGE_SECTORS;
 +
-+	dax_dev = alloc_dax(md, md->disk->disk_name, &dm_dax_ops);
-+	if (!dax_dev)
-+		goto bad;
-+	md->dax_dev = dax_dev;
-+
- 	add_disk(md->disk);
- 	format_dev_t(md->name, MKDEV(_major, minor));
++	dev_sector = linear_map_sector(ti, sector);
++	ret = bdev_dax_pgoff(bdev, dev_sector, nr_pages * PAGE_SIZE, &pgoff);
++	if (ret)
++		return ret;
++	return dax_direct_access(dax_dev, pgoff, nr_pages, kaddr, pfn);
+ }
  
-@@ -2781,6 +2833,10 @@ static const struct block_device_operations dm_blk_dops = {
- 	.owner = THIS_MODULE
+ static struct target_type linear_target = {
+@@ -169,7 +168,7 @@ static struct target_type linear_target = {
+ 	.status = linear_status,
+ 	.prepare_ioctl = linear_prepare_ioctl,
+ 	.iterate_devices = linear_iterate_devices,
+-	.direct_access = linear_direct_access,
++	.direct_access = linear_dax_direct_access,
  };
  
-+static const struct dax_operations dm_dax_ops = {
-+	.direct_access = dm_dax_direct_access,
-+};
-+
+ int __init dm_linear_init(void)
+diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
+index c65feeada864..e152d9817c81 100644
+--- a/drivers/md/dm-snap.c
++++ b/drivers/md/dm-snap.c
+@@ -2302,8 +2302,8 @@ static int origin_map(struct dm_target *ti, struct bio *bio)
+ 	return do_origin(o->dev, bio);
+ }
+ 
+-static long origin_direct_access(struct dm_target *ti, sector_t sector,
+-		void **kaddr, pfn_t *pfn, long size)
++static long origin_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
++		long nr_pages, void **kaddr, pfn_t *pfn)
+ {
+ 	DMWARN("device does not support dax.");
+ 	return -EIO;
+@@ -2368,7 +2368,7 @@ static struct target_type origin_target = {
+ 	.postsuspend = origin_postsuspend,
+ 	.status  = origin_status,
+ 	.iterate_devices = origin_iterate_devices,
+-	.direct_access = origin_direct_access,
++	.direct_access = origin_dax_direct_access,
+ };
+ 
+ static struct target_type snapshot_target = {
+diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
+index 28193a57bf47..cb4b1e9e16ab 100644
+--- a/drivers/md/dm-stripe.c
++++ b/drivers/md/dm-stripe.c
+@@ -11,6 +11,7 @@
+ #include <linux/init.h>
+ #include <linux/blkdev.h>
+ #include <linux/bio.h>
++#include <linux/dax.h>
+ #include <linux/slab.h>
+ #include <linux/log2.h>
+ 
+@@ -308,27 +309,25 @@ static int stripe_map(struct dm_target *ti, struct bio *bio)
+ 	return DM_MAPIO_REMAPPED;
+ }
+ 
+-static long stripe_direct_access(struct dm_target *ti, sector_t sector,
+-				 void **kaddr, pfn_t *pfn, long size)
++static long stripe_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
++		long nr_pages, void **kaddr, pfn_t *pfn)
+ {
++	sector_t dev_sector, sector = pgoff * PAGE_SECTORS;
+ 	struct stripe_c *sc = ti->private;
+-	uint32_t stripe;
++	struct dax_device *dax_dev;
+ 	struct block_device *bdev;
+-	struct blk_dax_ctl dax = {
+-		.size = size,
+-	};
++	uint32_t stripe;
+ 	long ret;
+ 
+-	stripe_map_sector(sc, sector, &stripe, &dax.sector);
+-
+-	dax.sector += sc->stripe[stripe].physical_start;
++	stripe_map_sector(sc, sector, &stripe, &dev_sector);
++	dev_sector += sc->stripe[stripe].physical_start;
++	dax_dev = sc->stripe[stripe].dev->dax_dev;
+ 	bdev = sc->stripe[stripe].dev->bdev;
+ 
+-	ret = bdev_direct_access(bdev, &dax);
+-	*kaddr = dax.addr;
+-	*pfn = dax.pfn;
+-
+-	return ret;
++	ret = bdev_dax_pgoff(bdev, dev_sector, nr_pages * PAGE_SIZE, &pgoff);
++	if (ret)
++		return ret;
++	return dax_direct_access(dax_dev, pgoff, nr_pages, kaddr, pfn);
+ }
+ 
  /*
-  * module hooks
-  */
+@@ -448,7 +447,7 @@ static struct target_type stripe_target = {
+ 	.status = stripe_status,
+ 	.iterate_devices = stripe_iterate_devices,
+ 	.io_hints = stripe_io_hints,
+-	.direct_access = stripe_direct_access,
++	.direct_access = stripe_dax_direct_access,
+ };
+ 
+ int __init dm_stripe_init(void)
+diff --git a/drivers/md/dm-target.c b/drivers/md/dm-target.c
+index 43d3445b121d..6a7968f93f3c 100644
+--- a/drivers/md/dm-target.c
++++ b/drivers/md/dm-target.c
+@@ -142,8 +142,8 @@ static void io_err_release_clone_rq(struct request *clone)
+ {
+ }
+ 
+-static long io_err_direct_access(struct dm_target *ti, sector_t sector,
+-				 void **kaddr, pfn_t *pfn, long size)
++static long io_err_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
++		long nr_pages, void **kaddr, pfn_t *pfn)
+ {
+ 	return -EIO;
+ }
+@@ -157,7 +157,7 @@ static struct target_type error_target = {
+ 	.map  = io_err_map,
+ 	.clone_and_map_rq = io_err_clone_and_map_rq,
+ 	.release_clone_rq = io_err_release_clone_rq,
+-	.direct_access = io_err_direct_access,
++	.direct_access = io_err_dax_direct_access,
+ };
+ 
+ int __init dm_target_init(void)
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index bd56dfe43a99..ef4c6f8cad47 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -630,6 +630,7 @@ static int open_table_device(struct table_device *td, dev_t dev,
+ 	}
+ 
+ 	td->dm_dev.bdev = bdev;
++	td->dm_dev.dax_dev = dax_get_by_host(bdev->bd_disk->disk_name);
+ 	return 0;
+ }
+ 
+@@ -643,7 +644,9 @@ static void close_table_device(struct table_device *td, struct mapped_device *md
+ 
+ 	bd_unlink_disk_holder(td->dm_dev.bdev, dm_disk(md));
+ 	blkdev_put(td->dm_dev.bdev, td->dm_dev.mode | FMODE_EXCL);
++	put_dax(td->dm_dev.dax_dev);
+ 	td->dm_dev.bdev = NULL;
++	td->dm_dev.dax_dev = NULL;
+ }
+ 
+ static struct table_device *find_table_device(struct list_head *l, dev_t dev,
+@@ -945,16 +948,9 @@ static long dm_dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff,
+ 	if (len < 1)
+ 		goto out;
+ 	nr_pages = min(len, nr_pages);
+-	if (ti->type->direct_access) {
+-		ret = ti->type->direct_access(ti, sector, kaddr, pfn,
+-				nr_pages * PAGE_SIZE);
+-		/*
+-		 * FIXME: convert ti->type->direct_access to return
+-		 * nr_pages directly.
+-		 */
+-		if (ret >= 0)
+-			ret /= PAGE_SIZE;
+-	}
++	if (ti->type->direct_access)
++		ret = ti->type->direct_access(ti, pgoff, nr_pages, kaddr, pfn);
++
+  out:
+ 	dm_put_live_table(md, srcu_idx);
+ 
 diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index a7e6903866fd..bcba4d89089c 100644
+index bcba4d89089c..df830d167892 100644
 --- a/include/linux/device-mapper.h
 +++ b/include/linux/device-mapper.h
-@@ -130,6 +130,7 @@ typedef int (*dm_busy_fn) (struct dm_target *ti);
+@@ -128,14 +128,15 @@ typedef int (*dm_busy_fn) (struct dm_target *ti);
+  *  < 0 : error
+  * >= 0 : the number of bytes accessible at the address
   */
- typedef long (*dm_direct_access_fn) (struct dm_target *ti, sector_t sector,
- 				     void **kaddr, pfn_t *pfn, long size);
-+#define PAGE_SECTORS (PAGE_SIZE / 512)
+-typedef long (*dm_direct_access_fn) (struct dm_target *ti, sector_t sector,
+-				     void **kaddr, pfn_t *pfn, long size);
++typedef long (*dm_dax_direct_access_fn) (struct dm_target *ti, pgoff_t pgoff,
++		long nr_pages, void **kaddr, pfn_t *pfn);
+ #define PAGE_SECTORS (PAGE_SIZE / 512)
  
  void dm_error(const char *message);
  
+ struct dm_dev {
+ 	struct block_device *bdev;
++	struct dax_device *dax_dev;
+ 	fmode_t mode;
+ 	char name[16];
+ };
+@@ -177,7 +178,7 @@ struct target_type {
+ 	dm_busy_fn busy;
+ 	dm_iterate_devices_fn iterate_devices;
+ 	dm_io_hints_fn io_hints;
+-	dm_direct_access_fn direct_access;
++	dm_dax_direct_access_fn direct_access;
+ 
+ 	/* For internal device-mapper use. */
+ 	struct list_head list;
