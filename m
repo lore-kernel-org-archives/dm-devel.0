@@ -1,7 +1,8 @@
 From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: [resend PATCH v2 15/33] filesystem-dax: convert to dax_direct_access()
-Date: Mon, 17 Apr 2017 12:10:11 -0700
-Message-ID: <149245621108.10206.2553880203010672287.stgit@dwillia2-desk3.amr.corp.intel.com>
+Subject: [resend PATCH v2 17/33] block: remove block_device_operations
+ ->direct_access()
+Date: Mon, 17 Apr 2017 12:10:21 -0700
+Message-ID: <149245622170.10206.2196597933362879172.stgit@dwillia2-desk3.amr.corp.intel.com>
 References: <149245612770.10206.15496018295337908594.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -18,509 +19,293 @@ List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
 Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 To: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org
 List-Id: dm-devel.ids
 
-Now that a dax_device is plumbed through all dax-capable drivers we can
-switch from block_device_operations to dax_operations for invoking
-->direct_access.
+Now that all the producers and consumers of dax interfaces have been
+converted to using dax_operations on a dax_device, remove the block
+device direct_access enabling.
 
-This also lets us kill off some usages of struct blk_dax_ctl on the way
-to its eventual removal.
-
-Suggested-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
 Signed-off-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 ---
- fs/dax.c            |  277 +++++++++++++++++++++++++++++----------------------
- fs/iomap.c          |    3 -
- include/linux/dax.h |    6 +
- 3 files changed, 162 insertions(+), 124 deletions(-)
+ arch/powerpc/sysdev/axonram.c |   23 ++++-----------------
+ drivers/block/brd.c           |   15 --------------
+ drivers/md/dm.c               |   13 ------------
+ drivers/nvdimm/pmem.c         |   10 ---------
+ drivers/s390/block/dcssblk.c  |   16 ---------------
+ fs/block_dev.c                |   45 -----------------------------------------
+ include/linux/blkdev.h        |   17 ---------------
+ 7 files changed, 4 insertions(+), 135 deletions(-)
 
-diff --git a/fs/dax.c b/fs/dax.c
-index b78a6947c4f5..ce9dc9c3e829 100644
---- a/fs/dax.c
-+++ b/fs/dax.c
-@@ -55,32 +55,6 @@ static int __init init_dax_wait_table(void)
+diff --git a/arch/powerpc/sysdev/axonram.c b/arch/powerpc/sysdev/axonram.c
+index ad857d5e81b1..83eb56ff1d2c 100644
+--- a/arch/powerpc/sysdev/axonram.c
++++ b/arch/powerpc/sysdev/axonram.c
+@@ -139,6 +139,10 @@ axon_ram_make_request(struct request_queue *queue, struct bio *bio)
+ 	return BLK_QC_T_NONE;
  }
- fs_initcall(init_dax_wait_table);
  
--static long dax_map_atomic(struct block_device *bdev, struct blk_dax_ctl *dax)
++static const struct block_device_operations axon_ram_devops = {
++	.owner		= THIS_MODULE,
++};
++
+ static long
+ __axon_ram_direct_access(struct axon_ram_bank *bank, pgoff_t pgoff, long nr_pages,
+ 		       void **kaddr, pfn_t *pfn)
+@@ -150,25 +154,6 @@ __axon_ram_direct_access(struct axon_ram_bank *bank, pgoff_t pgoff, long nr_page
+ 	return (bank->size - offset) / PAGE_SIZE;
+ }
+ 
+-/**
+- * axon_ram_direct_access - direct_access() method for block device
+- * @device, @sector, @data: see block_device_operations method
+- */
+-static long
+-axon_ram_blk_direct_access(struct block_device *device, sector_t sector,
+-		       void **kaddr, pfn_t *pfn, long size)
 -{
--	struct request_queue *q = bdev->bd_queue;
--	long rc = -EIO;
+-	struct axon_ram_bank *bank = device->bd_disk->private_data;
 -
--	dax->addr = ERR_PTR(-EIO);
--	if (blk_queue_enter(q, true) != 0)
--		return rc;
--
--	rc = bdev_direct_access(bdev, dax);
--	if (rc < 0) {
--		dax->addr = ERR_PTR(rc);
--		blk_queue_exit(q);
--		return rc;
--	}
--	return rc;
+-	return __axon_ram_direct_access(bank, (sector * 512) / PAGE_SIZE,
+-			size / PAGE_SIZE, kaddr, pfn) * PAGE_SIZE;
 -}
 -
--static void dax_unmap_atomic(struct block_device *bdev,
--		const struct blk_dax_ctl *dax)
+-static const struct block_device_operations axon_ram_devops = {
+-	.owner		= THIS_MODULE,
+-	.direct_access	= axon_ram_blk_direct_access
+-};
+-
+ static long
+ axon_ram_dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff, long nr_pages,
+ 		       void **kaddr, pfn_t *pfn)
+diff --git a/drivers/block/brd.c b/drivers/block/brd.c
+index 60f3193c9ce2..bfa4ed2c75ef 100644
+--- a/drivers/block/brd.c
++++ b/drivers/block/brd.c
+@@ -395,18 +395,6 @@ static long __brd_direct_access(struct brd_device *brd, pgoff_t pgoff,
+ 	return 1;
+ }
+ 
+-static long brd_blk_direct_access(struct block_device *bdev, sector_t sector,
+-			void **kaddr, pfn_t *pfn, long size)
 -{
--	if (IS_ERR(dax->addr))
--		return;
--	blk_queue_exit(bdev->bd_queue);
+-	struct brd_device *brd = bdev->bd_disk->private_data;
+-	long nr_pages = __brd_direct_access(brd, PHYS_PFN(sector * 512),
+-			PHYS_PFN(size), kaddr, pfn);
+-
+-	if (nr_pages < 0)
+-		return nr_pages;
+-	return nr_pages * PAGE_SIZE;
 -}
 -
- static int dax_is_pmd_entry(void *entry)
+ static long brd_dax_direct_access(struct dax_device *dax_dev,
+ 		pgoff_t pgoff, long nr_pages, void **kaddr, pfn_t *pfn)
  {
- 	return (unsigned long)entry & RADIX_DAX_PMD;
-@@ -553,21 +527,30 @@ static int dax_load_hole(struct address_space *mapping, void **entry,
+@@ -418,14 +406,11 @@ static long brd_dax_direct_access(struct dax_device *dax_dev,
+ static const struct dax_operations brd_dax_ops = {
+ 	.direct_access = brd_dax_direct_access,
+ };
+-#else
+-#define brd_blk_direct_access NULL
+ #endif
+ 
+ static const struct block_device_operations brd_fops = {
+ 	.owner =		THIS_MODULE,
+ 	.rw_page =		brd_rw_page,
+-	.direct_access =	brd_blk_direct_access,
+ };
+ 
+ /*
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index ef4c6f8cad47..79d5f5fd823e 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -957,18 +957,6 @@ static long dm_dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff,
  	return ret;
  }
  
--static int copy_user_dax(struct block_device *bdev, sector_t sector, size_t size,
--		struct page *to, unsigned long vaddr)
-+static int copy_user_dax(struct block_device *bdev, struct dax_device *dax_dev,
-+		sector_t sector, size_t size, struct page *to,
-+		unsigned long vaddr)
- {
--	struct blk_dax_ctl dax = {
--		.sector = sector,
--		.size = size,
--	};
--	void *vto;
+-static long dm_blk_direct_access(struct block_device *bdev, sector_t sector,
+-		void **kaddr, pfn_t *pfn, long size)
+-{
+-	struct mapped_device *md = bdev->bd_disk->private_data;
+-	struct dax_device *dax_dev = md->dax_dev;
+-	long nr_pages = size / PAGE_SIZE;
 -
--	if (dax_map_atomic(bdev, &dax) < 0)
--		return PTR_ERR(dax.addr);
-+	void *vto, *kaddr;
-+	pgoff_t pgoff;
-+	pfn_t pfn;
-+	long rc;
-+	int id;
-+
-+	rc = bdev_dax_pgoff(bdev, sector, size, &pgoff);
-+	if (rc)
-+		return rc;
-+
-+	id = dax_read_lock();
-+	rc = dax_direct_access(dax_dev, pgoff, PHYS_PFN(size), &kaddr, &pfn);
-+	if (rc < 0) {
-+		dax_read_unlock(id);
-+		return rc;
-+	}
- 	vto = kmap_atomic(to);
--	copy_user_page(vto, (void __force *)dax.addr, vaddr, to);
-+	copy_user_page(vto, (void __force *)kaddr, vaddr, to);
- 	kunmap_atomic(vto);
--	dax_unmap_atomic(bdev, &dax);
-+	dax_read_unlock(id);
- 	return 0;
- }
- 
-@@ -735,12 +718,16 @@ static void dax_mapping_entry_mkclean(struct address_space *mapping,
- }
- 
- static int dax_writeback_one(struct block_device *bdev,
--		struct address_space *mapping, pgoff_t index, void *entry)
-+		struct dax_device *dax_dev, struct address_space *mapping,
-+		pgoff_t index, void *entry)
- {
- 	struct radix_tree_root *page_tree = &mapping->page_tree;
--	struct blk_dax_ctl dax;
--	void *entry2, **slot;
--	int ret = 0;
-+	void *entry2, **slot, *kaddr;
-+	long ret = 0, id;
-+	sector_t sector;
-+	pgoff_t pgoff;
-+	size_t size;
-+	pfn_t pfn;
- 
- 	/*
- 	 * A page got tagged dirty in DAX mapping? Something is seriously
-@@ -789,26 +776,29 @@ static int dax_writeback_one(struct block_device *bdev,
- 	 * 'entry'.  This allows us to flush for PMD_SIZE and not have to
- 	 * worry about partial PMD writebacks.
- 	 */
--	dax.sector = dax_radix_sector(entry);
--	dax.size = PAGE_SIZE << dax_radix_order(entry);
-+	sector = dax_radix_sector(entry);
-+	size = PAGE_SIZE << dax_radix_order(entry);
-+
-+	id = dax_read_lock();
-+	ret = bdev_dax_pgoff(bdev, sector, size, &pgoff);
-+	if (ret)
-+		goto dax_unlock;
- 
- 	/*
--	 * We cannot hold tree_lock while calling dax_map_atomic() because it
--	 * eventually calls cond_resched().
-+	 * dax_direct_access() may sleep, so cannot hold tree_lock over
-+	 * its invocation.
- 	 */
--	ret = dax_map_atomic(bdev, &dax);
--	if (ret < 0) {
--		put_locked_mapping_entry(mapping, index, entry);
--		return ret;
--	}
-+	ret = dax_direct_access(dax_dev, pgoff, size / PAGE_SIZE, &kaddr, &pfn);
-+	if (ret < 0)
-+		goto dax_unlock;
- 
--	if (WARN_ON_ONCE(ret < dax.size)) {
-+	if (WARN_ON_ONCE(ret < size / PAGE_SIZE)) {
- 		ret = -EIO;
--		goto unmap;
-+		goto dax_unlock;
- 	}
- 
--	dax_mapping_entry_mkclean(mapping, index, pfn_t_to_pfn(dax.pfn));
--	wb_cache_pmem(dax.addr, dax.size);
-+	dax_mapping_entry_mkclean(mapping, index, pfn_t_to_pfn(pfn));
-+	wb_cache_pmem(kaddr, size);
- 	/*
- 	 * After we have flushed the cache, we can clear the dirty tag. There
- 	 * cannot be new dirty data in the pfn after the flush has completed as
-@@ -818,8 +808,8 @@ static int dax_writeback_one(struct block_device *bdev,
- 	spin_lock_irq(&mapping->tree_lock);
- 	radix_tree_tag_clear(page_tree, index, PAGECACHE_TAG_DIRTY);
- 	spin_unlock_irq(&mapping->tree_lock);
-- unmap:
--	dax_unmap_atomic(bdev, &dax);
-+ dax_unlock:
-+	dax_read_unlock(id);
- 	put_locked_mapping_entry(mapping, index, entry);
- 	return ret;
- 
-@@ -840,6 +830,7 @@ int dax_writeback_mapping_range(struct address_space *mapping,
- 	struct inode *inode = mapping->host;
- 	pgoff_t start_index, end_index;
- 	pgoff_t indices[PAGEVEC_SIZE];
-+	struct dax_device *dax_dev;
- 	struct pagevec pvec;
- 	bool done = false;
- 	int i, ret = 0;
-@@ -850,6 +841,10 @@ int dax_writeback_mapping_range(struct address_space *mapping,
- 	if (!mapping->nrexceptional || wbc->sync_mode != WB_SYNC_ALL)
- 		return 0;
- 
-+	dax_dev = dax_get_by_host(bdev->bd_disk->disk_name);
-+	if (!dax_dev)
-+		return -EIO;
-+
- 	start_index = wbc->range_start >> PAGE_SHIFT;
- 	end_index = wbc->range_end >> PAGE_SHIFT;
- 
-@@ -870,38 +865,49 @@ int dax_writeback_mapping_range(struct address_space *mapping,
- 				break;
- 			}
- 
--			ret = dax_writeback_one(bdev, mapping, indices[i],
--					pvec.pages[i]);
--			if (ret < 0)
-+			ret = dax_writeback_one(bdev, dax_dev, mapping,
-+					indices[i], pvec.pages[i]);
-+			if (ret < 0) {
-+				put_dax(dax_dev);
- 				return ret;
-+			}
- 		}
- 	}
-+	put_dax(dax_dev);
- 	return 0;
- }
- EXPORT_SYMBOL_GPL(dax_writeback_mapping_range);
- 
- static int dax_insert_mapping(struct address_space *mapping,
--		struct block_device *bdev, sector_t sector, size_t size,
--		void **entryp, struct vm_area_struct *vma, struct vm_fault *vmf)
-+		struct block_device *bdev, struct dax_device *dax_dev,
-+		sector_t sector, size_t size, void **entryp,
-+		struct vm_area_struct *vma, struct vm_fault *vmf)
- {
- 	unsigned long vaddr = vmf->address;
--	struct blk_dax_ctl dax = {
--		.sector = sector,
--		.size = size,
--	};
--	void *ret;
- 	void *entry = *entryp;
-+	void *ret, *kaddr;
-+	pgoff_t pgoff;
-+	int id, rc;
-+	pfn_t pfn;
- 
--	if (dax_map_atomic(bdev, &dax) < 0)
--		return PTR_ERR(dax.addr);
--	dax_unmap_atomic(bdev, &dax);
-+	rc = bdev_dax_pgoff(bdev, sector, size, &pgoff);
-+	if (rc)
-+		return rc;
- 
--	ret = dax_insert_mapping_entry(mapping, vmf, entry, dax.sector, 0);
-+	id = dax_read_lock();
-+	rc = dax_direct_access(dax_dev, pgoff, PHYS_PFN(size), &kaddr, &pfn);
-+	if (rc < 0) {
-+		dax_read_unlock(id);
-+		return rc;
-+	}
-+	dax_read_unlock(id);
-+
-+	ret = dax_insert_mapping_entry(mapping, vmf, entry, sector, 0);
- 	if (IS_ERR(ret))
- 		return PTR_ERR(ret);
- 	*entryp = ret;
- 
--	return vm_insert_mixed(vma, vaddr, dax.pfn);
-+	return vm_insert_mixed(vma, vaddr, pfn);
- }
- 
- /**
-@@ -950,24 +956,34 @@ static bool dax_range_is_aligned(struct block_device *bdev,
- 	return true;
- }
- 
--int __dax_zero_page_range(struct block_device *bdev, sector_t sector,
--		unsigned int offset, unsigned int length)
-+int __dax_zero_page_range(struct block_device *bdev,
-+		struct dax_device *dax_dev, sector_t sector,
-+		unsigned int offset, unsigned int size)
- {
--	struct blk_dax_ctl dax = {
--		.sector		= sector,
--		.size		= PAGE_SIZE,
--	};
+-	nr_pages = dm_dax_direct_access(dax_dev, sector / PAGE_SECTORS,
+-			nr_pages, kaddr, pfn);
+-	return nr_pages < 0 ? nr_pages : nr_pages * PAGE_SIZE;
+-}
 -
--	if (dax_range_is_aligned(bdev, offset, length)) {
--		sector_t start_sector = dax.sector + (offset >> 9);
-+	if (dax_range_is_aligned(bdev, offset, size)) {
-+		sector_t start_sector = sector + (offset >> 9);
- 
- 		return blkdev_issue_zeroout(bdev, start_sector,
--				length >> 9, GFP_NOFS, true);
-+				size >> 9, GFP_NOFS, true);
- 	} else {
--		if (dax_map_atomic(bdev, &dax) < 0)
--			return PTR_ERR(dax.addr);
--		clear_pmem(dax.addr + offset, length);
--		dax_unmap_atomic(bdev, &dax);
-+		pgoff_t pgoff;
-+		long rc, id;
-+		void *kaddr;
-+		pfn_t pfn;
-+
-+		rc = bdev_dax_pgoff(bdev, sector, size, &pgoff);
-+		if (rc)
-+			return rc;
-+
-+		id = dax_read_lock();
-+		rc = dax_direct_access(dax_dev, pgoff, PHYS_PFN(size), &kaddr,
-+				&pfn);
-+		if (rc < 0) {
-+			dax_read_unlock(id);
-+			return rc;
-+		}
-+		clear_pmem(kaddr + offset, size);
-+		dax_read_unlock(id);
- 	}
- 	return 0;
+ /*
+  * A target may call dm_accept_partial_bio only from the map routine.  It is
+  * allowed for all bio types except REQ_PREFLUSH.
+@@ -2823,7 +2811,6 @@ static const struct block_device_operations dm_blk_dops = {
+ 	.open = dm_blk_open,
+ 	.release = dm_blk_close,
+ 	.ioctl = dm_blk_ioctl,
+-	.direct_access = dm_blk_direct_access,
+ 	.getgeo = dm_blk_getgeo,
+ 	.pr_ops = &dm_pr_ops,
+ 	.owner = THIS_MODULE
+diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
+index fbbcf8154eec..85b85633d674 100644
+--- a/drivers/nvdimm/pmem.c
++++ b/drivers/nvdimm/pmem.c
+@@ -220,19 +220,9 @@ __weak long __pmem_direct_access(struct pmem_device *pmem, pgoff_t pgoff,
+ 	return PHYS_PFN(pmem->size - pmem->pfn_pad - offset);
  }
-@@ -982,9 +998,12 @@ static loff_t
- dax_iomap_actor(struct inode *inode, loff_t pos, loff_t length, void *data,
- 		struct iomap *iomap)
- {
-+	struct block_device *bdev = iomap->bdev;
-+	struct dax_device *dax_dev = iomap->dax_dev;
- 	struct iov_iter *iter = data;
- 	loff_t end = pos + length, done = 0;
- 	ssize_t ret = 0;
-+	int id;
  
- 	if (iov_iter_rw(iter) == READ) {
- 		end = min(end, i_size_read(inode));
-@@ -1009,34 +1028,42 @@ dax_iomap_actor(struct inode *inode, loff_t pos, loff_t length, void *data,
- 					      (end - 1) >> PAGE_SHIFT);
- 	}
- 
-+	id = dax_read_lock();
- 	while (pos < end) {
- 		unsigned offset = pos & (PAGE_SIZE - 1);
--		struct blk_dax_ctl dax = { 0 };
-+		const size_t size = ALIGN(length + offset, PAGE_SIZE);
-+		const sector_t sector = dax_iomap_sector(iomap, pos);
- 		ssize_t map_len;
-+		pgoff_t pgoff;
-+		void *kaddr;
-+		pfn_t pfn;
- 
- 		if (fatal_signal_pending(current)) {
- 			ret = -EINTR;
- 			break;
- 		}
- 
--		dax.sector = dax_iomap_sector(iomap, pos);
--		dax.size = (length + offset + PAGE_SIZE - 1) & PAGE_MASK;
--		map_len = dax_map_atomic(iomap->bdev, &dax);
-+		ret = bdev_dax_pgoff(bdev, sector, size, &pgoff);
-+		if (ret)
-+			break;
-+
-+		map_len = dax_direct_access(dax_dev, pgoff, PHYS_PFN(size),
-+				&kaddr, &pfn);
- 		if (map_len < 0) {
- 			ret = map_len;
- 			break;
- 		}
- 
--		dax.addr += offset;
-+		map_len = PFN_PHYS(map_len);
-+		kaddr += offset;
- 		map_len -= offset;
- 		if (map_len > end - pos)
- 			map_len = end - pos;
- 
- 		if (iov_iter_rw(iter) == WRITE)
--			map_len = copy_from_iter_pmem(dax.addr, map_len, iter);
-+			map_len = copy_from_iter_pmem(kaddr, map_len, iter);
- 		else
--			map_len = copy_to_iter(dax.addr, map_len, iter);
--		dax_unmap_atomic(iomap->bdev, &dax);
-+			map_len = copy_to_iter(kaddr, map_len, iter);
- 		if (map_len <= 0) {
- 			ret = map_len ? map_len : -EFAULT;
- 			break;
-@@ -1046,6 +1073,7 @@ dax_iomap_actor(struct inode *inode, loff_t pos, loff_t length, void *data,
- 		length -= map_len;
- 		done += map_len;
- 	}
-+	dax_read_unlock(id);
- 
- 	return done ? done : ret;
- }
-@@ -1152,8 +1180,8 @@ static int dax_iomap_pte_fault(struct vm_fault *vmf,
- 			clear_user_highpage(vmf->cow_page, vaddr);
- 			break;
- 		case IOMAP_MAPPED:
--			error = copy_user_dax(iomap.bdev, sector, PAGE_SIZE,
--					vmf->cow_page, vaddr);
-+			error = copy_user_dax(iomap.bdev, iomap.dax_dev,
-+					sector, PAGE_SIZE, vmf->cow_page, vaddr);
- 			break;
- 		default:
- 			WARN_ON_ONCE(1);
-@@ -1178,8 +1206,8 @@ static int dax_iomap_pte_fault(struct vm_fault *vmf,
- 			mem_cgroup_count_vm_event(vmf->vma->vm_mm, PGMAJFAULT);
- 			major = VM_FAULT_MAJOR;
- 		}
--		error = dax_insert_mapping(mapping, iomap.bdev, sector,
--				PAGE_SIZE, &entry, vmf->vma, vmf);
-+		error = dax_insert_mapping(mapping, iomap.bdev, iomap.dax_dev,
-+				sector, PAGE_SIZE, &entry, vmf->vma, vmf);
- 		/* -EBUSY is fine, somebody else faulted on the same PTE */
- 		if (error == -EBUSY)
- 			error = 0;
-@@ -1229,41 +1257,48 @@ static int dax_pmd_insert_mapping(struct vm_fault *vmf, struct iomap *iomap,
- 		loff_t pos, void **entryp)
- {
- 	struct address_space *mapping = vmf->vma->vm_file->f_mapping;
-+	const sector_t sector = dax_iomap_sector(iomap, pos);
-+	struct dax_device *dax_dev = iomap->dax_dev;
- 	struct block_device *bdev = iomap->bdev;
- 	struct inode *inode = mapping->host;
--	struct blk_dax_ctl dax = {
--		.sector = dax_iomap_sector(iomap, pos),
--		.size = PMD_SIZE,
--	};
--	long length = dax_map_atomic(bdev, &dax);
--	void *ret = NULL;
+-static long pmem_blk_direct_access(struct block_device *bdev, sector_t sector,
+-		void **kaddr, pfn_t *pfn, long size)
+-{
+-	struct pmem_device *pmem = bdev->bd_queue->queuedata;
 -
--	if (length < 0) /* dax_map_atomic() failed */
-+	const size_t size = PMD_SIZE;
-+	void *ret = NULL, *kaddr;
-+	long length = 0;
-+	pgoff_t pgoff;
-+	pfn_t pfn;
-+	int id;
-+
-+	if (bdev_dax_pgoff(bdev, sector, size, &pgoff) != 0)
- 		goto fallback;
--	if (length < PMD_SIZE)
--		goto unmap_fallback;
--	if (pfn_t_to_pfn(dax.pfn) & PG_PMD_COLOUR)
--		goto unmap_fallback;
--	if (!pfn_t_devmap(dax.pfn))
--		goto unmap_fallback;
+-	return __pmem_direct_access(pmem, PHYS_PFN(sector * 512),
+-			PHYS_PFN(size), kaddr, pfn);
+-}
 -
--	dax_unmap_atomic(bdev, &dax);
+ static const struct block_device_operations pmem_fops = {
+ 	.owner =		THIS_MODULE,
+ 	.rw_page =		pmem_rw_page,
+-	.direct_access =	pmem_blk_direct_access,
+ 	.revalidate_disk =	nvdimm_revalidate_disk,
+ };
  
--	ret = dax_insert_mapping_entry(mapping, vmf, *entryp, dax.sector,
-+	id = dax_read_lock();
-+	length = dax_direct_access(dax_dev, pgoff, PHYS_PFN(size), &kaddr, &pfn);
-+	if (length < 0)
-+		goto unlock_fallback;
-+	length = PFN_PHYS(length);
-+
-+	if (length < size)
-+		goto unlock_fallback;
-+	if (pfn_t_to_pfn(pfn) & PG_PMD_COLOUR)
-+		goto unlock_fallback;
-+	if (!pfn_t_devmap(pfn))
-+		goto unlock_fallback;
-+	dax_read_unlock(id);
-+
-+	ret = dax_insert_mapping_entry(mapping, vmf, *entryp, sector,
- 			RADIX_DAX_PMD);
- 	if (IS_ERR(ret))
- 		goto fallback;
- 	*entryp = ret;
+diff --git a/drivers/s390/block/dcssblk.c b/drivers/s390/block/dcssblk.c
+index 682a9eb4934d..1586e11b979e 100644
+--- a/drivers/s390/block/dcssblk.c
++++ b/drivers/s390/block/dcssblk.c
+@@ -31,8 +31,6 @@ static int dcssblk_open(struct block_device *bdev, fmode_t mode);
+ static void dcssblk_release(struct gendisk *disk, fmode_t mode);
+ static blk_qc_t dcssblk_make_request(struct request_queue *q,
+ 						struct bio *bio);
+-static long dcssblk_blk_direct_access(struct block_device *bdev, sector_t secnum,
+-			 void **kaddr, pfn_t *pfn, long size);
+ static long dcssblk_dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff,
+ 		long nr_pages, void **kaddr, pfn_t *pfn);
  
--	trace_dax_pmd_insert_mapping(inode, vmf, length, dax.pfn, ret);
-+	trace_dax_pmd_insert_mapping(inode, vmf, length, pfn, ret);
- 	return vmf_insert_pfn_pmd(vmf->vma, vmf->address, vmf->pmd,
--			dax.pfn, vmf->flags & FAULT_FLAG_WRITE);
-+			pfn, vmf->flags & FAULT_FLAG_WRITE);
+@@ -43,7 +41,6 @@ static const struct block_device_operations dcssblk_devops = {
+ 	.owner   	= THIS_MODULE,
+ 	.open    	= dcssblk_open,
+ 	.release 	= dcssblk_release,
+-	.direct_access 	= dcssblk_blk_direct_access,
+ };
  
-- unmap_fallback:
--	dax_unmap_atomic(bdev, &dax);
-+unlock_fallback:
-+	dax_read_unlock(id);
- fallback:
--	trace_dax_pmd_insert_mapping_fallback(inode, vmf, length,
--			dax.pfn, ret);
-+	trace_dax_pmd_insert_mapping_fallback(inode, vmf, length, pfn, ret);
- 	return VM_FAULT_FALLBACK;
+ static const struct dax_operations dcssblk_dax_ops = {
+@@ -915,19 +912,6 @@ __dcssblk_direct_access(struct dcssblk_dev_info *dev_info, pgoff_t pgoff,
  }
  
-diff --git a/fs/iomap.c b/fs/iomap.c
-index 141c3cd55a8b..4ec0d6ac8bc1 100644
---- a/fs/iomap.c
-+++ b/fs/iomap.c
-@@ -360,7 +360,8 @@ static int iomap_dax_zero(loff_t pos, unsigned offset, unsigned bytes,
- 	sector_t sector = iomap->blkno +
- 		(((pos & ~(PAGE_SIZE - 1)) - iomap->offset) >> 9);
- 
--	return __dax_zero_page_range(iomap->bdev, sector, offset, bytes);
-+	return __dax_zero_page_range(iomap->bdev, iomap->dax_dev, sector,
-+			offset, bytes);
- }
- 
- static loff_t
-diff --git a/include/linux/dax.h b/include/linux/dax.h
-index 0d0d890f9186..d3158e74a59e 100644
---- a/include/linux/dax.h
-+++ b/include/linux/dax.h
-@@ -70,11 +70,13 @@ void dax_wake_mapping_entry_waiter(struct address_space *mapping,
- 		pgoff_t index, void *entry, bool wake_all);
- 
- #ifdef CONFIG_FS_DAX
--int __dax_zero_page_range(struct block_device *bdev, sector_t sector,
-+int __dax_zero_page_range(struct block_device *bdev,
-+		struct dax_device *dax_dev, sector_t sector,
- 		unsigned int offset, unsigned int length);
- #else
- static inline int __dax_zero_page_range(struct block_device *bdev,
--		sector_t sector, unsigned int offset, unsigned int length)
-+		struct dax_device *dax_dev, sector_t sector,
-+		unsigned int offset, unsigned int length)
+ static long
+-dcssblk_blk_direct_access(struct block_device *bdev, sector_t secnum,
+-			void **kaddr, pfn_t *pfn, long size)
+-{
+-	struct dcssblk_dev_info *dev_info;
+-
+-	dev_info = bdev->bd_disk->private_data;
+-	if (!dev_info)
+-		return -ENODEV;
+-	return __dcssblk_direct_access(dev_info, PHYS_PFN(secnum * 512),
+-			PHYS_PFN(size), kaddr, pfn) * PAGE_SIZE;
+-}
+-
+-static long
+ dcssblk_dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff,
+ 		long nr_pages, void **kaddr, pfn_t *pfn)
  {
- 	return -ENXIO;
+diff --git a/fs/block_dev.c b/fs/block_dev.c
+index ecbdc8f9f718..10e21465d5a9 100644
+--- a/fs/block_dev.c
++++ b/fs/block_dev.c
+@@ -718,51 +718,6 @@ int bdev_write_page(struct block_device *bdev, sector_t sector,
  }
+ EXPORT_SYMBOL_GPL(bdev_write_page);
+ 
+-/**
+- * bdev_direct_access() - Get the address for directly-accessibly memory
+- * @bdev: The device containing the memory
+- * @dax: control and output parameters for ->direct_access
+- *
+- * If a block device is made up of directly addressable memory, this function
+- * will tell the caller the PFN and the address of the memory.  The address
+- * may be directly dereferenced within the kernel without the need to call
+- * ioremap(), kmap() or similar.  The PFN is suitable for inserting into
+- * page tables.
+- *
+- * Return: negative errno if an error occurs, otherwise the number of bytes
+- * accessible at this address.
+- */
+-long bdev_direct_access(struct block_device *bdev, struct blk_dax_ctl *dax)
+-{
+-	sector_t sector = dax->sector;
+-	long avail, size = dax->size;
+-	const struct block_device_operations *ops = bdev->bd_disk->fops;
+-
+-	/*
+-	 * The device driver is allowed to sleep, in order to make the
+-	 * memory directly accessible.
+-	 */
+-	might_sleep();
+-
+-	if (size < 0)
+-		return size;
+-	if (!blk_queue_dax(bdev_get_queue(bdev)) || !ops->direct_access)
+-		return -EOPNOTSUPP;
+-	if ((sector + DIV_ROUND_UP(size, 512)) >
+-					part_nr_sects_read(bdev->bd_part))
+-		return -ERANGE;
+-	sector += get_start_sect(bdev);
+-	if (sector % (PAGE_SIZE / 512))
+-		return -EINVAL;
+-	avail = ops->direct_access(bdev, sector, &dax->addr, &dax->pfn, size);
+-	if (!avail)
+-		return -ERANGE;
+-	if (avail > 0 && avail & ~PAGE_MASK)
+-		return -ENXIO;
+-	return min(avail, size);
+-}
+-EXPORT_SYMBOL_GPL(bdev_direct_access);
+-
+ int bdev_dax_pgoff(struct block_device *bdev, sector_t sector, size_t size,
+ 		pgoff_t *pgoff)
+ {
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 612c497d1461..848f87eb1905 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -1916,28 +1916,12 @@ static inline bool integrity_req_gap_front_merge(struct request *req,
+ 
+ #endif /* CONFIG_BLK_DEV_INTEGRITY */
+ 
+-/**
+- * struct blk_dax_ctl - control and output parameters for ->direct_access
+- * @sector: (input) offset relative to a block_device
+- * @addr: (output) kernel virtual address for @sector populated by driver
+- * @pfn: (output) page frame number for @addr populated by driver
+- * @size: (input) number of bytes requested
+- */
+-struct blk_dax_ctl {
+-	sector_t sector;
+-	void *addr;
+-	long size;
+-	pfn_t pfn;
+-};
+-
+ struct block_device_operations {
+ 	int (*open) (struct block_device *, fmode_t);
+ 	void (*release) (struct gendisk *, fmode_t);
+ 	int (*rw_page)(struct block_device *, sector_t, struct page *, bool);
+ 	int (*ioctl) (struct block_device *, fmode_t, unsigned, unsigned long);
+ 	int (*compat_ioctl) (struct block_device *, fmode_t, unsigned, unsigned long);
+-	long (*direct_access)(struct block_device *, sector_t, void **, pfn_t *,
+-			long);
+ 	unsigned int (*check_events) (struct gendisk *disk,
+ 				      unsigned int clearing);
+ 	/* ->media_changed() is DEPRECATED, use ->check_events() instead */
+@@ -1956,7 +1940,6 @@ extern int __blkdev_driver_ioctl(struct block_device *, fmode_t, unsigned int,
+ extern int bdev_read_page(struct block_device *, sector_t, struct page *);
+ extern int bdev_write_page(struct block_device *, sector_t, struct page *,
+ 						struct writeback_control *);
+-extern long bdev_direct_access(struct block_device *, struct blk_dax_ctl *);
+ extern int bdev_dax_supported(struct super_block *, int);
+ int bdev_dax_pgoff(struct block_device *, sector_t, size_t, pgoff_t *pgoff);
+ #else /* CONFIG_BLOCK */
