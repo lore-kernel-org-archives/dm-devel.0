@@ -1,8 +1,8 @@
 From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: [resend PATCH v2 18/33] x86, dax,
- pmem: remove indirection around memcpy_from_pmem()
-Date: Mon, 17 Apr 2017 12:10:27 -0700
-Message-ID: <149245622727.10206.9207175325089032123.stgit@dwillia2-desk3.amr.corp.intel.com>
+Subject: [resend PATCH v2 20/33] dm: add ->copy_from_iter() dax operation
+ support
+Date: Mon, 17 Apr 2017 12:10:38 -0700
+Message-ID: <149245623835.10206.17481761679193180574.stgit@dwillia2-desk3.amr.corp.intel.com>
 References: <149245612770.10206.15496018295337908594.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,163 +19,214 @@ List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
 Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 To: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Cc: Tony Luck <tony.luck-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, hch-jcswGhMUV9g@public.gmane.org
+Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org
 List-Id: dm-devel.ids
 
-memcpy_from_pmem() maps directly to memcpy_mcsafe(). The wrapper
-serves no real benefit aside from affording a more generic function name
-than the x86-specific 'mcsafe'. However this would not be the first time
-that x86 terminology leaked into the global namespace. For lack of
-better name, just use memcpy_mcsafe() directly.
+Allow device-mapper to route copy_from_iter operations to the
+per-target implementation. In order for the device stacking to work we
+need a dax_dev and a pgoff relative to that device. This gives each
+layer of the stack the information it needs to look up the operation
+pointer for the next level.
 
-This conversion also catches a place where we should have been using
-plain memcpy, acpi_nfit_blk_single_io().
+This conceptually allows for an array of mixed device drivers with
+varying copy_from_iter implementations.
 
-Cc: <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Cc: Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Cc: Tony Luck <tony.luck-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
-Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Cc: Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>
-Cc: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Cc: Toshi Kani <toshi.kani-ZPxbGqLxI0U@public.gmane.org>
+Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Signed-off-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 ---
- arch/x86/include/asm/pmem.h      |    5 -----
- arch/x86/include/asm/string_64.h |    1 +
- drivers/acpi/nfit/core.c         |    3 +--
- drivers/nvdimm/claim.c           |    2 +-
- drivers/nvdimm/pmem.c            |    2 +-
- include/linux/pmem.h             |   23 -----------------------
- include/linux/string.h           |    8 ++++++++
- 7 files changed, 12 insertions(+), 32 deletions(-)
+ drivers/dax/super.c           |   13 +++++++++++++
+ drivers/md/dm-linear.c        |   15 +++++++++++++++
+ drivers/md/dm-stripe.c        |   20 ++++++++++++++++++++
+ drivers/md/dm.c               |   26 ++++++++++++++++++++++++++
+ include/linux/dax.h           |    2 ++
+ include/linux/device-mapper.h |    3 +++
+ 6 files changed, 79 insertions(+)
 
-diff --git a/arch/x86/include/asm/pmem.h b/arch/x86/include/asm/pmem.h
-index 529bb4a6487a..d5a22bac9988 100644
---- a/arch/x86/include/asm/pmem.h
-+++ b/arch/x86/include/asm/pmem.h
-@@ -44,11 +44,6 @@ static inline void arch_memcpy_to_pmem(void *dst, const void *src, size_t n)
- 		BUG();
+diff --git a/drivers/dax/super.c b/drivers/dax/super.c
+index 23ce3ab49f10..73f0da8e5d27 100644
+--- a/drivers/dax/super.c
++++ b/drivers/dax/super.c
+@@ -17,6 +17,7 @@
+ #include <linux/cdev.h>
+ #include <linux/hash.h>
+ #include <linux/slab.h>
++#include <linux/uio.h>
+ #include <linux/dax.h>
+ #include <linux/fs.h>
+ 
+@@ -104,6 +105,18 @@ long dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff, long nr_pages,
  }
+ EXPORT_SYMBOL_GPL(dax_direct_access);
  
--static inline int arch_memcpy_from_pmem(void *dst, const void *src, size_t n)
--{
--	return memcpy_mcsafe(dst, src, n);
--}
--
- /**
-  * arch_wb_cache_pmem - write back a cache range with CLWB
-  * @vaddr:	virtual start address
-diff --git a/arch/x86/include/asm/string_64.h b/arch/x86/include/asm/string_64.h
-index a164862d77e3..733bae07fb29 100644
---- a/arch/x86/include/asm/string_64.h
-+++ b/arch/x86/include/asm/string_64.h
-@@ -79,6 +79,7 @@ int strcmp(const char *cs, const char *ct);
- #define memset(s, c, n) __memset(s, c, n)
- #endif
- 
-+#define __HAVE_ARCH_MEMCPY_MCSAFE 1
- __must_check int memcpy_mcsafe_unrolled(void *dst, const void *src, size_t cnt);
- DECLARE_STATIC_KEY_FALSE(mcsafe_key);
- 
-diff --git a/drivers/acpi/nfit/core.c b/drivers/acpi/nfit/core.c
-index c8ea9d698cd0..d0c07b2344e4 100644
---- a/drivers/acpi/nfit/core.c
-+++ b/drivers/acpi/nfit/core.c
-@@ -1783,8 +1783,7 @@ static int acpi_nfit_blk_single_io(struct nfit_blk *nfit_blk,
- 				mmio_flush_range((void __force *)
- 					mmio->addr.aperture + offset, c);
- 
--			memcpy_from_pmem(iobuf + copied,
--					mmio->addr.aperture + offset, c);
-+			memcpy(iobuf + copied, mmio->addr.aperture + offset, c);
- 		}
- 
- 		copied += c;
-diff --git a/drivers/nvdimm/claim.c b/drivers/nvdimm/claim.c
-index ca6d572c48fc..3a35e8028b9c 100644
---- a/drivers/nvdimm/claim.c
-+++ b/drivers/nvdimm/claim.c
-@@ -239,7 +239,7 @@ static int nsio_rw_bytes(struct nd_namespace_common *ndns,
- 	if (rw == READ) {
- 		if (unlikely(is_bad_pmem(&nsio->bb, sector, sz_align)))
- 			return -EIO;
--		return memcpy_from_pmem(buf, nsio->addr + offset, size);
-+		return memcpy_mcsafe(buf, nsio->addr + offset, size);
- 	}
- 
- 	if (unlikely(is_bad_pmem(&nsio->bb, sector, sz_align))) {
-diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
-index 85b85633d674..3b3dab73d741 100644
---- a/drivers/nvdimm/pmem.c
-+++ b/drivers/nvdimm/pmem.c
-@@ -89,7 +89,7 @@ static int read_pmem(struct page *page, unsigned int off,
- 	int rc;
- 	void *mem = kmap_atomic(page);
- 
--	rc = memcpy_from_pmem(mem + off, pmem_addr, len);
-+	rc = memcpy_mcsafe(mem + off, pmem_addr, len);
- 	kunmap_atomic(mem);
- 	if (rc)
- 		return -EIO;
-diff --git a/include/linux/pmem.h b/include/linux/pmem.h
-index e856c2cb0fe8..71ecf3d46aac 100644
---- a/include/linux/pmem.h
-+++ b/include/linux/pmem.h
-@@ -31,12 +31,6 @@ static inline void arch_memcpy_to_pmem(void *dst, const void *src, size_t n)
- 	BUG();
- }
- 
--static inline int arch_memcpy_from_pmem(void *dst, const void *src, size_t n)
--{
--	BUG();
--	return -EFAULT;
--}
--
- static inline size_t arch_copy_from_iter_pmem(void *addr, size_t bytes,
- 		struct iov_iter *i)
- {
-@@ -65,23 +59,6 @@ static inline bool arch_has_pmem_api(void)
- 	return IS_ENABLED(CONFIG_ARCH_HAS_PMEM_API);
- }
- 
--/*
-- * memcpy_from_pmem - read from persistent memory with error handling
-- * @dst: destination buffer
-- * @src: source buffer
-- * @size: transfer length
-- *
-- * Returns 0 on success negative error code on failure.
-- */
--static inline int memcpy_from_pmem(void *dst, void const *src, size_t size)
--{
--	if (arch_has_pmem_api())
--		return arch_memcpy_from_pmem(dst, src, size);
--	else
--		memcpy(dst, src, size);
--	return 0;
--}
--
- /**
-  * memcpy_to_pmem - copy data to persistent memory
-  * @dst: destination buffer for the copy
-diff --git a/include/linux/string.h b/include/linux/string.h
-index 26b6f6a66f83..9d6f189157e2 100644
---- a/include/linux/string.h
-+++ b/include/linux/string.h
-@@ -114,6 +114,14 @@ extern int memcmp(const void *,const void *,__kernel_size_t);
- #ifndef __HAVE_ARCH_MEMCHR
- extern void * memchr(const void *,int,__kernel_size_t);
- #endif
-+#ifndef __HAVE_ARCH_MEMCPY_MCSAFE
-+static inline __must_check int memcpy_mcsafe(void *dst, const void *src,
-+		size_t cnt)
++size_t dax_copy_from_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
++		size_t bytes, struct iov_iter *i)
 +{
-+	memcpy(dst, src, cnt);
-+	return 0;
++	if (!dax_alive(dax_dev))
++		return 0;
++
++	if (!dax_dev->ops->copy_from_iter)
++		return copy_from_iter(addr, bytes, i);
++	return dax_dev->ops->copy_from_iter(dax_dev, pgoff, addr, bytes, i);
 +}
-+#endif
- void *memchr_inv(const void *s, int c, size_t n);
- char *strreplace(char *s, char old, char new);
++EXPORT_SYMBOL_GPL(dax_copy_from_iter);
++
+ bool dax_alive(struct dax_device *dax_dev)
+ {
+ 	lockdep_assert_held(&dax_srcu);
+diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
+index c5a52f4dae81..5fe44a0ddfab 100644
+--- a/drivers/md/dm-linear.c
++++ b/drivers/md/dm-linear.c
+@@ -158,6 +158,20 @@ static long linear_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
+ 	return dax_direct_access(dax_dev, pgoff, nr_pages, kaddr, pfn);
+ }
+ 
++static size_t linear_dax_copy_from_iter(struct dm_target *ti, pgoff_t pgoff,
++		void *addr, size_t bytes, struct iov_iter *i)
++{
++	struct linear_c *lc = ti->private;
++	struct block_device *bdev = lc->dev->bdev;
++	struct dax_device *dax_dev = lc->dev->dax_dev;
++	sector_t dev_sector, sector = pgoff * PAGE_SECTORS;
++
++	dev_sector = linear_map_sector(ti, sector);
++	if (bdev_dax_pgoff(bdev, dev_sector, ALIGN(bytes, PAGE_SIZE), &pgoff))
++		return 0;
++	return dax_copy_from_iter(dax_dev, pgoff, addr, bytes, i);
++}
++
+ static struct target_type linear_target = {
+ 	.name   = "linear",
+ 	.version = {1, 3, 0},
+@@ -169,6 +183,7 @@ static struct target_type linear_target = {
+ 	.prepare_ioctl = linear_prepare_ioctl,
+ 	.iterate_devices = linear_iterate_devices,
+ 	.direct_access = linear_dax_direct_access,
++	.dax_copy_from_iter = linear_dax_copy_from_iter,
+ };
+ 
+ int __init dm_linear_init(void)
+diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
+index cb4b1e9e16ab..4f45d23249b2 100644
+--- a/drivers/md/dm-stripe.c
++++ b/drivers/md/dm-stripe.c
+@@ -330,6 +330,25 @@ static long stripe_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
+ 	return dax_direct_access(dax_dev, pgoff, nr_pages, kaddr, pfn);
+ }
+ 
++static size_t stripe_dax_copy_from_iter(struct dm_target *ti, pgoff_t pgoff,
++		void *addr, size_t bytes, struct iov_iter *i)
++{
++	sector_t dev_sector, sector = pgoff * PAGE_SECTORS;
++	struct stripe_c *sc = ti->private;
++	struct dax_device *dax_dev;
++	struct block_device *bdev;
++	uint32_t stripe;
++
++	stripe_map_sector(sc, sector, &stripe, &dev_sector);
++	dev_sector += sc->stripe[stripe].physical_start;
++	dax_dev = sc->stripe[stripe].dev->dax_dev;
++	bdev = sc->stripe[stripe].dev->bdev;
++
++	if (bdev_dax_pgoff(bdev, dev_sector, ALIGN(bytes, PAGE_SIZE), &pgoff))
++		return 0;
++	return dax_copy_from_iter(dax_dev, pgoff, addr, bytes, i);
++}
++
+ /*
+  * Stripe status:
+  *
+@@ -448,6 +467,7 @@ static struct target_type stripe_target = {
+ 	.iterate_devices = stripe_iterate_devices,
+ 	.io_hints = stripe_io_hints,
+ 	.direct_access = stripe_dax_direct_access,
++	.dax_copy_from_iter = stripe_dax_copy_from_iter,
+ };
+ 
+ int __init dm_stripe_init(void)
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 79d5f5fd823e..8c8579efcba2 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -19,6 +19,7 @@
+ #include <linux/dax.h>
+ #include <linux/slab.h>
+ #include <linux/idr.h>
++#include <linux/uio.h>
+ #include <linux/hdreg.h>
+ #include <linux/delay.h>
+ #include <linux/wait.h>
+@@ -957,6 +958,30 @@ static long dm_dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff,
+ 	return ret;
+ }
+ 
++static size_t dm_dax_copy_from_iter(struct dax_device *dax_dev, pgoff_t pgoff,
++		void *addr, size_t bytes, struct iov_iter *i)
++{
++	struct mapped_device *md = dax_get_private(dax_dev);
++	sector_t sector = pgoff * PAGE_SECTORS;
++	struct dm_target *ti;
++	long ret = 0;
++	int srcu_idx;
++
++	ti = dm_dax_get_live_target(md, sector, &srcu_idx);
++
++	if (!ti)
++		goto out;
++	if (!ti->type->dax_copy_from_iter) {
++		ret = copy_from_iter(addr, bytes, i);
++		goto out;
++	}
++	ret = ti->type->dax_copy_from_iter(ti, pgoff, addr, bytes, i);
++ out:
++	dm_put_live_table(md, srcu_idx);
++
++	return ret;
++}
++
+ /*
+  * A target may call dm_accept_partial_bio only from the map routine.  It is
+  * allowed for all bio types except REQ_PREFLUSH.
+@@ -2818,6 +2843,7 @@ static const struct block_device_operations dm_blk_dops = {
+ 
+ static const struct dax_operations dm_dax_ops = {
+ 	.direct_access = dm_dax_direct_access,
++	.copy_from_iter = dm_dax_copy_from_iter,
+ };
+ 
+ /*
+diff --git a/include/linux/dax.h b/include/linux/dax.h
+index 156f067d4db5..cd8561bb21f3 100644
+--- a/include/linux/dax.h
++++ b/include/linux/dax.h
+@@ -32,6 +32,8 @@ void kill_dax(struct dax_device *dax_dev);
+ void *dax_get_private(struct dax_device *dax_dev);
+ long dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff, long nr_pages,
+ 		void **kaddr, pfn_t *pfn);
++size_t dax_copy_from_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
++		size_t bytes, struct iov_iter *i);
+ 
+ /*
+  * We use lowest available bit in exceptional entry for locking, one bit for
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index df830d167892..e18e4277d09d 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -130,6 +130,8 @@ typedef int (*dm_busy_fn) (struct dm_target *ti);
+  */
+ typedef long (*dm_dax_direct_access_fn) (struct dm_target *ti, pgoff_t pgoff,
+ 		long nr_pages, void **kaddr, pfn_t *pfn);
++typedef size_t (*dm_dax_copy_from_iter_fn)(struct dm_target *ti, pgoff_t pgoff,
++		void *addr, size_t bytes, struct iov_iter *i);
+ #define PAGE_SECTORS (PAGE_SIZE / 512)
+ 
+ void dm_error(const char *message);
+@@ -179,6 +181,7 @@ struct target_type {
+ 	dm_iterate_devices_fn iterate_devices;
+ 	dm_io_hints_fn io_hints;
+ 	dm_dax_direct_access_fn direct_access;
++	dm_dax_copy_from_iter_fn dax_copy_from_iter;
+ 
+ 	/* For internal device-mapper use. */
+ 	struct list_head list;
