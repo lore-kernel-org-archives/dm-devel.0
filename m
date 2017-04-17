@@ -1,52 +1,122 @@
-From: Matthias Kaehlcke <mka@chromium.org>
-Subject: [PATCH RESEND] dm ioctl: Remove double parentheses
-Date: Mon, 17 Apr 2017 11:05:03 -0700
-Message-ID: <20170417180503.30435-1-mka@chromium.org>
+From: Joe Perches <joe@perches.com>
+Subject: [PATCH] device-mapper: Convert printks to pr_<level> macros
+Date: Mon, 17 Apr 2017 12:00:14 -0700
+Message-ID: <265c09d8869388ced29b91fcae8d6f936ed2ad13.1492455602.git.joe@perches.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
-Cc: Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, Grant Grundler <grundler@chromium.org>, Greg Hackmann <ghackmann@google.com>, Michael Davidson <md@google.com>, Matthias Kaehlcke <mka@chromium.org>
+Cc: linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-The extra pair of parantheses is not needed and causes clang to generate
-the following warning:
+Using pr_<level> is the more common logging style.
 
-drivers/md/dm-ioctl.c:1776:11: error: equality comparison with extraneous parentheses [-Werror,-Wparentheses-equality]
-        if ((cmd == DM_DEV_CREATE_CMD)) {
-             ~~~~^~~~~~~~~~~~~~~~~~~~
-drivers/md/dm-ioctl.c:1776:11: note: remove extraneous parentheses around the comparison to silence this warning
-        if ((cmd == DM_DEV_CREATE_CMD)) {
-            ~    ^                   ~
-drivers/md/dm-ioctl.c:1776:11: note: use '=' to turn this equality comparison into an assignment
-        if ((cmd == DM_DEV_CREATE_CMD)) {
-                 ^~
-                 =
+In addition, using the pr_<level> macros could shrink the kernel image
+if/when the macros are converted to functions.
 
-Also remove another double parentheses that don't cause a warning.
+Miscellanea:
 
-Signed-off-by: Matthias Kaehlcke <mka@chromium.org>
+o Standardize style and use pr_fmt to prefix the output
+o Standardize the DMDEBUG and DMDEBUG_LIMIT output prefix
+
+Signed-off-by: Joe Perches <joe@perches.com>
 ---
- drivers/md/dm-ioctl.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ include/linux/device-mapper.h | 81 ++++++++++++++++++++++---------------------
+ 1 file changed, 42 insertions(+), 39 deletions(-)
 
-diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-index 4da6fc6b1ffd..acd8f12439e4 100644
---- a/drivers/md/dm-ioctl.c
-+++ b/drivers/md/dm-ioctl.c
-@@ -1778,12 +1778,12 @@ static int validate_params(uint cmd, struct dm_ioctl *param)
- 	    cmd == DM_LIST_VERSIONS_CMD)
- 		return 0;
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index b7ab76ed8e11..759a1a0c72dc 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -533,48 +533,51 @@ extern struct ratelimit_state dm_ratelimit_state;
+ #define dm_ratelimit()	0
+ #endif
  
--	if ((cmd == DM_DEV_CREATE_CMD)) {
-+	if (cmd == DM_DEV_CREATE_CMD) {
- 		if (!*param->name) {
- 			DMWARN("name not supplied when creating device");
- 			return -EINVAL;
- 		}
--	} else if ((*param->uuid && *param->name)) {
-+	} else if (*param->uuid && *param->name) {
- 		DMWARN("only supply one of name or uuid, cmd(%u)", cmd);
- 		return -EINVAL;
- 	}
+-#define DMCRIT(f, arg...) \
+-	printk(KERN_CRIT DM_NAME ": " DM_MSG_PREFIX ": " f "\n", ## arg)
+-
+-#define DMERR(f, arg...) \
+-	printk(KERN_ERR DM_NAME ": " DM_MSG_PREFIX ": " f "\n", ## arg)
+-#define DMERR_LIMIT(f, arg...) \
+-	do { \
+-		if (dm_ratelimit())	\
+-			printk(KERN_ERR DM_NAME ": " DM_MSG_PREFIX ": " \
+-			       f "\n", ## arg); \
+-	} while (0)
+-
+-#define DMWARN(f, arg...) \
+-	printk(KERN_WARNING DM_NAME ": " DM_MSG_PREFIX ": " f "\n", ## arg)
+-#define DMWARN_LIMIT(f, arg...) \
+-	do { \
+-		if (dm_ratelimit())	\
+-			printk(KERN_WARNING DM_NAME ": " DM_MSG_PREFIX ": " \
+-			       f "\n", ## arg); \
+-	} while (0)
+-
+-#define DMINFO(f, arg...) \
+-	printk(KERN_INFO DM_NAME ": " DM_MSG_PREFIX ": " f "\n", ## arg)
+-#define DMINFO_LIMIT(f, arg...) \
+-	do { \
+-		if (dm_ratelimit())	\
+-			printk(KERN_INFO DM_NAME ": " DM_MSG_PREFIX ": " f \
+-			       "\n", ## arg); \
+-	} while (0)
++#ifdef pr_fmt
++#undef pr_fmt
++#endif
++
++#define pr_fmt(fmt) DM_NAME ": " DM_MSG_PREFIX ": " fmt
++
++#define DMCRIT(fmt, ...)						\
++	pr_crit(fmt "\n", ##__VA_ARGS__)
++
++#define DMERR(fmt, ...)							\
++	pr_err(fmt "\n", ##__VA_ARGS__)
++#define DMERR_LIMIT(fmt, ...)						\
++do {									\
++	if (dm_ratelimit())						\
++		DMERR(fmt, ##__VA_ARGS__);				\
++} while (0)
++
++#define DMWARN(fmt, ...)						\
++	pr_warn(fmt "\n", ##__VA_ARGS__)
++#define DMWARN_LIMIT(fmt, ...)						\
++do {									\
++	if (dm_ratelimit())						\
++		DMWARN(fmt, ##__VA_ARGS__);				\
++} while (0)
++
++#define DMINFO(fmt, ...)						\
++	pr_info(fmt "\n", ##__VA_ARGS__)
++#define DMINFO_LIMIT(fmt, ...)						\
++do {									\
++	if (dm_ratelimit())						\
++		DMINFO(fmt, ##__VA_ARGS__);				\
++} while (0)
+ 
+ #ifdef CONFIG_DM_DEBUG
+-#  define DMDEBUG(f, arg...) \
+-	printk(KERN_DEBUG DM_NAME ": " DM_MSG_PREFIX " DEBUG: " f "\n", ## arg)
+-#  define DMDEBUG_LIMIT(f, arg...) \
+-	do { \
+-		if (dm_ratelimit())	\
+-			printk(KERN_DEBUG DM_NAME ": " DM_MSG_PREFIX ": " f \
+-			       "\n", ## arg); \
+-	} while (0)
++#  define DMDEBUG(fmt, ...)						\
++	printk(KERN_DEBUG DM_NAME ": " DM_MSG_PREFIX " DEBUG: " fmt "\n", \
++	       ##__VA_ARGS__)
++#  define DMDEBUG_LIMIT(fmt, ...)					\
++do {									\
++	if (dm_ratelimit())						\
++		DMDEBUG(fmt, ##__VA_ARGS__);				\
++} while (0)
+ #else
+-#  define DMDEBUG(f, arg...) do {} while (0)
+-#  define DMDEBUG_LIMIT(f, arg...) do {} while (0)
++#  define DMDEBUG(fmt, ...) no_printk(fmt, ##__VA_ARGS__)
++#  define DMDEBUG_LIMIT(fmt, ...) no_printk(fmt, ##__VA_ARGS__)
+ #endif
+ 
+ #define DMEMIT(x...) sz += ((sz >= maxlen) ? \
 -- 
-2.12.2.762.g0e3151a226-goog
+2.10.0.rc2.1.g053435c
