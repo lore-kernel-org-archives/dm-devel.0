@@ -1,7 +1,7 @@
 From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: [resend PATCH v2 06/33] axon_ram: add dax_operations support
-Date: Mon, 17 Apr 2017 12:09:22 -0700
-Message-ID: <149245616209.10206.7635523768920777081.stgit@dwillia2-desk3.amr.corp.intel.com>
+Subject: [resend PATCH v2 05/33] pmem: add dax_operations support
+Date: Mon, 17 Apr 2017 12:09:16 -0700
+Message-ID: <149245615669.10206.5525594166204113189.stgit@dwillia2-desk3.amr.corp.intel.com>
 References: <149245612770.10206.15496018295337908594.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,140 +21,260 @@ To: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org
 List-Id: dm-devel.ids
 
-Setup a dax_device to have the same lifetime as the axon_ram block
-device and add a ->direct_access() method that is equivalent to
-axon_ram_direct_access(). Once fs/dax.c has been converted to use
-dax_operations the old axon_ram_direct_access() will be removed.
+Setup a dax_device to have the same lifetime as the pmem block device
+and add a ->direct_access() method that is equivalent to
+pmem_direct_access(). Once fs/dax.c has been converted to use
+dax_operations the old pmem_direct_access() will be removed.
 
 Signed-off-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 ---
- arch/powerpc/platforms/Kconfig |    1 +
- arch/powerpc/sysdev/axonram.c  |   48 +++++++++++++++++++++++++++++++++++-----
- 2 files changed, 43 insertions(+), 6 deletions(-)
+ drivers/dax/dax.h               |    7 ----
+ drivers/nvdimm/Kconfig          |    1 +
+ drivers/nvdimm/pmem.c           |   61 +++++++++++++++++++++++++++++++--------
+ drivers/nvdimm/pmem.h           |    7 +++-
+ include/linux/dax.h             |    6 ++++
+ tools/testing/nvdimm/pmem-dax.c |   21 ++++++-------
+ 6 files changed, 70 insertions(+), 33 deletions(-)
 
-diff --git a/arch/powerpc/platforms/Kconfig b/arch/powerpc/platforms/Kconfig
-index 7e3a2ebba29b..33244e3d9375 100644
---- a/arch/powerpc/platforms/Kconfig
-+++ b/arch/powerpc/platforms/Kconfig
-@@ -284,6 +284,7 @@ config CPM2
- config AXON_RAM
- 	tristate "Axon DDR2 memory device driver"
- 	depends on PPC_IBM_CELL_BLADE && BLOCK
+diff --git a/drivers/dax/dax.h b/drivers/dax/dax.h
+index 617bbc24be2b..f9e5feea742c 100644
+--- a/drivers/dax/dax.h
++++ b/drivers/dax/dax.h
+@@ -13,13 +13,6 @@
+ #ifndef __DAX_H__
+ #define __DAX_H__
+ struct dax_device;
+-struct dax_operations;
+-struct dax_device *alloc_dax(void *private, const char *host,
+-		const struct dax_operations *ops);
+-void put_dax(struct dax_device *dax_dev);
+-bool dax_alive(struct dax_device *dax_dev);
+-void kill_dax(struct dax_device *dax_dev);
+ struct dax_device *inode_dax(struct inode *inode);
+ struct inode *dax_inode(struct dax_device *dax_dev);
+-void *dax_get_private(struct dax_device *dax_dev);
+ #endif /* __DAX_H__ */
+diff --git a/drivers/nvdimm/Kconfig b/drivers/nvdimm/Kconfig
+index 59e750183b7f..5bdd499b5f4f 100644
+--- a/drivers/nvdimm/Kconfig
++++ b/drivers/nvdimm/Kconfig
+@@ -20,6 +20,7 @@ if LIBNVDIMM
+ config BLK_DEV_PMEM
+ 	tristate "PMEM: Persistent memory block device support"
+ 	default LIBNVDIMM
 +	select DAX
- 	default m
+ 	select ND_BTT if BTT
+ 	select ND_PFN if NVDIMM_PFN
  	help
- 	  It registers one block device per Axon's DDR2 memory bank found
-diff --git a/arch/powerpc/sysdev/axonram.c b/arch/powerpc/sysdev/axonram.c
-index f523ac883150..ad857d5e81b1 100644
---- a/arch/powerpc/sysdev/axonram.c
-+++ b/arch/powerpc/sysdev/axonram.c
-@@ -25,6 +25,7 @@
- 
- #include <linux/bio.h>
- #include <linux/blkdev.h>
+diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
+index 5b536be5a12e..fbbcf8154eec 100644
+--- a/drivers/nvdimm/pmem.c
++++ b/drivers/nvdimm/pmem.c
+@@ -28,6 +28,7 @@
+ #include <linux/pfn_t.h>
+ #include <linux/slab.h>
+ #include <linux/pmem.h>
 +#include <linux/dax.h>
- #include <linux/device.h>
- #include <linux/errno.h>
- #include <linux/fs.h>
-@@ -62,6 +63,7 @@ static int azfs_major, azfs_minor;
- struct axon_ram_bank {
- 	struct platform_device	*device;
- 	struct gendisk		*disk;
-+	struct dax_device	*dax_dev;
- 	unsigned int		irq_id;
- 	unsigned long		ph_addr;
- 	unsigned long		io_addr;
-@@ -137,25 +139,47 @@ axon_ram_make_request(struct request_queue *queue, struct bio *bio)
- 	return BLK_QC_T_NONE;
+ #include <linux/nd.h>
+ #include "pmem.h"
+ #include "pfn.h"
+@@ -199,13 +200,13 @@ static int pmem_rw_page(struct block_device *bdev, sector_t sector,
  }
  
-+static long
-+__axon_ram_direct_access(struct axon_ram_bank *bank, pgoff_t pgoff, long nr_pages,
-+		       void **kaddr, pfn_t *pfn)
-+{
-+	resource_size_t offset = pgoff * PAGE_SIZE;
-+
-+	*kaddr = (void *) bank->io_addr + offset;
-+	*pfn = phys_to_pfn_t(bank->ph_addr + offset, PFN_DEV);
-+	return (bank->size - offset) / PAGE_SIZE;
-+}
-+
- /**
-  * axon_ram_direct_access - direct_access() method for block device
-  * @device, @sector, @data: see block_device_operations method
-  */
- static long
--axon_ram_direct_access(struct block_device *device, sector_t sector,
-+axon_ram_blk_direct_access(struct block_device *device, sector_t sector,
- 		       void **kaddr, pfn_t *pfn, long size)
+ /* see "strong" declaration in tools/testing/nvdimm/pmem-dax.c */
+-__weak long pmem_direct_access(struct block_device *bdev, sector_t sector,
+-		      void **kaddr, pfn_t *pfn, long size)
++__weak long __pmem_direct_access(struct pmem_device *pmem, pgoff_t pgoff,
++		long nr_pages, void **kaddr, pfn_t *pfn)
  {
- 	struct axon_ram_bank *bank = device->bd_disk->private_data;
--	loff_t offset = (loff_t)sector << AXON_RAM_SECTOR_SHIFT;
+-	struct pmem_device *pmem = bdev->bd_queue->queuedata;
+-	resource_size_t offset = sector * 512 + pmem->data_offset;
++	resource_size_t offset = PFN_PHYS(pgoff) + pmem->data_offset;
  
--	*kaddr = (void *) bank->io_addr + offset;
--	*pfn = phys_to_pfn_t(bank->ph_addr + offset, PFN_DEV);
--	return bank->size - offset;
-+	return __axon_ram_direct_access(bank, (sector * 512) / PAGE_SIZE,
-+			size / PAGE_SIZE, kaddr, pfn) * PAGE_SIZE;
- }
- 
- static const struct block_device_operations axon_ram_devops = {
- 	.owner		= THIS_MODULE,
--	.direct_access	= axon_ram_direct_access
-+	.direct_access	= axon_ram_blk_direct_access
-+};
-+
-+static long
-+axon_ram_dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff, long nr_pages,
-+		       void **kaddr, pfn_t *pfn)
-+{
-+	struct axon_ram_bank *bank = dax_get_private(dax_dev);
-+
-+	return __axon_ram_direct_access(bank, pgoff, nr_pages, kaddr, pfn);
+-	if (unlikely(is_bad_pmem(&pmem->bb, sector, size)))
++	if (unlikely(is_bad_pmem(&pmem->bb, PFN_PHYS(pgoff) / 512,
++					PFN_PHYS(nr_pages))))
+ 		return -EIO;
+ 	*kaddr = pmem->virt_addr + offset;
+ 	*pfn = phys_to_pfn_t(pmem->phys_addr + offset, pmem->pfn_flags);
+@@ -215,26 +216,51 @@ __weak long pmem_direct_access(struct block_device *bdev, sector_t sector,
+ 	 * requested range.
+ 	 */
+ 	if (unlikely(pmem->bb.count))
+-		return size;
+-	return pmem->size - pmem->pfn_pad - offset;
++		return nr_pages;
++	return PHYS_PFN(pmem->size - pmem->pfn_pad - offset);
 +}
 +
-+static const struct dax_operations axon_ram_dax_ops = {
-+	.direct_access = axon_ram_dax_direct_access,
++static long pmem_blk_direct_access(struct block_device *bdev, sector_t sector,
++		void **kaddr, pfn_t *pfn, long size)
++{
++	struct pmem_device *pmem = bdev->bd_queue->queuedata;
++
++	return __pmem_direct_access(pmem, PHYS_PFN(sector * 512),
++			PHYS_PFN(size), kaddr, pfn);
+ }
+ 
+ static const struct block_device_operations pmem_fops = {
+ 	.owner =		THIS_MODULE,
+ 	.rw_page =		pmem_rw_page,
+-	.direct_access =	pmem_direct_access,
++	.direct_access =	pmem_blk_direct_access,
+ 	.revalidate_disk =	nvdimm_revalidate_disk,
  };
  
- /**
-@@ -219,6 +243,7 @@ static int axon_ram_probe(struct platform_device *device)
- 		goto failed;
++static long pmem_dax_direct_access(struct dax_device *dax_dev,
++		pgoff_t pgoff, long nr_pages, void **kaddr, pfn_t *pfn)
++{
++	struct pmem_device *pmem = dax_get_private(dax_dev);
++
++	return __pmem_direct_access(pmem, pgoff, nr_pages, kaddr, pfn);
++}
++
++static const struct dax_operations pmem_dax_ops = {
++	.direct_access = pmem_dax_direct_access,
++};
++
+ static void pmem_release_queue(void *q)
+ {
+ 	blk_cleanup_queue(q);
+ }
+ 
+-static void pmem_release_disk(void *disk)
++static void pmem_release_disk(void *__pmem)
+ {
+-	del_gendisk(disk);
+-	put_disk(disk);
++	struct pmem_device *pmem = __pmem;
++
++	kill_dax(pmem->dax_dev);
++	put_dax(pmem->dax_dev);
++	del_gendisk(pmem->disk);
++	put_disk(pmem->disk);
+ }
+ 
+ static int pmem_attach_disk(struct device *dev,
+@@ -245,6 +271,7 @@ static int pmem_attach_disk(struct device *dev,
+ 	struct vmem_altmap __altmap, *altmap = NULL;
+ 	struct resource *res = &nsio->res;
+ 	struct nd_pfn *nd_pfn = NULL;
++	struct dax_device *dax_dev;
+ 	int nid = dev_to_node(dev);
+ 	struct nd_pfn_sb *pfn_sb;
+ 	struct pmem_device *pmem;
+@@ -325,6 +352,7 @@ static int pmem_attach_disk(struct device *dev,
+ 	disk = alloc_disk_node(0, nid);
+ 	if (!disk)
+ 		return -ENOMEM;
++	pmem->disk = disk;
+ 
+ 	disk->fops		= &pmem_fops;
+ 	disk->queue		= q;
+@@ -336,9 +364,16 @@ static int pmem_attach_disk(struct device *dev,
+ 		return -ENOMEM;
+ 	nvdimm_badblocks_populate(nd_region, &pmem->bb, res);
+ 	disk->bb = &pmem->bb;
+-	device_add_disk(dev, disk);
+ 
+-	if (devm_add_action_or_reset(dev, pmem_release_disk, disk))
++	dax_dev = alloc_dax(pmem, disk->disk_name, &pmem_dax_ops);
++	if (!dax_dev) {
++		put_disk(disk);
++		return -ENOMEM;
++	}
++	pmem->dax_dev = dax_dev;
++
++	device_add_disk(dev, disk);
++	if (devm_add_action_or_reset(dev, pmem_release_disk, pmem))
+ 		return -ENOMEM;
+ 
+ 	revalidate_disk(disk);
+diff --git a/drivers/nvdimm/pmem.h b/drivers/nvdimm/pmem.h
+index b4ee4f71b4a1..7f4dbd72a90a 100644
+--- a/drivers/nvdimm/pmem.h
++++ b/drivers/nvdimm/pmem.h
+@@ -5,8 +5,6 @@
+ #include <linux/pfn_t.h>
+ #include <linux/fs.h>
+ 
+-long pmem_direct_access(struct block_device *bdev, sector_t sector,
+-		      void **kaddr, pfn_t *pfn, long size);
+ /* this definition is in it's own header for tools/testing/nvdimm to consume */
+ struct pmem_device {
+ 	/* One contiguous memory region per device */
+@@ -20,5 +18,10 @@ struct pmem_device {
+ 	/* trim size when namespace capacity has been section aligned */
+ 	u32			pfn_pad;
+ 	struct badblocks	bb;
++	struct dax_device	*dax_dev;
++	struct gendisk		*disk;
+ };
++
++long __pmem_direct_access(struct pmem_device *pmem, pgoff_t pgoff,
++		long nr_pages, void **kaddr, pfn_t *pfn);
+ #endif /* __NVDIMM_PMEM_H__ */
+diff --git a/include/linux/dax.h b/include/linux/dax.h
+index 74ebb92b625a..39a0312c45c3 100644
+--- a/include/linux/dax.h
++++ b/include/linux/dax.h
+@@ -21,6 +21,12 @@ struct dax_operations {
+ int dax_read_lock(void);
+ void dax_read_unlock(int id);
+ struct dax_device *dax_get_by_host(const char *host);
++struct dax_device *alloc_dax(void *private, const char *host,
++		const struct dax_operations *ops);
++void put_dax(struct dax_device *dax_dev);
++bool dax_alive(struct dax_device *dax_dev);
++void kill_dax(struct dax_device *dax_dev);
++void *dax_get_private(struct dax_device *dax_dev);
+ 
+ /*
+  * We use lowest available bit in exceptional entry for locking, one bit for
+diff --git a/tools/testing/nvdimm/pmem-dax.c b/tools/testing/nvdimm/pmem-dax.c
+index c9b8c48f85fc..b53596ad601b 100644
+--- a/tools/testing/nvdimm/pmem-dax.c
++++ b/tools/testing/nvdimm/pmem-dax.c
+@@ -15,13 +15,13 @@
+ #include <pmem.h>
+ #include <nd.h>
+ 
+-long pmem_direct_access(struct block_device *bdev, sector_t sector,
+-		void **kaddr, pfn_t *pfn, long size)
++long __pmem_direct_access(struct pmem_device *pmem, pgoff_t pgoff,
++		long nr_pages, void **kaddr, pfn_t *pfn)
+ {
+-	struct pmem_device *pmem = bdev->bd_queue->queuedata;
+-	resource_size_t offset = sector * 512 + pmem->data_offset;
++	resource_size_t offset = PFN_PHYS(pgoff) + pmem->data_offset;
+ 
+-	if (unlikely(is_bad_pmem(&pmem->bb, sector, size)))
++	if (unlikely(is_bad_pmem(&pmem->bb, PFN_PHYS(pgoff) / 512,
++					PFN_PHYS(nr_pages))))
+ 		return -EIO;
+ 
+ 	/*
+@@ -34,11 +34,10 @@ long pmem_direct_access(struct block_device *bdev, sector_t sector,
+ 		*kaddr = pmem->virt_addr + offset;
+ 		page = vmalloc_to_page(pmem->virt_addr + offset);
+ 		*pfn = page_to_pfn_t(page);
+-		dev_dbg_ratelimited(disk_to_dev(bdev->bd_disk)->parent,
+-				"%s: sector: %#llx pfn: %#lx\n", __func__,
+-				(unsigned long long) sector, page_to_pfn(page));
++		pr_debug_ratelimited("%s: pmem: %p pgoff: %#lx pfn: %#lx\n",
++				__func__, pmem, pgoff, page_to_pfn(page));
+ 
+-		return PAGE_SIZE;
++		return 1;
  	}
  
-+
- 	bank->disk->major = azfs_major;
- 	bank->disk->first_minor = azfs_minor;
- 	bank->disk->fops = &axon_ram_devops;
-@@ -227,6 +252,11 @@ static int axon_ram_probe(struct platform_device *device)
- 	sprintf(bank->disk->disk_name, "%s%d",
- 			AXON_RAM_DEVICE_NAME, axon_ram_bank_id);
- 
-+	bank->dax_dev = alloc_dax(bank, bank->disk->disk_name,
-+			&axon_ram_dax_ops);
-+	if (!bank->dax_dev)
-+		goto failed;
-+
- 	bank->disk->queue = blk_alloc_queue(GFP_KERNEL);
- 	if (bank->disk->queue == NULL) {
- 		dev_err(&device->dev, "Cannot register disk queue\n");
-@@ -278,6 +308,10 @@ static int axon_ram_probe(struct platform_device *device)
- 				del_gendisk(bank->disk);
- 			put_disk(bank->disk);
- 		}
-+		if (bank->dax_dev) {
-+			kill_dax(bank->dax_dev);
-+			put_dax(bank->dax_dev);
-+		}
- 		device->dev.platform_data = NULL;
- 		if (bank->io_addr != 0)
- 			iounmap((void __iomem *) bank->io_addr);
-@@ -300,6 +334,8 @@ axon_ram_remove(struct platform_device *device)
- 
- 	device_remove_file(&device->dev, &dev_attr_ecc);
- 	free_irq(bank->irq_id, device);
-+	kill_dax(bank->dax_dev);
-+	put_dax(bank->dax_dev);
- 	del_gendisk(bank->disk);
- 	put_disk(bank->disk);
- 	iounmap((void __iomem *) bank->io_addr);
+ 	*kaddr = pmem->virt_addr + offset;
+@@ -49,6 +48,6 @@ long pmem_direct_access(struct block_device *bdev, sector_t sector,
+ 	 * requested range.
+ 	 */
+ 	if (unlikely(pmem->bb.count))
+-		return size;
+-	return pmem->size - pmem->pfn_pad - offset;
++		return nr_pages;
++	return PHYS_PFN(pmem->size - pmem->pfn_pad - offset);
+ }
