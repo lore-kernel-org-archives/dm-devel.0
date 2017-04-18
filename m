@@ -1,109 +1,143 @@
-From: Enric Balletbo i Serra <enric.balletbo@collabora.com>
-Subject: [PATCH v6 2/3] dm: export a table+mapped device to the
-	ioctl interface
-Date: Tue, 18 Apr 2017 18:42:39 +0200
-Message-ID: <20170418164240.18079-3-enric.balletbo@collabora.com>
-References: <20170418164240.18079-1-enric.balletbo@collabora.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170418164240.18079-1-enric.balletbo@collabora.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Kees Cook <keescook@chromium.org>, Will Drewry <wad@chromium.org>
-Cc: Guenter Roeck <groeck@google.com>, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>
+From: Ilya Dryomov <idryomov@gmail.com>
+Subject: [PATCH] block: get rid of blk_integrity_revalidate()
+Date: Tue, 18 Apr 2017 18:43:20 +0200
+Message-ID: <1492533800-30627-1-git-send-email-idryomov@gmail.com>
+Return-path: <ceph-devel-owner@vger.kernel.org>
+Sender: ceph-devel-owner@vger.kernel.org
+To: "Martin K. Petersen" <martin.petersen@oracle.com>
+Cc: Dan Williams <dan.j.williams@intel.com>, Christoph Hellwig <hch@lst.de>, Mike Snitzer <snitzer@redhat.com>, Jens Axboe <axboe@fb.com>, linux-block@vger.kernel.org, linux-nvme@lists.infradead.org, dm-devel@redhat.com, ceph-devel@vger.kernel.org
 List-Id: dm-devel.ids
 
-From: Will Drewry <wad@chromium.org>
+Commit 25520d55cdb6 ("block: Inline blk_integrity in struct gendisk")
+introduced blk_integrity_revalidate(), which seems to assume ownership
+of the stable pages flag and unilaterally clears it if no blk_integrity
+profile is registered:
 
-One function is added which allows for a programmatically created
-mapped device to be inserted into the dm-ioctl hash table. This binds
-the device to a name and, optional, uuid which is needed by udev and
-allows for userspace management of the mapped device.
+    if (bi->profile)
+            disk->queue->backing_dev_info->capabilities |=
+                    BDI_CAP_STABLE_WRITES;
+    else
+            disk->queue->backing_dev_info->capabilities &=
+                    ~BDI_CAP_STABLE_WRITES;
 
-Signed-off-by: Will Drewry <wad@chromium.org>
-Signed-off-by: Kees Cook <keescook@chromium.org>
-Signed-off-by: Enric Balletbo i Serra <enric.balletbo@collabora.com>
+It's called from revalidate_disk() and rescan_partitions(), making it
+impossible to enable stable pages for drivers that support partitions
+and don't use blk_integrity: while the call in revalidate_disk() can be
+trivially worked around (see zram, which doesn't support partitions and
+hence gets away with zram_revalidate_disk()), rescan_partitions() can
+be triggered from userspace at any time.  This breaks rbd, where the
+ceph messenger is responsible for generating/verifying CRCs.
+
+Since blk_integrity_{un,}register() "must" be used for (un)registering
+the integrity profile with the block layer, move BDI_CAP_STABLE_WRITES
+setting there.  This way drivers that call blk_integrity_register() and
+use integrity infrastructure won't interfere with drivers that don't
+but still want stable pages.
+
+Fixes: 25520d55cdb6 ("block: Inline blk_integrity in struct gendisk")
+Cc: "Martin K. Petersen" <martin.petersen@oracle.com>
+Cc: Dan Williams <dan.j.williams@intel.com>
+Cc: Christoph Hellwig <hch@lst.de>
+Cc: Mike Snitzer <snitzer@redhat.com>
+Cc: stable@vger.kernel.org # 4.4+, needs backporting
+Signed-off-by: Ilya Dryomov <idryomov@gmail.com>
 ---
-v6: none
-v5: resurrection
-v4: https://patchwork.kernel.org/patch/104860/
----
- drivers/md/dm-ioctl.c         | 36 ++++++++++++++++++++++++++++++++++++
- include/linux/device-mapper.h |  6 ++++++
- 2 files changed, 42 insertions(+)
+I don't have any integrity-capable disks or nvme separate-metadata
+cards, so I couldn't test this as well as I wanted to.  25520d55cdb6
+went in with some nvme work, but Martin recalls that it may have had
+something to do with integrity-capable dm arrays losing the integrity
+capability at runtime.  Previous discussion at
 
-diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-index 4951bf9..f4c610f 100644
---- a/drivers/md/dm-ioctl.c
-+++ b/drivers/md/dm-ioctl.c
-@@ -1924,6 +1924,42 @@ void dm_interface_exit(void)
+    http://www.spinics.net/lists/ceph-devel/msg35413.html
+
+---
+ block/blk-integrity.c     | 19 ++-----------------
+ block/partition-generic.c |  1 -
+ fs/block_dev.c            |  1 -
+ include/linux/genhd.h     |  2 --
+ 4 files changed, 2 insertions(+), 21 deletions(-)
+
+diff --git a/block/blk-integrity.c b/block/blk-integrity.c
+index 9f0ff5ba4f84..35c5af1ea068 100644
+--- a/block/blk-integrity.c
++++ b/block/blk-integrity.c
+@@ -417,7 +417,7 @@ void blk_integrity_register(struct gendisk *disk, struct blk_integrity *template
+ 	bi->tuple_size = template->tuple_size;
+ 	bi->tag_size = template->tag_size;
+ 
+-	blk_integrity_revalidate(disk);
++	disk->queue->backing_dev_info->capabilities |= BDI_CAP_STABLE_WRITES;
  }
+ EXPORT_SYMBOL(blk_integrity_register);
  
- /**
-+ * dm_ioctl_export - Permanently export a mapped device via the ioctl interface
-+ * @md: Pointer to mapped_device
-+ * @name: Buffer (size DM_NAME_LEN) for name
-+ * @uuid: Buffer (size DM_UUID_LEN) for uuid or NULL if not desired
-+ */
-+int dm_ioctl_export(struct mapped_device *md, const char *name,
-+		    const char *uuid)
-+{
-+	int r = 0;
-+	struct hash_cell *hc;
-+
-+	if (!md)
-+		return -ENXIO;
-+
-+	/* The name and uuid can only be set once. */
-+	mutex_lock(&dm_hash_cells_mutex);
-+	hc = dm_get_mdptr(md);
-+	mutex_unlock(&dm_hash_cells_mutex);
-+	if (hc) {
-+		DMERR("%s: already exported", dm_device_name(md));
-+		return -ENXIO;
-+	}
-+
-+	r = dm_hash_insert(name, uuid, md);
-+	if (r) {
-+		DMERR("%s: could not bind to '%s'", dm_device_name(md), name);
-+		return r;
-+	}
-+
-+	/* Let udev know we've changed. */
-+	dm_kobject_uevent(md, KOBJ_CHANGE, dm_get_event_nr(md));
-+
-+	return r;
-+}
-+
-+/**
-  * dm_copy_name_and_uuid - Copy mapped device name & uuid into supplied buffers
-  * @md: Pointer to mapped_device
-  * @name: Buffer (size DM_NAME_LEN) for name
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index 9f70b21..2efac3b 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -412,6 +412,12 @@ void dm_set_mdptr(struct mapped_device *md, void *ptr);
- void *dm_get_mdptr(struct mapped_device *md);
- 
- /*
-+ * Export the device via the ioctl interface (uses mdptr).
-+ */
-+int dm_ioctl_export(struct mapped_device *md, const char *name,
-+		    const char *uuid);
-+
-+/*
-  * A device can still be used while suspended, but I/O is deferred.
+@@ -430,26 +430,11 @@ EXPORT_SYMBOL(blk_integrity_register);
   */
- int dm_suspend(struct mapped_device *md, unsigned suspend_flags);
+ void blk_integrity_unregister(struct gendisk *disk)
+ {
+-	blk_integrity_revalidate(disk);
++	disk->queue->backing_dev_info->capabilities &= ~BDI_CAP_STABLE_WRITES;
+ 	memset(&disk->queue->integrity, 0, sizeof(struct blk_integrity));
+ }
+ EXPORT_SYMBOL(blk_integrity_unregister);
+ 
+-void blk_integrity_revalidate(struct gendisk *disk)
+-{
+-	struct blk_integrity *bi = &disk->queue->integrity;
+-
+-	if (!(disk->flags & GENHD_FL_UP))
+-		return;
+-
+-	if (bi->profile)
+-		disk->queue->backing_dev_info->capabilities |=
+-			BDI_CAP_STABLE_WRITES;
+-	else
+-		disk->queue->backing_dev_info->capabilities &=
+-			~BDI_CAP_STABLE_WRITES;
+-}
+-
+ void blk_integrity_add(struct gendisk *disk)
+ {
+ 	if (kobject_init_and_add(&disk->integrity_kobj, &integrity_ktype,
+diff --git a/block/partition-generic.c b/block/partition-generic.c
+index 7afb9907821f..0171a2faad68 100644
+--- a/block/partition-generic.c
++++ b/block/partition-generic.c
+@@ -497,7 +497,6 @@ int rescan_partitions(struct gendisk *disk, struct block_device *bdev)
+ 
+ 	if (disk->fops->revalidate_disk)
+ 		disk->fops->revalidate_disk(disk);
+-	blk_integrity_revalidate(disk);
+ 	check_disk_size_change(disk, bdev);
+ 	bdev->bd_invalidated = 0;
+ 	if (!get_capacity(disk) || !(state = check_partition(disk, bdev)))
+diff --git a/fs/block_dev.c b/fs/block_dev.c
+index 2eca00ec4370..56039dfbc674 100644
+--- a/fs/block_dev.c
++++ b/fs/block_dev.c
+@@ -1451,7 +1451,6 @@ int revalidate_disk(struct gendisk *disk)
+ 
+ 	if (disk->fops->revalidate_disk)
+ 		ret = disk->fops->revalidate_disk(disk);
+-	blk_integrity_revalidate(disk);
+ 	bdev = bdget_disk(disk, 0);
+ 	if (!bdev)
+ 		return ret;
+diff --git a/include/linux/genhd.h b/include/linux/genhd.h
+index 76f39754e7b0..76d6a1cd4153 100644
+--- a/include/linux/genhd.h
++++ b/include/linux/genhd.h
+@@ -722,11 +722,9 @@ static inline void part_nr_sects_write(struct hd_struct *part, sector_t size)
+ #if defined(CONFIG_BLK_DEV_INTEGRITY)
+ extern void blk_integrity_add(struct gendisk *);
+ extern void blk_integrity_del(struct gendisk *);
+-extern void blk_integrity_revalidate(struct gendisk *);
+ #else	/* CONFIG_BLK_DEV_INTEGRITY */
+ static inline void blk_integrity_add(struct gendisk *disk) { }
+ static inline void blk_integrity_del(struct gendisk *disk) { }
+-static inline void blk_integrity_revalidate(struct gendisk *disk) { }
+ #endif	/* CONFIG_BLK_DEV_INTEGRITY */
+ 
+ #else /* CONFIG_BLOCK */
 -- 
-2.9.3
+2.4.3
+
