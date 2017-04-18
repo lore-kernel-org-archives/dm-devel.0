@@ -1,87 +1,229 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: Re: [PATCH v6 0/3] dm: boot a mapped device without an initramfs
-Date: Tue, 18 Apr 2017 10:37:59 -0700
-Message-ID: <CAGXu5jLD+0POz1sopyZNNqDAiq2MZ5ZYdjs43jX5OnWxkZt1Lg@mail.gmail.com>
-References: <20170418164240.18079-1-enric.balletbo@collabora.com>
+From: Joe Perches <joe@perches.com>
+Subject: Re: [PATCH] device-mapper: Convert printks to pr_<level> macros
+Date: Tue, 18 Apr 2017 12:13:03 -0700
+Message-ID: <1492542783.8661.43.camel@perches.com>
+References: <201704180416.flAy5fPu%fengguang.wu@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <20170418164240.18079-1-enric.balletbo@collabora.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: Enric Balletbo i Serra <enric.balletbo@collabora.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Will Drewry <wad@chromium.org>, dm-devel@redhat.com, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, Guenter Roeck <groeck@google.com>, David Zeuthen <zeuthen@google.com>
+Content-Type: text/plain; charset="ISO-8859-1"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <201704180416.flAy5fPu%fengguang.wu@intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: kbuild test robot <lkp@intel.com>
+Cc: kbuild-all@01.org, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Tue, Apr 18, 2017 at 9:42 AM, Enric Balletbo i Serra
-<enric.balletbo@collabora.com> wrote:
-> Hello,
->
-> Some of these patches were send few years back, I saw that first
-> version was send to this list in 2010, and after version 4 did not
-> land [1]. Some days ago I resend the patches [2] and few hours later I
-> noticed that one year ago was send a v5 version [3] and I was not aware.
->
-> There was some discussion about v5 and during the discussion Mike Snitzer
-> proposed that at least a change of the syntax is required, we're really
-> interested on see this upstream as is extensively used in ChromeOS based
-> devices so I'm wondering if we can restart the discussion and hopefully
-> we will be able to do the modifications needed.
->
-> So my first question is, apart of the change of the syntax, what more
-> should be changed?
+(wrote this yesterday, neglected to send)
 
-AFAIK, this was the main change needed. Change the syntax and plumb
-into the ioctl interface. The discussion ended with Mike being open to
-the idea, and for me to go work on it. I haven't had time to work on
-it, though, so it has continued to be a locally carried patch:
-https://www.redhat.com/archives/dm-devel/2016-February/msg00199.html
+On Tue, 2017-04-18 at 05:02 +0800, kbuild test robot wrote:
+> Hi Joe,
 
-More recently David Zeuthen has been poking at this code, so I've
-included him on CC here, in case there are new developments.
+Hello Fengguang's robot.
 
--Kees
+> [auto build test ERROR on v4.9-rc8]
+> [also build test ERROR on next-20170413]
+> [if your patch is applied to the wrong git tree, please drop us a note to help improve the system]
+> 
+> url:    https://github.com/0day-ci/linux/commits/Joe-Perches/device-mapper-Convert-printks-to-pr_-level-macros/20170418-030508
+> config: i386-allmodconfig (attached as .config)
+> compiler: gcc-6 (Debian 6.2.0-3) 6.2.0 20160901
+> reproduce:
+>         # save the attached .config to linux build tree
+>         make ARCH=i386 
+> 
+> All error/warnings (new ones prefixed by >>):
+> 
+>    In file included from fs/nfs/blocklayout/blocklayout.h:35:0,
+>                     from fs/nfs/blocklayout/dev.c:11:
+>    fs/nfs/blocklayout/dev.c: In function 'bl_free_device':
+> > > include/linux/device-mapper.h:536:34: error: expected ')' before 'DM_MSG_PREFIX'
+> 
+>     #define pr_fmt(fmt) DM_NAME ": " DM_MSG_PREFIX ": " fmt
+>                                      ^
+> > > include/linux/printk.h:277:18: note: in expansion of macro 'pr_fmt'
+> 
+>      printk(KERN_ERR pr_fmt(fmt), ##__VA_ARGS__)
+>                      ^~~~~~
+> > > fs/nfs/blocklayout/dev.c:33:5: note: in expansion of macro 'pr_err'
+> 
+>         pr_err("failed to unregister PR key.\n");
+>         ^~~~~~
+>    fs/nfs/blocklayout/dev.c: In function 'nfs4_block_decode_volume':
 
->
-> Thanks for your help,
->  Enric
->
-> [1] Patchwork links:
->     https://patchwork.kernel.org/patch/104857/
->     https://patchwork.kernel.org/patch/104856/
->     https://patchwork.kernel.org/patch/104858/
->
-> [2] https://www.mail-archive.com/linux-kernel@vger.kernel.org/msg1375276.html
->
-> [3] https://www.redhat.com/archives/dm-devel/2016-February/msg00112.html
->
->
-> Brian Norris (1):
->   dm: make some mapped_device functions available
->
-> Will Drewry (2):
->   dm: export a table+mapped device to the ioctl interface
->   init: add support to directly boot to a mapped device
->
->  Documentation/admin-guide/kernel-parameters.rst |   1 +
->  Documentation/admin-guide/kernel-parameters.txt |   3 +
->  Documentation/device-mapper/boot.txt            |  65 ++++
->  drivers/md/dm-ioctl.c                           |  36 ++
->  drivers/md/dm.h                                 |   8 -
->  include/linux/device-mapper.h                   |  19 +
->  init/Makefile                                   |   1 +
->  init/do_mounts.c                                |   1 +
->  init/do_mounts.h                                |  10 +
->  init/do_mounts_dm.c                             | 448 ++++++++++++++++++++++++
->  10 files changed, 584 insertions(+), 8 deletions(-)
->  create mode 100644 Documentation/device-mapper/boot.txt
->  create mode 100644 init/do_mounts_dm.c
->
+Right.
+
+I didn't compile the all the files that #include device-mapper.h
+only drivers/md/.
+
+My mistake.  I'll investigate and possibly resubmit.
+
+(investigated and sent email about possible #pragma macro_push use)
+
+> > > include/linux/device-mapper.h:536:34: error: expected ')' before 'DM_MSG_PREFIX'
+> 
+>     #define pr_fmt(fmt) DM_NAME ": " DM_MSG_PREFIX ": " fmt
+>                                      ^
+>    include/linux/printk.h:284:19: note: in expansion of macro 'pr_fmt'
+>      printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
+>                       ^~~~~~
+> > > fs/nfs/blocklayout/dev.c:81:5: note: in expansion of macro 'pr_info'
+> 
+>         pr_info("signature too long: %d\n",
+>         ^~~~~~~
+>    fs/nfs/blocklayout/dev.c: In function 'bl_validate_designator':
+> > > include/linux/device-mapper.h:536:34: error: expected ')' before 'DM_MSG_PREFIX'
+> 
+>     #define pr_fmt(fmt) DM_NAME ": " DM_MSG_PREFIX ": " fmt
+>                                      ^
+> > > include/linux/printk.h:277:18: note: in expansion of macro 'pr_fmt'
+> 
+>      printk(KERN_ERR pr_fmt(fmt), ##__VA_ARGS__)
+>                      ^~~~~~
+>    fs/nfs/blocklayout/dev.c:287:3: note: in expansion of macro 'pr_err'
+>       pr_err("pNFS: unsupported designator "
+>       ^~~~~~
+> > > include/linux/device-mapper.h:536:34: error: expected ')' before 'DM_MSG_PREFIX'
+> 
+>     #define pr_fmt(fmt) DM_NAME ": " DM_MSG_PREFIX ": " fmt
+>                                      ^
+> > > include/linux/printk.h:277:18: note: in expansion of macro 'pr_fmt'
+> 
+>      printk(KERN_ERR pr_fmt(fmt), ##__VA_ARGS__)
+>                      ^~~~~~
+>    fs/nfs/blocklayout/dev.c:294:3: note: in expansion of macro 'pr_err'
+>       pr_err("pNFS: invalid designator "
+>       ^~~~~~
+>    fs/nfs/blocklayout/dev.c: In function 'bl_open_udev_path':
+> > > include/linux/device-mapper.h:536:34: error: expected ')' before 'DM_MSG_PREFIX'
+> 
+>     #define pr_fmt(fmt) DM_NAME ": " DM_MSG_PREFIX ": " fmt
+>                                      ^
+>    include/linux/printk.h:279:22: note: in expansion of macro 'pr_fmt'
+>      printk(KERN_WARNING pr_fmt(fmt), ##__VA_ARGS__)
+>                          ^~~~~~
+>    include/linux/printk.h:280:17: note: in expansion of macro 'pr_warning'
+>     #define pr_warn pr_warning
+>                     ^~~~~~~~~~
+> > > fs/nfs/blocklayout/dev.c:320:3: note: in expansion of macro 'pr_warn'
+> 
+>       pr_warn("pNFS: failed to open device %s (%ld)\n",
+>       ^~~~~~~
+>    fs/nfs/blocklayout/dev.c: In function 'bl_parse_scsi':
+> > > include/linux/device-mapper.h:536:34: error: expected ')' before 'DM_MSG_PREFIX'
+> 
+>     #define pr_fmt(fmt) DM_NAME ": " DM_MSG_PREFIX ": " fmt
+>                                      ^
+>    include/linux/printk.h:284:19: note: in expansion of macro 'pr_fmt'
+>      printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
+>                       ^~~~~~
+>    fs/nfs/blocklayout/dev.c:373:2: note: in expansion of macro 'pr_info'
+>      pr_info("pNFS: using block device %s (reservation key 0x%llx)\n",
+>      ^~~~~~~
+> > > include/linux/device-mapper.h:536:34: error: expected ')' before 'DM_MSG_PREFIX'
+> 
+>     #define pr_fmt(fmt) DM_NAME ": " DM_MSG_PREFIX ": " fmt
+>                                      ^
+> > > include/linux/printk.h:277:18: note: in expansion of macro 'pr_fmt'
+> 
+>      printk(KERN_ERR pr_fmt(fmt), ##__VA_ARGS__)
+>                      ^~~~~~
+>    fs/nfs/blocklayout/dev.c:378:3: note: in expansion of macro 'pr_err'
+>       pr_err("pNFS: block device %s does not support reservations.",
+>       ^~~~~~
+> > > include/linux/device-mapper.h:536:34: error: expected ')' before 'DM_MSG_PREFIX'
+> 
+>     #define pr_fmt(fmt) DM_NAME ": " DM_MSG_PREFIX ": " fmt
+>                                      ^
+> > > include/linux/printk.h:277:18: note: in expansion of macro 'pr_fmt'
+> 
+>      printk(KERN_ERR pr_fmt(fmt), ##__VA_ARGS__)
+>                      ^~~~~~
+>    fs/nfs/blocklayout/dev.c:386:3: note: in expansion of macro 'pr_err'
+>       pr_err("pNFS: failed to register key for block device %s.",
+>       ^~~~~~
 > --
-> 2.9.3
->
-
-
-
--- 
-Kees Cook
-Pixel Security
+>    In file included from fs/nfs/blocklayout/blocklayout.h:35:0,
+>                     from fs/nfs/blocklayout/extent_tree.c:7:
+>    include/linux/netdevice.h: In function 'netdev_cap_txqueue':
+> > > include/linux/device-mapper.h:536:34: error: expected ')' before 'DM_MSG_PREFIX'
+> 
+>     #define pr_fmt(fmt) DM_NAME ": " DM_MSG_PREFIX ": " fmt
+>                                      ^
+>    include/linux/printk.h:279:22: note: in expansion of macro 'pr_fmt'
+>      printk(KERN_WARNING pr_fmt(fmt), ##__VA_ARGS__)
+>                          ^~~~~~
+> > > include/linux/net.h:238:3: note: in expansion of macro 'pr_warning'
+> 
+>       function(__VA_ARGS__);    \
+>       ^~~~~~~~
+> > > include/linux/net.h:252:2: note: in expansion of macro 'net_ratelimited_function'
+> 
+>      net_ratelimited_function(pr_warn, fmt, ##__VA_ARGS__)
+>      ^~~~~~~~~~~~~~~~~~~~~~~~
+> > > include/linux/net.h:252:27: note: in expansion of macro 'pr_warn'
+> 
+>      net_ratelimited_function(pr_warn, fmt, ##__VA_ARGS__)
+>                               ^~~~~~~
+> > > include/linux/netdevice.h:3119:3: note: in expansion of macro 'net_warn_ratelimited'
+> 
+>       net_warn_ratelimited("%s selects TX queue %d, but real number of TX queues is %d\n",
+>       ^~~~~~~~~~~~~~~~~~~~
+>    include/net/inet_connection_sock.h: In function 'inet_csk_clear_xmit_timer':
+> > > include/linux/device-mapper.h:536:34: error: expected ')' before 'DM_MSG_PREFIX'
+> 
+>     #define pr_fmt(fmt) DM_NAME ": " DM_MSG_PREFIX ": " fmt
+>                                      ^
+>    include/linux/dynamic_debug.h:126:35: note: in expansion of macro 'pr_fmt'
+>       __dynamic_pr_debug(&descriptor, pr_fmt(fmt), \
+>                                       ^~~~~~
+>    include/linux/printk.h:309:2: note: in expansion of macro 'dynamic_pr_debug'
+>      dynamic_pr_debug(fmt, ##__VA_ARGS__)
+>      ^~~~~~~~~~~~~~~~
+> > > include/net/inet_connection_sock.h:213:3: note: in expansion of macro 'pr_debug'
+> 
+>       pr_debug("%s", inet_csk_timer_bug_msg);
+>       ^~~~~~~~
+>    include/net/inet_connection_sock.h: In function 'inet_csk_reset_xmit_timer':
+> > > include/linux/device-mapper.h:536:34: error: expected ')' before 'DM_MSG_PREFIX'
+> 
+>     #define pr_fmt(fmt) DM_NAME ": " DM_MSG_PREFIX ": " fmt
+>                                      ^
+>    include/linux/dynamic_debug.h:126:35: note: in expansion of macro 'pr_fmt'
+>       __dynamic_pr_debug(&descriptor, pr_fmt(fmt), \
+>                                       ^~~~~~
+>    include/linux/printk.h:309:2: note: in expansion of macro 'dynamic_pr_debug'
+>      dynamic_pr_debug(fmt, ##__VA_ARGS__)
+>      ^~~~~~~~~~~~~~~~
+>    include/net/inet_connection_sock.h:229:3: note: in expansion of macro 'pr_debug'
+>       pr_debug("reset_xmit_timer: sk=%p %d when=0x%lx, caller=%p\n",
+>       ^~~~~~~~
+> > > include/linux/device-mapper.h:536:34: error: expected ')' before 'DM_MSG_PREFIX'
+> 
+>     #define pr_fmt(fmt) DM_NAME ": " DM_MSG_PREFIX ": " fmt
+>                                      ^
+>    include/linux/dynamic_debug.h:126:35: note: in expansion of macro 'pr_fmt'
+>       __dynamic_pr_debug(&descriptor, pr_fmt(fmt), \
+>                                       ^~~~~~
+>    include/linux/printk.h:309:2: note: in expansion of macro 'dynamic_pr_debug'
+>      dynamic_pr_debug(fmt, ##__VA_ARGS__)
+>      ^~~~~~~~~~~~~~~~
+>    include/net/inet_connection_sock.h:247:3: note: in expansion of macro 'pr_debug'
+>       pr_debug("%s", inet_csk_timer_bug_msg);
+>       ^~~~~~~~
+> 
+> vim +536 include/linux/device-mapper.h
+> 
+>    530	#endif
+>    531	
+>    532	#ifdef pr_fmt
+>    533	#undef pr_fmt
+>    534	#endif
+>    535	
+>  > 536	#define pr_fmt(fmt) DM_NAME ": " DM_MSG_PREFIX ": " fmt
+>    537	
+>    538	#define DMCRIT(fmt, ...)						\
+>    539		pr_crit(fmt "\n", ##__VA_ARGS__)
+> 
+> ---
+> 0-DAY kernel test infrastructure                Open Source Technology Center
+> https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
