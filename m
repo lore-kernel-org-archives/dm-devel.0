@@ -1,12 +1,14 @@
 From: Enric Balletbo i Serra <enric.balletbo@collabora.com>
-Subject: [PATCH v6 0/3] dm: boot a mapped device without an
-	initramfs
-Date: Tue, 18 Apr 2017 18:42:37 +0200
-Message-ID: <20170418164240.18079-1-enric.balletbo@collabora.com>
+Subject: [PATCH v6 1/3] dm: make some mapped_device functions
+	available
+Date: Tue, 18 Apr 2017 18:42:38 +0200
+Message-ID: <20170418164240.18079-2-enric.balletbo@collabora.com>
+References: <20170418164240.18079-1-enric.balletbo@collabora.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20170418164240.18079-1-enric.balletbo@collabora.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,58 +19,91 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Kees Cook <keescook@chromium.org>, Will Drewry <wad@chromium.org>
-Cc: Guenter Roeck <groeck@google.com>, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>
+Cc: Guenter Roeck <groeck@google.com>, linux-doc@vger.kernel.org, Brian Norris <briannorris@chromium.org>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>
 List-Id: dm-devel.ids
 
-Hello,
+From: Brian Norris <briannorris@chromium.org>
 
-Some of these patches were send few years back, I saw that first
-version was send to this list in 2010, and after version 4 did not
-land [1]. Some days ago I resend the patches [2] and few hours later I
-noticed that one year ago was send a v5 version [3] and I was not aware.
+For init to build a mapped_device, it must hold the appropriate locks,
+able to use dm_table_destroy() and the functions to get/set the md
+type, so move these to the common header.
 
-There was some discussion about v5 and during the discussion Mike Snitzer
-proposed that at least a change of the syntax is required, we're really
-interested on see this upstream as is extensively used in ChromeOS based
-devices so I'm wondering if we can restart the discussion and hopefully
-we will be able to do the modifications needed.
+Signed-off-by: Brian Norris <briannorris@chromium.org>
+Signed-off-by: Kees Cook <keescook@chromium.org>
+Signed-off-by: Enric Balletbo i Serra <enric.balletbo@collabora.com>
+---
+v6: added more functions required
+v5: first version of this specific patch in the series
+---
+ drivers/md/dm.h               |  8 --------
+ include/linux/device-mapper.h | 13 +++++++++++++
+ 2 files changed, 13 insertions(+), 8 deletions(-)
 
-So my first question is, apart of the change of the syntax, what more
-should be changed?
-
-Thanks for your help,
- Enric
-
-[1] Patchwork links:
-    https://patchwork.kernel.org/patch/104857/
-    https://patchwork.kernel.org/patch/104856/
-    https://patchwork.kernel.org/patch/104858/
-
-[2] https://www.mail-archive.com/linux-kernel@vger.kernel.org/msg1375276.html
-
-[3] https://www.redhat.com/archives/dm-devel/2016-February/msg00112.html
-
-
-Brian Norris (1):
-  dm: make some mapped_device functions available
-
-Will Drewry (2):
-  dm: export a table+mapped device to the ioctl interface
-  init: add support to directly boot to a mapped device
-
- Documentation/admin-guide/kernel-parameters.rst |   1 +
- Documentation/admin-guide/kernel-parameters.txt |   3 +
- Documentation/device-mapper/boot.txt            |  65 ++++
- drivers/md/dm-ioctl.c                           |  36 ++
- drivers/md/dm.h                                 |   8 -
- include/linux/device-mapper.h                   |  19 +
- init/Makefile                                   |   1 +
- init/do_mounts.c                                |   1 +
- init/do_mounts.h                                |  10 +
- init/do_mounts_dm.c                             | 448 ++++++++++++++++++++++++
- 10 files changed, 584 insertions(+), 8 deletions(-)
- create mode 100644 Documentation/device-mapper/boot.txt
- create mode 100644 init/do_mounts_dm.c
-
+diff --git a/drivers/md/dm.h b/drivers/md/dm.h
+index f298b01..6b501b5 100644
+--- a/drivers/md/dm.h
++++ b/drivers/md/dm.h
+@@ -48,7 +48,6 @@ struct dm_md_mempools;
+ /*-----------------------------------------------------------------
+  * Internal table functions.
+  *---------------------------------------------------------------*/
+-void dm_table_destroy(struct dm_table *t);
+ void dm_table_event_callback(struct dm_table *t,
+ 			     void (*fn)(void *), void *context);
+ struct dm_target *dm_table_get_target(struct dm_table *t, unsigned int index);
+@@ -64,7 +63,6 @@ void dm_table_presuspend_undo_targets(struct dm_table *t);
+ void dm_table_postsuspend_targets(struct dm_table *t);
+ int dm_table_resume_targets(struct dm_table *t);
+ int dm_table_any_congested(struct dm_table *t, int bdi_bits);
+-unsigned dm_table_get_type(struct dm_table *t);
+ struct target_type *dm_table_get_immutable_target_type(struct dm_table *t);
+ struct dm_target *dm_table_get_immutable_target(struct dm_table *t);
+ struct dm_target *dm_table_get_wildcard_target(struct dm_table *t);
+@@ -74,14 +72,8 @@ bool dm_table_all_blk_mq_devices(struct dm_table *t);
+ void dm_table_free_md_mempools(struct dm_table *t);
+ struct dm_md_mempools *dm_table_get_md_mempools(struct dm_table *t);
+ 
+-void dm_lock_md_type(struct mapped_device *md);
+-void dm_unlock_md_type(struct mapped_device *md);
+-void dm_set_md_type(struct mapped_device *md, unsigned type);
+-unsigned dm_get_md_type(struct mapped_device *md);
+ struct target_type *dm_get_immutable_target_type(struct mapped_device *md);
+ 
+-int dm_setup_md_queue(struct mapped_device *md, struct dm_table *t);
+-
+ /*
+  * To check the return value from dm_table_find_target().
+  */
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index b7ab76e..9f70b21 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -479,6 +479,11 @@ void dm_table_set_type(struct dm_table *t, unsigned type);
+ int dm_table_complete(struct dm_table *t);
+ 
+ /*
++ * Destroy the table when finished.
++ */
++void dm_table_destroy(struct dm_table *t);
++
++/*
+  * Target may require that it is never sent I/O larger than len.
+  */
+ int __must_check dm_set_target_max_io_len(struct dm_target *ti, sector_t len);
+@@ -515,6 +520,14 @@ void dm_table_run_md_queue_async(struct dm_table *t);
+ struct dm_table *dm_swap_table(struct mapped_device *md,
+ 			       struct dm_table *t);
+ 
++unsigned dm_table_get_type(struct dm_table *t);
++
++void dm_lock_md_type(struct mapped_device *md);
++void dm_unlock_md_type(struct mapped_device *md);
++void dm_set_md_type(struct mapped_device *md, unsigned type);
++unsigned dm_get_md_type(struct mapped_device *md);
++int dm_setup_md_queue(struct mapped_device *md, struct dm_table *t);
++
+ /*
+  * A wrapper around vmalloc.
+  */
 -- 
 2.9.3
