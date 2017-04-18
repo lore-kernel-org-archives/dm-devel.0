@@ -1,15 +1,12 @@
-From: Martin Wilck <mwilck@suse.de>
-Subject: Re: [PATCH 4/9] multipathd: don't call strlen on NULL
- variables
-Date: Thu, 13 Apr 2017 16:12:43 +0200
-Message-ID: <1492092763.22602.0.camel@suse.de>
-References: <1491545798-22183-1-git-send-email-bmarzins@redhat.com>
-	<1491545798-22183-5-git-send-email-bmarzins@redhat.com>
+From: Dennis Yang <dennisyang@qnap.com>
+Subject: [PATCH] dm thin: fix a memory leak when passing discard
+	bio down
+Date: Tue, 18 Apr 2017 15:27:06 +0800
+Message-ID: <1492500426-11166-1-git-send-email-dennisyang@qnap.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1491545798-22183-5-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,18 +17,53 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: ejt@redhat.com, Dennis Yang <dennisyang@qnap.com>
 List-Id: dm-devel.ids
 
-T24gRnJpLCAyMDE3LTA0LTA3IGF0IDAxOjE2IC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gc3RybGVuIGhhcyB1bmRlZmluZWQgcmVzdWx0cyB3aGVuIHBhc3NlZCBhIE5VTEwgdmFy
-aWFibGUsIHNvIGRvbid0IGRvCj4gaXQuCj4gCj4gU2lnbmVkLW9mZi1ieTogQmVuamFtaW4gTWFy
-emluc2tpIDxibWFyemluc0ByZWRoYXQuY29tPgo+IC0tLQoKVGhpcyBpcyBjZXJ0YWlubHkgY29y
-cmVjdC4gWWV0IEkgaGF2ZSB0d28gcmVtYXJrczrCoAoKMSkgVGhlcmUgYXJlIG1hbnkgbW9yZSBj
-YWxscyB0byBzdHJsZW4oKSBpbiB0aGUgbXVsdGlwYXRoLXRvb2xzIGNvZGUKd2hpY2ggd291bGQg
-bmVlZCB0byBiZSBsaWtld2lzZSBwcm90ZWN0ZWQuCgoyKSBJZiBTVFJEVVAoIm9rXG4iKSByZXR1
-cm5zIE5VTEwsIHdlJ3JlIGxpa2VseSB0byBiZSBzbyBob3NlZCB0aGF0IHdlCm1pZ2h0IGFzIHdl
-bGwgY2FsbCBhYm9ydCgpIGFueXdheSAod2hpY2ggaXMgYSBwaGlsb3NvcGh5IHRoYXQgSQpwZXJz
-b25hbGx5IHF1aXRlIGxpa2UgLSBtdWx0aXBhdGhkIGlzIG5vdCBzdWNoIGEgdml0YWwgcGFydCBv
-ZiB0aGUKc3lzdGVtIHRoYXQgaXQgY2FuJ3QgcmlzayBkeWluZykuCgpSZWdhcmRzCk1hcnRpbgoK
-LS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cu
-cmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+dm-thin does not free the discard_parent bio after all chained sub
+bios finished. The following kmemleak report could be observed after
+pool with discard_passdown option processes discard bios in
+linux v4.11-rc7. To fix this, we drop the discard_parent bio reference
+when its endio (passdown_endio) called.
+
+unreferenced object 0xffff8803d6b29700 (size 256):
+  comm "kworker/u8:0", pid 30349, jiffies 4379504020 (age 143002.776s)
+  hex dump (first 32 bytes):
+    00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+    01 00 00 00 00 00 00 f0 00 00 00 00 00 00 00 00  ................
+  backtrace:
+    [<ffffffff81a5efd9>] kmemleak_alloc+0x49/0xa0
+    [<ffffffff8114ec34>] kmem_cache_alloc+0xb4/0x100
+    [<ffffffff8110eec0>] mempool_alloc_slab+0x10/0x20
+    [<ffffffff8110efa5>] mempool_alloc+0x55/0x150
+    [<ffffffff81374939>] bio_alloc_bioset+0xb9/0x260
+    [<ffffffffa018fd20>] process_prepared_discard_passdown_pt1+0x40/0x1c0 [dm_thin_pool]
+    [<ffffffffa018b409>] break_up_discard_bio+0x1a9/0x200 [dm_thin_pool]
+    [<ffffffffa018b484>] process_discard_cell_passdown+0x24/0x40 [dm_thin_pool]
+    [<ffffffffa018b24d>] process_discard_bio+0xdd/0xf0 [dm_thin_pool]
+    [<ffffffffa018ecf6>] do_worker+0xa76/0xd50 [dm_thin_pool]
+    [<ffffffff81086239>] process_one_work+0x139/0x370
+    [<ffffffff810867b1>] worker_thread+0x61/0x450
+    [<ffffffff8108b316>] kthread+0xd6/0xf0
+    [<ffffffff81a6cd1f>] ret_from_fork+0x3f/0x70
+    [<ffffffffffffffff>] 0xffffffffffffffff
+
+Signed-off-by: Dennis Yang <dennisyang@qnap.com>
+---
+ drivers/md/dm-thin.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index 2b266a2..5742e5e 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -1069,6 +1069,7 @@ static void passdown_endio(struct bio *bio)
+ 	 * to unmap (we ignore err).
+ 	 */
+ 	queue_passdown_pt2(bio->bi_private);
++	bio_put(bio);
+ }
+ 
+ static void process_prepared_discard_passdown_pt1(struct dm_thin_new_mapping *m)
+-- 
+1.9.1
