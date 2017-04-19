@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 18/23] block: add a error_count field to struct request
-Date: Wed, 19 Apr 2017 21:27:03 +0200
-Message-ID: <20170419192708.22098-19-hch@lst.de>
+Subject: [PATCH 12/23] dm mpath: don't check for req->errors
+Date: Wed, 19 Apr 2017 21:26:57 +0200
+Message-ID: <20170419192708.22098-13-hch@lst.de>
 References: <20170419192708.22098-1-hch@lst.de>
 Return-path: <linux-scsi-owner@vger.kernel.org>
 In-Reply-To: <20170419192708.22098-1-hch@lst.de>
@@ -10,28 +10,26 @@ To: Jens Axboe <axboe@kernel.dk>
 Cc: Josef Bacik <jbacik@fb.com>, James Smart <james.smart@broadcom.com>, Konrad Rzeszutek Wilk <konrad.wilk@oracle.com>, =?UTF-8?q?Roger=20Pau=20Monn=C3=A9?= <roger.pau@citrix.com>, linux-scsi@vger.kernel.org, linux-nvme@lists.infradead.org, linux-block@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This is for the legacy floppy and ataflop drivers that currently abuse
-->errors for this purpose.  It's stashed away in a union to not grow
-the struct size, the other fields are either used by modern drivers
-for different purposes or the I/O scheduler before queing the I/O
-to drivers.
+We'll get all proper errors reported through ->end_io and ->errors will
+go away soon.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- include/linux/blkdev.h | 1 +
- 1 file changed, 1 insertion(+)
+ drivers/md/dm-mpath.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index d8bcd51b8a47..e8006abce8b6 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -175,6 +175,7 @@ struct request {
- 		struct rb_node rb_node;	/* sort/lookup */
- 		struct bio_vec special_vec;
- 		void *completion_data;
-+		int error_count; /* for legacy drivers, don't use */
- 	};
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index ab55955ed704..2950b145443d 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -1492,7 +1492,7 @@ static int do_end_io(struct multipath *m, struct request *clone,
+ 	 */
+ 	int r = DM_ENDIO_REQUEUE;
  
- 	/*
+-	if (!error && !clone->errors)
++	if (!error)
+ 		return 0;	/* I/O complete */
+ 
+ 	if (noretry_error(error))
 -- 
 2.11.0
