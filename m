@@ -1,8 +1,7 @@
 From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH v3] dax: add a facility to lookup a dax device by 'host'
- device name
-Date: Wed, 19 Apr 2017 15:31:53 -0700
-Message-ID: <149264098308.36586.14533308558533384197.stgit@dwillia2-desk3.amr.corp.intel.com>
+Subject: [PATCH v3] axon_ram: add dax_operations support
+Date: Wed, 19 Apr 2017 15:32:13 -0700
+Message-ID: <149264111867.36586.15762148888692084363.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -17,228 +16,147 @@ List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
 Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 To: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org, Gerald Schaefer <gerald.schaefer-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-For the current block_device based filesystem-dax path, we need a way
-for it to lookup the dax_device associated with a block_device. Add a
-'host' property of a dax_device that can be used for this purpose. It is
-a free form string, but for a dax_device associated with a block device
-it is the bdev name.
+Setup a dax_device to have the same lifetime as the axon_ram block
+device and add a ->direct_access() method that is equivalent to
+axon_ram_direct_access(). Once fs/dax.c has been converted to use
+dax_operations the old axon_ram_direct_access() will be removed.
 
-This is a stop-gap until filesystems are able to mount on a dax-inode
-directly.
-
+Reported-by: Gerald Schaefer <gerald.schaefer-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>
 Signed-off-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 ---
 Changes since v2:
-* fixed slab corruption due to non-null dax_dev->host at
-  dax_i_callback() time
+* fix return code in the alloc_dax() failure case (Gerald)
 
- drivers/dax/dax.h    |    2 +
- drivers/dax/device.c |    2 +
- drivers/dax/super.c  |   87 ++++++++++++++++++++++++++++++++++++++++++++++++--
- include/linux/dax.h  |    1 +
- 4 files changed, 86 insertions(+), 6 deletions(-)
+ arch/powerpc/platforms/Kconfig |    1 +
+ arch/powerpc/sysdev/axonram.c  |   48 +++++++++++++++++++++++++++++++++++-----
+ 2 files changed, 43 insertions(+), 6 deletions(-)
 
-diff --git a/drivers/dax/dax.h b/drivers/dax/dax.h
-index 2472d9da96db..246a24d68d4c 100644
---- a/drivers/dax/dax.h
-+++ b/drivers/dax/dax.h
-@@ -13,7 +13,7 @@
- #ifndef __DAX_H__
- #define __DAX_H__
- struct dax_device;
--struct dax_device *alloc_dax(void *private);
-+struct dax_device *alloc_dax(void *private, const char *host);
- void put_dax(struct dax_device *dax_dev);
- bool dax_alive(struct dax_device *dax_dev);
- void kill_dax(struct dax_device *dax_dev);
-diff --git a/drivers/dax/device.c b/drivers/dax/device.c
-index 19a42edbfa03..db68f4fa8ce0 100644
---- a/drivers/dax/device.c
-+++ b/drivers/dax/device.c
-@@ -645,7 +645,7 @@ struct dev_dax *devm_create_dev_dax(struct dax_region *dax_region,
- 		goto err_id;
- 	}
+diff --git a/arch/powerpc/platforms/Kconfig b/arch/powerpc/platforms/Kconfig
+index 7e3a2ebba29b..33244e3d9375 100644
+--- a/arch/powerpc/platforms/Kconfig
++++ b/arch/powerpc/platforms/Kconfig
+@@ -284,6 +284,7 @@ config CPM2
+ config AXON_RAM
+ 	tristate "Axon DDR2 memory device driver"
+ 	depends on PPC_IBM_CELL_BLADE && BLOCK
++	select DAX
+ 	default m
+ 	help
+ 	  It registers one block device per Axon's DDR2 memory bank found
+diff --git a/arch/powerpc/sysdev/axonram.c b/arch/powerpc/sysdev/axonram.c
+index f523ac883150..171ba86a3494 100644
+--- a/arch/powerpc/sysdev/axonram.c
++++ b/arch/powerpc/sysdev/axonram.c
+@@ -25,6 +25,7 @@
  
--	dax_dev = alloc_dax(dev_dax);
-+	dax_dev = alloc_dax(dev_dax, NULL);
- 	if (!dax_dev)
- 		goto err_dax;
+ #include <linux/bio.h>
+ #include <linux/blkdev.h>
++#include <linux/dax.h>
+ #include <linux/device.h>
+ #include <linux/errno.h>
+ #include <linux/fs.h>
+@@ -62,6 +63,7 @@ static int azfs_major, azfs_minor;
+ struct axon_ram_bank {
+ 	struct platform_device	*device;
+ 	struct gendisk		*disk;
++	struct dax_device	*dax_dev;
+ 	unsigned int		irq_id;
+ 	unsigned long		ph_addr;
+ 	unsigned long		io_addr;
+@@ -137,25 +139,47 @@ axon_ram_make_request(struct request_queue *queue, struct bio *bio)
+ 	return BLK_QC_T_NONE;
+ }
  
-diff --git a/drivers/dax/super.c b/drivers/dax/super.c
-index c9f85f1c086e..8d446674c1da 100644
---- a/drivers/dax/super.c
-+++ b/drivers/dax/super.c
-@@ -30,6 +30,10 @@ static DEFINE_IDA(dax_minor_ida);
- static struct kmem_cache *dax_cache __read_mostly;
- static struct super_block *dax_superblock __read_mostly;
- 
-+#define DAX_HASH_SIZE (PAGE_SIZE / sizeof(struct hlist_head))
-+static struct hlist_head dax_host_list[DAX_HASH_SIZE];
-+static DEFINE_SPINLOCK(dax_host_lock);
++static long
++__axon_ram_direct_access(struct axon_ram_bank *bank, pgoff_t pgoff, long nr_pages,
++		       void **kaddr, pfn_t *pfn)
++{
++	resource_size_t offset = pgoff * PAGE_SIZE;
 +
- int dax_read_lock(void)
- {
- 	return srcu_read_lock(&dax_srcu);
-@@ -46,12 +50,15 @@ EXPORT_SYMBOL_GPL(dax_read_unlock);
-  * struct dax_device - anchor object for dax services
-  * @inode: core vfs
-  * @cdev: optional character interface for "device dax"
-+ * @host: optional name for lookups where the device path is not available
-  * @private: dax driver private data
-  * @alive: !alive + rcu grace period == no new operations / mappings
++	*kaddr = (void *) bank->io_addr + offset;
++	*pfn = phys_to_pfn_t(bank->ph_addr + offset, PFN_DEV);
++	return (bank->size - offset) / PAGE_SIZE;
++}
++
+ /**
+  * axon_ram_direct_access - direct_access() method for block device
+  * @device, @sector, @data: see block_device_operations method
   */
- struct dax_device {
-+	struct hlist_node list;
- 	struct inode inode;
- 	struct cdev cdev;
-+	const char *host;
- 	void *private;
- 	bool alive;
- };
-@@ -63,6 +70,11 @@ bool dax_alive(struct dax_device *dax_dev)
- }
- EXPORT_SYMBOL_GPL(dax_alive);
- 
-+static int dax_host_hash(const char *host)
-+{
-+	return hashlen_hash(hashlen_string("DAX", host)) % DAX_HASH_SIZE;
-+}
-+
- /*
-  * Note, rcu is not protecting the liveness of dax_dev, rcu is ensuring
-  * that any fault handlers or operations that might have seen
-@@ -75,7 +87,13 @@ void kill_dax(struct dax_device *dax_dev)
- 		return;
- 
- 	dax_dev->alive = false;
-+
- 	synchronize_srcu(&dax_srcu);
-+
-+	spin_lock(&dax_host_lock);
-+	hlist_del_init(&dax_dev->list);
-+	spin_unlock(&dax_host_lock);
-+
- 	dax_dev->private = NULL;
- }
- EXPORT_SYMBOL_GPL(kill_dax);
-@@ -98,6 +116,8 @@ static void dax_i_callback(struct rcu_head *head)
- 	struct inode *inode = container_of(head, struct inode, i_rcu);
- 	struct dax_device *dax_dev = to_dax_dev(inode);
- 
-+	kfree(dax_dev->host);
-+	dax_dev->host = NULL;
- 	ida_simple_remove(&dax_minor_ida, MINOR(inode->i_rdev));
- 	kmem_cache_free(dax_cache, dax_dev);
- }
-@@ -169,26 +189,53 @@ static struct dax_device *dax_dev_get(dev_t devt)
- 	return dax_dev;
- }
- 
--struct dax_device *alloc_dax(void *private)
-+static void dax_add_host(struct dax_device *dax_dev, const char *host)
-+{
-+	int hash;
-+
-+	/*
-+	 * Unconditionally init dax_dev since it's coming from a
-+	 * non-zeroed slab cache
-+	 */
-+	INIT_HLIST_NODE(&dax_dev->list);
-+	dax_dev->host = host;
-+	if (!host)
-+		return;
-+
-+	hash = dax_host_hash(host);
-+	spin_lock(&dax_host_lock);
-+	hlist_add_head(&dax_dev->list, &dax_host_list[hash]);
-+	spin_unlock(&dax_host_lock);
-+}
-+
-+struct dax_device *alloc_dax(void *private, const char *__host)
+ static long
+-axon_ram_direct_access(struct block_device *device, sector_t sector,
++axon_ram_blk_direct_access(struct block_device *device, sector_t sector,
+ 		       void **kaddr, pfn_t *pfn, long size)
  {
- 	struct dax_device *dax_dev;
-+	const char *host;
- 	dev_t devt;
- 	int minor;
+ 	struct axon_ram_bank *bank = device->bd_disk->private_data;
+-	loff_t offset = (loff_t)sector << AXON_RAM_SECTOR_SHIFT;
  
-+	host = kstrdup(__host, GFP_KERNEL);
-+	if (__host && !host)
-+		return NULL;
-+
- 	minor = ida_simple_get(&dax_minor_ida, 0, nr_dax, GFP_KERNEL);
- 	if (minor < 0)
--		return NULL;
-+		goto err_minor;
- 
- 	devt = MKDEV(MAJOR(dax_devt), minor);
- 	dax_dev = dax_dev_get(devt);
- 	if (!dax_dev)
--		goto err_inode;
-+		goto err_dev;
- 
-+	dax_add_host(dax_dev, host);
- 	dax_dev->private = private;
- 	return dax_dev;
- 
-- err_inode:
-+ err_dev:
- 	ida_simple_remove(&dax_minor_ida, minor);
-+ err_minor:
-+	kfree(host);
- 	return NULL;
+-	*kaddr = (void *) bank->io_addr + offset;
+-	*pfn = phys_to_pfn_t(bank->ph_addr + offset, PFN_DEV);
+-	return bank->size - offset;
++	return __axon_ram_direct_access(bank, (sector * 512) / PAGE_SIZE,
++			size / PAGE_SIZE, kaddr, pfn) * PAGE_SIZE;
  }
- EXPORT_SYMBOL_GPL(alloc_dax);
-@@ -202,6 +249,38 @@ void put_dax(struct dax_device *dax_dev)
- EXPORT_SYMBOL_GPL(put_dax);
+ 
+ static const struct block_device_operations axon_ram_devops = {
+ 	.owner		= THIS_MODULE,
+-	.direct_access	= axon_ram_direct_access
++	.direct_access	= axon_ram_blk_direct_access
++};
++
++static long
++axon_ram_dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff, long nr_pages,
++		       void **kaddr, pfn_t *pfn)
++{
++	struct axon_ram_bank *bank = dax_get_private(dax_dev);
++
++	return __axon_ram_direct_access(bank, pgoff, nr_pages, kaddr, pfn);
++}
++
++static const struct dax_operations axon_ram_dax_ops = {
++	.direct_access = axon_ram_dax_direct_access,
+ };
  
  /**
-+ * dax_get_by_host() - temporary lookup mechanism for filesystem-dax
-+ * @host: alternate name for the device registered by a dax driver
-+ */
-+struct dax_device *dax_get_by_host(const char *host)
-+{
-+	struct dax_device *dax_dev, *found = NULL;
-+	int hash, id;
+@@ -219,6 +243,7 @@ static int axon_ram_probe(struct platform_device *device)
+ 		goto failed;
+ 	}
+ 
 +
-+	if (!host)
-+		return NULL;
-+
-+	hash = dax_host_hash(host);
-+
-+	id = dax_read_lock();
-+	spin_lock(&dax_host_lock);
-+	hlist_for_each_entry(dax_dev, &dax_host_list[hash], list) {
-+		if (!dax_alive(dax_dev)
-+				|| strcmp(host, dax_dev->host) != 0)
-+			continue;
-+
-+		if (igrab(&dax_dev->inode))
-+			found = dax_dev;
-+		break;
+ 	bank->disk->major = azfs_major;
+ 	bank->disk->first_minor = azfs_minor;
+ 	bank->disk->fops = &axon_ram_devops;
+@@ -227,6 +252,13 @@ static int axon_ram_probe(struct platform_device *device)
+ 	sprintf(bank->disk->disk_name, "%s%d",
+ 			AXON_RAM_DEVICE_NAME, axon_ram_bank_id);
+ 
++	bank->dax_dev = alloc_dax(bank, bank->disk->disk_name,
++			&axon_ram_dax_ops);
++	if (!bank->dax_dev) {
++		rc = -ENOMEM;
++		goto failed;
 +	}
-+	spin_unlock(&dax_host_lock);
-+	dax_read_unlock(id);
 +
-+	return found;
-+}
-+EXPORT_SYMBOL_GPL(dax_get_by_host);
-+
-+/**
-  * inode_dax: convert a public inode into its dax_dev
-  * @inode: An inode with i_cdev pointing to a dax_dev
-  *
-diff --git a/include/linux/dax.h b/include/linux/dax.h
-index 5b62f5d19aea..9b2d5ba10d7d 100644
---- a/include/linux/dax.h
-+++ b/include/linux/dax.h
-@@ -10,6 +10,7 @@ struct iomap_ops;
+ 	bank->disk->queue = blk_alloc_queue(GFP_KERNEL);
+ 	if (bank->disk->queue == NULL) {
+ 		dev_err(&device->dev, "Cannot register disk queue\n");
+@@ -278,6 +310,8 @@ static int axon_ram_probe(struct platform_device *device)
+ 				del_gendisk(bank->disk);
+ 			put_disk(bank->disk);
+ 		}
++		kill_dax(bank->dax_dev);
++		put_dax(bank->dax_dev);
+ 		device->dev.platform_data = NULL;
+ 		if (bank->io_addr != 0)
+ 			iounmap((void __iomem *) bank->io_addr);
+@@ -300,6 +334,8 @@ axon_ram_remove(struct platform_device *device)
  
- int dax_read_lock(void);
- void dax_read_unlock(int id);
-+struct dax_device *dax_get_by_host(const char *host);
- 
- /*
-  * We use lowest available bit in exceptional entry for locking, one bit for
+ 	device_remove_file(&device->dev, &dev_attr_ecc);
+ 	free_irq(bank->irq_id, device);
++	kill_dax(bank->dax_dev);
++	put_dax(bank->dax_dev);
+ 	del_gendisk(bank->disk);
+ 	put_disk(bank->disk);
+ 	iounmap((void __iomem *) bank->io_addr);
