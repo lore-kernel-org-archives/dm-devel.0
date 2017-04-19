@@ -1,72 +1,244 @@
-From: Neutron Sharc <neutronsharc@gmail.com>
-Subject: new multipath device mistakenly replaced another PV in
- existing volume group
-Date: Wed, 19 Apr 2017 14:58:47 -0700
-Message-ID: <CAB-bdyRpmVvNFi_=p2NLVU43kuC4VMiX1EEYNd2zMfT5cEnSOw@mail.gmail.com>
+From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH v3] dax: add a facility to lookup a dax device by 'host'
+ device name
+Date: Wed, 19 Apr 2017 15:31:53 -0700
+Message-ID: <149264098308.36586.14533308558533384197.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org
 List-Id: dm-devel.ids
 
-SSdtIHNlZWluZyBhIHN0cmFuZ2UgcHJvYmxlbSAoaXNjc2kgTFVOcyArIGRtLW11bHRpcGF0aCAr
-IGx2bSkgdGhhdCBJCndpbGwgd2FsayB0aHJvdWdoIGFuIGV4YW1wbGUgdG8gZXhwbGFpbi4KCkkg
-aGF2ZSBhbiBpc2NzaSB0YXJnZXQgbWFjaGluZSB0aGF0IGV4cG9zZXMgbWFueSBpc2NzaSBMVU5z
-LiBJc2NzaQppbml0aWF0b3IgbG9ncyBpbiA0IGlzY3NpIExVTnMgKHZvbDFfWzAtM10pLCAgY3Jl
-YXRlcyBhIG11bHRpcGF0aApkZXZpY2UgZm9yIGVhY2ggTFVOICgvZGV2L21hcHBlci92b2wxX1sw
-LTNdKSwgYW5kIGNvbWJpbmVzIHRoZSA0Cm11bHRpcGF0aCBkZXZpY2VzIGludG8gYSB2b2x1bWUg
-Z3JvdXAgYW5kIExWICh2b2wxL3ZvbDFfbHYpLgoKVGhlbiBJIGxvZyBpbiBhbm90aGVyIDQgaXNj
-c2kgTFVOcyAodm9sM19bMC0zXSksIGNyZWF0ZSBhIG11bHRpcGF0aApkZXZpY2UgZm9yIGVhY2gg
-bmV3IExVTiAoL2Rldi9tYXBwZXIvdm9sM19bMC0zXSkuICBOb3cgdGhlcmUgaXMgYQpzdHJhbmdl
-IHRoaW5nOgpzb21lIG5ldyBtdWx0aXBhdGggZGV2aWNlcyAoL2Rldi9tYXBwZXIvdm9sM18wLCAv
-ZGV2L21hcHBlci92b2wzXzIgaW4KdGhpcyBleGFtcGxlKSByZXBsYWNlZCBleGlzdGluZyBQVnMg
-aW4gdm9sMS4gIEFzIGEgcmVzdWx0LCB0aGVzZSBuZXcKbXVsdGlwYXRoIGRldmljZXMgaGF2ZSBv
-cGVuLWNvdW50ID4gMCwgc28gSSBjYW5ub3QgcHZjcmVhdGUgb24gdGhlbToKCiQgc3VkbyBkbXNl
-dHVwIGxzIC0tdHJlZQp2b2wxLXZvbDFfbHYgKDI1Mjo0KQog4pSc4pSAdm9sM18wICgyNTI6OSkg
-ICA8PT0gIGZyZXNoIG11bHRpcGF0aCBkZXZpY2UsIHNob3VsZCBOT1QgYmUgaW4gdm9sMQog4pSC
-ICDilJTilIAgKDY1OjEyOCkKIOKUnOKUgHZvbDNfMiAoMjUyOjEwKSAgPD09ICBmcmVzaCBtdWx0
-aXBhdGggZGV2aWNlLCBzaG91bGQgTk9UIGJlIGluIHZvbDEKIOKUgiAg4pSU4pSAICg2NToxNDQp
-CiDilJzilIB2b2wxXzEgKDI1MjoxKQog4pSCICDilJTilIAgKDY1OjQ4KQog4pSU4pSAdm9sMV8w
-ICgyNTI6MCkKICAgIOKUlOKUgCAoNjU6MzIpCnZvbDFfMyAoMjUyOjMpICA8PT0gd2FzIGluIHZv
-bDEtdm9sMV9sdiwgYnV0IGtub2NrZWQgb3V0CiDilJTilIAgKDY1OjE2KQp2b2wxXzIgKDI1Mjoy
-KSAgPD09IHdhcyBpbiB2b2wxLXZvbDFfbHYsIGJ1dCBrbm9ja2VkIG91dAog4pSU4pSAICg2NTo2
-NCkKdm9sM18zICgyNTI6MTEpCiDilJTilIAgKDY1OjE2MCkKdm9sM18xICgyNTI6MTIpCiDilJTi
-lIAgKDY1OjE3NikKCgpQbGVhc2Ugbm90ZSB0aGF0IGFsbCB0aGVzZSB2b2wzX1swLTNdIGFyZSBm
-cmVzaCwgd2l0aG91dCBhbnkgTFZNCm1ldGFkYXRhIG9uIHRoZW0sIGFzIHNob3duIGJ5IHB2c2Nh
-bjo6CgpzdWRvIHB2c2NhbiAtLWNhY2hlIC9kZXYvbWFwcGVyL3ZvbDNfMAogIEluY29ycmVjdCBt
-ZXRhZGF0YSBhcmVhIGhlYWRlciBjaGVja3N1bSBvbiAvZGV2L21hcHBlci92b2wzXzAgYXQgb2Zm
-c2V0IDQwOTYKICBJbmNvcnJlY3QgbWV0YWRhdGEgYXJlYSBoZWFkZXIgY2hlY2tzdW0gb24gL2Rl
-di9tYXBwZXIvdm9sM18wIGF0IG9mZnNldCA0MDk2CiAgSW5jb3JyZWN0IG1ldGFkYXRhIGFyZWEg
-aGVhZGVyIGNoZWNrc3VtIG9uIC9kZXYvbWFwcGVyL3ZvbDNfMCBhdCBvZmZzZXQgNDA5NgoKCiQg
-c3VkbyBwdmNyZWF0ZSAvZGV2L21hcHBlci92b2wzXzAgICA8PT0gdGhpcyBtdWx0aXBhdGggZGV2
-aWNlIHdhcwptaXN0YWtlbmx5IGluY2x1ZGVkIGludG8gdm9sMQoKICBGb3VuZCBkdXBsaWNhdGUg
-UFYgOUY2dlU5TlZCZkVxMXczZTA0VDVVcmVPNmZEVlBKTnk6IHVzaW5nCi9kZXYvbWFwcGVyL3Zv
-bDFfMyBub3QgL2Rldi9tYXBwZXIvdm9sM18wCiAgVXNpbmcgZHVwbGljYXRlIFBWIC9kZXYvbWFw
-cGVyL3ZvbDFfMyB3aXRob3V0IGhvbGRlcnMsIHJlcGxhY2luZwovZGV2L21hcHBlci92b2wzXzAK
-ICBDYW4ndCBvcGVuIC9kZXYvbWFwcGVyL3ZvbDNfMCBleGNsdXNpdmVseS4gIE1vdW50ZWQgZmls
-ZXN5c3RlbT8KCgo9PT09PT09PT09IENvbmZpZ3MgSSB1c2VkOgpCVFcsICBJIGhhdmUgZW5hYmxl
-ZCBsdm1ldGFkLCAgbXkgbHZtLmNvbmYgaGFzIHRoaXM6CmZpbHRlciA9IFsgImF8L2Rldi9tYXBw
-ZXIvLip8IiwgInJ8Lip8IiBdCmdsb2JhbF9maWx0ZXIgPSBbICJhfC9kZXYvbWFwcGVyLy4qfCIs
-ICJyfC4qfCIgXQoKTXkgL2V0Yy9tdWx0aXBhdGguY29uZiBpczoKZGVmYXVsdHMgewogIHVzZXJf
-ZnJpZW5kbHlfbmFtZXMgICAgIHllcwogIHBhdGhfZ3JvdXBpbmdfcG9saWN5ICAgIGZhaWxvdmVy
-CiAgcG9sbGluZ19pbnRlcnZhbCAgICAgICAgMTAKICBwYXRoX3NlbGVjdG9yICAgICAgICAgICAi
-cm91bmQtcm9iaW4gMCIKICBmaW5kX211bHRpcGF0aHMgICAgICAgICB5ZXMKICBmZWF0dXJlcyAg
-ICAgICAiMSBxdWV1ZV9pZl9ub19wYXRoIgp9CmJsYWNrbGlzdCB7CiAgZGV2bm9kZSAgIl5zZGFb
-MS05XSIKfQptdWx0aXBhdGhzIHsKICBtdWx0aXBhdGggewogICAgd3dpZCAzNjAwMDAwMDA3NTg3
-NTdkZTlmYjI4OWNiZGUxMmFiYWIKICAgIGFsaWFzIHZvbDFfMAogIH0KICAvLyBtb3JlIGRldmlj
-ZXMKfQoKaXNjc2kgaW5pdGlhdG9yIGlzIG9uIGNlbnRvcyA2LjUsIHdpdGggcGtncyB2ZXJzaW9u
-Ogpsdm0yLTIuMDIuMTQzLTEyLmVsNi54ODZfNjQKZGV2aWNlLW1hcHBlci1tdWx0aXBhdGgtMC40
-LjktMTAwLmVsNi54ODZfNjQKCmlzY3NpIHRhcmdldCBpcyB0Z3RkIG9uIGFub3RoZXIgVWJ1bnR1
-IG1hY2hpbmUuCgoKCkNvbW1lbnRzIGFyZSBhcHByZWNpYXRlZC4KCgotU2hhd24KCi0tCmRtLWRl
-dmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5j
-b20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+For the current block_device based filesystem-dax path, we need a way
+for it to lookup the dax_device associated with a block_device. Add a
+'host' property of a dax_device that can be used for this purpose. It is
+a free form string, but for a dax_device associated with a block device
+it is the bdev name.
+
+This is a stop-gap until filesystems are able to mount on a dax-inode
+directly.
+
+Signed-off-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+---
+Changes since v2:
+* fixed slab corruption due to non-null dax_dev->host at
+  dax_i_callback() time
+
+ drivers/dax/dax.h    |    2 +
+ drivers/dax/device.c |    2 +
+ drivers/dax/super.c  |   87 ++++++++++++++++++++++++++++++++++++++++++++++++--
+ include/linux/dax.h  |    1 +
+ 4 files changed, 86 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/dax/dax.h b/drivers/dax/dax.h
+index 2472d9da96db..246a24d68d4c 100644
+--- a/drivers/dax/dax.h
++++ b/drivers/dax/dax.h
+@@ -13,7 +13,7 @@
+ #ifndef __DAX_H__
+ #define __DAX_H__
+ struct dax_device;
+-struct dax_device *alloc_dax(void *private);
++struct dax_device *alloc_dax(void *private, const char *host);
+ void put_dax(struct dax_device *dax_dev);
+ bool dax_alive(struct dax_device *dax_dev);
+ void kill_dax(struct dax_device *dax_dev);
+diff --git a/drivers/dax/device.c b/drivers/dax/device.c
+index 19a42edbfa03..db68f4fa8ce0 100644
+--- a/drivers/dax/device.c
++++ b/drivers/dax/device.c
+@@ -645,7 +645,7 @@ struct dev_dax *devm_create_dev_dax(struct dax_region *dax_region,
+ 		goto err_id;
+ 	}
+ 
+-	dax_dev = alloc_dax(dev_dax);
++	dax_dev = alloc_dax(dev_dax, NULL);
+ 	if (!dax_dev)
+ 		goto err_dax;
+ 
+diff --git a/drivers/dax/super.c b/drivers/dax/super.c
+index c9f85f1c086e..8d446674c1da 100644
+--- a/drivers/dax/super.c
++++ b/drivers/dax/super.c
+@@ -30,6 +30,10 @@ static DEFINE_IDA(dax_minor_ida);
+ static struct kmem_cache *dax_cache __read_mostly;
+ static struct super_block *dax_superblock __read_mostly;
+ 
++#define DAX_HASH_SIZE (PAGE_SIZE / sizeof(struct hlist_head))
++static struct hlist_head dax_host_list[DAX_HASH_SIZE];
++static DEFINE_SPINLOCK(dax_host_lock);
++
+ int dax_read_lock(void)
+ {
+ 	return srcu_read_lock(&dax_srcu);
+@@ -46,12 +50,15 @@ EXPORT_SYMBOL_GPL(dax_read_unlock);
+  * struct dax_device - anchor object for dax services
+  * @inode: core vfs
+  * @cdev: optional character interface for "device dax"
++ * @host: optional name for lookups where the device path is not available
+  * @private: dax driver private data
+  * @alive: !alive + rcu grace period == no new operations / mappings
+  */
+ struct dax_device {
++	struct hlist_node list;
+ 	struct inode inode;
+ 	struct cdev cdev;
++	const char *host;
+ 	void *private;
+ 	bool alive;
+ };
+@@ -63,6 +70,11 @@ bool dax_alive(struct dax_device *dax_dev)
+ }
+ EXPORT_SYMBOL_GPL(dax_alive);
+ 
++static int dax_host_hash(const char *host)
++{
++	return hashlen_hash(hashlen_string("DAX", host)) % DAX_HASH_SIZE;
++}
++
+ /*
+  * Note, rcu is not protecting the liveness of dax_dev, rcu is ensuring
+  * that any fault handlers or operations that might have seen
+@@ -75,7 +87,13 @@ void kill_dax(struct dax_device *dax_dev)
+ 		return;
+ 
+ 	dax_dev->alive = false;
++
+ 	synchronize_srcu(&dax_srcu);
++
++	spin_lock(&dax_host_lock);
++	hlist_del_init(&dax_dev->list);
++	spin_unlock(&dax_host_lock);
++
+ 	dax_dev->private = NULL;
+ }
+ EXPORT_SYMBOL_GPL(kill_dax);
+@@ -98,6 +116,8 @@ static void dax_i_callback(struct rcu_head *head)
+ 	struct inode *inode = container_of(head, struct inode, i_rcu);
+ 	struct dax_device *dax_dev = to_dax_dev(inode);
+ 
++	kfree(dax_dev->host);
++	dax_dev->host = NULL;
+ 	ida_simple_remove(&dax_minor_ida, MINOR(inode->i_rdev));
+ 	kmem_cache_free(dax_cache, dax_dev);
+ }
+@@ -169,26 +189,53 @@ static struct dax_device *dax_dev_get(dev_t devt)
+ 	return dax_dev;
+ }
+ 
+-struct dax_device *alloc_dax(void *private)
++static void dax_add_host(struct dax_device *dax_dev, const char *host)
++{
++	int hash;
++
++	/*
++	 * Unconditionally init dax_dev since it's coming from a
++	 * non-zeroed slab cache
++	 */
++	INIT_HLIST_NODE(&dax_dev->list);
++	dax_dev->host = host;
++	if (!host)
++		return;
++
++	hash = dax_host_hash(host);
++	spin_lock(&dax_host_lock);
++	hlist_add_head(&dax_dev->list, &dax_host_list[hash]);
++	spin_unlock(&dax_host_lock);
++}
++
++struct dax_device *alloc_dax(void *private, const char *__host)
+ {
+ 	struct dax_device *dax_dev;
++	const char *host;
+ 	dev_t devt;
+ 	int minor;
+ 
++	host = kstrdup(__host, GFP_KERNEL);
++	if (__host && !host)
++		return NULL;
++
+ 	minor = ida_simple_get(&dax_minor_ida, 0, nr_dax, GFP_KERNEL);
+ 	if (minor < 0)
+-		return NULL;
++		goto err_minor;
+ 
+ 	devt = MKDEV(MAJOR(dax_devt), minor);
+ 	dax_dev = dax_dev_get(devt);
+ 	if (!dax_dev)
+-		goto err_inode;
++		goto err_dev;
+ 
++	dax_add_host(dax_dev, host);
+ 	dax_dev->private = private;
+ 	return dax_dev;
+ 
+- err_inode:
++ err_dev:
+ 	ida_simple_remove(&dax_minor_ida, minor);
++ err_minor:
++	kfree(host);
+ 	return NULL;
+ }
+ EXPORT_SYMBOL_GPL(alloc_dax);
+@@ -202,6 +249,38 @@ void put_dax(struct dax_device *dax_dev)
+ EXPORT_SYMBOL_GPL(put_dax);
+ 
+ /**
++ * dax_get_by_host() - temporary lookup mechanism for filesystem-dax
++ * @host: alternate name for the device registered by a dax driver
++ */
++struct dax_device *dax_get_by_host(const char *host)
++{
++	struct dax_device *dax_dev, *found = NULL;
++	int hash, id;
++
++	if (!host)
++		return NULL;
++
++	hash = dax_host_hash(host);
++
++	id = dax_read_lock();
++	spin_lock(&dax_host_lock);
++	hlist_for_each_entry(dax_dev, &dax_host_list[hash], list) {
++		if (!dax_alive(dax_dev)
++				|| strcmp(host, dax_dev->host) != 0)
++			continue;
++
++		if (igrab(&dax_dev->inode))
++			found = dax_dev;
++		break;
++	}
++	spin_unlock(&dax_host_lock);
++	dax_read_unlock(id);
++
++	return found;
++}
++EXPORT_SYMBOL_GPL(dax_get_by_host);
++
++/**
+  * inode_dax: convert a public inode into its dax_dev
+  * @inode: An inode with i_cdev pointing to a dax_dev
+  *
+diff --git a/include/linux/dax.h b/include/linux/dax.h
+index 5b62f5d19aea..9b2d5ba10d7d 100644
+--- a/include/linux/dax.h
++++ b/include/linux/dax.h
+@@ -10,6 +10,7 @@ struct iomap_ops;
+ 
+ int dax_read_lock(void);
+ void dax_read_unlock(int id);
++struct dax_device *dax_get_by_host(const char *host);
+ 
+ /*
+  * We use lowest available bit in exceptional entry for locking, one bit for
