@@ -1,34 +1,39 @@
-From: "hch@lst.de" <hch@lst.de>
-Subject: Re: blk-mq: remove the error argument to blk_mq_complete_request
-Date: Wed, 19 Apr 2017 19:54:07 +0200
-Message-ID: <20170419175407.GB25761@lst.de>
-References: <20170418155229.5977-1-hch@bombadil.infradead.org> <20170418155229.5977-16-hch@bombadil.infradead.org> <1492555816.2689.20.camel@sandisk.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1492555816.2689.20.camel@sandisk.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Bart Van Assche <Bart.VanAssche@sandisk.com>
-Cc: "hch@bombadil.infradead.org" <hch@bombadil.infradead.org>, "axboe@kernel.dk" <axboe@kernel.dk>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "hch@lst.de" <hch@lst.de>, "konrad.wilk@oracle.com" <konrad.wilk@oracle.com>, "roger.pau@citrix.com" <roger.pau@citrix.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, "jbacik@fb.com" <jbacik@fb.com>, "james.smart@broadcom.com" <james.smart@broadcom.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+From: Christoph Hellwig <hch@lst.de>
+Subject: kill req->errors V3
+Date: Wed, 19 Apr 2017 21:26:28 +0200
+Message-ID: <20170419192651.22037-1-hch@lst.de>
+Return-path: <linux-block-owner@vger.kernel.org>
+Sender: linux-block-owner@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Josef Bacik <jbacik@fb.com>, James Smart <james.smart@broadcom.com>, Konrad Rzeszutek Wilk <konrad.wilk@oracle.com>, =?UTF-8?q?Roger=20Pau=20Monn=C3=A9?= <roger.pau@citrix.com>, linux-scsi@vger.kernel.org, linux-nvme@lists.infradead.org, linux-block@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Apr 18, 2017 at 10:50:18PM +0000, Bart Van Assche wrote:
-> On Tue, 2017-04-18 at 08:52 -0700, Christoph Hellwig wrote:
-> > Now that we always have a ->complete callback we can remove the direct
-> > call to blk_mq_end_request, as well as the error argument to
-> > blk_mq_complete_request.
-> 
-> Hello Christoph,
-> 
-> Please add a runtime check that issues a warning early if a .complete
-> callback function is missing.
-> 
-> Are you sure that all blk-mq drivers have a .complete callback? In the
-> request-errors branch of your block git tree I found the following:
+Currently the request structure has an errors field that is used in
+various different ways.  The oldest drivers use it as an error count,
+blk-mq and the generic timeout code assume that it holds a Linux
+errno for block completions, and various drivers use it for internal
+status values, often overwriting them with Linux errnos later,
+that is unless they are processing passthrough requests in which
+case they'll leave their errors in it.
 
-I think the problem is that my above changelog was wrong - we only
-require the complete_rq method if the driver calls the
-blk_mq_complete_request function.  Both rbd and ubiblock don't in
-the tree.  They probably should, but that's work for a separate
-series.
+This series kills the ->errors field and replaced it with new fields
+in the drivers (or an odd hack in a union in struct request for
+two bitrotting old drivers).
+
+Also available in the following git tree:
+
+    git://git.infradead.org/users/hch/block.git request-errors
+
+Gitweb:
+
+    http://git.infradead.org/users/hch/block.git/shortlog/refs/heads/request-errors
+
+Changes since V2;
+ - reorder one patch to be earlier in the series
+ - fix the argument to a bsg dprintk
+ - fix a kerneldoc comment
+
+Changes since V1:
+ - rebased on top the latest block for-next tree
+ - fix error handling in nfsd blocklayout
+ - dropped "scsi: fix fast-fail for non-passthrough requests"
