@@ -1,172 +1,144 @@
-From: kbuild test robot <lkp-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v3] axon_ram: add dax_operations support
-Date: Thu, 20 Apr 2017 13:46:55 +0800
-Message-ID: <201704201331.ZRvwTFof%fengguang.wu@intel.com>
-References: <149264111867.36586.15762148888692084363.stgit@dwillia2-desk3.amr.corp.intel.com>
+From: Markus Hentsch <markus.hentsch@cloudandheat.com>
+Subject: Re: dm-era: metadata reuse after reboot possible?
+Date: Thu, 20 Apr 2017 13:55:35 +0200
+Message-ID: <0597d116-14b5-a326-a962-8047a9d7eff7@cloudandheat.com>
+References: <c06844f1-bed2-7de3-5338-67f6a9d84f5a@cloudandheat.com>
+	<20161031113749.GA27906@roamer.bos.redhat.com>
+	<8f623e41-9a70-9b09-41c0-de9f6e590fee@cloudandheat.com>
+	<a6f20994-56f4-2169-61d5-f2c3c748cd0e@oracle.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <149264111867.36586.15762148888692084363.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Content-Disposition: inline
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, kbuild-all-JC7UmRfGjtg@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org, Gerald Schaefer <gerald.schaefer-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <a6f20994-56f4-2169-61d5-f2c3c748cd0e@oracle.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Somasundaram Krishnasamy <somasundaram.krishnasamy@oracle.com>
+Cc: dm-devel@redhat.com, Edward Thornber <thornber@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Dan,
+Dear Somu,
 
-[auto build test WARNING on powerpc/next]
-[also build test WARNING on v4.11-rc7 next-20170419]
-[if your patch is applied to the wrong git tree, please drop us a note to help improve the system]
+thanks for your quick response!
 
-url:    https://github.com/0day-ci/linux/commits/Dan-Williams/axon_ram-add-dax_operations-support/20170420-091615
-base:   https://git.kernel.org/pub/scm/linux/kernel/git/powerpc/linux.git next
-config: powerpc-allyesconfig (attached as .config)
-compiler: powerpc64-linux-gnu-gcc (Debian 6.1.1-9) 6.1.1 20160705
-reproduce:
-        wget https://raw.githubusercontent.com/01org/lkp-tests/master/sbin/make.cross -O ~/bin/make.cross
-        chmod +x ~/bin/make.cross
-        # save the attached .config to linux build tree
-        make.cross ARCH=powerpc 
+I applied your patch to the 4.4 kernel of a Ubuntu 16.04.2 VM and can
+now confirm that the dm-era metadata survived every subsequent reboot so
+far. Thank you!
 
-All warnings (new ones prefixed by >>):
 
-   arch/powerpc/sysdev/axonram.c: In function 'axon_ram_dax_direct_access':
-   arch/powerpc/sysdev/axonram.c:176:31: error: implicit declaration of function 'dax_get_private' [-Werror=implicit-function-declaration]
-     struct axon_ram_bank *bank = dax_get_private(dax_dev);
-                                  ^~~~~~~~~~~~~~~
->> arch/powerpc/sysdev/axonram.c:176:31: warning: initialization makes pointer from integer without a cast [-Wint-conversion]
-   arch/powerpc/sysdev/axonram.c: At top level:
-   arch/powerpc/sysdev/axonram.c:181:21: error: variable 'axon_ram_dax_ops' has initializer but incomplete type
-    static const struct dax_operations axon_ram_dax_ops = {
-                        ^~~~~~~~~~~~~~
-   arch/powerpc/sysdev/axonram.c:182:2: error: unknown field 'direct_access' specified in initializer
-     .direct_access = axon_ram_dax_direct_access,
-     ^
->> arch/powerpc/sysdev/axonram.c:182:19: warning: excess elements in struct initializer
-     .direct_access = axon_ram_dax_direct_access,
-                      ^~~~~~~~~~~~~~~~~~~~~~~~~~
-   arch/powerpc/sysdev/axonram.c:182:19: note: (near initialization for 'axon_ram_dax_ops')
-   arch/powerpc/sysdev/axonram.c: In function 'axon_ram_probe':
-   arch/powerpc/sysdev/axonram.c:255:18: error: implicit declaration of function 'alloc_dax' [-Werror=implicit-function-declaration]
-     bank->dax_dev = alloc_dax(bank, bank->disk->disk_name,
-                     ^~~~~~~~~
->> arch/powerpc/sysdev/axonram.c:255:16: warning: assignment makes pointer from integer without a cast [-Wint-conversion]
-     bank->dax_dev = alloc_dax(bank, bank->disk->disk_name,
-                   ^
-   arch/powerpc/sysdev/axonram.c:313:3: error: implicit declaration of function 'kill_dax' [-Werror=implicit-function-declaration]
-      kill_dax(bank->dax_dev);
-      ^~~~~~~~
-   arch/powerpc/sysdev/axonram.c:314:3: error: implicit declaration of function 'put_dax' [-Werror=implicit-function-declaration]
-      put_dax(bank->dax_dev);
-      ^~~~~~~
-   arch/powerpc/sysdev/axonram.c: At top level:
-   arch/powerpc/sysdev/axonram.c:181:36: error: storage size of 'axon_ram_dax_ops' isn't known
-    static const struct dax_operations axon_ram_dax_ops = {
-                                       ^~~~~~~~~~~~~~~~
-   cc1: some warnings being treated as errors
+Best regards,
 
-vim +176 arch/powerpc/sysdev/axonram.c
+Markus Hentsch
+Cloud&Heat Technologies
 
-   170	};
-   171	
-   172	static long
-   173	axon_ram_dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff, long nr_pages,
-   174			       void **kaddr, pfn_t *pfn)
-   175	{
- > 176		struct axon_ram_bank *bank = dax_get_private(dax_dev);
-   177	
-   178		return __axon_ram_direct_access(bank, pgoff, nr_pages, kaddr, pfn);
-   179	}
-   180	
-   181	static const struct dax_operations axon_ram_dax_ops = {
- > 182		.direct_access = axon_ram_dax_direct_access,
-   183	};
-   184	
-   185	/**
-   186	 * axon_ram_probe - probe() method for platform driver
-   187	 * @device: see platform_driver method
-   188	 */
-   189	static int axon_ram_probe(struct platform_device *device)
-   190	{
-   191		static int axon_ram_bank_id = -1;
-   192		struct axon_ram_bank *bank;
-   193		struct resource resource;
-   194		int rc = 0;
-   195	
-   196		axon_ram_bank_id++;
-   197	
-   198		dev_info(&device->dev, "Found memory controller on %s\n",
-   199				device->dev.of_node->full_name);
-   200	
-   201		bank = kzalloc(sizeof(struct axon_ram_bank), GFP_KERNEL);
-   202		if (bank == NULL) {
-   203			dev_err(&device->dev, "Out of memory\n");
-   204			rc = -ENOMEM;
-   205			goto failed;
-   206		}
-   207	
-   208		device->dev.platform_data = bank;
-   209	
-   210		bank->device = device;
-   211	
-   212		if (of_address_to_resource(device->dev.of_node, 0, &resource) != 0) {
-   213			dev_err(&device->dev, "Cannot access device tree\n");
-   214			rc = -EFAULT;
-   215			goto failed;
-   216		}
-   217	
-   218		bank->size = resource_size(&resource);
-   219	
-   220		if (bank->size == 0) {
-   221			dev_err(&device->dev, "No DDR2 memory found for %s%d\n",
-   222					AXON_RAM_DEVICE_NAME, axon_ram_bank_id);
-   223			rc = -ENODEV;
-   224			goto failed;
-   225		}
-   226	
-   227		dev_info(&device->dev, "Register DDR2 memory device %s%d with %luMB\n",
-   228				AXON_RAM_DEVICE_NAME, axon_ram_bank_id, bank->size >> 20);
-   229	
-   230		bank->ph_addr = resource.start;
-   231		bank->io_addr = (unsigned long) ioremap_prot(
-   232				bank->ph_addr, bank->size, _PAGE_NO_CACHE);
-   233		if (bank->io_addr == 0) {
-   234			dev_err(&device->dev, "ioremap() failed\n");
-   235			rc = -EFAULT;
-   236			goto failed;
-   237		}
-   238	
-   239		bank->disk = alloc_disk(AXON_RAM_MINORS_PER_DISK);
-   240		if (bank->disk == NULL) {
-   241			dev_err(&device->dev, "Cannot register disk\n");
-   242			rc = -EFAULT;
-   243			goto failed;
-   244		}
-   245	
-   246	
-   247		bank->disk->major = azfs_major;
-   248		bank->disk->first_minor = azfs_minor;
-   249		bank->disk->fops = &axon_ram_devops;
-   250		bank->disk->private_data = bank;
-   251	
-   252		sprintf(bank->disk->disk_name, "%s%d",
-   253				AXON_RAM_DEVICE_NAME, axon_ram_bank_id);
-   254	
- > 255		bank->dax_dev = alloc_dax(bank, bank->disk->disk_name,
-   256				&axon_ram_dax_ops);
-   257		if (!bank->dax_dev) {
-   258			rc = -ENOMEM;
 
----
-0-DAY kernel test infrastructure                Open Source Technology Center
-https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
+On Apr 19, 2017 at 18:18 Somasundaram Krishnasamy wrote:
+> I have sent a patch recently for review.
+>
+> https://www.redhat.com/archives/dm-devel/2017-April/msg00138.html
+>
+> It should fix this issue.
+>
+> Regards,
+> Somu.
+>
+> On 4/19/2017 6:32 AM, Markus Hentsch wrote:
+>> Hello, it's been a while. I've also been busy with other stuff in the
+>> last months but now I'm back stuck at this issue. Has there been any
+>> progress on this?
+>>
+>> On Mo, Oct 31, 2016 at 12:37, Edward Thornber wrote:
+>>> On Fri, Oct 21, 2016 at 11:29:26AM +0200, Markus Hentsch wrote:
+>>>> Hello,
+>>>>
+>>>> is it possible for the dm-era metadata to survive reboots?
+>>> No, you certainly should be able to continue using the metadata.  I
+>>> don't have time to look at this for the next couple of weeks, but
+>>> after that will definitely fix.
+>>>
+>>> - Joe
+>>
+>> For reference, my original message from Fri, Oct 21, 2016 was:
+>>> Hello,
+>>>
+>>> is it possible for the dm-era metadata to survive reboots?
+>>>
+>>> The official dm-era documentation states under "Resilience":
+>>>
+>>>     Metadata is updated on disk before a write to a previously
+>>> unwritten
+>>>     block is performed.  As such dm-era should not be effected by a
+>>> hard
+>>>     crash such as power failure.
+>>>
+>>> That's why I initially assumed that I may continue (re)using the
+>>> metadata after reboots without wiping it (i.e. resetting the eras
+>>> and block tracking). But is that actually the case?
+>>>
+>>>
+>>> Using a Ubuntu trusty x64 VM with 2 additional virtual HDDs (sdb and
+>>> sdc, 256MB each), I set up dm-era after bootup like this:
+>>>
+>>>     root@alice:~# dmsetup create era-meta --table "0 256 linear
+>>> /dev/sdb 0"
+>>>     root@alice:~# dmsetup create era --table "0 524288 era
+>>> /dev/mapper/era-meta /dev/sdc 4096"
+>>>     root@alice:~# dmsetup create era-access --table "0 256 linear
+>>> /dev/mapper/era-meta 0"
+>>>
+>>>
+>>> When I reboot and repeat the commands above, the layout is recreated
+>>> correctly (according to lsblk). However, taking a metadata snapshot
+>>> and trying to access the metadata using era_dump or
+>>> era_invalidate fails, e.g.:
+>>>
+>>>     root@alice:~# dmsetup message era 0 take_metadata_snap
+>>>     root@alice:~# era_dump /dev/mapper/era-access
+>>>     <superblock uuid="" block_size="4096" nr_blocks="128"
+>>> current_era="3">
+>>>     metadata contains errors (run era_check for details).
+>>>     perhaps you wanted to run with --repair ?
+>>>
+>>>     root@alice:~# era_check /dev/mapper/era-access
+>>>     examining superblock
+>>>     missing eras from writeset tree
+>>>       value size mismatch: expected 12, but got 8.  This is not the
+>>> btree you are looking for.
+>>>
+>>>     era_check: /usr/include/boost/optional/optional.hpp:1004:
+>>> boost::optional<T>::reference_const_type
+>>>       boost::optional<T>::get() const [with T = unsigned int;
+>>> boost::optional<T>::reference_const_type =
+>>>       const unsigned int&]: Assertion `this->is_initialized()' failed.
+>>>     Aborted
+>>>
+>>>
+>>> It doesn't matter if I take and drop any metadata snapshots or write
+>>> to the era device before the reboot or not.
+>>> Do I have to start over and wipe the metadata device directly after
+>>> reboot or is there some way to continue using it, i.e. recovering
+>>> its state when recreating the previous dmsetup layout?
+>>
+>> Best regards,
+>>
+>> Markus Hentsch
+>> Cloud&Heat Technologies
+>>
+>>
+>> -- 
+>> dm-devel mailing list
+>> dm-devel@redhat.com
+>> https://www.redhat.com/mailman/listinfo/dm-devel
+>>
+>
+> -- 
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
