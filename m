@@ -1,35 +1,120 @@
-From: Gerald Schaefer <gerald.schaefer@de.ibm.com>
-Subject: Re: [PATCH v3] dcssblk: add dax_operations support
-Date: Thu, 20 Apr 2017 19:05:50 +0200
-Message-ID: <20170420190550.6a31fa6c@thinkpad>
-References: <149264113824.36586.1220609927071019352.stgit@dwillia2-desk3.amr.corp.intel.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <149264113824.36586.1220609927071019352.stgit@dwillia2-desk3.amr.corp.intel.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Dan Williams <dan.j.williams@intel.com>
-Cc: linux-nvdimm@lists.01.org, linux-kernel@vger.kernel.org, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, hch@lst.de
+From: Joe Perches <joe@perches.com>
+Subject: [PATCH V2] device-mapper: Convert printks to pr_<level> macros
+Date: Thu, 20 Apr 2017 10:46:07 -0700
+Message-ID: <b7bbe2dda80ec1120149db4c7992a9170a0472ec.1492710052.git.joe@perches.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
+Cc: linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Wed, 19 Apr 2017 15:32:38 -0700
-Dan Williams <dan.j.williams@intel.com> wrote:
+Using pr_<level> is the more common logging style.
 
-> Setup a dax_dev to have the same lifetime as the dcssblk block device
-> and add a ->direct_access() method that is equivalent to
-> dcssblk_direct_access(). Once fs/dax.c has been converted to use
-> dax_operations the old dcssblk_direct_access() will be removed.
-> 
-> Reported-by: Gerald Schaefer <gerald.schaefer@de.ibm.com>
-> Signed-off-by: Dan Williams <dan.j.williams@intel.com>
-> ---
-> Changes since v2:
-> * fix return code in the alloc_dax() failure case (Gerald)
-> * assign dax_dev to dev_info and kill local variable (Gerald)
-> 
->  drivers/s390/block/Kconfig   |    1 +
->  drivers/s390/block/dcssblk.c |   55 +++++++++++++++++++++++++++++++++++-------
->  2 files changed, 47 insertions(+), 9 deletions(-)
+In addition, using the pr_<level> macros could shrink the kernel image
+if/when the macros are converted to functions.
 
-Acked-by: Gerald Schaefer <gerald.schaefer@de.ibm.com>
+Miscellanea:
+
+o Standardize style and use new macro DM_FMT
+o Use no_printk in DMDEBUG macros when CONFIG_DM_DEBUG is not #defined
+
+Signed-off-by: Joe Perches <joe@perches.com>
+---
+
+v2: Fix compilation outside of drivers/md/ by adding and using DM_FMT macro
+
+ include/linux/device-mapper.h | 76 +++++++++++++++++++++----------------------
+ 1 file changed, 37 insertions(+), 39 deletions(-)
+
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index b7ab76ed8e11..c93f9ef4a7fc 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -533,48 +533,46 @@ extern struct ratelimit_state dm_ratelimit_state;
+ #define dm_ratelimit()	0
+ #endif
+ 
+-#define DMCRIT(f, arg...) \
+-	printk(KERN_CRIT DM_NAME ": " DM_MSG_PREFIX ": " f "\n", ## arg)
+-
+-#define DMERR(f, arg...) \
+-	printk(KERN_ERR DM_NAME ": " DM_MSG_PREFIX ": " f "\n", ## arg)
+-#define DMERR_LIMIT(f, arg...) \
+-	do { \
+-		if (dm_ratelimit())	\
+-			printk(KERN_ERR DM_NAME ": " DM_MSG_PREFIX ": " \
+-			       f "\n", ## arg); \
+-	} while (0)
+-
+-#define DMWARN(f, arg...) \
+-	printk(KERN_WARNING DM_NAME ": " DM_MSG_PREFIX ": " f "\n", ## arg)
+-#define DMWARN_LIMIT(f, arg...) \
+-	do { \
+-		if (dm_ratelimit())	\
+-			printk(KERN_WARNING DM_NAME ": " DM_MSG_PREFIX ": " \
+-			       f "\n", ## arg); \
+-	} while (0)
+-
+-#define DMINFO(f, arg...) \
+-	printk(KERN_INFO DM_NAME ": " DM_MSG_PREFIX ": " f "\n", ## arg)
+-#define DMINFO_LIMIT(f, arg...) \
+-	do { \
+-		if (dm_ratelimit())	\
+-			printk(KERN_INFO DM_NAME ": " DM_MSG_PREFIX ": " f \
+-			       "\n", ## arg); \
+-	} while (0)
++#define DM_FMT(fmt) DM_NAME ": " DM_MSG_PREFIX ": " fmt "\n"
++
++#define DMCRIT(fmt, ...)						\
++	pr_crit(DM_FMT(fmt), ##__VA_ARGS__)
++
++#define DMERR(fmt, ...)							\
++	pr_err(DM_FMT(fmt), ##__VA_ARGS__)
++#define DMERR_LIMIT(fmt, ...)						\
++do {									\
++	if (dm_ratelimit())						\
++		DMERR(fmt, ##__VA_ARGS__);				\
++} while (0)
++
++#define DMWARN(fmt, ...)						\
++	pr_warn(DM_FMT(fmt), ##__VA_ARGS__)
++#define DMWARN_LIMIT(fmt, ...)						\
++do {									\
++	if (dm_ratelimit())						\
++		DMWARN(fmt, ##__VA_ARGS__);				\
++} while (0)
++
++#define DMINFO(fmt, ...)						\
++	pr_info(DM_FMT(fmt), ##__VA_ARGS__)
++#define DMINFO_LIMIT(fmt, ...)						\
++do {									\
++	if (dm_ratelimit())						\
++		DMINFO(fmt, ##__VA_ARGS__);				\
++} while (0)
+ 
+ #ifdef CONFIG_DM_DEBUG
+-#  define DMDEBUG(f, arg...) \
+-	printk(KERN_DEBUG DM_NAME ": " DM_MSG_PREFIX " DEBUG: " f "\n", ## arg)
+-#  define DMDEBUG_LIMIT(f, arg...) \
+-	do { \
+-		if (dm_ratelimit())	\
+-			printk(KERN_DEBUG DM_NAME ": " DM_MSG_PREFIX ": " f \
+-			       "\n", ## arg); \
+-	} while (0)
++#  define DMDEBUG(fmt, ...)						\
++	printk(KERN_DEBUG DM_FMT(fmt), ##__VA_ARGS__)
++#  define DMDEBUG_LIMIT(fmt, ...)					\
++do {									\
++	if (dm_ratelimit())						\
++		DMDEBUG(fmt, ##__VA_ARGS__);				\
++} while (0)
+ #else
+-#  define DMDEBUG(f, arg...) do {} while (0)
+-#  define DMDEBUG_LIMIT(f, arg...) do {} while (0)
++#  define DMDEBUG(fmt, ...) no_printk(fmt, ##__VA_ARGS__)
++#  define DMDEBUG_LIMIT(fmt, ...) no_printk(fmt, ##__VA_ARGS__)
+ #endif
+ 
+ #define DMEMIT(x...) sz += ((sz >= maxlen) ? \
+-- 
+2.10.0.rc2.1.g053435c
