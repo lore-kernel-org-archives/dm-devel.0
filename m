@@ -1,54 +1,231 @@
-From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: Re: [PATCH] block: get rid of blk_integrity_revalidate()
-Date: Wed, 19 Apr 2017 22:04:59 -0400
-Message-ID: <yq1shl3rfzo.fsf@oracle.com>
-References: <1492533800-30627-1-git-send-email-idryomov@gmail.com>
+From: kbuild test robot <lkp-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v3] axon_ram: add dax_operations support
+Date: Thu, 20 Apr 2017 11:01:40 +0800
+Message-ID: <201704201000.drxGPNHB%fengguang.wu@intel.com>
+References: <149264111867.36586.15762148888692084363.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <1492533800-30627-1-git-send-email-idryomov@gmail.com> (Ilya
-        Dryomov's message of "Tue, 18 Apr 2017 18:43:20 +0200")
-Sender: linux-block-owner@vger.kernel.org
-To: Ilya Dryomov <idryomov@gmail.com>
-Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, Dan Williams <dan.j.williams@intel.com>, Christoph Hellwig <hch@lst.de>, Mike Snitzer <snitzer@redhat.com>, Jens Axboe <axboe@fb.com>, linux-block@vger.kernel.org, linux-nvme@lists.infradead.org, dm-devel@redhat.com, ceph-devel@vger.kernel.org, Keith Busch <keith.busch@intel.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <149264111867.36586.15762148888692084363.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Content-Disposition: inline
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, kbuild-all-JC7UmRfGjtg@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org, Gerald Schaefer <gerald.schaefer-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-Ilya Dryomov <idryomov@gmail.com> writes:
+Hi Dan,
 
-Ilya,
+[auto build test ERROR on powerpc/next]
+[also build test ERROR on v4.11-rc7 next-20170419]
+[if your patch is applied to the wrong git tree, please drop us a note to help improve the system]
 
-> Commit 25520d55cdb6 ("block: Inline blk_integrity in struct gendisk")
-> introduced blk_integrity_revalidate(), which seems to assume ownership
-> of the stable pages flag and unilaterally clears it if no blk_integrity
-> profile is registered:
->
->     if (bi->profile)
->             disk->queue->backing_dev_info->capabilities |=
->                     BDI_CAP_STABLE_WRITES;
->     else
->             disk->queue->backing_dev_info->capabilities &=
->                     ~BDI_CAP_STABLE_WRITES;
->
-> It's called from revalidate_disk() and rescan_partitions(), making it
-> impossible to enable stable pages for drivers that support partitions
-> and don't use blk_integrity: while the call in revalidate_disk() can be
-> trivially worked around (see zram, which doesn't support partitions and
-> hence gets away with zram_revalidate_disk()), rescan_partitions() can
-> be triggered from userspace at any time.  This breaks rbd, where the
-> ceph messenger is responsible for generating/verifying CRCs.
->
-> Since blk_integrity_{un,}register() "must" be used for (un)registering
-> the integrity profile with the block layer, move BDI_CAP_STABLE_WRITES
-> setting there.  This way drivers that call blk_integrity_register() and
-> use integrity infrastructure won't interfere with drivers that don't
-> but still want stable pages.
+url:    https://github.com/0day-ci/linux/commits/Dan-Williams/axon_ram-add-dax_operations-support/20170420-091615
+base:   https://git.kernel.org/pub/scm/linux/kernel/git/powerpc/linux.git next
+config: powerpc-defconfig (attached as .config)
+compiler: powerpc64-linux-gnu-gcc (Debian 6.1.1-9) 6.1.1 20160705
+reproduce:
+        wget https://raw.githubusercontent.com/01org/lkp-tests/master/sbin/make.cross -O ~/bin/make.cross
+        chmod +x ~/bin/make.cross
+        # save the attached .config to linux build tree
+        make.cross ARCH=powerpc 
 
-I seem to recall that the reason for the revalidate hook was that either
-NVMe or nvdimm had to register an integrity profile prior to the actual
-format being known.
+All errors (new ones prefixed by >>):
 
-So while I am OK with the change from a SCSI perspective, I think we
-need Keith and Dan to ack it.
+   arch/powerpc/sysdev/axonram.c: In function 'axon_ram_dax_direct_access':
+>> arch/powerpc/sysdev/axonram.c:176:31: error: implicit declaration of function 'dax_get_private' [-Werror=implicit-function-declaration]
+     struct axon_ram_bank *bank = dax_get_private(dax_dev);
+                                  ^~~~~~~~~~~~~~~
+>> arch/powerpc/sysdev/axonram.c:176:31: error: initialization makes pointer from integer without a cast [-Werror=int-conversion]
+   arch/powerpc/sysdev/axonram.c: At top level:
+>> arch/powerpc/sysdev/axonram.c:181:21: error: variable 'axon_ram_dax_ops' has initializer but incomplete type
+    static const struct dax_operations axon_ram_dax_ops = {
+                        ^~~~~~~~~~~~~~
+>> arch/powerpc/sysdev/axonram.c:182:2: error: unknown field 'direct_access' specified in initializer
+     .direct_access = axon_ram_dax_direct_access,
+     ^
+   arch/powerpc/sysdev/axonram.c:182:19: error: excess elements in struct initializer [-Werror]
+     .direct_access = axon_ram_dax_direct_access,
+                      ^~~~~~~~~~~~~~~~~~~~~~~~~~
+   arch/powerpc/sysdev/axonram.c:182:19: note: (near initialization for 'axon_ram_dax_ops')
+   arch/powerpc/sysdev/axonram.c: In function 'axon_ram_probe':
+>> arch/powerpc/sysdev/axonram.c:255:18: error: implicit declaration of function 'alloc_dax' [-Werror=implicit-function-declaration]
+     bank->dax_dev = alloc_dax(bank, bank->disk->disk_name,
+                     ^~~~~~~~~
+>> arch/powerpc/sysdev/axonram.c:255:16: error: assignment makes pointer from integer without a cast [-Werror=int-conversion]
+     bank->dax_dev = alloc_dax(bank, bank->disk->disk_name,
+                   ^
+>> arch/powerpc/sysdev/axonram.c:313:3: error: implicit declaration of function 'kill_dax' [-Werror=implicit-function-declaration]
+      kill_dax(bank->dax_dev);
+      ^~~~~~~~
+>> arch/powerpc/sysdev/axonram.c:314:3: error: implicit declaration of function 'put_dax' [-Werror=implicit-function-declaration]
+      put_dax(bank->dax_dev);
+      ^~~~~~~
+   arch/powerpc/sysdev/axonram.c: At top level:
+>> arch/powerpc/sysdev/axonram.c:181:36: error: storage size of 'axon_ram_dax_ops' isn't known
+    static const struct dax_operations axon_ram_dax_ops = {
+                                       ^~~~~~~~~~~~~~~~
+   cc1: all warnings being treated as errors
 
--- 
-Martin K. Petersen	Oracle Linux Engineering
+vim +/dax_get_private +176 arch/powerpc/sysdev/axonram.c
+
+   170	};
+   171	
+   172	static long
+   173	axon_ram_dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff, long nr_pages,
+   174			       void **kaddr, pfn_t *pfn)
+   175	{
+ > 176		struct axon_ram_bank *bank = dax_get_private(dax_dev);
+   177	
+   178		return __axon_ram_direct_access(bank, pgoff, nr_pages, kaddr, pfn);
+   179	}
+   180	
+ > 181	static const struct dax_operations axon_ram_dax_ops = {
+ > 182		.direct_access = axon_ram_dax_direct_access,
+   183	};
+   184	
+   185	/**
+   186	 * axon_ram_probe - probe() method for platform driver
+   187	 * @device: see platform_driver method
+   188	 */
+   189	static int axon_ram_probe(struct platform_device *device)
+   190	{
+   191		static int axon_ram_bank_id = -1;
+   192		struct axon_ram_bank *bank;
+   193		struct resource resource;
+   194		int rc = 0;
+   195	
+   196		axon_ram_bank_id++;
+   197	
+   198		dev_info(&device->dev, "Found memory controller on %s\n",
+   199				device->dev.of_node->full_name);
+   200	
+   201		bank = kzalloc(sizeof(struct axon_ram_bank), GFP_KERNEL);
+   202		if (bank == NULL) {
+   203			dev_err(&device->dev, "Out of memory\n");
+   204			rc = -ENOMEM;
+   205			goto failed;
+   206		}
+   207	
+   208		device->dev.platform_data = bank;
+   209	
+   210		bank->device = device;
+   211	
+   212		if (of_address_to_resource(device->dev.of_node, 0, &resource) != 0) {
+   213			dev_err(&device->dev, "Cannot access device tree\n");
+   214			rc = -EFAULT;
+   215			goto failed;
+   216		}
+   217	
+   218		bank->size = resource_size(&resource);
+   219	
+   220		if (bank->size == 0) {
+   221			dev_err(&device->dev, "No DDR2 memory found for %s%d\n",
+   222					AXON_RAM_DEVICE_NAME, axon_ram_bank_id);
+   223			rc = -ENODEV;
+   224			goto failed;
+   225		}
+   226	
+   227		dev_info(&device->dev, "Register DDR2 memory device %s%d with %luMB\n",
+   228				AXON_RAM_DEVICE_NAME, axon_ram_bank_id, bank->size >> 20);
+   229	
+   230		bank->ph_addr = resource.start;
+   231		bank->io_addr = (unsigned long) ioremap_prot(
+   232				bank->ph_addr, bank->size, _PAGE_NO_CACHE);
+   233		if (bank->io_addr == 0) {
+   234			dev_err(&device->dev, "ioremap() failed\n");
+   235			rc = -EFAULT;
+   236			goto failed;
+   237		}
+   238	
+   239		bank->disk = alloc_disk(AXON_RAM_MINORS_PER_DISK);
+   240		if (bank->disk == NULL) {
+   241			dev_err(&device->dev, "Cannot register disk\n");
+   242			rc = -EFAULT;
+   243			goto failed;
+   244		}
+   245	
+   246	
+   247		bank->disk->major = azfs_major;
+   248		bank->disk->first_minor = azfs_minor;
+   249		bank->disk->fops = &axon_ram_devops;
+   250		bank->disk->private_data = bank;
+   251	
+   252		sprintf(bank->disk->disk_name, "%s%d",
+   253				AXON_RAM_DEVICE_NAME, axon_ram_bank_id);
+   254	
+ > 255		bank->dax_dev = alloc_dax(bank, bank->disk->disk_name,
+   256				&axon_ram_dax_ops);
+   257		if (!bank->dax_dev) {
+   258			rc = -ENOMEM;
+   259			goto failed;
+   260		}
+   261	
+   262		bank->disk->queue = blk_alloc_queue(GFP_KERNEL);
+   263		if (bank->disk->queue == NULL) {
+   264			dev_err(&device->dev, "Cannot register disk queue\n");
+   265			rc = -EFAULT;
+   266			goto failed;
+   267		}
+   268	
+   269		set_capacity(bank->disk, bank->size >> AXON_RAM_SECTOR_SHIFT);
+   270		blk_queue_make_request(bank->disk->queue, axon_ram_make_request);
+   271		blk_queue_logical_block_size(bank->disk->queue, AXON_RAM_SECTOR_SIZE);
+   272		device_add_disk(&device->dev, bank->disk);
+   273	
+   274		bank->irq_id = irq_of_parse_and_map(device->dev.of_node, 0);
+   275		if (!bank->irq_id) {
+   276			dev_err(&device->dev, "Cannot access ECC interrupt ID\n");
+   277			rc = -EFAULT;
+   278			goto failed;
+   279		}
+   280	
+   281		rc = request_irq(bank->irq_id, axon_ram_irq_handler,
+   282				AXON_RAM_IRQ_FLAGS, bank->disk->disk_name, device);
+   283		if (rc != 0) {
+   284			dev_err(&device->dev, "Cannot register ECC interrupt handler\n");
+   285			bank->irq_id = 0;
+   286			rc = -EFAULT;
+   287			goto failed;
+   288		}
+   289	
+   290		rc = device_create_file(&device->dev, &dev_attr_ecc);
+   291		if (rc != 0) {
+   292			dev_err(&device->dev, "Cannot create sysfs file\n");
+   293			rc = -EFAULT;
+   294			goto failed;
+   295		}
+   296	
+   297		azfs_minor += bank->disk->minors;
+   298	
+   299		return 0;
+   300	
+   301	failed:
+   302		if (bank != NULL) {
+   303			if (bank->irq_id)
+   304				free_irq(bank->irq_id, device);
+   305			if (bank->disk != NULL) {
+   306				if (bank->disk->major > 0)
+   307					unregister_blkdev(bank->disk->major,
+   308							bank->disk->disk_name);
+   309				if (bank->disk->flags & GENHD_FL_UP)
+   310					del_gendisk(bank->disk);
+   311				put_disk(bank->disk);
+   312			}
+ > 313			kill_dax(bank->dax_dev);
+ > 314			put_dax(bank->dax_dev);
+   315			device->dev.platform_data = NULL;
+   316			if (bank->io_addr != 0)
+   317				iounmap((void __iomem *) bank->io_addr);
+
+---
+0-DAY kernel test infrastructure                Open Source Technology Center
+https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
