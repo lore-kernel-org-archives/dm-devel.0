@@ -1,7 +1,7 @@
 From: damien.lemoal@wdc.com
-Subject: [PATCH 08/10] dm-linear: Add support for zoned block devices
-Date: Fri, 21 Apr 2017 12:55:56 +0900
-Message-ID: <20170421035558.2657-9-damien.lemoal@wdc.com>
+Subject: [PATCH 05/10] dm: Fix REQ_OP_ZONE_REPORT bio handling
+Date: Fri, 21 Apr 2017 12:55:53 +0900
+Message-ID: <20170421035558.2657-6-damien.lemoal@wdc.com>
 References: <20170421035558.2657-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -14,57 +14,44 @@ List-Id: dm-devel.ids
 
 From: Damien Le Moal <damien.lemoal@wdc.com>
 
-Add support for zoned block devices by allowing host-managed zoned block
-device mapped targets, the remapping of REQ_OP_ZONE_RESET and the post
-processing (reply remapping) of REQ_OP_ZONE_REPORT.
+A REQ_OP_ZONE_REPORT bio is not a medium access command. Its number of
+sectors indicates the maximum size allowed for the report reply size
+and not an amount of sectors accessed from the device.
+REQ_OP_ZONE_REPORT bios should thus not be split depending on the
+target device maximum I/O length but passed as is. Note that it is the
+responsability of the target to remap and format the report reply.
 
 Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
 ---
- drivers/md/dm-linear.c | 14 +++++++++++++-
- 1 file changed, 13 insertions(+), 1 deletion(-)
+ drivers/md/dm.c | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
-index 4788b0b..9c4debd 100644
---- a/drivers/md/dm-linear.c
-+++ b/drivers/md/dm-linear.c
-@@ -87,7 +87,7 @@ static void linear_map_bio(struct dm_target *ti, struct bio *bio)
- 	struct linear_c *lc = ti->private;
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 1d98035..cd44928 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1098,7 +1098,8 @@ static int clone_bio(struct dm_target_io *tio, struct bio *bio,
+ 			return r;
+ 	}
  
- 	bio->bi_bdev = lc->dev->bdev;
--	if (bio_sectors(bio))
-+	if (bio_sectors(bio) || bio_op(bio) == REQ_OP_ZONE_RESET)
- 		bio->bi_iter.bi_sector =
- 			linear_map_sector(ti, bio->bi_iter.bi_sector);
- }
-@@ -99,6 +99,16 @@ static int linear_map(struct dm_target *ti, struct bio *bio)
- 	return DM_MAPIO_REMAPPED;
- }
+-	bio_advance(clone, to_bytes(sector - clone->bi_iter.bi_sector));
++	if (bio_op(bio) != REQ_OP_ZONE_REPORT)
++		bio_advance(clone, to_bytes(sector - clone->bi_iter.bi_sector));
+ 	clone->bi_iter.bi_size = to_bytes(len);
  
-+static int linear_end_io(struct dm_target *ti, struct bio *bio, int error)
-+{
-+	struct linear_c *lc = ti->private;
-+
-+	if (!error && bio_op(bio) == REQ_OP_ZONE_REPORT)
-+		dm_remap_zone_report(ti, bio, lc->start);
-+
-+	return error;
-+}
-+
- static void linear_status(struct dm_target *ti, status_type_t type,
- 			  unsigned status_flags, char *result, unsigned maxlen)
- {
-@@ -162,10 +172,12 @@ static long linear_direct_access(struct dm_target *ti, sector_t sector,
- static struct target_type linear_target = {
- 	.name   = "linear",
- 	.version = {1, 3, 0},
-+	.features = DM_TARGET_ZONED_HM,
- 	.module = THIS_MODULE,
- 	.ctr    = linear_ctr,
- 	.dtr    = linear_dtr,
- 	.map    = linear_map,
-+	.end_io = linear_end_io,
- 	.status = linear_status,
- 	.prepare_ioctl = linear_prepare_ioctl,
- 	.iterate_devices = linear_iterate_devices,
+ 	if (bio_integrity(bio))
+@@ -1275,7 +1276,11 @@ static int __split_and_process_non_flush(struct clone_info *ci)
+ 	if (!dm_target_is_valid(ti))
+ 		return -EIO;
+ 
+-	len = min_t(sector_t, max_io_len(ci->sector, ti), ci->sector_count);
++	if (bio_op(bio) == REQ_OP_ZONE_REPORT)
++		len = ci->sector_count;
++	else
++		len = min_t(sector_t, max_io_len(ci->sector, ti),
++			    ci->sector_count);
+ 
+ 	r = __clone_and_map_data_bio(ci, ti, ci->sector, &len);
+ 	if (r < 0)
 -- 
 2.9.3
