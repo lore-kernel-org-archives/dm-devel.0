@@ -1,7 +1,7 @@
 From: damien.lemoal@wdc.com
-Subject: [PATCH 04/10] dm: Fix REQ_OP_ZONE_RESET bio handling
-Date: Fri, 21 Apr 2017 12:55:52 +0900
-Message-ID: <20170421035558.2657-5-damien.lemoal@wdc.com>
+Subject: [PATCH 01/10] dm-table: Introduce DM_TARGET_ZONED_HM feature
+Date: Fri, 21 Apr 2017 12:55:49 +0900
+Message-ID: <20170421035558.2657-2-damien.lemoal@wdc.com>
 References: <20170421035558.2657-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -14,32 +14,84 @@ List-Id: dm-devel.ids
 
 From: Damien Le Moal <damien.lemoal@wdc.com>
 
-The REQ_OP_ZONE_RESET bio has no payload and zero sectors. Its position
-is the only information used to indicate the zone to reset on the
-device. Due to its zero length, this bio is not cloned and sent to the
-target through the non-flush case in __split_and_process_bio().
-Add an additional case in that function to call
-__split_and_process_non_flush() without checking the clone info size.
+The target drivers currently available will not operate correctly if a
+table target maps onto a host-managed zoned block device.
+
+To avoid problems, this patch introduces the new feature flag
+DM_TARGET_ZONED_HM for a target driver to explicitly state that it
+supports host-managed zoned block devices. This feature is checked
+in dm_get_device() to prevent the addition to a table of a target
+mapping to a host-managed zoned block device if the target type does
+not have the feature enabled.
+
+Note that as host-aware zoned block devices are backward compatible
+with regular block devices, they can be used by any of the current
+target types. This new feature is thus restricted to host-managed
+zoned block devices.
 
 Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
 ---
- drivers/md/dm.c | 4 ++++
- 1 file changed, 4 insertions(+)
+ drivers/md/dm-table.c         | 23 +++++++++++++++++++++++
+ include/linux/device-mapper.h |  6 ++++++
+ 2 files changed, 29 insertions(+)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index dfb7597..1d98035 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1318,6 +1318,10 @@ static void __split_and_process_bio(struct mapped_device *md,
- 		ci.sector_count = 0;
- 		error = __send_empty_flush(&ci);
- 		/* dec_pending submits any data associated with flush */
-+	} else if (bio_op(bio) == REQ_OP_ZONE_RESET) {
-+		ci.bio = bio;
-+		ci.sector_count = 0;
-+		error = __split_and_process_non_flush(&ci);
- 	} else {
- 		ci.bio = bio;
- 		ci.sector_count = bio_sectors(bio);
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 3ad16d9..06d3b7b 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -388,6 +388,24 @@ dev_t dm_get_dev_t(const char *path)
+ EXPORT_SYMBOL_GPL(dm_get_dev_t);
+ 
+ /*
++ * Check if the target supports supports host-managed zoned block devices.
++ */
++static bool device_supported(struct dm_target *ti, struct dm_dev *dev)
++{
++	struct block_device *bdev = dev->bdev;
++	char b[BDEVNAME_SIZE];
++
++	if (bdev_zoned_model(bdev) == BLK_ZONED_HM &&
++	    !dm_target_zoned_hm(ti->type)) {
++		DMWARN("%s: Unsupported host-managed zoned block device %s",
++		       dm_device_name(ti->table->md), bdevname(bdev, b));
++		return false;
++	}
++
++	return true;
++}
++
++/*
+  * Add a device to the list, or just increment the usage count if
+  * it's already present.
+  */
+@@ -426,6 +444,11 @@ int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
+ 	}
+ 	atomic_inc(&dd->count);
+ 
++	if (!device_supported(ti, dd->dm_dev)) {
++		dm_put_device(ti, dd->dm_dev);
++		return -ENOTSUPP;
++	}
++
+ 	*result = dd->dm_dev;
+ 	return 0;
+ }
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index a7e6903..b3c2408 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -214,6 +214,12 @@ struct target_type {
+ #define dm_target_is_wildcard(type)	((type)->features & DM_TARGET_WILDCARD)
+ 
+ /*
++ * Indicates that a target supports host-managed zoned block devices.
++ */
++#define DM_TARGET_ZONED_HM		0x00000010
++#define dm_target_zoned_hm(type)	((type)->features & DM_TARGET_ZONED_HM)
++
++/*
+  * Some targets need to be sent the same WRITE bio severals times so
+  * that they can send copies of it to different devices.  This function
+  * examines any supplied bio and returns the number of copies of it the
 -- 
 2.9.3
