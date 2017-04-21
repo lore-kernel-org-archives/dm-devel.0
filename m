@@ -1,46 +1,122 @@
-From: Jens Axboe <axboe@fb.com>
-Subject: Re: [PATCH] block: get rid of blk_integrity_revalidate()
-Date: Fri, 21 Apr 2017 14:18:08 -0600
-Message-ID: <30a66f64-2785-dc9d-d64a-cb3cf4fc346e@fb.com>
-References: <1492533800-30627-1-git-send-email-idryomov@gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: 7bit
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH for-4.12] block, dm: use __blk_integrity_register to properly setup integrity profile
+Date: Fri, 21 Apr 2017 18:28:15 -0400
+Message-ID: <20170421222815.45663-1-snitzer@redhat.com>
 Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <1492533800-30627-1-git-send-email-idryomov@gmail.com>
 Sender: linux-block-owner@vger.kernel.org
-To: Ilya Dryomov <idryomov@gmail.com>, "Martin K. Petersen" <martin.petersen@oracle.com>
-Cc: Dan Williams <dan.j.williams@intel.com>, Christoph Hellwig <hch@lst.de>, Mike Snitzer <snitzer@redhat.com>, linux-block@vger.kernel.org, linux-nvme@lists.infradead.org, dm-devel@redhat.com, ceph-devel@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: dm-devel@redhat.com, linux-block@vger.kernel.org, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-On 04/18/2017 10:43 AM, Ilya Dryomov wrote:
-> Commit 25520d55cdb6 ("block: Inline blk_integrity in struct gendisk")
-> introduced blk_integrity_revalidate(), which seems to assume ownership
-> of the stable pages flag and unilaterally clears it if no blk_integrity
-> profile is registered:
-> 
->     if (bi->profile)
->             disk->queue->backing_dev_info->capabilities |=
->                     BDI_CAP_STABLE_WRITES;
->     else
->             disk->queue->backing_dev_info->capabilities &=
->                     ~BDI_CAP_STABLE_WRITES;
-> 
-> It's called from revalidate_disk() and rescan_partitions(), making it
-> impossible to enable stable pages for drivers that support partitions
-> and don't use blk_integrity: while the call in revalidate_disk() can be
-> trivially worked around (see zram, which doesn't support partitions and
-> hence gets away with zram_revalidate_disk()), rescan_partitions() can
-> be triggered from userspace at any time.  This breaks rbd, where the
-> ceph messenger is responsible for generating/verifying CRCs.
-> 
-> Since blk_integrity_{un,}register() "must" be used for (un)registering
-> the integrity profile with the block layer, move BDI_CAP_STABLE_WRITES
-> setting there.  This way drivers that call blk_integrity_register() and
-> use integrity infrastructure won't interfere with drivers that don't
-> but still want stable pages.
+From: Mikulas Patocka <mpatocka@redhat.com>
 
-Applied, thanks.
+When registering integrity profile on a DM device, the logical block
+size of the underlying device with integrity support must be used, not
+the logical block size of the stacked device we are creating.
 
+Introduce __blk_integrity_register() to allow users more precise control
+over the logical block size used to register the integrity profile.
+blk_integrity_register() now calls __blk_integrity_register().
+
+DM core's use of __blk_integrity_register() fixes a long-standing DM
+linear target bug where it cannot pass integrity data to the underlying
+device if its logical block size conflicts with the underlying device's
+logical block size.
+
+Cc: stable@vger.kernel.org
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ block/blk-integrity.c  | 14 +++++++++++---
+ drivers/md/dm-table.c  |  6 ++++--
+ include/linux/blkdev.h |  2 ++
+ 3 files changed, 17 insertions(+), 5 deletions(-)
+
+NOTE: Jens, I'd like to get this staged in linux-dm.git for 4.12
+because the dm-inegrity target depends on it, doing so would avoid
+some awkward coordination between block and DM trees.  SO if you're OK
+with this patch, and with me sending it to Linus as part of the DM
+pull, please provide your Ack. Thanks!
+
+diff --git a/block/blk-integrity.c b/block/blk-integrity.c
+index 9f0ff5b..d2a36e3 100644
+--- a/block/blk-integrity.c
++++ b/block/blk-integrity.c
+@@ -396,9 +396,10 @@ static struct blk_integrity_profile nop_profile = {
+ };
+ 
+ /**
+- * blk_integrity_register - Register a gendisk as being integrity-capable
++ * __blk_integrity_register - Register a gendisk as being integrity-capable
+  * @disk:	struct gendisk pointer to make integrity-aware
+  * @template:	block integrity profile to register
++ * @logical_block_size:	block size - integrity tag exists for each block
+  *
+  * Description: When a device needs to advertise itself as being able to
+  * send/receive integrity metadata it must use this function to register
+@@ -406,19 +407,26 @@ static struct blk_integrity_profile nop_profile = {
+  * struct with values appropriate for the underlying hardware. See
+  * Documentation/block/data-integrity.txt.
+  */
+-void blk_integrity_register(struct gendisk *disk, struct blk_integrity *template)
++void __blk_integrity_register(struct gendisk *disk, struct blk_integrity *template,
++			      unsigned logical_block_size)
+ {
+ 	struct blk_integrity *bi = &disk->queue->integrity;
+ 
+ 	bi->flags = BLK_INTEGRITY_VERIFY | BLK_INTEGRITY_GENERATE |
+ 		template->flags;
+-	bi->interval_exp = ilog2(queue_logical_block_size(disk->queue));
++	bi->interval_exp = ilog2(logical_block_size);
+ 	bi->profile = template->profile ? template->profile : &nop_profile;
+ 	bi->tuple_size = template->tuple_size;
+ 	bi->tag_size = template->tag_size;
+ 
+ 	blk_integrity_revalidate(disk);
+ }
++EXPORT_SYMBOL(__blk_integrity_register);
++
++void blk_integrity_register(struct gendisk *disk, struct blk_integrity *template)
++{
++	__blk_integrity_register(disk, template, queue_logical_block_size(disk->queue));
++}
+ EXPORT_SYMBOL(blk_integrity_register);
+ 
+ /**
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index b060084..b7a5843 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1181,13 +1181,15 @@ static int dm_table_register_integrity(struct dm_table *t)
+ 		return 0;
+ 
+ 	if (!integrity_profile_exists(dm_disk(md))) {
++		struct blk_integrity *integrity = blk_get_integrity(template_disk);
++
+ 		t->integrity_supported = true;
+ 		/*
+ 		 * Register integrity profile during table load; we can do
+ 		 * this because the final profile must match during resume.
+ 		 */
+-		blk_integrity_register(dm_disk(md),
+-				       blk_get_integrity(template_disk));
++		__blk_integrity_register(dm_disk(md), integrity,
++					 1U << integrity->interval_exp);
+ 		return 0;
+ 	}
+ 
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 796016e..353400c 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -1778,6 +1778,8 @@ struct blk_integrity_profile {
+ 	const char			*name;
+ };
+ 
++extern void __blk_integrity_register(struct gendisk *, struct blk_integrity *,
++				     unsigned);
+ extern void blk_integrity_register(struct gendisk *, struct blk_integrity *);
+ extern void blk_integrity_unregister(struct gendisk *);
+ extern int blk_integrity_compare(struct gendisk *, struct gendisk *);
 -- 
-Jens Axboe
+2.10.1
