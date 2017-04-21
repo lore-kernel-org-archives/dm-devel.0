@@ -1,10 +1,12 @@
 From: damien.lemoal@wdc.com
-Subject: [PATCH 00/10] dm: zoned block device support
-Date: Fri, 21 Apr 2017 12:55:48 +0900
-Message-ID: <20170421035558.2657-1-damien.lemoal@wdc.com>
+Subject: [PATCH 04/10] dm: Fix REQ_OP_ZONE_RESET bio handling
+Date: Fri, 21 Apr 2017 12:55:52 +0900
+Message-ID: <20170421035558.2657-5-damien.lemoal@wdc.com>
+References: <20170421035558.2657-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20170421035558.2657-1-damien.lemoal@wdc.com>
 Sender: linux-block-owner@vger.kernel.org
 To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
 Cc: Hannes Reinecke <hare@suse.de>, Christoph Hellwig <hch@lst.de>, Bart Van Assche <Bart.VanAssche@sandisk.com>, linux-block@vger.kernel.org, Damien Le Moal <damien.lemoal@wdc.com>
@@ -12,74 +14,32 @@ List-Id: dm-devel.ids
 
 From: Damien Le Moal <damien.lemoal@wdc.com>
 
-This series introduces zoned block device support to the device mapper
-infrastructure. Pathces are as follows:
+The REQ_OP_ZONE_RESET bio has no payload and zero sectors. Its position
+is the only information used to indicate the zone to reset on the
+device. Due to its zero length, this bio is not cloned and sent to the
+target through the non-flush case in __split_and_process_bio().
+Add an additional case in that function to call
+__split_and_process_non_flush() without checking the clone info size.
 
-- Patch 1: Add a new target type feature flag to indicate if a target type
-  supports host-managed zoned block devices. This prevents using these drives
-  with the current target types since none of them have the proper support
-  implemented and will not operate properly with these drives.
-- Patch 2: If a target device is a zoned block device, check that the range of
-  LBAs mapped is aligned to the device zone size and that the device start
-  offset also aligns to zone boundaries. This is necessary for zone reset and
-  zone report correct execution.
-- Patch 3: Check that the different target devices of a table have compatible
-  zone sizes and models. This is necessary for target types that expose a zone
-  model different from the underlying device.
-- Patch 4: Fix handling of REQ_OP_ZONE_RESET bios
-- Patch 5: Fix handling of REQ_OP_ZONE_REPORT bios
-- Patch 6: Introduce a new helper function to reverse map a device zone report
-  to the target LBA range
-- Patch 7: Add support for host-managed zoned block devices to dm-flakey. This
-  is necessary for testing file systems supporting natively these drives (e.g.
-  f2fs).
-- Patch 8: Add support for for zoned block devices to dm-linear. This can have
-  useful applications during development and testing (e.g. allow creating
-  smaller zoned devices with different combinations and positions of zones).
-  There are also interesting applications for production, for instance, the
-  ability to aggregate conventional zones of different drives to create a
-  regular disk.
-- Patch 9: Add sequential write enforcement to dm_kcopyd_copy so that
-  sequential zones of a host-managed zoned block device can be specified as
-  destinations.
-- Patch 10: New dm-zoned target type (this was already sent for review twice).
-  This resend adds modifications suggested by Hannes to implement reclaim
-  using dm-kcopyd. dm-zoned depends on patch 9.
+Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
+---
+ drivers/md/dm.c | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-As always, comments and reviews are welcome.
-
-Damien Le Moal (10):
-  dm-table: Introduce DM_TARGET_ZONED_HM feature
-  dm-table: Check device area zone alignment
-  dm-table: Check block devices zone model compatibility
-  dm: Fix REQ_OP_ZONE_RESET bio handling
-  dm: Fix REQ_OP_ZONE_REPORT bio handling
-  dm: Introduce dm_remap_zone_report()
-  dm-flakey: Add support for zoned block devices
-  dm-linear: Add support for zoned block devices
-  dm-kcopyd: Add sequential write feature
-  dm-zoned: Drive-managed zoned block device target
-
- Documentation/device-mapper/dm-zoned.txt |  154 +++
- drivers/md/Kconfig                       |   19 +
- drivers/md/Makefile                      |    2 +
- drivers/md/dm-flakey.c                   |   21 +-
- drivers/md/dm-kcopyd.c                   |   68 +-
- drivers/md/dm-linear.c                   |   14 +-
- drivers/md/dm-table.c                    |  145 ++
- drivers/md/dm-zoned-io.c                 |  998 ++++++++++++++
- drivers/md/dm-zoned-metadata.c           | 2195 ++++++++++++++++++++++++++++++
- drivers/md/dm-zoned-reclaim.c            |  535 ++++++++
- drivers/md/dm-zoned.h                    |  528 +++++++
- drivers/md/dm.c                          |   93 +-
- include/linux/device-mapper.h            |   16 +
- include/linux/dm-kcopyd.h                |    1 +
- 14 files changed, 4783 insertions(+), 6 deletions(-)
- create mode 100644 Documentation/device-mapper/dm-zoned.txt
- create mode 100644 drivers/md/dm-zoned-io.c
- create mode 100644 drivers/md/dm-zoned-metadata.c
- create mode 100644 drivers/md/dm-zoned-reclaim.c
- create mode 100644 drivers/md/dm-zoned.h
-
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index dfb7597..1d98035 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1318,6 +1318,10 @@ static void __split_and_process_bio(struct mapped_device *md,
+ 		ci.sector_count = 0;
+ 		error = __send_empty_flush(&ci);
+ 		/* dec_pending submits any data associated with flush */
++	} else if (bio_op(bio) == REQ_OP_ZONE_RESET) {
++		ci.bio = bio;
++		ci.sector_count = 0;
++		error = __split_and_process_non_flush(&ci);
+ 	} else {
+ 		ci.bio = bio;
+ 		ci.sector_count = bio_sectors(bio);
 -- 
 2.9.3
