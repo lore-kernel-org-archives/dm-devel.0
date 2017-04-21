@@ -1,57 +1,56 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH 3.18-stable] dm bufio: hide bogus warning
-Date: Fri, 21 Apr 2017 15:41:10 +0200
-Message-ID: <20170421134212.2727744-1-arnd@arndb.de>
+From: Dan Williams <dan.j.williams@intel.com>
+Subject: Re: [PATCH] block: get rid of blk_integrity_revalidate()
+Date: Fri, 21 Apr 2017 13:13:52 -0700
+Message-ID: <CAPcyv4h_T734PmfLPOgz8U_jNXKburcD688fdGRJX+SHQvfPjQ@mail.gmail.com>
+References: <1492533800-30627-1-git-send-email-idryomov@gmail.com> <yq1shl3rfzo.fsf@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: stable@vger.kernel.org
-Cc: Arnd Bergmann <arnd@arndb.de>, Mike Snitzer <snitzer@redhat.com>, gregkh@linuxfoundation.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <ceph-devel-owner@vger.kernel.org>
+In-Reply-To: <yq1shl3rfzo.fsf@oracle.com>
+Sender: ceph-devel-owner@vger.kernel.org
+To: "Martin K. Petersen" <martin.petersen@oracle.com>
+Cc: Ilya Dryomov <idryomov@gmail.com>, Christoph Hellwig <hch@lst.de>, Mike Snitzer <snitzer@redhat.com>, Jens Axboe <axboe@fb.com>, linux-block@vger.kernel.org, linux-nvme@lists.infradead.org, dm-devel@redhat.com, ceph-devel@vger.kernel.org, Keith Busch <keith.busch@intel.com>
 List-Id: dm-devel.ids
 
-mips-gcc-5.3 warns about correct code on linux-3.18 and earlier:
+On Wed, Apr 19, 2017 at 7:04 PM, Martin K. Petersen
+<martin.petersen@oracle.com> wrote:
+> Ilya Dryomov <idryomov@gmail.com> writes:
+>
+> Ilya,
+>
+>> Commit 25520d55cdb6 ("block: Inline blk_integrity in struct gendisk")
+>> introduced blk_integrity_revalidate(), which seems to assume ownership
+>> of the stable pages flag and unilaterally clears it if no blk_integrity
+>> profile is registered:
+>>
+>>     if (bi->profile)
+>>             disk->queue->backing_dev_info->capabilities |=
+>>                     BDI_CAP_STABLE_WRITES;
+>>     else
+>>             disk->queue->backing_dev_info->capabilities &=
+>>                     ~BDI_CAP_STABLE_WRITES;
+>>
+>> It's called from revalidate_disk() and rescan_partitions(), making it
+>> impossible to enable stable pages for drivers that support partitions
+>> and don't use blk_integrity: while the call in revalidate_disk() can be
+>> trivially worked around (see zram, which doesn't support partitions and
+>> hence gets away with zram_revalidate_disk()), rescan_partitions() can
+>> be triggered from userspace at any time.  This breaks rbd, where the
+>> ceph messenger is responsible for generating/verifying CRCs.
+>>
+>> Since blk_integrity_{un,}register() "must" be used for (un)registering
+>> the integrity profile with the block layer, move BDI_CAP_STABLE_WRITES
+>> setting there.  This way drivers that call blk_integrity_register() and
+>> use integrity infrastructure won't interfere with drivers that don't
+>> but still want stable pages.
+>
+> I seem to recall that the reason for the revalidate hook was that either
+> NVMe or nvdimm had to register an integrity profile prior to the actual
+> format being known.
+>
+> So while I am OK with the change from a SCSI perspective, I think we
+> need Keith and Dan to ack it.
 
-In file included from ../include/linux/blkdev.h:4:0,
-                 from ../drivers/md/dm-bufio.h:12,
-                 from ../drivers/md/dm-bufio.c:9:
-../drivers/md/dm-bufio.c: In function 'alloc_buffer':
-../include/linux/sched.h:1975:56: warning: 'noio_flag' may be used uninitialized in this function [-Wmaybe-uninitialized]
-  current->flags = (current->flags & ~PF_MEMALLOC_NOIO) | flags;
-                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~
-../drivers/md/dm-bufio.c:325:11: note: 'noio_flag' was declared here
+Looks good to me,
 
-The warning disappeared on later kernels with this commit: be0c37c985ed
-("MIPS: Rearrange PTE bits into fixed positions.")  I assume this only
-happened because it changed some inlining decisions.
-
-On 3.18.y, we can shut up the warning by adding an extra initialization.
-
-Signed-off-by: Arnd Bergmann <arnd@arndb.de>
----
- drivers/md/dm-bufio.c | 1 +
- 1 file changed, 1 insertion(+)
-
-diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
-index ecbd3ffcf359..91fe43b98c96 100644
---- a/drivers/md/dm-bufio.c
-+++ b/drivers/md/dm-bufio.c
-@@ -349,6 +349,7 @@ static void *alloc_buffer_data(struct dm_bufio_client *c, gfp_t gfp_mask,
- 	 * as if GFP_NOIO was specified.
- 	 */
- 
-+	noio_flag = 0;
- 	if (gfp_mask & __GFP_NORETRY)
- 		noio_flag = memalloc_noio_save();
- 
--- 
-2.9.0
+Tested-by: Dan Williams <dan.j.williams@intel.com>
