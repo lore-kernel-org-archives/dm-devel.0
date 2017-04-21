@@ -1,7 +1,7 @@
 From: damien.lemoal@wdc.com
-Subject: [PATCH 05/10] dm: Fix REQ_OP_ZONE_REPORT bio handling
-Date: Fri, 21 Apr 2017 12:55:53 +0900
-Message-ID: <20170421035558.2657-6-damien.lemoal@wdc.com>
+Subject: [PATCH 02/10] dm-table: Check device area zone alignment
+Date: Fri, 21 Apr 2017 12:55:50 +0900
+Message-ID: <20170421035558.2657-3-damien.lemoal@wdc.com>
 References: <20170421035558.2657-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -14,44 +14,54 @@ List-Id: dm-devel.ids
 
 From: Damien Le Moal <damien.lemoal@wdc.com>
 
-A REQ_OP_ZONE_REPORT bio is not a medium access command. Its number of
-sectors indicates the maximum size allowed for the report reply size
-and not an amount of sectors accessed from the device.
-REQ_OP_ZONE_REPORT bios should thus not be split depending on the
-target device maximum I/O length but passed as is. Note that it is the
-responsability of the target to remap and format the report reply.
+If a target maps to a zoned block device, check that the device area is
+aligned on zone boundaries to avoid problems with REQ_OP_ZONE_RESET
+operations (resetting a partially mapped sequential zone would not be
+possible). This also greatly facilitate the processing of zone report
+with REQ_OP_ZONE_REPORT bios.
 
 Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
 ---
- drivers/md/dm.c | 9 +++++++--
- 1 file changed, 7 insertions(+), 2 deletions(-)
+ drivers/md/dm-table.c | 27 +++++++++++++++++++++++++++
+ 1 file changed, 27 insertions(+)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 1d98035..cd44928 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1098,7 +1098,8 @@ static int clone_bio(struct dm_target_io *tio, struct bio *bio,
- 			return r;
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 06d3b7b..6947f0f 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -339,6 +339,33 @@ static int device_area_is_invalid(struct dm_target *ti, struct dm_dev *dev,
+ 		return 1;
  	}
  
--	bio_advance(clone, to_bytes(sector - clone->bi_iter.bi_sector));
-+	if (bio_op(bio) != REQ_OP_ZONE_REPORT)
-+		bio_advance(clone, to_bytes(sector - clone->bi_iter.bi_sector));
- 	clone->bi_iter.bi_size = to_bytes(len);
++	/*
++	 * If the target is mapped to a zoned block device, check
++	 * that the device zones are not partially mapped.
++	 */
++	if (bdev_zoned_model(bdev) != BLK_ZONED_NONE) {
++		unsigned int zone_sectors = bdev_zone_sectors(bdev);
++
++		if (start & (zone_sectors - 1)) {
++			DMWARN("%s: start=%llu not aligned to h/w "
++			       "zone size %u of %s",
++			       dm_device_name(ti->table->md),
++			       (unsigned long long)start,
++			       zone_sectors, bdevname(bdev, b));
++			return 1;
++		}
++
++		if (start + len < dev_size &&
++		    len & (zone_sectors - 1)) {
++			DMWARN("%s: len=%llu not aligned to h/w "
++			       "zone size %u of %s",
++			       dm_device_name(ti->table->md),
++			       (unsigned long long)start,
++			       zone_sectors, bdevname(bdev, b));
++			return 1;
++		}
++	}
++
+ 	return 0;
+ }
  
- 	if (bio_integrity(bio))
-@@ -1275,7 +1276,11 @@ static int __split_and_process_non_flush(struct clone_info *ci)
- 	if (!dm_target_is_valid(ti))
- 		return -EIO;
- 
--	len = min_t(sector_t, max_io_len(ci->sector, ti), ci->sector_count);
-+	if (bio_op(bio) == REQ_OP_ZONE_REPORT)
-+		len = ci->sector_count;
-+	else
-+		len = min_t(sector_t, max_io_len(ci->sector, ti),
-+			    ci->sector_count);
- 
- 	r = __clone_and_map_data_bio(ci, ti, ci->sector, &len);
- 	if (r < 0)
 -- 
 2.9.3
