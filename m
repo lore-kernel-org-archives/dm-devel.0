@@ -1,63 +1,52 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [resend PATCH v2 11/33] dm: add dax_device and dax_operations
- support
-Date: Sat, 22 Apr 2017 11:25:06 -0400
-Message-ID: <20170422152505.GB22651@redhat.com>
-References: <149245612770.10206.15496018295337908594.stgit@dwillia2-desk3.amr.corp.intel.com>
- <149245618859.10206.13182319600260215993.stgit@dwillia2-desk3.amr.corp.intel.com>
- <CAPcyv4iskwS2izbZEtf7vSsk06cd3C0jhbDF3sfsOkWakc6jaw@mail.gmail.com>
+Subject: [PATCH v2 for-4.12] block: fix blk_integrity_register to use
+ template's interval_exp if not 0
+Date: Sat, 22 Apr 2017 17:22:09 -0400
+Message-ID: <20170422212209.GA49088@redhat.com>
+References: <20170421222815.45663-1-snitzer@redhat.com>
+ <yq1o9vpjs9f.fsf@oracle.com>
+ <20170422151043.GA22651@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-block-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAPcyv4iskwS2izbZEtf7vSsk06cd3C0jhbDF3sfsOkWakc6jaw@mail.gmail.com>
+In-Reply-To: <20170422151043.GA22651@redhat.com>
 Sender: linux-block-owner@vger.kernel.org
-To: Dan Williams <dan.j.williams@intel.com>
-Cc: "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Toshi Kani <toshi.kani@hpe.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Christoph Hellwig <hch@lst.de>
+To: Jens Axboe <axboe@kernel.dk>, "Martin K. Petersen" <martin.petersen@oracle.com>
+Cc: dm-devel@redhat.com, linux-block@vger.kernel.org, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Apr 20 2017 at 12:30pm -0400,
-Dan Williams <dan.j.williams@intel.com> wrote:
+When registering an integrity profile: if the template's interval_exp is
+not 0 use it, otherwise use the ilog2() of logical block size of the
+provided gendisk.
 
-> On Mon, Apr 17, 2017 at 12:09 PM, Dan Williams <dan.j.williams@intel.com> wrote:
-> > Allocate a dax_device to represent the capacity of a device-mapper
-> > instance. Provide a ->direct_access() method via the new dax_operations
-> > indirection that mirrors the functionality of the current direct_access
-> > support via block_device_operations.  Once fs/dax.c has been converted
-> > to use dax_operations the old dm_blk_direct_access() will be removed.
-> >
-> > A new helper dm_dax_get_live_target() is introduced to separate some of
-> > the dm-specifics from the direct_access implementation.
-> >
-> > This enabling is only for the top-level dm representation to upper
-> > layers. Converting target direct_access implementations is deferred to a
-> > separate patch.
-> >
-> > Cc: Toshi Kani <toshi.kani@hpe.com>
-> > Cc: Mike Snitzer <snitzer@redhat.com>
-> 
-> Hi Mike,
-> 
-> Any concerns with these dax_device and dax_operations changes to
-> device-mapper for the upcoming merge window?
+This fixes a long-standing DM linear target bug where it cannot pass
+integrity data to the underlying device if its logical block size
+conflicts with the underlying device's logical block size.
 
-Sorry for the delay.
+Cc: stable@vger.kernel.org
+Reported-by: Mikulas Patocka <mpatocka@redhat.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ block/blk-integrity.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-I just reviewed them, overall looks good.  The enabling functions in the
-DAX code, that are mixed in with the DM changes, could maybe be factored
-out into separate earlier patches but I don't feel that strongly about
-that.
+Jens, please feel free to pick this up for 4.12 and I'll just make the
+dm-integrity commit Depends-on it once you've staged it.
 
-Feel free to add this tag to the handful of relevant DM patches:
-
-Reviewed-by: Mike Snitzer <snitzer@redhat.com>
-
-I haven't done a merge with the linux-dm.git 'dm-4.12' branch but it'd
-be good to verify there aren't any merge conflicts.  If there are then
-it'd be nice to know going in to the merge so that we can forecast as
-much to Linus.
-
-I really appreciate you doing this work!
-
-Thanks,
-Mike
+diff --git a/block/blk-integrity.c b/block/blk-integrity.c
+index 9f0ff5b..d6e1b9a 100644
+--- a/block/blk-integrity.c
++++ b/block/blk-integrity.c
+@@ -412,7 +412,8 @@ void blk_integrity_register(struct gendisk *disk, struct blk_integrity *template
+ 
+ 	bi->flags = BLK_INTEGRITY_VERIFY | BLK_INTEGRITY_GENERATE |
+ 		template->flags;
+-	bi->interval_exp = ilog2(queue_logical_block_size(disk->queue));
++	bi->interval_exp = template->interval_exp ? :
++		ilog2(queue_logical_block_size(disk->queue));
+ 	bi->profile = template->profile ? template->profile : &nop_profile;
+ 	bi->tuple_size = template->tuple_size;
+ 	bi->tag_size = template->tag_size;
+-- 
+2.10.1
