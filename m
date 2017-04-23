@@ -1,44 +1,34 @@
-From: Bart Van Assche <Bart.VanAssche@sandisk.com>
-Subject: Re: [PATCH] dm-mpath: Requeue after a small delay if
- blk_get_request() fails
-Date: Fri, 21 Apr 2017 20:34:35 +0000
-Message-ID: <1492806874.2550.30.camel@sandisk.com>
-References: <dbf70983-7e32-0a65-589b-8cfb15c12792@sandisk.com>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Re: [PATCH v2 for-4.12] block: fix blk_integrity_register to use template's interval_exp if not 0
+Date: Sun, 23 Apr 2017 14:42:37 -0400
+Message-ID: <yq1inlvj78i.fsf@oracle.com>
+References: <20170421222815.45663-1-snitzer@redhat.com>
+        <yq1o9vpjs9f.fsf@oracle.com> <20170422151043.GA22651@redhat.com>
+        <20170422212209.GA49088@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <dbf70983-7e32-0a65-589b-8cfb15c12792@sandisk.com>
-Content-Language: en-US
-Content-ID: <0F4E54A232ECFF4AAD09B001D19AA1DC@namprd04.prod.outlook.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "snitzer@redhat.com" <snitzer@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Type: text/plain
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20170422212209.GA49088@redhat.com> (Mike Snitzer's message of
+        "Sat, 22 Apr 2017 17:22:09 -0400")
+Sender: linux-block-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, "Martin K. Petersen" <martin.petersen@oracle.com>, dm-devel@redhat.com, linux-block@vger.kernel.org, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, 2017-04-07 at 16:50 -0700, Bart Van Assche wrote:
-> If blk_get_request() returns ENODEV then multipath_clone_and_map()
-> causes a request to be requeued immediately. This can cause a
-> kworker thread to spend 100% of the CPU time of a single core in
-> __blk_mq_run_hw_queue() and also can cause device removal to
-> never finish.
-> 
-> Avoid this by only requeuing after a delay if blk_get_request()
-> fails. Additionally, reduce the requeue delay.
 
-Hello Mike,
+Mike,
 
-The v4.12 merge window will open soon. Have you already had the
-time to review this patch?
+> When registering an integrity profile: if the template's interval_exp is
+> not 0 use it, otherwise use the ilog2() of logical block size of the
+> provided gendisk.
+>
+> This fixes a long-standing DM linear target bug where it cannot pass
+> integrity data to the underlying device if its logical block size
+> conflicts with the underlying device's logical block size.
 
-Thanks,
+Looks good!
 
-Bart.
+Acked-by: Martin K. Petersen <martin.petersen@oracle.com>
+
+-- 
+Martin K. Petersen	Oracle Linux Engineering
