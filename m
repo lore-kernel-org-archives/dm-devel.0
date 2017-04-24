@@ -1,113 +1,225 @@
-From: Damien Le Moal <damien.lemoal@wdc.com>
-Subject: Re: [PATCH 00/10] dm: zoned block device support
-Date: Mon, 24 Apr 2017 16:52:21 +0900
-Message-ID: <d811fd5a-9225-53a3-b2e4-292482e5c1a1@wdc.com>
-References: <20170421035558.2657-1-damien.lemoal@wdc.com>
- <c33ac182-94d6-1abf-3287-1faf0398c778@suse.de>
+From: Milan Broz <gmazyland@gmail.com>
+Subject: Re: [PATCH] dm verity: deferred hash checking for
+ restart/logging mode
+Date: Mon, 24 Apr 2017 10:05:03 +0200
+Message-ID: <76b0b4ab-f811-7c8e-c88c-1210a0e67119@gmail.com>
+References: <1493019260-43938-1-git-send-email-bongkyu.kim@lge.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <c33ac182-94d6-1abf-3287-1faf0398c778@suse.de>
-Content-Language: en-US
-Sender: linux-block-owner@vger.kernel.org
-To: Hannes Reinecke <hare@suse.de>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
-Cc: Christoph Hellwig <hch@lst.de>, Bart Van Assche <Bart.VanAssche@sandisk.com>, linux-block@vger.kernel.org
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1493019260-43938-1-git-send-email-bongkyu.kim@lge.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Bongkyu Kim <bongkyu.kim@lge.com>, agk@redhat.com, snitzer@redhat.com
+Cc: Will Drewry <wad@chromium.org>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, Sami Tolvanen <samitolvanen@google.com>, shli@kernel.org
 List-Id: dm-devel.ids
 
-Hannes,
-
-On 4/24/17 15:24, Hannes Reinecke wrote:
-> On 04/21/2017 05:55 AM, damien.lemoal@wdc.com wrote:
->> From: Damien Le Moal <damien.lemoal@wdc.com>
->>
->> This series introduces zoned block device support to the device mapper
->> infrastructure. Pathces are as follows:
->>
->> - Patch 1: Add a new target type feature flag to indicate if a target type
->>   supports host-managed zoned block devices. This prevents using these drives
->>   with the current target types since none of them have the proper support
->>   implemented and will not operate properly with these drives.
->> - Patch 2: If a target device is a zoned block device, check that the range of
->>   LBAs mapped is aligned to the device zone size and that the device start
->>   offset also aligns to zone boundaries. This is necessary for zone reset and
->>   zone report correct execution.
->> - Patch 3: Check that the different target devices of a table have compatible
->>   zone sizes and models. This is necessary for target types that expose a zone
->>   model different from the underlying device.
->> - Patch 4: Fix handling of REQ_OP_ZONE_RESET bios
->> - Patch 5: Fix handling of REQ_OP_ZONE_REPORT bios
->> - Patch 6: Introduce a new helper function to reverse map a device zone report
->>   to the target LBA range
->> - Patch 7: Add support for host-managed zoned block devices to dm-flakey. This
->>   is necessary for testing file systems supporting natively these drives (e.g.
->>   f2fs).
->> - Patch 8: Add support for for zoned block devices to dm-linear. This can have
->>   useful applications during development and testing (e.g. allow creating
->>   smaller zoned devices with different combinations and positions of zones).
->>   There are also interesting applications for production, for instance, the
->>   ability to aggregate conventional zones of different drives to create a
->>   regular disk.
->> - Patch 9: Add sequential write enforcement to dm_kcopyd_copy so that
->>   sequential zones of a host-managed zoned block device can be specified as
->>   destinations.
->> - Patch 10: New dm-zoned target type (this was already sent for review twice).
->>   This resend adds modifications suggested by Hannes to implement reclaim
->>   using dm-kcopyd. dm-zoned depends on patch 9.
->>
->> As always, comments and reviews are welcome.
->>
->> Damien Le Moal (10):
->>   dm-table: Introduce DM_TARGET_ZONED_HM feature
->>   dm-table: Check device area zone alignment
->>   dm-table: Check block devices zone model compatibility
->>   dm: Fix REQ_OP_ZONE_RESET bio handling
->>   dm: Fix REQ_OP_ZONE_REPORT bio handling
->>   dm: Introduce dm_remap_zone_report()
->>   dm-flakey: Add support for zoned block devices
->>   dm-linear: Add support for zoned block devices
->>   dm-kcopyd: Add sequential write feature
->>   dm-zoned: Drive-managed zoned block device target
->>
->>  Documentation/device-mapper/dm-zoned.txt |  154 +++
->>  drivers/md/Kconfig                       |   19 +
->>  drivers/md/Makefile                      |    2 +
->>  drivers/md/dm-flakey.c                   |   21 +-
->>  drivers/md/dm-kcopyd.c                   |   68 +-
->>  drivers/md/dm-linear.c                   |   14 +-
->>  drivers/md/dm-table.c                    |  145 ++
->>  drivers/md/dm-zoned-io.c                 |  998 ++++++++++++++
->>  drivers/md/dm-zoned-metadata.c           | 2195 ++++++++++++++++++++++++++++++
->>  drivers/md/dm-zoned-reclaim.c            |  535 ++++++++
->>  drivers/md/dm-zoned.h                    |  528 +++++++
->>  drivers/md/dm.c                          |   93 +-
->>  include/linux/device-mapper.h            |   16 +
->>  include/linux/dm-kcopyd.h                |    1 +
->>  14 files changed, 4783 insertions(+), 6 deletions(-)
->>  create mode 100644 Documentation/device-mapper/dm-zoned.txt
->>  create mode 100644 drivers/md/dm-zoned-io.c
->>  create mode 100644 drivers/md/dm-zoned-metadata.c
->>  create mode 100644 drivers/md/dm-zoned-reclaim.c
->>  create mode 100644 drivers/md/dm-zoned.h
->>
-> Very nice.
+On 04/24/2017 09:34 AM, Bongkyu Kim wrote:
+> This patch introduces deferred hash checking for dm-verity.
+> In case of restart and logging mode, I/O return first and hash checking is
+> deferred. It can improve dm-verity's performance greatly.
 > 
-> You can add my
+> This is my testing on qualcomm snapdragon 821 platform with UFS 2.0.
+> dd if=/dev/block/dm-0 of=/dev/null bs=1024 count=1000000
+> - vanilla: 238.14 MB/s
+> - patched: 331.52 MB/s (+39.2%)
 > 
-> Reviewed-by: Hannes Reinecke <hare@suse.com>
+> fio --rw=randread --size=64M --bs=4k --filename=/dev/block/dm-0 --name=job1
+>     --name=job2 --name=job3 --name=job4
+> - vanilla: 325.21 MB/s
+> - patched: 356.42 MB/s (+9.6%)
 > 
-> to the whole series.
+> One major concoren is security risk.
+> If data is tampered, this data will not return -EIO, and can be transferred
+> to user process. But, device will be rebooted after hash verification.
 
-Thank you for the review.
+Isn't one of the goal of integrity checking to PREVENT that userspace
+accesses tampered data?
 
-Best regards.
+What happens if that corrupted part is malware that just send one packet
+with confidential data in time window before it restarts?
 
--- 
-Damien Le Moal, Ph.D.
-Sr. Manager, System Software Research Group,
-Western Digital Corporation
-Damien.LeMoal@wdc.com
-(+81) 0466-98-3593 (ext. 513593)
-1 kirihara-cho, Fujisawa,
-Kanagawa, 252-0888 Japan
-www.wdc.com, www.hgst.com
+Now I am not sure what is the Google Chromebook/Android threat model here.
+If we accept patches that allows non-verified data to be returned to userspace,
+dmverity just becomes way how to detect flaky hw, I cannot imagine it is acceptable
+in "verified boot" chain.
+
+Could someone from dm-verity authors comment this?
+(I added Sami and Will to cc but not sure if there is anyone else)?
+
+Milan
+
+> After rebooting, device will work with EIO mode.
+> In my opinion, this is enough for gurantee integrity by each power cycles.
+> 
+> Signed-off-by: Bongkyu Kim <bongkyu.kim@lge.com>
+> ---
+>  drivers/md/dm-verity-target.c | 58 ++++++++++++++++++++++++++++++++++++++++---
+>  drivers/md/dm.c               | 17 +++++++++++--
+>  drivers/md/dm.h               |  4 +++
+>  3 files changed, 73 insertions(+), 6 deletions(-)
+> 
+> diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
+> index 7335d8a..37c4d9c 100644
+> --- a/drivers/md/dm-verity-target.c
+> +++ b/drivers/md/dm-verity-target.c
+> @@ -16,6 +16,7 @@
+>  
+>  #include "dm-verity.h"
+>  #include "dm-verity-fec.h"
+> +#include "dm.h"
+>  
+>  #include <linux/module.h>
+>  #include <linux/reboot.h>
+> @@ -62,6 +63,9 @@ struct buffer_aux {
+>  	int hash_verified;
+>  };
+>  
+> +static void verity_submit_prefetch(struct dm_verity *v,
+> +		struct dm_verity_io *io);
+> +
+>  /*
+>   * Initialize struct buffer_aux for a freshly created buffer.
+>   */
+> @@ -462,12 +466,35 @@ static void verity_finish_io(struct dm_verity_io *io, int error)
+>  	struct dm_verity *v = io->v;
+>  	struct bio *bio = dm_bio_from_per_bio_data(io, v->ti->per_io_data_size);
+>  
+> -	bio->bi_end_io = io->orig_bi_end_io;
+> -	bio->bi_error = error;
+> +	if (v->mode == DM_VERITY_MODE_EIO) {
+> +		bio->bi_end_io = io->orig_bi_end_io;
+> +		bio->bi_error = error;
+> +	}
+>  
+>  	verity_fec_finish_io(io);
+>  
+> -	bio_endio(bio);
+> +	if (v->mode == DM_VERITY_MODE_EIO) {
+> +		bio_endio(bio);
+> +	} else {
+> +		struct dm_target_io *tio = container_of(bio,
+> +				struct dm_target_io, clone);
+> +		struct dm_io *dmio = tio->io;
+> +		struct bio *ori_bio = dm_io_get_bio(dmio);
+> +		struct bio_vec *bv;
+> +		int i;
+> +
+> +		bio_put(bio);
+> +		free_io(dm_io_get_md(dmio), dmio);
+> +
+> +		bio_for_each_segment_all(bv, ori_bio, i) {
+> +			struct page *page = bv->bv_page;
+> +
+> +			put_page(page);
+> +		}
+> +
+> +		bio_put(ori_bio);
+> +
+> +	}
+>  }
+>  
+>  static void verity_work(struct work_struct *w)
+> @@ -486,6 +513,28 @@ static void verity_end_io(struct bio *bio)
+>  		return;
+>  	}
+>  
+> +	if (io->v->mode != DM_VERITY_MODE_EIO) {
+> +		struct dm_target_io *tio = container_of(bio,
+> +				struct dm_target_io, clone);
+> +		struct bio *ori_bio = dm_io_get_bio(tio->io);
+> +		struct bio_vec *bv;
+> +		int i;
+> +
+> +		bio_for_each_segment_all(bv, ori_bio, i) {
+> +			struct page *page = bv->bv_page;
+> +
+> +			get_page(page);
+> +		}
+> +
+> +		bio_get(ori_bio);
+> +		bio_get(bio);
+> +
+> +		bio->bi_end_io = io->orig_bi_end_io;
+> +		bio_endio(bio);
+> +
+> +		verity_submit_prefetch(io->v, io);
+> +	}
+> +
+>  	INIT_WORK(&io->work, verity_work);
+>  	queue_work(io->v->verify_wq, &io->work);
+>  }
+> @@ -586,7 +635,8 @@ static int verity_map(struct dm_target *ti, struct bio *bio)
+>  
+>  	verity_fec_init_io(io);
+>  
+> -	verity_submit_prefetch(v, io);
+> +	if (v->mode == DM_VERITY_MODE_EIO)
+> +		verity_submit_prefetch(v, io);
+>  
+>  	generic_make_request(bio);
+>  
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index 8bf3977..9eca0a0 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -164,6 +164,18 @@ static unsigned dm_get_numa_node(void)
+>  					 DM_NUMA_NODE, num_online_nodes() - 1);
+>  }
+>  
+> +struct bio *dm_io_get_bio(struct dm_io *io)
+> +{
+> +	return io->bio;
+> +}
+> +EXPORT_SYMBOL(dm_io_get_bio);
+> +
+> +struct mapped_device *dm_io_get_md(struct dm_io *io)
+> +{
+> +	return io->md;
+> +}
+> +EXPORT_SYMBOL(dm_io_get_md);
+> +
+>  static int __init local_init(void)
+>  {
+>  	int r = -ENOMEM;
+> @@ -489,7 +501,7 @@ static struct dm_io *alloc_io(struct mapped_device *md)
+>  	return mempool_alloc(md->io_pool, GFP_NOIO);
+>  }
+>  
+> -static void free_io(struct mapped_device *md, struct dm_io *io)
+> +void free_io(struct mapped_device *md, struct dm_io *io)
+>  {
+>  	mempool_free(io, md->io_pool);
+>  }
+> @@ -796,7 +808,8 @@ static void dec_pending(struct dm_io *io, int error)
+>  		io_error = io->error;
+>  		bio = io->bio;
+>  		end_io_acct(io);
+> -		free_io(md, io);
+> +		if (atomic_read(&bio->__bi_cnt) <= 1)
+> +			free_io(md, io);
+>  
+>  		if (io_error == DM_ENDIO_REQUEUE)
+>  			return;
+> diff --git a/drivers/md/dm.h b/drivers/md/dm.h
+> index f298b01..b026178 100644
+> --- a/drivers/md/dm.h
+> +++ b/drivers/md/dm.h
+> @@ -213,4 +213,8 @@ void dm_free_md_mempools(struct dm_md_mempools *pools);
+>   */
+>  unsigned dm_get_reserved_bio_based_ios(void);
+>  
+> +struct bio *dm_io_get_bio(struct dm_io *io);
+> +struct mapped_device *dm_io_get_md(struct dm_io *io);
+> +void free_io(struct mapped_device *md, struct dm_io *io);
+> +
+>  #endif
+> 
