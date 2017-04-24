@@ -1,11 +1,13 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 0/5] More misc patches
-Date: Mon, 24 Apr 2017 17:39:25 -0500
-Message-ID: <1493073570-17167-1-git-send-email-bmarzins@redhat.com>
+From: Andrei Borzenkov <arvidjaar@gmail.com>
+Subject: Re: Autoload of DM kernel targets?
+Date: Mon, 24 Apr 2017 20:32:21 +0300
+Message-ID: <f157f07e-7001-245d-ea15-dc729efd6e32@gmail.com>
+References: <3474bd1a-7a81-29ba-3562-aaaaeca47cc7@gmail.com>
+	<87zif6phzt.fsf@notabene.neil.brown.name>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============9208276522008330819=="
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <87zif6phzt.fsf@notabene.neil.brown.name>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,39 +17,105 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: NeilBrown <neilb@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Here are a couple of bug fixes and cleanups. Since nobody complained
-about the DELL MD3xxx merge, I put that in as well. I've left out the
-multipath.rules change from before, since that one shouldn't go in
-without an explicit ACK from other maintainers.
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--===============9208276522008330819==
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature";
+	boundary="gWUFeHNRVHApfX5kQ7UPVCpjjuBVU91Mo"
 
-Benjamin Marzinski (5):
-  multipath: Merge the DELL MD3xxx device configs
-  multipath: fix up position independent code
-  libmultipath: fix partition detection
-  kpartx: default to running in sync mode
-  libmultipath: force udev reloads
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--gWUFeHNRVHApfX5kQ7UPVCpjjuBVU91Mo
+Content-Type: multipart/mixed; boundary="7nJtduOJmqIPR6UTQgTTFGkXJjmehsk2m"
+From: Andrei Borzenkov <arvidjaar@gmail.com>
+To: NeilBrown <neilb@suse.com>, dm-devel@redhat.com
+Message-ID: <f157f07e-7001-245d-ea15-dc729efd6e32@gmail.com>
+Subject: Re: [dm-devel] Autoload of DM kernel targets?
+References: <3474bd1a-7a81-29ba-3562-aaaaeca47cc7@gmail.com>
+	<87zif6phzt.fsf@notabene.neil.brown.name>
+In-Reply-To: <87zif6phzt.fsf@notabene.neil.brown.name>
 
- Makefile.inc                       |  6 +++-
- kpartx/Makefile                    |  3 +-
- kpartx/kpartx.c                    | 10 +++++--
- kpartx/kpartx.rules                |  2 +-
- libdmmp/Makefile                   |  2 +-
- libmpathcmd/Makefile               |  2 ++
- libmpathpersist/Makefile           |  2 +-
- libmultipath/Makefile              |  2 +-
- libmultipath/checkers/Makefile     |  2 +-
- libmultipath/configure.c           |  7 ++++-
- libmultipath/devmapper.c           | 56 ++++++++++++++++++--------------------
- libmultipath/hwtable.c             | 26 +-----------------
- libmultipath/prioritizers/Makefile |  2 +-
- libmultipath/structs.h             |  1 +
- mpathpersist/Makefile              |  3 +-
- multipath/Makefile                 |  4 +--
- multipathd/Makefile                |  6 ++--
- 17 files changed, 63 insertions(+), 73 deletions(-)
+--7nJtduOJmqIPR6UTQgTTFGkXJjmehsk2m
+Content-Type: text/plain; charset=windows-1251
+Content-Transfer-Encoding: quoted-printable
 
--- 
-1.8.3.1
+24.04.2017 07:05, NeilBrown =EF=E8=F8=E5=F2:
+> On Fri, Apr 21 2017, Andrei Borzenkov wrote:
+>=20
+>> See as example https://bugzilla.opensuse.org/show_bug.cgi?id=3D983221
+>>
+>> "non-standard" DM targets do not appear to be autoloaded (the problem
+>> was hit with thin-pool, but it seems to apply to other targets as well=
+).
+>> "Common" targets (like linear) are provided by dm-mod which seems to b=
+e
+>> autoloaded by virtue of /dev/mapper/control.
+>>
+>> Is it expected and intentional? Or are users required to manually load=
+
+>> necessary modules on boot?
+>>
+>> TIA
+>>
+>> -andrei
+>>
+>> --
+>> dm-devel mailing list
+>> dm-devel@redhat.com
+>> https://www.redhat.com/mailman/listinfo/dm-devel
+>=20
+> Does this patch fix it for you?
+>=20
+
+I did not test it, because the problem (at least, this specific problem)
+turned out a packaging problem - lvm checks for available targets before
+it even tries to call into kernel, so this should not change anything.
+But it needs path to modprobe that is detected during build. mkdprobe
+was not present in build environment so lvm did not try to autoload
+anything and immediately failed. Making sure to BuildRequire (package,
+that provides) it fixed the problem.
+
+> diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+> index 8f811dc8b3cc..d2c6a9a12d75 100644
+> --- a/drivers/md/dm-thin.c
+> +++ b/drivers/md/dm-thin.c
+> @@ -4400,3 +4400,4 @@ MODULE_PARM_DESC(no_space_timeout, "Out of data s=
+pace queue IO timeout in second
+>  MODULE_DESCRIPTION(DM_NAME " thin provisioning target");
+>  MODULE_AUTHOR("Joe Thornber <dm-devel@redhat.com>");
+>  MODULE_LICENSE("GPL");
+> +MODULE_ALIAS("dm-thin-pool");
+>=20
+> NeilBrown
+>=20
+
+
+
+--7nJtduOJmqIPR6UTQgTTFGkXJjmehsk2m--
+
+--gWUFeHNRVHApfX5kQ7UPVCpjjuBVU91Mo
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
+
+iEYEARECAAYFAlj+NqUACgkQR6LMutpd94zLZgCgpyGC51Y1NGjT44Q48yGlwZil
+XpAAniR+Di1y6iw6pbqr02ziLuinquoc
+=wI5Q
+-----END PGP SIGNATURE-----
+
+--gWUFeHNRVHApfX5kQ7UPVCpjjuBVU91Mo--
+
+
+--===============9208276522008330819==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============9208276522008330819==--
