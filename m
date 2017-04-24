@@ -1,7 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 5/5] libmultipath: force udev reloads
-Date: Mon, 24 Apr 2017 17:39:30 -0500
-Message-ID: <1493073570-17167-6-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 3/5] libmultipath: fix partition detection
+Date: Mon, 24 Apr 2017 17:39:28 -0500
+Message-ID: <1493073570-17167-4-git-send-email-bmarzins@redhat.com>
 References: <1493073570-17167-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -20,83 +20,120 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Now that the multipath udev rules try harder to not do lvm scans or
-kpartx runs unnecessarily, multipath needs to make sure that these do
-run when they are wanted.  This patch makes sure that when a device is
-force reloaded, or changes size, the MPATH_UDEV_RELOAD_FLAG isn't set.
-This allows lvm scanning and kpartx runs to happen on these uevents.
+The do_foreach_partmaps code could incorrectly list a device as a
+partition of another device, because of two issues.  First, the check to
+compare the dm UUID of two devices would allow two partition devices to
+match, or a partition device to match with itself, instead of only
+having a partition device match with the multipath device that it
+belongs to.  Second, the code to check if a multipath device's
+major:minor appeared in a partition device's table only used strstr
+to check of the existance of the major:minor string. This meant that
+any device with a minor number that started with the same digits would
+match. for instance, checking for "253:10" would also match "253:102".
+
+This patch fixes these issues.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/configure.c | 7 ++++++-
- libmultipath/devmapper.c | 3 ++-
- libmultipath/structs.h   | 1 +
- 3 files changed, 9 insertions(+), 2 deletions(-)
+ libmultipath/devmapper.c | 53 ++++++++++++++++++++++--------------------------
+ 1 file changed, 24 insertions(+), 29 deletions(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index b29a660..bd090d9 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -499,8 +499,10 @@ select_action (struct multipath * mpp, vector curmp, int force_reload)
- 				cmpp->alias, mpp->alias);
- 			strncpy(mpp->alias_old, cmpp->alias, WWID_SIZE - 1);
- 			mpp->action = ACT_RENAME;
--			if (force_reload)
-+			if (force_reload) {
-+				mpp->force_udev_reload = 1;
- 				mpp->action = ACT_FORCERENAME;
-+			}
- 			return;
- 		}
- 		mpp->action = ACT_CREATE;
-@@ -538,12 +540,14 @@ select_action (struct multipath * mpp, vector curmp, int force_reload)
- 		return;
- 	}
- 	if (force_reload) {
-+		mpp->force_udev_reload = 1;
- 		mpp->action = ACT_RELOAD;
- 		condlog(3, "%s: set ACT_RELOAD (forced by user)",
- 			mpp->alias);
- 		return;
- 	}
- 	if (cmpp->size != mpp->size) {
-+		mpp->force_udev_reload = 1;
- 		mpp->action = ACT_RESIZE;
- 		condlog(3, "%s: set ACT_RESIZE (size change)",
- 			mpp->alias);
-@@ -797,6 +801,7 @@ int domap(struct multipath *mpp, char *params, int is_daemon)
- 		 * DM_DEVICE_CREATE, DM_DEVICE_RENAME, or DM_DEVICE_RELOAD
- 		 * succeeded
- 		 */
-+		mpp->force_udev_reload = 0;
- 		if (mpp->action == ACT_CREATE)
- 			remember_wwid(mpp->wwid);
- 		if (!is_daemon) {
 diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index c7602cb..d73ba1a 100644
+index 5fb9d9a..c7602cb 100644
 --- a/libmultipath/devmapper.c
 +++ b/libmultipath/devmapper.c
-@@ -372,7 +372,8 @@ int dm_addmap_create (struct multipath *mpp, char * params)
- int dm_addmap_reload(struct multipath *mpp, char *params, int flush)
+@@ -493,42 +493,35 @@ uuidout:
+ 
+ int dm_get_uuid(char *name, char *uuid)
  {
- 	int r = 0;
--	uint16_t udev_flags = (flush ? 0 : MPATH_UDEV_RELOAD_FLAG) |
-+	uint16_t udev_flags = ((mpp->force_udev_reload)?
-+			       0 : MPATH_UDEV_RELOAD_FLAG) |
- 			      ((mpp->skip_kpartx == SKIP_KPARTX_ON)?
- 			       MPATH_UDEV_NO_KPARTX_FLAG : 0) |
- 			      ((mpp->nr_active)? 0 : MPATH_UDEV_NO_PATHS_FLAG);
-diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-index 98e13e4..01e031a 100644
---- a/libmultipath/structs.h
-+++ b/libmultipath/structs.h
-@@ -272,6 +272,7 @@ struct multipath {
- 	int skip_kpartx;
- 	int max_sectors_kb;
- 	int force_readonly;
-+	int force_udev_reload;
- 	unsigned int dev_loss;
- 	uid_t uid;
- 	gid_t gid;
+-	char uuidtmp[WWID_SIZE];
+-
+-	if (dm_get_prefixed_uuid(name, uuidtmp))
++	if (dm_get_prefixed_uuid(name, uuid))
+ 		return 1;
+ 
+-	if (!strncmp(uuidtmp, UUID_PREFIX, UUID_PREFIX_LEN))
+-		strcpy(uuid, uuidtmp + UUID_PREFIX_LEN);
+-	else
+-		strcpy(uuid, uuidtmp);
+-
++	if (!strncmp(uuid, UUID_PREFIX, UUID_PREFIX_LEN))
++		memmove(uuid, uuid + UUID_PREFIX_LEN,
++			strlen(uuid + UUID_PREFIX_LEN) + 1);
+ 	return 0;
+ }
+ 
+-/*
+- * returns:
+- *    0 : if both uuids end with same suffix which starts with UUID_PREFIX
+- *    1 : otherwise
+- */
+-int
+-dm_compare_uuid(const char* mapname1, const char* mapname2)
++static int
++is_mpath_part(const char *part_name, const char *map_name)
+ {
+-	char *p1, *p2;
+-	char uuid1[WWID_SIZE], uuid2[WWID_SIZE];
++	char *p;
++	char part_uuid[WWID_SIZE], map_uuid[WWID_SIZE];
+ 
+-	if (dm_get_prefixed_uuid(mapname1, uuid1))
+-		return 1;
++	if (dm_get_prefixed_uuid(part_name, part_uuid))
++		return 0;
+ 
+-	if (dm_get_prefixed_uuid(mapname2, uuid2))
+-		return 1;
++	if (dm_get_prefixed_uuid(map_name, map_uuid))
++		return 0;
+ 
+-	p1 = strstr(uuid1, UUID_PREFIX);
+-	p2 = strstr(uuid2, UUID_PREFIX);
+-	if (p1 && p2 && !strcmp(p1, p2))
++	if (strncmp(part_uuid, "part", 4) != 0)
+ 		return 0;
+ 
+-	return 1;
++	p = strstr(part_uuid, UUID_PREFIX);
++	if (p && !strcmp(p, map_uuid))
++		return 1;
++
++	return 0;
+ }
+ 
+ int dm_get_status(char *name, char *outstatus)
+@@ -1162,6 +1155,7 @@ do_foreach_partmaps (const char * mapname,
+ 	unsigned long long size;
+ 	char dev_t[32];
+ 	int r = 1;
++	char *p;
+ 
+ 	if (!(dmt = dm_task_create(DM_DEVICE_LIST)))
+ 		return 1;
+@@ -1190,10 +1184,10 @@ do_foreach_partmaps (const char * mapname,
+ 		    (dm_type(names->name, TGT_PART) > 0) &&
+ 
+ 		    /*
+-		     * and both uuid end with same suffix starting
+-		     * at UUID_PREFIX
++		     * and the uuid of the target is a partition of the
++		     * uuid of the multipath device
+ 		     */
+-		    (!dm_compare_uuid(names->name, mapname)) &&
++		    is_mpath_part(names->name, mapname) &&
+ 
+ 		    /*
+ 		     * and we can fetch the map table from the kernel
+@@ -1203,7 +1197,8 @@ do_foreach_partmaps (const char * mapname,
+ 		    /*
+ 		     * and the table maps over the multipath map
+ 		     */
+-		    strstr(params, dev_t)
++		    (p = strstr(params, dev_t)) &&
++		    !isdigit(*(p + strlen(dev_t)))
+ 		   ) {
+ 			if (partmap_func(names->name, data) != 0)
+ 				goto out;
 -- 
 1.8.3.1
