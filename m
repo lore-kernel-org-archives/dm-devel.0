@@ -1,93 +1,104 @@
-From: NeilBrown <neilb@suse.com>
-Subject: Re: Autoload of DM kernel targets?
-Date: Mon, 24 Apr 2017 14:05:58 +1000
-Message-ID: <87zif6phzt.fsf@notabene.neil.brown.name>
-References: <3474bd1a-7a81-29ba-3562-aaaaeca47cc7@gmail.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 00/10] dm: zoned block device support
+Date: Mon, 24 Apr 2017 08:24:41 +0200
+Message-ID: <c33ac182-94d6-1abf-3287-1faf0398c778@suse.de>
+References: <20170421035558.2657-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0339778937383091935=="
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <3474bd1a-7a81-29ba-3562-aaaaeca47cc7@gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Andrei Borzenkov <arvidjaar@gmail.com>, dm-devel@redhat.com
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20170421035558.2657-1-damien.lemoal@wdc.com>
+Sender: linux-block-owner@vger.kernel.org
+To: damien.lemoal@wdc.com, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
+Cc: Christoph Hellwig <hch@lst.de>, Bart Van Assche <Bart.VanAssche@sandisk.com>, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
---===============0339778937383091935==
-Content-Type: multipart/signed; boundary="=-=-=";
-	micalg=pgp-sha256; protocol="application/pgp-signature"
+On 04/21/2017 05:55 AM, damien.lemoal@wdc.com wrote:
+> From: Damien Le Moal <damien.lemoal@wdc.com>
+> 
+> This series introduces zoned block device support to the device mapper
+> infrastructure. Pathces are as follows:
+> 
+> - Patch 1: Add a new target type feature flag to indicate if a target type
+>   supports host-managed zoned block devices. This prevents using these drives
+>   with the current target types since none of them have the proper support
+>   implemented and will not operate properly with these drives.
+> - Patch 2: If a target device is a zoned block device, check that the range of
+>   LBAs mapped is aligned to the device zone size and that the device start
+>   offset also aligns to zone boundaries. This is necessary for zone reset and
+>   zone report correct execution.
+> - Patch 3: Check that the different target devices of a table have compatible
+>   zone sizes and models. This is necessary for target types that expose a zone
+>   model different from the underlying device.
+> - Patch 4: Fix handling of REQ_OP_ZONE_RESET bios
+> - Patch 5: Fix handling of REQ_OP_ZONE_REPORT bios
+> - Patch 6: Introduce a new helper function to reverse map a device zone report
+>   to the target LBA range
+> - Patch 7: Add support for host-managed zoned block devices to dm-flakey. This
+>   is necessary for testing file systems supporting natively these drives (e.g.
+>   f2fs).
+> - Patch 8: Add support for for zoned block devices to dm-linear. This can have
+>   useful applications during development and testing (e.g. allow creating
+>   smaller zoned devices with different combinations and positions of zones).
+>   There are also interesting applications for production, for instance, the
+>   ability to aggregate conventional zones of different drives to create a
+>   regular disk.
+> - Patch 9: Add sequential write enforcement to dm_kcopyd_copy so that
+>   sequential zones of a host-managed zoned block device can be specified as
+>   destinations.
+> - Patch 10: New dm-zoned target type (this was already sent for review twice).
+>   This resend adds modifications suggested by Hannes to implement reclaim
+>   using dm-kcopyd. dm-zoned depends on patch 9.
+> 
+> As always, comments and reviews are welcome.
+> 
+> Damien Le Moal (10):
+>   dm-table: Introduce DM_TARGET_ZONED_HM feature
+>   dm-table: Check device area zone alignment
+>   dm-table: Check block devices zone model compatibility
+>   dm: Fix REQ_OP_ZONE_RESET bio handling
+>   dm: Fix REQ_OP_ZONE_REPORT bio handling
+>   dm: Introduce dm_remap_zone_report()
+>   dm-flakey: Add support for zoned block devices
+>   dm-linear: Add support for zoned block devices
+>   dm-kcopyd: Add sequential write feature
+>   dm-zoned: Drive-managed zoned block device target
+> 
+>  Documentation/device-mapper/dm-zoned.txt |  154 +++
+>  drivers/md/Kconfig                       |   19 +
+>  drivers/md/Makefile                      |    2 +
+>  drivers/md/dm-flakey.c                   |   21 +-
+>  drivers/md/dm-kcopyd.c                   |   68 +-
+>  drivers/md/dm-linear.c                   |   14 +-
+>  drivers/md/dm-table.c                    |  145 ++
+>  drivers/md/dm-zoned-io.c                 |  998 ++++++++++++++
+>  drivers/md/dm-zoned-metadata.c           | 2195 ++++++++++++++++++++++++++++++
+>  drivers/md/dm-zoned-reclaim.c            |  535 ++++++++
+>  drivers/md/dm-zoned.h                    |  528 +++++++
+>  drivers/md/dm.c                          |   93 +-
+>  include/linux/device-mapper.h            |   16 +
+>  include/linux/dm-kcopyd.h                |    1 +
+>  14 files changed, 4783 insertions(+), 6 deletions(-)
+>  create mode 100644 Documentation/device-mapper/dm-zoned.txt
+>  create mode 100644 drivers/md/dm-zoned-io.c
+>  create mode 100644 drivers/md/dm-zoned-metadata.c
+>  create mode 100644 drivers/md/dm-zoned-reclaim.c
+>  create mode 100644 drivers/md/dm-zoned.h
+> 
+Very nice.
 
---=-=-=
-Content-Type: text/plain
+You can add my
 
-On Fri, Apr 21 2017, Andrei Borzenkov wrote:
+Reviewed-by: Hannes Reinecke <hare@suse.com>
 
-> See as example https://bugzilla.opensuse.org/show_bug.cgi?id=983221
->
-> "non-standard" DM targets do not appear to be autoloaded (the problem
-> was hit with thin-pool, but it seems to apply to other targets as well).
-> "Common" targets (like linear) are provided by dm-mod which seems to be
-> autoloaded by virtue of /dev/mapper/control.
->
-> Is it expected and intentional? Or are users required to manually load
-> necessary modules on boot?
->
-> TIA
->
-> -andrei
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+to the whole series.
 
-Does this patch fix it for you?
+Cheers,
 
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index 8f811dc8b3cc..d2c6a9a12d75 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -4400,3 +4400,4 @@ MODULE_PARM_DESC(no_space_timeout, "Out of data space queue IO timeout in second
- MODULE_DESCRIPTION(DM_NAME " thin provisioning target");
- MODULE_AUTHOR("Joe Thornber <dm-devel@redhat.com>");
- MODULE_LICENSE("GPL");
-+MODULE_ALIAS("dm-thin-pool");
-
-NeilBrown
-
---=-=-=
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQIzBAEBCAAdFiEEG8Yp69OQ2HB7X0l6Oeye3VZigbkFAlj9eaYACgkQOeye3VZi
-gbnTPRAAtVSRt3+tLn+vHHrNCeOZ22xMhKZr6adPw6yww6KwdZgjOd0mmjJuXVzj
-i/8x1iWh3+Hj8TV0qf8jUDkrP1wpsttruZ1DCEIf1PnBuemQ2IX7s5565lMrjOk9
-KWYMpKPzRcGpxoNmMRTPPPTL2gKa+4o9baxq3mJ/LVZiU9AYEfSx1S0B691SR6w0
-rv2XSUchgRpUXzJq/IppY6joftXMbSnZj/pJT4X3Lmn5RQb/DAqjofAzyGWTp3gZ
-7oUpMH6OYWp6WZs6s5MAaRTtmUMzOCdQk1WcnaSEnACPpKgeASWZ5Ei5wety8YNL
-+CXq8cZwaZNW4HQ7MHlqsDosF5GMxyDyQxCESLTusNNXPLyVn2R/g8DzsQWWuo6M
-Ktn+By6ifhTdX5v13O32pfIosywLPdl0EAZVsyYk63/J0eVcsKk79oNObSQOYrHo
-MZh5NgY/HljU3qMauZbFAjT77l8kutDblKDC9ekCo9PqnasOhSm5k4+De2dAdF3j
-fXiDrP3/1wpFYpUx+WZwBs4KJ3dQywV/6q7OhShpwlYtFCKlL94hiA+vr2v9grWx
-vVd87D3kzQLdpPg9muGlq9fc2fqnAwr6cDdgCisu6LNxaR8ZrvyzejSfuxtv9I8E
-istvYMoySOM0Pl7B2TcntmEZHxMOfIv8Hpml7uDRr8m2Muy/x3I=
-=cfGn
------END PGP SIGNATURE-----
---=-=-=--
-
-
---===============0339778937383091935==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============0339778937383091935==--
+Hannes
+-- 
+Dr. Hannes Reinecke		   Teamlead Storage & Networking
+hare@suse.de			               +49 911 74053 688
+SUSE LINUX GmbH, Maxfeldstr. 5, 90409 Nürnberg
+GF: F. Imendörffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
+HRB 21284 (AG Nürnberg)
