@@ -1,16 +1,17 @@
-From: Steffen Maier <maier@linux.vnet.ibm.com>
-Subject: Re: [PATCH 4/5] kpartx: default to running in sync mode
-Date: Tue, 25 Apr 2017 19:48:05 +0200
-Message-ID: <cbcdac40-16c7-1c61-79f2-63d34b85e989@linux.vnet.ibm.com>
-References: <1493073570-17167-1-git-send-email-bmarzins@redhat.com>
-	<1493073570-17167-5-git-send-email-bmarzins@redhat.com>
-	<d4cdb3c3-c815-998f-9794-150179c74411@linux.vnet.ibm.com>
-	<20170425155255.GS19236@octiron.msp.redhat.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH 3/3] Add options to multipathd to turn off
+ queueing
+Date: Tue, 25 Apr 2017 13:03:59 -0500
+Message-ID: <20170425180359.GU19236@octiron.msp.redhat.com>
+References: <1236883093-2989-1-git-send-email-bmarzins@redhat.com>
+	<1236883093-2989-4-git-send-email-bmarzins@redhat.com>
+	<f99991a6-a2a5-e8fb-17b8-ff9f6a51a515@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; Format="flowed"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170425155255.GS19236@octiron.msp.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <f99991a6-a2a5-e8fb-17b8-ff9f6a51a515@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,81 +21,51 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+On Tue, Apr 25, 2017 at 03:38:38PM +0200, Xose Vazquez Perez wrote:
+> On 03/12/2009 07:38 PM, Benjamin Marzinski wrote:
+>          ^^^^ Old patch.
+> 
+> > Even when the last path of a multipath device is deleted, it can't be
+> > removed until all the queued IO is flushed. For devices that have
+> > no_path_retry set to queue, this doesn't automatically happen.
+> > 
+> > This patch adds a "flush_on_last_del" config file option, that causes the
+> > multipath device to automatically turn off queueing when the last path is
+> > deleted.  It also adds the "disablequeueing" and "restorequeueing"
+> > multipathd cli commands.
+> > 
+> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> > [...]
+> > diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+> > index 43611ff..c1bc591 100644
+> > --- a/libmultipath/propsel.c
+> > +++ b/libmultipath/propsel.c
+> > @@ -279,6 +279,10 @@ select_prio (struct path * pp)
+> >  extern int
+> >  select_no_path_retry(struct multipath *mp)
+> >  {
+> > +	if (mp->flush_on_last_del == FLUSH_IN_PROGRESS) {
+> > +		condlog(0, "flush_on_last_del in progress");
+>                             ^^^^
+> If flush is done per LUN, it should be added a prefix(WWID or alias).
 
-On 04/25/2017 05:52 PM, Benjamin Marzinski wrote:
-> On Tue, Apr 25, 2017 at 12:12:25PM +0200, Steffen Maier wrote:
->> On 04/25/2017 12:39 AM, Benjamin Marzinski wrote:
->>> When users run kpartx, they would naturally assume that when it
->>> completes, the devices have been created. However, kpartx runs in async
->>> mode by default.  This seems like it is likely to trip up users.  So,
->>> switch the default to sync mode, add a -n option to enable async mode,
->>> and set async mode when kpartx is called by the udev rules.
+Yep. I can send a patch for this.
 
->>> diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+Thanks.
+-Ben
 
->>> +	printf("\t-n nosync mode. Return before the partitions are created\n"=
-);
-
->>> diff --git a/kpartx/kpartx.rules b/kpartx/kpartx.rules
-
->>> @@ -40,6 +40,6 @@ ENV{DM_NR_VALID_PATHS}=3D=3D"0", GOTO=3D"kpartx_end"
->>> ENV{ENV{DM_UDEV_PRIMARY_SOURCE_FLAG}!=3D"1", IMPORT{db}=3D"DM_SUBSYSTEM=
-_UDEV_FLAG1"
->>> ENV{DM_SUBSYSTEM_UDEV_FLAG1}=3D=3D"1", GOTO=3D"kpartx_end"
->>> ENV{DM_STATE}!=3D"SUSPENDED", ENV{DM_UUID}=3D=3D"mpath-*", \
->>> -	RUN+=3D"/sbin/kpartx -u -p -part /dev/$name"
->>> +	RUN+=3D"/sbin/kpartx -un -p -part /dev/$name"
->>
->> I understand this was async before and is now still async after the defa=
-ult
->> change in kpartx. However, I'm wondering in general how one would "wait"=
- for
->> kpartx mappings, since I suppose a "udevadm settle" would not suffice.
->> Dracut probably does not care because it would loop until its required
->> root-fs devices have appeared.
->
-> I'm pretty sure that it is inherently impossible in the general case.
-> There is no way to know when the uevent will occur, and until the uevent
-> occurs, there would be no way that udev settle could possibly help. You
-
-indeed
-
-> can know that a dm device has been set up when the first change event
-> for that device occurs. So, if you knew a device was coming, you could
-> wait for the change event.  Multipathd currently listens for change
-> events to know when a multipath device has been fully initialized.
->
-> For partition devices explicitly, say you just manually ran multipath to
-> create a multipath device, and want to know that your partition devices
-> exist before going on. You could manually run kpartx in the now-default
-> sync mode, and when it returned, you would know that the devices were
-> there. However, your kpart call would be racing with the udev version,
-> so it's possible that kpartx would return with an error because it tried
-> to create the device and failed because the device already existed. The
-> good news is that it would continue to try with the rest of the devices,
-> so it really won't return until they all are there. If it is important
-> to you, we could add a flag to kpartx to not return an error if a create
-> fails because the device currently exists.
-
-Currently I have no real need for such addition, just wanted to =
-
-understand the implications.
-
-Thanks for your explanation!
-
--- =
-
-Mit freundlichen Gr=FC=DFen / Kind regards
-Steffen Maier
-
-Linux on z Systems Development
-
-IBM Deutschland Research & Development GmbH
-Vorsitzende des Aufsichtsrats: Martina Koederitz
-Geschaeftsfuehrung: Dirk Wittkopp
-Sitz der Gesellschaft: Boeblingen
-Registergericht: Amtsgericht Stuttgart, HRB 243294
+> 
+> > +		mp->no_path_retry = NO_PATH_RETRY_FAIL;
+> > +	}
+> >  	if (mp->mpe && mp->mpe->no_path_retry != NO_PATH_RETRY_UNDEF) {
+> >  		mp->no_path_retry = mp->mpe->no_path_retry;
+> >  		condlog(3, "%s: no_path_retry = %i (multipath setting)",
+> > @@ -368,3 +372,31 @@ select_pg_timeout(struct multipath *mp)
+> >  	condlog(3, "pg_timeout = NONE (internal default)");
+> >  	return 0;
+> >  }
+> Thank you.
