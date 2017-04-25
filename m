@@ -1,13 +1,14 @@
-From: Andrei Borzenkov <arvidjaar@gmail.com>
-Subject: Re: Autoload of DM kernel targets?
-Date: Mon, 24 Apr 2017 20:32:21 +0300
-Message-ID: <f157f07e-7001-245d-ea15-dc729efd6e32@gmail.com>
-References: <3474bd1a-7a81-29ba-3562-aaaaeca47cc7@gmail.com>
-	<87zif6phzt.fsf@notabene.neil.brown.name>
+From: Steffen Maier <maier@linux.vnet.ibm.com>
+Subject: Re: [PATCH 4/5] kpartx: default to running in sync mode
+Date: Tue, 25 Apr 2017 12:12:25 +0200
+Message-ID: <d4cdb3c3-c815-998f-9794-150179c74411@linux.vnet.ibm.com>
+References: <1493073570-17167-1-git-send-email-bmarzins@redhat.com>
+	<1493073570-17167-5-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============9208276522008330819=="
+Content-Type: text/plain; charset="windows-1252"; Format="flowed"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <87zif6phzt.fsf@notabene.neil.brown.name>
+In-Reply-To: <1493073570-17167-5-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,105 +18,72 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: NeilBrown <neilb@suse.com>, dm-devel@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---===============9208276522008330819==
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature";
-	boundary="gWUFeHNRVHApfX5kQ7UPVCpjjuBVU91Mo"
 
-This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---gWUFeHNRVHApfX5kQ7UPVCpjjuBVU91Mo
-Content-Type: multipart/mixed; boundary="7nJtduOJmqIPR6UTQgTTFGkXJjmehsk2m"
-From: Andrei Borzenkov <arvidjaar@gmail.com>
-To: NeilBrown <neilb@suse.com>, dm-devel@redhat.com
-Message-ID: <f157f07e-7001-245d-ea15-dc729efd6e32@gmail.com>
-Subject: Re: [dm-devel] Autoload of DM kernel targets?
-References: <3474bd1a-7a81-29ba-3562-aaaaeca47cc7@gmail.com>
-	<87zif6phzt.fsf@notabene.neil.brown.name>
-In-Reply-To: <87zif6phzt.fsf@notabene.neil.brown.name>
+On 04/25/2017 12:39 AM, Benjamin Marzinski wrote:
+> When users run kpartx, they would naturally assume that when it
+> completes, the devices have been created. However, kpartx runs in async
+> mode by default.  This seems like it is likely to trip up users.  So,
+> switch the default to sync mode, add a -n option to enable async mode,
+> and set async mode when kpartx is called by the udev rules.
+>
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> ---
+>  kpartx/kpartx.c     | 10 +++++++---
+>  kpartx/kpartx.rules |  2 +-
+>  2 files changed, 8 insertions(+), 4 deletions(-)
+>
+> diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+> index 58e60ff..d1edd5e 100644
+> --- a/kpartx/kpartx.c
+> +++ b/kpartx/kpartx.c
 
---7nJtduOJmqIPR6UTQgTTFGkXJjmehsk2m
-Content-Type: text/plain; charset=windows-1251
-Content-Transfer-Encoding: quoted-printable
+> -int udev_sync =3D 0;
+> +int udev_sync =3D 1;
 
-24.04.2017 07:05, NeilBrown =EF=E8=F8=E5=F2:
-> On Fri, Apr 21 2017, Andrei Borzenkov wrote:
->=20
->> See as example https://bugzilla.opensuse.org/show_bug.cgi?id=3D983221
->>
->> "non-standard" DM targets do not appear to be autoloaded (the problem
->> was hit with thin-pool, but it seems to apply to other targets as well=
-).
->> "Common" targets (like linear) are provided by dm-mod which seems to b=
-e
->> autoloaded by virtue of /dev/mapper/control.
->>
->> Is it expected and intentional? Or are users required to manually load=
+> -	printf("\t-s sync mode. Don't return until the partitions are created\n=
+");
+> +	printf("\t-n nosync mode. Return before the partitions are created\n");
+> +	printf("\t-s sync mode. Don't return until the partitions are created. =
+Default.\n");
 
->> necessary modules on boot?
->>
->> TIA
->>
->> -andrei
->>
->> --
->> dm-devel mailing list
->> dm-devel@redhat.com
->> https://www.redhat.com/mailman/listinfo/dm-devel
->=20
-> Does this patch fix it for you?
->=20
+> +		case 'n':
+> +			udev_sync =3D 0;
+> +			break;
 
-I did not test it, because the problem (at least, this specific problem)
-turned out a packaging problem - lvm checks for available targets before
-it even tries to call into kernel, so this should not change anything.
-But it needs path to modprobe that is detected during build. mkdprobe
-was not present in build environment so lvm did not try to autoload
-anything and immediately failed. Making sure to BuildRequire (package,
-that provides) it fixed the problem.
+> diff --git a/kpartx/kpartx.rules b/kpartx/kpartx.rules
+> index 48a4d6c..a958791 100644
+> --- a/kpartx/kpartx.rules
+> +++ b/kpartx/kpartx.rules
+> @@ -40,6 +40,6 @@ ENV{DM_NR_VALID_PATHS}=3D=3D"0", GOTO=3D"kpartx_end"
+>  ENV{ENV{DM_UDEV_PRIMARY_SOURCE_FLAG}!=3D"1", IMPORT{db}=3D"DM_SUBSYSTEM_=
+UDEV_FLAG1"
+>  ENV{DM_SUBSYSTEM_UDEV_FLAG1}=3D=3D"1", GOTO=3D"kpartx_end"
+>  ENV{DM_STATE}!=3D"SUSPENDED", ENV{DM_UUID}=3D=3D"mpath-*", \
+> -	RUN+=3D"/sbin/kpartx -u -p -part /dev/$name"
+> +	RUN+=3D"/sbin/kpartx -un -p -part /dev/$name"
 
-> diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-> index 8f811dc8b3cc..d2c6a9a12d75 100644
-> --- a/drivers/md/dm-thin.c
-> +++ b/drivers/md/dm-thin.c
-> @@ -4400,3 +4400,4 @@ MODULE_PARM_DESC(no_space_timeout, "Out of data s=
-pace queue IO timeout in second
->  MODULE_DESCRIPTION(DM_NAME " thin provisioning target");
->  MODULE_AUTHOR("Joe Thornber <dm-devel@redhat.com>");
->  MODULE_LICENSE("GPL");
-> +MODULE_ALIAS("dm-thin-pool");
->=20
-> NeilBrown
->=20
+I understand this was async before and is now still async after the =
 
+default change in kpartx. However, I'm wondering in general how one =
 
+would "wait" for kpartx mappings, since I suppose a "udevadm settle" =
 
---7nJtduOJmqIPR6UTQgTTFGkXJjmehsk2m--
+would not suffice. Dracut probably does not care because it would loop =
 
---gWUFeHNRVHApfX5kQ7UPVCpjjuBVU91Mo
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
+until its required root-fs devices have appeared.
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
+-- =
 
-iEYEARECAAYFAlj+NqUACgkQR6LMutpd94zLZgCgpyGC51Y1NGjT44Q48yGlwZil
-XpAAniR+Di1y6iw6pbqr02ziLuinquoc
-=wI5Q
------END PGP SIGNATURE-----
+Mit freundlichen Gr=FC=DFen / Kind regards
+Steffen Maier
 
---gWUFeHNRVHApfX5kQ7UPVCpjjuBVU91Mo--
+Linux on z Systems Development
 
-
---===============9208276522008330819==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============9208276522008330819==--
+IBM Deutschland Research & Development GmbH
+Vorsitzende des Aufsichtsrats: Martina Koederitz
+Geschaeftsfuehrung: Dirk Wittkopp
+Sitz der Gesellschaft: Boeblingen
+Registergericht: Amtsgericht Stuttgart, HRB 243294
