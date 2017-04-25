@@ -1,65 +1,92 @@
-From: Logan Gunthorpe <logang-OTvnGxWRz7hWk0Htik3J/w@public.gmane.org>
-Subject: [PATCH v2 19/21] mmc: sdricoh_cs: Make use of the new sg_map helper
- function
-Date: Tue, 25 Apr 2017 12:21:06 -0600
-Message-ID: <1493144468-22493-20-git-send-email-logang@deltatee.com>
-References: <1493144468-22493-1-git-send-email-logang@deltatee.com>
+From: Neutron Sharc <neutronsharc@gmail.com>
+Subject: Re: new multipath device mistakenly replaced another PV
+ in existing volume group
+Date: Tue, 25 Apr 2017 11:38:08 -0700
+Message-ID: <CAB-bdySKhGsre=Cy0_3WgdFCNZENYzr-FeAKaJV9CpuEY3to0w@mail.gmail.com>
+References: <CAB-bdyRpmVvNFi_=p2NLVU43kuC4VMiX1EEYNd2zMfT5cEnSOw@mail.gmail.com>
+	<20170425163937.GT19236@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <1493144468-22493-1-git-send-email-logang-OTvnGxWRz7hWk0Htik3J/w@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, intel-gfx-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mmc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, open-iscsi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, megaraidlinux.pdl-dY08KVG/lbpWk0Htik3J/w@public.gmane.org, sparmaintainer-GLv8BlqOqDDQT0dZR+AlfA@public.gmane.org, devel-gWbeCf7V1WCQmaza687I9mD2FQJk+8+b@public.gmane.org, target-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-Cc: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Ulf Hansson <ulf.hansson-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, "James E.J. Bottomley" <jejb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Sumit Semwal <sumit.semwal-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Sascha Sommer <saschasommer-KuiJ5kEpwI6ELgA04lAiVw@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20170425163937.GT19236@octiron.msp.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This is a straightforward conversion to the new function.
-
-Signed-off-by: Logan Gunthorpe <logang-OTvnGxWRz7hWk0Htik3J/w@public.gmane.org>
-Cc: Sascha Sommer <saschasommer-KuiJ5kEpwI6ELgA04lAiVw@public.gmane.org>
-Cc: Ulf Hansson <ulf.hansson-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
----
- drivers/mmc/host/sdricoh_cs.c | 14 +++++++++-----
- 1 file changed, 9 insertions(+), 5 deletions(-)
-
-diff --git a/drivers/mmc/host/sdricoh_cs.c b/drivers/mmc/host/sdricoh_cs.c
-index 5ff26ab..03225c3 100644
---- a/drivers/mmc/host/sdricoh_cs.c
-+++ b/drivers/mmc/host/sdricoh_cs.c
-@@ -319,16 +319,20 @@ static void sdricoh_request(struct mmc_host *mmc, struct mmc_request *mrq)
- 		for (i = 0; i < data->blocks; i++) {
- 			size_t len = data->blksz;
- 			u8 *buf;
--			struct page *page;
- 			int result;
--			page = sg_page(data->sg);
- 
--			buf = kmap(page) + data->sg->offset + (len * i);
-+			buf = sg_map(data->sg, (len * i), SG_KMAP);
-+			if (IS_ERR(buf)) {
-+				cmd->error = PTR_ERR(buf);
-+				break;
-+			}
-+
- 			result =
- 				sdricoh_blockio(host,
- 					data->flags & MMC_DATA_READ, buf, len);
--			kunmap(page);
--			flush_dcache_page(page);
-+			sg_unmap(data->sg, buf, (len * i), SG_KMAP);
-+
-+			flush_dcache_page(sg_page(data->sg));
- 			if (result) {
- 				dev_err(dev, "sdricoh_request: cmd %i "
- 					"block transfer failed\n", cmd->opcode);
--- 
-2.1.4
+QmVuamFtaW46ICB0aGFua3MgZm9yIHJlcGx5aW5nLiAgV2UgaGF2ZSBmb3VuZCB0aGUgcm9vdCBj
+YXVzZSB0byBiZQpzdGFsZSByZWFkIGJ1ZmZlciBhdCBiYWNrZW5kLgpBZnRlciB6ZXJvaW5nIG91
+dCByZWFkIGJ1ZmZlciB1cG9uIHJlYWQgbWlzcyB0aGUgcHJvYmxlbSBpcyBnb25lLgoKCi1TaGF3
+bgoKT24gVHVlLCBBcHIgMjUsIDIwMTcgYXQgOTozOSBBTSwgQmVuamFtaW4gTWFyemluc2tpIDxi
+bWFyemluc0ByZWRoYXQuY29tPiB3cm90ZToKPiBPbiBXZWQsIEFwciAxOSwgMjAxNyBhdCAwMjo1
+ODo0N1BNIC0wNzAwLCBOZXV0cm9uIFNoYXJjIHdyb3RlOgo+PiBJJ20gc2VlaW5nIGEgc3RyYW5n
+ZSBwcm9ibGVtIChpc2NzaSBMVU5zICsgZG0tbXVsdGlwYXRoICsgbHZtKSB0aGF0IEkKPj4gd2ls
+bCB3YWxrIHRocm91Z2ggYW4gZXhhbXBsZSB0byBleHBsYWluLgo+Pgo+PiBJIGhhdmUgYW4gaXNj
+c2kgdGFyZ2V0IG1hY2hpbmUgdGhhdCBleHBvc2VzIG1hbnkgaXNjc2kgTFVOcy4gSXNjc2kKPj4g
+aW5pdGlhdG9yIGxvZ3MgaW4gNCBpc2NzaSBMVU5zICh2b2wxX1swLTNdKSwgIGNyZWF0ZXMgYSBt
+dWx0aXBhdGgKPj4gZGV2aWNlIGZvciBlYWNoIExVTiAoL2Rldi9tYXBwZXIvdm9sMV9bMC0zXSks
+IGFuZCBjb21iaW5lcyB0aGUgNAo+PiBtdWx0aXBhdGggZGV2aWNlcyBpbnRvIGEgdm9sdW1lIGdy
+b3VwIGFuZCBMViAodm9sMS92b2wxX2x2KS4KPj4KPj4gVGhlbiBJIGxvZyBpbiBhbm90aGVyIDQg
+aXNjc2kgTFVOcyAodm9sM19bMC0zXSksIGNyZWF0ZSBhIG11bHRpcGF0aAo+PiBkZXZpY2UgZm9y
+IGVhY2ggbmV3IExVTiAoL2Rldi9tYXBwZXIvdm9sM19bMC0zXSkuICBOb3cgdGhlcmUgaXMgYQo+
+PiBzdHJhbmdlIHRoaW5nOgo+PiBzb21lIG5ldyBtdWx0aXBhdGggZGV2aWNlcyAoL2Rldi9tYXBw
+ZXIvdm9sM18wLCAvZGV2L21hcHBlci92b2wzXzIgaW4KPj4gdGhpcyBleGFtcGxlKSByZXBsYWNl
+ZCBleGlzdGluZyBQVnMgaW4gdm9sMS4gIEFzIGEgcmVzdWx0LCB0aGVzZSBuZXcKPj4gbXVsdGlw
+YXRoIGRldmljZXMgaGF2ZSBvcGVuLWNvdW50ID4gMCwgc28gSSBjYW5ub3QgcHZjcmVhdGUgb24g
+dGhlbToKPj4KPj4gJCBzdWRvIGRtc2V0dXAgbHMgLS10cmVlCj4+IHZvbDEtdm9sMV9sdiAoMjUy
+OjQpCj4+ICDilJzilIB2b2wzXzAgKDI1Mjo5KSAgIDw9PSAgZnJlc2ggbXVsdGlwYXRoIGRldmlj
+ZSwgc2hvdWxkIE5PVCBiZSBpbiB2b2wxCj4+ICDilIIgIOKUlOKUgCAoNjU6MTI4KQo+PiAg4pSc
+4pSAdm9sM18yICgyNTI6MTApICA8PT0gIGZyZXNoIG11bHRpcGF0aCBkZXZpY2UsIHNob3VsZCBO
+T1QgYmUgaW4gdm9sMQo+PiAg4pSCICDilJTilIAgKDY1OjE0NCkKPj4gIOKUnOKUgHZvbDFfMSAo
+MjUyOjEpCj4+ICDilIIgIOKUlOKUgCAoNjU6NDgpCj4+ICDilJTilIB2b2wxXzAgKDI1MjowKQo+
+PiAgICAg4pSU4pSAICg2NTozMikKPj4gdm9sMV8zICgyNTI6MykgIDw9PSB3YXMgaW4gdm9sMS12
+b2wxX2x2LCBidXQga25vY2tlZCBvdXQKPj4gIOKUlOKUgCAoNjU6MTYpCj4+IHZvbDFfMiAoMjUy
+OjIpICA8PT0gd2FzIGluIHZvbDEtdm9sMV9sdiwgYnV0IGtub2NrZWQgb3V0Cj4+ICDilJTilIAg
+KDY1OjY0KQo+PiB2b2wzXzMgKDI1MjoxMSkKPj4gIOKUlOKUgCAoNjU6MTYwKQo+PiB2b2wzXzEg
+KDI1MjoxMikKPj4gIOKUlOKUgCAoNjU6MTc2KQo+Pgo+Pgo+PiBQbGVhc2Ugbm90ZSB0aGF0IGFs
+bCB0aGVzZSB2b2wzX1swLTNdIGFyZSBmcmVzaCwgd2l0aG91dCBhbnkgTFZNCj4+IG1ldGFkYXRh
+IG9uIHRoZW0sIGFzIHNob3duIGJ5IHB2c2Nhbjo6Cj4+Cj4+IHN1ZG8gcHZzY2FuIC0tY2FjaGUg
+L2Rldi9tYXBwZXIvdm9sM18wCj4+ICAgSW5jb3JyZWN0IG1ldGFkYXRhIGFyZWEgaGVhZGVyIGNo
+ZWNrc3VtIG9uIC9kZXYvbWFwcGVyL3ZvbDNfMCBhdCBvZmZzZXQgNDA5Ngo+PiAgIEluY29ycmVj
+dCBtZXRhZGF0YSBhcmVhIGhlYWRlciBjaGVja3N1bSBvbiAvZGV2L21hcHBlci92b2wzXzAgYXQg
+b2Zmc2V0IDQwOTYKPj4gICBJbmNvcnJlY3QgbWV0YWRhdGEgYXJlYSBoZWFkZXIgY2hlY2tzdW0g
+b24gL2Rldi9tYXBwZXIvdm9sM18wIGF0IG9mZnNldCA0MDk2Cj4+Cj4+Cj4+ICQgc3VkbyBwdmNy
+ZWF0ZSAvZGV2L21hcHBlci92b2wzXzAgICA8PT0gdGhpcyBtdWx0aXBhdGggZGV2aWNlIHdhcwo+
+PiBtaXN0YWtlbmx5IGluY2x1ZGVkIGludG8gdm9sMQo+Pgo+PiAgIEZvdW5kIGR1cGxpY2F0ZSBQ
+ViA5RjZ2VTlOVkJmRXExdzNlMDRUNVVyZU82ZkRWUEpOeTogdXNpbmcKPj4gL2Rldi9tYXBwZXIv
+dm9sMV8zIG5vdCAvZGV2L21hcHBlci92b2wzXzAKPj4gICBVc2luZyBkdXBsaWNhdGUgUFYgL2Rl
+di9tYXBwZXIvdm9sMV8zIHdpdGhvdXQgaG9sZGVycywgcmVwbGFjaW5nCj4+IC9kZXYvbWFwcGVy
+L3ZvbDNfMAo+PiAgIENhbid0IG9wZW4gL2Rldi9tYXBwZXIvdm9sM18wIGV4Y2x1c2l2ZWx5LiAg
+TW91bnRlZCBmaWxlc3lzdGVtPwo+Pgo+Pgo+PiA9PT09PT09PT09IENvbmZpZ3MgSSB1c2VkOgo+
+PiBCVFcsICBJIGhhdmUgZW5hYmxlZCBsdm1ldGFkLCAgbXkgbHZtLmNvbmYgaGFzIHRoaXM6Cj4+
+IGZpbHRlciA9IFsgImF8L2Rldi9tYXBwZXIvLip8IiwgInJ8Lip8IiBdCj4+IGdsb2JhbF9maWx0
+ZXIgPSBbICJhfC9kZXYvbWFwcGVyLy4qfCIsICJyfC4qfCIgXQo+Pgo+PiBNeSAvZXRjL211bHRp
+cGF0aC5jb25mIGlzOgo+PiBkZWZhdWx0cyB7Cj4+ICAgdXNlcl9mcmllbmRseV9uYW1lcyAgICAg
+eWVzCj4+ICAgcGF0aF9ncm91cGluZ19wb2xpY3kgICAgZmFpbG92ZXIKPj4gICBwb2xsaW5nX2lu
+dGVydmFsICAgICAgICAxMAo+PiAgIHBhdGhfc2VsZWN0b3IgICAgICAgICAgICJyb3VuZC1yb2Jp
+biAwIgo+PiAgIGZpbmRfbXVsdGlwYXRocyAgICAgICAgIHllcwo+PiAgIGZlYXR1cmVzICAgICAg
+ICIxIHF1ZXVlX2lmX25vX3BhdGgiCj4+IH0KPj4gYmxhY2tsaXN0IHsKPj4gICBkZXZub2RlICAi
+XnNkYVsxLTldIgo+PiB9Cj4+IG11bHRpcGF0aHMgewo+PiAgIG11bHRpcGF0aCB7Cj4+ICAgICB3
+d2lkIDM2MDAwMDAwMDc1ODc1N2RlOWZiMjg5Y2JkZTEyYWJhYgo+PiAgICAgYWxpYXMgdm9sMV8w
+Cj4+ICAgfQo+PiAgIC8vIG1vcmUgZGV2aWNlcwo+PiB9Cj4+Cj4+IGlzY3NpIGluaXRpYXRvciBp
+cyBvbiBjZW50b3MgNi41LCB3aXRoIHBrZ3MgdmVyc2lvbjoKPj4gbHZtMi0yLjAyLjE0My0xMi5l
+bDYueDg2XzY0Cj4+IGRldmljZS1tYXBwZXItbXVsdGlwYXRoLTAuNC45LTEwMC5lbDYueDg2XzY0
+Cj4+Cj4+IGlzY3NpIHRhcmdldCBpcyB0Z3RkIG9uIGFub3RoZXIgVWJ1bnR1IG1hY2hpbmUuCj4+
+Cj4+Cj4+Cj4+IENvbW1lbnRzIGFyZSBhcHByZWNpYXRlZC4KPgo+IEhhdmUgeW91IHRyaWVkIHRo
+aXMgd2l0aCBtdWx0aXBhdGhpbmcgcmVtb3ZlZD8gRG9lcyB0aGUgc2FtZSB0aGluZyBzdGlsbAo+
+IGhhcHBlbj8gbXVsdGlwYXRoIHNob3VsZG4ndCBiZSBjaGFuZ2luZyB5b3VyIExWcy4gVGhlIHJl
+YXNzaWduX21hcHMgY29kZQo+ICh3aGljaCBjb3VsZCBkbyB0aGF0KSBpc24ndCBpbiBSSEVMNi4g
+RG9lcyB0aGlzIHdvcmsgY29ycmVjdGx5IHdpdGgKPiBsdm1ldGFkIHR1cm5lZCBvZmY/Cj4KPiAt
+QmVuCj4KPj4KPj4KPj4gLVNoYXduCj4+Cj4+IC0tCj4+IGRtLWRldmVsIG1haWxpbmcgbGlzdAo+
+PiBkbS1kZXZlbEByZWRoYXQuY29tCj4+IGh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9s
+aXN0aW5mby9kbS1kZXZlbAoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhh
+dC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
