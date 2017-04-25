@@ -1,15 +1,16 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH 3/3] Add options to multipathd to turn off
- queueing
-Date: Tue, 25 Apr 2017 15:38:38 +0200
-Message-ID: <f99991a6-a2a5-e8fb-17b8-ff9f6a51a515@gmail.com>
-References: <1236883093-2989-1-git-send-email-bmarzins@redhat.com>
-	<1236883093-2989-4-git-send-email-bmarzins@redhat.com>
+Subject: Re: [PATCH 10/10] set retrigger_tries to 0 for multipath
+Date: Tue, 25 Apr 2017 16:07:41 +0200
+Message-ID: <07584819-cfc2-67f4-c6cd-e32fa00c7350@gmail.com>
+References: <1477709726-5442-1-git-send-email-bmarzins@redhat.com>
+	<1477709726-5442-11-git-send-email-bmarzins@redhat.com>
+	<fbb6b068-fc38-ddd8-831b-98ce65a17954@gmail.com>
+	<20161206152225.GB25309@octiron.msp.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1236883093-2989-4-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <20161206152225.GB25309@octiron.msp.redhat.com>
 Content-Language: en-GB
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -20,43 +21,58 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, Benjamin Marzinski <bmarzins@redhat.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 03/12/2009 07:38 PM, Benjamin Marzinski wrote:
-         ^^^^ Old patch.
+On 12/06/2016 04:22 PM, Benjamin Marzinski wrote:
 
-> Even when the last path of a multipath device is deleted, it can't be
-> removed until all the queued IO is flushed. For devices that have
-> no_path_retry set to queue, this doesn't automatically happen.
+> On Tue, Dec 06, 2016 at 04:11:42PM +0100, Xose Vazquez Perez wrote:
+>> On 10/29/2016 04:55 AM, Benjamin Marzinski wrote:
+>>
+>>> Multipathd uses retrigger_tries to give udev more chances to to fill in
+>>> the uid_attribute, so that the path device is correctly set up in the
+>>> udev database. However the multipath command can't do this, so it should
+>>> just immediately give up on udev, and try to get the wwid directly.
+>>>
+>>> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+>>> ---
+>>>  multipath/main.c | 1 +
+>>>  1 file changed, 1 insertion(+)
+>>>
+>>> diff --git a/multipath/main.c b/multipath/main.c
+>>> index ee00fdb..06add30 100644
+>>> --- a/multipath/main.c
+>>> +++ b/multipath/main.c
+>>> @@ -521,6 +521,7 @@ main (int argc, char *argv[])
+>>>  	if (!conf)
+>>>  		exit(1);
+>>>  	multipath_conf = conf;
+>>> +	conf->retrigger_tries = 0;
+>>>  	while ((arg = getopt(argc, argv, ":adchl::FfM:v:p:b:BritquwW")) != EOF ) {
+>>>  		switch(arg) {
+>>>  		case 1: printf("optarg : %s\n",optarg);
+>>>
+>>
+>> I don't know how, but this patch(?) is overwriting the default value:
 > 
-> This patch adds a "flush_on_last_del" config file option, that causes the
-> multipath device to automatically turn off queueing when the last path is
-> deleted.  It also adds the "disablequeueing" and "restorequeueing"
-> multipathd cli commands.
-> 
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> [...]
-> diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-> index 43611ff..c1bc591 100644
-> --- a/libmultipath/propsel.c
-> +++ b/libmultipath/propsel.c
-> @@ -279,6 +279,10 @@ select_prio (struct path * pp)
->  extern int
->  select_no_path_retry(struct multipath *mp)
->  {
-> +	if (mp->flush_on_last_del == FLUSH_IN_PROGRESS) {
-> +		condlog(0, "flush_on_last_del in progress");
-                            ^^^^
-If flush is done per LUN, it should be added a prefix(WWID or alias).
+> That's because multipath and mutipathd need to do different things.
+> However, I can change the patch so that 'multipath -t' still reports the
+> configured value.
 
-> +		mp->no_path_retry = NO_PATH_RETRY_FAIL;
-> +	}
->  	if (mp->mpe && mp->mpe->no_path_retry != NO_PATH_RETRY_UNDEF) {
->  		mp->no_path_retry = mp->mpe->no_path_retry;
->  		condlog(3, "%s: no_path_retry = %i (multipath setting)",
-> @@ -368,3 +372,31 @@ select_pg_timeout(struct multipath *mp)
->  	condlog(3, "pg_timeout = NONE (internal default)");
->  	return 0;
->  }
+Could you do a patch to fix it?
+
 Thank you.
+
+>>
+>> libmultipath/defaults.h:#define DEFAULT_RETRIGGER_TRIES 3
+>> libmultipath/config.c:  conf->retrigger_tries = DEFAULT_RETRIGGER_TRIES;
+>>
+>> # multipath -t
+>> defaults {
+>> [...]
+>>         retrigger_tries 0
+>> [...]
+>> }
+>> [...]
+>
