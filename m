@@ -1,15 +1,16 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: new multipath device mistakenly replaced another PV
- in existing volume group
-Date: Tue, 25 Apr 2017 11:39:37 -0500
-Message-ID: <20170425163937.GT19236@octiron.msp.redhat.com>
-References: <CAB-bdyRpmVvNFi_=p2NLVU43kuC4VMiX1EEYNd2zMfT5cEnSOw@mail.gmail.com>
+From: Steffen Maier <maier@linux.vnet.ibm.com>
+Subject: Re: [PATCH 4/5] kpartx: default to running in sync mode
+Date: Tue, 25 Apr 2017 19:48:05 +0200
+Message-ID: <cbcdac40-16c7-1c61-79f2-63d34b85e989@linux.vnet.ibm.com>
+References: <1493073570-17167-1-git-send-email-bmarzins@redhat.com>
+	<1493073570-17167-5-git-send-email-bmarzins@redhat.com>
+	<d4cdb3c3-c815-998f-9794-150179c74411@linux.vnet.ibm.com>
+	<20170425155255.GS19236@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="windows-1252"; Format="flowed"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <CAB-bdyRpmVvNFi_=p2NLVU43kuC4VMiX1EEYNd2zMfT5cEnSOw@mail.gmail.com>
+In-Reply-To: <20170425155255.GS19236@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,68 +20,81 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Neutron Sharc <neutronsharc@gmail.com>
-Cc: dm-devel@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gV2VkLCBBcHIgMTksIDIwMTcgYXQgMDI6NTg6NDdQTSAtMDcwMCwgTmV1dHJvbiBTaGFyYyB3
-cm90ZToKPiBJJ20gc2VlaW5nIGEgc3RyYW5nZSBwcm9ibGVtIChpc2NzaSBMVU5zICsgZG0tbXVs
-dGlwYXRoICsgbHZtKSB0aGF0IEkKPiB3aWxsIHdhbGsgdGhyb3VnaCBhbiBleGFtcGxlIHRvIGV4
-cGxhaW4uCj4gCj4gSSBoYXZlIGFuIGlzY3NpIHRhcmdldCBtYWNoaW5lIHRoYXQgZXhwb3NlcyBt
-YW55IGlzY3NpIExVTnMuIElzY3NpCj4gaW5pdGlhdG9yIGxvZ3MgaW4gNCBpc2NzaSBMVU5zICh2
-b2wxX1swLTNdKSwgIGNyZWF0ZXMgYSBtdWx0aXBhdGgKPiBkZXZpY2UgZm9yIGVhY2ggTFVOICgv
-ZGV2L21hcHBlci92b2wxX1swLTNdKSwgYW5kIGNvbWJpbmVzIHRoZSA0Cj4gbXVsdGlwYXRoIGRl
-dmljZXMgaW50byBhIHZvbHVtZSBncm91cCBhbmQgTFYgKHZvbDEvdm9sMV9sdikuCj4gCj4gVGhl
-biBJIGxvZyBpbiBhbm90aGVyIDQgaXNjc2kgTFVOcyAodm9sM19bMC0zXSksIGNyZWF0ZSBhIG11
-bHRpcGF0aAo+IGRldmljZSBmb3IgZWFjaCBuZXcgTFVOICgvZGV2L21hcHBlci92b2wzX1swLTNd
-KS4gIE5vdyB0aGVyZSBpcyBhCj4gc3RyYW5nZSB0aGluZzoKPiBzb21lIG5ldyBtdWx0aXBhdGgg
-ZGV2aWNlcyAoL2Rldi9tYXBwZXIvdm9sM18wLCAvZGV2L21hcHBlci92b2wzXzIgaW4KPiB0aGlz
-IGV4YW1wbGUpIHJlcGxhY2VkIGV4aXN0aW5nIFBWcyBpbiB2b2wxLiAgQXMgYSByZXN1bHQsIHRo
-ZXNlIG5ldwo+IG11bHRpcGF0aCBkZXZpY2VzIGhhdmUgb3Blbi1jb3VudCA+IDAsIHNvIEkgY2Fu
-bm90IHB2Y3JlYXRlIG9uIHRoZW06Cj4gCj4gJCBzdWRvIGRtc2V0dXAgbHMgLS10cmVlCj4gdm9s
-MS12b2wxX2x2ICgyNTI6NCkKPiAg4pSc4pSAdm9sM18wICgyNTI6OSkgICA8PT0gIGZyZXNoIG11
-bHRpcGF0aCBkZXZpY2UsIHNob3VsZCBOT1QgYmUgaW4gdm9sMQo+ICDilIIgIOKUlOKUgCAoNjU6
-MTI4KQo+ICDilJzilIB2b2wzXzIgKDI1MjoxMCkgIDw9PSAgZnJlc2ggbXVsdGlwYXRoIGRldmlj
-ZSwgc2hvdWxkIE5PVCBiZSBpbiB2b2wxCj4gIOKUgiAg4pSU4pSAICg2NToxNDQpCj4gIOKUnOKU
-gHZvbDFfMSAoMjUyOjEpCj4gIOKUgiAg4pSU4pSAICg2NTo0OCkKPiAg4pSU4pSAdm9sMV8wICgy
-NTI6MCkKPiAgICAg4pSU4pSAICg2NTozMikKPiB2b2wxXzMgKDI1MjozKSAgPD09IHdhcyBpbiB2
-b2wxLXZvbDFfbHYsIGJ1dCBrbm9ja2VkIG91dAo+ICDilJTilIAgKDY1OjE2KQo+IHZvbDFfMiAo
-MjUyOjIpICA8PT0gd2FzIGluIHZvbDEtdm9sMV9sdiwgYnV0IGtub2NrZWQgb3V0Cj4gIOKUlOKU
-gCAoNjU6NjQpCj4gdm9sM18zICgyNTI6MTEpCj4gIOKUlOKUgCAoNjU6MTYwKQo+IHZvbDNfMSAo
-MjUyOjEyKQo+ICDilJTilIAgKDY1OjE3NikKPiAKPiAKPiBQbGVhc2Ugbm90ZSB0aGF0IGFsbCB0
-aGVzZSB2b2wzX1swLTNdIGFyZSBmcmVzaCwgd2l0aG91dCBhbnkgTFZNCj4gbWV0YWRhdGEgb24g
-dGhlbSwgYXMgc2hvd24gYnkgcHZzY2FuOjoKPiAKPiBzdWRvIHB2c2NhbiAtLWNhY2hlIC9kZXYv
-bWFwcGVyL3ZvbDNfMAo+ICAgSW5jb3JyZWN0IG1ldGFkYXRhIGFyZWEgaGVhZGVyIGNoZWNrc3Vt
-IG9uIC9kZXYvbWFwcGVyL3ZvbDNfMCBhdCBvZmZzZXQgNDA5Ngo+ICAgSW5jb3JyZWN0IG1ldGFk
-YXRhIGFyZWEgaGVhZGVyIGNoZWNrc3VtIG9uIC9kZXYvbWFwcGVyL3ZvbDNfMCBhdCBvZmZzZXQg
-NDA5Ngo+ICAgSW5jb3JyZWN0IG1ldGFkYXRhIGFyZWEgaGVhZGVyIGNoZWNrc3VtIG9uIC9kZXYv
-bWFwcGVyL3ZvbDNfMCBhdCBvZmZzZXQgNDA5Ngo+IAo+IAo+ICQgc3VkbyBwdmNyZWF0ZSAvZGV2
-L21hcHBlci92b2wzXzAgICA8PT0gdGhpcyBtdWx0aXBhdGggZGV2aWNlIHdhcwo+IG1pc3Rha2Vu
-bHkgaW5jbHVkZWQgaW50byB2b2wxCj4gCj4gICBGb3VuZCBkdXBsaWNhdGUgUFYgOUY2dlU5TlZC
-ZkVxMXczZTA0VDVVcmVPNmZEVlBKTnk6IHVzaW5nCj4gL2Rldi9tYXBwZXIvdm9sMV8zIG5vdCAv
-ZGV2L21hcHBlci92b2wzXzAKPiAgIFVzaW5nIGR1cGxpY2F0ZSBQViAvZGV2L21hcHBlci92b2wx
-XzMgd2l0aG91dCBob2xkZXJzLCByZXBsYWNpbmcKPiAvZGV2L21hcHBlci92b2wzXzAKPiAgIENh
-bid0IG9wZW4gL2Rldi9tYXBwZXIvdm9sM18wIGV4Y2x1c2l2ZWx5LiAgTW91bnRlZCBmaWxlc3lz
-dGVtPwo+IAo+IAo+ID09PT09PT09PT0gQ29uZmlncyBJIHVzZWQ6Cj4gQlRXLCAgSSBoYXZlIGVu
-YWJsZWQgbHZtZXRhZCwgIG15IGx2bS5jb25mIGhhcyB0aGlzOgo+IGZpbHRlciA9IFsgImF8L2Rl
-di9tYXBwZXIvLip8IiwgInJ8Lip8IiBdCj4gZ2xvYmFsX2ZpbHRlciA9IFsgImF8L2Rldi9tYXBw
-ZXIvLip8IiwgInJ8Lip8IiBdCj4gCj4gTXkgL2V0Yy9tdWx0aXBhdGguY29uZiBpczoKPiBkZWZh
-dWx0cyB7Cj4gICB1c2VyX2ZyaWVuZGx5X25hbWVzICAgICB5ZXMKPiAgIHBhdGhfZ3JvdXBpbmdf
-cG9saWN5ICAgIGZhaWxvdmVyCj4gICBwb2xsaW5nX2ludGVydmFsICAgICAgICAxMAo+ICAgcGF0
-aF9zZWxlY3RvciAgICAgICAgICAgInJvdW5kLXJvYmluIDAiCj4gICBmaW5kX211bHRpcGF0aHMg
-ICAgICAgICB5ZXMKPiAgIGZlYXR1cmVzICAgICAgICIxIHF1ZXVlX2lmX25vX3BhdGgiCj4gfQo+
-IGJsYWNrbGlzdCB7Cj4gICBkZXZub2RlICAiXnNkYVsxLTldIgo+IH0KPiBtdWx0aXBhdGhzIHsK
-PiAgIG11bHRpcGF0aCB7Cj4gICAgIHd3aWQgMzYwMDAwMDAwNzU4NzU3ZGU5ZmIyODljYmRlMTJh
-YmFiCj4gICAgIGFsaWFzIHZvbDFfMAo+ICAgfQo+ICAgLy8gbW9yZSBkZXZpY2VzCj4gfQo+IAo+
-IGlzY3NpIGluaXRpYXRvciBpcyBvbiBjZW50b3MgNi41LCB3aXRoIHBrZ3MgdmVyc2lvbjoKPiBs
-dm0yLTIuMDIuMTQzLTEyLmVsNi54ODZfNjQKPiBkZXZpY2UtbWFwcGVyLW11bHRpcGF0aC0wLjQu
-OS0xMDAuZWw2Lng4Nl82NAo+IAo+IGlzY3NpIHRhcmdldCBpcyB0Z3RkIG9uIGFub3RoZXIgVWJ1
-bnR1IG1hY2hpbmUuCj4gCj4gCj4gCj4gQ29tbWVudHMgYXJlIGFwcHJlY2lhdGVkLgoKSGF2ZSB5
-b3UgdHJpZWQgdGhpcyB3aXRoIG11bHRpcGF0aGluZyByZW1vdmVkPyBEb2VzIHRoZSBzYW1lIHRo
-aW5nIHN0aWxsCmhhcHBlbj8gbXVsdGlwYXRoIHNob3VsZG4ndCBiZSBjaGFuZ2luZyB5b3VyIExW
-cy4gVGhlIHJlYXNzaWduX21hcHMgY29kZQood2hpY2ggY291bGQgZG8gdGhhdCkgaXNuJ3QgaW4g
-UkhFTDYuIERvZXMgdGhpcyB3b3JrIGNvcnJlY3RseSB3aXRoCmx2bWV0YWQgdHVybmVkIG9mZj8K
-Ci1CZW4KCj4gCj4gCj4gLVNoYXduCj4gCj4gLS0KPiBkbS1kZXZlbCBtYWlsaW5nIGxpc3QKPiBk
-bS1kZXZlbEByZWRoYXQuY29tCj4gaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3Rp
-bmZvL2RtLWRldmVsCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNv
-bQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+
+On 04/25/2017 05:52 PM, Benjamin Marzinski wrote:
+> On Tue, Apr 25, 2017 at 12:12:25PM +0200, Steffen Maier wrote:
+>> On 04/25/2017 12:39 AM, Benjamin Marzinski wrote:
+>>> When users run kpartx, they would naturally assume that when it
+>>> completes, the devices have been created. However, kpartx runs in async
+>>> mode by default.  This seems like it is likely to trip up users.  So,
+>>> switch the default to sync mode, add a -n option to enable async mode,
+>>> and set async mode when kpartx is called by the udev rules.
+
+>>> diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+
+>>> +	printf("\t-n nosync mode. Return before the partitions are created\n"=
+);
+
+>>> diff --git a/kpartx/kpartx.rules b/kpartx/kpartx.rules
+
+>>> @@ -40,6 +40,6 @@ ENV{DM_NR_VALID_PATHS}=3D=3D"0", GOTO=3D"kpartx_end"
+>>> ENV{ENV{DM_UDEV_PRIMARY_SOURCE_FLAG}!=3D"1", IMPORT{db}=3D"DM_SUBSYSTEM=
+_UDEV_FLAG1"
+>>> ENV{DM_SUBSYSTEM_UDEV_FLAG1}=3D=3D"1", GOTO=3D"kpartx_end"
+>>> ENV{DM_STATE}!=3D"SUSPENDED", ENV{DM_UUID}=3D=3D"mpath-*", \
+>>> -	RUN+=3D"/sbin/kpartx -u -p -part /dev/$name"
+>>> +	RUN+=3D"/sbin/kpartx -un -p -part /dev/$name"
+>>
+>> I understand this was async before and is now still async after the defa=
+ult
+>> change in kpartx. However, I'm wondering in general how one would "wait"=
+ for
+>> kpartx mappings, since I suppose a "udevadm settle" would not suffice.
+>> Dracut probably does not care because it would loop until its required
+>> root-fs devices have appeared.
+>
+> I'm pretty sure that it is inherently impossible in the general case.
+> There is no way to know when the uevent will occur, and until the uevent
+> occurs, there would be no way that udev settle could possibly help. You
+
+indeed
+
+> can know that a dm device has been set up when the first change event
+> for that device occurs. So, if you knew a device was coming, you could
+> wait for the change event.  Multipathd currently listens for change
+> events to know when a multipath device has been fully initialized.
+>
+> For partition devices explicitly, say you just manually ran multipath to
+> create a multipath device, and want to know that your partition devices
+> exist before going on. You could manually run kpartx in the now-default
+> sync mode, and when it returned, you would know that the devices were
+> there. However, your kpart call would be racing with the udev version,
+> so it's possible that kpartx would return with an error because it tried
+> to create the device and failed because the device already existed. The
+> good news is that it would continue to try with the rest of the devices,
+> so it really won't return until they all are there. If it is important
+> to you, we could add a flag to kpartx to not return an error if a create
+> fails because the device currently exists.
+
+Currently I have no real need for such addition, just wanted to =
+
+understand the implications.
+
+Thanks for your explanation!
+
+-- =
+
+Mit freundlichen Gr=FC=DFen / Kind regards
+Steffen Maier
+
+Linux on z Systems Development
+
+IBM Deutschland Research & Development GmbH
+Vorsitzende des Aufsichtsrats: Martina Koederitz
+Geschaeftsfuehrung: Dirk Wittkopp
+Sitz der Gesellschaft: Boeblingen
+Registergericht: Amtsgericht Stuttgart, HRB 243294
