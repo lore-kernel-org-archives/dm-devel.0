@@ -1,7 +1,8 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH 04/13] dm-rq: Adjust requeuing delays
-Date: Wed, 26 Apr 2017 11:37:19 -0700
-Message-ID: <20170426183728.10821-5-bart.vanassche@sandisk.com>
+Subject: [PATCH 08/13] dm: Verify suspend_locking assumptions at
+	runtime
+Date: Wed, 26 Apr 2017 11:37:23 -0700
+Message-ID: <20170426183728.10821-9-bart.vanassche@sandisk.com>
 References: <20170426183728.10821-1-bart.vanassche@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -18,43 +19,76 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Mike Snitzer <snitzer@redhat.com>
-Cc: Bart Van Assche <bart.vanassche@sandisk.com>, dm-devel@redhat.com, Hannes Reinecke <hare@suse.com>, Christoph Hellwig <hch@lst.de>
+Cc: Bart Van Assche <bart.vanassche@sandisk.com>, dm-devel@redhat.com, Hannes Reinecke <hare@suse.com>
 List-Id: dm-devel.ids
 
-Reduce the requeue delay in dm_requeue_original_request() from 5s
-to 0.5s to avoid that this delay slows down failover or failback.
-Increase the requeue delay in dm_mq_queue_rq() from 0.1s to 0.5s
-to reduce the system load if immediate requeuing has been requested
-by the dm driver.
+Ensure that the assumptions about the caller holding suspend_lock
+are checked at runtime if lockdep is enabled.
 
 Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
 Cc: Hannes Reinecke <hare@suse.com>
-Cc: Christoph Hellwig <hch@lst.de>
 ---
- drivers/md/dm-rq.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ drivers/md/dm-table.c | 4 ++++
+ drivers/md/dm.c       | 9 ++++-----
+ 2 files changed, 8 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
-index 0b081d170087..c53debdcd7dc 100644
---- a/drivers/md/dm-rq.c
-+++ b/drivers/md/dm-rq.c
-@@ -280,7 +280,7 @@ static void dm_requeue_original_request(struct dm_rq_target_io *tio, bool delay_
- 	if (!rq->q->mq_ops)
- 		dm_old_requeue_request(rq);
- 	else
--		dm_mq_delay_requeue_request(rq, delay_requeue ? 5000 : 0);
-+		dm_mq_delay_requeue_request(rq, delay_requeue ? 500/*ms*/ : 0);
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 3ad16d9c9d5a..92dbc85af53a 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1661,6 +1661,8 @@ static void suspend_targets(struct dm_table *t, enum suspend_mode mode)
+ 	int i = t->num_targets;
+ 	struct dm_target *ti = t->targets;
  
- 	rq_completed(md, rw, false);
++	lockdep_assert_held(&t->md->suspend_lock);
++
+ 	while (i--) {
+ 		switch (mode) {
+ 		case PRESUSPEND:
+@@ -1708,6 +1710,8 @@ int dm_table_resume_targets(struct dm_table *t)
+ {
+ 	int i, r = 0;
+ 
++	lockdep_assert_held(&t->md->suspend_lock);
++
+ 	for (i = 0; i < t->num_targets; i++) {
+ 		struct dm_target *ti = t->targets + i;
+ 
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index dfb75979e455..78706a04bab4 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1686,11 +1686,10 @@ static void event_callback(void *context)
+ 	wake_up(&md->eventq);
  }
-@@ -755,7 +755,7 @@ static int dm_mq_queue_rq(struct blk_mq_hw_ctx *hctx,
- 		/* Undo dm_start_request() before requeuing */
- 		rq_end_stats(md, rq);
- 		rq_completed(md, rq_data_dir(rq), false);
--		blk_mq_delay_run_hw_queue(hctx, 100/*ms*/);
-+		blk_mq_delay_run_hw_queue(hctx, 500/*ms*/);
- 		return BLK_MQ_RQ_QUEUE_BUSY;
- 	}
+ 
+-/*
+- * Protected by md->suspend_lock obtained by dm_swap_table().
+- */
+ static void __set_size(struct mapped_device *md, sector_t size)
+ {
++	lockdep_assert_held(&md->suspend_lock);
++
+ 	set_capacity(md->disk, size);
+ 
+ 	i_size_write(md->bdev->bd_inode, (loff_t)size << SECTOR_SHIFT);
+@@ -2140,8 +2139,6 @@ static void unlock_fs(struct mapped_device *md)
+  * If __dm_suspend returns 0, the device is completely quiescent
+  * now. There is no request-processing activity. All new requests
+  * are being added to md->deferred list.
+- *
+- * Caller must hold md->suspend_lock
+  */
+ static int __dm_suspend(struct mapped_device *md, struct dm_table *map,
+ 			unsigned suspend_flags, long task_state,
+@@ -2357,6 +2354,8 @@ static void __dm_internal_suspend(struct mapped_device *md, unsigned suspend_fla
+ {
+ 	struct dm_table *map = NULL;
+ 
++	lockdep_assert_held(&md->suspend_lock);
++
+ 	if (md->internal_suspend_count++)
+ 		return; /* nested internal suspend */
  
 -- 
 2.12.2
