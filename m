@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 1/4] dm mpath: merge do_end_io into multipath_end_io
-Date: Wed, 26 Apr 2017 09:40:36 +0200
-Message-ID: <20170426074039.14602-2-hch@lst.de>
+Subject: [PATCH 2/4] dm rq: change ->rq_end_io calling conventions
+Date: Wed, 26 Apr 2017 09:40:37 +0200
+Message-ID: <20170426074039.14602-3-hch@lst.de>
 References: <20170426074039.14602-1-hch@lst.de>
 Return-path: <linux-block-owner@vger.kernel.org>
 In-Reply-To: <20170426074039.14602-1-hch@lst.de>
@@ -10,95 +10,117 @@ To: snitzer@redhat.com
 Cc: dm-devel@redhat.com, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-This simplifies the I/O completion path a bit.
+Instead of returning either a DM_ENDIO_* constant or an error code, add
+a new DM_ENDIO_DONE value that means keep errno as is.  This allows us
+to easily keep the existing error code in case where we can't push back,
+and it also preparares for the new block level status codes with strict
+type checking.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- drivers/md/dm-mpath.c | 53 +++++++++++++++++----------------------------------
- 1 file changed, 18 insertions(+), 35 deletions(-)
+ drivers/md/dm-mpath.c         |  8 +++++---
+ drivers/md/dm-rq.c            | 17 ++++++++++-------
+ include/linux/device-mapper.h |  1 +
+ 3 files changed, 16 insertions(+), 10 deletions(-)
 
 diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 2950b145443d..1973670ea102 100644
+index 1973670ea102..9e971be254f4 100644
 --- a/drivers/md/dm-mpath.c
 +++ b/drivers/md/dm-mpath.c
-@@ -1473,12 +1473,12 @@ static int noretry_error(int error)
- 	return 0;
- }
- 
--/*
-- * end_io handling
-- */
--static int do_end_io(struct multipath *m, struct request *clone,
--		     int error, struct dm_mpath_io *mpio)
-+static int multipath_end_io(struct dm_target *ti, struct request *clone,
-+			    int error, union map_info *map_context)
+@@ -1478,6 +1478,7 @@ static int multipath_end_io(struct dm_target *ti, struct request *clone,
  {
-+	struct dm_mpath_io *mpio = get_mpio(map_context);
-+	struct pgpath *pgpath = mpio->pgpath;
-+
+ 	struct dm_mpath_io *mpio = get_mpio(map_context);
+ 	struct pgpath *pgpath = mpio->pgpath;
++	int r = DM_ENDIO_DONE;
+ 
  	/*
  	 * We don't queue any clone request inside the multipath target
- 	 * during end I/O handling, since those clone requests don't have
-@@ -1490,47 +1490,30 @@ static int do_end_io(struct multipath *m, struct request *clone,
- 	 * request into dm core, which will remake a clone request and
- 	 * clone bios for it and resubmit it later.
- 	 */
--	int r = DM_ENDIO_REQUEUE;
--
--	if (!error)
--		return 0;	/* I/O complete */
-+	if (error && !noretry_error(error)) {
-+		struct multipath *m = ti->private;
+@@ -1493,15 +1494,16 @@ static int multipath_end_io(struct dm_target *ti, struct request *clone,
+ 	if (error && !noretry_error(error)) {
+ 		struct multipath *m = ti->private;
  
--	if (noretry_error(error))
--		return error;
-+		error = DM_ENDIO_REQUEUE;
+-		error = DM_ENDIO_REQUEUE;
++		r = DM_ENDIO_REQUEUE;
  
--	if (mpio->pgpath)
--		fail_path(mpio->pgpath);
-+		if (pgpath)
-+			fail_path(pgpath);
+ 		if (pgpath)
+ 			fail_path(pgpath);
  
--	if (!atomic_read(&m->nr_valid_paths)) {
--		if (!test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags)) {
--			if (!must_push_back_rq(m))
--				r = -EIO;
-+		if (!atomic_read(&m->nr_valid_paths)) {
-+			if (!test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags)) {
-+				if (!must_push_back_rq(m))
-+					error = -EIO;
-+			}
+ 		if (!atomic_read(&m->nr_valid_paths)) {
+ 			if (!test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags)) {
++				/* complete with the original error */
+ 				if (!must_push_back_rq(m))
+-					error = -EIO;
++					r = DM_ENDIO_DONE;
+ 			}
  		}
  	}
- 
--	return r;
--}
--
--static int multipath_end_io(struct dm_target *ti, struct request *clone,
--			    int error, union map_info *map_context)
--{
--	struct multipath *m = ti->private;
--	struct dm_mpath_io *mpio = get_mpio(map_context);
--	struct pgpath *pgpath;
--	struct path_selector *ps;
--	int r;
--
--	BUG_ON(!mpio);
--
--	r = do_end_io(m, clone, error, mpio);
--	pgpath = mpio->pgpath;
- 	if (pgpath) {
--		ps = &pgpath->pg->ps;
-+		struct path_selector *ps = &pgpath->pg->ps;
-+
- 		if (ps->type->end_io)
+@@ -1513,7 +1515,7 @@ static int multipath_end_io(struct dm_target *ti, struct request *clone,
  			ps->type->end_io(ps, &pgpath->path, mpio->nr_bytes);
  	}
  
--	return r;
-+	return error;
+-	return error;
++	return r;
  }
  
  static int do_end_io_bio(struct multipath *m, struct bio *clone,
+diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+index bff7e3bdb4ed..769f04f83ca2 100644
+--- a/drivers/md/dm-rq.c
++++ b/drivers/md/dm-rq.c
+@@ -287,7 +287,7 @@ static void dm_requeue_original_request(struct dm_rq_target_io *tio, bool delay_
+ 
+ static void dm_done(struct request *clone, int error, bool mapped)
+ {
+-	int r = error;
++	int r = DM_ENDIO_DONE;
+ 	struct dm_rq_target_io *tio = clone->end_io_data;
+ 	dm_request_endio_fn rq_end_io = NULL;
+ 
+@@ -298,7 +298,7 @@ static void dm_done(struct request *clone, int error, bool mapped)
+ 			r = rq_end_io(tio->ti, clone, error, &tio->info);
+ 	}
+ 
+-	if (unlikely(r == -EREMOTEIO)) {
++	if (unlikely(error == -EREMOTEIO)) {
+ 		if (req_op(clone) == REQ_OP_WRITE_SAME &&
+ 		    !clone->q->limits.max_write_same_sectors)
+ 			disable_write_same(tio->md);
+@@ -307,16 +307,19 @@ static void dm_done(struct request *clone, int error, bool mapped)
+ 			disable_write_zeroes(tio->md);
+ 	}
+ 
+-	if (r <= 0)
++	switch (r) {
++	case DM_ENDIO_DONE:
+ 		/* The target wants to complete the I/O */
+-		dm_end_request(clone, r);
+-	else if (r == DM_ENDIO_INCOMPLETE)
++		dm_end_request(clone, error);
++		break;
++	case DM_ENDIO_INCOMPLETE:
+ 		/* The target will handle the I/O */
+ 		return;
+-	else if (r == DM_ENDIO_REQUEUE)
++	case DM_ENDIO_REQUEUE:
+ 		/* The target wants to requeue the I/O */
+ 		dm_requeue_original_request(tio, false);
+-	else {
++		break;
++	default:
+ 		DMWARN("unimplemented target endio return value: %d", r);
+ 		BUG();
+ 	}
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index c7ea33e38fb9..5bafe3af27cc 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -579,6 +579,7 @@ extern struct ratelimit_state dm_ratelimit_state;
+ /*
+  * Definitions of return values from target end_io function.
+  */
++#define DM_ENDIO_DONE		0
+ #define DM_ENDIO_INCOMPLETE	1
+ #define DM_ENDIO_REQUEUE	2
+ 
 -- 
 2.11.0
