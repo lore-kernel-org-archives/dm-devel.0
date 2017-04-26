@@ -1,74 +1,60 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH 01/13] dm-mpath: Split activate_path()
-Date: Wed, 26 Apr 2017 11:37:16 -0700
-Message-ID: <20170426183728.10821-2-bart.vanassche@sandisk.com>
+Subject: [PATCH 04/13] dm-rq: Adjust requeuing delays
+Date: Wed, 26 Apr 2017 11:37:19 -0700
+Message-ID: <20170426183728.10821-5-bart.vanassche@sandisk.com>
 References: <20170426183728.10821-1-bart.vanassche@sandisk.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <stable-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <20170426183728.10821-1-bart.vanassche@sandisk.com>
-Sender: stable-owner@vger.kernel.org
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
 To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, Bart Van Assche <bart.vanassche@sandisk.com>, Hannes Reinecke <hare@suse.com>, Christoph Hellwig <hch@lst.de>, stable@vger.kernel.org
+Cc: Bart Van Assche <bart.vanassche@sandisk.com>, dm-devel@redhat.com, Hannes Reinecke <hare@suse.com>, Christoph Hellwig <hch@lst.de>
 List-Id: dm-devel.ids
 
-This patch does not change any functionality but makes the next
-patch in this series easier to read.
+Reduce the requeue delay in dm_requeue_original_request() from 5s
+to 0.5s to avoid that this delay slows down failover or failback.
+Increase the requeue delay in dm_mq_queue_rq() from 0.1s to 0.5s
+to reduce the system load if immediate requeuing has been requested
+by the dm driver.
 
 Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
 Cc: Hannes Reinecke <hare@suse.com>
 Cc: Christoph Hellwig <hch@lst.de>
-Cc: <stable@vger.kernel.org>
 ---
- drivers/md/dm-mpath.c | 14 +++++++++-----
- 1 file changed, 9 insertions(+), 5 deletions(-)
+ drivers/md/dm-rq.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 7f223dbed49f..909098e18643 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -111,7 +111,8 @@ typedef int (*action_fn) (struct pgpath *pgpath);
+diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+index 0b081d170087..c53debdcd7dc 100644
+--- a/drivers/md/dm-rq.c
++++ b/drivers/md/dm-rq.c
+@@ -280,7 +280,7 @@ static void dm_requeue_original_request(struct dm_rq_target_io *tio, bool delay_
+ 	if (!rq->q->mq_ops)
+ 		dm_old_requeue_request(rq);
+ 	else
+-		dm_mq_delay_requeue_request(rq, delay_requeue ? 5000 : 0);
++		dm_mq_delay_requeue_request(rq, delay_requeue ? 500/*ms*/ : 0);
  
- static struct workqueue_struct *kmultipathd, *kmpath_handlerd;
- static void trigger_event(struct work_struct *work);
--static void activate_path(struct work_struct *work);
-+static void activate_path(struct pgpath *pgpath);
-+static void activate_path_work(struct work_struct *work);
- static void process_queued_bios(struct work_struct *work);
- 
- /*-----------------------------------------------
-@@ -136,7 +137,7 @@ static struct pgpath *alloc_pgpath(void)
- 
- 	if (pgpath) {
- 		pgpath->is_active = true;
--		INIT_DELAYED_WORK(&pgpath->activate_path, activate_path);
-+		INIT_DELAYED_WORK(&pgpath->activate_path, activate_path_work);
+ 	rq_completed(md, rw, false);
+ }
+@@ -755,7 +755,7 @@ static int dm_mq_queue_rq(struct blk_mq_hw_ctx *hctx,
+ 		/* Undo dm_start_request() before requeuing */
+ 		rq_end_stats(md, rq);
+ 		rq_completed(md, rq_data_dir(rq), false);
+-		blk_mq_delay_run_hw_queue(hctx, 100/*ms*/);
++		blk_mq_delay_run_hw_queue(hctx, 500/*ms*/);
+ 		return BLK_MQ_RQ_QUEUE_BUSY;
  	}
  
- 	return pgpath;
-@@ -1437,10 +1438,8 @@ static void pg_init_done(void *data, int errors)
- 	spin_unlock_irqrestore(&m->lock, flags);
- }
- 
--static void activate_path(struct work_struct *work)
-+static void activate_path(struct pgpath *pgpath)
- {
--	struct pgpath *pgpath =
--		container_of(work, struct pgpath, activate_path.work);
- 	struct request_queue *q = bdev_get_queue(pgpath->path.dev->bdev);
- 
- 	if (pgpath->is_active && !blk_queue_dying(q))
-@@ -1449,6 +1448,11 @@ static void activate_path(struct work_struct *work)
- 		pg_init_done(pgpath, SCSI_DH_DEV_OFFLINED);
- }
- 
-+static void activate_path_work(struct work_struct *work)
-+{
-+	activate_path(container_of(work, struct pgpath, activate_path.work));
-+}
-+
- static int noretry_error(int error)
- {
- 	switch (error) {
 -- 
 2.12.2
