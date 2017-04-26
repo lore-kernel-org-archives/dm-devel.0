@@ -1,8 +1,8 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH 06/13] dm-rq: Check blk_mq_register_dev() return
-	value
-Date: Wed, 26 Apr 2017 11:37:21 -0700
-Message-ID: <20170426183728.10821-7-bart.vanassche@sandisk.com>
+Subject: [PATCH 05/13] dm-mpath: Make it easier to analyze
+	requeuing behavior
+Date: Wed, 26 Apr 2017 11:37:20 -0700
+Message-ID: <20170426183728.10821-6-bart.vanassche@sandisk.com>
 References: <20170426183728.10821-1-bart.vanassche@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,35 +22,107 @@ To: Mike Snitzer <snitzer@redhat.com>
 Cc: Bart Van Assche <bart.vanassche@sandisk.com>, dm-devel@redhat.com, Hannes Reinecke <hare@suse.com>, Christoph Hellwig <hch@lst.de>
 List-Id: dm-devel.ids
 
-blk_mq_register_dev() can fail. Hence check the return value of
-that function.
+When debugging the dm-mpath driver it is important to know what
+decisions have been taken with regard to requeuing. Hence this
+patch that adds pr_debug() statements that report what decisions
+have been taken.
 
 Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
 Cc: Hannes Reinecke <hare@suse.com>
 Cc: Christoph Hellwig <hch@lst.de>
 ---
- drivers/md/dm-rq.c | 6 +++++-
- 1 file changed, 5 insertions(+), 1 deletion(-)
+ drivers/md/dm-mpath.c | 21 ++++++++++++++++++---
+ drivers/md/dm-rq.c    |  5 ++++-
+ 2 files changed, 22 insertions(+), 4 deletions(-)
 
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index e38c92178746..fb4b7228fe5f 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -501,8 +501,10 @@ static int multipath_clone_and_map(struct dm_target *ti, struct request *rq,
+ 		pgpath = choose_pgpath(m, nr_bytes);
+ 
+ 	if (!pgpath) {
+-		if (must_push_back_rq(m))
++		if (must_push_back_rq(m)) {
++			pr_debug("no path - requeueing\n");
+ 			return DM_MAPIO_DELAY_REQUEUE;
++		}
+ 		return -EIO;	/* Failed */
+ 	} else if (test_bit(MPATHF_QUEUE_IO, &m->flags) ||
+ 		   test_bit(MPATHF_PG_INIT_REQUIRED, &m->flags)) {
+@@ -1425,17 +1427,23 @@ static void pg_init_done(void *data, int errors)
+ 		/* Activations of other paths are still on going */
+ 		goto out;
+ 
++	pr_debug("pg_init_in_progress = %d\n",
++		 atomic_read(&m->pg_init_in_progress));
++
+ 	if (test_bit(MPATHF_PG_INIT_REQUIRED, &m->flags)) {
+ 		if (delay_retry)
+ 			set_bit(MPATHF_PG_INIT_DELAY_RETRY, &m->flags);
+ 		else
+ 			clear_bit(MPATHF_PG_INIT_DELAY_RETRY, &m->flags);
+ 
+-		if (__pg_init_all_paths(m))
++		if (__pg_init_all_paths(m)) {
++			pr_debug("__pg_init_all_paths() reported that initialization is ongoing\n");
+ 			goto out;
++		}
+ 	}
+ 	clear_bit(MPATHF_QUEUE_IO, &m->flags);
+ 
++	pr_debug("Processing queued I/O list\n");
+ 	process_queued_io_list(m);
+ 
+ 	/*
+@@ -1929,8 +1937,11 @@ static int multipath_busy(struct dm_target *ti)
+ 	struct pgpath *pgpath;
+ 
+ 	/* pg_init in progress */
+-	if (atomic_read(&m->pg_init_in_progress))
++	if (atomic_read(&m->pg_init_in_progress)) {
++		pr_debug("pg_init_in_progress = %d\n",
++			 atomic_read(&m->pg_init_in_progress));
+ 		return true;
++	}
+ 
+ 	/* no paths available, for blk-mq: rely on IO mapping to delay requeue */
+ 	if (!atomic_read(&m->nr_valid_paths) && test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags))
+@@ -1977,6 +1988,10 @@ static int multipath_busy(struct dm_target *ti)
+ 		busy = false;
+ 	}
+ 
++
++	if (busy)
++		pr_debug("all active paths are busy\n");
++
+ 	return busy;
+ }
+ 
 diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
-index ba5694be55a4..3ff7280f5dc5 100644
+index c53debdcd7dc..ba5694be55a4 100644
 --- a/drivers/md/dm-rq.c
 +++ b/drivers/md/dm-rq.c
-@@ -813,10 +813,14 @@ int dm_mq_init_request_queue(struct mapped_device *md, struct dm_table *t)
- 	dm_init_md_queue(md);
+@@ -737,8 +737,10 @@ static int dm_mq_queue_rq(struct blk_mq_hw_ctx *hctx,
+ 		dm_put_live_table(md, srcu_idx);
+ 	}
  
- 	/* backfill 'mq' sysfs registration normally done in blk_register_queue */
--	blk_mq_register_dev(disk_to_dev(md->disk), q);
-+	err = blk_mq_register_dev(disk_to_dev(md->disk), q);
-+	if (err)
-+		goto free_queue;
+-	if (ti->type->busy && ti->type->busy(ti))
++	if (ti->type->busy && ti->type->busy(ti)) {
++		pr_debug("ti->type->busy()\n");
+ 		return BLK_MQ_RQ_QUEUE_BUSY;
++	}
  
- 	return 0;
+ 	dm_start_request(md, rq);
  
-+free_queue:
-+	blk_cleanup_queue(q);
- out_tag_set:
- 	blk_mq_free_tag_set(md->tag_set);
- out_kfree_tag_set:
+@@ -756,6 +758,7 @@ static int dm_mq_queue_rq(struct blk_mq_hw_ctx *hctx,
+ 		rq_end_stats(md, rq);
+ 		rq_completed(md, rq_data_dir(rq), false);
+ 		blk_mq_delay_run_hw_queue(hctx, 500/*ms*/);
++		pr_debug("DM_MAPIO_REQUEUE\n");
+ 		return BLK_MQ_RQ_QUEUE_BUSY;
+ 	}
+ 
 -- 
 2.12.2
