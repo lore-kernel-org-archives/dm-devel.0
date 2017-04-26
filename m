@@ -1,7 +1,8 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH 12/13] dm-mpath: Introduce assign_bit()
-Date: Wed, 26 Apr 2017 11:37:27 -0700
-Message-ID: <20170426183728.10821-13-bart.vanassche@sandisk.com>
+Subject: [PATCH 13/13] dm,
+	dm-mpath: Make it easier to detect unintended I/O request flushes
+Date: Wed, 26 Apr 2017 11:37:28 -0700
+Message-ID: <20170426183728.10821-14-bart.vanassche@sandisk.com>
 References: <20170426183728.10821-1-bart.vanassche@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,76 +22,94 @@ To: Mike Snitzer <snitzer@redhat.com>
 Cc: Bart Van Assche <bart.vanassche@sandisk.com>, dm-devel@redhat.com, Hannes Reinecke <hare@suse.com>
 List-Id: dm-devel.ids
 
-This patch does not change any functionality but makes the code
-easier to read.
+I/O errors triggered by multipathd incorrectly not enabling the
+no-flush flag for DM_DEVICE_SUSPEND or DM_DEVICE_RESUME are hard to
+debug. Add more logging to make it easier to debug this.
 
 Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
 Cc: Hannes Reinecke <hare@suse.com>
 ---
- drivers/md/dm-mpath.c | 37 ++++++++++++++++---------------------
- 1 file changed, 16 insertions(+), 21 deletions(-)
+ drivers/md/dm-mpath.c | 25 +++++++++++++++++++++----
+ drivers/md/dm.c       |  3 +++
+ 2 files changed, 24 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 0eafe7a2070b..57b467207741 100644
+index 57b467207741..7aebbf4ae7d5 100644
 --- a/drivers/md/dm-mpath.c
 +++ b/drivers/md/dm-mpath.c
-@@ -613,6 +613,14 @@ static void process_queued_bios(struct work_struct *work)
- 	blk_finish_plug(&plug);
+@@ -442,6 +442,23 @@ static struct pgpath *choose_pgpath(struct multipath *m, size_t nr_bytes)
  }
  
-+static void assign_bit(bool value, long nr, unsigned long *addr)
-+{
-+	if (value)
-+		set_bit(nr, addr);
-+	else
-+		clear_bit(nr, addr);
-+}
-+
  /*
-  * If we run out of usable paths, should we queue I/O or error it?
++ * Note: dm_report_eio() is a macro instead of a function to make pr_debug()
++ * report the function name and line number of the function from which it has
++ * been invoked.
++ */
++#define dm_report_eio(m)						\
++({									\
++	struct mapped_device *md = dm_table_get_md((m)->ti->table);	\
++									\
++	pr_debug("%s: returning EIO; QIFNP = %d; SQIFNP = %d; DNFS = %d\n", \
++		 dm_device_name(md),					\
++		 test_bit(MPATHF_QUEUE_IF_NO_PATH, &(m)->flags),	\
++		 test_bit(MPATHF_SAVED_QUEUE_IF_NO_PATH, &(m)->flags),	\
++		 dm_noflush_suspending((m)->ti));			\
++	-EIO;								\
++})
++
++/*
+  * Map cloned requests (request-based multipath)
   */
-@@ -622,23 +630,12 @@ static int queue_if_no_path(struct multipath *m, bool queue_if_no_path,
- 	unsigned long flags;
+ static int multipath_clone_and_map(struct dm_target *ti, struct request *rq,
+@@ -466,7 +483,7 @@ static int multipath_clone_and_map(struct dm_target *ti, struct request *rq,
+ 			pr_debug("no path - requeueing\n");
+ 			return DM_MAPIO_DELAY_REQUEUE;
+ 		}
+-		return -EIO;	/* Failed */
++		return dm_report_eio(m);	/* Failed */
+ 	} else if (test_bit(MPATHF_QUEUE_IO, &m->flags) ||
+ 		   test_bit(MPATHF_PG_INIT_REQUIRED, &m->flags)) {
+ 		return pg_init_all_paths(m) == 0 ? DM_MAPIO_REQUEUE :
+@@ -542,7 +559,7 @@ static int __multipath_map_bio(struct multipath *m, struct bio *bio, struct dm_m
+ 	if (!pgpath) {
+ 		if (test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags))
+ 			return DM_MAPIO_REQUEUE;
+-		return -EIO;
++		return dm_report_eio(m);
+ 	}
  
- 	spin_lock_irqsave(&m->lock, flags);
--
--	if (save_old_value) {
--		if (test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags))
--			set_bit(MPATHF_SAVED_QUEUE_IF_NO_PATH, &m->flags);
--		else
--			clear_bit(MPATHF_SAVED_QUEUE_IF_NO_PATH, &m->flags);
--	} else {
--		if (queue_if_no_path)
--			set_bit(MPATHF_SAVED_QUEUE_IF_NO_PATH, &m->flags);
--		else
--			clear_bit(MPATHF_SAVED_QUEUE_IF_NO_PATH, &m->flags);
--	}
--	if (queue_if_no_path || dm_noflush_suspending(m->ti))
--		set_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags);
--	else
--		clear_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags);
--
-+	assign_bit((save_old_value &&
-+		    test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags)) ||
-+		   (!save_old_value && queue_if_no_path),
-+		   MPATHF_SAVED_QUEUE_IF_NO_PATH, &m->flags);
-+	assign_bit(queue_if_no_path || dm_noflush_suspending(m->ti),
-+		   MPATHF_QUEUE_IF_NO_PATH, &m->flags);
- 	spin_unlock_irqrestore(&m->lock, flags);
+ 	mpio->pgpath = pgpath;
+@@ -1481,7 +1498,7 @@ static int do_end_io(struct multipath *m, struct request *clone,
  
- 	if (!queue_if_no_path) {
-@@ -1593,10 +1590,8 @@ static void multipath_resume(struct dm_target *ti)
- 	unsigned long flags;
+ 	if (atomic_read(&m->nr_valid_paths) == 0 &&
+ 	    !test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags))
+-		r = -EIO;
++		r = dm_report_eio(m);
  
- 	spin_lock_irqsave(&m->lock, flags);
--	if (test_bit(MPATHF_SAVED_QUEUE_IF_NO_PATH, &m->flags))
--		set_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags);
--	else
--		clear_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags);
-+	assign_bit(test_bit(MPATHF_SAVED_QUEUE_IF_NO_PATH, &m->flags),
-+		   MPATHF_QUEUE_IF_NO_PATH, &m->flags);
- 	spin_unlock_irqrestore(&m->lock, flags);
+ 	return r;
  }
+@@ -1524,7 +1541,7 @@ static int do_end_io_bio(struct multipath *m, struct bio *clone,
  
+ 	if (atomic_read(&m->nr_valid_paths) == 0 &&
+ 	    !test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags))
+-		return -EIO;
++		return dm_report_eio(m);
+ 
+ 	/* Queue for the daemon to resubmit */
+ 	dm_bio_restore(get_bio_details_from_bio(clone), clone);
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 7161c7804363..9f0aed0e1bf0 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -2158,6 +2158,9 @@ static int __dm_suspend(struct mapped_device *md, struct dm_table *map,
+ 	 */
+ 	if (noflush)
+ 		set_bit(DMF_NOFLUSH_SUSPENDING, &md->flags);
++	else
++		pr_debug("%s: suspending without no-flush flag\n",
++			 dm_device_name(md));
+ 
+ 	/*
+ 	 * This gets reverted if there's an error later and the targets
 -- 
 2.12.2
