@@ -1,14 +1,15 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 04/13] dm-rq: Adjust requeuing delays
-Date: Thu, 27 Apr 2017 07:48:12 +0200
-Message-ID: <4e2af3ef-ae37-104f-8f47-57ec84def2db@suse.de>
+Subject: Re: [PATCH 06/13] dm-rq: Check blk_mq_register_dev()
+ return value
+Date: Thu, 27 Apr 2017 07:49:19 +0200
+Message-ID: <9b7d93d6-5844-460c-db15-89b31f10821e@suse.de>
 References: <20170426183728.10821-1-bart.vanassche@sandisk.com>
-	<20170426183728.10821-5-bart.vanassche@sandisk.com>
+	<20170426183728.10821-7-bart.vanassche@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="windows-1252"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170426183728.10821-5-bart.vanassche@sandisk.com>
+In-Reply-To: <20170426183728.10821-7-bart.vanassche@sandisk.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,46 +24,43 @@ Cc: dm-devel@redhat.com, Hannes Reinecke <hare@suse.com>, Christoph Hellwig <hch
 List-Id: dm-devel.ids
 
 On 04/26/2017 08:37 PM, Bart Van Assche wrote:
-> Reduce the requeue delay in dm_requeue_original_request() from 5s
-> to 0.5s to avoid that this delay slows down failover or failback.
-> Increase the requeue delay in dm_mq_queue_rq() from 0.1s to 0.5s
-> to reduce the system load if immediate requeuing has been requested
-> by the dm driver.
+> blk_mq_register_dev() can fail. Hence check the return value of
+> that function.
 > =
 
 > Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
 > Cc: Hannes Reinecke <hare@suse.com>
 > Cc: Christoph Hellwig <hch@lst.de>
 > ---
->  drivers/md/dm-rq.c | 4 ++--
->  1 file changed, 2 insertions(+), 2 deletions(-)
+>  drivers/md/dm-rq.c | 6 +++++-
+>  1 file changed, 5 insertions(+), 1 deletion(-)
 > =
 
 > diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
-> index 0b081d170087..c53debdcd7dc 100644
+> index ba5694be55a4..3ff7280f5dc5 100644
 > --- a/drivers/md/dm-rq.c
 > +++ b/drivers/md/dm-rq.c
-> @@ -280,7 +280,7 @@ static void dm_requeue_original_request(struct dm_rq_=
-target_io *tio, bool delay_
->  	if (!rq->q->mq_ops)
->  		dm_old_requeue_request(rq);
->  	else
-> -		dm_mq_delay_requeue_request(rq, delay_requeue ? 5000 : 0);
-> +		dm_mq_delay_requeue_request(rq, delay_requeue ? 500/*ms*/ : 0);
+> @@ -813,10 +813,14 @@ int dm_mq_init_request_queue(struct mapped_device *=
+md, struct dm_table *t)
+>  	dm_init_md_queue(md);
 >  =
 
->  	rq_completed(md, rw, false);
->  }
-> @@ -755,7 +755,7 @@ static int dm_mq_queue_rq(struct blk_mq_hw_ctx *hctx,
->  		/* Undo dm_start_request() before requeuing */
->  		rq_end_stats(md, rq);
->  		rq_completed(md, rq_data_dir(rq), false);
-> -		blk_mq_delay_run_hw_queue(hctx, 100/*ms*/);
-> +		blk_mq_delay_run_hw_queue(hctx, 500/*ms*/);
->  		return BLK_MQ_RQ_QUEUE_BUSY;
->  	}
+>  	/* backfill 'mq' sysfs registration normally done in blk_register_queue=
+ */
+> -	blk_mq_register_dev(disk_to_dev(md->disk), q);
+> +	err =3D blk_mq_register_dev(disk_to_dev(md->disk), q);
+> +	if (err)
+> +		goto free_queue;
 >  =
 
+>  	return 0;
+>  =
+
+> +free_queue:
+> +	blk_cleanup_queue(q);
+>  out_tag_set:
+>  	blk_mq_free_tag_set(md->tag_set);
+>  out_kfree_tag_set:
 > =
 
 Reviewed-by: Hannes Reinecke <hare@suse.com>
