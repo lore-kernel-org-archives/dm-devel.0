@@ -1,14 +1,15 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 10/13] dm: Introduce enum dm_queue_mode
-Date: Thu, 27 Apr 2017 07:51:28 +0200
-Message-ID: <4ec75dd3-71c6-2280-bc46-0198e8b58b30@suse.de>
+Subject: Re: [PATCH 08/13] dm: Verify suspend_locking assumptions
+ at runtime
+Date: Thu, 27 Apr 2017 08:05:27 +0200
+Message-ID: <d0a1c5d6-727b-e123-c358-89c60ba45150@suse.de>
 References: <20170426183728.10821-1-bart.vanassche@sandisk.com>
-	<20170426183728.10821-11-bart.vanassche@sandisk.com>
+	<20170426183728.10821-9-bart.vanassche@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="windows-1252"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170426183728.10821-11-bart.vanassche@sandisk.com>
+In-Reply-To: <20170426183728.10821-9-bart.vanassche@sandisk.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,21 +24,16 @@ Cc: dm-devel@redhat.com, Hannes Reinecke <hare@suse.com>
 List-Id: dm-devel.ids
 
 On 04/26/2017 08:37 PM, Bart Van Assche wrote:
-> Introduce an enumeration type for the queue mode. This patch does
-> not change any functionality but makes the dm code easier to read.
+> Ensure that the assumptions about the caller holding suspend_lock
+> are checked at runtime if lockdep is enabled.
 > =
 
 > Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
 > Cc: Hannes Reinecke <hare@suse.com>
 > ---
->  drivers/md/dm-core.h          |  2 +-
->  drivers/md/dm-ioctl.c         |  2 +-
->  drivers/md/dm-mpath.c         |  5 ++++-
->  drivers/md/dm-table.c         | 14 +++++++-------
->  drivers/md/dm.c               | 14 +++++++++-----
->  drivers/md/dm.h               | 12 +++++++-----
->  include/linux/device-mapper.h | 14 ++++++++------
->  7 files changed, 37 insertions(+), 26 deletions(-)
+>  drivers/md/dm-table.c | 4 ++++
+>  drivers/md/dm.c       | 9 ++++-----
+>  2 files changed, 8 insertions(+), 5 deletions(-)
 > =
 
 Reviewed-by: Hannes Reinecke <hare@suse.com>
