@@ -1,103 +1,84 @@
-From: Damien Le Moal <damien.lemoal@wdc.com>
-Subject: Re: [PATCH 00/10] dm: zoned block device support
-Date: Thu, 27 Apr 2017 13:22:24 +0900
-Message-ID: <cca4fad3-aee4-14d7-f576-b6ceda114941@wdc.com>
-References: <20170421035558.2657-1-damien.lemoal@wdc.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [dm-devel] [PATCH 03/13] dm-mpath: Delay requeuing while path
+ initialization is in progress
+Date: Thu, 27 Apr 2017 07:47:19 +0200
+Message-ID: <e791d1fe-6bdd-1e8c-3601-76c529dc3a6e@suse.de>
+References: <20170426183728.10821-1-bart.vanassche@sandisk.com>
+ <20170426183728.10821-4-bart.vanassche@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20170421035558.2657-1-damien.lemoal@wdc.com>
-Sender: linux-block-owner@vger.kernel.org
-To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
-Cc: Hannes Reinecke <hare@suse.de>, Christoph Hellwig <hch@lst.de>, Bart Van Assche <Bart.VanAssche@sandisk.com>, linux-block@vger.kernel.org
+Content-Transfer-Encoding: 8bit
+Return-path: <stable-owner@vger.kernel.org>
+In-Reply-To: <20170426183728.10821-4-bart.vanassche@sandisk.com>
+Sender: stable-owner@vger.kernel.org
+To: Bart Van Assche <bart.vanassche@sandisk.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, Hannes Reinecke <hare@suse.com>, stable@vger.kernel.org, Christoph Hellwig <hch@lst.de>
 List-Id: dm-devel.ids
 
-Hello Mike,
+On 04/26/2017 08:37 PM, Bart Van Assche wrote:
+> Requeuing a request immediately while path initialization is ongoing
+> causes high CPU usage, something that is undesired. Hence delay
+> requeuing while path initialization is in progress.
+> 
+> Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
+> Cc: Hannes Reinecke <hare@suse.com>
+> Cc: Christoph Hellwig <hch@lst.de>
+> Cc: <stable@vger.kernel.org>
+> ---
+>  drivers/md/dm-mpath.c | 12 +++++++-----
+>  1 file changed, 7 insertions(+), 5 deletions(-)
+> 
+> diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+> index 6d4333fdddf5..e38c92178746 100644
+> --- a/drivers/md/dm-mpath.c
+> +++ b/drivers/md/dm-mpath.c
+> @@ -322,13 +322,16 @@ static int __pg_init_all_paths(struct multipath *m)
+>  	return atomic_read(&m->pg_init_in_progress);
+>  }
+>  
+> -static void pg_init_all_paths(struct multipath *m)
+> +static int pg_init_all_paths(struct multipath *m)
+>  {
+>  	unsigned long flags;
+> +	int ret;
+>  
+>  	spin_lock_irqsave(&m->lock, flags);
+> -	__pg_init_all_paths(m);
+> +	ret = __pg_init_all_paths(m);
+>  	spin_unlock_irqrestore(&m->lock, flags);
+> +
+> +	return ret;
+>  }
+>  
+>  static void __switch_pg(struct multipath *m, struct priority_group *pg)
+> @@ -485,7 +488,6 @@ static int multipath_clone_and_map(struct dm_target *ti, struct request *rq,
+>  				   struct request **__clone)
+>  {
+>  	struct multipath *m = ti->private;
+> -	int r = DM_MAPIO_REQUEUE;
+>  	size_t nr_bytes = blk_rq_bytes(rq);
+>  	struct pgpath *pgpath;
+>  	struct block_device *bdev;
+> @@ -504,8 +506,8 @@ static int multipath_clone_and_map(struct dm_target *ti, struct request *rq,
+>  		return -EIO;	/* Failed */
+>  	} else if (test_bit(MPATHF_QUEUE_IO, &m->flags) ||
+>  		   test_bit(MPATHF_PG_INIT_REQUIRED, &m->flags)) {
+> -		pg_init_all_paths(m);
+> -		return r;
+> +		return pg_init_all_paths(m) == 0 ? DM_MAPIO_REQUEUE :
+> +			DM_MAPIO_DELAY_REQUEUE;
+>  	}
+>  
+>  	memset(mpio, 0, sizeof(*mpio));
+> 
+Reviewed-by: Hannes Reinecke <hare@suse.com>
 
-Any comments on this series ?
-Is it possible that you consider it for 4.12 ?
+Cheers,
 
-Best regards.
-
-On 4/21/17 12:55, damien.lemoal@wdc.com wrote:
-> From: Damien Le Moal <damien.lemoal@wdc.com>
-> 
-> This series introduces zoned block device support to the device mapper
-> infrastructure. Pathces are as follows:
-> 
-> - Patch 1: Add a new target type feature flag to indicate if a target type
->   supports host-managed zoned block devices. This prevents using these drives
->   with the current target types since none of them have the proper support
->   implemented and will not operate properly with these drives.
-> - Patch 2: If a target device is a zoned block device, check that the range of
->   LBAs mapped is aligned to the device zone size and that the device start
->   offset also aligns to zone boundaries. This is necessary for zone reset and
->   zone report correct execution.
-> - Patch 3: Check that the different target devices of a table have compatible
->   zone sizes and models. This is necessary for target types that expose a zone
->   model different from the underlying device.
-> - Patch 4: Fix handling of REQ_OP_ZONE_RESET bios
-> - Patch 5: Fix handling of REQ_OP_ZONE_REPORT bios
-> - Patch 6: Introduce a new helper function to reverse map a device zone report
->   to the target LBA range
-> - Patch 7: Add support for host-managed zoned block devices to dm-flakey. This
->   is necessary for testing file systems supporting natively these drives (e.g.
->   f2fs).
-> - Patch 8: Add support for for zoned block devices to dm-linear. This can have
->   useful applications during development and testing (e.g. allow creating
->   smaller zoned devices with different combinations and positions of zones).
->   There are also interesting applications for production, for instance, the
->   ability to aggregate conventional zones of different drives to create a
->   regular disk.
-> - Patch 9: Add sequential write enforcement to dm_kcopyd_copy so that
->   sequential zones of a host-managed zoned block device can be specified as
->   destinations.
-> - Patch 10: New dm-zoned target type (this was already sent for review twice).
->   This resend adds modifications suggested by Hannes to implement reclaim
->   using dm-kcopyd. dm-zoned depends on patch 9.
-> 
-> As always, comments and reviews are welcome.
-> 
-> Damien Le Moal (10):
->   dm-table: Introduce DM_TARGET_ZONED_HM feature
->   dm-table: Check device area zone alignment
->   dm-table: Check block devices zone model compatibility
->   dm: Fix REQ_OP_ZONE_RESET bio handling
->   dm: Fix REQ_OP_ZONE_REPORT bio handling
->   dm: Introduce dm_remap_zone_report()
->   dm-flakey: Add support for zoned block devices
->   dm-linear: Add support for zoned block devices
->   dm-kcopyd: Add sequential write feature
->   dm-zoned: Drive-managed zoned block device target
-> 
->  Documentation/device-mapper/dm-zoned.txt |  154 +++
->  drivers/md/Kconfig                       |   19 +
->  drivers/md/Makefile                      |    2 +
->  drivers/md/dm-flakey.c                   |   21 +-
->  drivers/md/dm-kcopyd.c                   |   68 +-
->  drivers/md/dm-linear.c                   |   14 +-
->  drivers/md/dm-table.c                    |  145 ++
->  drivers/md/dm-zoned-io.c                 |  998 ++++++++++++++
->  drivers/md/dm-zoned-metadata.c           | 2195 ++++++++++++++++++++++++++++++
->  drivers/md/dm-zoned-reclaim.c            |  535 ++++++++
->  drivers/md/dm-zoned.h                    |  528 +++++++
->  drivers/md/dm.c                          |   93 +-
->  include/linux/device-mapper.h            |   16 +
->  include/linux/dm-kcopyd.h                |    1 +
->  14 files changed, 4783 insertions(+), 6 deletions(-)
->  create mode 100644 Documentation/device-mapper/dm-zoned.txt
->  create mode 100644 drivers/md/dm-zoned-io.c
->  create mode 100644 drivers/md/dm-zoned-metadata.c
->  create mode 100644 drivers/md/dm-zoned-reclaim.c
->  create mode 100644 drivers/md/dm-zoned.h
-> 
-
+Hannes
 -- 
-Damien Le Moal, Ph.D.
-Sr Manager, System Software Group,
-Western Digital Research
-Damien.LeMoal@wdc.com
-Tel: (+81) 0466-98-3593 (Ext. 51-3593)
-1 kirihara-cho, Fujisawa, Kanagawa, 252-0888 Japan
-www.wdc.com, www.hgst.com
+Dr. Hannes Reinecke		   Teamlead Storage & Networking
+hare@suse.de			               +49 911 74053 688
+SUSE LINUX GmbH, Maxfeldstr. 5, 90409 Nürnberg
+GF: F. Imendörffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
+HRB 21284 (AG Nürnberg)
