@@ -1,61 +1,103 @@
-From: Herbert Xu <herbert@gondor.apana.org.au>
-Subject: Re: [PATCH v2 07/21] crypto: shash, caam: Make use of the new sg_map
- helper function
-Date: Thu, 27 Apr 2017 11:56:03 +0800
-Message-ID: <20170427035603.GA32212@gondor.apana.org.au>
-References: <1493144468-22493-1-git-send-email-logang@deltatee.com>
- <1493144468-22493-8-git-send-email-logang@deltatee.com>
+From: Damien Le Moal <damien.lemoal@wdc.com>
+Subject: Re: [PATCH 00/10] dm: zoned block device support
+Date: Thu, 27 Apr 2017 13:22:24 +0900
+Message-ID: <cca4fad3-aee4-14d7-f576-b6ceda114941@wdc.com>
+References: <20170421035558.2657-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <netdev-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1493144468-22493-8-git-send-email-logang@deltatee.com>
-Sender: netdev-owner@vger.kernel.org
-To: Logan Gunthorpe <logang@deltatee.com>
-Cc: linux-kernel@vger.kernel.org, linux-crypto@vger.kernel.org, linux-media@vger.kernel.org, dri-devel@lists.freedesktop.org, intel-gfx@lists.freedesktop.org, linux-raid@vger.kernel.org, linux-mmc@vger.kernel.org, linux-nvdimm@lists.01.org, linux-scsi@vger.kernel.org, open-iscsi@googlegroups.com, megaraidlinux.pdl@broadcom.com, sparmaintainer@unisys.com, devel@driverdev.osuosl.org, target-devel@vger.kernel.org, netdev@vger.kernel.org, linux-rdma@vger.kernel.org, dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>, "Martin K. Petersen" <martin.petersen@oracle.com>, "James E.J. Bottomley" <jejb@linux.vnet.ibm.com>, Jens Axboe <axboe@kernel.dk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Dan Williams <dan.j.williams@intel.com>, Ross Zwisler <ross.zwisler@linux.intel.com>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20170421035558.2657-1-damien.lemoal@wdc.com>
+Sender: linux-block-owner@vger.kernel.org
+To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
+Cc: Hannes Reinecke <hare@suse.de>, Christoph Hellwig <hch@lst.de>, Bart Van Assche <Bart.VanAssche@sandisk.com>, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Tue, Apr 25, 2017 at 12:20:54PM -0600, Logan Gunthorpe wrote:
-> Very straightforward conversion to the new function in the caam driver
-> and shash library.
-> 
-> Signed-off-by: Logan Gunthorpe <logang@deltatee.com>
-> Cc: Herbert Xu <herbert@gondor.apana.org.au>
-> Cc: "David S. Miller" <davem@davemloft.net>
-> ---
->  crypto/shash.c                | 9 ++++++---
->  drivers/crypto/caam/caamalg.c | 8 +++-----
->  2 files changed, 9 insertions(+), 8 deletions(-)
-> 
-> diff --git a/crypto/shash.c b/crypto/shash.c
-> index 5e31c8d..5914881 100644
-> --- a/crypto/shash.c
-> +++ b/crypto/shash.c
-> @@ -283,10 +283,13 @@ int shash_ahash_digest(struct ahash_request *req, struct shash_desc *desc)
->  	if (nbytes < min(sg->length, ((unsigned int)(PAGE_SIZE)) - offset)) {
->  		void *data;
->  
-> -		data = kmap_atomic(sg_page(sg));
-> -		err = crypto_shash_digest(desc, data + offset, nbytes,
-> +		data = sg_map(sg, 0, SG_KMAP_ATOMIC);
-> +		if (IS_ERR(data))
-> +			return PTR_ERR(data);
-> +
-> +		err = crypto_shash_digest(desc, data, nbytes,
->  					  req->result);
-> -		kunmap_atomic(data);
-> +		sg_unmap(sg, data, 0, SG_KMAP_ATOMIC);
->  		crypto_yield(desc->flags);
->  	} else
->  		err = crypto_shash_init(desc) ?:
+Hello Mike,
 
-Nack.  This is an optimisation for the special case of a single
-SG list entry.  In fact in the common case the kmap_atomic should
-disappear altogether in the no-highmem case.  So replacing it
-with sg_map is not acceptable.
+Any comments on this series ?
+Is it possible that you consider it for 4.12 ?
 
-Cheers,
+Best regards.
+
+On 4/21/17 12:55, damien.lemoal@wdc.com wrote:
+> From: Damien Le Moal <damien.lemoal@wdc.com>
+> 
+> This series introduces zoned block device support to the device mapper
+> infrastructure. Pathces are as follows:
+> 
+> - Patch 1: Add a new target type feature flag to indicate if a target type
+>   supports host-managed zoned block devices. This prevents using these drives
+>   with the current target types since none of them have the proper support
+>   implemented and will not operate properly with these drives.
+> - Patch 2: If a target device is a zoned block device, check that the range of
+>   LBAs mapped is aligned to the device zone size and that the device start
+>   offset also aligns to zone boundaries. This is necessary for zone reset and
+>   zone report correct execution.
+> - Patch 3: Check that the different target devices of a table have compatible
+>   zone sizes and models. This is necessary for target types that expose a zone
+>   model different from the underlying device.
+> - Patch 4: Fix handling of REQ_OP_ZONE_RESET bios
+> - Patch 5: Fix handling of REQ_OP_ZONE_REPORT bios
+> - Patch 6: Introduce a new helper function to reverse map a device zone report
+>   to the target LBA range
+> - Patch 7: Add support for host-managed zoned block devices to dm-flakey. This
+>   is necessary for testing file systems supporting natively these drives (e.g.
+>   f2fs).
+> - Patch 8: Add support for for zoned block devices to dm-linear. This can have
+>   useful applications during development and testing (e.g. allow creating
+>   smaller zoned devices with different combinations and positions of zones).
+>   There are also interesting applications for production, for instance, the
+>   ability to aggregate conventional zones of different drives to create a
+>   regular disk.
+> - Patch 9: Add sequential write enforcement to dm_kcopyd_copy so that
+>   sequential zones of a host-managed zoned block device can be specified as
+>   destinations.
+> - Patch 10: New dm-zoned target type (this was already sent for review twice).
+>   This resend adds modifications suggested by Hannes to implement reclaim
+>   using dm-kcopyd. dm-zoned depends on patch 9.
+> 
+> As always, comments and reviews are welcome.
+> 
+> Damien Le Moal (10):
+>   dm-table: Introduce DM_TARGET_ZONED_HM feature
+>   dm-table: Check device area zone alignment
+>   dm-table: Check block devices zone model compatibility
+>   dm: Fix REQ_OP_ZONE_RESET bio handling
+>   dm: Fix REQ_OP_ZONE_REPORT bio handling
+>   dm: Introduce dm_remap_zone_report()
+>   dm-flakey: Add support for zoned block devices
+>   dm-linear: Add support for zoned block devices
+>   dm-kcopyd: Add sequential write feature
+>   dm-zoned: Drive-managed zoned block device target
+> 
+>  Documentation/device-mapper/dm-zoned.txt |  154 +++
+>  drivers/md/Kconfig                       |   19 +
+>  drivers/md/Makefile                      |    2 +
+>  drivers/md/dm-flakey.c                   |   21 +-
+>  drivers/md/dm-kcopyd.c                   |   68 +-
+>  drivers/md/dm-linear.c                   |   14 +-
+>  drivers/md/dm-table.c                    |  145 ++
+>  drivers/md/dm-zoned-io.c                 |  998 ++++++++++++++
+>  drivers/md/dm-zoned-metadata.c           | 2195 ++++++++++++++++++++++++++++++
+>  drivers/md/dm-zoned-reclaim.c            |  535 ++++++++
+>  drivers/md/dm-zoned.h                    |  528 +++++++
+>  drivers/md/dm.c                          |   93 +-
+>  include/linux/device-mapper.h            |   16 +
+>  include/linux/dm-kcopyd.h                |    1 +
+>  14 files changed, 4783 insertions(+), 6 deletions(-)
+>  create mode 100644 Documentation/device-mapper/dm-zoned.txt
+>  create mode 100644 drivers/md/dm-zoned-io.c
+>  create mode 100644 drivers/md/dm-zoned-metadata.c
+>  create mode 100644 drivers/md/dm-zoned-reclaim.c
+>  create mode 100644 drivers/md/dm-zoned.h
+> 
+
 -- 
-Email: Herbert Xu <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+Damien Le Moal, Ph.D.
+Sr Manager, System Software Group,
+Western Digital Research
+Damien.LeMoal@wdc.com
+Tel: (+81) 0466-98-3593 (Ext. 51-3593)
+1 kirihara-cho, Fujisawa, Kanagawa, 252-0888 Japan
+www.wdc.com, www.hgst.com
