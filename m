@@ -1,15 +1,14 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 09/13] dm-mpath: Verify locking assumptions
- at runtime
-Date: Thu, 27 Apr 2017 07:50:45 +0200
-Message-ID: <a4b84865-57dc-fd53-49ef-99cf78b9bf8e@suse.de>
+Subject: Re: [PATCH 10/13] dm: Introduce enum dm_queue_mode
+Date: Thu, 27 Apr 2017 07:51:28 +0200
+Message-ID: <4ec75dd3-71c6-2280-bc46-0198e8b58b30@suse.de>
 References: <20170426183728.10821-1-bart.vanassche@sandisk.com>
-	<20170426183728.10821-10-bart.vanassche@sandisk.com>
+	<20170426183728.10821-11-bart.vanassche@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="windows-1252"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170426183728.10821-10-bart.vanassche@sandisk.com>
+In-Reply-To: <20170426183728.10821-11-bart.vanassche@sandisk.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,33 +23,21 @@ Cc: dm-devel@redhat.com, Hannes Reinecke <hare@suse.com>
 List-Id: dm-devel.ids
 
 On 04/26/2017 08:37 PM, Bart Van Assche wrote:
-> Verify at runtime that __pg_init_all_paths() is called with
-> multipath.lock held if lockdep is enabled.
+> Introduce an enumeration type for the queue mode. This patch does
+> not change any functionality but makes the dm code easier to read.
 > =
 
 > Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
 > Cc: Hannes Reinecke <hare@suse.com>
 > ---
->  drivers/md/dm-mpath.c | 2 ++
->  1 file changed, 2 insertions(+)
-> =
-
-> diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-> index fb4b7228fe5f..312d4fc34430 100644
-> --- a/drivers/md/dm-mpath.c
-> +++ b/drivers/md/dm-mpath.c
-> @@ -298,6 +298,8 @@ static int __pg_init_all_paths(struct multipath *m)
->  	struct pgpath *pgpath;
->  	unsigned long pg_init_delay =3D 0;
->  =
-
-> +	lockdep_assert_held(&m->lock);
-> +
->  	if (atomic_read(&m->pg_init_in_progress) || test_bit(MPATHF_PG_INIT_DIS=
-ABLED, &m->flags))
->  		return 0;
->  =
-
+>  drivers/md/dm-core.h          |  2 +-
+>  drivers/md/dm-ioctl.c         |  2 +-
+>  drivers/md/dm-mpath.c         |  5 ++++-
+>  drivers/md/dm-table.c         | 14 +++++++-------
+>  drivers/md/dm.c               | 14 +++++++++-----
+>  drivers/md/dm.h               | 12 +++++++-----
+>  include/linux/device-mapper.h | 14 ++++++++------
+>  7 files changed, 37 insertions(+), 26 deletions(-)
 > =
 
 Reviewed-by: Hannes Reinecke <hare@suse.com>
