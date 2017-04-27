@@ -1,8 +1,7 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH v2 05/13] dm-mpath: Make it easier to analyze
-	requeuing behavior
-Date: Thu, 27 Apr 2017 10:11:18 -0700
-Message-ID: <20170427171126.26814-6-bart.vanassche@sandisk.com>
+Subject: [PATCH v2 12/13] dm-mpath: Introduce assign_bit()
+Date: Thu, 27 Apr 2017 10:11:25 -0700
+Message-ID: <20170427171126.26814-13-bart.vanassche@sandisk.com>
 References: <20170427171126.26814-1-bart.vanassche@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,110 +18,79 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Mike Snitzer <snitzer@redhat.com>
-Cc: Bart Van Assche <bart.vanassche@sandisk.com>, dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>
+Cc: Bart Van Assche <bart.vanassche@sandisk.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-When debugging the dm-mpath driver it is important to know what
-decisions have been taken with regard to requeuing. Hence this
-patch that adds pr_debug() statements that report what decisions
-have been taken.
+This patch does not change any functionality but makes the code
+easier to read.
 
 Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
 Reviewed-by: Hannes Reinecke <hare@suse.com>
-Cc: Christoph Hellwig <hch@lst.de>
 ---
- drivers/md/dm-mpath.c | 21 ++++++++++++++++++---
- drivers/md/dm-rq.c    |  5 ++++-
- 2 files changed, 22 insertions(+), 4 deletions(-)
+ drivers/md/dm-mpath.c | 37 ++++++++++++++++---------------------
+ 1 file changed, 16 insertions(+), 21 deletions(-)
 
 diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index d739688246a0..fc3e7f028110 100644
+index 5a3200332eb1..6cab04a0e565 100644
 --- a/drivers/md/dm-mpath.c
 +++ b/drivers/md/dm-mpath.c
-@@ -501,8 +501,10 @@ static int multipath_clone_and_map(struct dm_target *ti, struct request *rq,
- 		pgpath = choose_pgpath(m, nr_bytes);
- 
- 	if (!pgpath) {
--		if (must_push_back_rq(m))
-+		if (must_push_back_rq(m)) {
-+			pr_debug("no path - requeueing\n");
- 			return DM_MAPIO_DELAY_REQUEUE;
-+		}
- 		return -EIO;	/* Failed */
- 	} else if (test_bit(MPATHF_QUEUE_IO, &m->flags) ||
- 		   test_bit(MPATHF_PG_INIT_REQUIRED, &m->flags)) {
-@@ -1425,17 +1427,23 @@ static void pg_init_done(void *data, int errors)
- 		/* Activations of other paths are still on going */
- 		goto out;
- 
-+	pr_debug("pg_init_in_progress = %d\n",
-+		 atomic_read(&m->pg_init_in_progress));
-+
- 	if (test_bit(MPATHF_PG_INIT_REQUIRED, &m->flags)) {
- 		if (delay_retry)
- 			set_bit(MPATHF_PG_INIT_DELAY_RETRY, &m->flags);
- 		else
- 			clear_bit(MPATHF_PG_INIT_DELAY_RETRY, &m->flags);
- 
--		if (__pg_init_all_paths(m))
-+		if (__pg_init_all_paths(m)) {
-+			pr_debug("__pg_init_all_paths() reported that initialization is ongoing\n");
- 			goto out;
-+		}
- 	}
- 	clear_bit(MPATHF_QUEUE_IO, &m->flags);
- 
-+	pr_debug("Processing queued I/O list\n");
- 	process_queued_io_list(m);
- 
- 	/*
-@@ -1932,8 +1940,11 @@ static int multipath_busy(struct dm_target *ti)
- 	struct pgpath *pgpath;
- 
- 	/* pg_init in progress */
--	if (atomic_read(&m->pg_init_in_progress))
-+	if (atomic_read(&m->pg_init_in_progress)) {
-+		pr_debug("pg_init_in_progress = %d\n",
-+			 atomic_read(&m->pg_init_in_progress));
- 		return true;
-+	}
- 
- 	/* no paths available, for blk-mq: rely on IO mapping to delay requeue */
- 	if (!atomic_read(&m->nr_valid_paths) && test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags))
-@@ -1980,6 +1991,10 @@ static int multipath_busy(struct dm_target *ti)
- 		busy = false;
- 	}
- 
-+
-+	if (busy)
-+		pr_debug("all active paths are busy\n");
-+
- 	return busy;
+@@ -613,6 +613,14 @@ static void process_queued_bios(struct work_struct *work)
+ 	blk_finish_plug(&plug);
  }
  
-diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
-index c53debdcd7dc..ba5694be55a4 100644
---- a/drivers/md/dm-rq.c
-+++ b/drivers/md/dm-rq.c
-@@ -737,8 +737,10 @@ static int dm_mq_queue_rq(struct blk_mq_hw_ctx *hctx,
- 		dm_put_live_table(md, srcu_idx);
- 	}
++static void assign_bit(bool value, long nr, unsigned long *addr)
++{
++	if (value)
++		set_bit(nr, addr);
++	else
++		clear_bit(nr, addr);
++}
++
+ /*
+  * If we run out of usable paths, should we queue I/O or error it?
+  */
+@@ -622,23 +630,12 @@ static int queue_if_no_path(struct multipath *m, bool queue_if_no_path,
+ 	unsigned long flags;
  
--	if (ti->type->busy && ti->type->busy(ti))
-+	if (ti->type->busy && ti->type->busy(ti)) {
-+		pr_debug("ti->type->busy()\n");
- 		return BLK_MQ_RQ_QUEUE_BUSY;
-+	}
+ 	spin_lock_irqsave(&m->lock, flags);
+-
+-	if (save_old_value) {
+-		if (test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags))
+-			set_bit(MPATHF_SAVED_QUEUE_IF_NO_PATH, &m->flags);
+-		else
+-			clear_bit(MPATHF_SAVED_QUEUE_IF_NO_PATH, &m->flags);
+-	} else {
+-		if (queue_if_no_path)
+-			set_bit(MPATHF_SAVED_QUEUE_IF_NO_PATH, &m->flags);
+-		else
+-			clear_bit(MPATHF_SAVED_QUEUE_IF_NO_PATH, &m->flags);
+-	}
+-	if (queue_if_no_path || dm_noflush_suspending(m->ti))
+-		set_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags);
+-	else
+-		clear_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags);
+-
++	assign_bit((save_old_value &&
++		    test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags)) ||
++		   (!save_old_value && queue_if_no_path),
++		   MPATHF_SAVED_QUEUE_IF_NO_PATH, &m->flags);
++	assign_bit(queue_if_no_path || dm_noflush_suspending(m->ti),
++		   MPATHF_QUEUE_IF_NO_PATH, &m->flags);
+ 	spin_unlock_irqrestore(&m->lock, flags);
  
- 	dm_start_request(md, rq);
+ 	if (!queue_if_no_path) {
+@@ -1596,10 +1593,8 @@ static void multipath_resume(struct dm_target *ti)
+ 	unsigned long flags;
  
-@@ -756,6 +758,7 @@ static int dm_mq_queue_rq(struct blk_mq_hw_ctx *hctx,
- 		rq_end_stats(md, rq);
- 		rq_completed(md, rq_data_dir(rq), false);
- 		blk_mq_delay_run_hw_queue(hctx, 500/*ms*/);
-+		pr_debug("DM_MAPIO_REQUEUE\n");
- 		return BLK_MQ_RQ_QUEUE_BUSY;
- 	}
+ 	spin_lock_irqsave(&m->lock, flags);
+-	if (test_bit(MPATHF_SAVED_QUEUE_IF_NO_PATH, &m->flags))
+-		set_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags);
+-	else
+-		clear_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags);
++	assign_bit(test_bit(MPATHF_SAVED_QUEUE_IF_NO_PATH, &m->flags),
++		   MPATHF_QUEUE_IF_NO_PATH, &m->flags);
+ 	spin_unlock_irqrestore(&m->lock, flags);
+ }
  
 -- 
 2.12.2
