@@ -1,15 +1,15 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 08/13] dm: Verify suspend_locking assumptions
+Subject: Re: [PATCH 09/13] dm-mpath: Verify locking assumptions
  at runtime
-Date: Thu, 27 Apr 2017 07:50:21 +0200
-Message-ID: <8be60091-8fe6-8f82-4e25-efc8124e7caf@suse.de>
+Date: Thu, 27 Apr 2017 07:50:45 +0200
+Message-ID: <a4b84865-57dc-fd53-49ef-99cf78b9bf8e@suse.de>
 References: <20170426183728.10821-1-bart.vanassche@sandisk.com>
-	<20170426183728.10821-9-bart.vanassche@sandisk.com>
+	<20170426183728.10821-10-bart.vanassche@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="windows-1252"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170426183728.10821-9-bart.vanassche@sandisk.com>
+In-Reply-To: <20170426183728.10821-10-bart.vanassche@sandisk.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,16 +24,33 @@ Cc: dm-devel@redhat.com, Hannes Reinecke <hare@suse.com>
 List-Id: dm-devel.ids
 
 On 04/26/2017 08:37 PM, Bart Van Assche wrote:
-> Ensure that the assumptions about the caller holding suspend_lock
-> are checked at runtime if lockdep is enabled.
+> Verify at runtime that __pg_init_all_paths() is called with
+> multipath.lock held if lockdep is enabled.
 > =
 
 > Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
 > Cc: Hannes Reinecke <hare@suse.com>
 > ---
->  drivers/md/dm-table.c | 4 ++++
->  drivers/md/dm.c       | 9 ++++-----
->  2 files changed, 8 insertions(+), 5 deletions(-)
+>  drivers/md/dm-mpath.c | 2 ++
+>  1 file changed, 2 insertions(+)
+> =
+
+> diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+> index fb4b7228fe5f..312d4fc34430 100644
+> --- a/drivers/md/dm-mpath.c
+> +++ b/drivers/md/dm-mpath.c
+> @@ -298,6 +298,8 @@ static int __pg_init_all_paths(struct multipath *m)
+>  	struct pgpath *pgpath;
+>  	unsigned long pg_init_delay =3D 0;
+>  =
+
+> +	lockdep_assert_held(&m->lock);
+> +
+>  	if (atomic_read(&m->pg_init_in_progress) || test_bit(MPATHF_PG_INIT_DIS=
+ABLED, &m->flags))
+>  		return 0;
+>  =
+
 > =
 
 Reviewed-by: Hannes Reinecke <hare@suse.com>
