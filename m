@@ -1,39 +1,61 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: small dm mpath cleanups
-Date: Wed, 26 Apr 2017 22:24:08 -0400
-Message-ID: <20170427022407.GA19985@redhat.com>
-References: <20170426074039.14602-1-hch@lst.de>
- <1493232084.2632.5.camel@sandisk.com>
+From: Herbert Xu <herbert@gondor.apana.org.au>
+Subject: Re: [PATCH v2 07/21] crypto: shash, caam: Make use of the new sg_map
+ helper function
+Date: Thu, 27 Apr 2017 11:56:03 +0800
+Message-ID: <20170427035603.GA32212@gondor.apana.org.au>
+References: <1493144468-22493-1-git-send-email-logang@deltatee.com>
+ <1493144468-22493-8-git-send-email-logang@deltatee.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
+Return-path: <netdev-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1493232084.2632.5.camel@sandisk.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Bart Van Assche <Bart.VanAssche@sandisk.com>
-Cc: "hch@lst.de" <hch@lst.de>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>
+In-Reply-To: <1493144468-22493-8-git-send-email-logang@deltatee.com>
+Sender: netdev-owner@vger.kernel.org
+To: Logan Gunthorpe <logang@deltatee.com>
+Cc: linux-kernel@vger.kernel.org, linux-crypto@vger.kernel.org, linux-media@vger.kernel.org, dri-devel@lists.freedesktop.org, intel-gfx@lists.freedesktop.org, linux-raid@vger.kernel.org, linux-mmc@vger.kernel.org, linux-nvdimm@lists.01.org, linux-scsi@vger.kernel.org, open-iscsi@googlegroups.com, megaraidlinux.pdl@broadcom.com, sparmaintainer@unisys.com, devel@driverdev.osuosl.org, target-devel@vger.kernel.org, netdev@vger.kernel.org, linux-rdma@vger.kernel.org, dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>, "Martin K. Petersen" <martin.petersen@oracle.com>, "James E.J. Bottomley" <jejb@linux.vnet.ibm.com>, Jens Axboe <axboe@kernel.dk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Dan Williams <dan.j.williams@intel.com>, Ross Zwisler <ross.zwisler@linux.intel.com>
 List-Id: dm-devel.ids
 
-On Wed, Apr 26 2017 at  2:41pm -0400,
-Bart Van Assche <Bart.VanAssche@sandisk.com> wrote:
-
-> On Wed, 2017-04-26 at 09:40 +0200, Christoph Hellwig wrote:
-> > this series has some prep patches for my work to have proper, type
-> > checked block errors codes.  One fallout of that is that we need to
-> > get rid of how dm overloads a few return values with either internal
-> > positive error codes or negative errno values.  This patches does
-> > that, which happens to clean things up a bit, and also allows us
-> > dm to propagate the actual error code in one case where it currently
-> > is dropped on the floor.
+On Tue, Apr 25, 2017 at 12:20:54PM -0600, Logan Gunthorpe wrote:
+> Very straightforward conversion to the new function in the caam driver
+> and shash library.
 > 
-> Hello Christoph,
+> Signed-off-by: Logan Gunthorpe <logang@deltatee.com>
+> Cc: Herbert Xu <herbert@gondor.apana.org.au>
+> Cc: "David S. Miller" <davem@davemloft.net>
+> ---
+>  crypto/shash.c                | 9 ++++++---
+>  drivers/crypto/caam/caamalg.c | 8 +++-----
+>  2 files changed, 9 insertions(+), 8 deletions(-)
 > 
-> Some patches in this series conflict with patches I would like to end up in
-> the stable kernel series. If I would rebase my patch series on top of your
-> series then that would make it harder to apply my patches on the stable
-> kernel trees. Mike and Christoph, please advise how to proceed.
+> diff --git a/crypto/shash.c b/crypto/shash.c
+> index 5e31c8d..5914881 100644
+> --- a/crypto/shash.c
+> +++ b/crypto/shash.c
+> @@ -283,10 +283,13 @@ int shash_ahash_digest(struct ahash_request *req, struct shash_desc *desc)
+>  	if (nbytes < min(sg->length, ((unsigned int)(PAGE_SIZE)) - offset)) {
+>  		void *data;
+>  
+> -		data = kmap_atomic(sg_page(sg));
+> -		err = crypto_shash_digest(desc, data + offset, nbytes,
+> +		data = sg_map(sg, 0, SG_KMAP_ATOMIC);
+> +		if (IS_ERR(data))
+> +			return PTR_ERR(data);
+> +
+> +		err = crypto_shash_digest(desc, data, nbytes,
+>  					  req->result);
+> -		kunmap_atomic(data);
+> +		sg_unmap(sg, data, 0, SG_KMAP_ATOMIC);
+>  		crypto_yield(desc->flags);
+>  	} else
+>  		err = crypto_shash_init(desc) ?:
 
-I'll go over your series and christoph's tomorrow (thursday).  I'll pull
-all fixes to the front and rebase later patches as needed.
+Nack.  This is an optimisation for the special case of a single
+SG list entry.  In fact in the common case the kmap_atomic should
+disappear altogether in the no-highmem case.  So replacing it
+with sg_map is not acceptable.
 
-Mike
+Cheers,
+-- 
+Email: Herbert Xu <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
