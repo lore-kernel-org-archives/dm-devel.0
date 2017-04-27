@@ -1,40 +1,42 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH] dm ioctl: prevent stack leak in dm ioctl	call
-Date: Thu, 27 Apr 2017 16:43:48 +0100
-Message-ID: <20170427154348.GD5330@agk-dp.fab.redhat.com>
-References: <20170425233129.GA155598@google.com>
-	<20170426001117.GA7433@agk-dp.fab.redhat.com>
-	<CAEP91RFJTRk7Ux3W=1TMfgjzF1cMc5jXF+om4Qchh8RDx84MtQ@mail.gmail.com>
+From: Logan Gunthorpe <logang@deltatee.com>
+Subject: Re: [PATCH v2 01/21] scatterlist: Introduce sg_map
+	helper functions
+Date: Thu, 27 Apr 2017 09:44:18 -0600
+Message-ID: <3b7f3aba-d609-dca7-149f-107757d63fb0@deltatee.com>
+References: <1493144468-22493-1-git-send-email-logang@deltatee.com>
+ <1493144468-22493-2-git-send-email-logang@deltatee.com>
+ <20170426074416.GA7936@lst.de>
+ <4736d44e-bbcf-5d59-a1a9-317d0f4da847@deltatee.com>
+ <20170427065338.GA20677@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <CAEP91RFJTRk7Ux3W=1TMfgjzF1cMc5jXF+om4Qchh8RDx84MtQ@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Adrian Salido <salidoa@google.com>
-Cc: dm-devel@redhat.com, mpatocka@redhat.com, snitzer@redhat.com
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <intel-gfx-bounces@lists.freedesktop.org>
+In-Reply-To: <20170427065338.GA20677@lst.de>
+List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/intel-gfx>,
+ <mailto:intel-gfx-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <https://lists.freedesktop.org/archives/intel-gfx>
+List-Post: <mailto:intel-gfx@lists.freedesktop.org>
+List-Help: <mailto:intel-gfx-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/intel-gfx>,
+ <mailto:intel-gfx-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: intel-gfx-bounces@lists.freedesktop.org
+Sender: "Intel-gfx" <intel-gfx-bounces@lists.freedesktop.org>
+To: Christoph Hellwig <hch@lst.de>
+Cc: dri-devel@lists.freedesktop.org, Stephen Bates <sbates@raithlin.com>, dm-devel@redhat.com, target-devel@vger.kernel.org, Sumit Semwal <sumit.semwal@linaro.org>, devel@driverdev.osuosl.org, "James E.J. Bottomley" <jejb@linux.vnet.ibm.com>, linux-scsi@vger.kernel.org, linux-nvdimm@lists.01.org, linux-rdma@vger.kernel.org, Ross Zwisler <ross.zwisler@linux.intel.com>, open-iscsi@googlegroups.com, linux-media@vger.kernel.org, intel-gfx@lists.freedesktop.org, sparmaintainer@unisys.com, linux-raid@vger.kernel.org, Dan Williams <dan.j.williams@intel.com>, megaraidlinux.pdl@broadcom.com, Jens Axboe <axboe@kernel.dk>, "Martin K. Petersen" <martin.petersen@oracle.com>, netdev@vger.kernel.org, Matthew Wilcox <mawilcox@microsoft.com>, linux-mmc@vger.kernel.org, linux-kernel@vger.kernel.org, linux-crypto@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 List-Id: dm-devel.ids
 
-On Tue, Apr 25, 2017 at 05:33:19PM -0700, Adrian Salido wrote:
-> Will update the patch to be clear
- 
-So at the moment, we're leaning towards just:
-
-  param->data_size = offsetof(struct dm_ioctl, data)
-
-to replace
-
-  param->data_size = sizeof(*param);
-
-in the caller.
-
-Alasdair
+CgpPbiAyNy8wNC8xNyAxMjo1MyBBTSwgQ2hyaXN0b3BoIEhlbGx3aWcgd3JvdGU6Cj4gSSB0aGlu
+ayB5b3UnbGwgbmVlZCB0byBmb2xsb3cgdGhlIGV4aXN0aW5nIGttYXAgc2VtYW50aWNzIGFuZCBu
+ZXZlcgo+IGZhaWwgdGhlIGlvbWVtIHZlcnNpb24gZWl0aGVyLiAgT3RoZXJ3aXNlIHlvdSdsbCBo
+YXZlIGEgc3BlY2lhbCBjYXNlCj4gdGhhdCdzIGFsbW9zdCBuZXZlciB1c2VkIHRoYXQgaGFzIGEg
+ZGlmZmVyZW50IGVycm9yIHBhdGguCj4KPiBBZ2Fpbiwgd3Jvbmcgd2F5LiAgU3VkZGVubHkgbWFr
+aW5nIHRoaW5ncyBmYWlsIGZvciB5b3VyIHNwZWNpYWwgY2FzZQo+IHRoYXQgbm9ybWFsbHkgZG9u
+J3QgZmFpbCBpcyBhIHJlY2VpcGUgZm9yIGJ1Z3MuCgpJIGRvbid0IGRpc2FncmVlIGJ1dCB0aGVz
+ZSByZXN0cmljdGlvbnMgbWFrZSB0aGUgcHJvYmxlbSBpbXBvc3NpYmxlIHRvCnNvbHZlPyBJZiB0
+aGVyZSBpcyBpb21lbSBiZWhpbmQgYSBwYWdlIGluIGFuIFNHTCBhbmQgc29tZW9uZSB0cmllcyB0
+bwptYXAgaXQsIHdlIGVpdGhlciBoYXZlIHRvIGZhaWwgb3Igd2UgYnJlYWsgaW9tZW0gc2FmZXR5
+IHdoaWNoIHdhcyB5b3VyCm9yaWdpbmFsIGNvbmNlcm4uCgpMb2dhbgoKX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KSW50ZWwtZ2Z4IG1haWxpbmcgbGlzdApJ
+bnRlbC1nZnhAbGlzdHMuZnJlZWRlc2t0b3Aub3JnCmh0dHBzOi8vbGlzdHMuZnJlZWRlc2t0b3Au
+b3JnL21haWxtYW4vbGlzdGluZm8vaW50ZWwtZ2Z4Cg==
