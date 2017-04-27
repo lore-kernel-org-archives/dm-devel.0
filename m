@@ -1,68 +1,61 @@
-From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-Subject: [PATCH v1] dm-crypt: replace custom implementation of hex2bin()
-Date: Thu, 27 Apr 2017 16:52:04 +0300
-Message-ID: <20170427135204.5761-1-andriy.shevchenko@linux.intel.com>
-Return-path: <linux-raid-owner@vger.kernel.org>
-Sender: linux-raid-owner@vger.kernel.org
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org
-Cc: Andy Shevchenko <andy.shevchenko@gmail.com>
+From: Bart Van Assche <Bart.VanAssche@sandisk.com>
+Subject: Re: [dm-devel] [PATCH 02/13] dm-mpath: Avoid that path removal can
+ trigger an infinite loop
+Date: Thu, 27 Apr 2017 15:11:43 +0000
+Message-ID: <1493305901.2625.1.camel@sandisk.com>
+References: <20170426183728.10821-1-bart.vanassche@sandisk.com>
+         <20170426183728.10821-3-bart.vanassche@sandisk.com>
+         <fabbb802-5743-1193-3d4e-841404db2372@suse.de>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <stable-owner@vger.kernel.org>
+In-Reply-To: <fabbb802-5743-1193-3d4e-841404db2372@suse.de>
+Content-Language: en-US
+Content-ID: <0D85A49438E9AD4FAF01F1AD713D862E@namprd04.prod.outlook.com>
+Sender: stable-owner@vger.kernel.org
+To: "hare@suse.de" <hare@suse.de>, "snitzer@redhat.com" <snitzer@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "hch@lst.de" <hch@lst.de>, "hare@suse.com" <hare@suse.com>, "stable@vger.kernel.org" <stable@vger.kernel.org>
 List-Id: dm-devel.ids
 
-From: Andy Shevchenko <andy.shevchenko@gmail.com>
+On Thu, 2017-04-27 at 07:46 +0200, Hannes Reinecke wrote:
+> On 04/26/2017 08:37 PM, Bart Van Assche wrote:
+> > +	clone =3D blk_get_request(q, rq->cmd_flags | REQ_NOMERGE, GFP_ATOMIC)=
+;
+> >  	if (IS_ERR(clone)) {
+> >  		/* EBUSY, ENODEV or EWOULDBLOCK: requeue */
+> > -		return r;
+> > +		pr_debug("blk_get_request() returned %ld%s - requeuing\n",
+> > +			 PTR_ERR(clone), blk_queue_dying(q) ?
+> > +			 " (path offline)" : "");
+> > +		if (blk_queue_dying(q)) {
+> > +			atomic_inc(&m->pg_init_in_progress);
+> > +			activate_path(pgpath);
+> > +			return DM_MAPIO_REQUEUE;
+> > +		}
+> > +		return DM_MAPIO_DELAY_REQUEUE;
+> >  	}
+> >  	clone->bio =3D clone->biotail =3D NULL;
+> >  	clone->rq_disk =3D bdev->bd_disk;
+>=20
+> At the very least this does warrant some inline comments.
+> Why do we call activate_path() here, seeing that the queue is dying?
 
-There is no need to have a duplication of the generic library, i.e. hex2bin().
-Replace the open coded variant.
+Hello Hannes,
 
-Signed-off-by: Andy Shevchenko <andy.shevchenko@gmail.com>
----
- drivers/md/dm-crypt.c | 27 ++-------------------------
- 1 file changed, 2 insertions(+), 25 deletions(-)
+activate_path() is not only able to activate a path but can also change
+the state of a path to offline. The body of the activate_path() function
+makes that clear and that is why I had not added a comment above the
+activate_path() call:
 
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 70f765f50c59..ebf9e72d479b 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -1814,30 +1814,6 @@ static void kcryptd_queue_crypt(struct dm_crypt_io *io)
- 	queue_work(cc->crypt_queue, &io->work);
- }
- 
--/*
-- * Decode key from its hex representation
-- */
--static int crypt_decode_key(u8 *key, char *hex, unsigned int size)
--{
--	char buffer[3];
--	unsigned int i;
--
--	buffer[2] = '\0';
--
--	for (i = 0; i < size; i++) {
--		buffer[0] = *hex++;
--		buffer[1] = *hex++;
--
--		if (kstrtou8(buffer, 16, &key[i]))
--			return -EINVAL;
--	}
--
--	if (*hex != '\0')
--		return -EINVAL;
--
--	return 0;
--}
--
- static void crypt_free_tfms_aead(struct crypt_config *cc)
- {
- 	if (!cc->cipher_tfm.tfms_aead)
-@@ -2136,7 +2112,8 @@ static int crypt_set_key(struct crypt_config *cc, char *key)
- 	kzfree(cc->key_string);
- 	cc->key_string = NULL;
- 
--	if (cc->key_size && crypt_decode_key(cc->key, key, cc->key_size) < 0)
-+	/* Decode key from its hex representation. */
-+	if (cc->key_size && hex2bin(cc->key, key, cc->key_size) < 0)
- 		goto out;
- 
- 	r = crypt_setkey(cc);
--- 
-2.11.0
+static void activate_path(struct pgpath *pgpath)
+{
+	struct request_queue *q =3D bdev_get_queue(pgpath->path.dev->bdev);
 
+	if (pgpath->is_active && !blk_queue_dying(q))
+		scsi_dh_activate(q, pg_init_done, pgpath);
+	else
+		pg_init_done(pgpath, SCSI_DH_DEV_OFFLINED);
+}
+
+Bart.=
