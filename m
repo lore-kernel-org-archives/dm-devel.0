@@ -1,8 +1,8 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH v2 06/13] dm-rq: Check blk_mq_register_dev()
-	return value
-Date: Thu, 27 Apr 2017 10:11:19 -0700
-Message-ID: <20170427171126.26814-7-bart.vanassche@sandisk.com>
+Subject: [PATCH v2 08/13] dm: Verify suspend_locking assumptions
+	at runtime
+Date: Thu, 27 Apr 2017 10:11:21 -0700
+Message-ID: <20170427171126.26814-9-bart.vanassche@sandisk.com>
 References: <20170427171126.26814-1-bart.vanassche@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,38 +19,76 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Mike Snitzer <snitzer@redhat.com>
-Cc: Bart Van Assche <bart.vanassche@sandisk.com>, dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>
+Cc: Bart Van Assche <bart.vanassche@sandisk.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-blk_mq_register_dev() can fail. Hence check the return value of
-that function.
+Ensure that the assumptions about the caller holding suspend_lock
+are checked at runtime if lockdep is enabled.
 
 Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
 Reviewed-by: Hannes Reinecke <hare@suse.com>
-Cc: Christoph Hellwig <hch@lst.de>
 ---
- drivers/md/dm-rq.c | 6 +++++-
- 1 file changed, 5 insertions(+), 1 deletion(-)
+ drivers/md/dm-table.c | 4 ++++
+ drivers/md/dm.c       | 9 ++++-----
+ 2 files changed, 8 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
-index ba5694be55a4..3ff7280f5dc5 100644
---- a/drivers/md/dm-rq.c
-+++ b/drivers/md/dm-rq.c
-@@ -813,10 +813,14 @@ int dm_mq_init_request_queue(struct mapped_device *md, struct dm_table *t)
- 	dm_init_md_queue(md);
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 3ad16d9c9d5a..92dbc85af53a 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1661,6 +1661,8 @@ static void suspend_targets(struct dm_table *t, enum suspend_mode mode)
+ 	int i = t->num_targets;
+ 	struct dm_target *ti = t->targets;
  
- 	/* backfill 'mq' sysfs registration normally done in blk_register_queue */
--	blk_mq_register_dev(disk_to_dev(md->disk), q);
-+	err = blk_mq_register_dev(disk_to_dev(md->disk), q);
-+	if (err)
-+		goto free_queue;
++	lockdep_assert_held(&t->md->suspend_lock);
++
+ 	while (i--) {
+ 		switch (mode) {
+ 		case PRESUSPEND:
+@@ -1708,6 +1710,8 @@ int dm_table_resume_targets(struct dm_table *t)
+ {
+ 	int i, r = 0;
  
- 	return 0;
++	lockdep_assert_held(&t->md->suspend_lock);
++
+ 	for (i = 0; i < t->num_targets; i++) {
+ 		struct dm_target *ti = t->targets + i;
  
-+free_queue:
-+	blk_cleanup_queue(q);
- out_tag_set:
- 	blk_mq_free_tag_set(md->tag_set);
- out_kfree_tag_set:
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index dfb75979e455..78706a04bab4 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1686,11 +1686,10 @@ static void event_callback(void *context)
+ 	wake_up(&md->eventq);
+ }
+ 
+-/*
+- * Protected by md->suspend_lock obtained by dm_swap_table().
+- */
+ static void __set_size(struct mapped_device *md, sector_t size)
+ {
++	lockdep_assert_held(&md->suspend_lock);
++
+ 	set_capacity(md->disk, size);
+ 
+ 	i_size_write(md->bdev->bd_inode, (loff_t)size << SECTOR_SHIFT);
+@@ -2140,8 +2139,6 @@ static void unlock_fs(struct mapped_device *md)
+  * If __dm_suspend returns 0, the device is completely quiescent
+  * now. There is no request-processing activity. All new requests
+  * are being added to md->deferred list.
+- *
+- * Caller must hold md->suspend_lock
+  */
+ static int __dm_suspend(struct mapped_device *md, struct dm_table *map,
+ 			unsigned suspend_flags, long task_state,
+@@ -2357,6 +2354,8 @@ static void __dm_internal_suspend(struct mapped_device *md, unsigned suspend_fla
+ {
+ 	struct dm_table *map = NULL;
+ 
++	lockdep_assert_held(&md->suspend_lock);
++
+ 	if (md->internal_suspend_count++)
+ 		return; /* nested internal suspend */
+ 
 -- 
 2.12.2
