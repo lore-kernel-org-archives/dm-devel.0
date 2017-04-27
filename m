@@ -1,7 +1,8 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH v2 11/13] dm-mpath: Micro-optimize the hot path
-Date: Thu, 27 Apr 2017 10:11:24 -0700
-Message-ID: <20170427171126.26814-12-bart.vanassche@sandisk.com>
+Subject: [PATCH v2 05/13] dm-mpath: Make it easier to analyze
+	requeuing behavior
+Date: Thu, 27 Apr 2017 10:11:18 -0700
+Message-ID: <20170427171126.26814-6-bart.vanassche@sandisk.com>
 References: <20170427171126.26814-1-bart.vanassche@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -18,138 +19,110 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Mike Snitzer <snitzer@redhat.com>
-Cc: Bart Van Assche <bart.vanassche@sandisk.com>, dm-devel@redhat.com
+Cc: Bart Van Assche <bart.vanassche@sandisk.com>, dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>
 List-Id: dm-devel.ids
 
-Instead of checking MPATHF_QUEUE_IF_NO_PATH,
-MPATHF_SAVED_QUEUE_IF_NO_PATH and the no_flush flag to decide whether
-or not to push back a request if there are no paths available, only
-clear MPATHF_QUEUE_IF_NO_PATH in queue_if_no_path() if no_flush has
-not been set. The result is that only a single bit has to be tested
-in the hot path to decide whether or not a request must be pushed
-back and also that m->lock does not have to be taken in the hot path.
+When debugging the dm-mpath driver it is important to know what
+decisions have been taken with regard to requeuing. Hence this
+patch that adds pr_debug() statements that report what decisions
+have been taken.
 
 Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
 Reviewed-by: Hannes Reinecke <hare@suse.com>
+Cc: Christoph Hellwig <hch@lst.de>
 ---
- drivers/md/dm-mpath.c | 70 ++++++++-------------------------------------------
- 1 file changed, 11 insertions(+), 59 deletions(-)
+ drivers/md/dm-mpath.c | 21 ++++++++++++++++++---
+ drivers/md/dm-rq.c    |  5 ++++-
+ 2 files changed, 22 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 286d74593b2c..5a3200332eb1 100644
+index d739688246a0..fc3e7f028110 100644
 --- a/drivers/md/dm-mpath.c
 +++ b/drivers/md/dm-mpath.c
-@@ -442,47 +442,6 @@ static struct pgpath *choose_pgpath(struct multipath *m, size_t nr_bytes)
- }
- 
- /*
-- * Check whether bios must be queued in the device-mapper core rather
-- * than here in the target.
-- *
-- * If m->queue_if_no_path and m->saved_queue_if_no_path hold the
-- * same value then we are not between multipath_presuspend()
-- * and multipath_resume() calls and we have no need to check
-- * for the DMF_NOFLUSH_SUSPENDING flag.
-- */
--static bool __must_push_back(struct multipath *m)
--{
--	return ((test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags) !=
--		 test_bit(MPATHF_SAVED_QUEUE_IF_NO_PATH, &m->flags)) &&
--		dm_noflush_suspending(m->ti));
--}
--
--static bool must_push_back_rq(struct multipath *m)
--{
--	bool r;
--	unsigned long flags;
--
--	spin_lock_irqsave(&m->lock, flags);
--	r = (test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags) ||
--	     __must_push_back(m));
--	spin_unlock_irqrestore(&m->lock, flags);
--
--	return r;
--}
--
--static bool must_push_back_bio(struct multipath *m)
--{
--	bool r;
--	unsigned long flags;
--
--	spin_lock_irqsave(&m->lock, flags);
--	r = __must_push_back(m);
--	spin_unlock_irqrestore(&m->lock, flags);
--
--	return r;
--}
--
--/*
-  * Map cloned requests (request-based multipath)
-  */
- static int multipath_clone_and_map(struct dm_target *ti, struct request *rq,
-@@ -503,7 +462,7 @@ static int multipath_clone_and_map(struct dm_target *ti, struct request *rq,
+@@ -501,8 +501,10 @@ static int multipath_clone_and_map(struct dm_target *ti, struct request *rq,
  		pgpath = choose_pgpath(m, nr_bytes);
  
  	if (!pgpath) {
--		if (must_push_back_rq(m)) {
-+		if (test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags)) {
- 			pr_debug("no path - requeueing\n");
+-		if (must_push_back_rq(m))
++		if (must_push_back_rq(m)) {
++			pr_debug("no path - requeueing\n");
  			return DM_MAPIO_DELAY_REQUEUE;
- 		}
-@@ -581,9 +540,9 @@ static int __multipath_map_bio(struct multipath *m, struct bio *bio, struct dm_m
- 	}
++		}
+ 		return -EIO;	/* Failed */
+ 	} else if (test_bit(MPATHF_QUEUE_IO, &m->flags) ||
+ 		   test_bit(MPATHF_PG_INIT_REQUIRED, &m->flags)) {
+@@ -1425,17 +1427,23 @@ static void pg_init_done(void *data, int errors)
+ 		/* Activations of other paths are still on going */
+ 		goto out;
  
- 	if (!pgpath) {
--		if (!must_push_back_bio(m))
--			return -EIO;
--		return DM_MAPIO_REQUEUE;
-+		if (test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags))
-+			return DM_MAPIO_REQUEUE;
-+		return -EIO;
- 	}
- 
- 	mpio->pgpath = pgpath;
-@@ -675,7 +634,7 @@ static int queue_if_no_path(struct multipath *m, bool queue_if_no_path,
++	pr_debug("pg_init_in_progress = %d\n",
++		 atomic_read(&m->pg_init_in_progress));
++
+ 	if (test_bit(MPATHF_PG_INIT_REQUIRED, &m->flags)) {
+ 		if (delay_retry)
+ 			set_bit(MPATHF_PG_INIT_DELAY_RETRY, &m->flags);
  		else
- 			clear_bit(MPATHF_SAVED_QUEUE_IF_NO_PATH, &m->flags);
+ 			clear_bit(MPATHF_PG_INIT_DELAY_RETRY, &m->flags);
+ 
+-		if (__pg_init_all_paths(m))
++		if (__pg_init_all_paths(m)) {
++			pr_debug("__pg_init_all_paths() reported that initialization is ongoing\n");
+ 			goto out;
++		}
  	}
--	if (queue_if_no_path)
-+	if (queue_if_no_path || dm_noflush_suspending(m->ti))
- 		set_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags);
- 	else
- 		clear_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags);
-@@ -1526,12 +1485,9 @@ static int do_end_io(struct multipath *m, struct request *clone,
- 	if (mpio->pgpath)
- 		fail_path(mpio->pgpath);
+ 	clear_bit(MPATHF_QUEUE_IO, &m->flags);
  
--	if (!atomic_read(&m->nr_valid_paths)) {
--		if (!test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags)) {
--			if (!must_push_back_rq(m))
--				r = -EIO;
--		}
--	}
-+	if (atomic_read(&m->nr_valid_paths) == 0 &&
-+	    !test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags))
-+		r = -EIO;
++	pr_debug("Processing queued I/O list\n");
+ 	process_queued_io_list(m);
  
- 	return r;
+ 	/*
+@@ -1932,8 +1940,11 @@ static int multipath_busy(struct dm_target *ti)
+ 	struct pgpath *pgpath;
+ 
+ 	/* pg_init in progress */
+-	if (atomic_read(&m->pg_init_in_progress))
++	if (atomic_read(&m->pg_init_in_progress)) {
++		pr_debug("pg_init_in_progress = %d\n",
++			 atomic_read(&m->pg_init_in_progress));
+ 		return true;
++	}
+ 
+ 	/* no paths available, for blk-mq: rely on IO mapping to delay requeue */
+ 	if (!atomic_read(&m->nr_valid_paths) && test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags))
+@@ -1980,6 +1991,10 @@ static int multipath_busy(struct dm_target *ti)
+ 		busy = false;
+ 	}
+ 
++
++	if (busy)
++		pr_debug("all active paths are busy\n");
++
+ 	return busy;
  }
-@@ -1572,13 +1528,9 @@ static int do_end_io_bio(struct multipath *m, struct bio *clone,
- 	if (mpio->pgpath)
- 		fail_path(mpio->pgpath);
  
--	if (!atomic_read(&m->nr_valid_paths)) {
--		if (!test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags)) {
--			if (!must_push_back_bio(m))
--				return -EIO;
--			return DM_ENDIO_REQUEUE;
--		}
--	}
-+	if (atomic_read(&m->nr_valid_paths) == 0 &&
-+	    !test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags))
-+		return -EIO;
+diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+index c53debdcd7dc..ba5694be55a4 100644
+--- a/drivers/md/dm-rq.c
++++ b/drivers/md/dm-rq.c
+@@ -737,8 +737,10 @@ static int dm_mq_queue_rq(struct blk_mq_hw_ctx *hctx,
+ 		dm_put_live_table(md, srcu_idx);
+ 	}
  
- 	/* Queue for the daemon to resubmit */
- 	dm_bio_restore(get_bio_details_from_bio(clone), clone);
+-	if (ti->type->busy && ti->type->busy(ti))
++	if (ti->type->busy && ti->type->busy(ti)) {
++		pr_debug("ti->type->busy()\n");
+ 		return BLK_MQ_RQ_QUEUE_BUSY;
++	}
+ 
+ 	dm_start_request(md, rq);
+ 
+@@ -756,6 +758,7 @@ static int dm_mq_queue_rq(struct blk_mq_hw_ctx *hctx,
+ 		rq_end_stats(md, rq);
+ 		rq_completed(md, rq_data_dir(rq), false);
+ 		blk_mq_delay_run_hw_queue(hctx, 500/*ms*/);
++		pr_debug("DM_MAPIO_REQUEUE\n");
+ 		return BLK_MQ_RQ_QUEUE_BUSY;
+ 	}
+ 
 -- 
 2.12.2
