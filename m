@@ -1,50 +1,64 @@
-From: Logan Gunthorpe <logang@deltatee.com>
-Subject: Re: [PATCH v2 07/21] crypto: shash,
- caam: Make use of the new sg_map helper function
-Date: Fri, 28 Apr 2017 13:01:39 -0600
-Message-ID: <d5242ef0-2670-63e4-02ce-a6d2368b7292@deltatee.com>
-References: <1493144468-22493-1-git-send-email-logang@deltatee.com>
- <1493144468-22493-8-git-send-email-logang@deltatee.com>
- <20170427035603.GA32212@gondor.apana.org.au>
- <94123cbf-3287-f05e-7267-0bcf08ab0a8b@deltatee.com>
- <20170428063039.GB6817@gondor.apana.org.au>
- <5a08708b-c3b8-41fe-96de-607a109eacbd@deltatee.com>
- <20170428175147.GA9596@gondor.apana.org.au>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: small dm mpath cleanups
+Date: Fri, 28 Apr 2017 16:23:58 -0400
+Message-ID: <20170428202358.GA28562@redhat.com>
+References: <20170426074039.14602-1-hch@lst.de>
+ <1493232084.2632.5.camel@sandisk.com>
+ <20170427063318.GA20345@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <intel-gfx-bounces@lists.freedesktop.org>
-In-Reply-To: <20170428175147.GA9596@gondor.apana.org.au>
-List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/intel-gfx>,
- <mailto:intel-gfx-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <https://lists.freedesktop.org/archives/intel-gfx>
-List-Post: <mailto:intel-gfx@lists.freedesktop.org>
-List-Help: <mailto:intel-gfx-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/intel-gfx>,
- <mailto:intel-gfx-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: intel-gfx-bounces@lists.freedesktop.org
-Sender: "Intel-gfx" <intel-gfx-bounces@lists.freedesktop.org>
-To: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: dri-devel@lists.freedesktop.org, Stephen Bates <sbates@raithlin.com>, dm-devel@redhat.com, target-devel@vger.kernel.org, Christoph Hellwig <hch@lst.de>, devel@driverdev.osuosl.org, "James E.J. Bottomley" <jejb@linux.vnet.ibm.com>, linux-scsi@vger.kernel.org, linux-nvdimm@lists.01.org, linux-rdma@vger.kernel.org, Sumit Semwal <sumit.semwal@linaro.org>, Ross Zwisler <ross.zwisler@linux.intel.com>, open-iscsi@googlegroups.com, linux-media@vger.kernel.org, intel-gfx@lists.freedesktop.org, sparmaintainer@unisys.com, linux-raid@vger.kernel.org, Dan Williams <dan.j.williams@intel.com>, megaraidlinux.pdl@broadcom.com, Jens Axboe <axboe@kernel.dk>, "Martin K. Petersen" <martin.petersen@oracle.com>, netdev@vger.kernel.org, Matthew Wilcox <mawilcox@microsoft.com>, linux-mmc@vger.kernel.org, linux-kernel@vger.kernel.org, linux-crypto@vger.kernel.org, Greg Kroah-Hartman <gregkh@linu>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20170427063318.GA20345@lst.de>
+Sender: linux-block-owner@vger.kernel.org
+To: hch@lst.de
+Cc: Bart Van Assche <Bart.VanAssche@sandisk.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, axboe@kernel.dk
 List-Id: dm-devel.ids
 
-CgpPbiAyOC8wNC8xNyAxMTo1MSBBTSwgSGVyYmVydCBYdSB3cm90ZToKPiBPbiBGcmksIEFwciAy
-OCwgMjAxNyBhdCAxMDo1Mzo0NUFNIC0wNjAwLCBMb2dhbiBHdW50aG9ycGUgd3JvdGU6Cj4+Cj4+
-Cj4+IE9uIDI4LzA0LzE3IDEyOjMwIEFNLCBIZXJiZXJ0IFh1IHdyb3RlOgo+Pj4gWW91IGFyZSBy
-aWdodC4gIEluZGVlZCB0aGUgZXhpc3RpbmcgY29kZSBsb29rcyBidWdneSBhcyB0aGV5Cj4+PiBk
-b24ndCB0YWtlIHNnLT5vZmZzZXQgaW50byBhY2NvdW50IHdoZW4gZG9pbmcgdGhlIGttYXAuICBD
-b3VsZAo+Pj4geW91IHNlbmQgbWUgc29tZSBwYXRjaGVzIHRoYXQgZml4IHRoZXNlIHByb2JsZW1z
-IGZpcnN0IHNvIHRoYXQKPj4+IHRoZXkgY2FuIGJlIGVhc2lseSBiYWNrcG9ydGVkPwo+Pgo+PiBP
-aywgSSB0aGluayB0aGUgb25seSBidWdneSBvbmUgaW4gY3J5cHRvIGlzIGhpZm5fNzk1eC4gU2hh
-c2ggYW5kIGNhYW0KPj4gYm90aCBkbyBoYXZlIHRoZSBzZy0+b2Zmc2V0IGFjY291bnRlZCBmb3Iu
-IEknbGwgc2VuZCBhIHBhdGNoIGZvciB0aGUKPj4gYnVnZ3kgb25lIHNob3J0bHkuCj4gCj4gSSB0
-aGluayB0aGV5J3JlIGFsbCBidWdneSB3aGVuIHNnLT5vZmZzZXQgaXMgZ3JlYXRlciB0aGFuIFBB
-R0VfU0laRS4KClllcywgdGVjaG5pY2FsbHkuIEJ1dCB0aGF0J3MgYSBfdmVyeV8gY29tbW9uIG1p
-c3Rha2UuIFByZXR0eSBuZWFybHkKZXZlcnkgY2FzZSBJIGxvb2tlZCBhdCBkaWQgbm90IHRha2Ug
-dGhhdCBpbnRvIGFjY291bnQuIEkgZG9uJ3QgdGhpbmsKc2cncyB0aGF0IHBvaW50IHRvIG1vcmUg
-dGhhbiBvbmUgY29udGludW91cyBwYWdlIGFyZSBhbGwgdGhhdCBjb21tb24uCgpGaXhpbmcgYWxs
-IHRob3NlIGNhc2VzIHdpdGhvdXQgbWFraW5nIGEgY29tbW9uIGZ1bmN0aW9uIGlzIGEgd2FzdGUg
-b2YKdGltZSBJTU8uCgpMb2dhbgpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fXwpJbnRlbC1nZnggbWFpbGluZyBsaXN0CkludGVsLWdmeEBsaXN0cy5mcmVlZGVz
-a3RvcC5vcmcKaHR0cHM6Ly9saXN0cy5mcmVlZGVza3RvcC5vcmcvbWFpbG1hbi9saXN0aW5mby9p
-bnRlbC1nZngK
+On Thu, Apr 27 2017 at  2:33am -0400,
+hch@lst.de <hch@lst.de> wrote:
+
+> On Wed, Apr 26, 2017 at 06:41:27PM +0000, Bart Van Assche wrote:
+> > On Wed, 2017-04-26 at 09:40 +0200, Christoph Hellwig wrote:
+> > > this series has some prep patches for my work to have proper, type
+> > > checked block errors codes.  One fallout of that is that we need to
+> > > get rid of how dm overloads a few return values with either internal
+> > > positive error codes or negative errno values.  This patches does
+> > > that, which happens to clean things up a bit, and also allows us
+> > > dm to propagate the actual error code in one case where it currently
+> > > is dropped on the floor.
+> > 
+> > Hello Christoph,
+> > 
+> > Some patches in this series conflict with patches I would like to end up in
+> > the stable kernel series. If I would rebase my patch series on top of your
+> > series then that would make it harder to apply my patches on the stable
+> > kernel trees. Mike and Christoph, please advise how to proceed.
+> 
+> Bugfixes always go before cleanups.  I'd be happy to delay and/or rebase
+> any of my patches as needed.
+
+I rebased your patchset ontop of Bart's patchset that I've already
+staged in linux-dm.git's 'dm-4.12' branch.
+
+When I try to apply this rebased patchset, it turns out 'dm-4.12' is
+missing linux-block.git commit 8fc779805 ("dm mpath: don't check for
+req->errors").  Because of this your first patch ("dm mpath: merge
+do_end_io into multipath_end_io") won't apply due to conflict.
+
+Not sure how we skin this cat.  Unfortunately Jens cannot easily pick
+this rebased patchset up because he'll be missing all of Bart's changes
+that I've staged in linux-dm.git's 'dm-4.12'.
+
+In hindsight, linux-block.git commit 8fc779805 likely should've been
+routed through linux-dm.git.  But not a big deal.
+
+How should we skin this cat of getting your changes into 4.12?  I could
+send a 2nd pull request to Linus after both linux-block.git and
+linux-dm.git are merged... sound OK?
+
+Until then, and/or for now, I've staged the fully merged result in
+linux-next via linux-dm.git's 'for-next', see:
+https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/log/?h=for-next
+
+Mike
