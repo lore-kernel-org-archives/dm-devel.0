@@ -1,85 +1,144 @@
-From: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
-Subject: Re: [PATCH v2 07/21] crypto: shash, caam: Make use of the new sg_map
- helper function
-Date: Fri, 28 Apr 2017 14:30:39 +0800
-Message-ID: <20170428063039.GB6817@gondor.apana.org.au>
-References: <1493144468-22493-1-git-send-email-logang@deltatee.com>
- <1493144468-22493-8-git-send-email-logang@deltatee.com>
- <20170427035603.GA32212@gondor.apana.org.au>
- <94123cbf-3287-f05e-7267-0bcf08ab0a8b@deltatee.com>
+From: Peter Rajnoha <prajnoha@redhat.com>
+Subject: Re: [mdadm PATCH 4/4] Create: tell udev device is not ready when
+ first created.
+Date: Fri, 28 Apr 2017 11:08:25 +0200
+Message-ID: <f9977410-5a8e-1a78-1406-fc9875f83d13@redhat.com>
+References: <149265560315.31004.3851231165281498425.stgit@noble>
+ <149265600601.31004.323865505557190368.stgit@noble>
+ <dedd27cd-9c2e-f244-d8aa-7a074679d3c6@gmail.com>
+ <87mvbasqx6.fsf@notabene.neil.brown.name>
+ <40a5fbff-9eef-07b3-fe1b-fb9a888cfb8b@redhat.com>
+ <87k265rxsm.fsf@notabene.neil.brown.name>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <94123cbf-3287-f05e-7267-0bcf08ab0a8b-OTvnGxWRz7hWk0Htik3J/w@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Logan Gunthorpe <logang-OTvnGxWRz7hWk0Htik3J/w@public.gmane.org>
-Cc: dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, target-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, devel-gWbeCf7V1WCQmaza687I9mD2FQJk+8+b@public.gmane.org, "James E.J. Bottomley" <jejb-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Sumit Semwal <sumit.semwal-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, open-iscsi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, intel-gfx-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, sparmaintainer-GLv8BlqOqDDQT0dZR+AlfA@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, megaraidlinux.pdl-dY08KVG/lbpWk0Htik3J/w@public.gmane.org, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, linux-mmc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <87k265rxsm.fsf@notabene.neil.brown.name>
+Content-Language: en-US
+Sender: linux-raid-owner@vger.kernel.org
+To: NeilBrown <neilb@suse.com>, Jes Sorensen <jes.sorensen@gmail.com>
+Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Apr 27, 2017 at 09:45:57AM -0600, Logan Gunthorpe wrote:
+On 04/28/2017 05:55 AM, NeilBrown wrote:
+> On Wed, Apr 26 2017, Peter Rajnoha wrote:
 > 
+>> On 04/20/2017 11:35 PM, NeilBrown wrote:
+>>> If we wanted an more permanent udev rule, we would need to record the
+>>> devices that should be ignored in the filesystem somewhere else.
+>>> Maybe in /run/mdadm.
+>>> e.g.
+>>>
+>>>  KERNEL=="md*", TEST="/run/mdadm/creating-$kernel", ENV{SYSTEMD_READY}="0"
+>>>
+>>> Then we could have something like the following (untested) in mdadm.
+>>> Does that seem more suitable?
+>>>
+>>
+>> Yes, please, if possible, go for a permanent udev rule surely - this
+>> will make it much easier for other foreign tools to hook in properly if
+>> needed and it would also be much easier to debug.
 > 
-> On 26/04/17 09:56 PM, Herbert Xu wrote:
-> > On Tue, Apr 25, 2017 at 12:20:54PM -0600, Logan Gunthorpe wrote:
-> >> Very straightforward conversion to the new function in the caam driver
-> >> and shash library.
-> >>
-> >> Signed-off-by: Logan Gunthorpe <logang-OTvnGxWRz7hWk0Htik3J/w@public.gmane.org>
-> >> Cc: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
-> >> Cc: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
-> >> ---
-> >>  crypto/shash.c                | 9 ++++++---
-> >>  drivers/crypto/caam/caamalg.c | 8 +++-----
-> >>  2 files changed, 9 insertions(+), 8 deletions(-)
-> >>
-> >> diff --git a/crypto/shash.c b/crypto/shash.c
-> >> index 5e31c8d..5914881 100644
-> >> --- a/crypto/shash.c
-> >> +++ b/crypto/shash.c
-> >> @@ -283,10 +283,13 @@ int shash_ahash_digest(struct ahash_request *req, struct shash_desc *desc)
-> >>  	if (nbytes < min(sg->length, ((unsigned int)(PAGE_SIZE)) - offset)) {
-> >>  		void *data;
-> >>  
-> >> -		data = kmap_atomic(sg_page(sg));
-> >> -		err = crypto_shash_digest(desc, data + offset, nbytes,
-> >> +		data = sg_map(sg, 0, SG_KMAP_ATOMIC);
-> >> +		if (IS_ERR(data))
-> >> +			return PTR_ERR(data);
-> >> +
-> >> +		err = crypto_shash_digest(desc, data, nbytes,
-> >>  					  req->result);
-> >> -		kunmap_atomic(data);
-> >> +		sg_unmap(sg, data, 0, SG_KMAP_ATOMIC);
-> >>  		crypto_yield(desc->flags);
-> >>  	} else
-> >>  		err = crypto_shash_init(desc) ?:
-> > 
-> > Nack.  This is an optimisation for the special case of a single
-> > SG list entry.  In fact in the common case the kmap_atomic should
-> > disappear altogether in the no-highmem case.  So replacing it
-> > with sg_map is not acceptable.
+> I'm leaning towards the files-in-/run/mdadm approach too.  I'll make a
+> proper patch.
 > 
-> What you seem to have missed is that sg_map is just a thin wrapper
-> around kmap_atomic. Perhaps with a future check for a mappable page.
-> This change should have zero impact on performance.
+>>
+>> But, wouldn't it be better if we could just pass this information ("not
+>> initialized yet") as RUN_ARRAY md ioctl parameter? In that case the md
+>> driver in kernel could add the variable to the uevent it generates which
+>> userspace udev rules could check for easily. This way, we don't need to
+>> hassle with creating files in filesystem and the information would be
+>> directly a part of the uevent the md kernel driver generates (so
+>> directly accessible in udev rules too). Also, possibly adding more
+>> variables for other future scenarios if needed.
+> 
+> When would we clear the "not initialised yet" flag in the kernel, and
+> how?  And would that be enough.
 
-You are right.  Indeed the existing code looks buggy as they
-don't take sg->offset into account when doing the kmap.  Could
-you send me some patches that fix these problems first so that
-they can be easily backported?
+The flag wouldn't be stored in kernel, md kernel driver would just pass
+the flag with the uevent as it received in with ioctl/sysfs request to
+create a new dev. The udev in userspace would handle the state
+transition then from "flagged as not-initialized" state to "initilized"
+by checking the sequence of events as they come.
 
-Thanks,
+We should have this sequence I assume:
+
+  1) "add" (creating dev, not usable yet)
+  2) "change" (activated dev, but not initialized yet)
+  3) "synthetic change" (after wiping the dev and closing it, the WATCH
+rule fires)
+
+> 
+> When mdadm creates an md array, at least 3 uevents get generated.
+> The first is generated when the md device object is created, either by
+> opening the /dev/mdXX file, or by writing magic to somewhere in sysfs.
+> The second is generated when the array is started and the content is
+> visible.
+> The third is generated when mdadm closes the file descriptor.  It opens
+> /dev/mdXX for O_RDWR and performs ioctls on this, and then closes it.
+> Because udev uses inotify to watch for a 'close for a writable file
+> descriptor', this generates another event.
+> 
+> We need to ensure that none of these cause udev to run anything that
+> inspects the contents of the array.
+> Of the three, only the second one is directly under the control of the
+> md module, so only that one can add an environment variable.
+> 
+> It might be possible to avoid the last one (by not opening for write),
+> but I cannot see a way to avoid the first one.
+
+So the first event is the "add" event ("md device object created") - in
+this case, the device is not yet usable anyway I suppose, so we can skip
+udev scans for this event right away (unless it's the synthetic "add"
+event which is generated by writing "add" to /sys/block/.../uevent file
+or alternatively using udevadm trigger - but we should be able to
+recognize this event "synthetic add event" because it always comes after
+the activating "change" event, otherwise we can skip scans).
+
+The second event, which is the "change" event, would be marked with the
+new "not initialized" flag. And so we skip the scans in udev too.
+
+Then mdadm opens the devive, clears any old content/signatures the data
+area may contain, then closes it - this generates the third event -
+which is the "synthetic change" event (as a result of the inotify WATCH
+rule). And this one would drop the "not initialized" flag in udev db and
+the scans in udev are now enabled.
+
+So we should be able to handle all three kinds of events I think.
+
+Now, as for even better synthetic event recognition, I've proposed a
+patch recently where udev as well as any other tool generating these
+synthetic events can add variables for more detailed event
+identification, so this one should help us in the future even more in
+these situations: https://lkml.org/lkml/2017/3/15/461. With this, we can
+even disable the WATCH rule till the device is properly initialized and
+the tool can generate the event itself by writing the
+/sys/block/.../uevent file with a variable that the tool can then wait
+for even (so the tool doesn't exit till the device is not properly
+initialized). Once this initialization is all done, the WATCH rule can
+be enabled for the dev. Also, with this, we don't need to be afraid that
+some other tool fired the WATCH rule by chance if it opened the dev for
+RW and closed it by mistake before we had a chance to initialize it
+(which would fire the synthetic change event before the
+wiping/initialization).
+
+> 
+> I don't think that making a file appear in /run is really very different
+> from making a variable appear in a uevent.   If the variable were
+> describing the event itself there would be a different, but it would be
+> describing the state of the device.  So the only important difference is
+> "which is easier to work with".  I think creating an deleting a file is
+> easier to setting and clearing a variable.
+> 
+
+Yes, I agree that it's an alternative solution - it definitely and
+surely improves current situation, either if we choose to write the file
+or pass the flag in the uevent directly. It's just that with the
+information written in filesystem, we have something external to check
+for in addition to processing the uevent variables while we don't need
+to, I think. As I described the sequence of events above, I think we
+should be able to recognize the events properly and we should be able to
+drop the flag automatically.
+
 -- 
-Email: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+Peter
