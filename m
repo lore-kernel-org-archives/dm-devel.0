@@ -1,144 +1,338 @@
 From: Peter Rajnoha <prajnoha@redhat.com>
-Subject: Re: [mdadm PATCH 4/4] Create: tell udev device is not ready when
- first created.
-Date: Fri, 28 Apr 2017 11:08:25 +0200
-Message-ID: <f9977410-5a8e-1a78-1406-fc9875f83d13@redhat.com>
+Subject: Re: [mdadm PATCH] Create: tell udev md device is not ready when first
+ created.
+Date: Fri, 28 Apr 2017 11:28:08 +0200
+Message-ID: <6bd347e1-170c-48e9-1171-09ff143ace83@redhat.com>
 References: <149265560315.31004.3851231165281498425.stgit@noble>
  <149265600601.31004.323865505557190368.stgit@noble>
  <dedd27cd-9c2e-f244-d8aa-7a074679d3c6@gmail.com>
  <87mvbasqx6.fsf@notabene.neil.brown.name>
  <40a5fbff-9eef-07b3-fe1b-fb9a888cfb8b@redhat.com>
- <87k265rxsm.fsf@notabene.neil.brown.name>
+ <87h919ruj5.fsf@notabene.neil.brown.name>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <87k265rxsm.fsf@notabene.neil.brown.name>
+In-Reply-To: <87h919ruj5.fsf@notabene.neil.brown.name>
 Content-Language: en-US
 Sender: linux-raid-owner@vger.kernel.org
 To: NeilBrown <neilb@suse.com>, Jes Sorensen <jes.sorensen@gmail.com>
 Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 04/28/2017 05:55 AM, NeilBrown wrote:
-> On Wed, Apr 26 2017, Peter Rajnoha wrote:
+On 04/28/2017 07:05 AM, NeilBrown wrote:
 > 
->> On 04/20/2017 11:35 PM, NeilBrown wrote:
->>> If we wanted an more permanent udev rule, we would need to record the
->>> devices that should be ignored in the filesystem somewhere else.
->>> Maybe in /run/mdadm.
->>> e.g.
->>>
->>>  KERNEL=="md*", TEST="/run/mdadm/creating-$kernel", ENV{SYSTEMD_READY}="0"
->>>
->>> Then we could have something like the following (untested) in mdadm.
->>> Does that seem more suitable?
->>>
->>
->> Yes, please, if possible, go for a permanent udev rule surely - this
->> will make it much easier for other foreign tools to hook in properly if
->> needed and it would also be much easier to debug.
+> When an array is created the content is not initialized,
+> so it could have remnants of an old filesystem or md array
+> etc on it.
+> udev will see this and might try to activate it, which is almost
+> certainly not what is wanted.
 > 
-> I'm leaning towards the files-in-/run/mdadm approach too.  I'll make a
-> proper patch.
+> So create a mechanism for mdadm to communicate with udev to tell
+> it that the device isn't ready.  This mechanism is the existance
+> of a file /run/mdadm/created-mdXXX where mdXXX is the md device name.
 > 
->>
->> But, wouldn't it be better if we could just pass this information ("not
->> initialized yet") as RUN_ARRAY md ioctl parameter? In that case the md
->> driver in kernel could add the variable to the uevent it generates which
->> userspace udev rules could check for easily. This way, we don't need to
->> hassle with creating files in filesystem and the information would be
->> directly a part of the uevent the md kernel driver generates (so
->> directly accessible in udev rules too). Also, possibly adding more
->> variables for other future scenarios if needed.
-> 
-> When would we clear the "not initialised yet" flag in the kernel, and
-> how?  And would that be enough.
-
-The flag wouldn't be stored in kernel, md kernel driver would just pass
-the flag with the uevent as it received in with ioctl/sysfs request to
-create a new dev. The udev in userspace would handle the state
-transition then from "flagged as not-initialized" state to "initilized"
-by checking the sequence of events as they come.
-
-We should have this sequence I assume:
-
-  1) "add" (creating dev, not usable yet)
-  2) "change" (activated dev, but not initialized yet)
-  3) "synthetic change" (after wiping the dev and closing it, the WATCH
-rule fires)
-
-> 
-> When mdadm creates an md array, at least 3 uevents get generated.
-> The first is generated when the md device object is created, either by
-> opening the /dev/mdXX file, or by writing magic to somewhere in sysfs.
-> The second is generated when the array is started and the content is
-> visible.
-> The third is generated when mdadm closes the file descriptor.  It opens
-> /dev/mdXX for O_RDWR and performs ioctls on this, and then closes it.
-> Because udev uses inotify to watch for a 'close for a writable file
-> descriptor', this generates another event.
-> 
-> We need to ensure that none of these cause udev to run anything that
-> inspects the contents of the array.
-> Of the three, only the second one is directly under the control of the
-> md module, so only that one can add an environment variable.
-> 
-> It might be possible to avoid the last one (by not opening for write),
-> but I cannot see a way to avoid the first one.
-
-So the first event is the "add" event ("md device object created") - in
-this case, the device is not yet usable anyway I suppose, so we can skip
-udev scans for this event right away (unless it's the synthetic "add"
-event which is generated by writing "add" to /sys/block/.../uevent file
-or alternatively using udevadm trigger - but we should be able to
-recognize this event "synthetic add event" because it always comes after
-the activating "change" event, otherwise we can skip scans).
-
-The second event, which is the "change" event, would be marked with the
-new "not initialized" flag. And so we skip the scans in udev too.
-
-Then mdadm opens the devive, clears any old content/signatures the data
-area may contain, then closes it - this generates the third event -
-which is the "synthetic change" event (as a result of the inotify WATCH
-rule). And this one would drop the "not initialized" flag in udev db and
-the scans in udev are now enabled.
-
-So we should be able to handle all three kinds of events I think.
-
-Now, as for even better synthetic event recognition, I've proposed a
-patch recently where udev as well as any other tool generating these
-synthetic events can add variables for more detailed event
-identification, so this one should help us in the future even more in
-these situations: https://lkml.org/lkml/2017/3/15/461. With this, we can
-even disable the WATCH rule till the device is properly initialized and
-the tool can generate the event itself by writing the
-/sys/block/.../uevent file with a variable that the tool can then wait
-for even (so the tool doesn't exit till the device is not properly
-initialized). Once this initialization is all done, the WATCH rule can
-be enabled for the dev. Also, with this, we don't need to be afraid that
-some other tool fired the WATCH rule by chance if it opened the dev for
-RW and closed it by mistake before we had a chance to initialize it
-(which would fire the synthetic change event before the
-wiping/initialization).
-
-> 
-> I don't think that making a file appear in /run is really very different
-> from making a variable appear in a uevent.   If the variable were
-> describing the event itself there would be a different, but it would be
-> describing the state of the device.  So the only important difference is
-> "which is easier to work with".  I think creating an deleting a file is
-> easier to setting and clearing a variable.
+> When creating an array, mdadm will create the file.
+> A new udev rule file, 01-md-raid-creating.rules, will detect the
+> precense of thst file and set ENV{SYSTEMD_READY}="0".
+> This is fairly uniformly used to suppress actions based on the
+> contents of the device.
 > 
 
-Yes, I agree that it's an alternative solution - it definitely and
-surely improves current situation, either if we choose to write the file
-or pass the flag in the uevent directly. It's just that with the
-information written in filesystem, we have something external to check
-for in addition to processing the uevent variables while we don't need
-to, I think. As I described the sequence of events above, I think we
-should be able to recognize the events properly and we should be able to
-drop the flag automatically.
+The scans in udev are primarily directed by blkid call which detects the
+signatures and based on this information various other udev rules fire.
+
+The blkid as well as wipefs uses common libblkid library to detect these
+signatures - is mdadm going to use libblkid to wipe the signatures on MD
+device initialization or is it relying on external tools to do this? How
+is mdadm actually initializing/wiping the newly created MD device?
 
 -- 
 Peter
+
+> Signed-off-by: NeilBrown <neilb@suse.com>
+> ---
+>  Assemble.c                  |  2 +-
+>  Build.c                     |  2 +-
+>  Create.c                    |  9 +++++++-
+>  Incremental.c               |  4 ++--
+>  Makefile                    |  4 ++--
+>  lib.c                       | 29 +++++++++++++++++++++++++
+>  mdadm.h                     |  4 +++-
+>  mdopen.c                    | 52 ++++++++++++++++++++++++++++-----------------
+>  udev-md-raid-creating.rules |  7 ++++++
+>  9 files changed, 86 insertions(+), 27 deletions(-)
+>  create mode 100644 udev-md-raid-creating.rules
+> 
+> diff --git a/Assemble.c b/Assemble.c
+> index d6beb23da9c5..a9442c8ce73b 100644
+> --- a/Assemble.c
+> +++ b/Assemble.c
+> @@ -1478,7 +1478,7 @@ try_again:
+>  			name = strchr(name, ':')+1;
+>  
+>  		mdfd = create_mddev(mddev, name, ident->autof, trustworthy,
+> -				    chosen_name);
+> +				    chosen_name, 0);
+>  	}
+>  	if (mdfd < 0) {
+>  		st->ss->free_super(st);
+> diff --git a/Build.c b/Build.c
+> index 11ba12f4ae7d..665d9067b8d6 100644
+> --- a/Build.c
+> +++ b/Build.c
+> @@ -109,7 +109,7 @@ int Build(char *mddev, struct mddev_dev *devlist,
+>  	/* We need to create the device.  It can have no name. */
+>  	map_lock(&map);
+>  	mdfd = create_mddev(mddev, NULL, c->autof, LOCAL,
+> -			    chosen_name);
+> +			    chosen_name, 0);
+>  	if (mdfd < 0) {
+>  		map_unlock(&map);
+>  		return 1;
+> diff --git a/Create.c b/Create.c
+> index 6ca092449880..df1bc20c635b 100644
+> --- a/Create.c
+> +++ b/Create.c
+> @@ -605,7 +605,7 @@ int Create(struct supertype *st, char *mddev,
+>  
+>  	/* We need to create the device */
+>  	map_lock(&map);
+> -	mdfd = create_mddev(mddev, name, c->autof, LOCAL, chosen_name);
+> +	mdfd = create_mddev(mddev, name, c->autof, LOCAL, chosen_name, 1);
+>  	if (mdfd < 0) {
+>  		map_unlock(&map);
+>  		return 1;
+> @@ -620,6 +620,7 @@ int Create(struct supertype *st, char *mddev,
+>  			chosen_name);
+>  		close(mdfd);
+>  		map_unlock(&map);
+> +		udev_unblock();
+>  		return 1;
+>  	}
+>  	mddev = chosen_name;
+> @@ -1053,9 +1054,15 @@ int Create(struct supertype *st, char *mddev,
+>  		pr_err("not starting array - not enough devices.\n");
+>  	}
+>  	close(mdfd);
+> +	/* Give udev a moment to process the Change event caused
+> +	 * by the close.
+> +	 */
+> +	usleep(100*1000);
+> +	udev_unblock();
+>  	return 0;
+>  
+>   abort:
+> +	udev_unblock();
+>  	map_lock(&map);
+>   abort_locked:
+>  	map_remove(&map, fd2devnm(mdfd));
+> diff --git a/Incremental.c b/Incremental.c
+> index 28f1f7734956..63ed4fa1a88d 100644
+> --- a/Incremental.c
+> +++ b/Incremental.c
+> @@ -321,7 +321,7 @@ int Incremental(struct mddev_dev *devlist, struct context *c,
+>  
+>  		/* Couldn't find an existing array, maybe make a new one */
+>  		mdfd = create_mddev(match ? match->devname : NULL,
+> -				    name_to_use, c->autof, trustworthy, chosen_name);
+> +				    name_to_use, c->autof, trustworthy, chosen_name, 0);
+>  
+>  		if (mdfd < 0)
+>  			goto out_unlock;
+> @@ -1605,7 +1605,7 @@ static int Incremental_container(struct supertype *st, char *devname,
+>  					    ra->name,
+>  					    c->autof,
+>  					    trustworthy,
+> -					    chosen_name);
+> +					    chosen_name, 0);
+>  		}
+>  		if (only && (!mp || strcmp(mp->devnm, only) != 0))
+>  			continue;
+> diff --git a/Makefile b/Makefile
+> index 685069612617..021d3adf3ed1 100644
+> --- a/Makefile
+> +++ b/Makefile
+> @@ -256,8 +256,8 @@ install-man: mdadm.8 md.4 mdadm.conf.5 mdmon.8
+>  	$(INSTALL) -D -m 644 md.4 $(DESTDIR)$(MAN4DIR)/md.4
+>  	$(INSTALL) -D -m 644 mdadm.conf.5 $(DESTDIR)$(MAN5DIR)/mdadm.conf.5
+>  
+> -install-udev: udev-md-raid-arrays.rules udev-md-raid-assembly.rules
+> -	@for file in 63-md-raid-arrays.rules 64-md-raid-assembly.rules ; \
+> +install-udev: udev-md-raid-arrays.rules udev-md-raid-assembly.rules udev-md-raid-creating.rules
+> +	@for file in 01-md-raid-creating.rules 63-md-raid-arrays.rules 64-md-raid-assembly.rules ; \
+>  	do sed -e 's,BINDIR,$(BINDIR),g' udev-$${file#??-} > .install.tmp.1 && \
+>  	   $(ECHO) $(INSTALL) -D -m 644 udev-$${file#??-} $(DESTDIR)$(UDEVDIR)/rules.d/$$file ; \
+>  	   $(INSTALL) -D -m 644 .install.tmp.1 $(DESTDIR)$(UDEVDIR)/rules.d/$$file ; \
+> diff --git a/lib.c b/lib.c
+> index b640634ef6f2..7e44b1f27fcc 100644
+> --- a/lib.c
+> +++ b/lib.c
+> @@ -163,6 +163,35 @@ char *fd2devnm(int fd)
+>  	return NULL;
+>  }
+>  
+> +/* When we create a new array, we don't want the content to
+> + * be immediately examined by udev - it is probably meaningless.
+> + * So create /run/mdadm/creating-FOO and expect that a udev
+> + * rule will noticed this and act accordingly.
+> + */
+> +static char block_path[] = "/run/mdadm/creating-%s";
+> +static char *unblock_path = NULL;
+> +void udev_block(char *devnm)
+> +{
+> +	int fd;
+> +	char *path = NULL;
+> +
+> +	xasprintf(&path, block_path, devnm);
+> +	fd = open(path, O_CREAT|O_RDWR, 0600);
+> +	if (fd >= 0) {
+> +		close(fd);
+> +		unblock_path = path;
+> +	} else
+> +		free(path);
+> +}
+> +
+> +void udev_unblock(void)
+> +{
+> +	if (unblock_path)
+> +		unlink(unblock_path);
+> +	free(unblock_path);
+> +	unblock_path = NULL;
+> +}
+> +
+>  /*
+>   * convert a major/minor pair for a block device into a name in /dev, if possible.
+>   * On the first call, walk /dev collecting name.
+> diff --git a/mdadm.h b/mdadm.h
+> index 1bbacfe9e916..6a382a7c1b90 100644
+> --- a/mdadm.h
+> +++ b/mdadm.h
+> @@ -1533,7 +1533,7 @@ extern char *get_md_name(char *devnm);
+>  extern char DefaultConfFile[];
+>  
+>  extern int create_mddev(char *dev, char *name, int autof, int trustworthy,
+> -			char *chosen);
+> +			char *chosen, int block_udev);
+>  /* values for 'trustworthy' */
+>  #define	LOCAL	1
+>  #define	LOCAL_ANY 10
+> @@ -1567,6 +1567,8 @@ extern char *stat2kname(struct stat *st);
+>  extern char *fd2kname(int fd);
+>  extern char *stat2devnm(struct stat *st);
+>  extern char *fd2devnm(int fd);
+> +extern void udev_block(char *devnm);
+> +extern void udev_unblock(void);
+>  
+>  extern int in_initrd(void);
+>  
+> diff --git a/mdopen.c b/mdopen.c
+> index 82b97fc90339..099efa0aa2e5 100644
+> --- a/mdopen.c
+> +++ b/mdopen.c
+> @@ -135,7 +135,7 @@ void make_parts(char *dev, int cnt)
+>   */
+>  
+>  int create_mddev(char *dev, char *name, int autof, int trustworthy,
+> -		 char *chosen)
+> +		 char *chosen, int block_udev)
+>  {
+>  	int mdfd;
+>  	struct stat stb;
+> @@ -147,6 +147,10 @@ int create_mddev(char *dev, char *name, int autof, int trustworthy,
+>  	char devname[37];
+>  	char devnm[32];
+>  	char cbuf[400];
+> +
+> +	if (!use_udev())
+> +		block_udev = 0;
+> +
+>  	if (chosen == NULL)
+>  		chosen = cbuf;
+>  
+> @@ -305,43 +309,53 @@ int create_mddev(char *dev, char *name, int autof, int trustworthy,
+>  		int fd;
+>  		int n = -1;
+>  		sprintf(devnm, "md_%s", cname);
+> +		if (block_udev)
+> +			udev_block(devnm);
+>  		fd = open("/sys/module/md_mod/parameters/new_array", O_WRONLY);
+>  		if (fd >= 0) {
+>  			n = write(fd, devnm, strlen(devnm));
+>  			close(fd);
+>  		}
+> -		if (n < 0)
+> +		if (n < 0) {
+>  			devnm[0] = 0;
+> +			udev_unblock();
+> +		}
+>  	}
+>  	if (num >= 0) {
+>  		int fd;
+>  		int n = -1;
+>  		sprintf(devnm, "md%d", num);
+> +		if (block_udev)
+> +			udev_block(devnm);
+>  		fd = open("/sys/module/md_mod/parameters/new_array", O_WRONLY);
+>  		if (fd >= 0) {
+>  			n = write(fd, devnm, strlen(devnm));
+>  			close(fd);
+>  		}
+> -		if (n < 0)
+> +		if (n < 0) {
+>  			devnm[0] = 0;
+> -	}
+> -	if (devnm[0])
+> -		;
+> -	else if (num < 0) {
+> -		/* need to choose a free number. */
+> -		char *_devnm = find_free_devnm(use_mdp);
+> -		if (_devnm == NULL) {
+> -			pr_err("No avail md devices - aborting\n");
+> -			return -1;
+> +			udev_unblock();
+>  		}
+> -		strcpy(devnm, _devnm);
+> -	} else {
+> -		sprintf(devnm, "%s%d", use_mdp?"md_d":"md", num);
+> -		if (mddev_busy(devnm)) {
+> -			pr_err("%s is already in use.\n",
+> -				dev);
+> -			return -1;
+> +	}
+> +	if (devnm[0] == 0) {
+> +		if (num < 0) {
+> +			/* need to choose a free number. */
+> +			char *_devnm = find_free_devnm(use_mdp);
+> +			if (_devnm == NULL) {
+> +				pr_err("No avail md devices - aborting\n");
+> +				return -1;
+> +			}
+> +			strcpy(devnm, _devnm);
+> +		} else {
+> +			sprintf(devnm, "%s%d", use_mdp?"md_d":"md", num);
+> +			if (mddev_busy(devnm)) {
+> +				pr_err("%s is already in use.\n",
+> +				       dev);
+> +				return -1;
+> +			}
+>  		}
+> +		if (block_udev)
+> +			udev_block(devnm);
+>  	}
+>  
+>  	sprintf(devname, "/dev/%s", devnm);
+> diff --git a/udev-md-raid-creating.rules b/udev-md-raid-creating.rules
+> new file mode 100644
+> index 000000000000..2be466bcefd2
+> --- /dev/null
+> +++ b/udev-md-raid-creating.rules
+> @@ -0,0 +1,7 @@
+> +# do not edit this file, it will be overwritten on update
+> +# While mdadm is creating an array, it creates a file
+> +# /run/mdadm/creating-mdXXX.  If that file exists, then
+> +# the array is not "ready" and we should make sure the
+> +# content is ignored.
+> +
+> +KERNEL=="md*", TEST="/run/mdadm/creating-$kernel", ENV{SYSTEMD_READY}="0"
+>
