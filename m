@@ -1,7 +1,7 @@
 From: damien.lemoal@wdc.com
-Subject: [PATCH v2 05/10] dm: Fix REQ_OP_ZONE_REPORT bio handling
-Date: Tue,  2 May 2017 02:53:09 +0900
-Message-ID: <20170501175314.10922-6-damien.lemoal@wdc.com>
+Subject: [PATCH v2 06/10] dm: Introduce dm_remap_zone_report()
+Date: Tue,  2 May 2017 02:53:10 +0900
+Message-ID: <20170501175314.10922-7-damien.lemoal@wdc.com>
 References: <20170501175314.10922-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -14,45 +14,136 @@ List-Id: dm-devel.ids
 
 From: Damien Le Moal <damien.lemoal@wdc.com>
 
-A REQ_OP_ZONE_REPORT bio is not a medium access command. Its number of
-sectors indicates the maximum size allowed for the report reply size
-and not an amount of sectors accessed from the device.
-REQ_OP_ZONE_REPORT bios should thus not be split depending on the
-target device maximum I/O length but passed as is. Note that it is the
-responsability of the target to remap and format the report reply.
+A target driver support zoned block devices and exposing it as such may
+receive REQ_OP_ZONE_REPORT request for the user to determine the mapped
+device zone configuration. To process properly such request, the target
+driver may need to remap the zone descriptors provided in the report
+reply. The helper function dm_remap_zone_report() does this generically
+using only the target start offset and length and the start offset
+within the target device.
+
+dm_remap_zone_report() will remap the start sector of all zones
+reported. If the report includes sequential zones, the write pointer
+position of these zones will also be remapped.
 
 Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
 Reviewed-by: Hannes Reinecke <hare@suse.com>
 ---
- drivers/md/dm.c | 9 +++++++--
- 1 file changed, 7 insertions(+), 2 deletions(-)
+ drivers/md/dm.c               | 80 +++++++++++++++++++++++++++++++++++++++++++
+ include/linux/device-mapper.h | 10 ++++++
+ 2 files changed, 90 insertions(+)
 
 diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 1d98035..cd44928 100644
+index cd44928..1f6558e 100644
 --- a/drivers/md/dm.c
 +++ b/drivers/md/dm.c
-@@ -1098,7 +1098,8 @@ static int clone_bio(struct dm_target_io *tio, struct bio *bio,
- 			return r;
- 	}
+@@ -975,6 +975,86 @@ void dm_accept_partial_bio(struct bio *bio, unsigned n_sectors)
+ }
+ EXPORT_SYMBOL_GPL(dm_accept_partial_bio);
  
--	bio_advance(clone, to_bytes(sector - clone->bi_iter.bi_sector));
-+	if (bio_op(bio) != REQ_OP_ZONE_REPORT)
-+		bio_advance(clone, to_bytes(sector - clone->bi_iter.bi_sector));
- 	clone->bi_iter.bi_size = to_bytes(len);
++#ifdef CONFIG_BLK_DEV_ZONED
++/*
++ * The zone descriptors obtained with a zone report indicate
++ * zone positions within the target device. The zone descriptors
++ * must be remapped to match their position within the dm device.
++ * A target may call dm_remap_zone_report after completion of a
++ * REQ_OP_ZONE_REPORT bio to remap the zone descriptors obtained
++ * from the target device mapping to the dm device.
++ */
++void dm_remap_zone_report(struct dm_target *ti, struct bio *bio, sector_t start)
++{
++	struct dm_target_io *tio =
++		container_of(bio, struct dm_target_io, clone);
++	struct bio *report_bio = tio->io->bio;
++	struct blk_zone_report_hdr *hdr = NULL;
++	struct blk_zone *zone;
++	unsigned int nr_rep = 0;
++	unsigned int ofst;
++	struct bio_vec bvec;
++	struct bvec_iter iter;
++	void *addr;
++
++	if (bio->bi_error)
++		return;
++
++	/*
++	 * Remap the start sector of the reported zones. For sequential zones,
++	 * also remap the write pointer position.
++	 */
++	bio_for_each_segment(bvec, report_bio, iter) {
++
++		addr = kmap_atomic(bvec.bv_page);
++
++		/* Remember the report header in the first page */
++		if (!hdr) {
++			hdr = addr;
++			ofst = sizeof(struct blk_zone_report_hdr);
++		} else {
++			ofst = 0;
++		}
++
++		/* Set zones start sector */
++		while (hdr->nr_zones && ofst < bvec.bv_len) {
++			zone = addr + ofst;
++			if (zone->start >= start + ti->len) {
++				hdr->nr_zones = 0;
++				break;
++			}
++			zone->start = zone->start + ti->begin - start;
++			if (zone->type != BLK_ZONE_TYPE_CONVENTIONAL) {
++				if (zone->cond == BLK_ZONE_COND_FULL)
++					zone->wp = zone->start + zone->len;
++				else if (zone->cond == BLK_ZONE_COND_EMPTY)
++					zone->wp = zone->start;
++				else
++					zone->wp = zone->wp + ti->begin - start;
++			}
++			ofst += sizeof(struct blk_zone);
++			hdr->nr_zones--;
++			nr_rep++;
++		}
++
++		if (addr != hdr)
++			kunmap_atomic(addr);
++
++		if (!hdr->nr_zones)
++			break;
++
++	}
++
++	if (hdr) {
++		hdr->nr_zones = nr_rep;
++		kunmap_atomic(hdr);
++	}
++
++	bio_advance(report_bio, report_bio->bi_iter.bi_size);
++}
++EXPORT_SYMBOL_GPL(dm_remap_zone_report);
++#endif
++
+ /*
+  * Flush current->bio_list when the target map method blocks.
+  * This fixes deadlocks in snapshot and possibly in other targets.
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index b3c2408..d21c761 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -433,6 +433,16 @@ struct gendisk *dm_disk(struct mapped_device *md);
+ int dm_suspended(struct dm_target *ti);
+ int dm_noflush_suspending(struct dm_target *ti);
+ void dm_accept_partial_bio(struct bio *bio, unsigned n_sectors);
++#ifdef CONFIG_BLK_DEV_ZONED
++void dm_remap_zone_report(struct dm_target *ti, struct bio *bio,
++			  sector_t start);
++#else
++static inline void dm_remap_zone_report(struct dm_target *ti, struct bio *bio,
++					sector_t start)
++{
++	bio->bi_error = -ENOTSUPP;
++}
++#endif
+ union map_info *dm_get_rq_mapinfo(struct request *rq);
  
- 	if (bio_integrity(bio))
-@@ -1275,7 +1276,11 @@ static int __split_and_process_non_flush(struct clone_info *ci)
- 	if (!dm_target_is_valid(ti))
- 		return -EIO;
- 
--	len = min_t(sector_t, max_io_len(ci->sector, ti), ci->sector_count);
-+	if (bio_op(bio) == REQ_OP_ZONE_REPORT)
-+		len = ci->sector_count;
-+	else
-+		len = min_t(sector_t, max_io_len(ci->sector, ti),
-+			    ci->sector_count);
- 
- 	r = __clone_and_map_data_bio(ci, ti, ci->sector, &len);
- 	if (r < 0)
+ struct queue_limits *dm_get_queue_limits(struct mapped_device *md);
 -- 
 2.9.3
