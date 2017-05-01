@@ -1,54 +1,79 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-bufio: check watermark periodically each 30
-	seconds
-Date: Mon, 1 May 2017 15:51:05 -0400
-Message-ID: <20170501195104.GA14140@redhat.com>
-References: <alpine.LRH.2.02.1704301733270.25063@file01.intranet.prod.int.rdu2.redhat.com>
+From: Bart Van Assche <Bart.VanAssche@sandisk.com>
+Subject: Re: [PATCH 25/27] block: remove the discard_zeroes_data flag
+Date: Mon, 1 May 2017 20:45:21 +0000
+Message-ID: <1493671519.2665.15.camel@sandisk.com>
+References: <20170405172125.22600-1-hch@lst.de>
+         <20170405172125.22600-26-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1704301733270.25063@file01.intranet.prod.int.rdu2.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <target-devel-owner@vger.kernel.org>
+In-Reply-To: <20170405172125.22600-26-hch@lst.de>
+Content-Language: en-US
+Content-ID: <6057828B6A69B94887FF6CB79814747D@namprd04.prod.outlook.com>
+Sender: target-devel-owner@vger.kernel.org
+To: "agk@redhat.com" <agk@redhat.com>, "lars.ellenberg@linbit.com" <lars.ellenberg@linbit.com>, "snitzer@redhat.com" <snitzer@redhat.com>, "hch@lst.de" <hch@lst.de>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "philipp.reisner@linbit.com" <philipp.reisner@linbit.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "shli@kernel.org" <shli@kernel.org>
+Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "drbd-dev@lists.linbit.com" <drbd-dev@lists.linbit.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "target-devel@vger.kernel.org" <target-devel@vger.kernel.org>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Sun, Apr 30 2017 at  5:34pm -0400,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
+On Wed, 2017-04-05 at 19:21 +0200, Christoph Hellwig wrote:
+> Now that we use the proper REQ_OP_WRITE_ZEROES operation everywhere we ca=
+n
+> kill this hack.
+>=20
+> Signed-off-by: Christoph Hellwig <hch@lst.de>
+> Reviewed-by: Martin K. Petersen <martin.petersen@oracle.com>
+> Reviewed-by: Hannes Reinecke <hare@suse.com>
+> [ ... ]
+> diff --git a/drivers/target/target_core_device.c b/drivers/target/target_=
+core_device.c
+> index c754ae33bf7b..d2f089cfa9ae 100644
+> --- a/drivers/target/target_core_device.c
+> +++ b/drivers/target/target_core_device.c
+> @@ -851,7 +851,7 @@ bool target_configure_unmap_from_queue(struct se_dev_=
+attrib *attrib,
+>  	attrib->unmap_granularity =3D q->limits.discard_granularity / block_siz=
+e;
+>  	attrib->unmap_granularity_alignment =3D q->limits.discard_alignment /
+>  								block_size;
+> -	attrib->unmap_zeroes_data =3D q->limits.discard_zeroes_data;
+> +	attrib->unmap_zeroes_data =3D 0;
+>  	return true;
+>  }
+>  EXPORT_SYMBOL(target_configure_unmap_from_queue);
 
-> dm-bufio checks a watermark when it allocates a new buffer in the function
-> __bufio_new. However, it doesn't check the watermark when the user changes
-> the value /sys/module/dm_bufio/parameters/max_cache_size_bytes.
-> 
-> This may result in a problem - if the watermark is high enough so that all
-> possible buffers are allocated and if the user lowers the value
-> "max_cache_size_bytes", the watermark will never be checked against the
-> new value because no new buffer would be allocated.
-> 
-> This patch changes the function __evict_old_buffers so that it checks the
-> watermark. __evict_old_buffers is called every 30 seconds, so if the user
-> lowes "max_cache_size_bytes", dm-bufio will react to this change within
-> 30 seconds and decrease memory consumption.
-> 
-> This patch requires the previous patch "dm-bufio: avoid a possible
-> deadlock due to lock ordering" to be applied. Applying this patch without
-> the previous patch would result in a deadlock.
-> 
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> Cc: stable@vger.kernel.org
+Hello Christoph,
 
-I've applied the 2 stable@ fixes for 4.12 but the optimizations will
-have to wait for 4.13 (the 4.12 merge window is already open, I need to
-draw a line in the sand now).
+Sorry that I hadn't noticed this before but I think that this patch
+introduces a significant performance regressions for LIO users. Before
+this patch the LBPRZ flag was reported correctly to initiator systems
+through the thin provisioning VPD. With this patch applied that flag
+will always be reported as zero, forcing initiators to submit WRITE
+commands with zeroed data buffers instead of submitting the SCSI UNMAP
+command to block devices for which=A0discard_zeroes_data was set. From
+target_core_spc.c:
 
-Mike
+/* Thin Provisioning VPD */
+static sense_reason_t spc_emulate_evpd_b2(struct se_cmd *cmd, unsigned char=
+ *buf)
+{
+	[ ... ]
+	/*
+	 * The unmap_zeroes_data set means that the underlying device supports
+	 * REQ_DISCARD and has the discard_zeroes_data bit set. This satisfies
+	 * the SBC requirements for LBPRZ, meaning that a subsequent read
+	 * will return zeroes after an UNMAP or WRITE SAME (16) to an LBA
+	 * See sbc4r36 6.6.4.
+	 */
+	if (((dev->dev_attrib.emulate_tpu !=3D 0) ||
+	=A0=A0=A0=A0=A0(dev->dev_attrib.emulate_tpws !=3D 0)) &&
+	=A0=A0=A0=A0=A0(dev->dev_attrib.unmap_zeroes_data !=3D 0))
+		buf[5] |=3D 0x04;
+	[ ... ]
+}
+
+Please advise how to proceed.
+
+Thanks,
+
+Bart.=
