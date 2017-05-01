@@ -1,10 +1,12 @@
 From: damien.lemoal@wdc.com
-Subject: [PATCH v2 00/10] dm: zoned block device support
-Date: Tue,  2 May 2017 02:53:04 +0900
-Message-ID: <20170501175314.10922-1-damien.lemoal@wdc.com>
+Subject: [PATCH v2 01/10] dm-table: Introduce DM_TARGET_ZONED_HM feature
+Date: Tue,  2 May 2017 02:53:05 +0900
+Message-ID: <20170501175314.10922-2-damien.lemoal@wdc.com>
+References: <20170501175314.10922-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20170501175314.10922-1-damien.lemoal@wdc.com>
 Sender: linux-block-owner@vger.kernel.org
 To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
 Cc: Hannes Reinecke <hare@suse.de>, Christoph Hellwig <hch@lst.de>, Bart Van Assche <Bart.VanAssche@sandisk.com>, linux-block@vger.kernel.org, Damien Le Moal <damien.lemoal@wdc.com>
@@ -12,80 +14,85 @@ List-Id: dm-devel.ids
 
 From: Damien Le Moal <damien.lemoal@wdc.com>
 
-This series introduces zoned block device support to the device mapper
-infrastructure. Pathces are as follows:
+The target drivers currently available will not operate correctly if a
+table target maps onto a host-managed zoned block device.
 
-- Patch 1: Add a new target type feature flag to indicate if a target type
-  supports host-managed zoned block devices. This prevents using these drives
-  with the current target types since none of them have the proper support
-  implemented and will not operate properly with these drives.
-- Patch 2: If a target device is a zoned block device, check that the range of
-  LBAs mapped is aligned to the device zone size and that the device start
-  offset also aligns to zone boundaries. This is necessary for zone reset and
-  zone report correct execution.
-- Patch 3: Check that the different target devices of a table have compatible
-  zone sizes and models. This is necessary for target types that expose a zone
-  model different from the underlying device.
-- Patch 4: Fix handling of REQ_OP_ZONE_RESET bios
-- Patch 5: Fix handling of REQ_OP_ZONE_REPORT bios
-- Patch 6: Introduce a new helper function to reverse map a device zone report
-  to the target LBA range
-- Patch 7: Add support for host-managed zoned block devices to dm-flakey. This
-  is necessary for testing file systems supporting natively these drives (e.g.
-  f2fs).
-- Patch 8: Add support for for zoned block devices to dm-linear. This can have
-  useful applications during development and testing (e.g. allow creating
-  smaller zoned devices with different combinations and positions of zones).
-  There are also interesting applications for production, for instance, the
-  ability to aggregate conventional zones of different drives to create a
-  regular disk.
-- Patch 9: Add sequential write enforcement to dm_kcopyd_copy so that
-  sequential zones of a host-managed zoned block device can be specified as
-  destinations.
-- Patch 10: New dm-zoned target type (this was already sent for review twice).
-  This resend adds modifications suggested by Hannes to implement reclaim
-  using dm-kcopyd. dm-zoned depends on patch 9.
+To avoid problems, this patch introduces the new feature flag
+DM_TARGET_ZONED_HM for a target driver to explicitly state that it
+supports host-managed zoned block devices. This feature is checked
+in dm_get_device() to prevent the addition to a table of a target
+mapping to a host-managed zoned block device if the target type does
+not have the feature enabled.
 
-As always, comments and reviews are welcome.
+Note that as host-aware zoned block devices are backward compatible
+with regular block devices, they can be used by any of the current
+target types. This new feature is thus restricted to host-managed
+zoned block devices.
 
-Changes from v1:
-- Use for-loop in patch 3 as suggested by Bart
-- Add memory shrinker to dm-zoned to shrink the metadata block cache under
-  memory pressure (suggested by Bart)
-- Added Hannes Reviewed-by tag
+Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
+Reviewed-by: Hannes Reinecke <hare@suse.com>
+---
+ drivers/md/dm-table.c         | 23 +++++++++++++++++++++++
+ include/linux/device-mapper.h |  6 ++++++
+ 2 files changed, 29 insertions(+)
 
-Damien Le Moal (10):
-  dm-table: Introduce DM_TARGET_ZONED_HM feature
-  dm-table: Check device area zone alignment
-  dm-table: Check block devices zone model compatibility
-  dm: Fix REQ_OP_ZONE_RESET bio handling
-  dm: Fix REQ_OP_ZONE_REPORT bio handling
-  dm: Introduce dm_remap_zone_report()
-  dm-flakey: Add support for zoned block devices
-  dm-linear: Add support for zoned block devices
-  dm-kcopyd: Add sequential write feature
-  dm-zoned: Drive-managed zoned block device target
-
- Documentation/device-mapper/dm-zoned.txt |  154 +++
- drivers/md/Kconfig                       |   19 +
- drivers/md/Makefile                      |    2 +
- drivers/md/dm-flakey.c                   |   21 +-
- drivers/md/dm-kcopyd.c                   |   68 +-
- drivers/md/dm-linear.c                   |   14 +-
- drivers/md/dm-table.c                    |  145 ++
- drivers/md/dm-zoned-io.c                 |  998 ++++++++++++++
- drivers/md/dm-zoned-metadata.c           | 2195 ++++++++++++++++++++++++++++++
- drivers/md/dm-zoned-reclaim.c            |  535 ++++++++
- drivers/md/dm-zoned.h                    |  528 +++++++
- drivers/md/dm.c                          |   93 +-
- include/linux/device-mapper.h            |   16 +
- include/linux/dm-kcopyd.h                |    1 +
- 14 files changed, 4783 insertions(+), 6 deletions(-)
- create mode 100644 Documentation/device-mapper/dm-zoned.txt
- create mode 100644 drivers/md/dm-zoned-io.c
- create mode 100644 drivers/md/dm-zoned-metadata.c
- create mode 100644 drivers/md/dm-zoned-reclaim.c
- create mode 100644 drivers/md/dm-zoned.h
-
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 3ad16d9..06d3b7b 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -388,6 +388,24 @@ dev_t dm_get_dev_t(const char *path)
+ EXPORT_SYMBOL_GPL(dm_get_dev_t);
+ 
+ /*
++ * Check if the target supports supports host-managed zoned block devices.
++ */
++static bool device_supported(struct dm_target *ti, struct dm_dev *dev)
++{
++	struct block_device *bdev = dev->bdev;
++	char b[BDEVNAME_SIZE];
++
++	if (bdev_zoned_model(bdev) == BLK_ZONED_HM &&
++	    !dm_target_zoned_hm(ti->type)) {
++		DMWARN("%s: Unsupported host-managed zoned block device %s",
++		       dm_device_name(ti->table->md), bdevname(bdev, b));
++		return false;
++	}
++
++	return true;
++}
++
++/*
+  * Add a device to the list, or just increment the usage count if
+  * it's already present.
+  */
+@@ -426,6 +444,11 @@ int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
+ 	}
+ 	atomic_inc(&dd->count);
+ 
++	if (!device_supported(ti, dd->dm_dev)) {
++		dm_put_device(ti, dd->dm_dev);
++		return -ENOTSUPP;
++	}
++
+ 	*result = dd->dm_dev;
+ 	return 0;
+ }
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index a7e6903..b3c2408 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -214,6 +214,12 @@ struct target_type {
+ #define dm_target_is_wildcard(type)	((type)->features & DM_TARGET_WILDCARD)
+ 
+ /*
++ * Indicates that a target supports host-managed zoned block devices.
++ */
++#define DM_TARGET_ZONED_HM		0x00000010
++#define dm_target_zoned_hm(type)	((type)->features & DM_TARGET_ZONED_HM)
++
++/*
+  * Some targets need to be sent the same WRITE bio severals times so
+  * that they can send copies of it to different devices.  This function
+  * examines any supplied bio and returns the number of copies of it the
 -- 
 2.9.3
