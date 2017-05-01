@@ -1,7 +1,7 @@
 From: damien.lemoal@wdc.com
-Subject: [PATCH v2 01/10] dm-table: Introduce DM_TARGET_ZONED_HM feature
-Date: Tue,  2 May 2017 02:53:05 +0900
-Message-ID: <20170501175314.10922-2-damien.lemoal@wdc.com>
+Subject: [PATCH v2 02/10] dm-table: Check device area zone alignment
+Date: Tue,  2 May 2017 02:53:06 +0900
+Message-ID: <20170501175314.10922-3-damien.lemoal@wdc.com>
 References: <20170501175314.10922-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -14,85 +14,55 @@ List-Id: dm-devel.ids
 
 From: Damien Le Moal <damien.lemoal@wdc.com>
 
-The target drivers currently available will not operate correctly if a
-table target maps onto a host-managed zoned block device.
-
-To avoid problems, this patch introduces the new feature flag
-DM_TARGET_ZONED_HM for a target driver to explicitly state that it
-supports host-managed zoned block devices. This feature is checked
-in dm_get_device() to prevent the addition to a table of a target
-mapping to a host-managed zoned block device if the target type does
-not have the feature enabled.
-
-Note that as host-aware zoned block devices are backward compatible
-with regular block devices, they can be used by any of the current
-target types. This new feature is thus restricted to host-managed
-zoned block devices.
+If a target maps to a zoned block device, check that the device area is
+aligned on zone boundaries to avoid problems with REQ_OP_ZONE_RESET
+operations (resetting a partially mapped sequential zone would not be
+possible). This also greatly facilitate the processing of zone report
+with REQ_OP_ZONE_REPORT bios.
 
 Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
 Reviewed-by: Hannes Reinecke <hare@suse.com>
 ---
- drivers/md/dm-table.c         | 23 +++++++++++++++++++++++
- include/linux/device-mapper.h |  6 ++++++
- 2 files changed, 29 insertions(+)
+ drivers/md/dm-table.c | 27 +++++++++++++++++++++++++++
+ 1 file changed, 27 insertions(+)
 
 diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 3ad16d9..06d3b7b 100644
+index 06d3b7b..6947f0f 100644
 --- a/drivers/md/dm-table.c
 +++ b/drivers/md/dm-table.c
-@@ -388,6 +388,24 @@ dev_t dm_get_dev_t(const char *path)
- EXPORT_SYMBOL_GPL(dm_get_dev_t);
- 
- /*
-+ * Check if the target supports supports host-managed zoned block devices.
-+ */
-+static bool device_supported(struct dm_target *ti, struct dm_dev *dev)
-+{
-+	struct block_device *bdev = dev->bdev;
-+	char b[BDEVNAME_SIZE];
-+
-+	if (bdev_zoned_model(bdev) == BLK_ZONED_HM &&
-+	    !dm_target_zoned_hm(ti->type)) {
-+		DMWARN("%s: Unsupported host-managed zoned block device %s",
-+		       dm_device_name(ti->table->md), bdevname(bdev, b));
-+		return false;
-+	}
-+
-+	return true;
-+}
-+
-+/*
-  * Add a device to the list, or just increment the usage count if
-  * it's already present.
-  */
-@@ -426,6 +444,11 @@ int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
+@@ -339,6 +339,33 @@ static int device_area_is_invalid(struct dm_target *ti, struct dm_dev *dev,
+ 		return 1;
  	}
- 	atomic_inc(&dd->count);
  
-+	if (!device_supported(ti, dd->dm_dev)) {
-+		dm_put_device(ti, dd->dm_dev);
-+		return -ENOTSUPP;
++	/*
++	 * If the target is mapped to a zoned block device, check
++	 * that the device zones are not partially mapped.
++	 */
++	if (bdev_zoned_model(bdev) != BLK_ZONED_NONE) {
++		unsigned int zone_sectors = bdev_zone_sectors(bdev);
++
++		if (start & (zone_sectors - 1)) {
++			DMWARN("%s: start=%llu not aligned to h/w "
++			       "zone size %u of %s",
++			       dm_device_name(ti->table->md),
++			       (unsigned long long)start,
++			       zone_sectors, bdevname(bdev, b));
++			return 1;
++		}
++
++		if (start + len < dev_size &&
++		    len & (zone_sectors - 1)) {
++			DMWARN("%s: len=%llu not aligned to h/w "
++			       "zone size %u of %s",
++			       dm_device_name(ti->table->md),
++			       (unsigned long long)start,
++			       zone_sectors, bdevname(bdev, b));
++			return 1;
++		}
 +	}
 +
- 	*result = dd->dm_dev;
  	return 0;
  }
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index a7e6903..b3c2408 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -214,6 +214,12 @@ struct target_type {
- #define dm_target_is_wildcard(type)	((type)->features & DM_TARGET_WILDCARD)
  
- /*
-+ * Indicates that a target supports host-managed zoned block devices.
-+ */
-+#define DM_TARGET_ZONED_HM		0x00000010
-+#define dm_target_zoned_hm(type)	((type)->features & DM_TARGET_ZONED_HM)
-+
-+/*
-  * Some targets need to be sent the same WRITE bio severals times so
-  * that they can send copies of it to different devices.  This function
-  * examines any supplied bio and returns the number of copies of it the
 -- 
 2.9.3
