@@ -1,7 +1,7 @@
 From: damien.lemoal@wdc.com
-Subject: [PATCH v2 04/10] dm: Fix REQ_OP_ZONE_RESET bio handling
-Date: Tue,  2 May 2017 02:53:08 +0900
-Message-ID: <20170501175314.10922-5-damien.lemoal@wdc.com>
+Subject: [PATCH v2 05/10] dm: Fix REQ_OP_ZONE_REPORT bio handling
+Date: Tue,  2 May 2017 02:53:09 +0900
+Message-ID: <20170501175314.10922-6-damien.lemoal@wdc.com>
 References: <20170501175314.10922-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -14,33 +14,45 @@ List-Id: dm-devel.ids
 
 From: Damien Le Moal <damien.lemoal@wdc.com>
 
-The REQ_OP_ZONE_RESET bio has no payload and zero sectors. Its position
-is the only information used to indicate the zone to reset on the
-device. Due to its zero length, this bio is not cloned and sent to the
-target through the non-flush case in __split_and_process_bio().
-Add an additional case in that function to call
-__split_and_process_non_flush() without checking the clone info size.
+A REQ_OP_ZONE_REPORT bio is not a medium access command. Its number of
+sectors indicates the maximum size allowed for the report reply size
+and not an amount of sectors accessed from the device.
+REQ_OP_ZONE_REPORT bios should thus not be split depending on the
+target device maximum I/O length but passed as is. Note that it is the
+responsability of the target to remap and format the report reply.
 
 Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
 Reviewed-by: Hannes Reinecke <hare@suse.com>
 ---
- drivers/md/dm.c | 4 ++++
- 1 file changed, 4 insertions(+)
+ drivers/md/dm.c | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index dfb7597..1d98035 100644
+index 1d98035..cd44928 100644
 --- a/drivers/md/dm.c
 +++ b/drivers/md/dm.c
-@@ -1318,6 +1318,10 @@ static void __split_and_process_bio(struct mapped_device *md,
- 		ci.sector_count = 0;
- 		error = __send_empty_flush(&ci);
- 		/* dec_pending submits any data associated with flush */
-+	} else if (bio_op(bio) == REQ_OP_ZONE_RESET) {
-+		ci.bio = bio;
-+		ci.sector_count = 0;
-+		error = __split_and_process_non_flush(&ci);
- 	} else {
- 		ci.bio = bio;
- 		ci.sector_count = bio_sectors(bio);
+@@ -1098,7 +1098,8 @@ static int clone_bio(struct dm_target_io *tio, struct bio *bio,
+ 			return r;
+ 	}
+ 
+-	bio_advance(clone, to_bytes(sector - clone->bi_iter.bi_sector));
++	if (bio_op(bio) != REQ_OP_ZONE_REPORT)
++		bio_advance(clone, to_bytes(sector - clone->bi_iter.bi_sector));
+ 	clone->bi_iter.bi_size = to_bytes(len);
+ 
+ 	if (bio_integrity(bio))
+@@ -1275,7 +1276,11 @@ static int __split_and_process_non_flush(struct clone_info *ci)
+ 	if (!dm_target_is_valid(ti))
+ 		return -EIO;
+ 
+-	len = min_t(sector_t, max_io_len(ci->sector, ti), ci->sector_count);
++	if (bio_op(bio) == REQ_OP_ZONE_REPORT)
++		len = ci->sector_count;
++	else
++		len = min_t(sector_t, max_io_len(ci->sector, ti),
++			    ci->sector_count);
+ 
+ 	r = __clone_and_map_data_bio(ci, ti, ci->sector, &len);
+ 	if (r < 0)
 -- 
 2.9.3
