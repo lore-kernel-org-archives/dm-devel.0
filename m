@@ -1,175 +1,54 @@
-From: damien.lemoal@wdc.com
-Subject: [PATCH v2 09/10] dm-kcopyd: Add sequential write feature
-Date: Tue,  2 May 2017 02:53:13 +0900
-Message-ID: <20170501175314.10922-10-damien.lemoal@wdc.com>
-References: <20170501175314.10922-1-damien.lemoal@wdc.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-bufio: check watermark periodically each 30
+	seconds
+Date: Mon, 1 May 2017 15:51:05 -0400
+Message-ID: <20170501195104.GA14140@redhat.com>
+References: <alpine.LRH.2.02.1704301733270.25063@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20170501175314.10922-1-damien.lemoal@wdc.com>
-Sender: linux-block-owner@vger.kernel.org
-To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
-Cc: Hannes Reinecke <hare@suse.de>, Christoph Hellwig <hch@lst.de>, Bart Van Assche <Bart.VanAssche@sandisk.com>, linux-block@vger.kernel.org, Damien Le Moal <damien.lemoal@wdc.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1704301733270.25063@file01.intranet.prod.int.rdu2.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-From: Damien Le Moal <damien.lemoal@wdc.com>
+On Sun, Apr 30 2017 at  5:34pm -0400,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-When copyying blocks to host-managed zoned block devices, writes must be
-sequential. dm_kcopyd_copy() does not howerver guarantee this as writes
-are issued in the completion order of reads, and reads may complete out
-of order despite being issued sequentially.
+> dm-bufio checks a watermark when it allocates a new buffer in the function
+> __bufio_new. However, it doesn't check the watermark when the user changes
+> the value /sys/module/dm_bufio/parameters/max_cache_size_bytes.
+> 
+> This may result in a problem - if the watermark is high enough so that all
+> possible buffers are allocated and if the user lowers the value
+> "max_cache_size_bytes", the watermark will never be checked against the
+> new value because no new buffer would be allocated.
+> 
+> This patch changes the function __evict_old_buffers so that it checks the
+> watermark. __evict_old_buffers is called every 30 seconds, so if the user
+> lowes "max_cache_size_bytes", dm-bufio will react to this change within
+> 30 seconds and decrease memory consumption.
+> 
+> This patch requires the previous patch "dm-bufio: avoid a possible
+> deadlock due to lock ordering" to be applied. Applying this patch without
+> the previous patch would result in a deadlock.
+> 
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> Cc: stable@vger.kernel.org
 
-Fix this by introducing the DM_KCOPYD_WRITE_SEQ flag. This can be
-specified by the user when calling dm_kcopyd_copy() and is set
-automatically if one of the destinations is a host-managed zoned block
-device. For a split job, the master job maintains the write position at
-which writes must be issued. This is checked with the pop() function
-which is modify to not return any write I/O sub job that is not at the
-correct write position.
+I've applied the 2 stable@ fixes for 4.12 but the optimizations will
+have to wait for 4.13 (the 4.12 merge window is already open, I need to
+draw a line in the sand now).
 
-When DM_KCOPYD_WRITE_SEQ is specified for a job, errors cannot be
-ignored and the flag DM_KCOPYD_IGNORE_ERROR is ignored, even if
-specified by the user.
-
-Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
-Reviewed-by: Hannes Reinecke <hare@suse.com>
----
- drivers/md/dm-kcopyd.c    | 68 +++++++++++++++++++++++++++++++++++++++++++++--
- include/linux/dm-kcopyd.h |  1 +
- 2 files changed, 67 insertions(+), 2 deletions(-)
-
-diff --git a/drivers/md/dm-kcopyd.c b/drivers/md/dm-kcopyd.c
-index 9e9d04cb..477846e 100644
---- a/drivers/md/dm-kcopyd.c
-+++ b/drivers/md/dm-kcopyd.c
-@@ -356,6 +356,7 @@ struct kcopyd_job {
- 	struct mutex lock;
- 	atomic_t sub_jobs;
- 	sector_t progress;
-+	sector_t write_ofst;
- 
- 	struct kcopyd_job *master_job;
- };
-@@ -386,6 +387,34 @@ void dm_kcopyd_exit(void)
-  * Functions to push and pop a job onto the head of a given job
-  * list.
-  */
-+static struct kcopyd_job *pop_io_job(struct list_head *jobs,
-+				     struct dm_kcopyd_client *kc)
-+{
-+	struct kcopyd_job *job;
-+
-+	/*
-+	 * For I/O jobs, pop any read, any write without sequential write
-+	 * constraint and sequential writes that are at the right position.
-+	 */
-+	list_for_each_entry(job, jobs, list) {
-+
-+		if (job->rw == READ ||
-+		    !test_bit(DM_KCOPYD_WRITE_SEQ, &job->flags)) {
-+			list_del(&job->list);
-+			return job;
-+		}
-+
-+		if (job->write_ofst == job->master_job->write_ofst) {
-+			job->master_job->write_ofst += job->source.count;
-+			list_del(&job->list);
-+			return job;
-+		}
-+
-+	}
-+
-+	return NULL;
-+}
-+
- static struct kcopyd_job *pop(struct list_head *jobs,
- 			      struct dm_kcopyd_client *kc)
- {
-@@ -395,8 +424,12 @@ static struct kcopyd_job *pop(struct list_head *jobs,
- 	spin_lock_irqsave(&kc->job_lock, flags);
- 
- 	if (!list_empty(jobs)) {
--		job = list_entry(jobs->next, struct kcopyd_job, list);
--		list_del(&job->list);
-+		if (jobs == &kc->io_jobs) {
-+			job = pop_io_job(jobs, kc);
-+		} else {
-+			job = list_entry(jobs->next, struct kcopyd_job, list);
-+			list_del(&job->list);
-+		}
- 	}
- 	spin_unlock_irqrestore(&kc->job_lock, flags);
- 
-@@ -506,6 +539,14 @@ static int run_io_job(struct kcopyd_job *job)
- 		.client = job->kc->io_client,
- 	};
- 
-+	/*
-+	 * If we need to write sequentially and some reads or writes failed,
-+	 * no point in continuing.
-+	 */
-+	if (test_bit(DM_KCOPYD_WRITE_SEQ, &job->flags) &&
-+	    job->master_job->write_err)
-+		return -EIO;
-+
- 	io_job_start(job->kc->throttle);
- 
- 	if (job->rw == READ)
-@@ -655,6 +696,7 @@ static void segment_complete(int read_err, unsigned long write_err,
- 		int i;
- 
- 		*sub_job = *job;
-+		sub_job->write_ofst = progress;
- 		sub_job->source.sector += progress;
- 		sub_job->source.count = count;
- 
-@@ -723,6 +765,27 @@ int dm_kcopyd_copy(struct dm_kcopyd_client *kc, struct dm_io_region *from,
- 	job->num_dests = num_dests;
- 	memcpy(&job->dests, dests, sizeof(*dests) * num_dests);
- 
-+	/*
-+	 * If one of the destination is a host-managed zoned block device,
-+	 * we need to write sequentially. If one of the destination is a
-+	 * host-aware device, then leave it to the caller to choose what to do.
-+	 */
-+	if (!test_bit(DM_KCOPYD_WRITE_SEQ, &job->flags)) {
-+		for (i = 0; i < job->num_dests; i++) {
-+			if (bdev_zoned_model(dests[i].bdev) == BLK_ZONED_HM) {
-+				set_bit(DM_KCOPYD_WRITE_SEQ, &job->flags);
-+				break;
-+			}
-+		}
-+	}
-+
-+	/*
-+	 * If we need to write sequentially, errors cannot be ignored.
-+	 */
-+	if (test_bit(DM_KCOPYD_WRITE_SEQ, &job->flags) &&
-+	    test_bit(DM_KCOPYD_IGNORE_ERROR, &job->flags))
-+		clear_bit(DM_KCOPYD_IGNORE_ERROR, &job->flags);
-+
- 	if (from) {
- 		job->source = *from;
- 		job->pages = NULL;
-@@ -746,6 +809,7 @@ int dm_kcopyd_copy(struct dm_kcopyd_client *kc, struct dm_io_region *from,
- 	job->fn = fn;
- 	job->context = context;
- 	job->master_job = job;
-+	job->write_ofst = 0;
- 
- 	if (job->source.count <= SUB_JOB_SIZE)
- 		dispatch_job(job);
-diff --git a/include/linux/dm-kcopyd.h b/include/linux/dm-kcopyd.h
-index f486d63..cfac858 100644
---- a/include/linux/dm-kcopyd.h
-+++ b/include/linux/dm-kcopyd.h
-@@ -20,6 +20,7 @@
- #define DM_KCOPYD_MAX_REGIONS 8
- 
- #define DM_KCOPYD_IGNORE_ERROR 1
-+#define DM_KCOPYD_WRITE_SEQ    2
- 
- struct dm_kcopyd_throttle {
- 	unsigned throttle;
--- 
-2.9.3
+Mike
