@@ -1,78 +1,212 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-bufio: check watermark periodically each 30
-	seconds
-Date: Sun, 30 Apr 2017 17:34:53 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1704301733270.25063@file01.intranet.prod.int.rdu2.redhat.com>
+From: NeilBrown <neilb@suse.com>
+Subject: Re: [dm-devel] [mdadm PATCH 4/4] Create: tell udev device is not ready when first created.
+Date: Mon, 01 May 2017 14:35:17 +1000
+Message-ID: <8737cpry7u.fsf@notabene.neil.brown.name>
+References: <149265560315.31004.3851231165281498425.stgit@noble> <149265600601.31004.323865505557190368.stgit@noble> <dedd27cd-9c2e-f244-d8aa-7a074679d3c6@gmail.com> <87mvbasqx6.fsf@notabene.neil.brown.name> <40a5fbff-9eef-07b3-fe1b-fb9a888cfb8b@redhat.com> <87k265rxsm.fsf@notabene.neil.brown.name> <f9977410-5a8e-1a78-1406-fc9875f83d13@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <msnitzer@redhat.com>
-Cc: dm-devel@redhat.com
+Content-Type: multipart/signed; boundary="=-=-=";
+        micalg=pgp-sha256; protocol="application/pgp-signature"
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <f9977410-5a8e-1a78-1406-fc9875f83d13@redhat.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: Peter Rajnoha <prajnoha@redhat.com>, Jes Sorensen <jes.sorensen@gmail.com>
+Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-dm-bufio checks a watermark when it allocates a new buffer in the function
-__bufio_new. However, it doesn't check the watermark when the user changes
-the value /sys/module/dm_bufio/parameters/max_cache_size_bytes.
+--=-=-=
+Content-Type: text/plain
+Content-Transfer-Encoding: quoted-printable
 
-This may result in a problem - if the watermark is high enough so that all
-possible buffers are allocated and if the user lowers the value
-"max_cache_size_bytes", the watermark will never be checked against the
-new value because no new buffer would be allocated.
+On Fri, Apr 28 2017, Peter Rajnoha wrote:
 
-This patch changes the function __evict_old_buffers so that it checks the
-watermark. __evict_old_buffers is called every 30 seconds, so if the user
-lowes "max_cache_size_bytes", dm-bufio will react to this change within
-30 seconds and decrease memory consumption.
+> On 04/28/2017 05:55 AM, NeilBrown wrote:
+>> On Wed, Apr 26 2017, Peter Rajnoha wrote:
+>>=20
+>>> On 04/20/2017 11:35 PM, NeilBrown wrote:
+>>>> If we wanted an more permanent udev rule, we would need to record the
+>>>> devices that should be ignored in the filesystem somewhere else.
+>>>> Maybe in /run/mdadm.
+>>>> e.g.
+>>>>
+>>>>  KERNEL=3D=3D"md*", TEST=3D"/run/mdadm/creating-$kernel", ENV{SYSTEMD_=
+READY}=3D"0"
+>>>>
+>>>> Then we could have something like the following (untested) in mdadm.
+>>>> Does that seem more suitable?
+>>>>
+>>>
+>>> Yes, please, if possible, go for a permanent udev rule surely - this
+>>> will make it much easier for other foreign tools to hook in properly if
+>>> needed and it would also be much easier to debug.
+>>=20
+>> I'm leaning towards the files-in-/run/mdadm approach too.  I'll make a
+>> proper patch.
+>>=20
+>>>
+>>> But, wouldn't it be better if we could just pass this information ("not
+>>> initialized yet") as RUN_ARRAY md ioctl parameter? In that case the md
+>>> driver in kernel could add the variable to the uevent it generates which
+>>> userspace udev rules could check for easily. This way, we don't need to
+>>> hassle with creating files in filesystem and the information would be
+>>> directly a part of the uevent the md kernel driver generates (so
+>>> directly accessible in udev rules too). Also, possibly adding more
+>>> variables for other future scenarios if needed.
+>>=20
+>> When would we clear the "not initialised yet" flag in the kernel, and
+>> how?  And would that be enough.
+>
+> The flag wouldn't be stored in kernel, md kernel driver would just pass
+> the flag with the uevent as it received in with ioctl/sysfs request to
+> create a new dev. The udev in userspace would handle the state
+> transition then from "flagged as not-initialized" state to "initilized"
+> by checking the sequence of events as they come.
+>
+> We should have this sequence I assume:
+>
+>   1) "add" (creating dev, not usable yet)
+>   2) "change" (activated dev, but not initialized yet)
+>   3) "synthetic change" (after wiping the dev and closing it, the WATCH
+> rule fires)
+>
 
-This patch requires the previous patch "dm-bufio: avoid a possible
-deadlock due to lock ordering" to be applied. Applying this patch without
-the previous patch would result in a deadlock.
+"Should" is arguable, but there are no guarantees of this sequence.
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Cc: stable@vger.kernel.org
+A particular cause of irregular sequencing is when an array is assembled
+by the initrd, then after the real root is mounted, something runs
+  udevadm trigger --action=3Dadd
+(e.g. systemd-udev-triggger.service).
 
----
- drivers/md/dm-bufio.c |   10 ++++++++++
- 1 file changed, 10 insertions(+)
+In that case, 'add' is the first and only message that the
+full-root-available udev sees, so it is not safe to ignore the array as
+"not usable yet".
 
-Index: linux-2.6/drivers/md/dm-bufio.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-bufio.c
-+++ linux-2.6/drivers/md/dm-bufio.c
-@@ -1835,9 +1835,17 @@ static void __evict_old_buffers(struct d
- 	struct dm_buffer *b, *tmp;
- 	unsigned retain_target = get_retain_buffers(c);
- 	unsigned count;
-+	LIST_HEAD(write_list);
- 
- 	dm_bufio_lock(c);
- 
-+	__check_watermark(c, &write_list);
-+	if (unlikely(!list_empty(&write_list))) {
-+		dm_bufio_unlock(c);
-+		__flush_write_list(&write_list);
-+		dm_bufio_lock(c);
-+	}
-+
- 	count = c->n_buffers[LIST_CLEAN] + c->n_buffers[LIST_DIRTY];
- 	list_for_each_entry_safe_reverse(b, tmp, &c->lru[LIST_CLEAN], lru_list) {
- 		if (count <= retain_target)
-@@ -1862,6 +1870,8 @@ static void cleanup_old_buffers(void)
- 
- 	mutex_lock(&dm_bufio_clients_lock);
- 
-+	__cache_size_refresh();
-+
- 	list_for_each_entry(c, &dm_bufio_all_clients, client_list)
- 		__evict_old_buffers(c, max_age_hz);
- 
+
+>>=20
+>> When mdadm creates an md array, at least 3 uevents get generated.
+>> The first is generated when the md device object is created, either by
+>> opening the /dev/mdXX file, or by writing magic to somewhere in sysfs.
+>> The second is generated when the array is started and the content is
+>> visible.
+>> The third is generated when mdadm closes the file descriptor.  It opens
+>> /dev/mdXX for O_RDWR and performs ioctls on this, and then closes it.
+>> Because udev uses inotify to watch for a 'close for a writable file
+>> descriptor', this generates another event.
+>>=20
+>> We need to ensure that none of these cause udev to run anything that
+>> inspects the contents of the array.
+>> Of the three, only the second one is directly under the control of the
+>> md module, so only that one can add an environment variable.
+>>=20
+>> It might be possible to avoid the last one (by not opening for write),
+>> but I cannot see a way to avoid the first one.
+>
+> So the first event is the "add" event ("md device object created") - in
+> this case, the device is not yet usable anyway I suppose, so we can skip
+> udev scans for this event right away (unless it's the synthetic "add"
+> event which is generated by writing "add" to /sys/block/.../uevent file
+> or alternatively using udevadm trigger - but we should be able to
+> recognize this event "synthetic add event" because it always comes after
+> the activating "change" event, otherwise we can skip scans).
+
+"not yet usable anyway" is not reliable.  It is very easy for mdadm to
+finish making the array usable before udev gets around to processing the
+initial "add" event.
+
+You seem to be suggesting that udev rules should try to reverse-engineer
+the sequence of events and deduce what is meant from that sequence.  I
+doubt that would be very robust.
+
+
+>
+> The second event, which is the "change" event, would be marked with the
+> new "not initialized" flag. And so we skip the scans in udev too.
+
+(one obvious problem with this approach is that it cannot work with old
+kernels, while my approach only requires an update to mdadm)
+
+>
+> Then mdadm opens the devive, clears any old content/signatures the data
+> area may contain, then closes it - this generates the third event -
+> which is the "synthetic change" event (as a result of the inotify WATCH
+> rule). And this one would drop the "not initialized" flag in udev db and
+> the scans in udev are now enabled.
+
+Nope, it would be incorrect for mdadm to clear any old content.
+Sometimes people want to ignore old content.  Sometimes they very
+definitely want to use it.  It would be wrong for any code to try to
+guess what is wanted.
+
+
+>
+> So we should be able to handle all three kinds of events I think.
+>
+> Now, as for even better synthetic event recognition, I've proposed a
+> patch recently where udev as well as any other tool generating these
+> synthetic events can add variables for more detailed event
+> identification, so this one should help us in the future even more in
+> these situations: https://lkml.org/lkml/2017/3/15/461. With this, we can
+> even disable the WATCH rule till the device is properly initialized and
+> the tool can generate the event itself by writing the
+> /sys/block/.../uevent file with a variable that the tool can then wait
+> for even (so the tool doesn't exit till the device is not properly
+> initialized). Once this initialization is all done, the WATCH rule can
+> be enabled for the dev. Also, with this, we don't need to be afraid that
+> some other tool fired the WATCH rule by chance if it opened the dev for
+> RW and closed it by mistake before we had a chance to initialize it
+> (which would fire the synthetic change event before the
+> wiping/initialization).
+
+It sounds to me like you are adding a lot of complexity to an
+already-fragile system.  I'm not filled with confidence - sorry.
+
+Thanks,
+NeilBrown
+
+
+>
+>>=20
+>> I don't think that making a file appear in /run is really very different
+>> from making a variable appear in a uevent.   If the variable were
+>> describing the event itself there would be a different, but it would be
+>> describing the state of the device.  So the only important difference is
+>> "which is easier to work with".  I think creating an deleting a file is
+>> easier to setting and clearing a variable.
+>>=20
+>
+> Yes, I agree that it's an alternative solution - it definitely and
+> surely improves current situation, either if we choose to write the file
+> or pass the flag in the uevent directly. It's just that with the
+> information written in filesystem, we have something external to check
+> for in addition to processing the uevent variables while we don't need
+> to, I think. As I described the sequence of events above, I think we
+> should be able to recognize the events properly and we should be able to
+> drop the flag automatically.
+>
+> --=20
+> Peter
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+
+--=-=-=
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCAAdFiEEG8Yp69OQ2HB7X0l6Oeye3VZigbkFAlkGuwUACgkQOeye3VZi
+gbn8eBAArnA5pLEdhkJ4OtA8y2wu5zRmyUAj+Ft64LAuj69NntW/FM7cHG8b+EFd
+UbNPApVX7KSH+orhe+rNbg3hRcMggFxrrxxFmzmqlw8LkBYPrhisXndbjCXdnBVB
+doJqmRxDzGihI/t/GaNSiV4O89zMFUrKAELwotp9GJamt0tALphhfzDOICybJnC/
+XwMYwrS0r9xpgI7Wr5W7IfoFdA2xriEjqJSY4Edhm/litg9dIyVdLJBadztT6QSA
+QNaO/4Ej6sb8n4/zujeWitH9lTZFhbEwxs3Ka0G4e2KDtcIZZFoGG0Xk/CP1ThT1
+Wq2KWp9Q0sryVJqmTisGukBmWzFnv/UjsPE6fp++nbylbOQHRgcOjGvAwpu70CFC
+WCY092TybIn9hs+iMXkHuPd/m3KKhfT1CYz//lXt4UnMX9SkzsUtZtdvQ85HEBUD
+UhQyDpu8D4LlPJXdW5g5U79NAqSilFw0HmJZOiv/7dVwtD52iU730Km6EuLzdZBp
+DwbRLBpA5vuEweLkXEG+8qznZdThQN43EY16DMliJKytRwMje5RQuF550+jWkF3W
+E8EhwhUvoNsK6z094R1lUhsmaWggOwdleCo8W2t72KDsb+qD3D5qlrYTukJ6Eabz
+tglBB2WqikfjzKMQB2z06P3ve1kypYqML1fPFHESrgxx9i6yfxE=
+=ncJj
+-----END PGP SIGNATURE-----
+--=-=-=--
