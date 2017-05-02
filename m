@@ -1,86 +1,47 @@
 From: Jan Kara <jack@suse.cz>
-Subject: [PATCH 7/7] md: Make flush bios explicitely sync
-Date: Tue,  2 May 2017 17:03:51 +0200
-Message-ID: <20170502150351.29452-8-jack@suse.cz>
-References: <20170502150351.29452-1-jack@suse.cz>
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <20170502150351.29452-1-jack@suse.cz>
-Sender: linux-raid-owner@vger.kernel.org
+Subject: [PATCH 0/7] Fix fallout from changes to FUA and PREFLUSH
+	definitions
+Date: Tue,  2 May 2017 17:03:44 +0200
+Message-ID: <20170502150351.29452-1-jack@suse.cz>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
+	<mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
+List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
+List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
+	<mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
+Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: linux-fsdevel@vger.kernel.org
-Cc: Christoph Hellwig <hch@infradead.org>, Jan Kara <jack@suse.cz>, linux-raid@vger.kernel.org, Shaohua Li <shli@kernel.org>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
+Cc: cluster-devel@redhat.com, Theodore Ts'o <tytso@mit.edu>, Mike Snitzer <snitzer@redhat.com>, linux-raid@vger.kernel.org, reiserfs-devel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, Jaegeuk Kim <jaegeuk@kernel.org>, David Sterba <dsterba@suse.com>, Jan Kara <jack@suse.cz>, linux-ext4@vger.kernel.org, Shaohua Li <shli@kernel.org>, Steven Whitehouse <swhiteho@redhat.com>, linux-btrfs@vger.kernel.org
 List-Id: dm-devel.ids
 
-Commit b685d3d65ac7 "block: treat REQ_FUA and REQ_PREFLUSH as
-synchronous" removed REQ_SYNC flag from WRITE_{FUA|PREFLUSH|...}
-definitions.  generic_make_request_checks() however strips REQ_FUA and
-REQ_PREFLUSH flags from a bio when the storage doesn't report volatile
-write cache and thus write effectively becomes asynchronous which can
-lead to performance regressions
+Hello,
 
-Fix the problem by making sure all bios which are synchronous are
-properly marked with REQ_SYNC.
+this series addresses a performance issue caused by commit b685d3d65ac7 "block:
+treat REQ_FUA and REQ_PREFLUSH as synchronous". We know for certain this
+problem significanly regresses (over 10%, in some cases up to 100%) ext4 and
+btrfs for dbench4 and reaim benchmarks.  Based on this I have fixed up also
+other places which suffer from the same problem however those changes are
+untested so maintainers please have a look whether the change makes sense to
+you and also whether I possibly didn't miss some cases where REQ_SYNC should be
+also added. Patches in this series are completely independent so if maintainers
+agree with the change, feel free to take it through your tree.
 
-CC: linux-raid@vger.kernel.org
-CC: Shaohua Li <shli@kernel.org>
-CC: Mike Snitzer <snitzer@redhat.com>
-CC: dm-devel@redhat.com
-Fixes: b685d3d65ac791406e0dfd8779cc9b3707fea5a3
-Signed-off-by: Jan Kara <jack@suse.cz>
----
- drivers/md/dm-snap-persistent.c | 3 ++-
- drivers/md/md.c                 | 2 +-
- drivers/md/raid5-cache.c        | 4 ++--
- 3 files changed, 5 insertions(+), 4 deletions(-)
+The core of the problem is that above mentioned commit removed REQ_SYNC flag
+from WRITE_{FUA|PREFLUSH|...} definitions.  generic_make_request_checks()
+however strips REQ_FUA and REQ_PREFLUSH flags from a bio when the storage
+doesn't report volatile write cache and thus write effectively becomes
+asynchronous which can lead to performance regressions.
 
-diff --git a/drivers/md/dm-snap-persistent.c b/drivers/md/dm-snap-persistent.c
-index b93476c3ba3f..b92ab4cb0710 100644
---- a/drivers/md/dm-snap-persistent.c
-+++ b/drivers/md/dm-snap-persistent.c
-@@ -741,7 +741,8 @@ static void persistent_commit_exception(struct dm_exception_store *store,
- 	/*
- 	 * Commit exceptions to disk.
- 	 */
--	if (ps->valid && area_io(ps, REQ_OP_WRITE, REQ_PREFLUSH | REQ_FUA))
-+	if (ps->valid && area_io(ps, REQ_OP_WRITE,
-+				 REQ_SYNC | REQ_PREFLUSH | REQ_FUA))
- 		ps->valid = 0;
- 
- 	/*
-diff --git a/drivers/md/md.c b/drivers/md/md.c
-index f6ae1d67bcd0..9c40ce0642c2 100644
---- a/drivers/md/md.c
-+++ b/drivers/md/md.c
-@@ -753,7 +753,7 @@ void md_super_write(struct mddev *mddev, struct md_rdev *rdev,
- 	    test_bit(FailFast, &rdev->flags) &&
- 	    !test_bit(LastDev, &rdev->flags))
- 		ff = MD_FAILFAST;
--	bio->bi_opf = REQ_OP_WRITE | REQ_PREFLUSH | REQ_FUA | ff;
-+	bio->bi_opf = REQ_OP_WRITE | REQ_SYNC | REQ_PREFLUSH | REQ_FUA | ff;
- 
- 	atomic_inc(&mddev->pending_writes);
- 	submit_bio(bio);
-diff --git a/drivers/md/raid5-cache.c b/drivers/md/raid5-cache.c
-index 3f307be01b10..0bd5d0c88cee 100644
---- a/drivers/md/raid5-cache.c
-+++ b/drivers/md/raid5-cache.c
-@@ -1625,7 +1625,7 @@ static int r5l_log_write_empty_meta_block(struct r5l_log *log, sector_t pos,
- 	mb->checksum = cpu_to_le32(crc32c_le(log->uuid_checksum,
- 					     mb, PAGE_SIZE));
- 	if (!sync_page_io(log->rdev, pos, PAGE_SIZE, page, REQ_OP_WRITE,
--			  REQ_FUA, false)) {
-+			  REQ_SYNC | REQ_FUA, false)) {
- 		__free_page(page);
- 		return -EIO;
- 	}
-@@ -2198,7 +2198,7 @@ r5c_recovery_rewrite_data_only_stripes(struct r5l_log *log,
- 		mb->checksum = cpu_to_le32(crc32c_le(log->uuid_checksum,
- 						     mb, PAGE_SIZE));
- 		sync_page_io(log->rdev, ctx->pos, PAGE_SIZE, page,
--			     REQ_OP_WRITE, REQ_FUA, false);
-+			     REQ_OP_WRITE, REQ_SYNC | REQ_FUA, false);
- 		sh->log_start = ctx->pos;
- 		list_add_tail(&sh->r5c, &log->stripe_in_journal_list);
- 		atomic_inc(&log->stripe_in_journal_count);
--- 
-2.12.0
+A side note for ext4: The two patches for ext4 & jbd2 are on top of the change
+that got merged in the ext4 tree already.
 
+								Honza
+
+------------------------------------------------------------------------------
+Check out the vibrant tech community on one of the world's most
+engaging tech sites, Slashdot.org! http://sdm.link/slashdot
