@@ -1,64 +1,86 @@
-From: Jes Sorensen <jes.sorensen@gmail.com>
-Subject: Re: [mdadm PATCH] Create: tell udev md device is not ready when first
- created.
-Date: Tue, 2 May 2017 09:42:49 -0400
-Message-ID: <01f50f57-c55e-e87f-b5a1-ded4647368b2@gmail.com>
-References: <149265560315.31004.3851231165281498425.stgit@noble>
- <149265600601.31004.323865505557190368.stgit@noble>
- <dedd27cd-9c2e-f244-d8aa-7a074679d3c6@gmail.com>
- <87mvbasqx6.fsf@notabene.neil.brown.name>
- <40a5fbff-9eef-07b3-fe1b-fb9a888cfb8b@redhat.com>
- <87h919ruj5.fsf@notabene.neil.brown.name>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
+From: Jan Kara <jack@suse.cz>
+Subject: [PATCH 7/7] md: Make flush bios explicitely sync
+Date: Tue,  2 May 2017 17:03:51 +0200
+Message-ID: <20170502150351.29452-8-jack@suse.cz>
+References: <20170502150351.29452-1-jack@suse.cz>
 Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <87h919ruj5.fsf@notabene.neil.brown.name>
+In-Reply-To: <20170502150351.29452-1-jack@suse.cz>
 Sender: linux-raid-owner@vger.kernel.org
-To: NeilBrown <neilb@suse.com>
-Cc: Peter Rajnoha <prajnoha@redhat.com>, linux-raid@vger.kernel.org, dm-devel@redhat.com
+To: linux-fsdevel@vger.kernel.org
+Cc: Christoph Hellwig <hch@infradead.org>, Jan Kara <jack@suse.cz>, linux-raid@vger.kernel.org, Shaohua Li <shli@kernel.org>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 04/28/2017 01:05 AM, NeilBrown wrote:
->
-> When an array is created the content is not initialized,
-> so it could have remnants of an old filesystem or md array
-> etc on it.
-> udev will see this and might try to activate it, which is almost
-> certainly not what is wanted.
->
-> So create a mechanism for mdadm to communicate with udev to tell
-> it that the device isn't ready.  This mechanism is the existance
-> of a file /run/mdadm/created-mdXXX where mdXXX is the md device name.
->
-> When creating an array, mdadm will create the file.
-> A new udev rule file, 01-md-raid-creating.rules, will detect the
-> precense of thst file and set ENV{SYSTEMD_READY}="0".
-> This is fairly uniformly used to suppress actions based on the
-> contents of the device.
->
-> Signed-off-by: NeilBrown <neilb@suse.com>
-> ---
->  Assemble.c                  |  2 +-
->  Build.c                     |  2 +-
->  Create.c                    |  9 +++++++-
->  Incremental.c               |  4 ++--
->  Makefile                    |  4 ++--
->  lib.c                       | 29 +++++++++++++++++++++++++
->  mdadm.h                     |  4 +++-
->  mdopen.c                    | 52 ++++++++++++++++++++++++++++-----------------
->  udev-md-raid-creating.rules |  7 ++++++
->  9 files changed, 86 insertions(+), 27 deletions(-)
->  create mode 100644 udev-md-raid-creating.rules
+Commit b685d3d65ac7 "block: treat REQ_FUA and REQ_PREFLUSH as
+synchronous" removed REQ_SYNC flag from WRITE_{FUA|PREFLUSH|...}
+definitions.  generic_make_request_checks() however strips REQ_FUA and
+REQ_PREFLUSH flags from a bio when the storage doesn't report volatile
+write cache and thus write effectively becomes asynchronous which can
+lead to performance regressions
 
-Applied!
+Fix the problem by making sure all bios which are synchronous are
+properly marked with REQ_SYNC.
 
-I like this solution much better, even though I am not in love with the 
-giant usleep() call. Would be nice to find a better way around that.
+CC: linux-raid@vger.kernel.org
+CC: Shaohua Li <shli@kernel.org>
+CC: Mike Snitzer <snitzer@redhat.com>
+CC: dm-devel@redhat.com
+Fixes: b685d3d65ac791406e0dfd8779cc9b3707fea5a3
+Signed-off-by: Jan Kara <jack@suse.cz>
+---
+ drivers/md/dm-snap-persistent.c | 3 ++-
+ drivers/md/md.c                 | 2 +-
+ drivers/md/raid5-cache.c        | 4 ++--
+ 3 files changed, 5 insertions(+), 4 deletions(-)
 
-Sorry it took so long to get back to you on this, last week was a mess.
-
-Thanks,
-Jes
-
+diff --git a/drivers/md/dm-snap-persistent.c b/drivers/md/dm-snap-persistent.c
+index b93476c3ba3f..b92ab4cb0710 100644
+--- a/drivers/md/dm-snap-persistent.c
++++ b/drivers/md/dm-snap-persistent.c
+@@ -741,7 +741,8 @@ static void persistent_commit_exception(struct dm_exception_store *store,
+ 	/*
+ 	 * Commit exceptions to disk.
+ 	 */
+-	if (ps->valid && area_io(ps, REQ_OP_WRITE, REQ_PREFLUSH | REQ_FUA))
++	if (ps->valid && area_io(ps, REQ_OP_WRITE,
++				 REQ_SYNC | REQ_PREFLUSH | REQ_FUA))
+ 		ps->valid = 0;
+ 
+ 	/*
+diff --git a/drivers/md/md.c b/drivers/md/md.c
+index f6ae1d67bcd0..9c40ce0642c2 100644
+--- a/drivers/md/md.c
++++ b/drivers/md/md.c
+@@ -753,7 +753,7 @@ void md_super_write(struct mddev *mddev, struct md_rdev *rdev,
+ 	    test_bit(FailFast, &rdev->flags) &&
+ 	    !test_bit(LastDev, &rdev->flags))
+ 		ff = MD_FAILFAST;
+-	bio->bi_opf = REQ_OP_WRITE | REQ_PREFLUSH | REQ_FUA | ff;
++	bio->bi_opf = REQ_OP_WRITE | REQ_SYNC | REQ_PREFLUSH | REQ_FUA | ff;
+ 
+ 	atomic_inc(&mddev->pending_writes);
+ 	submit_bio(bio);
+diff --git a/drivers/md/raid5-cache.c b/drivers/md/raid5-cache.c
+index 3f307be01b10..0bd5d0c88cee 100644
+--- a/drivers/md/raid5-cache.c
++++ b/drivers/md/raid5-cache.c
+@@ -1625,7 +1625,7 @@ static int r5l_log_write_empty_meta_block(struct r5l_log *log, sector_t pos,
+ 	mb->checksum = cpu_to_le32(crc32c_le(log->uuid_checksum,
+ 					     mb, PAGE_SIZE));
+ 	if (!sync_page_io(log->rdev, pos, PAGE_SIZE, page, REQ_OP_WRITE,
+-			  REQ_FUA, false)) {
++			  REQ_SYNC | REQ_FUA, false)) {
+ 		__free_page(page);
+ 		return -EIO;
+ 	}
+@@ -2198,7 +2198,7 @@ r5c_recovery_rewrite_data_only_stripes(struct r5l_log *log,
+ 		mb->checksum = cpu_to_le32(crc32c_le(log->uuid_checksum,
+ 						     mb, PAGE_SIZE));
+ 		sync_page_io(log->rdev, ctx->pos, PAGE_SIZE, page,
+-			     REQ_OP_WRITE, REQ_FUA, false);
++			     REQ_OP_WRITE, REQ_SYNC | REQ_FUA, false);
+ 		sh->log_start = ctx->pos;
+ 		list_add_tail(&sh->r5c, &log->stripe_in_journal_list);
+ 		atomic_inc(&log->stripe_in_journal_count);
+-- 
+2.12.0
 
