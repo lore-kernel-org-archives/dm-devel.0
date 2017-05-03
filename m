@@ -1,43 +1,44 @@
-From: Bart Van Assche <Bart.VanAssche@sandisk.com>
-Subject: Re: [PATCH v2 10/10] dm-zoned: Drive-managed zoned block device
- target
-Date: Tue, 2 May 2017 21:53:41 +0000
-Message-ID: <1493762020.2552.15.camel@sandisk.com>
-References: <20170501175314.10922-1-damien.lemoal@wdc.com>
-         <20170501175314.10922-11-damien.lemoal@wdc.com>
+From: "Nicholas A. Bellinger" <nab@linux-iscsi.org>
+Subject: Re: [PATCH 25/27] block: remove the discard_zeroes_data flag
+Date: Tue, 02 May 2017 20:33:15 -0700
+Message-ID: <1493782395.23202.84.camel@haakon3.risingtidesystems.com>
+References: <20170405172125.22600-1-hch@lst.de>
+         <20170405172125.22600-26-hch@lst.de> <1493671519.2665.15.camel@sandisk.com>
+         <1493707425.23202.77.camel@haakon3.risingtidesystems.com>
+         <1493709373.23202.79.camel@haakon3.risingtidesystems.com>
+         <20170502072328.GA11522@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20170501175314.10922-11-damien.lemoal@wdc.com>
-Content-Language: en-US
-Content-ID: <BAF4FD6E9160D646BB006A218540E3D4@namprd04.prod.outlook.com>
+In-Reply-To: <20170502072328.GA11522@lst.de>
 Sender: linux-block-owner@vger.kernel.org
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>, "agk@redhat.com" <agk@redhat.com>, Damien Le Moal <Damien.LeMoal@wdc.com>, "snitzer@redhat.com" <snitzer@redhat.com>
-Cc: "hch@lst.de" <hch@lst.de>, "hare@suse.de" <hare@suse.de>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>
+To: "hch@lst.de" <hch@lst.de>
+Cc: Bart Van Assche <Bart.VanAssche@sandisk.com>, "agk@redhat.com" <agk@redhat.com>, "lars.ellenberg@linbit.com" <lars.ellenberg@linbit.com>, "snitzer@redhat.com" <snitzer@redhat.com>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "philipp.reisner@linbit.com" <philipp.reisner@linbit.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "shli@kernel.org" <shli@kernel.org>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "drbd-dev@lists.linbit.com" <drbd-dev@lists.linbit.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "target-devel@vger.kernel.org" <target-devel@vger.kernel.org>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Tue, 2017-05-02 at 02:53 +0900, damien.lemoal@wdc.com wrote:
-> +static unsigned long dmz_mblock_shrinker_count(struct shrinker *shrink,
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 struct shri=
-nk_control *sc)
-> +{
-> +=A0=A0=A0=A0=A0=A0=A0struct dmz_target *dmz =3D
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0container_of(shrink, struct=
- dmz_target, mblk_shrinker);
-> +
-> +=A0=A0=A0=A0=A0=A0=A0return atomic_read(&dmz->nr_mblks);
-> +}
+On Tue, 2017-05-02 at 09:23 +0200, hch@lst.de wrote:
+> On Tue, May 02, 2017 at 12:16:13AM -0700, Nicholas A. Bellinger wrote:
+> > Or, another options is use bdev_write_zeroes_sectors() to determine when
+> > dev_attrib->unmap_zeroes_data should be set.
+> 
+> Yes, that in combination with your patch to use bdev_write_zeroes_sectors
+> for zeroing from write same seems like the right fix.
 
-Hello Damien,
+The larger target/iblock conversion patch looks like post v4.12 material
+at this point, so to avoid breakage wrt to existing LBPRZ behavior, I'll
+plan to push the following patch post -rc1.
 
-dmz_mblock_shrinker_count() probably should return the following value sinc=
-e
-dmz_shrink_mblock_cache() won't free more than the this number of elements:
-
-        max(atomic_read(&dmz->nr_mblks) - dmz->min_nr_mblks, 0)=20
-
-But since v2 is IMHO good enough to be merged, for the whole series:
-
-Reviewed-by: Bart Van Assche <bart.vanassche@sandisk.com>=
+diff --git a/drivers/target/target_core_device.c b/drivers/target/target_core_device.c
+index d2f089c..e7caf78 100644
+--- a/drivers/target/target_core_device.c
++++ b/drivers/target/target_core_device.c
+@@ -851,7 +851,7 @@ bool target_configure_unmap_from_queue(struct se_dev_attrib *attrib,
+        attrib->unmap_granularity = q->limits.discard_granularity / block_size;
+        attrib->unmap_granularity_alignment = q->limits.discard_alignment /
+                                                                block_size;
+-       attrib->unmap_zeroes_data = 0;
++       attrib->unmap_zeroes_data = (q->limits.max_write_zeroes_sectors);
+        return true;
+ }
+ EXPORT_SYMBOL(target_configure_unmap_from_queue);
