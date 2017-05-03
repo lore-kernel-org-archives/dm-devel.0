@@ -1,74 +1,52 @@
-From: Peter Rajnoha <prajnoha@redhat.com>
-Subject: Re: [mdadm PATCH] Create: tell udev md device is not
- ready when first created.
-Date: Wed, 3 May 2017 16:32:14 +0200
-Message-ID: <2fb51c71-4398-e206-4a94-5dcd13d78603@redhat.com>
-References: <149265560315.31004.3851231165281498425.stgit@noble>
-	<149265600601.31004.323865505557190368.stgit@noble>
-	<dedd27cd-9c2e-f244-d8aa-7a074679d3c6@gmail.com>
-	<87mvbasqx6.fsf@notabene.neil.brown.name>
-	<40a5fbff-9eef-07b3-fe1b-fb9a888cfb8b@redhat.com>
-	<87h919ruj5.fsf@notabene.neil.brown.name>
-	<01f50f57-c55e-e87f-b5a1-ded4647368b2@gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 25/27] block: remove the discard_zeroes_data flag
+Date: Wed, 3 May 2017 10:33:39 -0400
+Message-ID: <20170503143338.GA24111@redhat.com>
+References: <20170405172125.22600-1-hch@lst.de>
+ <20170405172125.22600-26-hch@lst.de>
+ <1493671519.2665.15.camel@sandisk.com>
+ <1493707425.23202.77.camel@haakon3.risingtidesystems.com>
+ <1493709373.23202.79.camel@haakon3.risingtidesystems.com>
+ <20170502072328.GA11522@lst.de>
+ <1493782395.23202.84.camel@haakon3.risingtidesystems.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <01f50f57-c55e-e87f-b5a1-ded4647368b2@gmail.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Jes Sorensen <jes.sorensen@gmail.com>, NeilBrown <neilb@suse.com>
-Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1493782395.23202.84.camel@haakon3.risingtidesystems.com>
+Sender: linux-block-owner@vger.kernel.org
+To: "Nicholas A. Bellinger" <nab@linux-iscsi.org>
+Cc: "hch@lst.de" <hch@lst.de>, Bart Van Assche <Bart.VanAssche@sandisk.com>, "agk@redhat.com" <agk@redhat.com>, "lars.ellenberg@linbit.com" <lars.ellenberg@linbit.com>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "philipp.reisner@linbit.com" <philipp.reisner@linbit.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "shli@kernel.org" <shli@kernel.org>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "drbd-dev@lists.linbit.com" <drbd-dev@lists.linbit.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "target-devel@vger.kernel.org" <target-devel@vger.kernel.org>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On 05/02/2017 03:42 PM, Jes Sorensen wrote:
-> On 04/28/2017 01:05 AM, NeilBrown wrote:
->>
->> When an array is created the content is not initialized,
->> so it could have remnants of an old filesystem or md array
->> etc on it.
->> udev will see this and might try to activate it, which is almost
->> certainly not what is wanted.
->>
->> So create a mechanism for mdadm to communicate with udev to tell
->> it that the device isn't ready.  This mechanism is the existance
->> of a file /run/mdadm/created-mdXXX where mdXXX is the md device name.
->>
->> When creating an array, mdadm will create the file.
->> A new udev rule file, 01-md-raid-creating.rules, will detect the
->> precense of thst file and set ENV{SYSTEMD_READY}="0".
->> This is fairly uniformly used to suppress actions based on the
->> contents of the device.
->>
->> Signed-off-by: NeilBrown <neilb@suse.com>
->> ---
->>  Assemble.c                  |  2 +-
->>  Build.c                     |  2 +-
->>  Create.c                    |  9 +++++++-
->>  Incremental.c               |  4 ++--
->>  Makefile                    |  4 ++--
->>  lib.c                       | 29 +++++++++++++++++++++++++
->>  mdadm.h                     |  4 +++-
->>  mdopen.c                    | 52
->> ++++++++++++++++++++++++++++-----------------
->>  udev-md-raid-creating.rules |  7 ++++++
->>  9 files changed, 86 insertions(+), 27 deletions(-)
->>  create mode 100644 udev-md-raid-creating.rules
+On Tue, May 02 2017 at 11:33pm -0400,
+Nicholas A. Bellinger <nab@linux-iscsi.org> wrote:
+
+> On Tue, 2017-05-02 at 09:23 +0200, hch@lst.de wrote:
+> > On Tue, May 02, 2017 at 12:16:13AM -0700, Nicholas A. Bellinger wrote:
+> > > Or, another options is use bdev_write_zeroes_sectors() to determine when
+> > > dev_attrib->unmap_zeroes_data should be set.
+> > 
+> > Yes, that in combination with your patch to use bdev_write_zeroes_sectors
+> > for zeroing from write same seems like the right fix.
 > 
-> Applied!
+> The larger target/iblock conversion patch looks like post v4.12 material
+> at this point, so to avoid breakage wrt to existing LBPRZ behavior, I'll
+> plan to push the following patch post -rc1.
+> 
+> diff --git a/drivers/target/target_core_device.c b/drivers/target/target_core_device.c
+> index d2f089c..e7caf78 100644
+> --- a/drivers/target/target_core_device.c
+> +++ b/drivers/target/target_core_device.c
+> @@ -851,7 +851,7 @@ bool target_configure_unmap_from_queue(struct se_dev_attrib *attrib,
+>         attrib->unmap_granularity = q->limits.discard_granularity / block_size;
+>         attrib->unmap_granularity_alignment = q->limits.discard_alignment /
+>                                                                 block_size;
+> -       attrib->unmap_zeroes_data = 0;
+> +       attrib->unmap_zeroes_data = (q->limits.max_write_zeroes_sectors);
+>         return true;
+>  }
+>  EXPORT_SYMBOL(target_configure_unmap_from_queue);
 > 
 
-How is this solving the problem then? The patch is flagging a device as
-not ready, then clearing the flag after some time. Where does the wiping
-happen actually?
-
--- 
-Peter
+Completely a nit but: why the extra parenthesis?
