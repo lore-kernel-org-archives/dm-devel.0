@@ -1,110 +1,74 @@
 From: Peter Rajnoha <prajnoha@redhat.com>
-Subject: Re: [dm-devel] [mdadm PATCH 4/4] Create: tell udev device is not
+Subject: Re: [mdadm PATCH] Create: tell udev md device is not
  ready when first created.
-Date: Wed, 3 May 2017 16:27:22 +0200
-Message-ID: <4b422ccc-b666-e9ae-4067-cb0c4e407c04@redhat.com>
+Date: Wed, 3 May 2017 16:32:14 +0200
+Message-ID: <2fb51c71-4398-e206-4a94-5dcd13d78603@redhat.com>
 References: <149265560315.31004.3851231165281498425.stgit@noble>
- <149265600601.31004.323865505557190368.stgit@noble>
- <dedd27cd-9c2e-f244-d8aa-7a074679d3c6@gmail.com>
- <87mvbasqx6.fsf@notabene.neil.brown.name>
- <40a5fbff-9eef-07b3-fe1b-fb9a888cfb8b@redhat.com>
- <87k265rxsm.fsf@notabene.neil.brown.name>
- <f9977410-5a8e-1a78-1406-fc9875f83d13@redhat.com>
- <8737cpry7u.fsf@notabene.neil.brown.name>
- <65882238-57f0-dcef-645b-0ab1ab9cdc91@redhat.com>
- <88ba4ec0-9c4d-aa07-b9b5-66cad893e130@gmail.com>
+	<149265600601.31004.323865505557190368.stgit@noble>
+	<dedd27cd-9c2e-f244-d8aa-7a074679d3c6@gmail.com>
+	<87mvbasqx6.fsf@notabene.neil.brown.name>
+	<40a5fbff-9eef-07b3-fe1b-fb9a888cfb8b@redhat.com>
+	<87h919ruj5.fsf@notabene.neil.brown.name>
+	<01f50f57-c55e-e87f-b5a1-ded4647368b2@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <88ba4ec0-9c4d-aa07-b9b5-66cad893e130@gmail.com>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <01f50f57-c55e-e87f-b5a1-ded4647368b2@gmail.com>
 Content-Language: en-US
-Sender: linux-raid-owner@vger.kernel.org
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
 To: Jes Sorensen <jes.sorensen@gmail.com>, NeilBrown <neilb@suse.com>
 Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 05/02/2017 03:40 PM, Jes Sorensen wrote:
-> On 05/02/2017 07:40 AM, Peter Rajnoha wrote:
->> On 05/01/2017 06:35 AM, NeilBrown wrote:
->>> On Fri, Apr 28 2017, Peter Rajnoha wrote:
->>>> Then mdadm opens the devive, clears any old content/signatures the data
->>>> area may contain, then closes it - this generates the third event -
->>>> which is the "synthetic change" event (as a result of the inotify WATCH
->>>> rule). And this one would drop the "not initialized" flag in udev db
->>>> and
->>>> the scans in udev are now enabled.
->>>
->>> Nope, it would be incorrect for mdadm to clear any old content.
->>> Sometimes people want to ignore old content.  Sometimes they very
->>> definitely want to use it.  It would be wrong for any code to try to
->>> guess what is wanted.
+On 05/02/2017 03:42 PM, Jes Sorensen wrote:
+> On 04/28/2017 01:05 AM, NeilBrown wrote:
 >>
->> The mdadm is not going to guess - it can have an option to
->> enable/disable the wiping on demand directly on command line (which is
->> also what is actually done in LVM).
-> 
-> I know the anaconda team keeps pushing for the nonsense of being able to
-> wipe drives on creation. It is wrong, it is broken, and it is not going
-> to happen.
-> 
-
-I'm not thinking about anaconda at the moment at all. It's just one of
-the many users of mdadm. I'm thinking about a fix in general for all the
-users which expect the device to be initialized properly when mdadm
---create returns.
-
->> Otherwise, if mdadm is not going to wipe/initialize the device itself,
->> then it needs to wait for the external tool to do it (based on external
->> configuration or on some manual wipefs-like call). So the sequence
->> would be:
+>> When an array is created the content is not initialized,
+>> so it could have remnants of an old filesystem or md array
+>> etc on it.
+>> udev will see this and might try to activate it, which is almost
+>> certainly not what is wanted.
 >>
->>  1) mdadm creating the device
->>  2) mdadm setting up the device, marking it as "not initialized yet"
->>  4a) mdadm waiting for the external decision to be made about wiping part
->>  4b) external tool doing the wiping (or not) based on configuration or
->> user's will
->>  5) mdadm continuing and finishing when the wiping part is complete
+>> So create a mechanism for mdadm to communicate with udev to tell
+>> it that the device isn't ready.  This mechanism is the existance
+>> of a file /run/mdadm/created-mdXXX where mdXXX is the md device name.
 >>
->> I expect mdadm to return only if the device is properly initialized
->> otherwise it's harder for other tools called after mdadm to start
->> working with the device - they need to poll for the state laboriously
->> and check for readiness.
+>> When creating an array, mdadm will create the file.
+>> A new udev rule file, 01-md-raid-creating.rules, will detect the
+>> precense of thst file and set ENV{SYSTEMD_READY}="0".
+>> This is fairly uniformly used to suppress actions based on the
+>> contents of the device.
+>>
+>> Signed-off-by: NeilBrown <neilb@suse.com>
+>> ---
+>>  Assemble.c                  |  2 +-
+>>  Build.c                     |  2 +-
+>>  Create.c                    |  9 +++++++-
+>>  Incremental.c               |  4 ++--
+>>  Makefile                    |  4 ++--
+>>  lib.c                       | 29 +++++++++++++++++++++++++
+>>  mdadm.h                     |  4 +++-
+>>  mdopen.c                    | 52
+>> ++++++++++++++++++++++++++++-----------------
+>>  udev-md-raid-creating.rules |  7 ++++++
+>>  9 files changed, 86 insertions(+), 27 deletions(-)
+>>  create mode 100644 udev-md-raid-creating.rules
 > 
-> What defines readiness? Some believe a raid1 array must be fully
-> assembled with all members, other setups are happy to have one running
-> drive in place.....
+> Applied!
 > 
 
-With "ready" I mean the time when it's safe to do a scan without seeing
-old data (garbage) that may confuse udev hooks and udev event listeners.
-That scan is done at some time - at the time the activating "change"
-uevent comes and this rule does not pass
-ATTR{md/array_state}=="|clear|inactive" (if it passes, the device is not
-scanned yet).
-
-> 4a/4b in your list here once again has no place in mdadm. Please kindly
-> tell the anaconda team to go back and handle this properly instead.
-
-The mdadm is creating the dev and so it should be responsible primarily
-for providing a device which is cleared and ready for use without
-causing any confusion on event-based system where various scans are
-executed based on incoming udev events.
-
-Alternatively, if mdadm is not going to be the place where the wiping
-happens, I'd expect at least the sequence above (which is more complex,
-yes, that's why I think having the wiping directly in mdadm is much
-easier solution).
-
-If you don't wipe the data and you don't give time for others to hook in
-to do that, you make it harder for others (they need to deactivate all
-the stack/garbage that is found in the data area after previous use).
-
-Also, we can't reliably call wiping on the underlying components first,
-because once they become MD components, the data are for the MD device
-has an offset and new data range is revealed from the underlying devices
-which may expose old signatures which were not visible on those
-underlying devices before the MD device got created.
+How is this solving the problem then? The patch is flagging a device as
+not ready, then clearing the flag after some time. Where does the wiping
+happen actually?
 
 -- 
 Peter
