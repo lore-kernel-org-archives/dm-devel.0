@@ -1,73 +1,54 @@
-From: Jes Sorensen <jes.sorensen@gmail.com>
-Subject: Re: [dm-devel] [mdadm PATCH] Create: tell udev md device is not ready
- when first created.
-Date: Wed, 3 May 2017 10:45:33 -0400
-Message-ID: <28a2c94d-7f70-147a-9909-c1e4de6cc335@gmail.com>
-References: <149265560315.31004.3851231165281498425.stgit@noble>
- <149265600601.31004.323865505557190368.stgit@noble>
- <dedd27cd-9c2e-f244-d8aa-7a074679d3c6@gmail.com>
- <87mvbasqx6.fsf@notabene.neil.brown.name>
- <40a5fbff-9eef-07b3-fe1b-fb9a888cfb8b@redhat.com>
- <87h919ruj5.fsf@notabene.neil.brown.name>
- <01f50f57-c55e-e87f-b5a1-ded4647368b2@gmail.com>
- <2fb51c71-4398-e206-4a94-5dcd13d78603@redhat.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [git pull] device mapper changes for 4.12
+Date: Wed, 3 May 2017 10:51:55 -0700
+Message-ID: <CA+55aFx4w3eEpstfQWPJS=1XFX+qe11h6PAVk1=WjC55ODwegw@mail.gmail.com>
+References: <20170502185847.GA79886@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <2fb51c71-4398-e206-4a94-5dcd13d78603@redhat.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: Peter Rajnoha <prajnoha@redhat.com>, NeilBrown <neilb@suse.com>
-Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20170502185847.GA79886@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
+Cc: Somasundaram Krishnasamy <somasundaram.krishnasamy@oracle.com>, Adrian Salido <salidoa@google.com>, Heinz Mauelshagen <heinzm@redhat.com>, Eric Biggers <ebiggers@google.com>, Andy Shevchenko <andy.shevchenko@gmail.com>, Dennis Yang <dennisyang@qnap.com>, Milan Broz <gmazyland@gmail.com>, Vinothkumar Raja <vinraja@cs.stonybrook.edu>, Gilad Ben-Yossef <gilad@benyossef.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Matthias Kaehlcke <mka@chromium.org>, Tim Murray <timmurray@google.com>, Ondrej Kozina <okozina@redhat.com>, Bart Van Assche <bart.vanassche@sandisk.com>, Joe Thornber <ejt@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On 05/03/2017 10:32 AM, Peter Rajnoha wrote:
-> On 05/02/2017 03:42 PM, Jes Sorensen wrote:
->> On 04/28/2017 01:05 AM, NeilBrown wrote:
->>>
->>> When an array is created the content is not initialized,
->>> so it could have remnants of an old filesystem or md array
->>> etc on it.
->>> udev will see this and might try to activate it, which is almost
->>> certainly not what is wanted.
->>>
->>> So create a mechanism for mdadm to communicate with udev to tell
->>> it that the device isn't ready.  This mechanism is the existance
->>> of a file /run/mdadm/created-mdXXX where mdXXX is the md device name.
->>>
->>> When creating an array, mdadm will create the file.
->>> A new udev rule file, 01-md-raid-creating.rules, will detect the
->>> precense of thst file and set ENV{SYSTEMD_READY}="0".
->>> This is fairly uniformly used to suppress actions based on the
->>> contents of the device.
->>>
->>> Signed-off-by: NeilBrown <neilb@suse.com>
->>> ---
->>>  Assemble.c                  |  2 +-
->>>  Build.c                     |  2 +-
->>>  Create.c                    |  9 +++++++-
->>>  Incremental.c               |  4 ++--
->>>  Makefile                    |  4 ++--
->>>  lib.c                       | 29 +++++++++++++++++++++++++
->>>  mdadm.h                     |  4 +++-
->>>  mdopen.c                    | 52
->>> ++++++++++++++++++++++++++++-----------------
->>>  udev-md-raid-creating.rules |  7 ++++++
->>>  9 files changed, 86 insertions(+), 27 deletions(-)
->>>  create mode 100644 udev-md-raid-creating.rules
->>
->> Applied!
->>
+On Tue, May 2, 2017 at 11:58 AM, Mike Snitzer <snitzer@redhat.com> wrote:
 >
-> How is this solving the problem then? The patch is flagging a device as
-> not ready, then clearing the flag after some time. Where does the wiping
-> happen actually?
+> - Add a new DM integrity target that emulates a block device that has
+>   additional per-sector tags that can be used for storing integrity
+>   information.
 
-There is *NO* wiping happening, there is *NO* wiping going to happen.
+So this one comes with a nice documentation file and everything, but
+let me just quote all the help that you give users when faced with the
+CONFIG_DM_INTEGRITY choice:
 
-Can we stop this nonsense now!
+    CONFIG_DM_INTEGRITY:
 
-Thank you!
-Jes
+    This is the integrity target.
 
+That's it. Not really very helpful.
 
+The kernel configuration phase is already likely the most frustrating
+part of building your own kernel, it's really worth trying to make it
+a *bit* less frustrating than this.
+
+Even just a stupid little blurb that says
+
+   "Emulates a block device that has additional per-sector tags that can
+    be used for storing integrity information.
+
+    If you're not sure, you can probably just say 'n'"
+
+or something like that. People who use this likely know they use it,
+and it should lower the stress level for others.
+
+                   Linus
