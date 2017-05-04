@@ -1,43 +1,59 @@
 From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH v6 0/3] dm: boot a mapped device without
-	an	initramfs
-Date: Thu, 4 May 2017 13:14:52 +0100
-Message-ID: <20170504121452.GF4943@agk-dp.fab.redhat.com>
-References: <20170418164240.18079-1-enric.balletbo@collabora.com>
-	<CAGXu5jLD+0POz1sopyZNNqDAiq2MZ5ZYdjs43jX5OnWxkZt1Lg@mail.gmail.com>
-	<CAFqH_51YLoYrNcw+Fb99LbSY63wVWg+MW7nBYQqWjV6qfOAmNQ@mail.gmail.com>
+Subject: Re: [dm-devel] [PATCH v6 0/3] dm: boot a mapped device without an
+        initramfs
+Date: Thu, 4 May 2017 14:20:07 +0100
+Message-ID: <20170504132007.GG4943@agk-dp.fab.redhat.com>
+References: <20170418164240.18079-1-enric.balletbo@collabora.com> <CAGXu5jLD+0POz1sopyZNNqDAiq2MZ5ZYdjs43jX5OnWxkZt1Lg@mail.gmail.com> <CAFqH_51YLoYrNcw+Fb99LbSY63wVWg+MW7nBYQqWjV6qfOAmNQ@mail.gmail.com> <20170504121452.GF4943@agk-dp.fab.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-raid-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAFqH_51YLoYrNcw+Fb99LbSY63wVWg+MW7nBYQqWjV6qfOAmNQ@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+In-Reply-To: <20170504121452.GF4943@agk-dp.fab.redhat.com>
+Sender: linux-raid-owner@vger.kernel.org
 To: Enric Balletbo Serra <eballetbo@gmail.com>
-Cc: Will Drewry <wad@chromium.org>, Kees Cook <keescook@chromium.org>, Mike Snitzer <snitzer@redhat.com>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, David Zeuthen <zeuthen@google.com>, LKML <linux-kernel@vger.kernel.org>, linux-raid@vger.kernel.org, dm-devel@redhat.com, Guenter Roeck <groeck@google.com>, Enric Balletbo i Serra <enric.balletbo@collabora.com>, Shaohua Li <shli@kernel.org>, Alasdair Kergon <agk@redhat.com>
+Cc: Kees Cook <keescook@chromium.org>, Will Drewry <wad@chromium.org>, Guenter Roeck <groeck@google.com>, Mike Snitzer <snitzer@redhat.com>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, David Zeuthen <zeuthen@google.com>, LKML <linux-kernel@vger.kernel.org>, linux-raid@vger.kernel.org, dm-devel@redhat.com, Enric Balletbo i Serra <enric.balletbo@collabora.com>, Shaohua Li <shli@kernel.org>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, May 04, 2017 at 01:18:41PM +0200, Enric Balletbo Serra wrote:
-> I'm wondering if a command line like this would be acceptable.
+Some more thoughts with your example, dmsetup might look like:
 
-1) Make sure the implementation continues to support backslash quoting
-so that any characters you introduce with special meanings (comma,
-semi-colon, double-quote in that example) can still be used if required.
+# dmsetup create --bootformat "lroot:uuid,rw,0 2097152 linear 8:2 0, \
+2097152 2097152 linear 8:3 0, 4194304 2097152 linear 8:4 0"
 
-2) "none" is of course a valid uuid:)  More comma-separation or
-re-ordering, perhaps?
- 
-3) Whatever final format is agreed here should be supported by dmsetup
-as well, so you can both supply the format to dmsetup and ask dmsetup
-to display your existing devices in this format.  Choose a format
-that makes this easy.
+- also supporting creating multiple devices if the semi-colon is used
+
+- colon to separate name from uuid, like we already do major:minor 
+- colon to separate other flags from rw if we need them in future
+
+- splitting first on a unescaped semi-colons, then on the first two
+unescaped commas, and then on unescaped commas and then unescaped spaces
+within the table
+
+- backslash escapes the following character so it is never a treated
+as a separator
+  - lroot\:uuid\;\\\ \"\, would be a device with no uuid and the name
+    lroot:uuid;\ ",  (on a non-udev system without name mangling)
+
+# dmsetup ls --bootformat lroot
+dm="lroot:uuid,rw,0 2097152 linear 8:2 0, 2097152 2097152 \
+linear 8:3 0, 4194304 2097152 linear 8:4 0"
+
+# dmsetup ls --bootformat
+(all devices on one output line)
+
+While the code also supports devices in the /dev/sda2 format for 
+convenience, please use the preferred 8:2 format in any implementation
+and documented examples (to avoid the unnecessary dependency on /dev and
+its dependencies).
+
+Or with some alternative name for the option
+--boot[format|param]
+--short[format]
+--kernelparam
+--condensed
+other suggestions?
+
+dmsetup create --condensed
+dmsetup ls --condensed
 
 Alasdair
+
