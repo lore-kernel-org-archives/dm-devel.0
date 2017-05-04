@@ -1,59 +1,54 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [dm-devel] [PATCH v6 0/3] dm: boot a mapped device without an
-        initramfs
-Date: Thu, 4 May 2017 14:20:07 +0100
-Message-ID: <20170504132007.GG4943@agk-dp.fab.redhat.com>
-References: <20170418164240.18079-1-enric.balletbo@collabora.com> <CAGXu5jLD+0POz1sopyZNNqDAiq2MZ5ZYdjs43jX5OnWxkZt1Lg@mail.gmail.com> <CAFqH_51YLoYrNcw+Fb99LbSY63wVWg+MW7nBYQqWjV6qfOAmNQ@mail.gmail.com> <20170504121452.GF4943@agk-dp.fab.redhat.com>
+From: Milan Broz <gmazyland@gmail.com>
+Subject: [PATCH] dm-crypt: add Kconfig switch to enable
+	authenticated mode.
+Date: Thu,  4 May 2017 17:07:25 +0200
+Message-ID: <20170504150725.9737-1-gmazyland@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-raid-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20170504121452.GF4943@agk-dp.fab.redhat.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: Enric Balletbo Serra <eballetbo@gmail.com>
-Cc: Kees Cook <keescook@chromium.org>, Will Drewry <wad@chromium.org>, Guenter Roeck <groeck@google.com>, Mike Snitzer <snitzer@redhat.com>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, David Zeuthen <zeuthen@google.com>, LKML <linux-kernel@vger.kernel.org>, linux-raid@vger.kernel.org, dm-devel@redhat.com, Enric Balletbo i Serra <enric.balletbo@collabora.com>, Shaohua Li <shli@kernel.org>, Alasdair Kergon <agk@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: Milan Broz <gmazyland@gmail.com>
 List-Id: dm-devel.ids
 
-Some more thoughts with your example, dmsetup might look like:
+The switch just enables dm-integrity module but it makes
+configuration more logic and user friendly.
 
-# dmsetup create --bootformat "lroot:uuid,rw,0 2097152 linear 8:2 0, \
-2097152 2097152 linear 8:3 0, 4194304 2097152 linear 8:4 0"
+Signed-off-by: Milan Broz <gmazyland@gmail.com>
+---
+ drivers/md/Kconfig | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
 
-- also supporting creating multiple devices if the semi-colon is used
-
-- colon to separate name from uuid, like we already do major:minor 
-- colon to separate other flags from rw if we need them in future
-
-- splitting first on a unescaped semi-colons, then on the first two
-unescaped commas, and then on unescaped commas and then unescaped spaces
-within the table
-
-- backslash escapes the following character so it is never a treated
-as a separator
-  - lroot\:uuid\;\\\ \"\, would be a device with no uuid and the name
-    lroot:uuid;\ ",  (on a non-udev system without name mangling)
-
-# dmsetup ls --bootformat lroot
-dm="lroot:uuid,rw,0 2097152 linear 8:2 0, 2097152 2097152 \
-linear 8:3 0, 4194304 2097152 linear 8:4 0"
-
-# dmsetup ls --bootformat
-(all devices on one output line)
-
-While the code also supports devices in the /dev/sda2 format for 
-convenience, please use the preferred 8:2 format in any implementation
-and documented examples (to avoid the unnecessary dependency on /dev and
-its dependencies).
-
-Or with some alternative name for the option
---boot[format|param]
---short[format]
---kernelparam
---condensed
-other suggestions?
-
-dmsetup create --condensed
-dmsetup ls --condensed
-
-Alasdair
-
+diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
+index 3e96fccbbdb2..134f885c6be1 100644
+--- a/drivers/md/Kconfig
++++ b/drivers/md/Kconfig
+@@ -285,6 +285,17 @@ config DM_CRYPT
+ 
+ 	  If unsure, say N.
+ 
++config DM_CRYPT_AEAD
++	tristate "Crypt target support for authenticated disk encrytion modes"
++	depends on DM_CRYPT
++	select DM_INTEGRITY
++	---help---
++	  This option enables dm-integrity target that is required in dm-crypt
++	  for support of authenticated encryption modes (it enables additional
++	  per-sector metadata for authentication tags).
++
++	  If unsure, say N.
++
+ config DM_SNAPSHOT
+        tristate "Snapshot target"
+        depends on BLK_DEV_DM
+-- 
+2.11.0
