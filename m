@@ -1,8 +1,7 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 06/10] kpartx: don't treat multi-linear mappings
-	as partitions
-Date: Sat,  6 May 2017 00:05:55 +0200
-Message-ID: <20170505220559.7248-7-mwilck@suse.com>
+Subject: [PATCH 02/10] kpartx: avoid ioctl error for loop devices
+Date: Sat,  6 May 2017 00:05:51 +0200
+Message-ID: <20170505220559.7248-3-mwilck@suse.com>
 References: <20170505220559.7248-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,62 +21,28 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@s
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-kpartx -d treats any map that has a "linear" mapping into a
-device as first target as a partition of this device.
-This is wrong, because linear mappings may consist of
-several pieces, combining multiple devices into one
-(LVM logical volumes are an example of such a
-mapping). Partitions have to be single-target mappings.
+Commit 3d709241 causes kpartx to attempt a dm ioctl on a loop
+device. This causes an error message
+"device-mapper: table ioctl on loop4 failed: No such device or address".
 
-Fix this by returning an error in dm_type() if a map with
-multiple targets is encountered. The "type" of a map with
-two or more targets is a difficult concept, anyway.
-
-test case:
-truncate -s 1G test0 test1
-losetup /dev/loop0 test0
-losetup /dev/loop1 test1
-dmsetup create <<EOF
-0 1000000 linear 7:0 4096
-1000000 1000000 linear 7:1 4096
-EOF
-kpartx -d /dev/loop0 -v
-
-The map "join" should NOT be deleted.
-
+Fixes: 3d709241 "kpartx: sanitize delete partitions"
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- kpartx/devmapper.c | 11 ++++++-----
- 1 file changed, 6 insertions(+), 5 deletions(-)
+ kpartx/kpartx.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/kpartx/devmapper.c b/kpartx/devmapper.c
-index d6ccd000..5380b2e9 100644
---- a/kpartx/devmapper.c
-+++ b/kpartx/devmapper.c
-@@ -390,10 +390,11 @@ dm_type(const char * name, char * type)
- 		goto out;
+diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+index 58e60ffe..e9b09492 100644
+--- a/kpartx/kpartx.c
++++ b/kpartx/kpartx.c
+@@ -362,7 +362,7 @@ main(int argc, char **argv){
  
- 	/* Fetch 1st target */
--	dm_get_next_target(dmt, NULL, &start, &length,
--			   &target_type, &params);
--
--	if (!target_type)
-+	if (dm_get_next_target(dmt, NULL, &start, &length,
-+			       &target_type, &params) != NULL)
-+		/* more than one target */
-+		r = -1;
-+	else if (!target_type)
- 		r = -1;
- 	else if (!strcmp(target_type, type))
- 		r = 1;
-@@ -494,7 +495,7 @@ do_foreach_partmaps (const char * mapname, const char *uuid,
- 		/*
- 		 * skip if devmap target is not "linear"
- 		 */
--		if (!dm_type(names->name, "linear")) {
-+		if (dm_type(names->name, "linear") != 1) {
- 			if (rd->verbose)
- 				printf("%s: is not a linear target. Not removing\n",
- 				       names->name);
+ 	if (!mapname)
+ 		mapname = device + off;
+-	if (!force_devmap &&
++	else if (!force_devmap &&
+ 		 dm_no_partitions(mapname)) {
+ 		/* Feature 'no_partitions' is set, return */
+ 		return 0;
 -- 
 2.12.2
