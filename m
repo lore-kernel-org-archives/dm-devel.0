@@ -1,14 +1,11 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 08/10] kpartx: use partition UUID for non-DM
-	devices
-Date: Sat,  6 May 2017 00:05:57 +0200
-Message-ID: <20170505220559.7248-9-mwilck@suse.com>
-References: <20170505220559.7248-1-mwilck@suse.com>
+Subject: [PATCH 00/10] fixes for kpartx -d
+Date: Sat,  6 May 2017 00:05:49 +0200
+Message-ID: <20170505220559.7248-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170505220559.7248-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,91 +19,59 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@s
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-For dm devices, kpartx uses an UUID check at partition removal
-to make sure it only deletes partitions it previously created.
-Non-DM parent devices such as loop devices don't generally have
-a UUID.
+Working on a bug report about kpartx not properly removing
+partitions for loop devices, I realized a number of glitches
+and improperly handled corner cases in the kpartx code for
+deleting partitions. Some mappings are not deleted although
+they should be, and others are deleted although that is clearly
+wrong.
 
-Introduce a "fake" UUID for these devices to make sure kpartx
-deletes only devices it had created previously. Otherwise kpartx
-might e.g. delete LVM LVs that are inside a device it is trying
-to delete partitions for. It seems to be wiser to make sure the
-user delete these manually before running "kpartx -d".
+This patch series fixes the issues I found. The series starts
+with a test program demonstrating the problems. The program
+succeeds only after all patches of this series are applied.
 
-With the fake UUID in place, we can re-introduce the UUID check
-for non-DM device that was removed in the earlier patch
-"kpartx: dm_remove_partmaps: support non-dm devices".
+Here is my summary of what I think how kpartx should behave:
 
-This disables also deletion of partition mappings created
-by earlier versions of kpartx. If kpartx has been updated after
-partition mappings were created, the "-f" flag can be used
-to force delting these partitions, too.
+  1) kpartx should delete all mappings it created beforehand.
+  2) kpartx should handle partitions on dm devices and other devices
+     (e.g. loop devices) equally well.
+  3) kpartx should only delete "partitions", which are single-target
+     linear mappings into a block device. Other maps should not be touched.
+  4) kpartx should only delete mappings it created itself beforehand.
+     In particular, it shouldn't delete LVM LVs, even if they are fully
+     contained in the block device at hand and thus look like partitions
+     in the first place. (For historical compatibility reasons, allow
+     such mappings to be deleted with the -f/--force flag).
+  5) DM map names may be changed, thus kpartx shouldn't rely on them to
+     check whether a mapping is a partition of a particular device. It is
+     legal for a partition of /dev/loop0 to be named "loop0".
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- kpartx/devmapper.c |  2 +-
- kpartx/kpartx.c    | 29 +++++++++++++++++++++++++++++
- 2 files changed, 30 insertions(+), 1 deletion(-)
+One patch has an obvious libdevmapper equivalent and is therefore
+included although this series is otherwise focused only on kpartx.
 
-diff --git a/kpartx/devmapper.c b/kpartx/devmapper.c
-index 5380b2e9..40ec26cf 100644
---- a/kpartx/devmapper.c
-+++ b/kpartx/devmapper.c
-@@ -505,7 +505,7 @@ do_foreach_partmaps (const char * mapname, const char *uuid,
- 		/*
- 		 * skip if uuids don't match
- 		 */
--		if (is_dmdev && uuid && dm_compare_uuid(uuid, names->name)) {
-+		if (uuid && dm_compare_uuid(uuid, names->name)) {
- 			if (rd->verbose)
- 				printf("%s: is not a kpartx partition. Not removing\n",
- 				       names->name);
-diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
-index e2056b7f..d9057fba 100644
---- a/kpartx/kpartx.c
-+++ b/kpartx/kpartx.c
-@@ -60,6 +60,26 @@ struct pt {
- int ptct = 0;
- int udev_sync = 0;
- 
-+/*
-+ * UUID format for partitions created on non-DM devices
-+ * ${UUID_PREFIX}${MAJOR}:${MINOR}-${NONDM_UUID_SUFFIX}"
-+ * The suffix should be sufficiently random to avoid unintended conflicts,
-+ * and shouldn't be changed.
-+ * The value below is a bas64-encoded 96-bit random number.
-+ */
-+#define NONDM_UUID_SUFFIX "-kpartx-Wh5pYvM7uc60hh74"
-+
-+static char *
-+nondm_create_uuid(dev_t devt)
-+{
-+#define NONDM_UUID_BUFLEN (32 + sizeof(NONDM_UUID_SUFFIX))
-+	static char uuid_buf[NONDM_UUID_BUFLEN];
-+	snprintf(uuid_buf, sizeof(uuid_buf), "%u:%u%s",
-+		 major(devt), minor(devt), NONDM_UUID_SUFFIX);
-+	uuid_buf[NONDM_UUID_BUFLEN-1] = '\0';
-+	return uuid_buf;
-+}
-+
- static void
- addpts(char *t, ptreader f)
- {
-@@ -360,6 +380,15 @@ main(int argc, char **argv){
- 			uuid = dm_mapuuid(mapname);
- 	}
- 
-+	/*
-+	 * We are called for a non-DM device.
-+	 * Make up a fake UUID for the device, unless "-d -f" is given.
-+	 * This allows deletion of partitions created with older kpartx
-+	 * versions which didn't use the fake UUID during creation.
-+	 */
-+	if (!uuid && !(what == DELETE && force_devmap))
-+		uuid = nondm_create_uuid(buf.st_rdev);
-+
- 	if (!mapname)
- 		mapname = device + off;
- 	else if (!force_devmap &&
+Feedback is welcome.
+
+Martin Wilck (10):
+  kpartx: test-kpartx: new unit test program
+  kpartx: avoid ioctl error for loop devices
+  kpartx: remove is_loop_device
+  kpartx: dm_remove_partmaps: support non-dm devices
+  kpartx: dm_devn: return error for non-existent device
+  kpartx: don't treat multi-linear mappings as partitions
+  libmultipath: don't treat multi-linear mappings as partitions
+  kpartx: use partition UUID for non-DM devices
+  kpartx: use absolute path for regular files
+  kpartx: find_loop_by_file: use sysfs
+
+ kpartx/devmapper.c       |  39 +++++---
+ kpartx/devmapper.h       |   2 +-
+ kpartx/kpartx.c          |  42 +++++++-
+ kpartx/lopart.c          |  73 ++++++--------
+ kpartx/lopart.h          |   1 -
+ kpartx/test-kpartx       | 253 +++++++++++++++++++++++++++++++++++++++++++++++
+ libmultipath/devmapper.c |  15 +--
+ 7 files changed, 356 insertions(+), 69 deletions(-)
+ create mode 100755 kpartx/test-kpartx
+
 -- 
 2.12.2
