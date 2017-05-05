@@ -1,7 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 03/10] kpartx: remove is_loop_device
-Date: Sat,  6 May 2017 00:05:52 +0200
-Message-ID: <20170505220559.7248-4-mwilck@suse.com>
+Subject: [PATCH 06/10] kpartx: don't treat multi-linear mappings
+	as partitions
+Date: Sat,  6 May 2017 00:05:55 +0200
+Message-ID: <20170505220559.7248-7-mwilck@suse.com>
 References: <20170505220559.7248-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,66 +22,62 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@s
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This function is not used any more.
+kpartx -d treats any map that has a "linear" mapping into a
+device as first target as a partition of this device.
+This is wrong, because linear mappings may consist of
+several pieces, combining multiple devices into one
+(LVM logical volumes are an example of such a
+mapping). Partitions have to be single-target mappings.
+
+Fix this by returning an error in dm_type() if a map with
+multiple targets is encountered. The "type" of a map with
+two or more targets is a difficult concept, anyway.
+
+test case:
+truncate -s 1G test0 test1
+losetup /dev/loop0 test0
+losetup /dev/loop1 test1
+dmsetup create <<EOF
+0 1000000 linear 7:0 4096
+1000000 1000000 linear 7:1 4096
+EOF
+kpartx -d /dev/loop0 -v
+
+The map "join" should NOT be deleted.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- kpartx/lopart.c | 31 -------------------------------
- kpartx/lopart.h |  1 -
- 2 files changed, 32 deletions(-)
+ kpartx/devmapper.c | 11 ++++++-----
+ 1 file changed, 6 insertions(+), 5 deletions(-)
 
-diff --git a/kpartx/lopart.c b/kpartx/lopart.c
-index 2eb3f631..44f0c277 100644
---- a/kpartx/lopart.c
-+++ b/kpartx/lopart.c
-@@ -62,37 +62,6 @@ xstrdup (const char *s)
- 	return t;
- }
+diff --git a/kpartx/devmapper.c b/kpartx/devmapper.c
+index d6ccd000..5380b2e9 100644
+--- a/kpartx/devmapper.c
++++ b/kpartx/devmapper.c
+@@ -390,10 +390,11 @@ dm_type(const char * name, char * type)
+ 		goto out;
  
--int is_loop_device(const char *device)
--{
--	struct stat statbuf;
--	int loopmajor;
--#if 1
--	loopmajor = 7;
--#else
--	FILE *procdev;
--	char line[100], *cp;
+ 	/* Fetch 1st target */
+-	dm_get_next_target(dmt, NULL, &start, &length,
+-			   &target_type, &params);
 -
--	loopmajor = 0;
--
--	if ((procdev = fopen(PROC_DEVICES, "r")) != NULL) {
--
--		while (fgets (line, sizeof(line), procdev)) {
--
--			if ((cp = strstr (line, " loop\n")) != NULL) {
--				*cp='\0';
--				loopmajor=atoi(line);
--				break;
--			}
--		}
--
--		fclose(procdev);
--	}
--#endif
--	return (loopmajor && stat(device, &statbuf) == 0 &&
--		S_ISBLK(statbuf.st_mode) &&
--		major(statbuf.st_rdev) == loopmajor);
--}
--
- #define SIZE(a) (sizeof(a)/sizeof(a[0]))
- 
- char *find_loop_by_file(const char *filename)
-diff --git a/kpartx/lopart.h b/kpartx/lopart.h
-index a512353b..d3bad10a 100644
---- a/kpartx/lopart.h
-+++ b/kpartx/lopart.h
-@@ -1,6 +1,5 @@
- extern int verbose;
- extern int set_loop (const char *, const char *, int, int *);
- extern int del_loop (const char *);
--extern int is_loop_device (const char *);
- extern char * find_unused_loop_device (void);
- extern char * find_loop_by_file (const char *);
+-	if (!target_type)
++	if (dm_get_next_target(dmt, NULL, &start, &length,
++			       &target_type, &params) != NULL)
++		/* more than one target */
++		r = -1;
++	else if (!target_type)
+ 		r = -1;
+ 	else if (!strcmp(target_type, type))
+ 		r = 1;
+@@ -494,7 +495,7 @@ do_foreach_partmaps (const char * mapname, const char *uuid,
+ 		/*
+ 		 * skip if devmap target is not "linear"
+ 		 */
+-		if (!dm_type(names->name, "linear")) {
++		if (dm_type(names->name, "linear") != 1) {
+ 			if (rd->verbose)
+ 				printf("%s: is not a linear target. Not removing\n",
+ 				       names->name);
 -- 
 2.12.2
