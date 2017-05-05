@@ -1,32 +1,45 @@
-From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Subject: Re: remove REQ_OP_WRITE_SAME
-Date: Fri, 5 May 2017 10:57:13 +0200
-Message-ID: <20170505085713.GA5008@lst.de>
-References: <20170412084809.8245-1-hch@lst.de> <yq1mvbjwwvl.fsf@oracle.com>
+From: Jes Sorensen <jes.sorensen@gmail.com>
+Subject: Re: [mdadm PATCH] Fix typo in new udev rule.
+Date: Fri, 5 May 2017 11:07:29 -0400
+Message-ID: <02e0eacd-7d1c-5fd9-b94b-5d906f4fda5a@gmail.com>
+References: <149265560315.31004.3851231165281498425.stgit@noble>
+ <149265600601.31004.323865505557190368.stgit@noble>
+ <dedd27cd-9c2e-f244-d8aa-7a074679d3c6@gmail.com>
+ <87mvbasqx6.fsf@notabene.neil.brown.name>
+ <40a5fbff-9eef-07b3-fe1b-fb9a888cfb8b@redhat.com>
+ <87h919ruj5.fsf@notabene.neil.brown.name>
+ <85c9e9e1-3d2c-9f88-e923-235fb69a4188@redhat.com>
+ <87r303opcw.fsf@notabene.neil.brown.name>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <yq1mvbjwwvl.fsf-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-List-Unsubscribe: <http://lists.linbit.com/mailman/options/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
-List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
-List-Subscribe: <http://lists.linbit.com/mailman/listinfo/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
-Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-To: "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Cc: axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, target-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <87r303opcw.fsf@notabene.neil.brown.name>
+Sender: linux-raid-owner@vger.kernel.org
+To: NeilBrown <neilb@suse.com>, Peter Rajnoha <prajnoha@redhat.com>
+Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Apr 13, 2017 at 10:23:10PM -0400, Martin K. Petersen wrote:
-> The other thing that keeps me a bit on the fence is that a bunch of the
-> plumbing to handle a bio with a payload different from bi_size is needed
-> for the copy offload token. I'm hoping to have those patches ready for
-> 4.13. Right now there are a bunch of places where handling of
-> REQ_OP_COPY_IN and REQ_OP_COPY_OUT share conditionals with WRITE SAME.
+On 05/05/2017 01:16 AM, NeilBrown wrote:
+>
+> As pointed out by Peter Rajnoha, the correct usage in udev is
+> TEST=="file", not TEST="file".
+>
+> Also improve a related comment which was a bit informal.
+>
+> Reported-by: Peter Rajnoha <prajnoha@redhat.com>
+> Fixes: cd6cbb08c458 ("Create: tell udev md device is not ready when first created.")
+> Signed-off-by: NeilBrown <neilb@suse.com>
+> ---
+>
+> Thanks Peter!  Properly tested as well :-)
+>
+> NeilBrown
 
-Any chance to get a sneak preview of that work?
+Applied!
+
+Thanks both of you!
+
+Jes
+
+
