@@ -1,11 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 00/10] fixes for kpartx -d
-Date: Sat,  6 May 2017 00:05:49 +0200
-Message-ID: <20170505220559.7248-1-mwilck@suse.com>
+Subject: [PATCH 04/10] kpartx: dm_remove_partmaps: support non-dm
+	devices
+Date: Sat,  6 May 2017 00:05:53 +0200
+Message-ID: <20170505220559.7248-5-mwilck@suse.com>
+References: <20170505220559.7248-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20170505220559.7248-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,59 +22,145 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@s
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Working on a bug report about kpartx not properly removing
-partitions for loop devices, I realized a number of glitches
-and improperly handled corner cases in the kpartx code for
-deleting partitions. Some mappings are not deleted although
-they should be, and others are deleted although that is clearly
-wrong.
+Commit  3d709241 improved partition removal, but broke support
+for handling partitions of non-dm devices such as loop devices
+or RAM disks.
 
-This patch series fixes the issues I found. The series starts
-with a test program demonstrating the problems. The program
-succeeds only after all patches of this series are applied.
+This requires passing the dev_t of the device down to
+do_foreach_partmap(). Doing so, there's little use in trying
+to derive major/minor numbers from the "mapname" any more
+(which actually is the device name for non-DM devices).
+But we can use this to find out whether the device in question
+is a dm device.
 
-Here is my summary of what I think how kpartx should behave:
+The test for UUID match doesn't work for non-DM devices (this
+shall be improved in a later patch in this series).
 
-  1) kpartx should delete all mappings it created beforehand.
-  2) kpartx should handle partitions on dm devices and other devices
-     (e.g. loop devices) equally well.
-  3) kpartx should only delete "partitions", which are single-target
-     linear mappings into a block device. Other maps should not be touched.
-  4) kpartx should only delete mappings it created itself beforehand.
-     In particular, it shouldn't delete LVM LVs, even if they are fully
-     contained in the block device at hand and thus look like partitions
-     in the first place. (For historical compatibility reasons, allow
-     such mappings to be deleted with the -f/--force flag).
-  5) DM map names may be changed, thus kpartx shouldn't rely on them to
-     check whether a mapping is a partition of a particular device. It is
-     legal for a partition of /dev/loop0 to be named "loop0".
+The test for equal name of parent dev and partition is only valid
+for dm devices. For non-dm devices such as loop, "/dev/mapper/loop0"
+could, theoretically, be a partition of "/dev/loop0"
+(and we don't want to rely on map names).
 
-One patch has an obvious libdevmapper equivalent and is therefore
-included although this series is otherwise focused only on kpartx.
+Fixes: 3d709241 "kpartx: sanitize delete partitions"
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ kpartx/devmapper.c | 26 +++++++++++++++++---------
+ kpartx/devmapper.h |  2 +-
+ kpartx/kpartx.c    |  3 ++-
+ 3 files changed, 20 insertions(+), 11 deletions(-)
 
-Feedback is welcome.
-
-Martin Wilck (10):
-  kpartx: test-kpartx: new unit test program
-  kpartx: avoid ioctl error for loop devices
-  kpartx: remove is_loop_device
-  kpartx: dm_remove_partmaps: support non-dm devices
-  kpartx: dm_devn: return error for non-existent device
-  kpartx: don't treat multi-linear mappings as partitions
-  libmultipath: don't treat multi-linear mappings as partitions
-  kpartx: use partition UUID for non-DM devices
-  kpartx: use absolute path for regular files
-  kpartx: find_loop_by_file: use sysfs
-
- kpartx/devmapper.c       |  39 +++++---
- kpartx/devmapper.h       |   2 +-
- kpartx/kpartx.c          |  42 +++++++-
- kpartx/lopart.c          |  73 ++++++--------
- kpartx/lopart.h          |   1 -
- kpartx/test-kpartx       | 253 +++++++++++++++++++++++++++++++++++++++++++++++
- libmultipath/devmapper.c |  15 +--
- 7 files changed, 356 insertions(+), 69 deletions(-)
- create mode 100755 kpartx/test-kpartx
-
+diff --git a/kpartx/devmapper.c b/kpartx/devmapper.c
+index cf6650c6..8f48a705 100644
+--- a/kpartx/devmapper.c
++++ b/kpartx/devmapper.c
+@@ -8,6 +8,7 @@
+ #include <libdevmapper.h>
+ #include <ctype.h>
+ #include <errno.h>
++#include <sys/sysmacros.h>
+ #include "devmapper.h"
+ 
+ #define UUID_PREFIX "part%d-"
+@@ -418,8 +419,8 @@ dm_compare_uuid(const char *mapuuid, const char *partname)
+ 		return 1;
+ 
+ 	if (!strncmp(partuuid, "part", 4)) {
+-		char *p = strstr(partuuid, "mpath-");
+-		if (p && !strcmp(mapuuid, p))
++		char *p = strchr(partuuid, '-');
++		if (p && !strcmp(mapuuid, p + 1))
+ 			r = 0;
+ 	}
+ 	free(partuuid);
+@@ -432,6 +433,7 @@ struct remove_data {
+ 
+ static int
+ do_foreach_partmaps (const char * mapname, const char *uuid,
++		     dev_t devt,
+ 		     int (*partmap_func)(const char *, void *),
+ 		     void *data)
+ {
+@@ -443,6 +445,7 @@ do_foreach_partmaps (const char * mapname, const char *uuid,
+ 	int major, minor;
+ 	char dev_t[32];
+ 	int r = 1;
++	int is_dmdev = 1;
+ 
+ 	if (!(dmt = dm_task_create(DM_DEVICE_LIST)))
+ 		return 1;
+@@ -460,15 +463,20 @@ do_foreach_partmaps (const char * mapname, const char *uuid,
+ 		goto out;
+ 	}
+ 
+-	if (dm_devn(mapname, &major, &minor))
+-		goto out;
++	if (dm_devn(mapname, &major, &minor) ||
++	    (major != major(devt) || minor != minor(devt)))
++		/*
++		 * The latter could happen if a dm device "/dev/mapper/loop0"
++		 * exits while kpartx is called on "/dev/loop0".
++		 */
++		is_dmdev = 0;
+ 
+-	sprintf(dev_t, "%d:%d", major, minor);
++	sprintf(dev_t, "%d:%d", major(devt), minor(devt));
+ 	do {
+ 		/*
+ 		 * skip our devmap
+ 		 */
+-		if (!strcmp(names->name, mapname))
++		if (is_dmdev && !strcmp(names->name, mapname))
+ 			goto next;
+ 
+ 		/*
+@@ -496,7 +504,7 @@ do_foreach_partmaps (const char * mapname, const char *uuid,
+ 		/*
+ 		 * skip if uuids don't match
+ 		 */
+-		if (dm_compare_uuid(uuid, names->name)) {
++		if (is_dmdev && uuid && dm_compare_uuid(uuid, names->name)) {
+ 			if (rd->verbose)
+ 				printf("%s: is not a kpartx partition. Not removing\n",
+ 				       names->name);
+@@ -537,10 +545,10 @@ remove_partmap(const char *name, void *data)
+ }
+ 
+ int
+-dm_remove_partmaps (char * mapname, char *uuid, int verbose)
++dm_remove_partmaps (char * mapname, char *uuid, dev_t devt, int verbose)
+ {
+ 	struct remove_data rd = { verbose };
+-	return do_foreach_partmaps(mapname, uuid, remove_partmap, &rd);
++	return do_foreach_partmaps(mapname, uuid, devt, remove_partmap, &rd);
+ }
+ 
+ #define FEATURE_NO_PART "no_partitions"
+diff --git a/kpartx/devmapper.h b/kpartx/devmapper.h
+index 9988ec0f..2e28c780 100644
+--- a/kpartx/devmapper.h
++++ b/kpartx/devmapper.h
+@@ -18,7 +18,7 @@ char * dm_mapname(int major, int minor);
+ dev_t dm_get_first_dep(char *devname);
+ char * dm_mapuuid(const char *mapname);
+ int dm_devn (const char * mapname, int *major, int *minor);
+-int dm_remove_partmaps (char * mapname, char *uuid, int verbose);
++int dm_remove_partmaps (char * mapname, char *uuid, dev_t devt, int verbose);
+ int dm_no_partitions(char * mapname);
+ 
+ #endif /* _KPARTX_DEVMAPPER_H */
+diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+index e9b09492..e2056b7f 100644
+--- a/kpartx/kpartx.c
++++ b/kpartx/kpartx.c
+@@ -451,7 +451,8 @@ main(int argc, char **argv){
+ 			break;
+ 
+ 		case DELETE:
+-			r = dm_remove_partmaps(mapname, uuid, verbose);
++			r = dm_remove_partmaps(mapname, uuid, buf.st_rdev,
++					       verbose);
+ 			if (loopdev) {
+ 				if (del_loop(loopdev)) {
+ 					if (verbose)
 -- 
 2.12.2
