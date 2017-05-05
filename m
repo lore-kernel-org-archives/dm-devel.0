@@ -1,7 +1,7 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 10/10] kpartx: find_loop_by_file: use sysfs
-Date: Sat,  6 May 2017 00:05:59 +0200
-Message-ID: <20170505220559.7248-11-mwilck@suse.com>
+Subject: [PATCH 09/10] kpartx: use absolute path for regular files
+Date: Sat,  6 May 2017 00:05:58 +0200
+Message-ID: <20170505220559.7248-10-mwilck@suse.com>
 References: <20170505220559.7248-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,89 +21,37 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@s
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Rather then searching through all of /dev, look up loop devices
-in /sys/devices/virtual/block. This is cleaner and more robust
-(/dev/loop$Xp$Y symlinks may confuse kpartx).
+kpartx supports being called for a regular file, in which
+case it assumes that it should set up a loop device or use
+an existing one. Because the loopinfo.lo_name field contains
+an absolute path, matching with existing loop devices fails
+for relative paths. Matching by basename only would be unreliable.
+
+Therefore, convert relative to absolute path for regular files.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- kpartx/lopart.c | 42 +++++++++++++++++++++++++++++++-----------
- 1 file changed, 31 insertions(+), 11 deletions(-)
+ kpartx/kpartx.c | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
 
-diff --git a/kpartx/lopart.c b/kpartx/lopart.c
-index 44f0c277..0521d7dc 100644
---- a/kpartx/lopart.c
-+++ b/kpartx/lopart.c
-@@ -68,25 +68,46 @@ char *find_loop_by_file(const char *filename)
- {
- 	DIR *dir;
- 	struct dirent *dent;
--	char dev[64], *found = NULL;
-+	char dev[64], *found = NULL, *p;
- 	int fd;
- 	struct stat statbuf;
- 	struct loop_info loopinfo;
-+	const char VIRT_BLOCK[] = "/sys/devices/virtual/block";
-+	char path[PATH_MAX];
+diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+index d9057fba..3bd16452 100644
+--- a/kpartx/kpartx.c
++++ b/kpartx/kpartx.c
+@@ -350,7 +350,13 @@ main(int argc, char **argv){
  
--	dir = opendir("/dev");
-+	dir = opendir(VIRT_BLOCK);
- 	if (!dir)
- 		return NULL;
- 
- 	while ((dent = readdir(dir)) != NULL) {
- 		if (strncmp(dent->d_name,"loop",4))
- 			continue;
--		if (!strcmp(dent->d_name, "loop-control"))
--			continue;
--		sprintf(dev, "/dev/%s", dent->d_name);
- 
--		fd = open (dev, O_RDONLY);
-+		if (snprintf(path, PATH_MAX, "%s/%s/dev", VIRT_BLOCK,
-+			     dent->d_name) >= PATH_MAX)
-+			continue;
-+
-+		fd = open(path, O_RDONLY);
- 		if (fd < 0)
--			break;
-+			continue;
-+
-+		if (read(fd, dev, sizeof(dev)) <= 0) {
-+			close(fd);
-+			continue;
+ 	if (S_ISREG (buf.st_mode)) {
+ 		/* already looped file ? */
+-		loopdev = find_loop_by_file(device);
++		char rpath[PATH_MAX];
++		if (realpath(device, rpath) == NULL) {
++			fprintf(stderr, "Error: %s: %s\n", device,
++				strerror(errno));
++			exit (1);
 +		}
-+
-+		close(fd);
-+
-+		dev[sizeof(dev)-1] = '\0';
-+		p = strchr(dev, '\n');
-+		if (p != NULL)
-+			*p = '\0';
-+		if (snprintf(path, PATH_MAX, "/dev/block/%s", dev) >= PATH_MAX)
-+			continue;
-+
-+		fd = open (path, O_RDONLY);
-+		if (fd < 0)
-+			continue;
++		loopdev = find_loop_by_file(rpath);
  
- 		if (fstat (fd, &statbuf) != 0 ||
- 		    !S_ISBLK(statbuf.st_mode)) {
-@@ -99,13 +120,12 @@ char *find_loop_by_file(const char *filename)
- 			continue;
- 		}
- 
-+		close (fd);
-+
- 		if (0 == strcmp(filename, loopinfo.lo_name)) {
--			close (fd);
--			found = xstrdup(dev);
-+			found = realpath(path, NULL);
- 			break;
- 		}
--
--		close (fd);
- 	}
- 	closedir(dir);
- 	return found;
+ 		if (!loopdev && what == DELETE)
+ 			exit (0);
 -- 
 2.12.2
