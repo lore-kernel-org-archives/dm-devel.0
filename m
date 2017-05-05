@@ -1,12 +1,13 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 09/10] kpartx: use absolute path for regular files
-Date: Sat,  6 May 2017 00:05:58 +0200
-Message-ID: <20170505220559.7248-10-mwilck@suse.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH 00/10] fixes for kpartx -d
+Date: Fri, 5 May 2017 23:18:19 +0100
+Message-ID: <20170505221819.GG11857@agk-dp.fab.redhat.com>
 References: <20170505220559.7248-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
 In-Reply-To: <20170505220559.7248-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -17,41 +18,17 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@suse.de>, Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <mwilck@suse.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-kpartx supports being called for a regular file, in which
-case it assumes that it should set up a loop device or use
-an existing one. Because the loopinfo.lo_name field contains
-an absolute path, matching with existing loop devices fails
-for relative paths. Matching by basename only would be unreliable.
+On Sat, May 06, 2017 at 12:05:49AM +0200, Martin Wilck wrote:
+>   3) kpartx should only delete "partitions", which are single-target
+>      linear mappings into a block device. Other maps should not be touched.
 
-Therefore, convert relative to absolute path for regular files.
+The prefix on the dm device's uuid should guarantee this: all devices
+kpartx creates should have the same initial characters (a
+not-quite-standard form "part" IIRC instead of "KPARTX-") and any
+devices without those initial characters must be ignored.
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- kpartx/kpartx.c | 8 +++++++-
- 1 file changed, 7 insertions(+), 1 deletion(-)
-
-diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
-index d9057fba..3bd16452 100644
---- a/kpartx/kpartx.c
-+++ b/kpartx/kpartx.c
-@@ -350,7 +350,13 @@ main(int argc, char **argv){
- 
- 	if (S_ISREG (buf.st_mode)) {
- 		/* already looped file ? */
--		loopdev = find_loop_by_file(device);
-+		char rpath[PATH_MAX];
-+		if (realpath(device, rpath) == NULL) {
-+			fprintf(stderr, "Error: %s: %s\n", device,
-+				strerror(errno));
-+			exit (1);
-+		}
-+		loopdev = find_loop_by_file(rpath);
- 
- 		if (!loopdev && what == DELETE)
- 			exit (0);
--- 
-2.12.2
+Alasdair
