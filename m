@@ -1,8 +1,7 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 07/10] libmultipath: don't treat multi-linear
-	mappings as partitions
-Date: Sat,  6 May 2017 00:05:56 +0200
-Message-ID: <20170505220559.7248-8-mwilck@suse.com>
+Subject: [PATCH 03/10] kpartx: remove is_loop_device
+Date: Sat,  6 May 2017 00:05:52 +0200
+Message-ID: <20170505220559.7248-4-mwilck@suse.com>
 References: <20170505220559.7248-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,62 +21,66 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@s
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-dm_type is used in libmultipath only to check whether a mapping
-is "linear", with the intention to test if it represents a
-"partition". This test returns TRUE also for mappings with
-multiple targets, the first of which happens to be a linear
-mapping into the target device. This is questionable, it's
-hard to assign a "type" to such maps anyway.
-
-Fix this by returning an error for multi-target maps.
-This is analogous to the patch
-"kpartx: don't treat multi-linear mappings as partitions".
+This function is not used any more.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/devmapper.c | 15 ++++++++-------
- 1 file changed, 8 insertions(+), 7 deletions(-)
+ kpartx/lopart.c | 31 -------------------------------
+ kpartx/lopart.h |  1 -
+ 2 files changed, 32 deletions(-)
 
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index 5fb9d9ac..c19dcb62 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -572,7 +572,7 @@ out:
-  * returns:
-  *    1 : match
-  *    0 : no match
-- *   -1 : empty map
-+ *   -1 : empty map, or more than 1 target
-  */
- int dm_type(const char *name, char *type)
- {
-@@ -594,10 +594,11 @@ int dm_type(const char *name, char *type)
- 		goto out;
+diff --git a/kpartx/lopart.c b/kpartx/lopart.c
+index 2eb3f631..44f0c277 100644
+--- a/kpartx/lopart.c
++++ b/kpartx/lopart.c
+@@ -62,37 +62,6 @@ xstrdup (const char *s)
+ 	return t;
+ }
  
- 	/* Fetch 1st target */
--	dm_get_next_target(dmt, NULL, &start, &length,
--			   &target_type, &params);
+-int is_loop_device(const char *device)
+-{
+-	struct stat statbuf;
+-	int loopmajor;
+-#if 1
+-	loopmajor = 7;
+-#else
+-	FILE *procdev;
+-	char line[100], *cp;
 -
--	if (!target_type)
-+	if (dm_get_next_target(dmt, NULL, &start, &length,
-+			       &target_type, &params) != NULL)
-+		/* multiple targets */
-+		r = -1;
-+	else if (!target_type)
- 		r = -1;
- 	else if (!strcmp(target_type, type))
- 		r = 1;
-@@ -1185,9 +1186,9 @@ do_foreach_partmaps (const char * mapname,
- 	do {
- 		if (
- 		    /*
--		     * if devmap target is "linear"
-+		     * if there is only a single "linear" target
- 		     */
--		    (dm_type(names->name, TGT_PART) > 0) &&
-+		    (dm_type(names->name, TGT_PART) == 1) &&
+-	loopmajor = 0;
+-
+-	if ((procdev = fopen(PROC_DEVICES, "r")) != NULL) {
+-
+-		while (fgets (line, sizeof(line), procdev)) {
+-
+-			if ((cp = strstr (line, " loop\n")) != NULL) {
+-				*cp='\0';
+-				loopmajor=atoi(line);
+-				break;
+-			}
+-		}
+-
+-		fclose(procdev);
+-	}
+-#endif
+-	return (loopmajor && stat(device, &statbuf) == 0 &&
+-		S_ISBLK(statbuf.st_mode) &&
+-		major(statbuf.st_rdev) == loopmajor);
+-}
+-
+ #define SIZE(a) (sizeof(a)/sizeof(a[0]))
  
- 		    /*
- 		     * and both uuid end with same suffix starting
+ char *find_loop_by_file(const char *filename)
+diff --git a/kpartx/lopart.h b/kpartx/lopart.h
+index a512353b..d3bad10a 100644
+--- a/kpartx/lopart.h
++++ b/kpartx/lopart.h
+@@ -1,6 +1,5 @@
+ extern int verbose;
+ extern int set_loop (const char *, const char *, int, int *);
+ extern int del_loop (const char *);
+-extern int is_loop_device (const char *);
+ extern char * find_unused_loop_device (void);
+ extern char * find_loop_by_file (const char *);
 -- 
 2.12.2
