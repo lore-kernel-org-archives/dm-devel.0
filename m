@@ -1,54 +1,71 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 00/10] fixes for kpartx -d
-Date: Sat, 06 May 2017 00:36:19 +0200
-Message-ID: <1494023779.4926.4.camel@suse.com>
-References: <20170505220559.7248-1-mwilck@suse.com>
-	<20170505221819.GG11857@agk-dp.fab.redhat.com>
-	<1494023438.4926.2.camel@suse.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1494023438.4926.2.camel@suse.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com
+From: Gilad Ben-Yossef <gilad@benyossef.com>
+Subject: [RFC 00/10] introduce crypto wait for async op function
+Date: Sat,  6 May 2017 15:59:49 +0300
+Message-ID: <1494075602-5061-1-git-send-email-gilad@benyossef.com>
+Return-path: <linux-crypto-owner@vger.kernel.org>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, Jonathan Corbet <corbet@lwn.net>, David Howells <dhowells@redhat.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, Steve French <sfrench@samba.org>, "Theodore Y. Ts'o" <tytso@mit.edu>, Jaegeuk Kim <jaegeuk@kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Dmitry Kasatkin <dmitry.kasatkin@gmail.com>, James Morris <james.l.morris@oracle.com>, "Serge E. Hallyn" <serge@hallyn.com>
+Cc: Ofir Drang <ofir.drang@arm.com>, Gilad Ben-Yossef <gilad.benyossef@arm.com>, linux-crypto@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, keyrings@vger.kernel.org, linux-raid@vger.kernel.org, linux-cifs@vger.kernel.org, samba-technical@lists.samba.org, linux-fsdevel@vger.kernel.org, linux-ima-devel@lists.sourceforge.net, linux-ima-user@lists.sourceforge.net, linux-security-module@vger.kernel.org
 List-Id: dm-devel.ids
 
-T24gU2F0LCAyMDE3LTA1LTA2IGF0IDAwOjMwICswMjAwLCBNYXJ0aW4gV2lsY2sgd3JvdGU6Cj4g
-T24gRnJpLCAyMDE3LTA1LTA1IGF0IDIzOjE4ICswMTAwLCBBbGFzZGFpciBHIEtlcmdvbiB3cm90
-ZToKPiA+IE9uIFNhdCwgTWF5IDA2LCAyMDE3IGF0IDEyOjA1OjQ5QU0gKzAyMDAsIE1hcnRpbiBX
-aWxjayB3cm90ZToKPiA+ID4gwqAgMykga3BhcnR4IHNob3VsZCBvbmx5IGRlbGV0ZSAicGFydGl0
-aW9ucyIsIHdoaWNoIGFyZSBzaW5nbGUtCj4gPiA+IHRhcmdldAo+ID4gPiDCoMKgwqDCoMKgbGlu
-ZWFyIG1hcHBpbmdzIGludG8gYSBibG9jayBkZXZpY2UuIE90aGVyIG1hcHMgc2hvdWxkIG5vdAo+
-ID4gPiBiZQo+ID4gPiB0b3VjaGVkLgo+ID4gCj4gPiBUaGUgcHJlZml4IG9uIHRoZSBkbSBkZXZp
-Y2UncyB1dWlkIHNob3VsZCBndWFyYW50ZWUgdGhpczogYWxsCj4gPiBkZXZpY2VzCj4gPiBrcGFy
-dHggY3JlYXRlcyBzaG91bGQgaGF2ZSB0aGUgc2FtZSBpbml0aWFsIGNoYXJhY3RlcnMgKGEKPiA+
-IG5vdC1xdWl0ZS1zdGFuZGFyZCBmb3JtICJwYXJ0IiBJSVJDIGluc3RlYWQgb2YgIktQQVJUWC0i
-KSBhbmQgYW55Cj4gPiBkZXZpY2VzIHdpdGhvdXQgdGhvc2UgaW5pdGlhbCBjaGFyYWN0ZXJzIG11
-c3QgYmUgaWdub3JlZC4KPiAKPiBUaGlzIHdvcmtzIG9ubHkgZm9yIHBhcnRpdGlvbnMgb24gRE0g
-ZGV2aWNlcywgbm90IGUuZy4gZm9yIGxvb3AKPiBkZXZpY2VzLiBUaGVzZSBkZXZpY2VzIG9idmlv
-dXNseSBoYXZlIG5vIERNIFVVSUQ7IGFuZCB0aHVzIGtwYXJ0eAo+IGFsc28KPiBkb2Vzbid0IHNl
-dCBhbiBVVUlEIGZvciB0aGUgcGFydGl0aW9uIGRldmljZXMgaXQgY3JlYXRlcy4KPiBUaGF0J3Mg
-dGhlIG1haW4gcG9pbnQgb2YgdGhpcyBzZXJpZXMuCgpNb3Jlb3ZlcjogYmVmb3JlIGV2ZW4gbG9v
-a2luZyBhdCB0aGUgVVVJRCwga3BhcnR4IGRpc2NhcmRzIG1hcHBpbmdzCnRoYXQgYXJlIG5vdCAi
-bGluZWFyIiBhbmQgZG9uJ3QgbWFwIGludG8gdGhlIGRldmljZSBpbiBxdWVzdGlvbi4gSQphZGRl
-ZCB0aGUgYWRkaXRpb25hbCBjYXNlIHRoYXQgaXQgc2hvdWxkIGFsc28gZGlzcmVnYXJkIG1hcHBp
-bmdzIHdpdGgKdHdvIG9yIG1vcmUgdGFyZ2V0cyB3aGljaCBjYW4ndCBiZSByZWdhcmRlZCBhcyBz
-aW1wbGUgImxpbmVhciIgdHlwZQooYnV0IGluIHRoZSBjdXJyZW50IGNvZGUsIHRoZXkgYXJlKS4K
-CldpdGggdGhlIFVVSUQgdGVzdCBpbiBwbGFjZSwgdGhpcyBtYXkgc2VlbSBraW5kIG9mIHJlZHVu
-ZGFudCwgYnV0IGl0CmZvbGxvd3MgdGhlIGdlbmVyYWwgbG9naWMgdGhhdCBvYnZpb3VzIG5vbi1w
-YXJ0aXRpb24gZGV2aWNlcyBzaG91bGQgYmUKZGlzY2FyZGVkIGJlZm9yZSBjaGVja2luZyB0aGUg
-VVVJRC4KCk1hcnRpbgoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRl
-bC7CoCs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVu
-ZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xy
-bmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRw
-czovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+Many users of kernel async. crypto services have a pattern of
+starting an async. crypto op and than using a completion
+to wait for it to end, resulting of the same code repeating
+itself in multiple places, sometime with errors.
+
+This patch aims to introduce a generic "wait for async. 
+crypto op to complete" functions and move all the users
+I could find to use it.  This gets rid of almost 300 
+lines of code and fixes at least one bug (hopefully
+without adding new ones).
+
+In some cases (indicated in the specific patch description)
+the move to the generic function changes the semantics
+slightly (such as dropping interruptible when waiting).
+I am especially interested in feedback whether people
+think this is OK or I should an interruptible variant.
+
+The patch set was boot tested on x86_64 and arm64 which
+at the very least tests the crypto users via testmgr
+but I am less confident regarding some of the other
+users and would love feedback.
+
+Signed-off-by: Gilad Ben-Yossef <gilad@benyossef.com>
+
+Gilad Ben-Yossef (10):
+  crypto: factor async completion for general use
+  crypto: move pub key to generic async completion
+  crypto: move drbg to generic async completion
+  crypto: move gcm to generic async completion
+  crypto: move testmgr to generic async completion
+  dm: move dm-verity to generic async completion
+  fscrypt: move to generic async completion
+  cifs: move to generic async completion
+  ima: move to generic async completion
+  crypto: adapt api sample to use async. op wait
+
+ Documentation/crypto/api-samples.rst |  52 ++--------
+ crypto/af_alg.c                      |  27 -----
+ crypto/algif_aead.c                  |  14 +--
+ crypto/algif_hash.c                  |  30 +++---
+ crypto/algif_skcipher.c              |  10 +-
+ crypto/api.c                         |  28 ++++++
+ crypto/asymmetric_keys/public_key.c  |  28 +-----
+ crypto/drbg.c                        |  35 ++-----
+ crypto/gcm.c                         |  34 ++-----
+ crypto/testmgr.c                     | 184 +++++++++++------------------------
+ drivers/md/dm-verity-target.c        |  81 ++++-----------
+ drivers/md/dm-verity.h               |   5 -
+ fs/cifs/smb2ops.c                    |  30 +-----
+ fs/crypto/crypto.c                   |  28 +-----
+ fs/crypto/fname.c                    |  36 ++-----
+ fs/crypto/fscrypt_private.h          |  10 --
+ fs/crypto/keyinfo.c                  |  21 +---
+ include/crypto/drbg.h                |   3 +-
+ include/crypto/if_alg.h              |  14 ---
+ include/linux/crypto.h               |  28 ++++++
+ security/integrity/ima/ima_crypto.c  |  56 ++++-------
+ 21 files changed, 222 insertions(+), 532 deletions(-)
+
+-- 
+2.1.4
