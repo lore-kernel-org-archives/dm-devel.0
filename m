@@ -1,114 +1,53 @@
-From: Gilad Ben-Yossef <gilad@benyossef.com>
-Subject: [RFC 10/10] crypto: adapt api sample to use async. op wait
-Date: Sat,  6 May 2017 15:59:59 +0300
-Message-ID: <1494075602-5061-11-git-send-email-gilad@benyossef.com>
-References: <1494075602-5061-1-git-send-email-gilad@benyossef.com>
-Return-path: <linux-doc-owner@vger.kernel.org>
-In-Reply-To: <1494075602-5061-1-git-send-email-gilad@benyossef.com>
-Sender: linux-doc-owner@vger.kernel.org
-To: Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, Jonathan Corbet <corbet@lwn.net>, David Howells <dhowells@redhat.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, Steve French <sfrench@samba.org>, "Theodore Y. Ts'o" <tytso@mit.edu>, Jaegeuk Kim <jaegeuk@kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Dmitry Kasatkin <dmitry.kasatkin@gmail.com>, James Morris <james.l.morris@oracle.com>, "Serge E. Hallyn" <serge@hallyn.com>
-Cc: Ofir Drang <ofir.drang@arm.com>, Gilad Ben-Yossef <gilad.benyossef@arm.com>, linux-crypto@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, keyrings@vger.kernel.org, linux-raid@vger.kernel.org, linux-cifs@vger.kernel.org, samba-technical@lists.samba.org, linux-fsdevel@vger.kernel.org, linux-ima-devel@lists.sourceforge.net, linux-ima-user@lists.sourceforge.net, linux-security-module@vger.kernel.org
+From: Geliang Tang <geliangtang@gmail.com>
+Subject: [PATCH v2] dm bio prison: use rb_entry()
+Date: Sat,  6 May 2017 23:39:10 +0800
+Message-ID: <ddb7846622c75a58f7cd872f36c4c22d4b4ce7d4.1493722271.git.geliangtang@gmail.com>
+References: <478774bc-7af1-58a6-7c3e-36745249d61b@suse.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <478774bc-7af1-58a6-7c3e-36745249d61b@suse.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, Coly Li <colyli@suse.de>
+Cc: Geliang Tang <geliangtang@gmail.com>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-The code sample is waiting for an async. crypto op completion.
-Adapt sample to use the new generic infrastructure to do the same.
+To make the code clearer, use rb_entry() instead of container_of() to
+deal with rbtree.
 
-Signed-off-by: Gilad Ben-Yossef <gilad@benyossef.com>
+Signed-off-by: Geliang Tang <geliangtang@gmail.com>
+Acked-by: Coly Li <colyli@suse.de>
 ---
- Documentation/crypto/api-samples.rst | 52 +++++++-----------------------------
- 1 file changed, 10 insertions(+), 42 deletions(-)
+Changes in v2:
+ - Apply to dm-bio-prison-v1.c and dm-bio-prison-v2.c
+---
+ drivers/md/dm-bio-prison-v1.c | 2 +-
+ drivers/md/dm-bio-prison-v2.c | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/Documentation/crypto/api-samples.rst b/Documentation/crypto/api-samples.rst
-index d021fd9..73b466b 100644
---- a/Documentation/crypto/api-samples.rst
-+++ b/Documentation/crypto/api-samples.rst
-@@ -7,59 +7,27 @@ Code Example For Symmetric Key Cipher Operation
- ::
+diff --git a/drivers/md/dm-bio-prison-v1.c b/drivers/md/dm-bio-prison-v1.c
+index ae7da2c..f8d221b 100644
+--- a/drivers/md/dm-bio-prison-v1.c
++++ b/drivers/md/dm-bio-prison-v1.c
+@@ -116,7 +116,7 @@ static int __bio_detain(struct dm_bio_prison *prison,
  
+ 	while (*new) {
+ 		struct dm_bio_prison_cell *cell =
+-			container_of(*new, struct dm_bio_prison_cell, node);
++			rb_entry(*new, struct dm_bio_prison_cell, node);
  
--    struct tcrypt_result {
--        struct completion completion;
--        int err;
--    };
--
-     /* tie all data structures together */
-     struct skcipher_def {
-         struct scatterlist sg;
-         struct crypto_skcipher *tfm;
-         struct skcipher_request *req;
--        struct tcrypt_result result;
-+        struct crypto_wait wait;
-     };
+ 		r = cmp_keys(key, &cell->key);
  
--    /* Callback function */
--    static void test_skcipher_cb(struct crypto_async_request *req, int error)
--    {
--        struct tcrypt_result *result = req->data;
--
--        if (error == -EINPROGRESS)
--            return;
--        result->err = error;
--        complete(&result->completion);
--        pr_info("Encryption finished successfully\n");
--    }
--
-     /* Perform cipher operation */
-     static unsigned int test_skcipher_encdec(struct skcipher_def *sk,
-                          int enc)
-     {
--        int rc = 0;
-+        int rc;
+diff --git a/drivers/md/dm-bio-prison-v2.c b/drivers/md/dm-bio-prison-v2.c
+index c9b11f7..8ce3a1a 100644
+--- a/drivers/md/dm-bio-prison-v2.c
++++ b/drivers/md/dm-bio-prison-v2.c
+@@ -120,7 +120,7 @@ static bool __find_or_insert(struct dm_bio_prison_v2 *prison,
  
-         if (enc)
--            rc = crypto_skcipher_encrypt(sk->req);
-+            rc = crypto_wait_req(crypto_skcipher_encrypt(sk->req), &sk->wait);
-         else
--            rc = crypto_skcipher_decrypt(sk->req);
--
--        switch (rc) {
--        case 0:
--            break;
--        case -EINPROGRESS:
--        case -EBUSY:
--            rc = wait_for_completion_interruptible(
--                &sk->result.completion);
--            if (!rc && !sk->result.err) {
--                reinit_completion(&sk->result.completion);
--                break;
--            }
--        default:
--            pr_info("skcipher encrypt returned with %d result %d\n",
--                rc, sk->result.err);
--            break;
--        }
--        init_completion(&sk->result.completion);
-+            rc = crypto_wait_req(crypto_skcipher_decrypt(sk->req), &sk->wait);
-+
-+	if (rc)
-+		pr_info("skcipher encrypt returned with result %d\n", rc);
+ 	while (*new) {
+ 		struct dm_bio_prison_cell_v2 *cell =
+-			container_of(*new, struct dm_bio_prison_cell_v2, node);
++			rb_entry(*new, struct dm_bio_prison_cell_v2, node);
  
-         return rc;
-     }
-@@ -89,8 +57,8 @@ Code Example For Symmetric Key Cipher Operation
-         }
+ 		r = cmp_keys(key, &cell->key);
  
-         skcipher_request_set_callback(req, CRYPTO_TFM_REQ_MAY_BACKLOG,
--                          test_skcipher_cb,
--                          &sk.result);
-+                          crypto_req_done,
-+                          &sk.wait);
- 
-         /* AES 256 with random key */
-         get_random_bytes(&key, 32);
-@@ -122,7 +90,7 @@ Code Example For Symmetric Key Cipher Operation
-         /* We encrypt one block */
-         sg_init_one(&sk.sg, scratchpad, 16);
-         skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, ivdata);
--        init_completion(&sk.result.completion);
-+        crypto_init_wait(&sk.wait);
- 
-         /* encrypt data */
-         ret = test_skcipher_encdec(&sk, 1);
 -- 
-2.1.4
-
+2.9.3
