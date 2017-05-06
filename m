@@ -1,53 +1,56 @@
-From: Geliang Tang <geliangtang@gmail.com>
-Subject: [PATCH v2] dm bio prison: use rb_entry()
-Date: Sat,  6 May 2017 23:39:10 +0800
-Message-ID: <ddb7846622c75a58f7cd872f36c4c22d4b4ce7d4.1493722271.git.geliangtang@gmail.com>
-References: <478774bc-7af1-58a6-7c3e-36745249d61b@suse.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <478774bc-7af1-58a6-7c3e-36745249d61b@suse.de>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, Coly Li <colyli@suse.de>
-Cc: Geliang Tang <geliangtang@gmail.com>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org
+From: Wols Lists <antlists@youngman.org.uk>
+Subject: Re: [mdadm PATCH] Create: tell udev md device is not ready when first
+ created.
+Date: Sat, 6 May 2017 17:25:30 +0100
+Message-ID: <590DF8FA.4090600@youngman.org.uk>
+References: <149265560315.31004.3851231165281498425.stgit@noble>
+ <149265600601.31004.323865505557190368.stgit@noble>
+ <dedd27cd-9c2e-f244-d8aa-7a074679d3c6@gmail.com>
+ <87mvbasqx6.fsf@notabene.neil.brown.name>
+ <40a5fbff-9eef-07b3-fe1b-fb9a888cfb8b@redhat.com>
+ <87h919ruj5.fsf@notabene.neil.brown.name>
+ <6bd347e1-170c-48e9-1171-09ff143ace83@redhat.com>
+ <c5fe5d16-5ca6-94b0-fd5b-0b6009d78bab@gmail.com>
+ <2f431da6-0dce-b485-4109-6f8669814430@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <2f431da6-0dce-b485-4109-6f8669814430@redhat.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: Peter Rajnoha <prajnoha@redhat.com>, Jes Sorensen <jes.sorensen@gmail.com>, NeilBrown <neilb@suse.com>
+Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-To make the code clearer, use rb_entry() instead of container_of() to
-deal with rbtree.
+On 03/05/17 15:13, Peter Rajnoha wrote:
+> There's a difference though - when you're *creating* a completely new
+> device that is an abstraction over existing devices, you (most of the
+> time) expect that new device to be initialized. For those corner cases
+> where people do need to keep the old data, there can be an option to do
+> that.
 
-Signed-off-by: Geliang Tang <geliangtang@gmail.com>
-Acked-by: Coly Li <colyli@suse.de>
----
-Changes in v2:
- - Apply to dm-bio-prison-v1.c and dm-bio-prison-v2.c
----
- drivers/md/dm-bio-prison-v1.c | 2 +-
- drivers/md/dm-bio-prison-v2.c | 2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
+That's not a corner case. If there's old data that's the NORM. I get
+what you're after, I'm inclined to agree with you, but the default
+should be to DO NOTHING.
 
-diff --git a/drivers/md/dm-bio-prison-v1.c b/drivers/md/dm-bio-prison-v1.c
-index ae7da2c..f8d221b 100644
---- a/drivers/md/dm-bio-prison-v1.c
-+++ b/drivers/md/dm-bio-prison-v1.c
-@@ -116,7 +116,7 @@ static int __bio_detain(struct dm_bio_prison *prison,
- 
- 	while (*new) {
- 		struct dm_bio_prison_cell *cell =
--			container_of(*new, struct dm_bio_prison_cell, node);
-+			rb_entry(*new, struct dm_bio_prison_cell, node);
- 
- 		r = cmp_keys(key, &cell->key);
- 
-diff --git a/drivers/md/dm-bio-prison-v2.c b/drivers/md/dm-bio-prison-v2.c
-index c9b11f7..8ce3a1a 100644
---- a/drivers/md/dm-bio-prison-v2.c
-+++ b/drivers/md/dm-bio-prison-v2.c
-@@ -120,7 +120,7 @@ static bool __find_or_insert(struct dm_bio_prison_v2 *prison,
- 
- 	while (*new) {
- 		struct dm_bio_prison_cell_v2 *cell =
--			container_of(*new, struct dm_bio_prison_cell_v2, node);
-+			rb_entry(*new, struct dm_bio_prison_cell_v2, node);
- 
- 		r = cmp_keys(key, &cell->key);
- 
--- 
-2.9.3
+If you want mdadm to mess about with the content of the drives you
+should either (a) explicitly tell it to (yes I would like that option
+:-), or (b) do it yourself beforehand - dd if=/dev/zero etc etc.
+
+It does seem weird to me that mdadm spends a lot of effort initialising
+an array and calculating parity blah-di-blah, and you can't tell it to
+just "set everything to zero". But there's no way it should mess about
+with what was there before, without explicitly being told to.
+
+ When you're inserting existing drives, you're not creating them -
+> when those device come from factory (they're "created"), they never
+> contain garbage and old data when you buy them.
+
+As Jes says, USB devices rarely come with nothing on them. MS eventually
+learnt their lesson, "doing something" BY DEFAULT with unknown/untrusted
+data was a really stupid idea - it was far too easy to get your system
+"pwned". Here it would be far too easy to trash an array you're trying
+to recover.
+
+Cheers,
+Wol
