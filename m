@@ -1,16 +1,16 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 08/10] kpartx: use partition UUID for
-	non-DM	devices
-Date: Mon, 08 May 2017 10:01:34 +0200
-Message-ID: <1494230494.5362.5.camel@suse.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH 02/10] kpartx: avoid ioctl error for loop
+	devices
+Date: Mon, 8 May 2017 15:46:11 -0500
+Message-ID: <20170508204611.GE22856@octiron.msp.redhat.com>
 References: <20170505220559.7248-1-mwilck@suse.com>
-	<20170505220559.7248-9-mwilck@suse.com>
-	<20170505223005.GH11857@agk-dp.fab.redhat.com>
+	<20170505220559.7248-3-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170505223005.GH11857@agk-dp.fab.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20170505220559.7248-3-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,49 +20,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
+To: Martin Wilck <mwilck@suse.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gRnJpLCAyMDE3LTA1LTA1IGF0IDIzOjMwICswMTAwLCBBbGFzZGFpciBHIEtlcmdvbiB3cm90
-ZToKPiBPbiBTYXQsIE1heSAwNiwgMjAxNyBhdCAxMjowNTo1N0FNICswMjAwLCBNYXJ0aW4gV2ls
-Y2sgd3JvdGU6Cj4gPiBJbnRyb2R1Y2UgYSAiZmFrZSIgVVVJRCBmb3IgdGhlc2UgZGV2aWNlcyB0
-byBtYWtlIHN1cmUga3BhcnR4Cj4gPiBkZWxldGVzIG9ubHkgZGV2aWNlcyBpdCBoYWQgY3JlYXRl
-ZCBwcmV2aW91c2x5LiBPdGhlcndpc2Uga3BhcnR4Cj4gPiBtaWdodCBlLmcuIGRlbGV0ZSBMVk0g
-TFZzIHRoYXQgYXJlIGluc2lkZSBhIGRldmljZSBpdCBpcyB0cnlpbmcKPiA+IHRvIGRlbGV0ZSBw
-YXJ0aXRpb25zIGZvci4gSXQgc2VlbXMgdG8gYmUgd2lzZXIgdG8gbWFrZSBzdXJlIHRoZQo+ID4g
-dXNlciBkZWxldGUgdGhlc2UgbWFudWFsbHkgYmVmb3JlIHJ1bm5pbmcgImtwYXJ0eCAtZCIuCj4g
-PiAKPiA+IFdpdGggdGhlIGZha2UgVVVJRCBpbiBwbGFjZSwgd2UgY2FuIHJlLWludHJvZHVjZSB0
-aGUgVVVJRCBjaGVjawo+ID4gZm9yIG5vbi1ETSBkZXZpY2UgdGhhdCB3YXMgcmVtb3ZlZCBpbiB0
-aGUgZWFybGllciBwYXRjaAo+ID4gImtwYXJ0eDogZG1fcmVtb3ZlX3BhcnRtYXBzOiBzdXBwb3J0
-IG5vbi1kbSBkZXZpY2VzIi4KPiA+IAo+ID4gVGhpcyBkaXNhYmxlcyBhbHNvIGRlbGV0aW9uIG9m
-IHBhcnRpdGlvbiBtYXBwaW5ncyBjcmVhdGVkCj4gPiBieSBlYXJsaWVyIHZlcnNpb25zIG9mIGtw
-YXJ0eC4gSWYga3BhcnR4IGhhcyBiZWVuIHVwZGF0ZWQgYWZ0ZXIKPiA+IHBhcnRpdGlvbiBtYXBw
-aW5ncyB3ZXJlIGNyZWF0ZWQsIHRoZSAiLWYiIGZsYWcgY2FuIGJlIHVzZWQKPiA+IHRvIGZvcmNl
-IGRlbHRpbmcgdGhlc2UgcGFydGl0aW9ucywgdG9vLgo+IAo+IMKgCj4gSW5kZWVkIC0gYWx3YXlz
-IHN1cHBseSBhIHV1aWQgZm9yIGV2ZXJ5IGRtIGRldmljZSBjcmVhdGVkLgo+IEFkZCBhIHN0YW5k
-YXJkIHByZWZpeCB0byB0aGUgYmVnaW5uaW5nIG9mIGl0LCBpZGVhbGx5ICJLUEFSVFgtIiB0byBi
-ZQo+IGNvbnNpc3RlbnQgd2l0aCBvdGhlciBkbSB0b29scyAoIkxWTS0iLCAiQ1JZUFQtIiBldGMu
-KSBpZiB5b3UncmUKPiBhYmxlIHRvIGJyZWFrIGNvbXBhdGliaWxpdHksIGJ1dCAicGFydCIgaXMg
-c3RpbGwgdW5pcXVlIGFuZAo+IGFkZXF1YXRlLsKgwqAKPiAoU3RhY2tlZCBkZXZpY2VzIGNhbiBl
-bmQgdXAgd2l0aCBhIHN0YWNrIG9mIHByZWZpeGVzIC0gb25seSB0aGUKPiBsZWZ0bW9zdCBvbmUK
-PiBjb3VudHMuKQoKQXMgbm90ZWQgaW4gbXkgcmVwbHkgdG8gSGFubmVzJyBtYWlsLCBJJ20gdXNp
-bmcgdGhlIHByZWZpeCAicGFydCV1LSIsCnRoZSBzYW1lIHByZWZpeCB0aGF0IGtwYXJ0eCBjdXJy
-ZW50bHkgdXNlZCBmb3IgcGFydGl0aW9ucyBvZiBETQpkZXZpY2VzLgoKVGhlIGZ1bGwgZm9ybWF0
-IGUuZy4gZm9yIC9kZXYvbWFwcGVyL2xvb3AwcDEgaXPCoAoKInBhcnQxLTc6MC1rcGFydHgtV2g1
-cFl2TTd1YzYwaGg3NCLCoAoKYW5kIGNvcnJlc3BvbmRpbmdseSwgdGhlICJmYWtlIFVVSUQiIHVz
-ZWQgZm9yIC9kZXYvbG9vcDAgd291bGQgYmXCoAoKwqDCoMKgwqDCoMKgIjc6MC1rcGFydHgtV2g1
-cFl2TTd1YzYwaGg3NCIKCklmIHlvdSBkb24ndCBsaWtlIHRoZSBmYWN0IHRoYXQgdGhpcyBzdGFy
-dHMgd2l0aCAiNzowIiwgY2hhbmdpbmcgdGhpcwp0byBlLmcuICJLUEFSVFgtNy4wLSRzb21ldGhp
-bmciIGlzIG5vIHByb2JsZW0gYXMgbG9uZyBhcyBwYXRjaCBpc24ndAphcHBsaWVkLgoKVGhlIGxh
-c3QgcGFydCAoIldoLi4uIikgaXMgYSBoYXJkLWNvZGVkIHN0cmluZywganVzdCB0byBhdm9pZAph
-Y2NpZGVudGFsIGNvbmZsaWN0cy4gSSB3YXMgd29uZGVyaW5nIHdoZXRoZXIgaXQgd291bGQgbWFr
-ZSBzZW5zZSB0bwpzb21lIHNvcnQgb2YgZW5jb2RlZCAiaG9zdCBJRCIgdG8gbWFrZSB0aGlzIFVV
-SUQgdHJ1bHkgInVuaXZlcnNhbCIuIE15CnBlcnNvbmFsIG9waW5pb24gaXMgdGhhdCB0aGlzIHdv
-dWxkIGJlIG92ZXItZW5naW5lZXJlZCwgYmVjYXVzZSB0aGVzZQpVVUlEIHdpbGwgYmUgdmlzaWJs
-ZSBvbmx5IG9ubHkgb24gdGhlIGhvc3QgdGhhdCBjYWxsZWQgImtwYXJ0eCAtYSIgaW4KdGhlIGZp
-cnN0IHBsYWNlLgoKQ2hlZXJzLApNYXJ0aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tA
-c3VzZS5jb20+LCBUZWwuwqArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBH
-RjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAy
-MTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJl
-ZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+dm_no_partitions() checks if features includes "no_partitions", but the
+upstream kernel doesn't allow that feature.  The patch to add it got
+NAKed when Hannes posted it, IIRC. That's why I went the route of using
+udev flags to avoid running kpartx.  Unless SUSE (or some other distro)
+is using the "no_partitions" patch in their kernel, we can pull the
+dm_no_partitions code completely.
+
+If you're still using it, I'm fine with this patch.
+-Ben
+
+On Sat, May 06, 2017 at 12:05:51AM +0200, Martin Wilck wrote:
+> Commit 3d709241 causes kpartx to attempt a dm ioctl on a loop
+> device. This causes an error message
+> "device-mapper: table ioctl on loop4 failed: No such device or address".
+> 
+> Fixes: 3d709241 "kpartx: sanitize delete partitions"
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  kpartx/kpartx.c | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+> 
+> diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+> index 58e60ffe..e9b09492 100644
+> --- a/kpartx/kpartx.c
+> +++ b/kpartx/kpartx.c
+> @@ -362,7 +362,7 @@ main(int argc, char **argv){
+>  
+>  	if (!mapname)
+>  		mapname = device + off;
+> -	if (!force_devmap &&
+> +	else if (!force_devmap &&
+>  		 dm_no_partitions(mapname)) {
+>  		/* Feature 'no_partitions' is set, return */
+>  		return 0;
+> -- 
+> 2.12.2
