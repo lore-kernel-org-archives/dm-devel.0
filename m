@@ -1,62 +1,94 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 02/10] kpartx: avoid ioctl error for loop
-	devices
-Date: Mon, 8 May 2017 15:46:11 -0500
-Message-ID: <20170508204611.GE22856@octiron.msp.redhat.com>
-References: <20170505220559.7248-1-mwilck@suse.com>
-	<20170505220559.7248-3-mwilck@suse.com>
+From: Pavel Shilovsky <pshilovsky@samba.org>
+Subject: Re: [RFC 08/10] cifs: move to generic async completion
+Date: Mon, 8 May 2017 13:56:03 -0700
+Message-ID: <CAKywueTvdNwnzwmMj+0qigZ24EZeksO0--t5mqwXN4r5a4C70g@mail.gmail.com>
+References: <1494075602-5061-1-git-send-email-gilad@benyossef.com> <1494075602-5061-9-git-send-email-gilad@benyossef.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20170505220559.7248-3-mwilck@suse.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <1494075602-5061-9-git-send-email-gilad@benyossef.com>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Gilad Ben-Yossef <gilad@benyossef.com>
+Cc: Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, Jonathan Corbet <corbet@lwn.net>, David Howells <dhowells@redhat.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, Steve French <sfrench@samba.org>, "Theodore Y. Ts'o" <tytso@mit.edu>, Jaegeuk Kim <jaegeuk@kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Dmitry Kasatkin <dmitry.kasatkin@gmail.com>, James Morris <james.l.morris@oracle.com>, "Serge E. Hallyn" <serge@hallyn.com>, Ofir Drang <ofir.drang@arm.com>, Gilad Ben-Yossef <gilad.benyossef@arm.com>, linux-crypto@vger.kernel.org, linux-doc@vger.kernel.org, Kernel Mailing List <linux-kernel@vger.kernel.org>, keyrings@vger.kernel.orglinux-
 List-Id: dm-devel.ids
 
-dm_no_partitions() checks if features includes "no_partitions", but the
-upstream kernel doesn't allow that feature.  The patch to add it got
-NAKed when Hannes posted it, IIRC. That's why I went the route of using
-udev flags to avoid running kpartx.  Unless SUSE (or some other distro)
-is using the "no_partitions" patch in their kernel, we can pull the
-dm_no_partitions code completely.
-
-If you're still using it, I'm fine with this patch.
--Ben
-
-On Sat, May 06, 2017 at 12:05:51AM +0200, Martin Wilck wrote:
-> Commit 3d709241 causes kpartx to attempt a dm ioctl on a loop
-> device. This causes an error message
-> "device-mapper: table ioctl on loop4 failed: No such device or address".
-> 
-> Fixes: 3d709241 "kpartx: sanitize delete partitions"
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
+2017-05-06 5:59 GMT-07:00 Gilad Ben-Yossef <gilad@benyossef.com>:
+> cifs starts an async. crypto op and waits for their completion.
+> Move it over to generic code doing the same.
+>
+> Signed-off-by: Gilad Ben-Yossef <gilad@benyossef.com>
 > ---
->  kpartx/kpartx.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
-> index 58e60ffe..e9b09492 100644
-> --- a/kpartx/kpartx.c
-> +++ b/kpartx/kpartx.c
-> @@ -362,7 +362,7 @@ main(int argc, char **argv){
->  
->  	if (!mapname)
->  		mapname = device + off;
-> -	if (!force_devmap &&
-> +	else if (!force_devmap &&
->  		 dm_no_partitions(mapname)) {
->  		/* Feature 'no_partitions' is set, return */
->  		return 0;
-> -- 
-> 2.12.2
+>  fs/cifs/smb2ops.c | 30 ++++--------------------------
+>  1 file changed, 4 insertions(+), 26 deletions(-)
+>
+> diff --git a/fs/cifs/smb2ops.c b/fs/cifs/smb2ops.c
+> index 152e37f..cee7bb3 100644
+> --- a/fs/cifs/smb2ops.c
+> +++ b/fs/cifs/smb2ops.c
+> @@ -1706,22 +1706,6 @@ init_sg(struct smb_rqst *rqst, u8 *sign)
+>         return sg;
+>  }
+>
+> -struct cifs_crypt_result {
+> -       int err;
+> -       struct completion completion;
+> -};
+> -
+> -static void cifs_crypt_complete(struct crypto_async_request *req, int err)
+> -{
+> -       struct cifs_crypt_result *res = req->data;
+> -
+> -       if (err == -EINPROGRESS)
+> -               return;
+> -
+> -       res->err = err;
+> -       complete(&res->completion);
+> -}
+> -
+>  static int
+>  smb2_get_enc_key(struct TCP_Server_Info *server, __u64 ses_id, int enc, u8 *key)
+>  {
+> @@ -1762,12 +1746,10 @@ crypt_message(struct TCP_Server_Info *server, struct smb_rqst *rqst, int enc)
+>         struct aead_request *req;
+>         char *iv;
+>         unsigned int iv_len;
+> -       struct cifs_crypt_result result = {0, };
+> +       DECLARE_CRYPTO_WAIT(wait);
+>         struct crypto_aead *tfm;
+>         unsigned int crypt_len = le32_to_cpu(tr_hdr->OriginalMessageSize);
+>
+> -       init_completion(&result.completion);
+> -
+>         rc = smb2_get_enc_key(server, tr_hdr->SessionId, enc, key);
+>         if (rc) {
+>                 cifs_dbg(VFS, "%s: Could not get %scryption key\n", __func__,
+> @@ -1825,14 +1807,10 @@ crypt_message(struct TCP_Server_Info *server, struct smb_rqst *rqst, int enc)
+>         aead_request_set_ad(req, assoc_data_len);
+>
+>         aead_request_set_callback(req, CRYPTO_TFM_REQ_MAY_BACKLOG,
+> -                                 cifs_crypt_complete, &result);
+> +                                 crypto_req_done, &wait);
+>
+> -       rc = enc ? crypto_aead_encrypt(req) : crypto_aead_decrypt(req);
+> -
+> -       if (rc == -EINPROGRESS || rc == -EBUSY) {
+> -               wait_for_completion(&result.completion);
+> -               rc = result.err;
+> -       }
+> +       rc = crypto_wait_req(enc ? crypto_aead_encrypt(req)
+> +                               : crypto_aead_decrypt(req), &wait);
+>
+>         if (!rc && enc)
+>                 memcpy(&tr_hdr->Signature, sign, SMB2_SIGNATURE_SIZE);
+> --
+> 2.1.4
+>
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-cifs" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+Acked-by: Pavel Shilovsky <pshilov@microsoft.com>
+
+Best regards,
+Pavel Shilovsky
