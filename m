@@ -1,8 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 2/6] multipathd: force reload device on all
-	resizes
-Date: Tue,  9 May 2017 11:57:01 -0500
-Message-ID: <1494349025-6561-3-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 1/6] libmultipath: print alias with no_path_retry
+	message
+Date: Tue,  9 May 2017 11:57:00 -0500
+Message-ID: <1494349025-6561-2-git-send-email-bmarzins@redhat.com>
 References: <1494349025-6561-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,27 +21,26 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-My previous patch missed setting force_udev_reload on resizes initiated
-by
-
-multipathd resize map <map>
+the "flush_on_last_del in progress" message in select_no_path_retry
+should print the device alias.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/cli_handlers.c | 1 +
- 1 file changed, 1 insertion(+)
+ libmultipath/propsel.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index efc12dd..d598039 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -870,6 +870,7 @@ int resize_map(struct multipath *mpp, unsigned long long size,
- 	update_mpp_paths(mpp, vecs->pathvec);
- 	setup_map(mpp, params, PARAMS_SIZE);
- 	mpp->action = ACT_RESIZE;
-+	mpp->force_udev_reload = 1;
- 	if (domap(mpp, params, 1) <= 0) {
- 		condlog(0, "%s: failed to resize map : %s", mpp->alias,
- 			strerror(errno));
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index 09fe728..d393710 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -456,7 +456,7 @@ int select_no_path_retry(struct config *conf, struct multipath *mp)
+ 	char buff[12];
+ 
+ 	if (mp->flush_on_last_del == FLUSH_IN_PROGRESS) {
+-		condlog(0, "flush_on_last_del in progress");
++		condlog(0, "%s: flush_on_last_del in progress", mp->alias);
+ 		mp->no_path_retry = NO_PATH_RETRY_FAIL;
+ 		return 0;
+ 	}
 -- 
 1.8.3.1
