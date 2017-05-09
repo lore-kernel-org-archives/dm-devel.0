@@ -1,8 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 1/6] libmultipath: print alias with no_path_retry
-	message
-Date: Tue,  9 May 2017 11:57:00 -0500
-Message-ID: <1494349025-6561-2-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 5/6] kpartx: fix device checks
+Date: Tue,  9 May 2017 11:57:04 -0500
+Message-ID: <1494349025-6561-6-git-send-email-bmarzins@redhat.com>
 References: <1494349025-6561-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,26 +20,72 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-the "flush_on_last_del in progress" message in select_no_path_retry
-should print the device alias.
+There are a number of issues in the the kpartx device checking code.
+First, it accepts files that are neither regular files or a block device
+nodes (you can run kpartx on character devices or directories, and it
+will treat them as block devices). When trying to figure out the
+basename of a device, the code returns garbage if the path doesn't
+include a '/'. Finally, the set_delimiter code can access memory outside
+of the string if an empty string is passed in.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/propsel.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ kpartx/kpartx.c | 23 ++++++++++++++++-------
+ 1 file changed, 16 insertions(+), 7 deletions(-)
 
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index 09fe728..d393710 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -456,7 +456,7 @@ int select_no_path_retry(struct config *conf, struct multipath *mp)
- 	char buff[12];
+diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+index cc7e2e7..a1af156 100644
+--- a/kpartx/kpartx.c
++++ b/kpartx/kpartx.c
+@@ -135,10 +135,13 @@ set_delimiter (char * device, char * delimiter)
+ {
+ 	char * p = device;
  
- 	if (mp->flush_on_last_del == FLUSH_IN_PROGRESS) {
--		condlog(0, "flush_on_last_del in progress");
-+		condlog(0, "%s: flush_on_last_del in progress", mp->alias);
- 		mp->no_path_retry = NO_PATH_RETRY_FAIL;
- 		return 0;
+-	while (*(p++) != 0x0)
++	if (*p == 0x0)
++		return;
++
++	while (*(++p) != 0x0)
+ 		continue;
+ 
+-	if (isdigit(*(p - 2)))
++	if (isdigit(*(p - 1)))
+ 		*delimiter = 'p';
+ }
+ 
+@@ -157,15 +160,17 @@ strip_slash (char * device)
+ static int
+ find_devname_offset (char * device)
+ {
+-	char *p, *q = NULL;
++	char *p, *q;
+ 
+-	p = device;
++	q = p = device;
+ 
+-	while (*p++)
++	while (*p) {
+ 		if (*p == '/')
+-			q = p;
++			q = p + 1;
++		p++;
++	}
+ 
+-	return (int)(q - device) + 1;
++	return (int)(q - device);
+ }
+ 
+ static char *
+@@ -381,6 +386,10 @@ main(int argc, char **argv){
+ 			exit (1);
+ 		}
  	}
++	else if (!S_ISBLK(buf.st_mode)) {
++		fprintf(stderr, "invalid device: %s\n", device);
++		exit(1);
++	}
+ 
+ 	off = find_devname_offset(device);
+ 
 -- 
 1.8.3.1
