@@ -1,106 +1,35 @@
-From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH v3 07/10] dm-flakey: Add support for zoned block
-	devices
-Date: Mon, 8 May 2017 16:40:49 -0700
-Message-ID: <20170508234052.32375-8-bart.vanassche@sandisk.com>
-References: <20170508234052.32375-1-bart.vanassche@sandisk.com>
+From: "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Subject: Re: remove REQ_OP_WRITE_SAME
+Date: Mon, 08 May 2017 22:06:30 -0400
+Message-ID: <yq1efvyss0p.fsf@oracle.com>
+References: <20170412084809.8245-1-hch@lst.de> <yq1mvbjwwvl.fsf@oracle.com>
+	<20170505085713.GA5008@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170508234052.32375-1-bart.vanassche@sandisk.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
-Cc: Bart Van Assche <bart.vanassche@sandisk.com>, Damien Le Moal <damien.lemoal@wdc.com>, Christoph Hellwig <hch@lst.de>
+Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+In-Reply-To: <20170505085713.GA5008-jcswGhMUV9g@public.gmane.org> (Christoph Hellwig's message of
+	"Fri, 5 May 2017 10:57:13 +0200")
+List-Unsubscribe: <http://lists.linbit.com/mailman/options/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
+List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
+List-Subscribe: <http://lists.linbit.com/mailman/listinfo/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
+Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Cc: axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, target-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
 List-Id: dm-devel.ids
 
-From: Damien Le Moal <damien.lemoal@wdc.com>
 
-With the development of file system support for zoned block devices
-(e.g. f2fs), having dm-flakey support for these devices is interesting
-to improve testing.
+Christoph,
 
-This patch adds support for zoned block devices in dm-flakey, both
-host-aware and host-managed. The target type feature is set to
-DM_TARGET_ZONED_HM indicate support for host-managed models. The
-remaining of the support adds hooks for remapping of REQ_OP_ZONE_RESET
-and REQ_OP_ZONE_REPORT bios. Additionally, in the bio completion path,
-(backward) remapping of a zone report reply is also added.
+> Any chance to get a sneak preview of that work?
 
-Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
-Reviewed-by: Hannes Reinecke <hare@suse.com>
-Reviewed-by: Bart Van Assche <bart.vanassche@sandisk.com>
----
- drivers/md/dm-flakey.c | 21 ++++++++++++++++++++-
- 1 file changed, 20 insertions(+), 1 deletion(-)
+I have been on the road since LSF/MM and just got back home. I'll make
+it a priority.
 
-diff --git a/drivers/md/dm-flakey.c b/drivers/md/dm-flakey.c
-index 13305a1..b419c85 100644
---- a/drivers/md/dm-flakey.c
-+++ b/drivers/md/dm-flakey.c
-@@ -251,6 +251,8 @@ static int flakey_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	return 0;
- 
- bad:
-+	if (fc->dev)
-+		dm_put_device(ti, fc->dev);
- 	kfree(fc);
- 	return r;
- }
-@@ -275,7 +277,7 @@ static void flakey_map_bio(struct dm_target *ti, struct bio *bio)
- 	struct flakey_c *fc = ti->private;
- 
- 	bio->bi_bdev = fc->dev->bdev;
--	if (bio_sectors(bio))
-+	if (bio_sectors(bio) || bio_op(bio) == REQ_OP_ZONE_RESET)
- 		bio->bi_iter.bi_sector =
- 			flakey_map_sector(ti, bio->bi_iter.bi_sector);
- }
-@@ -306,6 +308,14 @@ static int flakey_map(struct dm_target *ti, struct bio *bio)
- 	struct per_bio_data *pb = dm_per_bio_data(bio, sizeof(struct per_bio_data));
- 	pb->bio_submitted = false;
- 
-+	/* Do not fail reset zone */
-+	if (bio_op(bio) == REQ_OP_ZONE_RESET)
-+		goto map_bio;
-+
-+	/* We need to remap reported zones, so remember the BIO iter */
-+	if (bio_op(bio) == REQ_OP_ZONE_REPORT)
-+		goto map_bio;
-+
- 	/* Are we alive ? */
- 	elapsed = (jiffies - fc->start_time) / HZ;
- 	if (elapsed % (fc->up_interval + fc->down_interval) >= fc->up_interval) {
-@@ -363,6 +373,14 @@ static int flakey_end_io(struct dm_target *ti, struct bio *bio, int error)
- 	struct flakey_c *fc = ti->private;
- 	struct per_bio_data *pb = dm_per_bio_data(bio, sizeof(struct per_bio_data));
- 
-+	if (bio_op(bio) == REQ_OP_ZONE_RESET)
-+		return error;
-+
-+	if (bio_op(bio) == REQ_OP_ZONE_REPORT) {
-+		dm_remap_zone_report(ti, bio, fc->start);
-+		return error;
-+	}
-+
- 	if (!error && pb->bio_submitted && (bio_data_dir(bio) == READ)) {
- 		if (fc->corrupt_bio_byte && (fc->corrupt_bio_rw == READ) &&
- 		    all_corrupt_bio_flags_match(bio, fc)) {
-@@ -446,6 +464,7 @@ static int flakey_iterate_devices(struct dm_target *ti, iterate_devices_callout_
- static struct target_type flakey_target = {
- 	.name   = "flakey",
- 	.version = {1, 4, 0},
-+	.features = DM_TARGET_ZONED_HM,
- 	.module = THIS_MODULE,
- 	.ctr    = flakey_ctr,
- 	.dtr    = flakey_dtr,
 -- 
-2.9.3
+Martin K. Petersen	Oracle Linux Engineering
