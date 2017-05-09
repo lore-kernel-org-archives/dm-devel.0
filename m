@@ -1,109 +1,74 @@
-From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH v3 01/10] dm-table: Introduce DM_TARGET_ZONED_HM
-	feature
-Date: Mon, 8 May 2017 16:40:43 -0700
-Message-ID: <20170508234052.32375-2-bart.vanassche@sandisk.com>
-References: <20170508234052.32375-1-bart.vanassche@sandisk.com>
+From: "Nicholas A. Bellinger" <nab-IzHhD5pYlfBP7FQvKIMDCQ@public.gmane.org>
+Subject: Re: [PATCH 25/27] block: remove the discard_zeroes_data
+	flag
+Date: Mon, 08 May 2017 23:46:14 -0700
+Message-ID: <1494312374.16894.36.camel@haakon3.risingtidesystems.com>
+References: <20170405172125.22600-1-hch@lst.de>
+	<20170405172125.22600-26-hch@lst.de>
+	<1493671519.2665.15.camel@sandisk.com>
+	<1493707425.23202.77.camel@haakon3.risingtidesystems.com>
+	<1493709373.23202.79.camel@haakon3.risingtidesystems.com>
+	<20170502072328.GA11522@lst.de>
+	<1493782395.23202.84.camel@haakon3.risingtidesystems.com>
+	<20170507092209.GA27370@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170508234052.32375-1-bart.vanassche@sandisk.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
-Cc: Bart Van Assche <bart.vanassche@sandisk.com>, Damien Le Moal <damien.lemoal@wdc.com>, Christoph Hellwig <hch@lst.de>
+Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+In-Reply-To: <20170507092209.GA27370-jcswGhMUV9g@public.gmane.org>
+List-Unsubscribe: <http://lists.linbit.com/mailman/options/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
+List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
+List-Subscribe: <http://lists.linbit.com/mailman/listinfo/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
+Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+To: "hch-jcswGhMUV9g@public.gmane.org" <hch-jcswGhMUV9g@public.gmane.org>
+Cc: "axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org" <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, "linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, "snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org" <philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, "linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "target-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <target-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Bart Van Assche <Bart.VanAssche-XdAiOPVOjttBDgjK7y7TUQ@public.gmane.org>, "lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org" <lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, "shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org" <drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
 List-Id: dm-devel.ids
 
-From: Damien Le Moal <damien.lemoal@wdc.com>
+On Sun, 2017-05-07 at 11:22 +0200, hch-jcswGhMUV9g@public.gmane.org wrote:
+> On Tue, May 02, 2017 at 08:33:15PM -0700, Nicholas A. Bellinger wrote:
+> > The larger target/iblock conversion patch looks like post v4.12 material
+> > at this point, so to avoid breakage wrt to existing LBPRZ behavior, I'll
+> > plan to push the following patch post -rc1.
+> 
+> I don't think this is safe.  If you want to do the aboe you also
+> need to ensure ->execute_unmap always zeroes the data.  For actual
+> files in the file backend we should be all fine, but for the block
+> device case [1] and iblock we'd need to use blkdev_issue_zeroout
+> instead of blkdev_issue_discard when unmap_zeroes_data is set.
+> 
+> [1] which btw already seems broken as it doesn't invalidate cached
+> data when issuing a discard.
 
-The target drivers currently available will not operate correctly if a
-table target maps onto a host-managed zoned block device.
+Mmm, for [1] that would appear to be true, but after a deeper look at
+existing code I don't think this is the case.
 
-To avoid problems, this patch introduces the new feature flag
-DM_TARGET_ZONED_HM for a target driver to explicitly state that it
-supports host-managed zoned block devices. This feature is checked
-in dm_get_device() to prevent the addition to a table of a target
-mapping to a host-managed zoned block device if the target type does
-not have the feature enabled.
+The reason being is target backend attributes emulate_tpu and
+emulate_tpws are strictly user configurable, and aren't automatically
+set based upon the underlying IBLOCK block_device support for either
+one.
 
-Note that as host-aware zoned block devices are backward compatible
-with regular block devices, they can be used by any of the current
-target types. This new feature is thus restricted to host-managed
-zoned block devices.
+According to pre v4.12-rc1 code, q->limits.discard_zeroes_data was only
+enabled by drivers/scsi/sd.c:sd_config_discard() for
+sdkp->provisioning_mode WRITE_SAME with LBPRZ = 1 or explicit ZERO, and
+for NVME for devices that supported NVME_QUIRK_DISCARD_ZEROES.  Eg: Only
+real DISCARD + ZERO support.
 
-Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
-Reviewed-by: Hannes Reinecke <hare@suse.com>
-Reviewed-by: Bart Van Assche <bart.vanassche@sandisk.com>
----
- drivers/md/dm-table.c         | 23 +++++++++++++++++++++++
- include/linux/device-mapper.h |  6 ++++++
- 2 files changed, 29 insertions(+)
+In your changes to v4.12-rc1, this logic to signal real DISCARD + zero
+support for SCSI and NVMe via q->limits.max_write_zeroes_sectors has not
+changed..
 
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 5f5eae4..6a7e200 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -389,6 +389,24 @@ dev_t dm_get_dev_t(const char *path)
- EXPORT_SYMBOL_GPL(dm_get_dev_t);
- 
- /*
-+ * Check if the target supports supports host-managed zoned block devices.
-+ */
-+static bool device_supported(struct dm_target *ti, struct dm_dev *dev)
-+{
-+	struct block_device *bdev = dev->bdev;
-+	char b[BDEVNAME_SIZE];
-+
-+	if (bdev_zoned_model(bdev) == BLK_ZONED_HM &&
-+	    !dm_target_zoned_hm(ti->type)) {
-+		DMWARN("%s: Unsupported host-managed zoned block device %s",
-+		       dm_device_name(ti->table->md), bdevname(bdev, b));
-+		return false;
-+	}
-+
-+	return true;
-+}
-+
-+/*
-  * Add a device to the list, or just increment the usage count if
-  * it's already present.
-  */
-@@ -427,6 +445,11 @@ int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
- 	}
- 	atomic_inc(&dd->count);
- 
-+	if (!device_supported(ti, dd->dm_dev)) {
-+		dm_put_device(ti, dd->dm_dev);
-+		return -ENOTSUPP;
-+	}
-+
- 	*result = dd->dm_dev;
- 	return 0;
- }
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index f4c639c..afd25af 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -218,6 +218,12 @@ struct target_type {
- #define dm_target_is_wildcard(type)	((type)->features & DM_TARGET_WILDCARD)
- 
- /*
-+ * Indicates that a target supports host-managed zoned block devices.
-+ */
-+#define DM_TARGET_ZONED_HM		0x00000010
-+#define dm_target_zoned_hm(type)	((type)->features & DM_TARGET_ZONED_HM)
-+
-+/*
-  * Some targets need to be sent the same WRITE bio severals times so
-  * that they can send copies of it to different devices.  This function
-  * examines any supplied bio and returns the number of copies of it the
--- 
-2.9.3
+So AFAICT, regardless if the user sets emulate_tpu or emulate_tpws for a
+IBLOCK backend, SCSI host code will have to choose sdkp->zeroing_mode
+WRITE_SAME with LBPRZ or explicit ZERO, and NVMe host code will have to
+chose a ctrl NVME_QUIRK_DEALLOCATE_ZEROES before
+q->limits.max_write_zeroes_sectors != 0 is propagated up to target code,
+and LBPRZ = 1 is signaled via READ_CAPACITY_16 and EVPD = 0xb2.
+
+That said, simply propagating up q->limits.max_write_zeroes_sectors as
+dev_attrib->unmap_zeroes_data following existing code still looks like
+the right thing to do.
