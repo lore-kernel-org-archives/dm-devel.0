@@ -1,66 +1,420 @@
 From: Peter Rajnoha <prajnoha@redhat.com>
-Subject: Re: [mdadm PATCH] Create: tell udev md device is not
- ready when first created.
-Date: Tue, 9 May 2017 14:14:33 +0200
-Message-ID: <2461f05a-d742-dfc9-6e94-d3600cb99f93@redhat.com>
-References: <149265560315.31004.3851231165281498425.stgit@noble>
-	<149265600601.31004.323865505557190368.stgit@noble>
-	<dedd27cd-9c2e-f244-d8aa-7a074679d3c6@gmail.com>
-	<87mvbasqx6.fsf@notabene.neil.brown.name>
-	<40a5fbff-9eef-07b3-fe1b-fb9a888cfb8b@redhat.com>
-	<87h919ruj5.fsf@notabene.neil.brown.name>
-	<6bd347e1-170c-48e9-1171-09ff143ace83@redhat.com>
-	<c5fe5d16-5ca6-94b0-fd5b-0b6009d78bab@gmail.com>
-	<2f431da6-0dce-b485-4109-6f8669814430@redhat.com>
-	<590DF8FA.4090600@youngman.org.uk>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <590DF8FA.4090600@youngman.org.uk>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Wols Lists <antlists@youngman.org.uk>, Jes Sorensen <jes.sorensen@gmail.com>, NeilBrown <neilb@suse.com>
-Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com
+Subject: [RESEND PATCH v2] kobject: support passing in variables for synthetic uevents
+Date: Tue,  9 May 2017 15:22:30 +0200
+Message-ID: <20170509132230.20132-1-prajnoha@redhat.com>
+References: <20170410103118.20660-1-prajnoha@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20170410103118.20660-1-prajnoha@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: gregkh@linuxfoundation.org
+Cc: jeyu@redhat.com, rusty@rustcorp.com.au, linux-kernel@vger.kernel.org, kay@redhat.com, dm-devel@redhat.com, harald@redhat.com, Peter Rajnoha <prajnoha@redhat.com>
 List-Id: dm-devel.ids
 
-On 05/06/2017 06:25 PM, Wols Lists wrote:
-> On 03/05/17 15:13, Peter Rajnoha wrote:
->> There's a difference though - when you're *creating* a completely new
->> device that is an abstraction over existing devices, you (most of the
->> time) expect that new device to be initialized. For those corner cases
->> where people do need to keep the old data, there can be an option to do
->> that.
-> 
-> That's not a corner case. If there's old data that's the NORM. I get
-> what you're after, I'm inclined to agree with you, but the default
-> should be to DO NOTHING.
-> 
-> If you want mdadm to mess about with the content of the drives you
-> should either (a) explicitly tell it to (yes I would like that option
-> :-), or (b) do it yourself beforehand - dd if=/dev/zero etc etc.
+Hi Greg,
 
-As for (b), the "dd" with zeroing all the future mdadm components I'm
-going to use for an MD device is quite time-consuming operation, mainly
-for large devices.
+I'm resending rebased patch with updated date and kernel version in
+sysfs-uevent ABI documentation. There were no further comments and
+feedback for a month, will you consider the patch for inclusion?
 
-And we don't need to do that full zeroing at all, what I'm after is to
-have the wipefs-like functionality directly integrated into mdadm (that
-functionality is already a part of libbblkid and it's very easy to use
-it as a matter of fact). With this, we can detect and wipe all
-signatures that blkid detects. The blkid is used as a primary source of
-information when processing uevents to decide about further processing.
-Once we wipe all that blkid can see, we make the device clear for udev
-processing too and we don't end up automatically activating some old
-garbage that we don't intend to actually based on these uevent hooks.
 
+This patch makes it possible to pass additional arguments in addition
+to uevent action name when writing /sys/.../uevent attribute. These
+additional arguments are then inserted into generated synthetic uevent
+as additional environment variables.
+
+Before, we were not able to pass any additional uevent environment
+variables for synthetic uevents. This made it hard to identify such uevents
+properly in userspace to make proper distinction between genuine uevents
+originating from kernel and synthetic uevents triggered from userspace.
+Also, it was not possible to pass any additional information which would
+make it possible to optimize and change the way the synthetic uevents are
+processed back in userspace based on the originating environment of the
+triggering action in userspace. With the extra additional variables, we are
+able to pass through this extra information needed and also it makes it
+possible to synchronize with such synthetic uevents as they can be clearly
+identified back in userspace.
+
+The format for writing the uevent attribute is following:
+
+    ACTION [UUID [KEY=VALUE ...]
+
+There's no change in how "ACTION" is recognized - it stays the same
+("add", "change", "remove"). The "ACTION" is the only argument required
+to generate synthetic uevent, the rest of arguments, that this patch
+adds support for, are optional.
+
+The "UUID" is considered as transaction identifier so it's possible to
+use the same UUID value for one or more synthetic uevents in which case
+we logically group these uevents together for any userspace listeners.
+The "UUID" is expected to be in "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+format where "x" is a hex digit. The value appears in uevent as
+"SYNTH_UUID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" environment variable.
+
+The "KEY=VALUE" pairs can contain alphanumeric characters only. It's
+possible to define zero or more more pairs - each pair is then delimited
+by a space character " ". Each pair appears in synthetic uevents as
+"SYNTH_ARG_KEY=VALUE" environment variable. That means the KEY name gains
+"SYNTH_ARG_" prefix to avoid possible collisions with existing variables.
+To pass the "KEY=VALUE" pairs, it's also required to pass in the "UUID"
+part for the synthetic uevent first.
+
+If "UUID" is not passed in, the generated synthetic uevent gains
+"SYNTH_UUID=0" environment variable automatically so it's possible to
+identify this situation in userspace when reading generated uevent and so
+we can still make a difference between genuine and synthetic uevents.
+
+Changes from v1:
+
+- Add Documentation/ABI/testing/sysfs-uevent describing extended format
+for writing the /sys/.../uevent file.
+
+Signed-off-by: Peter Rajnoha <prajnoha@redhat.com>
+---
+ Documentation/ABI/testing/sysfs-uevent |  47 ++++++++++
+ drivers/base/bus.c                     |  10 +-
+ drivers/base/core.c                    |   7 +-
+ include/linux/kobject.h                |   4 +-
+ kernel/module.c                        |   5 +-
+ lib/kobject_uevent.c                   | 167 ++++++++++++++++++++++++++++++---
+ 6 files changed, 207 insertions(+), 33 deletions(-)
+ create mode 100644 Documentation/ABI/testing/sysfs-uevent
+
+diff --git a/Documentation/ABI/testing/sysfs-uevent b/Documentation/ABI/testing/sysfs-uevent
+new file mode 100644
+index 0000000..d7ac990
+--- /dev/null
++++ b/Documentation/ABI/testing/sysfs-uevent
+@@ -0,0 +1,47 @@
++What:           /sys/.../uevent
++Date:           May 2017
++KernelVersion:  4.12
++Contact:        Linux kernel mailing list <linux-kernel@vger.kernel.org>
++Description:
++                Enable passing additional variables for synthetic uevents that
++                are generated by writing /sys/.../uevent file.
++
++                Recognized extended format is ACTION [UUID [KEY=VALUE ...].
++
++                The ACTION is compulsory - it is the name of the uevent action
++                ("add", "change", "remove"). There is no change compared to
++                previous functionality here. The rest of the extended format
++                is optional.
++
++                You need to pass UUID first before any KEY=VALUE pairs.
++                The UUID must be in "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
++                format where 'x' is a hex digit. The UUID is considered to be
++                a transaction identifier so it's possible to use the same UUID
++                value for one or more synthetic uevents in which case we
++                logically group these uevents together for any userspace
++                listeners. The UUID value appears in uevent as
++                "SYNTH_UUID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" environment
++                variable.
++
++                If UUID is not passed in, the generated synthetic uevent gains
++                "SYNTH_UUID=0" environment variable automatically.
++
++                The KEY=VALUE pairs can contain alphanumeric characters only.
++                It's possible to define zero or more pairs - each pair is then
++                delimited by a space character ' '. Each pair appears in
++                synthetic uevent as "SYNTH_ARG_KEY=VALUE". That means the KEY
++                name gains "SYNTH_ARG_" prefix to avoid possible collisions
++                with existing variables.
++
++                Example of valid sequence written to the uevent file:
++
++                    add fe4d7c9d-b8c6-4a70-9ef1-3d8a58d18eed A=1 B=abc
++
++                This generates synthetic uevent including these variables:
++
++                    ACTION=add
++                    SYNTH_ARG_A=1
++                    SYNTH_ARG_B=abc
++                    SYNTH_UUID=fe4d7c9d-b8c6-4a70-9ef1-3d8a58d18eed
++Users:
++                udev, userspace tools generating synthetic uevents
+diff --git a/drivers/base/bus.c b/drivers/base/bus.c
+index 6470eb8..f945f2f 100644
+--- a/drivers/base/bus.c
++++ b/drivers/base/bus.c
+@@ -648,10 +648,7 @@ static void remove_probe_files(struct bus_type *bus)
+ static ssize_t uevent_store(struct device_driver *drv, const char *buf,
+ 			    size_t count)
+ {
+-	enum kobject_action action;
+-
+-	if (kobject_action_type(buf, count, &action) == 0)
+-		kobject_uevent(&drv->p->kobj, action);
++	kobject_synth_uevent(&drv->p->kobj, buf, count);
+ 	return count;
+ }
+ static DRIVER_ATTR_WO(uevent);
+@@ -868,10 +865,7 @@ static void klist_devices_put(struct klist_node *n)
+ static ssize_t bus_uevent_store(struct bus_type *bus,
+ 				const char *buf, size_t count)
+ {
+-	enum kobject_action action;
+-
+-	if (kobject_action_type(buf, count, &action) == 0)
+-		kobject_uevent(&bus->p->subsys.kobj, action);
++	kobject_synth_uevent(&bus->p->subsys.kobj, buf, count);
+ 	return count;
+ }
+ static BUS_ATTR(uevent, S_IWUSR, NULL, bus_uevent_store);
+diff --git a/drivers/base/core.c b/drivers/base/core.c
+index bbecaf9..6564339 100644
+--- a/drivers/base/core.c
++++ b/drivers/base/core.c
+@@ -981,12 +981,9 @@ static ssize_t uevent_show(struct device *dev, struct device_attribute *attr,
+ static ssize_t uevent_store(struct device *dev, struct device_attribute *attr,
+ 			    const char *buf, size_t count)
+ {
+-	enum kobject_action action;
++	if (kobject_synth_uevent(&dev->kobj, buf, count))
++		dev_err(dev, "uevent: failed to send synthetic uevent\n");
+ 
+-	if (kobject_action_type(buf, count, &action) == 0)
+-		kobject_uevent(&dev->kobj, action);
+-	else
+-		dev_err(dev, "uevent: unknown action-string\n");
+ 	return count;
+ }
+ static DEVICE_ATTR_RW(uevent);
+diff --git a/include/linux/kobject.h b/include/linux/kobject.h
+index ca85cb8..eeab34b 100644
+--- a/include/linux/kobject.h
++++ b/include/linux/kobject.h
+@@ -217,11 +217,9 @@ extern struct kobject *firmware_kobj;
+ int kobject_uevent(struct kobject *kobj, enum kobject_action action);
+ int kobject_uevent_env(struct kobject *kobj, enum kobject_action action,
+ 			char *envp[]);
++int kobject_synth_uevent(struct kobject *kobj, const char *buf, size_t count);
+ 
+ __printf(2, 3)
+ int add_uevent_var(struct kobj_uevent_env *env, const char *format, ...);
+ 
+-int kobject_action_type(const char *buf, size_t count,
+-			enum kobject_action *type);
+-
+ #endif /* _KOBJECT_H_ */
+diff --git a/kernel/module.c b/kernel/module.c
+index 4a3665f..d7eb41d 100644
+--- a/kernel/module.c
++++ b/kernel/module.c
+@@ -1202,10 +1202,7 @@ static ssize_t store_uevent(struct module_attribute *mattr,
+ 			    struct module_kobject *mk,
+ 			    const char *buffer, size_t count)
+ {
+-	enum kobject_action action;
+-
+-	if (kobject_action_type(buffer, count, &action) == 0)
+-		kobject_uevent(&mk->kobj, action);
++	kobject_synth_uevent(&mk->kobj, buffer, count);
+ 	return count;
+ }
+ 
+diff --git a/lib/kobject_uevent.c b/lib/kobject_uevent.c
+index 9a2b811..719c155 100644
+--- a/lib/kobject_uevent.c
++++ b/lib/kobject_uevent.c
+@@ -23,6 +23,8 @@
+ #include <linux/socket.h>
+ #include <linux/skbuff.h>
+ #include <linux/netlink.h>
++#include <linux/uuid.h>
++#include <linux/ctype.h>
+ #include <net/sock.h>
+ #include <net/net_namespace.h>
+ 
+@@ -52,19 +54,13 @@ static const char *kobject_actions[] = {
+ 	[KOBJ_OFFLINE] =	"offline",
+ };
+ 
+-/**
+- * kobject_action_type - translate action string to numeric type
+- *
+- * @buf: buffer containing the action string, newline is ignored
+- * @count: length of buffer
+- * @type: pointer to the location to store the action type
+- *
+- * Returns 0 if the action string was recognized.
+- */
+-int kobject_action_type(const char *buf, size_t count,
+-			enum kobject_action *type)
++static int kobject_action_type(const char *buf, size_t count,
++			       enum kobject_action *type,
++			       const char **args)
+ {
+ 	enum kobject_action action;
++	size_t count_first;
++	const char *args_start;
+ 	int ret = -EINVAL;
+ 
+ 	if (count && (buf[count-1] == '\n' || buf[count-1] == '\0'))
+@@ -73,11 +69,20 @@ int kobject_action_type(const char *buf, size_t count,
+ 	if (!count)
+ 		goto out;
+ 
++	args_start = strnchr(buf, count, ' ');
++	if (args_start) {
++		count_first = args_start - buf;
++		args_start = args_start + 1;
++	} else
++		count_first = count;
++
+ 	for (action = 0; action < ARRAY_SIZE(kobject_actions); action++) {
+-		if (strncmp(kobject_actions[action], buf, count) != 0)
++		if (strncmp(kobject_actions[action], buf, count_first) != 0)
+ 			continue;
+-		if (kobject_actions[action][count] != '\0')
++		if (kobject_actions[action][count_first] != '\0')
+ 			continue;
++		if (args)
++			*args = args_start;
+ 		*type = action;
+ 		ret = 0;
+ 		break;
+@@ -86,6 +91,142 @@ int kobject_action_type(const char *buf, size_t count,
+ 	return ret;
+ }
+ 
++static const char *action_arg_word_end(const char *buf, const char *buf_end,
++				       char delim)
++{
++	const char *next = buf;
++
++	while (next <= buf_end && *next != delim)
++		if (!isalnum(*next++))
++			return NULL;
++
++	if (next == buf)
++		return NULL;
++
++	return next;
++}
++
++static int kobject_action_args(const char *buf, size_t count,
++			       struct kobj_uevent_env **ret_env)
++{
++	struct kobj_uevent_env *env = NULL;
++	const char *next, *buf_end, *key;
++	int key_len;
++	int r = -EINVAL;
++
++	if (count && (buf[count - 1] == '\n' || buf[count - 1] == '\0'))
++		count--;
++
++	if (!count)
++		return -EINVAL;
++
++	env = kzalloc(sizeof(*env), GFP_KERNEL);
++	if (!env)
++		return -ENOMEM;
++
++	/* first arg is UUID */
++	if (count < UUID_STRING_LEN || !uuid_is_valid(buf) ||
++	    add_uevent_var(env, "SYNTH_UUID=%.*s", UUID_STRING_LEN, buf))
++		goto out;
++
++	/*
++	 * the rest are custom environment variables in KEY=VALUE
++	 * format with ' ' delimiter between each KEY=VALUE pair
++	 */
++	next = buf + UUID_STRING_LEN;
++	buf_end = buf + count - 1;
++
++	while (next <= buf_end) {
++		if (*next != ' ')
++			goto out;
++
++		/* skip the ' ', key must follow */
++		key = ++next;
++		if (key > buf_end)
++			goto out;
++
++		buf = next;
++		next = action_arg_word_end(buf, buf_end, '=');
++		if (!next || next > buf_end || *next != '=')
++			goto out;
++		key_len = next - buf;
++
++		/* skip the '=', value must follow */
++		if (++next > buf_end)
++			goto out;
++
++		buf = next;
++		next = action_arg_word_end(buf, buf_end, ' ');
++		if (!next)
++			goto out;
++
++		if (add_uevent_var(env, "SYNTH_ARG_%.*s=%.*s",
++				   key_len, key, (int) (next - buf), buf))
++			goto out;
++	}
++
++	r = 0;
++out:
++	if (r)
++		kfree(env);
++	else
++		*ret_env = env;
++	return r;
++}
++
++/**
++ * kobject_synth_uevent - send synthetic uevent with arguments
++ *
++ * @kobj: struct kobject for which synthetic uevent is to be generated
++ * @buf: buffer containing action type and action args, newline is ignored
++ * @count: length of buffer
++ *
++ * Returns 0 if kobject_synthetic_uevent() is completed with success or the
++ * corresponding error when it fails.
++ */
++int kobject_synth_uevent(struct kobject *kobj, const char *buf, size_t count)
++{
++	char *no_uuid_envp[] = { "SYNTH_UUID=0", NULL };
++	enum kobject_action action;
++	const char *action_args;
++	struct kobj_uevent_env *env;
++	const char *msg = NULL, *devpath;
++	int r;
++
++	r = kobject_action_type(buf, count, &action, &action_args);
++	if (r) {
++		msg = "unknown uevent action string\n";
++		goto out;
++	}
++
++	if (!action_args) {
++		r = kobject_uevent_env(kobj, action, no_uuid_envp);
++		goto out;
++	}
++
++	r = kobject_action_args(action_args,
++				count - (action_args - buf), &env);
++	if (r == -EINVAL) {
++		msg = "incorrect uevent action arguments\n";
++		goto out;
++	}
++
++	if (r)
++		goto out;
++
++	r = kobject_uevent_env(kobj, action, env->envp);
++	kfree(env);
++out:
++	if (r) {
++		devpath = kobject_get_path(kobj, GFP_KERNEL);
++		printk(KERN_WARNING "synth uevent: %s: %s",
++		       devpath ?: "unknown device",
++		       msg ?: "failed to send uevent");
++		kfree(devpath);
++	}
++	return r;
++}
++
+ #ifdef CONFIG_NET
+ static int kobj_bcast_filter(struct sock *dsk, struct sk_buff *skb, void *data)
+ {
 -- 
-Peter
+2.9.3
