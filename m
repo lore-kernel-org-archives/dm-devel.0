@@ -1,14 +1,11 @@
 From: Andy Grover <agrover@redhat.com>
-Subject: [PATCH 3/3] dm-ioctl: report event number in
-	DM_LIST_DEVICES
-Date: Tue,  9 May 2017 12:10:28 -0700
-Message-ID: <20170509191028.6898-4-agrover@redhat.com>
-References: <20170509191028.6898-1-agrover@redhat.com>
+Subject: [PATCH 0/3] poll()able DM events
+Date: Tue,  9 May 2017 12:10:25 -0700
+Message-ID: <20170509191028.6898-1-agrover@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170509191028.6898-1-agrover@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,52 +19,35 @@ To: dm-devel@redhat.com, snitzer@redhat.com
 Cc: mpatocka@redhat.com
 List-Id: dm-devel.ids
 
-From: Mikulas Patocka <mpatocka@redhat.com>
+Hi Mike,
 
-This patch reports the event numbers for all the devices, so that the
-user doesn't have to ask them one by one. The event number is reported
-after the name field in the dm_name_list structure.
+We've been working off-list to develop a method of getting DM events
+that is reliable, and also can monitor events from multiple DM devices
+from a single thread.
 
-The location of the next record is specified in the dm_name_list->next
-field, that means that we can put the new data after the end of name and
-it is backward compatible with the old code. The old code just skips the
-event number without interpreting it.
+In short, these enable an open file descriptor to /dev/mapper/control
+to be polled. If the fd indicates POLLIN, some DM device has
+experienced an event. Figuring out which is made easier by adding
+event_nr in a backwards-compatible way to DM_LIST_DEVICES, so
+userspace can compare against previously seen per-device
+event_nrs. A new ioctl is also added, to rearm the fd so it may be
+re-poll()ed. See individual patch commitlogs for more details.
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
----
- drivers/md/dm-ioctl.c | 6 +++++-
- 1 file changed, 5 insertions(+), 1 deletion(-)
+Thanks to Mikulas for redeveloping earlier versions into this patchset,
+as well as the other RH LVM devs who provided early internal feedback!
 
-diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-index 84930a3..0029776 100644
---- a/drivers/md/dm-ioctl.c
-+++ b/drivers/md/dm-ioctl.c
-@@ -518,6 +518,7 @@ static int list_devices(struct file *filp, struct dm_ioctl *param, size_t param_
- 			needed += sizeof(struct dm_name_list);
- 			needed += strlen(hc->name) + 1;
- 			needed += ALIGN_MASK;
-+			needed += (sizeof(uint32_t) + ALIGN_MASK) & ~ALIGN_MASK;
- 		}
- 	}
- 
-@@ -538,6 +539,7 @@ static int list_devices(struct file *filp, struct dm_ioctl *param, size_t param_
- 	 */
- 	for (i = 0; i < NUM_BUCKETS; i++) {
- 		list_for_each_entry (hc, _name_buckets + i, name_list) {
-+			uint32_t *event_nr;
- 			if (old_nl)
- 				old_nl->next = (uint32_t) ((void *) nl -
- 							   (void *) old_nl);
-@@ -547,7 +549,9 @@ static int list_devices(struct file *filp, struct dm_ioctl *param, size_t param_
- 			strcpy(nl->name, hc->name);
- 
- 			old_nl = nl;
--			nl = align_ptr(((void *) ++nl) + strlen(hc->name) + 1);
-+			event_nr = align_ptr(((void *) (nl + 1)) + strlen(hc->name) + 1);
-+			*event_nr = dm_get_event_nr(hc->md);
-+			nl = align_ptr(event_nr + 1);
- 		}
- 	}
- 
+Regards -- Andy
+
+Mikulas Patocka (3):
+  dm: a basic support for using the select or poll function
+  dm-ioctl: add a new DM_DEV_ARM_POLL ioctl
+  dm-ioctl: report event number in DM_LIST_DEVICES
+
+ drivers/md/dm-core.h          |   3 ++
+ drivers/md/dm-ioctl.c         | 109 +++++++++++++++++++++++++++++++++---------
+ drivers/md/dm.c               |   5 ++
+ include/uapi/linux/dm-ioctl.h |   6 ++-
+ 4 files changed, 99 insertions(+), 24 deletions(-)
+
 -- 
 2.9.3
