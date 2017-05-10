@@ -1,10 +1,7 @@
 From: Colin King <colin.king@canonical.com>
-Subject: [PATCH] dm ioctl: make dm_open and dm_release release
-Date: Wed, 10 May 2017 10:18:21 +0100
-Message-ID: <20170510091821.17995-1-colin.king@canonical.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 8bit
+Subject: [PATCH][V2] dm ioctl: make dm_open and dm_release release static
+Date: Wed, 10 May 2017 10:18:44 +0100
+Message-ID: <20170510091844.18045-1-colin.king@canonical.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org
