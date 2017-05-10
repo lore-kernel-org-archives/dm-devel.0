@@ -1,14 +1,14 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH] multipath-tools:Prioritizer based on a
- time-delay algorithm
-Date: Thu, 11 May 2017 00:36:47 +0200
-Message-ID: <d5205a96-32cb-3832-a93a-0057c445ef55@gmail.com>
-References: <1494215904-7564-1-git-send-email-philip.yang@huawei.com>
+Subject: Re: [PATCH 4/5] kpartx: default to running in sync mode
+Date: Thu, 11 May 2017 00:42:27 +0200
+Message-ID: <a6409045-02e1-643f-7c9c-b3bf13ebcfbc@gmail.com>
+References: <1493073570-17167-1-git-send-email-bmarzins@redhat.com>
+	<1493073570-17167-5-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1494215904-7564-1-git-send-email-philip.yang@huawei.com>
+In-Reply-To: <1493073570-17167-5-git-send-email-bmarzins@redhat.com>
 Content-Language: en-GB
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -19,28 +19,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Yang Feng <philip.yang@huawei.com>, dm-devel@redhat.com, Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: guanjunxiong@huawei.com, hege09@huawei.com, zouming.zouming@huawei.com, shenhong09@huawei.com
+To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
 List-Id: dm-devel.ids
 
-On 05/08/2017 05:58 AM, Yang Feng wrote:
+On 04/25/2017 12:39 AM, Benjamin Marzinski wrote:
 
-> Prioritizer for device mapper multipath, where the corresponding priority
-> values of specific paths are provided by a time-delay algorithm. And the
-> time-delay algorithm is dependent on the following arguments(delay_interval,
-> cons_num).
-This new feature should be documented in multipath/multipath.conf.5
+> When users run kpartx, they would naturally assume that when it
+> completes, the devices have been created. However, kpartx runs in async
+> mode by default.  This seems like it is likely to trip up users.  So,
+> switch the default to sync mode, add a -n option to enable async mode,
+> and set async mode when kpartx is called by the udev rules.
+>[...]
+> diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+> index 58e60ff..d1edd5e 100644
+> --- a/kpartx/kpartx.c
+> +++ b/kpartx/kpartx.c
+>[...]
+> -static char short_opts[] = "rladfgvp:t:su";
+> +static char short_opts[] = "rladfgvp:t:snu";
+>[...]
+> -	printf("\t-s sync mode. Don't return until the partitions are created\n");
+> +	printf("\t-n nosync mode. Return before the partitions are created\n");
+> +	printf("\t-s sync mode. Don't return until the partitions are created. Default.\n");
+>  	return 1;
+>[...]> +		case 'n':
+> +			udev_sync = 0;
+> +			break;
 
-> diff --git a/libmultipath/checkers/Makefile b/libmultipath/checkers/Makefile
-> index 4970fc0..7e433ca 100644
-> --- a/libmultipath/checkers/Makefile
-> +++ b/libmultipath/checkers/Makefile
-> @@ -14,19 +14,16 @@ LIBS= \
->  	libcheckemc_clariion.so \
->  	libcheckhp_sw.so \
->  	libcheckrdac.so
-> -ifneq ($(ENABLE_RADOS),0)
-> -LIBS += libcheckrbd.so
-> -endif
-
-Is it right?
+New flags should be documented in its man page.
