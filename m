@@ -1,34 +1,50 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: dm: submit stacked requests in irq enabled context
-Date: Wed, 10 May 2017 00:17:33 -0700
-Message-ID: <20170510071733.GA24980@infradead.org>
-References: <a66b6e17-a8c4-3465-fc2e-c3114abe0ca7@codeaurora.org>
-	<dee12838-7b43-2fdd-0644-41c10ecf9148@codeaurora.org>
-	<20170509155555.GB2572@localhost.localdomain>
+From: Colin King <colin.king@canonical.com>
+Subject: [PATCH] dm ioctl: make dm_open and dm_release release
+Date: Wed, 10 May 2017 10:18:21 +0100
+Message-ID: <20170510091821.17995-1-colin.king@canonical.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20170509155555.GB2572@localhost.localdomain>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Keith Busch <keith.busch@intel.com>
-Cc: Neeraj Soni <neersoni@codeaurora.org>, dm-devel@redhat.com, snitzer@redhat.com, Alasdair Kergon <agk@redhat.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org
+Cc: kernel-janitors@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Tue, May 09, 2017 at 11:55:55AM -0400, Keith Busch wrote:
-> >      I have recently started using kernel 4.4 on a Android device and ran
-> >      Androbench to check storage read/write performance. I found that the
-> >      Random Read (RR) and Random write(RW) performance with Full Disk
-> >      Encryption is degraded compared to no Disk Encryption. Initially i
+From: Colin Ian King <colin.king@canonical.com>
 
-dm-crypt doesn't even use request based device mapper.  Something odd
-must be going on with your benchmarks.
+Making dm_open and dm_release static fixes the sparse warnings:
+
+warning: symbol 'dm_open' was not declared. Should it be static?
+warning: symbol 'dm_release' was not declared. Should it be static?
+
+Fixes: ab2c6224f4c0c ("dm: a basic support for using the select or poll function")
+Signed-off-by: Colin Ian King <colin.king@canonical.com>
+---
+ drivers/md/dm-ioctl.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
+index 70dc5db90ef2..d45c68115d4c 100644
+--- a/drivers/md/dm-ioctl.c
++++ b/drivers/md/dm-ioctl.c
+@@ -1893,7 +1893,7 @@ static long dm_compat_ctl_ioctl(struct file *file, uint command, ulong u)
+ #define dm_compat_ctl_ioctl NULL
+ #endif
+ 
+-int dm_open(struct inode *inode, struct file *filp)
++static int dm_open(struct inode *inode, struct file *filp)
+ {
+ 	int r;
+ 	struct dm_file *priv;
+@@ -1911,7 +1911,7 @@ int dm_open(struct inode *inode, struct file *filp)
+ 	return 0;
+ }
+ 
+-int dm_release(struct inode *inode, struct file *filp)
++static int dm_release(struct inode *inode, struct file *filp)
+ {
+ 	kfree(filp->private_data);
+ 	return 0;
+-- 
+2.11.0
