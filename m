@@ -1,39 +1,60 @@
-From: Eric Biggers <ebiggers3@gmail.com>
-Subject: Re: [RFC 07/10] fscrypt: move to generic async completion
-Date: Wed, 10 May 2017 21:04:42 -0700
-Message-ID: <20170511040442.GB2936@zzz>
-References: <1494075602-5061-1-git-send-email-gilad@benyossef.com>
- <1494075602-5061-8-git-send-email-gilad@benyossef.com>
+From: "Nicholas A. Bellinger" <nab-IzHhD5pYlfBP7FQvKIMDCQ@public.gmane.org>
+Subject: Re: [PATCH 25/27] block: remove the discard_zeroes_data
+	flag
+Date: Wed, 10 May 2017 21:50:35 -0700
+Message-ID: <1494478235.16894.115.camel@haakon3.risingtidesystems.com>
+References: <20170405172125.22600-1-hch@lst.de>
+	<20170405172125.22600-26-hch@lst.de>
+	<1493671519.2665.15.camel@sandisk.com>
+	<1493707425.23202.77.camel@haakon3.risingtidesystems.com>
+	<1493709373.23202.79.camel@haakon3.risingtidesystems.com>
+	<20170502072328.GA11522@lst.de>
+	<1493782395.23202.84.camel@haakon3.risingtidesystems.com>
+	<20170507092209.GA27370@lst.de>
+	<1494312374.16894.36.camel@haakon3.risingtidesystems.com>
+	<20170510140627.GA23759@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-crypto-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1494075602-5061-8-git-send-email-gilad@benyossef.com>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Gilad Ben-Yossef <gilad@benyossef.com>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, Jonathan Corbet <corbet@lwn.net>, David Howells <dhowells@redhat.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, Steve French <sfrench@samba.org>, "Theodore Y. Ts'o" <tytso@mit.edu>, Jaegeuk Kim <jaegeuk@kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Dmitry Kasatkin <dmitry.kasatkin@gmail.com>, James Morris <james.l.morris@oracle.com>, "Serge E. Hallyn" <serge@hallyn.com>, Ofir Drang <ofir.drang@arm.com>, Gilad Ben-Yossef <gilad.benyossef@arm.com>, linux-crypto@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, keyrings@vger.kernel.org, linux-raid@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+In-Reply-To: <20170510140627.GA23759-jcswGhMUV9g@public.gmane.org>
+List-Unsubscribe: <http://lists.linbit.com/mailman/options/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
+List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
+List-Subscribe: <http://lists.linbit.com/mailman/listinfo/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
+Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+To: "hch-jcswGhMUV9g@public.gmane.org" <hch-jcswGhMUV9g@public.gmane.org>
+Cc: "axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org" <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, "linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, "snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org" <philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, "linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "target-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <target-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Bart Van Assche <Bart.VanAssche-XdAiOPVOjttBDgjK7y7TUQ@public.gmane.org>, "lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org" <lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, "shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org" <drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
 List-Id: dm-devel.ids
 
-Hi Gilad,
+On Wed, 2017-05-10 at 16:06 +0200, hch-jcswGhMUV9g@public.gmane.org wrote:
+> On Mon, May 08, 2017 at 11:46:14PM -0700, Nicholas A. Bellinger wrote:
+> > That said, simply propagating up q->limits.max_write_zeroes_sectors as
+> > dev_attrib->unmap_zeroes_data following existing code still looks like
+> > the right thing to do.
+> 
+> It is not.  Martin has decoupled write same/zeroes support from discard
+> support.  Any device will claim to support it initially, and we'll
+> only clear the flag if a Write Same command fails.
+> 
+> So even if LBPRZ is not set you can trivially get into a situation
+> where discard is supported through UNMAP, and you'll incorrectly
+> set LBPRZ and will cause data corruption.
 
-On Sat, May 06, 2017 at 03:59:56PM +0300, Gilad Ben-Yossef wrote:
->  int fscrypt_do_page_crypto(const struct inode *inode, fscrypt_direction_t rw,
->  			   u64 lblk_num, struct page *src_page,
->  			   struct page *dest_page, unsigned int len,
-> @@ -150,7 +135,7 @@ int fscrypt_do_page_crypto(const struct inode *inode, fscrypt_direction_t rw,
->  		u8 padding[FS_XTS_TWEAK_SIZE - sizeof(__le64)];
->  	} xts_tweak;
->  	struct skcipher_request *req = NULL;
-> -	DECLARE_FS_COMPLETION_RESULT(ecr);
-> +	DECLARE_CRYPTO_WAIT(ecr);
->  	struct scatterlist dst, src;
->  	struct fscrypt_info *ci = inode->i_crypt_info;
->  	struct crypto_skcipher *tfm = ci->ci_ctfm;
-> @@ -168,7 +153,7 @@ int fscrypt_do_page_crypto(const struct inode *inode, fscrypt_direction_t rw,
-[...]
+In that case, there are two choices.
 
-This patch looks good --- thanks for doing this!  I suggest also renaming 'ecr'
-to 'wait' in the places being updated to use crypto_wait, since the name is
-obsolete (and was already; it originally stood for "ext4 completion result").
+1) Expose a block_device or request_queue bit to signal 'real LBPRZ'
+support up to IBLOCK, in order to maintain SCSI target feature
+compatibility.
 
-- Eric
+2) Or drop the LBPRZ bit usage for IBLOCK all-together.
+
+Since I happen happen to support a block driver that has 'real LBPRZ'
+support for all discards, I'd prefer the latter so this doesn't have to
+be carried out-of-tree.
+
+So what are the options for this in post v4.12..?
