@@ -1,78 +1,40 @@
-From: Neeraj Soni <neersoni@codeaurora.org>
-Subject: Re: need to pick a solution for dm-crypt IV generation and do it!
- [was: Re: dm: submit stacked requests in irq enabled context]
-Date: Thu, 11 May 2017 11:24:33 +0530
-Message-ID: <17685656-9384-e050-d7d6-0bdb68e2a2d3@codeaurora.org>
-References: <a66b6e17-a8c4-3465-fc2e-c3114abe0ca7@codeaurora.org>
- <dee12838-7b43-2fdd-0644-41c10ecf9148@codeaurora.org>
- <20170509155555.GB2572@localhost.localdomain>
- <20170510071733.GA24980@infradead.org>
- <39356321-b39b-98c7-f52b-ffd19d6dfc69@codeaurora.org>
- <CAOtvUMcjULAOZYQ3K_XDvxcFoFJJjX-wxF6e6Y1+-r67tS_Y7g@mail.gmail.com>
- <20170510144525.GA5608@redhat.com>
- <CAOtvUMdrnvr4RSzh6YB9F0B_WqfQ2WmSDUtCgn605JvRHrB3gg@mail.gmail.com>
- <6f802971-1622-1186-93d2-ff2cb3ca9fa0@codeaurora.org>
+From: "hch-jcswGhMUV9g@public.gmane.org" <hch-jcswGhMUV9g@public.gmane.org>
+Subject: Re: [PATCH 25/27] block: remove the discard_zeroes_data
+	flag
+Date: Thu, 11 May 2017 08:26:30 +0200
+Message-ID: <20170511062630.GA18517@lst.de>
+References: <20170405172125.22600-26-hch@lst.de>
+	<1493671519.2665.15.camel@sandisk.com>
+	<1493707425.23202.77.camel@haakon3.risingtidesystems.com>
+	<1493709373.23202.79.camel@haakon3.risingtidesystems.com>
+	<20170502072328.GA11522@lst.de>
+	<1493782395.23202.84.camel@haakon3.risingtidesystems.com>
+	<20170507092209.GA27370@lst.de>
+	<1494312374.16894.36.camel@haakon3.risingtidesystems.com>
+	<20170510140627.GA23759@lst.de>
+	<1494478235.16894.115.camel@haakon3.risingtidesystems.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <6f802971-1622-1186-93d2-ff2cb3ca9fa0@codeaurora.org>
-Content-Language: en-US
-Sender: linux-crypto-owner@vger.kernel.org
-To: Gilad Ben-Yossef <gilad@benyossef.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: Christoph Hellwig <hch@infradead.org>, Keith Busch <keith.busch@intel.com>, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, Ondrej Mosnacek <omosnace@redhat.com>, Milan Broz <gmazyland@gmail.com>, Herbert Xu <herbert@gondor.apana.org.au>, linux-crypto@vger.kernel.org
+Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1494478235.16894.115.camel-XoQW25Eq2zviZyQQd+hFbcojREIfoBdhmpATvIKMPHk@public.gmane.org>
+List-Unsubscribe: <http://lists.linbit.com/mailman/options/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
+List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
+List-Subscribe: <http://lists.linbit.com/mailman/listinfo/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
+Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+To: "Nicholas A. Bellinger" <nab-IzHhD5pYlfBP7FQvKIMDCQ@public.gmane.org>
+Cc: "axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org" <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, "linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, "snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org" <philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, "linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "target-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <target-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Bart Van Assche <Bart.VanAssche-XdAiOPVOjttBDgjK7y7TUQ@public.gmane.org>, "lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org" <lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, "shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "hch-jcswGhMUV9g@public.gmane.org" <hch-jcswGhMUV9g@public.gmane.org>, "agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org" <drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
 List-Id: dm-devel.ids
 
-Until we move to some latest stable kernel as Keith mentioned.
+On Wed, May 10, 2017 at 09:50:35PM -0700, Nicholas A. Bellinger wrote:
+> 1) Expose a block_device or request_queue bit to signal 'real LBPRZ'
+> support up to IBLOCK, in order to maintain SCSI target feature
+> compatibility.
 
-On 5/11/2017 11:22 AM, Neeraj Soni wrote:
-> Thanks for inputs folks. So shall i conclude that there is no remedy 
-> available that can be applied on 4.4 and reverting this patch is only 
-> way forward to solve the degradation?
->
-> Neeraj
->
->
-> On 5/10/2017 8:25 PM, Gilad Ben-Yossef wrote:
->> On Wed, May 10, 2017 at 5:45 PM, Mike Snitzer <snitzer@redhat.com> 
->> wrote:
->>> On Wed, May 10 2017 at  9:37am -0400,
->>> Gilad Ben-Yossef <gilad@benyossef.com> wrote:
->>>
->>>> On Wed, May 10, 2017 at 11:49 AM, Neeraj Soni 
->>>> <neersoni@codeaurora.org> wrote:
->>>>> Hi Keith,
->>>>>
->>>>> Request based dm (dm-req-crypt) is being used for Disk Encryption 
->>>>> solution
->>>>> in Android used by Google. Also as i mentioned reverting this fix  
->>>>> improves
->>>>> the RR/RW numbers so this proves the request based dm is coming 
->>>>> into path
->>>>> and is being used.
->>>> Sadly, that is an out of tree module.
->>>>
->>>> Does it still use Qcom specific APIs in its implementation 
->>>> (qcrypto_* funcs)?
->>>> It did the last time I've checked - and the driver that implements
->>>> those is not upstream either...
->>>>
->>>> It makes it difficult to help - which is a shame since I am interested
->>>> in enabling higher performance
->>>> of dm-crypt when using HW based crypto transformation myself.
->>> I have absolutely no interest in request-based dm-crypt.  It is a hack
->>> to work-around limitations in crypto IV generation.
->> I agree. This is why I've said I'm interested in a high performance 
->> dm-crypt,
->> not "request based dm-crypt". They are trying to solve the same 
->> problem but
->> with the wrong solution and doing so out of upstream.
->>
->> As the parlance of our time seems to go... sad. :-)
->>
->>
->> Cheers,
->> Gilad
->>
->>
->
+No way.  If you want to zero use REQ_OP_WRITE_ZEROES..
