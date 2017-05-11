@@ -1,50 +1,73 @@
-From: "Nicholas A. Bellinger" <nab-IzHhD5pYlfBP7FQvKIMDCQ@public.gmane.org>
-Subject: Re: [PATCH 25/27] block: remove the discard_zeroes_data
-	flag
-Date: Wed, 10 May 2017 23:36:22 -0700
-Message-ID: <1494484582.16894.156.camel@haakon3.risingtidesystems.com>
-References: <20170405172125.22600-26-hch@lst.de>
-	<1493671519.2665.15.camel@sandisk.com>
-	<1493707425.23202.77.camel@haakon3.risingtidesystems.com>
-	<1493709373.23202.79.camel@haakon3.risingtidesystems.com>
-	<20170502072328.GA11522@lst.de>
-	<1493782395.23202.84.camel@haakon3.risingtidesystems.com>
-	<20170507092209.GA27370@lst.de>
-	<1494312374.16894.36.camel@haakon3.risingtidesystems.com>
-	<20170510140627.GA23759@lst.de>
-	<1494478235.16894.115.camel@haakon3.risingtidesystems.com>
-	<20170511062630.GA18517@lst.de>
+From: Gilad Ben-Yossef <gilad@benyossef.com>
+Subject: Re: [RFC 01/10] crypto: factor async completion for general use
+Date: Thu, 11 May 2017 10:29:47 +0300
+Message-ID: <CAOtvUMezWBrHtGxJCBJHVks-XJdSCOMrRj3evsNdY=cB==wc-g@mail.gmail.com>
+References: <1494075602-5061-1-git-send-email-gilad@benyossef.com>
+ <1494075602-5061-2-git-send-email-gilad@benyossef.com> <20170511035527.GA2936@zzz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-In-Reply-To: <20170511062630.GA18517-jcswGhMUV9g@public.gmane.org>
-List-Unsubscribe: <http://lists.linbit.com/mailman/options/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
-List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
-List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
-List-Subscribe: <http://lists.linbit.com/mailman/listinfo/drbd-dev>,
-	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
-Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
-To: "hch-jcswGhMUV9g@public.gmane.org" <hch-jcswGhMUV9g@public.gmane.org>
-Cc: "axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org" <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, "linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, "snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org" <philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, "linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "target-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <target-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Bart Van Assche <Bart.VanAssche-XdAiOPVOjttBDgjK7y7TUQ@public.gmane.org>, "lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org" <lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org>, "shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org" <drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-security-module-owner@vger.kernel.org>
+In-Reply-To: <20170511035527.GA2936@zzz>
+Sender: owner-linux-security-module@vger.kernel.org
+To: Eric Biggers <ebiggers3@gmail.com>
+Cc: Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, Jonathan Corbet <corbet@lwn.net>, David Howells <dhowells@redhat.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, Steve French <sfrench@samba.org>, "Theodore Y. Ts'o" <tytso@mit.edu>, Jaegeuk Kim <jaegeuk@kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Dmitry Kasatkin <dmitry.kasatkin@gmail.com>, James Morris <james.l.morris@oracle.com>, "Serge E. Hallyn" <serge@hallyn.com>, Ofir Drang <ofir.drang@arm.com>, Gilad Ben-Yossef <gilad.benyossef@arm.com>, linux-crypto@vger.kernel.org, linux-doc@vger.kernel.org, Linux kernel mailing list <linux-kernel@vger.kernel.org>, keyrings@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Thu, 2017-05-11 at 08:26 +0200, hch-jcswGhMUV9g@public.gmane.org wrote:
-> On Wed, May 10, 2017 at 09:50:35PM -0700, Nicholas A. Bellinger wrote:
-> > 1) Expose a block_device or request_queue bit to signal 'real LBPRZ'
-> > support up to IBLOCK, in order to maintain SCSI target feature
-> > compatibility.
-> 
-> No way.  If you want to zero use REQ_OP_WRITE_ZEROES..
+Hi Eric,
 
-Yes, I understand that part and it's what the earlier conversion of
-IBLOCK to use blkdev_issue_zeroout() already does.
+On Thu, May 11, 2017 at 6:55 AM, Eric Biggers <ebiggers3@gmail.com> wrote:
+> Hi Gilad,
+>
+> On Sat, May 06, 2017 at 03:59:50PM +0300, Gilad Ben-Yossef wrote:
+>> Invoking a possibly async. crypto op and waiting for completion
+>> while correctly handling backlog processing is a common task
+>> in the crypto API implementation and outside users of it.
+>>
+>> This patch re-factors one of the in crypto API implementation in
+>> preparation for using it across the board instead of hand
+>> rolled versions.
+>
+> Thanks for doing this!  It annoyed me too that there wasn't a helper function
+> for this.  Just a few comments below:
+>
 
-Once the blkdev_issue_zeroout() conversion is in place then LBPRZ can
-always be set to one for IBLOCK using blkdev_issue_zeroout().
+Thank you for the review.
+I will incorporate the feedback into v2.
 
-The point is this is not in -rc1, which as-is breaks LBPRZ compat for a
-release.
+...
+
+> With regards to the wait being uninterruptible, I agree that this should be the
+> default behavior, because I think users waiting for specific crypto requests are
+> generally not prepared to handle the wait actually being interrupted.  After
+> interruption the crypto operation will still proceed in the background, and it
+> will use buffers which the caller has in many cases already freed.  However, I'd
+> suggest taking a close look at anything that was actually doing an interruptible
+> wait before, to see whether it was a bug or intentional (or "doesn't matter").
+>
+> And yes there could always be a crypto_wait_req_interruptible() introduced if
+> some users need it.
+
+So this one was a bit of a shocker.  I though the  _interruptible use
+sites seemed
+wrong in the sense of being needless. However, after reading your feedback and
+reviewing the code I'm pretty sure every single one of them (including
+the one I've
+added in dm-verity-target.c this merge window)  are down right dangerous and
+can cause random data corruption... so thanks for pointing this out!
+
+I though of this patch set as a "make the code pretty" for 4.13 kind
+of patch set.
+Looks like it's a bug fix now, maybe even stable material.
+
+Anyway, I'll roll a v2 and we'll see.
+
+Thanks,
+Gilad
+
+-- 
+Gilad Ben-Yossef
+Chief Coffee Drinker
+
+"If you take a class in large-scale robotics, can you end up in a
+situation where the homework eats your dog?"
+ -- Jean-Baptiste Queru
