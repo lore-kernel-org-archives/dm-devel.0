@@ -1,15 +1,16 @@
 From: Martin Wilck <mwilck@suse.com>
 Subject: Re: [PATCH 1/3] dm: a basic support for using the select
  or poll function
-Date: Thu, 11 May 2017 11:39:39 +0200
-Message-ID: <1494495579.6093.10.camel@suse.com>
+Date: Thu, 11 May 2017 11:43:21 +0200
+Message-ID: <1494495801.6093.12.camel@suse.com>
 References: <20170509191028.6898-1-agrover@redhat.com>
 	<20170509191028.6898-2-agrover@redhat.com>
+	<1494495579.6093.10.camel@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170509191028.6898-2-agrover@redhat.com>
+In-Reply-To: <1494495579.6093.10.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,18 +24,22 @@ To: Andy Grover <agrover@redhat.com>, dm-devel@redhat.com, snitzer@redhat.com
 Cc: mpatocka@redhat.com
 List-Id: dm-devel.ids
 
-T24gVHVlLCAyMDE3LTA1LTA5IGF0IDEyOjEwIC0wNzAwLCBBbmR5IEdyb3ZlciB3cm90ZToKPiBG
-cm9tOiBNaWt1bGFzIFBhdG9ja2EgPG1wYXRvY2thQHJlZGhhdC5jb20+Cj7CoAo+IFRoaXMgaXMg
-dGhlIHZlcnkgc2ltcGxlIHBhdGNoIGZvciBwb2xsaW5nIG9uIHRoZSAvZGV2L21hcHBlci9jb250
-cm9sCj4gZGV2aWNlLiBUaGUgc2VsZWN0IG9yIHBvbGwgZnVuY3Rpb24gd2FpdHMgdW50aWwgYW55
-IGV2ZW50IGhhcHBlbnMgb24KPiBhbnkKPiBkbSBkZXZpY2Ugc2luY2Ugb3BlbmluZyB0aGUgL2Rl
-di9tYXBwZXIvY29udHJvbCBkZXZpY2UuIFdoZW4gc2VsZWN0Cj4gb3IKPiBwb2xsIHJldHVybnMg
-dGhlIGRldmljZSBhcyByZWFkYWJsZSwgd2UgbXVzdCBjbG9zZSBhbmQgcmVvcGVuIHRoZQo+IGRl
-dmljZQo+IHRvIHdhaXQgZm9yIG5ldyBkbSBldmVudHMuCgpXaHkgaGF2ZSB5b3UgZG9uZSBpdCB0
-aGF0IHdheT8gQ291bGRuJ3QgeW91IGp1c3Qgc2F2ZSB0aGUKZG1fZ2xvYmFsX2V2ZW50X25yIGF0
-IHRoZSB0aW1lIHBvbGwoKSBpcyBjYWxsZWQ/CgpSZWdhcmRzCk1hcnRpbgoKLS3CoApEci4gTWFy
-dGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuwqArNDkgKDApOTExIDc0MDUzIDIxMDdT
-VVNFCkxpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdy
-YWhhbSBOb3J0b25IUkIKMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcg
-bGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9s
-aXN0aW5mby9kbS1kZXZlbA==
+T24gVGh1LCAyMDE3LTA1LTExIGF0IDExOjM5ICswMjAwLCBNYXJ0aW4gV2lsY2sgd3JvdGU6Cj4g
+T24gVHVlLCAyMDE3LTA1LTA5IGF0IDEyOjEwIC0wNzAwLCBBbmR5IEdyb3ZlciB3cm90ZToKPiA+
+IEZyb206IE1pa3VsYXMgUGF0b2NrYSA8bXBhdG9ja2FAcmVkaGF0LmNvbT4KPiA+IMKgCj4gPiBU
+aGlzIGlzIHRoZSB2ZXJ5IHNpbXBsZSBwYXRjaCBmb3IgcG9sbGluZyBvbiB0aGUKPiA+IC9kZXYv
+bWFwcGVyL2NvbnRyb2wKPiA+IGRldmljZS4gVGhlIHNlbGVjdCBvciBwb2xsIGZ1bmN0aW9uIHdh
+aXRzIHVudGlsIGFueSBldmVudCBoYXBwZW5zCj4gPiBvbgo+ID4gYW55Cj4gPiBkbSBkZXZpY2Ug
+c2luY2Ugb3BlbmluZyB0aGUgL2Rldi9tYXBwZXIvY29udHJvbCBkZXZpY2UuIFdoZW4gc2VsZWN0
+Cj4gPiBvcgo+ID4gcG9sbCByZXR1cm5zIHRoZSBkZXZpY2UgYXMgcmVhZGFibGUsIHdlIG11c3Qg
+Y2xvc2UgYW5kIHJlb3BlbiB0aGUKPiA+IGRldmljZQo+ID4gdG8gd2FpdCBmb3IgbmV3IGRtIGV2
+ZW50cy4KPiAKPiBXaHkgaGF2ZSB5b3UgZG9uZSBpdCB0aGF0IHdheT8gQ291bGRuJ3QgeW91IGp1
+c3Qgc2F2ZSB0aGUKPiBkbV9nbG9iYWxfZXZlbnRfbnIgYXQgdGhlIHRpbWUgcG9sbCgpIGlzIGNh
+bGxlZD8KCkkgc2hvdWxkIGhhdmUgcmVhZCB5b3VyIHBhdGNoIDIvMyBiZWZvcmUgcG9zdGluZyAu
+Li4gYnV0IEknbSBzdGlsbAptaXNzaW5nIHdoeSB0aGUgY291bnRlciBjYW4ndCBzaW1wbHkgYmUg
+c2V0IGF0IHBvbGwoKSB0aW1lLgoKUmVnYXJkcwpNYXJ0aW4KLS0gCkRyLiBNYXJ0aW4gV2lsY2sg
+PG13aWxja0BzdXNlLmNvbT4sIFRlbC7CoCs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4
+IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0
+b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0t
+ZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8v
+ZG0tZGV2ZWw=
