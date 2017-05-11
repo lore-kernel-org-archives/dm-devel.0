@@ -1,16 +1,21 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 4/5] kpartx: default to running in sync mode
-Date: Thu, 11 May 2017 22:01:33 +0200
-Message-ID: <1494532893.6093.32.camel@suse.com>
-References: <1493073570-17167-1-git-send-email-bmarzins@redhat.com>
-	<1493073570-17167-5-git-send-email-bmarzins@redhat.com>
-	<1494506528.6093.19.camel@suse.com>
-	<20170511174635.GI22856@octiron.msp.redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH 1/3] dm: a basic support for using the	select
+	or poll function
+Date: Thu, 11 May 2017 21:21:04 +0100
+Message-ID: <20170511202103.GG6155@agk-dp.fab.redhat.com>
+References: <20170509191028.6898-1-agrover@redhat.com>
+	<20170509191028.6898-2-agrover@redhat.com>
+	<1494495579.6093.10.camel@suse.com>
+	<1494495801.6093.12.camel@suse.com>
+	<20170511132134.GA10709@redhat.com>
+	<01517603-ba44-bc02-8b70-96feef8050ed@redhat.com>
+	<1494532154.6093.30.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170511174635.GI22856@octiron.msp.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1494532154.6093.30.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,61 +25,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com
+To: Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com, Andy Grover <agrover@redhat.com>, mpatocka@redhat.com, snitzer@redhat.com
 List-Id: dm-devel.ids
 
-T24gVGh1LCAyMDE3LTA1LTExIGF0IDEyOjQ2IC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gT24gVGh1LCBNYXkgMTEsIDIwMTcgYXQgMDI6NDI6MDhQTSArMDIwMCwgTWFydGluIFdp
-bGNrIHdyb3RlOgo+ID4gSGkgQmVuLAo+ID4gCj4gPiBPbiBNb24sIDIwMTctMDQtMjQgYXQgMTc6
-MzkgLTA1MDAsIEJlbmphbWluIE1hcnppbnNraSB3cm90ZToKPiA+IAo+ID4gPiBXaGVuIHVzZXJz
-IHJ1biBrcGFydHgsIHRoZXkgd291bGQgbmF0dXJhbGx5IGFzc3VtZSB0aGF0IHdoZW4gaXQKPiA+
-ID4gY29tcGxldGVzLCB0aGUgZGV2aWNlcyBoYXZlIGJlZW4gY3JlYXRlZC4gSG93ZXZlciwga3Bh
-cnR4IHJ1bnMgaW4KPiA+ID4gYXN5bmMKPiA+ID4gbW9kZSBieSBkZWZhdWx0LsKgwqBUaGlzIHNl
-ZW1zIGxpa2UgaXQgaXMgbGlrZWx5IHRvIHRyaXAgdXAgdXNlcnMuwqAKPiA+IAo+ID4gSXMgdGhp
-cyBqdXN0IGxpa2VseSwgb3IgZG8geW91IGhhdmUgZXZpZGVuY2UgdGhhdCBpdCByZWFsbHkgZGlk
-Cj4gPiBpcnJpdGF0ZSB1c2Vycz8gWW91IGludHJvZHVjZWQgInN5bmMgbW9kZSIsIHRvZ2V0aGVy
-IHdpdGggdGhlICItcyIKPiA+IGZsYWcsIHlvdXJzZWxmIGluIDIwMTAsIGFuZCB1bmxlc3MgSSdt
-IG1pc3Rha2VuLCBrcGFydHggb3BlcmF0ZWQgaW4KPiA+ICJhc3luYyIgbW9kZSBiZWZvcmUgdGhh
-dCwgdG9vLCBiZWNhdXNlIHRoZXJlIHdhcyBubyAic3luYyIgbW9kZS7CoAo+IAo+IFllcy4gSSBt
-YWRlIHRoaXMgcGF0Y2ggYWZ0ZXIgdGhlIHNlY29uZCB0aW1lIGEgY3VzdG9tZXIgY29tcGxhaW5l
-ZAo+IHRoYXQKPiBrcGFydHggd2Fzbid0IHdvcmtpbmcgY29ycmVjdGx5LCB3aGVuIHRoZSByZWFs
-IGlzc3VlIHdhcyB0aGF0IHRoZWlyCj4gc2NyaXB0cyB3ZXJlIGFzc3VtaW5nIHRoYXQgYWZ0ZXIg
-dGhlIGtwYXJ0eCBjb21tYW5kIGNvbXBsZXRlZCwgdGhvc2UKPiBwYXJ0aXRpb24gZGV2aWNlIG5v
-ZGVzIHdvdWxkIGJlIHByZXNlbnQuIE9idmlvdXNseSwgMiBpc24ndCBhIGh1Z2UKPiBudW1iZXIs
-IGJ1dCBpdCBjZXJ0YWlubHkgaGFzIGNhdXNlZCBjb25mdXNpb24gaW4gc29tZSBjYXNlcy4KCjIg
-PiAibGlrZWx5IiwgdGhhdCBtYWtlcyBhIGRpZmZlcmVuY2UuCgo+ID4gSSdtIG5vdCB0b28gZm9u
-ZCBvZiB0aGUgaWRlYSB0byBjaGFuZ2UgYSBkZWZhdWx0IHdoaWNoIGhhcyBiZWVuCj4gPiBlc3Rh
-Ymxpc2hlZCBmb3Igc3VjaCBhIGxvbmcgdGltZSBqdXN0IGJlY2F1c2UgdXNlciBtaXN0YWtlcyBh
-cmUKPiA+ICJsaWtlbHkiLiBGb3Igb25lIHRoaW5nLCBzdWNoIGNoYW5nZXMgYXJlIGRpZmZpY3Vs
-dCB0byBkb2N1bWVudCBpbgo+ID4gYQo+ID4gd2F5IHRoYXQgZG9lc24ndCBjYXVzZSBjb25mdXNp
-b24uIEFsc28sIGlmIHNvbWVvbmUgd3JpdGVzIGEgc2NyaXB0Cj4gPiBpbgo+ID4gd2hpY2ggc2hl
-IHdhbnRzIGtwYXJ0eCB0byBydW4gYXN5bmNocm9ub3VzbHksIGl0IHdpbGwgYmUgZGlmZmljdWx0
-Cj4gPiB0bwo+ID4gZG8gc28gaW4gYSBtYW5uZXIgd2hpY2ggaXMgcG9ydGFibGUgYmV0d2VlbiBk
-aXN0cmlidXRpb25zIGlmIHNvbWUKPiA+IGRpc3RyaWJ1dGlvbnMgaW5jbHVkZSB0aGlzIHBhdGNo
-IGFuZCBzb21lIGRvbid0Lgo+IAo+IEkgc2VlIHlvdXIgcG9pbnQsIGJ1dCBhc3N1bWluZyB0aGF0
-IEkgYW0gY29ycmVjdCB0aGF0IG1vc3QgdXNlcnMgZG8KPiBhc3N1bWUgdGhhdCBrcGFydHggcnVu
-cyBzeW5jaHJvbm91c2x5LCBJIGZlZWwgbGlrZSB3ZSBzaG91bGRuJ3Qga2VlcAo+IGEKPiBiYWQg
-ZGVmYXVsdCBmb3JldmVyLCBzaW1wbHkgYmVjYXVzZSBpdCdzIGFsd2F5cyBiZWVuIHRoYXQgd2F5
-LiBsdm0KPiBhbmQKPiBkbXNldHVwIHdhaXQgZm9yIHVkZXYgYnkgZGVmYXVsdCAod2VsbCwgb24g
-bHZtIElJUkMgaXQgaXMgYSBjb21waWxlLQo+IHRpbWUKPiBzZXR0aW5nLCBidXQgaGVyZSBpcyBz
-b21lIFNVU0UgZG9jdW1lbnRhdGlvbiBzaG93aW5nIHRoYXQgaXQgdXNlcwo+IHVkZXYKPiBzeW5j
-aHJvbml6YXRpb24gYnkgZGVmYXVsdAo+IGh0dHBzOi8vd3d3LnN1c2UuY29tL2RvY3VtZW50YXRp
-b24vc2xlcy0xMi9zdG9yX2FkbWluL2RhdGEvc2VjX2x2bV9jbAo+IGkuaHRtbCkKPiBrcGFydHgg
-ZG9lcyBzZWVtIHRvIGJlIHRoZSBvZGQgb25lIG91dC4KPiAKPiA+IEFzIGFuIGFsdGVybmF0aXZl
-LCB3ZSBtaWdodCBzaW1wbHkgd2FybiBhYm91dCB0aGUgZGVmYXVsdAo+ID4gYXN5bmNocm9ub3Vz
-Cj4gPiBiZWhhdmlvciBpbiBhIHByb21pbmVudCBwbGFjZSBpbiB0aGUgbWFuIHBhZ2UuCj4gCj4g
-V2UgY291bGQsIGFuZCBpZiB5b3UgYXJlIG9wcG9zZWQgdG8gdGhpcyBwYXRjaCwgdGhhdCB3b3Vs
-ZCBwcm9iYWJseQo+IGhlbHAKPiBjdXQgZG93biBhbnkgY29uZnVzaW9uIChhc3N1bWluZyB0aGF0
-IHdoZW4gY3VzdG9tZXJzIHNlZSB0aGluZ3MgZ28KPiB3cm9uZwo+IHRoZXkgcmVhZCB0aGUgZG9j
-dW1lbnRhdGlvbiBiZWZvcmUgY2FsbGluZyBzdXBwb3J0KS4KCkkgc3RpbGwgZG9uJ3QgbGlrZSBp
-dCB0b28gbXVjaC4gVGhlIHNjcmlwdGluZyBpc3N1ZSBpcyBteSBiaWdnZXN0CmNvbmNlcm4gLSB1
-c2VycyBuZWVkIGF0IGxlYXN0IGEgcmVsaWFibGUgd2F5IHRvIHRlc3Qgd2hldGhlciBvciBub3TC
-oAoiLW4iIGlzIHN1cHBvcnRlZCBieSBrcGFydHggb24gYSBnaXZlbiBzeXN0ZW0uCgpCdXQgSSwg
-YWxvbmUsIGFtIG5vdCBpbiBhIHBvc2l0aW9uIHRvIHZldG8gdGhpcy4KCkRvZXMgYW55b25lIGVs
-c2UgaGF2ZSBhbiBvcGluaW9uIG9uIHRoaXMgY2hhbmdlPwoKTWFydGluCgotLSAKRHIuIE1hcnRp
-biBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLsKgKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNV
-U0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3Jh
-aGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcg
-bGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9s
-aXN0aW5mby9kbS1kZXZlbA==
+On Thu, May 11, 2017 at 09:49:14PM +0200, Martin Wilck wrote:
+> Here is an idea: the best way to avoid the race mentioned by Mike might
+> be to set priv->global_event_nr to the highest event nr reported by the
+> DM_LIST_DEVICES ioctl when this ioctl returns. DM_LIST_DEVICES would
+> then represent your "separate action", which would fit quite well, and
+> the DM_DEV_ARM_POLL ioctl wouldn't be needed. It would be guaranteed
+> that if any event had occured after the previous DM_LIST_DEVICES,
+> whether or not that had been before or after the poll() call, userspace
+> would notice.
+ 
+It's not really good practice to overload operations by adding and
+relying upon side-effects.  Yes, you could add a flag to control the
+side-effect, but a separate ioctl seems to be a perfectly reasonable
+approach in the present case, allowing for flexible use and not forcing
+you to generate the list when you don't need it.  We've already got
+examples of both other approaches - DM_DEV_WAIT_CMD taking the last
+known event_nr as input, and @stats_print_clear reporting and resetting
+counters in the same operation.
+
+Alasdair
