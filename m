@@ -1,18 +1,17 @@
-From: Andy Grover <agrover@redhat.com>
+From: Martin Wilck <mwilck@suse.com>
 Subject: Re: [PATCH 1/3] dm: a basic support for using the select
  or poll function
-Date: Thu, 11 May 2017 11:10:04 -0700
-Message-ID: <01517603-ba44-bc02-8b70-96feef8050ed@redhat.com>
+Date: Thu, 11 May 2017 21:30:43 +0200
+Message-ID: <1494531043.6093.27.camel@suse.com>
 References: <20170509191028.6898-1-agrover@redhat.com>
 	<20170509191028.6898-2-agrover@redhat.com>
 	<1494495579.6093.10.camel@suse.com> <1494495801.6093.12.camel@suse.com>
 	<20170511132134.GA10709@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <20170511132134.GA10709@redhat.com>
-Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,53 +21,51 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>, Martin Wilck <mwilck@suse.com>
-Cc: dm-devel@redhat.com, mpatocka@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, Andy Grover <agrover@redhat.com>, mpatocka@redhat.com
 List-Id: dm-devel.ids
 
-On 05/11/2017 06:21 AM, Mike Snitzer wrote:
-> On Thu, May 11 2017 at  5:43am -0400,
-> Martin Wilck <mwilck@suse.com> wrote:
-> 
->> On Thu, 2017-05-11 at 11:39 +0200, Martin Wilck wrote:
->>> On Tue, 2017-05-09 at 12:10 -0700, Andy Grover wrote:
->>>> From: Mikulas Patocka <mpatocka@redhat.com>
->>>>   
->>>> This is the very simple patch for polling on the
->>>> /dev/mapper/control
->>>> device. The select or poll function waits until any event happens
->>>> on
->>>> any
->>>> dm device since opening the /dev/mapper/control device. When select
->>>> or
->>>> poll returns the device as readable, we must close and reopen the
->>>> device
->>>> to wait for new dm events.
->>>
->>> Why have you done it that way? Couldn't you just save the
->>> dm_global_event_nr at the time poll() is called?
->>
->> I should have read your patch 2/3 before posting ... but I'm still
->> missing why the counter can't simply be set at poll() time.
-> 
-> If you did that then you would have a race where:
-> 
-> 1) userspace has recorded events prior to poll()
-> 2) an event triggers an increment of dm_global_event_nr before userspace
-> calls poll()
-> 3) then userspace calls poll() -- only to find that after poll() returns
-> multiple events have occurred.
-> 
-> Which implies missed handling of events.
-> 
-> But if I'm wrong I'm sure Andy or Mikulas will correct me.
-
-I think getting one readiness notification for multiple events should be ok.
-
-But, the semantics of poll(2) are level-triggered, meaning if a fd is 
-ready then it will stay ready through multiple invocations of poll() 
-until something is done to satisfy it (e.g. for a TCP socket, read()ing 
-all the available data). Therefore we can't make it "edge-triggered" by 
-auto-clearing - it has to be a separate action.
-
-my 2c -- Regards -- Andy
+T24gVGh1LCAyMDE3LTA1LTExIGF0IDA5OjIxIC0wNDAwLCBNaWtlIFNuaXR6ZXIgd3JvdGU6Cj4g
+T24gVGh1LCBNYXkgMTEgMjAxNyBhdMKgwqA1OjQzYW0gLTA0MDAsCj4gTWFydGluIFdpbGNrIDxt
+d2lsY2tAc3VzZS5jb20+IHdyb3RlOgo+IAo+ID4gT24gVGh1LCAyMDE3LTA1LTExIGF0IDExOjM5
+ICswMjAwLCBNYXJ0aW4gV2lsY2sgd3JvdGU6Cj4gPiA+IE9uIFR1ZSwgMjAxNy0wNS0wOSBhdCAx
+MjoxMCAtMDcwMCwgQW5keSBHcm92ZXIgd3JvdGU6Cj4gPiA+ID4gRnJvbTogTWlrdWxhcyBQYXRv
+Y2thIDxtcGF0b2NrYUByZWRoYXQuY29tPgo+ID4gPiA+IMKgCj4gPiA+ID4gVGhpcyBpcyB0aGUg
+dmVyeSBzaW1wbGUgcGF0Y2ggZm9yIHBvbGxpbmcgb24gdGhlCj4gPiA+ID4gL2Rldi9tYXBwZXIv
+Y29udHJvbAo+ID4gPiA+IGRldmljZS4gVGhlIHNlbGVjdCBvciBwb2xsIGZ1bmN0aW9uIHdhaXRz
+IHVudGlsIGFueSBldmVudAo+ID4gPiA+IGhhcHBlbnMKPiA+ID4gPiBvbgo+ID4gPiA+IGFueQo+
+ID4gPiA+IGRtIGRldmljZSBzaW5jZSBvcGVuaW5nIHRoZSAvZGV2L21hcHBlci9jb250cm9sIGRl
+dmljZS4gV2hlbgo+ID4gPiA+IHNlbGVjdAo+ID4gPiA+IG9yCj4gPiA+ID4gcG9sbCByZXR1cm5z
+IHRoZSBkZXZpY2UgYXMgcmVhZGFibGUsIHdlIG11c3QgY2xvc2UgYW5kIHJlb3Blbgo+ID4gPiA+
+IHRoZQo+ID4gPiA+IGRldmljZQo+ID4gPiA+IHRvIHdhaXQgZm9yIG5ldyBkbSBldmVudHMuCj4g
+PiA+IAo+ID4gPiBXaHkgaGF2ZSB5b3UgZG9uZSBpdCB0aGF0IHdheT8gQ291bGRuJ3QgeW91IGp1
+c3Qgc2F2ZSB0aGUKPiA+ID4gZG1fZ2xvYmFsX2V2ZW50X25yIGF0IHRoZSB0aW1lIHBvbGwoKSBp
+cyBjYWxsZWQ/Cj4gPiAKPiA+IEkgc2hvdWxkIGhhdmUgcmVhZCB5b3VyIHBhdGNoIDIvMyBiZWZv
+cmUgcG9zdGluZyAuLi4gYnV0IEknbSBzdGlsbAo+ID4gbWlzc2luZyB3aHkgdGhlIGNvdW50ZXIg
+Y2FuJ3Qgc2ltcGx5IGJlIHNldCBhdCBwb2xsKCkgdGltZS4KPiAKPiBJZiB5b3UgZGlkIHRoYXQg
+dGhlbiB5b3Ugd291bGQgaGF2ZSBhIHJhY2Ugd2hlcmU6Cj4gCj4gMSkgdXNlcnNwYWNlIGhhcyBy
+ZWNvcmRlZCBldmVudHMgcHJpb3IgdG8gcG9sbCgpCj4gMikgYW4gZXZlbnQgdHJpZ2dlcnMgYW4g
+aW5jcmVtZW50IG9mIGRtX2dsb2JhbF9ldmVudF9uciBiZWZvcmUKPiB1c2Vyc3BhY2UKPiBjYWxs
+cyBwb2xsKCkKPiAzKSB0aGVuIHVzZXJzcGFjZSBjYWxscyBwb2xsKCkgLS0gb25seSB0byBmaW5k
+IHRoYXQgYWZ0ZXIgcG9sbCgpCj4gcmV0dXJucwo+IG11bHRpcGxlIGV2ZW50cyBoYXZlIG9jY3Vy
+cmVkLgo+IAo+IFdoaWNoIGltcGxpZXMgbWlzc2VkIGhhbmRsaW5nIG9mIGV2ZW50cy4KCkkgc2Vl
+IC0gYnV0IEkgZG9uJ3Qgc2VlIHlldCBob3cgdGhlIGlvY3RsIGFwcHJvYWNoIChvciB0aGUKY2xv
+c2UoKS9vcGVuKCkgYmFzZWQgb25lLCBmb3IgdGhhdCBtYXR0ZXIpIHdvdWxkIGF2b2lkIHRoaXMg
+cmFjZS4KCiAxKSBhcHBsaWNhdGlvbiBwcm9jZXNzZXMgZXZlbnQgTgogMikgZXZlbnQgTisxIGFy
+cml2ZXMgaW4gdGhlIGtlcm5lbAogMykgdXNlciBzcGFjZSBpc3N1ZXMgaW9jdGwgb3IgY2xvc2Uo
+KS9vcGVuKCkgc2VxdWVuY2UsIE4rMSBpcyByZWNvcmRlZAogICAgaW4gcHJpdi0+Z2xvYmFsX2V2
+ZW50X25yCiA0KSB1c2VyIHNwYWNlIHJ1bnMgcG9sbCgpCiA1KSBldmVudCBOKzIgYXJyaXZlcyA0
+IHdlZWtzIGxhdGVyIGFuZCBwb2xsIHJldHVybnMKCi4uLiBtZWFuaW5nIHRoYXQgZXZlbnQgTisx
+IGhhcyBiZWVuIGxlZnQgdW5wcm9jZXNzZWQgZm9yIDQgd2Vla3MuCk9yIHdoYXQgSSBhbSBtaXNz
+aW5nPwoKQUZBSUNTLCB0aGUgb25seSB3YXkgZm9yIHVzZXIgc3BhY2UgdG8gbWFrZSBzdXJlIGl0
+IG1pc3NlcyBubyBldmVudHMKd291bGQgYmUgcGFzc2luZyB0aGUgbnVtYmVyIG9mIHRoZSBsYXN0
+IHByb2Nlc3NlZCBldmVudCBkb3duIHRoZSBrZXJuZWwKaW4gdGhlIGlvY3RsIGNhbGwgKGFuZCB0
+aGUga2VybmVsIHdvdWxkIHVzZSB0aGF0IHZhbHVlLCByYXRoZXIgdGhhbiBpdHMKaW50ZXJuYWwg
+Y291bnRlciwgZm9yIGluaXRpYWxpemluZyBwcml2LT5nbG9iYWxfZXZlbnRfbnIpLgoKUmVnYXJk
+cwpNYXJ0aW4KCgoKPiBCdXQgaWYgSSdtIHdyb25nIEknbSBzdXJlIEFuZHkgb3IgTWlrdWxhcyB3
+aWxsIGNvcnJlY3QgbWUuCj4gCj4gVGhhbmtzLAo+IE1pa2UKPiAKCi0tIApEci4gTWFydGluIFdp
+bGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuwqArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBM
+aW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0g
+Tm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0
+CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3Rp
+bmZvL2RtLWRldmVs
