@@ -1,20 +1,18 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH 1/3] dm: a basic support for using the	select
-	or poll function
-Date: Thu, 11 May 2017 22:50:05 +0100
-Message-ID: <20170511215005.GI6155@agk-dp.fab.redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 1/3] dm: a basic support for using the select
+ or poll function
+Date: Fri, 12 May 2017 08:48:53 +0200
+Message-ID: <1494571733.4987.2.camel@suse.com>
 References: <20170509191028.6898-1-agrover@redhat.com>
 	<20170509191028.6898-2-agrover@redhat.com>
-	<1494495579.6093.10.camel@suse.com>
-	<1494495801.6093.12.camel@suse.com>
-	<20170511132134.GA10709@redhat.com>
-	<1494531043.6093.27.camel@suse.com>
+	<1494495579.6093.10.camel@suse.com> <1494495801.6093.12.camel@suse.com>
+	<20170511132134.GA10709@redhat.com> <1494531043.6093.27.camel@suse.com>
+	<b14635cd-095f-a466-18cd-ced079b949f6@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1494531043.6093.27.camel@suse.com>
+In-Reply-To: <b14635cd-095f-a466-18cd-ced079b949f6@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,27 +22,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: dm-devel@redhat.com, Andy Grover <agrover@redhat.com>, mpatocka@redhat.com, Mike Snitzer <snitzer@redhat.com>
+To: Andy Grover <agrover@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, mpatocka@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, May 11, 2017 at 09:30:43PM +0200, Martin Wilck wrote:
-> I see - but I don't see yet how the ioctl approach (or the
-> close()/open() based one, for that matter) would avoid this race.
->  1) application processes event N
->  2) event N+1 arrives in the kernel
->  3) user space issues ioctl or close()/open() sequence, N+1 is recorded
->     in priv->global_event_nr
->  4) user space runs poll()
->  5) event N+2 arrives 4 weeks later and poll returns
- 
-Well that userspace design is obviously not compatible with the set of 
-patches that has been posted and is not what was proposed in the patch
-headers.
-
-Userspace records and compares event numbers.
-
-ARM occurs immediately before LIST.  Any userspace processing in response
-happens later.
-
-Alasdair
+T24gVGh1LCAyMDE3LTA1LTExIGF0IDE0OjQ2IC0wNzAwLCBBbmR5IEdyb3ZlciB3cm90ZToKPiAK
+PiBhKSBBcHBsaWNhdGlvbiBub3RlcyBpbml0aWFsIGV2ZW50X25ycyBmb3IgYWxsIHJlbGV2YW50
+IGRldmljZXMKPiB3aGlsZSAoMSkKPiDCoMKgwqDCoMKgYikgQXBwbGljYXRpb24gY2FsbHMgQVJN
+X1BPTEwKPiDCoMKgwqDCoMKgYykgQXBwbGljYXRpb24gZ2V0cyB1cGRhdGVkIGV2ZW50X25ycyBm
+cm9tIExJU1RfREVWSUNFUyBhbmQKPiBoYW5kbGVzCj4gwqDCoMKgwqDCoGQpIEFwcGxpY2F0aW9u
+IGNhbGxzIHBvbGwoKQo+IAo+IElmIGV2ZW50cyBhcnJpdmUgYmV0d2VlbiBiIGFuZCBjLCBhcHAg
+c2VlcyB0aGVtLgo+IElmIGV2ZW50cyBhcnJpdmUgYmV0d2VlbiBjIGFuZCBkLCBkbV9nbG9iYWxf
+ZXZlbnRfbnIgaXMgZ3JlYXRlciB0aGFuwqAKPiBwcml2LT5nbG9iYWxfZXZlbnRfbnIgYW5kIHBv
+bGwoKSB3aWxsIGluZGljYXRlIGZkIGlzIHJlYWR5Cj4gaW1tZWRpYXRlbHnCoAo+IHcvbyBzbGVl
+cGluZy4KPiBJZiBldmVudHMgYXJyaXZlIGFmdGVyIGQsIGFwcCBzbGVlcHMgaW4gcG9sbCgpIHVu
+dGlsIGZkIGlzIHJlYWR5Lgo+IAo+IFRoZSBkaWZmZXJlbmNlIGlzIHRoYXQgeW91IGhhdmUgdG8g
+QVJNX1BPTEwgYW5kICp0aGVuKiBwcm9jZXNzCj4gZXZlbnRzwqAKPiBiZWZvcmUgY2FsbGluZyBw
+b2xsKCkuIFRoZSBvbmx5IHNtYWxsIG5lZ2F0aXZlIGNvbnNlcXVlbmNlIGlzIHRoYXQgaWYKPiBh
+bsKgCj4gZXZlbnQgYXJyaXZlcyBiZXR3ZWVuIGIgYW5kIGMsIGl0IHdpbGwgYmUgaGFuZGxlZCBi
+eSBjIGJ1dCBwb2xsKCkKPiB3aWxswqAKPiBzdGlsbCBzZWUgcmVhZGluZXNzIGFuZCBwb3Agb3V0
+IG9mIHRoZSBwb2xsKCkgYW5kIGxvb3AgYWdhaW4gd2hlbiBpdMKgCj4gc3RyaWN0bHkgZGlkbid0
+IGhhdmUgdG8uIEJ1dCBldmVudHMgd29uJ3QgYmUgbG9zdC4KCkkgc2VlLCB0aGF0IHdvdWxkIHdv
+cmsuIFRoZSBjYWxsIHNlcXVlbmNlIGlzIHJldmVyc2VkIGNvbXBhcmVkIHRvCiJjbGFzc2ljYWwi
+IHBvbGwoKSB1c2FnZS4gTm90IGEgYmlnIHByb2JsZW0sIGp1c3Qgc29tZXRoaW5nIHRvIGJlIGF3
+YXJlCm9mLiBXaWxsIHRoZXJlIGJlIHNvbWUgd3JhcHBlciBpbiBsaWJkbSB0byBtYWtlIHN1cmUg
+YXBwbGljYXRpb25zCmFkaGVyZSB0byB0aGVzZSBzZW1hbnRpY3M/CgpBbmQgaG93IGRvZXMgdXNl
+ciBzcGFjZSBmaW5kIG91dCB3aGV0aGVyIHRoZSBrZXJuZWwgc3VwcG9ydHMgdGhpcwpmdW5jdGlv
+bmFsaXR5PwoKUmVnYXJkcywKTWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1
+c2UuY29tPiwgVGVsLsKgKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6
+IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEy
+ODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRo
+YXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
