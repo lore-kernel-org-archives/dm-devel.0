@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 07/12] kpartx: don't treat multi-linear
-	mappings as partitions
-Date: Mon, 15 May 2017 17:37:17 +0200
-Message-ID: <20170515153722.11508-8-mwilck@suse.com>
+Subject: [PATCH v2 04/12] kpartx: relax and improve UUID check in
+	dm_compare_uuid
+Date: Mon, 15 May 2017 17:37:14 +0200
+Message-ID: <20170515153722.11508-5-mwilck@suse.com>
 References: <20170515153722.11508-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,62 +22,51 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@s
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-kpartx -d treats any map that has a "linear" mapping into a
-device as first target as a partition of this device.
-This is wrong, because linear mappings may consist of
-several pieces, combining multiple devices into one
-(LVM logical volumes are an example of such a
-mapping). Partitions have to be single-target mappings.
+It is wrong to assume that UUIDs of parent devices always contain
+"mpath". Fix that, and make the check for the kpartx-specific prefix
+"part%d-" stricter and more explicit.
 
-Fix this by returning an error in dm_type() if a map with
-multiple targets is encountered. The "type" of a map with
-two or more targets is a difficult concept, anyway.
-
-test case:
-truncate -s 1G test0 test1
-losetup /dev/loop0 test0
-losetup /dev/loop1 test1
-dmsetup create <<EOF
-0 1000000 linear 7:0 4096
-1000000 1000000 linear 7:1 4096
-EOF
-kpartx -d /dev/loop0 -v
-
-The map "join" should NOT be deleted.
+Moreover, avoid duplication of string constants and properly express
+the dependencies of the various constants.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- kpartx/devmapper.c | 11 ++++++-----
- 1 file changed, 6 insertions(+), 5 deletions(-)
+ kpartx/devmapper.c | 16 +++++++++++-----
+ 1 file changed, 11 insertions(+), 5 deletions(-)
 
 diff --git a/kpartx/devmapper.c b/kpartx/devmapper.c
-index 6cee120d..b714ba4e 100644
+index 8aca9592..8b125be5 100644
 --- a/kpartx/devmapper.c
 +++ b/kpartx/devmapper.c
-@@ -392,10 +392,11 @@ dm_type(const char * name, char * type)
- 		goto out;
+@@ -10,8 +10,10 @@
+ #include <errno.h>
+ #include "devmapper.h"
  
- 	/* Fetch 1st target */
--	dm_get_next_target(dmt, NULL, &start, &length,
--			   &target_type, &params);
--
--	if (!target_type)
-+	if (dm_get_next_target(dmt, NULL, &start, &length,
-+			       &target_type, &params) != NULL)
-+		/* more than one target */
-+		r = -1;
-+	else if (!target_type)
- 		r = -1;
- 	else if (!strcmp(target_type, type))
- 		r = 1;
-@@ -500,7 +501,7 @@ do_foreach_partmaps (const char * mapname, const char *uuid,
- 		/*
- 		 * skip if devmap target is not "linear"
- 		 */
--		if (!dm_type(names->name, "linear")) {
-+		if (dm_type(names->name, "linear") != 1) {
- 			if (rd->verbose)
- 				printf("%s: is not a linear target. Not removing\n",
- 				       names->name);
+-#define UUID_PREFIX "part%d-"
+-#define MAX_PREFIX_LEN 8
++#define _UUID_PREFIX "part"
++#define UUID_PREFIX _UUID_PREFIX "%d-"
++#define _UUID_PREFIX_LEN (sizeof(_UUID_PREFIX) - 1)
++#define MAX_PREFIX_LEN (_UUID_PREFIX_LEN + 4)
+ #define PARAMS_SIZE 1024
+ 
+ int dm_prereq(char * str, int x, int y, int z)
+@@ -417,9 +419,13 @@ dm_compare_uuid(const char *mapuuid, const char *partname)
+ 	if (!partuuid)
+ 		return 1;
+ 
+-	if (!strncmp(partuuid, "part", 4)) {
+-		char *p = strstr(partuuid, "mpath-");
+-		if (p && !strcmp(mapuuid, p))
++	if (!strncmp(partuuid, _UUID_PREFIX, _UUID_PREFIX_LEN)) {
++		char *p = partuuid + _UUID_PREFIX_LEN;
++		/* skip partition number */
++		while (isdigit(*p))
++			p++;
++		if (p != partuuid + _UUID_PREFIX_LEN && *p == '-' &&
++		    !strcmp(mapuuid, p + 1))
+ 			r = 0;
+ 	}
+ 	free(partuuid);
 -- 
 2.12.2
