@@ -1,76 +1,111 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 4/4] dm: fix REQ_RAHEAD handling
-Date: Mon, 15 May 2017 14:46:41 -0400
-Message-ID: <20170515184641.GA22139@redhat.com>
-References: <20170515152839.23375-1-hch@lst.de>
- <20170515152839.23375-5-hch@lst.de>
+From: Martin Wilck <mwilck@suse.com>
+Subject: [PATCH] multipath-tools: enable libdmmp installation in
+	alternative directory
+Date: Mon, 15 May 2017 22:33:25 +0200
+Message-ID: <20170515203325.22170-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20170515152839.23375-5-hch@lst.de>
-Sender: linux-block-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: dm-devel@redhat.com, linux-block@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@suse.de>, Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, May 15 2017 at 11:28P -0400,
-Christoph Hellwig <hch@lst.de> wrote:
+Introduce a new Makefile variable, usr_prefix, to be used for
+libdmmp and the associated pkgconfig file.
 
-> A few (but not all) dm targets use a special EWOULDBLOCK error code for
-> failing REQ_RAHEAD requests that fail due to a lack of available resources.
-> But no one else knows about this magic code, and lower level drivers also
-> don't generate it when failing read-ahead requests for similar reasons.
-> 
-> So remove this special casing and ignore all additional error handling for
-> REQ_RAHEAD - if this was a real underlying error we'd get a normal read
-> once the real read comes in.
-> 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-> ---
->  drivers/md/dm-raid1.c  | 4 ++--
->  drivers/md/dm-stripe.c | 2 +-
->  2 files changed, 3 insertions(+), 3 deletions(-)
-> 
-> diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c
-> index a95cbb80fb34..5e30b08b91d9 100644
-> --- a/drivers/md/dm-raid1.c
-> +++ b/drivers/md/dm-raid1.c
-> @@ -1214,7 +1214,7 @@ static int mirror_map(struct dm_target *ti, struct bio *bio)
->  	 */
->  	if (!r || (r == -EWOULDBLOCK)) {
->  		if (bio->bi_opf & REQ_RAHEAD)
-> -			return -EWOULDBLOCK;
-> +			return -EIO;
->  
->  		queue_bio(ms, bio, rw);
->  		return DM_MAPIO_SUBMITTED;
-> @@ -1258,7 +1258,7 @@ static int mirror_end_io(struct dm_target *ti, struct bio *bio, int error)
->  	if (error == -EOPNOTSUPP)
->  		return error;
->  
-> -	if ((error == -EWOULDBLOCK) && (bio->bi_opf & REQ_RAHEAD))
-> +	if (bio->bi_opf & REQ_RAHEAD)
->  		return error;
->  
->  	if (unlikely(error)) {
-> diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
-> index 75152482f3ad..780e95889a7c 100644
-> --- a/drivers/md/dm-stripe.c
-> +++ b/drivers/md/dm-stripe.c
-> @@ -384,7 +384,7 @@ static int stripe_end_io(struct dm_target *ti, struct bio *bio, int error)
->  	if (!error)
->  		return 0; /* I/O complete */
->  
-> -	if ((error == -EWOULDBLOCK) && (bio->bi_opf & REQ_RAHEAD))
-> +	if (bio->bi_opf & REQ_RAHEAD)
->  		return error;
->  
->  	if (error == -EOPNOTSUPP)
-> -- 
-> 2.11.0
-> 
+Some distributions install those libraries which are  necessary
+for booting (and mounting /usr) in a different location (/lib or
+/lib64) than other libraries (/usr/lib or /usr/lib64). On such
+distributions, installation to the different paths can be achieved
+by setting "usr_prefix=/usr". This will affect only libdmmp at this
+time, as all other libaries in the multipath-tools package may be
+relevant for booting.
 
-I'll let this one go for now.. meaning I won't pick it up, nor will I
-send it for 4.12.  Please just roll this into your broader block work
-that you mentioned.
+For distributions on which /lib and /lib64 are just symlinks to their
+/usr counterparts, nothing changes.
+
+Comments are welcome.
+
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ Makefile.inc     |  4 +++-
+ libdmmp/Makefile | 11 ++++++-----
+ 2 files changed, 9 insertions(+), 6 deletions(-)
+
+diff --git a/Makefile.inc b/Makefile.inc
+index ad55aa10..ad08f307 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -47,6 +47,7 @@ endif
+ 
+ prefix		=
+ exec_prefix	= $(prefix)
++usr_prefix	= $(prefix)
+ bindir		= $(exec_prefix)/sbin
+ libudevdir	= $(prefix)/$(SYSTEMDPATH)/udev
+ udevrulesdir	= $(libudevdir)/rules.d
+@@ -55,6 +56,7 @@ man8dir		= $(prefix)/usr/share/man/man8
+ man5dir		= $(prefix)/usr/share/man/man5
+ man3dir		= $(prefix)/usr/share/man/man3
+ syslibdir	= $(prefix)/$(LIB)
++usrlibdir	= $(usr_prefix)/$(LIB)
+ libdir		= $(prefix)/$(LIB)/multipath
+ unitdir		= $(prefix)/$(SYSTEMDPATH)/systemd/system
+ mpathpersistdir	= $(TOPDIR)/libmpathpersist
+@@ -62,7 +64,7 @@ mpathcmddir	= $(TOPDIR)/libmpathcmd
+ thirdpartydir	= $(TOPDIR)/third-party
+ libdmmpdir	= $(TOPDIR)/libdmmp
+ includedir	= $(prefix)/usr/include
+-pkgconfdir	= $(prefix)/$(LIB)/pkgconfig
++pkgconfdir	= $(usrlibdir)/pkgconfig
+ 
+ GZIP		= gzip -9 -c
+ RM		= rm -f
+diff --git a/libdmmp/Makefile b/libdmmp/Makefile
+index 1c5329aa..908e294b 100644
+--- a/libdmmp/Makefile
++++ b/libdmmp/Makefile
+@@ -27,15 +27,16 @@ $(LIBS): $(OBJS)
+ 	$(LN) $@ $(DEVLIB)
+ 
+ install:
+-	$(INSTALL_PROGRAM) -m 755 $(LIBS) $(DESTDIR)$(syslibdir)/$(LIBS)
++	mkdir -p $(DESTDIR)$(usrlibdir)
++	$(INSTALL_PROGRAM) -m 755 $(LIBS) $(DESTDIR)$(usrlibdir)/$(LIBS)
+ 	$(INSTALL_PROGRAM) -m 644 -D \
+ 		$(HEADERS) $(DESTDIR)$(includedir)/$(HEADERS)
+-	$(LN) $(LIBS) $(DESTDIR)$(syslibdir)/$(DEVLIB)
++	$(LN) $(LIBS) $(DESTDIR)$(usrlibdir)/$(DEVLIB)
+ 	$(INSTALL_PROGRAM) -m 644 -D \
+ 		$(PKGFILE).in $(DESTDIR)$(pkgconfdir)/$(PKGFILE)
+ 	perl -i -pe 's|__VERSION__|$(LIBDMMP_VERSION)|g' \
+ 		$(DESTDIR)$(pkgconfdir)/$(PKGFILE)
+-	perl -i -pe 's|__LIBDIR__|$(syslibdir)|g' \
++	perl -i -pe 's|__LIBDIR__|$(usrlibdir)|g' \
+ 		$(DESTDIR)$(pkgconfdir)/$(PKGFILE)
+ 	perl -i -pe 's|__INCLUDEDIR__|$(includedir)|g' \
+ 		$(DESTDIR)$(pkgconfdir)/$(PKGFILE)
+@@ -46,9 +47,9 @@ install:
+ 	done
+ 
+ uninstall:
+-	$(RM) $(DESTDIR)$(syslibdir)/$(LIBS)
++	$(RM) $(DESTDIR)$(usrlibdir)/$(LIBS)
+ 	$(RM) $(DESTDIR)$(includedir)/$(HEADERS)
+-	$(RM) $(DESTDIR)$(syslibdir)/$(DEVLIB)
++	$(RM) $(DESTDIR)$(usrlibdir)/$(DEVLIB)
+ 	@for file in $(DESTDIR)$(man3dir)/dmmp_*; do \
+ 		$(RM) $$file; \
+ 	done
+-- 
+2.12.2
