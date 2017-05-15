@@ -1,8 +1,7 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 01/12] kpartx: test-kpartx: new unit test
-	program
-Date: Mon, 15 May 2017 17:37:11 +0200
-Message-ID: <20170515153722.11508-2-mwilck@suse.com>
+Subject: [PATCH v2 03/12] kpartx: remove is_loop_device
+Date: Mon, 15 May 2017 17:37:13 +0200
+Message-ID: <20170515153722.11508-4-mwilck@suse.com>
 References: <20170515153722.11508-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,277 +21,66 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@s
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This is a unit test program for kpartx, in particular for deleting
-partitions.
-
-NOTE: This test program fails with current kpartx; full patch series
-needed to make it work.
+This function is not used any more.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- kpartx/test-kpartx | 254 +++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 254 insertions(+)
- create mode 100755 kpartx/test-kpartx
+ kpartx/lopart.c | 31 -------------------------------
+ kpartx/lopart.h |  1 -
+ 2 files changed, 32 deletions(-)
 
-diff --git a/kpartx/test-kpartx b/kpartx/test-kpartx
-new file mode 100755
-index 00000000..7c45cd14
---- /dev/null
-+++ b/kpartx/test-kpartx
-@@ -0,0 +1,254 @@
-+#! /bin/bash
-+
-+# This is a unit test program for kpartx, in particular for deleting partitions.
-+#
-+# The rationale is the following:
-+#
-+#  1) kpartx should delete all mappings it created beforehand.
-+#  2) kpartx should handle partitions on dm devices and other devices
-+#     (e.g. loop devices) equally well.
-+#  3) kpartx should only delete "partitions", which are single-target
-+#     linear mappings into a block device. Other maps should not be touched.
-+#  4) kpartx should only delete mappings it created itself beforehand.
-+#     In particular, it shouldn't delete LVM LVs, even if they are fully
-+#     contained in the block device at hand and thus look like partitions
-+#     in the first place. (For historical compatibility reasons, we allow
-+#     such mappings to be deleted with the -f/--force flag).
-+#  5) DM map names may be changed, thus kpartx shouldn't rely on them to
-+#     check whether a mapping is a partition of a particular device. It is
-+#     legal for a partition of /dev/loop0 to be named "loop0".
-+
-+# Note: This program tries hard to clean up, but if tests fail,
-+# stale DM or loop devices may keep lurking around.
-+
-+# Set WORKDIR in environment to existing dir to for persistence
-+# WARNING:  exisiting files will be truncated.
-+# If empty, test will be done in temporary dir
-+: ${WORKDIR:=}
-+# Set this environment variable to test an alternative kpartx executable
-+: ${KPARTX:=}
-+# Options to pass to kpartx always
-+: ${KPARTX_OPTS:=-s}
-+# Time to wait for device nodes to appear (microseconds)
-+# Waiting is only needed if "s" is not in $KPARTX_OPTS
-+: ${WAIT_US:=0}
-+
-+# IMPORTANT: The ERR trap is essential for this program to work correctly!
-+trap 'LINE=$LINENO; trap - ERR; echo "== error in $BASH_COMMAND on line $LINE ==" >&2; exit 1' ERR
-+trap 'cleanup' 0
-+
-+CLEANUP=:
-+cleanup() {
-+    trap - ERR
-+    trap - 0
-+    if [[ $OK ]]; then
-+	echo == all tests completed successfully == >&2
-+    else
-+	echo == step $STEP failed == >&2
-+    fi
-+    eval "$CLEANUP" &>/dev/null
-+}
-+
-+push_cleanup() {
-+    CLEANUP="$@;$CLEANUP"
-+}
-+
-+pop_cleanup() {
-+    # CAUTION: simplistic
-+    CLEANUP=${CLEANUP#*;}
-+}
-+
-+step() {
-+    STEP="$@"
-+    echo == Test step: $STEP == >&2
-+}
-+
-+mk_partitions() {
-+    parted -s $1 mklabel msdos
-+    parted -s -- $1 mkpart prim ext2 1MiB -1s
-+}
-+
-+step preparation
-+
-+[[ $UID -eq 0 ]]
-+[[ $KPARTX ]] || {
-+    if [[ -x $PWD/kpartx/kpartx ]]; then
-+	KPARTX=$PWD/kpartx/kpartx
-+    else
-+	KPARTX=$(which kpartx)
-+    fi
-+}
-+[[ $KPARTX ]]
-+
-+FILE1=kpartx1
-+FILE2=kpartx2
-+FILE3=kpartx3
-+SIZE=$((1024*1024*1024))  # use bytes as units here
-+SECTSIZ=512
-+OFFS=32                # offset of linear mapping into dev, sectors
-+VG=kpvg  # volume group name
-+LV=kplv  # logical vol name
-+LVMCONF='devices { filter = [ "a|/dev/loop.*|", r".*" ] }'
-+
-+OK=
-+
-+[[ $WORKDIR ]] || {
-+    WORKDIR=$(mktemp -d /tmp/kpartx-XXXXXX)
-+    push_cleanup 'rm -rf $WORKDIR'
-+}
-+
-+push_cleanup "cd $PWD"
-+cd "$WORKDIR"
-+
-+step "create loop devices"
-+truncate -s $SIZE $FILE1
-+truncate -s $SIZE $FILE2
-+truncate -s $SIZE $FILE3
-+
-+LO1=$(losetup -f $FILE1 --show)
-+push_cleanup 'losetup -d $LO1'
-+LO2=$(losetup -f $FILE2 --show)
-+push_cleanup 'losetup -d $LO2'
-+LO3=$(losetup -f $FILE3 --show)
-+push_cleanup 'losetup -d $LO3'
-+
-+[[ $LO1 && $LO2 && $LO3 && -b $LO1 && -b $LO2 && -b $LO3 ]]
-+DEV1=$(stat -c "%t:%T" $LO1)
-+DEV2=$(stat -c "%t:%T" $LO2)
-+DEV3=$(stat -c "%t:%T" $LO3)
-+
-+usleep $WAIT_US
-+
-+step "create DM devices (spans)"
-+# Create two linear mappings spanning two loopdevs.
-+# One of them gets a pathological name colliding with
-+# the loop device name.
-+# These mappings must not be removed by kpartx.
-+# They also serve as DM devices to test partition removal on those.
-+
-+TABLE="\
-+0 $((SIZE/SECTSIZ-OFFS)) linear $DEV1 $OFFS
-+$((SIZE/SECTSIZ-OFFS)) $((SIZE/SECTSIZ-OFFS)) linear $DEV2 $OFFS"
-+
-+SPAN1=kpt
-+SPAN2=$(basename $LO2)
-+dmsetup create $SPAN1 <<<"$TABLE"
-+push_cleanup 'dmsetup remove -f $SPAN1'
-+
-+dmsetup create $SPAN2 <<<"$TABLE"
-+push_cleanup 'dmsetup remove -f $SPAN2'
-+
-+usleep $WAIT_US
-+[[ -b /dev/mapper/$SPAN1 ]]
-+[[ -b /dev/mapper/$SPAN2 ]]
-+
-+step "create vg on $LO3"
-+# On the 3rd loop device, we create a VG and an LV
-+# The LV should not be removed by kpartx.
-+pvcreate --config "$LVMCONF" -f $LO3
-+vgcreate --config "$LVMCONF" $VG $LO3
-+push_cleanup 'vgremove --config "$LVMCONF" -f $VG'
-+lvcreate --config "$LVMCONF" -L $((SIZE/2))B -n $LV $VG
-+push_cleanup 'lvremove --config "$LVMCONF" -f $VG/$LV'
-+usleep $WAIT_US
-+
-+[[ -b /dev/mapper/$VG-$LV ]]
-+
-+# dmsetup table /dev/mapper/$VG-$LV
-+# dmsetup info /dev/mapper/$VG-$LV
-+
-+step "create partitions on loop devices"
-+
-+mk_partitions $LO1
-+mk_partitions $LO2
-+
-+# Test invocation of kpartx with regular file here
-+LO2P1=/dev/mapper/$(basename $LO2)-foo1
-+$KPARTX $KPARTX_OPTS -a -p -foo $FILE2
-+push_cleanup 'dmsetup remove -f $(basename $LO2P1)'
-+
-+LO1P1=/dev/mapper/$(basename $LO1)-eggs1
-+$KPARTX $KPARTX_OPTS -a -p -eggs $LO1
-+push_cleanup 'dmsetup remove -f $(basename $LO1P1)'
-+
-+usleep $WAIT_US
-+[[ -b $LO1P1 ]]
-+[[ -b $LO2P1 ]]
-+
-+# dmsetup info $LO2P1
-+
-+# Set pathological name for partition on $LO1 (same as loop device itself)
-+dmsetup rename $(basename $LO1P1) $(basename $LO1)
-+LO1P1=/dev/mapper/$(basename $LO1)
-+pop_cleanup
-+push_cleanup 'dmsetup remove -f $(basename $LO1P1)'
-+
-+# dmsetup info $LO1P1
-+
-+step "create partitions on DM devices"
-+mk_partitions /dev/mapper/$SPAN2
-+
-+$KPARTX $KPARTX_OPTS -a -p -bar /dev/mapper/$SPAN2
-+SPAN2P1=/dev/mapper/${SPAN2}-bar1
-+
-+# udev rules may have created partition mappings without UUIDs
-+# which aren't removed by default (if system standard kpartx doesn't
-+# set the UUID). Remove them using -f
-+push_cleanup '$KPARTX $KPARTX_OPTS -f -d /dev/mapper/$SPAN2'
-+push_cleanup 'dmsetup remove -f $(basename $SPAN2P1)'
-+
-+$KPARTX $KPARTX_OPTS -a -p -spam /dev/mapper/$SPAN1
-+SPAN1P1=/dev/mapper/${SPAN1}-spam1
-+# see above
-+push_cleanup '$KPARTX $KPARTX_OPTS -f -d /dev/mapper/$SPAN1'
-+push_cleanup 'dmsetup remove -f $(basename $SPAN1P1)'
-+
-+usleep $WAIT_US
-+[[ -b $SPAN2P1 ]]
-+[[ -b $SPAN1P1 ]]
-+
-+step "delete partitions on DM devices"
-+$KPARTX $KPARTX_OPTS -d /dev/mapper/$SPAN1 >&2
-+usleep $WAIT_US
-+
-+[[ -b $SPAN2P1 ]]
-+[[ -b $LO1P1 ]]
-+[[ -b $LO2P1 ]]
-+[[ ! -b $SPAN1P1 ]]
-+
-+$KPARTX $KPARTX_OPTS -d /dev/mapper/$SPAN2
-+usleep $WAIT_US
-+
-+[[ -b $LO1P1 ]]
-+[[ -b $LO2P1 ]]
-+[[ ! -b $SPAN2P1 ]]
-+
-+step "delete partitions on loop devices"
-+
-+$KPARTX $KPARTX_OPTS -d $LO3
-+
-+# This will also delete the loop device
-+$KPARTX $KPARTX_OPTS -d $FILE2
-+$KPARTX $KPARTX_OPTS -d $LO1
-+usleep $WAIT_US
-+
-+# ls -l /dev/mapper
-+[[ ! -b $LO1P1 ]]
-+pop_cleanup
-+[[ ! -b $LO2P1 ]]
-+pop_cleanup
-+# spans should not have been removed
-+[[ -b /dev/mapper/$SPAN1 ]]
-+[[ -b /dev/mapper/$SPAN2 ]]
-+# LVs neither
-+[[ -b /dev/mapper/$VG-$LV ]]
-+
-+step "delete partitions on $LO3 with -f"
-+
-+$KPARTX $KPARTX_OPTS -f -d $LO3
-+# -d -f should delete the LV, too
-+[[ ! -b /dev/mapper/$VG-$LV ]]
-+[[ -b /dev/mapper/$SPAN1 ]]
-+[[ -b /dev/mapper/$SPAN2 ]]
-+
-+OK=yes
+diff --git a/kpartx/lopart.c b/kpartx/lopart.c
+index 2eb3f631..44f0c277 100644
+--- a/kpartx/lopart.c
++++ b/kpartx/lopart.c
+@@ -62,37 +62,6 @@ xstrdup (const char *s)
+ 	return t;
+ }
+ 
+-int is_loop_device(const char *device)
+-{
+-	struct stat statbuf;
+-	int loopmajor;
+-#if 1
+-	loopmajor = 7;
+-#else
+-	FILE *procdev;
+-	char line[100], *cp;
+-
+-	loopmajor = 0;
+-
+-	if ((procdev = fopen(PROC_DEVICES, "r")) != NULL) {
+-
+-		while (fgets (line, sizeof(line), procdev)) {
+-
+-			if ((cp = strstr (line, " loop\n")) != NULL) {
+-				*cp='\0';
+-				loopmajor=atoi(line);
+-				break;
+-			}
+-		}
+-
+-		fclose(procdev);
+-	}
+-#endif
+-	return (loopmajor && stat(device, &statbuf) == 0 &&
+-		S_ISBLK(statbuf.st_mode) &&
+-		major(statbuf.st_rdev) == loopmajor);
+-}
+-
+ #define SIZE(a) (sizeof(a)/sizeof(a[0]))
+ 
+ char *find_loop_by_file(const char *filename)
+diff --git a/kpartx/lopart.h b/kpartx/lopart.h
+index a512353b..d3bad10a 100644
+--- a/kpartx/lopart.h
++++ b/kpartx/lopart.h
+@@ -1,6 +1,5 @@
+ extern int verbose;
+ extern int set_loop (const char *, const char *, int, int *);
+ extern int del_loop (const char *);
+-extern int is_loop_device (const char *);
+ extern char * find_unused_loop_device (void);
+ extern char * find_loop_by_file (const char *);
 -- 
 2.12.2
