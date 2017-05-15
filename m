@@ -1,7 +1,7 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 03/12] kpartx: remove is_loop_device
-Date: Mon, 15 May 2017 17:37:13 +0200
-Message-ID: <20170515153722.11508-4-mwilck@suse.com>
+Subject: [PATCH v2 02/12] kpartx: remove "no_partitions" support
+Date: Mon, 15 May 2017 17:37:12 +0200
+Message-ID: <20170515153722.11508-3-mwilck@suse.com>
 References: <20170515153722.11508-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,66 +21,68 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@s
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This function is not used any more.
+The kernel does not support the "no_partitions" feature - remove it.
+Distributions who want to keep support for this feature should
+re-enable it with a distro-specific patch.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- kpartx/lopart.c | 31 -------------------------------
- kpartx/lopart.h |  1 -
- 2 files changed, 32 deletions(-)
+ kpartx/devmapper.c | 29 -----------------------------
+ kpartx/kpartx.c    |  5 -----
+ 2 files changed, 34 deletions(-)
 
-diff --git a/kpartx/lopart.c b/kpartx/lopart.c
-index 2eb3f631..44f0c277 100644
---- a/kpartx/lopart.c
-+++ b/kpartx/lopart.c
-@@ -62,37 +62,6 @@ xstrdup (const char *s)
- 	return t;
+diff --git a/kpartx/devmapper.c b/kpartx/devmapper.c
+index cf6650c6..8aca9592 100644
+--- a/kpartx/devmapper.c
++++ b/kpartx/devmapper.c
+@@ -542,32 +542,3 @@ dm_remove_partmaps (char * mapname, char *uuid, int verbose)
+ 	struct remove_data rd = { verbose };
+ 	return do_foreach_partmaps(mapname, uuid, remove_partmap, &rd);
  }
- 
--int is_loop_device(const char *device)
+-
+-#define FEATURE_NO_PART "no_partitions"
+-
+-int
+-dm_no_partitions(char *mapname)
 -{
--	struct stat statbuf;
--	int loopmajor;
--#if 1
--	loopmajor = 7;
--#else
--	FILE *procdev;
--	char line[100], *cp;
+-	char params[PARAMS_SIZE], *ptr;
+-	int i, num_features;
 -
--	loopmajor = 0;
+-	if (dm_get_map(mapname, params))
+-		return 0;
 -
--	if ((procdev = fopen(PROC_DEVICES, "r")) != NULL) {
--
--		while (fgets (line, sizeof(line), procdev)) {
--
--			if ((cp = strstr (line, " loop\n")) != NULL) {
--				*cp='\0';
--				loopmajor=atoi(line);
--				break;
--			}
--		}
--
--		fclose(procdev);
+-	ptr = params;
+-	num_features = strtoul(params, &ptr, 10);
+-	if ((ptr == params) || num_features == 0) {
+-		/* No features found, return success */
+-		return 0;
 -	}
--#endif
--	return (loopmajor && stat(device, &statbuf) == 0 &&
--		S_ISBLK(statbuf.st_mode) &&
--		major(statbuf.st_rdev) == loopmajor);
+-	for (i = 0; (i < num_features); i++) {
+-		if (!ptr || ptr > params + strlen(params))
+-			break;
+-		/* Skip whitespaces */
+-		while(ptr && *ptr == ' ') ptr++;
+-		if (!strncmp(ptr, FEATURE_NO_PART, strlen(FEATURE_NO_PART)))
+-			return 1;
+-		ptr = strchr(ptr, ' ');
+-	}
+-	return 0;
 -}
--
- #define SIZE(a) (sizeof(a)/sizeof(a[0]))
+diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+index 58e60ffe..e0c105f4 100644
+--- a/kpartx/kpartx.c
++++ b/kpartx/kpartx.c
+@@ -362,11 +362,6 @@ main(int argc, char **argv){
  
- char *find_loop_by_file(const char *filename)
-diff --git a/kpartx/lopart.h b/kpartx/lopart.h
-index a512353b..d3bad10a 100644
---- a/kpartx/lopart.h
-+++ b/kpartx/lopart.h
-@@ -1,6 +1,5 @@
- extern int verbose;
- extern int set_loop (const char *, const char *, int, int *);
- extern int del_loop (const char *);
--extern int is_loop_device (const char *);
- extern char * find_unused_loop_device (void);
- extern char * find_loop_by_file (const char *);
+ 	if (!mapname)
+ 		mapname = device + off;
+-	if (!force_devmap &&
+-		 dm_no_partitions(mapname)) {
+-		/* Feature 'no_partitions' is set, return */
+-		return 0;
+-	}
+ 
+ 	if (delim == NULL) {
+ 		delim = malloc(DELIM_SIZE);
 -- 
 2.12.2
