@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 08/12] libmultipath: don't treat multi-linear
-	mappings as partitions
-Date: Mon, 15 May 2017 17:37:18 +0200
-Message-ID: <20170515153722.11508-9-mwilck@suse.com>
+Subject: [PATCH v2 09/12] kpartx: use partition UUID for non-DM
+	devices
+Date: Mon, 15 May 2017 17:37:19 +0200
+Message-ID: <20170515153722.11508-10-mwilck@suse.com>
 References: <20170515153722.11508-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,62 +22,96 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@s
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-dm_type is used in libmultipath only to check whether a mapping
-is "linear", with the intention to test if it represents a
-"partition". This test returns TRUE also for mappings with
-multiple targets, the first of which happens to be a linear
-mapping into the target device. This is questionable, it's
-hard to assign a "type" to such maps anyway.
+For dm devices, kpartx uses an UUID check at partition removal
+to make sure it only deletes partitions it previously created.
+Non-DM parent devices such as loop devices don't generally have
+a UUID.
 
-Fix this by returning an error for multi-target maps.
-This is analogous to the patch
-"kpartx: don't treat multi-linear mappings as partitions".
+Introduce a "fake" UUID for these devices to make sure kpartx
+deletes only devices it had created previously. Otherwise kpartx
+might e.g. delete LVM LVs that are inside a device it is trying
+to delete partitions for. It seems to be wiser to make sure the
+user delete these manually before running "kpartx -d".
+
+With the fake UUID in place, we can re-introduce the UUID check
+for non-DM device that was removed in the earlier patch
+"kpartx: dm_remove_partmaps: support non-dm devices".
+
+This disables also deletion of partition mappings created
+by earlier versions of kpartx. If kpartx has been updated after
+partition mappings were created, the "-f" flag can be used
+to force delting these partitions, too.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/devmapper.c | 15 ++++++++-------
- 1 file changed, 8 insertions(+), 7 deletions(-)
+ kpartx/devmapper.c |  2 +-
+ kpartx/kpartx.c    | 34 ++++++++++++++++++++++++++++++++++
+ 2 files changed, 35 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index 5fb9d9ac..c19dcb62 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -572,7 +572,7 @@ out:
-  * returns:
-  *    1 : match
-  *    0 : no match
-- *   -1 : empty map
-+ *   -1 : empty map, or more than 1 target
-  */
- int dm_type(const char *name, char *type)
+diff --git a/kpartx/devmapper.c b/kpartx/devmapper.c
+index b714ba4e..4ab58ce9 100644
+--- a/kpartx/devmapper.c
++++ b/kpartx/devmapper.c
+@@ -511,7 +511,7 @@ do_foreach_partmaps (const char * mapname, const char *uuid,
+ 		/*
+ 		 * skip if uuids don't match
+ 		 */
+-		if (is_dmdev && uuid && dm_compare_uuid(uuid, names->name)) {
++		if (uuid && dm_compare_uuid(uuid, names->name)) {
+ 			if (rd->verbose)
+ 				printf("%s: is not a kpartx partition. Not removing\n",
+ 				       names->name);
+diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+index ea728b42..587c3dfe 100644
+--- a/kpartx/kpartx.c
++++ b/kpartx/kpartx.c
+@@ -60,6 +60,31 @@ struct pt {
+ int ptct = 0;
+ int udev_sync = 0;
+ 
++/*
++ * UUID format for partitions created on non-DM devices
++ * ${UUID_PREFIX}devnode_${MAJOR}:${MINOR}_${NONDM_UUID_SUFFIX}"
++ * where ${UUID_PREFIX} is "part${PARTNO}-" (see devmapper.c).
++ *
++ * The suffix should be sufficiently unique to avoid incidental conflicts;
++ * the value below is a base64-encoded random number.
++ * The UUID format shouldn't be changed between kpartx releases.
++ */
++#define NONDM_UUID_PREFIX "devnode"
++#define NONDM_UUID_SUFFIX "Wh5pYvM"
++
++static char *
++nondm_create_uuid(dev_t devt)
++{
++#define NONDM_UUID_BUFLEN (34 + sizeof(NONDM_UUID_PREFIX) + \
++			   sizeof(NONDM_UUID_SUFFIX))
++	static char uuid_buf[NONDM_UUID_BUFLEN];
++	snprintf(uuid_buf, sizeof(uuid_buf), "%s_%u:%u_%s",
++		 NONDM_UUID_PREFIX, major(devt), minor(devt),
++		 NONDM_UUID_SUFFIX);
++	uuid_buf[NONDM_UUID_BUFLEN-1] = '\0';
++	return uuid_buf;
++}
++
+ static void
+ addpts(char *t, ptreader f)
  {
-@@ -594,10 +594,11 @@ int dm_type(const char *name, char *type)
- 		goto out;
+@@ -360,6 +385,15 @@ main(int argc, char **argv){
+ 			uuid = dm_mapuuid(mapname);
+ 	}
  
- 	/* Fetch 1st target */
--	dm_get_next_target(dmt, NULL, &start, &length,
--			   &target_type, &params);
--
--	if (!target_type)
-+	if (dm_get_next_target(dmt, NULL, &start, &length,
-+			       &target_type, &params) != NULL)
-+		/* multiple targets */
-+		r = -1;
-+	else if (!target_type)
- 		r = -1;
- 	else if (!strcmp(target_type, type))
- 		r = 1;
-@@ -1185,9 +1186,9 @@ do_foreach_partmaps (const char * mapname,
- 	do {
- 		if (
- 		    /*
--		     * if devmap target is "linear"
-+		     * if there is only a single "linear" target
- 		     */
--		    (dm_type(names->name, TGT_PART) > 0) &&
-+		    (dm_type(names->name, TGT_PART) == 1) &&
++	/*
++	 * We are called for a non-DM device.
++	 * Make up a fake UUID for the device, unless "-d -f" is given.
++	 * This allows deletion of partitions created with older kpartx
++	 * versions which didn't use the fake UUID during creation.
++	 */
++	if (!uuid && !(what == DELETE && force_devmap))
++		uuid = nondm_create_uuid(buf.st_rdev);
++
+ 	if (!mapname)
+ 		mapname = device + off;
  
- 		    /*
- 		     * and both uuid end with same suffix starting
 -- 
 2.12.2
