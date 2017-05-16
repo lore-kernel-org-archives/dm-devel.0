@@ -1,17 +1,14 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 4/6] libmultipath: fix suspended devs from
- failed reloads
-Date: Tue, 16 May 2017 20:56:40 +0200
-Message-ID: <1494961000.4700.15.camel@suse.com>
-References: <1494349025-6561-1-git-send-email-bmarzins@redhat.com>
-	<1494349025-6561-5-git-send-email-bmarzins@redhat.com>
-	<1494534412.6093.36.camel@suse.com>
-	<20170516173350.GN22856@octiron.msp.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v3 00/10] dm: zoned block device support
+Date: Tue, 16 May 2017 16:03:57 -0400
+Message-ID: <20170516200356.GA17063@redhat.com>
+References: <20170508234052.32375-1-bart.vanassche@sandisk.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170516173350.GN22856@octiron.msp.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20170508234052.32375-1-bart.vanassche@sandisk.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,43 +18,104 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com
+To: Bart Van Assche <bart.vanassche@sandisk.com>
+Cc: Damien Le Moal <Damien.LeMoal@wdc.com>, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, Christoph Hellwig <hch@lst.de>
 List-Id: dm-devel.ids
 
-T24gVHVlLCAyMDE3LTA1LTE2IGF0IDEyOjMzIC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gT24gVGh1LCBNYXkgMTEsIDIwMTcgYXQgMTA6MjY6NTJQTSArMDIwMCwgTWFydGluIFdp
-bGNrIHdyb3RlOgo+ID4gT24gVHVlLCAyMDE3LTA1LTA5IGF0IDExOjU3IC0wNTAwLCBCZW5qYW1p
-biBNYXJ6aW5za2kgd3JvdGU6Cj4gPiA+IFdoZW4gbXVsdGlwYXRoIHJlbG9hZHMgYSBkZXZpY2Us
-IGl0IGNhbiBlaXRoZXIgZmFpbCB3aGlsZSBsb2FkaW5nCj4gPiA+IHRoZQo+ID4gPiBuZXcgdGFi
-bGUgb3Igd2hpbGUgcmVzdW1pbmcgdGhlIGRldmljZS4gSWYgaXQgZmFpbHMgd2hpbGUKPiA+ID4g
-cmVzdW1pbmcKPiA+ID4gdGhlCj4gPiA+IGRldmljZSwgdGhlIGRldmljZSBjYW4gZ2V0IHN0dWNr
-IGluIHRoZSBzdXNwZW5kZWQgc3RhdGUuwqDCoFRvIGZpeAo+ID4gPiB0aGlzLAo+ID4gPiBtdWx0
-aXBhdGggbmVlZHMgdG8gcmVzdW1lIHRoZSBkZXZpY2UgYWdhaW4gc28gdGhhdCBpdCBjYW4KPiA+
-ID4gY29udGludWUKPiA+ID4gdXNpbmcKPiA+ID4gdGhlIG9sZCB0YWJsZS4KPiA+ID4gCj4gPiA+
-IFNpZ25lZC1vZmYtYnk6IEJlbmphbWluIE1hcnppbnNraSA8Ym1hcnppbnNAcmVkaGF0LmNvbT4K
-PiA+ID4gLS0tCj4gPiA+IMKgbGlibXVsdGlwYXRoL2Rldm1hcHBlci5jIHwgMTkgKysrKysrKysr
-KysrKysrKysrLQo+ID4gPiDCoGxpYm11bHRpcGF0aC9kZXZtYXBwZXIuaCB8wqDCoDEgKwo+ID4g
-PiDCoDIgZmlsZXMgY2hhbmdlZCwgMTkgaW5zZXJ0aW9ucygrKSwgMSBkZWxldGlvbigtKQo+ID4g
-PiAKPiA+ID4gZGlmZiAtLWdpdCBhL2xpYm11bHRpcGF0aC9kZXZtYXBwZXIuYyBiL2xpYm11bHRp
-cGF0aC9kZXZtYXBwZXIuYwo+ID4gPiBpbmRleCAyYzRhMTNhLi42OWI2MzRiIDEwMDY0NAo+ID4g
-PiAtLS0gYS9saWJtdWx0aXBhdGgvZGV2bWFwcGVyLmMKPiA+ID4gKysrIGIvbGlibXVsdGlwYXRo
-L2Rldm1hcHBlci5jCj4gPiA+IEBAIC0zOTYsNyArMzk2LDEzIEBAIGludCBkbV9hZGRtYXBfcmVs
-b2FkKHN0cnVjdCBtdWx0aXBhdGggKm1wcCwKPiA+ID4gY2hhcgo+ID4gPiAqcGFyYW1zLCBpbnQg
-Zmx1c2gpCj4gPiA+IMKgCWlmIChyKQo+ID4gPiDCoAkJciA9IGRtX3NpbXBsZWNtZChETV9ERVZJ
-Q0VfUkVTVU1FLCBtcHAtPmFsaWFzLAo+ID4gPiAhZmx1c2gsCj4gPiA+IMKgCQkJCcKgMSwgdWRl
-dl9mbGFncywgMCk7Cj4gPiA+IC0JcmV0dXJuIHI7Cj4gPiA+ICsJaWYgKHIpCj4gPiA+ICsJCXJl
-dHVybiByOwo+ID4gPiArCj4gPiA+ICsJaWYgKGRtX2lzX3N1c3BlbmRlZChtcHAtPmFsaWFzKSkK
-PiA+ID4gKwkJZG1fc2ltcGxlY21kKERNX0RFVklDRV9SRVNVTUUsIG1wcC0+YWxpYXMsCj4gPiA+
-ICFmbHVzaCwKPiA+ID4gMSwKPiA+ID4gKwkJCcKgwqDCoMKgwqB1ZGV2X2ZsYWdzLCAwKTsKPiA+
-ID4gKwlyZXR1cm4gMDsKPiA+ID4gwqB9Cj4gPiAKPiA+IFdoeSB3b3VsZCB0aGUgc2Vjb25kIERN
-X0RFVklDRV9SRVNVTUUgY2FsbCBzdWNjZWVkIGlmIHRoZSBmaXJzdCBvbmUKPiA+IGZhaWxlZD8K
-PiAKPiBCZWNhdXNlIGlmIHRoZSBmaXJzdCByZXN1bWUgZmFpbHMsIGRldmljZS1tYXBwZXIgcm9s
-bHMgYmFjayB0byB0aGUKPiBvcmlnaW5hbCB0YWJsZS4KCkFoLiBJIGRpZG4ndCBrbm93IHRoYXQs
-IGFuZCBJJ20gbGlrZWx5IHRvIGZvcmdldCBpdCBhZ2Fpbi4gV291bGQgeW91Cm1pbmQgYWRkaW5n
-IGEgc2hvcnQgY29tbWVudCBhdCB0aGF0IHBvaW50IGluIHRoZSBjb2RlPyAKCk90aGVyd2lzZSwg
-QUNLLgoKTWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVs
-LsKgKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5k
-w7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJu
-YmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBz
-Oi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+I see quite a few issues with this patchset (only gotten through patches
+1 - 6).  I'll work through it in more detail and share my
+feedback/revisions tomorrow.  Mostly just cleanups, renames, etc.  But
+"the fun" is obviously once I get to the last patch.
+
+Mike
+
+On Mon, May 08 2017 at  7:40pm -0400,
+Bart Van Assche <bart.vanassche@sandisk.com> wrote:
+
+> From: Damien Le Moal <damien.lemoal@wdc.com>
+> 
+> [ Note: I'm resending this patch series on Damien's behalf because Damien's ]
+> [ e-mails apparently do not reach the dm-devel mailing list - Bart.         ]
+> 
+> This series introduces zoned block device support to the device mapper
+> infrastructure. Pathces are as follows:
+> 
+> - Patch 1: Add a new target type feature flag to indicate if a target type
+>   supports host-managed zoned block devices. This prevents using these drives
+>   with the current target types since none of them have the proper support
+>   implemented and will not operate properly with these drives.
+> - Patch 2: If a target device is a zoned block device, check that the range of
+>   LBAs mapped is aligned to the device zone size and that the device start
+>   offset also aligns to zone boundaries. This is necessary for zone reset and
+>   zone report correct execution.
+> - Patch 3: Check that the different target devices of a table have compatible
+>   zone sizes and models. This is necessary for target types that expose a zone
+>   model different from the underlying device.
+> - Patch 4: Fix handling of REQ_OP_ZONE_RESET bios
+> - Patch 5: Fix handling of REQ_OP_ZONE_REPORT bios
+> - Patch 6: Introduce a new helper function to reverse map a device zone report
+>   to the target LBA range
+> - Patch 7: Add support for host-managed zoned block devices to dm-flakey. This
+>   is necessary for testing file systems supporting natively these drives (e.g.
+>   f2fs).
+> - Patch 8: Add support for for zoned block devices to dm-linear. This can have
+>   useful applications during development and testing (e.g. allow creating
+>   smaller zoned devices with different combinations and positions of zones).
+>   There are also interesting applications for production, for instance, the
+>   ability to aggregate conventional zones of different drives to create a
+>   regular disk.
+> - Patch 9: Add sequential write enforcement to dm_kcopyd_copy so that
+>   sequential zones of a host-managed zoned block device can be specified as
+>   destinations.
+> - Patch 10: New dm-zoned target type (this was already sent for review twice).
+>   This resend adds modifications suggested by Hannes to implement reclaim
+>   using dm-kcopyd. dm-zoned depends on patch 9.
+> 
+> As always, comments and reviews are welcome.
+> 
+> Changes from v2:
+> - Rebased on 4.12-rc tree
+> - Added Bart Reviewed-by tag
+> 
+> Changes from v1:
+> - Use for-loop in patch 3 as suggested by Bart
+> - Add memory shrinker to dm-zoned to shrink the metadata block cache under
+>   memory pressure (suggested by Bart)
+> - Added Hannes Reviewed-by tag
+> 
+> Damien Le Moal (10):
+>   dm-table: Introduce DM_TARGET_ZONED_HM feature
+>   dm-table: Check device area zone alignment
+>   dm-table: Check block devices zone model compatibility
+>   dm: Fix REQ_OP_ZONE_RESET bio handling
+>   dm: Fix REQ_OP_ZONE_REPORT bio handling
+>   dm: Introduce dm_remap_zone_report()
+>   dm-flakey: Add support for zoned block devices
+>   dm-linear: Add support for zoned block devices
+>   dm-kcopyd: Add sequential write feature
+>   dm-zoned: Drive-managed zoned block device target
+> 
+>  Documentation/device-mapper/dm-zoned.txt |  154 +++
+>  drivers/md/Kconfig                       |   17 +
+>  drivers/md/Makefile                      |    2 +
+>  drivers/md/dm-flakey.c                   |   21 +-
+>  drivers/md/dm-kcopyd.c                   |   68 +-
+>  drivers/md/dm-linear.c                   |   15 +-
+>  drivers/md/dm-table.c                    |  143 ++
+>  drivers/md/dm-zoned-io.c                 |  999 ++++++++++++++
+>  drivers/md/dm-zoned-metadata.c           | 2225 ++++++++++++++++++++++++++++++
+>  drivers/md/dm-zoned-reclaim.c            |  535 +++++++
+>  drivers/md/dm-zoned.h                    |  530 +++++++
+>  drivers/md/dm.c                          |   93 +-
+>  include/linux/device-mapper.h            |   16 +
+>  include/linux/dm-kcopyd.h                |    1 +
+>  14 files changed, 4812 insertions(+), 7 deletions(-)
+>  create mode 100644 Documentation/device-mapper/dm-zoned.txt
+>  create mode 100644 drivers/md/dm-zoned-io.c
+>  create mode 100644 drivers/md/dm-zoned-metadata.c
+>  create mode 100644 drivers/md/dm-zoned-reclaim.c
+>  create mode 100644 drivers/md/dm-zoned.h
+> 
+> -- 
+> 2.9.3
+> 
