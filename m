@@ -1,7 +1,7 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH 4/7] Remove mpath_reverse_8bytes_order()
-Date: Wed, 17 May 2017 08:43:06 -0700
-Message-ID: <20170517154309.17787-5-bart.vanassche@sandisk.com>
+Subject: [PATCH 7/7] Remove a superfluous "extern" keyword
+Date: Wed, 17 May 2017 08:43:09 -0700
+Message-ID: <20170517154309.17787-8-bart.vanassche@sandisk.com>
 References: <20170517154309.17787-1-bart.vanassche@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,38 +21,27 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: Bart Van Assche <bart.vanassche@sandisk.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Since this function is not used, remove it.
+Since it is not necessary to use the "extern" keyword in front of
+a function definition, remove that keyword.
 
 Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
 ---
- libmpathpersist/mpath_pr_ioctl.c | 15 ---------------
- 1 file changed, 15 deletions(-)
+ libmultipath/propsel.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
 
-diff --git a/libmpathpersist/mpath_pr_ioctl.c b/libmpathpersist/mpath_pr_ioctl.c
-index 31b2fe6d..29df8c6f 100644
---- a/libmpathpersist/mpath_pr_ioctl.c
-+++ b/libmpathpersist/mpath_pr_ioctl.c
-@@ -502,21 +502,6 @@ void mpath_reverse_uint32_byteorder(uint32_t *num)
- 	*num = ((byte0 << 24) | (byte1 << 16) | (byte2 << 8) | (byte3 << 0));
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index 09fe7282..3c057237 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -744,8 +744,7 @@ out:
+ 	return 0;
  }
  
--void mpath_reverse_8bytes_order(char * var)
--{
--	char byte[8];
--
--	int i;
--	for(i=0 ; i < 8 ; i++ )
--	{
--		byte[i] = var[i];
--	}
--	for(i=0 ; i < 8 ; i++ )
--	{
--		var[7 - i] = byte[i];
--	}
--}
--
- void
- dumpHex(const char* str, int len, int log)
+-extern int
+-select_max_sectors_kb (struct config *conf, struct multipath * mp)
++int select_max_sectors_kb(struct config *conf, struct multipath * mp)
  {
+ 	char *origin;
+ 
 -- 
 2.12.2
