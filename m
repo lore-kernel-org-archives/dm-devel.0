@@ -1,8 +1,8 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH 3/7] libmpathpersist: Add two missing #include
-	directives
-Date: Wed, 17 May 2017 08:43:05 -0700
-Message-ID: <20170517154309.17787-4-bart.vanassche@sandisk.com>
+Subject: [PATCH 5/7] Move the declaration of mpath_mx_alloc_len
+	to a header file
+Date: Wed, 17 May 2017 08:43:07 -0700
+Message-ID: <20170517154309.17787-6-bart.vanassche@sandisk.com>
 References: <20170517154309.17787-1-bart.vanassche@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,41 +22,54 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: Bart Van Assche <bart.vanassche@sandisk.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Make sure that including mpathpr.h as the first header file does not
-fail. Since mpath_updatepr.c defines functions declared in mpathpr.h,
-include that header file in that .c file such that the compiler can
-check consistency of the .h and the .c file.
+This allows the compiler to verify consistency of declaration and
+definition.
 
 Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
 ---
- libmpathpersist/mpath_updatepr.c | 1 +
- libmpathpersist/mpathpr.h        | 2 ++
- 2 files changed, 3 insertions(+)
+ libmpathpersist/mpath_persist.h | 3 +++
+ mpathpersist/main.c             | 1 -
+ multipathd/main.c               | 2 --
+ 3 files changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/libmpathpersist/mpath_updatepr.c b/libmpathpersist/mpath_updatepr.c
-index 5af2e032..b3701b28 100644
---- a/libmpathpersist/mpath_updatepr.c
-+++ b/libmpathpersist/mpath_updatepr.c
-@@ -15,6 +15,7 @@
- #include "mpath_cmd.h"
- #include "uxsock.h"
- #include "memory.h"
-+#include "mpathpr.h"
+diff --git a/libmpathpersist/mpath_persist.h b/libmpathpersist/mpath_persist.h
+index 79de5b5b..3faa8c9e 100644
+--- a/libmpathpersist/mpath_persist.h
++++ b/libmpathpersist/mpath_persist.h
+@@ -81,6 +81,9 @@ extern "C" {
  
  
- int update_prflag(char * arg1, char * arg2, int noisy)
-diff --git a/libmpathpersist/mpathpr.h b/libmpathpersist/mpathpr.h
-index e6c2dedf..99e641b7 100644
---- a/libmpathpersist/mpathpr.h
-+++ b/libmpathpersist/mpathpr.h
-@@ -1,6 +1,8 @@
- #ifndef MPATHPR_H
- #define MPATHPR_H
  
-+#include "structs.h" /* FILE_NAME_SIZE */
++extern unsigned int mpath_mx_alloc_len;
 +
- struct prin_param {
- 	char dev[FILE_NAME_SIZE];
- 	int rq_servact;
++
+ 
+ struct prin_readdescr
+ {
+diff --git a/mpathpersist/main.c b/mpathpersist/main.c
+index 2e0aba3c..9de52b98 100644
+--- a/mpathpersist/main.c
++++ b/mpathpersist/main.c
+@@ -40,7 +40,6 @@ void mpath_print_transport_id(struct prin_fulldescr *fdesc);
+ int construct_transportid(const char * inp, struct transportid transid[], int num_transportids);
+ 
+ int logsink;
+-unsigned int mpath_mx_alloc_len;
+ struct config *multipath_conf;
+ 
+ struct config *get_multipath_config(void)
+diff --git a/multipathd/main.c b/multipathd/main.c
+index b167cb4c..81c76cab 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -104,8 +104,6 @@ struct mpath_event_param
+ 	struct multipath *mpp;
+ };
+ 
+-unsigned int mpath_mx_alloc_len;
+-
+ int logsink;
+ int verbosity;
+ int bindings_read_only;
 -- 
 2.12.2
