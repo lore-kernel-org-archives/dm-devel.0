@@ -1,8 +1,7 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH 5/7] Move the declaration of mpath_mx_alloc_len
-	to a header file
-Date: Wed, 17 May 2017 08:43:07 -0700
-Message-ID: <20170517154309.17787-6-bart.vanassche@sandisk.com>
+Subject: [PATCH 6/7] kpartx: Fix a compiler warning
+Date: Wed, 17 May 2017 08:43:08 -0700
+Message-ID: <20170517154309.17787-7-bart.vanassche@sandisk.com>
 References: <20170517154309.17787-1-bart.vanassche@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,54 +21,58 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: Bart Van Assche <bart.vanassche@sandisk.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This allows the compiler to verify consistency of declaration and
-definition.
+Avoid that building against glibc >= 2.25 triggers the following
+compiler warning:
+
+lopart.c: In function 'is_loop_device':
+lopart.c:93:13: warning: In the GNU C Library, "major" is defined
+ by <sys/sysmacros.h>. For historical compatibility, it is
+ currently defined by <sys/types.h> as well, but we plan to
+ remove this soon. To use "major", include <sys/sysmacros.h>
+ directly. If you did not intend to use a system-defined macro
+ "major", you should undefine it after including <sys/types.h>.
+   major(statbuf.st_rdev) == loopmajor);
 
 Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
 ---
- libmpathpersist/mpath_persist.h | 3 +++
- mpathpersist/main.c             | 1 -
- multipathd/main.c               | 2 --
- 3 files changed, 3 insertions(+), 3 deletions(-)
+ kpartx/Makefile    | 4 ++++
+ kpartx/sysmacros.h | 6 ++++++
+ 2 files changed, 10 insertions(+)
 
-diff --git a/libmpathpersist/mpath_persist.h b/libmpathpersist/mpath_persist.h
-index 79de5b5b..3faa8c9e 100644
---- a/libmpathpersist/mpath_persist.h
-+++ b/libmpathpersist/mpath_persist.h
-@@ -81,6 +81,9 @@ extern "C" {
- 
- 
- 
-+extern unsigned int mpath_mx_alloc_len;
+diff --git a/kpartx/Makefile b/kpartx/Makefile
+index 9441a2ba..2d2a249e 100644
+--- a/kpartx/Makefile
++++ b/kpartx/Makefile
+@@ -10,6 +10,10 @@ LIBDEPS += -ldevmapper
+ ifneq ($(call check_func,dm_task_set_cookie,/usr/include/libdevmapper.h),0)
+ 	CFLAGS += -DLIBDM_API_COOKIE
+ endif
++ifneq ($(call check_func,major,/usr/include/sys/sysmacros.h),0)
++	CFLAGS += -DHAVE_SYS_SYSMACROS_H
++endif
 +
+ 
+ OBJS = bsd.o dos.o kpartx.o solaris.o unixware.o dasd.o sun.o \
+ 	gpt.o mac.o ps3.o crc32.o lopart.o xstrncpy.o devmapper.o
+diff --git a/kpartx/sysmacros.h b/kpartx/sysmacros.h
+index 171b33d4..dc5077ec 100644
+--- a/kpartx/sysmacros.h
++++ b/kpartx/sysmacros.h
+@@ -1,5 +1,10 @@
+ /* versions to be used with > 16-bit dev_t - leave unused for now */
+ 
++#ifdef HAVE_SYS_SYSMACROS_H
++#include <sys/sysmacros.h>
++#else
++#include <sys/types.h>
 +
- 
- struct prin_readdescr
- {
-diff --git a/mpathpersist/main.c b/mpathpersist/main.c
-index 2e0aba3c..9de52b98 100644
---- a/mpathpersist/main.c
-+++ b/mpathpersist/main.c
-@@ -40,7 +40,6 @@ void mpath_print_transport_id(struct prin_fulldescr *fdesc);
- int construct_transportid(const char * inp, struct transportid transid[], int num_transportids);
- 
- int logsink;
--unsigned int mpath_mx_alloc_len;
- struct config *multipath_conf;
- 
- struct config *get_multipath_config(void)
-diff --git a/multipathd/main.c b/multipathd/main.c
-index b167cb4c..81c76cab 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -104,8 +104,6 @@ struct mpath_event_param
- 	struct multipath *mpp;
- };
- 
--unsigned int mpath_mx_alloc_len;
--
- int logsink;
- int verbosity;
- int bindings_read_only;
+ #ifndef major
+ #define major(dev)	((dev) >> 8)
+ #endif
+@@ -7,3 +12,4 @@
+ #ifndef minor
+ #define minor(dev)	((dev) & 0xff)
+ #endif
++#endif
 -- 
 2.12.2
