@@ -1,8 +1,7 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH 2/7] libmultipath/configure.h: Add a forward
-	declaration
-Date: Wed, 17 May 2017 08:43:04 -0700
-Message-ID: <20170517154309.17787-3-bart.vanassche@sandisk.com>
+Subject: [PATCH 4/7] Remove mpath_reverse_8bytes_order()
+Date: Wed, 17 May 2017 08:43:06 -0700
+Message-ID: <20170517154309.17787-5-bart.vanassche@sandisk.com>
 References: <20170517154309.17787-1-bart.vanassche@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,26 +21,38 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: Bart Van Assche <bart.vanassche@sandisk.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This change avoids that the "#include "configure.h"" statements that
-are added by the next patch trigger a compiler warning.
+Since this function is not used, remove it.
 
 Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
 ---
- libmultipath/configure.h | 2 ++
- 1 file changed, 2 insertions(+)
+ libmpathpersist/mpath_pr_ioctl.c | 15 ---------------
+ 1 file changed, 15 deletions(-)
 
-diff --git a/libmultipath/configure.h b/libmultipath/configure.h
-index fb078a61..fd7f581d 100644
---- a/libmultipath/configure.h
-+++ b/libmultipath/configure.h
-@@ -26,6 +26,8 @@ enum actions {
- #define FLUSH_ONE 1
- #define FLUSH_ALL 2
+diff --git a/libmpathpersist/mpath_pr_ioctl.c b/libmpathpersist/mpath_pr_ioctl.c
+index 31b2fe6d..29df8c6f 100644
+--- a/libmpathpersist/mpath_pr_ioctl.c
++++ b/libmpathpersist/mpath_pr_ioctl.c
+@@ -502,21 +502,6 @@ void mpath_reverse_uint32_byteorder(uint32_t *num)
+ 	*num = ((byte0 << 24) | (byte1 << 16) | (byte2 << 8) | (byte3 << 0));
+ }
  
-+struct vectors;
-+
- int setup_map (struct multipath * mpp, char * params, int params_size );
- int domap (struct multipath * mpp, char * params, int is_daemon);
- int reinstate_paths (struct multipath *mpp);
+-void mpath_reverse_8bytes_order(char * var)
+-{
+-	char byte[8];
+-
+-	int i;
+-	for(i=0 ; i < 8 ; i++ )
+-	{
+-		byte[i] = var[i];
+-	}
+-	for(i=0 ; i < 8 ; i++ )
+-	{
+-		var[7 - i] = byte[i];
+-	}
+-}
+-
+ void
+ dumpHex(const char* str, int len, int log)
+ {
 -- 
 2.12.2
