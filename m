@@ -1,19 +1,17 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 4/6] libmultipath: fix suspended devs from
- failed reloads
-Date: Wed, 17 May 2017 11:25:46 -0500
-Message-ID: <20170517162546.GP22856@octiron.msp.redhat.com>
-References: <1494349025-6561-1-git-send-email-bmarzins@redhat.com>
-	<1494349025-6561-5-git-send-email-bmarzins@redhat.com>
-	<1494534412.6093.36.camel@suse.com>
-	<20170516173350.GN22856@octiron.msp.redhat.com>
-	<1494961000.4700.15.camel@suse.com>
+From: Bart Van Assche <Bart.VanAssche@sandisk.com>
+Subject: Re: [PATCH 2/2] multipath-tools: fix compilation with
+ gcc < 4.9
+Date: Wed, 17 May 2017 14:23:52 +0000
+Message-ID: <1495031031.2945.6.camel@sandisk.com>
+References: <20170517135439.25935-1-mwilck@suse.com>
+	<20170517135439.25935-3-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1494961000.4700.15.camel@suse.com>
+In-Reply-To: <20170517135439.25935-3-mwilck@suse.com>
+Content-Language: en-US
+Content-ID: <7CD2215300F1194E960DD733FE264434@namprd04.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,84 +21,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: dm-devel@redhat.com
+To: "mwilck@suse.com" <mwilck@suse.com>, "hare@suse.de" <hare@suse.de>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, May 16, 2017 at 08:56:40PM +0200, Martin Wilck wrote:
-> On Tue, 2017-05-16 at 12:33 -0500, Benjamin Marzinski wrote:
-> > On Thu, May 11, 2017 at 10:26:52PM +0200, Martin Wilck wrote:
-> > > On Tue, 2017-05-09 at 11:57 -0500, Benjamin Marzinski wrote:
-> > > > When multipath reloads a device, it can either fail while loading
-> > > > the
-> > > > new table or while resuming the device. If it fails while
-> > > > resuming
-> > > > the
-> > > > device, the device can get stuck in the suspended state.=A0=A0To fix
-> > > > this,
-> > > > multipath needs to resume the device again so that it can
-> > > > continue
-> > > > using
-> > > > the old table.
-> > > > =
+On Wed, 2017-05-17 at 15:54 +0200, Martin Wilck wrote:
+> +# $(call TEST_CC_OPTION,option,fallback)
+> +# Test if the C compiler supports the option.
+> +# Evaluates to "option" if yes, and "fallback" otherwise.
+> +TEST_CC_OPTION = $(shell \
+> +	if $(CC) -o /dev/null -c "$(1)" -xc - <<<'int main(void){return 0;}' &>/dev/null; \
+> +	then \
+> +		echo "$(1)"; \
+> +	else \
+> +		echo "$(2)"; \
+> +	fi)
 
-> > > > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> > > > ---
-> > > > =A0libmultipath/devmapper.c | 19 ++++++++++++++++++-
-> > > > =A0libmultipath/devmapper.h |=A0=A01 +
-> > > > =A02 files changed, 19 insertions(+), 1 deletion(-)
-> > > > =
+Since '<<<' is nonstandard, please consider to use 'echo' and a pipe instead.
+See also http://pubs.opengroup.org/onlinepubs/9699919799/.
 
-> > > > diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-> > > > index 2c4a13a..69b634b 100644
-> > > > --- a/libmultipath/devmapper.c
-> > > > +++ b/libmultipath/devmapper.c
-> > > > @@ -396,7 +396,13 @@ int dm_addmap_reload(struct multipath *mpp,
-> > > > char
-> > > > *params, int flush)
-> > > > =A0	if (r)
-> > > > =A0		r =3D dm_simplecmd(DM_DEVICE_RESUME, mpp->alias,
-> > > > !flush,
-> > > > =A0				=A01, udev_flags, 0);
-> > > > -	return r;
-> > > > +	if (r)
-> > > > +		return r;
-> > > > +
-> > > > +	if (dm_is_suspended(mpp->alias))
-> > > > +		dm_simplecmd(DM_DEVICE_RESUME, mpp->alias,
-> > > > !flush,
-> > > > 1,
-> > > > +			=A0=A0=A0=A0=A0udev_flags, 0);
-> > > > +	return 0;
-> > > > =A0}
-> > > =
+> +STACKPROT = $(call TEST_CC_OPTION,-fstack-protector-strong,-fstack-protector)
 
-> > > Why would the second DM_DEVICE_RESUME call succeed if the first one
-> > > failed?
-> > =
+Please consider to use ":=" instead of "=" such that TEST_CC_OPTION gets called
+once per "make" invocation instead of once per C file that is built.
 
-> > Because if the first resume fails, device-mapper rolls back to the
-> > original table.
-> =
+Thanks,
 
-> Ah. I didn't know that, and I'm likely to forget it again. Would you
-> mind adding a short comment at that point in the code? =
-
-
-Sure.
-
--Ben
-
-> =
-
-> Otherwise, ACK.
-> =
-
-> Martin
-> =
-
-> -- =
-
-> Dr. Martin Wilck <mwilck@suse.com>, Tel.=A0+49 (0)911 74053 2107
-> SUSE Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
-> HRB 21284 (AG N=FCrnberg)
+Bart.
