@@ -1,17 +1,14 @@
-From: Bart Van Assche <Bart.VanAssche@sandisk.com>
-Subject: Re: [PATCH 2/2] multipath-tools: fix compilation with
- gcc < 4.9
-Date: Wed, 17 May 2017 14:23:52 +0000
-Message-ID: <1495031031.2945.6.camel@sandisk.com>
-References: <20170517135439.25935-1-mwilck@suse.com>
-	<20170517135439.25935-3-mwilck@suse.com>
+From: Bart Van Assche <bart.vanassche@sandisk.com>
+Subject: [PATCH 1/7] Makefile: Remove assignments to unused
+	variables
+Date: Wed, 17 May 2017 08:43:03 -0700
+Message-ID: <20170517154309.17787-2-bart.vanassche@sandisk.com>
+References: <20170517154309.17787-1-bart.vanassche@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170517135439.25935-3-mwilck@suse.com>
-Content-Language: en-US
-Content-ID: <7CD2215300F1194E960DD733FE264434@namprd04.prod.outlook.com>
+In-Reply-To: <20170517154309.17787-1-bart.vanassche@sandisk.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,30 +18,66 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "mwilck@suse.com" <mwilck@suse.com>, "hare@suse.de" <hare@suse.de>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: Bart Van Assche <bart.vanassche@sandisk.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, 2017-05-17 at 15:54 +0200, Martin Wilck wrote:
-> +# $(call TEST_CC_OPTION,option,fallback)
-> +# Test if the C compiler supports the option.
-> +# Evaluates to "option" if yes, and "fallback" otherwise.
-> +TEST_CC_OPTION = $(shell \
-> +	if $(CC) -o /dev/null -c "$(1)" -xc - <<<'int main(void){return 0;}' &>/dev/null; \
-> +	then \
-> +		echo "$(1)"; \
-> +	else \
-> +		echo "$(2)"; \
-> +	fi)
+No multipath-tools source file or Makefile imports anything directly
+from the kernel source tree. Hence remove the variables that refer to
+the kernel tree.
 
-Since '<<<' is nonstandard, please consider to use 'echo' and a pipe instead.
-See also http://pubs.opengroup.org/onlinepubs/9699919799/.
+Since the $(VERSION) Makefile macro is not used, remove it. Note:
+the version number is defined as a macro in libmultipath/version.h.
 
-> +STACKPROT = $(call TEST_CC_OPTION,-fstack-protector-strong,-fstack-protector)
+Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
+---
+ Makefile | 27 +--------------------------
+ 1 file changed, 1 insertion(+), 26 deletions(-)
 
-Please consider to use ":=" instead of "=" such that TEST_CC_OPTION gets called
-once per "make" invocation instead of once per C file that is built.
-
-Thanks,
-
-Bart.
+diff --git a/Makefile b/Makefile
+index cfee0d07..bfb168fb 100644
+--- a/Makefile
++++ b/Makefile
+@@ -2,28 +2,6 @@
+ # Copyright (C) 2003 Christophe Varoqui, <christophe.varoqui@opensvc.com>
+ #
+ 
+-#
+-# Try to supply the linux kernel headers.
+-#
+-ifeq ($(KRNLSRC),)
+-	KRNLLIB = /lib/modules/$(shell uname -r)
+-	ifeq ($(shell test -r $(KRNLLIB)/source && echo 1),1)
+-		KRNLSRC = $(KRNLLIB)/source
+-		KRNLOBJ = $(KRNLLIB)/build
+-	else
+-		KRNLSRC = $(KRNLLIB)/build
+-		KRNLOBJ = $(KRNLLIB)/build
+-	endif
+-	export KRNLSRC
+-	export KRNLOBJ
+-endif
+-
+-ifeq ($(MULTIPATH_VERSION),)
+-	VERSION = $(shell basename ${PWD} | cut -d'-' -f3)
+-else
+-	VERSION = $(MULTIPATH_VERSION)
+-endif
+-
+ BUILDDIRS = \
+ 	libmpathcmd \
+ 	libmultipath \
+@@ -43,10 +21,7 @@ endif
+ all: recurse
+ 
+ recurse:
+-	@for dir in $(BUILDDIRS); do \
+-	$(MAKE) -C $$dir VERSION=$(VERSION) \
+-		KRNLSRC=$(KRNLSRC) KRNLOBJ=$(KRNLOBJ) || exit $?; \
+-	done
++	@for dir in $(BUILDDIRS); do $(MAKE) -C $$dir || exit $?; done
+ 
+ recurse_clean:
+ 	@for dir in $(BUILDDIRS); do \
+-- 
+2.12.2
