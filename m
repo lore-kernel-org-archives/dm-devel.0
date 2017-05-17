@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 2/2] multipath-tools: fix compilation with gcc <
-	4.9
-Date: Wed, 17 May 2017 15:54:39 +0200
-Message-ID: <20170517135439.25935-3-mwilck@suse.com>
+Subject: [PATCH 1/2] libmultipath: print.c: make sure lines are
+	0-terminated
+Date: Wed, 17 May 2017 15:54:38 +0200
+Message-ID: <20170517135439.25935-2-mwilck@suse.com>
 References: <20170517135439.25935-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,46 +22,45 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@s
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-gcc supports -fstack-protector-strong since v4.9 only. Add a "poor man's
-autoconf" test to check whether the option is supported on the given
-build system.
+Under certain conditions, the output of "multipath -ll" or
+"multipathd show topology", or the multipathd logs, may
+contain garbage characters. Fix that by making sure that
+the strings are always properly zero-terminated.
 
-Fixes: 596f51f3
-"multipath-tools: Replace -fstack-protector with -fstack-protector-strong"
+Note 1: The way this is coded, the previously written
+character is overwritten by the newline. That behavior is
+unchanged by this patch. I didn't want to fuzz with the
+carefully crafted print.c code more than necessary at
+this point.
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
+Note 2: The condition (c <= line + len - 1) is equivalent to
+(TAIL >= 0). It should always hold the way ENDLINE is called
+after PRINT and PAD in print.c, and is only added as an
+additional safeguard, e.g. against future code changes.
 ---
- Makefile.inc | 15 ++++++++++++++-
- 1 file changed, 14 insertions(+), 1 deletion(-)
+ libmultipath/print.c | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
 
-diff --git a/Makefile.inc b/Makefile.inc
-index 8361e6c4..3ef134f6 100644
---- a/Makefile.inc
-+++ b/Makefile.inc
-@@ -69,10 +69,23 @@ RM		= rm -f
- LN		= ln -sf
- INSTALL_PROGRAM	= install
+diff --git a/libmultipath/print.c b/libmultipath/print.c
+index 7c2a1588..3a07fcf5 100644
+--- a/libmultipath/print.c
++++ b/libmultipath/print.c
+@@ -40,8 +40,14 @@ do { \
+ } while (0)
  
-+# $(call TEST_CC_OPTION,option,fallback)
-+# Test if the C compiler supports the option.
-+# Evaluates to "option" if yes, and "fallback" otherwise.
-+TEST_CC_OPTION = $(shell \
-+	if $(CC) -o /dev/null -c "$(1)" -xc - <<<'int main(void){return 0;}' &>/dev/null; \
-+	then \
-+		echo "$(1)"; \
-+	else \
-+		echo "$(2)"; \
-+	fi)
+ #define ENDLINE \
+-		if (c > line) \
+-			line[c - line - 1] = '\n'
++		if (c > line) {				\
++			if (c <= line + len - 1) {	\
++				*(c - 1) = '\n';	\
++				*c = '\0';		\
++			} else				\
++				line[len - 1] = '\0';	\
++		}
 +
-+STACKPROT = $(call TEST_CC_OPTION,-fstack-protector-strong,-fstack-protector)
-+
- OPTFLAGS	= -O2 -g -pipe -Wall -Wextra -Wformat=2 -Werror=implicit-int \
- 		  -Werror=implicit-function-declaration -Werror=format-security \
- 		  -Wno-sign-compare -Wno-unused-parameter -Wno-clobbered \
--		  -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong \
-+		  -Wp,-D_FORTIFY_SOURCE=2 $(STACKPROT) \
- 		  --param=ssp-buffer-size=4
- 
- CFLAGS		= $(OPTFLAGS) -fPIC -DLIB_STRING=\"${LIB}\" -DRUN_DIR=\"${RUN}\"
+ #define PRINT(var, size, format, args...) \
+ do { \
+ 	fwd = snprintf(var, size, format, ##args); \
 -- 
 2.12.2
