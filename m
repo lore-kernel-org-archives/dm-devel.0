@@ -1,11 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 0/2] Small multipath fixes
-Date: Wed, 17 May 2017 15:54:37 +0200
-Message-ID: <20170517135439.25935-1-mwilck@suse.com>
+Subject: [PATCH 2/2] multipath-tools: fix compilation with gcc <
+	4.9
+Date: Wed, 17 May 2017 15:54:39 +0200
+Message-ID: <20170517135439.25935-3-mwilck@suse.com>
+References: <20170517135439.25935-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20170517135439.25935-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,23 +22,46 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@s
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Two minor fixes that I found necessary recently.
+gcc supports -fstack-protector-strong since v4.9 only. Add a "poor man's
+autoconf" test to check whether the option is supported on the given
+build system.
 
-Both touch potentially bigger issues - the first one print.c, which
-might need some general overhaul at some time in the future, and the
-second one the build process of multipath tools, which is currently
-lacking an "autobuild" mechanism.
+Fixes: 596f51f3
+"multipath-tools: Replace -fstack-protector with -fstack-protector-strong"
 
-My intention at was to keep the patches small and non-controversial,
-therefore I didn't delve into the big issues just yet.
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ Makefile.inc | 15 ++++++++++++++-
+ 1 file changed, 14 insertions(+), 1 deletion(-)
 
-Martin Wilck (2):
-  libmultipath: print.c: make sure lines are 0-terminated
-  multipath-tools: fix compilation with gcc < 4.9
-
- Makefile.inc         | 15 ++++++++++++++-
- libmultipath/print.c | 10 ++++++++--
- 2 files changed, 22 insertions(+), 3 deletions(-)
-
+diff --git a/Makefile.inc b/Makefile.inc
+index 8361e6c4..3ef134f6 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -69,10 +69,23 @@ RM		= rm -f
+ LN		= ln -sf
+ INSTALL_PROGRAM	= install
+ 
++# $(call TEST_CC_OPTION,option,fallback)
++# Test if the C compiler supports the option.
++# Evaluates to "option" if yes, and "fallback" otherwise.
++TEST_CC_OPTION = $(shell \
++	if $(CC) -o /dev/null -c "$(1)" -xc - <<<'int main(void){return 0;}' &>/dev/null; \
++	then \
++		echo "$(1)"; \
++	else \
++		echo "$(2)"; \
++	fi)
++
++STACKPROT = $(call TEST_CC_OPTION,-fstack-protector-strong,-fstack-protector)
++
+ OPTFLAGS	= -O2 -g -pipe -Wall -Wextra -Wformat=2 -Werror=implicit-int \
+ 		  -Werror=implicit-function-declaration -Werror=format-security \
+ 		  -Wno-sign-compare -Wno-unused-parameter -Wno-clobbered \
+-		  -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong \
++		  -Wp,-D_FORTIFY_SOURCE=2 $(STACKPROT) \
+ 		  --param=ssp-buffer-size=4
+ 
+ CFLAGS		= $(OPTFLAGS) -fPIC -DLIB_STRING=\"${LIB}\" -DRUN_DIR=\"${RUN}\"
 -- 
 2.12.2
