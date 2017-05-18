@@ -1,11 +1,15 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: add limits.h to kpartx/lopart.c
-Date: Thu, 18 May 2017 01:58:44 +0200
-Message-ID: <20170517235844.11576-1-xose.vazquez@gmail.com>
+Subject: Re: [PATCH] multipath-tools: Replace multipath
+	configuration output
+Date: Thu, 18 May 2017 02:06:27 +0200
+Message-ID: <1a35a769-0d7d-7ed7-17b8-1d8c5093059a@gmail.com>
+References: <20170418000756.13970-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20170418000756.13970-1-xose.vazquez@gmail.com>
+Content-Language: en-GB
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,20 +19,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-bXVzbCBsaWJjIGNvbXBsYWlucyBvZgpsb3BhcnQuYzo3NjoxMjogZXJyb3I6IOKAmFBBVEhfTUFY
-4oCZIHVuZGVjbGFyZWQgKGZpcnN0IHVzZSBpbiB0aGlzIGZ1bmN0aW9uKQoKQ2M6IE1hcnRpbiBX
-aWxjayA8bXdpbGNrQHN1c2UuY29tPgpDYzogQ2hyaXN0b3BoZSBWYXJvcXVpIDxjaHJpc3RvcGhl
-LnZhcm9xdWlAb3BlbnN2Yy5jb20+CkNjOiBkZXZpY2UtbWFwcGVyIGRldmVsb3BtZW50IDxkbS1k
-ZXZlbEByZWRoYXQuY29tPgpTaWduZWQtb2ZmLWJ5OiBYb3NlIFZhenF1ZXogUGVyZXogPHhvc2Uu
-dmF6cXVlekBnbWFpbC5jb20+Ci0tLQoga3BhcnR4L2xvcGFydC5jIHwgMSArCiAxIGZpbGUgY2hh
-bmdlZCwgMSBpbnNlcnRpb24oKykKCmRpZmYgLS1naXQgYS9rcGFydHgvbG9wYXJ0LmMgYi9rcGFy
-dHgvbG9wYXJ0LmMKaW5kZXggNzAwNTQ0NS4uNGU2ZGFiNCAxMDA2NDQKLS0tIGEva3BhcnR4L2xv
-cGFydC5jCisrKyBiL2twYXJ0eC9sb3BhcnQuYwpAQCAtMjksNiArMjksNyBAQAogI2luY2x1ZGUg
-PGRpcmVudC5oPgogI2luY2x1ZGUgPHN5cy9zeXNtYWNyb3MuaD4KICNpbmNsdWRlIDxsaW51eC9s
-b29wLmg+CisjaW5jbHVkZSA8bGltaXRzLmg+CiAKICNpbmNsdWRlICJsb3BhcnQuaCIKICNpbmNs
-dWRlICJ4c3RybmNweS5oIgotLSAKMi4xMy4wCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0t
-ZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8v
-ZG0tZGV2ZWw=
+On 04/18/2017 02:07 AM, Xose Vazquez Perez wrote:
+
+> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> Cc: device-mapper development <dm-devel@redhat.com>
+> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+
+This is missing.
+
+> ---
+>  libmultipath/propsel.c | 6 +++---
+>  1 file changed, 3 insertions(+), 3 deletions(-)
+> 
+> diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+> index 09fe728..782f039 100644
+> --- a/libmultipath/propsel.c
+> +++ b/libmultipath/propsel.c
+> @@ -286,11 +286,11 @@ out:
+>  		if (mp->no_path_retry == NO_PATH_RETRY_UNDEF)
+>  			mp->no_path_retry = NO_PATH_RETRY_QUEUE;
+>  		else if (mp->no_path_retry == NO_PATH_RETRY_FAIL) {
+> -			condlog(1, "%s: config error, overriding 'no_path_retry' value",
+> +			condlog(1, "%s: config ERROR (setting: overriding 'no_path_retry' value)",
+>  				mp->alias);
+>  			mp->no_path_retry = NO_PATH_RETRY_QUEUE;
+>  		} else if (mp->no_path_retry != NO_PATH_RETRY_QUEUE)
+> -			condlog(1, "%s: config error, ignoring 'queue_if_no_path' because no_path_retry=%d",
+> +			condlog(1, "%s: config ERROR (setting: ignoring 'queue_if_no_path' because no_path_retry = %d)",
+>  				mp->alias, mp->no_path_retry);
+>  	}
+>  	return 0;
+> @@ -470,7 +470,7 @@ out:
+>  		condlog(3, "%s: no_path_retry = %s %s", mp->alias, buff,
+>  			origin);
+>  	else if (mp->no_path_retry != NO_PATH_RETRY_UNDEF)
+> -		condlog(3, "%s: no_path_retry = %s (inherited setting)",
+> +		condlog(3, "%s: no_path_retry = %s (setting: inherited value)",
+>  			mp->alias, buff);
+>  	else
+>  		condlog(3, "%s: no_path_retry = undef (setting: multipath internal)",
+> 
