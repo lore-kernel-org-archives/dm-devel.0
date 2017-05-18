@@ -1,75 +1,73 @@
-From: Milan Broz <gmazyland@gmail.com>
-Subject: Re: [PATCH] dm verity: fix no salt used use case
-Date: Thu, 18 May 2017 13:03:06 +0200
-Message-ID: <9b872fad-6ae3-4709-d744-1f4686f070b9@gmail.com>
-References: <1495104445-29753-1-git-send-email-gilad@benyossef.com>
+From: Ondrej Mosnacek <omosnace@redhat.com>
+Subject: Re: dm-crypt IV generation (summary)
+Date: Thu, 18 May 2017 13:40:38 +0200
+Message-ID: <CAFqZXNvp0qgEMUqi8o3o8ZVhMwYngkdV5WePx+KRq+rAMEu2kg@mail.gmail.com>
+References: <CAFqZXNs0=6+PvpGq3weRwCJkUOfSn06i_fD6ZuvXo_0rms9zeA@mail.gmail.com>
+ <20170407061226.GA2282@gondor.apana.org.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1495104445-29753-1-git-send-email-gilad@benyossef.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Gilad Ben-Yossef <gilad@benyossef.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>
-Cc: linux-raid@vger.kernel.org, Marian Csontos <mcsontos@redhat.com>, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <20170407061226.GA2282@gondor.apana.org.au>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: Milan Broz <gmazyland@gmail.com>, linux-crypto@vger.kernel.org, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Binoy Jayan <binoy.jayan@linaro.org>, Gilad Ben-Yossef <gilad@benyossef.com>
 List-Id: dm-devel.ids
 
+2017-04-07 8:12 GMT+02:00 Herbert Xu <herbert@gondor.apana.org.au>:
+> On Fri, Mar 10, 2017 at 02:44:26PM +0100, Ondrej Mosnacek wrote:
+>>
+>>     ISSUES:
+>>         a) The 'keycount' parameter.
+>>             In order to support multi-key modes from Loop-AES,
+>> dm-crypt accepts a keycount parameter which, if it != 1, causes
+>> consecutive sectors to be encrypted with a different key. This
+>> parameter can be specified with any of the cipher modes, which makes
+>> porting the whole scale of modes supported by dm-crypt to crypto API
+>> rather messy, since a lot of dm-crypt specific stuff needs to be moved
+>> into the crypto drivers.
+>
+> Actually I think this one can probably easily handled in the crypto
+> layer.  All we need is to add a multikey template that sits on top
+> of an underlying IV generator.  The multikey instance can then accept
+> a key length that is a multiple of the underlying key length.
 
-On 05/18/2017 12:47 PM, Gilad Ben-Yossef wrote:
-> DM-Verity has an (undocumented) mode where no salt is used.
-> This was never handled directly by the DM-Verity code, instead working due
-> to the fact that calling crypto_shash_update() with a zero length data is
-> an implicit noop.
-> 
-> This is no longer the case now that we have switched to
-> crypto_ahash_update(). Fix the issue by introducing an explicit handling
-> of the no salt use case to DM-Verity.
-> 
-> Signed-off-by: Gilad Ben-Yossef <gilad@benyossef.com>
-> Reported-by: Marian Csontos <mcsontos@redhat.com>
-> Fixes: d1ac3ff ("dm verity: switch to using asynchronous hash crypto API")
-> CC: Milan Broz <gmazyland@gmail.com>
+I thought of that, too, but unfortunately with TCW the key structure is:
 
-Tested-by: Milan Broz <gmazyland@gmail.com>
+| KEY 1 | KEY 2 | ... | KEY n | IV SEED (size = IV size) | WHITENING
+(size = 16 bytes) |
 
-Thanks for quick fix!
+So part of the key needs to be processed before it is split into multiple keys.
 
-Mike: this must go to 4.12rc (only).
+Also with the LMK mode, there is a similar optional key appendix,
+which is of the same size as the other subkeys.
 
-m.
+>>         b) New AEAD functionality; random IV generator.
+>>             The soon-to-be-added AEAD functionality in dm-crypt
+>> introduces a new IV generator that generates IVs randomly and stores
+>> them as sector metadata. This means IV generation cannot be handled
+>> solely in the driver. Also, additional AEAD implementation of IV
+>> generators would be eventually needed.
+>
+> Again I don't see the problem here.  IV generators are supposed
+> to return the IV to the caller so that it can be transmitted.
+>
+> For example, the IV generated in IPsec is explicitly transmitted.
+> Here we just need to store the IV.
 
+My point is that it doesn't make much sense to have a crypto API alg
+that calls get_random_bytes() as part of its implementation. IMHO,
+that might tempt HW drivers to replace it with some crappy
+alternatives, which wouldn't be good... Also, how would we test such
+alg with testmgr?
 
-> ---
->  drivers/md/dm-verity-target.c | 4 ++--
->  1 file changed, 2 insertions(+), 2 deletions(-)
-> 
-> diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-> index 97de961..1ec9b2c 100644
-> --- a/drivers/md/dm-verity-target.c
-> +++ b/drivers/md/dm-verity-target.c
-> @@ -166,7 +166,7 @@ static int verity_hash_init(struct dm_verity *v, struct ahash_request *req,
->  		return r;
->  	}
->  
-> -	if (likely(v->version >= 1))
-> +	if (likely(v->salt_size && (v->version >= 1)))
->  		r = verity_hash_update(v, req, v->salt, v->salt_size, res);
->  
->  	return r;
-> @@ -177,7 +177,7 @@ static int verity_hash_final(struct dm_verity *v, struct ahash_request *req,
->  {
->  	int r;
->  
-> -	if (unlikely(!v->version)) {
-> +	if (unlikely(v->salt_size && (!v->version))) {
->  		r = verity_hash_update(v, req, v->salt, v->salt_size, res);
->  
->  		if (r < 0) {
-> 
+I would say the best solution in this case would be to treat the
+'random' IV mode as a special case in dm-crypt: the IVs would be
+generated in dm-crypt and passed to a special template (which would
+have a similar interface as the other IV generation templates) that
+would just pass the generated IVs to underlying skciphers instead of
+generating them from the sequence number. This template would need to
+provide some way to pass the IVs, e.g. by prepending them to the
+plaintext/ciphertext.
+
+Cheers,
+Ondrej
