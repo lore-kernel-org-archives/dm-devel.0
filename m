@@ -1,73 +1,49 @@
-From: Ondrej Mosnacek <omosnace@redhat.com>
-Subject: Re: dm-crypt IV generation (summary)
-Date: Thu, 18 May 2017 13:40:38 +0200
-Message-ID: <CAFqZXNvp0qgEMUqi8o3o8ZVhMwYngkdV5WePx+KRq+rAMEu2kg@mail.gmail.com>
-References: <CAFqZXNs0=6+PvpGq3weRwCJkUOfSn06i_fD6ZuvXo_0rms9zeA@mail.gmail.com>
- <20170407061226.GA2282@gondor.apana.org.au>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <20170407061226.GA2282@gondor.apana.org.au>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: Milan Broz <gmazyland@gmail.com>, linux-crypto@vger.kernel.org, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Binoy Jayan <binoy.jayan@linaro.org>, Gilad Ben-Yossef <gilad@benyossef.com>
+From: Christoph Hellwig <hch@lst.de>
+Subject: [PATCH 06/15] fs: simplify dio_bio_complete
+Date: Thu, 18 May 2017 15:18:03 +0200
+Message-ID: <20170518131812.22956-7-hch@lst.de>
+References: <20170518131812.22956-1-hch@lst.de>
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20170518131812.22956-1-hch@lst.de>
+Sender: linux-block-owner@vger.kernel.org
+To: axboe@kernel.dk
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, linux-btrfs@vger.kernel.org
 List-Id: dm-devel.ids
 
-2017-04-07 8:12 GMT+02:00 Herbert Xu <herbert@gondor.apana.org.au>:
-> On Fri, Mar 10, 2017 at 02:44:26PM +0100, Ondrej Mosnacek wrote:
->>
->>     ISSUES:
->>         a) The 'keycount' parameter.
->>             In order to support multi-key modes from Loop-AES,
->> dm-crypt accepts a keycount parameter which, if it != 1, causes
->> consecutive sectors to be encrypted with a different key. This
->> parameter can be specified with any of the cipher modes, which makes
->> porting the whole scale of modes supported by dm-crypt to crypto API
->> rather messy, since a lot of dm-crypt specific stuff needs to be moved
->> into the crypto drivers.
->
-> Actually I think this one can probably easily handled in the crypto
-> layer.  All we need is to add a multikey template that sits on top
-> of an underlying IV generator.  The multikey instance can then accept
-> a key length that is a multiple of the underlying key length.
+Only read bio->bi_error once in the common path.
 
-I thought of that, too, but unfortunately with TCW the key structure is:
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+---
+ fs/direct-io.c | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
 
-| KEY 1 | KEY 2 | ... | KEY n | IV SEED (size = IV size) | WHITENING
-(size = 16 bytes) |
-
-So part of the key needs to be processed before it is split into multiple keys.
-
-Also with the LMK mode, there is a similar optional key appendix,
-which is of the same size as the other subkeys.
-
->>         b) New AEAD functionality; random IV generator.
->>             The soon-to-be-added AEAD functionality in dm-crypt
->> introduces a new IV generator that generates IVs randomly and stores
->> them as sector metadata. This means IV generation cannot be handled
->> solely in the driver. Also, additional AEAD implementation of IV
->> generators would be eventually needed.
->
-> Again I don't see the problem here.  IV generators are supposed
-> to return the IV to the caller so that it can be transmitted.
->
-> For example, the IV generated in IPsec is explicitly transmitted.
-> Here we just need to store the IV.
-
-My point is that it doesn't make much sense to have a crypto API alg
-that calls get_random_bytes() as part of its implementation. IMHO,
-that might tempt HW drivers to replace it with some crappy
-alternatives, which wouldn't be good... Also, how would we test such
-alg with testmgr?
-
-I would say the best solution in this case would be to treat the
-'random' IV mode as a special case in dm-crypt: the IVs would be
-generated in dm-crypt and passed to a special template (which would
-have a similar interface as the other IV generation templates) that
-would just pass the generated IVs to underlying skciphers instead of
-generating them from the sequence number. This template would need to
-provide some way to pass the IVs, e.g. by prepending them to the
-plaintext/ciphertext.
-
-Cheers,
-Ondrej
+diff --git a/fs/direct-io.c b/fs/direct-io.c
+index 04247a6c3f73..bb711e4b86c2 100644
+--- a/fs/direct-io.c
++++ b/fs/direct-io.c
+@@ -477,13 +477,12 @@ static int dio_bio_complete(struct dio *dio, struct bio *bio)
+ {
+ 	struct bio_vec *bvec;
+ 	unsigned i;
+-	int err;
++	int err = bio->bi_error;
+ 
+-	if (bio->bi_error)
++	if (err)
+ 		dio->io_error = -EIO;
+ 
+ 	if (dio->is_async && dio->op == REQ_OP_READ && dio->should_dirty) {
+-		err = bio->bi_error;
+ 		bio_check_pages_dirty(bio);	/* transfers ownership */
+ 	} else {
+ 		bio_for_each_segment_all(bvec, bio, i) {
+@@ -494,7 +493,6 @@ static int dio_bio_complete(struct dio *dio, struct bio *bio)
+ 				set_page_dirty_lock(page);
+ 			put_page(page);
+ 		}
+-		err = bio->bi_error;
+ 		bio_put(bio);
+ 	}
+ 	return err;
+-- 
+2.11.0
