@@ -1,715 +1,354 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 12/15] block: merge blk_types.h into bio.h
-Date: Thu, 18 May 2017 15:18:09 +0200
-Message-ID: <20170518131812.22956-13-hch@lst.de>
+Subject: [PATCH 10/15] dm: change ->end_io calling convention
+Date: Thu, 18 May 2017 15:18:07 +0200
+Message-ID: <20170518131812.22956-11-hch@lst.de>
 References: <20170518131812.22956-1-hch@lst.de>
-Return-path: <linux-btrfs-owner@vger.kernel.org>
+Return-path: <linux-block-owner@vger.kernel.org>
 In-Reply-To: <20170518131812.22956-1-hch@lst.de>
-Sender: linux-btrfs-owner@vger.kernel.org
+Sender: linux-block-owner@vger.kernel.org
 To: axboe@kernel.dk
 Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, linux-btrfs@vger.kernel.org
 List-Id: dm-devel.ids
 
-We've cleaned up our headers sufficiently that we don't need this split
-anymore.
+Turn the error paramter into a pointer so that target drivers can change
+the value, and make sure only DM_ENDIO_* values are returned from the
+methods.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- block/blk-wbt.c                    |   2 +-
- drivers/target/target_core_pscsi.c |   2 +-
- include/linux/bio.h                | 307 +++++++++++++++++++++++++++++++++++-
- include/linux/blk_types.h          | 315 -------------------------------------
- include/linux/swap.h               |   2 +-
- 5 files changed, 308 insertions(+), 320 deletions(-)
- delete mode 100644 include/linux/blk_types.h
+ drivers/md/dm-cache-target.c  |  4 ++--
+ drivers/md/dm-flakey.c        |  8 ++++----
+ drivers/md/dm-log-writes.c    |  4 ++--
+ drivers/md/dm-mpath.c         | 11 ++++++-----
+ drivers/md/dm-raid1.c         | 14 +++++++-------
+ drivers/md/dm-snap.c          |  4 ++--
+ drivers/md/dm-stripe.c        | 14 +++++++-------
+ drivers/md/dm-thin.c          |  4 ++--
+ drivers/md/dm.c               | 36 ++++++++++++++++++------------------
+ include/linux/device-mapper.h |  2 +-
+ 10 files changed, 51 insertions(+), 50 deletions(-)
 
-diff --git a/block/blk-wbt.c b/block/blk-wbt.c
-index 17676f4d7fd1..ad355fcda96c 100644
---- a/block/blk-wbt.c
-+++ b/block/blk-wbt.c
-@@ -19,7 +19,7 @@
-  *
+diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
+index d682a0511381..c48612e6d525 100644
+--- a/drivers/md/dm-cache-target.c
++++ b/drivers/md/dm-cache-target.c
+@@ -2820,7 +2820,7 @@ static int cache_map(struct dm_target *ti, struct bio *bio)
+ 	return r;
+ }
+ 
+-static int cache_end_io(struct dm_target *ti, struct bio *bio, int error)
++static int cache_end_io(struct dm_target *ti, struct bio *bio, int *error)
+ {
+ 	struct cache *cache = ti->private;
+ 	unsigned long flags;
+@@ -2838,7 +2838,7 @@ static int cache_end_io(struct dm_target *ti, struct bio *bio, int error)
+ 	bio_drop_shared_lock(cache, bio);
+ 	accounted_complete(cache, bio);
+ 
+-	return 0;
++	return DM_ENDIO_DONE;
+ }
+ 
+ static int write_dirty_bitset(struct cache *cache)
+diff --git a/drivers/md/dm-flakey.c b/drivers/md/dm-flakey.c
+index e8f093b323ce..c9539917a59b 100644
+--- a/drivers/md/dm-flakey.c
++++ b/drivers/md/dm-flakey.c
+@@ -358,12 +358,12 @@ static int flakey_map(struct dm_target *ti, struct bio *bio)
+ 	return DM_MAPIO_REMAPPED;
+ }
+ 
+-static int flakey_end_io(struct dm_target *ti, struct bio *bio, int error)
++static int flakey_end_io(struct dm_target *ti, struct bio *bio, int *error)
+ {
+ 	struct flakey_c *fc = ti->private;
+ 	struct per_bio_data *pb = dm_per_bio_data(bio, sizeof(struct per_bio_data));
+ 
+-	if (!error && pb->bio_submitted && (bio_data_dir(bio) == READ)) {
++	if (!*error && pb->bio_submitted && (bio_data_dir(bio) == READ)) {
+ 		if (fc->corrupt_bio_byte && (fc->corrupt_bio_rw == READ) &&
+ 		    all_corrupt_bio_flags_match(bio, fc)) {
+ 			/*
+@@ -377,11 +377,11 @@ static int flakey_end_io(struct dm_target *ti, struct bio *bio, int error)
+ 			 * Error read during the down_interval if drop_writes
+ 			 * and error_writes were not configured.
+ 			 */
+-			return -EIO;
++			*error = -EIO;
+ 		}
+ 	}
+ 
+-	return error;
++	return DM_ENDIO_DONE;
+ }
+ 
+ static void flakey_status(struct dm_target *ti, status_type_t type,
+diff --git a/drivers/md/dm-log-writes.c b/drivers/md/dm-log-writes.c
+index e42264706c59..cc57c7fa1268 100644
+--- a/drivers/md/dm-log-writes.c
++++ b/drivers/md/dm-log-writes.c
+@@ -664,7 +664,7 @@ static int log_writes_map(struct dm_target *ti, struct bio *bio)
+ 	return DM_MAPIO_REMAPPED;
+ }
+ 
+-static int normal_end_io(struct dm_target *ti, struct bio *bio, int error)
++static int normal_end_io(struct dm_target *ti, struct bio *bio, int *error)
+ {
+ 	struct log_writes_c *lc = ti->private;
+ 	struct per_bio_data *pb = dm_per_bio_data(bio, sizeof(struct per_bio_data));
+@@ -686,7 +686,7 @@ static int normal_end_io(struct dm_target *ti, struct bio *bio, int error)
+ 		spin_unlock_irqrestore(&lc->blocks_lock, flags);
+ 	}
+ 
+-	return error;
++	return DM_ENDIO_DONE;
+ }
+ 
+ /*
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index 94b1aa917fcb..14f5b0d4ecce 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -1517,16 +1517,17 @@ static int multipath_end_io(struct dm_target *ti, struct request *clone,
+ 	return r;
+ }
+ 
+-static int multipath_end_io_bio(struct dm_target *ti, struct bio *clone, int error)
++static int multipath_end_io_bio(struct dm_target *ti, struct bio *clone, int *error)
+ {
+ 	struct multipath *m = ti->private;
+ 	struct dm_mpath_io *mpio = get_mpio_from_bio(clone);
+ 	struct pgpath *pgpath = mpio->pgpath;
+ 	unsigned long flags;
++	int r = DM_ENDIO_DONE;
+ 
+ 	BUG_ON(!mpio);
+ 
+-	if (!error || noretry_error(error))
++	if (!*error || noretry_error(*error))
+ 		goto done;
+ 
+ 	if (pgpath)
+@@ -1535,7 +1536,7 @@ static int multipath_end_io_bio(struct dm_target *ti, struct bio *clone, int err
+ 	if (atomic_read(&m->nr_valid_paths) == 0 &&
+ 	    !test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags)) {
+ 		dm_report_EIO(m);
+-		error = -EIO;
++		*error = -EIO;
+ 		goto done;
+ 	}
+ 
+@@ -1548,7 +1549,7 @@ static int multipath_end_io_bio(struct dm_target *ti, struct bio *clone, int err
+ 	if (!test_bit(MPATHF_QUEUE_IO, &m->flags))
+ 		queue_work(kmultipathd, &m->process_queued_bios);
+ 
+-	error = DM_ENDIO_INCOMPLETE;
++	r = DM_ENDIO_INCOMPLETE;
+ done:
+ 	if (pgpath) {
+ 		struct path_selector *ps = &pgpath->pg->ps;
+@@ -1557,7 +1558,7 @@ static int multipath_end_io_bio(struct dm_target *ti, struct bio *clone, int err
+ 			ps->type->end_io(ps, &pgpath->path, mpio->nr_bytes);
+ 	}
+ 
+-	return error;
++	return r;
+ }
+ 
+ /*
+diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c
+index d9c0c6a77eb5..77bcf50ce75f 100644
+--- a/drivers/md/dm-raid1.c
++++ b/drivers/md/dm-raid1.c
+@@ -1236,7 +1236,7 @@ static int mirror_map(struct dm_target *ti, struct bio *bio)
+ 	return DM_MAPIO_REMAPPED;
+ }
+ 
+-static int mirror_end_io(struct dm_target *ti, struct bio *bio, int error)
++static int mirror_end_io(struct dm_target *ti, struct bio *bio, int *error)
+ {
+ 	int rw = bio_data_dir(bio);
+ 	struct mirror_set *ms = (struct mirror_set *) ti->private;
+@@ -1252,16 +1252,16 @@ static int mirror_end_io(struct dm_target *ti, struct bio *bio, int error)
+ 		if (!(bio->bi_opf & REQ_PREFLUSH) &&
+ 		    bio_op(bio) != REQ_OP_DISCARD)
+ 			dm_rh_dec(ms->rh, bio_record->write_region);
+-		return error;
++		return DM_ENDIO_DONE;
+ 	}
+ 
+-	if (error == -EOPNOTSUPP)
+-		return error;
++	if (*error == -EOPNOTSUPP)
++		return DM_ENDIO_DONE;
+ 
+ 	if (bio->bi_opf & REQ_RAHEAD)
+-		return error;
++		return DM_ENDIO_DONE;
+ 
+-	if (unlikely(error)) {
++	if (unlikely(*error)) {
+ 		m = bio_record->m;
+ 
+ 		DMERR("Mirror read failed from %s. Trying alternative device.",
+@@ -1285,7 +1285,7 @@ static int mirror_end_io(struct dm_target *ti, struct bio *bio, int error)
+ 		DMERR("All replicated volumes dead, failing I/O");
+ 	}
+ 
+-	return error;
++	return DM_ENDIO_DONE;
+ }
+ 
+ static void mirror_presuspend(struct dm_target *ti)
+diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
+index 5a7f73f9a6fb..79a845798e2f 100644
+--- a/drivers/md/dm-snap.c
++++ b/drivers/md/dm-snap.c
+@@ -1851,14 +1851,14 @@ static int snapshot_merge_map(struct dm_target *ti, struct bio *bio)
+ 	return r;
+ }
+ 
+-static int snapshot_end_io(struct dm_target *ti, struct bio *bio, int error)
++static int snapshot_end_io(struct dm_target *ti, struct bio *bio, int *error)
+ {
+ 	struct dm_snapshot *s = ti->private;
+ 
+ 	if (is_bio_tracked(bio))
+ 		stop_tracking_chunk(s, bio);
+ 
+-	return 0;
++	return DM_ENDIO_DONE;
+ }
+ 
+ static void snapshot_merge_presuspend(struct dm_target *ti)
+diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
+index 780e95889a7c..49888bc2c909 100644
+--- a/drivers/md/dm-stripe.c
++++ b/drivers/md/dm-stripe.c
+@@ -375,20 +375,20 @@ static void stripe_status(struct dm_target *ti, status_type_t type,
+ 	}
+ }
+ 
+-static int stripe_end_io(struct dm_target *ti, struct bio *bio, int error)
++static int stripe_end_io(struct dm_target *ti, struct bio *bio, int *error)
+ {
+ 	unsigned i;
+ 	char major_minor[16];
+ 	struct stripe_c *sc = ti->private;
+ 
+-	if (!error)
+-		return 0; /* I/O complete */
++	if (!*error)
++		return DM_ENDIO_DONE; /* I/O complete */
+ 
+ 	if (bio->bi_opf & REQ_RAHEAD)
+-		return error;
++		return DM_ENDIO_DONE;
+ 
+-	if (error == -EOPNOTSUPP)
+-		return error;
++	if (*error == -EOPNOTSUPP)
++		return DM_ENDIO_DONE;
+ 
+ 	memset(major_minor, 0, sizeof(major_minor));
+ 	sprintf(major_minor, "%d:%d",
+@@ -409,7 +409,7 @@ static int stripe_end_io(struct dm_target *ti, struct bio *bio, int error)
+ 				schedule_work(&sc->trigger_event);
+ 		}
+ 
+-	return error;
++	return DM_ENDIO_DONE;
+ }
+ 
+ static int stripe_iterate_devices(struct dm_target *ti,
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index 17ad50daed08..22b1a64c44b7 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -4177,7 +4177,7 @@ static int thin_map(struct dm_target *ti, struct bio *bio)
+ 	return thin_bio_map(ti, bio);
+ }
+ 
+-static int thin_endio(struct dm_target *ti, struct bio *bio, int err)
++static int thin_endio(struct dm_target *ti, struct bio *bio, int *err)
+ {
+ 	unsigned long flags;
+ 	struct dm_thin_endio_hook *h = dm_per_bio_data(bio, sizeof(struct dm_thin_endio_hook));
+@@ -4212,7 +4212,7 @@ static int thin_endio(struct dm_target *ti, struct bio *bio, int err)
+ 	if (h->cell)
+ 		cell_defer_no_holder(h->tc, h->cell);
+ 
+-	return 0;
++	return DM_ENDIO_DONE;
+ }
+ 
+ static void thin_presuspend(struct dm_target *ti)
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 499f8209bacf..7a7047211c64 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -845,24 +845,7 @@ static void clone_endio(struct bio *bio)
+ 	struct mapped_device *md = tio->io->md;
+ 	dm_endio_fn endio = tio->ti->type->end_io;
+ 
+-	if (endio) {
+-		r = endio(tio->ti, bio, error);
+-		if (r < 0 || r == DM_ENDIO_REQUEUE)
+-			/*
+-			 * error and requeue request are handled
+-			 * in dec_pending().
+-			 */
+-			error = r;
+-		else if (r == DM_ENDIO_INCOMPLETE)
+-			/* The target will handle the io */
+-			return;
+-		else if (r) {
+-			DMWARN("unimplemented target endio return value: %d", r);
+-			BUG();
+-		}
+-	}
+-
+-	if (unlikely(r == -EREMOTEIO)) {
++	if (unlikely(error == -EREMOTEIO)) {
+ 		if (bio_op(bio) == REQ_OP_WRITE_SAME &&
+ 		    !bdev_get_queue(bio->bi_bdev)->limits.max_write_same_sectors)
+ 			disable_write_same(md);
+@@ -871,6 +854,23 @@ static void clone_endio(struct bio *bio)
+ 			disable_write_zeroes(md);
+ 	}
+ 
++	if (endio) {
++		r = endio(tio->ti, bio, &error);
++		switch (r) {
++		case DM_ENDIO_REQUEUE:
++			error = DM_ENDIO_REQUEUE;
++			/*FALLTHRU*/
++		case DM_ENDIO_DONE:
++			break;
++		case DM_ENDIO_INCOMPLETE:
++			/* The target will handle the io */
++			return;
++		default:
++			DMWARN("unimplemented target endio return value: %d", r);
++			BUG();
++		}
++	}
++
+ 	free_tio(tio);
+ 	dec_pending(io, error);
+ }
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index f4c639c0c362..dec227acc13b 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -72,7 +72,7 @@ typedef void (*dm_release_clone_request_fn) (struct request *clone);
+  * 2   : The target wants to push back the io
   */
- #include <linux/kernel.h>
--#include <linux/blk_types.h>
-+#include <linux/bio.h>
- #include <linux/slab.h>
- #include <linux/backing-dev.h>
- #include <linux/swap.h>
-diff --git a/drivers/target/target_core_pscsi.c b/drivers/target/target_core_pscsi.c
-index 3e4abb13f8ea..1fd365ed83d6 100644
---- a/drivers/target/target_core_pscsi.c
-+++ b/drivers/target/target_core_pscsi.c
-@@ -27,7 +27,7 @@
- #include <linux/parser.h>
- #include <linux/timer.h>
- #include <linux/blkdev.h>
--#include <linux/blk_types.h>
-+#include <linux/bio.h>
- #include <linux/slab.h>
- #include <linux/spinlock.h>
- #include <linux/genhd.h>
-diff --git a/include/linux/bio.h b/include/linux/bio.h
-index d1b04b0e99cf..f6a7c9e65ea0 100644
---- a/include/linux/bio.h
-+++ b/include/linux/bio.h
-@@ -25,10 +25,18 @@
- 
- #ifdef CONFIG_BLOCK
- 
-+#include <linux/types.h>
-+#include <linux/bvec.h>
- #include <asm/io.h>
- 
--/* struct bio, bio_vec and BIO_* flags are defined in blk_types.h */
--#include <linux/blk_types.h>
-+struct bio_set;
-+struct bio;
-+struct bio_integrity_payload;
-+struct page;
-+struct block_device;
-+struct io_context;
-+struct cgroup_subsys_state;
-+typedef void (bio_end_io_t) (struct bio *);
- 
- #define BIO_DEBUG
- 
-@@ -40,6 +48,301 @@
- 
- #define BIO_MAX_PAGES		256
- 
-+struct blk_issue_stat {
-+	u64 stat;
-+};
-+
-+/*
-+ * main unit of I/O for the block layer and lower layers (ie drivers and
-+ * stacking drivers)
-+ */
-+struct bio {
-+	struct bio		*bi_next;	/* request queue link */
-+	struct block_device	*bi_bdev;
-+	int			bi_error;
-+	unsigned int		bi_opf;		/* bottom bits req flags,
-+						 * top bits REQ_OP. Use
-+						 * accessors.
-+						 */
-+	unsigned short		bi_flags;	/* status, etc and bvec pool number */
-+	unsigned short		bi_ioprio;
-+
-+	struct bvec_iter	bi_iter;
-+
-+	/* Number of segments in this BIO after
-+	 * physical address coalescing is performed.
-+	 */
-+	unsigned int		bi_phys_segments;
-+
-+	/*
-+	 * To keep track of the max segment size, we account for the
-+	 * sizes of the first and last mergeable segments in this bio.
-+	 */
-+	unsigned int		bi_seg_front_size;
-+	unsigned int		bi_seg_back_size;
-+
-+	atomic_t		__bi_remaining;
-+
-+	bio_end_io_t		*bi_end_io;
-+
-+	void			*bi_private;
-+#ifdef CONFIG_BLK_CGROUP
-+	/*
-+	 * Optional ioc and css associated with this bio.  Put on bio
-+	 * release.  Read comment on top of bio_associate_current().
-+	 */
-+	struct io_context	*bi_ioc;
-+	struct cgroup_subsys_state *bi_css;
-+#ifdef CONFIG_BLK_DEV_THROTTLING_LOW
-+	void			*bi_cg_private;
-+	struct blk_issue_stat	bi_issue_stat;
-+#endif
-+#endif
-+	union {
-+#if defined(CONFIG_BLK_DEV_INTEGRITY)
-+		struct bio_integrity_payload *bi_integrity; /* data integrity */
-+#endif
-+	};
-+
-+	unsigned short		bi_vcnt;	/* how many bio_vec's */
-+
-+	/*
-+	 * Everything starting with bi_max_vecs will be preserved by bio_reset()
-+	 */
-+
-+	unsigned short		bi_max_vecs;	/* max bvl_vecs we can hold */
-+
-+	atomic_t		__bi_cnt;	/* pin count */
-+
-+	struct bio_vec		*bi_io_vec;	/* the actual vec list */
-+
-+	struct bio_set		*bi_pool;
-+
-+	/*
-+	 * We can inline a number of vecs at the end of the bio, to avoid
-+	 * double allocations for a small number of bio_vecs. This member
-+	 * MUST obviously be kept at the very end of the bio.
-+	 */
-+	struct bio_vec		bi_inline_vecs[0];
-+};
-+
-+#define BIO_RESET_BYTES		offsetof(struct bio, bi_max_vecs)
-+
-+/*
-+ * bio flags
-+ */
-+#define BIO_SEG_VALID	1	/* bi_phys_segments valid */
-+#define BIO_CLONED	2	/* doesn't own data */
-+#define BIO_BOUNCED	3	/* bio is a bounce bio */
-+#define BIO_USER_MAPPED 4	/* contains user pages */
-+#define BIO_NULL_MAPPED 5	/* contains invalid user pages */
-+#define BIO_QUIET	6	/* Make BIO Quiet */
-+#define BIO_CHAIN	7	/* chained bio, ->bi_remaining in effect */
-+#define BIO_REFFED	8	/* bio has elevated ->bi_cnt */
-+#define BIO_THROTTLED	9	/* This bio has already been subjected to
-+				 * throttling rules. Don't do it again. */
-+#define BIO_TRACE_COMPLETION 10	/* bio_endio() should trace the final completion
-+				 * of this bio. */
-+/* See BVEC_POOL_OFFSET below before adding new flags */
-+
-+/*
-+ * We support 6 different bvec pools, the last one is magic in that it
-+ * is backed by a mempool.
-+ */
-+#define BVEC_POOL_NR		6
-+#define BVEC_POOL_MAX		(BVEC_POOL_NR - 1)
-+
-+/*
-+ * Top 3 bits of bio flags indicate the pool the bvecs came from.  We add
-+ * 1 to the actual index so that 0 indicates that there are no bvecs to be
-+ * freed.
-+ */
-+#define BVEC_POOL_BITS		(3)
-+#define BVEC_POOL_OFFSET	(16 - BVEC_POOL_BITS)
-+#define BVEC_POOL_IDX(bio)	((bio)->bi_flags >> BVEC_POOL_OFFSET)
-+#if (1<< BVEC_POOL_BITS) < (BVEC_POOL_NR+1)
-+# error "BVEC_POOL_BITS is too small"
-+#endif
-+
-+/*
-+ * Flags starting here get preserved by bio_reset() - this includes
-+ * only BVEC_POOL_IDX()
-+ */
-+#define BIO_RESET_BITS	BVEC_POOL_OFFSET
-+
-+/*
-+ * Operations and flags common to the bio and request structures.
-+ * We use 8 bits for encoding the operation, and the remaining 24 for flags.
-+ *
-+ * The least significant bit of the operation number indicates the data
-+ * transfer direction:
-+ *
-+ *   - if the least significant bit is set transfers are TO the device
-+ *   - if the least significant bit is not set transfers are FROM the device
-+ *
-+ * If a operation does not transfer data the least significant bit has no
-+ * meaning.
-+ */
-+#define REQ_OP_BITS	8
-+#define REQ_OP_MASK	((1 << REQ_OP_BITS) - 1)
-+#define REQ_FLAG_BITS	24
-+
-+enum req_opf {
-+	/* read sectors from the device */
-+	REQ_OP_READ		= 0,
-+	/* write sectors to the device */
-+	REQ_OP_WRITE		= 1,
-+	/* flush the volatile write cache */
-+	REQ_OP_FLUSH		= 2,
-+	/* discard sectors */
-+	REQ_OP_DISCARD		= 3,
-+	/* get zone information */
-+	REQ_OP_ZONE_REPORT	= 4,
-+	/* securely erase sectors */
-+	REQ_OP_SECURE_ERASE	= 5,
-+	/* seset a zone write pointer */
-+	REQ_OP_ZONE_RESET	= 6,
-+	/* write the same sector many times */
-+	REQ_OP_WRITE_SAME	= 7,
-+	/* write the zero filled sector many times */
-+	REQ_OP_WRITE_ZEROES	= 9,
-+
-+	/* SCSI passthrough using struct scsi_request */
-+	REQ_OP_SCSI_IN		= 32,
-+	REQ_OP_SCSI_OUT		= 33,
-+	/* Driver private requests */
-+	REQ_OP_DRV_IN		= 34,
-+	REQ_OP_DRV_OUT		= 35,
-+
-+	REQ_OP_LAST,
-+};
-+
-+enum req_flag_bits {
-+	__REQ_FAILFAST_DEV =	/* no driver retries of device errors */
-+		REQ_OP_BITS,
-+	__REQ_FAILFAST_TRANSPORT, /* no driver retries of transport errors */
-+	__REQ_FAILFAST_DRIVER,	/* no driver retries of driver errors */
-+	__REQ_SYNC,		/* request is sync (sync write or read) */
-+	__REQ_META,		/* metadata io request */
-+	__REQ_PRIO,		/* boost priority in cfq */
-+	__REQ_NOMERGE,		/* don't touch this for merging */
-+	__REQ_IDLE,		/* anticipate more IO after this one */
-+	__REQ_INTEGRITY,	/* I/O includes block integrity payload */
-+	__REQ_FUA,		/* forced unit access */
-+	__REQ_PREFLUSH,		/* request for cache flush */
-+	__REQ_RAHEAD,		/* read ahead, can fail anytime */
-+	__REQ_BACKGROUND,	/* background IO */
-+
-+	/* command specific flags for REQ_OP_WRITE_ZEROES: */
-+	__REQ_NOUNMAP,		/* do not free blocks when zeroing */
-+
-+	__REQ_NR_BITS,		/* stops here */
-+};
-+
-+#define REQ_FAILFAST_DEV	(1ULL << __REQ_FAILFAST_DEV)
-+#define REQ_FAILFAST_TRANSPORT	(1ULL << __REQ_FAILFAST_TRANSPORT)
-+#define REQ_FAILFAST_DRIVER	(1ULL << __REQ_FAILFAST_DRIVER)
-+#define REQ_SYNC		(1ULL << __REQ_SYNC)
-+#define REQ_META		(1ULL << __REQ_META)
-+#define REQ_PRIO		(1ULL << __REQ_PRIO)
-+#define REQ_NOMERGE		(1ULL << __REQ_NOMERGE)
-+#define REQ_IDLE		(1ULL << __REQ_IDLE)
-+#define REQ_INTEGRITY		(1ULL << __REQ_INTEGRITY)
-+#define REQ_FUA			(1ULL << __REQ_FUA)
-+#define REQ_PREFLUSH		(1ULL << __REQ_PREFLUSH)
-+#define REQ_RAHEAD		(1ULL << __REQ_RAHEAD)
-+#define REQ_BACKGROUND		(1ULL << __REQ_BACKGROUND)
-+
-+#define REQ_NOUNMAP		(1ULL << __REQ_NOUNMAP)
-+
-+#define REQ_FAILFAST_MASK \
-+	(REQ_FAILFAST_DEV | REQ_FAILFAST_TRANSPORT | REQ_FAILFAST_DRIVER)
-+
-+#define REQ_NOMERGE_FLAGS \
-+	(REQ_NOMERGE | REQ_PREFLUSH | REQ_FUA)
-+
-+#define bio_op(bio) \
-+	((bio)->bi_opf & REQ_OP_MASK)
-+#define req_op(req) \
-+	((req)->cmd_flags & REQ_OP_MASK)
-+
-+/* obsolete, don't use in new code */
-+static inline void bio_set_op_attrs(struct bio *bio, unsigned op,
-+		unsigned op_flags)
-+{
-+	bio->bi_opf = op | op_flags;
-+}
-+
-+static inline bool op_is_write(unsigned int op)
-+{
-+	return (op & 1);
-+}
-+
-+/*
-+ * Check if the bio or request is one that needs special treatment in the
-+ * flush state machine.
-+ */
-+static inline bool op_is_flush(unsigned int op)
-+{
-+	return op & (REQ_FUA | REQ_PREFLUSH);
-+}
-+
-+/*
-+ * Reads are always treated as synchronous, as are requests with the FUA or
-+ * PREFLUSH flag.  Other operations may be marked as synchronous using the
-+ * REQ_SYNC flag.
-+ */
-+static inline bool op_is_sync(unsigned int op)
-+{
-+	return (op & REQ_OP_MASK) == REQ_OP_READ ||
-+		(op & (REQ_SYNC | REQ_FUA | REQ_PREFLUSH));
-+}
-+
-+typedef unsigned int blk_qc_t;
-+#define BLK_QC_T_NONE		-1U
-+#define BLK_QC_T_SHIFT		16
-+#define BLK_QC_T_INTERNAL	(1U << 31)
-+
-+static inline bool blk_qc_t_valid(blk_qc_t cookie)
-+{
-+	return cookie != BLK_QC_T_NONE;
-+}
-+
-+static inline blk_qc_t blk_tag_to_qc_t(unsigned int tag, unsigned int queue_num,
-+				       bool internal)
-+{
-+	blk_qc_t ret = tag | (queue_num << BLK_QC_T_SHIFT);
-+
-+	if (internal)
-+		ret |= BLK_QC_T_INTERNAL;
-+
-+	return ret;
-+}
-+
-+static inline unsigned int blk_qc_t_to_queue_num(blk_qc_t cookie)
-+{
-+	return (cookie & ~BLK_QC_T_INTERNAL) >> BLK_QC_T_SHIFT;
-+}
-+
-+static inline unsigned int blk_qc_t_to_tag(blk_qc_t cookie)
-+{
-+	return cookie & ((1u << BLK_QC_T_SHIFT) - 1);
-+}
-+
-+static inline bool blk_qc_t_is_internal(blk_qc_t cookie)
-+{
-+	return (cookie & BLK_QC_T_INTERNAL) != 0;
-+}
-+
-+struct blk_rq_stat {
-+	s64 mean;
-+	u64 min;
-+	u64 max;
-+	s32 nr_samples;
-+	s32 nr_batch;
-+	u64 batch;
-+};
-+
- #define bio_prio(bio)			(bio)->bi_ioprio
- #define bio_set_prio(bio, prio)		((bio)->bi_ioprio = prio)
- 
-diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-deleted file mode 100644
-index 61339bc44400..000000000000
---- a/include/linux/blk_types.h
-+++ /dev/null
-@@ -1,315 +0,0 @@
--/*
-- * Block data types and constants.  Directly include this file only to
-- * break include dependency loop.
-- */
--#ifndef __LINUX_BLK_TYPES_H
--#define __LINUX_BLK_TYPES_H
--
--#include <linux/types.h>
--#include <linux/bvec.h>
--
--struct bio_set;
--struct bio;
--struct bio_integrity_payload;
--struct page;
--struct block_device;
--struct io_context;
--struct cgroup_subsys_state;
--typedef void (bio_end_io_t) (struct bio *);
--
--struct blk_issue_stat {
--	u64 stat;
--};
--
--/*
-- * main unit of I/O for the block layer and lower layers (ie drivers and
-- * stacking drivers)
-- */
--struct bio {
--	struct bio		*bi_next;	/* request queue link */
--	struct block_device	*bi_bdev;
--	int			bi_error;
--	unsigned int		bi_opf;		/* bottom bits req flags,
--						 * top bits REQ_OP. Use
--						 * accessors.
--						 */
--	unsigned short		bi_flags;	/* status, etc and bvec pool number */
--	unsigned short		bi_ioprio;
--
--	struct bvec_iter	bi_iter;
--
--	/* Number of segments in this BIO after
--	 * physical address coalescing is performed.
--	 */
--	unsigned int		bi_phys_segments;
--
--	/*
--	 * To keep track of the max segment size, we account for the
--	 * sizes of the first and last mergeable segments in this bio.
--	 */
--	unsigned int		bi_seg_front_size;
--	unsigned int		bi_seg_back_size;
--
--	atomic_t		__bi_remaining;
--
--	bio_end_io_t		*bi_end_io;
--
--	void			*bi_private;
--#ifdef CONFIG_BLK_CGROUP
--	/*
--	 * Optional ioc and css associated with this bio.  Put on bio
--	 * release.  Read comment on top of bio_associate_current().
--	 */
--	struct io_context	*bi_ioc;
--	struct cgroup_subsys_state *bi_css;
--#ifdef CONFIG_BLK_DEV_THROTTLING_LOW
--	void			*bi_cg_private;
--	struct blk_issue_stat	bi_issue_stat;
--#endif
--#endif
--	union {
--#if defined(CONFIG_BLK_DEV_INTEGRITY)
--		struct bio_integrity_payload *bi_integrity; /* data integrity */
--#endif
--	};
--
--	unsigned short		bi_vcnt;	/* how many bio_vec's */
--
--	/*
--	 * Everything starting with bi_max_vecs will be preserved by bio_reset()
--	 */
--
--	unsigned short		bi_max_vecs;	/* max bvl_vecs we can hold */
--
--	atomic_t		__bi_cnt;	/* pin count */
--
--	struct bio_vec		*bi_io_vec;	/* the actual vec list */
--
--	struct bio_set		*bi_pool;
--
--	/*
--	 * We can inline a number of vecs at the end of the bio, to avoid
--	 * double allocations for a small number of bio_vecs. This member
--	 * MUST obviously be kept at the very end of the bio.
--	 */
--	struct bio_vec		bi_inline_vecs[0];
--};
--
--#define BIO_RESET_BYTES		offsetof(struct bio, bi_max_vecs)
--
--/*
-- * bio flags
-- */
--#define BIO_SEG_VALID	1	/* bi_phys_segments valid */
--#define BIO_CLONED	2	/* doesn't own data */
--#define BIO_BOUNCED	3	/* bio is a bounce bio */
--#define BIO_USER_MAPPED 4	/* contains user pages */
--#define BIO_NULL_MAPPED 5	/* contains invalid user pages */
--#define BIO_QUIET	6	/* Make BIO Quiet */
--#define BIO_CHAIN	7	/* chained bio, ->bi_remaining in effect */
--#define BIO_REFFED	8	/* bio has elevated ->bi_cnt */
--#define BIO_THROTTLED	9	/* This bio has already been subjected to
--				 * throttling rules. Don't do it again. */
--#define BIO_TRACE_COMPLETION 10	/* bio_endio() should trace the final completion
--				 * of this bio. */
--/* See BVEC_POOL_OFFSET below before adding new flags */
--
--/*
-- * We support 6 different bvec pools, the last one is magic in that it
-- * is backed by a mempool.
-- */
--#define BVEC_POOL_NR		6
--#define BVEC_POOL_MAX		(BVEC_POOL_NR - 1)
--
--/*
-- * Top 3 bits of bio flags indicate the pool the bvecs came from.  We add
-- * 1 to the actual index so that 0 indicates that there are no bvecs to be
-- * freed.
-- */
--#define BVEC_POOL_BITS		(3)
--#define BVEC_POOL_OFFSET	(16 - BVEC_POOL_BITS)
--#define BVEC_POOL_IDX(bio)	((bio)->bi_flags >> BVEC_POOL_OFFSET)
--#if (1<< BVEC_POOL_BITS) < (BVEC_POOL_NR+1)
--# error "BVEC_POOL_BITS is too small"
--#endif
--
--/*
-- * Flags starting here get preserved by bio_reset() - this includes
-- * only BVEC_POOL_IDX()
-- */
--#define BIO_RESET_BITS	BVEC_POOL_OFFSET
--
--/*
-- * Operations and flags common to the bio and request structures.
-- * We use 8 bits for encoding the operation, and the remaining 24 for flags.
-- *
-- * The least significant bit of the operation number indicates the data
-- * transfer direction:
-- *
-- *   - if the least significant bit is set transfers are TO the device
-- *   - if the least significant bit is not set transfers are FROM the device
-- *
-- * If a operation does not transfer data the least significant bit has no
-- * meaning.
-- */
--#define REQ_OP_BITS	8
--#define REQ_OP_MASK	((1 << REQ_OP_BITS) - 1)
--#define REQ_FLAG_BITS	24
--
--enum req_opf {
--	/* read sectors from the device */
--	REQ_OP_READ		= 0,
--	/* write sectors to the device */
--	REQ_OP_WRITE		= 1,
--	/* flush the volatile write cache */
--	REQ_OP_FLUSH		= 2,
--	/* discard sectors */
--	REQ_OP_DISCARD		= 3,
--	/* get zone information */
--	REQ_OP_ZONE_REPORT	= 4,
--	/* securely erase sectors */
--	REQ_OP_SECURE_ERASE	= 5,
--	/* seset a zone write pointer */
--	REQ_OP_ZONE_RESET	= 6,
--	/* write the same sector many times */
--	REQ_OP_WRITE_SAME	= 7,
--	/* write the zero filled sector many times */
--	REQ_OP_WRITE_ZEROES	= 9,
--
--	/* SCSI passthrough using struct scsi_request */
--	REQ_OP_SCSI_IN		= 32,
--	REQ_OP_SCSI_OUT		= 33,
--	/* Driver private requests */
--	REQ_OP_DRV_IN		= 34,
--	REQ_OP_DRV_OUT		= 35,
--
--	REQ_OP_LAST,
--};
--
--enum req_flag_bits {
--	__REQ_FAILFAST_DEV =	/* no driver retries of device errors */
--		REQ_OP_BITS,
--	__REQ_FAILFAST_TRANSPORT, /* no driver retries of transport errors */
--	__REQ_FAILFAST_DRIVER,	/* no driver retries of driver errors */
--	__REQ_SYNC,		/* request is sync (sync write or read) */
--	__REQ_META,		/* metadata io request */
--	__REQ_PRIO,		/* boost priority in cfq */
--	__REQ_NOMERGE,		/* don't touch this for merging */
--	__REQ_IDLE,		/* anticipate more IO after this one */
--	__REQ_INTEGRITY,	/* I/O includes block integrity payload */
--	__REQ_FUA,		/* forced unit access */
--	__REQ_PREFLUSH,		/* request for cache flush */
--	__REQ_RAHEAD,		/* read ahead, can fail anytime */
--	__REQ_BACKGROUND,	/* background IO */
--
--	/* command specific flags for REQ_OP_WRITE_ZEROES: */
--	__REQ_NOUNMAP,		/* do not free blocks when zeroing */
--
--	__REQ_NR_BITS,		/* stops here */
--};
--
--#define REQ_FAILFAST_DEV	(1ULL << __REQ_FAILFAST_DEV)
--#define REQ_FAILFAST_TRANSPORT	(1ULL << __REQ_FAILFAST_TRANSPORT)
--#define REQ_FAILFAST_DRIVER	(1ULL << __REQ_FAILFAST_DRIVER)
--#define REQ_SYNC		(1ULL << __REQ_SYNC)
--#define REQ_META		(1ULL << __REQ_META)
--#define REQ_PRIO		(1ULL << __REQ_PRIO)
--#define REQ_NOMERGE		(1ULL << __REQ_NOMERGE)
--#define REQ_IDLE		(1ULL << __REQ_IDLE)
--#define REQ_INTEGRITY		(1ULL << __REQ_INTEGRITY)
--#define REQ_FUA			(1ULL << __REQ_FUA)
--#define REQ_PREFLUSH		(1ULL << __REQ_PREFLUSH)
--#define REQ_RAHEAD		(1ULL << __REQ_RAHEAD)
--#define REQ_BACKGROUND		(1ULL << __REQ_BACKGROUND)
--
--#define REQ_NOUNMAP		(1ULL << __REQ_NOUNMAP)
--
--#define REQ_FAILFAST_MASK \
--	(REQ_FAILFAST_DEV | REQ_FAILFAST_TRANSPORT | REQ_FAILFAST_DRIVER)
--
--#define REQ_NOMERGE_FLAGS \
--	(REQ_NOMERGE | REQ_PREFLUSH | REQ_FUA)
--
--#define bio_op(bio) \
--	((bio)->bi_opf & REQ_OP_MASK)
--#define req_op(req) \
--	((req)->cmd_flags & REQ_OP_MASK)
--
--/* obsolete, don't use in new code */
--static inline void bio_set_op_attrs(struct bio *bio, unsigned op,
--		unsigned op_flags)
--{
--	bio->bi_opf = op | op_flags;
--}
--
--static inline bool op_is_write(unsigned int op)
--{
--	return (op & 1);
--}
--
--/*
-- * Check if the bio or request is one that needs special treatment in the
-- * flush state machine.
-- */
--static inline bool op_is_flush(unsigned int op)
--{
--	return op & (REQ_FUA | REQ_PREFLUSH);
--}
--
--/*
-- * Reads are always treated as synchronous, as are requests with the FUA or
-- * PREFLUSH flag.  Other operations may be marked as synchronous using the
-- * REQ_SYNC flag.
-- */
--static inline bool op_is_sync(unsigned int op)
--{
--	return (op & REQ_OP_MASK) == REQ_OP_READ ||
--		(op & (REQ_SYNC | REQ_FUA | REQ_PREFLUSH));
--}
--
--typedef unsigned int blk_qc_t;
--#define BLK_QC_T_NONE		-1U
--#define BLK_QC_T_SHIFT		16
--#define BLK_QC_T_INTERNAL	(1U << 31)
--
--static inline bool blk_qc_t_valid(blk_qc_t cookie)
--{
--	return cookie != BLK_QC_T_NONE;
--}
--
--static inline blk_qc_t blk_tag_to_qc_t(unsigned int tag, unsigned int queue_num,
--				       bool internal)
--{
--	blk_qc_t ret = tag | (queue_num << BLK_QC_T_SHIFT);
--
--	if (internal)
--		ret |= BLK_QC_T_INTERNAL;
--
--	return ret;
--}
--
--static inline unsigned int blk_qc_t_to_queue_num(blk_qc_t cookie)
--{
--	return (cookie & ~BLK_QC_T_INTERNAL) >> BLK_QC_T_SHIFT;
--}
--
--static inline unsigned int blk_qc_t_to_tag(blk_qc_t cookie)
--{
--	return cookie & ((1u << BLK_QC_T_SHIFT) - 1);
--}
--
--static inline bool blk_qc_t_is_internal(blk_qc_t cookie)
--{
--	return (cookie & BLK_QC_T_INTERNAL) != 0;
--}
--
--struct blk_rq_stat {
--	s64 mean;
--	u64 min;
--	u64 max;
--	s32 nr_samples;
--	s32 nr_batch;
--	u64 batch;
--};
--
--#endif /* __LINUX_BLK_TYPES_H */
-diff --git a/include/linux/swap.h b/include/linux/swap.h
-index ba5882419a7d..d5664c7d7d93 100644
---- a/include/linux/swap.h
-+++ b/include/linux/swap.h
-@@ -328,7 +328,7 @@ extern void kswapd_stop(int nid);
- 
- #ifdef CONFIG_SWAP
- 
--#include <linux/blk_types.h> /* for bio_end_io_t */
-+#include <linux/bio.h> /* for bio_end_io_t */
- 
- /* linux/mm/page_io.c */
- extern int swap_readpage(struct page *);
+ typedef int (*dm_endio_fn) (struct dm_target *ti,
+-			    struct bio *bio, int error);
++			    struct bio *bio, int *error);
+ typedef int (*dm_request_endio_fn) (struct dm_target *ti,
+ 				    struct request *clone, int error,
+ 				    union map_info *map_context);
 -- 
 2.11.0
-
