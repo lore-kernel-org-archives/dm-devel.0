@@ -1,116 +1,29 @@
-From: Enric Balletbo i Serra <enric.balletbo@collabora.com>
-Subject: [PATCH v8 2/2] dm ioctl: add a device mapper ioctl
-	function.
-Date: Fri, 19 May 2017 09:11:46 +0200
-Message-ID: <20170519071146.25760-3-enric.balletbo@collabora.com>
-References: <20170519071146.25760-1-enric.balletbo@collabora.com>
+From: Christoph Hellwig <hch@lst.de>
+Subject: Re: dedicated error codes for the block layer
+Date: Fri, 19 May 2017 10:21:22 +0200
+Message-ID: <20170519082122.GB1411@lst.de>
+References: <20170518131812.22956-1-hch@lst.de> <20170518145508.GR4065@twin.jikos.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170519071146.25760-1-enric.balletbo@collabora.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, linux-lvm@redhat.com, linux-kernel@vger.kernel.org, Kees Cook <keescook@chromium.org>, linux-doc@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20170518145508.GR4065@twin.jikos.cz>
+Sender: linux-block-owner@vger.kernel.org
+To: dsterba@suse.cz, Christoph Hellwig <hch@lst.de>, axboe@kernel.dk, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-btrfs@vger.kernel.org
 List-Id: dm-devel.ids
 
-Add a dm_ioctl_cmd to issue the equivalent of a DM ioctl call in kernel.
+On Thu, May 18, 2017 at 04:55:08PM +0200, David Sterba wrote:
+> JFYI, the patches 13 and 15 are missing, not in linux-btrfs mailbox and
+> patchwork web. Does not look like a delay, maybe vger refused them
+> completely.
 
-Signed-off-by: Enric Balletbo i Serra <enric.balletbo@collabora.com>
----
- drivers/md/dm-ioctl.c         | 50 +++++++++++++++++++++++++++++++++++++++++++
- include/linux/device-mapper.h |  6 ++++++
- 2 files changed, 56 insertions(+)
+They still haven't made it to linux-block and linux-btrfs, but they did
+make it to dm-devel, which is not host on vger.
 
-diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-index d45c681..033e31d 100644
---- a/drivers/md/dm-ioctl.c
-+++ b/drivers/md/dm-ioctl.c
-@@ -2011,3 +2011,53 @@ int dm_copy_name_and_uuid(struct mapped_device *md, char *name, char *uuid)
- 
- 	return r;
- }
-+
-+/**
-+ * dm_ioctl_cmd - Device mapper ioctl's
-+ * @command: ioctl command
-+ * @param: Pointer to device mapped ioctl struct
-+ */
-+int dm_ioctl_cmd(uint command, struct dm_ioctl *param)
-+{
-+	int r = 0;
-+	int ioctl_flags;
-+	unsigned int cmd;
-+	ioctl_fn fn = NULL;
-+	size_t input_param_size;
-+	struct file *filp = NULL;
-+
-+	if (_IOC_TYPE(command) != DM_IOCTL)
-+		return -ENOTTY;
-+
-+	/* DM_DEV_ARM_POLL is not supported */
-+	if (command == DM_DEV_ARM_POLL)
-+		return -EINVAL;
-+
-+	cmd = _IOC_NR(command);
-+
-+	/*
-+	 * Nothing more to do for the version command.
-+	 */
-+	if (cmd == DM_VERSION_CMD)
-+		return 0;
-+
-+	fn = lookup_ioctl(cmd, &ioctl_flags);
-+	if (!fn) {
-+		DMWARN("dm_ioctl: unknown command 0x%x", command);
-+		return -ENOTTY;
-+	}
-+
-+	input_param_size = param->data_size;
-+	r = validate_params(cmd, param);
-+	if (r)
-+		return r;
-+
-+	param->data_size = sizeof(*param);
-+	r = fn(filp, param, input_param_size);
-+
-+	if (unlikely(param->flags & DM_BUFFER_FULL_FLAG) &&
-+	    unlikely(ioctl_flags & IOCTL_FLAGS_NO_PARAMS))
-+		DMERR("ioctl %d tried to output some data but has IOCTL_FLAGS_NO_PARAMS set", cmd);
-+
-+	return r;
-+}
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index f4c639c..f81ba42 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -12,6 +12,7 @@
- #include <linux/blkdev.h>
- #include <linux/math64.h>
- #include <linux/ratelimit.h>
-+#include <linux/dm-ioctl.h>
- 
- struct dm_dev;
- struct dm_target;
-@@ -446,6 +447,11 @@ int dm_noflush_suspending(struct dm_target *ti);
- void dm_accept_partial_bio(struct bio *bio, unsigned n_sectors);
- union map_info *dm_get_rq_mapinfo(struct request *rq);
- 
-+/*
-+ * Device mapper ioctl function.
-+ */
-+int dm_ioctl_cmd(unsigned int command, struct dm_ioctl *param);
-+
- struct queue_limits *dm_get_queue_limits(struct mapped_device *md);
- 
- /*
--- 
-2.9.3
+I also have a git tree here:
+
+   git://git.infradead.org/users/hch/block.git block-errors
+
+Gitweb:
+
+   http://git.infradead.org/users/hch/block.git/shortlog/refs/heads/block-errors   
