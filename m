@@ -1,29 +1,30 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: dedicated error codes for the block layer
-Date: Fri, 19 May 2017 10:21:22 +0200
-Message-ID: <20170519082122.GB1411@lst.de>
-References: <20170518131812.22956-1-hch@lst.de> <20170518145508.GR4065@twin.jikos.cz>
+From: "hch@lst.de" <hch@lst.de>
+Subject: Re: [PATCH 12/15] block: merge blk_types.h into bio.h
+Date: Fri, 19 May 2017 10:22:44 +0200
+Message-ID: <20170519082244.GC1411@lst.de>
+References: <20170518131812.22956-1-hch@lst.de> <20170518131812.22956-13-hch@lst.de> <1495117551.2713.1.camel@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
+Return-path: <linux-btrfs-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20170518145508.GR4065@twin.jikos.cz>
-Sender: linux-block-owner@vger.kernel.org
-To: dsterba@suse.cz, Christoph Hellwig <hch@lst.de>, axboe@kernel.dk, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-btrfs@vger.kernel.org
+In-Reply-To: <1495117551.2713.1.camel@sandisk.com>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: Bart Van Assche <Bart.VanAssche@sandisk.com>
+Cc: "hch@lst.de" <hch@lst.de>, "axboe@kernel.dk" <axboe@kernel.dk>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-btrfs@vger.kernel.org" <linux-btrfs@vger.kernel.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Thu, May 18, 2017 at 04:55:08PM +0200, David Sterba wrote:
-> JFYI, the patches 13 and 15 are missing, not in linux-btrfs mailbox and
-> patchwork web. Does not look like a delay, maybe vger refused them
-> completely.
+On Thu, May 18, 2017 at 02:25:52PM +0000, Bart Van Assche wrote:
+> On Thu, 2017-05-18 at 15:18 +0200, Christoph Hellwig wrote:
+> > We've cleaned up our headers sufficiently that we don't need this split
+> > anymore.
+> 
+> Hello Christoph,
+> 
+> Request-based drivers need the structure definitions from <linux/blkdev.h> and
+> the type definitions from <linux/blk_types.h> but do not need the definition of
+> struct bio. Have you considered to remove #include <linux/bio.h> from file
+> include/linux/blkdev.h? Do you think that would help to reduce the kernel build
+> time?
 
-They still haven't made it to linux-block and linux-btrfs, but they did
-make it to dm-devel, which is not host on vger.
-
-I also have a git tree here:
-
-   git://git.infradead.org/users/hch/block.git block-errors
-
-Gitweb:
-
-   http://git.infradead.org/users/hch/block.git/shortlog/refs/heads/block-errors   
+Most block drivers end up needing bio.h anyway.  But I can skip this
+part of the series for now.
