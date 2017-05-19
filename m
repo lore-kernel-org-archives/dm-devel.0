@@ -1,17 +1,17 @@
 From: Yang Feng <philip.yang@huawei.com>
 Subject: Re: [PATCH] multipath-tools:Prioritizer based on a
  time-delay algorithm
-Date: Fri, 19 May 2017 16:43:08 +0800
-Message-ID: <c2428d4a-7693-927d-5c57-eeebb721640b@huawei.com>
+Date: Fri, 19 May 2017 17:45:51 +0800
+Message-ID: <9bb062bf-8a08-f659-a540-f68ddf0ef5da@huawei.com>
 References: <1494215904-7564-1-git-send-email-philip.yang@huawei.com>
 	<1494501243.6093.16.camel@suse.com>
 	<aec35be2-fa7f-1fc8-9cd8-a52647cddc13@huawei.com>
-	<1494960873.4700.13.camel@suse.com>
+	<20170516213850.GO22856@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1494960873.4700.13.camel@suse.com>
+In-Reply-To: <20170516213850.GO22856@octiron.msp.redhat.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -22,468 +22,358 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: zouming.zouming@huawei.com, Xose Vazquez Perez <xose.vazquez@gmail.com>, guanjunxiong@huawei.com, shenhong09@huawei.com, dm-devel@redhat.com, hege09@huawei.com
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: zouming.zouming@huawei.com, Xose Vazquez Perez <xose.vazquez@gmail.com>, guanjunxiong@huawei.com, shenhong09@huawei.com, dm-devel@redhat.com, hege09@huawei.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Hello Martin,
-
-Firstly, thank you very much for your comments.
-And find my replys and the up-to-date patch.
-
-Best regards!
-
-
-> Please think about the name once again. Maybe you should call it
-> "io_latency" or "path_latency" instead of "delayedpath"?
-OK, as the following patch.
-
-> 
-> Hm, I can't see a lot of difference in the parsing code wrt the
-> previous version. IMO it's still non-straightforward and hard to
-> comprehend. Maybe I didn't express myself clearly enough. Here is how
-> I'd code this:
-> 
->  1. Verify that the string starts with a digit. Error if it does not.
->  2. Parse the delay interval using strtoul().
->  3. The "end" pointer of strtoul() points to the unit, which has to be
-> "s", "ms" or "us". Verify, and set the unit accordingly.
->  4. Verify that the next character is '|', and that it's followed by a
-> digit.
->  5. Parse the number with strtoul()
->  6. Verify that there's no garbage at the end of the string. 
-Thank you , as the following patch.
-
-> 
-> Please follow the https://en.wikipedia.org/wiki/Robustness_principle.
-> If a user enters "1500ms" here, the parsing will silently fail, and
-> with it the whole prio algorithm. This will cause user confusion.
-> Please don't do this
-Thank you , as the following patch.
-
-> 
-> However please consider lowering the upper bound, I kind of doubt that
-> 1000 IOs will finish quickly. More often than not, a lot of paths will
-> appear at the same time (e.g. if a port of a storage array is enabled)
-> and we'll have to send 1000 IOs to each one.
-> 
-OK, the upper bound lower to 200, as the following patch.
-
->> +    while (temp-- > 0)
->> +    {
->> +        (void)clock_gettime(CLOCK_MONOTONIC, &tv);
->> +        before = timeval_to_us(&tv);		
->> +
->> +        if (do_readsector0(pp->fd, timeout) == 2)
->> +        {
->> +            condlog(0, "%s: path down", pp->dev);
->> +            return -1;
->> +        }
->> +
->> +        (void)clock_gettime(CLOCK_MONOTONIC, &tv);
->> +        after = timeval_to_us(&tv);
->> +
->> +        delay = after - before;
->> +    	
->> +        min = (min <= delay) ? min : delay;
->> +        max = (max >= delay) ? max : delay;
->> +
->> +        toldelay += delay;
->> +    }
->> +
->> +    toldelay -= min + max;
-> 
-> Why are you doing this? If you want to discard "extreme" values, this
-> is probably not sufficient. If cons == 3, this will have the effect to
-> use a single measurement rather than an average, is that intended?
-> 
-> Btw, as you are doing statistics here anyway, you may want to calculate
-> the estimate of the standard deviation and warn the user if the
-> delay_interval is smaller than, say, 2 * standard deviation.
-> 
-> Please consider printing a message with the measured value at debug
-> level 3 or higher.
-OK, as the following patch.
-
->>  "%N:%R:%n:%r"\fR. For example: 0x200100e08ba0aea0:0x210100e08ba0aea0:.*:.* , .*:.*:iqn.2009-10.com.redhat.msp.lab.ask-06:.*
->>  .RE
->>  .TP 12
->> +.I delayed
-> 
-> should be "delayedpath" here?
-OK, as the following patch.
-> 
->> +Needs a value of the form
->> +\fI"<delay_interval|cons_num>"\fR
->> +.RS
->> +.TP 8
->> +.I delay_interval
->> +The interval values of average IO-time-delay between two different
->> neighbour ranks of path priority, used to partition different
->> priority ranks.
-> 
-> It might be good to give an example here, like this:
-> 
-> "If delay_interval=10ms, the paths will be grouped in priority groups
-> with path latency 0-10ms, 10-20ms, 20-30ms, etc." 
-OK, as the following patch.>
-
----
-From 58d718fdd34550bd9c4a32c6e9a87099c1e45a9f Mon Sep 17 00:00:00 2001
-From: Yang Feng <philip.yang@huawei.com>
-Date: Fri, 19 May 2017 16:09:07 +0800
-Subject: [PATCH] libmultipath/prioritizers: Prioritizer for device mapper multipath, where the corresponding priority
-values of specific paths are provided by a latency algorithm. And the latency algorithm is dependent on the following
-arguments(latency_interval and io_num). The principle of the algorithm is illustrated as follows:
-1. By sending a certain number "cons_num" of read IOs to the current path continuously, the IOs' average latency can be calculated.
-2. According to the average latency of each path and the weight value "latency_interval", the priority "rc" of each path can be provided.
-
-                   latency_interval   latency_interval   latency_interval       latency_interval
-         	 |------------------|------------------|------------------|...|------------------|
-		 |  priority rank 1 |  priority rank 2 |  priority rank 3 |...|  priority rank x |
-		 |------------------|------------------|------------------|...|------------------|
-				          Priority Rank Partitioning
----
- libmultipath/prioritizers/Makefile       |   6 +-
- libmultipath/prioritizers/path_latency.c | 271 +++++++++++++++++++++++++++++++
- multipath/multipath.conf.5               |  18 ++
- 3 files changed, 294 insertions(+), 1 deletion(-)
- create mode 100644 libmultipath/prioritizers/path_latency.c
-
-diff --git a/libmultipath/prioritizers/Makefile b/libmultipath/prioritizers/Makefile
-index 36b42e4..d2f20f6 100644
---- a/libmultipath/prioritizers/Makefile
-+++ b/libmultipath/prioritizers/Makefile
-@@ -18,13 +18,17 @@ LIBS = \
- 	libpriorandom.so \
- 	libpriordac.so \
- 	libprioweightedpath.so \
--	libpriosysfs.so
-+	libpriopath_latency.so \
-+	libpriosysfs.so
-
- all: $(LIBS)
-
- libprioalua.so: alua.o alua_rtpg.o
- 	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^
-
-+libpriopath_latency.so: path_latency.o  ../checkers/libsg.o
-+	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^ -lm
-+
- libprio%.so: %.o
- 	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^
-
-diff --git a/libmultipath/prioritizers/path_latency.c b/libmultipath/prioritizers/path_latency.c
-new file mode 100644
-index 0000000..a666b6c
---- /dev/null
-+++ b/libmultipath/prioritizers/path_latency.c
-@@ -0,0 +1,271 @@
-+/*
-+ * (C) Copyright HUAWEI Technology Corp. 2017, 2021   All Rights Reserved.
-+ *
-+ * main.c
-+ *
-+ * Prioritizer for device mapper multipath, where the corresponding priority
-+ * values of specific paths are provided by a latency algorithm. And the
-+ * latency algorithm is dependent on arguments.
-+ *
-+ * The principle of the algorithm as follows:
-+ * 1. By sending a certain number "io_num" of read IOs to the current path
-+ *    continuously, the IOs' average latency can be calculated.
-+ * 2. According to the average latency of each path and the weight value
-+ *    "latency_interval", the priority "rc" of each path can be provided.
-+ *
-+ * Author(s): Yang Feng <philip.yang@huawei.com>
-+ *            Zou Ming <zouming.zouming@huawei.com>
-+ *
-+ * This file is released under the GPL.
-+ */
-+#include <stdio.h>
-+#include <math.h>
-+#include <ctype.h>
-+#include <time.h>
-+
-+#include "debug.h"
-+#include "prio.h"
-+#include "structs.h"
-+#include "../checkers/libsg.h"
-+
-+#define THRES_USEC_VALUE        120000000LL    /*unit: us, =120s*/
-+
-+#define MAX_IO_NUM              200
-+#define MIN_IO_NUM              10
-+
-+#define MAX_LATENCY_INTERVAL    60            /*unit: s*/
-+#define MIN_LATENCY_INTERVAL    1             /*unit: us, or ms, or s*/
-+
-+#define DEFAULT_PRIORITY        0
-+
-+#define MAX_CHAR_SIZE           30
-+
-+#define CHAR_USEC               "us"
-+#define CHAR_MSEC               "ms"
-+#define CHAR_SEC                "s"
-+
-+enum interval_type {
-+    INTERVAL_USEC,
-+    INTERVAL_MSEC,
-+    INTERVAL_SEC,
-+    INTERVAL_INVALID
-+};
-+
-+/* interval_unit_str and interval_unit_type keep the same assignment sequence */
-+static const char *interval_unit_str[MAX_CHAR_SIZE] = {
-+    CHAR_USEC, CHAR_MSEC, CHAR_SEC
-+};
-+static const int interval_unit_type[] = {
-+    INTERVAL_USEC, INTERVAL_MSEC, INTERVAL_SEC
-+};
-+
-+#define USEC_PER_SEC      1000000LL
-+#define USEC_PER_MSEC     1000LL
-+#define USEC_PER_USEC     1LL
-+
-+static const int conversion_ratio[] = {
-+    [INTERVAL_USEC]		= USEC_PER_USEC,
-+    [INTERVAL_MSEC]     = USEC_PER_MSEC,
-+    [INTERVAL_SEC]		= USEC_PER_SEC,
-+    [INTERVAL_INVALID]	= 0
-+};
-+
-+static long long path_latency[MAX_IO_NUM];
-+
-+static inline long long timeval_to_us(const struct timespec *tv)
-+{
-+	return ((long long) tv->tv_sec * USEC_PER_SEC) + (tv->tv_nsec >> 10);
-+}
-+
-+static int do_readsector0(int fd, unsigned int timeout)
-+{
-+	unsigned char buf[4096];
-+	unsigned char sbuf[SENSE_BUFF_LEN];
-+	int ret;
-+
-+	ret = sg_read(fd, &buf[0], 4096, &sbuf[0],
-+		      SENSE_BUFF_LEN, timeout);
-+
-+	return ret;
-+}
-+
-+int check_args_valid(int io_num, long long latency_interval, int type)
-+{
-+    if ((io_num < MIN_IO_NUM) || (io_num > MAX_IO_NUM))
-+    {
-+        condlog(0, "args io_num is more than the valid values range");
-+        return 0;
-+    }
-+
-+    /* s:[1, 60], ms:[1, 60000], us:[1, 60000000] */
-+    if ((latency_interval < MIN_LATENCY_INTERVAL) || (latency_interval > (MAX_LATENCY_INTERVAL * USEC_PER_SEC / conversion_ratio[type])))
-+    {
-+        condlog(0, "args latency_interval is more than the valid values range");
-+        return 0;
-+    }
-+
-+    return 1;
-+}
-+
-+static int get_interval_type(char *type)
-+{
-+    int index;
-+
-+    for (index = 0; index < sizeof(interval_unit_str)/MAX_CHAR_SIZE; index++)
-+    {
-+        if (strcmp(type, interval_unit_str[index]) == 0)
-+        {
-+            return interval_unit_type[index];
-+        }
-+    }
-+
-+    return INTERVAL_INVALID;
-+}
-+
-+long long get_conversion_ratio(int type)
-+{
-+    return conversion_ratio[type];
-+}
-+
-+/* In multipath.conf, args form: io_num|latency_interval. For example,
-+*  args is "20|10ms", this function can get 20, 10.
-+*/
-+static int get_interval_and_ionum(char *args,
-+                                        int *ionum,
-+                                        long long *interval)
-+{
-+    char source[MAX_CHAR_SIZE];
-+    char vertica = '|';
-+    char *endstrbefore = NULL;
-+    char *endstrafter = NULL;
-+    int type;
-+    unsigned int size = strlen(args);
-+    long long ratio;
-+
-+    if ((args == NULL) || (ionum == NULL) || (interval == NULL))
-+    {
-+        condlog(0, "args string is NULL");
-+        return 0;
-+    }
-+
-+    if ((size < 1) || (size > MAX_CHAR_SIZE-1))
-+    {
-+        condlog(0, "args string's size is too long");
-+        return 0;
-+    }
-+
-+    memcpy(source, args, size+1);
-+
-+    if (!isdigit(source[0]))
-+    {
-+        condlog(0, "args io_num string's first char is not digit");
-+        return 0;
-+    }
-+
-+    *ionum = (int)strtoul(source, &endstrbefore, 10);
-+    if (endstrbefore[0] != vertica)
-+    {
-+        condlog(0, "segmentation char is invalid");
-+        return 0;
-+    }
-+
-+    if (!isdigit(endstrbefore[1]))
-+    {
-+        condlog(0, "args latency_interval string's first char is not digit");
-+        return 0;
-+    }
-+
-+    *interval = (long long)strtol(&endstrbefore[1], &endstrafter, 10);
-+    type = get_interval_type(endstrafter);
-+    if (type == INTERVAL_INVALID)
-+    {
-+        condlog(0, "args latency_interval type is invalid");
-+        return 0;
-+    }
-+
-+    if (check_args_valid(*ionum, *interval, type) == 0)
-+    {
-+        return 0;
-+    }
-+
-+	ratio = get_conversion_ratio(type);
-+    *interval *= (long long)ratio;
-+
-+    return 1;
-+}
-+
-+long long calc_standard_deviation(long long *path_latency, int size, long long avglatency)
-+{
-+    int index;
-+    long long total = 0;
-+
-+    for (index = 0; index < size; index++)
-+    {
-+        total += (path_latency[index] - avglatency) * (path_latency[index] - avglatency);
-+    }
-+
-+    total /= (size-1);
-+
-+    return (long long)sqrt((double)total);
-+}
-+
-+int getprio (struct path *pp, char *args, unsigned int timeout)
-+{
-+    int rc, temp;
-+    int index = 0;
-+    int io_num;
-+    long long latency_interval;
-+    long long avglatency;
-+    long long standard_deviation;
-+    long long toldelay = 0;
-+    long long before, after;
-+    struct timespec tv;
-+
-+	if (pp->fd < 0)
-+		return -1;
-+
-+    if (get_interval_and_ionum(args, &io_num, &latency_interval) == 0)
-+    {
-+        condlog(0, "%s: get path_latency args fail", pp->dev);
-+        return DEFAULT_PRIORITY;
-+    }
-+
-+    memset(path_latency, 0, sizeof(path_latency));
-+
-+    temp = io_num;
-+    while (temp-- > 0)
-+    {
-+        (void)clock_gettime(CLOCK_MONOTONIC, &tv);
-+        before = timeval_to_us(&tv);		
-+
-+        if (do_readsector0(pp->fd, timeout) == 2)
-+        {
-+            condlog(0, "%s: path down", pp->dev);
-+            return -1;
-+        }
-+
-+        (void)clock_gettime(CLOCK_MONOTONIC, &tv);
-+        after = timeval_to_us(&tv);
-+
-+        path_latency[index] = after - before;
-+        toldelay += path_latency[index++];
-+    }
-+
-+    avglatency = toldelay/(long long)io_num;
-+    condlog(4, "%s: average latency is (%lld)", pp->dev, avglatency);
-+
-+    if (avglatency > THRES_USEC_VALUE)
-+    {
-+        condlog(0, "%s: average latency (%lld) is more than thresold", pp->dev, avglatency);
-+        return DEFAULT_PRIORITY;
-+    }
-+
-+    /* warn the user if the latency_interval set is smaller than (2 * standard deviation), or equal */
-+    standard_deviation = calc_standard_deviation(path_latency, index, avglatency);
-+    if (latency_interval <= (2 * standard_deviation))
-+        condlog(3, "%s: args latency_interval set is smaller than 2 * standard deviation (%lld us), or equal",
-+            pp->dev, standard_deviation);
-+
-+	rc = (int)(THRES_USEC_VALUE - (avglatency/(long long)latency_interval));
-+    return rc;
-+}
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index 5939688..3dd0d77 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -293,6 +293,10 @@ Generate a random priority between 1 and 10.
- Generate the path priority based on the regular expression and the
- priority provided as argument. Requires prio_args keyword.
- .TP
-+.I path_latency
-+Generate the path priority based on a latency algorithm.
-+Requires prio_args keyword.
-+.TP
- .I datacore
- .\" XXX
- ???. Requires prio_args keyword.
-@@ -333,6 +337,20 @@ these values can be looked up through sysfs or by running \fImultipathd show pat
- "%N:%R:%n:%r"\fR. For example: 0x200100e08ba0aea0:0x210100e08ba0aea0:.*:.* , .*:.*:iqn.2009-10.com.redhat.msp.lab.ask-06:.*
- .RE
- .TP 12
-+.I path_latency
-+Needs a value of the form
-+\fI"<latency_interval>|<io_num>"\fR
-+.RS
-+.TP 8
-+.I latency_interval
-+The interval values of average latency between two different neighbour ranks of path priority, used to partition different priority ranks.
-+Form: XXs, or XXXus, or XXXms. Unit: Second, or Microsecond, or Millisecond. Valid Values: Integer, s [1, 60], ms [1, 60000], us [1, 60000000],
-+For example: If latency_interval=10ms, the paths will be grouped in priority groups with path latency 0-10ms, 10-20ms, 20-30ms, etc..
-+.TP
-+.I io_num
-+The number of read IOs sent to the current path continuously, used to calculate the average path latency. Valid Values: Integer, [10, 200].
-+.RE
-+.TP 12
- .I alua
- If \fIexclusive_pref_bit\fR is set, paths with the \fIpreferred path\fR bit
- set will always be in their own path group.
--- 
+SGkgQmVuamFtaW4sCgpUaGFuayB5b3UgdmVyeSBtdWNoIGZvciB5b3VyIGNvbW1lbnRzLgpQbGVh
+c2UgZmluZCBteSByZXBseXMgYW5kIHRoZSB1cC10by1kYXRlIHBhdGNoLgpCZXN0IHJlZ2FyZHMh
+Cgo+IAo+IEZpcnN0LCBvbmUgb3ZlcmFsbCBxdWVzdGlvbi4gV2UgaGF2ZSBkeW5hbWljIHBhdGgg
+c2VsZWN0b3JzIGF2YWlsYWJsZSB0bwo+IGRlYWwgd2l0aCBwYXRocyB0aGF0IGFyZSBqdXN0IHNp
+bXBseSBzbG93ZXIgdGhhdCBvdGhlciBwYXRocywgYnV0IGNhbgo+IHN0aWxsIGJlIHVzZWQgdG9n
+ZXRoZXIuICBJcyB0aGVyZSBzcGVjaWZpYyBoYXJkd2FyZSBvciBhIHNwZWNpZmljIHNldHVwCj4g
+d2hlcmUgdGhpcyBpc24ndCBnb29kIGVub3VnaCBhbmQgd2UgcmVhbGx5IG5lZWQgdG8gc2VwZXJh
+dGUgdGhlc2UgcGF0aHMKPiBpbnRvIGRpZmZlcmVudCBwYXRoZ3JvdXBzLCBidXQgd2UgY2FuJ3Qg
+ZmluZCBvdXQgZGV0ZXJtaW5pc3RpY2FsbHkgaG93Cj4gdGhlIGdyb3VwcyBzaG91bGQgYmUgc2V0
+IHVwPyAgSXQganVzdCBzZWVtcyBsaWtlIHRoZXJlIGNvdWxkIGJlIGEgbGVzcwo+IGhhY2t5IHNv
+bHV0aW9uIHRvIHRoaXMgcHJvYmxlbSwgYnV0IHBlcmhhcHMgdGhlcmUgYXJlIHNvbWUgc2l0dWF0
+aW9ucwo+IHdoZXJlIHRoaXMgaXMgdHJ1bHkgdGhlIGJlc3Qgb3B0aW9uLiBJJ20ganVzdCB3b25k
+ZXJpbmcgd2hhdCB0aG9zZSBhcmUuMS4gSW4gdGhlIFN0b3JhZ2UtQmFja3VwIGVudmlyb25tZW50
+IG9mIEh5cGVyQ2x1c3Rlcu+8jGluY2x1ZHMgb25lIHN0b3JhZ2UgYXJyYXkgbmVhcgp0byB0aGUg
+aG9zdCBhbmQgb25lIHJlbW90ZSBzdG9yYWdlIGFycmF5LCBhbmQgdGhlIHR3byBzdG9yYWdlIGFy
+cmF5cyBoYXZlIHRoZSBzYW1lIGhhcmR3YXJlLgpUaGUgc2FtZSBMVU4gaXMgd3JpdGVkIG9yIHJl
+YWRlZCBieSB0aGUgdHdvIHN0b3JhZ2UgYXJyYXlzLgpIb3dldmVyLCB1c3VhbGx5LCB0aGUgYXZl
+cmFnZSBsYXRlbmN5IG9mIHRoZSBwYXRocyBvZiB0aGUgcmVtb3RlIHN0b3JhZ2UgYXJyYXkgaXMg
+bXVjaCBoaWdoZXIgdGhhbiB0aGUKbmVhciBzdG9yYWdlIGFycmF5J3MuCmFwcGFyZW50bHksIHRo
+ZSBwcmlvcml0aXplciBjYW4gYmUgYSBnb29kIGF1dG9tYXRpYyBzb2x1dGlvbi4KQW5kIHRoZSBj
+dXJyZW50IHNlbGVjdG9ycyBkb24ndCBzb2x2ZSBpdCwgSU9zIHdpbGwgc2VuZCB0byB0aGUgcGF0
+aHMgb2YgdGhlIHJlbW90ZSBzdG9yYWdlIGFycmF5LCBJT1BTIHdpbGwgYmUgaW5mbHVlbmNlZCB1
+bmF2b2lkYWJseS4KMi4gSW4gdGhlIGVudmlyb25tZW50IG9mIHNpbmdsZSBzdG9yYWdlIGFycmF5
+LCB0aGUgcHJpb3JpdGl6ZXIgY2FuIGF1dG9tYXRpY2FsbHkgc2VwYXJhdGUgdGhlIHBhdGhzIHdo
+bydzIGxhdGVuY3kgaXMgbXVjaCBoaWdoZXIsCklPcyB3aWxsIG5vdCBzZW5kIHRvIHRoaXMgcGF0
+aHMuCkJ1dCB0aGUgY3VycmVudCBzZWxlY3RvcnMgZG9uJ3Qgc29sdmUgdGhpcyBwcm9ibGVtLCBJ
+T1BTIHdpbGwgYmUgaW5mbHVlbmNlZCB1bmF2b2lkYWJseS4KCj4+ICsKPj4gKy8qIGludGVydmFs
+X3VuaXRfc3RyIGFuZCBpbnRlcnZhbF91bml0X3R5cGUga2VlcCB0aGUgc2FtZSBhc3NpZ25tZW50
+IHNlcXVlbmNlICovCj4+ICtzdGF0aWMgY29uc3QgY2hhciBpbnRlcnZhbF91bml0X3N0cltdW01B
+WF9DSEFSX1NJWkVdID0gewo+PiArICAgIENIQVJfVVNFQywgQ0hBUl9NU0VDLCBDSEFSX1NFQwo+
+IAo+IFRoaXMgaXMgYSBuaXQsIGJ1dCBmb3IgY29uc3RhbnQgc3RyaW5ncywgY291bGQgeW91IHBs
+ZWFzZSB1c2UgImNoYXIKPiAqdmFyIiBpbnN0ZWFkIG9mICJjaGFyIHZhcltdIiwgdG8gYmUgY29u
+c2lzdGVudCB3aXRoIHRoZSByZXN0IG9mIHRoZQo+IG11bHRpcGF0aCBjb2RlLgpUaGFua3MsIGFz
+IHRoZSBmb2xsb3dpbmcgcGF0Y2guCgo+PiArICAgIGlmICgoYXJncyA9PSBOVUxMKSB8fCAoaW50
+ZXJ2YWwgPT0gTlVMTCkKPj4gKyAgICAgICAgfHwgKGNvbnNudW0gPT0gTlVMTCkgfHwgKHR5cGUg
+PT0gTlVMTCkpCj4+ICsgICAgICAgIHJldHVybiAwOwo+PiArCj4+ICsgICAgLyogaW50IHR5cGUg
+Ki8KPj4gKyAgICBpZiAoKHNpemUgPCAxKSB8fCAoc2l6ZSA+IE1BWF9DSEFSX1NJWkUtMSkpCj4+
+ICsgICAgICAgIHJldHVybiAwOwo+IAo+IFlvdSBzaG91bGQgcHJvYmFibHkgaGF2ZSBsb2cgbWVz
+c2FnZXMgZm9yIHRoZXNlIGVycm9yIHJldHVybnMuClRoYW5rcywgYXMgdGhlIGZvbGxvd2luZyBw
+YXRjaC4KCj4+ICsKPj4gKyAgICBtZW1jcHkoc291cmNlLCBhcmdzLCBzaXplKzEpOwo+PiArICAg
+IGlmIChzdHJzdHIoc291cmNlLCB2ZXJ0aWNhKSA9PSBOVUxMKQo+PiArICAgICAgICByZXR1cm4g
+MDsKPj4gKwo+PiArICAgICp0eXBlID0gZ2V0X2ludGVydmFsX3R5cGUoc291cmNlLCB0eXBlc3Ry
+KTsKPj4gKyAgICBpZiAoKnR5cGUgPT0gSU5URVJWQUxfSU5WQUxJRCkKPj4gKyAgICB7Cj4+ICsg
+ICAgICAgIGNvbmRsb2coMCwgImRlbGF5X2ludGVydmFsIHR5cGUgaXMgaW52YWxpZCIpOwo+PiAr
+ICAgICAgICByZXR1cm4gMDsKPj4gKyAgICB9Cj4gCj4gSSdtIGNvbmZ1c2VkIGhlcmUuIEhvdyBk
+byB5b3UgZ2V0IHRvIHVzZSB0aGUgZGVmYXVsdCBpbnRlcnZhbC4gU2hvdWxkbid0Cj4geW91IGFj
+Y2VwdCAiMjBzfCIgYW5kICJ8MzAiIGFuZCBhcyB2YWxpZCBpbnB1dHMgdGhhdCB1c2UgdGhlIGRl
+ZmF1bHRzCj4gZm9yIHRoZSBwYXJ0IHRoZXkgZG9uJ3Qgc3BlY2lmeS4gCk9L77yMdGhlIGRlZmF1
+bHQgYXJndW1lbnRzIHZhbHVlIGlzIHJlbW92ZWQuIElmIGdldCBpbnB1dHMgZmFpbGVkLCByZXR1
+cm4gZGVmYXVsdCBwcmlvcml0eSAiMCIuCkFzIHRoZSBmb2xsb3dpbmcgcGF0Y2guCj4gCj4+ICsg
+ICAgdG9rZW5iZWZvcmUgPSBzdHJ0b2soc291cmNlLCB2ZXJ0aWNhKTsKPj4gKyAgICB0b2tlbmFm
+dGVyID0gc3RydG9rKE5VTEwsIHZlcnRpY2EpOwo+PiArICAgIHR5cGVzdHJbMV0gPSAnXDAnOwo+
+PiArICAgIHRva2VuYmVmb3JlID0gc3RydG9rKHRva2VuYmVmb3JlLCB0eXBlc3RyKTsKPj4gKyAg
+ICBpZiAoKHRva2VuYmVmb3JlID09IE5VTEwpIHx8ICh0b2tlbmFmdGVyID09IE5VTEwpKQo+PiAr
+ICAgICAgICByZXR1cm4gMDsKPj4gKwo+PiArICAgIHRtcCA9IHRva2VuYmVmb3JlOwo+PiArICAg
+IHdoaWxlICgqdG1wICE9ICdcMCcpCj4+ICsgICAgICAgIGlmICghaXNkaWdpdCgqdG1wKyspKQo+
+PiArICAgICAgICB7Cj4+ICsgICAgICAgICAgICBjb25kbG9nKDAsICJkZWxheV9pbnRlcnZhbCBz
+dHJpbmcgaW5jbHVkZSBpbnZhbGlkIGNoYXIiKTsKPj4gKyAgICAgICAgICAgIHJldHVybiAwOwo+
+PiArICAgICAgICB9Cj4+ICsKPj4gKyAgICB0bXAgPSB0b2tlbmFmdGVyOwo+PiArICAgIHdoaWxl
+ICgqdG1wICE9ICdcMCcpCj4+ICsgICAgICAgIGlmICghaXNkaWdpdCgqdG1wKyspKQo+PiArICAg
+ICAgICB7Cj4+ICsgICAgICAgICAgICBjb25kbG9nKDAsICJjb25zX251bSBzdHJpbmcgaW5jbHVk
+ZSBpbnZhbGlkIGNoYXIiKTsKPj4gKyAgICAgICAgICAgIHJldHVybiAwOwo+PiArICAgICAgICB9
+Cj4+ICsKPj4gKyAgICAqaW50ZXJ2YWwgPSBhdG9pKHRva2VuYmVmb3JlKTsKPiAKPiBXaHkgZG8g
+eW91IGtlZXAgdHJhY2sgb2YgdGhlIHR5cGUgYW5kIHRoZSBpbnRlcnZhbCBzZXBlcmF0ZWx5PyBD
+YW4ndCB5b3UKPiBqdXN0IGZpbmQgb3V0IHRoZSB0eXBlLCBhbmQgdXNlIHRoYXQgdG8gbXVsdGlw
+bHkgdGhlIGludGVydmFsIG9uY2UgeW91Cj4gcmVhZCBpdCwgYW5kIHRoZW4ganVzdCB1c2UgdGhh
+dCB2YWx1ZSwgaW5zdGVhZCBvZiBrZWVwaW5nIHRyYWNrIG9mIHR3bwo+IHZhbHVlcyBhY3Jvc3Mg
+bXVsdGlwbGUgZnVuY3Rpb25zPwpUaGFua3MsIGFzIHRoZSBmb2xsb3dpbmcgcGF0Y2guCgo+PiAr
+Cj4+ICsJaWYgKHBwLT5mZCA8IDApCj4+ICsJICAgIHJldHVybiAtUFJJT19OT19JTkZPUk1BVElP
+TjsKPj4gKwo+PiArICAgIGlmIChnZXRfZGVsYXlfcHJlZl9hcmcoYXJncywgJmRlbGF5X2ludGVy
+dmFsLCAmY29uc19udW0sICZ0eXBlKSA9PSAwKQo+PiArICAgIHsKPj4gKyAgICAgICAgY29uZGxv
+ZygzLCAiJXM6IGdldCBkZWxheSBhcmcgZmFpbCIsIHBwLT5kZXYpOwo+IAo+IFdoeSB1c2UgdGhl
+IHdvcmQgImZhaWwiIGluIHRoaXMgbWVzc2FnZT8gTm90IHNldHRpbmcgcHJpb19hcmdzIHRvIGdl
+dAo+IHRoZSBkZWZhdWx0cyBzZWVtcyBsaWtlIGEgcGVyZmVjdGx5IHZhbGlkIGNob2ljZS4KVGhl
+IGRlZmF1bHRzIGFyZSBub3QgdXNlZC4gSW5zdGVhZGx5LCByZXR1cm4gZGVmYXVsdCBwcmlvcml0
+eSAiMCIuIFNlZSBiZWxvdy4KCj4+IGRpZmYgLS1naXQgYS9saWJtdWx0aXBhdGgvcHJpb3JpdGl6
+ZXJzL2RlbGF5ZWRwYXRoLmggYi9saWJtdWx0aXBhdGgvcHJpb3JpdGl6ZXJzL2RlbGF5ZWRwYXRo
+LmgKPj4gbmV3IGZpbGUgbW9kZSAxMDA2NDQKPj4gaW5kZXggMDAwMDAwMC4uZDgyMTNlOQo+PiAt
+LS0gL2Rldi9udWxsCj4+ICsrKyBiL2xpYm11bHRpcGF0aC9wcmlvcml0aXplcnMvZGVsYXllZHBh
+dGguaAo+PiBAQCAtMCwwICsxLDE3IEBACj4+ICsjaWZuZGVmIF9ERUxBWUVEUEFUSF9ICj4+ICsj
+ZGVmaW5lIF9ERUxBWUVEUEFUSF9ICj4+ICsKPj4gKyNkZWZpbmUgUFJJT19ERUxBWUVEX1BBVEgg
+ImRlbGF5ZWRwYXRoIgo+IAo+IEluIG9yZGVyIGZvciB0aGUgcmVzdCBvZiB0aGUgY29kZSB0byBy
+ZWZlciB0byB0aGlzIHByaW9yaXRpemVyLCB0aGlzCj4gZGVmaW5lIHNob3VsZCBiZSBpbiBwcmlv
+Lmggd2l0aCB0aGUgb3RoZXIgcHJpb3JpdGl6ZXIgbmFtZXMsIGFuZCBhcyBsb25nCj4gYXMgZGVs
+YXllZHBhdGguYyBpbmNsdWRlcyBwcmlvLmgsIHRoZXJlJ3Mgbm8gbmVlZCB0byBwdXQgaXQgaW4K
+PiBkZWxheWVkcGF0aC5oLgpPSywgYXMgdGhlIGZvbGxvd2luZyBwYXRjaC4KPiAKPj4gKwo+PiAr
+I2RlZmluZSBQUklPX05PX0lORk9STUFUSU9OIDUKPiAKPiBUaGUgcmVzdCBvZiB0aGUgbXVsdGlw
+YXRoIGNvZGUgb25seSBjYXJlcyBpZiBnZXRwcmlvIHJldHVybnMgYSBuZWdhdGl2ZQo+IG51bWJl
+ciBvZiBub3QuIEl0IGRvZXNuJ3QgY2hlY2sgd2hhdCB0aGUgc3BlY2lmaWMgbmVnYXRpdmUgbnVt
+YmVyIGlzLiAgSQo+IHJlYWxpemUgdGhlIHRoZSBhbHVhIHByaW9yaXRpemVyIHJldHVybnMgYSBz
+ZXQgb2YgZXJyb3IgY29kZXMsIGJ1dCB0aGV5Cj4gYXJlbid0IHVzZWQsIG9yIGV2ZW4gdXNhYmxl
+IGluIHRoZWlyIHByZXNlbnQgZm9ybS4gSWYgd2Ugd2FudGVkIHRvIGhhdmUKPiBiZXR0ZXIgZXJy
+b3IgcmVwb3J0aW5nLCB3ZSBzaG91bGQgc2V0IHVwIGEgdW5pdmVyc2FsIHNldCBvZiBlcnJvciBj
+b2Rlcwo+IGluIHByaW8uaCwgYW5kIGhhdmUgYWxsIHByaW9yaXRpemVycyB1c2UgdGhlbSwgaW5z
+dGVhZCBvZiBoYXZpbmcgZWFjaAo+IHByaW9yaXRpemVyIGRlZmluZSBpdHMgb3duIGVycm9yIGNv
+ZGVzLiBUaGVyZSdzIG5vIHJlYXNvbiB3aHkgeW91cgo+IHByaW9yaXRpemVyIG5lZWRzIHRvIHJl
+dHVybiB0aGlzIGVycm9yIGNvZGUgaW5zdGVhZCBvZiAtMS4KT0ssIGFzIHRoZSBmb2xsb3dpbmcg
+cGF0Y2guCj4gCj4+ICsKPj4gKyNkZWZpbmUgVVNFQ19QRVJfU0VDICAgICAgMTAwMDAwMExMCj4+
+ICsjZGVmaW5lIFVTRUNfUEVSX01TRUMgICAgIDEwMDBMTAo+PiArI2RlZmluZSBVU0VDX1BFUl9V
+U0VDICAgICAxTEwKPj4gKwo+PiArc3RhdGljIGlubGluZSBsb25nIGxvbmcgdGltZXZhbF90b191
+cyhjb25zdCBzdHJ1Y3QgdGltZXNwZWMgKnR2KQo+PiArewo+PiArCXJldHVybiAoKGxvbmcgbG9u
+ZykgdHYtPnR2X3NlYyAqIFVTRUNfUEVSX1NFQykgKyAodHYtPnR2X25zZWMgPj4gMTApOwo+PiAr
+fQo+IAo+IE5vIG90aGVyIGZpbGUgYmVzaWRlcyBkZWxheWVkcGF0aC5jIHdpbGwgbGlrZWx5IGJl
+IGluY2x1ZGluZyB0aGlzIC5oCj4gZmlsZSwgc28gSSBkb24ndCBzZWUgYW55IHB1cnBvc2UgZm9y
+IHRoZXNlIGJlaW5nIGRlZmluZWQgaGVyZS4gIEluIGZhY3QsCj4gSSBkb24ndCBzZWUgd2h5IHlv
+dSBjYW4ndCBqdXN0IGhhdmUgYSAuYyBmaWxlIHdpdGhvdXQgYSAuaCBmaWxlIGxpa2UgdGhlCj4g
+bWFqb3JpdHkgb2YgcHJpb3JpdGl6ZXJzLiAgSSdtIHByZXR0eSBzdXJlIHRoYXQgbm9uZSBvZiB0
+aGUgcHJpb3JpdGl6ZXJzCj4gcmVhbGx5IG5lZWQgdGhlaXIgb3duIC5oIGZpbGUuCk9LLCBhcyB0
+aGUgZm9sbG93aW5nIHBhdGNoLgo+IAo+PiArI2VuZGlmCj4+IGRpZmYgLS1naXQgYS9tdWx0aXBh
+dGgvbXVsdGlwYXRoLmNvbmYuNSBiL211bHRpcGF0aC9tdWx0aXBhdGguY29uZi41Cj4+IGluZGV4
+IDU5Mzk2ODguLmYxZTEyNmUgMTAwNjQ0Cj4+IC0tLSBhL211bHRpcGF0aC9tdWx0aXBhdGguY29u
+Zi41Cj4+ICsrKyBiL211bHRpcGF0aC9tdWx0aXBhdGguY29uZi41Cj4+IEBAIC0yOTMsNiArMjkz
+LDEwIEBAIEdlbmVyYXRlIGEgcmFuZG9tIHByaW9yaXR5IGJldHdlZW4gMSBhbmQgMTAuCj4+ICBH
+ZW5lcmF0ZSB0aGUgcGF0aCBwcmlvcml0eSBiYXNlZCBvbiB0aGUgcmVndWxhciBleHByZXNzaW9u
+IGFuZCB0aGUKPj4gIHByaW9yaXR5IHByb3ZpZGVkIGFzIGFyZ3VtZW50LiBSZXF1aXJlcyBwcmlv
+X2FyZ3Mga2V5d29yZC4KPj4gIC5UUAo+PiArLkkgZGVsYXllZHBhdGgKPj4gK0dlbmVyYXRlIHRo
+ZSBwYXRoIHByaW9yaXR5IGJhc2VkIG9uIGEgdGltZS1kZWxheSBhbGdvcml0aG0uCj4+ICtSZXF1
+aXJlcyBwcmlvX2FyZ3Mga2V5d29yZC4KPiAKPiBSZWFsbHkgaXQgZG9lc24ndCByZXF1aXJlIHBy
+aW9fYXJncyBpZiB5b3Ugd2FudCB0byB1c2UgdGhlIGRlZmF1bHQKPiB2YWx1ZXMsIGFuZCBzaG91
+bGQgcHJvYmFibHkgc2F5IHNvLgpUaGUgZGVmYXVsdCBhcmdzIGlzIGRpc2NhcmRlZCwgYXMgdGhl
+IGZvbGxvd2luZyBwYXRjaC4KCj4+ICsuSSBkZWxheWVkCj4+ICtOZWVkcyBhIHZhbHVlIG9mIHRo
+ZSBmb3JtCj4+ICtcZkkiPGRlbGF5X2ludGVydmFsfGNvbnNfbnVtPiJcZlIKPj4gKy5SUwo+PiAr
+LlRQIDgKPj4gKy5JIGRlbGF5X2ludGVydmFsCj4+ICtUaGUgaW50ZXJ2YWwgdmFsdWVzIG9mIGF2
+ZXJhZ2UgSU8tdGltZS1kZWxheSBiZXR3ZWVuIHR3byBkaWZmZXJlbnQgbmVpZ2hib3VyIHJhbmtz
+IG9mIHBhdGggcHJpb3JpdHksIHVzZWQgdG8gcGFydGl0aW9uIGRpZmZlcmVudCBwcmlvcml0eSBy
+YW5rcy4KPj4gK0Zvcm06IFhYcywgb3IgWFhYdXMsIG9yIFhYWG1zLiBVbml0OiBTZWNvbmQsIG9y
+IE1pY3Jvc2Vjb25kLCBvciBNaWxsaXNlY29uZC4gVmFsaWQgVmFsdWVzOiBJbnRlZ2VyLCBzIFsx
+LCA2MF0sIG1zIFsxLCAxMDAwKSwgdXMgWzEsIDEwMDApLAo+PiArRm9yIGV4YW1wbGU6IDEwcywg
+b3IgMTAwdXMsIG9yIDEwMG1zLiBUaGUgZGVmYXVsdCBpczogMTBtcy4KPj4gKy5UUAo+PiArLkkg
+Y29uc19udW0KPj4gK1RoZSBudW1iZXIgb2YgcmVhZCBJT3Mgc2VudCB0byB0aGUgY3VycmVudCBw
+YXRoIGNvbnRpbnVvdXNseSwgdXNlZCB0byBjYWxjdWxhdGUgdGhlIGF2ZXJhZ2UgSU8tdGltZS1k
+ZWxheS4gVmFsaWQgVmFsdWVzOiBJbnRlZ2VyLCBbMywgMTAwMF0uCj4+ICtGb3IgZXhhbXBsZTog
+MzAuIFRoZSBkZWZhdWx0IGlzOiAyMC4KPj4gKy5SRQo+PiArLlRQIDEyCj4gCj4gTG9va2luZyBh
+dCB0aGUgIndlaWdodGVkIiBwcmlvX2FyZ3MgZGVmaW5pdGlvbiBqdXN0IGFib3ZlIHlvdXIgImRl
+bGF5ZWQiCj4gZGVmaW5pdGlvbiwgdGhlIHBpcGUgY2hhcmFjdGVyICJ8IiBpcyBiZWluZyB1c2Vk
+IHRvIHNheSB0aGF0IGFueSBvZiBhCj4gc2V0IG9mIG9wdGlvbnMgaXMgYWxsb3dlZC4gIFlvdXIg
+ZGVmaW5pdGlvbiBoYXMgaXQgYmVpbmcgYSBsaXRlcmFsCj4gY2hhcmFjdGVyLCBidXQgaXQncyBz
+dGlsbCBpbnNpZGUgdGhlIGFuZ2xlIGJyYWNrZXRzIHRoYXQgdXN1YWxseQo+IGRlbGluZWF0ZSBh
+IHZhcmlhYmxlLiAgcGVyaGFwcyAiPGRlbGF5X2ludGVydmFsPnw8aW9fbnVtPiIgd291bGQgYmUK
+PiBlYXNpZXIgdG8gdW5kZXJzdGFuZCwgb3IgZXZlbiAiW2RlbGF5ZWRfaW50ZXJ2YWxdfFtpb19u
+dW1dIiBpZiB5b3UgY2FuCj4gb21pdCB0aGVzZSB0byB1c2UgdGhlIGRlZmF1bHRzLgpPSywgYXMg
+dGhlIGZvbGxvd2luZyBwYXRjaC4KVGhlIHVwLXRvLWRhdGUgcGF0Y2ggYXMgZm9sbG93czoKCi0t
+LQo+RnJvbSA1OGQ3MThmZGQzNDU1MGJkOWM0YTMyYzZlOWE4NzA5OWMxZTQ1YTlmIE1vbiBTZXAg
+MTcgMDA6MDA6MDAgMjAwMQpGcm9tOiBZYW5nIEZlbmcgPHBoaWxpcC55YW5nQGh1YXdlaS5jb20+
+CkRhdGU6IEZyaSwgMTkgTWF5IDIwMTcgMTY6MDk6MDcgKzA4MDAKU3ViamVjdDogW1BBVENIXSBs
+aWJtdWx0aXBhdGgvcHJpb3JpdGl6ZXJzOiBQcmlvcml0aXplciBmb3IgZGV2aWNlIG1hcHBlciBt
+dWx0aXBhdGgsIHdoZXJlIHRoZSBjb3JyZXNwb25kaW5nIHByaW9yaXR5CnZhbHVlcyBvZiBzcGVj
+aWZpYyBwYXRocyBhcmUgcHJvdmlkZWQgYnkgYSBsYXRlbmN5IGFsZ29yaXRobS4gQW5kIHRoZSBs
+YXRlbmN5IGFsZ29yaXRobSBpcyBkZXBlbmRlbnQgb24gdGhlIGZvbGxvd2luZwphcmd1bWVudHMo
+bGF0ZW5jeV9pbnRlcnZhbCBhbmQgaW9fbnVtKS4gVGhlIHByaW5jaXBsZSBvZiB0aGUgYWxnb3Jp
+dGhtIGlzIGlsbHVzdHJhdGVkIGFzIGZvbGxvd3M6CjEuIEJ5IHNlbmRpbmcgYSBjZXJ0YWluIG51
+bWJlciAiY29uc19udW0iIG9mIHJlYWQgSU9zIHRvIHRoZSBjdXJyZW50IHBhdGggY29udGludW91
+c2x5LCB0aGUgSU9zJyBhdmVyYWdlIGxhdGVuY3kgY2FuIGJlIGNhbGN1bGF0ZWQuCjIuIEFjY29y
+ZGluZyB0byB0aGUgYXZlcmFnZSBsYXRlbmN5IG9mIGVhY2ggcGF0aCBhbmQgdGhlIHdlaWdodCB2
+YWx1ZSAibGF0ZW5jeV9pbnRlcnZhbCIsIHRoZSBwcmlvcml0eSAicmMiIG9mIGVhY2ggcGF0aCBj
+YW4gYmUgcHJvdmlkZWQuCgogICAgICAgICAgICAgICAgICAgbGF0ZW5jeV9pbnRlcnZhbCAgIGxh
+dGVuY3lfaW50ZXJ2YWwgICBsYXRlbmN5X2ludGVydmFsICAgICAgIGxhdGVuY3lfaW50ZXJ2YWwK
+ICAgICAgICAgCSB8LS0tLS0tLS0tLS0tLS0tLS0tfC0tLS0tLS0tLS0tLS0tLS0tLXwtLS0tLS0t
+LS0tLS0tLS0tLS18Li4ufC0tLS0tLS0tLS0tLS0tLS0tLXwKCQkgfCAgcHJpb3JpdHkgcmFuayAx
+IHwgIHByaW9yaXR5IHJhbmsgMiB8ICBwcmlvcml0eSByYW5rIDMgfC4uLnwgIHByaW9yaXR5IHJh
+bmsgeCB8CgkJIHwtLS0tLS0tLS0tLS0tLS0tLS18LS0tLS0tLS0tLS0tLS0tLS0tfC0tLS0tLS0t
+LS0tLS0tLS0tLXwuLi58LS0tLS0tLS0tLS0tLS0tLS0tfAoJCQkJICAgICAgICAgIFByaW9yaXR5
+IFJhbmsgUGFydGl0aW9uaW5nCi0tLQogbGlibXVsdGlwYXRoL3ByaW9yaXRpemVycy9NYWtlZmls
+ZSAgICAgICB8ICAgNiArLQogbGlibXVsdGlwYXRoL3ByaW9yaXRpemVycy9wYXRoX2xhdGVuY3ku
+YyB8IDI3MSArKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrCiBtdWx0aXBhdGgvbXVsdGlw
+YXRoLmNvbmYuNSAgICAgICAgICAgICAgIHwgIDE4ICsrCiBsaWJtdWx0aXBhdGgvcHJpby5oIAkJ
+CSAgfCAgIDEgKwogNCBmaWxlcyBjaGFuZ2VkLCAyOTUgaW5zZXJ0aW9ucygrKSwgMSBkZWxldGlv
+bigtKQogY3JlYXRlIG1vZGUgMTAwNjQ0IGxpYm11bHRpcGF0aC9wcmlvcml0aXplcnMvcGF0aF9s
+YXRlbmN5LmMKCmRpZmYgLS1naXQgYS9saWJtdWx0aXBhdGgvcHJpb3JpdGl6ZXJzL01ha2VmaWxl
+IGIvbGlibXVsdGlwYXRoL3ByaW9yaXRpemVycy9NYWtlZmlsZQppbmRleCAzNmI0MmU0Li5kMmYy
+MGY2IDEwMDY0NAotLS0gYS9saWJtdWx0aXBhdGgvcHJpb3JpdGl6ZXJzL01ha2VmaWxlCisrKyBi
+L2xpYm11bHRpcGF0aC9wcmlvcml0aXplcnMvTWFrZWZpbGUKQEAgLTE4LDEzICsxOCwxNyBAQCBM
+SUJTID0gXAogCWxpYnByaW9yYW5kb20uc28gXAogCWxpYnByaW9yZGFjLnNvIFwKIAlsaWJwcmlv
+d2VpZ2h0ZWRwYXRoLnNvIFwKLQlsaWJwcmlvc3lzZnMuc28KKwlsaWJwcmlvcGF0aF9sYXRlbmN5
+LnNvIFwKKwlsaWJwcmlvc3lzZnMuc28KCiBhbGw6ICQoTElCUykKCiBsaWJwcmlvYWx1YS5zbzog
+YWx1YS5vIGFsdWFfcnRwZy5vCiAJJChDQykgJChMREZMQUdTKSAkKFNIQVJFRF9GTEFHUykgLW8g
+JEAgJF4KCitsaWJwcmlvcGF0aF9sYXRlbmN5LnNvOiBwYXRoX2xhdGVuY3kubyAgLi4vY2hlY2tl
+cnMvbGlic2cubworCSQoQ0MpICQoTERGTEFHUykgJChTSEFSRURfRkxBR1MpIC1vICRAICReIC1s
+bQorCiBsaWJwcmlvJS5zbzogJS5vCiAJJChDQykgJChMREZMQUdTKSAkKFNIQVJFRF9GTEFHUykg
+LW8gJEAgJF4KCmRpZmYgLS1naXQgYS9saWJtdWx0aXBhdGgvcHJpb3JpdGl6ZXJzL3BhdGhfbGF0
+ZW5jeS5jIGIvbGlibXVsdGlwYXRoL3ByaW9yaXRpemVycy9wYXRoX2xhdGVuY3kuYwpuZXcgZmls
+ZSBtb2RlIDEwMDY0NAppbmRleCAwMDAwMDAwLi5hNjY2YjZjCi0tLSAvZGV2L251bGwKKysrIGIv
+bGlibXVsdGlwYXRoL3ByaW9yaXRpemVycy9wYXRoX2xhdGVuY3kuYwpAQCAtMCwwICsxLDI3MSBA
+QAorLyoKKyAqIChDKSBDb3B5cmlnaHQgSFVBV0VJIFRlY2hub2xvZ3kgQ29ycC4gMjAxNywgMjAy
+MSAgIEFsbCBSaWdodHMgUmVzZXJ2ZWQuCisgKgorICogbWFpbi5jCisgKgorICogUHJpb3JpdGl6
+ZXIgZm9yIGRldmljZSBtYXBwZXIgbXVsdGlwYXRoLCB3aGVyZSB0aGUgY29ycmVzcG9uZGluZyBw
+cmlvcml0eQorICogdmFsdWVzIG9mIHNwZWNpZmljIHBhdGhzIGFyZSBwcm92aWRlZCBieSBhIGxh
+dGVuY3kgYWxnb3JpdGhtLiBBbmQgdGhlCisgKiBsYXRlbmN5IGFsZ29yaXRobSBpcyBkZXBlbmRl
+bnQgb24gYXJndW1lbnRzLgorICoKKyAqIFRoZSBwcmluY2lwbGUgb2YgdGhlIGFsZ29yaXRobSBh
+cyBmb2xsb3dzOgorICogMS4gQnkgc2VuZGluZyBhIGNlcnRhaW4gbnVtYmVyICJpb19udW0iIG9m
+IHJlYWQgSU9zIHRvIHRoZSBjdXJyZW50IHBhdGgKKyAqICAgIGNvbnRpbnVvdXNseSwgdGhlIElP
+cycgYXZlcmFnZSBsYXRlbmN5IGNhbiBiZSBjYWxjdWxhdGVkLgorICogMi4gQWNjb3JkaW5nIHRv
+IHRoZSBhdmVyYWdlIGxhdGVuY3kgb2YgZWFjaCBwYXRoIGFuZCB0aGUgd2VpZ2h0IHZhbHVlCisg
+KiAgICAibGF0ZW5jeV9pbnRlcnZhbCIsIHRoZSBwcmlvcml0eSAicmMiIG9mIGVhY2ggcGF0aCBj
+YW4gYmUgcHJvdmlkZWQuCisgKgorICogQXV0aG9yKHMpOiBZYW5nIEZlbmcgPHBoaWxpcC55YW5n
+QGh1YXdlaS5jb20+CisgKiAgICAgICAgICAgIFpvdSBNaW5nIDx6b3VtaW5nLnpvdW1pbmdAaHVh
+d2VpLmNvbT4KKyAqCisgKiBUaGlzIGZpbGUgaXMgcmVsZWFzZWQgdW5kZXIgdGhlIEdQTC4KKyAq
+LworI2luY2x1ZGUgPHN0ZGlvLmg+CisjaW5jbHVkZSA8bWF0aC5oPgorI2luY2x1ZGUgPGN0eXBl
+Lmg+CisjaW5jbHVkZSA8dGltZS5oPgorCisjaW5jbHVkZSAiZGVidWcuaCIKKyNpbmNsdWRlICJw
+cmlvLmgiCisjaW5jbHVkZSAic3RydWN0cy5oIgorI2luY2x1ZGUgIi4uL2NoZWNrZXJzL2xpYnNn
+LmgiCisKKyNkZWZpbmUgVEhSRVNfVVNFQ19WQUxVRSAgICAgICAgMTIwMDAwMDAwTEwgICAgLyp1
+bml0OiB1cywgPTEyMHMqLworCisjZGVmaW5lIE1BWF9JT19OVU0gICAgICAgICAgICAgIDIwMAor
+I2RlZmluZSBNSU5fSU9fTlVNICAgICAgICAgICAgICAxMAorCisjZGVmaW5lIE1BWF9MQVRFTkNZ
+X0lOVEVSVkFMICAgIDYwICAgICAgICAgICAgLyp1bml0OiBzKi8KKyNkZWZpbmUgTUlOX0xBVEVO
+Q1lfSU5URVJWQUwgICAgMSAgICAgICAgICAgICAvKnVuaXQ6IHVzLCBvciBtcywgb3IgcyovCisK
+KyNkZWZpbmUgREVGQVVMVF9QUklPUklUWSAgICAgICAgMAorCisjZGVmaW5lIE1BWF9DSEFSX1NJ
+WkUgICAgICAgICAgIDMwCisKKyNkZWZpbmUgQ0hBUl9VU0VDICAgICAgICAgICAgICAgInVzIgor
+I2RlZmluZSBDSEFSX01TRUMgICAgICAgICAgICAgICAibXMiCisjZGVmaW5lIENIQVJfU0VDICAg
+ICAgICAgICAgICAgICJzIgorCitlbnVtIGludGVydmFsX3R5cGUgeworICAgIElOVEVSVkFMX1VT
+RUMsCisgICAgSU5URVJWQUxfTVNFQywKKyAgICBJTlRFUlZBTF9TRUMsCisgICAgSU5URVJWQUxf
+SU5WQUxJRAorfTsKKworLyogaW50ZXJ2YWxfdW5pdF9zdHIgYW5kIGludGVydmFsX3VuaXRfdHlw
+ZSBrZWVwIHRoZSBzYW1lIGFzc2lnbm1lbnQgc2VxdWVuY2UgKi8KK3N0YXRpYyBjb25zdCBjaGFy
+ICppbnRlcnZhbF91bml0X3N0cltNQVhfQ0hBUl9TSVpFXSA9IHsKKyAgICBDSEFSX1VTRUMsIENI
+QVJfTVNFQywgQ0hBUl9TRUMKK307CitzdGF0aWMgY29uc3QgaW50IGludGVydmFsX3VuaXRfdHlw
+ZVtdID0geworICAgIElOVEVSVkFMX1VTRUMsIElOVEVSVkFMX01TRUMsIElOVEVSVkFMX1NFQwor
+fTsKKworI2RlZmluZSBVU0VDX1BFUl9TRUMgICAgICAxMDAwMDAwTEwKKyNkZWZpbmUgVVNFQ19Q
+RVJfTVNFQyAgICAgMTAwMExMCisjZGVmaW5lIFVTRUNfUEVSX1VTRUMgICAgIDFMTAorCitzdGF0
+aWMgY29uc3QgaW50IGNvbnZlcnNpb25fcmF0aW9bXSA9IHsKKyAgICBbSU5URVJWQUxfVVNFQ10J
+CT0gVVNFQ19QRVJfVVNFQywKKyAgICBbSU5URVJWQUxfTVNFQ10gICAgID0gVVNFQ19QRVJfTVNF
+QywKKyAgICBbSU5URVJWQUxfU0VDXQkJPSBVU0VDX1BFUl9TRUMsCisgICAgW0lOVEVSVkFMX0lO
+VkFMSURdCT0gMAorfTsKKworc3RhdGljIGxvbmcgbG9uZyBwYXRoX2xhdGVuY3lbTUFYX0lPX05V
+TV07CisKK3N0YXRpYyBpbmxpbmUgbG9uZyBsb25nIHRpbWV2YWxfdG9fdXMoY29uc3Qgc3RydWN0
+IHRpbWVzcGVjICp0dikKK3sKKwlyZXR1cm4gKChsb25nIGxvbmcpIHR2LT50dl9zZWMgKiBVU0VD
+X1BFUl9TRUMpICsgKHR2LT50dl9uc2VjID4+IDEwKTsKK30KKworc3RhdGljIGludCBkb19yZWFk
+c2VjdG9yMChpbnQgZmQsIHVuc2lnbmVkIGludCB0aW1lb3V0KQoreworCXVuc2lnbmVkIGNoYXIg
+YnVmWzQwOTZdOworCXVuc2lnbmVkIGNoYXIgc2J1ZltTRU5TRV9CVUZGX0xFTl07CisJaW50IHJl
+dDsKKworCXJldCA9IHNnX3JlYWQoZmQsICZidWZbMF0sIDQwOTYsICZzYnVmWzBdLAorCQkgICAg
+ICBTRU5TRV9CVUZGX0xFTiwgdGltZW91dCk7CisKKwlyZXR1cm4gcmV0OworfQorCitpbnQgY2hl
+Y2tfYXJnc192YWxpZChpbnQgaW9fbnVtLCBsb25nIGxvbmcgbGF0ZW5jeV9pbnRlcnZhbCwgaW50
+IHR5cGUpCit7CisgICAgaWYgKChpb19udW0gPCBNSU5fSU9fTlVNKSB8fCAoaW9fbnVtID4gTUFY
+X0lPX05VTSkpCisgICAgeworICAgICAgICBjb25kbG9nKDAsICJhcmdzIGlvX251bSBpcyBtb3Jl
+IHRoYW4gdGhlIHZhbGlkIHZhbHVlcyByYW5nZSIpOworICAgICAgICByZXR1cm4gMDsKKyAgICB9
+CisKKyAgICAvKiBzOlsxLCA2MF0sIG1zOlsxLCA2MDAwMF0sIHVzOlsxLCA2MDAwMDAwMF0gKi8K
+KyAgICBpZiAoKGxhdGVuY3lfaW50ZXJ2YWwgPCBNSU5fTEFURU5DWV9JTlRFUlZBTCkgfHwgKGxh
+dGVuY3lfaW50ZXJ2YWwgPiAoTUFYX0xBVEVOQ1lfSU5URVJWQUwgKiBVU0VDX1BFUl9TRUMgLyBj
+b252ZXJzaW9uX3JhdGlvW3R5cGVdKSkpCisgICAgeworICAgICAgICBjb25kbG9nKDAsICJhcmdz
+IGxhdGVuY3lfaW50ZXJ2YWwgaXMgbW9yZSB0aGFuIHRoZSB2YWxpZCB2YWx1ZXMgcmFuZ2UiKTsK
+KyAgICAgICAgcmV0dXJuIDA7CisgICAgfQorCisgICAgcmV0dXJuIDE7Cit9CisKK3N0YXRpYyBp
+bnQgZ2V0X2ludGVydmFsX3R5cGUoY2hhciAqdHlwZSkKK3sKKyAgICBpbnQgaW5kZXg7CisKKyAg
+ICBmb3IgKGluZGV4ID0gMDsgaW5kZXggPCBzaXplb2YoaW50ZXJ2YWxfdW5pdF9zdHIpL01BWF9D
+SEFSX1NJWkU7IGluZGV4KyspCisgICAgeworICAgICAgICBpZiAoc3RyY21wKHR5cGUsIGludGVy
+dmFsX3VuaXRfc3RyW2luZGV4XSkgPT0gMCkKKyAgICAgICAgeworICAgICAgICAgICAgcmV0dXJu
+IGludGVydmFsX3VuaXRfdHlwZVtpbmRleF07CisgICAgICAgIH0KKyAgICB9CisKKyAgICByZXR1
+cm4gSU5URVJWQUxfSU5WQUxJRDsKK30KKworbG9uZyBsb25nIGdldF9jb252ZXJzaW9uX3JhdGlv
+KGludCB0eXBlKQoreworICAgIHJldHVybiBjb252ZXJzaW9uX3JhdGlvW3R5cGVdOworfQorCisv
+KiBJbiBtdWx0aXBhdGguY29uZiwgYXJncyBmb3JtOiBpb19udW18bGF0ZW5jeV9pbnRlcnZhbC4g
+Rm9yIGV4YW1wbGUsCisqICBhcmdzIGlzICIyMHwxMG1zIiwgdGhpcyBmdW5jdGlvbiBjYW4gZ2V0
+IDIwLCAxMC4KKyovCitzdGF0aWMgaW50IGdldF9pbnRlcnZhbF9hbmRfaW9udW0oY2hhciAqYXJn
+cywKKyAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBpbnQgKmlvbnVtLAor
+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGxvbmcgbG9uZyAqaW50ZXJ2
+YWwpCit7CisgICAgY2hhciBzb3VyY2VbTUFYX0NIQVJfU0laRV07CisgICAgY2hhciB2ZXJ0aWNh
+ID0gJ3wnOworICAgIGNoYXIgKmVuZHN0cmJlZm9yZSA9IE5VTEw7CisgICAgY2hhciAqZW5kc3Ry
+YWZ0ZXIgPSBOVUxMOworICAgIGludCB0eXBlOworICAgIHVuc2lnbmVkIGludCBzaXplID0gc3Ry
+bGVuKGFyZ3MpOworICAgIGxvbmcgbG9uZyByYXRpbzsKKworICAgIGlmICgoYXJncyA9PSBOVUxM
+KSB8fCAoaW9udW0gPT0gTlVMTCkgfHwgKGludGVydmFsID09IE5VTEwpKQorICAgIHsKKyAgICAg
+ICAgY29uZGxvZygwLCAiYXJncyBzdHJpbmcgaXMgTlVMTCIpOworICAgICAgICByZXR1cm4gMDsK
+KyAgICB9CisKKyAgICBpZiAoKHNpemUgPCAxKSB8fCAoc2l6ZSA+IE1BWF9DSEFSX1NJWkUtMSkp
+CisgICAgeworICAgICAgICBjb25kbG9nKDAsICJhcmdzIHN0cmluZydzIHNpemUgaXMgdG9vIGxv
+bmciKTsKKyAgICAgICAgcmV0dXJuIDA7CisgICAgfQorCisgICAgbWVtY3B5KHNvdXJjZSwgYXJn
+cywgc2l6ZSsxKTsKKworICAgIGlmICghaXNkaWdpdChzb3VyY2VbMF0pKQorICAgIHsKKyAgICAg
+ICAgY29uZGxvZygwLCAiYXJncyBpb19udW0gc3RyaW5nJ3MgZmlyc3QgY2hhciBpcyBub3QgZGln
+aXQiKTsKKyAgICAgICAgcmV0dXJuIDA7CisgICAgfQorCisgICAgKmlvbnVtID0gKGludClzdHJ0
+b3VsKHNvdXJjZSwgJmVuZHN0cmJlZm9yZSwgMTApOworICAgIGlmIChlbmRzdHJiZWZvcmVbMF0g
+IT0gdmVydGljYSkKKyAgICB7CisgICAgICAgIGNvbmRsb2coMCwgInNlZ21lbnRhdGlvbiBjaGFy
+IGlzIGludmFsaWQiKTsKKyAgICAgICAgcmV0dXJuIDA7CisgICAgfQorCisgICAgaWYgKCFpc2Rp
+Z2l0KGVuZHN0cmJlZm9yZVsxXSkpCisgICAgeworICAgICAgICBjb25kbG9nKDAsICJhcmdzIGxh
+dGVuY3lfaW50ZXJ2YWwgc3RyaW5nJ3MgZmlyc3QgY2hhciBpcyBub3QgZGlnaXQiKTsKKyAgICAg
+ICAgcmV0dXJuIDA7CisgICAgfQorCisgICAgKmludGVydmFsID0gKGxvbmcgbG9uZylzdHJ0b2wo
+JmVuZHN0cmJlZm9yZVsxXSwgJmVuZHN0cmFmdGVyLCAxMCk7CisgICAgdHlwZSA9IGdldF9pbnRl
+cnZhbF90eXBlKGVuZHN0cmFmdGVyKTsKKyAgICBpZiAodHlwZSA9PSBJTlRFUlZBTF9JTlZBTElE
+KQorICAgIHsKKyAgICAgICAgY29uZGxvZygwLCAiYXJncyBsYXRlbmN5X2ludGVydmFsIHR5cGUg
+aXMgaW52YWxpZCIpOworICAgICAgICByZXR1cm4gMDsKKyAgICB9CisKKyAgICBpZiAoY2hlY2tf
+YXJnc192YWxpZCgqaW9udW0sICppbnRlcnZhbCwgdHlwZSkgPT0gMCkKKyAgICB7CisgICAgICAg
+IHJldHVybiAwOworICAgIH0KKworCXJhdGlvID0gZ2V0X2NvbnZlcnNpb25fcmF0aW8odHlwZSk7
+CisgICAgKmludGVydmFsICo9IChsb25nIGxvbmcpcmF0aW87CisKKyAgICByZXR1cm4gMTsKK30K
+KworbG9uZyBsb25nIGNhbGNfc3RhbmRhcmRfZGV2aWF0aW9uKGxvbmcgbG9uZyAqcGF0aF9sYXRl
+bmN5LCBpbnQgc2l6ZSwgbG9uZyBsb25nIGF2Z2xhdGVuY3kpCit7CisgICAgaW50IGluZGV4Owor
+ICAgIGxvbmcgbG9uZyB0b3RhbCA9IDA7CisKKyAgICBmb3IgKGluZGV4ID0gMDsgaW5kZXggPCBz
+aXplOyBpbmRleCsrKQorICAgIHsKKyAgICAgICAgdG90YWwgKz0gKHBhdGhfbGF0ZW5jeVtpbmRl
+eF0gLSBhdmdsYXRlbmN5KSAqIChwYXRoX2xhdGVuY3lbaW5kZXhdIC0gYXZnbGF0ZW5jeSk7Cisg
+ICAgfQorCisgICAgdG90YWwgLz0gKHNpemUtMSk7CisKKyAgICByZXR1cm4gKGxvbmcgbG9uZylz
+cXJ0KChkb3VibGUpdG90YWwpOworfQorCitpbnQgZ2V0cHJpbyAoc3RydWN0IHBhdGggKnBwLCBj
+aGFyICphcmdzLCB1bnNpZ25lZCBpbnQgdGltZW91dCkKK3sKKyAgICBpbnQgcmMsIHRlbXA7Cisg
+ICAgaW50IGluZGV4ID0gMDsKKyAgICBpbnQgaW9fbnVtOworICAgIGxvbmcgbG9uZyBsYXRlbmN5
+X2ludGVydmFsOworICAgIGxvbmcgbG9uZyBhdmdsYXRlbmN5OworICAgIGxvbmcgbG9uZyBzdGFu
+ZGFyZF9kZXZpYXRpb247CisgICAgbG9uZyBsb25nIHRvbGRlbGF5ID0gMDsKKyAgICBsb25nIGxv
+bmcgYmVmb3JlLCBhZnRlcjsKKyAgICBzdHJ1Y3QgdGltZXNwZWMgdHY7CisKKwlpZiAocHAtPmZk
+IDwgMCkKKwkJcmV0dXJuIC0xOworCisgICAgaWYgKGdldF9pbnRlcnZhbF9hbmRfaW9udW0oYXJn
+cywgJmlvX251bSwgJmxhdGVuY3lfaW50ZXJ2YWwpID09IDApCisgICAgeworICAgICAgICBjb25k
+bG9nKDAsICIlczogZ2V0IHBhdGhfbGF0ZW5jeSBhcmdzIGZhaWwiLCBwcC0+ZGV2KTsKKyAgICAg
+ICAgcmV0dXJuIERFRkFVTFRfUFJJT1JJVFk7CisgICAgfQorCisgICAgbWVtc2V0KHBhdGhfbGF0
+ZW5jeSwgMCwgc2l6ZW9mKHBhdGhfbGF0ZW5jeSkpOworCisgICAgdGVtcCA9IGlvX251bTsKKyAg
+ICB3aGlsZSAodGVtcC0tID4gMCkKKyAgICB7CisgICAgICAgICh2b2lkKWNsb2NrX2dldHRpbWUo
+Q0xPQ0tfTU9OT1RPTklDLCAmdHYpOworICAgICAgICBiZWZvcmUgPSB0aW1ldmFsX3RvX3VzKCZ0
+dik7CQkKKworICAgICAgICBpZiAoZG9fcmVhZHNlY3RvcjAocHAtPmZkLCB0aW1lb3V0KSA9PSAy
+KQorICAgICAgICB7CisgICAgICAgICAgICBjb25kbG9nKDAsICIlczogcGF0aCBkb3duIiwgcHAt
+PmRldik7CisgICAgICAgICAgICByZXR1cm4gLTE7CisgICAgICAgIH0KKworICAgICAgICAodm9p
+ZCljbG9ja19nZXR0aW1lKENMT0NLX01PTk9UT05JQywgJnR2KTsKKyAgICAgICAgYWZ0ZXIgPSB0
+aW1ldmFsX3RvX3VzKCZ0dik7CisKKyAgICAgICAgcGF0aF9sYXRlbmN5W2luZGV4XSA9IGFmdGVy
+IC0gYmVmb3JlOworICAgICAgICB0b2xkZWxheSArPSBwYXRoX2xhdGVuY3lbaW5kZXgrK107Cisg
+ICAgfQorCisgICAgYXZnbGF0ZW5jeSA9IHRvbGRlbGF5Lyhsb25nIGxvbmcpaW9fbnVtOworICAg
+IGNvbmRsb2coNCwgIiVzOiBhdmVyYWdlIGxhdGVuY3kgaXMgKCVsbGQpIiwgcHAtPmRldiwgYXZn
+bGF0ZW5jeSk7CisKKyAgICBpZiAoYXZnbGF0ZW5jeSA+IFRIUkVTX1VTRUNfVkFMVUUpCisgICAg
+eworICAgICAgICBjb25kbG9nKDAsICIlczogYXZlcmFnZSBsYXRlbmN5ICglbGxkKSBpcyBtb3Jl
+IHRoYW4gdGhyZXNvbGQiLCBwcC0+ZGV2LCBhdmdsYXRlbmN5KTsKKyAgICAgICAgcmV0dXJuIERF
+RkFVTFRfUFJJT1JJVFk7CisgICAgfQorCisgICAgLyogd2FybiB0aGUgdXNlciBpZiB0aGUgbGF0
+ZW5jeV9pbnRlcnZhbCBzZXQgaXMgc21hbGxlciB0aGFuICgyICogc3RhbmRhcmQgZGV2aWF0aW9u
+KSwgb3IgZXF1YWwgKi8KKyAgICBzdGFuZGFyZF9kZXZpYXRpb24gPSBjYWxjX3N0YW5kYXJkX2Rl
+dmlhdGlvbihwYXRoX2xhdGVuY3ksIGluZGV4LCBhdmdsYXRlbmN5KTsKKyAgICBpZiAobGF0ZW5j
+eV9pbnRlcnZhbCA8PSAoMiAqIHN0YW5kYXJkX2RldmlhdGlvbikpCisgICAgICAgIGNvbmRsb2co
+MywgIiVzOiBhcmdzIGxhdGVuY3lfaW50ZXJ2YWwgc2V0IGlzIHNtYWxsZXIgdGhhbiAyICogc3Rh
+bmRhcmQgZGV2aWF0aW9uICglbGxkIHVzKSwgb3IgZXF1YWwiLAorICAgICAgICAgICAgcHAtPmRl
+diwgc3RhbmRhcmRfZGV2aWF0aW9uKTsKKworCXJjID0gKGludCkoVEhSRVNfVVNFQ19WQUxVRSAt
+IChhdmdsYXRlbmN5Lyhsb25nIGxvbmcpbGF0ZW5jeV9pbnRlcnZhbCkpOworICAgIHJldHVybiBy
+YzsKK30KZGlmZiAtLWdpdCBhL211bHRpcGF0aC9tdWx0aXBhdGguY29uZi41IGIvbXVsdGlwYXRo
+L211bHRpcGF0aC5jb25mLjUKaW5kZXggNTkzOTY4OC4uM2RkMGQ3NyAxMDA2NDQKLS0tIGEvbXVs
+dGlwYXRoL211bHRpcGF0aC5jb25mLjUKKysrIGIvbXVsdGlwYXRoL211bHRpcGF0aC5jb25mLjUK
+QEAgLTI5Myw2ICsyOTMsMTAgQEAgR2VuZXJhdGUgYSByYW5kb20gcHJpb3JpdHkgYmV0d2VlbiAx
+IGFuZCAxMC4KIEdlbmVyYXRlIHRoZSBwYXRoIHByaW9yaXR5IGJhc2VkIG9uIHRoZSByZWd1bGFy
+IGV4cHJlc3Npb24gYW5kIHRoZQogcHJpb3JpdHkgcHJvdmlkZWQgYXMgYXJndW1lbnQuIFJlcXVp
+cmVzIHByaW9fYXJncyBrZXl3b3JkLgogLlRQCisuSSBwYXRoX2xhdGVuY3kKK0dlbmVyYXRlIHRo
+ZSBwYXRoIHByaW9yaXR5IGJhc2VkIG9uIGEgbGF0ZW5jeSBhbGdvcml0aG0uCitSZXF1aXJlcyBw
+cmlvX2FyZ3Mga2V5d29yZC4KKy5UUAogLkkgZGF0YWNvcmUKIC5cIiBYWFgKID8/Py4gUmVxdWly
+ZXMgcHJpb19hcmdzIGtleXdvcmQuCkBAIC0zMzMsNiArMzM3LDIwIEBAIHRoZXNlIHZhbHVlcyBj
+YW4gYmUgbG9va2VkIHVwIHRocm91Z2ggc3lzZnMgb3IgYnkgcnVubmluZyBcZkltdWx0aXBhdGhk
+IHNob3cgcGF0CiAiJU46JVI6JW46JXIiXGZSLiBGb3IgZXhhbXBsZTogMHgyMDAxMDBlMDhiYTBh
+ZWEwOjB4MjEwMTAwZTA4YmEwYWVhMDouKjouKiAsIC4qOi4qOmlxbi4yMDA5LTEwLmNvbS5yZWRo
+YXQubXNwLmxhYi5hc2stMDY6LioKIC5SRQogLlRQIDEyCisuSSBwYXRoX2xhdGVuY3kKK05lZWRz
+IGEgdmFsdWUgb2YgdGhlIGZvcm0KK1xmSSI8bGF0ZW5jeV9pbnRlcnZhbD58PGlvX251bT4iXGZS
+CisuUlMKKy5UUCA4CisuSSBsYXRlbmN5X2ludGVydmFsCitUaGUgaW50ZXJ2YWwgdmFsdWVzIG9m
+IGF2ZXJhZ2UgbGF0ZW5jeSBiZXR3ZWVuIHR3byBkaWZmZXJlbnQgbmVpZ2hib3VyIHJhbmtzIG9m
+IHBhdGggcHJpb3JpdHksIHVzZWQgdG8gcGFydGl0aW9uIGRpZmZlcmVudCBwcmlvcml0eSByYW5r
+cy4KK0Zvcm06IFhYcywgb3IgWFhYdXMsIG9yIFhYWG1zLiBVbml0OiBTZWNvbmQsIG9yIE1pY3Jv
+c2Vjb25kLCBvciBNaWxsaXNlY29uZC4gVmFsaWQgVmFsdWVzOiBJbnRlZ2VyLCBzIFsxLCA2MF0s
+IG1zIFsxLCA2MDAwMF0sIHVzIFsxLCA2MDAwMDAwMF0sCitGb3IgZXhhbXBsZTogSWYgbGF0ZW5j
+eV9pbnRlcnZhbD0xMG1zLCB0aGUgcGF0aHMgd2lsbCBiZSBncm91cGVkIGluIHByaW9yaXR5IGdy
+b3VwcyB3aXRoIHBhdGggbGF0ZW5jeSAwLTEwbXMsIDEwLTIwbXMsIDIwLTMwbXMsIGV0Yy4uCisu
+VFAKKy5JIGlvX251bQorVGhlIG51bWJlciBvZiByZWFkIElPcyBzZW50IHRvIHRoZSBjdXJyZW50
+IHBhdGggY29udGludW91c2x5LCB1c2VkIHRvIGNhbGN1bGF0ZSB0aGUgYXZlcmFnZSBwYXRoIGxh
+dGVuY3kuIFZhbGlkIFZhbHVlczogSW50ZWdlciwgWzEwLCAyMDBdLgorLlJFCisuVFAgMTIKIC5J
+IGFsdWEKIElmIFxmSWV4Y2x1c2l2ZV9wcmVmX2JpdFxmUiBpcyBzZXQsIHBhdGhzIHdpdGggdGhl
+IFxmSXByZWZlcnJlZCBwYXRoXGZSIGJpdAogc2V0IHdpbGwgYWx3YXlzIGJlIGluIHRoZWlyIG93
+biBwYXRoIGdyb3VwLgpkaWZmIC0tZ2l0IGEvbGlibXVsdGlwYXRoL3ByaW8uaCBiL2xpYm11bHRp
+cGF0aC9wcmlvLmgKaW5kZXggMDE5M2M1Mi4uYzk3ZmUzOSAxMDA2NDQKLS0tIGEvbGlibXVsdGlw
+YXRoL3ByaW8uaAorKysgYi9saWJtdWx0aXBhdGgvcHJpby5oCkBAIC0yOSw2ICsyOSw3IEBAIHN0
+cnVjdCBwYXRoOwogI2RlZmluZSBQUklPX1JEQUMJCSJyZGFjIgogI2RlZmluZSBQUklPX1dFSUdI
+VEVEX1BBVEgJIndlaWdodGVkcGF0aCIKICNkZWZpbmUgUFJJT19TWVNGUwkJInN5c2ZzIgorI2Rl
+ZmluZSBQUklPX1BBVEhfTEFURU5DWQkicGF0aF9sYXRlbmN5IgoKIC8qCiAgKiBWYWx1ZSB1c2Vk
+IHRvIG1hcmsgdGhlIGZhY3QgcHJpbyB3YXMgbm90IGRlZmluZWQKLS0gCgotLQpkbS1kZXZlbCBt
+YWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21h
+aWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
