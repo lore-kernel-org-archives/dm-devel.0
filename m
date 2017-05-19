@@ -1,12 +1,14 @@
 From: Enric Balletbo i Serra <enric.balletbo@collabora.com>
-Subject: [PATCH v8 0/2] dm: boot a mapped device without an
-	initramfs
-Date: Fri, 19 May 2017 09:11:44 +0200
-Message-ID: <20170519071146.25760-1-enric.balletbo@collabora.com>
+Subject: [PATCH v8 2/2] dm ioctl: add a device mapper ioctl
+	function.
+Date: Fri, 19 May 2017 09:11:46 +0200
+Message-ID: <20170519071146.25760-3-enric.balletbo@collabora.com>
+References: <20170519071146.25760-1-enric.balletbo@collabora.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20170519071146.25760-1-enric.balletbo@collabora.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,48 +22,95 @@ To: dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>
 Cc: Mike Snitzer <snitzer@redhat.com>, linux-lvm@redhat.com, linux-kernel@vger.kernel.org, Kees Cook <keescook@chromium.org>, linux-doc@vger.kernel.org
 List-Id: dm-devel.ids
 
-Dear all,
+Add a dm_ioctl_cmd to issue the equivalent of a DM ioctl call in kernel.
 
-So here is a new version of the patches to be reviewed, this time as
-suggested by Alasdair the patches are reworked to match with the new
-dmsetup bootformat feature [1]. These patches are not reviewed yet but
-the format was discussed in the IRC and was suggested to send the
-kernel patches in parallel.
+Signed-off-by: Enric Balletbo i Serra <enric.balletbo@collabora.com>
+---
+ drivers/md/dm-ioctl.c         | 50 +++++++++++++++++++++++++++++++++++++++++++
+ include/linux/device-mapper.h |  6 ++++++
+ 2 files changed, 56 insertions(+)
 
-Changes since v7:
- - Fix build error due commit
-    e516db4f67 (dm ioctl: add a new DM_DEV_ARM_POLL ioctl)
-
-Changes since v6:
- - Add a new function to issue the equivalent of a DM ioctl programatically.
- - Use the new ioctl interface to create the devices.
- - Use a comma-delimited and semi-colon delimited dmsetup-like commands.
-
-Changes since v5:
- - https://www.redhat.com/archives/dm-devel/2016-February/msg00112.html
-
-[1] https://www.redhat.com/archives/linux-lvm/2017-May/msg00047.html
-
-Wating for your feedback,
-
-Enric Balletbo i Serra (1):
-  dm ioctl: add a device mapper ioctl function.
-
-Will Drewry (1):
-  init: add support to directly boot to a mapped device
-
- Documentation/admin-guide/kernel-parameters.rst |   1 +
- Documentation/admin-guide/kernel-parameters.txt |   3 +
- Documentation/device-mapper/dm-boot.txt         |  65 ++++
- drivers/md/dm-ioctl.c                           |  50 +++
- include/linux/device-mapper.h                   |   6 +
- init/Makefile                                   |   1 +
- init/do_mounts.c                                |   1 +
- init/do_mounts.h                                |  10 +
- init/do_mounts_dm.c                             | 459 ++++++++++++++++++++++++
- 9 files changed, 596 insertions(+)
- create mode 100644 Documentation/device-mapper/dm-boot.txt
- create mode 100644 init/do_mounts_dm.c
-
+diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
+index d45c681..033e31d 100644
+--- a/drivers/md/dm-ioctl.c
++++ b/drivers/md/dm-ioctl.c
+@@ -2011,3 +2011,53 @@ int dm_copy_name_and_uuid(struct mapped_device *md, char *name, char *uuid)
+ 
+ 	return r;
+ }
++
++/**
++ * dm_ioctl_cmd - Device mapper ioctl's
++ * @command: ioctl command
++ * @param: Pointer to device mapped ioctl struct
++ */
++int dm_ioctl_cmd(uint command, struct dm_ioctl *param)
++{
++	int r = 0;
++	int ioctl_flags;
++	unsigned int cmd;
++	ioctl_fn fn = NULL;
++	size_t input_param_size;
++	struct file *filp = NULL;
++
++	if (_IOC_TYPE(command) != DM_IOCTL)
++		return -ENOTTY;
++
++	/* DM_DEV_ARM_POLL is not supported */
++	if (command == DM_DEV_ARM_POLL)
++		return -EINVAL;
++
++	cmd = _IOC_NR(command);
++
++	/*
++	 * Nothing more to do for the version command.
++	 */
++	if (cmd == DM_VERSION_CMD)
++		return 0;
++
++	fn = lookup_ioctl(cmd, &ioctl_flags);
++	if (!fn) {
++		DMWARN("dm_ioctl: unknown command 0x%x", command);
++		return -ENOTTY;
++	}
++
++	input_param_size = param->data_size;
++	r = validate_params(cmd, param);
++	if (r)
++		return r;
++
++	param->data_size = sizeof(*param);
++	r = fn(filp, param, input_param_size);
++
++	if (unlikely(param->flags & DM_BUFFER_FULL_FLAG) &&
++	    unlikely(ioctl_flags & IOCTL_FLAGS_NO_PARAMS))
++		DMERR("ioctl %d tried to output some data but has IOCTL_FLAGS_NO_PARAMS set", cmd);
++
++	return r;
++}
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index f4c639c..f81ba42 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -12,6 +12,7 @@
+ #include <linux/blkdev.h>
+ #include <linux/math64.h>
+ #include <linux/ratelimit.h>
++#include <linux/dm-ioctl.h>
+ 
+ struct dm_dev;
+ struct dm_target;
+@@ -446,6 +447,11 @@ int dm_noflush_suspending(struct dm_target *ti);
+ void dm_accept_partial_bio(struct bio *bio, unsigned n_sectors);
+ union map_info *dm_get_rq_mapinfo(struct request *rq);
+ 
++/*
++ * Device mapper ioctl function.
++ */
++int dm_ioctl_cmd(unsigned int command, struct dm_ioctl *param);
++
+ struct queue_limits *dm_get_queue_limits(struct mapped_device *md);
+ 
+ /*
 -- 
 2.9.3
