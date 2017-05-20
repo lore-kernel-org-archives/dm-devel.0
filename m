@@ -1,11 +1,15 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-integrity: use the kvmalloc function
-Date: Sat, 20 May 2017 14:56:21 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1705201455530.1841@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: Re: [PATCH] dm ioctl: Restore __GFP_HIGH in copy_params()
+Date: Sat, 20 May 2017 15:00:53 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1705201458500.1841@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20170518185040.108293-1-junaids@google.com>
+	<alpine.LRH.2.02.1705191949340.17646@file01.intranet.prod.int.rdu2.redhat.com>
+	<20170520083412.GD11925@dhcp22.suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20170520083412.GD11925@dhcp22.suse.cz>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,95 +19,65 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <msnitzer@redhat.com>
-Cc: dm-devel@redhat.com
+To: Michal Hocko <mhocko@kernel.org>, Mike Snitzer <msnitzer@redhat.com>
+Cc: Junaid Shahid <junaids@google.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, andreslc@google.com, rientjes@google.com, gthelen@google.com, akpm@linux-foundation.org, vbabka@suse.cz
 List-Id: dm-devel.ids
 
-Use the kvmalloc function instead of dm_integrity_kvmalloc.
 
+
+On Sat, 20 May 2017, Michal Hocko wrote:
+
+> On Fri 19-05-17 19:50:24, Mikulas Patocka wrote:
+> > 
+> > 
+> > On Thu, 18 May 2017, Junaid Shahid wrote:
+> > 
+> > > d224e9381897 (drivers/md/dm-ioctl.c: use kvmalloc rather than opencoded
+> > > variant) left out the __GFP_HIGH flag when converting from __vmalloc to
+> > > kvmalloc. This can cause the IOCTL to fail in some low memory situations
+> > > where it wouldn't have failed earlier. This patch adds it back to avoid
+> > > any potential regression.
+> > > 
+> > > Signed-off-by: Junaid Shahid <junaids@google.com>
+> > 
+> > Acked-by: Mikulas Patocka <mpatocka@redhat.com>
+> 
+> Can we have a comment explaning why we need memory reserves in this case
+> please?
+
+Here I'm sending the patch with the comment:
+
+
+d224e9381897 (drivers/md/dm-ioctl.c: use kvmalloc rather than opencoded
+variant) left out the __GFP_HIGH flag when converting from __vmalloc to
+kvmalloc. This can cause the IOCTL to fail in some low memory situations
+where it wouldn't have failed earlier. This patch adds it back to avoid
+any potential regression.
+
+Signed-off-by: Junaid Shahid <junaids@google.com>
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm-integrity.c |   27 ++++++---------------------
- 1 file changed, 6 insertions(+), 21 deletions(-)
+ drivers/md/dm-ioctl.c |    5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
-Index: linux-2.6/drivers/md/dm-integrity.c
+Index: linux-2.6/drivers/md/dm-ioctl.c
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-integrity.c
-+++ linux-2.6/drivers/md/dm-integrity.c
-@@ -2374,21 +2374,6 @@ static void dm_integrity_set(struct dm_t
- 	blk_queue_max_integrity_segments(disk->queue, UINT_MAX);
- }
- 
--/* FIXME: use new kvmalloc */
--static void *dm_integrity_kvmalloc(size_t size, gfp_t gfp)
--{
--	void *ptr = NULL;
--
--	if (size <= PAGE_SIZE)
--		ptr = kmalloc(size, GFP_KERNEL | gfp);
--	if (!ptr && size <= KMALLOC_MAX_SIZE)
--		ptr = kmalloc(size, GFP_KERNEL | __GFP_NOWARN | __GFP_NORETRY | gfp);
--	if (!ptr)
--		ptr = __vmalloc(size, GFP_KERNEL | gfp, PAGE_KERNEL);
--
--	return ptr;
--}
--
- static void dm_integrity_free_page_list(struct dm_integrity_c *ic, struct page_list *pl)
- {
- 	unsigned i;
-@@ -2407,7 +2392,7 @@ static struct page_list *dm_integrity_al
- 	struct page_list *pl;
- 	unsigned i;
- 
--	pl = dm_integrity_kvmalloc(page_list_desc_size, __GFP_ZERO);
-+	pl = kvmalloc(page_list_desc_size, GFP_KERNEL | __GFP_ZERO);
- 	if (!pl)
- 		return NULL;
- 
-@@ -2437,7 +2422,7 @@ static struct scatterlist **dm_integrity
- 	struct scatterlist **sl;
- 	unsigned i;
- 
--	sl = dm_integrity_kvmalloc(ic->journal_sections * sizeof(struct scatterlist *), __GFP_ZERO);
-+	sl = kvmalloc(ic->journal_sections * sizeof(struct scatterlist *), GFP_KERNEL | __GFP_ZERO);
- 	if (!sl)
- 		return NULL;
- 
-@@ -2453,7 +2438,7 @@ static struct scatterlist **dm_integrity
- 
- 		n_pages = (end_index - start_index + 1);
- 
--		s = dm_integrity_kvmalloc(n_pages * sizeof(struct scatterlist), 0);
-+		s = kvmalloc(n_pages * sizeof(struct scatterlist), GFP_KERNEL);
- 		if (!s) {
- 			dm_integrity_free_journal_scatterlist(ic, sl);
- 			return NULL;
-@@ -2617,7 +2602,7 @@ static int create_journal(struct dm_inte
- 				goto bad;
- 			}
- 
--			sg = dm_integrity_kvmalloc((ic->journal_pages + 1) * sizeof(struct scatterlist), 0);
-+			sg = kvmalloc((ic->journal_pages + 1) * sizeof(struct scatterlist), GFP_KERNEL);
- 			if (!sg) {
- 				*error = "Unable to allocate sg list";
- 				r = -ENOMEM;
-@@ -2673,7 +2658,7 @@ static int create_journal(struct dm_inte
- 				r = -ENOMEM;
- 				goto bad;
- 			}
--			ic->sk_requests = dm_integrity_kvmalloc(ic->journal_sections * sizeof(struct skcipher_request *), __GFP_ZERO);
-+			ic->sk_requests = kvmalloc(ic->journal_sections * sizeof(struct skcipher_request *), GFP_KERNEL | __GFP_ZERO);
- 			if (!ic->sk_requests) {
- 				*error = "Unable to allocate sk requests";
- 				r = -ENOMEM;
-@@ -2740,7 +2725,7 @@ retest_commit_id:
- 		r = -ENOMEM;
- 		goto bad;
+--- linux-2.6.orig/drivers/md/dm-ioctl.c
++++ linux-2.6/drivers/md/dm-ioctl.c
+@@ -1710,12 +1710,13 @@ static int copy_params(struct dm_ioctl _
  	}
--	ic->journal_tree = dm_integrity_kvmalloc(journal_tree_size, 0);
-+	ic->journal_tree = kvmalloc(journal_tree_size, GFP_KERNEL);
- 	if (!ic->journal_tree) {
- 		*error = "Could not allocate memory for journal tree";
- 		r = -ENOMEM;
+ 
+ 	/*
+-	 * Try to avoid low memory issues when a device is suspended.
++	 * Use __GFP_HIGH to avoid low memory issues when a device is suspended
++	 * and the ioctl is needed to resume it.
+ 	 * Use kmalloc() rather than vmalloc() when we can.
+ 	 */
+ 	dmi = NULL;
+ 	noio_flag = memalloc_noio_save();
+-	dmi = kvmalloc(param_kernel->data_size, GFP_KERNEL);
++	dmi = kvmalloc(param_kernel->data_size, GFP_KERNEL | __GFP_HIGH);
+ 	memalloc_noio_restore(noio_flag);
+ 
+ 	if (!dmi) {
