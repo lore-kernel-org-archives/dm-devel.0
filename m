@@ -1,117 +1,89 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [dm-devel] [PATCH 08/15] dm mpath: merge do_end_io_bio into
- multipath_end_io_bio
-Date: Mon, 22 May 2017 20:51:20 +0200
-Message-ID: <1495479080.28992.23.camel@suse.com>
-References: <20170518131812.22956-1-hch@lst.de>
-         <20170518131812.22956-9-hch@lst.de>
+Subject: [PATCH] mpathpersist.8: add missing documentation for -K,
+	-C, -l
+Date: Tue, 23 May 2017 00:16:43 +0200
+Message-ID: <20170522221643.18826-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20170518131812.22956-9-hch@lst.de>
-Sender: linux-block-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>, axboe@kernel.dk
-Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, linux-btrfs@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@suse.de>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, 2017-05-18 at 15:18 +0200, Christoph Hellwig wrote:
-> This simplifies the code and especially the error passing a bit and
-> will help with the next patch.
-> 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-> ---
->  drivers/md/dm-mpath.c | 42 ++++++++++++++++-------------------------
-> -
->  1 file changed, 16 insertions(+), 26 deletions(-)
-> 
-> diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-> index 3df056b73b66..b1cb0273b081 100644
-> --- a/drivers/md/dm-mpath.c
-> +++ b/drivers/md/dm-mpath.c
-> @@ -1510,24 +1510,26 @@ static int multipath_end_io(struct dm_target
-> *ti, struct request *clone,
->  	return r;
->  }
->  
-> -static int do_end_io_bio(struct multipath *m, struct bio *clone,
-> -			 int error, struct dm_mpath_io *mpio)
-> +static int multipath_end_io_bio(struct dm_target *ti, struct bio
-> *clone, int error)
->  {
-> +	struct multipath *m = ti->private;
-> +	struct dm_mpath_io *mpio = get_mpio_from_bio(clone);
-> +	struct pgpath *pgpath = mpio->pgpath;
->  	unsigned long flags;
->  
-> -	if (!error)
-> -		return 0;	/* I/O complete */
-> +	BUG_ON(!mpio);
+Furthermore, add a reference to the sg_persist man page.
+---
+ mpathpersist/mpathpersist.8 | 21 ++++++++++++++++++++-
+ 1 file changed, 20 insertions(+), 1 deletion(-)
 
-You dereferenced mpio already above.
-
-Regards,
-Martin
-
->  
-> -	if (noretry_error(error))
-> -		return error;
-> +	if (!error || noretry_error(error))
-> +		goto done;
->  
-> -	if (mpio->pgpath)
-> -		fail_path(mpio->pgpath);
-> +	if (pgpath)
-> +		fail_path(pgpath);
->  
->  	if (atomic_read(&m->nr_valid_paths) == 0 &&
->  	    !test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags)) {
->  		dm_report_EIO(m);
-> -		return -EIO;
-> +		error = -EIO;
-> +		goto done;
->  	}
->  
->  	/* Queue for the daemon to resubmit */
-> @@ -1539,28 +1541,16 @@ static int do_end_io_bio(struct multipath *m,
-> struct bio *clone,
->  	if (!test_bit(MPATHF_QUEUE_IO, &m->flags))
->  		queue_work(kmultipathd, &m->process_queued_bios);
->  
-> -	return DM_ENDIO_INCOMPLETE;
-> -}
-> -
-> -static int multipath_end_io_bio(struct dm_target *ti, struct bio
-> *clone, int error)
-> -{
-> -	struct multipath *m = ti->private;
-> -	struct dm_mpath_io *mpio = get_mpio_from_bio(clone);
-> -	struct pgpath *pgpath;
-> -	struct path_selector *ps;
-> -	int r;
-> -
-> -	BUG_ON(!mpio);
-> -
-> -	r = do_end_io_bio(m, clone, error, mpio);
-> -	pgpath = mpio->pgpath;
-> +	error = DM_ENDIO_INCOMPLETE;
-> +done:
->  	if (pgpath) {
-> -		ps = &pgpath->pg->ps;
-> +		struct path_selector *ps = &pgpath->pg->ps;
-> +
->  		if (ps->type->end_io)
->  			ps->type->end_io(ps, &pgpath->path, mpio-
-> >nr_bytes);
->  	}
->  
-> -	return r;
-> +	return error;
->  }
->  
->  /*
-
+diff --git a/mpathpersist/mpathpersist.8 b/mpathpersist/mpathpersist.8
+index 4b15666f..a8982e65 100644
+--- a/mpathpersist/mpathpersist.8
++++ b/mpathpersist/mpathpersist.8
+@@ -34,6 +34,12 @@ attribute must be defined in the \fI/etc/multipath.conf\fR file. Otherwise the
+ \fBmultipathd\fR daemon will not check for persistent reservation for newly
+ discovered paths or reinstated paths.
+ .
++.LP
++\fBmpathpersist\fR supports the same command-line options as the
++\fBsg_persist\fR utility.
++.
++Consult the \fBsg_persist (8)\fR manual page for an in-depth discussion of the
++various options.
+ .
+ .\" ----------------------------------------------------------------------------
+ .SH OPTIONS
+@@ -89,6 +95,10 @@ PR Out parameter 'APTPL'.
+ PR In: Read Keys.
+ .
+ .TP
++.BI \--param-rk=\fIRK\fB|\-K " RK"
++PR Out parameter reservation key (RK is in hex, up to 8 bytes).
++.
++.TP
+ .BI \--param-sark=\fISARK\fB|\-S " SARK"
+ PR Out parameter service action reservation key (SARK is in hex).
+ .
+@@ -97,6 +107,10 @@ PR Out parameter service action reservation key (SARK is in hex).
+ PR Out: Preempt.
+ .
+ .TP
++.B \--clear|\-C
++PR Out: Clear registrations.
++.
++.TP
+ .B \--preempt-abort|\-A
+ PR Out: Preempt and Abort.
+ .
+@@ -140,6 +154,10 @@ PR Out: Reserve.
+ .BI \--transport-id=\fITIDS\fB|\-X " TIDS"
+ TransportIDs can be mentioned in several forms.
+ .
++.TP
++.BI \--alloc-length=\fILEN\fB|\-l " LEN"
++PR In: maximum allocation length. LEN is a decimal number between 0 and 8192.
++.
+ .
+ .\" ----------------------------------------------------------------------------
+ .SH EXAMPLE
+@@ -164,7 +182,8 @@ Read the reservation status of the /dev/mapper/mpath9 device:
+ .\" ----------------------------------------------------------------------------
+ .
+ .BR multipath (8),
+-.BR multipathd (8).
++.BR multipathd (8),
++.BR sg_persist (8).
+ .
+ .
+ .\" ----------------------------------------------------------------------------
 -- 
-Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-SUSE Linux GmbH, GF: Felix Imendörffer, Jane Smithard, Graham Norton
-HRB 21284 (AG Nürnberg)
+2.12.2
