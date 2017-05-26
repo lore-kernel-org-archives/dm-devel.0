@@ -1,11 +1,11 @@
 From: Ming Lei <ming.lei@redhat.com>
-Subject: [PATCH 6/6] blk-mq: clarify dispatching may not be drained/blocked by stopping queue
-Date: Fri, 26 May 2017 11:07:39 +0800
-Message-ID: <20170526030740.26959-7-ming.lei@redhat.com>
+Subject: [PATCH 6/6] blk-mq: clarify dispatching won't be blocked by stopping queue
+Date: Fri, 26 May 2017 11:07:40 +0800
+Message-ID: <20170526030740.26959-8-ming.lei@redhat.com>
 References: <20170526030740.26959-1-ming.lei@redhat.com>
-Return-path: <linux-block-owner@vger.kernel.org>
+Return-path: <linux-scsi-owner@vger.kernel.org>
 In-Reply-To: <20170526030740.26959-1-ming.lei@redhat.com>
-Sender: linux-block-owner@vger.kernel.org
+Sender: linux-scsi-owner@vger.kernel.org
 To: Jens Axboe <axboe@fb.com>, linux-block@vger.kernel.org, Christoph Hellwig <hch@infradead.org>
 Cc: Bart Van Assche <bart.vanassche@sandisk.com>, linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
