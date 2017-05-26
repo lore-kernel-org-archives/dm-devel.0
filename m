@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 06/13] fs: simplify dio_bio_complete
-Date: Fri, 26 May 2017 11:56:13 +0300
-Message-ID: <20170526085620.3113-7-hch@lst.de>
+Subject: [PATCH 07/13] block_dev: propagate bio_iov_iter_get_pages error in __blkdev_direct_IO
+Date: Fri, 26 May 2017 11:56:14 +0300
+Message-ID: <20170526085620.3113-8-hch@lst.de>
 References: <20170526085620.3113-1-hch@lst.de>
 Return-path: <linux-block-owner@vger.kernel.org>
 In-Reply-To: <20170526085620.3113-1-hch@lst.de>
@@ -10,41 +10,44 @@ To: axboe@kernel.dk
 Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, linux-btrfs@vger.kernel.org
 List-Id: dm-devel.ids
 
-Only read bio->bi_error once in the common path.
-
-Signed-off-by: Christoph Hellwig <hch@lst.de>
-Reviewed-by: Bart Van Assche <Bart.VanAssche@sandisk.com>
+Once we move the block layer to its own status code we'll still want to
+propagate the bio_iov_iter_get_pages, so restructure __blkdev_direct_IO
+to take ret into account when returning the errno.
 ---
- fs/direct-io.c | 6 ++----
- 1 file changed, 2 insertions(+), 4 deletions(-)
+ fs/block_dev.c | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
 
-diff --git a/fs/direct-io.c b/fs/direct-io.c
-index 04247a6c3f73..bb711e4b86c2 100644
---- a/fs/direct-io.c
-+++ b/fs/direct-io.c
-@@ -477,13 +477,12 @@ static int dio_bio_complete(struct dio *dio, struct bio *bio)
- {
- 	struct bio_vec *bvec;
- 	unsigned i;
--	int err;
-+	int err = bio->bi_error;
+diff --git a/fs/block_dev.c b/fs/block_dev.c
+index 519599dddd36..c1dc393ad6b9 100644
+--- a/fs/block_dev.c
++++ b/fs/block_dev.c
+@@ -334,7 +334,7 @@ __blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter, int nr_pages)
+ 	bool is_read = (iov_iter_rw(iter) == READ), is_sync;
+ 	loff_t pos = iocb->ki_pos;
+ 	blk_qc_t qc = BLK_QC_T_NONE;
+-	int ret;
++	int ret = 0;
  
--	if (bio->bi_error)
-+	if (err)
- 		dio->io_error = -EIO;
+ 	if ((pos | iov_iter_alignment(iter)) &
+ 	    (bdev_logical_block_size(bdev) - 1))
+@@ -363,7 +363,7 @@ __blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter, int nr_pages)
  
- 	if (dio->is_async && dio->op == REQ_OP_READ && dio->should_dirty) {
--		err = bio->bi_error;
- 		bio_check_pages_dirty(bio);	/* transfers ownership */
- 	} else {
- 		bio_for_each_segment_all(bvec, bio, i) {
-@@ -494,7 +493,6 @@ static int dio_bio_complete(struct dio *dio, struct bio *bio)
- 				set_page_dirty_lock(page);
- 			put_page(page);
+ 		ret = bio_iov_iter_get_pages(bio, iter);
+ 		if (unlikely(ret)) {
+-			bio->bi_error = ret;
++			bio->bi_error = -EIO;
+ 			bio_endio(bio);
+ 			break;
  		}
--		err = bio->bi_error;
- 		bio_put(bio);
+@@ -412,7 +412,8 @@ __blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter, int nr_pages)
  	}
- 	return err;
+ 	__set_current_state(TASK_RUNNING);
+ 
+-	ret = dio->bio.bi_error;
++	if (!ret)
++		ret = dio->bio.bi_error;
+ 	if (likely(!ret))
+ 		ret = dio->size;
+ 
 -- 
 2.11.0
