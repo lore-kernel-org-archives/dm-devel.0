@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 09/13] dm: don't return errnos from ->map
-Date: Fri, 26 May 2017 11:56:16 +0300
-Message-ID: <20170526085620.3113-10-hch@lst.de>
+Subject: [PATCH 10/13] dm: change ->end_io calling convention
+Date: Fri, 26 May 2017 11:56:17 +0300
+Message-ID: <20170526085620.3113-11-hch@lst.de>
 References: <20170526085620.3113-1-hch@lst.de>
 Return-path: <linux-block-owner@vger.kernel.org>
 In-Reply-To: <20170526085620.3113-1-hch@lst.de>
@@ -10,336 +10,343 @@ To: axboe@kernel.dk
 Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, linux-btrfs@vger.kernel.org
 List-Id: dm-devel.ids
 
-Instead use the special DM_MAPIO_KILL return value to return -EIO just
-like we do for the request based path.  Note that dm-log-writes returned
--ENOMEM in a few places, which now becomes -EIO instead.  No consumer
-treats -ENOMEM special so this shouldn't be an issue (and it should
-use a mempool to start with to make guaranteed progress).
+Turn the error paramter into a pointer so that target drivers can change
+the value, and make sure only DM_ENDIO_* values are returned from the
+methods.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- drivers/md/dm-crypt.c         |  4 ++--
- drivers/md/dm-flakey.c        |  4 ++--
- drivers/md/dm-integrity.c     | 12 ++++++------
+ drivers/md/dm-cache-target.c  |  4 ++--
+ drivers/md/dm-flakey.c        |  8 ++++----
  drivers/md/dm-log-writes.c    |  4 ++--
- drivers/md/dm-mpath.c         | 13 ++++++++++---
- drivers/md/dm-raid1.c         |  6 +++---
- drivers/md/dm-snap.c          |  8 ++++----
- drivers/md/dm-target.c        |  2 +-
- drivers/md/dm-verity-target.c |  6 +++---
- drivers/md/dm-zero.c          |  4 ++--
- drivers/md/dm.c               | 16 +++++++++++-----
- 11 files changed, 46 insertions(+), 33 deletions(-)
+ drivers/md/dm-mpath.c         | 11 ++++++-----
+ drivers/md/dm-raid1.c         | 14 +++++++-------
+ drivers/md/dm-snap.c          |  4 ++--
+ drivers/md/dm-stripe.c        | 14 +++++++-------
+ drivers/md/dm-thin.c          |  4 ++--
+ drivers/md/dm.c               | 36 ++++++++++++++++++------------------
+ include/linux/device-mapper.h |  2 +-
+ 10 files changed, 51 insertions(+), 50 deletions(-)
 
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index ebf9e72d479b..f4b51809db21 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -2795,10 +2795,10 @@ static int crypt_map(struct dm_target *ti, struct bio *bio)
- 	 * and is aligned to this size as defined in IO hints.
- 	 */
- 	if (unlikely((bio->bi_iter.bi_sector & ((cc->sector_size >> SECTOR_SHIFT) - 1)) != 0))
--		return -EIO;
-+		return DM_MAPIO_KILL;
+diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
+index d682a0511381..c48612e6d525 100644
+--- a/drivers/md/dm-cache-target.c
++++ b/drivers/md/dm-cache-target.c
+@@ -2820,7 +2820,7 @@ static int cache_map(struct dm_target *ti, struct bio *bio)
+ 	return r;
+ }
  
- 	if (unlikely(bio->bi_iter.bi_size & (cc->sector_size - 1)))
--		return -EIO;
-+		return DM_MAPIO_KILL;
+-static int cache_end_io(struct dm_target *ti, struct bio *bio, int error)
++static int cache_end_io(struct dm_target *ti, struct bio *bio, int *error)
+ {
+ 	struct cache *cache = ti->private;
+ 	unsigned long flags;
+@@ -2838,7 +2838,7 @@ static int cache_end_io(struct dm_target *ti, struct bio *bio, int error)
+ 	bio_drop_shared_lock(cache, bio);
+ 	accounted_complete(cache, bio);
  
- 	io = dm_per_bio_data(bio, cc->per_bio_data_size);
- 	crypt_io_init(io, cc, bio, dm_target_offset(ti, bio->bi_iter.bi_sector));
+-	return 0;
++	return DM_ENDIO_DONE;
+ }
+ 
+ static int write_dirty_bitset(struct cache *cache)
 diff --git a/drivers/md/dm-flakey.c b/drivers/md/dm-flakey.c
-index 13305a182611..e8f093b323ce 100644
+index e8f093b323ce..c9539917a59b 100644
 --- a/drivers/md/dm-flakey.c
 +++ b/drivers/md/dm-flakey.c
-@@ -321,7 +321,7 @@ static int flakey_map(struct dm_target *ti, struct bio *bio)
- 		if (bio_data_dir(bio) == READ) {
- 			if (!fc->corrupt_bio_byte && !test_bit(DROP_WRITES, &fc->flags) &&
- 			    !test_bit(ERROR_WRITES, &fc->flags))
--				return -EIO;
-+				return DM_MAPIO_KILL;
- 			goto map_bio;
- 		}
+@@ -358,12 +358,12 @@ static int flakey_map(struct dm_target *ti, struct bio *bio)
+ 	return DM_MAPIO_REMAPPED;
+ }
  
-@@ -349,7 +349,7 @@ static int flakey_map(struct dm_target *ti, struct bio *bio)
- 		/*
- 		 * By default, error all I/O.
- 		 */
--		return -EIO;
-+		return DM_MAPIO_KILL;
- 	}
+-static int flakey_end_io(struct dm_target *ti, struct bio *bio, int error)
++static int flakey_end_io(struct dm_target *ti, struct bio *bio, int *error)
+ {
+ 	struct flakey_c *fc = ti->private;
+ 	struct per_bio_data *pb = dm_per_bio_data(bio, sizeof(struct per_bio_data));
  
- map_bio:
-diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-index c7f7c8d76576..ee78fb471229 100644
---- a/drivers/md/dm-integrity.c
-+++ b/drivers/md/dm-integrity.c
-@@ -1352,13 +1352,13 @@ static int dm_integrity_map(struct dm_target *ti, struct bio *bio)
- 		DMERR("Too big sector number: 0x%llx + 0x%x > 0x%llx",
- 		      (unsigned long long)dio->range.logical_sector, bio_sectors(bio),
- 		      (unsigned long long)ic->provided_data_sectors);
--		return -EIO;
-+		return DM_MAPIO_KILL;
- 	}
- 	if (unlikely((dio->range.logical_sector | bio_sectors(bio)) & (unsigned)(ic->sectors_per_block - 1))) {
- 		DMERR("Bio not aligned on %u sectors: 0x%llx, 0x%x",
- 		      ic->sectors_per_block,
- 		      (unsigned long long)dio->range.logical_sector, bio_sectors(bio));
--		return -EIO;
-+		return DM_MAPIO_KILL;
- 	}
- 
- 	if (ic->sectors_per_block > 1) {
-@@ -1368,7 +1368,7 @@ static int dm_integrity_map(struct dm_target *ti, struct bio *bio)
- 			if (unlikely((bv.bv_offset | bv.bv_len) & ((ic->sectors_per_block << SECTOR_SHIFT) - 1))) {
- 				DMERR("Bio vector (%u,%u) is not aligned on %u-sector boundary",
- 					bv.bv_offset, bv.bv_len, ic->sectors_per_block);
--				return -EIO;
-+				return DM_MAPIO_KILL;
- 			}
- 		}
- 	}
-@@ -1383,18 +1383,18 @@ static int dm_integrity_map(struct dm_target *ti, struct bio *bio)
- 				wanted_tag_size *= ic->tag_size;
- 			if (unlikely(wanted_tag_size != bip->bip_iter.bi_size)) {
- 				DMERR("Invalid integrity data size %u, expected %u", bip->bip_iter.bi_size, wanted_tag_size);
--				return -EIO;
-+				return DM_MAPIO_KILL;
- 			}
- 		}
- 	} else {
- 		if (unlikely(bip != NULL)) {
- 			DMERR("Unexpected integrity data when using internal hash");
+-	if (!error && pb->bio_submitted && (bio_data_dir(bio) == READ)) {
++	if (!*error && pb->bio_submitted && (bio_data_dir(bio) == READ)) {
+ 		if (fc->corrupt_bio_byte && (fc->corrupt_bio_rw == READ) &&
+ 		    all_corrupt_bio_flags_match(bio, fc)) {
+ 			/*
+@@ -377,11 +377,11 @@ static int flakey_end_io(struct dm_target *ti, struct bio *bio, int error)
+ 			 * Error read during the down_interval if drop_writes
+ 			 * and error_writes were not configured.
+ 			 */
 -			return -EIO;
-+			return DM_MAPIO_KILL;
++			*error = -EIO;
  		}
  	}
  
- 	if (unlikely(ic->mode == 'R') && unlikely(dio->write))
--		return -EIO;
-+		return DM_MAPIO_KILL;
+-	return error;
++	return DM_ENDIO_DONE;
+ }
  
- 	get_area_and_offset(ic, dio->range.logical_sector, &area, &offset);
- 	dio->metadata_block = get_metadata_sector_and_offset(ic, area, offset, &dio->metadata_offset);
+ static void flakey_status(struct dm_target *ti, status_type_t type,
 diff --git a/drivers/md/dm-log-writes.c b/drivers/md/dm-log-writes.c
-index 4dfe38655a49..e42264706c59 100644
+index e42264706c59..cc57c7fa1268 100644
 --- a/drivers/md/dm-log-writes.c
 +++ b/drivers/md/dm-log-writes.c
-@@ -586,7 +586,7 @@ static int log_writes_map(struct dm_target *ti, struct bio *bio)
- 		spin_lock_irq(&lc->blocks_lock);
- 		lc->logging_enabled = false;
- 		spin_unlock_irq(&lc->blocks_lock);
--		return -ENOMEM;
-+		return DM_MAPIO_KILL;
- 	}
- 	INIT_LIST_HEAD(&block->list);
- 	pb->block = block;
-@@ -639,7 +639,7 @@ static int log_writes_map(struct dm_target *ti, struct bio *bio)
- 			spin_lock_irq(&lc->blocks_lock);
- 			lc->logging_enabled = false;
- 			spin_unlock_irq(&lc->blocks_lock);
--			return -ENOMEM;
-+			return DM_MAPIO_KILL;
- 		}
+@@ -664,7 +664,7 @@ static int log_writes_map(struct dm_target *ti, struct bio *bio)
+ 	return DM_MAPIO_REMAPPED;
+ }
  
- 		src = kmap_atomic(bv.bv_page);
+-static int normal_end_io(struct dm_target *ti, struct bio *bio, int error)
++static int normal_end_io(struct dm_target *ti, struct bio *bio, int *error)
+ {
+ 	struct log_writes_c *lc = ti->private;
+ 	struct per_bio_data *pb = dm_per_bio_data(bio, sizeof(struct per_bio_data));
+@@ -686,7 +686,7 @@ static int normal_end_io(struct dm_target *ti, struct bio *bio, int error)
+ 		spin_unlock_irqrestore(&lc->blocks_lock, flags);
+ 	}
+ 
+-	return error;
++	return DM_ENDIO_DONE;
+ }
+ 
+ /*
 diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 6d5ebb76149d..bf6e49c780d5 100644
+index bf6e49c780d5..ceeeb495d01c 100644
 --- a/drivers/md/dm-mpath.c
 +++ b/drivers/md/dm-mpath.c
-@@ -559,7 +559,7 @@ static int __multipath_map_bio(struct multipath *m, struct bio *bio, struct dm_m
- 		if (test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags))
- 			return DM_MAPIO_REQUEUE;
+@@ -1517,14 +1517,15 @@ static int multipath_end_io(struct dm_target *ti, struct request *clone,
+ 	return r;
+ }
+ 
+-static int multipath_end_io_bio(struct dm_target *ti, struct bio *clone, int error)
++static int multipath_end_io_bio(struct dm_target *ti, struct bio *clone, int *error)
+ {
+ 	struct multipath *m = ti->private;
+ 	struct dm_mpath_io *mpio = get_mpio_from_bio(clone);
+ 	struct pgpath *pgpath = mpio->pgpath;
+ 	unsigned long flags;
++	int r = DM_ENDIO_DONE;
+ 
+-	if (!error || noretry_error(error))
++	if (!*error || noretry_error(*error))
+ 		goto done;
+ 
+ 	if (pgpath)
+@@ -1533,7 +1534,7 @@ static int multipath_end_io_bio(struct dm_target *ti, struct bio *clone, int err
+ 	if (atomic_read(&m->nr_valid_paths) == 0 &&
+ 	    !test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags)) {
  		dm_report_EIO(m);
--		return -EIO;
-+		return DM_MAPIO_KILL;
+-		error = -EIO;
++		*error = -EIO;
+ 		goto done;
  	}
  
- 	mpio->pgpath = pgpath;
-@@ -621,11 +621,18 @@ static void process_queued_bios(struct work_struct *work)
- 	blk_start_plug(&plug);
- 	while ((bio = bio_list_pop(&bios))) {
- 		r = __multipath_map_bio(m, bio, get_mpio_from_bio(bio));
--		if (r < 0 || r == DM_MAPIO_REQUEUE) {
-+		switch (r) {
-+		case DM_MAPIO_KILL:
-+			r = -EIO;
-+			/*FALLTHRU*/
-+		case DM_MAPIO_REQUEUE:
- 			bio->bi_error = r;
- 			bio_endio(bio);
--		} else if (r == DM_MAPIO_REMAPPED)
-+			break;
-+		case DM_MAPIO_REMAPPED:
- 			generic_make_request(bio);
-+			break;
-+		}
+@@ -1546,7 +1547,7 @@ static int multipath_end_io_bio(struct dm_target *ti, struct bio *clone, int err
+ 	if (!test_bit(MPATHF_QUEUE_IO, &m->flags))
+ 		queue_work(kmultipathd, &m->process_queued_bios);
+ 
+-	error = DM_ENDIO_INCOMPLETE;
++	r = DM_ENDIO_INCOMPLETE;
+ done:
+ 	if (pgpath) {
+ 		struct path_selector *ps = &pgpath->pg->ps;
+@@ -1555,7 +1556,7 @@ static int multipath_end_io_bio(struct dm_target *ti, struct bio *clone, int err
+ 			ps->type->end_io(ps, &pgpath->path, mpio->nr_bytes);
  	}
- 	blk_finish_plug(&plug);
+ 
+-	return error;
++	return r;
  }
+ 
+ /*
 diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c
-index 5e30b08b91d9..d9c0c6a77eb5 100644
+index d9c0c6a77eb5..77bcf50ce75f 100644
 --- a/drivers/md/dm-raid1.c
 +++ b/drivers/md/dm-raid1.c
-@@ -1207,14 +1207,14 @@ static int mirror_map(struct dm_target *ti, struct bio *bio)
- 
- 	r = log->type->in_sync(log, dm_rh_bio_to_region(ms->rh, bio), 0);
- 	if (r < 0 && r != -EWOULDBLOCK)
--		return r;
-+		return DM_MAPIO_KILL;
- 
- 	/*
- 	 * If region is not in-sync queue the bio.
- 	 */
- 	if (!r || (r == -EWOULDBLOCK)) {
- 		if (bio->bi_opf & REQ_RAHEAD)
--			return -EIO;
-+			return DM_MAPIO_KILL;
- 
- 		queue_bio(ms, bio, rw);
- 		return DM_MAPIO_SUBMITTED;
-@@ -1226,7 +1226,7 @@ static int mirror_map(struct dm_target *ti, struct bio *bio)
- 	 */
- 	m = choose_mirror(ms, bio->bi_iter.bi_sector);
- 	if (unlikely(!m))
--		return -EIO;
-+		return DM_MAPIO_KILL;
- 
- 	dm_bio_record(&bio_record->details, bio);
- 	bio_record->m = m;
-diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index e152d9817c81..5a7f73f9a6fb 100644
---- a/drivers/md/dm-snap.c
-+++ b/drivers/md/dm-snap.c
-@@ -1690,7 +1690,7 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio)
- 	/* Full snapshots are not usable */
- 	/* To get here the table must be live so s->active is always set. */
- 	if (!s->valid)
--		return -EIO;
-+		return DM_MAPIO_KILL;
- 
- 	/* FIXME: should only take write lock if we need
- 	 * to copy an exception */
-@@ -1698,7 +1698,7 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio)
- 
- 	if (!s->valid || (unlikely(s->snapshot_overflowed) &&
- 	    bio_data_dir(bio) == WRITE)) {
--		r = -EIO;
-+		r = DM_MAPIO_KILL;
- 		goto out_unlock;
- 	}
- 
-@@ -1723,7 +1723,7 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio)
- 
- 			if (!s->valid || s->snapshot_overflowed) {
- 				free_pending_exception(pe);
--				r = -EIO;
-+				r = DM_MAPIO_KILL;
- 				goto out_unlock;
- 			}
- 
-@@ -1741,7 +1741,7 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio)
- 					DMERR("Snapshot overflowed: Unable to allocate exception.");
- 				} else
- 					__invalidate_snapshot(s, -ENOMEM);
--				r = -EIO;
-+				r = DM_MAPIO_KILL;
- 				goto out_unlock;
- 			}
- 		}
-diff --git a/drivers/md/dm-target.c b/drivers/md/dm-target.c
-index b242b750542f..c0d7e60820c4 100644
---- a/drivers/md/dm-target.c
-+++ b/drivers/md/dm-target.c
-@@ -128,7 +128,7 @@ static void io_err_dtr(struct dm_target *tt)
- 
- static int io_err_map(struct dm_target *tt, struct bio *bio)
- {
--	return -EIO;
-+	return DM_MAPIO_KILL;
+@@ -1236,7 +1236,7 @@ static int mirror_map(struct dm_target *ti, struct bio *bio)
+ 	return DM_MAPIO_REMAPPED;
  }
  
- static int io_err_clone_and_map_rq(struct dm_target *ti, struct request *rq,
-diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-index 97de961a3bfc..9ed55468b98b 100644
---- a/drivers/md/dm-verity-target.c
-+++ b/drivers/md/dm-verity-target.c
-@@ -643,17 +643,17 @@ static int verity_map(struct dm_target *ti, struct bio *bio)
- 	if (((unsigned)bio->bi_iter.bi_sector | bio_sectors(bio)) &
- 	    ((1 << (v->data_dev_block_bits - SECTOR_SHIFT)) - 1)) {
- 		DMERR_LIMIT("unaligned io");
--		return -EIO;
-+		return DM_MAPIO_KILL;
+-static int mirror_end_io(struct dm_target *ti, struct bio *bio, int error)
++static int mirror_end_io(struct dm_target *ti, struct bio *bio, int *error)
+ {
+ 	int rw = bio_data_dir(bio);
+ 	struct mirror_set *ms = (struct mirror_set *) ti->private;
+@@ -1252,16 +1252,16 @@ static int mirror_end_io(struct dm_target *ti, struct bio *bio, int error)
+ 		if (!(bio->bi_opf & REQ_PREFLUSH) &&
+ 		    bio_op(bio) != REQ_OP_DISCARD)
+ 			dm_rh_dec(ms->rh, bio_record->write_region);
+-		return error;
++		return DM_ENDIO_DONE;
  	}
  
- 	if (bio_end_sector(bio) >>
- 	    (v->data_dev_block_bits - SECTOR_SHIFT) > v->data_blocks) {
- 		DMERR_LIMIT("io out of range");
--		return -EIO;
-+		return DM_MAPIO_KILL;
+-	if (error == -EOPNOTSUPP)
+-		return error;
++	if (*error == -EOPNOTSUPP)
++		return DM_ENDIO_DONE;
+ 
+ 	if (bio->bi_opf & REQ_RAHEAD)
+-		return error;
++		return DM_ENDIO_DONE;
+ 
+-	if (unlikely(error)) {
++	if (unlikely(*error)) {
+ 		m = bio_record->m;
+ 
+ 		DMERR("Mirror read failed from %s. Trying alternative device.",
+@@ -1285,7 +1285,7 @@ static int mirror_end_io(struct dm_target *ti, struct bio *bio, int error)
+ 		DMERR("All replicated volumes dead, failing I/O");
  	}
  
- 	if (bio_data_dir(bio) == WRITE)
--		return -EIO;
-+		return DM_MAPIO_KILL;
+-	return error;
++	return DM_ENDIO_DONE;
+ }
  
- 	io = dm_per_bio_data(bio, ti->per_io_data_size);
- 	io->v = v;
-diff --git a/drivers/md/dm-zero.c b/drivers/md/dm-zero.c
-index b616f11d8473..b65ca8dcfbdc 100644
---- a/drivers/md/dm-zero.c
-+++ b/drivers/md/dm-zero.c
-@@ -39,7 +39,7 @@ static int zero_map(struct dm_target *ti, struct bio *bio)
- 	case REQ_OP_READ:
- 		if (bio->bi_opf & REQ_RAHEAD) {
- 			/* readahead of null bytes only wastes buffer cache */
--			return -EIO;
-+			return DM_MAPIO_KILL;
+ static void mirror_presuspend(struct dm_target *ti)
+diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
+index 5a7f73f9a6fb..79a845798e2f 100644
+--- a/drivers/md/dm-snap.c
++++ b/drivers/md/dm-snap.c
+@@ -1851,14 +1851,14 @@ static int snapshot_merge_map(struct dm_target *ti, struct bio *bio)
+ 	return r;
+ }
+ 
+-static int snapshot_end_io(struct dm_target *ti, struct bio *bio, int error)
++static int snapshot_end_io(struct dm_target *ti, struct bio *bio, int *error)
+ {
+ 	struct dm_snapshot *s = ti->private;
+ 
+ 	if (is_bio_tracked(bio))
+ 		stop_tracking_chunk(s, bio);
+ 
+-	return 0;
++	return DM_ENDIO_DONE;
+ }
+ 
+ static void snapshot_merge_presuspend(struct dm_target *ti)
+diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
+index 780e95889a7c..49888bc2c909 100644
+--- a/drivers/md/dm-stripe.c
++++ b/drivers/md/dm-stripe.c
+@@ -375,20 +375,20 @@ static void stripe_status(struct dm_target *ti, status_type_t type,
+ 	}
+ }
+ 
+-static int stripe_end_io(struct dm_target *ti, struct bio *bio, int error)
++static int stripe_end_io(struct dm_target *ti, struct bio *bio, int *error)
+ {
+ 	unsigned i;
+ 	char major_minor[16];
+ 	struct stripe_c *sc = ti->private;
+ 
+-	if (!error)
+-		return 0; /* I/O complete */
++	if (!*error)
++		return DM_ENDIO_DONE; /* I/O complete */
+ 
+ 	if (bio->bi_opf & REQ_RAHEAD)
+-		return error;
++		return DM_ENDIO_DONE;
+ 
+-	if (error == -EOPNOTSUPP)
+-		return error;
++	if (*error == -EOPNOTSUPP)
++		return DM_ENDIO_DONE;
+ 
+ 	memset(major_minor, 0, sizeof(major_minor));
+ 	sprintf(major_minor, "%d:%d",
+@@ -409,7 +409,7 @@ static int stripe_end_io(struct dm_target *ti, struct bio *bio, int error)
+ 				schedule_work(&sc->trigger_event);
  		}
- 		zero_fill_bio(bio);
- 		break;
-@@ -47,7 +47,7 @@ static int zero_map(struct dm_target *ti, struct bio *bio)
- 		/* writes get silently dropped */
- 		break;
- 	default:
--		return -EIO;
-+		return DM_MAPIO_KILL;
- 	}
  
- 	bio_endio(bio);
+-	return error;
++	return DM_ENDIO_DONE;
+ }
+ 
+ static int stripe_iterate_devices(struct dm_target *ti,
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index 17ad50daed08..22b1a64c44b7 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -4177,7 +4177,7 @@ static int thin_map(struct dm_target *ti, struct bio *bio)
+ 	return thin_bio_map(ti, bio);
+ }
+ 
+-static int thin_endio(struct dm_target *ti, struct bio *bio, int err)
++static int thin_endio(struct dm_target *ti, struct bio *bio, int *err)
+ {
+ 	unsigned long flags;
+ 	struct dm_thin_endio_hook *h = dm_per_bio_data(bio, sizeof(struct dm_thin_endio_hook));
+@@ -4212,7 +4212,7 @@ static int thin_endio(struct dm_target *ti, struct bio *bio, int err)
+ 	if (h->cell)
+ 		cell_defer_no_holder(h->tc, h->cell);
+ 
+-	return 0;
++	return DM_ENDIO_DONE;
+ }
+ 
+ static void thin_presuspend(struct dm_target *ti)
 diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 6ef9500226c0..499f8209bacf 100644
+index 499f8209bacf..7a7047211c64 100644
 --- a/drivers/md/dm.c
 +++ b/drivers/md/dm.c
-@@ -1084,18 +1084,24 @@ static void __map_bio(struct dm_target_io *tio)
- 	r = ti->type->map(ti, clone);
- 	dm_offload_end(&o);
+@@ -845,24 +845,7 @@ static void clone_endio(struct bio *bio)
+ 	struct mapped_device *md = tio->io->md;
+ 	dm_endio_fn endio = tio->ti->type->end_io;
  
--	if (r == DM_MAPIO_REMAPPED) {
-+	switch (r) {
-+	case DM_MAPIO_SUBMITTED:
-+		break;
-+	case DM_MAPIO_REMAPPED:
- 		/* the bio has been remapped so dispatch it */
+-	if (endio) {
+-		r = endio(tio->ti, bio, error);
+-		if (r < 0 || r == DM_ENDIO_REQUEUE)
+-			/*
+-			 * error and requeue request are handled
+-			 * in dec_pending().
+-			 */
+-			error = r;
+-		else if (r == DM_ENDIO_INCOMPLETE)
+-			/* The target will handle the io */
+-			return;
+-		else if (r) {
+-			DMWARN("unimplemented target endio return value: %d", r);
+-			BUG();
+-		}
+-	}
 -
- 		trace_block_bio_remap(bdev_get_queue(clone->bi_bdev), clone,
- 				      tio->io->bio->bi_bdev->bd_dev, sector);
--
- 		generic_make_request(clone);
--	} else if (r < 0 || r == DM_MAPIO_REQUEUE) {
-+		break;
-+	case DM_MAPIO_KILL:
-+		r = -EIO;
-+		/*FALLTHRU*/
-+	case DM_MAPIO_REQUEUE:
- 		/* error the io and bail out, or requeue it if needed */
- 		dec_pending(tio->io, r);
- 		free_tio(tio);
--	} else if (r != DM_MAPIO_SUBMITTED) {
-+		break;
-+	default:
- 		DMWARN("unimplemented target map return value: %d", r);
- 		BUG();
+-	if (unlikely(r == -EREMOTEIO)) {
++	if (unlikely(error == -EREMOTEIO)) {
+ 		if (bio_op(bio) == REQ_OP_WRITE_SAME &&
+ 		    !bdev_get_queue(bio->bi_bdev)->limits.max_write_same_sectors)
+ 			disable_write_same(md);
+@@ -871,6 +854,23 @@ static void clone_endio(struct bio *bio)
+ 			disable_write_zeroes(md);
  	}
+ 
++	if (endio) {
++		r = endio(tio->ti, bio, &error);
++		switch (r) {
++		case DM_ENDIO_REQUEUE:
++			error = DM_ENDIO_REQUEUE;
++			/*FALLTHRU*/
++		case DM_ENDIO_DONE:
++			break;
++		case DM_ENDIO_INCOMPLETE:
++			/* The target will handle the io */
++			return;
++		default:
++			DMWARN("unimplemented target endio return value: %d", r);
++			BUG();
++		}
++	}
++
+ 	free_tio(tio);
+ 	dec_pending(io, error);
+ }
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index f4c639c0c362..dec227acc13b 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -72,7 +72,7 @@ typedef void (*dm_release_clone_request_fn) (struct request *clone);
+  * 2   : The target wants to push back the io
+  */
+ typedef int (*dm_endio_fn) (struct dm_target *ti,
+-			    struct bio *bio, int error);
++			    struct bio *bio, int *error);
+ typedef int (*dm_request_endio_fn) (struct dm_target *ti,
+ 				    struct request *clone, int error,
+ 				    union map_info *map_context);
 -- 
 2.11.0
