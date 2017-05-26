@@ -1,53 +1,40 @@
-From: Ming Lei <ming.lei@redhat.com>
-Subject: [PATCH 6/6] blk-mq: clarify dispatching won't be blocked by stopping queue
-Date: Fri, 26 May 2017 11:07:40 +0800
-Message-ID: <20170526030740.26959-8-ming.lei@redhat.com>
-References: <20170526030740.26959-1-ming.lei@redhat.com>
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20170526030740.26959-1-ming.lei@redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Jens Axboe <axboe@fb.com>, linux-block@vger.kernel.org, Christoph Hellwig <hch@infradead.org>
-Cc: Bart Van Assche <bart.vanassche@sandisk.com>, linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org, dm-devel@redhat.com
+From: "hch@lst.de" <hch@lst.de>
+Subject: Re: [PATCH 02/15] scsi/osd: don't save block errors into
+        req_results
+Date: Fri, 26 May 2017 07:15:40 +0200
+Message-ID: <20170526051540.GA17709@lst.de>
+References: <20170518131812.22956-1-hch@lst.de> <20170518131812.22956-3-hch@lst.de> <1495641879.2823.7.camel@sandisk.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1495641879.2823.7.camel@sandisk.com>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: Bart Van Assche <Bart.VanAssche@sandisk.com>
+Cc: "hch@lst.de" <hch@lst.de>, "axboe@kernel.dk" <axboe@kernel.dk>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-btrfs@vger.kernel.org" <linux-btrfs@vger.kernel.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>
 List-Id: dm-devel.ids
 
-BLK_MQ_S_STOPPED may be not observed in other concurrent I/O paths,
-we can't guarantee that dispatching won't happen after queue
-is stopped.
+On Wed, May 24, 2017 at 04:04:40PM +0000, Bart Van Assche wrote:
+> Are you sure that that code is not necessary? From osd_initiator.c:
+> 
+> static void _put_request(struct request *rq)
+> {
+> 	/*
+> 	 * If osd_finalize_request() was called but the request was not
+> 	 * executed through the block layer, then we must release BIOs.
+> 	 * TODO: Keep error code in or->async_error. Need to audit all
+> 	 *       code paths.
+> 	 */
+> 	if (unlikely(rq->bio))
+> 		blk_end_request(rq, -ENOMEM, blk_rq_bytes(rq));
+> 	else
+> 		blk_put_request(rq);
+> }
 
-So clarify the fact and avoid potential misuse.
+Which isn't using it at all.  It has a ten year old comment to pass
+on some error, but even then ORing two different error types together
+would no be very helpful.
 
-Signed-off-by: Ming Lei <ming.lei@redhat.com>
----
- block/blk-mq.c | 10 ++++++++++
- 1 file changed, 10 insertions(+)
-
-diff --git a/block/blk-mq.c b/block/blk-mq.c
-index 900eb91e0ece..32bed5bac7da 100644
---- a/block/blk-mq.c
-+++ b/block/blk-mq.c
-@@ -1240,6 +1240,11 @@ static void __blk_mq_stop_hw_queue(struct blk_mq_hw_ctx *hctx, bool sync)
- 	set_bit(BLK_MQ_S_STOPPED, &hctx->state);
- }
- 
-+/*
-+ * Do not expect that dispatching or .queue_rq() can be blocked
-+ * after blk_mq_stop_hw_queue() returns. Please use
-+ * blk_mq_quiesce_queue() for that requirement.
-+ */
- void blk_mq_stop_hw_queue(struct blk_mq_hw_ctx *hctx)
- {
- 	__blk_mq_stop_hw_queue(hctx, false);
-@@ -1255,6 +1260,11 @@ static void __blk_mq_stop_hw_queues(struct request_queue *q, bool sync)
- 		__blk_mq_stop_hw_queue(hctx, sync);
- }
- 
-+/*
-+ * Do not expect that dispatching or .queue_rq() can be blocked
-+ * after blk_mq_stop_hw_queues() returns. Please use
-+ * blk_mq_quiesce_queue() for that requirement.
-+ */
- void blk_mq_stop_hw_queues(struct request_queue *q)
- {
- 	__blk_mq_stop_hw_queues(q, false);
--- 
-2.9.4
+> 
+> Bart.---end quoted text---
