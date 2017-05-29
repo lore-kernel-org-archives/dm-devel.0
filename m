@@ -1,11 +1,13 @@
 From: Damien Le Moal <damien.lemoal@wdc.com>
-Subject: [PATCH 0/4] dm: zoned block device fixes
-Date: Mon, 29 May 2017 19:23:03 +0900
-Message-ID: <20170529102307.19814-1-damien.lemoal@wdc.com>
+Subject: [PATCH 1/4] dm: Fix mapping zone alignment check
+Date: Mon, 29 May 2017 19:23:04 +0900
+Message-ID: <20170529102307.19814-2-damien.lemoal@wdc.com>
+References: <20170529102307.19814-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20170529102307.19814-1-damien.lemoal@wdc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,54 +21,91 @@ To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk
 Cc: Bart Van Assche <bart.vanassche@sandisk.com>
 List-Id: dm-devel.ids
 
-Mike,
+In device_area_is_invalid(), check a device mapping zone alignment
+before checking the LBA size so that the check is also performed for
+devices with a single sector (512B) LBA size.
 
-The first 3 patches of this series are incremental fixes for the zoned block
-device support patches that you committed to the for-4.13/dm branch.
+Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
+---
+ drivers/md/dm-table.c | 51 ++++++++++++++++++++++++++++++---------------------
+ 1 file changed, 30 insertions(+), 21 deletions(-)
 
-The first patch correct the zone alignement checks so that the check is
-performed for any device, regardless of the device LBA size (it is skipped for
-512B LBA devices otherwise).
-
-The second patch is a fix for commit baf844bf4ae3 "dm table: add zoned block
-devices validation". In that commit, the stacked limits zoned model was not
-set to the zoned model of the table target devices, leading to the exposed
-device always being exposed as a regular block device. With this fix, dm-flaky
-and dm-linear work fine on top of host-managed  zoned block devices.
-
-The third patch fixes zoned model validation again to allow for target types
-emulating a different zoned model than the model of the table target devices,
-e.g. dm-zoned.
-
-The last patch is dm-zoned with various fixes (mainly crashes on setup error
-and handling of the metadata cache shrinker). For your review, please use this
-version.
-
-Thank you.
-
-Best regards.
-
-Damien Le Moal (4):
-  dm: Fix mapping zone alignment check
-  dm: Fix staking limits for zoned block device
-  dm: Fix zoned block device model validation
-  dm-zoned: Drive-managed zoned block device target
-
- Documentation/device-mapper/dm-zoned.txt |  154 +++
- drivers/md/Kconfig                       |   17 +
- drivers/md/Makefile                      |    2 +
- drivers/md/dm-table.c                    |  190 +--
- drivers/md/dm-zoned-io.c                 | 1007 ++++++++++++++
- drivers/md/dm-zoned-metadata.c           | 2220 ++++++++++++++++++++++++++++++
- drivers/md/dm-zoned-reclaim.c            |  535 +++++++
- drivers/md/dm-zoned.h                    |  530 +++++++
- 8 files changed, 4560 insertions(+), 95 deletions(-)
- create mode 100644 Documentation/device-mapper/dm-zoned.txt
- create mode 100644 drivers/md/dm-zoned-io.c
- create mode 100644 drivers/md/dm-zoned-metadata.c
- create mode 100644 drivers/md/dm-zoned-reclaim.c
- create mode 100644 drivers/md/dm-zoned.h
-
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index b7b95d5..6545150 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -319,27 +319,6 @@ static int device_area_is_invalid(struct dm_target *ti, struct dm_dev *dev,
+ 		return 1;
+ 	}
+ 
+-	if (logical_block_size_sectors <= 1)
+-		return 0;
+-
+-	if (start & (logical_block_size_sectors - 1)) {
+-		DMWARN("%s: start=%llu not aligned to h/w "
+-		       "logical block size %u of %s",
+-		       dm_device_name(ti->table->md),
+-		       (unsigned long long)start,
+-		       limits->logical_block_size, bdevname(bdev, b));
+-		return 1;
+-	}
+-
+-	if (len & (logical_block_size_sectors - 1)) {
+-		DMWARN("%s: len=%llu not aligned to h/w "
+-		       "logical block size %u of %s",
+-		       dm_device_name(ti->table->md),
+-		       (unsigned long long)len,
+-		       limits->logical_block_size, bdevname(bdev, b));
+-		return 1;
+-	}
+-
+ 	/*
+ 	 * If the target is mapped to zoned block device(s), check
+ 	 * that the zones are not partially mapped.
+@@ -355,6 +334,15 @@ static int device_area_is_invalid(struct dm_target *ti, struct dm_dev *dev,
+ 			return 1;
+ 		}
+ 
++		/*
++		 * Note: The last zone of a zoned block device may be smaller
++		 * than other zones. So for a target mapping the end of a
++		 * zoned block device with such a zone, len would not be zone
++		 * aligned. We do not allow such last smaller zone to be part
++		 * of the mapping here to ensure that mappings with multiple
++		 * devices do not end up with a smaller zone in the middle of
++		 * the sector range.
++		 */
+ 		if (len & (zone_sectors - 1)) {
+ 			DMWARN("%s: len=%llu not aligned to h/w zone size %u of %s",
+ 			       dm_device_name(ti->table->md),
+@@ -364,6 +352,27 @@ static int device_area_is_invalid(struct dm_target *ti, struct dm_dev *dev,
+ 		}
+ 	}
+ 
++	if (logical_block_size_sectors <= 1)
++		return 0;
++
++	if (start & (logical_block_size_sectors - 1)) {
++		DMWARN("%s: start=%llu not aligned to h/w "
++		       "logical block size %u of %s",
++		       dm_device_name(ti->table->md),
++		       (unsigned long long)start,
++		       limits->logical_block_size, bdevname(bdev, b));
++		return 1;
++	}
++
++	if (len & (logical_block_size_sectors - 1)) {
++		DMWARN("%s: len=%llu not aligned to h/w "
++		       "logical block size %u of %s",
++		       dm_device_name(ti->table->md),
++		       (unsigned long long)len,
++		       limits->logical_block_size, bdevname(bdev, b));
++		return 1;
++	}
++
+ 	return 0;
+ }
+ 
 -- 
 2.9.4
 
