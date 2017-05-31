@@ -1,146 +1,104 @@
-From: Damien Le Moal <damien.lemoal@wdc.com>
-Subject: Re: [PATCH 0/4] dm: zoned block device fixes
-Date: Wed, 31 May 2017 13:29:58 +0900
-Message-ID: <46ec84af-0700-70f9-f990-d87a63cc18b0@wdc.com>
-References: <20170529102307.19814-1-damien.lemoal@wdc.com>
-	<20170530202031.GA52190@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170530202031.GA52190@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Bart Van Assche <bart.vanassche@sandisk.com>, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>
+From: Jan Kara <jack@suse.cz>
+Subject: [PATCH 1/2] dm: Make flush bios explicitely sync
+Date: Wed, 31 May 2017 09:44:32 +0200
+Message-ID: <20170531074433.14298-2-jack@suse.cz>
+References: <20170531074433.14298-1-jack@suse.cz>
+Return-path: <stable-owner@vger.kernel.org>
+In-Reply-To: <20170531074433.14298-1-jack@suse.cz>
+Sender: stable-owner@vger.kernel.org
+To: Shaohua Li <shli@kernel.org>
+Cc: Jan Kara <jack@suse.cz>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, stable@vger.kernel.org
 List-Id: dm-devel.ids
 
-Mike,
+Commit b685d3d65ac7 "block: treat REQ_FUA and REQ_PREFLUSH as
+synchronous" removed REQ_SYNC flag from WRITE_{FUA|PREFLUSH|...}
+definitions.  generic_make_request_checks() however strips REQ_FUA and
+REQ_PREFLUSH flags from a bio when the storage doesn't report volatile
+write cache and thus write effectively becomes asynchronous which can
+lead to performance regressions
 
-On 5/31/17 05:20, Mike Snitzer wrote:
-> On Mon, May 29 2017 at  6:23P -0400,
-> Damien Le Moal <damien.lemoal@wdc.com> wrote:
-> 
->> Mike,
->>
->> The first 3 patches of this series are incremental fixes for the zoned block
->> device support patches that you committed to the for-4.13/dm branch.
->>
->> The first patch correct the zone alignement checks so that the check is
->> performed for any device, regardless of the device LBA size (it is skipped for
->> 512B LBA devices otherwise).
-> 
-> I folded this first patch into the original commit (baf844bf4ae3).
+Fix the problem by making sure all bios which are synchronous are
+properly marked with REQ_SYNC.
 
-Great. Thanks.
+CC: Mike Snitzer <snitzer@redhat.com>
+CC: dm-devel@redhat.com
+Fixes: b685d3d65ac791406e0dfd8779cc9b3707fea5a3
+CC: stable@vger.kernel.org
+Signed-off-by: Jan Kara <jack@suse.cz>
+---
+ drivers/md/dm-bufio.c           | 2 +-
+ drivers/md/dm-integrity.c       | 3 ++-
+ drivers/md/dm-raid1.c           | 2 +-
+ drivers/md/dm-snap-persistent.c | 3 ++-
+ drivers/md/dm.c                 | 2 +-
+ 5 files changed, 7 insertions(+), 5 deletions(-)
 
->> The second patch is a fix for commit baf844bf4ae3 "dm table: add zoned block
->> devices validation". In that commit, the stacked limits zoned model was not
->> set to the zoned model of the table target devices, leading to the exposed
->> device always being exposed as a regular block device. With this fix, dm-flaky
->> and dm-linear work fine on top of host-managed zoned block devices.
->>
->> The third patch fixes zoned model validation again to allow for target types
->> emulating a different zoned model than the model of the table target devices,
->> e.g. dm-zoned.
-> 
-> The 2nd and 3rd seem over-done to me.  After spending more time than
-> ideal, the following patch would seem to be the equivalent to what
-> you've done in patches 2 and 3 (sans the "cleanup" of passing limits to
-> validate_hardware_zoned_model):
-> 
-> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-> index 6545150..a39bcd9 100644
-> --- a/drivers/md/dm-table.c
-> +++ b/drivers/md/dm-table.c
-> @@ -1523,19 +1524,39 @@ int dm_calculate_queue_limits(struct dm_table *table,
->  			       dm_device_name(table->md),
->  			       (unsigned long long) ti->begin,
->  			       (unsigned long long) ti->len);
-> +
-> +		/*
-> +		 * FIXME: this should likely be moved to blk_stack_limits(), would
-> +		 * also eliminate limits->zoned stacking hack in dm_set_device_limits()
-> +		 */
-> +		if (limits->zoned == BLK_ZONED_NONE && ti_limits.zoned != BLK_ZONED_NONE) {
-> +			/*
-> +			 * By default, the stacked limits zoned model is set to
-> +			 * BLK_ZONED_NONE in blk_set_stacking_limits(). Update
-> +			 * this model using the first target model reported
-> +			 * that is not BLK_ZONED_NONE. This will be either the
-> +			 * first target device zoned model or the model reported
-> +			 * by the target .io_hints.
-> +			 */
-> +			limits->zoned = ti_limits.zoned;
-> +		}
->  	}
->  
->  	/*
->  	 * Verify that the zoned model and zone sectors, as determined before
->  	 * any .io_hints override, are the same across all devices in the table.
-> -	 * - but if limits->zoned is not BLK_ZONED_NONE validate match for it
-> -	 * - simillarly, check all devices conform to limits->chunk_sectors if
-> -	 *   .io_hints altered them
-> +	 * - this is especially relevant if .io_hints is emulating a disk-managed
-> +	 *   zoned model (aka BLK_ZONED_NONE) on host-managed zoned block devices.
-> +	 * BUT...
->  	 */
-> -	if (limits->zoned != BLK_ZONED_NONE)
-> +	if (limits->zoned != BLK_ZONED_NONE) {
-> +		/*
-> +		 * ...IF the above limits stacking determined a zoned model
-> +		 * validate that all of the table's devices conform to it.
-> +		 */
->  		zoned_model = limits->zoned;
-> -	if (limits->chunk_sectors != zone_sectors)
->  		zone_sectors = limits->chunk_sectors;
-> +	}
->  	if (validate_hardware_zoned_model(table, zoned_model, zone_sectors))
->  		return -EINVAL;
->  
-> Anyway, I've folded this into the original commit too.  If you could
-> verify it works with your scenarios I'd appreciate it.
-
-I tested with dm-linear, dm-flakey and dm-zoned. No problems detected,
-the end device zone model and zone size was always correct. I also tried
-all invalid setup I could generate and all were properly caught.
-
-There is however one case that will not work: an HM (or HA) emulating
-target on top of a regular (NONE) block device. In that case, we will
-end up checking that the underlying devices are compatible HM/HA, whih
-will fail. But since none of the existing targets currently do this, I
-guess the code is OK as is. What do you think ?
-
-> FYI, any additional cosmetic cleanup can wait (I happen to think this
-> code is clearer than how you relied on the matches functions to
-> initialize a temporary value).
-
-OK. No problem.
-
-> I also folded in an validate_hardware_zoned_model() optimization to
-> return early if zoned_model == BLK_ZONED_NONE, please see/test the
-> rolled-up end result here:
-> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-4.13/dm&id=9a6b54360f147c2d25fba7debc31a3251b804cc2
-> 
-> Also, please note that I've forcibly rebased linux-dm.git's
-> 'for-4.13/dm' and staged it in 'for-next'.
-
-I tested this tree unmodified. No problem detected.
-Thank you.
-
-Best regards.
-
+diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+index cd8139593ccd..840c1496b2b1 100644
+--- a/drivers/md/dm-bufio.c
++++ b/drivers/md/dm-bufio.c
+@@ -1334,7 +1334,7 @@ int dm_bufio_issue_flush(struct dm_bufio_client *c)
+ {
+ 	struct dm_io_request io_req = {
+ 		.bi_op = REQ_OP_WRITE,
+-		.bi_op_flags = REQ_PREFLUSH,
++		.bi_op_flags = REQ_PREFLUSH | REQ_SYNC,
+ 		.mem.type = DM_IO_KMEM,
+ 		.mem.ptr.addr = NULL,
+ 		.client = c->dm_io,
+diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
+index c7f7c8d76576..923323e22320 100644
+--- a/drivers/md/dm-integrity.c
++++ b/drivers/md/dm-integrity.c
+@@ -783,7 +783,8 @@ static void write_journal(struct dm_integrity_c *ic, unsigned commit_start, unsi
+ 			for (i = 0; i < commit_sections; i++)
+ 				rw_section_mac(ic, commit_start + i, true);
+ 		}
+-		rw_journal(ic, REQ_OP_WRITE, REQ_FUA, commit_start, commit_sections, &io_comp);
++		rw_journal(ic, REQ_OP_WRITE, REQ_FUA | REQ_SYNC, commit_start,
++			   commit_sections, &io_comp);
+ 	} else {
+ 		unsigned to_end;
+ 		io_comp.in_flight = (atomic_t)ATOMIC_INIT(2);
+diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c
+index a95cbb80fb34..e61c45047c25 100644
+--- a/drivers/md/dm-raid1.c
++++ b/drivers/md/dm-raid1.c
+@@ -260,7 +260,7 @@ static int mirror_flush(struct dm_target *ti)
+ 	struct mirror *m;
+ 	struct dm_io_request io_req = {
+ 		.bi_op = REQ_OP_WRITE,
+-		.bi_op_flags = REQ_PREFLUSH,
++		.bi_op_flags = REQ_PREFLUSH | REQ_SYNC,
+ 		.mem.type = DM_IO_KMEM,
+ 		.mem.ptr.addr = NULL,
+ 		.client = ms->io_client,
+diff --git a/drivers/md/dm-snap-persistent.c b/drivers/md/dm-snap-persistent.c
+index b93476c3ba3f..c5534d294773 100644
+--- a/drivers/md/dm-snap-persistent.c
++++ b/drivers/md/dm-snap-persistent.c
+@@ -741,7 +741,8 @@ static void persistent_commit_exception(struct dm_exception_store *store,
+ 	/*
+ 	 * Commit exceptions to disk.
+ 	 */
+-	if (ps->valid && area_io(ps, REQ_OP_WRITE, REQ_PREFLUSH | REQ_FUA))
++	if (ps->valid && area_io(ps, REQ_OP_WRITE,
++				 REQ_PREFLUSH | REQ_FUA | REQ_SYNC))
+ 		ps->valid = 0;
+ 
+ 	/*
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 6ef9500226c0..37ccd73c79ec 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1657,7 +1657,7 @@ static struct mapped_device *alloc_dev(int minor)
+ 
+ 	bio_init(&md->flush_bio, NULL, 0);
+ 	md->flush_bio.bi_bdev = md->bdev;
+-	md->flush_bio.bi_opf = REQ_OP_WRITE | REQ_PREFLUSH;
++	md->flush_bio.bi_opf = REQ_OP_WRITE | REQ_PREFLUSH | REQ_SYNC;
+ 
+ 	dm_stats_init(&md->stats);
+ 
 -- 
-Damien Le Moal,
-Western Digital Research
-
-Western Digital Corporation (and its subsidiaries) E-mail Confidentiality Notice & Disclaimer:
-
-This e-mail and any files transmitted with it may contain confidential or legally privileged information of WDC and/or its affiliates, and are intended solely for the use of the individual or entity to which they are addressed. If you are not the intended recipient, any disclosure, copying, distribution or any action taken or omitted to be taken in reliance on it, is prohibited. If you have received this e-mail in error, please notify the sender immediately and delete the e-mail in its entirety from your system.
+2.12.3
