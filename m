@@ -1,407 +1,171 @@
-From: Yang Feng <philip.yang@huawei.com>
-Subject: [PATCH v2] multipath-tools: Prioritizer based on a
- latency algorithm
-Date: Thu, 1 Jun 2017 09:50:02 +0800
-Message-ID: <6e2822ad-b5dc-2125-dde0-f23c3b6fb621@huawei.com>
-References: <4aff59a1-b456-bf95-e8fc-e7f54ba86d6c@huawei.com>
+From: "Nicholas A. Bellinger" <nab-IzHhD5pYlfBP7FQvKIMDCQ@public.gmane.org>
+Subject: Re: [PATCH 2/8] target: remove iblock WRITE_SAME
+	passthrough support
+Date: Wed, 31 May 2017 23:27:01 -0700
+Message-ID: <1496298421.27407.206.camel@haakon3.risingtidesystems.com>
+References: <20170410160807.23674-1-hch@lst.de>
+	<20170410160807.23674-3-hch@lst.de>
+	<1491975041.8231.131.camel@haakon3.risingtidesystems.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4aff59a1-b456-bf95-e8fc-e7f54ba86d6c@huawei.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: zouming.zouming@huawei.com, Xose Vazquez Perez <xose.vazquez@gmail.com>, guanjunxiong@huawei.com, "Chengjike (ISSP)" <chengjike.cheng@huawei.com>, shenhong09@huawei.com, "Hege
-	(A)" <hege09@huawei.com>, Martin Wilck <mwilck@suse.com>, qiuxin@huawei.com
+Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+In-Reply-To: <1491975041.8231.131.camel-XoQW25Eq2zviZyQQd+hFbcojREIfoBdhmpATvIKMPHk@public.gmane.org>
+List-Unsubscribe: <http://lists.linbit.com/mailman/options/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
+List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
+List-Subscribe: <http://lists.linbit.com/mailman/listinfo/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
+Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Cc: axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, philipp.reisner-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, target-devel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lars.ellenberg-63ez5xqkn6DQT0dZR+AlfA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
 List-Id: dm-devel.ids
 
-1. In the Storage-Backup environment of HyperCluster, includes one storage array near
-to the host and one remote storage array, and the two storage arrays have the same hardware.
-The same LUN is writed or readed by the two storage arrays. However, usually, the average
-latency of the paths of the remote storage array is much higher than the near storage array's.
-Apparently, the prioritizer can be a good automatic solution. And the current selectors don't
-solve it, IOs will send to the paths of the remote storage array, IOPS will be influenced unavoidably.
+Hey HCH & Jens,
 
-2. In the environment of single storage array, the prioritizer can automatically separate the paths
-who's latency is much higher, IOs will not send to this paths. But the current selectors don't solve
-this problem, IOPS will be influenced unavoidably.
+Is this already queued up for v4.13 to address the missing LBPRZ feature
+bit..?
 
-The value of "MIN_IO_NUM" is set 2 from 10, the patch v2 as follows:
----
-Subject: [PATCH] libmultipath/prioritizers: Prioritizer for device mapper multipath, where the corresponding priority
-values of specific paths are provided by a latency algorithm. And the latency algorithm is dependent on the following
-arguments(latency_interval and io_num). The principle of the algorithm is illustrated as follows:
-1. By sending a certain number "cons_num" of read IOs to the current path continuously, the IOs' average latency can be calculated.
-2. According to the average latency of each path and the weight value "latency_interval", the priority "rc" of each path can be provided.
+If not, I'll happy to take it via target-pending along with the
+following to re-enable it via max_write_zeroes_sectors.
 
-                   latency_interval   latency_interval   latency_interval       latency_interval
-         	 |------------------|------------------|------------------|...|------------------|
-		 |  priority rank 1 |  priority rank 2 |  priority rank 3 |...|  priority rank x |
-		 |------------------|------------------|------------------|...|------------------|
-				          Priority Rank Partitioning
----
- libmultipath/prioritizers/Makefile       |   6 +-
- libmultipath/prioritizers/path_latency.c | 271 +++++++++++++++++++++++++++++++
- multipath/multipath.conf.5               |  18 ++
- libmultipath/prio.h 			  |   1 +
- 4 files changed, 295 insertions(+), 1 deletion(-)
- create mode 100644 libmultipath/prioritizers/path_latency.c
+diff --git a/drivers/target/target_core_device.c b/drivers/target/target_core_device.c
+index d2f089c..e7caf78 100644
+--- a/drivers/target/target_core_device.c
++++ b/drivers/target/target_core_device.c
+@@ -851,7 +851,7 @@ bool target_configure_unmap_from_queue(struct se_dev_attrib *attrib,
+        attrib->unmap_granularity = q->limits.discard_granularity / block_size;
+        attrib->unmap_granularity_alignment = q->limits.discard_alignment /
+                                                                block_size;
+-       attrib->unmap_zeroes_data = 0;
++       attrib->unmap_zeroes_data = (q->limits.max_write_zeroes_sectors);
+        return true;
+ }
+ EXPORT_SYMBOL(target_configure_unmap_from_queue);
 
-diff --git a/libmultipath/prioritizers/Makefile b/libmultipath/prioritizers/Makefile
-index 36b42e4..d2f20f6 100644
---- a/libmultipath/prioritizers/Makefile
-+++ b/libmultipath/prioritizers/Makefile
-@@ -18,13 +18,17 @@ LIBS = \
- 	libpriorandom.so \
- 	libpriordac.so \
- 	libprioweightedpath.so \
--	libpriosysfs.so
-+	libpriopath_latency.so \
-+	libpriosysfs.so
+Any objections..?
 
- all: $(LIBS)
-
- libprioalua.so: alua.o alua_rtpg.o
- 	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^
-
-+libpriopath_latency.so: path_latency.o  ../checkers/libsg.o
-+	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^ -lm
-+
- libprio%.so: %.o
- 	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^
-
-diff --git a/libmultipath/prioritizers/path_latency.c b/libmultipath/prioritizers/path_latency.c
-new file mode 100644
-index 0000000..a666b6c
---- /dev/null
-+++ b/libmultipath/prioritizers/path_latency.c
-@@ -0,0 +1,271 @@
-+/*
-+ * (C) Copyright HUAWEI Technology Corp. 2017, 2021   All Rights Reserved.
-+ *
-+ * main.c
-+ *
-+ * Prioritizer for device mapper multipath, where the corresponding priority
-+ * values of specific paths are provided by a latency algorithm. And the
-+ * latency algorithm is dependent on arguments.
-+ *
-+ * The principle of the algorithm as follows:
-+ * 1. By sending a certain number "io_num" of read IOs to the current path
-+ *    continuously, the IOs' average latency can be calculated.
-+ * 2. According to the average latency of each path and the weight value
-+ *    "latency_interval", the priority "rc" of each path can be provided.
-+ *
-+ * Author(s): Yang Feng <philip.yang@huawei.com>
-+ *            Zou Ming <zouming.zouming@huawei.com>
-+ *
-+ * This file is released under the GPL.
-+ */
-+#include <stdio.h>
-+#include <math.h>
-+#include <ctype.h>
-+#include <time.h>
-+
-+#include "debug.h"
-+#include "prio.h"
-+#include "structs.h"
-+#include "../checkers/libsg.h"
-+
-+#define THRES_USEC_VALUE        120000000LL    /*unit: us, =120s*/
-+
-+#define MAX_IO_NUM              200
-+#define MIN_IO_NUM              2
-+
-+#define MAX_LATENCY_INTERVAL    60            /*unit: s*/
-+#define MIN_LATENCY_INTERVAL    1             /*unit: us, or ms, or s*/
-+
-+#define DEFAULT_PRIORITY        0
-+
-+#define MAX_CHAR_SIZE           30
-+
-+#define CHAR_USEC               "us"
-+#define CHAR_MSEC               "ms"
-+#define CHAR_SEC                "s"
-+
-+enum interval_type {
-+    INTERVAL_USEC,
-+    INTERVAL_MSEC,
-+    INTERVAL_SEC,
-+    INTERVAL_INVALID
-+};
-+
-+/* interval_unit_str and interval_unit_type keep the same assignment sequence */
-+static const char *interval_unit_str[MAX_CHAR_SIZE] = {
-+    CHAR_USEC, CHAR_MSEC, CHAR_SEC
-+};
-+static const int interval_unit_type[] = {
-+    INTERVAL_USEC, INTERVAL_MSEC, INTERVAL_SEC
-+};
-+
-+#define USEC_PER_SEC      1000000LL
-+#define USEC_PER_MSEC     1000LL
-+#define USEC_PER_USEC     1LL
-+
-+static const int conversion_ratio[] = {
-+    [INTERVAL_USEC]		= USEC_PER_USEC,
-+    [INTERVAL_MSEC]     = USEC_PER_MSEC,
-+    [INTERVAL_SEC]		= USEC_PER_SEC,
-+    [INTERVAL_INVALID]	= 0
-+};
-+
-+static long long path_latency[MAX_IO_NUM];
-+
-+static inline long long timeval_to_us(const struct timespec *tv)
-+{
-+	return ((long long) tv->tv_sec * USEC_PER_SEC) + (tv->tv_nsec >> 10);
-+}
-+
-+static int do_readsector0(int fd, unsigned int timeout)
-+{
-+	unsigned char buf[4096];
-+	unsigned char sbuf[SENSE_BUFF_LEN];
-+	int ret;
-+
-+	ret = sg_read(fd, &buf[0], 4096, &sbuf[0],
-+		      SENSE_BUFF_LEN, timeout);
-+
-+	return ret;
-+}
-+
-+int check_args_valid(int io_num, long long latency_interval, int type)
-+{
-+    if ((io_num < MIN_IO_NUM) || (io_num > MAX_IO_NUM))
-+    {
-+        condlog(0, "args io_num is more than the valid values range");
-+        return 0;
-+    }
-+
-+    /* s:[1, 60], ms:[1, 60000], us:[1, 60000000] */
-+    if ((latency_interval < MIN_LATENCY_INTERVAL) || (latency_interval > (MAX_LATENCY_INTERVAL * USEC_PER_SEC / conversion_ratio[type])))
-+    {
-+        condlog(0, "args latency_interval is more than the valid values range");
-+        return 0;
-+    }
-+
-+    return 1;
-+}
-+
-+static int get_interval_type(char *type)
-+{
-+    int index;
-+
-+    for (index = 0; index < sizeof(interval_unit_str)/MAX_CHAR_SIZE; index++)
-+    {
-+        if (strcmp(type, interval_unit_str[index]) == 0)
-+        {
-+            return interval_unit_type[index];
-+        }
-+    }
-+
-+    return INTERVAL_INVALID;
-+}
-+
-+long long get_conversion_ratio(int type)
-+{
-+    return conversion_ratio[type];
-+}
-+
-+/* In multipath.conf, args form: io_num|latency_interval. For example,
-+*  args is "20|10ms", this function can get 20, 10.
-+*/
-+static int get_interval_and_ionum(char *args,
-+                                        int *ionum,
-+                                        long long *interval)
-+{
-+    char source[MAX_CHAR_SIZE];
-+    char vertica = '|';
-+    char *endstrbefore = NULL;
-+    char *endstrafter = NULL;
-+    int type;
-+    unsigned int size = strlen(args);
-+    long long ratio;
-+
-+    if ((args == NULL) || (ionum == NULL) || (interval == NULL))
-+    {
-+        condlog(0, "args string is NULL");
-+        return 0;
-+    }
-+
-+    if ((size < 1) || (size > MAX_CHAR_SIZE-1))
-+    {
-+        condlog(0, "args string's size is too long");
-+        return 0;
-+    }
-+
-+    memcpy(source, args, size+1);
-+
-+    if (!isdigit(source[0]))
-+    {
-+        condlog(0, "args io_num string's first char is not digit");
-+        return 0;
-+    }
-+
-+    *ionum = (int)strtoul(source, &endstrbefore, 10);
-+    if (endstrbefore[0] != vertica)
-+    {
-+        condlog(0, "segmentation char is invalid");
-+        return 0;
-+    }
-+
-+    if (!isdigit(endstrbefore[1]))
-+    {
-+        condlog(0, "args latency_interval string's first char is not digit");
-+        return 0;
-+    }
-+
-+    *interval = (long long)strtol(&endstrbefore[1], &endstrafter, 10);
-+    type = get_interval_type(endstrafter);
-+    if (type == INTERVAL_INVALID)
-+    {
-+        condlog(0, "args latency_interval type is invalid");
-+        return 0;
-+    }
-+
-+    if (check_args_valid(*ionum, *interval, type) == 0)
-+    {
-+        return 0;
-+    }
-+
-+	ratio = get_conversion_ratio(type);
-+    *interval *= (long long)ratio;
-+
-+    return 1;
-+}
-+
-+long long calc_standard_deviation(long long *path_latency, int size, long long avglatency)
-+{
-+    int index;
-+    long long total = 0;
-+
-+    for (index = 0; index < size; index++)
-+    {
-+        total += (path_latency[index] - avglatency) * (path_latency[index] - avglatency);
-+    }
-+
-+    total /= (size-1);
-+
-+    return (long long)sqrt((double)total);
-+}
-+
-+int getprio (struct path *pp, char *args, unsigned int timeout)
-+{
-+    int rc, temp;
-+    int index = 0;
-+    int io_num;
-+    long long latency_interval;
-+    long long avglatency;
-+    long long standard_deviation;
-+    long long toldelay = 0;
-+    long long before, after;
-+    struct timespec tv;
-+
-+	if (pp->fd < 0)
-+		return -1;
-+
-+    if (get_interval_and_ionum(args, &io_num, &latency_interval) == 0)
-+    {
-+        condlog(0, "%s: get path_latency args fail", pp->dev);
-+        return DEFAULT_PRIORITY;
-+    }
-+
-+    memset(path_latency, 0, sizeof(path_latency));
-+
-+    temp = io_num;
-+    while (temp-- > 0)
-+    {
-+        (void)clock_gettime(CLOCK_MONOTONIC, &tv);
-+        before = timeval_to_us(&tv);		
-+
-+        if (do_readsector0(pp->fd, timeout) == 2)
-+        {
-+            condlog(0, "%s: path down", pp->dev);
-+            return -1;
-+        }
-+
-+        (void)clock_gettime(CLOCK_MONOTONIC, &tv);
-+        after = timeval_to_us(&tv);
-+
-+        path_latency[index] = after - before;
-+        toldelay += path_latency[index++];
-+    }
-+
-+    avglatency = toldelay/(long long)io_num;
-+    condlog(4, "%s: average latency is (%lld)", pp->dev, avglatency);
-+
-+    if (avglatency > THRES_USEC_VALUE)
-+    {
-+        condlog(0, "%s: average latency (%lld) is more than thresold", pp->dev, avglatency);
-+        return DEFAULT_PRIORITY;
-+    }
-+
-+    /* warn the user if the latency_interval set is smaller than (2 * standard deviation), or equal */
-+    standard_deviation = calc_standard_deviation(path_latency, index, avglatency);
-+    if (latency_interval <= (2 * standard_deviation))
-+        condlog(3, "%s: args latency_interval set is smaller than 2 * standard deviation (%lld us), or equal",
-+            pp->dev, standard_deviation);
-+
-+	rc = (int)(THRES_USEC_VALUE - (avglatency/(long long)latency_interval));
-+    return rc;
-+}
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index 5939688..3dd0d77 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -293,6 +293,10 @@ Generate a random priority between 1 and 10.
- Generate the path priority based on the regular expression and the
- priority provided as argument. Requires prio_args keyword.
- .TP
-+.I path_latency
-+Generate the path priority based on a latency algorithm.
-+Requires prio_args keyword.
-+.TP
- .I datacore
- .\" XXX
- ???. Requires prio_args keyword.
-@@ -333,6 +337,20 @@ these values can be looked up through sysfs or by running \fImultipathd show pat
- "%N:%R:%n:%r"\fR. For example: 0x200100e08ba0aea0:0x210100e08ba0aea0:.*:.* , .*:.*:iqn.2009-10.com.redhat.msp.lab.ask-06:.*
- .RE
- .TP 12
-+.I path_latency
-+Needs a value of the form
-+\fI"<latency_interval>|<io_num>"\fR
-+.RS
-+.TP 8
-+.I latency_interval
-+The interval values of average latency between two different neighbour ranks of path priority, used to partition different priority ranks.
-+Form: XXs, or XXXus, or XXXms. Unit: Second, or Microsecond, or Millisecond. Valid Values: Integer, s [1, 60], ms [1, 60000], us [1, 60000000],
-+For example: If latency_interval=10ms, the paths will be grouped in priority groups with path latency 0-10ms, 10-20ms, 20-30ms, etc..
-+.TP
-+.I io_num
-+The number of read IOs sent to the current path continuously, used to calculate the average path latency. Valid Values: Integer, [2, 200].
-+.RE
-+.TP 12
- .I alua
- If \fIexclusive_pref_bit\fR is set, paths with the \fIpreferred path\fR bit
- set will always be in their own path group.
-diff --git a/libmultipath/prio.h b/libmultipath/prio.h
-index 0193c52..c97fe39 100644
---- a/libmultipath/prio.h
-+++ b/libmultipath/prio.h
-@@ -29,6 +29,7 @@ struct path;
- #define PRIO_RDAC		"rdac"
- #define PRIO_WEIGHTED_PATH	"weightedpath"
- #define PRIO_SYSFS		"sysfs"
-+#define PRIO_PATH_LATENCY	"path_latency"
-
- /*
-  * Value used to mark the fact prio was not defined
--- 
+On Tue, 2017-04-11 at 22:30 -0700, Nicholas A. Bellinger wrote:
+> On Mon, 2017-04-10 at 18:08 +0200, Christoph Hellwig wrote:
+> > Use the pscsi driver to support arbitrary command passthrough
+> > instead.
+> > 
+> 
+> The people who are actively using iblock_execute_write_same_direct() are
+> doing so in the context of ESX VAAI BlockZero, together with
+> EXTENDED_COPY and COMPARE_AND_WRITE primitives.  Just using PSCSI is not
+> an option for them.
+> 
+> In practice though I've not seen any users of IBLOCK WRITE_SAME for
+> anything other than VAAI BlockZero, so just using blkdev_issue_zeroout()
+> when available, and falling back to iblock_execute_write_same() if the
+> WRITE_SAME buffer contains anything other than zeros should be OK.
+> 
+> How about something like the following below..?
+> 
+> This would bring parity to how blkdev_issue_write_same() works atm wrt
+> to synchronous bio completions.  However, most folks with a raw
+> make_request or blk-mq backend driver that supports multiple GB/sec of
+> zero bandwidth end up changing IBLOCK to support asynchronous
+> REQ_WRITE_SAME completions anyways.
+> 
+> I'd be happy to add support for that using __blkdev_issue_zeroout() once
+> the basic conversion is in place.
+> 
+> From ff74012eaff38f9fa0d74aca60507b9964f484ce Mon Sep 17 00:00:00 2001
+> From: Nicholas Bellinger <nab-IzHhD5pYlfBP7FQvKIMDCQ@public.gmane.org>
+> Date: Tue, 11 Apr 2017 22:21:47 -0700
+> Subject: [PATCH] target/iblock: Convert WRITE_SAME to blkdev_issue_zeroout
+> 
+> Signed-off-by: Nicholas Bellinger <nab-IzHhD5pYlfBP7FQvKIMDCQ@public.gmane.org>
+> ---
+>  drivers/target/target_core_iblock.c | 44 +++++++++++++++++++++++--------------
+>  1 file changed, 27 insertions(+), 17 deletions(-)
+> 
+> diff --git a/drivers/target/target_core_iblock.c b/drivers/target/target_core_iblock.c
+> index d316ed5..5bfde20 100644
+> --- a/drivers/target/target_core_iblock.c
+> +++ b/drivers/target/target_core_iblock.c
+> @@ -86,6 +86,7 @@ static int iblock_configure_device(struct se_device *dev)
+>  	struct block_device *bd = NULL;
+>  	struct blk_integrity *bi;
+>  	fmode_t mode;
+> +	unsigned int max_write_zeroes_sectors;
+>  	int ret = -ENOMEM;
+>  
+>  	if (!(ib_dev->ibd_flags & IBDF_HAS_UDEV_PATH)) {
+> @@ -129,7 +130,11 @@ static int iblock_configure_device(struct se_device *dev)
+>  	 * Enable write same emulation for IBLOCK and use 0xFFFF as
+>  	 * the smaller WRITE_SAME(10) only has a two-byte block count.
+>  	 */
+> -	dev->dev_attrib.max_write_same_len = 0xFFFF;
+> +	max_write_zeroes_sectors = bdev_write_zeroes_sectors(bd);
+> +	if (max_write_zeroes_sectors)
+> +		dev->dev_attrib.max_write_same_len = max_write_zeroes_sectors;
+> +	else
+> +		dev->dev_attrib.max_write_same_len = 0xFFFF;
+>  
+>  	if (blk_queue_nonrot(q))
+>  		dev->dev_attrib.is_nonrot = 1;
+> @@ -415,28 +420,31 @@ static void iblock_end_io_flush(struct bio *bio)
+>  }
+>  
+>  static sense_reason_t
+> -iblock_execute_write_same_direct(struct block_device *bdev, struct se_cmd *cmd)
+> +iblock_execute_zero_out(struct block_device *bdev, struct se_cmd *cmd)
+>  {
+>  	struct se_device *dev = cmd->se_dev;
+>  	struct scatterlist *sg = &cmd->t_data_sg[0];
+> -	struct page *page = NULL;
+> -	int ret;
+> +	unsigned char *buf, zero = 0x00, *p = &zero;
+> +	int rc, ret;
+>  
+> -	if (sg->offset) {
+> -		page = alloc_page(GFP_KERNEL);
+> -		if (!page)
+> -			return TCM_OUT_OF_RESOURCES;
+> -		sg_copy_to_buffer(sg, cmd->t_data_nents, page_address(page),
+> -				  dev->dev_attrib.block_size);
+> -	}
+> +	buf = kmap(sg_page(sg)) + sg->offset;
+> +	if (!buf)
+> +		return TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
+> +	/*
+> +	 * Fall back to block_execute_write_same() slow-path if
+> +	 * incoming WRITE_SAME payload does not contain zeros.
+> +	 */
+> +	rc = memcmp(buf, p, cmd->data_length);
+> +	kunmap(sg_page(sg));
+> +
+> +	if (rc)
+> +		return TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
+>  
+> -	ret = blkdev_issue_write_same(bdev,
+> +	ret = blkdev_issue_zeroout(bdev,
+>  				target_to_linux_sector(dev, cmd->t_task_lba),
+>  				target_to_linux_sector(dev,
+>  					sbc_get_write_same_sectors(cmd)),
+> -				GFP_KERNEL, page ? page : sg_page(sg));
+> -	if (page)
+> -		__free_page(page);
+> +				GFP_KERNEL, false);
+>  	if (ret)
+>  		return TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
+>  
+> @@ -472,8 +480,10 @@ static void iblock_end_io_flush(struct bio *bio)
+>  		return TCM_INVALID_CDB_FIELD;
+>  	}
+>  
+> -	if (bdev_write_same(bdev))
+> -		return iblock_execute_write_same_direct(bdev, cmd);
+> +	if (bdev_write_zeroes_sectors(bdev)) {
+> +		if (!iblock_execute_zero_out(bdev, cmd))
+> +			return 0;
+> +	}
+>  
+>  	ibr = kzalloc(sizeof(struct iblock_req), GFP_KERNEL);
+>  	if (!ibr)
