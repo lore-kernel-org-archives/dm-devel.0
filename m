@@ -1,13 +1,12 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 5/5] multipathd: fix "show maps json" crash
-Date: Thu,  1 Jun 2017 22:09:12 -0500
-Message-ID: <1496372952-27110-6-git-send-email-bmarzins@redhat.com>
-References: <1496372952-27110-1-git-send-email-bmarzins@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [git pull] device mapper fixes for 4.12-rc4
+Date: Fri, 2 Jun 2017 13:16:41 -0400
+Message-ID: <20170602171640.GA59854@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1496372952-27110-1-git-send-email-bmarzins@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,39 +16,58 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Martin Wilck <mwilck@suse.com>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Junaid Shahid <junaids@google.com>, Jan Kara <jack@suse.cz>, Gilad Ben-Yossef <gilad@benyossef.com>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-If there are no multipath devices, show_maps_json sets the maximum size
-of the reply buffer to 0. Having a size of 0 causes the calls to calloc
-and realloc to behave in ways that the code isn't designed to handle,
-leading to a double-free crash. Instead, show_maps_json should just
-use the INITIAL_REPLY_LEN if there are no multipath devices.
+Hi Linus,
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- multipathd/cli_handlers.c | 6 ++++--
- 1 file changed, 4 insertions(+), 2 deletions(-)
+The following changes since commit 08332893e37af6ae779367e78e444f8f9571511d:
 
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index 04c7386..7b0d00c 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -162,10 +162,12 @@ show_maps_json (char ** r, int * len, struct vectors * vecs)
- 	struct multipath * mpp;
- 	char * c;
- 	char * reply;
--	unsigned int maxlen = INITIAL_REPLY_LEN *
--			PRINT_JSON_MULTIPLIER * VECTOR_SIZE(vecs->mpvec);
-+	unsigned int maxlen = INITIAL_REPLY_LEN;
- 	int again = 1;
- 
-+	if (VECTOR_SIZE(vecs->mpvec) > 0)
-+		maxlen *= PRINT_JSON_MULTIPLIER * VECTOR_SIZE(vecs->mpvec);
-+
- 	vector_foreach_slot(vecs->mpvec, mpp, i) {
- 		if (update_multipath(vecs, mpp->alias, 0)) {
- 			return 1;
--- 
-2.7.4
+  Linux 4.12-rc2 (2017-05-21 19:30:23 -0700)
+
+are available in the git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-4.12/dm-fixes-3
+
+for you to fetch changes up to ff0361b34ac63ef80c785c32d62e0e9d89a2cf89:
+
+  dm: make flush bios explicitly sync (2017-05-31 10:50:23 -0400)
+
+Please pull, thanks.
+Mike
+
+----------------------------------------------------------------
+- a DM verity fix for a mode when no salt is used
+
+- a fix to DM to account for the possibility that PREFLUSH or FUA are
+  used without the SYNC flag if the underlying storage doesn't have a
+  volatile write-cache
+
+- a DM ioctl memory allocation flag fix to use __GFP_HIGH to allow
+  emergency forward progress (by using memory reserves as last resort)
+
+- a small DM integrity cleanup to use kvmalloc() instead of duplicating
+  the same
+
+----------------------------------------------------------------
+Gilad Ben-Yossef (1):
+      dm verity: fix no salt use case
+
+Jan Kara (1):
+      dm: make flush bios explicitly sync
+
+Junaid Shahid (1):
+      dm ioctl: restore __GFP_HIGH in copy_params()
+
+Mikulas Patocka (1):
+      dm integrity: use kvmalloc() instead of dm_integrity_kvmalloc()
+
+ drivers/md/dm-bufio.c           |  2 +-
+ drivers/md/dm-integrity.c       | 30 ++++++++----------------------
+ drivers/md/dm-ioctl.c           |  5 +++--
+ drivers/md/dm-raid1.c           |  2 +-
+ drivers/md/dm-snap-persistent.c |  3 ++-
+ drivers/md/dm-verity-target.c   |  4 ++--
+ drivers/md/dm.c                 |  2 +-
+ 7 files changed, 18 insertions(+), 30 deletions(-)
