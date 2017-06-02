@@ -1,8 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 3/5] multipath: set verbosity to default during
-	config
-Date: Thu,  1 Jun 2017 22:09:10 -0500
-Message-ID: <1496372952-27110-4-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 2/5] libmultipath: change how RADOS checker is
+	enabled
+Date: Thu,  1 Jun 2017 22:09:09 -0500
+Message-ID: <1496372952-27110-3-git-send-email-bmarzins@redhat.com>
 References: <1496372952-27110-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,37 +22,53 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-condlog was setting the verbosity to 0 if there was no configuration.
-This keeps multipath from printing warning messages about config file
-problems that are found while loading the configuration. Instead, it
-should use the default config level until it loads the configuration
-to find the current value.
+Instead of making the user call "make", "make install" and "make clean"
+with ENABLE_RADOS set correctly, have the makefile check if
+/usr/include/rados/librados.h exists, just like it checks if specific
+functions exist in a file.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/debug.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ Makefile.inc                   | 13 +++++++++++++
+ libmultipath/checkers/Makefile |  3 ++-
+ 2 files changed, 15 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/debug.c b/libmultipath/debug.c
-index fbe171a..f89b264 100644
---- a/libmultipath/debug.c
-+++ b/libmultipath/debug.c
-@@ -11,6 +11,7 @@
- #include "../third-party/valgrind/drd.h"
- #include "vector.h"
- #include "config.h"
-+#include "defaults.h"
+diff --git a/Makefile.inc b/Makefile.inc
+index 1815f9a..ec41dbf 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -109,5 +109,18 @@ check_func =								       \
+ 	echo "$$found"							       \
+     )
  
- void dlog (int sink, int prio, const char * fmt, ...)
- {
-@@ -21,7 +22,7 @@ void dlog (int sink, int prio, const char * fmt, ...)
- 	va_start(ap, fmt);
- 	conf = get_multipath_config();
- 	ANNOTATE_IGNORE_READS_BEGIN();
--	thres = (conf) ? conf->verbosity : 0;
-+	thres = (conf) ? conf->verbosity : DEFAULT_VERBOSITY;
- 	ANNOTATE_IGNORE_READS_END();
- 	put_multipath_config(conf);
++# Checker whether a file with name $1 exists
++check_file = $(shell	\
++	if [ -f "$1" ]; then \
++		found=1; \
++		status="yes"; \
++	else \
++		found=0; \
++		status="no"; \
++	fi; \
++	echo 1>&2 "Checking if $1 exists ... $$status"; \
++	echo "$$found" \
++	)
++
+ %.o:	%.c
+ 	$(CC) $(CFLAGS) -c -o $@ $<
+diff --git a/libmultipath/checkers/Makefile b/libmultipath/checkers/Makefile
+index 732ca9d..bce6b8b 100644
+--- a/libmultipath/checkers/Makefile
++++ b/libmultipath/checkers/Makefile
+@@ -14,7 +14,8 @@ LIBS= \
+ 	libcheckemc_clariion.so \
+ 	libcheckhp_sw.so \
+ 	libcheckrdac.so
+-ifneq ($(ENABLE_RADOS),0)
++
++ifneq ($(call check_file,/usr/include/rados/librados.h),0)
+ LIBS += libcheckrbd.so
+ endif
  
 -- 
 2.7.4
