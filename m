@@ -1,7 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 1/5] libmultipath: add comment about resuming
-Date: Thu,  1 Jun 2017 22:09:08 -0500
-Message-ID: <1496372952-27110-2-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 4/5] mpath: skip device configs without
+	vendor/product
+Date: Thu,  1 Jun 2017 22:09:11 -0500
+Message-ID: <1496372952-27110-5-git-send-email-bmarzins@redhat.com>
 References: <1496372952-27110-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,28 +22,34 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-The reason for the second resume in my commit "libmultipath: fix
-suspended devs from failed reloads" is not obvious from the multipath
-code, so add a comment.
+Right now if multipath.conf includes a device configuration without a
+vendor or product string, it will automatically be applied to all
+devices, skipping all other configs entirely.  This is clearly wrong.
+This patch makes sure that user added configs include vendor and
+product strings
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/devmapper.c | 3 +++
- 1 file changed, 3 insertions(+)
+ libmultipath/config.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
 
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index 69b634b..ee83e0f 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -399,6 +399,9 @@ int dm_addmap_reload(struct multipath *mpp, char *params, int flush)
- 	if (r)
- 		return r;
- 
-+	/* If the resume failed, dm will leave the device suspended, and
-+ 	 * drop the new table, so doing a second resume will try using
-+ 	 * the original table */
- 	if (dm_is_suspended(mpp->alias))
- 		dm_simplecmd(DM_DEVICE_RESUME, mpp->alias, !flush, 1,
- 			     udev_flags, 0);
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index bb6619b..6b23601 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -451,6 +451,13 @@ restart:
+ 			break;
+ 		j = n;
+ 		vector_foreach_slot_after(hw, hwe2, j) {
++			/* drop invalid device configs */
++			if (!hwe2->vendor || !hwe2->product) {
++				condlog(0, "device config missing vendor or product parameter");
++				vector_del_slot(hw, j--);
++				free_hwe(hwe2);
++				continue;
++			}
+ 			if (hwe_regmatch(hwe1, hwe2))
+ 				continue;
+ 			/* dup */
 -- 
 2.7.4
