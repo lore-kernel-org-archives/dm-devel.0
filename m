@@ -1,8 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 2/5] libmultipath: change how RADOS checker is
-	enabled
-Date: Thu,  1 Jun 2017 22:09:09 -0500
-Message-ID: <1496372952-27110-3-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 1/5] libmultipath: add comment about resuming
+Date: Thu,  1 Jun 2017 22:09:08 -0500
+Message-ID: <1496372952-27110-2-git-send-email-bmarzins@redhat.com>
 References: <1496372952-27110-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,53 +21,28 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Instead of making the user call "make", "make install" and "make clean"
-with ENABLE_RADOS set correctly, have the makefile check if
-/usr/include/rados/librados.h exists, just like it checks if specific
-functions exist in a file.
+The reason for the second resume in my commit "libmultipath: fix
+suspended devs from failed reloads" is not obvious from the multipath
+code, so add a comment.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- Makefile.inc                   | 13 +++++++++++++
- libmultipath/checkers/Makefile |  3 ++-
- 2 files changed, 15 insertions(+), 1 deletion(-)
+ libmultipath/devmapper.c | 3 +++
+ 1 file changed, 3 insertions(+)
 
-diff --git a/Makefile.inc b/Makefile.inc
-index 1815f9a..ec41dbf 100644
---- a/Makefile.inc
-+++ b/Makefile.inc
-@@ -109,5 +109,18 @@ check_func =								       \
- 	echo "$$found"							       \
-     )
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index 69b634b..ee83e0f 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -399,6 +399,9 @@ int dm_addmap_reload(struct multipath *mpp, char *params, int flush)
+ 	if (r)
+ 		return r;
  
-+# Checker whether a file with name $1 exists
-+check_file = $(shell	\
-+	if [ -f "$1" ]; then \
-+		found=1; \
-+		status="yes"; \
-+	else \
-+		found=0; \
-+		status="no"; \
-+	fi; \
-+	echo 1>&2 "Checking if $1 exists ... $$status"; \
-+	echo "$$found" \
-+	)
-+
- %.o:	%.c
- 	$(CC) $(CFLAGS) -c -o $@ $<
-diff --git a/libmultipath/checkers/Makefile b/libmultipath/checkers/Makefile
-index 732ca9d..bce6b8b 100644
---- a/libmultipath/checkers/Makefile
-+++ b/libmultipath/checkers/Makefile
-@@ -14,7 +14,8 @@ LIBS= \
- 	libcheckemc_clariion.so \
- 	libcheckhp_sw.so \
- 	libcheckrdac.so
--ifneq ($(ENABLE_RADOS),0)
-+
-+ifneq ($(call check_file,/usr/include/rados/librados.h),0)
- LIBS += libcheckrbd.so
- endif
- 
++	/* If the resume failed, dm will leave the device suspended, and
++ 	 * drop the new table, so doing a second resume will try using
++ 	 * the original table */
+ 	if (dm_is_suspended(mpp->alias))
+ 		dm_simplecmd(DM_DEVICE_RESUME, mpp->alias, !flush, 1,
+ 			     udev_flags, 0);
 -- 
 2.7.4
