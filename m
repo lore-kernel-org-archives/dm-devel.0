@@ -1,73 +1,66 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper fixes for 4.12-rc4
-Date: Fri, 2 Jun 2017 13:16:41 -0400
-Message-ID: <20170602171640.GA59854@redhat.com>
+From: Bart Van Assche <Bart.VanAssche@sandisk.com>
+Subject: Re: [PATCH v3 3/9] blk-mq: use the introduced
+ blk_mq_unquiesce_queue()
+Date: Fri, 2 Jun 2017 22:19:53 +0000
+Message-ID: <1496441991.1214.25.camel@sandisk.com>
+References: <20170531123706.20885-1-ming.lei@redhat.com>
+         <20170531123706.20885-4-ming.lei@redhat.com>
+         <1496244100.2608.3.camel@sandisk.com> <20170601005423.GA23563@ming.t460p>
+         <1496358538.3075.12.camel@sandisk.com> <20170602020041.GE30505@ming.t460p>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Junaid Shahid <junaids@google.com>, Jan Kara <jack@suse.cz>, Gilad Ben-Yossef <gilad@benyossef.com>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Alasdair G Kergon <agk@redhat.com>
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20170602020041.GE30505@ming.t460p>
+Content-Language: en-US
+Content-ID: <2AB090B513CB324FB70C30EAED9E2C58@namprd04.prod.outlook.com>
+Sender: linux-block-owner@vger.kernel.org
+To: "ming.lei@redhat.com" <ming.lei@redhat.com>
+Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "hch@infradead.org" <hch@infradead.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, "axboe@fb.com" <axboe@fb.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Linus,
+On Fri, 2017-06-02 at 10:00 +0800, Ming Lei wrote:
+> On Thu, Jun 01, 2017 at 11:09:00PM +0000, Bart Van Assche wrote:
+> > My opinion is that scsi_internal_device_block() and scsi_internal_devic=
+e_unblock()
+> > should be changed as follows for the scsi-mq code path:
+> > * scsi_internal_device_block() should call blk_mq_quiesce_queue(q) if t=
+he "wait"
+> >   argument is true and should set the QUEUE_FLAG_QUIESCED flag if the "=
+wait"
+> >   argument is false.
+> > * scsi_internal_device_unblock() should call blk_mq_unquiesce_queue().
+> >=20
+> > I am aware it sounds weird to set the QUEUE_FLAG_QUIESCED flag without =
+waiting
+> > until ongoing .queue_rq() calls have finished. The only driver that tri=
+ggers
+>=20
+> This way may break the contract of blk_mq_quiesce_queue() and is really w=
+eird.
+> And the above change shouldn't be related with this patchset, so better
+> to do whatever you want once this patch is merged.
 
-The following changes since commit 08332893e37af6ae779367e78e444f8f9571511d:
+No, what I proposed doesn't break the contract of blk_mq_quiesce_queue().
+The contract of that function is that if it is called that all pending
+.queue_rq() calls have finished and no new .queue_rq() calls will occur
+until blk_mq_unquiesce_queue() is called. Since the wait =3D=3D false path =
+does
+not call blk_mq_quiesce_queue() that contract does not apply.
 
-  Linux 4.12-rc2 (2017-05-21 19:30:23 -0700)
+> This patchset won't break current SCSI uses of blk_mq_quiesce_queue() and
+> won't cause regression, and I setup one iSCSI target yesterday and it wor=
+ks
+> just fine, how about just keeping this patch as it is?
 
-are available in the git repository at:
+As I explained in a previous e-mail, the iSCSI initiator driver does not
+trigger the wait =3D=3D false path so your test did not trigger that code p=
+ath.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-4.12/dm-fixes-3
+Something else I explained in a previous e-mail is that your patch makes it
+impossible to use the STOPPED flag in the SCSI core what it was originally
+intended for, namely preventing that the block layer keeps trying to queue
+requests while the block driver knows that it will have to return "BUSY".
+This is why I asked you to modify the SCSI integration of your patch.
 
-for you to fetch changes up to ff0361b34ac63ef80c785c32d62e0e9d89a2cf89:
-
-  dm: make flush bios explicitly sync (2017-05-31 10:50:23 -0400)
-
-Please pull, thanks.
-Mike
-
-----------------------------------------------------------------
-- a DM verity fix for a mode when no salt is used
-
-- a fix to DM to account for the possibility that PREFLUSH or FUA are
-  used without the SYNC flag if the underlying storage doesn't have a
-  volatile write-cache
-
-- a DM ioctl memory allocation flag fix to use __GFP_HIGH to allow
-  emergency forward progress (by using memory reserves as last resort)
-
-- a small DM integrity cleanup to use kvmalloc() instead of duplicating
-  the same
-
-----------------------------------------------------------------
-Gilad Ben-Yossef (1):
-      dm verity: fix no salt use case
-
-Jan Kara (1):
-      dm: make flush bios explicitly sync
-
-Junaid Shahid (1):
-      dm ioctl: restore __GFP_HIGH in copy_params()
-
-Mikulas Patocka (1):
-      dm integrity: use kvmalloc() instead of dm_integrity_kvmalloc()
-
- drivers/md/dm-bufio.c           |  2 +-
- drivers/md/dm-integrity.c       | 30 ++++++++----------------------
- drivers/md/dm-ioctl.c           |  5 +++--
- drivers/md/dm-raid1.c           |  2 +-
- drivers/md/dm-snap-persistent.c |  3 ++-
- drivers/md/dm-verity-target.c   |  4 ++--
- drivers/md/dm.c                 |  2 +-
- 7 files changed, 18 insertions(+), 30 deletions(-)
+Bart.=
