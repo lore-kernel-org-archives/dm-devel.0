@@ -1,110 +1,68 @@
-From: Bart Van Assche <Bart.VanAssche@sandisk.com>
-Subject: Re: [PATCH v3 3/9] blk-mq: use the introduced
- blk_mq_unquiesce_queue()
-Date: Thu, 1 Jun 2017 23:09:00 +0000
-Message-ID: <1496358538.3075.12.camel@sandisk.com>
-References: <20170531123706.20885-1-ming.lei@redhat.com>
-         <20170531123706.20885-4-ming.lei@redhat.com>
-         <1496244100.2608.3.camel@sandisk.com> <20170601005423.GA23563@ming.t460p>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 0/4] dm: zoned block device fixes
+Date: Thu, 1 Jun 2017 20:36:18 -0400
+Message-ID: <20170602003617.GB25647@redhat.com>
+References: <20170529102307.19814-1-damien.lemoal@wdc.com>
+	<20170530202031.GA52190@redhat.com>
+	<46ec84af-0700-70f9-f990-d87a63cc18b0@wdc.com>
+	<20170531143910.GA16671@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20170601005423.GA23563@ming.t460p>
-Content-Language: en-US
-Content-ID: <9FD2FDAFCD537B4B931F3B0AB502F1A8@namprd04.prod.outlook.com>
-Sender: linux-block-owner@vger.kernel.org
-To: "ming.lei@redhat.com" <ming.lei@redhat.com>
-Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "hch@infradead.org" <hch@infradead.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, "axboe@fb.com" <axboe@fb.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20170531143910.GA16671@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Damien Le Moal <damien.lemoal@wdc.com>
+Cc: Bart Van Assche <bart.vanassche@sandisk.com>, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, 2017-06-01 at 08:54 +0800, Ming Lei wrote:
-> On Wed, May 31, 2017 at 03:21:41PM +0000, Bart Van Assche wrote:
-> > On Wed, 2017-05-31 at 20:37 +0800, Ming Lei wrote:
-> > > diff --git a/drivers/scsi/scsi_lib.c b/drivers/scsi/scsi_lib.c
-> > > index 99e16ac479e3..ffcf05765e2b 100644
-> > > --- a/drivers/scsi/scsi_lib.c
-> > > +++ b/drivers/scsi/scsi_lib.c
-> > > @@ -3031,7 +3031,10 @@ scsi_internal_device_unblock(struct scsi_devic=
-e *sdev,
-> > >  		return -EINVAL;
-> > > =20
-> > >  	if (q->mq_ops) {
-> > > -		blk_mq_start_stopped_hw_queues(q, false);
-> > > +		if (blk_queue_quiesced(q))
-> > > +			blk_mq_unquiesce_queue(q);
-> > > +		else
-> > > +			blk_mq_start_stopped_hw_queues(q, false);
-> > >  	} else {
-> > >  		spin_lock_irqsave(q->queue_lock, flags);
-> > >  		blk_start_queue(q);
-> >=20
-> > As I commented on v2, this change is really wrong. All what's needed he=
-re is
-> > a call to blk_mq_unquiesce_queue() and nothing else. Adding a call to
-> > blk_mq_start_stopped_hw_queues() is wrong because it makes it impossibl=
-e to
-> > use the STOPPED flag in the SCSI core to make the block layer core stop=
- calling
-> > .queue_rq() if a SCSI LLD returns "busy".
->=20
-> I am not sure if I understand your idea, could you explain a bit why it i=
-s wrong?
->=20
-> Let's see the function of scsi_internal_device_block():
->=20
-> 	if (q->mq_ops) {
->                 if (wait)
->                         blk_mq_quiesce_queue(q);
->                 else
->                         blk_mq_stop_hw_queues(q);
-> 	}
->=20
-> So the queue may be put into quiesced if 'wait' is true, or it is
-> stopped if 'wait' is false.
->=20
-> And this patch just makes the two SCSI APIs symmetrical.
->=20
-> Since we will not stop queue in blk_mq_quiesce_queue() later,
-> I have to unquiese one queue only if it is quiesced.
->=20
-> So suppose the queue is put into stopped in scsi_internal_device_block(),
-> do we expect not to restart it in scsi_internal_device_unblock() via
-> blk_mq_unquiesce_queue()?
+On Wed, May 31 2017 at 10:39am -0400,
+Mike Snitzer <snitzer@redhat.com> wrote:
+ 
+> FYI: my review of dm-zoned will be focused on DM target correctness
+> (suspend/resume quirks, no allocations in the IO path that aren't backed
+> by a mempool, coding style nits, etc).  I don't know enough about zoned
+> block devices to weigh-in on those details.  Ultimately I'll be
+> deferring to you, others on your team, and others in the community that
+> are more invested in zoned block devices to steer and stabilize this
+> target.
+> 
+> Anyway, hopefully my review will be fairly quick and I can get dm-zoned
+> staged for 4.13 by end of day tomorrow.
 
-Hello Ming,
+I made a go of it but I'm getting hung up on quite a lot of code that
+doesn't conform to, what I'd like to think is, the cleaner nature of how
+DM targets that are split across multiple files should be.
 
-My opinion is that scsi_internal_device_block() and scsi_internal_device_un=
-block()
-should be changed as follows for the scsi-mq code path:
-* scsi_internal_device_block() should call blk_mq_quiesce_queue(q) if the "=
-wait"
-  argument is true and should set the QUEUE_FLAG_QUIESCED flag if the "wait=
-"
-  argument is false.
-* scsi_internal_device_unblock() should call blk_mq_unquiesce_queue().
+You basically slammed everything into 'struct dmz_target' and passed dmz
+everywhere.  I tried to split out a 'struct dmz_metadata' (and got quite
+far!) but finally gave up because affecting that churn was killing me
+slowly.  Anyway, here is where I left off:
+https://git.kernel.org/pub/scm/linux/kernel/git/snitzer/linux.git/log/?h=dm-zoned
 
-I am aware it sounds weird to set the QUEUE_FLAG_QUIESCED flag without wait=
-ing
-until ongoing .queue_rq() calls have finished. The only driver that trigger=
-s
-that code path is the mpt3sas driver. I think it's unfortunate that that dr=
-iver
-has ever been allowed to call scsi_internal_device_block() because it's the=
- only
-driver that calls that function from a context where sleeping is not allowe=
-d.
-No matter whether the scsi_internal_device_block() call from the mpt3sas dr=
-iver
-sets the QUEUE_FLAG_QUIESCED or the BLK_MQ_S_STOPPED flag, I don't think th=
-at
-will have the effect the authors of this driver intended. Unfortunately I'm=
- not
-familiar enough with the mpt3sas driver to fix that driver myself.
+In hindsight, maybe I should've just responded with the laundry list of
+things I saw so that you could fix them.  But if you see changes that
+you like in that branch feel free to pull them in to a new version of
+dm-zoned that you resubmit.
 
-Note: these changes conflict with a patch SCSI patch series I started worki=
-ng on
-about two months ago. See also https://www.spinics.net/lists/linux-scsi/msg=
-109103.html.
+As for splitting out a 'struct dmz_metadata'.. I'd really prefer _some_
+separation but there is little point with doing so if we're going to
+just half-ass it and add in a back-pointer to the 'struct dmz_target' to
+access certain members.  I was left unhappy with my attempt.. again, was
+a shit-show of churn.
 
-Bart.=
+I think this target needs a more critical eye on the various places IO
+is being submitted and where allocations are occuring.  I allowed myself
+to get hung up on code movement when I should've focused on more
+constructive design choices you made.
+
+Mike
