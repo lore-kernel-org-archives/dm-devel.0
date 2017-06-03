@@ -1,86 +1,55 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 05/13] fs: remove the unused error argument to dio_end_io()
-Date: Sat,  3 Jun 2017 09:37:58 +0200
-Message-ID: <20170603073806.2046-6-hch@lst.de>
+Subject: [PATCH 07/13] block_dev: propagate bio_iov_iter_get_pages error in __blkdev_direct_IO
+Date: Sat,  3 Jun 2017 09:38:00 +0200
+Message-ID: <20170603073806.2046-8-hch@lst.de>
 References: <20170603073806.2046-1-hch@lst.de>
-Return-path: <linux-btrfs-owner@vger.kernel.org>
+Return-path: <linux-block-owner@vger.kernel.org>
 In-Reply-To: <20170603073806.2046-1-hch@lst.de>
-Sender: linux-btrfs-owner@vger.kernel.org
+Sender: linux-block-owner@vger.kernel.org
 To: axboe@kernel.dk
 Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, linux-btrfs@vger.kernel.org
 List-Id: dm-devel.ids
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
-Reviewed-by: Bart Van Assche <Bart.VanAssche@sandisk.com>
----
- fs/btrfs/inode.c   | 6 +++---
- fs/direct-io.c     | 3 +--
- include/linux/fs.h | 2 +-
- 3 files changed, 5 insertions(+), 6 deletions(-)
+Once we move the block layer to its own status code we'll still want to
+propagate the bio_iov_iter_get_pages, so restructure __blkdev_direct_IO
+to take ret into account when returning the errno.
 
-diff --git a/fs/btrfs/inode.c b/fs/btrfs/inode.c
-index 17cbe9306faf..758b2666885e 100644
---- a/fs/btrfs/inode.c
-+++ b/fs/btrfs/inode.c
-@@ -8244,7 +8244,7 @@ static void btrfs_endio_direct_read(struct bio *bio)
- 	kfree(dip);
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+---
+ fs/block_dev.c | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/fs/block_dev.c b/fs/block_dev.c
+index 519599dddd36..c1dc393ad6b9 100644
+--- a/fs/block_dev.c
++++ b/fs/block_dev.c
+@@ -334,7 +334,7 @@ __blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter, int nr_pages)
+ 	bool is_read = (iov_iter_rw(iter) == READ), is_sync;
+ 	loff_t pos = iocb->ki_pos;
+ 	blk_qc_t qc = BLK_QC_T_NONE;
+-	int ret;
++	int ret = 0;
  
- 	dio_bio->bi_error = bio->bi_error;
--	dio_end_io(dio_bio, bio->bi_error);
-+	dio_end_io(dio_bio);
+ 	if ((pos | iov_iter_alignment(iter)) &
+ 	    (bdev_logical_block_size(bdev) - 1))
+@@ -363,7 +363,7 @@ __blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter, int nr_pages)
  
- 	if (io_bio->end_io)
- 		io_bio->end_io(io_bio, err);
-@@ -8304,7 +8304,7 @@ static void btrfs_endio_direct_write(struct bio *bio)
- 	kfree(dip);
- 
- 	dio_bio->bi_error = bio->bi_error;
--	dio_end_io(dio_bio, bio->bi_error);
-+	dio_end_io(dio_bio);
- 	bio_put(bio);
- }
- 
-@@ -8673,7 +8673,7 @@ static void btrfs_submit_direct(struct bio *dio_bio, struct inode *inode,
- 		 * Releases and cleans up our dio_bio, no need to bio_put()
- 		 * nor bio_endio()/bio_io_error() against dio_bio.
- 		 */
--		dio_end_io(dio_bio, ret);
-+		dio_end_io(dio_bio);
+ 		ret = bio_iov_iter_get_pages(bio, iter);
+ 		if (unlikely(ret)) {
+-			bio->bi_error = ret;
++			bio->bi_error = -EIO;
+ 			bio_endio(bio);
+ 			break;
+ 		}
+@@ -412,7 +412,8 @@ __blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter, int nr_pages)
  	}
- 	if (io_bio)
- 		bio_put(io_bio);
-diff --git a/fs/direct-io.c b/fs/direct-io.c
-index a04ebea77de8..04247a6c3f73 100644
---- a/fs/direct-io.c
-+++ b/fs/direct-io.c
-@@ -348,13 +348,12 @@ static void dio_bio_end_io(struct bio *bio)
- /**
-  * dio_end_io - handle the end io action for the given bio
-  * @bio: The direct io bio thats being completed
-- * @error: Error if there was one
-  *
-  * This is meant to be called by any filesystem that uses their own dio_submit_t
-  * so that the DIO specific endio actions are dealt with after the filesystem
-  * has done it's completion work.
-  */
--void dio_end_io(struct bio *bio, int error)
-+void dio_end_io(struct bio *bio)
- {
- 	struct dio *dio = bio->bi_private;
+ 	__set_current_state(TASK_RUNNING);
  
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 803e5a9b2654..4388ab58843d 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -2843,7 +2843,7 @@ enum {
- 	DIO_SKIP_DIO_COUNT = 0x08,
- };
+-	ret = dio->bio.bi_error;
++	if (!ret)
++		ret = dio->bio.bi_error;
+ 	if (likely(!ret))
+ 		ret = dio->size;
  
--void dio_end_io(struct bio *bio, int error);
-+void dio_end_io(struct bio *bio);
- 
- ssize_t __blockdev_direct_IO(struct kiocb *iocb, struct inode *inode,
- 			     struct block_device *bdev, struct iov_iter *iter,
 -- 
 2.11.0
-
