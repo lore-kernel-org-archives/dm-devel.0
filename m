@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 11/13] block: introduce new block status code type
-Date: Sat,  3 Jun 2017 09:38:04 +0200
-Message-ID: <20170603073806.2046-12-hch@lst.de>
+Subject: [PATCH 13/13] block: switch bios to blk_status_t
+Date: Sat,  3 Jun 2017 09:38:06 +0200
+Message-ID: <20170603073806.2046-14-hch@lst.de>
 References: <20170603073806.2046-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,3405 +21,5039 @@ To: axboe@kernel.dk
 Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, linux-btrfs@vger.kernel.org
 List-Id: dm-devel.ids
 
-Currently we use nornal Linux errno values in the block layer, and while
-we accept any error a few have overloaded magic meanings.  This patch
-instead introduces a new  blk_status_t value that holds block layer specific
-status codes and explicitly explains their meaning.  Helpers to convert from
-and to the previous special meanings are provided for now, but I suspect
-we want to get rid of them in the long run - those drivers that have a
-errno input (e.g. networking) usually get errnos that don't know about
-the special block layer overloads, and similarly returning them to userspace
-will usually return somethings that strictly speaking isn't correct
-for file system operations, but that's left as an exercise for later.
-
-For now the set of errors is a very limited set that closely corresponds
-to the previous overloaded errno values, but there is some low hanging
-fruite to improve it.
-
-blk_status_t (ab)uses the sparse __bitwise annotations to allow for sparse
-typechecking, so that we can easily catch places passing the wrong values.
+Replace bi_error with a new bi_status to allow for a clear conversion.
+Note that device mapper overloaded bi_error with a private value, which
+we'll have to keep arround at least for now and thus propagate to a
+proper blk_status_t value.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- arch/s390/include/asm/eadm.h        |   6 +-
- arch/um/drivers/ubd_kern.c          |   2 +-
- block/blk-core.c                    | 156 +++++++++++++++++++++---------------
- block/blk-exec.c                    |   4 +-
- block/blk-flush.c                   |   8 +-
- block/blk-mq.c                      |   8 +-
- block/bsg-lib.c                     |   4 +-
- block/bsg.c                         |   6 +-
- drivers/block/DAC960.c              |   2 +-
- drivers/block/amiflop.c             |  10 +--
- drivers/block/aoe/aoecmd.c          |   2 +-
- drivers/block/ataflop.c             |  16 ++--
- drivers/block/cciss.c               |   3 +-
- drivers/block/floppy.c              |   4 +-
- drivers/block/loop.c                |   2 +-
- drivers/block/mtip32xx/mtip32xx.c   |  16 ++--
- drivers/block/mtip32xx/mtip32xx.h   |   2 +-
- drivers/block/nbd.c                 |  14 ++--
- drivers/block/null_blk.c            |   9 ++-
- drivers/block/paride/pcd.c          |   8 +-
- drivers/block/paride/pd.c           |   2 +-
- drivers/block/paride/pf.c           |  18 ++---
- drivers/block/ps3disk.c             |  11 +--
- drivers/block/rbd.c                 |   8 +-
- drivers/block/skd_main.c            |  31 ++++---
- drivers/block/sunvdc.c              |   4 +-
- drivers/block/swim.c                |   6 +-
- drivers/block/swim3.c               |  26 +++---
- drivers/block/sx8.c                 |  20 ++---
- drivers/block/virtio_blk.c          |  10 +--
- drivers/block/xen-blkfront.c        |  16 ++--
- drivers/block/xsysace.c             |   8 +-
- drivers/block/z2ram.c               |   4 +-
- drivers/cdrom/gdrom.c               |   9 ++-
- drivers/ide/ide-atapi.c             |   9 ++-
- drivers/ide/ide-cd.c                |  10 +--
- drivers/ide/ide-dma.c               |   2 +-
- drivers/ide/ide-eh.c                |  16 ++--
- drivers/ide/ide-floppy.c            |   6 +-
- drivers/ide/ide-io.c                |  10 +--
- drivers/ide/ide-pm.c                |   6 +-
- drivers/ide/ide-tape.c              |   2 +-
- drivers/ide/ide-taskfile.c          |   6 +-
- drivers/ide/siimage.c               |   6 +-
- drivers/md/dm-mpath.c               |  27 +++----
- drivers/md/dm-rq.c                  |  20 ++---
- drivers/md/dm-rq.h                  |   2 +-
- drivers/memstick/core/ms_block.c    |   7 +-
- drivers/memstick/core/mspro_block.c |   8 +-
- drivers/mmc/core/block.c            |  37 +++++----
- drivers/mmc/core/queue.c            |   2 +-
- drivers/mtd/mtd_blkdevs.c           |  30 ++++---
- drivers/mtd/ubi/block.c             |   2 +-
- drivers/nvme/host/core.c            |  29 +++----
- drivers/nvme/host/lightnvm.c        |   2 +-
- drivers/nvme/host/pci.c             |   8 +-
- drivers/s390/block/dasd.c           |  36 +++++----
- drivers/s390/block/scm_blk.c        |   8 +-
- drivers/s390/block/scm_blk.h        |   4 +-
- drivers/s390/cio/eadm_sch.c         |   6 +-
- drivers/s390/cio/scm.c              |   2 +-
- drivers/sbus/char/jsflash.c         |   4 +-
- drivers/scsi/osd/osd_initiator.c    |  20 ++---
- drivers/scsi/osst.c                 |   2 +-
- drivers/scsi/scsi_error.c           |   2 +-
- drivers/scsi/scsi_lib.c             |  51 ++++--------
- drivers/scsi/scsi_transport_sas.c   |   2 +-
- drivers/scsi/sg.c                   |   6 +-
- drivers/scsi/st.c                   |   2 +-
- drivers/target/target_core_pscsi.c  |   4 +-
- include/linux/blk-mq.h              |   4 +-
- include/linux/blk_types.h           |  16 ++++
- include/linux/blkdev.h              |  21 ++---
- include/linux/device-mapper.h       |   2 +-
- include/linux/ide.h                 |   6 +-
- include/scsi/osd_initiator.h        |   2 +-
- 76 files changed, 474 insertions(+), 428 deletions(-)
+ block/bio-integrity.c               |  8 ++--
+ block/bio.c                         |  8 ++--
+ block/blk-core.c                    | 20 ++++++----
+ block/blk-integrity.c               |  4 +-
+ block/bounce.c                      |  4 +-
+ block/t10-pi.c                      | 30 +++++++--------
+ drivers/block/aoe/aoecmd.c          | 10 ++---
+ drivers/block/aoe/aoedev.c          |  2 +-
+ drivers/block/drbd/drbd_actlog.c    |  2 +-
+ drivers/block/drbd/drbd_bitmap.c    |  6 +--
+ drivers/block/drbd/drbd_int.h       |  2 +-
+ drivers/block/drbd/drbd_receiver.c  |  6 +--
+ drivers/block/drbd/drbd_req.c       |  6 +--
+ drivers/block/drbd/drbd_worker.c    | 16 ++++----
+ drivers/block/floppy.c              |  4 +-
+ drivers/block/pktcdvd.c             | 18 ++++-----
+ drivers/block/ps3vram.c             | 14 +++----
+ drivers/block/rsxx/dev.c            | 14 +++----
+ drivers/block/rsxx/dma.c            | 13 +++----
+ drivers/block/rsxx/rsxx_priv.h      |  2 +-
+ drivers/block/umem.c                |  2 +-
+ drivers/block/xen-blkback/blkback.c | 19 ++++------
+ drivers/block/xen-blkfront.c        |  2 +-
+ drivers/lightnvm/pblk-core.c        |  4 +-
+ drivers/lightnvm/pblk-read.c        |  4 +-
+ drivers/lightnvm/pblk-write.c       |  2 +-
+ drivers/lightnvm/rrpc.c             |  8 ++--
+ drivers/md/bcache/bcache.h          |  7 ++--
+ drivers/md/bcache/btree.c           |  6 +--
+ drivers/md/bcache/io.c              |  6 +--
+ drivers/md/bcache/journal.c         |  2 +-
+ drivers/md/bcache/movinggc.c        | 10 ++---
+ drivers/md/bcache/request.c         | 28 +++++++-------
+ drivers/md/bcache/request.h         |  2 +-
+ drivers/md/bcache/super.c           |  6 +--
+ drivers/md/bcache/writeback.c       |  4 +-
+ drivers/md/dm-bio-prison-v1.c       |  4 +-
+ drivers/md/dm-bio-prison-v1.h       |  2 +-
+ drivers/md/dm-bufio.c               | 28 +++++++-------
+ drivers/md/dm-cache-target.c        | 34 +++++++++--------
+ drivers/md/dm-crypt.c               | 34 ++++++++---------
+ drivers/md/dm-flakey.c              |  5 ++-
+ drivers/md/dm-integrity.c           | 18 ++++-----
+ drivers/md/dm-io.c                  | 10 ++---
+ drivers/md/dm-log-writes.c          |  7 ++--
+ drivers/md/dm-mpath.c               | 15 ++++----
+ drivers/md/dm-raid1.c               | 13 ++++---
+ drivers/md/dm-rq.c                  |  2 +-
+ drivers/md/dm-snap.c                |  5 ++-
+ drivers/md/dm-stripe.c              |  5 ++-
+ drivers/md/dm-thin.c                | 65 ++++++++++++++++----------------
+ drivers/md/dm-verity-target.c       | 10 ++---
+ drivers/md/dm.c                     | 40 ++++++++++----------
+ drivers/md/md.c                     |  8 ++--
+ drivers/md/multipath.c              | 10 ++---
+ drivers/md/raid1.c                  | 36 +++++++++---------
+ drivers/md/raid10.c                 | 36 +++++++++---------
+ drivers/md/raid5-cache.c            |  4 +-
+ drivers/md/raid5-ppl.c              |  2 +-
+ drivers/md/raid5.c                  | 22 +++++------
+ drivers/nvdimm/blk.c                |  4 +-
+ drivers/nvdimm/btt.c                |  4 +-
+ drivers/nvdimm/pmem.c               | 28 +++++++-------
+ drivers/nvme/target/io-cmd.c        |  4 +-
+ drivers/target/target_core_iblock.c | 10 ++---
+ fs/block_dev.c                      | 18 +++++----
+ fs/btrfs/btrfs_inode.h              |  3 +-
+ fs/btrfs/check-integrity.c          |  4 +-
+ fs/btrfs/compression.c              | 44 +++++++++++-----------
+ fs/btrfs/compression.h              |  4 +-
+ fs/btrfs/ctree.h                    |  6 +--
+ fs/btrfs/disk-io.c                  | 75 ++++++++++++++++++-------------------
+ fs/btrfs/disk-io.h                  | 12 +++---
+ fs/btrfs/extent_io.c                | 23 +++++++-----
+ fs/btrfs/extent_io.h                |  6 +--
+ fs/btrfs/file-item.c                | 14 +++----
+ fs/btrfs/inode.c                    | 73 ++++++++++++++++++------------------
+ fs/btrfs/raid56.c                   | 16 ++++----
+ fs/btrfs/scrub.c                    | 26 ++++++-------
+ fs/btrfs/volumes.c                  | 11 +++---
+ fs/buffer.c                         |  2 +-
+ fs/crypto/bio.c                     |  2 +-
+ fs/direct-io.c                      |  8 ++--
+ fs/ext4/page-io.c                   | 13 ++++---
+ fs/ext4/readpage.c                  |  4 +-
+ fs/f2fs/data.c                      | 10 ++---
+ fs/f2fs/segment.c                   |  2 +-
+ fs/gfs2/lops.c                      |  8 ++--
+ fs/gfs2/meta_io.c                   |  2 +-
+ fs/gfs2/ops_fstype.c                |  4 +-
+ fs/iomap.c                          |  4 +-
+ fs/jfs/jfs_logmgr.c                 |  2 +-
+ fs/jfs/jfs_metapage.c               |  4 +-
+ fs/mpage.c                          |  3 +-
+ fs/nfs/blocklayout/blocklayout.c    |  4 +-
+ fs/nilfs2/segbuf.c                  |  2 +-
+ fs/ocfs2/cluster/heartbeat.c        |  6 +--
+ fs/xfs/xfs_aops.c                   |  7 ++--
+ fs/xfs/xfs_buf.c                    |  7 +++-
+ include/linux/bio.h                 |  2 +-
+ include/linux/blk_types.h           |  5 ++-
+ include/linux/blkdev.h              |  2 +-
+ include/linux/device-mapper.h       |  2 +-
+ kernel/power/swap.c                 | 14 +++----
+ kernel/trace/blktrace.c             |  4 +-
+ mm/page_io.c                        |  4 +-
+ 106 files changed, 625 insertions(+), 603 deletions(-)
 
-diff --git a/arch/s390/include/asm/eadm.h b/arch/s390/include/asm/eadm.h
-index 67026300c88e..144809a3f4f6 100644
---- a/arch/s390/include/asm/eadm.h
-+++ b/arch/s390/include/asm/eadm.h
-@@ -3,6 +3,7 @@
+diff --git a/block/bio-integrity.c b/block/bio-integrity.c
+index 5384713d48bc..17b9740e138b 100644
+--- a/block/bio-integrity.c
++++ b/block/bio-integrity.c
+@@ -221,7 +221,7 @@ static inline unsigned int bio_integrity_bytes(struct blk_integrity *bi,
+  * @bio:	bio to generate/verify integrity metadata for
+  * @proc_fn:	Pointer to the relevant processing function
+  */
+-static int bio_integrity_process(struct bio *bio,
++static blk_status_t bio_integrity_process(struct bio *bio,
+ 				 integrity_processing_fn *proc_fn)
+ {
+ 	struct blk_integrity *bi = bdev_get_integrity(bio->bi_bdev);
+@@ -229,7 +229,7 @@ static int bio_integrity_process(struct bio *bio,
+ 	struct bvec_iter bviter;
+ 	struct bio_vec bv;
+ 	struct bio_integrity_payload *bip = bio_integrity(bio);
+-	unsigned int ret = 0;
++	blk_status_t ret = BLK_STS_OK;
+ 	void *prot_buf = page_address(bip->bip_vec->bv_page) +
+ 		bip->bip_vec->bv_offset;
  
- #include <linux/types.h>
- #include <linux/device.h>
-+#include <linux/blkdev.h>
+@@ -366,7 +366,7 @@ static void bio_integrity_verify_fn(struct work_struct *work)
+ 	struct bio *bio = bip->bip_bio;
+ 	struct blk_integrity *bi = bdev_get_integrity(bio->bi_bdev);
  
- struct arqb {
- 	u64 data;
-@@ -105,13 +106,14 @@ struct scm_driver {
- 	int (*probe) (struct scm_device *scmdev);
- 	int (*remove) (struct scm_device *scmdev);
- 	void (*notify) (struct scm_device *scmdev, enum scm_event event);
--	void (*handler) (struct scm_device *scmdev, void *data, int error);
-+	void (*handler) (struct scm_device *scmdev, void *data,
-+			blk_status_t error);
- };
+-	bio->bi_error = bio_integrity_process(bio, bi->profile->verify_fn);
++	bio->bi_status = bio_integrity_process(bio, bi->profile->verify_fn);
  
- int scm_driver_register(struct scm_driver *scmdrv);
- void scm_driver_unregister(struct scm_driver *scmdrv);
+ 	/* Restore original bio completion handler */
+ 	bio->bi_end_io = bip->bip_end_io;
+@@ -395,7 +395,7 @@ void bio_integrity_endio(struct bio *bio)
+ 	 * integrity metadata.  Restore original bio end_io handler
+ 	 * and run it.
+ 	 */
+-	if (bio->bi_error) {
++	if (bio->bi_status) {
+ 		bio->bi_end_io = bip->bip_end_io;
+ 		bio_endio(bio);
  
- int eadm_start_aob(struct aob *aob);
--void scm_irq_handler(struct aob *aob, int error);
-+void scm_irq_handler(struct aob *aob, blk_status_t error);
+diff --git a/block/bio.c b/block/bio.c
+index 888e7801c638..7a5c8ed27f42 100644
+--- a/block/bio.c
++++ b/block/bio.c
+@@ -309,8 +309,8 @@ static struct bio *__bio_chain_endio(struct bio *bio)
+ {
+ 	struct bio *parent = bio->bi_private;
  
- #endif /* _ASM_S390_EADM_H */
-diff --git a/arch/um/drivers/ubd_kern.c b/arch/um/drivers/ubd_kern.c
-index 85410279beab..b55fe9bf5d3e 100644
---- a/arch/um/drivers/ubd_kern.c
-+++ b/arch/um/drivers/ubd_kern.c
-@@ -534,7 +534,7 @@ static void ubd_handler(void)
- 		for (count = 0; count < n/sizeof(struct io_thread_req *); count++) {
- 			blk_end_request(
- 				(*irq_req_buffer)[count]->req,
--				0,
-+				BLK_STS_OK,
- 				(*irq_req_buffer)[count]->length
- 			);
- 			kfree((*irq_req_buffer)[count]);
+-	if (!parent->bi_error)
+-		parent->bi_error = bio->bi_error;
++	if (!parent->bi_status)
++		parent->bi_status = bio->bi_status;
+ 	bio_put(bio);
+ 	return parent;
+ }
+@@ -918,7 +918,7 @@ static void submit_bio_wait_endio(struct bio *bio)
+ {
+ 	struct submit_bio_ret *ret = bio->bi_private;
+ 
+-	ret->error = bio->bi_error;
++	ret->error = blk_status_to_errno(bio->bi_status);
+ 	complete(&ret->event);
+ }
+ 
+@@ -1818,7 +1818,7 @@ void bio_endio(struct bio *bio)
+ 
+ 	if (bio->bi_bdev && bio_flagged(bio, BIO_TRACE_COMPLETION)) {
+ 		trace_block_bio_complete(bdev_get_queue(bio->bi_bdev),
+-					 bio, bio->bi_error);
++					 bio, bio->bi_status);
+ 		bio_clear_flag(bio, BIO_TRACE_COMPLETION);
+ 	}
+ 
 diff --git a/block/blk-core.c b/block/blk-core.c
-index c7068520794b..e942a9f814c7 100644
+index e942a9f814c7..3d84820ace9e 100644
 --- a/block/blk-core.c
 +++ b/block/blk-core.c
-@@ -129,11 +129,66 @@ void blk_rq_init(struct request_queue *q, struct request *rq)
- }
- EXPORT_SYMBOL(blk_rq_init);
+@@ -144,6 +144,9 @@ static const struct {
+ 	[BLK_STS_PROTECTION]	= { -EILSEQ,	"protection" },
+ 	[BLK_STS_RESOURCE]	= { -ENOMEM,	"kernel resource" },
  
-+static const struct {
-+	int		errno;
-+	const char	*name;
-+} blk_errors[] = {
-+	[BLK_STS_OK]		= { 0,		"" },
-+	[BLK_STS_NOTSUPP]	= { -EOPNOTSUPP, "operation not supported" },
-+	[BLK_STS_TIMEOUT]	= { -ETIMEDOUT,	"timeout" },
-+	[BLK_STS_NOSPC]		= { -ENOSPC,	"critical space allocation" },
-+	[BLK_STS_TRANSPORT]	= { -ENOLINK,	"recoverable transport" },
-+	[BLK_STS_TARGET]	= { -EREMOTEIO,	"critical target" },
-+	[BLK_STS_NEXUS]		= { -EBADE,	"critical nexus" },
-+	[BLK_STS_MEDIUM]	= { -ENODATA,	"critical medium" },
-+	[BLK_STS_PROTECTION]	= { -EILSEQ,	"protection" },
-+	[BLK_STS_RESOURCE]	= { -ENOMEM,	"kernel resource" },
++	/* device mapper special case, should not leak out: */
++	[BLK_STS_DM_REQUEUE]	= { -EREMCHG, "dm internal retry" },
 +
-+	/* everything else not covered above: */
-+	[BLK_STS_IOERR]		= { -EIO,	"I/O" },
-+};
-+
-+blk_status_t errno_to_blk_status(int errno)
-+{
-+	int i;
-+
-+	for (i = 0; i < ARRAY_SIZE(blk_errors); i++) {
-+		if (blk_errors[i].errno == errno)
-+			return (__force blk_status_t)i;
-+	}
-+
-+	return BLK_STS_IOERR;
-+}
-+EXPORT_SYMBOL_GPL(errno_to_blk_status);
-+
-+int blk_status_to_errno(blk_status_t status)
-+{
-+	int idx = (__force int)status;
-+
-+	if (WARN_ON_ONCE(idx > ARRAY_SIZE(blk_errors)))
-+		return -EIO;
-+	return blk_errors[idx].errno;
-+}
-+EXPORT_SYMBOL_GPL(blk_status_to_errno);
-+
-+static void print_req_error(struct request *req, blk_status_t status)
-+{
-+	int idx = (__force int)status;
-+
-+	if (WARN_ON_ONCE(idx > ARRAY_SIZE(blk_errors)))
-+		return;
-+
-+	printk_ratelimited(KERN_ERR "%s: %s error, dev %s, sector %llu\n",
-+			   __func__, blk_errors[idx].name, req->rq_disk ?
-+			   req->rq_disk->disk_name : "?",
-+			   (unsigned long long)blk_rq_pos(req));
-+}
-+
- static void req_bio_endio(struct request *rq, struct bio *bio,
--			  unsigned int nbytes, int error)
-+			  unsigned int nbytes, blk_status_t error)
+ 	/* everything else not covered above: */
+ 	[BLK_STS_IOERR]		= { -EIO,	"I/O" },
+ };
+@@ -188,7 +191,7 @@ static void req_bio_endio(struct request *rq, struct bio *bio,
+ 			  unsigned int nbytes, blk_status_t error)
  {
  	if (error)
--		bio->bi_error = error;
-+		bio->bi_error = blk_status_to_errno(error);
+-		bio->bi_error = blk_status_to_errno(error);
++		bio->bi_status = error;
  
  	if (unlikely(rq->rq_flags & RQF_QUIET))
  		bio_set_flag(bio, BIO_QUIET);
-@@ -2177,29 +2232,29 @@ static int blk_cloned_rq_check_limits(struct request_queue *q,
-  * @q:  the queue to submit the request
-  * @rq: the request being queued
-  */
--int blk_insert_cloned_request(struct request_queue *q, struct request *rq)
-+blk_status_t blk_insert_cloned_request(struct request_queue *q, struct request *rq)
+@@ -1717,7 +1720,7 @@ static blk_qc_t blk_queue_bio(struct request_queue *q, struct bio *bio)
+ 	blk_queue_split(q, &bio, q->bio_split);
+ 
+ 	if (bio_integrity_enabled(bio) && bio_integrity_prep(bio)) {
+-		bio->bi_error = -EIO;
++		bio->bi_status = BLK_STS_IOERR;
+ 		bio_endio(bio);
+ 		return BLK_QC_T_NONE;
+ 	}
+@@ -1775,7 +1778,10 @@ static blk_qc_t blk_queue_bio(struct request_queue *q, struct bio *bio)
+ 	req = get_request(q, bio->bi_opf, bio, GFP_NOIO);
+ 	if (IS_ERR(req)) {
+ 		__wbt_done(q->rq_wb, wb_acct);
+-		bio->bi_error = PTR_ERR(req);
++		if (PTR_ERR(req) == -ENOMEM)
++			bio->bi_status = BLK_STS_RESOURCE;
++		else
++			bio->bi_status = BLK_STS_IOERR;
+ 		bio_endio(bio);
+ 		goto out_unlock;
+ 	}
+@@ -1930,7 +1936,7 @@ generic_make_request_checks(struct bio *bio)
  {
- 	unsigned long flags;
- 	int where = ELEVATOR_INSERT_BACK;
+ 	struct request_queue *q;
+ 	int nr_sectors = bio_sectors(bio);
+-	int err = -EIO;
++	blk_status_t status = BLK_STS_IOERR;
+ 	char b[BDEVNAME_SIZE];
+ 	struct hd_struct *part;
  
- 	if (blk_cloned_rq_check_limits(q, rq))
--		return -EIO;
-+		return BLK_STS_IOERR;
+@@ -1973,7 +1979,7 @@ generic_make_request_checks(struct bio *bio)
+ 	    !test_bit(QUEUE_FLAG_WC, &q->queue_flags)) {
+ 		bio->bi_opf &= ~(REQ_PREFLUSH | REQ_FUA);
+ 		if (!nr_sectors) {
+-			err = 0;
++			status = BLK_STS_OK;
+ 			goto end_io;
+ 		}
+ 	}
+@@ -2025,9 +2031,9 @@ generic_make_request_checks(struct bio *bio)
+ 	return true;
  
- 	if (rq->rq_disk &&
- 	    should_fail_request(&rq->rq_disk->part0, blk_rq_bytes(rq)))
--		return -EIO;
-+		return BLK_STS_IOERR;
+ not_supported:
+-	err = -EOPNOTSUPP;
++	status = BLK_STS_NOTSUPP;
+ end_io:
+-	bio->bi_error = err;
++	bio->bi_status = status;
+ 	bio_endio(bio);
+ 	return false;
+ }
+diff --git a/block/blk-integrity.c b/block/blk-integrity.c
+index 0f891a9aff4d..feb30570eaf5 100644
+--- a/block/blk-integrity.c
++++ b/block/blk-integrity.c
+@@ -384,9 +384,9 @@ static struct kobj_type integrity_ktype = {
+ 	.sysfs_ops	= &integrity_ops,
+ };
  
- 	if (q->mq_ops) {
- 		if (blk_queue_io_stat(q))
- 			blk_account_io_start(rq, true);
- 		blk_mq_sched_insert_request(rq, false, true, false, false);
--		return 0;
-+		return BLK_STS_OK;
+-static int blk_integrity_nop_fn(struct blk_integrity_iter *iter)
++static blk_status_t blk_integrity_nop_fn(struct blk_integrity_iter *iter)
+ {
+-	return 0;
++	return BLK_STS_OK;
+ }
+ 
+ static const struct blk_integrity_profile nop_profile = {
+diff --git a/block/bounce.c b/block/bounce.c
+index 1cb5dd3a5da1..e4703181d97f 100644
+--- a/block/bounce.c
++++ b/block/bounce.c
+@@ -143,7 +143,7 @@ static void bounce_end_io(struct bio *bio, mempool_t *pool)
+ 		mempool_free(bvec->bv_page, pool);
  	}
  
- 	spin_lock_irqsave(q->queue_lock, flags);
- 	if (unlikely(blk_queue_dying(q))) {
- 		spin_unlock_irqrestore(q->queue_lock, flags);
--		return -ENODEV;
-+		return BLK_STS_IOERR;
- 	}
+-	bio_orig->bi_error = bio->bi_error;
++	bio_orig->bi_status = bio->bi_status;
+ 	bio_endio(bio_orig);
+ 	bio_put(bio);
+ }
+@@ -163,7 +163,7 @@ static void __bounce_end_io_read(struct bio *bio, mempool_t *pool)
+ {
+ 	struct bio *bio_orig = bio->bi_private;
  
- 	/*
-@@ -2216,7 +2271,7 @@ int blk_insert_cloned_request(struct request_queue *q, struct request *rq)
- 		__blk_run_queue(q);
- 	spin_unlock_irqrestore(q->queue_lock, flags);
+-	if (!bio->bi_error)
++	if (!bio->bi_status)
+ 		copy_to_high_bio_irq(bio_orig, bio);
+ 
+ 	bounce_end_io(bio, pool);
+diff --git a/block/t10-pi.c b/block/t10-pi.c
+index 680c6d636298..350b3cbcf9e5 100644
+--- a/block/t10-pi.c
++++ b/block/t10-pi.c
+@@ -46,8 +46,8 @@ static __be16 t10_pi_ip_fn(void *data, unsigned int len)
+  * 16 bit app tag, 32 bit reference tag. Type 3 does not define the ref
+  * tag.
+  */
+-static int t10_pi_generate(struct blk_integrity_iter *iter, csum_fn *fn,
+-			   unsigned int type)
++static blk_status_t t10_pi_generate(struct blk_integrity_iter *iter,
++		csum_fn *fn, unsigned int type)
+ {
+ 	unsigned int i;
+ 
+@@ -67,11 +67,11 @@ static int t10_pi_generate(struct blk_integrity_iter *iter, csum_fn *fn,
+ 		iter->seed++;
+ 	}
  
 -	return 0;
 +	return BLK_STS_OK;
  }
- EXPORT_SYMBOL_GPL(blk_insert_cloned_request);
  
-@@ -2450,15 +2505,14 @@ struct request *blk_peek_request(struct request_queue *q)
- 			rq = NULL;
- 			break;
- 		} else if (ret == BLKPREP_KILL || ret == BLKPREP_INVALID) {
--			int err = (ret == BLKPREP_INVALID) ? -EREMOTEIO : -EIO;
--
- 			rq->rq_flags |= RQF_QUIET;
- 			/*
- 			 * Mark this request as started so we don't trigger
- 			 * any debug logic in the end I/O path.
- 			 */
- 			blk_start_request(rq);
--			__blk_end_request_all(rq, err);
-+			__blk_end_request_all(rq, ret == BLKPREP_INVALID ?
-+					BLK_STS_TARGET : BLK_STS_IOERR);
- 		} else {
- 			printk(KERN_ERR "%s: bad return=%d\n", __func__, ret);
- 			break;
-@@ -2547,7 +2601,7 @@ EXPORT_SYMBOL(blk_fetch_request);
- /**
-  * blk_update_request - Special helper function for request stacking drivers
-  * @req:      the request being processed
-- * @error:    %0 for success, < %0 for error
-+ * @error:    block status code
-  * @nr_bytes: number of bytes to complete @req
-  *
-  * Description:
-@@ -2566,49 +2620,19 @@ EXPORT_SYMBOL(blk_fetch_request);
-  *     %false - this request doesn't have any more data
-  *     %true  - this request has more data
-  **/
--bool blk_update_request(struct request *req, int error, unsigned int nr_bytes)
-+bool blk_update_request(struct request *req, blk_status_t error,
-+		unsigned int nr_bytes)
+-static int t10_pi_verify(struct blk_integrity_iter *iter, csum_fn *fn,
+-				unsigned int type)
++static blk_status_t t10_pi_verify(struct blk_integrity_iter *iter,
++		csum_fn *fn, unsigned int type)
  {
- 	int total_bytes;
+ 	unsigned int i;
  
--	trace_block_rq_complete(req, error, nr_bytes);
-+	trace_block_rq_complete(req, blk_status_to_errno(error), nr_bytes);
- 
- 	if (!req->bio)
- 		return false;
- 
--	if (error && !blk_rq_is_passthrough(req) &&
--	    !(req->rq_flags & RQF_QUIET)) {
--		char *error_type;
--
--		switch (error) {
--		case -ENOLINK:
--			error_type = "recoverable transport";
--			break;
--		case -EREMOTEIO:
--			error_type = "critical target";
--			break;
--		case -EBADE:
--			error_type = "critical nexus";
--			break;
--		case -ETIMEDOUT:
--			error_type = "timeout";
--			break;
--		case -ENOSPC:
--			error_type = "critical space allocation";
--			break;
--		case -ENODATA:
--			error_type = "critical medium";
--			break;
--		case -EIO:
--		default:
--			error_type = "I/O";
--			break;
--		}
--		printk_ratelimited(KERN_ERR "%s: %s error, dev %s, sector %llu\n",
--				   __func__, error_type, req->rq_disk ?
--				   req->rq_disk->disk_name : "?",
--				   (unsigned long long)blk_rq_pos(req));
--
--	}
-+	if (unlikely(error && !blk_rq_is_passthrough(req) &&
-+		     !(req->rq_flags & RQF_QUIET)))
-+		print_req_error(req, error);
- 
- 	blk_account_io_completion(req, nr_bytes);
- 
-@@ -2674,7 +2698,7 @@ bool blk_update_request(struct request *req, int error, unsigned int nr_bytes)
- }
- EXPORT_SYMBOL_GPL(blk_update_request);
- 
--static bool blk_update_bidi_request(struct request *rq, int error,
-+static bool blk_update_bidi_request(struct request *rq, blk_status_t error,
- 				    unsigned int nr_bytes,
- 				    unsigned int bidi_bytes)
- {
-@@ -2715,7 +2739,7 @@ EXPORT_SYMBOL_GPL(blk_unprep_request);
- /*
-  * queue lock must be held
-  */
--void blk_finish_request(struct request *req, int error)
-+void blk_finish_request(struct request *req, blk_status_t error)
- {
- 	struct request_queue *q = req->q;
- 
-@@ -2752,7 +2776,7 @@ EXPORT_SYMBOL(blk_finish_request);
- /**
-  * blk_end_bidi_request - Complete a bidi request
-  * @rq:         the request to complete
-- * @error:      %0 for success, < %0 for error
-+ * @error:      block status code
-  * @nr_bytes:   number of bytes to complete @rq
-  * @bidi_bytes: number of bytes to complete @rq->next_rq
-  *
-@@ -2766,7 +2790,7 @@ EXPORT_SYMBOL(blk_finish_request);
-  *     %false - we are done with this request
-  *     %true  - still buffers pending for this request
-  **/
--static bool blk_end_bidi_request(struct request *rq, int error,
-+static bool blk_end_bidi_request(struct request *rq, blk_status_t error,
- 				 unsigned int nr_bytes, unsigned int bidi_bytes)
- {
- 	struct request_queue *q = rq->q;
-@@ -2785,7 +2809,7 @@ static bool blk_end_bidi_request(struct request *rq, int error,
- /**
-  * __blk_end_bidi_request - Complete a bidi request with queue lock held
-  * @rq:         the request to complete
-- * @error:      %0 for success, < %0 for error
-+ * @error:      block status code
-  * @nr_bytes:   number of bytes to complete @rq
-  * @bidi_bytes: number of bytes to complete @rq->next_rq
-  *
-@@ -2797,7 +2821,7 @@ static bool blk_end_bidi_request(struct request *rq, int error,
-  *     %false - we are done with this request
-  *     %true  - still buffers pending for this request
-  **/
--static bool __blk_end_bidi_request(struct request *rq, int error,
-+static bool __blk_end_bidi_request(struct request *rq, blk_status_t error,
- 				   unsigned int nr_bytes, unsigned int bidi_bytes)
- {
- 	if (blk_update_bidi_request(rq, error, nr_bytes, bidi_bytes))
-@@ -2811,7 +2835,7 @@ static bool __blk_end_bidi_request(struct request *rq, int error,
- /**
-  * blk_end_request - Helper function for drivers to complete the request.
-  * @rq:       the request being processed
-- * @error:    %0 for success, < %0 for error
-+ * @error:    block status code
-  * @nr_bytes: number of bytes to complete
-  *
-  * Description:
-@@ -2822,7 +2846,8 @@ static bool __blk_end_bidi_request(struct request *rq, int error,
-  *     %false - we are done with this request
-  *     %true  - still buffers pending for this request
-  **/
--bool blk_end_request(struct request *rq, int error, unsigned int nr_bytes)
-+bool blk_end_request(struct request *rq, blk_status_t error,
-+		unsigned int nr_bytes)
- {
- 	return blk_end_bidi_request(rq, error, nr_bytes, 0);
- }
-@@ -2831,12 +2856,12 @@ EXPORT_SYMBOL(blk_end_request);
- /**
-  * blk_end_request_all - Helper function for drives to finish the request.
-  * @rq: the request to finish
-- * @error: %0 for success, < %0 for error
-+ * @error: block status code
-  *
-  * Description:
-  *     Completely finish @rq.
-  */
--void blk_end_request_all(struct request *rq, int error)
-+void blk_end_request_all(struct request *rq, blk_status_t error)
- {
- 	bool pending;
- 	unsigned int bidi_bytes = 0;
-@@ -2852,7 +2877,7 @@ EXPORT_SYMBOL(blk_end_request_all);
- /**
-  * __blk_end_request - Helper function for drivers to complete the request.
-  * @rq:       the request being processed
-- * @error:    %0 for success, < %0 for error
-+ * @error:    block status code
-  * @nr_bytes: number of bytes to complete
-  *
-  * Description:
-@@ -2862,7 +2887,8 @@ EXPORT_SYMBOL(blk_end_request_all);
-  *     %false - we are done with this request
-  *     %true  - still buffers pending for this request
-  **/
--bool __blk_end_request(struct request *rq, int error, unsigned int nr_bytes)
-+bool __blk_end_request(struct request *rq, blk_status_t error,
-+		unsigned int nr_bytes)
- {
- 	return __blk_end_bidi_request(rq, error, nr_bytes, 0);
- }
-@@ -2871,12 +2897,12 @@ EXPORT_SYMBOL(__blk_end_request);
- /**
-  * __blk_end_request_all - Helper function for drives to finish the request.
-  * @rq: the request to finish
-- * @error: %0 for success, < %0 for error
-+ * @error:    block status code
-  *
-  * Description:
-  *     Completely finish @rq.  Must be called with queue lock held.
-  */
--void __blk_end_request_all(struct request *rq, int error)
-+void __blk_end_request_all(struct request *rq, blk_status_t error)
- {
- 	bool pending;
- 	unsigned int bidi_bytes = 0;
-@@ -2892,7 +2918,7 @@ EXPORT_SYMBOL(__blk_end_request_all);
- /**
-  * __blk_end_request_cur - Helper function to finish the current request chunk.
-  * @rq: the request to finish the current chunk for
-- * @error: %0 for success, < %0 for error
-+ * @error:    block status code
-  *
-  * Description:
-  *     Complete the current consecutively mapped chunk from @rq.  Must
-@@ -2902,7 +2928,7 @@ EXPORT_SYMBOL(__blk_end_request_all);
-  *     %false - we are done with this request
-  *     %true  - still buffers pending for this request
-  */
--bool __blk_end_request_cur(struct request *rq, int error)
-+bool __blk_end_request_cur(struct request *rq, blk_status_t error)
- {
- 	return __blk_end_request(rq, error, blk_rq_cur_bytes(rq));
- }
-@@ -3243,7 +3269,7 @@ void blk_flush_plug_list(struct blk_plug *plug, bool from_schedule)
- 		 * Short-circuit if @q is dead
- 		 */
- 		if (unlikely(blk_queue_dying(q))) {
--			__blk_end_request_all(rq, -ENODEV);
-+			__blk_end_request_all(rq, BLK_STS_IOERR);
- 			continue;
+@@ -108,7 +108,7 @@ static int t10_pi_verify(struct blk_integrity_iter *iter, csum_fn *fn,
+ 			       "(rcvd %04x, want %04x)\n", iter->disk_name,
+ 			       (unsigned long long)iter->seed,
+ 			       be16_to_cpu(pi->guard_tag), be16_to_cpu(csum));
+-			return -EILSEQ;
++			return BLK_STS_PROTECTION;
  		}
  
-diff --git a/block/blk-exec.c b/block/blk-exec.c
-index a9451e3b8587..5c0f3dc446dc 100644
---- a/block/blk-exec.c
-+++ b/block/blk-exec.c
-@@ -16,7 +16,7 @@
-  * @rq: request to complete
-  * @error: end I/O status of the request
-  */
--static void blk_end_sync_rq(struct request *rq, int error)
-+static void blk_end_sync_rq(struct request *rq, blk_status_t error)
- {
- 	struct completion *waiting = rq->end_io_data;
- 
-@@ -69,7 +69,7 @@ void blk_execute_rq_nowait(struct request_queue *q, struct gendisk *bd_disk,
- 
- 	if (unlikely(blk_queue_dying(q))) {
- 		rq->rq_flags |= RQF_QUIET;
--		__blk_end_request_all(rq, -ENXIO);
-+		__blk_end_request_all(rq, BLK_STS_IOERR);
- 		spin_unlock_irq(q->queue_lock);
- 		return;
- 	}
-diff --git a/block/blk-flush.c b/block/blk-flush.c
-index c4e0880b54bb..a572b47fa059 100644
---- a/block/blk-flush.c
-+++ b/block/blk-flush.c
-@@ -164,7 +164,7 @@ static bool blk_flush_queue_rq(struct request *rq, bool add_front)
-  */
- static bool blk_flush_complete_seq(struct request *rq,
- 				   struct blk_flush_queue *fq,
--				   unsigned int seq, int error)
-+				   unsigned int seq, blk_status_t error)
- {
- 	struct request_queue *q = rq->q;
- 	struct list_head *pending = &fq->flush_queue[fq->flush_pending_idx];
-@@ -216,7 +216,7 @@ static bool blk_flush_complete_seq(struct request *rq,
- 	return kicked | queued;
- }
- 
--static void flush_end_io(struct request *flush_rq, int error)
-+static void flush_end_io(struct request *flush_rq, blk_status_t error)
- {
- 	struct request_queue *q = flush_rq->q;
- 	struct list_head *running;
-@@ -341,7 +341,7 @@ static bool blk_kick_flush(struct request_queue *q, struct blk_flush_queue *fq)
- 	return blk_flush_queue_rq(flush_rq, false);
- }
- 
--static void flush_data_end_io(struct request *rq, int error)
-+static void flush_data_end_io(struct request *rq, blk_status_t error)
- {
- 	struct request_queue *q = rq->q;
- 	struct blk_flush_queue *fq = blk_get_flush_queue(q, NULL);
-@@ -382,7 +382,7 @@ static void flush_data_end_io(struct request *rq, int error)
- 		blk_run_queue_async(q);
- }
- 
--static void mq_flush_data_end_io(struct request *rq, int error)
-+static void mq_flush_data_end_io(struct request *rq, blk_status_t error)
- {
- 	struct request_queue *q = rq->q;
- 	struct blk_mq_hw_ctx *hctx;
-diff --git a/block/blk-mq.c b/block/blk-mq.c
-index 22438d5036a3..adcc1c0dce6e 100644
---- a/block/blk-mq.c
-+++ b/block/blk-mq.c
-@@ -394,7 +394,7 @@ void blk_mq_free_request(struct request *rq)
- }
- EXPORT_SYMBOL_GPL(blk_mq_free_request);
- 
--inline void __blk_mq_end_request(struct request *rq, int error)
-+inline void __blk_mq_end_request(struct request *rq, blk_status_t error)
- {
- 	blk_account_io_done(rq);
- 
-@@ -409,7 +409,7 @@ inline void __blk_mq_end_request(struct request *rq, int error)
- }
- EXPORT_SYMBOL(__blk_mq_end_request);
- 
--void blk_mq_end_request(struct request *rq, int error)
-+void blk_mq_end_request(struct request *rq, blk_status_t error)
- {
- 	if (blk_update_request(rq, error, blk_rq_bytes(rq)))
- 		BUG();
-@@ -988,7 +988,7 @@ bool blk_mq_dispatch_rq_list(struct request_queue *q, struct list_head *list)
- 			pr_err("blk-mq: bad return on queue: %d\n", ret);
- 		case BLK_MQ_RQ_QUEUE_ERROR:
- 			errors++;
--			blk_mq_end_request(rq, -EIO);
-+			blk_mq_end_request(rq, BLK_STS_IOERR);
- 			break;
- 		}
- 
-@@ -1433,7 +1433,7 @@ static void __blk_mq_try_issue_directly(struct request *rq, blk_qc_t *cookie,
- 
- 	if (ret == BLK_MQ_RQ_QUEUE_ERROR) {
- 		*cookie = BLK_QC_T_NONE;
--		blk_mq_end_request(rq, -EIO);
-+		blk_mq_end_request(rq, BLK_STS_IOERR);
- 		return;
- 	}
- 
-diff --git a/block/bsg-lib.c b/block/bsg-lib.c
-index 9b91daefcd9b..c4513b23f57a 100644
---- a/block/bsg-lib.c
-+++ b/block/bsg-lib.c
-@@ -37,7 +37,7 @@ static void bsg_destroy_job(struct kref *kref)
- 	struct bsg_job *job = container_of(kref, struct bsg_job, kref);
- 	struct request *rq = job->req;
- 
--	blk_end_request_all(rq, scsi_req(rq)->result);
-+	blk_end_request_all(rq, BLK_STS_OK);
- 
- 	put_device(job->dev);	/* release reference for the request */
- 
-@@ -202,7 +202,7 @@ static void bsg_request_fn(struct request_queue *q)
- 		ret = bsg_create_job(dev, req);
- 		if (ret) {
- 			scsi_req(req)->result = ret;
--			blk_end_request_all(req, ret);
-+			blk_end_request_all(req, BLK_STS_OK);
- 			spin_lock_irq(q->queue_lock);
- 			continue;
- 		}
-diff --git a/block/bsg.c b/block/bsg.c
-index 40db8ff4c618..59d02dd31b0c 100644
---- a/block/bsg.c
-+++ b/block/bsg.c
-@@ -294,14 +294,14 @@ bsg_map_hdr(struct bsg_device *bd, struct sg_io_v4 *hdr, fmode_t has_write_perm)
-  * async completion call-back from the block layer, when scsi/ide/whatever
-  * calls end_that_request_last() on a request
-  */
--static void bsg_rq_end_io(struct request *rq, int uptodate)
-+static void bsg_rq_end_io(struct request *rq, blk_status_t status)
- {
- 	struct bsg_command *bc = rq->end_io_data;
- 	struct bsg_device *bd = bc->bd;
- 	unsigned long flags;
- 
--	dprintk("%s: finished rq %p bc %p, bio %p stat %d\n",
--		bd->name, rq, bc, bc->bio, uptodate);
-+	dprintk("%s: finished rq %p bc %p, bio %p\n",
-+		bd->name, rq, bc, bc->bio);
- 
- 	bc->hdr.duration = jiffies_to_msecs(jiffies - bc->hdr.duration);
- 
-diff --git a/drivers/block/DAC960.c b/drivers/block/DAC960.c
-index 26a51be77227..245a879b036e 100644
---- a/drivers/block/DAC960.c
-+++ b/drivers/block/DAC960.c
-@@ -3464,7 +3464,7 @@ static inline bool DAC960_ProcessCompletedRequest(DAC960_Command_T *Command,
- 						 bool SuccessfulIO)
- {
- 	struct request *Request = Command->Request;
--	int Error = SuccessfulIO ? 0 : -EIO;
-+	blk_status_t Error = SuccessfulIO ? BLK_STS_OK : BLK_STS_IOERR;
- 
- 	pci_unmap_sg(Command->Controller->PCIDevice, Command->cmd_sglist,
- 		Command->SegmentCount, Command->DmaDirection);
-diff --git a/drivers/block/amiflop.c b/drivers/block/amiflop.c
-index a328f673adfe..49908c74bfcb 100644
---- a/drivers/block/amiflop.c
-+++ b/drivers/block/amiflop.c
-@@ -1378,7 +1378,7 @@ static void redo_fd_request(void)
- 	struct amiga_floppy_struct *floppy;
- 	char *data;
- 	unsigned long flags;
--	int err;
-+	blk_status_t err;
- 
- next_req:
- 	rq = set_next_request();
-@@ -1392,7 +1392,7 @@ static void redo_fd_request(void)
- 
- next_segment:
- 	/* Here someone could investigate to be more efficient */
--	for (cnt = 0, err = 0; cnt < blk_rq_cur_sectors(rq); cnt++) {
-+	for (cnt = 0, err = BLK_STS_OK; cnt < blk_rq_cur_sectors(rq); cnt++) {
- #ifdef DEBUG
- 		printk("fd: sector %ld + %d requested for %s\n",
- 		       blk_rq_pos(rq), cnt,
-@@ -1400,7 +1400,7 @@ static void redo_fd_request(void)
- #endif
- 		block = blk_rq_pos(rq) + cnt;
- 		if ((int)block > floppy->blocks) {
--			err = -EIO;
-+			err = BLK_STS_IOERR;
- 			break;
- 		}
- 
-@@ -1413,7 +1413,7 @@ static void redo_fd_request(void)
- #endif
- 
- 		if (get_track(drive, track) == -1) {
--			err = -EIO;
-+			err = BLK_STS_IOERR;
- 			break;
- 		}
- 
-@@ -1424,7 +1424,7 @@ static void redo_fd_request(void)
- 
- 			/* keep the drive spinning while writes are scheduled */
- 			if (!fd_motor_on(drive)) {
--				err = -EIO;
-+				err = BLK_STS_IOERR;
- 				break;
- 			}
- 			/*
-diff --git a/drivers/block/aoe/aoecmd.c b/drivers/block/aoe/aoecmd.c
-index 3c606c09fd5a..5bf0c9d21fc1 100644
---- a/drivers/block/aoe/aoecmd.c
-+++ b/drivers/block/aoe/aoecmd.c
-@@ -1071,7 +1071,7 @@ aoe_end_request(struct aoedev *d, struct request *rq, int fastfail)
- 	do {
- 		bio = rq->bio;
- 		bok = !fastfail && !bio->bi_error;
--	} while (__blk_end_request(rq, bok ? 0 : -EIO, bio->bi_iter.bi_size));
-+	} while (__blk_end_request(rq, bok ? BLK_STS_OK : BLK_STS_IOERR, bio->bi_iter.bi_size));
- 
- 	/* cf. http://lkml.org/lkml/2006/10/31/28 */
- 	if (!fastfail)
-diff --git a/drivers/block/ataflop.c b/drivers/block/ataflop.c
-index fa69ecd52cb5..92da886180aa 100644
---- a/drivers/block/ataflop.c
-+++ b/drivers/block/ataflop.c
-@@ -378,7 +378,7 @@ static DEFINE_TIMER(readtrack_timer, fd_readtrack_check, 0, 0);
- static DEFINE_TIMER(timeout_timer, fd_times_out, 0, 0);
- static DEFINE_TIMER(fd_timer, check_change, 0, 0);
- 	
--static void fd_end_request_cur(int err)
-+static void fd_end_request_cur(blk_status_t err)
- {
- 	if (!__blk_end_request_cur(fd_request, err))
- 		fd_request = NULL;
-@@ -620,7 +620,7 @@ static void fd_error( void )
- 	fd_request->error_count++;
- 	if (fd_request->error_count >= MAX_ERRORS) {
- 		printk(KERN_ERR "fd%d: too many errors.\n", SelectedDrive );
--		fd_end_request_cur(-EIO);
-+		fd_end_request_cur(BLK_STS_IOERR);
- 	}
- 	else if (fd_request->error_count == RECALIBRATE_ERRORS) {
- 		printk(KERN_WARNING "fd%d: recalibrating\n", SelectedDrive );
-@@ -739,7 +739,7 @@ static void do_fd_action( int drive )
- 		    }
- 		    else {
- 			/* all sectors finished */
--			fd_end_request_cur(0);
-+			fd_end_request_cur(BLK_STS_OK);
- 			redo_fd_request();
- 			return;
- 		    }
-@@ -1144,7 +1144,7 @@ static void fd_rwsec_done1(int status)
- 	}
- 	else {
- 		/* all sectors finished */
--		fd_end_request_cur(0);
-+		fd_end_request_cur(BLK_STS_OK);
- 		redo_fd_request();
- 	}
- 	return;
-@@ -1445,7 +1445,7 @@ static void redo_fd_request(void)
- 	if (!UD.connected) {
- 		/* drive not connected */
- 		printk(KERN_ERR "Unknown Device: fd%d\n", drive );
--		fd_end_request_cur(-EIO);
-+		fd_end_request_cur(BLK_STS_IOERR);
- 		goto repeat;
- 	}
- 		
-@@ -1461,12 +1461,12 @@ static void redo_fd_request(void)
- 		/* user supplied disk type */
- 		if (--type >= NUM_DISK_MINORS) {
- 			printk(KERN_WARNING "fd%d: invalid disk format", drive );
--			fd_end_request_cur(-EIO);
-+			fd_end_request_cur(BLK_STS_IOERR);
- 			goto repeat;
- 		}
- 		if (minor2disktype[type].drive_types > DriveType)  {
- 			printk(KERN_WARNING "fd%d: unsupported disk format", drive );
--			fd_end_request_cur(-EIO);
-+			fd_end_request_cur(BLK_STS_IOERR);
- 			goto repeat;
- 		}
- 		type = minor2disktype[type].index;
-@@ -1476,7 +1476,7 @@ static void redo_fd_request(void)
- 	}
- 	
- 	if (blk_rq_pos(fd_request) + 1 > UDT->blocks) {
--		fd_end_request_cur(-EIO);
-+		fd_end_request_cur(BLK_STS_IOERR);
- 		goto repeat;
- 	}
- 
-diff --git a/drivers/block/cciss.c b/drivers/block/cciss.c
-index 3761066fe89d..02a611993bb4 100644
---- a/drivers/block/cciss.c
-+++ b/drivers/block/cciss.c
-@@ -1864,7 +1864,8 @@ static void cciss_softirq_done(struct request *rq)
- 	/* set the residual count for pc requests */
- 	if (blk_rq_is_passthrough(rq))
- 		scsi_req(rq)->resid_len = c->err_info->ResidualCnt;
--	blk_end_request_all(rq, scsi_req(rq)->result ? -EIO : 0);
-+	blk_end_request_all(rq, scsi_req(rq)->result ?
-+			BLK_STS_IOERR : BLK_STS_OK);
- 
- 	spin_lock_irqsave(&h->lock, flags);
- 	cmd_free(h, c);
-diff --git a/drivers/block/floppy.c b/drivers/block/floppy.c
-index 60d4c7653178..cc75a5176057 100644
---- a/drivers/block/floppy.c
-+++ b/drivers/block/floppy.c
-@@ -2202,7 +2202,7 @@ static int do_format(int drive, struct format_descr *tmp_format_req)
-  * =============================
-  */
- 
--static void floppy_end_request(struct request *req, int error)
-+static void floppy_end_request(struct request *req, blk_status_t error)
- {
- 	unsigned int nr_sectors = current_count_sectors;
- 	unsigned int drive = (unsigned long)req->rq_disk->private_data;
-@@ -2263,7 +2263,7 @@ static void request_done(int uptodate)
- 			DRWE->last_error_generation = DRS->generation;
- 		}
- 		spin_lock_irqsave(q->queue_lock, flags);
--		floppy_end_request(req, -EIO);
-+		floppy_end_request(req, BLK_STS_IOERR);
- 		spin_unlock_irqrestore(q->queue_lock, flags);
- 	}
- }
-diff --git a/drivers/block/loop.c b/drivers/block/loop.c
-index 28d932906f24..183597053ce5 100644
---- a/drivers/block/loop.c
-+++ b/drivers/block/loop.c
-@@ -457,7 +457,7 @@ static void lo_complete_rq(struct request *rq)
- 		zero_fill_bio(bio);
- 	}
- 
--	blk_mq_end_request(rq, cmd->ret < 0 ? -EIO : 0);
-+	blk_mq_end_request(rq, cmd->ret < 0 ? BLK_STS_IOERR : BLK_STS_OK);
- }
- 
- static void lo_rw_aio_complete(struct kiocb *iocb, long ret, long ret2)
-diff --git a/drivers/block/mtip32xx/mtip32xx.c b/drivers/block/mtip32xx/mtip32xx.c
-index 3a779a4f5653..ee6f66bb50c7 100644
---- a/drivers/block/mtip32xx/mtip32xx.c
-+++ b/drivers/block/mtip32xx/mtip32xx.c
-@@ -532,7 +532,7 @@ static int mtip_read_log_page(struct mtip_port *port, u8 page, u16 *buffer,
- static int mtip_get_smart_attr(struct mtip_port *port, unsigned int id,
- 						struct smart_attr *attrib);
- 
--static void mtip_complete_command(struct mtip_cmd *cmd, int status)
-+static void mtip_complete_command(struct mtip_cmd *cmd, blk_status_t status)
- {
- 	struct request *req = blk_mq_rq_from_pdu(cmd);
- 
-@@ -568,7 +568,7 @@ static void mtip_handle_tfe(struct driver_data *dd)
- 	if (test_bit(MTIP_PF_IC_ACTIVE_BIT, &port->flags)) {
- 		cmd = mtip_cmd_from_tag(dd, MTIP_TAG_INTERNAL);
- 		dbg_printk(MTIP_DRV_NAME " TFE for the internal command\n");
--		mtip_complete_command(cmd, -EIO);
-+		mtip_complete_command(cmd, BLK_STS_IOERR);
- 		return;
- 	}
- 
-@@ -667,7 +667,7 @@ static void mtip_handle_tfe(struct driver_data *dd)
- 					tag,
- 					fail_reason != NULL ?
- 						fail_reason : "unknown");
--					mtip_complete_command(cmd, -ENODATA);
-+					mtip_complete_command(cmd, BLK_STS_MEDIUM);
- 					continue;
- 				}
- 			}
-@@ -690,7 +690,7 @@ static void mtip_handle_tfe(struct driver_data *dd)
- 			dev_warn(&port->dd->pdev->dev,
- 				"retiring tag %d\n", tag);
- 
--			mtip_complete_command(cmd, -EIO);
-+			mtip_complete_command(cmd, BLK_STS_IOERR);
- 		}
- 	}
- 	print_tags(dd, "reissued (TFE)", tagaccum, cmd_cnt);
-@@ -2753,7 +2753,7 @@ static void mtip_abort_cmd(struct request *req, void *data,
- 	dbg_printk(MTIP_DRV_NAME " Aborting request, tag = %d\n", req->tag);
- 
- 	clear_bit(req->tag, dd->port->cmds_to_issue);
--	cmd->status = -EIO;
-+	cmd->status = BLK_STS_IOERR;
- 	mtip_softirq_done_fn(req);
- }
- 
-@@ -3597,7 +3597,7 @@ static int mtip_submit_request(struct blk_mq_hw_ctx *hctx, struct request *rq)
- 		int err;
- 
- 		err = mtip_send_trim(dd, blk_rq_pos(rq), blk_rq_sectors(rq));
--		blk_mq_end_request(rq, err);
-+		blk_mq_end_request(rq, err ? BLK_STS_IOERR : BLK_STS_OK);
- 		return 0;
- 	}
- 
-@@ -3730,7 +3730,7 @@ static enum blk_eh_timer_return mtip_cmd_timeout(struct request *req,
- 	if (reserved) {
- 		struct mtip_cmd *cmd = blk_mq_rq_to_pdu(req);
- 
--		cmd->status = -ETIME;
-+		cmd->status = BLK_STS_TIMEOUT;
- 		return BLK_EH_HANDLED;
- 	}
- 
-@@ -3961,7 +3961,7 @@ static void mtip_no_dev_cleanup(struct request *rq, void *data, bool reserv)
- {
- 	struct mtip_cmd *cmd = blk_mq_rq_to_pdu(rq);
- 
--	cmd->status = -ENODEV;
-+	cmd->status = BLK_STS_IOERR;
- 	blk_mq_complete_request(rq);
- }
- 
-diff --git a/drivers/block/mtip32xx/mtip32xx.h b/drivers/block/mtip32xx/mtip32xx.h
-index 37b8e3e0bb78..e8286af50e16 100644
---- a/drivers/block/mtip32xx/mtip32xx.h
-+++ b/drivers/block/mtip32xx/mtip32xx.h
-@@ -342,7 +342,7 @@ struct mtip_cmd {
- 	int retries; /* The number of retries left for this command. */
- 
- 	int direction; /* Data transfer direction */
--	int status;
-+	blk_status_t status;
- };
- 
- /* Structure used to describe a port. */
-diff --git a/drivers/block/nbd.c b/drivers/block/nbd.c
-index c5e52f66d3d4..b2e5c15fcb4d 100644
---- a/drivers/block/nbd.c
-+++ b/drivers/block/nbd.c
-@@ -116,7 +116,7 @@ struct nbd_cmd {
- 	int index;
- 	int cookie;
- 	struct completion send_complete;
--	int status;
-+	blk_status_t status;
- };
- 
- #if IS_ENABLED(CONFIG_DEBUG_FS)
-@@ -286,7 +286,7 @@ static enum blk_eh_timer_return nbd_xmit_timeout(struct request *req,
- 	struct nbd_config *config;
- 
- 	if (!refcount_inc_not_zero(&nbd->config_refs)) {
--		cmd->status = -EIO;
-+		cmd->status = BLK_STS_TIMEOUT;
- 		return BLK_EH_HANDLED;
- 	}
- 
-@@ -331,7 +331,7 @@ static enum blk_eh_timer_return nbd_xmit_timeout(struct request *req,
- 				    "Connection timed out\n");
- 	}
- 	set_bit(NBD_TIMEDOUT, &config->runtime_flags);
--	cmd->status = -EIO;
-+	cmd->status = BLK_STS_IOERR;
- 	sock_shutdown(nbd);
- 	nbd_config_put(nbd);
- 
-@@ -578,7 +578,7 @@ static struct nbd_cmd *nbd_read_stat(struct nbd_device *nbd, int index)
- 	if (ntohl(reply.error)) {
- 		dev_err(disk_to_dev(nbd->disk), "Other side returned error (%d)\n",
- 			ntohl(reply.error));
--		cmd->status = -EIO;
-+		cmd->status = BLK_STS_IOERR;
- 		return cmd;
- 	}
- 
-@@ -603,7 +603,7 @@ static struct nbd_cmd *nbd_read_stat(struct nbd_device *nbd, int index)
- 				 */
- 				if (nbd_disconnected(config) ||
- 				    config->num_connections <= 1) {
--					cmd->status = -EIO;
-+					cmd->status = BLK_STS_IOERR;
- 					return cmd;
- 				}
- 				return ERR_PTR(-EIO);
-@@ -655,7 +655,7 @@ static void nbd_clear_req(struct request *req, void *data, bool reserved)
- 	if (!blk_mq_request_started(req))
- 		return;
- 	cmd = blk_mq_rq_to_pdu(req);
--	cmd->status = -EIO;
-+	cmd->status = BLK_STS_IOERR;
- 	blk_mq_complete_request(req);
- }
- 
-@@ -744,7 +744,7 @@ static int nbd_handle_cmd(struct nbd_cmd *cmd, int index)
- 		nbd_config_put(nbd);
- 		return -EINVAL;
- 	}
--	cmd->status = 0;
-+	cmd->status = BLK_STS_OK;
- again:
- 	nsock = config->socks[index];
- 	mutex_lock(&nsock->tx_lock);
-diff --git a/drivers/block/null_blk.c b/drivers/block/null_blk.c
-index d946e1eeac8e..e6b81d370882 100644
---- a/drivers/block/null_blk.c
-+++ b/drivers/block/null_blk.c
-@@ -229,11 +229,11 @@ static void end_cmd(struct nullb_cmd *cmd)
- 
- 	switch (queue_mode)  {
- 	case NULL_Q_MQ:
--		blk_mq_end_request(cmd->rq, 0);
-+		blk_mq_end_request(cmd->rq, BLK_STS_OK);
- 		return;
- 	case NULL_Q_RQ:
- 		INIT_LIST_HEAD(&cmd->rq->queuelist);
--		blk_end_request_all(cmd->rq, 0);
-+		blk_end_request_all(cmd->rq, BLK_STS_OK);
- 		break;
- 	case NULL_Q_BIO:
- 		bio_endio(cmd->bio);
-@@ -422,11 +422,12 @@ static void cleanup_queues(struct nullb *nullb)
- 
- #ifdef CONFIG_NVM
- 
--static void null_lnvm_end_io(struct request *rq, int error)
-+static void null_lnvm_end_io(struct request *rq, blk_status_t status)
- {
- 	struct nvm_rq *rqd = rq->end_io_data;
- 
--	rqd->error = error;
-+	/* XXX: lighnvm core seems to expect NVM_RSP_* values here.. */
-+	rqd->error = status ? -EIO : 0;
- 	nvm_end_io(rqd);
- 
- 	blk_put_request(rq);
-diff --git a/drivers/block/paride/pcd.c b/drivers/block/paride/pcd.c
-index b1267ef34d5a..cffe42d80ce9 100644
---- a/drivers/block/paride/pcd.c
-+++ b/drivers/block/paride/pcd.c
-@@ -783,7 +783,7 @@ static void pcd_request(void)
- 			ps_set_intr(do_pcd_read, NULL, 0, nice);
- 			return;
- 		} else {
--			__blk_end_request_all(pcd_req, -EIO);
-+			__blk_end_request_all(pcd_req, BLK_STS_IOERR);
- 			pcd_req = NULL;
- 		}
- 	}
-@@ -794,7 +794,7 @@ static void do_pcd_request(struct request_queue *q)
- 	pcd_request();
- }
- 
--static inline void next_request(int err)
-+static inline void next_request(blk_status_t err)
- {
- 	unsigned long saved_flags;
- 
-@@ -837,7 +837,7 @@ static void pcd_start(void)
- 
- 	if (pcd_command(pcd_current, rd_cmd, 2048, "read block")) {
- 		pcd_bufblk = -1;
--		next_request(-EIO);
-+		next_request(BLK_STS_IOERR);
- 		return;
- 	}
- 
-@@ -871,7 +871,7 @@ static void do_pcd_read_drq(void)
- 			return;
- 		}
- 		pcd_bufblk = -1;
--		next_request(-EIO);
-+		next_request(BLK_STS_IOERR);
- 		return;
- 	}
- 
-diff --git a/drivers/block/paride/pd.c b/drivers/block/paride/pd.c
-index 7d2402f90978..c98983be4f9c 100644
---- a/drivers/block/paride/pd.c
-+++ b/drivers/block/paride/pd.c
-@@ -438,7 +438,7 @@ static void run_fsm(void)
- 				phase = NULL;
- 				spin_lock_irqsave(&pd_lock, saved_flags);
- 				if (!__blk_end_request_cur(pd_req,
--						res == Ok ? 0 : -EIO)) {
-+						res == Ok ? 0 : BLK_STS_IOERR)) {
- 					if (!set_next_request())
- 						stop = 1;
- 				}
-diff --git a/drivers/block/paride/pf.c b/drivers/block/paride/pf.c
-index f24ca7315ddc..5f46da8d05cd 100644
---- a/drivers/block/paride/pf.c
-+++ b/drivers/block/paride/pf.c
-@@ -801,7 +801,7 @@ static int set_next_request(void)
- 	return pf_req != NULL;
- }
- 
--static void pf_end_request(int err)
-+static void pf_end_request(blk_status_t err)
- {
- 	if (pf_req && !__blk_end_request_cur(pf_req, err))
- 		pf_req = NULL;
-@@ -821,7 +821,7 @@ static void pf_request(void)
- 	pf_count = blk_rq_cur_sectors(pf_req);
- 
- 	if (pf_block + pf_count > get_capacity(pf_req->rq_disk)) {
--		pf_end_request(-EIO);
-+		pf_end_request(BLK_STS_IOERR);
- 		goto repeat;
- 	}
- 
-@@ -836,7 +836,7 @@ static void pf_request(void)
- 		pi_do_claimed(pf_current->pi, do_pf_write);
- 	else {
- 		pf_busy = 0;
--		pf_end_request(-EIO);
-+		pf_end_request(BLK_STS_IOERR);
- 		goto repeat;
- 	}
- }
-@@ -868,7 +868,7 @@ static int pf_next_buf(void)
- 	return 0;
- }
- 
--static inline void next_request(int err)
-+static inline void next_request(blk_status_t err)
- {
- 	unsigned long saved_flags;
- 
-@@ -896,7 +896,7 @@ static void do_pf_read_start(void)
- 			pi_do_claimed(pf_current->pi, do_pf_read_start);
- 			return;
- 		}
--		next_request(-EIO);
-+		next_request(BLK_STS_IOERR);
- 		return;
- 	}
- 	pf_mask = STAT_DRQ;
-@@ -915,7 +915,7 @@ static void do_pf_read_drq(void)
- 				pi_do_claimed(pf_current->pi, do_pf_read_start);
- 				return;
- 			}
--			next_request(-EIO);
-+			next_request(BLK_STS_IOERR);
- 			return;
- 		}
- 		pi_read_block(pf_current->pi, pf_buf, 512);
-@@ -942,7 +942,7 @@ static void do_pf_write_start(void)
- 			pi_do_claimed(pf_current->pi, do_pf_write_start);
- 			return;
- 		}
--		next_request(-EIO);
-+		next_request(BLK_STS_IOERR);
- 		return;
- 	}
- 
-@@ -955,7 +955,7 @@ static void do_pf_write_start(void)
- 				pi_do_claimed(pf_current->pi, do_pf_write_start);
- 				return;
- 			}
--			next_request(-EIO);
-+			next_request(BLK_STS_IOERR);
- 			return;
- 		}
- 		pi_write_block(pf_current->pi, pf_buf, 512);
-@@ -975,7 +975,7 @@ static void do_pf_write_done(void)
- 			pi_do_claimed(pf_current->pi, do_pf_write_start);
- 			return;
- 		}
--		next_request(-EIO);
-+		next_request(BLK_STS_IOERR);
- 		return;
- 	}
- 	pi_disconnect(pf_current->pi);
-diff --git a/drivers/block/ps3disk.c b/drivers/block/ps3disk.c
-index a809e3e9feb8..075662f2cf46 100644
---- a/drivers/block/ps3disk.c
-+++ b/drivers/block/ps3disk.c
-@@ -158,7 +158,7 @@ static int ps3disk_submit_request_sg(struct ps3_storage_device *dev,
- 	if (res) {
- 		dev_err(&dev->sbd.core, "%s:%u: %s failed %d\n", __func__,
- 			__LINE__, op, res);
--		__blk_end_request_all(req, -EIO);
-+		__blk_end_request_all(req, BLK_STS_IOERR);
- 		return 0;
- 	}
- 
-@@ -180,7 +180,7 @@ static int ps3disk_submit_flush_request(struct ps3_storage_device *dev,
- 	if (res) {
- 		dev_err(&dev->sbd.core, "%s:%u: sync cache failed 0x%llx\n",
- 			__func__, __LINE__, res);
--		__blk_end_request_all(req, -EIO);
-+		__blk_end_request_all(req, BLK_STS_IOERR);
- 		return 0;
- 	}
- 
-@@ -208,7 +208,7 @@ static void ps3disk_do_request(struct ps3_storage_device *dev,
- 			break;
- 		default:
- 			blk_dump_rq_flags(req, DEVICE_NAME " bad request");
--			__blk_end_request_all(req, -EIO);
-+			__blk_end_request_all(req, BLK_STS_IOERR);
- 		}
- 	}
- }
-@@ -231,7 +231,8 @@ static irqreturn_t ps3disk_interrupt(int irq, void *data)
- 	struct ps3_storage_device *dev = data;
- 	struct ps3disk_private *priv;
- 	struct request *req;
--	int res, read, error;
-+	int res, read;
-+	blk_status_t error;
- 	u64 tag, status;
- 	const char *op;
- 
-@@ -269,7 +270,7 @@ static irqreturn_t ps3disk_interrupt(int irq, void *data)
- 	if (status) {
- 		dev_dbg(&dev->sbd.core, "%s:%u: %s failed 0x%llx\n", __func__,
- 			__LINE__, op, status);
--		error = -EIO;
-+		error = BLK_STS_IOERR;
- 	} else {
- 		dev_dbg(&dev->sbd.core, "%s:%u: %s completed\n", __func__,
- 			__LINE__, op);
-diff --git a/drivers/block/rbd.c b/drivers/block/rbd.c
-index 454bf9c34882..3e8b43d792c2 100644
---- a/drivers/block/rbd.c
-+++ b/drivers/block/rbd.c
-@@ -2293,11 +2293,13 @@ static bool rbd_img_obj_end_request(struct rbd_obj_request *obj_request)
- 		rbd_assert(img_request->obj_request != NULL);
- 		more = obj_request->which < img_request->obj_request_count - 1;
- 	} else {
-+		blk_status_t status = errno_to_blk_status(result);
-+
- 		rbd_assert(img_request->rq != NULL);
- 
--		more = blk_update_request(img_request->rq, result, xferred);
-+		more = blk_update_request(img_request->rq, status, xferred);
- 		if (!more)
--			__blk_mq_end_request(img_request->rq, result);
-+			__blk_mq_end_request(img_request->rq, status);
- 	}
- 
- 	return more;
-@@ -4149,7 +4151,7 @@ static void rbd_queue_workfn(struct work_struct *work)
- 			 obj_op_name(op_type), length, offset, result);
- 	ceph_put_snap_context(snapc);
- err:
--	blk_mq_end_request(rq, result);
-+	blk_mq_end_request(rq, errno_to_blk_status(result));
- }
- 
- static int rbd_queue_rq(struct blk_mq_hw_ctx *hctx,
-diff --git a/drivers/block/skd_main.c b/drivers/block/skd_main.c
-index 27833e4dae2a..e6c526861703 100644
---- a/drivers/block/skd_main.c
-+++ b/drivers/block/skd_main.c
-@@ -451,8 +451,8 @@ static void skd_send_special_fitmsg(struct skd_device *skdev,
- 				    struct skd_special_context *skspcl);
- static void skd_request_fn(struct request_queue *rq);
- static void skd_end_request(struct skd_device *skdev,
--			    struct skd_request_context *skreq, int error);
--static int skd_preop_sg_list(struct skd_device *skdev,
-+		struct skd_request_context *skreq, blk_status_t status);
-+static bool skd_preop_sg_list(struct skd_device *skdev,
- 			     struct skd_request_context *skreq);
- static void skd_postop_sg_list(struct skd_device *skdev,
- 			       struct skd_request_context *skreq);
-@@ -491,7 +491,7 @@ static void skd_fail_all_pending(struct skd_device *skdev)
- 		if (req == NULL)
- 			break;
- 		blk_start_request(req);
--		__blk_end_request_all(req, -EIO);
-+		__blk_end_request_all(req, BLK_STS_IOERR);
- 	}
- }
- 
-@@ -545,7 +545,6 @@ static void skd_request_fn(struct request_queue *q)
- 	struct request *req = NULL;
- 	struct skd_scsi_request *scsi_req;
- 	unsigned long io_flags;
--	int error;
- 	u32 lba;
- 	u32 count;
- 	int data_dir;
-@@ -716,9 +715,7 @@ static void skd_request_fn(struct request_queue *q)
- 		if (!req->bio)
- 			goto skip_sg;
- 
--		error = skd_preop_sg_list(skdev, skreq);
--
--		if (error != 0) {
-+		if (!skd_preop_sg_list(skdev, skreq)) {
- 			/*
- 			 * Complete the native request with error.
- 			 * Note that the request context is still at the
-@@ -730,7 +727,7 @@ static void skd_request_fn(struct request_queue *q)
- 			 */
- 			pr_debug("%s:%s:%d error Out\n",
- 				 skdev->name, __func__, __LINE__);
--			skd_end_request(skdev, skreq, error);
-+			skd_end_request(skdev, skreq, BLK_STS_RESOURCE);
- 			continue;
- 		}
- 
-@@ -805,7 +802,7 @@ static void skd_request_fn(struct request_queue *q)
- }
- 
- static void skd_end_request(struct skd_device *skdev,
--			    struct skd_request_context *skreq, int error)
-+		struct skd_request_context *skreq, blk_status_t error)
- {
- 	if (unlikely(error)) {
- 		struct request *req = skreq->req;
-@@ -822,7 +819,7 @@ static void skd_end_request(struct skd_device *skdev,
- 	__blk_end_request_all(skreq->req, error);
- }
- 
--static int skd_preop_sg_list(struct skd_device *skdev,
-+static bool skd_preop_sg_list(struct skd_device *skdev,
- 			     struct skd_request_context *skreq)
- {
- 	struct request *req = skreq->req;
-@@ -839,7 +836,7 @@ static int skd_preop_sg_list(struct skd_device *skdev,
- 
- 	n_sg = blk_rq_map_sg(skdev->queue, req, sg);
- 	if (n_sg <= 0)
--		return -EINVAL;
-+		return false;
- 
- 	/*
- 	 * Map scatterlist to PCI bus addresses.
-@@ -847,7 +844,7 @@ static int skd_preop_sg_list(struct skd_device *skdev,
- 	 */
- 	n_sg = pci_map_sg(skdev->pdev, sg, n_sg, pci_dir);
- 	if (n_sg <= 0)
--		return -EINVAL;
-+		return false;
- 
- 	SKD_ASSERT(n_sg <= skdev->sgs_per_request);
- 
-@@ -882,7 +879,7 @@ static int skd_preop_sg_list(struct skd_device *skdev,
- 		}
+ next:
+@@ -117,45 +117,45 @@ static int t10_pi_verify(struct blk_integrity_iter *iter, csum_fn *fn,
+ 		iter->seed++;
  	}
  
 -	return 0;
-+	return true;
++	return BLK_STS_OK;
  }
  
- static void skd_postop_sg_list(struct skd_device *skdev,
-@@ -2333,7 +2330,7 @@ static void skd_resolve_req_exception(struct skd_device *skdev,
- 	switch (skd_check_status(skdev, cmp_status, &skreq->err_info)) {
- 	case SKD_CHECK_STATUS_REPORT_GOOD:
- 	case SKD_CHECK_STATUS_REPORT_SMART_ALERT:
--		skd_end_request(skdev, skreq, 0);
-+		skd_end_request(skdev, skreq, BLK_STS_OK);
- 		break;
+-static int t10_pi_type1_generate_crc(struct blk_integrity_iter *iter)
++static blk_status_t t10_pi_type1_generate_crc(struct blk_integrity_iter *iter)
+ {
+ 	return t10_pi_generate(iter, t10_pi_crc_fn, 1);
+ }
  
- 	case SKD_CHECK_STATUS_BUSY_IMMINENT:
-@@ -2355,7 +2352,7 @@ static void skd_resolve_req_exception(struct skd_device *skdev,
+-static int t10_pi_type1_generate_ip(struct blk_integrity_iter *iter)
++static blk_status_t t10_pi_type1_generate_ip(struct blk_integrity_iter *iter)
+ {
+ 	return t10_pi_generate(iter, t10_pi_ip_fn, 1);
+ }
  
- 	case SKD_CHECK_STATUS_REPORT_ERROR:
- 	default:
--		skd_end_request(skdev, skreq, -EIO);
-+		skd_end_request(skdev, skreq, BLK_STS_IOERR);
- 		break;
+-static int t10_pi_type1_verify_crc(struct blk_integrity_iter *iter)
++static blk_status_t t10_pi_type1_verify_crc(struct blk_integrity_iter *iter)
+ {
+ 	return t10_pi_verify(iter, t10_pi_crc_fn, 1);
+ }
+ 
+-static int t10_pi_type1_verify_ip(struct blk_integrity_iter *iter)
++static blk_status_t t10_pi_type1_verify_ip(struct blk_integrity_iter *iter)
+ {
+ 	return t10_pi_verify(iter, t10_pi_ip_fn, 1);
+ }
+ 
+-static int t10_pi_type3_generate_crc(struct blk_integrity_iter *iter)
++static blk_status_t t10_pi_type3_generate_crc(struct blk_integrity_iter *iter)
+ {
+ 	return t10_pi_generate(iter, t10_pi_crc_fn, 3);
+ }
+ 
+-static int t10_pi_type3_generate_ip(struct blk_integrity_iter *iter)
++static blk_status_t t10_pi_type3_generate_ip(struct blk_integrity_iter *iter)
+ {
+ 	return t10_pi_generate(iter, t10_pi_ip_fn, 3);
+ }
+ 
+-static int t10_pi_type3_verify_crc(struct blk_integrity_iter *iter)
++static blk_status_t t10_pi_type3_verify_crc(struct blk_integrity_iter *iter)
+ {
+ 	return t10_pi_verify(iter, t10_pi_crc_fn, 3);
+ }
+ 
+-static int t10_pi_type3_verify_ip(struct blk_integrity_iter *iter)
++static blk_status_t t10_pi_type3_verify_ip(struct blk_integrity_iter *iter)
+ {
+ 	return t10_pi_verify(iter, t10_pi_ip_fn, 3);
+ }
+diff --git a/drivers/block/aoe/aoecmd.c b/drivers/block/aoe/aoecmd.c
+index 5bf0c9d21fc1..dc43254e05a4 100644
+--- a/drivers/block/aoe/aoecmd.c
++++ b/drivers/block/aoe/aoecmd.c
+@@ -1070,7 +1070,7 @@ aoe_end_request(struct aoedev *d, struct request *rq, int fastfail)
+ 		d->ip.rq = NULL;
+ 	do {
+ 		bio = rq->bio;
+-		bok = !fastfail && !bio->bi_error;
++		bok = !fastfail && !bio->bi_status;
+ 	} while (__blk_end_request(rq, bok ? BLK_STS_OK : BLK_STS_IOERR, bio->bi_iter.bi_size));
+ 
+ 	/* cf. http://lkml.org/lkml/2006/10/31/28 */
+@@ -1131,7 +1131,7 @@ ktiocomplete(struct frame *f)
+ 			ahout->cmdstat, ahin->cmdstat,
+ 			d->aoemajor, d->aoeminor);
+ noskb:		if (buf)
+-			buf->bio->bi_error = -EIO;
++			buf->bio->bi_status = BLK_STS_IOERR;
+ 		goto out;
  	}
+ 
+@@ -1144,7 +1144,7 @@ noskb:		if (buf)
+ 				"aoe: runt data size in read from",
+ 				(long) d->aoemajor, d->aoeminor,
+ 			       skb->len, n);
+-			buf->bio->bi_error = -EIO;
++			buf->bio->bi_status = BLK_STS_IOERR;
+ 			break;
+ 		}
+ 		if (n > f->iter.bi_size) {
+@@ -1152,7 +1152,7 @@ noskb:		if (buf)
+ 				"aoe: too-large data size in read from",
+ 				(long) d->aoemajor, d->aoeminor,
+ 				n, f->iter.bi_size);
+-			buf->bio->bi_error = -EIO;
++			buf->bio->bi_status = BLK_STS_IOERR;
+ 			break;
+ 		}
+ 		bvcpy(skb, f->buf->bio, f->iter, n);
+@@ -1654,7 +1654,7 @@ aoe_failbuf(struct aoedev *d, struct buf *buf)
+ 	if (buf == NULL)
+ 		return;
+ 	buf->iter.bi_size = 0;
+-	buf->bio->bi_error = -EIO;
++	buf->bio->bi_status = BLK_STS_IOERR;
+ 	if (buf->nframesout == 0)
+ 		aoe_end_buf(d, buf);
  }
-@@ -2748,7 +2745,7 @@ static int skd_isr_completion_posted(struct skd_device *skdev,
- 			 * native request.
- 			 */
- 			if (likely(cmp_status == SAM_STAT_GOOD))
--				skd_end_request(skdev, skreq, 0);
-+				skd_end_request(skdev, skreq, BLK_STS_OK);
- 			else
- 				skd_resolve_req_exception(skdev, skreq);
- 		}
-@@ -3190,7 +3187,7 @@ static void skd_recover_requests(struct skd_device *skdev, int requeue)
- 			    SKD_MAX_RETRIES)
- 				blk_requeue_request(skdev->queue, skreq->req);
- 			else
--				skd_end_request(skdev, skreq, -EIO);
-+				skd_end_request(skdev, skreq, BLK_STS_IOERR);
+diff --git a/drivers/block/aoe/aoedev.c b/drivers/block/aoe/aoedev.c
+index ffd1947500c6..b28fefb90391 100644
+--- a/drivers/block/aoe/aoedev.c
++++ b/drivers/block/aoe/aoedev.c
+@@ -170,7 +170,7 @@ aoe_failip(struct aoedev *d)
+ 	if (rq == NULL)
+ 		return;
+ 	while ((bio = d->ip.nxbio)) {
+-		bio->bi_error = -EIO;
++		bio->bi_status = BLK_STS_IOERR;
+ 		d->ip.nxbio = bio->bi_next;
+ 		n = (unsigned long) rq->special;
+ 		rq->special = (void *) --n;
+diff --git a/drivers/block/drbd/drbd_actlog.c b/drivers/block/drbd/drbd_actlog.c
+index 8d7bcfa49c12..e02c45cd3c5a 100644
+--- a/drivers/block/drbd/drbd_actlog.c
++++ b/drivers/block/drbd/drbd_actlog.c
+@@ -178,7 +178,7 @@ static int _drbd_md_sync_page_io(struct drbd_device *device,
+ 	else
+ 		submit_bio(bio);
+ 	wait_until_done_or_force_detached(device, bdev, &device->md_io.done);
+-	if (!bio->bi_error)
++	if (!bio->bi_status)
+ 		err = device->md_io.error;
  
- 			skreq->req = NULL;
+  out:
+diff --git a/drivers/block/drbd/drbd_bitmap.c b/drivers/block/drbd/drbd_bitmap.c
+index a804a4107fbc..809fd245c3dc 100644
+--- a/drivers/block/drbd/drbd_bitmap.c
++++ b/drivers/block/drbd/drbd_bitmap.c
+@@ -959,16 +959,16 @@ static void drbd_bm_endio(struct bio *bio)
+ 	    !bm_test_page_unchanged(b->bm_pages[idx]))
+ 		drbd_warn(device, "bitmap page idx %u changed during IO!\n", idx);
  
-diff --git a/drivers/block/sunvdc.c b/drivers/block/sunvdc.c
-index 3f3a3ab3d50a..6b16ead1da58 100644
---- a/drivers/block/sunvdc.c
-+++ b/drivers/block/sunvdc.c
-@@ -316,7 +316,7 @@ static void vdc_end_one(struct vdc_port *port, struct vio_dring_state *dr,
- 
- 	rqe->req = NULL;
- 
--	__blk_end_request(req, (desc->status ? -EIO : 0), desc->size);
-+	__blk_end_request(req, (desc->status ? BLK_STS_IOERR : 0), desc->size);
- 
- 	vdc_blk_queue_start(port);
- }
-@@ -1023,7 +1023,7 @@ static void vdc_queue_drain(struct vdc_port *port)
- 	struct request *req;
- 
- 	while ((req = blk_fetch_request(port->disk->queue)) != NULL)
--		__blk_end_request_all(req, -EIO);
-+		__blk_end_request_all(req, BLK_STS_IOERR);
- }
- 
- static void vdc_ldc_reset_timer(unsigned long _arg)
-diff --git a/drivers/block/swim.c b/drivers/block/swim.c
-index 3064be6cf375..1633aaf24060 100644
---- a/drivers/block/swim.c
-+++ b/drivers/block/swim.c
-@@ -493,7 +493,7 @@ static inline int swim_read_sector(struct floppy_state *fs,
- 	return ret;
- }
- 
--static int floppy_read_sectors(struct floppy_state *fs,
-+static blk_status_t floppy_read_sectors(struct floppy_state *fs,
- 			       int req_sector, int sectors_nb,
- 			       unsigned char *buffer)
- {
-@@ -516,7 +516,7 @@ static int floppy_read_sectors(struct floppy_state *fs,
- 			ret = swim_read_sector(fs, side, track, sector,
- 						buffer);
- 			if (try-- == 0)
--				return -EIO;
-+				return BLK_STS_IOERR;
- 		} while (ret != 512);
- 
- 		buffer += ret;
-@@ -553,7 +553,7 @@ static void do_fd_request(struct request_queue *q)
- 
- 	req = swim_next_request(swd);
- 	while (req) {
--		int err = -EIO;
-+		blk_status_t err = BLK_STS_IOERR;
- 
- 		fs = req->rq_disk->private_data;
- 		if (blk_rq_pos(req) >= fs->total_secs)
-diff --git a/drivers/block/swim3.c b/drivers/block/swim3.c
-index ba4809c9bdba..c7953860ce91 100644
---- a/drivers/block/swim3.c
-+++ b/drivers/block/swim3.c
-@@ -257,7 +257,7 @@ static unsigned int floppy_check_events(struct gendisk *disk,
- 					unsigned int clearing);
- static int floppy_revalidate(struct gendisk *disk);
- 
--static bool swim3_end_request(struct floppy_state *fs, int err, unsigned int nr_bytes)
-+static bool swim3_end_request(struct floppy_state *fs, blk_status_t err, unsigned int nr_bytes)
- {
- 	struct request *req = fs->cur_req;
- 	int rc;
-@@ -334,7 +334,7 @@ static void start_request(struct floppy_state *fs)
- 		if (fs->mdev->media_bay &&
- 		    check_media_bay(fs->mdev->media_bay) != MB_FD) {
- 			swim3_dbg("%s", "  media bay absent, dropping req\n");
--			swim3_end_request(fs, -ENODEV, 0);
-+			swim3_end_request(fs, BLK_STS_IOERR, 0);
- 			continue;
- 		}
- 
-@@ -350,12 +350,12 @@ static void start_request(struct floppy_state *fs)
- 		if (blk_rq_pos(req) >= fs->total_secs) {
- 			swim3_dbg("  pos out of bounds (%ld, max is %ld)\n",
- 				  (long)blk_rq_pos(req), (long)fs->total_secs);
--			swim3_end_request(fs, -EIO, 0);
-+			swim3_end_request(fs, BLK_STS_IOERR, 0);
- 			continue;
- 		}
- 		if (fs->ejected) {
- 			swim3_dbg("%s", "  disk ejected\n");
--			swim3_end_request(fs, -EIO, 0);
-+			swim3_end_request(fs, BLK_STS_IOERR, 0);
- 			continue;
- 		}
- 
-@@ -364,7 +364,7 @@ static void start_request(struct floppy_state *fs)
- 				fs->write_prot = swim3_readbit(fs, WRITE_PROT);
- 			if (fs->write_prot) {
- 				swim3_dbg("%s", "  try to write, disk write protected\n");
--				swim3_end_request(fs, -EIO, 0);
-+				swim3_end_request(fs, BLK_STS_IOERR, 0);
- 				continue;
- 			}
- 		}
-@@ -548,7 +548,7 @@ static void act(struct floppy_state *fs)
- 				if (fs->retries > 5) {
- 					swim3_err("Wrong cylinder in transfer, want: %d got %d\n",
- 						  fs->req_cyl, fs->cur_cyl);
--					swim3_end_request(fs, -EIO, 0);
-+					swim3_end_request(fs, BLK_STS_IOERR, 0);
- 					fs->state = idle;
- 					return;
- 				}
-@@ -584,7 +584,7 @@ static void scan_timeout(unsigned long data)
- 	out_8(&sw->intr_enable, 0);
- 	fs->cur_cyl = -1;
- 	if (fs->retries > 5) {
--		swim3_end_request(fs, -EIO, 0);
-+		swim3_end_request(fs, BLK_STS_IOERR, 0);
- 		fs->state = idle;
- 		start_request(fs);
+-	if (bio->bi_error) {
++	if (bio->bi_status) {
+ 		/* ctx error will hold the completed-last non-zero error code,
+ 		 * in case error codes differ. */
+-		ctx->error = bio->bi_error;
++		ctx->error = blk_status_to_errno(bio->bi_status);
+ 		bm_set_page_io_err(b->bm_pages[idx]);
+ 		/* Not identical to on disk version of it.
+ 		 * Is BM_PAGE_IO_ERROR enough? */
+ 		if (__ratelimit(&drbd_ratelimit_state))
+ 			drbd_err(device, "IO ERROR %d on bitmap page idx %u\n",
+-					bio->bi_error, idx);
++					bio->bi_status, idx);
  	} else {
-@@ -608,7 +608,7 @@ static void seek_timeout(unsigned long data)
- 	out_8(&sw->select, RELAX);
- 	out_8(&sw->intr_enable, 0);
- 	swim3_err("%s", "Seek timeout\n");
--	swim3_end_request(fs, -EIO, 0);
-+	swim3_end_request(fs, BLK_STS_IOERR, 0);
- 	fs->state = idle;
- 	start_request(fs);
- 	spin_unlock_irqrestore(&swim3_lock, flags);
-@@ -637,7 +637,7 @@ static void settle_timeout(unsigned long data)
- 		goto unlock;
+ 		bm_clear_page_io_err(b->bm_pages[idx]);
+ 		dynamic_drbd_dbg(device, "bitmap page idx %u completed\n", idx);
+diff --git a/drivers/block/drbd/drbd_int.h b/drivers/block/drbd/drbd_int.h
+index d5da45bb03a6..76761b4ca13e 100644
+--- a/drivers/block/drbd/drbd_int.h
++++ b/drivers/block/drbd/drbd_int.h
+@@ -1627,7 +1627,7 @@ static inline void drbd_generic_make_request(struct drbd_device *device,
+ 	__release(local);
+ 	if (!bio->bi_bdev) {
+ 		drbd_err(device, "drbd_generic_make_request: bio->bi_bdev == NULL\n");
+-		bio->bi_error = -ENODEV;
++		bio->bi_status = BLK_STS_IOERR;
+ 		bio_endio(bio);
+ 		return;
  	}
- 	swim3_err("%s", "Seek settle timeout\n");
--	swim3_end_request(fs, -EIO, 0);
-+	swim3_end_request(fs, BLK_STS_IOERR, 0);
- 	fs->state = idle;
- 	start_request(fs);
-  unlock:
-@@ -666,7 +666,7 @@ static void xfer_timeout(unsigned long data)
- 	swim3_err("Timeout %sing sector %ld\n",
- 	       (rq_data_dir(fs->cur_req)==WRITE? "writ": "read"),
- 	       (long)blk_rq_pos(fs->cur_req));
--	swim3_end_request(fs, -EIO, 0);
-+	swim3_end_request(fs, BLK_STS_IOERR, 0);
- 	fs->state = idle;
- 	start_request(fs);
- 	spin_unlock_irqrestore(&swim3_lock, flags);
-@@ -703,7 +703,7 @@ static irqreturn_t swim3_interrupt(int irq, void *dev_id)
- 				swim3_err("%s", "Seen sector but cyl=ff?\n");
- 				fs->cur_cyl = -1;
- 				if (fs->retries > 5) {
--					swim3_end_request(fs, -EIO, 0);
-+					swim3_end_request(fs, BLK_STS_IOERR, 0);
- 					fs->state = idle;
- 					start_request(fs);
- 				} else {
-@@ -786,7 +786,7 @@ static irqreturn_t swim3_interrupt(int irq, void *dev_id)
- 				swim3_err("Error %sing block %ld (err=%x)\n",
- 				       rq_data_dir(req) == WRITE? "writ": "read",
- 				       (long)blk_rq_pos(req), err);
--				swim3_end_request(fs, -EIO, 0);
-+				swim3_end_request(fs, BLK_STS_IOERR, 0);
- 				fs->state = idle;
- 			}
- 		} else {
-@@ -795,7 +795,7 @@ static irqreturn_t swim3_interrupt(int irq, void *dev_id)
- 				swim3_err("fd dma error: stat=%x resid=%d\n", stat, resid);
- 				swim3_err("  state=%d, dir=%x, intr=%x, err=%x\n",
- 					  fs->state, rq_data_dir(req), intr, err);
--				swim3_end_request(fs, -EIO, 0);
-+				swim3_end_request(fs, BLK_STS_IOERR, 0);
- 				fs->state = idle;
- 				start_request(fs);
- 				break;
-diff --git a/drivers/block/sx8.c b/drivers/block/sx8.c
-index c8e072caf56f..08586dc14e85 100644
---- a/drivers/block/sx8.c
-+++ b/drivers/block/sx8.c
-@@ -745,7 +745,7 @@ static unsigned int carm_fill_get_fw_ver(struct carm_host *host,
+diff --git a/drivers/block/drbd/drbd_receiver.c b/drivers/block/drbd/drbd_receiver.c
+index 1b0a2be24f39..c7e95e6380fb 100644
+--- a/drivers/block/drbd/drbd_receiver.c
++++ b/drivers/block/drbd/drbd_receiver.c
+@@ -1229,9 +1229,9 @@ void one_flush_endio(struct bio *bio)
+ 	struct drbd_device *device = octx->device;
+ 	struct issue_flush_context *ctx = octx->ctx;
  
- static inline void carm_end_request_queued(struct carm_host *host,
- 					   struct carm_request *crq,
--					   int error)
-+					   blk_status_t error)
+-	if (bio->bi_error) {
+-		ctx->error = bio->bi_error;
+-		drbd_info(device, "local disk FLUSH FAILED with status %d\n", bio->bi_error);
++	if (bio->bi_status) {
++		ctx->error = blk_status_to_errno(bio->bi_status);
++		drbd_info(device, "local disk FLUSH FAILED with status %d\n", bio->bi_status);
+ 	}
+ 	kfree(octx);
+ 	bio_put(bio);
+diff --git a/drivers/block/drbd/drbd_req.c b/drivers/block/drbd/drbd_req.c
+index 656624314f0d..fca6b9914948 100644
+--- a/drivers/block/drbd/drbd_req.c
++++ b/drivers/block/drbd/drbd_req.c
+@@ -203,7 +203,7 @@ void start_new_tl_epoch(struct drbd_connection *connection)
+ void complete_master_bio(struct drbd_device *device,
+ 		struct bio_and_error *m)
  {
- 	struct request *req = crq->rq;
- 	int rc;
-@@ -791,7 +791,7 @@ static inline void carm_round_robin(struct carm_host *host)
+-	m->bio->bi_error = m->error;
++	m->bio->bi_status = errno_to_blk_status(m->error);
+ 	bio_endio(m->bio);
+ 	dec_ap_bio(device);
+ }
+@@ -1157,7 +1157,7 @@ static void drbd_process_discard_req(struct drbd_request *req)
+ 
+ 	if (blkdev_issue_zeroout(bdev, req->i.sector, req->i.size >> 9,
+ 			GFP_NOIO, 0))
+-		req->private_bio->bi_error = -EIO;
++		req->private_bio->bi_status = BLK_STS_IOERR;
+ 	bio_endio(req->private_bio);
  }
  
- static inline void carm_end_rq(struct carm_host *host, struct carm_request *crq,
--			       int error)
-+			       blk_status_t error)
- {
- 	carm_end_request_queued(host, crq, error);
- 	if (max_queue == 1)
-@@ -869,14 +869,14 @@ static void carm_rq_fn(struct request_queue *q)
- 	sg = &crq->sg[0];
- 	n_elem = blk_rq_map_sg(q, rq, sg);
- 	if (n_elem <= 0) {
--		carm_end_rq(host, crq, -EIO);
-+		carm_end_rq(host, crq, BLK_STS_IOERR);
- 		return;		/* request with no s/g entries? */
+@@ -1225,7 +1225,7 @@ drbd_request_prepare(struct drbd_device *device, struct bio *bio, unsigned long
+ 		/* only pass the error to the upper layers.
+ 		 * if user cannot handle io errors, that's not our business. */
+ 		drbd_err(device, "could not kmalloc() req\n");
+-		bio->bi_error = -ENOMEM;
++		bio->bi_status = BLK_STS_RESOURCE;
+ 		bio_endio(bio);
+ 		return ERR_PTR(-ENOMEM);
+ 	}
+diff --git a/drivers/block/drbd/drbd_worker.c b/drivers/block/drbd/drbd_worker.c
+index 1afcb4e02d8d..1d8726a8df34 100644
+--- a/drivers/block/drbd/drbd_worker.c
++++ b/drivers/block/drbd/drbd_worker.c
+@@ -63,7 +63,7 @@ void drbd_md_endio(struct bio *bio)
+ 	struct drbd_device *device;
+ 
+ 	device = bio->bi_private;
+-	device->md_io.error = bio->bi_error;
++	device->md_io.error = blk_status_to_errno(bio->bi_status);
+ 
+ 	/* We grabbed an extra reference in _drbd_md_sync_page_io() to be able
+ 	 * to timeout on the lower level device, and eventually detach from it.
+@@ -177,13 +177,13 @@ void drbd_peer_request_endio(struct bio *bio)
+ 	bool is_discard = bio_op(bio) == REQ_OP_WRITE_ZEROES ||
+ 			  bio_op(bio) == REQ_OP_DISCARD;
+ 
+-	if (bio->bi_error && __ratelimit(&drbd_ratelimit_state))
++	if (bio->bi_status && __ratelimit(&drbd_ratelimit_state))
+ 		drbd_warn(device, "%s: error=%d s=%llus\n",
+ 				is_write ? (is_discard ? "discard" : "write")
+-					: "read", bio->bi_error,
++					: "read", bio->bi_status,
+ 				(unsigned long long)peer_req->i.sector);
+ 
+-	if (bio->bi_error)
++	if (bio->bi_status)
+ 		set_bit(__EE_WAS_ERROR, &peer_req->flags);
+ 
+ 	bio_put(bio); /* no need for the bio anymore */
+@@ -243,16 +243,16 @@ void drbd_request_endio(struct bio *bio)
+ 		if (__ratelimit(&drbd_ratelimit_state))
+ 			drbd_emerg(device, "delayed completion of aborted local request; disk-timeout may be too aggressive\n");
+ 
+-		if (!bio->bi_error)
++		if (!bio->bi_status)
+ 			drbd_panic_after_delayed_completion_of_aborted_request(device);
  	}
  
- 	/* map scatterlist to PCI bus addresses */
- 	n_elem = pci_map_sg(host->pdev, sg, n_elem, pci_dir);
- 	if (n_elem <= 0) {
--		carm_end_rq(host, crq, -EIO);
-+		carm_end_rq(host, crq, BLK_STS_IOERR);
- 		return;		/* request with no s/g entries? */
+ 	/* to avoid recursion in __req_mod */
+-	if (unlikely(bio->bi_error)) {
++	if (unlikely(bio->bi_status)) {
+ 		switch (bio_op(bio)) {
+ 		case REQ_OP_WRITE_ZEROES:
+ 		case REQ_OP_DISCARD:
+-			if (bio->bi_error == -EOPNOTSUPP)
++			if (bio->bi_status == BLK_STS_NOTSUPP)
+ 				what = DISCARD_COMPLETED_NOTSUPP;
+ 			else
+ 				what = DISCARD_COMPLETED_WITH_ERROR;
+@@ -272,7 +272,7 @@ void drbd_request_endio(struct bio *bio)
  	}
- 	crq->n_elem = n_elem;
-@@ -937,7 +937,7 @@ static void carm_rq_fn(struct request_queue *q)
  
- static void carm_handle_array_info(struct carm_host *host,
- 				   struct carm_request *crq, u8 *mem,
--				   int error)
-+				   blk_status_t error)
- {
- 	struct carm_port *port;
- 	u8 *msg_data = mem + sizeof(struct carm_array_info);
-@@ -997,7 +997,7 @@ static void carm_handle_array_info(struct carm_host *host,
+ 	bio_put(req->private_bio);
+-	req->private_bio = ERR_PTR(bio->bi_error);
++	req->private_bio = ERR_PTR(blk_status_to_errno(bio->bi_status));
  
- static void carm_handle_scan_chan(struct carm_host *host,
- 				  struct carm_request *crq, u8 *mem,
--				  int error)
-+				  blk_status_t error)
- {
- 	u8 *msg_data = mem + IOC_SCAN_CHAN_OFFSET;
- 	unsigned int i, dev_count = 0;
-@@ -1029,7 +1029,7 @@ static void carm_handle_scan_chan(struct carm_host *host,
+ 	/* not req_mod(), we need irqsave here! */
+ 	spin_lock_irqsave(&device->resource->req_lock, flags);
+diff --git a/drivers/block/floppy.c b/drivers/block/floppy.c
+index cc75a5176057..9e3cb32e365d 100644
+--- a/drivers/block/floppy.c
++++ b/drivers/block/floppy.c
+@@ -3780,9 +3780,9 @@ static void floppy_rb0_cb(struct bio *bio)
+ 	struct rb0_cbdata *cbdata = (struct rb0_cbdata *)bio->bi_private;
+ 	int drive = cbdata->drive;
+ 
+-	if (bio->bi_error) {
++	if (bio->bi_status) {
+ 		pr_info("floppy: error %d while reading block 0\n",
+-			bio->bi_error);
++			bio->bi_status);
+ 		set_bit(FD_OPEN_SHOULD_FAIL_BIT, &UDRS->flags);
+ 	}
+ 	complete(&cbdata->complete);
+diff --git a/drivers/block/pktcdvd.c b/drivers/block/pktcdvd.c
+index 42e3c880a8a5..e8a381161db6 100644
+--- a/drivers/block/pktcdvd.c
++++ b/drivers/block/pktcdvd.c
+@@ -952,9 +952,9 @@ static void pkt_end_io_read(struct bio *bio)
+ 
+ 	pkt_dbg(2, pd, "bio=%p sec0=%llx sec=%llx err=%d\n",
+ 		bio, (unsigned long long)pkt->sector,
+-		(unsigned long long)bio->bi_iter.bi_sector, bio->bi_error);
++		(unsigned long long)bio->bi_iter.bi_sector, bio->bi_status);
+ 
+-	if (bio->bi_error)
++	if (bio->bi_status)
+ 		atomic_inc(&pkt->io_errors);
+ 	if (atomic_dec_and_test(&pkt->io_wait)) {
+ 		atomic_inc(&pkt->run_sm);
+@@ -969,7 +969,7 @@ static void pkt_end_io_packet_write(struct bio *bio)
+ 	struct pktcdvd_device *pd = pkt->pd;
+ 	BUG_ON(!pd);
+ 
+-	pkt_dbg(2, pd, "id=%d, err=%d\n", pkt->id, bio->bi_error);
++	pkt_dbg(2, pd, "id=%d, err=%d\n", pkt->id, bio->bi_status);
+ 
+ 	pd->stats.pkt_ended++;
+ 
+@@ -1305,16 +1305,16 @@ static void pkt_start_write(struct pktcdvd_device *pd, struct packet_data *pkt)
+ 	pkt_queue_bio(pd, pkt->w_bio);
  }
  
- static void carm_handle_generic(struct carm_host *host,
--				struct carm_request *crq, int error,
-+				struct carm_request *crq, blk_status_t error,
- 				int cur_state, int next_state)
+-static void pkt_finish_packet(struct packet_data *pkt, int error)
++static void pkt_finish_packet(struct packet_data *pkt, blk_status_t status)
  {
- 	DPRINTK("ENTER\n");
-@@ -1045,7 +1045,7 @@ static void carm_handle_generic(struct carm_host *host,
+ 	struct bio *bio;
+ 
+-	if (error)
++	if (status)
+ 		pkt->cache_valid = 0;
+ 
+ 	/* Finish all bios corresponding to this packet */
+ 	while ((bio = bio_list_pop(&pkt->orig_bios))) {
+-		bio->bi_error = error;
++		bio->bi_status = status;
+ 		bio_endio(bio);
+ 	}
+ }
+@@ -1349,7 +1349,7 @@ static void pkt_run_state_machine(struct pktcdvd_device *pd, struct packet_data
+ 			if (atomic_read(&pkt->io_wait) > 0)
+ 				return;
+ 
+-			if (!pkt->w_bio->bi_error) {
++			if (!pkt->w_bio->bi_status) {
+ 				pkt_set_state(pkt, PACKET_FINISHED_STATE);
+ 			} else {
+ 				pkt_set_state(pkt, PACKET_RECOVERY_STATE);
+@@ -1366,7 +1366,7 @@ static void pkt_run_state_machine(struct pktcdvd_device *pd, struct packet_data
+ 			break;
+ 
+ 		case PACKET_FINISHED_STATE:
+-			pkt_finish_packet(pkt, pkt->w_bio->bi_error);
++			pkt_finish_packet(pkt, pkt->w_bio->bi_status);
+ 			return;
+ 
+ 		default:
+@@ -2301,7 +2301,7 @@ static void pkt_end_io_read_cloned(struct bio *bio)
+ 	struct packet_stacked_data *psd = bio->bi_private;
+ 	struct pktcdvd_device *pd = psd->pd;
+ 
+-	psd->bio->bi_error = bio->bi_error;
++	psd->bio->bi_status = bio->bi_status;
+ 	bio_put(bio);
+ 	bio_endio(psd->bio);
+ 	mempool_free(psd, psd_pool);
+diff --git a/drivers/block/ps3vram.c b/drivers/block/ps3vram.c
+index 456b4fe21559..6fa2b8197013 100644
+--- a/drivers/block/ps3vram.c
++++ b/drivers/block/ps3vram.c
+@@ -428,7 +428,7 @@ static void ps3vram_cache_cleanup(struct ps3_system_bus_device *dev)
+ 	kfree(priv->cache.tags);
  }
  
- static inline void carm_handle_rw(struct carm_host *host,
--				  struct carm_request *crq, int error)
-+				  struct carm_request *crq, blk_status_t error)
+-static int ps3vram_read(struct ps3_system_bus_device *dev, loff_t from,
++static blk_status_t ps3vram_read(struct ps3_system_bus_device *dev, loff_t from,
+ 			size_t len, size_t *retlen, u_char *buf)
  {
- 	int pci_dir;
+ 	struct ps3vram_priv *priv = ps3_system_bus_get_drvdata(dev);
+@@ -438,7 +438,7 @@ static int ps3vram_read(struct ps3_system_bus_device *dev, loff_t from,
+ 		(unsigned int)from, len);
  
-@@ -1067,7 +1067,7 @@ static inline void carm_handle_resp(struct carm_host *host,
- 	u32 handle = le32_to_cpu(ret_handle_le);
- 	unsigned int msg_idx;
- 	struct carm_request *crq;
--	int error = (status == RMSG_OK) ? 0 : -EIO;
-+	blk_status_t error = (status == RMSG_OK) ? 0 : BLK_STS_IOERR;
- 	u8 *mem;
- 
- 	VPRINTK("ENTER, handle == 0x%x\n", handle);
-@@ -1155,7 +1155,7 @@ static inline void carm_handle_resp(struct carm_host *host,
- err_out:
- 	printk(KERN_WARNING DRV_NAME "(%s): BUG: unhandled message type %d/%d\n",
- 	       pci_name(host->pdev), crq->msg_type, crq->msg_subtype);
--	carm_end_rq(host, crq, -EIO);
-+	carm_end_rq(host, crq, BLK_STS_IOERR);
- }
- 
- static inline void carm_handle_responses(struct carm_host *host)
-diff --git a/drivers/block/virtio_blk.c b/drivers/block/virtio_blk.c
-index 553cc4c542b4..205b74d70efc 100644
---- a/drivers/block/virtio_blk.c
-+++ b/drivers/block/virtio_blk.c
-@@ -64,15 +64,15 @@ struct virtblk_req {
- 	struct scatterlist sg[];
- };
- 
--static inline int virtblk_result(struct virtblk_req *vbr)
-+static inline blk_status_t virtblk_result(struct virtblk_req *vbr)
- {
- 	switch (vbr->status) {
- 	case VIRTIO_BLK_S_OK:
--		return 0;
-+		return BLK_STS_OK;
- 	case VIRTIO_BLK_S_UNSUPP:
--		return -ENOTTY;
-+		return BLK_STS_NOTSUPP;
- 	default:
+ 	if (from >= priv->size)
 -		return -EIO;
 +		return BLK_STS_IOERR;
- 	}
+ 
+ 	if (len > priv->size - from)
+ 		len = priv->size - from;
+@@ -472,14 +472,14 @@ static int ps3vram_read(struct ps3_system_bus_device *dev, loff_t from,
+ 	return 0;
  }
  
-@@ -307,7 +307,7 @@ static int virtblk_get_id(struct gendisk *disk, char *id_str)
- 		goto out;
+-static int ps3vram_write(struct ps3_system_bus_device *dev, loff_t to,
++static blk_status_t ps3vram_write(struct ps3_system_bus_device *dev, loff_t to,
+ 			 size_t len, size_t *retlen, const u_char *buf)
+ {
+ 	struct ps3vram_priv *priv = ps3_system_bus_get_drvdata(dev);
+ 	unsigned int cached, count;
  
- 	blk_execute_rq(vblk->disk->queue, vblk->disk, req, false);
--	err = virtblk_result(blk_mq_rq_to_pdu(req));
-+	err = blk_status_to_errno(virtblk_result(blk_mq_rq_to_pdu(req)));
- out:
- 	blk_put_request(req);
- 	return err;
+ 	if (to >= priv->size)
+-		return -EIO;
++		return BLK_STS_IOERR;
+ 
+ 	if (len > priv->size - to)
+ 		len = priv->size - to;
+@@ -554,7 +554,7 @@ static struct bio *ps3vram_do_bio(struct ps3_system_bus_device *dev,
+ 	int write = bio_data_dir(bio) == WRITE;
+ 	const char *op = write ? "write" : "read";
+ 	loff_t offset = bio->bi_iter.bi_sector << 9;
+-	int error = 0;
++	blk_status_t error = 0;
+ 	struct bio_vec bvec;
+ 	struct bvec_iter iter;
+ 	struct bio *next;
+@@ -578,7 +578,7 @@ static struct bio *ps3vram_do_bio(struct ps3_system_bus_device *dev,
+ 
+ 		if (retlen != len) {
+ 			dev_err(&dev->core, "Short %s\n", op);
+-			error = -EIO;
++			error = BLK_STS_IOERR;
+ 			goto out;
+ 		}
+ 
+@@ -593,7 +593,7 @@ static struct bio *ps3vram_do_bio(struct ps3_system_bus_device *dev,
+ 	next = bio_list_peek(&priv->list);
+ 	spin_unlock_irq(&priv->lock);
+ 
+-	bio->bi_error = error;
++	bio->bi_status = error;
+ 	bio_endio(bio);
+ 	return next;
+ }
+diff --git a/drivers/block/rsxx/dev.c b/drivers/block/rsxx/dev.c
+index 9c566364ac9c..0b0a0a902355 100644
+--- a/drivers/block/rsxx/dev.c
++++ b/drivers/block/rsxx/dev.c
+@@ -149,7 +149,7 @@ static blk_qc_t rsxx_make_request(struct request_queue *q, struct bio *bio)
+ {
+ 	struct rsxx_cardinfo *card = q->queuedata;
+ 	struct rsxx_bio_meta *bio_meta;
+-	int st = -EINVAL;
++	blk_status_t st = BLK_STS_IOERR;
+ 
+ 	blk_queue_split(q, &bio, q->bio_split);
+ 
+@@ -161,15 +161,11 @@ static blk_qc_t rsxx_make_request(struct request_queue *q, struct bio *bio)
+ 	if (bio_end_sector(bio) > get_capacity(card->gendisk))
+ 		goto req_err;
+ 
+-	if (unlikely(card->halt)) {
+-		st = -EFAULT;
++	if (unlikely(card->halt))
+ 		goto req_err;
+-	}
+ 
+-	if (unlikely(card->dma_fault)) {
+-		st = (-EFAULT);
++	if (unlikely(card->dma_fault))
+ 		goto req_err;
+-	}
+ 
+ 	if (bio->bi_iter.bi_size == 0) {
+ 		dev_err(CARD_TO_DEV(card), "size zero BIO!\n");
+@@ -178,7 +174,7 @@ static blk_qc_t rsxx_make_request(struct request_queue *q, struct bio *bio)
+ 
+ 	bio_meta = kmem_cache_alloc(bio_meta_pool, GFP_KERNEL);
+ 	if (!bio_meta) {
+-		st = -ENOMEM;
++		st = BLK_STS_RESOURCE;
+ 		goto req_err;
+ 	}
+ 
+@@ -205,7 +201,7 @@ static blk_qc_t rsxx_make_request(struct request_queue *q, struct bio *bio)
+ 	kmem_cache_free(bio_meta_pool, bio_meta);
+ req_err:
+ 	if (st)
+-		bio->bi_error = st;
++		bio->bi_status = st;
+ 	bio_endio(bio);
+ 	return BLK_QC_T_NONE;
+ }
+diff --git a/drivers/block/rsxx/dma.c b/drivers/block/rsxx/dma.c
+index 5a20385f87d0..6a1b2177951c 100644
+--- a/drivers/block/rsxx/dma.c
++++ b/drivers/block/rsxx/dma.c
+@@ -611,7 +611,7 @@ static void rsxx_schedule_done(struct work_struct *work)
+ 	mutex_unlock(&ctrl->work_lock);
+ }
+ 
+-static int rsxx_queue_discard(struct rsxx_cardinfo *card,
++static blk_status_t rsxx_queue_discard(struct rsxx_cardinfo *card,
+ 				  struct list_head *q,
+ 				  unsigned int laddr,
+ 				  rsxx_dma_cb cb,
+@@ -621,7 +621,7 @@ static int rsxx_queue_discard(struct rsxx_cardinfo *card,
+ 
+ 	dma = kmem_cache_alloc(rsxx_dma_pool, GFP_KERNEL);
+ 	if (!dma)
+-		return -ENOMEM;
++		return BLK_STS_RESOURCE;
+ 
+ 	dma->cmd          = HW_CMD_BLK_DISCARD;
+ 	dma->laddr        = laddr;
+@@ -640,7 +640,7 @@ static int rsxx_queue_discard(struct rsxx_cardinfo *card,
+ 	return 0;
+ }
+ 
+-static int rsxx_queue_dma(struct rsxx_cardinfo *card,
++static blk_status_t rsxx_queue_dma(struct rsxx_cardinfo *card,
+ 			      struct list_head *q,
+ 			      int dir,
+ 			      unsigned int dma_off,
+@@ -655,7 +655,7 @@ static int rsxx_queue_dma(struct rsxx_cardinfo *card,
+ 
+ 	dma = kmem_cache_alloc(rsxx_dma_pool, GFP_KERNEL);
+ 	if (!dma)
+-		return -ENOMEM;
++		return BLK_STS_RESOURCE;
+ 
+ 	dma->cmd          = dir ? HW_CMD_BLK_WRITE : HW_CMD_BLK_READ;
+ 	dma->laddr        = laddr;
+@@ -677,7 +677,7 @@ static int rsxx_queue_dma(struct rsxx_cardinfo *card,
+ 	return 0;
+ }
+ 
+-int rsxx_dma_queue_bio(struct rsxx_cardinfo *card,
++blk_status_t rsxx_dma_queue_bio(struct rsxx_cardinfo *card,
+ 			   struct bio *bio,
+ 			   atomic_t *n_dmas,
+ 			   rsxx_dma_cb cb,
+@@ -694,7 +694,7 @@ int rsxx_dma_queue_bio(struct rsxx_cardinfo *card,
+ 	unsigned int dma_len;
+ 	int dma_cnt[RSXX_MAX_TARGETS];
+ 	int tgt;
+-	int st;
++	blk_status_t st;
+ 	int i;
+ 
+ 	addr8 = bio->bi_iter.bi_sector << 9; /* sectors are 512 bytes */
+@@ -769,7 +769,6 @@ int rsxx_dma_queue_bio(struct rsxx_cardinfo *card,
+ 	for (i = 0; i < card->n_targets; i++)
+ 		rsxx_cleanup_dma_queue(&card->ctrl[i], &dma_list[i],
+ 					FREE_DMA);
+-
+ 	return st;
+ }
+ 
+diff --git a/drivers/block/rsxx/rsxx_priv.h b/drivers/block/rsxx/rsxx_priv.h
+index 6bbc64d0f690..277f27e673a2 100644
+--- a/drivers/block/rsxx/rsxx_priv.h
++++ b/drivers/block/rsxx/rsxx_priv.h
+@@ -391,7 +391,7 @@ int rsxx_dma_cancel(struct rsxx_dma_ctrl *ctrl);
+ void rsxx_dma_cleanup(void);
+ void rsxx_dma_queue_reset(struct rsxx_cardinfo *card);
+ int rsxx_dma_configure(struct rsxx_cardinfo *card);
+-int rsxx_dma_queue_bio(struct rsxx_cardinfo *card,
++blk_status_t rsxx_dma_queue_bio(struct rsxx_cardinfo *card,
+ 			   struct bio *bio,
+ 			   atomic_t *n_dmas,
+ 			   rsxx_dma_cb cb,
+diff --git a/drivers/block/umem.c b/drivers/block/umem.c
+index c141cc3be22b..4b3c947697b1 100644
+--- a/drivers/block/umem.c
++++ b/drivers/block/umem.c
+@@ -454,7 +454,7 @@ static void process_page(unsigned long data)
+ 				PCI_DMA_TODEVICE : PCI_DMA_FROMDEVICE);
+ 		if (control & DMASCR_HARD_ERROR) {
+ 			/* error */
+-			bio->bi_error = -EIO;
++			bio->bi_status = BLK_STS_IOERR;
+ 			dev_printk(KERN_WARNING, &card->dev->dev,
+ 				"I/O error on sector %d/%d\n",
+ 				le32_to_cpu(desc->local_addr)>>9,
+diff --git a/drivers/block/xen-blkback/blkback.c b/drivers/block/xen-blkback/blkback.c
+index 726c32e35db9..746bd8c8c09a 100644
+--- a/drivers/block/xen-blkback/blkback.c
++++ b/drivers/block/xen-blkback/blkback.c
+@@ -1069,20 +1069,17 @@ static void xen_blk_drain_io(struct xen_blkif_ring *ring)
+ 	atomic_set(&blkif->drain, 0);
+ }
+ 
+-/*
+- * Completion callback on the bio's. Called as bh->b_end_io()
+- */
+-
+-static void __end_block_io_op(struct pending_req *pending_req, int error)
++static void __end_block_io_op(struct pending_req *pending_req,
++		blk_status_t error)
+ {
+ 	/* An error fails the entire request. */
+-	if ((pending_req->operation == BLKIF_OP_FLUSH_DISKCACHE) &&
+-	    (error == -EOPNOTSUPP)) {
++	if (pending_req->operation == BLKIF_OP_FLUSH_DISKCACHE &&
++	    error == BLK_STS_NOTSUPP) {
+ 		pr_debug("flush diskcache op failed, not supported\n");
+ 		xen_blkbk_flush_diskcache(XBT_NIL, pending_req->ring->blkif->be, 0);
+ 		pending_req->status = BLKIF_RSP_EOPNOTSUPP;
+-	} else if ((pending_req->operation == BLKIF_OP_WRITE_BARRIER) &&
+-		    (error == -EOPNOTSUPP)) {
++	} else if (pending_req->operation == BLKIF_OP_WRITE_BARRIER &&
++		   error == BLK_STS_NOTSUPP) {
+ 		pr_debug("write barrier op failed, not supported\n");
+ 		xen_blkbk_barrier(XBT_NIL, pending_req->ring->blkif->be, 0);
+ 		pending_req->status = BLKIF_RSP_EOPNOTSUPP;
+@@ -1106,7 +1103,7 @@ static void __end_block_io_op(struct pending_req *pending_req, int error)
+  */
+ static void end_block_io_op(struct bio *bio)
+ {
+-	__end_block_io_op(bio->bi_private, bio->bi_error);
++	__end_block_io_op(bio->bi_private, bio->bi_status);
+ 	bio_put(bio);
+ }
+ 
+@@ -1423,7 +1420,7 @@ static int dispatch_rw_block_io(struct xen_blkif_ring *ring,
+ 	for (i = 0; i < nbio; i++)
+ 		bio_put(biolist[i]);
+ 	atomic_set(&pending_req->pendcnt, 1);
+-	__end_block_io_op(pending_req, -EINVAL);
++	__end_block_io_op(pending_req, BLK_STS_RESOURCE);
+ 	msleep(1); /* back off a bit */
+ 	return -EIO;
+ }
 diff --git a/drivers/block/xen-blkfront.c b/drivers/block/xen-blkfront.c
-index 39459631667c..aedc3c759273 100644
+index 2f468cf86dcf..e3be666c2776 100644
 --- a/drivers/block/xen-blkfront.c
 +++ b/drivers/block/xen-blkfront.c
-@@ -1601,14 +1601,18 @@ static irqreturn_t blkif_interrupt(int irq, void *dev_id)
- 			continue;
- 		}
+@@ -2006,7 +2006,7 @@ static void split_bio_end(struct bio *bio)
  
--		blkif_req(req)->error = (bret->status == BLKIF_RSP_OKAY) ? 0 : -EIO;
-+		if (bret->status == BLKIF_RSP_OKAY)
-+			blkif_req(req)->error = BLK_STS_OK;
-+		else
-+			blkif_req(req)->error = BLK_STS_IOERR;
-+
- 		switch (bret->operation) {
- 		case BLKIF_OP_DISCARD:
- 			if (unlikely(bret->status == BLKIF_RSP_EOPNOTSUPP)) {
- 				struct request_queue *rq = info->rq;
- 				printk(KERN_WARNING "blkfront: %s: %s op failed\n",
- 					   info->gd->disk_name, op_name(bret->operation));
--				blkif_req(req)->error = -EOPNOTSUPP;
-+				blkif_req(req)->error = BLK_STS_NOTSUPP;
- 				info->feature_discard = 0;
- 				info->feature_secdiscard = 0;
- 				queue_flag_clear(QUEUE_FLAG_DISCARD, rq);
-@@ -1626,11 +1630,11 @@ static irqreturn_t blkif_interrupt(int irq, void *dev_id)
- 				     rinfo->shadow[id].req.u.rw.nr_segments == 0)) {
- 				printk(KERN_WARNING "blkfront: %s: empty %s op failed\n",
- 				       info->gd->disk_name, op_name(bret->operation));
--				blkif_req(req)->error = -EOPNOTSUPP;
-+				blkif_req(req)->error = BLK_STS_NOTSUPP;
- 			}
- 			if (unlikely(blkif_req(req)->error)) {
--				if (blkif_req(req)->error == -EOPNOTSUPP)
--					blkif_req(req)->error = 0;
-+				if (blkif_req(req)->error == BLK_STS_NOTSUPP)
-+					blkif_req(req)->error = BLK_STS_OK;
- 				info->feature_fua = 0;
- 				info->feature_flush = 0;
- 				xlvbd_flush(info);
-@@ -2137,7 +2141,7 @@ static int blkfront_resume(struct xenbus_device *dev)
- 			merge_bio.tail = shadow[j].request->biotail;
- 			bio_list_merge(&info->bio_list, &merge_bio);
- 			shadow[j].request->bio = NULL;
--			blk_mq_end_request(shadow[j].request, 0);
-+			blk_mq_end_request(shadow[j].request, BLK_STS_OK);
- 		}
+ 	if (atomic_dec_and_test(&split_bio->pending)) {
+ 		split_bio->bio->bi_phys_segments = 0;
+-		split_bio->bio->bi_error = bio->bi_error;
++		split_bio->bio->bi_status = bio->bi_status;
+ 		bio_endio(split_bio->bio);
+ 		kfree(split_bio);
+ 	}
+diff --git a/drivers/lightnvm/pblk-core.c b/drivers/lightnvm/pblk-core.c
+index 5e44768ccffa..4e0de995cd90 100644
+--- a/drivers/lightnvm/pblk-core.c
++++ b/drivers/lightnvm/pblk-core.c
+@@ -296,8 +296,8 @@ void pblk_flush_writer(struct pblk *pblk)
+ 		pr_err("pblk: tear down bio failed\n");
  	}
  
-diff --git a/drivers/block/xsysace.c b/drivers/block/xsysace.c
-index 757dce2147e0..977fdf066017 100644
---- a/drivers/block/xsysace.c
-+++ b/drivers/block/xsysace.c
-@@ -471,7 +471,7 @@ static struct request *ace_get_next_request(struct request_queue *q)
- 		if (!blk_rq_is_passthrough(req))
- 			break;
- 		blk_start_request(req);
--		__blk_end_request_all(req, -EIO);
-+		__blk_end_request_all(req, BLK_STS_IOERR);
- 	}
- 	return req;
+-	if (bio->bi_error)
+-		pr_err("pblk: flush sync write failed (%u)\n", bio->bi_error);
++	if (bio->bi_status)
++		pr_err("pblk: flush sync write failed (%u)\n", bio->bi_status);
+ 
+ 	bio_put(bio);
  }
-@@ -499,11 +499,11 @@ static void ace_fsm_dostate(struct ace_device *ace)
+diff --git a/drivers/lightnvm/pblk-read.c b/drivers/lightnvm/pblk-read.c
+index 4a12f14d78c6..762c0b73cb67 100644
+--- a/drivers/lightnvm/pblk-read.c
++++ b/drivers/lightnvm/pblk-read.c
+@@ -114,7 +114,7 @@ static void pblk_end_io_read(struct nvm_rq *rqd)
+ 		pblk_log_read_err(pblk, rqd);
+ #ifdef CONFIG_NVM_DEBUG
+ 	else
+-		WARN_ONCE(bio->bi_error, "pblk: corrupted read error\n");
++		WARN_ONCE(bio->bi_status, "pblk: corrupted read error\n");
+ #endif
  
- 		/* Drop all in-flight and pending requests */
- 		if (ace->req) {
--			__blk_end_request_all(ace->req, -EIO);
-+			__blk_end_request_all(ace->req, BLK_STS_IOERR);
- 			ace->req = NULL;
- 		}
- 		while ((req = blk_fetch_request(ace->queue)) != NULL)
--			__blk_end_request_all(req, -EIO);
-+			__blk_end_request_all(req, BLK_STS_IOERR);
+ 	if (rqd->nr_ppas > 1)
+@@ -123,7 +123,7 @@ static void pblk_end_io_read(struct nvm_rq *rqd)
+ 	bio_put(bio);
+ 	if (r_ctx->orig_bio) {
+ #ifdef CONFIG_NVM_DEBUG
+-		WARN_ONCE(r_ctx->orig_bio->bi_error,
++		WARN_ONCE(r_ctx->orig_bio->bi_status,
+ 						"pblk: corrupted read bio\n");
+ #endif
+ 		bio_endio(r_ctx->orig_bio);
+diff --git a/drivers/lightnvm/pblk-write.c b/drivers/lightnvm/pblk-write.c
+index aef6fd7c4a0c..79b90d8dbcb3 100644
+--- a/drivers/lightnvm/pblk-write.c
++++ b/drivers/lightnvm/pblk-write.c
+@@ -186,7 +186,7 @@ static void pblk_end_io_write(struct nvm_rq *rqd)
+ 	}
+ #ifdef CONFIG_NVM_DEBUG
+ 	else
+-		WARN_ONCE(rqd->bio->bi_error, "pblk: corrupted write error\n");
++		WARN_ONCE(rqd->bio->bi_status, "pblk: corrupted write error\n");
+ #endif
  
- 		/* Drop back to IDLE state and notify waiters */
- 		ace->fsm_state = ACE_FSM_STATE_IDLE;
-@@ -728,7 +728,7 @@ static void ace_fsm_dostate(struct ace_device *ace)
- 		}
- 
- 		/* bio finished; is there another one? */
--		if (__blk_end_request_cur(ace->req, 0)) {
-+		if (__blk_end_request_cur(ace->req, BLK_STS_OK)) {
- 			/* dev_dbg(ace->dev, "next block; h=%u c=%u\n",
- 			 *      blk_rq_sectors(ace->req),
- 			 *      blk_rq_cur_sectors(ace->req));
-diff --git a/drivers/block/z2ram.c b/drivers/block/z2ram.c
-index 968f9e52effa..41c95c9b2ab4 100644
---- a/drivers/block/z2ram.c
-+++ b/drivers/block/z2ram.c
-@@ -74,14 +74,14 @@ static void do_z2_request(struct request_queue *q)
- 	while (req) {
- 		unsigned long start = blk_rq_pos(req) << 9;
- 		unsigned long len  = blk_rq_cur_bytes(req);
--		int err = 0;
-+		blk_status_t err = BLK_STS_OK;
- 
- 		if (start + len > z2ram_size) {
- 			pr_err(DEVICE_NAME ": bad access: block=%llu, "
- 			       "count=%u\n",
- 			       (unsigned long long)blk_rq_pos(req),
- 			       blk_rq_cur_sectors(req));
--			err = -EIO;
-+			err = BLK_STS_IOERR;
- 			goto done;
- 		}
- 		while (len) {
-diff --git a/drivers/cdrom/gdrom.c b/drivers/cdrom/gdrom.c
-index 1372763a948f..53f8278e66f7 100644
---- a/drivers/cdrom/gdrom.c
-+++ b/drivers/cdrom/gdrom.c
-@@ -583,7 +583,8 @@ static int gdrom_set_interrupt_handlers(void)
-  */
- static void gdrom_readdisk_dma(struct work_struct *work)
+ 	pblk_complete_write(pblk, rqd, c_ctx);
+diff --git a/drivers/lightnvm/rrpc.c b/drivers/lightnvm/rrpc.c
+index cf0e28a0ff61..8d3b53bb3307 100644
+--- a/drivers/lightnvm/rrpc.c
++++ b/drivers/lightnvm/rrpc.c
+@@ -279,8 +279,8 @@ static void rrpc_end_sync_bio(struct bio *bio)
  {
--	int err, block, block_cnt;
-+	int block, block_cnt;
-+	blk_status_t err;
- 	struct packet_command *read_command;
- 	struct list_head *elem, *next;
- 	struct request *req;
-@@ -641,7 +642,7 @@ static void gdrom_readdisk_dma(struct work_struct *work)
- 		__raw_writeb(1, GDROM_DMA_STATUS_REG);
- 		wait_event_interruptible_timeout(request_queue,
- 			gd.transfer == 0, GDROM_DEFAULT_TIMEOUT);
--		err = gd.transfer ? -EIO : 0;
-+		err = gd.transfer ? BLK_STS_IOERR : BLK_STS_OK;
- 		gd.transfer = 0;
- 		gd.pending = 0;
- 		/* now seek to take the request spinlock
-@@ -670,11 +671,11 @@ static void gdrom_request(struct request_queue *rq)
- 			break;
- 		case REQ_OP_WRITE:
- 			pr_notice("Read only device - write request ignored\n");
--			__blk_end_request_all(req, -EIO);
-+			__blk_end_request_all(req, BLK_STS_IOERR);
- 			break;
- 		default:
- 			printk(KERN_DEBUG "gdrom: Non-fs request ignored\n");
--			__blk_end_request_all(req, -EIO);
-+			__blk_end_request_all(req, BLK_STS_IOERR);
- 			break;
- 		}
- 	}
-diff --git a/drivers/ide/ide-atapi.c b/drivers/ide/ide-atapi.c
-index 5901937284e7..d7a49dcfa85e 100644
---- a/drivers/ide/ide-atapi.c
-+++ b/drivers/ide/ide-atapi.c
-@@ -273,7 +273,7 @@ void ide_retry_pc(ide_drive_t *drive)
- 	ide_requeue_and_plug(drive, failed_rq);
- 	if (ide_queue_sense_rq(drive, pc)) {
- 		blk_start_request(failed_rq);
--		ide_complete_rq(drive, -EIO, blk_rq_bytes(failed_rq));
-+		ide_complete_rq(drive, BLK_STS_IOERR, blk_rq_bytes(failed_rq));
- 	}
+ 	struct completion *waiting = bio->bi_private;
+ 
+-	if (bio->bi_error)
+-		pr_err("nvm: gc request failed (%u).\n", bio->bi_error);
++	if (bio->bi_status)
++		pr_err("nvm: gc request failed (%u).\n", bio->bi_status);
+ 
+ 	complete(waiting);
  }
- EXPORT_SYMBOL_GPL(ide_retry_pc);
-@@ -437,7 +437,8 @@ static ide_startstop_t ide_pc_intr(ide_drive_t *drive)
- 
- 	/* No more interrupts */
- 	if ((stat & ATA_DRQ) == 0) {
--		int uptodate, error;
-+		int uptodate;
-+		blk_status_t error;
- 
- 		debug_log("Packet command completed, %d bytes transferred\n",
- 			  blk_rq_bytes(rq));
-@@ -490,7 +491,7 @@ static ide_startstop_t ide_pc_intr(ide_drive_t *drive)
- 
- 		if (ata_misc_request(rq)) {
- 			scsi_req(rq)->result = 0;
--			error = 0;
-+			error = BLK_STS_OK;
- 		} else {
- 
- 			if (blk_rq_is_passthrough(rq) && uptodate <= 0) {
-@@ -498,7 +499,7 @@ static ide_startstop_t ide_pc_intr(ide_drive_t *drive)
- 					scsi_req(rq)->result = -EIO;
- 			}
- 
--			error = uptodate ? 0 : -EIO;
-+			error = uptodate ? BLK_STS_OK : BLK_STS_IOERR;
+@@ -359,7 +359,7 @@ static int rrpc_move_valid_pages(struct rrpc *rrpc, struct rrpc_block *rblk)
+ 			goto finished;
  		}
- 
- 		ide_complete_rq(drive, error, blk_rq_bytes(rq));
-diff --git a/drivers/ide/ide-cd.c b/drivers/ide/ide-cd.c
-index 07e5ff3a64c3..d55e44ed82b5 100644
---- a/drivers/ide/ide-cd.c
-+++ b/drivers/ide/ide-cd.c
-@@ -228,7 +228,7 @@ static void ide_cd_complete_failed_rq(ide_drive_t *drive, struct request *rq)
- 		scsi_req(failed)->sense_len = scsi_req(rq)->sense_len;
- 		cdrom_analyze_sense_data(drive, failed);
- 
--		if (ide_end_rq(drive, failed, -EIO, blk_rq_bytes(failed)))
-+		if (ide_end_rq(drive, failed, BLK_STS_IOERR, blk_rq_bytes(failed)))
- 			BUG();
- 	} else
- 		cdrom_analyze_sense_data(drive, NULL);
-@@ -508,7 +508,7 @@ static bool ide_cd_error_cmd(ide_drive_t *drive, struct ide_cmd *cmd)
- 		nr_bytes -= cmd->last_xfer_len;
- 
- 	if (nr_bytes > 0) {
--		ide_complete_rq(drive, 0, nr_bytes);
-+		ide_complete_rq(drive, BLK_STS_OK, nr_bytes);
- 		return true;
- 	}
- 
-@@ -674,7 +674,7 @@ static ide_startstop_t cdrom_newpc_intr(ide_drive_t *drive)
- out_end:
- 	if (blk_rq_is_scsi(rq) && rc == 0) {
- 		scsi_req(rq)->resid_len = 0;
--		blk_end_request_all(rq, 0);
-+		blk_end_request_all(rq, BLK_STS_OK);
- 		hwif->rq = NULL;
- 	} else {
- 		if (sense && uptodate)
-@@ -699,7 +699,7 @@ static ide_startstop_t cdrom_newpc_intr(ide_drive_t *drive)
- 				scsi_req(rq)->resid_len += cmd->last_xfer_len;
+ 		wait_for_completion_io(&wait);
+-		if (bio->bi_error) {
++		if (bio->bi_status) {
+ 			rrpc_inflight_laddr_release(rrpc, rqd);
+ 			goto finished;
  		}
+@@ -385,7 +385,7 @@ static int rrpc_move_valid_pages(struct rrpc *rrpc, struct rrpc_block *rblk)
+ 		wait_for_completion_io(&wait);
  
--		ide_complete_rq(drive, uptodate ? 0 : -EIO, blk_rq_bytes(rq));
-+		ide_complete_rq(drive, uptodate ? BLK_STS_OK : BLK_STS_IOERR, blk_rq_bytes(rq));
+ 		rrpc_inflight_laddr_release(rrpc, rqd);
+-		if (bio->bi_error)
++		if (bio->bi_status)
+ 			goto finished;
  
- 		if (sense && rc == 2)
- 			ide_error(drive, "request sense failure", stat);
-@@ -844,7 +844,7 @@ static ide_startstop_t ide_cd_do_request(ide_drive_t *drive, struct request *rq,
- 	if (nsectors == 0)
- 		nsectors = 1;
+ 		bio_reset(bio);
+diff --git a/drivers/md/bcache/bcache.h b/drivers/md/bcache/bcache.h
+index c3ea03c9a1a8..dee542fff68e 100644
+--- a/drivers/md/bcache/bcache.h
++++ b/drivers/md/bcache/bcache.h
+@@ -849,10 +849,11 @@ static inline void wake_up_allocators(struct cache_set *c)
  
--	ide_complete_rq(drive, uptodate ? 0 : -EIO, nsectors << 9);
-+	ide_complete_rq(drive, uptodate ? BLK_STS_OK : BLK_STS_IOERR, nsectors << 9);
+ /* Forward declarations */
  
- 	return ide_stopped;
- }
-diff --git a/drivers/ide/ide-dma.c b/drivers/ide/ide-dma.c
-index 51c81223e56d..54d4d78ca46a 100644
---- a/drivers/ide/ide-dma.c
-+++ b/drivers/ide/ide-dma.c
-@@ -104,7 +104,7 @@ ide_startstop_t ide_dma_intr(ide_drive_t *drive)
- 			if ((cmd->tf_flags & IDE_TFLAG_FS) == 0)
- 				ide_finish_cmd(drive, cmd, stat);
- 			else
--				ide_complete_rq(drive, 0,
-+				ide_complete_rq(drive, BLK_STS_OK,
- 						blk_rq_sectors(cmd->rq) << 9);
- 			return ide_stopped;
- 		}
-diff --git a/drivers/ide/ide-eh.c b/drivers/ide/ide-eh.c
-index 4b7ffd7d158d..47d5f3379748 100644
---- a/drivers/ide/ide-eh.c
-+++ b/drivers/ide/ide-eh.c
-@@ -135,7 +135,7 @@ ide_startstop_t ide_error(ide_drive_t *drive, const char *msg, u8 stat)
- 			return ide_stopped;
- 		}
- 		scsi_req(rq)->result = err;
--		ide_complete_rq(drive, err ? -EIO : 0, blk_rq_bytes(rq));
-+		ide_complete_rq(drive, err ? BLK_STS_IOERR : BLK_STS_OK, blk_rq_bytes(rq));
- 		return ide_stopped;
- 	}
+-void bch_count_io_errors(struct cache *, int, const char *);
++void bch_count_io_errors(struct cache *, blk_status_t, const char *);
+ void bch_bbio_count_io_errors(struct cache_set *, struct bio *,
+-			      int, const char *);
+-void bch_bbio_endio(struct cache_set *, struct bio *, int, const char *);
++			      blk_status_t, const char *);
++void bch_bbio_endio(struct cache_set *, struct bio *, blk_status_t,
++		const char *);
+ void bch_bbio_free(struct bio *, struct cache_set *);
+ struct bio *bch_bbio_alloc(struct cache_set *);
  
-@@ -143,7 +143,7 @@ ide_startstop_t ide_error(ide_drive_t *drive, const char *msg, u8 stat)
- }
- EXPORT_SYMBOL_GPL(ide_error);
+diff --git a/drivers/md/bcache/btree.c b/drivers/md/bcache/btree.c
+index 450d0e848ae4..866dcf78ff8e 100644
+--- a/drivers/md/bcache/btree.c
++++ b/drivers/md/bcache/btree.c
+@@ -307,7 +307,7 @@ static void bch_btree_node_read(struct btree *b)
+ 	bch_submit_bbio(bio, b->c, &b->key, 0);
+ 	closure_sync(&cl);
  
--static inline void ide_complete_drive_reset(ide_drive_t *drive, int err)
-+static inline void ide_complete_drive_reset(ide_drive_t *drive, blk_status_t err)
- {
- 	struct request *rq = drive->hwif->rq;
+-	if (bio->bi_error)
++	if (bio->bi_status)
+ 		set_btree_node_io_error(b);
  
-@@ -151,7 +151,7 @@ static inline void ide_complete_drive_reset(ide_drive_t *drive, int err)
- 	    scsi_req(rq)->cmd[0] == REQ_DRIVE_RESET) {
- 		if (err <= 0 && scsi_req(rq)->result == 0)
- 			scsi_req(rq)->result = -EIO;
--		ide_complete_rq(drive, err ? err : 0, blk_rq_bytes(rq));
-+		ide_complete_rq(drive, err, blk_rq_bytes(rq));
- 	}
+ 	bch_bbio_free(bio, b->c);
+@@ -374,10 +374,10 @@ static void btree_node_write_endio(struct bio *bio)
+ 	struct closure *cl = bio->bi_private;
+ 	struct btree *b = container_of(cl, struct btree, io);
+ 
+-	if (bio->bi_error)
++	if (bio->bi_status)
+ 		set_btree_node_io_error(b);
+ 
+-	bch_bbio_count_io_errors(b->c, bio, bio->bi_error, "writing btree");
++	bch_bbio_count_io_errors(b->c, bio, bio->bi_status, "writing btree");
+ 	closure_put(cl);
  }
  
-@@ -191,7 +191,7 @@ static ide_startstop_t atapi_reset_pollfunc(ide_drive_t *drive)
- 	}
- 	/* done polling */
- 	hwif->polling = 0;
--	ide_complete_drive_reset(drive, 0);
-+	ide_complete_drive_reset(drive, BLK_STS_OK);
- 	return ide_stopped;
- }
+diff --git a/drivers/md/bcache/io.c b/drivers/md/bcache/io.c
+index db45a88c0ce9..6a9b85095e7b 100644
+--- a/drivers/md/bcache/io.c
++++ b/drivers/md/bcache/io.c
+@@ -50,7 +50,7 @@ void bch_submit_bbio(struct bio *bio, struct cache_set *c,
  
-@@ -225,7 +225,7 @@ static ide_startstop_t reset_pollfunc(ide_drive_t *drive)
- 	ide_hwif_t *hwif = drive->hwif;
- 	const struct ide_port_ops *port_ops = hwif->port_ops;
- 	u8 tmp;
--	int err = 0;
-+	blk_status_t err = BLK_STS_OK;
+ /* IO errors */
  
- 	if (port_ops && port_ops->reset_poll) {
- 		err = port_ops->reset_poll(drive);
-@@ -247,7 +247,7 @@ static ide_startstop_t reset_pollfunc(ide_drive_t *drive)
- 		printk(KERN_ERR "%s: reset timed-out, status=0x%02x\n",
- 			hwif->name, tmp);
- 		drive->failures++;
--		err = -EIO;
-+		err = BLK_STS_IOERR;
- 	} else  {
- 		tmp = ide_read_error(drive);
- 
-@@ -257,7 +257,7 @@ static ide_startstop_t reset_pollfunc(ide_drive_t *drive)
- 		} else {
- 			ide_reset_report_error(hwif, tmp);
- 			drive->failures++;
--			err = -EIO;
-+			err = BLK_STS_IOERR;
- 		}
- 	}
- out:
-@@ -392,7 +392,7 @@ static ide_startstop_t do_reset1(ide_drive_t *drive, int do_not_try_atapi)
- 
- 	if (io_ports->ctl_addr == 0) {
- 		spin_unlock_irqrestore(&hwif->lock, flags);
--		ide_complete_drive_reset(drive, -ENXIO);
-+		ide_complete_drive_reset(drive, BLK_STS_IOERR);
- 		return ide_stopped;
- 	}
- 
-diff --git a/drivers/ide/ide-floppy.c b/drivers/ide/ide-floppy.c
-index 8ac6048cd2df..627b1f62a749 100644
---- a/drivers/ide/ide-floppy.c
-+++ b/drivers/ide/ide-floppy.c
-@@ -143,7 +143,7 @@ static ide_startstop_t ide_floppy_issue_pc(ide_drive_t *drive,
- 
- 		drive->failed_pc = NULL;
- 		drive->pc_callback(drive, 0);
--		ide_complete_rq(drive, -EIO, done);
-+		ide_complete_rq(drive, BLK_STS_IOERR, done);
- 		return ide_stopped;
- 	}
- 
-@@ -248,7 +248,7 @@ static ide_startstop_t ide_floppy_do_request(ide_drive_t *drive,
- 
- 		if (ata_misc_request(rq)) {
- 			scsi_req(rq)->result = 0;
--			ide_complete_rq(drive, 0, blk_rq_bytes(rq));
-+			ide_complete_rq(drive, BLK_STS_OK, blk_rq_bytes(rq));
- 			return ide_stopped;
- 		} else
- 			goto out_end;
-@@ -303,7 +303,7 @@ static ide_startstop_t ide_floppy_do_request(ide_drive_t *drive,
- 	drive->failed_pc = NULL;
- 	if (blk_rq_is_passthrough(rq) && scsi_req(rq)->result == 0)
- 		scsi_req(rq)->result = -EIO;
--	ide_complete_rq(drive, -EIO, blk_rq_bytes(rq));
-+	ide_complete_rq(drive, BLK_STS_IOERR, blk_rq_bytes(rq));
- 	return ide_stopped;
- }
- 
-diff --git a/drivers/ide/ide-io.c b/drivers/ide/ide-io.c
-index 323af721f8cb..3a234701d92c 100644
---- a/drivers/ide/ide-io.c
-+++ b/drivers/ide/ide-io.c
-@@ -54,7 +54,7 @@
- #include <linux/uaccess.h>
- #include <asm/io.h>
- 
--int ide_end_rq(ide_drive_t *drive, struct request *rq, int error,
-+int ide_end_rq(ide_drive_t *drive, struct request *rq, blk_status_t error,
- 	       unsigned int nr_bytes)
+-void bch_count_io_errors(struct cache *ca, int error, const char *m)
++void bch_count_io_errors(struct cache *ca, blk_status_t error, const char *m)
  {
  	/*
-@@ -112,7 +112,7 @@ void ide_complete_cmd(ide_drive_t *drive, struct ide_cmd *cmd, u8 stat, u8 err)
- 	}
+ 	 * The halflife of an error is:
+@@ -103,7 +103,7 @@ void bch_count_io_errors(struct cache *ca, int error, const char *m)
  }
  
--int ide_complete_rq(ide_drive_t *drive, int error, unsigned int nr_bytes)
-+int ide_complete_rq(ide_drive_t *drive, blk_status_t error, unsigned int nr_bytes)
+ void bch_bbio_count_io_errors(struct cache_set *c, struct bio *bio,
+-			      int error, const char *m)
++			      blk_status_t error, const char *m)
  {
- 	ide_hwif_t *hwif = drive->hwif;
- 	struct request *rq = hwif->rq;
-@@ -122,7 +122,7 @@ int ide_complete_rq(ide_drive_t *drive, int error, unsigned int nr_bytes)
- 	 * if failfast is set on a request, override number of sectors
- 	 * and complete the whole request right now
+ 	struct bbio *b = container_of(bio, struct bbio, bio);
+ 	struct cache *ca = PTR_CACHE(c, &b->key, 0);
+@@ -132,7 +132,7 @@ void bch_bbio_count_io_errors(struct cache_set *c, struct bio *bio,
+ }
+ 
+ void bch_bbio_endio(struct cache_set *c, struct bio *bio,
+-		    int error, const char *m)
++		    blk_status_t error, const char *m)
+ {
+ 	struct closure *cl = bio->bi_private;
+ 
+diff --git a/drivers/md/bcache/journal.c b/drivers/md/bcache/journal.c
+index 1198e53d5670..0352d05e495c 100644
+--- a/drivers/md/bcache/journal.c
++++ b/drivers/md/bcache/journal.c
+@@ -549,7 +549,7 @@ static void journal_write_endio(struct bio *bio)
+ {
+ 	struct journal_write *w = bio->bi_private;
+ 
+-	cache_set_err_on(bio->bi_error, w->c, "journal io error");
++	cache_set_err_on(bio->bi_status, w->c, "journal io error");
+ 	closure_put(&w->c->journal.io);
+ }
+ 
+diff --git a/drivers/md/bcache/movinggc.c b/drivers/md/bcache/movinggc.c
+index 13b8a907006d..f633b30c962e 100644
+--- a/drivers/md/bcache/movinggc.c
++++ b/drivers/md/bcache/movinggc.c
+@@ -63,14 +63,14 @@ static void read_moving_endio(struct bio *bio)
+ 	struct moving_io *io = container_of(bio->bi_private,
+ 					    struct moving_io, cl);
+ 
+-	if (bio->bi_error)
+-		io->op.error = bio->bi_error;
++	if (bio->bi_status)
++		io->op.status = bio->bi_status;
+ 	else if (!KEY_DIRTY(&b->key) &&
+ 		 ptr_stale(io->op.c, &b->key, 0)) {
+-		io->op.error = -EINTR;
++		io->op.status = BLK_STS_IOERR;
+ 	}
+ 
+-	bch_bbio_endio(io->op.c, bio, bio->bi_error, "reading data to move");
++	bch_bbio_endio(io->op.c, bio, bio->bi_status, "reading data to move");
+ }
+ 
+ static void moving_init(struct moving_io *io)
+@@ -92,7 +92,7 @@ static void write_moving(struct closure *cl)
+ 	struct moving_io *io = container_of(cl, struct moving_io, cl);
+ 	struct data_insert_op *op = &io->op;
+ 
+-	if (!op->error) {
++	if (!op->status) {
+ 		moving_init(io);
+ 
+ 		io->bio.bio.bi_iter.bi_sector = KEY_START(&io->w->key);
+diff --git a/drivers/md/bcache/request.c b/drivers/md/bcache/request.c
+index 709c9cc34369..019b3df9f1c6 100644
+--- a/drivers/md/bcache/request.c
++++ b/drivers/md/bcache/request.c
+@@ -81,7 +81,7 @@ static void bch_data_insert_keys(struct closure *cl)
+ 	if (ret == -ESRCH) {
+ 		op->replace_collision = true;
+ 	} else if (ret) {
+-		op->error		= -ENOMEM;
++		op->status		= BLK_STS_RESOURCE;
+ 		op->insert_data_done	= true;
+ 	}
+ 
+@@ -178,17 +178,17 @@ static void bch_data_insert_endio(struct bio *bio)
+ 	struct closure *cl = bio->bi_private;
+ 	struct data_insert_op *op = container_of(cl, struct data_insert_op, cl);
+ 
+-	if (bio->bi_error) {
++	if (bio->bi_status) {
+ 		/* TODO: We could try to recover from this. */
+ 		if (op->writeback)
+-			op->error = bio->bi_error;
++			op->status = bio->bi_status;
+ 		else if (!op->replace)
+ 			set_closure_fn(cl, bch_data_insert_error, op->wq);
+ 		else
+ 			set_closure_fn(cl, NULL, NULL);
+ 	}
+ 
+-	bch_bbio_endio(op->c, bio, bio->bi_error, "writing data to cache");
++	bch_bbio_endio(op->c, bio, bio->bi_status, "writing data to cache");
+ }
+ 
+ static void bch_data_insert_start(struct closure *cl)
+@@ -488,15 +488,15 @@ static void bch_cache_read_endio(struct bio *bio)
+ 	 * from the backing device.
  	 */
--	if (blk_noretry_request(rq) && error <= 0)
-+	if (blk_noretry_request(rq) && error)
- 		nr_bytes = blk_rq_sectors(rq) << 9;
  
- 	rc = ide_end_rq(drive, rq, error, nr_bytes);
-@@ -149,7 +149,7 @@ void ide_kill_rq(ide_drive_t *drive, struct request *rq)
- 			scsi_req(rq)->result = -EIO;
+-	if (bio->bi_error)
+-		s->iop.error = bio->bi_error;
++	if (bio->bi_status)
++		s->iop.status = bio->bi_status;
+ 	else if (!KEY_DIRTY(&b->key) &&
+ 		 ptr_stale(s->iop.c, &b->key, 0)) {
+ 		atomic_long_inc(&s->iop.c->cache_read_races);
+-		s->iop.error = -EINTR;
++		s->iop.status = BLK_STS_IOERR;
  	}
  
--	ide_complete_rq(drive, -EIO, blk_rq_bytes(rq));
-+	ide_complete_rq(drive, BLK_STS_IOERR, blk_rq_bytes(rq));
- }
- 
- static void ide_tf_set_specify_cmd(ide_drive_t *drive, struct ide_taskfile *tf)
-@@ -272,7 +272,7 @@ static ide_startstop_t execute_drive_cmd (ide_drive_t *drive,
-  	printk("%s: DRIVE_CMD (null)\n", drive->name);
- #endif
- 	scsi_req(rq)->result = 0;
--	ide_complete_rq(drive, 0, blk_rq_bytes(rq));
-+	ide_complete_rq(drive, BLK_STS_OK, blk_rq_bytes(rq));
- 
-  	return ide_stopped;
- }
-diff --git a/drivers/ide/ide-pm.c b/drivers/ide/ide-pm.c
-index 0977fc1f40ce..08b54bb3b705 100644
---- a/drivers/ide/ide-pm.c
-+++ b/drivers/ide/ide-pm.c
-@@ -40,7 +40,7 @@ int generic_ide_suspend(struct device *dev, pm_message_t mesg)
- 	return ret;
- }
- 
--static void ide_end_sync_rq(struct request *rq, int error)
-+static void ide_end_sync_rq(struct request *rq, blk_status_t error)
- {
- 	complete(rq->end_io_data);
- }
-@@ -57,7 +57,7 @@ static int ide_pm_execute_rq(struct request *rq)
- 	if (unlikely(blk_queue_dying(q))) {
- 		rq->rq_flags |= RQF_QUIET;
- 		scsi_req(rq)->result = -ENXIO;
--		__blk_end_request_all(rq, 0);
-+		__blk_end_request_all(rq, BLK_STS_OK);
- 		spin_unlock_irq(q->queue_lock);
- 		return -ENXIO;
- 	}
-@@ -235,7 +235,7 @@ void ide_complete_pm_rq(ide_drive_t *drive, struct request *rq)
- 
- 	drive->hwif->rq = NULL;
- 
--	if (blk_end_request(rq, 0, 0))
-+	if (blk_end_request(rq, BLK_STS_OK, 0))
- 		BUG();
- }
- 
-diff --git a/drivers/ide/ide-tape.c b/drivers/ide/ide-tape.c
-index a0651f948b76..4d062c568777 100644
---- a/drivers/ide/ide-tape.c
-+++ b/drivers/ide/ide-tape.c
-@@ -474,7 +474,7 @@ static ide_startstop_t ide_tape_issue_pc(ide_drive_t *drive,
- 
- 		drive->failed_pc = NULL;
- 		drive->pc_callback(drive, 0);
--		ide_complete_rq(drive, -EIO, blk_rq_bytes(rq));
-+		ide_complete_rq(drive, BLK_STS_IOERR, blk_rq_bytes(rq));
- 		return ide_stopped;
- 	}
- 	ide_debug_log(IDE_DBG_SENSE, "retry #%d, cmd: 0x%02x", pc->retries,
-diff --git a/drivers/ide/ide-taskfile.c b/drivers/ide/ide-taskfile.c
-index d71199d23c9e..ab1a32cdcb0a 100644
---- a/drivers/ide/ide-taskfile.c
-+++ b/drivers/ide/ide-taskfile.c
-@@ -318,7 +318,7 @@ static void ide_error_cmd(ide_drive_t *drive, struct ide_cmd *cmd)
- 		}
- 
- 		if (nr_bytes > 0)
--			ide_complete_rq(drive, 0, nr_bytes);
-+			ide_complete_rq(drive, BLK_STS_OK, nr_bytes);
- 	}
- }
- 
-@@ -336,7 +336,7 @@ void ide_finish_cmd(ide_drive_t *drive, struct ide_cmd *cmd, u8 stat)
- 		ide_driveid_update(drive);
- 	}
- 
--	ide_complete_rq(drive, err ? -EIO : 0, blk_rq_bytes(rq));
-+	ide_complete_rq(drive, err ? BLK_STS_IOERR : BLK_STS_OK, blk_rq_bytes(rq));
+-	bch_bbio_endio(s->iop.c, bio, bio->bi_error, "reading from cache");
++	bch_bbio_endio(s->iop.c, bio, bio->bi_status, "reading from cache");
  }
  
  /*
-@@ -394,7 +394,7 @@ static ide_startstop_t task_pio_intr(ide_drive_t *drive)
- 	if ((cmd->tf_flags & IDE_TFLAG_FS) == 0)
- 		ide_finish_cmd(drive, cmd, stat);
- 	else
--		ide_complete_rq(drive, 0, blk_rq_sectors(cmd->rq) << 9);
-+		ide_complete_rq(drive, BLK_STS_OK, blk_rq_sectors(cmd->rq) << 9);
- 	return ide_stopped;
- out_err:
- 	ide_error_cmd(drive, cmd);
-diff --git a/drivers/ide/siimage.c b/drivers/ide/siimage.c
-index 6a1849bb476c..57eea5a9047f 100644
---- a/drivers/ide/siimage.c
-+++ b/drivers/ide/siimage.c
-@@ -406,7 +406,7 @@ static int siimage_dma_test_irq(ide_drive_t *drive)
-  *	yet.
-  */
- 
--static int sil_sata_reset_poll(ide_drive_t *drive)
-+static blk_status_t sil_sata_reset_poll(ide_drive_t *drive)
+@@ -593,9 +593,9 @@ static void request_endio(struct bio *bio)
  {
- 	ide_hwif_t *hwif = drive->hwif;
- 	void __iomem *sata_status_addr
-@@ -419,11 +419,11 @@ static int sil_sata_reset_poll(ide_drive_t *drive)
- 		if ((sata_stat & 0x03) != 0x03) {
- 			printk(KERN_WARNING "%s: reset phy dead, status=0x%08x\n",
- 					    hwif->name, sata_stat);
--			return -ENXIO;
+ 	struct closure *cl = bio->bi_private;
+ 
+-	if (bio->bi_error) {
++	if (bio->bi_status) {
+ 		struct search *s = container_of(cl, struct search, cl);
+-		s->iop.error = bio->bi_error;
++		s->iop.status = bio->bi_status;
+ 		/* Only cache read errors are recoverable */
+ 		s->recoverable = false;
+ 	}
+@@ -611,7 +611,7 @@ static void bio_complete(struct search *s)
+ 				    &s->d->disk->part0, s->start_time);
+ 
+ 		trace_bcache_request_end(s->d, s->orig_bio);
+-		s->orig_bio->bi_error = s->iop.error;
++		s->orig_bio->bi_status = s->iop.status;
+ 		bio_endio(s->orig_bio);
+ 		s->orig_bio = NULL;
+ 	}
+@@ -664,7 +664,7 @@ static inline struct search *search_alloc(struct bio *bio,
+ 	s->iop.inode		= d->id;
+ 	s->iop.write_point	= hash_long((unsigned long) current, 16);
+ 	s->iop.write_prio	= 0;
+-	s->iop.error		= 0;
++	s->iop.status		= 0;
+ 	s->iop.flags		= 0;
+ 	s->iop.flush_journal	= op_is_flush(bio->bi_opf);
+ 	s->iop.wq		= bcache_wq;
+@@ -707,7 +707,7 @@ static void cached_dev_read_error(struct closure *cl)
+ 		/* Retry from the backing device: */
+ 		trace_bcache_read_retry(s->orig_bio);
+ 
+-		s->iop.error = 0;
++		s->iop.status = 0;
+ 		do_bio_hook(s, s->orig_bio);
+ 
+ 		/* XXX: invalidate cache */
+@@ -767,7 +767,7 @@ static void cached_dev_read_done_bh(struct closure *cl)
+ 				  !s->cache_miss, s->iop.bypass);
+ 	trace_bcache_read(s->orig_bio, !s->cache_miss, s->iop.bypass);
+ 
+-	if (s->iop.error)
++	if (s->iop.status)
+ 		continue_at_nobarrier(cl, cached_dev_read_error, bcache_wq);
+ 	else if (s->iop.bio || verify(dc, &s->bio.bio))
+ 		continue_at_nobarrier(cl, cached_dev_read_done, bcache_wq);
+diff --git a/drivers/md/bcache/request.h b/drivers/md/bcache/request.h
+index 1ff36875c2b3..7689176951ce 100644
+--- a/drivers/md/bcache/request.h
++++ b/drivers/md/bcache/request.h
+@@ -10,7 +10,7 @@ struct data_insert_op {
+ 	unsigned		inode;
+ 	uint16_t		write_point;
+ 	uint16_t		write_prio;
+-	short			error;
++	blk_status_t		status;
+ 
+ 	union {
+ 		uint16_t	flags;
+diff --git a/drivers/md/bcache/super.c b/drivers/md/bcache/super.c
+index e57353e39168..fbc4f5412dec 100644
+--- a/drivers/md/bcache/super.c
++++ b/drivers/md/bcache/super.c
+@@ -271,7 +271,7 @@ static void write_super_endio(struct bio *bio)
+ {
+ 	struct cache *ca = bio->bi_private;
+ 
+-	bch_count_io_errors(ca, bio->bi_error, "writing superblock");
++	bch_count_io_errors(ca, bio->bi_status, "writing superblock");
+ 	closure_put(&ca->set->sb_write);
+ }
+ 
+@@ -321,7 +321,7 @@ static void uuid_endio(struct bio *bio)
+ 	struct closure *cl = bio->bi_private;
+ 	struct cache_set *c = container_of(cl, struct cache_set, uuid_write);
+ 
+-	cache_set_err_on(bio->bi_error, c, "accessing uuids");
++	cache_set_err_on(bio->bi_status, c, "accessing uuids");
+ 	bch_bbio_free(bio, c);
+ 	closure_put(cl);
+ }
+@@ -494,7 +494,7 @@ static void prio_endio(struct bio *bio)
+ {
+ 	struct cache *ca = bio->bi_private;
+ 
+-	cache_set_err_on(bio->bi_error, ca->set, "accessing priorities");
++	cache_set_err_on(bio->bi_status, ca->set, "accessing priorities");
+ 	bch_bbio_free(bio, ca->set);
+ 	closure_put(&ca->prio);
+ }
+diff --git a/drivers/md/bcache/writeback.c b/drivers/md/bcache/writeback.c
+index 6ac2e48b9235..42c66e76f05e 100644
+--- a/drivers/md/bcache/writeback.c
++++ b/drivers/md/bcache/writeback.c
+@@ -167,7 +167,7 @@ static void dirty_endio(struct bio *bio)
+ 	struct keybuf_key *w = bio->bi_private;
+ 	struct dirty_io *io = w->private;
+ 
+-	if (bio->bi_error)
++	if (bio->bi_status)
+ 		SET_KEY_DIRTY(&w->key, false);
+ 
+ 	closure_put(&io->cl);
+@@ -195,7 +195,7 @@ static void read_dirty_endio(struct bio *bio)
+ 	struct dirty_io *io = w->private;
+ 
+ 	bch_count_io_errors(PTR_CACHE(io->dc->disk.c, &w->key, 0),
+-			    bio->bi_error, "reading dirty data from cache");
++			    bio->bi_status, "reading dirty data from cache");
+ 
+ 	dirty_endio(bio);
+ }
+diff --git a/drivers/md/dm-bio-prison-v1.c b/drivers/md/dm-bio-prison-v1.c
+index ae7da2c30a57..82d27384d31f 100644
+--- a/drivers/md/dm-bio-prison-v1.c
++++ b/drivers/md/dm-bio-prison-v1.c
+@@ -229,7 +229,7 @@ void dm_cell_release_no_holder(struct dm_bio_prison *prison,
+ EXPORT_SYMBOL_GPL(dm_cell_release_no_holder);
+ 
+ void dm_cell_error(struct dm_bio_prison *prison,
+-		   struct dm_bio_prison_cell *cell, int error)
++		   struct dm_bio_prison_cell *cell, blk_status_t error)
+ {
+ 	struct bio_list bios;
+ 	struct bio *bio;
+@@ -238,7 +238,7 @@ void dm_cell_error(struct dm_bio_prison *prison,
+ 	dm_cell_release(prison, cell, &bios);
+ 
+ 	while ((bio = bio_list_pop(&bios))) {
+-		bio->bi_error = error;
++		bio->bi_status = error;
+ 		bio_endio(bio);
+ 	}
+ }
+diff --git a/drivers/md/dm-bio-prison-v1.h b/drivers/md/dm-bio-prison-v1.h
+index cddd4ac07e2c..cec52ac5e1ae 100644
+--- a/drivers/md/dm-bio-prison-v1.h
++++ b/drivers/md/dm-bio-prison-v1.h
+@@ -91,7 +91,7 @@ void dm_cell_release_no_holder(struct dm_bio_prison *prison,
+ 			       struct dm_bio_prison_cell *cell,
+ 			       struct bio_list *inmates);
+ void dm_cell_error(struct dm_bio_prison *prison,
+-		   struct dm_bio_prison_cell *cell, int error);
++		   struct dm_bio_prison_cell *cell, blk_status_t error);
+ 
+ /*
+  * Visits the cell and then releases.  Guarantees no new inmates are
+diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+index cd8139593ccd..0902d2fd1743 100644
+--- a/drivers/md/dm-bufio.c
++++ b/drivers/md/dm-bufio.c
+@@ -145,8 +145,8 @@ struct dm_buffer {
+ 	enum data_mode data_mode;
+ 	unsigned char list_mode;		/* LIST_* */
+ 	unsigned hold_count;
+-	int read_error;
+-	int write_error;
++	blk_status_t read_error;
++	blk_status_t write_error;
+ 	unsigned long state;
+ 	unsigned long last_accessed;
+ 	struct dm_bufio_client *c;
+@@ -555,7 +555,7 @@ static void dmio_complete(unsigned long error, void *context)
+ {
+ 	struct dm_buffer *b = context;
+ 
+-	b->bio.bi_error = error ? -EIO : 0;
++	b->bio.bi_status = error ? BLK_STS_IOERR : 0;
+ 	b->bio.bi_end_io(&b->bio);
+ }
+ 
+@@ -588,7 +588,7 @@ static void use_dmio(struct dm_buffer *b, int rw, sector_t sector,
+ 
+ 	r = dm_io(&io_req, 1, &region, NULL);
+ 	if (r) {
+-		b->bio.bi_error = r;
++		b->bio.bi_status = errno_to_blk_status(r);
+ 		end_io(&b->bio);
+ 	}
+ }
+@@ -596,7 +596,7 @@ static void use_dmio(struct dm_buffer *b, int rw, sector_t sector,
+ static void inline_endio(struct bio *bio)
+ {
+ 	bio_end_io_t *end_fn = bio->bi_private;
+-	int error = bio->bi_error;
++	blk_status_t status = bio->bi_status;
+ 
+ 	/*
+ 	 * Reset the bio to free any attached resources
+@@ -604,7 +604,7 @@ static void inline_endio(struct bio *bio)
+ 	 */
+ 	bio_reset(bio);
+ 
+-	bio->bi_error = error;
++	bio->bi_status = status;
+ 	end_fn(bio);
+ }
+ 
+@@ -685,11 +685,12 @@ static void write_endio(struct bio *bio)
+ {
+ 	struct dm_buffer *b = container_of(bio, struct dm_buffer, bio);
+ 
+-	b->write_error = bio->bi_error;
+-	if (unlikely(bio->bi_error)) {
++	b->write_error = bio->bi_status;
++	if (unlikely(bio->bi_status)) {
+ 		struct dm_bufio_client *c = b->c;
+-		int error = bio->bi_error;
+-		(void)cmpxchg(&c->async_write_error, 0, error);
++
++		(void)cmpxchg(&c->async_write_error, 0,
++				blk_status_to_errno(bio->bi_status));
+ 	}
+ 
+ 	BUG_ON(!test_bit(B_WRITING, &b->state));
+@@ -1063,7 +1064,7 @@ static void read_endio(struct bio *bio)
+ {
+ 	struct dm_buffer *b = container_of(bio, struct dm_buffer, bio);
+ 
+-	b->read_error = bio->bi_error;
++	b->read_error = bio->bi_status;
+ 
+ 	BUG_ON(!test_bit(B_READING, &b->state));
+ 
+@@ -1107,7 +1108,7 @@ static void *new_read(struct dm_bufio_client *c, sector_t block,
+ 	wait_on_bit_io(&b->state, B_READING, TASK_UNINTERRUPTIBLE);
+ 
+ 	if (b->read_error) {
+-		int error = b->read_error;
++		int error = blk_status_to_errno(b->read_error);
+ 
+ 		dm_bufio_release(b);
+ 
+@@ -1257,7 +1258,8 @@ EXPORT_SYMBOL_GPL(dm_bufio_write_dirty_buffers_async);
+  */
+ int dm_bufio_write_dirty_buffers(struct dm_bufio_client *c)
+ {
+-	int a, f;
++	blk_status_t a;
++	int f;
+ 	unsigned long buffers_processed = 0;
+ 	struct dm_buffer *b, *tmp;
+ 
+diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
+index c48612e6d525..c5ea03fc7ee1 100644
+--- a/drivers/md/dm-cache-target.c
++++ b/drivers/md/dm-cache-target.c
+@@ -119,7 +119,7 @@ static void iot_io_end(struct io_tracker *iot, sector_t len)
+  */
+ struct continuation {
+ 	struct work_struct ws;
+-	int input;
++	blk_status_t input;
+ };
+ 
+ static inline void init_continuation(struct continuation *k,
+@@ -145,7 +145,7 @@ struct batcher {
+ 	/*
+ 	 * The operation that everyone is waiting for.
+ 	 */
+-	int (*commit_op)(void *context);
++	blk_status_t (*commit_op)(void *context);
+ 	void *commit_context;
+ 
+ 	/*
+@@ -171,8 +171,7 @@ struct batcher {
+ static void __commit(struct work_struct *_ws)
+ {
+ 	struct batcher *b = container_of(_ws, struct batcher, commit_work);
+-
+-	int r;
++	blk_status_t r;
+ 	unsigned long flags;
+ 	struct list_head work_items;
+ 	struct work_struct *ws, *tmp;
+@@ -205,7 +204,7 @@ static void __commit(struct work_struct *_ws)
+ 
+ 	while ((bio = bio_list_pop(&bios))) {
+ 		if (r) {
+-			bio->bi_error = r;
++			bio->bi_status = r;
+ 			bio_endio(bio);
+ 		} else
+ 			b->issue_op(bio, b->issue_context);
+@@ -213,7 +212,7 @@ static void __commit(struct work_struct *_ws)
+ }
+ 
+ static void batcher_init(struct batcher *b,
+-			 int (*commit_op)(void *),
++			 blk_status_t (*commit_op)(void *),
+ 			 void *commit_context,
+ 			 void (*issue_op)(struct bio *bio, void *),
+ 			 void *issue_context,
+@@ -955,7 +954,7 @@ static void writethrough_endio(struct bio *bio)
+ 
+ 	dm_unhook_bio(&pb->hook_info, bio);
+ 
+-	if (bio->bi_error) {
++	if (bio->bi_status) {
+ 		bio_endio(bio);
+ 		return;
+ 	}
+@@ -1220,7 +1219,7 @@ static void copy_complete(int read_err, unsigned long write_err, void *context)
+ 	struct dm_cache_migration *mg = container_of(context, struct dm_cache_migration, k);
+ 
+ 	if (read_err || write_err)
+-		mg->k.input = -EIO;
++		mg->k.input = BLK_STS_IOERR;
+ 
+ 	queue_continuation(mg->cache->wq, &mg->k);
+ }
+@@ -1266,8 +1265,8 @@ static void overwrite_endio(struct bio *bio)
+ 
+ 	dm_unhook_bio(&pb->hook_info, bio);
+ 
+-	if (bio->bi_error)
+-		mg->k.input = bio->bi_error;
++	if (bio->bi_status)
++		mg->k.input = bio->bi_status;
+ 
+ 	queue_continuation(mg->cache->wq, &mg->k);
+ }
+@@ -1323,8 +1322,10 @@ static void mg_complete(struct dm_cache_migration *mg, bool success)
+ 		if (mg->overwrite_bio) {
+ 			if (success)
+ 				force_set_dirty(cache, cblock);
++			else if (mg->k.input)
++				mg->overwrite_bio->bi_status = mg->k.input;
+ 			else
+-				mg->overwrite_bio->bi_error = (mg->k.input ? : -EIO);
++				mg->overwrite_bio->bi_status = BLK_STS_IOERR;
+ 			bio_endio(mg->overwrite_bio);
+ 		} else {
+ 			if (success)
+@@ -1504,7 +1505,7 @@ static void mg_copy(struct work_struct *ws)
+ 		r = copy(mg, is_policy_promote);
+ 		if (r) {
+ 			DMERR_LIMIT("%s: migration copy failed", cache_device_name(cache));
+-			mg->k.input = -EIO;
++			mg->k.input = BLK_STS_IOERR;
+ 			mg_complete(mg, false);
+ 		}
+ 	}
+@@ -1907,12 +1908,12 @@ static int commit(struct cache *cache, bool clean_shutdown)
+ /*
+  * Used by the batcher.
+  */
+-static int commit_op(void *context)
++static blk_status_t commit_op(void *context)
+ {
+ 	struct cache *cache = context;
+ 
+ 	if (dm_cache_changed_this_transaction(cache->cmd))
+-		return commit(cache, false);
++		return errno_to_blk_status(commit(cache, false));
+ 
+ 	return 0;
+ }
+@@ -2018,7 +2019,7 @@ static void requeue_deferred_bios(struct cache *cache)
+ 	bio_list_init(&cache->deferred_bios);
+ 
+ 	while ((bio = bio_list_pop(&bios))) {
+-		bio->bi_error = DM_ENDIO_REQUEUE;
++		bio->bi_status = BLK_STS_DM_REQUEUE;
+ 		bio_endio(bio);
+ 	}
+ }
+@@ -2820,7 +2821,8 @@ static int cache_map(struct dm_target *ti, struct bio *bio)
+ 	return r;
+ }
+ 
+-static int cache_end_io(struct dm_target *ti, struct bio *bio, int *error)
++static int cache_end_io(struct dm_target *ti, struct bio *bio,
++		blk_status_t *error)
+ {
+ 	struct cache *cache = ti->private;
+ 	unsigned long flags;
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index f4b51809db21..586cef085c6a 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -71,7 +71,7 @@ struct dm_crypt_io {
+ 	struct convert_context ctx;
+ 
+ 	atomic_t io_pending;
+-	int error;
++	blk_status_t error;
+ 	sector_t sector;
+ 
+ 	struct rb_node rb_node;
+@@ -1292,7 +1292,7 @@ static void crypt_free_req(struct crypt_config *cc, void *req, struct bio *base_
+ /*
+  * Encrypt / decrypt data from one bio to another one (can be the same one)
+  */
+-static int crypt_convert(struct crypt_config *cc,
++static blk_status_t crypt_convert(struct crypt_config *cc,
+ 			 struct convert_context *ctx)
+ {
+ 	unsigned int tag_offset = 0;
+@@ -1343,13 +1343,13 @@ static int crypt_convert(struct crypt_config *cc,
+ 		 */
+ 		case -EBADMSG:
+ 			atomic_dec(&ctx->cc_pending);
+-			return -EILSEQ;
++			return BLK_STS_PROTECTION;
+ 		/*
+ 		 * There was an error while processing the request.
+ 		 */
+ 		default:
+ 			atomic_dec(&ctx->cc_pending);
+-			return -EIO;
 +			return BLK_STS_IOERR;
  		}
  	}
  
--	return 0;
-+	return BLK_STS_OK;
- }
- 
- /**
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index ceeeb495d01c..39262e344ae1 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -1449,22 +1449,15 @@ static void activate_path_work(struct work_struct *work)
- 	activate_or_offline_path(pgpath);
- }
- 
--static int noretry_error(int error)
-+static int noretry_error(blk_status_t error)
+@@ -1463,7 +1463,7 @@ static void crypt_dec_pending(struct dm_crypt_io *io)
  {
- 	switch (error) {
--	case -EBADE:
--		/*
--		 * EBADE signals an reservation conflict.
--		 * We shouldn't fail the path here as we can communicate with
--		 * the target.  We should failover to the next path, but in
--		 * doing so we might be causing a ping-pong between paths.
--		 * So just return the reservation conflict error.
--		 */
--	case -EOPNOTSUPP:
--	case -EREMOTEIO:
--	case -EILSEQ:
--	case -ENODATA:
--	case -ENOSPC:
-+	case BLK_STS_NOTSUPP:
-+	case BLK_STS_NOSPC:
-+	case BLK_STS_TARGET:
-+	case BLK_STS_NEXUS:
-+	case BLK_STS_MEDIUM:
-+	case BLK_STS_RESOURCE:
- 		return 1;
+ 	struct crypt_config *cc = io->cc;
+ 	struct bio *base_bio = io->base_bio;
+-	int error = io->error;
++	blk_status_t error = io->error;
+ 
+ 	if (!atomic_dec_and_test(&io->io_pending))
+ 		return;
+@@ -1476,7 +1476,7 @@ static void crypt_dec_pending(struct dm_crypt_io *io)
+ 	else
+ 		kfree(io->integrity_metadata);
+ 
+-	base_bio->bi_error = error;
++	base_bio->bi_status = error;
+ 	bio_endio(base_bio);
+ }
+ 
+@@ -1502,7 +1502,7 @@ static void crypt_endio(struct bio *clone)
+ 	struct dm_crypt_io *io = clone->bi_private;
+ 	struct crypt_config *cc = io->cc;
+ 	unsigned rw = bio_data_dir(clone);
+-	int error;
++	blk_status_t error;
+ 
+ 	/*
+ 	 * free the processed pages
+@@ -1510,7 +1510,7 @@ static void crypt_endio(struct bio *clone)
+ 	if (rw == WRITE)
+ 		crypt_free_buffer_pages(cc, clone);
+ 
+-	error = clone->bi_error;
++	error = clone->bi_status;
+ 	bio_put(clone);
+ 
+ 	if (rw == READ && !error) {
+@@ -1570,7 +1570,7 @@ static void kcryptd_io_read_work(struct work_struct *work)
+ 
+ 	crypt_inc_pending(io);
+ 	if (kcryptd_io_read(io, GFP_NOIO))
+-		io->error = -ENOMEM;
++		io->error = BLK_STS_RESOURCE;
+ 	crypt_dec_pending(io);
+ }
+ 
+@@ -1656,7 +1656,7 @@ static void kcryptd_crypt_write_io_submit(struct dm_crypt_io *io, int async)
+ 	sector_t sector;
+ 	struct rb_node **rbp, *parent;
+ 
+-	if (unlikely(io->error < 0)) {
++	if (unlikely(io->error)) {
+ 		crypt_free_buffer_pages(cc, clone);
+ 		bio_put(clone);
+ 		crypt_dec_pending(io);
+@@ -1697,7 +1697,7 @@ static void kcryptd_crypt_write_convert(struct dm_crypt_io *io)
+ 	struct bio *clone;
+ 	int crypt_finished;
+ 	sector_t sector = io->sector;
+-	int r;
++	blk_status_t r;
+ 
+ 	/*
+ 	 * Prevent io from disappearing until this function completes.
+@@ -1707,7 +1707,7 @@ static void kcryptd_crypt_write_convert(struct dm_crypt_io *io)
+ 
+ 	clone = crypt_alloc_buffer(io, io->base_bio->bi_iter.bi_size);
+ 	if (unlikely(!clone)) {
+-		io->error = -EIO;
++		io->error = BLK_STS_IOERR;
+ 		goto dec;
  	}
  
-@@ -1473,7 +1466,7 @@ static int noretry_error(int error)
+@@ -1718,7 +1718,7 @@ static void kcryptd_crypt_write_convert(struct dm_crypt_io *io)
+ 
+ 	crypt_inc_pending(io);
+ 	r = crypt_convert(cc, &io->ctx);
+-	if (r < 0)
++	if (r)
+ 		io->error = r;
+ 	crypt_finished = atomic_dec_and_test(&io->ctx.cc_pending);
+ 
+@@ -1740,7 +1740,7 @@ static void kcryptd_crypt_read_done(struct dm_crypt_io *io)
+ static void kcryptd_crypt_read_convert(struct dm_crypt_io *io)
+ {
+ 	struct crypt_config *cc = io->cc;
+-	int r = 0;
++	blk_status_t r;
+ 
+ 	crypt_inc_pending(io);
+ 
+@@ -1748,7 +1748,7 @@ static void kcryptd_crypt_read_convert(struct dm_crypt_io *io)
+ 			   io->sector);
+ 
+ 	r = crypt_convert(cc, &io->ctx);
+-	if (r < 0)
++	if (r)
+ 		io->error = r;
+ 
+ 	if (atomic_dec_and_test(&io->ctx.cc_pending))
+@@ -1781,9 +1781,9 @@ static void kcryptd_async_done(struct crypto_async_request *async_req,
+ 	if (error == -EBADMSG) {
+ 		DMERR_LIMIT("INTEGRITY AEAD ERROR, sector %llu",
+ 			    (unsigned long long)le64_to_cpu(*org_sector_of_dmreq(cc, dmreq)));
+-		io->error = -EILSEQ;
++		io->error = BLK_STS_PROTECTION;
+ 	} else if (error < 0)
+-		io->error = -EIO;
++		io->error = BLK_STS_IOERR;
+ 
+ 	crypt_free_req(cc, req_of_dmreq(cc, dmreq), io->base_bio);
+ 
+diff --git a/drivers/md/dm-flakey.c b/drivers/md/dm-flakey.c
+index c9539917a59b..3d04d5ce19d9 100644
+--- a/drivers/md/dm-flakey.c
++++ b/drivers/md/dm-flakey.c
+@@ -358,7 +358,8 @@ static int flakey_map(struct dm_target *ti, struct bio *bio)
+ 	return DM_MAPIO_REMAPPED;
  }
  
- static int multipath_end_io(struct dm_target *ti, struct request *clone,
--			    int error, union map_info *map_context)
-+			    blk_status_t error, union map_info *map_context)
+-static int flakey_end_io(struct dm_target *ti, struct bio *bio, int *error)
++static int flakey_end_io(struct dm_target *ti, struct bio *bio,
++		blk_status_t *error)
  {
- 	struct dm_mpath_io *mpio = get_mpio(map_context);
- 	struct pgpath *pgpath = mpio->pgpath;
-@@ -1500,7 +1493,7 @@ static int multipath_end_io(struct dm_target *ti, struct request *clone,
+ 	struct flakey_c *fc = ti->private;
+ 	struct per_bio_data *pb = dm_per_bio_data(bio, sizeof(struct per_bio_data));
+@@ -377,7 +378,7 @@ static int flakey_end_io(struct dm_target *ti, struct bio *bio, int *error)
+ 			 * Error read during the down_interval if drop_writes
+ 			 * and error_writes were not configured.
+ 			 */
+-			*error = -EIO;
++			*error = BLK_STS_IOERR;
+ 		}
+ 	}
  
- 		if (atomic_read(&m->nr_valid_paths) == 0 &&
- 		    !test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags)) {
--			if (error == -EIO)
-+			if (error == BLK_STS_IOERR)
- 				dm_report_EIO(m);
- 			/* complete with the original error */
- 			r = DM_ENDIO_DONE;
-@@ -1525,7 +1518,7 @@ static int multipath_end_io_bio(struct dm_target *ti, struct bio *clone, int *er
+diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
+index ee78fb471229..ccc6ef4d00b9 100644
+--- a/drivers/md/dm-integrity.c
++++ b/drivers/md/dm-integrity.c
+@@ -246,7 +246,7 @@ struct dm_integrity_io {
+ 	unsigned metadata_offset;
+ 
+ 	atomic_t in_flight;
+-	int bi_error;
++	blk_status_t bi_status;
+ 
+ 	struct completion *completion;
+ 
+@@ -1114,8 +1114,8 @@ static void submit_flush_bio(struct dm_integrity_c *ic, struct dm_integrity_io *
+ static void do_endio(struct dm_integrity_c *ic, struct bio *bio)
+ {
+ 	int r = dm_integrity_failed(ic);
+-	if (unlikely(r) && !bio->bi_error)
+-		bio->bi_error = r;
++	if (unlikely(r) && !bio->bi_status)
++		bio->bi_status = errno_to_blk_status(r);
+ 	bio_endio(bio);
+ }
+ 
+@@ -1123,7 +1123,7 @@ static void do_endio_flush(struct dm_integrity_c *ic, struct dm_integrity_io *di
+ {
+ 	struct bio *bio = dm_bio_from_per_bio_data(dio, sizeof(struct dm_integrity_io));
+ 
+-	if (unlikely(dio->fua) && likely(!bio->bi_error) && likely(!dm_integrity_failed(ic)))
++	if (unlikely(dio->fua) && likely(!bio->bi_status) && likely(!dm_integrity_failed(ic)))
+ 		submit_flush_bio(ic, dio);
+ 	else
+ 		do_endio(ic, bio);
+@@ -1142,9 +1142,9 @@ static void dec_in_flight(struct dm_integrity_io *dio)
+ 
+ 		bio = dm_bio_from_per_bio_data(dio, sizeof(struct dm_integrity_io));
+ 
+-		if (unlikely(dio->bi_error) && !bio->bi_error)
+-			bio->bi_error = dio->bi_error;
+-		if (likely(!bio->bi_error) && unlikely(bio_sectors(bio) != dio->range.n_sectors)) {
++		if (unlikely(dio->bi_status) && !bio->bi_status)
++			bio->bi_status = dio->bi_status;
++		if (likely(!bio->bi_status) && unlikely(bio_sectors(bio) != dio->range.n_sectors)) {
+ 			dio->range.logical_sector += dio->range.n_sectors;
+ 			bio_advance(bio, dio->range.n_sectors << SECTOR_SHIFT);
+ 			INIT_WORK(&dio->work, integrity_bio_wait);
+@@ -1318,7 +1318,7 @@ static void integrity_metadata(struct work_struct *w)
+ 	dec_in_flight(dio);
+ 	return;
+ error:
+-	dio->bi_error = r;
++	dio->bi_status = errno_to_blk_status(r);
+ 	dec_in_flight(dio);
+ }
+ 
+@@ -1331,7 +1331,7 @@ static int dm_integrity_map(struct dm_target *ti, struct bio *bio)
+ 	sector_t area, offset;
+ 
+ 	dio->ic = ic;
+-	dio->bi_error = 0;
++	dio->bi_status = 0;
+ 
+ 	if (unlikely(bio->bi_opf & REQ_PREFLUSH)) {
+ 		submit_flush_bio(ic, dio);
+diff --git a/drivers/md/dm-io.c b/drivers/md/dm-io.c
+index 3702e502466d..c8f8f3004085 100644
+--- a/drivers/md/dm-io.c
++++ b/drivers/md/dm-io.c
+@@ -124,7 +124,7 @@ static void complete_io(struct io *io)
+ 	fn(error_bits, context);
+ }
+ 
+-static void dec_count(struct io *io, unsigned int region, int error)
++static void dec_count(struct io *io, unsigned int region, blk_status_t error)
+ {
+ 	if (error)
+ 		set_bit(region, &io->error_bits);
+@@ -137,9 +137,9 @@ static void endio(struct bio *bio)
+ {
+ 	struct io *io;
+ 	unsigned region;
+-	int error;
++	blk_status_t error;
+ 
+-	if (bio->bi_error && bio_data_dir(bio) == READ)
++	if (bio->bi_status && bio_data_dir(bio) == READ)
+ 		zero_fill_bio(bio);
+ 
+ 	/*
+@@ -147,7 +147,7 @@ static void endio(struct bio *bio)
+ 	 */
+ 	retrieve_io_and_region_from_bio(bio, &io, &region);
+ 
+-	error = bio->bi_error;
++	error = bio->bi_status;
+ 	bio_put(bio);
+ 
+ 	dec_count(io, region, error);
+@@ -319,7 +319,7 @@ static void do_region(int op, int op_flags, unsigned region,
+ 	if ((op == REQ_OP_DISCARD || op == REQ_OP_WRITE_ZEROES ||
+ 	     op == REQ_OP_WRITE_SAME)  &&
+ 	    special_cmd_max_sectors == 0) {
+-		dec_count(io, region, -EOPNOTSUPP);
++		dec_count(io, region, BLK_STS_NOTSUPP);
+ 		return;
+ 	}
+ 
+diff --git a/drivers/md/dm-log-writes.c b/drivers/md/dm-log-writes.c
+index cc57c7fa1268..a1da0eb58a93 100644
+--- a/drivers/md/dm-log-writes.c
++++ b/drivers/md/dm-log-writes.c
+@@ -150,10 +150,10 @@ static void log_end_io(struct bio *bio)
+ {
+ 	struct log_writes_c *lc = bio->bi_private;
+ 
+-	if (bio->bi_error) {
++	if (bio->bi_status) {
+ 		unsigned long flags;
+ 
+-		DMERR("Error writing log block, error=%d", bio->bi_error);
++		DMERR("Error writing log block, error=%d", bio->bi_status);
+ 		spin_lock_irqsave(&lc->blocks_lock, flags);
+ 		lc->logging_enabled = false;
+ 		spin_unlock_irqrestore(&lc->blocks_lock, flags);
+@@ -664,7 +664,8 @@ static int log_writes_map(struct dm_target *ti, struct bio *bio)
+ 	return DM_MAPIO_REMAPPED;
+ }
+ 
+-static int normal_end_io(struct dm_target *ti, struct bio *bio, int *error)
++static int normal_end_io(struct dm_target *ti, struct bio *bio,
++		blk_status_t *error)
+ {
+ 	struct log_writes_c *lc = ti->private;
+ 	struct per_bio_data *pb = dm_per_bio_data(bio, sizeof(struct per_bio_data));
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index 39262e344ae1..a7d2e0840cc5 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -565,7 +565,7 @@ static int __multipath_map_bio(struct multipath *m, struct bio *bio, struct dm_m
+ 	mpio->pgpath = pgpath;
+ 	mpio->nr_bytes = nr_bytes;
+ 
+-	bio->bi_error = 0;
++	bio->bi_status = 0;
+ 	bio->bi_bdev = pgpath->path.dev->bdev;
+ 	bio->bi_opf |= REQ_FAILFAST_TRANSPORT;
+ 
+@@ -623,10 +623,10 @@ static void process_queued_bios(struct work_struct *work)
+ 		r = __multipath_map_bio(m, bio, get_mpio_from_bio(bio));
+ 		switch (r) {
+ 		case DM_MAPIO_KILL:
+-			r = -EIO;
+-			/*FALLTHRU*/
++			bio->bi_status = BLK_STS_IOERR;
++			bio_endio(bio);
+ 		case DM_MAPIO_REQUEUE:
+-			bio->bi_error = r;
++			bio->bi_status = BLK_STS_DM_REQUEUE;
+ 			bio_endio(bio);
+ 			break;
+ 		case DM_MAPIO_REMAPPED:
+@@ -1510,7 +1510,8 @@ static int multipath_end_io(struct dm_target *ti, struct request *clone,
+ 	return r;
+ }
+ 
+-static int multipath_end_io_bio(struct dm_target *ti, struct bio *clone, int *error)
++static int multipath_end_io_bio(struct dm_target *ti, struct bio *clone,
++		blk_status_t *error)
+ {
+ 	struct multipath *m = ti->private;
+ 	struct dm_mpath_io *mpio = get_mpio_from_bio(clone);
+@@ -1518,7 +1519,7 @@ static int multipath_end_io_bio(struct dm_target *ti, struct bio *clone, int *er
  	unsigned long flags;
  	int r = DM_ENDIO_DONE;
  
--	if (!*error || noretry_error(*error))
-+	if (!*error || noretry_error(errno_to_blk_status(*error)))
+-	if (!*error || noretry_error(errno_to_blk_status(*error)))
++	if (!*error || noretry_error(*error))
  		goto done;
  
  	if (pgpath)
+@@ -1527,7 +1528,7 @@ static int multipath_end_io_bio(struct dm_target *ti, struct bio *clone, int *er
+ 	if (atomic_read(&m->nr_valid_paths) == 0 &&
+ 	    !test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags)) {
+ 		dm_report_EIO(m);
+-		*error = -EIO;
++		*error = BLK_STS_IOERR;
+ 		goto done;
+ 	}
+ 
+diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c
+index 77bcf50ce75f..0822e4a6f67d 100644
+--- a/drivers/md/dm-raid1.c
++++ b/drivers/md/dm-raid1.c
+@@ -490,9 +490,9 @@ static void hold_bio(struct mirror_set *ms, struct bio *bio)
+ 		 * If device is suspended, complete the bio.
+ 		 */
+ 		if (dm_noflush_suspending(ms->ti))
+-			bio->bi_error = DM_ENDIO_REQUEUE;
++			bio->bi_status = BLK_STS_DM_REQUEUE;
+ 		else
+-			bio->bi_error = -EIO;
++			bio->bi_status = BLK_STS_IOERR;
+ 
+ 		bio_endio(bio);
+ 		return;
+@@ -626,7 +626,7 @@ static void write_callback(unsigned long error, void *context)
+ 	 * degrade the array.
+ 	 */
+ 	if (bio_op(bio) == REQ_OP_DISCARD) {
+-		bio->bi_error = -EOPNOTSUPP;
++		bio->bi_status = BLK_STS_NOTSUPP;
+ 		bio_endio(bio);
+ 		return;
+ 	}
+@@ -1236,7 +1236,8 @@ static int mirror_map(struct dm_target *ti, struct bio *bio)
+ 	return DM_MAPIO_REMAPPED;
+ }
+ 
+-static int mirror_end_io(struct dm_target *ti, struct bio *bio, int *error)
++static int mirror_end_io(struct dm_target *ti, struct bio *bio,
++		blk_status_t *error)
+ {
+ 	int rw = bio_data_dir(bio);
+ 	struct mirror_set *ms = (struct mirror_set *) ti->private;
+@@ -1255,7 +1256,7 @@ static int mirror_end_io(struct dm_target *ti, struct bio *bio, int *error)
+ 		return DM_ENDIO_DONE;
+ 	}
+ 
+-	if (*error == -EOPNOTSUPP)
++	if (*error == BLK_STS_NOTSUPP)
+ 		return DM_ENDIO_DONE;
+ 
+ 	if (bio->bi_opf & REQ_RAHEAD)
+@@ -1277,7 +1278,7 @@ static int mirror_end_io(struct dm_target *ti, struct bio *bio, int *error)
+ 			bd = &bio_record->details;
+ 
+ 			dm_bio_restore(bd, bio);
+-			bio->bi_error = 0;
++			bio->bi_status = 0;
+ 
+ 			queue_bio(ms, bio, rw);
+ 			return DM_ENDIO_INCOMPLETE;
 diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
-index b639fa7246ee..bee334389173 100644
+index 63402f8a38de..fafd5326e572 100644
 --- a/drivers/md/dm-rq.c
 +++ b/drivers/md/dm-rq.c
 @@ -119,7 +119,7 @@ static void end_clone_bio(struct bio *clone)
  	struct dm_rq_target_io *tio = info->tio;
  	struct bio *bio = info->orig;
  	unsigned int nr_bytes = info->orig->bi_iter.bi_size;
--	int error = clone->bi_error;
-+	blk_status_t error = errno_to_blk_status(clone->bi_error);
+-	blk_status_t error = errno_to_blk_status(clone->bi_error);
++	blk_status_t error = clone->bi_status;
  
  	bio_put(clone);
  
-@@ -158,7 +158,7 @@ static void end_clone_bio(struct bio *clone)
- 	 * Do not use blk_end_request() here, because it may complete
- 	 * the original request before the clone, and break the ordering.
- 	 */
--	blk_update_request(tio->orig, 0, nr_bytes);
-+	blk_update_request(tio->orig, BLK_STS_OK, nr_bytes);
+diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
+index 79a845798e2f..1ba41048b438 100644
+--- a/drivers/md/dm-snap.c
++++ b/drivers/md/dm-snap.c
+@@ -1590,7 +1590,7 @@ static void full_bio_end_io(struct bio *bio)
+ {
+ 	void *callback_data = bio->bi_private;
+ 
+-	dm_kcopyd_do_callback(callback_data, 0, bio->bi_error ? 1 : 0);
++	dm_kcopyd_do_callback(callback_data, 0, bio->bi_status ? 1 : 0);
  }
  
- static struct dm_rq_target_io *tio_from_request(struct request *rq)
-@@ -216,7 +216,7 @@ static void rq_completed(struct mapped_device *md, int rw, bool run_queue)
-  * Must be called without clone's queue lock held,
-  * see end_clone_request() for more details.
-  */
--static void dm_end_request(struct request *clone, int error)
-+static void dm_end_request(struct request *clone, blk_status_t error)
- {
- 	int rw = rq_data_dir(clone);
- 	struct dm_rq_target_io *tio = clone->end_io_data;
-@@ -285,7 +285,7 @@ static void dm_requeue_original_request(struct dm_rq_target_io *tio, bool delay_
- 	rq_completed(md, rw, false);
+ static void start_full_bio(struct dm_snap_pending_exception *pe,
+@@ -1851,7 +1851,8 @@ static int snapshot_merge_map(struct dm_target *ti, struct bio *bio)
+ 	return r;
  }
  
--static void dm_done(struct request *clone, int error, bool mapped)
-+static void dm_done(struct request *clone, blk_status_t error, bool mapped)
+-static int snapshot_end_io(struct dm_target *ti, struct bio *bio, int *error)
++static int snapshot_end_io(struct dm_target *ti, struct bio *bio,
++		blk_status_t *error)
  {
- 	int r = DM_ENDIO_DONE;
- 	struct dm_rq_target_io *tio = clone->end_io_data;
-@@ -298,7 +298,7 @@ static void dm_done(struct request *clone, int error, bool mapped)
- 			r = rq_end_io(tio->ti, clone, error, &tio->info);
+ 	struct dm_snapshot *s = ti->private;
+ 
+diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
+index 49888bc2c909..11621a0af887 100644
+--- a/drivers/md/dm-stripe.c
++++ b/drivers/md/dm-stripe.c
+@@ -375,7 +375,8 @@ static void stripe_status(struct dm_target *ti, status_type_t type,
  	}
+ }
+ 
+-static int stripe_end_io(struct dm_target *ti, struct bio *bio, int *error)
++static int stripe_end_io(struct dm_target *ti, struct bio *bio,
++		blk_status_t *error)
+ {
+ 	unsigned i;
+ 	char major_minor[16];
+@@ -387,7 +388,7 @@ static int stripe_end_io(struct dm_target *ti, struct bio *bio, int *error)
+ 	if (bio->bi_opf & REQ_RAHEAD)
+ 		return DM_ENDIO_DONE;
+ 
+-	if (*error == -EOPNOTSUPP)
++	if (*error == BLK_STS_NOTSUPP)
+ 		return DM_ENDIO_DONE;
+ 
+ 	memset(major_minor, 0, sizeof(major_minor));
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index 22b1a64c44b7..3490b300cbff 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -383,8 +383,8 @@ static void end_discard(struct discard_op *op, int r)
+ 	 * Even if r is set, there could be sub discards in flight that we
+ 	 * need to wait for.
+ 	 */
+-	if (r && !op->parent_bio->bi_error)
+-		op->parent_bio->bi_error = r;
++	if (r && !op->parent_bio->bi_status)
++		op->parent_bio->bi_status = errno_to_blk_status(r);
+ 	bio_endio(op->parent_bio);
+ }
+ 
+@@ -450,22 +450,20 @@ static void cell_release_no_holder(struct pool *pool,
+ }
+ 
+ static void cell_error_with_code(struct pool *pool,
+-				 struct dm_bio_prison_cell *cell, int error_code)
++		struct dm_bio_prison_cell *cell, blk_status_t error_code)
+ {
+ 	dm_cell_error(pool->prison, cell, error_code);
+ 	dm_bio_prison_free_cell(pool->prison, cell);
+ }
+ 
+-static int get_pool_io_error_code(struct pool *pool)
++static blk_status_t get_pool_io_error_code(struct pool *pool)
+ {
+-	return pool->out_of_data_space ? -ENOSPC : -EIO;
++	return pool->out_of_data_space ? BLK_STS_NOSPC : BLK_STS_IOERR;
+ }
+ 
+ static void cell_error(struct pool *pool, struct dm_bio_prison_cell *cell)
+ {
+-	int error = get_pool_io_error_code(pool);
+-
+-	cell_error_with_code(pool, cell, error);
++	cell_error_with_code(pool, cell, get_pool_io_error_code(pool));
+ }
+ 
+ static void cell_success(struct pool *pool, struct dm_bio_prison_cell *cell)
+@@ -475,7 +473,7 @@ static void cell_success(struct pool *pool, struct dm_bio_prison_cell *cell)
+ 
+ static void cell_requeue(struct pool *pool, struct dm_bio_prison_cell *cell)
+ {
+-	cell_error_with_code(pool, cell, DM_ENDIO_REQUEUE);
++	cell_error_with_code(pool, cell, BLK_STS_DM_REQUEUE);
+ }
+ 
+ /*----------------------------------------------------------------*/
+@@ -555,17 +553,18 @@ static void __merge_bio_list(struct bio_list *bios, struct bio_list *master)
+ 	bio_list_init(master);
+ }
+ 
+-static void error_bio_list(struct bio_list *bios, int error)
++static void error_bio_list(struct bio_list *bios, blk_status_t error)
+ {
+ 	struct bio *bio;
+ 
+ 	while ((bio = bio_list_pop(bios))) {
+-		bio->bi_error = error;
++		bio->bi_status = error;
+ 		bio_endio(bio);
+ 	}
+ }
+ 
+-static void error_thin_bio_list(struct thin_c *tc, struct bio_list *master, int error)
++static void error_thin_bio_list(struct thin_c *tc, struct bio_list *master,
++		blk_status_t error)
+ {
+ 	struct bio_list bios;
+ 	unsigned long flags;
+@@ -608,11 +607,11 @@ static void requeue_io(struct thin_c *tc)
+ 	__merge_bio_list(&bios, &tc->retry_on_resume_list);
+ 	spin_unlock_irqrestore(&tc->lock, flags);
+ 
+-	error_bio_list(&bios, DM_ENDIO_REQUEUE);
++	error_bio_list(&bios, BLK_STS_DM_REQUEUE);
+ 	requeue_deferred_cells(tc);
+ }
+ 
+-static void error_retry_list_with_code(struct pool *pool, int error)
++static void error_retry_list_with_code(struct pool *pool, blk_status_t error)
+ {
+ 	struct thin_c *tc;
+ 
+@@ -624,9 +623,7 @@ static void error_retry_list_with_code(struct pool *pool, int error)
+ 
+ static void error_retry_list(struct pool *pool)
+ {
+-	int error = get_pool_io_error_code(pool);
+-
+-	error_retry_list_with_code(pool, error);
++	error_retry_list_with_code(pool, get_pool_io_error_code(pool));
+ }
+ 
+ /*
+@@ -774,7 +771,7 @@ struct dm_thin_new_mapping {
+ 	 */
+ 	atomic_t prepare_actions;
+ 
+-	int err;
++	blk_status_t status;
+ 	struct thin_c *tc;
+ 	dm_block_t virt_begin, virt_end;
+ 	dm_block_t data_block;
+@@ -814,7 +811,7 @@ static void copy_complete(int read_err, unsigned long write_err, void *context)
+ {
+ 	struct dm_thin_new_mapping *m = context;
+ 
+-	m->err = read_err || write_err ? -EIO : 0;
++	m->status = read_err || write_err ? BLK_STS_IOERR : 0;
+ 	complete_mapping_preparation(m);
+ }
+ 
+@@ -825,7 +822,7 @@ static void overwrite_endio(struct bio *bio)
+ 
+ 	bio->bi_end_io = m->saved_bi_end_io;
+ 
+-	m->err = bio->bi_error;
++	m->status = bio->bi_status;
+ 	complete_mapping_preparation(m);
+ }
+ 
+@@ -925,7 +922,7 @@ static void process_prepared_mapping(struct dm_thin_new_mapping *m)
+ 	struct bio *bio = m->bio;
+ 	int r;
+ 
+-	if (m->err) {
++	if (m->status) {
+ 		cell_error(pool, m->cell);
+ 		goto out;
+ 	}
+@@ -1495,7 +1492,7 @@ static void retry_on_resume(struct bio *bio)
+ 	spin_unlock_irqrestore(&tc->lock, flags);
+ }
+ 
+-static int should_error_unserviceable_bio(struct pool *pool)
++static blk_status_t should_error_unserviceable_bio(struct pool *pool)
+ {
+ 	enum pool_mode m = get_pool_mode(pool);
+ 
+@@ -1503,27 +1500,27 @@ static int should_error_unserviceable_bio(struct pool *pool)
+ 	case PM_WRITE:
+ 		/* Shouldn't get here */
+ 		DMERR_LIMIT("bio unserviceable, yet pool is in PM_WRITE mode");
+-		return -EIO;
++		return BLK_STS_IOERR;
+ 
+ 	case PM_OUT_OF_DATA_SPACE:
+-		return pool->pf.error_if_no_space ? -ENOSPC : 0;
++		return pool->pf.error_if_no_space ? BLK_STS_NOSPC : 0;
+ 
+ 	case PM_READ_ONLY:
+ 	case PM_FAIL:
+-		return -EIO;
++		return BLK_STS_IOERR;
+ 	default:
+ 		/* Shouldn't get here */
+ 		DMERR_LIMIT("bio unserviceable, yet pool has an unknown mode");
+-		return -EIO;
++		return BLK_STS_IOERR;
+ 	}
+ }
+ 
+ static void handle_unserviceable_bio(struct pool *pool, struct bio *bio)
+ {
+-	int error = should_error_unserviceable_bio(pool);
++	blk_status_t error = should_error_unserviceable_bio(pool);
+ 
+ 	if (error) {
+-		bio->bi_error = error;
++		bio->bi_status = error;
+ 		bio_endio(bio);
+ 	} else
+ 		retry_on_resume(bio);
+@@ -1533,7 +1530,7 @@ static void retry_bios_on_resume(struct pool *pool, struct dm_bio_prison_cell *c
+ {
+ 	struct bio *bio;
+ 	struct bio_list bios;
+-	int error;
++	blk_status_t error;
+ 
+ 	error = should_error_unserviceable_bio(pool);
+ 	if (error) {
+@@ -2071,7 +2068,8 @@ static void process_thin_deferred_bios(struct thin_c *tc)
+ 	unsigned count = 0;
+ 
+ 	if (tc->requeue_mode) {
+-		error_thin_bio_list(tc, &tc->deferred_bio_list, DM_ENDIO_REQUEUE);
++		error_thin_bio_list(tc, &tc->deferred_bio_list,
++				BLK_STS_DM_REQUEUE);
+ 		return;
+ 	}
+ 
+@@ -2322,7 +2320,7 @@ static void do_no_space_timeout(struct work_struct *ws)
+ 	if (get_pool_mode(pool) == PM_OUT_OF_DATA_SPACE && !pool->pf.error_if_no_space) {
+ 		pool->pf.error_if_no_space = true;
+ 		notify_of_pool_mode_change_to_oods(pool);
+-		error_retry_list_with_code(pool, -ENOSPC);
++		error_retry_list_with_code(pool, BLK_STS_NOSPC);
+ 	}
+ }
+ 
+@@ -2624,7 +2622,7 @@ static int thin_bio_map(struct dm_target *ti, struct bio *bio)
+ 	thin_hook_bio(tc, bio);
+ 
+ 	if (tc->requeue_mode) {
+-		bio->bi_error = DM_ENDIO_REQUEUE;
++		bio->bi_status = BLK_STS_DM_REQUEUE;
+ 		bio_endio(bio);
+ 		return DM_MAPIO_SUBMITTED;
+ 	}
+@@ -4177,7 +4175,8 @@ static int thin_map(struct dm_target *ti, struct bio *bio)
+ 	return thin_bio_map(ti, bio);
+ }
+ 
+-static int thin_endio(struct dm_target *ti, struct bio *bio, int *err)
++static int thin_endio(struct dm_target *ti, struct bio *bio,
++		blk_status_t *err)
+ {
+ 	unsigned long flags;
+ 	struct dm_thin_endio_hook *h = dm_per_bio_data(bio, sizeof(struct dm_thin_endio_hook));
+diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
+index 9ed55468b98b..2dca66eb67e1 100644
+--- a/drivers/md/dm-verity-target.c
++++ b/drivers/md/dm-verity-target.c
+@@ -538,13 +538,13 @@ static int verity_verify_io(struct dm_verity_io *io)
+ /*
+  * End one "io" structure with a given error.
+  */
+-static void verity_finish_io(struct dm_verity_io *io, int error)
++static void verity_finish_io(struct dm_verity_io *io, blk_status_t status)
+ {
+ 	struct dm_verity *v = io->v;
+ 	struct bio *bio = dm_bio_from_per_bio_data(io, v->ti->per_io_data_size);
+ 
+ 	bio->bi_end_io = io->orig_bi_end_io;
+-	bio->bi_error = error;
++	bio->bi_status = status;
+ 
+ 	verity_fec_finish_io(io);
+ 
+@@ -555,15 +555,15 @@ static void verity_work(struct work_struct *w)
+ {
+ 	struct dm_verity_io *io = container_of(w, struct dm_verity_io, work);
+ 
+-	verity_finish_io(io, verity_verify_io(io));
++	verity_finish_io(io, errno_to_blk_status(verity_verify_io(io)));
+ }
+ 
+ static void verity_end_io(struct bio *bio)
+ {
+ 	struct dm_verity_io *io = bio->bi_private;
+ 
+-	if (bio->bi_error && !verity_fec_is_enabled(io->v)) {
+-		verity_finish_io(io, bio->bi_error);
++	if (bio->bi_status && !verity_fec_is_enabled(io->v)) {
++		verity_finish_io(io, bio->bi_status);
+ 		return;
+ 	}
+ 
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 7a7047211c64..f38f9dd5cbdd 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -63,7 +63,7 @@ static struct workqueue_struct *deferred_remove_workqueue;
+  */
+ struct dm_io {
+ 	struct mapped_device *md;
+-	int error;
++	blk_status_t status;
+ 	atomic_t io_count;
+ 	struct bio *bio;
+ 	unsigned long start_time;
+@@ -768,23 +768,24 @@ static int __noflush_suspending(struct mapped_device *md)
+  * Decrements the number of outstanding ios that a bio has been
+  * cloned into, completing the original io if necc.
+  */
+-static void dec_pending(struct dm_io *io, int error)
++static void dec_pending(struct dm_io *io, blk_status_t error)
+ {
+ 	unsigned long flags;
+-	int io_error;
++	blk_status_t io_error;
+ 	struct bio *bio;
+ 	struct mapped_device *md = io->md;
+ 
+ 	/* Push-back supersedes any I/O errors */
+ 	if (unlikely(error)) {
+ 		spin_lock_irqsave(&io->endio_lock, flags);
+-		if (!(io->error > 0 && __noflush_suspending(md)))
+-			io->error = error;
++		if (!(io->status == BLK_STS_DM_REQUEUE &&
++				__noflush_suspending(md)))
++			io->status = error;
+ 		spin_unlock_irqrestore(&io->endio_lock, flags);
+ 	}
+ 
+ 	if (atomic_dec_and_test(&io->io_count)) {
+-		if (io->error == DM_ENDIO_REQUEUE) {
++		if (io->status == BLK_STS_DM_REQUEUE) {
+ 			/*
+ 			 * Target requested pushing back the I/O.
+ 			 */
+@@ -793,16 +794,16 @@ static void dec_pending(struct dm_io *io, int error)
+ 				bio_list_add_head(&md->deferred, io->bio);
+ 			else
+ 				/* noflush suspend was interrupted. */
+-				io->error = -EIO;
++				io->status = BLK_STS_IOERR;
+ 			spin_unlock_irqrestore(&md->deferred_lock, flags);
+ 		}
+ 
+-		io_error = io->error;
++		io_error = io->status;
+ 		bio = io->bio;
+ 		end_io_acct(io);
+ 		free_io(md, io);
+ 
+-		if (io_error == DM_ENDIO_REQUEUE)
++		if (io_error == BLK_STS_DM_REQUEUE)
+ 			return;
+ 
+ 		if ((bio->bi_opf & REQ_PREFLUSH) && bio->bi_iter.bi_size) {
+@@ -814,7 +815,7 @@ static void dec_pending(struct dm_io *io, int error)
+ 			queue_io(md, bio);
+ 		} else {
+ 			/* done with normal IO or empty flush */
+-			bio->bi_error = io_error;
++			bio->bi_status = io_error;
+ 			bio_endio(bio);
+ 		}
+ 	}
+@@ -838,14 +839,13 @@ void disable_write_zeroes(struct mapped_device *md)
+ 
+ static void clone_endio(struct bio *bio)
+ {
+-	int error = bio->bi_error;
+-	int r = error;
++	blk_status_t error = bio->bi_status;
+ 	struct dm_target_io *tio = container_of(bio, struct dm_target_io, clone);
+ 	struct dm_io *io = tio->io;
+ 	struct mapped_device *md = tio->io->md;
+ 	dm_endio_fn endio = tio->ti->type->end_io;
  
 -	if (unlikely(error == -EREMOTEIO)) {
 +	if (unlikely(error == BLK_STS_TARGET)) {
- 		if (req_op(clone) == REQ_OP_WRITE_SAME &&
- 		    !clone->q->limits.max_write_same_sectors)
- 			disable_write_same(tio->md);
-@@ -358,7 +358,7 @@ static void dm_softirq_done(struct request *rq)
-  * Complete the clone and the original request with the error status
-  * through softirq context.
-  */
--static void dm_complete_request(struct request *rq, int error)
-+static void dm_complete_request(struct request *rq, blk_status_t error)
- {
- 	struct dm_rq_target_io *tio = tio_from_request(rq);
+ 		if (bio_op(bio) == REQ_OP_WRITE_SAME &&
+ 		    !bdev_get_queue(bio->bi_bdev)->limits.max_write_same_sectors)
+ 			disable_write_same(md);
+@@ -855,10 +855,10 @@ static void clone_endio(struct bio *bio)
+ 	}
  
-@@ -375,7 +375,7 @@ static void dm_complete_request(struct request *rq, int error)
-  * Target's rq_end_io() function isn't called.
-  * This may be used when the target's map_rq() or clone_and_map_rq() functions fail.
-  */
--static void dm_kill_unmapped_request(struct request *rq, int error)
-+static void dm_kill_unmapped_request(struct request *rq, blk_status_t error)
- {
- 	rq->rq_flags |= RQF_FAILED;
- 	dm_complete_request(rq, error);
-@@ -384,7 +384,7 @@ static void dm_kill_unmapped_request(struct request *rq, int error)
- /*
-  * Called with the clone's queue lock held (in the case of .request_fn)
-  */
--static void end_clone_request(struct request *clone, int error)
-+static void end_clone_request(struct request *clone, blk_status_t error)
- {
- 	struct dm_rq_target_io *tio = clone->end_io_data;
- 
-@@ -401,7 +401,7 @@ static void end_clone_request(struct request *clone, int error)
- 
- static void dm_dispatch_clone_request(struct request *clone, struct request *rq)
- {
--	int r;
-+	blk_status_t r;
- 
- 	if (blk_queue_io_stat(clone->q))
- 		clone->rq_flags |= RQF_IO_STAT;
-@@ -506,7 +506,7 @@ static int map_request(struct dm_rq_target_io *tio)
+ 	if (endio) {
+-		r = endio(tio->ti, bio, &error);
++		int r = endio(tio->ti, bio, &error);
+ 		switch (r) {
+ 		case DM_ENDIO_REQUEUE:
+-			error = DM_ENDIO_REQUEUE;
++			error = BLK_STS_DM_REQUEUE;
+ 			/*FALLTHRU*/
+ 		case DM_ENDIO_DONE:
+ 			break;
+@@ -1094,11 +1094,11 @@ static void __map_bio(struct dm_target_io *tio)
+ 		generic_make_request(clone);
  		break;
  	case DM_MAPIO_KILL:
- 		/* The target wants to complete the I/O */
--		dm_kill_unmapped_request(rq, -EIO);
-+		dm_kill_unmapped_request(rq, BLK_STS_IOERR);
+-		r = -EIO;
+-		/*FALLTHRU*/
++		dec_pending(tio->io, BLK_STS_IOERR);
++		free_tio(tio);
++		break;
+ 	case DM_MAPIO_REQUEUE:
+-		/* error the io and bail out, or requeue it if needed */
+-		dec_pending(tio->io, r);
++		dec_pending(tio->io, BLK_STS_DM_REQUEUE);
+ 		free_tio(tio);
  		break;
  	default:
- 		DMWARN("unimplemented target map return value: %d", r);
-diff --git a/drivers/md/dm-rq.h b/drivers/md/dm-rq.h
-index f0020d21b95f..9813922e4fe5 100644
---- a/drivers/md/dm-rq.h
-+++ b/drivers/md/dm-rq.h
-@@ -24,7 +24,7 @@ struct dm_rq_target_io {
- 	struct dm_target *ti;
- 	struct request *orig, *clone;
- 	struct kthread_work work;
--	int error;
-+	blk_status_t error;
- 	union map_info info;
- 	struct dm_stats_aux stats_aux;
- 	unsigned long duration_jiffies;
-diff --git a/drivers/memstick/core/ms_block.c b/drivers/memstick/core/ms_block.c
-index 99e651c27fb7..22de7f5ed032 100644
---- a/drivers/memstick/core/ms_block.c
-+++ b/drivers/memstick/core/ms_block.c
-@@ -1921,12 +1921,13 @@ static void msb_io_work(struct work_struct *work)
- 		spin_lock_irqsave(&msb->q_lock, flags);
- 
- 		if (len)
--			if (!__blk_end_request(msb->req, 0, len))
-+			if (!__blk_end_request(msb->req, BLK_STS_OK, len))
- 				msb->req = NULL;
- 
- 		if (error && msb->req) {
-+			blk_status_t ret = errno_to_blk_status(error);
- 			dbg_verbose("IO: ending one sector of the request with error");
--			if (!__blk_end_request(msb->req, error, msb->page_size))
-+			if (!__blk_end_request(msb->req, ret, msb->page_size))
- 				msb->req = NULL;
- 		}
- 
-@@ -2014,7 +2015,7 @@ static void msb_submit_req(struct request_queue *q)
- 		WARN_ON(!msb->io_queue_stopped);
- 
- 		while ((req = blk_fetch_request(q)) != NULL)
--			__blk_end_request_all(req, -ENODEV);
-+			__blk_end_request_all(req, BLK_STS_IOERR);
- 		return;
+@@ -1366,7 +1366,7 @@ static void __split_and_process_bio(struct mapped_device *md,
+ 	ci.map = map;
+ 	ci.md = md;
+ 	ci.io = alloc_io(md);
+-	ci.io->error = 0;
++	ci.io->status = 0;
+ 	atomic_set(&ci.io->io_count, 1);
+ 	ci.io->bio = bio;
+ 	ci.io->md = md;
+diff --git a/drivers/md/md.c b/drivers/md/md.c
+index 10367ffe92e3..6452e83fd650 100644
+--- a/drivers/md/md.c
++++ b/drivers/md/md.c
+@@ -273,7 +273,7 @@ static blk_qc_t md_make_request(struct request_queue *q, struct bio *bio)
  	}
- 
-diff --git a/drivers/memstick/core/mspro_block.c b/drivers/memstick/core/mspro_block.c
-index c00d8a266878..8897962781bb 100644
---- a/drivers/memstick/core/mspro_block.c
-+++ b/drivers/memstick/core/mspro_block.c
-@@ -709,7 +709,8 @@ static int mspro_block_issue_req(struct memstick_dev *card, int chunk)
- 					       msb->req_sg);
- 
- 		if (!msb->seg_count) {
--			chunk = __blk_end_request_cur(msb->block_req, -ENOMEM);
-+			chunk = __blk_end_request_cur(msb->block_req,
-+					BLK_STS_RESOURCE);
- 			continue;
- 		}
- 
-@@ -776,7 +777,8 @@ static int mspro_block_complete_req(struct memstick_dev *card, int error)
- 		if (error && !t_len)
- 			t_len = blk_rq_cur_bytes(msb->block_req);
- 
--		chunk = __blk_end_request(msb->block_req, error, t_len);
-+		chunk = __blk_end_request(msb->block_req,
-+				errno_to_blk_status(error), t_len);
- 
- 		error = mspro_block_issue_req(card, chunk);
- 
-@@ -838,7 +840,7 @@ static void mspro_block_submit_req(struct request_queue *q)
- 
- 	if (msb->eject) {
- 		while ((req = blk_fetch_request(q)) != NULL)
--			__blk_end_request_all(req, -ENODEV);
-+			__blk_end_request_all(req, BLK_STS_IOERR);
- 
- 		return;
+ 	if (mddev->ro == 1 && unlikely(rw == WRITE)) {
+ 		if (bio_sectors(bio) != 0)
+-			bio->bi_error = -EROFS;
++			bio->bi_status = BLK_STS_IOERR;
+ 		bio_endio(bio);
+ 		return BLK_QC_T_NONE;
  	}
-diff --git a/drivers/mmc/core/block.c b/drivers/mmc/core/block.c
-index 8273b078686d..6ff94a948a4b 100644
---- a/drivers/mmc/core/block.c
-+++ b/drivers/mmc/core/block.c
-@@ -1184,9 +1184,10 @@ static void mmc_blk_issue_discard_rq(struct mmc_queue *mq, struct request *req)
- 	struct mmc_card *card = md->queue.card;
- 	unsigned int from, nr, arg;
- 	int err = 0, type = MMC_BLK_DISCARD;
-+	blk_status_t status = BLK_STS_OK;
+@@ -719,8 +719,8 @@ static void super_written(struct bio *bio)
+ 	struct md_rdev *rdev = bio->bi_private;
+ 	struct mddev *mddev = rdev->mddev;
  
- 	if (!mmc_can_erase(card)) {
--		err = -EOPNOTSUPP;
-+		status = BLK_STS_NOTSUPP;
- 		goto fail;
- 	}
+-	if (bio->bi_error) {
+-		pr_err("md: super_written gets error=%d\n", bio->bi_error);
++	if (bio->bi_status) {
++		pr_err("md: super_written gets error=%d\n", bio->bi_status);
+ 		md_error(mddev, rdev);
+ 		if (!test_bit(Faulty, &rdev->flags)
+ 		    && (bio->bi_opf & MD_FAILFAST)) {
+@@ -801,7 +801,7 @@ int sync_page_io(struct md_rdev *rdev, sector_t sector, int size,
  
-@@ -1212,10 +1213,12 @@ static void mmc_blk_issue_discard_rq(struct mmc_queue *mq, struct request *req)
- 		if (!err)
- 			err = mmc_erase(card, from, nr, arg);
- 	} while (err == -EIO && !mmc_blk_reset(md, card->host, type));
--	if (!err)
-+	if (err)
-+		status = BLK_STS_IOERR;
-+	else
- 		mmc_blk_reset_success(md, type);
- fail:
--	blk_end_request(req, err, blk_rq_bytes(req));
-+	blk_end_request(req, status, blk_rq_bytes(req));
+ 	submit_bio_wait(bio);
+ 
+-	ret = !bio->bi_error;
++	ret = !bio->bi_status;
+ 	bio_put(bio);
+ 	return ret;
  }
- 
- static void mmc_blk_issue_secdiscard_rq(struct mmc_queue *mq,
-@@ -1225,9 +1228,10 @@ static void mmc_blk_issue_secdiscard_rq(struct mmc_queue *mq,
- 	struct mmc_card *card = md->queue.card;
- 	unsigned int from, nr, arg;
- 	int err = 0, type = MMC_BLK_SECDISCARD;
-+	blk_status_t status = BLK_STS_OK;
- 
- 	if (!(mmc_can_secure_erase_trim(card))) {
--		err = -EOPNOTSUPP;
-+		status = BLK_STS_NOTSUPP;
- 		goto out;
- 	}
- 
-@@ -1254,8 +1258,10 @@ static void mmc_blk_issue_secdiscard_rq(struct mmc_queue *mq,
- 	err = mmc_erase(card, from, nr, arg);
- 	if (err == -EIO)
- 		goto out_retry;
--	if (err)
-+	if (err) {
-+		status = BLK_STS_IOERR;
- 		goto out;
-+	}
- 
- 	if (arg == MMC_SECURE_TRIM1_ARG) {
- 		if (card->quirks & MMC_QUIRK_INAND_CMD38) {
-@@ -1270,8 +1276,10 @@ static void mmc_blk_issue_secdiscard_rq(struct mmc_queue *mq,
- 		err = mmc_erase(card, from, nr, MMC_SECURE_TRIM2_ARG);
- 		if (err == -EIO)
- 			goto out_retry;
--		if (err)
-+		if (err) {
-+			status = BLK_STS_IOERR;
- 			goto out;
-+		}
- 	}
- 
- out_retry:
-@@ -1280,7 +1288,7 @@ static void mmc_blk_issue_secdiscard_rq(struct mmc_queue *mq,
- 	if (!err)
- 		mmc_blk_reset_success(md, type);
- out:
--	blk_end_request(req, err, blk_rq_bytes(req));
-+	blk_end_request(req, status, blk_rq_bytes(req));
- }
- 
- static void mmc_blk_issue_flush(struct mmc_queue *mq, struct request *req)
-@@ -1290,10 +1298,7 @@ static void mmc_blk_issue_flush(struct mmc_queue *mq, struct request *req)
- 	int ret = 0;
- 
- 	ret = mmc_flush_cache(card);
--	if (ret)
--		ret = -EIO;
--
--	blk_end_request_all(req, ret);
-+	blk_end_request_all(req, ret ? BLK_STS_IOERR : BLK_STS_OK);
- }
- 
- /*
-@@ -1641,7 +1646,7 @@ static void mmc_blk_rw_cmd_abort(struct mmc_queue *mq, struct mmc_card *card,
- {
- 	if (mmc_card_removed(card))
- 		req->rq_flags |= RQF_QUIET;
--	while (blk_end_request(req, -EIO, blk_rq_cur_bytes(req)));
-+	while (blk_end_request(req, BLK_STS_IOERR, blk_rq_cur_bytes(req)));
- 	mmc_queue_req_free(mq, mqrq);
- }
- 
-@@ -1661,7 +1666,7 @@ static void mmc_blk_rw_try_restart(struct mmc_queue *mq, struct request *req,
- 	 */
- 	if (mmc_card_removed(mq->card)) {
- 		req->rq_flags |= RQF_QUIET;
--		blk_end_request_all(req, -EIO);
-+		blk_end_request_all(req, BLK_STS_IOERR);
- 		mmc_queue_req_free(mq, mqrq);
- 		return;
- 	}
-@@ -1743,7 +1748,7 @@ static void mmc_blk_issue_rw_rq(struct mmc_queue *mq, struct request *new_req)
- 			 */
- 			mmc_blk_reset_success(md, type);
- 
--			req_pending = blk_end_request(old_req, 0,
-+			req_pending = blk_end_request(old_req, BLK_STS_OK,
- 						      brq->data.bytes_xfered);
- 			/*
- 			 * If the blk_end_request function returns non-zero even
-@@ -1811,7 +1816,7 @@ static void mmc_blk_issue_rw_rq(struct mmc_queue *mq, struct request *new_req)
- 			 * time, so we only reach here after trying to
- 			 * read a single sector.
- 			 */
--			req_pending = blk_end_request(old_req, -EIO,
-+			req_pending = blk_end_request(old_req, BLK_STS_IOERR,
- 						      brq->data.blksz);
- 			if (!req_pending) {
- 				mmc_queue_req_free(mq, mq_rq);
-@@ -1860,7 +1865,7 @@ void mmc_blk_issue_rq(struct mmc_queue *mq, struct request *req)
- 	ret = mmc_blk_part_switch(card, md);
- 	if (ret) {
- 		if (req) {
--			blk_end_request_all(req, -EIO);
-+			blk_end_request_all(req, BLK_STS_IOERR);
- 		}
- 		goto out;
- 	}
-diff --git a/drivers/mmc/core/queue.c b/drivers/mmc/core/queue.c
-index 5c37b6be3e7b..7f20298d892b 100644
---- a/drivers/mmc/core/queue.c
-+++ b/drivers/mmc/core/queue.c
-@@ -133,7 +133,7 @@ static void mmc_request_fn(struct request_queue *q)
- 	if (!mq) {
- 		while ((req = blk_fetch_request(q)) != NULL) {
- 			req->rq_flags |= RQF_QUIET;
--			__blk_end_request_all(req, -EIO);
-+			__blk_end_request_all(req, BLK_STS_IOERR);
- 		}
- 		return;
- 	}
-diff --git a/drivers/mtd/mtd_blkdevs.c b/drivers/mtd/mtd_blkdevs.c
-index 6b8d5cd7dbf6..91c17fba7659 100644
---- a/drivers/mtd/mtd_blkdevs.c
-+++ b/drivers/mtd/mtd_blkdevs.c
-@@ -73,7 +73,7 @@ static void blktrans_dev_put(struct mtd_blktrans_dev *dev)
- }
- 
- 
--static int do_blktrans_request(struct mtd_blktrans_ops *tr,
-+static blk_status_t do_blktrans_request(struct mtd_blktrans_ops *tr,
- 			       struct mtd_blktrans_dev *dev,
- 			       struct request *req)
- {
-@@ -84,33 +84,37 @@ static int do_blktrans_request(struct mtd_blktrans_ops *tr,
- 	nsect = blk_rq_cur_bytes(req) >> tr->blkshift;
- 	buf = bio_data(req->bio);
- 
--	if (req_op(req) == REQ_OP_FLUSH)
--		return tr->flush(dev);
-+	if (req_op(req) == REQ_OP_FLUSH) {
-+		if (tr->flush(dev))
-+			return BLK_STS_IOERR;
-+		return BLK_STS_OK;
-+	}
- 
- 	if (blk_rq_pos(req) + blk_rq_cur_sectors(req) >
- 	    get_capacity(req->rq_disk))
--		return -EIO;
-+		return BLK_STS_IOERR;
- 
- 	switch (req_op(req)) {
- 	case REQ_OP_DISCARD:
--		return tr->discard(dev, block, nsect);
-+		if (tr->discard(dev, block, nsect))
-+			return BLK_STS_IOERR;
-+		return BLK_STS_OK;
- 	case REQ_OP_READ:
- 		for (; nsect > 0; nsect--, block++, buf += tr->blksize)
- 			if (tr->readsect(dev, block, buf))
--				return -EIO;
-+				return BLK_STS_IOERR;
- 		rq_flush_dcache_pages(req);
--		return 0;
-+		return BLK_STS_OK;
- 	case REQ_OP_WRITE:
- 		if (!tr->writesect)
--			return -EIO;
-+			return BLK_STS_IOERR;
- 
- 		rq_flush_dcache_pages(req);
- 		for (; nsect > 0; nsect--, block++, buf += tr->blksize)
- 			if (tr->writesect(dev, block, buf))
--				return -EIO;
--		return 0;
-+				return BLK_STS_IOERR;
- 	default:
--		return -EIO;
-+		return BLK_STS_IOERR;
- 	}
- }
- 
-@@ -132,7 +136,7 @@ static void mtd_blktrans_work(struct work_struct *work)
- 	spin_lock_irq(rq->queue_lock);
- 
- 	while (1) {
--		int res;
-+		blk_status_t res;
- 
- 		dev->bg_stop = false;
- 		if (!req && !(req = blk_fetch_request(rq))) {
-@@ -178,7 +182,7 @@ static void mtd_blktrans_request(struct request_queue *rq)
- 
- 	if (!dev)
- 		while ((req = blk_fetch_request(rq)) != NULL)
--			__blk_end_request_all(req, -ENODEV);
-+			__blk_end_request_all(req, BLK_STS_IOERR);
- 	else
- 		queue_work(dev->wq, &dev->work);
- }
-diff --git a/drivers/mtd/ubi/block.c b/drivers/mtd/ubi/block.c
-index 5497e65439df..3ecdb39d1985 100644
---- a/drivers/mtd/ubi/block.c
-+++ b/drivers/mtd/ubi/block.c
-@@ -313,7 +313,7 @@ static void ubiblock_do_work(struct work_struct *work)
- 	ret = ubiblock_read(pdu);
- 	rq_flush_dcache_pages(req);
- 
--	blk_mq_end_request(req, ret);
-+	blk_mq_end_request(req, errno_to_blk_status(ret));
- }
- 
- static int ubiblock_queue_rq(struct blk_mq_hw_ctx *hctx,
-diff --git a/drivers/nvme/host/core.c b/drivers/nvme/host/core.c
-index a60926410438..07e95c7d837a 100644
---- a/drivers/nvme/host/core.c
-+++ b/drivers/nvme/host/core.c
-@@ -70,29 +70,21 @@ static DEFINE_SPINLOCK(dev_list_lock);
- 
- static struct class *nvme_class;
- 
--static int nvme_error_status(struct request *req)
-+static blk_status_t nvme_error_status(struct request *req)
- {
- 	switch (nvme_req(req)->status & 0x7ff) {
- 	case NVME_SC_SUCCESS:
--		return 0;
-+		return BLK_STS_OK;
- 	case NVME_SC_CAP_EXCEEDED:
--		return -ENOSPC;
--	default:
--		return -EIO;
--
--	/*
--	 * XXX: these errors are a nasty side-band protocol to
--	 * drivers/md/dm-mpath.c:noretry_error() that aren't documented
--	 * anywhere..
--	 */
--	case NVME_SC_CMD_SEQ_ERROR:
--		return -EILSEQ;
-+		return BLK_STS_NOSPC;
- 	case NVME_SC_ONCS_NOT_SUPPORTED:
--		return -EOPNOTSUPP;
-+		return BLK_STS_NOTSUPP;
- 	case NVME_SC_WRITE_FAULT:
- 	case NVME_SC_READ_ERROR:
- 	case NVME_SC_UNWRITTEN_BLOCK:
--		return -ENODATA;
-+		return BLK_STS_MEDIUM;
-+	default:
-+		return BLK_STS_IOERR;
- 	}
- }
- 
-@@ -555,15 +547,16 @@ int nvme_submit_user_cmd(struct request_queue *q, struct nvme_command *cmd,
- 			result, timeout);
- }
- 
--static void nvme_keep_alive_end_io(struct request *rq, int error)
-+static void nvme_keep_alive_end_io(struct request *rq, blk_status_t status)
- {
- 	struct nvme_ctrl *ctrl = rq->end_io_data;
- 
- 	blk_mq_free_request(rq);
- 
--	if (error) {
-+	if (status) {
- 		dev_err(ctrl->device,
--			"failed nvme_keep_alive_end_io error=%d\n", error);
-+			"failed nvme_keep_alive_end_io error=%d\n",
-+				status);
- 		return;
- 	}
- 
-diff --git a/drivers/nvme/host/lightnvm.c b/drivers/nvme/host/lightnvm.c
-index f3885b5e56bd..2d7a2889866f 100644
---- a/drivers/nvme/host/lightnvm.c
-+++ b/drivers/nvme/host/lightnvm.c
-@@ -480,7 +480,7 @@ static inline void nvme_nvm_rqtocmd(struct nvm_rq *rqd, struct nvme_ns *ns,
- 					rqd->bio->bi_iter.bi_sector));
- }
- 
--static void nvme_nvm_end_io(struct request *rq, int error)
-+static void nvme_nvm_end_io(struct request *rq, blk_status_t status)
- {
- 	struct nvm_rq *rqd = rq->end_io_data;
- 
-diff --git a/drivers/nvme/host/pci.c b/drivers/nvme/host/pci.c
-index d52701df7245..819898428763 100644
---- a/drivers/nvme/host/pci.c
-+++ b/drivers/nvme/host/pci.c
-@@ -706,7 +706,7 @@ static int nvme_queue_rq(struct blk_mq_hw_ctx *hctx,
- 	if (ns && ns->ms && !blk_integrity_rq(req)) {
- 		if (!(ns->pi_type && ns->ms == 8) &&
- 		    !blk_rq_is_passthrough(req)) {
--			blk_mq_end_request(req, -EFAULT);
-+			blk_mq_end_request(req, BLK_STS_NOTSUPP);
- 			return BLK_MQ_RQ_QUEUE_OK;
- 		}
- 	}
-@@ -939,7 +939,7 @@ static int adapter_delete_sq(struct nvme_dev *dev, u16 sqid)
- 	return adapter_delete_queue(dev, nvme_admin_delete_sq, sqid);
- }
- 
--static void abort_endio(struct request *req, int error)
-+static void abort_endio(struct request *req, blk_status_t error)
- {
- 	struct nvme_iod *iod = blk_mq_rq_to_pdu(req);
- 	struct nvme_queue *nvmeq = iod->nvmeq;
-@@ -1586,7 +1586,7 @@ static int nvme_setup_io_queues(struct nvme_dev *dev)
- 	return nvme_create_io_queues(dev);
- }
- 
--static void nvme_del_queue_end(struct request *req, int error)
-+static void nvme_del_queue_end(struct request *req, blk_status_t error)
- {
- 	struct nvme_queue *nvmeq = req->end_io_data;
- 
-@@ -1594,7 +1594,7 @@ static void nvme_del_queue_end(struct request *req, int error)
- 	complete(&nvmeq->dev->ioq_wait);
- }
- 
--static void nvme_del_cq_end(struct request *req, int error)
-+static void nvme_del_cq_end(struct request *req, blk_status_t error)
- {
- 	struct nvme_queue *nvmeq = req->end_io_data;
- 
-diff --git a/drivers/s390/block/dasd.c b/drivers/s390/block/dasd.c
-index 6fb3fd5efc11..b7cbd5d2cdea 100644
---- a/drivers/s390/block/dasd.c
-+++ b/drivers/s390/block/dasd.c
-@@ -2672,7 +2672,7 @@ static void __dasd_process_request_queue(struct dasd_block *block)
- 	 */
- 	if (basedev->state < DASD_STATE_READY) {
- 		while ((req = blk_fetch_request(block->request_queue)))
--			__blk_end_request_all(req, -EIO);
-+			__blk_end_request_all(req, BLK_STS_IOERR);
- 		return;
- 	}
- 
-@@ -2692,7 +2692,7 @@ static void __dasd_process_request_queue(struct dasd_block *block)
- 				      "Rejecting write request %p",
- 				      req);
- 			blk_start_request(req);
--			__blk_end_request_all(req, -EIO);
-+			__blk_end_request_all(req, BLK_STS_IOERR);
- 			continue;
- 		}
- 		if (test_bit(DASD_FLAG_ABORTALL, &basedev->flags) &&
-@@ -2702,7 +2702,7 @@ static void __dasd_process_request_queue(struct dasd_block *block)
- 				      "Rejecting failfast request %p",
- 				      req);
- 			blk_start_request(req);
--			__blk_end_request_all(req, -ETIMEDOUT);
-+			__blk_end_request_all(req, BLK_STS_TIMEOUT);
- 			continue;
- 		}
- 		cqr = basedev->discipline->build_cp(basedev, block, req);
-@@ -2734,7 +2734,7 @@ static void __dasd_process_request_queue(struct dasd_block *block)
- 				      "on request %p",
- 				      PTR_ERR(cqr), req);
- 			blk_start_request(req);
--			__blk_end_request_all(req, -EIO);
-+			__blk_end_request_all(req, BLK_STS_IOERR);
- 			continue;
- 		}
- 		/*
-@@ -2755,21 +2755,29 @@ static void __dasd_cleanup_cqr(struct dasd_ccw_req *cqr)
- {
- 	struct request *req;
- 	int status;
--	int error = 0;
-+	blk_status_t error = BLK_STS_OK;
- 
- 	req = (struct request *) cqr->callback_data;
- 	dasd_profile_end(cqr->block, cqr, req);
-+
- 	status = cqr->block->base->discipline->free_cp(cqr, req);
- 	if (status < 0)
--		error = status;
-+		error = errno_to_blk_status(status);
- 	else if (status == 0) {
--		if (cqr->intrc == -EPERM)
--			error = -EBADE;
--		else if (cqr->intrc == -ENOLINK ||
--			 cqr->intrc == -ETIMEDOUT)
--			error = cqr->intrc;
--		else
--			error = -EIO;
-+		switch (cqr->intrc) {
-+		case -EPERM:
-+			error = BLK_STS_NEXUS;
-+			break;
-+		case -ENOLINK:
-+			error = BLK_STS_TRANSPORT;
-+			break;
-+		case -ETIMEDOUT:
-+			error = BLK_STS_TIMEOUT;
-+			break;
-+		default:
-+			error = BLK_STS_IOERR;
-+			break;
-+		}
- 	}
- 	__blk_end_request_all(req, error);
- }
-@@ -3190,7 +3198,7 @@ static void dasd_flush_request_queue(struct dasd_block *block)
- 
- 	spin_lock_irq(&block->request_queue_lock);
- 	while ((req = blk_fetch_request(block->request_queue)))
--		__blk_end_request_all(req, -EIO);
-+		__blk_end_request_all(req, BLK_STS_IOERR);
- 	spin_unlock_irq(&block->request_queue_lock);
- }
- 
-diff --git a/drivers/s390/block/scm_blk.c b/drivers/s390/block/scm_blk.c
-index 152de6817875..3c2c84b72877 100644
---- a/drivers/s390/block/scm_blk.c
-+++ b/drivers/s390/block/scm_blk.c
-@@ -231,7 +231,7 @@ static inline void scm_request_init(struct scm_blk_dev *bdev,
- 	aob->request.data = (u64) aobrq;
- 	scmrq->bdev = bdev;
- 	scmrq->retries = 4;
--	scmrq->error = 0;
-+	scmrq->error = BLK_STS_OK;
- 	/* We don't use all msbs - place aidaws at the end of the aob page. */
- 	scmrq->next_aidaw = (void *) &aob->msb[nr_requests_per_io];
- 	scm_request_cluster_init(scmrq);
-@@ -364,7 +364,7 @@ static void __scmrq_log_error(struct scm_request *scmrq)
- {
- 	struct aob *aob = scmrq->aob;
- 
--	if (scmrq->error == -ETIMEDOUT)
-+	if (scmrq->error == BLK_STS_TIMEOUT)
- 		SCM_LOG(1, "Request timeout");
- 	else {
- 		SCM_LOG(1, "Request error");
-@@ -377,7 +377,7 @@ static void __scmrq_log_error(struct scm_request *scmrq)
- 		       scmrq->error);
- }
- 
--void scm_blk_irq(struct scm_device *scmdev, void *data, int error)
-+void scm_blk_irq(struct scm_device *scmdev, void *data, blk_status_t error)
- {
- 	struct scm_request *scmrq = data;
- 	struct scm_blk_dev *bdev = scmrq->bdev;
-@@ -397,7 +397,7 @@ static void scm_blk_handle_error(struct scm_request *scmrq)
- 	struct scm_blk_dev *bdev = scmrq->bdev;
- 	unsigned long flags;
- 
--	if (scmrq->error != -EIO)
-+	if (scmrq->error != BLK_STS_IOERR)
- 		goto restart;
- 
- 	/* For -EIO the response block is valid. */
-diff --git a/drivers/s390/block/scm_blk.h b/drivers/s390/block/scm_blk.h
-index 09218cdc5129..cd598d1a4eae 100644
---- a/drivers/s390/block/scm_blk.h
-+++ b/drivers/s390/block/scm_blk.h
-@@ -35,7 +35,7 @@ struct scm_request {
- 	struct aob *aob;
- 	struct list_head list;
- 	u8 retries;
--	int error;
-+	blk_status_t error;
- #ifdef CONFIG_SCM_BLOCK_CLUSTER_WRITE
- 	struct {
- 		enum {CLUSTER_NONE, CLUSTER_READ, CLUSTER_WRITE} state;
-@@ -50,7 +50,7 @@ struct scm_request {
- int scm_blk_dev_setup(struct scm_blk_dev *, struct scm_device *);
- void scm_blk_dev_cleanup(struct scm_blk_dev *);
- void scm_blk_set_available(struct scm_blk_dev *);
--void scm_blk_irq(struct scm_device *, void *, int);
-+void scm_blk_irq(struct scm_device *, void *, blk_status_t);
- 
- void scm_request_finish(struct scm_request *);
- void scm_request_requeue(struct scm_request *);
-diff --git a/drivers/s390/cio/eadm_sch.c b/drivers/s390/cio/eadm_sch.c
-index b3f44bc7f644..0f11f3bcac82 100644
---- a/drivers/s390/cio/eadm_sch.c
-+++ b/drivers/s390/cio/eadm_sch.c
-@@ -135,7 +135,7 @@ static void eadm_subchannel_irq(struct subchannel *sch)
- 	struct eadm_private *private = get_eadm_private(sch);
- 	struct eadm_scsw *scsw = &sch->schib.scsw.eadm;
- 	struct irb *irb = this_cpu_ptr(&cio_irb);
--	int error = 0;
-+	blk_status_t error = BLK_STS_OK;
- 
- 	EADM_LOG(6, "irq");
- 	EADM_LOG_HEX(6, irb, sizeof(*irb));
-@@ -144,10 +144,10 @@ static void eadm_subchannel_irq(struct subchannel *sch)
- 
- 	if ((scsw->stctl & (SCSW_STCTL_ALERT_STATUS | SCSW_STCTL_STATUS_PEND))
- 	    && scsw->eswf == 1 && irb->esw.eadm.erw.r)
--		error = -EIO;
-+		error = BLK_STS_IOERR;
- 
- 	if (scsw->fctl & SCSW_FCTL_CLEAR_FUNC)
--		error = -ETIMEDOUT;
-+		error = BLK_STS_TIMEOUT;
- 
- 	eadm_subchannel_set_timeout(sch, 0);
- 
-diff --git a/drivers/s390/cio/scm.c b/drivers/s390/cio/scm.c
-index 15268edc54ae..1fa53ecdc2aa 100644
---- a/drivers/s390/cio/scm.c
-+++ b/drivers/s390/cio/scm.c
-@@ -71,7 +71,7 @@ void scm_driver_unregister(struct scm_driver *scmdrv)
- }
- EXPORT_SYMBOL_GPL(scm_driver_unregister);
- 
--void scm_irq_handler(struct aob *aob, int error)
-+void scm_irq_handler(struct aob *aob, blk_status_t error)
- {
- 	struct aob_rq_header *aobrq = (void *) aob->request.data;
- 	struct scm_device *scmdev = aobrq->scmdev;
-diff --git a/drivers/sbus/char/jsflash.c b/drivers/sbus/char/jsflash.c
-index 62fed9dc893e..35a69949f92d 100644
---- a/drivers/sbus/char/jsflash.c
-+++ b/drivers/sbus/char/jsflash.c
-@@ -214,7 +214,7 @@ static void jsfd_request(void)
- 		struct jsfd_part *jdp = req->rq_disk->private_data;
- 		unsigned long offset = blk_rq_pos(req) << 9;
- 		size_t len = blk_rq_cur_bytes(req);
--		int err = -EIO;
-+		blk_status_t err = BLK_STS_IOERR;
- 
- 		if ((offset + len) > jdp->dsize)
- 			goto end;
-@@ -230,7 +230,7 @@ static void jsfd_request(void)
- 		}
- 
- 		jsfd_read(bio_data(req->bio), jdp->dbase + offset, len);
--		err = 0;
-+		err = BLK_STS_OK;
- 	end:
- 		if (!__blk_end_request_cur(req, err))
- 			req = jsfd_next_request();
-diff --git a/drivers/scsi/osd/osd_initiator.c b/drivers/scsi/osd/osd_initiator.c
-index 14785177ce7b..1e69a43b279d 100644
---- a/drivers/scsi/osd/osd_initiator.c
-+++ b/drivers/scsi/osd/osd_initiator.c
-@@ -446,7 +446,7 @@ static void _put_request(struct request *rq)
- 	 *       code paths.
- 	 */
- 	if (unlikely(rq->bio))
--		blk_end_request(rq, -ENOMEM, blk_rq_bytes(rq));
-+		blk_end_request(rq, BLK_STS_IOERR, blk_rq_bytes(rq));
- 	else
- 		blk_put_request(rq);
- }
-@@ -474,7 +474,7 @@ void osd_end_request(struct osd_request *or)
- EXPORT_SYMBOL(osd_end_request);
- 
- static void _set_error_resid(struct osd_request *or, struct request *req,
--			     int error)
-+			     blk_status_t error)
- {
- 	or->async_error = error;
- 	or->req_errors = scsi_req(req)->result;
-@@ -489,17 +489,19 @@ static void _set_error_resid(struct osd_request *or, struct request *req,
- 
- int osd_execute_request(struct osd_request *or)
- {
--	int error;
--
- 	blk_execute_rq(or->request->q, NULL, or->request, 0);
--	error = scsi_req(or->request)->result ? -EIO : 0;
- 
--	_set_error_resid(or, or->request, error);
--	return error;
-+	if (scsi_req(or->request)->result) {
-+		_set_error_resid(or, or->request, BLK_STS_IOERR);
-+		return -EIO;
-+	}
-+
-+	_set_error_resid(or, or->request, BLK_STS_OK);
-+	return 0;
- }
- EXPORT_SYMBOL(osd_execute_request);
- 
--static void osd_request_async_done(struct request *req, int error)
-+static void osd_request_async_done(struct request *req, blk_status_t error)
- {
- 	struct osd_request *or = req->end_io_data;
- 
-@@ -1914,7 +1916,7 @@ int osd_req_decode_sense_full(struct osd_request *or,
- 		/* scsi sense is Empty, the request was never issued to target
- 		 * linux return code might tell us what happened.
- 		 */
--		if (or->async_error == -ENOMEM)
-+		if (or->async_error == BLK_STS_RESOURCE)
- 			osi->osd_err_pri = OSD_ERR_PRI_RESOURCE;
- 		else
- 			osi->osd_err_pri = OSD_ERR_PRI_UNREACHABLE;
-diff --git a/drivers/scsi/osst.c b/drivers/scsi/osst.c
-index 67cbed92f07d..d54689c9216e 100644
---- a/drivers/scsi/osst.c
-+++ b/drivers/scsi/osst.c
-@@ -320,7 +320,7 @@ static int osst_chk_result(struct osst_tape * STp, struct osst_request * SRpnt)
- 
- 
- /* Wakeup from interrupt */
--static void osst_end_async(struct request *req, int update)
-+static void osst_end_async(struct request *req, blk_status_t status)
- {
- 	struct scsi_request *rq = scsi_req(req);
- 	struct osst_request *SRpnt = req->end_io_data;
-diff --git a/drivers/scsi/scsi_error.c b/drivers/scsi/scsi_error.c
-index ecc07dab893d..44904f41924c 100644
---- a/drivers/scsi/scsi_error.c
-+++ b/drivers/scsi/scsi_error.c
-@@ -1874,7 +1874,7 @@ int scsi_decide_disposition(struct scsi_cmnd *scmd)
- 	}
- }
- 
--static void eh_lock_door_done(struct request *req, int uptodate)
-+static void eh_lock_door_done(struct request *req, blk_status_t status)
- {
- 	__blk_put_request(req->q, req);
- }
-diff --git a/drivers/scsi/scsi_lib.c b/drivers/scsi/scsi_lib.c
-index 884aaa84c2dd..67a67191520f 100644
---- a/drivers/scsi/scsi_lib.c
-+++ b/drivers/scsi/scsi_lib.c
-@@ -635,7 +635,7 @@ static void scsi_release_bidi_buffers(struct scsi_cmnd *cmd)
- 	cmd->request->next_rq->special = NULL;
- }
- 
--static bool scsi_end_request(struct request *req, int error,
-+static bool scsi_end_request(struct request *req, blk_status_t error,
- 		unsigned int bytes, unsigned int bidi_bytes)
- {
- 	struct scsi_cmnd *cmd = req->special;
-@@ -694,45 +694,28 @@ static bool scsi_end_request(struct request *req, int error,
-  * @cmd:	SCSI command (unused)
-  * @result:	scsi error code
-  *
-- * Translate SCSI error code into standard UNIX errno.
-- * Return values:
-- * -ENOLINK	temporary transport failure
-- * -EREMOTEIO	permanent target failure, do not retry
-- * -EBADE	permanent nexus failure, retry on other path
-- * -ENOSPC	No write space available
-- * -ENODATA	Medium error
-- * -EIO		unspecified I/O error
-+ * Translate SCSI error code into block errors.
+diff --git a/drivers/md/multipath.c b/drivers/md/multipath.c
+index e95d521d93e9..68d036e64041 100644
+--- a/drivers/md/multipath.c
++++ b/drivers/md/multipath.c
+@@ -73,12 +73,12 @@ static void multipath_reschedule_retry (struct multipath_bh *mp_bh)
+  * operation and are ready to return a success/failure code to the buffer
+  * cache layer.
   */
--static int __scsi_error_from_host_byte(struct scsi_cmnd *cmd, int result)
-+static blk_status_t __scsi_error_from_host_byte(struct scsi_cmnd *cmd,
-+		int result)
+-static void multipath_end_bh_io (struct multipath_bh *mp_bh, int err)
++static void multipath_end_bh_io(struct multipath_bh *mp_bh, blk_status_t status)
  {
--	int error = 0;
--
--	switch(host_byte(result)) {
-+	switch (host_byte(result)) {
- 	case DID_TRANSPORT_FAILFAST:
--		error = -ENOLINK;
--		break;
-+		return BLK_STS_TRANSPORT;
- 	case DID_TARGET_FAILURE:
- 		set_host_byte(cmd, DID_OK);
--		error = -EREMOTEIO;
--		break;
-+		return BLK_STS_TARGET;
- 	case DID_NEXUS_FAILURE:
--		set_host_byte(cmd, DID_OK);
--		error = -EBADE;
--		break;
-+		return BLK_STS_NEXUS;
- 	case DID_ALLOC_FAILURE:
- 		set_host_byte(cmd, DID_OK);
--		error = -ENOSPC;
--		break;
-+		return BLK_STS_NOSPC;
- 	case DID_MEDIUM_ERROR:
- 		set_host_byte(cmd, DID_OK);
--		error = -ENODATA;
--		break;
-+		return BLK_STS_MEDIUM;
- 	default:
--		error = -EIO;
--		break;
-+		return BLK_STS_IOERR;
- 	}
--
--	return error;
+ 	struct bio *bio = mp_bh->master_bio;
+ 	struct mpconf *conf = mp_bh->mddev->private;
+ 
+-	bio->bi_error = err;
++	bio->bi_status = status;
+ 	bio_endio(bio);
+ 	mempool_free(mp_bh, conf->pool);
+ }
+@@ -89,7 +89,7 @@ static void multipath_end_request(struct bio *bio)
+ 	struct mpconf *conf = mp_bh->mddev->private;
+ 	struct md_rdev *rdev = conf->multipaths[mp_bh->path].rdev;
+ 
+-	if (!bio->bi_error)
++	if (!bio->bi_status)
+ 		multipath_end_bh_io(mp_bh, 0);
+ 	else if (!(bio->bi_opf & REQ_RAHEAD)) {
+ 		/*
+@@ -102,7 +102,7 @@ static void multipath_end_request(struct bio *bio)
+ 			(unsigned long long)bio->bi_iter.bi_sector);
+ 		multipath_reschedule_retry(mp_bh);
+ 	} else
+-		multipath_end_bh_io(mp_bh, bio->bi_error);
++		multipath_end_bh_io(mp_bh, bio->bi_status);
+ 	rdev_dec_pending(rdev, conf->mddev);
  }
  
- /*
-@@ -769,7 +752,7 @@ void scsi_io_completion(struct scsi_cmnd *cmd, unsigned int good_bytes)
- 	int result = cmd->result;
- 	struct request_queue *q = cmd->device->request_queue;
- 	struct request *req = cmd->request;
--	int error = 0;
-+	blk_status_t error = BLK_STS_OK;
- 	struct scsi_sense_hdr sshdr;
- 	bool sense_valid = false;
- 	int sense_deferred = 0, level = 0;
-@@ -808,7 +791,7 @@ void scsi_io_completion(struct scsi_cmnd *cmd, unsigned int good_bytes)
- 			 * both sides at once.
- 			 */
- 			scsi_req(req->next_rq)->resid_len = scsi_in(cmd)->resid;
--			if (scsi_end_request(req, 0, blk_rq_bytes(req),
-+			if (scsi_end_request(req, BLK_STS_OK, blk_rq_bytes(req),
- 					blk_rq_bytes(req->next_rq)))
- 				BUG();
- 			return;
-@@ -850,7 +833,7 @@ void scsi_io_completion(struct scsi_cmnd *cmd, unsigned int good_bytes)
- 			scsi_print_sense(cmd);
- 		result = 0;
- 		/* for passthrough error may be set */
--		error = 0;
-+		error = BLK_STS_OK;
- 	}
+@@ -347,7 +347,7 @@ static void multipathd(struct md_thread *thread)
+ 			pr_err("multipath: %s: unrecoverable IO read error for block %llu\n",
+ 			       bdevname(bio->bi_bdev,b),
+ 			       (unsigned long long)bio->bi_iter.bi_sector);
+-			multipath_end_bh_io(mp_bh, -EIO);
++			multipath_end_bh_io(mp_bh, BLK_STS_IOERR);
+ 		} else {
+ 			pr_err("multipath: %s: redirecting sector %llu to another IO path\n",
+ 			       bdevname(bio->bi_bdev,b),
+diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
+index af5056d56878..94b87c4d0f7b 100644
+--- a/drivers/md/raid1.c
++++ b/drivers/md/raid1.c
+@@ -277,7 +277,7 @@ static void call_bio_endio(struct r1bio *r1_bio)
+ 	struct r1conf *conf = r1_bio->mddev->private;
+ 
+ 	if (!test_bit(R1BIO_Uptodate, &r1_bio->state))
+-		bio->bi_error = -EIO;
++		bio->bi_status = BLK_STS_IOERR;
+ 
+ 	bio_endio(bio);
+ 	/*
+@@ -335,7 +335,7 @@ static int find_bio_disk(struct r1bio *r1_bio, struct bio *bio)
+ 
+ static void raid1_end_read_request(struct bio *bio)
+ {
+-	int uptodate = !bio->bi_error;
++	int uptodate = !bio->bi_status;
+ 	struct r1bio *r1_bio = bio->bi_private;
+ 	struct r1conf *conf = r1_bio->mddev->private;
+ 	struct md_rdev *rdev = conf->mirrors[r1_bio->read_disk].rdev;
+@@ -426,12 +426,12 @@ static void raid1_end_write_request(struct bio *bio)
+ 	struct md_rdev *rdev = conf->mirrors[mirror].rdev;
+ 	bool discard_error;
+ 
+-	discard_error = bio->bi_error && bio_op(bio) == REQ_OP_DISCARD;
++	discard_error = bio->bi_status && bio_op(bio) == REQ_OP_DISCARD;
  
  	/*
-@@ -922,18 +905,18 @@ void scsi_io_completion(struct scsi_cmnd *cmd, unsigned int good_bytes)
- 				action = ACTION_REPREP;
- 			} else if (sshdr.asc == 0x10) /* DIX */ {
- 				action = ACTION_FAIL;
--				error = -EILSEQ;
-+				error = BLK_STS_PROTECTION;
- 			/* INVALID COMMAND OPCODE or INVALID FIELD IN CDB */
- 			} else if (sshdr.asc == 0x20 || sshdr.asc == 0x24) {
- 				action = ACTION_FAIL;
--				error = -EREMOTEIO;
-+				error = BLK_STS_TARGET;
- 			} else
- 				action = ACTION_FAIL;
- 			break;
- 		case ABORTED_COMMAND:
- 			action = ACTION_FAIL;
- 			if (sshdr.asc == 0x10) /* DIF */
--				error = -EILSEQ;
-+				error = BLK_STS_PROTECTION;
- 			break;
- 		case NOT_READY:
- 			/* If the device is in the process of becoming
-diff --git a/drivers/scsi/scsi_transport_sas.c b/drivers/scsi/scsi_transport_sas.c
-index d16414bfe2ef..cc970c811bcb 100644
---- a/drivers/scsi/scsi_transport_sas.c
-+++ b/drivers/scsi/scsi_transport_sas.c
-@@ -172,7 +172,7 @@ static void sas_smp_request(struct request_queue *q, struct Scsi_Host *shost,
- 			    struct sas_rphy *rphy)
+ 	 * 'one mirror IO has finished' event handler:
+ 	 */
+-	if (bio->bi_error && !discard_error) {
++	if (bio->bi_status && !discard_error) {
+ 		set_bit(WriteErrorSeen,	&rdev->flags);
+ 		if (!test_and_set_bit(WantReplacement, &rdev->flags))
+ 			set_bit(MD_RECOVERY_NEEDED, &
+@@ -802,7 +802,7 @@ static void flush_bio_list(struct r1conf *conf, struct bio *bio)
+ 		bio->bi_next = NULL;
+ 		bio->bi_bdev = rdev->bdev;
+ 		if (test_bit(Faulty, &rdev->flags)) {
+-			bio->bi_error = -EIO;
++			bio->bi_status = BLK_STS_IOERR;
+ 			bio_endio(bio);
+ 		} else if (unlikely((bio_op(bio) == REQ_OP_DISCARD) &&
+ 				    !blk_queue_discard(bdev_get_queue(bio->bi_bdev))))
+@@ -1856,7 +1856,7 @@ static void end_sync_read(struct bio *bio)
+ 	 * or re-read if the read failed.
+ 	 * We don't do much here, just schedule handling by raid1d
+ 	 */
+-	if (!bio->bi_error)
++	if (!bio->bi_status)
+ 		set_bit(R1BIO_Uptodate, &r1_bio->state);
+ 
+ 	if (atomic_dec_and_test(&r1_bio->remaining))
+@@ -1865,7 +1865,7 @@ static void end_sync_read(struct bio *bio)
+ 
+ static void end_sync_write(struct bio *bio)
  {
- 	struct request *req;
+-	int uptodate = !bio->bi_error;
++	int uptodate = !bio->bi_status;
+ 	struct r1bio *r1_bio = get_resync_r1bio(bio);
+ 	struct mddev *mddev = r1_bio->mddev;
+ 	struct r1conf *conf = mddev->private;
+@@ -2058,7 +2058,7 @@ static int fix_sync_read_error(struct r1bio *r1_bio)
+ 		idx ++;
+ 	}
+ 	set_bit(R1BIO_Uptodate, &r1_bio->state);
+-	bio->bi_error = 0;
++	bio->bi_status = 0;
+ 	return 1;
+ }
+ 
+@@ -2082,16 +2082,16 @@ static void process_checks(struct r1bio *r1_bio)
+ 	for (i = 0; i < conf->raid_disks * 2; i++) {
+ 		int j;
+ 		int size;
+-		int error;
++		blk_status_t status;
+ 		struct bio_vec *bi;
+ 		struct bio *b = r1_bio->bios[i];
+ 		struct resync_pages *rp = get_resync_pages(b);
+ 		if (b->bi_end_io != end_sync_read)
+ 			continue;
+ 		/* fixup the bio for reuse, but preserve errno */
+-		error = b->bi_error;
++		status = b->bi_status;
+ 		bio_reset(b);
+-		b->bi_error = error;
++		b->bi_status = status;
+ 		b->bi_vcnt = vcnt;
+ 		b->bi_iter.bi_size = r1_bio->sectors << 9;
+ 		b->bi_iter.bi_sector = r1_bio->sector +
+@@ -2113,7 +2113,7 @@ static void process_checks(struct r1bio *r1_bio)
+ 	}
+ 	for (primary = 0; primary < conf->raid_disks * 2; primary++)
+ 		if (r1_bio->bios[primary]->bi_end_io == end_sync_read &&
+-		    !r1_bio->bios[primary]->bi_error) {
++		    !r1_bio->bios[primary]->bi_status) {
+ 			r1_bio->bios[primary]->bi_end_io = NULL;
+ 			rdev_dec_pending(conf->mirrors[primary].rdev, mddev);
+ 			break;
+@@ -2123,7 +2123,7 @@ static void process_checks(struct r1bio *r1_bio)
+ 		int j;
+ 		struct bio *pbio = r1_bio->bios[primary];
+ 		struct bio *sbio = r1_bio->bios[i];
+-		int error = sbio->bi_error;
++		blk_status_t status = sbio->bi_status;
+ 		struct page **ppages = get_resync_pages(pbio)->pages;
+ 		struct page **spages = get_resync_pages(sbio)->pages;
+ 		struct bio_vec *bi;
+@@ -2132,12 +2132,12 @@ static void process_checks(struct r1bio *r1_bio)
+ 		if (sbio->bi_end_io != end_sync_read)
+ 			continue;
+ 		/* Now we can 'fixup' the error value */
+-		sbio->bi_error = 0;
++		sbio->bi_status = 0;
+ 
+ 		bio_for_each_segment_all(bi, sbio, j)
+ 			page_len[j] = bi->bv_len;
+ 
+-		if (!error) {
++		if (!status) {
+ 			for (j = vcnt; j-- ; ) {
+ 				if (memcmp(page_address(ppages[j]),
+ 					   page_address(spages[j]),
+@@ -2149,7 +2149,7 @@ static void process_checks(struct r1bio *r1_bio)
+ 		if (j >= 0)
+ 			atomic64_add(r1_bio->sectors, &mddev->resync_mismatches);
+ 		if (j < 0 || (test_bit(MD_RECOVERY_CHECK, &mddev->recovery)
+-			      && !error)) {
++			      && !status)) {
+ 			/* No need to write to this device. */
+ 			sbio->bi_end_io = NULL;
+ 			rdev_dec_pending(conf->mirrors[i].rdev, mddev);
+@@ -2400,11 +2400,11 @@ static void handle_sync_write_finished(struct r1conf *conf, struct r1bio *r1_bio
+ 		struct bio *bio = r1_bio->bios[m];
+ 		if (bio->bi_end_io == NULL)
+ 			continue;
+-		if (!bio->bi_error &&
++		if (!bio->bi_status &&
+ 		    test_bit(R1BIO_MadeGood, &r1_bio->state)) {
+ 			rdev_clear_badblocks(rdev, r1_bio->sector, s, 0);
+ 		}
+-		if (bio->bi_error &&
++		if (bio->bi_status &&
+ 		    test_bit(R1BIO_WriteError, &r1_bio->state)) {
+ 			if (!rdev_set_badblocks(rdev, r1_bio->sector, s, 0))
+ 				md_error(conf->mddev, rdev);
+diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
+index 4343d7ff9916..89ad1cd29037 100644
+--- a/drivers/md/raid10.c
++++ b/drivers/md/raid10.c
+@@ -336,7 +336,7 @@ static void raid_end_bio_io(struct r10bio *r10_bio)
+ 	struct r10conf *conf = r10_bio->mddev->private;
+ 
+ 	if (!test_bit(R10BIO_Uptodate, &r10_bio->state))
+-		bio->bi_error = -EIO;
++		bio->bi_status = BLK_STS_IOERR;
+ 
+ 	bio_endio(bio);
+ 	/*
+@@ -389,7 +389,7 @@ static int find_bio_disk(struct r10conf *conf, struct r10bio *r10_bio,
+ 
+ static void raid10_end_read_request(struct bio *bio)
+ {
+-	int uptodate = !bio->bi_error;
++	int uptodate = !bio->bi_status;
+ 	struct r10bio *r10_bio = bio->bi_private;
+ 	int slot, dev;
+ 	struct md_rdev *rdev;
+@@ -477,7 +477,7 @@ static void raid10_end_write_request(struct bio *bio)
+ 	struct bio *to_put = NULL;
+ 	bool discard_error;
+ 
+-	discard_error = bio->bi_error && bio_op(bio) == REQ_OP_DISCARD;
++	discard_error = bio->bi_status && bio_op(bio) == REQ_OP_DISCARD;
+ 
+ 	dev = find_bio_disk(conf, r10_bio, bio, &slot, &repl);
+ 
+@@ -491,7 +491,7 @@ static void raid10_end_write_request(struct bio *bio)
+ 	/*
+ 	 * this branch is our 'one mirror IO has finished' event handler:
+ 	 */
+-	if (bio->bi_error && !discard_error) {
++	if (bio->bi_status && !discard_error) {
+ 		if (repl)
+ 			/* Never record new bad blocks to replacement,
+ 			 * just fail it.
+@@ -913,7 +913,7 @@ static void flush_pending_writes(struct r10conf *conf)
+ 			bio->bi_next = NULL;
+ 			bio->bi_bdev = rdev->bdev;
+ 			if (test_bit(Faulty, &rdev->flags)) {
+-				bio->bi_error = -EIO;
++				bio->bi_status = BLK_STS_IOERR;
+ 				bio_endio(bio);
+ 			} else if (unlikely((bio_op(bio) ==  REQ_OP_DISCARD) &&
+ 					    !blk_queue_discard(bdev_get_queue(bio->bi_bdev))))
+@@ -1098,7 +1098,7 @@ static void raid10_unplug(struct blk_plug_cb *cb, bool from_schedule)
+ 		bio->bi_next = NULL;
+ 		bio->bi_bdev = rdev->bdev;
+ 		if (test_bit(Faulty, &rdev->flags)) {
+-			bio->bi_error = -EIO;
++			bio->bi_status = BLK_STS_IOERR;
+ 			bio_endio(bio);
+ 		} else if (unlikely((bio_op(bio) ==  REQ_OP_DISCARD) &&
+ 				    !blk_queue_discard(bdev_get_queue(bio->bi_bdev))))
+@@ -1888,7 +1888,7 @@ static void __end_sync_read(struct r10bio *r10_bio, struct bio *bio, int d)
+ {
+ 	struct r10conf *conf = r10_bio->mddev->private;
+ 
+-	if (!bio->bi_error)
++	if (!bio->bi_status)
+ 		set_bit(R10BIO_Uptodate, &r10_bio->state);
+ 	else
+ 		/* The write handler will notice the lack of
+@@ -1972,7 +1972,7 @@ static void end_sync_write(struct bio *bio)
+ 	else
+ 		rdev = conf->mirrors[d].rdev;
+ 
+-	if (bio->bi_error) {
++	if (bio->bi_status) {
+ 		if (repl)
+ 			md_error(mddev, rdev);
+ 		else {
+@@ -2021,7 +2021,7 @@ static void sync_request_write(struct mddev *mddev, struct r10bio *r10_bio)
+ 
+ 	/* find the first device with a block */
+ 	for (i=0; i<conf->copies; i++)
+-		if (!r10_bio->devs[i].bio->bi_error)
++		if (!r10_bio->devs[i].bio->bi_status)
+ 			break;
+ 
+ 	if (i == conf->copies)
+@@ -2050,7 +2050,7 @@ static void sync_request_write(struct mddev *mddev, struct r10bio *r10_bio)
+ 		tpages = get_resync_pages(tbio)->pages;
+ 		d = r10_bio->devs[i].devnum;
+ 		rdev = conf->mirrors[d].rdev;
+-		if (!r10_bio->devs[i].bio->bi_error) {
++		if (!r10_bio->devs[i].bio->bi_status) {
+ 			/* We know that the bi_io_vec layout is the same for
+ 			 * both 'first' and 'i', so we just compare them.
+ 			 * All vec entries are PAGE_SIZE;
+@@ -2633,7 +2633,7 @@ static void handle_write_completed(struct r10conf *conf, struct r10bio *r10_bio)
+ 			rdev = conf->mirrors[dev].rdev;
+ 			if (r10_bio->devs[m].bio == NULL)
+ 				continue;
+-			if (!r10_bio->devs[m].bio->bi_error) {
++			if (!r10_bio->devs[m].bio->bi_status) {
+ 				rdev_clear_badblocks(
+ 					rdev,
+ 					r10_bio->devs[m].addr,
+@@ -2649,7 +2649,7 @@ static void handle_write_completed(struct r10conf *conf, struct r10bio *r10_bio)
+ 			if (r10_bio->devs[m].repl_bio == NULL)
+ 				continue;
+ 
+-			if (!r10_bio->devs[m].repl_bio->bi_error) {
++			if (!r10_bio->devs[m].repl_bio->bi_status) {
+ 				rdev_clear_badblocks(
+ 					rdev,
+ 					r10_bio->devs[m].addr,
+@@ -2675,7 +2675,7 @@ static void handle_write_completed(struct r10conf *conf, struct r10bio *r10_bio)
+ 					r10_bio->devs[m].addr,
+ 					r10_bio->sectors, 0);
+ 				rdev_dec_pending(rdev, conf->mddev);
+-			} else if (bio != NULL && bio->bi_error) {
++			} else if (bio != NULL && bio->bi_status) {
+ 				fail = true;
+ 				if (!narrow_write_error(r10_bio, m)) {
+ 					md_error(conf->mddev, rdev);
+@@ -3267,7 +3267,7 @@ static sector_t raid10_sync_request(struct mddev *mddev, sector_t sector_nr,
+ 				r10_bio->devs[i].repl_bio->bi_end_io = NULL;
+ 
+ 			bio = r10_bio->devs[i].bio;
+-			bio->bi_error = -EIO;
++			bio->bi_status = BLK_STS_IOERR;
+ 			rcu_read_lock();
+ 			rdev = rcu_dereference(conf->mirrors[d].rdev);
+ 			if (rdev == NULL || test_bit(Faulty, &rdev->flags)) {
+@@ -3309,7 +3309,7 @@ static sector_t raid10_sync_request(struct mddev *mddev, sector_t sector_nr,
+ 
+ 			/* Need to set up for writing to the replacement */
+ 			bio = r10_bio->devs[i].repl_bio;
+-			bio->bi_error = -EIO;
++			bio->bi_status = BLK_STS_IOERR;
+ 
+ 			sector = r10_bio->devs[i].addr;
+ 			bio->bi_next = biolist;
+@@ -3375,7 +3375,7 @@ static sector_t raid10_sync_request(struct mddev *mddev, sector_t sector_nr,
+ 
+ 		if (bio->bi_end_io == end_sync_read) {
+ 			md_sync_acct(bio->bi_bdev, nr_sectors);
+-			bio->bi_error = 0;
++			bio->bi_status = 0;
+ 			generic_make_request(bio);
+ 		}
+ 	}
+@@ -4394,7 +4394,7 @@ static sector_t reshape_request(struct mddev *mddev, sector_t sector_nr,
+ 	read_bio->bi_end_io = end_reshape_read;
+ 	bio_set_op_attrs(read_bio, REQ_OP_READ, 0);
+ 	read_bio->bi_flags &= (~0UL << BIO_RESET_BITS);
+-	read_bio->bi_error = 0;
++	read_bio->bi_status = 0;
+ 	read_bio->bi_vcnt = 0;
+ 	read_bio->bi_iter.bi_size = 0;
+ 	r10_bio->master_bio = read_bio;
+@@ -4638,7 +4638,7 @@ static void end_reshape_write(struct bio *bio)
+ 		rdev = conf->mirrors[d].rdev;
+ 	}
+ 
+-	if (bio->bi_error) {
++	if (bio->bi_status) {
+ 		/* FIXME should record badblock */
+ 		md_error(mddev, rdev);
+ 	}
+diff --git a/drivers/md/raid5-cache.c b/drivers/md/raid5-cache.c
+index 4c00bc248287..3ed6a0d89db8 100644
+--- a/drivers/md/raid5-cache.c
++++ b/drivers/md/raid5-cache.c
+@@ -572,7 +572,7 @@ static void r5l_log_endio(struct bio *bio)
+ 	struct r5l_log *log = io->log;
+ 	unsigned long flags;
+ 
+-	if (bio->bi_error)
++	if (bio->bi_status)
+ 		md_error(log->rdev->mddev, log->rdev);
+ 
+ 	bio_put(bio);
+@@ -1247,7 +1247,7 @@ static void r5l_log_flush_endio(struct bio *bio)
+ 	unsigned long flags;
+ 	struct r5l_io_unit *io;
+ 
+-	if (bio->bi_error)
++	if (bio->bi_status)
+ 		md_error(log->rdev->mddev, log->rdev);
+ 
+ 	spin_lock_irqsave(&log->io_list_lock, flags);
+diff --git a/drivers/md/raid5-ppl.c b/drivers/md/raid5-ppl.c
+index 5d25bebf3328..09e04be34e5f 100644
+--- a/drivers/md/raid5-ppl.c
++++ b/drivers/md/raid5-ppl.c
+@@ -397,7 +397,7 @@ static void ppl_log_endio(struct bio *bio)
+ 
+ 	pr_debug("%s: seq: %llu\n", __func__, io->seq);
+ 
+-	if (bio->bi_error)
++	if (bio->bi_status)
+ 		md_error(ppl_conf->mddev, log->rdev);
+ 
+ 	list_for_each_entry_safe(sh, next, &io->stripe_list, log_list) {
+diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+index 9c4f7659f8b1..e1bdc320f664 100644
+--- a/drivers/md/raid5.c
++++ b/drivers/md/raid5.c
+@@ -2476,7 +2476,7 @@ static void raid5_end_read_request(struct bio * bi)
+ 
+ 	pr_debug("end_read_request %llu/%d, count: %d, error %d.\n",
+ 		(unsigned long long)sh->sector, i, atomic_read(&sh->count),
+-		bi->bi_error);
++		bi->bi_status);
+ 	if (i == disks) {
+ 		bio_reset(bi);
+ 		BUG();
+@@ -2496,7 +2496,7 @@ static void raid5_end_read_request(struct bio * bi)
+ 		s = sh->sector + rdev->new_data_offset;
+ 	else
+ 		s = sh->sector + rdev->data_offset;
+-	if (!bi->bi_error) {
++	if (!bi->bi_status) {
+ 		set_bit(R5_UPTODATE, &sh->dev[i].flags);
+ 		if (test_bit(R5_ReadError, &sh->dev[i].flags)) {
+ 			/* Note that this cannot happen on a
+@@ -2613,7 +2613,7 @@ static void raid5_end_write_request(struct bio *bi)
+ 	}
+ 	pr_debug("end_write_request %llu/%d, count %d, error: %d.\n",
+ 		(unsigned long long)sh->sector, i, atomic_read(&sh->count),
+-		bi->bi_error);
++		bi->bi_status);
+ 	if (i == disks) {
+ 		bio_reset(bi);
+ 		BUG();
+@@ -2621,14 +2621,14 @@ static void raid5_end_write_request(struct bio *bi)
+ 	}
+ 
+ 	if (replacement) {
+-		if (bi->bi_error)
++		if (bi->bi_status)
+ 			md_error(conf->mddev, rdev);
+ 		else if (is_badblock(rdev, sh->sector,
+ 				     STRIPE_SECTORS,
+ 				     &first_bad, &bad_sectors))
+ 			set_bit(R5_MadeGoodRepl, &sh->dev[i].flags);
+ 	} else {
+-		if (bi->bi_error) {
++		if (bi->bi_status) {
+ 			set_bit(STRIPE_DEGRADED, &sh->state);
+ 			set_bit(WriteErrorSeen, &rdev->flags);
+ 			set_bit(R5_WriteError, &sh->dev[i].flags);
+@@ -2649,7 +2649,7 @@ static void raid5_end_write_request(struct bio *bi)
+ 	}
+ 	rdev_dec_pending(rdev, conf->mddev);
+ 
+-	if (sh->batch_head && bi->bi_error && !replacement)
++	if (sh->batch_head && bi->bi_status && !replacement)
+ 		set_bit(STRIPE_BATCH_ERR, &sh->batch_head->state);
+ 
+ 	bio_reset(bi);
+@@ -3381,7 +3381,7 @@ handle_failed_stripe(struct r5conf *conf, struct stripe_head *sh,
+ 			sh->dev[i].sector + STRIPE_SECTORS) {
+ 			struct bio *nextbi = r5_next_bio(bi, sh->dev[i].sector);
+ 
+-			bi->bi_error = -EIO;
++			bi->bi_status = BLK_STS_IOERR;
+ 			md_write_end(conf->mddev);
+ 			bio_endio(bi);
+ 			bi = nextbi;
+@@ -3403,7 +3403,7 @@ handle_failed_stripe(struct r5conf *conf, struct stripe_head *sh,
+ 		       sh->dev[i].sector + STRIPE_SECTORS) {
+ 			struct bio *bi2 = r5_next_bio(bi, sh->dev[i].sector);
+ 
+-			bi->bi_error = -EIO;
++			bi->bi_status = BLK_STS_IOERR;
+ 			md_write_end(conf->mddev);
+ 			bio_endio(bi);
+ 			bi = bi2;
+@@ -3429,7 +3429,7 @@ handle_failed_stripe(struct r5conf *conf, struct stripe_head *sh,
+ 				struct bio *nextbi =
+ 					r5_next_bio(bi, sh->dev[i].sector);
+ 
+-				bi->bi_error = -EIO;
++				bi->bi_status = BLK_STS_IOERR;
+ 				bio_endio(bi);
+ 				bi = nextbi;
+ 			}
+@@ -5144,7 +5144,7 @@ static void raid5_align_endio(struct bio *bi)
+ 	struct mddev *mddev;
+ 	struct r5conf *conf;
+ 	struct md_rdev *rdev;
+-	int error = bi->bi_error;
++	blk_status_t error = bi->bi_status;
+ 
+ 	bio_put(bi);
+ 
+@@ -5721,7 +5721,7 @@ static void raid5_make_request(struct mddev *mddev, struct bio * bi)
+ 			release_stripe_plug(mddev, sh);
+ 		} else {
+ 			/* cannot get stripe for read-ahead, just give-up */
+-			bi->bi_error = -EIO;
++			bi->bi_status = BLK_STS_IOERR;
+ 			break;
+ 		}
+ 	}
+diff --git a/drivers/nvdimm/blk.c b/drivers/nvdimm/blk.c
+index 822198a75e96..79eb9fb358d5 100644
+--- a/drivers/nvdimm/blk.c
++++ b/drivers/nvdimm/blk.c
+@@ -186,7 +186,7 @@ static blk_qc_t nd_blk_make_request(struct request_queue *q, struct bio *bio)
+ 	 * another kernel subsystem, and we just pass it through.
+ 	 */
+ 	if (bio_integrity_enabled(bio) && bio_integrity_prep(bio)) {
+-		bio->bi_error = -EIO;
++		bio->bi_status = BLK_STS_IOERR;
+ 		goto out;
+ 	}
+ 
+@@ -205,7 +205,7 @@ static blk_qc_t nd_blk_make_request(struct request_queue *q, struct bio *bio)
+ 					"io error in %s sector %lld, len %d,\n",
+ 					(rw == READ) ? "READ" : "WRITE",
+ 					(unsigned long long) iter.bi_sector, len);
+-			bio->bi_error = err;
++			bio->bi_status = errno_to_blk_status(err);
+ 			break;
+ 		}
+ 	}
+diff --git a/drivers/nvdimm/btt.c b/drivers/nvdimm/btt.c
+index 983718b8fd9b..31b2d14e210d 100644
+--- a/drivers/nvdimm/btt.c
++++ b/drivers/nvdimm/btt.c
+@@ -1210,7 +1210,7 @@ static blk_qc_t btt_make_request(struct request_queue *q, struct bio *bio)
+ 	 * another kernel subsystem, and we just pass it through.
+ 	 */
+ 	if (bio_integrity_enabled(bio) && bio_integrity_prep(bio)) {
+-		bio->bi_error = -EIO;
++		bio->bi_status = BLK_STS_IOERR;
+ 		goto out;
+ 	}
+ 
+@@ -1232,7 +1232,7 @@ static blk_qc_t btt_make_request(struct request_queue *q, struct bio *bio)
+ 					(op_is_write(bio_op(bio))) ? "WRITE" :
+ 					"READ",
+ 					(unsigned long long) iter.bi_sector, len);
+-			bio->bi_error = err;
++			bio->bi_status = errno_to_blk_status(err);
+ 			break;
+ 		}
+ 	}
+diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
+index c544d466ea51..7bd383aeea14 100644
+--- a/drivers/nvdimm/pmem.c
++++ b/drivers/nvdimm/pmem.c
+@@ -49,19 +49,19 @@ static struct nd_region *to_region(struct pmem_device *pmem)
+ 	return to_nd_region(to_dev(pmem)->parent);
+ }
+ 
+-static int pmem_clear_poison(struct pmem_device *pmem, phys_addr_t offset,
+-		unsigned int len)
++static blk_status_t pmem_clear_poison(struct pmem_device *pmem,
++		phys_addr_t offset, unsigned int len)
+ {
+ 	struct device *dev = to_dev(pmem);
+ 	sector_t sector;
+ 	long cleared;
+-	int rc = 0;
++	blk_status_t rc = BLK_STS_OK;
+ 
+ 	sector = (offset - pmem->data_offset) / 512;
+ 
+ 	cleared = nvdimm_clear_poison(dev, pmem->phys_addr + offset, len);
+ 	if (cleared < len)
+-		rc = -EIO;
++		rc = BLK_STS_IOERR;
+ 	if (cleared > 0 && cleared / 512) {
+ 		cleared /= 512;
+ 		dev_dbg(dev, "%s: %#llx clear %ld sector%s\n", __func__,
+@@ -84,7 +84,7 @@ static void write_pmem(void *pmem_addr, struct page *page,
+ 	kunmap_atomic(mem);
+ }
+ 
+-static int read_pmem(struct page *page, unsigned int off,
++static blk_status_t read_pmem(struct page *page, unsigned int off,
+ 		void *pmem_addr, unsigned int len)
+ {
+ 	int rc;
+@@ -93,15 +93,15 @@ static int read_pmem(struct page *page, unsigned int off,
+ 	rc = memcpy_mcsafe(mem + off, pmem_addr, len);
+ 	kunmap_atomic(mem);
+ 	if (rc)
+-		return -EIO;
+-	return 0;
++		return BLK_STS_IOERR;
++	return BLK_STS_OK;
+ }
+ 
+-static int pmem_do_bvec(struct pmem_device *pmem, struct page *page,
++static blk_status_t pmem_do_bvec(struct pmem_device *pmem, struct page *page,
+ 			unsigned int len, unsigned int off, bool is_write,
+ 			sector_t sector)
+ {
+-	int rc = 0;
++	blk_status_t rc = BLK_STS_OK;
+ 	bool bad_pmem = false;
+ 	phys_addr_t pmem_off = sector * 512 + pmem->data_offset;
+ 	void *pmem_addr = pmem->virt_addr + pmem_off;
+@@ -111,7 +111,7 @@ static int pmem_do_bvec(struct pmem_device *pmem, struct page *page,
+ 
+ 	if (!is_write) {
+ 		if (unlikely(bad_pmem))
+-			rc = -EIO;
++			rc = BLK_STS_IOERR;
+ 		else {
+ 			rc = read_pmem(page, off, pmem_addr, len);
+ 			flush_dcache_page(page);
+@@ -149,7 +149,7 @@ static int pmem_do_bvec(struct pmem_device *pmem, struct page *page,
+ 
+ static blk_qc_t pmem_make_request(struct request_queue *q, struct bio *bio)
+ {
+-	int rc = 0;
++	blk_status_t rc = 0;
+ 	bool do_acct;
+ 	unsigned long start;
+ 	struct bio_vec bvec;
+@@ -166,7 +166,7 @@ static blk_qc_t pmem_make_request(struct request_queue *q, struct bio *bio)
+ 				bvec.bv_offset, op_is_write(bio_op(bio)),
+ 				iter.bi_sector);
+ 		if (rc) {
+-			bio->bi_error = rc;
++			bio->bi_status = rc;
+ 			break;
+ 		}
+ 	}
+@@ -184,7 +184,7 @@ static int pmem_rw_page(struct block_device *bdev, sector_t sector,
+ 		       struct page *page, bool is_write)
+ {
+ 	struct pmem_device *pmem = bdev->bd_queue->queuedata;
+-	int rc;
++	blk_status_t rc;
+ 
+ 	rc = pmem_do_bvec(pmem, page, PAGE_SIZE, 0, is_write, sector);
+ 
+@@ -197,7 +197,7 @@ static int pmem_rw_page(struct block_device *bdev, sector_t sector,
+ 	if (rc == 0)
+ 		page_endio(page, is_write, 0);
+ 
+-	return rc;
++	return blk_status_to_errno(rc);
+ }
+ 
+ /* see "strong" declaration in tools/testing/nvdimm/pmem-dax.c */
+diff --git a/drivers/nvme/target/io-cmd.c b/drivers/nvme/target/io-cmd.c
+index c77940d80fc8..40128793e613 100644
+--- a/drivers/nvme/target/io-cmd.c
++++ b/drivers/nvme/target/io-cmd.c
+@@ -21,7 +21,7 @@ static void nvmet_bio_done(struct bio *bio)
+ 	struct nvmet_req *req = bio->bi_private;
+ 
+ 	nvmet_req_complete(req,
+-		bio->bi_error ? NVME_SC_INTERNAL | NVME_SC_DNR : 0);
++		bio->bi_status ? NVME_SC_INTERNAL | NVME_SC_DNR : 0);
+ 
+ 	if (bio != &req->inline_bio)
+ 		bio_put(bio);
+@@ -145,7 +145,7 @@ static void nvmet_execute_discard(struct nvmet_req *req)
+ 		bio->bi_private = req;
+ 		bio->bi_end_io = nvmet_bio_done;
+ 		if (status) {
+-			bio->bi_error = -EIO;
++			bio->bi_status = BLK_STS_IOERR;
+ 			bio_endio(bio);
+ 		} else {
+ 			submit_bio(bio);
+diff --git a/drivers/target/target_core_iblock.c b/drivers/target/target_core_iblock.c
+index bb069ebe4aa6..75373624604b 100644
+--- a/drivers/target/target_core_iblock.c
++++ b/drivers/target/target_core_iblock.c
+@@ -296,8 +296,8 @@ static void iblock_bio_done(struct bio *bio)
+ 	struct se_cmd *cmd = bio->bi_private;
+ 	struct iblock_req *ibr = cmd->priv;
+ 
+-	if (bio->bi_error) {
+-		pr_err("bio error: %p,  err: %d\n", bio, bio->bi_error);
++	if (bio->bi_status) {
++		pr_err("bio error: %p,  err: %d\n", bio, bio->bi_status);
+ 		/*
+ 		 * Bump the ib_bio_err_cnt and release bio.
+ 		 */
+@@ -354,11 +354,11 @@ static void iblock_end_io_flush(struct bio *bio)
+ {
+ 	struct se_cmd *cmd = bio->bi_private;
+ 
+-	if (bio->bi_error)
+-		pr_err("IBLOCK: cache flush failed: %d\n", bio->bi_error);
++	if (bio->bi_status)
++		pr_err("IBLOCK: cache flush failed: %d\n", bio->bi_status);
+ 
+ 	if (cmd) {
+-		if (bio->bi_error)
++		if (bio->bi_status)
+ 			target_complete_cmd(cmd, SAM_STAT_CHECK_CONDITION);
+ 		else
+ 			target_complete_cmd(cmd, SAM_STAT_GOOD);
+diff --git a/fs/block_dev.c b/fs/block_dev.c
+index c1dc393ad6b9..bcd8e16a34e1 100644
+--- a/fs/block_dev.c
++++ b/fs/block_dev.c
+@@ -262,8 +262,8 @@ __blkdev_direct_IO_simple(struct kiocb *iocb, struct iov_iter *iter,
+ 	if (vecs != inline_vecs)
+ 		kfree(vecs);
+ 
+-	if (unlikely(bio.bi_error))
+-		return bio.bi_error;
++	if (unlikely(bio.bi_status))
++		return blk_status_to_errno(bio.bi_status);
+ 	return ret;
+ }
+ 
+@@ -288,16 +288,18 @@ static void blkdev_bio_end_io(struct bio *bio)
+ 	bool should_dirty = dio->should_dirty;
+ 
+ 	if (dio->multi_bio && !atomic_dec_and_test(&dio->ref)) {
+-		if (bio->bi_error && !dio->bio.bi_error)
+-			dio->bio.bi_error = bio->bi_error;
++		if (bio->bi_status && !dio->bio.bi_status)
++			dio->bio.bi_status = bio->bi_status;
+ 	} else {
+ 		if (!dio->is_sync) {
+ 			struct kiocb *iocb = dio->iocb;
+-			ssize_t ret = dio->bio.bi_error;
++			ssize_t ret;
+ 
+-			if (likely(!ret)) {
++			if (likely(!dio->bio.bi_status)) {
+ 				ret = dio->size;
+ 				iocb->ki_pos += ret;
++			} else {
++				ret = blk_status_to_errno(dio->bio.bi_status);
+ 			}
+ 
+ 			dio->iocb->ki_complete(iocb, ret, 0);
+@@ -363,7 +365,7 @@ __blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter, int nr_pages)
+ 
+ 		ret = bio_iov_iter_get_pages(bio, iter);
+ 		if (unlikely(ret)) {
+-			bio->bi_error = -EIO;
++			bio->bi_status = BLK_STS_IOERR;
+ 			bio_endio(bio);
+ 			break;
+ 		}
+@@ -413,7 +415,7 @@ __blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter, int nr_pages)
+ 	__set_current_state(TASK_RUNNING);
+ 
+ 	if (!ret)
+-		ret = dio->bio.bi_error;
++		ret = blk_status_to_errno(dio->bio.bi_status);
+ 	if (likely(!ret))
+ 		ret = dio->size;
+ 
+diff --git a/fs/btrfs/btrfs_inode.h b/fs/btrfs/btrfs_inode.h
+index b8622e4d1744..d87ac27a5f2b 100644
+--- a/fs/btrfs/btrfs_inode.h
++++ b/fs/btrfs/btrfs_inode.h
+@@ -310,7 +310,8 @@ struct btrfs_dio_private {
+ 	 * The original bio may be split to several sub-bios, this is
+ 	 * done during endio of sub-bios
+ 	 */
+-	int (*subio_endio)(struct inode *, struct btrfs_io_bio *, int);
++	blk_status_t (*subio_endio)(struct inode *, struct btrfs_io_bio *,
++			blk_status_t);
+ };
+ 
+ /*
+diff --git a/fs/btrfs/check-integrity.c b/fs/btrfs/check-integrity.c
+index ab14c2e635ca..4ded1c3f92b8 100644
+--- a/fs/btrfs/check-integrity.c
++++ b/fs/btrfs/check-integrity.c
+@@ -2129,7 +2129,7 @@ static void btrfsic_bio_end_io(struct bio *bp)
+ 	/* mutex is not held! This is not save if IO is not yet completed
+ 	 * on umount */
+ 	iodone_w_error = 0;
+-	if (bp->bi_error)
++	if (bp->bi_status)
+ 		iodone_w_error = 1;
+ 
+ 	BUG_ON(NULL == block);
+@@ -2143,7 +2143,7 @@ static void btrfsic_bio_end_io(struct bio *bp)
+ 		if ((dev_state->state->print_mask &
+ 		     BTRFSIC_PRINT_MASK_END_IO_BIO_BH))
+ 			pr_info("bio_end_io(err=%d) for %c @%llu (%s/%llu/%d)\n",
+-			       bp->bi_error,
++			       bp->bi_status,
+ 			       btrfsic_get_block_type(dev_state->state, block),
+ 			       block->logical_bytenr, dev_state->name,
+ 			       block->dev_bytenr, block->mirror_num);
+diff --git a/fs/btrfs/compression.c b/fs/btrfs/compression.c
+index 10e6b282d09d..9ac55b266e78 100644
+--- a/fs/btrfs/compression.c
++++ b/fs/btrfs/compression.c
+@@ -155,7 +155,7 @@ static void end_compressed_bio_read(struct bio *bio)
+ 	unsigned long index;
+ 	int ret;
+ 
+-	if (bio->bi_error)
++	if (bio->bi_status)
+ 		cb->errors = 1;
+ 
+ 	/* if there are more bios still pending for this compressed
+@@ -268,7 +268,7 @@ static void end_compressed_bio_write(struct bio *bio)
+ 	struct page *page;
+ 	unsigned long index;
+ 
+-	if (bio->bi_error)
++	if (bio->bi_status)
+ 		cb->errors = 1;
+ 
+ 	/* if there are more bios still pending for this compressed
+@@ -287,7 +287,7 @@ static void end_compressed_bio_write(struct bio *bio)
+ 					 cb->start,
+ 					 cb->start + cb->len - 1,
+ 					 NULL,
+-					 bio->bi_error ? 0 : 1);
++					 bio->bi_status ? 0 : 1);
+ 	cb->compressed_pages[0]->mapping = NULL;
+ 
+ 	end_compressed_writeback(inode, cb);
+@@ -320,7 +320,7 @@ static void end_compressed_bio_write(struct bio *bio)
+  * This also checksums the file bytes and gets things ready for
+  * the end io hooks.
+  */
+-int btrfs_submit_compressed_write(struct inode *inode, u64 start,
++blk_status_t btrfs_submit_compressed_write(struct inode *inode, u64 start,
+ 				 unsigned long len, u64 disk_start,
+ 				 unsigned long compressed_len,
+ 				 struct page **compressed_pages,
+@@ -335,13 +335,13 @@ int btrfs_submit_compressed_write(struct inode *inode, u64 start,
+ 	struct page *page;
+ 	u64 first_byte = disk_start;
+ 	struct block_device *bdev;
 -	int ret;
 +	blk_status_t ret;
- 	int (*handler)(struct Scsi_Host *, struct sas_rphy *, struct request *);
+ 	int skip_sum = BTRFS_I(inode)->flags & BTRFS_INODE_NODATASUM;
  
- 	while ((req = blk_fetch_request(q)) != NULL) {
-diff --git a/drivers/scsi/sg.c b/drivers/scsi/sg.c
-index 82c33a6edbea..f3387c6089c5 100644
---- a/drivers/scsi/sg.c
-+++ b/drivers/scsi/sg.c
-@@ -177,7 +177,7 @@ typedef struct sg_device { /* holds the state of each scsi generic device */
- } Sg_device;
+ 	WARN_ON(start & ((u64)PAGE_SIZE - 1));
+ 	cb = kmalloc(compressed_bio_size(fs_info, compressed_len), GFP_NOFS);
+ 	if (!cb)
+-		return -ENOMEM;
++		return BLK_STS_RESOURCE;
+ 	refcount_set(&cb->pending_bios, 0);
+ 	cb->errors = 0;
+ 	cb->inode = inode;
+@@ -358,7 +358,7 @@ int btrfs_submit_compressed_write(struct inode *inode, u64 start,
+ 	bio = compressed_bio_alloc(bdev, first_byte, GFP_NOFS);
+ 	if (!bio) {
+ 		kfree(cb);
+-		return -ENOMEM;
++		return BLK_STS_RESOURCE;
+ 	}
+ 	bio_set_op_attrs(bio, REQ_OP_WRITE, 0);
+ 	bio->bi_private = cb;
+@@ -368,17 +368,17 @@ int btrfs_submit_compressed_write(struct inode *inode, u64 start,
+ 	/* create and submit bios for the compressed pages */
+ 	bytes_left = compressed_len;
+ 	for (pg_index = 0; pg_index < cb->nr_pages; pg_index++) {
++		int submit = 0;
++
+ 		page = compressed_pages[pg_index];
+ 		page->mapping = inode->i_mapping;
+ 		if (bio->bi_iter.bi_size)
+-			ret = io_tree->ops->merge_bio_hook(page, 0,
++			submit = io_tree->ops->merge_bio_hook(page, 0,
+ 							   PAGE_SIZE,
+ 							   bio, 0);
+-		else
+-			ret = 0;
  
- /* tasklet or soft irq callback */
--static void sg_rq_end_io(struct request *rq, int uptodate);
-+static void sg_rq_end_io(struct request *rq, blk_status_t status);
- static int sg_start_req(Sg_request *srp, unsigned char *cmd);
- static int sg_finish_rem_req(Sg_request * srp);
- static int sg_build_indirect(Sg_scatter_hold * schp, Sg_fd * sfp, int buff_size);
-@@ -808,7 +808,7 @@ sg_common_write(Sg_fd * sfp, Sg_request * srp,
- 	if (atomic_read(&sdp->detaching)) {
- 		if (srp->bio) {
- 			scsi_req_free_cmd(scsi_req(srp->rq));
--			blk_end_request_all(srp->rq, -EIO);
-+			blk_end_request_all(srp->rq, BLK_STS_IOERR);
- 			srp->rq = NULL;
- 		}
+ 		page->mapping = NULL;
+-		if (ret || bio_add_page(bio, page, PAGE_SIZE, 0) <
++		if (submit || bio_add_page(bio, page, PAGE_SIZE, 0) <
+ 		    PAGE_SIZE) {
+ 			bio_get(bio);
  
-@@ -1300,7 +1300,7 @@ sg_rq_end_io_usercontext(struct work_struct *work)
-  * level when a command is completed (or has failed).
+@@ -400,7 +400,7 @@ int btrfs_submit_compressed_write(struct inode *inode, u64 start,
+ 
+ 			ret = btrfs_map_bio(fs_info, bio, 0, 1);
+ 			if (ret) {
+-				bio->bi_error = ret;
++				bio->bi_status = ret;
+ 				bio_endio(bio);
+ 			}
+ 
+@@ -434,7 +434,7 @@ int btrfs_submit_compressed_write(struct inode *inode, u64 start,
+ 
+ 	ret = btrfs_map_bio(fs_info, bio, 0, 1);
+ 	if (ret) {
+-		bio->bi_error = ret;
++		bio->bi_status = ret;
+ 		bio_endio(bio);
+ 	}
+ 
+@@ -569,7 +569,7 @@ static noinline int add_ra_bio_pages(struct inode *inode,
+  * After the compressed pages are read, we copy the bytes into the
+  * bio we were passed and then call the bio end_io calls
   */
- static void
--sg_rq_end_io(struct request *rq, int uptodate)
-+sg_rq_end_io(struct request *rq, blk_status_t status)
+-int btrfs_submit_compressed_read(struct inode *inode, struct bio *bio,
++blk_status_t btrfs_submit_compressed_read(struct inode *inode, struct bio *bio,
+ 				 int mirror_num, unsigned long bio_flags)
  {
- 	struct sg_request *srp = rq->end_io_data;
- 	struct scsi_request *req = scsi_req(rq);
-diff --git a/drivers/scsi/st.c b/drivers/scsi/st.c
-index 1ea34d6f5437..6b1c4ac54e66 100644
---- a/drivers/scsi/st.c
-+++ b/drivers/scsi/st.c
-@@ -511,7 +511,7 @@ static void st_do_stats(struct scsi_tape *STp, struct request *req)
- 	atomic64_dec(&STp->stats->in_flight);
+ 	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
+@@ -586,7 +586,7 @@ int btrfs_submit_compressed_read(struct inode *inode, struct bio *bio,
+ 	u64 em_len;
+ 	u64 em_start;
+ 	struct extent_map *em;
+-	int ret = -ENOMEM;
++	blk_status_t ret = BLK_STS_RESOURCE;
+ 	int faili = 0;
+ 	u32 *sums;
+ 
+@@ -600,7 +600,7 @@ int btrfs_submit_compressed_read(struct inode *inode, struct bio *bio,
+ 				   PAGE_SIZE);
+ 	read_unlock(&em_tree->lock);
+ 	if (!em)
+-		return -EIO;
++		return BLK_STS_IOERR;
+ 
+ 	compressed_len = em->block_len;
+ 	cb = kmalloc(compressed_bio_size(fs_info, compressed_len), GFP_NOFS);
+@@ -659,19 +659,19 @@ int btrfs_submit_compressed_read(struct inode *inode, struct bio *bio,
+ 	refcount_set(&cb->pending_bios, 1);
+ 
+ 	for (pg_index = 0; pg_index < nr_pages; pg_index++) {
++		int submit = 0;
++
+ 		page = cb->compressed_pages[pg_index];
+ 		page->mapping = inode->i_mapping;
+ 		page->index = em_start >> PAGE_SHIFT;
+ 
+ 		if (comp_bio->bi_iter.bi_size)
+-			ret = tree->ops->merge_bio_hook(page, 0,
++			submit = tree->ops->merge_bio_hook(page, 0,
+ 							PAGE_SIZE,
+ 							comp_bio, 0);
+-		else
+-			ret = 0;
+ 
+ 		page->mapping = NULL;
+-		if (ret || bio_add_page(comp_bio, page, PAGE_SIZE, 0) <
++		if (submit || bio_add_page(comp_bio, page, PAGE_SIZE, 0) <
+ 		    PAGE_SIZE) {
+ 			bio_get(comp_bio);
+ 
+@@ -697,7 +697,7 @@ int btrfs_submit_compressed_read(struct inode *inode, struct bio *bio,
+ 
+ 			ret = btrfs_map_bio(fs_info, comp_bio, mirror_num, 0);
+ 			if (ret) {
+-				comp_bio->bi_error = ret;
++				comp_bio->bi_status = ret;
+ 				bio_endio(comp_bio);
+ 			}
+ 
+@@ -726,7 +726,7 @@ int btrfs_submit_compressed_read(struct inode *inode, struct bio *bio,
+ 
+ 	ret = btrfs_map_bio(fs_info, comp_bio, mirror_num, 0);
+ 	if (ret) {
+-		comp_bio->bi_error = ret;
++		comp_bio->bi_status = ret;
+ 		bio_endio(comp_bio);
+ 	}
+ 
+diff --git a/fs/btrfs/compression.h b/fs/btrfs/compression.h
+index 39ec43ab8df1..680d4265d601 100644
+--- a/fs/btrfs/compression.h
++++ b/fs/btrfs/compression.h
+@@ -48,12 +48,12 @@ int btrfs_decompress_buf2page(const char *buf, unsigned long buf_start,
+ 			      unsigned long total_out, u64 disk_start,
+ 			      struct bio *bio);
+ 
+-int btrfs_submit_compressed_write(struct inode *inode, u64 start,
++blk_status_t btrfs_submit_compressed_write(struct inode *inode, u64 start,
+ 				  unsigned long len, u64 disk_start,
+ 				  unsigned long compressed_len,
+ 				  struct page **compressed_pages,
+ 				  unsigned long nr_pages);
+-int btrfs_submit_compressed_read(struct inode *inode, struct bio *bio,
++blk_status_t btrfs_submit_compressed_read(struct inode *inode, struct bio *bio,
+ 				 int mirror_num, unsigned long bio_flags);
+ 
+ enum btrfs_compression_type {
+diff --git a/fs/btrfs/ctree.h b/fs/btrfs/ctree.h
+index 643c70d2b2e6..d2da0a52d560 100644
+--- a/fs/btrfs/ctree.h
++++ b/fs/btrfs/ctree.h
+@@ -3078,8 +3078,8 @@ int btrfs_find_name_in_ext_backref(struct btrfs_path *path,
+ struct btrfs_dio_private;
+ int btrfs_del_csums(struct btrfs_trans_handle *trans,
+ 		    struct btrfs_fs_info *fs_info, u64 bytenr, u64 len);
+-int btrfs_lookup_bio_sums(struct inode *inode, struct bio *bio, u32 *dst);
+-int btrfs_lookup_bio_sums_dio(struct inode *inode, struct bio *bio,
++blk_status_t btrfs_lookup_bio_sums(struct inode *inode, struct bio *bio, u32 *dst);
++blk_status_t btrfs_lookup_bio_sums_dio(struct inode *inode, struct bio *bio,
+ 			      u64 logical_offset);
+ int btrfs_insert_file_extent(struct btrfs_trans_handle *trans,
+ 			     struct btrfs_root *root,
+@@ -3094,7 +3094,7 @@ int btrfs_lookup_file_extent(struct btrfs_trans_handle *trans,
+ int btrfs_csum_file_blocks(struct btrfs_trans_handle *trans,
+ 			   struct btrfs_root *root,
+ 			   struct btrfs_ordered_sum *sums);
+-int btrfs_csum_one_bio(struct inode *inode, struct bio *bio,
++blk_status_t btrfs_csum_one_bio(struct inode *inode, struct bio *bio,
+ 		       u64 file_start, int contig);
+ int btrfs_lookup_csums_range(struct btrfs_root *root, u64 start, u64 end,
+ 			     struct list_head *list, int search_commit);
+diff --git a/fs/btrfs/disk-io.c b/fs/btrfs/disk-io.c
+index 8685d67185d0..46accc75ad5a 100644
+--- a/fs/btrfs/disk-io.c
++++ b/fs/btrfs/disk-io.c
+@@ -87,7 +87,7 @@ struct btrfs_end_io_wq {
+ 	bio_end_io_t *end_io;
+ 	void *private;
+ 	struct btrfs_fs_info *info;
+-	int error;
++	blk_status_t status;
+ 	enum btrfs_wq_endio_type metadata;
+ 	struct list_head list;
+ 	struct btrfs_work work;
+@@ -131,7 +131,7 @@ struct async_submit_bio {
+ 	 */
+ 	u64 bio_offset;
+ 	struct btrfs_work work;
+-	int error;
++	blk_status_t status;
+ };
+ 
+ /*
+@@ -799,7 +799,7 @@ static void end_workqueue_bio(struct bio *bio)
+ 	btrfs_work_func_t func;
+ 
+ 	fs_info = end_io_wq->info;
+-	end_io_wq->error = bio->bi_error;
++	end_io_wq->status = bio->bi_status;
+ 
+ 	if (bio_op(bio) == REQ_OP_WRITE) {
+ 		if (end_io_wq->metadata == BTRFS_WQ_ENDIO_METADATA) {
+@@ -836,19 +836,19 @@ static void end_workqueue_bio(struct bio *bio)
+ 	btrfs_queue_work(wq, &end_io_wq->work);
  }
  
--static void st_scsi_execute_end(struct request *req, int uptodate)
-+static void st_scsi_execute_end(struct request *req, blk_status_t status)
+-int btrfs_bio_wq_end_io(struct btrfs_fs_info *info, struct bio *bio,
++blk_status_t btrfs_bio_wq_end_io(struct btrfs_fs_info *info, struct bio *bio,
+ 			enum btrfs_wq_endio_type metadata)
  {
- 	struct st_request *SRpnt = req->end_io_data;
- 	struct scsi_request *rq = scsi_req(req);
-diff --git a/drivers/target/target_core_pscsi.c b/drivers/target/target_core_pscsi.c
-index 3e4abb13f8ea..323ab47645d0 100644
---- a/drivers/target/target_core_pscsi.c
-+++ b/drivers/target/target_core_pscsi.c
-@@ -55,7 +55,7 @@ static inline struct pscsi_dev_virt *PSCSI_DEV(struct se_device *dev)
+ 	struct btrfs_end_io_wq *end_io_wq;
+ 
+ 	end_io_wq = kmem_cache_alloc(btrfs_end_io_wq_cache, GFP_NOFS);
+ 	if (!end_io_wq)
+-		return -ENOMEM;
++		return BLK_STS_RESOURCE;
+ 
+ 	end_io_wq->private = bio->bi_private;
+ 	end_io_wq->end_io = bio->bi_end_io;
+ 	end_io_wq->info = info;
+-	end_io_wq->error = 0;
++	end_io_wq->status = 0;
+ 	end_io_wq->bio = bio;
+ 	end_io_wq->metadata = metadata;
+ 
+@@ -868,14 +868,14 @@ unsigned long btrfs_async_submit_limit(struct btrfs_fs_info *info)
+ static void run_one_async_start(struct btrfs_work *work)
+ {
+ 	struct async_submit_bio *async;
+-	int ret;
++	blk_status_t ret;
+ 
+ 	async = container_of(work, struct  async_submit_bio, work);
+ 	ret = async->submit_bio_start(async->inode, async->bio,
+ 				      async->mirror_num, async->bio_flags,
+ 				      async->bio_offset);
+ 	if (ret)
+-		async->error = ret;
++		async->status = ret;
  }
  
- static sense_reason_t pscsi_execute_cmd(struct se_cmd *cmd);
--static void pscsi_req_done(struct request *, int);
-+static void pscsi_req_done(struct request *, blk_status_t);
+ static void run_one_async_done(struct btrfs_work *work)
+@@ -898,8 +898,8 @@ static void run_one_async_done(struct btrfs_work *work)
+ 		wake_up(&fs_info->async_submit_wait);
  
- /*	pscsi_attach_hba():
-  *
-@@ -1045,7 +1045,7 @@ static sector_t pscsi_get_blocks(struct se_device *dev)
+ 	/* If an error occurred we just want to clean up the bio and move on */
+-	if (async->error) {
+-		async->bio->bi_error = async->error;
++	if (async->status) {
++		async->bio->bi_status = async->status;
+ 		bio_endio(async->bio);
+ 		return;
+ 	}
+@@ -916,18 +916,17 @@ static void run_one_async_free(struct btrfs_work *work)
+ 	kfree(async);
+ }
+ 
+-int btrfs_wq_submit_bio(struct btrfs_fs_info *fs_info, struct inode *inode,
+-			struct bio *bio, int mirror_num,
+-			unsigned long bio_flags,
+-			u64 bio_offset,
+-			extent_submit_bio_hook_t *submit_bio_start,
+-			extent_submit_bio_hook_t *submit_bio_done)
++blk_status_t btrfs_wq_submit_bio(struct btrfs_fs_info *fs_info,
++		struct inode *inode, struct bio *bio, int mirror_num,
++		unsigned long bio_flags, u64 bio_offset,
++		extent_submit_bio_hook_t *submit_bio_start,
++		extent_submit_bio_hook_t *submit_bio_done)
+ {
+ 	struct async_submit_bio *async;
+ 
+ 	async = kmalloc(sizeof(*async), GFP_NOFS);
+ 	if (!async)
+-		return -ENOMEM;
++		return BLK_STS_RESOURCE;
+ 
+ 	async->inode = inode;
+ 	async->bio = bio;
+@@ -941,7 +940,7 @@ int btrfs_wq_submit_bio(struct btrfs_fs_info *fs_info, struct inode *inode,
+ 	async->bio_flags = bio_flags;
+ 	async->bio_offset = bio_offset;
+ 
+-	async->error = 0;
++	async->status = 0;
+ 
+ 	atomic_inc(&fs_info->nr_async_submits);
+ 
+@@ -959,7 +958,7 @@ int btrfs_wq_submit_bio(struct btrfs_fs_info *fs_info, struct inode *inode,
  	return 0;
  }
  
--static void pscsi_req_done(struct request *req, int uptodate)
-+static void pscsi_req_done(struct request *req, blk_status_t status)
+-static int btree_csum_one_bio(struct bio *bio)
++static blk_status_t btree_csum_one_bio(struct bio *bio)
  {
- 	struct se_cmd *cmd = req->end_io_data;
- 	struct pscsi_plugin_task *pt = cmd->priv;
-diff --git a/include/linux/blk-mq.h b/include/linux/blk-mq.h
-index fcd641032f8d..0cf6735046d3 100644
---- a/include/linux/blk-mq.h
-+++ b/include/linux/blk-mq.h
-@@ -230,8 +230,8 @@ static inline u16 blk_mq_unique_tag_to_tag(u32 unique_tag)
+ 	struct bio_vec *bvec;
+ 	struct btrfs_root *root;
+@@ -972,12 +971,12 @@ static int btree_csum_one_bio(struct bio *bio)
+ 			break;
+ 	}
  
- int blk_mq_request_started(struct request *rq);
- void blk_mq_start_request(struct request *rq);
--void blk_mq_end_request(struct request *rq, int error);
--void __blk_mq_end_request(struct request *rq, int error);
-+void blk_mq_end_request(struct request *rq, blk_status_t error);
-+void __blk_mq_end_request(struct request *rq, blk_status_t error);
+-	return ret;
++	return errno_to_blk_status(ret);
+ }
  
- void blk_mq_requeue_request(struct request *rq, bool kick_requeue_list);
- void blk_mq_add_to_requeue_list(struct request *rq, bool at_head,
+-static int __btree_submit_bio_start(struct inode *inode, struct bio *bio,
+-				    int mirror_num, unsigned long bio_flags,
+-				    u64 bio_offset)
++static blk_status_t __btree_submit_bio_start(struct inode *inode,
++		struct bio *bio, int mirror_num, unsigned long bio_flags,
++		u64 bio_offset)
+ {
+ 	/*
+ 	 * when we're called for a write, we're already in the async
+@@ -986,11 +985,11 @@ static int __btree_submit_bio_start(struct inode *inode, struct bio *bio,
+ 	return btree_csum_one_bio(bio);
+ }
+ 
+-static int __btree_submit_bio_done(struct inode *inode, struct bio *bio,
+-				 int mirror_num, unsigned long bio_flags,
+-				 u64 bio_offset)
++static blk_status_t __btree_submit_bio_done(struct inode *inode,
++		struct bio *bio, int mirror_num, unsigned long bio_flags,
++		u64 bio_offset)
+ {
+-	int ret;
++	blk_status_t ret;
+ 
+ 	/*
+ 	 * when we're called for a write, we're already in the async
+@@ -998,7 +997,7 @@ static int __btree_submit_bio_done(struct inode *inode, struct bio *bio,
+ 	 */
+ 	ret = btrfs_map_bio(btrfs_sb(inode->i_sb), bio, mirror_num, 1);
+ 	if (ret) {
+-		bio->bi_error = ret;
++		bio->bi_status = ret;
+ 		bio_endio(bio);
+ 	}
+ 	return ret;
+@@ -1015,13 +1014,13 @@ static int check_async_write(unsigned long bio_flags)
+ 	return 1;
+ }
+ 
+-static int btree_submit_bio_hook(struct inode *inode, struct bio *bio,
++static blk_status_t btree_submit_bio_hook(struct inode *inode, struct bio *bio,
+ 				 int mirror_num, unsigned long bio_flags,
+ 				 u64 bio_offset)
+ {
+ 	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
+ 	int async = check_async_write(bio_flags);
+-	int ret;
++	blk_status_t ret;
+ 
+ 	if (bio_op(bio) != REQ_OP_WRITE) {
+ 		/*
+@@ -1054,7 +1053,7 @@ static int btree_submit_bio_hook(struct inode *inode, struct bio *bio,
+ 	return 0;
+ 
+ out_w_error:
+-	bio->bi_error = ret;
++	bio->bi_status = ret;
+ 	bio_endio(bio);
+ 	return ret;
+ }
+@@ -1820,7 +1819,7 @@ static void end_workqueue_fn(struct btrfs_work *work)
+ 	end_io_wq = container_of(work, struct btrfs_end_io_wq, work);
+ 	bio = end_io_wq->bio;
+ 
+-	bio->bi_error = end_io_wq->error;
++	bio->bi_status = end_io_wq->status;
+ 	bio->bi_private = end_io_wq->private;
+ 	bio->bi_end_io = end_io_wq->end_io;
+ 	kmem_cache_free(btrfs_end_io_wq_cache, end_io_wq);
+@@ -3495,11 +3494,11 @@ static void btrfs_end_empty_barrier(struct bio *bio)
+  * any device where the flush fails with eopnotsupp are flagged as not-barrier
+  * capable
+  */
+-static int write_dev_flush(struct btrfs_device *device, int wait)
++static blk_status_t write_dev_flush(struct btrfs_device *device, int wait)
+ {
+ 	struct request_queue *q = bdev_get_queue(device->bdev);
+ 	struct bio *bio;
+-	int ret = 0;
++	blk_status_t ret = 0;
+ 
+ 	if (!test_bit(QUEUE_FLAG_WC, &q->queue_flags))
+ 		return 0;
+@@ -3511,8 +3510,8 @@ static int write_dev_flush(struct btrfs_device *device, int wait)
+ 
+ 		wait_for_completion(&device->flush_wait);
+ 
+-		if (bio->bi_error) {
+-			ret = bio->bi_error;
++		if (bio->bi_status) {
++			ret = bio->bi_status;
+ 			btrfs_dev_stat_inc_and_print(device,
+ 				BTRFS_DEV_STAT_FLUSH_ERRS);
+ 		}
+@@ -3531,7 +3530,7 @@ static int write_dev_flush(struct btrfs_device *device, int wait)
+ 	device->flush_bio = NULL;
+ 	bio = btrfs_io_bio_alloc(GFP_NOFS, 0);
+ 	if (!bio)
+-		return -ENOMEM;
++		return BLK_STS_RESOURCE;
+ 
+ 	bio->bi_end_io = btrfs_end_empty_barrier;
+ 	bio->bi_bdev = device->bdev;
+@@ -3556,7 +3555,7 @@ static int barrier_all_devices(struct btrfs_fs_info *info)
+ 	struct btrfs_device *dev;
+ 	int errors_send = 0;
+ 	int errors_wait = 0;
+-	int ret;
++	blk_status_t ret;
+ 
+ 	/* send down all the barriers */
+ 	head = &info->fs_devices->devices;
+diff --git a/fs/btrfs/disk-io.h b/fs/btrfs/disk-io.h
+index 21f1ceb85b76..c581927555f3 100644
+--- a/fs/btrfs/disk-io.h
++++ b/fs/btrfs/disk-io.h
+@@ -118,13 +118,13 @@ int btrfs_buffer_uptodate(struct extent_buffer *buf, u64 parent_transid,
+ int btrfs_read_buffer(struct extent_buffer *buf, u64 parent_transid);
+ u32 btrfs_csum_data(const char *data, u32 seed, size_t len);
+ void btrfs_csum_final(u32 crc, u8 *result);
+-int btrfs_bio_wq_end_io(struct btrfs_fs_info *info, struct bio *bio,
++blk_status_t btrfs_bio_wq_end_io(struct btrfs_fs_info *info, struct bio *bio,
+ 			enum btrfs_wq_endio_type metadata);
+-int btrfs_wq_submit_bio(struct btrfs_fs_info *fs_info, struct inode *inode,
+-			struct bio *bio, int mirror_num,
+-			unsigned long bio_flags, u64 bio_offset,
+-			extent_submit_bio_hook_t *submit_bio_start,
+-			extent_submit_bio_hook_t *submit_bio_done);
++blk_status_t btrfs_wq_submit_bio(struct btrfs_fs_info *fs_info,
++		struct inode *inode, struct bio *bio, int mirror_num,
++		unsigned long bio_flags, u64 bio_offset,
++		extent_submit_bio_hook_t *submit_bio_start,
++		extent_submit_bio_hook_t *submit_bio_done);
+ unsigned long btrfs_async_submit_limit(struct btrfs_fs_info *info);
+ int btrfs_write_tree_block(struct extent_buffer *buf);
+ int btrfs_wait_tree_block_writeback(struct extent_buffer *buf);
+diff --git a/fs/btrfs/extent_io.c b/fs/btrfs/extent_io.c
+index d8da3edf2ac3..35cbb6ceb70d 100644
+--- a/fs/btrfs/extent_io.c
++++ b/fs/btrfs/extent_io.c
+@@ -2399,6 +2399,7 @@ static int bio_readpage_error(struct bio *failed_bio, u64 phy_offset,
+ 	struct extent_io_tree *tree = &BTRFS_I(inode)->io_tree;
+ 	struct bio *bio;
+ 	int read_mode = 0;
++	blk_status_t status;
+ 	int ret;
+ 
+ 	BUG_ON(bio_op(failed_bio) == REQ_OP_WRITE);
+@@ -2431,11 +2432,12 @@ static int bio_readpage_error(struct bio *failed_bio, u64 phy_offset,
+ 		"Repair Read Error: submitting new read[%#x] to this_mirror=%d, in_validation=%d",
+ 		read_mode, failrec->this_mirror, failrec->in_validation);
+ 
+-	ret = tree->ops->submit_bio_hook(inode, bio, failrec->this_mirror,
++	status = tree->ops->submit_bio_hook(inode, bio, failrec->this_mirror,
+ 					 failrec->bio_flags, 0);
+-	if (ret) {
++	if (status) {
+ 		free_io_failure(BTRFS_I(inode), failrec);
+ 		bio_put(bio);
++		ret = blk_status_to_errno(status);
+ 	}
+ 
+ 	return ret;
+@@ -2474,6 +2476,7 @@ void end_extent_writepage(struct page *page, int err, u64 start, u64 end)
+  */
+ static void end_bio_extent_writepage(struct bio *bio)
+ {
++	int error = blk_status_to_errno(bio->bi_status);
+ 	struct bio_vec *bvec;
+ 	u64 start;
+ 	u64 end;
+@@ -2503,7 +2506,7 @@ static void end_bio_extent_writepage(struct bio *bio)
+ 		start = page_offset(page);
+ 		end = start + bvec->bv_offset + bvec->bv_len - 1;
+ 
+-		end_extent_writepage(page, bio->bi_error, start, end);
++		end_extent_writepage(page, error, start, end);
+ 		end_page_writeback(page);
+ 	}
+ 
+@@ -2536,7 +2539,7 @@ endio_readpage_release_extent(struct extent_io_tree *tree, u64 start, u64 len,
+ static void end_bio_extent_readpage(struct bio *bio)
+ {
+ 	struct bio_vec *bvec;
+-	int uptodate = !bio->bi_error;
++	int uptodate = !bio->bi_status;
+ 	struct btrfs_io_bio *io_bio = btrfs_io_bio(bio);
+ 	struct extent_io_tree *tree;
+ 	u64 offset = 0;
+@@ -2556,7 +2559,7 @@ static void end_bio_extent_readpage(struct bio *bio)
+ 
+ 		btrfs_debug(fs_info,
+ 			"end_bio_extent_readpage: bi_sector=%llu, err=%d, mirror=%u",
+-			(u64)bio->bi_iter.bi_sector, bio->bi_error,
++			(u64)bio->bi_iter.bi_sector, bio->bi_status,
+ 			io_bio->mirror_num);
+ 		tree = &BTRFS_I(inode)->io_tree;
+ 
+@@ -2615,7 +2618,7 @@ static void end_bio_extent_readpage(struct bio *bio)
+ 				ret = bio_readpage_error(bio, offset, page,
+ 							 start, end, mirror);
+ 				if (ret == 0) {
+-					uptodate = !bio->bi_error;
++					uptodate = !bio->bi_status;
+ 					offset += len;
+ 					continue;
+ 				}
+@@ -2673,7 +2676,7 @@ static void end_bio_extent_readpage(struct bio *bio)
+ 		endio_readpage_release_extent(tree, extent_start, extent_len,
+ 					      uptodate);
+ 	if (io_bio->end_io)
+-		io_bio->end_io(io_bio, bio->bi_error);
++		io_bio->end_io(io_bio, blk_status_to_errno(bio->bi_status));
+ 	bio_put(bio);
+ }
+ 
+@@ -2743,7 +2746,7 @@ struct bio *btrfs_io_bio_alloc(gfp_t gfp_mask, unsigned int nr_iovecs)
+ static int __must_check submit_one_bio(struct bio *bio, int mirror_num,
+ 				       unsigned long bio_flags)
+ {
+-	int ret = 0;
++	blk_status_t ret = 0;
+ 	struct bio_vec *bvec = bio->bi_io_vec + bio->bi_vcnt - 1;
+ 	struct page *page = bvec->bv_page;
+ 	struct extent_io_tree *tree = bio->bi_private;
+@@ -2761,7 +2764,7 @@ static int __must_check submit_one_bio(struct bio *bio, int mirror_num,
+ 		btrfsic_submit_bio(bio);
+ 
+ 	bio_put(bio);
+-	return ret;
++	return blk_status_to_errno(ret);
+ }
+ 
+ static int merge_bio(struct extent_io_tree *tree, struct page *page,
+@@ -3707,7 +3710,7 @@ static void end_bio_extent_buffer_writepage(struct bio *bio)
+ 		BUG_ON(!eb);
+ 		done = atomic_dec_and_test(&eb->io_pages);
+ 
+-		if (bio->bi_error ||
++		if (bio->bi_status ||
+ 		    test_bit(EXTENT_BUFFER_WRITE_ERR, &eb->bflags)) {
+ 			ClearPageUptodate(page);
+ 			set_btree_ioerr(page);
+diff --git a/fs/btrfs/extent_io.h b/fs/btrfs/extent_io.h
+index 1eafa2f0ede3..487ca0207cb6 100644
+--- a/fs/btrfs/extent_io.h
++++ b/fs/btrfs/extent_io.h
+@@ -92,9 +92,9 @@ struct btrfs_inode;
+ struct btrfs_io_bio;
+ struct io_failure_record;
+ 
+-typedef	int (extent_submit_bio_hook_t)(struct inode *inode, struct bio *bio,
+-				       int mirror_num, unsigned long bio_flags,
+-				       u64 bio_offset);
++typedef	blk_status_t (extent_submit_bio_hook_t)(struct inode *inode,
++		struct bio *bio, int mirror_num, unsigned long bio_flags,
++		u64 bio_offset);
+ struct extent_io_ops {
+ 	/*
+ 	 * The following callbacks must be allways defined, the function
+diff --git a/fs/btrfs/file-item.c b/fs/btrfs/file-item.c
+index 64fcb31d7163..5b1c7090e546 100644
+--- a/fs/btrfs/file-item.c
++++ b/fs/btrfs/file-item.c
+@@ -160,7 +160,7 @@ static void btrfs_io_bio_endio_readpage(struct btrfs_io_bio *bio, int err)
+ 	kfree(bio->csum_allocated);
+ }
+ 
+-static int __btrfs_lookup_bio_sums(struct inode *inode, struct bio *bio,
++static blk_status_t __btrfs_lookup_bio_sums(struct inode *inode, struct bio *bio,
+ 				   u64 logical_offset, u32 *dst, int dio)
+ {
+ 	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
+@@ -182,7 +182,7 @@ static int __btrfs_lookup_bio_sums(struct inode *inode, struct bio *bio,
+ 
+ 	path = btrfs_alloc_path();
+ 	if (!path)
+-		return -ENOMEM;
++		return BLK_STS_RESOURCE;
+ 
+ 	nblocks = bio->bi_iter.bi_size >> inode->i_sb->s_blocksize_bits;
+ 	if (!dst) {
+@@ -191,7 +191,7 @@ static int __btrfs_lookup_bio_sums(struct inode *inode, struct bio *bio,
+ 					csum_size, GFP_NOFS);
+ 			if (!btrfs_bio->csum_allocated) {
+ 				btrfs_free_path(path);
+-				return -ENOMEM;
++				return BLK_STS_RESOURCE;
+ 			}
+ 			btrfs_bio->csum = btrfs_bio->csum_allocated;
+ 			btrfs_bio->end_io = btrfs_io_bio_endio_readpage;
+@@ -303,12 +303,12 @@ static int __btrfs_lookup_bio_sums(struct inode *inode, struct bio *bio,
+ 	return 0;
+ }
+ 
+-int btrfs_lookup_bio_sums(struct inode *inode, struct bio *bio, u32 *dst)
++blk_status_t btrfs_lookup_bio_sums(struct inode *inode, struct bio *bio, u32 *dst)
+ {
+ 	return __btrfs_lookup_bio_sums(inode, bio, 0, dst, 0);
+ }
+ 
+-int btrfs_lookup_bio_sums_dio(struct inode *inode, struct bio *bio, u64 offset)
++blk_status_t btrfs_lookup_bio_sums_dio(struct inode *inode, struct bio *bio, u64 offset)
+ {
+ 	return __btrfs_lookup_bio_sums(inode, bio, offset, NULL, 1);
+ }
+@@ -433,7 +433,7 @@ int btrfs_lookup_csums_range(struct btrfs_root *root, u64 start, u64 end,
+ 	return ret;
+ }
+ 
+-int btrfs_csum_one_bio(struct inode *inode, struct bio *bio,
++blk_status_t btrfs_csum_one_bio(struct inode *inode, struct bio *bio,
+ 		       u64 file_start, int contig)
+ {
+ 	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
+@@ -452,7 +452,7 @@ int btrfs_csum_one_bio(struct inode *inode, struct bio *bio,
+ 	sums = kzalloc(btrfs_ordered_sum_size(fs_info, bio->bi_iter.bi_size),
+ 		       GFP_NOFS);
+ 	if (!sums)
+-		return -ENOMEM;
++		return BLK_STS_RESOURCE;
+ 
+ 	sums->len = bio->bi_iter.bi_size;
+ 	INIT_LIST_HEAD(&sums->list);
+diff --git a/fs/btrfs/inode.c b/fs/btrfs/inode.c
+index 758b2666885e..ea7cae1003eb 100644
+--- a/fs/btrfs/inode.c
++++ b/fs/btrfs/inode.c
+@@ -842,13 +842,12 @@ static noinline void submit_compressed_extents(struct inode *inode,
+ 				NULL, EXTENT_LOCKED | EXTENT_DELALLOC,
+ 				PAGE_UNLOCK | PAGE_CLEAR_DIRTY |
+ 				PAGE_SET_WRITEBACK);
+-		ret = btrfs_submit_compressed_write(inode,
++		if (btrfs_submit_compressed_write(inode,
+ 				    async_extent->start,
+ 				    async_extent->ram_size,
+ 				    ins.objectid,
+ 				    ins.offset, async_extent->pages,
+-				    async_extent->nr_pages);
+-		if (ret) {
++				    async_extent->nr_pages)) {
+ 			struct extent_io_tree *tree = &BTRFS_I(inode)->io_tree;
+ 			struct page *p = async_extent->pages[0];
+ 			const u64 start = async_extent->start;
+@@ -1901,11 +1900,11 @@ int btrfs_merge_bio_hook(struct page *page, unsigned long offset,
+  * At IO completion time the cums attached on the ordered extent record
+  * are inserted into the btree
+  */
+-static int __btrfs_submit_bio_start(struct inode *inode, struct bio *bio,
+-				    int mirror_num, unsigned long bio_flags,
+-				    u64 bio_offset)
++static blk_status_t __btrfs_submit_bio_start(struct inode *inode,
++		struct bio *bio, int mirror_num, unsigned long bio_flags,
++		u64 bio_offset)
+ {
+-	int ret = 0;
++	blk_status_t ret = 0;
+ 
+ 	ret = btrfs_csum_one_bio(inode, bio, 0, 0);
+ 	BUG_ON(ret); /* -ENOMEM */
+@@ -1920,16 +1919,16 @@ static int __btrfs_submit_bio_start(struct inode *inode, struct bio *bio,
+  * At IO completion time the cums attached on the ordered extent record
+  * are inserted into the btree
+  */
+-static int __btrfs_submit_bio_done(struct inode *inode, struct bio *bio,
+-			  int mirror_num, unsigned long bio_flags,
+-			  u64 bio_offset)
++static blk_status_t __btrfs_submit_bio_done(struct inode *inode,
++		struct bio *bio, int mirror_num, unsigned long bio_flags,
++		u64 bio_offset)
+ {
+ 	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
+-	int ret;
++	blk_status_t ret;
+ 
+ 	ret = btrfs_map_bio(fs_info, bio, mirror_num, 1);
+ 	if (ret) {
+-		bio->bi_error = ret;
++		bio->bi_status = ret;
+ 		bio_endio(bio);
+ 	}
+ 	return ret;
+@@ -1939,14 +1938,14 @@ static int __btrfs_submit_bio_done(struct inode *inode, struct bio *bio,
+  * extent_io.c submission hook. This does the right thing for csum calculation
+  * on write, or reading the csums from the tree before a read
+  */
+-static int btrfs_submit_bio_hook(struct inode *inode, struct bio *bio,
++static blk_status_t btrfs_submit_bio_hook(struct inode *inode, struct bio *bio,
+ 			  int mirror_num, unsigned long bio_flags,
+ 			  u64 bio_offset)
+ {
+ 	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
+ 	struct btrfs_root *root = BTRFS_I(inode)->root;
+ 	enum btrfs_wq_endio_type metadata = BTRFS_WQ_ENDIO_DATA;
+-	int ret = 0;
++	blk_status_t ret = 0;
+ 	int skip_sum;
+ 	int async = !atomic_read(&BTRFS_I(inode)->sync_writers);
+ 
+@@ -1991,8 +1990,8 @@ static int btrfs_submit_bio_hook(struct inode *inode, struct bio *bio,
+ 	ret = btrfs_map_bio(fs_info, bio, mirror_num, 0);
+ 
+ out:
+-	if (ret < 0) {
+-		bio->bi_error = ret;
++	if (ret) {
++		bio->bi_status = ret;
+ 		bio_endio(bio);
+ 	}
+ 	return ret;
+@@ -8037,7 +8036,7 @@ static void btrfs_retry_endio_nocsum(struct bio *bio)
+ 	struct bio_vec *bvec;
+ 	int i;
+ 
+-	if (bio->bi_error)
++	if (bio->bi_status)
+ 		goto end;
+ 
+ 	ASSERT(bio->bi_vcnt == 1);
+@@ -8116,7 +8115,7 @@ static void btrfs_retry_endio(struct bio *bio)
+ 	int ret;
+ 	int i;
+ 
+-	if (bio->bi_error)
++	if (bio->bi_status)
+ 		goto end;
+ 
+ 	uptodate = 1;
+@@ -8141,8 +8140,8 @@ static void btrfs_retry_endio(struct bio *bio)
+ 	bio_put(bio);
+ }
+ 
+-static int __btrfs_subio_endio_read(struct inode *inode,
+-				    struct btrfs_io_bio *io_bio, int err)
++static blk_status_t __btrfs_subio_endio_read(struct inode *inode,
++		struct btrfs_io_bio *io_bio, blk_status_t err)
+ {
+ 	struct btrfs_fs_info *fs_info;
+ 	struct bio_vec *bvec;
+@@ -8184,7 +8183,7 @@ static int __btrfs_subio_endio_read(struct inode *inode,
+ 				io_bio->mirror_num,
+ 				btrfs_retry_endio, &done);
+ 		if (ret) {
+-			err = ret;
++			err = errno_to_blk_status(ret);
+ 			goto next;
+ 		}
+ 
+@@ -8211,8 +8210,8 @@ static int __btrfs_subio_endio_read(struct inode *inode,
+ 	return err;
+ }
+ 
+-static int btrfs_subio_endio_read(struct inode *inode,
+-				  struct btrfs_io_bio *io_bio, int err)
++static blk_status_t btrfs_subio_endio_read(struct inode *inode,
++		struct btrfs_io_bio *io_bio, blk_status_t err)
+ {
+ 	bool skip_csum = BTRFS_I(inode)->flags & BTRFS_INODE_NODATASUM;
+ 
+@@ -8232,7 +8231,7 @@ static void btrfs_endio_direct_read(struct bio *bio)
+ 	struct inode *inode = dip->inode;
+ 	struct bio *dio_bio;
+ 	struct btrfs_io_bio *io_bio = btrfs_io_bio(bio);
+-	int err = bio->bi_error;
++	blk_status_t err = bio->bi_status;
+ 
+ 	if (dip->flags & BTRFS_DIO_ORIG_BIO_SUBMITTED)
+ 		err = btrfs_subio_endio_read(inode, io_bio, err);
+@@ -8243,11 +8242,11 @@ static void btrfs_endio_direct_read(struct bio *bio)
+ 
+ 	kfree(dip);
+ 
+-	dio_bio->bi_error = bio->bi_error;
++	dio_bio->bi_status = bio->bi_status;
+ 	dio_end_io(dio_bio);
+ 
+ 	if (io_bio->end_io)
+-		io_bio->end_io(io_bio, err);
++		io_bio->end_io(io_bio, blk_status_to_errno(err));
+ 	bio_put(bio);
+ }
+ 
+@@ -8299,20 +8298,20 @@ static void btrfs_endio_direct_write(struct bio *bio)
+ 	struct bio *dio_bio = dip->dio_bio;
+ 
+ 	__endio_write_update_ordered(dip->inode, dip->logical_offset,
+-				     dip->bytes, !bio->bi_error);
++				     dip->bytes, !bio->bi_status);
+ 
+ 	kfree(dip);
+ 
+-	dio_bio->bi_error = bio->bi_error;
++	dio_bio->bi_status = bio->bi_status;
+ 	dio_end_io(dio_bio);
+ 	bio_put(bio);
+ }
+ 
+-static int __btrfs_submit_bio_start_direct_io(struct inode *inode,
++static blk_status_t __btrfs_submit_bio_start_direct_io(struct inode *inode,
+ 				    struct bio *bio, int mirror_num,
+ 				    unsigned long bio_flags, u64 offset)
+ {
+-	int ret;
++	blk_status_t ret;
+ 	ret = btrfs_csum_one_bio(inode, bio, offset, 1);
+ 	BUG_ON(ret); /* -ENOMEM */
+ 	return 0;
+@@ -8321,7 +8320,7 @@ static int __btrfs_submit_bio_start_direct_io(struct inode *inode,
+ static void btrfs_end_dio_bio(struct bio *bio)
+ {
+ 	struct btrfs_dio_private *dip = bio->bi_private;
+-	int err = bio->bi_error;
++	blk_status_t err = bio->bi_status;
+ 
+ 	if (err)
+ 		btrfs_warn(BTRFS_I(dip->inode)->root->fs_info,
+@@ -8351,7 +8350,7 @@ static void btrfs_end_dio_bio(struct bio *bio)
+ 	if (dip->errors) {
+ 		bio_io_error(dip->orig_bio);
+ 	} else {
+-		dip->dio_bio->bi_error = 0;
++		dip->dio_bio->bi_status = 0;
+ 		bio_endio(dip->orig_bio);
+ 	}
+ out:
+@@ -8368,14 +8367,14 @@ static struct bio *btrfs_dio_bio_alloc(struct block_device *bdev,
+ 	return bio;
+ }
+ 
+-static inline int btrfs_lookup_and_bind_dio_csum(struct inode *inode,
++static inline blk_status_t btrfs_lookup_and_bind_dio_csum(struct inode *inode,
+ 						 struct btrfs_dio_private *dip,
+ 						 struct bio *bio,
+ 						 u64 file_offset)
+ {
+ 	struct btrfs_io_bio *io_bio = btrfs_io_bio(bio);
+ 	struct btrfs_io_bio *orig_io_bio = btrfs_io_bio(dip->orig_bio);
+-	int ret;
++	blk_status_t ret;
+ 
+ 	/*
+ 	 * We load all the csum data we need when we submit
+@@ -8406,7 +8405,7 @@ static inline int __btrfs_submit_dio_bio(struct bio *bio, struct inode *inode,
+ 	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
+ 	struct btrfs_dio_private *dip = bio->bi_private;
+ 	bool write = bio_op(bio) == REQ_OP_WRITE;
+-	int ret;
++	blk_status_t ret;
+ 
+ 	if (async_submit)
+ 		async_submit = !atomic_read(&BTRFS_I(inode)->sync_writers);
+@@ -8649,7 +8648,7 @@ static void btrfs_submit_direct(struct bio *dio_bio, struct inode *inode,
+ 	 * callbacks - they require an allocated dip and a clone of dio_bio.
+ 	 */
+ 	if (io_bio && dip) {
+-		io_bio->bi_error = -EIO;
++		io_bio->bi_status = BLK_STS_IOERR;
+ 		bio_endio(io_bio);
+ 		/*
+ 		 * The end io callbacks free our dip, do the final put on io_bio
+@@ -8668,7 +8667,7 @@ static void btrfs_submit_direct(struct bio *dio_bio, struct inode *inode,
+ 			unlock_extent(&BTRFS_I(inode)->io_tree, file_offset,
+ 			      file_offset + dio_bio->bi_iter.bi_size - 1);
+ 
+-		dio_bio->bi_error = -EIO;
++		dio_bio->bi_status = BLK_STS_IOERR;
+ 		/*
+ 		 * Releases and cleans up our dio_bio, no need to bio_put()
+ 		 * nor bio_endio()/bio_io_error() against dio_bio.
+diff --git a/fs/btrfs/raid56.c b/fs/btrfs/raid56.c
+index d8ea0eb76325..f3d30d9ea8f9 100644
+--- a/fs/btrfs/raid56.c
++++ b/fs/btrfs/raid56.c
+@@ -871,7 +871,7 @@ static void free_raid_bio(struct btrfs_raid_bio *rbio)
+  * this frees the rbio and runs through all the bios in the
+  * bio_list and calls end_io on them
+  */
+-static void rbio_orig_end_io(struct btrfs_raid_bio *rbio, int err)
++static void rbio_orig_end_io(struct btrfs_raid_bio *rbio, blk_status_t err)
+ {
+ 	struct bio *cur = bio_list_get(&rbio->bio_list);
+ 	struct bio *next;
+@@ -884,7 +884,7 @@ static void rbio_orig_end_io(struct btrfs_raid_bio *rbio, int err)
+ 	while (cur) {
+ 		next = cur->bi_next;
+ 		cur->bi_next = NULL;
+-		cur->bi_error = err;
++		cur->bi_status = err;
+ 		bio_endio(cur);
+ 		cur = next;
+ 	}
+@@ -897,7 +897,7 @@ static void rbio_orig_end_io(struct btrfs_raid_bio *rbio, int err)
+ static void raid_write_end_io(struct bio *bio)
+ {
+ 	struct btrfs_raid_bio *rbio = bio->bi_private;
+-	int err = bio->bi_error;
++	blk_status_t err = bio->bi_status;
+ 	int max_errors;
+ 
+ 	if (err)
+@@ -914,7 +914,7 @@ static void raid_write_end_io(struct bio *bio)
+ 	max_errors = (rbio->operation == BTRFS_RBIO_PARITY_SCRUB) ?
+ 		     0 : rbio->bbio->max_errors;
+ 	if (atomic_read(&rbio->error) > max_errors)
+-		err = -EIO;
++		err = BLK_STS_IOERR;
+ 
+ 	rbio_orig_end_io(rbio, err);
+ }
+@@ -1092,7 +1092,7 @@ static int rbio_add_io_page(struct btrfs_raid_bio *rbio,
+ 		 * devices or if they are not contiguous
+ 		 */
+ 		if (last_end == disk_start && stripe->dev->bdev &&
+-		    !last->bi_error &&
++		    !last->bi_status &&
+ 		    last->bi_bdev == stripe->dev->bdev) {
+ 			ret = bio_add_page(last, page, PAGE_SIZE, 0);
+ 			if (ret == PAGE_SIZE)
+@@ -1448,7 +1448,7 @@ static void raid_rmw_end_io(struct bio *bio)
+ {
+ 	struct btrfs_raid_bio *rbio = bio->bi_private;
+ 
+-	if (bio->bi_error)
++	if (bio->bi_status)
+ 		fail_bio_stripe(rbio, bio);
+ 	else
+ 		set_bio_pages_uptodate(bio);
+@@ -1991,7 +1991,7 @@ static void raid_recover_end_io(struct bio *bio)
+ 	 * we only read stripe pages off the disk, set them
+ 	 * up to date if there were no errors
+ 	 */
+-	if (bio->bi_error)
++	if (bio->bi_status)
+ 		fail_bio_stripe(rbio, bio);
+ 	else
+ 		set_bio_pages_uptodate(bio);
+@@ -2530,7 +2530,7 @@ static void raid56_parity_scrub_end_io(struct bio *bio)
+ {
+ 	struct btrfs_raid_bio *rbio = bio->bi_private;
+ 
+-	if (bio->bi_error)
++	if (bio->bi_status)
+ 		fail_bio_stripe(rbio, bio);
+ 	else
+ 		set_bio_pages_uptodate(bio);
+diff --git a/fs/btrfs/scrub.c b/fs/btrfs/scrub.c
+index c7b45eb2403d..ba5595d19de1 100644
+--- a/fs/btrfs/scrub.c
++++ b/fs/btrfs/scrub.c
+@@ -95,7 +95,7 @@ struct scrub_bio {
+ 	struct scrub_ctx	*sctx;
+ 	struct btrfs_device	*dev;
+ 	struct bio		*bio;
+-	int			err;
++	blk_status_t		status;
+ 	u64			logical;
+ 	u64			physical;
+ #if SCRUB_PAGES_PER_WR_BIO >= SCRUB_PAGES_PER_RD_BIO
+@@ -1668,14 +1668,14 @@ static int scrub_setup_recheck_block(struct scrub_block *original_sblock,
+ 
+ struct scrub_bio_ret {
+ 	struct completion event;
+-	int error;
++	blk_status_t status;
+ };
+ 
+ static void scrub_bio_wait_endio(struct bio *bio)
+ {
+ 	struct scrub_bio_ret *ret = bio->bi_private;
+ 
+-	ret->error = bio->bi_error;
++	ret->status = bio->bi_status;
+ 	complete(&ret->event);
+ }
+ 
+@@ -1693,7 +1693,7 @@ static int scrub_submit_raid56_bio_wait(struct btrfs_fs_info *fs_info,
+ 	int ret;
+ 
+ 	init_completion(&done.event);
+-	done.error = 0;
++	done.status = 0;
+ 	bio->bi_iter.bi_sector = page->logical >> 9;
+ 	bio->bi_private = &done;
+ 	bio->bi_end_io = scrub_bio_wait_endio;
+@@ -1705,7 +1705,7 @@ static int scrub_submit_raid56_bio_wait(struct btrfs_fs_info *fs_info,
+ 		return ret;
+ 
+ 	wait_for_completion(&done.event);
+-	if (done.error)
++	if (done.status)
+ 		return -EIO;
+ 
+ 	return 0;
+@@ -1937,7 +1937,7 @@ static int scrub_add_page_to_wr_bio(struct scrub_ctx *sctx,
+ 		bio->bi_bdev = sbio->dev->bdev;
+ 		bio->bi_iter.bi_sector = sbio->physical >> 9;
+ 		bio_set_op_attrs(bio, REQ_OP_WRITE, 0);
+-		sbio->err = 0;
++		sbio->status = 0;
+ 	} else if (sbio->physical + sbio->page_count * PAGE_SIZE !=
+ 		   spage->physical_for_dev_replace ||
+ 		   sbio->logical + sbio->page_count * PAGE_SIZE !=
+@@ -1992,7 +1992,7 @@ static void scrub_wr_bio_end_io(struct bio *bio)
+ 	struct scrub_bio *sbio = bio->bi_private;
+ 	struct btrfs_fs_info *fs_info = sbio->dev->fs_info;
+ 
+-	sbio->err = bio->bi_error;
++	sbio->status = bio->bi_status;
+ 	sbio->bio = bio;
+ 
+ 	btrfs_init_work(&sbio->work, btrfs_scrubwrc_helper,
+@@ -2007,7 +2007,7 @@ static void scrub_wr_bio_end_io_worker(struct btrfs_work *work)
+ 	int i;
+ 
+ 	WARN_ON(sbio->page_count > SCRUB_PAGES_PER_WR_BIO);
+-	if (sbio->err) {
++	if (sbio->status) {
+ 		struct btrfs_dev_replace *dev_replace =
+ 			&sbio->sctx->fs_info->dev_replace;
+ 
+@@ -2341,7 +2341,7 @@ static int scrub_add_page_to_rd_bio(struct scrub_ctx *sctx,
+ 		bio->bi_bdev = sbio->dev->bdev;
+ 		bio->bi_iter.bi_sector = sbio->physical >> 9;
+ 		bio_set_op_attrs(bio, REQ_OP_READ, 0);
+-		sbio->err = 0;
++		sbio->status = 0;
+ 	} else if (sbio->physical + sbio->page_count * PAGE_SIZE !=
+ 		   spage->physical ||
+ 		   sbio->logical + sbio->page_count * PAGE_SIZE !=
+@@ -2377,7 +2377,7 @@ static void scrub_missing_raid56_end_io(struct bio *bio)
+ 	struct scrub_block *sblock = bio->bi_private;
+ 	struct btrfs_fs_info *fs_info = sblock->sctx->fs_info;
+ 
+-	if (bio->bi_error)
++	if (bio->bi_status)
+ 		sblock->no_io_error_seen = 0;
+ 
+ 	bio_put(bio);
+@@ -2588,7 +2588,7 @@ static void scrub_bio_end_io(struct bio *bio)
+ 	struct scrub_bio *sbio = bio->bi_private;
+ 	struct btrfs_fs_info *fs_info = sbio->dev->fs_info;
+ 
+-	sbio->err = bio->bi_error;
++	sbio->status = bio->bi_status;
+ 	sbio->bio = bio;
+ 
+ 	btrfs_queue_work(fs_info->scrub_workers, &sbio->work);
+@@ -2601,7 +2601,7 @@ static void scrub_bio_end_io_worker(struct btrfs_work *work)
+ 	int i;
+ 
+ 	BUG_ON(sbio->page_count > SCRUB_PAGES_PER_RD_BIO);
+-	if (sbio->err) {
++	if (sbio->status) {
+ 		for (i = 0; i < sbio->page_count; i++) {
+ 			struct scrub_page *spage = sbio->pagev[i];
+ 
+@@ -3004,7 +3004,7 @@ static void scrub_parity_bio_endio(struct bio *bio)
+ 	struct scrub_parity *sparity = (struct scrub_parity *)bio->bi_private;
+ 	struct btrfs_fs_info *fs_info = sparity->sctx->fs_info;
+ 
+-	if (bio->bi_error)
++	if (bio->bi_status)
+ 		bitmap_or(sparity->ebitmap, sparity->ebitmap, sparity->dbitmap,
+ 			  sparity->nsectors);
+ 
+diff --git a/fs/btrfs/volumes.c b/fs/btrfs/volumes.c
+index 017b67daa3bb..84a495967e0a 100644
+--- a/fs/btrfs/volumes.c
++++ b/fs/btrfs/volumes.c
+@@ -6042,9 +6042,10 @@ static void btrfs_end_bio(struct bio *bio)
+ 	struct btrfs_bio *bbio = bio->bi_private;
+ 	int is_orig_bio = 0;
+ 
+-	if (bio->bi_error) {
++	if (bio->bi_status) {
+ 		atomic_inc(&bbio->error);
+-		if (bio->bi_error == -EIO || bio->bi_error == -EREMOTEIO) {
++		if (bio->bi_status == BLK_STS_IOERR ||
++		    bio->bi_status == BLK_STS_TARGET) {
+ 			unsigned int stripe_index =
+ 				btrfs_io_bio(bio)->stripe_index;
+ 			struct btrfs_device *dev;
+@@ -6082,13 +6083,13 @@ static void btrfs_end_bio(struct bio *bio)
+ 		 * beyond the tolerance of the btrfs bio
+ 		 */
+ 		if (atomic_read(&bbio->error) > bbio->max_errors) {
+-			bio->bi_error = -EIO;
++			bio->bi_status = BLK_STS_IOERR;
+ 		} else {
+ 			/*
+ 			 * this bio is actually up to date, we didn't
+ 			 * go over the max number of errors
+ 			 */
+-			bio->bi_error = 0;
++			bio->bi_status = 0;
+ 		}
+ 
+ 		btrfs_end_bbio(bbio, bio);
+@@ -6199,7 +6200,7 @@ static void bbio_error(struct btrfs_bio *bbio, struct bio *bio, u64 logical)
+ 
+ 		btrfs_io_bio(bio)->mirror_num = bbio->mirror_num;
+ 		bio->bi_iter.bi_sector = logical >> 9;
+-		bio->bi_error = -EIO;
++		bio->bi_status = BLK_STS_IOERR;
+ 		btrfs_end_bbio(bbio, bio);
+ 	}
+ }
+diff --git a/fs/buffer.c b/fs/buffer.c
+index 161be58c5cb0..306b720f7383 100644
+--- a/fs/buffer.c
++++ b/fs/buffer.c
+@@ -3038,7 +3038,7 @@ static void end_bio_bh_io_sync(struct bio *bio)
+ 	if (unlikely(bio_flagged(bio, BIO_QUIET)))
+ 		set_bit(BH_Quiet, &bh->b_state);
+ 
+-	bh->b_end_io(bh, !bio->bi_error);
++	bh->b_end_io(bh, !bio->bi_status);
+ 	bio_put(bio);
+ }
+ 
+diff --git a/fs/crypto/bio.c b/fs/crypto/bio.c
+index a409a84f1bca..6181e9526860 100644
+--- a/fs/crypto/bio.c
++++ b/fs/crypto/bio.c
+@@ -129,7 +129,7 @@ int fscrypt_zeroout_range(const struct inode *inode, pgoff_t lblk,
+ 			goto errout;
+ 		}
+ 		err = submit_bio_wait(bio);
+-		if ((err == 0) && bio->bi_error)
++		if (err == 0 && bio->bi_status)
+ 			err = -EIO;
+ 		bio_put(bio);
+ 		if (err)
+diff --git a/fs/direct-io.c b/fs/direct-io.c
+index bb711e4b86c2..e8baaabebf13 100644
+--- a/fs/direct-io.c
++++ b/fs/direct-io.c
+@@ -294,7 +294,7 @@ static void dio_aio_complete_work(struct work_struct *work)
+ 	dio_complete(dio, 0, true);
+ }
+ 
+-static int dio_bio_complete(struct dio *dio, struct bio *bio);
++static blk_status_t dio_bio_complete(struct dio *dio, struct bio *bio);
+ 
+ /*
+  * Asynchronous IO callback. 
+@@ -473,11 +473,11 @@ static struct bio *dio_await_one(struct dio *dio)
+ /*
+  * Process one completed BIO.  No locks are held.
+  */
+-static int dio_bio_complete(struct dio *dio, struct bio *bio)
++static blk_status_t dio_bio_complete(struct dio *dio, struct bio *bio)
+ {
+ 	struct bio_vec *bvec;
+ 	unsigned i;
+-	int err = bio->bi_error;
++	blk_status_t err = bio->bi_status;
+ 
+ 	if (err)
+ 		dio->io_error = -EIO;
+@@ -536,7 +536,7 @@ static inline int dio_bio_reap(struct dio *dio, struct dio_submit *sdio)
+ 			bio = dio->bio_list;
+ 			dio->bio_list = bio->bi_private;
+ 			spin_unlock_irqrestore(&dio->bio_lock, flags);
+-			ret2 = dio_bio_complete(dio, bio);
++			ret2 = blk_status_to_errno(dio_bio_complete(dio, bio));
+ 			if (ret == 0)
+ 				ret = ret2;
+ 		}
+diff --git a/fs/ext4/page-io.c b/fs/ext4/page-io.c
+index 1a82138ba739..930ca0fc9a0f 100644
+--- a/fs/ext4/page-io.c
++++ b/fs/ext4/page-io.c
+@@ -85,7 +85,7 @@ static void ext4_finish_bio(struct bio *bio)
+ 		}
+ #endif
+ 
+-		if (bio->bi_error) {
++		if (bio->bi_status) {
+ 			SetPageError(page);
+ 			mapping_set_error(page->mapping, -EIO);
+ 		}
+@@ -104,7 +104,7 @@ static void ext4_finish_bio(struct bio *bio)
+ 				continue;
+ 			}
+ 			clear_buffer_async_write(bh);
+-			if (bio->bi_error)
++			if (bio->bi_status)
+ 				buffer_io_error(bh);
+ 		} while ((bh = bh->b_this_page) != head);
+ 		bit_spin_unlock(BH_Uptodate_Lock, &head->b_state);
+@@ -303,24 +303,25 @@ static void ext4_end_bio(struct bio *bio)
+ 		      bdevname(bio->bi_bdev, b),
+ 		      (long long) bio->bi_iter.bi_sector,
+ 		      (unsigned) bio_sectors(bio),
+-		      bio->bi_error)) {
++		      bio->bi_status)) {
+ 		ext4_finish_bio(bio);
+ 		bio_put(bio);
+ 		return;
+ 	}
+ 	bio->bi_end_io = NULL;
+ 
+-	if (bio->bi_error) {
++	if (bio->bi_status) {
+ 		struct inode *inode = io_end->inode;
+ 
+ 		ext4_warning(inode->i_sb, "I/O error %d writing to inode %lu "
+ 			     "(offset %llu size %ld starting block %llu)",
+-			     bio->bi_error, inode->i_ino,
++			     bio->bi_status, inode->i_ino,
+ 			     (unsigned long long) io_end->offset,
+ 			     (long) io_end->size,
+ 			     (unsigned long long)
+ 			     bi_sector >> (inode->i_blkbits - 9));
+-		mapping_set_error(inode->i_mapping, bio->bi_error);
++		mapping_set_error(inode->i_mapping,
++				blk_status_to_errno(bio->bi_status));
+ 	}
+ 
+ 	if (io_end->flag & EXT4_IO_END_UNWRITTEN) {
+diff --git a/fs/ext4/readpage.c b/fs/ext4/readpage.c
+index a81b829d56de..40a5497b0f60 100644
+--- a/fs/ext4/readpage.c
++++ b/fs/ext4/readpage.c
+@@ -73,7 +73,7 @@ static void mpage_end_io(struct bio *bio)
+ 	int i;
+ 
+ 	if (ext4_bio_encrypted(bio)) {
+-		if (bio->bi_error) {
++		if (bio->bi_status) {
+ 			fscrypt_release_ctx(bio->bi_private);
+ 		} else {
+ 			fscrypt_decrypt_bio_pages(bio->bi_private, bio);
+@@ -83,7 +83,7 @@ static void mpage_end_io(struct bio *bio)
+ 	bio_for_each_segment_all(bv, bio, i) {
+ 		struct page *page = bv->bv_page;
+ 
+-		if (!bio->bi_error) {
++		if (!bio->bi_status) {
+ 			SetPageUptodate(page);
+ 		} else {
+ 			ClearPageUptodate(page);
+diff --git a/fs/f2fs/data.c b/fs/f2fs/data.c
+index 7c0f6bdf817d..36fe82012a33 100644
+--- a/fs/f2fs/data.c
++++ b/fs/f2fs/data.c
+@@ -58,12 +58,12 @@ static void f2fs_read_end_io(struct bio *bio)
+ #ifdef CONFIG_F2FS_FAULT_INJECTION
+ 	if (time_to_inject(F2FS_P_SB(bio->bi_io_vec->bv_page), FAULT_IO)) {
+ 		f2fs_show_injection_info(FAULT_IO);
+-		bio->bi_error = -EIO;
++		bio->bi_status = BLK_STS_IOERR;
+ 	}
+ #endif
+ 
+ 	if (f2fs_bio_encrypted(bio)) {
+-		if (bio->bi_error) {
++		if (bio->bi_status) {
+ 			fscrypt_release_ctx(bio->bi_private);
+ 		} else {
+ 			fscrypt_decrypt_bio_pages(bio->bi_private, bio);
+@@ -74,7 +74,7 @@ static void f2fs_read_end_io(struct bio *bio)
+ 	bio_for_each_segment_all(bvec, bio, i) {
+ 		struct page *page = bvec->bv_page;
+ 
+-		if (!bio->bi_error) {
++		if (!bio->bi_status) {
+ 			if (!PageUptodate(page))
+ 				SetPageUptodate(page);
+ 		} else {
+@@ -102,14 +102,14 @@ static void f2fs_write_end_io(struct bio *bio)
+ 			unlock_page(page);
+ 			mempool_free(page, sbi->write_io_dummy);
+ 
+-			if (unlikely(bio->bi_error))
++			if (unlikely(bio->bi_status))
+ 				f2fs_stop_checkpoint(sbi, true);
+ 			continue;
+ 		}
+ 
+ 		fscrypt_pullback_bio_page(&page, true);
+ 
+-		if (unlikely(bio->bi_error)) {
++		if (unlikely(bio->bi_status)) {
+ 			mapping_set_error(page->mapping, -EIO);
+ 			f2fs_stop_checkpoint(sbi, true);
+ 		}
+diff --git a/fs/f2fs/segment.c b/fs/f2fs/segment.c
+index 96845854e7ee..ea9f455d94ba 100644
+--- a/fs/f2fs/segment.c
++++ b/fs/f2fs/segment.c
+@@ -749,7 +749,7 @@ static void f2fs_submit_discard_endio(struct bio *bio)
+ {
+ 	struct discard_cmd *dc = (struct discard_cmd *)bio->bi_private;
+ 
+-	dc->error = bio->bi_error;
++	dc->error = blk_status_to_errno(bio->bi_status);
+ 	dc->state = D_DONE;
+ 	complete(&dc->wait);
+ 	bio_put(bio);
+diff --git a/fs/gfs2/lops.c b/fs/gfs2/lops.c
+index 13ebf15a4db0..885d36e7a29f 100644
+--- a/fs/gfs2/lops.c
++++ b/fs/gfs2/lops.c
+@@ -170,7 +170,7 @@ static u64 gfs2_log_bmap(struct gfs2_sbd *sdp)
+  */
+ 
+ static void gfs2_end_log_write_bh(struct gfs2_sbd *sdp, struct bio_vec *bvec,
+-				  int error)
++				  blk_status_t error)
+ {
+ 	struct buffer_head *bh, *next;
+ 	struct page *page = bvec->bv_page;
+@@ -209,13 +209,13 @@ static void gfs2_end_log_write(struct bio *bio)
+ 	struct page *page;
+ 	int i;
+ 
+-	if (bio->bi_error)
+-		fs_err(sdp, "Error %d writing to log\n", bio->bi_error);
++	if (bio->bi_status)
++		fs_err(sdp, "Error %d writing to log\n", bio->bi_status);
+ 
+ 	bio_for_each_segment_all(bvec, bio, i) {
+ 		page = bvec->bv_page;
+ 		if (page_has_buffers(page))
+-			gfs2_end_log_write_bh(sdp, bvec, bio->bi_error);
++			gfs2_end_log_write_bh(sdp, bvec, bio->bi_status);
+ 		else
+ 			mempool_free(page, gfs2_page_pool);
+ 	}
+diff --git a/fs/gfs2/meta_io.c b/fs/gfs2/meta_io.c
+index 663ffc135ef3..fabe1614f879 100644
+--- a/fs/gfs2/meta_io.c
++++ b/fs/gfs2/meta_io.c
+@@ -201,7 +201,7 @@ static void gfs2_meta_read_endio(struct bio *bio)
+ 		do {
+ 			struct buffer_head *next = bh->b_this_page;
+ 			len -= bh->b_size;
+-			bh->b_end_io(bh, !bio->bi_error);
++			bh->b_end_io(bh, !bio->bi_status);
+ 			bh = next;
+ 		} while (bh && len);
+ 	}
+diff --git a/fs/gfs2/ops_fstype.c b/fs/gfs2/ops_fstype.c
+index ed67548b286c..83953cdbbc6c 100644
+--- a/fs/gfs2/ops_fstype.c
++++ b/fs/gfs2/ops_fstype.c
+@@ -176,10 +176,10 @@ static void end_bio_io_page(struct bio *bio)
+ {
+ 	struct page *page = bio->bi_private;
+ 
+-	if (!bio->bi_error)
++	if (!bio->bi_status)
+ 		SetPageUptodate(page);
+ 	else
+-		pr_warn("error %d reading superblock\n", bio->bi_error);
++		pr_warn("error %d reading superblock\n", bio->bi_status);
+ 	unlock_page(page);
+ }
+ 
+diff --git a/fs/iomap.c b/fs/iomap.c
+index 4b10892967a5..18f2f2b8ba2c 100644
+--- a/fs/iomap.c
++++ b/fs/iomap.c
+@@ -672,8 +672,8 @@ static void iomap_dio_bio_end_io(struct bio *bio)
+ 	struct iomap_dio *dio = bio->bi_private;
+ 	bool should_dirty = (dio->flags & IOMAP_DIO_DIRTY);
+ 
+-	if (bio->bi_error)
+-		iomap_dio_set_error(dio, bio->bi_error);
++	if (bio->bi_status)
++		iomap_dio_set_error(dio, blk_status_to_errno(bio->bi_status));
+ 
+ 	if (atomic_dec_and_test(&dio->ref)) {
+ 		if (is_sync_kiocb(dio->iocb)) {
+diff --git a/fs/jfs/jfs_logmgr.c b/fs/jfs/jfs_logmgr.c
+index bb1da1feafeb..a21f0e9eecd4 100644
+--- a/fs/jfs/jfs_logmgr.c
++++ b/fs/jfs/jfs_logmgr.c
+@@ -2205,7 +2205,7 @@ static void lbmIODone(struct bio *bio)
+ 
+ 	bp->l_flag |= lbmDONE;
+ 
+-	if (bio->bi_error) {
++	if (bio->bi_status) {
+ 		bp->l_flag |= lbmERROR;
+ 
+ 		jfs_err("lbmIODone: I/O error in JFS log");
+diff --git a/fs/jfs/jfs_metapage.c b/fs/jfs/jfs_metapage.c
+index 489aaa1403e5..ce93db3aef3c 100644
+--- a/fs/jfs/jfs_metapage.c
++++ b/fs/jfs/jfs_metapage.c
+@@ -280,7 +280,7 @@ static void metapage_read_end_io(struct bio *bio)
+ {
+ 	struct page *page = bio->bi_private;
+ 
+-	if (bio->bi_error) {
++	if (bio->bi_status) {
+ 		printk(KERN_ERR "metapage_read_end_io: I/O error\n");
+ 		SetPageError(page);
+ 	}
+@@ -337,7 +337,7 @@ static void metapage_write_end_io(struct bio *bio)
+ 
+ 	BUG_ON(!PagePrivate(page));
+ 
+-	if (bio->bi_error) {
++	if (bio->bi_status) {
+ 		printk(KERN_ERR "metapage_write_end_io: I/O error\n");
+ 		SetPageError(page);
+ 	}
+diff --git a/fs/mpage.c b/fs/mpage.c
+index baff8f820c29..9524fdde00c2 100644
+--- a/fs/mpage.c
++++ b/fs/mpage.c
+@@ -50,7 +50,8 @@ static void mpage_end_io(struct bio *bio)
+ 
+ 	bio_for_each_segment_all(bv, bio, i) {
+ 		struct page *page = bv->bv_page;
+-		page_endio(page, op_is_write(bio_op(bio)), bio->bi_error);
++		page_endio(page, op_is_write(bio_op(bio)),
++				blk_status_to_errno(bio->bi_status));
+ 	}
+ 
+ 	bio_put(bio);
+diff --git a/fs/nfs/blocklayout/blocklayout.c b/fs/nfs/blocklayout/blocklayout.c
+index 0ca370d23ddb..d8863a804b15 100644
+--- a/fs/nfs/blocklayout/blocklayout.c
++++ b/fs/nfs/blocklayout/blocklayout.c
+@@ -188,7 +188,7 @@ static void bl_end_io_read(struct bio *bio)
+ {
+ 	struct parallel_io *par = bio->bi_private;
+ 
+-	if (bio->bi_error) {
++	if (bio->bi_status) {
+ 		struct nfs_pgio_header *header = par->data;
+ 
+ 		if (!header->pnfs_error)
+@@ -319,7 +319,7 @@ static void bl_end_io_write(struct bio *bio)
+ 	struct parallel_io *par = bio->bi_private;
+ 	struct nfs_pgio_header *header = par->data;
+ 
+-	if (bio->bi_error) {
++	if (bio->bi_status) {
+ 		if (!header->pnfs_error)
+ 			header->pnfs_error = -EIO;
+ 		pnfs_set_lo_fail(header->lseg);
+diff --git a/fs/nilfs2/segbuf.c b/fs/nilfs2/segbuf.c
+index 6f87b2ac1aeb..e73c86d9855c 100644
+--- a/fs/nilfs2/segbuf.c
++++ b/fs/nilfs2/segbuf.c
+@@ -338,7 +338,7 @@ static void nilfs_end_bio_write(struct bio *bio)
+ {
+ 	struct nilfs_segment_buffer *segbuf = bio->bi_private;
+ 
+-	if (bio->bi_error)
++	if (bio->bi_status)
+ 		atomic_inc(&segbuf->sb_err);
+ 
+ 	bio_put(bio);
+diff --git a/fs/ocfs2/cluster/heartbeat.c b/fs/ocfs2/cluster/heartbeat.c
+index 0da0332725aa..ffe003982d95 100644
+--- a/fs/ocfs2/cluster/heartbeat.c
++++ b/fs/ocfs2/cluster/heartbeat.c
+@@ -516,9 +516,9 @@ static void o2hb_bio_end_io(struct bio *bio)
+ {
+ 	struct o2hb_bio_wait_ctxt *wc = bio->bi_private;
+ 
+-	if (bio->bi_error) {
+-		mlog(ML_ERROR, "IO Error %d\n", bio->bi_error);
+-		wc->wc_error = bio->bi_error;
++	if (bio->bi_status) {
++		mlog(ML_ERROR, "IO Error %d\n", bio->bi_status);
++		wc->wc_error = blk_status_to_errno(bio->bi_status);
+ 	}
+ 
+ 	o2hb_bio_wait_dec(wc, 1);
+diff --git a/fs/xfs/xfs_aops.c b/fs/xfs/xfs_aops.c
+index 09af0f7cd55e..76b6f988e2fa 100644
+--- a/fs/xfs/xfs_aops.c
++++ b/fs/xfs/xfs_aops.c
+@@ -276,7 +276,7 @@ xfs_end_io(
+ 	struct xfs_inode	*ip = XFS_I(ioend->io_inode);
+ 	xfs_off_t		offset = ioend->io_offset;
+ 	size_t			size = ioend->io_size;
+-	int			error = ioend->io_bio->bi_error;
++	int			error;
+ 
+ 	/*
+ 	 * Just clean up the in-memory strutures if the fs has been shut down.
+@@ -289,6 +289,7 @@ xfs_end_io(
+ 	/*
+ 	 * Clean up any COW blocks on an I/O error.
+ 	 */
++	error = blk_status_to_errno(ioend->io_bio->bi_status);
+ 	if (unlikely(error)) {
+ 		switch (ioend->io_type) {
+ 		case XFS_IO_COW:
+@@ -332,7 +333,7 @@ xfs_end_bio(
+ 	else if (ioend->io_append_trans)
+ 		queue_work(mp->m_data_workqueue, &ioend->io_work);
+ 	else
+-		xfs_destroy_ioend(ioend, bio->bi_error);
++		xfs_destroy_ioend(ioend, blk_status_to_errno(bio->bi_status));
+ }
+ 
+ STATIC int
+@@ -500,7 +501,7 @@ xfs_submit_ioend(
+ 	 * time.
+ 	 */
+ 	if (status) {
+-		ioend->io_bio->bi_error = status;
++		ioend->io_bio->bi_status = errno_to_blk_status(status);
+ 		bio_endio(ioend->io_bio);
+ 		return status;
+ 	}
+diff --git a/fs/xfs/xfs_buf.c b/fs/xfs/xfs_buf.c
+index 62fa39276a24..15c7a484a5d2 100644
+--- a/fs/xfs/xfs_buf.c
++++ b/fs/xfs/xfs_buf.c
+@@ -1213,8 +1213,11 @@ xfs_buf_bio_end_io(
+ 	 * don't overwrite existing errors - otherwise we can lose errors on
+ 	 * buffers that require multiple bios to complete.
+ 	 */
+-	if (bio->bi_error)
+-		cmpxchg(&bp->b_io_error, 0, bio->bi_error);
++	if (bio->bi_status) {
++		int error = blk_status_to_errno(bio->bi_status);
++
++		cmpxchg(&bp->b_io_error, 0, error);
++	}
+ 
+ 	if (!bp->b_error && xfs_buf_is_vmapped(bp) && (bp->b_flags & XBF_READ))
+ 		invalidate_kernel_vmap_range(bp->b_addr, xfs_buf_vmap_len(bp));
+diff --git a/include/linux/bio.h b/include/linux/bio.h
+index d1b04b0e99cf..9455aada1399 100644
+--- a/include/linux/bio.h
++++ b/include/linux/bio.h
+@@ -414,7 +414,7 @@ extern void bio_endio(struct bio *);
+ 
+ static inline void bio_io_error(struct bio *bio)
+ {
+-	bio->bi_error = -EIO;
++	bio->bi_status = BLK_STS_IOERR;
+ 	bio_endio(bio);
+ }
+ 
 diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-index 61339bc44400..59378939a8cd 100644
+index 59378939a8cd..dcd45b15a3a5 100644
 --- a/include/linux/blk_types.h
 +++ b/include/linux/blk_types.h
-@@ -17,6 +17,22 @@ struct io_context;
- struct cgroup_subsys_state;
- typedef void (bio_end_io_t) (struct bio *);
+@@ -33,6 +33,9 @@ typedef u8 __bitwise blk_status_t;
+ #define BLK_STS_RESOURCE	((__force blk_status_t)9)
+ #define BLK_STS_IOERR		((__force blk_status_t)10)
  
-+/*
-+ * Block error status values.  See block/blk-core:blk_errors for the details.
-+ */
-+typedef u8 __bitwise blk_status_t;
-+#define	BLK_STS_OK 0
-+#define BLK_STS_NOTSUPP		((__force blk_status_t)1)
-+#define BLK_STS_TIMEOUT		((__force blk_status_t)2)
-+#define BLK_STS_NOSPC		((__force blk_status_t)3)
-+#define BLK_STS_TRANSPORT	((__force blk_status_t)4)
-+#define BLK_STS_TARGET		((__force blk_status_t)5)
-+#define BLK_STS_NEXUS		((__force blk_status_t)6)
-+#define BLK_STS_MEDIUM		((__force blk_status_t)7)
-+#define BLK_STS_PROTECTION	((__force blk_status_t)8)
-+#define BLK_STS_RESOURCE	((__force blk_status_t)9)
-+#define BLK_STS_IOERR		((__force blk_status_t)10)
++/* hack for device mapper, don't use elsewhere: */
++#define BLK_STS_DM_REQUEUE    ((__force blk_status_t)11)
 +
  struct blk_issue_stat {
  	u64 stat;
  };
+@@ -44,7 +47,7 @@ struct blk_issue_stat {
+ struct bio {
+ 	struct bio		*bi_next;	/* request queue link */
+ 	struct block_device	*bi_bdev;
+-	int			bi_error;
++	blk_status_t		bi_status;
+ 	unsigned int		bi_opf;		/* bottom bits req flags,
+ 						 * top bits REQ_OP. Use
+ 						 * accessors.
 diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 019f18c65098..2a8871638453 100644
+index 2a8871638453..76b6df862a12 100644
 --- a/include/linux/blkdev.h
 +++ b/include/linux/blkdev.h
-@@ -55,7 +55,7 @@ struct blk_stat_callback;
-  */
- #define BLKCG_MAX_POLS		3
- 
--typedef void (rq_end_io_fn)(struct request *, int);
-+typedef void (rq_end_io_fn)(struct request *, blk_status_t);
- 
- #define BLK_RL_SYNCFULL		(1U << 0)
- #define BLK_RL_ASYNCFULL	(1U << 1)
-@@ -940,7 +940,7 @@ extern int blk_rq_prep_clone(struct request *rq, struct request *rq_src,
- 			     int (*bio_ctr)(struct bio *, struct bio *, void *),
- 			     void *data);
- extern void blk_rq_unprep_clone(struct request *rq);
--extern int blk_insert_cloned_request(struct request_queue *q,
-+extern blk_status_t blk_insert_cloned_request(struct request_queue *q,
- 				     struct request *rq);
- extern int blk_rq_append_bio(struct request *rq, struct bio *bio);
- extern void blk_delay_queue(struct request_queue *, unsigned long);
-@@ -980,6 +980,9 @@ extern void blk_execute_rq(struct request_queue *, struct gendisk *,
- extern void blk_execute_rq_nowait(struct request_queue *, struct gendisk *,
- 				  struct request *, int, rq_end_io_fn *);
- 
-+int blk_status_to_errno(blk_status_t status);
-+blk_status_t errno_to_blk_status(int errno);
-+
- bool blk_mq_poll(struct request_queue *q, blk_qc_t cookie);
- 
- static inline struct request_queue *bdev_get_queue(struct block_device *bdev)
-@@ -1112,16 +1115,16 @@ extern struct request *blk_fetch_request(struct request_queue *q);
-  * blk_end_request() for parts of the original function.
-  * This prevents code duplication in drivers.
-  */
--extern bool blk_update_request(struct request *rq, int error,
-+extern bool blk_update_request(struct request *rq, blk_status_t error,
- 			       unsigned int nr_bytes);
--extern void blk_finish_request(struct request *rq, int error);
--extern bool blk_end_request(struct request *rq, int error,
-+extern void blk_finish_request(struct request *rq, blk_status_t error);
-+extern bool blk_end_request(struct request *rq, blk_status_t error,
- 			    unsigned int nr_bytes);
--extern void blk_end_request_all(struct request *rq, int error);
--extern bool __blk_end_request(struct request *rq, int error,
-+extern void blk_end_request_all(struct request *rq, blk_status_t error);
-+extern bool __blk_end_request(struct request *rq, blk_status_t error,
- 			      unsigned int nr_bytes);
--extern void __blk_end_request_all(struct request *rq, int error);
--extern bool __blk_end_request_cur(struct request *rq, int error);
-+extern void __blk_end_request_all(struct request *rq, blk_status_t error);
-+extern bool __blk_end_request_cur(struct request *rq, blk_status_t error);
- 
- extern void blk_complete_request(struct request *);
- extern void __blk_complete_request(struct request *);
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index dec227acc13b..5de5c53251ec 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -74,7 +74,7 @@ typedef void (*dm_release_clone_request_fn) (struct request *clone);
- typedef int (*dm_endio_fn) (struct dm_target *ti,
- 			    struct bio *bio, int *error);
- typedef int (*dm_request_endio_fn) (struct dm_target *ti,
--				    struct request *clone, int error,
-+				    struct request *clone, blk_status_t error,
- 				    union map_info *map_context);
- 
- typedef void (*dm_presuspend_fn) (struct dm_target *ti);
-diff --git a/include/linux/ide.h b/include/linux/ide.h
-index 6980ca322074..dc152e4b7f73 100644
---- a/include/linux/ide.h
-+++ b/include/linux/ide.h
-@@ -671,7 +671,7 @@ struct ide_port_ops {
- 	void	(*init_dev)(ide_drive_t *);
- 	void	(*set_pio_mode)(struct hwif_s *, ide_drive_t *);
- 	void	(*set_dma_mode)(struct hwif_s *, ide_drive_t *);
--	int	(*reset_poll)(ide_drive_t *);
-+	blk_status_t (*reset_poll)(ide_drive_t *);
- 	void	(*pre_reset)(ide_drive_t *);
- 	void	(*resetproc)(ide_drive_t *);
- 	void	(*maskproc)(ide_drive_t *, int);
-@@ -1092,7 +1092,7 @@ int generic_ide_ioctl(ide_drive_t *, struct block_device *, unsigned, unsigned l
- extern int ide_vlb_clk;
- extern int ide_pci_clk;
- 
--int ide_end_rq(ide_drive_t *, struct request *, int, unsigned int);
-+int ide_end_rq(ide_drive_t *, struct request *, blk_status_t, unsigned int);
- void ide_kill_rq(ide_drive_t *, struct request *);
- 
- void __ide_set_handler(ide_drive_t *, ide_handler_t *, unsigned int);
-@@ -1123,7 +1123,7 @@ extern int ide_devset_execute(ide_drive_t *drive,
- 			      const struct ide_devset *setting, int arg);
- 
- void ide_complete_cmd(ide_drive_t *, struct ide_cmd *, u8, u8);
--int ide_complete_rq(ide_drive_t *, int, unsigned int);
-+int ide_complete_rq(ide_drive_t *, blk_status_t, unsigned int);
- 
- void ide_tf_readback(ide_drive_t *drive, struct ide_cmd *cmd);
- void ide_tf_dump(const char *, struct ide_cmd *);
-diff --git a/include/scsi/osd_initiator.h b/include/scsi/osd_initiator.h
-index a09cca829082..a29d3086eb56 100644
---- a/include/scsi/osd_initiator.h
-+++ b/include/scsi/osd_initiator.h
-@@ -157,7 +157,7 @@ struct osd_request {
- 
- 	osd_req_done_fn *async_done;
- 	void *async_private;
--	int async_error;
-+	blk_status_t async_error;
- 	int req_errors;
+@@ -1782,7 +1782,7 @@ struct blk_integrity_iter {
+ 	const char		*disk_name;
  };
  
+-typedef int (integrity_processing_fn) (struct blk_integrity_iter *);
++typedef blk_status_t (integrity_processing_fn) (struct blk_integrity_iter *);
+ 
+ struct blk_integrity_profile {
+ 	integrity_processing_fn		*generate_fn;
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index 5de5c53251ec..456da5017b32 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -72,7 +72,7 @@ typedef void (*dm_release_clone_request_fn) (struct request *clone);
+  * 2   : The target wants to push back the io
+  */
+ typedef int (*dm_endio_fn) (struct dm_target *ti,
+-			    struct bio *bio, int *error);
++			    struct bio *bio, blk_status_t *error);
+ typedef int (*dm_request_endio_fn) (struct dm_target *ti,
+ 				    struct request *clone, blk_status_t error,
+ 				    union map_info *map_context);
+diff --git a/kernel/power/swap.c b/kernel/power/swap.c
+index f80fd33639e0..57d22571f306 100644
+--- a/kernel/power/swap.c
++++ b/kernel/power/swap.c
+@@ -225,14 +225,14 @@ static struct block_device *hib_resume_bdev;
+ struct hib_bio_batch {
+ 	atomic_t		count;
+ 	wait_queue_head_t	wait;
+-	int			error;
++	blk_status_t		error;
+ };
+ 
+ static void hib_init_batch(struct hib_bio_batch *hb)
+ {
+ 	atomic_set(&hb->count, 0);
+ 	init_waitqueue_head(&hb->wait);
+-	hb->error = 0;
++	hb->error = BLK_STS_OK;
+ }
+ 
+ static void hib_end_io(struct bio *bio)
+@@ -240,7 +240,7 @@ static void hib_end_io(struct bio *bio)
+ 	struct hib_bio_batch *hb = bio->bi_private;
+ 	struct page *page = bio->bi_io_vec[0].bv_page;
+ 
+-	if (bio->bi_error) {
++	if (bio->bi_status) {
+ 		printk(KERN_ALERT "Read-error on swap-device (%u:%u:%Lu)\n",
+ 				imajor(bio->bi_bdev->bd_inode),
+ 				iminor(bio->bi_bdev->bd_inode),
+@@ -253,8 +253,8 @@ static void hib_end_io(struct bio *bio)
+ 		flush_icache_range((unsigned long)page_address(page),
+ 				   (unsigned long)page_address(page) + PAGE_SIZE);
+ 
+-	if (bio->bi_error && !hb->error)
+-		hb->error = bio->bi_error;
++	if (bio->bi_status && !hb->error)
++		hb->error = bio->bi_status;
+ 	if (atomic_dec_and_test(&hb->count))
+ 		wake_up(&hb->wait);
+ 
+@@ -293,10 +293,10 @@ static int hib_submit_io(int op, int op_flags, pgoff_t page_off, void *addr,
+ 	return error;
+ }
+ 
+-static int hib_wait_io(struct hib_bio_batch *hb)
++static blk_status_t hib_wait_io(struct hib_bio_batch *hb)
+ {
+ 	wait_event(hb->wait, atomic_read(&hb->count) == 0);
+-	return hb->error;
++	return blk_status_to_errno(hb->error);
+ }
+ 
+ /*
+diff --git a/kernel/trace/blktrace.c b/kernel/trace/blktrace.c
+index 193c5f5e3f79..bc364f86100a 100644
+--- a/kernel/trace/blktrace.c
++++ b/kernel/trace/blktrace.c
+@@ -867,7 +867,7 @@ static void blk_add_trace_split(void *ignore,
+ 
+ 		__blk_add_trace(bt, bio->bi_iter.bi_sector,
+ 				bio->bi_iter.bi_size, bio_op(bio), bio->bi_opf,
+-				BLK_TA_SPLIT, bio->bi_error, sizeof(rpdu),
++				BLK_TA_SPLIT, bio->bi_status, sizeof(rpdu),
+ 				&rpdu);
+ 	}
+ }
+@@ -900,7 +900,7 @@ static void blk_add_trace_bio_remap(void *ignore,
+ 	r.sector_from = cpu_to_be64(from);
+ 
+ 	__blk_add_trace(bt, bio->bi_iter.bi_sector, bio->bi_iter.bi_size,
+-			bio_op(bio), bio->bi_opf, BLK_TA_REMAP, bio->bi_error,
++			bio_op(bio), bio->bi_opf, BLK_TA_REMAP, bio->bi_status,
+ 			sizeof(r), &r);
+ }
+ 
+diff --git a/mm/page_io.c b/mm/page_io.c
+index 23f6d0d3470f..2da71e627812 100644
+--- a/mm/page_io.c
++++ b/mm/page_io.c
+@@ -45,7 +45,7 @@ void end_swap_bio_write(struct bio *bio)
+ {
+ 	struct page *page = bio->bi_io_vec[0].bv_page;
+ 
+-	if (bio->bi_error) {
++	if (bio->bi_status) {
+ 		SetPageError(page);
+ 		/*
+ 		 * We failed to write the page out to swap-space.
+@@ -118,7 +118,7 @@ static void end_swap_bio_read(struct bio *bio)
+ {
+ 	struct page *page = bio->bi_io_vec[0].bv_page;
+ 
+-	if (bio->bi_error) {
++	if (bio->bi_status) {
+ 		SetPageError(page);
+ 		ClearPageUptodate(page);
+ 		pr_alert("Read-error on swap-device (%u:%u:%llu)\n",
 -- 
 2.11.0
