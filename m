@@ -1,12 +1,16 @@
-From: Ondrej Mosnacek <omosnacek@gmail.com>
-Subject: [PATCH] dm integrity: Reject mappings too large for
-	device
-Date: Mon,  5 Jun 2017 17:52:39 +0200
-Message-ID: <20170605155239.12223-1-omosnacek@gmail.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: [PATCH v3 1/1] multipath-tools: Prioritizer based on
+ a latency algorithm
+Date: Mon, 5 Jun 2017 18:43:02 +0200
+Message-ID: <4005a390-9db7-ff4b-f503-2801a80815ab@gmail.com>
+References: <1496630622-24648-1-git-send-email-philip.yang@huawei.com>
+	<1496630622-24648-2-git-send-email-philip.yang@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1496630622-24648-2-git-send-email-philip.yang@huawei.com>
+Content-Language: en-GB
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,41 +20,50 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Mikulas Patocka <mpatocka@redhat.com>, Ondrej Mosnacek <omosnacek@gmail.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Milan Broz <gmazyland@gmail.com>
+To: Yang Feng <philip.yang@huawei.com>, dm-devel@redhat.com, christophe.varoqui@opensvc.com, bmarzins@redhat.com, mwilck@suse.com
+Cc: zouming.zouming@huawei.com, hege09@huawei.com, guanjunxiong@huawei.com, shenhong09@huawei.com, qiuxin@huawei.com
 List-Id: dm-devel.ids
 
-Before this patch, dm-integrity would successfully create mappings with
-the number of sectors greater than the provided data sector count.
-Attempts to read sectors of this mapping that were beyond the provided
-data sector count would then yield run-time messages of the form
-"device-mapper: integrity: Too big sector number: ...".
+On 06/05/2017 04:43 AM, Yang Feng wrote:
 
-This patch fixes this by emitting an error when the requested mapping
-size is bigger than the provided data sector count.
+> diff --git a/libmultipath/prioritizers/path_latency.c b/libmultipath/prioritizers/path_latency.c
+> new file mode 100644
+> index 0000000..081f546
+> --- /dev/null
+> +++ b/libmultipath/prioritizers/path_latency.c
+> @@ -0,0 +1,272 @@
+> +/*
+> + * (C) Copyright HUAWEI Technology Corp. 2017, 2021   All Rights Reserved.
 
-Cc: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Milan Broz <gmazyland@gmail.com>
-Signed-off-by: Ondrej Mosnacek <omosnacek@gmail.com>
----
- drivers/md/dm-integrity.c | 5 +++++
- 1 file changed, 5 insertions(+)
+                                                  ^^^^  <-----------
+2021 ???
 
-diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-index 7910bfe50da4..4ab10cf718c9 100644
---- a/drivers/md/dm-integrity.c
-+++ b/drivers/md/dm-integrity.c
-@@ -3040,6 +3040,11 @@ static int dm_integrity_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 		ti->error = "The device is too small";
- 		goto bad;
- 	}
-+	if (ti->len > ic->provided_data_sectors) {
-+		r = -EINVAL;
-+		ti->error = "Not enough provided sectors for requested mapping size";
-+		goto bad;
-+	}
- 
- 	if (!buffer_sectors)
- 		buffer_sectors = 1;
--- 
-2.11.0
+> + *
+> + * main.c
+> + *
+> + * Prioritizer for device mapper multipath, where the corresponding priority
+> + * values of specific paths are provided by a latency algorithm. And the
+> + * latency algorithm is dependent on arguments.
+> + *
+> + * The principle of the algorithm as follows:
+> + * 1. By sending a certain number "io_num" of read IOs to the current path
+> + *    continuously, the IOs' average latency can be calculated.
+> + * 2. According to the average latency of each path and the weight value
+> + *    "latency_interval", the priority "rc" of each path can be provided.
+> + *
+> + * Author(s): Yang Feng <philip.yang@huawei.com>
+> + *            Zou Ming <zouming.zouming@huawei.com>
+> + *            Guan Junxiong <guanjunxiong@huawei.com>
+> + *
+> + * This file is released under the GPL.
+                                      ^^^  <-----------
+
+"GPL" is not a licence. The *version* must be specified.
+
+
+And it would be nice to start using SPDX tags ( https://spdx.org/ )
+for new files.
+
+
+BTW: LFC191 Compliance Basics for Developers course is FREE
+     https://training.linuxfoundation.org/linux-courses/open-source-compliance-courses/compliance-basics-for-developers
