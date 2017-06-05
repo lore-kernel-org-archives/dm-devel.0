@@ -1,80 +1,59 @@
-From: Ming Lei <ming.lei@redhat.com>
-Subject: [PATCH v5 06/12] blk-mq: use the introduced blk_mq_unquiesce_queue()
-Date: Tue,  6 Jun 2017 23:22:04 +0800
-Message-ID: <20170606152210.22806-7-ming.lei@redhat.com>
-References: <20170606152210.22806-1-ming.lei@redhat.com>
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20170606152210.22806-1-ming.lei@redhat.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Jens Axboe <axboe@fb.com>, linux-block@vger.kernel.org, Christoph Hellwig <hch@infradead.org>
-Cc: Bart Van Assche <bart.vanassche@sandisk.com>, Ming Lei <ming.lei@redhat.com>, linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org, dm-devel@redhat.com
+From: Yang Feng <philip.yang@huawei.com>
+Subject: [PATCH v3 0/1] multipath-tools: Prioritizer based on a
+	latency algorithm
+Date: Mon, 5 Jun 2017 10:43:41 +0800
+Message-ID: <1496630622-24648-1-git-send-email-philip.yang@huawei.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com, christophe.varoqui@opensvc.com, bmarzins@redhat.com, mwilck@suse.com, xose.vazquez@gmail.com
+Cc: zouming.zouming@huawei.com, guanjunxiong@huawei.com, philip.yang@huawei.com, shenhong09@huawei.com, hege09@huawei.com, qiuxin@huawei.com
 List-Id: dm-devel.ids
 
-blk_mq_unquiesce_queue() is used for unquiescing the
-queue explicitly, so replace blk_mq_start_stopped_hw_queues()
-with it.
+This patch value is in the following: 
+1. In the Storage-Backup environment of HyperCluster, includes
+one storage array near to the host and one remote storage array,
+and the two storage arrays have the same hardware.The same LUN is
+writed or readed by the two storage arrays. However, usually, the
+average latency of the paths of the remote storage array is much 
+higher than the near storage array's. Apparently, the prioritizer
+can be a good automatic solution. And the current selectors don't
+solve it, IOs will send to the paths of the remote storage array,
+IOPS will be influenced unavoidably.
 
-For the scsi part, this patch takes Bart's suggestion to
-switch to block quiesce/unquiesce API completely.
+2. In the environment of single storage array, the prioritizer can
+automatically separate the paths who's latency is much higher, IOs
+will not send to this paths. But the current selectors don't solve
+this problem, IOPS will be influenced unavoidably.
 
-Cc: linux-nvme@lists.infradead.org
-Cc: linux-scsi@vger.kernel.org
-Cc: dm-devel@redhat.com
-Reviewed-by: Bart Van Assche <Bart.VanAssche@sandisk.com>
-Signed-off-by: Ming Lei <ming.lei@redhat.com>
----
- drivers/md/dm-rq.c       | 2 +-
- drivers/nvme/host/core.c | 2 +-
- drivers/scsi/scsi_lib.c  | 4 ++--
- 3 files changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
-index b639fa7246ee..ea4029de077f 100644
---- a/drivers/md/dm-rq.c
-+++ b/drivers/md/dm-rq.c
-@@ -71,7 +71,7 @@ static void dm_old_start_queue(struct request_queue *q)
- 
- static void dm_mq_start_queue(struct request_queue *q)
- {
--	blk_mq_start_stopped_hw_queues(q, true);
-+	blk_mq_unquiesce_queue(q);
- 	blk_mq_kick_requeue_list(q);
- }
- 
-diff --git a/drivers/nvme/host/core.c b/drivers/nvme/host/core.c
-index a60926410438..c3f189e54d10 100644
---- a/drivers/nvme/host/core.c
-+++ b/drivers/nvme/host/core.c
-@@ -2526,7 +2526,7 @@ void nvme_start_queues(struct nvme_ctrl *ctrl)
- 
- 	mutex_lock(&ctrl->namespaces_mutex);
- 	list_for_each_entry(ns, &ctrl->namespaces, list) {
--		blk_mq_start_stopped_hw_queues(ns->queue, true);
-+		blk_mq_unquiesce_queue(ns->queue);
- 		blk_mq_kick_requeue_list(ns->queue);
- 	}
- 	mutex_unlock(&ctrl->namespaces_mutex);
-diff --git a/drivers/scsi/scsi_lib.c b/drivers/scsi/scsi_lib.c
-index 884aaa84c2dd..d6df1dafdc9f 100644
---- a/drivers/scsi/scsi_lib.c
-+++ b/drivers/scsi/scsi_lib.c
-@@ -2979,7 +2979,7 @@ scsi_internal_device_block(struct scsi_device *sdev, bool wait)
- 		if (wait)
- 			blk_mq_quiesce_queue(q);
- 		else
--			blk_mq_stop_hw_queues(q);
-+			blk_mq_quiesce_queue_nowait(q);
- 	} else {
- 		spin_lock_irqsave(q->queue_lock, flags);
- 		blk_stop_queue(q);
-@@ -3033,7 +3033,7 @@ scsi_internal_device_unblock(struct scsi_device *sdev,
- 		return -EINVAL;
- 
- 	if (q->mq_ops) {
--		blk_mq_start_stopped_hw_queues(q, false);
-+		blk_mq_unquiesce_queue(q);
- 	} else {
- 		spin_lock_irqsave(q->queue_lock, flags);
- 		blk_start_queue(q);
+Changes to v2:
+* Reorganize the commit comment and patch format
+* Added Benjamin, Martin and Xose's Reviewed-by
+
+Changes to v1:
+* The value of "MIN_IO_NUM" is set 2 from 10
+* Fix according to Benjamin, Martin and Xose's reviews.
+
+Yang Feng (1):
+  multipath-tools: Prioritizer based on a latency algorithm
+
+ libmultipath/prio.h                      |   1 +
+ libmultipath/prioritizers/Makefile       |   4 +
+ libmultipath/prioritizers/path_latency.c | 272 +++++++++++++++++++++++++++++++
+ multipath/multipath.conf.5               |  18 ++
+ 4 files changed, 295 insertions(+)
+ create mode 100644 libmultipath/prioritizers/path_latency.c
+
 -- 
-2.9.4
+2.6.4.windows.1
