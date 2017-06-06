@@ -1,12 +1,19 @@
-From: Yang Feng <philip.yang@huawei.com>
-Subject: [PATCH v4 0/1] multipath-tools: Prioritizer based on a
-	latency algorithm
-Date: Tue, 6 Jun 2017 10:43:41 +0800
-Message-ID: <1496717022-25392-1-git-send-email-philip.yang@huawei.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 0/4] dm: zoned block device fixes
+Date: Tue, 6 Jun 2017 10:18:42 -0400
+Message-ID: <20170606141842.GA24861@redhat.com>
+References: <20170529102307.19814-1-damien.lemoal@wdc.com>
+	<20170530202031.GA52190@redhat.com>
+	<46ec84af-0700-70f9-f990-d87a63cc18b0@wdc.com>
+	<20170531143910.GA16671@redhat.com>
+	<20170602003617.GB25647@redhat.com>
+	<9749b12d-e232-5386-0894-511bb45758e7@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <9749b12d-e232-5386-0894-511bb45758e7@wdc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,47 +23,90 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, christophe.varoqui@opensvc.com, bmarzins@redhat.com, mwilck@suse.com, xose.vazquez@gmail.com
-Cc: zouming.zouming@huawei.com, guanjunxiong@huawei.com, philip.yang@huawei.com, shenhong09@huawei.com, hege09@huawei.com, qiuxin@huawei.com
+To: Damien Le Moal <damien.lemoal@wdc.com>
+Cc: Bart Van Assche <bart.vanassche@sandisk.com>, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-This patch value is in the following: 
-1. In the Storage-Backup environment of HyperCluster, includes
-one storage array near to the host and one remote storage array,
-and the two storage arrays have the same hardware.The same LUN is
-writed or readed by the two storage arrays. However, usually, the
-average latency of the paths of the remote storage array is much 
-higher than the near storage array's. Apparently, the prioritizer
-can be a good automatic solution. And the current selectors don't
-solve it, IOs will send to the paths of the remote storage array,
-IOPS will be influenced unavoidably.
+On Mon, Jun 05 2017 at  6:48am -0400,
+Damien Le Moal <damien.lemoal@wdc.com> wrote:
 
-2. In the environment of single storage array, the prioritizer can
-automatically separate the paths who's latency is much higher, IOs
-will not send to this paths. But the current selectors don't solve
-this problem, IOPS will be influenced unavoidably.
+> Mike,
+> 
+> Thank you very much for the very detailed review and all the cleanup.
+> 
+> On 6/2/17 09:36, Mike Snitzer wrote:
+> > On Wed, May 31 2017 at 10:39am -0400,
+> > Mike Snitzer <snitzer@redhat.com> wrote:
+> >  
+> >> FYI: my review of dm-zoned will be focused on DM target correctness
+> >> (suspend/resume quirks, no allocations in the IO path that aren't backed
+> >> by a mempool, coding style nits, etc).  I don't know enough about zoned
+> >> block devices to weigh-in on those details.  Ultimately I'll be
+> >> deferring to you, others on your team, and others in the community that
+> >> are more invested in zoned block devices to steer and stabilize this
+> >> target.
+> >>
+> >> Anyway, hopefully my review will be fairly quick and I can get dm-zoned
+> >> staged for 4.13 by end of day tomorrow.
+> > 
+> > I made a go of it but I'm getting hung up on quite a lot of code that
+> > doesn't conform to, what I'd like to think is, the cleaner nature of how
+> > DM targets that are split across multiple files should be.
+> > 
+> > You basically slammed everything into 'struct dmz_target' and passed dmz
+> > everywhere.  I tried to split out a 'struct dmz_metadata' (and got quite
+> > far!) but finally gave up because affecting that churn was killing me
+> > slowly.  Anyway, here is where I left off:
+> > https://git.kernel.org/pub/scm/linux/kernel/git/snitzer/linux.git/log/?h=dm-zoned
+> > 
+> > In hindsight, maybe I should've just responded with the laundry list of
+> > things I saw so that you could fix them.  But if you see changes that
+> > you like in that branch feel free to pull them in to a new version of
+> > dm-zoned that you resubmit.
+> > 
+> > As for splitting out a 'struct dmz_metadata'.. I'd really prefer _some_
+> > separation but there is little point with doing so if we're going to
+> > just half-ass it and add in a back-pointer to the 'struct dmz_target' to
+> > access certain members.  I was left unhappy with my attempt.. again, was
+> > a shit-show of churn.
+> 
+> I continued and finished the separation. There is no back-pointer
+> anymore. All functions in dm-zoned-metadata.c take the metadata struct
+> pointer as argument. Other functions in dm-zoned-target.c and
+> dm-zoned-reclaim.c take the dmz_target pointer as argument. To do this,
+> I had to add a "struct dmz_dev" to store the static information about
+> the device being used (bdev, name, capacity, number of zones, zone
+> size). This does cleanup further the initialization and tear-down path.
+> I also moved around and renamed some functions to further cleanup the
+> code and make it easier to read. At this point, I think it would be easy
+> to also separate all fields needed for reclaim from the dmz_target
+> structure. But I have not pushed changes this far as the amount of data
+> needed for reclaim is rather small.
 
-Changes from v3:
-* Delete Copyright time "2021", Fix according to Xose's reviews.
-* Add version for GPL, Fix according to Xose's reviews.
+Sounds good.
 
-Changes from v2:
-* Reorganize the commit comment and patch format.
-* Added Benjamin, Martin and Xose's Reviewed-by.
+> > I think this target needs a more critical eye on the various places IO
+> > is being submitted and where allocations are occuring.  I allowed myself
+> > to get hung up on code movement when I should've focused on more
+> > constructive design choices you made.
+> 
+> I did address some of the "FIXME" notes you added. The main one is the
+> BIO cloning in the I/O path. I removed most of that and added a .end_io
+> method for completion processing. The only place were I do not see how
+> to remove the call to bio_clone() is during read BIO processing: since a
+> read BIO may end up being split between buffer zone, sequential zone and
+> simple buffer zero-out, fragmentation of the read BIO is sometimes
+> necessary and so need a clone.
+> 
+> There is one "FIXME" that I did not address: the allocation of metadata
+> blocks on cache miss. This is in the I/O path, but called only from the
+> context of the chunk workers, so a different context than the BIO submit
+> one. I do not see a problem with this. Please let me know if you would
+> prefer another solution.
+> 
+> I am running tests against the new version created with all these
+> changes. If everything goes well, I will send it out tomorrow.
 
-Changes from v1:
-* The value of "MIN_IO_NUM" is set 2 from 10.
-* Fix according to Benjamin, Martin and Xose's reviews.
+Great, thanks for carrying it forward.
 
-Yang Feng (1):
-  multipath-tools: Prioritizer based on a latency algorithm
-
- libmultipath/prio.h                      |   1 +
- libmultipath/prioritizers/Makefile       |   4 +
- libmultipath/prioritizers/path_latency.c | 272 +++++++++++++++++++++++++++++++
- multipath/multipath.conf.5               |  18 ++
- 4 files changed, 295 insertions(+)
- create mode 100644 libmultipath/prioritizers/path_latency.c
-
--- 
-2.6.4.windows.1
+Mike
