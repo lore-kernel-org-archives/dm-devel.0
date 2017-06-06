@@ -1,16 +1,12 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH v3 1/1] multipath-tools: Prioritizer based on
- a latency algorithm
-Date: Mon, 5 Jun 2017 18:43:02 +0200
-Message-ID: <4005a390-9db7-ff4b-f503-2801a80815ab@gmail.com>
-References: <1496630622-24648-1-git-send-email-philip.yang@huawei.com>
-	<1496630622-24648-2-git-send-email-philip.yang@huawei.com>
+From: Milan Broz <gmazyland@gmail.com>
+Subject: [PATCH] dm-crypt: Add big-endian variant of plain64 IV
+	(plain64be).
+Date: Tue,  6 Jun 2017 09:07:01 +0200
+Message-ID: <20170606070701.28061-1-gmazyland@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1496630622-24648-2-git-send-email-philip.yang@huawei.com>
-Content-Language: en-GB
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,50 +16,79 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Yang Feng <philip.yang@huawei.com>, dm-devel@redhat.com, christophe.varoqui@opensvc.com, bmarzins@redhat.com, mwilck@suse.com
-Cc: zouming.zouming@huawei.com, hege09@huawei.com, guanjunxiong@huawei.com, shenhong09@huawei.com, qiuxin@huawei.com
+To: dm-devel@redhat.com
+Cc: thomas.a.kaeding@gmail.com, Milan Broz <gmazyland@gmail.com>
 List-Id: dm-devel.ids
 
-On 06/05/2017 04:43 AM, Yang Feng wrote:
+The big-endian IV is needed to map images from extracted
+disks that are used in some external (on-chip FDE) disk encryption drives.
+(For example for data recovery from external USB/SATA drives that
+supports "internal" encryption.)
 
-> diff --git a/libmultipath/prioritizers/path_latency.c b/libmultipath/prioritizers/path_latency.c
-> new file mode 100644
-> index 0000000..081f546
-> --- /dev/null
-> +++ b/libmultipath/prioritizers/path_latency.c
-> @@ -0,0 +1,272 @@
-> +/*
-> + * (C) Copyright HUAWEI Technology Corp. 2017, 2021   All Rights Reserved.
+Signed-off-by: Milan Broz <gmazyland@gmail.com>
+---
+ drivers/md/dm-crypt.c | 21 ++++++++++++++++++++-
+ 1 file changed, 20 insertions(+), 1 deletion(-)
 
-                                                  ^^^^  <-----------
-2021 ???
-
-> + *
-> + * main.c
-> + *
-> + * Prioritizer for device mapper multipath, where the corresponding priority
-> + * values of specific paths are provided by a latency algorithm. And the
-> + * latency algorithm is dependent on arguments.
-> + *
-> + * The principle of the algorithm as follows:
-> + * 1. By sending a certain number "io_num" of read IOs to the current path
-> + *    continuously, the IOs' average latency can be calculated.
-> + * 2. According to the average latency of each path and the weight value
-> + *    "latency_interval", the priority "rc" of each path can be provided.
-> + *
-> + * Author(s): Yang Feng <philip.yang@huawei.com>
-> + *            Zou Ming <zouming.zouming@huawei.com>
-> + *            Guan Junxiong <guanjunxiong@huawei.com>
-> + *
-> + * This file is released under the GPL.
-                                      ^^^  <-----------
-
-"GPL" is not a licence. The *version* must be specified.
-
-
-And it would be nice to start using SPDX tags ( https://spdx.org/ )
-for new files.
-
-
-BTW: LFC191 Compliance Basics for Developers course is FREE
-     https://training.linuxfoundation.org/linux-courses/open-source-compliance-courses/compliance-basics-for-developers
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index ebf9e72d479b..a68f9476c483 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -246,6 +246,9 @@ static struct crypto_aead *any_tfm_aead(struct crypt_config *cc)
+  * plain64: the initial vector is the 64-bit little-endian version of the sector
+  *        number, padded with zeros if necessary.
+  *
++ * plain64be: the initial vector is the 64-bit big-endian version of the sector
++ *        number, padded with zeros if necessary.
++ *
+  * essiv: "encrypted sector|salt initial vector", the sector number is
+  *        encrypted with the bulk cipher using a salt as key. The salt
+  *        should be derived from the bulk cipher's key via hashing.
+@@ -302,6 +305,16 @@ static int crypt_iv_plain64_gen(struct crypt_config *cc, u8 *iv,
+ 	return 0;
+ }
+ 
++static int crypt_iv_plain64be_gen(struct crypt_config *cc, u8 *iv,
++				  struct dm_crypt_request *dmreq)
++{
++	memset(iv, 0, cc->iv_size);
++	/* iv_size is at least of size u64; usually it is 16 bytes */
++	*(__be64 *)&iv[cc->iv_size - sizeof(u64)] = cpu_to_be64(dmreq->iv_sector);
++
++	return 0;
++}
++
+ /* Initialise ESSIV - compute salt but no local memory allocations */
+ static int crypt_iv_essiv_init(struct crypt_config *cc)
+ {
+@@ -835,6 +848,10 @@ static const struct crypt_iv_operations crypt_iv_plain64_ops = {
+ 	.generator = crypt_iv_plain64_gen
+ };
+ 
++static const struct crypt_iv_operations crypt_iv_plain64be_ops = {
++	.generator = crypt_iv_plain64be_gen
++};
++
+ static const struct crypt_iv_operations crypt_iv_essiv_ops = {
+ 	.ctr       = crypt_iv_essiv_ctr,
+ 	.dtr       = crypt_iv_essiv_dtr,
+@@ -2208,6 +2225,8 @@ static int crypt_ctr_ivmode(struct dm_target *ti, const char *ivmode)
+ 		cc->iv_gen_ops = &crypt_iv_plain_ops;
+ 	else if (strcmp(ivmode, "plain64") == 0)
+ 		cc->iv_gen_ops = &crypt_iv_plain64_ops;
++	else if (strcmp(ivmode, "plain64be") == 0)
++		cc->iv_gen_ops = &crypt_iv_plain64be_ops;
+ 	else if (strcmp(ivmode, "essiv") == 0)
+ 		cc->iv_gen_ops = &crypt_iv_essiv_ops;
+ 	else if (strcmp(ivmode, "benbi") == 0)
+@@ -2986,7 +3005,7 @@ static void crypt_io_hints(struct dm_target *ti, struct queue_limits *limits)
+ 
+ static struct target_type crypt_target = {
+ 	.name   = "crypt",
+-	.version = {1, 17, 0},
++	.version = {1, 18, 0},
+ 	.module = THIS_MODULE,
+ 	.ctr    = crypt_ctr,
+ 	.dtr    = crypt_dtr,
+-- 
+2.11.0
