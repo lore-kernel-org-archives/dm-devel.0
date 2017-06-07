@@ -1,13 +1,12 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 0/5] misc multipath patches
-Date: Tue, 06 Jun 2017 22:40:38 +0200
-Message-ID: <1496781638.4654.11.camel@suse.com>
-References: <1496372952-27110-1-git-send-email-bmarzins@redhat.com>
+From: Damien Le Moal <damien.lemoal@wdc.com>
+Subject: [PATCH V5 0/1] dm-zoned: Drive-managed zoned block
+	device target
+Date: Wed,  7 Jun 2017 15:53:11 +0900
+Message-ID: <20170607065312.16706-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1496372952-27110-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,21 +16,57 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
+Cc: Bart Van Assche <bart.vanassche@sandisk.com>
 List-Id: dm-devel.ids
 
-T24gVGh1LCAyMDE3LTA2LTAxIGF0IDIyOjA5IC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gVGhpcyBpcyBhbm90aGVyIGNvbGxlY3Rpb24gb2YgbWlzY2VsbGFuZW91cyBwYXRjaGVz
-LiBUaGUgZmlyc3Qgb25lIGlzCj4ganVzdCBhIHJlc2VuZC4gVGhlIHNlY29uZCBpcyBhIGNoYW5n
-ZSB0byBob3cgdGhlIHJhZG9zIGNoZWNrZXIgaXMKPiBlbmFibGUKPiB0aGF0IG1ha2VzIGl0IGVh
-c2llciB0byBidWlsZCBwYWNrYWdlcyBmb3IgbXVsdGlwbGUgYXJjaGl0ZWN0dXJlcwo+IChzaW5j
-ZQo+IGxpYnJhZG9zIGlzbid0IHN1cHBvcnRlZCBvbiBhbGwgYXJjaGl0ZWN0dXJlcyB5ZXQpLiBJ
-ZiBwZW9wbGUgaGF2ZQo+IG9iamVjdGlvbnMsIEkgY2FuIGNvbnRpbnVlIHRvIHVzZSB0aGUgZXhp
-c3RpbmcgYnVpbGQgb3B0aW9uLgoKV2VsbCwgd2UncmUgZ2V0dGluZyBjbG9zZSB0byBoYXZpbmcg
-dG8gd3JpdGUgY29uZmlndXJlLmFjLApvciBzb21ldGhpbmcgb2YgdGhlIGtpbmQgOi0pCgpCdXQg
-aXQncyBmaW5lIHdpdGggbWUuIEFDSyBmcm9tIG1lIGZvciB0aGlzIHNlcmllcy4KCk1hcnRpbgoK
-LS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3
-NDA1MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBT
-bWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRl
-dmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5j
-b20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+Mike,
+
+I folded all your patches from your dm-zoned branch together with further
+rewrite to finish the data structure separation that you started. Folded in
+this version are also several bug fixes and code cleanup.
+
+In more details, the changes from the previous version are as follow:
+* Completed the dmz_target structure split into dmz_metadata, dmz_reclaim and
+  a smaller dmz_target structure. These structures are respectively defined in
+  dm-zoned-metadata.c, dm-zoned-reclaim.c and dm-zoned-target.c.
+  In the include file dm-zoned.h remains only the dm_zone data structure
+  definition and the newly defined dmz_dev data structure to hold static
+  device information shared between all files (bdev handle, device name,
+  number of zones, zone size, etc)
+* Various code shuffle and cleanup, function rename and message fixes.
+  Most of the code changes are to avoid the need for back-pointers and cross
+  access to the data structure members. There was no functionality loss due to
+  these changes. The code is in fact now a lot cleaner in many places.
+* Fixed a deadlock happening when a chunk work is waiting for a zone to be
+  reclaimed with the flush work concurrently executing (all three of these
+  running together could deadlock on the metadata semaphore).
+
+I ran several long run tests applying various workloads with XFS running on
+top of a dm-zoned device. No problems were detected. I will keep testing to
+make sure that stability was not affected by all the changes.
+
+Please review and let me know of any further change or correction you think is
+needed. Thank you.
+
+Best regards.
+
+Damien Le Moal (1):
+  dm-zoned: Drive-managed zoned block device target
+
+ Documentation/device-mapper/dm-zoned.txt |  144 ++
+ drivers/md/Kconfig                       |   17 +
+ drivers/md/Makefile                      |    2 +
+ drivers/md/dm-zoned-metadata.c           | 2514 ++++++++++++++++++++++++++++++
+ drivers/md/dm-zoned-reclaim.c            |  570 +++++++
+ drivers/md/dm-zoned-target.c             |  970 ++++++++++++
+ drivers/md/dm-zoned.h                    |  228 +++
+ 7 files changed, 4445 insertions(+)
+ create mode 100644 Documentation/device-mapper/dm-zoned.txt
+ create mode 100644 drivers/md/dm-zoned-metadata.c
+ create mode 100644 drivers/md/dm-zoned-reclaim.c
+ create mode 100644 drivers/md/dm-zoned-target.c
+ create mode 100644 drivers/md/dm-zoned.h
+
+-- 
+2.9.4
