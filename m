@@ -1,15 +1,15 @@
-From: "Bryn M. Reeves" <bmr@redhat.com>
-Subject: Re: [DRAFT] Snapshot boot design document
-Date: Thu, 8 Jun 2017 15:34:10 +0100
-Message-ID: <20170608143410.GB32358@dhcp-24-191.fab.redhat.com>
-References: <20170601204734.GB3619@localhost.localdomain>
-	<20170607162330.GA10393@suse.de> <20170608081705.GA18236@suse.de>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH v4 0/1] multipath-tools: Prioritizer based on
+ a latency algorithm
+Date: Thu, 8 Jun 2017 17:37:08 +0200
+Message-ID: <8f92be05-3841-e1b8-ac69-13ab4700395e@suse.de>
+References: <1496717022-25392-1-git-send-email-philip.yang@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20170608081705.GA18236@suse.de>
+In-Reply-To: <1496717022-25392-1-git-send-email-philip.yang@huawei.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,23 +19,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Thorsten Kukuk <kukuk@suse.de>
-Cc: dm-devel@redhat.com
+To: Yang Feng <philip.yang@huawei.com>, dm-devel@redhat.com, christophe.varoqui@opensvc.com, bmarzins@redhat.com, mwilck@suse.com, xose.vazquez@gmail.com
+Cc: zouming.zouming@huawei.com, hege09@huawei.com, guanjunxiong@huawei.com, shenhong09@huawei.com, qiuxin@huawei.com
 List-Id: dm-devel.ids
 
-On Thu, Jun 08, 2017 at 10:17:05AM +0200, Thorsten Kukuk wrote:
-> On Wed, Jun 07, Thorsten Kukuk wrote:
-> One more: please don't forget read-only root filesystems with all of
-> your designs. btrfs snapshots are read-only, so if you boot an old
-> snapshot, you have a read-only root filesystem.
-> And if you play with transactional updates by snapshots and rollback,
-> you will really like read-only root filesystems.
-
-Good point again, thanks. Coming from a device-mapper and LVM2 background
-that's my natural priority, but we are very clear that we want to create
-a solution that will work for the full range of snapshot techniques now
-available on Linux (including potentially ZFS although it's not a high
-priority, simply due to how few distributions ship it).
-
-Regards,
-Bryn.
+T24gMDYvMDYvMjAxNyAwNDo0MyBBTSwgWWFuZyBGZW5nIHdyb3RlOgo+IFRoaXMgcGF0Y2ggdmFs
+dWUgaXMgaW4gdGhlIGZvbGxvd2luZzogCj4gMS4gSW4gdGhlIFN0b3JhZ2UtQmFja3VwIGVudmly
+b25tZW50IG9mIEh5cGVyQ2x1c3RlciwgaW5jbHVkZXMKPiBvbmUgc3RvcmFnZSBhcnJheSBuZWFy
+IHRvIHRoZSBob3N0IGFuZCBvbmUgcmVtb3RlIHN0b3JhZ2UgYXJyYXksCj4gYW5kIHRoZSB0d28g
+c3RvcmFnZSBhcnJheXMgaGF2ZSB0aGUgc2FtZSBoYXJkd2FyZS5UaGUgc2FtZSBMVU4gaXMKPiB3
+cml0ZWQgb3IgcmVhZGVkIGJ5IHRoZSB0d28gc3RvcmFnZSBhcnJheXMuIEhvd2V2ZXIsIHVzdWFs
+bHksIHRoZQo+IGF2ZXJhZ2UgbGF0ZW5jeSBvZiB0aGUgcGF0aHMgb2YgdGhlIHJlbW90ZSBzdG9y
+YWdlIGFycmF5IGlzIG11Y2ggCj4gaGlnaGVyIHRoYW4gdGhlIG5lYXIgc3RvcmFnZSBhcnJheSdz
+LiBBcHBhcmVudGx5LCB0aGUgcHJpb3JpdGl6ZXIKPiBjYW4gYmUgYSBnb29kIGF1dG9tYXRpYyBz
+b2x1dGlvbi4gQW5kIHRoZSBjdXJyZW50IHNlbGVjdG9ycyBkb24ndAo+IHNvbHZlIGl0LCBJT3Mg
+d2lsbCBzZW5kIHRvIHRoZSBwYXRocyBvZiB0aGUgcmVtb3RlIHN0b3JhZ2UgYXJyYXksCj4gSU9Q
+UyB3aWxsIGJlIGluZmx1ZW5jZWQgdW5hdm9pZGFibHkuCj4gCkFjdHVhbGx5LCB5b3UncmUgbm90
+IGFsb25lIGhlcmU7IHNldmVyYWwgb3RoZXIgc3RvcmFnZSBhcnJheSBzZXR1cHMKc3VmZmVyIGZy
+b20gdGhlIHNhbWUgcHJvYmxlbS4KCkVnIGlmIHlvdSBoYXZlIGEgc2l0ZS1mYWlsb3ZlciBzZXR1
+cCB3aXRoIHR3byBzdG9yYWdlIGFycmF5cyBhdApkaWZmZXJlbnQgbG9jYXRpb25zIHRoZSBwcm9i
+bGVtIGlzIG1vcmUtb3ItbGVzcyB0aGUgc2FtZTsKYm90aCBhcnJheXMgcG90ZW50aWFsbHkgd2ls
+bCBiZSBkaXNwbGF5aW5nIGlkZW50aWNhbCBwcmlvcml0eQppbmZvcm1hdGlvbiwgZGVzcGl0ZSBv
+bmUgYXJyYXkgYmVpbmcgcmVtb3RlLgoKU2ltaWxhcmx5LCBpZiB5b3UgaGF2ZSBhIGZhaWxvdmVy
+IHNjZW5hcmlvIHdoZXJlIHRoZSBpbmRpdmlkdWFsIHBhdGhzCmFyZSBhY2Nlc3NlZCB2aWEgZGlm
+ZmVyZW50IHByb3RvY29scyB5b3UncmUgZmFjaW5nIHRoZSBzYW1lIHByb2JsZW0uCgpUaGUgdW5k
+ZXJseWluZyByZWFzb24gZm9yIHRoaXMgZGlmZmljdWx0eSBpcyB0aGUgdHdvLXN0YWdlIHRvcG9s
+b2d5IG9mCnRoZSBjdXJyZW50IG11bHRpcGF0aCBpbXBsZW1lbnRhdGlvbjoKCi0gRWFjaCBwYXRo
+IGlzIGdyb3VwZWQgaW50byBhIHBhdGggZ3JvdXAKLSBQcmlvcml0aWVzIGFyZSBhdHRhY2hlZCB0
+byBhIHBhdGggZ3JvdXAKLSBFYWNoIHBhdGggZ3JvdXAgYmVsb25ncyB0byBhIG11bHRpcGF0aCBk
+ZXZpY2UKCkFuZCBhcyB3ZSBvbmx5IGhhdmUgYSBfc2luZ2xlXyBwcmlvcml0aXplciBwZXIgcGF0
+aCB3ZSBjYW5ub3QgZWFzaWx5CmhhbmRsZSB0aGlzIHNpdHVhdGlvbi4KCklkZWFsbHkgd2Ugc2hv
+dWxkIGJlIGFibGUgdG8gJ3N0YWNrJyBwcmlvcml0aXplcnMsIHdoaWNoIHdvdWxkIHdvcmsgYnkK
+Y29tYmluaW5nIHRoZSBwcmlvcml0eSBudW1iZXJzIGZyb20gdGhlIHN0YWNrZWQvY29tYmluZWQg
+cHJpb3JpdGl6ZXJzLgoKQnV0IHRoYXQgd291bGQgYmUgcmVxdWlyaW5nIHF1aXRlIHNvbWUgcmV3
+b3JrLCBvZiBjb3Vyc2UuCgpDaGVlcnMsCgpIYW5uZXMKLS0gCkRyLiBIYW5uZXMgUmVpbmVja2UJ
+CSAgIFRlYW1sZWFkIFN0b3JhZ2UgJiBOZXR3b3JraW5nCmhhcmVAc3VzZS5kZQkJCSAgICAgICAg
+ICAgICAgICs0OSA5MTEgNzQwNTMgNjg4ClNVU0UgTElOVVggR21iSCwgTWF4ZmVsZHN0ci4gNSwg
+OTA0MDkgTsO8cm5iZXJnCkdGOiBGLiBJbWVuZMO2cmZmZXIsIEouIFNtaXRoYXJkLCBKLiBHdWls
+ZCwgRC4gVXBtYW55dSwgRy4gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0t
+ZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0
+LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
