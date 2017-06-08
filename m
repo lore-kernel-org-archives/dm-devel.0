@@ -1,61 +1,47 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH v4 0/1] multipath-tools: Prioritizer based on
- a latency algorithm
-Date: Thu, 8 Jun 2017 17:37:08 +0200
-Message-ID: <8f92be05-3841-e1b8-ac69-13ab4700395e@suse.de>
-References: <1496717022-25392-1-git-send-email-philip.yang@huawei.com>
+From: Jens Axboe <axboe@kernel.dk>
+Subject: Re: dedicated error codes for the block layer V3
+Date: Thu, 8 Jun 2017 09:42:44 -0600
+Message-ID: <d4840574-0fd2-4f12-b77c-bf7409a785e4@kernel.dk>
+References: <20170603073806.2046-1-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1496717022-25392-1-git-send-email-philip.yang@huawei.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20170603073806.2046-1-hch@lst.de>
 Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Yang Feng <philip.yang@huawei.com>, dm-devel@redhat.com, christophe.varoqui@opensvc.com, bmarzins@redhat.com, mwilck@suse.com, xose.vazquez@gmail.com
-Cc: zouming.zouming@huawei.com, hege09@huawei.com, guanjunxiong@huawei.com, shenhong09@huawei.com, qiuxin@huawei.com
+Sender: linux-block-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, linux-btrfs@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-T24gMDYvMDYvMjAxNyAwNDo0MyBBTSwgWWFuZyBGZW5nIHdyb3RlOgo+IFRoaXMgcGF0Y2ggdmFs
-dWUgaXMgaW4gdGhlIGZvbGxvd2luZzogCj4gMS4gSW4gdGhlIFN0b3JhZ2UtQmFja3VwIGVudmly
-b25tZW50IG9mIEh5cGVyQ2x1c3RlciwgaW5jbHVkZXMKPiBvbmUgc3RvcmFnZSBhcnJheSBuZWFy
-IHRvIHRoZSBob3N0IGFuZCBvbmUgcmVtb3RlIHN0b3JhZ2UgYXJyYXksCj4gYW5kIHRoZSB0d28g
-c3RvcmFnZSBhcnJheXMgaGF2ZSB0aGUgc2FtZSBoYXJkd2FyZS5UaGUgc2FtZSBMVU4gaXMKPiB3
-cml0ZWQgb3IgcmVhZGVkIGJ5IHRoZSB0d28gc3RvcmFnZSBhcnJheXMuIEhvd2V2ZXIsIHVzdWFs
-bHksIHRoZQo+IGF2ZXJhZ2UgbGF0ZW5jeSBvZiB0aGUgcGF0aHMgb2YgdGhlIHJlbW90ZSBzdG9y
-YWdlIGFycmF5IGlzIG11Y2ggCj4gaGlnaGVyIHRoYW4gdGhlIG5lYXIgc3RvcmFnZSBhcnJheSdz
-LiBBcHBhcmVudGx5LCB0aGUgcHJpb3JpdGl6ZXIKPiBjYW4gYmUgYSBnb29kIGF1dG9tYXRpYyBz
-b2x1dGlvbi4gQW5kIHRoZSBjdXJyZW50IHNlbGVjdG9ycyBkb24ndAo+IHNvbHZlIGl0LCBJT3Mg
-d2lsbCBzZW5kIHRvIHRoZSBwYXRocyBvZiB0aGUgcmVtb3RlIHN0b3JhZ2UgYXJyYXksCj4gSU9Q
-UyB3aWxsIGJlIGluZmx1ZW5jZWQgdW5hdm9pZGFibHkuCj4gCkFjdHVhbGx5LCB5b3UncmUgbm90
-IGFsb25lIGhlcmU7IHNldmVyYWwgb3RoZXIgc3RvcmFnZSBhcnJheSBzZXR1cHMKc3VmZmVyIGZy
-b20gdGhlIHNhbWUgcHJvYmxlbS4KCkVnIGlmIHlvdSBoYXZlIGEgc2l0ZS1mYWlsb3ZlciBzZXR1
-cCB3aXRoIHR3byBzdG9yYWdlIGFycmF5cyBhdApkaWZmZXJlbnQgbG9jYXRpb25zIHRoZSBwcm9i
-bGVtIGlzIG1vcmUtb3ItbGVzcyB0aGUgc2FtZTsKYm90aCBhcnJheXMgcG90ZW50aWFsbHkgd2ls
-bCBiZSBkaXNwbGF5aW5nIGlkZW50aWNhbCBwcmlvcml0eQppbmZvcm1hdGlvbiwgZGVzcGl0ZSBv
-bmUgYXJyYXkgYmVpbmcgcmVtb3RlLgoKU2ltaWxhcmx5LCBpZiB5b3UgaGF2ZSBhIGZhaWxvdmVy
-IHNjZW5hcmlvIHdoZXJlIHRoZSBpbmRpdmlkdWFsIHBhdGhzCmFyZSBhY2Nlc3NlZCB2aWEgZGlm
-ZmVyZW50IHByb3RvY29scyB5b3UncmUgZmFjaW5nIHRoZSBzYW1lIHByb2JsZW0uCgpUaGUgdW5k
-ZXJseWluZyByZWFzb24gZm9yIHRoaXMgZGlmZmljdWx0eSBpcyB0aGUgdHdvLXN0YWdlIHRvcG9s
-b2d5IG9mCnRoZSBjdXJyZW50IG11bHRpcGF0aCBpbXBsZW1lbnRhdGlvbjoKCi0gRWFjaCBwYXRo
-IGlzIGdyb3VwZWQgaW50byBhIHBhdGggZ3JvdXAKLSBQcmlvcml0aWVzIGFyZSBhdHRhY2hlZCB0
-byBhIHBhdGggZ3JvdXAKLSBFYWNoIHBhdGggZ3JvdXAgYmVsb25ncyB0byBhIG11bHRpcGF0aCBk
-ZXZpY2UKCkFuZCBhcyB3ZSBvbmx5IGhhdmUgYSBfc2luZ2xlXyBwcmlvcml0aXplciBwZXIgcGF0
-aCB3ZSBjYW5ub3QgZWFzaWx5CmhhbmRsZSB0aGlzIHNpdHVhdGlvbi4KCklkZWFsbHkgd2Ugc2hv
-dWxkIGJlIGFibGUgdG8gJ3N0YWNrJyBwcmlvcml0aXplcnMsIHdoaWNoIHdvdWxkIHdvcmsgYnkK
-Y29tYmluaW5nIHRoZSBwcmlvcml0eSBudW1iZXJzIGZyb20gdGhlIHN0YWNrZWQvY29tYmluZWQg
-cHJpb3JpdGl6ZXJzLgoKQnV0IHRoYXQgd291bGQgYmUgcmVxdWlyaW5nIHF1aXRlIHNvbWUgcmV3
-b3JrLCBvZiBjb3Vyc2UuCgpDaGVlcnMsCgpIYW5uZXMKLS0gCkRyLiBIYW5uZXMgUmVpbmVja2UJ
-CSAgIFRlYW1sZWFkIFN0b3JhZ2UgJiBOZXR3b3JraW5nCmhhcmVAc3VzZS5kZQkJCSAgICAgICAg
-ICAgICAgICs0OSA5MTEgNzQwNTMgNjg4ClNVU0UgTElOVVggR21iSCwgTWF4ZmVsZHN0ci4gNSwg
-OTA0MDkgTsO8cm5iZXJnCkdGOiBGLiBJbWVuZMO2cmZmZXIsIEouIFNtaXRoYXJkLCBKLiBHdWls
-ZCwgRC4gVXBtYW55dSwgRy4gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0t
-ZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0
-LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+On 06/03/2017 01:37 AM, Christoph Hellwig wrote:
+> This series introduces a new blk_status_t error code type for the block
+> layer so that we can have tigher control and explicit semantics for
+> block layer errors.
+> 
+> All but the last three patches are cleanups that lead to the new type.
+> 
+> The series it mostly limited to the block layer and drivers, and touching
+> file systems a little bit.  The only major exception is btrfs, which
+> does funny things with bios and thus sees a larger amount of propagation
+> of the new blk_status_t.
+> 
+> A git tree is also available at:
+> 
+>     git://git.infradead.org/users/hch/block.git block-errors
+> 
+> gitweb:
+> 
+>     http://git.infradead.org/users/hch/block.git/shortlog/refs/heads/block-errors
+> 
+> Note the the two biggest patches didn't make it to linux-block and
+> linux-btrfs last time.  If you didn't get them they are available in
+> the git tree above.  Unfortunately there is no easy way to split them
+> up.
+
+Mike, can you take a look at the dm bits in this series? I'd like to get
+this queued up, but I'd also greatly prefer if the dm patches had sign
+off from your end.
+
+-- 
+Jens Axboe
