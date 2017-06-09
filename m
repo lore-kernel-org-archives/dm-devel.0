@@ -1,8 +1,7 @@
 From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH v3 04/14] dax,
- pmem: introduce an optional 'flush' dax_operation
-Date: Fri, 09 Jun 2017 13:24:07 -0700
-Message-ID: <149703984722.20620.1577767383686219477.stgit@dwillia2-desk3.amr.corp.intel.com>
+Subject: [PATCH v3 05/14] dm: add ->flush() dax operation support
+Date: Fri, 09 Jun 2017 13:24:13 -0700
+Message-ID: <149703985321.20620.13954624502810597823.stgit@dwillia2-desk3.amr.corp.intel.com>
 References: <149703982465.20620.14881139332926778446.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,60 +18,191 @@ List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
 Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 To: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Cc: Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org
+Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org
 List-Id: dm-devel.ids
 
-Filesystem-DAX flushes caches whenever it writes to the address returned
-through dax_direct_access() and when writing back dirty radix entries.
-That flushing is only required in the pmem case, so add a dax operation
-to allow pmem to take this extra action, but skip it for other dax
-capable devices that do not provide a flush routine.
+Allow device-mapper to route flush operations to the
+per-target implementation. In order for the device stacking to work we
+need a dax_dev and a pgoff relative to that device. This gives each
+layer of the stack the information it needs to look up the operation
+pointer for the next level.
 
-An example for this differentiation might be a volatile ram disk where
-there is no expectation of persistence. In fact the pmem driver itself might
-front such an address range specified by the NFIT. So, this "no flush"
-property might be something passed down by the bus / libnvdimm.
+This conceptually allows for an array of mixed device drivers with
+varying flush implementations.
 
-Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Cc: Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>
-Cc: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Cc: Toshi Kani <toshi.kani-ZPxbGqLxI0U@public.gmane.org>
+Reviewed-by: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Signed-off-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 ---
- drivers/nvdimm/pmem.c |    7 +++++++
- include/linux/dax.h   |    2 ++
- 2 files changed, 9 insertions(+)
+ drivers/dax/super.c           |   11 +++++++++++
+ drivers/md/dm-linear.c        |   15 +++++++++++++++
+ drivers/md/dm-stripe.c        |   20 ++++++++++++++++++++
+ drivers/md/dm.c               |   19 +++++++++++++++++++
+ include/linux/dax.h           |    2 ++
+ include/linux/device-mapper.h |    3 +++
+ 6 files changed, 70 insertions(+)
 
-diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
-index 2f3aefe565c6..823b07774244 100644
---- a/drivers/nvdimm/pmem.c
-+++ b/drivers/nvdimm/pmem.c
-@@ -242,9 +242,16 @@ static size_t pmem_copy_from_iter(struct dax_device *dax_dev, pgoff_t pgoff,
- 	return copy_from_iter_flushcache(addr, bytes, i);
+diff --git a/drivers/dax/super.c b/drivers/dax/super.c
+index dd299e55f65d..b7729e4d351a 100644
+--- a/drivers/dax/super.c
++++ b/drivers/dax/super.c
+@@ -185,6 +185,17 @@ size_t dax_copy_from_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
+ }
+ EXPORT_SYMBOL_GPL(dax_copy_from_iter);
+ 
++void dax_flush(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
++		size_t size)
++{
++	if (!dax_alive(dax_dev))
++		return;
++
++	if (dax_dev->ops->flush)
++		dax_dev->ops->flush(dax_dev, pgoff, addr, size);
++}
++EXPORT_SYMBOL_GPL(dax_flush);
++
+ bool dax_alive(struct dax_device *dax_dev)
+ {
+ 	lockdep_assert_held(&dax_srcu);
+diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
+index 0841ec1bfbad..25e661974319 100644
+--- a/drivers/md/dm-linear.c
++++ b/drivers/md/dm-linear.c
+@@ -173,6 +173,20 @@ static size_t linear_dax_copy_from_iter(struct dm_target *ti, pgoff_t pgoff,
+ 	return dax_copy_from_iter(dax_dev, pgoff, addr, bytes, i);
  }
  
-+static void pmem_dax_flush(struct dax_device *dax_dev, pgoff_t pgoff,
-+		void *addr, size_t size)
++static void linear_dax_flush(struct dm_target *ti, pgoff_t pgoff, void *addr,
++		size_t size)
 +{
-+	wb_cache_pmem(addr, size);
++	struct linear_c *lc = ti->private;
++	struct block_device *bdev = lc->dev->bdev;
++	struct dax_device *dax_dev = lc->dev->dax_dev;
++	sector_t dev_sector, sector = pgoff * PAGE_SECTORS;
++
++	dev_sector = linear_map_sector(ti, sector);
++	if (bdev_dax_pgoff(bdev, dev_sector, ALIGN(size, PAGE_SIZE), &pgoff))
++		return;
++	dax_flush(dax_dev, pgoff, addr, size);
 +}
 +
- static const struct dax_operations pmem_dax_ops = {
- 	.direct_access = pmem_dax_direct_access,
- 	.copy_from_iter = pmem_copy_from_iter,
-+	.flush = pmem_dax_flush,
+ static struct target_type linear_target = {
+ 	.name   = "linear",
+ 	.version = {1, 3, 0},
+@@ -186,6 +200,7 @@ static struct target_type linear_target = {
+ 	.iterate_devices = linear_iterate_devices,
+ 	.direct_access = linear_dax_direct_access,
+ 	.dax_copy_from_iter = linear_dax_copy_from_iter,
++	.dax_flush = linear_dax_flush,
  };
  
- static void pmem_release_queue(void *q)
+ int __init dm_linear_init(void)
+diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
+index 1ef914f9ca72..8e73517967b6 100644
+--- a/drivers/md/dm-stripe.c
++++ b/drivers/md/dm-stripe.c
+@@ -351,6 +351,25 @@ static size_t stripe_dax_copy_from_iter(struct dm_target *ti, pgoff_t pgoff,
+ 	return dax_copy_from_iter(dax_dev, pgoff, addr, bytes, i);
+ }
+ 
++static void stripe_dax_flush(struct dm_target *ti, pgoff_t pgoff, void *addr,
++		size_t size)
++{
++	sector_t dev_sector, sector = pgoff * PAGE_SECTORS;
++	struct stripe_c *sc = ti->private;
++	struct dax_device *dax_dev;
++	struct block_device *bdev;
++	uint32_t stripe;
++
++	stripe_map_sector(sc, sector, &stripe, &dev_sector);
++	dev_sector += sc->stripe[stripe].physical_start;
++	dax_dev = sc->stripe[stripe].dev->dax_dev;
++	bdev = sc->stripe[stripe].dev->bdev;
++
++	if (bdev_dax_pgoff(bdev, dev_sector, ALIGN(size, PAGE_SIZE), &pgoff))
++		return;
++	dax_flush(dax_dev, pgoff, addr, size);
++}
++
+ /*
+  * Stripe status:
+  *
+@@ -471,6 +490,7 @@ static struct target_type stripe_target = {
+ 	.io_hints = stripe_io_hints,
+ 	.direct_access = stripe_dax_direct_access,
+ 	.dax_copy_from_iter = stripe_dax_copy_from_iter,
++	.dax_flush = stripe_dax_flush,
+ };
+ 
+ int __init dm_stripe_init(void)
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 7faaceb52819..09b3efdc8abf 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -994,6 +994,24 @@ static size_t dm_dax_copy_from_iter(struct dax_device *dax_dev, pgoff_t pgoff,
+ 	return ret;
+ }
+ 
++static void dm_dax_flush(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
++		size_t size)
++{
++	struct mapped_device *md = dax_get_private(dax_dev);
++	sector_t sector = pgoff * PAGE_SECTORS;
++	struct dm_target *ti;
++	int srcu_idx;
++
++	ti = dm_dax_get_live_target(md, sector, &srcu_idx);
++
++	if (!ti)
++		goto out;
++	if (ti->type->dax_flush)
++		ti->type->dax_flush(ti, pgoff, addr, size);
++ out:
++	dm_put_live_table(md, srcu_idx);
++}
++
+ /*
+  * A target may call dm_accept_partial_bio only from the map routine.  It is
+  * allowed for all bio types except REQ_PREFLUSH.
+@@ -2885,6 +2903,7 @@ static const struct block_device_operations dm_blk_dops = {
+ static const struct dax_operations dm_dax_ops = {
+ 	.direct_access = dm_dax_direct_access,
+ 	.copy_from_iter = dm_dax_copy_from_iter,
++	.flush = dm_dax_flush,
+ };
+ 
+ /*
 diff --git a/include/linux/dax.h b/include/linux/dax.h
-index 28e398f8c59e..407dd3ff6e54 100644
+index 407dd3ff6e54..1f6b6072af64 100644
 --- a/include/linux/dax.h
 +++ b/include/linux/dax.h
-@@ -19,6 +19,8 @@ struct dax_operations {
- 	/* copy_from_iter: dax-driver override for default copy_from_iter */
- 	size_t (*copy_from_iter)(struct dax_device *, pgoff_t, void *, size_t,
- 			struct iov_iter *);
-+	/* flush: optional driver-specific cache management after writes */
-+	void (*flush)(struct dax_device *, pgoff_t, void *, size_t);
- };
+@@ -82,6 +82,8 @@ long dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff, long nr_pages,
+ 		void **kaddr, pfn_t *pfn);
+ size_t dax_copy_from_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
+ 		size_t bytes, struct iov_iter *i);
++void dax_flush(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
++		size_t size);
  
- #if IS_ENABLED(CONFIG_DAX)
+ /*
+  * We use lowest available bit in exceptional entry for locking, one bit for
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index 11c8a0a92f9c..67bfe8ddcb32 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -134,6 +134,8 @@ typedef long (*dm_dax_direct_access_fn) (struct dm_target *ti, pgoff_t pgoff,
+ 		long nr_pages, void **kaddr, pfn_t *pfn);
+ typedef size_t (*dm_dax_copy_from_iter_fn)(struct dm_target *ti, pgoff_t pgoff,
+ 		void *addr, size_t bytes, struct iov_iter *i);
++typedef void (*dm_dax_flush_fn)(struct dm_target *ti, pgoff_t pgoff, void *addr,
++		size_t size);
+ #define PAGE_SECTORS (PAGE_SIZE / 512)
+ 
+ void dm_error(const char *message);
+@@ -184,6 +186,7 @@ struct target_type {
+ 	dm_io_hints_fn io_hints;
+ 	dm_dax_direct_access_fn direct_access;
+ 	dm_dax_copy_from_iter_fn dax_copy_from_iter;
++	dm_dax_flush_fn dax_flush;
+ 
+ 	/* For internal device-mapper use. */
+ 	struct list_head list;
