@@ -1,16 +1,18 @@
-From: Martin Wilck <mwilck@suse.com>
+From: Yang Feng <philip.yang@huawei.com>
 Subject: Re: [PATCH v4 0/1] multipath-tools: Prioritizer based on
  a latency algorithm
-Date: Fri, 09 Jun 2017 10:05:52 +0200
-Message-ID: <1496995552.4654.16.camel@suse.com>
+Date: Fri, 9 Jun 2017 16:26:09 +0800
+Message-ID: <dd64aa99-bc63-7dfc-c58c-0cfc1776324c@huawei.com>
 References: <1496717022-25392-1-git-send-email-philip.yang@huawei.com>
 	<8f92be05-3841-e1b8-ac69-13ab4700395e@suse.de>
 	<197737a7-c0bd-adf7-934c-b198adac82f3@huawei.com>
+	<1496995552.4654.16.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <197737a7-c0bd-adf7-934c-b198adac82f3@huawei.com>
+In-Reply-To: <1496995552.4654.16.camel@suse.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,40 +22,62 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Yang Feng <philip.yang@huawei.com>, Hannes Reinecke <hare@suse.de>, dm-devel@redhat.com, christophe.varoqui@opensvc.com, bmarzins@redhat.com, xose.vazquez@gmail.com
+To: Martin Wilck <mwilck@suse.com>, Hannes Reinecke <hare@suse.de>, dm-devel@redhat.com, christophe.varoqui@opensvc.com, bmarzins@redhat.com, xose.vazquez@gmail.com
 Cc: zouming.zouming@huawei.com, hege09@huawei.com, guanjunxiong@huawei.com, shenhong09@huawei.com, qiuxin@huawei.com
 List-Id: dm-devel.ids
 
-SGVsbG8gWWFuZywKCj4gPiBBY3R1YWxseSwgeW91J3JlIG5vdCBhbG9uZSBoZXJlOyBzZXZlcmFs
-IG90aGVyIHN0b3JhZ2UgYXJyYXkgc2V0dXBzCj4gPiBzdWZmZXIgZnJvbSB0aGUgc2FtZSBwcm9i
-bGVtLgo+ID4gCj4gPiBFZyBpZiB5b3UgaGF2ZSBhIHNpdGUtZmFpbG92ZXIgc2V0dXAgd2l0aCB0
-d28gc3RvcmFnZSBhcnJheXMgYXQKPiA+IGRpZmZlcmVudCBsb2NhdGlvbnMgdGhlIHByb2JsZW0g
-aXMgbW9yZS1vci1sZXNzIHRoZSBzYW1lOwo+ID4gYm90aCBhcnJheXMgcG90ZW50aWFsbHkgd2ls
-bCBiZSBkaXNwbGF5aW5nIGlkZW50aWNhbCBwcmlvcml0eQo+ID4gaW5mb3JtYXRpb24sIGRlc3Bp
-dGUgb25lIGFycmF5IGJlaW5nIHJlbW90ZS4KPiA+IAo+IAo+IEl0J3MgdXAgdG8gdGhlIHZhbHVl
-IHNldCBvZiB0aGUgYXJndW1lbnQgImxhdGVuY3lfaW50ZXJ2YWwiLkZvcgo+IGV4YW1wbGUsCj4g
-SWYgbGF0ZW5jeV9pbnRlcnZhbD0xMG1zLCB0aGUgcGF0aHMgd2lsbCBiZSBncm91cGVkIGluIHBy
-aW9yaXR5Cj4gZ3JvdXBzCj4gd2l0aCBwYXRoIGxhdGVuY3kgMC0xMG1zLCAxMC0yMG1zLCAyMC0z
-MG1zLCBldGMuIElmIHRoZSBhcmd1bWVudAo+ICJsYXRlbmN5X2ludGVydmFsIiBpcyBzZXQgdG8g
-YXBwcm9wcmlhdGUgdmFsdWUgYW5kIHRoZSBkaXN0YW5jZQo+IGJldHdlZW4KPiB0d28gYXJyYXlz
-IGlzIG5vdCBlbm91Z2ggZmFyLCB0d28gcHJpb3JpdGllcyBtYXkgYmUgdGhlIHNhbWUsIEJ1dAo+
-IGl0J3MKPiBPSywgYmVjYXVzZSBiZXR3ZWVuIHR3byBhcnJheXMsIHRoZSBnYXAgb2YgYXZlcmFn
-ZSBwYXRoIGxhdGVuY3kgaXMKPiB2ZXJ5Cj4gc21hbGwgYW5kIHRvbGVyYWJsZS4KCkkgd29uZGVy
-IGlmIGl0IHdvdWxkIG1ha2Ugc2Vuc2UgdG8gdXNlICJsb2dhcml0aG1pY2FsbHkiIHNjYWxlZCBs
-YXRlbmN5CmludGVydmFscyBoZXJlLiBJdCB3b3VsZG4ndCBtYWtlIGEgbGFyZ2UgZGlmZmVyZW5j
-ZSB3aGV0aGVyIHRoZSBsYXRlbmN5CmlzIDFtcyBvciAybXMsIGJ1dCBpZiB3ZSBoYXZlIHBhdGhz
-IHdoZXJlIHRoZSBsYXRlbmNpZXMgZGlmZmVyIGJ5IG9yZGVyCm9mIG1hZ25pdHVkZSwgaXQgd291
-bGQgYmUgdmVyeSBpbXBvcnRhbnQgdG8gbWFrZSBhIGRpc3RpbmN0aW9uLiBXaXRoCnRoZSBjdXJy
-ZW50IGxpbmVhciBpbnRlcnZhbHMsIGl0IHdvdWxkIGJlIGhhcmQgdG8gZ2V0IHRoaXMgcmlnaHQg
-KHVzCmludGVydmFsIHNpemUgd291bGQgcmVzdWx0IGluIHRvbyBtYW55IGludGVydmFscywgYW5k
-IHNlYyBpbnRlcnZhbCBzaXplCndvdWxkbid0IGFsbG93IGEgZGlzdGluY3Rpb24gYmV0d2VlbiB1
-cyBhbmQgbXMgbGF0ZW5jaWVzKS4KCkJ5IHVzaW5nIGxvZ2FyaXRobWljIHNjYWxlLCB5b3UgY291
-bGQgc2V0dXAgdGhlIGxhdGVuY3kgaW50ZXZhbHMgZS5nCmxpa2UgdGhpczogCgogIDwgMTB1cywg
-MTB1cy0xMDB1cywgMTAwdXMtMW1zLCAxbXMtMTBtcywgMTBtcy0xMDBtcywgPiAxMDBtcwoKSU1P
-IHRoYXQgd291bGQgYmUgYmV0dGVyLCBpbiBwYXJ0aWN1bGFyIGlmIHRoZSBsYXRlbmNpZXMgZGlm
-ZmVyCnN0cm9uZ2x5IGJldHdlZW4gcGF0aHMuCgpSZWdhcmRzCk1hcnRpbgoKCi0tIApEci4gTWFy
-dGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpT
-VVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdy
-YWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5n
-IGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4v
-bGlzdGluZm8vZG0tZGV2ZWw=
+Hi Martin,
+
+Thanks a lot.
+It's a good idea.
+The updated patch will be sent later.
+
+Regards,
+-Yang
+
+
+On 2017/6/9 16:05, Martin Wilck wrote:
+> Hello Yang,
+> 
+>>> Actually, you're not alone here; several other storage array setups
+>>> suffer from the same problem.
+>>>
+>>> Eg if you have a site-failover setup with two storage arrays at
+>>> different locations the problem is more-or-less the same;
+>>> both arrays potentially will be displaying identical priority
+>>> information, despite one array being remote.
+>>>
+>>
+>> It's up to the value set of the argument "latency_interval".For
+>> example,
+>> If latency_interval=10ms, the paths will be grouped in priority
+>> groups
+>> with path latency 0-10ms, 10-20ms, 20-30ms, etc. If the argument
+>> "latency_interval" is set to appropriate value and the distance
+>> between
+>> two arrays is not enough far, two priorities may be the same, But
+>> it's
+>> OK, because between two arrays, the gap of average path latency is
+>> very
+>> small and tolerable.
+> 
+> I wonder if it would make sense to use "logarithmically" scaled latency
+> intervals here. It wouldn't make a large difference whether the latency
+> is 1ms or 2ms, but if we have paths where the latencies differ by order
+> of magnitude, it would be very important to make a distinction. With
+> the current linear intervals, it would be hard to get this right (us
+> interval size would result in too many intervals, and sec interval size
+> wouldn't allow a distinction between us and ms latencies).
+> 
+> By using logarithmic scale, you could setup the latency intevals e.g
+> like this: 
+> 
+>   < 10us, 10us-100us, 100us-1ms, 1ms-10ms, 10ms-100ms, > 100ms
+> 
+> IMO that would be better, in particular if the latencies differ
+> strongly between paths.
+> 
+> Regards
+> Martin
+> 
+> 
