@@ -1,81 +1,35 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-zoned: Fix overflow in exposed capacity
-Date: Fri, 9 Jun 2017 08:03:39 -0400
-Message-ID: <20170609120339.GB11110@redhat.com>
-References: <20170609040605.4340-1-damien.lemoal@wdc.com>
+From: Marian Csontos <mcsontos@redhat.com>
+Subject: Re: [dm-devel] kernel BUG at lib/percpu-refcount.c:192
+Date: Fri, 9 Jun 2017 14:40:39 +0200
+Message-ID: <b15d955d-d25f-afe9-b6eb-af34078115bd@redhat.com>
+References: <5fd9ae4c-2cf3-360c-ed50-f2517aafda7a@redhat.com>
+ <9dcf0086-6d8a-29db-2a27-6c63af988388@redhat.com>
+ <20170608133829.GA32626@redhat.com>
+ <20170608170719.6kkk4g2gwzrko7wr@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20170609040605.4340-1-damien.lemoal@wdc.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Damien Le Moal <damien.lemoal@wdc.com>
-Cc: Bart Van Assche <bart.vanassche@sandisk.com>, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <20170608170719.6kkk4g2gwzrko7wr@kernel.org>
+Content-Language: en-MW
+Sender: linux-raid-owner@vger.kernel.org
+To: Shaohua Li <shli@kernel.org>, Mike Snitzer <snitzer@redhat.com>
+Cc: linux-raid@vger.kernel.org, Heinz Mauelshagen <heinzm@redhat.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Jun 09 2017 at 12:06am -0400,
-Damien Le Moal <damien.lemoal@wdc.com> wrote:
+On 06/08/2017 07:07 PM, Shaohua Li wrote:
 
-> Cast unsigned int to sector_t before shifting. Otherwise, the target
-> length overflows and becomes incorrect.
 > 
-> Also fix an incorrect setting of the target suspend
-> operation.
+> Neil fixed a bug in this side recently, which is pretty similar like the
+> reported, I'll push the patch to upstream soon. Could you please try my
+> for-next tree, and check if you still have the issue?
 > 
-> Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
-> ---
->  drivers/md/dm-zoned-target.c | 5 +++--
->  1 file changed, 3 insertions(+), 2 deletions(-)
-> 
-> diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
-> index 4438f30..f947166 100644
-> --- a/drivers/md/dm-zoned-target.c
-> +++ b/drivers/md/dm-zoned-target.c
-> @@ -773,7 +773,7 @@ static int dmz_ctr(struct dm_target *ti, unsigned int argc, char **argv)
->  	ti->split_discard_bios = true;
->  
->  	/* The exposed capacity is the number of chunks that can be mapped */
-> -	ti->len = dmz_nr_chunks(dmz->metadata) << dev->zone_nr_sectors_shift;
-> +	ti->len = (sector_t)dmz_nr_chunks(dmz->metadata) << dev->zone_nr_sectors_shift;
->  
->  	/* Zone BIO */
->  	dmz->bio_set = bioset_create_nobvec(DMZ_MIN_BIOS, 0);
+> Thanks,
+> Shaohua
 
-I folded this in, thanks.
+Kernel with the patch applied runs so far fine. All raid tests passed, 
+and the whole test suite is being run now.
 
-> @@ -944,7 +944,8 @@ static struct target_type dmz_type = {
->  	.end_io		 = dmz_end_io,
->  	.io_hints	 = dmz_io_hints,
->  	.prepare_ioctl	 = dmz_prepare_ioctl,
-> -	.suspend	 = dmz_suspend,
-> +	.presuspend	 = dmz_suspend,
-> +	.presuspend_undo = dmz_resume,
->  	.resume		 = dmz_resume,
->  	.iterate_devices = dmz_iterate_devices,
->  };
+Thanks!
 
-I've switched from .presuspend to .postsuspend, and eliminated the
-.presuspend_undo
-
-I'm not seeing any reason for .presuspend_undo
-
-See dm-cache-target.c for a .postsuspend that is pretty comparable to
-what dm-zoned's is doing.
-
-As for .presuspend_undo, dm-thinp has a need for it but most target do
-not.  And I'm not seeing why dm-zoned needs it.
-
-I've pushed to linux-dm.git's 'for-next' to get more test coverage;
-doesn't mean that I consider dm-zoned's review complete.
-
-Thanks,
-Mike
+-- Martian
