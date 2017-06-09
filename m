@@ -1,12 +1,15 @@
 From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH v3 00/14] pmem: stop abusing __copy_user_nocache(),
- and other reworks
-Date: Fri, 09 Jun 2017 13:23:45 -0700
-Message-ID: <149703982465.20620.14881139332926778446.stgit@dwillia2-desk3.amr.corp.intel.com>
+Subject: [PATCH v3 01/14] x86,
+ uaccess: introduce copy_from_iter_flushcache for pmem /
+ cache-bypass operations
+Date: Fri, 09 Jun 2017 13:23:51 -0700
+Message-ID: <149703983098.20620.14791162611225792317.stgit@dwillia2-desk3.amr.corp.intel.com>
+References: <149703982465.20620.14881139332926778446.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <149703982465.20620.14881139332926778446.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
  <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
 List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
@@ -17,146 +20,456 @@ List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
 Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 To: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org
+Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, hch-jcswGhMUV9g@public.gmane.org
 List-Id: dm-devel.ids
 
-Changes since v2 [1]:
-1/ Address the concerns from "[NAK] copy_from_iter_ops()" [2]. The
-   copy_from_iter_ops approach is replaced with a new set _flushcache
-   memcpy and user-copy helpers (Al)
+The pmem driver has a need to transfer data with a persistent memory
+destination and be able to rely on the fact that the destination writes are not
+cached. It is sufficient for the writes to be flushed to a cpu-store-buffer
+(non-temporal / "movnt" in x86 terms), as we expect userspace to call fsync()
+to ensure data-writes have reached a power-fail-safe zone in the platform. The
+fsync() triggers a REQ_FUA or REQ_FLUSH to the pmem driver which will turn
+around and fence previous writes with an "sfence".
 
-2/ Use _flushcache as the suffix for the new cache managing copy helpers
-   rather than _writethrough (Ingo and Toshi)
+Implement a __copy_from_user_inatomic_flushcache, memcpy_page_flushcache, and
+memcpy_flushcache, that guarantee that the destination buffer is not dirty in
+the cpu cache on completion. The new copy_from_iter_flushcache and sub-routines
+will be used to replace the "pmem api" (include/linux/pmem.h +
+arch/x86/include/asm/pmem.h). The availability of copy_from_iter_flushcache()
+and memcpy_flushcache() are gated by the CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE
+config symbol, and fallback to copy_from_iter_nocache() and plain memcpy()
+otherwise.
 
-3/ Keep asm/pmem.h instead of moving the helpers to
-   drivers/nvdimm/$arch.c (another side effect of Al's feedback)
+This is meant to satisfy the concern from Linus that if a driver wants to do
+something beyond the normal nocache semantics it should be something private to
+that driver [1], and Al's concern that anything uaccess related belongs with
+the rest of the uaccess code [2].
 
-[1]: https://lkml.org/lkml/2017/4/21/823
+The first consumer of this interface is a new 'copy_from_iter' dax operation so
+that pmem can inject cache maintenance operations without imposing this
+overhead on other dax-capable drivers.
+
+[1]: https://lists.01.org/pipermail/linux-nvdimm/2017-January/008364.html
 [2]: https://lists.01.org/pipermail/linux-nvdimm/2017-April/009942.html
 
+Cc: <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Cc: Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Cc: Toshi Kani <toshi.kani-ZPxbGqLxI0U@public.gmane.org>
+Cc: "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
+Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Cc: Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>
+Reviewed-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Signed-off-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 ---
-A few months back, in the course of reviewing the memcpy_nocache()
-proposal from Brian, Linus proposed that the pmem specific
-memcpy_to_pmem() routine be moved to be implemented at the driver level
-[3]:
-
-   "Quite frankly, the whole 'memcpy_nocache()' idea or (ab-)using
-    copy_user_nocache() just needs to die. It's idiotic.
-
-    As you point out, it's also fundamentally buggy crap.
-
-    Throw it away. There is no possible way this is ever valid or
-    portable. We're not going to lie and claim that it is.
-
-    If some driver ends up using 'movnt' by hand, that is up to that
-    *driver*. But no way in hell should we care about this one whit in
-    the sense of <linux/uaccess.h>."
-
-This feedback also dovetails with another fs/dax.c design wart of being
-hard coded to assume the backing device is pmem. We call the pmem
-specific copy, clear, and flush routines even if the backing device
-driver is one of the other 3 dax drivers (axonram, dccssblk, or brd).
-There is no reason to spend cpu cycles flushing the cache after writing
-to brd, for example, since it is using volatile memory for storage.
-
-Moreover, the pmem driver might be fronting a volatile memory range
-published by the ACPI NFIT, or the platform might have arranged to flush
-cpu caches on power fail. This latter capability is a feature that has
-appeared in embedded storage appliances (pre-ACPI-NFIT nvdimm
-platforms).
-
-Now, the comment about completely avoiding uaccess.h is augmented by
-Al's recent assertion:
-
-   "And for !@#!@# sake, comments like this
-    +        * On x86_64 __copy_from_user_nocache() uses non-temporal stores
-    +        * for the bulk of the transfer, but we need to manually flush
-    +        * if the transfer is unaligned. A cached memory copy is used
-    +        * when destination or size is not naturally aligned. That is:
-    +        *   - Require 8-byte alignment when size is 8 bytes or larger.
-    +        *   - Require 4-byte alignment when size is 4 bytes.
-    mean only one thing: this should live in arch/x86/lib/usercopy_64.c,
-    right next to the actual function that does copying.  NOT in
-    drivers/nvdimm/x86.c.  At the very least it needs a comment in usercopy_64.c
-    with dire warnings along the lines of "don't touch that code without
-    looking into <filename>:pmem_from_user().."
-
-So, this series proceeds to keep all the usercopy code centralized. The
-change set:
-
-1/ Moves what was previously named "the pmem api" out of the global
-   namespace and into the libnvdimm sub-system that needs to be
-   concerned with architecture specific persistent memory considerations.
-
-2/ Arranges for dax to stop abusing __copy_user_nocache() and implements
-   formal _flushcache helpers that use 'movnt' on x86_64.
-
-3/ Makes filesystem-dax cache maintenance optional by arranging for dax
-   to call driver specific copy and flush operations only if the driver
-   publishes them.
-
-4/ Allows filesytem-dax cache management to be controlled by the block
-   device write-cache queue flag. The pmem driver is updated to clear
-   that flag by default when pmem is driving volatile memory. In the future
-   this same path may be used to detect platforms that have a
-   cpu-cache-flush-on-fail capability. That said, an administrator has the
-   option to force this behavior by writing to the $bdev/queue/write_cache
-   attribute in sysfs.
-
-[3]: https://lists.01.org/pipermail/linux-nvdimm/2017-January/008364.html
-
-This series is based on v4.12-rc4 and passes the current ndctl
-regression suite.
-
----
-
-Dan Williams (14):
-      x86, uaccess: introduce copy_from_iter_flushcache for pmem / cache-bypass operations
-      dm: add ->copy_from_iter() dax operation support
-      filesystem-dax: convert to dax_copy_from_iter()
-      dax, pmem: introduce an optional 'flush' dax_operation
-      dm: add ->flush() dax operation support
-      filesystem-dax: convert to dax_flush()
-      x86, dax: replace clear_pmem() with open coded memset + dax_ops->flush
-      x86, dax, libnvdimm: move wb_cache_pmem() to libnvdimm
-      x86, libnvdimm, pmem: move arch_invalidate_pmem() to libnvdimm
-      pmem: remove global pmem api
-      libnvdimm, pmem: fix persistence warning
-      libnvdimm, nfit: enable support for volatile ranges
-      filesystem-dax: gate calls to dax_flush() on QUEUE_FLAG_WC
-      libnvdimm, pmem: disable dax flushing when pmem is fronting a volatile region
-
-
- MAINTAINERS                       |    1 
  arch/x86/Kconfig                  |    1 
- arch/x86/include/asm/pmem.h       |   81 ---------------------
  arch/x86/include/asm/string_64.h  |    5 +
- arch/x86/include/asm/uaccess_64.h |   12 +++
- arch/x86/lib/usercopy_64.c        |  129 ++++++++++++++++++++++++++++++++++
- drivers/acpi/nfit/core.c          |   15 +++-
- drivers/dax/super.c               |   24 ++++++
- drivers/md/dm-linear.c            |   30 ++++++++
- drivers/md/dm-stripe.c            |   40 ++++++++++
- drivers/md/dm.c                   |   45 ++++++++++++
- drivers/nvdimm/bus.c              |    8 +-
- drivers/nvdimm/claim.c            |    6 +-
- drivers/nvdimm/core.c             |    2 -
- drivers/nvdimm/dax_devs.c         |    2 -
- drivers/nvdimm/dimm_devs.c        |   10 ++-
- drivers/nvdimm/namespace_devs.c   |   14 +---
- drivers/nvdimm/nd-core.h          |    9 ++
- drivers/nvdimm/pfn_devs.c         |    4 +
- drivers/nvdimm/pmem.c             |   32 +++++++-
- drivers/nvdimm/pmem.h             |   13 +++
- drivers/nvdimm/region_devs.c      |   43 +++++++----
- fs/dax.c                          |   11 ++-
- include/linux/dax.h               |    9 ++
- include/linux/device-mapper.h     |    6 ++
- include/linux/libnvdimm.h         |    2 +
- include/linux/pmem.h              |  142 -------------------------------------
+ arch/x86/include/asm/uaccess_64.h |   11 +++
+ arch/x86/lib/usercopy_64.c        |  128 +++++++++++++++++++++++++++++++++++++
+ drivers/acpi/nfit/core.c          |    3 -
+ drivers/nvdimm/claim.c            |    2 -
+ drivers/nvdimm/pmem.c             |   13 +++-
+ drivers/nvdimm/region_devs.c      |    4 +
+ include/linux/dax.h               |    3 +
  include/linux/string.h            |    6 ++
  include/linux/uio.h               |   15 ++++
  lib/Kconfig                       |    3 +
  lib/iov_iter.c                    |   22 ++++++
- 31 files changed, 464 insertions(+), 278 deletions(-)
- delete mode 100644 include/linux/pmem.h
+ 13 files changed, 209 insertions(+), 7 deletions(-)
+
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index 4ccfacc7232a..bb273b2f50b5 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -54,6 +54,7 @@ config X86
+ 	select ARCH_HAS_KCOV			if X86_64
+ 	select ARCH_HAS_MMIO_FLUSH
+ 	select ARCH_HAS_PMEM_API		if X86_64
++	select ARCH_HAS_UACCESS_FLUSHCACHE	if X86_64
+ 	select ARCH_HAS_SET_MEMORY
+ 	select ARCH_HAS_SG_CHAIN
+ 	select ARCH_HAS_STRICT_KERNEL_RWX
+diff --git a/arch/x86/include/asm/string_64.h b/arch/x86/include/asm/string_64.h
+index 733bae07fb29..1f22bc277c45 100644
+--- a/arch/x86/include/asm/string_64.h
++++ b/arch/x86/include/asm/string_64.h
+@@ -109,6 +109,11 @@ memcpy_mcsafe(void *dst, const void *src, size_t cnt)
+ 	return 0;
+ }
+ 
++#ifdef CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE
++#define __HAVE_ARCH_MEMCPY_FLUSHCACHE 1
++void memcpy_flushcache(void *dst, const void *src, size_t cnt);
++#endif
++
+ #endif /* __KERNEL__ */
+ 
+ #endif /* _ASM_X86_STRING_64_H */
+diff --git a/arch/x86/include/asm/uaccess_64.h b/arch/x86/include/asm/uaccess_64.h
+index c5504b9a472e..b16f6a1d8b26 100644
+--- a/arch/x86/include/asm/uaccess_64.h
++++ b/arch/x86/include/asm/uaccess_64.h
+@@ -171,6 +171,10 @@ unsigned long raw_copy_in_user(void __user *dst, const void __user *src, unsigne
+ extern long __copy_user_nocache(void *dst, const void __user *src,
+ 				unsigned size, int zerorest);
+ 
++extern long __copy_user_flushcache(void *dst, const void __user *src, unsigned size);
++extern void memcpy_page_flushcache(char *to, struct page *page, size_t offset,
++			   size_t len);
++
+ static inline int
+ __copy_from_user_inatomic_nocache(void *dst, const void __user *src,
+ 				  unsigned size)
+@@ -179,6 +183,13 @@ __copy_from_user_inatomic_nocache(void *dst, const void __user *src,
+ 	return __copy_user_nocache(dst, src, size, 0);
+ }
+ 
++static inline int
++__copy_from_user_flushcache(void *dst, const void __user *src, unsigned size)
++{
++	kasan_check_write(dst, size);
++	return __copy_user_flushcache(dst, src, size);
++}
++
+ unsigned long
+ copy_user_handle_tail(char *to, char *from, unsigned len);
+ 
+diff --git a/arch/x86/lib/usercopy_64.c b/arch/x86/lib/usercopy_64.c
+index 3b7c40a2e3e1..f42d2fd86ca3 100644
+--- a/arch/x86/lib/usercopy_64.c
++++ b/arch/x86/lib/usercopy_64.c
+@@ -7,6 +7,7 @@
+  */
+ #include <linux/export.h>
+ #include <linux/uaccess.h>
++#include <linux/highmem.h>
+ 
+ /*
+  * Zero Userspace
+@@ -73,3 +74,130 @@ copy_user_handle_tail(char *to, char *from, unsigned len)
+ 	clac();
+ 	return len;
+ }
++
++#ifdef CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE
++/**
++ * clean_cache_range - write back a cache range with CLWB
++ * @vaddr:	virtual start address
++ * @size:	number of bytes to write back
++ *
++ * Write back a cache range using the CLWB (cache line write back)
++ * instruction. Note that @size is internally rounded up to be cache
++ * line size aligned.
++ */
++static void clean_cache_range(void *addr, size_t size)
++{
++	u16 x86_clflush_size = boot_cpu_data.x86_clflush_size;
++	unsigned long clflush_mask = x86_clflush_size - 1;
++	void *vend = addr + size;
++	void *p;
++
++	for (p = (void *)((unsigned long)addr & ~clflush_mask);
++	     p < vend; p += x86_clflush_size)
++		clwb(p);
++}
++
++long __copy_user_flushcache(void *dst, const void __user *src, unsigned size)
++{
++	unsigned long flushed, dest = (unsigned long) dst;
++	long rc = __copy_user_nocache(dst, src, size, 0);
++
++	/*
++	 * __copy_user_nocache() uses non-temporal stores for the bulk
++	 * of the transfer, but we need to manually flush if the
++	 * transfer is unaligned. A cached memory copy is used when
++	 * destination or size is not naturally aligned. That is:
++	 *   - Require 8-byte alignment when size is 8 bytes or larger.
++	 *   - Require 4-byte alignment when size is 4 bytes.
++	 */
++	if (size < 8) {
++		if (!IS_ALIGNED(dest, 4) || size != 4)
++			clean_cache_range(dst, 1);
++	} else {
++		if (!IS_ALIGNED(dest, 8)) {
++			dest = ALIGN(dest, boot_cpu_data.x86_clflush_size);
++			clean_cache_range(dst, 1);
++		}
++
++		flushed = dest - (unsigned long) dst;
++		if (size > flushed && !IS_ALIGNED(size - flushed, 8))
++			clean_cache_range(dst + size - 1, 1);
++	}
++
++	return rc;
++}
++
++void memcpy_flushcache(void *_dst, const void *_src, size_t size)
++{
++	unsigned long dest = (unsigned long) _dst;
++	unsigned long source = (unsigned long) _src;
++
++	/* cache copy and flush to align dest */
++	if (!IS_ALIGNED(dest, 8)) {
++		unsigned len = min_t(unsigned, size, ALIGN(dest, 8) - dest);
++
++		memcpy((void *) dest, (void *) source, len);
++		clean_cache_range((void *) dest, len);
++		dest += len;
++		source += len;
++		size -= len;
++		if (!size)
++			return;
++	}
++
++	/* 4x8 movnti loop */
++	while (size >= 32) {
++		asm("movq    (%0), %%r8\n"
++		    "movq   8(%0), %%r9\n"
++		    "movq  16(%0), %%r10\n"
++		    "movq  24(%0), %%r11\n"
++		    "movnti  %%r8,   (%1)\n"
++		    "movnti  %%r9,  8(%1)\n"
++		    "movnti %%r10, 16(%1)\n"
++		    "movnti %%r11, 24(%1)\n"
++		    :: "r" (source), "r" (dest)
++		    : "memory", "r8", "r9", "r10", "r11");
++		dest += 32;
++		source += 32;
++		size -= 32;
++	}
++
++	/* 1x8 movnti loop */
++	while (size >= 8) {
++		asm("movq    (%0), %%r8\n"
++		    "movnti  %%r8,   (%1)\n"
++		    :: "r" (source), "r" (dest)
++		    : "memory", "r8");
++		dest += 8;
++		source += 8;
++		size -= 8;
++	}
++
++	/* 1x4 movnti loop */
++	while (size >= 4) {
++		asm("movl    (%0), %%r8d\n"
++		    "movnti  %%r8d,   (%1)\n"
++		    :: "r" (source), "r" (dest)
++		    : "memory", "r8");
++		dest += 4;
++		source += 4;
++		size -= 4;
++	}
++
++	/* cache copy for remaining bytes */
++	if (size) {
++		memcpy((void *) dest, (void *) source, size);
++		clean_cache_range((void *) dest, size);
++	}
++}
++EXPORT_SYMBOL_GPL(memcpy_flushcache);
++
++void memcpy_page_flushcache(char *to, struct page *page, size_t offset,
++		size_t len)
++{
++	char *from = kmap_atomic(page);
++
++	memcpy_flushcache(to, from + offset, len);
++	kunmap_atomic(from);
++}
++#endif
+diff --git a/drivers/acpi/nfit/core.c b/drivers/acpi/nfit/core.c
+index 656acb5d7166..cbd5596e7562 100644
+--- a/drivers/acpi/nfit/core.c
++++ b/drivers/acpi/nfit/core.c
+@@ -1842,8 +1842,7 @@ static int acpi_nfit_blk_single_io(struct nfit_blk *nfit_blk,
+ 		}
+ 
+ 		if (rw)
+-			memcpy_to_pmem(mmio->addr.aperture + offset,
+-					iobuf + copied, c);
++			memcpy_flushcache(mmio->addr.aperture + offset, iobuf + copied, c);
+ 		else {
+ 			if (nfit_blk->dimm_flags & NFIT_BLK_READ_FLUSH)
+ 				mmio_flush_range((void __force *)
+diff --git a/drivers/nvdimm/claim.c b/drivers/nvdimm/claim.c
+index 7ceb5fa4f2a1..b8b9c8ca7862 100644
+--- a/drivers/nvdimm/claim.c
++++ b/drivers/nvdimm/claim.c
+@@ -277,7 +277,7 @@ static int nsio_rw_bytes(struct nd_namespace_common *ndns,
+ 			rc = -EIO;
+ 	}
+ 
+-	memcpy_to_pmem(nsio->addr + offset, buf, size);
++	memcpy_flushcache(nsio->addr + offset, buf, size);
+ 	nvdimm_flush(to_nd_region(ndns->dev.parent));
+ 
+ 	return rc;
+diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
+index c544d466ea51..2f3aefe565c6 100644
+--- a/drivers/nvdimm/pmem.c
++++ b/drivers/nvdimm/pmem.c
+@@ -29,6 +29,7 @@
+ #include <linux/pfn_t.h>
+ #include <linux/slab.h>
+ #include <linux/pmem.h>
++#include <linux/uio.h>
+ #include <linux/dax.h>
+ #include <linux/nd.h>
+ #include "pmem.h"
+@@ -80,7 +81,7 @@ static void write_pmem(void *pmem_addr, struct page *page,
+ {
+ 	void *mem = kmap_atomic(page);
+ 
+-	memcpy_to_pmem(pmem_addr, mem + off, len);
++	memcpy_flushcache(pmem_addr, mem + off, len);
+ 	kunmap_atomic(mem);
+ }
+ 
+@@ -235,8 +236,15 @@ static long pmem_dax_direct_access(struct dax_device *dax_dev,
+ 	return __pmem_direct_access(pmem, pgoff, nr_pages, kaddr, pfn);
+ }
+ 
++static size_t pmem_copy_from_iter(struct dax_device *dax_dev, pgoff_t pgoff,
++		void *addr, size_t bytes, struct iov_iter *i)
++{
++	return copy_from_iter_flushcache(addr, bytes, i);
++}
++
+ static const struct dax_operations pmem_dax_ops = {
+ 	.direct_access = pmem_dax_direct_access,
++	.copy_from_iter = pmem_copy_from_iter,
+ };
+ 
+ static void pmem_release_queue(void *q)
+@@ -294,7 +302,8 @@ static int pmem_attach_disk(struct device *dev,
+ 	dev_set_drvdata(dev, pmem);
+ 	pmem->phys_addr = res->start;
+ 	pmem->size = resource_size(res);
+-	if (nvdimm_has_flush(nd_region) < 0)
++	if (!IS_ENABLED(CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE)
++			|| nvdimm_has_flush(nd_region) < 0)
+ 		dev_warn(dev, "unable to guarantee persistence of writes\n");
+ 
+ 	if (!devm_request_mem_region(dev, res->start, resource_size(res),
+diff --git a/drivers/nvdimm/region_devs.c b/drivers/nvdimm/region_devs.c
+index b550edf2571f..985b0e11bd73 100644
+--- a/drivers/nvdimm/region_devs.c
++++ b/drivers/nvdimm/region_devs.c
+@@ -1015,8 +1015,8 @@ void nvdimm_flush(struct nd_region *nd_region)
+ 	 * The first wmb() is needed to 'sfence' all previous writes
+ 	 * such that they are architecturally visible for the platform
+ 	 * buffer flush.  Note that we've already arranged for pmem
+-	 * writes to avoid the cache via arch_memcpy_to_pmem().  The
+-	 * final wmb() ensures ordering for the NVDIMM flush write.
++	 * writes to avoid the cache via memcpy_flushcache().  The final
++	 * wmb() ensures ordering for the NVDIMM flush write.
+ 	 */
+ 	wmb();
+ 	for (i = 0; i < nd_region->ndr_mappings; i++)
+diff --git a/include/linux/dax.h b/include/linux/dax.h
+index 5ec1f6c47716..bbe79ed90e2b 100644
+--- a/include/linux/dax.h
++++ b/include/linux/dax.h
+@@ -16,6 +16,9 @@ struct dax_operations {
+ 	 */
+ 	long (*direct_access)(struct dax_device *, pgoff_t, long,
+ 			void **, pfn_t *);
++	/* copy_from_iter: dax-driver override for default copy_from_iter */
++	size_t (*copy_from_iter)(struct dax_device *, pgoff_t, void *, size_t,
++			struct iov_iter *);
+ };
+ 
+ #if IS_ENABLED(CONFIG_DAX)
+diff --git a/include/linux/string.h b/include/linux/string.h
+index 537918f8a98e..7439d83eaa33 100644
+--- a/include/linux/string.h
++++ b/include/linux/string.h
+@@ -122,6 +122,12 @@ static inline __must_check int memcpy_mcsafe(void *dst, const void *src,
+ 	return 0;
+ }
+ #endif
++#ifndef __HAVE_ARCH_MEMCPY_FLUSHCACHE
++static inline void memcpy_flushcache(void *dst, const void *src, size_t cnt)
++{
++	memcpy(dst, src, cnt);
++}
++#endif
+ void *memchr_inv(const void *s, int c, size_t n);
+ char *strreplace(char *s, char old, char new);
+ 
+diff --git a/include/linux/uio.h b/include/linux/uio.h
+index f2d36a3d3005..55cd54a0e941 100644
+--- a/include/linux/uio.h
++++ b/include/linux/uio.h
+@@ -95,6 +95,21 @@ size_t copy_to_iter(const void *addr, size_t bytes, struct iov_iter *i);
+ size_t copy_from_iter(void *addr, size_t bytes, struct iov_iter *i);
+ bool copy_from_iter_full(void *addr, size_t bytes, struct iov_iter *i);
+ size_t copy_from_iter_nocache(void *addr, size_t bytes, struct iov_iter *i);
++#ifdef CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE
++/*
++ * Note, users like pmem that depend on the stricter semantics of
++ * copy_from_iter_flushcache() than copy_from_iter_nocache() must check for
++ * IS_ENABLED(CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE) before assuming that the
++ * destination is flushed from the cache on return.
++ */
++size_t copy_from_iter_flushcache(void *addr, size_t bytes, struct iov_iter *i);
++#else
++static inline size_t copy_from_iter_flushcache(void *addr, size_t bytes,
++				       struct iov_iter *i)
++{
++	return copy_from_iter_nocache(addr, bytes, i);
++}
++#endif
+ bool copy_from_iter_full_nocache(void *addr, size_t bytes, struct iov_iter *i);
+ size_t iov_iter_zero(size_t bytes, struct iov_iter *);
+ unsigned long iov_iter_alignment(const struct iov_iter *i);
+diff --git a/lib/Kconfig b/lib/Kconfig
+index 0c8b78a9ae2e..2d1c4b3a085c 100644
+--- a/lib/Kconfig
++++ b/lib/Kconfig
+@@ -548,6 +548,9 @@ config ARCH_HAS_SG_CHAIN
+ config ARCH_HAS_PMEM_API
+ 	bool
+ 
++config ARCH_HAS_UACCESS_FLUSHCACHE
++	bool
++
+ config ARCH_HAS_MMIO_FLUSH
+ 	bool
+ 
+diff --git a/lib/iov_iter.c b/lib/iov_iter.c
+index f835964c9485..c9a69064462f 100644
+--- a/lib/iov_iter.c
++++ b/lib/iov_iter.c
+@@ -615,6 +615,28 @@ size_t copy_from_iter_nocache(void *addr, size_t bytes, struct iov_iter *i)
+ }
+ EXPORT_SYMBOL(copy_from_iter_nocache);
+ 
++#ifdef CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE
++size_t copy_from_iter_flushcache(void *addr, size_t bytes, struct iov_iter *i)
++{
++	char *to = addr;
++	if (unlikely(i->type & ITER_PIPE)) {
++		WARN_ON(1);
++		return 0;
++	}
++	iterate_and_advance(i, bytes, v,
++		__copy_from_user_flushcache((to += v.iov_len) - v.iov_len,
++					 v.iov_base, v.iov_len),
++		memcpy_page_flushcache((to += v.bv_len) - v.bv_len, v.bv_page,
++				 v.bv_offset, v.bv_len),
++		memcpy_flushcache((to += v.iov_len) - v.iov_len, v.iov_base,
++			v.iov_len)
++	)
++
++	return bytes;
++}
++EXPORT_SYMBOL_GPL(copy_from_iter_flushcache);
++#endif
++
+ bool copy_from_iter_full_nocache(void *addr, size_t bytes, struct iov_iter *i)
+ {
+ 	char *to = addr;
