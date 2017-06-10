@@ -1,63 +1,49 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: Re: [PATCH v3 14/14] libnvdimm, pmem: disable dax flushing when pmem
- is fronting a volatile region
-Date: Fri, 9 Jun 2017 16:21:16 -0700
-Message-ID: <CAPcyv4jyM5HqNw0efE+03ZzSN-4YnqSQ9z2jkx7nDBgqwSsg3w@mail.gmail.com>
-References: <149703982465.20620.14881139332926778446.stgit@dwillia2-desk3.amr.corp.intel.com>
- <149703990158.20620.16257541455791191783.stgit@dwillia2-desk3.amr.corp.intel.com>
+From: Herbert Xu <herbert@gondor.apana.org.au>
+Subject: Re: [PATCH v2 01/11] crypto: introduce crypto wait for async op
+Date: Sat, 10 Jun 2017 11:43:37 +0800
+Message-ID: <20170610034336.GB14206@gondor.apana.org.au>
+References: <1496046180-21962-1-git-send-email-gilad@benyossef.com>
+ <1496046180-21962-2-git-send-email-gilad@benyossef.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <149703990158.20620.16257541455791191783.stgit@dwillia2-desk3.amr.corp.intel.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>
-Cc: Jan Kara <jack@suse.cz>, dm-devel@redhat.com, Matthew Wilcox <mawilcox@microsoft.com>, X86 ML <x86@kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Jeff Moyer <jmoyer@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@lst.de>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-doc-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1496046180-21962-2-git-send-email-gilad@benyossef.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Gilad Ben-Yossef <gilad@benyossef.com>
+Cc: "David S. Miller" <davem@davemloft.net>, Jonathan Corbet <corbet@lwn.net>, David Howells <dhowells@redhat.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, Steve French <sfrench@samba.org>, "Theodore Y. Ts'o" <tytso@mit.edu>, Jaegeuk Kim <jaegeuk@kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Dmitry Kasatkin <dmitry.kasatkin@gmail.com>, James Morris <james.l.morris@oracle.com>, "Serge E. Hallyn" <serge@hallyn.com>, Eric Biggers <ebiggers3@gmail.com>, Ofir Drang <ofir.drang@arm.com>, Pavel Shilovsky <pshilov@microsoft.com>, linux-crypto@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, keyrings@vger.kernel.org, linux-raid@vger.kernel.org, linux-cif
 List-Id: dm-devel.ids
 
-On Fri, Jun 9, 2017 at 1:25 PM, Dan Williams <dan.j.williams@intel.com> wrote:
-> The pmem driver attaches to both persistent and volatile memory ranges
-> advertised by the ACPI NFIT. When the region is volatile it is redundant
-> to spend cycles flushing caches at fsync(). Check if the hosting region
-> is volatile and do not set QUEUE_FLAG_WC if it is.
+On Mon, May 29, 2017 at 11:22:48AM +0300, Gilad Ben-Yossef wrote:
 >
-> Cc: Jan Kara <jack@suse.cz>
-> Cc: Jeff Moyer <jmoyer@redhat.com>
-> Cc: Christoph Hellwig <hch@lst.de>
-> Cc: Matthew Wilcox <mawilcox@microsoft.com>
-> Cc: Ross Zwisler <ross.zwisler@linux.intel.com>
-> Signed-off-by: Dan Williams <dan.j.williams@intel.com>
-> ---
->  drivers/nvdimm/pmem.c        |   13 ++++++++-----
->  drivers/nvdimm/region_devs.c |    6 ++++++
->  include/linux/libnvdimm.h    |    1 +
->  3 files changed, 15 insertions(+), 5 deletions(-)
->
-> diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
-> index 06f6c27ec1e9..5cac9fb39db8 100644
-> --- a/drivers/nvdimm/pmem.c
-> +++ b/drivers/nvdimm/pmem.c
-> @@ -279,10 +279,10 @@ static int pmem_attach_disk(struct device *dev,
->         struct nd_namespace_io *nsio = to_nd_namespace_io(&ndns->dev);
->         struct nd_region *nd_region = to_nd_region(dev->parent);
->         struct vmem_altmap __altmap, *altmap = NULL;
-> +       int nid = dev_to_node(dev), fua, wbc;
->         struct resource *res = &nsio->res;
->         struct nd_pfn *nd_pfn = NULL;
->         struct dax_device *dax_dev;
-> -       int nid = dev_to_node(dev);
->         struct nd_pfn_sb *pfn_sb;
->         struct pmem_device *pmem;
->         struct resource pfn_res;
-> @@ -308,9 +308,12 @@ static int pmem_attach_disk(struct device *dev,
->         dev_set_drvdata(dev, pmem);
->         pmem->phys_addr = res->start;
->         pmem->size = resource_size(res);
-> -       if (!IS_ENABLED(CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE)
-> -                       || nvdimm_has_flush(nd_region) < 0)
-> -               dev_warn(dev, "unable to guarantee persistence of writes\n");
-> +       fua = nvdimm_has_flush(nd_region);
-> +       if (!IS_ENABLED(CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE) || fua < 0)
-> +               dev_warn(dev, "unable to guarantee persistence of writes\n"); {
+> +static inline int crypto_wait_req(int err, struct crypto_wait *wait)
+> +{
+> +	switch (err) {
+> +	case -EINPROGRESS:
+> +	case -EBUSY:
+> +		wait_for_completion(&wait->completion);
+> +		reinit_completion(&wait->completion);
+> +		err = wait->err;
+> +		break;
+> +	};
+> +
+> +	return err;
+> +}
 
-I sent this patch with local uncommitted changes. Will send a v2
-shortly, and also update stg mail to abort if the tree is dirty.
+This assumes that the request is used with backlog.  For non-backlog
+requests this would result in a memory leak as EBUSY in that case is
+a fatal error.
+
+So this API can't be used without backlog.
+
+We could introduce a flag to indicate whether we want backlog or not,
+or maybe we should change our API so that in the non-backlog case we
+return something other than EBUSY.
+
+Opinions?
+
+Thanks,
+-- 
+Email: Herbert Xu <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
