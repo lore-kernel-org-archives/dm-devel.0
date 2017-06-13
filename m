@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 3/7] libmultipath: clarify option conflicts for
-	"features"
-Date: Wed, 14 Jun 2017 00:55:50 +0200
-Message-ID: <20170613225554.11181-4-mwilck@suse.com>
+Subject: [PATCH 6/7] multipath.conf.5: document no_path_retry vs.
+	queue_if_no_path
+Date: Wed, 14 Jun 2017 00:55:53 +0200
+Message-ID: <20170613225554.11181-7-mwilck@suse.com>
 References: <20170613225554.11181-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,104 +22,27 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@s
 Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-The "features" option in multipath.conf can possibly conflict
-with the "no_path_retry" and "retain_attached_hw_handler" options.
-
-Currently, "no_path_retry" takes precedence, unless it is set to
-"fail", in which case it's overridden. No precedence rules are
-defined for "retain_attached_hw_handler".
-
-Make this behavior more consistent by always giving precedence
-to the explicit config file options, and improve logging.
+Clarify the documentation about option precedence.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/configure.c |  4 ++--
- libmultipath/propsel.c   | 37 ++++++++++++++++++++++++-------------
- 2 files changed, 26 insertions(+), 15 deletions(-)
+ multipath/multipath.conf.5 | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index bd090d9a..fd4721dd 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -280,11 +280,11 @@ int setup_map(struct multipath *mpp, char *params, int params_size)
- 	select_pgfailback(conf, mpp);
- 	select_pgpolicy(conf, mpp);
- 	select_selector(conf, mpp);
--	select_features(conf, mpp);
- 	select_hwhandler(conf, mpp);
-+	select_no_path_retry(conf, mpp);
-+	select_features(conf, mpp);
- 	select_rr_weight(conf, mpp);
- 	select_minio(conf, mpp);
--	select_no_path_retry(conf, mpp);
- 	select_mode(conf, mpp);
- 	select_uid(conf, mpp);
- 	select_gid(conf, mpp);
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index 99d17e65..4267aa04 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -272,6 +272,9 @@ out:
- int select_features(struct config *conf, struct multipath *mp)
- {
- 	char *origin;
-+	char buff[12];
-+	static const char q_i_n_p[] = "queue_if_no_path";
-+	static const char r_a_h_h[] = "retain_attached_hw_handler";
- 
- 	mp_set_mpe(features);
- 	mp_set_ovr(features);
-@@ -280,19 +283,30 @@ int select_features(struct config *conf, struct multipath *mp)
- 	mp_set_default(features, DEFAULT_FEATURES);
- out:
- 	mp->features = STRDUP(mp->features);
--	condlog(3, "%s: features = \"%s\" %s", mp->alias, mp->features, origin);
- 
--	if (strstr(mp->features, "queue_if_no_path")) {
--		if (mp->no_path_retry == NO_PATH_RETRY_UNDEF)
-+	if (strstr(mp->features, q_i_n_p)) {
-+		if (mp->no_path_retry == NO_PATH_RETRY_UNDEF) {
- 			mp->no_path_retry = NO_PATH_RETRY_QUEUE;
--		else if (mp->no_path_retry == NO_PATH_RETRY_FAIL) {
--			condlog(1, "%s: config error, overriding 'no_path_retry' value",
--				mp->alias);
--			mp->no_path_retry = NO_PATH_RETRY_QUEUE;
--		} else if (mp->no_path_retry != NO_PATH_RETRY_QUEUE)
--			condlog(1, "%s: config error, ignoring 'queue_if_no_path' because no_path_retry=%d",
--				mp->alias, mp->no_path_retry);
-+			print_no_path_retry(buff, sizeof(buff),
-+					    &mp->no_path_retry);
-+			condlog(3, "%s: no_path_retry = %s (inherited setting from feature '%s')",
-+				mp->alias, buff, q_i_n_p);
-+		} else {
-+			print_no_path_retry(buff, sizeof(buff),
-+					    &mp->no_path_retry);
-+			condlog(2, "%s: ignoring feature '%s' because no_path_retry is set to '%s'",
-+				mp->alias, q_i_n_p, buff);
-+			remove_feature(&mp->features, q_i_n_p);
-+		};
- 	}
-+	if (strstr(mp->features, r_a_h_h) &&
-+	    mp->retain_hwhandler == RETAIN_HWHANDLER_OFF) {
-+		condlog(2, "%s: ignoring feature '%s' because %s is set to 'off'",
-+			mp->alias, r_a_h_h, r_a_h_h);
-+		remove_feature(&mp->features, r_a_h_h);
-+	}
-+
-+	condlog(3, "%s: features = \"%s\" %s", mp->alias, mp->features, origin);
- 	return 0;
- }
- 
-@@ -469,9 +483,6 @@ out:
- 	if (origin)
- 		condlog(3, "%s: no_path_retry = %s %s", mp->alias, buff,
- 			origin);
--	else if (mp->no_path_retry != NO_PATH_RETRY_UNDEF)
--		condlog(3, "%s: no_path_retry = %s (inherited setting)",
--			mp->alias, buff);
- 	else
- 		condlog(3, "%s: no_path_retry = undef (setting: multipath internal)",
- 			mp->alias);
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index f04ff194..e6944faf 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -365,7 +365,9 @@ Possible values for the feature list are:
+ .\" XXX
+ .I queue_if_no_path
+ (Superseded by \fIno_path_retry\fR) (Since ??? kernel) Queue I/O if no path is active.
+-Identical to the \fIno_path_retry\fR with \fIqueue\fR value. See KNOWN ISSUES.
++Identical to the \fIno_path_retry\fR with \fIqueue\fR value. If both this
++feature and \fIno_path_retry\fR are set, the latter value takes
++precedence. See KNOWN ISSUES. 
+ .TP
+ .I no_partitions
+ Disable automatic partitions generation via kpartx.
 -- 
 2.13.0
