@@ -1,14 +1,12 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 4/7] libmultipath: merge_hwe: fix
-	queue_if_no_path logic
-Date: Wed, 14 Jun 2017 00:55:51 +0200
-Message-ID: <20170613225554.11181-5-mwilck@suse.com>
-References: <20170613225554.11181-1-mwilck@suse.com>
+Subject: [PATCH 0/7] no_path_retry/queue_if_no_path logic &
+	logging/man page fixes
+Date: Wed, 14 Jun 2017 00:55:47 +0200
+Message-ID: <20170613225554.11181-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170613225554.11181-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,50 +20,51 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@s
 Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-The logic applied here should match the logic in select_features().
-If no_path_retry is anything but "undef", queue_if_no_path can be
-removed from the feature string, assemble_map() will infer it
-correctly.
-The case where no_path_retry is undefined and "queue_if_no_path"
-is set is treated as if "no_path_retry queue" had been set.
+This patch set attempts to sanitize the logic used for consistently handling
+options that can be set both via the "features" string and explicit multipath.conf
+options. This is most prominently "no_path_retry" vs. "queue_if_no_path", but also
+"retain_attached_hw_handler" vs. the feature of the same name.
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- libmultipath/config.c | 20 ++++++++++++++++----
- 1 file changed, 16 insertions(+), 4 deletions(-)
+The logic this patch set follows is:
+ - If "no_path_retry" is set to any value, "queue_if_no_path" is ignored
+   (this is the case nowadays for almost all "real" storage arrays, thanks to hwtable).
+ - Otherwise, if "queue_if_no_path" is set, treat it like "no_path_retry queue".
 
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index 61bbba91..b928fbe7 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -355,12 +355,24 @@ merge_hwe (struct hwentry * dst, struct hwentry * src)
- 
- 	/*
- 	 * Make sure features is consistent with
--	 * no_path_retry
-+	 * no_path_retry.
-+	 * The logic should be consistent with select_features().
-+	 * The actual queue_if_no_path feature is set in assemble_map().
- 	 */
--	if (dst->no_path_retry == NO_PATH_RETRY_FAIL)
-+	if (dst->no_path_retry == NO_PATH_RETRY_UNDEF &&
-+	    strstr(dst->features, "queue_if_no_path")) {
-+		condlog(3, "%s/%s: 'queue_if_no_path' is set, assuming no_path_retry='queue'",
-+			dst->vendor, dst->product);
-+		dst->no_path_retry = NO_PATH_RETRY_QUEUE;
-+	}
-+	else if (dst->no_path_retry != NO_PATH_RETRY_UNDEF) {
-+		condlog(3, "%s/%s: 'no_path_retry' is set, ignoring 'queue_if_no_path'",
-+			dst->vendor, dst->product);
- 		remove_feature(&dst->features, "queue_if_no_path");
--	else if (dst->no_path_retry != NO_PATH_RETRY_UNDEF)
--		add_feature(&dst->features, "queue_if_no_path");
-+	}
-+
-+	if (dst->retain_hwhandler != RETAIN_HWHANDLER_UNDEF)
-+		remove_feature(&dst->features, "retain_attached_hw_handler");
- 
- 	return 0;
- }
+... likewise for "retain_attached_hw_handler".
+
+The logic is implemented in select_features() (which needs to be called after
+select_no_path_retry()) for multipath groups, and similarly in merge_hwe() for
+hwtable entries. The actual feature setting is made in assemble_map(), I also
+fix a problem there.
+
+The patch set documents the behavior in the man page, and adds some more
+man page fixes.
+
+Finally, by skipping superfluous default initializations in load_config(), the
+log messages for the respective config settings become more appropriate.
+
+Review and comments are highly welcome.
+
+Regards,
+Martin
+
+Martin Wilck (7):
+  libmultipath: load_config: skip setting unnecessary defaults
+  libmultipath: add/remove_feature: use const char* for feature
+  libmultipath: clarify option conflicts for "features"
+  libmultipath: merge_hwe: fix queue_if_no_path logic
+  libmultipath: assemble_map: fix queue_if_no_path logic
+  multipath.conf.5: document no_path_retry vs. queue_if_no_path
+  multipath.conf.5: Remove ??? and other minor fixes
+
+ libmultipath/config.c      | 36 ++++++++++++++------------------
+ libmultipath/configure.c   |  4 ++--
+ libmultipath/dmparser.c    |  5 ++---
+ libmultipath/propsel.c     | 39 +++++++++++++++++++++-------------
+ libmultipath/structs.c     | 30 +++++++++++++-------------
+ libmultipath/structs.h     |  4 ++--
+ multipath/multipath.conf.5 | 52 ++++++++++++++++++++++++++--------------------
+ 7 files changed, 92 insertions(+), 78 deletions(-)
+
 -- 
 2.13.0
