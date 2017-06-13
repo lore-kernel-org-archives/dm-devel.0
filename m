@@ -1,19 +1,13 @@
-From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: Re: [PATCH 4/4] multipath: Fix a potential buffer
-	overflow
-Date: Tue, 13 Jun 2017 13:21:41 -0700
-Message-ID: <5bf47087-fc60-eda8-89f4-5d756f52b45e@sandisk.com>
-References: <20170613163339.23005-1-bart.vanassche@sandisk.com>
-	<20170613163339.23005-5-bart.vanassche@sandisk.com>
-	<1497382123.4654.48.camel@suse.com>
-	<5549db47-506b-f564-19ff-8d9dd1c36177@sandisk.com>
-	<1497385089.4654.54.camel@suse.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: libmultipath issue
+Date: Tue, 13 Jun 2017 22:28:08 +0200
+Message-ID: <1497385688.4654.56.camel@suse.com>
+References: <CALRmJ1uB6SA_ct7O-2XxQthWmXZpLhnJ0sAj3tc0kmTxkGu9LQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1497385089.4654.54.camel@suse.com>
-Content-Language: en-US
+In-Reply-To: <CALRmJ1uB6SA_ct7O-2XxQthWmXZpLhnJ0sAj3tc0kmTxkGu9LQ@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,46 +17,41 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: James Shoemaker <james@dhlake.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-
-
-On 06/13/17 13:18, Martin Wilck wrote:
-> On Tue, 2017-06-13 at 12:53 -0700, Bart Van Assche wrote:
->> On 06/13/17 12:29, Martin Wilck wrote:
->>> how about this simpler patch, as prflag is actually a boolean?
->>>
->>> diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
->>> index 04c73866..c31ebd34 100644
->>> --- a/multipathd/cli_handlers.c
->>> +++ b/multipathd/cli_handlers.c
->>> @@ -1337,7 +1337,7 @@ cli_getprstatus (void * v, char ** reply, int
->>> * len, void * data)
->>>         memset(*reply,0,2);
->>>  
->>>  
->>> -       sprintf(*reply,"%d",mpp->prflag);
->>> +       sprintf(*reply, "%d", !!mpp->prflag);
->>>         (*reply)[1]='\0';
->>
->> Hello Martin,
->>
->> Every sprintf() call requires careful analysis to see whether or not
->> it
->> triggers a buffer overflow. I really would like to get rid of that
->> sprintf() call.
-> 
-> Then we could write
-> 
-> 	snprintf(*reply, 2, "%d", !!mpp->prflag);
->   
-> without needing _GNU_SOURCE.
-
-Hello Martin,
-
-There are already three other multipath-tools source files that #define
-_GNU_SOURCE so I don't see what's wrong with using _GNU_SOURCE.
-
-Bart.
+SGkgSmFtZXMsCgpPbiBUdWUsIDIwMTctMDYtMTMgYXQgMTE6MTkgLTA1MDAsIEphbWVzIFNob2Vt
+YWtlciB3cm90ZToKPiAgICBJIGhhdmUgYSBwaWVjZSBvZiBoYXJkd2FyZSwgYSAxNiBiYXkgc3Rv
+cmFnZXRlayAgb3B0aWNhbGx5Cj4gY29ubmVjdGVkIFNBTiB0bwo+IGJlIHNwZWNpZmljLCB0aGF0
+IHJldHVybnMgZW1wdHkgc3RyaW5nIGZvciBEZXZpY2UgaWQuCj4gCj4gICAgSSBkaWQgdGhlIGZv
+bGxvd2luZyBwYXRjaCB0byByZXNvbHZlIHRoZSBpc3N1ZSwgaXQgYmFzaWNhbGx5Cj4gYWxsb3dz
+IGVtcHR5Cj4gc3RyaW5nIGZvciB2ZW5kb3IgYW5kIHByb2R1Y3QsIEkgY291bGRuJ3QgZmluZCBh
+bnl3aGVyZSB0aGF0IGhhZCBhbgo+IGlzc3VlIHdpdGgKPiBpdC4uCj4gCj4gZGlmZiAtLWdpdCBh
+L2xpYm11bHRpcGF0aC9kaXNjb3ZlcnkuYyBiL2xpYm11bHRpcGF0aC9kaXNjb3ZlcnkuYwo+IGlu
+ZGV4IDY2M2M4ZWEuLjkyZDBlNDkgMTAwNjQ0Cj4gLS0tIGEvbGlibXVsdGlwYXRoL2Rpc2NvdmVy
+eS5jCj4gKysrIGIvbGlibXVsdGlwYXRoL2Rpc2NvdmVyeS5jCj4gQEAgLTExNDksMTIgKzExNDks
+MTIgQEAgc2NzaV9zeXNmc19wYXRoaW5mbyAoc3RydWN0IHBhdGggKiBwcCwgdmVjdG9yCj4gaHd0
+YWJsZSkKPiAgICAgICAgIGlmICghYXR0cl9wYXRoIHx8IHBwLT5zZ19pZC5ob3N0X25vID09IC0x
+KQo+ICAgICAgICAgICAgICAgICByZXR1cm4gMTsKPiAKPiAtICAgICAgIGlmIChzeXNmc19nZXRf
+dmVuZG9yKHBhcmVudCwgcHAtPnZlbmRvcl9pZCwgU0NTSV9WRU5ET1JfU0laRSkKPiA8PSAwKQo+
+ICsgICAgICAgaWYgKHN5c2ZzX2dldF92ZW5kb3IocGFyZW50LCBwcC0+dmVuZG9yX2lkLCBTQ1NJ
+X1ZFTkRPUl9TSVpFKQo+IDwgMCkKPiAgICAgICAgICAgICAgICAgcmV0dXJuIDE7Cj4gCj4gICAg
+ICAgICBjb25kbG9nKDMsICIlczogdmVuZG9yID0gJXMiLCBwcC0+ZGV2LCBwcC0+dmVuZG9yX2lk
+KTsKPiAKPiAtICAgICAgIGlmIChzeXNmc19nZXRfbW9kZWwocGFyZW50LCBwcC0+cHJvZHVjdF9p
+ZCwKPiBTQ1NJX1BST0RVQ1RfU0laRSkgPD0gMCkKPiArICAgICAgIGlmIChzeXNmc19nZXRfbW9k
+ZWwocGFyZW50LCBwcC0+cHJvZHVjdF9pZCwKPiBTQ1NJX1BST0RVQ1RfU0laRSkgPCAwKQo+ICAg
+ICAgICAgICAgICAgICByZXR1cm4gMTsKPiAKPiAgICAgICAgIGNvbmRsb2coMywgIiVzOiBwcm9k
+dWN0ID0gJXMiLCBwcC0+ZGV2LCBwcC0+cHJvZHVjdF9pZCk7CgpJbiBnZW5lcmFsLCB5ZXMsIEkg
+dGhpbmsgdGhpcyB3b3VsZCB3b3JrLiB2ZW5kb3JfaWQgYW5kIHByb2R1Y3RfaWQgYXJlCnByaW1h
+cmlseSB1c2VkIHRvIGxvb2t1cCBwYXJhbWV0ZXJzIGluIHRoZSBod3RhYmxlLCBhbmQgdGhlcmUg
+d2UgaGF2ZQpubyBlbnRyaWVzIHdpdGggZW1wdHkgdmVuZG9yIG9yIHByb2R1Y3QuCgpPbmUgc2lk
+ZSBpc3N1ZSB0aGF0IG5lZWRzIHRvIGJlIGNvbnNpZGVyZWQgaXMgcHJpbnRvdXQsIHRob3VnaDoK
+c25wcmludF9tdWx0aXBhdGhfKHZwcnxwcm9kfHZlbmQpIHdpbGwganVzdCBwcmludCBub3RoaW5n
+IGlmIGVpdGhlcgp2ZW5kb3Igb3IgcHJvZHVjdCBoYXMgemVybyBsZW5ndGguIEl0IHdvdWxkIGJl
+IGdvb2QgaWYgdGhleSdkIHByaW50CmUuZy4gIjxOT1ZORFI+IiBhbmQgIjxOTyBQUk9EVUNUPiIg
+aW5zdGVhZC4KClJlZ2FyZHMKTWFydGluCgpQUzogUGF0Y2ggaW4gcGxhaW4gdGV4dCBmb3JtYXQg
+d291bGQgYmUgYXBwcmVjaWF0ZWQuCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2Uu
+Y29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVs
+aXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAo
+QUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5j
+b20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
