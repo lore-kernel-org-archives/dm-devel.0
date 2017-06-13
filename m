@@ -1,7 +1,7 @@
 From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH 1/4] kpartx: Improve portability of set_loop()
-Date: Tue, 13 Jun 2017 09:33:36 -0700
-Message-ID: <20170613163339.23005-2-bart.vanassche@sandisk.com>
+Subject: [PATCH 3/4] libmultipath/datacore: Remove dead code
+Date: Tue, 13 Jun 2017 09:33:38 -0700
+Message-ID: <20170613163339.23005-4-bart.vanassche@sandisk.com>
 References: <20170613163339.23005-1-bart.vanassche@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -18,56 +18,48 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: Bart Van Assche <bart.vanassche@sandisk.com>, dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: Bart Van Assche <bart.vanassche@sandisk.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Because macros like __x86_64__ are not defined by the C standard
-and because it is easy to convert the int2ptr() macro into
-standard C, use (void*)(uintptr_t) instead of int2ptr(). Inline
-this macro because it only has one user. This patch does not
-change any functionality.
+Remove those variables a value is assigned to but that are never
+used. This patch avoids that gcc 7 reports the following warning:
 
-Reported-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+datacore.c:98:22: warning: '
+   ' directive output may be truncated writing 1 byte into a region of size between 0 and 8 [-Wformat-truncation=]
+  snprintf(vendor, 8, "%.8s\n", inqBuffp + 8);
+
 Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- kpartx/lopart.c | 10 ++--------
- 1 file changed, 2 insertions(+), 8 deletions(-)
+ libmultipath/prioritizers/datacore.c | 10 +---------
+ 1 file changed, 1 insertion(+), 9 deletions(-)
 
-diff --git a/kpartx/lopart.c b/kpartx/lopart.c
-index 70054459..f7ab91b5 100644
---- a/kpartx/lopart.c
-+++ b/kpartx/lopart.c
-@@ -21,6 +21,7 @@
- #include <fcntl.h>
- #include <errno.h>
- #include <stdlib.h>
-+#include <stdint.h>
- #include <unistd.h>
- #include <sys/ioctl.h>
- #include <sys/stat.h>
-@@ -37,13 +38,6 @@
- #define LOOP_CTL_GET_FREE       0x4C82
- #endif
- 
--#if !defined (__alpha__) && !defined (__ia64__) && !defined (__x86_64__) \
--	&& !defined (__s390x__)
--#define int2ptr(x)	((void *) ((int) x))
--#else
--#define int2ptr(x)	((void *) ((long) x))
--#endif
--
- static char *
- xstrdup (const char *s)
+diff --git a/libmultipath/prioritizers/datacore.c b/libmultipath/prioritizers/datacore.c
+index 36465ac4..59c98164 100644
+--- a/libmultipath/prioritizers/datacore.c
++++ b/libmultipath/prioritizers/datacore.c
+@@ -35,10 +35,6 @@
+ int datacore_prio (const char *dev, int sg_fd, char * args)
  {
-@@ -249,7 +243,7 @@ int set_loop(const char *device, const char *file, int offset, int *loopro)
- 	loopinfo.lo_encrypt_type = LO_CRYPT_NONE;
- 	loopinfo.lo_encrypt_key_size = 0;
+ 	int k;
+-	char vendor[8];
+-	char product[32];
+-	char luname[32];
+-	char wwpn[32];
+ 	char sdsname[32];
+ 	unsigned char inqCmdBlk[INQ_CMD_LEN] = { INQ_CMD_CODE, 0, 0, 0, INQ_REPLY_LEN, 0 };
+ 	unsigned char inqBuff[INQ_REPLY_LEN];
+@@ -95,11 +91,7 @@ int datacore_prio (const char *dev, int sg_fd, char * args)
+ 	if ((io_hdr.info & SG_INFO_OK_MASK) != SG_INFO_OK)
+ 		return 0;
  
--	if (ioctl (fd, LOOP_SET_FD, int2ptr(ffd)) < 0) {
-+	if (ioctl(fd, LOOP_SET_FD, (void*)(uintptr_t)(ffd)) < 0) {
- 		perror ("ioctl: LOOP_SET_FD");
- 		close (fd);
- 		close (ffd);
+-	snprintf(vendor, 8, "%.8s\n", inqBuffp + 8);
+-	snprintf(product, 17, "%.16s", inqBuffp + 16);
+-	snprintf(luname, 21, "%.19s", inqBuffp + 36);
+-	snprintf(wwpn, 17, "%.16s", inqBuffp + 96);
+-	snprintf(sdsname, 17, "%.16s", inqBuffp + 112);
++	snprintf(sdsname, sizeof(sdsname), "%.16s", inqBuffp + 112);
+ 
+ 	if (strstr(sdsname , preferredsds))
+ 		return 1;
 -- 
 2.12.2
