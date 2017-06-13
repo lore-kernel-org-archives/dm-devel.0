@@ -1,16 +1,18 @@
-From: Eric Ren <zren@suse.com>
-Subject: Re: [Report] crash tool cannot resolve struct dm_table
- properly
-Date: Tue, 13 Jun 2017 18:06:36 +0800
-Message-ID: <e61a0134-c768-8ed6-8af7-54f584d2177c@suse.com>
-References: <ed7ae3a8-f053-fb4b-8523-c09b8c725ed9@suse.com>
-	<e9d01427-b93e-37b6-8ef4-ccc0de714d70@linux.vnet.ibm.com>
+From: Bart Van Assche <Bart.VanAssche@sandisk.com>
+Subject: Re: [PATCH] multipath-tools: replace 64bit archs macros
+ by __LP64__
+Date: Tue, 13 Jun 2017 15:38:59 +0000
+Message-ID: <1497368335.2804.6.camel@wdc.com>
+References: <20170519013818.15130-1-xose.vazquez@gmail.com>
+	<1495164703.3174.1.camel@sandisk.com>
+	<13c7d90c-47d6-fe96-d7e2-ce1aa0b266ca@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <e9d01427-b93e-37b6-8ef4-ccc0de714d70@linux.vnet.ibm.com>
+In-Reply-To: <13c7d90c-47d6-fe96-d7e2-ce1aa0b266ca@gmail.com>
 Content-Language: en-US
+Content-ID: <18C96195CC12B042843F10319DC4379F@namprd04.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,53 +22,19 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Steffen Maier <maier@linux.vnet.ibm.com>, device-mapper development <dm-devel@redhat.com>
+To: "xose.vazquez@gmail.com" <xose.vazquez@gmail.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Steffen,
+On Sun, 2017-06-11 at 21:14 +0200, Xose Vazquez Perez wrote:
+> On 05/19/2017 05:31 AM, Bart Van Assche wrote:
+> > Since there is only one user of int2ptr(), please remove the macro definitions
+> > and use the following construct: (void *)(uintptr_t)(...).
+> 
+> No time for a proper patch, use it as an interim fix.
 
-On 04/13/17 18:22, Steffen Maier wrote:
-> On 04/13/2017 04:01 AM, Eric Ren wrote:
->> Hi Mikulas,
->>
->> When inspecting on coredump with crash tool, I find that 'dm_table'
->> cannot be resolved properly as follows:
->>
->> ===
->> crash> struct dm_table
->> struct dm_table {
->>     int undefined__;
->> }
->> SIZE: 4
->> ===
->>
->> Looks this issue is introduced by 83d5e5b (dm: optimize use SRCU and
->> RCU) with this code:
->> ===
->> +/*
->> + * A dummy definition to make RCU happy.
->> + * struct dm_table should never be dereferenced in this file.
->>  + */ +struct dm_table {
->> + int undefined__;
->> +};
->> +
->> ===
->>
->> It stops me from looking into dm_table when analyzing coredump. Is there
->> any workaround?
->> or can be fixed somehow?
->
-> Does this help somewhat?:
->
-> https://www.redhat.com/archives/dm-devel/2015-December/msg00042.html
->
-> As workaround for eppic scripts in crash, we currently re-define struct dm_table in eppic 
-> scripts, because "set scope dm_table_create" has not always worked as we liked. Sometimes 
-> "whatis dm_table_create" and again "set scope dm_table_create" worked and we put this in 
-> .crashrc, but eventually gave up and kept our struct re-define.
+Hello Jose,
 
-Yes, playing with "set" or "gdb ptype" commands doesn't always work. Could you please share 
-your eppic scripts and steps how to use it?
+I will post a patch to remove int2ptr().
 
-Thanks in advance,
-Eric
+Bart.
