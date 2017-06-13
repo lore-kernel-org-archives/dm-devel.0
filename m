@@ -1,19 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 4/4] multipath: Fix a potential buffer
- overflow
-Date: Tue, 13 Jun 2017 22:35:08 +0200
-Message-ID: <1497386108.4654.58.camel@suse.com>
-References: <20170613163339.23005-1-bart.vanassche@sandisk.com>
-	<20170613163339.23005-5-bart.vanassche@sandisk.com>
-	<1497382123.4654.48.camel@suse.com>
-	<5549db47-506b-f564-19ff-8d9dd1c36177@sandisk.com>
-	<1497385089.4654.54.camel@suse.com>
-	<5bf47087-fc60-eda8-89f4-5d756f52b45e@sandisk.com>
+Subject: [PATCH 1/7] libmultipath: load_config: skip setting
+	unnecessary defaults
+Date: Wed, 14 Jun 2017 00:55:48 +0200
+Message-ID: <20170613225554.11181-2-mwilck@suse.com>
+References: <20170613225554.11181-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <5bf47087-fc60-eda8-89f4-5d756f52b45e@sandisk.com>
+In-Reply-To: <20170613225554.11181-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,28 +18,80 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <bart.vanassche@sandisk.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@suse.de>
+Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-SGVsbG8gQmFydCwKCk9uIFR1ZSwgMjAxNy0wNi0xMyBhdCAxMzoyMSAtMDcwMCwgQmFydCBWYW4g
-QXNzY2hlIHdyb3RlOgo+IAo+ID4gPiBIZWxsbyBNYXJ0aW4sCj4gPiA+IAo+ID4gPiBFdmVyeSBz
-cHJpbnRmKCkgY2FsbCByZXF1aXJlcyBjYXJlZnVsIGFuYWx5c2lzIHRvIHNlZSB3aGV0aGVyIG9y
-Cj4gPiA+IG5vdAo+ID4gPiBpdAo+ID4gPiB0cmlnZ2VycyBhIGJ1ZmZlciBvdmVyZmxvdy4gSSBy
-ZWFsbHkgd291bGQgbGlrZSB0byBnZXQgcmlkIG9mCj4gPiA+IHRoYXQKPiA+ID4gc3ByaW50Zigp
-IGNhbGwuCj4gPiAKPiA+IFRoZW4gd2UgY291bGQgd3JpdGUKPiA+IAo+ID4gCXNucHJpbnRmKCpy
-ZXBseSwgMiwgIiVkIiwgISFtcHAtPnByZmxhZyk7Cj4gPiAgIAo+ID4gd2l0aG91dCBuZWVkaW5n
-IF9HTlVfU09VUkNFLgo+IAo+IEhlbGxvIE1hcnRpbiwKPiAKPiBUaGVyZSBhcmUgYWxyZWFkeSB0
-aHJlZSBvdGhlciBtdWx0aXBhdGgtdG9vbHMgc291cmNlIGZpbGVzIHRoYXQKPiAjZGVmaW5lCj4g
-X0dOVV9TT1VSQ0Ugc28gSSBkb24ndCBzZWUgd2hhdCdzIHdyb25nIHdpdGggdXNpbmcgX0dOVV9T
-T1VSQ0UuCgpZZXMsIEkgc2F3IHRoYXQuIEkgaGF2ZW4ndCByZXZpZXdlZCB0aGUgcmVhc29uIHdo
-eSBfR05VX1NPVVJDRSBpcyB1c2VkCmluIHRoZSBvdGhlciBwbGFjZXMuIEluIGdlbmVyYWwgaXQn
-cyBhIHRoaW5nIEknZCByYXRoZXIgYXZvaWQgZm9yCnBvcnRhYmlsaXR5IHJlYXNvbnMuCkluIHRo
-aXMgcGFydGljdWxhciBjYXNlLCBJIHRoaW5rIHRoZSBwcm9ibGVtIGF0IGhhbmQgYmUgZWFzaWx5
-IHNvbHZlZAp3aXRob3V0IHJlc29ydGluZyB0byBfR05VX1NPVVJDRS4KCkJ1dCB3ZWxsLCBpdCdz
-IG5vdCBhIHRoaW5nIHdvcnRoIGZpZ2h0aW5nIGFib3V0LiBNYXkgQ2hyaXN0b3BoZSBkZWNpZGUu
-CgpNYXJ0aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0
-OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZm
-ZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcp
-CgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3
-dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+We have the logic for setting defaults for paths and maps
+in propsel.c. By pre-setting conf values with defaults in
+load_config(), we generate irritating log messages like
+'features = "0" (setting: multipath.conf defaults/devices section)'
+even if multipath.conf doesn't contain a 'features' setting at all.
+With this patch, these defaults are correctly logged as "multipath internal".
+
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ libmultipath/config.c  | 16 ----------------
+ libmultipath/propsel.c |  2 +-
+ 2 files changed, 1 insertion(+), 17 deletions(-)
+
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index bb6619b3..61bbba91 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -599,40 +599,24 @@ load_config (char * file)
+ 	if (!conf->verbosity)
+ 		conf->verbosity = DEFAULT_VERBOSITY;
+ 
+-	conf->minio = DEFAULT_MINIO;
+-	conf->minio_rq = DEFAULT_MINIO_RQ;
+ 	get_sys_max_fds(&conf->max_fds);
+ 	conf->bindings_file = set_default(DEFAULT_BINDINGS_FILE);
+ 	conf->wwids_file = set_default(DEFAULT_WWIDS_FILE);
+ 	conf->multipath_dir = set_default(DEFAULT_MULTIPATHDIR);
+-	conf->features = set_default(DEFAULT_FEATURES);
+-	conf->flush_on_last_del = DEFAULT_FLUSH;
+ 	conf->attribute_flags = 0;
+ 	conf->reassign_maps = DEFAULT_REASSIGN_MAPS;
+ 	conf->checkint = DEFAULT_CHECKINT;
+ 	conf->max_checkint = 0;
+-	conf->pgfailback = DEFAULT_FAILBACK;
+-	conf->fast_io_fail = DEFAULT_FAST_IO_FAIL;
+-	conf->retain_hwhandler = DEFAULT_RETAIN_HWHANDLER;
+-	conf->detect_prio = DEFAULT_DETECT_PRIO;
+-	conf->detect_checker = DEFAULT_DETECT_CHECKER;
+ 	conf->force_sync = DEFAULT_FORCE_SYNC;
+ 	conf->partition_delim = DEFAULT_PARTITION_DELIM;
+ 	conf->processed_main_config = 0;
+ 	conf->find_multipaths = DEFAULT_FIND_MULTIPATHS;
+ 	conf->uxsock_timeout = DEFAULT_REPLY_TIMEOUT;
+-	conf->uid_attribute = set_default(DEFAULT_UID_ATTRIBUTE);
+ 	conf->retrigger_tries = DEFAULT_RETRIGGER_TRIES;
+ 	conf->retrigger_delay = DEFAULT_RETRIGGER_DELAY;
+ 	conf->uev_wait_timeout = DEFAULT_UEV_WAIT_TIMEOUT;
+-	conf->deferred_remove = DEFAULT_DEFERRED_REMOVE;
+-	conf->skip_kpartx = DEFAULT_SKIP_KPARTX;
+ 	conf->disable_changed_wwids = DEFAULT_DISABLE_CHANGED_WWIDS;
+ 	conf->remove_retries = 0;
+-	conf->max_sectors_kb = DEFAULT_MAX_SECTORS_KB;
+-	conf->san_path_err_threshold = DEFAULT_ERR_CHECKS;
+-	conf->san_path_err_forget_rate = DEFAULT_ERR_CHECKS;
+-	conf->san_path_err_recovery_time = DEFAULT_ERR_CHECKS;
+ 
+ 	/*
+ 	 * preload default hwtable
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index 385063aa..99d17e65 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -752,7 +752,7 @@ int select_max_sectors_kb(struct config *conf, struct multipath * mp)
+ 	mp_set_ovr(max_sectors_kb);
+ 	mp_set_hwe(max_sectors_kb);
+ 	mp_set_conf(max_sectors_kb);
+-	return 0;
++	mp_set_default(max_sectors_kb, DEFAULT_MAX_SECTORS_KB);
+ out:
+ 	condlog(3, "%s: max_sectors_kb = %i %s", mp->alias, mp->max_sectors_kb,
+ 		origin);
+-- 
+2.13.0
