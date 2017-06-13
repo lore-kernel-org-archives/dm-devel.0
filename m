@@ -1,13 +1,15 @@
-From: Bart Van Assche <bart.vanassche@sandisk.com>
-Subject: [PATCH 3/4] libmultipath/datacore: Remove dead code
-Date: Tue, 13 Jun 2017 09:33:38 -0700
-Message-ID: <20170613163339.23005-4-bart.vanassche@sandisk.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 4/4] multipath: Fix a potential buffer
+ overflow
+Date: Tue, 13 Jun 2017 21:28:43 +0200
+Message-ID: <1497382123.4654.48.camel@suse.com>
 References: <20170613163339.23005-1-bart.vanassche@sandisk.com>
+	<20170613163339.23005-5-bart.vanassche@sandisk.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170613163339.23005-1-bart.vanassche@sandisk.com>
+In-Reply-To: <20170613163339.23005-5-bart.vanassche@sandisk.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,49 +19,42 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: Bart Van Assche <bart.vanassche@sandisk.com>, dm-devel@redhat.com
+To: Bart Van Assche <bart.vanassche@sandisk.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Remove those variables a value is assigned to but that are never
-used. This patch avoids that gcc 7 reports the following warning:
-
-datacore.c:98:22: warning: '
-   ' directive output may be truncated writing 1 byte into a region of size between 0 and 8 [-Wformat-truncation=]
-  snprintf(vendor, 8, "%.8s\n", inqBuffp + 8);
-
-Signed-off-by: Bart Van Assche <bart.vanassche@sandisk.com>
----
- libmultipath/prioritizers/datacore.c | 10 +---------
- 1 file changed, 1 insertion(+), 9 deletions(-)
-
-diff --git a/libmultipath/prioritizers/datacore.c b/libmultipath/prioritizers/datacore.c
-index 36465ac4..59c98164 100644
---- a/libmultipath/prioritizers/datacore.c
-+++ b/libmultipath/prioritizers/datacore.c
-@@ -35,10 +35,6 @@
- int datacore_prio (const char *dev, int sg_fd, char * args)
- {
- 	int k;
--	char vendor[8];
--	char product[32];
--	char luname[32];
--	char wwpn[32];
- 	char sdsname[32];
- 	unsigned char inqCmdBlk[INQ_CMD_LEN] = { INQ_CMD_CODE, 0, 0, 0, INQ_REPLY_LEN, 0 };
- 	unsigned char inqBuff[INQ_REPLY_LEN];
-@@ -95,11 +91,7 @@ int datacore_prio (const char *dev, int sg_fd, char * args)
- 	if ((io_hdr.info & SG_INFO_OK_MASK) != SG_INFO_OK)
- 		return 0;
- 
--	snprintf(vendor, 8, "%.8s\n", inqBuffp + 8);
--	snprintf(product, 17, "%.16s", inqBuffp + 16);
--	snprintf(luname, 21, "%.19s", inqBuffp + 36);
--	snprintf(wwpn, 17, "%.16s", inqBuffp + 96);
--	snprintf(sdsname, 17, "%.16s", inqBuffp + 112);
-+	snprintf(sdsname, sizeof(sdsname), "%.16s", inqBuffp + 112);
- 
- 	if (strstr(sdsname , preferredsds))
- 		return 1;
--- 
-2.12.2
+SGkgQmFydCwKCk9uIFR1ZSwgMjAxNy0wNi0xMyBhdCAwOTozMyAtMDcwMCwgQmFydCBWYW4gQXNz
+Y2hlIHdyb3RlOgo+IEF2b2lkIHRoYXQgZ2NjIDcgcmVwb3J0cyB0aGUgZm9sbG93aW5nIHdhcm5p
+bmc6Cj4gCj4gY2xpX2hhbmRsZXJzLmM6MTM0MDoxODogd2FybmluZzogJyVkJyBkaXJlY3RpdmUg
+d3JpdGluZyBiZXR3ZWVuIDEgYW5kCj4gMyBieXRlcyBpbnRvIGEgcmVnaW9uIG9mIHNpemUgMiBb
+LVdmb3JtYXQtb3ZlcmZsb3c9XQo+ICAgc3ByaW50ZigqcmVwbHksIiVkIixtcHAtPnByZmxhZyk7
+Cj4gCj4gU2lnbmVkLW9mZi1ieTogQmFydCBWYW4gQXNzY2hlIDxiYXJ0LnZhbmFzc2NoZUBzYW5k
+aXNrLmNvbT4KPiAtLS0KPiAgbXVsdGlwYXRoZC9jbGlfaGFuZGxlcnMuYyB8IDE0ICsrKysrKy0t
+LS0tLS0tCj4gIDEgZmlsZSBjaGFuZ2VkLCA2IGluc2VydGlvbnMoKyksIDggZGVsZXRpb25zKC0p
+Cj4gCj4gZGlmZiAtLWdpdCBhL211bHRpcGF0aGQvY2xpX2hhbmRsZXJzLmMgYi9tdWx0aXBhdGhk
+L2NsaV9oYW5kbGVycy5jCj4gaW5kZXggMDRjNzM4NjYuLjQ2MGZlYTFmIDEwMDY0NAo+IC0tLSBh
+L211bHRpcGF0aGQvY2xpX2hhbmRsZXJzLmMKPiArKysgYi9tdWx0aXBhdGhkL2NsaV9oYW5kbGVy
+cy5jCj4gQEAgLTEsNiArMSw5IEBACj4gIC8qCj4gICAqIENvcHlyaWdodCAoYykgMjAwNSBDaHJp
+c3RvcGhlIFZhcm9xdWkKPiAgICovCj4gKwo+ICsjZGVmaW5lIF9HTlVfU09VUkNFCj4gKwo+ICAj
+aW5jbHVkZSAiY2hlY2tlcnMuaCIKPiAgI2luY2x1ZGUgIm1lbW9yeS5oIgo+ICAjaW5jbHVkZSAi
+dmVjdG9yLmgiCj4gQEAgLTEzMzIsMTQgKzEzMzUsOSBAQCBjbGlfZ2V0cHJzdGF0dXMgKHZvaWQg
+KiB2LCBjaGFyICoqIHJlcGx5LCBpbnQKPiAqIGxlbiwgdm9pZCAqIGRhdGEpCj4gIAo+ICAJY29u
+ZGxvZygzLCAiJXM6IHByZmxhZyA9ICV1IiwgcGFyYW0sICh1bnNpZ25lZCBpbnQpbXBwLQo+ID5w
+cmZsYWcpOwo+ICAKPiAtCSpyZXBseSA9KGNoYXIgKiltYWxsb2MoMik7Cj4gLQkqbGVuID0gMjsK
+PiAtCW1lbXNldCgqcmVwbHksMCwyKTsKPiAtCj4gLQo+IC0Jc3ByaW50ZigqcmVwbHksIiVkIixt
+cHAtPnByZmxhZyk7Cj4gLQkoKnJlcGx5KVsxXT0nXDAnOwo+IC0KPiArCSpsZW4gPSBhc3ByaW50
+ZihyZXBseSwgIiVkIiwgbXBwLT5wcmZsYWcpOwo+ICsJaWYgKCpsZW4gPCAwKQo+ICsJCXJldHVy
+biAxOwo+ICAKPiAgCWNvbmRsb2coMywgIiVzOiByZXBseSA9ICVzIiwgcGFyYW0sICpyZXBseSk7
+Cj4gIAoKaG93IGFib3V0IHRoaXMgc2ltcGxlciBwYXRjaCwgYXMgcHJmbGFnIGlzIGFjdHVhbGx5
+IGEgYm9vbGVhbj8KCmRpZmYgLS1naXQgYS9tdWx0aXBhdGhkL2NsaV9oYW5kbGVycy5jIGIvbXVs
+dGlwYXRoZC9jbGlfaGFuZGxlcnMuYwppbmRleCAwNGM3Mzg2Ni4uYzMxZWJkMzQgMTAwNjQ0Ci0t
+LSBhL211bHRpcGF0aGQvY2xpX2hhbmRsZXJzLmMKKysrIGIvbXVsdGlwYXRoZC9jbGlfaGFuZGxl
+cnMuYwpAQCAtMTMzNyw3ICsxMzM3LDcgQEAgY2xpX2dldHByc3RhdHVzICh2b2lkICogdiwgY2hh
+ciAqKiByZXBseSwgaW50ICogbGVuLCB2b2lkICogZGF0YSkKICAgICAgICBtZW1zZXQoKnJlcGx5
+LDAsMik7CiAKIAotICAgICAgIHNwcmludGYoKnJlcGx5LCIlZCIsbXBwLT5wcmZsYWcpOworICAg
+ICAgIHNwcmludGYoKnJlcGx5LCAiJWQiLCAhIW1wcC0+cHJmbGFnKTsKICAgICAgICAoKnJlcGx5
+KVsxXT0nXDAnOwogCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVs
+LiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTD
+tnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5i
+ZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6
+Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
