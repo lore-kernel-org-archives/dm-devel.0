@@ -1,193 +1,92 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH v5 1/1] multipath-tools: Prioritizer based on
- a latency algorithm
-Date: Wed, 14 Jun 2017 22:47:01 +0200
-Message-ID: <1497473221.4654.74.camel@suse.com>
-References: <1497002306-26880-1-git-send-email-philip.yang@huawei.com>
-	<1497002306-26880-2-git-send-email-philip.yang@huawei.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1497002306-26880-2-git-send-email-philip.yang@huawei.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Yang Feng <philip.yang@huawei.com>, hare@suse.de, christophe.varoqui@opensvc.com, bmarzins@redhat.com, xose.vazquez@gmail.com
-Cc: zouming.zouming@huawei.com, guanjunxiong@huawei.com, shenhong09@huawei.com, dm-devel@redhat.com, hege09@huawei.com, qiuxin@huawei.com
+From: Michael Halcrow <mhalcrow@google.com>
+Subject: [RFC PATCH 2/4] dm-crypt: Skip encryption of file system-encrypted blocks
+Date: Wed, 14 Jun 2017 16:40:38 -0700
+Message-ID: <20170614234040.4326-3-mhalcrow@google.com>
+References: <20170614234040.4326-1-mhalcrow@google.com>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20170614234040.4326-1-mhalcrow@google.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Michael Halcrow <mhalcrow@google.com>, "Theodore Y . Ts'o" <tytso@mit.edu>, Eric Biggers <ebiggers@google.com>, Jaegeuk Kim <jaegeuk@kernel.org>, linux-fscrypt@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-ext4@vger.kernel.org, Tyler Hicks <tyler.hicks@canonical.com>
 List-Id: dm-devel.ids
 
-SGVsbG8gWWFuZywKCnRoYW5rcyBmb3IgeW91ciB3b3JrLCBhbmQgYXBvbG9naWVzIGZvciBtYWtp
-bmcgeW91IHdhaXQgc28gbG9uZy4KSSBzdGlsbCBoYXZlIHNvbWUgc3VnZ2VzdGlvbnMuIFBsZWFz
-ZSBzZWUgYmVsb3cuCgpPbiBGcmksIDIwMTctMDYtMDkgYXQgMTc6NTggKzA4MDAsIFlhbmcgRmVu
-ZyB3cm90ZQo+IGxpYm11bHRpcGF0aC9wcmlvcml0aXplcnM6IFByaW9yaXRpemVyIGZvciBkZXZp
-Y2UgbWFwcGVyIG11bHRpcGF0aCwKPiB3aGVyZSB0aGUgY29ycmVzcG9uZGluZyBwcmlvcml0eSB2
-YWx1ZXMgb2Ygc3BlY2lmaWMgcGF0aHMgYXJlCj4gcHJvdmlkZWQKPiBieSBhIGxhdGVuY3kgYWxn
-b3JpdGhtLiBBbmQgdGhlIGxhdGVuY3kgYWxnb3JpdGhtIGlzIGRlcGVuZGVudCBvbiB0aGUKPiBm
-b2xsb3dpbmcgYXJndW1lbnRzKGxhdGVuY3lfaW50ZXJ2YWwgYW5kIGlvX251bSkuCj4gVGhlIHBy
-aW5jaXBsZSBvZiB0aGUgYWxnb3JpdGhtIGlzIGlsbHVzdHJhdGVkIGFzIGZvbGxvd3M6Cj4gMS4g
-Qnkgc2VuZGluZyBhIGNlcnRhaW4gbnVtYmVyICJjb25zX251bSIgb2YgcmVhZCBJT3MgdG8gdGhl
-IGN1cnJlbnQKPiBwYXRoIGNvbnRpbnVvdXNseSwgdGhlIElPcycgYXZlcmFnZSBsYXRlbmN5IGNh
-biBiZSBjYWxjdWxhdGVkLgo+IDIuIEFjY29yZGluZyB0byB0aGUgYXZlcmFnZSBsYXRlbmN5IG9m
-IGVhY2ggcGF0aCBhbmQgdGhlIHdlaWdodCB2YWx1ZQo+ICJsYXRlbmN5X2ludGVydmFsIiwgdGhl
-IHByaW9yaXR5ICJyYyIgb2YgZWFjaCBwYXRoIGNhbiBiZSBwcm92aWRlZC4KPiAKPiAgICBsYXRl
-bmN5X2ludGVydmFsICAgbGF0ZW5jeV9pbnRlcnZhbCAgIGxhdGVuY3lfaW50ZXJ2YWwgICAgICAg
-bGF0ZW4KPiBjeV9pbnRlcnZhbAo+ICB8LS0tLS0tLS0tLS0tLS0tLS0tfC0tLS0tLS0tLS0tLS0t
-LS0tLXwtLS0tLS0tLS0tLS0tLS0tLS18Li4ufC0tLS0KPiAtLS0tLS0tLS0tLS0tLXwKPiAgfCAg
-cHJpb3JpdHkgcmFuayAxIHwgIHByaW9yaXR5IHJhbmsgMiB8ICBwcmlvcml0eSByYW5rIDMKPiB8
-Li4ufCAgcHJpb3JpdHkgcmFuayB4IHwKPiAgfC0tLS0tLS0tLS0tLS0tLS0tLXwtLS0tLS0tLS0t
-LS0tLS0tLS18LS0tLS0tLS0tLS0tLS0tLS0tfC4uLnwtLS0tCj4gLS0tLS0tLS0tLS0tLS18Cj4g
-CQkgICAgICAgICAgUHJpb3JpdHkgUmFuayBQYXJ0aXRpb25pbmcKPiAKPiBTaWduZWQtb2ZmLWJ5
-OiBZYW5nIEZlbmcgPHBoaWxpcC55YW5nQGh1YXdlaS5jb20+Cj4gUmV2aWV3ZWQtYnk6IEJlbmph
-bWluIE1hcnppbnNraSA8Ym1hcnppbnNAcmVkaGF0LmNvbT4KPiBSZXZpZXdlZC1ieTogTWFydGlu
-IFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+Cj4gUmV2aWV3ZWQtYnk6IFhvc2UgVmF6cXVleiBQZXJl
-eiA8eG9zZS52YXpxdWV6QGdtYWlsLmNvbT4KPiBSZXZpZXdlZC1ieTogSGFubmVzIFJlaW5lY2tl
-IDxoYXJlQHN1c2UuZGU+Cj4gCgo+ICsjZGVmaW5lIE1BWF9MQVRFTkNZX0lOVEVSVkFMICAgIDEw
-ICAgICAgICAgICAgLyp1bml0OiBzKi8KPiArI2RlZmluZSBNSU5fTEFURU5DWV9JTlRFUlZBTCAg
-ICAxICAgICAgICAgICAgIC8qdW5pdDogdXMsIG9yIG1zLCBvciBzKi8KCldoeSBub3QgdXNlIHRo
-ZSBzYW1lIHVuaXQgb3IgYm90aCB2YWx1ZXM/Cgo+ICtzdGF0aWMgaW5saW5lIGxvbmcgbG9uZyB0
-aW1ldmFsX3RvX3VzKGNvbnN0IHN0cnVjdCB0aW1lc3BlYyAqdHYpCj4gK3sKPiArCXJldHVybiAo
-KGxvbmcgbG9uZykgdHYtPnR2X3NlYyAqIFVTRUNfUEVSX1NFQykgKyAodHYtCj4gPnR2X25zZWMg
-Pj4gMTApOwoKUGxlYXNlIGNhbGN1bGF0ZSBjb3JyZWN0bHksIGRpdmlkZSBieSAxMDAwLgoKPiAr
-aW50IGNoZWNrX2FyZ3NfdmFsaWQoaW50IGlvX251bSwgbG9uZyBsb25nIGxhdGVuY3lfaW50ZXJ2
-YWwsIGludAo+IHR5cGUpCj4gK3sKPiArICAgIGlmICgoaW9fbnVtIDwgTUlOX0lPX05VTSkgfHwg
-KGlvX251bSA+IE1BWF9JT19OVU0pKQo+ICsgICAgewo+ICsgICAgICAgIGNvbmRsb2coMCwgImFy
-Z3MgaW9fbnVtIGlzIG1vcmUgdGhhbiB0aGUgdmFsaWQgdmFsdWVzCj4gcmFuZ2UiKTsKPiArICAg
-ICAgICByZXR1cm4gMDsKPiArICAgIH0KClBsZWFzZSB3cml0ZSAib3V0c2lkZSB0aGUgdmFsaWQg
-cmFuZ2UiIHJhdGhlciB0aGFuICJtb3JlIHRoYW4gdGhlIHZhbGlkCnZhbHVlcyByYW5nZSIuCgpJ
-biBnZW5lcmFsLCB3aGVuIHlvdSB1c2UgY29uZGxvZygpLCBwbGVhc2UgcHJlZml4IGFsbCBtZXNz
-YWdlcyB3aXRoIGEKc3RyaW5nIHRoYXQgY2xlYXJseSBpZGVudGlmaWVzIHRoZSBwYXRoX2xhdGVu
-Y3kgcHJpb3JpdGl6ZXIsIGUuZy4KUFJJT19QQVRIX0xBVEVOQ1kuCkkga25vdyB3ZSdyZSBub3Qg
-Y3VycmVudGx5IGRvaW5nIHRoYXQgY29uc2lzdGVudGx5IGluIG11bHRpcGF0aC10b29scywKYnV0
-IHRoYXQgc2hvdWxkbid0IGJlIGEgcmVhc29uIGZvciBub3QgZG9pbmcgd2hlbiBhZGRpbmcgbmV3
-IGNvZGUuCgo+ICsKPiArICAgIC8qIGNoZWNrIHZhbHVlIGlzIHNldCBieSB1c2luZyBsb2dhcml0
-aG1pYyBzY2FsZSwgYW5kIGJhc2UKPiBudW1iZXIgaXMgMTAgKi8KPiArICAgIGlmICgobGF0ZW5j
-eV9pbnRlcnZhbCAlIEJBU0VfTlVNQkVSKSAhPSAwKQo+ICsgICAgewo+ICsgICAgICAgIGNvbmRs
-b2coMCwgImFyZ3MgbGF0ZW5jeV9pbnRlcnZhbCBpcyBub3Qgc2V0IGJ5IHVzaW5nCj4gbG9nYXJp
-dGhtaWMgc2NhbGUgLCB3aGVyZSBiYXNlIG51bWJlciBpcyAxMCIpOwo+ICsgICAgICAgIHJldHVy
-biAwOwo+ICsgICAgfQoKVGhpcyBpcyBub3Qgd2hhdCBJIG1lYW50IHdpdGggImxvZ2FyaXRobWlj
-IHNjYWxlIi4gU2VlIGJlbG93LgoKPiArCj4gKyAgICAvKiBzOlsxLCAxMF0sIG1zOlsxLCAxMDAw
-MF0sIHVzOlsxLCAxMDAwMDAwMF0gKi8KPiArICAgIGlmICgobGF0ZW5jeV9pbnRlcnZhbCA8IE1J
-Tl9MQVRFTkNZX0lOVEVSVkFMKQo+ICsgICAgICAgIHx8IChsYXRlbmN5X2ludGVydmFsID4gKE1B
-WF9MQVRFTkNZX0lOVEVSVkFMICogVVNFQ19QRVJfU0VDCj4gLyBjb252ZXJzaW9uX3JhdGlvW3R5
-cGVdKSkpCj4gKyAgICB7Cj4gKyAgICAgICAgY29uZGxvZygwLCAiYXJncyBsYXRlbmN5X2ludGVy
-dmFsIGlzIG1vcmUgdGhhbiB0aGUgdmFsaWQKPiB2YWx1ZXMgcmFuZ2UiKTsKPiArICAgICAgICBy
-ZXR1cm4gMDsKPiArICAgIH0KCkFnYWluLCBwbGVhc2UgdXNlICJvdXRzaWRlIi4KCj4gKy8qIElu
-IG11bHRpcGF0aC5jb25mLCBhcmdzIGZvcm06IGlvX251bXxsYXRlbmN5X2ludGVydmFsLiBGb3IK
-PiBleGFtcGxlLAo+ICsqICBhcmdzIGlzICIyMHwxMG1zIiwgdGhpcyBmdW5jdGlvbiBjYW4gZ2V0
-IDIwLCAxMC4KPiArKi8KPiArc3RhdGljIGludCBnZXRfaW50ZXJ2YWxfYW5kX2lvbnVtKGNoYXIg
-KmFyZ3MsCj4gKyAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBpbnQgKmlv
-bnVtLAo+ICsgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgbG9uZyBsb25n
-ICppbnRlcnZhbCkKPiArewo+ICsgICAgY2hhciBzb3VyY2VbTUFYX0NIQVJfU0laRV07Cj4gKyAg
-ICBjaGFyIHZlcnRpY2EgPSAnfCc7Cj4gKyAgICBjaGFyICplbmRzdHJiZWZvcmUgPSBOVUxMOwo+
-ICsgICAgY2hhciAqZW5kc3RyYWZ0ZXIgPSBOVUxMOwo+ICsgICAgaW50IHR5cGU7Cj4gKyAgICB1
-bnNpZ25lZCBpbnQgc2l6ZSA9IHN0cmxlbihhcmdzKTsKPiArICAgIGxvbmcgbG9uZyByYXRpbzsK
-PiArCj4gKyAgICBpZiAoKGFyZ3MgPT0gTlVMTCkgfHwgKGlvbnVtID09IE5VTEwpIHx8IChpbnRl
-cnZhbCA9PSBOVUxMKSkKPiArICAgIHsKPiArICAgICAgICBjb25kbG9nKDAsICJhcmdzIHN0cmlu
-ZyBpcyBOVUxMIik7Cj4gKyAgICAgICAgcmV0dXJuIDA7Cj4gKyAgICB9Cj4gKwo+ICsgICAgaWYg
-KChzaXplIDwgMSkgfHwgKHNpemUgPiBNQVhfQ0hBUl9TSVpFLTEpKQo+ICsgICAgewo+ICsgICAg
-ICAgIGNvbmRsb2coMCwgImFyZ3Mgc3RyaW5nJ3Mgc2l6ZSBpcyB0b28gbG9uZyIpOwo+ICsgICAg
-ICAgIHJldHVybiAwOwo+ICsgICAgfQoKInRvbyBsb25nIiBpcyBub3QgY29ycmVjdCBmb3IgdGhl
-IGZpcnN0IChtb3JlIGxpa2VseSkgZXJyb3IgY29uZGl0aW9uLgoKPiArCj4gKyAgICBtZW1jcHko
-c291cmNlLCBhcmdzLCBzaXplKzEpOwo+ICsKPiArICAgIGlmICghaXNkaWdpdChzb3VyY2VbMF0p
-KQo+ICsgICAgewo+ICsgICAgICAgIGNvbmRsb2coMCwgImFyZ3MgaW9fbnVtIHN0cmluZydzIGZp
-cnN0IGNoYXIgaXMgbm90IGRpZ2l0Iik7Cj4gKyAgICAgICAgcmV0dXJuIDA7Cj4gKyAgICB9CgpJ
-dCB3b3VsZCBiZSBvayB0byBjYXRjaCBhbGwgdGhlc2UgZXJyb3JzIHdpdGggYSBzaW5nbGUgbGlu
-ZSBvZiBjb2RlCnN1Y2ggYXMgInBhdGhfbGF0ZW5jeTogaW52YWxpZCBwcmlvX2FyZ3MgZm9ybWF0
-OiAlcyIuCgo+ICsKPiArICAgICppb251bSA9IChpbnQpc3RydG91bChzb3VyY2UsICZlbmRzdHJi
-ZWZvcmUsIDEwKTsKPiArICAgIGlmIChlbmRzdHJiZWZvcmVbMF0gIT0gdmVydGljYSkKPiArICAg
-IHsKPiArICAgICAgICBjb25kbG9nKDAsICJzZWdtZW50YXRpb24gY2hhciBpcyBpbnZhbGlkIik7
-Cj4gKyAgICAgICAgcmV0dXJuIDA7Cj4gKyAgICB9Cj4gKwo+ICsgICAgaWYgKCFpc2RpZ2l0KGVu
-ZHN0cmJlZm9yZVsxXSkpCj4gKyAgICB7Cj4gKyAgICAgICAgY29uZGxvZygwLCAiYXJncyBsYXRl
-bmN5X2ludGVydmFsIHN0cmluZydzIGZpcnN0IGNoYXIgaXMgbm90Cj4gZGlnaXQiKTsKPiArICAg
-ICAgICByZXR1cm4gMDsKPiArICAgIH0KPiArCj4gKyAgICAqaW50ZXJ2YWwgPSAobG9uZyBsb25n
-KXN0cnRvbCgmZW5kc3RyYmVmb3JlWzFdLCAmZW5kc3RyYWZ0ZXIsCj4gMTApOwo+ICsgICAgdHlw
-ZSA9IGdldF9pbnRlcnZhbF90eXBlKGVuZHN0cmFmdGVyKTsKPiArICAgIGlmICh0eXBlID09IElO
-VEVSVkFMX0lOVkFMSUQpCj4gKyAgICB7Cj4gKyAgICAgICAgY29uZGxvZygwLCAiYXJncyBsYXRl
-bmN5X2ludGVydmFsIHR5cGUgaXMgaW52YWxpZCIpOwo+ICsgICAgICAgIHJldHVybiAwOwo+ICsg
-ICAgfQo+ICsKPiArICAgIGlmIChjaGVja19hcmdzX3ZhbGlkKCppb251bSwgKmludGVydmFsLCB0
-eXBlKSA9PSAwKQo+ICsgICAgewo+ICsgICAgICAgIHJldHVybiAwOwo+ICsgICAgfQo+ICsKPiAr
-CXJhdGlvID0gZ2V0X2NvbnZlcnNpb25fcmF0aW8odHlwZSk7Cj4gKyAgICAqaW50ZXJ2YWwgKj0g
-KGxvbmcgbG9uZylyYXRpbzsKPiArCj4gKyAgICByZXR1cm4gMTsKPiArfQo+ICsKPiArbG9uZyBs
-b25nIGNhbGNfc3RhbmRhcmRfZGV2aWF0aW9uKGxvbmcgbG9uZyAqcGF0aF9sYXRlbmN5LCBpbnQg
-c2l6ZSwKPiBsb25nIGxvbmcgYXZnbGF0ZW5jeSkKPiArewo+ICsgICAgaW50IGluZGV4Owo+ICsg
-ICAgbG9uZyBsb25nIHRvdGFsID0gMDsKPiArCj4gKyAgICBmb3IgKGluZGV4ID0gMDsgaW5kZXgg
-PCBzaXplOyBpbmRleCsrKQo+ICsgICAgewo+ICsgICAgICAgIHRvdGFsICs9IChwYXRoX2xhdGVu
-Y3lbaW5kZXhdIC0gYXZnbGF0ZW5jeSkgKgo+IChwYXRoX2xhdGVuY3lbaW5kZXhdIC0gYXZnbGF0
-ZW5jeSk7Cj4gKyAgICB9Cj4gKwo+ICsgICAgdG90YWwgLz0gKHNpemUtMSk7Cj4gKwo+ICsgICAg
-cmV0dXJuIChsb25nIGxvbmcpc3FydCgoZG91YmxlKXRvdGFsKTsKPiArfQo+ICsKPiAraW50IGdl
-dHByaW8gKHN0cnVjdCBwYXRoICpwcCwgY2hhciAqYXJncywgdW5zaWduZWQgaW50IHRpbWVvdXQp
-Cj4gK3sKPiArICAgIGludCByYywgdGVtcDsKPiArICAgIGludCBpbmRleCA9IDA7Cj4gKyAgICBp
-bnQgaW9fbnVtOwo+ICsgICAgbG9uZyBsb25nIGxhdGVuY3lfaW50ZXJ2YWw7Cj4gKyAgICBsb25n
-IGxvbmcgYXZnbGF0ZW5jeTsKPiArICAgIGxvbmcgbG9uZyBzdGFuZGFyZF9kZXZpYXRpb247Cj4g
-KyAgICBsb25nIGxvbmcgdG9sZGVsYXkgPSAwOwo+ICsgICAgbG9uZyBsb25nIGJlZm9yZSwgYWZ0
-ZXI7Cj4gKyAgICBzdHJ1Y3QgdGltZXNwZWMgdHY7Cj4gKwo+ICsJaWYgKHBwLT5mZCA8IDApCj4g
-KwkJcmV0dXJuIC0xOwo+ICsKPiArICAgIGlmIChnZXRfaW50ZXJ2YWxfYW5kX2lvbnVtKGFyZ3Ms
-ICZpb19udW0sICZsYXRlbmN5X2ludGVydmFsKSA9PQo+IDApCj4gKyAgICB7Cj4gKyAgICAgICAg
-Y29uZGxvZygwLCAiJXM6IGdldCBwYXRoX2xhdGVuY3kgYXJncyBmYWlsIiwgcHAtPmRldik7Cj4g
-KyAgICAgICAgcmV0dXJuIERFRkFVTFRfUFJJT1JJVFk7Cj4gKyAgICB9CgpDb3VsZCB5b3UganVz
-dCBhc3N1bWUgcmVhc29uYWJsZSBkZWZhdWx0cyBmb3IgdGhlIHBhdGggbGF0ZW5jeQphbGdvcml0
-aG0gcmF0aGVyIHRoYW4gcmV0dXJuaW5nIGEgY29uc3RhbnQ/Cgo+ICsKPiArICAgIG1lbXNldChw
-YXRoX2xhdGVuY3ksIDAsIHNpemVvZihwYXRoX2xhdGVuY3kpKTsKPiArCj4gKyAgICB0ZW1wID0g
-aW9fbnVtOwo+ICsgICAgd2hpbGUgKHRlbXAtLSA+IDApCj4gKyAgICB7Cj4gKyAgICAgICAgKHZv
-aWQpY2xvY2tfZ2V0dGltZShDTE9DS19NT05PVE9OSUMsICZ0dik7Cj4gKyAgICAgICAgYmVmb3Jl
-ID0gdGltZXZhbF90b191cygmdHYpOwo+ICsKPiArICAgICAgICBpZiAoZG9fcmVhZHNlY3RvcjAo
-cHAtPmZkLCB0aW1lb3V0KSA9PSAyKQo+ICsgICAgICAgIHsKPiArICAgICAgICAgICAgY29uZGxv
-ZygwLCAiJXM6IHBhdGggZG93biIsIHBwLT5kZXYpOwo+ICsgICAgICAgICAgICByZXR1cm4gLTE7
-Cj4gKyAgICAgICAgfQo+ICsKPiArICAgICAgICAodm9pZCljbG9ja19nZXR0aW1lKENMT0NLX01P
-Tk9UT05JQywgJnR2KTsKPiArICAgICAgICBhZnRlciA9IHRpbWV2YWxfdG9fdXMoJnR2KTsKPiAr
-Cj4gKyAgICAgICAgcGF0aF9sYXRlbmN5W2luZGV4XSA9IGFmdGVyIC0gYmVmb3JlOwo+ICsgICAg
-ICAgIHRvbGRlbGF5ICs9IHBhdGhfbGF0ZW5jeVtpbmRleCsrXTsKPiArICAgIH0KPiArCj4gKyAg
-ICBhdmdsYXRlbmN5ID0gdG9sZGVsYXkvKGxvbmcgbG9uZylpb19udW07Cj4gKyAgICBjb25kbG9n
-KDQsICIlczogYXZlcmFnZSBsYXRlbmN5IGlzICglbGxkKSIsIHBwLT5kZXYsCj4gYXZnbGF0ZW5j
-eSk7Cj4gKwo+ICsgICAgaWYgKGF2Z2xhdGVuY3kgPiBUSFJFU19VU0VDX1ZBTFVFKQo+ICsgICAg
-ewo+ICsgICAgICAgIGNvbmRsb2coMCwgIiVzOiBhdmVyYWdlIGxhdGVuY3kgKCVsbGQpIGlzIG1v
-cmUgdGhhbgo+IHRocmVzb2xkIiwgcHAtPmRldiwgYXZnbGF0ZW5jeSk7Cj4gKyAgICAgICAgcmV0
-dXJuIERFRkFVTFRfUFJJT1JJVFk7Cj4gKyAgICB9CgpXaHkgZG9uJ3QgeW91IHB1dCBzaW1wbHkg
-cHV0IHRoaXMgaW4gdGhlIGhpZ2hlc3QgbGF0ZW5jeSBiaW4/IFNlZQpiZWxvdy4KCj4gKwo+ICsg
-ICAgLyogd2FybiB0aGUgdXNlciBpZiB0aGUgbGF0ZW5jeV9pbnRlcnZhbCBzZXQgaXMgc21hbGxl
-ciB0aGFuICgyCj4gKiBzdGFuZGFyZCBkZXZpYXRpb24pLCBvciBlcXVhbCAqLwo+ICsgICAgc3Rh
-bmRhcmRfZGV2aWF0aW9uID0gY2FsY19zdGFuZGFyZF9kZXZpYXRpb24ocGF0aF9sYXRlbmN5LAo+
-IGluZGV4LCBhdmdsYXRlbmN5KTsKPiArICAgIGlmIChsYXRlbmN5X2ludGVydmFsIDw9ICgyICog
-c3RhbmRhcmRfZGV2aWF0aW9uKSkKPiArICAgICAgICBjb25kbG9nKDMsICIlczogYXJncyBsYXRl
-bmN5X2ludGVydmFsIHNldCBpcyBzbWFsbGVyIHRoYW4gMgo+ICogc3RhbmRhcmQgZGV2aWF0aW9u
-ICglbGxkIHVzKSwgb3IgZXF1YWwiLAo+ICsgICAgICAgICAgICBwcC0+ZGV2LCBzdGFuZGFyZF9k
-ZXZpYXRpb24pOwo+ICsKPiArCXJjID0gKGludCkoVEhSRVNfVVNFQ19WQUxVRSAtIChhdmdsYXRl
-bmN5Lyhsb25nCj4gbG9uZylsYXRlbmN5X2ludGVydmFsKSk7Cj4gKyAgICByZXR1cm4gcmM7Cj4g
-K30KCkhtLCBJIHRoaW5rIHlvdSBtaXN1bmRlcnN0b29kIG15ICJsb2dhcml0aG1pYyBzY2FsZSIg
-aWRlYS4KQnkgZGl2aWRpbmcgdGhlIGF2ZXJhZ2UgYnkgdGhlIGludGVydmFsIHNpemUsIHlvdSBn
-ZXQgb3JkaW5hcnkgbGluZWFyCnNjYWxpbmcgYWdhaW4uIFRoYXQgZG9lc24ndCBoZWxwIHRoZSBw
-cm9ibGVtLgoKSGVyZSBpcyBhIHNhbXBsZSBwcm9ncmFtIGlsbHVzdHJhdGluZyB3aGF0IEkgbWVh
-bnQuIEl0IHVzZXMgbWF0aC5oCmZ1bmN0aW9ucywgYnV0IHRoYXQgc2hvdWxkbid0IGJlIGEgcHJv
-YmxlbTsgd2UncmUgcnVubmluZyBpbiB1c2VyCnNwYWNlLiBUaGUgY2hvc2VuIGludGVydmFsIHNp
-emUsIGNvcnJlc3BvbmRpbmcgdG8gYSBmYWN0b3Igb2YgMS45OTUsIGlzCnByb2JhYmx5IGEgZ29v
-ZCBjaG9pY2UgZm9yIG1hbnkgc2NlbmFyaW9zLiBZb3VyIGNvdWxkIHJlcHJlc2VudCB0aGUKcmFu
-Z2UgYmV0d2VlbiAxdXMgYW5kIDEwcyB3aXRoIDM0IHByaW8gdmFsdWVzLCBhbmQgc3RpbGwgYmUg
-YWJsZSB0bwpkaWZmZXJlbnRpYXRlIHBhdGhzIHdpdGgsIHNheSwgMS41IGFuZCAzIHVzIGxhdGVu
-Y3kuCgpJZiB5b3UgdXNlIHRoaXMsIHlvdSBzaG91bGQgYWxzbyB1c2UgZG91YmxlIHR5cGUgZm9y
-IGNhbGN1bGF0aW5nIHRoZQphdmVyYWdlIGFuZCBzdGRkZXYsIGFuZCB5b3UgbXVzdCBiZSBjYXJl
-ZnVsIHRvIGNhbGN1bGF0ZSB0aGUgc3RhbmRhcmQKZGV2aWF0aW9uIGZvciB0aGUgbG9nYXJpdGht
-cywgYXMgaW50ZXJ2YWwgc2l6ZSBpcyBub3QgY29uc3RhbnQgYW55IG1vcmUKKG9ubHkgb24gbG9n
-YXJpdGhtaWMgc2NhbGUpLgoKI2luY2x1ZGUgPHN0ZGlvLmg+CiNpbmNsdWRlIDxtYXRoLmg+Cgov
-KgogKiBGb3IgYSBnaXZlbiBwb3NpdGl2ZSB2YWx1ZSB4LCByZXR1cm4gYSAicHJpbyIgYmV0d2Vl
-biAwIGFuZCBuCiAqIHVzaW5nIGxvZ2FyaXRobWljYWxseSBzY2FsZWQgaW50ZXJ2YWxzIGJldHdl
-ZW4gbWludmFsIGFuZCBtYXh2YWwuCiAqLwoKaW50IGxvZ19wcmlvKGRvdWJsZSB4LAoJICAgICB1
-bnNpZ25lZCBsb25nIG1pbnZhbCwgdW5zaWduZWQgbG9uZyBtYXh2YWwsIHVuc2lnbmVkIG4pCnsK
-CWRvdWJsZSBseCwgbG1pbiwgbG1heDsKCWlmICh4IDw9IG1pbnZhbCkKCQlyZXR1cm4gbjsKCWlm
-ICh4ID49IG1heHZhbCkKCQlyZXR1cm4gMDsKCWx4ID0gbG9nMTAoeCk7CglsbWluID0gbG9nMTAo
-bWludmFsKTsKCWxtYXggPSBsb2cxMChtYXh2YWwpOwoJcmV0dXJuIG4gLSAobiAtIDEpICogKGx4
-IC0gbG1pbikgLyAobG1heCAtIGxtaW4pOwp9CgppbnQgbWFpbih2b2lkKQp7CglpbnQgbWludmFs
-ID0gMTsKCWludCBtYXh2YWwgPSAxMDAwOwoJaW50IG4gPSAxMTsKCWRvdWJsZSB4OwoJZm9yICh4
-ID0gbWludmFsLzIuOyB4IDwgbWF4dmFsKjIuOyB4ICo9IHNxcnQoMi4pKQoJCXByaW50ZigiJWY6
-ICVkXG4iLCB4LCBsb2dfcHJpbyh4LCBtaW52YWwsIG1heHZhbCwgbikpOwoJcmV0dXJuIDA7Cn0K
-ClJlZ2FyZHMsCk1hcnRpbgoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4s
-IFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IElt
-ZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7D
-vHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0
-dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+File systems can encrypt some of their data blocks with their own
+encryption keys, and for those blocks another round of encryption at
+the dm-crypt layer may be redundant, depending on the keys being used.
+
+This patch enables dm-crypt to observe the REQ_NOENCRYPT flag as an
+indicator that a bio request should bypass the dm-crypt encryption
+queue.
+
+By default dm-crypt will ignore this request flag from the file
+system.  The user must set the allow_encrypt_override option to enable
+this functionality.  Once the dm-crypt has been used with the
+allow_encrypt_override option for any given block device, it must
+continue to be used with the option to avoid the possibility of data
+corruption.
+
+Signed-off-by: Michael Halcrow <mhalcrow@google.com>
+---
+ drivers/md/dm-crypt.c | 17 +++++++++++++----
+ 1 file changed, 13 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index ebf9e72d479b..14ca8a6de3d9 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -125,7 +125,8 @@ struct iv_tcw_private {
+  * and encrypts / decrypts at the same time.
+  */
+ enum flags { DM_CRYPT_SUSPENDED, DM_CRYPT_KEY_VALID,
+-	     DM_CRYPT_SAME_CPU, DM_CRYPT_NO_OFFLOAD };
++	     DM_CRYPT_SAME_CPU, DM_CRYPT_NO_OFFLOAD,
++	     DM_CRYPT_ENCRYPT_OVERRIDE };
+ 
+ enum cipher_flags {
+ 	CRYPT_MODE_INTEGRITY_AEAD,	/* Use authenticated mode for cihper */
+@@ -2572,6 +2573,8 @@ static int crypt_ctr_optional(struct dm_target *ti, unsigned int argc, char **ar
+ 			cc->sector_shift = __ffs(cc->sector_size) - SECTOR_SHIFT;
+ 		} else if (!strcasecmp(opt_string, "iv_large_sectors"))
+ 			set_bit(CRYPT_IV_LARGE_SECTORS, &cc->cipher_flags);
++		else if (!strcasecmp(opt_string, "allow_encrypt_override"))
++			set_bit(DM_CRYPT_ENCRYPT_OVERRIDE, &cc->flags);
+ 		else {
+ 			ti->error = "Invalid feature arguments";
+ 			return -EINVAL;
+@@ -2770,12 +2773,15 @@ static int crypt_map(struct dm_target *ti, struct bio *bio)
+ 	struct crypt_config *cc = ti->private;
+ 
+ 	/*
+-	 * If bio is REQ_PREFLUSH or REQ_OP_DISCARD, just bypass crypt queues.
++	 * If bio is REQ_PREFLUSH, REQ_NOENCRYPT, or REQ_OP_DISCARD,
++	 * just bypass crypt queues.
+ 	 * - for REQ_PREFLUSH device-mapper core ensures that no IO is in-flight
+ 	 * - for REQ_OP_DISCARD caller must use flush if IO ordering matters
+ 	 */
+-	if (unlikely(bio->bi_opf & REQ_PREFLUSH ||
+-	    bio_op(bio) == REQ_OP_DISCARD)) {
++	if (unlikely(bio->bi_opf & REQ_PREFLUSH) ||
++	    (unlikely(bio->bi_opf & REQ_NOENCRYPT) &&
++	     test_bit(DM_CRYPT_ENCRYPT_OVERRIDE, &cc->flags)) ||
++	    bio_op(bio) == REQ_OP_DISCARD) {
+ 		bio->bi_bdev = cc->dev->bdev;
+ 		if (bio_sectors(bio))
+ 			bio->bi_iter.bi_sector = cc->start +
+@@ -2862,6 +2868,7 @@ static void crypt_status(struct dm_target *ti, status_type_t type,
+ 		num_feature_args += test_bit(DM_CRYPT_NO_OFFLOAD, &cc->flags);
+ 		num_feature_args += cc->sector_size != (1 << SECTOR_SHIFT);
+ 		num_feature_args += test_bit(CRYPT_IV_LARGE_SECTORS, &cc->cipher_flags);
++		num_feature_args += test_bit(DM_CRYPT_ENCRYPT_OVERRIDE, &cc->flags);
+ 		if (cc->on_disk_tag_size)
+ 			num_feature_args++;
+ 		if (num_feature_args) {
+@@ -2878,6 +2885,8 @@ static void crypt_status(struct dm_target *ti, status_type_t type,
+ 				DMEMIT(" sector_size:%d", cc->sector_size);
+ 			if (test_bit(CRYPT_IV_LARGE_SECTORS, &cc->cipher_flags))
+ 				DMEMIT(" iv_large_sectors");
++			if (test_bit(DM_CRYPT_ENCRYPT_OVERRIDE, &cc->flags))
++				DMEMIT(" allow_encrypt_override");
+ 		}
+ 
+ 		break;
+-- 
+2.13.1.508.gb3defc5cc-goog
