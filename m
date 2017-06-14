@@ -1,292 +1,132 @@
-From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH v3 10/14] pmem: remove global pmem api
-Date: Wed, 14 Jun 2017 12:48:35 +0200
-Message-ID: <20170614104835.GB21506@quack2.suse.cz>
+From: Jan Kara <jack@suse.cz>
+Subject: Re: [PATCH v3 09/14] x86, libnvdimm, pmem: move
+ arch_invalidate_pmem() to libnvdimm
+Date: Wed, 14 Jun 2017 12:49:12 +0200
+Message-ID: <20170614104912.GC21506@quack2.suse.cz>
 References: <149703982465.20620.14881139332926778446.stgit@dwillia2-desk3.amr.corp.intel.com>
- <149703988061.20620.2077699148888013311.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <149703987543.20620.15705330305343743783.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <149703988061.20620.2077699148888013311.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org
+In-Reply-To: <149703987543.20620.15705330305343743783.stgit@dwillia2-desk3.amr.corp.intel.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Dan Williams <dan.j.williams@intel.com>
+Cc: linux-nvdimm@lists.01.org, Jan Kara <jack@suse.cz>, dm-devel@redhat.com, Matthew Wilcox <mawilcox@microsoft.com>, x86@kernel.org, linux-kernel@vger.kernel.org, hch@lst.de, Jeff Moyer <jmoyer@redhat.com>, Ingo Molnar <mingo@redhat.com>, viro@zeniv.linux.org.uk, "H. Peter Anvin" <hpa@zytor.com>, linux-fsdevel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, Ross Zwisler <ross.zwisler@linux.intel.com>
 List-Id: dm-devel.ids
 
-On Fri 09-06-17 13:24:40, Dan Williams wrote:
-> Now that all callers of the pmem api have been converted to dax helpers that
-> call back to the pmem driver, we can remove include/linux/pmem.h.
+On Fri 09-06-17 13:24:35, Dan Williams wrote:
+> Kill this globally defined wrapper and move to libnvdimm so that we can
+> ultimately remove include/linux/pmem.h.
 > 
-> Cc: <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-> Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-> Cc: Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> Cc: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-> Cc: Toshi Kani <toshi.kani-ZPxbGqLxI0U@public.gmane.org>
-> Cc: Oliver O'Halloran <oohall-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> Cc: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-> Signed-off-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> Cc: <x86@kernel.org>
+> Cc: Jan Kara <jack@suse.cz>
+> Cc: Jeff Moyer <jmoyer@redhat.com>
+> Cc: Ingo Molnar <mingo@redhat.com>
+> Cc: Christoph Hellwig <hch@lst.de>
+> Cc: "H. Peter Anvin" <hpa@zytor.com>
+> Cc: Thomas Gleixner <tglx@linutronix.de>
+> Cc: Matthew Wilcox <mawilcox@microsoft.com>
+> Cc: Ross Zwisler <ross.zwisler@linux.intel.com>
+> Signed-off-by: Dan Williams <dan.j.williams@intel.com>
 
 Looks good to me. You can add:
 
-Reviewed-by: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Reviewed-by: Jan Kara <jack@suse.cz>
 
 								Honza
 
 > ---
->  MAINTAINERS                     |    1 -
->  drivers/acpi/nfit/core.c        |    3 +-
->  drivers/nvdimm/claim.c          |    1 -
->  drivers/nvdimm/dimm_devs.c      |    8 +++++
->  drivers/nvdimm/namespace_devs.c |    6 +---
->  drivers/nvdimm/pmem.c           |    1 -
->  drivers/nvdimm/pmem.h           |    5 +++
->  drivers/nvdimm/region_devs.c    |    1 -
->  fs/dax.c                        |    1 -
->  include/linux/libnvdimm.h       |    1 +
->  include/linux/pmem.h            |   59 ---------------------------------------
->  11 files changed, 15 insertions(+), 72 deletions(-)
->  delete mode 100644 include/linux/pmem.h
+>  drivers/nvdimm/claim.c |    3 ++-
+>  drivers/nvdimm/pmem.c  |    2 +-
+>  drivers/nvdimm/pmem.h  |    3 +++
+>  include/linux/pmem.h   |   19 -------------------
+>  4 files changed, 6 insertions(+), 21 deletions(-)
 > 
-> diff --git a/MAINTAINERS b/MAINTAINERS
-> index 7a28acd7f525..d77ad3194adc 100644
-> --- a/MAINTAINERS
-> +++ b/MAINTAINERS
-> @@ -7593,7 +7593,6 @@ L:	linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
->  Q:	https://patchwork.kernel.org/project/linux-nvdimm/list/
->  S:	Supported
->  F:	drivers/nvdimm/pmem.c
-> -F:	include/linux/pmem.h
->  F:	arch/*/include/asm/pmem.h
->  
->  LIGHTNVM PLATFORM SUPPORT
-> diff --git a/drivers/acpi/nfit/core.c b/drivers/acpi/nfit/core.c
-> index cbd5596e7562..ac2436538b7e 100644
-> --- a/drivers/acpi/nfit/core.c
-> +++ b/drivers/acpi/nfit/core.c
-> @@ -20,7 +20,6 @@
->  #include <linux/list.h>
->  #include <linux/acpi.h>
->  #include <linux/sort.h>
-> -#include <linux/pmem.h>
->  #include <linux/io.h>
->  #include <linux/nd.h>
->  #include <asm/cacheflush.h>
-> @@ -1956,7 +1955,7 @@ static int acpi_nfit_blk_region_enable(struct nvdimm_bus *nvdimm_bus,
->  	nfit_blk->bdw_offset = nfit_mem->bdw->offset;
->  	mmio = &nfit_blk->mmio[BDW];
->  	mmio->addr.base = devm_nvdimm_memremap(dev, nfit_mem->spa_bdw->address,
-> -                        nfit_mem->spa_bdw->length, ARCH_MEMREMAP_PMEM);
-> +                        nfit_mem->spa_bdw->length, nd_blk_memremap_flags(ndbr));
->  	if (!mmio->addr.base) {
->  		dev_dbg(dev, "%s: %s failed to map bdw\n", __func__,
->  				nvdimm_name(nvdimm));
 > diff --git a/drivers/nvdimm/claim.c b/drivers/nvdimm/claim.c
-> index d2e16c0401df..3beedf173902 100644
+> index b8b9c8ca7862..d2e16c0401df 100644
 > --- a/drivers/nvdimm/claim.c
 > +++ b/drivers/nvdimm/claim.c
-> @@ -12,7 +12,6 @@
->   */
->  #include <linux/device.h>
+> @@ -14,6 +14,7 @@
 >  #include <linux/sizes.h>
-> -#include <linux/pmem.h>
+>  #include <linux/pmem.h>
 >  #include "nd-core.h"
->  #include "pmem.h"
+> +#include "pmem.h"
 >  #include "pfn.h"
-> diff --git a/drivers/nvdimm/dimm_devs.c b/drivers/nvdimm/dimm_devs.c
-> index 9852a3355509..6a1e7a3c0c17 100644
-> --- a/drivers/nvdimm/dimm_devs.c
-> +++ b/drivers/nvdimm/dimm_devs.c
-> @@ -20,6 +20,7 @@
->  #include <linux/mm.h>
->  #include "nd-core.h"
->  #include "label.h"
-> +#include "pmem.h"
+>  #include "btt.h"
 >  #include "nd.h"
->  
->  static DEFINE_IDA(dimm_ida);
-> @@ -235,6 +236,13 @@ struct nvdimm *nd_blk_region_to_dimm(struct nd_blk_region *ndbr)
->  }
->  EXPORT_SYMBOL_GPL(nd_blk_region_to_dimm);
->  
-> +unsigned long nd_blk_memremap_flags(struct nd_blk_region *ndbr)
-> +{
-> +	/* pmem mapping properties are private to libnvdimm */
-> +	return ARCH_MEMREMAP_PMEM;
-> +}
-> +EXPORT_SYMBOL_GPL(nd_blk_memremap_flags);
-> +
->  struct nvdimm_drvdata *to_ndd(struct nd_mapping *nd_mapping)
->  {
->  	struct nvdimm *nvdimm = nd_mapping->nvdimm;
-> diff --git a/drivers/nvdimm/namespace_devs.c b/drivers/nvdimm/namespace_devs.c
-> index 2f9dfbd2dbec..4e9261ef8a95 100644
-> --- a/drivers/nvdimm/namespace_devs.c
-> +++ b/drivers/nvdimm/namespace_devs.c
-> @@ -14,10 +14,10 @@
->  #include <linux/device.h>
->  #include <linux/sort.h>
->  #include <linux/slab.h>
-> -#include <linux/pmem.h>
->  #include <linux/list.h>
->  #include <linux/nd.h>
->  #include "nd-core.h"
-> +#include "pmem.h"
->  #include "nd.h"
->  
->  static void namespace_io_release(struct device *dev)
-> @@ -155,11 +155,7 @@ bool pmem_should_map_pages(struct device *dev)
->  				IORES_DESC_NONE) == REGION_MIXED)
->  		return false;
->  
-> -#ifdef ARCH_MEMREMAP_PMEM
->  	return ARCH_MEMREMAP_PMEM == MEMREMAP_WB;
-> -#else
-> -	return false;
-> -#endif
->  }
->  EXPORT_SYMBOL(pmem_should_map_pages);
->  
+> @@ -272,7 +273,7 @@ static int nsio_rw_bytes(struct nd_namespace_common *ndns,
+>  				cleared /= 512;
+>  				badblocks_clear(&nsio->bb, sector, cleared);
+>  			}
+> -			invalidate_pmem(nsio->addr + offset, size);
+> +			arch_invalidate_pmem(nsio->addr + offset, size);
+>  		} else
+>  			rc = -EIO;
+>  	}
 > diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
-> index 68737bc68a07..06f6c27ec1e9 100644
+> index 3b87702d46bb..68737bc68a07 100644
 > --- a/drivers/nvdimm/pmem.c
 > +++ b/drivers/nvdimm/pmem.c
-> @@ -28,7 +28,6 @@
->  #include <linux/blk-mq.h>
->  #include <linux/pfn_t.h>
->  #include <linux/slab.h>
-> -#include <linux/pmem.h>
->  #include <linux/uio.h>
->  #include <linux/dax.h>
->  #include <linux/nd.h>
+> @@ -71,7 +71,7 @@ static int pmem_clear_poison(struct pmem_device *pmem, phys_addr_t offset,
+>  		badblocks_clear(&pmem->bb, sector, cleared);
+>  	}
+>  
+> -	invalidate_pmem(pmem->virt_addr + offset, len);
+> +	arch_invalidate_pmem(pmem->virt_addr + offset, len);
+>  
+>  	return rc;
+>  }
 > diff --git a/drivers/nvdimm/pmem.h b/drivers/nvdimm/pmem.h
-> index d579c7095a45..2b02e00b44eb 100644
+> index 9137ec80b85f..d579c7095a45 100644
 > --- a/drivers/nvdimm/pmem.h
 > +++ b/drivers/nvdimm/pmem.h
-> @@ -6,7 +6,10 @@
->  #include <linux/fs.h>
->  #include <asm/pmem.h>
->  
-> -#ifndef CONFIG_ARCH_HAS_PMEM_API
-> +#ifdef CONFIG_ARCH_HAS_PMEM_API
-> +#define ARCH_MEMREMAP_PMEM MEMREMAP_WB
-> +#else
-> +#define ARCH_MEMREMAP_PMEM MEMREMAP_WT
+> @@ -10,6 +10,9 @@
 >  static inline void arch_wb_cache_pmem(void *addr, size_t size)
 >  {
 >  }
-> diff --git a/drivers/nvdimm/region_devs.c b/drivers/nvdimm/region_devs.c
-> index 985b0e11bd73..3c06a6ea6958 100644
-> --- a/drivers/nvdimm/region_devs.c
-> +++ b/drivers/nvdimm/region_devs.c
-> @@ -15,7 +15,6 @@
->  #include <linux/sched.h>
->  #include <linux/slab.h>
->  #include <linux/hash.h>
-> -#include <linux/pmem.h>
->  #include <linux/sort.h>
->  #include <linux/io.h>
->  #include <linux/nd.h>
-> diff --git a/fs/dax.c b/fs/dax.c
-> index 554b8e7d921c..6d8699feae2e 100644
-> --- a/fs/dax.c
-> +++ b/fs/dax.c
-> @@ -25,7 +25,6 @@
->  #include <linux/mm.h>
->  #include <linux/mutex.h>
->  #include <linux/pagevec.h>
-> -#include <linux/pmem.h>
->  #include <linux/sched.h>
->  #include <linux/sched/signal.h>
->  #include <linux/uio.h>
-> diff --git a/include/linux/libnvdimm.h b/include/linux/libnvdimm.h
-> index 6c807017128d..b2f659bd661d 100644
-> --- a/include/linux/libnvdimm.h
-> +++ b/include/linux/libnvdimm.h
-> @@ -159,6 +159,7 @@ void *nd_region_provider_data(struct nd_region *nd_region);
->  void *nd_blk_region_provider_data(struct nd_blk_region *ndbr);
->  void nd_blk_region_set_provider_data(struct nd_blk_region *ndbr, void *data);
->  struct nvdimm *nd_blk_region_to_dimm(struct nd_blk_region *ndbr);
-> +unsigned long nd_blk_memremap_flags(struct nd_blk_region *ndbr);
->  unsigned int nd_region_acquire_lane(struct nd_region *nd_region);
->  void nd_region_release_lane(struct nd_region *nd_region, unsigned int lane);
->  u64 nd_fletcher64(void *addr, size_t len, bool le);
+> +static inline void arch_invalidate_pmem(void *addr, size_t size)
+> +{
+> +}
+>  #endif
+>  
+>  /* this definition is in it's own header for tools/testing/nvdimm to consume */
 > diff --git a/include/linux/pmem.h b/include/linux/pmem.h
-> deleted file mode 100644
-> index 559c00848583..000000000000
+> index 33ae761f010a..559c00848583 100644
 > --- a/include/linux/pmem.h
-> +++ /dev/null
-> @@ -1,59 +0,0 @@
-> -/*
-> - * Copyright(c) 2015 Intel Corporation. All rights reserved.
-> - *
-> - * This program is free software; you can redistribute it and/or modify
-> - * it under the terms of version 2 of the GNU General Public License as
-> - * published by the Free Software Foundation.
-> - *
-> - * This program is distributed in the hope that it will be useful, but
-> - * WITHOUT ANY WARRANTY; without even the implied warranty of
-> - * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-> - * General Public License for more details.
-> - */
-> -#ifndef __PMEM_H__
-> -#define __PMEM_H__
+> +++ b/include/linux/pmem.h
+> @@ -30,11 +30,6 @@ static inline void arch_memcpy_to_pmem(void *dst, const void *src, size_t n)
+>  {
+>  	BUG();
+>  }
 > -
-> -#include <linux/io.h>
-> -#include <linux/uio.h>
-> -
-> -#ifdef CONFIG_ARCH_HAS_PMEM_API
-> -#define ARCH_MEMREMAP_PMEM MEMREMAP_WB
-> -#include <asm/pmem.h>
-> -#else
-> -#define ARCH_MEMREMAP_PMEM MEMREMAP_WT
-> -/*
-> - * These are simply here to enable compilation, all call sites gate
-> - * calling these symbols with arch_has_pmem_api() and redirect to the
-> - * implementation in asm/pmem.h.
-> - */
-> -static inline void arch_memcpy_to_pmem(void *dst, const void *src, size_t n)
+> -static inline void arch_invalidate_pmem(void *addr, size_t size)
 > -{
 > -	BUG();
 > -}
-> -#endif
-> -
-> -static inline bool arch_has_pmem_api(void)
-> -{
-> -	return IS_ENABLED(CONFIG_ARCH_HAS_PMEM_API);
-> -}
+>  #endif
+>  
+>  static inline bool arch_has_pmem_api(void)
+> @@ -61,18 +56,4 @@ static inline void memcpy_to_pmem(void *dst, const void *src, size_t n)
+>  	else
+>  		memcpy(dst, src, n);
+>  }
 > -
 > -/**
-> - * memcpy_to_pmem - copy data to persistent memory
-> - * @dst: destination buffer for the copy
-> - * @src: source buffer for the copy
-> - * @n: length of the copy in bytes
+> - * invalidate_pmem - flush a pmem range from the cache hierarchy
+> - * @addr:	virtual start address
+> - * @size:	bytes to invalidate (internally aligned to cache line size)
 > - *
-> - * Perform a memory copy that results in the destination of the copy
-> - * being effectively evicted from, or never written to, the processor
-> - * cache hierarchy after the copy completes.  After memcpy_to_pmem()
-> - * data may still reside in cpu or platform buffers, so this operation
-> - * must be followed by a blkdev_issue_flush() on the pmem block device.
+> - * For platforms that support clearing poison this flushes any poisoned
+> - * ranges out of the cache
 > - */
-> -static inline void memcpy_to_pmem(void *dst, const void *src, size_t n)
+> -static inline void invalidate_pmem(void *addr, size_t size)
 > -{
 > -	if (arch_has_pmem_api())
-> -		arch_memcpy_to_pmem(dst, src, n);
-> -	else
-> -		memcpy(dst, src, n);
+> -		arch_invalidate_pmem(addr, size);
 > -}
-> -#endif /* __PMEM_H__ */
+>  #endif /* __PMEM_H__ */
 > 
 -- 
-Jan Kara <jack-IBi9RG/b67k@public.gmane.org>
+Jan Kara <jack@suse.com>
 SUSE Labs, CR
