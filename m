@@ -1,57 +1,46 @@
-From: "Kani, Toshimitsu" <toshi.kani@hpe.com>
-Subject: Re: [PATCH v3 02/14] dm: add ->copy_from_iter() dax operation support
-Date: Thu, 15 Jun 2017 01:21:08 +0000
-Message-ID: <1497489635.9288.18.camel@hpe.com>
+From: "Kani, Toshimitsu" <toshi.kani-ZPxbGqLxI0U@public.gmane.org>
+Subject: Re: [PATCH v3 05/14] dm: add ->flush() dax operation support
+Date: Thu, 15 Jun 2017 01:44:54 +0000
+Message-ID: <1497491062.9288.19.camel@hpe.com>
 References: <149703982465.20620.14881139332926778446.stgit@dwillia2-desk3.amr.corp.intel.com>
-         <149703983692.20620.3787021839815275819.stgit@dwillia2-desk3.amr.corp.intel.com>
-         <1497487541.9288.16.camel@hpe.com>
+ <149703985321.20620.13954624502810597823.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1497487541.9288.16.camel@hpe.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <149703985321.20620.13954624502810597823.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 Content-Language: en-US
-Content-ID: <E1E5D9D30646AA43A340A60F7CD7EFE9@NAMPRD84.PROD.OUTLOOK.COM>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "dan.j.williams@intel.com" <dan.j.williams@intel.com>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>, "hch@lst.de" <hch@lst.de>, "x86@kernel.org" <x86@kernel.org>, "snitzer@redhat.com" <snitzer@redhat.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>
+Content-ID: <FEFFC8E73D2A434CA87A21416DB02246-mmYPd6ayCNGroOM5E8FhRbjFIynDaujOfM0AETQt39g@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: "dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org" <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Cc: "snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org" <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "hch-jcswGhMUV9g@public.gmane.org" <hch-jcswGhMUV9g@public.gmane.org>
 List-Id: dm-devel.ids
 
-T24gV2VkLCAyMDE3LTA2LTE0IGF0IDE4OjQ1IC0wNjAwLCBUb3NoaSBLYW5pIHdyb3RlOg0KPiBP
-biBGcmksIDIwMTctMDYtMDkgYXQgMTM6MjMgLTA3MDAsIERhbiBXaWxsaWFtcyB3cm90ZToNCj4g
-PiBBbGxvdyBkZXZpY2UtbWFwcGVyIHRvIHJvdXRlIGNvcHlfZnJvbV9pdGVyIG9wZXJhdGlvbnMg
-dG8gdGhlDQo+ID4gcGVyLXRhcmdldCBpbXBsZW1lbnRhdGlvbi4gSW4gb3JkZXIgZm9yIHRoZSBk
-ZXZpY2Ugc3RhY2tpbmcgdG8gd29yaw0KPiA+IHdlIG5lZWQgYSBkYXhfZGV2IGFuZCBhIHBnb2Zm
-IHJlbGF0aXZlIHRvIHRoYXQgZGV2aWNlLiBUaGlzIGdpdmVzDQo+ID4gZWFjaCBsYXllciBvZiB0
-aGUgc3RhY2sgdGhlIGluZm9ybWF0aW9uIGl0IG5lZWRzIHRvIGxvb2sgdXAgdGhlDQo+ID4gb3Bl
-cmF0aW9uIHBvaW50ZXIgZm9yIHRoZSBuZXh0IGxldmVsLg0KPiA+IA0KPiA+IFRoaXMgY29uY2Vw
-dHVhbGx5IGFsbG93cyBmb3IgYW4gYXJyYXkgb2YgbWl4ZWQgZGV2aWNlIGRyaXZlcnMgd2l0aA0K
-PiA+IHZhcnlpbmcgY29weV9mcm9tX2l0ZXIgaW1wbGVtZW50YXRpb25zLg0KPiA+IA0KPiA+IENj
-OiBUb3NoaSBLYW5pIDx0b3NoaS5rYW5pQGhwZS5jb20+DQo+ID4gUmV2aWV3ZWQtYnk6IE1pa2Ug
-U25pdHplciA8c25pdHplckByZWRoYXQuY29tPg0KPiA+IFNpZ25lZC1vZmYtYnk6IERhbiBXaWxs
-aWFtcyA8ZGFuLmoud2lsbGlhbXNAaW50ZWwuY29tPg0KPiANCj4gSSB3YXMgd29ycmllZCBhYm91
-dCBwb3NzaWJsZSBvdmVyaGVhZCB3aXRoIGFkZGl0aW9uYWwgc3R1YiBjYWxscywgYnV0DQo+IGl0
-IGxvb2tzIGZpbmUgd2l0aCBhIHNpbmdsZSB0aHJlYWQgZmlvIHdyaXRlIHRlc3Qgd2l0aCBkaXJl
-Y3Q9MS4NCj4gDQo+IMKgOTIuNjIlwqDCoFtrZXJuZWwua2FsbHN5bXNdwqDCoMKgW2tdIF9fY29w
-eV91c2VyX25vY2FjaGUNCj4gwqAgMC4wNCXCoMKgW2tlcm5lbC5rYWxsc3ltc13CoMKgwqBba10g
-ZW50cnlfU1lTQ0FMTF82NF9mYXN0cGF0aA0KPiDCoCAwLjA4JcKgwqBsaWJwdGhyZWFkLTIuMjIu
-c2/CoMKgWy5dIF9fR0lfX19saWJjX3dyaXRlDQo+IMKgIDAuMDElwqDCoFtrZXJuZWwua2FsbHN5
-bXNdwqDCoMKgW2tdIHN5c193cml0ZQ0KPiDCoCAwLjAyJcKgwqBba2VybmVsLmthbGxzeW1zXcKg
-wqDCoFtrXSB2ZnNfd3JpdGUNCj4gwqAgMC4wMiXCoMKgW2tlcm5lbC5rYWxsc3ltc13CoMKgwqBb
-a10gX192ZnNfd3JpdGUNCj4gwqAgMC4wMiXCoMKgW2tlcm5lbC5rYWxsc3ltc13CoMKgwqBba10g
-ZXh0NF9maWxlX3dyaXRlX2l0ZXINCj4gwqAgMC4wMiXCoMKgW2tlcm5lbC5rYWxsc3ltc13CoMKg
-wqBba10gZGF4X2lvbWFwX3J3DQo+IMKgIDAuMDMlwqDCoFtrZXJuZWwua2FsbHN5bXNdwqDCoMKg
-W2tdIGlvbWFwX2FwcGx5DQo+IMKgIDAuMDQlwqDCoFtrZXJuZWwua2FsbHN5bXNdwqDCoMKgW2td
-IGRheF9pb21hcF9hY3Rvcg0KPiDCoCAwLjAxJcKgwqBba2VybmVsLmthbGxzeW1zXcKgwqDCoFtr
-XSBkYXhfY29weV9mcm9tX2l0ZXINCj4gwqAgMC4wMSXCoMKgW2tlcm5lbC5rYWxsc3ltc13CoMKg
-wqBba10gZG1fZGF4X2NvcHlfZnJvbV9pdGVyDQo+IMKgIDAuMDElwqDCoFtrZXJuZWwua2FsbHN5
-bXNdwqDCoMKgW2tdIGxpbmVhcl9kYXhfY29weV9mcm9tX2l0ZXINCj4gwqAgMC4wMyXCoMKgW2tl
-cm5lbC5rYWxsc3ltc13CoMKgwqBba10gY29weV9mcm9tX2l0ZXJfZmx1c2hjYWNoZQ0KPiDCoCAw
-LjAwJcKgwqBba2VybmVsLmthbGxzeW1zXcKgwqDCoFtrXSBwbWVtX2NvcHlfZnJvbV9pdGVyDQoN
-CkkgaGFkIGJzPTI1NmssIHdoaWNoIHdhcyB0b28gYmlnIGZvciB0aGlzIHRlc3QuICBicz00ayBy
-ZXN1bHQgaXMgbm90DQp0aGlzIHByZXR0eSBhdCBhbGwsIG9ubHkgMjMlIGluIF9fY29weV91c2Vy
-X25vY2FjaGUuICBUaGlzIGNoYW5nZQ0KYWNjb3VudHMgZm9yIGFwcHJveC4gMSUgd2l0aCA0ay4g
-IEdpdmVuIHdlIGhhdmUgbGFyZ2VyIG92ZXJoZWFkcyBpbg0KbWFueSBvdGhlciBmdW5jdGlvbnMg
-aW4gdGhlIHBhdGgsIHRoZSBjaGFuZ2UgbG9va3MgYWNjZXB0YWJsZSAoSSBrZWVwDQpteSByZXZp
-ZXctYnkpLiAgSSdkIHByZWZlciB0byByZWR1Y2UgY29kZSBpbiB0aGUgcGF0aCwgdGhvdWdoLg0K
-DQpUaGFua3MsDQotVG9zaGkNCg==
+On Fri, 2017-06-09 at 13:24 -0700, Dan Williams wrote:
+> Allow device-mapper to route flush operations to the
+> per-target implementation. In order for the device stacking to work
+> we need a dax_dev and a pgoff relative to that device. This gives
+> each layer of the stack the information it needs to look up the
+> operation pointer for the next level.
+> 
+> This conceptually allows for an array of mixed device drivers with
+> varying flush implementations.
+> 
+> Cc: Toshi Kani <toshi.kani-ZPxbGqLxI0U@public.gmane.org>
+> Reviewed-by: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> Signed-off-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+
+Looks good to me.
+
+Reviewed-by: Toshi Kani <toshi.kani-ZPxbGqLxI0U@public.gmane.org>
+
+Thanks,
+-Toshi
