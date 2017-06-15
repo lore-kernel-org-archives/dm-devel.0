@@ -1,103 +1,74 @@
-From: Milan Broz <gmazyland@gmail.com>
-Subject: Re: [RFC PATCH 0/4] Allow file systems to selectively bypass dm-crypt
-Date: Thu, 15 Jun 2017 09:33:39 +0200
-Message-ID: <0b268ff7-5fc8-c85f-a530-82e9844f0400@gmail.com>
-References: <20170614234040.4326-1-mhalcrow@google.com>
+From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [PATCH v3 08/14] x86, dax, libnvdimm: move wb_cache_pmem() to
+ libnvdimm
+Date: Thu, 15 Jun 2017 10:11:24 +0200
+Message-ID: <20170615081124.GD1764@quack2.suse.cz>
+References: <149703982465.20620.14881139332926778446.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <149703986971.20620.10303247412197996310.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <20170614105425.GD21506@quack2.suse.cz>
+ <CAPcyv4hNLkX9ct=Z9YQ8zaqAYPa_ab_+W+Z8By6=btJEkbrZag@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20170614234040.4326-1-mhalcrow@google.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Michael Halcrow <mhalcrow@google.com>, "Theodore Y . Ts'o" <tytso@mit.edu>, Eric Biggers <ebiggers@google.com>, Jaegeuk Kim <jaegeuk@kernel.org>, linux-fscrypt@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-ext4@vger.kernel.org, Tyler Hicks <tyler.hicks@canonical.com>, dm-crypt <dm-crypt@saout.de>
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CAPcyv4hNLkX9ct=Z9YQ8zaqAYPa_ab_+W+Z8By6=btJEkbrZag-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, X86 ML <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
 List-Id: dm-devel.ids
 
-On 06/15/2017 01:40 AM, Michael Halcrow wrote:
-> Several file systems either have already implemented encryption or are
-> in the process of doing so.  This addresses usability and storage
-> isolation requirements on mobile devices and in multi-tenant
-> environments.
+On Wed 14-06-17 09:49:29, Dan Williams wrote:
+> On Wed, Jun 14, 2017 at 3:54 AM, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org> wrote:
+> >> -/**
+> >> - * arch_wb_cache_pmem - write back a cache range with CLWB
+> >> - * @vaddr:   virtual start address
+> >> - * @size:    number of bytes to write back
+> >> - *
+> >> - * Write back a cache range using the CLWB (cache line write back)
+> >> - * instruction. Note that @size is internally rounded up to be cache
+> >> - * line size aligned.
+> >> - */
+> >>  static inline void arch_wb_cache_pmem(void *addr, size_t size)
+> >>  {
+> >> -     u16 x86_clflush_size = boot_cpu_data.x86_clflush_size;
+> >> -     unsigned long clflush_mask = x86_clflush_size - 1;
+> >> -     void *vend = addr + size;
+> >> -     void *p;
+> >> -
+> >> -     for (p = (void *)((unsigned long)addr & ~clflush_mask);
+> >> -          p < vend; p += x86_clflush_size)
+> >> -             clwb(p);
+> >> +     clean_cache_range(addr,size);
+> >>  }
+> >
+> > So this will make compilation break on 32-bit x86 as it does not define
+> > clean_cache_range(). Do we somewhere force we are on x86_64 when pmem is
+> > enabled?
 > 
-> While distinct keys locked down to user accounts protect the names and
-> contents of individual files, a volume-level encryption key should
-> protect the file system metadata.  When using dm-crypt to do this, the
-> blocks that the file system encrypts undergo another round of
-> encryption.  In many contexts this isn't necessary, and it results in
-> decreased performance and increased power consumption.  This
-> discourages users and vendors from taking steps to protect file system
-> metadata in addition to file contents.
+> Yes, this is enforced by:
 > 
-> This patchset provides a new I/O request flag that suggests to lower
-> layers that encryption may not be necessary because the file system
-> has already done it.  The first patch targets the block subsystem and
-> adds the REQ_NOENCRYPT flag.  The second patch targets dm-crypt and
-> adds logic to observe the flag only when the user has opted-in by
-> passing allow_encrypt_override as one of the optional parameters to
-> the dm-crypt target.  The third patch targets ext4 and sets the
-> REQ_NOENCRYPT flag for blocks it encrypts and decrypts.  The fourth
-> patch does the same for f2fs.
+>     select ARCH_HAS_PMEM_API if X86_64
 > 
-> In this patchset I'm proposing that we make dm-crypt's observation of
-> the file system "don't encrypt" request optional, but I'm not sure
-> that's a good tradeoff.  Under the assumption that encryption in
-> upstream file systems is sound, the most common way I expect things
-> can go awry is if the file system keys don't meet security
-> requirements while dm-crypt keys do.  However I'm not convinced that
-> will end up being a widespread problem in practice, and there's a real
-> data corruption concern with making dm-crypt's observation of the flag
-> optional.
+> ...in arch/x86/Kconfig. We fallback to a dummy arch_wb_cache_pmem()
+> implementation and emit this warning for !ARCH_HAS_PMEM_API archs:
 > 
-> The problem is that once dm-crypt observes the flag, it must always
-> continue to do so or dm-crypt might decrypt content that it didn't
-> encrypt.  This can lead to scenarios where a vendor sets the dm-crypt
-> option to observe the "don't encrypt" flag, and then down the road a
-> user follows one of the many online guides to manually recover a
-> dm-crypt partition without setting this new option.
-> 
-> Should there be an encryption disable flag?  I'm interested in
-> considering other solutions.
+>     "nd_pmem namespace0.0: unable to guarantee persistence of writes"
 
-The whole reason for full disk encryption (FDE) is the it is FULL disk
-encryption.
+Aha, right. Feel free to add:
 
-If you do not need encryption on dmcrypt level, just do not use it
-by properly configuring storage stack!
+Reviewed-by: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
 
-The file-level encryption and dm-crypt encryption can have completely different
-purpose, even one can be authenticated one (providing integrity)
-and second just providing confidentiality.
+							Honza
 
-It is not "redundant" encryption, it is the encryption for different purpose
-on different layer.
-
-IMO what you are proposing is incredible security hack and very ugly
-layer violation.
-
-If this is accepted, we basically allow attacker to trick system to write
-plaintext to media just by setting this flag. This must never ever happen
-with FDE - BY DESIGN.
-
-For me, ABSOLUTE NACK to this approach.
-
-(cc dmcrypt list as well)
-
-Milan
-
-
-> 
-> Michael Halcrow (4):
->   block: Add bio req flag to disable encryption in block
->   dm-crypt: Skip encryption of file system-encrypted blocks
->   ext4: Set the bio REQ_NOENCRYPT flag
->   f2fs: Set the bio REQ_NOENCRYPT flag
-> 
->  drivers/md/dm-crypt.c     | 17 +++++++++++++----
->  fs/crypto/bio.c           |  2 +-
->  fs/ext4/ext4.h            |  3 +++
->  fs/ext4/inode.c           | 13 ++++++++-----
->  fs/ext4/page-io.c         |  5 +++++
->  fs/ext4/readpage.c        |  3 ++-
->  fs/f2fs/data.c            | 10 ++++++++--
->  include/linux/blk_types.h |  2 ++
->  8 files changed, 42 insertions(+), 13 deletions(-)
-> 
+-- 
+Jan Kara <jack-IBi9RG/b67k@public.gmane.org>
+SUSE Labs, CR
