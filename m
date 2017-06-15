@@ -1,145 +1,61 @@
-From: Michael Halcrow <mhalcrow@google.com>
-Subject: [RFC PATCH 3/4] ext4: Set the bio REQ_NOENCRYPT flag
-Date: Wed, 14 Jun 2017 16:40:39 -0700
-Message-ID: <20170614234040.4326-4-mhalcrow@google.com>
-References: <20170614234040.4326-1-mhalcrow@google.com>
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20170614234040.4326-1-mhalcrow@google.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Michael Halcrow <mhalcrow@google.com>, "Theodore Y . Ts'o" <tytso@mit.edu>, Eric Biggers <ebiggers@google.com>, Jaegeuk Kim <jaegeuk@kernel.org>, linux-fscrypt@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-ext4@vger.kernel.org, Tyler Hicks <tyler.hicks@canonical.com>
+From: "Kani, Toshimitsu" <toshi.kani-ZPxbGqLxI0U@public.gmane.org>
+Subject: Re: [PATCH v3 02/14] dm: add ->copy_from_iter() dax operation support
+Date: Thu, 15 Jun 2017 00:46:14 +0000
+Message-ID: <1497487541.9288.16.camel@hpe.com>
+References: <149703982465.20620.14881139332926778446.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <149703983692.20620.3787021839815275819.stgit@dwillia2-desk3.amr.corp.intel.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <149703983692.20620.3787021839815275819.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Content-Language: en-US
+Content-ID: <BA89C42A7198D3429DA9819BC01A07AA-mmYPd6ayCNGroOM5E8FhRbjFIynDaujOfM0AETQt39g@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: "dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org" <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Cc: "snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org" <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "hch-jcswGhMUV9g@public.gmane.org" <hch-jcswGhMUV9g@public.gmane.org>
 List-Id: dm-devel.ids
 
-When lower layers such as dm-crypt observe the REQ_NOENCRYPT flag, it
-helps the I/O stack avoid redundant encryption, improving performance
-and power utilization.
-
-Note that lower layers must be consistent in their observation of this
-flag in order to avoid the possibility of data corruption.
-
-Signed-off-by: Michael Halcrow <mhalcrow@google.com>
----
- fs/crypto/bio.c    |  2 +-
- fs/ext4/ext4.h     |  3 +++
- fs/ext4/inode.c    | 13 ++++++++-----
- fs/ext4/page-io.c  |  5 +++++
- fs/ext4/readpage.c |  3 ++-
- 5 files changed, 19 insertions(+), 7 deletions(-)
-
-diff --git a/fs/crypto/bio.c b/fs/crypto/bio.c
-index a409a84f1bca..9093a715d2be 100644
---- a/fs/crypto/bio.c
-+++ b/fs/crypto/bio.c
-@@ -118,7 +118,7 @@ int fscrypt_zeroout_range(const struct inode *inode, pgoff_t lblk,
- 		bio->bi_bdev = inode->i_sb->s_bdev;
- 		bio->bi_iter.bi_sector =
- 			pblk << (inode->i_sb->s_blocksize_bits - 9);
--		bio_set_op_attrs(bio, REQ_OP_WRITE, 0);
-+		bio_set_op_attrs(bio, REQ_OP_WRITE, REQ_NOENCRYPT);
- 		ret = bio_add_page(bio, ciphertext_page,
- 					inode->i_sb->s_blocksize, 0);
- 		if (ret != inode->i_sb->s_blocksize) {
-diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
-index 8e8046104f4d..48c2bc9f8688 100644
---- a/fs/ext4/ext4.h
-+++ b/fs/ext4/ext4.h
-@@ -206,7 +206,10 @@ typedef struct ext4_io_end {
- 	ssize_t			size;		/* size of the extent */
- } ext4_io_end_t;
- 
-+#define EXT4_IO_ENCRYPTED	1
-+
- struct ext4_io_submit {
-+	unsigned int		io_flags;
- 	struct writeback_control *io_wbc;
- 	struct bio		*io_bio;
- 	ext4_io_end_t		*io_end;
-diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
-index 1bd0bfa547f6..25a9b7265692 100644
---- a/fs/ext4/inode.c
-+++ b/fs/ext4/inode.c
-@@ -1154,10 +1154,11 @@ static int ext4_block_write_begin(struct page *page, loff_t pos, unsigned len,
- 		if (!buffer_uptodate(bh) && !buffer_delay(bh) &&
- 		    !buffer_unwritten(bh) &&
- 		    (block_start < from || block_end > to)) {
--			ll_rw_block(REQ_OP_READ, 0, 1, &bh);
--			*wait_bh++ = bh;
- 			decrypt = ext4_encrypted_inode(inode) &&
- 				S_ISREG(inode->i_mode);
-+			ll_rw_block(REQ_OP_READ, (decrypt ? REQ_NOENCRYPT : 0),
-+				    1, &bh);
-+			*wait_bh++ = bh;
- 		}
- 	}
- 	/*
-@@ -3863,6 +3864,7 @@ static int __ext4_block_zero_page_range(handle_t *handle,
- 	struct inode *inode = mapping->host;
- 	struct buffer_head *bh;
- 	struct page *page;
-+	bool decrypt;
- 	int err = 0;
- 
- 	page = find_or_create_page(mapping, from >> PAGE_SHIFT,
-@@ -3905,13 +3907,14 @@ static int __ext4_block_zero_page_range(handle_t *handle,
- 
- 	if (!buffer_uptodate(bh)) {
- 		err = -EIO;
--		ll_rw_block(REQ_OP_READ, 0, 1, &bh);
-+		decrypt = S_ISREG(inode->i_mode) &&
-+			ext4_encrypted_inode(inode);
-+		ll_rw_block(REQ_OP_READ, (decrypt ? REQ_NOENCRYPT : 0), 1, &bh);
- 		wait_on_buffer(bh);
- 		/* Uhhuh. Read error. Complain and punt. */
- 		if (!buffer_uptodate(bh))
- 			goto unlock;
--		if (S_ISREG(inode->i_mode) &&
--		    ext4_encrypted_inode(inode)) {
-+		if (decrypt) {
- 			/* We expect the key to be set. */
- 			BUG_ON(!fscrypt_has_encryption_key(inode));
- 			BUG_ON(blocksize != PAGE_SIZE);
-diff --git a/fs/ext4/page-io.c b/fs/ext4/page-io.c
-index 1a82138ba739..e25bf6cb216a 100644
---- a/fs/ext4/page-io.c
-+++ b/fs/ext4/page-io.c
-@@ -349,6 +349,8 @@ void ext4_io_submit(struct ext4_io_submit *io)
- 	if (bio) {
- 		int io_op_flags = io->io_wbc->sync_mode == WB_SYNC_ALL ?
- 				  REQ_SYNC : 0;
-+		if (io->io_flags & EXT4_IO_ENCRYPTED)
-+			io_op_flags |= REQ_NOENCRYPT;
- 		bio_set_op_attrs(io->io_bio, REQ_OP_WRITE, io_op_flags);
- 		submit_bio(io->io_bio);
- 	}
-@@ -358,6 +360,7 @@ void ext4_io_submit(struct ext4_io_submit *io)
- void ext4_io_submit_init(struct ext4_io_submit *io,
- 			 struct writeback_control *wbc)
- {
-+	io->io_flags = 0;
- 	io->io_wbc = wbc;
- 	io->io_bio = NULL;
- 	io->io_end = NULL;
-@@ -499,6 +502,8 @@ int ext4_bio_write_page(struct ext4_io_submit *io,
- 	do {
- 		if (!buffer_async_write(bh))
- 			continue;
-+		if (data_page)
-+			io->io_flags |= EXT4_IO_ENCRYPTED;
- 		ret = io_submit_add_bh(io, inode,
- 				       data_page ? data_page : page, bh);
- 		if (ret) {
-diff --git a/fs/ext4/readpage.c b/fs/ext4/readpage.c
-index a81b829d56de..008d14d74f33 100644
---- a/fs/ext4/readpage.c
-+++ b/fs/ext4/readpage.c
-@@ -258,7 +258,8 @@ int ext4_mpage_readpages(struct address_space *mapping,
- 			bio->bi_iter.bi_sector = blocks[0] << (blkbits - 9);
- 			bio->bi_end_io = mpage_end_io;
- 			bio->bi_private = ctx;
--			bio_set_op_attrs(bio, REQ_OP_READ, 0);
-+			bio_set_op_attrs(bio, REQ_OP_READ,
-+					 ctx ? REQ_NOENCRYPT : 0);
- 		}
- 
- 		length = first_hole << blkbits;
--- 
-2.13.1.508.gb3defc5cc-goog
+T24gRnJpLCAyMDE3LTA2LTA5IGF0IDEzOjIzIC0wNzAwLCBEYW4gV2lsbGlhbXMgd3JvdGU6DQo+
+IEFsbG93IGRldmljZS1tYXBwZXIgdG8gcm91dGUgY29weV9mcm9tX2l0ZXIgb3BlcmF0aW9ucyB0
+byB0aGUNCj4gcGVyLXRhcmdldCBpbXBsZW1lbnRhdGlvbi4gSW4gb3JkZXIgZm9yIHRoZSBkZXZp
+Y2Ugc3RhY2tpbmcgdG8gd29yaw0KPiB3ZQ0KPiBuZWVkIGEgZGF4X2RldiBhbmQgYSBwZ29mZiBy
+ZWxhdGl2ZSB0byB0aGF0IGRldmljZS4gVGhpcyBnaXZlcyBlYWNoDQo+IGxheWVyIG9mIHRoZSBz
+dGFjayB0aGUgaW5mb3JtYXRpb24gaXQgbmVlZHMgdG8gbG9vayB1cCB0aGUgb3BlcmF0aW9uDQo+
+IHBvaW50ZXIgZm9yIHRoZSBuZXh0IGxldmVsLg0KPiANCj4gVGhpcyBjb25jZXB0dWFsbHkgYWxs
+b3dzIGZvciBhbiBhcnJheSBvZiBtaXhlZCBkZXZpY2UgZHJpdmVycyB3aXRoDQo+IHZhcnlpbmcg
+Y29weV9mcm9tX2l0ZXIgaW1wbGVtZW50YXRpb25zLg0KPiANCj4gQ2M6IFRvc2hpIEthbmkgPHRv
+c2hpLmthbmlAaHBlLmNvbT4NCj4gUmV2aWV3ZWQtYnk6IE1pa2UgU25pdHplciA8c25pdHplckBy
+ZWRoYXQuY29tPg0KPiBTaWduZWQtb2ZmLWJ5OiBEYW4gV2lsbGlhbXMgPGRhbi5qLndpbGxpYW1z
+QGludGVsLmNvbT4NCg0KSSB3YXMgd29ycmllZCBhYm91dCBwb3NzaWJsZSBvdmVyaGVhZCB3aXRo
+IGFkZGl0aW9uYWwgc3R1YiBjYWxscywgYnV0DQppdCBsb29rcyBmaW5lIHdpdGggYSBzaW5nbGUg
+dGhyZWFkIGZpbyB3cml0ZSB0ZXN0IHdpdGggZGlyZWN0PTEuDQoNCsKgOTIuNjIlwqDCoFtrZXJu
+ZWwua2FsbHN5bXNdwqDCoMKgW2tdIF9fY29weV91c2VyX25vY2FjaGUNCsKgIDAuMDQlwqDCoFtr
+ZXJuZWwua2FsbHN5bXNdwqDCoMKgW2tdIGVudHJ5X1NZU0NBTExfNjRfZmFzdHBhdGgNCsKgIDAu
+MDglwqDCoGxpYnB0aHJlYWQtMi4yMi5zb8KgwqBbLl0gX19HSV9fX2xpYmNfd3JpdGUNCsKgIDAu
+MDElwqDCoFtrZXJuZWwua2FsbHN5bXNdwqDCoMKgW2tdIHN5c193cml0ZQ0KwqAgMC4wMiXCoMKg
+W2tlcm5lbC5rYWxsc3ltc13CoMKgwqBba10gdmZzX3dyaXRlDQrCoCAwLjAyJcKgwqBba2VybmVs
+LmthbGxzeW1zXcKgwqDCoFtrXSBfX3Zmc193cml0ZQ0KwqAgMC4wMiXCoMKgW2tlcm5lbC5rYWxs
+c3ltc13CoMKgwqBba10gZXh0NF9maWxlX3dyaXRlX2l0ZXINCsKgIDAuMDIlwqDCoFtrZXJuZWwu
+a2FsbHN5bXNdwqDCoMKgW2tdIGRheF9pb21hcF9ydw0KwqAgMC4wMyXCoMKgW2tlcm5lbC5rYWxs
+c3ltc13CoMKgwqBba10gaW9tYXBfYXBwbHkNCsKgIDAuMDQlwqDCoFtrZXJuZWwua2FsbHN5bXNd
+wqDCoMKgW2tdIGRheF9pb21hcF9hY3Rvcg0KwqAgMC4wMSXCoMKgW2tlcm5lbC5rYWxsc3ltc13C
+oMKgwqBba10gZGF4X2NvcHlfZnJvbV9pdGVyDQrCoCAwLjAxJcKgwqBba2VybmVsLmthbGxzeW1z
+XcKgwqDCoFtrXSBkbV9kYXhfY29weV9mcm9tX2l0ZXINCsKgIDAuMDElwqDCoFtrZXJuZWwua2Fs
+bHN5bXNdwqDCoMKgW2tdIGxpbmVhcl9kYXhfY29weV9mcm9tX2l0ZXINCsKgIDAuMDMlwqDCoFtr
+ZXJuZWwua2FsbHN5bXNdwqDCoMKgW2tdIGNvcHlfZnJvbV9pdGVyX2ZsdXNoY2FjaGUNCsKgIDAu
+MDAlwqDCoFtrZXJuZWwua2FsbHN5bXNdwqDCoMKgW2tdIHBtZW1fY29weV9mcm9tX2l0ZXINCg0K
+TXVsdGktdGhyZWFkIGZpbyB0ZXN0IGhpdHMgaGFyZCBpbiBpbm9kZV9sb2NrKCksIG5vIGNvbnRl
+bnRpb24gZnJvbSB0aGUNCmRtLWxheWVyLg0KDQpSZXZpZXdlZC1ieTogVG9zaGkgS2FuaSA8dG9z
+aGkua2FuaUBocGUuY29tPg0KDQpUaGFua3MsDQotVG9zaGkNCg0KDQoNCg0KDQpfX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpMaW51eC1udmRpbW0gbWFpbGlu
+ZyBsaXN0CkxpbnV4LW52ZGltbUBsaXN0cy4wMS5vcmcKaHR0cHM6Ly9saXN0cy4wMS5vcmcvbWFp
+bG1hbi9saXN0aW5mby9saW51eC1udmRpbW0K
