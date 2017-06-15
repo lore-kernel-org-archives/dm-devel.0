@@ -1,75 +1,121 @@
-From: Milan Broz <gmazyland@gmail.com>
-Subject: Re: [RFC PATCH 0/4] Allow file systems to selectively bypass dm-crypt
-Date: Thu, 15 Jun 2017 20:17:02 +0200
-Message-ID: <0df74dd8-f29d-8925-7cc1-783d09c6a42c@gmail.com>
-References: <20170614234040.4326-1-mhalcrow@google.com>
- <0b268ff7-5fc8-c85f-a530-82e9844f0400@gmail.com>
- <20170615172450.GA27384@google.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH 1/7] libmultipath: load_config: skip setting
+ unnecessary defaults
+Date: Thu, 15 Jun 2017 14:49:14 -0500
+Message-ID: <20170615194914.GD2940@octiron.msp.redhat.com>
+References: <20170613225554.11181-1-mwilck@suse.com>
+	<20170613225554.11181-2-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-ext4-owner@vger.kernel.org>
-In-Reply-To: <20170615172450.GA27384@google.com>
-Sender: linux-ext4-owner@vger.kernel.org
-To: Michael Halcrow <mhalcrow@google.com>
-Cc: "Theodore Y . Ts'o" <tytso@mit.edu>, Eric Biggers <ebiggers@google.com>, Jaegeuk Kim <jaegeuk@kernel.org>, linux-fscrypt@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-ext4@vger.kernel.org, Tyler Hicks <tyler.hicks@canonical.com>, dm-crypt <dm-crypt@saout.de>
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20170613225554.11181-2-mwilck@suse.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-On 06/15/2017 07:24 PM, Michael Halcrow wrote:
-...
->> If this is accepted, we basically allow attacker to trick system to
->> write plaintext to media just by setting this flag. This must never
->> ever happen with FDE - BY DESIGN.
+On Wed, Jun 14, 2017 at 12:55:48AM +0200, Martin Wilck wrote:
+> We have the logic for setting defaults for paths and maps
+> in propsel.c. By pre-setting conf values with defaults in
+> load_config(), we generate irritating log messages like
+> 'features = "0" (setting: multipath.conf defaults/devices section)'
+> even if multipath.conf doesn't contain a 'features' setting at all.
+> With this patch, these defaults are correctly logged as "multipath internal".
 > 
-> That's an important point.  This expands the attack surface to include
-> the file system, so if an adversary can provide a bad encryption key
-> or policy at the file system layer or if there's a bug in the file
-> system that an adversary can exploit, then users setting the
-> allow_encrypt_override option on dmcrypt would be vulnerable.
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  libmultipath/config.c  | 16 ----------------
+>  libmultipath/propsel.c |  2 +-
+>  2 files changed, 1 insertion(+), 17 deletions(-)
 > 
->> For me, ABSOLUTE NACK to this approach.
-> 
-> I can understand where you're coming from.  Given our challenges on
-> mobile, do you have any suggestions for an alternative approach?
+> diff --git a/libmultipath/config.c b/libmultipath/config.c
+> index bb6619b3..61bbba91 100644
+> --- a/libmultipath/config.c
+> +++ b/libmultipath/config.c
+> @@ -599,40 +599,24 @@ load_config (char * file)
+>  	if (!conf->verbosity)
+>  		conf->verbosity = DEFAULT_VERBOSITY;
+>  
+> -	conf->minio = DEFAULT_MINIO;
+> -	conf->minio_rq = DEFAULT_MINIO_RQ;
+>  	get_sys_max_fds(&conf->max_fds);
+>  	conf->bindings_file = set_default(DEFAULT_BINDINGS_FILE);
+>  	conf->wwids_file = set_default(DEFAULT_WWIDS_FILE);
+>  	conf->multipath_dir = set_default(DEFAULT_MULTIPATHDIR);
+> -	conf->features = set_default(DEFAULT_FEATURES);
+> -	conf->flush_on_last_del = DEFAULT_FLUSH;
+>  	conf->attribute_flags = 0;
+>  	conf->reassign_maps = DEFAULT_REASSIGN_MAPS;
+>  	conf->checkint = DEFAULT_CHECKINT;
+>  	conf->max_checkint = 0;
+> -	conf->pgfailback = DEFAULT_FAILBACK;
+> -	conf->fast_io_fail = DEFAULT_FAST_IO_FAIL;
+> -	conf->retain_hwhandler = DEFAULT_RETAIN_HWHANDLER;
+> -	conf->detect_prio = DEFAULT_DETECT_PRIO;
+> -	conf->detect_checker = DEFAULT_DETECT_CHECKER;
+>  	conf->force_sync = DEFAULT_FORCE_SYNC;
+>  	conf->partition_delim = DEFAULT_PARTITION_DELIM;
+>  	conf->processed_main_config = 0;
+>  	conf->find_multipaths = DEFAULT_FIND_MULTIPATHS;
+>  	conf->uxsock_timeout = DEFAULT_REPLY_TIMEOUT;
+> -	conf->uid_attribute = set_default(DEFAULT_UID_ATTRIBUTE);
+>  	conf->retrigger_tries = DEFAULT_RETRIGGER_TRIES;
+>  	conf->retrigger_delay = DEFAULT_RETRIGGER_DELAY;
+>  	conf->uev_wait_timeout = DEFAULT_UEV_WAIT_TIMEOUT;
+> -	conf->deferred_remove = DEFAULT_DEFERRED_REMOVE;
+> -	conf->skip_kpartx = DEFAULT_SKIP_KPARTX;
+>  	conf->disable_changed_wwids = DEFAULT_DISABLE_CHANGED_WWIDS;
+>  	conf->remove_retries = 0;
+> -	conf->max_sectors_kb = DEFAULT_MAX_SECTORS_KB;
+> -	conf->san_path_err_threshold = DEFAULT_ERR_CHECKS;
+> -	conf->san_path_err_forget_rate = DEFAULT_ERR_CHECKS;
+> -	conf->san_path_err_recovery_time = DEFAULT_ERR_CHECKS;
+>  
+>  	/*
+>  	 * preload default hwtable
 
-Well, what I really do not like here that you are solving problem
-of missing properly designed cryptographic filesystem by hacking
-some layers together that were not designed to it.
+If you look at the output of "multipathd show config", with this change
+multipath is not longer printing the built-in defaults for some options
+that do have defined defaults. Fixing this probably just requires using
+declare_def_snprint_defint() instead of declare_def_snprint() for these
+options it dict.c.
 
-Obvious solution is to implement encryption in fs properly and encrypt
-fs metadata there. I guess this is your long term goal?
+> diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+> index 385063aa..99d17e65 100644
+> --- a/libmultipath/propsel.c
+> +++ b/libmultipath/propsel.c
+> @@ -752,7 +752,7 @@ int select_max_sectors_kb(struct config *conf, struct multipath * mp)
+>  	mp_set_ovr(max_sectors_kb);
+>  	mp_set_hwe(max_sectors_kb);
+>  	mp_set_conf(max_sectors_kb);
+> -	return 0;
+> +	mp_set_default(max_sectors_kb, DEFAULT_MAX_SECTORS_KB);
+>  out:
+>  	condlog(3, "%s: max_sectors_kb = %i %s", mp->alias, mp->max_sectors_kb,
+>  		origin);
 
-Is the double encryption really such a big problem?
-With some hw support it should not cost much time and energy.
-Do you have some numbers to show that is it real problem?
+I think this will be confusing.  The default for max_sectors_kb is
+undefined (i.e. if users don't set it, multipath doesn't doesn't change
+the existing sysfs value for max_sectors_kb for the path devices).
+Instead of just printing nothing, we will now print that max_sectors_kb
+has been set to 0, which isn't actually true. I don't disagree that we
+should explicitly set the value for the multipath device. I just think
+that we should either print nothing, or define a print function that
+prints "undefined" or something for 0 and the number otherwise, and use
+that to generate the string to print, much like how
+select_san_path_err_recovery_time() and others use print_off_int_undef()
 
-What I am missing here is the definition of your threat model.
+-Ben
 
-If the encryption of metadata in block layer is ok for you, why it is not
-ok for the data?
-
-What are you solving there? Is it that one user must not see other users data?
-(And who is an user on a mobile device - an application in own sandbox?)
-
-Because the confidentiality in the case of stolen device is there with
-encryption on any layer. And ext4 encryption uses the same algorithms
-as dmcrypt IIRC.
-
-It would better to go with some model that actually increases security.
-
-For example, if your patch marks IO operation that comes from fs as REQ_NOENCRYPT,
-could fs send some metadata information in bio of owner (user, translated to key id)
-instead and encrypt the sector with a different key?
-
-I am not sure how complicated this would be to implement but we have already
-concept of multiple keys in dmcrypt (there is 64 keys for loopAES mapping
-and the used key id is calculated as sector# modulo 64).
-
-Maybe the keys can be taken from kernel keyring and loaded dynamically,
-according to optional table parameters that defines policy for it.
-The IV could be shared (in XTS mode it is not a problem).
-If the key is not available, the bio should simply fail early.
-
-Dunno, just an idea - it really depends what are you trying to solve.
-
-Milan
+> -- 
+> 2.13.0
