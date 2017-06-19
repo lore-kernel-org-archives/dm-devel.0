@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 06/10] blk-mq: don't bounce by default
-Date: Mon, 19 Jun 2017 09:26:24 +0200
-Message-ID: <20170619072628.12894-7-hch@lst.de>
+Subject: [PATCH 07/10] block: don't set bounce limit in blk_init_allocated_queue
+Date: Mon, 19 Jun 2017 09:26:25 +0200
+Message-ID: <20170619072628.12894-8-hch@lst.de>
 References: <20170619072628.12894-1-hch@lst.de>
 Return-path: <linux-block-owner@vger.kernel.org>
 In-Reply-To: <20170619072628.12894-1-hch@lst.de>
@@ -10,61 +10,59 @@ To: axboe@kernel.dk
 Cc: linux-block@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-For historical reasons we default to bouncing highmem pages for all block
-queues.  But the blk-mq drivers are easy to audit to ensure that we don't
-need this - scsi and mtip32xx set explicit limits and everyone else doesn't
-have any particular ones.
+And just move it into scsi_transport_sas which needs it due to low-level
+drivers directly derferencing bio_data, and into blk_init_queue_node,
+which will need a further push into the callers.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- block/blk-mq.c               | 5 -----
- drivers/block/virtio_blk.c   | 3 ---
- drivers/block/xen-blkfront.c | 3 ---
- 3 files changed, 11 deletions(-)
+ block/blk-core.c                  | 10 +++++-----
+ drivers/scsi/scsi_transport_sas.c |  5 +++++
+ 2 files changed, 10 insertions(+), 5 deletions(-)
 
-diff --git a/block/blk-mq.c b/block/blk-mq.c
-index e26b7435e245..dd276a9e138e 100644
---- a/block/blk-mq.c
-+++ b/block/blk-mq.c
-@@ -2300,11 +2300,6 @@ struct request_queue *blk_mq_init_allocated_queue(struct blk_mq_tag_set *set,
- 	blk_queue_make_request(q, blk_mq_make_request);
+diff --git a/block/blk-core.c b/block/blk-core.c
+index 07b26853ce1e..ef82164c6d82 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -927,6 +927,11 @@ blk_init_queue_node(request_fn_proc *rfn, spinlock_t *lock, int node_id)
+ 		return NULL;
+ 	}
  
- 	/*
++	/*
++	 * by default assume old behaviour and bounce for any highmem page
++	 */
++	blk_queue_bounce_limit(q, BLK_BOUNCE_HIGH);
++
+ 	return q;
+ }
+ EXPORT_SYMBOL(blk_init_queue_node);
+@@ -954,11 +959,6 @@ int blk_init_allocated_queue(struct request_queue *q)
+ 	 */
+ 	blk_queue_make_request(q, blk_queue_bio);
+ 
+-	/*
 -	 * by default assume old behaviour and bounce for any highmem page
 -	 */
 -	blk_queue_bounce_limit(q, BLK_BOUNCE_HIGH);
 -
--	/*
- 	 * Do this after blk_queue_make_request() overrides it...
- 	 */
- 	q->nr_requests = set->queue_depth;
-diff --git a/drivers/block/virtio_blk.c b/drivers/block/virtio_blk.c
-index e59bd4549a8a..0297ad7c1452 100644
---- a/drivers/block/virtio_blk.c
-+++ b/drivers/block/virtio_blk.c
-@@ -720,9 +720,6 @@ static int virtblk_probe(struct virtio_device *vdev)
- 	/* We can handle whatever the host told us to handle. */
- 	blk_queue_max_segments(q, vblk->sg_elems-2);
+ 	q->sg_reserved_size = INT_MAX;
  
--	/* No need to bounce any requests */
--	blk_queue_bounce_limit(q, BLK_BOUNCE_ANY);
--
- 	/* No real sector limit. */
- 	blk_queue_max_hw_sectors(q, -1U);
+ 	/* Protect q->elevator from elevator_change */
+diff --git a/drivers/scsi/scsi_transport_sas.c b/drivers/scsi/scsi_transport_sas.c
+index cc970c811bcb..87ea904f0700 100644
+--- a/drivers/scsi/scsi_transport_sas.c
++++ b/drivers/scsi/scsi_transport_sas.c
+@@ -249,6 +249,11 @@ static int sas_bsg_initialize(struct Scsi_Host *shost, struct sas_rphy *rphy)
+ 	if (error)
+ 		goto out_cleanup_queue;
  
-diff --git a/drivers/block/xen-blkfront.c b/drivers/block/xen-blkfront.c
-index ac90093fcb25..c852ed3c01d5 100644
---- a/drivers/block/xen-blkfront.c
-+++ b/drivers/block/xen-blkfront.c
-@@ -953,9 +953,6 @@ static void blkif_set_queue_limits(struct blkfront_info *info)
- 
- 	/* Make sure buffer addresses are sector-aligned. */
- 	blk_queue_dma_alignment(rq, 511);
--
--	/* Make sure we don't use bounce buffers. */
--	blk_queue_bounce_limit(rq, BLK_BOUNCE_ANY);
- }
- 
- static int xlvbd_init_blk_queue(struct gendisk *gd, u16 sector_size,
++	/*
++	 * by default assume old behaviour and bounce for any highmem page
++	 */
++	blk_queue_bounce_limit(q, BLK_BOUNCE_HIGH);
++
+ 	error = bsg_register_queue(q, dev, name, release);
+ 	if (error)
+ 		goto out_cleanup_queue;
 -- 
 2.11.0
