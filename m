@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 08/10] block: don't set bounce limit in blk_init_queue
-Date: Mon, 19 Jun 2017 09:26:26 +0200
-Message-ID: <20170619072628.12894-9-hch@lst.de>
+Subject: [PATCH 09/10] dm: don't set bounce limit
+Date: Mon, 19 Jun 2017 09:26:27 +0200
+Message-ID: <20170619072628.12894-10-hch@lst.de>
 References: <20170619072628.12894-1-hch@lst.de>
 Return-path: <linux-block-owner@vger.kernel.org>
 In-Reply-To: <20170619072628.12894-1-hch@lst.de>
@@ -10,187 +10,25 @@ To: axboe@kernel.dk
 Cc: linux-block@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Instead move it to the callers.  Those that either don't use bio_data() or
-page_address() or are specific to architectures that do not support highmem
-are skipped.
+Now all queues allocators come without abounce limit by default,
+dm doesn't have to override this anymore.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- block/blk-core.c            | 5 -----
- drivers/block/aoe/aoeblk.c  | 1 +
- drivers/block/floppy.c      | 1 +
- drivers/block/paride/pcd.c  | 1 +
- drivers/block/paride/pd.c   | 1 +
- drivers/block/paride/pf.c   | 1 +
- drivers/block/skd_main.c    | 1 +
- drivers/block/swim.c        | 2 ++
- drivers/block/swim3.c       | 1 +
- drivers/block/xsysace.c     | 1 +
- drivers/cdrom/gdrom.c       | 1 +
- drivers/mtd/mtd_blkdevs.c   | 1 +
- drivers/sbus/char/jsflash.c | 1 +
- 13 files changed, 13 insertions(+), 5 deletions(-)
+ drivers/md/dm.c | 1 -
+ 1 file changed, 1 deletion(-)
 
-diff --git a/block/blk-core.c b/block/blk-core.c
-index ef82164c6d82..62cf92550512 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -927,11 +927,6 @@ blk_init_queue_node(request_fn_proc *rfn, spinlock_t *lock, int node_id)
- 		return NULL;
- 	}
- 
--	/*
--	 * by default assume old behaviour and bounce for any highmem page
--	 */
--	blk_queue_bounce_limit(q, BLK_BOUNCE_HIGH);
--
- 	return q;
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index fbd06b9f9467..402946035308 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1534,7 +1534,6 @@ void dm_init_normal_md_queue(struct mapped_device *md)
+ 	 * Initialize aspects of queue that aren't relevant for blk-mq
+ 	 */
+ 	md->queue->backing_dev_info->congested_fn = dm_any_congested;
+-	blk_queue_bounce_limit(md->queue, BLK_BOUNCE_ANY);
  }
- EXPORT_SYMBOL(blk_init_queue_node);
-diff --git a/drivers/block/aoe/aoeblk.c b/drivers/block/aoe/aoeblk.c
-index 027b876370bc..6797e6c23c8a 100644
---- a/drivers/block/aoe/aoeblk.c
-+++ b/drivers/block/aoe/aoeblk.c
-@@ -388,6 +388,7 @@ aoeblk_gdalloc(void *vp)
- 			d->aoemajor, d->aoeminor);
- 		goto err_mempool;
- 	}
-+	blk_queue_bounce_limit(q, BLK_BOUNCE_HIGH);
  
- 	spin_lock_irqsave(&d->lock, flags);
- 	WARN_ON(!(d->flags & DEVFL_GD_NOW));
-diff --git a/drivers/block/floppy.c b/drivers/block/floppy.c
-index 9e3cb32e365d..ce823647a9c4 100644
---- a/drivers/block/floppy.c
-+++ b/drivers/block/floppy.c
-@@ -4203,6 +4203,7 @@ static int __init do_floppy_init(void)
- 			goto out_put_disk;
- 		}
- 
-+		blk_queue_bounce_limit(disks[drive]->queue, BLK_BOUNCE_HIGH);
- 		blk_queue_max_hw_sectors(disks[drive]->queue, 64);
- 		disks[drive]->major = FLOPPY_MAJOR;
- 		disks[drive]->first_minor = TOMINOR(drive);
-diff --git a/drivers/block/paride/pcd.c b/drivers/block/paride/pcd.c
-index cffe42d80ce9..7b8c6368beb7 100644
---- a/drivers/block/paride/pcd.c
-+++ b/drivers/block/paride/pcd.c
-@@ -305,6 +305,7 @@ static void pcd_init_units(void)
- 			put_disk(disk);
- 			continue;
- 		}
-+		blk_queue_bounce_limit(disk->queue, BLK_BOUNCE_HIGH);
- 		cd->disk = disk;
- 		cd->pi = &cd->pia;
- 		cd->present = 0;
-diff --git a/drivers/block/paride/pd.c b/drivers/block/paride/pd.c
-index c98983be4f9c..27a44b97393a 100644
---- a/drivers/block/paride/pd.c
-+++ b/drivers/block/paride/pd.c
-@@ -863,6 +863,7 @@ static void pd_probe_drive(struct pd_unit *disk)
- 		return;
- 	}
- 	blk_queue_max_hw_sectors(p->queue, cluster);
-+	blk_queue_bounce_limit(p->queue, BLK_BOUNCE_HIGH);
- 
- 	if (disk->drive == -1) {
- 		for (disk->drive = 0; disk->drive <= 1; disk->drive++)
-diff --git a/drivers/block/paride/pf.c b/drivers/block/paride/pf.c
-index 5f46da8d05cd..eef7a91f667d 100644
---- a/drivers/block/paride/pf.c
-+++ b/drivers/block/paride/pf.c
-@@ -293,6 +293,7 @@ static void __init pf_init_units(void)
- 			return;
- 		}
- 		blk_queue_max_segments(disk->queue, cluster);
-+		blk_queue_bounce_limit(disk->queue, BLK_BOUNCE_HIGH);
- 		pf->disk = disk;
- 		pf->pi = &pf->pia;
- 		pf->media_status = PF_NM;
-diff --git a/drivers/block/skd_main.c b/drivers/block/skd_main.c
-index e6c526861703..d0368682bd43 100644
---- a/drivers/block/skd_main.c
-+++ b/drivers/block/skd_main.c
-@@ -4273,6 +4273,7 @@ static int skd_cons_disk(struct skd_device *skdev)
- 		rc = -ENOMEM;
- 		goto err_out;
- 	}
-+	blk_queue_bounce_limit(q, BLK_BOUNCE_HIGH);
- 
- 	skdev->queue = q;
- 	disk->queue = q;
-diff --git a/drivers/block/swim.c b/drivers/block/swim.c
-index 1633aaf24060..84434d3ea19b 100644
---- a/drivers/block/swim.c
-+++ b/drivers/block/swim.c
-@@ -864,6 +864,8 @@ static int swim_floppy_init(struct swim_priv *swd)
- 			put_disk(swd->unit[drive].disk);
- 			goto exit_put_disks;
- 		}
-+		blk_queue_bounce_limit(swd->unit[drive].disk->queue,
-+				BLK_BOUNCE_HIGH);
- 		swd->unit[drive].disk->queue->queuedata = swd;
- 		swd->unit[drive].swd = swd;
- 	}
-diff --git a/drivers/block/swim3.c b/drivers/block/swim3.c
-index e3399a138335..9f931f8f6b4c 100644
---- a/drivers/block/swim3.c
-+++ b/drivers/block/swim3.c
-@@ -1223,6 +1223,7 @@ static int swim3_attach(struct macio_dev *mdev,
- 		put_disk(disk);
- 		return -ENOMEM;
- 	}
-+	blk_queue_bounce_limit(disk->queue, BLK_BOUNCE_HIGH);
- 	disk->queue->queuedata = &floppy_states[index];
- 
- 	if (index == 0) {
-diff --git a/drivers/block/xsysace.c b/drivers/block/xsysace.c
-index 977fdf066017..14459d66ef0c 100644
---- a/drivers/block/xsysace.c
-+++ b/drivers/block/xsysace.c
-@@ -993,6 +993,7 @@ static int ace_setup(struct ace_device *ace)
- 	if (ace->queue == NULL)
- 		goto err_blk_initq;
- 	blk_queue_logical_block_size(ace->queue, 512);
-+	blk_queue_bounce_limit(ace->queue, BLK_BOUNCE_HIGH);
- 
- 	/*
- 	 * Allocate and initialize GD structure
-diff --git a/drivers/cdrom/gdrom.c b/drivers/cdrom/gdrom.c
-index 53f8278e66f7..6495b03f576c 100644
---- a/drivers/cdrom/gdrom.c
-+++ b/drivers/cdrom/gdrom.c
-@@ -813,6 +813,7 @@ static int probe_gdrom(struct platform_device *devptr)
- 		err = -ENOMEM;
- 		goto probe_fail_requestq;
- 	}
-+	blk_queue_bounce_limit(gd.gdrom_rq, BLK_BOUNCE_HIGH);
- 
- 	err = probe_gdrom_setupqueue();
- 	if (err)
-diff --git a/drivers/mtd/mtd_blkdevs.c b/drivers/mtd/mtd_blkdevs.c
-index 91c17fba7659..f336a9b85576 100644
---- a/drivers/mtd/mtd_blkdevs.c
-+++ b/drivers/mtd/mtd_blkdevs.c
-@@ -417,6 +417,7 @@ int add_mtd_blktrans_dev(struct mtd_blktrans_dev *new)
- 	new->rq->queuedata = new;
- 	blk_queue_logical_block_size(new->rq, tr->blksize);
- 
-+	blk_queue_bounce_limit(new->rq, BLK_BOUNCE_HIGH);
- 	queue_flag_set_unlocked(QUEUE_FLAG_NONROT, new->rq);
- 	queue_flag_clear_unlocked(QUEUE_FLAG_ADD_RANDOM, new->rq);
- 
-diff --git a/drivers/sbus/char/jsflash.c b/drivers/sbus/char/jsflash.c
-index 35a69949f92d..14f377ac1280 100644
---- a/drivers/sbus/char/jsflash.c
-+++ b/drivers/sbus/char/jsflash.c
-@@ -592,6 +592,7 @@ static int jsfd_init(void)
- 			put_disk(disk);
- 			goto out;
- 		}
-+		blk_queue_bounce_limit(disk->queue, BLK_BOUNCE_HIGH);
- 		jsfd_disk[i] = disk;
- 	}
- 
+ static void cleanup_mapped_device(struct mapped_device *md)
 -- 
 2.11.0
