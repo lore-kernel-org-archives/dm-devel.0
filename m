@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 02/10] blk-map: call blk_queue_bounce from blk_rq_append_bio
-Date: Mon, 19 Jun 2017 09:26:20 +0200
-Message-ID: <20170619072628.12894-3-hch@lst.de>
+Subject: [PATCH 04/10] block: remove the queue_bounce_pfn helper
+Date: Mon, 19 Jun 2017 09:26:22 +0200
+Message-ID: <20170619072628.12894-5-hch@lst.de>
 References: <20170619072628.12894-1-hch@lst.de>
 Return-path: <linux-block-owner@vger.kernel.org>
 In-Reply-To: <20170619072628.12894-1-hch@lst.de>
@@ -10,80 +10,61 @@ To: axboe@kernel.dk
 Cc: linux-block@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This makes moves the knowledge about bouncing out of the callers into the
-block core (just like we do for the normal I/O path), and allows to unexport
-blk_queue_bounce.
+Only used inside the bounce code, and opencoding it makes it more obvious
+what is going on.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- block/blk-map.c                  | 7 +++----
- block/bounce.c                   | 2 --
- drivers/scsi/osd/osd_initiator.c | 5 +----
- 3 files changed, 4 insertions(+), 10 deletions(-)
+ block/bounce.c         | 6 +++---
+ include/linux/blkdev.h | 5 -----
+ 2 files changed, 3 insertions(+), 8 deletions(-)
 
-diff --git a/block/blk-map.c b/block/blk-map.c
-index 3b5cb863318f..2547016aa7aa 100644
---- a/block/blk-map.c
-+++ b/block/blk-map.c
-@@ -16,6 +16,8 @@
-  */
- int blk_rq_append_bio(struct request *rq, struct bio *bio)
- {
-+	blk_queue_bounce(rq->q, &bio);
-+
- 	if (!rq->bio) {
- 		blk_rq_bio_prep(rq->q, rq, bio);
- 	} else {
-@@ -72,15 +74,13 @@ static int __blk_rq_map_user_iov(struct request *rq,
- 		map_data->offset += bio->bi_iter.bi_size;
- 
- 	orig_bio = bio;
--	blk_queue_bounce(q, &bio);
- 
- 	/*
- 	 * We link the bounce buffer in and could have to traverse it
- 	 * later so we have to get a ref to prevent it from being freed
- 	 */
--	bio_get(bio);
--
- 	ret = blk_rq_append_bio(rq, bio);
-+	bio_get(bio);
- 	if (ret) {
- 		bio_endio(bio);
- 		__blk_rq_unmap_user(orig_bio);
-@@ -249,7 +249,6 @@ int blk_rq_map_kern(struct request_queue *q, struct request *rq, void *kbuf,
- 		return ret;
- 	}
- 
--	blk_queue_bounce(q, &rq->bio);
- 	return 0;
- }
- EXPORT_SYMBOL(blk_rq_map_kern);
 diff --git a/block/bounce.c b/block/bounce.c
-index 17d77613c471..b7e44bd59d7c 100644
+index fc79dd3e0f20..f2b4361fff81 100644
 --- a/block/bounce.c
 +++ b/block/bounce.c
-@@ -284,5 +284,3 @@ void blk_queue_bounce(struct request_queue *q, struct bio **bio_orig)
- 	 */
- 	__blk_queue_bounce(q, bio_orig, pool);
- }
--
--EXPORT_SYMBOL(blk_queue_bounce);
-diff --git a/drivers/scsi/osd/osd_initiator.c b/drivers/scsi/osd/osd_initiator.c
-index 1e69a43b279d..3754888dc7dd 100644
---- a/drivers/scsi/osd/osd_initiator.c
-+++ b/drivers/scsi/osd/osd_initiator.c
-@@ -1577,10 +1577,7 @@ static struct request *_make_request(struct request_queue *q, bool has_write,
- 	scsi_req_init(req);
- 
- 	for_each_bio(bio) {
--		struct bio *bounce_bio = bio;
--
--		blk_queue_bounce(req->q, &bounce_bio);
--		ret = blk_rq_append_bio(req, bounce_bio);
-+		ret = blk_rq_append_bio(req, bio);
- 		if (ret)
- 			return ERR_PTR(ret);
+@@ -203,7 +203,7 @@ static void __blk_queue_bounce(struct request_queue *q, struct bio **bio_orig,
+ 	bio_for_each_segment(from, *bio_orig, iter) {
+ 		if (i++ < BIO_MAX_PAGES)
+ 			sectors += from.bv_len >> 9;
+-		if (page_to_pfn(from.bv_page) > queue_bounce_pfn(q))
++		if (page_to_pfn(from.bv_page) > q->limits.bounce_pfn)
+ 			bounce = true;
  	}
+ 	if (!bounce)
+@@ -220,7 +220,7 @@ static void __blk_queue_bounce(struct request_queue *q, struct bio **bio_orig,
+ 	bio_for_each_segment_all(to, bio, i) {
+ 		struct page *page = to->bv_page;
+ 
+-		if (page_to_pfn(page) <= queue_bounce_pfn(q))
++		if (page_to_pfn(page) <= q->limits.bounce_pfn)
+ 			continue;
+ 
+ 		to->bv_page = mempool_alloc(pool, q->bounce_gfp);
+@@ -272,7 +272,7 @@ void blk_queue_bounce(struct request_queue *q, struct bio **bio_orig)
+ 	 * don't waste time iterating over bio segments
+ 	 */
+ 	if (!(q->bounce_gfp & GFP_DMA)) {
+-		if (queue_bounce_pfn(q) >= blk_max_pfn)
++		if (q->limits.bounce_pfn >= blk_max_pfn)
+ 			return;
+ 		pool = page_pool;
+ 	} else {
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index f1a5f82a4d97..db2b7a7450bd 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -1363,11 +1363,6 @@ enum blk_default_limits {
+ 
+ #define blkdev_entry_to_request(entry) list_entry((entry), struct request, queuelist)
+ 
+-static inline unsigned long queue_bounce_pfn(struct request_queue *q)
+-{
+-	return q->limits.bounce_pfn;
+-}
+-
+ static inline unsigned long queue_segment_boundary(struct request_queue *q)
+ {
+ 	return q->limits.seg_boundary_mask;
 -- 
 2.11.0
