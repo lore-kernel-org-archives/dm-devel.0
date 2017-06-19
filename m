@@ -1,39 +1,55 @@
-From: Ming Lei <tom.leiming@gmail.com>
-Subject: Re: [PATCH 01/10] pktcdvd: remove the call to blk_queue_bounce
-Date: Mon, 19 Jun 2017 23:13:46 +0800
-Message-ID: <CACVXFVOZMwTdeeUdHzLzNpnPurAHz9VaQNH+yW=XSgRjPN2=Mw@mail.gmail.com>
-References: <20170619072628.12894-1-hch@lst.de> <20170619072628.12894-2-hch@lst.de>
- <CACVXFVMxgKk1kzL=rgAzdw8X5qgWn8Z_Hv-gUHSKfp1rXRArxA@mail.gmail.com> <20170619150022.GA10165@lst.de>
+From: Ondrej Kozina <okozina@redhat.com>
+Subject: Re: [dm-devel] dm integrity tests crash kernel (4.12-rc5)
+Date: Mon, 19 Jun 2017 17:16:38 +0200
+Message-ID: <ad400234-fde1-5ff7-246e-91ded98764e2@redhat.com>
+References: <2b97933e-3f94-8510-cefd-13fae445400e@redhat.com>
+ <d32598d1-2ae3-6b0a-690f-7d7dfa43899e@redhat.com>
+ <20170619142026.GA92582@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20170619150022.GA10165@lst.de>
+In-Reply-To: <20170619142026.GA92582@redhat.com>
 Sender: linux-block-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block <linux-block@vger.kernel.org>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, mpatocka@redhat.com, mbroz@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Jun 19, 2017 at 11:00 PM, Christoph Hellwig <hch@lst.de> wrote:
-> On Mon, Jun 19, 2017 at 10:34:36PM +0800, Ming Lei wrote:
->> blk_queue_make_request() sets bounce for any highmem page for long time,
->> and in theory this patch might cause regression on 32bit arch, when
->> the controller can't handle higmem page really(especially in case of PAE), so
->> we may need to be careful about this change, especially on some old hardware.
+On 06/19/2017 04:20 PM, Mike Snitzer wrote:
 >
-> Which controller?
+> Looks like submit_flush_bio() is disabling/enabling interrupts from
+> interrupt context.  Ondrej, does this patch fix the issue?
 
-I don't know.
+I let it spin for 30 minutes on patched dm-integrity and everything 
+seems ok now. The moment I loaded back the old one it fell on face 
+almost immediately again.
 
-IMO, we can't just remove it because it is a bio based driver, the
-bounce is not related with
-a bio or req based driver, and it depends if the controller can handle
-highmem page.
+Thanks!
 
-Actually the bounce for highmem is here from v2.6.12, and looks you
-might need to
-investigate why it is introduced from start before the removing, :-)
-
-
-
-Thanks,
-Ming Lei
+>
+> diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
+> index 4ab10cf..93b1810 100644
+> --- a/drivers/md/dm-integrity.c
+> +++ b/drivers/md/dm-integrity.c
+> @@ -1105,10 +1105,13 @@ static void schedule_autocommit(struct dm_integrity_c *ic)
+>  static void submit_flush_bio(struct dm_integrity_c *ic, struct dm_integrity_io *dio)
+>  {
+>  	struct bio *bio;
+> -	spin_lock_irq(&ic->endio_wait.lock);
+> +	unsigned long flags;
+> +
+> +	spin_lock_irqsave(&ic->endio_wait.lock, flags);
+>  	bio = dm_bio_from_per_bio_data(dio, sizeof(struct dm_integrity_io));
+>  	bio_list_add(&ic->flush_bio_list, bio);
+> -	spin_unlock_irq(&ic->endio_wait.lock);
+> +	spin_unlock_irqrestore(&ic->endio_wait.lock, flags);
+> +
+>  	queue_work(ic->commit_wq, &ic->commit_work);
+>  }
+>
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+>
