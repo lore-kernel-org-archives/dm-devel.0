@@ -1,43 +1,110 @@
-From: Ming Lei <tom.leiming@gmail.com>
-Subject: Re: [PATCH 01/10] pktcdvd: remove the call to blk_queue_bounce
-Date: Mon, 19 Jun 2017 23:29:48 +0800
-Message-ID: <CACVXFVMkOMeUoe6vGBx2a83xF7J2E8QPM6Jf_Jyi_chwJOr7rQ@mail.gmail.com>
-References: <20170619072628.12894-1-hch@lst.de> <20170619072628.12894-2-hch@lst.de>
- <CACVXFVMxgKk1kzL=rgAzdw8X5qgWn8Z_Hv-gUHSKfp1rXRArxA@mail.gmail.com>
- <20170619150022.GA10165@lst.de> <CACVXFVOZMwTdeeUdHzLzNpnPurAHz9VaQNH+yW=XSgRjPN2=Mw@mail.gmail.com>
- <20170619151841.GA12068@lst.de>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 3/7] libmultipath: clarify option conflicts
+ for "features"
+Date: Mon, 19 Jun 2017 22:41:10 +0200
+Message-ID: <1497904870.4712.6.camel@suse.com>
+References: <20170613225554.11181-1-mwilck@suse.com>
+	<20170613225554.11181-4-mwilck@suse.com>
+	<20170615195436.GE2940@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20170619151841.GA12068@lst.de>
-Sender: linux-block-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block <linux-block@vger.kernel.org>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20170615195436.GE2940@octiron.msp.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-On Mon, Jun 19, 2017 at 11:18 PM, Christoph Hellwig <hch@lst.de> wrote:
-> On Mon, Jun 19, 2017 at 11:13:46PM +0800, Ming Lei wrote:
->> On Mon, Jun 19, 2017 at 11:00 PM, Christoph Hellwig <hch@lst.de> wrote:
->> > On Mon, Jun 19, 2017 at 10:34:36PM +0800, Ming Lei wrote:
->> >> blk_queue_make_request() sets bounce for any highmem page for long time,
->> >> and in theory this patch might cause regression on 32bit arch, when
->> >> the controller can't handle higmem page really(especially in case of PAE), so
->> >> we may need to be careful about this change, especially on some old hardware.
->> >
->> > Which controller?
->>
->> I don't know.
->>
->> IMO, we can't just remove it because it is a bio based driver, the
->> bounce is not related with
->> a bio or req based driver, and it depends if the controller can handle
->> highmem page.
->
-> pktcdvd is a stacking driver and forwards all data through either
-> generic_make_request or blk_rq_map_kern + blk_execute_rq,
-> both of which call blk_queue_bounce internally.
-
-OK, thanks for explaining, then looks it isn't needed from the start.
-
-Thanks,
-Ming Lei
+SGkgQmVuLAoKT24gVGh1LCAyMDE3LTA2LTE1IGF0IDE0OjU0IC0wNTAwLCBCZW5qYW1pbiBNYXJ6
+aW5za2kgd3JvdGU6Cj4gT24gV2VkLCBKdW4gMTQsIDIwMTcgYXQgMTI6NTU6NTBBTSArMDIwMCwg
+TWFydGluIFdpbGNrIHdyb3RlOgo+ID4gVGhlICJmZWF0dXJlcyIgb3B0aW9uIGluIG11bHRpcGF0
+aC5jb25mIGNhbiBwb3NzaWJseSBjb25mbGljdAo+ID4gd2l0aCB0aGUgIm5vX3BhdGhfcmV0cnki
+IGFuZCAicmV0YWluX2F0dGFjaGVkX2h3X2hhbmRsZXIiIG9wdGlvbnMuCj4gPiAKPiA+IEN1cnJl
+bnRseSwgIm5vX3BhdGhfcmV0cnkiIHRha2VzIHByZWNlZGVuY2UsIHVubGVzcyBpdCBpcyBzZXQg
+dG8KPiA+ICJmYWlsIiwgaW4gd2hpY2ggY2FzZSBpdCdzIG92ZXJyaWRkZW4uIE5vIHByZWNlZGVu
+Y2UgcnVsZXMgYXJlCj4gPiBkZWZpbmVkIGZvciAicmV0YWluX2F0dGFjaGVkX2h3X2hhbmRsZXIi
+Lgo+ID4gCj4gPiBNYWtlIHRoaXMgYmVoYXZpb3IgbW9yZSBjb25zaXN0ZW50IGJ5IGFsd2F5cyBn
+aXZpbmcgcHJlY2VkZW5jZQo+ID4gdG8gdGhlIGV4cGxpY2l0IGNvbmZpZyBmaWxlIG9wdGlvbnMs
+IGFuZCBpbXByb3ZlIGxvZ2dpbmcuCj4gPiAKPiA+IFNpZ25lZC1vZmYtYnk6IE1hcnRpbiBXaWxj
+ayA8bXdpbGNrQHN1c2UuY29tPgo+ID4gLS0tCj4gPiAgbGlibXVsdGlwYXRoL2NvbmZpZ3VyZS5j
+IHwgIDQgKystLQo+ID4gIGxpYm11bHRpcGF0aC9wcm9wc2VsLmMgICB8IDM3ICsrKysrKysrKysr
+KysrKysrKysrKysrKy0tLS0tLS0tLS0KPiA+IC0tLQo+ID4gIDIgZmlsZXMgY2hhbmdlZCwgMjYg
+aW5zZXJ0aW9ucygrKSwgMTUgZGVsZXRpb25zKC0pCj4gPiAKPiA+IGRpZmYgLS1naXQgYS9saWJt
+dWx0aXBhdGgvY29uZmlndXJlLmMgYi9saWJtdWx0aXBhdGgvY29uZmlndXJlLmMKPiA+IGluZGV4
+IGJkMDkwZDlhLi5mZDQ3MjFkZCAxMDA2NDQKPiA+IC0tLSBhL2xpYm11bHRpcGF0aC9jb25maWd1
+cmUuYwo+ID4gKysrIGIvbGlibXVsdGlwYXRoL2NvbmZpZ3VyZS5jCj4gPiBAQCAtMjgwLDExICsy
+ODAsMTEgQEAgaW50IHNldHVwX21hcChzdHJ1Y3QgbXVsdGlwYXRoICptcHAsIGNoYXIKPiA+ICpw
+YXJhbXMsIGludCBwYXJhbXNfc2l6ZSkKPiA+ICAJc2VsZWN0X3BnZmFpbGJhY2soY29uZiwgbXBw
+KTsKPiA+ICAJc2VsZWN0X3BncG9saWN5KGNvbmYsIG1wcCk7Cj4gPiAgCXNlbGVjdF9zZWxlY3Rv
+cihjb25mLCBtcHApOwo+ID4gLQlzZWxlY3RfZmVhdHVyZXMoY29uZiwgbXBwKTsKPiA+ICAJc2Vs
+ZWN0X2h3aGFuZGxlcihjb25mLCBtcHApOwo+ID4gKwlzZWxlY3Rfbm9fcGF0aF9yZXRyeShjb25m
+LCBtcHApOwo+ID4gKwlzZWxlY3RfZmVhdHVyZXMoY29uZiwgbXBwKTsKPiA+ICAJc2VsZWN0X3Jy
+X3dlaWdodChjb25mLCBtcHApOwo+ID4gIAlzZWxlY3RfbWluaW8oY29uZiwgbXBwKTsKPiA+IC0J
+c2VsZWN0X25vX3BhdGhfcmV0cnkoY29uZiwgbXBwKTsKPiA+ICAJc2VsZWN0X21vZGUoY29uZiwg
+bXBwKTsKPiA+ICAJc2VsZWN0X3VpZChjb25mLCBtcHApOwo+ID4gIAlzZWxlY3RfZ2lkKGNvbmYs
+IG1wcCk7Cj4gPiBkaWZmIC0tZ2l0IGEvbGlibXVsdGlwYXRoL3Byb3BzZWwuYyBiL2xpYm11bHRp
+cGF0aC9wcm9wc2VsLmMKPiA+IGluZGV4IDk5ZDE3ZTY1Li40MjY3YWEwNCAxMDA2NDQKPiA+IC0t
+LSBhL2xpYm11bHRpcGF0aC9wcm9wc2VsLmMKPiA+ICsrKyBiL2xpYm11bHRpcGF0aC9wcm9wc2Vs
+LmMKPiA+IEBAIC0yNzIsNiArMjcyLDkgQEAgb3V0Ogo+ID4gIGludCBzZWxlY3RfZmVhdHVyZXMo
+c3RydWN0IGNvbmZpZyAqY29uZiwgc3RydWN0IG11bHRpcGF0aCAqbXApCj4gPiAgewo+ID4gIAlj
+aGFyICpvcmlnaW47Cj4gPiArCWNoYXIgYnVmZlsxMl07Cj4gPiArCXN0YXRpYyBjb25zdCBjaGFy
+IHFfaV9uX3BbXSA9ICJxdWV1ZV9pZl9ub19wYXRoIjsKPiA+ICsJc3RhdGljIGNvbnN0IGNoYXIg
+cl9hX2hfaFtdID0KPiA+ICJyZXRhaW5fYXR0YWNoZWRfaHdfaGFuZGxlciI7Cj4gPiAgCj4gPiAg
+CW1wX3NldF9tcGUoZmVhdHVyZXMpOwo+ID4gIAltcF9zZXRfb3ZyKGZlYXR1cmVzKTsKPiA+IEBA
+IC0yODAsMTkgKzI4MywzMCBAQCBpbnQgc2VsZWN0X2ZlYXR1cmVzKHN0cnVjdCBjb25maWcgKmNv
+bmYsCj4gPiBzdHJ1Y3QgbXVsdGlwYXRoICptcCkKPiA+ICAJbXBfc2V0X2RlZmF1bHQoZmVhdHVy
+ZXMsIERFRkFVTFRfRkVBVFVSRVMpOwo+ID4gIG91dDoKPiA+ICAJbXAtPmZlYXR1cmVzID0gU1RS
+RFVQKG1wLT5mZWF0dXJlcyk7Cj4gPiAtCWNvbmRsb2coMywgIiVzOiBmZWF0dXJlcyA9IFwiJXNc
+IiAlcyIsIG1wLT5hbGlhcywgbXAtCj4gPiA+ZmVhdHVyZXMsIG9yaWdpbik7Cj4gPiAgCj4gPiAt
+CWlmIChzdHJzdHIobXAtPmZlYXR1cmVzLCAicXVldWVfaWZfbm9fcGF0aCIpKSB7Cj4gPiAtCQlp
+ZiAobXAtPm5vX3BhdGhfcmV0cnkgPT0gTk9fUEFUSF9SRVRSWV9VTkRFRikKPiA+ICsJaWYgKHN0
+cnN0cihtcC0+ZmVhdHVyZXMsIHFfaV9uX3ApKSB7Cj4gPiArCQlpZiAobXAtPm5vX3BhdGhfcmV0
+cnkgPT0gTk9fUEFUSF9SRVRSWV9VTkRFRikgewo+ID4gIAkJCW1wLT5ub19wYXRoX3JldHJ5ID0g
+Tk9fUEFUSF9SRVRSWV9RVUVVRTsKPiA+IC0JCWVsc2UgaWYgKG1wLT5ub19wYXRoX3JldHJ5ID09
+IE5PX1BBVEhfUkVUUllfRkFJTCkKPiA+IHsKPiA+IC0JCQljb25kbG9nKDEsICIlczogY29uZmln
+IGVycm9yLCBvdmVycmlkaW5nCj4gPiAnbm9fcGF0aF9yZXRyeScgdmFsdWUiLAo+ID4gLQkJCQlt
+cC0+YWxpYXMpOwo+ID4gLQkJCW1wLT5ub19wYXRoX3JldHJ5ID0gTk9fUEFUSF9SRVRSWV9RVUVV
+RTsKPiA+IC0JCX0gZWxzZSBpZiAobXAtPm5vX3BhdGhfcmV0cnkgIT0KPiA+IE5PX1BBVEhfUkVU
+UllfUVVFVUUpCj4gPiAtCQkJY29uZGxvZygxLCAiJXM6IGNvbmZpZyBlcnJvciwgaWdub3JpbmcK
+PiA+ICdxdWV1ZV9pZl9ub19wYXRoJyBiZWNhdXNlIG5vX3BhdGhfcmV0cnk9JWQiLAo+ID4gLQkJ
+CQltcC0+YWxpYXMsIG1wLT5ub19wYXRoX3JldHJ5KTsKPiA+ICsJCQlwcmludF9ub19wYXRoX3Jl
+dHJ5KGJ1ZmYsIHNpemVvZihidWZmKSwKPiA+ICsJCQkJCSAgICAmbXAtPm5vX3BhdGhfcmV0cnkp
+Owo+ID4gKwkJCWNvbmRsb2coMywgIiVzOiBub19wYXRoX3JldHJ5ID0gJXMKPiA+IChpbmhlcml0
+ZWQgc2V0dGluZyBmcm9tIGZlYXR1cmUgJyVzJykiLAo+ID4gKwkJCQltcC0+YWxpYXMsIGJ1ZmYs
+IHFfaV9uX3ApOwo+ID4gKwkJfSBlbHNlIHsKPiA+ICsJCQlwcmludF9ub19wYXRoX3JldHJ5KGJ1
+ZmYsIHNpemVvZihidWZmKSwKPiA+ICsJCQkJCSAgICAmbXAtPm5vX3BhdGhfcmV0cnkpOwo+ID4g
+KwkJCWNvbmRsb2coMiwgIiVzOiBpZ25vcmluZyBmZWF0dXJlICclcycKPiA+IGJlY2F1c2Ugbm9f
+cGF0aF9yZXRyeSBpcyBzZXQgdG8gJyVzJyIsCj4gPiArCQkJCW1wLT5hbGlhcywgcV9pX25fcCwg
+YnVmZik7Cj4gPiArCQkJcmVtb3ZlX2ZlYXR1cmUoJm1wLT5mZWF0dXJlcywgcV9pX25fcCk7Cj4g
+PiArCQl9Owo+IAo+IFRoaXMgaXMganVzdCBhIG5pdCwgYW5kIGl0IHdvbid0IGh1cnQgYW55dGhp
+bmcgYnkgcmVtYWluaW5nIHVuZml4ZWQsCj4gYnV0Cj4gaXQgaXMgb2RkIHRoYXQgaWYgeW91IGdv
+IGludG8gc2VsZWN0X2ZlYXR1cmVzKCkgd2l0aCBub19wYXRoX3JldHJ5Cj4gc2V0Cj4gdG8gcXVl
+dWUgKGZvciBhbnkgbGVuZ3RoIG9mIHRpbWUpIGFuZCBmZWF0dXJlcyBpbmNsdWRlcwo+ICJxdWV1
+ZV9pZl9ub19wYXRoIiwgeW91IHdpbGwgZXhpdCB3aXRoIG5vX3BhdGhfcmV0cnkgc3RpbGwgc2V0
+IHRvCj4gcXVldWUKPiBhbmQgInF1ZXVlX2lmX25vX3BhdGgiIHJlbW92ZWQgZnJvbSBmZWF0dXJl
+cy4gSG93ZXZlciBpZiB5b3UgZ28gaW50bwo+IHNlbGVjdF9mZWF0dXJlcyB3aXRoIG5vX3BhdGhf
+cmV0cnkgc2V0IHRvIHVuZGVmIGFuZCBmZWF0dXJlcyBpbmNsdWRlcwo+ICJxdWV1ZV9pZl9ub19w
+YXRoIiwgeW91IHdpbGwgZXhpdCB3aXRoIG5vX3BhdGhfcmV0cnkgc2V0IHRvIHF1ZXVlIGFuZAo+
+ICJxdWV1ZV9pZl9ub19wYXRoIiBzdGlsbCBpbmNsdWRlZCBpbiBmZWF0dXJlcy4gSXQgc2VlbXMg
+b2RkIHRoYXQgaW4KPiB0aGUKPiBzZWNvbmQgY2FzZSwgeW91IGV4cGxpY2l0bHkgc2V0IHRoZXNl
+IG9wdGlvbnMgdG8gdGhlIHZhbHVlcyB0aGF0IHlvdQo+IHN0YXJ0ZWQgd2l0aCBpbiB0aGUgZmly
+c3QgY2FzZSAod2hpY2ggeW91IGxhdGVyIGNoYW5nZWQpLiBBIHBlcmhhcHMKPiBtb3JlCj4gc2Vu
+c2libGUgb3B0aW9uIHdvdWxkIGJlIHRvIG9ubHkgcmVtb3ZlICJxdWV1ZV9pZl9ub19wYXRoIiBm
+cm9tCj4gZmVhdHVyZXMKPiBpZiBub19wYXRoX3JldHJ5IGlzIHNldCB0byBzb21ldGhpbmcgb3Ro
+ZXIgdGhhbiBOT19QQVRIX1JFVFJZX1FVRVVFLgoKCllvdSdyZSByaWdodC4gRm9yIGludGVybmFs
+IGNvbnNpc3RlbmN5LCBJIHByZWZlciB0byByZW1vdmUKInF1ZXVlX2lmX25vX3BhdGgiIGZyb20g
+dGhlIGludGVybmFsIGZlYXR1cmUgc3RyaW5nIGFsd2F5cy4gTW9kaWZpZWQKcGF0Y2ggaXMgaW4g
+dGhlIHdvcmtzLgoKTWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29t
+PiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXgg
+SW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcg
+TsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20K
+aHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
