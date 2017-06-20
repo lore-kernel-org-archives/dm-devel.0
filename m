@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 5/8] libmultipath: assemble_map: fix
-	queue_if_no_path logic
-Date: Tue, 20 Jun 2017 13:46:11 +0200
-Message-ID: <20170620114614.26261-6-mwilck@suse.com>
+Subject: [PATCH v2 2/8] libmultipath: add/remove_feature: use
+	const char* for feature
+Date: Tue, 20 Jun 2017 13:46:08 +0200
+Message-ID: <20170620114614.26261-3-mwilck@suse.com>
 References: <20170620114614.26261-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,34 +22,106 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@s
 Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-It is wrong to remove the queue_if_no_path feature if no_path_retry
-is unset. Rather, in this case the feature should neither be added
-nor removed.
+Change the argument type for the feature to add or remove to
+const char*, making it possible to pass const strings without
+warnings.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/dmparser.c | 5 ++---
- 1 file changed, 2 insertions(+), 3 deletions(-)
+ libmultipath/structs.c | 30 ++++++++++++++++--------------
+ libmultipath/structs.h |  4 ++--
+ 2 files changed, 18 insertions(+), 16 deletions(-)
 
-diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
-index 469e60d2..8d0c7af1 100644
---- a/libmultipath/dmparser.c
-+++ b/libmultipath/dmparser.c
-@@ -74,13 +74,12 @@ assemble_map (struct multipath * mp, char * params, int len)
- 	 * We have to set 'queue_if_no_path' here even
- 	 * to avoid path failures during map reload.
- 	 */
--	if (mp->no_path_retry == NO_PATH_RETRY_UNDEF ||
--	    mp->no_path_retry == NO_PATH_RETRY_FAIL) {
-+	if (mp->no_path_retry == NO_PATH_RETRY_FAIL) {
- 		/* remove queue_if_no_path settings */
- 		condlog(3, "%s: remove queue_if_no_path from '%s'",
- 			mp->alias, mp->features);
- 		remove_feature(&f, no_path_retry);
--	} else {
-+	} else if (mp->no_path_retry != NO_PATH_RETRY_UNDEF) {
- 		add_feature(&f, no_path_retry);
+diff --git a/libmultipath/structs.c b/libmultipath/structs.c
+index e225f8b4..28704676 100644
+--- a/libmultipath/structs.c
++++ b/libmultipath/structs.c
+@@ -513,10 +513,11 @@ void setup_feature(struct multipath *mpp, char *feature)
  	}
- 	if (mp->retain_hwhandler == RETAIN_HWHANDLER_ON)
+ }
+ 
+-int add_feature(char **f, char *n)
++int add_feature(char **f, const char *n)
+ {
+ 	int c = 0, d, l = 0;
+ 	char *e, *p, *t;
++	const char *q;
+ 
+ 	if (!f)
+ 		return 1;
+@@ -554,14 +555,14 @@ int add_feature(char **f, char *n)
+ 	if ((c % 10) == 9)
+ 		l++;
+ 	c++;
+-	p = n;
+-	while (*p != '\0') {
+-		if (*p == ' ' && p[1] != '\0' && p[1] != ' ') {
++	q = n;
++	while (*q != '\0') {
++		if (*q == ' ' && q[1] != '\0' && q[1] != ' ') {
+ 			if ((c % 10) == 9)
+ 				l++;
+ 			c++;
+ 		}
+-		p++;
++		q++;
+ 	}
+ 
+ 	t = MALLOC(l + 1);
+@@ -601,10 +602,11 @@ int add_feature(char **f, char *n)
+ 	return 0;
+ }
+ 
+-int remove_feature(char **f, char *o)
++int remove_feature(char **f, const char *o)
+ {
+ 	int c = 0, d, l;
+ 	char *e, *p, *n;
++	const char *q;
+ 
+ 	if (!f || !*f)
+ 		return 1;
+@@ -630,18 +632,18 @@ int remove_feature(char **f, char *o)
+ 	/* Just spaces, return */
+ 	if (*o == '\0')
+ 		return 0;
+-	e = o + strlen(o);
+-	while (*e == ' ')
+-		e--;
+-	d = (int)(e - o);
++	q = o + strlen(o);
++	while (*q == ' ')
++		q--;
++	d = (int)(q - o);
+ 
+ 	/* Update feature count */
+ 	c--;
+-	p = o;
+-	while (p[0] != '\0') {
+-		if (p[0] == ' ' && p[1] != ' ' && p[1] != '\0')
++	q = o;
++	while (q[0] != '\0') {
++		if (q[0] == ' ' && q[1] != ' ' && q[1] != '\0')
+ 			c--;
+-		p++;
++		q++;
+ 	}
+ 
+ 	/* Quick exit if all features have been removed */
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index 01e031ad..8ea984d9 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -369,8 +369,8 @@ int pathcountgr (struct pathgroup *, int);
+ int pathcount (struct multipath *, int);
+ int pathcmp (struct pathgroup *, struct pathgroup *);
+ void setup_feature(struct multipath *, char *);
+-int add_feature (char **, char *);
+-int remove_feature (char **, char *);
++int add_feature (char **, const char *);
++int remove_feature (char **, const char *);
+ 
+ extern char sysfs_path[PATH_SIZE];
+ 
 -- 
 2.13.1
