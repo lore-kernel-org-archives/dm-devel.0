@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 3/8] libmultipath: clarify option conflicts
-	for "features"
-Date: Tue, 20 Jun 2017 13:46:09 +0200
-Message-ID: <20170620114614.26261-4-mwilck@suse.com>
+Subject: [PATCH v2 1/8] libmultipath: load_config: skip setting
+	unnecessary defaults
+Date: Tue, 20 Jun 2017 13:46:07 +0200
+Message-ID: <20170620114614.26261-2-mwilck@suse.com>
 References: <20170620114614.26261-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,150 +22,127 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@s
 Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-The "features" option in multipath.conf can possibly conflict
-with "no_path_retry" and "retain_attached_hw_handler".
+We have the logic for setting defaults for paths and maps
+in propsel.c. By pre-setting conf values with defaults in
+load_config(), we generate irritating log messages like
+'features = "0" (setting: multipath.conf defaults/devices section)'
+if multipath.conf doesn't contain a features setting at all.
 
-Currently, "no_path_retry" takes precedence, unless it is set to
-"fail", in which case it's overridden by "queue_if_no_path".
-This is odd, either "features" or "no_path_retry" should take
-precedence.
-No precedence rules are defined for "retain_attached_hw_handler".
-
-Make this behavior more consistent by always giving precedence
-to the explicit config file options, and improve logging.
-
-Put this logic into a separate function, which can be used
-from other places in the code.
+For some config settings, we need to use declare_def_snprint_defint()
+now to make sure "multipathd show config" prints all defaults correctly.
+To avoid confusion, we don't do this for "max_sectors", because
+multipathd leaves this untouched by default.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/configure.c |  4 +--
- libmultipath/propsel.c   | 68 +++++++++++++++++++++++++++++++++++++-----------
- libmultipath/propsel.h   |  3 +++
- 3 files changed, 58 insertions(+), 17 deletions(-)
+ libmultipath/config.c  | 16 ----------------
+ libmultipath/dict.c    | 11 +++++++----
+ libmultipath/propsel.c |  5 +++++
+ 3 files changed, 12 insertions(+), 20 deletions(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index bd090d9a..fd4721dd 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -280,11 +280,11 @@ int setup_map(struct multipath *mpp, char *params, int params_size)
- 	select_pgfailback(conf, mpp);
- 	select_pgpolicy(conf, mpp);
- 	select_selector(conf, mpp);
--	select_features(conf, mpp);
- 	select_hwhandler(conf, mpp);
-+	select_no_path_retry(conf, mpp);
-+	select_features(conf, mpp);
- 	select_rr_weight(conf, mpp);
- 	select_minio(conf, mpp);
--	select_no_path_retry(conf, mpp);
- 	select_mode(conf, mpp);
- 	select_uid(conf, mpp);
- 	select_gid(conf, mpp);
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index bb6619b3..61bbba91 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -599,40 +599,24 @@ load_config (char * file)
+ 	if (!conf->verbosity)
+ 		conf->verbosity = DEFAULT_VERBOSITY;
+ 
+-	conf->minio = DEFAULT_MINIO;
+-	conf->minio_rq = DEFAULT_MINIO_RQ;
+ 	get_sys_max_fds(&conf->max_fds);
+ 	conf->bindings_file = set_default(DEFAULT_BINDINGS_FILE);
+ 	conf->wwids_file = set_default(DEFAULT_WWIDS_FILE);
+ 	conf->multipath_dir = set_default(DEFAULT_MULTIPATHDIR);
+-	conf->features = set_default(DEFAULT_FEATURES);
+-	conf->flush_on_last_del = DEFAULT_FLUSH;
+ 	conf->attribute_flags = 0;
+ 	conf->reassign_maps = DEFAULT_REASSIGN_MAPS;
+ 	conf->checkint = DEFAULT_CHECKINT;
+ 	conf->max_checkint = 0;
+-	conf->pgfailback = DEFAULT_FAILBACK;
+-	conf->fast_io_fail = DEFAULT_FAST_IO_FAIL;
+-	conf->retain_hwhandler = DEFAULT_RETAIN_HWHANDLER;
+-	conf->detect_prio = DEFAULT_DETECT_PRIO;
+-	conf->detect_checker = DEFAULT_DETECT_CHECKER;
+ 	conf->force_sync = DEFAULT_FORCE_SYNC;
+ 	conf->partition_delim = DEFAULT_PARTITION_DELIM;
+ 	conf->processed_main_config = 0;
+ 	conf->find_multipaths = DEFAULT_FIND_MULTIPATHS;
+ 	conf->uxsock_timeout = DEFAULT_REPLY_TIMEOUT;
+-	conf->uid_attribute = set_default(DEFAULT_UID_ATTRIBUTE);
+ 	conf->retrigger_tries = DEFAULT_RETRIGGER_TRIES;
+ 	conf->retrigger_delay = DEFAULT_RETRIGGER_DELAY;
+ 	conf->uev_wait_timeout = DEFAULT_UEV_WAIT_TIMEOUT;
+-	conf->deferred_remove = DEFAULT_DEFERRED_REMOVE;
+-	conf->skip_kpartx = DEFAULT_SKIP_KPARTX;
+ 	conf->disable_changed_wwids = DEFAULT_DISABLE_CHANGED_WWIDS;
+ 	conf->remove_retries = 0;
+-	conf->max_sectors_kb = DEFAULT_MAX_SECTORS_KB;
+-	conf->san_path_err_threshold = DEFAULT_ERR_CHECKS;
+-	conf->san_path_err_forget_rate = DEFAULT_ERR_CHECKS;
+-	conf->san_path_err_recovery_time = DEFAULT_ERR_CHECKS;
+ 
+ 	/*
+ 	 * preload default hwtable
+diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+index 82066f67..9dc10904 100644
+--- a/libmultipath/dict.c
++++ b/libmultipath/dict.c
+@@ -630,7 +630,7 @@ print_fast_io_fail(char * buff, int len, void *ptr)
+ }
+ 
+ declare_def_handler(fast_io_fail, set_fast_io_fail)
+-declare_def_snprint(fast_io_fail, print_fast_io_fail)
++declare_def_snprint_defint(fast_io_fail, print_fast_io_fail, DEFAULT_FAST_IO_FAIL)
+ declare_ovr_handler(fast_io_fail, set_fast_io_fail)
+ declare_ovr_snprint(fast_io_fail, print_fast_io_fail)
+ declare_hw_handler(fast_io_fail, set_fast_io_fail)
+@@ -1082,7 +1082,8 @@ declare_hw_snprint(delay_wait_checks, print_off_int_undef)
+ declare_mp_handler(delay_wait_checks, set_off_int_undef)
+ declare_mp_snprint(delay_wait_checks, print_off_int_undef)
+ declare_def_handler(san_path_err_threshold, set_off_int_undef)
+-declare_def_snprint(san_path_err_threshold, print_off_int_undef)
++declare_def_snprint_defint(san_path_err_threshold, print_off_int_undef,
++			   DEFAULT_ERR_CHECKS)
+ declare_ovr_handler(san_path_err_threshold, set_off_int_undef)
+ declare_ovr_snprint(san_path_err_threshold, print_off_int_undef)
+ declare_hw_handler(san_path_err_threshold, set_off_int_undef)
+@@ -1090,7 +1091,8 @@ declare_hw_snprint(san_path_err_threshold, print_off_int_undef)
+ declare_mp_handler(san_path_err_threshold, set_off_int_undef)
+ declare_mp_snprint(san_path_err_threshold, print_off_int_undef)
+ declare_def_handler(san_path_err_forget_rate, set_off_int_undef)
+-declare_def_snprint(san_path_err_forget_rate, print_off_int_undef)
++declare_def_snprint_defint(san_path_err_forget_rate, print_off_int_undef,
++			   DEFAULT_ERR_CHECKS)
+ declare_ovr_handler(san_path_err_forget_rate, set_off_int_undef)
+ declare_ovr_snprint(san_path_err_forget_rate, print_off_int_undef)
+ declare_hw_handler(san_path_err_forget_rate, set_off_int_undef)
+@@ -1098,7 +1100,8 @@ declare_hw_snprint(san_path_err_forget_rate, print_off_int_undef)
+ declare_mp_handler(san_path_err_forget_rate, set_off_int_undef)
+ declare_mp_snprint(san_path_err_forget_rate, print_off_int_undef)
+ declare_def_handler(san_path_err_recovery_time, set_off_int_undef)
+-declare_def_snprint(san_path_err_recovery_time, print_off_int_undef)
++declare_def_snprint_defint(san_path_err_recovery_time, print_off_int_undef,
++			   DEFAULT_ERR_CHECKS)
+ declare_ovr_handler(san_path_err_recovery_time, set_off_int_undef)
+ declare_ovr_snprint(san_path_err_recovery_time, print_off_int_undef)
+ declare_hw_handler(san_path_err_recovery_time, set_off_int_undef)
 diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index 68436433..ccd067f5 100644
+index 385063aa..68436433 100644
 --- a/libmultipath/propsel.c
 +++ b/libmultipath/propsel.c
-@@ -269,6 +269,55 @@ out:
- 	return mp->alias ? 0 : 1;
- }
- 
-+void reconcile_features_with_options(const char *id, char **features, int* no_path_retry,
-+		  int *retain_hwhandler)
-+{
-+	static const char q_i_n_p[] = "queue_if_no_path";
-+	static const char r_a_h_h[] = "retain_attached_hw_handler";
-+	char buff[12];
-+
-+	if (*features == NULL)
-+		return;
-+	if (id == NULL)
-+		id = "UNKNOWN";
-+
+@@ -752,6 +752,11 @@ int select_max_sectors_kb(struct config *conf, struct multipath * mp)
+ 	mp_set_ovr(max_sectors_kb);
+ 	mp_set_hwe(max_sectors_kb);
+ 	mp_set_conf(max_sectors_kb);
++	mp_set_default(max_sectors_kb, DEFAULT_MAX_SECTORS_KB);
 +	/*
-+	 * We only use no_path_retry internally. The "queue_if_no_path"
-+	 * device-mapper feature is derived from it when the map is loaded.
-+	 * For consistency, "queue_if_no_path" is removed from the
-+	 * internal libmultipath features string.
-+	 * For backward compatibility we allow 'features "1 queue_if_no_path"';
-+	 * it's translated into "no_path_retry queue" here.
++	 * In the default case, we will not modify max_sectors_kb.
++	 * Don't print a log message to avoid user confusion.
 +	 */
-+	if (strstr(*features, q_i_n_p)) {
-+		if (*no_path_retry == NO_PATH_RETRY_UNDEF) {
-+			*no_path_retry = NO_PATH_RETRY_QUEUE;
-+			print_no_path_retry(buff, sizeof(buff),
-+					    no_path_retry);
-+			condlog(3, "%s: no_path_retry = %s (inherited setting from feature '%s')",
-+				id, buff, q_i_n_p);
-+		};
-+		/* Warn only if features string is overridden */
-+		if (*no_path_retry != NO_PATH_RETRY_QUEUE) {
-+			print_no_path_retry(buff, sizeof(buff),
-+					    no_path_retry);
-+			condlog(2, "%s: ignoring feature '%s' because no_path_retry is set to '%s'",
-+				id, q_i_n_p, buff);
-+		}
-+		remove_feature(features, q_i_n_p);
-+	}
-+	if (strstr(*features, r_a_h_h)) {
-+		if (*retain_hwhandler == RETAIN_HWHANDLER_UNDEF) {
-+			condlog(3, "%s: %s = on (inherited setting from feature '%s')",
-+				id, r_a_h_h, r_a_h_h);
-+			*retain_hwhandler = RETAIN_HWHANDLER_ON;
-+		} else if (*retain_hwhandler == RETAIN_HWHANDLER_OFF)
-+			condlog(2, "%s: ignoring feature '%s' because %s is set to 'off'",
-+				id, r_a_h_h, r_a_h_h);
-+		remove_feature(features, r_a_h_h);
-+	}
-+}
-+
- int select_features(struct config *conf, struct multipath *mp)
- {
- 	char *origin;
-@@ -280,19 +329,11 @@ int select_features(struct config *conf, struct multipath *mp)
- 	mp_set_default(features, DEFAULT_FEATURES);
- out:
- 	mp->features = STRDUP(mp->features);
--	condlog(3, "%s: features = \"%s\" %s", mp->alias, mp->features, origin);
- 
--	if (strstr(mp->features, "queue_if_no_path")) {
--		if (mp->no_path_retry == NO_PATH_RETRY_UNDEF)
--			mp->no_path_retry = NO_PATH_RETRY_QUEUE;
--		else if (mp->no_path_retry == NO_PATH_RETRY_FAIL) {
--			condlog(1, "%s: config error, overriding 'no_path_retry' value",
--				mp->alias);
--			mp->no_path_retry = NO_PATH_RETRY_QUEUE;
--		} else if (mp->no_path_retry != NO_PATH_RETRY_QUEUE)
--			condlog(1, "%s: config error, ignoring 'queue_if_no_path' because no_path_retry=%d",
--				mp->alias, mp->no_path_retry);
--	}
-+	reconcile_features_with_options(mp->alias, &mp->features,
-+					&mp->no_path_retry,
-+					&mp->retain_hwhandler);
-+	condlog(3, "%s: features = \"%s\" %s", mp->alias, mp->features, origin);
  	return 0;
- }
- 
-@@ -469,9 +510,6 @@ out:
- 	if (origin)
- 		condlog(3, "%s: no_path_retry = %s %s", mp->alias, buff,
- 			origin);
--	else if (mp->no_path_retry != NO_PATH_RETRY_UNDEF)
--		condlog(3, "%s: no_path_retry = %s (inherited setting)",
--			mp->alias, buff);
- 	else
- 		condlog(3, "%s: no_path_retry = undef (setting: multipath internal)",
- 			mp->alias);
-diff --git a/libmultipath/propsel.h b/libmultipath/propsel.h
-index 58a32f3c..f8e96d85 100644
---- a/libmultipath/propsel.h
-+++ b/libmultipath/propsel.h
-@@ -28,3 +28,6 @@ int select_max_sectors_kb (struct config *conf, struct multipath * mp);
- int select_san_path_err_forget_rate(struct config *conf, struct multipath *mp);
- int select_san_path_err_threshold(struct config *conf, struct multipath *mp);
- int select_san_path_err_recovery_time(struct config *conf, struct multipath *mp);
-+void reconcile_features_with_options(const char *id, char **features,
-+				     int* no_path_retry,
-+				     int *retain_hwhandler);
+ out:
+ 	condlog(3, "%s: max_sectors_kb = %i %s", mp->alias, mp->max_sectors_kb,
 -- 
 2.13.1
