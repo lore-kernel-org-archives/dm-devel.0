@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 1/8] libmultipath: load_config: skip setting
-	unnecessary defaults
-Date: Tue, 20 Jun 2017 13:46:07 +0200
-Message-ID: <20170620114614.26261-2-mwilck@suse.com>
+Subject: [PATCH v2 6/8] multipath.conf.5: document no_path_retry
+	vs. queue_if_no_path
+Date: Tue, 20 Jun 2017 13:46:12 +0200
+Message-ID: <20170620114614.26261-7-mwilck@suse.com>
 References: <20170620114614.26261-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,127 +22,27 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@s
 Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-We have the logic for setting defaults for paths and maps
-in propsel.c. By pre-setting conf values with defaults in
-load_config(), we generate irritating log messages like
-'features = "0" (setting: multipath.conf defaults/devices section)'
-if multipath.conf doesn't contain a features setting at all.
-
-For some config settings, we need to use declare_def_snprint_defint()
-now to make sure "multipathd show config" prints all defaults correctly.
-To avoid confusion, we don't do this for "max_sectors", because
-multipathd leaves this untouched by default.
+Clarify the documentation about option precedence.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/config.c  | 16 ----------------
- libmultipath/dict.c    | 11 +++++++----
- libmultipath/propsel.c |  5 +++++
- 3 files changed, 12 insertions(+), 20 deletions(-)
+ multipath/multipath.conf.5 | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index bb6619b3..61bbba91 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -599,40 +599,24 @@ load_config (char * file)
- 	if (!conf->verbosity)
- 		conf->verbosity = DEFAULT_VERBOSITY;
- 
--	conf->minio = DEFAULT_MINIO;
--	conf->minio_rq = DEFAULT_MINIO_RQ;
- 	get_sys_max_fds(&conf->max_fds);
- 	conf->bindings_file = set_default(DEFAULT_BINDINGS_FILE);
- 	conf->wwids_file = set_default(DEFAULT_WWIDS_FILE);
- 	conf->multipath_dir = set_default(DEFAULT_MULTIPATHDIR);
--	conf->features = set_default(DEFAULT_FEATURES);
--	conf->flush_on_last_del = DEFAULT_FLUSH;
- 	conf->attribute_flags = 0;
- 	conf->reassign_maps = DEFAULT_REASSIGN_MAPS;
- 	conf->checkint = DEFAULT_CHECKINT;
- 	conf->max_checkint = 0;
--	conf->pgfailback = DEFAULT_FAILBACK;
--	conf->fast_io_fail = DEFAULT_FAST_IO_FAIL;
--	conf->retain_hwhandler = DEFAULT_RETAIN_HWHANDLER;
--	conf->detect_prio = DEFAULT_DETECT_PRIO;
--	conf->detect_checker = DEFAULT_DETECT_CHECKER;
- 	conf->force_sync = DEFAULT_FORCE_SYNC;
- 	conf->partition_delim = DEFAULT_PARTITION_DELIM;
- 	conf->processed_main_config = 0;
- 	conf->find_multipaths = DEFAULT_FIND_MULTIPATHS;
- 	conf->uxsock_timeout = DEFAULT_REPLY_TIMEOUT;
--	conf->uid_attribute = set_default(DEFAULT_UID_ATTRIBUTE);
- 	conf->retrigger_tries = DEFAULT_RETRIGGER_TRIES;
- 	conf->retrigger_delay = DEFAULT_RETRIGGER_DELAY;
- 	conf->uev_wait_timeout = DEFAULT_UEV_WAIT_TIMEOUT;
--	conf->deferred_remove = DEFAULT_DEFERRED_REMOVE;
--	conf->skip_kpartx = DEFAULT_SKIP_KPARTX;
- 	conf->disable_changed_wwids = DEFAULT_DISABLE_CHANGED_WWIDS;
- 	conf->remove_retries = 0;
--	conf->max_sectors_kb = DEFAULT_MAX_SECTORS_KB;
--	conf->san_path_err_threshold = DEFAULT_ERR_CHECKS;
--	conf->san_path_err_forget_rate = DEFAULT_ERR_CHECKS;
--	conf->san_path_err_recovery_time = DEFAULT_ERR_CHECKS;
- 
- 	/*
- 	 * preload default hwtable
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index 82066f67..9dc10904 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -630,7 +630,7 @@ print_fast_io_fail(char * buff, int len, void *ptr)
- }
- 
- declare_def_handler(fast_io_fail, set_fast_io_fail)
--declare_def_snprint(fast_io_fail, print_fast_io_fail)
-+declare_def_snprint_defint(fast_io_fail, print_fast_io_fail, DEFAULT_FAST_IO_FAIL)
- declare_ovr_handler(fast_io_fail, set_fast_io_fail)
- declare_ovr_snprint(fast_io_fail, print_fast_io_fail)
- declare_hw_handler(fast_io_fail, set_fast_io_fail)
-@@ -1082,7 +1082,8 @@ declare_hw_snprint(delay_wait_checks, print_off_int_undef)
- declare_mp_handler(delay_wait_checks, set_off_int_undef)
- declare_mp_snprint(delay_wait_checks, print_off_int_undef)
- declare_def_handler(san_path_err_threshold, set_off_int_undef)
--declare_def_snprint(san_path_err_threshold, print_off_int_undef)
-+declare_def_snprint_defint(san_path_err_threshold, print_off_int_undef,
-+			   DEFAULT_ERR_CHECKS)
- declare_ovr_handler(san_path_err_threshold, set_off_int_undef)
- declare_ovr_snprint(san_path_err_threshold, print_off_int_undef)
- declare_hw_handler(san_path_err_threshold, set_off_int_undef)
-@@ -1090,7 +1091,8 @@ declare_hw_snprint(san_path_err_threshold, print_off_int_undef)
- declare_mp_handler(san_path_err_threshold, set_off_int_undef)
- declare_mp_snprint(san_path_err_threshold, print_off_int_undef)
- declare_def_handler(san_path_err_forget_rate, set_off_int_undef)
--declare_def_snprint(san_path_err_forget_rate, print_off_int_undef)
-+declare_def_snprint_defint(san_path_err_forget_rate, print_off_int_undef,
-+			   DEFAULT_ERR_CHECKS)
- declare_ovr_handler(san_path_err_forget_rate, set_off_int_undef)
- declare_ovr_snprint(san_path_err_forget_rate, print_off_int_undef)
- declare_hw_handler(san_path_err_forget_rate, set_off_int_undef)
-@@ -1098,7 +1100,8 @@ declare_hw_snprint(san_path_err_forget_rate, print_off_int_undef)
- declare_mp_handler(san_path_err_forget_rate, set_off_int_undef)
- declare_mp_snprint(san_path_err_forget_rate, print_off_int_undef)
- declare_def_handler(san_path_err_recovery_time, set_off_int_undef)
--declare_def_snprint(san_path_err_recovery_time, print_off_int_undef)
-+declare_def_snprint_defint(san_path_err_recovery_time, print_off_int_undef,
-+			   DEFAULT_ERR_CHECKS)
- declare_ovr_handler(san_path_err_recovery_time, set_off_int_undef)
- declare_ovr_snprint(san_path_err_recovery_time, print_off_int_undef)
- declare_hw_handler(san_path_err_recovery_time, set_off_int_undef)
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index 385063aa..68436433 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -752,6 +752,11 @@ int select_max_sectors_kb(struct config *conf, struct multipath * mp)
- 	mp_set_ovr(max_sectors_kb);
- 	mp_set_hwe(max_sectors_kb);
- 	mp_set_conf(max_sectors_kb);
-+	mp_set_default(max_sectors_kb, DEFAULT_MAX_SECTORS_KB);
-+	/*
-+	 * In the default case, we will not modify max_sectors_kb.
-+	 * Don't print a log message to avoid user confusion.
-+	 */
- 	return 0;
- out:
- 	condlog(3, "%s: max_sectors_kb = %i %s", mp->alias, mp->max_sectors_kb,
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index f04ff194..6959ba5c 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -365,7 +365,9 @@ Possible values for the feature list are:
+ .\" XXX
+ .I queue_if_no_path
+ (Superseded by \fIno_path_retry\fR) (Since ??? kernel) Queue I/O if no path is active.
+-Identical to the \fIno_path_retry\fR with \fIqueue\fR value. See KNOWN ISSUES.
++Identical to the \fIno_path_retry\fR with \fIqueue\fR value. If both this
++feature and \fIno_path_retry\fR are set, the latter value takes
++precedence. See KNOWN ISSUES.
+ .TP
+ .I no_partitions
+ Disable automatic partitions generation via kpartx.
 -- 
 2.13.1
