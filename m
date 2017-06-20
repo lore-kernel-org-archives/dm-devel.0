@@ -1,12 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 0/8] multipath-tools:
-	no_path_retry/queue_if_no_path logic
-Date: Tue, 20 Jun 2017 13:46:06 +0200
-Message-ID: <20170620114614.26261-1-mwilck@suse.com>
+Subject: [PATCH v2 3/8] libmultipath: clarify option conflicts
+	for "features"
+Date: Tue, 20 Jun 2017 13:46:09 +0200
+Message-ID: <20170620114614.26261-4-mwilck@suse.com>
+References: <20170620114614.26261-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20170620114614.26261-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,67 +22,150 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@s
 Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-This patch set attempts to sanitize the logic used for consistently handling
-options that can be set both via the "features" string and explicit multipath.conf
-options. This is most prominently "no_path_retry" vs. "queue_if_no_path", but also
-"retain_attached_hw_handler" vs. the feature of the same name.
+The "features" option in multipath.conf can possibly conflict
+with "no_path_retry" and "retain_attached_hw_handler".
 
-The logic this patch set follows is:
- - If "no_path_retry" is set to any value, "queue_if_no_path" is ignored
-   (this is the case nowadays for almost all "real" storage arrays, thanks to hwtable).
- - Otherwise, if "queue_if_no_path" is set, treat it like "no_path_retry queue".
+Currently, "no_path_retry" takes precedence, unless it is set to
+"fail", in which case it's overridden by "queue_if_no_path".
+This is odd, either "features" or "no_path_retry" should take
+precedence.
+No precedence rules are defined for "retain_attached_hw_handler".
 
-... likewise for "retain_attached_hw_handler".
+Make this behavior more consistent by always giving precedence
+to the explicit config file options, and improve logging.
 
-In the long run, we should get rid of the "features" settings duplicating
-configuration options altogether; the patch set prepares this by printing
-warning messages.
+Put this logic into a separate function, which can be used
+from other places in the code.
 
-The logic is implemented in the new function reconcile_features_with_options,
-which is called from both select_features() and merge_hwe(). In setup_map(),
-we need to call select_features() after select_no_path_retry() to make this work.
-The actual feature setting for device-mapper is made in assemble_map(), the
-patch set also fixes the logic there.
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ libmultipath/configure.c |  4 +--
+ libmultipath/propsel.c   | 68 +++++++++++++++++++++++++++++++++++++-----------
+ libmultipath/propsel.h   |  3 +++
+ 3 files changed, 58 insertions(+), 17 deletions(-)
 
-The patch set documents the behavior in the man page, and adds some more
-man page fixes.
-
-Finally, by skipping superfluous default initializations in load_config(), the
-log messages for the respective config settings become more appropriate.
-
-Review and comments are highly welcome.
-
-Changes wrt v1:
-  - Suggestions from Ben Marzinski:
-    * Made sure "multipathd show config" still works (1/8).
-    * Fixed logging for default setting of "max_sectors" (1/8)
-    * Consistent internal treatment of mp->features (3/8, 4/8)
-    * Fixed whitespace error (6/8)
-    * Added deprecated warnings (8/8)
-  - Made sure the same logic is used in propsel.c and config.c by
-    calling the same function (3/8, 4/8)
-  - Added deprecated warnings (8/8)
-
-Martin Wilck (8):
-  libmultipath: load_config: skip setting unnecessary defaults
-  libmultipath: add/remove_feature: use const char* for feature
-  libmultipath: clarify option conflicts for "features"
-  libmultipath: merge_hwe: fix queue_if_no_path logic
-  libmultipath: assemble_map: fix queue_if_no_path logic
-  multipath.conf.5: document no_path_retry vs. queue_if_no_path
-  multipath.conf.5: Remove ??? and other minor fixes
-  libmultipath: add deprecated warning for some features settings
-
- libmultipath/config.c      | 36 +++++++--------------
- libmultipath/configure.c   |  4 +--
- libmultipath/dict.c        | 11 ++++---
- libmultipath/dmparser.c    |  5 ++-
- libmultipath/propsel.c     | 79 +++++++++++++++++++++++++++++++++++++---------
- libmultipath/propsel.h     |  3 ++
- libmultipath/structs.c     | 30 ++++++++++--------
- libmultipath/structs.h     |  4 +--
- multipath/multipath.conf.5 | 52 ++++++++++++++++--------------
- 9 files changed, 136 insertions(+), 88 deletions(-)
-
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index bd090d9a..fd4721dd 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -280,11 +280,11 @@ int setup_map(struct multipath *mpp, char *params, int params_size)
+ 	select_pgfailback(conf, mpp);
+ 	select_pgpolicy(conf, mpp);
+ 	select_selector(conf, mpp);
+-	select_features(conf, mpp);
+ 	select_hwhandler(conf, mpp);
++	select_no_path_retry(conf, mpp);
++	select_features(conf, mpp);
+ 	select_rr_weight(conf, mpp);
+ 	select_minio(conf, mpp);
+-	select_no_path_retry(conf, mpp);
+ 	select_mode(conf, mpp);
+ 	select_uid(conf, mpp);
+ 	select_gid(conf, mpp);
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index 68436433..ccd067f5 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -269,6 +269,55 @@ out:
+ 	return mp->alias ? 0 : 1;
+ }
+ 
++void reconcile_features_with_options(const char *id, char **features, int* no_path_retry,
++		  int *retain_hwhandler)
++{
++	static const char q_i_n_p[] = "queue_if_no_path";
++	static const char r_a_h_h[] = "retain_attached_hw_handler";
++	char buff[12];
++
++	if (*features == NULL)
++		return;
++	if (id == NULL)
++		id = "UNKNOWN";
++
++	/*
++	 * We only use no_path_retry internally. The "queue_if_no_path"
++	 * device-mapper feature is derived from it when the map is loaded.
++	 * For consistency, "queue_if_no_path" is removed from the
++	 * internal libmultipath features string.
++	 * For backward compatibility we allow 'features "1 queue_if_no_path"';
++	 * it's translated into "no_path_retry queue" here.
++	 */
++	if (strstr(*features, q_i_n_p)) {
++		if (*no_path_retry == NO_PATH_RETRY_UNDEF) {
++			*no_path_retry = NO_PATH_RETRY_QUEUE;
++			print_no_path_retry(buff, sizeof(buff),
++					    no_path_retry);
++			condlog(3, "%s: no_path_retry = %s (inherited setting from feature '%s')",
++				id, buff, q_i_n_p);
++		};
++		/* Warn only if features string is overridden */
++		if (*no_path_retry != NO_PATH_RETRY_QUEUE) {
++			print_no_path_retry(buff, sizeof(buff),
++					    no_path_retry);
++			condlog(2, "%s: ignoring feature '%s' because no_path_retry is set to '%s'",
++				id, q_i_n_p, buff);
++		}
++		remove_feature(features, q_i_n_p);
++	}
++	if (strstr(*features, r_a_h_h)) {
++		if (*retain_hwhandler == RETAIN_HWHANDLER_UNDEF) {
++			condlog(3, "%s: %s = on (inherited setting from feature '%s')",
++				id, r_a_h_h, r_a_h_h);
++			*retain_hwhandler = RETAIN_HWHANDLER_ON;
++		} else if (*retain_hwhandler == RETAIN_HWHANDLER_OFF)
++			condlog(2, "%s: ignoring feature '%s' because %s is set to 'off'",
++				id, r_a_h_h, r_a_h_h);
++		remove_feature(features, r_a_h_h);
++	}
++}
++
+ int select_features(struct config *conf, struct multipath *mp)
+ {
+ 	char *origin;
+@@ -280,19 +329,11 @@ int select_features(struct config *conf, struct multipath *mp)
+ 	mp_set_default(features, DEFAULT_FEATURES);
+ out:
+ 	mp->features = STRDUP(mp->features);
+-	condlog(3, "%s: features = \"%s\" %s", mp->alias, mp->features, origin);
+ 
+-	if (strstr(mp->features, "queue_if_no_path")) {
+-		if (mp->no_path_retry == NO_PATH_RETRY_UNDEF)
+-			mp->no_path_retry = NO_PATH_RETRY_QUEUE;
+-		else if (mp->no_path_retry == NO_PATH_RETRY_FAIL) {
+-			condlog(1, "%s: config error, overriding 'no_path_retry' value",
+-				mp->alias);
+-			mp->no_path_retry = NO_PATH_RETRY_QUEUE;
+-		} else if (mp->no_path_retry != NO_PATH_RETRY_QUEUE)
+-			condlog(1, "%s: config error, ignoring 'queue_if_no_path' because no_path_retry=%d",
+-				mp->alias, mp->no_path_retry);
+-	}
++	reconcile_features_with_options(mp->alias, &mp->features,
++					&mp->no_path_retry,
++					&mp->retain_hwhandler);
++	condlog(3, "%s: features = \"%s\" %s", mp->alias, mp->features, origin);
+ 	return 0;
+ }
+ 
+@@ -469,9 +510,6 @@ out:
+ 	if (origin)
+ 		condlog(3, "%s: no_path_retry = %s %s", mp->alias, buff,
+ 			origin);
+-	else if (mp->no_path_retry != NO_PATH_RETRY_UNDEF)
+-		condlog(3, "%s: no_path_retry = %s (inherited setting)",
+-			mp->alias, buff);
+ 	else
+ 		condlog(3, "%s: no_path_retry = undef (setting: multipath internal)",
+ 			mp->alias);
+diff --git a/libmultipath/propsel.h b/libmultipath/propsel.h
+index 58a32f3c..f8e96d85 100644
+--- a/libmultipath/propsel.h
++++ b/libmultipath/propsel.h
+@@ -28,3 +28,6 @@ int select_max_sectors_kb (struct config *conf, struct multipath * mp);
+ int select_san_path_err_forget_rate(struct config *conf, struct multipath *mp);
+ int select_san_path_err_threshold(struct config *conf, struct multipath *mp);
+ int select_san_path_err_recovery_time(struct config *conf, struct multipath *mp);
++void reconcile_features_with_options(const char *id, char **features,
++				     int* no_path_retry,
++				     int *retain_hwhandler);
 -- 
 2.13.1
