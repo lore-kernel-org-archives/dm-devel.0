@@ -1,140 +1,75 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH v2 1/8] libmultipath: load_config: skip
- setting unnecessary defaults
-Date: Tue, 20 Jun 2017 16:36:47 +0200
-Message-ID: <4dcb7f57-ec1e-90e9-1f6a-7c8572578d1d@suse.de>
-References: <20170620114614.26261-1-mwilck@suse.com>
-	<20170620114614.26261-2-mwilck@suse.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [RFC PATCH 0/4] Allow file systems to selectively bypass dm-crypt
+Date: Tue, 20 Jun 2017 10:44:23 -0400
+Message-ID: <20170620144423.GA22495@redhat.com>
+References: <20170614234040.4326-1-mhalcrow@google.com>
+ <0b268ff7-5fc8-c85f-a530-82e9844f0400@gmail.com>
+ <20170615172450.GA27384@google.com>
+ <0df74dd8-f29d-8925-7cc1-783d09c6a42c@gmail.com>
+ <20170616184240.GA13904@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170620114614.26261-2-mwilck@suse.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20170616184240.GA13904@google.com>
+Sender: linux-block-owner@vger.kernel.org
+To: Michael Halcrow <mhalcrow@google.com>
+Cc: Milan Broz <gmazyland@gmail.com>, "Theodore Y . Ts'o" <tytso@mit.edu>, Eric Biggers <ebiggers@google.com>, dm-crypt <dm-crypt@saout.de>, dm-devel@redhat.com, linux-block@vger.kernel.org, Tyler Hicks <tyler.hicks@canonical.com>, linux-fscrypt@vger.kernel.org, "Daniel P. Berrange" <berrange@redhat.com>, linux-fsdevel@vger.kernel.org, Jaegeuk Kim <jaegeuk@kernel.org>, linux-ext4@vger.kernel.org
 List-Id: dm-devel.ids
 
-T24gMDYvMjAvMjAxNyAwMTo0NiBQTSwgTWFydGluIFdpbGNrIHdyb3RlOgo+IFdlIGhhdmUgdGhl
-IGxvZ2ljIGZvciBzZXR0aW5nIGRlZmF1bHRzIGZvciBwYXRocyBhbmQgbWFwcwo+IGluIHByb3Bz
-ZWwuYy4gQnkgcHJlLXNldHRpbmcgY29uZiB2YWx1ZXMgd2l0aCBkZWZhdWx0cyBpbgo+IGxvYWRf
-Y29uZmlnKCksIHdlIGdlbmVyYXRlIGlycml0YXRpbmcgbG9nIG1lc3NhZ2VzIGxpa2UKPiAnZmVh
-dHVyZXMgPSAiMCIgKHNldHRpbmc6IG11bHRpcGF0aC5jb25mIGRlZmF1bHRzL2RldmljZXMgc2Vj
-dGlvbiknCj4gaWYgbXVsdGlwYXRoLmNvbmYgZG9lc24ndCBjb250YWluIGEgZmVhdHVyZXMgc2V0
-dGluZyBhdCBhbGwuCj4gCj4gRm9yIHNvbWUgY29uZmlnIHNldHRpbmdzLCB3ZSBuZWVkIHRvIHVz
-ZSBkZWNsYXJlX2RlZl9zbnByaW50X2RlZmludCgpCj4gbm93IHRvIG1ha2Ugc3VyZSAibXVsdGlw
-YXRoZCBzaG93IGNvbmZpZyIgcHJpbnRzIGFsbCBkZWZhdWx0cyBjb3JyZWN0bHkuCj4gVG8gYXZv
-aWQgY29uZnVzaW9uLCB3ZSBkb24ndCBkbyB0aGlzIGZvciAibWF4X3NlY3RvcnMiLCBiZWNhdXNl
-Cj4gbXVsdGlwYXRoZCBsZWF2ZXMgdGhpcyB1bnRvdWNoZWQgYnkgZGVmYXVsdC4KPiAKPiBTaWdu
-ZWQtb2ZmLWJ5OiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4KPiAtLS0KPiAgbGlibXVs
-dGlwYXRoL2NvbmZpZy5jICB8IDE2IC0tLS0tLS0tLS0tLS0tLS0KPiAgbGlibXVsdGlwYXRoL2Rp
-Y3QuYyAgICB8IDExICsrKysrKystLS0tCj4gIGxpYm11bHRpcGF0aC9wcm9wc2VsLmMgfCAgNSAr
-KysrKwo+ICAzIGZpbGVzIGNoYW5nZWQsIDEyIGluc2VydGlvbnMoKyksIDIwIGRlbGV0aW9ucygt
-KQo+IAo+IGRpZmYgLS1naXQgYS9saWJtdWx0aXBhdGgvY29uZmlnLmMgYi9saWJtdWx0aXBhdGgv
-Y29uZmlnLmMKPiBpbmRleCBiYjY2MTliMy4uNjFiYmJhOTEgMTAwNjQ0Cj4gLS0tIGEvbGlibXVs
-dGlwYXRoL2NvbmZpZy5jCj4gKysrIGIvbGlibXVsdGlwYXRoL2NvbmZpZy5jCj4gQEAgLTU5OSw0
-MCArNTk5LDI0IEBAIGxvYWRfY29uZmlnIChjaGFyICogZmlsZSkKPiAgCWlmICghY29uZi0+dmVy
-Ym9zaXR5KQo+ICAJCWNvbmYtPnZlcmJvc2l0eSA9IERFRkFVTFRfVkVSQk9TSVRZOwo+ICAKPiAt
-CWNvbmYtPm1pbmlvID0gREVGQVVMVF9NSU5JTzsKPiAtCWNvbmYtPm1pbmlvX3JxID0gREVGQVVM
-VF9NSU5JT19SUTsKPiAgCWdldF9zeXNfbWF4X2ZkcygmY29uZi0+bWF4X2Zkcyk7Cj4gIAljb25m
-LT5iaW5kaW5nc19maWxlID0gc2V0X2RlZmF1bHQoREVGQVVMVF9CSU5ESU5HU19GSUxFKTsKPiAg
-CWNvbmYtPnd3aWRzX2ZpbGUgPSBzZXRfZGVmYXVsdChERUZBVUxUX1dXSURTX0ZJTEUpOwo+ICAJ
-Y29uZi0+bXVsdGlwYXRoX2RpciA9IHNldF9kZWZhdWx0KERFRkFVTFRfTVVMVElQQVRIRElSKTsK
-PiAtCWNvbmYtPmZlYXR1cmVzID0gc2V0X2RlZmF1bHQoREVGQVVMVF9GRUFUVVJFUyk7Cj4gLQlj
-b25mLT5mbHVzaF9vbl9sYXN0X2RlbCA9IERFRkFVTFRfRkxVU0g7Cj4gIAljb25mLT5hdHRyaWJ1
-dGVfZmxhZ3MgPSAwOwo+ICAJY29uZi0+cmVhc3NpZ25fbWFwcyA9IERFRkFVTFRfUkVBU1NJR05f
-TUFQUzsKPiAgCWNvbmYtPmNoZWNraW50ID0gREVGQVVMVF9DSEVDS0lOVDsKPiAgCWNvbmYtPm1h
-eF9jaGVja2ludCA9IDA7Cj4gLQljb25mLT5wZ2ZhaWxiYWNrID0gREVGQVVMVF9GQUlMQkFDSzsK
-PiAtCWNvbmYtPmZhc3RfaW9fZmFpbCA9IERFRkFVTFRfRkFTVF9JT19GQUlMOwo+IC0JY29uZi0+
-cmV0YWluX2h3aGFuZGxlciA9IERFRkFVTFRfUkVUQUlOX0hXSEFORExFUjsKPiAtCWNvbmYtPmRl
-dGVjdF9wcmlvID0gREVGQVVMVF9ERVRFQ1RfUFJJTzsKPiAtCWNvbmYtPmRldGVjdF9jaGVja2Vy
-ID0gREVGQVVMVF9ERVRFQ1RfQ0hFQ0tFUjsKPiAgCWNvbmYtPmZvcmNlX3N5bmMgPSBERUZBVUxU
-X0ZPUkNFX1NZTkM7Cj4gIAljb25mLT5wYXJ0aXRpb25fZGVsaW0gPSBERUZBVUxUX1BBUlRJVElP
-Tl9ERUxJTTsKPiAgCWNvbmYtPnByb2Nlc3NlZF9tYWluX2NvbmZpZyA9IDA7Cj4gIAljb25mLT5m
-aW5kX211bHRpcGF0aHMgPSBERUZBVUxUX0ZJTkRfTVVMVElQQVRIUzsKPiAgCWNvbmYtPnV4c29j
-a190aW1lb3V0ID0gREVGQVVMVF9SRVBMWV9USU1FT1VUOwo+IC0JY29uZi0+dWlkX2F0dHJpYnV0
-ZSA9IHNldF9kZWZhdWx0KERFRkFVTFRfVUlEX0FUVFJJQlVURSk7Cj4gIAljb25mLT5yZXRyaWdn
-ZXJfdHJpZXMgPSBERUZBVUxUX1JFVFJJR0dFUl9UUklFUzsKPiAgCWNvbmYtPnJldHJpZ2dlcl9k
-ZWxheSA9IERFRkFVTFRfUkVUUklHR0VSX0RFTEFZOwo+ICAJY29uZi0+dWV2X3dhaXRfdGltZW91
-dCA9IERFRkFVTFRfVUVWX1dBSVRfVElNRU9VVDsKPiAtCWNvbmYtPmRlZmVycmVkX3JlbW92ZSA9
-IERFRkFVTFRfREVGRVJSRURfUkVNT1ZFOwo+IC0JY29uZi0+c2tpcF9rcGFydHggPSBERUZBVUxU
-X1NLSVBfS1BBUlRYOwo+ICAJY29uZi0+ZGlzYWJsZV9jaGFuZ2VkX3d3aWRzID0gREVGQVVMVF9E
-SVNBQkxFX0NIQU5HRURfV1dJRFM7Cj4gIAljb25mLT5yZW1vdmVfcmV0cmllcyA9IDA7Cj4gLQlj
-b25mLT5tYXhfc2VjdG9yc19rYiA9IERFRkFVTFRfTUFYX1NFQ1RPUlNfS0I7Cj4gLQljb25mLT5z
-YW5fcGF0aF9lcnJfdGhyZXNob2xkID0gREVGQVVMVF9FUlJfQ0hFQ0tTOwo+IC0JY29uZi0+c2Fu
-X3BhdGhfZXJyX2ZvcmdldF9yYXRlID0gREVGQVVMVF9FUlJfQ0hFQ0tTOwo+IC0JY29uZi0+c2Fu
-X3BhdGhfZXJyX3JlY292ZXJ5X3RpbWUgPSBERUZBVUxUX0VSUl9DSEVDS1M7Cj4gIAo+ICAJLyoK
-PiAgCSAqIHByZWxvYWQgZGVmYXVsdCBod3RhYmxlCj4gZGlmZiAtLWdpdCBhL2xpYm11bHRpcGF0
-aC9kaWN0LmMgYi9saWJtdWx0aXBhdGgvZGljdC5jCj4gaW5kZXggODIwNjZmNjcuLjlkYzEwOTA0
-IDEwMDY0NAo+IC0tLSBhL2xpYm11bHRpcGF0aC9kaWN0LmMKPiArKysgYi9saWJtdWx0aXBhdGgv
-ZGljdC5jCj4gQEAgLTYzMCw3ICs2MzAsNyBAQCBwcmludF9mYXN0X2lvX2ZhaWwoY2hhciAqIGJ1
-ZmYsIGludCBsZW4sIHZvaWQgKnB0cikKPiAgfQo+ICAKPiAgZGVjbGFyZV9kZWZfaGFuZGxlcihm
-YXN0X2lvX2ZhaWwsIHNldF9mYXN0X2lvX2ZhaWwpCj4gLWRlY2xhcmVfZGVmX3NucHJpbnQoZmFz
-dF9pb19mYWlsLCBwcmludF9mYXN0X2lvX2ZhaWwpCj4gK2RlY2xhcmVfZGVmX3NucHJpbnRfZGVm
-aW50KGZhc3RfaW9fZmFpbCwgcHJpbnRfZmFzdF9pb19mYWlsLCBERUZBVUxUX0ZBU1RfSU9fRkFJ
-TCkKPiAgZGVjbGFyZV9vdnJfaGFuZGxlcihmYXN0X2lvX2ZhaWwsIHNldF9mYXN0X2lvX2ZhaWwp
-Cj4gIGRlY2xhcmVfb3ZyX3NucHJpbnQoZmFzdF9pb19mYWlsLCBwcmludF9mYXN0X2lvX2ZhaWwp
-Cj4gIGRlY2xhcmVfaHdfaGFuZGxlcihmYXN0X2lvX2ZhaWwsIHNldF9mYXN0X2lvX2ZhaWwpCj4g
-QEAgLTEwODIsNyArMTA4Miw4IEBAIGRlY2xhcmVfaHdfc25wcmludChkZWxheV93YWl0X2NoZWNr
-cywgcHJpbnRfb2ZmX2ludF91bmRlZikKPiAgZGVjbGFyZV9tcF9oYW5kbGVyKGRlbGF5X3dhaXRf
-Y2hlY2tzLCBzZXRfb2ZmX2ludF91bmRlZikKPiAgZGVjbGFyZV9tcF9zbnByaW50KGRlbGF5X3dh
-aXRfY2hlY2tzLCBwcmludF9vZmZfaW50X3VuZGVmKQo+ICBkZWNsYXJlX2RlZl9oYW5kbGVyKHNh
-bl9wYXRoX2Vycl90aHJlc2hvbGQsIHNldF9vZmZfaW50X3VuZGVmKQo+IC1kZWNsYXJlX2RlZl9z
-bnByaW50KHNhbl9wYXRoX2Vycl90aHJlc2hvbGQsIHByaW50X29mZl9pbnRfdW5kZWYpCj4gK2Rl
-Y2xhcmVfZGVmX3NucHJpbnRfZGVmaW50KHNhbl9wYXRoX2Vycl90aHJlc2hvbGQsIHByaW50X29m
-Zl9pbnRfdW5kZWYsCj4gKwkJCSAgIERFRkFVTFRfRVJSX0NIRUNLUykKPiAgZGVjbGFyZV9vdnJf
-aGFuZGxlcihzYW5fcGF0aF9lcnJfdGhyZXNob2xkLCBzZXRfb2ZmX2ludF91bmRlZikKPiAgZGVj
-bGFyZV9vdnJfc25wcmludChzYW5fcGF0aF9lcnJfdGhyZXNob2xkLCBwcmludF9vZmZfaW50X3Vu
-ZGVmKQo+ICBkZWNsYXJlX2h3X2hhbmRsZXIoc2FuX3BhdGhfZXJyX3RocmVzaG9sZCwgc2V0X29m
-Zl9pbnRfdW5kZWYpCj4gQEAgLTEwOTAsNyArMTA5MSw4IEBAIGRlY2xhcmVfaHdfc25wcmludChz
-YW5fcGF0aF9lcnJfdGhyZXNob2xkLCBwcmludF9vZmZfaW50X3VuZGVmKQo+ICBkZWNsYXJlX21w
-X2hhbmRsZXIoc2FuX3BhdGhfZXJyX3RocmVzaG9sZCwgc2V0X29mZl9pbnRfdW5kZWYpCj4gIGRl
-Y2xhcmVfbXBfc25wcmludChzYW5fcGF0aF9lcnJfdGhyZXNob2xkLCBwcmludF9vZmZfaW50X3Vu
-ZGVmKQo+ICBkZWNsYXJlX2RlZl9oYW5kbGVyKHNhbl9wYXRoX2Vycl9mb3JnZXRfcmF0ZSwgc2V0
-X29mZl9pbnRfdW5kZWYpCj4gLWRlY2xhcmVfZGVmX3NucHJpbnQoc2FuX3BhdGhfZXJyX2Zvcmdl
-dF9yYXRlLCBwcmludF9vZmZfaW50X3VuZGVmKQo+ICtkZWNsYXJlX2RlZl9zbnByaW50X2RlZmlu
-dChzYW5fcGF0aF9lcnJfZm9yZ2V0X3JhdGUsIHByaW50X29mZl9pbnRfdW5kZWYsCj4gKwkJCSAg
-IERFRkFVTFRfRVJSX0NIRUNLUykKPiAgZGVjbGFyZV9vdnJfaGFuZGxlcihzYW5fcGF0aF9lcnJf
-Zm9yZ2V0X3JhdGUsIHNldF9vZmZfaW50X3VuZGVmKQo+ICBkZWNsYXJlX292cl9zbnByaW50KHNh
-bl9wYXRoX2Vycl9mb3JnZXRfcmF0ZSwgcHJpbnRfb2ZmX2ludF91bmRlZikKPiAgZGVjbGFyZV9o
-d19oYW5kbGVyKHNhbl9wYXRoX2Vycl9mb3JnZXRfcmF0ZSwgc2V0X29mZl9pbnRfdW5kZWYpCj4g
-QEAgLTEwOTgsNyArMTEwMCw4IEBAIGRlY2xhcmVfaHdfc25wcmludChzYW5fcGF0aF9lcnJfZm9y
-Z2V0X3JhdGUsIHByaW50X29mZl9pbnRfdW5kZWYpCj4gIGRlY2xhcmVfbXBfaGFuZGxlcihzYW5f
-cGF0aF9lcnJfZm9yZ2V0X3JhdGUsIHNldF9vZmZfaW50X3VuZGVmKQo+ICBkZWNsYXJlX21wX3Nu
-cHJpbnQoc2FuX3BhdGhfZXJyX2ZvcmdldF9yYXRlLCBwcmludF9vZmZfaW50X3VuZGVmKQo+ICBk
-ZWNsYXJlX2RlZl9oYW5kbGVyKHNhbl9wYXRoX2Vycl9yZWNvdmVyeV90aW1lLCBzZXRfb2ZmX2lu
-dF91bmRlZikKPiAtZGVjbGFyZV9kZWZfc25wcmludChzYW5fcGF0aF9lcnJfcmVjb3ZlcnlfdGlt
-ZSwgcHJpbnRfb2ZmX2ludF91bmRlZikKPiArZGVjbGFyZV9kZWZfc25wcmludF9kZWZpbnQoc2Fu
-X3BhdGhfZXJyX3JlY292ZXJ5X3RpbWUsIHByaW50X29mZl9pbnRfdW5kZWYsCj4gKwkJCSAgIERF
-RkFVTFRfRVJSX0NIRUNLUykKPiAgZGVjbGFyZV9vdnJfaGFuZGxlcihzYW5fcGF0aF9lcnJfcmVj
-b3ZlcnlfdGltZSwgc2V0X29mZl9pbnRfdW5kZWYpCj4gIGRlY2xhcmVfb3ZyX3NucHJpbnQoc2Fu
-X3BhdGhfZXJyX3JlY292ZXJ5X3RpbWUsIHByaW50X29mZl9pbnRfdW5kZWYpCj4gIGRlY2xhcmVf
-aHdfaGFuZGxlcihzYW5fcGF0aF9lcnJfcmVjb3ZlcnlfdGltZSwgc2V0X29mZl9pbnRfdW5kZWYp
-Cj4gZGlmZiAtLWdpdCBhL2xpYm11bHRpcGF0aC9wcm9wc2VsLmMgYi9saWJtdWx0aXBhdGgvcHJv
-cHNlbC5jCj4gaW5kZXggMzg1MDYzYWEuLjY4NDM2NDMzIDEwMDY0NAo+IC0tLSBhL2xpYm11bHRp
-cGF0aC9wcm9wc2VsLmMKPiArKysgYi9saWJtdWx0aXBhdGgvcHJvcHNlbC5jCj4gQEAgLTc1Miw2
-ICs3NTIsMTEgQEAgaW50IHNlbGVjdF9tYXhfc2VjdG9yc19rYihzdHJ1Y3QgY29uZmlnICpjb25m
-LCBzdHJ1Y3QgbXVsdGlwYXRoICogbXApCj4gIAltcF9zZXRfb3ZyKG1heF9zZWN0b3JzX2tiKTsK
-PiAgCW1wX3NldF9od2UobWF4X3NlY3RvcnNfa2IpOwo+ICAJbXBfc2V0X2NvbmYobWF4X3NlY3Rv
-cnNfa2IpOwo+ICsJbXBfc2V0X2RlZmF1bHQobWF4X3NlY3RvcnNfa2IsIERFRkFVTFRfTUFYX1NF
-Q1RPUlNfS0IpOwo+ICsJLyoKPiArCSAqIEluIHRoZSBkZWZhdWx0IGNhc2UsIHdlIHdpbGwgbm90
-IG1vZGlmeSBtYXhfc2VjdG9yc19rYi4KPiArCSAqIERvbid0IHByaW50IGEgbG9nIG1lc3NhZ2Ug
-dG8gYXZvaWQgdXNlciBjb25mdXNpb24uCj4gKwkgKi8KPiAgCXJldHVybiAwOwo+ICBvdXQ6Cj4g
-IAljb25kbG9nKDMsICIlczogbWF4X3NlY3RvcnNfa2IgPSAlaSAlcyIsIG1wLT5hbGlhcywgbXAt
-Pm1heF9zZWN0b3JzX2tiLAo+IApFcnJtLiBZb3UganVzdCBzZXQgdGhlIGRlZmF1bHQgdmFsdWUs
-IG5vPwpDYXJlIHRvIGNsYXJpZnkgdGhpcyBjb21tZW50PwoKQ2hlZXJzLAoKSGFubmVzCi0tIApE
-ci4gSGFubmVzIFJlaW5lY2tlCQkgICBUZWFtbGVhZCBTdG9yYWdlICYgTmV0d29ya2luZwpoYXJl
-QHN1c2UuZGUJCQkgICAgICAgICAgICAgICArNDkgOTExIDc0MDUzIDY4OApTVVNFIExJTlVYIEdt
-YkgsIE1heGZlbGRzdHIuIDUsIDkwNDA5IE7DvHJuYmVyZwpHRjogRi4gSW1lbmTDtnJmZmVyLCBK
-LiBTbWl0aGFyZCwgSi4gR3VpbGQsIEQuIFVwbWFueXUsIEcuIE5vcnRvbgpIUkIgMjEyODQgKEFH
-IE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29t
-Cmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+On Fri, Jun 16 2017 at  2:42pm -0400,
+Michael Halcrow <mhalcrow@google.com> wrote:
+
+> On Thu, Jun 15, 2017 at 08:17:02PM +0200, Milan Broz wrote:
+> > On 06/15/2017 07:24 PM, Michael Halcrow wrote:
+> > ...
+> > >> If this is accepted, we basically allow attacker to trick system to
+> > >> write plaintext to media just by setting this flag. This must never
+> > >> ever happen with FDE - BY DESIGN.
+> > > 
+> > > That's an important point.  This expands the attack surface to include
+> > > the file system, so if an adversary can provide a bad encryption key
+> > > or policy at the file system layer or if there's a bug in the file
+> > > system that an adversary can exploit, then users setting the
+> > > allow_encrypt_override option on dmcrypt would be vulnerable.
+> > > 
+> > >> For me, ABSOLUTE NACK to this approach.
+> > > 
+> > > I can understand where you're coming from.  Given our challenges on
+> > > mobile, do you have any suggestions for an alternative approach?
+> > 
+> > Well, what I really do not like here that you are solving problem
+> > of missing properly designed cryptographic filesystem by hacking
+> > some layers together that were not designed to it.
+> 
+> Agreed.  I enthusiastically withdraw this proposal.
+> 
+> I think I'm instead going to look into proposing something new in the
+> block layer to address performance concerns with file system
+> encryption and inline cryptographic engine support.
+
+As should have been done from the start.  The emergence of ICE support
+for mobile/embedded platforms should result in a properly designed
+solution to enable dm-crypt to leverage them (easier said than done!).
+And if only certain files need to be encrypted then dm-crypt may or may
+not be configured in the stack.
+
+> > It would better to go with some model that actually increases security.
+> > 
+> > For example, if your patch marks IO operation that comes from fs as
+> > REQ_NOENCRYPT, could fs send some metadata information in bio of
+> > owner (user, translated to key id) instead and encrypt the sector
+> > with a different key?
+> 
+> I really like this idea.  However because users can access the dmcrypt
+> device without the file system, I wouldn't want to try to do it
+> without dmcrypt maintaining additional metadata about which keys
+> protect which blocks.  Even then, the user directly accessing the
+> dmcrypt device would be surprised when dmcrypt returns EIO because it
+> doesn't have a key for the blocks at offsets 42 and 128.
+> 
+> At this point I do think something new at the block layer for file
+> system managed encryption and inline cryptographic engine support will
+> be necessary.
+
+Yes.
