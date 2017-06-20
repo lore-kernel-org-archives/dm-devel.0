@@ -1,75 +1,81 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [RFC PATCH 0/4] Allow file systems to selectively bypass dm-crypt
-Date: Tue, 20 Jun 2017 10:44:23 -0400
-Message-ID: <20170620144423.GA22495@redhat.com>
-References: <20170614234040.4326-1-mhalcrow@google.com>
- <0b268ff7-5fc8-c85f-a530-82e9844f0400@gmail.com>
- <20170615172450.GA27384@google.com>
- <0df74dd8-f29d-8925-7cc1-783d09c6a42c@gmail.com>
- <20170616184240.GA13904@google.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH v2 2/8] libmultipath: add/remove_feature: use
+ const char* for feature
+Date: Tue, 20 Jun 2017 17:01:11 +0200
+Message-ID: <19e448be-646d-c1de-f2ed-a0201d109b37@suse.de>
+References: <20170620114614.26261-1-mwilck@suse.com>
+	<20170620114614.26261-3-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20170616184240.GA13904@google.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Michael Halcrow <mhalcrow@google.com>
-Cc: Milan Broz <gmazyland@gmail.com>, "Theodore Y . Ts'o" <tytso@mit.edu>, Eric Biggers <ebiggers@google.com>, dm-crypt <dm-crypt@saout.de>, dm-devel@redhat.com, linux-block@vger.kernel.org, Tyler Hicks <tyler.hicks@canonical.com>, linux-fscrypt@vger.kernel.org, "Daniel P. Berrange" <berrange@redhat.com>, linux-fsdevel@vger.kernel.org, Jaegeuk Kim <jaegeuk@kernel.org>, linux-ext4@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20170620114614.26261-3-mwilck@suse.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-On Fri, Jun 16 2017 at  2:42pm -0400,
-Michael Halcrow <mhalcrow@google.com> wrote:
-
-> On Thu, Jun 15, 2017 at 08:17:02PM +0200, Milan Broz wrote:
-> > On 06/15/2017 07:24 PM, Michael Halcrow wrote:
-> > ...
-> > >> If this is accepted, we basically allow attacker to trick system to
-> > >> write plaintext to media just by setting this flag. This must never
-> > >> ever happen with FDE - BY DESIGN.
-> > > 
-> > > That's an important point.  This expands the attack surface to include
-> > > the file system, so if an adversary can provide a bad encryption key
-> > > or policy at the file system layer or if there's a bug in the file
-> > > system that an adversary can exploit, then users setting the
-> > > allow_encrypt_override option on dmcrypt would be vulnerable.
-> > > 
-> > >> For me, ABSOLUTE NACK to this approach.
-> > > 
-> > > I can understand where you're coming from.  Given our challenges on
-> > > mobile, do you have any suggestions for an alternative approach?
-> > 
-> > Well, what I really do not like here that you are solving problem
-> > of missing properly designed cryptographic filesystem by hacking
-> > some layers together that were not designed to it.
-> 
-> Agreed.  I enthusiastically withdraw this proposal.
-> 
-> I think I'm instead going to look into proposing something new in the
-> block layer to address performance concerns with file system
-> encryption and inline cryptographic engine support.
-
-As should have been done from the start.  The emergence of ICE support
-for mobile/embedded platforms should result in a properly designed
-solution to enable dm-crypt to leverage them (easier said than done!).
-And if only certain files need to be encrypted then dm-crypt may or may
-not be configured in the stack.
-
-> > It would better to go with some model that actually increases security.
-> > 
-> > For example, if your patch marks IO operation that comes from fs as
-> > REQ_NOENCRYPT, could fs send some metadata information in bio of
-> > owner (user, translated to key id) instead and encrypt the sector
-> > with a different key?
-> 
-> I really like this idea.  However because users can access the dmcrypt
-> device without the file system, I wouldn't want to try to do it
-> without dmcrypt maintaining additional metadata about which keys
-> protect which blocks.  Even then, the user directly accessing the
-> dmcrypt device would be surprised when dmcrypt returns EIO because it
-> doesn't have a key for the blocks at offsets 42 and 128.
-> 
-> At this point I do think something new at the block layer for file
-> system managed encryption and inline cryptographic engine support will
-> be necessary.
-
-Yes.
+T24gMDYvMjAvMjAxNyAwMTo0NiBQTSwgTWFydGluIFdpbGNrIHdyb3RlOgo+IENoYW5nZSB0aGUg
+YXJndW1lbnQgdHlwZSBmb3IgdGhlIGZlYXR1cmUgdG8gYWRkIG9yIHJlbW92ZSB0bwo+IGNvbnN0
+IGNoYXIqLCBtYWtpbmcgaXQgcG9zc2libGUgdG8gcGFzcyBjb25zdCBzdHJpbmdzIHdpdGhvdXQK
+PiB3YXJuaW5ncy4KPiAKPiBTaWduZWQtb2ZmLWJ5OiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNl
+LmNvbT4KPiAtLS0KPiAgbGlibXVsdGlwYXRoL3N0cnVjdHMuYyB8IDMwICsrKysrKysrKysrKysr
+KystLS0tLS0tLS0tLS0tLQo+ICBsaWJtdWx0aXBhdGgvc3RydWN0cy5oIHwgIDQgKystLQo+ICAy
+IGZpbGVzIGNoYW5nZWQsIDE4IGluc2VydGlvbnMoKyksIDE2IGRlbGV0aW9ucygtKQo+IAo+IGRp
+ZmYgLS1naXQgYS9saWJtdWx0aXBhdGgvc3RydWN0cy5jIGIvbGlibXVsdGlwYXRoL3N0cnVjdHMu
+Ywo+IGluZGV4IGUyMjVmOGI0Li4yODcwNDY3NiAxMDA2NDQKPiAtLS0gYS9saWJtdWx0aXBhdGgv
+c3RydWN0cy5jCj4gKysrIGIvbGlibXVsdGlwYXRoL3N0cnVjdHMuYwo+IEBAIC01MTMsMTAgKzUx
+MywxMSBAQCB2b2lkIHNldHVwX2ZlYXR1cmUoc3RydWN0IG11bHRpcGF0aCAqbXBwLCBjaGFyICpm
+ZWF0dXJlKQo+ICAJfQo+ICB9Cj4gIAo+IC1pbnQgYWRkX2ZlYXR1cmUoY2hhciAqKmYsIGNoYXIg
+Km4pCj4gK2ludCBhZGRfZmVhdHVyZShjaGFyICoqZiwgY29uc3QgY2hhciAqbikKPiAgewo+ICAJ
+aW50IGMgPSAwLCBkLCBsID0gMDsKPiAgCWNoYXIgKmUsICpwLCAqdDsKPiArCWNvbnN0IGNoYXIg
+KnE7Cj4gIAo+ICAJaWYgKCFmKQo+ICAJCXJldHVybiAxOwo+IEBAIC01NTQsMTQgKzU1NSwxNCBA
+QCBpbnQgYWRkX2ZlYXR1cmUoY2hhciAqKmYsIGNoYXIgKm4pCj4gIAlpZiAoKGMgJSAxMCkgPT0g
+OSkKPiAgCQlsKys7Cj4gIAljKys7Cj4gLQlwID0gbjsKPiAtCXdoaWxlICgqcCAhPSAnXDAnKSB7
+Cj4gLQkJaWYgKCpwID09ICcgJyAmJiBwWzFdICE9ICdcMCcgJiYgcFsxXSAhPSAnICcpIHsKPiAr
+CXEgPSBuOwo+ICsJd2hpbGUgKCpxICE9ICdcMCcpIHsKPiArCQlpZiAoKnEgPT0gJyAnICYmIHFb
+MV0gIT0gJ1wwJyAmJiBxWzFdICE9ICcgJykgewo+ICAJCQlpZiAoKGMgJSAxMCkgPT0gOSkKPiAg
+CQkJCWwrKzsKPiAgCQkJYysrOwo+ICAJCX0KPiAtCQlwKys7Cj4gKwkJcSsrOwo+ICAJfQo+ICAK
+PiAgCXQgPSBNQUxMT0MobCArIDEpOwo+IEBAIC02MDEsMTAgKzYwMiwxMSBAQCBpbnQgYWRkX2Zl
+YXR1cmUoY2hhciAqKmYsIGNoYXIgKm4pCj4gIAlyZXR1cm4gMDsKPiAgfQo+ICAKPiAtaW50IHJl
+bW92ZV9mZWF0dXJlKGNoYXIgKipmLCBjaGFyICpvKQo+ICtpbnQgcmVtb3ZlX2ZlYXR1cmUoY2hh
+ciAqKmYsIGNvbnN0IGNoYXIgKm8pCj4gIHsKPiAgCWludCBjID0gMCwgZCwgbDsKPiAgCWNoYXIg
+KmUsICpwLCAqbjsKPiArCWNvbnN0IGNoYXIgKnE7Cj4gIAo+ICAJaWYgKCFmIHx8ICEqZikKPiAg
+CQlyZXR1cm4gMTsKPiBAQCAtNjMwLDE4ICs2MzIsMTggQEAgaW50IHJlbW92ZV9mZWF0dXJlKGNo
+YXIgKipmLCBjaGFyICpvKQo+ICAJLyogSnVzdCBzcGFjZXMsIHJldHVybiAqLwo+ICAJaWYgKCpv
+ID09ICdcMCcpCj4gIAkJcmV0dXJuIDA7Cj4gLQllID0gbyArIHN0cmxlbihvKTsKPiAtCXdoaWxl
+ICgqZSA9PSAnICcpCj4gLQkJZS0tOwo+IC0JZCA9IChpbnQpKGUgLSBvKTsKPiArCXEgPSBvICsg
+c3RybGVuKG8pOwo+ICsJd2hpbGUgKCpxID09ICcgJykKPiArCQlxLS07Cj4gKwlkID0gKGludCko
+cSAtIG8pOwo+ICAKPiAgCS8qIFVwZGF0ZSBmZWF0dXJlIGNvdW50ICovCj4gIAljLS07Cj4gLQlw
+ID0gbzsKPiAtCXdoaWxlIChwWzBdICE9ICdcMCcpIHsKPiAtCQlpZiAocFswXSA9PSAnICcgJiYg
+cFsxXSAhPSAnICcgJiYgcFsxXSAhPSAnXDAnKQo+ICsJcSA9IG87Cj4gKwl3aGlsZSAocVswXSAh
+PSAnXDAnKSB7Cj4gKwkJaWYgKHFbMF0gPT0gJyAnICYmIHFbMV0gIT0gJyAnICYmIHFbMV0gIT0g
+J1wwJykKPiAgCQkJYy0tOwo+IC0JCXArKzsKPiArCQlxKys7Cj4gIAl9Cj4gIAo+ICAJLyogUXVp
+Y2sgZXhpdCBpZiBhbGwgZmVhdHVyZXMgaGF2ZSBiZWVuIHJlbW92ZWQgKi8KPiBkaWZmIC0tZ2l0
+IGEvbGlibXVsdGlwYXRoL3N0cnVjdHMuaCBiL2xpYm11bHRpcGF0aC9zdHJ1Y3RzLmgKPiBpbmRl
+eCAwMWUwMzFhZC4uOGVhOTg0ZDkgMTAwNjQ0Cj4gLS0tIGEvbGlibXVsdGlwYXRoL3N0cnVjdHMu
+aAo+ICsrKyBiL2xpYm11bHRpcGF0aC9zdHJ1Y3RzLmgKPiBAQCAtMzY5LDggKzM2OSw4IEBAIGlu
+dCBwYXRoY291bnRnciAoc3RydWN0IHBhdGhncm91cCAqLCBpbnQpOwo+ICBpbnQgcGF0aGNvdW50
+IChzdHJ1Y3QgbXVsdGlwYXRoICosIGludCk7Cj4gIGludCBwYXRoY21wIChzdHJ1Y3QgcGF0aGdy
+b3VwICosIHN0cnVjdCBwYXRoZ3JvdXAgKik7Cj4gIHZvaWQgc2V0dXBfZmVhdHVyZShzdHJ1Y3Qg
+bXVsdGlwYXRoICosIGNoYXIgKik7Cj4gLWludCBhZGRfZmVhdHVyZSAoY2hhciAqKiwgY2hhciAq
+KTsKPiAtaW50IHJlbW92ZV9mZWF0dXJlIChjaGFyICoqLCBjaGFyICopOwo+ICtpbnQgYWRkX2Zl
+YXR1cmUgKGNoYXIgKiosIGNvbnN0IGNoYXIgKik7Cj4gK2ludCByZW1vdmVfZmVhdHVyZSAoY2hh
+ciAqKiwgY29uc3QgY2hhciAqKTsKPiAgCj4gIGV4dGVybiBjaGFyIHN5c2ZzX3BhdGhbUEFUSF9T
+SVpFXTsKPiAgCj4gClJldmlld2VkLWJ5OiBIYW5uZXMgUmVpbmVja2UgPGhhcmVAc3VzZS5jb20+
+CgpDaGVlcnMsCgpIYW5uZXMKCi0tIApEci4gSGFubmVzIFJlaW5lY2tlCQkgICBUZWFtbGVhZCBT
+dG9yYWdlICYgTmV0d29ya2luZwpoYXJlQHN1c2UuZGUJCQkgICAgICAgICAgICAgICArNDkgOTEx
+IDc0MDUzIDY4OApTVVNFIExJTlVYIEdtYkgsIE1heGZlbGRzdHIuIDUsIDkwNDA5IE7DvHJuYmVy
+ZwpHRjogRi4gSW1lbmTDtnJmZmVyLCBKLiBTbWl0aGFyZCwgSi4gR3VpbGQsIEQuIFVwbWFueXUs
+IEcuIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcg
+bGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9s
+aXN0aW5mby9kbS1kZXZlbA==
