@@ -1,16 +1,17 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH v2 2/8] libmultipath: add/remove_feature: use
- const char* for feature
-Date: Tue, 20 Jun 2017 17:01:11 +0200
-Message-ID: <19e448be-646d-c1de-f2ed-a0201d109b37@suse.de>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH v2 1/8] libmultipath: load_config: skip
+ setting unnecessary defaults
+Date: Tue, 20 Jun 2017 11:25:03 -0500
+Message-ID: <20170620162503.GH2940@octiron.msp.redhat.com>
 References: <20170620114614.26261-1-mwilck@suse.com>
-	<20170620114614.26261-3-mwilck@suse.com>
+	<20170620114614.26261-2-mwilck@suse.com>
+	<4dcb7f57-ec1e-90e9-1f6a-7c8572578d1d@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170620114614.26261-3-mwilck@suse.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <4dcb7f57-ec1e-90e9-1f6a-7c8572578d1d@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,62 +21,170 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: Hannes Reinecke <hare@suse.de>
+Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-T24gMDYvMjAvMjAxNyAwMTo0NiBQTSwgTWFydGluIFdpbGNrIHdyb3RlOgo+IENoYW5nZSB0aGUg
-YXJndW1lbnQgdHlwZSBmb3IgdGhlIGZlYXR1cmUgdG8gYWRkIG9yIHJlbW92ZSB0bwo+IGNvbnN0
-IGNoYXIqLCBtYWtpbmcgaXQgcG9zc2libGUgdG8gcGFzcyBjb25zdCBzdHJpbmdzIHdpdGhvdXQK
-PiB3YXJuaW5ncy4KPiAKPiBTaWduZWQtb2ZmLWJ5OiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNl
-LmNvbT4KPiAtLS0KPiAgbGlibXVsdGlwYXRoL3N0cnVjdHMuYyB8IDMwICsrKysrKysrKysrKysr
-KystLS0tLS0tLS0tLS0tLQo+ICBsaWJtdWx0aXBhdGgvc3RydWN0cy5oIHwgIDQgKystLQo+ICAy
-IGZpbGVzIGNoYW5nZWQsIDE4IGluc2VydGlvbnMoKyksIDE2IGRlbGV0aW9ucygtKQo+IAo+IGRp
-ZmYgLS1naXQgYS9saWJtdWx0aXBhdGgvc3RydWN0cy5jIGIvbGlibXVsdGlwYXRoL3N0cnVjdHMu
-Ywo+IGluZGV4IGUyMjVmOGI0Li4yODcwNDY3NiAxMDA2NDQKPiAtLS0gYS9saWJtdWx0aXBhdGgv
-c3RydWN0cy5jCj4gKysrIGIvbGlibXVsdGlwYXRoL3N0cnVjdHMuYwo+IEBAIC01MTMsMTAgKzUx
-MywxMSBAQCB2b2lkIHNldHVwX2ZlYXR1cmUoc3RydWN0IG11bHRpcGF0aCAqbXBwLCBjaGFyICpm
-ZWF0dXJlKQo+ICAJfQo+ICB9Cj4gIAo+IC1pbnQgYWRkX2ZlYXR1cmUoY2hhciAqKmYsIGNoYXIg
-Km4pCj4gK2ludCBhZGRfZmVhdHVyZShjaGFyICoqZiwgY29uc3QgY2hhciAqbikKPiAgewo+ICAJ
-aW50IGMgPSAwLCBkLCBsID0gMDsKPiAgCWNoYXIgKmUsICpwLCAqdDsKPiArCWNvbnN0IGNoYXIg
-KnE7Cj4gIAo+ICAJaWYgKCFmKQo+ICAJCXJldHVybiAxOwo+IEBAIC01NTQsMTQgKzU1NSwxNCBA
-QCBpbnQgYWRkX2ZlYXR1cmUoY2hhciAqKmYsIGNoYXIgKm4pCj4gIAlpZiAoKGMgJSAxMCkgPT0g
-OSkKPiAgCQlsKys7Cj4gIAljKys7Cj4gLQlwID0gbjsKPiAtCXdoaWxlICgqcCAhPSAnXDAnKSB7
-Cj4gLQkJaWYgKCpwID09ICcgJyAmJiBwWzFdICE9ICdcMCcgJiYgcFsxXSAhPSAnICcpIHsKPiAr
-CXEgPSBuOwo+ICsJd2hpbGUgKCpxICE9ICdcMCcpIHsKPiArCQlpZiAoKnEgPT0gJyAnICYmIHFb
-MV0gIT0gJ1wwJyAmJiBxWzFdICE9ICcgJykgewo+ICAJCQlpZiAoKGMgJSAxMCkgPT0gOSkKPiAg
-CQkJCWwrKzsKPiAgCQkJYysrOwo+ICAJCX0KPiAtCQlwKys7Cj4gKwkJcSsrOwo+ICAJfQo+ICAK
-PiAgCXQgPSBNQUxMT0MobCArIDEpOwo+IEBAIC02MDEsMTAgKzYwMiwxMSBAQCBpbnQgYWRkX2Zl
-YXR1cmUoY2hhciAqKmYsIGNoYXIgKm4pCj4gIAlyZXR1cm4gMDsKPiAgfQo+ICAKPiAtaW50IHJl
-bW92ZV9mZWF0dXJlKGNoYXIgKipmLCBjaGFyICpvKQo+ICtpbnQgcmVtb3ZlX2ZlYXR1cmUoY2hh
-ciAqKmYsIGNvbnN0IGNoYXIgKm8pCj4gIHsKPiAgCWludCBjID0gMCwgZCwgbDsKPiAgCWNoYXIg
-KmUsICpwLCAqbjsKPiArCWNvbnN0IGNoYXIgKnE7Cj4gIAo+ICAJaWYgKCFmIHx8ICEqZikKPiAg
-CQlyZXR1cm4gMTsKPiBAQCAtNjMwLDE4ICs2MzIsMTggQEAgaW50IHJlbW92ZV9mZWF0dXJlKGNo
-YXIgKipmLCBjaGFyICpvKQo+ICAJLyogSnVzdCBzcGFjZXMsIHJldHVybiAqLwo+ICAJaWYgKCpv
-ID09ICdcMCcpCj4gIAkJcmV0dXJuIDA7Cj4gLQllID0gbyArIHN0cmxlbihvKTsKPiAtCXdoaWxl
-ICgqZSA9PSAnICcpCj4gLQkJZS0tOwo+IC0JZCA9IChpbnQpKGUgLSBvKTsKPiArCXEgPSBvICsg
-c3RybGVuKG8pOwo+ICsJd2hpbGUgKCpxID09ICcgJykKPiArCQlxLS07Cj4gKwlkID0gKGludCko
-cSAtIG8pOwo+ICAKPiAgCS8qIFVwZGF0ZSBmZWF0dXJlIGNvdW50ICovCj4gIAljLS07Cj4gLQlw
-ID0gbzsKPiAtCXdoaWxlIChwWzBdICE9ICdcMCcpIHsKPiAtCQlpZiAocFswXSA9PSAnICcgJiYg
-cFsxXSAhPSAnICcgJiYgcFsxXSAhPSAnXDAnKQo+ICsJcSA9IG87Cj4gKwl3aGlsZSAocVswXSAh
-PSAnXDAnKSB7Cj4gKwkJaWYgKHFbMF0gPT0gJyAnICYmIHFbMV0gIT0gJyAnICYmIHFbMV0gIT0g
-J1wwJykKPiAgCQkJYy0tOwo+IC0JCXArKzsKPiArCQlxKys7Cj4gIAl9Cj4gIAo+ICAJLyogUXVp
-Y2sgZXhpdCBpZiBhbGwgZmVhdHVyZXMgaGF2ZSBiZWVuIHJlbW92ZWQgKi8KPiBkaWZmIC0tZ2l0
-IGEvbGlibXVsdGlwYXRoL3N0cnVjdHMuaCBiL2xpYm11bHRpcGF0aC9zdHJ1Y3RzLmgKPiBpbmRl
-eCAwMWUwMzFhZC4uOGVhOTg0ZDkgMTAwNjQ0Cj4gLS0tIGEvbGlibXVsdGlwYXRoL3N0cnVjdHMu
-aAo+ICsrKyBiL2xpYm11bHRpcGF0aC9zdHJ1Y3RzLmgKPiBAQCAtMzY5LDggKzM2OSw4IEBAIGlu
-dCBwYXRoY291bnRnciAoc3RydWN0IHBhdGhncm91cCAqLCBpbnQpOwo+ICBpbnQgcGF0aGNvdW50
-IChzdHJ1Y3QgbXVsdGlwYXRoICosIGludCk7Cj4gIGludCBwYXRoY21wIChzdHJ1Y3QgcGF0aGdy
-b3VwICosIHN0cnVjdCBwYXRoZ3JvdXAgKik7Cj4gIHZvaWQgc2V0dXBfZmVhdHVyZShzdHJ1Y3Qg
-bXVsdGlwYXRoICosIGNoYXIgKik7Cj4gLWludCBhZGRfZmVhdHVyZSAoY2hhciAqKiwgY2hhciAq
-KTsKPiAtaW50IHJlbW92ZV9mZWF0dXJlIChjaGFyICoqLCBjaGFyICopOwo+ICtpbnQgYWRkX2Zl
-YXR1cmUgKGNoYXIgKiosIGNvbnN0IGNoYXIgKik7Cj4gK2ludCByZW1vdmVfZmVhdHVyZSAoY2hh
-ciAqKiwgY29uc3QgY2hhciAqKTsKPiAgCj4gIGV4dGVybiBjaGFyIHN5c2ZzX3BhdGhbUEFUSF9T
-SVpFXTsKPiAgCj4gClJldmlld2VkLWJ5OiBIYW5uZXMgUmVpbmVja2UgPGhhcmVAc3VzZS5jb20+
-CgpDaGVlcnMsCgpIYW5uZXMKCi0tIApEci4gSGFubmVzIFJlaW5lY2tlCQkgICBUZWFtbGVhZCBT
-dG9yYWdlICYgTmV0d29ya2luZwpoYXJlQHN1c2UuZGUJCQkgICAgICAgICAgICAgICArNDkgOTEx
-IDc0MDUzIDY4OApTVVNFIExJTlVYIEdtYkgsIE1heGZlbGRzdHIuIDUsIDkwNDA5IE7DvHJuYmVy
-ZwpHRjogRi4gSW1lbmTDtnJmZmVyLCBKLiBTbWl0aGFyZCwgSi4gR3VpbGQsIEQuIFVwbWFueXUs
-IEcuIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcg
-bGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9s
-aXN0aW5mby9kbS1kZXZlbA==
+On Tue, Jun 20, 2017 at 04:36:47PM +0200, Hannes Reinecke wrote:
+> On 06/20/2017 01:46 PM, Martin Wilck wrote:
+> > We have the logic for setting defaults for paths and maps
+> > in propsel.c. By pre-setting conf values with defaults in
+> > load_config(), we generate irritating log messages like
+> > 'features =3D "0" (setting: multipath.conf defaults/devices section)'
+> > if multipath.conf doesn't contain a features setting at all.
+> > =
+
+> > For some config settings, we need to use declare_def_snprint_defint()
+> > now to make sure "multipathd show config" prints all defaults correctly.
+> > To avoid confusion, we don't do this for "max_sectors", because
+> > multipathd leaves this untouched by default.
+> > =
+
+> > Signed-off-by: Martin Wilck <mwilck@suse.com>
+> > ---
+> >  libmultipath/config.c  | 16 ----------------
+> >  libmultipath/dict.c    | 11 +++++++----
+> >  libmultipath/propsel.c |  5 +++++
+> >  3 files changed, 12 insertions(+), 20 deletions(-)
+> > =
+
+> > diff --git a/libmultipath/config.c b/libmultipath/config.c
+> > index bb6619b3..61bbba91 100644
+> > --- a/libmultipath/config.c
+> > +++ b/libmultipath/config.c
+> > @@ -599,40 +599,24 @@ load_config (char * file)
+> >  	if (!conf->verbosity)
+> >  		conf->verbosity =3D DEFAULT_VERBOSITY;
+> >  =
+
+> > -	conf->minio =3D DEFAULT_MINIO;
+> > -	conf->minio_rq =3D DEFAULT_MINIO_RQ;
+> >  	get_sys_max_fds(&conf->max_fds);
+> >  	conf->bindings_file =3D set_default(DEFAULT_BINDINGS_FILE);
+> >  	conf->wwids_file =3D set_default(DEFAULT_WWIDS_FILE);
+> >  	conf->multipath_dir =3D set_default(DEFAULT_MULTIPATHDIR);
+> > -	conf->features =3D set_default(DEFAULT_FEATURES);
+> > -	conf->flush_on_last_del =3D DEFAULT_FLUSH;
+> >  	conf->attribute_flags =3D 0;
+> >  	conf->reassign_maps =3D DEFAULT_REASSIGN_MAPS;
+> >  	conf->checkint =3D DEFAULT_CHECKINT;
+> >  	conf->max_checkint =3D 0;
+> > -	conf->pgfailback =3D DEFAULT_FAILBACK;
+> > -	conf->fast_io_fail =3D DEFAULT_FAST_IO_FAIL;
+> > -	conf->retain_hwhandler =3D DEFAULT_RETAIN_HWHANDLER;
+> > -	conf->detect_prio =3D DEFAULT_DETECT_PRIO;
+> > -	conf->detect_checker =3D DEFAULT_DETECT_CHECKER;
+> >  	conf->force_sync =3D DEFAULT_FORCE_SYNC;
+> >  	conf->partition_delim =3D DEFAULT_PARTITION_DELIM;
+> >  	conf->processed_main_config =3D 0;
+> >  	conf->find_multipaths =3D DEFAULT_FIND_MULTIPATHS;
+> >  	conf->uxsock_timeout =3D DEFAULT_REPLY_TIMEOUT;
+> > -	conf->uid_attribute =3D set_default(DEFAULT_UID_ATTRIBUTE);
+> >  	conf->retrigger_tries =3D DEFAULT_RETRIGGER_TRIES;
+> >  	conf->retrigger_delay =3D DEFAULT_RETRIGGER_DELAY;
+> >  	conf->uev_wait_timeout =3D DEFAULT_UEV_WAIT_TIMEOUT;
+> > -	conf->deferred_remove =3D DEFAULT_DEFERRED_REMOVE;
+> > -	conf->skip_kpartx =3D DEFAULT_SKIP_KPARTX;
+> >  	conf->disable_changed_wwids =3D DEFAULT_DISABLE_CHANGED_WWIDS;
+> >  	conf->remove_retries =3D 0;
+> > -	conf->max_sectors_kb =3D DEFAULT_MAX_SECTORS_KB;
+> > -	conf->san_path_err_threshold =3D DEFAULT_ERR_CHECKS;
+> > -	conf->san_path_err_forget_rate =3D DEFAULT_ERR_CHECKS;
+> > -	conf->san_path_err_recovery_time =3D DEFAULT_ERR_CHECKS;
+> >  =
+
+> >  	/*
+> >  	 * preload default hwtable
+> > diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+> > index 82066f67..9dc10904 100644
+> > --- a/libmultipath/dict.c
+> > +++ b/libmultipath/dict.c
+> > @@ -630,7 +630,7 @@ print_fast_io_fail(char * buff, int len, void *ptr)
+> >  }
+> >  =
+
+> >  declare_def_handler(fast_io_fail, set_fast_io_fail)
+> > -declare_def_snprint(fast_io_fail, print_fast_io_fail)
+> > +declare_def_snprint_defint(fast_io_fail, print_fast_io_fail, DEFAULT_F=
+AST_IO_FAIL)
+> >  declare_ovr_handler(fast_io_fail, set_fast_io_fail)
+> >  declare_ovr_snprint(fast_io_fail, print_fast_io_fail)
+> >  declare_hw_handler(fast_io_fail, set_fast_io_fail)
+> > @@ -1082,7 +1082,8 @@ declare_hw_snprint(delay_wait_checks, print_off_i=
+nt_undef)
+> >  declare_mp_handler(delay_wait_checks, set_off_int_undef)
+> >  declare_mp_snprint(delay_wait_checks, print_off_int_undef)
+> >  declare_def_handler(san_path_err_threshold, set_off_int_undef)
+> > -declare_def_snprint(san_path_err_threshold, print_off_int_undef)
+> > +declare_def_snprint_defint(san_path_err_threshold, print_off_int_undef,
+> > +			   DEFAULT_ERR_CHECKS)
+> >  declare_ovr_handler(san_path_err_threshold, set_off_int_undef)
+> >  declare_ovr_snprint(san_path_err_threshold, print_off_int_undef)
+> >  declare_hw_handler(san_path_err_threshold, set_off_int_undef)
+> > @@ -1090,7 +1091,8 @@ declare_hw_snprint(san_path_err_threshold, print_=
+off_int_undef)
+> >  declare_mp_handler(san_path_err_threshold, set_off_int_undef)
+> >  declare_mp_snprint(san_path_err_threshold, print_off_int_undef)
+> >  declare_def_handler(san_path_err_forget_rate, set_off_int_undef)
+> > -declare_def_snprint(san_path_err_forget_rate, print_off_int_undef)
+> > +declare_def_snprint_defint(san_path_err_forget_rate, print_off_int_und=
+ef,
+> > +			   DEFAULT_ERR_CHECKS)
+> >  declare_ovr_handler(san_path_err_forget_rate, set_off_int_undef)
+> >  declare_ovr_snprint(san_path_err_forget_rate, print_off_int_undef)
+> >  declare_hw_handler(san_path_err_forget_rate, set_off_int_undef)
+> > @@ -1098,7 +1100,8 @@ declare_hw_snprint(san_path_err_forget_rate, prin=
+t_off_int_undef)
+> >  declare_mp_handler(san_path_err_forget_rate, set_off_int_undef)
+> >  declare_mp_snprint(san_path_err_forget_rate, print_off_int_undef)
+> >  declare_def_handler(san_path_err_recovery_time, set_off_int_undef)
+> > -declare_def_snprint(san_path_err_recovery_time, print_off_int_undef)
+> > +declare_def_snprint_defint(san_path_err_recovery_time, print_off_int_u=
+ndef,
+> > +			   DEFAULT_ERR_CHECKS)
+> >  declare_ovr_handler(san_path_err_recovery_time, set_off_int_undef)
+> >  declare_ovr_snprint(san_path_err_recovery_time, print_off_int_undef)
+> >  declare_hw_handler(san_path_err_recovery_time, set_off_int_undef)
+> > diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+> > index 385063aa..68436433 100644
+> > --- a/libmultipath/propsel.c
+> > +++ b/libmultipath/propsel.c
+> > @@ -752,6 +752,11 @@ int select_max_sectors_kb(struct config *conf, str=
+uct multipath * mp)
+> >  	mp_set_ovr(max_sectors_kb);
+> >  	mp_set_hwe(max_sectors_kb);
+> >  	mp_set_conf(max_sectors_kb);
+> > +	mp_set_default(max_sectors_kb, DEFAULT_MAX_SECTORS_KB);
+> > +	/*
+> > +	 * In the default case, we will not modify max_sectors_kb.
+> > +	 * Don't print a log message to avoid user confusion.
+> > +	 */
+> >  	return 0;
+> >  out:
+> >  	condlog(3, "%s: max_sectors_kb =3D %i %s", mp->alias, mp->max_sectors=
+_kb,
+> > =
+
+> Errm. You just set the default value, no?
+> Care to clarify this comment?
+
+The default value is "undefined". This isn't strictly necessary if all
+the other code is correct, but in case mpp->max_sectors_kb was
+previously set to something (or never zeroed out initially), this will
+correctly set it back to undefined.
+
+-Ben
+
+> =
+
+> Cheers,
+> =
+
+> Hannes
+> -- =
+
+> Dr. Hannes Reinecke		   Teamlead Storage & Networking
+> hare@suse.de			               +49 911 74053 688
+> SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+> GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
+> HRB 21284 (AG N=FCrnberg)
