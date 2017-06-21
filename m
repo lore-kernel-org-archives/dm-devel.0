@@ -1,15 +1,12 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH] mpathpersist.8: add missing documentation
- for -K, -C, -l
-Date: Tue, 20 Jun 2017 17:43:06 -0500
-Message-ID: <20170620224306.GL2940@octiron.msp.redhat.com>
-References: <20170522221643.18826-1-mwilck@suse.com>
+From: Yang Feng <philip.yang@huawei.com>
+Subject: [PATCH v6 0/1] multipath-tools: Prioritizer based on a
+	latency algorithm
+Date: Wed, 21 Jun 2017 17:40:33 +0800
+Message-ID: <1498038034-18276-1-git-send-email-philip.yang@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20170522221643.18826-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,85 +16,59 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: dm-devel@redhat.com
+To: mwilck@suse.com, christophe.varoqui@opensvc.com, xose.vazquez@gmail.com, bmarzins@redhat.com, hare@suse.de, dm-devel@redhat.com, shenhong09@huawei.com, hege09@huawei.com, tristan.ye@suse.com
+Cc: philip.yang@huawei.com
 List-Id: dm-devel.ids
 
-On Tue, May 23, 2017 at 12:16:43AM +0200, Martin Wilck wrote:
+This patch value is in the following: 
+1. In the Storage-Backup environment of HyperCluster, includes
+one storage array near to the host and one remote storage array,
+and the two storage arrays have the same hardware. The same LUN is
+writed or readed by the two storage arrays. However, usually, the
+average latency of the paths of the remote storage array is higher
+than the near storage array's. Apparently, the prioritizer can be
+a good automatic solution. And the current selectors don't solve it,
+IOs will send to the paths of the remote storage array, IOPS will
+be influenced unavoidably.
 
-ACK
+2. In the environment of single storage array, the prioritizer can
+automatically separate the paths who's latency is higher, IOs will
+not send to this paths. But the current selectors don't solve this
+problem, IOPS will be influenced unavoidably.
 
--Ben
+Changes from v5:
+* Max average latency value is set to 100s, and min value is set to
+1us. Use logarithmic scale to partition different path priority ranks
+instead of linear scale, while use args "base_num" instead of
+"latency_interval". Fix according to Martin's reviews.
+* Make log to be more regular. Fix according to Martin's reviews.
 
-> Furthermore, add a reference to the sg_persist man page.
-> ---
->  mpathpersist/mpathpersist.8 | 21 ++++++++++++++++++++-
->  1 file changed, 20 insertions(+), 1 deletion(-)
-> 
-> diff --git a/mpathpersist/mpathpersist.8 b/mpathpersist/mpathpersist.8
-> index 4b15666f..a8982e65 100644
-> --- a/mpathpersist/mpathpersist.8
-> +++ b/mpathpersist/mpathpersist.8
-> @@ -34,6 +34,12 @@ attribute must be defined in the \fI/etc/multipath.conf\fR file. Otherwise the
->  \fBmultipathd\fR daemon will not check for persistent reservation for newly
->  discovered paths or reinstated paths.
->  .
-> +.LP
-> +\fBmpathpersist\fR supports the same command-line options as the
-> +\fBsg_persist\fR utility.
-> +.
-> +Consult the \fBsg_persist (8)\fR manual page for an in-depth discussion of the
-> +various options.
->  .
->  .\" ----------------------------------------------------------------------------
->  .SH OPTIONS
-> @@ -89,6 +95,10 @@ PR Out parameter 'APTPL'.
->  PR In: Read Keys.
->  .
->  .TP
-> +.BI \--param-rk=\fIRK\fB|\-K " RK"
-> +PR Out parameter reservation key (RK is in hex, up to 8 bytes).
-> +.
-> +.TP
->  .BI \--param-sark=\fISARK\fB|\-S " SARK"
->  PR Out parameter service action reservation key (SARK is in hex).
->  .
-> @@ -97,6 +107,10 @@ PR Out parameter service action reservation key (SARK is in hex).
->  PR Out: Preempt.
->  .
->  .TP
-> +.B \--clear|\-C
-> +PR Out: Clear registrations.
-> +.
-> +.TP
->  .B \--preempt-abort|\-A
->  PR Out: Preempt and Abort.
->  .
-> @@ -140,6 +154,10 @@ PR Out: Reserve.
->  .BI \--transport-id=\fITIDS\fB|\-X " TIDS"
->  TransportIDs can be mentioned in several forms.
->  .
-> +.TP
-> +.BI \--alloc-length=\fILEN\fB|\-l " LEN"
-> +PR In: maximum allocation length. LEN is a decimal number between 0 and 8192.
-> +.
->  .
->  .\" ----------------------------------------------------------------------------
->  .SH EXAMPLE
-> @@ -164,7 +182,8 @@ Read the reservation status of the /dev/mapper/mpath9 device:
->  .\" ----------------------------------------------------------------------------
->  .
->  .BR multipath (8),
-> -.BR multipathd (8).
-> +.BR multipathd (8),
-> +.BR sg_persist (8).
->  .
->  .
->  .\" ----------------------------------------------------------------------------
-> -- 
-> 2.12.2
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+Changes from v4:
+* Args "latency_interval" is set by using logarithmic scale, 
+where base number is 10. Fix according to Martin's reviews.
+* The value of "MAX_LATENCY_INTERVAL" is set 10 from 60.
+
+Changes from v3:
+* Delete Copyright time "2021", Fix according to Xose's reviews.
+* Add version for GPL, Fix according to Xose's reviews.
+
+Changes from v2:
+* Reorganize the commit comment and patch format.
+* Added Benjamin, Martin and Xose's Reviewed-by.
+
+Changes from v1:
+* The value of "MIN_IO_NUM" is set 2 from 10.
+* Fix according to Benjamin, Martin and Xose's reviews.
+
+Yang Feng (1):
+  multipath-tools: Prioritizer based on a latency algorithm
+
+ libmultipath/prio.h                      |   1 +
+ libmultipath/prioritizers/Makefile       |   4 +
+ libmultipath/prioritizers/path_latency.c | 257 +++++++++++++++++++++++++++++++
+ multipath/multipath.conf.5               |  20 +++
+ 4 files changed, 282 insertions(+)
+ create mode 100644 libmultipath/prioritizers/path_latency.c
+
+-- 
+2.6.4.windows.1
