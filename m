@@ -1,14 +1,13 @@
-From: Yang Feng <philip.yang@huawei.com>
-Subject: [PATCH v6 1/1] multipath-tools: Prioritizer based on a
-	latency algorithm
-Date: Wed, 21 Jun 2017 17:40:34 +0800
-Message-ID: <1498038034-18276-2-git-send-email-philip.yang@huawei.com>
-References: <1498038034-18276-1-git-send-email-philip.yang@huawei.com>
+From: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Subject: Re: [PATCH 0/5] misc multipath patches
+Date: Wed, 21 Jun 2017 12:09:43 +0200
+Message-ID: <CABr-GnfN-GKPFD401ucN-u-BMq1saG6zndBLw=Vjv=OVpFF9+A@mail.gmail.com>
+References: <1496372952-27110-1-git-send-email-bmarzins@redhat.com>
+	<1496781638.4654.11.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============5659161527186674513=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1498038034-18276-1-git-send-email-philip.yang@huawei.com>
+In-Reply-To: <1496781638.4654.11.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,378 +17,92 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: mwilck@suse.com, christophe.varoqui@opensvc.com, xose.vazquez@gmail.com, bmarzins@redhat.com, hare@suse.de, dm-devel@redhat.com, shenhong09@huawei.com, hege09@huawei.com, tristan.ye@suse.com
-Cc: philip.yang@huawei.com
+To: Martin Wilck <mwilck@suse.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-libmultipath/prioritizers: Prioritizer for device mapper multipath,
-where the corresponding priority values of specific paths are provided
-by a latency algorithm on the logarithmic scale. And the latency algorithm
-is dependent on the following arguments(io_num and base_num).
-The principle of the algorithm is illustrated as follows:
-1. By sending a certain number "io_num" of read IOs to the current
-path continuously, the IOs' average latency can be calculated.
-2. Max average latency value is 100s, and min value is 1us. According
-to the average latency of each path and the "base_number" of logarithmic
-scale, the priority "rc" of each path can be provided.
+--===============5659161527186674513==
+Content-Type: multipart/alternative; boundary="001a1141576630c5eb0552759123"
 
-For example: If base_num=10, the paths will be grouped in priority groups
-with path latency <=1us, (1us, 10us], (10us, 100us], (100us, 1ms], (1ms, 10ms],
-(10ms, 100ms], (100ms, 1s], (1s, 10s], (10s, 100s], >100s. As follows:
+--001a1141576630c5eb0552759123
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-       <=1us            (1us, 10us]      (10us, 100us]               >100s
-|------------------|------------------|------------------|...|------------------|
-|  priority rank 9 |  priority rank 8 |  priority rank 7 |...|  priority rank 0 |
-|------------------|------------------|------------------|...|------------------|
-	   		   Priority Rank Partitioning
+The set is merged.
+Thanks.
 
-Signed-off-by: Yang Feng <philip.yang@huawei.com>
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
-Reviewed-by: Martin Wilck <mwilck@suse.com>
-Reviewed-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Reviewed-by: Hannes Reinecke <hare@suse.de>
----
- libmultipath/prio.h                      |   1 +
- libmultipath/prioritizers/Makefile       |   4 +
- libmultipath/prioritizers/path_latency.c | 257 +++++++++++++++++++++++++++++++
- multipath/multipath.conf.5               |  20 +++
- 4 files changed, 282 insertions(+)
- create mode 100644 libmultipath/prioritizers/path_latency.c
+On Tue, Jun 6, 2017 at 10:40 PM, Martin Wilck <mwilck@suse.com> wrote:
 
-diff --git a/libmultipath/prio.h b/libmultipath/prio.h
-index 0193c52..c97fe39 100644
---- a/libmultipath/prio.h
-+++ b/libmultipath/prio.h
-@@ -29,6 +29,7 @@ struct path;
- #define PRIO_RDAC		"rdac"
- #define PRIO_WEIGHTED_PATH	"weightedpath"
- #define PRIO_SYSFS		"sysfs"
-+#define PRIO_PATH_LATENCY	"path_latency"
- 
- /*
-  * Value used to mark the fact prio was not defined
-diff --git a/libmultipath/prioritizers/Makefile b/libmultipath/prioritizers/Makefile
-index 36b42e4..ca47cdf 100644
---- a/libmultipath/prioritizers/Makefile
-+++ b/libmultipath/prioritizers/Makefile
-@@ -18,6 +18,7 @@ LIBS = \
- 	libpriorandom.so \
- 	libpriordac.so \
- 	libprioweightedpath.so \
-+	libpriopath_latency.so \
- 	libpriosysfs.so
- 
- all: $(LIBS)
-@@ -25,6 +26,9 @@ all: $(LIBS)
- libprioalua.so: alua.o alua_rtpg.o
- 	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^
- 
-+libpriopath_latency.so: path_latency.o  ../checkers/libsg.o
-+	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^ -lm
-+
- libprio%.so: %.o
- 	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^
- 
-diff --git a/libmultipath/prioritizers/path_latency.c b/libmultipath/prioritizers/path_latency.c
-new file mode 100644
-index 0000000..046e13b
---- /dev/null
-+++ b/libmultipath/prioritizers/path_latency.c
-@@ -0,0 +1,257 @@
-+/*
-+ * (C) Copyright HUAWEI Technology Corp. 2017, All Rights Reserved.
-+ *
-+ * path_latency.c
-+ *
-+ * Prioritizer for device mapper multipath, where the corresponding priority
-+ * values of specific paths are provided by a latency algorithm. And the
-+ * latency algorithm is dependent on arguments("io_num" and "base_num").
-+ *
-+ * The principle of the algorithm as follows:
-+ * 1. By sending a certain number "io_num" of read IOs to the current path
-+ *    continuously, the IOs' average latency can be calculated.
-+ * 2. Max value and min value of average latency are constant. According to
-+ *    the average latency of each path and the "base_num" of logarithmic
-+ *    scale, the priority "rc" of each path can be provided.
-+ *
-+ * Author(s): Yang Feng <philip.yang@huawei.com>
-+ *
-+ * This file is released under the GPL version 2, or any later version.
-+ *
-+ */
-+#include <stdio.h>
-+#include <math.h>
-+#include <ctype.h>
-+#include <time.h>
-+
-+#include "debug.h"
-+#include "prio.h"
-+#include "structs.h"
-+#include "../checkers/libsg.h"
-+
-+#define pp_pl_log(prio, fmt, args...) condlog(prio, "path_latency prio: " fmt, ##args)
-+
-+#define MAX_IO_NUM              200
-+#define MIN_IO_NUM              2
-+
-+#define MAX_BASE_NUM            10
-+#define MIN_BASE_NUM            2
-+
-+#define MAX_AVG_LATENCY         100000000.  /*Unit: us*/
-+#define MIN_AVG_LATENCY         1.          /*Unit: us*/
-+
-+#define DEFAULT_PRIORITY        0
-+
-+#define MAX_CHAR_SIZE           30
-+
-+#define USEC_PER_SEC            1000000LL
-+#define NSEC_PER_USEC           1000LL
-+
-+static long long path_latency[MAX_IO_NUM];
-+
-+static inline long long timeval_to_us(const struct timespec *tv)
-+{
-+	return ((long long) tv->tv_sec * USEC_PER_SEC) + (tv->tv_nsec / NSEC_PER_USEC);
-+}
-+
-+static int do_readsector0(int fd, unsigned int timeout)
-+{
-+	unsigned char buf[4096];
-+	unsigned char sbuf[SENSE_BUFF_LEN];
-+	int ret;
-+
-+	ret = sg_read(fd, &buf[0], 4096, &sbuf[0],
-+		      SENSE_BUFF_LEN, timeout);
-+
-+	return ret;
-+}
-+
-+int check_args_valid(int io_num, int base_num)
-+{
-+    if ((io_num < MIN_IO_NUM) || (io_num > MAX_IO_NUM))
-+    {
-+        pp_pl_log(0, "args io_num is outside the valid range");
-+        return 0;
-+    }
-+
-+    if ((base_num < MIN_BASE_NUM) || (base_num > MAX_BASE_NUM))
-+    {
-+        pp_pl_log(0, "args base_num is outside the valid range");
-+        return 0;
-+    }
-+
-+    return 1;
-+}
-+
-+/* In multipath.conf, args form: io_num|base_num. For example,
-+*  args is "20|10", this function can get io_num value 20, and
-+   base_num value 10.
-+*/
-+static int get_ionum_and_basenum(char *args,
-+                                 int *ionum,
-+                                 int *basenum)
-+{
-+    char source[MAX_CHAR_SIZE];
-+    char vertica = '|';
-+    char *endstrbefore = NULL;
-+    char *endstrafter = NULL;
-+    unsigned int size = strlen(args);
-+
-+    if ((args == NULL) || (ionum == NULL) || (basenum == NULL))
-+    {
-+        pp_pl_log(0, "args string is NULL");
-+        return 0;
-+    }
-+
-+    if ((size < 1) || (size > MAX_CHAR_SIZE-1))
-+    {
-+        pp_pl_log(0, "args string's size is too long");
-+        return 0;
-+    }
-+
-+    memcpy(source, args, size+1);
-+
-+    if (!isdigit(source[0]))
-+    {
-+        pp_pl_log(0, "invalid prio_args format: %s", source);
-+        return 0;
-+    }
-+
-+    *ionum = (int)strtoul(source, &endstrbefore, 10);
-+    if (endstrbefore[0] != vertica)
-+    {
-+        pp_pl_log(0, "invalid prio_args format: %s", source);
-+        return 0;
-+    }
-+
-+    if (!isdigit(endstrbefore[1]))
-+    {
-+        pp_pl_log(0, "invalid prio_args format: %s", source);
-+        return 0;
-+    }
-+
-+    *basenum = (long long)strtol(&endstrbefore[1], &endstrafter, 10);
-+    if (check_args_valid(*ionum, *basenum) == 0)
-+    {
-+        return 0;
-+    }
-+
-+    return 1;
-+}
-+
-+long long calc_standard_deviation(long long *path_latency, int size, long long avglatency)
-+{
-+    int index;
-+    long long total = 0;
-+
-+    for (index = 0; index < size; index++)
-+    {
-+        total += (path_latency[index] - avglatency) * (path_latency[index] - avglatency);
-+    }
-+
-+    total /= (size-1);
-+
-+    return (long long)sqrt((double)total);
-+}
-+
-+int calcPrio(double avglatency, double max_avglatency, double min_avglatency, double base_num)
-+{
-+    double lavglatency = log(avglatency)/log(base_num);
-+    double lmax_avglatency = log(max_avglatency)/log(base_num);
-+    double lmin_avglatency = log(min_avglatency)/log(base_num);
-+
-+    if (lavglatency <= lmin_avglatency)
-+        return (int)(lmax_avglatency + 1.);
-+
-+    if (lavglatency > lmax_avglatency)
-+        return 0;
-+
-+    return (int)(lmax_avglatency - lavglatency + 1.);
-+}
-+
-+/* Calc the latency interval corresponding to the average latency */
-+long long calc_latency_interval(double avglatency, double max_avglatency,
-+                                double min_avglatency, double base_num)
-+{
-+    double lavglatency = log(avglatency)/log(base_num);
-+    double lmax_avglatency = log(max_avglatency)/log(base_num);
-+    double lmin_avglatency = log(min_avglatency)/log(base_num);
-+
-+    if ((lavglatency <= lmin_avglatency)
-+        || (lavglatency > lmax_avglatency))
-+        return 0;/* Invalid value */
-+
-+    if ((double)((int)lavglatency) == lavglatency)
-+        return (long long)(avglatency - (avglatency / base_num));
-+    else
-+        return (long long)(pow(base_num, (double)((int)lavglatency + 1))
-+            - pow(base_num, (double)((int)lavglatency)));
-+}
-+
-+int getprio (struct path *pp, char *args, unsigned int timeout)
-+{
-+    int rc, temp;
-+    int index = 0;
-+    int io_num;
-+    int base_num;
-+    long long avglatency;
-+    long long latency_interval;
-+    long long standard_deviation;
-+    long long toldelay = 0;
-+    long long before, after;
-+    struct timespec tv;
-+
-+    if (pp->fd < 0)
-+        return -1;
-+
-+    if (get_ionum_and_basenum(args, &io_num, &base_num) == 0)
-+    {
-+        pp_pl_log(0, "%s: get path_latency args fail", pp->dev);
-+        return DEFAULT_PRIORITY;
-+    }
-+
-+    memset(path_latency, 0, sizeof(path_latency));
-+
-+    temp = io_num;
-+    while (temp-- > 0)
-+    {
-+        (void)clock_gettime(CLOCK_MONOTONIC, &tv);
-+        before = timeval_to_us(&tv);
-+
-+        if (do_readsector0(pp->fd, timeout) == 2)
-+        {
-+            pp_pl_log(0, "%s: path down", pp->dev);
-+            return -1;
-+        }
-+
-+        (void)clock_gettime(CLOCK_MONOTONIC, &tv);
-+        after = timeval_to_us(&tv);
-+
-+        path_latency[index] = after - before;
-+        toldelay += path_latency[index++];
-+    }
-+
-+    avglatency = toldelay/(long long)io_num;
-+    pp_pl_log(4, "%s: average latency is (%lld us)", pp->dev, avglatency);
-+
-+    if (avglatency > MAX_AVG_LATENCY)
-+    {
-+        pp_pl_log(0, "%s: average latency (%lld us) is outside the thresold (%lld us)",
-+            pp->dev, avglatency, (long long)MAX_AVG_LATENCY);
-+        return DEFAULT_PRIORITY;
-+    }
-+
-+    /* Min average latency and max average latency are constant, the args base_num
-+    set can change latency_interval value corresponding to avglatency and is not constant.
-+    Warn the user if latency_interval is smaller than (2 * standard_deviation), or equal */
-+    standard_deviation = calc_standard_deviation(path_latency, index, avglatency);
-+    latency_interval = calc_latency_interval(avglatency, MAX_AVG_LATENCY, MIN_AVG_LATENCY, base_num);
-+    if ((latency_interval!= 0)
-+        && (latency_interval <= (2 * standard_deviation)))
-+        pp_pl_log(3, "%s: latency interval (%lld) according to average latency (%lld us) is smaller than "
-+            "2 * standard deviation (%lld us), or equal, args base_num (%d) needs to be set bigger value",
-+            pp->dev, latency_interval, avglatency, standard_deviation, base_num);
-+
-+    rc = calcPrio(avglatency, MAX_AVG_LATENCY, MIN_AVG_LATENCY, base_num);
-+    return rc;
-+}
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index 5939688..8dffac0 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -293,6 +293,10 @@ Generate a random priority between 1 and 10.
- Generate the path priority based on the regular expression and the
- priority provided as argument. Requires prio_args keyword.
- .TP
-+.I path_latency
-+Generate the path priority based on a latency algorithm.
-+Requires prio_args keyword.
-+.TP
- .I datacore
- .\" XXX
- ???. Requires prio_args keyword.
-@@ -333,6 +337,22 @@ these values can be looked up through sysfs or by running \fImultipathd show pat
- "%N:%R:%n:%r"\fR. For example: 0x200100e08ba0aea0:0x210100e08ba0aea0:.*:.* , .*:.*:iqn.2009-10.com.redhat.msp.lab.ask-06:.*
- .RE
- .TP 12
-+.I path_latency
-+Needs a value of the form
-+\fI"<io_num>|<base_num>"\fR
-+.RS
-+.TP 8
-+.I io_num
-+The number of read IOs sent to the current path continuously, used to calculate the average path latency.
-+Valid Values: Integer, [2, 200].
-+.TP
-+.I base_num
-+The base number value of logarithmic scale, used to partition different priority ranks. Valid Values: Integer,
-+[2, 10]. And Max average latency value is 100s, min average latency value is 1us.
-+For example: If base_num=10, the paths will be grouped in priority groups with path latency <=1us, (1us, 10us],
-+(10us, 100us], (100us, 1ms], (1ms, 10ms], (10ms, 100ms], (100ms, 1s], (1s, 10s], (10s, 100s], >100s.
-+.RE
-+.TP 12
- .I alua
- If \fIexclusive_pref_bit\fR is set, paths with the \fIpreferred path\fR bit
- set will always be in their own path group.
--- 
-2.6.4.windows.1
+> On Thu, 2017-06-01 at 22:09 -0500, Benjamin Marzinski wrote:
+> > This is another collection of miscellaneous patches. The first one is
+> > just a resend. The second is a change to how the rados checker is
+> > enable
+> > that makes it easier to build packages for multiple architectures
+> > (since
+> > librados isn't supported on all architectures yet). If people have
+> > objections, I can continue to use the existing build option.
+>
+> Well, we're getting close to having to write configure.ac,
+> or something of the kind :-)
+>
+> But it's fine with me. ACK from me for this series.
+>
+> Martin
+>
+> --
+> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+> SUSE Linux GmbH, GF: Felix Imend=C3=B6rffer, Jane Smithard, Graham Norton
+> HRB 21284 (AG N=C3=BCrnberg)
+>
+>
+
+--001a1141576630c5eb0552759123
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">The set is merged.<div>Thanks.</div></div><div class=3D"gm=
+ail_extra"><br><div class=3D"gmail_quote">On Tue, Jun 6, 2017 at 10:40 PM, =
+Martin Wilck <span dir=3D"ltr">&lt;<a href=3D"mailto:mwilck@suse.com" targe=
+t=3D"_blank">mwilck@suse.com</a>&gt;</span> wrote:<br><blockquote class=3D"=
+gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-=
+left:1ex"><span class=3D"">On Thu, 2017-06-01 at 22:09 -0500, Benjamin Marz=
+inski wrote:<br>
+&gt; This is another collection of miscellaneous patches. The first one is<=
+br>
+&gt; just a resend. The second is a change to how the rados checker is<br>
+&gt; enable<br>
+&gt; that makes it easier to build packages for multiple architectures<br>
+&gt; (since<br>
+&gt; librados isn&#39;t supported on all architectures yet). If people have=
+<br>
+&gt; objections, I can continue to use the existing build option.<br>
+<br>
+</span>Well, we&#39;re getting close to having to write <a href=3D"http://c=
+onfigure.ac" rel=3D"noreferrer" target=3D"_blank">configure.ac</a>,<br>
+or something of the kind :-)<br>
+<br>
+But it&#39;s fine with me. ACK from me for this series.<br>
+<span class=3D"HOEnZb"><font color=3D"#888888"><br>
+Martin<br>
+<br>
+--<br>
+Dr. Martin Wilck &lt;<a href=3D"mailto:mwilck@suse.com">mwilck@suse.com</a>=
+&gt;, Tel. <a href=3D"tel:%2B49%20%280%29911%2074053%202107" value=3D"+4991=
+1740532107">+49 (0)911 74053 2107</a><br>
+SUSE Linux GmbH, GF: Felix Imend=C3=B6rffer, Jane Smithard, Graham Norton<b=
+r>
+HRB 21284 (AG N=C3=BCrnberg)<br>
+<br>
+</font></span></blockquote></div><br></div>
+
+--001a1141576630c5eb0552759123--
+
+
+--===============5659161527186674513==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============5659161527186674513==--
