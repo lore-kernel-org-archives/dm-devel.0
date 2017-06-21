@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 03/11] libmultipath: clarify option conflicts
-	for "features"
-Date: Wed, 21 Jun 2017 17:06:22 +0200
-Message-ID: <20170621150630.25773-4-mwilck@suse.com>
+Subject: [PATCH v3 10/11] libmultipath: don't try to set
+	hwhandler if it is retained
+Date: Wed, 21 Jun 2017 17:06:29 +0200
+Message-ID: <20170621150630.25773-11-mwilck@suse.com>
 References: <20170621150630.25773-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,158 +22,167 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@s
 Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-The "features" option in multipath.conf can possibly conflict
-with "no_path_retry" and "retain_attached_hw_handler".
+Setting a device handler only works if retain_attached_hw_handler
+is 'no', or if the kernel didn't auto-assign a handler. If this
+is not the case, don't even attempt to set a different handler.
 
-Currently, "no_path_retry" takes precedence, unless it is set to
-"fail", in which case it's overridden by "queue_if_no_path".
-This is odd, either "features" or "no_path_retry" should take
-precedence.
-No precedence rules are defined for "retain_attached_hw_handler".
-
-Make this behavior more consistent by always giving precedence
-to the explicit config file options, and improve logging.
-
-Put this logic into a separate function, which can be used
-from other places in the code.
+This requires reading the sysfs "dh_state" path attribute.
+For internal consistency, this attribute must be updated after domap().
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/configure.c |  6 ++---
- libmultipath/propsel.c   | 68 +++++++++++++++++++++++++++++++++++++-----------
- libmultipath/propsel.h   |  3 +++
- 3 files changed, 59 insertions(+), 18 deletions(-)
+ libmultipath/configure.c | 52 +++++++++++++++++++++++++++++++++++++++++++++++-
+ libmultipath/discovery.c |  4 ++++
+ libmultipath/propsel.c   | 15 ++++++++++++++
+ libmultipath/structs.h   |  2 ++
+ 4 files changed, 72 insertions(+), 1 deletion(-)
 
 diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index bd090d9a..a7f2b443 100644
+index 74b6f52a..55dbb261 100644
 --- a/libmultipath/configure.c
 +++ b/libmultipath/configure.c
-@@ -280,18 +280,18 @@ int setup_map(struct multipath *mpp, char *params, int params_size)
+@@ -275,15 +275,21 @@ int setup_map(struct multipath *mpp, char *params, int params_size)
+ 
+ 	/*
+ 	 * properties selectors
++	 *
++	 * Ordering matters for some properties:
++	 * - features after no_path_retry and retain_hwhandler
++	 * - hwhandler after retain_hwhandler
++	 * No guarantee that this list is complete, check code in
++	 * propsel.c if in doubt.
+ 	 */
+ 	conf = get_multipath_config();
  	select_pgfailback(conf, mpp);
  	select_pgpolicy(conf, mpp);
  	select_selector(conf, mpp);
--	select_features(conf, mpp);
- 	select_hwhandler(conf, mpp);
-+	select_no_path_retry(conf, mpp);
-+	select_retain_hwhandler(conf, mpp);
-+	select_features(conf, mpp);
+-	select_hwhandler(conf, mpp);
+ 	select_no_path_retry(conf, mpp);
+ 	select_retain_hwhandler(conf, mpp);
+ 	select_features(conf, mpp);
++	select_hwhandler(conf, mpp);
  	select_rr_weight(conf, mpp);
  	select_minio(conf, mpp);
--	select_no_path_retry(conf, mpp);
  	select_mode(conf, mpp);
- 	select_uid(conf, mpp);
- 	select_gid(conf, mpp);
- 	select_fast_io_fail(conf, mpp);
- 	select_dev_loss(conf, mpp);
- 	select_reservation_key(conf, mpp);
--	select_retain_hwhandler(conf, mpp);
- 	select_deferred_remove(conf, mpp);
- 	select_delay_watch_checks(conf, mpp);
- 	select_delay_wait_checks(conf, mpp);
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index c8ccede5..bc9e130b 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -269,6 +269,55 @@ out:
- 	return mp->alias ? 0 : 1;
+@@ -706,6 +712,48 @@ fail:
+ 	return 1;
  }
  
-+void reconcile_features_with_options(const char *id, char **features, int* no_path_retry,
-+		  int *retain_hwhandler)
++static void
++check_dh_state_changed(struct multipath *mp)
 +{
-+	static const char q_i_n_p[] = "queue_if_no_path";
-+	static const char r_a_h_h[] = "retain_attached_hw_handler";
-+	char buff[12];
++	struct config *conf;
++	struct path newp, *pp;
++	struct pathgroup *pg;
++	int i, j;
 +
-+	if (*features == NULL)
-+		return;
-+	if (id == NULL)
-+		id = "UNKNOWN";
++	conf = get_multipath_config();
 +
-+	/*
-+	 * We only use no_path_retry internally. The "queue_if_no_path"
-+	 * device-mapper feature is derived from it when the map is loaded.
-+	 * For consistency, "queue_if_no_path" is removed from the
-+	 * internal libmultipath features string.
-+	 * For backward compatibility we allow 'features "1 queue_if_no_path"';
-+	 * it's translated into "no_path_retry queue" here.
-+	 */
-+	if (strstr(*features, q_i_n_p)) {
-+		if (*no_path_retry == NO_PATH_RETRY_UNDEF) {
-+			*no_path_retry = NO_PATH_RETRY_QUEUE;
-+			print_no_path_retry(buff, sizeof(buff),
-+					    no_path_retry);
-+			condlog(3, "%s: no_path_retry = %s (inherited setting from feature '%s')",
-+				id, buff, q_i_n_p);
-+		};
-+		/* Warn only if features string is overridden */
-+		if (*no_path_retry != NO_PATH_RETRY_QUEUE) {
-+			print_no_path_retry(buff, sizeof(buff),
-+					    no_path_retry);
-+			condlog(2, "%s: ignoring feature '%s' because no_path_retry is set to '%s'",
-+				id, q_i_n_p, buff);
++	vector_foreach_slot (mp->pg, pg, j) {
++		vector_foreach_slot (pg->paths, pp, i) {
++			if (!pp->udev || !strlen(pp->dh_state) ||
++			    (conf->retain_hwhandler == RETAIN_HWHANDLER_ON &&
++			     strcmp(pp->dh_state, "detached")))
++				continue;
++
++			memset(&newp, 0, sizeof(newp));
++			memcpy(newp.dev, pp->dev, sizeof(newp.dev));
++			newp.udev = udev_device_ref(pp->udev);
++
++			if (pathinfo(&newp, conf, DI_SYSFS) == PATHINFO_OK) {
++				if (strncmp(newp.dh_state, pp->dh_state,
++					    SCSI_DH_SIZE)) {
++					condlog(3, "%s: dh_state changed from %s to %s",
++						pp->dev,
++						pp->dh_state,
++						newp.dh_state);
++					memcpy(pp->dh_state, newp.dh_state,
++					       SCSI_DH_SIZE);
++				}
++			} else
++				condlog(1, "%s: failed to update dh_state",
++					pp->dev);
++
++			udev_device_unref(newp.udev);
 +		}
-+		remove_feature(features, q_i_n_p);
 +	}
-+	if (strstr(*features, r_a_h_h)) {
-+		if (*retain_hwhandler == RETAIN_HWHANDLER_UNDEF) {
-+			condlog(3, "%s: %s = on (inherited setting from feature '%s')",
-+				id, r_a_h_h, r_a_h_h);
-+			*retain_hwhandler = RETAIN_HWHANDLER_ON;
-+		} else if (*retain_hwhandler == RETAIN_HWHANDLER_OFF)
-+			condlog(2, "%s: ignoring feature '%s' because %s is set to 'off'",
-+				id, r_a_h_h, r_a_h_h);
-+		remove_feature(features, r_a_h_h);
-+	}
++
++	put_multipath_config(conf);
 +}
 +
- int select_features(struct config *conf, struct multipath *mp)
- {
- 	char *origin;
-@@ -280,19 +329,11 @@ int select_features(struct config *conf, struct multipath *mp)
- 	mp_set_default(features, DEFAULT_FEATURES);
- out:
- 	mp->features = STRDUP(mp->features);
--	condlog(3, "%s: features = \"%s\" %s", mp->alias, mp->features, origin);
+ /*
+  * Return value:
+  */
+@@ -828,6 +876,8 @@ int domap(struct multipath *mpp, char *params, int is_daemon)
+ 			}
+ 		}
+ 		dm_setgeometry(mpp);
++
++		check_dh_state_changed(mpp);
+ 		return DOMAP_OK;
+ 	}
+ 	return DOMAP_FAIL;
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 663c8eaa..8c0c6a9f 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1188,6 +1188,10 @@ scsi_sysfs_pathinfo (struct path * pp, vector hwtable)
+ 	condlog(3, "%s: tgt_node_name = %s",
+ 		pp->dev, pp->tgt_node_name);
  
--	if (strstr(mp->features, "queue_if_no_path")) {
--		if (mp->no_path_retry == NO_PATH_RETRY_UNDEF)
--			mp->no_path_retry = NO_PATH_RETRY_QUEUE;
--		else if (mp->no_path_retry == NO_PATH_RETRY_FAIL) {
--			condlog(1, "%s: config ERROR (setting: overriding 'no_path_retry' value)",
--				mp->alias);
--			mp->no_path_retry = NO_PATH_RETRY_QUEUE;
--		} else if (mp->no_path_retry != NO_PATH_RETRY_QUEUE)
--			condlog(1, "%s: config ERROR (setting: ignoring 'queue_if_no_path' because no_path_retry = %d)",
--				mp->alias, mp->no_path_retry);
--	}
-+	reconcile_features_with_options(mp->alias, &mp->features,
-+					&mp->no_path_retry,
-+					&mp->retain_hwhandler);
-+	condlog(3, "%s: features = \"%s\" %s", mp->alias, mp->features, origin);
++	if (sysfs_attr_get_value(parent, "dh_state",
++				 pp->dh_state, sizeof(pp->dh_state)) >= 0)
++		condlog(3, "%s: dh_state = %s", pp->dev, pp->dh_state);
++
  	return 0;
  }
  
-@@ -469,9 +510,6 @@ out:
- 	if (origin)
- 		condlog(3, "%s: no_path_retry = %s %s", mp->alias, buff,
- 			origin);
--	else if (mp->no_path_retry != NO_PATH_RETRY_UNDEF)
--		condlog(3, "%s: no_path_retry = %s (setting: inherited value)",
--			mp->alias, buff);
- 	else
- 		condlog(3, "%s: no_path_retry = undef (setting: multipath internal)",
- 			mp->alias);
-diff --git a/libmultipath/propsel.h b/libmultipath/propsel.h
-index 58a32f3c..f8e96d85 100644
---- a/libmultipath/propsel.h
-+++ b/libmultipath/propsel.h
-@@ -28,3 +28,6 @@ int select_max_sectors_kb (struct config *conf, struct multipath * mp);
- int select_san_path_err_forget_rate(struct config *conf, struct multipath *mp);
- int select_san_path_err_threshold(struct config *conf, struct multipath *mp);
- int select_san_path_err_recovery_time(struct config *conf, struct multipath *mp);
-+void reconcile_features_with_options(const char *id, char **features,
-+				     int* no_path_retry,
-+				     int *retain_hwhandler);
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index d609394e..d1b3d416 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -345,7 +345,22 @@ out:
+ int select_hwhandler(struct config *conf, struct multipath *mp)
+ {
+ 	char *origin;
++	struct path *pp;
++	char handler[SCSI_DH_SIZE+2];
++	int i;
+ 
++	if (mp->retain_hwhandler != RETAIN_HWHANDLER_OFF) {
++		vector_foreach_slot(mp->paths, pp, i) {
++			if (strlen(pp->dh_state) &&
++			    strcmp(pp->dh_state, "detached")) {
++				snprintf(handler, sizeof(handler),
++					 "1 %s", pp->dh_state);
++				mp->hwhandler = handler;
++				origin = "(setting: retained by kernel driver)";
++				goto out;
++			}
++		}
++	}
+ 	mp_set_hwe(hwhandler);
+ 	mp_set_conf(hwhandler);
+ 	mp_set_default(hwhandler, DEFAULT_HWHANDLER);
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index 8ea984d9..4203e2b0 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -22,6 +22,7 @@
+ #define SCSI_PRODUCT_SIZE	17
+ #define SCSI_REV_SIZE		5
+ #define SCSI_STATE_SIZE		19
++#define SCSI_DH_SIZE		9 /* must hold "detached" */
+ 
+ #define NO_PATH_RETRY_UNDEF	0
+ #define NO_PATH_RETRY_FAIL	-1
+@@ -205,6 +206,7 @@ struct path {
+ 	char rev[SCSI_REV_SIZE];
+ 	char serial[SERIAL_SIZE];
+ 	char tgt_node_name[NODE_NAME_SIZE];
++	char dh_state[SCSI_DH_SIZE];
+ 	unsigned long long size;
+ 	unsigned int checkint;
+ 	unsigned int tick;
 -- 
 2.13.1
