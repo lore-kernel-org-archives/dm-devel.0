@@ -1,16 +1,16 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH v3 11/11] libmultipath: don't [un]set
- queue_if_no_path after domap
-Date: Thu, 22 Jun 2017 08:23:44 +0200
-Message-ID: <fb72a1ed-58c6-fa6d-9411-8c03ce9541b7@suse.de>
-References: <20170621150630.25773-1-mwilck@suse.com>
-	<20170621150630.25773-12-mwilck@suse.com>
+From: Bart Van Assche <Bart.VanAssche@wdc.com>
+Subject: Re: [PATCH] multipath-tools: sync third-party headers
+ with 3.13 upstream
+Date: Wed, 21 Jun 2017 15:14:06 +0000
+Message-ID: <1498058040.2746.2.camel@wdc.com>
+References: <20170621122639.6027-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170621150630.25773-12-mwilck@suse.com>
+In-Reply-To: <20170621122639.6027-1-xose.vazquez@gmail.com>
 Content-Language: en-US
+Content-ID: <930C657B60E946458E4A56CB365FDA46@namprd04.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,39 +20,14 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: "xose.vazquez@gmail.com" <xose.vazquez@gmail.com>
+Cc: Bart Van Assche <Bart.VanAssche@wdc.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gMDYvMjEvMjAxNyAwNTowNiBQTSwgTWFydGluIFdpbGNrIHdyb3RlOgo+IFdlIHNldCB0aGUg
-cXVldWVfaWZfbm9fcGF0aCBmZWF0dXJlIGluIGFzc2VtYmxlX21hcCgpIGFscmVhZHksCj4gbm8g
-bmVlZCB0byBzZXQgaXQgaGVyZSBhZ2Fpbi4KPiAKPiBTaWduZWQtb2ZmLWJ5OiBNYXJ0aW4gV2ls
-Y2sgPG13aWxja0BzdXNlLmNvbT4KPiAtLS0KPiAgbGlibXVsdGlwYXRoL2NvbmZpZ3VyZS5jIHwg
-MTUgLS0tLS0tLS0tLS0tLS0tCj4gIDEgZmlsZSBjaGFuZ2VkLCAxNSBkZWxldGlvbnMoLSkKPiAK
-PiBkaWZmIC0tZ2l0IGEvbGlibXVsdGlwYXRoL2NvbmZpZ3VyZS5jIGIvbGlibXVsdGlwYXRoL2Nv
-bmZpZ3VyZS5jCj4gaW5kZXggNTVkYmIyNjEuLjM5OTEyZjA1IDEwMDY0NAo+IC0tLSBhL2xpYm11
-bHRpcGF0aC9jb25maWd1cmUuYwo+ICsrKyBiL2xpYm11bHRpcGF0aC9jb25maWd1cmUuYwo+IEBA
-IC0xMDk3LDIxICsxMDk3LDYgQEAgaW50IGNvYWxlc2NlX3BhdGhzIChzdHJ1Y3QgdmVjdG9ycyAq
-IHZlY3MsIHZlY3RvciBuZXdtcCwgY2hhciAqIHJlZnd3aWQsCj4gIAkJCQlyZW1vdmVfZmVhdHVy
-ZSgmbXBwLT5mZWF0dXJlcywKPiAgCQkJCQkgICAgICAgInF1ZXVlX2lmX25vX3BhdGgiKTsKPiAg
-CQl9Cj4gLQkJZWxzZSBpZiAobXBwLT5ub19wYXRoX3JldHJ5ICE9IE5PX1BBVEhfUkVUUllfVU5E
-RUYpIHsKPiAtCQkJaWYgKG1wcC0+bm9fcGF0aF9yZXRyeSA9PSBOT19QQVRIX1JFVFJZX0ZBSUwp
-IHsKPiAtCQkJCWNvbmRsb2coMywgIiVzOiB1bnNldCBxdWV1ZV9pZl9ub19wYXRoIGZlYXR1cmUi
-LAo+IC0JCQkJCW1wcC0+YWxpYXMpOwo+IC0JCQkJaWYgKCFkbV9xdWV1ZV9pZl9ub19wYXRoKG1w
-cC0+YWxpYXMsIDApKQo+IC0JCQkJCXJlbW92ZV9mZWF0dXJlKCZtcHAtPmZlYXR1cmVzLAo+IC0J
-CQkJCQkgICAgICAgInF1ZXVlX2lmX25vX3BhdGgiKTsKPiAtCQkJfSBlbHNlIHsKPiAtCQkJCWNv
-bmRsb2coMywgIiVzOiBzZXQgcXVldWVfaWZfbm9fcGF0aCBmZWF0dXJlIiwKPiAtCQkJCQltcHAt
-PmFsaWFzKTsKPiAtCQkJCWlmICghZG1fcXVldWVfaWZfbm9fcGF0aChtcHAtPmFsaWFzLCAxKSkK
-PiAtCQkJCQlhZGRfZmVhdHVyZSgmbXBwLT5mZWF0dXJlcywKPiAtCQkJCQkJICAgICJxdWV1ZV9p
-Zl9ub19wYXRoIik7Cj4gLQkJCX0KPiAtCQl9Cj4gIAo+ICAJCWlmICghaXNfZGFlbW9uICYmIG1w
-cC0+YWN0aW9uICE9IEFDVF9OT1RISU5HKSB7Cj4gIAkJCWNvbmYgPSBnZXRfbXVsdGlwYXRoX2Nv
-bmZpZygpOwo+IApXYXRjaCBvdXQuCidxdWV1ZV9pZl9ub19wYXRoJyBpcyBzZXQgX3RlbXBvcmFy
-aWx5XyB3aGlsZSAnbm9fcGF0aF9yZXRyeScgaXMgYWN0aXZlLAphbmQgcmVtb3ZlZCBhZnRlcndh
-cmRzLgpTbyB0aGVyZSBtaWdodCBiZSB2YWxpZCByZWFzb25zIHdoeSBpdCdzIHNldCBoZXJlLgpI
-YXZlIHlvdSBjaGVja2VkPwoKQ2hlZXJzLAoKSGFubmVzCi0tIApEci4gSGFubmVzIFJlaW5lY2tl
-CQkgICBUZWFtbGVhZCBTdG9yYWdlICYgTmV0d29ya2luZwpoYXJlQHN1c2UuZGUJCQkgICAgICAg
-ICAgICAgICArNDkgOTExIDc0MDUzIDY4OApTVVNFIExJTlVYIEdtYkgsIE1heGZlbGRzdHIuIDUs
-IDkwNDA5IE7DvHJuYmVyZwpHRjogRi4gSW1lbmTDtnJmZmVyLCBKLiBTbWl0aGFyZCwgSi4gR3Vp
-bGQsIEQuIFVwbWFueXUsIEcuIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRt
-LWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhh
-dC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+On Wed, 2017-06-21 at 14:26 +0200, Xose Vazquez Perez wrote:
+> Cc: Bart Van Assche <bart.vanassche@sandisk.com>
+> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> Cc: device-mapper development <dm-devel@redhat.com>
+> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+
+Reviewed-by: Bart Van Assche <bart.vanassche@wdc.com>
