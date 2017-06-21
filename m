@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 06/11] multipath.conf.5: document
-	no_path_retry vs. queue_if_no_path
-Date: Wed, 21 Jun 2017 17:06:25 +0200
-Message-ID: <20170621150630.25773-7-mwilck@suse.com>
+Subject: [PATCH v3 02/11] libmultipath: add/remove_feature: use
+	const char* for feature
+Date: Wed, 21 Jun 2017 17:06:21 +0200
+Message-ID: <20170621150630.25773-3-mwilck@suse.com>
 References: <20170621150630.25773-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,28 +22,107 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@s
 Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-Clarify the documentation about option precedence.
+Change the argument type for the feature to add or remove to
+const char*, making it possible to pass const strings without
+warnings.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
-Acked-by: Benjamin Marzinski <bmarzins@redhat.com>
+Reviewed-by: Hannes Reinecke <hare@suse.com>
 ---
- multipath/multipath.conf.5 | 4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+ libmultipath/structs.c | 30 ++++++++++++++++--------------
+ libmultipath/structs.h |  4 ++--
+ 2 files changed, 18 insertions(+), 16 deletions(-)
 
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index 0049cba7..d5d9438a 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -385,7 +385,9 @@ Possible values for the feature list are:
- .\" XXX
- .I queue_if_no_path
- (Superseded by \fIno_path_retry\fR) (Since ??? kernel) Queue I/O if no path is active.
--Identical to the \fIno_path_retry\fR with \fIqueue\fR value. See KNOWN ISSUES.
-+Identical to the \fIno_path_retry\fR with \fIqueue\fR value. If both this
-+feature and \fIno_path_retry\fR are set, the latter value takes
-+precedence. See KNOWN ISSUES.
- .TP
- .I no_partitions
- Disable automatic partitions generation via kpartx.
+diff --git a/libmultipath/structs.c b/libmultipath/structs.c
+index e225f8b4..28704676 100644
+--- a/libmultipath/structs.c
++++ b/libmultipath/structs.c
+@@ -513,10 +513,11 @@ void setup_feature(struct multipath *mpp, char *feature)
+ 	}
+ }
+ 
+-int add_feature(char **f, char *n)
++int add_feature(char **f, const char *n)
+ {
+ 	int c = 0, d, l = 0;
+ 	char *e, *p, *t;
++	const char *q;
+ 
+ 	if (!f)
+ 		return 1;
+@@ -554,14 +555,14 @@ int add_feature(char **f, char *n)
+ 	if ((c % 10) == 9)
+ 		l++;
+ 	c++;
+-	p = n;
+-	while (*p != '\0') {
+-		if (*p == ' ' && p[1] != '\0' && p[1] != ' ') {
++	q = n;
++	while (*q != '\0') {
++		if (*q == ' ' && q[1] != '\0' && q[1] != ' ') {
+ 			if ((c % 10) == 9)
+ 				l++;
+ 			c++;
+ 		}
+-		p++;
++		q++;
+ 	}
+ 
+ 	t = MALLOC(l + 1);
+@@ -601,10 +602,11 @@ int add_feature(char **f, char *n)
+ 	return 0;
+ }
+ 
+-int remove_feature(char **f, char *o)
++int remove_feature(char **f, const char *o)
+ {
+ 	int c = 0, d, l;
+ 	char *e, *p, *n;
++	const char *q;
+ 
+ 	if (!f || !*f)
+ 		return 1;
+@@ -630,18 +632,18 @@ int remove_feature(char **f, char *o)
+ 	/* Just spaces, return */
+ 	if (*o == '\0')
+ 		return 0;
+-	e = o + strlen(o);
+-	while (*e == ' ')
+-		e--;
+-	d = (int)(e - o);
++	q = o + strlen(o);
++	while (*q == ' ')
++		q--;
++	d = (int)(q - o);
+ 
+ 	/* Update feature count */
+ 	c--;
+-	p = o;
+-	while (p[0] != '\0') {
+-		if (p[0] == ' ' && p[1] != ' ' && p[1] != '\0')
++	q = o;
++	while (q[0] != '\0') {
++		if (q[0] == ' ' && q[1] != ' ' && q[1] != '\0')
+ 			c--;
+-		p++;
++		q++;
+ 	}
+ 
+ 	/* Quick exit if all features have been removed */
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index 01e031ad..8ea984d9 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -369,8 +369,8 @@ int pathcountgr (struct pathgroup *, int);
+ int pathcount (struct multipath *, int);
+ int pathcmp (struct pathgroup *, struct pathgroup *);
+ void setup_feature(struct multipath *, char *);
+-int add_feature (char **, char *);
+-int remove_feature (char **, char *);
++int add_feature (char **, const char *);
++int remove_feature (char **, const char *);
+ 
+ extern char sysfs_path[PATH_SIZE];
+ 
 -- 
 2.13.1
