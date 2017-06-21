@@ -1,12 +1,12 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 04/11] libmultipath: merge_hwe: fix
-	queue_if_no_path logic
-Date: Wed, 21 Jun 2017 17:06:23 +0200
-Message-ID: <20170621150630.25773-5-mwilck@suse.com>
+Subject: Re: [PATCH v3 00/11] multipath-tools:
+ no_path_retry/queue_if_no_path/hwhandler logic
+Date: Wed, 21 Jun 2017 17:15:13 +0200
+Message-ID: <1498058113.6632.10.camel@suse.com>
 References: <20170621150630.25773-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <20170621150630.25773-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -22,59 +22,15 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@s
 Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-The logic applied here should match the logic in select_features().
-This is achieved by calling reconcile_features_with_options().
-
-Signed-off-by: Martin Wilck <mwilck@suse.com>
-Acked-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmultipath/config.c | 20 +++++++++++---------
- 1 file changed, 11 insertions(+), 9 deletions(-)
-
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index 60e345b3..a9b3eda2 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -25,6 +25,7 @@
- #include "prio.h"
- #include "devmapper.h"
- #include "mpath_cmd.h"
-+#include "propsel.h"
- 
- static int
- hwe_strmatch (struct hwentry *hwe1, struct hwentry *hwe2)
-@@ -318,6 +319,8 @@ set_param_str(char * str)
- static int
- merge_hwe (struct hwentry * dst, struct hwentry * src)
- {
-+	int id_len;
-+	char *id;
- 	merge_str(vendor);
- 	merge_str(product);
- 	merge_str(revision);
-@@ -353,15 +356,14 @@ merge_hwe (struct hwentry * dst, struct hwentry * src)
- 	merge_num(san_path_err_forget_rate);
- 	merge_num(san_path_err_recovery_time);
- 
--	/*
--	 * Make sure features is consistent with
--	 * no_path_retry
--	 */
--	if (dst->no_path_retry == NO_PATH_RETRY_FAIL)
--		remove_feature(&dst->features, "queue_if_no_path");
--	else if (dst->no_path_retry != NO_PATH_RETRY_UNDEF)
--		add_feature(&dst->features, "queue_if_no_path");
--
-+	id_len = strlen(dst->vendor) + strlen(dst->product) + 2;
-+	id = MALLOC(id_len);
-+	if (id != NULL)
-+		snprintf(id, id_len, "%s/%s", dst->vendor, dst->product);
-+	reconcile_features_with_options(id, &dst->features,
-+					&dst->no_path_retry,
-+					&dst->retain_hwhandler);
-+	FREE(id);
- 	return 0;
- }
- 
--- 
-2.13.1
+T24gV2VkLCAyMDE3LTA2LTIxIGF0IDE3OjA2ICswMjAwLCBNYXJ0aW4gV2lsY2sgd3JvdGU6Cj4g
+Cj4gQ2hhbmdlcyB3cnQgdjI6Cj4gIC0gQWRkZWQgQWNrZWQtYnk6L1Jldmlld2VkLWJ5OiB0YWdz
+Cj4gIC0gMS8xMTogY2xhcmlmeSBjb21tZW50IGluIHNlbGVjdF9tYXhfc2VjdG9yc19rYiAoSGFu
+bmVzIFJlaW5lY2tlKQo+ICAtIDMvMTE6IGNhbGwgc2VsZWN0X3JldGFpbl9od2hhbmRsZXIgYmVm
+b3JlIHNlbGVjdF9mZWF0dXJlcwo+ICAtIDgvMTE6IGRvbid0IHN1Z2dlc3QgdXNpbmcgcmV0YWlu
+X2F0dGFjaGVkX2h3X2hhbmRsZXIgaW4gbG9nIG1zZwo+ICAtIDkvMTEsIDEwLzExLCAxMS8xMTog
+bmV3CgpGb3Jnb3QgdG8gbWVudGlvbjogcmViYXNlZCB0byBDaHJpc3RvcGhlJ3MgbGF0ZXN0IGNv
+ZGUgKDg0N2NjNDNjKS4KCk1hcnRpbgoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNl
+LmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZl
+bGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQg
+KEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQu
+Y29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
