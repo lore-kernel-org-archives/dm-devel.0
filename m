@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 11/11] libmultipath: don't [un]set
-	queue_if_no_path after domap
-Date: Wed, 21 Jun 2017 17:06:30 +0200
-Message-ID: <20170621150630.25773-12-mwilck@suse.com>
+Subject: [PATCH v3 04/11] libmultipath: merge_hwe: fix
+	queue_if_no_path logic
+Date: Wed, 21 Jun 2017 17:06:23 +0200
+Message-ID: <20170621150630.25773-5-mwilck@suse.com>
 References: <20170621150630.25773-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,39 +22,59 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@s
 Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-We set the queue_if_no_path feature in assemble_map() already,
-no need to set it here again.
+The logic applied here should match the logic in select_features().
+This is achieved by calling reconcile_features_with_options().
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
+Acked-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/configure.c | 15 ---------------
- 1 file changed, 15 deletions(-)
+ libmultipath/config.c | 20 +++++++++++---------
+ 1 file changed, 11 insertions(+), 9 deletions(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 55dbb261..39912f05 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -1097,21 +1097,6 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
- 				remove_feature(&mpp->features,
- 					       "queue_if_no_path");
- 		}
--		else if (mpp->no_path_retry != NO_PATH_RETRY_UNDEF) {
--			if (mpp->no_path_retry == NO_PATH_RETRY_FAIL) {
--				condlog(3, "%s: unset queue_if_no_path feature",
--					mpp->alias);
--				if (!dm_queue_if_no_path(mpp->alias, 0))
--					remove_feature(&mpp->features,
--						       "queue_if_no_path");
--			} else {
--				condlog(3, "%s: set queue_if_no_path feature",
--					mpp->alias);
--				if (!dm_queue_if_no_path(mpp->alias, 1))
--					add_feature(&mpp->features,
--						    "queue_if_no_path");
--			}
--		}
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index 60e345b3..a9b3eda2 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -25,6 +25,7 @@
+ #include "prio.h"
+ #include "devmapper.h"
+ #include "mpath_cmd.h"
++#include "propsel.h"
  
- 		if (!is_daemon && mpp->action != ACT_NOTHING) {
- 			conf = get_multipath_config();
+ static int
+ hwe_strmatch (struct hwentry *hwe1, struct hwentry *hwe2)
+@@ -318,6 +319,8 @@ set_param_str(char * str)
+ static int
+ merge_hwe (struct hwentry * dst, struct hwentry * src)
+ {
++	int id_len;
++	char *id;
+ 	merge_str(vendor);
+ 	merge_str(product);
+ 	merge_str(revision);
+@@ -353,15 +356,14 @@ merge_hwe (struct hwentry * dst, struct hwentry * src)
+ 	merge_num(san_path_err_forget_rate);
+ 	merge_num(san_path_err_recovery_time);
+ 
+-	/*
+-	 * Make sure features is consistent with
+-	 * no_path_retry
+-	 */
+-	if (dst->no_path_retry == NO_PATH_RETRY_FAIL)
+-		remove_feature(&dst->features, "queue_if_no_path");
+-	else if (dst->no_path_retry != NO_PATH_RETRY_UNDEF)
+-		add_feature(&dst->features, "queue_if_no_path");
+-
++	id_len = strlen(dst->vendor) + strlen(dst->product) + 2;
++	id = MALLOC(id_len);
++	if (id != NULL)
++		snprintf(id, id_len, "%s/%s", dst->vendor, dst->product);
++	reconcile_features_with_options(id, &dst->features,
++					&dst->no_path_retry,
++					&dst->retain_hwhandler);
++	FREE(id);
+ 	return 0;
+ }
+ 
 -- 
 2.13.1
