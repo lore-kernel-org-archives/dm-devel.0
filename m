@@ -1,13 +1,16 @@
 From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH] multipath-tools: replace hidden tabs by
-	spaces in .vendor
-Date: Wed, 21 Jun 2017 12:29:45 +0200
-Message-ID: <CABr-GncwH6eB0uihXhKC3eoZEnP9fcDMeJrWfLHm7UaKm6FfgQ@mail.gmail.com>
-References: <20170520132952.2732-1-xose.vazquez@gmail.com>
+Subject: Re: [PATCH] multipath-tools: delete vendor name HUASY
+ for Huawei devices
+Date: Wed, 21 Jun 2017 12:30:54 +0200
+Message-ID: <CABr-GnfhDP-gJw1_N=nZqLxVy9GkqdsooaxsBTiuC-L+NQtLQg@mail.gmail.com>
+References: <1495268822-18564-1-git-send-email-zouming.zouming@huawei.com>
+	<CABr-GneAwr2yFYvjigedLV32csn2jtAR3mK7G_2eOAB+T+9_HQ@mail.gmail.com>
+	<a1e23307-2a9d-45c5-579e-e2d912e76bcc@huawei.com>
+	<CABr-Gnfh93jZVi=sET6hpOgHpYUQBDJj4P1Nk7tqcnp9cz6tCQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============8397536850845685739=="
+Content-Type: multipart/mixed; boundary="===============8720019991758611325=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170520132952.2732-1-xose.vazquez@gmail.com>
+In-Reply-To: <CABr-Gnfh93jZVi=sET6hpOgHpYUQBDJj4P1Nk7tqcnp9cz6tCQ@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,158 +20,174 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: "Zouming (IT)" <zouming.zouming@huawei.com>
+Cc: guanjunxiong@huawei.com, Yang Feng <philip.yang@huawei.com>, shenhong09@huawei.com, device-mapper development <dm-devel@redhat.com>, hege09@huawei.com, qiuxin@huawei.com
 List-Id: dm-devel.ids
 
---===============8397536850845685739==
-Content-Type: multipart/alternative; boundary="94eb2c04fa14d473bc055275d860"
+--===============8720019991758611325==
+Content-Type: multipart/alternative; boundary="001a11c10ec2eda5c6055275dcf4"
 
---94eb2c04fa14d473bc055275d860
+--001a11c10ec2eda5c6055275dcf4
 Content-Type: text/plain; charset="UTF-8"
 
-Merged,
+And now merged.
 Thanks.
 
-On Sat, May 20, 2017 at 3:29 PM, Xose Vazquez Perez <xose.vazquez@gmail.com>
-wrote:
+On Sat, May 20, 2017 at 12:31 PM, Christophe Varoqui <
+christophe.varoqui@opensvc.com> wrote:
 
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: device-mapper development <dm-devel@redhat.com>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> ---
->  libmultipath/hwtable.c | 10 +++++-----
->  1 file changed, 5 insertions(+), 5 deletions(-)
+> Thanks for the clarification.
 >
-> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-> index 54309ef..59a6055 100644
-> --- a/libmultipath/hwtable.c
-> +++ b/libmultipath/hwtable.c
-> @@ -827,7 +827,7 @@ static struct hwentry default_hw[] = {
->          * Intel
->          */
->         {
-> -               .vendor        = "(Intel|INTEL)",
-> +               .vendor        = "(Intel|INTEL)",
->                 .product       = "Multi-Flex",
->                 .bl_product    = "VTrak V-LUN",
->                 .hwhandler     = "1 alua",
-> @@ -840,7 +840,7 @@ static struct hwentry default_hw[] = {
->          * Linux-IO Target
->          */
->         {
-> -               .vendor        = "(LIO-ORG|SUSE)",
-> +               .vendor        = "(LIO-ORG|SUSE)",
->                 .product       = "RBD",
->                 .hwhandler     = "1 alua",
->                 .pgpolicy      = GROUP_BY_PRIO,
-> @@ -852,7 +852,7 @@ static struct hwentry default_hw[] = {
->          * DataCore
->          */
->         {
-> -               .vendor        = "DataCore",
-> +               .vendor        = "DataCore",
->                 .product       = "SANmelody",
->                 .pgpolicy      = GROUP_BY_PRIO,
->                 .pgfailback    = -FAILBACK_IMMEDIATE,
-> @@ -861,7 +861,7 @@ static struct hwentry default_hw[] = {
->         },
->         {
->                 /* SANsymphony */
-> -               .vendor        = "DataCore",
-> +               .vendor        = "DataCore",
->                 .product       = "Virtual Disk",
->                 .pgpolicy      = GROUP_BY_PRIO,
->                 .pgfailback    = -FAILBACK_IMMEDIATE,
-> @@ -1053,7 +1053,7 @@ static struct hwentry default_hw[] = {
->          * Generic NVMe devices
->          */
->         {
-> -               .vendor        = "NVME",
-> +               .vendor        = "NVME",
->                 .product       = ".*",
->                 .uid_attribute = "ID_WWN",
->                 .checker_name  = DIRECTIO,
-> --
-> 2.13.0
+> On Sat, May 20, 2017 at 11:17 AM, Zouming (IT) <zouming.zouming@huawei.com
+> > wrote:
 >
+>> Hi christophe:
+>>
+>> We absolutely sure for product XSG1,no arrays use vendor name HUASY.
+>> Because these arrays are our up-to-date product.
+>>
+>> Best regards,
+>> Zou Ming.
+>>
+>> On 2017/5/20 17:02, Christophe Varoqui wrote:
+>> > Hi,
+>> >
+>> > question is, is there arrays in the wild exposing this vendor name ?
+>> > If so, we'll rather keep its defaults for the decade to come.
+>> >
+>> > Best regards,
+>> > Christophe.
+>> >
+>> > On Sat, May 20, 2017 at 10:27 AM, Zou Ming <zouming.zouming@huawei.com
+>> <mailto:zouming.zouming@huawei.com>> wrote:
+>> >
+>> >     For product XSG1,HUASY is obsolete for Huawei devices,Only HUAWEI
+>> is the official vendor name.
+>> >     ---
+>> >      libmultipath/hwtable.c | 2 +-
+>> >      1 file changed, 1 insertion(+), 1 deletion(-)
+>> >
+>> >     diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+>> >     index 54309ef..bd8719c 100644
+>> >     --- a/libmultipath/hwtable.c
+>> >     +++ b/libmultipath/hwtable.c
+>> >     @@ -881,7 +881,7 @@ static struct hwentry default_hw[] = {
+>> >              */
+>> >             {
+>> >                     /* OceanStor V3 */
+>> >     -               .vendor        = "(HUAWEI|HUASY)",
+>> >     +               .vendor        = "HUAWEI",
+>> >                     .product       = "XSG1",
+>> >                     .pgpolicy      = MULTIBUS,
+>> >             },
+>> >     --
+>> >     2.6.4.windows.1
+>> >
+>> >
+>> >     --
+>> >     dm-devel mailing list
+>> >     dm-devel@redhat.com <mailto:dm-devel@redhat.com>
+>> >     https://www.redhat.com/mailman/listinfo/dm-devel <
+>> https://www.redhat.com/mailman/listinfo/dm-devel>
+>> >
+>> >
+>>
+>>
 >
 
---94eb2c04fa14d473bc055275d860
+--001a11c10ec2eda5c6055275dcf4
 Content-Type: text/html; charset="UTF-8"
-Content-Transfer-Encoding: base64
+Content-Transfer-Encoding: quoted-printable
 
-PGRpdiBkaXI9Imx0ciI+TWVyZ2VkLDxkaXY+VGhhbmtzLjwvZGl2PjwvZGl2PjxkaXYgY2xhc3M9
-ImdtYWlsX2V4dHJhIj48YnI+PGRpdiBjbGFzcz0iZ21haWxfcXVvdGUiPk9uIFNhdCwgTWF5IDIw
-LCAyMDE3IGF0IDM6MjkgUE0sIFhvc2UgVmF6cXVleiBQZXJleiA8c3BhbiBkaXI9Imx0ciI+Jmx0
-OzxhIGhyZWY9Im1haWx0bzp4b3NlLnZhenF1ZXpAZ21haWwuY29tIiB0YXJnZXQ9Il9ibGFuayI+
-eG9zZS52YXpxdWV6QGdtYWlsLmNvbTwvYT4mZ3Q7PC9zcGFuPiB3cm90ZTo8YnI+PGJsb2NrcXVv
-dGUgY2xhc3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0ibWFyZ2luOjAgMCAwIC44ZXg7Ym9yZGVyLWxl
-ZnQ6MXB4ICNjY2Mgc29saWQ7cGFkZGluZy1sZWZ0OjFleCI+Q2M6IENocmlzdG9waGUgVmFyb3F1
-aSAmbHQ7PGEgaHJlZj0ibWFpbHRvOmNocmlzdG9waGUudmFyb3F1aUBvcGVuc3ZjLmNvbSI+Y2hy
-aXN0b3BoZS52YXJvcXVpQG9wZW5zdmMuPHdicj5jb208L2E+Jmd0Ozxicj4NCkNjOiBkZXZpY2Ut
-bWFwcGVyIGRldmVsb3BtZW50ICZsdDs8YSBocmVmPSJtYWlsdG86ZG0tZGV2ZWxAcmVkaGF0LmNv
-bSI+ZG0tZGV2ZWxAcmVkaGF0LmNvbTwvYT4mZ3Q7PGJyPg0KU2lnbmVkLW9mZi1ieTogWG9zZSBW
-YXpxdWV6IFBlcmV6ICZsdDs8YSBocmVmPSJtYWlsdG86eG9zZS52YXpxdWV6QGdtYWlsLmNvbSI+
-eG9zZS52YXpxdWV6QGdtYWlsLmNvbTwvYT4mZ3Q7PGJyPg0KLS0tPGJyPg0KwqBsaWJtdWx0aXBh
-dGgvaHd0YWJsZS5jIHwgMTAgKysrKystLS0tLTxicj4NCsKgMSBmaWxlIGNoYW5nZWQsIDUgaW5z
-ZXJ0aW9ucygrKSwgNSBkZWxldGlvbnMoLSk8YnI+DQo8YnI+DQpkaWZmIC0tZ2l0IGEvbGlibXVs
-dGlwYXRoL2h3dGFibGUuYyBiL2xpYm11bHRpcGF0aC9od3RhYmxlLmM8YnI+DQppbmRleCA1NDMw
-OWVmLi41OWE2MDU1IDEwMDY0NDxicj4NCi0tLSBhL2xpYm11bHRpcGF0aC9od3RhYmxlLmM8YnI+
-DQorKysgYi9saWJtdWx0aXBhdGgvaHd0YWJsZS5jPGJyPg0KQEAgLTgyNyw3ICs4MjcsNyBAQCBz
-dGF0aWMgc3RydWN0IGh3ZW50cnkgZGVmYXVsdF9od1tdID0gezxicj4NCsKgIMKgIMKgIMKgIMKg
-KiBJbnRlbDxicj4NCsKgIMKgIMKgIMKgIMKgKi88YnI+DQrCoCDCoCDCoCDCoCB7PGJyPg0KLcKg
-IMKgIMKgIMKgIMKgIMKgIMKgIMKgLnZlbmRvcsKgIMKgIMKgIMKgID0gJnF1b3Q7KEludGVsfElO
-VEVMKSZxdW90Oyw8YnI+DQorwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAudmVuZG9ywqAgwqAgwqAg
-wqAgPSAmcXVvdDsoSW50ZWx8SU5URUwpJnF1b3Q7LDxicj4NCsKgIMKgIMKgIMKgIMKgIMKgIMKg
-IMKgIC5wcm9kdWN0wqAgwqAgwqAgwqA9ICZxdW90O011bHRpLUZsZXgmcXVvdDssPGJyPg0KwqAg
-wqAgwqAgwqAgwqAgwqAgwqAgwqAgLmJsX3Byb2R1Y3TCoCDCoCA9ICZxdW90O1ZUcmFrIFYtTFVO
-JnF1b3Q7LDxicj4NCsKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIC5od2hhbmRsZXLCoCDCoCDCoD0g
-JnF1b3Q7MSBhbHVhJnF1b3Q7LDxicj4NCkBAIC04NDAsNyArODQwLDcgQEAgc3RhdGljIHN0cnVj
-dCBod2VudHJ5IGRlZmF1bHRfaHdbXSA9IHs8YnI+DQrCoCDCoCDCoCDCoCDCoCogTGludXgtSU8g
-VGFyZ2V0PGJyPg0KwqAgwqAgwqAgwqAgwqAqLzxicj4NCsKgIMKgIMKgIMKgIHs8YnI+DQotwqAg
-wqAgwqAgwqAgwqAgwqAgwqAgwqAudmVuZG9ywqAgwqAgwqAgwqAgPSAmcXVvdDsoTElPLU9SR3xT
-VVNFKSZxdW90Oyw8YnI+DQorwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAudmVuZG9ywqAgwqAgwqAg
-wqAgPSAmcXVvdDsoTElPLU9SR3xTVVNFKSZxdW90Oyw8YnI+DQrCoCDCoCDCoCDCoCDCoCDCoCDC
-oCDCoCAucHJvZHVjdMKgIMKgIMKgIMKgPSAmcXVvdDtSQkQmcXVvdDssPGJyPg0KwqAgwqAgwqAg
-wqAgwqAgwqAgwqAgwqAgLmh3aGFuZGxlcsKgIMKgIMKgPSAmcXVvdDsxIGFsdWEmcXVvdDssPGJy
-Pg0KwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgLnBncG9saWN5wqAgwqAgwqAgPSBHUk9VUF9CWV9Q
-UklPLDxicj4NCkBAIC04NTIsNyArODUyLDcgQEAgc3RhdGljIHN0cnVjdCBod2VudHJ5IGRlZmF1
-bHRfaHdbXSA9IHs8YnI+DQrCoCDCoCDCoCDCoCDCoCogRGF0YUNvcmU8YnI+DQrCoCDCoCDCoCDC
-oCDCoCovPGJyPg0KwqAgwqAgwqAgwqAgezxicj4NCi3CoCDCoCDCoCDCoCDCoCDCoCDCoCDCoC52
-ZW5kb3LCoCDCoCDCoCDCoCA9ICZxdW90O0RhdGFDb3JlJnF1b3Q7LDxicj4NCivCoCDCoCDCoCDC
-oCDCoCDCoCDCoCDCoC52ZW5kb3LCoCDCoCDCoCDCoCA9ICZxdW90O0RhdGFDb3JlJnF1b3Q7LDxi
-cj4NCsKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIC5wcm9kdWN0wqAgwqAgwqAgwqA9ICZxdW90O1NB
-Tm1lbG9keSZxdW90Oyw8YnI+DQrCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCAucGdwb2xpY3nCoCDC
-oCDCoCA9IEdST1VQX0JZX1BSSU8sPGJyPg0KwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgLnBnZmFp
-bGJhY2vCoCDCoCA9IC1GQUlMQkFDS19JTU1FRElBVEUsPGJyPg0KQEAgLTg2MSw3ICs4NjEsNyBA
-QCBzdGF0aWMgc3RydWN0IGh3ZW50cnkgZGVmYXVsdF9od1tdID0gezxicj4NCsKgIMKgIMKgIMKg
-IH0sPGJyPg0KwqAgwqAgwqAgwqAgezxicj4NCsKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIC8qIFNB
-TnN5bXBob255ICovPGJyPg0KLcKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgLnZlbmRvcsKgIMKgIMKg
-IMKgID0gJnF1b3Q7RGF0YUNvcmUmcXVvdDssPGJyPg0KK8KgIMKgIMKgIMKgIMKgIMKgIMKgIMKg
-LnZlbmRvcsKgIMKgIMKgIMKgID0gJnF1b3Q7RGF0YUNvcmUmcXVvdDssPGJyPg0KwqAgwqAgwqAg
-wqAgwqAgwqAgwqAgwqAgLnByb2R1Y3TCoCDCoCDCoCDCoD0gJnF1b3Q7VmlydHVhbCBEaXNrJnF1
-b3Q7LDxicj4NCsKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIC5wZ3BvbGljecKgIMKgIMKgID0gR1JP
-VVBfQllfUFJJTyw8YnI+DQrCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCAucGdmYWlsYmFja8KgIMKg
-ID0gLUZBSUxCQUNLX0lNTUVESUFURSw8YnI+DQpAQCAtMTA1Myw3ICsxMDUzLDcgQEAgc3RhdGlj
-IHN0cnVjdCBod2VudHJ5IGRlZmF1bHRfaHdbXSA9IHs8YnI+DQrCoCDCoCDCoCDCoCDCoCogR2Vu
-ZXJpYyBOVk1lIGRldmljZXM8YnI+DQrCoCDCoCDCoCDCoCDCoCovPGJyPg0KwqAgwqAgwqAgwqAg
-ezxicj4NCi3CoCDCoCDCoCDCoCDCoCDCoCDCoCDCoC52ZW5kb3LCoCDCoCDCoCDCoCA9ICZxdW90
-O05WTUUmcXVvdDssPGJyPg0KK8KgIMKgIMKgIMKgIMKgIMKgIMKgIMKgLnZlbmRvcsKgIMKgIMKg
-IMKgID0gJnF1b3Q7TlZNRSZxdW90Oyw8YnI+DQrCoCDCoCDCoCDCoCDCoCDCoCDCoCDCoCAucHJv
-ZHVjdMKgIMKgIMKgIMKgPSAmcXVvdDsuKiZxdW90Oyw8YnI+DQrCoCDCoCDCoCDCoCDCoCDCoCDC
-oCDCoCAudWlkX2F0dHJpYnV0ZSA9ICZxdW90O0lEX1dXTiZxdW90Oyw8YnI+DQrCoCDCoCDCoCDC
-oCDCoCDCoCDCoCDCoCAuY2hlY2tlcl9uYW1lwqAgPSBESVJFQ1RJTyw8YnI+DQo8c3BhbiBjbGFz
-cz0iSE9FblpiIj48Zm9udCBjb2xvcj0iIzg4ODg4OCI+LS08YnI+DQoyLjEzLjA8YnI+DQo8YnI+
-DQo8L2ZvbnQ+PC9zcGFuPjwvYmxvY2txdW90ZT48L2Rpdj48YnI+PC9kaXY+DQo=
---94eb2c04fa14d473bc055275d860--
+<div dir=3D"ltr">And now merged.<div>Thanks.</div></div><div class=3D"gmail=
+_extra"><br><div class=3D"gmail_quote">On Sat, May 20, 2017 at 12:31 PM, Ch=
+ristophe Varoqui <span dir=3D"ltr">&lt;<a href=3D"mailto:christophe.varoqui=
+@opensvc.com" target=3D"_blank">christophe.varoqui@opensvc.com</a>&gt;</spa=
+n> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;b=
+order-left:1px #ccc solid;padding-left:1ex"><div dir=3D"ltr">Thanks for the=
+ clarification.</div><div class=3D"HOEnZb"><div class=3D"h5"><div class=3D"=
+gmail_extra"><br><div class=3D"gmail_quote">On Sat, May 20, 2017 at 11:17 A=
+M, Zouming (IT) <span dir=3D"ltr">&lt;<a href=3D"mailto:zouming.zouming@hua=
+wei.com" target=3D"_blank">zouming.zouming@huawei.com</a>&gt;</span> wrote:=
+<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-lef=
+t:1px #ccc solid;padding-left:1ex">Hi christophe:<br>
+<br>
+We absolutely sure for product XSG1,no arrays use vendor name HUASY.<br>
+Because these arrays are our up-to-date product.<br>
+<br>
+Best regards,<br>
+Zou Ming.<br>
+<span><br>
+On 2017/5/20 17:02, Christophe Varoqui wrote:<br>
+&gt; Hi,<br>
+&gt;<br>
+&gt; question is, is there arrays in the wild exposing this vendor name ?<b=
+r>
+&gt; If so, we&#39;ll rather keep its defaults for the decade to come.<br>
+&gt;<br>
+&gt; Best regards,<br>
+&gt; Christophe.<br>
+&gt;<br>
+</span><span>&gt; On Sat, May 20, 2017 at 10:27 AM, Zou Ming &lt;<a href=3D=
+"mailto:zouming.zouming@huawei.com" target=3D"_blank">zouming.zouming@huawe=
+i.com</a> &lt;mailto:<a href=3D"mailto:zouming.zouming@huawei.com" target=
+=3D"_blank">zouming.zouming@huawei<wbr>.com</a>&gt;&gt; wrote:<br>
+&gt;<br>
+&gt;=C2=A0 =C2=A0 =C2=A0For product XSG1,HUASY is obsolete for Huawei devic=
+es,Only HUAWEI is the official vendor name.<br>
+&gt;=C2=A0 =C2=A0 =C2=A0---<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 libmultipath/hwtable.c | 2 +-<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 1 file changed, 1 insertion(+), 1 deletion(-)<br>
+&gt;<br>
+&gt;=C2=A0 =C2=A0 =C2=A0diff --git a/libmultipath/hwtable.c b/libmultipath/=
+hwtable.c<br>
+&gt;=C2=A0 =C2=A0 =C2=A0index 54309ef..bd8719c 100644<br>
+&gt;=C2=A0 =C2=A0 =C2=A0--- a/libmultipath/hwtable.c<br>
+&gt;=C2=A0 =C2=A0 =C2=A0+++ b/libmultipath/hwtable.c<br>
+&gt;=C2=A0 =C2=A0 =C2=A0@@ -881,7 +881,7 @@ static struct hwentry default_h=
+w[] =3D {<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 */<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0{<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0/* OceanStor V3 */<br>
+&gt;=C2=A0 =C2=A0 =C2=A0-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0.vendor=C2=A0 =C2=A0 =C2=A0 =C2=A0 =3D &quot;(HUAWEI|HUASY)&quot;,<br=
+>
+&gt;=C2=A0 =C2=A0 =C2=A0+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0.vendor=C2=A0 =C2=A0 =C2=A0 =C2=A0 =3D &quot;HUAWEI&quot;,<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0.product=C2=A0 =C2=A0 =C2=A0 =C2=A0=3D &quot;XSG1&quot;,<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0.pgpolicy=C2=A0 =C2=A0 =C2=A0 =3D MULTIBUS,<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0},<br>
+&gt;=C2=A0 =C2=A0 =C2=A0--<br>
+&gt;=C2=A0 =C2=A0 =C2=A02.6.4.windows.1<br>
+&gt;<br>
+&gt;<br>
+&gt;=C2=A0 =C2=A0 =C2=A0--<br>
+&gt;=C2=A0 =C2=A0 =C2=A0dm-devel mailing list<br>
+</span>&gt;=C2=A0 =C2=A0 =C2=A0<a href=3D"mailto:dm-devel@redhat.com" targe=
+t=3D"_blank">dm-devel@redhat.com</a> &lt;mailto:<a href=3D"mailto:dm-devel@=
+redhat.com" target=3D"_blank">dm-devel@redhat.com</a>&gt;<br>
+&gt;=C2=A0 =C2=A0 =C2=A0<a href=3D"https://www.redhat.com/mailman/listinfo/=
+dm-devel" rel=3D"noreferrer" target=3D"_blank">https://www.redhat.com/mailm=
+a<wbr>n/listinfo/dm-devel</a> &lt;<a href=3D"https://www.redhat.com/mailman=
+/listinfo/dm-devel" rel=3D"noreferrer" target=3D"_blank">https://www.redhat=
+.com/mailma<wbr>n/listinfo/dm-devel</a>&gt;<br>
+&gt;<br>
+&gt;<br>
+<br>
+</blockquote></div><br></div>
+</div></div></blockquote></div><br></div>
+
+--001a11c10ec2eda5c6055275dcf4--
 
 
---===============8397536850845685739==
+--===============8720019991758611325==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============8397536850845685739==--
+--===============8720019991758611325==--
