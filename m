@@ -1,17 +1,12 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH v3 11/11] libmultipath: don't [un]set
- queue_if_no_path after domap
-Date: Thu, 22 Jun 2017 14:21:29 -0500
-Message-ID: <20170622192129.GP2940@octiron.msp.redhat.com>
-References: <20170621150630.25773-1-mwilck@suse.com>
-	<20170621150630.25773-12-mwilck@suse.com>
-	<fb72a1ed-58c6-fa6d-9411-8c03ce9541b7@suse.de>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [git pull] device mapper fixes for 4.12-rc7
+Date: Thu, 22 Jun 2017 15:18:39 -0400
+Message-ID: <20170622191838.GA3969@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <fb72a1ed-58c6-fa6d-9411-8c03ce9541b7@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,89 +16,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Ondrej Kozina <okozina@redhat.com>, dm-devel@redhat.com, Ondrej =?utf-8?B?TW9zbsOhxI1law==?= <omosnacek@gmail.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Jun 22, 2017 at 08:23:44AM +0200, Hannes Reinecke wrote:
-> On 06/21/2017 05:06 PM, Martin Wilck wrote:
-> > We set the queue_if_no_path feature in assemble_map() already,
-> > no need to set it here again.
-> > =
-
-> > Signed-off-by: Martin Wilck <mwilck@suse.com>
-> > ---
-> >  libmultipath/configure.c | 15 ---------------
-> >  1 file changed, 15 deletions(-)
-> > =
-
-> > diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-> > index 55dbb261..39912f05 100644
-> > --- a/libmultipath/configure.c
-> > +++ b/libmultipath/configure.c
-> > @@ -1097,21 +1097,6 @@ int coalesce_paths (struct vectors * vecs, vecto=
-r newmp, char * refwwid,
-> >  				remove_feature(&mpp->features,
-> >  					       "queue_if_no_path");
-> >  		}
-> > -		else if (mpp->no_path_retry !=3D NO_PATH_RETRY_UNDEF) {
-> > -			if (mpp->no_path_retry =3D=3D NO_PATH_RETRY_FAIL) {
-> > -				condlog(3, "%s: unset queue_if_no_path feature",
-> > -					mpp->alias);
-> > -				if (!dm_queue_if_no_path(mpp->alias, 0))
-> > -					remove_feature(&mpp->features,
-> > -						       "queue_if_no_path");
-> > -			} else {
-> > -				condlog(3, "%s: set queue_if_no_path feature",
-> > -					mpp->alias);
-> > -				if (!dm_queue_if_no_path(mpp->alias, 1))
-> > -					add_feature(&mpp->features,
-> > -						    "queue_if_no_path");
-> > -			}
-> > -		}
-> >  =
-
-> >  		if (!is_daemon && mpp->action !=3D ACT_NOTHING) {
-> >  			conf =3D get_multipath_config();
-> > =
-
-> Watch out.
-> 'queue_if_no_path' is set _temporarily_ while 'no_path_retry' is active,
-> and removed afterwards.
-> So there might be valid reasons why it's set here.
-> Have you checked?
-
-IIRC, we used to always set queue_if_no_path before reloading the map,
-and then call setup_multipath() afterwards, which would call
-set_no_path_retry() to set it to the actual correct value. If we are
-correctly setting the feature line when we reload the map, that's a
-better solution. Obviously, we can't strip set_no_path_retry() out of
-__setup_multipath() since we rely on that to deal with deal with going
-into recovery mode. However, without some more thought and code reading,
-I'm not sure if we do still need the calls to dm_queue_if_no_path()
-there for some other reason anymore.  At any rate, they won't hurt
-anything, except for causing a redundant call to device-mapper.
-
-Also, if we're yanking these dm_queue_if_no_path() calls from
-coalesce_paths, I don't see why we need them in reload_map(), where they
-also seem redundant if we just correctly set the features argument when
-we reloaded the table.
-
-ACK, but I wouldn't mind seeing the calls pulled from reload_map as
-well.
-
--Ben
-
-> =
-
-> Cheers,
-> =
-
-> Hannes
-> -- =
-
-> Dr. Hannes Reinecke		   Teamlead Storage & Networking
-> hare@suse.de			               +49 911 74053 688
-> SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-> GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
-> HRB 21284 (AG N=FCrnberg)
+SGkgTGludXMsCgpUaGUgZm9sbG93aW5nIGNoYW5nZXMgc2luY2UgY29tbWl0IDMyYzE0MzFlZWE0
+ODgxYTZiMTdiZDdjNjM5MzE1MDEwYWVlZmE0NTI6CgogIExpbnV4IDQuMTItcmM1ICgyMDE3LTA2
+LTExIDE2OjQ4OjIwIC0wNzAwKQoKYXJlIGF2YWlsYWJsZSBpbiB0aGUgZ2l0IHJlcG9zaXRvcnkg
+YXQ6CgogIGdpdDovL2dpdC5rZXJuZWwub3JnL3B1Yi9zY20vbGludXgva2VybmVsL2dpdC9kZXZp
+Y2UtbWFwcGVyL2xpbnV4LWRtLmdpdCB0YWdzL2Zvci00LjEyL2RtLWZpeGVzLTQKCmZvciB5b3Ug
+dG8gZmV0Y2ggY2hhbmdlcyB1cCB0byBmZWI3Njk1ZmU5ZmI4MzA4NGFhMjlkZTAwOTQ3NzRmNGM5
+ZDRjOWZjOgoKICBkbSBpbzogZml4IGR1cGxpY2F0ZSBiaW8gY29tcGxldGlvbiBkdWUgdG8gbWlz
+c2luZyByZWYgY291bnQgKDIwMTctMDYtMjEgMTI6MDQ6NTAgLTA0MDApCgpQbGVhc2UgcHVsbCwg
+dGhhbmtzLgpNaWtlCgotLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tCi0gYSByZXZlcnQgb2YgYSBETSBtaXJyb3IgY29tbWl0IHRo
+YXQgaGFzIHByb3ZlbiB0byBtYWtlIHRoZSBjb2RlIHByb25lCiAgdG8gY3Jhc2gKCi0gYSBETSBp
+byByZWZlcmVuY2UgY291bnQgZml4IHRoYXQgcmVzb2x2ZXMgYSBOVUxMIHBvaW50ZXIgc2VlbiB3
+aGVuCiAgaXNzdWluZyBkaXNjYXJkcyB0byBhIERNIG1pcnJvciB0YXJnZXQncyBkZXZpY2Ugd2hv
+c2UgbWlycm9yIGxlZ3MgZG8KICBub3QgYWxsIHN1cHBvcnQgZGlzY2FyZHMKCi0gYSBjb3VwbGUg
+RE0gaW50ZWdyaXR5IGZpeGVzCgotLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCk1pa2UgU25pdHplciAoMyk6CiAgICAgIFJldmVy
+dCAiZG0gbWlycm9yOiB1c2UgYWxsIGF2YWlsYWJsZSBsZWdzIG9uIG11bHRpcGxlIGZhaWx1cmVz
+IgogICAgICBkbSBpbnRlZ3JpdHk6IGZpeCB0byBub3QgZGlzYWJsZS9lbmFibGUgaW50ZXJydXB0
+cyBmcm9tIGludGVycnVwdCBjb250ZXh0CiAgICAgIGRtIGlvOiBmaXggZHVwbGljYXRlIGJpbyBj
+b21wbGV0aW9uIGR1ZSB0byBtaXNzaW5nIHJlZiBjb3VudAoKT25kcmVqIE1vc27DocSNZWsgKDEp
+OgogICAgICBkbSBpbnRlZ3JpdHk6IHJlamVjdCBtYXBwaW5ncyB0b28gbGFyZ2UgZm9yIGRldmlj
+ZQoKIGRyaXZlcnMvbWQvZG0taW50ZWdyaXR5LmMgfCAxMiArKysrKysrKysrLS0KIGRyaXZlcnMv
+bWQvZG0taW8uYyAgICAgICAgfCAgNCArKy0tCiBkcml2ZXJzL21kL2RtLXJhaWQxLmMgICAgIHwg
+MjEgKysrKysrKysrKysrKysrKysrKy0tCiAzIGZpbGVzIGNoYW5nZWQsIDMxIGluc2VydGlvbnMo
+KyksIDYgZGVsZXRpb25zKC0pCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVk
+aGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
