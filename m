@@ -1,16 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH v3 10/11] libmultipath: don't try to set
- hwhandler if it is retained
-Date: Thu, 22 Jun 2017 11:58:44 +0200
-Message-ID: <1498125524.6002.6.camel@suse.com>
-References: <20170621150630.25773-1-mwilck@suse.com>
-	<20170621150630.25773-11-mwilck@suse.com>
-	<6f223a11-a7f0-8194-e634-5cad19baab38@suse.de>
+Subject: [PATCH v4 10/11] libmultipath: don't try to set
+	hwhandler if it is retained
+Date: Thu, 22 Jun 2017 16:59:12 +0200
+Message-ID: <20170622145913.23714-11-mwilck@suse.com>
+References: <20170622145913.23714-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <6f223a11-a7f0-8194-e634-5cad19baab38@suse.de>
+In-Reply-To: <20170622145913.23714-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,53 +18,106 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>, Christophe Varoqui <christophe.varoqui@opensvc.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@suse.de>
 Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-T24gVGh1LCAyMDE3LTA2LTIyIGF0IDA4OjIxICswMjAwLCBIYW5uZXMgUmVpbmVja2Ugd3JvdGU6
-Cj4gT24gMDYvMjEvMjAxNyAwNTowNiBQTSwgTWFydGluIFdpbGNrIHdyb3RlOgo+ID4gU2V0dGlu
-ZyBhIGRldmljZSBoYW5kbGVyIG9ubHkgd29ya3MgaWYgcmV0YWluX2F0dGFjaGVkX2h3X2hhbmRs
-ZXIKPiA+IGlzICdubycsIG9yIGlmIHRoZSBrZXJuZWwgZGlkbid0IGF1dG8tYXNzaWduIGEgaGFu
-ZGxlci4gSWYgdGhpcwo+ID4gaXMgbm90IHRoZSBjYXNlLCBkb24ndCBldmVuIGF0dGVtcHQgdG8g
-c2V0IGEgZGlmZmVyZW50IGhhbmRsZXIuCj4gPiAKPiA+IFRoaXMgcmVxdWlyZXMgcmVhZGluZyB0
-aGUgc3lzZnMgImRoX3N0YXRlIiBwYXRoIGF0dHJpYnV0ZS4KPiA+IEZvciBpbnRlcm5hbCBjb25z
-aXN0ZW5jeSwgdGhpcyBhdHRyaWJ1dGUgbXVzdCBiZSB1cGRhdGVkIGFmdGVyCj4gPiBkb21hcCgp
-Lgo+ID4gCj4gPiBTaWduZWQtb2ZmLWJ5OiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4K
-PiA+IC0tLQo+ID4gIGxpYm11bHRpcGF0aC9jb25maWd1cmUuYyB8IDUyCj4gPiArKysrKysrKysr
-KysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKy0KPiA+ICBsaWJtdWx0aXBhdGgv
-ZGlzY292ZXJ5LmMgfCAgNCArKysrCj4gPiAgbGlibXVsdGlwYXRoL3Byb3BzZWwuYyAgIHwgMTUg
-KysrKysrKysrKysrKysKPiA+ICBsaWJtdWx0aXBhdGgvc3RydWN0cy5oICAgfCAgMiArKwo+ID4g
-IDQgZmlsZXMgY2hhbmdlZCwgNzIgaW5zZXJ0aW9ucygrKSwgMSBkZWxldGlvbigtKQo+ID4gCj4g
-PiBbLi4uXQo+Cj4gSG1tLgo+IAo+IE5vdCBzdXJlIGlmIEkgZnVsbHkgYWdyZWUgd2l0aCB0aGlz
-Lgo+IEkgZG8gc2VlIHRoZSBuZWVkIHRvIHJlYWQgJ2RoX3N0YXRlJyBmcm9tIHBhdGhpbmZvKCks
-IGp1c3QgdG8gZmlndXJlCj4gb3V0Cj4gaWYgYW4gaGFyZHdhcmUgaGFuZGxlciBpcyBhbHJlYWR5
-IGxvYWRlZC4KPiAKPiBCdXQgb25jZSBzZWxlY3RfaHdoYW5kbGVyIGlzIGRvbmUgaXQncyBxdWl0
-ZSBwb2ludGxlc3MgdG8gdXBkYXRlIHRoZQo+IGRoX3N0YXRlOyB3aGF0IGV4YWN0bHkgX3dvdWxk
-XyBiZSB0aGUgZXJyb3IgYWN0aW9uIGluIHRoaXMgY2FzZT8KPiBQbHVzIHRoZSBjb2RlIGRldGVj
-dHMgdGhlIGZhaWx1cmUsIGJ1dCB0aGVuIGRvZXNuJ3QgZG8gYW55dGhpbmcgd2l0aAo+IGl0Li4u
-CgpNeSBjb25jZXJuIHdhcyB0aGF0IG11bHRpcGF0aGQgbWlnaHQgY2FycnkgYWxvbmcgd3Jvbmcg
-c3RhdGUgYW5kCnBvc3NpYmx5IHByaW50IGl0IGluIGxvZyBtZXNzYWdlcywgaXJyaXRhdGluZyB1
-c2Vycy4gSXQncyB0cnVlLCB0aGVyZQppcyBubyByZWFzb25hYmxlIGVycm9yIGFjdGlvbiwgYW5k
-IGl0J3MgcXVpdGUgYSBsb3Qgb2YgY29kZSBqdXN0IGZvcgp0aGlzIG1pbm9yIHB1cnBvc2UuCgo+
-IFNvLCBwbGVhc2UsIGlmIHlvdSBpbnNpc3Qgb24gY2hlY2tpbmcgZGhfc3RhdGUgcGxlYXNlIGlt
-cGxlbWVudAo+IGNvcnJlY3QKPiBlcnJvciBhY3Rpb24gaGVyZSwgbGlrZSB1cGRhdGluZyB0aGUg
-J2h3aGFuZGxlcicgdmFsdWUgdG8gdGhhdCBmb3VuZAo+IGluCj4gZGhfc3RhdGUgb3IgZGlzYWJs
-aW5nIHRoZSBoYXJkd2FyZSBoYW5kbGVyIGlmIGl0J3MgZm91bmQgdG8gYmUKPiBkZXRhY2hlZC4K
-CklmIGl0J3MgZmluZSB3aXRoIHlvdSBhbmQgb3RoZXIgcmV2aWV3ZXJzLCBJJ2xsIGhhcHBpbHkg
-cmVtb3ZlIHRoYXQKcGFydCBvZiB0aGUgcGF0Y2gsIGFuZCBqdXN0IGtlZXAgdGhlIHBhcnQgaW4g
-c2VsZWN0X2h3aGFuZGxlcigpLgoKSWYgd2Ugd2FudCBwcm9wZXIgZXJyb3IgaGFuZGxpbmcsIHdl
-J2QgbmVlZCB0byBjaGVjayB0aGF0IHRoZSBoYW5kbGVyCm9mIHRoZSBsb2FkZWQgbWFwIGFzIHdl
-bGwgYXMgdGhlIGhhbmRsZXJzIG9mIGFsbCBwYXRocyBhcmUgc2V0IHRvIHRoZQpoYW5kbGVyIGNv
-bmZpZ3VyZWQgaW4gbXVsdGlwYXRoZC4gVW5sZXNzIEknbSBtaXN0YWtlbiwgaXQgaXNuJ3QKZ3Vh
-cmFudGVlZCB0aGF0IGFsbCBwYXRocyB3aWxsIGJlIHVzaW5nIHRoZSBzYW1lIGhhbmRsZXIgYWZ0
-ZXIgYSBtYXAgaXMKc2V0IHVwLgoKQmVzaWRlcyByZS1yZWFkaW5nIHRoZSBkaF9zdGF0ZSBvZiBh
-bGwgcGF0aHMsIHRoaXMgY2hlY2sgd291bGQgYWxzbwpyZXF1aXJlIHJlLXJlYWRpbmcgYW5kIGRp
-c2Fzc2VtYmxpbmcgdGhlIG1hcCwgYW5kIG5vIHJlYXNvbmFibGUgZXJyb3IKYWN0aW9uIGlzIHRv
-IGJlIHNlZW4gb3RoZXIgdGhlbiB1cGRhdGluZyB0aGUgaW50ZXJuYWwgc3RhdGUsIGxvdHMgb2YK
-Y29kZSBmb3IgYWxtb3N0IG5vdGhpbmcuCgpDaGVlcnMsCk1hcnRpbgoKLS0gCkRyLiBNYXJ0aW4g
-V2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0Ug
-TGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFt
-IE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlz
-dApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0
-aW5mby9kbS1kZXZlbA==
+Setting a device handler only works if retain_attached_hw_handler
+is 'no', or if the kernel didn't auto-assign a handler. If this
+is not the case, don't even attempt to set a different handler.
+
+This requires reading the sysfs "dh_state" path attribute.
+
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ libmultipath/configure.c |  8 +++++++-
+ libmultipath/propsel.c   | 35 +++++++++++++++++++++++++++++++++++
+ 2 files changed, 42 insertions(+), 1 deletion(-)
+
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 74b6f52a..03874f47 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -275,15 +275,21 @@ int setup_map(struct multipath *mpp, char *params, int params_size)
+ 
+ 	/*
+ 	 * properties selectors
++	 *
++	 * Ordering matters for some properties:
++	 * - features after no_path_retry and retain_hwhandler
++	 * - hwhandler after retain_hwhandler
++	 * No guarantee that this list is complete, check code in
++	 * propsel.c if in doubt.
+ 	 */
+ 	conf = get_multipath_config();
+ 	select_pgfailback(conf, mpp);
+ 	select_pgpolicy(conf, mpp);
+ 	select_selector(conf, mpp);
+-	select_hwhandler(conf, mpp);
+ 	select_no_path_retry(conf, mpp);
+ 	select_retain_hwhandler(conf, mpp);
+ 	select_features(conf, mpp);
++	select_hwhandler(conf, mpp);
+ 	select_rr_weight(conf, mpp);
+ 	select_minio(conf, mpp);
+ 	select_mode(conf, mpp);
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index d609394e..a86207a0 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -19,8 +19,10 @@
+ #include "discovery.h"
+ #include "dict.h"
+ #include "util.h"
++#include "sysfs.h"
+ #include "prioritizers/alua_rtpg.h"
+ #include <inttypes.h>
++#include <libudev.h>
+ 
+ pgpolicyfn *pgpolicies[] = {
+ 	NULL,
+@@ -342,9 +344,42 @@ out:
+ 	return 0;
+ }
+ 
++static int get_dh_state(struct path *pp, char *value, size_t value_len)
++{
++	struct udev_device *ud;
++
++	if (pp->udev == NULL)
++		return -1;
++
++	ud = udev_device_get_parent_with_subsystem_devtype(
++		pp->udev, "scsi", "scsi_device");
++	if (ud == NULL)
++		return -1;
++
++	return sysfs_attr_get_value(ud, "dh_state", value, value_len);
++}
++
+ int select_hwhandler(struct config *conf, struct multipath *mp)
+ {
+ 	char *origin;
++	struct path *pp;
++	/* dh_state is no longer than "detached" */
++	char handler[12];
++	char *dh_state;
++	int i;
++
++	dh_state = &handler[2];
++	if (mp->retain_hwhandler != RETAIN_HWHANDLER_OFF) {
++		vector_foreach_slot(mp->paths, pp, i) {
++			if (get_dh_state(pp, dh_state, sizeof(handler) - 2) > 0
++			    && strcmp(dh_state, "detached")) {
++				memcpy(handler, "1 ", 2);
++				mp->hwhandler = handler;
++				origin = "(setting: retained by kernel driver)";
++				goto out;
++			}
++		}
++	}
+ 
+ 	mp_set_hwe(hwhandler);
+ 	mp_set_conf(hwhandler);
+-- 
+2.13.1
