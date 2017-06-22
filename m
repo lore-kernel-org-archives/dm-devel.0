@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v4 05/11] libmultipath: assemble_map: fix
-	queue_if_no_path logic
-Date: Thu, 22 Jun 2017 16:59:07 +0200
-Message-ID: <20170622145913.23714-6-mwilck@suse.com>
+Subject: [PATCH v4 06/11] multipath.conf.5: document
+	no_path_retry vs. queue_if_no_path
+Date: Thu, 22 Jun 2017 16:59:08 +0200
+Message-ID: <20170622145913.23714-7-mwilck@suse.com>
 References: <20170622145913.23714-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,36 +22,29 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@s
 Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-It is wrong to remove the queue_if_no_path feature if no_path_retry
-is unset. Rather, in this case the feature should neither be added
-nor removed.
+Clarify the documentation about option precedence.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 Acked-by: Benjamin Marzinski <bmarzins@redhat.com>
 Reviewed-by: Hannes Reinecke <hare@suse.com>
 ---
- libmultipath/dmparser.c | 5 ++---
- 1 file changed, 2 insertions(+), 3 deletions(-)
+ multipath/multipath.conf.5 | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
-index ba09dc72..1121c715 100644
---- a/libmultipath/dmparser.c
-+++ b/libmultipath/dmparser.c
-@@ -89,13 +89,12 @@ assemble_map (struct multipath * mp, char * params, int len)
- 	 * We have to set 'queue_if_no_path' here even
- 	 * to avoid path failures during map reload.
- 	 */
--	if (mp->no_path_retry == NO_PATH_RETRY_UNDEF ||
--	    mp->no_path_retry == NO_PATH_RETRY_FAIL) {
-+	if (mp->no_path_retry == NO_PATH_RETRY_FAIL) {
- 		/* remove queue_if_no_path settings */
- 		condlog(3, "%s: remove queue_if_no_path from '%s'",
- 			mp->alias, mp->features);
- 		remove_feature(&f, no_path_retry);
--	} else {
-+	} else if (mp->no_path_retry != NO_PATH_RETRY_UNDEF) {
- 		add_feature(&f, no_path_retry);
- 	}
- 	if (mp->retain_hwhandler == RETAIN_HWHANDLER_ON)
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index 0049cba7..d5d9438a 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -385,7 +385,9 @@ Possible values for the feature list are:
+ .\" XXX
+ .I queue_if_no_path
+ (Superseded by \fIno_path_retry\fR) (Since ??? kernel) Queue I/O if no path is active.
+-Identical to the \fIno_path_retry\fR with \fIqueue\fR value. See KNOWN ISSUES.
++Identical to the \fIno_path_retry\fR with \fIqueue\fR value. If both this
++feature and \fIno_path_retry\fR are set, the latter value takes
++precedence. See KNOWN ISSUES.
+ .TP
+ .I no_partitions
+ Disable automatic partitions generation via kpartx.
 -- 
 2.13.1
