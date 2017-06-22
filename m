@@ -1,14 +1,11 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v4 11/11] libmultipath: don't [un]set
-	queue_if_no_path after domap
-Date: Thu, 22 Jun 2017 16:59:13 +0200
-Message-ID: <20170622145913.23714-12-mwilck@suse.com>
-References: <20170622145913.23714-1-mwilck@suse.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: beautify path_latency.c code
+Date: Thu, 22 Jun 2017 18:46:23 +0200
+Message-ID: <20170622164623.4511-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170622145913.23714-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,43 +15,436 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Yang Feng <philip.yang@huawei.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-We set the queue_if_no_path feature in assemble_map() already,
-no need to set it here again.
+Mainly running scripts/Lindent, from kernel dir, to replace indent spaces
+by tabs.
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
+Cc: Yang Feng <philip.yang@huawei.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/configure.c | 15 ---------------
- 1 file changed, 15 deletions(-)
+ libmultipath/prioritizers/path_latency.c | 354 +++++++++++++++----------------
+ 1 file changed, 177 insertions(+), 177 deletions(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 03874f47..98589150 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -1053,21 +1053,6 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
- 				remove_feature(&mpp->features,
- 					       "queue_if_no_path");
- 		}
--		else if (mpp->no_path_retry != NO_PATH_RETRY_UNDEF) {
--			if (mpp->no_path_retry == NO_PATH_RETRY_FAIL) {
--				condlog(3, "%s: unset queue_if_no_path feature",
--					mpp->alias);
--				if (!dm_queue_if_no_path(mpp->alias, 0))
--					remove_feature(&mpp->features,
--						       "queue_if_no_path");
--			} else {
--				condlog(3, "%s: set queue_if_no_path feature",
--					mpp->alias);
--				if (!dm_queue_if_no_path(mpp->alias, 1))
--					add_feature(&mpp->features,
--						    "queue_if_no_path");
--			}
--		}
+diff --git a/libmultipath/prioritizers/path_latency.c b/libmultipath/prioritizers/path_latency.c
+index 34b734b..9fc2dfc 100644
+--- a/libmultipath/prioritizers/path_latency.c
++++ b/libmultipath/prioritizers/path_latency.c
+@@ -17,8 +17,8 @@
+  * Author(s): Yang Feng <philip.yang@huawei.com>
+  *
+  * This file is released under the GPL version 2, or any later version.
+- *
+  */
++
+ #include <stdio.h>
+ #include <math.h>
+ #include <ctype.h>
+@@ -31,27 +31,28 @@
  
- 		if (!is_daemon && mpp->action != ACT_NOTHING) {
- 			conf = get_multipath_config();
+ #define pp_pl_log(prio, fmt, args...) condlog(prio, "path_latency prio: " fmt, ##args)
+ 
+-#define MAX_IO_NUM              200
+-#define MIN_IO_NUM              2
++#define MAX_IO_NUM		200
++#define MIN_IO_NUM		2
+ 
+-#define MAX_BASE_NUM            10
+-#define MIN_BASE_NUM            2
++#define MAX_BASE_NUM		10
++#define MIN_BASE_NUM		2
+ 
+-#define MAX_AVG_LATENCY         100000000.  /*Unit: us*/
+-#define MIN_AVG_LATENCY         1.          /*Unit: us*/
++#define MAX_AVG_LATENCY		100000000.	/* Unit: us */
++#define MIN_AVG_LATENCY		1.		/* Unit: us */
+ 
+-#define DEFAULT_PRIORITY        0
++#define DEFAULT_PRIORITY	0
+ 
+-#define MAX_CHAR_SIZE           30
++#define MAX_CHAR_SIZE		30
+ 
+-#define USEC_PER_SEC            1000000LL
+-#define NSEC_PER_USEC           1000LL
++#define USEC_PER_SEC		1000000LL
++#define NSEC_PER_USEC		1000LL
+ 
+ static long long path_latency[MAX_IO_NUM];
+ 
+ static inline long long timeval_to_us(const struct timespec *tv)
+ {
+-	return ((long long) tv->tv_sec * USEC_PER_SEC) + (tv->tv_nsec / NSEC_PER_USEC);
++	return ((long long)tv->tv_sec * USEC_PER_SEC) +
++	    (tv->tv_nsec / NSEC_PER_USEC);
+ }
+ 
+ static int do_readsector0(int fd, unsigned int timeout)
+@@ -60,198 +61,197 @@ static int do_readsector0(int fd, unsigned int timeout)
+ 	unsigned char sbuf[SENSE_BUFF_LEN];
+ 	int ret;
+ 
+-	ret = sg_read(fd, &buf[0], 4096, &sbuf[0],
+-		      SENSE_BUFF_LEN, timeout);
++	ret = sg_read(fd, &buf[0], 4096, &sbuf[0], SENSE_BUFF_LEN, timeout);
+ 
+ 	return ret;
+ }
+ 
+ int check_args_valid(int io_num, int base_num)
+ {
+-    if ((io_num < MIN_IO_NUM) || (io_num > MAX_IO_NUM))
+-    {
+-        pp_pl_log(0, "args io_num is outside the valid range");
+-        return 0;
+-    }
+-
+-    if ((base_num < MIN_BASE_NUM) || (base_num > MAX_BASE_NUM))
+-    {
+-        pp_pl_log(0, "args base_num is outside the valid range");
+-        return 0;
+-    }
+-
+-    return 1;
++	if ((io_num < MIN_IO_NUM) || (io_num > MAX_IO_NUM)) {
++		pp_pl_log(0, "args io_num is outside the valid range");
++		return 0;
++	}
++
++	if ((base_num < MIN_BASE_NUM) || (base_num > MAX_BASE_NUM)) {
++		pp_pl_log(0, "args base_num is outside the valid range");
++		return 0;
++	}
++
++	return 1;
+ }
+ 
+-/* In multipath.conf, args form: io_num|base_num. For example,
+-*  args is "20|10", this function can get io_num value 20, and
+-   base_num value 10.
+-*/
+-static int get_ionum_and_basenum(char *args,
+-                                 int *ionum,
+-                                 int *basenum)
++/*
++ * In multipath.conf, args form: io_num|base_num. For example,
++ * args is "20|10", this function can get io_num value 20, and
++ * base_num value 10.
++ */
++static int get_ionum_and_basenum(char *args, int *ionum, int *basenum)
+ {
+-    char source[MAX_CHAR_SIZE];
+-    char vertica = '|';
+-    char *endstrbefore = NULL;
+-    char *endstrafter = NULL;
+-    unsigned int size = strlen(args);
+-
+-    if ((args == NULL) || (ionum == NULL) || (basenum == NULL))
+-    {
+-        pp_pl_log(0, "args string is NULL");
+-        return 0;
+-    }
+-
+-    if ((size < 1) || (size > MAX_CHAR_SIZE-1))
+-    {
+-        pp_pl_log(0, "args string's size is too long");
+-        return 0;
+-    }
+-
+-    memcpy(source, args, size+1);
+-
+-    if (!isdigit(source[0]))
+-    {
+-        pp_pl_log(0, "invalid prio_args format: %s", source);
+-        return 0;
+-    }
+-
+-    *ionum = (int)strtoul(source, &endstrbefore, 10);
+-    if (endstrbefore[0] != vertica)
+-    {
+-        pp_pl_log(0, "invalid prio_args format: %s", source);
+-        return 0;
+-    }
+-
+-    if (!isdigit(endstrbefore[1]))
+-    {
+-        pp_pl_log(0, "invalid prio_args format: %s", source);
+-        return 0;
+-    }
+-
+-    *basenum = (long long)strtol(&endstrbefore[1], &endstrafter, 10);
+-    if (check_args_valid(*ionum, *basenum) == 0)
+-    {
+-        return 0;
+-    }
+-
+-    return 1;
++	char source[MAX_CHAR_SIZE];
++	char vertica = '|';
++	char *endstrbefore = NULL;
++	char *endstrafter = NULL;
++	unsigned int size = strlen(args);
++
++	if ((args == NULL) || (ionum == NULL) || (basenum == NULL)) {
++		pp_pl_log(0, "args string is NULL");
++		return 0;
++	}
++
++	if ((size < 1) || (size > MAX_CHAR_SIZE - 1)) {
++		pp_pl_log(0, "args string's size is too long");
++		return 0;
++	}
++
++	memcpy(source, args, size + 1);
++
++	if (!isdigit(source[0])) {
++		pp_pl_log(0, "invalid prio_args format: %s", source);
++		return 0;
++	}
++
++	*ionum = (int)strtoul(source, &endstrbefore, 10);
++	if (endstrbefore[0] != vertica) {
++		pp_pl_log(0, "invalid prio_args format: %s", source);
++		return 0;
++	}
++
++	if (!isdigit(endstrbefore[1])) {
++		pp_pl_log(0, "invalid prio_args format: %s", source);
++		return 0;
++	}
++
++	*basenum = (long long)strtol(&endstrbefore[1], &endstrafter, 10);
++	if (check_args_valid(*ionum, *basenum) == 0) {
++		return 0;
++	}
++
++	return 1;
+ }
+ 
+-long long calc_standard_deviation(long long *path_latency, int size, long long avglatency)
++long long calc_standard_deviation(long long *path_latency, int size,
++				  long long avglatency)
+ {
+-    int index;
+-    long long total = 0;
++	int index;
++	long long total = 0;
+ 
+-    for (index = 0; index < size; index++)
+-    {
+-        total += (path_latency[index] - avglatency) * (path_latency[index] - avglatency);
+-    }
++	for (index = 0; index < size; index++) {
++		total +=
++		    (path_latency[index] - avglatency) * (path_latency[index] -
++							  avglatency);
++	}
+ 
+-    total /= (size-1);
++	total /= (size - 1);
+ 
+-    return (long long)sqrt((double)total);
++	return (long long)sqrt((double)total);
+ }
+ 
+-int calcPrio(double avglatency, double max_avglatency, double min_avglatency, double base_num)
++int calcPrio(double avglatency, double max_avglatency, double min_avglatency,
++	     double base_num)
+ {
+-    double lavglatency = log(avglatency)/log(base_num);
+-    double lmax_avglatency = log(max_avglatency)/log(base_num);
+-    double lmin_avglatency = log(min_avglatency)/log(base_num);
++	double lavglatency = log(avglatency) / log(base_num);
++	double lmax_avglatency = log(max_avglatency) / log(base_num);
++	double lmin_avglatency = log(min_avglatency) / log(base_num);
+ 
+-    if (lavglatency <= lmin_avglatency)
+-        return (int)(lmax_avglatency + 1.);
++	if (lavglatency <= lmin_avglatency)
++		return (int)(lmax_avglatency + 1.);
+ 
+-    if (lavglatency > lmax_avglatency)
+-        return 0;
++	if (lavglatency > lmax_avglatency)
++		return 0;
+ 
+-    return (int)(lmax_avglatency - lavglatency + 1.);
++	return (int)(lmax_avglatency - lavglatency + 1.);
+ }
+ 
+ /* Calc the latency interval corresponding to the average latency */
+ long long calc_latency_interval(double avglatency, double max_avglatency,
+-                                double min_avglatency, double base_num)
++				double min_avglatency, double base_num)
+ {
+-    double lavglatency = log(avglatency)/log(base_num);
+-    double lmax_avglatency = log(max_avglatency)/log(base_num);
+-    double lmin_avglatency = log(min_avglatency)/log(base_num);
+-
+-    if ((lavglatency <= lmin_avglatency)
+-        || (lavglatency > lmax_avglatency))
+-        return 0;/* Invalid value */
+-
+-    if ((double)((int)lavglatency) == lavglatency)
+-        return (long long)(avglatency - (avglatency / base_num));
+-    else
+-        return (long long)(pow(base_num, (double)((int)lavglatency + 1))
+-            - pow(base_num, (double)((int)lavglatency)));
++	double lavglatency = log(avglatency) / log(base_num);
++	double lmax_avglatency = log(max_avglatency) / log(base_num);
++	double lmin_avglatency = log(min_avglatency) / log(base_num);
++
++	if ((lavglatency <= lmin_avglatency)
++	    || (lavglatency > lmax_avglatency))
++		return 0;	/* Invalid value */
++
++	if ((double)((int)lavglatency) == lavglatency)
++		return (long long)(avglatency - (avglatency / base_num));
++	else
++		return (long long)(pow(base_num, (double)((int)lavglatency + 1))
++				   - pow(base_num, (double)((int)lavglatency)));
+ }
+ 
+-int getprio (struct path *pp, char *args, unsigned int timeout)
++int getprio(struct path *pp, char *args, unsigned int timeout)
+ {
+-    int rc, temp;
+-    int index = 0;
+-    int io_num;
+-    int base_num;
+-    long long avglatency;
+-    long long latency_interval;
+-    long long standard_deviation;
+-    long long toldelay = 0;
+-    long long before, after;
+-    struct timespec tv;
+-
+-    if (pp->fd < 0)
+-        return -1;
+-
+-    if (get_ionum_and_basenum(args, &io_num, &base_num) == 0)
+-    {
+-        pp_pl_log(0, "%s: get path_latency args fail", pp->dev);
+-        return DEFAULT_PRIORITY;
+-    }
+-
+-    memset(path_latency, 0, sizeof(path_latency));
+-
+-    temp = io_num;
+-    while (temp-- > 0)
+-    {
+-        (void)clock_gettime(CLOCK_MONOTONIC, &tv);
+-        before = timeval_to_us(&tv);
+-
+-        if (do_readsector0(pp->fd, timeout) == 2)
+-        {
+-            pp_pl_log(0, "%s: path down", pp->dev);
+-            return -1;
+-        }
+-
+-        (void)clock_gettime(CLOCK_MONOTONIC, &tv);
+-        after = timeval_to_us(&tv);
+-
+-        path_latency[index] = after - before;
+-        toldelay += path_latency[index++];
+-    }
+-
+-    avglatency = toldelay/(long long)io_num;
+-    pp_pl_log(4, "%s: average latency is (%lld us)", pp->dev, avglatency);
+-
+-    if (avglatency > MAX_AVG_LATENCY)
+-    {
+-        pp_pl_log(0, "%s: average latency (%lld us) is outside the thresold (%lld us)",
+-            pp->dev, avglatency, (long long)MAX_AVG_LATENCY);
+-        return DEFAULT_PRIORITY;
+-    }
+-
+-    /* Min average latency and max average latency are constant, the args base_num
+-    set can change latency_interval value corresponding to avglatency and is not constant.
+-    Warn the user if latency_interval is smaller than (2 * standard_deviation), or equal */
+-    standard_deviation = calc_standard_deviation(path_latency, index, avglatency);
+-    latency_interval = calc_latency_interval(avglatency, MAX_AVG_LATENCY, MIN_AVG_LATENCY, base_num);
+-    if ((latency_interval!= 0)
+-        && (latency_interval <= (2 * standard_deviation)))
+-        pp_pl_log(3, "%s: latency interval (%lld) according to average latency (%lld us) is smaller than "
+-            "2 * standard deviation (%lld us), or equal, args base_num (%d) needs to be set bigger value",
+-            pp->dev, latency_interval, avglatency, standard_deviation, base_num);
+-
+-    rc = calcPrio(avglatency, MAX_AVG_LATENCY, MIN_AVG_LATENCY, base_num);
+-    return rc;
++	int rc, temp;
++	int index = 0;
++	int io_num;
++	int base_num;
++	long long avglatency;
++	long long latency_interval;
++	long long standard_deviation;
++	long long toldelay = 0;
++	long long before, after;
++	struct timespec tv;
++
++	if (pp->fd < 0)
++		return -1;
++
++	if (get_ionum_and_basenum(args, &io_num, &base_num) == 0) {
++		pp_pl_log(0, "%s: get path_latency args fail", pp->dev);
++		return DEFAULT_PRIORITY;
++	}
++
++	memset(path_latency, 0, sizeof(path_latency));
++
++	temp = io_num;
++	while (temp-- > 0) {
++		(void)clock_gettime(CLOCK_MONOTONIC, &tv);
++		before = timeval_to_us(&tv);
++
++		if (do_readsector0(pp->fd, timeout) == 2) {
++			pp_pl_log(0, "%s: path down", pp->dev);
++			return -1;
++		}
++
++		(void)clock_gettime(CLOCK_MONOTONIC, &tv);
++		after = timeval_to_us(&tv);
++
++		path_latency[index] = after - before;
++		toldelay += path_latency[index++];
++	}
++
++	avglatency = toldelay / (long long)io_num;
++	pp_pl_log(4, "%s: average latency is (%lld us)", pp->dev, avglatency);
++
++	if (avglatency > MAX_AVG_LATENCY) {
++		pp_pl_log(0,
++			  "%s: average latency (%lld us) is outside the thresold (%lld us)",
++			  pp->dev, avglatency, (long long)MAX_AVG_LATENCY);
++		return DEFAULT_PRIORITY;
++	}
++
++	/*
++	 * Min average latency and max average latency are constant, the args
++	 * base_num set can change latency_interval value corresponding to
++	 * avglatency and is not constant.
++	 * Warn the user if latency_interval is smaller than (2 * standard_deviation),
++	 * or equal.
++	 */
++	standard_deviation =
++	    calc_standard_deviation(path_latency, index, avglatency);
++	latency_interval =
++	    calc_latency_interval(avglatency, MAX_AVG_LATENCY, MIN_AVG_LATENCY,
++				  base_num);
++	if ((latency_interval != 0)
++	    && (latency_interval <= (2 * standard_deviation)))
++		pp_pl_log(3,
++			  "%s: latency interval (%lld) according to average latency (%lld us) is smaller than "
++			  "2 * standard deviation (%lld us), or equal, args base_num (%d) needs to be set bigger value",
++			  pp->dev, latency_interval, avglatency,
++			  standard_deviation, base_num);
++
++	rc = calcPrio(avglatency, MAX_AVG_LATENCY, MIN_AVG_LATENCY, base_num);
++	return rc;
+ }
 -- 
 2.13.1
