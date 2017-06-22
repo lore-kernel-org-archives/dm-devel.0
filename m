@@ -1,11 +1,16 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: beautify path_latency.c code
-Date: Thu, 22 Jun 2017 18:46:23 +0200
-Message-ID: <20170622164623.4511-1-xose.vazquez@gmail.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH v4 09/11] libmultipath:
+ retain_attached_hw_handler obsolete with 4.3+
+Date: Thu, 22 Jun 2017 14:09:25 -0500
+Message-ID: <20170622190925.GN2940@octiron.msp.redhat.com>
+References: <20170622145913.23714-1-mwilck@suse.com>
+	<20170622145913.23714-10-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20170622145913.23714-10-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,436 +20,181 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Yang Feng <philip.yang@huawei.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-Mainly running scripts/Lindent, from kernel dir, to replace indent spaces
-by tabs.
+On Thu, Jun 22, 2017 at 04:59:11PM +0200, Martin Wilck wrote:
+> Kernels 4.3 and newer (commit 1bab0de0 "dm-mpath, scsi_dh: don't
+> let dm detach device handlers") imply "retain_attached_hw_handler yes".
+> 
+> Clarify this in the propsel code, log messages, and documentation.
 
-Cc: Yang Feng <philip.yang@huawei.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- libmultipath/prioritizers/path_latency.c | 354 +++++++++++++++----------------
- 1 file changed, 177 insertions(+), 177 deletions(-)
+ACK
 
-diff --git a/libmultipath/prioritizers/path_latency.c b/libmultipath/prioritizers/path_latency.c
-index 34b734b..9fc2dfc 100644
---- a/libmultipath/prioritizers/path_latency.c
-+++ b/libmultipath/prioritizers/path_latency.c
-@@ -17,8 +17,8 @@
-  * Author(s): Yang Feng <philip.yang@huawei.com>
-  *
-  * This file is released under the GPL version 2, or any later version.
-- *
-  */
-+
- #include <stdio.h>
- #include <math.h>
- #include <ctype.h>
-@@ -31,27 +31,28 @@
- 
- #define pp_pl_log(prio, fmt, args...) condlog(prio, "path_latency prio: " fmt, ##args)
- 
--#define MAX_IO_NUM              200
--#define MIN_IO_NUM              2
-+#define MAX_IO_NUM		200
-+#define MIN_IO_NUM		2
- 
--#define MAX_BASE_NUM            10
--#define MIN_BASE_NUM            2
-+#define MAX_BASE_NUM		10
-+#define MIN_BASE_NUM		2
- 
--#define MAX_AVG_LATENCY         100000000.  /*Unit: us*/
--#define MIN_AVG_LATENCY         1.          /*Unit: us*/
-+#define MAX_AVG_LATENCY		100000000.	/* Unit: us */
-+#define MIN_AVG_LATENCY		1.		/* Unit: us */
- 
--#define DEFAULT_PRIORITY        0
-+#define DEFAULT_PRIORITY	0
- 
--#define MAX_CHAR_SIZE           30
-+#define MAX_CHAR_SIZE		30
- 
--#define USEC_PER_SEC            1000000LL
--#define NSEC_PER_USEC           1000LL
-+#define USEC_PER_SEC		1000000LL
-+#define NSEC_PER_USEC		1000LL
- 
- static long long path_latency[MAX_IO_NUM];
- 
- static inline long long timeval_to_us(const struct timespec *tv)
- {
--	return ((long long) tv->tv_sec * USEC_PER_SEC) + (tv->tv_nsec / NSEC_PER_USEC);
-+	return ((long long)tv->tv_sec * USEC_PER_SEC) +
-+	    (tv->tv_nsec / NSEC_PER_USEC);
- }
- 
- static int do_readsector0(int fd, unsigned int timeout)
-@@ -60,198 +61,197 @@ static int do_readsector0(int fd, unsigned int timeout)
- 	unsigned char sbuf[SENSE_BUFF_LEN];
- 	int ret;
- 
--	ret = sg_read(fd, &buf[0], 4096, &sbuf[0],
--		      SENSE_BUFF_LEN, timeout);
-+	ret = sg_read(fd, &buf[0], 4096, &sbuf[0], SENSE_BUFF_LEN, timeout);
- 
- 	return ret;
- }
- 
- int check_args_valid(int io_num, int base_num)
- {
--    if ((io_num < MIN_IO_NUM) || (io_num > MAX_IO_NUM))
--    {
--        pp_pl_log(0, "args io_num is outside the valid range");
--        return 0;
--    }
--
--    if ((base_num < MIN_BASE_NUM) || (base_num > MAX_BASE_NUM))
--    {
--        pp_pl_log(0, "args base_num is outside the valid range");
--        return 0;
--    }
--
--    return 1;
-+	if ((io_num < MIN_IO_NUM) || (io_num > MAX_IO_NUM)) {
-+		pp_pl_log(0, "args io_num is outside the valid range");
-+		return 0;
-+	}
-+
-+	if ((base_num < MIN_BASE_NUM) || (base_num > MAX_BASE_NUM)) {
-+		pp_pl_log(0, "args base_num is outside the valid range");
-+		return 0;
-+	}
-+
-+	return 1;
- }
- 
--/* In multipath.conf, args form: io_num|base_num. For example,
--*  args is "20|10", this function can get io_num value 20, and
--   base_num value 10.
--*/
--static int get_ionum_and_basenum(char *args,
--                                 int *ionum,
--                                 int *basenum)
-+/*
-+ * In multipath.conf, args form: io_num|base_num. For example,
-+ * args is "20|10", this function can get io_num value 20, and
-+ * base_num value 10.
-+ */
-+static int get_ionum_and_basenum(char *args, int *ionum, int *basenum)
- {
--    char source[MAX_CHAR_SIZE];
--    char vertica = '|';
--    char *endstrbefore = NULL;
--    char *endstrafter = NULL;
--    unsigned int size = strlen(args);
--
--    if ((args == NULL) || (ionum == NULL) || (basenum == NULL))
--    {
--        pp_pl_log(0, "args string is NULL");
--        return 0;
--    }
--
--    if ((size < 1) || (size > MAX_CHAR_SIZE-1))
--    {
--        pp_pl_log(0, "args string's size is too long");
--        return 0;
--    }
--
--    memcpy(source, args, size+1);
--
--    if (!isdigit(source[0]))
--    {
--        pp_pl_log(0, "invalid prio_args format: %s", source);
--        return 0;
--    }
--
--    *ionum = (int)strtoul(source, &endstrbefore, 10);
--    if (endstrbefore[0] != vertica)
--    {
--        pp_pl_log(0, "invalid prio_args format: %s", source);
--        return 0;
--    }
--
--    if (!isdigit(endstrbefore[1]))
--    {
--        pp_pl_log(0, "invalid prio_args format: %s", source);
--        return 0;
--    }
--
--    *basenum = (long long)strtol(&endstrbefore[1], &endstrafter, 10);
--    if (check_args_valid(*ionum, *basenum) == 0)
--    {
--        return 0;
--    }
--
--    return 1;
-+	char source[MAX_CHAR_SIZE];
-+	char vertica = '|';
-+	char *endstrbefore = NULL;
-+	char *endstrafter = NULL;
-+	unsigned int size = strlen(args);
-+
-+	if ((args == NULL) || (ionum == NULL) || (basenum == NULL)) {
-+		pp_pl_log(0, "args string is NULL");
-+		return 0;
-+	}
-+
-+	if ((size < 1) || (size > MAX_CHAR_SIZE - 1)) {
-+		pp_pl_log(0, "args string's size is too long");
-+		return 0;
-+	}
-+
-+	memcpy(source, args, size + 1);
-+
-+	if (!isdigit(source[0])) {
-+		pp_pl_log(0, "invalid prio_args format: %s", source);
-+		return 0;
-+	}
-+
-+	*ionum = (int)strtoul(source, &endstrbefore, 10);
-+	if (endstrbefore[0] != vertica) {
-+		pp_pl_log(0, "invalid prio_args format: %s", source);
-+		return 0;
-+	}
-+
-+	if (!isdigit(endstrbefore[1])) {
-+		pp_pl_log(0, "invalid prio_args format: %s", source);
-+		return 0;
-+	}
-+
-+	*basenum = (long long)strtol(&endstrbefore[1], &endstrafter, 10);
-+	if (check_args_valid(*ionum, *basenum) == 0) {
-+		return 0;
-+	}
-+
-+	return 1;
- }
- 
--long long calc_standard_deviation(long long *path_latency, int size, long long avglatency)
-+long long calc_standard_deviation(long long *path_latency, int size,
-+				  long long avglatency)
- {
--    int index;
--    long long total = 0;
-+	int index;
-+	long long total = 0;
- 
--    for (index = 0; index < size; index++)
--    {
--        total += (path_latency[index] - avglatency) * (path_latency[index] - avglatency);
--    }
-+	for (index = 0; index < size; index++) {
-+		total +=
-+		    (path_latency[index] - avglatency) * (path_latency[index] -
-+							  avglatency);
-+	}
- 
--    total /= (size-1);
-+	total /= (size - 1);
- 
--    return (long long)sqrt((double)total);
-+	return (long long)sqrt((double)total);
- }
- 
--int calcPrio(double avglatency, double max_avglatency, double min_avglatency, double base_num)
-+int calcPrio(double avglatency, double max_avglatency, double min_avglatency,
-+	     double base_num)
- {
--    double lavglatency = log(avglatency)/log(base_num);
--    double lmax_avglatency = log(max_avglatency)/log(base_num);
--    double lmin_avglatency = log(min_avglatency)/log(base_num);
-+	double lavglatency = log(avglatency) / log(base_num);
-+	double lmax_avglatency = log(max_avglatency) / log(base_num);
-+	double lmin_avglatency = log(min_avglatency) / log(base_num);
- 
--    if (lavglatency <= lmin_avglatency)
--        return (int)(lmax_avglatency + 1.);
-+	if (lavglatency <= lmin_avglatency)
-+		return (int)(lmax_avglatency + 1.);
- 
--    if (lavglatency > lmax_avglatency)
--        return 0;
-+	if (lavglatency > lmax_avglatency)
-+		return 0;
- 
--    return (int)(lmax_avglatency - lavglatency + 1.);
-+	return (int)(lmax_avglatency - lavglatency + 1.);
- }
- 
- /* Calc the latency interval corresponding to the average latency */
- long long calc_latency_interval(double avglatency, double max_avglatency,
--                                double min_avglatency, double base_num)
-+				double min_avglatency, double base_num)
- {
--    double lavglatency = log(avglatency)/log(base_num);
--    double lmax_avglatency = log(max_avglatency)/log(base_num);
--    double lmin_avglatency = log(min_avglatency)/log(base_num);
--
--    if ((lavglatency <= lmin_avglatency)
--        || (lavglatency > lmax_avglatency))
--        return 0;/* Invalid value */
--
--    if ((double)((int)lavglatency) == lavglatency)
--        return (long long)(avglatency - (avglatency / base_num));
--    else
--        return (long long)(pow(base_num, (double)((int)lavglatency + 1))
--            - pow(base_num, (double)((int)lavglatency)));
-+	double lavglatency = log(avglatency) / log(base_num);
-+	double lmax_avglatency = log(max_avglatency) / log(base_num);
-+	double lmin_avglatency = log(min_avglatency) / log(base_num);
-+
-+	if ((lavglatency <= lmin_avglatency)
-+	    || (lavglatency > lmax_avglatency))
-+		return 0;	/* Invalid value */
-+
-+	if ((double)((int)lavglatency) == lavglatency)
-+		return (long long)(avglatency - (avglatency / base_num));
-+	else
-+		return (long long)(pow(base_num, (double)((int)lavglatency + 1))
-+				   - pow(base_num, (double)((int)lavglatency)));
- }
- 
--int getprio (struct path *pp, char *args, unsigned int timeout)
-+int getprio(struct path *pp, char *args, unsigned int timeout)
- {
--    int rc, temp;
--    int index = 0;
--    int io_num;
--    int base_num;
--    long long avglatency;
--    long long latency_interval;
--    long long standard_deviation;
--    long long toldelay = 0;
--    long long before, after;
--    struct timespec tv;
--
--    if (pp->fd < 0)
--        return -1;
--
--    if (get_ionum_and_basenum(args, &io_num, &base_num) == 0)
--    {
--        pp_pl_log(0, "%s: get path_latency args fail", pp->dev);
--        return DEFAULT_PRIORITY;
--    }
--
--    memset(path_latency, 0, sizeof(path_latency));
--
--    temp = io_num;
--    while (temp-- > 0)
--    {
--        (void)clock_gettime(CLOCK_MONOTONIC, &tv);
--        before = timeval_to_us(&tv);
--
--        if (do_readsector0(pp->fd, timeout) == 2)
--        {
--            pp_pl_log(0, "%s: path down", pp->dev);
--            return -1;
--        }
--
--        (void)clock_gettime(CLOCK_MONOTONIC, &tv);
--        after = timeval_to_us(&tv);
--
--        path_latency[index] = after - before;
--        toldelay += path_latency[index++];
--    }
--
--    avglatency = toldelay/(long long)io_num;
--    pp_pl_log(4, "%s: average latency is (%lld us)", pp->dev, avglatency);
--
--    if (avglatency > MAX_AVG_LATENCY)
--    {
--        pp_pl_log(0, "%s: average latency (%lld us) is outside the thresold (%lld us)",
--            pp->dev, avglatency, (long long)MAX_AVG_LATENCY);
--        return DEFAULT_PRIORITY;
--    }
--
--    /* Min average latency and max average latency are constant, the args base_num
--    set can change latency_interval value corresponding to avglatency and is not constant.
--    Warn the user if latency_interval is smaller than (2 * standard_deviation), or equal */
--    standard_deviation = calc_standard_deviation(path_latency, index, avglatency);
--    latency_interval = calc_latency_interval(avglatency, MAX_AVG_LATENCY, MIN_AVG_LATENCY, base_num);
--    if ((latency_interval!= 0)
--        && (latency_interval <= (2 * standard_deviation)))
--        pp_pl_log(3, "%s: latency interval (%lld) according to average latency (%lld us) is smaller than "
--            "2 * standard deviation (%lld us), or equal, args base_num (%d) needs to be set bigger value",
--            pp->dev, latency_interval, avglatency, standard_deviation, base_num);
--
--    rc = calcPrio(avglatency, MAX_AVG_LATENCY, MIN_AVG_LATENCY, base_num);
--    return rc;
-+	int rc, temp;
-+	int index = 0;
-+	int io_num;
-+	int base_num;
-+	long long avglatency;
-+	long long latency_interval;
-+	long long standard_deviation;
-+	long long toldelay = 0;
-+	long long before, after;
-+	struct timespec tv;
-+
-+	if (pp->fd < 0)
-+		return -1;
-+
-+	if (get_ionum_and_basenum(args, &io_num, &base_num) == 0) {
-+		pp_pl_log(0, "%s: get path_latency args fail", pp->dev);
-+		return DEFAULT_PRIORITY;
-+	}
-+
-+	memset(path_latency, 0, sizeof(path_latency));
-+
-+	temp = io_num;
-+	while (temp-- > 0) {
-+		(void)clock_gettime(CLOCK_MONOTONIC, &tv);
-+		before = timeval_to_us(&tv);
-+
-+		if (do_readsector0(pp->fd, timeout) == 2) {
-+			pp_pl_log(0, "%s: path down", pp->dev);
-+			return -1;
-+		}
-+
-+		(void)clock_gettime(CLOCK_MONOTONIC, &tv);
-+		after = timeval_to_us(&tv);
-+
-+		path_latency[index] = after - before;
-+		toldelay += path_latency[index++];
-+	}
-+
-+	avglatency = toldelay / (long long)io_num;
-+	pp_pl_log(4, "%s: average latency is (%lld us)", pp->dev, avglatency);
-+
-+	if (avglatency > MAX_AVG_LATENCY) {
-+		pp_pl_log(0,
-+			  "%s: average latency (%lld us) is outside the thresold (%lld us)",
-+			  pp->dev, avglatency, (long long)MAX_AVG_LATENCY);
-+		return DEFAULT_PRIORITY;
-+	}
-+
-+	/*
-+	 * Min average latency and max average latency are constant, the args
-+	 * base_num set can change latency_interval value corresponding to
-+	 * avglatency and is not constant.
-+	 * Warn the user if latency_interval is smaller than (2 * standard_deviation),
-+	 * or equal.
-+	 */
-+	standard_deviation =
-+	    calc_standard_deviation(path_latency, index, avglatency);
-+	latency_interval =
-+	    calc_latency_interval(avglatency, MAX_AVG_LATENCY, MIN_AVG_LATENCY,
-+				  base_num);
-+	if ((latency_interval != 0)
-+	    && (latency_interval <= (2 * standard_deviation)))
-+		pp_pl_log(3,
-+			  "%s: latency interval (%lld) according to average latency (%lld us) is smaller than "
-+			  "2 * standard deviation (%lld us), or equal, args base_num (%d) needs to be set bigger value",
-+			  pp->dev, latency_interval, avglatency,
-+			  standard_deviation, base_num);
-+
-+	rc = calcPrio(avglatency, MAX_AVG_LATENCY, MIN_AVG_LATENCY, base_num);
-+	return rc;
- }
--- 
-2.13.1
+-Ben
+
+> 
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> Reviewed-by: Hannes Reinecke <hare@suse.com>
+> ---
+>  libmultipath/configure.c   |  3 ++-
+>  libmultipath/dmparser.c    |  3 ++-
+>  libmultipath/propsel.c     |  7 ++++++-
+>  libmultipath/util.c        | 36 ++++++++++++++++++++++++++++++++++++
+>  libmultipath/util.h        |  2 ++
+>  multipath/multipath.conf.5 | 15 +++++++++++----
+>  6 files changed, 59 insertions(+), 7 deletions(-)
+> 
+> diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+> index a7f2b443..74b6f52a 100644
+> --- a/libmultipath/configure.c
+> +++ b/libmultipath/configure.c
+> @@ -572,7 +572,8 @@ select_action (struct multipath * mpp, vector curmp, int force_reload)
+>  	}
+>  
+>  	if (mpp->retain_hwhandler != RETAIN_HWHANDLER_UNDEF &&
+> -	    mpp->retain_hwhandler != cmpp->retain_hwhandler) {
+> +	    mpp->retain_hwhandler != cmpp->retain_hwhandler &&
+> +	    get_linux_version_code() < KERNEL_VERSION(4, 3, 0)) {
+>  		mpp->action = ACT_RELOAD;
+>  		condlog(3, "%s: set ACT_RELOAD (retain_hwhandler change)",
+>  			mpp->alias);
+> diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
+> index 1121c715..b647c256 100644
+> --- a/libmultipath/dmparser.c
+> +++ b/libmultipath/dmparser.c
+> @@ -97,7 +97,8 @@ assemble_map (struct multipath * mp, char * params, int len)
+>  	} else if (mp->no_path_retry != NO_PATH_RETRY_UNDEF) {
+>  		add_feature(&f, no_path_retry);
+>  	}
+> -	if (mp->retain_hwhandler == RETAIN_HWHANDLER_ON)
+> +	if (mp->retain_hwhandler == RETAIN_HWHANDLER_ON &&
+> +	    get_linux_version_code() < KERNEL_VERSION(4, 3, 0))
+>  		add_feature(&f, retain_hwhandler);
+>  
+>  	APPEND(p, end, "%s %s %i %i", f, mp->hwhandler, nr_priority_groups,
+> diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+> index e885a845..d609394e 100644
+> --- a/libmultipath/propsel.c
+> +++ b/libmultipath/propsel.c
+> @@ -628,7 +628,12 @@ int select_retain_hwhandler(struct config *conf, struct multipath *mp)
+>  
+>  	if (!VERSION_GE(conf->version, minv_dm_retain)) {
+>  		mp->retain_hwhandler = RETAIN_HWHANDLER_OFF;
+> -		origin = "(setting: WARNING, requires kernel version >= 1.5.0)";
+> +		origin = "(setting: WARNING, requires kernel dm-mpath version >= 1.5.0)";
+> +		goto out;
+> +	}
+> +	if (get_linux_version_code() >= KERNEL_VERSION(4, 3, 0)) {
+> +		mp->retain_hwhandler = RETAIN_HWHANDLER_ON;
+> +		origin = "(setting: implied in kernel >= 4.3.0)";
+>  		goto out;
+>  	}
+>  	mp_set_ovr(retain_hwhandler);
+> diff --git a/libmultipath/util.c b/libmultipath/util.c
+> index b90cd8b0..dff2ed3c 100644
+> --- a/libmultipath/util.c
+> +++ b/libmultipath/util.c
+> @@ -6,6 +6,7 @@
+>  #include <sys/stat.h>
+>  #include <sys/sysmacros.h>
+>  #include <sys/types.h>
+> +#include <sys/utsname.h>
+>  #include <dirent.h>
+>  #include <unistd.h>
+>  #include <errno.h>
+> @@ -380,3 +381,38 @@ int systemd_service_enabled(const char *dev)
+>  		found = systemd_service_enabled_in(dev, "/run");
+>  	return found;
+>  }
+> +
+> +static int _linux_version_code;
+> +static pthread_once_t _lvc_initialized = PTHREAD_ONCE_INIT;
+> +
+> +/* Returns current kernel version encoded as major*65536 + minor*256 + patch,
+> + * so, for example,  to check if the kernel is greater than 2.2.11:
+> + *
+> + *     if (get_linux_version_code() > KERNEL_VERSION(2,2,11)) { <stuff> }
+> + *
+> + * Copyright (C) 1999-2004 by Erik Andersen <andersen@codepoet.org>
+> + * Code copied from busybox (GPLv2 or later)
+> + */
+> +static void
+> +_set_linux_version_code(void)
+> +{
+> +	struct utsname name;
+> +	char *t;
+> +	int i, r;
+> +
+> +	uname(&name); /* never fails */
+> +	t = name.release;
+> +	r = 0;
+> +	for (i = 0; i < 3; i++) {
+> +		t = strtok(t, ".");
+> +		r = r * 256 + (t ? atoi(t) : 0);
+> +		t = NULL;
+> +	}
+> +	_linux_version_code = r;
+> +}
+> +
+> +int get_linux_version_code(void)
+> +{
+> +	pthread_once(&_lvc_initialized, _set_linux_version_code);
+> +	return _linux_version_code;
+> +}
+> diff --git a/libmultipath/util.h b/libmultipath/util.h
+> index b087e32e..45291be8 100644
+> --- a/libmultipath/util.h
+> +++ b/libmultipath/util.h
+> @@ -15,6 +15,8 @@ char *convert_dev(char *dev, int is_path_device);
+>  char *parse_uid_attribute_by_attrs(char *uid_attrs, char *path_dev);
+>  void setup_thread_attr(pthread_attr_t *attr, size_t stacksize, int detached);
+>  int systemd_service_enabled(const char *dev);
+> +int get_linux_version_code(void);
+> +#define KERNEL_VERSION(maj, min, ptc) ((((maj) * 256) + (min)) * 256 + (ptc))
+>  
+>  #define safe_sprintf(var, format, args...)	\
+>  	snprintf(var, sizeof(var), format, ##args) >= sizeof(var)
+> diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+> index b32d0383..3b4e5187 100644
+> --- a/multipath/multipath.conf.5
+> +++ b/multipath/multipath.conf.5
+> @@ -698,15 +698,16 @@ The default is: \fB<unset>\fR
+>  .
+>  .TP
+>  .B retain_attached_hw_handler
+> -If set to
+> +(Obsolete for kernels >= 4.3) If set to
+>  .I yes
+>  and the SCSI layer has already attached a hardware_handler to the device,
+>  multipath will not force the device to use the hardware_handler specified by
+>  mutipath.conf. If the SCSI layer has not attached a hardware handler,
+>  multipath will continue to use its configured hardware handler.
+>  .RS
+> -.TP
+> -The default is: \fByes\fR
+> +.PP
+> +The default is: \fByes\fR. Linux kernel 4.3 or newer always behaves as if
+> +\fB"retain_attached_hw_handler yes"\fR was set.
+>  .RE
+>  .
+>  .
+> @@ -1182,8 +1183,14 @@ Active/Standby mode exclusively.
+>  .I 1 alua
+>  (Hardware-dependent)
+>  Hardware handler for SCSI-3 ALUA compatible arrays.
+> -.TP
+> +.PP
+>  The default is: \fB<unset>\fR
+> +.PP
+> +\fBImportant Note:\fR Linux kernels 4.3 and newer automatically attach a device
+> +handler to known devices (which includes all devices supporting SCSI-3 ALUA)
+> +and disallow changing the handler
+> +afterwards. Setting \fBhardware_handler\fR for such devices on these kernels
+> +has no effect.
+>  .RE
+>  .
+>  .
+> -- 
+> 2.13.1
