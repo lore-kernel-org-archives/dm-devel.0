@@ -1,12 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v4 00/11] multipath-tools:
-	no_path_retry/queue_if_no_path/hwhandler logic
-Date: Thu, 22 Jun 2017 16:59:02 +0200
-Message-ID: <20170622145913.23714-1-mwilck@suse.com>
+Subject: [PATCH v4 07/11] multipath.conf.5: Remove ??? and other
+	minor fixes
+Date: Thu, 22 Jun 2017 16:59:09 +0200
+Message-ID: <20170622145913.23714-8-mwilck@suse.com>
+References: <20170622145913.23714-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20170622145913.23714-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,90 +22,111 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@s
 Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-This patch set attempts to sanitize the logic used for consistently handling
-options that can be set both via the "features" string and explicit multipath.conf
-options. This is most prominently "no_path_retry" vs. "queue_if_no_path", but also
-"retain_attached_hw_handler" vs. the feature of the same name.
+Remove the FIXME markers by filling in missing content,
+and make some other minor fixes.
 
-The logic this patch set follows is:
- - If "no_path_retry" is set to any value, "queue_if_no_path" is ignored
-   (this is the case nowadays for almost all "real" storage arrays, thanks to hwtable).
- - Otherwise, if "queue_if_no_path" is set, treat it like "no_path_retry queue".
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+Acked-by: Benjamin Marzinski <bmarzins@redhat.com>
+Reviewed-by: Hannes Reinecke <hare@suse.com>
+---
+ multipath/multipath.conf.5 | 48 +++++++++++++++++++++++++---------------------
+ 1 file changed, 26 insertions(+), 22 deletions(-)
 
-... likewise for "retain_attached_hw_handler".
-
-In the long run, we should get rid of the "features" settings duplicating
-configuration options altogether; the patch set prepares this by printing
-warning messages.
-
-The logic is implemented in the new function reconcile_features_with_options,
-which is called from both select_features() and merge_hwe(). In setup_map(),
-we need to call select_features() after select_no_path_retry() to make this work.
-The actual feature setting for device-mapper is made in assemble_map(), the
-patch set also fixes the logic there.
-
-The patch set documents the behavior in the man page, and adds some more
-man page fixes.
-
-By skipping superfluous default initializations in load_config(), the
-log messages for the respective config settings become more appropriate.
-
-The logic for setting hardware handler is also improved. Since kernel 4.3,
-"retain_attached_hw_handler yes" is implicitly set by the kernel, and setting
-the hardware handler from user space is only possible in special situations.
-Acknowledge that in multipathd, and don't try to set or unset either this
-feature or the hwhandler attribute itself if it's doomed to fail.
-
-Review and comments are highly welcome.
-
-Changes wrt v1:
-  - Suggestions from Ben Marzinski:
-    * Made sure "multipathd show config" still works (1/8).
-    * Fixed logging for default setting of "max_sectors" (1/8)
-    * Consistent internal treatment of mp->features (3/8, 4/8)
-    * Fixed whitespace error (6/8)
-    * Added deprecated warnings (8/8)
-  - Made sure the same logic is used in propsel.c and config.c by
-    calling the same function (3/8, 4/8)
-  - Added deprecated warnings (8/8)
-
-Changes wrt v2:
- - Added Acked-by:/Reviewed-by: tags
- - 1/11: clarify comment in select_max_sectors_kb (Hannes Reinecke)
- - 3/11: call select_retain_hwhandler before select_features
- - 8/11: don't suggest using retain_attached_hw_handler in log msg
- - 9/11, 10/11, 11/11: new
-
-Changes wrt v3:
- - Added Reviewed-by: tags (kept Ben's Ack in 4/11 although patch slightly changed)
- - 4/11: use a buffer on stack rather than malloc (Hannes Reinecke)
- - 10/11: Simplify by checking dh_state only in select_handler (Hannes Reinecke)
-
-Martin Wilck (11):
-  libmultipath: load_config: skip setting unnecessary defaults
-  libmultipath: add/remove_feature: use const char* for feature
-  libmultipath: clarify option conflicts for "features"
-  libmultipath: merge_hwe: fix queue_if_no_path logic
-  libmultipath: assemble_map: fix queue_if_no_path logic
-  multipath.conf.5: document no_path_retry vs. queue_if_no_path
-  multipath.conf.5: Remove ??? and other minor fixes
-  libmultipath: add deprecated warning for some features settings
-  libmultipath: retain_attached_hw_handler obsolete with 4.3+
-  libmultipath: don't try to set hwhandler if it is retained
-  libmultipath: don't [un]set queue_if_no_path after domap
-
- libmultipath/config.c      |  31 +++---------
- libmultipath/configure.c   |  28 ++++-------
- libmultipath/dict.c        |  11 +++--
- libmultipath/dmparser.c    |   8 +--
- libmultipath/propsel.c     | 121 +++++++++++++++++++++++++++++++++++++++------
- libmultipath/propsel.h     |   3 ++
- libmultipath/structs.c     |  30 +++++------
- libmultipath/structs.h     |   4 +-
- libmultipath/util.c        |  36 ++++++++++++++
- libmultipath/util.h        |   2 +
- multipath/multipath.conf.5 |  67 +++++++++++++++----------
- 11 files changed, 231 insertions(+), 110 deletions(-)
-
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index d5d9438a..000a42ec 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -258,7 +258,7 @@ Return a constant priority of \fI1\fR.
+ .I sysfs
+ Use the sysfs attributes \fIaccess_state\fR and \fIpreferred_path\fR to
+ generate the path priority. This prioritizer accepts the optional prio_arg
+-\fIexclusive_pref_bit\fR
++\fIexclusive_pref_bit\fR.
+ .TP
+ .I emc
+ (Hardware-dependent)
+@@ -300,14 +300,19 @@ Generate the path priority based on a latency algorithm.
+ Requires prio_args keyword.
+ .TP
+ .I datacore
+-.\" XXX
+-???. Requires prio_args keyword.
++(Hardware-dependent)
++Generate the path priority for some Datacore storage arrays. Requires prio_args
++keyword.
+ .TP
+ .I iet
+-.\" XXX
+-???. Requires prio_args keyword.
+-.TP
+-The default is: \fBconst\fR
++(iSCSI only)
++Generate path priority for iSCSI targets based on IP address. Requires
++prio_args keyword.
++.PP
++The default depends on the \fBdetect_prio\fR setting: If \fBdetect_prio\fR is
++\fByes\fR (default), the default priority algorithm is \fBsysfs\fR (except for
++NetAPP E-Series, where it is \fBalua\fR). If \fBdetect_prio\fR is
++\fBno\fR, the default priority algorithm is \fBconst\fR.
+ .RE
+ .
+ .
+@@ -364,12 +369,12 @@ If \fIexclusive_pref_bit\fR is set, paths with the \fIpreferred path\fR bit
+ set will always be in their own path group.
+ .TP
+ .I datacore
+-.\" XXX
+-\fIpreferredsds\fR ???.
++\fIpreferredsds\fR (required) denotes the preferred "SDS name" for datacore
++arrays. \fItimeout\fR (optional) is the timeout for the INQUIRY, in ms.
+ .TP
+ .I iet
+-.\" XXX
+-\fIpreferredip\fR ???.
++\fIpreferredip=...\fR (required) denotes the preferred IP address (in dotted decimal
++notation) for iSCSI targets.
+ .TP
+ The default is: \fB<unset>\fR
+ .RE
+@@ -384,29 +389,28 @@ Possible values for the feature list are:
+ .TP 12
+ .\" XXX
+ .I queue_if_no_path
+-(Superseded by \fIno_path_retry\fR) (Since ??? kernel) Queue I/O if no path is active.
++(Superseded by \fIno_path_retry\fR) Queue I/O if no path is active.
+ Identical to the \fIno_path_retry\fR with \fIqueue\fR value. If both this
+ feature and \fIno_path_retry\fR are set, the latter value takes
+ precedence. See KNOWN ISSUES.
+ .TP
+-.I no_partitions
+-Disable automatic partitions generation via kpartx.
+-.TP
+ .\" XXX
+ .I pg_init_retries <times>
+-(Since ??? kernel) Number of times to retry pg_init, it must be between 1 and 50.
++(Since kernel 2.6.24) Number of times to retry pg_init, it must be between 1 and 50.
+ .TP
+ .\" XXX
+ .I pg_init_delay_msecs <msecs>
+-(Since ??? kernel) Number of msecs before pg_init retry, it must be between 0 and 60000.
++(Since kernel 2.6.38) Number of msecs before pg_init retry, it must be between 0 and 60000.
+ .TP
+ .\" XXX
+ .I queue_mode <mode>
+-(Since ??? kernel) Select the the queue_mode per multipath device.
+-Where <mode> can be \fIbio\fR, \fIrq\fR or \fImq\fR. Which corresponds to
+-bio-based, request_fn rq-based, and blk-mq rq-based respectively.
+-.TP
+-The default is: \fB0\fR
++(Since kernel 4.8) Select the the queueing mode per multipath device.
++<mode> can be \fIbio\fR, \fIrq\fR or \fImq\f, which corresponds to
++bio-based, request-based, and block-multiqueue (blk-mq) request-based,
++respectively.
++
++The default depends on the kernel parameter \fBdm_mod.use_blk_mq\fR. It is
++\fImq\fR if the latter is set, and \fIrq\fR otherwise.
+ .RE
+ .
+ .
 -- 
 2.13.1
