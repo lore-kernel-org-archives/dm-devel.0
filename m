@@ -1,16 +1,16 @@
-From: Bart Van Assche <Bart.VanAssche@wdc.com>
-Subject: Re: [PATCH] multipath-tools: sync third-party headers
- with 3.13 upstream
-Date: Wed, 21 Jun 2017 15:14:06 +0000
-Message-ID: <1498058040.2746.2.camel@wdc.com>
-References: <20170621122639.6027-1-xose.vazquez@gmail.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH v3 11/11] libmultipath: don't [un]set
+ queue_if_no_path after domap
+Date: Thu, 22 Jun 2017 11:34:14 +0200
+Message-ID: <1498124054.6002.3.camel@suse.com>
+References: <20170621150630.25773-1-mwilck@suse.com>
+	<20170621150630.25773-12-mwilck@suse.com>
+	<fb72a1ed-58c6-fa6d-9411-8c03ce9541b7@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170621122639.6027-1-xose.vazquez@gmail.com>
-Content-Language: en-US
-Content-ID: <930C657B60E946458E4A56CB365FDA46@namprd04.prod.outlook.com>
+In-Reply-To: <fb72a1ed-58c6-fa6d-9411-8c03ce9541b7@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,14 +20,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "xose.vazquez@gmail.com" <xose.vazquez@gmail.com>
-Cc: Bart Van Assche <Bart.VanAssche@wdc.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Hannes Reinecke <hare@suse.de>, Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-On Wed, 2017-06-21 at 14:26 +0200, Xose Vazquez Perez wrote:
-> Cc: Bart Van Assche <bart.vanassche@sandisk.com>
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: device-mapper development <dm-devel@redhat.com>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-
-Reviewed-by: Bart Van Assche <bart.vanassche@wdc.com>
+T24gVGh1LCAyMDE3LTA2LTIyIGF0IDA4OjIzICswMjAwLCBIYW5uZXMgUmVpbmVja2Ugd3JvdGU6
+Cj4gT24gMDYvMjEvMjAxNyAwNTowNiBQTSwgTWFydGluIFdpbGNrIHdyb3RlOgo+ID4gV2Ugc2V0
+IHRoZSBxdWV1ZV9pZl9ub19wYXRoIGZlYXR1cmUgaW4gYXNzZW1ibGVfbWFwKCkgYWxyZWFkeSwK
+PiA+IG5vIG5lZWQgdG8gc2V0IGl0IGhlcmUgYWdhaW4uCj4gPiAKPiA+IFNpZ25lZC1vZmYtYnk6
+IE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPgo+ID4gLS0tCj4gPiAgbGlibXVsdGlwYXRo
+L2NvbmZpZ3VyZS5jIHwgMTUgLS0tLS0tLS0tLS0tLS0tCj4gPiAgMSBmaWxlIGNoYW5nZWQsIDE1
+IGRlbGV0aW9ucygtKQo+ID4gCj4gPiBbLi4uXQo+IFdhdGNoIG91dC4KPiAncXVldWVfaWZfbm9f
+cGF0aCcgaXMgc2V0IF90ZW1wb3JhcmlseV8gd2hpbGUgJ25vX3BhdGhfcmV0cnknIGlzCj4gYWN0
+aXZlLAo+IGFuZCByZW1vdmVkIGFmdGVyd2FyZHMuCj4gU28gdGhlcmUgbWlnaHQgYmUgdmFsaWQg
+cmVhc29ucyB3aHkgaXQncyBzZXQgaGVyZS4KPiBIYXZlIHlvdSBjaGVja2VkPwoKWWVzLCBJJ20g
+cHJldHR5IGNlcnRhaW4gdGhhdCB0aGlzIGlzIGNvcnJlY3QuIFdlJ3JlIGluIGNvYWxlc2NlX3Bh
+dGhzKCkKaGVyZSwgd2hpbGUgd2UgYXJlIHNldHRpbmcgdXAgb3IgcmVjb25maWd1cmluZyBtYXBz
+LiBUaGUgY2FsbCBzZXF1ZW5jZQppcyAKCiAgIHNldHVwX21hcCgpCiAgICAgIGFzc2VtYmxlX21h
+cCgpCiAgIGRvbWFwKCkKICAgLi4uIGFuZCB0aGVuIGNvbWVzIHRoZSBjb2RlIEknbSByZW1vdmlu
+Zy4KCldlIHNldCB0aGUgZmVhdHVyZSBzdHJpbmcgaW4gYXNzZW1ibGVfbWFwKCkgY29ycmVjdGx5
+LiBUaHVzIHRoZSByZW1vdmVkCmNvZGUganVzdCByZXBlYXRlZCB0aGUgc2FtZSBzZXR0aW5nIHRo
+YXQgaGFkIGFscmVhZHkgYmVlbiBhcHBsaWVkIGluCmRvbWFwKCkuIFRoaXMgY29kZSBoYXMgYmVl
+biBpbiB0aGF0IHBsYWNlIGZvciBhIHZlcnkgbG9uZyB0aW1lLCBBRkFJQ1MKaXQgb3JpZ2luYXRl
+cyBmcm9tIHRpbWVzIHdoZXJlIHRoZSBmZWF0dXJlcyBzdHJpbmcgd2FzIG5vdCBjb3JyZWN0bHkK
+c2V0IHVwIGJlZm9yZSBjcmVhdGluZyBvciByZWxvYWRpbmcgdGhlIG1hcC4KClRoZSBsb2dpYyBm
+b3IgZGlzYWJsaW5nIHF1ZXVlX2lmX25vX3BhdGggaWYgdGhlIHJldHJ5IGNvdW50IGlzIHJlYWNo
+ZWQKaXMgaW1wbGVtZW50ZWQgZWxzZXdoZXJlLCBtYWlubHkgaW4gc2V0X25vX3BhdGhfcmV0cnko
+KSAoY2FsbGVkIGUuZy4KZnJvbSBldl9yZW1vdmVfcGF0aCgpKSBhbmQgcmV0cnlfY291bnRfdGlj
+aygpIChjYWxsZWQgZnJvbSBjaGVja2VyCmxvb3ApLgoKRG8geW91IHNlZSBhIGNhc2UgdGhhdCBJ
+IGhhdmUgb3Zlcmxvb2tlZD8KCkJlc3QsCk1hcnRpbgoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13
+aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGludXggR21i
+SCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpI
+UkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZl
+bEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1k
+ZXZlbA==
