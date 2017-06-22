@@ -1,16 +1,11 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH v4 09/11] libmultipath:
- retain_attached_hw_handler obsolete with 4.3+
-Date: Mon, 26 Jun 2017 10:00:12 +0200
-Message-ID: <1498464012.27347.3.camel@suse.com>
-References: <20170622145913.23714-1-mwilck@suse.com>
-	<20170622145913.23714-10-mwilck@suse.com>
-	<4a58e086-8e47-80d0-eb23-cf838bc09f15@gmail.com>
+From: Eric Biggers <ebiggers3@gmail.com>
+Subject: [PATCH] dm: constify argument arrays
+Date: Thu, 22 Jun 2017 11:32:45 -0700
+Message-ID: <20170622183245.48678-1-ebiggers3@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4a58e086-8e47-80d0-eb23-cf838bc09f15@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,48 +15,242 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com
+To: dm-devel@redhat.com
+Cc: Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>, Eric Biggers <ebiggers@google.com>
 List-Id: dm-devel.ids
 
-T24gRnJpLCAyMDE3LTA2LTIzIGF0IDE5OjI1ICswMjAwLCBYb3NlIFZhenF1ZXogUGVyZXogd3Jv
-dGU6Cj4gT24gMDYvMjIvMjAxNyAwNDo1OSBQTSwgTWFydGluIFdpbGNrIHdyb3RlOgo+IAo+ID4g
-S2VybmVscyA0LjMgYW5kIG5ld2VyIChjb21taXQgMWJhYjBkZTAgImRtLW1wYXRoLCBzY3NpX2Ro
-OiBkb24ndAo+ID4gbGV0IGRtIGRldGFjaCBkZXZpY2UgaGFuZGxlcnMiKSBpbXBseSAicmV0YWlu
-X2F0dGFjaGVkX2h3X2hhbmRsZXIKPiA+IHllcyIuCj4gPiAKPiA+IENsYXJpZnkgdGhpcyBpbiB0
-aGUgcHJvcHNlbCBjb2RlLCBsb2cgbWVzc2FnZXMsIGFuZCBkb2N1bWVudGF0aW9uLgo+ID4gCj4g
-PiBTaWduZWQtb2ZmLWJ5OiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4KPiA+IFJldmll
-d2VkLWJ5OiBIYW5uZXMgUmVpbmVja2UgPGhhcmVAc3VzZS5jb20+Cj4gPiAtLS0KPiA+ICBsaWJt
-dWx0aXBhdGgvY29uZmlndXJlLmMgICB8ICAzICsrLQo+ID4gIGxpYm11bHRpcGF0aC9kbXBhcnNl
-ci5jICAgIHwgIDMgKystCj4gPiAgbGlibXVsdGlwYXRoL3Byb3BzZWwuYyAgICAgfCAgNyArKysr
-KystCj4gPiAgbGlibXVsdGlwYXRoL3V0aWwuYyAgICAgICAgfCAzNgo+ID4gKysrKysrKysrKysr
-KysrKysrKysrKysrKysrKysrKysrKysrCj4gPiAgbGlibXVsdGlwYXRoL3V0aWwuaCAgICAgICAg
-fCAgMiArKwo+ID4gIG11bHRpcGF0aC9tdWx0aXBhdGguY29uZi41IHwgMTUgKysrKysrKysrKyst
-LS0tCj4gPiAgNiBmaWxlcyBjaGFuZ2VkLCA1OSBpbnNlcnRpb25zKCspLCA3IGRlbGV0aW9ucygt
-KQo+IAo+IFsuLi5dCj4gPiAtLS0gYS9saWJtdWx0aXBhdGgvcHJvcHNlbC5jCj4gPiArKysgYi9s
-aWJtdWx0aXBhdGgvcHJvcHNlbC5jCj4gPiBAQCAtNjI4LDcgKzYyOCwxMiBAQCBpbnQgc2VsZWN0
-X3JldGFpbl9od2hhbmRsZXIoc3RydWN0IGNvbmZpZwo+ID4gKmNvbmYsIHN0cnVjdCBtdWx0aXBh
-dGggKm1wKQo+ID4gIAo+ID4gIAlpZiAoIVZFUlNJT05fR0UoY29uZi0+dmVyc2lvbiwgbWludl9k
-bV9yZXRhaW4pKSB7Cj4gPiAgCQltcC0+cmV0YWluX2h3aGFuZGxlciA9IFJFVEFJTl9IV0hBTkRM
-RVJfT0ZGOwo+ID4gLQkJb3JpZ2luID0gIihzZXR0aW5nOiBXQVJOSU5HLCByZXF1aXJlcyBrZXJu
-ZWwKPiA+IHZlcnNpb24gPj0gMS41LjApIjsKPiA+ICsJCW9yaWdpbiA9ICIoc2V0dGluZzogV0FS
-TklORywgcmVxdWlyZXMga2VybmVsIGRtLQo+ID4gbXBhdGggdmVyc2lvbiA+PSAxLjUuMCkiOwo+
-IAo+IEl0IHdvdWxkIGJlIG1vcmUgaW5mb3JtYXRpdmUgcmVwbGFjZSB0aGUgZG0tbXBhdGggdmVy
-c2lvbiB3aXRoIHRoZQo+IGtlcm5lbCB2ZXJzaW9uLiBObyBvbmUgY2FyZXMgYWJvdXQgc3Vic3lz
-dGVtcyB2ZXJzaW9ucy4KCkkgZGlzYWdyZWUuIFRoaXMgY29kZSBzaG91bGQgYWxzbyB3b3JrIGZv
-ciB2ZW5kb3Iga2VybmVscyB3aGljaCBtYXkKZS5nLiBjb250YWluIHBhdGNoZXMgdG8gdXBkYXRl
-IGRtLW1wYXRoIHdpdGhvdXQgdXBkYXRpbmcgdGhlIG1haW4Ka2VybmVsICh1dHNuYW1lKSB2ZXJz
-aW9uLgoKVGhlIHJlYXNvbiBJIHVzZWQgZ2V0X2xpbnV4X3ZlcnNpb25fY29kZSgpIGZvciB0aGUg
-bmV3IGNoZWNrIG15IHBhdGNoCmludHJvZHVjZWQgd2FzIHRoYXQgdW5mb3J0dW5hdGVseSwgdGhl
-IGRtLW1wYXRoIHZlcnNpb24gaGFzIG5vdCBiZWVuCmNoYW5nZWQgd2hlbiB0aGUgInJldGFpbl9h
-dHRhY2hlZF9od2hhbmRsZXIiIGZlYXR1cmUgd2FzIHJlbW92ZWQgaW4KNC4zLiBUaGUgbmV4dCBk
-bS1tcGF0aCB2ZXJzaW9uIGNoYW5nZSAodG8gMS4xMCkgaGFwcGVuZWQgaW4gNC40LgpUaHVzIEkg
-Y291bGRuJ3QgdXNlIHRoZSBkbS1tcGF0aCB2ZXJzaW9uIGFuZCBoYWQgdG8gZmFsbGJhY2sgdG8K
-dXRzbmFtZS4KClRoaW5raW5nIGFib3V0IGl0LCB0aGUgbmV3IGNoZWNrIHNob3VsZCBwcm9iYWJs
-eSBiZSAoZG1fbXBhdGggdmVyc2lvbgo+PSAxLjEwIE9SIGtlcm5lbCB2ZXJzb24gPj0gNC4zKS4g
-SU1PIHRoYXQgY2FuIGJlIGhhbmRsZWQgaW4gYW4KaW5jcmVtZW50YWwgcGF0Y2guCgpSZWdhcmRz
-LApNYXJ0aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0
-OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZm
-ZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcp
-CgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3
-dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+From: Eric Biggers <ebiggers@google.com>
+
+The arrays of 'struct dm_arg' are never modified by the device-mapper
+core, so constify them so that they are placed in .rodata.
+
+(Exception: the args array in dm-raid cannot be constified because it is
+allocated on the stack and modified.)
+
+Signed-off-by: Eric Biggers <ebiggers@google.com>
+---
+ drivers/md/dm-cache-target.c  |  4 ++--
+ drivers/md/dm-crypt.c         |  2 +-
+ drivers/md/dm-flakey.c        |  4 ++--
+ drivers/md/dm-integrity.c     |  2 +-
+ drivers/md/dm-mpath.c         | 10 +++++-----
+ drivers/md/dm-switch.c        |  2 +-
+ drivers/md/dm-table.c         |  7 ++++---
+ drivers/md/dm-thin.c          |  2 +-
+ drivers/md/dm-verity-target.c |  2 +-
+ include/linux/device-mapper.h |  4 ++--
+ 10 files changed, 20 insertions(+), 19 deletions(-)
+
+diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
+index d682a0511381..484fbe0327b4 100644
+--- a/drivers/md/dm-cache-target.c
++++ b/drivers/md/dm-cache-target.c
+@@ -2305,7 +2305,7 @@ static void init_features(struct cache_features *cf)
+ static int parse_features(struct cache_args *ca, struct dm_arg_set *as,
+ 			  char **error)
+ {
+-	static struct dm_arg _args[] = {
++	static const struct dm_arg _args[] = {
+ 		{0, 2, "Invalid number of cache feature arguments"},
+ 	};
+ 
+@@ -2347,7 +2347,7 @@ static int parse_features(struct cache_args *ca, struct dm_arg_set *as,
+ static int parse_policy(struct cache_args *ca, struct dm_arg_set *as,
+ 			char **error)
+ {
+-	static struct dm_arg _args[] = {
++	static const struct dm_arg _args[] = {
+ 		{0, 1024, "Invalid number of policy arguments"},
+ 	};
+ 
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index ebf9e72d479b..95c5faf05391 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -2514,7 +2514,7 @@ static int crypt_ctr_optional(struct dm_target *ti, unsigned int argc, char **ar
+ {
+ 	struct crypt_config *cc = ti->private;
+ 	struct dm_arg_set as;
+-	static struct dm_arg _args[] = {
++	static const struct dm_arg _args[] = {
+ 		{0, 6, "Invalid number of feature args"},
+ 	};
+ 	unsigned int opt_params, val;
+diff --git a/drivers/md/dm-flakey.c b/drivers/md/dm-flakey.c
+index 13305a182611..56cc3fba3eaa 100644
+--- a/drivers/md/dm-flakey.c
++++ b/drivers/md/dm-flakey.c
+@@ -51,7 +51,7 @@ static int parse_features(struct dm_arg_set *as, struct flakey_c *fc,
+ 	unsigned argc;
+ 	const char *arg_name;
+ 
+-	static struct dm_arg _args[] = {
++	static const struct dm_arg _args[] = {
+ 		{0, 6, "Invalid number of feature args"},
+ 		{1, UINT_MAX, "Invalid corrupt bio byte"},
+ 		{0, 255, "Invalid corrupt value to write into bio byte (0-255)"},
+@@ -178,7 +178,7 @@ static int parse_features(struct dm_arg_set *as, struct flakey_c *fc,
+  */
+ static int flakey_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ {
+-	static struct dm_arg _args[] = {
++	static const struct dm_arg _args[] = {
+ 		{0, UINT_MAX, "Invalid up interval"},
+ 		{0, UINT_MAX, "Invalid down interval"},
+ 	};
+diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
+index 7910bfe50da4..866714c1dee1 100644
+--- a/drivers/md/dm-integrity.c
++++ b/drivers/md/dm-integrity.c
+@@ -2763,7 +2763,7 @@ static int dm_integrity_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 	int r;
+ 	unsigned extra_args;
+ 	struct dm_arg_set as;
+-	static struct dm_arg _args[] = {
++	static const struct dm_arg _args[] = {
+ 		{0, 9, "Invalid number of feature args"},
+ 	};
+ 	unsigned journal_sectors, interleave_sectors, buffer_sectors, journal_watermark, sync_msec;
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index 3df056b73b66..93f2a5bca918 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -691,7 +691,7 @@ static int parse_path_selector(struct dm_arg_set *as, struct priority_group *pg,
+ 	struct path_selector_type *pst;
+ 	unsigned ps_argc;
+ 
+-	static struct dm_arg _args[] = {
++	static const struct dm_arg _args[] = {
+ 		{0, 1024, "invalid number of path selector args"},
+ 	};
+ 
+@@ -815,7 +815,7 @@ static struct pgpath *parse_path(struct dm_arg_set *as, struct path_selector *ps
+ static struct priority_group *parse_priority_group(struct dm_arg_set *as,
+ 						   struct multipath *m)
+ {
+-	static struct dm_arg _args[] = {
++	static const struct dm_arg _args[] = {
+ 		{1, 1024, "invalid number of paths"},
+ 		{0, 1024, "invalid number of selector args"}
+ 	};
+@@ -891,7 +891,7 @@ static int parse_hw_handler(struct dm_arg_set *as, struct multipath *m)
+ 	int ret;
+ 	struct dm_target *ti = m->ti;
+ 
+-	static struct dm_arg _args[] = {
++	static const struct dm_arg _args[] = {
+ 		{0, 1024, "invalid number of hardware handler args"},
+ 	};
+ 
+@@ -943,7 +943,7 @@ static int parse_features(struct dm_arg_set *as, struct multipath *m)
+ 	struct dm_target *ti = m->ti;
+ 	const char *arg_name;
+ 
+-	static struct dm_arg _args[] = {
++	static const struct dm_arg _args[] = {
+ 		{0, 8, "invalid number of feature args"},
+ 		{1, 50, "pg_init_retries must be between 1 and 50"},
+ 		{0, 60000, "pg_init_delay_msecs must be between 0 and 60000"},
+@@ -1012,7 +1012,7 @@ static int parse_features(struct dm_arg_set *as, struct multipath *m)
+ static int multipath_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ {
+ 	/* target arguments */
+-	static struct dm_arg _args[] = {
++	static const struct dm_arg _args[] = {
+ 		{0, 1024, "invalid number of priority groups"},
+ 		{0, 1024, "invalid initial priority group number"},
+ 	};
+diff --git a/drivers/md/dm-switch.c b/drivers/md/dm-switch.c
+index 871c18fe000d..83a371d54412 100644
+--- a/drivers/md/dm-switch.c
++++ b/drivers/md/dm-switch.c
+@@ -251,7 +251,7 @@ static void switch_dtr(struct dm_target *ti)
+  */
+ static int switch_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ {
+-	static struct dm_arg _args[] = {
++	static const struct dm_arg _args[] = {
+ 		{1, (KMALLOC_MAX_SIZE - sizeof(struct switch_ctx)) / sizeof(struct switch_path), "Invalid number of paths"},
+ 		{1, UINT_MAX, "Invalid region size"},
+ 		{0, 0, "Invalid number of optional args"},
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 5f5eae41f804..15249a6b1741 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -770,7 +770,8 @@ int dm_table_add_target(struct dm_table *t, const char *type,
+ /*
+  * Target argument parsing helpers.
+  */
+-static int validate_next_arg(struct dm_arg *arg, struct dm_arg_set *arg_set,
++static int validate_next_arg(const struct dm_arg *arg,
++			     struct dm_arg_set *arg_set,
+ 			     unsigned *value, char **error, unsigned grouped)
+ {
+ 	const char *arg_str = dm_shift_arg(arg_set);
+@@ -788,14 +789,14 @@ static int validate_next_arg(struct dm_arg *arg, struct dm_arg_set *arg_set,
+ 	return 0;
+ }
+ 
+-int dm_read_arg(struct dm_arg *arg, struct dm_arg_set *arg_set,
++int dm_read_arg(const struct dm_arg *arg, struct dm_arg_set *arg_set,
+ 		unsigned *value, char **error)
+ {
+ 	return validate_next_arg(arg, arg_set, value, error, 0);
+ }
+ EXPORT_SYMBOL(dm_read_arg);
+ 
+-int dm_read_arg_group(struct dm_arg *arg, struct dm_arg_set *arg_set,
++int dm_read_arg_group(const struct dm_arg *arg, struct dm_arg_set *arg_set,
+ 		      unsigned *value, char **error)
+ {
+ 	return validate_next_arg(arg, arg_set, value, error, 1);
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index 17ad50daed08..08d945d0fc10 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -3043,7 +3043,7 @@ static int parse_pool_features(struct dm_arg_set *as, struct pool_features *pf,
+ 	unsigned argc;
+ 	const char *arg_name;
+ 
+-	static struct dm_arg _args[] = {
++	static const struct dm_arg _args[] = {
+ 		{0, 4, "Invalid number of pool feature arguments"},
+ 	};
+ 
+diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
+index 1ec9b2c51c07..efd3f05383bd 100644
+--- a/drivers/md/dm-verity-target.c
++++ b/drivers/md/dm-verity-target.c
+@@ -839,7 +839,7 @@ static int verity_parse_opt_args(struct dm_arg_set *as, struct dm_verity *v)
+ 	struct dm_target *ti = v->ti;
+ 	const char *arg_name;
+ 
+-	static struct dm_arg _args[] = {
++	static const struct dm_arg _args[] = {
+ 		{0, DM_VERITY_OPTS_MAX, "Invalid number of feature args"},
+ 	};
+ 
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index f4c639c0c362..9ad8eb3384ec 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -375,7 +375,7 @@ struct dm_arg {
+  * Validate the next argument, either returning it as *value or, if invalid,
+  * returning -EINVAL and setting *error.
+  */
+-int dm_read_arg(struct dm_arg *arg, struct dm_arg_set *arg_set,
++int dm_read_arg(const struct dm_arg *arg, struct dm_arg_set *arg_set,
+ 		unsigned *value, char **error);
+ 
+ /*
+@@ -383,7 +383,7 @@ int dm_read_arg(struct dm_arg *arg, struct dm_arg_set *arg_set,
+  * arg->min and arg->max further arguments. Either return the size as
+  * *num_args or, if invalid, return -EINVAL and set *error.
+  */
+-int dm_read_arg_group(struct dm_arg *arg, struct dm_arg_set *arg_set,
++int dm_read_arg_group(const struct dm_arg *arg, struct dm_arg_set *arg_set,
+ 		      unsigned *num_args, char **error);
+ 
+ /*
+-- 
+2.13.1.611.g7e3b11ae1-goog
