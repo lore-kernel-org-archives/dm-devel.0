@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v4 07/11] multipath.conf.5: Remove ??? and other
-	minor fixes
-Date: Thu, 22 Jun 2017 16:59:09 +0200
-Message-ID: <20170622145913.23714-8-mwilck@suse.com>
+Subject: [PATCH v4 08/11] libmultipath: add deprecated warning
+	for some features settings
+Date: Thu, 22 Jun 2017 16:59:10 +0200
+Message-ID: <20170622145913.23714-9-mwilck@suse.com>
 References: <20170622145913.23714-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,111 +22,61 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@s
 Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-Remove the FIXME markers by filling in missing content,
-and make some other minor fixes.
+The device-mapper features "queue_if_no_path" and
+"retain_attached_hw_handler" should be set via the configuration
+keywords "no_path_retry" and "retain_attached_hw_handler",
+respectively, not via "features".
+Print a warning if these "features" settings are encountered.
+
+So far these "features" settings will only be ignored if the
+respective other keyword is set, so in particular
+'features "1 queue_if_no_path"' will still work as expected, but
+cause the warning to be printed.
+
+We should consider ignoring these completely in a future version.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
-Acked-by: Benjamin Marzinski <bmarzins@redhat.com>
 Reviewed-by: Hannes Reinecke <hare@suse.com>
 ---
- multipath/multipath.conf.5 | 48 +++++++++++++++++++++++++---------------------
- 1 file changed, 26 insertions(+), 22 deletions(-)
+ libmultipath/propsel.c     | 5 +++++
+ multipath/multipath.conf.5 | 2 +-
+ 2 files changed, 6 insertions(+), 1 deletion(-)
 
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index bc9e130b..e885a845 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -290,6 +290,9 @@ void reconcile_features_with_options(const char *id, char **features, int* no_pa
+ 	 * it's translated into "no_path_retry queue" here.
+ 	 */
+ 	if (strstr(*features, q_i_n_p)) {
++		condlog(0, "%s: option 'features \"1 %s\"' is deprecated, "
++			"please use 'no_path_retry queue' instead",
++			id, q_i_n_p);
+ 		if (*no_path_retry == NO_PATH_RETRY_UNDEF) {
+ 			*no_path_retry = NO_PATH_RETRY_QUEUE;
+ 			print_no_path_retry(buff, sizeof(buff),
+@@ -307,6 +310,8 @@ void reconcile_features_with_options(const char *id, char **features, int* no_pa
+ 		remove_feature(features, q_i_n_p);
+ 	}
+ 	if (strstr(*features, r_a_h_h)) {
++		condlog(0, "%s: option 'features \"1 %s\"' is deprecated",
++			id, r_a_h_h);
+ 		if (*retain_hwhandler == RETAIN_HWHANDLER_UNDEF) {
+ 			condlog(3, "%s: %s = on (inherited setting from feature '%s')",
+ 				id, r_a_h_h, r_a_h_h);
 diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index d5d9438a..000a42ec 100644
+index 000a42ec..b32d0383 100644
 --- a/multipath/multipath.conf.5
 +++ b/multipath/multipath.conf.5
-@@ -258,7 +258,7 @@ Return a constant priority of \fI1\fR.
- .I sysfs
- Use the sysfs attributes \fIaccess_state\fR and \fIpreferred_path\fR to
- generate the path priority. This prioritizer accepts the optional prio_arg
--\fIexclusive_pref_bit\fR
-+\fIexclusive_pref_bit\fR.
- .TP
- .I emc
- (Hardware-dependent)
-@@ -300,14 +300,19 @@ Generate the path priority based on a latency algorithm.
- Requires prio_args keyword.
- .TP
- .I datacore
--.\" XXX
--???. Requires prio_args keyword.
-+(Hardware-dependent)
-+Generate the path priority for some Datacore storage arrays. Requires prio_args
-+keyword.
- .TP
- .I iet
--.\" XXX
--???. Requires prio_args keyword.
--.TP
--The default is: \fBconst\fR
-+(iSCSI only)
-+Generate path priority for iSCSI targets based on IP address. Requires
-+prio_args keyword.
-+.PP
-+The default depends on the \fBdetect_prio\fR setting: If \fBdetect_prio\fR is
-+\fByes\fR (default), the default priority algorithm is \fBsysfs\fR (except for
-+NetAPP E-Series, where it is \fBalua\fR). If \fBdetect_prio\fR is
-+\fBno\fR, the default priority algorithm is \fBconst\fR.
- .RE
- .
- .
-@@ -364,12 +369,12 @@ If \fIexclusive_pref_bit\fR is set, paths with the \fIpreferred path\fR bit
- set will always be in their own path group.
- .TP
- .I datacore
--.\" XXX
--\fIpreferredsds\fR ???.
-+\fIpreferredsds\fR (required) denotes the preferred "SDS name" for datacore
-+arrays. \fItimeout\fR (optional) is the timeout for the INQUIRY, in ms.
- .TP
- .I iet
--.\" XXX
--\fIpreferredip\fR ???.
-+\fIpreferredip=...\fR (required) denotes the preferred IP address (in dotted decimal
-+notation) for iSCSI targets.
- .TP
- The default is: \fB<unset>\fR
- .RE
-@@ -384,29 +389,28 @@ Possible values for the feature list are:
+@@ -389,7 +389,7 @@ Possible values for the feature list are:
  .TP 12
  .\" XXX
  .I queue_if_no_path
--(Superseded by \fIno_path_retry\fR) (Since ??? kernel) Queue I/O if no path is active.
-+(Superseded by \fIno_path_retry\fR) Queue I/O if no path is active.
+-(Superseded by \fIno_path_retry\fR) Queue I/O if no path is active.
++(Deprecated, superseded by \fIno_path_retry\fR) Queue I/O if no path is active.
  Identical to the \fIno_path_retry\fR with \fIqueue\fR value. If both this
  feature and \fIno_path_retry\fR are set, the latter value takes
  precedence. See KNOWN ISSUES.
- .TP
--.I no_partitions
--Disable automatic partitions generation via kpartx.
--.TP
- .\" XXX
- .I pg_init_retries <times>
--(Since ??? kernel) Number of times to retry pg_init, it must be between 1 and 50.
-+(Since kernel 2.6.24) Number of times to retry pg_init, it must be between 1 and 50.
- .TP
- .\" XXX
- .I pg_init_delay_msecs <msecs>
--(Since ??? kernel) Number of msecs before pg_init retry, it must be between 0 and 60000.
-+(Since kernel 2.6.38) Number of msecs before pg_init retry, it must be between 0 and 60000.
- .TP
- .\" XXX
- .I queue_mode <mode>
--(Since ??? kernel) Select the the queue_mode per multipath device.
--Where <mode> can be \fIbio\fR, \fIrq\fR or \fImq\fR. Which corresponds to
--bio-based, request_fn rq-based, and blk-mq rq-based respectively.
--.TP
--The default is: \fB0\fR
-+(Since kernel 4.8) Select the the queueing mode per multipath device.
-+<mode> can be \fIbio\fR, \fIrq\fR or \fImq\f, which corresponds to
-+bio-based, request-based, and block-multiqueue (blk-mq) request-based,
-+respectively.
-+
-+The default depends on the kernel parameter \fBdm_mod.use_blk_mq\fR. It is
-+\fImq\fR if the latter is set, and \fIrq\fR otherwise.
- .RE
- .
- .
 -- 
 2.13.1
