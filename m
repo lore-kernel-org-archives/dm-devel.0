@@ -1,14 +1,12 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v4 10/11] libmultipath: don't try to set
-	hwhandler if it is retained
-Date: Thu, 22 Jun 2017 16:59:12 +0200
-Message-ID: <20170622145913.23714-11-mwilck@suse.com>
-References: <20170622145913.23714-1-mwilck@suse.com>
+Subject: [PATCH v4 00/11] multipath-tools:
+	no_path_retry/queue_if_no_path/hwhandler logic
+Date: Thu, 22 Jun 2017 16:59:02 +0200
+Message-ID: <20170622145913.23714-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170622145913.23714-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,102 +20,90 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@s
 Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-Setting a device handler only works if retain_attached_hw_handler
-is 'no', or if the kernel didn't auto-assign a handler. If this
-is not the case, don't even attempt to set a different handler.
+This patch set attempts to sanitize the logic used for consistently handling
+options that can be set both via the "features" string and explicit multipath.conf
+options. This is most prominently "no_path_retry" vs. "queue_if_no_path", but also
+"retain_attached_hw_handler" vs. the feature of the same name.
 
-This requires reading the sysfs "dh_state" path attribute.
+The logic this patch set follows is:
+ - If "no_path_retry" is set to any value, "queue_if_no_path" is ignored
+   (this is the case nowadays for almost all "real" storage arrays, thanks to hwtable).
+ - Otherwise, if "queue_if_no_path" is set, treat it like "no_path_retry queue".
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- libmultipath/configure.c |  8 +++++++-
- libmultipath/propsel.c   | 35 +++++++++++++++++++++++++++++++++++
- 2 files changed, 42 insertions(+), 1 deletion(-)
+... likewise for "retain_attached_hw_handler".
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 74b6f52a..03874f47 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -275,15 +275,21 @@ int setup_map(struct multipath *mpp, char *params, int params_size)
- 
- 	/*
- 	 * properties selectors
-+	 *
-+	 * Ordering matters for some properties:
-+	 * - features after no_path_retry and retain_hwhandler
-+	 * - hwhandler after retain_hwhandler
-+	 * No guarantee that this list is complete, check code in
-+	 * propsel.c if in doubt.
- 	 */
- 	conf = get_multipath_config();
- 	select_pgfailback(conf, mpp);
- 	select_pgpolicy(conf, mpp);
- 	select_selector(conf, mpp);
--	select_hwhandler(conf, mpp);
- 	select_no_path_retry(conf, mpp);
- 	select_retain_hwhandler(conf, mpp);
- 	select_features(conf, mpp);
-+	select_hwhandler(conf, mpp);
- 	select_rr_weight(conf, mpp);
- 	select_minio(conf, mpp);
- 	select_mode(conf, mpp);
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index d609394e..a86207a0 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -19,8 +19,10 @@
- #include "discovery.h"
- #include "dict.h"
- #include "util.h"
-+#include "sysfs.h"
- #include "prioritizers/alua_rtpg.h"
- #include <inttypes.h>
-+#include <libudev.h>
- 
- pgpolicyfn *pgpolicies[] = {
- 	NULL,
-@@ -342,9 +344,42 @@ out:
- 	return 0;
- }
- 
-+static int get_dh_state(struct path *pp, char *value, size_t value_len)
-+{
-+	struct udev_device *ud;
-+
-+	if (pp->udev == NULL)
-+		return -1;
-+
-+	ud = udev_device_get_parent_with_subsystem_devtype(
-+		pp->udev, "scsi", "scsi_device");
-+	if (ud == NULL)
-+		return -1;
-+
-+	return sysfs_attr_get_value(ud, "dh_state", value, value_len);
-+}
-+
- int select_hwhandler(struct config *conf, struct multipath *mp)
- {
- 	char *origin;
-+	struct path *pp;
-+	/* dh_state is no longer than "detached" */
-+	char handler[12];
-+	char *dh_state;
-+	int i;
-+
-+	dh_state = &handler[2];
-+	if (mp->retain_hwhandler != RETAIN_HWHANDLER_OFF) {
-+		vector_foreach_slot(mp->paths, pp, i) {
-+			if (get_dh_state(pp, dh_state, sizeof(handler) - 2) > 0
-+			    && strcmp(dh_state, "detached")) {
-+				memcpy(handler, "1 ", 2);
-+				mp->hwhandler = handler;
-+				origin = "(setting: retained by kernel driver)";
-+				goto out;
-+			}
-+		}
-+	}
- 
- 	mp_set_hwe(hwhandler);
- 	mp_set_conf(hwhandler);
+In the long run, we should get rid of the "features" settings duplicating
+configuration options altogether; the patch set prepares this by printing
+warning messages.
+
+The logic is implemented in the new function reconcile_features_with_options,
+which is called from both select_features() and merge_hwe(). In setup_map(),
+we need to call select_features() after select_no_path_retry() to make this work.
+The actual feature setting for device-mapper is made in assemble_map(), the
+patch set also fixes the logic there.
+
+The patch set documents the behavior in the man page, and adds some more
+man page fixes.
+
+By skipping superfluous default initializations in load_config(), the
+log messages for the respective config settings become more appropriate.
+
+The logic for setting hardware handler is also improved. Since kernel 4.3,
+"retain_attached_hw_handler yes" is implicitly set by the kernel, and setting
+the hardware handler from user space is only possible in special situations.
+Acknowledge that in multipathd, and don't try to set or unset either this
+feature or the hwhandler attribute itself if it's doomed to fail.
+
+Review and comments are highly welcome.
+
+Changes wrt v1:
+  - Suggestions from Ben Marzinski:
+    * Made sure "multipathd show config" still works (1/8).
+    * Fixed logging for default setting of "max_sectors" (1/8)
+    * Consistent internal treatment of mp->features (3/8, 4/8)
+    * Fixed whitespace error (6/8)
+    * Added deprecated warnings (8/8)
+  - Made sure the same logic is used in propsel.c and config.c by
+    calling the same function (3/8, 4/8)
+  - Added deprecated warnings (8/8)
+
+Changes wrt v2:
+ - Added Acked-by:/Reviewed-by: tags
+ - 1/11: clarify comment in select_max_sectors_kb (Hannes Reinecke)
+ - 3/11: call select_retain_hwhandler before select_features
+ - 8/11: don't suggest using retain_attached_hw_handler in log msg
+ - 9/11, 10/11, 11/11: new
+
+Changes wrt v3:
+ - Added Reviewed-by: tags (kept Ben's Ack in 4/11 although patch slightly changed)
+ - 4/11: use a buffer on stack rather than malloc (Hannes Reinecke)
+ - 10/11: Simplify by checking dh_state only in select_handler (Hannes Reinecke)
+
+Martin Wilck (11):
+  libmultipath: load_config: skip setting unnecessary defaults
+  libmultipath: add/remove_feature: use const char* for feature
+  libmultipath: clarify option conflicts for "features"
+  libmultipath: merge_hwe: fix queue_if_no_path logic
+  libmultipath: assemble_map: fix queue_if_no_path logic
+  multipath.conf.5: document no_path_retry vs. queue_if_no_path
+  multipath.conf.5: Remove ??? and other minor fixes
+  libmultipath: add deprecated warning for some features settings
+  libmultipath: retain_attached_hw_handler obsolete with 4.3+
+  libmultipath: don't try to set hwhandler if it is retained
+  libmultipath: don't [un]set queue_if_no_path after domap
+
+ libmultipath/config.c      |  31 +++---------
+ libmultipath/configure.c   |  28 ++++-------
+ libmultipath/dict.c        |  11 +++--
+ libmultipath/dmparser.c    |   8 +--
+ libmultipath/propsel.c     | 121 +++++++++++++++++++++++++++++++++++++++------
+ libmultipath/propsel.h     |   3 ++
+ libmultipath/structs.c     |  30 +++++------
+ libmultipath/structs.h     |   4 +-
+ libmultipath/util.c        |  36 ++++++++++++++
+ libmultipath/util.h        |   2 +
+ multipath/multipath.conf.5 |  67 +++++++++++++++----------
+ 11 files changed, 231 insertions(+), 110 deletions(-)
+
 -- 
 2.13.1
