@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v4 09/11] libmultipath:
-	retain_attached_hw_handler obsolete with 4.3+
-Date: Thu, 22 Jun 2017 16:59:11 +0200
-Message-ID: <20170622145913.23714-10-mwilck@suse.com>
+Subject: [PATCH v4 01/11] libmultipath: load_config: skip setting
+	unnecessary defaults
+Date: Thu, 22 Jun 2017 16:59:03 +0200
+Message-ID: <20170622145913.23714-2-mwilck@suse.com>
 References: <20170622145913.23714-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,171 +22,130 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@s
 Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-Kernels 4.3 and newer (commit 1bab0de0 "dm-mpath, scsi_dh: don't
-let dm detach device handlers") imply "retain_attached_hw_handler yes".
+We have the logic for setting defaults for paths and maps
+in propsel.c. By pre-setting conf values with defaults in
+load_config(), we generate irritating log messages like
+'features = "0" (setting: multipath.conf defaults/devices section)'
+if multipath.conf doesn't contain a features setting at all.
 
-Clarify this in the propsel code, log messages, and documentation.
+For some config settings, we need to use declare_def_snprint_defint()
+now to make sure "multipathd show config" prints all defaults correctly.
+To avoid confusion, we don't do this for "max_sectors", because
+multipathd leaves this untouched by default.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
+Acked-by: Benjamin Marzinski <bmarzins@redhat.com>
 Reviewed-by: Hannes Reinecke <hare@suse.com>
 ---
- libmultipath/configure.c   |  3 ++-
- libmultipath/dmparser.c    |  3 ++-
- libmultipath/propsel.c     |  7 ++++++-
- libmultipath/util.c        | 36 ++++++++++++++++++++++++++++++++++++
- libmultipath/util.h        |  2 ++
- multipath/multipath.conf.5 | 15 +++++++++++----
- 6 files changed, 59 insertions(+), 7 deletions(-)
+ libmultipath/config.c  | 16 ----------------
+ libmultipath/dict.c    | 11 +++++++----
+ libmultipath/propsel.c |  6 ++++++
+ 3 files changed, 13 insertions(+), 20 deletions(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index a7f2b443..74b6f52a 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -572,7 +572,8 @@ select_action (struct multipath * mpp, vector curmp, int force_reload)
- 	}
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index 6b236019..60e345b3 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -606,40 +606,24 @@ load_config (char * file)
+ 	if (!conf->verbosity)
+ 		conf->verbosity = DEFAULT_VERBOSITY;
  
- 	if (mpp->retain_hwhandler != RETAIN_HWHANDLER_UNDEF &&
--	    mpp->retain_hwhandler != cmpp->retain_hwhandler) {
-+	    mpp->retain_hwhandler != cmpp->retain_hwhandler &&
-+	    get_linux_version_code() < KERNEL_VERSION(4, 3, 0)) {
- 		mpp->action = ACT_RELOAD;
- 		condlog(3, "%s: set ACT_RELOAD (retain_hwhandler change)",
- 			mpp->alias);
-diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
-index 1121c715..b647c256 100644
---- a/libmultipath/dmparser.c
-+++ b/libmultipath/dmparser.c
-@@ -97,7 +97,8 @@ assemble_map (struct multipath * mp, char * params, int len)
- 	} else if (mp->no_path_retry != NO_PATH_RETRY_UNDEF) {
- 		add_feature(&f, no_path_retry);
- 	}
--	if (mp->retain_hwhandler == RETAIN_HWHANDLER_ON)
-+	if (mp->retain_hwhandler == RETAIN_HWHANDLER_ON &&
-+	    get_linux_version_code() < KERNEL_VERSION(4, 3, 0))
- 		add_feature(&f, retain_hwhandler);
+-	conf->minio = DEFAULT_MINIO;
+-	conf->minio_rq = DEFAULT_MINIO_RQ;
+ 	get_sys_max_fds(&conf->max_fds);
+ 	conf->bindings_file = set_default(DEFAULT_BINDINGS_FILE);
+ 	conf->wwids_file = set_default(DEFAULT_WWIDS_FILE);
+ 	conf->multipath_dir = set_default(DEFAULT_MULTIPATHDIR);
+-	conf->features = set_default(DEFAULT_FEATURES);
+-	conf->flush_on_last_del = DEFAULT_FLUSH;
+ 	conf->attribute_flags = 0;
+ 	conf->reassign_maps = DEFAULT_REASSIGN_MAPS;
+ 	conf->checkint = DEFAULT_CHECKINT;
+ 	conf->max_checkint = 0;
+-	conf->pgfailback = DEFAULT_FAILBACK;
+-	conf->fast_io_fail = DEFAULT_FAST_IO_FAIL;
+-	conf->retain_hwhandler = DEFAULT_RETAIN_HWHANDLER;
+-	conf->detect_prio = DEFAULT_DETECT_PRIO;
+-	conf->detect_checker = DEFAULT_DETECT_CHECKER;
+ 	conf->force_sync = DEFAULT_FORCE_SYNC;
+ 	conf->partition_delim = DEFAULT_PARTITION_DELIM;
+ 	conf->processed_main_config = 0;
+ 	conf->find_multipaths = DEFAULT_FIND_MULTIPATHS;
+ 	conf->uxsock_timeout = DEFAULT_REPLY_TIMEOUT;
+-	conf->uid_attribute = set_default(DEFAULT_UID_ATTRIBUTE);
+ 	conf->retrigger_tries = DEFAULT_RETRIGGER_TRIES;
+ 	conf->retrigger_delay = DEFAULT_RETRIGGER_DELAY;
+ 	conf->uev_wait_timeout = DEFAULT_UEV_WAIT_TIMEOUT;
+-	conf->deferred_remove = DEFAULT_DEFERRED_REMOVE;
+-	conf->skip_kpartx = DEFAULT_SKIP_KPARTX;
+ 	conf->disable_changed_wwids = DEFAULT_DISABLE_CHANGED_WWIDS;
+ 	conf->remove_retries = 0;
+-	conf->max_sectors_kb = DEFAULT_MAX_SECTORS_KB;
+-	conf->san_path_err_threshold = DEFAULT_ERR_CHECKS;
+-	conf->san_path_err_forget_rate = DEFAULT_ERR_CHECKS;
+-	conf->san_path_err_recovery_time = DEFAULT_ERR_CHECKS;
  
- 	APPEND(p, end, "%s %s %i %i", f, mp->hwhandler, nr_priority_groups,
+ 	/*
+ 	 * preload default hwtable
+diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+index 82066f67..9dc10904 100644
+--- a/libmultipath/dict.c
++++ b/libmultipath/dict.c
+@@ -630,7 +630,7 @@ print_fast_io_fail(char * buff, int len, void *ptr)
+ }
+ 
+ declare_def_handler(fast_io_fail, set_fast_io_fail)
+-declare_def_snprint(fast_io_fail, print_fast_io_fail)
++declare_def_snprint_defint(fast_io_fail, print_fast_io_fail, DEFAULT_FAST_IO_FAIL)
+ declare_ovr_handler(fast_io_fail, set_fast_io_fail)
+ declare_ovr_snprint(fast_io_fail, print_fast_io_fail)
+ declare_hw_handler(fast_io_fail, set_fast_io_fail)
+@@ -1082,7 +1082,8 @@ declare_hw_snprint(delay_wait_checks, print_off_int_undef)
+ declare_mp_handler(delay_wait_checks, set_off_int_undef)
+ declare_mp_snprint(delay_wait_checks, print_off_int_undef)
+ declare_def_handler(san_path_err_threshold, set_off_int_undef)
+-declare_def_snprint(san_path_err_threshold, print_off_int_undef)
++declare_def_snprint_defint(san_path_err_threshold, print_off_int_undef,
++			   DEFAULT_ERR_CHECKS)
+ declare_ovr_handler(san_path_err_threshold, set_off_int_undef)
+ declare_ovr_snprint(san_path_err_threshold, print_off_int_undef)
+ declare_hw_handler(san_path_err_threshold, set_off_int_undef)
+@@ -1090,7 +1091,8 @@ declare_hw_snprint(san_path_err_threshold, print_off_int_undef)
+ declare_mp_handler(san_path_err_threshold, set_off_int_undef)
+ declare_mp_snprint(san_path_err_threshold, print_off_int_undef)
+ declare_def_handler(san_path_err_forget_rate, set_off_int_undef)
+-declare_def_snprint(san_path_err_forget_rate, print_off_int_undef)
++declare_def_snprint_defint(san_path_err_forget_rate, print_off_int_undef,
++			   DEFAULT_ERR_CHECKS)
+ declare_ovr_handler(san_path_err_forget_rate, set_off_int_undef)
+ declare_ovr_snprint(san_path_err_forget_rate, print_off_int_undef)
+ declare_hw_handler(san_path_err_forget_rate, set_off_int_undef)
+@@ -1098,7 +1100,8 @@ declare_hw_snprint(san_path_err_forget_rate, print_off_int_undef)
+ declare_mp_handler(san_path_err_forget_rate, set_off_int_undef)
+ declare_mp_snprint(san_path_err_forget_rate, print_off_int_undef)
+ declare_def_handler(san_path_err_recovery_time, set_off_int_undef)
+-declare_def_snprint(san_path_err_recovery_time, print_off_int_undef)
++declare_def_snprint_defint(san_path_err_recovery_time, print_off_int_undef,
++			   DEFAULT_ERR_CHECKS)
+ declare_ovr_handler(san_path_err_recovery_time, set_off_int_undef)
+ declare_ovr_snprint(san_path_err_recovery_time, print_off_int_undef)
+ declare_hw_handler(san_path_err_recovery_time, set_off_int_undef)
 diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index e885a845..d609394e 100644
+index 27f39517..c8ccede5 100644
 --- a/libmultipath/propsel.c
 +++ b/libmultipath/propsel.c
-@@ -628,7 +628,12 @@ int select_retain_hwhandler(struct config *conf, struct multipath *mp)
- 
- 	if (!VERSION_GE(conf->version, minv_dm_retain)) {
- 		mp->retain_hwhandler = RETAIN_HWHANDLER_OFF;
--		origin = "(setting: WARNING, requires kernel version >= 1.5.0)";
-+		origin = "(setting: WARNING, requires kernel dm-mpath version >= 1.5.0)";
-+		goto out;
-+	}
-+	if (get_linux_version_code() >= KERNEL_VERSION(4, 3, 0)) {
-+		mp->retain_hwhandler = RETAIN_HWHANDLER_ON;
-+		origin = "(setting: implied in kernel >= 4.3.0)";
- 		goto out;
- 	}
- 	mp_set_ovr(retain_hwhandler);
-diff --git a/libmultipath/util.c b/libmultipath/util.c
-index b90cd8b0..dff2ed3c 100644
---- a/libmultipath/util.c
-+++ b/libmultipath/util.c
-@@ -6,6 +6,7 @@
- #include <sys/stat.h>
- #include <sys/sysmacros.h>
- #include <sys/types.h>
-+#include <sys/utsname.h>
- #include <dirent.h>
- #include <unistd.h>
- #include <errno.h>
-@@ -380,3 +381,38 @@ int systemd_service_enabled(const char *dev)
- 		found = systemd_service_enabled_in(dev, "/run");
- 	return found;
- }
-+
-+static int _linux_version_code;
-+static pthread_once_t _lvc_initialized = PTHREAD_ONCE_INIT;
-+
-+/* Returns current kernel version encoded as major*65536 + minor*256 + patch,
-+ * so, for example,  to check if the kernel is greater than 2.2.11:
-+ *
-+ *     if (get_linux_version_code() > KERNEL_VERSION(2,2,11)) { <stuff> }
-+ *
-+ * Copyright (C) 1999-2004 by Erik Andersen <andersen@codepoet.org>
-+ * Code copied from busybox (GPLv2 or later)
-+ */
-+static void
-+_set_linux_version_code(void)
-+{
-+	struct utsname name;
-+	char *t;
-+	int i, r;
-+
-+	uname(&name); /* never fails */
-+	t = name.release;
-+	r = 0;
-+	for (i = 0; i < 3; i++) {
-+		t = strtok(t, ".");
-+		r = r * 256 + (t ? atoi(t) : 0);
-+		t = NULL;
-+	}
-+	_linux_version_code = r;
-+}
-+
-+int get_linux_version_code(void)
-+{
-+	pthread_once(&_lvc_initialized, _set_linux_version_code);
-+	return _linux_version_code;
-+}
-diff --git a/libmultipath/util.h b/libmultipath/util.h
-index b087e32e..45291be8 100644
---- a/libmultipath/util.h
-+++ b/libmultipath/util.h
-@@ -15,6 +15,8 @@ char *convert_dev(char *dev, int is_path_device);
- char *parse_uid_attribute_by_attrs(char *uid_attrs, char *path_dev);
- void setup_thread_attr(pthread_attr_t *attr, size_t stacksize, int detached);
- int systemd_service_enabled(const char *dev);
-+int get_linux_version_code(void);
-+#define KERNEL_VERSION(maj, min, ptc) ((((maj) * 256) + (min)) * 256 + (ptc))
- 
- #define safe_sprintf(var, format, args...)	\
- 	snprintf(var, sizeof(var), format, ##args) >= sizeof(var)
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index b32d0383..3b4e5187 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -698,15 +698,16 @@ The default is: \fB<unset>\fR
- .
- .TP
- .B retain_attached_hw_handler
--If set to
-+(Obsolete for kernels >= 4.3) If set to
- .I yes
- and the SCSI layer has already attached a hardware_handler to the device,
- multipath will not force the device to use the hardware_handler specified by
- mutipath.conf. If the SCSI layer has not attached a hardware handler,
- multipath will continue to use its configured hardware handler.
- .RS
--.TP
--The default is: \fByes\fR
-+.PP
-+The default is: \fByes\fR. Linux kernel 4.3 or newer always behaves as if
-+\fB"retain_attached_hw_handler yes"\fR was set.
- .RE
- .
- .
-@@ -1182,8 +1183,14 @@ Active/Standby mode exclusively.
- .I 1 alua
- (Hardware-dependent)
- Hardware handler for SCSI-3 ALUA compatible arrays.
--.TP
-+.PP
- The default is: \fB<unset>\fR
-+.PP
-+\fBImportant Note:\fR Linux kernels 4.3 and newer automatically attach a device
-+handler to known devices (which includes all devices supporting SCSI-3 ALUA)
-+and disallow changing the handler
-+afterwards. Setting \fBhardware_handler\fR for such devices on these kernels
-+has no effect.
- .RE
- .
- .
+@@ -752,6 +752,12 @@ int select_max_sectors_kb(struct config *conf, struct multipath * mp)
+ 	mp_set_ovr(max_sectors_kb);
+ 	mp_set_hwe(max_sectors_kb);
+ 	mp_set_conf(max_sectors_kb);
++	mp_set_default(max_sectors_kb, DEFAULT_MAX_SECTORS_KB);
++	/*
++	 * In the default case, we will not modify max_sectors_kb in sysfs
++	 * (see sysfs_set_max_sectors_kb()).
++	 * Don't print a log message here to avoid user confusion.
++	 */
+ 	return 0;
+ out:
+ 	condlog(3, "%s: max_sectors_kb = %i %s", mp->alias, mp->max_sectors_kb,
 -- 
 2.13.1
