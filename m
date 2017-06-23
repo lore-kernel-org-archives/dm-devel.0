@@ -1,76 +1,40 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH v3 11/11] libmultipath: don't [un]set
- queue_if_no_path after domap
-Date: Thu, 22 Jun 2017 22:44:53 +0200
-Message-ID: <1498164293.4743.3.camel@suse.com>
-References: <20170621150630.25773-1-mwilck@suse.com>
-	<20170621150630.25773-12-mwilck@suse.com>
-	<fb72a1ed-58c6-fa6d-9411-8c03ce9541b7@suse.de>
-	<20170622192129.GP2940@octiron.msp.redhat.com>
+From: Herbert Xu <herbert@gondor.apana.org.au>
+Subject: Re: [PATCH v6 0/2] IV Generation algorithms for dm-crypt
+Date: Fri, 23 Jun 2017 16:13:41 +0800
+Message-ID: <20170623081341.GA29748@gondor.apana.org.au>
+References: <1498106510-19793-1-git-send-email-binoy.jayan@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170622192129.GP2940@octiron.msp.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1498106510-19793-1-git-send-email-binoy.jayan@linaro.org>
+Sender: linux-kernel-owner@vger.kernel.org
+Cc: broonie@kernel.org, arnd@arndb.de, linux-crypto@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, rnayak@codeaurora.org, binoy.jayan@linaro.org, David Gstir <david@sigma-star.at>, Eric Biggers <ebiggers3@gmail.com>
 List-Id: dm-devel.ids
 
-T24gVGh1LCAyMDE3LTA2LTIyIGF0IDE0OjIxIC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gT24gVGh1LCBKdW4gMjIsIDIwMTcgYXQgMDg6MjM6NDRBTSArMDIwMCwgSGFubmVzIFJl
-aW5lY2tlIHdyb3RlOgo+ID4gT24gMDYvMjEvMjAxNyAwNTowNiBQTSwgTWFydGluIFdpbGNrIHdy
-b3RlOgo+ID4gPiBXZSBzZXQgdGhlIHF1ZXVlX2lmX25vX3BhdGggZmVhdHVyZSBpbiBhc3NlbWJs
-ZV9tYXAoKSBhbHJlYWR5LAo+ID4gPiBubyBuZWVkIHRvIHNldCBpdCBoZXJlIGFnYWluLgo+ID4g
-PiAKPiA+ID4gU2lnbmVkLW9mZi1ieTogTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+Cj4g
-PiA+IC0tLQo+ID4gPiAgbGlibXVsdGlwYXRoL2NvbmZpZ3VyZS5jIHwgMTUgLS0tLS0tLS0tLS0t
-LS0tCj4gPiA+ICAxIGZpbGUgY2hhbmdlZCwgMTUgZGVsZXRpb25zKC0pCj4gPiA+IAo+ID4gPiAK
-PiA+IAo+ID4gV2F0Y2ggb3V0Lgo+ID4gJ3F1ZXVlX2lmX25vX3BhdGgnIGlzIHNldCBfdGVtcG9y
-YXJpbHlfIHdoaWxlICdub19wYXRoX3JldHJ5JyBpcwo+ID4gYWN0aXZlLAo+ID4gYW5kIHJlbW92
-ZWQgYWZ0ZXJ3YXJkcy4KPiA+IFNvIHRoZXJlIG1pZ2h0IGJlIHZhbGlkIHJlYXNvbnMgd2h5IGl0
-J3Mgc2V0IGhlcmUuCj4gPiBIYXZlIHlvdSBjaGVja2VkPwo+IAo+IElJUkMsIHdlIHVzZWQgdG8g
-YWx3YXlzIHNldCBxdWV1ZV9pZl9ub19wYXRoIGJlZm9yZSByZWxvYWRpbmcgdGhlCj4gbWFwLAoK
-V2h5PyBJJ3ZlIHNlYXJjaGVkIGZvciBjb21tZW50cyBleHBsYWluaW5nIHRoYXQgYnV0IGZvdW5k
-IG5vdGhpbmcuCkFueXdheSwgd2UndmUgY2Vhc2VkIHRvIGRvIHNvIGF0IGxlYXN0IHNpbmNlIDcz
-MzFjZjUgIkNvcnJlY3RseSB1cGRhdGUKZmVhdHVyZSBzdHJpbmdzIiwgbWVyZ2VkIGluIE1heSAy
-MDExLgoKPiBhbmQgdGhlbiBjYWxsIHNldHVwX211bHRpcGF0aCgpIGFmdGVyd2FyZHMsIHdoaWNo
-IHdvdWxkIGNhbGwKPiBzZXRfbm9fcGF0aF9yZXRyeSgpIHRvIHNldCBpdCB0byB0aGUgYWN0dWFs
-IGNvcnJlY3QgdmFsdWUuIAoKc2V0dXBfbXVsdGlwYXRoKCkgaXMgY2FsbGVkIHRvbywgYSBiaXQg
-bGF0ZXIgaW4gdGhlIGNvZGUgZmxvdywgZnJvbQpjb25maWd1cmUoKSBhZnRlciBjb2FsZXNjZV9w
-YXRocygpIGFuZCBjb2FsZXNjZV9tYXBzKCkuIFNvIHdlJ3JlCmN1cnJlbnRseSBzZXR0aW5nIHF1
-ZXVlX2lmX25vX3BhdGggMyB0aW1lcyB3aGVuIGNyZWF0aW5nIG1hcHM6IGluCmRvbWFwKCksIGFm
-dGVyIGRvbWFwKCksIGFuZCBpbiBzZXR1cF9tdWx0aXBhdGgtPnNldF9ub19wYXRoX3JldHJ5KCku
-CldpdGggbXkgcGF0Y2gsIHdlIGRvIGl0IG9ubHkgdHdpY2UgOi0pCgpUaGUgY2FsbCB0byBkbV9x
-dWV1ZV9pZl9ub19wYXRoIGRpcmVjdGx5IGFmdGVyIGRvbWFwKCksIHdoaWNoIG15IHBhdGNoCnJl
-bW92ZXMsIGlzIGFuY2llbnQsIGl0IGNhbWUgd2l0aCAwZTZlMzExMyAiW211bHRpcGF0aF0gRXh0
-ZW5zaW9uIG9mCnRoZSAibm9fcGF0aF9yZXRyeSIgc2NvcGUgdG8gdGhlIG11bHRpcGF0aCIgaW4g
-MjAwNS4KCj4gSWYgd2UgYXJlCj4gY29ycmVjdGx5IHNldHRpbmcgdGhlIGZlYXR1cmUgbGluZSB3
-aGVuIHdlIHJlbG9hZCB0aGUgbWFwLCB0aGF0J3MgYQo+IGJldHRlciBzb2x1dGlvbi4gT2J2aW91
-c2x5LCB3ZSBjYW4ndCBzdHJpcCBzZXRfbm9fcGF0aF9yZXRyeSgpIG91dCBvZgo+IF9fc2V0dXBf
-bXVsdGlwYXRoKCkgc2luY2Ugd2UgcmVseSBvbiB0aGF0IHRvIGRlYWwgd2l0aCBkZWFsIHdpdGgK
-PiBnb2luZwo+IGludG8gcmVjb3ZlcnkgbW9kZS4gSG93ZXZlciwgd2l0aG91dCBzb21lIG1vcmUg
-dGhvdWdodCBhbmQgY29kZQo+IHJlYWRpbmcsCj4gSSdtIG5vdCBzdXJlIGlmIHdlIGRvIHN0aWxs
-IG5lZWQgdGhlIGNhbGxzIHRvIGRtX3F1ZXVlX2lmX25vX3BhdGgoKQo+IHRoZXJlIGZvciBzb21l
-IG90aGVyIHJlYXNvbiBhbnltb3JlLiAgQXQgYW55IHJhdGUsIHRoZXkgd29uJ3QgaHVydAo+IGFu
-eXRoaW5nLCBleGNlcHQgZm9yIGNhdXNpbmcgYSByZWR1bmRhbnQgY2FsbCB0byBkZXZpY2UtbWFw
-cGVyLgo+IAo+IEFsc28sIGlmIHdlJ3JlIHlhbmtpbmcgdGhlc2UgZG1fcXVldWVfaWZfbm9fcGF0
-aCgpIGNhbGxzIGZyb20KPiBjb2FsZXNjZV9wYXRocywgSSBkb24ndCBzZWUgd2h5IHdlIG5lZWQg
-dGhlbSBpbiByZWxvYWRfbWFwKCksIHdoZXJlCj4gdGhleQo+IGFsc28gc2VlbSByZWR1bmRhbnQg
-aWYgd2UganVzdCBjb3JyZWN0bHkgc2V0IHRoZSBmZWF0dXJlcyBhcmd1bWVudAo+IHdoZW4KPiB3
-ZSByZWxvYWRlZCB0aGUgdGFibGUuCj4gCj4gQUNLLCBidXQgSSB3b3VsZG4ndCBtaW5kIHNlZWlu
-ZyB0aGUgY2FsbHMgcHVsbGVkIGZyb20gcmVsb2FkX21hcCBhcwo+IHdlbGwuCgpBZ3JlZWQsIGJ1
-dCBJIHByb3Bvc2UgdG8gZG8gdGhhdCBpbiBhIHNlcGFyYXRlIHBhdGNoLiBObyBuZWVkIHRvIHJl
-cG9zdAp0aGUgd2hvbGUgc2VyaWVzIGZvciB0aGF0LgoKTWFydGluCgotLSAKRHIuIE1hcnRpbiBX
-aWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBM
-aW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0g
-Tm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0
-CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3Rp
-bmZvL2RtLWRldmVs
+Binoy Jayan <binoy.jayan@linaro.org> wrote:
+> ===============================================================================
+> dm-crypt optimization for larger block sizes
+> ===============================================================================
+> 
+> Currently, the iv generation algorithms are implemented in dm-crypt.c. The goal
+> is to move these algorithms from the dm layer to the kernel crypto layer by
+> implementing them as template ciphers so they can be used in relation with
+> algorithms like aes, and with multiple modes like cbc, ecb etc. As part of this
+> patchset, the iv-generation code is moved from the dm layer to the crypto layer
+> and adapt the dm-layer to send a whole 'bio' (as defined in the block layer)
+> at a time. Each bio contains the in memory representation of physically
+> contiguous disk blocks. Since the bio itself may not be contiguous in main
+> memory, the dm layer sets up a chained scatterlist of these blocks split into
+> physically contiguous segments in memory so that DMA can be performed.
+
+There is currently a patch-set for fscrypt to add essiv support.  It
+would be interesting to know whether your implementation of essiv
+can also be used in that patchset.  That would confirm that we're on
+the right track.
+
+Cheers,
+-- 
+Email: Herbert Xu <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
