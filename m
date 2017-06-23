@@ -1,61 +1,82 @@
-From: Herbert Xu <herbert@gondor.apana.org.au>
-Subject: Re: dm-crypt IV generation (summary)
-Date: Fri, 23 Jun 2017 16:49:36 +0800
-Message-ID: <20170623084936.GA30510@gondor.apana.org.au>
-References: <CAFqZXNs0=6+PvpGq3weRwCJkUOfSn06i_fD6ZuvXo_0rms9zeA@mail.gmail.com>
- <20170407061226.GA2282@gondor.apana.org.au>
- <CAFqZXNvp0qgEMUqi8o3o8ZVhMwYngkdV5WePx+KRq+rAMEu2kg@mail.gmail.com>
+From: heinzm@redhat.com
+Subject: [PATCH] dm raid: fix oops on upgrading to extended
+	superblock format
+Date: Fri, 23 Jun 2017 17:27:01 +0200
+Message-ID: <20170623152701.20977-1-heinzm@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-crypto-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAFqZXNvp0qgEMUqi8o3o8ZVhMwYngkdV5WePx+KRq+rAMEu2kg@mail.gmail.com>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Ondrej Mosnacek <omosnace@redhat.com>
-Cc: Milan Broz <gmazyland@gmail.com>, linux-crypto@vger.kernel.org, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Binoy Jayan <binoy.jayan@linaro.org>, Gilad Ben-Yossef <gilad@benyossef.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: heinzm@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, May 18, 2017 at 01:40:38PM +0200, Ondrej Mosnacek wrote:
->
-> > Actually I think this one can probably easily handled in the crypto
-> > layer.  All we need is to add a multikey template that sits on top
-> > of an underlying IV generator.  The multikey instance can then accept
-> > a key length that is a multiple of the underlying key length.
-> 
-> I thought of that, too, but unfortunately with TCW the key structure is:
-> 
-> | KEY 1 | KEY 2 | ... | KEY n | IV SEED (size = IV size) | WHITENING
-> (size = 16 bytes) |
-> 
-> So part of the key needs to be processed before it is split into multiple keys.
-> 
-> Also with the LMK mode, there is a similar optional key appendix,
-> which is of the same size as the other subkeys.
+From: Heinz Mauelshagen <heinzm@redhat.com>
 
-The format of the key isn't an issue.  Because we're writing this
-from scratch.  We can change the format in any way we want, e.g.,
-we could include the value n if we wanted in the key stream.
+When a RAID set was created on dm-raid version < 1.9.0
+(old RAID superblock format), none of the new members of the
+superblock have been set including the device sectors member
+needed to support shrinking.
 
-Yes dm-crypt would need to massage the key before passing it over
-to the crypto layer, but that should be pretty easy.
+Don't access such member unconditionally.
 
-> My point is that it doesn't make much sense to have a crypto API alg
-> that calls get_random_bytes() as part of its implementation. IMHO,
-> that might tempt HW drivers to replace it with some crappy
-> alternatives, which wouldn't be good... Also, how would we test such
-> alg with testmgr?
+Add respective comments.
 
-You are right.  There is no way we can judge the quality of a
-hardware IV generator, just as there is no way to judge the quality
-of hardware RNG without looking at its internal structure.
+Resolves: rhbz1464274
 
-But that doesn't mean that we shouldn't support them if they exist.
-
-In any case, this scenario already exists today with IPsec where
-we have multiple hardware implementations that generate the IV.
-
-Cheers,
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index 7d89322..2e15623 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -1927,7 +1927,7 @@ struct dm_raid_superblock {
+ 	/********************************************************************
+ 	 * BELOW FOLLOW V1.9.0 EXTENSIONS TO THE PRISTINE SUPERBLOCK FORMAT!!!
+ 	 *
+-	 * FEATURE_FLAG_SUPPORTS_V190 in the features member indicates that those exist
++	 * FEATURE_FLAG_SUPPORTS_V190 in the compat_features member indicates that those exist
+ 	 */
+ 
+ 	__le32 flags; /* Flags defining array states for reshaping */
+@@ -2092,6 +2092,11 @@ static void super_sync(struct mddev *mddev, struct md_rdev *rdev)
+ 	sb->layout = cpu_to_le32(mddev->layout);
+ 	sb->stripe_sectors = cpu_to_le32(mddev->chunk_sectors);
+ 
++	/********************************************************************
++	 * BELOW FOLLOW V1.9.0 EXTENSIONS TO THE PRISTINE SUPERBLOCK FORMAT!!!
++	 *
++	 * FEATURE_FLAG_SUPPORTS_V190 in the compat_features member indicates that those exist
++	 */
+ 	sb->new_level = cpu_to_le32(mddev->new_level);
+ 	sb->new_layout = cpu_to_le32(mddev->new_layout);
+ 	sb->new_stripe_sectors = cpu_to_le32(mddev->new_chunk_sectors);
+@@ -2438,8 +2443,17 @@ static int super_validate(struct raid_set *rs, struct md_rdev *rdev)
+ 	mddev->bitmap_info.default_offset = mddev->bitmap_info.offset;
+ 
+ 	if (!test_and_clear_bit(FirstUse, &rdev->flags)) {
+-		/* Retrieve device size stored in superblock to be prepared for shrink */
+-		rdev->sectors = le64_to_cpu(sb->sectors);
++		/*
++		 * Retrieve rdev size stored in superblock to be prepared for shrink.
++		 *
++		 * Check extended superblock members present to
++		 * access the size member or it will not be set!
++		 *
++		 * https://bugzilla.redhat.com/1464274
++		 */
++		if (le32_to_cpu(sb->compat_features) & FEATURE_FLAG_SUPPORTS_V190)
++			rdev->sectors = le64_to_cpu(sb->sectors);
++
+ 		rdev->recovery_offset = le64_to_cpu(sb->disk_recovery_offset);
+ 		if (rdev->recovery_offset == MaxSector)
+ 			set_bit(In_sync, &rdev->flags);
 -- 
-Email: Herbert Xu <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+2.9.4
