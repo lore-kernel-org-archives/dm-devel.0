@@ -1,54 +1,47 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH v4 09/11] libmultipath:
- retain_attached_hw_handler obsolete with 4.3+
-Date: Fri, 23 Jun 2017 19:25:17 +0200
-Message-ID: <4a58e086-8e47-80d0-eb23-cf838bc09f15@gmail.com>
-References: <20170622145913.23714-1-mwilck@suse.com>
-	<20170622145913.23714-10-mwilck@suse.com>
+From: Eric Biggers <ebiggers3@gmail.com>
+Subject: Re: [PATCH v6 0/2] IV Generation algorithms for dm-crypt
+Date: Fri, 23 Jun 2017 11:21:56 -0700
+Message-ID: <20170623182156.GB84943@gmail.com>
+References: <1498106510-19793-1-git-send-email-binoy.jayan@linaro.org>
+ <20170623081341.GA29748@gondor.apana.org.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170622145913.23714-10-mwilck@suse.com>
-Content-Language: en-GB
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-crypto-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20170623081341.GA29748@gondor.apana.org.au>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: Binoy Jayan <binoy.jayan@linaro.org>, broonie@kernel.org, arnd@arndb.de, linux-crypto@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, rnayak@codeaurora.org, David Gstir <david@sigma-star.at>
 List-Id: dm-devel.ids
 
-On 06/22/2017 04:59 PM, Martin Wilck wrote:
+On Fri, Jun 23, 2017 at 04:13:41PM +0800, Herbert Xu wrote:
+> Binoy Jayan <binoy.jayan@linaro.org> wrote:
+> > ===============================================================================
+> > dm-crypt optimization for larger block sizes
+> > ===============================================================================
+> > 
+> > Currently, the iv generation algorithms are implemented in dm-crypt.c. The goal
+> > is to move these algorithms from the dm layer to the kernel crypto layer by
+> > implementing them as template ciphers so they can be used in relation with
+> > algorithms like aes, and with multiple modes like cbc, ecb etc. As part of this
+> > patchset, the iv-generation code is moved from the dm layer to the crypto layer
+> > and adapt the dm-layer to send a whole 'bio' (as defined in the block layer)
+> > at a time. Each bio contains the in memory representation of physically
+> > contiguous disk blocks. Since the bio itself may not be contiguous in main
+> > memory, the dm layer sets up a chained scatterlist of these blocks split into
+> > physically contiguous segments in memory so that DMA can be performed.
+> 
+> There is currently a patch-set for fscrypt to add essiv support.  It
+> would be interesting to know whether your implementation of essiv
+> can also be used in that patchset.  That would confirm that we're on
+> the right track.
+> 
 
-> Kernels 4.3 and newer (commit 1bab0de0 "dm-mpath, scsi_dh: don't
-> let dm detach device handlers") imply "retain_attached_hw_handler yes".
-> 
-> Clarify this in the propsel code, log messages, and documentation.
-> 
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> Reviewed-by: Hannes Reinecke <hare@suse.com>
-> ---
->  libmultipath/configure.c   |  3 ++-
->  libmultipath/dmparser.c    |  3 ++-
->  libmultipath/propsel.c     |  7 ++++++-
->  libmultipath/util.c        | 36 ++++++++++++++++++++++++++++++++++++
->  libmultipath/util.h        |  2 ++
->  multipath/multipath.conf.5 | 15 +++++++++++----
->  6 files changed, 59 insertions(+), 7 deletions(-)
-[...]
-> --- a/libmultipath/propsel.c
-> +++ b/libmultipath/propsel.c
-> @@ -628,7 +628,12 @@ int select_retain_hwhandler(struct config *conf, struct multipath *mp)
->  
->  	if (!VERSION_GE(conf->version, minv_dm_retain)) {
->  		mp->retain_hwhandler = RETAIN_HWHANDLER_OFF;
-> -		origin = "(setting: WARNING, requires kernel version >= 1.5.0)";
-> +		origin = "(setting: WARNING, requires kernel dm-mpath version >= 1.5.0)";
-It would be more informative replace the dm-mpath version with the
-kernel version. No one cares about subsystems versions.
+You can find the fscrypt patch at https://patchwork.kernel.org/patch/9795327/
+
+Note that it's encrypting 4096-byte blocks, not 512-byte.  Also, it's using
+AES-256 for the ESSIV tfm (since it uses a SHA-256 hash) but AES-128 for the
+"real" encryption.  It's possible this is a mistake and it should be AES-128 for
+both.  (If it is, it needs to be fixed before it's released in 4.13.)
+
+Eric
