@@ -1,15 +1,15 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm thin: do not queue freed thin mapping for next
- stage processing
-Date: Mon, 26 Jun 2017 15:06:38 -0400
-Message-ID: <20170626190638.GA375@redhat.com>
-References: <1498243986-89156-1-git-send-email-vallish@amazon.com>
+From: Johannes Bauer <dfnsonfsduifb@gmx.de>
+Subject: Re: dm-cache coherence issue
+Date: Mon, 26 Jun 2017 21:08:25 +0200
+Message-ID: <745c64ba-a5ec-363b-bc6f-2abd0d242b38@gmx.de>
+References: <1ca408b4-0df2-d495-b899-28bded8217fa@gmx.de>
+	<20170626113341.GA20683@nim> <20170626155808.GC20683@nim>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1498243986-89156-1-git-send-email-vallish@amazon.com>
+In-Reply-To: <20170626155808.GC20683@nim>
+Content-Language: de-LU
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,130 +19,47 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Vallish Vaidyeshwara <vallish@amazon.com>
-Cc: eduval@amazon.com, ejt@redhat.com, gafton@amazon.com, dm-devel@redhat.com, anchalag@amazon.com, agk@redhat.com
+To: dm-devel@redhat.com
+Cc: thornber@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Jun 23 2017 at  2:53pm -0400,
-Vallish Vaidyeshwara <vallish@amazon.com> wrote:
+Hi Joe,
 
-> process_prepared_discard_passdown_pt1() should cleanup
-> dm_thin_new_mapping in cases of error.
+On 26.06.2017 17:58, Joe Thornber wrote:
+> On Mon, Jun 26, 2017 at 12:33:42PM +0100, Joe Thornber wrote:
+>> On Sat, Jun 24, 2017 at 03:56:54PM +0200, Johannes Bauer wrote:
+>>> So I seem to have a very basic misunderstanding of what the cleaner
+>>> policy/dirty pages mean. Is there a way to force the cache to flush
+>>> entirely? Apparently, "dmsetup wait" and/or "sync" don't do the job.
+>>
+>> I'll try and reproduce your scenario and get back to you.
 > 
-> dm_pool_inc_data_range() can fail trying to get a block reference:
+> Here's a similar scenario that I've added to the dm test suite:
 > 
-> metadata operation 'dm_pool_inc_data_range' failed: error = -61
+> https://github.com/jthornber/device-mapper-test-suite/commit/457e889b0c4d510609c0d7464af07f2ebee20768
 > 
-> When dm_pool_inc_data_range() fails, dm thin aborts current metadata
-> transaction and marks pool as PM_READ_ONLY. Memory for thin mapping
-> is released as well. However, current thin mapping will be queued
-> onto next stage as part of queue_passdown_pt2() or passdown_endio().
-> This dangling thin mapping memory when processed and accessed in
-> next stage will lead to device mapper crashing.
+> It goes through all the steps you need to use to decommission a cache
+> with dirty blocks.  Namely:
 > 
-> Code flow without fix:
-> -> process_prepared_discard_passdown_pt1(m)
->    -> dm_thin_remove_range()
->    -> discard passdown
->       --> passdown_endio(m) queues m onto next stage
->    -> dm_pool_inc_data_range() fails, frees memory m
->             but does not remove it from next stage queue
-> 
-> -> process_prepared_discard_passdown_pt2(m)
->    -> processes freed memory m and crashes
-> 
-> One such stack:
-> 
-> Call Trace:
-> [<ffffffffa037a46f>] dm_cell_release_no_holder+0x2f/0x70 [dm_bio_prison]
-> [<ffffffffa039b6dc>] cell_defer_no_holder+0x3c/0x80 [dm_thin_pool]
-> [<ffffffffa039b88b>] process_prepared_discard_passdown_pt2+0x4b/0x90 [dm_thin_pool]
-> [<ffffffffa0399611>] process_prepared+0x81/0xa0 [dm_thin_pool]
-> [<ffffffffa039e735>] do_worker+0xc5/0x820 [dm_thin_pool]
-> [<ffffffff8152bf54>] ? __schedule+0x244/0x680
-> [<ffffffff81087e72>] ? pwq_activate_delayed_work+0x42/0xb0
-> [<ffffffff81089f53>] process_one_work+0x153/0x3f0
-> [<ffffffff8108a71b>] worker_thread+0x12b/0x4b0
-> [<ffffffff8108a5f0>] ? rescuer_thread+0x350/0x350
-> [<ffffffff8108fd6a>] kthread+0xca/0xe0
-> [<ffffffff8108fca0>] ? kthread_park+0x60/0x60
-> [<ffffffff81530b45>] ret_from_fork+0x25/0x30
-> 
-> The fix is to first take the block ref count for discarded block and
-> then do a passdown discard of this block. If block ref count fails,
-> then bail out aborting current metadata transaction, mark pool as
-> PM_READ_ONLY and also free current thin mapping memory (existing error
-> handling code) without queueing this thin mapping onto next stage of
-> processing. If block ref count succeeds, then passdown discard of this
-> block. Discard callback of passdown_endio() will queue this thin mapping
-> onto next stage of processing.
-> 
-> Code flow with fix:
-> -> process_prepared_discard_passdown_pt1(m)
->    -> dm_thin_remove_range()
->    -> dm_pool_inc_data_range()
->       --> if fails, free memory m and bail out
->    -> discard passdown
->       --> passdown_endio(m) queues m onto next stage
-> 
-> Cc: stable <stable@vger.kernel.org> # v4.9+
-> Reviewed-by: Eduardo Valentin <eduval@amazon.com>
-> Reviewed-by: Cristian Gafton <gafton@amazon.com>
-> Reviewed-by: Anchal Agarwal <anchalag@amazon.com>
-> Signed-off-by: Vallish Vaidyeshwara <vallish@amazon.com>
-> ---
->  drivers/md/dm-thin.c | 26 +++++++++++++-------------
->  1 file changed, 13 insertions(+), 13 deletions(-)
-> 
-> diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-> index 17ad50d..28808e5 100644
-> --- a/drivers/md/dm-thin.c
-> +++ b/drivers/md/dm-thin.c
-> @@ -1094,6 +1094,19 @@ static void process_prepared_discard_passdown_pt1(struct dm_thin_new_mapping *m)
->  		return;
->  	}
->  
-> +	/*
-> +	 * Increment the unmapped blocks.  This prevents a race between the
-> +	 * passdown io and reallocation of freed blocks.
-> +	 */
-> +	r = dm_pool_inc_data_range(pool->pmd, m->data_block, data_end);
-> +	if (r) {
-> +		metadata_operation_failed(pool, "dm_pool_inc_data_range", r);
-> +		bio_io_error(m->bio);
-> +		cell_defer_no_holder(tc, m->cell);
-> +		mempool_free(m, pool->mapping_pool);
-> +		return;
-> +	}
-> +
->  	discard_parent = bio_alloc(GFP_NOIO, 1);
->  	if (!discard_parent) {
->  		DMWARN("%s: unable to allocate top level discard bio for passdown. Skipping passdown.",
-> @@ -1114,19 +1127,6 @@ static void process_prepared_discard_passdown_pt1(struct dm_thin_new_mapping *m)
->  			end_discard(&op, r);
->  		}
->  	}
-> -
-> -	/*
-> -	 * Increment the unmapped blocks.  This prevents a race between the
-> -	 * passdown io and reallocation of freed blocks.
-> -	 */
-> -	r = dm_pool_inc_data_range(pool->pmd, m->data_block, data_end);
-> -	if (r) {
-> -		metadata_operation_failed(pool, "dm_pool_inc_data_range", r);
-> -		bio_io_error(m->bio);
-> -		cell_defer_no_holder(tc, m->cell);
-> -		mempool_free(m, pool->mapping_pool);
-> -		return;
-> -	}
->  }
->  
->  static void process_prepared_discard_passdown_pt2(struct dm_thin_new_mapping *m)
+> - switch to writethrough mode (so new io can't create new dirty blocks)
+> - switch to the cleaner policy
+> - wait for clean
+> - remove the cache device before accessing the origin directly
 
-This looks like a good fix.
+Interesting, I did *not* change to writethrough. However, there
+shouldn't have been any I/O on the device (it was not accessed by
+anything after I switched to the cleaner policy).
 
-But I'll wait for Joe's confirmation before staging for 4.12 final
-inclusion later this week.
+On the advice of Zdenek Kabelac, who messaged me off-list, I therefore
+have indeed been convinced that using dm-cache "by hand" maybe is too
+dangerous (i.e., I had not accounted for "repairing" of a cache and am
+really still unsure what LVM does that) and that lvmcache is a better
+choice -- even though Ubuntu supports it really crappily for root devices:
+https://bugs.launchpad.net/ubuntu/+source/lvm2/+bug/1423796 a shame,
+it's been like this for over two years.
 
-Thanks,
-Mike
+Anyways, I'll try to replicate my scenario again because I'm actually
+quite sure that I did everything correctly (I did it a few times).
+
+Thanks for you help,
+Johannes
