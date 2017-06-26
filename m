@@ -1,18 +1,15 @@
-From: Eric Ren <zren@suse.com>
-Subject: Re: dm mirror: fix crash caused by NULL-pointer
- dereference
-Date: Mon, 26 Jun 2017 23:27:56 +0800
-Message-ID: <a2dcb2e0-cba2-6776-f041-605a66486ec5@suse.com>
-References: <20170626090848.21585-1-zren@suse.com>
-	<7ba503ae-ab87-493a-264c-3b42f8418c34@redhat.com>
-	<3291473d-1eec-89a7-c3a1-d49c82df500c@suse.com>
-	<a2d51150-c820-57b8-f1d1-c39c7576929b@suse.com>
-	<20170626143723.GA31713@redhat.com>
+From: Joe Thornber <thornber@redhat.com>
+Subject: Re: dm-cache coherence issue
+Date: Mon, 26 Jun 2017 16:58:08 +0100
+Message-ID: <20170626155808.GC20683@nim>
+References: <1ca408b4-0df2-d495-b899-28bded8217fa@gmx.de>
+	<20170626113341.GA20683@nim>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170626143723.GA31713@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20170626113341.GA20683@nim>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,94 +19,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: jtang@suse.com, dm-devel@redhat.com, neilb@suse.com, agk@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>
+To: Johannes Bauer <dfnsonfsduifb@gmx.de>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Mike,
+On Mon, Jun 26, 2017 at 12:33:42PM +0100, Joe Thornber wrote:
+> On Sat, Jun 24, 2017 at 03:56:54PM +0200, Johannes Bauer wrote:
+> > So I seem to have a very basic misunderstanding of what the cleaner
+> > policy/dirty pages mean. Is there a way to force the cache to flush
+> > entirely? Apparently, "dmsetup wait" and/or "sync" don't do the job.
+> 
+> I'll try and reproduce your scenario and get back to you.
 
+Here's a similar scenario that I've added to the dm test suite:
 
-On 06/26/2017 10:37 PM, Mike Snitzer wrote:
-> On Mon, Jun 26 2017 at  9:47am -0400,
-> Eric Ren <zren@suse.com> wrote:
-> [...snip...]
->>> """
->>> Revert "dm mirror: use all available legs on multiple failures"
->>> dm io: fix duplicate bio completion due to missing ref count
->> I have a confusion about this "dm io..." fix. The fix itself is good.
->>
->> Without it, a mkfs.ext4 on a mirrored dev whose primary mirror dev
->> has failed, will crash the kernel with the discard operation from mkfs.ext4.
->> However, mkfs.ext4 can succeed on a healthy mirrored device. This
->> is the thing I don't understand, because no matter the mirrored device is
->> good or not, there's always a duplicate bio completion before having this
->> this fix, thus write_callback() will be called twice, crashing will
->> occur on the
->> second write_callback():
-> No, there is only a duplicate bio completion if the error path is taken
-> (e.g. underlying device doesn't support discard).
-Hmm, when "op == REQ_OP_DISCARD", please see comments in do_region():
+https://github.com/jthornber/device-mapper-test-suite/commit/457e889b0c4d510609c0d7464af07f2ebee20768
 
-"""
-static void do_region(int op, int op_flags, unsigned region,
-                       struct dm_io_region *where, struct dpages *dp,
-                       struct io *io)
-{
-...
-  if (op == REQ_OP_DISCARD)
-                 special_cmd_max_sectors = q->limits.max_discard_sectors;
-...
-         if ((op == REQ_OP_DISCARD || op == REQ_OP_WRITE_ZEROES ||
-              op == REQ_OP_WRITE_SAME) && special_cmd_max_sectors == 0) {
-                 atomic_inc(&io->count);        ===>   [1]
-                 dec_count(io, region, -EOPNOTSUPP);     ===>  [2]
-                 return;
-         }
-"""
+It goes through all the steps you need to use to decommission a cache
+with dirty blocks.  Namely:
 
-[1] ref count fixed by patch "dm io: ...";
-[2] we won't come here if "special_cmd_max_sectors != 0", which is true 
-when both sides
-of the mirror is good.
+- switch to writethrough mode (so new io can't create new dirty blocks)
+- switch to the cleaner policy
+- wait for clean
+- remove the cache device before accessing the origin directly
 
-So only when a mirror device fails, "max_discard_sectors" on its queue 
-is 0, thus this error path
-will be taken, right?
+I've run it with a recent kernel, and one from about a year ago and it
+passes fine.
 
->
->> """
->> static void write_callback(unsigned long error, void *context)
->> {
->>          unsigned i;
->>          struct bio *bio = (struct bio *) context;
->>          struct mirror_set *ms;
->>          int should_wake = 0;
->>          unsigned long flags;
->>
->>          ms = bio_get_m(bio)->ms;        ====> NULL pointer at the
->> duplicate completion
->>          bio_set_m(bio, NULL);
->> """
->>
->> If no this fix, I expected the DISCARD IO would always crash the
->> kernel, but it's not true when
->> the mirrored device is good. Hope someone happen to know the reason
->> can give some hints ;-P
-> If the mirror is healthy then only one completion is returned to
-> dm-mirror (via write_callback).  The problem was the error patch wasn't
-> managing the reference count as needed.  Whereas dm-io's normal discard
-> IO path does.
-
-Yes, I can understand this.
-
-Thanks a lot,
-Eric
-
->
-> Mike
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
+- Joe
