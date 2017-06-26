@@ -1,15 +1,11 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: dm-cache coherence issue
-Date: Mon, 26 Jun 2017 16:58:08 +0100
-Message-ID: <20170626155808.GC20683@nim>
-References: <1ca408b4-0df2-d495-b899-28bded8217fa@gmx.de>
-	<20170626113341.GA20683@nim>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: [PATCH] libmultipath: update 3PARdata builtin config
+Date: Mon, 26 Jun 2017 14:03:19 -0500
+Message-ID: <1498503799-24026-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20170626113341.GA20683@nim>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,30 +15,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Johannes Bauer <dfnsonfsduifb@gmx.de>, device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Jun 26, 2017 at 12:33:42PM +0100, Joe Thornber wrote:
-> On Sat, Jun 24, 2017 at 03:56:54PM +0200, Johannes Bauer wrote:
-> > So I seem to have a very basic misunderstanding of what the cleaner
-> > policy/dirty pages mean. Is there a way to force the cache to flush
-> > entirely? Apparently, "dmsetup wait" and/or "sync" don't do the job.
-> 
-> I'll try and reproduce your scenario and get back to you.
+This updated config comes from hp.
 
-Here's a similar scenario that I've added to the dm test suite:
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/hwtable.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-https://github.com/jthornber/device-mapper-test-suite/commit/457e889b0c4d510609c0d7464af07f2ebee20768
-
-It goes through all the steps you need to use to decommission a cache
-with dirty blocks.  Namely:
-
-- switch to writethrough mode (so new io can't create new dirty blocks)
-- switch to the cleaner policy
-- wait for clean
-- remove the cache device before accessing the origin directly
-
-I've run it with a recent kernel, and one from about a year ago and it
-passes fine.
-
-- Joe
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index 390d143..54bdcfc 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -49,6 +49,8 @@ static struct hwentry default_hw[] = {
+ 		.hwhandler     = "1 alua",
+ 		.prio_name     = PRIO_ALUA,
+ 		.no_path_retry = 18,
++		.fast_io_fail  = 10,
++		.dev_loss      = MAX_DEV_LOSS_TMO,
+ 	},
+ 	{
+ 		/* RA8000 / ESA12000 */
+-- 
+2.7.4
