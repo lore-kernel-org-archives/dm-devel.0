@@ -1,12 +1,16 @@
-From: Vallish Vaidyeshwara <vallish@amazon.com>
-Subject: [PATCH] dm thin: do not queue freed thin mapping for
-	next stage processing
-Date: Fri, 23 Jun 2017 18:53:06 +0000
-Message-ID: <1498243986-89156-1-git-send-email-vallish@amazon.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH v4 09/11] libmultipath:
+ retain_attached_hw_handler obsolete with 4.3+
+Date: Mon, 26 Jun 2017 10:00:12 +0200
+Message-ID: <1498464012.27347.3.camel@suse.com>
+References: <20170622145913.23714-1-mwilck@suse.com>
+	<20170622145913.23714-10-mwilck@suse.com>
+	<4a58e086-8e47-80d0-eb23-cf838bc09f15@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <4a58e086-8e47-80d0-eb23-cf838bc09f15@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,121 +20,48 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, shli@kernel.org
-Cc: vallish@amazon.com, eduval@amazon.com, anchalag@amazon.com, gafton@amazon.com
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@suse.de>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-process_prepared_discard_passdown_pt1() should cleanup
-dm_thin_new_mapping in cases of error.
-
-dm_pool_inc_data_range() can fail trying to get a block reference:
-
-metadata operation 'dm_pool_inc_data_range' failed: error = -61
-
-When dm_pool_inc_data_range() fails, dm thin aborts current metadata
-transaction and marks pool as PM_READ_ONLY. Memory for thin mapping
-is released as well. However, current thin mapping will be queued
-onto next stage as part of queue_passdown_pt2() or passdown_endio().
-This dangling thin mapping memory when processed and accessed in
-next stage will lead to device mapper crashing.
-
-Code flow without fix:
--> process_prepared_discard_passdown_pt1(m)
-   -> dm_thin_remove_range()
-   -> discard passdown
-      --> passdown_endio(m) queues m onto next stage
-   -> dm_pool_inc_data_range() fails, frees memory m
-            but does not remove it from next stage queue
-
--> process_prepared_discard_passdown_pt2(m)
-   -> processes freed memory m and crashes
-
-One such stack:
-
-Call Trace:
-[<ffffffffa037a46f>] dm_cell_release_no_holder+0x2f/0x70 [dm_bio_prison]
-[<ffffffffa039b6dc>] cell_defer_no_holder+0x3c/0x80 [dm_thin_pool]
-[<ffffffffa039b88b>] process_prepared_discard_passdown_pt2+0x4b/0x90 [dm_thin_pool]
-[<ffffffffa0399611>] process_prepared+0x81/0xa0 [dm_thin_pool]
-[<ffffffffa039e735>] do_worker+0xc5/0x820 [dm_thin_pool]
-[<ffffffff8152bf54>] ? __schedule+0x244/0x680
-[<ffffffff81087e72>] ? pwq_activate_delayed_work+0x42/0xb0
-[<ffffffff81089f53>] process_one_work+0x153/0x3f0
-[<ffffffff8108a71b>] worker_thread+0x12b/0x4b0
-[<ffffffff8108a5f0>] ? rescuer_thread+0x350/0x350
-[<ffffffff8108fd6a>] kthread+0xca/0xe0
-[<ffffffff8108fca0>] ? kthread_park+0x60/0x60
-[<ffffffff81530b45>] ret_from_fork+0x25/0x30
-
-The fix is to first take the block ref count for discarded block and
-then do a passdown discard of this block. If block ref count fails,
-then bail out aborting current metadata transaction, mark pool as
-PM_READ_ONLY and also free current thin mapping memory (existing error
-handling code) without queueing this thin mapping onto next stage of
-processing. If block ref count succeeds, then passdown discard of this
-block. Discard callback of passdown_endio() will queue this thin mapping
-onto next stage of processing.
-
-Code flow with fix:
--> process_prepared_discard_passdown_pt1(m)
-   -> dm_thin_remove_range()
-   -> dm_pool_inc_data_range()
-      --> if fails, free memory m and bail out
-   -> discard passdown
-      --> passdown_endio(m) queues m onto next stage
-
-Cc: stable <stable@vger.kernel.org> # v4.9+
-Reviewed-by: Eduardo Valentin <eduval@amazon.com>
-Reviewed-by: Cristian Gafton <gafton@amazon.com>
-Reviewed-by: Anchal Agarwal <anchalag@amazon.com>
-Signed-off-by: Vallish Vaidyeshwara <vallish@amazon.com>
----
- drivers/md/dm-thin.c | 26 +++++++++++++-------------
- 1 file changed, 13 insertions(+), 13 deletions(-)
-
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index 17ad50d..28808e5 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -1094,6 +1094,19 @@ static void process_prepared_discard_passdown_pt1(struct dm_thin_new_mapping *m)
- 		return;
- 	}
- 
-+	/*
-+	 * Increment the unmapped blocks.  This prevents a race between the
-+	 * passdown io and reallocation of freed blocks.
-+	 */
-+	r = dm_pool_inc_data_range(pool->pmd, m->data_block, data_end);
-+	if (r) {
-+		metadata_operation_failed(pool, "dm_pool_inc_data_range", r);
-+		bio_io_error(m->bio);
-+		cell_defer_no_holder(tc, m->cell);
-+		mempool_free(m, pool->mapping_pool);
-+		return;
-+	}
-+
- 	discard_parent = bio_alloc(GFP_NOIO, 1);
- 	if (!discard_parent) {
- 		DMWARN("%s: unable to allocate top level discard bio for passdown. Skipping passdown.",
-@@ -1114,19 +1127,6 @@ static void process_prepared_discard_passdown_pt1(struct dm_thin_new_mapping *m)
- 			end_discard(&op, r);
- 		}
- 	}
--
--	/*
--	 * Increment the unmapped blocks.  This prevents a race between the
--	 * passdown io and reallocation of freed blocks.
--	 */
--	r = dm_pool_inc_data_range(pool->pmd, m->data_block, data_end);
--	if (r) {
--		metadata_operation_failed(pool, "dm_pool_inc_data_range", r);
--		bio_io_error(m->bio);
--		cell_defer_no_holder(tc, m->cell);
--		mempool_free(m, pool->mapping_pool);
--		return;
--	}
- }
- 
- static void process_prepared_discard_passdown_pt2(struct dm_thin_new_mapping *m)
--- 
-2.7.3.AMZN
+T24gRnJpLCAyMDE3LTA2LTIzIGF0IDE5OjI1ICswMjAwLCBYb3NlIFZhenF1ZXogUGVyZXogd3Jv
+dGU6Cj4gT24gMDYvMjIvMjAxNyAwNDo1OSBQTSwgTWFydGluIFdpbGNrIHdyb3RlOgo+IAo+ID4g
+S2VybmVscyA0LjMgYW5kIG5ld2VyIChjb21taXQgMWJhYjBkZTAgImRtLW1wYXRoLCBzY3NpX2Ro
+OiBkb24ndAo+ID4gbGV0IGRtIGRldGFjaCBkZXZpY2UgaGFuZGxlcnMiKSBpbXBseSAicmV0YWlu
+X2F0dGFjaGVkX2h3X2hhbmRsZXIKPiA+IHllcyIuCj4gPiAKPiA+IENsYXJpZnkgdGhpcyBpbiB0
+aGUgcHJvcHNlbCBjb2RlLCBsb2cgbWVzc2FnZXMsIGFuZCBkb2N1bWVudGF0aW9uLgo+ID4gCj4g
+PiBTaWduZWQtb2ZmLWJ5OiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4KPiA+IFJldmll
+d2VkLWJ5OiBIYW5uZXMgUmVpbmVja2UgPGhhcmVAc3VzZS5jb20+Cj4gPiAtLS0KPiA+ICBsaWJt
+dWx0aXBhdGgvY29uZmlndXJlLmMgICB8ICAzICsrLQo+ID4gIGxpYm11bHRpcGF0aC9kbXBhcnNl
+ci5jICAgIHwgIDMgKystCj4gPiAgbGlibXVsdGlwYXRoL3Byb3BzZWwuYyAgICAgfCAgNyArKysr
+KystCj4gPiAgbGlibXVsdGlwYXRoL3V0aWwuYyAgICAgICAgfCAzNgo+ID4gKysrKysrKysrKysr
+KysrKysrKysrKysrKysrKysrKysrKysrCj4gPiAgbGlibXVsdGlwYXRoL3V0aWwuaCAgICAgICAg
+fCAgMiArKwo+ID4gIG11bHRpcGF0aC9tdWx0aXBhdGguY29uZi41IHwgMTUgKysrKysrKysrKyst
+LS0tCj4gPiAgNiBmaWxlcyBjaGFuZ2VkLCA1OSBpbnNlcnRpb25zKCspLCA3IGRlbGV0aW9ucygt
+KQo+IAo+IFsuLi5dCj4gPiAtLS0gYS9saWJtdWx0aXBhdGgvcHJvcHNlbC5jCj4gPiArKysgYi9s
+aWJtdWx0aXBhdGgvcHJvcHNlbC5jCj4gPiBAQCAtNjI4LDcgKzYyOCwxMiBAQCBpbnQgc2VsZWN0
+X3JldGFpbl9od2hhbmRsZXIoc3RydWN0IGNvbmZpZwo+ID4gKmNvbmYsIHN0cnVjdCBtdWx0aXBh
+dGggKm1wKQo+ID4gIAo+ID4gIAlpZiAoIVZFUlNJT05fR0UoY29uZi0+dmVyc2lvbiwgbWludl9k
+bV9yZXRhaW4pKSB7Cj4gPiAgCQltcC0+cmV0YWluX2h3aGFuZGxlciA9IFJFVEFJTl9IV0hBTkRM
+RVJfT0ZGOwo+ID4gLQkJb3JpZ2luID0gIihzZXR0aW5nOiBXQVJOSU5HLCByZXF1aXJlcyBrZXJu
+ZWwKPiA+IHZlcnNpb24gPj0gMS41LjApIjsKPiA+ICsJCW9yaWdpbiA9ICIoc2V0dGluZzogV0FS
+TklORywgcmVxdWlyZXMga2VybmVsIGRtLQo+ID4gbXBhdGggdmVyc2lvbiA+PSAxLjUuMCkiOwo+
+IAo+IEl0IHdvdWxkIGJlIG1vcmUgaW5mb3JtYXRpdmUgcmVwbGFjZSB0aGUgZG0tbXBhdGggdmVy
+c2lvbiB3aXRoIHRoZQo+IGtlcm5lbCB2ZXJzaW9uLiBObyBvbmUgY2FyZXMgYWJvdXQgc3Vic3lz
+dGVtcyB2ZXJzaW9ucy4KCkkgZGlzYWdyZWUuIFRoaXMgY29kZSBzaG91bGQgYWxzbyB3b3JrIGZv
+ciB2ZW5kb3Iga2VybmVscyB3aGljaCBtYXkKZS5nLiBjb250YWluIHBhdGNoZXMgdG8gdXBkYXRl
+IGRtLW1wYXRoIHdpdGhvdXQgdXBkYXRpbmcgdGhlIG1haW4Ka2VybmVsICh1dHNuYW1lKSB2ZXJz
+aW9uLgoKVGhlIHJlYXNvbiBJIHVzZWQgZ2V0X2xpbnV4X3ZlcnNpb25fY29kZSgpIGZvciB0aGUg
+bmV3IGNoZWNrIG15IHBhdGNoCmludHJvZHVjZWQgd2FzIHRoYXQgdW5mb3J0dW5hdGVseSwgdGhl
+IGRtLW1wYXRoIHZlcnNpb24gaGFzIG5vdCBiZWVuCmNoYW5nZWQgd2hlbiB0aGUgInJldGFpbl9h
+dHRhY2hlZF9od2hhbmRsZXIiIGZlYXR1cmUgd2FzIHJlbW92ZWQgaW4KNC4zLiBUaGUgbmV4dCBk
+bS1tcGF0aCB2ZXJzaW9uIGNoYW5nZSAodG8gMS4xMCkgaGFwcGVuZWQgaW4gNC40LgpUaHVzIEkg
+Y291bGRuJ3QgdXNlIHRoZSBkbS1tcGF0aCB2ZXJzaW9uIGFuZCBoYWQgdG8gZmFsbGJhY2sgdG8K
+dXRzbmFtZS4KClRoaW5raW5nIGFib3V0IGl0LCB0aGUgbmV3IGNoZWNrIHNob3VsZCBwcm9iYWJs
+eSBiZSAoZG1fbXBhdGggdmVyc2lvbgo+PSAxLjEwIE9SIGtlcm5lbCB2ZXJzb24gPj0gNC4zKS4g
+SU1PIHRoYXQgY2FuIGJlIGhhbmRsZWQgaW4gYW4KaW5jcmVtZW50YWwgcGF0Y2guCgpSZWdhcmRz
+LApNYXJ0aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0
+OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZm
+ZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcp
+CgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3
+dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
