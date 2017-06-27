@@ -1,50 +1,27 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH] libmultipath: fix unit to seconds in log message
-	for checker timeout
-Date: Tue, 27 Jun 2017 17:11:47 +0200
-Message-ID: <20170627151147.11776-1-mwilck@suse.com>
+From: Jens Axboe <axboe@kernel.dk>
+Subject: Re: move bounce limits settings into the drivers
+Date: Tue, 27 Jun 2017 12:10:46 -0600
+Message-ID: <393234a3-3c36-46ca-fa23-29f79faf04a1@kernel.dk>
+References: <20170619072628.12894-1-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20170619072628.12894-1-hch@lst.de>
+Content-Language: en-US
+Sender: linux-block-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-checker_timeout is in seconds, not milliseconds, since 905281da
-"Specify checker_timeout in seconds". Fix the log messages.
+On 06/19/2017 01:26 AM, Christoph Hellwig wrote:
+> Currently we still default to a bounce all highmem setting for block
+> drivers.  This series defaults to no bouncing and instead adds call
+> to blk_queue_bounce_limit to those drivers that need it.   It also
+> has a few cleanups in that area.
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- libmultipath/propsel.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+Looks straight forward and trivial to me, I'll pull it in for
+4.13.
 
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index 27f39517..4ac7edcd 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -333,11 +333,11 @@ out:
- 				pp->dev, c->timeout);
- 	}
- 	else if (sysfs_get_timeout(pp, &c->timeout) > 0)
--		condlog(3, "%s: checker timeout = %u ms (setting: kernel sysfs)",
-+		condlog(3, "%s: checker timeout = %u s (setting: kernel sysfs)",
- 				pp->dev, c->timeout);
- 	else {
- 		c->timeout = DEF_TIMEOUT;
--		condlog(3, "%s: checker timeout = %u ms (setting: multipath internal)",
-+		condlog(3, "%s: checker timeout = %u s (setting: multipath internal)",
- 				pp->dev, c->timeout);
- 	}
- 	return 0;
 -- 
-2.13.1
+Jens Axboe
