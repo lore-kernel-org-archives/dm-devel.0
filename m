@@ -1,15 +1,14 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH RESEND] dm-raid: Do not call BUG() in
-	__rdev_sectors()
-Date: Wed, 28 Jun 2017 13:18:39 -0400
-Message-ID: <20170628171839.GA12783@redhat.com>
-References: <1498637057-23221-1-git-send-email-hare@suse.de>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: [PATCH] libmultipath: update 3PARdata builtin config
+Date: Wed, 28 Jun 2017 19:48:38 +0200
+Message-ID: <5d7143cd-4964-93ca-1e71-0119eb2a8ea1@gmail.com>
+References: <1498503799-24026-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1498637057-23221-1-git-send-email-hare@suse.de>
+In-Reply-To: <1498503799-24026-1-git-send-email-bmarzins@redhat.com>
+Content-Language: en-GB
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,55 +18,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: Heinz Mauelshagen <heinzm@redhat.com>, dm-devel@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
 List-Id: dm-devel.ids
 
-On Wed, Jun 28 2017 at  4:04P -0400,
-Hannes Reinecke <hare@suse.de> wrote:
+On 06/26/2017 09:03 PM, Benjamin Marzinski wrote:
 
-> __rdev_sectors() might be called for an invalid/non-existing
-> RAID set during raid_ctr(), which is perfectly fine and no
-> reason to panic.
-> 
-> Signed-off-by: Hannes Reinecke <hare@suse.com>
+> This updated config comes from hp.
+
+It would be nice to have more information.
+Why and when is this needed?
+
+
+BTW: HPE 'MSA 205x' and 'StoreVirtual 3200'(LeftHand) are missing.
+
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 > ---
->  drivers/md/dm-raid.c | 3 ++-
->  1 file changed, 2 insertions(+), 1 deletion(-)
+>  libmultipath/hwtable.c | 2 ++
+>  1 file changed, 2 insertions(+)
 > 
-> diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-> index 7d89322..9bbb596 100644
-> --- a/drivers/md/dm-raid.c
-> +++ b/drivers/md/dm-raid.c
-> @@ -1571,7 +1571,8 @@ static sector_t __rdev_sectors(struct raid_set *rs)
->  			return rdev->sectors;
->  	}
->  
-> -	BUG(); /* Constructor ensures we got some. */
-> +	/* No valid raid devices */
-> +	return 0;
->  }
->  
->  /* Calculate the sectors per device and per array used for @rs */
-> -- 
-> 1.8.5.6
-> 
-
-The use of BUG() is certainly suspect.  BUG() is very rarely the right
-answer.
-
-But I don't think returning 0 makes sense for all __rdev_sectors()
-callers, e.g.: rs_setup_recovery()
-
-__rdev_sectors() could easily be made to check if ti->error is passed as
-a non-NULL pointer.. if so set *error, return 0, have ctr check for 0,
-and gracefully fail ctr by returning the ti->error that __rdev_sectors()
-set.  If the error pointer passed to __rdev_sectors() is NULL, resort to
-BUG() still?  Would really like to avoid BUG().. but I'll defer to Heinz
-on what might be a better response.
-
-Alternatively, you could look to see where "Constructor ensures we got
-some." and fix the fact that it clearly isn't ensuring as much for your
-case?
-
-Mike
+> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+> index 390d143..54bdcfc 100644
+> --- a/libmultipath/hwtable.c
+> +++ b/libmultipath/hwtable.c
+> @@ -49,6 +49,8 @@ static struct hwentry default_hw[] = {
+>  		.hwhandler     = "1 alua",
+>  		.prio_name     = PRIO_ALUA,
+>  		.no_path_retry = 18,
+> +		.fast_io_fail  = 10,
+> +		.dev_loss      = MAX_DEV_LOSS_TMO,
+>  	},
+>  	{
+>  		/* RA8000 / ESA12000 */
+>
