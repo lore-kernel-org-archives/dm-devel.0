@@ -1,16 +1,15 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 2/2] multipath: attempt at common
- multipath.rules
-Date: Wed, 28 Jun 2017 15:00:08 +0200
-Message-ID: <1498654808.4318.5.camel@suse.com>
-References: <1492035310-27525-1-git-send-email-bmarzins@redhat.com>
-	<1492035310-27525-3-git-send-email-bmarzins@redhat.com>
-	<1498599692.27347.26.camel@suse.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH RESEND] dm-raid: Do not call BUG() in
+	__rdev_sectors()
+Date: Wed, 28 Jun 2017 13:18:39 -0400
+Message-ID: <20170628171839.GA12783@redhat.com>
+References: <1498637057-23221-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1498599692.27347.26.camel@suse.com>
+Content-Disposition: inline
+In-Reply-To: <1498637057-23221-1-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,61 +19,55 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>
+To: Hannes Reinecke <hare@suse.de>
+Cc: Heinz Mauelshagen <heinzm@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gVHVlLCAyMDE3LTA2LTI3IGF0IDIzOjQxICswMjAwLCBNYXJ0aW4gV2lsY2sgd3JvdGU6Cj4g
-Cj4gPiBUaGUgb3RoZXIgY2hhbmdlIGlzIHRoZSByZWRoYXQgbXVsdGlwYXRoIHJ1bGVzIHJlbW92
-ZSB0aGUgcGFydGl0aW9uCj4gPiBkZXZpY2Ugbm9kZXMgZm9yIGRldmljZXMgY2xhaW1lZCBieSBt
-dWx0aXBhdGguIFRoZSB1ZGV2IHJ1bGUgd2lsbAo+ID4gb25seQo+ID4gZG8gdGhpcyBvbmUgdGlt
-ZSAoYm90aCB0byBrZWVwIGZyb20gcnVubmluZyBwYXJ0eCBvbiBldmVyeSBldmVudCwKPiA+IGFu
-ZAo+ID4gc28KPiA+IHRoYXQgaWYgdXNlcnMgbWFudWFsbHkgcmVyZWFkIHRoZSBwYXJ0aXRpb24g
-dGFibGUsIHdlIGRvbid0IGtlZXAKPiA+IHJlbW92aW5nIHRoZW0gd2hlbiBjbGVhcmx5IHRoZXkg
-YXJlIHdhbnRlZCkuIFJlZGhhdCBkb2VzIHRoaXMKPiA+IGJlY2F1c2UKPiA+IHdlCj4gPiBoYWQg
-bXVsdGlwbGUgY3VzdG9tZXIgaXNzdWVzIHdoZXJlIHRoZXkgd2VyZSB1c2luZyB0aGUgc2NzaQo+
-ID4gcGFydGl0aW9ucwo+ID4gaW5zdGVhZCBvZiB0aGUga3BhcnR4IGRldmljZXMuIE9idmlvdXNs
-eSwgd2l0aCBzZXR0aW5nIHRoZQo+ID4gcGFydGl0aW9uCj4gPiBkZXZpY2VzIHRvIG5vdCByZWFk
-eSBhbmQgY2xlYXJpbmcgdGhlaXIgZnNfdHlwZSwgdGhpcyBpc24ndAo+ID4gZXNzZW50aWFsLAo+
-ID4gYnV0IGl0IGhhcyBoZWxwZWQgbWFrZSBjdXN0b21lcnMgZG8gdGhlIHJpZ2h0IHRoaW5nLgo+
-IAo+IElzbid0IHRoaXMgcmFjeT8gWW91IGNhbGwgInBhcnR4IC1kIiBvbiB0aGUgcGFyZW50IGRl
-dmljZSAoZS5nLiBzZGEpLgo+IEF0IHRoaXMgcG9pbnQgaW4gdGltZSwgdGhlIGtlcm5lbCB3aWxs
-IGFscmVhZHkgaGF2ZSBkZXRlY3RlZCB0aGUKPiBwYXJ0aXRpb25zIGFuZCAiYWRkIiB1ZXZlbnRz
-IGZvciB0aGVtIGFyZSBsaWtlbHkgdG8gZm9sbG93IHVwCj4gcXVpY2tseS4KPiBZb3UgZ2VuZXJh
-dGUgInJlbW92ZSIgZXZlbnRzIHRoYXQgbWF5IHJhY2Ugd2l0aCB0aGUgImFkZCIgLSBvciBhbSBJ
-Cj4gb3Zlcmxvb2tpbmcgc29tZXRoaW5nPwo+IAo+IEknZCBmZWVsIGJldHRlciBpZiB3ZSdkIGNh
-bGwgInBhcnR4IC1kIiB3aGlsZSBwcm9jZXNzaW5nIHRoZSAiYWRkIgo+IHVldmVudCBmb3IgdGhl
-IF9wYXJ0aXRpb25zXywgaWRlYWxseSBsYXRlIGluIHRoYXQgcHJvY2Vzcy4gVGhhdCB3b3VsZAo+
-IG1ha2UgKGFsbW9zdCkgc3VyZSB0aGF0ICJhZGQiIHdhcyBmaW5pc2hlZCB3aGVuICJyZW1vdmUi
-IHdhcwo+IGdlbmVyYXRlZC4KPiBTZWUgYmVsb3cuCgpJdCB0dXJucyBvdXQgdGhhdCBteSBpZGVh
-IGRvZXNuJ3Qgd29yayBxdWl0ZSBsaWtlIHlvdXIgYXBwcm9hY2gsCmJlY2F1c2UgdXNlcnMgY2Fu
-J3Qgc2ltcGx5IHJ1biAicGFydHggLWEgL2Rldi9zZCRYIiB0byBnZXQgdGhlIGRlbGV0ZWQKcGFy
-dGl0aW9ucyBiYWNrLiBUaGV5IG5lZWQgYW4gYWRkaXRpb25hbCwgbWFudWFsICJlY2hvIGNoYW5n
-ZQo+L3N5cy9jbGFzcy9ibG9jay9zZCRYL3VldmVudCIgZmlyc3QgdG8gbWFrZSAicGFydHggLWEg
-d29yayIuClNvLCBpZiB5b3UgY2FuIGNvbmZpcm0gdGhhdCB1ZXZlbnQgcmFjZXMgYXJlIG5vIHBy
-b2JsZW0sIHlvdXIgdGVjaG5pcXVlCnNlZW1zIHRvIGJlIG1vcmUgdXNlci1mcmllbmRseS4KCgo+
-ID4gK0xBQkVMPSJjaGVja19rcGFydHgiCj4gPiArCj4gPiArSU1QT1JUe2RifT0iRE1fTVVMVElQ
-QVRIX05FRURfS1BBUlRYIgo+IAo+IEFzIHJlbWFya2VkIGFib3ZlLCBJJ2Qgdm90ZSBmb3IgcmVt
-b3ZpbmcgIk1VTFRJUEFUSCIgZnJvbSB0aGlzCj4gcHJvcGVydHkKPiBuYW1lLgo+IAo+ID4gK0VO
-VntETV9VREVWX1BSSU1BUllfU09VUkNFX0ZMQUd9IT0iMSIsCj4gPiBJTVBPUlR7ZGJ9PSJETV9T
-VUJTWVNURU1fVURFVl9GTEFHMSIKPiA+ICtFTlZ7RE1fU1VCU1lTVEVNX1VERVZfRkxBRzF9PT0i
-MSIsIEdPVE89ImVuZF9tcGF0aCIKPiA+ICtBQ1RJT04hPSJjaGFuZ2UiLCBHT1RPPSJlbmRfbXBh
-dGgiCj4gPiArRU5We0RNX1VVSUR9IT0ibXBhdGgtPyoiLCBHT1RPPSJlbmRfbXBhdGgiCj4gPiAr
-RU5We0RNX0FDVElWQVRJT059PT0iMSIsIEVOVntETV9NVUxUSVBBVEhfTkVFRF9LUEFSVFh9PSIx
-Igo+ID4gK0VOVntETV9TVVNQRU5ERUR9PT0iMSIsIEdPVE89ImVuZF9tcGF0aCIKPiA+ICtFTlZ7
-RE1fQUNUSU9OfT09IlBBVEhfRkFJTEVEIiwgR09UTz0iZW5kX21wYXRoIgo+IAo+IFRoZSBwcmV2
-aW91cyBjb2RlIGhhZCBFTlZ7RE1fQUNUSU9OfT09IlBBVEhfRkFJTEVEfFBBVEhfUkVJTlNUQVRF
-RCIsCj4gd2h5IGRpZCB5b3UgZHJvcCB0aGUgbGF0dGVyPyAKPiBBbnl3YXksIEkgdGhpbmsgYm90
-aCBhcmVuJ3QgbmVlZGVkIGJlY2F1c2UgaW4gMTEtZG0tbXBhdGgucnVsZXMsCj4gIkRNX0FDVElW
-QVRJT04iIGlzIHNldCB0byAiMCIgaW4gdGhlICJyZWxvYWQgaWYgcGF0aHMgYXJlCj4gbG9zdC9y
-ZWNvdmVyZWQiIGNhc2UuIEkgdGhpbmsgdGhlIGNsZWFuZXIgd2F5IHRvIGV4cHJlc3MgdGhlIGxv
-Z2ljCj4gaGVyZQo+IHdvdWxkIGJlOgo+IAo+ICMgZG9uJ3QgcmVydW4ga3BhcnR4IG9uICJyZWxv
-YWQiIGV2ZW50cyAoc2VlIDExLWRtLW1wYXRoLnJ1bGVzKQo+IEVOVntETV9BQ1RJVkFUSU9OfT09
-IjAiLCBHT1RPPSJlbmRfbXBhdGgiCj4gIyBkb24ndCBydW4ga3BhcnR4IHdoZW4gdGhlcmUgYXJl
-IG5vIHBhdGhzCj4gRU5We01QQVRIX0RFVklDRV9SRUFEWX09PSIwIiwgR09UTz0iZW5kX21wYXRo
-IgoKVGhlIEVOVntETV9BQ1RJVkFUSU9OfT09IjAiIGNhbiBiZSBsZWZ0IG91dCwgdG9vLCBJIHRo
-aW5rLiBJJ2xsIHBvc3QgYQpwYXRjaCB3aXRoIHdoYXQgSSB0aGluayB0aGUgc2V0dXAgc2hvdWxk
-IGJlIHNvb24uCgpCZXN0Ck1hcnRpbgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2Uu
-Y29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVs
-aXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAo
-QUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5j
-b20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+On Wed, Jun 28 2017 at  4:04P -0400,
+Hannes Reinecke <hare@suse.de> wrote:
+
+> __rdev_sectors() might be called for an invalid/non-existing
+> RAID set during raid_ctr(), which is perfectly fine and no
+> reason to panic.
+> 
+> Signed-off-by: Hannes Reinecke <hare@suse.com>
+> ---
+>  drivers/md/dm-raid.c | 3 ++-
+>  1 file changed, 2 insertions(+), 1 deletion(-)
+> 
+> diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+> index 7d89322..9bbb596 100644
+> --- a/drivers/md/dm-raid.c
+> +++ b/drivers/md/dm-raid.c
+> @@ -1571,7 +1571,8 @@ static sector_t __rdev_sectors(struct raid_set *rs)
+>  			return rdev->sectors;
+>  	}
+>  
+> -	BUG(); /* Constructor ensures we got some. */
+> +	/* No valid raid devices */
+> +	return 0;
+>  }
+>  
+>  /* Calculate the sectors per device and per array used for @rs */
+> -- 
+> 1.8.5.6
+> 
+
+The use of BUG() is certainly suspect.  BUG() is very rarely the right
+answer.
+
+But I don't think returning 0 makes sense for all __rdev_sectors()
+callers, e.g.: rs_setup_recovery()
+
+__rdev_sectors() could easily be made to check if ti->error is passed as
+a non-NULL pointer.. if so set *error, return 0, have ctr check for 0,
+and gracefully fail ctr by returning the ti->error that __rdev_sectors()
+set.  If the error pointer passed to __rdev_sectors() is NULL, resort to
+BUG() still?  Would really like to avoid BUG().. but I'll defer to Heinz
+on what might be a better response.
+
+Alternatively, you could look to see where "Constructor ensures we got
+some." and fix the fact that it clearly isn't ensuring as much for your
+case?
+
+Mike
