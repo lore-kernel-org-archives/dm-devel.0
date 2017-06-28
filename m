@@ -1,50 +1,66 @@
 From: Brian King <brking@linux.vnet.ibm.com>
-Subject: Re: [PATCH 1/1] block: Convert hd_struct in_flight from
+Subject: Re: [dm-devel] [PATCH 1/1] block: Convert hd_struct in_flight from
  atomic to percpu
-Date: Wed, 28 Jun 2017 17:04:24 -0500
-Message-ID: <93d463ba-58aa-c830-9319-a0774d364b1e@linux.vnet.ibm.com>
+Date: Wed, 28 Jun 2017 17:07:49 -0500
+Message-ID: <29091da5-1076-9aa8-5519-37c713e47e83@linux.vnet.ibm.com>
 References: <20170628211010.4C8C9124035@b01ledav002.gho.pok.ibm.com>
-	<c91629be-26db-96bb-9a55-18a6861888b2@kernel.dk>
+ <9360a4b6-71be-6486-27f0-483180184905@kernel.dk>
+ <1ad262f4-2aa9-1127-3246-ce5ce80e9f4f@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <c91629be-26db-96bb-9a55-18a6861888b2@kernel.dk>
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <1ad262f4-2aa9-1127-3246-ce5ce80e9f4f@kernel.dk>
 Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Sender: linux-block-owner@vger.kernel.org
 To: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org
 Cc: dm-devel@redhat.com, agk@redhat.com, snitzer@redhat.com
 List-Id: dm-devel.ids
 
-On 06/28/2017 04:49 PM, Jens Axboe wrote:
-> On 06/28/2017 03:12 PM, Brian King wrote:
->> This patch converts the in_flight counter in struct hd_struct from a
->> pair of atomics to a pair of percpu counters. This eliminates a couple
->> of atomics from the hot path. When running this on a Power system, to
->> a single null_blk device with 80 submission queues, irq mode 0, with
->> 80 fio jobs, I saw IOPs go from 1.5M IO/s to 11.4 IO/s.
+On 06/28/2017 04:59 PM, Jens Axboe wrote:
+> On 06/28/2017 03:54 PM, Jens Axboe wrote:
+>> On 06/28/2017 03:12 PM, Brian King wrote:
+>>> -static inline int part_in_flight(struct hd_struct *part)
+>>> +static inline unsigned long part_in_flight(struct hd_struct *part)
+>>>  {
+>>> -	return atomic_read(&part->in_flight[0]) + atomic_read(&part->in_flight[1]);
+>>> +	return part_stat_read(part, in_flight[0]) + part_stat_read(part, in_flight[1]);
+>>
+>> One obvious improvement would be to not do this twice, but only have to
+>> loop once. Instead of making this an array, make it a structure with a
+>> read and write count.
+>>
+>> It still doesn't really fix the issue of someone running on a kernel
+>> with a ton of possible CPUs configured. But it does reduce the overhead
+>> by 50%.
 > 
-> This has been done before, but I've never really liked it. The reason is
-> that it means that reading the part stat inflight count now has to
-> iterate over every possible CPU. Did you use partitions in your testing?
-> How many CPUs were configured? When I last tested this a few years ago
+> Or something as simple as this:
+> 
+> #define part_stat_read_double(part, field1, field2)			\
+> ({									\
+> 	typeof((part)->dkstats->field1) res = 0;			\
+> 	unsigned int _cpu;						\
+> 	for_each_possible_cpu(_cpu) {					\
+> 		res += per_cpu_ptr((part)->dkstats, _cpu)->field1;	\
+> 		res += per_cpu_ptr((part)->dkstats, _cpu)->field2;	\
+> 	}								\
+> 	res;								\
+> })
+> 
+> static inline unsigned long part_in_flight(struct hd_struct *part)
+> {
+> 	return part_stat_read_double(part, in_flight[0], in_flight[1]);
+> }
+> 
 
-I did not use partitions. I was running this on a 4 socket Power 8 machine with
-5 cores per socket, running with 4 threads per core, so a total of 80
-logical CPUs were usable in Linux.
+I'll give this a try and also see about running some more exhaustive
+runs to see if there are any cases where we go backwards in performance.
 
-I was missing the fact that part_round_stats_single calls part_in_flight
-and had only noticed the sysfs and procfs users of part_in_flight previously.
+I'll also run with partitions and see how that impacts this.
 
--Brian
+Thanks,
+
+Brian
 
 -- 
 Brian King
