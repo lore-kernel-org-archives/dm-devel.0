@@ -1,15 +1,15 @@
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: Re: [PATCH RESEND] dm-raid: Do not call BUG() in
- __rdev_sectors()
-Date: Thu, 29 Jun 2017 16:09:38 +0200
-Message-ID: <17f4e017-f3f8-01dd-d305-dae30f93ae06@redhat.com>
-References: <1498637057-23221-1-git-send-email-hare@suse.de>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH] libmultipath: update 3PARdata builtin config
+Date: Thu, 29 Jun 2017 09:57:31 -0500
+Message-ID: <20170629145731.GR2940@octiron.msp.redhat.com>
+References: <1498503799-24026-1-git-send-email-bmarzins@redhat.com>
+	<5d7143cd-4964-93ca-1e71-0119eb2a8ea1@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1498637057-23221-1-git-send-email-hare@suse.de>
-Content-Language: de-CH
+Content-Disposition: inline
+In-Reply-To: <5d7143cd-4964-93ca-1e71-0119eb2a8ea1@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,47 +19,47 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+On Wed, Jun 28, 2017 at 07:48:38PM +0200, Xose Vazquez Perez wrote:
+> On 06/26/2017 09:03 PM, Benjamin Marzinski wrote:
+> 
+> > This updated config comes from hp.
+> 
+> It would be nice to have more information.
+> Why and when is this needed?
 
-Hi Hannes,
+I assume the change to dev_loss_tmo is simply a preference issue. Like
+Netapp, they don't want their devices to get auto-removed when they go
+down. I also assume that in their internal testing, they hit cases where
+5 seconds wasn't enough time to wait for some transient issue with the
+array to resolve.  At any rate, I'm simply passing along their request,
+which seems like a perfectly reasonable one to me.
 
-thanks for your patch.
+-Ben
 
-BUG() is intentional there to catch what I've already fixed with patch
-
-"[dm-devel] [PATCH] dm raid: fix oops on upgrading to extended 
-superblock format"
-
-on 06/23/2017.
-
-IOW: returning 0 is never right and would hide bugs like that one fixed.
-
-Heinz
-
-
-On 06/28/2017 10:04 AM, Hannes Reinecke wrote:
-> __rdev_sectors() might be called for an invalid/non-existing
-> RAID set during raid_ctr(), which is perfectly fine and no
-> reason to panic.
->
-> Signed-off-by: Hannes Reinecke <hare@suse.com>
-> ---
->   drivers/md/dm-raid.c | 3 ++-
->   1 file changed, 2 insertions(+), 1 deletion(-)
->
-> diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-> index 7d89322..9bbb596 100644
-> --- a/drivers/md/dm-raid.c
-> +++ b/drivers/md/dm-raid.c
-> @@ -1571,7 +1571,8 @@ static sector_t __rdev_sectors(struct raid_set *rs)
->   			return rdev->sectors;
->   	}
->   
-> -	BUG(); /* Constructor ensures we got some. */
-> +	/* No valid raid devices */
-> +	return 0;
->   }
->   
->   /* Calculate the sectors per device and per array used for @rs */
+> 
+> 
+> BTW: HPE 'MSA 205x' and 'StoreVirtual 3200'(LeftHand) are missing.
+> 
+> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> > ---
+> >  libmultipath/hwtable.c | 2 ++
+> >  1 file changed, 2 insertions(+)
+> > 
+> > diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+> > index 390d143..54bdcfc 100644
+> > --- a/libmultipath/hwtable.c
+> > +++ b/libmultipath/hwtable.c
+> > @@ -49,6 +49,8 @@ static struct hwentry default_hw[] = {
+> >  		.hwhandler     = "1 alua",
+> >  		.prio_name     = PRIO_ALUA,
+> >  		.no_path_retry = 18,
+> > +		.fast_io_fail  = 10,
+> > +		.dev_loss      = MAX_DEV_LOSS_TMO,
+> >  	},
+> >  	{
+> >  		/* RA8000 / ESA12000 */
+> >
