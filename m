@@ -1,67 +1,57 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [dm-devel] [PATCH 1/1] block: Convert hd_struct in_flight from
- atomic to percpu
-Date: Wed, 28 Jun 2017 16:19:11 -0600
-Message-ID: <edc27aaf-f6a6-d49e-b0c5-0474a7efbfc3@kernel.dk>
-References: <20170628211010.4C8C9124035@b01ledav002.gho.pok.ibm.com>
- <9360a4b6-71be-6486-27f0-483180184905@kernel.dk>
- <1ad262f4-2aa9-1127-3246-ce5ce80e9f4f@kernel.dk>
- <29091da5-1076-9aa8-5519-37c713e47e83@linux.vnet.ibm.com>
+From: Ming Lei <tom.leiming@gmail.com>
+Subject: Re: [PATCH 1/1] block: Convert hd_struct in_flight from atomic to percpu
+Date: Thu, 29 Jun 2017 16:40:23 +0800
+Message-ID: <CACVXFVMG=gD1Dq2SRKxhfPS33mzCC_dkSpVoYskaLE7PXV7xGQ@mail.gmail.com>
+References: <20170628211010.4C8C9124035@b01ledav002.gho.pok.ibm.com> <c91629be-26db-96bb-9a55-18a6861888b2@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <29091da5-1076-9aa8-5519-37c713e47e83@linux.vnet.ibm.com>
-Content-Language: en-US
+In-Reply-To: <c91629be-26db-96bb-9a55-18a6861888b2@kernel.dk>
 Sender: linux-block-owner@vger.kernel.org
-To: Brian King <brking@linux.vnet.ibm.com>, linux-block@vger.kernel.org
-Cc: dm-devel@redhat.com, agk@redhat.com, snitzer@redhat.com
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Brian King <brking@linux.vnet.ibm.com>, linux-block <linux-block@vger.kernel.org>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On 06/28/2017 04:07 PM, Brian King wrote:
-> On 06/28/2017 04:59 PM, Jens Axboe wrote:
->> On 06/28/2017 03:54 PM, Jens Axboe wrote:
->>> On 06/28/2017 03:12 PM, Brian King wrote:
->>>> -static inline int part_in_flight(struct hd_struct *part)
->>>> +static inline unsigned long part_in_flight(struct hd_struct *part)
->>>>  {
->>>> -	return atomic_read(&part->in_flight[0]) + atomic_read(&part->in_flight[1]);
->>>> +	return part_stat_read(part, in_flight[0]) + part_stat_read(part, in_flight[1]);
->>>
->>> One obvious improvement would be to not do this twice, but only have to
->>> loop once. Instead of making this an array, make it a structure with a
->>> read and write count.
->>>
->>> It still doesn't really fix the issue of someone running on a kernel
->>> with a ton of possible CPUs configured. But it does reduce the overhead
->>> by 50%.
->>
->> Or something as simple as this:
->>
->> #define part_stat_read_double(part, field1, field2)			\
->> ({									\
->> 	typeof((part)->dkstats->field1) res = 0;			\
->> 	unsigned int _cpu;						\
->> 	for_each_possible_cpu(_cpu) {					\
->> 		res += per_cpu_ptr((part)->dkstats, _cpu)->field1;	\
->> 		res += per_cpu_ptr((part)->dkstats, _cpu)->field2;	\
->> 	}								\
->> 	res;								\
->> })
->>
->> static inline unsigned long part_in_flight(struct hd_struct *part)
->> {
->> 	return part_stat_read_double(part, in_flight[0], in_flight[1]);
->> }
->>
-> 
-> I'll give this a try and also see about running some more exhaustive
-> runs to see if there are any cases where we go backwards in performance.
-> 
-> I'll also run with partitions and see how that impacts this.
+On Thu, Jun 29, 2017 at 5:49 AM, Jens Axboe <axboe@kernel.dk> wrote:
+> On 06/28/2017 03:12 PM, Brian King wrote:
+>> This patch converts the in_flight counter in struct hd_struct from a
+>> pair of atomics to a pair of percpu counters. This eliminates a couple
+>> of atomics from the hot path. When running this on a Power system, to
+>> a single null_blk device with 80 submission queues, irq mode 0, with
+>> 80 fio jobs, I saw IOPs go from 1.5M IO/s to 11.4 IO/s.
+>
+> This has been done before, but I've never really liked it. The reason is
+> that it means that reading the part stat inflight count now has to
+> iterate over every possible CPU. Did you use partitions in your testing?
+> How many CPUs were configured? When I last tested this a few years ago
+> on even a quad core nehalem (which is notoriously shitty for cross-node
+> latencies), it was a net loss.
 
-And do something nuts, like setting NR_CPUS to 512 or whatever. What do
-distros ship with?
+One year ago, I saw null_blk's IOPS can be decreased to 10%
+of non-RQF_IO_STAT on a dual socket ARM64(each CPU has
+96 cores, and dual numa nodes) too, the performance can be
+recovered basically if per numa-node counter is introduced and
+used in this case, but the patch was never posted out.
+If anyone is interested in that, I can rebase the patch on current
+block tree and post out. I guess the performance issue might be
+related with system cache coherency implementation more or less.
+This issue on ARM64 can be observed with the following userspace
+atomic counting test too:
 
--- 
-Jens Axboe
+       http://kernel.ubuntu.com/~ming/test/cache/
+
+>
+> I do agree that we should do something about it, and it's one of those
+> items I've highlighted in talks about blk-mq on pending issues to fix
+> up. It's just not great as it currently stands, but I don't think per
+> CPU counters is the right way to fix it, at least not for the inflight
+> counter.
+
+Yeah, it won't be a issue for non-mq path, and for blk-mq path,
+maybe we can use some blk-mq knowledge(tagset?) to figure out
+the 'in_flight' counter. I thought about it before, but never got a perfect
+solution, and looks it is a bit hard, :-)
+
+
+Thanks,
+Ming Lei
