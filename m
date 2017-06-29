@@ -1,80 +1,65 @@
-From: Brian King <brking@linux.vnet.ibm.com>
-Subject: Re: [dm-devel] [PATCH 1/1] block: Convert hd_struct in_flight from
- atomic to percpu
-Date: Thu, 29 Jun 2017 07:59:14 -0500
-Message-ID: <adcf3922-32ee-3076-1498-93e22558c82d@linux.vnet.ibm.com>
-References: <20170628211010.4C8C9124035@b01ledav002.gho.pok.ibm.com>
- <9360a4b6-71be-6486-27f0-483180184905@kernel.dk>
- <1ad262f4-2aa9-1127-3246-ce5ce80e9f4f@kernel.dk>
- <29091da5-1076-9aa8-5519-37c713e47e83@linux.vnet.ibm.com>
- <edc27aaf-f6a6-d49e-b0c5-0474a7efbfc3@kernel.dk>
+From: Heinz Mauelshagen <heinzm@redhat.com>
+Subject: Re: [PATCH RESEND] dm-raid: Do not call BUG() in
+ __rdev_sectors()
+Date: Thu, 29 Jun 2017 16:09:38 +0200
+Message-ID: <17f4e017-f3f8-01dd-d305-dae30f93ae06@redhat.com>
+References: <1498637057-23221-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <edc27aaf-f6a6-d49e-b0c5-0474a7efbfc3@kernel.dk>
-Content-Language: en-US
-Sender: linux-block-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org
-Cc: dm-devel@redhat.com, agk@redhat.com, snitzer@redhat.com
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1498637057-23221-1-git-send-email-hare@suse.de>
+Content-Language: de-CH
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 06/28/2017 05:19 PM, Jens Axboe wrote:
-> On 06/28/2017 04:07 PM, Brian King wrote:
->> On 06/28/2017 04:59 PM, Jens Axboe wrote:
->>> On 06/28/2017 03:54 PM, Jens Axboe wrote:
->>>> On 06/28/2017 03:12 PM, Brian King wrote:
->>>>> -static inline int part_in_flight(struct hd_struct *part)
->>>>> +static inline unsigned long part_in_flight(struct hd_struct *part)
->>>>>  {
->>>>> -	return atomic_read(&part->in_flight[0]) + atomic_read(&part->in_flight[1]);
->>>>> +	return part_stat_read(part, in_flight[0]) + part_stat_read(part, in_flight[1]);
->>>>
->>>> One obvious improvement would be to not do this twice, but only have to
->>>> loop once. Instead of making this an array, make it a structure with a
->>>> read and write count.
->>>>
->>>> It still doesn't really fix the issue of someone running on a kernel
->>>> with a ton of possible CPUs configured. But it does reduce the overhead
->>>> by 50%.
->>>
->>> Or something as simple as this:
->>>
->>> #define part_stat_read_double(part, field1, field2)			\
->>> ({									\
->>> 	typeof((part)->dkstats->field1) res = 0;			\
->>> 	unsigned int _cpu;						\
->>> 	for_each_possible_cpu(_cpu) {					\
->>> 		res += per_cpu_ptr((part)->dkstats, _cpu)->field1;	\
->>> 		res += per_cpu_ptr((part)->dkstats, _cpu)->field2;	\
->>> 	}								\
->>> 	res;								\
->>> })
->>>
->>> static inline unsigned long part_in_flight(struct hd_struct *part)
->>> {
->>> 	return part_stat_read_double(part, in_flight[0], in_flight[1]);
->>> }
->>>
->>
->> I'll give this a try and also see about running some more exhaustive
->> runs to see if there are any cases where we go backwards in performance.
->>
->> I'll also run with partitions and see how that impacts this.
-> 
-> And do something nuts, like setting NR_CPUS to 512 or whatever. What do
-> distros ship with?
 
-Both RHEL and SLES set NR_CPUS=2048 for the Power architecture. I can easily
-switch the SMT mode of the machine I used for this from 4 to 8 to have a total
-of 160 online logical CPUs and see how that affects the performance. I'll
-see if I can find a larger machine as well.
+Hi Hannes,
 
-Thanks,
+thanks for your patch.
 
-Brian
+BUG() is intentional there to catch what I've already fixed with patch
 
--- 
-Brian King
-Power Linux I/O
-IBM Linux Technology Center
+"[dm-devel] [PATCH] dm raid: fix oops on upgrading to extended 
+superblock format"
+
+on 06/23/2017.
+
+IOW: returning 0 is never right and would hide bugs like that one fixed.
+
+Heinz
+
+
+On 06/28/2017 10:04 AM, Hannes Reinecke wrote:
+> __rdev_sectors() might be called for an invalid/non-existing
+> RAID set during raid_ctr(), which is perfectly fine and no
+> reason to panic.
+>
+> Signed-off-by: Hannes Reinecke <hare@suse.com>
+> ---
+>   drivers/md/dm-raid.c | 3 ++-
+>   1 file changed, 2 insertions(+), 1 deletion(-)
+>
+> diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+> index 7d89322..9bbb596 100644
+> --- a/drivers/md/dm-raid.c
+> +++ b/drivers/md/dm-raid.c
+> @@ -1571,7 +1571,8 @@ static sector_t __rdev_sectors(struct raid_set *rs)
+>   			return rdev->sectors;
+>   	}
+>   
+> -	BUG(); /* Constructor ensures we got some. */
+> +	/* No valid raid devices */
+> +	return 0;
+>   }
+>   
+>   /* Calculate the sectors per device and per array used for @rs */
