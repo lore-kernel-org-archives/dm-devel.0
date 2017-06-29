@@ -1,26 +1,26 @@
-From: Brian King <brking@linux.vnet.ibm.com>
+From: Jens Axboe <axboe@kernel.dk>
 Subject: Re: [PATCH 1/1] block: Convert hd_struct in_flight from atomic to
  percpu
-Date: Thu, 29 Jun 2017 12:31:05 -0500
-Message-ID: <dc7cf367-534d-d9fc-27b1-7cfd5edcb74c@linux.vnet.ibm.com>
+Date: Thu, 29 Jun 2017 12:42:01 -0600
+Message-ID: <8f4ff428-e158-0df5-cf54-ae3cdea7ad1f@kernel.dk>
 References: <20170628211010.4C8C9124035@b01ledav002.gho.pok.ibm.com>
  <c91629be-26db-96bb-9a55-18a6861888b2@kernel.dk>
  <CACVXFVMG=gD1Dq2SRKxhfPS33mzCC_dkSpVoYskaLE7PXV7xGQ@mail.gmail.com>
  <7f0a852e-5f90-4c63-9a43-a4180557530c@kernel.dk>
- <CACVXFVPvbJ1vD5-7aBeNQ6D6bDvhhd8aQQJ++vVZwJ5AM8TMjg@mail.gmail.com>
+ <07ba10a8-6369-c1bc-dc9a-b550d9394c22@kernel.dk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <CACVXFVPvbJ1vD5-7aBeNQ6D6bDvhhd8aQQJ++vVZwJ5AM8TMjg@mail.gmail.com>
+In-Reply-To: <07ba10a8-6369-c1bc-dc9a-b550d9394c22@kernel.dk>
 Content-Language: en-US
 Sender: linux-block-owner@vger.kernel.org
-To: Ming Lei <tom.leiming@gmail.com>, Jens Axboe <axboe@kernel.dk>
-Cc: linux-block <linux-block@vger.kernel.org>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
+To: Ming Lei <tom.leiming@gmail.com>
+Cc: Brian King <brking@linux.vnet.ibm.com>, linux-block <linux-block@vger.kernel.org>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On 06/29/2017 11:25 AM, Ming Lei wrote:
-> On Thu, Jun 29, 2017 at 11:58 PM, Jens Axboe <axboe@kernel.dk> wrote:
+On 06/29/2017 10:00 AM, Jens Axboe wrote:
+> On 06/29/2017 09:58 AM, Jens Axboe wrote:
 >> On 06/29/2017 02:40 AM, Ming Lei wrote:
 >>> On Thu, Jun 29, 2017 at 5:49 AM, Jens Axboe <axboe@kernel.dk> wrote:
 >>>> On 06/28/2017 03:12 PM, Brian King wrote:
@@ -51,79 +51,12 @@ On 06/29/2017 11:25 AM, Ming Lei wrote:
 >>>        http://kernel.ubuntu.com/~ming/test/cache/
 >>
 >> How well did the per-node thing work? Doesn't seem to me like it would
-> 
-> Last time, on ARM64, I remembered that the IOPS was basically recovered,
-> but now I don't have a such machine to test. Could Brian test the attached patch
-> to see if it works on big Power machine?
-> 
-> And the idea is simple, just make the atomic counter per-node.
-
-I tried loading the patch and get an oops right away on boot. Haven't been able to 
-debug anything yet. This is on top of an older kernel, so not sure if that is
-the issue or not. I can try upstream and see if i have different results...
-
-[-1;-1fUbuntu 16.04[-1;-1f.  .  .  .Unable to handle kernel paging request for data at address 0xc00031313a333532
-Faulting instruction address: 0xc0000000002552c4
-Oops: Kernel access of bad area, sig: 11 [#1]
-SMP NR_CPUS=1024 NUMA 
-PowerNV
-Modules linked in: dm_round_robin vmx_crypto powernv_rng leds_powernv powernv_op_panel led_class rng_core dm_multipath autofs4 raid10 raid456 async_raid6_recov async_memcpy async_pq async_xor async_tx xor raid6_pq multipath dm_mirror dm_region_hash dm_log cxlflash bnx2x mdio libcrc32c nvme nvme_core lpfc cxl crc_t10dif crct10dif_generic crct10dif_common
-CPU: 9 PID: 3485 Comm: multipathd Not tainted 4.9.10-dirty #7
-task: c000000fba0d0000 task.stack: c000000fb8a1c000
-NIP: c0000000002552c4 LR: c000000000255274 CTR: 0000000000000000
-REGS: c000000fb8a1f350 TRAP: 0300   Not tainted  (4.9.10-dirty)
-MSR: 900000000280b033 <SF,HV,VEC,VSX,EE,FP,ME,IR,DR,RI,LE>  CR: 24028848  XER: 00000000
-CFAR: c000000000008a60 DAR: c00031313a333532 DSISR: 40000000 SOFTE: 1 
-GPR00: c0000000001f8980 c000000fb8a1f5d0 c000000000f24300 c000000fc4007c00 
-GPR04: 00000000024000c0 c0000000002fc0ac 000000000000025d c000000fc5d346e0 
-GPR08: 0000000fc50d6000 0000000000000000 c00031313a333532 c000000fbc836240 
-GPR12: 0000000000002200 c00000000ff02400 00003fff79cfebf0 0000000000000000 
-GPR16: 00000000c138fd03 000001003a12bf70 00003fff79ae75e0 00003fff79d269e8 
-GPR20: 0000000000000001 00003fff79cfebf0 000001003a393aa0 00003fff79d067b8 
-GPR24: 0000000000000000 c000000000b04948 000000000000a1ff c0000000002fc0ac 
-GPR28: 00000000024000c0 0000000000000007 c0000000002fc0ac c000000fc4007c00 
-NIP [c0000000002552c4] __kmalloc_track_caller+0x94/0x2f0
-LR [c000000000255274] __kmalloc_track_caller+0x44/0x2f0
-Call Trace:
-[c000000fb8a1f5d0] [c000000fb8a1f610] 0xc000000fb8a1f610 (unreliable)
-[c000000fb8a1f620] [c0000000001f8980] kstrdup+0x50/0xb0
-[c000000fb8a1f660] [c0000000002fc0ac] __kernfs_new_node+0x4c/0x140
-[c000000fb8a1f6b0] [c0000000002fd9f4] kernfs_new_node+0x34/0x80
-[c000000fb8a1f6e0] [c000000000300708] kernfs_create_link+0x38/0xf0
-[c000000fb8a1f720] [c000000000301cb8] sysfs_do_create_link_sd.isra.0+0xa8/0x160
-[c000000fb8a1f770] [c00000000054a658] device_add+0x2b8/0x740
-[c000000fb8a1f830] [c00000000054ae58] device_create_groups_vargs+0x178/0x190
-[c000000fb8a1f890] [c0000000001fcd70] bdi_register+0x80/0x1d0
-[c000000fb8a1f8c0] [c0000000001fd244] bdi_register_owner+0x44/0x80
-[c000000fb8a1f940] [c000000000453bbc] device_add_disk+0x1cc/0x500
-[c000000fb8a1f9f0] [c000000000764dec] dm_create+0x33c/0x5f0
-[c000000fb8a1fa90] [c00000000076d9ac] dev_create+0x8c/0x3e0
-[c000000fb8a1fb40] [c00000000076d1fc] ctl_ioctl+0x38c/0x580
-[c000000fb8a1fd20] [c00000000076d410] dm_ctl_ioctl+0x20/0x30
-[c000000fb8a1fd40] [c0000000002799ac] do_vfs_ioctl+0xcc/0x8f0
-[c000000fb8a1fde0] [c00000000027a230] SyS_ioctl+0x60/0xc0
-[c000000fb8a1fe30] [c00000000000bfe0] system_call+0x38/0xfc
-Instruction dump:
-39290008 7cc8482a e94d0030 e9230000 7ce95214 7d49502a e9270010 2faa0000 
-419e007c 2fa90000 419e0074 e93f0022 <7f4a482a> 39200000 88ad023a 992d023a 
----[ end trace dcdac2d3f668d033 ]---
-
-
-
-> 
 >> go far enough. And per CPU is too much. One potential improvement would
 >> be to change the part_stat_read() to just loop online CPUs, instead of
 >> all possible CPUs. When CPUs go on/offline, use that as the slow path to
 >> ensure the stats are sane. Often there's a huge difference between
 >> NR_CPUS configured and what the system has. As Brian states, RH ships
 >> with 2048, while I doubt a lot of customers actually run that...
-> 
-> One observation I saw on arm64 dual socket before is that atomic inc/dec on
-> counter stored in local numa node is much cheaper than cross-node, that is
-> why I tried the per-node counter. And wrt. in-flight atomic counter, both inc
-> and dec should happen on CPUs belonging to same numa node in case of
-> blk-mq.
-> 
 >>
 >> Outside of coming up with a more clever data structure that is fully
 >> CPU topology aware, one thing that could work is just having X cache
@@ -155,19 +88,388 @@ Instruction dump:
 >> count them. The fast path only cares about total count.
 >>
 >> Let me try that out real quick.
->>
->> --
->> Jens Axboe
->>
 > 
-> 
-> 
-> Thanks,
-> Ming Lei
-> 
+> Well, that only works for whole disk stats, of course... There's no way
+> around iterating the tags and checking for this to truly work.
 
+Totally untested proof of concept for using the tags for this. I based
+this on top of Brian's patch, so it includes his patch plus the
+_double() stuff I did which is no longer really needed.
+
+
+diff --git a/block/bio.c b/block/bio.c
+index 9cf98b29588a..ec99d9ba0f33 100644
+--- a/block/bio.c
++++ b/block/bio.c
+@@ -1737,7 +1737,7 @@ void generic_start_io_acct(int rw, unsigned long sectors,
+ 	part_round_stats(cpu, part);
+ 	part_stat_inc(cpu, part, ios[rw]);
+ 	part_stat_add(cpu, part, sectors[rw], sectors);
+-	part_inc_in_flight(part, rw);
++	part_inc_in_flight(cpu, part, rw);
+ 
+ 	part_stat_unlock();
+ }
+@@ -1751,7 +1751,7 @@ void generic_end_io_acct(int rw, struct hd_struct *part,
+ 
+ 	part_stat_add(cpu, part, ticks[rw], duration);
+ 	part_round_stats(cpu, part);
+-	part_dec_in_flight(part, rw);
++	part_dec_in_flight(cpu, part, rw);
+ 
+ 	part_stat_unlock();
+ }
+diff --git a/block/blk-core.c b/block/blk-core.c
+index af393d5a9680..6ab2efbe940b 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -2434,8 +2434,13 @@ void blk_account_io_done(struct request *req)
+ 
+ 		part_stat_inc(cpu, part, ios[rw]);
+ 		part_stat_add(cpu, part, ticks[rw], duration);
+-		part_round_stats(cpu, part);
+-		part_dec_in_flight(part, rw);
++
++		if (req->q->mq_ops)
++			part_round_stats_mq(req->q, cpu, part);
++		else {
++			part_round_stats(cpu, part);
++			part_dec_in_flight(cpu, part, rw);
++		}
+ 
+ 		hd_struct_put(part);
+ 		part_stat_unlock();
+@@ -2492,8 +2497,12 @@ void blk_account_io_start(struct request *rq, bool new_io)
+ 			part = &rq->rq_disk->part0;
+ 			hd_struct_get(part);
+ 		}
+-		part_round_stats(cpu, part);
+-		part_inc_in_flight(part, rw);
++		if (rq->q->mq_ops)
++			part_round_stats_mq(rq->q, cpu, part);
++		else {
++			part_round_stats(cpu, part);
++			part_inc_in_flight(cpu, part, rw);
++		}
+ 		rq->part = part;
+ 	}
+ 
+diff --git a/block/blk-merge.c b/block/blk-merge.c
+index 99038830fb42..3b5eb2d4b964 100644
+--- a/block/blk-merge.c
++++ b/block/blk-merge.c
+@@ -634,7 +634,7 @@ static void blk_account_io_merge(struct request *req)
+ 		part = req->part;
+ 
+ 		part_round_stats(cpu, part);
+-		part_dec_in_flight(part, rq_data_dir(req));
++		part_dec_in_flight(cpu, part, rq_data_dir(req));
+ 
+ 		hd_struct_put(part);
+ 		part_stat_unlock();
+diff --git a/block/blk-mq-tag.c b/block/blk-mq-tag.c
+index d0be72ccb091..a7b897740c47 100644
+--- a/block/blk-mq-tag.c
++++ b/block/blk-mq-tag.c
+@@ -214,7 +214,7 @@ static bool bt_iter(struct sbitmap *bitmap, unsigned int bitnr, void *data)
+ 		bitnr += tags->nr_reserved_tags;
+ 	rq = tags->rqs[bitnr];
+ 
+-	if (rq->q == hctx->queue)
++	if (rq && rq->q == hctx->queue)
+ 		iter_data->fn(hctx, rq, iter_data->data, reserved);
+ 	return true;
+ }
+diff --git a/block/blk-mq.c b/block/blk-mq.c
+index 05dfa3f270ae..cad4d2c26285 100644
+--- a/block/blk-mq.c
++++ b/block/blk-mq.c
+@@ -43,6 +43,58 @@ static LIST_HEAD(all_q_list);
+ static void blk_mq_poll_stats_start(struct request_queue *q);
+ static void blk_mq_poll_stats_fn(struct blk_stat_callback *cb);
+ 
++struct mq_inflight {
++	struct hd_struct *part;
++	unsigned int inflight;
++};
++
++static void blk_mq_check_inflight(struct blk_mq_hw_ctx *hctx,
++				  struct request *rq, void *priv,
++				  bool reserved)
++{
++	struct mq_inflight *mi = priv;
++
++	if (rq->part == mi->part &&
++	    test_bit(REQ_ATOM_STARTED, &rq->atomic_flags))
++		mi->inflight++;
++}
++
++unsigned long part_in_flight_mq(struct request_queue *q,
++				struct hd_struct *part)
++{
++	struct mq_inflight mi = { .part = part, .inflight = 0 };
++
++	blk_mq_queue_tag_busy_iter(q, blk_mq_check_inflight, &mi);
++	return mi.inflight;
++}
++
++static void __part_round_stats_mq(struct request_queue *q, int cpu,
++				  struct hd_struct *part, unsigned long now)
++{
++	unsigned long inflight;
++
++	if (now == part->stamp)
++		return;
++
++	inflight = part_in_flight_mq(q, part);
++	if (inflight) {
++		__part_stat_add(cpu, part, time_in_queue,
++				inflight * (now - part->stamp));
++		__part_stat_add(cpu, part, io_ticks, (now - part->stamp));
++	}
++	part->stamp = now;
++}
++
++void part_round_stats_mq(struct request_queue *q, int cpu,
++			 struct hd_struct *part)
++{
++	unsigned long now = jiffies;
++
++	if (part->partno)
++		__part_round_stats_mq(q, cpu, &part_to_disk(part)->part0, now);
++	__part_round_stats_mq(q, cpu, part, now);
++}
++
+ static int blk_mq_poll_stats_bkt(const struct request *rq)
+ {
+ 	int ddir, bytes, bucket;
+diff --git a/block/blk.h b/block/blk.h
+index 01ebb8185f6b..4803289467ac 100644
+--- a/block/blk.h
++++ b/block/blk.h
+@@ -264,6 +264,11 @@ static inline void req_set_nomerge(struct request_queue *q, struct request *req)
+ 		q->last_merge = NULL;
+ }
+ 
++extern void part_round_stats_mq(struct request_queue *q, int cpu,
++					struct hd_struct *part);
++extern unsigned long part_in_flight_mq(struct request_queue *q,
++					struct hd_struct *part);
++
+ /*
+  * Internal io_context interface
+  */
+diff --git a/block/genhd.c b/block/genhd.c
+index 7f520fa25d16..8ec19773ce68 100644
+--- a/block/genhd.c
++++ b/block/genhd.c
+@@ -1204,6 +1204,7 @@ static int diskstats_show(struct seq_file *seqf, void *v)
+ 	struct disk_part_iter piter;
+ 	struct hd_struct *hd;
+ 	char buf[BDEVNAME_SIZE];
++	unsigned long inflight;
+ 	int cpu;
+ 
+ 	/*
+@@ -1217,10 +1218,17 @@ static int diskstats_show(struct seq_file *seqf, void *v)
+ 	disk_part_iter_init(&piter, gp, DISK_PITER_INCL_EMPTY_PART0);
+ 	while ((hd = disk_part_iter_next(&piter))) {
+ 		cpu = part_stat_lock();
+-		part_round_stats(cpu, hd);
++		if (gp->queue->mq_ops)
++			part_round_stats_mq(gp->queue, cpu, hd);
++		else
++			part_round_stats(cpu, hd);
+ 		part_stat_unlock();
++		if (gp->queue->mq_ops)
++			inflight = part_in_flight_mq(gp->queue, hd);
++		else
++			inflight = part_in_flight(hd);
+ 		seq_printf(seqf, "%4d %7d %s %lu %lu %lu "
+-			   "%u %lu %lu %lu %u %u %u %u\n",
++			   "%u %lu %lu %lu %u %lu %u %u\n",
+ 			   MAJOR(part_devt(hd)), MINOR(part_devt(hd)),
+ 			   disk_name(gp, hd->partno, buf),
+ 			   part_stat_read(hd, ios[READ]),
+@@ -1231,7 +1239,7 @@ static int diskstats_show(struct seq_file *seqf, void *v)
+ 			   part_stat_read(hd, merges[WRITE]),
+ 			   part_stat_read(hd, sectors[WRITE]),
+ 			   jiffies_to_msecs(part_stat_read(hd, ticks[WRITE])),
+-			   part_in_flight(hd),
++			   inflight,
+ 			   jiffies_to_msecs(part_stat_read(hd, io_ticks)),
+ 			   jiffies_to_msecs(part_stat_read(hd, time_in_queue))
+ 			);
+diff --git a/block/partition-generic.c b/block/partition-generic.c
+index c5ec8246e25e..94aa92c3c010 100644
+--- a/block/partition-generic.c
++++ b/block/partition-generic.c
+@@ -19,6 +19,7 @@
+ #include <linux/blktrace_api.h>
+ 
+ #include "partitions/check.h"
++#include "blk.h"
+ 
+ #ifdef CONFIG_BLK_DEV_MD
+ extern void md_autodetect_dev(dev_t dev);
+@@ -111,16 +112,27 @@ static ssize_t part_discard_alignment_show(struct device *dev,
+ ssize_t part_stat_show(struct device *dev,
+ 		       struct device_attribute *attr, char *buf)
+ {
++	struct gendisk *disk = dev_to_disk(dev);
+ 	struct hd_struct *p = dev_to_part(dev);
++	unsigned long inflight;
+ 	int cpu;
+ 
+ 	cpu = part_stat_lock();
+-	part_round_stats(cpu, p);
++	if (disk->queue->mq_ops)
++		part_round_stats_mq(disk->queue, cpu, p);
++	else
++		part_round_stats(cpu, p);
+ 	part_stat_unlock();
++
++	if (disk->queue->mq_ops)
++		inflight = part_in_flight_mq(disk->queue, p);
++	else
++		inflight = part_in_flight(p);
++
+ 	return sprintf(buf,
+ 		"%8lu %8lu %8llu %8u "
+ 		"%8lu %8lu %8llu %8u "
+-		"%8u %8u %8u"
++		"%8lu %8u %8u"
+ 		"\n",
+ 		part_stat_read(p, ios[READ]),
+ 		part_stat_read(p, merges[READ]),
+@@ -130,7 +142,7 @@ ssize_t part_stat_show(struct device *dev,
+ 		part_stat_read(p, merges[WRITE]),
+ 		(unsigned long long)part_stat_read(p, sectors[WRITE]),
+ 		jiffies_to_msecs(part_stat_read(p, ticks[WRITE])),
+-		part_in_flight(p),
++		inflight,
+ 		jiffies_to_msecs(part_stat_read(p, io_ticks)),
+ 		jiffies_to_msecs(part_stat_read(p, time_in_queue)));
+ }
+@@ -140,8 +152,8 @@ ssize_t part_inflight_show(struct device *dev,
+ {
+ 	struct hd_struct *p = dev_to_part(dev);
+ 
+-	return sprintf(buf, "%8u %8u\n", atomic_read(&p->in_flight[0]),
+-		atomic_read(&p->in_flight[1]));
++	return sprintf(buf, "%8lu %8lu\n", part_stat_read(p, in_flight[0]),
++		part_stat_read(p, in_flight[1]));
+ }
+ 
+ #ifdef CONFIG_FAIL_MAKE_REQUEST
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 402946035308..1034abffd10d 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -517,9 +517,9 @@ static void start_io_acct(struct dm_io *io)
+ 
+ 	cpu = part_stat_lock();
+ 	part_round_stats(cpu, &dm_disk(md)->part0);
++	part_inc_in_flight(cpu, &dm_disk(md)->part0, rw);
++	atomic_inc(&md->pending[rw]);
+ 	part_stat_unlock();
+-	atomic_set(&dm_disk(md)->part0.in_flight[rw],
+-		atomic_inc_return(&md->pending[rw]));
+ 
+ 	if (unlikely(dm_stats_used(&md->stats)))
+ 		dm_stats_account_io(&md->stats, bio_data_dir(bio),
+@@ -532,7 +532,7 @@ static void end_io_acct(struct dm_io *io)
+ 	struct mapped_device *md = io->md;
+ 	struct bio *bio = io->bio;
+ 	unsigned long duration = jiffies - io->start_time;
+-	int pending;
++	int pending, cpu;
+ 	int rw = bio_data_dir(bio);
+ 
+ 	generic_end_io_acct(rw, &dm_disk(md)->part0, io->start_time);
+@@ -546,9 +546,11 @@ static void end_io_acct(struct dm_io *io)
+ 	 * After this is decremented the bio must not be touched if it is
+ 	 * a flush.
+ 	 */
++	cpu = part_stat_lock();
+ 	pending = atomic_dec_return(&md->pending[rw]);
+-	atomic_set(&dm_disk(md)->part0.in_flight[rw], pending);
++	part_dec_in_flight(cpu, &dm_disk(md)->part0, rw);
+ 	pending += atomic_read(&md->pending[rw^0x1]);
++	part_stat_unlock();
+ 
+ 	/* nudge anyone waiting on suspend queue */
+ 	if (!pending)
+diff --git a/include/linux/genhd.h b/include/linux/genhd.h
+index e619fae2f037..d050a509bdd4 100644
+--- a/include/linux/genhd.h
++++ b/include/linux/genhd.h
+@@ -87,6 +87,7 @@ struct disk_stats {
+ 	unsigned long ticks[2];
+ 	unsigned long io_ticks;
+ 	unsigned long time_in_queue;
++	unsigned long in_flight[2];
+ };
+ 
+ #define PARTITION_META_INFO_VOLNAMELTH	64
+@@ -120,7 +121,6 @@ struct hd_struct {
+ 	int make_it_fail;
+ #endif
+ 	unsigned long stamp;
+-	atomic_t in_flight[2];
+ #ifdef	CONFIG_SMP
+ 	struct disk_stats __percpu *dkstats;
+ #else
+@@ -292,6 +292,17 @@ extern struct hd_struct *disk_map_sector_rcu(struct gendisk *disk,
+ #define __part_stat_add(cpu, part, field, addnd)			\
+ 	(per_cpu_ptr((part)->dkstats, (cpu))->field += (addnd))
+ 
++#define part_stat_read_double(part, field1, field2)					\
++({									\
++	typeof((part)->dkstats->field1) res = 0;				\
++	unsigned int _cpu;						\
++	for_each_possible_cpu(_cpu) {					\
++		res += per_cpu_ptr((part)->dkstats, _cpu)->field1;	\
++		res += per_cpu_ptr((part)->dkstats, _cpu)->field2;	\
++	}								\
++	res;								\
++})
++
+ #define part_stat_read(part, field)					\
+ ({									\
+ 	typeof((part)->dkstats->field) res = 0;				\
+@@ -362,23 +373,23 @@ static inline void free_part_stats(struct hd_struct *part)
+ #define part_stat_sub(cpu, gendiskp, field, subnd)			\
+ 	part_stat_add(cpu, gendiskp, field, -subnd)
+ 
+-static inline void part_inc_in_flight(struct hd_struct *part, int rw)
++static inline void part_inc_in_flight(int cpu, struct hd_struct *part, int rw)
+ {
+-	atomic_inc(&part->in_flight[rw]);
++	part_stat_inc(cpu, part, in_flight[rw]);
+ 	if (part->partno)
+-		atomic_inc(&part_to_disk(part)->part0.in_flight[rw]);
++		part_stat_inc(cpu, &part_to_disk(part)->part0, in_flight[rw]);
+ }
+ 
+-static inline void part_dec_in_flight(struct hd_struct *part, int rw)
++static inline void part_dec_in_flight(int cpu, struct hd_struct *part, int rw)
+ {
+-	atomic_dec(&part->in_flight[rw]);
++	part_stat_dec(cpu, part, in_flight[rw]);
+ 	if (part->partno)
+-		atomic_dec(&part_to_disk(part)->part0.in_flight[rw]);
++		part_stat_dec(cpu, &part_to_disk(part)->part0, in_flight[rw]);
+ }
+ 
+-static inline int part_in_flight(struct hd_struct *part)
++static inline unsigned long part_in_flight(struct hd_struct *part)
+ {
+-	return atomic_read(&part->in_flight[0]) + atomic_read(&part->in_flight[1]);
++	return part_stat_read_double(part, in_flight[0], in_flight[1]);
+ }
+ 
+ static inline struct partition_meta_info *alloc_part_info(struct gendisk *disk)
 
 -- 
-Brian King
-Power Linux I/O
-IBM Linux Technology Center
+Jens Axboe
