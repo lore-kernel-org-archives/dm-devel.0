@@ -1,319 +1,85 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 2/2] multipath: attempt at common
-	multipath.rules
-Date: Fri, 30 Jun 2017 11:48:25 -0500
-Message-ID: <20170630164825.GS2940@octiron.msp.redhat.com>
-References: <1492035310-27525-1-git-send-email-bmarzins@redhat.com>
-	<1492035310-27525-3-git-send-email-bmarzins@redhat.com>
-	<1498599692.27347.26.camel@suse.com>
+From: Brian King <brking@linux.vnet.ibm.com>
+Subject: Re: [dm-devel] [PATCH 1/1] block: Convert hd_struct in_flight from
+ atomic to percpu
+Date: Fri, 30 Jun 2017 13:33:53 -0500
+Message-ID: <ca8ccbe7-beb6-bc0a-046c-b999004f0157@linux.vnet.ibm.com>
+References: <20170628211010.4C8C9124035@b01ledav002.gho.pok.ibm.com>
+ <c91629be-26db-96bb-9a55-18a6861888b2@kernel.dk>
+ <CACVXFVMG=gD1Dq2SRKxhfPS33mzCC_dkSpVoYskaLE7PXV7xGQ@mail.gmail.com>
+ <7f0a852e-5f90-4c63-9a43-a4180557530c@kernel.dk>
+ <07ba10a8-6369-c1bc-dc9a-b550d9394c22@kernel.dk>
+ <8f4ff428-e158-0df5-cf54-ae3cdea7ad1f@kernel.dk>
+ <CACVXFVOW21vSOM0RGa-g0UFPRm91b9U16bruqXXYd=D+u7GKFQ@mail.gmail.com>
+ <b462c167-53e9-11f8-583a-9984ef81fe0c@kernel.dk>
+ <3729482c-fcca-2af5-4d05-7e44bcd71159@linux.vnet.ibm.com>
+ <0759ff58-caa0-9e55-b5ac-6324d9ba521b@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1498599692.27347.26.camel@suse.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <0759ff58-caa0-9e55-b5ac-6324d9ba521b@kernel.dk>
+Content-Language: en-US
+Sender: linux-block-owner@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>, Ming Lei <tom.leiming@gmail.com>
+Cc: linux-block <linux-block@vger.kernel.org>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Jun 27, 2017 at 11:41:32PM +0200, Martin Wilck wrote:
-> Hello Ben,
-> =
+On 06/30/2017 09:08 AM, Jens Axboe wrote:
+>>>> Compared with the totally percpu approach, this way might help 1:M or
+>>>> N:M mapping, but won't help 1:1 map(NVMe), when hctx is mapped to
+>>>> each CPU(especially there are huge hw queues on a big system), :-(
+>>>
+>>> Not disagreeing with that, without having some mechanism to only
+>>> loop queues that have pending requests. That would be similar to the
+>>> ctx_map for sw to hw queues. But I don't think that would be worthwhile
+>>> doing, I like your pnode approach better. However, I'm still not fully
+>>> convinced that one per node is enough to get the scalability we need.
+>>>
+>>> Would be great if Brian could re-test with your updated patch, so we
+>>> know how it works for him at least.
+>>
+>> I'll try running with both approaches today and see how they compare.
+> 
+> Focus on Ming's, a variant of that is the most likely path forward,
+> imho. It'd be great to do a quick run on mine as well, just to establish
+> how it compares to mainline, though.
 
-> Thanks again for your effort on this issue.
-> I finally found time to look into this proposal more deeply, sorry that
-> it took so long.
-> =
+On my initial runs, the one from you Jens, appears to perform a bit better, although
+both are a huge improvement from what I was seeing before.
 
-> Please find my comments below.
-> =
+I ran 4k random reads using fio to nullblk in two configurations on my 20 core
+system with 4 NUMA nodes and 4-way SMT, so 80 logical CPUs. I ran both 80 threads
+to a single null_blk as well as 80 threads to 80 null_block devices, so one thread
+per null_blk. This is what I saw on this machine:
 
-> Best regards,
-> Martin
-> =
+Using the Per node atomic change from Ming Lei
+1 null_blk, 80 threads
+iops=9376.5K
 
-> On Wed, 2017-04-12 at 17:15 -0500, Benjamin Marzinski wrote:
-> > This is a proposal to try and bring the Redhat and SuSE
-> > multipath.rules
-> > closer. There are a couple of changes that I'd like some input on.
-> > =
+80 null_blk, 1 thread
+iops=9523.5K
 
-> > The big change is moving the kpartx call into the multipath
-> > rules.  Half
-> > of the current kpartx.rules file is about creating symlinks for
-> > multiple
-> > types of dm devices. The other half auto-creates kpartx devices on
-> > top
-> > of multipath devices. Since it is only creating kpartx devices on top
-> > of
-> > multipath devices, I've moved the these rules into multipath.rules,
-> > or
-> > rather, I've replaced them with the redhat rules in multipath.rules. =
 
-> =
+Using the alternate patch from Jens using the tags
+1 null_blk, 80 threads
+iops=9725.8K
 
-> I don't like the move of the rules too much, for two reasons:
-> =
+80 null_blk, 1 thread
+iops=9569.4K
 
-> 1) Even if multipath is the only use case today, I see no deeper reason
-> why kpartx would be used only for multipath devices. It could be used
-> to create partitions on top of other dm targets as well.
-> =
+Its interesting that with this change the single device, 80 threads scenario
+actually got better than the 80 null_blk scenario. I'll try on a larger machine
+as well. I've got a 32 core machine I can try this on too. Next week I can
+work with our performance team on running this on a system with a bunch of nvme
+devices so we can then test the disk partition case as well and see if there is
+any noticeable overhead.
 
-> 2) multipath.rules now consists of two completely unrelated parts, one
-> for detecting paths that are part of multipath maps, and one for
-> running kpartx on the maps themselves. That's confusing and sort of
-> against the "spirit" of udev rules, as far as I understand it.
-> Logically, if you really want to merge this into another .rules file,
-> the kpartx part would rather belong into 11-dm-mpath.rules (which deals
-> with multipath maps) than in 56-multipath.rules (which deals with
-> paths).
+Thanks,
 
-That's a fair complaint.  I'm not sure if the kpartx rules belong in
-11-dm-mpath.rules. That works a lot line 11-dm-lvm.rules. Both are just
-setting up flags for the other udev rules to use.  Perhaps the best
-answer is to move what is the kpartx part of my multipath.rules to
-kpartx.rules, and move the generic dm device labelling stuff from
-kpartx.rules to some other rules file.
- =
+Brian
 
-> > The
-> > biggest difference is the kpartx isn't run on every reload.  It works
-> > with the 11-dm-mpath.rules code to not run kpartx on multipathd
-> > generated reloads or when there aren't any working paths. It does
-> > remember if it didn't get to run kpartx when it was supposed to
-> > (because
-> > there were no valid paths or the device was suspended) and will make
-> > sure to run it on the next possible uevent.
-> =
 
-> I like this part, but i have some suggestions, see below.
-> =
-
-> > The other change is the redhat multipath rules remove the partition
-> > device nodes for devices claimed by multipath. The udev rule will
-> > only
-> > do this one time (both to keep from running partx on every event, and
-> > so
-> > that if users manually reread the partition table, we don't keep
-> > removing them when clearly they are wanted). Redhat does this because
-> > we
-> > had multiple customer issues where they were using the scsi
-> > partitions
-> > instead of the kpartx devices. Obviously, with setting the partition
-> > devices to not ready and clearing their fs_type, this isn't
-> > essential,
-> > but it has helped make customers do the right thing.
-> =
-
-> Isn't this racy? You call "partx -d" on the parent device (e.g. sda).
-> At this point in time, the kernel will already have detected the
-> partitions and "add" uevents for them are likely to follow up quickly.
-> You generate "remove" events that may race with the "add" - or am I
-> overlooking something?
-
-Yes this is racey. However, when the partition devices do come up, the
-are marked with ENV{SYSTEMD_READY}=3D"0" and ENV{ID_FS_TYPE}=3D"none". This
-means that systemd isn't going to do anything with them. So the devices
-may appear for an instant, and then get pulled, but nothing should
-auto-anything on top of them.
-
- =
-
-> I'd feel better if we'd call "partx -d" while processing the "add"
-> uevent for the _partitions_, ideally late in that process. That would
-> make (almost) sure that "add" was finished when "remove" was generated.
-> See below.
-
-My goal was to pull them before they ever appeared at all.  I should
-point out that although my way is racey insofar as the partition device
-may appear for a brief moment or not. The partition device will always
-get removed, regardless of whether the "partx -d" call comes before or
-after it appears.
-
--Ben
-
-> > =
-
-> > Cc: Martin Wilck <mwilck@suse.com>
-> > Cc: Hannes Reinecke <hare@suse.de>
-> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> > ---
-> >  kpartx/kpartx.rules       |  8 --------
-> >  multipath/multipath.rules | 27 ++++++++++++++++++++++++---
-> >  2 files changed, 24 insertions(+), 11 deletions(-)
-> > =
-
-> > diff --git a/kpartx/kpartx.rules b/kpartx/kpartx.rules
-> > index 48a4d6c..906e320 100644
-> > --- a/kpartx/kpartx.rules
-> > +++ b/kpartx/kpartx.rules
-> > @@ -34,12 +34,4 @@ ENV{ID_FS_LABEL_ENC}=3D=3D"?*",
-> > IMPORT{db}=3D"ID_FS_LABEL_ENC"
-> >  ENV{ID_FS_USAGE}=3D=3D"filesystem|other", ENV{ID_FS_LABEL_ENC}=3D=3D"?=
-*", \
-> >  	SYMLINK+=3D"disk/by-label/$env{ID_FS_LABEL_ENC}"
-> >  =
-
-> > -# Create dm tables for partitions
-> > -ENV{DM_ACTION}=3D=3D"PATH_FAILED|PATH_REINSTATED", GOTO=3D"kpartx_end"
-> > -ENV{DM_NR_VALID_PATHS}=3D=3D"0", GOTO=3D"kpartx_end"
-> > -ENV{ENV{DM_UDEV_PRIMARY_SOURCE_FLAG}!=3D"1",
-> > IMPORT{db}=3D"DM_SUBSYSTEM_UDEV_FLAG1"
-> > -ENV{DM_SUBSYSTEM_UDEV_FLAG1}=3D=3D"1", GOTO=3D"kpartx_end"
-> > -ENV{DM_STATE}!=3D"SUSPENDED", ENV{DM_UUID}=3D=3D"mpath-*", \
-> > -	RUN+=3D"/sbin/kpartx -u -p -part /dev/$name"
-> > -
-> >  LABEL=3D"kpartx_end"
-> > diff --git a/multipath/multipath.rules b/multipath/multipath.rules
-> > index 86defc0..10b9b2b 100644
-> > --- a/multipath/multipath.rules
-> > +++ b/multipath/multipath.rules
-> > @@ -1,13 +1,13 @@
-> >  # Set DM_MULTIPATH_DEVICE_PATH if the device should be handled by
-> > multipath
-> >  SUBSYSTEM!=3D"block", GOTO=3D"end_mpath"
-> >  ACTION!=3D"add|change", GOTO=3D"end_mpath"
-> > -KERNEL!=3D"sd*|dasd*", GOTO=3D"end_mpath"
-> > -
-> > +KERNEL!=3D"sd*|dasd*|rbd*|dm-*", GOTO=3D"end_mpath"
-> >  IMPORT{cmdline}=3D"nompath"
-> >  ENV{nompath}=3D=3D"?*", GOTO=3D"end_mpath"
-> >  IMPORT{cmdline}=3D"multipath"
-> >  ENV{multipath}=3D=3D"off", GOTO=3D"end_mpath"
-> >  =
-
-> > +KERNEL=3D=3D"dm-*", GOTO=3D"check_kpartx"
-> >  ENV{DEVTYPE}!=3D"partition", GOTO=3D"test_dev"
-> >  IMPORT{parent}=3D"DM_MULTIPATH_DEVICE_PATH"
-> >  ENV{DM_MULTIPATH_DEVICE_PATH}=3D=3D"1", ENV{ID_FS_TYPE}=3D"none", \
-> > @@ -21,7 +21,28 @@ TEST!=3D"$env{MPATH_SBIN_PATH}/multipath",
-> > ENV{MPATH_SBIN_PATH}=3D"/usr/sbin"
-> >  =
-
-> >  ENV{DM_MULTIPATH_DEVICE_PATH}!=3D"1", \
-> >  	PROGRAM=3D=3D"$env{MPATH_SBIN_PATH}/multipath -u %k", \
-> > -	ENV{DM_MULTIPATH_DEVICE_PATH}=3D"1", ENV{ID_FS_TYPE}=3D"none", \
-> > +	ENV{DM_MULTIPATH_DEVICE_PATH}=3D"1",
-> > ENV{ID_FS_TYPE}=3D"mpath_member", \
-> >  	ENV{SYSTEMD_READY}=3D"0"
-> >  =
-
-> > +ENV{DM_MULTIPATH_DEVICE_PATH}!=3D"1", GOTO=3D"end_mpath"
-> > +
-> > +IMPORT{db}=3D"DM_MULTIPATH_WIPE_PARTS"
-> > +ENV{DM_MULTIPATH_WIPE_PARTS}!=3D"1", ENV{DM_MULTIPATH_WIPE_PARTS}=3D"1=
-",
-> > \
-> > +	RUN+=3D"/sbin/partx -d --nr 1-1024 $env{DEVNAME}"
-> > +GOTO=3D"end_mpath"
-> =
-
-> I could imagine that this functionality, in general, might be useful
-> for members of other dm targets besides multipath as well. I suggest to
-> create a new, separate rules file for it. Moreover, I think it would be
-> better to act on the partitions rather than on disks (see above).
-> =
-
-> Here's a draft attempt at such a new rules file, please tell me what
-> you think:
-> =
-
-> # 68-del-parts.rules
-> # Delete partitions on disks which are members of dm (multipath) maps
-> =
-
-> SUBSYSTEM!=3D"block", GOTO=3D"end_del_parts"
-> ACTION!=3D"add", GOTO=3D"end_del_parts"
-> KERNEL!=3D"sd*|dasd*|rbd*", GOTO=3D"end_del_parts"
-> =
-
-> # possibly add other DM member types here
-> ENV{DM_MULTIPATH_DEVICE_PATH}=3D=3D"1", GOTO=3D"wipe_parts"
-> GOTO=3D"end_del_parts"
-> =
-
-> LABEL=3D"wipe_parts"
-> ENV{DEVTYPE}=3D=3D"partition", GOTO=3D"del_partition"
-> ENV{DEVTYPE}!=3D"disk", GOTO=3D"end_del_parts"
-> =
-
-> # Handle disks
-> # DM_WIPE_PARTS is set to "1" at first processing, "2" later
-> # Only if it's "1", partitions will be deleted
-> IMPORT{db}=3D"DM_WIPE_PARTS"
-> ENV{DM_WIPE_PARTS}=3D=3D"1", ENV{DM_WIPE_PARTS}=3D"2"
-> ENV{DM_WIPE_PARTS}!=3D"?*", ENV{DM_WIPE_PARTS}=3D"1"
-> GOTO=3D"end_del_parts"
-> =
-
-> LABEL=3D"del_partition"
-> IMPORT{parent}=3D"DM_WIPE_PARTS"
-> ENV{DM_WIPE_PARTS}=3D=3D"1", ENV{SYSTEMD_READY}=3D"0", RUN+=3D"/sbin/part=
-x -d $env{DEVNAME}", OPTIONS:=3D"nowatch"
-> =
-
-> LABEL=3D"end_del_parts"
-> # end 68-del-parts.rules
-> =
-
-> > +LABEL=3D"check_kpartx"
-> > +
-> > +IMPORT{db}=3D"DM_MULTIPATH_NEED_KPARTX"
-> As remarked above, I'd vote for removing "MULTIPATH" from this property
-> name.
-> =
-
-> > +ENV{DM_UDEV_PRIMARY_SOURCE_FLAG}!=3D"1",
-> > IMPORT{db}=3D"DM_SUBSYSTEM_UDEV_FLAG1"
-> > +ENV{DM_SUBSYSTEM_UDEV_FLAG1}=3D=3D"1", GOTO=3D"end_mpath"
-> > +ACTION!=3D"change", GOTO=3D"end_mpath"
-> > +ENV{DM_UUID}!=3D"mpath-?*", GOTO=3D"end_mpath"
-> > +ENV{DM_ACTIVATION}=3D=3D"1", ENV{DM_MULTIPATH_NEED_KPARTX}=3D"1"
-> > +ENV{DM_SUSPENDED}=3D=3D"1", GOTO=3D"end_mpath"
-> > +ENV{DM_ACTION}=3D=3D"PATH_FAILED", GOTO=3D"end_mpath"
-> =
-
-> The previous code had ENV{DM_ACTION}=3D=3D"PATH_FAILED|PATH_REINSTATED",
-> why did you drop the latter? =
-
-> Anyway, I think both aren't needed because in 11-dm-mpath.rules,
-> "DM_ACTIVATION" is set to "0" in the "reload if paths are
-> lost/recovered" case. I think the cleaner way to express the logic here
-> would be:
-> =
-
-> # don't rerun kpartx on "reload" events (see 11-dm-mpath.rules)
-> ENV{DM_ACTIVATION}=3D=3D"0", GOTO=3D"end_mpath"
-> # don't run kpartx when there are no paths
-> ENV{MPATH_DEVICE_READY}=3D=3D"0", GOTO=3D"end_mpath"
-> =
-
-> > +ENV{DM_ACTIVATION}!=3D"1", ENV{DM_MULTIPATH_NEED_KPARTX}!=3D"1",
-> > GOTO=3D"end_mpath"
-> > +RUN+=3D"/sbin/kpartx -u -p -part /dev/$name"
-> > +ENV{DM_MULTIPATH_NEED_KPARTX}=3D""
-> > +
-> >  LABEL=3D"end_mpath"
-> =
-
-> In general, it seems to me that both the addition and removal of
-> partition device nodes is not specific to multipath and, once we agree
-> on a set of rules, we should forward this to the udev and libdevmapper
-> community (reading this already? thanks!).
-> =
-
-> -- =
-
-> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-> SUSE Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
-> HRB 21284 (AG N=FCrnberg)
+-- 
+Brian King
+Power Linux I/O
+IBM Linux Technology Center
