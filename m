@@ -1,245 +1,319 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [dm-devel] [PATCH 1/1] block: Convert hd_struct in_flight from
- atomic to percpu
-Date: Fri, 30 Jun 2017 08:08:33 -0600
-Message-ID: <0759ff58-caa0-9e55-b5ac-6324d9ba521b@kernel.dk>
-References: <20170628211010.4C8C9124035@b01ledav002.gho.pok.ibm.com>
- <c91629be-26db-96bb-9a55-18a6861888b2@kernel.dk>
- <CACVXFVMG=gD1Dq2SRKxhfPS33mzCC_dkSpVoYskaLE7PXV7xGQ@mail.gmail.com>
- <7f0a852e-5f90-4c63-9a43-a4180557530c@kernel.dk>
- <07ba10a8-6369-c1bc-dc9a-b550d9394c22@kernel.dk>
- <8f4ff428-e158-0df5-cf54-ae3cdea7ad1f@kernel.dk>
- <CACVXFVOW21vSOM0RGa-g0UFPRm91b9U16bruqXXYd=D+u7GKFQ@mail.gmail.com>
- <b462c167-53e9-11f8-583a-9984ef81fe0c@kernel.dk>
- <3729482c-fcca-2af5-4d05-7e44bcd71159@linux.vnet.ibm.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH 2/2] multipath: attempt at common
+	multipath.rules
+Date: Fri, 30 Jun 2017 11:48:25 -0500
+Message-ID: <20170630164825.GS2940@octiron.msp.redhat.com>
+References: <1492035310-27525-1-git-send-email-bmarzins@redhat.com>
+	<1492035310-27525-3-git-send-email-bmarzins@redhat.com>
+	<1498599692.27347.26.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <3729482c-fcca-2af5-4d05-7e44bcd71159@linux.vnet.ibm.com>
-Content-Language: en-US
-Sender: linux-block-owner@vger.kernel.org
-To: Brian King <brking@linux.vnet.ibm.com>, Ming Lei <tom.leiming@gmail.com>
-Cc: linux-block <linux-block@vger.kernel.org>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1498599692.27347.26.camel@suse.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Martin Wilck <mwilck@suse.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 06/30/2017 07:05 AM, Brian King wrote:
-> On 06/29/2017 09:17 PM, Jens Axboe wrote:
->> On 06/29/2017 07:20 PM, Ming Lei wrote:
->>> On Fri, Jun 30, 2017 at 2:42 AM, Jens Axboe <axboe@kernel.dk> wrote:
->>>> On 06/29/2017 10:00 AM, Jens Axboe wrote:
->>>>> On 06/29/2017 09:58 AM, Jens Axboe wrote:
->>>>>> On 06/29/2017 02:40 AM, Ming Lei wrote:
->>>>>>> On Thu, Jun 29, 2017 at 5:49 AM, Jens Axboe <axboe@kernel.dk> wrote:
->>>>>>>> On 06/28/2017 03:12 PM, Brian King wrote:
->>>>>>>>> This patch converts the in_flight counter in struct hd_struct from a
->>>>>>>>> pair of atomics to a pair of percpu counters. This eliminates a couple
->>>>>>>>> of atomics from the hot path. When running this on a Power system, to
->>>>>>>>> a single null_blk device with 80 submission queues, irq mode 0, with
->>>>>>>>> 80 fio jobs, I saw IOPs go from 1.5M IO/s to 11.4 IO/s.
->>>>>>>>
->>>>>>>> This has been done before, but I've never really liked it. The reason is
->>>>>>>> that it means that reading the part stat inflight count now has to
->>>>>>>> iterate over every possible CPU. Did you use partitions in your testing?
->>>>>>>> How many CPUs were configured? When I last tested this a few years ago
->>>>>>>> on even a quad core nehalem (which is notoriously shitty for cross-node
->>>>>>>> latencies), it was a net loss.
->>>>>>>
->>>>>>> One year ago, I saw null_blk's IOPS can be decreased to 10%
->>>>>>> of non-RQF_IO_STAT on a dual socket ARM64(each CPU has
->>>>>>> 96 cores, and dual numa nodes) too, the performance can be
->>>>>>> recovered basically if per numa-node counter is introduced and
->>>>>>> used in this case, but the patch was never posted out.
->>>>>>> If anyone is interested in that, I can rebase the patch on current
->>>>>>> block tree and post out. I guess the performance issue might be
->>>>>>> related with system cache coherency implementation more or less.
->>>>>>> This issue on ARM64 can be observed with the following userspace
->>>>>>> atomic counting test too:
->>>>>>>
->>>>>>>        http://kernel.ubuntu.com/~ming/test/cache/
->>>>>>
->>>>>> How well did the per-node thing work? Doesn't seem to me like it would
->>>>>> go far enough. And per CPU is too much. One potential improvement would
->>>>>> be to change the part_stat_read() to just loop online CPUs, instead of
->>>>>> all possible CPUs. When CPUs go on/offline, use that as the slow path to
->>>>>> ensure the stats are sane. Often there's a huge difference between
->>>>>> NR_CPUS configured and what the system has. As Brian states, RH ships
->>>>>> with 2048, while I doubt a lot of customers actually run that...
->>>>>>
->>>>>> Outside of coming up with a more clever data structure that is fully
->>>>>> CPU topology aware, one thing that could work is just having X cache
->>>>>> line separated read/write inflight counters per node, where X is some
->>>>>> suitable value (like 4). That prevents us from having cross node
->>>>>> traffic, and it also keeps the cross cpu traffic fairly low. That should
->>>>>> provide a nice balance between cost of incrementing the inflight
->>>>>> counting, and the cost of looping for reading it.
->>>>>>
->>>>>> And that brings me to the next part...
->>>>>>
->>>>>>>> I do agree that we should do something about it, and it's one of those
->>>>>>>> items I've highlighted in talks about blk-mq on pending issues to fix
->>>>>>>> up. It's just not great as it currently stands, but I don't think per
->>>>>>>> CPU counters is the right way to fix it, at least not for the inflight
->>>>>>>> counter.
->>>>>>>
->>>>>>> Yeah, it won't be a issue for non-mq path, and for blk-mq path, maybe
->>>>>>> we can use some blk-mq knowledge(tagset?) to figure out the
->>>>>>> 'in_flight' counter. I thought about it before, but never got a
->>>>>>> perfect solution, and looks it is a bit hard, :-)
->>>>>>
->>>>>> The tags are already a bit spread out, so it's worth a shot. That would
->>>>>> remove the need to do anything in the inc/dec path, as the tags already
->>>>>> do that. The inlight count could be easily retrieved with
->>>>>> sbitmap_weight(). The only issue here is that we need separate read and
->>>>>> write counters, and the weight would obviously only get us the total
->>>>>> count. But we can have a slower path for that, just iterate the tags and
->>>>>> count them. The fast path only cares about total count.
->>>>>>
->>>>>> Let me try that out real quick.
->>>>>
->>>>> Well, that only works for whole disk stats, of course... There's no way
->>>>> around iterating the tags and checking for this to truly work.
->>>>
->>>> Totally untested proof of concept for using the tags for this. I based
->>>> this on top of Brian's patch, so it includes his patch plus the
->>>> _double() stuff I did which is no longer really needed.
->>>>
->>>>
->>>> diff --git a/block/bio.c b/block/bio.c
->>>> index 9cf98b29588a..ec99d9ba0f33 100644
->>>> --- a/block/bio.c
->>>> +++ b/block/bio.c
->>>> @@ -1737,7 +1737,7 @@ void generic_start_io_acct(int rw, unsigned long sectors,
->>>>         part_round_stats(cpu, part);
->>>>         part_stat_inc(cpu, part, ios[rw]);
->>>>         part_stat_add(cpu, part, sectors[rw], sectors);
->>>> -       part_inc_in_flight(part, rw);
->>>> +       part_inc_in_flight(cpu, part, rw);
->>>>
->>>>         part_stat_unlock();
->>>>  }
->>>> @@ -1751,7 +1751,7 @@ void generic_end_io_acct(int rw, struct hd_struct *part,
->>>>
->>>>         part_stat_add(cpu, part, ticks[rw], duration);
->>>>         part_round_stats(cpu, part);
->>>> -       part_dec_in_flight(part, rw);
->>>> +       part_dec_in_flight(cpu, part, rw);
->>>>
->>>>         part_stat_unlock();
->>>>  }
->>>> diff --git a/block/blk-core.c b/block/blk-core.c
->>>> index af393d5a9680..6ab2efbe940b 100644
->>>> --- a/block/blk-core.c
->>>> +++ b/block/blk-core.c
->>>> @@ -2434,8 +2434,13 @@ void blk_account_io_done(struct request *req)
->>>>
->>>>                 part_stat_inc(cpu, part, ios[rw]);
->>>>                 part_stat_add(cpu, part, ticks[rw], duration);
->>>> -               part_round_stats(cpu, part);
->>>> -               part_dec_in_flight(part, rw);
->>>> +
->>>> +               if (req->q->mq_ops)
->>>> +                       part_round_stats_mq(req->q, cpu, part);
->>>> +               else {
->>>> +                       part_round_stats(cpu, part);
->>>> +                       part_dec_in_flight(cpu, part, rw);
->>>> +               }
->>>>
->>>>                 hd_struct_put(part);
->>>>                 part_stat_unlock();
->>>> @@ -2492,8 +2497,12 @@ void blk_account_io_start(struct request *rq, bool new_io)
->>>>                         part = &rq->rq_disk->part0;
->>>>                         hd_struct_get(part);
->>>>                 }
->>>> -               part_round_stats(cpu, part);
->>>> -               part_inc_in_flight(part, rw);
->>>> +               if (rq->q->mq_ops)
->>>> +                       part_round_stats_mq(rq->q, cpu, part);
->>>> +               else {
->>>> +                       part_round_stats(cpu, part);
->>>> +                       part_inc_in_flight(cpu, part, rw);
->>>> +               }
->>>>                 rq->part = part;
->>>>         }
->>>>
->>>> diff --git a/block/blk-merge.c b/block/blk-merge.c
->>>> index 99038830fb42..3b5eb2d4b964 100644
->>>> --- a/block/blk-merge.c
->>>> +++ b/block/blk-merge.c
->>>> @@ -634,7 +634,7 @@ static void blk_account_io_merge(struct request *req)
->>>>                 part = req->part;
->>>>
->>>>                 part_round_stats(cpu, part);
->>>> -               part_dec_in_flight(part, rq_data_dir(req));
->>>> +               part_dec_in_flight(cpu, part, rq_data_dir(req));
->>>>
->>>>                 hd_struct_put(part);
->>>>                 part_stat_unlock();
->>>> diff --git a/block/blk-mq-tag.c b/block/blk-mq-tag.c
->>>> index d0be72ccb091..a7b897740c47 100644
->>>> --- a/block/blk-mq-tag.c
->>>> +++ b/block/blk-mq-tag.c
->>>> @@ -214,7 +214,7 @@ static bool bt_iter(struct sbitmap *bitmap, unsigned int bitnr, void *data)
->>>>                 bitnr += tags->nr_reserved_tags;
->>>>         rq = tags->rqs[bitnr];
->>>>
->>>> -       if (rq->q == hctx->queue)
->>>> +       if (rq && rq->q == hctx->queue)
->>>>                 iter_data->fn(hctx, rq, iter_data->data, reserved);
->>>>         return true;
->>>>  }
->>>> diff --git a/block/blk-mq.c b/block/blk-mq.c
->>>> index 05dfa3f270ae..cad4d2c26285 100644
->>>> --- a/block/blk-mq.c
->>>> +++ b/block/blk-mq.c
->>>> @@ -43,6 +43,58 @@ static LIST_HEAD(all_q_list);
->>>>  static void blk_mq_poll_stats_start(struct request_queue *q);
->>>>  static void blk_mq_poll_stats_fn(struct blk_stat_callback *cb);
->>>>
->>>> +struct mq_inflight {
->>>> +       struct hd_struct *part;
->>>> +       unsigned int inflight;
->>>> +};
->>>> +
->>>> +static void blk_mq_check_inflight(struct blk_mq_hw_ctx *hctx,
->>>> +                                 struct request *rq, void *priv,
->>>> +                                 bool reserved)
->>>> +{
->>>> +       struct mq_inflight *mi = priv;
->>>> +
->>>> +       if (rq->part == mi->part &&
->>>> +           test_bit(REQ_ATOM_STARTED, &rq->atomic_flags))
->>>> +               mi->inflight++;
->>>> +}
->>>> +
->>>> +unsigned long part_in_flight_mq(struct request_queue *q,
->>>> +                               struct hd_struct *part)
->>>> +{
->>>> +       struct mq_inflight mi = { .part = part, .inflight = 0 };
->>>> +
->>>> +       blk_mq_queue_tag_busy_iter(q, blk_mq_check_inflight, &mi);
->>>> +       return mi.inflight;
->>>> +}
->>>
->>> Compared with the totally percpu approach, this way might help 1:M or
->>> N:M mapping, but won't help 1:1 map(NVMe), when hctx is mapped to
->>> each CPU(especially there are huge hw queues on a big system), :-(
->>
->> Not disagreeing with that, without having some mechanism to only
->> loop queues that have pending requests. That would be similar to the
->> ctx_map for sw to hw queues. But I don't think that would be worthwhile
->> doing, I like your pnode approach better. However, I'm still not fully
->> convinced that one per node is enough to get the scalability we need.
->>
->> Would be great if Brian could re-test with your updated patch, so we
->> know how it works for him at least.
-> 
-> I'll try running with both approaches today and see how they compare.
+On Tue, Jun 27, 2017 at 11:41:32PM +0200, Martin Wilck wrote:
+> Hello Ben,
+> =
 
-Focus on Ming's, a variant of that is the most likely path forward,
-imho. It'd be great to do a quick run on mine as well, just to establish
-how it compares to mainline, though.
+> Thanks again for your effort on this issue.
+> I finally found time to look into this proposal more deeply, sorry that
+> it took so long.
+> =
 
+> Please find my comments below.
+> =
 
--- 
-Jens Axboe
+> Best regards,
+> Martin
+> =
+
+> On Wed, 2017-04-12 at 17:15 -0500, Benjamin Marzinski wrote:
+> > This is a proposal to try and bring the Redhat and SuSE
+> > multipath.rules
+> > closer. There are a couple of changes that I'd like some input on.
+> > =
+
+> > The big change is moving the kpartx call into the multipath
+> > rules.  Half
+> > of the current kpartx.rules file is about creating symlinks for
+> > multiple
+> > types of dm devices. The other half auto-creates kpartx devices on
+> > top
+> > of multipath devices. Since it is only creating kpartx devices on top
+> > of
+> > multipath devices, I've moved the these rules into multipath.rules,
+> > or
+> > rather, I've replaced them with the redhat rules in multipath.rules. =
+
+> =
+
+> I don't like the move of the rules too much, for two reasons:
+> =
+
+> 1) Even if multipath is the only use case today, I see no deeper reason
+> why kpartx would be used only for multipath devices. It could be used
+> to create partitions on top of other dm targets as well.
+> =
+
+> 2) multipath.rules now consists of two completely unrelated parts, one
+> for detecting paths that are part of multipath maps, and one for
+> running kpartx on the maps themselves. That's confusing and sort of
+> against the "spirit" of udev rules, as far as I understand it.
+> Logically, if you really want to merge this into another .rules file,
+> the kpartx part would rather belong into 11-dm-mpath.rules (which deals
+> with multipath maps) than in 56-multipath.rules (which deals with
+> paths).
+
+That's a fair complaint.  I'm not sure if the kpartx rules belong in
+11-dm-mpath.rules. That works a lot line 11-dm-lvm.rules. Both are just
+setting up flags for the other udev rules to use.  Perhaps the best
+answer is to move what is the kpartx part of my multipath.rules to
+kpartx.rules, and move the generic dm device labelling stuff from
+kpartx.rules to some other rules file.
+ =
+
+> > The
+> > biggest difference is the kpartx isn't run on every reload.  It works
+> > with the 11-dm-mpath.rules code to not run kpartx on multipathd
+> > generated reloads or when there aren't any working paths. It does
+> > remember if it didn't get to run kpartx when it was supposed to
+> > (because
+> > there were no valid paths or the device was suspended) and will make
+> > sure to run it on the next possible uevent.
+> =
+
+> I like this part, but i have some suggestions, see below.
+> =
+
+> > The other change is the redhat multipath rules remove the partition
+> > device nodes for devices claimed by multipath. The udev rule will
+> > only
+> > do this one time (both to keep from running partx on every event, and
+> > so
+> > that if users manually reread the partition table, we don't keep
+> > removing them when clearly they are wanted). Redhat does this because
+> > we
+> > had multiple customer issues where they were using the scsi
+> > partitions
+> > instead of the kpartx devices. Obviously, with setting the partition
+> > devices to not ready and clearing their fs_type, this isn't
+> > essential,
+> > but it has helped make customers do the right thing.
+> =
+
+> Isn't this racy? You call "partx -d" on the parent device (e.g. sda).
+> At this point in time, the kernel will already have detected the
+> partitions and "add" uevents for them are likely to follow up quickly.
+> You generate "remove" events that may race with the "add" - or am I
+> overlooking something?
+
+Yes this is racey. However, when the partition devices do come up, the
+are marked with ENV{SYSTEMD_READY}=3D"0" and ENV{ID_FS_TYPE}=3D"none". This
+means that systemd isn't going to do anything with them. So the devices
+may appear for an instant, and then get pulled, but nothing should
+auto-anything on top of them.
+
+ =
+
+> I'd feel better if we'd call "partx -d" while processing the "add"
+> uevent for the _partitions_, ideally late in that process. That would
+> make (almost) sure that "add" was finished when "remove" was generated.
+> See below.
+
+My goal was to pull them before they ever appeared at all.  I should
+point out that although my way is racey insofar as the partition device
+may appear for a brief moment or not. The partition device will always
+get removed, regardless of whether the "partx -d" call comes before or
+after it appears.
+
+-Ben
+
+> > =
+
+> > Cc: Martin Wilck <mwilck@suse.com>
+> > Cc: Hannes Reinecke <hare@suse.de>
+> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> > ---
+> >  kpartx/kpartx.rules       |  8 --------
+> >  multipath/multipath.rules | 27 ++++++++++++++++++++++++---
+> >  2 files changed, 24 insertions(+), 11 deletions(-)
+> > =
+
+> > diff --git a/kpartx/kpartx.rules b/kpartx/kpartx.rules
+> > index 48a4d6c..906e320 100644
+> > --- a/kpartx/kpartx.rules
+> > +++ b/kpartx/kpartx.rules
+> > @@ -34,12 +34,4 @@ ENV{ID_FS_LABEL_ENC}=3D=3D"?*",
+> > IMPORT{db}=3D"ID_FS_LABEL_ENC"
+> >  ENV{ID_FS_USAGE}=3D=3D"filesystem|other", ENV{ID_FS_LABEL_ENC}=3D=3D"?=
+*", \
+> >  	SYMLINK+=3D"disk/by-label/$env{ID_FS_LABEL_ENC}"
+> >  =
+
+> > -# Create dm tables for partitions
+> > -ENV{DM_ACTION}=3D=3D"PATH_FAILED|PATH_REINSTATED", GOTO=3D"kpartx_end"
+> > -ENV{DM_NR_VALID_PATHS}=3D=3D"0", GOTO=3D"kpartx_end"
+> > -ENV{ENV{DM_UDEV_PRIMARY_SOURCE_FLAG}!=3D"1",
+> > IMPORT{db}=3D"DM_SUBSYSTEM_UDEV_FLAG1"
+> > -ENV{DM_SUBSYSTEM_UDEV_FLAG1}=3D=3D"1", GOTO=3D"kpartx_end"
+> > -ENV{DM_STATE}!=3D"SUSPENDED", ENV{DM_UUID}=3D=3D"mpath-*", \
+> > -	RUN+=3D"/sbin/kpartx -u -p -part /dev/$name"
+> > -
+> >  LABEL=3D"kpartx_end"
+> > diff --git a/multipath/multipath.rules b/multipath/multipath.rules
+> > index 86defc0..10b9b2b 100644
+> > --- a/multipath/multipath.rules
+> > +++ b/multipath/multipath.rules
+> > @@ -1,13 +1,13 @@
+> >  # Set DM_MULTIPATH_DEVICE_PATH if the device should be handled by
+> > multipath
+> >  SUBSYSTEM!=3D"block", GOTO=3D"end_mpath"
+> >  ACTION!=3D"add|change", GOTO=3D"end_mpath"
+> > -KERNEL!=3D"sd*|dasd*", GOTO=3D"end_mpath"
+> > -
+> > +KERNEL!=3D"sd*|dasd*|rbd*|dm-*", GOTO=3D"end_mpath"
+> >  IMPORT{cmdline}=3D"nompath"
+> >  ENV{nompath}=3D=3D"?*", GOTO=3D"end_mpath"
+> >  IMPORT{cmdline}=3D"multipath"
+> >  ENV{multipath}=3D=3D"off", GOTO=3D"end_mpath"
+> >  =
+
+> > +KERNEL=3D=3D"dm-*", GOTO=3D"check_kpartx"
+> >  ENV{DEVTYPE}!=3D"partition", GOTO=3D"test_dev"
+> >  IMPORT{parent}=3D"DM_MULTIPATH_DEVICE_PATH"
+> >  ENV{DM_MULTIPATH_DEVICE_PATH}=3D=3D"1", ENV{ID_FS_TYPE}=3D"none", \
+> > @@ -21,7 +21,28 @@ TEST!=3D"$env{MPATH_SBIN_PATH}/multipath",
+> > ENV{MPATH_SBIN_PATH}=3D"/usr/sbin"
+> >  =
+
+> >  ENV{DM_MULTIPATH_DEVICE_PATH}!=3D"1", \
+> >  	PROGRAM=3D=3D"$env{MPATH_SBIN_PATH}/multipath -u %k", \
+> > -	ENV{DM_MULTIPATH_DEVICE_PATH}=3D"1", ENV{ID_FS_TYPE}=3D"none", \
+> > +	ENV{DM_MULTIPATH_DEVICE_PATH}=3D"1",
+> > ENV{ID_FS_TYPE}=3D"mpath_member", \
+> >  	ENV{SYSTEMD_READY}=3D"0"
+> >  =
+
+> > +ENV{DM_MULTIPATH_DEVICE_PATH}!=3D"1", GOTO=3D"end_mpath"
+> > +
+> > +IMPORT{db}=3D"DM_MULTIPATH_WIPE_PARTS"
+> > +ENV{DM_MULTIPATH_WIPE_PARTS}!=3D"1", ENV{DM_MULTIPATH_WIPE_PARTS}=3D"1=
+",
+> > \
+> > +	RUN+=3D"/sbin/partx -d --nr 1-1024 $env{DEVNAME}"
+> > +GOTO=3D"end_mpath"
+> =
+
+> I could imagine that this functionality, in general, might be useful
+> for members of other dm targets besides multipath as well. I suggest to
+> create a new, separate rules file for it. Moreover, I think it would be
+> better to act on the partitions rather than on disks (see above).
+> =
+
+> Here's a draft attempt at such a new rules file, please tell me what
+> you think:
+> =
+
+> # 68-del-parts.rules
+> # Delete partitions on disks which are members of dm (multipath) maps
+> =
+
+> SUBSYSTEM!=3D"block", GOTO=3D"end_del_parts"
+> ACTION!=3D"add", GOTO=3D"end_del_parts"
+> KERNEL!=3D"sd*|dasd*|rbd*", GOTO=3D"end_del_parts"
+> =
+
+> # possibly add other DM member types here
+> ENV{DM_MULTIPATH_DEVICE_PATH}=3D=3D"1", GOTO=3D"wipe_parts"
+> GOTO=3D"end_del_parts"
+> =
+
+> LABEL=3D"wipe_parts"
+> ENV{DEVTYPE}=3D=3D"partition", GOTO=3D"del_partition"
+> ENV{DEVTYPE}!=3D"disk", GOTO=3D"end_del_parts"
+> =
+
+> # Handle disks
+> # DM_WIPE_PARTS is set to "1" at first processing, "2" later
+> # Only if it's "1", partitions will be deleted
+> IMPORT{db}=3D"DM_WIPE_PARTS"
+> ENV{DM_WIPE_PARTS}=3D=3D"1", ENV{DM_WIPE_PARTS}=3D"2"
+> ENV{DM_WIPE_PARTS}!=3D"?*", ENV{DM_WIPE_PARTS}=3D"1"
+> GOTO=3D"end_del_parts"
+> =
+
+> LABEL=3D"del_partition"
+> IMPORT{parent}=3D"DM_WIPE_PARTS"
+> ENV{DM_WIPE_PARTS}=3D=3D"1", ENV{SYSTEMD_READY}=3D"0", RUN+=3D"/sbin/part=
+x -d $env{DEVNAME}", OPTIONS:=3D"nowatch"
+> =
+
+> LABEL=3D"end_del_parts"
+> # end 68-del-parts.rules
+> =
+
+> > +LABEL=3D"check_kpartx"
+> > +
+> > +IMPORT{db}=3D"DM_MULTIPATH_NEED_KPARTX"
+> As remarked above, I'd vote for removing "MULTIPATH" from this property
+> name.
+> =
+
+> > +ENV{DM_UDEV_PRIMARY_SOURCE_FLAG}!=3D"1",
+> > IMPORT{db}=3D"DM_SUBSYSTEM_UDEV_FLAG1"
+> > +ENV{DM_SUBSYSTEM_UDEV_FLAG1}=3D=3D"1", GOTO=3D"end_mpath"
+> > +ACTION!=3D"change", GOTO=3D"end_mpath"
+> > +ENV{DM_UUID}!=3D"mpath-?*", GOTO=3D"end_mpath"
+> > +ENV{DM_ACTIVATION}=3D=3D"1", ENV{DM_MULTIPATH_NEED_KPARTX}=3D"1"
+> > +ENV{DM_SUSPENDED}=3D=3D"1", GOTO=3D"end_mpath"
+> > +ENV{DM_ACTION}=3D=3D"PATH_FAILED", GOTO=3D"end_mpath"
+> =
+
+> The previous code had ENV{DM_ACTION}=3D=3D"PATH_FAILED|PATH_REINSTATED",
+> why did you drop the latter? =
+
+> Anyway, I think both aren't needed because in 11-dm-mpath.rules,
+> "DM_ACTIVATION" is set to "0" in the "reload if paths are
+> lost/recovered" case. I think the cleaner way to express the logic here
+> would be:
+> =
+
+> # don't rerun kpartx on "reload" events (see 11-dm-mpath.rules)
+> ENV{DM_ACTIVATION}=3D=3D"0", GOTO=3D"end_mpath"
+> # don't run kpartx when there are no paths
+> ENV{MPATH_DEVICE_READY}=3D=3D"0", GOTO=3D"end_mpath"
+> =
+
+> > +ENV{DM_ACTIVATION}!=3D"1", ENV{DM_MULTIPATH_NEED_KPARTX}!=3D"1",
+> > GOTO=3D"end_mpath"
+> > +RUN+=3D"/sbin/kpartx -u -p -part /dev/$name"
+> > +ENV{DM_MULTIPATH_NEED_KPARTX}=3D""
+> > +
+> >  LABEL=3D"end_mpath"
+> =
+
+> In general, it seems to me that both the addition and removal of
+> partition device nodes is not specific to multipath and, once we agree
+> on a set of rules, we should forward this to the udev and libdevmapper
+> community (reading this already? thanks!).
+> =
+
+> -- =
+
+> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+> SUSE Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
+> HRB 21284 (AG N=FCrnberg)
