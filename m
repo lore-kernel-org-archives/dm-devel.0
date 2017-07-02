@@ -1,293 +1,141 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [dm-devel] [PATCH 1/1] block: Convert hd_struct in_flight from
- atomic to percpu
-Date: Sat, 1 Jul 2017 10:43:07 -0600
-Message-ID: <5cfc618b-eb03-fe1b-6429-189c0b3d3fc1@kernel.dk>
-References: <20170628211010.4C8C9124035@b01ledav002.gho.pok.ibm.com>
- <c91629be-26db-96bb-9a55-18a6861888b2@kernel.dk>
- <CACVXFVMG=gD1Dq2SRKxhfPS33mzCC_dkSpVoYskaLE7PXV7xGQ@mail.gmail.com>
- <7f0a852e-5f90-4c63-9a43-a4180557530c@kernel.dk>
- <07ba10a8-6369-c1bc-dc9a-b550d9394c22@kernel.dk>
- <8f4ff428-e158-0df5-cf54-ae3cdea7ad1f@kernel.dk>
- <CACVXFVOW21vSOM0RGa-g0UFPRm91b9U16bruqXXYd=D+u7GKFQ@mail.gmail.com>
- <b462c167-53e9-11f8-583a-9984ef81fe0c@kernel.dk>
- <3729482c-fcca-2af5-4d05-7e44bcd71159@linux.vnet.ibm.com>
- <0759ff58-caa0-9e55-b5ac-6324d9ba521b@kernel.dk>
- <cf23ad83-5938-8256-5b32-f40c0d261508@kernel.dk>
- <0aedc83b-17a0-14bd-bacd-e11e1b7c263c@kernel.dk>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <0aedc83b-17a0-14bd-bacd-e11e1b7c263c@kernel.dk>
-Content-Language: en-US
-Sender: linux-block-owner@vger.kernel.org
-To: Brian King <brking@linux.vnet.ibm.com>, Ming Lei <tom.leiming@gmail.com>
-Cc: linux-block <linux-block@vger.kernel.org>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+From: Gilad Ben-Yossef <gilad@benyossef.com>
+Subject: [PATCH v3 00/28] simplify crypto wait for async op
+Date: Sun,  2 Jul 2017 17:41:42 +0300
+Message-ID: <1499006535-19760-1-git-send-email-gilad@benyossef.com>
+Return-path: <linux-doc-owner@vger.kernel.org>
+Sender: linux-doc-owner@vger.kernel.org
+To: Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, Jonathan Corbet <corbet@lwn.net>, David Howells <dhowells@redhat.com>, Tom Lendacky <thomas.lendacky@amd.com>, Gary Hook <gary.hook@amd.com>, Boris Brezillon <boris.brezillon@free-electrons.com>, Arnaud Ebalard <arno@natisbad.org>, Matthias Brugger <matthias.bgg@gmail.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, Steve French <sfrench@samba.org>, "Theodore Y. Ts'o" <tytso@mit.edu>, Jaegeuk Kim <jaegeuk@kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Dmitry Kasatkin <dmitry.kasatkin@gmail.com>, James Morris <james.l.morris@oracle.com>, "Serge E. Hallyn" <serge@hallyn.com>, linux-crypto@v
+Cc: Ofir Drang <ofir.drang@arm.com>
 List-Id: dm-devel.ids
 
-On 06/30/2017 10:59 PM, Jens Axboe wrote:
-> On 06/30/2017 10:17 PM, Jens Axboe wrote:
->> On 06/30/2017 08:08 AM, Jens Axboe wrote:
->>> On 06/30/2017 07:05 AM, Brian King wrote:
->>>> On 06/29/2017 09:17 PM, Jens Axboe wrote:
->>>>> On 06/29/2017 07:20 PM, Ming Lei wrote:
->>>>>> On Fri, Jun 30, 2017 at 2:42 AM, Jens Axboe <axboe@kernel.dk> wrote:
->>>>>>> On 06/29/2017 10:00 AM, Jens Axboe wrote:
->>>>>>>> On 06/29/2017 09:58 AM, Jens Axboe wrote:
->>>>>>>>> On 06/29/2017 02:40 AM, Ming Lei wrote:
->>>>>>>>>> On Thu, Jun 29, 2017 at 5:49 AM, Jens Axboe <axboe@kernel.dk> wrote:
->>>>>>>>>>> On 06/28/2017 03:12 PM, Brian King wrote:
->>>>>>>>>>>> This patch converts the in_flight counter in struct hd_struct from a
->>>>>>>>>>>> pair of atomics to a pair of percpu counters. This eliminates a couple
->>>>>>>>>>>> of atomics from the hot path. When running this on a Power system, to
->>>>>>>>>>>> a single null_blk device with 80 submission queues, irq mode 0, with
->>>>>>>>>>>> 80 fio jobs, I saw IOPs go from 1.5M IO/s to 11.4 IO/s.
->>>>>>>>>>>
->>>>>>>>>>> This has been done before, but I've never really liked it. The reason is
->>>>>>>>>>> that it means that reading the part stat inflight count now has to
->>>>>>>>>>> iterate over every possible CPU. Did you use partitions in your testing?
->>>>>>>>>>> How many CPUs were configured? When I last tested this a few years ago
->>>>>>>>>>> on even a quad core nehalem (which is notoriously shitty for cross-node
->>>>>>>>>>> latencies), it was a net loss.
->>>>>>>>>>
->>>>>>>>>> One year ago, I saw null_blk's IOPS can be decreased to 10%
->>>>>>>>>> of non-RQF_IO_STAT on a dual socket ARM64(each CPU has
->>>>>>>>>> 96 cores, and dual numa nodes) too, the performance can be
->>>>>>>>>> recovered basically if per numa-node counter is introduced and
->>>>>>>>>> used in this case, but the patch was never posted out.
->>>>>>>>>> If anyone is interested in that, I can rebase the patch on current
->>>>>>>>>> block tree and post out. I guess the performance issue might be
->>>>>>>>>> related with system cache coherency implementation more or less.
->>>>>>>>>> This issue on ARM64 can be observed with the following userspace
->>>>>>>>>> atomic counting test too:
->>>>>>>>>>
->>>>>>>>>>        http://kernel.ubuntu.com/~ming/test/cache/
->>>>>>>>>
->>>>>>>>> How well did the per-node thing work? Doesn't seem to me like it would
->>>>>>>>> go far enough. And per CPU is too much. One potential improvement would
->>>>>>>>> be to change the part_stat_read() to just loop online CPUs, instead of
->>>>>>>>> all possible CPUs. When CPUs go on/offline, use that as the slow path to
->>>>>>>>> ensure the stats are sane. Often there's a huge difference between
->>>>>>>>> NR_CPUS configured and what the system has. As Brian states, RH ships
->>>>>>>>> with 2048, while I doubt a lot of customers actually run that...
->>>>>>>>>
->>>>>>>>> Outside of coming up with a more clever data structure that is fully
->>>>>>>>> CPU topology aware, one thing that could work is just having X cache
->>>>>>>>> line separated read/write inflight counters per node, where X is some
->>>>>>>>> suitable value (like 4). That prevents us from having cross node
->>>>>>>>> traffic, and it also keeps the cross cpu traffic fairly low. That should
->>>>>>>>> provide a nice balance between cost of incrementing the inflight
->>>>>>>>> counting, and the cost of looping for reading it.
->>>>>>>>>
->>>>>>>>> And that brings me to the next part...
->>>>>>>>>
->>>>>>>>>>> I do agree that we should do something about it, and it's one of those
->>>>>>>>>>> items I've highlighted in talks about blk-mq on pending issues to fix
->>>>>>>>>>> up. It's just not great as it currently stands, but I don't think per
->>>>>>>>>>> CPU counters is the right way to fix it, at least not for the inflight
->>>>>>>>>>> counter.
->>>>>>>>>>
->>>>>>>>>> Yeah, it won't be a issue for non-mq path, and for blk-mq path, maybe
->>>>>>>>>> we can use some blk-mq knowledge(tagset?) to figure out the
->>>>>>>>>> 'in_flight' counter. I thought about it before, but never got a
->>>>>>>>>> perfect solution, and looks it is a bit hard, :-)
->>>>>>>>>
->>>>>>>>> The tags are already a bit spread out, so it's worth a shot. That would
->>>>>>>>> remove the need to do anything in the inc/dec path, as the tags already
->>>>>>>>> do that. The inlight count could be easily retrieved with
->>>>>>>>> sbitmap_weight(). The only issue here is that we need separate read and
->>>>>>>>> write counters, and the weight would obviously only get us the total
->>>>>>>>> count. But we can have a slower path for that, just iterate the tags and
->>>>>>>>> count them. The fast path only cares about total count.
->>>>>>>>>
->>>>>>>>> Let me try that out real quick.
->>>>>>>>
->>>>>>>> Well, that only works for whole disk stats, of course... There's no way
->>>>>>>> around iterating the tags and checking for this to truly work.
->>>>>>>
->>>>>>> Totally untested proof of concept for using the tags for this. I based
->>>>>>> this on top of Brian's patch, so it includes his patch plus the
->>>>>>> _double() stuff I did which is no longer really needed.
->>>>>>>
->>>>>>>
->>>>>>> diff --git a/block/bio.c b/block/bio.c
->>>>>>> index 9cf98b29588a..ec99d9ba0f33 100644
->>>>>>> --- a/block/bio.c
->>>>>>> +++ b/block/bio.c
->>>>>>> @@ -1737,7 +1737,7 @@ void generic_start_io_acct(int rw, unsigned long sectors,
->>>>>>>         part_round_stats(cpu, part);
->>>>>>>         part_stat_inc(cpu, part, ios[rw]);
->>>>>>>         part_stat_add(cpu, part, sectors[rw], sectors);
->>>>>>> -       part_inc_in_flight(part, rw);
->>>>>>> +       part_inc_in_flight(cpu, part, rw);
->>>>>>>
->>>>>>>         part_stat_unlock();
->>>>>>>  }
->>>>>>> @@ -1751,7 +1751,7 @@ void generic_end_io_acct(int rw, struct hd_struct *part,
->>>>>>>
->>>>>>>         part_stat_add(cpu, part, ticks[rw], duration);
->>>>>>>         part_round_stats(cpu, part);
->>>>>>> -       part_dec_in_flight(part, rw);
->>>>>>> +       part_dec_in_flight(cpu, part, rw);
->>>>>>>
->>>>>>>         part_stat_unlock();
->>>>>>>  }
->>>>>>> diff --git a/block/blk-core.c b/block/blk-core.c
->>>>>>> index af393d5a9680..6ab2efbe940b 100644
->>>>>>> --- a/block/blk-core.c
->>>>>>> +++ b/block/blk-core.c
->>>>>>> @@ -2434,8 +2434,13 @@ void blk_account_io_done(struct request *req)
->>>>>>>
->>>>>>>                 part_stat_inc(cpu, part, ios[rw]);
->>>>>>>                 part_stat_add(cpu, part, ticks[rw], duration);
->>>>>>> -               part_round_stats(cpu, part);
->>>>>>> -               part_dec_in_flight(part, rw);
->>>>>>> +
->>>>>>> +               if (req->q->mq_ops)
->>>>>>> +                       part_round_stats_mq(req->q, cpu, part);
->>>>>>> +               else {
->>>>>>> +                       part_round_stats(cpu, part);
->>>>>>> +                       part_dec_in_flight(cpu, part, rw);
->>>>>>> +               }
->>>>>>>
->>>>>>>                 hd_struct_put(part);
->>>>>>>                 part_stat_unlock();
->>>>>>> @@ -2492,8 +2497,12 @@ void blk_account_io_start(struct request *rq, bool new_io)
->>>>>>>                         part = &rq->rq_disk->part0;
->>>>>>>                         hd_struct_get(part);
->>>>>>>                 }
->>>>>>> -               part_round_stats(cpu, part);
->>>>>>> -               part_inc_in_flight(part, rw);
->>>>>>> +               if (rq->q->mq_ops)
->>>>>>> +                       part_round_stats_mq(rq->q, cpu, part);
->>>>>>> +               else {
->>>>>>> +                       part_round_stats(cpu, part);
->>>>>>> +                       part_inc_in_flight(cpu, part, rw);
->>>>>>> +               }
->>>>>>>                 rq->part = part;
->>>>>>>         }
->>>>>>>
->>>>>>> diff --git a/block/blk-merge.c b/block/blk-merge.c
->>>>>>> index 99038830fb42..3b5eb2d4b964 100644
->>>>>>> --- a/block/blk-merge.c
->>>>>>> +++ b/block/blk-merge.c
->>>>>>> @@ -634,7 +634,7 @@ static void blk_account_io_merge(struct request *req)
->>>>>>>                 part = req->part;
->>>>>>>
->>>>>>>                 part_round_stats(cpu, part);
->>>>>>> -               part_dec_in_flight(part, rq_data_dir(req));
->>>>>>> +               part_dec_in_flight(cpu, part, rq_data_dir(req));
->>>>>>>
->>>>>>>                 hd_struct_put(part);
->>>>>>>                 part_stat_unlock();
->>>>>>> diff --git a/block/blk-mq-tag.c b/block/blk-mq-tag.c
->>>>>>> index d0be72ccb091..a7b897740c47 100644
->>>>>>> --- a/block/blk-mq-tag.c
->>>>>>> +++ b/block/blk-mq-tag.c
->>>>>>> @@ -214,7 +214,7 @@ static bool bt_iter(struct sbitmap *bitmap, unsigned int bitnr, void *data)
->>>>>>>                 bitnr += tags->nr_reserved_tags;
->>>>>>>         rq = tags->rqs[bitnr];
->>>>>>>
->>>>>>> -       if (rq->q == hctx->queue)
->>>>>>> +       if (rq && rq->q == hctx->queue)
->>>>>>>                 iter_data->fn(hctx, rq, iter_data->data, reserved);
->>>>>>>         return true;
->>>>>>>  }
->>>>>>> diff --git a/block/blk-mq.c b/block/blk-mq.c
->>>>>>> index 05dfa3f270ae..cad4d2c26285 100644
->>>>>>> --- a/block/blk-mq.c
->>>>>>> +++ b/block/blk-mq.c
->>>>>>> @@ -43,6 +43,58 @@ static LIST_HEAD(all_q_list);
->>>>>>>  static void blk_mq_poll_stats_start(struct request_queue *q);
->>>>>>>  static void blk_mq_poll_stats_fn(struct blk_stat_callback *cb);
->>>>>>>
->>>>>>> +struct mq_inflight {
->>>>>>> +       struct hd_struct *part;
->>>>>>> +       unsigned int inflight;
->>>>>>> +};
->>>>>>> +
->>>>>>> +static void blk_mq_check_inflight(struct blk_mq_hw_ctx *hctx,
->>>>>>> +                                 struct request *rq, void *priv,
->>>>>>> +                                 bool reserved)
->>>>>>> +{
->>>>>>> +       struct mq_inflight *mi = priv;
->>>>>>> +
->>>>>>> +       if (rq->part == mi->part &&
->>>>>>> +           test_bit(REQ_ATOM_STARTED, &rq->atomic_flags))
->>>>>>> +               mi->inflight++;
->>>>>>> +}
->>>>>>> +
->>>>>>> +unsigned long part_in_flight_mq(struct request_queue *q,
->>>>>>> +                               struct hd_struct *part)
->>>>>>> +{
->>>>>>> +       struct mq_inflight mi = { .part = part, .inflight = 0 };
->>>>>>> +
->>>>>>> +       blk_mq_queue_tag_busy_iter(q, blk_mq_check_inflight, &mi);
->>>>>>> +       return mi.inflight;
->>>>>>> +}
->>>>>>
->>>>>> Compared with the totally percpu approach, this way might help 1:M or
->>>>>> N:M mapping, but won't help 1:1 map(NVMe), when hctx is mapped to
->>>>>> each CPU(especially there are huge hw queues on a big system), :-(
->>>>>
->>>>> Not disagreeing with that, without having some mechanism to only
->>>>> loop queues that have pending requests. That would be similar to the
->>>>> ctx_map for sw to hw queues. But I don't think that would be worthwhile
->>>>> doing, I like your pnode approach better. However, I'm still not fully
->>>>> convinced that one per node is enough to get the scalability we need.
->>>>>
->>>>> Would be great if Brian could re-test with your updated patch, so we
->>>>> know how it works for him at least.
->>>>
->>>> I'll try running with both approaches today and see how they compare.
->>>
->>> Focus on Ming's, a variant of that is the most likely path forward,
->>> imho. It'd be great to do a quick run on mine as well, just to establish
->>> how it compares to mainline, though.
->>
->> Here's a cleaned up series:
->>
->> http://git.kernel.dk/cgit/linux-block/log/?h=mq-inflight
->>
->> (it's against mainline for now, I will update it to be against
->> for-4.13/block in a rebase).
->>
->> One optimization on top of this I want to do is to only iterate once,
->> even for a partition - pass in both parts, and increment two different
->> counts. If we collapse the two part time stamps, then that's doable, and
->> it means we only have to iterate once.
->>
->> Essentially this series makes the inc/dec a noop, since we don't have to
->> do anything. The reading is basically no worse than a cpu online
->> iteration, since we never have more queues than online CPUs. That's an
->> improvement over per-cpu for-each-possible loops. For a lot of cases,
->> it's much less, since we have fewer queues than CPUs. I'll need an hour
->> or two to hone this a bit more, but then it would be great if you can
->> retest. I'll send out an email when that's done, it'll be some time over
->> this weekend.
-> 
-> Did the double-read with one iteration change, it was pretty trivial:
-> 
-> http://git.kernel.dk/cgit/linux-block/commit/?h=mq-inflight&id=b841804f826df072f706ae86d0eb533342f0297a
+Many users of kernel async. crypto services have a pattern of
+starting an async. crypto op and than using a completion
+to wait for it to end.
 
-Now:
+This patch set simplifies this common use case in two ways:
 
-http://git.kernel.dk/cgit/linux-block/commit/?h=mq-inflight&id=87f73ef2b9edb6834001df8f7cb48c7a116e8cd3
+First, by giving the case where a request was queued to the
+backlog a separate return code (-EIOCBQUEUED) of its own
+rather than sharing the -EBUSY return code with the fatal
+error of a busy provider when backlog is not enabled.
 
-> And updated the branch here:
-> 
-> http://git.kernel.dk/cgit/linux-block/log/?h=mq-inflight
-> 
-> to include that, and be based on top of for-4.13/block. If you prefer just
-> pulling a branch, pull:
-> 
-> git://git.kernel.dk/linux-block mq-inflight
+Next, this change is than built on to create a generic way
+to wait for a async. crypto operation to complete.
 
-I've tested it, and made a few adjustments and fixes. The branches are
-the same, just rebased. Works fine for me, even with partitions now.
+The end result is that after replacing all the call sites
+I could find, the code is smaller by ~340 lines, a branch
+is saved in some cases in run-time and the code is more
+straightforward to follow.
 
-Let me know how it works for you.
+Please note that patches 1-13 should be squashed together
+when applied in order to function correctly. They are
+only separated out to ease review.
+
+The patch set was boot tested on x86_64 and arm64 which
+at the very least tests the crypto users via testmgr and
+tcrypt but I do note that I do not have access to some
+of the HW whose drivers are modified nor do I claim I was
+able to test all of the corner cases.
+
+Last but not least, I do apologize for the size of this
+patch set and number of recipients, but I did have to
+touch every crypto async API user in the kernel. May the
+340 deleted lines serve as penance for my sin :-)
+
+Changes from v2:
+- Patch title changed from "introduce crypto wait for
+  async op" to better reflect the current state.
+- Rebase on top of latest linux-next.
+- Add a new return code of -EIOCBQUEUED for backlog
+  queueing, as suggested by Herbert Xu.
+- Transform more users to the new API.
+- Update the drbg change to account for new init as
+  indicated by Stephan Muller.
+
+Changes from v1:
+- Address review comments from Eric Biggers.
+- Separated out bug fixes of existing code and rebase
+  on top of that patch set.
+- Rename 'ecr' to 'wait' in fscrypto code.
+- Split patch introducing the new API from the change
+  moving over the algif code which it originated from
+  to the new API.
+- Inline crypto_wait_req().
+- Some code indentation fixes.
+
+Gilad Ben-Yossef (28):
+  crypto: change backlog return code to -EIOCBQUEUED
+  crypto: atmel: use -EIOCBQUEUED for backlog indication
+  crypto: ccm: use -EIOCBQUEUED for backlog indication
+  crypto: marvell/cesa: use -EIOCBQUEUED for backlog indication
+  crypto: mediatek: use -EIOCBQUEUED for backlog indication
+  crypto: omap: use -EIOCBQUEUED for backlog indication
+  crypto: qce: use -EIOCBQUEUED for backlog indication
+  crypto: talitos: use -EIOCBQUEUED for backlog indication
+  dm: verity: use -EIOCBQUEUED for backlog indication
+  fscrypt: use -EIOCBQUEUED for backlog indication
+  cifs: use -EIOCBQUEUED for backlog indication
+  ima: use -EIOCBQUEUED for backlog indication
+  crypto: adapt api sample to -EIOCBQUEUED as backlog indication
+  crypto: introduce crypto wait for async op
+  crypto: move algif to generic async completion
+  crypto: move pub key to generic async completion
+  crypto: move drbg to generic async completion
+  crypto: move gcm to generic async completion
+  crypto: move testmgr to generic async completion
+  dm: move dm-verity to generic async completion
+  fscrypt: move to generic async completion
+  cifs: move to generic async completion
+  ima: move to generic async completion
+  crypto: tcrypt: move to generic async completion
+  crypto: talitos: move to generic async completion
+  crypto: qce: move to generic async completion
+  crypto: mediatek: move to generic async completion
+  crypto: adapt api sample to use async. op wait
+
+ Documentation/crypto/api-samples.rst |  52 ++-------
+ crypto/af_alg.c                      |  27 -----
+ crypto/ahash.c                       |  12 +--
+ crypto/algapi.c                      |   6 +-
+ crypto/algif_aead.c                  |  14 +--
+ crypto/algif_hash.c                  |  29 +++--
+ crypto/algif_skcipher.c              |  15 ++-
+ crypto/api.c                         |  13 +++
+ crypto/asymmetric_keys/public_key.c  |  28 +----
+ crypto/chacha20poly1305.c            |   2 +-
+ crypto/cryptd.c                      |   4 +-
+ crypto/cts.c                         |   6 +-
+ crypto/drbg.c                        |  36 ++-----
+ crypto/gcm.c                         |  32 ++----
+ crypto/lrw.c                         |   8 +-
+ crypto/rsa-pkcs1pad.c                |  16 +--
+ crypto/tcrypt.c                      |  84 +++++----------
+ crypto/testmgr.c                     | 204 ++++++++++++-----------------------
+ crypto/xts.c                         |   8 +-
+ drivers/crypto/atmel-sha.c           |   2 +-
+ drivers/crypto/ccp/ccp-crypto-main.c |  10 +-
+ drivers/crypto/ccp/ccp-dev.c         |   8 +-
+ drivers/crypto/ccp/ccp-dmaengine.c   |   2 +-
+ drivers/crypto/marvell/cesa.c        |   2 +-
+ drivers/crypto/marvell/cesa.h        |   2 +-
+ drivers/crypto/mediatek/mtk-aes.c    |  31 +-----
+ drivers/crypto/mediatek/mtk-sha.c    |   2 +-
+ drivers/crypto/omap-sham.c           |   2 +-
+ drivers/crypto/qce/sha.c             |  30 +-----
+ drivers/crypto/talitos.c             |  39 +------
+ drivers/md/dm-verity-target.c        |  81 ++++----------
+ drivers/md/dm-verity.h               |   5 -
+ fs/cifs/smb2ops.c                    |  30 +-----
+ fs/crypto/crypto.c                   |  29 +----
+ fs/crypto/fname.c                    |  36 ++-----
+ fs/crypto/fscrypt_private.h          |  10 --
+ fs/crypto/keyinfo.c                  |  21 +---
+ include/crypto/drbg.h                |   3 +-
+ include/crypto/if_alg.h              |  14 ---
+ include/linux/crypto.h               |  40 +++++++
+ security/integrity/ima/ima_crypto.c  |  56 +++-------
+ 41 files changed, 305 insertions(+), 746 deletions(-)
 
 -- 
-Jens Axboe
+2.1.4
+
