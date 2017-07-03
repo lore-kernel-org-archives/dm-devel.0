@@ -1,12 +1,16 @@
-From: Renesanso <renesanso@yandex.ru>
-Subject: dmitry.kasatkin@huawei.com
-Date: Mon, 3 Jul 2017 07:44:07 +0300
-Message-ID: <bbf2a91d-2eac-5b10-903d-50939acfb57a@yandex.ru>
+From: Herbert Xu <herbert@gondor.apana.org.au>
+Subject: Re: [PATCH v3 01/28] crypto: change backlog return code
+ to -EIOCBQUEUED
+Date: Mon, 3 Jul 2017 20:35:15 +0800
+Message-ID: <20170703123515.GC30067@gondor.apana.org.au>
+References: <1499006535-19760-1-git-send-email-gilad@benyossef.com>
+	<1499006535-19760-2-git-send-email-gilad@benyossef.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: ru-RU
+Content-Disposition: inline
+In-Reply-To: <1499006535-19760-2-git-send-email-gilad@benyossef.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,26 +20,40 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: mpatocka@redhat.com, gmazyland@gmail.com, dm-devel@redhat.com
+To: Gilad Ben-Yossef <gilad@benyossef.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, linux-doc@vger.kernel.org, Gary Hook <gary.hook@amd.com>, David Howells <dhowells@redhat.com>, dm-devel@redhat.com, keyrings@vger.kernel.org, linux-ima-devel@lists.sourceforge.net, Alasdair Kergon <agk@redhat.com>, Boris Brezillon <boris.brezillon@free-electrons.com>, Jonathan Corbet <corbet@lwn.net>, Mimi Zohar <zohar@linux.vnet.ibm.com>, "Serge E. Hallyn" <serge@hallyn.com>, Tom Lendacky <thomas.lendacky@amd.com>, linux-cifs@vger.kernel.org, linux-ima-user@lists.sourceforge.net, Arnaud Ebalard <arno@natisbad.org>, linux-raid@vger.kernel.org, linux-fscrypt@vger.kernel.org, linux-mediatek@lists.infradead.org, James Morris <james.l.morris@oracle.com>, Matthias Brugger <matthias.bgg@gmail.com>, Jaegeuk Kim <jaegeuk@kernel.org>, linux-arm-kernel@lists.infradead.org, Ofir Drang <ofir.drang@arm.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Dm
 List-Id: dm-devel.ids
 
-Hi for all.
+On Sun, Jul 02, 2017 at 05:41:43PM +0300, Gilad Ben-Yossef wrote:
+> The crypto API was using the -EBUSY return value to indicate
+> both a hard failure to submit a crypto operation into a
+> transformation provider when the latter was busy and the backlog
+> mechanism was not enabled as well as a notification that the operation
+> was queued into the backlog when the backlog mechanism was enabled.
+> 
+> Having the same return code indicate two very different conditions
+> depending on a flag is both error prone and requires extra runtime
+> check like the following to discern between the cases:
+> 
+> 	if (err == -EINPROGRESS ||
+> 	    (err == -EBUSY && (ahash_request_flags(req) &
+> 			       CRYPTO_TFM_REQ_MAY_BACKLOG)))
+> 
+> This patch changes the return code used to indicate a crypto op
+> was queued in the backlog to -EIOCBQUEUED, thus resolving both
+> issues.
+> 
+> Signed-off-by: Gilad Ben-Yossef <gilad@benyossef.com>
 
-Dmitry Kasatkin's fork of linux.git write dm-integrity patch for linux 
-kernel and write example to create dm device 
-https://kernel.googlesource.com/pub/scm/linux/kernel/git/kasatkin/linux-digsig/+/2dfa67a1a4c049fd33fcc6abcb1c8ca57b17a268/Documentation/device-mapper/dm-integrity.txt 
-, but
-it mainline kernel is other dm-integrity, that must work in ecc mode or 
-as AEAD-backend for dm-crypt. 
-https://github.com/torvalds/linux/blob/master/Documentation/device-mapper/dm-integrity.txt 
-https://www.redhat.com/archives/dm-devel/2017-January/msg00028.html
+So you're changing the success case from EBUSY to EIOCBQUEUED.
+This results in a lot of churn as you have to change every single
+driver and caller.
 
-I try to use dmsetup to setup  dm-integrity in ecc mode (but if change 
-block on backend device dm-integrity gives not reaction and give another 
-md5sum to upper level. but non error), for dm-crypt I cannot understand 
-how to use AEAD mode.
+How about changing the error case to use something other than
+EBUSY instead?
 
-Please, give full instrustion to use dm-integrity in ecc mode and with 
-dm-crypt  (with kernel keychain creation)..
-
-Thanks, Renesanso.
+Thanks,
+-- 
+Email: Herbert Xu <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
