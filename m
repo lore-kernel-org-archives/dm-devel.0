@@ -1,77 +1,67 @@
-From: Gilad Ben-Yossef <gilad-6S/DczAoZh3WXxRugSxzZg@public.gmane.org>
-Subject: Re: [PATCH v3 01/28] crypto: change backlog return code to -EIOCBQUEUED
-Date: Mon, 3 Jul 2017 16:23:18 +0300
-Message-ID: <CAOtvUMdoMfrpZPuRfD_cQo4=FDp5Vn4uv51Vzc-0Gitmvr2V6g@mail.gmail.com>
-References: <1499006535-19760-1-git-send-email-gilad@benyossef.com>
- <1499006535-19760-2-git-send-email-gilad@benyossef.com> <20170703123515.GC30067@gondor.apana.org.au>
+From: Milan Broz <gmazyland@gmail.com>
+Subject: Re: dm-integrity
+Date: Mon, 3 Jul 2017 17:05:35 +0200
+Message-ID: <4d2e0176-071a-1cb4-3eaa-3c3552a2ce09@gmail.com>
+References: <bbf2a91d-2eac-5b10-903d-50939acfb57a@yandex.ru>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170703123515.GC30067-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
-Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
-Cc: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tom Lendacky <thomas.lendacky-5C7GfCeVMHo@public.gmane.org>, Gary Hook <gary.hook-5C7GfCeVMHo@public.gmane.org>, Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Arnaud Ebalard <arno-LkuqDEemtHBg9hUCZPvPmw@public.gmane.org>, Matthias Brugger <matthias.bgg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Shaohua Li <shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Steve French <sfrench-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, "Theodore Y. Ts'o" <tytso-3s7WtUTddSA@public.gmane.org>, Jaegeuk Kim <jaegeuk-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Dmitry Kasatkin <dmitry.kasatkin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <bbf2a91d-2eac-5b10-903d-50939acfb57a@yandex.ru>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Renesanso <renesanso@yandex.ru>, dm-devel@redhat.com
+Cc: mpatocka@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Jul 3, 2017 at 3:35 PM, Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org> wrote:
-> On Sun, Jul 02, 2017 at 05:41:43PM +0300, Gilad Ben-Yossef wrote:
->> The crypto API was using the -EBUSY return value to indicate
->> both a hard failure to submit a crypto operation into a
->> transformation provider when the latter was busy and the backlog
->> mechanism was not enabled as well as a notification that the operation
->> was queued into the backlog when the backlog mechanism was enabled.
->>
->> Having the same return code indicate two very different conditions
->> depending on a flag is both error prone and requires extra runtime
->> check like the following to discern between the cases:
->>
->>       if (err == -EINPROGRESS ||
->>           (err == -EBUSY && (ahash_request_flags(req) &
->>                              CRYPTO_TFM_REQ_MAY_BACKLOG)))
->>
->> This patch changes the return code used to indicate a crypto op
->> was queued in the backlog to -EIOCBQUEUED, thus resolving both
->> issues.
->>
->> Signed-off-by: Gilad Ben-Yossef <gilad-6S/DczAoZh3WXxRugSxzZg@public.gmane.org>
->
-> So you're changing the success case from EBUSY to EIOCBQUEUED.
-> This results in a lot of churn as you have to change every single
-> driver and caller.
->
-> How about changing the error case to use something other than
-> EBUSY instead?
+On 07/03/2017 06:44 AM, Renesanso wrote:
+> Hi for all.
+> 
+> Dmitry Kasatkin's fork of linux.git write dm-integrity patch for linux 
+...
 
-That was indeed my first thought - I wanted to change EBUSY to EAGAIN.
-It might even be a more descriptive error message since the failure is
-transient.
+yes, unfortunately we named the target the same (and I realized it too late).
 
-What stopped me was that I saw the algif interface passes this EBUSY value
-to user space. I don't know of any software that depends on this value but
-I'm really averse to changing user space API.
+It is doing something similar but definitely it is not the same.
 
-Of course, we can just plant a (ret != AGAIN : ? EBUSY) in the algif interface
-return to user space code path but that felt like a kludge to me.
+> I try to use dmsetup to setup  dm-integrity in ecc mode (but if change 
+> block on backend device dm-integrity gives not reaction and give another 
+> md5sum to upper level. but non error), for dm-crypt I cannot understand 
+> how to use AEAD mode.
 
-And it doesn't really save any churn, I think - I'd still have to
-visit all the places that
-use the flags value to distinguish between the two EBUSY use cases and  I need
-to visit most places that check for EBUSY as backlog indication because I'm
-replacing the check with the generic replacement, so it doesn't look
-like in the end
-it will be a smaller change.
+You probably configured it in mode when it only provide tag space,
+but does not calculate and verify internal hash.
 
-Having said that, if you prefer me to replace the error case I'd
-happily do that.
+(ECC means error correction, this target do not provide error correction,
+only detection of error (such a tool could be written on top of dm-integrity though).
 
-Thanks,
-Gilad
+> Please, give full instrustion to use dm-integrity in ecc mode and with 
+> dm-crypt  (with kernel keychain creation)..
 
+dm-integrity can work in standalone mode or together with dm-crypt.
 
--- 
-Gilad Ben-Yossef
-Chief Coffee Drinker
+For the standalone mode, it is the best to use integritysetup tool
+(for now in master branch of cryptsetup project).
+https://gitlab.com/cryptsetup/cryptsetup
 
-"If you take a class in large-scale robotics, can you end up in a
-situation where the homework eats your dog?"
- -- Jean-Baptiste Queru
+There is some simple documentation in man page and on this page
+https://gitlab.com/cryptsetup/cryptsetup/wikis/DMIntegrity
+
+(You can setup HMAC integrity protection in standalone mode as well.)
+I will update it soon with some more info and prepare some better examples
+(the whole userspace is still not finished though but should work.)
+
+For the combination with dm-crypt and AEAD - this is part of LUKS2 branch
+in the same repository but it is really only for experiments.
+Once we will have some testing build, I'll write more here, sorry, it takes
+longer than I expected.
+
+Milan
