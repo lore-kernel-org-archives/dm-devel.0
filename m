@@ -1,8 +1,8 @@
-From: Brian King <brking@linux.vnet.ibm.com>
+From: Jens Axboe <axboe@kernel.dk>
 Subject: Re: [dm-devel] [PATCH 1/1] block: Convert hd_struct in_flight from
  atomic to percpu
-Date: Tue, 4 Jul 2017 15:58:00 -0500
-Message-ID: <f562cc7a-819e-a130-e536-7b80247da49c@linux.vnet.ibm.com>
+Date: Tue, 4 Jul 2017 15:57:01 -0600
+Message-ID: <2538d533-0518-98f7-4bbd-716599a19c9a@kernel.dk>
 References: <20170628211010.4C8C9124035@b01ledav002.gho.pok.ibm.com>
  <c91629be-26db-96bb-9a55-18a6861888b2@kernel.dk>
  <CACVXFVMG=gD1Dq2SRKxhfPS33mzCC_dkSpVoYskaLE7PXV7xGQ@mail.gmail.com>
@@ -13,66 +13,59 @@ References: <20170628211010.4C8C9124035@b01ledav002.gho.pok.ibm.com>
  <b462c167-53e9-11f8-583a-9984ef81fe0c@kernel.dk>
  <3729482c-fcca-2af5-4d05-7e44bcd71159@linux.vnet.ibm.com>
  <0759ff58-caa0-9e55-b5ac-6324d9ba521b@kernel.dk>
- <ca8ccbe7-beb6-bc0a-046c-b999004f0157@linux.vnet.ibm.com>
- <CACVXFVPpJBB5ieHg5nwyC4NF3Qd+W-TKJMFB-Qm4cVYK2B6M1w@mail.gmail.com>
- <599ba934-902d-d6ce-5a5a-9b32657b4a08@kernel.dk>
- <3053d21a-3619-498f-bf3c-921ee3e8c532@linux.vnet.ibm.com>
- <CACVXFVNQa_6Wrnx7Px1VRU+YuXqX+0y5SwyUvWGrv=ZrF_qPFg@mail.gmail.com>
+ <cf23ad83-5938-8256-5b32-f40c0d261508@kernel.dk>
+ <0aedc83b-17a0-14bd-bacd-e11e1b7c263c@kernel.dk>
+ <5cfc618b-eb03-fe1b-6429-189c0b3d3fc1@kernel.dk>
+ <1c4c3849-ab98-9d5b-a31d-8ff35416ac23@linux.vnet.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <CACVXFVNQa_6Wrnx7Px1VRU+YuXqX+0y5SwyUvWGrv=ZrF_qPFg@mail.gmail.com>
+In-Reply-To: <1c4c3849-ab98-9d5b-a31d-8ff35416ac23@linux.vnet.ibm.com>
 Content-Language: en-US
 Sender: linux-block-owner@vger.kernel.org
-To: Ming Lei <tom.leiming@gmail.com>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block <linux-block@vger.kernel.org>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
+To: Brian King <brking@linux.vnet.ibm.com>, Ming Lei <tom.leiming@gmail.com>
+Cc: linux-block <linux-block@vger.kernel.org>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On 07/03/2017 08:20 PM, Ming Lei wrote:
->> Right. So the two modes I'm running in are:
+On 07/04/2017 02:55 PM, Brian King wrote:
+> On 07/01/2017 11:43 AM, Jens Axboe wrote:
+>> Now:
 >>
->> 1. 80 null_blk devices, each with one submit_queue, with one fio job per null_blk device,
->>    so 80 threads total. 80 logical CPUs
->> 2. 1 null_blk device, with 80 submit_queues, 80 fio jobs, 80 logical CPUs.
+>> http://git.kernel.dk/cgit/linux-block/commit/?h=mq-inflight&id=87f73ef2b9edb6834001df8f7cb48c7a116e8cd3
 >>
->> In theory, the two should result in similar numbers.
+>>> And updated the branch here:
+>>>
+>>> http://git.kernel.dk/cgit/linux-block/log/?h=mq-inflight
+>>>
+>>> to include that, and be based on top of for-4.13/block. If you prefer just
+>>> pulling a branch, pull:
+>>>
+>>> git://git.kernel.dk/linux-block mq-inflight
 >>
->> Here are the commands and fio configurations:
+>> I've tested it, and made a few adjustments and fixes. The branches are
+>> the same, just rebased. Works fine for me, even with partitions now.
 >>
->> Scenario #1
->> modprobe null_blk submit_queues=80 nr_devices=1 irqmode=0
->>
->> FIO config:
->> [global]
->> buffered=0
->> invalidate=1
->> bs=4k
->> iodepth=64
->> numjobs=80
->> group_reporting=1
->> rw=randrw
->> rwmixread=100
->> rwmixwrite=0
->> ioengine=libaio
->> runtime=60
->> time_based
->>
->> [job1]
->> filename=/dev/nullb0
-
+>> Let me know how it works for you.
 > 
-> IMO it should be more reasonable to use single null_blk with 80 queues
-> via setting submit_queues as 80 than simply 80 null_blks.  So suggest to switch
-> to test 80 queues in your future test.
+> This is looking very nice. This is what I'm seeing now:
+> 
+> 1 null_blk device / 80 submit_queues / fio numjobs=80
+> 9.4M IOPs
+> 
+> 80 null_blk devices / 1 submit_queue per null_blk / fio numjobs=1 (1 per null_blk)
+> 9.3M IOPs
+> 
+> 1 null_blk device / 160 submit_queues / fio numjobs=160
+> 9.8M IOPs
+> 
+> 160 null_blk devices / 1 submit_queue per null_blk / fio numjobs=1 (1 per null_blk)
+> 8.9M IOPs
+> 
+> What is queued in mq-inflight looks to resolve the issue I've been seeing.
 
-That should be what my Scenario #1 covers. 
-
-Thanks,
-
-Brian
+Good to hear! I'll test some corner cases and post a "real" version
+for review. Thanks for all your testing.
 
 -- 
-Brian King
-Power Linux I/O
-IBM Linux Technology Center
+Jens Axboe
