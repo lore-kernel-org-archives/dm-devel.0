@@ -1,71 +1,57 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [dm-devel] [PATCH 1/1] block: Convert hd_struct in_flight from
- atomic to percpu
-Date: Tue, 4 Jul 2017 15:57:01 -0600
-Message-ID: <2538d533-0518-98f7-4bbd-716599a19c9a@kernel.dk>
-References: <20170628211010.4C8C9124035@b01ledav002.gho.pok.ibm.com>
- <c91629be-26db-96bb-9a55-18a6861888b2@kernel.dk>
- <CACVXFVMG=gD1Dq2SRKxhfPS33mzCC_dkSpVoYskaLE7PXV7xGQ@mail.gmail.com>
- <7f0a852e-5f90-4c63-9a43-a4180557530c@kernel.dk>
- <07ba10a8-6369-c1bc-dc9a-b550d9394c22@kernel.dk>
- <8f4ff428-e158-0df5-cf54-ae3cdea7ad1f@kernel.dk>
- <CACVXFVOW21vSOM0RGa-g0UFPRm91b9U16bruqXXYd=D+u7GKFQ@mail.gmail.com>
- <b462c167-53e9-11f8-583a-9984ef81fe0c@kernel.dk>
- <3729482c-fcca-2af5-4d05-7e44bcd71159@linux.vnet.ibm.com>
- <0759ff58-caa0-9e55-b5ac-6324d9ba521b@kernel.dk>
- <cf23ad83-5938-8256-5b32-f40c0d261508@kernel.dk>
- <0aedc83b-17a0-14bd-bacd-e11e1b7c263c@kernel.dk>
- <5cfc618b-eb03-fe1b-6429-189c0b3d3fc1@kernel.dk>
- <1c4c3849-ab98-9d5b-a31d-8ff35416ac23@linux.vnet.ibm.com>
+From: Thanos Makatos <thanos.makatos@onapp.com>
+Subject: dm-cache: ensuring cache is flushed in timely manner
+Date: Wed, 5 Jul 2017 16:21:36 +0100
+Message-ID: <CAM2wQBtB2OSk_fgC99n=9WU0t3TGUK7J0j7+83GXwia=5tYGPA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <1c4c3849-ab98-9d5b-a31d-8ff35416ac23@linux.vnet.ibm.com>
-Content-Language: en-US
-Sender: linux-block-owner@vger.kernel.org
-To: Brian King <brking@linux.vnet.ibm.com>, Ming Lei <tom.leiming@gmail.com>
-Cc: linux-block <linux-block@vger.kernel.org>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: heinzm@redhat.com, Joe Thornber <thornber@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On 07/04/2017 02:55 PM, Brian King wrote:
-> On 07/01/2017 11:43 AM, Jens Axboe wrote:
->> Now:
->>
->> http://git.kernel.dk/cgit/linux-block/commit/?h=mq-inflight&id=87f73ef2b9edb6834001df8f7cb48c7a116e8cd3
->>
->>> And updated the branch here:
->>>
->>> http://git.kernel.dk/cgit/linux-block/log/?h=mq-inflight
->>>
->>> to include that, and be based on top of for-4.13/block. If you prefer just
->>> pulling a branch, pull:
->>>
->>> git://git.kernel.dk/linux-block mq-inflight
->>
->> I've tested it, and made a few adjustments and fixes. The branches are
->> the same, just rebased. Works fine for me, even with partitions now.
->>
->> Let me know how it works for you.
-> 
-> This is looking very nice. This is what I'm seeing now:
-> 
-> 1 null_blk device / 80 submit_queues / fio numjobs=80
-> 9.4M IOPs
-> 
-> 80 null_blk devices / 1 submit_queue per null_blk / fio numjobs=1 (1 per null_blk)
-> 9.3M IOPs
-> 
-> 1 null_blk device / 160 submit_queues / fio numjobs=160
-> 9.8M IOPs
-> 
-> 160 null_blk devices / 1 submit_queue per null_blk / fio numjobs=1 (1 per null_blk)
-> 8.9M IOPs
-> 
-> What is queued in mq-inflight looks to resolve the issue I've been seeing.
+Occasionally I need to flush a writeback cache in order to execute
+some other operation (e.g. take a back up). I do this by first setting
+the policy to cleaner, then wait for the number of dirty blocks to
+reach 0, and finally set the mode to writethrough. After that it is
+safe to execute the operation I want. Once I'm finished I set the
+policy to mq/smq and mode to writeback, job done. (Just a sanity check
+here, is my flush procedure correct?)
 
-Good to hear! I'll test some corner cases and post a "real" version
-for review. Thanks for all your testing.
+The problem is that when I/O is particularly heavy (e.g. lots of
+concurrent random writes) and the backing device is too slow (e.g. the
+HDD is some remote, virtualised block device), the number of dirty
+blocks not only fails to decrease, it even increases from time to
+time. This is happening on CentOS 3.18.44-20.el6.x86_64.
 
+I was able to locally reproduce this by priming the cache, setting
+migration_threshold to 0, dirtying it, rate-limiting the backing
+device (e.g. to 1 MB/s), running fio with random writes and a queue
+depth of 32, and then finally restoring migration_threshold and
+setting the policy to cleaner. The number of dirty blocks generally
+fluctuates but never seems to reach 0.
+
+I understand that I can solve the problem by rate-limiting the cache
+target such that there are more I/O resources for the flush to work
+with, but AFAIK the only way to do this is via cgroups and it requires
+an absolute number (e.g. MB/s or IOPS). Providing such an absolute
+number doesn't seem attractive as it always boils down to how heavily
+the cache target is used vs. the backing device I/O performance.
+
+Ideally I'd like to use something like ionice where I could prioritise
+flushing (even slightly) over serving regular I/O, but that doesn't
+look like an option here as I don't see separate threads for handling
+regular I/O and flushing I/O.
+
+Any ideas how I could solve this problem?
 -- 
-Jens Axboe
+Thanos Makatos
