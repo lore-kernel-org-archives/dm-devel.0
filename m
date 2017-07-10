@@ -1,16 +1,10 @@
-From: Renesanso <renesanso@yandex.ru>
-Subject: Re: dm-integrity
-Date: Wed, 5 Jul 2017 19:45:54 +0300
-Message-ID: <96314674-1b66-ce91-732e-17901d1f3236@yandex.ru>
-References: <bbf2a91d-2eac-5b10-903d-50939acfb57a@yandex.ru>
-	<4d2e0176-071a-1cb4-3eaa-3c3552a2ce09@gmail.com>
-	<0d01c698-211e-a969-8c4a-e6bb4ab2cf9b@yandex.ru>
+From: "liuqing@huayun.com" <liuqing@huayun.com>
+Subject: Multipath ID not equal to LUN scsi ID
+Date: Mon, 10 Jul 2017 17:58:14 +0800
+Message-ID: <2017071017581348809421@huayun.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: multipart/mixed; boundary="===============8390696549538191702=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <0d01c698-211e-a969-8c4a-e6bb4ab2cf9b@yandex.ru>
-Content-Language: ru-RU
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,73 +14,117 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Milan Broz <gmazyland@gmail.com>, mpatocka@redhat.com, dm-devel@redhat.com, dmitry.kasatkin@huawei.com
+To: dm-devel <dm-devel@redhat.com>
+Cc: liuqing <liuqing@huayun.com>
 List-Id: dm-devel.ids
 
-MS4gQW5kIGluIHRoaXMgKCAKaHR0cHM6Ly9rZXJuZWwuZ29vZ2xlc291cmNlLmNvbS9wdWIvc2Nt
-L2xpbnV4L2tlcm5lbC9naXQva2FzYXRraW4vbGludXgtZGlnc2lnLysvMmRmYTY3YTFhNGMwNDlm
-ZDMzZmNjNmFiY2IxYzhjYTU3YjE3YTI2OC9Eb2N1bWVudGF0aW9uL2RldmljZS1tYXBwZXIvZG0t
-aW50ZWdyaXR5LnR4dCAKKSBpbXBsZW1lbnRhdGlvbiBnaXZlcyB2YXJpYW50IHRvIHVzZSBleHRl
-cm5hbCBkZXZpY2UgZm9yIG1ldGFkYXRhIGFuZCAKam91cm5hbC4gSXQgcmVhbGx5IGFmZmVjdCBw
-ZXJmb21hbmNlLCBJIHRoaW5rLiBEbyB5b3UgcGxhbiBkbyBhbmFsb2d1ZSAKZnVuY3Rpb25zPwoK
-Mi4gQW5kIG90aGVyIHF1ZXN0aW9uOiBpbiB5b3VyIGltcGxlbWVudGF0aW9uIHRhZ3Mgd3JpdGUg
-cmFyZXJ5IGFmdGVyIApkYXRhIChlZy4gZGF0YVs1MTJiXSwgdGFnWzMyYl0sIGRhdGEgWzUxMmJd
-LCB0YWdbMzJiXSkgb3IgZGF0YSBzdG9yZXMgaW4gCm9uZSAiaGFsZiIgb2YgZGlzayBhbmQgdGFn
-cyBpbiBhbm90aGVyIChpbiBlbmQgb2YgZGlzaywgZXhhbXBsZSk/IFNlY29uZCAKdmFyaWFudCBn
-aXZlcyBWRVJZIEhVR0UgcGVuYWx0eSBvbiBoZGQncy4KCjMuIEFuZCBjYW4sIGFzIEkgc2VlIHRo
-ZXJlIG1hbnkgb3B0aW9ucyAoYXMgam91cm5hbCwgYnVmZmVycyBhbmQgb3RoZXIpLiAKQ2FuIHlv
-dSBnaXZlIG1lIGV4YW1wbGUgb2YgcGFyYW1ldGVycyBjb25maWd1cmF0aW9uLCB0aGF0IGZ1bGx5
-IApjb3JyZWN0bHkgd29yayBpbiBwcm9kdWN0aW9uIChLVk1zLSBWTXMgLT4gcmF3IC0+IEVYVDQg
-LT4gTFZNIC0+IE1EIC0+IAptdWx0aXBsZSBkbS1pbnRlZ3JpdHkgb24gbXVsdGlwbGUgcGhpc2lj
-YWwgZGlza3MgKT8KCjA0LjA3LjIwMTcgMDI6NTcsIFJlbmVzYW5zbyDQv9C40YjQtdGCOgo+IEJp
-ZyB0aGFua3MgZm9yIHJlcGx5IGFuZCB1cGRhdGUgZXhhbXBsZSEgTm93IGFsbCB3b3JrcywgdGhh
-dCBJIAo+IGV4cGVjdGVkLCBidXQgbm90ICBpbnRlcm5hbCBrZXkgLgo+Cj4gL2ludGVncml0eXNl
-dHVwIG9wZW4gL2Rldi9sb29wNyBpbnRlZ3JhIC0taW50ZWdyaXR5IHNoYTI1NjoyNzYzNDgyNzQ2
-ODIKPiBkZXZpY2UtbWFwcGVyOiByZWxvYWQgaW9jdGwgb24gIGZhaWxlZDogRnVuY3Rpb24gbm90
-IGltcGxlbWVudGVkCj4KPiBkbWVzZzogWzE3NjQ3MC40OTY0ODFdIGRldmljZS1tYXBwZXI6IHRh
-YmxlOiAyNTE6MTQ6IGludGVncml0eTogRXJyb3IgCj4gc2V0dGluZyBpbnRlcm5hbCBoYXNoIGtl
-eQo+IFsxNzY0NzAuNDk2NDg3XSBkZXZpY2UtbWFwcGVyOiBpb2N0bDogZXJyb3IgYWRkaW5nIHRh
-cmdldCB0byB0YWJsZQo+Cj4gdW5hbWUgLWEKPiBMaW51eCBsb2NhbGhvc3QgNC4xMi4wLXJjNiAj
-MSBTTVAgUFJFRU1QVCBTdW4gSnVuIDI1IDIxOjMwOjU1IE1TSyAyMDE3IAo+IHg4Nl82NCB4ODZf
-NjQgeDg2XzY0IEdOVS9MaW51eAo+Cj4gSSBkaWQgdG9tZXRoaW5rZyB3cm9uZz8KPgo+IEFuZCBj
-YW4sIGFzIEkgc2VlIHRoZXJlIG1hbnkgb3B0aW9ucyAoYXMgam91cm5hbCwgYnVmZmVycyBhbmQg
-b3RoZXIpLiAKPiBDYW4geW91IGdpdmUgbWUgZXhhbXBsZSBvZiBwYXJhbWV0ZXJzIGNvbmZpZ3Vy
-YXRpb24sIHRoYXQgZnVsbHkgCj4gY29ycmVjdGx5IHdvcmsgaW4gcHJvZHVjdGlvbiAoS1ZNcy0g
-Vk1zIC0+IHJhdyAtPiBFWFQ0IC0+IExWTSAtPiBNRCAtPiAKPiBtdWx0aXBsZSBkbS1pbnRlZ3Jp
-dHkgb24gbXVsdGlwbGUgcGhpc2ljYWwgZGlza3MgKT8KPgo+IEJpZyBiaWcgdGhhbmtzLiA6KQo+
-Cj4gMDMuMDcuMjAxNyAxODowNSwgTWlsYW4gQnJveiDQv9C40YjQtdGCOgo+PiBPbiAwNy8wMy8y
-MDE3IDA2OjQ0IEFNLCBSZW5lc2Fuc28gd3JvdGU6Cj4+PiBIaSBmb3IgYWxsLgo+Pj4KPj4+IERt
-aXRyeSBLYXNhdGtpbidzIGZvcmsgb2YgbGludXguZ2l0IHdyaXRlIGRtLWludGVncml0eSBwYXRj
-aCBmb3IgbGludXgKPj4gLi4uCj4+Cj4+IHllcywgdW5mb3J0dW5hdGVseSB3ZSBuYW1lZCB0aGUg
-dGFyZ2V0IHRoZSBzYW1lIChhbmQgSSByZWFsaXplZCBpdCAKPj4gdG9vIGxhdGUpLgo+Pgo+PiBJ
-dCBpcyBkb2luZyBzb21ldGhpbmcgc2ltaWxhciBidXQgZGVmaW5pdGVseSBpdCBpcyBub3QgdGhl
-IHNhbWUuCj4+Cj4+PiBJIHRyeSB0byB1c2UgZG1zZXR1cCB0byBzZXR1cCBkbS1pbnRlZ3JpdHkg
-aW4gZWNjIG1vZGUgKGJ1dCBpZiBjaGFuZ2UKPj4+IGJsb2NrIG9uIGJhY2tlbmQgZGV2aWNlIGRt
-LWludGVncml0eSBnaXZlcyBub3QgcmVhY3Rpb24gYW5kIGdpdmUgCj4+PiBhbm90aGVyCj4+PiBt
-ZDVzdW0gdG8gdXBwZXIgbGV2ZWwuIGJ1dCBub24gZXJyb3IpLCBmb3IgZG0tY3J5cHQgSSBjYW5u
-b3QgdW5kZXJzdGFuZAo+Pj4gaG93IHRvIHVzZSBBRUFEIG1vZGUuCj4+IFlvdSBwcm9iYWJseSBj
-b25maWd1cmVkIGl0IGluIG1vZGUgd2hlbiBpdCBvbmx5IHByb3ZpZGUgdGFnIHNwYWNlLAo+PiBi
-dXQgZG9lcyBub3QgY2FsY3VsYXRlIGFuZCB2ZXJpZnkgaW50ZXJuYWwgaGFzaC4KPj4KPj4gKEVD
-QyBtZWFucyBlcnJvciBjb3JyZWN0aW9uLCB0aGlzIHRhcmdldCBkbyBub3QgcHJvdmlkZSBlcnJv
-ciAKPj4gY29ycmVjdGlvbiwKPj4gb25seSBkZXRlY3Rpb24gb2YgZXJyb3IgKHN1Y2ggYSB0b29s
-IGNvdWxkIGJlIHdyaXR0ZW4gb24gdG9wIG9mIAo+PiBkbS1pbnRlZ3JpdHkgdGhvdWdoKS4KPj4K
-Pj4+IFBsZWFzZSwgZ2l2ZSBmdWxsIGluc3RydXN0aW9uIHRvIHVzZSBkbS1pbnRlZ3JpdHkgaW4g
-ZWNjIG1vZGUgYW5kIHdpdGgKPj4+IGRtLWNyeXB0ICAod2l0aCBrZXJuZWwga2V5Y2hhaW4gY3Jl
-YXRpb24pLi4KPj4gZG0taW50ZWdyaXR5IGNhbiB3b3JrIGluIHN0YW5kYWxvbmUgbW9kZSBvciB0
-b2dldGhlciB3aXRoIGRtLWNyeXB0Lgo+Pgo+PiBGb3IgdGhlIHN0YW5kYWxvbmUgbW9kZSwgaXQg
-aXMgdGhlIGJlc3QgdG8gdXNlIGludGVncml0eXNldHVwIHRvb2wKPj4gKGZvciBub3cgaW4gbWFz
-dGVyIGJyYW5jaCBvZiBjcnlwdHNldHVwIHByb2plY3QpLgo+PiBodHRwczovL2dpdGxhYi5jb20v
-Y3J5cHRzZXR1cC9jcnlwdHNldHVwCj4+Cj4+IFRoZXJlIGlzIHNvbWUgc2ltcGxlIGRvY3VtZW50
-YXRpb24gaW4gbWFuIHBhZ2UgYW5kIG9uIHRoaXMgcGFnZQo+PiBodHRwczovL2dpdGxhYi5jb20v
-Y3J5cHRzZXR1cC9jcnlwdHNldHVwL3dpa2lzL0RNSW50ZWdyaXR5Cj4+Cj4+IChZb3UgY2FuIHNl
-dHVwIEhNQUMgaW50ZWdyaXR5IHByb3RlY3Rpb24gaW4gc3RhbmRhbG9uZSBtb2RlIGFzIHdlbGwu
-KQo+PiBJIHdpbGwgdXBkYXRlIGl0IHNvb24gd2l0aCBzb21lIG1vcmUgaW5mbyBhbmQgcHJlcGFy
-ZSBzb21lIGJldHRlciAKPj4gZXhhbXBsZXMKPj4gKHRoZSB3aG9sZSB1c2Vyc3BhY2UgaXMgc3Rp
-bGwgbm90IGZpbmlzaGVkIHRob3VnaCBidXQgc2hvdWxkIHdvcmsuKQo+Pgo+PiBGb3IgdGhlIGNv
-bWJpbmF0aW9uIHdpdGggZG0tY3J5cHQgYW5kIEFFQUQgLSB0aGlzIGlzIHBhcnQgb2YgTFVLUzIg
-Cj4+IGJyYW5jaAo+PiBpbiB0aGUgc2FtZSByZXBvc2l0b3J5IGJ1dCBpdCBpcyByZWFsbHkgb25s
-eSBmb3IgZXhwZXJpbWVudHMuCj4+IE9uY2Ugd2Ugd2lsbCBoYXZlIHNvbWUgdGVzdGluZyBidWls
-ZCwgSSdsbCB3cml0ZSBtb3JlIGhlcmUsIHNvcnJ5LCBpdCAKPj4gdGFrZXMKPj4gbG9uZ2VyIHRo
-YW4gSSBleHBlY3RlZC4KPj4KPj4gTWlsYW4KPgo+CgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QK
-ZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGlu
-Zm8vZG0tZGV2ZWw=
+This is a multi-part message in MIME format.
+
+--===============8390696549538191702==
+Content-Type: multipart/alternative;
+	boundary="----=_001_NextPart427088406733_=----"
+
+This is a multi-part message in MIME format.
+
+------=_001_NextPart427088406733_=----
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: base64
+
+RGVhciBsaXN0LA0KV2UgaGF2ZSBhIEZDIHN0b3JhZ2UgYW5kIHVzaW5nIG11bHRpcGF0aGQgdG8g
+bWFuYWdlciB0aGUgRkMgcGF0aHMuDQpJJ3ZlIG1ldCBhbiBpc3N1ZSBpbiB0aGlzIGVudmlyb25t
+ZW50LiBUaGUgZm9sbG93aW5nIGlzIGhvdyB0byByZWNyZWF0ZSB0aGUgaXNzdWUuDQoNCj09PT09
+PT0NCjEuIE1hcCBhIExVTiB0byBob3N0IHdpdGggTFVOIElEIDAsDQoyLiByZXNjYW4gZmNfaG9z
+dCwgYSBuZXcgcGF0aCB3aWxsIGJlIGZvdW5kIGJ5IG11bHRpcGF0aC4NCjMuIFVubWFwIExVTiAw
+LiAgcGF0aCB3aWxsIGZhaWxlZCBhcyBmb2xsb3dpbmcuDQpbcm9vdEBsb2NhbGhvc3Qgc3lzXSMg
+bXVsdGlwYXRoIC1sbA0KSnVsIDEwIDE4OjQxOjUwIHwgc2RwOiBjb3VsZG4ndCBnZXQgYXN5bW1l
+dHJpYyBhY2Nlc3Mgc3RhdGUNCkp1bCAxMCAxODo0MTo1MCB8IHNkcTogY291bGRuJ3QgZ2V0IGFz
+eW1tZXRyaWMgYWNjZXNzIHN0YXRlDQozNjAwNTA3NjMwMDgxMGVhZGY4MDAwMDAwMDAwMDAxNTYg
+ZG0tMyBJQk0sMjE0NQ0Kc2l6ZT04LjBHIGZlYXR1cmVzPScyIHF1ZXVlX2lmX25vX3BhdGggcmV0
+YWluX2F0dGFjaGVkX2h3X2hhbmRsZXInIGh3aGFuZGxlcj0nMSBhbHVhJyB3cD1ydw0KfC0rLSBw
+b2xpY3k9J3NlcnZpY2UtdGltZSAwJyBwcmlvPTAgc3RhdHVzPWVuYWJsZWQNCnwgYC0gMjowOjA6
+MCBzZHAgODoyNDAgZmFpbGVkIGZhdWx0eSBydW5uaW5nDQpgLSstIHBvbGljeT0nc2VydmljZS10
+aW1lIDAnIHByaW89MCBzdGF0dXM9ZW5hYmxlZA0KICBgLSAyOjA6MTowIHNkcSA2NTowICBmYWls
+ZWQgZmF1bHR5IHJ1bm5pbmcNCjQuIE1hcCBhbm90aGVyIExVTiB3aGljaCBoYXZlIGRpZmZlcmVu
+dCBJRF9TRVJJQUwgYnV0IHdpdGggdGhlIHNhbWUgTFVOIElEKDApLiBNdWx0aXBhdGgoY2hlY2tf
+cGF0aCBmdW5jdGlvbikgd2lsbCBzZXQgdGhlIHBhdGhzIHVwLCB0dXIgY2hlY2tlciB3aWxsIHN1
+Y2Nlc3NmdWxseSB0ZXN0IHRoZSBMVU4uIA0KW3Jvb3RAbG9jYWxob3N0IHN5c10jIC9saWIvdWRl
+di9zY3NpX2lkIC0td2hpdGVsaXN0ZWQgLS1yZXBsYWNlLXdoaXRlc3BhY2UgLS1kZXZpY2U9L2Rl
+di9tYXBwZXIvMzYwMDUwNzYzMDA4MTBlYWRmODAwMDAwMDAwMDAwMTU2DQozNjAwNTA3NjMwMDgx
+MGVhZGY4MDAwMDAwMDAwMDAxNTUNCiBJIHRoaW5rIHRoaXMgaXMgbm90IHJpZ2h0LCBhbHRob3Vn
+aCBJIGRvIG5vdCByZW1vdmUgdGhlIGRldmljZSBieSAnZWNobyAxPiAvc3lzL2Jsb2NrL3NkcC9k
+ZXZpY2UvZGVsZXRlJy4gQSBtdWx0aXBhdGggaXMgaWRlbnRpZmllZCBieSBMVU4gc2NzaSBJRCwg
+aW4gdGhpcyBzaXR1YXRpb24gdGhlIG11bHRpcGF0aA0KSUQgaXMgbm90IGVxdWFsIHRvIExVTiBz
+Y3NpIElELiBBbmQgaWYgSSBhZGQgdGhlIHByZXZpb3VzIExVTiBiYWNrLCB0aGUgcGF0aHMgd2ls
+bCBhbHNvIGJlIGFkZGVkIHRvIHRoYXQgbXVsdGlwYXRoIGlkKDM2MDA1MDc2MzAwODEwZWFkZjgw
+MDAwMDAwMDAwMDE1NikuDQoNCkFueSBzdWdnZXN0aW9uIG9uIGhvdyB0byBtYWtlIGl0IGNyZWF0
+ZSBhIG5ldyBub2RlIGluIC9kZXYgd2l0aCBjb3JyZWN0IHNjc2kgSUQ/IFRoYW5rcy4NCg0KDQo9
+PT09PT09PT09PQ0KW3Jvb3RAbG9jYWxob3N0IHN5c10jIGNhdCAvZXRjL211bHRpcGF0aC5jb25m
+DQpkZWZhdWx0cyB7DQogICAgZmVhdHVyZXMgIjAiDQogICAgbm9fcGF0aF9yZXRyeSAgICAgICAg
+ICAgcXVldWUNCiAgICBnZXR1aWRfY2FsbG91dCAiL2xpYi91ZGV2L3Njc2lfaWQgLS13aGl0ZWxp
+c3RlZCAtLXJlcGxhY2Utd2hpdGVzcGFjZSAtLWRldmljZT0vZGV2LyVuIg0KfQ0KYmxhY2tsaXN0
+IHsNCiAgICBkZXZub2RlICJzZFthLW1dIg0KfQ0KDQoNCg0KbGl1cWluZ0BodWF5dW4uY29tDQo=
+
+------=_001_NextPart427088406733_=----
+Content-Type: text/html;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+
+<html><head><meta http-equiv=3D"content-type" content=3D"text/html; charse=
+t=3Dus-ascii"><style>body { line-height: 1.5; }body { font-size: 12pt; fon=
+t-family: ????; color: rgb(0, 0, 0); line-height: 1.5; }</style></head><bo=
+dy>=0A<div><span></span>Dear list,</div><div>We have a FC storage and usin=
+g multipathd to manager the FC paths.</div><div>I've met an issue in this =
+environment. The following is how to recreate the issue.</div><div><br></d=
+iv><div>=3D=3D=3D=3D=3D=3D=3D</div><div>1. Map a LUN to host with LUN ID 0=
+,</div><div>2. rescan fc_host, a new path will be found by multipath.</div=
+><div>3. Unmap LUN 0. &nbsp;path will failed as following.</div><div><span=
+ style=3D"color: rgb(0, 0, 0); background-color: rgba(0, 0, 0, 0);">[root@=
+localhost&nbsp;sys]#&nbsp;multipath&nbsp;-ll<br>Jul&nbsp;10&nbsp;18:41:50&=
+nbsp;|&nbsp;sdp:&nbsp;couldn't&nbsp;get&nbsp;asymmetric&nbsp;access&nbsp;s=
+tate<br>Jul&nbsp;10&nbsp;18:41:50&nbsp;|&nbsp;sdq:&nbsp;couldn't&nbsp;get&=
+nbsp;asymmetric&nbsp;access&nbsp;state<br>36005076300810eadf80000000000015=
+6&nbsp;dm-3&nbsp;IBM,2145<br>size=3D8.0G&nbsp;features=3D'2&nbsp;queue_if_=
+no_path&nbsp;retain_attached_hw_handler'&nbsp;hwhandler=3D'1&nbsp;alua'&nb=
+sp;wp=3Drw<br>|-+-&nbsp;policy=3D'service-time&nbsp;0'&nbsp;prio=3D0&nbsp;=
+status=3Denabled<br>|&nbsp;`-&nbsp;2:0:0:0&nbsp;sdp&nbsp;8:240&nbsp;failed=
+&nbsp;faulty&nbsp;running<br>`-+-&nbsp;policy=3D'service-time&nbsp;0'&nbsp=
+;prio=3D0&nbsp;status=3Denabled<br>&nbsp;&nbsp;`-&nbsp;2:0:1:0&nbsp;sdq&nb=
+sp;65:0&nbsp;&nbsp;failed&nbsp;faulty&nbsp;running<br></span></div>=0A<div=
+>4. Map another LUN which have different ID_SERIAL but with the same LUN I=
+D(0). Multipath(check_path function) will set the paths up, tur checker wi=
+ll successfully test the LUN.&nbsp;</div><div><span style=3D"color: rgb(0,=
+ 0, 0); background-color: rgba(0, 0, 0, 0);">[root@localhost&nbsp;sys]#&nb=
+sp;/lib/udev/scsi_id&nbsp;--whitelisted&nbsp;--replace-whitespace&nbsp;--d=
+evice=3D/dev/mapper/36005076300810eadf800000000000156<br>36005076300810ead=
+f800000000000155</span></div><div>&nbsp;I think this is not right, althoug=
+h I do not remove the device by 'echo 1&gt; /sys/block/sdp/device/delete'.=
+ A multipath is identified by LUN scsi ID, in this situation the multipath=
+</div><div>ID is not equal to LUN scsi ID. And if I add the previous LUN b=
+ack, the paths will also be added to that multipath id(<span style=3D"font=
+-size: 12pt; line-height: 1.5; background-color: window;">36005076300810ea=
+df800000000000156).</span></div><div><br></div><div>Any suggestion on how =
+to make it create a new node in /dev with correct scsi ID? Thanks.</div><d=
+iv><br></div><div><br></div><div>=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D</div><d=
+iv><span style=3D"color: rgb(0, 0, 0); background-color: rgba(0, 0, 0, 0);=
+">[root@localhost&nbsp;sys]#&nbsp;cat&nbsp;/etc/multipath.conf<br>defaults=
+&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;features&nbsp;"0"<br>&nbsp;&nbsp;&nbsp;=
+&nbsp;no_path_retry&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
+nbsp;&nbsp;queue<br>&nbsp;&nbsp;&nbsp;&nbsp;getuid_callout&nbsp;"/lib/udev=
+/scsi_id&nbsp;--whitelisted&nbsp;--replace-whitespace&nbsp;--device=3D/dev=
+/%n"<br>}<br>blacklist&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;devnode&nbsp;"sd[=
+a-m]"<br>}<br></span></div><div><br></div><hr style=3D"width: 210px; heigh=
+t: 1px;" color=3D"#b5c4df" size=3D"1" align=3D"left">=0A<div><span><div st=
+yle=3D"MARGIN: 10px; FONT-FAMILY: verdana; FONT-SIZE: 10pt"><div>liuqing@h=
+uayun.com</div></div></span></div>=0A</body></html>
+------=_001_NextPart427088406733_=------
+
+
+--===============8390696549538191702==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============8390696549538191702==--
