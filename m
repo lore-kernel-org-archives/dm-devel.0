@@ -1,16 +1,14 @@
-From: Bart Van Assche <Bart.VanAssche@wdc.com>
-Subject: Re: [PATCH] dm-zoned: Fix overflow when converting zone
-	ID to sectors
-Date: Mon, 10 Jul 2017 16:25:57 +0000
-Message-ID: <1499703955.3555.11.camel@wdc.com>
-References: <20170703064458.8091-1-damien.lemoal@wdc.com>
+From: Steffen Maier <maier@linux.vnet.ibm.com>
+Subject: Re: Multipath ID not equal to LUN scsi ID
+Date: Tue, 11 Jul 2017 11:07:15 +0200
+Message-ID: <1594c41f-cce0-0ff1-97b2-8ab62dc25d5b@linux.vnet.ibm.com>
+References: <2017071111495659851849@huayun.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170703064458.8091-1-damien.lemoal@wdc.com>
+In-Reply-To: <2017071111495659851849@huayun.com>
 Content-Language: en-US
-Content-ID: <CF03057B1C8EBB48AEFCD9BA68A9D225@namprd04.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,17 +18,58 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>, "agk@redhat.com" <agk@redhat.com>, Damien Le Moal <Damien.LeMoal@wdc.com>, "snitzer@redhat.com" <snitzer@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, 2017-07-03 at 15:44 +0900, Damien Le Moal wrote:
-> A zone ID is a 32 bits unsigned int which can overflow when doing the
-> bit shifts calculations in dmz_start_sect(). With a 256 MB zone size
-> drive, the overflow happens for a zone ID >= 8192.
-
-Does the data from this example apply to a sector size of 512 bytes only?
-Should this be mentioned in the patch description?
-
-Anyway,
-
-Reviewed-by: Bart Van Assche <bart.vanassche@wdc.com>
+T24gMDcvMTEvMjAxNyAwNTo0OSBBTSwgbGl1cWluZ0BodWF5dW4uY29tIHdyb3RlOgo+IE9uY2Ug
+YSBuZXcgYXJyaXZlZCBMVU4gbWFwcGVkIHdlIHdpbGwgZG8gcmVzY2FuIGJ5ICJlY2hvICctIC0g
+LScgPiAvc3lzL2NsYXNzL3Njc2lfaG9zdC9ob3N0Mi9zY2FuIi4KCkkgd2FzIHJlZmVycmluZyB0
+byBhIHJlc2NhbiBvZiB0aGUgc2NzaSBkZXZpY2UsCgpodHRwczovL3d3dy5pYm0uY29tL3N1cHBv
+cnQva25vd2xlZGdlY2VudGVyL2xpbnV4b25pYm0vY29tLmlibS5saW51eC56LmxoZGQvbGhkZF90
+X2ZjcF93cmtfcmVzY2FuLmh0bWwKCm5vdCBhIHNjYW4gb2YgdGhlIFNjc2lfSG9zdC4KVGhlIGxh
+dHRlciBsaWtlbHkga2VlcHMgdGhlIG9sZCBzY3NpIGRldmljZSB3aXRoIGl0cyBvbGQgcHJvcGVy
+dGllcyAKYmVpbmcgb2JsaXZpb3VzIHRvIHRoZSB2b2x1bWUgcmVtYXBwaW5nIG9uIHRoZSBzdG9y
+YWdlIHRhcmdldDsgaXQncyAKYWJvdXQgZGlzY292ZXJpbmcgbmV3IHNjc2kgZGV2aWNlcyBwcmV2
+aW91c2x5IG5vdCBiZWluZyBrbm93biB0byBMaW51eC4KCj4gQWZ0ZXIgcmVzY2FuIG9ubHkgdGhl
+IHNjc2lfaWQgdG9vbCBnaXZlIHRoZSByaWdodCBzZXJpYWwgaWQsIHVkZXZhZG0gc3RpbGwgZ290
+IHRoZSBwcnZpb3VzIG9uZS4KPiBJIGhhdmUgbW9uaXRvciB0aGUgdWRldiBldmVudCBieSB1ZGV2
+YWRtIG1vbml0b3Igd2hpbGUgbWFwcGluZyBhIG5ldyBMVU4gdG8gdGhlIGhvc3QsIHdobyB3aWxs
+IHJldXNlIHRoZSBvcmlnaW5hbCBwYXRoLiBObyBhZGQgZXZlbnQgaXMgdHJpZ2dlcnJlZCwgb25s
+eSBkbS1YIGVtaXRzIGEgY2hhbmdlIGV2ZW50Lgo+IEJ1dCBpZiB0aGUgb3JpZ2luYWwgcGF0aCBp
+cyBkZWxldGVkKHJlbW92ZWQpIHRoZW4gYWRkIGV2ZW50IHdpbGwgYmUgdHJpZ2dlcnJlZC4KPiAK
+PiBGbHVzaCB0aGUgb2xkIFdXSUQgY291bGQgbWFrZSB0aGUgV1dJRCBjb3JyZWN0IGJ1dCB0aGUg
+c2l6ZSBpcyBzdGlsbCBpbmNvcnJlY3QgYXMgZm9sbG93aW5nLiBBbmQgMzYwMDUwNzYzMDA4MTBl
+YWRmODAwMDAwMDAwMDAwMTU1IGlzIGFjdHVhbGx5IDVHQi4KCmxpa2VseSBzYW1lIHJlYXNvbiBh
+cyBhYm92ZQoKPiBJIGJ1aWx0IHRoZSB0b29sIHVzaW5nIGxhdGVzdCBjb2RlIGFuZCB0cmllZCBi
+b3RoIGF0dHJpYnV0ZV9pZCBhbmQgZ2V0dWlkX2NhbGxvdXQuIFRoZSBpc3N1ZSBleGlzdCBpbiBi
+b3RoIGNvbmZpZ3VyYXRpb24uCj4gCj4gCj4+IERlYXIgbGlzdCwKPj4gV2UgaGF2ZSBhIEZDIHN0
+b3JhZ2UgYW5kIHVzaW5nIG11bHRpcGF0aGQgdG8gbWFuYWdlciB0aGUgRkMgcGF0aHMuCj4+IEkn
+dmUgbWV0IGFuIGlzc3VlIGluIHRoaXMgZW52aXJvbm1lbnQuIFRoZSBmb2xsb3dpbmcgaXMgaG93
+IHRvIHJlY3JlYXRlIHRoZSBpc3N1ZS4KPj4KPj4gPT09PT09PQo+PiAxLiBNYXAgYSBMVU4gdG8g
+aG9zdCB3aXRoIExVTiBJRCAwLAo+PiAyLiByZXNjYW4gZmNfaG9zdCwgYSBuZXcgcGF0aCB3aWxs
+IGJlIGZvdW5kIGJ5IG11bHRpcGF0aC4KPj4gMy4gVW5tYXAgTFVOIDAuICBwYXRoIHdpbGwgZmFp
+bGVkIGFzIGZvbGxvd2luZy4KPj4gW3Jvb3RAbG9jYWxob3N0IHN5c10jIG11bHRpcGF0aCAtbGwK
+Pj4gSnVsIDEwIDE4OjQxOjUwIHwgc2RwOiBjb3VsZG4ndCBnZXQgYXN5bW1ldHJpYyBhY2Nlc3Mg
+c3RhdGUKPj4gSnVsIDEwIDE4OjQxOjUwIHwgc2RxOiBjb3VsZG4ndCBnZXQgYXN5bW1ldHJpYyBh
+Y2Nlc3Mgc3RhdGUKPj4gMzYwMDUwNzYzMDA4MTBlYWRmODAwMDAwMDAwMDAwMTU2IGRtLTMgSUJN
+LDIxNDUKPj4gc2l6ZT04LjBHIGZlYXR1cmVzPScyIHF1ZXVlX2lmX25vX3BhdGggcmV0YWluX2F0
+dGFjaGVkX2h3X2hhbmRsZXInIGh3aGFuZGxlcj0nMSBhbHVhJyB3cD1ydwo+PiB8LSstIHBvbGlj
+eT0nc2VydmljZS10aW1lIDAnIHByaW89MCBzdGF0dXM9ZW5hYmxlZAo+PiB8IGAtIDI6MDowOjAg
+c2RwIDg6MjQwIGZhaWxlZCBmYXVsdHkgcnVubmluZwo+PiBgLSstIHBvbGljeT0nc2VydmljZS10
+aW1lIDAnIHByaW89MCBzdGF0dXM9ZW5hYmxlZAo+PiAgICAgYC0gMjowOjE6MCBzZHEgNjU6MCAg
+ZmFpbGVkIGZhdWx0eSBydW5uaW5nCj4+IDQuIE1hcCBhbm90aGVyIExVTiB3aGljaCBoYXZlIGRp
+ZmZlcmVudCBJRF9TRVJJQUwgYnV0IHdpdGggdGhlIHNhbWUgTFVOIElEKDApLgo+ICAgCj4gRGlk
+IHlvdSAicmVzY2FuIiB0aGUgU0NTSSBkZXZpY2UgdmlhIHN5c2ZzIHRvIGxldCBMaW51eCBrbm93
+IHRoYXQgdGhpcwo+IGlzIG5vdyBpbiBmYWN0IGEgZGlmZmVyZW50IGRldmljZT8KPiAgIAo+IEFG
+QUlLLCBMaW51eCBkZWNvZGVzIFNDU0kgc2Vuc2UgZGF0YSBmb3IgTFVOcyByZW1hcHBlZCBvbiB0
+aGUgc3RvcmFnZQo+IHRhcmdldCBhbmQgZW1pdHMgYSB1ZGV2IGV2ZW50LCBidXQgSSdtIG5vdCBh
+d2FyZSBvZiBhbnkgZGVmYXVsdCB1ZGV2Cj4gcnVsZSB0aGF0IHdvdWxkIGFjdHVhbGx5IHJlYWN0
+LiBUaGUga2VybmVsIGl0c2VsZiBkb2VzIG5vdCByZWFjdCBvdGhlcgo+IHRoYW4gY3JlYXRpbmcg
+dGhlIHVldmVudC4KCgotLSAKTWl0IGZyZXVuZGxpY2hlbiBHcsO8w59lbiAvIEtpbmQgcmVnYXJk
+cwpTdGVmZmVuIE1haWVyCgpMaW51eCBvbiB6IFN5c3RlbXMgRGV2ZWxvcG1lbnQKCklCTSBEZXV0
+c2NobGFuZCBSZXNlYXJjaCAmIERldmVsb3BtZW50IEdtYkgKVm9yc2l0emVuZGUgZGVzIEF1ZnNp
+Y2h0c3JhdHM6IE1hcnRpbmEgS29lZGVyaXR6Ckdlc2NoYWVmdHNmdWVocnVuZzogRGlyayBXaXR0
+a29wcApTaXR6IGRlciBHZXNlbGxzY2hhZnQ6IEJvZWJsaW5nZW4KUmVnaXN0ZXJnZXJpY2h0OiBB
+bXRzZ2VyaWNodCBTdHV0dGdhcnQsIEhSQiAyNDMyOTQKCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxp
+c3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlz
+dGluZm8vZG0tZGV2ZWw=
