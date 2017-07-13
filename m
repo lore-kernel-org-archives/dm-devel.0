@@ -1,18 +1,12 @@
-From: Renesanso <renesanso@yandex.ru>
-Subject: Re: dm-integrity
-Date: Wed, 12 Jul 2017 21:36:38 +0300
-Message-ID: <b9024848-2505-7ce5-6927-a4cf3ae144e2@yandex.ru>
-References: <bbf2a91d-2eac-5b10-903d-50939acfb57a@yandex.ru>
-	<4d2e0176-071a-1cb4-3eaa-3c3552a2ce09@gmail.com>
-	<0d01c698-211e-a969-8c4a-e6bb4ab2cf9b@yandex.ru>
-	<96314674-1b66-ce91-732e-17901d1f3236@yandex.ru>
-	<ce9f9bdb-cb04-097d-5628-4f4ea0155195@gmail.com>
+From: Guan Junxiong <guanjunxiong@huawei.com>
+Subject: [PATCH] multipath-tools: don't discard uevent for
+	NVMe-Fabrics device
+Date: Thu, 13 Jul 2017 15:47:03 +0800
+Message-ID: <1499932023-29852-1-git-send-email-guanjunxiong@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <ce9f9bdb-cb04-097d-5628-4f4ea0155195@gmail.com>
-Content-Language: ru-RU
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,55 +16,82 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Milan Broz <gmazyland@gmail.com>, mpatocka@redhat.com, dm-devel@redhat.com, dmitry.kasatkin@huawei.com
+To: dm-devel@redhat.com, christophe.varoqui@opensvc.com, mwilck@suse.com, keith.busch@intel.com
+Cc: philip.yang@huawei.com, zouming.zouming@huawei.com, hege09@huawei.com, guanjunxiong@huawei.com, shenhong09@huawei.com
 List-Id: dm-devel.ids
 
-SSBoYXZlIG90aGVyIHF1ZXN0aW9uOiB3aHkgeW91IGRvbnQgdXNlIEFFQUQgaWRlYSBmcm9tIHJl
-ZGhhZCBmb3IgCmRtLWNyeXB0IChjcnlwdHNldHVwLCB0aGF0IHdvcmtzLCBhcyB0aGV5IHByZXNl
-bnQpLCB0aGF0IHJlYWxpc2UgQUVTLUdDTSAKKGFzLCBleGFtcGxlIFpGUyB1c2UpPyBXaHkgZG8g
-eW91IHdhbnQgdG8gbWVyZ2UgZG0taW50ZWdyaXR5IGFuZCAKZG0tY3J5cHQ/IApodHRwczovL21i
-cm96LmZlZG9yYXBlb3BsZS5vcmcvdGFsa3MvRGV2Q29uZjIwMTcvZGV2Y29uZjIwMTctYWVhZC5w
-ZGYKCjA3LjA3LjIwMTcgMTM6NDcsIE1pbGFuIEJyb3og0L/QuNGI0LXRgjoKPiBPbiAwNy8wNS8y
-MDE3IDA2OjQ1IFBNLCBSZW5lc2Fuc28gd3JvdGU6Cj4+IDEuIEFuZCBpbiB0aGlzICgKPj4gaHR0
-cHM6Ly9rZXJuZWwuZ29vZ2xlc291cmNlLmNvbS9wdWIvc2NtL2xpbnV4L2tlcm5lbC9naXQva2Fz
-YXRraW4vbGludXgtZGlnc2lnLysvMmRmYTY3YTFhNGMwNDlmZDMzZmNjNmFiY2IxYzhjYTU3YjE3
-YTI2OC9Eb2N1bWVudGF0aW9uL2RldmljZS1tYXBwZXIvZG0taW50ZWdyaXR5LnR4dAo+PiApIGlt
-cGxlbWVudGF0aW9uIGdpdmVzIHZhcmlhbnQgdG8gdXNlIGV4dGVybmFsIGRldmljZSBmb3IgbWV0
-YWRhdGEgYW5kCj4+IGpvdXJuYWwuIEl0IHJlYWxseSBhZmZlY3QgcGVyZm9tYW5jZSwgSSB0aGlu
-ay4gRG8geW91IHBsYW4gZG8gYW5hbG9ndWUKPj4gZnVuY3Rpb25zPwo+IE5vdCB5ZXQuIFRoZSBk
-ZXNpZ24gd2FzIG1lYW50IGZvciBhdXRoZW50aWNhdGVkIGV4dGVuc2lvbiBhbmQgY3J5cHRzZXR1
-cAo+IGhhcyBvbmx5IG9uZSBkZXZpY2UgYXMgYSBiYWNrZW5kIChJIHJlYWxseSBkbyBub3Qgd2Fu
-dCB0byBtYWtlIGl0IGFub3RoZXIgdm9sdW1lIG1hbmFnZXIgOikKPiAoSXQgaXMgbm90IGVhc3kg
-dGFzayB0byBzb2x2ZSB0aGUgc2l0dWF0aW9uIHdoZW4gdGhlIHNlcGFyYXRlIGRldmljZXMgYXJl
-IG91dCBvZiBzeW5jLAo+IGFuZCBzZWN1cml0eSBpbXBsaWNhdGlvbnMgb25seSBjb21wbGljYXRl
-cyBpdCBtb3JlLikKPgo+IEJ1dCBJIGNhbiBpbWFnaW5lIHRoYXQgaWYgdGhlcmUgaXMgc29tZSBz
-dHJvbmcgdXNlIGNhc2UsIGl0IGNhbiBiZSBhZGRlZCB0aGVyZS4KPgo+IChBcyBzYWlkLCBpdCB3
-YXMgbm90IG1lYW5zIGFzIHN0cmFpZ2h0IHJlcGxhY2VtZW50IG9mIHRoZSBtb2R1bGUgbWVudGlv
-bmVkIGFib3ZlOwo+IHRoZSBuYW1lIGNsYXNoIGlzIGp1c3QgbXkgc3R1cGlkIGNvaW5jaWRlbmNl
-LikKPgo+PiAyLiBBbmQgb3RoZXIgcXVlc3Rpb246IGluIHlvdXIgaW1wbGVtZW50YXRpb24gdGFn
-cyB3cml0ZSByYXJlcnkgYWZ0ZXIKPj4gZGF0YSAoZWcuIGRhdGFbNTEyYl0sIHRhZ1szMmJdLCBk
-YXRhIFs1MTJiXSwgdGFnWzMyYl0pIG9yIGRhdGEgc3RvcmVzIGluCj4+IG9uZSAiaGFsZiIgb2Yg
-ZGlzayBhbmQgdGFncyBpbiBhbm90aGVyIChpbiBlbmQgb2YgZGlzaywgZXhhbXBsZSk/IFNlY29u
-ZAo+PiB2YXJpYW50IGdpdmVzIFZFUlkgSFVHRSBwZW5hbHR5IG9uIGhkZCdzLgo+IFRhZ3MgYXJl
-IHdyaXR0ZW4gaW50byBtZXRhZGF0YSBzZWN0b3JzIHRoYXQgYXJlIGludGVybGVhdmVkIHdpdGgg
-bm9ybWFsCj4gZGF0YSBzZWN0b3JzLiAoVGhpcyBhbGxvdyB1cyB0byByZXNpemUgdGhlIGRldmlj
-ZSBsYXRlci4pCj4KPiBUaGVyZSBhcmUgbXVsdGlwbGUgdGFncyBpbiBvbmUgbWV0YWRhdGEgc2Vj
-dG9yIGFuZCBkbS1pbnRlZ3JpdHkKPiBwcm92aWRlcyBhbGwgdGhlIGluZnJhc3RydWN0dXJlIHRv
-IHBlcmZvcm0gYXRvbWljIHdyaXRlIG9mIHNlY3RvcittZXRhZGF0YS4KPgo+PiAzLiBBbmQgY2Fu
-LCBhcyBJIHNlZSB0aGVyZSBtYW55IG9wdGlvbnMgKGFzIGpvdXJuYWwsIGJ1ZmZlcnMgYW5kIG90
-aGVyKS4KPj4gQ2FuIHlvdSBnaXZlIG1lIGV4YW1wbGUgb2YgcGFyYW1ldGVycyBjb25maWd1cmF0
-aW9uLCB0aGF0IGZ1bGx5Cj4+IGNvcnJlY3RseSB3b3JrIGluIHByb2R1Y3Rpb24gKEtWTXMtIFZN
-cyAtPiByYXcgLT4gRVhUNCAtPiBMVk0gLT4gTUQgLT4KPj4gbXVsdGlwbGUgZG0taW50ZWdyaXR5
-IG9uIG11bHRpcGxlIHBoaXNpY2FsIGRpc2tzICk/Cj4gU29ycnksIEkgZG8gbm90IGhhdmUgYW55
-ICJnb29kIHByYWN0aWNlcyIgb3IgYW55IGNvbmZpZ3VyYXRpb25zIHlldC4KPiBJbiBmYWN0LCBJ
-IGFtIHN0aWxsIGN1cmlvdXMgd2hhdCB1c2UgY2FzZXMgcGVvcGxlIGNhbiBmaW5kIGZvciBpdCA6
-KQo+Cj4gVGhlcmUgaXMgYSBsb3Qgb2YgdGhpbmdzIHRvIGZpbmUtdHVuZSB0aG91Z2guIEJ1dCB0
-aGUgaW5pdGlhbAo+IHBlbmFsdHkgb2YgdXNpbmcgZGF0YSBqb3VybmFsIHdpbGwgYmUgYWx3YXlz
-IGJpZy4KPiAoWW91IGNhbiBzd2l0Y2ggam91cm5hbGxpbmcgb2ZmIGlmIGl0IGlzIGFscmVhZHkg
-b24gaGlnaGVyIGxheWVyLikKPgo+IFRoZSB3aG9sZSBpbnRlZ3JpdHkvY3J5cHQgc3RhY2sgd2Fz
-IG1lYW50IGZvciBleHBlcmltZW50cyB3aXRoCj4gYXV0aGVudGljYXRlZCBlbmNyeXB0aW9uIG9u
-IHRoZSBzZWN0b3IgbGV2ZWwgKGFuZCB3aXRoIGV4cGVjdGVkCj4gcGVyZm9ybWFuY2UgcGVuYWx0
-eSAtIHNlY3VyaXR5IGlzIHRoZSBmaXJzdCBjbGFzcyBjaXRpemVuIGhlcmUpLgo+Cj4gSSB3aWxs
-IHRyeSB0byBwdXQgc29tZSBtb3JlIGluZm8gaW50byBzb21lIGJsb2cgc29vbi4KPgo+IFRoYW5r
-cywKPiBNaWxhbgoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29t
-Cmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+The devpath of uevent of NVMe-Fabrics device is like this
+"../devices/virtual/nvme-fabrics/ctl/nvme0/nvme0n1" which
+doesn't contains the "/block/" string. So when new uvents
+of such nvme devices arise, the multipathd daemon still ignores
+them, which results the DM-multipath doesn't update the table.
+This patch fixes this by introducing a new helper to filter
+"/block/" and "nvme-fabrics/ctl".
+
+Signed-off-by: Junxiong Guan <guanjunxiong@huawei.com>
+---
+ libmultipath/uevent.c | 38 ++++++++++++++++++++++++++++++--------
+ 1 file changed, 30 insertions(+), 8 deletions(-)
+
+diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
+index 4fbd1dfb..09b86be3 100644
+--- a/libmultipath/uevent.c
++++ b/libmultipath/uevent.c
+@@ -143,25 +143,47 @@ uevent_need_merge(void)
+ 	return need_merge;
+ }
+ 
++static char *uevent_devpath_filter(const char *devpath, const char *filter_str)
++{
++	char *tmp = strstr(devpath, filter_str);
++
++	if (tmp == NULL) {
++		condlog(4, "no '%s' in '%s'", filter_str, devpath);
++		return NULL;
++	}
++	tmp += strlen(filter_str);
++	if (*tmp == '\0')
++		/* just ".../filter_str/" - discard */
++		return NULL;
++
++	return tmp;
++}
++
+ static bool
+ uevent_can_discard_by_devpath(const char *devpath)
+ {
+ 	static const char BLOCK[] = "/block/";
+-	const char *tmp = strstr(devpath, BLOCK);
++	static const char NVME_FABRICS[] = "/nvme-fabrics/ctl/";
++	int flag_nvmf = 0;
++	char *tmp = NULL;
+ 
++	tmp = uevent_devpath_filter(devpath, BLOCK);
+ 	if (tmp == NULL) {
+-		condlog(4, "no /block/ in '%s'", devpath);
+-		return true;
++		flag_nvmf = 1;
++		tmp = uevent_devpath_filter(devpath, NVME_FABRICS);
+ 	}
+-	tmp += sizeof(BLOCK) - 1;
+-	if (*tmp == '\0')
+-		/* just ".../block/" - discard */
++
++	if (tmp == NULL)
+ 		return true;
+ 	/*
+-	 * If there are more path elements after ".../block/xyz",
+-	 * it's a partition - discard it; but don't discard ".../block/sda/".
++	 * For BLOCK, if there are more path elements after ".../block/sda",
++	 * it's a partition - discard it; or else keep ".../block/sda/".
++	 * For NVME_FABRICS, don't discard "../nvme-fabrics/ctl/nvme0/nvme0n1".
+ 	 */
+ 	tmp = strchr(tmp, '/');
++	if (flag_nvmf && tmp != NULL)
++		tmp = strchr(++tmp, '/');
++
+ 	return tmp != NULL && *(tmp + 1) != '\0';
+ }
+ 
+-- 
+2.11.1
