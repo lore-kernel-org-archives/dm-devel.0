@@ -1,7 +1,8 @@
 From: heinzm@redhat.com
-Subject: [PATCH] dm raid: avoid mddev->suspended access
-Date: Thu, 13 Jul 2017 17:34:24 +0200
-Message-ID: <20170713153424.24400-1-heinzm@redhat.com>
+Subject: [PATCH] dm raid: fix validate_raid_redundancy()
+	activation check
+Date: Thu, 13 Jul 2017 17:36:12 +0200
+Message-ID: <20170713153612.24503-1-heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -21,70 +22,55 @@ List-Id: dm-devel.ids
 
 From: Heinz Mauelshagen <heinzm@redhat.com>
 
-Use runtime flag to ensure that an mddev gets suspended/resumed just once.
+On growing reshapes (i.e. stripes being added to a raid set), the
+new stripe images are not in sync and not part of the raid set until
+the reshape is started.
+
+LVM2 has to request multiple table reloads involving superblock updates
+in order to reflect proper size of SubLVs in the cluster.  Before a stripe
+adding reshape starts, validate_raid_redundancy() fails as a result of that
+because it checks the total number of devices for the number of rebuild
+ones rather than the actual ones in the raid set retrieved from the
+superblock thus fails raid4/5/6/10 redundancy checks.
+
+E.g. convert 3 stripes -> 7 stripes raid5 (which only allows for maximum
+1 device to fail) requesting +4 delta disks causing 4 devices to rebuild
+during reshaping thus failing activation.
+
+Move validate_raid_redundancy() to get access to current raid_set members.
 
 Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
 ---
- drivers/md/dm-raid.c | 12 +++++++-----
- 1 file changed, 7 insertions(+), 5 deletions(-)
+ drivers/md/dm-raid.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index b409015..60c524b 100644
+index 60c524b..757355b 100644
 --- a/drivers/md/dm-raid.c
 +++ b/drivers/md/dm-raid.c
-@@ -208,6 +208,7 @@ struct raid_dev {
- #define RT_FLAG_RS_BITMAP_LOADED	2
- #define RT_FLAG_UPDATE_SBS		3
- #define RT_FLAG_RESHAPE_RS		4
-+#define RT_FLAG_RS_SUSPENDED		5
+@@ -2542,11 +2542,6 @@ static int analyse_superblocks(struct dm_target *ti, struct raid_set *rs)
+ 	if (!freshest)
+ 		return 0;
  
- /* Array elements of 64 bit needed for rebuild/failed disk bits */
- #define DISKS_ARRAY_ELEMS ((MAX_RAID_DEVICES + (sizeof(uint64_t) * 8 - 1)) / sizeof(uint64_t) / 8)
-@@ -3169,6 +3170,7 @@ static int raid_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	}
- 
- 	mddev_suspend(&rs->md);
-+	set_bit(RT_FLAG_RS_SUSPENDED, &rs->runtime_flags);
- 
- 	/* Try to adjust the raid4/5/6 stripe cache size to the stripe size */
- 	if (rs_is_raid456(rs)) {
-@@ -3626,7 +3628,7 @@ static void raid_postsuspend(struct dm_target *ti)
- {
- 	struct raid_set *rs = ti->private;
- 
--	if (!rs->md.suspended)
-+	if (!test_and_set_bit(RT_FLAG_RS_SUSPENDED, &rs->runtime_flags))
- 		mddev_suspend(&rs->md);
- 
- 	rs->md.ro = 1;
-@@ -3760,7 +3762,7 @@ static int rs_start_reshape(struct raid_set *rs)
- 		return r;
- 
- 	/* Need to be resumed to be able to start reshape, recovery is frozen until raid_resume() though */
--	if (mddev->suspended)
-+	if (test_and_clear_bit(RT_FLAG_RS_SUSPENDED, &rs->runtime_flags))
- 		mddev_resume(mddev);
- 
+-	if (validate_raid_redundancy(rs)) {
+-		rs->ti->error = "Insufficient redundancy to activate array";
+-		return -EINVAL;
+-	}
+-
  	/*
-@@ -3787,8 +3789,8 @@ static int rs_start_reshape(struct raid_set *rs)
- 	}
+ 	 * Validation of the freshest device provides the source of
+ 	 * validation for the remaining devices.
+@@ -2555,6 +2550,11 @@ static int analyse_superblocks(struct dm_target *ti, struct raid_set *rs)
+ 	if (super_validate(rs, freshest))
+ 		return -EINVAL;
  
- 	/* Suspend because a resume will happen in raid_resume() */
--	if (!mddev->suspended)
--		mddev_suspend(mddev);
-+	set_bit(RT_FLAG_RS_SUSPENDED, &rs->runtime_flags);
-+	mddev_suspend(mddev);
- 
- 	/*
- 	 * Now reshape got set up, update superblocks to
-@@ -3884,7 +3886,7 @@ static void raid_resume(struct dm_target *ti)
- 	if (!(rs->ctr_flags & RESUME_STAY_FROZEN_FLAGS))
- 		clear_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
- 
--	if (mddev->suspended)
-+	if (test_and_clear_bit(RT_FLAG_RS_SUSPENDED, &rs->runtime_flags))
- 		mddev_resume(mddev);
- }
- 
++	if (validate_raid_redundancy(rs)) {
++		rs->ti->error = "Insufficient redundancy to activate array";
++		return -EINVAL;
++	}
++
+ 	rdev_for_each(rdev, mddev)
+ 		if (!test_bit(Journal, &rdev->flags) &&
+ 		    rdev != freshest &&
 -- 
 2.9.4
