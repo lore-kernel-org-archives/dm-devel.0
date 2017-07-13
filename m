@@ -1,14 +1,19 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH] multipath-tools: don't discard uevent for
- NVMe-Fabrics device
-Date: Thu, 13 Jul 2017 12:04:56 +0200
-Message-ID: <1499940296.6432.1.camel@suse.com>
-References: <1499932023-29852-1-git-send-email-guanjunxiong@huawei.com>
+From: Milan Broz <gmazyland@gmail.com>
+Subject: Re: dm-integrity
+Date: Thu, 13 Jul 2017 12:35:54 +0200
+Message-ID: <6b5bb9c8-b005-76d0-052f-f634e5f8912c@gmail.com>
+References: <bbf2a91d-2eac-5b10-903d-50939acfb57a@yandex.ru>
+	<4d2e0176-071a-1cb4-3eaa-3c3552a2ce09@gmail.com>
+	<0d01c698-211e-a969-8c4a-e6bb4ab2cf9b@yandex.ru>
+	<96314674-1b66-ce91-732e-17901d1f3236@yandex.ru>
+	<ce9f9bdb-cb04-097d-5628-4f4ea0155195@gmail.com>
+	<b9024848-2505-7ce5-6927-a4cf3ae144e2@yandex.ru>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1499932023-29852-1-git-send-email-guanjunxiong@huawei.com>
+In-Reply-To: <b9024848-2505-7ce5-6927-a4cf3ae144e2@yandex.ru>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,25 +23,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Guan Junxiong <guanjunxiong@huawei.com>, dm-devel@redhat.com, christophe.varoqui@opensvc.com, keith.busch@intel.com
-Cc: philip.yang@huawei.com, zouming.zouming@huawei.com, hege09@huawei.com, shenhong09@huawei.com
+To: Renesanso <renesanso@yandex.ru>, mpatocka@redhat.com, dm-devel@redhat.com, dmitry.kasatkin@huawei.com
 List-Id: dm-devel.ids
 
-T24gVGh1LCAyMDE3LTA3LTEzIGF0IDE1OjQ3ICswODAwLCBHdWFuIEp1bnhpb25nIHdyb3RlOgo+
-IFRoZSBkZXZwYXRoIG9mIHVldmVudCBvZiBOVk1lLUZhYnJpY3MgZGV2aWNlIGlzIGxpa2UgdGhp
-cwo+ICIuLi9kZXZpY2VzL3ZpcnR1YWwvbnZtZS1mYWJyaWNzL2N0bC9udm1lMC9udm1lMG4xIiB3
-aGljaAo+IGRvZXNuJ3QgY29udGFpbnMgdGhlICIvYmxvY2svIiBzdHJpbmcuIFNvIHdoZW4gbmV3
-IHV2ZW50cwo+IG9mIHN1Y2ggbnZtZSBkZXZpY2VzIGFyaXNlLCB0aGUgbXVsdGlwYXRoZCBkYWVt
-b24gc3RpbGwgaWdub3Jlcwo+IHRoZW0sIHdoaWNoIHJlc3VsdHMgdGhlIERNLW11bHRpcGF0aCBk
-b2Vzbid0IHVwZGF0ZSB0aGUgdGFibGUuCj4gVGhpcyBwYXRjaCBmaXhlcyB0aGlzIGJ5IGludHJv
-ZHVjaW5nIGEgbmV3IGhlbHBlciB0byBmaWx0ZXIKPiAiL2Jsb2NrLyIgYW5kICJudm1lLWZhYnJp
-Y3MvY3RsIi4KPiAKPiBTaWduZWQtb2ZmLWJ5OiBKdW54aW9uZyBHdWFuIDxndWFuanVueGlvbmdA
-aHVhd2VpLmNvbT4KClRoZSBhbmFseXNpcyBpcyBjb3JyZWN0LCBidXQgTkFLIG5vbmV0aGVsZXNz
-IGZvciB0aGUgcGF0Y2guIFRoZSB3aG9sZQp1ZXZlbnRfY2FuX2Rpc2NhcmRfYnlfZGV2cGF0aCgp
-IGFwcHJvYWNoIGlzIGJyb2tlbi4gSSdsbCBzZW5kIGEgcGF0Y2gKZHJvcHBpbmcgdGhhdCBmdW5j
-dGlvbiBlbnRpcmVseSBsYXRlciB0b2RheS4KCk1hcnRpbgoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sg
-PG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGludXgg
-R21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRv
-bgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1k
-ZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9k
-bS1kZXZlbA==
+On 07/12/2017 08:36 PM, Renesanso wrote:
+> I have other question: why you dont use AEAD idea from redhad for 
+> dm-crypt (cryptsetup, that works, as they present), that realise AES-GCM 
+> (as, example ZFS use)? Why do you want to merge dm-integrity and 
+> dm-crypt? 
+> https://mbroz.fedorapeople.org/talks/DevConf2017/devconf2017-aead.pdf
+
+Sorry? You mean my own talk? That exactly describes how it is implemented now.
+
+We use AEAD when used together with encryption (dm-crypt) but this requires
+LUKS2 userspace branch and this is not something I would like to use until
+it is more stable.
+
+As said in the slides you linked, dm-integrity can operate in two modes:
+
+ - standalone [parity only] (configured through integritysetup) and
+
+ - in cooperation with dm-crypt [for AEAD - authenticated encryption)
+  (will be configured through cryptsetup, but it is not yet in master branch)
+
+Milan
