@@ -1,16 +1,17 @@
-From: Damien Le Moal <damien.lemoal@wdc.com>
-Subject: Re: [PATCH] dm-zoned: Avoid metadata flush writeback
- throttling
-Date: Mon, 24 Jul 2017 18:16:00 +0900
-Message-ID: <0ee663a1-f497-1d10-f252-91fee072322a@wdc.com>
-References: <20170724074422.23948-1-damien.lemoal@wdc.com>
-	<20170724080320.GA16608@infradead.org>
+From: Bart Van Assche <Bart.VanAssche@wdc.com>
+Subject: Re: [PATCH 1/4] libmultipath: get_udev_uid: make sure
+ pp->wwid is 0-terminated
+Date: Fri, 14 Jul 2017 14:56:29 +0000
+Message-ID: <1500044188.2662.4.camel@wdc.com>
+References: <20170714113209.17177-1-mwilck@suse.com>
+	<20170714113209.17177-2-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170724080320.GA16608@infradead.org>
+In-Reply-To: <20170714113209.17177-2-mwilck@suse.com>
 Content-Language: en-US
+Content-ID: <E35AD630428A1643BF952AD6FC1B0867@namprd04.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,55 +21,54 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christoph Hellwig <hch@infradead.org>
-Cc: Bart Van Assche <bart.vanassche@sandisk.com>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+To: "bmarzins@redhat.com" <bmarzins@redhat.com>, "tang.junhui@zte.com.cn" <tang.junhui@zte.com.cn>, "mwilck@suse.com" <mwilck@suse.com>, "hare@suse.de" <hare@suse.de>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>, "guanjunxiong@huawei.com" <guanjunxiong@huawei.com>
+Cc: "mwilck@suse.de" <mwilck@suse.de>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "xose.vazquez@gmail.com" <xose.vazquez@gmail.com>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>
 List-Id: dm-devel.ids
 
-
-
-On 7/24/17 17:03, Christoph Hellwig wrote:
-> On Mon, Jul 24, 2017 at 04:44:22PM +0900, Damien Le Moal wrote:
->> Avoid metadata flush to be blocked by the writeback throttling code in
->> wbt_wait(). Otherwise, we can end up with a deadlock under heavy write
->> load with all chunk works active. In such situation, a deadlock can
->> happen if the flush work is blocked by the throttling code while holding
->> the metadata lock: as the chunk works will wait for the metadata lock
->> too, no progress can be made.
->>
->> Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
->> ---
->>  drivers/md/dm-zoned-metadata.c | 3 ++-
->>  1 file changed, 2 insertions(+), 1 deletion(-)
->>
->> diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
->> index 884ff7c170a0..f694fb98b002 100644
->> --- a/drivers/md/dm-zoned-metadata.c
->> +++ b/drivers/md/dm-zoned-metadata.c
->> @@ -567,7 +567,8 @@ static void dmz_write_mblock(struct dmz_metadata *zmd, struct dmz_mblock *mblk,
->>  	bio->bi_bdev = zmd->dev->bdev;
->>  	bio->bi_private = mblk;
->>  	bio->bi_end_io = dmz_mblock_bio_end_io;
->> -	bio_set_op_attrs(bio, REQ_OP_WRITE, REQ_META | REQ_PRIO);
->> +	bio_set_op_attrs(bio, REQ_OP_WRITE,
->> +			 REQ_META | REQ_PRIO | REQ_SYNC | REQ_IDLE);
+On Fri, 2017-07-14 at 13:32 +0200, Martin Wilck wrote:
+> If the first WWID_LEN bytes of the uuid_attribute do not contain
+> a 0 byte, pp->wwid may end up not properly terminated. Fix it.
 > 
-> Please just assign bi_opf directly instea dof using bio_set_op_attrs
-> in new code.
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  libmultipath/discovery.c | 1 +
+>  1 file changed, 1 insertion(+)
+> 
+> diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+> index 663c8eaa..9951af84 100644
+> --- a/libmultipath/discovery.c
+> +++ b/libmultipath/discovery.c
+> @@ -1615,6 +1615,7 @@ get_udev_uid(struct path * pp, char *uid_attribute, struct udev_device *udev)
+>  			len = strlen(value);
+>  		}
+>  		strncpy(pp->wwid, value, len);
+> +		pp->wwid[WWID_SIZE - 1] = '\0';
+>  	} else {
+>  		condlog(3, "%s: no %s attribute", pp->dev,
+>  			uid_attribute);
 
-OK. Will do.
+Hi Martin,
 
-> Also what do you need REQ_IDLE for?
+Your patch does not cause all overflows to be reported. How about using the
+following (untested) alternative?
 
-It is not really needed here, but the wbt_should_throttle() code test is:
-
-if ((bio->bi_opf & (REQ_SYNC | REQ_IDLE)) == (REQ_SYNC | REQ_IDLE))
-	return false;
-
-No if REQ_IDLE is not set, wbt will trigger.
-
-Having a req flag that says "no wb throttling please" would be a lot
-cleaner...
-
--- 
-Damien Le Moal,
-Western Digital
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index eca4ce97..80d962e6 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1607,13 +1607,8 @@ get_udev_uid(struct path * pp, char *uid_attribute, struct udev_device *udev)
+ 	if (!value || strlen(value) == 0)
+ 		value = getenv(uid_attribute);
+ 	if (value && strlen(value)) {
+-		if (strlen(value) + 1 > WWID_SIZE) {
++		if (strlcpy(pp->wwid, value, sizeof(pp->wwid)) >= WWID_SIZE)
+ 			condlog(0, "%s: wwid overflow", pp->dev);
+-			len = WWID_SIZE;
+-		} else {
+-			len = strlen(value);
+-		}
+-		strncpy(pp->wwid, value, len);
+ 	} else {
+ 		condlog(3, "%s: no %s attribute", pp->dev,
+ 			uid_attribute);
+Bart.
