@@ -1,59 +1,41 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: "Ewan D. Milne" <emilne@redhat.com>
 Subject: Re: [for-4.14 RFC PATCH 1/2] dm rq: avoid deadlock if dm-mq is
  stacked on old .request_fn device(s)
-Date: Fri, 14 Jul 2017 10:19:29 -0400
-Message-ID: <20170714141929.GB18245@redhat.com>
+Date: Fri, 14 Jul 2017 13:17:53 -0400
+Message-ID: <1500052673.10198.174.camel@localhost.localdomain>
 References: <20170713211217.52361-1-snitzer@redhat.com>
- <20170713211217.52361-2-snitzer@redhat.com>
- <20170714072250.GC17046@lst.de>
+         <20170713211217.52361-2-snitzer@redhat.com> <20170714072250.GC17046@lst.de>
+         <20170714141929.GB18245@redhat.com>
+Reply-To: emilne@redhat.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20170714072250.GC17046@lst.de>
+In-Reply-To: <20170714141929.GB18245@redhat.com>
 Sender: linux-scsi-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: dm-devel@redhat.com, linux-block@vger.kernel.org, linux-scsi@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Christoph Hellwig <hch@lst.de>, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Fri, Jul 14 2017 at  3:22am -0400,
-Christoph Hellwig <hch@lst.de> wrote:
-
-> The problem here is the following:
+On Fri, 2017-07-14 at 10:19 -0400, Mike Snitzer wrote:
 > 
-> blk_finish_request must always be called with the queue lock held,
-> it even has an assert.
+> Do you see a benefit to extracting that portion of your WIP patch
+> (removing the ->complete handler entirely)?
 > 
-> Without blk-mq used by dm-rq, dm uses the block softirq to execute the
-> completion, which means we always have a different execution context and
-> can take the queue lock again without issuesi.
+> Or leave well enough alone and just continue to disable dm-mq's ability
+> to stack on .request_fn paths?
 > 
-> With blk-mq used by dm-rq, the the dm .complete handler that is the rough
-> equivalent of the softirq handler is called either directly if were are
-> on the same CPU, or using a IPI (hardirq) if not.  If this handler gets
-> called from a legacy request function it will be called with the
-> queue_lock held, but if it's called from a blk-mq driver or actually
-> uses the IPI no lock will be held.
+> Given SCSI's switch to scsi-mq by default I cannot see value in propping
+> up stacking on the old .request_fn devices.
 
-Yeap, very well explained!  I found exactly that yesterday when I
-developed this patch.  I stopped short of getting into those details in
-my header though, but as you know it comes down to dm_complete_request's
-blk-mq-vs-not branching (blk_mq_complete_request vs blk_complete_request).
+So, the dm_mod.use_blk_mq flag is global, right?  I guess the question
+is whether all of the block device types used on a system under DM are
+supported under MQ.  If that is the case then we would be OK.
 
-> When I did my blk-mq only for dm-mpath WIP patch my solution to that
-> was that I removed the ->complete handler entirely and just ran the
-> whole dm completion from the original hardirq context.  With that change
-> I know that for blk-mq we'll never hold the queue_lock (and the blk-mq
-> request free path doesn't care), and for legacy we always hold it,
-> so __blk_put_request can always be used.
+The other question is whether there are negative performance
+consequences in any (corner?) cases with MQ that would result in it
+being preferable to run in non-MQ mode (e.g. tag space with lpfc, did
+we ever resolve that?) but the right approach there is to put the effort
+into the MQ path going forward, as has been the case.
 
-Do you see a benefit to extracting that portion of your WIP patch
-(removing the ->complete handler entirely)?
-
-Or leave well enough alone and just continue to disable dm-mq's ability
-to stack on .request_fn paths?
-
-Given SCSI's switch to scsi-mq by default I cannot see value in propping
-up stacking on the old .request_fn devices.
-
-But interested to get your thoughts, thanks.
+-Ewan
