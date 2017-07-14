@@ -1,76 +1,38 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 2/4] libmultipath: drop
-	uevent_can_discard_by_devpath
-Date: Fri, 14 Jul 2017 13:32:07 +0200
-Message-ID: <20170714113209.17177-3-mwilck@suse.com>
-References: <20170714113209.17177-1-mwilck@suse.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [for-4.14 RFC PATCH 0/2] dm rq: eliminate historic blk-mq and
+ .request_fn queue stacking restrictions
+Date: Fri, 14 Jul 2017 10:02:06 -0400
+Message-ID: <20170714140206.GA18245@redhat.com>
+References: <20170713211217.52361-1-snitzer@redhat.com>
+ <20170714071257.GB17046@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170714113209.17177-1-mwilck@suse.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, tang.junhui@zte.com.cn, Benjamin Marzinski <bmarzins@redhat.com>, Hannes Reinecke <hare@suse.de>, Guan Junxiong <guanjunxiong@huawei.com>
-Cc: Martin Wilck <mwilck@suse.de>, dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>, linux-nvme@lists.infradead.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20170714071257.GB17046@lst.de>
+Sender: linux-block-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: dm-devel@redhat.com, linux-block@vger.kernel.org, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-This function is broken. Not all devices that matter for multipathd
-follow the block/$DEVICE/$PARTITION convention (example: NVME)
+On Fri, Jul 14 2017 at  3:12am -0400,
+Christoph Hellwig <hch@lst.de> wrote:
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
-Reviewed-by: Hannes Reinecke <hare@suse.de>
----
- libmultipath/uevent.c | 25 -------------------------
- 1 file changed, 25 deletions(-)
+> Btw, we might want to expedite this to 4.13, a 4.13 now defaults
+> to blk-mq for scsi, and this patch would make sure that dm keeps
+> on just working with that switch.
 
-diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
-index 4fbd1dfb..b688ca03 100644
---- a/libmultipath/uevent.c
-+++ b/libmultipath/uevent.c
-@@ -143,36 +143,11 @@ uevent_need_merge(void)
- 	return need_merge;
- }
- 
--static bool
--uevent_can_discard_by_devpath(const char *devpath)
--{
--	static const char BLOCK[] = "/block/";
--	const char *tmp = strstr(devpath, BLOCK);
--
--	if (tmp == NULL) {
--		condlog(4, "no /block/ in '%s'", devpath);
--		return true;
--	}
--	tmp += sizeof(BLOCK) - 1;
--	if (*tmp == '\0')
--		/* just ".../block/" - discard */
--		return true;
--	/*
--	 * If there are more path elements after ".../block/xyz",
--	 * it's a partition - discard it; but don't discard ".../block/sda/".
--	 */
--	tmp = strchr(tmp, '/');
--	return tmp != NULL && *(tmp + 1) != '\0';
--}
--
- bool
- uevent_can_discard(struct uevent *uev)
- {
- 	struct config * conf;
- 
--	if (uevent_can_discard_by_devpath(uev->devpath))
--		return true;
--
- 	/*
- 	 * do not filter dm devices by devnode
- 	 */
--- 
-2.13.2
+Don't think we need to rush anything in response to that change in
+SCSI's default.  old .request_fn DM multipath works happily ontop of
+blk-mq devices (so long as all paths are blk-mq).
+
+Similarly, blk-mq DM multipath works ontop of all blk-mq devices.
+
+Lastly, old .request_fn DM multipath ontop of old .request_fn paths
+works fine.
+
+It is just blk-mq DM multipath ontop of old .request_fn paths that is
+disallowed in current upstream code.
+
+But again, I really don't see why we should even want/need to support
+that mode... hence my question raised in this RFC.
