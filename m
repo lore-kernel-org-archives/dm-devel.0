@@ -1,16 +1,16 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 1/4] libmultipath: get_udev_uid: make sure
- pp->wwid is 0-terminated
-Date: Fri, 14 Jul 2017 17:17:53 -0500
-Message-ID: <20170714221753.GA2940@octiron.msp.redhat.com>
+Subject: Re: [PATCH 2/4] libmultipath: drop
+	uevent_can_discard_by_devpath
+Date: Fri, 14 Jul 2017 17:29:32 -0500
+Message-ID: <20170714222932.GB2940@octiron.msp.redhat.com>
 References: <20170714113209.17177-1-mwilck@suse.com>
-	<20170714113209.17177-2-mwilck@suse.com>
+	<20170714113209.17177-3-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20170714113209.17177-2-mwilck@suse.com>
+In-Reply-To: <20170714113209.17177-3-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,30 +24,60 @@ To: Martin Wilck <mwilck@suse.com>
 Cc: Martin Wilck <mwilck@suse.de>, Xose Vazquez Perez <xose.vazquez@gmail.com>, tang.junhui@zte.com.cn, Guan Junxiong <guanjunxiong@huawei.com>, linux-nvme@lists.infradead.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-ACK, but I'm fine with Bart's patch as well.
+ACK
 
 -Ben
 
-On Fri, Jul 14, 2017 at 01:32:06PM +0200, Martin Wilck wrote:
-> If the first WWID_LEN bytes of the uuid_attribute do not contain
-> a 0 byte, pp->wwid may end up not properly terminated. Fix it.
+On Fri, Jul 14, 2017 at 01:32:07PM +0200, Martin Wilck wrote:
+> This function is broken. Not all devices that matter for multipathd
+> follow the block/$DEVICE/$PARTITION convention (example: NVME)
 > 
 > Signed-off-by: Martin Wilck <mwilck@suse.com>
+> Reviewed-by: Hannes Reinecke <hare@suse.de>
 > ---
->  libmultipath/discovery.c | 1 +
->  1 file changed, 1 insertion(+)
+>  libmultipath/uevent.c | 25 -------------------------
+>  1 file changed, 25 deletions(-)
 > 
-> diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-> index 663c8eaa..9951af84 100644
-> --- a/libmultipath/discovery.c
-> +++ b/libmultipath/discovery.c
-> @@ -1615,6 +1615,7 @@ get_udev_uid(struct path * pp, char *uid_attribute, struct udev_device *udev)
->  			len = strlen(value);
->  		}
->  		strncpy(pp->wwid, value, len);
-> +		pp->wwid[WWID_SIZE - 1] = '\0';
->  	} else {
->  		condlog(3, "%s: no %s attribute", pp->dev,
->  			uid_attribute);
+> diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
+> index 4fbd1dfb..b688ca03 100644
+> --- a/libmultipath/uevent.c
+> +++ b/libmultipath/uevent.c
+> @@ -143,36 +143,11 @@ uevent_need_merge(void)
+>  	return need_merge;
+>  }
+>  
+> -static bool
+> -uevent_can_discard_by_devpath(const char *devpath)
+> -{
+> -	static const char BLOCK[] = "/block/";
+> -	const char *tmp = strstr(devpath, BLOCK);
+> -
+> -	if (tmp == NULL) {
+> -		condlog(4, "no /block/ in '%s'", devpath);
+> -		return true;
+> -	}
+> -	tmp += sizeof(BLOCK) - 1;
+> -	if (*tmp == '\0')
+> -		/* just ".../block/" - discard */
+> -		return true;
+> -	/*
+> -	 * If there are more path elements after ".../block/xyz",
+> -	 * it's a partition - discard it; but don't discard ".../block/sda/".
+> -	 */
+> -	tmp = strchr(tmp, '/');
+> -	return tmp != NULL && *(tmp + 1) != '\0';
+> -}
+> -
+>  bool
+>  uevent_can_discard(struct uevent *uev)
+>  {
+>  	struct config * conf;
+>  
+> -	if (uevent_can_discard_by_devpath(uev->devpath))
+> -		return true;
+> -
+>  	/*
+>  	 * do not filter dm devices by devnode
+>  	 */
 > -- 
 > 2.13.2
