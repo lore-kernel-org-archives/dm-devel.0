@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 3/4] libmultipath: only listen for uevents with
-	DEVTYPE=disk
-Date: Fri, 14 Jul 2017 13:32:08 +0200
-Message-ID: <20170714113209.17177-4-mwilck@suse.com>
+Subject: [PATCH 1/4] libmultipath: get_udev_uid: make sure
+	pp->wwid is 0-terminated
+Date: Fri, 14 Jul 2017 13:32:06 +0200
+Message-ID: <20170714113209.17177-2-mwilck@suse.com>
 References: <20170714113209.17177-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,29 +22,25 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, tang.junhui@zte.com.cn,
 Cc: Martin Wilck <mwilck@suse.de>, dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>, linux-nvme@lists.infradead.org
 List-Id: dm-devel.ids
 
-We are only interested in disks anyway. This saves us checking
-for devtype in the uevent processing queue, and is more powerful
-than the previous test in the dropped function
-uevent_can_discard_by_devpath().
+If the first WWID_LEN bytes of the uuid_attribute do not contain
+a 0 byte, pp->wwid may end up not properly terminated. Fix it.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
-Reviewed-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/uevent.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/discovery.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
-index b688ca03..eb44da56 100644
---- a/libmultipath/uevent.c
-+++ b/libmultipath/uevent.c
-@@ -770,7 +770,7 @@ int uevent_listen(struct udev *udev)
- 		goto out;
- 	}
- 	err = udev_monitor_filter_add_match_subsystem_devtype(monitor, "block",
--							      NULL);
-+							      "disk");
- 	if (err)
- 		condlog(2, "failed to create filter : %s", strerror(-err));
- 	err = udev_monitor_enable_receiving(monitor);
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 663c8eaa..9951af84 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1615,6 +1615,7 @@ get_udev_uid(struct path * pp, char *uid_attribute, struct udev_device *udev)
+ 			len = strlen(value);
+ 		}
+ 		strncpy(pp->wwid, value, len);
++		pp->wwid[WWID_SIZE - 1] = '\0';
+ 	} else {
+ 		condlog(3, "%s: no %s attribute", pp->dev,
+ 			uid_attribute);
 -- 
 2.13.2
