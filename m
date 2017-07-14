@@ -1,51 +1,53 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [for-4.14 RFC PATCH 1/2] dm rq: avoid deadlock if dm-mq is
- stacked on old .request_fn device(s)
-Date: Fri, 14 Jul 2017 17:15:39 -0400
-Message-ID: <20170714211539.GB19238@redhat.com>
-References: <20170713211217.52361-1-snitzer@redhat.com>
- <20170713211217.52361-2-snitzer@redhat.com>
- <20170714072250.GC17046@lst.de>
- <20170714141929.GB18245@redhat.com>
- <1500052673.10198.174.camel@localhost.localdomain>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH 1/4] libmultipath: get_udev_uid: make sure
+ pp->wwid is 0-terminated
+Date: Fri, 14 Jul 2017 17:17:53 -0500
+Message-ID: <20170714221753.GA2940@octiron.msp.redhat.com>
+References: <20170714113209.17177-1-mwilck@suse.com>
+	<20170714113209.17177-2-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1500052673.10198.174.camel@localhost.localdomain>
-Sender: linux-block-owner@vger.kernel.org
-To: "Ewan D. Milne" <emilne@redhat.com>
-Cc: Christoph Hellwig <hch@lst.de>, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-scsi@vger.kernel.org
+In-Reply-To: <20170714113209.17177-2-mwilck@suse.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Martin Wilck <mwilck@suse.com>
+Cc: Martin Wilck <mwilck@suse.de>, Xose Vazquez Perez <xose.vazquez@gmail.com>, tang.junhui@zte.com.cn, Guan Junxiong <guanjunxiong@huawei.com>, linux-nvme@lists.infradead.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Jul 14 2017 at  1:17pm -0400,
-Ewan D. Milne <emilne@redhat.com> wrote:
+ACK, but I'm fine with Bart's patch as well.
 
-> On Fri, 2017-07-14 at 10:19 -0400, Mike Snitzer wrote:
-> > 
-> > Do you see a benefit to extracting that portion of your WIP patch
-> > (removing the ->complete handler entirely)?
-> > 
-> > Or leave well enough alone and just continue to disable dm-mq's ability
-> > to stack on .request_fn paths?
-> > 
-> > Given SCSI's switch to scsi-mq by default I cannot see value in propping
-> > up stacking on the old .request_fn devices.
+-Ben
+
+On Fri, Jul 14, 2017 at 01:32:06PM +0200, Martin Wilck wrote:
+> If the first WWID_LEN bytes of the uuid_attribute do not contain
+> a 0 byte, pp->wwid may end up not properly terminated. Fix it.
 > 
-> So, the dm_mod.use_blk_mq flag is global, right?  I guess the question
-> is whether all of the block device types used on a system under DM are
-> supported under MQ.  If that is the case then we would be OK.
-
-I didn't quite understand Ewan's question so we talked in person.  His
-concern was whether other DM targets needed to be worried about blk-mq
-vs not.  I clarified that DM multipath is the only target that is
-request-based and that it is fine with stacking on scsi-mq.  And all the
-bio-based targets obviously stack just fine on scsi-mq devices.
-
-> The other question is whether there are negative performance
-> consequences in any (corner?) cases with MQ that would result in it
-> being preferable to run in non-MQ mode (e.g. tag space with lpfc, did
-> we ever resolve that?) but the right approach there is to put the effort
-> into the MQ path going forward, as has been the case.
-
-Yeap.
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  libmultipath/discovery.c | 1 +
+>  1 file changed, 1 insertion(+)
+> 
+> diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+> index 663c8eaa..9951af84 100644
+> --- a/libmultipath/discovery.c
+> +++ b/libmultipath/discovery.c
+> @@ -1615,6 +1615,7 @@ get_udev_uid(struct path * pp, char *uid_attribute, struct udev_device *udev)
+>  			len = strlen(value);
+>  		}
+>  		strncpy(pp->wwid, value, len);
+> +		pp->wwid[WWID_SIZE - 1] = '\0';
+>  	} else {
+>  		condlog(3, "%s: no %s attribute", pp->dev,
+>  			uid_attribute);
+> -- 
+> 2.13.2
