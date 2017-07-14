@@ -1,144 +1,174 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [for-4.14 RFC PATCH 2/2] dm rq: eliminate historic blk-mq and .request_fn queue stacking restrictions
-Date: Thu, 13 Jul 2017 17:12:17 -0400
-Message-ID: <20170713211217.52361-3-snitzer@redhat.com>
-References: <20170713211217.52361-1-snitzer@redhat.com>
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20170713211217.52361-1-snitzer@redhat.com>
-Sender: linux-block-owner@vger.kernel.org
-To: hch@lst.de
-Cc: dm-devel@redhat.com, linux-block@vger.kernel.org, linux-scsi@vger.kernel.org
+From: Yang Feng <philip.yang@huawei.com>
+Subject: Re: [PATCH]prioritizers/path_latency: Fix failure of
+ sg_read to a nvme device
+Date: Fri, 14 Jul 2017 09:41:04 +0800
+Message-ID: <49d1e3be-f68b-d015-fcce-420098fe304f@huawei.com>
+References: <1498624934-4740-1-git-send-email-philip.yang@huawei.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1498624934-4740-1-git-send-email-philip.yang@huawei.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: guanjunxiong@huawei.com, hege09@huawei.com, shenhong09@huawei.com
 List-Id: dm-devel.ids
 
-Currently if dm_mod.use_blk_mq=Y (or a DM-multipath table is loaded with
-queue_mode=mq) and all underlying devices are not blk-mq, DM core will
-fail with the error:
-  "table load rejected: all devices are not blk-mq request-stackable"
+Closed and traced by another patch.
+-Yang
 
-This all-blk-mq-or-nothing approach is too cut-throat because it
-prevents access to data stored on what could have been a previously
-working multipath setup (e.g. if user decides to try dm_mod.use_blk_mq=Y
-or queue_mode=mq only to find their underlying devices aren't blk-mq).
-
-This restriction, and others like not being able to stack a top-level
-blk-mq request-queue ontop of old .request_fn device(s), can be removed
-thanks to commit eb8db831be ("dm: always defer request allocation to the
-owner of the request_queue").
-
-Now that request-based DM will always rely on the target (multipath) to
-call blk_get_request() to create a clone request it is possible to
-support all 4 permutations of stacking old .request_fn and blk-mq
-request_queues.
-
-Depends-on: eb8db831be ("dm: always defer request allocation to the owner of the request_queue")
-Reported-by: Ewan Milne <emilne@redhat.com>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm-rq.c    |  5 -----
- drivers/md/dm-table.c | 31 +++----------------------------
- drivers/md/dm.h       |  1 -
- 3 files changed, 3 insertions(+), 34 deletions(-)
-
-diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
-index 95bb44c..d64677b 100644
---- a/drivers/md/dm-rq.c
-+++ b/drivers/md/dm-rq.c
-@@ -782,11 +782,6 @@ int dm_mq_init_request_queue(struct mapped_device *md, struct dm_table *t)
- 	struct dm_target *immutable_tgt;
- 	int err;
- 
--	if (!dm_table_all_blk_mq_devices(t)) {
--		DMERR("request-based dm-mq may only be stacked on blk-mq device(s)");
--		return -EINVAL;
--	}
--
- 	md->tag_set = kzalloc_node(sizeof(struct blk_mq_tag_set), GFP_KERNEL, md->numa_node_id);
- 	if (!md->tag_set)
- 		return -ENOMEM;
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index a39bcd9..e630768 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -46,7 +46,6 @@ struct dm_table {
- 
- 	bool integrity_supported:1;
- 	bool singleton:1;
--	bool all_blk_mq:1;
- 	unsigned integrity_added:1;
- 
- 	/*
-@@ -910,7 +909,6 @@ static int dm_table_determine_type(struct dm_table *t)
- {
- 	unsigned i;
- 	unsigned bio_based = 0, request_based = 0, hybrid = 0;
--	unsigned sq_count = 0, mq_count = 0;
- 	struct dm_target *tgt;
- 	struct dm_dev_internal *dd;
- 	struct list_head *devices = dm_table_get_devices(t);
-@@ -985,11 +983,9 @@ static int dm_table_determine_type(struct dm_table *t)
- 		int srcu_idx;
- 		struct dm_table *live_table = dm_get_live_table(t->md, &srcu_idx);
- 
--		/* inherit live table's type and all_blk_mq */
--		if (live_table) {
-+		/* inherit live table's type */
-+		if (live_table)
- 			t->type = live_table->type;
--			t->all_blk_mq = live_table->all_blk_mq;
--		}
- 		dm_put_live_table(t->md, srcu_idx);
- 		return 0;
- 	}
-@@ -999,25 +995,9 @@ static int dm_table_determine_type(struct dm_table *t)
- 		struct request_queue *q = bdev_get_queue(dd->dm_dev->bdev);
- 
- 		if (!blk_queue_stackable(q)) {
--			DMERR("table load rejected: including"
--			      " non-request-stackable devices");
-+			DMERR("table load rejected: includes non-request-stackable devices");
- 			return -EINVAL;
- 		}
--
--		if (q->mq_ops)
--			mq_count++;
--		else
--			sq_count++;
--	}
--	if (sq_count && mq_count) {
--		DMERR("table load rejected: not all devices are blk-mq request-stackable");
--		return -EINVAL;
--	}
--	t->all_blk_mq = mq_count > 0;
--
--	if (t->type == DM_TYPE_MQ_REQUEST_BASED && !t->all_blk_mq) {
--		DMERR("table load rejected: all devices are not blk-mq request-stackable");
--		return -EINVAL;
- 	}
- 
- 	return 0;
-@@ -1067,11 +1047,6 @@ bool dm_table_request_based(struct dm_table *t)
- 	return __table_type_request_based(dm_table_get_type(t));
- }
- 
--bool dm_table_all_blk_mq_devices(struct dm_table *t)
--{
--	return t->all_blk_mq;
--}
--
- static int dm_table_alloc_md_mempools(struct dm_table *t, struct mapped_device *md)
- {
- 	enum dm_queue_mode type = dm_table_get_type(t);
-diff --git a/drivers/md/dm.h b/drivers/md/dm.h
-index 38c84c0..c484c4d 100644
---- a/drivers/md/dm.h
-+++ b/drivers/md/dm.h
-@@ -70,7 +70,6 @@ struct dm_target *dm_table_get_immutable_target(struct dm_table *t);
- struct dm_target *dm_table_get_wildcard_target(struct dm_table *t);
- bool dm_table_bio_based(struct dm_table *t);
- bool dm_table_request_based(struct dm_table *t);
--bool dm_table_all_blk_mq_devices(struct dm_table *t);
- void dm_table_free_md_mempools(struct dm_table *t);
- struct dm_md_mempools *dm_table_get_md_mempools(struct dm_table *t);
- 
--- 
-2.10.1
+On 2017/6/28 12:42, Yang Feng wrote:
+> Fixed failure of sg_read to a nvme device:
+> 1. Send sg_read command to a nvme device failed,
+> because the block size in user-mode is 4096 bytes,
+> not equal to the bolck size in kernel-mode, who is
+> 512 bytes. According to the func nvme_trans_io of
+> scsi.c in the dir "drivers/nvme/host". The code
+> fragmentS as follows:
+> /* If block count and actual data buffer size dont match, error out */
+> if (xfer_bytes != (cdb_info.xfer_len << ns->lba_shift)) {
+>     res = -EINVAL;
+>     goto out;
+> }
+> 2. And the SCSI-to-NVMe translations will be removed in
+> the patch "nvme: Remove SCSI translations" in the linux-nvme,
+> so using the nvme_read command is a good idea.
+> 
+> Signed-off-by: Yang Feng <philip.yang@huawei.com>
+> ---
+>  libmultipath/prioritizers/path_latency.c | 78 +++++++++++++++++++++++++++-----
+>  1 file changed, 66 insertions(+), 12 deletions(-)
+> 
+> diff --git a/libmultipath/prioritizers/path_latency.c b/libmultipath/prioritizers/path_latency.c
+> index 34b734b..8f633e0 100644
+> --- a/libmultipath/prioritizers/path_latency.c
+> +++ b/libmultipath/prioritizers/path_latency.c
+> @@ -23,14 +23,32 @@
+>  #include <math.h>
+>  #include <ctype.h>
+>  #include <time.h>
+> -
+>  #include "debug.h"
+>  #include "prio.h"
+>  #include "structs.h"
+> +#include <linux/types.h>
+> +#include <sys/ioctl.h>
+>  #include "../checkers/libsg.h"
+>  
+>  #define pp_pl_log(prio, fmt, args...) condlog(prio, "path_latency prio: " fmt, ##args)
+>  
+> +struct nvme_user_io {
+> +    __u8 opcode;
+> +    __u8 flags;
+> +    __u16 control;
+> +    __u16 nblocks;
+> +    __u16 rsvd;
+> +    __u64 metadata;
+> +    __u64 addr;
+> +    __u64 slba;
+> +    __u32 dsmgmt;
+> +    __u32 reftag;
+> +    __u16 apptag;
+> +    __u16 appmask;
+> +};
+> +
+> +#define NVME_IOCTL_SUBMIT_IO _IOW('N', 0x42, struct nvme_user_io)
+> +
+>  #define MAX_IO_NUM              200
+>  #define MIN_IO_NUM              2
+>  
+> @@ -51,19 +69,55 @@ static long long path_latency[MAX_IO_NUM];
+>  
+>  static inline long long timeval_to_us(const struct timespec *tv)
+>  {
+> -	return ((long long) tv->tv_sec * USEC_PER_SEC) + (tv->tv_nsec / NSEC_PER_USEC);
+> +    return ((long long) tv->tv_sec * USEC_PER_SEC) + (tv->tv_nsec / NSEC_PER_USEC);
+> +}
+> +
+> +int nvme_io(int fd, __u8 opcode, __u64 slba, __u16 nblocks, __u16 control,
+> +            __u32 dsmgmt, __u32 reftag, __u16 apptag, __u16 appmask, void *data, void *metadata)
+> +{
+> +    struct nvme_user_io io = {
+> +    .opcode = opcode,
+> +    .flags = 0,
+> +    .control = control,
+> +    .nblocks = nblocks,
+> +    .rsvd = 0,
+> +    .metadata = (__u64)(uintptr_t) metadata,
+> +    .addr = (__u64)(uintptr_t) data,
+> +    .slba = slba,
+> +    .dsmgmt = dsmgmt,
+> +    .reftag = reftag,
+> +    .appmask = apptag,
+> +    .apptag = appmask,
+> +    };
+> +
+> +    return ioctl(fd, NVME_IOCTL_SUBMIT_IO, &io);
+> +}
+> +
+> +int nvme_read(int fd, __u64 slba, __u16 nblocks, __u16 control, __u32 dsmgmt,
+> +            __u32 reftag, __u16 apptag, __u16 appmask, void *data, void *metadata)
+> +{
+> +    return nvme_io(fd, 0x2, slba, nblocks, control, dsmgmt,
+> +        reftag, apptag, appmask, data, metadata);
+>  }
+>  
+> -static int do_readsector0(int fd, unsigned int timeout)
+> +static int do_readsector0(struct path *pp, unsigned int timeout)
+>  {
+> -	unsigned char buf[4096];
+> -	unsigned char sbuf[SENSE_BUFF_LEN];
+> -	int ret;
+> +    unsigned char buf[4096];
+> +    unsigned char mbuf[512];
+> +    unsigned char sbuf[SENSE_BUFF_LEN];
+>  
+> -	ret = sg_read(fd, &buf[0], 4096, &sbuf[0],
+> -		      SENSE_BUFF_LEN, timeout);
+> +    if (!strncmp(pp->dev, "nvme", 4))
+> +    {
+> +        if (nvme_read(pp->fd, 0, 1, 0, 0, 0, 0, 0, buf, mbuf) < 0)
+> +            return 0;
+> +    }
+> +    else
+> +    {
+> +        if (sg_read(pp->fd, &buf[0], 4096, &sbuf[0],SENSE_BUFF_LEN, timeout) == 2)
+> +            return 0;
+> +    }
+>  
+> -	return ret;
+> +    return 1;
+>  }
+>  
+>  int check_args_valid(int io_num, int base_num)
+> @@ -218,9 +272,9 @@ int getprio (struct path *pp, char *args, unsigned int timeout)
+>          (void)clock_gettime(CLOCK_MONOTONIC, &tv);
+>          before = timeval_to_us(&tv);
+>  
+> -        if (do_readsector0(pp->fd, timeout) == 2)
+> +        if (do_readsector0(pp, timeout) == 0)
+>          {
+> -            pp_pl_log(0, "%s: path down", pp->dev);
+> +            pp_pl_log(0, "%s: send read sector0 command fail", pp->dev);
+>              return -1;
+>          }
+>  
+> @@ -246,7 +300,7 @@ int getprio (struct path *pp, char *args, unsigned int timeout)
+>      Warn the user if latency_interval is smaller than (2 * standard_deviation), or equal */
+>      standard_deviation = calc_standard_deviation(path_latency, index, avglatency);
+>      latency_interval = calc_latency_interval(avglatency, MAX_AVG_LATENCY, MIN_AVG_LATENCY, base_num);
+> -    if ((latency_interval!= 0)
+> +    if ((latency_interval != 0)
+>          && (latency_interval <= (2 * standard_deviation)))
+>          pp_pl_log(3, "%s: latency interval (%lld) according to average latency (%lld us) is smaller than "
+>              "2 * standard deviation (%lld us), or equal, args base_num (%d) needs to be set bigger value",
+> 
