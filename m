@@ -1,11 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 0/4] libmultipath: Fixes for NVME / NVMEoF
-Date: Fri, 14 Jul 2017 13:32:05 +0200
-Message-ID: <20170714113209.17177-1-mwilck@suse.com>
+Subject: [PATCH 3/4] libmultipath: only listen for uevents with
+	DEVTYPE=disk
+Date: Fri, 14 Jul 2017 13:32:08 +0200
+Message-ID: <20170714113209.17177-4-mwilck@suse.com>
+References: <20170714113209.17177-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20170714113209.17177-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,29 +22,29 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, tang.junhui@zte.com.cn,
 Cc: Martin Wilck <mwilck@suse.de>, dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>, linux-nvme@lists.infradead.org
 List-Id: dm-devel.ids
 
-Current code fails to set up multipath maps for NVME devices in a
-Linux target/Linux host combination. This series enables at least
-basic operation.
+We are only interested in disks anyway. This saves us checking
+for devtype in the uevent processing queue, and is more powerful
+than the previous test in the dropped function
+uevent_can_discard_by_devpath().
 
-Patch 1/4 fixes a crash that happens if over-long WWIDs are encountered, and
-is not specific to NVME as such. Patch 2/4 drops
-the broken test uevent_can_discard_by_devpath(). Patch 3/4 compensates
-for the additional event processing required by 2/4. Patch 4/4 mangles
-overlong "nvme.*" WWIDs to make them usable for multipath (related discussion
-in [1]; WWID_SIZE can't be simply increased because it has to match
-device mapper's DM_NAME_LEN).
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+Reviewed-by: Hannes Reinecke <hare@suse.de>
+---
+ libmultipath/uevent.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-[1] http://lists.infradead.org/pipermail/linux-nvme/2017-July/011960.html
-
-Martin Wilck (4):
-  libmultipath: get_udev_uid: make sure pp->wwid is 0-terminated
-  libmultipath: drop uevent_can_discard_by_devpath
-  libmultipath: only listen for uevents with DEVTYPE=disk
-  libmultipath: fix over-long NVME WWIDs
-
- libmultipath/discovery.c | 80 ++++++++++++++++++++++++++++++++++++++++++++++++
- libmultipath/uevent.c    | 27 +---------------
- 2 files changed, 81 insertions(+), 26 deletions(-)
-
+diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
+index b688ca03..eb44da56 100644
+--- a/libmultipath/uevent.c
++++ b/libmultipath/uevent.c
+@@ -770,7 +770,7 @@ int uevent_listen(struct udev *udev)
+ 		goto out;
+ 	}
+ 	err = udev_monitor_filter_add_match_subsystem_devtype(monitor, "block",
+-							      NULL);
++							      "disk");
+ 	if (err)
+ 		condlog(2, "failed to create filter : %s", strerror(-err));
+ 	err = udev_monitor_enable_receiving(monitor);
 -- 
 2.13.2
