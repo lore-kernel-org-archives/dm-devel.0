@@ -1,15 +1,15 @@
 From: Guan Junxiong <guanjunxiong@huawei.com>
-Subject: Re: [PATCH 3/4] libmultipath: only listen for uevents
- with DEVTYPE=disk
-Date: Mon, 17 Jul 2017 09:12:33 +0800
-Message-ID: <4285ec16-9d83-cb6a-3b4d-e311cd5de3a3@huawei.com>
+Subject: Re: [PATCH 2/4] libmultipath: drop
+	uevent_can_discard_by_devpath
+Date: Mon, 17 Jul 2017 09:12:22 +0800
+Message-ID: <2d85a9ec-27af-af50-7242-9ca5d1b18e5d@huawei.com>
 References: <20170714113209.17177-1-mwilck@suse.com>
-	<20170714113209.17177-4-mwilck@suse.com>
+	<20170714113209.17177-3-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170714113209.17177-4-mwilck@suse.com>
+In-Reply-To: <20170714113209.17177-3-mwilck@suse.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -20,38 +20,65 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, tang.junhui@zte.com.cn, Benjamin
-	Marzinski <bmarzins@redhat.com>, Hannes Reinecke <hare@suse.de>
-Cc: Martin Wilck <mwilck@suse.de>, Xose Vazquez Perez <xose.vazquez@gmail.com>, guanjunxiong@huawei.com, Yang Feng <philip.yang@huawei.com>, "Shenhong (C)" <shenhong09@huawei.com>, dm-devel@redhat.com, "Hege (A)" <hege09@huawei.com>, linux-nvme@lists.infradead.org
+To: Martin Wilck <mwilck@suse.com>
+Cc: Martin Wilck <mwilck@suse.de>, "Shenhong (C)" <shenhong09@huawei.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, tang.junhui@zte.com.cn, guanjunxiong@huawei.com, Yang Feng <philip.yang@huawei.com>, linux-nvme@lists.infradead.org, dm-devel@redhat.com, "Hege (A)" <hege09@huawei.com>
 List-Id: dm-devel.ids
 
-Looks fine.
+This patch combined with PATCH 3/4 looks more elegant than my previous patch
+and it works to fix the multipathd hotplug problem for NoF.
+Thanks.
 
 Reviewed-by: Guan Junxiong <guanjunxiong@huawei.com>
 
 On 2017/7/14 19:32, Martin Wilck wrote:
-> We are only interested in disks anyway. This saves us checking
-> for devtype in the uevent processing queue, and is more powerful
-> than the previous test in the dropped function
-> uevent_can_discard_by_devpath().
+> This function is broken. Not all devices that matter for multipathd
+> follow the block/$DEVICE/$PARTITION convention (example: NVME)
 > 
 > Signed-off-by: Martin Wilck <mwilck@suse.com>
 > Reviewed-by: Hannes Reinecke <hare@suse.de>
 > ---
->  libmultipath/uevent.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
+>  libmultipath/uevent.c | 25 -------------------------
+>  1 file changed, 25 deletions(-)
 > 
 > diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
-> index b688ca03..eb44da56 100644
+> index 4fbd1dfb..b688ca03 100644
 > --- a/libmultipath/uevent.c
 > +++ b/libmultipath/uevent.c
-> @@ -770,7 +770,7 @@ int uevent_listen(struct udev *udev)
->  		goto out;
->  	}
->  	err = udev_monitor_filter_add_match_subsystem_devtype(monitor, "block",
-> -							      NULL);
-> +							      "disk");
->  	if (err)
->  		condlog(2, "failed to create filter : %s", strerror(-err));
->  	err = udev_monitor_enable_receiving(monitor);
+> @@ -143,36 +143,11 @@ uevent_need_merge(void)
+>  	return need_merge;
+>  }
+>  
+> -static bool
+> -uevent_can_discard_by_devpath(const char *devpath)
+> -{
+> -	static const char BLOCK[] = "/block/";
+> -	const char *tmp = strstr(devpath, BLOCK);
+> -
+> -	if (tmp == NULL) {
+> -		condlog(4, "no /block/ in '%s'", devpath);
+> -		return true;
+> -	}
+> -	tmp += sizeof(BLOCK) - 1;
+> -	if (*tmp == '\0')
+> -		/* just ".../block/" - discard */
+> -		return true;
+> -	/*
+> -	 * If there are more path elements after ".../block/xyz",
+> -	 * it's a partition - discard it; but don't discard ".../block/sda/".
+> -	 */
+> -	tmp = strchr(tmp, '/');
+> -	return tmp != NULL && *(tmp + 1) != '\0';
+> -}
+> -
+>  bool
+>  uevent_can_discard(struct uevent *uev)
+>  {
+>  	struct config * conf;
+>  
+> -	if (uevent_can_discard_by_devpath(uev->devpath))
+> -		return true;
+> -
+>  	/*
+>  	 * do not filter dm devices by devnode
+>  	 */
 > 
