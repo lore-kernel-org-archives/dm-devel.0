@@ -1,14 +1,11 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 2/4] libmultipath: drop
-	uevent_can_discard_by_devpath
-Date: Tue, 18 Jul 2017 09:29:14 +0200
-Message-ID: <20170718072916.24275-3-mwilck@suse.com>
-References: <20170718072916.24275-1-mwilck@suse.com>
+Subject: [PATCH v2 0/4] libmultipath: Fixes for NVME / NVMEoF
+Date: Tue, 18 Jul 2017 09:29:12 +0200
+Message-ID: <20170718072916.24275-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170718072916.24275-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,58 +19,36 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Bart Van Assche <Bart.V
 Cc: Martin Wilck <mwilck@suse.de>, dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>, linux-nvme@lists.infradead.org, tang.junhui@zte.com.cn
 List-Id: dm-devel.ids
 
-This function is broken. Not all devices that matter for multipathd
-follow the block/$DEVICE/$PARTITION convention (example: NVME)
+Current code fails to set up multipath maps for NVME devices in a
+Linux target/Linux host combination. This series enables at least
+basic operation.
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
-Reviewed-by: Hannes Reinecke <hare@suse.de>
-Acked-by: Benjamin Marzinski <bmarzins@redhat.com>
-Reviewed-by: "Schremmer, Steven" <Steve.Schremmer@netapp.com>
-Reviewed-by: Guan Junxiong <guanjunxiong@huawei.com>
----
- libmultipath/uevent.c | 25 -------------------------
- 1 file changed, 25 deletions(-)
+Patch 1/4 fixes a crash that happens if over-long WWIDs are encountered, and
+is not specific to NVME as such. Patch 2/4 drops
+the broken test uevent_can_discard_by_devpath(). Patch 3/4 compensates
+for the additional event processing required by 2/4. Patch 4/4 mangles
+overlong "nvme.*" WWIDs to make them usable for multipath (related discussion
+in [1]; WWID_SIZE can't be simply increased because it has to match
+device mapper's DM_NAME_LEN).
 
-diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
-index 4fbd1dfb..b688ca03 100644
---- a/libmultipath/uevent.c
-+++ b/libmultipath/uevent.c
-@@ -143,36 +143,11 @@ uevent_need_merge(void)
- 	return need_merge;
- }
- 
--static bool
--uevent_can_discard_by_devpath(const char *devpath)
--{
--	static const char BLOCK[] = "/block/";
--	const char *tmp = strstr(devpath, BLOCK);
--
--	if (tmp == NULL) {
--		condlog(4, "no /block/ in '%s'", devpath);
--		return true;
--	}
--	tmp += sizeof(BLOCK) - 1;
--	if (*tmp == '\0')
--		/* just ".../block/" - discard */
--		return true;
--	/*
--	 * If there are more path elements after ".../block/xyz",
--	 * it's a partition - discard it; but don't discard ".../block/sda/".
--	 */
--	tmp = strchr(tmp, '/');
--	return tmp != NULL && *(tmp + 1) != '\0';
--}
--
- bool
- uevent_can_discard(struct uevent *uev)
- {
- 	struct config * conf;
- 
--	if (uevent_can_discard_by_devpath(uev->devpath))
--		return true;
--
- 	/*
- 	 * do not filter dm devices by devnode
- 	 */
+Changes wrt v1:
+ 1/4: assure 0-termination by using strlcpy() (Bart van Assche)
+ 4/4: drop extra length test (Ben Marzinski)
+
+I kept the v1 Reviewed-by: and Acked-by tags because the changes are minor,
+I hope that's ok for the reviewers.
+
+[1] http://lists.infradead.org/pipermail/linux-nvme/2017-July/011960.html
+
+Martin Wilck (4):
+  libmultipath: get_udev_uid: make sure pp->wwid is 0-terminated
+  libmultipath: drop uevent_can_discard_by_devpath
+  libmultipath: only listen for uevents with DEVTYPE=disk
+  libmultipath: fix over-long NVME WWIDs
+
+ libmultipath/discovery.c | 85 +++++++++++++++++++++++++++++++++++++++++++++---
+ libmultipath/uevent.c    | 27 +--------------
+ 2 files changed, 82 insertions(+), 30 deletions(-)
+
 -- 
 2.13.2
