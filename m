@@ -1,7 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 4/4] libmultipath: fix over-long NVME WWIDs
-Date: Tue, 18 Jul 2017 09:29:16 +0200
-Message-ID: <20170718072916.24275-5-mwilck@suse.com>
+Subject: [PATCH v2 2/4] libmultipath: drop
+	uevent_can_discard_by_devpath
+Date: Tue, 18 Jul 2017 09:29:14 +0200
+Message-ID: <20170718072916.24275-3-mwilck@suse.com>
 References: <20170718072916.24275-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,125 +22,58 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Bart Van Assche <Bart.V
 Cc: Martin Wilck <mwilck@suse.de>, dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>, linux-nvme@lists.infradead.org, tang.junhui@zte.com.cn
 List-Id: dm-devel.ids
 
-Fix for NVME wwids looking like this (line continuations inserted here
-for readability):
-
-nvme.0000-3163653363666438366239656630386200-\
-4c696e75780000000000000000000000000000000000000000000000000000000000000000000000-\
-00000002
-
-which are encountered in some combinations of Linux NVME host and target,
-where the 2nd field represents the serial number (SN) and the 3rd the
-model number (MN).
-
-The device mapper allows map names only up to 128 characters.
-Strip the "00" sequences at the end of the serial and model field,
-they are hex-encoded 0-bytes which are forbidden by the NVME spec
-anyway.
+This function is broken. Not all devices that matter for multipathd
+follow the block/$DEVICE/$PARTITION convention (example: NVME)
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
+Reviewed-by: Hannes Reinecke <hare@suse.de>
 Acked-by: Benjamin Marzinski <bmarzins@redhat.com>
+Reviewed-by: "Schremmer, Steven" <Steve.Schremmer@netapp.com>
 Reviewed-by: Guan Junxiong <guanjunxiong@huawei.com>
 ---
- libmultipath/discovery.c | 79 ++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 79 insertions(+)
+ libmultipath/uevent.c | 25 -------------------------
+ 1 file changed, 25 deletions(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 419a148b..17ab1913 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -1598,6 +1598,82 @@ get_prio (struct path * pp)
- 	return 0;
+diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
+index 4fbd1dfb..b688ca03 100644
+--- a/libmultipath/uevent.c
++++ b/libmultipath/uevent.c
+@@ -143,36 +143,11 @@ uevent_need_merge(void)
+ 	return need_merge;
  }
  
-+/*
-+ * Mangle string of length *len starting at start
-+ * by removing character sequence "00" (hex for a 0 byte),
-+ * starting at end, backwards.
-+ * Changes the value of *len if characters were removed.
-+ * Returns a pointer to the position where "end" was moved to.
-+ */
-+static char
-+*skip_zeroes_backward(char* start, int *len, char *end)
-+{
-+	char *p = end;
-+
-+	while (p >= start + 2 && *(p - 1) == '0' && *(p - 2) == '0')
-+		p -= 2;
-+
-+	if (p == end)
-+		return p;
-+
-+	memmove(p, end, start + *len + 1 - end);
-+	*len -= end - p;
-+
-+	return p;
-+}
-+
-+/*
-+ * Fix for NVME wwids looking like this:
-+ * nvme.0000-3163653363666438366239656630386200-4c696e75780000000000000000000000000000000000000000000000000000000000000000000000-00000002
-+ * which are encountered in some combinations of Linux NVME host and target.
-+ * The '00' are hex-encoded 0-bytes which are forbidden in the serial (SN)
-+ * and model (MN) fields. Discard them.
-+ * If a WWID of the above type is found, sets pp->wwid and returns a value > 0.
-+ * Otherwise, returns 0.
-+ */
-+static int
-+fix_broken_nvme_wwid(struct path *pp, const char *value, int size)
-+{
-+	static const char _nvme[] = "nvme.";
-+	int len, i;
-+	char mangled[256];
-+	char *p;
-+
-+	len = strlen(value);
-+	if (len >= sizeof(mangled))
-+		return 0;
-+
-+	/* Check that value starts with "nvme.%04x-" */
-+	if (memcmp(value, _nvme, sizeof(_nvme) - 1) || value[9] != '-')
-+		return 0;
-+	for (i = 5; i < 9; i++)
-+		if (!isxdigit(value[i]))
-+			return 0;
-+
-+	memcpy(mangled, value, len + 1);
-+
-+	/* search end of "model" part and strip trailing '00' */
-+	p = memrchr(mangled, '-', len);
-+	if (p == NULL)
-+		return 0;
-+
-+	p = skip_zeroes_backward(mangled, &len, p);
-+
-+	/* search end of "serial" part */
-+	p = memrchr(mangled, '-', p - mangled);
-+	if (p == NULL || memrchr(mangled, '-', p - mangled) != mangled + 9)
-+	    /* We expect exactly 3 '-' in the value */
-+		return 0;
-+
-+	p = skip_zeroes_backward(mangled, &len, p);
-+	if (len >= size)
-+		return 0;
-+
-+	memcpy(pp->wwid, mangled, len + 1);
-+	condlog(2, "%s: over-long WWID shortened to %s", pp->dev, pp->wwid);
-+	return len;
-+}
-+
- static int
- get_udev_uid(struct path * pp, char *uid_attribute, struct udev_device *udev)
+-static bool
+-uevent_can_discard_by_devpath(const char *devpath)
+-{
+-	static const char BLOCK[] = "/block/";
+-	const char *tmp = strstr(devpath, BLOCK);
+-
+-	if (tmp == NULL) {
+-		condlog(4, "no /block/ in '%s'", devpath);
+-		return true;
+-	}
+-	tmp += sizeof(BLOCK) - 1;
+-	if (*tmp == '\0')
+-		/* just ".../block/" - discard */
+-		return true;
+-	/*
+-	 * If there are more path elements after ".../block/xyz",
+-	 * it's a partition - discard it; but don't discard ".../block/sda/".
+-	 */
+-	tmp = strchr(tmp, '/');
+-	return tmp != NULL && *(tmp + 1) != '\0';
+-}
+-
+ bool
+ uevent_can_discard(struct uevent *uev)
  {
-@@ -1610,6 +1686,9 @@ get_udev_uid(struct path * pp, char *uid_attribute, struct udev_device *udev)
- 	if (value && strlen(value)) {
- 		len = strlcpy(pp->wwid, value, WWID_SIZE);
- 		if (len >= WWID_SIZE) {
-+			len = fix_broken_nvme_wwid(pp, value, WWID_SIZE);
-+			if (len > 0)
-+				return len;
- 			condlog(0, "%s: wwid overflow", pp->dev);
- 			len = WWID_SIZE;
- 		}
+ 	struct config * conf;
+ 
+-	if (uevent_can_discard_by_devpath(uev->devpath))
+-		return true;
+-
+ 	/*
+ 	 * do not filter dm devices by devnode
+ 	 */
 -- 
 2.13.2
