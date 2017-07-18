@@ -1,53 +1,37 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 3/4] libmultipath: only listen for uevents
-	with DEVTYPE=disk
-Date: Tue, 18 Jul 2017 09:29:15 +0200
-Message-ID: <20170718072916.24275-4-mwilck@suse.com>
-References: <20170718072916.24275-1-mwilck@suse.com>
+From: Herbert Xu <herbert@gondor.apana.org.au>
+Subject: Re: [PATCH 2/2] crypto/algapi - make crypto_xor() take separate dst
+ and src arguments
+Date: Tue, 18 Jul 2017 16:39:56 +0800
+Message-ID: <20170718083956.GA5813@gondor.apana.org.au>
+References: <20170710134548.20234-1-ard.biesheuvel@linaro.org>
+ <20170710134548.20234-3-ard.biesheuvel@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170718072916.24275-1-mwilck@suse.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Bart Van Assche <Bart.VanAssche@sandisk.com>, Benjamin Marzinski <bmarzins@redhat.com>, Hannes Reinecke <hare@suse.de>, Guan Junxiong <guanjunxiong@huawei.com>
-Cc: Martin Wilck <mwilck@suse.de>, dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>, linux-nvme@lists.infradead.org, tang.junhui@zte.com.cn
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-crypto-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20170710134548.20234-3-ard.biesheuvel@linaro.org>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+Cc: linux-crypto@vger.kernel.org, ebiggers@google.com, davem@davemloft.net, dm-devel@redhat.com, johannes@sipsolutions.net, linux-wireless@vger.kernel.org, agk@redhat.com, snitzer@redhat.com
 List-Id: dm-devel.ids
 
-We are only interested in disks anyway. This saves us checking
-for devtype in the uevent processing queue, and is more powerful
-than the previous test in the dropped function
-uevent_can_discard_by_devpath().
+On Mon, Jul 10, 2017 at 02:45:48PM +0100, Ard Biesheuvel wrote:
+> There are quite a number of occurrences in the kernel of the pattern
+> 
+>     if (dst != src)
+>             memcpy(dst, src, walk.total % AES_BLOCK_SIZE);
+>     crypto_xor(dst, final, walk.total % AES_BLOCK_SIZE);
+> 
+> or
+> 
+>     crypto_xor(keystream, src, nbytes);
+>     memcpy(dst, keystream, nbytes);
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
-Reviewed-by: Hannes Reinecke <hare@suse.de>
-Acked-by: Benjamin Marzinski <bmarzins@redhat.com>
-Reviewed-by: "Schremmer, Steven" <Steve.Schremmer@netapp.com>
-Reviewed-by: Guan Junxiong <guanjunxiong@huawei.com>
----
- libmultipath/uevent.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+What keeping crypto_xor as it is and adding a new entry point for
+the 4-argument case?
 
-diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
-index b688ca03..eb44da56 100644
---- a/libmultipath/uevent.c
-+++ b/libmultipath/uevent.c
-@@ -770,7 +770,7 @@ int uevent_listen(struct udev *udev)
- 		goto out;
- 	}
- 	err = udev_monitor_filter_add_match_subsystem_devtype(monitor, "block",
--							      NULL);
-+							      "disk");
- 	if (err)
- 		condlog(2, "failed to create filter : %s", strerror(-err));
- 	err = udev_monitor_enable_receiving(monitor);
+Cheers,
 -- 
-2.13.2
+Email: Herbert Xu <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
