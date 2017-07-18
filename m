@@ -1,34 +1,60 @@
-From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Subject: Re: [PATCH 2/2] crypto/algapi - make crypto_xor() take separate dst
- and src arguments
-Date: Tue, 18 Jul 2017 09:51:21 +0100
-Message-ID: <CAKv+Gu_9S4GHmoUE-H8ZLra90OYNPjOwVGi0PJ02WFNDe6udeg@mail.gmail.com>
-References: <20170710134548.20234-1-ard.biesheuvel@linaro.org>
- <20170710134548.20234-3-ard.biesheuvel@linaro.org> <20170718083956.GA5813@gondor.apana.org.au>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <20170718083956.GA5813@gondor.apana.org.au>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: "linux-crypto@vger.kernel.org" <linux-crypto@vger.kernel.org>, Eric Biggers <ebiggers@google.com>, "David S. Miller" <davem@davemloft.net>, dm-devel@redhat.com, Johannes Berg <johannes@sipsolutions.net>, "<linux-wireless@vger.kernel.org>" <linux-wireless@vger.kernel.org>, "Alasdair G. Kergon" <agk@redhat.com>, snitzer@redhat.com
+From: Ard Biesheuvel <ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Subject: [PATCH v2 0/2] crypto/algapi - refactor crypto_xor() to avoid memcpy()s
+Date: Tue, 18 Jul 2017 10:19:10 +0100
+Message-ID: <20170718091912.14104-1-ard.biesheuvel@linaro.org>
+Return-path: <linux-wireless-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-wireless-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org
+Cc: ebiggers-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, johannes-cdvu00un1VgdHxzADdlk8Q@public.gmane.org, linux-wireless-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Ard Biesheuvel <ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 List-Id: dm-devel.ids
 
-On 18 July 2017 at 09:39, Herbert Xu <herbert@gondor.apana.org.au> wrote:
-> On Mon, Jul 10, 2017 at 02:45:48PM +0100, Ard Biesheuvel wrote:
->> There are quite a number of occurrences in the kernel of the pattern
->>
->>     if (dst != src)
->>             memcpy(dst, src, walk.total % AES_BLOCK_SIZE);
->>     crypto_xor(dst, final, walk.total % AES_BLOCK_SIZE);
->>
->> or
->>
->>     crypto_xor(keystream, src, nbytes);
->>     memcpy(dst, keystream, nbytes);
->
-> What keeping crypto_xor as it is and adding a new entry point for
-> the 4-argument case?
->
+From 2/2:
 
-Also fine.
+"""
+There are quite a number of occurrences in the kernel of the pattern
+
+    if (dst != src)
+            memcpy(dst, src, walk.total % AES_BLOCK_SIZE);
+    crypto_xor(dst, final, walk.total % AES_BLOCK_SIZE);
+
+or
+
+    crypto_xor(keystream, src, nbytes);
+    memcpy(dst, keystream, nbytes);
+
+where crypto_xor() is preceded or followed by a memcpy() invocation
+that is only there because crypto_xor() uses its output parameter as
+one of the inputs.
+"""
+
+Patch #1 is a preparatory patch, which is split off for ease of review.
+
+Patch #2 updates all occurrences of crypto_xor() involving a memcpy() to
+use a new API function crypto_xor_cpy() which combines the two operations.
+
+v2: - keep existing crypto_xor() as-is, and add crypto_xor_cpy() for the
+      cases where a redundant memcpy() can be eliminated.
+
+Ard Biesheuvel (2):
+  crypto/algapi - use separate dst and src operands for __crypto_xor()
+  crypto/algapi - make crypto_xor() take separate dst and src arguments
+
+ arch/arm/crypto/aes-ce-glue.c       |  4 +---
+ arch/arm/crypto/aes-neonbs-glue.c   |  5 ++--
+ arch/arm64/crypto/aes-glue.c        |  4 +---
+ arch/arm64/crypto/aes-neonbs-glue.c |  5 ++--
+ arch/sparc/crypto/aes_glue.c        |  3 +--
+ arch/x86/crypto/aesni-intel_glue.c  |  4 ++--
+ arch/x86/crypto/blowfish_glue.c     |  3 +--
+ arch/x86/crypto/cast5_avx_glue.c    |  3 +--
+ arch/x86/crypto/des3_ede_glue.c     |  3 +--
+ crypto/algapi.c                     | 25 ++++++++++++--------
+ crypto/ctr.c                        |  3 +--
+ crypto/pcbc.c                       | 12 ++++------
+ drivers/crypto/vmx/aes_ctr.c        |  3 +--
+ drivers/md/dm-crypt.c               | 11 ++++-----
+ include/crypto/algapi.h             | 23 ++++++++++++++++--
+ 15 files changed, 59 insertions(+), 52 deletions(-)
+
+-- 
+2.9.3
