@@ -1,7 +1,7 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-integrity: plug I/Os when writing the journal
-Date: Wed, 19 Jul 2017 11:24:08 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1707191123410.2305@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: [PATCH] an optimization for dm-bufio and dm-integrity
+Date: Wed, 19 Jul 2017 11:30:18 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1707191128350.2305@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -19,36 +19,264 @@ To: Mike Snitzer <msnitzer@redhat.com>, Milan Broz <mbroz@redhat.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-When copying data from the journal to the appropriate place, we submit
-many I/Os. Some of these I/Os could go to adjacent areas. This patch uses
-the plug mechanism, so that the adjacent I/Os could be merged.
+Hi Mike
+
+Some times ago, I sent this patch as dm-bufio optimization (it doesn't 
+have to write full buffers, it only writes a part of the buffer that 
+changed). You delayed the patch until the next kernel.
+
+Will you submit the patch to the current kernel?
+
+Mikulas
+
+
+---------- Forwarded message ----------
+Date: Sun, 30 Apr 2017 17:31:22 -0400 (EDT)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Mike Snitzer <msnitzer@redhat.com>
+Subject: [PATCH] an optimization for dm-bufio and dm-integrity
+
+Hi
+
+This is an optimization for dm-bufio and dm-integrity, so that it can 
+write only part of the buffer.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm-integrity.c |    5 +++++
- 1 file changed, 5 insertions(+)
+ drivers/md/dm-bufio.c     |   95 ++++++++++++++++++++++++++++++++--------------
+ drivers/md/dm-bufio.h     |    9 ++++
+ drivers/md/dm-integrity.c |    2 
+ 3 files changed, 77 insertions(+), 29 deletions(-)
 
+Index: linux-2.6/drivers/md/dm-bufio.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-bufio.c
++++ linux-2.6/drivers/md/dm-bufio.c
+@@ -64,6 +64,12 @@
+ #define DM_BUFIO_BLOCK_SIZE_GFP_LIMIT	(PAGE_SIZE << (MAX_ORDER - 1))
+ 
+ /*
++ * Align buffer writes to this boundary.
++ * Tests show that SSDs have the highest IOPS when using 4k writes.
++ */
++#define DM_BUFIO_WRITE_ALIGN		4096
++
++/*
+  * dm_buffer->list_mode
+  */
+ #define LIST_CLEAN	0
+@@ -149,6 +155,10 @@ struct dm_buffer {
+ 	int write_error;
+ 	unsigned long state;
+ 	unsigned long last_accessed;
++	unsigned dirty_start;
++	unsigned dirty_end;
++	unsigned write_start;
++	unsigned write_end;
+ 	struct dm_bufio_client *c;
+ 	struct list_head write_list;
+ 	struct bio bio;
+@@ -560,7 +570,7 @@ static void dmio_complete(unsigned long
+ }
+ 
+ static void use_dmio(struct dm_buffer *b, int rw, sector_t sector,
+-		     unsigned n_sectors, bio_end_io_t *end_io)
++		     unsigned n_sectors, unsigned offset, bio_end_io_t *end_io)
+ {
+ 	int r;
+ 	struct dm_io_request io_req = {
+@@ -578,10 +588,10 @@ static void use_dmio(struct dm_buffer *b
+ 
+ 	if (b->data_mode != DATA_MODE_VMALLOC) {
+ 		io_req.mem.type = DM_IO_KMEM;
+-		io_req.mem.ptr.addr = b->data;
++		io_req.mem.ptr.addr = (char *)b->data + offset;
+ 	} else {
+ 		io_req.mem.type = DM_IO_VMA;
+-		io_req.mem.ptr.vma = b->data;
++		io_req.mem.ptr.vma = (char *)b->data + offset;
+ 	}
+ 
+ 	b->bio.bi_end_io = end_io;
+@@ -609,10 +619,10 @@ static void inline_endio(struct bio *bio
+ }
+ 
+ static void use_inline_bio(struct dm_buffer *b, int rw, sector_t sector,
+-			   unsigned n_sectors, bio_end_io_t *end_io)
++			   unsigned n_sectors, unsigned offset, bio_end_io_t *end_io)
+ {
+ 	char *ptr;
+-	int len;
++	unsigned len;
+ 
+ 	bio_init(&b->bio, b->bio_vec, DM_BUFIO_INLINE_VECS);
+ 	b->bio.bi_iter.bi_sector = sector;
+@@ -625,29 +635,20 @@ static void use_inline_bio(struct dm_buf
+ 	b->bio.bi_private = end_io;
+ 	bio_set_op_attrs(&b->bio, rw, 0);
+ 
+-	/*
+-	 * We assume that if len >= PAGE_SIZE ptr is page-aligned.
+-	 * If len < PAGE_SIZE the buffer doesn't cross page boundary.
+-	 */
+-	ptr = b->data;
++	ptr = (char *)b->data + offset;
+ 	len = n_sectors << SECTOR_SHIFT;
+ 
+-	if (len >= PAGE_SIZE)
+-		BUG_ON((unsigned long)ptr & (PAGE_SIZE - 1));
+-	else
+-		BUG_ON((unsigned long)ptr & (len - 1));
+-
+ 	do {
+-		if (!bio_add_page(&b->bio, virt_to_page(ptr),
+-				  len < PAGE_SIZE ? len : PAGE_SIZE,
++		unsigned this_step = min((unsigned)(PAGE_SIZE - offset_in_page(ptr)), len);
++		if (!bio_add_page(&b->bio, virt_to_page(ptr), this_step,
+ 				  offset_in_page(ptr))) {
+ 			BUG_ON(b->c->block_size <= PAGE_SIZE);
+-			use_dmio(b, rw, sector, n_sectors, end_io);
++			use_dmio(b, rw, sector, n_sectors, offset, end_io);
+ 			return;
+ 		}
+ 
+-		len -= PAGE_SIZE;
+-		ptr += PAGE_SIZE;
++		len -= this_step;
++		ptr += this_step;
+ 	} while (len > 0);
+ 
+ 	submit_bio(&b->bio);
+@@ -657,18 +658,33 @@ static void submit_io(struct dm_buffer *
+ {
+ 	unsigned n_sectors;
+ 	sector_t sector;
+-
+-	if (rw == WRITE && b->c->write_callback)
+-		b->c->write_callback(b);
++	unsigned offset, end;
+ 
+ 	sector = (b->block << b->c->sectors_per_block_bits) + b->c->start;
+-	n_sectors = 1 << b->c->sectors_per_block_bits;
++
++	if (rw != WRITE) {
++		n_sectors = 1 << b->c->sectors_per_block_bits;
++		offset = 0;
++	} else {
++		if (b->c->write_callback)
++			b->c->write_callback(b);
++		offset = b->write_start;
++		end = b->write_end;
++		offset &= -DM_BUFIO_WRITE_ALIGN;
++		end += DM_BUFIO_WRITE_ALIGN - 1;
++		end &= -DM_BUFIO_WRITE_ALIGN;
++		if (unlikely(end > b->c->block_size))
++			end = b->c->block_size;
++
++		sector += offset >> SECTOR_SHIFT;
++		n_sectors = (end - offset) >> SECTOR_SHIFT;
++	}
+ 
+ 	if (n_sectors <= ((DM_BUFIO_INLINE_VECS * PAGE_SIZE) >> SECTOR_SHIFT) &&
+ 	    b->data_mode != DATA_MODE_VMALLOC)
+-		use_inline_bio(b, rw, sector, n_sectors, end_io);
++		use_inline_bio(b, rw, sector, n_sectors, offset, end_io);
+ 	else
+-		use_dmio(b, rw, sector, n_sectors, end_io);
++		use_dmio(b, rw, sector, n_sectors, offset, end_io);
+ }
+ 
+ /*----------------------------------------------------------------
+@@ -719,6 +735,9 @@ static void __write_dirty_buffer(struct
+ 	clear_bit(B_DIRTY, &b->state);
+ 	wait_on_bit_lock_io(&b->state, B_WRITING, TASK_UNINTERRUPTIBLE);
+ 
++	b->write_start = b->dirty_start;
++	b->write_end = b->dirty_end;
++
+ 	if (!write_list)
+ 		submit_io(b, WRITE, write_endio);
+ 	else
+@@ -1219,19 +1238,37 @@ void dm_bufio_release(struct dm_buffer *
+ }
+ EXPORT_SYMBOL_GPL(dm_bufio_release);
+ 
+-void dm_bufio_mark_buffer_dirty(struct dm_buffer *b)
++void dm_bufio_mark_partial_buffer_dirty(struct dm_buffer *b,
++					unsigned start, unsigned end)
+ {
+ 	struct dm_bufio_client *c = b->c;
+ 
++	BUG_ON(start >= end);
++	BUG_ON(end > b->c->block_size);
++
+ 	dm_bufio_lock(c);
+ 
+ 	BUG_ON(test_bit(B_READING, &b->state));
+ 
+-	if (!test_and_set_bit(B_DIRTY, &b->state))
++	if (!test_and_set_bit(B_DIRTY, &b->state)) {
++		b->dirty_start = start;
++		b->dirty_end = end;
+ 		__relink_lru(b, LIST_DIRTY);
++	} else {
++		if (start < b->dirty_start)
++			b->dirty_start = start;
++		if (end > b->dirty_end)
++			b->dirty_end = end;
++	}
+ 
+ 	dm_bufio_unlock(c);
+ }
++EXPORT_SYMBOL_GPL(dm_bufio_mark_partial_buffer_dirty);
++
++void dm_bufio_mark_buffer_dirty(struct dm_buffer *b)
++{
++	dm_bufio_mark_partial_buffer_dirty(b, 0, b->c->block_size);
++}
+ EXPORT_SYMBOL_GPL(dm_bufio_mark_buffer_dirty);
+ 
+ void dm_bufio_write_dirty_buffers_async(struct dm_bufio_client *c)
+@@ -1396,6 +1433,8 @@ retry:
+ 		wait_on_bit_io(&b->state, B_WRITING,
+ 			       TASK_UNINTERRUPTIBLE);
+ 		set_bit(B_DIRTY, &b->state);
++		b->dirty_start = 0;
++		b->dirty_end = c->block_size;
+ 		__unlink_buffer(b);
+ 		__link_buffer(b, new_block, LIST_DIRTY);
+ 	} else {
+Index: linux-2.6/drivers/md/dm-bufio.h
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-bufio.h
++++ linux-2.6/drivers/md/dm-bufio.h
+@@ -94,6 +94,15 @@ void dm_bufio_release(struct dm_buffer *
+ void dm_bufio_mark_buffer_dirty(struct dm_buffer *b);
+ 
+ /*
++ * Mark a part of the buffer dirty.
++ *
++ * The specified part of the buffer is scheduled to be written. dm-bufio may
++ * write the specified part of the buffer or it may write a larger superset.
++ */
++void dm_bufio_mark_partial_buffer_dirty(struct dm_buffer *b,
++					unsigned start, unsigned end);
++
++/*
+  * Initiate writing of dirty buffers, without waiting for completion.
+  */
+ void dm_bufio_write_dirty_buffers_async(struct dm_bufio_client *c);
 Index: linux-2.6/drivers/md/dm-integrity.c
 ===================================================================
 --- linux-2.6.orig/drivers/md/dm-integrity.c
 +++ linux-2.6/drivers/md/dm-integrity.c
-@@ -1822,6 +1822,9 @@ static void do_journal_write(struct dm_i
- {
- 	unsigned i, j, n;
- 	struct journal_completion comp;
-+	struct blk_plug plug;
-+
-+	blk_start_plug(&plug);
- 
- 	comp.ic = ic;
- 	comp.in_flight = (atomic_t)ATOMIC_INIT(1);
-@@ -1946,6 +1949,8 @@ skip_io:
- 
- 	dm_bufio_write_dirty_buffers_async(ic->bufio);
- 
-+	blk_finish_plug(&plug);
-+
- 	complete_journal_op(&comp);
- 	wait_for_completion_io(&comp.comp);
- 
+@@ -1039,7 +1039,7 @@ static int dm_integrity_rw_tag(struct dm
+ 			memcpy(tag, dp, to_copy);
+ 		} else if (op == TAG_WRITE) {
+ 			memcpy(dp, tag, to_copy);
+-			dm_bufio_mark_buffer_dirty(b);
++			dm_bufio_mark_partial_buffer_dirty(b, *metadata_offset, *metadata_offset + to_copy);
+ 		} else  {
+ 			/* e.g.: op == TAG_CMP */
+ 			if (unlikely(memcmp(dp, tag, to_copy))) {
