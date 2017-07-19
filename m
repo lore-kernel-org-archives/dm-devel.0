@@ -1,60 +1,70 @@
-From: Stephan =?ISO-8859-1?Q?M=FCller?= <smueller@chronox.de>
-Subject: Re: AES-XTS key size
-Date: Wed, 19 Jul 2017 11:26:52 +0200
-Message-ID: <1787722.TLPNYLEBHS@tauon.chronox.de>
-References: <VI1PR0401MB2591C3B11125DDEF82F266E398A60@VI1PR0401MB2591.eurprd04.prod.outlook.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm-integrity: fix inefficient allocation of
+	stack space
+Date: Wed, 19 Jul 2017 11:23:40 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1707191122240.2305@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <VI1PR0401MB2591C3B11125DDEF82F266E398A60@VI1PR0401MB2591.eurprd04.prod.outlook.com>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Horia =?utf-8?B?R2VhbnTEgw==?= <horia.geanta@nxp.com>
-Cc: "linux-crypto@vger.kernel.org" <linux-crypto@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <msnitzer@redhat.com>, Milan Broz <mbroz@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Am Mittwoch, 19. Juli 2017, 10:20:07 CEST schrieb Horia Geantă:
+When using block size greater than 512 bytes, the dm-integrity target
+allocates journal space inefficiently, it allocates one entry for each
+512-byte chunk of data, fills entries for each block of data and leaves
+the remaining entries unused. This doesn't cause data corruption, but it
+causes severe performance degradation.
 
-Hi Horia,
+This patch fixes the journal allocation. As a safety it also adds BUG that
+fires if the variables representing journal usage get out of sync (it's
+better to crash than continue and corrupt data, so BUG is justified).
 
-> Hi,
-> 
-> AFAICS, IEEE 1619-2007 standard mentions only XTS-AES-128 and
-> XTS-AES-256, meaning that the keys should be either 256 or 512 bits.
-> 
-> Further, NIST SP800-38E mentions that an implementation may restrict
-> support to only one of XTS-AES-{128,256}, but does not explicitly allow
-> other cipher suites.
-> 
-> I don't see this enforcement in crypto/xts.c (XTS SW implementation),
-> though I noticed that XTS mode is used for other ciphers besides AES.
-> 
-> More, tcrypt has xts(aes) speed tests checking also for XTS-AES-192.
-> For HW crypto engines adhering strictly to IEEE P1619-2007 this is a
-> problem:
-> [...]
-> tcrypt: test 5 (384 bit key, 16 byte blocks):
-> caam_jr 8020000.jr: key size mismatch
-> tcrypt: setkey() failed flags=200000
-> [...]
-> 
-> Is the kernel more permissive than the standard?
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org
+Fixes: 7eada909bfd7 ("dm: add integrity target")
 
-The standard(s) only define XTS for AES 128/256. It does not (according to my 
-knowledge) prohibit the use of other key sizes (or even other ciphers, such as 
-xts(serpent)).
+---
+ drivers/md/dm-integrity.c |    7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
 
-Thus, I would say that the kernel implements the standard and allows a more 
-flexible use than the standard specifies.
-
-Unfortunately, the kernel crypto API only allows a min and max keysize 
-specification in the cipher definition structure.
-
-Once solution could be to introduce another flag. When that flag is set, 
-xts_check_key() could deny any key other than 256 or 512 bits. But maybe that 
-solution is more of a hack than a real solution.
-
-Or tcrypt could be changed to not use XTS with 192/384 bit keys.
-
-Ciao
-Stephan
+Index: linux-2.6/drivers/md/dm-integrity.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-integrity.c
++++ linux-2.6/drivers/md/dm-integrity.c
+@@ -1589,14 +1589,14 @@ retry:
+ 			unsigned next_entry, i, pos;
+ 			unsigned ws, we;
+ 
+-			dio->range.n_sectors = min(dio->range.n_sectors, ic->free_sectors);
++			dio->range.n_sectors = min(dio->range.n_sectors, ic->free_sectors << ic->sb->log2_sectors_per_block);
+ 			if (unlikely(!dio->range.n_sectors))
+ 				goto sleep;
+-			ic->free_sectors -= dio->range.n_sectors;
++			ic->free_sectors -= dio->range.n_sectors >> ic->sb->log2_sectors_per_block;
+ 			journal_section = ic->free_section;
+ 			journal_entry = ic->free_section_entry;
+ 
+-			next_entry = ic->free_section_entry + dio->range.n_sectors;
++			next_entry = ic->free_section_entry + (dio->range.n_sectors >> ic->sb->log2_sectors_per_block);
+ 			ic->free_section_entry = next_entry % ic->journal_section_entries;
+ 			ic->free_section += next_entry / ic->journal_section_entries;
+ 			ic->n_uncommitted_sections += next_entry / ic->journal_section_entries;
+@@ -1727,6 +1727,7 @@ static void pad_uncommitted(struct dm_in
+ 		wraparound_section(ic, &ic->free_section);
+ 		ic->n_uncommitted_sections++;
+ 	}
++	BUG_ON((ic->n_uncommitted_sections + ic->n_committed_sections) * ic->journal_section_entries + ic->free_sectors != ic->journal_sections * ic->journal_section_entries);
+ }
+ 
+ static void integrity_commit(struct work_struct *w)
