@@ -1,50 +1,59 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: Re: an optimization for dm-bufio and dm-integrity
-Date: Wed, 19 Jul 2017 18:22:51 +0200
-Message-ID: <25f78733-a371-068f-9465-830e65027940@redhat.com>
-References: <alpine.LRH.2.02.1707191128350.2305@file01.intranet.prod.int.rdu2.redhat.com>
-	<20170719153954.GA61594@redhat.com>
+From: =?UTF-8?q?Horia=20Geant=C4=83?= <horia.geanta@nxp.com>
+Subject: [PATCH] crypto: tcrypt - remove AES-XTS-192 speed tests
+Date: Wed, 19 Jul 2017 19:40:32 +0300
+Message-ID: <20170719164032.17731-1-horia.geanta@nxp.com>
+References: <1787722.TLPNYLEBHS@tauon.chronox.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170719153954.GA61594@redhat.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <1787722.TLPNYLEBHS@tauon.chronox.de>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: "David S. Miller" <davem@davemloft.net>, Stephan Mueller <smueller@chronox.de>, Dan Douglass <dan.douglass@nxp.com>, linux-crypto@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 07/19/2017 05:39 PM, Mike Snitzer wrote:
-> On Wed, Jul 19 2017 at 11:30P -0400,
-> Mikulas Patocka <mpatocka@redhat.com> wrote:
-> 
->> Hi Mike
->>
->> Some times ago, I sent this patch as dm-bufio optimization (it doesn't 
->> have to write full buffers, it only writes a part of the buffer that 
->> changed). You delayed the patch until the next kernel.
->>
->> Will you submit the patch to the current kernel?
-> 
-> Sorry about that.  It obviously fell off my radar.
-> 
-> I'll review it and see if I can make the justification for it going into
-> 4.13-rc2.  But unfortunately the 4.13 merge window closed this past
-> Sunday when Linus released v4.13-rc1
-> 
-> I'll let you know though, thanks.
+Remove xts(aes) speed tests with 2 x 192-bit keys, since implementations
+adhering strictly to IEEE 1619-2007 standard cannot cope with key sizes
+other than 2 x 128, 2 x 256 bits - i.e. AES-XTS-{128,256}:
+[...]
+tcrypt: test 5 (384 bit key, 16 byte blocks):
+caam_jr 8020000.jr: key size mismatch
+tcrypt: setkey() failed flags=200000
+[...]
 
-Just FYI: I am just running some tests with the stack space fix and
-this patch and the performance improvement for 4k sectors is really big
-(compared to 4.12). It would be nice if both patches hits 4.13...
+Signed-off-by: Horia Geantă <horia.geanta@nxp.com>
+---
+ crypto/tcrypt.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 
-Milan
+diff --git a/crypto/tcrypt.c b/crypto/tcrypt.c
+index 0dd6a432d6ca..0022a18d36ee 100644
+--- a/crypto/tcrypt.c
++++ b/crypto/tcrypt.c
+@@ -1404,9 +1404,9 @@ static int do_test(const char *alg, u32 type, u32 mask, int m)
+ 		test_cipher_speed("lrw(aes)", DECRYPT, sec, NULL, 0,
+ 				speed_template_32_40_48);
+ 		test_cipher_speed("xts(aes)", ENCRYPT, sec, NULL, 0,
+-				speed_template_32_48_64);
++				speed_template_32_64);
+ 		test_cipher_speed("xts(aes)", DECRYPT, sec, NULL, 0,
+-				speed_template_32_48_64);
++				speed_template_32_64);
+ 		test_cipher_speed("cts(cbc(aes))", ENCRYPT, sec, NULL, 0,
+ 				speed_template_16_24_32);
+ 		test_cipher_speed("cts(cbc(aes))", DECRYPT, sec, NULL, 0,
+@@ -1837,9 +1837,9 @@ static int do_test(const char *alg, u32 type, u32 mask, int m)
+ 		test_acipher_speed("lrw(aes)", DECRYPT, sec, NULL, 0,
+ 				   speed_template_32_40_48);
+ 		test_acipher_speed("xts(aes)", ENCRYPT, sec, NULL, 0,
+-				   speed_template_32_48_64);
++				   speed_template_32_64);
+ 		test_acipher_speed("xts(aes)", DECRYPT, sec, NULL, 0,
+-				   speed_template_32_48_64);
++				   speed_template_32_64);
+ 		test_acipher_speed("cts(cbc(aes))", ENCRYPT, sec, NULL, 0,
+ 				   speed_template_16_24_32);
+ 		test_acipher_speed("cts(cbc(aes))", DECRYPT, sec, NULL, 0,
+-- 
+2.12.0.264.gd6db3f216544
