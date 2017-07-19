@@ -1,8 +1,7 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-integrity: fix inefficient allocation of
-	stack space
-Date: Wed, 19 Jul 2017 11:23:40 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1707191122240.2305@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: [PATCH] dm-integrity: plug I/Os when writing the journal
+Date: Wed, 19 Jul 2017 11:24:08 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1707191123410.2305@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -20,51 +19,36 @@ To: Mike Snitzer <msnitzer@redhat.com>, Milan Broz <mbroz@redhat.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-When using block size greater than 512 bytes, the dm-integrity target
-allocates journal space inefficiently, it allocates one entry for each
-512-byte chunk of data, fills entries for each block of data and leaves
-the remaining entries unused. This doesn't cause data corruption, but it
-causes severe performance degradation.
-
-This patch fixes the journal allocation. As a safety it also adds BUG that
-fires if the variables representing journal usage get out of sync (it's
-better to crash than continue and corrupt data, so BUG is justified).
+When copying data from the journal to the appropriate place, we submit
+many I/Os. Some of these I/Os could go to adjacent areas. This patch uses
+the plug mechanism, so that the adjacent I/Os could be merged.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Cc: stable@vger.kernel.org
-Fixes: 7eada909bfd7 ("dm: add integrity target")
 
 ---
- drivers/md/dm-integrity.c |    7 ++++---
- 1 file changed, 4 insertions(+), 3 deletions(-)
+ drivers/md/dm-integrity.c |    5 +++++
+ 1 file changed, 5 insertions(+)
 
 Index: linux-2.6/drivers/md/dm-integrity.c
 ===================================================================
 --- linux-2.6.orig/drivers/md/dm-integrity.c
 +++ linux-2.6/drivers/md/dm-integrity.c
-@@ -1589,14 +1589,14 @@ retry:
- 			unsigned next_entry, i, pos;
- 			unsigned ws, we;
+@@ -1822,6 +1822,9 @@ static void do_journal_write(struct dm_i
+ {
+ 	unsigned i, j, n;
+ 	struct journal_completion comp;
++	struct blk_plug plug;
++
++	blk_start_plug(&plug);
  
--			dio->range.n_sectors = min(dio->range.n_sectors, ic->free_sectors);
-+			dio->range.n_sectors = min(dio->range.n_sectors, ic->free_sectors << ic->sb->log2_sectors_per_block);
- 			if (unlikely(!dio->range.n_sectors))
- 				goto sleep;
--			ic->free_sectors -= dio->range.n_sectors;
-+			ic->free_sectors -= dio->range.n_sectors >> ic->sb->log2_sectors_per_block;
- 			journal_section = ic->free_section;
- 			journal_entry = ic->free_section_entry;
+ 	comp.ic = ic;
+ 	comp.in_flight = (atomic_t)ATOMIC_INIT(1);
+@@ -1946,6 +1949,8 @@ skip_io:
  
--			next_entry = ic->free_section_entry + dio->range.n_sectors;
-+			next_entry = ic->free_section_entry + (dio->range.n_sectors >> ic->sb->log2_sectors_per_block);
- 			ic->free_section_entry = next_entry % ic->journal_section_entries;
- 			ic->free_section += next_entry / ic->journal_section_entries;
- 			ic->n_uncommitted_sections += next_entry / ic->journal_section_entries;
-@@ -1727,6 +1727,7 @@ static void pad_uncommitted(struct dm_in
- 		wraparound_section(ic, &ic->free_section);
- 		ic->n_uncommitted_sections++;
- 	}
-+	BUG_ON((ic->n_uncommitted_sections + ic->n_committed_sections) * ic->journal_section_entries + ic->free_sectors != ic->journal_sections * ic->journal_section_entries);
- }
+ 	dm_bufio_write_dirty_buffers_async(ic->bufio);
  
- static void integrity_commit(struct work_struct *w)
++	blk_finish_plug(&plug);
++
+ 	complete_journal_op(&comp);
+ 	wait_for_completion_io(&comp.comp);
+ 
