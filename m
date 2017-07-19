@@ -1,15 +1,14 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: an optimization for dm-bufio and dm-integrity
-Date: Wed, 19 Jul 2017 14:00:08 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1707191312370.24034@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1707191128350.2305@file01.intranet.prod.int.rdu2.redhat.com>
-	<20170719153954.GA61594@redhat.com>
-	<25f78733-a371-068f-9465-830e65027940@redhat.com>
+From: "John Stoffel" <john@stoffel.org>
+Subject: Re: [PATCH] dm-integrity: fix inefficient allocation
+	of	stack space
+Date: Wed, 19 Jul 2017 14:39:56 -0400
+Message-ID: <22895.42876.199753.299282@quad.stoffel.home>
+References: <alpine.LRH.2.02.1707191122240.2305@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <25f78733-a371-068f-9465-830e65027940@redhat.com>
+In-Reply-To: <alpine.LRH.2.02.1707191122240.2305@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,46 +18,76 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Milan Broz <mbroz@redhat.com>
-Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Mike Snitzer <msnitzer@redhat.com>, dm-devel@redhat.com, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
+>>>>> "Mikulas" == Mikulas Patocka <mpatocka@redhat.com> writes:
+
+Mikulas> When using block size greater than 512 bytes, the dm-integrity target
+Mikulas> allocates journal space inefficiently, it allocates one entry for each
+Mikulas> 512-byte chunk of data, fills entries for each block of data and leaves
+Mikulas> the remaining entries unused. This doesn't cause data corruption, but it
+Mikulas> causes severe performance degradation.
+
+Mikulas> This patch fixes the journal allocation. As a safety it also
+Mikulas> adds BUG that fires if the variables representing journal
+Mikulas> usage get out of sync (it's better to crash than continue and
+Mikulas> corrupt data, so BUG is justified).
+
+No, I don't agree.  You should lock down the block device(s) using the
+dm-integrity target, but you should NOT take down the entire system
+because of this.  Just return a failure up the stack that forces the
+device into read only mode so that there's a chance to debug this
+issue.
+
+Using a BUG_ON, especially for code that isn't proven, is just wrong.
+Do a WARN_ONCE() and then return an error instead.
+
+John
 
 
-On Wed, 19 Jul 2017, Milan Broz wrote:
 
-> On 07/19/2017 05:39 PM, Mike Snitzer wrote:
-> > On Wed, Jul 19 2017 at 11:30P -0400,
-> > Mikulas Patocka <mpatocka@redhat.com> wrote:
-> > 
-> >> Hi Mike
-> >>
-> >> Some times ago, I sent this patch as dm-bufio optimization (it doesn't 
-> >> have to write full buffers, it only writes a part of the buffer that 
-> >> changed). You delayed the patch until the next kernel.
-> >>
-> >> Will you submit the patch to the current kernel?
-> > 
-> > Sorry about that.  It obviously fell off my radar.
-> > 
-> > I'll review it and see if I can make the justification for it going into
-> > 4.13-rc2.  But unfortunately the 4.13 merge window closed this past
-> > Sunday when Linus released v4.13-rc1
-> > 
-> > I'll let you know though, thanks.
-> 
-> Just FYI: I am just running some tests with the stack space fix and
-> this patch and the performance improvement for 4k sectors is really big
-> (compared to 4.12). It would be nice if both patches hits 4.13...
-> 
-> Milan
+Mikulas> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Mikulas> Cc: stable@vger.kernel.org
+Mikulas> Fixes: 7eada909bfd7 ("dm: add integrity target")
 
-That journal allocation bugfix should definitely go to the stable 4.12 
-branch.
+Mikulas> ---
+Mikulas>  drivers/md/dm-integrity.c |    7 ++++---
+Mikulas>  1 file changed, 4 insertions(+), 3 deletions(-)
 
-The plug fix may or may not be backported, it provides about 60% 
-performance improvement on specific write patterns (if you write this 
-sequence of bytes with O_DIRECT 
-4096-8191,0-4095,12288-16383,8192-12287,20480-24575,16384-20479...).
+Mikulas> Index: linux-2.6/drivers/md/dm-integrity.c
+Mikulas> ===================================================================
+Mikulas> --- linux-2.6.orig/drivers/md/dm-integrity.c
+Mikulas> +++ linux-2.6/drivers/md/dm-integrity.c
+Mikulas> @@ -1589,14 +1589,14 @@ retry:
+Mikulas>  			unsigned next_entry, i, pos;
+Mikulas>  			unsigned ws, we;
+ 
+Mikulas> -			dio->range.n_sectors = min(dio->range.n_sectors, ic->free_sectors);
+Mikulas> +			dio->range.n_sectors = min(dio->range.n_sectors, ic->free_sectors << ic->sb->log2_sectors_per_block);
+Mikulas>  			if (unlikely(!dio->range.n_sectors))
+Mikulas>  				goto sleep;
+Mikulas> -			ic->free_sectors -= dio->range.n_sectors;
+Mikulas> +			ic->free_sectors -= dio->range.n_sectors >> ic->sb->log2_sectors_per_block;
+Mikulas>  			journal_section = ic->free_section;
+Mikulas>  			journal_entry = ic->free_section_entry;
+ 
+Mikulas> -			next_entry = ic->free_section_entry + dio->range.n_sectors;
+Mikulas> +			next_entry = ic->free_section_entry + (dio->range.n_sectors >> ic->sb->log2_sectors_per_block);
+ic-> free_section_entry = next_entry % ic->journal_section_entries;
+ic-> free_section += next_entry / ic->journal_section_entries;
+ic-> n_uncommitted_sections += next_entry / ic->journal_section_entries;
+Mikulas> @@ -1727,6 +1727,7 @@ static void pad_uncommitted(struct dm_in
+Mikulas>  		wraparound_section(ic, &ic->free_section);
+ic-> n_uncommitted_sections++;
+Mikulas>  	}
+Mikulas> +	BUG_ON((ic->n_uncommitted_sections + ic->n_committed_sections) * ic->journal_section_entries + ic->free_sectors != ic->journal_sections * ic->journal_section_entries);
+Mikulas>  }
+ 
+Mikulas>  static void integrity_commit(struct work_struct *w)
 
-Mikulas
+Mikulas> --
+Mikulas> dm-devel mailing list
+Mikulas> dm-devel@redhat.com
+Mikulas> https://www.redhat.com/mailman/listinfo/dm-devel
