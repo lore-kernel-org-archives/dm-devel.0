@@ -1,11 +1,16 @@
-From: Muneendra Kumar M <mmandala@Brocade.com>
-Subject: multipath dm_request_fn(in dm.c) is not getting called
-Date: Thu, 20 Jul 2017 14:01:20 +0000
-Message-ID: <3a25d3543b9f4d42846fb9b0238fca15@BRMWP-EXMB12.corp.brocade.com>
+From: "John Stoffel" <john@stoffel.org>
+Subject: Re: [PATCH] dm-integrity: fix inefficient allocation of
+ stack space
+Date: Thu, 20 Jul 2017 11:43:11 -0400
+Message-ID: <22896.53135.462550.221549@quad.stoffel.home>
+References: <alpine.LRH.2.02.1707191122240.2305@file01.intranet.prod.int.rdu2.redhat.com>
+	<22895.42876.199753.299282@quad.stoffel.home>
+	<alpine.LRH.2.02.1707200622230.32226@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============6024270914117698794=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
+In-Reply-To: <alpine.LRH.2.02.1707200622230.32226@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,143 +20,48 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Mike Snitzer <msnitzer@redhat.com>, John Stoffel <john@stoffel.org>, dm-devel@redhat.com, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
---===============6024270914117698794==
-Content-Language: en-US
-Content-Type: multipart/alternative;
-	boundary="_000_3a25d3543b9f4d42846fb9b0238fca15BRMWPEXMB12corpbrocadec_"
+>>>>> "Mikulas" == Mikulas Patocka <mpatocka@redhat.com> writes:
 
---_000_3a25d3543b9f4d42846fb9b0238fca15BRMWPEXMB12corpbrocadec_
-Content-Type: text/plain; charset="us-ascii"
+Mikulas> On Wed, 19 Jul 2017, John Stoffel wrote:
 
-Hi,
-We are testing the multipath behavior on centos7.3 and linux version Linux EC056108 3.10.
-We have two paths connected to dm-1(sda and sdb).
-We are using fio tool to read  data from /dev/dm-1 and we are seeing data on both paths(sda and sdb)
-Below is the fio  command which we are using
-./fio --filename=/dev/dm-2 --direct=1 --rw=randrw --refill_buffers --norandommap --randrepeat=0 --ioengine=libaio --bs=512k --rwmixread=100 --iodepth=16 --numjobs=16 --runtime=60 --group_reporting --name=4ktest --size=500m
+>> >>>>> "Mikulas" == Mikulas Patocka <mpatocka@redhat.com> writes:
+>> 
+Mikulas> When using block size greater than 512 bytes, the dm-integrity target
+Mikulas> allocates journal space inefficiently, it allocates one entry for each
+Mikulas> 512-byte chunk of data, fills entries for each block of data and leaves
+Mikulas> the remaining entries unused. This doesn't cause data corruption, but it
+Mikulas> causes severe performance degradation.
+>> 
+Mikulas> This patch fixes the journal allocation. As a safety it also
+Mikulas> adds BUG that fires if the variables representing journal
+Mikulas> usage get out of sync (it's better to crash than continue and
+Mikulas> corrupt data, so BUG is justified).
+>> 
+>> No, I don't agree.  You should lock down the block device(s) using the
+>> dm-integrity target, but you should NOT take down the entire system
+>> because of this.  Just return a failure up the stack that forces the
+>> device into read only mode so that there's a chance to debug this
+>> issue.
+>> 
+>> Using a BUG_ON, especially for code that isn't proven, is just wrong.
+>> Do a WARN_ONCE() and then return an error instead.
+>> 
+>> John
 
-Test Case: Dropping all the requests on sdb .
+Mikulas> That BUG can only be triggered by a bug in the code, it can't be triggered 
+Mikulas> by bad data on the disk, so why should we write code to recover from it?
 
-Observation: When we drop frames on sdb we observe  that on both sda and sdb there is no data flow.
-HBA is taking around 30 secs to report the io failure then followed by failover.
-During this 30 secs time we are not seeing any data on sda and even dm_request_fn(in dm.c) is not getting called which internally pushes the queue request to sda/sdb.
-Theoretically data should flow on sda as we are dropping data only on  sdb.
+Because it's damn obnoxious to kill a system because of bad coding,
+without giving the user a chance to recover or even investigate
+the root cause.   If it's a bug in the code, just warn the user and
+then try to continue.  If you can't continue, then just make the block
+device go read-only to protect the data.
 
-Any inputs here will help me to understand the concept better.
+Again, why do you think BUG_ON is appropriate thing to do?  What
+advantage does it have for you?
 
-Regards,
-Muneendra.
-
-
-
-
-
---_000_3a25d3543b9f4d42846fb9b0238fca15BRMWPEXMB12corpbrocadec_
-Content-Type: text/html; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-
-<html xmlns:v=3D"urn:schemas-microsoft-com:vml" xmlns:o=3D"urn:schemas-micr=
-osoft-com:office:office" xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
-xmlns:m=3D"http://schemas.microsoft.com/office/2004/12/omml" xmlns=3D"http:=
-//www.w3.org/TR/REC-html40">
-<head>
-<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dus-ascii"=
->
-<meta name=3D"Generator" content=3D"Microsoft Word 15 (filtered medium)">
-<style><!--
-/* Font Definitions */
-@font-face
-	{font-family:"Cambria Math";
-	panose-1:2 4 5 3 5 4 6 3 2 4;}
-@font-face
-	{font-family:Calibri;
-	panose-1:2 15 5 2 2 2 4 3 2 4;}
-/* Style Definitions */
-p.MsoNormal, li.MsoNormal, div.MsoNormal
-	{margin:0in;
-	margin-bottom:.0001pt;
-	font-size:11.0pt;
-	font-family:"Calibri",sans-serif;}
-a:link, span.MsoHyperlink
-	{mso-style-priority:99;
-	color:#0563C1;
-	text-decoration:underline;}
-a:visited, span.MsoHyperlinkFollowed
-	{mso-style-priority:99;
-	color:#954F72;
-	text-decoration:underline;}
-span.EmailStyle17
-	{mso-style-type:personal-compose;
-	font-family:"Calibri",sans-serif;
-	color:windowtext;}
-.MsoChpDefault
-	{mso-style-type:export-only;
-	font-family:"Calibri",sans-serif;}
-@page WordSection1
-	{size:8.5in 11.0in;
-	margin:1.0in 1.0in 1.0in 1.0in;}
-div.WordSection1
-	{page:WordSection1;}
---></style><!--[if gte mso 9]><xml>
-<o:shapedefaults v:ext=3D"edit" spidmax=3D"1026" />
-</xml><![endif]--><!--[if gte mso 9]><xml>
-<o:shapelayout v:ext=3D"edit">
-<o:idmap v:ext=3D"edit" data=3D"1" />
-</o:shapelayout></xml><![endif]-->
-</head>
-<body lang=3D"EN-US" link=3D"#0563C1" vlink=3D"#954F72">
-<div class=3D"WordSection1">
-<p class=3D"MsoNormal">Hi,<o:p></o:p></p>
-<p class=3D"MsoNormal">We are testing the multipath behavior on centos7.3 a=
-nd linux version Linux EC056108 3.10.<o:p></o:p></p>
-<p class=3D"MsoNormal">We have two paths connected to dm-1(sda and sdb).<o:=
-p></o:p></p>
-<p class=3D"MsoNormal">We are using fio tool to read &nbsp;data from /dev/d=
-m-1 and we are seeing data on both paths(sda and sdb)<o:p></o:p></p>
-<p class=3D"MsoNormal">Below is the fio&nbsp; command which we are using<o:=
-p></o:p></p>
-<p class=3D"MsoNormal">./fio --filename=3D/dev/dm-2 --direct=3D1 --rw=3Dran=
-drw --refill_buffers --norandommap --randrepeat=3D0 --ioengine=3Dlibaio --b=
-s=3D512k --rwmixread=3D100 --iodepth=3D16 --numjobs=3D16 --runtime=3D60 --g=
-roup_reporting --name=3D4ktest --size=3D500m<o:p></o:p></p>
-<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-<p class=3D"MsoNormal">Test Case: Dropping all the requests on sdb .<o:p></=
-o:p></p>
-<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-<p class=3D"MsoNormal">Observation: When we drop frames on sdb we observe &=
-nbsp;that on both sda and sdb there is no data flow.<o:p></o:p></p>
-<p class=3D"MsoNormal">HBA is taking around 30 secs to report the io failur=
-e then followed by failover.<o:p></o:p></p>
-<p class=3D"MsoNormal">During this 30 secs time we are not seeing any data =
-on sda and even dm_request_fn(in dm.c) is not getting called which internal=
-ly pushes the queue request to sda/sdb.<o:p></o:p></p>
-<p class=3D"MsoNormal">Theoretically data should flow on sda as we are drop=
-ping data only on &nbsp;sdb.<o:p></o:p></p>
-<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-<p class=3D"MsoNormal">Any inputs here will help me to understand the conce=
-pt better.<o:p></o:p></p>
-<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-<p class=3D"MsoNormal">Regards,<o:p></o:p></p>
-<p class=3D"MsoNormal">Muneendra.<o:p></o:p></p>
-<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-</div>
-</body>
-</html>
-
---_000_3a25d3543b9f4d42846fb9b0238fca15BRMWPEXMB12corpbrocadec_--
-
-
---===============6024270914117698794==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============6024270914117698794==--
+John
