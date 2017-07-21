@@ -1,17 +1,20 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 2/2] multipath-tools/libmultipath: Add args
- min_avg_latency for path_latency.
-Date: Fri, 21 Jul 2017 12:27:17 +0200
-Message-ID: <1500632837.32663.13.camel@suse.com>
-References: <1500521767-15884-1-git-send-email-philip.yang@huawei.com>
-	<1500521767-15884-3-git-send-email-philip.yang@huawei.com>
-	<1500574041.32663.7.camel@suse.com>
-	<5737cdc5-88fa-b27a-3acb-eacf1b4b0341@huawei.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: dm-integrity: fix inefficient allocation of stack
+	space
+Date: Fri, 21 Jul 2017 08:15:28 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1707210808560.17010@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1707191122240.2305@file01.intranet.prod.int.rdu2.redhat.com>
+	<22895.42876.199753.299282@quad.stoffel.home>
+	<20170719190230.GC20480@redhat.com>
+	<22895.51753.260996.643914@quad.stoffel.home>
+	<alpine.LRH.2.02.1707200652080.32226@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.LRH.2.02.1707200703460.32226@file01.intranet.prod.int.rdu2.redhat.com>
+	<22896.56378.568488.989656@quad.stoffel.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <5737cdc5-88fa-b27a-3acb-eacf1b4b0341@huawei.com>
+In-Reply-To: <22896.56378.568488.989656@quad.stoffel.home>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,19 +24,42 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Yang Feng <philip.yang@huawei.com>, dm-devel@redhat.com, xose.vazquez@gmail.com
-Cc: zouming.zouming@huawei.com, hege09@huawei.com, guanjunxiong@huawei.com, shenhong09@huawei.com
+To: John Stoffel <john@stoffel.org>
+Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-RGVhciBZYW5nLAoKT24gRnJpLCAyMDE3LTA3LTIxIGF0IDExOjM4ICswODAwLCBZYW5nIEZlbmcg
-d3JvdGU6Cj4gCj4gU29ycnksIEkgZG9uJ3QgZmluZCB0aGlzIHNpbWlsYXIgc3ludGF4LiBDb3Vs
-ZCB5b3UgZ2l2ZSBhIGV4YW1wbGUgb2YKPiB0aGUKPiBvdGhlciBwcmlvcml0aXplci4KClBsZWFz
-ZSBsb29rIGF0IHRoZSBwcmlvX2FyZ3Mgc2VjdGlvbiBpbiBtdWx0aXBhdGguY29uZi4gIndlaWdo
-dGVkIiB1c2VzCmp1c3Qgc3BhY2Ugc2VwYXJhdGVkIGFyZ3MuICJpZXQiIHVzZXMgInBhcm09dmFs
-dWUiIHN5bnRheC4gVGhhdCdzCmFjdHVhbGx5IG1vc3QgaW50dWl0aXZlIElNTy4gTm8gY3VycmVu
-dCBwcmlvIGFsZ29yaXRobSB1c2VzIGFueXRoaW5nCmJ1dCBzcGFjZSB0byBzZXBhcmF0ZSBvcHRp
-b25zLgoKUmVnYXJkcwpNYXJ0aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5j
-b20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxp
-eCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChB
-RyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNv
-bQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+
+
+On Thu, 20 Jul 2017, John Stoffel wrote:
+
+> Mikulas> In the early days when I was programming, I was adding checks for NULL 
+> Mikulas> pointers "just in case - so that it doesn't crash". But these checks 
+> Mikulas> didn't make the code any more understandable - they made the code less 
+> Mikulas> understandable - because if a function return value is checked for NULL, 
+> Mikulas> the programmer believes that the function could return NULL. And the 
+> Mikulas> programmer no longer knows what is the contract of the function - could 
+> Mikulas> the function really return NULL or not?
+> 
+> In this case, maybe it would make more sense to clamp the values to
+> the maximums in case they do exceed their limits?  The check is
+> simply:
+> 
+>     if (unlikely(section >= ic->journal_sections) ||
+> 	 unlikely(offset >= limit)) {
+> 
+> So I'm arguing that when you set the section or offset, shouldn't they
+> be clamped to their limits there?
+> 
+> Thanks for your time,
+> John
+
+Returning invalid data is directly against the purpose of the dm-integrity 
+target.
+
+If you think that clamping array indices that are out of range improves 
+software reliability - so write some program that uses this technique and 
+we will see how reliable or unreliable it is. You can persuade people by 
+writing software, you can't persuade them by preaching what should they 
+do.
+
+Mikulas
