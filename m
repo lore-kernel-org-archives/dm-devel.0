@@ -1,14 +1,12 @@
 From: Guan Junxiong <guanjunxiong@huawei.com>
-Subject: [PATCH RFC 1/3] multipath-tools: move get_next_string to
-	util
-Date: Fri, 21 Jul 2017 13:07:30 +0800
-Message-ID: <1500613652-9084-2-git-send-email-guanjunxiong@huawei.com>
-References: <1500613652-9084-1-git-send-email-guanjunxiong@huawei.com>
+Subject: [PATCH RFC 0/3] multipath-tools: coalesce heterogenous
+	paths by referencing method
+Date: Fri, 21 Jul 2017 13:07:29 +0800
+Message-ID: <1500613652-9084-1-git-send-email-guanjunxiong@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1500613652-9084-1-git-send-email-guanjunxiong@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,69 +20,63 @@ To: dm-devel@redhat.com, christophe.varoqui@opensvc.com, hare@suse.de, mwilck@su
 Cc: zouming.zouming@huawei.com, chengjike.cheng@huawei.com, guanjunxiong@huawei.com, philip.yang@huawei.com, shenhong09@huawei.com, hege09@huawei.com
 List-Id: dm-devel.ids
 
-The helper get_next_string is useful and generic. So move from
-exclusive weightedpath module to util module. It will be used
-in the next second patch.
+This three patches support coalescing heterogenous paths by referencing
+another path identifier. This is useful in the scenario of migrating data
+for heterogenous arrays without interrupting uplayer transaction.
 
-Signed-off-by: Junxiong Guan <guanjunxiong@huawei.com>
----
- libmultipath/prioritizers/weightedpath.c | 10 +---------
- libmultipath/util.c                      |  9 +++++++++
- libmultipath/util.h                      |  1 +
- 3 files changed, 11 insertions(+), 9 deletions(-)
+The 1/3 patch and 2/3 patch is used to prepare for the 3/3 patch which
+covers the core logic of this coalescing feature.
+The 1/3 patch move generic helper _get_next_string_ to util and the helper
+will be used in the 3/3 patch.However this patch can be seen as an independent
+patch.
+The 2/3 patch adds flags into path struct to track path internal state for
+future use. With this flag, we can distinguish the referenced path and
+non-referenced path in the 3/3 patch.
 
-diff --git a/libmultipath/prioritizers/weightedpath.c b/libmultipath/prioritizers/weightedpath.c
-index 34a43a81..e0f3efbb 100644
---- a/libmultipath/prioritizers/weightedpath.c
-+++ b/libmultipath/prioritizers/weightedpath.c
-@@ -34,15 +34,7 @@
- #include <regex.h>
- #include "structs_vec.h"
- #include "print.h"
--
--char *get_next_string(char **temp, char *split_char)
--{
--	char *token = NULL;
--	token = strsep(temp, split_char);
--	while (token != NULL && !strcmp(token, ""))
--		token = strsep(temp, split_char);
--	return token;
--}
-+#include "util.h"
- 
- #define CHECK_LEN \
- do { \
-diff --git a/libmultipath/util.c b/libmultipath/util.c
-index b90cd8b0..a4369173 100644
---- a/libmultipath/util.c
-+++ b/libmultipath/util.c
-@@ -63,6 +63,15 @@ filepresent (char * run) {
- 	return 0;
- }
- 
-+char *get_next_string(char **temp, char *split_char)
-+{
-+	char *token = NULL;
-+	token = strsep(temp, split_char);
-+	while (token != NULL && !strcmp(token, ""))
-+		token = strsep(temp, split_char);
-+	return token;
-+}
-+
- int
- get_word (char * sentence, char ** word)
- {
-diff --git a/libmultipath/util.h b/libmultipath/util.h
-index b087e32e..f7a33521 100644
---- a/libmultipath/util.h
-+++ b/libmultipath/util.h
-@@ -6,6 +6,7 @@
- size_t strchop(char *);
- int basenamecpy (const char * src, char * dst, int);
- int filepresent (char * run);
-+char *get_next_string(char **temp, char *split_char);
- int get_word (char * sentence, char ** word);
- size_t strlcpy(char *dst, const char *src, size_t size);
- size_t strlcat(char *dst, const char *src, size_t size);
+The usage is as follows:
+
+The new attribute named uid_reference provides a unique path identifier
+for some paths by referencing another path's identifier. Therefor those
+paths can be coalesced. This is useful to migrate data for heterogenous
+arrays without interrupting uplayer transaction. If you are going to let
+sda, sdb and sdc use the unique path identifier of the sdd, you can add
+the uid_reference field as follows into the vendor specific _devices_
+section, _override_ section or the _default_ section in the multipath.conf
+file.
+
+uid_reference  "sd[a-c]  sdd"
+
+where the first parameter which can be regular expression specifies
+the target devices to be assigned with the identifier of the source device.
+The second parameter is the source device to be referenced by the target
+devices. The source device only supports one device.
+
+Here is another example I use:
+uid_reference "nvme[1-9]*n[0-9]*  nvme0n1"
+
+
+Plese inform me if you have any idea.
+
+
+Junxiong Guan (3):
+  multipath-tools: move get_next_string to util
+  multipath-tools: add flags to path struct to track internel state
+  multipath-tools: coalesce heterogenous paths by referencing method
+
+ libmultipath/config.c                    |  13 ++++
+ libmultipath/config.h                    |   3 +
+ libmultipath/dict.c                      |  11 +++
+ libmultipath/discovery.c                 | 128 ++++++++++++++++++++++++++++++-
+ libmultipath/discovery.h                 |  11 ++-
+ libmultipath/prioritizers/weightedpath.c |  10 +--
+ libmultipath/propsel.c                   |  25 ++++++
+ libmultipath/structs.h                   |   2 +
+ libmultipath/structs_vec.c               |   1 +
+ libmultipath/util.c                      |   9 +++
+ libmultipath/util.h                      |   1 +
+ multipath/multipath.conf.5               |  37 ++++++++-
+ multipathd/main.c                        |   4 +-
+ 13 files changed, 239 insertions(+), 16 deletions(-)
+
 -- 
 2.11.1
