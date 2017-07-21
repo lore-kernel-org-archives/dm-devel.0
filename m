@@ -1,17 +1,17 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 1/2] multipath-tools/libmultipath: Support
- for the native NVMe Ioctl command.
-Date: Fri, 21 Jul 2017 12:23:15 +0200
-Message-ID: <1500632595.32663.11.camel@suse.com>
+Subject: Re: [PATCH 2/2] multipath-tools/libmultipath: Add args
+ min_avg_latency for path_latency.
+Date: Fri, 21 Jul 2017 12:27:17 +0200
+Message-ID: <1500632837.32663.13.camel@suse.com>
 References: <1500521767-15884-1-git-send-email-philip.yang@huawei.com>
-	<1500521767-15884-2-git-send-email-philip.yang@huawei.com>
-	<1500573037.32663.4.camel@suse.com>
-	<edc85155-39e0-86bb-c62b-6038488dfc36@huawei.com>
+	<1500521767-15884-3-git-send-email-philip.yang@huawei.com>
+	<1500574041.32663.7.camel@suse.com>
+	<5737cdc5-88fa-b27a-3acb-eacf1b4b0341@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <edc85155-39e0-86bb-c62b-6038488dfc36@huawei.com>
+In-Reply-To: <5737cdc5-88fa-b27a-3acb-eacf1b4b0341@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,13 +25,15 @@ To: Yang Feng <philip.yang@huawei.com>, dm-devel@redhat.com, xose.vazquez@gmail.
 Cc: zouming.zouming@huawei.com, hege09@huawei.com, guanjunxiong@huawei.com, shenhong09@huawei.com
 List-Id: dm-devel.ids
 
-T24gRnJpLCAyMDE3LTA3LTIxIGF0IDExOjMwICswODAwLCBZYW5nIEZlbmcgd3JvdGU6Cj4gRGVh
-ciBNYXJ0aW4sCj4gCj4gVGhhbmtzIGEgbG90IGZvciB5b3VyIHJldmlld3MuCj4gUGxlYXNlIGZp
-bmQgbXkgcmVwbHlzIGFzIGZvbGxvd3MuCj4gQW5kIHRoZSB1cC10by1kYXRlIHBhdGNoIHdpbGwg
-YmUgc2VudCBsYXRlci4KClRoYW5rIHlvdS4gTm90ZSB0aGF0IEknbGwgYmUgb3V0IG9mIG9mZmlj
-ZSBmb3IgdGhlIG5leHQgdHdvIHdlZWtzLgoKTWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8
-bXdpbGNrQHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBH
-bWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9u
-CkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRl
-dmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2Rt
-LWRldmVs
+RGVhciBZYW5nLAoKT24gRnJpLCAyMDE3LTA3LTIxIGF0IDExOjM4ICswODAwLCBZYW5nIEZlbmcg
+d3JvdGU6Cj4gCj4gU29ycnksIEkgZG9uJ3QgZmluZCB0aGlzIHNpbWlsYXIgc3ludGF4LiBDb3Vs
+ZCB5b3UgZ2l2ZSBhIGV4YW1wbGUgb2YKPiB0aGUKPiBvdGhlciBwcmlvcml0aXplci4KClBsZWFz
+ZSBsb29rIGF0IHRoZSBwcmlvX2FyZ3Mgc2VjdGlvbiBpbiBtdWx0aXBhdGguY29uZi4gIndlaWdo
+dGVkIiB1c2VzCmp1c3Qgc3BhY2Ugc2VwYXJhdGVkIGFyZ3MuICJpZXQiIHVzZXMgInBhcm09dmFs
+dWUiIHN5bnRheC4gVGhhdCdzCmFjdHVhbGx5IG1vc3QgaW50dWl0aXZlIElNTy4gTm8gY3VycmVu
+dCBwcmlvIGFsZ29yaXRobSB1c2VzIGFueXRoaW5nCmJ1dCBzcGFjZSB0byBzZXBhcmF0ZSBvcHRp
+b25zLgoKUmVnYXJkcwpNYXJ0aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5j
+b20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxp
+eCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChB
+RyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNv
+bQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
