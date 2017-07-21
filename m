@@ -1,7 +1,7 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-integrity: test for corrupted disk format
-Date: Fri, 21 Jul 2017 11:58:38 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1707211158120.31337@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: [PATCH] dm-zoned: remove test for impossible conditions
+Date: Fri, 21 Jul 2017 11:56:46 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1707211150200.31337@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -15,38 +15,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <msnitzer@redhat.com>, Milan Broz <mbroz@redhat.com>
-Cc: dm-devel@redhat.com
+To: Damien Le Moal <damien.lemoal@wdc.com>
+Cc: Bart Van Assche <bart.vanassche@sandisk.com>, Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-If the dm-integrity superblock was corrupted in such a way that the
-journal_sections field was zero, the integrity target would deadlock,
-because it would wait forever for free space in the journal.
+Hi
 
-This patch detects this situation and refuses to activate the device in
-this case.
+Here I send a patch that removes some impossible code from dm-zoned. The 
+target also contains large number of GFP_KERNEL allocations, they should 
+be changed to GFP_NOIO, if I/O processing could be delayed because of the 
+allocation (i.e. anywhere except initialization you should use GFP_NOIO).
+
+Regarding this "if (!nr_sectors && bio_op(bio) != REQ_OP_WRITE)" - could 
+this be removed too? Does it really process some zero-sized requests that 
+are not flushes? It doesn't seem so.
+
+Mikulas
+
+
+From: Mikulas Patocka <mpatocka@redhat.com>
+
+The value REQ_OP_FLUSH is used by the block code in the request structure. 
+It is not used in the bio structure.
+
+This patch removes the tests for REQ_OP_FLUSH from dm-zoned-target.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Cc: stable@vger.kernel.org
-Fixes: 7eada909bfd7 ("dm: add integrity target")
 
 ---
- drivers/md/dm-integrity.c |    5 +++++
- 1 file changed, 5 insertions(+)
+ drivers/md/dm-zoned-target.c |    4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-Index: linux-2.6/drivers/md/dm-integrity.c
+Index: linux-2.6/drivers/md/dm-zoned-target.c
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-integrity.c
-+++ linux-2.6/drivers/md/dm-integrity.c
-@@ -3020,6 +3020,11 @@ static int dm_integrity_ctr(struct dm_ta
- 		ti->error = "Block size doesn't match the information in superblock";
- 		goto bad;
- 	}
-+	if (!le32_to_cpu(ic->sb->journal_sections)) {
-+		r = -EINVAL;
-+		ti->error = "Corrupted superblock, journal_sections is 0";
-+		goto bad;
-+	}
- 	/* make sure that ti->max_io_len doesn't overflow */
- 	if (ic->sb->log2_interleave_sectors < MIN_LOG2_INTERLEAVE_SECTORS ||
- 	    ic->sb->log2_interleave_sectors > MAX_LOG2_INTERLEAVE_SECTORS) {
+--- linux-2.6.orig/drivers/md/dm-zoned-target.c
++++ linux-2.6/drivers/md/dm-zoned-target.c
+@@ -588,7 +588,7 @@ static int dmz_map(struct dm_target *ti,
+ 
+ 	bio->bi_bdev = dev->bdev;
+ 
+-	if (!nr_sectors && (bio_op(bio) != REQ_OP_FLUSH) && (bio_op(bio) != REQ_OP_WRITE))
++	if (!nr_sectors && bio_op(bio) != REQ_OP_WRITE)
+ 		return DM_MAPIO_REMAPPED;
+ 
+ 	/* The BIO should be block aligned */
+@@ -603,7 +603,7 @@ static int dmz_map(struct dm_target *ti,
+ 	bioctx->status = BLK_STS_OK;
+ 
+ 	/* Set the BIO pending in the flush list */
+-	if (bio_op(bio) == REQ_OP_FLUSH || (!nr_sectors && bio_op(bio) == REQ_OP_WRITE)) {
++	if (!nr_sectors && bio_op(bio) == REQ_OP_WRITE) {
+ 		spin_lock(&dmz->flush_lock);
+ 		bio_list_add(&dmz->flush_list, bio);
+ 		spin_unlock(&dmz->flush_lock);
