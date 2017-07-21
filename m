@@ -1,15 +1,17 @@
-From: Martin Wilck <mwilck@suse.com>
+From: Yang Feng <philip.yang@huawei.com>
 Subject: Re: [PATCH 1/2] multipath-tools/libmultipath: Support
  for the native NVMe Ioctl command.
-Date: Thu, 20 Jul 2017 19:50:37 +0200
-Message-ID: <1500573037.32663.4.camel@suse.com>
+Date: Fri, 21 Jul 2017 11:30:47 +0800
+Message-ID: <edc85155-39e0-86bb-c62b-6038488dfc36@huawei.com>
 References: <1500521767-15884-1-git-send-email-philip.yang@huawei.com>
 	<1500521767-15884-2-git-send-email-philip.yang@huawei.com>
+	<1500573037.32663.4.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1500521767-15884-2-git-send-email-philip.yang@huawei.com>
+In-Reply-To: <1500573037.32663.4.camel@suse.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,354 +21,687 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Yang Feng <philip.yang@huawei.com>, dm-devel@redhat.com, xose.vazquez@gmail.com
+To: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com, xose.vazquez@gmail.com
 Cc: zouming.zouming@huawei.com, hege09@huawei.com, guanjunxiong@huawei.com, shenhong09@huawei.com
 List-Id: dm-devel.ids
 
-RGVhciBZYW5nLAoKT24gVGh1LCAyMDE3LTA3LTIwIGF0IDExOjM2ICswODAwLCBZYW5nIEZlbmcg
-d3JvdGU6Cj4gMS4gVGhlIFNDU0ktdG8tTlZNZSB0cmFuc2xhdGlvbnMgaGF2ZSBiZWVuIHJlbW92
-ZWQgaW4gdGhlIHBhdGNoCj4gIm52bWU6Cj4gUmVtb3ZlIFNDU0kgdHJhbnNsYXRpb25zIiBpbiB0
-aGUgbGludXgtbnZtZSwgc28gdGhlIG5hdGl2ZSBOVk1lIElvY3RsCj4gY29tbWFuZCBzaG91bGQg
-YmUgc3VwcG9ydGVkIGluIHRoZSBtdWx0aXBhdGgtdG9vbHMuCgo+IDIuIEluIHRoZSBwcmlvcml0
-aXplcnMvcGF0aF9sYXRlbmN5LmMsIG1vZGlmeSB0aGUgZnVuYwo+IGRvX3JlYWRzZWN0b3IwKCk6
-Cj4gc2VuZCBhIG5hdGl2ZSBOVk1lIFJlYWQgSW9jdGwgY29tbWFuZCB0byB0aGUgbnZtZSBkZXZp
-Y2UsIGFuZCBzZW5kIGEKPiBTRwo+IFJlYWQgSW9jdGwgY29tbWFuZCB0byB0aGUgc2NzaSBkZXZp
-Y2UuCgpBcyBub3RlZCBwcmV2aW91c2x5LCBJIHdvdWxkIHByZWZlciB0byB1c2UgYSBkaXJlY3Rp
-byBjb21tYW5kIGhlcmUuIEkKc2VlIG5vIGFkdmFudGFnZSBvZiB1c2luZyBzZyBvciBudm1lIGlv
-Y3RscyBvdmVyIGRpcmVjdGlvLgoKPiAzLiBJbiB0aGUgdHVyIGNoZWNrZXIsIGFkZCBzdXBwb3J0
-IGZvciB0aGUgbmF0aXZlIE5WTWUgS2VlcCBBbGl2ZQo+IElvY3RsCj4gY29tbWFuZCB0byB0aGUg
-bnZtZSBkZXZpY2UuCgpObywgcGxlYXNlIGRvbid0LiBJJ20gc3RpbGwgd2l0aCBYb3NlIGhlcmUu
-IFRoZXJlJ3Mgbm8gbmVlZCB0byB1c2UgdGhlCnNhbWUgY2hlY2tlciBmb3IgTlZNZSBhbmQgU0NT
-SSBkZXZpY2VzLiBUaGlzIGlzIHdoYXQgd2UgaGF2ZSB0aGUKaHd0YWJsZSBmb3IuIEtlZXAgdGhl
-IHR1ciBjaGVja2VyIGFzIGl0IHdhcyBiZWZvcmUsIGNyZWF0ZSBhIGtlZXBhbGl2ZQpjaGVja2Vy
-IGZvciBOVk1lLCBhbmQgdXNlIGh3dGFibGUgZW50cmllcyB0byBtYXRjaCB0aGVtIGFwcHJvcHJp
-YXRlbHkKdG8gZGV2aWNlcy4KClNlZSBiZWxvdyBmb3Igc29tZSBkZXRhaWxzLiAKTkFLIGZyb20g
-bXkgc2lkZSBmb3IgdGhlIHBhdGNoIGluIHRoaXMgZm9ybS4KCk1hcnRpbgoKPiAKPiBTaWduZWQt
-b2ZmLWJ5OiBZYW5nIEZlbmcgPHBoaWxpcC55YW5nQGh1YXdlaS5jb20+Cj4gUmV2aWV3ZWQtYnk6
-IE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPgo+IFJldmlld2VkLWJ5OiBYb3NlIFZhenF1
-ZXogUGVyZXogPHhvc2UudmF6cXVlekBnbWFpbC5jb20+Cj4gLS0tCj4gIGxpYm11bHRpcGF0aC9j
-aGVja2Vycy5jICAgICAgICAgICAgICAgICAgfCAgIDcgKysKPiAgbGlibXVsdGlwYXRoL2NoZWNr
-ZXJzLmggICAgICAgICAgICAgICAgICB8ICAgNCArCj4gIGxpYm11bHRpcGF0aC9jaGVja2Vycy9N
-YWtlZmlsZSAgICAgICAgICAgfCAgIDQgKy0KPiAgbGlibXVsdGlwYXRoL2NoZWNrZXJzL2VtY19j
-bGFyaWlvbi5jICAgICB8ICAgNCArLQo+ICBsaWJtdWx0aXBhdGgvY2hlY2tlcnMvbGlic2cuYyAg
-ICAgICAgICAgIHwgIDk0IC0tLS0tLS0tLS0tLS0tLS0tLS0KCklJUkMgeW91IGRpZCB0aGlzIGlu
-IHlvdXIgcHJldmlvdXMgcGF0Y2ggYWxyZWFkeS4gQ2FuIHlvdSBnaXZlIGEgZ29vZApyZWFzb24g
-Zm9yIG1vdmluZyB0aGlzIGNvZGU/IEl0IG1ha2VzIHlvdXIgcGF0Y2ggdW5uZWNlc3NhcmlseSBi
-aWcgYW5kCm1lc3NlcyB1cCBnaXQgaGlzdG9yeS4gSWYgaXQncyBSRUFMTFkgbmVjZXNzYXJ5LCBz
-ZXBhcmF0ZSBpdCBvdXQsCnBsZWFzZS4KCgo+IC0tLQo+ICBsaWJtdWx0aXBhdGgvY2hlY2tlcnMv
-bGlic2cuaCAgICAgICAgICAgIHwgICA5IC0tLQo+ICBsaWJtdWx0aXBhdGgvY2hlY2tlcnMvcmVh
-ZHNlY3RvcjAuYyAgICAgIHwgICA0ICstCj4gIGxpYm11bHRpcGF0aC9jaGVja2Vycy90dXIuYyAg
-ICAgICAgICAgICAgfCAgNjQgKysrKysrKysrKy0tLS0tCj4gIGxpYm11bHRpcGF0aC9kaXNjb3Zl
-cnkuYyAgICAgICAgICAgICAgICAgfCAgIDEgKwo+ICBsaWJtdWx0aXBhdGgvbGlibnZtZS5jICAg
-ICAgICAgICAgICAgICAgIHwgMTMwCj4gKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKwo+
-ICBsaWJtdWx0aXBhdGgvbGlibnZtZS5oICAgICAgICAgICAgICAgICAgIHwgIDEwICsrKwo+ICBs
-aWJtdWx0aXBhdGgvbGlic2cuYyAgICAgICAgICAgICAgICAgICAgIHwgMTEzCj4gKysrKysrKysr
-KysrKysrKysrKysrKysrKysrCj4gIGxpYm11bHRpcGF0aC9saWJzZy5oICAgICAgICAgICAgICAg
-ICAgICAgfCAgMTMgKysrKwo+ICBsaWJtdWx0aXBhdGgvcHJpb3JpdGl6ZXJzL01ha2VmaWxlICAg
-ICAgIHwgICAyICstCj4gIGxpYm11bHRpcGF0aC9wcmlvcml0aXplcnMvcGF0aF9sYXRlbmN5LmMg
-fCAgMzQgKysrKystLS0KPiAgbXVsdGlwYXRoL211bHRpcGF0aC5jb25mLjUgICAgICAgICAgICAg
-ICB8ICAgMiArLQo+ICAxNiBmaWxlcyBjaGFuZ2VkLCAzNTQgaW5zZXJ0aW9ucygrKSwgMTQxIGRl
-bGV0aW9ucygtKQo+ICBkZWxldGUgbW9kZSAxMDA2NDQgbGlibXVsdGlwYXRoL2NoZWNrZXJzL2xp
-YnNnLmMKPiAgZGVsZXRlIG1vZGUgMTAwNjQ0IGxpYm11bHRpcGF0aC9jaGVja2Vycy9saWJzZy5o
-Cj4gIGNyZWF0ZSBtb2RlIDEwMDY0NCBsaWJtdWx0aXBhdGgvbGlibnZtZS5jCj4gIGNyZWF0ZSBt
-b2RlIDEwMDY0NCBsaWJtdWx0aXBhdGgvbGlibnZtZS5oCj4gIGNyZWF0ZSBtb2RlIDEwMDY0NCBs
-aWJtdWx0aXBhdGgvbGlic2cuYwo+ICBjcmVhdGUgbW9kZSAxMDA2NDQgbGlibXVsdGlwYXRoL2xp
-YnNnLmgKPiAKPiBkaWZmIC0tZ2l0IGEvbGlibXVsdGlwYXRoL2NoZWNrZXJzLmMgYi9saWJtdWx0
-aXBhdGgvY2hlY2tlcnMuYwo+IGluZGV4IDA1ZTAyNGYuLjAwZmJkNmUgMTAwNjQ0Cj4gLS0tIGEv
-bGlibXVsdGlwYXRoL2NoZWNrZXJzLmMKPiArKysgYi9saWJtdWx0aXBhdGgvY2hlY2tlcnMuYwo+
-IEBAIC0xNjIsNiArMTYyLDEzIEBAIHZvaWQgY2hlY2tlcl9zZXRfZmQgKHN0cnVjdCBjaGVja2Vy
-ICogYywgaW50IGZkKQo+ICAJYy0+ZmQgPSBmZDsKPiAgfQo+ICAKPiArdm9pZCBjaGVja2VyX3Nl
-dF9kZXYoc3RydWN0IGNoZWNrZXIgKmMsIGNoYXIgKmRldikKPiArewo+ICsgICAgaWYgKCFjKQo+
-ICsgICAgICAgIHJldHVybjsKPiArICAgIHN0cm5jcHkoYy0+ZGV2LCBkZXYsIHN0cmxlbihkZXYp
-KzEpOwo+ICt9Cj4gKwo+ICB2b2lkIGNoZWNrZXJfc2V0X3N5bmMgKHN0cnVjdCBjaGVja2VyICog
-YykKPiAgewo+ICAJaWYgKCFjKQo+IGRpZmYgLS1naXQgYS9saWJtdWx0aXBhdGgvY2hlY2tlcnMu
-aCBiL2xpYm11bHRpcGF0aC9jaGVja2Vycy5oCj4gaW5kZXggMWQyMjVkZS4uZjkyNDYyNCAxMDA2
-NDQKPiAtLS0gYS9saWJtdWx0aXBhdGgvY2hlY2tlcnMuaAo+ICsrKyBiL2xpYm11bHRpcGF0aC9j
-aGVja2Vycy5oCj4gQEAgLTk3LDYgKzk3LDggQEAgZW51bSBwYXRoX2NoZWNrX3N0YXRlIHsKPiAg
-I2RlZmluZSBDSEVDS0VSX0RFVl9MRU4gMjU2Cj4gICNkZWZpbmUgTElCX0NIRUNLRVJfTkFNRUxF
-TiAyNTYKPiAgCj4gKyNkZWZpbmUgRklMRV9OQU1FX1NJWkUgIDI1Ngo+ICsKPiAgc3RydWN0IGNo
-ZWNrZXIgewo+ICAJc3RydWN0IGxpc3RfaGVhZCBub2RlOwo+ICAJdm9pZCAqaGFuZGxlOwo+IEBA
-IC0xMDcsNiArMTA5LDcgQEAgc3RydWN0IGNoZWNrZXIgewo+ICAJaW50IGRpc2FibGU7Cj4gIAlj
-aGFyIG5hbWVbQ0hFQ0tFUl9OQU1FX0xFTl07Cj4gIAljaGFyIG1lc3NhZ2VbQ0hFQ0tFUl9NU0df
-TEVOXTsgICAgICAgLyogY29tbSB3aXRoIGNhbGxlcnMgKi8KPiArICAgIGNoYXIgZGV2W0ZJTEVf
-TkFNRV9TSVpFXTsKCkZJTEVfTkFNRV9TSVpFIG1vcmUgbWVtb3J5IHVzYWdlIG9ubHkgdG8gZGlz
-dGluZ3Vpc2ggU0NTSSBmcm9tIE5WTWUuClBsZWFzZSwgbm8uCgoKPiAgCXZvaWQgKiBjb250ZXh0
-OyAgICAgICAgICAgICAgICAgICAgICAvKiBzdG9yZSBmb3IgcGVyc2lzdGVudAo+IGRhdGEgKi8K
-PiAgCXZvaWQgKiogbXBjb250ZXh0OyAgICAgICAgICAgICAgICAgICAvKiBzdG9yZSBmb3IgcGVy
-c2lzdGVudAo+IGRhdGEgc2hhcmVkCj4gIAkJCQkJCW11bHRpcGF0aC13aWRlLiBVc2UKPiBNQUxM
-T0MgaWYKPiBAQCAtMTMyLDYgKzEzNSw3IEBAIHZvaWQgY2hlY2tlcl9yZXNldCAoc3RydWN0IGNo
-ZWNrZXIgKik7Cj4gIHZvaWQgY2hlY2tlcl9zZXRfc3luYyAoc3RydWN0IGNoZWNrZXIgKik7Cj4g
-IHZvaWQgY2hlY2tlcl9zZXRfYXN5bmMgKHN0cnVjdCBjaGVja2VyICopOwo+ICB2b2lkIGNoZWNr
-ZXJfc2V0X2ZkIChzdHJ1Y3QgY2hlY2tlciAqLCBpbnQpOwo+ICt2b2lkIGNoZWNrZXJfc2V0X2Rl
-dihzdHJ1Y3QgY2hlY2tlciAqYywgY2hhciAqZGV2KTsKPiAgdm9pZCBjaGVja2VyX2VuYWJsZSAo
-c3RydWN0IGNoZWNrZXIgKik7Cj4gIHZvaWQgY2hlY2tlcl9kaXNhYmxlIChzdHJ1Y3QgY2hlY2tl
-ciAqKTsKPiAgdm9pZCBjaGVja2VyX3JlcGFpciAoc3RydWN0IGNoZWNrZXIgKik7Cj4gZGlmZiAt
-LWdpdCBhL2xpYm11bHRpcGF0aC9jaGVja2Vycy9NYWtlZmlsZQo+IGIvbGlibXVsdGlwYXRoL2No
-ZWNrZXJzL01ha2VmaWxlCj4gaW5kZXggYmNlNmI4Yi4uYTliZTZiNiAxMDA2NDQKPiAtLS0gYS9s
-aWJtdWx0aXBhdGgvY2hlY2tlcnMvTWFrZWZpbGUKPiArKysgYi9saWJtdWx0aXBhdGgvY2hlY2tl
-cnMvTWFrZWZpbGUKPiBAQCAtMjQsMTAgKzI0LDEwIEBAIGFsbDogJChMSUJTKQo+ICBsaWJjaGVj
-a3JiZC5zbzogcmJkLm8KPiAgCSQoQ0MpICQoTERGTEFHUykgJChTSEFSRURfRkxBR1MpIC1vICRA
-ICReIC1scmFkb3MgLWx1ZGV2Cj4gIAo+IC1saWJjaGVja2RpcmVjdGlvLnNvOiBsaWJzZy5vIGRp
-cmVjdGlvLm8KPiArbGliY2hlY2tkaXJlY3Rpby5zbzogLi4vbGlic2cubyAuLi9saWJudm1lLm8g
-ZGlyZWN0aW8ubwo+ICAJJChDQykgJChMREZMQUdTKSAkKFNIQVJFRF9GTEFHUykgLW8gJEAgJF4g
-LWxhaW8KPiAgCj4gLWxpYmNoZWNrJS5zbzogbGlic2cubyAlLm8KPiArbGliY2hlY2slLnNvOiAu
-Li9saWJzZy5vIC4uL2xpYm52bWUubyAlLm8KPiAgCSQoQ0MpICQoTERGTEFHUykgJChTSEFSRURf
-RkxBR1MpIC1vICRAICReCj4gIAo+ICBpbnN0YWxsOgo+IGRpZmYgLS1naXQgYS9saWJtdWx0aXBh
-dGgvY2hlY2tlcnMvZW1jX2NsYXJpaW9uLmMKPiBiL2xpYm11bHRpcGF0aC9jaGVja2Vycy9lbWNf
-Y2xhcmlpb24uYwo+IGluZGV4IDljMWZmZWQuLjEyYzFlM2UgMTAwNjQ0Cj4gLS0tIGEvbGlibXVs
-dGlwYXRoL2NoZWNrZXJzL2VtY19jbGFyaWlvbi5jCj4gKysrIGIvbGlibXVsdGlwYXRoL2NoZWNr
-ZXJzL2VtY19jbGFyaWlvbi5jCj4gQEAgLTEyLDcgKzEyLDcgQEAKPiAgI2luY2x1ZGUgPGVycm5v
-Lmg+Cj4gIAo+ICAjaW5jbHVkZSAiLi4vbGlibXVsdGlwYXRoL3NnX2luY2x1ZGUuaCIKPiAtI2lu
-Y2x1ZGUgImxpYnNnLmgiCj4gKyNpbmNsdWRlICIuLi9saWJtdWx0aXBhdGgvbGlic2cuaCIKPiAg
-I2luY2x1ZGUgImNoZWNrZXJzLmgiCj4gICNpbmNsdWRlICJkZWJ1Zy5oIgo+ICAjaW5jbHVkZSAi
-bWVtb3J5LmgiCj4gQEAgLTIxLDYgKzIxLDggQEAKPiAgI2RlZmluZSBJTlFVSVJZX0NNRExFTiAg
-Ngo+ICAjZGVmaW5lIEhFQVZZX0NIRUNLX0NPVU5UICAgICAgIDEwCj4gIAo+ICsjZGVmaW5lIFNF
-TlNFX0JVRkZfTEVOICAzMgo+ICsKPiAgLyoKPiAgICogTWVjaGFuaXNtIHRvIHRyYWNrIENMQVJp
-aU9OIGluYWN0aXZlIHNuYXBzaG90IExVcy4KPiAgICogVGhpcyBpcyBkb25lIHNvIHRoYXQgd2Ug
-Y2FuIGZhaWwgcGFzc2l2ZSBwYXRocwo+IGRpZmYgLS1naXQgYS9saWJtdWx0aXBhdGgvY2hlY2tl
-cnMvbGlic2cuYwo+IGIvbGlibXVsdGlwYXRoL2NoZWNrZXJzL2xpYnNnLmMKPiBkZWxldGVkIGZp
-bGUgbW9kZSAxMDA2NDQKClNlZSBhYm92ZQoKPiBkaWZmIC0tZ2l0IGEvbGlibXVsdGlwYXRoL2No
-ZWNrZXJzL2xpYnNnLmgKPiBiL2xpYm11bHRpcGF0aC9jaGVja2Vycy9saWJzZy5oCj4gZGVsZXRl
-ZCBmaWxlIG1vZGUgMTAwNjQ0Cj4gaW5kZXggMzk5NGY0NS4uMDAwMDAwMAo+IC0tLSBhL2xpYm11
-bHRpcGF0aC9jaGVja2Vycy9saWJzZy5oCj4gKysrIC9kZXYvbnVsbAo+IEBAIC0xLDkgKzAsMCBA
-QAo+IC0jaWZuZGVmIF9MSUJTR19ICj4gLSNkZWZpbmUgX0xJQlNHX0gKPiAtCj4gLSNkZWZpbmUg
-U0VOU0VfQlVGRl9MRU4gMzIKPiAtCj4gLWludCBzZ19yZWFkIChpbnQgc2dfZmQsIHVuc2lnbmVk
-IGNoYXIgKiBidWZmLCBpbnQgYnVmZl9sZW4sCj4gLQkgICAgIHVuc2lnbmVkIGNoYXIgKiBzZW5z
-ZSwgaW50IHNlbnNlX2xlbiwgdW5zaWduZWQgaW50Cj4gdGltZW91dCk7Cj4gLQo+IC0jZW5kaWYg
-LyogX0xJQlNHX0ggKi8KPiBkaWZmIC0tZ2l0IGEvbGlibXVsdGlwYXRoL2NoZWNrZXJzL3JlYWRz
-ZWN0b3IwLmMKPiBiL2xpYm11bHRpcGF0aC9jaGVja2Vycy9yZWFkc2VjdG9yMC5jCj4gaW5kZXgg
-OGZjY2I0Ni4uZTQ4NTgxMCAxMDA2NDQKPiAtLS0gYS9saWJtdWx0aXBhdGgvY2hlY2tlcnMvcmVh
-ZHNlY3RvcjAuYwo+ICsrKyBiL2xpYm11bHRpcGF0aC9jaGVja2Vycy9yZWFkc2VjdG9yMC5jCj4g
-QEAgLTQsMTEgKzQsMTMgQEAKPiAgI2luY2x1ZGUgPHN0ZGlvLmg+Cj4gIAo+ICAjaW5jbHVkZSAi
-Y2hlY2tlcnMuaCIKPiAtI2luY2x1ZGUgImxpYnNnLmgiCj4gKyNpbmNsdWRlICIuLi9saWJtdWx0
-aXBhdGgvbGlic2cuaCIKPiAgCj4gICNkZWZpbmUgTVNHX1JFQURTRUNUT1IwX1VQCSJyZWFkc2Vj
-dG9yMCBjaGVja2VyIHJlcG9ydHMgcGF0aAo+IGlzIHVwIgo+ICAjZGVmaW5lIE1TR19SRUFEU0VD
-VE9SMF9ET1dOCSJyZWFkc2VjdG9yMCBjaGVja2VyIHJlcG9ydHMKPiBwYXRoIGlzIGRvd24iCj4g
-IAo+ICsjZGVmaW5lIFNFTlNFX0JVRkZfTEVOIDMyCj4gKwo+ICBzdHJ1Y3QgcmVhZHNlY3RvcjBf
-Y2hlY2tlcl9jb250ZXh0IHsKPiAgCXZvaWQgKiBkdW1teTsKPiAgfTsKPiBkaWZmIC0tZ2l0IGEv
-bGlibXVsdGlwYXRoL2NoZWNrZXJzL3R1ci5jCj4gYi9saWJtdWx0aXBhdGgvY2hlY2tlcnMvdHVy
-LmMKPiBpbmRleCBiNGE1Y2IyLi5hMDM4MmZhIDEwMDY0NAo+IC0tLSBhL2xpYm11bHRpcGF0aC9j
-aGVja2Vycy90dXIuYwo+ICsrKyBiL2xpYm11bHRpcGF0aC9jaGVja2Vycy90dXIuYwo+IEBAIC0x
-LDUgKzEsOCBAQAo+ICAvKgo+IC0gKiBTb21lIGNvZGUgYm9ycm93ZWQgZnJvbSBzZy11dGlscy4K
-PiArICogU29tZSBjb2RlIGJvcnJvd2VkIGZyb20gc2ctdXRpbHMgYW5kCj4gKyAqIE5WTS1FeHBy
-ZXNzIGNvbW1hbmQgbGluZSB1dGlsaXR5LAo+ICsgKiBpbmNsdWRpbmcgdXNpbmcgb2YgYSBUVVIg
-Y29tbWFuZCBhbmQKPiArICogYSBLZWVwIEFsaXZlIGNvbW1hbmQuCj4gICAqCj4gICAqIENvcHly
-aWdodCAoYykgMjAwNCBDaHJpc3RvcGhlIFZhcm9xdWkKPiAgICovCj4gQEAgLTIyLDEwICsyNSwx
-MCBAQAo+ICAjaW5jbHVkZSAiLi4vbGlibXVsdGlwYXRoL3NnX2luY2x1ZGUuaCIKPiAgI2luY2x1
-ZGUgIi4uL2xpYm11bHRpcGF0aC91dGlsLmgiCj4gICNpbmNsdWRlICIuLi9saWJtdWx0aXBhdGgv
-dGltZS11dGlsLmgiCj4gLSNpbmNsdWRlICIuLi9saWJtdWx0aXBhdGgvdXRpbC5oIgo+ICsjaW5j
-bHVkZSAiLi4vbGlibXVsdGlwYXRoL2xpYnNnLmgiCj4gKyNpbmNsdWRlICIuLi9saWJtdWx0aXBh
-dGgvbGlibnZtZS5oIgo+ICAKPiAtI2RlZmluZSBUVVJfQ01EX0xFTiA2Cj4gLSNkZWZpbmUgSEVB
-VllfQ0hFQ0tfQ09VTlQgICAgICAgMTAKPiArI2RlZmluZSBTRU5TRV9CVUZGX0xFTiAgIDMyCj4g
-IAo+ICAjZGVmaW5lIE1TR19UVVJfVVAJInR1ciBjaGVja2VyIHJlcG9ydHMgcGF0aCBpcyB1cCIK
-PiAgI2RlZmluZSBNU0dfVFVSX0RPV04JInR1ciBjaGVja2VyIHJlcG9ydHMgcGF0aCBpcyBkb3du
-Igo+IEBAIC0zOSw2ICs0Miw3IEBAIHN0cnVjdCB0dXJfY2hlY2tlcl9jb250ZXh0IHsKPiAgCWlu
-dCBzdGF0ZTsKPiAgCWludCBydW5uaW5nOwo+ICAJaW50IGZkOwo+ICsJY2hhciBkZXZbRklMRV9O
-QU1FX1NJWkVdOwoKc2VlIGFib3ZlCgo+ICAJdW5zaWduZWQgaW50IHRpbWVvdXQ7Cj4gIAl0aW1l
-X3QgdGltZTsKPiAgCXB0aHJlYWRfdCB0aHJlYWQ7Cj4gQEAgLTc1LDYgKzc5LDcgQEAgaW50IGxp
-YmNoZWNrX2luaXQgKHN0cnVjdCBjaGVja2VyICogYykKPiAgCWN0LT5zdGF0ZSA9IFBBVEhfVU5D
-SEVDS0VEOwo+ICAJY3QtPmZkID0gLTE7Cj4gIAljdC0+aG9sZGVycyA9IDE7Cj4gKyAgICBtZW1z
-ZXQoY3QtPmRldiwgMCwgc2l6ZW9mKGN0LT5kZXYpKTsKPiAgCXB0aHJlYWRfY29uZF9pbml0X21v
-bm8oJmN0LT5hY3RpdmUpOwo+ICAJcHRocmVhZF9tdXRleGF0dHJfaW5pdCgmYXR0cik7Cj4gIAlw
-dGhyZWFkX211dGV4YXR0cl9zZXR0eXBlKCZhdHRyLCBQVEhSRUFEX01VVEVYX1JFQ1VSU0lWRSk7
-Cj4gQEAgLTEzMywyMiArMTM4LDEyIEBAIHR1cl9jaGVjayhpbnQgZmQsIHVuc2lnbmVkIGludCB0
-aW1lb3V0LAo+ICAJICB2b2lkICgqY29weV9tZXNzYWdlKSh2b2lkICosIGNvbnN0IGNoYXIgKiks
-IHZvaWQgKmNiX2FyZykKPiAgewo+ICAJc3RydWN0IHNnX2lvX2hkciBpb19oZHI7Cj4gLQl1bnNp
-Z25lZCBjaGFyIHR1ckNtZEJsa1tUVVJfQ01EX0xFTl0gPSB7IDB4MDAsIDAsIDAsIDAsIDAsIDAK
-PiB9Owo+IC0JdW5zaWduZWQgY2hhciBzZW5zZV9idWZmZXJbMzJdOwo+ICsJdW5zaWduZWQgY2hh
-ciBzZW5zZV9idWZmZXJbU0VOU0VfQlVGRl9MRU5dOwo+ICAJaW50IHJldHJ5X3R1ciA9IDU7Cj4g
-IAo+ICByZXRyeToKPiAtCW1lbXNldCgmaW9faGRyLCAwLCBzaXplb2YgKHN0cnVjdCBzZ19pb19o
-ZHIpKTsKPiAtCW1lbXNldCgmc2Vuc2VfYnVmZmVyLCAwLCAzMik7Cj4gLQlpb19oZHIuaW50ZXJm
-YWNlX2lkID0gJ1MnOwo+IC0JaW9faGRyLmNtZF9sZW4gPSBzaXplb2YgKHR1ckNtZEJsayk7Cj4g
-LQlpb19oZHIubXhfc2JfbGVuID0gc2l6ZW9mIChzZW5zZV9idWZmZXIpOwo+IC0JaW9faGRyLmR4
-ZmVyX2RpcmVjdGlvbiA9IFNHX0RYRkVSX05PTkU7Cj4gLQlpb19oZHIuY21kcCA9IHR1ckNtZEJs
-azsKPiAtCWlvX2hkci5zYnAgPSBzZW5zZV9idWZmZXI7Cj4gLQlpb19oZHIudGltZW91dCA9IHRp
-bWVvdXQgKiAxMDAwOwo+IC0JaW9faGRyLnBhY2tfaWQgPSAwOwo+IC0JaWYgKGlvY3RsKGZkLCBT
-R19JTywgJmlvX2hkcikgPCAwKSB7Cj4gKwlpZiAoc2dfdHVyKGZkLCAmaW9faGRyLCBzZW5zZV9i
-dWZmZXIsCj4gKyAgICAgICAgc2l6ZW9mKHNlbnNlX2J1ZmZlciksIHRpbWVvdXQpIDwgMCkgewo+
-ICAJCVRVUl9NU0coTVNHX1RVUl9ET1dOKTsKPiAgCQlyZXR1cm4gUEFUSF9ET1dOOwo+ICAJfQo+
-IEBAIC0yMTMsNiArMjA4LDM1IEBAIHJldHJ5Ogo+ICAJcmV0dXJuIFBBVEhfVVA7Cj4gIH0KPiAg
-Cj4gK3N0YXRpYyBpbnQKPiAra2VlcF9hbGl2ZV9jaGVjayhpbnQgZmQsIHVuc2lnbmVkIGludCB0
-aW1lb3V0LAo+ICsJICB2b2lkICgqY29weV9tZXNzYWdlKSh2b2lkICosIGNvbnN0IGNoYXIgKiks
-IHZvaWQgKmNiX2FyZykKPiArewo+ICsgICAgaW50IGVycjsKPiArCj4gKyAgICBlcnIgPSBudm1l
-X2tlZXBfYWxpdmUoZmQsIHRpbWVvdXQpOwo+ICsgICAgaWYgKGVyciA9PSAwKSB7Cj4gKyAgICAg
-ICAgVFVSX01TRyhNU0dfVFVSX1VQKTsKPiArICAgICAgICByZXR1cm4gUEFUSF9VUDsKPiArCX0K
-PiArCj4gKwlUVVJfTVNHKE1TR19UVVJfRE9XTik7Cj4gKwlyZXR1cm4gUEFUSF9ET1dOOwo+ICt9
-Cj4gKwo+ICtzdGF0aWMgaW50Cj4gK3BpbmdfY2hlY2soaW50IGZkLCBjaGFyICpkZXYsIHVuc2ln
-bmVkIGludCB0aW1lb3V0LAo+ICsJICB2b2lkICgqY29weV9tZXNzYWdlKSh2b2lkICosIGNvbnN0
-IGNoYXIgKiksIHZvaWQgKmNiX2FyZykKPiArewo+ICsgICAgaWYgKCFzdHJuY21wKGRldiwgIm52
-bWUiLCA0KSkKPiArICAgIHsKPiArICAgICAgICByZXR1cm4ga2VlcF9hbGl2ZV9jaGVjayhmZCwg
-dGltZW91dCwgY29weV9tZXNzYWdlLCBjYl9hcmcpOwo+ICsgICAgfQo+ICsgICAgZWxzZQo+ICsg
-ICAgewo+ICsgICAgICAgIHJldHVybiB0dXJfY2hlY2soZmQsIHRpbWVvdXQsIGNvcHlfbWVzc2Fn
-ZSwgY2JfYXJnKTsKPiArICAgIH0KPiArfQo+ICAjZGVmaW5lIHR1cl90aHJlYWRfY2xlYW51cF9w
-dXNoKGN0KQo+IHB0aHJlYWRfY2xlYW51cF9wdXNoKGNsZWFudXBfZnVuYywgY3QpCj4gICNkZWZp
-bmUgdHVyX3RocmVhZF9jbGVhbnVwX3BvcChjdCkgcHRocmVhZF9jbGVhbnVwX3BvcCgxKQo+ICAK
-PiBAQCAtMjY2LDggKzI5MCw3IEBAIHN0YXRpYyB2b2lkICp0dXJfdGhyZWFkKHZvaWQgKmN0eCkK
-PiAgCWN0LT5zdGF0ZSA9IFBBVEhfUEVORElORzsKPiAgCWN0LT5tZXNzYWdlWzBdID0gJ1wwJzsK
-PiAgCXB0aHJlYWRfbXV0ZXhfdW5sb2NrKCZjdC0+bG9jayk7Cj4gLQo+IC0Jc3RhdGUgPSB0dXJf
-Y2hlY2soY3QtPmZkLCBjdC0+dGltZW91dCwgY29weV9tc2dfdG9fdGNjLCBjdC0KPiA+bWVzc2Fn
-ZSk7Cj4gKyAgICBzdGF0ZSA9IHBpbmdfY2hlY2soY3QtPmZkLCBjdC0+ZGV2LCBjdC0+dGltZW91
-dCwKPiBjb3B5X21zZ190b190Y2MsIGN0LT5tZXNzYWdlKTsKPiAgCXB0aHJlYWRfdGVzdGNhbmNl
-bCgpOwo+ICAKPiAgCS8qIFRVUiBjaGVja2VyIGRvbmUgKi8KPiBAQCAtMzkwLDYgKzQxMyw3IEBA
-IGludCBsaWJjaGVja19jaGVjayhzdHJ1Y3QgY2hlY2tlciAqIGMpCj4gIAkJLyogU3RhcnQgbmV3
-IFRVUiBjaGVja2VyICovCj4gIAkJY3QtPnN0YXRlID0gUEFUSF9VTkNIRUNLRUQ7Cj4gIAkJY3Qt
-PmZkID0gYy0+ZmQ7Cj4gKyAgICAgICAgc3RybmNweShjdC0+ZGV2LCBjLT5kZXYsIHN0cmxlbihj
-LT5kZXYpKzEpOwoKWW91IHNlZW0gdG8gaGF2ZSBzb21lIHdoaXRlc3BhY2UgaXNzdWVzLgoKPiAg
-CQljdC0+dGltZW91dCA9IGMtPnRpbWVvdXQ7Cj4gIAkJcHRocmVhZF9zcGluX2xvY2soJmN0LT5o
-bGRyX2xvY2spOwo+ICAJCWN0LT5ob2xkZXJzKys7Cj4gQEAgLTQwNiw3ICs0MzAsNyBAQCBpbnQg
-bGliY2hlY2tfY2hlY2soc3RydWN0IGNoZWNrZXIgKiBjKQo+ICAJCQljdC0+dGhyZWFkID0gMDsK
-PiAgCQkJY29uZGxvZygzLCAiJXM6IGZhaWxlZCB0byBzdGFydCB0dXIgdGhyZWFkLAo+IHVzaW5n
-Igo+ICAJCQkJIiBzeW5jIG1vZGUiLCB0dXJfZGV2dChkZXZ0LAo+IHNpemVvZihkZXZ0KSwgY3Qp
-KTsKPiAtCQkJcmV0dXJuIHR1cl9jaGVjayhjLT5mZCwgYy0+dGltZW91dCwKPiArCQkJcmV0dXJu
-IHBpbmdfY2hlY2soYy0+ZmQsIGMtPmRldiwgYy0+dGltZW91dCwKPiAgCQkJCQkgY29weV9tc2df
-dG9fY2hlY2tlciwgYyk7Cj4gIAkJfQo+ICAJCXR1cl90aW1lb3V0KCZ0c3ApOwo+IGRpZmYgLS1n
-aXQgYS9saWJtdWx0aXBhdGgvZGlzY292ZXJ5LmMgYi9saWJtdWx0aXBhdGgvZGlzY292ZXJ5LmMK
-PiBpbmRleCA2NjNjOGVhLi5iYWU1ZDI0IDEwMDY0NAo+IC0tLSBhL2xpYm11bHRpcGF0aC9kaXNj
-b3ZlcnkuYwo+ICsrKyBiL2xpYm11bHRpcGF0aC9kaXNjb3ZlcnkuYwo+IEBAIC0xNTM5LDYgKzE1
-MzksNyBAQCBnZXRfc3RhdGUgKHN0cnVjdCBwYXRoICogcHAsIHN0cnVjdCBjb25maWcKPiAqY29u
-ZiwgaW50IGRhZW1vbikKPiAgCQkJcmV0dXJuIFBBVEhfVU5DSEVDS0VEOwo+ICAJCX0KPiAgCQlj
-aGVja2VyX3NldF9mZChjLCBwcC0+ZmQpOwo+ICsgICAgICAgIGNoZWNrZXJfc2V0X2RldihjLCBw
-cC0+ZGV2KTsKPiAgCQlpZiAoY2hlY2tlcl9pbml0KGMsIHBwLT5tcHA/JnBwLT5tcHAtCj4gPm1w
-Y29udGV4dDpOVUxMKSkgewo+ICAJCQltZW1zZXQoYywgMHgwLCBzaXplb2Yoc3RydWN0IGNoZWNr
-ZXIpKTsKPiAgCQkJY29uZGxvZygzLCAiJXM6IGNoZWNrZXIgaW5pdCBmYWlsZWQiLCBwcC0KPiA+
-ZGV2KTsKPiBkaWZmIC0tZ2l0IGEvbGlibXVsdGlwYXRoL2xpYm52bWUuYyBiL2xpYm11bHRpcGF0
-aC9saWJudm1lLmMKPiBuZXcgZmlsZSBtb2RlIDEwMDY0NAo+IGluZGV4IDAwMDAwMDAuLjk3Yzkx
-MjUKPiAtLS0gL2Rldi9udWxsCj4gKysrIGIvbGlibXVsdGlwYXRoL2xpYm52bWUuYwo+IEBAIC0w
-LDAgKzEsMTMwIEBACj4gKy8qCj4gKyAqIChDKSBDb3B5cmlnaHQgSFVBV0VJIFRlY2hub2xvZ3kg
-Q29ycC4gMjAxNywgQWxsIFJpZ2h0cyBSZXNlcnZlZC4KPiArICoKPiArICogbGlibnZtZS5jCj4g
-KyAqCj4gKyAqIFNvbWUgY29kZSBib3Jyb3dlZCBmcm9tIE5WTS1FeHByZXNzIGNvbW1hbmQgbGlu
-ZSB1dGlsaXR5Lgo+ICsgKgo+ICsgKiBBdXRob3Iocyk6IFlhbmcgRmVuZyA8cGhpbGlwLnlhbmdA
-aHVhd2VpLmNvbT4KPiArICoKPiArICogVGhpcyBmaWxlIGlzIHJlbGVhc2VkIHVuZGVyIHRoZSBH
-UEwgdmVyc2lvbiAyLCBvciBhbnkgbGF0ZXIKPiB2ZXJzaW9uLgo+ICsgKgo+ICsgKi8KPiArI2lu
-Y2x1ZGUgPGxpbnV4L3R5cGVzLmg+Cj4gKyNpbmNsdWRlIDxzeXMvaW9jdGwuaD4KPiArI2luY2x1
-ZGUgPHN0ZGludC5oPgo+ICsKPiArc3RydWN0IG52bWVfdXNlcl9pbyB7Cj4gKyAgICBfX3U4ICAg
-IG9wY29kZTsKPiArICAgIF9fdTggICAgZmxhZ3M7Cj4gKyAgICBfX3UxNiAgIGNvbnRyb2w7Cj4g
-KyAgICBfX3UxNiAgIG5ibG9ja3M7Cj4gKyAgICBfX3UxNiAgIHJzdmQ7Cj4gKyAgICBfX3U2NCAg
-IG1ldGFkYXRhOwo+ICsgICAgX191NjQgICBhZGRyOwo+ICsgICAgX191NjQgICBzbGJhOwo+ICsg
-ICAgX191MzIgICBkc21nbXQ7Cj4gKyAgICBfX3UzMiAgIHJlZnRhZzsKPiArICAgIF9fdTE2ICAg
-YXBwdGFnOwo+ICsgICAgX191MTYgICBhcHBtYXNrOwo+ICt9OwoKUGxlYXNlIHNpbXBseSBpbmNs
-dWRlIGxpbnV4L252bWVfaW9jdGwuaC4gTWFrZWZpbGVzIHNob3VsZCBjaGVjayBpZgp0aGF0IGZp
-bGUgZXhpc3RzIGFuZCBjb21waWxlIHRoZSBudm1lIHN0dWZmIGNvbmRpdGlvbmFsbHkuIAoKPiAr
-Cj4gK3N0cnVjdCBudm1lX2FkbWluX2NtZCB7Cj4gKyAgICBfX3U4ICAgIG9wY29kZTsKPiArICAg
-IF9fdTggICAgZmxhZ3M7Cj4gKyAgICBfX3UxNiAgIHJzdmQxOwo+ICsgICAgX191MzIgICBuc2lk
-Owo+ICsgICAgX191MzIgICBjZHcyOwo+ICsgICAgX191MzIgICBjZHczOwo+ICsgICAgX191NjQg
-ICBtZXRhZGF0YTsKPiArICAgIF9fdTY0ICAgYWRkcjsKPiArICAgIF9fdTMyICAgbWV0YWRhdGFf
-bGVuOwo+ICsgICAgX191MzIgICBkYXRhX2xlbjsKPiArICAgIF9fdTMyICAgY2R3MTA7Cj4gKyAg
-ICBfX3UzMiAgIGNkdzExOwo+ICsgICAgX191MzIgICBjZHcxMjsKPiArICAgIF9fdTMyICAgY2R3
-MTM7Cj4gKyAgICBfX3UzMiAgIGNkdzE0Owo+ICsgICAgX191MzIgICBjZHcxNTsKPiArICAgIF9f
-dTMyICAgdGltZW91dF9tczsKPiArICAgIF9fdTMyICAgcmVzdWx0Owo+ICt9Owo+ICsKPiArI2Rl
-ZmluZSBOVk1FX0lPQ1RMX0FETUlOX0NNRCAgICBfSU9XUignTicsIDB4NDEsIHN0cnVjdAo+IG52
-bWVfYWRtaW5fY21kKQo+ICsjZGVmaW5lIE5WTUVfSU9DVExfU1VCTUlUX0lPICAgIF9JT1coJ04n
-LCAweDQyLCBzdHJ1Y3QgbnZtZV91c2VyX2lvKQo+ICsKPiArc3RhdGljIGludCBudm1lX2lvKGlu
-dCBmZCwgX191OCBvcGNvZGUsIF9fdTY0IHNsYmEsIF9fdTE2IG5ibG9ja3MsCj4gX191MTYgY29u
-dHJvbCwKPiArICAgICAgICAgICAgX191MzIgZHNtZ210LCBfX3UzMiByZWZ0YWcsIF9fdTE2IGFw
-cHRhZywgX191MTYgYXBwbWFzaywKPiB2b2lkICpkYXRhLAo+ICsgICAgICAgICAgICB2b2lkICpt
-ZXRhZGF0YSkKPiArewo+ICsgICAgc3RydWN0IG52bWVfdXNlcl9pbyBpbyA9IHsKPiArICAgIC5v
-cGNvZGUgPSBvcGNvZGUsCj4gKyAgICAuZmxhZ3MgPSAwLAo+ICsgICAgLmNvbnRyb2wgPSBjb250
-cm9sLAo+ICsgICAgLm5ibG9ja3MgPSBuYmxvY2tzLAo+ICsgICAgLnJzdmQgPSAwLAo+ICsgICAg
-Lm1ldGFkYXRhID0gKF9fdTY0KSh1aW50cHRyX3QpIG1ldGFkYXRhLAo+ICsgICAgLmFkZHIgPSAo
-X191NjQpKHVpbnRwdHJfdCkgZGF0YSwKPiArICAgIC5zbGJhID0gc2xiYSwKPiArICAgIC5kc21n
-bXQgPSBkc21nbXQsCj4gKyAgICAucmVmdGFnID0gcmVmdGFnLAo+ICsgICAgLmFwcG1hc2sgPSBh
-cHB0YWcsCj4gKyAgICAuYXBwdGFnID0gYXBwbWFzaywKPiArICAgIH07Cj4gKwo+ICsgICAgcmV0
-dXJuIGlvY3RsKGZkLCBOVk1FX0lPQ1RMX1NVQk1JVF9JTywgJmlvKTsKPiArfQo+ICsKPiAraW50
-IG52bWVfcmVhZChpbnQgZmQsIF9fdTY0IHNsYmEsIF9fdTE2IG5ibG9ja3MsIF9fdTE2IGNvbnRy
-b2wsCj4gX191MzIgZHNtZ210LAo+ICsgICAgICAgICAgICBfX3UzMiByZWZ0YWcsIF9fdTE2IGFw
-cHRhZywgX191MTYgYXBwbWFzaywgdm9pZCAqZGF0YSwKPiB2b2lkICptZXRhZGF0YSkKPiArewo+
-ICsgICAgcmV0dXJuIG52bWVfaW8oZmQsIDB4Miwgc2xiYSwgbmJsb2NrcywgY29udHJvbCwgZHNt
-Z210LAo+ICsgICAgICAgIHJlZnRhZywgYXBwdGFnLCBhcHBtYXNrLCBkYXRhLCBtZXRhZGF0YSk7
-Cj4gK30KClRoaXMgQVBJIGlzIGJsb2F0ZWQuIE91dCBvZiB0aGVzZSAxMCghKSBmdW5jdGlvbiBh
-cmd1bWVudHMsIDYgYXJlIHplcm8KaW4gdGhlIG9ubHkgY2FsbCB5b3UgaGF2ZS4KCj4gKwo+ICtz
-dGF0aWMgaW50IG52bWVfc3VibWl0X3Bhc3N0aHJ1KGludCBmZCwgaW50IGlvY3RsX2NtZCwgc3Ry
-dWN0Cj4gbnZtZV9hZG1pbl9jbWQgKmNtZCkKPiArewo+ICsJcmV0dXJuIGlvY3RsKGZkLCBpb2N0
-bF9jbWQsIGNtZCk7Cj4gK30KPiArCj4gK2ludCBudm1lX3Bhc3N0aHJ1KGludCBmZCwgaW50IGlv
-Y3RsX2NtZCwgX191OCBvcGNvZGUsIF9fdTggZmxhZ3MsCj4gX191MTYgcnN2ZCwKPiArCQkgIF9f
-dTMyIG5zaWQsIF9fdTMyIGNkdzIsIF9fdTMyIGNkdzMsIF9fdTMyIGNkdzEwLAo+IF9fdTMyIGNk
-dzExLAo+ICsJCSAgX191MzIgY2R3MTIsIF9fdTMyIGNkdzEzLCBfX3UzMiBjZHcxNCwgX191MzIK
-PiBjZHcxNSwKPiArCQkgIF9fdTMyIGRhdGFfbGVuLCB2b2lkICpkYXRhLCBfX3UzMiBtZXRhZGF0
-YV9sZW4sCj4gKwkJICB2b2lkICptZXRhZGF0YSwgX191MzIgdGltZW91dF9tcywgX191MzIgKnJl
-c3VsdCkKClRoaXMgaXMgZXZlbiB3b3JzZS4gVGhpcyBmdW5jdGlvbiB0YWtlcyAyMCghISEpIHBh
-cmFtZXRlcnMsIGFuZCAxNSBvZgp0aGVtIGFyZSAwIGluIHRoZSBjYWxsLiBEbyB5b3Ugc2VlIGFu
-eSBvdGhlciB1c2UgY2FzZSBvZgpudm1lX2FkbWluX2NtZCgpIGluIG11bHRpcGF0aC10b29scyB0
-aGF0IHdvdWxkIGp1c3RpZnkgdGhlIGV4dHJhCnBhcmFtZXRlcnM/Cgo+ICt7Cj4gKwlzdHJ1Y3Qg
-bnZtZV9hZG1pbl9jbWQgY21kID0gewo+ICsJCS5vcGNvZGUJCT0gb3Bjb2RlLAo+ICsJCS5mbGFn
-cwkJPSBmbGFncywKPiArCQkucnN2ZDEJCT0gcnN2ZCwKPiArCQkubnNpZAkJPSBuc2lkLAo+ICsJ
-CS5jZHcyCQk9IGNkdzIsCj4gKwkJLmNkdzMJCT0gY2R3MywKPiArCQkubWV0YWRhdGEJPSAoX191
-NjQpKHVpbnRwdHJfdCkgbWV0YWRhdGEsCj4gKwkJLmFkZHIJCT0gKF9fdTY0KSh1aW50cHRyX3Qp
-IGRhdGEsCj4gKwkJLm1ldGFkYXRhX2xlbgk9IG1ldGFkYXRhX2xlbiwKPiArCQkuZGF0YV9sZW4J
-PSBkYXRhX2xlbiwKPiArCQkuY2R3MTAJCT0gY2R3MTAsCj4gKwkJLmNkdzExCQk9IGNkdzExLAo+
-ICsJCS5jZHcxMgkJPSBjZHcxMiwKPiArCQkuY2R3MTMJCT0gY2R3MTMsCj4gKwkJLmNkdzE0CQk9
-IGNkdzE0LAo+ICsJCS5jZHcxNQkJPSBjZHcxNSwKPiArCQkudGltZW91dF9tcwk9IHRpbWVvdXRf
-bXMsCj4gKwkJLnJlc3VsdAkJPSAwLAo+ICsJfTsKPiArCWludCBlcnI7Cj4gKwo+ICsJZXJyID0g
-bnZtZV9zdWJtaXRfcGFzc3RocnUoZmQsIGlvY3RsX2NtZCwgJmNtZCk7Cj4gKwlpZiAoIWVyciAm
-JiByZXN1bHQpCj4gKwkJKnJlc3VsdCA9IGNtZC5yZXN1bHQ7Cj4gKwlyZXR1cm4gZXJyOwo+ICt9
-Cj4gKwo+ICtpbnQgbnZtZV9rZWVwX2FsaXZlKGludCBmZCwgX191MzIgdGltZW91dF9tcykKPiAr
-ewo+ICsgICAgX191MzIgcmVzdWx0Owo+ICsKPiArICAgIHJldHVybiBudm1lX3Bhc3N0aHJ1KGZk
-LCBOVk1FX0lPQ1RMX0FETUlOX0NNRCwgMHgxOCwgMCwgMCwgMCwgMCwKPiAwLCAwLCAwLAo+ICsJ
-CSAgICAgICAgICAgICAgICAwLCAwLCAwLCAwLCAwLCAwLCAwLDAgLCB0aW1lb3V0X21zLAo+ICZy
-ZXN1bHQpOwo+ICt9CgpIb25lc3RseSwgd2h5IGRvIHlvdSBkZWZpbmUgdGhlIEFQSSBhdCBhbGw/
-IEl0IHdvdWxkIGJlIG1vcmUgcmVhZGFibGUKdG8gY2FsbCBudm1lX3N1Ym1pdF9wYXNzdGhydSgp
-IGRpcmVjdGx5LgoKPiBkaWZmIC0tZ2l0IGEvbGlibXVsdGlwYXRoL2xpYm52bWUuaCBiL2xpYm11
-bHRpcGF0aC9saWJudm1lLmgKPiBuZXcgZmlsZSBtb2RlIDEwMDY0NAo+IGluZGV4IDAwMDAwMDAu
-LmEyYjU0NjAKPiAtLS0gL2Rldi9udWxsCj4gKysrIGIvbGlibXVsdGlwYXRoL2xpYm52bWUuaAo+
-IEBAIC0wLDAgKzEsMTAgQEAKPiArI2lmbmRlZiBfTElCTlZNRV9ICj4gKyNkZWZpbmUgX0xJQk5W
-TUVfSAo+ICsKPiArI2luY2x1ZGUgPGxpbnV4L3R5cGVzLmg+Cj4gKwo+ICtpbnQgbnZtZV9yZWFk
-KGludCBmZCwgX191NjQgc2xiYSwgX191MTYgbmJsb2NrcywgX191MTYgY29udHJvbCwKPiBfX3Uz
-MiBkc21nbXQsCj4gKyAgICAgICAgICAgIF9fdTMyIHJlZnRhZywgX191MTYgYXBwdGFnLCBfX3Ux
-NiBhcHBtYXNrLCB2b2lkICpkYXRhLAo+IHZvaWQgKm1ldGFkYXRhKTsKPiAraW50IG52bWVfa2Vl
-cF9hbGl2ZShpbnQgZmQsIF9fdTMyIHRpbWVvdXRfbXMpOwo+ICsKPiArI2VuZGlmIC8qIF9MSUJO
-Vk1FX0ggKi8KPiBkaWZmIC0tZ2l0IGEvbGlibXVsdGlwYXRoL2xpYnNnLmMgYi9saWJtdWx0aXBh
-dGgvbGlic2cuYwo+IG5ldyBmaWxlIG1vZGUgMTAwNjQ0CgpzZWUgYWJvdmUKCmRpZmYgLS1naXQg
-YS9saWJtdWx0aXBhdGgvcHJpb3JpdGl6ZXJzL3BhdGhfbGF0ZW5jeS5jCj4gYi9saWJtdWx0aXBh
-dGgvcHJpb3JpdGl6ZXJzL3BhdGhfbGF0ZW5jeS5jCj4gaW5kZXggMzRiNzM0Yi4uMjEyMDlmZiAx
-MDA2NDQKPiAtLS0gYS9saWJtdWx0aXBhdGgvcHJpb3JpdGl6ZXJzL3BhdGhfbGF0ZW5jeS5jCj4g
-KysrIGIvbGlibXVsdGlwYXRoL3ByaW9yaXRpemVycy9wYXRoX2xhdGVuY3kuYwo+IEBAIC0yMywx
-MSArMjMsMTEgQEAKPiAgI2luY2x1ZGUgPG1hdGguaD4KPiAgI2luY2x1ZGUgPGN0eXBlLmg+Cj4g
-ICNpbmNsdWRlIDx0aW1lLmg+Cj4gLQo+ICAjaW5jbHVkZSAiZGVidWcuaCIKPiAgI2luY2x1ZGUg
-InByaW8uaCIKPiAgI2luY2x1ZGUgInN0cnVjdHMuaCIKPiAtI2luY2x1ZGUgIi4uL2NoZWNrZXJz
-L2xpYnNnLmgiCj4gKyNpbmNsdWRlICJsaWJzZy5oIgo+ICsjaW5jbHVkZSAibGlibnZtZS5oIgo+
-ICAKPiAgI2RlZmluZSBwcF9wbF9sb2cocHJpbywgZm10LCBhcmdzLi4uKSBjb25kbG9nKHByaW8s
-ICJwYXRoX2xhdGVuY3kKPiBwcmlvOiAiIGZtdCwgIyNhcmdzKQo+ICAKPiBAQCAtNDQsNiArNDQs
-OCBAQAo+ICAKPiAgI2RlZmluZSBNQVhfQ0hBUl9TSVpFICAgICAgICAgICAzMAo+ICAKPiArI2Rl
-ZmluZSBTRU5TRV9CVUZGX0xFTiAgICAgICAgICAzMgo+ICsKPiAgI2RlZmluZSBVU0VDX1BFUl9T
-RUMgICAgICAgICAgICAxMDAwMDAwTEwKPiAgI2RlZmluZSBOU0VDX1BFUl9VU0VDICAgICAgICAg
-ICAxMDAwTEwKPiAgCj4gQEAgLTUxLDE5ICs1MywyNyBAQCBzdGF0aWMgbG9uZyBsb25nIHBhdGhf
-bGF0ZW5jeVtNQVhfSU9fTlVNXTsKPiAgCj4gIHN0YXRpYyBpbmxpbmUgbG9uZyBsb25nIHRpbWV2
-YWxfdG9fdXMoY29uc3Qgc3RydWN0IHRpbWVzcGVjICp0dikKPiAgewo+IC0JcmV0dXJuICgobG9u
-ZyBsb25nKSB0di0+dHZfc2VjICogVVNFQ19QRVJfU0VDKSArICh0di0KPiA+dHZfbnNlYyAvIE5T
-RUNfUEVSX1VTRUMpOwo+ICsgICAgcmV0dXJuICgobG9uZyBsb25nKSB0di0+dHZfc2VjICogVVNF
-Q19QRVJfU0VDKSArICh0di0+dHZfbnNlYyAvCj4gTlNFQ19QRVJfVVNFQyk7Cj4gIH0KPiAgCj4g
-LXN0YXRpYyBpbnQgZG9fcmVhZHNlY3RvcjAoaW50IGZkLCB1bnNpZ25lZCBpbnQgdGltZW91dCkK
-PiArc3RhdGljIGludCBkb19yZWFkc2VjdG9yMChzdHJ1Y3QgcGF0aCAqcHAsIHVuc2lnbmVkIGlu
-dCB0aW1lb3V0KQo+ICB7Cj4gLQl1bnNpZ25lZCBjaGFyIGJ1Zls0MDk2XTsKPiAtCXVuc2lnbmVk
-IGNoYXIgc2J1ZltTRU5TRV9CVUZGX0xFTl07Cj4gLQlpbnQgcmV0Owo+ICsgICAgdW5zaWduZWQg
-Y2hhciBidWZbNDA5Nl07Cj4gKyAgICB1bnNpZ25lZCBjaGFyIG1idWZbNTEyXTsKPiArICAgIHVu
-c2lnbmVkIGNoYXIgc2J1ZltTRU5TRV9CVUZGX0xFTl07Cj4gIAo+IC0JcmV0ID0gc2dfcmVhZChm
-ZCwgJmJ1ZlswXSwgNDA5NiwgJnNidWZbMF0sCj4gLQkJICAgICAgU0VOU0VfQlVGRl9MRU4sIHRp
-bWVvdXQpOwo+ICsgICAgaWYgKCFzdHJuY21wKHBwLT5kZXYsICJudm1lIiwgNCkpCj4gKyAgICB7
-Cj4gKyAgICAgICAgaWYgKG52bWVfcmVhZChwcC0+ZmQsIDAsIDEsIDAsIDAsIDAsIDAsIDAsIGJ1
-ZiwgbWJ1ZikgIT0gMCkKPiArICAgICAgICAgICAgcmV0dXJuIDA7Cj4gKyAgICB9Cj4gKyAgICBl
-bHNlCj4gKyAgICB7Cj4gKyAgICAgICAgaWYgKHNnX3JlYWQocHAtPmZkLCAmYnVmWzBdLCA0MDk2
-LCAmc2J1ZlswXSwgU0VOU0VfQlVGRl9MRU4sCj4gdGltZW91dCkgPT0gMikKPiArICAgICAgICAg
-ICAgcmV0dXJuIDA7Cj4gKyAgICB9Cj4gIAo+IC0JcmV0dXJuIHJldDsKPiArICAgIHJldHVybiAx
-Owo+ICB9Cj4gIAo+ICBpbnQgY2hlY2tfYXJnc192YWxpZChpbnQgaW9fbnVtLCBpbnQgYmFzZV9u
-dW0pCj4gQEAgLTIxOCw5ICsyMjgsOSBAQCBpbnQgZ2V0cHJpbyAoc3RydWN0IHBhdGggKnBwLCBj
-aGFyICphcmdzLAo+IHVuc2lnbmVkIGludCB0aW1lb3V0KQo+ICAgICAgICAgICh2b2lkKWNsb2Nr
-X2dldHRpbWUoQ0xPQ0tfTU9OT1RPTklDLCAmdHYpOwo+ICAgICAgICAgIGJlZm9yZSA9IHRpbWV2
-YWxfdG9fdXMoJnR2KTsKPiAgCj4gLSAgICAgICAgaWYgKGRvX3JlYWRzZWN0b3IwKHBwLT5mZCwg
-dGltZW91dCkgPT0gMikKPiArICAgICAgICBpZiAoZG9fcmVhZHNlY3RvcjAocHAsIHRpbWVvdXQp
-ID09IDApCj4gICAgICAgICAgewo+IC0gICAgICAgICAgICBwcF9wbF9sb2coMCwgIiVzOiBwYXRo
-IGRvd24iLCBwcC0+ZGV2KTsKPiArICAgICAgICAgICAgcHBfcGxfbG9nKDAsICIlczogc2VuZCBy
-ZWFkIHNlY3RvcjAgY29tbWFuZCBmYWlsIiwgcHAtCj4gPmRldik7Cj4gICAgICAgICAgICAgIHJl
-dHVybiAtMTsKPiAgICAgICAgICB9Cj4gIAo+IGRpZmYgLS1naXQgYS9tdWx0aXBhdGgvbXVsdGlw
-YXRoLmNvbmYuNSBiL211bHRpcGF0aC9tdWx0aXBhdGguY29uZi41Cj4gaW5kZXggMDA0OWNiYS4u
-YThkNDc5NyAxMDA2NDQKPiAtLS0gYS9tdWx0aXBhdGgvbXVsdGlwYXRoLmNvbmYuNQo+ICsrKyBi
-L211bHRpcGF0aC9tdWx0aXBhdGguY29uZi41Cj4gQEAgLTQxOSw3ICs0MTksNyBAQCBhcmU6Cj4g
-IGRlcHJlY2F0ZWQsIHBsZWFzZSB1c2UgXGZJdHVyXGZSIGluc3RlYWQuCj4gIC5UUAo+ICAuSSB0
-dXIKPiAtSXNzdWUgYSBcZklURVNUIFVOSVQgUkVBRFlcZlIgY29tbWFuZCB0byB0aGUgZGV2aWNl
-Lgo+ICtJc3N1ZSBhIFxmSVRFU1QgVU5JVCBSRUFEWVxmUiBjb21tYW5kIG9yIGEgXGZJS0VFUCBB
-TElWRVxmUiBjb21tYW5kCj4gdG8gdGhlIGRldmljZS4KPiAgLlRQCj4gIC5JIGVtY19jbGFyaWlv
-bgo+ICAoSGFyZHdhcmUtZGVwZW5kZW50KQoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0Bz
-dXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6
-IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEy
-ODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRo
-YXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+Dear Martin,
+
+Thanks a lot for your reviews.
+Please find my replys as follows.
+And the up-to-date patch will be sent later.
+
+Regards,
+-Yang
+
+On 2017/7/21 1:50, Martin Wilck wrote:
+> Dear Yang,
+> 
+> On Thu, 2017-07-20 at 11:36 +0800, Yang Feng wrote:
+>> 1. The SCSI-to-NVMe translations have been removed in the patch
+>> "nvme:
+>> Remove SCSI translations" in the linux-nvme, so the native NVMe Ioctl
+>> command should be supported in the multipath-tools.
+> 
+>> 2. In the prioritizers/path_latency.c, modify the func
+>> do_readsector0():
+>> send a native NVMe Read Ioctl command to the nvme device, and send a
+>> SG
+>> Read Ioctl command to the scsi device.
+> 
+> As noted previously, I would prefer to use a directio command here. I
+> see no advantage of using sg or nvme ioctls over directio.
+> 
+Thanks, insteadly, directio will be used.
+
+>> 3. In the tur checker, add support for the native NVMe Keep Alive
+>> Ioctl
+>> command to the nvme device.
+> 
+> No, please don't. I'm still with Xose here. There's no need to use the
+> same checker for NVMe and SCSI devices. This is what we have the
+> hwtable for. Keep the tur checker as it was before, create a keepalive
+> checker for NVMe, and use hwtable entries to match them appropriately
+> to devices.
+> 
+OK, it will be fixed.
+
+> See below for some details. 
+> NAK from my side for the patch in this form.
+> 
+> Martin
+> 
+>>
+>> Signed-off-by: Yang Feng <philip.yang@huawei.com>
+>> Reviewed-by: Martin Wilck <mwilck@suse.com>
+>> Reviewed-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+>> ---
+>>  libmultipath/checkers.c                  |   7 ++
+>>  libmultipath/checkers.h                  |   4 +
+>>  libmultipath/checkers/Makefile           |   4 +-
+>>  libmultipath/checkers/emc_clariion.c     |   4 +-
+>>  libmultipath/checkers/libsg.c            |  94 -------------------
+> 
+> IIRC you did this in your previous patch already. Can you give a good
+> reason for moving this code? It makes your patch unnecessarily big and
+> messes up git history. If it's REALLY necessary, separate it out,
+> please.
+>
+OK, the libsg.c/libsg.h will not be moved.
+> 
+>> ---
+>>  libmultipath/checkers/libsg.h            |   9 ---
+>>  libmultipath/checkers/readsector0.c      |   4 +-
+>>  libmultipath/checkers/tur.c              |  64 ++++++++++-----
+>>  libmultipath/discovery.c                 |   1 +
+>>  libmultipath/libnvme.c                   | 130
+>> +++++++++++++++++++++++++++++++
+>>  libmultipath/libnvme.h                   |  10 +++
+>>  libmultipath/libsg.c                     | 113
+>> +++++++++++++++++++++++++++
+>>  libmultipath/libsg.h                     |  13 ++++
+>>  libmultipath/prioritizers/Makefile       |   2 +-
+>>  libmultipath/prioritizers/path_latency.c |  34 +++++---
+>>  multipath/multipath.conf.5               |   2 +-
+>>  16 files changed, 354 insertions(+), 141 deletions(-)
+>>  delete mode 100644 libmultipath/checkers/libsg.c
+>>  delete mode 100644 libmultipath/checkers/libsg.h
+>>  create mode 100644 libmultipath/libnvme.c
+>>  create mode 100644 libmultipath/libnvme.h
+>>  create mode 100644 libmultipath/libsg.c
+>>  create mode 100644 libmultipath/libsg.h
+>>
+>> diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
+>> index 05e024f..00fbd6e 100644
+>> --- a/libmultipath/checkers.c
+>> +++ b/libmultipath/checkers.c
+>> @@ -162,6 +162,13 @@ void checker_set_fd (struct checker * c, int fd)
+>>  	c->fd = fd;
+>>  }
+>>  
+>> +void checker_set_dev(struct checker *c, char *dev)
+>> +{
+>> +    if (!c)
+>> +        return;
+>> +    strncpy(c->dev, dev, strlen(dev)+1);
+>> +}
+>> +
+>>  void checker_set_sync (struct checker * c)
+>>  {
+>>  	if (!c)
+>> diff --git a/libmultipath/checkers.h b/libmultipath/checkers.h
+>> index 1d225de..f924624 100644
+>> --- a/libmultipath/checkers.h
+>> +++ b/libmultipath/checkers.h
+>> @@ -97,6 +97,8 @@ enum path_check_state {
+>>  #define CHECKER_DEV_LEN 256
+>>  #define LIB_CHECKER_NAMELEN 256
+>>  
+>> +#define FILE_NAME_SIZE  256
+>> +
+>>  struct checker {
+>>  	struct list_head node;
+>>  	void *handle;
+>> @@ -107,6 +109,7 @@ struct checker {
+>>  	int disable;
+>>  	char name[CHECKER_NAME_LEN];
+>>  	char message[CHECKER_MSG_LEN];       /* comm with callers */
+>> +    char dev[FILE_NAME_SIZE];
+> 
+> FILE_NAME_SIZE more memory usage only to distinguish SCSI from NVMe.
+> Please, no.
+> 
+OK, it will be fixed.
+> 
+>>  	void * context;                      /* store for persistent
+>> data */
+>>  	void ** mpcontext;                   /* store for persistent
+>> data shared
+>>  						multipath-wide. Use
+>> MALLOC if
+>> @@ -132,6 +135,7 @@ void checker_reset (struct checker *);
+>>  void checker_set_sync (struct checker *);
+>>  void checker_set_async (struct checker *);
+>>  void checker_set_fd (struct checker *, int);
+>> +void checker_set_dev(struct checker *c, char *dev);
+>>  void checker_enable (struct checker *);
+>>  void checker_disable (struct checker *);
+>>  void checker_repair (struct checker *);
+>> diff --git a/libmultipath/checkers/Makefile
+>> b/libmultipath/checkers/Makefile
+>> index bce6b8b..a9be6b6 100644
+>> --- a/libmultipath/checkers/Makefile
+>> +++ b/libmultipath/checkers/Makefile
+>> @@ -24,10 +24,10 @@ all: $(LIBS)
+>>  libcheckrbd.so: rbd.o
+>>  	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^ -lrados -ludev
+>>  
+>> -libcheckdirectio.so: libsg.o directio.o
+>> +libcheckdirectio.so: ../libsg.o ../libnvme.o directio.o
+>>  	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^ -laio
+>>  
+>> -libcheck%.so: libsg.o %.o
+>> +libcheck%.so: ../libsg.o ../libnvme.o %.o
+>>  	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^
+>>  
+>>  install:
+>> diff --git a/libmultipath/checkers/emc_clariion.c
+>> b/libmultipath/checkers/emc_clariion.c
+>> index 9c1ffed..12c1e3e 100644
+>> --- a/libmultipath/checkers/emc_clariion.c
+>> +++ b/libmultipath/checkers/emc_clariion.c
+>> @@ -12,7 +12,7 @@
+>>  #include <errno.h>
+>>  
+>>  #include "../libmultipath/sg_include.h"
+>> -#include "libsg.h"
+>> +#include "../libmultipath/libsg.h"
+>>  #include "checkers.h"
+>>  #include "debug.h"
+>>  #include "memory.h"
+>> @@ -21,6 +21,8 @@
+>>  #define INQUIRY_CMDLEN  6
+>>  #define HEAVY_CHECK_COUNT       10
+>>  
+>> +#define SENSE_BUFF_LEN  32
+>> +
+>>  /*
+>>   * Mechanism to track CLARiiON inactive snapshot LUs.
+>>   * This is done so that we can fail passive paths
+>> diff --git a/libmultipath/checkers/libsg.c
+>> b/libmultipath/checkers/libsg.c
+>> deleted file mode 100644
+> 
+> See above
+> 
+>> diff --git a/libmultipath/checkers/libsg.h
+>> b/libmultipath/checkers/libsg.h
+>> deleted file mode 100644
+>> index 3994f45..0000000
+>> --- a/libmultipath/checkers/libsg.h
+>> +++ /dev/null
+>> @@ -1,9 +0,0 @@
+>> -#ifndef _LIBSG_H
+>> -#define _LIBSG_H
+>> -
+>> -#define SENSE_BUFF_LEN 32
+>> -
+>> -int sg_read (int sg_fd, unsigned char * buff, int buff_len,
+>> -	     unsigned char * sense, int sense_len, unsigned int
+>> timeout);
+>> -
+>> -#endif /* _LIBSG_H */
+>> diff --git a/libmultipath/checkers/readsector0.c
+>> b/libmultipath/checkers/readsector0.c
+>> index 8fccb46..e485810 100644
+>> --- a/libmultipath/checkers/readsector0.c
+>> +++ b/libmultipath/checkers/readsector0.c
+>> @@ -4,11 +4,13 @@
+>>  #include <stdio.h>
+>>  
+>>  #include "checkers.h"
+>> -#include "libsg.h"
+>> +#include "../libmultipath/libsg.h"
+>>  
+>>  #define MSG_READSECTOR0_UP	"readsector0 checker reports path
+>> is up"
+>>  #define MSG_READSECTOR0_DOWN	"readsector0 checker reports
+>> path is down"
+>>  
+>> +#define SENSE_BUFF_LEN 32
+>> +
+>>  struct readsector0_checker_context {
+>>  	void * dummy;
+>>  };
+>> diff --git a/libmultipath/checkers/tur.c
+>> b/libmultipath/checkers/tur.c
+>> index b4a5cb2..a0382fa 100644
+>> --- a/libmultipath/checkers/tur.c
+>> +++ b/libmultipath/checkers/tur.c
+>> @@ -1,5 +1,8 @@
+>>  /*
+>> - * Some code borrowed from sg-utils.
+>> + * Some code borrowed from sg-utils and
+>> + * NVM-Express command line utility,
+>> + * including using of a TUR command and
+>> + * a Keep Alive command.
+>>   *
+>>   * Copyright (c) 2004 Christophe Varoqui
+>>   */
+>> @@ -22,10 +25,10 @@
+>>  #include "../libmultipath/sg_include.h"
+>>  #include "../libmultipath/util.h"
+>>  #include "../libmultipath/time-util.h"
+>> -#include "../libmultipath/util.h"
+>> +#include "../libmultipath/libsg.h"
+>> +#include "../libmultipath/libnvme.h"
+>>  
+>> -#define TUR_CMD_LEN 6
+>> -#define HEAVY_CHECK_COUNT       10
+>> +#define SENSE_BUFF_LEN   32
+>>  
+>>  #define MSG_TUR_UP	"tur checker reports path is up"
+>>  #define MSG_TUR_DOWN	"tur checker reports path is down"
+>> @@ -39,6 +42,7 @@ struct tur_checker_context {
+>>  	int state;
+>>  	int running;
+>>  	int fd;
+>> +	char dev[FILE_NAME_SIZE];
+> 
+> see above
+> 
+>>  	unsigned int timeout;
+>>  	time_t time;
+>>  	pthread_t thread;
+>> @@ -75,6 +79,7 @@ int libcheck_init (struct checker * c)
+>>  	ct->state = PATH_UNCHECKED;
+>>  	ct->fd = -1;
+>>  	ct->holders = 1;
+>> +    memset(ct->dev, 0, sizeof(ct->dev));
+>>  	pthread_cond_init_mono(&ct->active);
+>>  	pthread_mutexattr_init(&attr);
+>>  	pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+>> @@ -133,22 +138,12 @@ tur_check(int fd, unsigned int timeout,
+>>  	  void (*copy_message)(void *, const char *), void *cb_arg)
+>>  {
+>>  	struct sg_io_hdr io_hdr;
+>> -	unsigned char turCmdBlk[TUR_CMD_LEN] = { 0x00, 0, 0, 0, 0, 0
+>> };
+>> -	unsigned char sense_buffer[32];
+>> +	unsigned char sense_buffer[SENSE_BUFF_LEN];
+>>  	int retry_tur = 5;
+>>  
+>>  retry:
+>> -	memset(&io_hdr, 0, sizeof (struct sg_io_hdr));
+>> -	memset(&sense_buffer, 0, 32);
+>> -	io_hdr.interface_id = 'S';
+>> -	io_hdr.cmd_len = sizeof (turCmdBlk);
+>> -	io_hdr.mx_sb_len = sizeof (sense_buffer);
+>> -	io_hdr.dxfer_direction = SG_DXFER_NONE;
+>> -	io_hdr.cmdp = turCmdBlk;
+>> -	io_hdr.sbp = sense_buffer;
+>> -	io_hdr.timeout = timeout * 1000;
+>> -	io_hdr.pack_id = 0;
+>> -	if (ioctl(fd, SG_IO, &io_hdr) < 0) {
+>> +	if (sg_tur(fd, &io_hdr, sense_buffer,
+>> +        sizeof(sense_buffer), timeout) < 0) {
+>>  		TUR_MSG(MSG_TUR_DOWN);
+>>  		return PATH_DOWN;
+>>  	}
+>> @@ -213,6 +208,35 @@ retry:
+>>  	return PATH_UP;
+>>  }
+>>  
+>> +static int
+>> +keep_alive_check(int fd, unsigned int timeout,
+>> +	  void (*copy_message)(void *, const char *), void *cb_arg)
+>> +{
+>> +    int err;
+>> +
+>> +    err = nvme_keep_alive(fd, timeout);
+>> +    if (err == 0) {
+>> +        TUR_MSG(MSG_TUR_UP);
+>> +        return PATH_UP;
+>> +	}
+>> +
+>> +	TUR_MSG(MSG_TUR_DOWN);
+>> +	return PATH_DOWN;
+>> +}
+>> +
+>> +static int
+>> +ping_check(int fd, char *dev, unsigned int timeout,
+>> +	  void (*copy_message)(void *, const char *), void *cb_arg)
+>> +{
+>> +    if (!strncmp(dev, "nvme", 4))
+>> +    {
+>> +        return keep_alive_check(fd, timeout, copy_message, cb_arg);
+>> +    }
+>> +    else
+>> +    {
+>> +        return tur_check(fd, timeout, copy_message, cb_arg);
+>> +    }
+>> +}
+>>  #define tur_thread_cleanup_push(ct)
+>> pthread_cleanup_push(cleanup_func, ct)
+>>  #define tur_thread_cleanup_pop(ct) pthread_cleanup_pop(1)
+>>  
+>> @@ -266,8 +290,7 @@ static void *tur_thread(void *ctx)
+>>  	ct->state = PATH_PENDING;
+>>  	ct->message[0] = '\0';
+>>  	pthread_mutex_unlock(&ct->lock);
+>> -
+>> -	state = tur_check(ct->fd, ct->timeout, copy_msg_to_tcc, ct-
+>>> message);
+>> +    state = ping_check(ct->fd, ct->dev, ct->timeout,
+>> copy_msg_to_tcc, ct->message);
+>>  	pthread_testcancel();
+>>  
+>>  	/* TUR checker done */
+>> @@ -390,6 +413,7 @@ int libcheck_check(struct checker * c)
+>>  		/* Start new TUR checker */
+>>  		ct->state = PATH_UNCHECKED;
+>>  		ct->fd = c->fd;
+>> +        strncpy(ct->dev, c->dev, strlen(c->dev)+1);
+> 
+> You seem to have some whitespace issues.
+Thanks, it will be fixed.
+> 
+>>  		ct->timeout = c->timeout;
+>>  		pthread_spin_lock(&ct->hldr_lock);
+>>  		ct->holders++;
+>> @@ -406,7 +430,7 @@ int libcheck_check(struct checker * c)
+>>  			ct->thread = 0;
+>>  			condlog(3, "%s: failed to start tur thread,
+>> using"
+>>  				" sync mode", tur_devt(devt,
+>> sizeof(devt), ct));
+>> -			return tur_check(c->fd, c->timeout,
+>> +			return ping_check(c->fd, c->dev, c->timeout,
+>>  					 copy_msg_to_checker, c);
+>>  		}
+>>  		tur_timeout(&tsp);
+>> diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+>> index 663c8ea..bae5d24 100644
+>> --- a/libmultipath/discovery.c
+>> +++ b/libmultipath/discovery.c
+>> @@ -1539,6 +1539,7 @@ get_state (struct path * pp, struct config
+>> *conf, int daemon)
+>>  			return PATH_UNCHECKED;
+>>  		}
+>>  		checker_set_fd(c, pp->fd);
+>> +        checker_set_dev(c, pp->dev);
+>>  		if (checker_init(c, pp->mpp?&pp->mpp-
+>>> mpcontext:NULL)) {
+>>  			memset(c, 0x0, sizeof(struct checker));
+>>  			condlog(3, "%s: checker init failed", pp-
+>>> dev);
+>> diff --git a/libmultipath/libnvme.c b/libmultipath/libnvme.c
+>> new file mode 100644
+>> index 0000000..97c9125
+>> --- /dev/null
+>> +++ b/libmultipath/libnvme.c
+>> @@ -0,0 +1,130 @@
+>> +/*
+>> + * (C) Copyright HUAWEI Technology Corp. 2017, All Rights Reserved.
+>> + *
+>> + * libnvme.c
+>> + *
+>> + * Some code borrowed from NVM-Express command line utility.
+>> + *
+>> + * Author(s): Yang Feng <philip.yang@huawei.com>
+>> + *
+>> + * This file is released under the GPL version 2, or any later
+>> version.
+>> + *
+>> + */
+>> +#include <linux/types.h>
+>> +#include <sys/ioctl.h>
+>> +#include <stdint.h>
+>> +
+>> +struct nvme_user_io {
+>> +    __u8    opcode;
+>> +    __u8    flags;
+>> +    __u16   control;
+>> +    __u16   nblocks;
+>> +    __u16   rsvd;
+>> +    __u64   metadata;
+>> +    __u64   addr;
+>> +    __u64   slba;
+>> +    __u32   dsmgmt;
+>> +    __u32   reftag;
+>> +    __u16   apptag;
+>> +    __u16   appmask;
+>> +};
+> 
+> Please simply include linux/nvme_ioctl.h. Makefiles should check if
+> that file exists and compile the nvme stuff conditionally. 
+> 
+OK, it will be added.
+>> +
+>> +struct nvme_admin_cmd {
+>> +    __u8    opcode;
+>> +    __u8    flags;
+>> +    __u16   rsvd1;
+>> +    __u32   nsid;
+>> +    __u32   cdw2;
+>> +    __u32   cdw3;
+>> +    __u64   metadata;
+>> +    __u64   addr;
+>> +    __u32   metadata_len;
+>> +    __u32   data_len;
+>> +    __u32   cdw10;
+>> +    __u32   cdw11;
+>> +    __u32   cdw12;
+>> +    __u32   cdw13;
+>> +    __u32   cdw14;
+>> +    __u32   cdw15;
+>> +    __u32   timeout_ms;
+>> +    __u32   result;
+>> +};
+>> +
+>> +#define NVME_IOCTL_ADMIN_CMD    _IOWR('N', 0x41, struct
+>> nvme_admin_cmd)
+>> +#define NVME_IOCTL_SUBMIT_IO    _IOW('N', 0x42, struct nvme_user_io)
+>> +
+>> +static int nvme_io(int fd, __u8 opcode, __u64 slba, __u16 nblocks,
+>> __u16 control,
+>> +            __u32 dsmgmt, __u32 reftag, __u16 apptag, __u16 appmask,
+>> void *data,
+>> +            void *metadata)
+>> +{
+>> +    struct nvme_user_io io = {
+>> +    .opcode = opcode,
+>> +    .flags = 0,
+>> +    .control = control,
+>> +    .nblocks = nblocks,
+>> +    .rsvd = 0,
+>> +    .metadata = (__u64)(uintptr_t) metadata,
+>> +    .addr = (__u64)(uintptr_t) data,
+>> +    .slba = slba,
+>> +    .dsmgmt = dsmgmt,
+>> +    .reftag = reftag,
+>> +    .appmask = apptag,
+>> +    .apptag = appmask,
+>> +    };
+>> +
+>> +    return ioctl(fd, NVME_IOCTL_SUBMIT_IO, &io);
+>> +}
+>> +
+>> +int nvme_read(int fd, __u64 slba, __u16 nblocks, __u16 control,
+>> __u32 dsmgmt,
+>> +            __u32 reftag, __u16 apptag, __u16 appmask, void *data,
+>> void *metadata)
+>> +{
+>> +    return nvme_io(fd, 0x2, slba, nblocks, control, dsmgmt,
+>> +        reftag, apptag, appmask, data, metadata);
+>> +}
+> 
+> This API is bloated. Out of these 10(!) function arguments, 6 are zero
+> in the only call you have.
+> 
+Thanks, this will be optimized.
+>> +
+>> +static int nvme_submit_passthru(int fd, int ioctl_cmd, struct
+>> nvme_admin_cmd *cmd)
+>> +{
+>> +	return ioctl(fd, ioctl_cmd, cmd);
+>> +}
+>> +
+>> +int nvme_passthru(int fd, int ioctl_cmd, __u8 opcode, __u8 flags,
+>> __u16 rsvd,
+>> +		  __u32 nsid, __u32 cdw2, __u32 cdw3, __u32 cdw10,
+>> __u32 cdw11,
+>> +		  __u32 cdw12, __u32 cdw13, __u32 cdw14, __u32
+>> cdw15,
+>> +		  __u32 data_len, void *data, __u32 metadata_len,
+>> +		  void *metadata, __u32 timeout_ms, __u32 *result)
+> 
+> This is even worse. This function takes 20(!!!) parameters, and 15 of
+> them are 0 in the call. Do you see any other use case of
+> nvme_admin_cmd() in multipath-tools that would justify the extra
+> parameters?
+> 
+Thanks, this will be optimized.
+>> +{
+>> +	struct nvme_admin_cmd cmd = {
+>> +		.opcode		= opcode,
+>> +		.flags		= flags,
+>> +		.rsvd1		= rsvd,
+>> +		.nsid		= nsid,
+>> +		.cdw2		= cdw2,
+>> +		.cdw3		= cdw3,
+>> +		.metadata	= (__u64)(uintptr_t) metadata,
+>> +		.addr		= (__u64)(uintptr_t) data,
+>> +		.metadata_len	= metadata_len,
+>> +		.data_len	= data_len,
+>> +		.cdw10		= cdw10,
+>> +		.cdw11		= cdw11,
+>> +		.cdw12		= cdw12,
+>> +		.cdw13		= cdw13,
+>> +		.cdw14		= cdw14,
+>> +		.cdw15		= cdw15,
+>> +		.timeout_ms	= timeout_ms,
+>> +		.result		= 0,
+>> +	};
+>> +	int err;
+>> +
+>> +	err = nvme_submit_passthru(fd, ioctl_cmd, &cmd);
+>> +	if (!err && result)
+>> +		*result = cmd.result;
+>> +	return err;
+>> +}
+>> +
+>> +int nvme_keep_alive(int fd, __u32 timeout_ms)
+>> +{
+>> +    __u32 result;
+>> +
+>> +    return nvme_passthru(fd, NVME_IOCTL_ADMIN_CMD, 0x18, 0, 0, 0, 0,
+>> 0, 0, 0,
+>> +		                0, 0, 0, 0, 0, 0, 0,0 , timeout_ms,
+>> &result);
+>> +}
+> 
+> Honestly, why do you define the API at all? It would be more readable
+> to call nvme_submit_passthru() directly.
+> 
+Thanks, the func will be renamed.
+>> diff --git a/libmultipath/libnvme.h b/libmultipath/libnvme.h
+>> new file mode 100644
+>> index 0000000..a2b5460
+>> --- /dev/null
+>> +++ b/libmultipath/libnvme.h
+>> @@ -0,0 +1,10 @@
+>> +#ifndef _LIBNVME_H
+>> +#define _LIBNVME_H
+>> +
+>> +#include <linux/types.h>
+>> +
+>> +int nvme_read(int fd, __u64 slba, __u16 nblocks, __u16 control,
+>> __u32 dsmgmt,
+>> +            __u32 reftag, __u16 apptag, __u16 appmask, void *data,
+>> void *metadata);
+>> +int nvme_keep_alive(int fd, __u32 timeout_ms);
+>> +
+>> +#endif /* _LIBNVME_H */
+>> diff --git a/libmultipath/libsg.c b/libmultipath/libsg.c
+>> new file mode 100644
+> 
+> see above
+> 
+> diff --git a/libmultipath/prioritizers/path_latency.c
+>> b/libmultipath/prioritizers/path_latency.c
+>> index 34b734b..21209ff 100644
+>> --- a/libmultipath/prioritizers/path_latency.c
+>> +++ b/libmultipath/prioritizers/path_latency.c
+>> @@ -23,11 +23,11 @@
+>>  #include <math.h>
+>>  #include <ctype.h>
+>>  #include <time.h>
+>> -
+>>  #include "debug.h"
+>>  #include "prio.h"
+>>  #include "structs.h"
+>> -#include "../checkers/libsg.h"
+>> +#include "libsg.h"
+>> +#include "libnvme.h"
+>>  
+>>  #define pp_pl_log(prio, fmt, args...) condlog(prio, "path_latency
+>> prio: " fmt, ##args)
+>>  
+>> @@ -44,6 +44,8 @@
+>>  
+>>  #define MAX_CHAR_SIZE           30
+>>  
+>> +#define SENSE_BUFF_LEN          32
+>> +
+>>  #define USEC_PER_SEC            1000000LL
+>>  #define NSEC_PER_USEC           1000LL
+>>  
+>> @@ -51,19 +53,27 @@ static long long path_latency[MAX_IO_NUM];
+>>  
+>>  static inline long long timeval_to_us(const struct timespec *tv)
+>>  {
+>> -	return ((long long) tv->tv_sec * USEC_PER_SEC) + (tv-
+>>> tv_nsec / NSEC_PER_USEC);
+>> +    return ((long long) tv->tv_sec * USEC_PER_SEC) + (tv->tv_nsec /
+>> NSEC_PER_USEC);
+>>  }
+>>  
+>> -static int do_readsector0(int fd, unsigned int timeout)
+>> +static int do_readsector0(struct path *pp, unsigned int timeout)
+>>  {
+>> -	unsigned char buf[4096];
+>> -	unsigned char sbuf[SENSE_BUFF_LEN];
+>> -	int ret;
+>> +    unsigned char buf[4096];
+>> +    unsigned char mbuf[512];
+>> +    unsigned char sbuf[SENSE_BUFF_LEN];
+>>  
+>> -	ret = sg_read(fd, &buf[0], 4096, &sbuf[0],
+>> -		      SENSE_BUFF_LEN, timeout);
+>> +    if (!strncmp(pp->dev, "nvme", 4))
+>> +    {
+>> +        if (nvme_read(pp->fd, 0, 1, 0, 0, 0, 0, 0, buf, mbuf) != 0)
+>> +            return 0;
+>> +    }
+>> +    else
+>> +    {
+>> +        if (sg_read(pp->fd, &buf[0], 4096, &sbuf[0], SENSE_BUFF_LEN,
+>> timeout) == 2)
+>> +            return 0;
+>> +    }
+>>  
+>> -	return ret;
+>> +    return 1;
+>>  }
+>>  
+>>  int check_args_valid(int io_num, int base_num)
+>> @@ -218,9 +228,9 @@ int getprio (struct path *pp, char *args,
+>> unsigned int timeout)
+>>          (void)clock_gettime(CLOCK_MONOTONIC, &tv);
+>>          before = timeval_to_us(&tv);
+>>  
+>> -        if (do_readsector0(pp->fd, timeout) == 2)
+>> +        if (do_readsector0(pp, timeout) == 0)
+>>          {
+>> -            pp_pl_log(0, "%s: path down", pp->dev);
+>> +            pp_pl_log(0, "%s: send read sector0 command fail", pp-
+>>> dev);
+>>              return -1;
+>>          }
+>>  
+>> diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+>> index 0049cba..a8d4797 100644
+>> --- a/multipath/multipath.conf.5
+>> +++ b/multipath/multipath.conf.5
+>> @@ -419,7 +419,7 @@ are:
+>>  deprecated, please use \fItur\fR instead.
+>>  .TP
+>>  .I tur
+>> -Issue a \fITEST UNIT READY\fR command to the device.
+>> +Issue a \fITEST UNIT READY\fR command or a \fIKEEP ALIVE\fR command
+>> to the device.
+>>  .TP
+>>  .I emc_clariion
+>>  (Hardware-dependent)
+> 
