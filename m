@@ -1,17 +1,17 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH] dm-integrity: fix inefficient allocation of
- stack space
-Date: Fri, 21 Jul 2017 08:29:59 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1707210816020.17010@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1707191122240.2305@file01.intranet.prod.int.rdu2.redhat.com>
-	<22895.42876.199753.299282@quad.stoffel.home>
-	<alpine.LRH.2.02.1707200622230.32226@file01.intranet.prod.int.rdu2.redhat.com>
-	<22896.53135.462550.221549@quad.stoffel.home>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 2/2] multipath-tools/libmultipath: Add args
+ min_avg_latency for path_latency.
+Date: Fri, 21 Jul 2017 14:26:02 +0200
+Message-ID: <1500639962.32663.28.camel@suse.de>
+References: <1500521767-15884-1-git-send-email-philip.yang@huawei.com>
+	<1500521767-15884-3-git-send-email-philip.yang@huawei.com>
+	<1500574041.32663.7.camel@suse.com>
+	<5737cdc5-88fa-b27a-3acb-eacf1b4b0341@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <22896.53135.462550.221549@quad.stoffel.home>
+In-Reply-To: <5737cdc5-88fa-b27a-3acb-eacf1b4b0341@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,69 +21,24 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: John Stoffel <john@stoffel.org>
-Cc: Mike Snitzer <msnitzer@redhat.com>, dm-devel@redhat.com, Milan Broz <mbroz@redhat.com>
+To: Yang Feng <philip.yang@huawei.com>, dm-devel@redhat.com, xose.vazquez@gmail.com
+Cc: zouming.zouming@huawei.com, hege09@huawei.com, guanjunxiong@huawei.com, shenhong09@huawei.com
 List-Id: dm-devel.ids
 
+Dear Yang,
 
-
-On Thu, 20 Jul 2017, John Stoffel wrote:
-
-> >>>>> "Mikulas" == Mikulas Patocka <mpatocka@redhat.com> writes:
+On Fri, 2017-07-21 at 11:38 +0800, Yang Feng wrote:
 > 
-> Mikulas> On Wed, 19 Jul 2017, John Stoffel wrote:
-> 
-> >> >>>>> "Mikulas" == Mikulas Patocka <mpatocka@redhat.com> writes:
-> >> 
-> Mikulas> When using block size greater than 512 bytes, the dm-integrity target
-> Mikulas> allocates journal space inefficiently, it allocates one entry for each
-> Mikulas> 512-byte chunk of data, fills entries for each block of data and leaves
-> Mikulas> the remaining entries unused. This doesn't cause data corruption, but it
-> Mikulas> causes severe performance degradation.
-> >> 
-> Mikulas> This patch fixes the journal allocation. As a safety it also
-> Mikulas> adds BUG that fires if the variables representing journal
-> Mikulas> usage get out of sync (it's better to crash than continue and
-> Mikulas> corrupt data, so BUG is justified).
-> >> 
-> >> No, I don't agree.  You should lock down the block device(s) using the
-> >> dm-integrity target, but you should NOT take down the entire system
-> >> because of this.  Just return a failure up the stack that forces the
-> >> device into read only mode so that there's a chance to debug this
-> >> issue.
-> >> 
-> >> Using a BUG_ON, especially for code that isn't proven, is just wrong.
-> >> Do a WARN_ONCE() and then return an error instead.
-> >> 
-> >> John
-> 
-> Mikulas> That BUG can only be triggered by a bug in the code, it can't be triggered 
-> Mikulas> by bad data on the disk, so why should we write code to recover from it?
-> 
-> Because it's damn obnoxious to kill a system because of bad coding,
-> without giving the user a chance to recover or even investigate
-> the root cause.   If it's a bug in the code, just warn the user and
-> then try to continue.  If you can't continue, then just make the block
-> device go read-only to protect the data.
-> 
-> Again, why do you think BUG_ON is appropriate thing to do?  What
-> advantage does it have for you?
+> Sorry, I don't find this similar syntax. Could you give a example of
+> the
+> other prioritizer.
 
-When writing the code, I occasionally make mistakes, such as passing a 
-wrong variable to the function. This BUG_ON catches the problem 
-immediatelly, I can instantly see what problem occured.
+Please look at the prio_args section in multipath.conf. "weighted" uses
+just space separated args. "iet" uses "parm=value" syntax. That's
+actually most intuitive IMO. No current prio algorithm uses anything
+but space to separate options.
 
-If that BUG_ON is omitted, I get a crash that is harder to debug (it is 
-needed to disassemble the function and find out which registers are used 
-for which variables) or I get a data corruption, which is even harder to 
-debug than a crash.
+Regards
+Martin
 
-If I pass a wrong variable to a function, the correct fix is to pass the 
-correct variable to the function, not to write additional code that tries 
-to recover from the wrong variable. If you disagree, just show us some 
-program that uses your own techniques for recovering from your bugs and we 
-can see.
-
-Mikulas
-
-> John
+-- 
