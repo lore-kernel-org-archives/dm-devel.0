@@ -1,20 +1,17 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: dm-integrity: fix inefficient allocation of stack
-	space
-Date: Fri, 21 Jul 2017 08:15:28 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1707210808560.17010@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: Re: [PATCH] dm-integrity: fix inefficient allocation of
+ stack space
+Date: Fri, 21 Jul 2017 08:29:59 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1707210816020.17010@file01.intranet.prod.int.rdu2.redhat.com>
 References: <alpine.LRH.2.02.1707191122240.2305@file01.intranet.prod.int.rdu2.redhat.com>
 	<22895.42876.199753.299282@quad.stoffel.home>
-	<20170719190230.GC20480@redhat.com>
-	<22895.51753.260996.643914@quad.stoffel.home>
-	<alpine.LRH.2.02.1707200652080.32226@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.LRH.2.02.1707200703460.32226@file01.intranet.prod.int.rdu2.redhat.com>
-	<22896.56378.568488.989656@quad.stoffel.home>
+	<alpine.LRH.2.02.1707200622230.32226@file01.intranet.prod.int.rdu2.redhat.com>
+	<22896.53135.462550.221549@quad.stoffel.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <22896.56378.568488.989656@quad.stoffel.home>
+In-Reply-To: <22896.53135.462550.221549@quad.stoffel.home>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,41 +22,68 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: John Stoffel <john@stoffel.org>
-Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Milan Broz <mbroz@redhat.com>
+Cc: Mike Snitzer <msnitzer@redhat.com>, dm-devel@redhat.com, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
 
 
 On Thu, 20 Jul 2017, John Stoffel wrote:
 
-> Mikulas> In the early days when I was programming, I was adding checks for NULL 
-> Mikulas> pointers "just in case - so that it doesn't crash". But these checks 
-> Mikulas> didn't make the code any more understandable - they made the code less 
-> Mikulas> understandable - because if a function return value is checked for NULL, 
-> Mikulas> the programmer believes that the function could return NULL. And the 
-> Mikulas> programmer no longer knows what is the contract of the function - could 
-> Mikulas> the function really return NULL or not?
+> >>>>> "Mikulas" == Mikulas Patocka <mpatocka@redhat.com> writes:
 > 
-> In this case, maybe it would make more sense to clamp the values to
-> the maximums in case they do exceed their limits?  The check is
-> simply:
+> Mikulas> On Wed, 19 Jul 2017, John Stoffel wrote:
 > 
->     if (unlikely(section >= ic->journal_sections) ||
-> 	 unlikely(offset >= limit)) {
+> >> >>>>> "Mikulas" == Mikulas Patocka <mpatocka@redhat.com> writes:
+> >> 
+> Mikulas> When using block size greater than 512 bytes, the dm-integrity target
+> Mikulas> allocates journal space inefficiently, it allocates one entry for each
+> Mikulas> 512-byte chunk of data, fills entries for each block of data and leaves
+> Mikulas> the remaining entries unused. This doesn't cause data corruption, but it
+> Mikulas> causes severe performance degradation.
+> >> 
+> Mikulas> This patch fixes the journal allocation. As a safety it also
+> Mikulas> adds BUG that fires if the variables representing journal
+> Mikulas> usage get out of sync (it's better to crash than continue and
+> Mikulas> corrupt data, so BUG is justified).
+> >> 
+> >> No, I don't agree.  You should lock down the block device(s) using the
+> >> dm-integrity target, but you should NOT take down the entire system
+> >> because of this.  Just return a failure up the stack that forces the
+> >> device into read only mode so that there's a chance to debug this
+> >> issue.
+> >> 
+> >> Using a BUG_ON, especially for code that isn't proven, is just wrong.
+> >> Do a WARN_ONCE() and then return an error instead.
+> >> 
+> >> John
 > 
-> So I'm arguing that when you set the section or offset, shouldn't they
-> be clamped to their limits there?
+> Mikulas> That BUG can only be triggered by a bug in the code, it can't be triggered 
+> Mikulas> by bad data on the disk, so why should we write code to recover from it?
 > 
-> Thanks for your time,
-> John
+> Because it's damn obnoxious to kill a system because of bad coding,
+> without giving the user a chance to recover or even investigate
+> the root cause.   If it's a bug in the code, just warn the user and
+> then try to continue.  If you can't continue, then just make the block
+> device go read-only to protect the data.
+> 
+> Again, why do you think BUG_ON is appropriate thing to do?  What
+> advantage does it have for you?
 
-Returning invalid data is directly against the purpose of the dm-integrity 
-target.
+When writing the code, I occasionally make mistakes, such as passing a 
+wrong variable to the function. This BUG_ON catches the problem 
+immediatelly, I can instantly see what problem occured.
 
-If you think that clamping array indices that are out of range improves 
-software reliability - so write some program that uses this technique and 
-we will see how reliable or unreliable it is. You can persuade people by 
-writing software, you can't persuade them by preaching what should they 
-do.
+If that BUG_ON is omitted, I get a crash that is harder to debug (it is 
+needed to disassemble the function and find out which registers are used 
+for which variables) or I get a data corruption, which is even harder to 
+debug than a crash.
+
+If I pass a wrong variable to a function, the correct fix is to pass the 
+correct variable to the function, not to write additional code that tries 
+to recover from the wrong variable. If you disagree, just show us some 
+program that uses your own techniques for recovering from your bugs and we 
+can see.
 
 Mikulas
+
+> John
