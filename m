@@ -1,17 +1,14 @@
-From: Yang Feng <philip.yang@huawei.com>
-Subject: Re: [PATCH 2/2] multipath-tools/libmultipath: Add args
- min_avg_latency for path_latency.
-Date: Fri, 21 Jul 2017 11:38:27 +0800
-Message-ID: <5737cdc5-88fa-b27a-3acb-eacf1b4b0341@huawei.com>
-References: <1500521767-15884-1-git-send-email-philip.yang@huawei.com>
-	<1500521767-15884-3-git-send-email-philip.yang@huawei.com>
-	<1500574041.32663.7.camel@suse.com>
+From: Guan Junxiong <guanjunxiong@huawei.com>
+Subject: [PATCH RFC 1/3] multipath-tools: move get_next_string to
+	util
+Date: Fri, 21 Jul 2017 13:07:30 +0800
+Message-ID: <1500613652-9084-2-git-send-email-guanjunxiong@huawei.com>
+References: <1500613652-9084-1-git-send-email-guanjunxiong@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1500574041.32663.7.camel@suse.com>
-Content-Language: en-US
+In-Reply-To: <1500613652-9084-1-git-send-email-guanjunxiong@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,276 +18,73 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com, xose.vazquez@gmail.com
-Cc: zouming.zouming@huawei.com, hege09@huawei.com, guanjunxiong@huawei.com, shenhong09@huawei.com
+To: dm-devel@redhat.com, christophe.varoqui@opensvc.com, hare@suse.de, mwilck@suse.com, bmarzins@redhat.com, xose.vazquez@gmail.com
+Cc: zouming.zouming@huawei.com, chengjike.cheng@huawei.com, guanjunxiong@huawei.com, philip.yang@huawei.com, shenhong09@huawei.com, hege09@huawei.com
 List-Id: dm-devel.ids
 
-Dear Martin,
+The helper get_next_string is useful and generic. So move from
+exclusive weightedpath module to util module. It will be used
+in the next second patch.
 
-Thank you very much for your guidance and reviews.
-Please find my replys as follows.
-The up-to-date patch will be sent later.
+Signed-off-by: Junxiong Guan <guanjunxiong@huawei.com>
+---
+ libmultipath/prioritizers/weightedpath.c | 10 +---------
+ libmultipath/util.c                      |  9 +++++++++
+ libmultipath/util.h                      |  1 +
+ 3 files changed, 11 insertions(+), 9 deletions(-)
 
-Regards,
--Yang
-
-On 2017/7/21 2:07, Martin Wilck wrote:
-> Dear Yang,
-> 
-> On Thu, 2017-07-20 at 11:36 +0800, Yang Feng wrote:
->>   Add args min_avg_latency of logarithmic scale, for
->> prioritizers/path_latency.c.
->> Min average latency is not constant 1us, and is set by user.
->> Certainly, max average
->> latency value is still 100s. It make support better for more scenes,
->> because it can
->> deal better with the normal standard deviation of path latency. For
->> example, when the
->> standard deviation value is 200us and the average latency of the
->> normal paths is 1ms,
->> args base_num can be set to 5 and args min_avg_latency can be set to
->> 2ms, so the paths
->> will be grouped in priority groups with path latency <=2ms, (2ms,
->> 10ms], (10ms, 50ms],
->> etc.
-> 
-> Nack. You need this because you are using a wrong calculation for
-> standard deviation. If your scale is logarithmic, you need to calculate
-> the standard deviation on a log scale, too. The scientific term is
-> "geometric standard deviation".
-> 
-> https://en.wikipedia.org/wiki/Geometric_standard_deviation
-> 
-> Suppose you really have 3 classes of devices with us, ms, and seconds
-> average latency, respectively. The latency of the devices in the
-> "seconds" class will also vary on the order of seconds (e.g. 3.5-5s).
-> That's obviously impossible for the us and ms class devices. Rather,
-> it's reasonable to assume that the us devices will have us (or sub-us)
-> standard deviation and the ms devices have ms (or sub-ms) standard
-> deviation, or in other words, the uncertainty is roughly in the same
-> order of magnitude as the average.
->> This is exactly how the geometric standard deviation behaves.
-> 
-> I think I actually remarked this on your previous patch, but the patch
-> has been  applied without that having been fixed. It would be good if
-> you could fix it now.
->
-Sorry, there is a mistake. I will fix it later.
->>
->> Signed-off-by: Yang Feng <philip.yang@huawei.com>
->> Reviewed-by: Martin Wilck <mwilck@suse.com>
-> 
-> Please don't add my Reviewed-by: tag for patches I haven't reviewed, or
-> have negatively reviewed. Reviewed-by: is supposed to indicate
-> approval.
-> 
-Sorry, it will fixed.
-> Wrt your prio_args parser, could you perhaps support a syntax that is
-> similar to other prioritizers, e.g. "base_num=5 io_num=10"?
-> 
-Sorry, I don't find this similar syntax. Could you give a example of the
-other prioritizer.
-> Regards
-> Martin
-> 
-> 
->> Reviewed-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
->> ---
->>  libmultipath/prioritizers/path_latency.c | 61
->> ++++++++++++++++++++++----------
->>  multipath/multipath.conf.5               | 14 +++++---
->>  2 files changed, 52 insertions(+), 23 deletions(-)
->>
->> diff --git a/libmultipath/prioritizers/path_latency.c
->> b/libmultipath/prioritizers/path_latency.c
->> index 34b734b..a71faff 100644
->> --- a/libmultipath/prioritizers/path_latency.c
->> +++ b/libmultipath/prioritizers/path_latency.c
->> @@ -66,7 +66,7 @@ static int do_readsector0(int fd, unsigned int
->> timeout)
->>  	return ret;
->>  }
->>  
->> -int check_args_valid(int io_num, int base_num)
->> +int check_args_valid(int io_num, int base_num, int min_avg_latency)
->>  {
->>      if ((io_num < MIN_IO_NUM) || (io_num > MAX_IO_NUM))
->>      {
->> @@ -80,24 +80,33 @@ int check_args_valid(int io_num, int base_num)
->>          return 0;
->>      }
->>  
->> +    if ((min_avg_latency < MIN_AVG_LATENCY) || (min_avg_latency >
->> MAX_AVG_LATENCY))
->> +    {
->> +        pp_pl_log(0, "args min_avg_latency is outside the valid
->> range");
->> +        return 0;
->> +    }
->> +
->>      return 1;
->>  }
->>  
->> -/* In multipath.conf, args form: io_num|base_num. For example,
->> -*  args is "20|10", this function can get io_num value 20, and
->> -   base_num value 10.
->> +/* In multipath.conf, args form: io_num|base_num|min_avg_latency.
->> +*  For example, args is "20|10|1", this function can get io_num
->> +*  value 20, base_num value 10, min_avg_latency value 1 (us).
->>  */
->> -static int get_ionum_and_basenum(char *args,
->> -                                 int *ionum,
->> -                                 int *basenum)
->> +static int get_prio_args(char *args,
->> +                    int *ionum,
->> +                    int *basenum,
->> +                    int *minavglatency)
->>  {
->>      char source[MAX_CHAR_SIZE];
->>      char vertica = '|';
->> -    char *endstrbefore = NULL;
->> -    char *endstrafter = NULL;
->> +    char *endstr1 = NULL;
->> +    char *endstr2 = NULL;
->> +    char *endstr3 = NULL;
->>      unsigned int size = strlen(args);
->>  
->> -    if ((args == NULL) || (ionum == NULL) || (basenum == NULL))
->> +    if ((args == NULL) || (ionum == NULL)
->> +        || (basenum == NULL) || (minavglatency == NULL))
->>      {
->>          pp_pl_log(0, "args string is NULL");
->>          return 0;
->> @@ -117,21 +126,34 @@ static int get_ionum_and_basenum(char *args,
->>          return 0;
->>      }
->>  
->> -    *ionum = (int)strtoul(source, &endstrbefore, 10);
->> -    if (endstrbefore[0] != vertica)
->> +    *ionum = (int)strtoul(source, &endstr1, 10);
->> +    if (endstr1[0] != vertica)
->> +    {
->> +        pp_pl_log(0, "invalid prio_args format: %s", source);
->> +        return 0;
->> +    }
->> +
->> +    if (!isdigit(endstr1[1]))
->> +    {
->> +        pp_pl_log(0, "invalid prio_args format: %s", source);
->> +        return 0;
->> +    }
->> +
->> +    *basenum = (long long)strtol(&endstr1[1], &endstr2, 10);
->> +    if (endstr2[0] != vertica)
->>      {
->>          pp_pl_log(0, "invalid prio_args format: %s", source);
->>          return 0;
->>      }
->>  
->> -    if (!isdigit(endstrbefore[1]))
->> +    if (!isdigit(endstr2[1]))
->>      {
->>          pp_pl_log(0, "invalid prio_args format: %s", source);
->>          return 0;
->>      }
->>  
->> -    *basenum = (long long)strtol(&endstrbefore[1], &endstrafter,
->> 10);
->> -    if (check_args_valid(*ionum, *basenum) == 0)
->> +    *minavglatency = (long long)strtol(&endstr2[1], &endstr3, 10);
->> +    if (check_args_valid(*ionum, *basenum, *minavglatency) == 0)
->>      {
->>          return 0;
->>      }
->> @@ -194,6 +216,7 @@ int getprio (struct path *pp, char *args,
->> unsigned int timeout)
->>      int index = 0;
->>      int io_num;
->>      int base_num;
->> +    int min_avg_latency;
->>      long long avglatency;
->>      long long latency_interval;
->>      long long standard_deviation;
->> @@ -204,7 +227,7 @@ int getprio (struct path *pp, char *args,
->> unsigned int timeout)
->>      if (pp->fd < 0)
->>          return -1;
->>  
->> -    if (get_ionum_and_basenum(args, &io_num, &base_num) == 0)
->> +    if (get_prio_args(args, &io_num, &base_num, &min_avg_latency) ==
->> 0)
->>      {
->>          pp_pl_log(0, "%s: get path_latency args fail", pp->dev);
->>          return DEFAULT_PRIORITY;
->> @@ -245,13 +268,13 @@ int getprio (struct path *pp, char *args,
->> unsigned int timeout)
->>      set can change latency_interval value corresponding to
->> avglatency and is not constant.
->>      Warn the user if latency_interval is smaller than (2 *
->> standard_deviation), or equal */
->>      standard_deviation = calc_standard_deviation(path_latency,
->> index, avglatency);
->> -    latency_interval = calc_latency_interval(avglatency,
->> MAX_AVG_LATENCY, MIN_AVG_LATENCY, base_num);
->> -    if ((latency_interval!= 0)
->> +    latency_interval = calc_latency_interval(avglatency,
->> MAX_AVG_LATENCY, min_avg_latency, base_num);
->> +    if ((latency_interval != 0)
->>          && (latency_interval <= (2 * standard_deviation)))
->>          pp_pl_log(3, "%s: latency interval (%lld) according to
->> average latency (%lld us) is smaller than "
->>              "2 * standard deviation (%lld us), or equal, args
->> base_num (%d) needs to be set bigger value",
->>              pp->dev, latency_interval, avglatency,
->> standard_deviation, base_num);
->>  
->> -    rc = calcPrio(avglatency, MAX_AVG_LATENCY, MIN_AVG_LATENCY,
->> base_num);
->> +    rc = calcPrio(avglatency, MAX_AVG_LATENCY, min_avg_latency,
->> base_num);
->>      return rc;
->>  }
->> diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
->> index 0049cba..e68e681 100644
->> --- a/multipath/multipath.conf.5
->> +++ b/multipath/multipath.conf.5
->> @@ -341,7 +341,7 @@ these values can be looked up through sysfs or by
->> running \fImultipathd show pat
->>  .TP 12
->>  .I path_latency
->>  Needs a value of the form
->> -\fI"<io_num>|<base_num>"\fR
->> +\fI"<io_num>|<base_num>|<min_avg_latency>"\fR
->>  .RS
->>  .TP 8
->>  .I io_num
->> @@ -350,9 +350,15 @@ Valid Values: Integer, [2, 200].
->>  .TP
->>  .I base_num
->>  The base number value of logarithmic scale, used to partition
->> different priority ranks. Valid Values: Integer,
->> -[2, 10]. And Max average latency value is 100s, min average latency
->> value is 1us.
->> -For example: If base_num=10, the paths will be grouped in priority
->> groups with path latency <=1us, (1us, 10us],
->> -(10us, 100us], (100us, 1ms], (1ms, 10ms], (10ms, 100ms], (100ms,
->> 1s], (1s, 10s], (10s, 100s], >100s.
->> +[2, 10]. And Max average latency value is constant 100s.
->> +For example: If base_num=10 and min_avg_latency=1, the paths will be
->> grouped in priority groups with path latency <=1us,
->> +(1us, 10us], (10us, 100us], (100us, 1ms], (1ms, 10ms], (10ms,
->> 100ms], (100ms, 1s], (1s, 10s], (10s, 100s], >100s.
->> +.TP
->> +.I min_avg_latency
->> +The min average latency value of logarithmic scale, used to
->> partition different priority ranks. Valid Values:
->> +Integer, [1, 10000000] (us). And  Max average latency value is
->> constant 100s.
->> +For example: If base_num=10 and min_avg_latency=1000, the paths will
->> be grouped in priority groups with path latency <=1ms,
->> +(1ms, 10ms], (10ms, 100ms], (100ms, 1s], (1s, 10s], (10s, 100s],
->>> 100s.
->>  .RE
->>  .TP 12
->>  .I alua
-> 
+diff --git a/libmultipath/prioritizers/weightedpath.c b/libmultipath/prioritizers/weightedpath.c
+index 34a43a81..e0f3efbb 100644
+--- a/libmultipath/prioritizers/weightedpath.c
++++ b/libmultipath/prioritizers/weightedpath.c
+@@ -34,15 +34,7 @@
+ #include <regex.h>
+ #include "structs_vec.h"
+ #include "print.h"
+-
+-char *get_next_string(char **temp, char *split_char)
+-{
+-	char *token = NULL;
+-	token = strsep(temp, split_char);
+-	while (token != NULL && !strcmp(token, ""))
+-		token = strsep(temp, split_char);
+-	return token;
+-}
++#include "util.h"
+ 
+ #define CHECK_LEN \
+ do { \
+diff --git a/libmultipath/util.c b/libmultipath/util.c
+index b90cd8b0..a4369173 100644
+--- a/libmultipath/util.c
++++ b/libmultipath/util.c
+@@ -63,6 +63,15 @@ filepresent (char * run) {
+ 	return 0;
+ }
+ 
++char *get_next_string(char **temp, char *split_char)
++{
++	char *token = NULL;
++	token = strsep(temp, split_char);
++	while (token != NULL && !strcmp(token, ""))
++		token = strsep(temp, split_char);
++	return token;
++}
++
+ int
+ get_word (char * sentence, char ** word)
+ {
+diff --git a/libmultipath/util.h b/libmultipath/util.h
+index b087e32e..f7a33521 100644
+--- a/libmultipath/util.h
++++ b/libmultipath/util.h
+@@ -6,6 +6,7 @@
+ size_t strchop(char *);
+ int basenamecpy (const char * src, char * dst, int);
+ int filepresent (char * run);
++char *get_next_string(char **temp, char *split_char);
+ int get_word (char * sentence, char ** word);
+ size_t strlcpy(char *dst, const char *src, size_t size);
+ size_t strlcat(char *dst, const char *src, size_t size);
+-- 
+2.11.1
