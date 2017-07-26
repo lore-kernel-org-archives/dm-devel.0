@@ -1,11 +1,13 @@
-From: Damien Le Moal <damien.lemoal@wdc.com>
-Subject: [PATCH V2] dm-zoned: Use GFP_NOIO in I/O path
-Date: Wed, 26 Jul 2017 18:50:20 +0900
-Message-ID: <20170726095020.3967-1-damien.lemoal@wdc.com>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: [PATCH][V2] dm,
+ dax: Make sure dm_dax_flush() is called if device supports it
+Date: Wed, 26 Jul 2017 09:35:09 -0400
+Message-ID: <20170726133509.GA5416@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,118 +17,112 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
-Cc: Bart Van Assche <bart.vanassche@sandisk.com>, Mikulas Patocka <mpatocka@redhat.com>
+To: dm-devel@redhat.com, linux-nvdimm@lists.01.org
+Cc: Dan Williams <dan.j.williams@intel.com>, Moyer Jeff Moyer <jmoyer@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-Use GFP_NOIO for all memory allocations in the I/O path. Other memory
-allocations in the initialization path can keep using GFP_KERNEL.
+Right now, dm_dax_flush() is not being called and I think it is not being
+called becuase DAXDEV_WRITE_CACHE is not set on dm dax device.
 
-Problem reported by Mikulas Patocka <mpatocka@redhat.com>.
+If underlying dax device supports write cache, set DAXDEV_WRITE_CACHE on
+dm dax device. This will get dm_dax_flush() being called.
 
-While at it, also fix the call to blkdev_issue_zeroout() in
-dm-zoned-reclaim.c so that the last argument specifies 0 (for unsigned
-flags) instead of false (for bool unmap of the older 4.11 API).
-
-Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
+Acked-by: Dan Williams <dan.j.williams@intel.com>
+Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
 ---
- drivers/md/dm-zoned-metadata.c | 12 ++++++------
- drivers/md/dm-zoned-reclaim.c  |  2 +-
- drivers/md/dm-zoned-target.c   |  4 ++--
- 3 files changed, 9 insertions(+), 9 deletions(-)
+ drivers/dax/super.c   |  6 ++++++
+ drivers/md/dm-table.c | 35 +++++++++++++++++++++++++++++++++++
+ include/linux/dax.h   |  1 +
+ 3 files changed, 42 insertions(+)
 
-diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
-index 884ff7c170a0..a4fa2ada6883 100644
---- a/drivers/md/dm-zoned-metadata.c
-+++ b/drivers/md/dm-zoned-metadata.c
-@@ -624,7 +624,7 @@ static int dmz_write_sb(struct dmz_metadata *zmd, unsigned int set)
- 
- 	ret = dmz_rdwr_block(zmd, REQ_OP_WRITE, block, mblk->page);
- 	if (ret == 0)
--		ret = blkdev_issue_flush(zmd->dev->bdev, GFP_KERNEL, NULL);
-+		ret = blkdev_issue_flush(zmd->dev->bdev, GFP_NOIO, NULL);
- 
- 	return ret;
+diff --git a/drivers/dax/super.c b/drivers/dax/super.c
+index ce9e563..938eb48 100644
+--- a/drivers/dax/super.c
++++ b/drivers/dax/super.c
+@@ -278,6 +278,12 @@ void dax_write_cache(struct dax_device *dax_dev, bool wc)
  }
-@@ -658,7 +658,7 @@ static int dmz_write_dirty_mblocks(struct dmz_metadata *zmd,
+ EXPORT_SYMBOL_GPL(dax_write_cache);
  
- 	/* Flush drive cache (this will also sync data) */
- 	if (ret == 0)
--		ret = blkdev_issue_flush(zmd->dev->bdev, GFP_KERNEL, NULL);
-+		ret = blkdev_issue_flush(zmd->dev->bdev, GFP_NOIO, NULL);
++bool dax_write_cache_enabled(struct dax_device *dax_dev)
++{
++	return test_bit(DAXDEV_WRITE_CACHE, &dax_dev->flags);
++}
++EXPORT_SYMBOL_GPL(dax_write_cache_enabled);
++
+ bool dax_alive(struct dax_device *dax_dev)
+ {
+ 	lockdep_assert_held(&dax_srcu);
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index a39bcd9..28a4071 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -20,6 +20,7 @@
+ #include <linux/atomic.h>
+ #include <linux/blk-mq.h>
+ #include <linux/mount.h>
++#include <linux/dax.h>
  
- 	return ret;
+ #define DM_MSG_PREFIX "table"
+ 
+@@ -1630,6 +1631,37 @@ static bool dm_table_supports_flush(struct dm_table *t, unsigned long flush)
+ 	return false;
  }
-@@ -722,7 +722,7 @@ int dmz_flush_metadata(struct dmz_metadata *zmd)
  
- 	/* If there are no dirty metadata blocks, just flush the device cache */
- 	if (list_empty(&write_list)) {
--		ret = blkdev_issue_flush(zmd->dev->bdev, GFP_KERNEL, NULL);
-+		ret = blkdev_issue_flush(zmd->dev->bdev, GFP_NOIO, NULL);
- 		goto out;
++static int device_dax_write_cache_enabled(struct dm_target *ti,
++					  struct dm_dev *dev, sector_t start,
++					  sector_t len, void *data)
++{
++	struct dax_device *dax_dev = dev->dax_dev;
++
++	if (!dax_dev)
++		return false;
++
++	if (dax_write_cache_enabled(dax_dev))
++		return true;
++	return false;
++}
++
++static int dm_table_supports_dax_write_cache(struct dm_table *t)
++{
++	struct dm_target *ti;
++	unsigned i;
++
++	for (i = 0; i < dm_table_get_num_targets(t); i++) {
++		ti = dm_table_get_target(t, i);
++
++		if (ti->type->iterate_devices &&
++		    ti->type->iterate_devices(ti,
++				device_dax_write_cache_enabled, NULL))
++			return true;
++	}
++
++	return false;
++}
++
+ static int device_is_nonrot(struct dm_target *ti, struct dm_dev *dev,
+ 			    sector_t start, sector_t len, void *data)
+ {
+@@ -1785,6 +1817,9 @@ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
  	}
+ 	blk_queue_write_cache(q, wc, fua);
  
-@@ -927,7 +927,7 @@ static int dmz_recover_mblocks(struct dmz_metadata *zmd, unsigned int dst_set)
- 			(zmd->nr_meta_zones << zmd->dev->zone_nr_blocks_shift);
- 	}
++	if (dm_table_supports_dax_write_cache(t))
++		dax_write_cache(t->md->dax_dev, true);
++
+ 	/* Ensure that all underlying devices are non-rotational. */
+ 	if (dm_table_all_devices_attribute(t, device_is_nonrot))
+ 		queue_flag_set_unlocked(QUEUE_FLAG_NONROT, q);
+diff --git a/include/linux/dax.h b/include/linux/dax.h
+index 7948118..df97b7a 100644
+--- a/include/linux/dax.h
++++ b/include/linux/dax.h
+@@ -87,6 +87,7 @@ size_t dax_copy_from_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
+ void dax_flush(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
+ 		size_t size);
+ void dax_write_cache(struct dax_device *dax_dev, bool wc);
++bool dax_write_cache_enabled(struct dax_device *dax_dev);
  
--	page = alloc_page(GFP_KERNEL);
-+	page = alloc_page(GFP_NOIO);
- 	if (!page)
- 		return -ENOMEM;
- 
-@@ -1183,7 +1183,7 @@ static int dmz_update_zone(struct dmz_metadata *zmd, struct dm_zone *zone)
- 
- 	/* Get zone information from disk */
- 	ret = blkdev_report_zones(zmd->dev->bdev, dmz_start_sect(zmd, zone),
--				  &blkz, &nr_blkz, GFP_KERNEL);
-+				  &blkz, &nr_blkz, GFP_NOIO);
- 	if (ret) {
- 		dmz_dev_err(zmd->dev, "Get zone %u report failed",
- 			    dmz_id(zmd, zone));
-@@ -1257,7 +1257,7 @@ static int dmz_reset_zone(struct dmz_metadata *zmd, struct dm_zone *zone)
- 
- 		ret = blkdev_reset_zones(dev->bdev,
- 					 dmz_start_sect(zmd, zone),
--					 dev->zone_nr_sectors, GFP_KERNEL);
-+					 dev->zone_nr_sectors, GFP_NOIO);
- 		if (ret) {
- 			dmz_dev_err(dev, "Reset zone %u failed %d",
- 				    dmz_id(zmd, zone), ret);
-diff --git a/drivers/md/dm-zoned-reclaim.c b/drivers/md/dm-zoned-reclaim.c
-index 05c0a126f5c8..44a119e12f1a 100644
---- a/drivers/md/dm-zoned-reclaim.c
-+++ b/drivers/md/dm-zoned-reclaim.c
-@@ -75,7 +75,7 @@ static int dmz_reclaim_align_wp(struct dmz_reclaim *zrc, struct dm_zone *zone,
- 	nr_blocks = block - wp_block;
- 	ret = blkdev_issue_zeroout(zrc->dev->bdev,
- 				   dmz_start_sect(zmd, zone) + dmz_blk2sect(wp_block),
--				   dmz_blk2sect(nr_blocks), GFP_NOFS, false);
-+				   dmz_blk2sect(nr_blocks), GFP_NOIO, 0);
- 	if (ret) {
- 		dmz_dev_err(zrc->dev,
- 			    "Align zone %u wp %llu to %llu (wp+%u) blocks failed %d",
-diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
-index 71eae8a23dae..01152e198236 100644
---- a/drivers/md/dm-zoned-target.c
-+++ b/drivers/md/dm-zoned-target.c
-@@ -541,7 +541,7 @@ static void dmz_queue_chunk_work(struct dmz_target *dmz, struct bio *bio)
- 		int ret;
- 
- 		/* Create a new chunk work */
--		cw = kmalloc(sizeof(struct dm_chunk_work), GFP_NOFS);
-+		cw = kmalloc(sizeof(struct dm_chunk_work), GFP_NOIO);
- 		if (!cw)
- 			goto out;
- 
-@@ -785,7 +785,7 @@ static int dmz_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 
- 	/* Chunk BIO work */
- 	mutex_init(&dmz->chunk_lock);
--	INIT_RADIX_TREE(&dmz->chunk_rxtree, GFP_NOFS);
-+	INIT_RADIX_TREE(&dmz->chunk_rxtree, GFP_NOIO);
- 	dmz->chunk_wq = alloc_workqueue("dmz_cwq_%s", WQ_MEM_RECLAIM | WQ_UNBOUND,
- 					0, dev->name);
- 	if (!dmz->chunk_wq) {
+ /*
+  * We use lowest available bit in exceptional entry for locking, one bit for
 -- 
-2.13.3
+2.5.5
