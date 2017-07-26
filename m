@@ -1,84 +1,78 @@
 From: Goldwyn Rodrigues <rgoldwyn@suse.de>
-Subject: [PATCH 2/9] md: Add nowait support to md
-Date: Wed, 26 Jul 2017 18:57:59 -0500
-Message-ID: <20170726235806.12148-3-rgoldwyn@suse.de>
+Subject: [PATCH 4/9] md: raid5 nowait support
+Date: Wed, 26 Jul 2017 18:58:01 -0500
+Message-ID: <20170726235806.12148-5-rgoldwyn@suse.de>
 References: <20170726235806.12148-1-rgoldwyn@suse.de>
-Return-path: <linux-raid-owner@vger.kernel.org>
+Return-path: <linux-block-owner@vger.kernel.org>
 In-Reply-To: <20170726235806.12148-1-rgoldwyn@suse.de>
-Sender: linux-raid-owner@vger.kernel.org
+Sender: linux-block-owner@vger.kernel.org
 To: linux-block@vger.kernel.org
 Cc: hch@infradead.org, jack@suse.cz, linux-raid@vger.kernel.org, dm-devel@redhat.com, Goldwyn Rodrigues <rgoldwyn@suse.com>
 List-Id: dm-devel.ids
 
 From: Goldwyn Rodrigues <rgoldwyn@suse.com>
 
-Set queue flags to QUEUE_FLAG_NOWAIT to indicate REQ_NOWAIT
-will be handled.
-
-If an I/O on the md will be delayed, it would bail by calling
-bio_wouldblock_error(). The conditions when this could happen are:
-
- + MD is suspended
- + There is a change pending on the SB, and current I/O would
-   block until that is complete.
+Return EAGAIN in case RAID5 would block because of waiting due to:
+ + Reshaping
+ + Suspension
+ + Stripe Expansion
 
 Signed-off-by: Goldwyn Rodrigues <rgoldwyn@suse.com>
 ---
- drivers/md/md.c | 27 +++++++++++++++++++++++++--
- 1 file changed, 25 insertions(+), 2 deletions(-)
+ drivers/md/raid5.c | 20 ++++++++++++++++++++
+ 1 file changed, 20 insertions(+)
 
-diff --git a/drivers/md/md.c b/drivers/md/md.c
-index 8cdca0296749..d96c27d16841 100644
---- a/drivers/md/md.c
-+++ b/drivers/md/md.c
-@@ -285,6 +285,13 @@ static blk_qc_t md_make_request(struct request_queue *q, struct bio *bio)
- 		bio_endio(bio);
- 		return BLK_QC_T_NONE;
- 	}
-+
-+	if (mddev->suspended && (bio->bi_opf & REQ_NOWAIT)) {
-+		bio_wouldblock_error(bio);
-+		rcu_read_unlock();
-+		return BLK_QC_T_NONE;
-+	}
-+
- check_suspended:
- 	rcu_read_lock();
- 	if (mddev->suspended) {
-@@ -5274,6 +5281,10 @@ static int md_alloc(dev_t dev, char *name)
- 		mddev->queue = NULL;
- 		goto abort;
- 	}
-+
-+	/* Set the NOWAIT flags to show support */
-+	queue_flag_set_unlocked(QUEUE_FLAG_NOWAIT, mddev->queue);
-+
- 	disk->major = MAJOR(mddev->unit);
- 	disk->first_minor = unit << shift;
- 	if (name)
-@@ -8010,8 +8021,20 @@ bool md_write_start(struct mddev *mddev, struct bio *bi)
- 	rcu_read_unlock();
- 	if (did_change)
- 		sysfs_notify_dirent_safe(mddev->sysfs_state);
--	wait_event(mddev->sb_wait,
--		   !test_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags) && !mddev->suspended);
-+
-+	/* Don't wait for sb writes if marked with REQ_NOWAIT */
-+	if (test_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags) ||
-+			mddev->suspended) {
-+		if (bi->bi_opf & REQ_NOWAIT) {
-+			bio_wouldblock_error(bi);
-+			percpu_ref_put(&mddev->writes_pending);
-+			return false;
-+		}
-+
-+		wait_event(mddev->sb_wait,
-+				!test_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags) && !mddev->suspended);
-+	}
-+
- 	if (test_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags)) {
- 		percpu_ref_put(&mddev->writes_pending);
- 		return false;
+diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+index aeeb8d6854e2..d1b3bcf26d29 100644
+--- a/drivers/md/raid5.c
++++ b/drivers/md/raid5.c
+@@ -5635,6 +5635,11 @@ static bool raid5_make_request(struct mddev *mddev, struct bio * bi)
+ 				    ? logical_sector < conf->reshape_safe
+ 				    : logical_sector >= conf->reshape_safe) {
+ 					spin_unlock_irq(&conf->device_lock);
++					if (bi->bi_opf & REQ_NOWAIT) {
++						bio_wouldblock_error(bi);
++						finish_wait(&conf->wait_for_overlap, &w);
++						return true;
++					}
+ 					schedule();
+ 					do_prepare = true;
+ 					goto retry;
+@@ -5672,6 +5677,11 @@ static bool raid5_make_request(struct mddev *mddev, struct bio * bi)
+ 				spin_unlock_irq(&conf->device_lock);
+ 				if (must_retry) {
+ 					raid5_release_stripe(sh);
++					if (bi->bi_opf & REQ_NOWAIT) {
++						bio_wouldblock_error(bi);
++						finish_wait(&conf->wait_for_overlap, &w);
++						return true;
++					}
+ 					schedule();
+ 					do_prepare = true;
+ 					goto retry;
+@@ -5700,6 +5710,11 @@ static bool raid5_make_request(struct mddev *mddev, struct bio * bi)
+ 					sigset_t full, old;
+ 					sigfillset(&full);
+ 					sigprocmask(SIG_BLOCK, &full, &old);
++					if (bi->bi_opf & REQ_NOWAIT) {
++						bio_wouldblock_error(bi);
++						finish_wait(&conf->wait_for_overlap, &w);
++						return true;
++					}
+ 					schedule();
+ 					sigprocmask(SIG_SETMASK, &old, NULL);
+ 					do_prepare = true;
+@@ -5715,6 +5730,11 @@ static bool raid5_make_request(struct mddev *mddev, struct bio * bi)
+ 				 */
+ 				md_wakeup_thread(mddev->thread);
+ 				raid5_release_stripe(sh);
++				if (bi->bi_opf & REQ_NOWAIT) {
++					bio_wouldblock_error(bi);
++					finish_wait(&conf->wait_for_overlap, &w);
++					return true;
++				}
+ 				schedule();
+ 				do_prepare = true;
+ 				goto retry;
 -- 
 2.12.3
-
