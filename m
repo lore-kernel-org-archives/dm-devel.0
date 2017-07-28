@@ -1,97 +1,54 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper fixes for 4.13-rc3
-Date: Fri, 28 Jul 2017 12:04:14 -0400
-Message-ID: <20170728160414.GA12967@redhat.com>
+From: Bart Van Assche <Bart.VanAssche-Sjgp3cTcYWE@public.gmane.org>
+Subject: Re: [resend PATCH v2 11/33] dm: add dax_device and dax_operations
+ support
+Date: Fri, 28 Jul 2017 16:17:07 +0000
+Message-ID: <1501258623.2413.3.camel@wdc.com>
+References: <149245612770.10206.15496018295337908594.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <149245618859.10206.13182319600260215993.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Damien Le Moal <damien.lemoal@wdc.com>, Heinz Mauelshagen <heinzm@redhat.com>, NeilBrown <neilb@suse.com>, Vivek Goyal <vgoyal@redhat.com>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Alasdair G Kergon <agk@redhat.com>, Dan Carpenter <dan.carpenter@oracle.com>
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <149245618859.10206.13182319600260215993.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Content-Language: en-US
+Content-ID: <45C5A08BBF091D4C8A2DA2234541D60E-+cFlbfsKLD6cE4WynfumptQqCkab/8FMAL8bYrjMMd8@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: "dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org" <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Cc: "snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "hch-jcswGhMUV9g@public.gmane.org" <hch-jcswGhMUV9g@public.gmane.org>
 List-Id: dm-devel.ids
 
-Hi Linus,
+On Mon, 2017-04-17 at 12:09 -0700, Dan Williams wrote:
+> diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
+> index b7767da50c26..1de8372d9459 100644
+> --- a/drivers/md/Kconfig
+> +++ b/drivers/md/Kconfig
+> @@ -200,6 +200,7 @@ config BLK_DEV_DM_BUILTIN
+>  config BLK_DEV_DM
+>  	tristate "Device mapper support"
+>  	select BLK_DEV_DM_BUILTIN
+> +	select DAX
+>  	---help---
+>  	  Device-mapper is a low level volume manager.  It works by allowing
+>  	  people to specify mappings for ranges of logical sectors.  Various
 
-The following changes since commit 5771a8c08880cdca3bfb4a3fc6d309d6bba20877:
+(replying to an e-mail of three months ago)
 
-  Linux v4.13-rc1 (2017-07-15 15:22:10 -0700)
+Hello Dan,
 
-are available in the git repository at:
+While building a v4.12 kernel I noticed that enabling device mapper support
+now unconditionally enables DAX. I think there are plenty of systems that use
+dm but do not need DAX. Have you considered to rework this such that instead
+of dm selecting DAX that DAX support is only enabled in dm if CONFIG_DAX is
+enabled?
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-4.13/dm-fixes
+Thanks,
 
-for you to fetch changes up to 273752c9ff03eb83856601b2a3458218bb949e46:
-
-  dm, dax: Make sure dm_dax_flush() is called if device supports it (2017-07-26 15:55:44 -0400)
-
-Please pull, thanks.
-Mike
-
-----------------------------------------------------------------
-- A few DM integrity fixes that improve performance.  One that address
-  inefficiencies in the on-disk journal device layout.  Another that
-  makes use of the block layer's on-stack plugging when writing the
-  journal.
-
-- A dm-bufio fix for the blk_status_t conversion that went in during the
-  merge window.
-
-- A few DM raid fixes that address correctness when suspending the
-  device and a validation fix for validation that occurs during device
-  activation.
-
-- A couple DM zoned target fixes.  Important one being the fix to not
-  use GFP_KERNEL in the IO path due to concerns about deadlock in
-  low-memory conditions (e.g. swap over a DM zoned device, etc).
-
-- A DM DAX device fix to make sure dm_dax_flush() is called if the
-  underlying DAX device is operating as a write cache.
-
-----------------------------------------------------------------
-Damien Le Moal (1):
-      dm zoned: use GFP_NOIO in I/O path
-
-Dan Carpenter (1):
-      dm bufio: fix error code in dm_bufio_write_dirty_buffers()
-
-Heinz Mauelshagen (4):
-      dm raid: remove WARN_ON() in raid10_md_layout_to_format()
-      dm raid: fix activation check in validate_raid_redundancy()
-      dm raid: avoid mddev->suspended access
-      dm raid: bump target version
-
-Mikulas Patocka (5):
-      dm integrity: fix inefficient allocation of journal space
-      dm integrity: use plugging when writing the journal
-      dm integrity: WARN_ON if variables representing journal usage get out of sync
-      dm integrity: test for corrupted disk format during table load
-      dm zoned: remove test for impossible REQ_OP_FLUSH conditions
-
-NeilBrown (1):
-      dm verity fec: fix GFP flags used with mempool_alloc()
-
-Vivek Goyal (1):
-      dm, dax: Make sure dm_dax_flush() is called if device supports it
-
- Documentation/device-mapper/dm-raid.txt |  1 +
- drivers/dax/super.c                     |  6 ++++++
- drivers/md/dm-bufio.c                   |  3 +--
- drivers/md/dm-integrity.c               | 22 +++++++++++++++++----
- drivers/md/dm-raid.c                    | 29 +++++++++++++++------------
- drivers/md/dm-table.c                   | 35 +++++++++++++++++++++++++++++++++
- drivers/md/dm-verity-fec.c              | 21 +++++---------------
- drivers/md/dm-zoned-metadata.c          | 12 +++++------
- drivers/md/dm-zoned-reclaim.c           |  2 +-
- drivers/md/dm-zoned-target.c            |  8 ++++----
- include/linux/dax.h                     |  1 +
- 11 files changed, 94 insertions(+), 46 deletions(-)
+Bart.
