@@ -1,14 +1,15 @@
-From: Hannes Reinecke <hare@suse.de>
+From: Guan Junxiong <guanjunxiong@huawei.com>
 Subject: Re: [PATCH] multipath-tools: check sysfs path state for
 	NVMe/NVMf
-Date: Fri, 28 Jul 2017 08:12:41 +0200
-Message-ID: <66209fe7-9ed4-d269-5102-5a97a3c58854@suse.de>
+Date: Fri, 28 Jul 2017 14:54:01 +0800
+Message-ID: <87413531-8abe-a279-dd97-0d49e56984b6@huawei.com>
 References: <1501205323-13440-1-git-send-email-guanjunxiong@huawei.com>
+	<66209fe7-9ed4-d269-5102-5a97a3c58854@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1501205323-13440-1-git-send-email-guanjunxiong@huawei.com>
+In-Reply-To: <66209fe7-9ed4-d269-5102-5a97a3c58854@suse.de>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -19,65 +20,58 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Guan Junxiong <guanjunxiong@huawei.com>, dm-devel@redhat.com, christophe.varoqui@opensvc.com, mwilck@suse.com, bmarzins@redhat.com, xose.vazquez@gmail.com
+To: Hannes Reinecke <hare@suse.de>, dm-devel@redhat.com, christophe.varoqui@opensvc.com, mwilck@suse.com, bmarzins@redhat.com, xose.vazquez@gmail.com
 Cc: philip.yang@huawei.com, zouming.zouming@huawei.com, hege09@huawei.com, shenhong09@huawei.com
 List-Id: dm-devel.ids
 
-T24gMDcvMjgvMjAxNyAwMzoyOCBBTSwgR3VhbiBKdW54aW9uZyB3cm90ZToKPiBUaGUgcHJldmlv
-dXMgY29kZSBvZiBwYXRoX29mZmxpbmUgY2hlY2tpbmcgd2FzIG9ubHkgdmFsaWQgZm9yIFNDU0kK
-PiBkZXZpY2UuIEl0IHJldHVybmVkIFBBVEhfVVAgZm9yIG90aGVyIGRldmljZXMgYW5kIHRocm93
-ZWQgcGF0aCBjaGVjay0KPiBpbmcgdG8gY2hla2Vycy4gVGhpcyBwYXRjaCBzdXBwbGVtZW50cyBj
-aGVja2luZyBzeXNmcyBwYXRoIHN0YXRlIGZvcgo+IE5WTWUvTlZNZiBkZXZpY2VzLiBGb3IgZXhh
-bXBsZSwgaWYgTlZNZS9OVk1mIHBhdGggaXMgcmVjb25uZWN0dGluZyBvcgo+IHJlc2V0dGluZywg
-d2UgcmV0dXJuIFBBVEhfUEVORElORyBpbiBvcmRlciB0byBza2lwIGN1cnJlbnQgcGF0aCBjaGVj
-ay0KPiBpbmcgYW5kIHJlc2NoZWR1bGUgcGF0aCBjaGVja2luZyBpbiB0aGUgbmV4dCB0aWNrIGFz
-IHNvb24gYXMgcG9zc2libGUuCj4gCj4gU2lnbmVkLW9mZi1ieTogR3VhbiBKdW54aW9uZyA8Z3Vh
-bmp1bnhpb25nQGh1YXdlaS5jb20+Cj4gLS0tCj4gIGxpYm11bHRpcGF0aC9kaXNjb3ZlcnkuYyB8
-IDQ1ICsrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrLS0tLS0tLS0tLQo+ICAxIGZp
-bGUgY2hhbmdlZCwgMzUgaW5zZXJ0aW9ucygrKSwgMTAgZGVsZXRpb25zKC0pCj4gClRoYW5rcyBm
-b3IgZG9pbmcgdGhpcy4KCj4gZGlmZiAtLWdpdCBhL2xpYm11bHRpcGF0aC9kaXNjb3ZlcnkuYyBi
-L2xpYm11bHRpcGF0aC9kaXNjb3ZlcnkuYwo+IGluZGV4IDY2M2M4ZWFhLi5iNTQ5Y2UwZSAxMDA2
-NDQKPiAtLS0gYS9saWJtdWx0aXBhdGgvZGlzY292ZXJ5LmMKPiArKysgYi9saWJtdWx0aXBhdGgv
-ZGlzY292ZXJ5LmMKPiBAQCAtMTM4MywxNCArMTM4MywyMiBAQCBwYXRoX29mZmxpbmUgKHN0cnVj
-dCBwYXRoICogcHApCj4gIAlzdHJ1Y3QgdWRldl9kZXZpY2UgKiBwYXJlbnQ7Cj4gIAljaGFyIGJ1
-ZmZbU0NTSV9TVEFURV9TSVpFXTsKPiAgCWludCBlcnI7Cj4gKwljb25zdCBjaGFyICpzdWJzeXNf
-dHlwZTsKPiAgCj4gLQlpZiAocHAtPmJ1cyAhPSBTWVNGU19CVVNfU0NTSSkKPiArCWlmIChwcC0+
-YnVzID09IFNZU0ZTX0JVU19TQ1NJKSB7Cj4gKwkJc3Vic3lzX3R5cGUgPSAic2NzaSI7Cj4gKwl9
-Cj4gKwllbHNlIGlmIChwcC0+YnVzID09IFNZU0ZTX0JVU19OVk1FKSB7Cj4gKwkJc3Vic3lzX3R5
-cGUgPSAibnZtZSI7Cj4gKwl9Cj4gKwllbHNlIHsKPiAgCQlyZXR1cm4gUEFUSF9VUDsKPiArCX0K
-PiAgCj4gIAlwYXJlbnQgPSBwcC0+dWRldjsKPiAgCXdoaWxlIChwYXJlbnQpIHsKPiAgCQljb25z
-dCBjaGFyICpzdWJzeXMgPSB1ZGV2X2RldmljZV9nZXRfc3Vic3lzdGVtKHBhcmVudCk7Cj4gLQkJ
-aWYgKHN1YnN5cyAmJiAhc3RybmNtcChzdWJzeXMsICJzY3NpIiwgNCkpCj4gKwkJaWYgKHN1YnN5
-cyAmJiAhc3RybmNtcChzdWJzeXMsIHN1YnN5c190eXBlLCA0KSkKPiAgCQkJYnJlYWs7Cj4gIAkJ
-cGFyZW50ID0gdWRldl9kZXZpY2VfZ2V0X3BhcmVudChwYXJlbnQpOwo+ICAJfQo+IEBAIC0xNDEy
-LDE1ICsxNDIwLDMyIEBAIHBhdGhfb2ZmbGluZSAoc3RydWN0IHBhdGggKiBwcCkKPiAgCj4gIAlj
-b25kbG9nKDMsICIlczogcGF0aCBzdGF0ZSA9ICVzIiwgcHAtPmRldiwgYnVmZik7Cj4gIAo+IC0J
-aWYgKCFzdHJuY21wKGJ1ZmYsICJvZmZsaW5lIiwgNykpIHsKPiAtCQlwcC0+b2ZmbGluZSA9IDE7
-Cj4gLQkJcmV0dXJuIFBBVEhfRE9XTjsKPiArCWlmIChwcC0+YnVzID09IFNZU0ZTX0JVU19TQ1NJ
-KSB7Cj4gKwkJaWYgKCFzdHJuY21wKGJ1ZmYsICJvZmZsaW5lIiwgNykpIHsKPiArCQkJcHAtPm9m
-ZmxpbmUgPSAxOwo+ICsJCQlyZXR1cm4gUEFUSF9ET1dOOwo+ICsJCX0KPiArCQlwcC0+b2ZmbGlu
-ZSA9IDA7Cj4gKwkJaWYgKCFzdHJuY21wKGJ1ZmYsICJibG9ja2VkIiwgNykgfHwKPiArCQkgICAg
-IXN0cm5jbXAoYnVmZiwgInF1aWVzY2UiLCA3KSkKPiArCQkJcmV0dXJuIFBBVEhfUEVORElORzsK
-PiArCQllbHNlIGlmICghc3RybmNtcChidWZmLCAicnVubmluZyIsIDcpKQo+ICsJCQlyZXR1cm4g
-UEFUSF9VUDsKPiArCj4gKwl9Cj4gKwllbHNlIGlmIChwcC0+YnVzID09IFNZU0ZTX0JVU19OVk1F
-KSB7Cj4gKwkJaWYgKCFzdHJuY21wKGJ1ZmYsICJkZWFkIiwgNCkpIHsKPiArCQkJcHAtPm9mZmxp
-bmUgPSAxOwo+ICsJCQlyZXR1cm4gUEFUSF9ET1dOOwo+ICsJCX0KPiArCQlwcC0+b2ZmbGluZSA9
-IDA7Cj4gKwkJaWYgKCFzdHJuY21wKGJ1ZmYsICJuZXciLCAzKSB8fAo+ICsJCSAgICAhc3RybmNt
-cChidWZmLCAicmVjb25uZWN0aW5nIiwgMTIpIHx8Cj4gKwkJICAgICFzdHJuY21wKGJ1ZmYsICJy
-ZXNldHRpbmciLCA5KSkKPiArCQkJcmV0dXJuIFBBVEhfUEVORElORzsKPiArCQllbHNlIGlmICgh
-c3RybmNtcChidWZmLCAibGl2ZSIsIDQpKQo+ICsJCQlyZXR1cm4gUEFUSF9VUDsKPiAgCX0KPiAt
-CXBwLT5vZmZsaW5lID0gMDsKPiAtCWlmICghc3RybmNtcChidWZmLCAiYmxvY2tlZCIsIDcpIHx8
-ICFzdHJuY21wKGJ1ZmYsICJxdWllc2NlIiwgNykpCj4gLQkJcmV0dXJuIFBBVEhfUEVORElORzsK
-PiAtCWVsc2UgaWYgKCFzdHJuY21wKGJ1ZmYsICJydW5uaW5nIiwgNykpCj4gLQkJcmV0dXJuIFBB
-VEhfVVA7Cj4gIAo+ICAJcmV0dXJuIFBBVEhfRE9XTjsKPiAgfQo+IApQYXRjaCBsb29rcyBnb29k
-LgoKUmV2aWV3ZWQtYnk6IEhhbm5lcyBSZWluZWNrZSA8aGFyZUBzdXNlLmNvbT4KCkhvd2V2ZXIs
-IEkgZG8gd29uZGVyIGlmIHdlIHJlYWxseSBuZWVkIGEgcGF0aCBjaGVja2VyIGZvciBOVk1mIG9u
-Y2Ugd2UKaGF2ZSB0aGlzLiBBZnRlciBhbGwsIHRoZSBzeXNmcyBhdHRyaWJ1dGUgcmVmbGVjdHMg
-dGhhdCBLQVRPIHN0YXR1cywKd2hpY2ggcHJldHR5IG11Y2ggZGV0ZXJtaW5lcyBpZiB3ZSBjYW4g
-c2VuZCBJL08gX2F0IGFsbF8uCgpDaGVlcnMsCgpIYW5uZXMKLS0gCkRyLiBIYW5uZXMgUmVpbmVj
-a2UJCSAgIFRlYW1sZWFkIFN0b3JhZ2UgJiBOZXR3b3JraW5nCmhhcmVAc3VzZS5kZQkJCSAgICAg
-ICAgICAgICAgICs0OSA5MTEgNzQwNTMgNjg4ClNVU0UgTElOVVggR21iSCwgTWF4ZmVsZHN0ci4g
-NSwgOTA0MDkgTsO8cm5iZXJnCkdGOiBGLiBJbWVuZMO2cmZmZXIsIEouIFNtaXRoYXJkLCBKLiBH
-dWlsZCwgRC4gVXBtYW55dSwgRy4gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0K
-ZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVk
-aGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+Hi Hannes,
+
+On 2017/7/28 14:12, Hannes Reinecke wrote:
+> On 07/28/2017 03:28 AM, Guan Junxiong wrote:
+>> The previous code of path_offline checking was only valid for SCSI
+>> device. It returned PATH_UP for other devices and throwed path check-
+>> ing to chekers. This patch supplements checking sysfs path state for
+>> NVMe/NVMf devices. For example, if NVMe/NVMf path is reconnectting or
+>> resetting, we return PATH_PENDING in order to skip current path check-
+>> ing and reschedule path checking in the next tick as soon as possible.
+>>
+>> Signed-off-by: Guan Junxiong <guanjunxiong@huawei.com>
+>> ---
+>>  libmultipath/discovery.c | 45 +++++++++++++++++++++++++++++++++++----------
+>>  1 file changed, 35 insertions(+), 10 deletions(-)
+>>
+> Thanks for doing this.
+> 
+>>
+> Patch looks good.
+> 
+> Reviewed-by: Hannes Reinecke <hare@suse.com>
+> 
+Nice to have any review. Thanks.
+
+> However, I do wonder if we really need a path checker for NVMf once we
+> have this. After all, the sysfs attribute reflects that KATO status,
+> which pretty much determines if we can send I/O _at all_.
+> 
+> Cheers,
+>
+> Hannes
+
+IMO, I think Keep Alive feature is in controller granularity , _not_ namespace
+granularity. A namespace can be detached ( or disabled with nvmetcli tools)
+from controller which has many namespaces attached, but the controller sysfs
+state attribute is still "live". Therefor, we do need further path checker
+after we know controller is live.
+
+Refer to the following quoted from NVMe Spec 1.3:
+"The Keep Alive feature is used by the host to determine that the controller
+is operational and by the controller to determine that the host is operational.
+The host and controller are operational when each is accessible and able to
+issue or execute commands."
+
+
+Regards
+Guan
+
+
+.
