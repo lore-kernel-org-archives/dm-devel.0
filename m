@@ -1,76 +1,48 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH] dm-integrity: Do not check integrity for
- failed read operations
-Date: Tue, 1 Aug 2017 19:05:36 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1708011904300.26170@file01.intranet.prod.int.rdu2.redhat.com>
-References: <1501485740-27519-1-git-send-email-hyc.lee@gmail.com>
-	<3f027fbd-61b6-4507-848c-7c6af0ca213c@gmail.com>
+From: kbuild test robot <lkp-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH] dm: enable opt-out of device-mapper dax support
+Date: Wed, 2 Aug 2017 09:40:26 +0800
+Message-ID: <201708020927.f9cVCYCl%fengguang.wu@intel.com>
+References: <150161113411.34055.9762658795237184307.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <3f027fbd-61b6-4507-848c-7c6af0ca213c@gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Milan Broz <gmazyland@gmail.com>
-Cc: kernel-team@lge.com, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Hyunchul Lee <hyc.lee@gmail.com>
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <150161113411.34055.9762658795237184307.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Content-Disposition: inline
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, kbuild-all-JC7UmRfGjtg@public.gmane.org, Bart Van Assche <Bart.VanAssche-Sjgp3cTcYWE@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
+Hi Dan,
 
+[auto build test ERROR on dm/for-next]
+[also build test ERROR on v4.13-rc3 next-20170801]
+[if your patch is applied to the wrong git tree, please drop us a note to help improve the system]
 
-On Tue, 1 Aug 2017, Milan Broz wrote:
+url:    https://github.com/0day-ci/linux/commits/Dan-Williams/dm-enable-opt-out-of-device-mapper-dax-support/20170802-063827
+base:   https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git for-next
+config: sparc64-defconfig (attached as .config)
+compiler: sparc64-linux-gnu-gcc (Debian 6.1.1-9) 6.1.1 20160705
+reproduce:
+        wget https://raw.githubusercontent.com/01org/lkp-tests/master/sbin/make.cross -O ~/bin/make.cross
+        chmod +x ~/bin/make.cross
+        # save the attached .config to linux build tree
+        make.cross ARCH=sparc64 
 
-> On 07/31/2017 09:22 AM, Hyunchul Lee wrote:
-> > From: Hyunchul Lee <cheol.lee@lge.com>
-> > 
-> > Even though read operations fail, dm_integrity_map_continue()
-> > calls integrity_metadata() to check integrity. In this case,
-> > just complete these.
-> 
-> Yes this makes sense to me.
-> 
-> If bio->bi_status is set, it is directly propagated and the whole
-> bio is failed.
-> 
-> But this is just shortcut, the bio will fail the same way (with bi_status),
-> just integrity calculation code is skipped, so I think it should go to 4.13.
-> 
-> Thanks,
-> Milan
+All errors (new ones prefixed by >>):
 
-I would also mark this patch for backporting to the stable kernels - so 
-that I/O errors do not generate integrity warnings in the log.
+>> ERROR: "dax_write_cache" [drivers/md/dm-mod.ko] undefined!
+>> ERROR: "dax_write_cache_enabled" [drivers/md/dm-mod.ko] undefined!
 
-Mikulas
-
-> > Signed-off-by: Hyunchul Lee <cheol.lee@lge.com>
-> > ---
-> >  drivers/md/dm-integrity.c | 6 +++++-
-> >  1 file changed, 5 insertions(+), 1 deletion(-)
-> > 
-> > diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-> > index 10f123e..f99eee9 100644
-> > --- a/drivers/md/dm-integrity.c
-> > +++ b/drivers/md/dm-integrity.c
-> > @@ -1697,7 +1697,11 @@ static void dm_integrity_map_continue(struct dm_integrity_io *dio, bool from_map
-> >  
-> >  	if (need_sync_io) {
-> >  		wait_for_completion_io(&read_comp);
-> > -		integrity_metadata(&dio->work);
-> > +		if (likely(!bio->bi_status))
-> > +			integrity_metadata(&dio->work);
-> > +		else
-> > +			dec_in_flight(dio);
-> > +
-> >  	} else {
-> >  		INIT_WORK(&dio->work, integrity_metadata);
-> >  		queue_work(ic->metadata_wq, &dio->work);
-> > 
-> 
+---
+0-DAY kernel test infrastructure                Open Source Technology Center
+https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
