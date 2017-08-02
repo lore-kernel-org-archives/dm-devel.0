@@ -1,7 +1,7 @@
 From: kbuild test robot <lkp-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 Subject: Re: [PATCH] dm: enable opt-out of device-mapper dax support
-Date: Wed, 2 Aug 2017 09:40:26 +0800
-Message-ID: <201708020927.f9cVCYCl%fengguang.wu@intel.com>
+Date: Wed, 2 Aug 2017 09:48:47 +0800
+Message-ID: <201708020917.5ZjuHQzh%fengguang.wu@intel.com>
 References: <150161113411.34055.9762658795237184307.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -30,18 +30,18 @@ Hi Dan,
 
 url:    https://github.com/0day-ci/linux/commits/Dan-Williams/dm-enable-opt-out-of-device-mapper-dax-support/20170802-063827
 base:   https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git for-next
-config: sparc64-defconfig (attached as .config)
-compiler: sparc64-linux-gnu-gcc (Debian 6.1.1-9) 6.1.1 20160705
+config: x86_64-allyesdebian (attached as .config)
+compiler: gcc-6 (Debian 6.2.0-3) 6.2.0 20160901
 reproduce:
-        wget https://raw.githubusercontent.com/01org/lkp-tests/master/sbin/make.cross -O ~/bin/make.cross
-        chmod +x ~/bin/make.cross
         # save the attached .config to linux build tree
-        make.cross ARCH=sparc64 
+        make ARCH=x86_64 
 
 All errors (new ones prefixed by >>):
 
->> ERROR: "dax_write_cache" [drivers/md/dm-mod.ko] undefined!
->> ERROR: "dax_write_cache_enabled" [drivers/md/dm-mod.ko] undefined!
+   drivers/md/dm-table.o: In function `device_dax_write_cache_enabled':
+>> dm-table.c:(.text+0x568): undefined reference to `dax_write_cache_enabled'
+   drivers/md/dm-table.o: In function `dm_table_set_restrictions':
+>> dm-table.c:(.text+0x1e40): undefined reference to `dax_write_cache'
 
 ---
 0-DAY kernel test infrastructure                Open Source Technology Center
