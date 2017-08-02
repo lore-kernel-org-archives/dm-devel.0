@@ -1,200 +1,52 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: [PATCH v3 2/2] dm: allow device-mapper to operate without dax
- support
-Date: Wed, 02 Aug 2017 10:58:10 -0700
-Message-ID: <150169668989.39569.8174620146135008137.stgit@dwillia2-desk3.amr.corp.intel.com>
+From: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v3 0/2] dax, dm: stop requiring dax for device-mapper
+Date: Wed, 2 Aug 2017 14:55:38 -0400
+Message-ID: <20170802185537.GA16551@redhat.com>
 References: <150169667935.39569.15808116323143633486.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <150169667935.39569.15808116323143633486.stgit@dwillia2-desk3.amr.corp.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: snitzer@redhat.com
-Cc: kbuild test robot <lkp@intel.com>, linux-nvdimm@lists.01.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Bart Van Assche <Bart.VanAssche@wdc.com>, Alasdair Kergon <agk@redhat.com>
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <150169667935.39569.15808116323143633486.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: kbuild test robot <lkp-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Bart Van Assche <Bart.VanAssche-Sjgp3cTcYWE@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Gerald Schaefer <gerald.schaefer-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Martin Schwidefsky <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-Rather than have device-mapper directly 'select DAX', let the fact that
-BLK_DEV_PMEM selects dax act as a gate for the device-mapper dax
-support. We arrange for all the dax core routines to compile to nops
-when CONFIG_DAX=n. With that in place we can simply handle the
-alloc_dax() error as expected and ifdef out the other device-mapper-dax
-support code.
+On Wed, Aug 02 2017 at  1:57pm -0400,
+Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
 
-Now, if dax is provided by a leaf driver that driver may only arrange to
-compile the dax core as a module. Since device-mapper dax support is
-consumed by the always-built-in portion of the device-mapper
-implementation we need to upgrade from DAX=m to DAX=y.
+> Changes since v2 [1]:
+> * rebase on -next to integrate with commit 273752c9ff03 "dm, dax: Make
+>   sure dm_dax_flush() is called if device supports it" (kbuild robot)
+> * fix CONFIG_DAX dependencies to upgrade CONFIG_DAX=m to CONFIG_DAX=y
+>   (kbuild robot)
+> 
+> [1]: https://www.spinics.net/lists/kernel/msg2570522.html
+> 
+> ---
+> 
+> Bart points out that the DAX core is unconditionally enabled if
+> device-mapper is enabled. Add some config machinery and some
+> stub-static-inline routines to allow dax infrastructure to be deleted
+> from device-mapper at compile time.
+> 
+> Since this depends on commit 273752c9ff03 that's already in -next, this
+> should go through the device-mapper tree.
 
-Cc: Alasdair Kergon <agk@redhat.com>
-Cc: Mike Snitzer <snitzer@redhat.com>
-Reported-by: Bart Van Assche <Bart.VanAssche@wdc.com>
-Reported-by: kbuild test robot <lkp@intel.com>
-Signed-off-by: Dan Williams <dan.j.williams@intel.com>
----
- drivers/md/Kconfig     |    2 +-
- drivers/md/dm-linear.c |    6 ++++++
- drivers/md/dm-stripe.c |    6 ++++++
- drivers/md/dm.c        |   10 ++++++----
- include/linux/dax.h    |   30 ++++++++++++++++++++++++------
- 5 files changed, 43 insertions(+), 11 deletions(-)
+Commit 273752c9ff03eb83856601b2a3458218bb949e46 is upstream as of
+v4.13-rc3 -- so no real need to have this go via linux-dm.git
 
-diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
-index 4a249ee86364..8ebf09e99006 100644
---- a/drivers/md/Kconfig
-+++ b/drivers/md/Kconfig
-@@ -195,12 +195,12 @@ config MD_CLUSTER
- source "drivers/md/bcache/Kconfig"
- 
- config BLK_DEV_DM_BUILTIN
-+	select DAX if DAX_DRIVER
- 	bool
- 
- config BLK_DEV_DM
- 	tristate "Device mapper support"
- 	select BLK_DEV_DM_BUILTIN
--	select DAX
- 	---help---
- 	  Device-mapper is a low level volume manager.  It works by allowing
- 	  people to specify mappings for ranges of logical sectors.  Various
-diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
-index 41971a090e34..8804e278e834 100644
---- a/drivers/md/dm-linear.c
-+++ b/drivers/md/dm-linear.c
-@@ -154,6 +154,7 @@ static int linear_iterate_devices(struct dm_target *ti,
- 	return fn(ti, lc->dev, lc->start, ti->len, data);
- }
- 
-+#if IS_ENABLED(CONFIG_DAX)
- static long linear_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
- 		long nr_pages, void **kaddr, pfn_t *pfn)
- {
-@@ -197,6 +198,11 @@ static void linear_dax_flush(struct dm_target *ti, pgoff_t pgoff, void *addr,
- 		return;
- 	dax_flush(dax_dev, pgoff, addr, size);
- }
-+#else
-+#define linear_dax_direct_access NULL
-+#define linear_dax_copy_from_iter NULL
-+#define linear_dax_flush NULL
-+#endif
- 
- static struct target_type linear_target = {
- 	.name   = "linear",
-diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
-index a0375530b07f..eeb6c784dc4f 100644
---- a/drivers/md/dm-stripe.c
-+++ b/drivers/md/dm-stripe.c
-@@ -311,6 +311,7 @@ static int stripe_map(struct dm_target *ti, struct bio *bio)
- 	return DM_MAPIO_REMAPPED;
- }
- 
-+#if IS_ENABLED(CONFIG_DAX)
- static long stripe_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
- 		long nr_pages, void **kaddr, pfn_t *pfn)
- {
-@@ -369,6 +370,11 @@ static void stripe_dax_flush(struct dm_target *ti, pgoff_t pgoff, void *addr,
- 		return;
- 	dax_flush(dax_dev, pgoff, addr, size);
- }
-+#else
-+#define stripe_dax_direct_access NULL
-+#define stripe_dax_copy_from_iter NULL
-+#define stripe_dax_flush NULL
-+#endif
- 
- /*
-  * Stripe status:
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 2edbcc2d7d3f..70fa48f4d3a3 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1713,7 +1713,7 @@ static void cleanup_mapped_device(struct mapped_device *md)
- static struct mapped_device *alloc_dev(int minor)
- {
- 	int r, numa_node_id = dm_get_numa_node();
--	struct dax_device *dax_dev;
-+	struct dax_device *dax_dev = NULL;
- 	struct mapped_device *md;
- 	void *old_md;
- 
-@@ -1779,9 +1779,11 @@ static struct mapped_device *alloc_dev(int minor)
- 	md->disk->private_data = md;
- 	sprintf(md->disk->disk_name, "dm-%d", minor);
- 
--	dax_dev = alloc_dax(md, md->disk->disk_name, &dm_dax_ops);
--	if (!dax_dev)
--		goto bad;
-+	if (IS_ENABLED(CONFIG_DAX)) {
-+		dax_dev = alloc_dax(md, md->disk->disk_name, &dm_dax_ops);
-+		if (!dax_dev)
-+			goto bad;
-+	}
- 	md->dax_dev = dax_dev;
- 
- 	add_disk(md->disk);
-diff --git a/include/linux/dax.h b/include/linux/dax.h
-index eb0bff6f1eab..59575b8e638e 100644
---- a/include/linux/dax.h
-+++ b/include/linux/dax.h
-@@ -27,16 +27,39 @@ extern struct attribute_group dax_attribute_group;
- 
- #if IS_ENABLED(CONFIG_DAX)
- struct dax_device *dax_get_by_host(const char *host);
-+struct dax_device *alloc_dax(void *private, const char *host,
-+		const struct dax_operations *ops);
- void put_dax(struct dax_device *dax_dev);
-+void kill_dax(struct dax_device *dax_dev);
-+void dax_write_cache(struct dax_device *dax_dev, bool wc);
-+bool dax_write_cache_enabled(struct dax_device *dax_dev);
- #else
- static inline struct dax_device *dax_get_by_host(const char *host)
- {
- 	return NULL;
- }
--
-+static inline struct dax_device *alloc_dax(void *private, const char *host,
-+		const struct dax_operations *ops)
-+{
-+	/*
-+	 * Callers should check IS_ENABLED(CONFIG_DAX) to know if this
-+	 * NULL is an error or expected.
-+	 */
-+	return NULL;
-+}
- static inline void put_dax(struct dax_device *dax_dev)
- {
- }
-+static inline void kill_dax(struct dax_device *dax_dev)
-+{
-+}
-+static inline void dax_write_cache(struct dax_device *dax_dev, bool wc)
-+{
-+}
-+static inline bool dax_write_cache_enabled(struct dax_device *dax_dev)
-+{
-+	return false;
-+}
- #endif
- 
- int bdev_dax_pgoff(struct block_device *, sector_t, size_t, pgoff_t *pgoff);
-@@ -75,10 +98,7 @@ static inline void fs_put_dax(struct dax_device *dax_dev)
- 
- int dax_read_lock(void);
- void dax_read_unlock(int id);
--struct dax_device *alloc_dax(void *private, const char *host,
--		const struct dax_operations *ops);
- bool dax_alive(struct dax_device *dax_dev);
--void kill_dax(struct dax_device *dax_dev);
- void *dax_get_private(struct dax_device *dax_dev);
- long dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff, long nr_pages,
- 		void **kaddr, pfn_t *pfn);
-@@ -86,8 +106,6 @@ size_t dax_copy_from_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
- 		size_t bytes, struct iov_iter *i);
- void dax_flush(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
- 		size_t size);
--void dax_write_cache(struct dax_device *dax_dev, bool wc);
--bool dax_write_cache_enabled(struct dax_device *dax_dev);
- 
- ssize_t dax_iomap_rw(struct kiocb *iocb, struct iov_iter *iter,
- 		const struct iomap_ops *ops);
+That said, I don't mind picking it up once we are satisfied with the
+implementation.  I'll start reviewing shortly.
+
+Mike
