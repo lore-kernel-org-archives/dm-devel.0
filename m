@@ -1,14 +1,14 @@
-From: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v3 0/2] dax, dm: stop requiring dax for device-mapper
-Date: Wed, 2 Aug 2017 14:55:38 -0400
-Message-ID: <20170802185537.GA16551@redhat.com>
-References: <150169667935.39569.15808116323143633486.stgit@dwillia2-desk3.amr.corp.intel.com>
+From: kbuild test robot <lkp-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v2] dm: allow device-mapper to operate without dax support
+Date: Thu, 3 Aug 2017 04:44:06 +0800
+Message-ID: <201708030445.iNkin6wg%fengguang.wu@intel.com>
+References: <150162766102.27319.10043964535977848237.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <150162766102.27319.10043964535977848237.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <150169667935.39569.15808116323143633486.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
  <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
 List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
@@ -19,34 +19,32 @@ List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
 Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: kbuild test robot <lkp-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Bart Van Assche <Bart.VanAssche-Sjgp3cTcYWE@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Gerald Schaefer <gerald.schaefer-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Martin Schwidefsky <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, kbuild-all-JC7UmRfGjtg@public.gmane.org, Bart Van Assche <Bart.VanAssche-Sjgp3cTcYWE@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-On Wed, Aug 02 2017 at  1:57pm -0400,
-Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
+Hi Dan,
 
-> Changes since v2 [1]:
-> * rebase on -next to integrate with commit 273752c9ff03 "dm, dax: Make
->   sure dm_dax_flush() is called if device supports it" (kbuild robot)
-> * fix CONFIG_DAX dependencies to upgrade CONFIG_DAX=m to CONFIG_DAX=y
->   (kbuild robot)
-> 
-> [1]: https://www.spinics.net/lists/kernel/msg2570522.html
-> 
-> ---
-> 
-> Bart points out that the DAX core is unconditionally enabled if
-> device-mapper is enabled. Add some config machinery and some
-> stub-static-inline routines to allow dax infrastructure to be deleted
-> from device-mapper at compile time.
-> 
-> Since this depends on commit 273752c9ff03 that's already in -next, this
-> should go through the device-mapper tree.
+[auto build test ERROR on dm/for-next]
+[also build test ERROR on v4.13-rc3 next-20170802]
+[if your patch is applied to the wrong git tree, please drop us a note to help improve the system]
 
-Commit 273752c9ff03eb83856601b2a3458218bb949e46 is upstream as of
-v4.13-rc3 -- so no real need to have this go via linux-dm.git
+url:    https://github.com/0day-ci/linux/commits/Dan-Williams/dm-allow-device-mapper-to-operate-without-dax-support/20170802-155255
+base:   https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git for-next
+config: sh-sdk7786_defconfig (attached as .config)
+compiler: sh4-linux-gnu-gcc (Debian 6.1.1-9) 6.1.1 20160705
+reproduce:
+        wget https://raw.githubusercontent.com/01org/lkp-tests/master/sbin/make.cross -O ~/bin/make.cross
+        chmod +x ~/bin/make.cross
+        # save the attached .config to linux build tree
+        make.cross ARCH=sh 
 
-That said, I don't mind picking it up once we are satisfied with the
-implementation.  I'll start reviewing shortly.
+All errors (new ones prefixed by >>):
 
-Mike
+   drivers/md/dm-table.o: In function `device_dax_write_cache_enabled':
+   dm-table.c:(.text+0xab4): undefined reference to `dax_write_cache_enabled'
+   drivers/md/dm-table.o: In function `dm_table_set_restrictions':
+>> (.text+0x23d0): undefined reference to `dax_write_cache'
+
+---
+0-DAY kernel test infrastructure                Open Source Technology Center
+https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
