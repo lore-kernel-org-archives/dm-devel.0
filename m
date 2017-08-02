@@ -1,48 +1,81 @@
-From: kbuild test robot <lkp-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH] dm: enable opt-out of device-mapper dax support
-Date: Wed, 2 Aug 2017 09:48:47 +0800
-Message-ID: <201708020917.5ZjuHQzh%fengguang.wu@intel.com>
-References: <150161113411.34055.9762658795237184307.stgit@dwillia2-desk3.amr.corp.intel.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <150161113411.34055.9762658795237184307.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Content-Disposition: inline
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, kbuild-all-JC7UmRfGjtg@public.gmane.org, Bart Van Assche <Bart.VanAssche-Sjgp3cTcYWE@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+From: Milan Broz <gmazyland@gmail.com>
+Subject: [RFC PATCH] bio-integrity: Fix regression if profile verify_fn is NULL
+Date: Wed,  2 Aug 2017 14:27:50 +0200
+Message-ID: <20170802122750.12216-1-gmazyland@gmail.com>
+Return-path: <linux-block-owner@vger.kernel.org>
+Sender: linux-block-owner@vger.kernel.org
+To: linux-block@vger.kernel.org
+Cc: hch@lst.de, axboe@kernel.dk, mpatocka@redhat.com, dm-devel@redhat.com, Milan Broz <gmazyland@gmail.com>
 List-Id: dm-devel.ids
 
-Hi Dan,
+In dm-integrity target we register integrity profile that have
+both generate_fn and verify_fn callbacks set to NULL.
 
-[auto build test ERROR on dm/for-next]
-[also build test ERROR on v4.13-rc3 next-20170801]
-[if your patch is applied to the wrong git tree, please drop us a note to help improve the system]
+This is used if dm-integrity is stacked under a dm-crypt device
+for authenticated encryption (integrity payload contains authentication
+tag and IV seed).
 
-url:    https://github.com/0day-ci/linux/commits/Dan-Williams/dm-enable-opt-out-of-device-mapper-dax-support/20170802-063827
-base:   https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git for-next
-config: x86_64-allyesdebian (attached as .config)
-compiler: gcc-6 (Debian 6.2.0-3) 6.2.0 20160901
-reproduce:
-        # save the attached .config to linux build tree
-        make ARCH=x86_64 
+In this case the verification is done through own crypto API
+processing inside dm-crypt; integrity profile is only holder
+of these data. (And memory is owned by dm-crypt as well.)
 
-All errors (new ones prefixed by >>):
+After the commit (and previous changes)
+  Commit 7c20f11680a441df09de7235206f70115fbf6290
+  Author: Christoph Hellwig <hch@lst.de>
+  Date:   Mon Jul 3 16:58:43 2017 -0600
 
-   drivers/md/dm-table.o: In function `device_dax_write_cache_enabled':
->> dm-table.c:(.text+0x568): undefined reference to `dax_write_cache_enabled'
-   drivers/md/dm-table.o: In function `dm_table_set_restrictions':
->> dm-table.c:(.text+0x1e40): undefined reference to `dax_write_cache'
+    bio-integrity: stop abusing bi_end_io
 
+we get this crash:
+
+: BUG: unable to handle kernel NULL pointer dereference at   (null)
+: IP:   (null)
+: *pde = 00000000
+...
+:
+: Workqueue: kintegrityd bio_integrity_verify_fn
+: task: f48ae180 task.stack: f4b5c000
+: EIP:   (null)
+: EFLAGS: 00210286 CPU: 0
+: EAX: f4b5debc EBX: 00001000 ECX: 00000001 EDX: 00000000
+: ESI: 00001000 EDI: ed25f000 EBP: f4b5dee8 ESP: f4b5dea4
+:  DS: 007b ES: 007b FS: 00d8 GS: 00e0 SS: 0068
+: CR0: 80050033 CR2: 00000000 CR3: 32823000 CR4: 001406d0
+: Call Trace:
+:  ? bio_integrity_process+0xe3/0x1e0
+:  bio_integrity_verify_fn+0xea/0x150
+:  process_one_work+0x1c7/0x5c0
+:  worker_thread+0x39/0x380
+:  kthread+0xd6/0x110
+:  ? process_one_work+0x5c0/0x5c0
+:  ? kthread_worker_fn+0x100/0x100
+:  ? kthread_worker_fn+0x100/0x100
+:  ret_from_fork+0x19/0x24
+: Code:  Bad EIP value.
+: EIP:   (null) SS:ESP: 0068:f4b5dea4
+: CR2: 0000000000000000
+
+Patch just skip the whole verify workqueue if verify_fn is set to NULL.
+
+Signed-off-by: Milan Broz <gmazyland@gmail.com>
 ---
-0-DAY kernel test infrastructure                Open Source Technology Center
-https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
+ block/bio-integrity.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/block/bio-integrity.c b/block/bio-integrity.c
+index 83e92beb3c9f..b9d1580bfc13 100644
+--- a/block/bio-integrity.c
++++ b/block/bio-integrity.c
+@@ -387,7 +387,9 @@ static void bio_integrity_verify_fn(struct work_struct *work)
+  */
+ bool __bio_integrity_endio(struct bio *bio)
+ {
+-	if (bio_op(bio) == REQ_OP_READ && !bio->bi_status) {
++	struct blk_integrity *bi = bdev_get_integrity(bio->bi_bdev);
++
++	if (bi->profile->verify_fn && bio_op(bio) == REQ_OP_READ && !bio->bi_status) {
+ 		struct bio_integrity_payload *bip = bio_integrity(bio);
+ 
+ 		INIT_WORK(&bip->bip_work, bio_integrity_verify_fn);
+-- 
+2.13.3
