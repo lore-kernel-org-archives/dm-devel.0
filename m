@@ -1,50 +1,52 @@
-From: kbuild test robot <lkp-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v2] dm: allow device-mapper to operate without dax support
-Date: Thu, 3 Aug 2017 04:44:06 +0800
-Message-ID: <201708030445.iNkin6wg%fengguang.wu@intel.com>
-References: <150162766102.27319.10043964535977848237.stgit@dwillia2-desk3.amr.corp.intel.com>
+From: "Yu, Wenqian" <wenqian.yu@intel.com>
+Subject: RE: Request for Comments about Chained-IV feature in Linux crypto
+ framework
+Date: Thu, 3 Aug 2017 01:24:27 +0000
+Message-ID: <858B57D94E9DE244922C3CF355D7FFD65179BFAD@SHSMSX104.ccr.corp.intel.com>
+References: <858B57D94E9DE244922C3CF355D7FFD65179BF4C@SHSMSX104.ccr.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <150162766102.27319.10043964535977848237.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Content-Disposition: inline
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, kbuild-all-JC7UmRfGjtg@public.gmane.org, Bart Van Assche <Bart.VanAssche-Sjgp3cTcYWE@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <858B57D94E9DE244922C3CF355D7FFD65179BF4C@SHSMSX104.ccr.corp.intel.com>
+Content-Language: en-US
+Sender: linux-crypto-owner@vger.kernel.org
+To: "linux-crypto@vger.kernel.org" <linux-crypto@vger.kernel.org>
+Cc: "herbert@gondor.apana.org.au" <herbert@gondor.apana.org.au>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "dm-cyrpt@saout.de" <dm-cyrpt@saout.de>, "Keating, Brian A" <brian.a.keating@intel.com>, "Will, Brian" <brian.will@intel.com>, "Li, Weigang" <weigang.li@intel.com>, "Cabiddu, Giovanni" <giovanni.cabiddu@intel.com>, "Yu, Wenqian" <wenqian.yu@intel.com>
 List-Id: dm-devel.ids
 
-Hi Dan,
+Format it to plaintext and resend it as HTML subpart is treated as SPAM or Outlook Virus by the system.
 
-[auto build test ERROR on dm/for-next]
-[also build test ERROR on v4.13-rc3 next-20170802]
-[if your patch is applied to the wrong git tree, please drop us a note to help improve the system]
+Thanks,
+- Wenqian
 
-url:    https://github.com/0day-ci/linux/commits/Dan-Williams/dm-allow-device-mapper-to-operate-without-dax-support/20170802-155255
-base:   https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git for-next
-config: sh-sdk7786_defconfig (attached as .config)
-compiler: sh4-linux-gnu-gcc (Debian 6.1.1-9) 6.1.1 20160705
-reproduce:
-        wget https://raw.githubusercontent.com/01org/lkp-tests/master/sbin/make.cross -O ~/bin/make.cross
-        chmod +x ~/bin/make.cross
-        # save the attached .config to linux build tree
-        make.cross ARCH=sh 
 
-All errors (new ones prefixed by >>):
+From: Yu, Wenqian 
+Sent: Thursday, August 3, 2017 9:13 AM
+To: linux-crypto@vger.kernel.org
+Cc: herbert@gondor.apana.org.au; dm-devel@redhat.com; m-crypt@saout.de; Milan Broz <gmazyland@gmail.com>; Keating, Brian A <brian.a.keating@intel.com>; Will, Brian <brian.will@intel.com>; Li, Weigang <weigang.li@intel.com>; Cabiddu, Giovanni <giovanni.cabiddu@intel.com>; Yu, Wenqian <wenqian.yu@intel.com>
+Subject: Request for Comments about Chained-IV feature in Linux crypto framework
 
-   drivers/md/dm-table.o: In function `device_dax_write_cache_enabled':
-   dm-table.c:(.text+0xab4): undefined reference to `dax_write_cache_enabled'
-   drivers/md/dm-table.o: In function `dm_table_set_restrictions':
->> (.text+0x23d0): undefined reference to `dax_write_cache'
+Hi, Herbert and all,
 
----
-0-DAY kernel test infrastructure                Open Source Technology Center
-https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
+For saving the offload cost of symmetric cipher to hardware accelerator, we have a proposal (chained-IV) to batch multiple SG with different IV into one skcipher request, which also benefits SW implementation. The existing skcipher with SG list in crypto framework is treating all SG in the SG list as one single buffer to symmetric crypto operation with same IV.  In some use case the IV for each SG is different (e.g. dm-crypt, the IV for each sector is different). Could you please give quick comments on the below proposal before implementation?
+
+1) Add a new flag CRYPTO_TFM_REQ_CHAINED_IV for chained IV request.
+
+2) Reuse the existing iv in skcipher_request structure to include all the IVs for each different sg with agreement that the first block size length data of IV is for the data in first sg and so on. Same as aead_request.
+struct skcipher_request {
+        unsigned int cryptlen;
+        u8 *iv;
+
+        struct scatterlist *src;
+        struct scatterlist *dst;
+
+        struct crypto_async_request base;
+
+        void *__ctx[] CRYPTO_MINALIGN_ATTR;
+};
+
+3) No API change but implementation change required inside of skcipher API to handle chained-IV support and API should inforce the same number of IV elements as that of SG elements.
+
+Thanks,
+- Wenqian
