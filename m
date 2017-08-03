@@ -1,267 +1,276 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] bio-integrity: revert "stop abusing bi_end_io"
-Date: Thu, 3 Aug 2017 10:10:55 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1708030938110.21391@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20170802122750.12216-1-gmazyland@gmail.com> <20170802125509.GA18977@lst.de>
+From: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Subject: Re: [PATCH v4 00/11] multipath-tools:
+ no_path_retry/queue_if_no_path/hwhandler logic
+Date: Thu, 3 Aug 2017 08:36:10 +0200
+Message-ID: <CABr-Gnd17UcGvSxAOR-s8YqNU3+3tNqGe6JzaxBEewWF0VLBbg@mail.gmail.com>
+References: <20170622145913.23714-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20170802125509.GA18977@lst.de>
-Sender: linux-block-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: Milan Broz <gmazyland@gmail.com>, linux-block@vger.kernel.org, axboe@kernel.dk, dm-devel@redhat.com, "Martin K. Petersen" <martin.petersen@oracle.com>
+Content-Type: multipart/mixed; boundary="===============3177314558516719407=="
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20170622145913.23714-1-mwilck@suse.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Martin Wilck <mwilck@suse.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
+--===============3177314558516719407==
+Content-Type: multipart/alternative; boundary="001a113ca11aa5421f0555d39822"
+
+--001a113ca11aa5421f0555d39822
+Content-Type: text/plain; charset="UTF-8"
+
+Patch 1 to 9 are now merged.
 
 
-On Wed, 2 Aug 2017, Christoph Hellwig wrote:
+On Thu, Jun 22, 2017 at 4:59 PM, Martin Wilck <mwilck@suse.com> wrote:
 
-> On Wed, Aug 02, 2017 at 02:27:50PM +0200, Milan Broz wrote:
-> > In dm-integrity target we register integrity profile that have
-> > both generate_fn and verify_fn callbacks set to NULL.
-> > 
-> > This is used if dm-integrity is stacked under a dm-crypt device
-> > for authenticated encryption (integrity payload contains authentication
-> > tag and IV seed).
-> > 
-> > In this case the verification is done through own crypto API
-> > processing inside dm-crypt; integrity profile is only holder
-> > of these data. (And memory is owned by dm-crypt as well.)
-> 
-> Maybe that's where the problem lies?  You're abusing the integrity
-> payload for something that is not end to end data integrity at all
-> and then wonder why it breaks?  Also the commit that introduced your
-> code had absolutely no review by Martin or any of the core block
-> folks.
-> 
-> The right fix is to revert the dm-crypt commit.
+> This patch set attempts to sanitize the logic used for consistently
+> handling
+> options that can be set both via the "features" string and explicit
+> multipath.conf
+> options. This is most prominently "no_path_retry" vs. "queue_if_no_path",
+> but also
+> "retain_attached_hw_handler" vs. the feature of the same name.
+>
+> The logic this patch set follows is:
+>  - If "no_path_retry" is set to any value, "queue_if_no_path" is ignored
+>    (this is the case nowadays for almost all "real" storage arrays, thanks
+> to hwtable).
+>  - Otherwise, if "queue_if_no_path" is set, treat it like "no_path_retry
+> queue".
+>
+> ... likewise for "retain_attached_hw_handler".
+>
+> In the long run, we should get rid of the "features" settings duplicating
+> configuration options altogether; the patch set prepares this by printing
+> warning messages.
+>
+> The logic is implemented in the new function reconcile_features_with_
+> options,
+> which is called from both select_features() and merge_hwe(). In
+> setup_map(),
+> we need to call select_features() after select_no_path_retry() to make
+> this work.
+> The actual feature setting for device-mapper is made in assemble_map(), the
+> patch set also fixes the logic there.
+>
+> The patch set documents the behavior in the man page, and adds some more
+> man page fixes.
+>
+> By skipping superfluous default initializations in load_config(), the
+> log messages for the respective config settings become more appropriate.
+>
+> The logic for setting hardware handler is also improved. Since kernel 4.3,
+> "retain_attached_hw_handler yes" is implicitly set by the kernel, and
+> setting
+> the hardware handler from user space is only possible in special
+> situations.
+> Acknowledge that in multipathd, and don't try to set or unset either this
+> feature or the hwhandler attribute itself if it's doomed to fail.
+>
+> Review and comments are highly welcome.
+>
+> Changes wrt v1:
+>   - Suggestions from Ben Marzinski:
+>     * Made sure "multipathd show config" still works (1/8).
+>     * Fixed logging for default setting of "max_sectors" (1/8)
+>     * Consistent internal treatment of mp->features (3/8, 4/8)
+>     * Fixed whitespace error (6/8)
+>     * Added deprecated warnings (8/8)
+>   - Made sure the same logic is used in propsel.c and config.c by
+>     calling the same function (3/8, 4/8)
+>   - Added deprecated warnings (8/8)
+>
+> Changes wrt v2:
+>  - Added Acked-by:/Reviewed-by: tags
+>  - 1/11: clarify comment in select_max_sectors_kb (Hannes Reinecke)
+>  - 3/11: call select_retain_hwhandler before select_features
+>  - 8/11: don't suggest using retain_attached_hw_handler in log msg
+>  - 9/11, 10/11, 11/11: new
+>
+> Changes wrt v3:
+>  - Added Reviewed-by: tags (kept Ben's Ack in 4/11 although patch slightly
+> changed)
+>  - 4/11: use a buffer on stack rather than malloc (Hannes Reinecke)
+>  - 10/11: Simplify by checking dh_state only in select_handler (Hannes
+> Reinecke)
+>
+> Martin Wilck (11):
+>   libmultipath: load_config: skip setting unnecessary defaults
+>   libmultipath: add/remove_feature: use const char* for feature
+>   libmultipath: clarify option conflicts for "features"
+>   libmultipath: merge_hwe: fix queue_if_no_path logic
+>   libmultipath: assemble_map: fix queue_if_no_path logic
+>   multipath.conf.5: document no_path_retry vs. queue_if_no_path
+>   multipath.conf.5: Remove ??? and other minor fixes
+>   libmultipath: add deprecated warning for some features settings
+>   libmultipath: retain_attached_hw_handler obsolete with 4.3+
+>   libmultipath: don't try to set hwhandler if it is retained
+>   libmultipath: don't [un]set queue_if_no_path after domap
+>
+>  libmultipath/config.c      |  31 +++---------
+>  libmultipath/configure.c   |  28 ++++-------
+>  libmultipath/dict.c        |  11 +++--
+>  libmultipath/dmparser.c    |   8 +--
+>  libmultipath/propsel.c     | 121 ++++++++++++++++++++++++++++++
+> +++++++++------
+>  libmultipath/propsel.h     |   3 ++
+>  libmultipath/structs.c     |  30 +++++------
+>  libmultipath/structs.h     |   4 +-
+>  libmultipath/util.c        |  36 ++++++++++++++
+>  libmultipath/util.h        |   2 +
+>  multipath/multipath.conf.5 |  67 +++++++++++++++----------
+>  11 files changed, 231 insertions(+), 110 deletions(-)
+>
+> --
+> 2.13.1
+>
+>
 
-That dm-crypt commit that uses bio integrity payload came 3 months before 
-7c20f11680a441df09de7235206f70115fbf6290 and it was already present in 
-4.12.
+--001a113ca11aa5421f0555d39822
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-The patch 7c20f11680a441df09de7235206f70115fbf6290 not only breaks 
-dm-crypt and dm-integrity. It also breaks regular integrity payload usage 
-when stacking drivers are used.
+<div dir=3D"ltr">Patch 1 to 9 are now merged.<div><br></div></div><div clas=
+s=3D"gmail_extra"><br><div class=3D"gmail_quote">On Thu, Jun 22, 2017 at 4:=
+59 PM, Martin Wilck <span dir=3D"ltr">&lt;<a href=3D"mailto:mwilck@suse.com=
+" target=3D"_blank">mwilck@suse.com</a>&gt;</span> wrote:<br><blockquote cl=
+ass=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;p=
+adding-left:1ex">This patch set attempts to sanitize the logic used for con=
+sistently handling<br>
+options that can be set both via the &quot;features&quot; string and explic=
+it multipath.conf<br>
+options. This is most prominently &quot;no_path_retry&quot; vs. &quot;queue=
+_if_no_path&quot;, but also<br>
+&quot;retain_attached_hw_handler&quot; vs. the feature of the same name.<br=
+>
+<br>
+The logic this patch set follows is:<br>
+=C2=A0- If &quot;no_path_retry&quot; is set to any value, &quot;queue_if_no=
+_path&quot; is ignored<br>
+=C2=A0 =C2=A0(this is the case nowadays for almost all &quot;real&quot; sto=
+rage arrays, thanks to hwtable).<br>
+=C2=A0- Otherwise, if &quot;queue_if_no_path&quot; is set, treat it like &q=
+uot;no_path_retry queue&quot;.<br>
+<br>
+... likewise for &quot;retain_attached_hw_handler&quot;.<br>
+<br>
+In the long run, we should get rid of the &quot;features&quot; settings dup=
+licating<br>
+configuration options altogether; the patch set prepares this by printing<b=
+r>
+warning messages.<br>
+<br>
+The logic is implemented in the new function reconcile_features_with_<wbr>o=
+ptions,<br>
+which is called from both select_features() and merge_hwe(). In setup_map()=
+,<br>
+we need to call select_features() after select_no_path_retry() to make this=
+ work.<br>
+The actual feature setting for device-mapper is made in assemble_map(), the=
+<br>
+patch set also fixes the logic there.<br>
+<br>
+The patch set documents the behavior in the man page, and adds some more<br=
+>
+man page fixes.<br>
+<br>
+By skipping superfluous default initializations in load_config(), the<br>
+log messages for the respective config settings become more appropriate.<br=
+>
+<br>
+The logic for setting hardware handler is also improved. Since kernel 4.3,<=
+br>
+&quot;retain_attached_hw_handler yes&quot; is implicitly set by the kernel,=
+ and setting<br>
+the hardware handler from user space is only possible in special situations=
+.<br>
+Acknowledge that in multipathd, and don&#39;t try to set or unset either th=
+is<br>
+feature or the hwhandler attribute itself if it&#39;s doomed to fail.<br>
+<br>
+Review and comments are highly welcome.<br>
+<br>
+Changes wrt v1:<br>
+=C2=A0 - Suggestions from Ben Marzinski:<br>
+=C2=A0 =C2=A0 * Made sure &quot;multipathd show config&quot; still works (1=
+/8).<br>
+=C2=A0 =C2=A0 * Fixed logging for default setting of &quot;max_sectors&quot=
+; (1/8)<br>
+=C2=A0 =C2=A0 * Consistent internal treatment of mp-&gt;features (3/8, 4/8)=
+<br>
+=C2=A0 =C2=A0 * Fixed whitespace error (6/8)<br>
+=C2=A0 =C2=A0 * Added deprecated warnings (8/8)<br>
+=C2=A0 - Made sure the same logic is used in propsel.c and config.c by<br>
+=C2=A0 =C2=A0 calling the same function (3/8, 4/8)<br>
+=C2=A0 - Added deprecated warnings (8/8)<br>
+<br>
+Changes wrt v2:<br>
+=C2=A0- Added Acked-by:/Reviewed-by: tags<br>
+=C2=A0- 1/11: clarify comment in select_max_sectors_kb (Hannes Reinecke)<br=
+>
+=C2=A0- 3/11: call select_retain_hwhandler before select_features<br>
+=C2=A0- 8/11: don&#39;t suggest using retain_attached_hw_handler in log msg=
+<br>
+=C2=A0- 9/11, 10/11, 11/11: new<br>
+<br>
+Changes wrt v3:<br>
+=C2=A0- Added Reviewed-by: tags (kept Ben&#39;s Ack in 4/11 although patch =
+slightly changed)<br>
+=C2=A0- 4/11: use a buffer on stack rather than malloc (Hannes Reinecke)<br=
+>
+=C2=A0- 10/11: Simplify by checking dh_state only in select_handler (Hannes=
+ Reinecke)<br>
+<br>
+Martin Wilck (11):<br>
+=C2=A0 libmultipath: load_config: skip setting unnecessary defaults<br>
+=C2=A0 libmultipath: add/remove_feature: use const char* for feature<br>
+=C2=A0 libmultipath: clarify option conflicts for &quot;features&quot;<br>
+=C2=A0 libmultipath: merge_hwe: fix queue_if_no_path logic<br>
+=C2=A0 libmultipath: assemble_map: fix queue_if_no_path logic<br>
+=C2=A0 multipath.conf.5: document no_path_retry vs. queue_if_no_path<br>
+=C2=A0 multipath.conf.5: Remove ??? and other minor fixes<br>
+=C2=A0 libmultipath: add deprecated warning for some features settings<br>
+=C2=A0 libmultipath: retain_attached_hw_handler obsolete with 4.3+<br>
+=C2=A0 libmultipath: don&#39;t try to set hwhandler if it is retained<br>
+=C2=A0 libmultipath: don&#39;t [un]set queue_if_no_path after domap<br>
+<br>
+=C2=A0libmultipath/config.c=C2=A0 =C2=A0 =C2=A0 |=C2=A0 31 +++---------<br>
+=C2=A0libmultipath/configure.c=C2=A0 =C2=A0|=C2=A0 28 ++++-------<br>
+=C2=A0libmultipath/dict.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 |=C2=A0 11 +++--<br>
+=C2=A0libmultipath/dmparser.c=C2=A0 =C2=A0 |=C2=A0 =C2=A08 +--<br>
+=C2=A0libmultipath/propsel.c=C2=A0 =C2=A0 =C2=A0| 121 +++++++++++++++++++++=
++++++++++<wbr>+++++++++------<br>
+=C2=A0libmultipath/propsel.h=C2=A0 =C2=A0 =C2=A0|=C2=A0 =C2=A03 ++<br>
+=C2=A0libmultipath/structs.c=C2=A0 =C2=A0 =C2=A0|=C2=A0 30 +++++------<br>
+=C2=A0libmultipath/structs.h=C2=A0 =C2=A0 =C2=A0|=C2=A0 =C2=A04 +-<br>
+=C2=A0libmultipath/util.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 |=C2=A0 36 +++++++++++=
++++<br>
+=C2=A0libmultipath/util.h=C2=A0 =C2=A0 =C2=A0 =C2=A0 |=C2=A0 =C2=A02 +<br>
+=C2=A0multipath/multipath.conf.5 |=C2=A0 67 +++++++++++++++----------<br>
+=C2=A011 files changed, 231 insertions(+), 110 deletions(-)<br>
+<span class=3D"HOEnZb"><font color=3D"#888888"><br>
+--<br>
+2.13.1<br>
+<br>
+</font></span></blockquote></div><br></div>
 
-Suppose that a bio goes the through the device mapper stack. At each level 
-a clone bio is allocated and forwarded to a lower level. It eventually 
-reaches the request-based physical disk driver.
-
-In the kernel 4.12, when the bio reaches the request-based driver, the 
-function blk_queue_bio is called, it calls bio_integrity_prep, 
-bio_integrity_prep saves the bio->bi_end_io in the structure 
-bio_integrity_payload and sets bio->bi_end_io = bio_integrity_endio. When 
-the bio is finished, bio_integrity_endio is called, it performs the 
-verification (a call to bio_integrity_verify_fn), restores bio->bi_end_io 
-and calls it.
-
-The patch 7c20f11680a441df09de7235206f70115fbf6290 changes it so that 
-bio->bi_end_io is not changed and bio_integrity_endio is called directly 
-from bio_endio if the bio has integrity payload. The unintended 
-consequence of this change is that when a request with integrity payload 
-is finished and bio_endio is called for each cloned bio, the verification 
-routine bio_integrity_verify_fn is called for every level in the stack (it 
-used to be called only for the lowest level in 4.12). At different levels 
-in the stack, the bio may have different bi_sector value, so the repeated 
-verification can't succeed.
-
-I think the patch 7c20f11680a441df09de7235206f70115fbf6290 should be 
-reverted and it should be reworked for the next merge window, so that it 
-calls bio_integrity_verify_fn only for the lowest level.
-
-Mikulas
+--001a113ca11aa5421f0555d39822--
 
 
+--===============3177314558516719407==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-From: Mikulas Patocka <mpatocka@redhat.co>
 
-The patch 7c20f11680a441df09de7235206f70115fbf6290 ("bio-integrity: stop 
-abusing bi_end_io") changes the code so that it doesn't replace 
-bio_end_io with bio_integrity_endio and calls bio_integrity_endio directly 
-from bio_endio.
-
-The unintended consequence of this change is that when a bio with 
-integrity payload is passed through the device stack, bio_integrity_endio 
-is called for each level of the stack (it used to be called only for the 
-lowest level before).
-
-This breaks dm-integrity and dm-crypt and it also causes verification 
-errors when a bio with regular integrity payload is passed through the 
-device mapper stack.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
-diff --git a/block/bio-integrity.c b/block/bio-integrity.c
-index f733beab6ca2..8df4eb103ba9 100644
---- a/block/bio-integrity.c
-+++ b/block/bio-integrity.c
-@@ -102,7 +102,7 @@ EXPORT_SYMBOL(bio_integrity_alloc);
-  * Description: Used to free the integrity portion of a bio. Usually
-  * called from bio_free().
-  */
--static void bio_integrity_free(struct bio *bio)
-+void bio_integrity_free(struct bio *bio)
- {
- 	struct bio_integrity_payload *bip = bio_integrity(bio);
- 	struct bio_set *bs = bio->bi_pool;
-@@ -120,8 +120,8 @@ static void bio_integrity_free(struct bio *bio)
- 	}
- 
- 	bio->bi_integrity = NULL;
--	bio->bi_opf &= ~REQ_INTEGRITY;
- }
-+EXPORT_SYMBOL(bio_integrity_free);
- 
- /**
-  * bio_integrity_add_page - Attach integrity metadata
-@@ -326,6 +326,12 @@ bool bio_integrity_prep(struct bio *bio)
- 		offset = 0;
- 	}
- 
-+	/* Install custom I/O completion handler if read verify is enabled */
-+	if (bio_data_dir(bio) == READ) {
-+		bip->bip_end_io = bio->bi_end_io;
-+		bio->bi_end_io = bio_integrity_endio;
-+	}
-+
- 	/* Auto-generate integrity metadata if this is a write */
- 	if (bio_data_dir(bio) == WRITE) {
- 		bio_integrity_process(bio, &bio->bi_iter,
-@@ -369,12 +375,13 @@ static void bio_integrity_verify_fn(struct work_struct *work)
- 		bio->bi_status = BLK_STS_IOERR;
- 	}
- 
--	bio_integrity_free(bio);
-+	/* Restore original bio completion handler */
-+	bio->bi_end_io = bip->bip_end_io;
- 	bio_endio(bio);
- }
- 
- /**
-- * __bio_integrity_endio - Integrity I/O completion function
-+ * bio_integrity_endio - Integrity I/O completion function
-  * @bio:	Protected bio
-  * @error:	Pointer to errno
-  *
-@@ -385,19 +392,27 @@ static void bio_integrity_verify_fn(struct work_struct *work)
-  * in process context.	This function postpones completion
-  * accordingly.
-  */
--bool __bio_integrity_endio(struct bio *bio)
-+void bio_integrity_endio(struct bio *bio)
- {
--	if (bio_op(bio) == REQ_OP_READ && !bio->bi_status) {
--		struct bio_integrity_payload *bip = bio_integrity(bio);
-+	struct bio_integrity_payload *bip = bio_integrity(bio);
- 
--		INIT_WORK(&bip->bip_work, bio_integrity_verify_fn);
--		queue_work(kintegrityd_wq, &bip->bip_work);
--		return false;
-+	BUG_ON(bip->bip_bio != bio);
-+
-+	/* In case of an I/O error there is no point in verifying the
-+	 * integrity metadata.  Restore original bio end_io handler
-+	 * and run it.
-+	 */
-+	if (bio->bi_status) {
-+		bio->bi_end_io = bip->bip_end_io;
-+		bio_endio(bio);
-+
-+		return;
- 	}
- 
--	bio_integrity_free(bio);
--	return true;
-+	INIT_WORK(&bip->bip_work, bio_integrity_verify_fn);
-+	queue_work(kintegrityd_wq, &bip->bip_work);
- }
-+EXPORT_SYMBOL(bio_integrity_endio);
- 
- /**
-  * bio_integrity_advance - Advance integrity vector
-diff --git a/block/bio.c b/block/bio.c
-index 9cabf5d0be20..a6b225324a61 100644
---- a/block/bio.c
-+++ b/block/bio.c
-@@ -243,6 +243,9 @@ struct bio_vec *bvec_alloc(gfp_t gfp_mask, int nr, unsigned long *idx,
- void bio_uninit(struct bio *bio)
- {
- 	bio_disassociate_task(bio);
-+
-+	if (bio_integrity(bio))
-+		bio_integrity_free(bio);
- }
- EXPORT_SYMBOL(bio_uninit);
- 
-@@ -1810,8 +1813,6 @@ void bio_endio(struct bio *bio)
- again:
- 	if (!bio_remaining_done(bio))
- 		return;
--	if (!bio_integrity_endio(bio))
--		return;
- 
- 	/*
- 	 * Need to have a real endio function for chained bios, otherwise
-diff --git a/block/blk.h b/block/blk.h
-index 3a3d715bd725..01ebb8185f6b 100644
---- a/block/blk.h
-+++ b/block/blk.h
-@@ -81,21 +81,10 @@ static inline void blk_queue_enter_live(struct request_queue *q)
- 
- #ifdef CONFIG_BLK_DEV_INTEGRITY
- void blk_flush_integrity(void);
--bool __bio_integrity_endio(struct bio *);
--static inline bool bio_integrity_endio(struct bio *bio)
--{
--	if (bio_integrity(bio))
--		return __bio_integrity_endio(bio);
--	return true;
--}
- #else
- static inline void blk_flush_integrity(void)
- {
- }
--static inline bool bio_integrity_endio(struct bio *bio)
--{
--	return true;
--}
- #endif
- 
- void blk_timeout_work(struct work_struct *work);
-diff --git a/include/linux/bio.h b/include/linux/bio.h
-index 7b1cf4ba0902..1eba19580185 100644
---- a/include/linux/bio.h
-+++ b/include/linux/bio.h
-@@ -320,6 +320,8 @@ struct bio_integrity_payload {
- 
- 	struct bvec_iter	bip_iter;
- 
-+	bio_end_io_t		*bip_end_io;	/* saved I/O completion fn */
-+
- 	unsigned short		bip_slab;	/* slab the bip came from */
- 	unsigned short		bip_vcnt;	/* # of integrity bio_vecs */
- 	unsigned short		bip_max_vcnt;	/* integrity bio_vec slots */
-@@ -737,8 +739,10 @@ struct biovec_slab {
- 		bip_for_each_vec(_bvl, _bio->bi_integrity, _iter)
- 
- extern struct bio_integrity_payload *bio_integrity_alloc(struct bio *, gfp_t, unsigned int);
-+extern void bio_integrity_free(struct bio *);
- extern int bio_integrity_add_page(struct bio *, struct page *, unsigned int, unsigned int);
- extern bool bio_integrity_prep(struct bio *);
-+extern void bio_integrity_endio(struct bio *);
- extern void bio_integrity_advance(struct bio *, unsigned int);
- extern void bio_integrity_trim(struct bio *);
- extern int bio_integrity_clone(struct bio *, struct bio *, gfp_t);
-@@ -768,6 +772,11 @@ static inline bool bio_integrity_prep(struct bio *bio)
- 	return true;
- }
- 
-+static inline void bio_integrity_free(struct bio *bio)
-+{
-+	return;
-+}
-+
- static inline int bio_integrity_clone(struct bio *bio, struct bio *bio_src,
- 				      gfp_t gfp_mask)
- {
+--===============3177314558516719407==--
