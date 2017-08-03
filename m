@@ -1,13 +1,14 @@
 From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH] multipath-tools: delete libdmmp/docs/man
- directory in make clean
-Date: Thu, 3 Aug 2017 08:40:50 +0200
-Message-ID: <CABr-GnfVRUF7FTjEtrQyA=3PMAhyJSugQG_FYiH3JzC=85cNkA@mail.gmail.com>
-References: <20170624180613.11652-1-xose.vazquez@gmail.com>
+Subject: Re: [PATCH] multipath-tools: sync third-party headers
+	with 3.13 upstream
+Date: Thu, 3 Aug 2017 09:25:04 +0200
+Message-ID: <CABr-GnfeQ9TDELSb6q9PrbY7VGHxbXXXwLY=kyxUPUu9XLhPhQ@mail.gmail.com>
+References: <20170621122639.6027-1-xose.vazquez@gmail.com>
+	<1498058040.2746.2.camel@wdc.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0643382469428093837=="
+Content-Type: multipart/mixed; boundary="===============7843676512652635366=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170624180613.11652-1-xose.vazquez@gmail.com>
+In-Reply-To: <1498058040.2746.2.camel@wdc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,93 +18,61 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: Gris Ge <fge@redhat.com>, device-mapper development <dm-devel@redhat.com>
+To: Bart Van Assche <Bart.VanAssche@wdc.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "xose.vazquez@gmail.com" <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
---===============0643382469428093837==
-Content-Type: multipart/alternative; boundary="001a113c58584ca0650555d3a99b"
+--===============7843676512652635366==
+Content-Type: multipart/alternative; boundary="001a113d29d48646730555d44706"
 
---001a113c58584ca0650555d3a99b
+--001a113d29d48646730555d44706
 Content-Type: text/plain; charset="UTF-8"
 
 Merged.
 Thanks.
 
-On Sat, Jun 24, 2017 at 8:06 PM, Xose Vazquez Perez <xose.vazquez@gmail.com>
+On Wed, Jun 21, 2017 at 5:14 PM, Bart Van Assche <Bart.VanAssche@wdc.com>
 wrote:
 
-> CC: Gris Ge <fge@redhat.com>
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: device-mapper development <dm-devel@redhat.com>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> ---
->  libdmmp/Makefile | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
+> On Wed, 2017-06-21 at 14:26 +0200, Xose Vazquez Perez wrote:
+> > Cc: Bart Van Assche <bart.vanassche@sandisk.com>
+> > Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> > Cc: device-mapper development <dm-devel@redhat.com>
+> > Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 >
-> diff --git a/libdmmp/Makefile b/libdmmp/Makefile
-> index bffc573..cdd26ed 100644
-> --- a/libdmmp/Makefile
-> +++ b/libdmmp/Makefile
-> @@ -57,7 +57,7 @@ uninstall:
->
->  clean:
->         $(RM) core *.a *.o *.gz *.so *.so.*
-> -       $(RM) docs/man/*.3.gz
-> +       $(RM) -r docs/man
->         $(MAKE) -C test clean
->
->  check: all
-> --
-> 2.13.1
->
+> Reviewed-by: Bart Van Assche <bart.vanassche@wdc.com>
 
---001a113c58584ca0650555d3a99b
+--001a113d29d48646730555d44706
 Content-Type: text/html; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
 <div dir=3D"ltr">Merged.<div>Thanks.</div></div><div class=3D"gmail_extra">=
-<br><div class=3D"gmail_quote">On Sat, Jun 24, 2017 at 8:06 PM, Xose Vazque=
-z Perez <span dir=3D"ltr">&lt;<a href=3D"mailto:xose.vazquez@gmail.com" tar=
-get=3D"_blank">xose.vazquez@gmail.com</a>&gt;</span> wrote:<br><blockquote =
-class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid=
-;padding-left:1ex">CC: Gris Ge &lt;<a href=3D"mailto:fge@redhat.com">fge@re=
-dhat.com</a>&gt;<br>
-Cc: Christophe Varoqui &lt;<a href=3D"mailto:christophe.varoqui@opensvc.com=
-">christophe.varoqui@opensvc.<wbr>com</a>&gt;<br>
-Cc: device-mapper development &lt;<a href=3D"mailto:dm-devel@redhat.com">dm=
--devel@redhat.com</a>&gt;<br>
-Signed-off-by: Xose Vazquez Perez &lt;<a href=3D"mailto:xose.vazquez@gmail.=
-com">xose.vazquez@gmail.com</a>&gt;<br>
----<br>
-=C2=A0libdmmp/Makefile | 2 +-<br>
-=C2=A01 file changed, 1 insertion(+), 1 deletion(-)<br>
+<br><div class=3D"gmail_quote">On Wed, Jun 21, 2017 at 5:14 PM, Bart Van As=
+sche <span dir=3D"ltr">&lt;<a href=3D"mailto:Bart.VanAssche@wdc.com" target=
+=3D"_blank">Bart.VanAssche@wdc.com</a>&gt;</span> wrote:<br><blockquote cla=
+ss=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;pa=
+dding-left:1ex"><span class=3D"">On Wed, 2017-06-21 at 14:26 +0200, Xose Va=
+zquez Perez wrote:<br>
+&gt; Cc: Bart Van Assche &lt;<a href=3D"mailto:bart.vanassche@sandisk.com">=
+bart.vanassche@sandisk.com</a>&gt;<br>
+&gt; Cc: Christophe Varoqui &lt;<a href=3D"mailto:christophe.varoqui@opensv=
+c.com">christophe.varoqui@opensvc.<wbr>com</a>&gt;<br>
+&gt; Cc: device-mapper development &lt;<a href=3D"mailto:dm-devel@redhat.co=
+m">dm-devel@redhat.com</a>&gt;<br>
+&gt; Signed-off-by: Xose Vazquez Perez &lt;<a href=3D"mailto:xose.vazquez@g=
+mail.com">xose.vazquez@gmail.com</a>&gt;<br>
 <br>
-diff --git a/libdmmp/Makefile b/libdmmp/Makefile<br>
-index bffc573..cdd26ed 100644<br>
---- a/libdmmp/Makefile<br>
-+++ b/libdmmp/Makefile<br>
-@@ -57,7 +57,7 @@ uninstall:<br>
-<br>
-=C2=A0clean:<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 $(RM) core *.a *.o *.gz *.so *.so.*<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0$(RM) docs/man/*.3.gz<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0$(RM) -r docs/man<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 $(MAKE) -C test clean<br>
-<br>
-=C2=A0check: all<br>
-<span class=3D"HOEnZb"><font color=3D"#888888">--<br>
-2.13.1<br>
-</font></span></blockquote></div><br></div>
+</span>Reviewed-by: Bart Van Assche &lt;<a href=3D"mailto:bart.vanassche@wd=
+c.com">bart.vanassche@wdc.com</a>&gt;</blockquote></div><br></div>
 
---001a113c58584ca0650555d3a99b--
+--001a113d29d48646730555d44706--
 
 
---===============0643382469428093837==
+--===============7843676512652635366==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============0643382469428093837==--
+--===============7843676512652635366==--
