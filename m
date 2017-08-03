@@ -1,12 +1,13 @@
 From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH v2 0/4] libmultipath: Fixes for NVME / NVMEoF
-Date: Thu, 3 Aug 2017 09:08:44 +0200
-Message-ID: <CABr-GndPzZdaGavhQJn3vf=H+RWKXcaQm72NdBciRQxEaewtQw@mail.gmail.com>
-References: <20170718072916.24275-1-mwilck@suse.com>
+Subject: Re: [PATCH] libmultipath: fix unit to seconds in log
+ message for checker timeout
+Date: Thu, 3 Aug 2017 08:44:03 +0200
+Message-ID: <CABr-GndUJ9wDQvmqOm8v505jNK=cRDqaqcFcCDD6A9gqkAYAmQ@mail.gmail.com>
+References: <20170627151147.11776-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============2172562076273835504=="
+Content-Type: multipart/mixed; boundary="===============0252286637390910361=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170718072916.24275-1-mwilck@suse.com>
+In-Reply-To: <20170627151147.11776-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,121 +18,113 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Martin Wilck <mwilck@suse.com>
-Cc: Martin Wilck <mwilck@suse.de>, Xose Vazquez Perez <xose.vazquez@gmail.com>, tang.junhui@zte.com.cn, Guan Junxiong <guanjunxiong@huawei.com>, linux-nvme@lists.infradead.org, device-mapper development <dm-devel@redhat.com>, Bart Van Assche <Bart.VanAssche@sandisk.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============2172562076273835504==
-Content-Type: multipart/alternative; boundary="001a113d29d414323e0555d40dee"
+--===============0252286637390910361==
+Content-Type: multipart/alternative; boundary="001a113d29d4d02b090555d3b42b"
 
---001a113d29d414323e0555d40dee
+--001a113d29d4d02b090555d3b42b
 Content-Type: text/plain; charset="UTF-8"
 
-This set is now merged.
+Merged,
 Thanks.
 
-On Tue, Jul 18, 2017 at 9:29 AM, Martin Wilck <mwilck@suse.com> wrote:
+On Tue, Jun 27, 2017 at 5:11 PM, Martin Wilck <mwilck@suse.com> wrote:
 
-> Current code fails to set up multipath maps for NVME devices in a
-> Linux target/Linux host combination. This series enables at least
-> basic operation.
+> checker_timeout is in seconds, not milliseconds, since 905281da
+> "Specify checker_timeout in seconds". Fix the log messages.
 >
-> Patch 1/4 fixes a crash that happens if over-long WWIDs are encountered,
-> and
-> is not specific to NVME as such. Patch 2/4 drops
-> the broken test uevent_can_discard_by_devpath(). Patch 3/4 compensates
-> for the additional event processing required by 2/4. Patch 4/4 mangles
-> overlong "nvme.*" WWIDs to make them usable for multipath (related
-> discussion
-> in [1]; WWID_SIZE can't be simply increased because it has to match
-> device mapper's DM_NAME_LEN).
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  libmultipath/propsel.c | 4 ++--
+>  1 file changed, 2 insertions(+), 2 deletions(-)
 >
-> Changes wrt v1:
->  1/4: assure 0-termination by using strlcpy() (Bart van Assche)
->  4/4: drop extra length test (Ben Marzinski)
->
-> I kept the v1 Reviewed-by: and Acked-by tags because the changes are minor,
-> I hope that's ok for the reviewers.
->
-> [1] http://lists.infradead.org/pipermail/linux-nvme/2017-July/011960.html
->
-> Martin Wilck (4):
->   libmultipath: get_udev_uid: make sure pp->wwid is 0-terminated
->   libmultipath: drop uevent_can_discard_by_devpath
->   libmultipath: only listen for uevents with DEVTYPE=disk
->   libmultipath: fix over-long NVME WWIDs
->
->  libmultipath/discovery.c | 85 ++++++++++++++++++++++++++++++
-> +++++++++++++++---
->  libmultipath/uevent.c    | 27 +--------------
->  2 files changed, 82 insertions(+), 30 deletions(-)
->
+> diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+> index 27f39517..4ac7edcd 100644
+> --- a/libmultipath/propsel.c
+> +++ b/libmultipath/propsel.c
+> @@ -333,11 +333,11 @@ out:
+>                                 pp->dev, c->timeout);
+>         }
+>         else if (sysfs_get_timeout(pp, &c->timeout) > 0)
+> -               condlog(3, "%s: checker timeout = %u ms (setting: kernel
+> sysfs)",
+> +               condlog(3, "%s: checker timeout = %u s (setting: kernel
+> sysfs)",
+>                                 pp->dev, c->timeout);
+>         else {
+>                 c->timeout = DEF_TIMEOUT;
+> -               condlog(3, "%s: checker timeout = %u ms (setting:
+> multipath internal)",
+> +               condlog(3, "%s: checker timeout = %u s (setting: multipath
+> internal)",
+>                                 pp->dev, c->timeout);
+>         }
+>         return 0;
 > --
-> 2.13.2
+> 2.13.1
 >
 >
 
---001a113d29d414323e0555d40dee
+--001a113d29d4d02b090555d3b42b
 Content-Type: text/html; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-<div dir=3D"ltr">This set is now merged.<div>Thanks.</div></div><div class=
-=3D"gmail_extra"><br><div class=3D"gmail_quote">On Tue, Jul 18, 2017 at 9:2=
-9 AM, Martin Wilck <span dir=3D"ltr">&lt;<a href=3D"mailto:mwilck@suse.com"=
- target=3D"_blank">mwilck@suse.com</a>&gt;</span> wrote:<br><blockquote cla=
-ss=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;pa=
-dding-left:1ex">Current code fails to set up multipath maps for NVME device=
-s in a<br>
-Linux target/Linux host combination. This series enables at least<br>
-basic operation.<br>
+<div dir=3D"ltr">Merged,<div>Thanks.</div></div><div class=3D"gmail_extra">=
+<br><div class=3D"gmail_quote">On Tue, Jun 27, 2017 at 5:11 PM, Martin Wilc=
+k <span dir=3D"ltr">&lt;<a href=3D"mailto:mwilck@suse.com" target=3D"_blank=
+">mwilck@suse.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote=
+" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex">c=
+hecker_timeout is in seconds, not milliseconds, since 905281da<br>
+&quot;Specify checker_timeout in seconds&quot;. Fix the log messages.<br>
 <br>
-Patch 1/4 fixes a crash that happens if over-long WWIDs are encountered, an=
-d<br>
-is not specific to NVME as such. Patch 2/4 drops<br>
-the broken test uevent_can_discard_by_devpath(<wbr>). Patch 3/4 compensates=
+Signed-off-by: Martin Wilck &lt;<a href=3D"mailto:mwilck@suse.com">mwilck@s=
+use.com</a>&gt;<br>
+---<br>
+=C2=A0libmultipath/propsel.c | 4 ++--<br>
+=C2=A01 file changed, 2 insertions(+), 2 deletions(-)<br>
 <br>
-for the additional event processing required by 2/4. Patch 4/4 mangles<br>
-overlong &quot;nvme.*&quot; WWIDs to make them usable for multipath (relate=
-d discussion<br>
-in [1]; WWID_SIZE can&#39;t be simply increased because it has to match<br>
-device mapper&#39;s DM_NAME_LEN).<br>
-<br>
-Changes wrt v1:<br>
-=C2=A01/4: assure 0-termination by using strlcpy() (Bart van Assche)<br>
-=C2=A04/4: drop extra length test (Ben Marzinski)<br>
-<br>
-I kept the v1 Reviewed-by: and Acked-by tags because the changes are minor,=
-<br>
-I hope that&#39;s ok for the reviewers.<br>
-<br>
-[1] <a href=3D"http://lists.infradead.org/pipermail/linux-nvme/2017-July/01=
-1960.html" rel=3D"noreferrer" target=3D"_blank">http://lists.infradead.org/=
-<wbr>pipermail/linux-nvme/2017-<wbr>July/011960.html</a><br>
-<br>
-Martin Wilck (4):<br>
-=C2=A0 libmultipath: get_udev_uid: make sure pp-&gt;wwid is 0-terminated<br=
->
-=C2=A0 libmultipath: drop uevent_can_discard_by_devpath<br>
-=C2=A0 libmultipath: only listen for uevents with DEVTYPE=3Ddisk<br>
-=C2=A0 libmultipath: fix over-long NVME WWIDs<br>
-<br>
-=C2=A0libmultipath/discovery.c | 85 ++++++++++++++++++++++++++++++<wbr>++++=
-+++++++++++---<br>
-=C2=A0libmultipath/uevent.c=C2=A0 =C2=A0 | 27 +--------------<br>
-=C2=A02 files changed, 82 insertions(+), 30 deletions(-)<br>
-<span class=3D"HOEnZb"><font color=3D"#888888"><br>
---<br>
-2.13.2<br>
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c<br>
+index 27f39517..4ac7edcd 100644<br>
+--- a/libmultipath/propsel.c<br>
++++ b/libmultipath/propsel.c<br>
+@@ -333,11 +333,11 @@ out:<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 pp-&gt;dev, c-&gt;timeout);<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 }<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 else if (sysfs_get_timeout(pp, &amp;c-&gt;timeo=
+ut) &gt; 0)<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0condlog(3, &quot;%s=
+: checker timeout =3D %u ms (setting: kernel sysfs)&quot;,<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0condlog(3, &quot;%s=
+: checker timeout =3D %u s (setting: kernel sysfs)&quot;,<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 pp-&gt;dev, c-&gt;timeout);<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 else {<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 c-&gt;timeout =3D D=
+EF_TIMEOUT;<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0condlog(3, &quot;%s=
+: checker timeout =3D %u ms (setting: multipath internal)&quot;,<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0condlog(3, &quot;%s=
+: checker timeout =3D %u s (setting: multipath internal)&quot;,<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 pp-&gt;dev, c-&gt;timeout);<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 }<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 return 0;<br>
+<span class=3D"HOEnZb"><font color=3D"#888888">--<br>
+2.13.1<br>
 <br>
 </font></span></blockquote></div><br></div>
 
---001a113d29d414323e0555d40dee--
+--001a113d29d4d02b090555d3b42b--
 
 
---===============2172562076273835504==
+--===============0252286637390910361==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============2172562076273835504==--
+--===============0252286637390910361==--
