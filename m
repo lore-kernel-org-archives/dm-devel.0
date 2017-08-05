@@ -1,69 +1,49 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH] libmultipath: update 3PARdata builtin config
-Date: Sat, 5 Aug 2017 13:54:39 +0200
-Message-ID: <CABr-GndzfDpQMDt0OFUEG6R-TV4DqT5B8f5uddANzXTQ=xRz-Q@mail.gmail.com>
-References: <d43d560c-dff9-0491-71c6-92a6fcd62b3c@gmail.com>
+From: Christoph Hellwig <hch@lst.de>
+Subject: Re: [PATCH] bio-integrity: revert "stop abusing bi_end_io"
+Date: Sat, 5 Aug 2017 15:44:18 +0200
+Message-ID: <20170805134418.GB17694@lst.de>
+References: <20170802122750.12216-1-gmazyland@gmail.com> <20170802125509.GA18977@lst.de> <alpine.LRH.2.02.1708030938110.21391@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0977129158133731139=="
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <d43d560c-dff9-0491-71c6-92a6fcd62b3c@gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1708030938110.21391@file01.intranet.prod.int.rdu2.redhat.com>
+Sender: linux-block-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Christoph Hellwig <hch@lst.de>, Milan Broz <gmazyland@gmail.com>, linux-block@vger.kernel.org, axboe@kernel.dk, dm-devel@redhat.com, "Martin K. Petersen" <martin.petersen@oracle.com>
 List-Id: dm-devel.ids
 
---===============0977129158133731139==
-Content-Type: multipart/alternative; boundary="001a1141b0a057bb850556004710"
 
---001a1141b0a057bb850556004710
-Content-Type: text/plain; charset="UTF-8"
+On Thu, Aug 03, 2017 at 10:10:55AM -0400, Mikulas Patocka wrote:
+> That dm-crypt commit that uses bio integrity payload came 3 months before 
+> 7c20f11680a441df09de7235206f70115fbf6290 and it was already present in 
+> 4.12.
 
-And done.
+And on it's own that isn't an argument if your usage is indeed wrong,
+and that's why we are having this discussion.
 
-On Sat, Aug 5, 2017 at 1:23 PM, Xose Vazquez Perez <xose.vazquez@gmail.com>
-wrote:
+> The patch 7c20f11680a441df09de7235206f70115fbf6290 changes it so that 
+> bio->bi_end_io is not changed and bio_integrity_endio is called directly 
+> from bio_endio if the bio has integrity payload. The unintended 
+> consequence of this change is that when a request with integrity payload 
+> is finished and bio_endio is called for each cloned bio, the verification 
+> routine bio_integrity_verify_fn is called for every level in the stack (it 
+> used to be called only for the lowest level in 4.12). At different levels 
+> in the stack, the bio may have different bi_sector value, so the repeated 
+> verification can't succeed.
 
-> Christophe Varoqui wrote:
->
-> > (And version bumped to 0.7.2)
->
-> untagged: https://git.opensvc.com/gitweb.cgi?p=multipath-tools/.git;a=tags
->
+We can simply add another bio flag to get back to the previous
+behavior.  That being said thing to do in the end is to verify it
+at the top of the stack, and not the bottom eventuall.  I can cook
+up a patch for that.
 
---001a1141b0a057bb850556004710
-Content-Type: text/html; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+> I think the patch 7c20f11680a441df09de7235206f70115fbf6290 should be 
+> reverted and it should be reworked for the next merge window, so that it 
+> calls bio_integrity_verify_fn only for the lowest level.
 
-<div dir=3D"ltr">And done.</div><div class=3D"gmail_extra"><br><div class=
-=3D"gmail_quote">On Sat, Aug 5, 2017 at 1:23 PM, Xose Vazquez Perez <span d=
-ir=3D"ltr">&lt;<a href=3D"mailto:xose.vazquez@gmail.com" target=3D"_blank">=
-xose.vazquez@gmail.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_=
-quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1=
-ex"><span class=3D"">Christophe Varoqui wrote:<br>
-<br>
-&gt; (And version bumped to 0.7.2)<br>
-<br>
-</span>untagged: <a href=3D"https://git.opensvc.com/gitweb.cgi?p=3Dmultipat=
-h-tools/.git;a=3Dtags" rel=3D"noreferrer" target=3D"_blank">https://git.ope=
-nsvc.com/<wbr>gitweb.cgi?p=3Dmultipath-tools/.<wbr>git;a=3Dtags</a><br>
-</blockquote></div><br></div>
+And with this you will just reintroduce the memory leak for
+on-stack bios we've fixed.
 
---001a1141b0a057bb850556004710--
-
-
---===============0977129158133731139==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============0977129158133731139==--
+I'll take a look at not calling the verify function for every level,
+which is wrong, and in the meantime we can discuss the uses and abuses
+of the bio integrity code by dm in the separate subthread.
