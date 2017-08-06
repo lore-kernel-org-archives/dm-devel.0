@@ -1,50 +1,42 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH] bio-integrity: revert "stop abusing bi_end_io"
-Date: Sun, 6 Aug 2017 14:49:23 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1708061441120.9109@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20170802122750.12216-1-gmazyland@gmail.com> <20170802125509.GA18977@lst.de> <alpine.LRH.2.02.1708030938110.21391@file01.intranet.prod.int.rdu2.redhat.com> <20170805134418.GB17694@lst.de> <alpine.LRH.2.02.1708051038550.25961@file01.intranet.prod.int.rdu2.redhat.com>
- <yq1y3qxdano.fsf@oracle.com>
+From: "Yu, Wenqian" <wenqian.yu@intel.com>
+Subject: RE: Request for Comments about Chained-IV feature in Linux crypto
+ framework
+Date: Sun, 6 Aug 2017 22:07:16 +0000
+Message-ID: <858B57D94E9DE244922C3CF355D7FFD65179FDA3@SHSMSX104.ccr.corp.intel.com>
+References: <858B57D94E9DE244922C3CF355D7FFD65179BF4C@SHSMSX104.ccr.corp.intel.com>
+ <20170803035940.GA11211@gondor.apana.org.au>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <yq1y3qxdano.fsf@oracle.com>
-Sender: linux-block-owner@vger.kernel.org
-To: "Martin K. Petersen" <martin.petersen@oracle.com>
-Cc: Christoph Hellwig <hch@lst.de>, Milan Broz <gmazyland@gmail.com>, linux-block@vger.kernel.org, axboe@kernel.dk, dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <20170803035940.GA11211@gondor.apana.org.au>
+Content-Language: en-US
+Sender: linux-crypto-owner@vger.kernel.org
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: "linux-crypto@vger.kernel.org" <linux-crypto@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "dm-crypt@saout.de" <dm-crypt@saout.de>, Milan Broz <gmazyland@gmail.com>, "Keating, Brian A" <brian.a.keating@intel.com>, "Will, Brian" <brian.will@intel.com>, "Li, Weigang" <weigang.li@intel.com>, "Cabiddu, Giovanni" <giovanni.cabiddu@intel.com>, "Yu, Wenqian" <wenqian.yu@intel.com>
 List-Id: dm-devel.ids
 
+Thanks for the information, Herbert.  Let me check see the detail of explicit IV generators.
 
+Thanks,
+- Wenqian
 
-On Sat, 5 Aug 2017, Martin K. Petersen wrote:
+-----Original Message-----
+From: linux-crypto-owner@vger.kernel.org [mailto:linux-crypto-owner@vger.kernel.org] On Behalf Of Herbert Xu
+Sent: Thursday, August 3, 2017 12:00 PM
+To: Yu, Wenqian <wenqian.yu@intel.com>
+Cc: linux-crypto@vger.kernel.org; dm-devel@redhat.com; m-crypt@saout.de; Milan Broz <gmazyland@gmail.com>; Keating, Brian A <brian.a.keating@intel.com>; Will, Brian <brian.will@intel.com>; Li, Weigang <weigang.li@intel.com>; Cabiddu, Giovanni <giovanni.cabiddu@intel.com>
+Subject: Re: Request for Comments about Chained-IV feature in Linux crypto framework
 
-> Mikulas,
+On Thu, Aug 03, 2017 at 01:12:32AM +0000, Yu, Wenqian wrote:
+> Hi, Herbert and all,
 > 
-> > The sector number in the integrity tag must match the physical sector 
-> > number. So, it must be verified at the bottom.
-> 
-> The ref tag seed matches the submitter block number (typically block
-> layer sector for the top device) and is remapped to and from the LBA by
-> the SCSI disk driver or HBA firmware.
-> 
-> So the verification is designed to be done by the top level entity that
-> attaches the protection information to the bio. In this case
-> bio_integrity_prep().
+> For saving the offload cost of symmetric cipher to hardware accelerator, we have a proposal (chained-IV) to batch multiple SG with different IV into one skcipher request, which also benefits SW implementation. The existing skcipher with SG list in crypto framework is treating all SG in the SG list as one single buffer to symmetric crypto operation with same IV.  In some use case the IV for each SG is different (e.g. dm-crypt, the IV for each sector is different). Could you please give quick comments on the below proposal before implementation?
 
-bio_integrity_prep is called by blk_queue_bio - that is the lowest level 
-physical disk, not the top level. It is not called by device mapper.
+We've had this discussion already.  The current plan is to use explicit IV generators, as seen here
 
-Documentation/block/data-integrity.txt says that bio_integrity_prep() can 
-be called by integrity-aware filesystem, but it seems that no such 
-filesystem exists.
+https://patchwork.kernel.org/patch/9803473/
 
-If you create the integrity tag at or above device mapper level, you will 
-run into problems because the same device can be accessed using device 
-mapper and using physical volume /dev/sd*. If you create integrity tags at 
-device mapper level, they will contain device mapper's logical sector 
-number and the sector number won't match if you access the device directly 
-using /dev/sd*.
+So please help review the existing patches and if there are any inadequacies, please comment.
 
-> -- 
-> Martin K. Petersen	Oracle Linux Engineering
-
-Mikulas
+Thanks.
