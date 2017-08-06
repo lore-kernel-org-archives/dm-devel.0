@@ -1,104 +1,35 @@
-From: Thorsten Leemhuis <regressions@leemhuis.info>
-Subject: Re: [RFC PATCH] bio-integrity: Fix regression if profile verify_fn is
- NULL
-Date: Sun, 6 Aug 2017 15:30:22 +0200
-Message-ID: <bd2f8d59-1e2f-c05e-0a4c-df4de17a8db8@leemhuis.info>
-References: <20170802122750.12216-1-gmazyland@gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20170802122750.12216-1-gmazyland@gmail.com>
-Content-Language: en-MW
-Sender: linux-block-owner@vger.kernel.org
-To: Milan Broz <gmazyland@gmail.com>, linux-block@vger.kernel.org
-Cc: hch@lst.de, axboe@kernel.dk, mpatocka@redhat.com, dm-devel@redhat.com
+From: Bhumika Goyal <bhumirks@gmail.com>
+Subject: [PATCH] dm integrity: make blk_integrity_profile structure const
+Date: Sun,  6 Aug 2017 22:54:00 +0530
+Message-ID: <1502040240-6867-1-git-send-email-bhumirks@gmail.com>
+Return-path: <linux-raid-owner@vger.kernel.org>
+Sender: linux-raid-owner@vger.kernel.org
+To: julia.lawall@lip6.fr, agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, shli@kernel.org, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: Bhumika Goyal <bhumirks@gmail.com>
 List-Id: dm-devel.ids
 
-TWIMC: This issue is tracked in the regression reports for Linux 4.13
-(http://bit.ly/lnxregrep413 ) with this id:
+Make this structure const as it is only stored in the profile field of a
+blk_integrity structure. This field is of type const, so make structure
+as const.
 
-Linux-Regression-ID: lr#35498d
+Signed-off-by: Bhumika Goyal <bhumirks@gmail.com>
+---
+ drivers/md/dm-integrity.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Please include this line in the comment section of patches that are
-supposed to fix the issue. Please also mention the string once in other
-mailinglist threads or different bug tracking entries if you or someone
-else start to discuss the issue there. By including that string you make
-it a whole lot easier to track where an issue gets discussed and how far
-patches to fix it have made it. For more details on this please see
-here: http://bit.ly/lnxregtrackid
+diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
+index 293a196..e522a94 100644
+--- a/drivers/md/dm-integrity.c
++++ b/drivers/md/dm-integrity.c
+@@ -299,7 +299,7 @@ static void __DEBUG_bytes(__u8 *bytes, size_t len, const char *msg, ...)
+ /*
+  * DM Integrity profile, protection is performed layer above (dm-crypt)
+  */
+-static struct blk_integrity_profile dm_integrity_profile = {
++static const struct blk_integrity_profile dm_integrity_profile = {
+ 	.name			= "DM-DIF-EXT-TAG",
+ 	.generate_fn		= NULL,
+ 	.verify_fn		= NULL,
+-- 
+1.9.1
 
-Thx for your help. And thx to Milan for pointing me to this regression.
- Ciao, Thorsten
-
-On 02.08.2017 14:27, Milan Broz wrote:
-> In dm-integrity target we register integrity profile that have
-> both generate_fn and verify_fn callbacks set to NULL.
-> 
-> This is used if dm-integrity is stacked under a dm-crypt device
-> for authenticated encryption (integrity payload contains authentication
-> tag and IV seed).
-> 
-> In this case the verification is done through own crypto API
-> processing inside dm-crypt; integrity profile is only holder
-> of these data. (And memory is owned by dm-crypt as well.)
-> 
-> After the commit (and previous changes)
->   Commit 7c20f11680a441df09de7235206f70115fbf6290
->   Author: Christoph Hellwig <hch@lst.de>
->   Date:   Mon Jul 3 16:58:43 2017 -0600
-> 
->     bio-integrity: stop abusing bi_end_io
-> 
-> we get this crash:
-> 
-> : BUG: unable to handle kernel NULL pointer dereference at   (null)
-> : IP:   (null)
-> : *pde = 00000000
-> ...
-> :
-> : Workqueue: kintegrityd bio_integrity_verify_fn
-> : task: f48ae180 task.stack: f4b5c000
-> : EIP:   (null)
-> : EFLAGS: 00210286 CPU: 0
-> : EAX: f4b5debc EBX: 00001000 ECX: 00000001 EDX: 00000000
-> : ESI: 00001000 EDI: ed25f000 EBP: f4b5dee8 ESP: f4b5dea4
-> :  DS: 007b ES: 007b FS: 00d8 GS: 00e0 SS: 0068
-> : CR0: 80050033 CR2: 00000000 CR3: 32823000 CR4: 001406d0
-> : Call Trace:
-> :  ? bio_integrity_process+0xe3/0x1e0
-> :  bio_integrity_verify_fn+0xea/0x150
-> :  process_one_work+0x1c7/0x5c0
-> :  worker_thread+0x39/0x380
-> :  kthread+0xd6/0x110
-> :  ? process_one_work+0x5c0/0x5c0
-> :  ? kthread_worker_fn+0x100/0x100
-> :  ? kthread_worker_fn+0x100/0x100
-> :  ret_from_fork+0x19/0x24
-> : Code:  Bad EIP value.
-> : EIP:   (null) SS:ESP: 0068:f4b5dea4
-> : CR2: 0000000000000000
-> 
-> Patch just skip the whole verify workqueue if verify_fn is set to NULL.
-> 
-> Signed-off-by: Milan Broz <gmazyland@gmail.com>
-> ---
->  block/bio-integrity.c | 4 +++-
->  1 file changed, 3 insertions(+), 1 deletion(-)
-> 
-> diff --git a/block/bio-integrity.c b/block/bio-integrity.c
-> index 83e92beb3c9f..b9d1580bfc13 100644
-> --- a/block/bio-integrity.c
-> +++ b/block/bio-integrity.c
-> @@ -387,7 +387,9 @@ static void bio_integrity_verify_fn(struct work_struct *work)
->   */
->  bool __bio_integrity_endio(struct bio *bio)
->  {
-> -	if (bio_op(bio) == REQ_OP_READ && !bio->bi_status) {
-> +	struct blk_integrity *bi = bdev_get_integrity(bio->bi_bdev);
-> +
-> +	if (bi->profile->verify_fn && bio_op(bio) == REQ_OP_READ && !bio->bi_status) {
->  		struct bio_integrity_payload *bip = bio_integrity(bio);
->  
->  		INIT_WORK(&bip->bip_work, bio_integrity_verify_fn);
-> 
