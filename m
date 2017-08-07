@@ -1,54 +1,46 @@
-From: Akira Hayakawa <ruby.wktk@gmail.com>
-Subject: Re: Guide stacking device mappers
-Date: Mon, 7 Aug 2017 16:23:39 +0900
-Message-ID: <6557f958-8bb6-415d-3304-ef3f535e6b8c@gmail.com>
-References: <HE1PR0301MB21562E7B9F051D3DA7484226A4B00@HE1PR0301MB2156.eurprd03.prod.outlook.com>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Re: [PATCH] bio-integrity: revert "stop abusing bi_end_io"
+Date: Mon, 07 Aug 2017 11:48:55 -0400
+Message-ID: <yq1valzbcpk.fsf@oracle.com>
+References: <20170802122750.12216-1-gmazyland@gmail.com>
+        <20170802125509.GA18977@lst.de>
+        <alpine.LRH.2.02.1708030938110.21391@file01.intranet.prod.int.rdu2.redhat.com>
+        <20170805134418.GB17694@lst.de>
+        <alpine.LRH.2.02.1708051038550.25961@file01.intranet.prod.int.rdu2.redhat.com>
+        <yq1y3qxdano.fsf@oracle.com>
+        <alpine.LRH.2.02.1708061441120.9109@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <HE1PR0301MB21562E7B9F051D3DA7484226A4B00@HE1PR0301MB2156.eurprd03.prod.outlook.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Jonas <jonasalmqvist@live.se>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <alpine.LRH.2.02.1708061441120.9109@file01.intranet.prod.int.rdu2.redhat.com>
+        (Mikulas Patocka's message of "Sun, 6 Aug 2017 14:49:23 -0400 (EDT)")
+Sender: linux-block-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, Christoph Hellwig <hch@lst.de>, Milan Broz <gmazyland@gmail.com>, linux-block@vger.kernel.org, axboe@kernel.dk, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Jonas,
 
-I am developing dm-writeboost. Thank you for your interest.
+Mikulas,
 
-I couldn't understand how you try to stack devices.
-You should share diagram if you want others to know your idea precisely.
+> If you create the integrity tag at or above device mapper level, you
+> will run into problems because the same device can be accessed using
+> device mapper and using physical volume /dev/sd*. If you create
+> integrity tags at device mapper level, they will contain device
+> mapper's logical sector number and the sector number won't match if
+> you access the device directly using /dev/sd*.
 
-But this may help you. dm-writeboost can't use zram as the caching device.
-I thought this is device-mapper's issue so you may confront this when you try the stacking.
-https://github.com/akiradeveloper/dm-writeboost/issues/60
+For writes, the bip seed value is adjusted every time a bio is cloned,
+sliced and diced as it traverses partitioning/MD/DM. And then at the
+bottom of the stack, the ref tag values in the protection information
+buffer are verified against the adjusted seed value and remapped
+according to the starting logical block number. The reverse is taking
+place for reads.
 
-Akira
+This is much faster than doing a remapping of the actual protection
+buffer values every time the I/O transitions from one address space to
+the other. In addition, some HBA hardware allows us to program the PI
+engine with the seed value. So the submitter value to LBA conversion can
+be done on the fly in hardware.
 
-On 2017/08/03 6:00, Jonas wrote:
-> 
-> Hi
-> 
-> I want to write data to dm-dedup device, store that on a zram w lz4 compressed. Then dm-mirror the zram to dm-writeboost that have a Ssd as block device/final destination.
-> 
-> Is there any guide w examples on how to stack device mappers? Or anyone having instructions or guidlines on how to do?
-> 
-> /J
-> 
-> 
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-> 
+-- 
+Martin K. Petersen	Oracle Linux Engineering
