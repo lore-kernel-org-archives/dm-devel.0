@@ -1,12 +1,13 @@
-From: Tom Yan <tom.ty89@outlook.com>
-Subject: [BUG] BLKZEROOUT on dm-crypt container cause OOM /
-	kernel panic
-Date: Mon, 7 Aug 2017 01:58:01 +0000
-Message-ID: <HK2PR04MB064468C0371547D1D17C9C5488B50@HK2PR04MB0644.apcprd04.prod.outlook.com>
+From: Akira Hayakawa <ruby.wktk@gmail.com>
+Subject: Re: Guide stacking device mappers
+Date: Mon, 7 Aug 2017 16:23:39 +0900
+Message-ID: <6557f958-8bb6-415d-3304-ef3f535e6b8c@gmail.com>
+References: <HE1PR0301MB21562E7B9F051D3DA7484226A4B00@HE1PR0301MB2156.eurprd03.prod.outlook.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <HE1PR0301MB21562E7B9F051D3DA7484226A4B00@HE1PR0301MB2156.eurprd03.prod.outlook.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -17,22 +18,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Jonas <jonasalmqvist@live.se>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi all,
+Hi Jonas,
 
-When I do the following:
+I am developing dm-writeboost. Thank you for your interest.
 
-cryptsetup open /dev/sdX[Y] rand --type plain --key-file /dev/random;
-blkdiscard -z /dev/mapper/rand
+I couldn't understand how you try to stack devices.
+You should share diagram if you want others to know your idea precisely.
 
-Some OOM killings and a kernel panic occur. Here is a screenshot:
-https://gitlab.com/cryptsetup/cryptsetup/uploads/207ffdada52f3172f54a014c67159625/DSC_0129.JPG
+But this may help you. dm-writeboost can't use zram as the caching device.
+I thought this is device-mapper's issue so you may confront this when you try the stacking.
+https://github.com/akiradeveloper/dm-writeboost/issues/60
 
-Similar issue is NOT found in doing `cat /dev/zero > /dev/mapper/rand`, or `blkdiscard -z /dev/sdX[Y]` (without opening a dm-crypt on it), on the same hardware and configuration.
+Akira
 
-Note that `blkdiscard -z` does not trigger the BLKDISCARD ioctl but the BLKZEROOUT ioctl. And the devices I have been testing on are USB devices that does NOT support WRITE SAME or UNMAP.
-
-Regards,
-Tom Yan
+On 2017/08/03 6:00, Jonas wrote:
+> 
+> Hi
+> 
+> I want to write data to dm-dedup device, store that on a zram w lz4 compressed. Then dm-mirror the zram to dm-writeboost that have a Ssd as block device/final destination.
+> 
+> Is there any guide w examples on how to stack device mappers? Or anyone having instructions or guidlines on how to do?
+> 
+> /J
+> 
+> 
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+> 
