@@ -1,92 +1,117 @@
-From: Gilad Ben-Yossef <gilad@benyossef.com>
-Subject: [PATCH v4 18/19] crypto: mediatek: move to generic async completion
-Date: Tue,  8 Aug 2017 15:03:49 +0300
-Message-ID: <1502193834-11289-19-git-send-email-gilad@benyossef.com>
-References: <1502193834-11289-1-git-send-email-gilad@benyossef.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1502193834-11289-1-git-send-email-gilad@benyossef.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, Jonathan Corbet <corbet@lwn.net>, David Howells <dhowells@redhat.com>, Tom Lendacky <thomas.lendacky@amd.com>, Gary Hook <gary.hook@amd.com>, Boris Brezillon <boris.brezillon@free-electrons.com>, Arnaud Ebalard <arno@natisbad.org>, Matthias Brugger <matthias.bgg@gmail.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, Steve French <sfrench@samba.org>, "Theodore Y. Ts'o" <tytso@mit.edu>, Jaegeuk Kim <jaegeuk@kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Dmitry Kasatkin <dmitry.kasatkin@gmail.com>, James Morris <james.l.morris@oracle.com>, "Serge E. Hallyn" <serge@hallyn.com>, linux-crypto@v
-Cc: Ofir Drang <ofir.drang@arm.com>
+From: Tom Yan <tom.ty89@outlook.com>
+Subject: Re: [BUG] BLKZEROOUT on dm-crypt container cause OOM /
+	kernel panic
+Date: Tue, 8 Aug 2017 09:42:31 +0000
+Message-ID: <HK2PR04MB064465B738C469017E3E533D888A0@HK2PR04MB0644.apcprd04.prod.outlook.com>
+References: <HK2PR04MB064468C0371547D1D17C9C5488B50@HK2PR04MB0644.apcprd04.prod.outlook.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <HK2PR04MB064468C0371547D1D17C9C5488B50@HK2PR04MB0644.apcprd04.prod.outlook.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>, "gmazyland@gmail.com" <gmazyland@gmail.com>, "axboe@fb.com" <axboe@fb.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "hch@lst.de" <hch@lst.de>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>
 List-Id: dm-devel.ids
 
-The mediatek driver starts several async crypto ops and waits for their
-completions. Move it over to generic code doing the same.
+Hi again,
 
-Signed-off-by: Gilad Ben-Yossef <gilad@benyossef.com>
----
- drivers/crypto/mediatek/mtk-aes.c | 31 +++++--------------------------
- 1 file changed, 5 insertions(+), 26 deletions(-)
+I think I have sort of identified the problem. It appears to me that both t=
+he block layer and dm-crypt is defected on handling this.
 
-diff --git a/drivers/crypto/mediatek/mtk-aes.c b/drivers/crypto/mediatek/mtk-aes.c
-index 9e845e8..e2c7c95 100644
---- a/drivers/crypto/mediatek/mtk-aes.c
-+++ b/drivers/crypto/mediatek/mtk-aes.c
-@@ -137,11 +137,6 @@ struct mtk_aes_gcm_ctx {
- 	struct crypto_skcipher *ctr;
- };
- 
--struct mtk_aes_gcm_setkey_result {
--	int err;
--	struct completion completion;
--};
--
- struct mtk_aes_drv {
- 	struct list_head dev_list;
- 	/* Device list lock */
-@@ -936,17 +931,6 @@ static int mtk_aes_gcm_crypt(struct aead_request *req, u64 mode)
- 				    &req->base);
- }
- 
--static void mtk_gcm_setkey_done(struct crypto_async_request *req, int err)
--{
--	struct mtk_aes_gcm_setkey_result *result = req->data;
--
--	if (err == -EINPROGRESS)
--		return;
--
--	result->err = err;
--	complete(&result->completion);
--}
--
- /*
-  * Because of the hardware limitation, we need to pre-calculate key(H)
-  * for the GHASH operation. The result of the encryption operation
-@@ -962,7 +946,7 @@ static int mtk_aes_gcm_setkey(struct crypto_aead *aead, const u8 *key,
- 		u32 hash[4];
- 		u8 iv[8];
- 
--		struct mtk_aes_gcm_setkey_result result;
-+		struct crypto_wait wait;
- 
- 		struct scatterlist sg[1];
- 		struct skcipher_request req;
-@@ -1002,22 +986,17 @@ static int mtk_aes_gcm_setkey(struct crypto_aead *aead, const u8 *key,
- 	if (!data)
- 		return -ENOMEM;
- 
--	init_completion(&data->result.completion);
-+	crypto_init_wait(&data->wait);
- 	sg_init_one(data->sg, &data->hash, AES_BLOCK_SIZE);
- 	skcipher_request_set_tfm(&data->req, ctr);
- 	skcipher_request_set_callback(&data->req, CRYPTO_TFM_REQ_MAY_SLEEP |
- 				      CRYPTO_TFM_REQ_MAY_BACKLOG,
--				      mtk_gcm_setkey_done, &data->result);
-+				      crypto_req_done, &data->wait);
- 	skcipher_request_set_crypt(&data->req, data->sg, data->sg,
- 				   AES_BLOCK_SIZE, data->iv);
- 
--	err = crypto_skcipher_encrypt(&data->req);
--	if (err == -EINPROGRESS || err == -EBUSY) {
--		err = wait_for_completion_interruptible(
--			&data->result.completion);
--		if (!err)
--			err = data->result.err;
--	}
-+	err = crypto_wait_req(crypto_skcipher_encrypt(&data->req),
-+			      &data->wait);
- 	if (err)
- 		goto out;
- 
--- 
-2.1.4
+First of all, check out the "fallback" zero out implementation, which is us=
+ed in this case, here:
+https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/blo=
+ck/blk-lib.c?h=3Dv4.12#n309
+
+From the outer loop, it seem to imply that this should be done in multiple=
+ "bio"s, if the request (original "nr_sects") is larger than BIO_MAX_PAGES:
+
+...
+while (nr_sects !=3D 0) {
+	bio =3D next_bio(bio, min(nr_sects, (sector_t)BIO_MAX_PAGES),
+			gfp_mask);
+...
+}
+...
+
+However, there is a inner loop:
+
+...
+	while (nr_sects !=3D 0) {
+		sz =3D min((sector_t) PAGE_SIZE >> 9 , nr_sects);
+		bi_size =3D bio_add_page(bio, ZERO_PAGE(0), sz << 9, 0);
+		nr_sects -=3D bi_size >> 9;
+		sector +=3D bi_size >> 9;
+		if (bi_size < (sz << 9))
+			break;
+	}
+...
+
+which apparently would loop over the whole request on its own, making the o=
+uter loop a bogus one.
+
+The request ends up being done in a single (huge) bio. When the bio is pass=
+ed on to dm-crypt, it appears that dm-crypt will not split the bio either w=
+hen it allocates buffer for conversion/encryption:
+https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/dri=
+vers/md/dm-crypt.c?h=3Dv4.12#n1694
+
+which leads to possible enormous uptake of memory, causing OOM / kernel pan=
+ic.
+
+There seems to be some measure that is suppose to split large bio though:
+https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/dri=
+vers/md/dm-crypt.c?h=3Dv4.12#n2787
+
+Apparently it is called before kcryptd_crypt_write_convert() / crypt_alloc_=
+buffer(). However, I don't really parse dm_accept_partial_bio() (or the com=
+ment about it) so I don't really know what it actually does or how it does =
+it. Neither can I see it helps in reality anyway.
+
+Here is another test case that shows the problem:
+https://ptpb.pw/BWWo.png
+https://ptpb.pw/aRTE.png
+
+Regards,
+Tom Yan
+
+
+From: Tom Yan
+Sent: Monday, August 7, 2017 9:58 AM
+To: dm-devel@redhat.com
+Subject: [BUG] BLKZEROOUT on dm-crypt container cause OOM / kernel panic
+=A0   =
+
+Hi all,
+
+When I do the following:
+
+cryptsetup open /dev/sdX[Y] rand --type plain --key-file /dev/random;
+blkdiscard -z /dev/mapper/rand
+
+Some OOM killings and a kernel panic occur. Here is a screenshot:
+https://gitlab.com/cryptsetup/cryptsetup/uploads/207ffdada52f3172f54a014c67=
+159625/DSC_0129.JPGhttps://gitlab.com/cryptsetup/cryptsetup/uploads/207ffda=
+da52f3172f54a014c67159625/DSC_0129.JPG =
+
+
+
+Similar issue is NOT found in doing `cat /dev/zero > /dev/mapper/rand`, or =
+`blkdiscard -z /dev/sdX[Y]` (without opening a dm-crypt on it), on the same=
+ hardware and configuration.
+
+Note that `blkdiscard -z` does not trigger the BLKDISCARD ioctl but the BLK=
+ZEROOUT ioctl. And the devices I have been testing on are USB devices that =
+does NOT support WRITE SAME or UNMAP.
+
+Regards,
+Tom Yan    =
