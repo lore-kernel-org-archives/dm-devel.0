@@ -1,78 +1,102 @@
-From: Milan Broz <gmazyland@gmail.com>
-Subject: Re: [PATCH] bio-integrity: revert "stop abusing bi_end_io"
-Date: Tue, 8 Aug 2017 08:47:06 +0200
-Message-ID: <184e07d0-0d93-dca4-8719-37e5c9c90c89@gmail.com>
-References: <20170802122750.12216-1-gmazyland@gmail.com>
- <20170802125509.GA18977@lst.de>
- <alpine.LRH.2.02.1708030938110.21391@file01.intranet.prod.int.rdu2.redhat.com>
- <20170805134418.GB17694@lst.de>
- <alpine.LRH.2.02.1708051038550.25961@file01.intranet.prod.int.rdu2.redhat.com>
- <yq1y3qxdano.fsf@oracle.com>
- <alpine.LRH.2.02.1708061441120.9109@file01.intranet.prod.int.rdu2.redhat.com>
- <yq1valzbcpk.fsf@oracle.com>
+From: Tom Yan <tom.ty89@gmail.com>
+Subject: Re: [BUG] BLKZEROOUT on dm-crypt container cause OOM / kernel panic
+Date: Tue, 8 Aug 2017 17:57:08 +0800
+Message-ID: <CAGnHSE=yV56phkDkgeSRaTN+A8G=5vK8SmWmbLPmNyFYTBK+Ug@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <yq1valzbcpk.fsf@oracle.com>
-Content-Language: en-US
 Sender: linux-block-owner@vger.kernel.org
-To: "Martin K. Petersen" <martin.petersen@oracle.com>, Mikulas Patocka <mpatocka@redhat.com>
-Cc: Christoph Hellwig <hch@lst.de>, linux-block@vger.kernel.org, axboe@kernel.dk, dm-devel@redhat.com
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>, gmazyland@gmail.com, "axboe@fb.com" <axboe@fb.com>, axboe@kernel.dk, "hch@lst.de" <hch@lst.de>, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hi,
+Hi again,
 
-On 08/07/2017 05:48 PM, Martin K. Petersen wrote:
-> 
->> If you create the integrity tag at or above device mapper level, you
->> will run into problems because the same device can be accessed using
->> device mapper and using physical volume /dev/sd*. If you create
->> integrity tags at device mapper level, they will contain device
->> mapper's logical sector number and the sector number won't match if
->> you access the device directly using /dev/sd*.
-> 
-> For writes, the bip seed value is adjusted every time a bio is cloned,
-> sliced and diced as it traverses partitioning/MD/DM. And then at the
-> bottom of the stack, the ref tag values in the protection information
-> buffer are verified against the adjusted seed value and remapped
-> according to the starting logical block number. The reverse is taking
-> place for reads.
-> 
-> This is much faster than doing a remapping of the actual protection
-> buffer values every time the I/O transitions from one address space to
-> the other. In addition, some HBA hardware allows us to program the PI
-> engine with the seed value. So the submitter value to LBA conversion can
-> be done on the fly in hardware.
+I think I have sort of identified the problem. It appears to me that both t=
+he block layer and dm-crypt is defected on handling this.
 
-Yes, this is how enterprise storage works and how the PI was designed.
+First of all, check out the "fallback" zero out implementation, which is us=
+ed in this case, here:
+https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/blo=
+ck/blk-lib.c?h=3Dv4.12#n309
 
-For authenticated encryption with additional data (AEAD) we have to authenticate
-the sector number as well (as part or additional data - authenticated
-but not encrypted part).
+From the outer loop, it seem to imply that this should be done in multiple =
+"bio"s, if the request (original "nr_sects") is larger than BIO_MAX_PAGES:
 
-Unfortunately the whole design cannot work this way if the AEAD is implemented
-on some higher layer. (Higher layer has a big advantage that you do not need to trust
-underlying storage stack because you will detect even intentional tampering with data.)
- So, only the layer that own the keys (here dmcrypt) can calculate or verify auth. tags
-(and then decrypt data). Nobody else can "remap" this sector in tag - without the key
-you cannot recalculate auth. tags.
+...
+while (nr_sects !=3D 0) {
+    bio =3D next_bio(bio, min(nr_sects, (sector_t)BIO_MAX_PAGES),
+            gfp_mask);
+...
+}
+...
 
-In other words, we just treat the whole additional data (delivered in bio-integrity)
-as "Application tag" (if using DIF terminology...)
+However, there is a inner loop:
+
+...
+    while (nr_sects !=3D 0) {
+        sz =3D min((sector_t) PAGE_SIZE >> 9 , nr_sects);
+        bi_size =3D bio_add_page(bio, ZERO_PAGE(0), sz << 9, 0);
+        nr_sects -=3D bi_size >> 9;
+        sector +=3D bi_size >> 9;
+        if (bi_size < (sz << 9))
+            break;
+    }
+...
+
+which apparently would loop over the whole request on its own, making the o=
+uter loop a bogus one.
+
+The request ends up being done in a single (huge) bio. When the bio is pass=
+ed on to dm-crypt, it appears that dm-crypt will not split the bio either w=
+hen it allocates buffer for conversion/encryption:
+https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/dri=
+vers/md/dm-crypt.c?h=3Dv4.12#n1694
+
+which leads to possible enormous uptake of memory, causing OOM / kernel pan=
+ic.
+
+There seems to be some measure that is suppose to split large bio though:
+https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/dri=
+vers/md/dm-crypt.c?h=3Dv4.12#n2787
+
+Apparently it is called before kcryptd_crypt_write_convert() / crypt_alloc_=
+buffer(). However, I don't really parse dm_accept_partial_bio() (or the com=
+ment about it) so I don't really know what it actually does or how it does =
+it. Neither can I see it helps in reality anyway.
+
+Here is another test case that shows the problem:
+https://ptpb.pw/BWWo.png
+https://ptpb.pw/aRTE.png
+
+Regards,
+Tom Yan
 
 
-Anyway, could we please fix the 4.13 kernel now to not crash with that
-dm-integrity use? This is urgent for people that already play with dm-integrity from 4.12.
-
-
-If you want a following discussion, I would really welcome to see what exactly
-is wrong because I think we used the bio-integrity interface through existing
-API and according to doc.
-Just we are unfortunately the first user for own profile (different than
-these defined in T10).
-And I think it can help in future to people that will try to implement
-bio-integrity-aware filesystem as well.
-
-Thanks,
-Milan
+> From: Tom Yan
+> Sent: Monday, August 7, 2017 9:58 AM
+> To: dm-devel@redhat.com
+> Subject: [BUG] BLKZEROOUT on dm-crypt container cause OOM / kernel panic
+>
+> Hi all,
+>
+> When I do the following:
+>
+> cryptsetup open /dev/sdX[Y] rand --type plain --key-file /dev/random;
+> blkdiscard -z /dev/mapper/rand
+>
+> Some OOM killings and a kernel panic occur. Here is a screenshot:
+> https://gitlab.com/cryptsetup/cryptsetup/uploads/207ffdada52f3172f54a014c67=
+> 159625/DSC_0129.JPGhttps://gitlab.com/cryptsetup/cryptsetup/uploads/207ffda=
+> da52f3172f54a014c67159625/DSC_0129.JPG=20
+>
+>
+> Similar issue is NOT found in doing `cat /dev/zero > /dev/mapper/rand`, or =
+> `blkdiscard -z /dev/sdX[Y]` (without opening a dm-crypt on it), on the same=
+>  hardware and configuration.
+>
+> Note that `blkdiscard -z` does not trigger the BLKDISCARD ioctl but the BLK=
+> ZEROOUT ioctl. And the devices I have been testing on are USB devices that =
+> does NOT support WRITE SAME or UNMAP.
+>
+> Regards,
+> Tom Yan
