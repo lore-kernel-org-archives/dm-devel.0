@@ -1,97 +1,124 @@
-From: Tom Yan <tom.ty89@gmail.com>
-Subject: Re: [BUG] BLKZEROOUT on dm-crypt container cause OOM / kernel panic
-Date: Tue, 8 Aug 2017 18:23:01 +0800
-Message-ID: <CAGnHSEngW1Ugf66V5henR9fMEev0xcJnKVY9MjJb19gy3CkgNA@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-block-owner@vger.kernel.org>
-Sender: linux-block-owner@vger.kernel.org
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>, gmazyland@gmail.com, "axboe@fb.com" <axboe@fb.com>, axboe@kernel.dk, "hch@lst.de" <hch@lst.de>, linux-block@vger.kernel.org
+From: Gilad Ben-Yossef <gilad@benyossef.com>
+Subject: [PATCH v4 00/19] simplify crypto wait for async op
+Date: Tue,  8 Aug 2017 15:03:31 +0300
+Message-ID: <1502193834-11289-1-git-send-email-gilad@benyossef.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, Jonathan Corbet <corbet@lwn.net>, David Howells <dhowells@redhat.com>, Tom Lendacky <thomas.lendacky@amd.com>, Gary Hook <gary.hook@amd.com>, Boris Brezillon <boris.brezillon@free-electrons.com>, Arnaud Ebalard <arno@natisbad.org>, Matthias Brugger <matthias.bgg@gmail.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, Steve French <sfrench@samba.org>, "Theodore Y. Ts'o" <tytso@mit.edu>, Jaegeuk Kim <jaegeuk@kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Dmitry Kasatkin <dmitry.kasatkin@gmail.com>, James Morris <james.l.morris@oracle.com>, "Serge E. Hallyn" <serge@hallyn.com>, linux-crypto@v
+Cc: Ofir Drang <ofir.drang@arm.com>
 List-Id: dm-devel.ids
 
-(Sorry for the spam. Having hard time moving the thread from
-outlook.com to gmail.com for linux-block. Please reply to this, thank
-you.)
+Many users of kernel async. crypto services have a pattern of
+starting an async. crypto op and than using a completion
+to wait for it to end.
 
-Hi again,
+This patch set simplifies this common use case in two ways:
 
-I think I have sort of identified the problem. It appears to me that
-both the block layer and dm-crypt is defected on handling this.
+First, by separating the return codes of the case where a
+request is queued to a backlog due to the provider being
+busy (-EBUSY) from the case the request has failed due
+to the provider being busy and backlogging is not enabled
+(-EAGAIN).
 
-First of all, check out the "fallback" zero out implementation, which
-is used in this case, here:
-https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/block/blk-lib.c?h=v4.12#n309
+Next, this change is than built on to create a generic API 
+to wait for a async. crypto operation to complete.
 
-From the outer loop, it seem to imply that this should be done in
-multiple "bio"s, if the request (original "nr_sects") is larger than
-BIO_MAX_PAGES:
+The end result is a smaller code base and an API that is
+easier to use and more difficult to get wrong.
 
-...
-while (nr_sects != 0) {
-        bio = next_bio(bio, min(nr_sects, (sector_t)BIO_MAX_PAGES),
-                        gfp_mask);
-...
-}
-...
+The patch set was boot tested on x86_64 and arm64 which
+at the very least tests the crypto users via testmgr and
+tcrypt but I do note that I do not have access to some
+of the HW whose drivers are modified nor do I claim I was
+able to test all of the corner cases.
 
-However, there is a inner loop:
+The patch set is based upon linux-next release tagged 
+next-20170808.
 
-...
-        while (nr_sects != 0) {
-                sz = min((sector_t) PAGE_SIZE >> 9 , nr_sects);
-                bi_size = bio_add_page(bio, ZERO_PAGE(0), sz << 9, 0);
-                nr_sects -= bi_size >> 9;
-                sector += bi_size >> 9;
-                if (bi_size < (sz << 9))
-                        break;
-        }
-...
+Changes from v3:
+- Instead of changing the return code to indicate
+  backlog queueing, change the return code to indicate
+  transient busy state, as suggested by Herbert Xu.
 
-which apparently would loop over the whole request on its own, making
-the outer loop a bogus one.
+Changes from v2:
+- Patch title changed from "introduce crypto wait for
+  async op" to better reflect the current state.
+- Rebase on top of latest linux-next.
+- Add a new return code of -EIOCBQUEUED for backlog
+  queueing, as suggested by Herbert Xu.
+- Transform more users to the new API.
+- Update the drbg change to account for new init as
+  indicated by Stephan Muller.
 
-The request ends up being done in a single (huge) bio. When the bio is
-passed on to dm-crypt, it appears that dm-crypt will not split the bio
-either when it allocates buffer for conversion/encryption:
-https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/md/dm-crypt.c?h=v4.12#n1694
+Changes from v1:
+- Address review comments from Eric Biggers.
+- Separated out bug fixes of existing code and rebase
+  on top of that patch set.
+- Rename 'ecr' to 'wait' in fscrypto code.
+- Split patch introducing the new API from the change
+  moving over the algif code which it originated from
+  to the new API.
+- Inline crypto_wait_req().
+- Some code indentation fixes.
 
-which leads to possible enormous uptake of memory, causing OOM / kernel panic.
+Gilad Ben-Yossef (19):
+  crypto: change transient busy return code to -EAGAIN
+  crypto: ccm: use -EAGAIN for transient busy indication
+  crypto: remove redundant backlog checks on EBUSY
+  crypto: marvell/cesa: remove redundant backlog checks on EBUSY
+  crypto: introduce crypto wait for async op
+  crypto: move algif to generic async completion
+  crypto: move pub key to generic async completion
+  crypto: move drbg to generic async completion
+  crypto: move gcm to generic async completion
+  crypto: move testmgr to generic async completion
+  fscrypt: move to generic async completion
+  dm: move dm-verity to generic async completion
+  cifs: move to generic async completion
+  ima: move to generic async completion
+  crypto: tcrypt: move to generic async completion
+  crypto: talitos: move to generic async completion
+  crypto: qce: move to generic async completion
+  crypto: mediatek: move to generic async completion
+  crypto: adapt api sample to use async. op wait
 
-There seems to be some measure that is suppose to split large bio though:
-https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/md/dm-crypt.c?h=v4.12#n2787
+ Documentation/crypto/api-samples.rst |  52 ++-------
+ crypto/af_alg.c                      |  27 -----
+ crypto/ahash.c                       |  12 +--
+ crypto/algapi.c                      |   6 +-
+ crypto/algif_aead.c                  |  14 +--
+ crypto/algif_hash.c                  |  50 +++++----
+ crypto/algif_skcipher.c              |  15 ++-
+ crypto/api.c                         |  13 +++
+ crypto/asymmetric_keys/public_key.c  |  28 +----
+ crypto/cryptd.c                      |   4 +-
+ crypto/cts.c                         |   6 +-
+ crypto/drbg.c                        |  36 ++-----
+ crypto/gcm.c                         |  32 ++----
+ crypto/lrw.c                         |   8 +-
+ crypto/rsa-pkcs1pad.c                |  16 +--
+ crypto/tcrypt.c                      |  84 +++++----------
+ crypto/testmgr.c                     | 204 ++++++++++++-----------------------
+ crypto/xts.c                         |   8 +-
+ drivers/crypto/ccp/ccp-crypto-main.c |   8 +-
+ drivers/crypto/ccp/ccp-dev.c         |   7 +-
+ drivers/crypto/marvell/cesa.c        |   3 +-
+ drivers/crypto/marvell/cesa.h        |   2 +-
+ drivers/crypto/mediatek/mtk-aes.c    |  31 +-----
+ drivers/crypto/qce/sha.c             |  30 +-----
+ drivers/crypto/talitos.c             |  38 +------
+ drivers/md/dm-verity-target.c        |  81 ++++----------
+ drivers/md/dm-verity.h               |   5 -
+ fs/cifs/smb2ops.c                    |  30 +-----
+ fs/crypto/crypto.c                   |  28 +----
+ fs/crypto/fname.c                    |  36 ++-----
+ fs/crypto/fscrypt_private.h          |  10 --
+ fs/crypto/keyinfo.c                  |  21 +---
+ include/crypto/drbg.h                |   3 +-
+ include/crypto/if_alg.h              |  13 ---
+ include/linux/crypto.h               |  41 +++++++
+ security/integrity/ima/ima_crypto.c  |  56 +++-------
+ 36 files changed, 316 insertions(+), 742 deletions(-)
 
-Apparently it is called before kcryptd_crypt_write_convert() /
-crypt_alloc_buffer(). However, I don't really parse
-dm_accept_partial_bio() (or the comment about it) so I don't really
-know what it actually does or how it does it. Neither can I see it
-helps in reality anyway.
-
-Here is another test case that shows the problem:
-https://ptpb.pw/BWWo.png
-https://ptpb.pw/aRTE.png
-
-Regards,
-Tom Yan
-
-
-> From: Tom Yan
-> Sent: Monday, August 7, 2017 9:58 AM
-> To: dm-devel@redhat.com
-> Subject: [BUG] BLKZEROOUT on dm-crypt container cause OOM / kernel panic
->
-> Hi all,
->
-> When I do the following:
->
-> cryptsetup open /dev/sdX[Y] rand --type plain --key-file /dev/random;
-> blkdiscard -z /dev/mapper/rand
->
-> Some OOM killings and a kernel panic occur. Here is a screenshot:
-> https://gitlab.com/cryptsetup/cryptsetup/uploads/207ffdada52f3172f54a014c67159625/DSC_0129.JPG
->
-> Similar issue is NOT found in doing `cat /dev/zero > /dev/mapper/rand`, or `blkdiscard -z /dev/sdX[Y]` (without opening a dm-crypt on it), on the same hardware and configuration.
->
-> Note that `blkdiscard -z` does not trigger the BLKDISCARD ioctl but the BLKZEROOUT ioctl. And the devices I have been testing on are USB devices that does NOT support WRITE SAME or UNMAP.
->
-> Regards,
-> Tom Yan
+-- 
+2.1.4
