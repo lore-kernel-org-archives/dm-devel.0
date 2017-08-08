@@ -1,117 +1,43 @@
-From: Tom Yan <tom.ty89@outlook.com>
-Subject: Re: [BUG] BLKZEROOUT on dm-crypt container cause OOM /
-	kernel panic
-Date: Tue, 8 Aug 2017 09:42:31 +0000
-Message-ID: <HK2PR04MB064465B738C469017E3E533D888A0@HK2PR04MB0644.apcprd04.prod.outlook.com>
-References: <HK2PR04MB064468C0371547D1D17C9C5488B50@HK2PR04MB0644.apcprd04.prod.outlook.com>
+From: Gilad Ben-Yossef <gilad-6S/DczAoZh3WXxRugSxzZg@public.gmane.org>
+Subject: Re: [PATCH v4 06/19] crypto: move algif to generic async completion
+Date: Tue, 8 Aug 2017 16:45:36 +0300
+Message-ID: <CAOtvUMfp7Hie_RA8XNmWS084PvyO_xB0VAf2Vt9nR68cQhz3=g@mail.gmail.com>
+References: <1502193834-11289-1-git-send-email-gilad@benyossef.com>
+ <1502193834-11289-7-git-send-email-gilad@benyossef.com> <8585274.Umn6qnzcUd@tauon.chronox.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <HK2PR04MB064468C0371547D1D17C9C5488B50@HK2PR04MB0644.apcprd04.prod.outlook.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>, "gmazyland@gmail.com" <gmazyland@gmail.com>, "axboe@fb.com" <axboe@fb.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "hch@lst.de" <hch@lst.de>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <8585274.Umn6qnzcUd-b2PLbiJbNv8ftSvlWXw0+g@public.gmane.org>
+Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
+Cc: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tom Lendacky <thomas.lendacky-5C7GfCeVMHo@public.gmane.org>, Gary Hook <gary.hook-5C7GfCeVMHo@public.gmane.org>, Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Arnaud Ebalard <arno-LkuqDEemtHBg9hUCZPvPmw@public.gmane.org>, Matthias Brugger <matthias.bgg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Shaohua Li <shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Steve French <sfrench-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, "Theodore Y. Ts'o" <tytso-3s7WtUTddSA@public.gmane.org>, Jaegeuk Kim <jaegeuk-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Dmitry Kasatkin <dmitry.kasatkin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Serge E. Hallyn
 List-Id: dm-devel.ids
 
-Hi again,
+On Tue, Aug 8, 2017 at 4:10 PM, Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org> wrote:
+> Am Dienstag, 8. August 2017, 14:03:37 CEST schrieb Gilad Ben-Yossef:
+>
+> Hi Gilad,
+>
+>> algif starts several async crypto ops and waits for their completion.
+>> Move it over to generic code doing the same.
+>
+> Just FYI: your patch set and my patch [1] will clash.
+>
+> [1] https://patchwork.kernel.org/patch/9875959/
 
-I think I have sort of identified the problem. It appears to me that both t=
-he block layer and dm-crypt is defected on handling this.
+I'll try to rebase on linux-next + your patch than.
 
-First of all, check out the "fallback" zero out implementation, which is us=
-ed in this case, here:
-https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/blo=
-ck/blk-lib.c?h=3Dv4.12#n309
+Thanks for letting me know.
 
-From the outer loop, it seem to imply that this should be done in multiple=
- "bio"s, if the request (original "nr_sects") is larger than BIO_MAX_PAGES:
-
-...
-while (nr_sects !=3D 0) {
-	bio =3D next_bio(bio, min(nr_sects, (sector_t)BIO_MAX_PAGES),
-			gfp_mask);
-...
-}
-...
-
-However, there is a inner loop:
-
-...
-	while (nr_sects !=3D 0) {
-		sz =3D min((sector_t) PAGE_SIZE >> 9 , nr_sects);
-		bi_size =3D bio_add_page(bio, ZERO_PAGE(0), sz << 9, 0);
-		nr_sects -=3D bi_size >> 9;
-		sector +=3D bi_size >> 9;
-		if (bi_size < (sz << 9))
-			break;
-	}
-...
-
-which apparently would loop over the whole request on its own, making the o=
-uter loop a bogus one.
-
-The request ends up being done in a single (huge) bio. When the bio is pass=
-ed on to dm-crypt, it appears that dm-crypt will not split the bio either w=
-hen it allocates buffer for conversion/encryption:
-https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/dri=
-vers/md/dm-crypt.c?h=3Dv4.12#n1694
-
-which leads to possible enormous uptake of memory, causing OOM / kernel pan=
-ic.
-
-There seems to be some measure that is suppose to split large bio though:
-https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/dri=
-vers/md/dm-crypt.c?h=3Dv4.12#n2787
-
-Apparently it is called before kcryptd_crypt_write_convert() / crypt_alloc_=
-buffer(). However, I don't really parse dm_accept_partial_bio() (or the com=
-ment about it) so I don't really know what it actually does or how it does =
-it. Neither can I see it helps in reality anyway.
-
-Here is another test case that shows the problem:
-https://ptpb.pw/BWWo.png
-https://ptpb.pw/aRTE.png
-
-Regards,
-Tom Yan
-
-
-From: Tom Yan
-Sent: Monday, August 7, 2017 9:58 AM
-To: dm-devel@redhat.com
-Subject: [BUG] BLKZEROOUT on dm-crypt container cause OOM / kernel panic
-=A0   =
-
-Hi all,
-
-When I do the following:
-
-cryptsetup open /dev/sdX[Y] rand --type plain --key-file /dev/random;
-blkdiscard -z /dev/mapper/rand
-
-Some OOM killings and a kernel panic occur. Here is a screenshot:
-https://gitlab.com/cryptsetup/cryptsetup/uploads/207ffdada52f3172f54a014c67=
-159625/DSC_0129.JPGhttps://gitlab.com/cryptsetup/cryptsetup/uploads/207ffda=
-da52f3172f54a014c67159625/DSC_0129.JPG =
+Gilad
 
 
 
-Similar issue is NOT found in doing `cat /dev/zero > /dev/mapper/rand`, or =
-`blkdiscard -z /dev/sdX[Y]` (without opening a dm-crypt on it), on the same=
- hardware and configuration.
 
-Note that `blkdiscard -z` does not trigger the BLKDISCARD ioctl but the BLK=
-ZEROOUT ioctl. And the devices I have been testing on are USB devices that =
-does NOT support WRITE SAME or UNMAP.
+-- 
+Gilad Ben-Yossef
+Chief Coffee Drinker
 
-Regards,
-Tom Yan    =
+"If you take a class in large-scale robotics, can you end up in a
+situation where the homework eats your dog?"
+ -- Jean-Baptiste Queru
