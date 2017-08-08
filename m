@@ -1,192 +1,155 @@
 From: Shaohua Li <shli@kernel.org>
-Subject: Re: [PATCH 3/9] md: raid1 nowait support
-Date: Tue, 8 Aug 2017 13:39:07 -0700
-Message-ID: <20170808203907.obfzlkqe4zboipva@kernel.org>
+Subject: Re: [PATCH 5/9] md: raid10 nowait support
+Date: Tue, 8 Aug 2017 13:40:17 -0700
+Message-ID: <20170808204017.mt6p46y3zzznnzyy@kernel.org>
 References: <20170726235806.12148-1-rgoldwyn@suse.de>
- <20170726235806.12148-4-rgoldwyn@suse.de>
+ <20170726235806.12148-6-rgoldwyn@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-block-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20170726235806.12148-4-rgoldwyn@suse.de>
+In-Reply-To: <20170726235806.12148-6-rgoldwyn@suse.de>
 Sender: linux-block-owner@vger.kernel.org
 To: Goldwyn Rodrigues <rgoldwyn@suse.de>
 Cc: linux-block@vger.kernel.org, hch@infradead.org, jack@suse.cz, linux-raid@vger.kernel.org, dm-devel@redhat.com, Goldwyn Rodrigues <rgoldwyn@suse.com>
 List-Id: dm-devel.ids
 
-On Wed, Jul 26, 2017 at 06:58:00PM -0500, Goldwyn Rodrigues wrote:
+On Wed, Jul 26, 2017 at 06:58:02PM -0500, Goldwyn Rodrigues wrote:
 > From: Goldwyn Rodrigues <rgoldwyn@suse.com>
 > 
-> The RAID1 driver would bail with EAGAIN in case of:
->  + I/O has to wait for a barrier
->  + array is frozen
->  + Area is suspended
->  + There are too many pending I/O that it will be queued.
-> 
-> To facilitate error for wait barriers, wait_barrier() is
-> returning bool. True in case if there was a wait (or is not
-> required). False in case a wait was required, but was not performed.
+> Bail and status to EAGAIN if raid10 is going to wait for:
+>  + barriers
+>  + reshape operation
+>  + Too many queued requests
 > 
 > Signed-off-by: Goldwyn Rodrigues <rgoldwyn@suse.com>
 > ---
->  drivers/md/raid1.c | 74 +++++++++++++++++++++++++++++++++++++++++-------------
->  1 file changed, 57 insertions(+), 17 deletions(-)
+>  drivers/md/raid10.c | 62 ++++++++++++++++++++++++++++++++++++++++-------------
+>  1 file changed, 47 insertions(+), 15 deletions(-)
 > 
-> diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
-> index 3febfc8391fb..66ca4288e3e8 100644
-> --- a/drivers/md/raid1.c
-> +++ b/drivers/md/raid1.c
-> @@ -903,8 +903,9 @@ static void lower_barrier(struct r1conf *conf, sector_t sector_nr)
+> diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
+> index 5026e7ad51d3..6d80438c5040 100644
+> --- a/drivers/md/raid10.c
+> +++ b/drivers/md/raid10.c
+> @@ -978,8 +978,9 @@ static void lower_barrier(struct r10conf *conf)
 >  	wake_up(&conf->wait_barrier);
 >  }
 >  
-> -static void _wait_barrier(struct r1conf *conf, int idx)
-> +static bool _wait_barrier(struct r1conf *conf, int idx, bool nowait)
+> -static void wait_barrier(struct r10conf *conf)
+> +static bool wait_barrier(struct r10conf *conf, bool nowait)
 >  {
 > +	bool ret = true;
->  	/*
->  	 * We need to increase conf->nr_pending[idx] very early here,
->  	 * then raise_barrier() can be blocked when it waits for
-> @@ -935,7 +936,7 @@ static void _wait_barrier(struct r1conf *conf, int idx)
->  	 */
->  	if (!READ_ONCE(conf->array_frozen) &&
->  	    !atomic_read(&conf->barrier[idx]))
-> -		return;
-> +		return ret;
->  
->  	/*
->  	 * After holding conf->resync_lock, conf->nr_pending[idx]
-> @@ -953,18 +954,26 @@ static void _wait_barrier(struct r1conf *conf, int idx)
->  	 */
->  	wake_up(&conf->wait_barrier);
->  	/* Wait for the barrier in same barrier unit bucket to drop. */
-> -	wait_event_lock_irq(conf->wait_barrier,
-> -			    !conf->array_frozen &&
-> -			     !atomic_read(&conf->barrier[idx]),
-> -			    conf->resync_lock);
-> +	if (conf->array_frozen || atomic_read(&conf->barrier[idx])) {
-> +		if (nowait)
-> +			ret = false;
-
-In this case, we nr_pending shouldn't be increased
-
-> +		else
-> +			wait_event_lock_irq(conf->wait_barrier,
-> +					!conf->array_frozen &&
-> +					!atomic_read(&conf->barrier[idx]),
-> +					conf->resync_lock);
-> +	}
->  	atomic_inc(&conf->nr_pending[idx]);
->  	atomic_dec(&conf->nr_waiting[idx]);
->  	spin_unlock_irq(&conf->resync_lock);
-> +	return ret;
->  }
->  
-> -static void wait_read_barrier(struct r1conf *conf, sector_t sector_nr)
-> +static bool wait_read_barrier(struct r1conf *conf, sector_t sector_nr,
-> +		bool nowait)
->  {
->  	int idx = sector_to_idx(sector_nr);
-> +	bool ret = true;
->  
->  	/*
->  	 * Very similar to _wait_barrier(). The difference is, for read
-> @@ -976,7 +985,7 @@ static void wait_read_barrier(struct r1conf *conf, sector_t sector_nr)
->  	atomic_inc(&conf->nr_pending[idx]);
->  
->  	if (!READ_ONCE(conf->array_frozen))
-> -		return;
-> +		return ret;
->  
 >  	spin_lock_irq(&conf->resync_lock);
->  	atomic_inc(&conf->nr_waiting[idx]);
-> @@ -987,19 +996,28 @@ static void wait_read_barrier(struct r1conf *conf, sector_t sector_nr)
->  	 */
->  	wake_up(&conf->wait_barrier);
->  	/* Wait for array to be unfrozen */
-> -	wait_event_lock_irq(conf->wait_barrier,
-> -			    !conf->array_frozen,
-> -			    conf->resync_lock);
-> +	if (conf->array_frozen) {
-> +		/* If nowait flag is set, return false to
-> +		 * show we did not wait
-> +		 */
-> +		if (nowait)
-> +			ret = false;
-
-ditto
-> +		else
+>  	if (conf->barrier) {
+>  		conf->nr_waiting++;
+> @@ -993,19 +994,23 @@ static void wait_barrier(struct r10conf *conf)
+>  		 * count down.
+>  		 */
+>  		raid10_log(conf->mddev, "wait barrier");
+> -		wait_event_lock_irq(conf->wait_barrier,
+> -				    !conf->barrier ||
+> -				    (atomic_read(&conf->nr_pending) &&
+> -				     current->bio_list &&
+> -				     (!bio_list_empty(&current->bio_list[0]) ||
+> -				      !bio_list_empty(&current->bio_list[1]))),
+> -				    conf->resync_lock);
+> +		if (!nowait)
 > +			wait_event_lock_irq(conf->wait_barrier,
-> +					!conf->array_frozen,
-> +					conf->resync_lock);
-> +	}
->  	atomic_inc(&conf->nr_pending[idx]);
->  	atomic_dec(&conf->nr_waiting[idx]);
+> +					    !conf->barrier ||
+> +				            (atomic_read(&conf->nr_pending) &&
+> +				             current->bio_list &&
+> +				             (!bio_list_empty(&current->bio_list[0]) ||
+> +				              !bio_list_empty(&current->bio_list[1]))),
+> +					    conf->resync_lock);
+> +		else
+> +			ret = false;
+same here, nr_pending shouldn't be increased
+
+>  		conf->nr_waiting--;
+>  		if (!conf->nr_waiting)
+>  			wake_up(&conf->wait_barrier);
+>  	}
+>  	atomic_inc(&conf->nr_pending);
 >  	spin_unlock_irq(&conf->resync_lock);
 > +	return ret;
 >  }
 >  
-> -static void wait_barrier(struct r1conf *conf, sector_t sector_nr)
-> +static bool wait_barrier(struct r1conf *conf, sector_t sector_nr, bool nowait)
->  {
->  	int idx = sector_to_idx(sector_nr);
->  
-> -	_wait_barrier(conf, idx);
-> +	return _wait_barrier(conf, idx, nowait);
->  }
->  
->  static void wait_all_barriers(struct r1conf *conf)
-> @@ -1007,7 +1025,7 @@ static void wait_all_barriers(struct r1conf *conf)
->  	int idx;
->  
->  	for (idx = 0; idx < BARRIER_BUCKETS_NR; idx++)
-> -		_wait_barrier(conf, idx);
-> +		_wait_barrier(conf, idx, false);
->  }
->  
->  static void _allow_barrier(struct r1conf *conf, int idx)
-> @@ -1223,7 +1241,11 @@ static void raid1_read_request(struct mddev *mddev, struct bio *bio,
->  	 * Still need barrier for READ in case that whole
->  	 * array is frozen.
+>  static void allow_barrier(struct r10conf *conf)
+> @@ -1158,7 +1163,10 @@ static void raid10_read_request(struct mddev *mddev, struct bio *bio,
+>  	 * thread has put up a bar for new requests.
+>  	 * Continue immediately if no resync is active currently.
 >  	 */
-> -	wait_read_barrier(conf, bio->bi_iter.bi_sector);
-> +	if (!wait_read_barrier(conf, bio->bi_iter.bi_sector,
-> +				bio->bi_opf & REQ_NOWAIT)) {
+> -	wait_barrier(conf);
+> +	if (!wait_barrier(conf, bio->bi_opf & REQ_NOWAIT)) {
 > +		bio_wouldblock_error(bio);
 > +		return;
 > +	}
 >  
->  	if (!r1_bio)
->  		r1_bio = alloc_r1bio(mddev, bio);
-> @@ -1333,6 +1355,11 @@ static void raid1_write_request(struct mddev *mddev, struct bio *bio,
->  		 * an interruptible wait.
+>  	sectors = r10_bio->sectors;
+>  	while (test_bit(MD_RECOVERY_RESHAPE, &mddev->recovery) &&
+> @@ -1169,12 +1177,16 @@ static void raid10_read_request(struct mddev *mddev, struct bio *bio,
+>  		 * pass
 >  		 */
->  		DEFINE_WAIT(w);
+>  		raid10_log(conf->mddev, "wait reshape");
 > +		if (bio->bi_opf & REQ_NOWAIT) {
 > +			bio_wouldblock_error(bio);
 > +			return;
 > +		}
-> +
->  		for (;;) {
->  			sigset_t full, old;
->  			prepare_to_wait(&conf->wait_barrier,
-> @@ -1351,7 +1378,11 @@ static void raid1_write_request(struct mddev *mddev, struct bio *bio,
->  		}
->  		finish_wait(&conf->wait_barrier, &w);
+>  		allow_barrier(conf);
+>  		wait_event(conf->wait_barrier,
+>  			   conf->reshape_progress <= bio->bi_iter.bi_sector ||
+>  			   conf->reshape_progress >= bio->bi_iter.bi_sector +
+>  			   sectors);
+> -		wait_barrier(conf);
+> +		wait_barrier(conf, false);
 >  	}
-> -	wait_barrier(conf, bio->bi_iter.bi_sector);
-> +	if (!wait_barrier(conf, bio->bi_iter.bi_sector,
-> +				bio->bi_opf & REQ_NOWAIT)) {
+>  
+>  	rdev = read_balance(conf, r10_bio, &max_sectors);
+> @@ -1308,7 +1320,10 @@ static void raid10_write_request(struct mddev *mddev, struct bio *bio,
+>  	 * thread has put up a bar for new requests.
+>  	 * Continue immediately if no resync is active currently.
+>  	 */
+> -	wait_barrier(conf);
+> +	if (!wait_barrier(conf, bio->bi_opf & REQ_NOWAIT)) {
 > +		bio_wouldblock_error(bio);
 > +		return;
 > +	}
 >  
->  	r1_bio = alloc_r1bio(mddev, bio);
->  	r1_bio->sectors = max_write_sectors;
-> @@ -1359,6 +1390,10 @@ static void raid1_write_request(struct mddev *mddev, struct bio *bio,
+>  	sectors = r10_bio->sectors;
+>  	while (test_bit(MD_RECOVERY_RESHAPE, &mddev->recovery) &&
+> @@ -1319,12 +1334,16 @@ static void raid10_write_request(struct mddev *mddev, struct bio *bio,
+>  		 * pass
+>  		 */
+>  		raid10_log(conf->mddev, "wait reshape");
+> +		if (bio->bi_opf & REQ_NOWAIT) {
+> +			bio_wouldblock_error(bio);
+> +			return;
+> +		}
+>  		allow_barrier(conf);
+>  		wait_event(conf->wait_barrier,
+>  			   conf->reshape_progress <= bio->bi_iter.bi_sector ||
+>  			   conf->reshape_progress >= bio->bi_iter.bi_sector +
+>  			   sectors);
+> -		wait_barrier(conf);
+> +		wait_barrier(conf, false);
+>  	}
+>  
+>  	if (test_bit(MD_RECOVERY_RESHAPE, &mddev->recovery) &&
+> @@ -1339,6 +1358,10 @@ static void raid10_write_request(struct mddev *mddev, struct bio *bio,
+>  			      BIT(MD_SB_CHANGE_DEVS) | BIT(MD_SB_CHANGE_PENDING));
+>  		md_wakeup_thread(mddev->thread);
+>  		raid10_log(conf->mddev, "wait reshape metadata");
+> +		if (bio->bi_opf & REQ_NOWAIT) {
+> +			bio_wouldblock_error(bio);
+> +			return;
+> +		}
+>  		wait_event(mddev->sb_wait,
+>  			   !test_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags));
+>  
+> @@ -1348,6 +1371,10 @@ static void raid10_write_request(struct mddev *mddev, struct bio *bio,
 >  	if (conf->pending_count >= max_queued_requests) {
 >  		md_wakeup_thread(mddev->thread);
->  		raid1_log(mddev, "wait queued");
+>  		raid10_log(mddev, "wait queued");
 > +		if (bio->bi_opf & REQ_NOWAIT) {
 > +			bio_wouldblock_error(bio);
 > +			return;
@@ -194,31 +157,45 @@ ditto
 >  		wait_event(conf->wait_barrier,
 >  			   conf->pending_count < max_queued_requests);
 >  	}
-> @@ -1442,6 +1477,11 @@ static void raid1_write_request(struct mddev *mddev, struct bio *bio,
->  		/* Wait for this device to become unblocked */
+> @@ -1454,6 +1481,11 @@ static void raid10_write_request(struct mddev *mddev, struct bio *bio,
 >  		int j;
+>  		int d;
 >  
 > +		if (bio->bi_opf & REQ_NOWAIT) {
 > +			bio_wouldblock_error(bio);
 > +			return;
 > +		}
 > +
->  		for (j = 0; j < i; j++)
->  			if (r1_bio->bios[j])
->  				rdev_dec_pending(conf->mirrors[j].rdev, mddev);
-> @@ -1449,7 +1489,7 @@ static void raid1_write_request(struct mddev *mddev, struct bio *bio,
->  		allow_barrier(conf, bio->bi_iter.bi_sector);
->  		raid1_log(mddev, "wait rdev %d blocked", blocked_rdev->raid_disk);
+>  		for (j = 0; j < i; j++) {
+>  			if (r10_bio->devs[j].bio) {
+>  				d = r10_bio->devs[j].devnum;
+> @@ -1474,7 +1506,7 @@ static void raid10_write_request(struct mddev *mddev, struct bio *bio,
+>  		allow_barrier(conf);
+>  		raid10_log(conf->mddev, "wait rdev %d blocked", blocked_rdev->raid_disk);
 >  		md_wait_for_blocked_rdev(blocked_rdev, mddev);
-> -		wait_barrier(conf, bio->bi_iter.bi_sector);
-> +		wait_barrier(conf, bio->bi_iter.bi_sector, false);
-
-There are other cases we could block, for example, md_wait_for_blocked_rdev
-here. Is the goal just avoid block for normal situations?
-
+> -		wait_barrier(conf);
+> +		wait_barrier(conf, false);
 >  		goto retry_write;
 >  	}
 >  
+> @@ -1703,7 +1735,7 @@ static void print_conf(struct r10conf *conf)
+>  
+>  static void close_sync(struct r10conf *conf)
+>  {
+> -	wait_barrier(conf);
+> +	wait_barrier(conf, false);
+>  	allow_barrier(conf);
+>  
+>  	mempool_destroy(conf->r10buf_pool);
+> @@ -4347,7 +4379,7 @@ static sector_t reshape_request(struct mddev *mddev, sector_t sector_nr,
+>  	if (need_flush ||
+>  	    time_after(jiffies, conf->reshape_checkpoint + 10*HZ)) {
+>  		/* Need to update reshape_position in metadata */
+> -		wait_barrier(conf);
+> +		wait_barrier(conf, false);
+>  		mddev->reshape_position = conf->reshape_progress;
+>  		if (mddev->reshape_backwards)
+>  			mddev->curr_resync_completed = raid10_size(mddev, 0, 0)
 > -- 
 > 2.12.3
 > 
