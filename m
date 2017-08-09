@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 1/2] bio-integrity: move the bio integrity profile check earlier in bio_integrity_prep
-Date: Wed,  9 Aug 2017 17:48:08 +0200
-Message-ID: <20170809154809.2168-2-hch@lst.de>
+Subject: [PATCH 2/2] dm-crypt: don't mess with BIP_BLOCK_INTEGRITY
+Date: Wed,  9 Aug 2017 17:48:09 +0200
+Message-ID: <20170809154809.2168-3-hch@lst.de>
 References: <20170809154809.2168-1-hch@lst.de>
 Return-path: <linux-block-owner@vger.kernel.org>
 In-Reply-To: <20170809154809.2168-1-hch@lst.de>
@@ -10,37 +10,27 @@ To: axboe@kernel.dk
 Cc: mpatocka@redhat.com, gmazyland@gmail.com, martin.petersen@oracle.com, linux-block@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This makes the code more obvious, and moves the most likely branch first
-in the function.
+This flag is never set right after calling bio_integrity_alloc,
+so don't clear it and confuse the reader.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- block/bio-integrity.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ drivers/md/dm-crypt.c | 3 ---
+ 1 file changed, 3 deletions(-)
 
-diff --git a/block/bio-integrity.c b/block/bio-integrity.c
-index 9b1ea478577b..fafd19c540b0 100644
---- a/block/bio-integrity.c
-+++ b/block/bio-integrity.c
-@@ -246,6 +246,9 @@ bool bio_integrity_prep(struct bio *bio)
- 	blk_status_t status;
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index cdf6b1e12460..73c2e270cda6 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -933,9 +933,6 @@ static int dm_crypt_integrity_io_alloc(struct dm_crypt_io *io, struct bio *bio)
+ 	bip->bip_iter.bi_size = tag_len;
+ 	bip->bip_iter.bi_sector = io->cc->start + io->sector;
  
- 	bi = bdev_get_integrity(bio->bi_bdev);
-+	if (!bi)
-+		return true;
-+
- 	q = bdev_get_queue(bio->bi_bdev);
- 	if (bio_op(bio) != REQ_OP_READ && bio_op(bio) != REQ_OP_WRITE)
- 		return true;
-@@ -257,9 +260,6 @@ bool bio_integrity_prep(struct bio *bio)
- 	if (bio_integrity(bio))
- 		return true;
- 
--	if (bi == NULL)
--		return true;
+-	/* We own the metadata, do not let bio_free to release it */
+-	bip->bip_flags &= ~BIP_BLOCK_INTEGRITY;
 -
- 	if (bio_data_dir(bio) == READ) {
- 		if (!bi->profile->verify_fn ||
- 		    !(bi->flags & BLK_INTEGRITY_VERIFY))
+ 	ret = bio_integrity_add_page(bio, virt_to_page(io->integrity_metadata),
+ 				     tag_len, offset_in_page(io->integrity_metadata));
+ 	if (unlikely(ret != tag_len))
 -- 
 2.11.0
