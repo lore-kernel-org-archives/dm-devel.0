@@ -1,36 +1,33 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 2/2] dm-crypt: don't mess with BIP_BLOCK_INTEGRITY
-Date: Wed,  9 Aug 2017 17:48:09 +0200
-Message-ID: <20170809154809.2168-3-hch@lst.de>
-References: <20170809154809.2168-1-hch@lst.de>
+From: Jens Axboe <axboe@kernel.dk>
+Subject: Re: integrity regression fixes for 4.13-rc
+Date: Wed, 9 Aug 2017 09:59:56 -0600
+Message-ID: <52b6068c-9f13-020a-1a3f-f4ecfebd92fd@kernel.dk>
+References: <20170809154727.2085-1-hch@lst.de>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20170809154809.2168-1-hch@lst.de>
+In-Reply-To: <20170809154727.2085-1-hch@lst.de>
+Content-Language: en-US
 Sender: linux-block-owner@vger.kernel.org
-To: axboe@kernel.dk
+To: Christoph Hellwig <hch@lst.de>
 Cc: mpatocka@redhat.com, gmazyland@gmail.com, martin.petersen@oracle.com, linux-block@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This flag is never set right after calling bio_integrity_alloc,
-so don't clear it and confuse the reader.
+On 08/09/2017 09:47 AM, Christoph Hellwig wrote:
+> Hi Jens,
+> 
+> this series fixes regressions in the integrity handling update in 4.13-rc.
+> 
+> The first one was sent earlier by Milan and while both Martin and I aren't
+> exactly happy about the way dm uses the integrity code to cause this
+> regression this minimal fix gets us back to the status quo.
+> 
+> The second one makes sure that we only verify the DIF checksums on the
+> lowest layer where we attach the integrity information.
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
----
- drivers/md/dm-crypt.c | 3 ---
- 1 file changed, 3 deletions(-)
+Thanks, I was waiting on these. Applied for 4.13. I did just ship off
+a pull request, but I'll get this in for the next -rc.
 
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index cdf6b1e12460..73c2e270cda6 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -933,9 +933,6 @@ static int dm_crypt_integrity_io_alloc(struct dm_crypt_io *io, struct bio *bio)
- 	bip->bip_iter.bi_size = tag_len;
- 	bip->bip_iter.bi_sector = io->cc->start + io->sector;
- 
--	/* We own the metadata, do not let bio_free to release it */
--	bip->bip_flags &= ~BIP_BLOCK_INTEGRITY;
--
- 	ret = bio_integrity_add_page(bio, virt_to_page(io->integrity_metadata),
- 				     tag_len, offset_in_page(io->integrity_metadata));
- 	if (unlikely(ret != tag_len))
 -- 
-2.11.0
+Jens Axboe
