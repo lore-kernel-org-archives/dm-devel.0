@@ -1,51 +1,37 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: remove Sun StorEdge T4(6020,
-	6120, 6320) arrays from hwtable
-Date: Wed,  9 Aug 2017 19:00:56 +0200
-Message-ID: <20170809170056.5015-1-xose.vazquez@gmail.com>
+From: Bart Van Assche <Bart.VanAssche@wdc.com>
+Subject: Re: [v4.13-rc BUG] system lockup when running big buffered write(4M)
+ to IB SRP via mpath
+Date: Wed, 9 Aug 2017 17:10:01 +0000
+Message-ID: <1502298599.2356.7.camel@wdc.com>
+References: <20170808141715.GB22763@ming.t460p>
+         <1502237504.4017.1.camel@redhat.com> <1502245693.6511.3.camel@redhat.com>
+         <c072e942-0265-f0ad-561d-0e50d50e3cb1@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Cc: James Cassidy <jcassidy@qfire.net>, device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <c072e942-0265-f0ad-561d-0e50d50e3cb1@redhat.com>
+Content-Language: en-US
+Content-ID: <383872F987413C46BD0A1ACAF1D645EA@namprd04.prod.outlook.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "loberman@redhat.com" <loberman@redhat.com>, "ming.lei@redhat.com" <ming.lei@redhat.com>
+Cc: Bart Van Assche <Bart.VanAssche@wdc.com>
 List-Id: dm-devel.ids
 
-Multipathing for these arrays is not supported by multipath-tools.
-Only available with Sun StorEdge Traffic Manager software.
-Or with a "new" infrastructure: https://marc.info/?l=dm-devel&m=116322662722330
-
-Cc: James Cassidy <jcassidy@qfire.net>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- libmultipath/hwtable.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
-
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 9e14ec1..dd3d12f 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -796,9 +796,9 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = 30,
- 	},
- 	{
--		/* 3510 / 6020 and 6120 */
-+		/* 3510 */
- 		.vendor        = "SUN",
--		.product       = "(StorEdge 3510|T4)",
-+		.product       = "StorEdge 3510",
- 		.pgpolicy      = MULTIBUS,
- 	},
- 	{
--- 
-2.13.4
+T24gV2VkLCAyMDE3LTA4LTA5IGF0IDEyOjQzIC0wNDAwLCBMYXVyZW5jZSBPYmVybWFuIHdyb3Rl
+Og0KPiBZb3VyIGxhdGVzdCBwYXRjaCBvbiBzdG9jayB1cHN0cmVhbSB3aXRob3V0IE1pbmcncyBs
+YXRlc3QgcGF0Y2hlcyBpcyANCj4gYmVoYXZpbmcgZm9yIG1lLg0KPiANCj4gQXMgYWxyZWFkeSBt
+ZW50aW9uZWQsIHRoZSByZXF1ZXVlIC0xMSBhbmQgY2xvbmUgZmFpbHVyZSBtZXNzYWdlcyBhcmUg
+DQo+IGdvbmUgYW5kIEkgYW0gbm90IGFjdHVhbGx5IHNlZWluZyBhbnkgc29mdCBsb2NrdXBzIG9y
+IGhhcmQgbG9ja3Vwcy4NCj4gDQo+IFdoZW4gTWluZyBnZXRzIGJhY2sgSSB3aWxsIHdvcmsgd2l0
+aCBoaW0gb24gaGlzIHBhdGNoIHNldCBhbmQgdGhlIGxvY2t1cHMuDQo+IA0KPiBSdW5uaW5nIDEw
+IHBhcmFsbGVsIHdyaXRlcyB3aGljaCBlYXNpbHkgdHJpcHMgaW50byBzb2Z0IGxvY2t1cHMgb24g
+DQo+IE1pbmcncyBrZXJuZWwgKGV2ZW4gd2l0aCB5b3VyIHBhdGNoKSBoYXMgYmVlbiBzdGFibGUg
+aGVyZSBvbiA0LjEzLVJDMyANCj4gd2l0aCB5b3VyIHBhdGNoLg0KPiANCj4gSSB3aWxsIGxlYXZl
+IGl0IHJ1bm5pbmcgZm9yIGEgd2hpbGUgbm93IGJ1dCB0aGUgcGF0Y2ggaXMgZ29vZC4NCj4gDQo+
+IElmIGl0IHN1cnZpdmVzIDQgaG91cnMgSSB3aWxsIGFkZCBhIFRlc3RlZC1ieSB0byB5b3VyIGxh
+dGVzdCBwYXRjaC4NCg0KSGVsbG8gTGF1cmVuY2UsDQoNCkknbSB3b3JraW5nIG9uIGFuIGFkZGl0
+aW9uYWwgcGF0Y2ggdGhhdCBzaG91bGQgcmVkdWNlIHVubmVjZXNzYXJ5IHJlcXVldWluZw0KZXZl
+biBmdXJ0aGVyLiBJIHdpbGwgbGV0IHlvdSBrbm93IHdoZW4gaXQncyByZWFkeS4NCg0KQWRkaXRp
+b25hbGx5LCBwbGVhc2UgdHJpbSBlLW1haWxzIHdoZW4gcmVwbHlpbmcgc3VjaCB0aGF0IGUtbWFp
+bHMgZG8gbm90IGdldA0KdG9vIGxvbmcuDQoNClRoYW5rcywNCg0KQmFydC4=
