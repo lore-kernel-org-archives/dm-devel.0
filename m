@@ -1,109 +1,89 @@
-From: Goldwyn Rodrigues <rgoldwyn@suse.de>
-Subject: Re: [PATCH 1/9] QUEUE_FLAG_NOWAIT to indicate device supports nowait
-Date: Wed, 9 Aug 2017 10:35:39 -0500
-Message-ID: <de5000a0-a52c-bce4-de4f-ab39aae4b593@suse.de>
-References: <20170726235806.12148-1-rgoldwyn@suse.de>
- <20170726235806.12148-2-rgoldwyn@suse.de>
- <20170808203246.sdjnpzixxz5brjaf@kernel.org>
- <51cdf08c-c8a4-6bbd-3342-7cdb2b510668@suse.de>
- <20170809150205.4dm3vskyjqzyejsq@kernel.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+From: Christoph Hellwig <hch@lst.de>
+Subject: [PATCH 1/2] bio-integrity: Fix regression if profile verify_fn is NULL
+Date: Wed,  9 Aug 2017 17:47:26 +0200
+Message-ID: <20170809154727.2085-2-hch@lst.de>
+References: <20170809154727.2085-1-hch@lst.de>
 Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20170809150205.4dm3vskyjqzyejsq@kernel.org>
-Content-Language: en-US
+In-Reply-To: <20170809154727.2085-1-hch@lst.de>
 Sender: linux-block-owner@vger.kernel.org
-To: Shaohua Li <shli@kernel.org>
-Cc: linux-block@vger.kernel.org, hch@infradead.org, jack@suse.cz, linux-raid@vger.kernel.org, dm-devel@redhat.com, Goldwyn Rodrigues <rgoldwyn@suse.com>
+To: axboe@kernel.dk
+Cc: mpatocka@redhat.com, gmazyland@gmail.com, martin.petersen@oracle.com, linux-block@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+From: Milan Broz <gmazyland@gmail.com>
 
+In dm-integrity target we register integrity profile that have
+both generate_fn and verify_fn callbacks set to NULL.
 
-On 08/09/2017 10:02 AM, Shaohua Li wrote:
-> On Wed, Aug 09, 2017 at 06:44:55AM -0500, Goldwyn Rodrigues wrote:
->>
->>
->> On 08/08/2017 03:32 PM, Shaohua Li wrote:
->>> On Wed, Jul 26, 2017 at 06:57:58PM -0500, Goldwyn Rodrigues wrote:
->>>> From: Goldwyn Rodrigues <rgoldwyn@suse.com>
->>>>
->>>> Nowait is a feature of direct AIO, where users can request
->>>> to return immediately if the I/O is going to block. This translates
->>>> to REQ_NOWAIT in bio.bi_opf flags. While request based devices
->>>> don't wait, stacked devices such as md/dm will.
->>>>
->>>> In order to explicitly mark stacked devices as supported, we
->>>> set the QUEUE_FLAG_NOWAIT in the queue_flags and return -EAGAIN
->>>> whenever the device would block.
->>>
->>> probably you should route this patch to Jens first, DM/MD are different trees.
->>
->> Yes, I have sent it to linux-block as well, and he has commented as well.
->>
->>
->>>  
->>>> Signed-off-by: Goldwyn Rodrigues <rgoldwyn@suse.com>
->>>> ---
->>>>  block/blk-core.c       | 3 ++-
->>>>  include/linux/blkdev.h | 2 ++
->>>>  2 files changed, 4 insertions(+), 1 deletion(-)
->>>>
->>>> diff --git a/block/blk-core.c b/block/blk-core.c
->>>> index 970b9c9638c5..1c9a981d88e5 100644
->>>> --- a/block/blk-core.c
->>>> +++ b/block/blk-core.c
->>>> @@ -2025,7 +2025,8 @@ generic_make_request_checks(struct bio *bio)
->>>>  	 * if queue is not a request based queue.
->>>>  	 */
->>>>  
->>>> -	if ((bio->bi_opf & REQ_NOWAIT) && !queue_is_rq_based(q))
->>>> +	if ((bio->bi_opf & REQ_NOWAIT) && !queue_is_rq_based(q) &&
->>>> +	    !blk_queue_supports_nowait(q))
->>>>  		goto not_supported;
->>>>  
->>>>  	part = bio->bi_bdev->bd_part;
->>>> diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
->>>> index 25f6a0cb27d3..fae021ebec1b 100644
->>>> --- a/include/linux/blkdev.h
->>>> +++ b/include/linux/blkdev.h
->>>> @@ -633,6 +633,7 @@ struct request_queue {
->>>>  #define QUEUE_FLAG_REGISTERED  29	/* queue has been registered to a disk */
->>>>  #define QUEUE_FLAG_SCSI_PASSTHROUGH 30	/* queue supports SCSI commands */
->>>>  #define QUEUE_FLAG_QUIESCED    31	/* queue has been quiesced */
->>>> +#define QUEUE_FLAG_NOWAIT      32	/* stack device driver supports REQ_NOWAIT */
->>>>  
->>>>  #define QUEUE_FLAG_DEFAULT	((1 << QUEUE_FLAG_IO_STAT) |		\
->>>>  				 (1 << QUEUE_FLAG_STACKABLE)	|	\
->>>> @@ -732,6 +733,7 @@ static inline void queue_flag_clear(unsigned int flag, struct request_queue *q)
->>>>  #define blk_queue_dax(q)	test_bit(QUEUE_FLAG_DAX, &(q)->queue_flags)
->>>>  #define blk_queue_scsi_passthrough(q)	\
->>>>  	test_bit(QUEUE_FLAG_SCSI_PASSTHROUGH, &(q)->queue_flags)
->>>> +#define blk_queue_supports_nowait(q)	test_bit(QUEUE_FLAG_NOWAIT, &(q)->queue_flags)
->>>
->>> Should this bit consider under layer disks? For example, one raid array disk
->>> doesn't support NOWAIT, shouldn't we disable NOWAIT for the array?
->>
->> Yes, it should. I will add a check before setting the flag. Thanks.
->> Request-based devices don't wait. So, they would not have this flag set.
->> It is only the bio-based, with the  make_request_fn hook which need this.
->>
->>>  
->>> I have another generic question. If a bio is splitted into 2 bios, one bio
->>> doesn't need to wait but the other need to wait. We will return -EAGAIN for the
->>> second bio, so the whole bio will return -EAGAIN, but the first bio is already
->>> dispatched to disk. Is this correct behavior?
->>>
->>
->> No, from a multi-device point of view, this is inconsistent. I have
->> tried the request bio returns -EAGAIN before the split, but I shall
->> check again. Where do you see this happening?
-> 
-> No, this isn't multi-device specific, any driver can do it. Please see blk_queue_split.
-> 
+This is used if dm-integrity is stacked under a dm-crypt device
+for authenticated encryption (integrity payload contains authentication
+tag and IV seed).
 
-In that case, the bio end_io function is chained and the bio of the
-split will replicate the error to the parent (if not already set).
+In this case the verification is done through own crypto API
+processing inside dm-crypt; integrity profile is only holder
+of these data. (And memory is owned by dm-crypt as well.)
 
+After the commit (and previous changes)
+  Commit 7c20f11680a441df09de7235206f70115fbf6290
+  Author: Christoph Hellwig <hch@lst.de>
+  Date:   Mon Jul 3 16:58:43 2017 -0600
+
+    bio-integrity: stop abusing bi_end_io
+
+we get this crash:
+
+: BUG: unable to handle kernel NULL pointer dereference at   (null)
+: IP:   (null)
+: *pde = 00000000
+...
+:
+: Workqueue: kintegrityd bio_integrity_verify_fn
+: task: f48ae180 task.stack: f4b5c000
+: EIP:   (null)
+: EFLAGS: 00210286 CPU: 0
+: EAX: f4b5debc EBX: 00001000 ECX: 00000001 EDX: 00000000
+: ESI: 00001000 EDI: ed25f000 EBP: f4b5dee8 ESP: f4b5dea4
+:  DS: 007b ES: 007b FS: 00d8 GS: 00e0 SS: 0068
+: CR0: 80050033 CR2: 00000000 CR3: 32823000 CR4: 001406d0
+: Call Trace:
+:  ? bio_integrity_process+0xe3/0x1e0
+:  bio_integrity_verify_fn+0xea/0x150
+:  process_one_work+0x1c7/0x5c0
+:  worker_thread+0x39/0x380
+:  kthread+0xd6/0x110
+:  ? process_one_work+0x5c0/0x5c0
+:  ? kthread_worker_fn+0x100/0x100
+:  ? kthread_worker_fn+0x100/0x100
+:  ret_from_fork+0x19/0x24
+: Code:  Bad EIP value.
+: EIP:   (null) SS:ESP: 0068:f4b5dea4
+: CR2: 0000000000000000
+
+Patch just skip the whole verify workqueue if verify_fn is set to NULL.
+
+Fixes: 7c20f116 ("bio-integrity: stop abusing bi_end_io")
+Signed-off-by: Milan Broz <gmazyland@gmail.com>
+[hch: trivial whitespace fix]
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+---
+ block/bio-integrity.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/block/bio-integrity.c b/block/bio-integrity.c
+index 83e92beb3c9f..dcfb968c8259 100644
+--- a/block/bio-integrity.c
++++ b/block/bio-integrity.c
+@@ -387,7 +387,10 @@ static void bio_integrity_verify_fn(struct work_struct *work)
+  */
+ bool __bio_integrity_endio(struct bio *bio)
+ {
+-	if (bio_op(bio) == REQ_OP_READ && !bio->bi_status) {
++	struct blk_integrity *bi = bdev_get_integrity(bio->bi_bdev);
++
++	if (bio_op(bio) == REQ_OP_READ && !bio->bi_status &&
++	    bi->profile->verify_fn)
+ 		struct bio_integrity_payload *bip = bio_integrity(bio);
+ 
+ 		INIT_WORK(&bip->bip_work, bio_integrity_verify_fn);
 -- 
-Goldwyn
+2.11.0
