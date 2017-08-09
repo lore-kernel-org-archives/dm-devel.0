@@ -1,17 +1,14 @@
-From: Bart Van Assche <Bart.VanAssche@wdc.com>
-Subject: Re: [PATCH V2] multipathd daemon: Fix incorrect use of
- CLOCK_MONOTONIC in pthread
-Date: Wed, 9 Aug 2017 16:25:06 +0000
-Message-ID: <1502295904.2356.5.camel@wdc.com>
-References: <20170809132214.3081-1-fge@redhat.com>
-	<20170809162126.7831-1-fge@redhat.com>
+From: Bart Van Assche <bart.vanassche@wdc.com>
+Subject: [PATCH 1/7] dm: Fix the second dec_pending() argument in
+	__split_and_process_bio()
+Date: Wed, 9 Aug 2017 11:32:10 -0700
+Message-ID: <20170809183216.526-2-bart.vanassche@wdc.com>
+References: <20170809183216.526-1-bart.vanassche@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170809162126.7831-1-fge@redhat.com>
-Content-Language: en-US
-Content-ID: <BEDEB9B4AB7D4C4FB91D7670F3E44661@namprd04.prod.outlook.com>
+In-Reply-To: <20170809183216.526-1-bart.vanassche@wdc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,22 +18,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>, "fge@redhat.com" <fge@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Bart Van Assche <bart.vanassche@wdc.com>, dm-devel@redhat.com, Laurence Oberman <loberman@redhat.com>, Christoph Hellwig <hch@lst.de>
 List-Id: dm-devel.ids
 
-On Thu, 2017-08-10 at 00:21 +0800, Gris Ge wrote:
-> diff --git a/multipathd/cli.c b/multipathd/cli.c
-> index 32d49766..002abe61 100644
-> --- a/multipathd/cli.c
-> +++ b/multipathd/cli.c
-> @@ -475,7 +475,7 @@ parse_cmd (char * cmd, char ** reply, int * len, void * data, int timeout )
->  	/*
->  	 * execute handler
->  	 */
-> -	if (clock_gettime(CLOCK_MONOTONIC, &tmo) == 0) {
-> +	if (clock_gettime(CLOCK_REALTIME, &tmo) == 0) {
->  		tmo.tv_sec += timeout;
->  	} else {
->  		tmo.tv_sec = 0;
+Detected by sparse.
 
-Reviewed-by: Bart Van Assche <bart.vanassche@wdc.com>
+Fixes: commit 4e4cbee93d56 ("block: switch bios to blk_status_t")
+Signed-off-by: Bart Van Assche <bart.vanassche@wdc.com>
+Cc: Christoph Hellwig <hch@lst.de>
+Cc: Laurence Oberman <loberman@redhat.com>
+---
+ drivers/md/dm.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 2edbcc2d7d3f..8298670757e9 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1523,7 +1523,7 @@ static void __split_and_process_bio(struct mapped_device *md,
+ 	}
+ 
+ 	/* drop the extra reference count */
+-	dec_pending(ci.io, error);
++	dec_pending(ci.io, errno_to_blk_status(error));
+ }
+ /*-----------------------------------------------------------------
+  * CRUD END
+-- 
+2.13.3
