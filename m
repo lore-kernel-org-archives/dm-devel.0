@@ -1,39 +1,27 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH v4 00/11] multipath-tools:
- no_path_retry/queue_if_no_path/hwhandler logic
-Date: Wed, 09 Aug 2017 15:19:17 +0200
-Message-ID: <1502284757.4342.5.camel@suse.com>
-References: <20170622145913.23714-1-mwilck@suse.com>
-	<CABr-Gnd17UcGvSxAOR-s8YqNU3+3tNqGe6JzaxBEewWF0VLBbg@mail.gmail.com>
+From: Christoph Hellwig <hch@lst.de>
+Subject: Re: [PATCH] bio-integrity: revert "stop abusing bi_end_io"
+Date: Wed, 9 Aug 2017 16:07:23 +0200
+Message-ID: <20170809140723.GA26843@lst.de>
+References: <20170802122750.12216-1-gmazyland@gmail.com> <20170802125509.GA18977@lst.de> <alpine.LRH.2.02.1708030938110.21391@file01.intranet.prod.int.rdu2.redhat.com> <20170805134418.GB17694@lst.de> <yq13795epil.fsf@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CABr-Gnd17UcGvSxAOR-s8YqNU3+3tNqGe6JzaxBEewWF0VLBbg@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <yq13795epil.fsf@oracle.com>
+Sender: linux-block-owner@vger.kernel.org
+To: "Martin K. Petersen" <martin.petersen@oracle.com>
+Cc: Christoph Hellwig <hch@lst.de>, Mikulas Patocka <mpatocka@redhat.com>, Milan Broz <gmazyland@gmail.com>, linux-block@vger.kernel.org, axboe@kernel.dk, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-SGkgQ2hyaXN0b3BoZSwKCk9uIFRodSwgMjAxNy0wOC0wMyBhdCAwODozNiArMDIwMCwgQ2hyaXN0
-b3BoZSBWYXJvcXVpIHdyb3RlOgo+IFBhdGNoIDEgdG8gOSBhcmUgbm93IG1lcmdlZC4KClNvIHlv
-dSBoYXZlIGlzc3VlcyB3aXRoIHBhdGNoIDEwIGFuZCAxMT8gQ291bGQgeW91IGVsYWJvcmF0ZSwg
-b3IgYWR2aXNlCndoYXQgeW91J2QgbGlrZSB0byBoYXZlIGNoYW5nZWQ/Cgo+ID4gICgxMC8xMSkg
-bGlibXVsdGlwYXRoOiBkb24ndCB0cnkgdG8gc2V0IGh3aGFuZGxlciBpZiBpdCBpcyByZXRhaW5l
-ZAo+ID4gICgxMS8xMSkgbGlibXVsdGlwYXRoOiBkb24ndCBbdW5dc2V0IHF1ZXVlX2lmX25vX3Bh
-dGggYWZ0ZXIgZG9tYXAKCjExLzExIGNhbiBiZSB2aWV3ZWQgYXMgYW4gb3B0aW1pemF0aW9uIG9u
-bHkgKHRob3VnaCBhIHJlYXNvbmFibGUgb25lLCBJCnRoaW5rKSwgYnV0IDEwLzExIGlzIGltcG9y
-dGFudCB0byBwcmVzZXJ2ZSBjb25zaXN0ZW50IHN0YXRlIGJldHdlZW4Ka2VybmVsIGFuZCBtdWx0
-aXBhdGhkLgoKTWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwg
-VGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1l
-bmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8
-cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0
-cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+On Sat, Aug 05, 2017 at 04:19:30PM -0400, Martin K. Petersen wrote:
+> A bio flag is probably the path of least resistance. It already exists,
+> actually: BIP_BLOCK_INTEGRITY. But we'll need to make sure it gets
+> masked out when a bio is cloned. And then we can key off of that and
+> REQ_OP_READ in the endio function.
+
+bio_integrity_clone doesn't even clone it - it allocates a new
+bip and then only copies over bip_vec, bip_vcnt and bit_iter.
+
+I'll preparate a patch for this and will send it out together with
+the orginal hotfix for the verify_fn, which also needs a trivial
+line length fix anyway.
