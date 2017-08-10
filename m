@@ -1,25 +1,29 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH] block: Make blk_mq_delay_kick_requeue_list() rerun the
-        queue at a quiet time
-Date: Thu, 10 Aug 2017 09:14:08 +0200
-Message-ID: <20170810071408.GA20981@lst.de>
-References: <20170809182806.32741-1-bart.vanassche@wdc.com>
+Subject: Re: [PATCH 1/7] dm: Fix the second dec_pending()
+	argument in	__split_and_process_bio()
+Date: Thu, 10 Aug 2017 11:28:48 +0200
+Message-ID: <20170810092848.GF24539@lst.de>
+References: <20170809183216.526-1-bart.vanassche@wdc.com>
+	<20170809183216.526-2-bart.vanassche@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <stable-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20170809182806.32741-1-bart.vanassche@wdc.com>
-Sender: stable-owner@vger.kernel.org
+In-Reply-To: <20170809183216.526-2-bart.vanassche@wdc.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
 To: Bart Van Assche <bart.vanassche@wdc.com>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, Christoph Hellwig <hch@lst.de>, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Laurence Oberman <loberman@redhat.com>, stable@vger.kernel.org
+Cc: dm-devel@redhat.com, Laurence Oberman <loberman@redhat.com>, Christoph Hellwig <hch@lst.de>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Aug 09, 2017 at 11:28:06AM -0700, Bart Van Assche wrote:
-> The blk_mq_delay_kick_requeue_list() function is used by the device
-> mapper and only by the device mapper to rerun the queue and requeue
-> list after a delay. This function is called once per request that
-> gets requeued. Modify this function such that the queue is run once
-> per path change event instead of once per request that is requeued.
+Looks good,
 
-Is there a chance we could look into killing this function and moving
-dm to run it every time we requeue a request like all the other drivers?
+Reviewed-by: Christoph Hellwig <hch@lst.de>
