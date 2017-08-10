@@ -1,83 +1,46 @@
-From: Tom Yan <tom.ty89@gmail.com>
-Subject: Re: [BUG] BLKZEROOUT on dm-crypt container cause OOM / kernel panic
-Date: Thu, 10 Aug 2017 18:14:19 +0800
-Message-ID: <CAGnHSE=fruKYu15ppryRvTCMft_CkcpZmAqWVBL6n9RP2HGD=Q@mail.gmail.com>
-References: <CAGnHSEngW1Ugf66V5henR9fMEev0xcJnKVY9MjJb19gy3CkgNA@mail.gmail.com>
- <20170809133833.GA25681@lst.de> <CAGnHSEnrD4LkMGLAuehe4yEeyWk9305TFrrdJcPFv7gyqyuGNQ@mail.gmail.com>
+From: Goldwyn Rodrigues <rgoldwyn@suse.de>
+Subject: Re: [PATCH 1/9] QUEUE_FLAG_NOWAIT to indicate device supports nowait
+Date: Thu, 10 Aug 2017 06:38:53 -0500
+Message-ID: <f8d2c0e3-e81f-55e7-2645-4598af34b367@suse.de>
+References: <20170726235806.12148-1-rgoldwyn@suse.de>
+ <20170726235806.12148-2-rgoldwyn@suse.de>
+ <20170808203246.sdjnpzixxz5brjaf@kernel.org>
+ <10dbe9f0-e2a0-456f-b271-7cf0312aa1d5@kernel.dk>
+ <284fb7b3-9265-229f-4c66-bd043b94ec9f@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <CAGnHSEnrD4LkMGLAuehe4yEeyWk9305TFrrdJcPFv7gyqyuGNQ@mail.gmail.com>
-Sender: linux-block-owner@vger.kernel.org
-To: "hch@lst.de" <hch@lst.de>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Milan Broz <gmazyland@gmail.com>, "axboe@fb.com" <axboe@fb.com>, axboe@kernel.dk, linux-block@vger.kernel.org, okozina@redhat.com
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <284fb7b3-9265-229f-4c66-bd043b94ec9f@kernel.dk>
+Content-Language: en-US
+Sender: linux-raid-owner@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>, Shaohua Li <shli@kernel.org>
+Cc: linux-block@vger.kernel.org, hch@infradead.org, jack@suse.cz, linux-raid@vger.kernel.org, dm-devel@redhat.com, Goldwyn Rodrigues <rgoldwyn@suse.com>
 List-Id: dm-devel.ids
 
-Never mind, I guess I was wrong, coz bio_add_page() is always called
-with "offset" = 0 here, so:
 
-offset == bv->bv_offset + bv->bv_len
 
-is never matched. Hence,
+On 08/09/2017 09:18 PM, Jens Axboe wrote:
+> On 08/08/2017 02:36 PM, Jens Axboe wrote:
+>> On 08/08/2017 02:32 PM, Shaohua Li wrote:
+>>>> diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+>>>> index 25f6a0cb27d3..fae021ebec1b 100644
+>>>> --- a/include/linux/blkdev.h
+>>>> +++ b/include/linux/blkdev.h
+>>>> @@ -633,6 +633,7 @@ struct request_queue {
+>>>>  #define QUEUE_FLAG_REGISTERED  29	/* queue has been registered to a disk */
+>>>>  #define QUEUE_FLAG_SCSI_PASSTHROUGH 30	/* queue supports SCSI commands */
+>>>>  #define QUEUE_FLAG_QUIESCED    31	/* queue has been quiesced */
+>>>> +#define QUEUE_FLAG_NOWAIT      32	/* stack device driver supports REQ_NOWAIT */
+>>
+>> Does this work on 32-bit, where sizeof(unsigned long) == 32?
+> 
+> I didn't get an answer to this one.
+> 
 
-if (bio->bi_vcnt >= bio->bi_max_vecs)
-return 0;
+Oh, I assumed the question is rhetorical.
+No, it will not work on 32-bit. I was planning to change the field
+queue_flags to u64. Is that okay?
 
-will trigger the if-break.
-
-So maybe this is after all just a dm-crypt issue on handling multiple
-bios created with next_bio (a bio chain)?
-
-On 10 August 2017 at 07:27, Tom Yan <tom.ty89@gmail.com> wrote:
-> I haven't really tested but I was aware of the commit before I send my
-> last email. It doesn't seem relevant to be honest, because it doesn't
-> change the fact that the inner loop wil only end if the whole request
-> has been looped over. So still one big bio.
->
-> There are a few things that seem suspicious to me. First of all, the
-> inner loop has an if-break at its end that seem to practically do
-> nothing, especially in terms of making the inner loop end when the bio
-> reach its expected size (BIO_MAX_PAGES?).
->
-> bi_size = bio_add_page(bio, ZERO_PAGE(0), sz, 0);
->
-> If you take a look at bio_add_page():
-> https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/block/bio.c?h=v4.13-rc4#n820
->
-> it will basically always return "len", which is "sz" here, unchanged.
->
-> if (bi_size < sz)
-> break;
->
-> So this pretty much never happens, with two exceptions:
->
-> if (WARN_ON_ONCE(bio_flagged(bio, BIO_CLONED)))
-> return 0;
->
-> which is most likely irrelevant in this case,
->
-> if (bio->bi_vcnt >= bio->bi_max_vecs)
-> return 0;
->
-> which seem to matter in this case. However:
->
-> if (page == bv->bv_page &&
-> offset == bv->bv_offset + bv->bv_len) {
-> bv->bv_len += len;
-> goto done;
-> }
-> ...
-> if (bio->bi_vcnt >= bio->bi_max_vecs)
-> return 0;
-> ...
-> bio->bi_vcnt++;
-> done:
-> bio->bi_iter.bi_size += len;
-> return len;
->
-> So if the first condition in the above quote is matched, the exception
-> would never happen either.
->
-> On 9 August 2017 at 21:38, hch@lst.de <hch@lst.de> wrote:
->> Does commit 615d22a51c04856efe62af6e1d5b450aaf5cc2c0
->> "block: Fix __blkdev_issue_zeroout loop" fix the issue for you?
+-- 
+Goldwyn
