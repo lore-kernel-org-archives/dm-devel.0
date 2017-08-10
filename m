@@ -1,15 +1,18 @@
-From: Laurence Oberman <loberman@redhat.com>
+From: Bart Van Assche <Bart.VanAssche@wdc.com>
 Subject: Re: [PATCH 1/7] dm: Fix the second dec_pending()
  argument in __split_and_process_bio()
-Date: Thu, 10 Aug 2017 10:28:18 -0400
-Message-ID: <1502375298.8615.3.camel@redhat.com>
+Date: Thu, 10 Aug 2017 15:02:38 +0000
+Message-ID: <1502377354.2309.1.camel@wdc.com>
 References: <20170809183216.526-1-bart.vanassche@wdc.com>
 	<20170809183216.526-2-bart.vanassche@wdc.com>
+	<1502375298.8615.3.camel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170809183216.526-2-bart.vanassche@wdc.com>
+In-Reply-To: <1502375298.8615.3.camel@redhat.com>
+Content-Language: en-US
+Content-ID: <F3BA982E91B2F8409E78259C4DC67476@namprd04.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,42 +22,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <bart.vanassche@wdc.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>
+To: "loberman@redhat.com" <loberman@redhat.com>, "snitzer@redhat.com" <snitzer@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "hch@lst.de" <hch@lst.de>
 List-Id: dm-devel.ids
 
-T24gV2VkLCAyMDE3LTA4LTA5IGF0IDExOjMyIC0wNzAwLCBCYXJ0IFZhbiBBc3NjaGUgd3JvdGU6
-Cj4gRGV0ZWN0ZWQgYnkgc3BhcnNlLgo+IAo+IEZpeGVzOiBjb21taXQgNGU0Y2JlZTkzZDU2ICgi
-YmxvY2s6IHN3aXRjaCBiaW9zIHRvIGJsa19zdGF0dXNfdCIpCj4gU2lnbmVkLW9mZi1ieTogQmFy
-dCBWYW4gQXNzY2hlIDxiYXJ0LnZhbmFzc2NoZUB3ZGMuY29tPgo+IENjOiBDaHJpc3RvcGggSGVs
-bHdpZyA8aGNoQGxzdC5kZT4KPiBDYzogTGF1cmVuY2UgT2Jlcm1hbiA8bG9iZXJtYW5AcmVkaGF0
-LmNvbT4KPiAtLS0KPiDCoGRyaXZlcnMvbWQvZG0uYyB8IDIgKy0KPiDCoDEgZmlsZSBjaGFuZ2Vk
-LCAxIGluc2VydGlvbigrKSwgMSBkZWxldGlvbigtKQo+IAo+IGRpZmYgLS1naXQgYS9kcml2ZXJz
-L21kL2RtLmMgYi9kcml2ZXJzL21kL2RtLmMKPiBpbmRleCAyZWRiY2MyZDdkM2YuLjgyOTg2NzA3
-NTdlOSAxMDA2NDQKPiAtLS0gYS9kcml2ZXJzL21kL2RtLmMKPiArKysgYi9kcml2ZXJzL21kL2Rt
-LmMKPiBAQCAtMTUyMyw3ICsxNTIzLDcgQEAgc3RhdGljIHZvaWQgX19zcGxpdF9hbmRfcHJvY2Vz
-c19iaW8oc3RydWN0Cj4gbWFwcGVkX2RldmljZSAqbWQsCj4gwqAJfQo+IMKgCj4gwqAJLyogZHJv
-cCB0aGUgZXh0cmEgcmVmZXJlbmNlIGNvdW50ICovCj4gLQlkZWNfcGVuZGluZyhjaS5pbywgZXJy
-b3IpOwo+ICsJZGVjX3BlbmRpbmcoY2kuaW8sIGVycm5vX3RvX2Jsa19zdGF0dXMoZXJyb3IpKTsK
-PiDCoH0KPiDCoC8qLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0KPiDCoCAqIENSVUQgRU5ECgpIZWxsbyBCYXJ0CgpJIGFwcGxp
-ZWQgYW5kIHRlc3RlZCBhbGwgcGF0Y2hlcyBleGNlcHQgcGF0Y2ggMi83IChhcyBkaXNjdXNzZWQp
-CkkgYWxzbyBzdGlsbCBoYXZlIHRoZSBwcmlvciBwYXRjaCBpbiBwbGFjZSB5b3Ugc2VudCBtZS4K
-CkkgYnVpbHQgYSBuZXcga2VybmVsIG9uIDQuMTMtcmMzCgpUaGUgc29mdCBsb2NrdXBzIGFyZSBn
-b25lIGZvciBtZSB3aXRoIDEwIHBhcmFsbGVsIHdyaXRlcy4KSSBhbHNvIGhhdmUgbm90IHNlZW4g
-YSBoYXJkIGxvY2t1cCBzbyBmYXIuCgpXaGF0IGlzIGltcG9ydGFudCB0byBub3RlIGlzIHRoYXQg
-aWYgSSB1c2UgdGhlIFtub25lXSBzY2hlZHVsZXIgSSBhbQpzdGlsbCBzdGFibGUgYnV0IEkgd2ls
-bCBzcG9yYWRpY2FsbHkgZ2V0IHRoZSAgICAgICoqKioqKgoiWzM4MDcxLjc3MzQ3MV0gZGV2aWNl
-LW1hcHBlcjogbXVsdGlwYXRoOiBibGtfZ2V0X3JlcXVlc3QoKSByZXR1cm5lZAotMTEgLSByZXF1
-ZXVpbmcKIgoKSG93ZXZlciB0aGF0IGlzIG5vdCB1bmV4cGVjdGVkIEkgZ3Vlc3MuCgpUaGUgKMKg
-cmVxdWV1aW5nIG1lc3NhZ2VzKSBkbyBOT1Qgc2hvdyB1cCB3aXRoIFttcS1kZWFkbGluZV0gd2hp
-Y2ggaXMKYWxsIEkgd2FzIHRlc3Rpbmcgd2l0aCBsYXN0IG5pZ2h0IGFuZCB5ZXN0ZXJkYXkuIFNv
-IHdoZW4gSSBzYWlkIHRoZXkKYXJlIGdvbmUsIHRoYXQgd2FzIHNwZWNpZmljYWxseSBmb3IgW21x
-LWRlYWRsaW5lXQoKUGF0Y2hlcyBsb29rIGdvb2QgYW5kIGFyZSBoZWxwaW5nLiBJIHdpbGwgY2ly
-Y2xlIGJhY2sgYW5kIHBhdGNoIGFuZAp0ZXN0IG9uIE1pbmcncyBrZXJuZWwuCgpGb3IgdGhlIHNl
-cmllcyBleGNlcHQgUEFUQ0gyLzcgYW5kIGluY2x1ZGluZwoKW1BBVENIXSBibG9jazogTWFrZSBi
-bGtfbXFfZGVsYXlfa2lja19yZXF1ZXVlX2xpc3QoKSByZXJ1biB0aGUgcXVldWUgYXQKYSBxdWll
-dCB0aW1lCgoKVGVzdGVkLWJ5OiBMYXVyZW5jZSBPYmVybWFuIDxsb2Jlcm1hbkByZWRoYXQuY29t
-PgoKVGhhbmtzCkxhdXJlbmNlCgoKCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxA
-cmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2
-ZWw=
+On Thu, 2017-08-10 at 10:28 -0400, Laurence Oberman wrote:
+> The soft lockups are gone for me with 10 parallel writes.
+> I also have not seen a hard lockup so far.
+
+That's great news!
+
+> What is important to note is that if I use the [none] scheduler I am
+> still stable but I will sporadically get the      ******
+> "[38071.773471] device-mapper: multipath: blk_get_request() returned
+> -11 - requeuing"
+> 
+> However that is not unexpected I guess.
+
+Yes, this is expected.
+
+> For the series except PATCH2/7 and including
+> 
+> [PATCH] block: Make blk_mq_delay_kick_requeue_list() rerun the queue at
+> a quiet time
+> 
+> Tested-by: Laurence Oberman <loberman@redhat.com>
+
+Thanks for the testing!
+
+Bart.
