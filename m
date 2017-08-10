@@ -1,8 +1,8 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: add support for all arrays from
-	Sun StorEdge 3000 family
-Date: Thu, 10 Aug 2017 21:18:09 +0200
-Message-ID: <20170810191809.9131-1-xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: add Xiotech iglu blaze arrays
+	to hwtable
+Date: Thu, 10 Aug 2017 21:18:24 +0200
+Message-ID: <20170810191824.9181-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -19,30 +19,30 @@ Errors-To: dm-devel-bounces@redhat.com
 Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-They were made by Dot Hill.
-
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ libmultipath/hwtable.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
 
 diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index dd3d12f..bcd24b3 100644
+index bcd24b3..9d3df11 100644
 --- a/libmultipath/hwtable.c
 +++ b/libmultipath/hwtable.c
-@@ -796,9 +796,9 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = 30,
- 	},
- 	{
--		/* 3510 */
-+		/* (Dot Hill) 3310, 3320, 3510 and 3511 */
- 		.vendor        = "SUN",
--		.product       = "StorEdge 3510",
-+		.product       = "StorEdge 3",
+@@ -1045,6 +1045,13 @@ static struct hwentry default_hw[] = {
  		.pgpolicy      = MULTIBUS,
+ 		.no_path_retry = 12,
  	},
- 	{
++	{
++		/* iglu blaze family */
++		.vendor        = "(XIOTECH|XIOtech)",
++		.product       = "IGLU DISK",
++		.pgpolicy      = MULTIBUS,
++		.no_path_retry = 30,
++	},
+ 	/*
+ 	 * Violin Memory
+ 	 */
 -- 
 2.13.4
