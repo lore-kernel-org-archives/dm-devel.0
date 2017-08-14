@@ -1,7 +1,7 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 1/3] kpartx/devmapper.h: remove dm_no_partitions
-Date: Mon, 14 Aug 2017 22:40:41 +0200
-Message-ID: <20170814204043.17640-2-mwilck@suse.com>
+Subject: [PATCH 2/3] libmultipath: cli_add_map: Use CMD_NONE
+Date: Mon, 14 Aug 2017 22:40:42 +0200
+Message-ID: <20170814204043.17640-3-mwilck@suse.com>
 References: <20170814204043.17640-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,24 +21,30 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This removes the deleted function from the header file.
+Commands issued from the daemon itself should always pass
+CMD_NONE to coalesce_paths. Otherwise, the daemon mistakenly
+tries to talk to itself via the socket, causing deadlock.
 
-Fixes: 2ea69fc9 'kpartx: remove "no_partitions" support'
+Reproduce simply by calling "multipathd add map $X".
+
+Fixes: d19936f4 "libmultipath: Do not access 'conf->cmd' in domap()"
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- kpartx/devmapper.h | 1 -
- 1 file changed, 1 deletion(-)
+ multipathd/cli_handlers.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/kpartx/devmapper.h b/kpartx/devmapper.h
-index 2e28c780..f00373e0 100644
---- a/kpartx/devmapper.h
-+++ b/kpartx/devmapper.h
-@@ -19,6 +19,5 @@ dev_t dm_get_first_dep(char *devname);
- char * dm_mapuuid(const char *mapname);
- int dm_devn (const char * mapname, int *major, int *minor);
- int dm_remove_partmaps (char * mapname, char *uuid, dev_t devt, int verbose);
--int dm_no_partitions(char * mapname);
- 
- #endif /* _KPARTX_DEVMAPPER_H */
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index b4a95e37..f5ba4cfb 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -782,7 +782,7 @@ cli_add_map (void * v, char ** reply, int * len, void * data)
+ 					 vecs->pathvec, &refwwid);
+ 			if (refwwid) {
+ 				if (coalesce_paths(vecs, NULL, refwwid,
+-						   FORCE_RELOAD_NONE, 1))
++						   FORCE_RELOAD_NONE, CMD_NONE))
+ 					condlog(2, "%s: coalesce_paths failed",
+ 									param);
+ 				dm_lib_release();
 -- 
 2.14.0
