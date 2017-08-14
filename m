@@ -1,38 +1,53 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
+From: Damien Le Moal <Damien.LeMoal@wdc.com>
 Subject: Re: [dm-devel] [BUG] BLKZEROOUT on dm-crypt container cause OOM /
  kernel panic
-Date: Sun, 13 Aug 2017 22:47:32 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1708132245190.18210@file01.intranet.prod.int.rdu2.redhat.com>
-References: <CAGnHSEngW1Ugf66V5henR9fMEev0xcJnKVY9MjJb19gy3CkgNA@mail.gmail.com> <20170809133833.GA25681@lst.de>
+Date: Mon, 14 Aug 2017 04:04:50 +0000
+Message-ID: <1502683489.903.1.camel@wdc.com>
+References: <CAGnHSEngW1Ugf66V5henR9fMEev0xcJnKVY9MjJb19gy3CkgNA@mail.gmail.com>
+         <20170809133833.GA25681@lst.de>
+         <alpine.LRH.2.02.1708132245190.18210@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20170809133833.GA25681@lst.de>
+In-Reply-To: <alpine.LRH.2.02.1708132245190.18210@file01.intranet.prod.int.rdu2.redhat.com>
+Content-Language: en-US
+Content-ID: <FBB69C1C86992F4CA24266EEE229E19D@namprd04.prod.outlook.com>
 Sender: linux-block-owner@vger.kernel.org
-To: "hch@lst.de" <hch@lst.de>, Damien Le Moal <damien.lemoal@wdc.com>
-Cc: Tom Yan <tom.ty89@gmail.com>, axboe@kernel.dk, linux-block@vger.kernel.org, "axboe@fb.com" <axboe@fb.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, gmazyland@gmail.com
+To: "hch@lst.de" <hch@lst.de>, "mpatocka@redhat.com" <mpatocka@redhat.com>
+Cc: "tom.ty89@gmail.com" <tom.ty89@gmail.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "gmazyland@gmail.com" <gmazyland@gmail.com>, "axboe@fb.com" <axboe@fb.com>, "axboe@kernel.dk" <axboe@kernel.dk>
 List-Id: dm-devel.ids
 
-
-
-On Wed, 9 Aug 2017, hch@lst.de wrote:
-
-> Does commit 615d22a51c04856efe62af6e1d5b450aaf5cc2c0
-> "block: Fix __blkdev_issue_zeroout loop" fix the issue for you?
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-
-I think that patch is incorrect. sector_t may be a 32-bit type and 
-nr_sects << 9 may overflow.
-
-static unsigned int __blkdev_sectors_to_bio_pages(sector_t nr_sects)
-{
-       sector_t bytes = (nr_sects << 9) + PAGE_SIZE - 1;
-
-       return min(bytes >> PAGE_SHIFT, (sector_t)BIO_MAX_PAGES);
-}
-
-Mikulas
+T24gU3VuLCAyMDE3LTA4LTEzIGF0IDIyOjQ3IC0wNDAwLCBNaWt1bGFzIFBhdG9ja2Egd3JvdGU6
+DQo+IA0KPiBPbiBXZWQsIDkgQXVnIDIwMTcsIGhjaEBsc3QuZGUgd3JvdGU6DQo+IA0KPiA+IERv
+ZXMgY29tbWl0IDYxNWQyMmE1MWMwNDg1NmVmZTYyYWY2ZTFkNWI0NTBhYWY1Y2MyYzANCj4gPiAi
+YmxvY2s6IEZpeCBfX2Jsa2Rldl9pc3N1ZV96ZXJvb3V0IGxvb3AiIGZpeCB0aGUgaXNzdWUgZm9y
+IHlvdT8NCj4gPiANCj4gPiAtLQ0KPiA+IGRtLWRldmVsIG1haWxpbmcgbGlzdA0KPiA+IGRtLWRl
+dmVsQHJlZGhhdC5jb20NCj4gPiBodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGlu
+Zm8vZG0tZGV2ZWwNCj4gDQo+IEkgdGhpbmsgdGhhdCBwYXRjaCBpcyBpbmNvcnJlY3QuIHNlY3Rv
+cl90IG1heSBiZSBhIDMyLWJpdCB0eXBlIGFuZCANCj4gbnJfc2VjdHMgPDwgOSBtYXkgb3ZlcmZs
+b3cuDQo+IA0KPiBzdGF0aWMgdW5zaWduZWQgaW50IF9fYmxrZGV2X3NlY3RvcnNfdG9fYmlvX3Bh
+Z2VzKHNlY3Rvcl90IG5yX3NlY3RzKQ0KPiB7DQo+ICAgICAgICBzZWN0b3JfdCBieXRlcyA9IChu
+cl9zZWN0cyA8PCA5KSArIFBBR0VfU0laRSAtIDE7DQo+IA0KPiAgICAgICAgcmV0dXJuIG1pbihi
+eXRlcyA+PiBQQUdFX1NISUZULCAoc2VjdG9yX3QpQklPX01BWF9QQUdFUyk7DQo+IH0NCj4gDQo+
+IE1pa3VsYXMNCg0KTWlrdWxhcywNCg0KRG9lcyB0aGUgZm9sbHdpbmcgcGF0Y2ggZml4IHRoZSBw
+cm9ibGVtID8NCg0KRnJvbSA5NDdiM2NmNDFlNzU5YjJiMjNmNjg0ZTIxNWU2NTFkMGM4MDM3Zjg4
+IE1vbiBTZXAgMTcgMDA6MDA6MDAgMjAwMQ0KRnJvbTogRGFtaWVuIExlIE1vYWwgPGRhbWllbi5s
+ZW1vYWxAd2RjLmNvbT4NCkRhdGU6IE1vbiwgMTQgQXVnIDIwMTcgMTM6MDE6MTYgKzA5MDANClN1
+YmplY3Q6IFtQQVRDSF0gYmxvY2s6IEZpeCBfX2Jsa2Rldl9zZWN0b3JzX3RvX2Jpb19wYWdlcygp
+DQoNCk9uIDMyYml0IHN5c3RlbXMgd2hlcmUgc2VjdG9yX3QgaXMgYSAzMmJpdHMgdHlwZSwgdGhl
+IGNhbGN1bGF0aW9uIG9mDQpieXRlcyBtYXkgb3ZlcmZsb3cuIFVzZSB0aGUgdTY0IHR5cGUgZm9y
+IHRoZSBsb2NhbCBjYWxjdWxhdGlvbiB0byBhdm9pZA0Kb3ZlcmZsb3dzLg0KDQpTaWduZWQtb2Zm
+LWJ5OiBEYW1pZW4gTGUgTW9hbCA8ZGFtaWVuLmxlbW9hbEB3ZGMuY29tPg0KLS0tDQogYmxvY2sv
+YmxrLWxpYi5jIHwgNCArKy0tDQogMSBmaWxlIGNoYW5nZWQsIDIgaW5zZXJ0aW9ucygrKSwgMiBk
+ZWxldGlvbnMoLSkNCg0KZGlmZiAtLWdpdCBhL2Jsb2NrL2Jsay1saWIuYyBiL2Jsb2NrL2Jsay1s
+aWIuYw0KaW5kZXggM2ZlMGFlYzkwNTk3Li5jY2YyMmRiYTIxZjAgMTAwNjQ0DQotLS0gYS9ibG9j
+ay9ibGstbGliLmMNCisrKyBiL2Jsb2NrL2Jsay1saWIuYw0KQEAgLTI2OSw5ICsyNjksOSBAQCBz
+dGF0aWMgaW50IF9fYmxrZGV2X2lzc3VlX3dyaXRlX3plcm9lcyhzdHJ1Y3QgYmxvY2tfZGV2aWNl
+DQoqYmRldiwNCiAgKi8NCiBzdGF0aWMgdW5zaWduZWQgaW50IF9fYmxrZGV2X3NlY3RvcnNfdG9f
+YmlvX3BhZ2VzKHNlY3Rvcl90IG5yX3NlY3RzKQ0KIHsNCi0Jc2VjdG9yX3QgYnl0ZXMgPSAobnJf
+c2VjdHMgPDwgOSkgKyBQQUdFX1NJWkUgLSAxOw0KKwl1NjQgYnl0ZXMgPSAoKHU2NClucl9zZWN0
+cyA8PCA5KSArIFBBR0VfU0laRSAtIDE7DQogDQotCXJldHVybiBtaW4oYnl0ZXMgPj4gUEFHRV9T
+SElGVCwgKHNlY3Rvcl90KUJJT19NQVhfUEFHRVMpOw0KKwlyZXR1cm4gbWluKGJ5dGVzID4+IFBB
+R0VfU0hJRlQsICh1NjQpQklPX01BWF9QQUdFUyk7DQogfQ0KIA0KIC8qKg0KLS0gDQoyLjEzLjQN
+Cg0KDQotLSANCkRhbWllbiBMZSBNb2FsDQpXZXN0ZXJuIERpZ2l0YWw=
