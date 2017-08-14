@@ -1,13 +1,11 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 2/3] libmultipath: cli_add_map: Use CMD_NONE
-Date: Mon, 14 Aug 2017 22:40:42 +0200
-Message-ID: <20170814204043.17640-3-mwilck@suse.com>
-References: <20170814204043.17640-1-mwilck@suse.com>
+Subject: [PATCH 0/3] some minor multipath-tools fixes
+Date: Mon, 14 Aug 2017 22:40:40 +0200
+Message-ID: <20170814204043.17640-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170814204043.17640-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,30 +19,19 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Commands issued from the daemon itself should always pass
-CMD_NONE to coalesce_paths. Otherwise, the daemon mistakenly
-tries to talk to itself via the socket, causing deadlock.
+Fix some glitches that were discovered recently here at SUSE.
 
-Reproduce simply by calling "multipathd add map $X".
+Martin Wilck (3):
+  kpartx/devmapper.h: remove dm_no_partitions
+  libmultipath: cli_add_map: Use CMD_NONE
+  multipath-tools: link internal libraries before foreigns
 
-Fixes: d19936f4 "libmultipath: Do not access 'conf->cmd' in domap()"
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
+ kpartx/devmapper.h        | 1 -
+ mpathpersist/Makefile     | 4 ++--
+ multipath/Makefile        | 4 ++--
+ multipathd/Makefile       | 4 ++--
  multipathd/cli_handlers.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ 5 files changed, 7 insertions(+), 8 deletions(-)
 
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index b4a95e37..f5ba4cfb 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -782,7 +782,7 @@ cli_add_map (void * v, char ** reply, int * len, void * data)
- 					 vecs->pathvec, &refwwid);
- 			if (refwwid) {
- 				if (coalesce_paths(vecs, NULL, refwwid,
--						   FORCE_RELOAD_NONE, 1))
-+						   FORCE_RELOAD_NONE, CMD_NONE))
- 					condlog(2, "%s: coalesce_paths failed",
- 									param);
- 				dm_lib_release();
 -- 
 2.14.0
