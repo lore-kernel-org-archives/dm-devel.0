@@ -1,53 +1,130 @@
-From: Damien Le Moal <Damien.LeMoal@wdc.com>
-Subject: Re: [dm-devel] [BUG] BLKZEROOUT on dm-crypt container cause OOM /
- kernel panic
-Date: Mon, 14 Aug 2017 04:04:50 +0000
-Message-ID: <1502683489.903.1.camel@wdc.com>
-References: <CAGnHSEngW1Ugf66V5henR9fMEev0xcJnKVY9MjJb19gy3CkgNA@mail.gmail.com>
-         <20170809133833.GA25681@lst.de>
-         <alpine.LRH.2.02.1708132245190.18210@file01.intranet.prod.int.rdu2.redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.02.1708132245190.18210@file01.intranet.prod.int.rdu2.redhat.com>
-Content-Language: en-US
-Content-ID: <FBB69C1C86992F4CA24266EEE229E19D@namprd04.prod.outlook.com>
-Sender: linux-block-owner@vger.kernel.org
-To: "hch@lst.de" <hch@lst.de>, "mpatocka@redhat.com" <mpatocka@redhat.com>
-Cc: "tom.ty89@gmail.com" <tom.ty89@gmail.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "gmazyland@gmail.com" <gmazyland@gmail.com>, "axboe@fb.com" <axboe@fb.com>, "axboe@kernel.dk" <axboe@kernel.dk>
+From: Gilad Ben-Yossef <gilad@benyossef.com>
+Subject: [PATCH v5 00/19] simplify crypto wait for async op
+Date: Mon, 14 Aug 2017 18:21:10 +0300
+Message-ID: <1502724094-23305-1-git-send-email-gilad@benyossef.com>
+Return-path: <linux-doc-owner@vger.kernel.org>
+Sender: linux-doc-owner@vger.kernel.org
+To: Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, Jonathan Corbet <corbet@lwn.net>, David Howells <dhowells@redhat.com>, Tom Lendacky <thomas.lendacky@amd.com>, Gary Hook <gary.hook@amd.com>, Boris Brezillon <boris.brezillon@free-electrons.com>, Arnaud Ebalard <arno@natisbad.org>, Matthias Brugger <matthias.bgg@gmail.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, Steve French <sfrench@samba.org>, "Theodore Y. Ts'o" <tytso@mit.edu>, Jaegeuk Kim <jaegeuk@kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Dmitry Kasatkin <dmitry.kasatkin@gmail.com>, James Morris <james.l.morris@oracle.com>, "Serge E. Hallyn" <serge@hallyn.com>, linux-crypto@v
+Cc: Ofir Drang <ofir.drang@arm.com>
 List-Id: dm-devel.ids
 
-T24gU3VuLCAyMDE3LTA4LTEzIGF0IDIyOjQ3IC0wNDAwLCBNaWt1bGFzIFBhdG9ja2Egd3JvdGU6
-DQo+IA0KPiBPbiBXZWQsIDkgQXVnIDIwMTcsIGhjaEBsc3QuZGUgd3JvdGU6DQo+IA0KPiA+IERv
-ZXMgY29tbWl0IDYxNWQyMmE1MWMwNDg1NmVmZTYyYWY2ZTFkNWI0NTBhYWY1Y2MyYzANCj4gPiAi
-YmxvY2s6IEZpeCBfX2Jsa2Rldl9pc3N1ZV96ZXJvb3V0IGxvb3AiIGZpeCB0aGUgaXNzdWUgZm9y
-IHlvdT8NCj4gPiANCj4gPiAtLQ0KPiA+IGRtLWRldmVsIG1haWxpbmcgbGlzdA0KPiA+IGRtLWRl
-dmVsQHJlZGhhdC5jb20NCj4gPiBodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGlu
-Zm8vZG0tZGV2ZWwNCj4gDQo+IEkgdGhpbmsgdGhhdCBwYXRjaCBpcyBpbmNvcnJlY3QuIHNlY3Rv
-cl90IG1heSBiZSBhIDMyLWJpdCB0eXBlIGFuZCANCj4gbnJfc2VjdHMgPDwgOSBtYXkgb3ZlcmZs
-b3cuDQo+IA0KPiBzdGF0aWMgdW5zaWduZWQgaW50IF9fYmxrZGV2X3NlY3RvcnNfdG9fYmlvX3Bh
-Z2VzKHNlY3Rvcl90IG5yX3NlY3RzKQ0KPiB7DQo+ICAgICAgICBzZWN0b3JfdCBieXRlcyA9IChu
-cl9zZWN0cyA8PCA5KSArIFBBR0VfU0laRSAtIDE7DQo+IA0KPiAgICAgICAgcmV0dXJuIG1pbihi
-eXRlcyA+PiBQQUdFX1NISUZULCAoc2VjdG9yX3QpQklPX01BWF9QQUdFUyk7DQo+IH0NCj4gDQo+
-IE1pa3VsYXMNCg0KTWlrdWxhcywNCg0KRG9lcyB0aGUgZm9sbHdpbmcgcGF0Y2ggZml4IHRoZSBw
-cm9ibGVtID8NCg0KRnJvbSA5NDdiM2NmNDFlNzU5YjJiMjNmNjg0ZTIxNWU2NTFkMGM4MDM3Zjg4
-IE1vbiBTZXAgMTcgMDA6MDA6MDAgMjAwMQ0KRnJvbTogRGFtaWVuIExlIE1vYWwgPGRhbWllbi5s
-ZW1vYWxAd2RjLmNvbT4NCkRhdGU6IE1vbiwgMTQgQXVnIDIwMTcgMTM6MDE6MTYgKzA5MDANClN1
-YmplY3Q6IFtQQVRDSF0gYmxvY2s6IEZpeCBfX2Jsa2Rldl9zZWN0b3JzX3RvX2Jpb19wYWdlcygp
-DQoNCk9uIDMyYml0IHN5c3RlbXMgd2hlcmUgc2VjdG9yX3QgaXMgYSAzMmJpdHMgdHlwZSwgdGhl
-IGNhbGN1bGF0aW9uIG9mDQpieXRlcyBtYXkgb3ZlcmZsb3cuIFVzZSB0aGUgdTY0IHR5cGUgZm9y
-IHRoZSBsb2NhbCBjYWxjdWxhdGlvbiB0byBhdm9pZA0Kb3ZlcmZsb3dzLg0KDQpTaWduZWQtb2Zm
-LWJ5OiBEYW1pZW4gTGUgTW9hbCA8ZGFtaWVuLmxlbW9hbEB3ZGMuY29tPg0KLS0tDQogYmxvY2sv
-YmxrLWxpYi5jIHwgNCArKy0tDQogMSBmaWxlIGNoYW5nZWQsIDIgaW5zZXJ0aW9ucygrKSwgMiBk
-ZWxldGlvbnMoLSkNCg0KZGlmZiAtLWdpdCBhL2Jsb2NrL2Jsay1saWIuYyBiL2Jsb2NrL2Jsay1s
-aWIuYw0KaW5kZXggM2ZlMGFlYzkwNTk3Li5jY2YyMmRiYTIxZjAgMTAwNjQ0DQotLS0gYS9ibG9j
-ay9ibGstbGliLmMNCisrKyBiL2Jsb2NrL2Jsay1saWIuYw0KQEAgLTI2OSw5ICsyNjksOSBAQCBz
-dGF0aWMgaW50IF9fYmxrZGV2X2lzc3VlX3dyaXRlX3plcm9lcyhzdHJ1Y3QgYmxvY2tfZGV2aWNl
-DQoqYmRldiwNCiAgKi8NCiBzdGF0aWMgdW5zaWduZWQgaW50IF9fYmxrZGV2X3NlY3RvcnNfdG9f
-YmlvX3BhZ2VzKHNlY3Rvcl90IG5yX3NlY3RzKQ0KIHsNCi0Jc2VjdG9yX3QgYnl0ZXMgPSAobnJf
-c2VjdHMgPDwgOSkgKyBQQUdFX1NJWkUgLSAxOw0KKwl1NjQgYnl0ZXMgPSAoKHU2NClucl9zZWN0
-cyA8PCA5KSArIFBBR0VfU0laRSAtIDE7DQogDQotCXJldHVybiBtaW4oYnl0ZXMgPj4gUEFHRV9T
-SElGVCwgKHNlY3Rvcl90KUJJT19NQVhfUEFHRVMpOw0KKwlyZXR1cm4gbWluKGJ5dGVzID4+IFBB
-R0VfU0hJRlQsICh1NjQpQklPX01BWF9QQUdFUyk7DQogfQ0KIA0KIC8qKg0KLS0gDQoyLjEzLjQN
-Cg0KDQotLSANCkRhbWllbiBMZSBNb2FsDQpXZXN0ZXJuIERpZ2l0YWw=
+Many users of kernel async. crypto services have a pattern of
+starting an async. crypto op and than using a completion
+to wait for it to end.
+
+This patch set simplifies this common use case in two ways:
+
+First, by separating the return codes of the case where a
+request is queued to a backlog due to the provider being
+busy (-EBUSY) from the case the request has failed due
+to the provider being busy and backlogging is not enabled
+(-EAGAIN).
+
+Next, this change is than built on to create a generic API
+to wait for a async. crypto operation to complete.
+
+The end result is a smaller code base and an API that is
+easier to use and more difficult to get wrong.
+
+The patch set was boot tested on x86_64 and arm64 which
+at the very least tests the crypto users via testmgr and
+tcrypt but I do note that I do not have access to some
+of the HW whose drivers are modified nor do I claim I was
+able to test all of the corner cases.
+
+The patch set is based upon linux-next release tagged
+next-20170811.
+
+Changes from v4:
+- Rebase on top of latest algif changes from Stephan
+  Mueller.
+- Fix typo in ccp patch title.
+
+Changes from v3:
+- Instead of changing the return code to indicate
+  backlog queueing, change the return code to indicate
+  transient busy state, as suggested by Herbert Xu.
+
+Changes from v2:
+- Patch title changed from "introduce crypto wait for
+  async op" to better reflect the current state.
+- Rebase on top of latest linux-next.
+- Add a new return code of -EIOCBQUEUED for backlog
+  queueing, as suggested by Herbert Xu.
+- Transform more users to the new API.
+- Update the drbg change to account for new init as
+  indicated by Stephan Muller.
+
+Changes from v1:
+- Address review comments from Eric Biggers.
+- Separated out bug fixes of existing code and rebase
+  on top of that patch set.
+- Rename 'ecr' to 'wait' in fscrypto code.
+- Split patch introducing the new API from the change
+  moving over the algif code which it originated from
+  to the new API.
+- Inline crypto_wait_req().
+- Some code indentation fixes.
+
+Gilad Ben-Yossef (19):
+  crypto: change transient busy return code to -EAGAIN
+  crypto: ccp: use -EAGAIN for transient busy indication
+  crypto: remove redundant backlog checks on EBUSY
+  crypto: marvell/cesa: remove redundant backlog checks on EBUSY
+  crypto: introduce crypto wait for async op
+  crypto: move algif to generic async completion
+  crypto: move pub key to generic async completion
+  crypto: move drbg to generic async completion
+  crypto: move gcm to generic async completion
+  crypto: move testmgr to generic async completion
+  fscrypt: move to generic async completion
+  dm: move dm-verity to generic async completion
+  cifs: move to generic async completion
+  ima: move to generic async completion
+  crypto: tcrypt: move to generic async completion
+  crypto: talitos: move to generic async completion
+  crypto: qce: move to generic async completion
+  crypto: mediatek: move to generic async completion
+  crypto: adapt api sample to use async. op wait
+
+ Documentation/crypto/api-samples.rst |  52 ++-------
+ crypto/af_alg.c                      |  27 -----
+ crypto/ahash.c                       |  12 +--
+ crypto/algapi.c                      |   6 +-
+ crypto/algif_aead.c                  |   8 +-
+ crypto/algif_hash.c                  |  50 +++++----
+ crypto/algif_skcipher.c              |   9 +-
+ crypto/api.c                         |  13 +++
+ crypto/asymmetric_keys/public_key.c  |  28 +----
+ crypto/cryptd.c                      |   4 +-
+ crypto/cts.c                         |   6 +-
+ crypto/drbg.c                        |  36 ++-----
+ crypto/gcm.c                         |  32 ++----
+ crypto/lrw.c                         |   8 +-
+ crypto/rsa-pkcs1pad.c                |  16 +--
+ crypto/tcrypt.c                      |  84 +++++----------
+ crypto/testmgr.c                     | 204 ++++++++++++-----------------------
+ crypto/xts.c                         |   8 +-
+ drivers/crypto/ccp/ccp-crypto-main.c |   8 +-
+ drivers/crypto/ccp/ccp-dev.c         |   7 +-
+ drivers/crypto/marvell/cesa.c        |   3 +-
+ drivers/crypto/marvell/cesa.h        |   2 +-
+ drivers/crypto/mediatek/mtk-aes.c    |  31 +-----
+ drivers/crypto/qce/sha.c             |  30 +-----
+ drivers/crypto/talitos.c             |  38 +------
+ drivers/md/dm-verity-target.c        |  81 ++++----------
+ drivers/md/dm-verity.h               |   5 -
+ fs/cifs/smb2ops.c                    |  30 +-----
+ fs/crypto/crypto.c                   |  28 +----
+ fs/crypto/fname.c                    |  36 ++-----
+ fs/crypto/fscrypt_private.h          |  10 --
+ fs/crypto/keyinfo.c                  |  21 +---
+ include/crypto/drbg.h                |   3 +-
+ include/crypto/if_alg.h              |  15 +--
+ include/linux/crypto.h               |  41 +++++++
+ security/integrity/ima/ima_crypto.c  |  56 +++-------
+ 36 files changed, 311 insertions(+), 737 deletions(-)
+
+-- 
+2.1.4
+
