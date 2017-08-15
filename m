@@ -1,129 +1,99 @@
-From: Damien Le Moal <damien.lemoal@wdc.com>
-Subject: Re: [PATCH] fix an integer overflow in __blkdev_sectors_to_bio_pages
-Date: Tue, 15 Aug 2017 12:43:38 +0900
-Message-ID: <87d37dc1-74c0-47c0-4cdd-0c5c826b4199@wdc.com>
-References: <CAGnHSEngW1Ugf66V5henR9fMEev0xcJnKVY9MjJb19gy3CkgNA@mail.gmail.com>
- <20170809133833.GA25681@lst.de>
- <alpine.LRH.2.02.1708132245190.18210@file01.intranet.prod.int.rdu2.redhat.com>
- <1502683489.903.1.camel@wdc.com>
- <alpine.LRH.2.02.1708141926170.24994@file01.intranet.prod.int.rdu2.redhat.com>
+From: Ryder Lee <ryder.lee-NuS5LvNUpcJWk0Htik3J/w@public.gmane.org>
+Subject: Re: [PATCH v5 18/19] crypto: mediatek: move to generic async
+ completion
+Date: Tue, 15 Aug 2017 13:13:58 +0800
+Message-ID: <1502774038.962.2.camel@mtkswgap22>
+References: <1502724094-23305-1-git-send-email-gilad@benyossef.com>
+         <1502724094-23305-19-git-send-email-gilad@benyossef.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.02.1708141926170.24994@file01.intranet.prod.int.rdu2.redhat.com>
-Content-Language: en-US
-Sender: linux-block-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: "hch@lst.de" <hch@lst.de>, "tom.ty89@gmail.com" <tom.ty89@gmail.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "gmazyland@gmail.com" <gmazyland@gmail.com>, "axboe@fb.com" <axboe@fb.com>, "axboe@kernel.dk" <axboe@kernel.dk>
+Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1502724094-23305-19-git-send-email-gilad-6S/DczAoZh3WXxRugSxzZg@public.gmane.org>
+Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Gilad Ben-Yossef <gilad-6S/DczAoZh3WXxRugSxzZg@public.gmane.org>
+Cc: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tom Lendacky <thomas.lendacky-5C7GfCeVMHo@public.gmane.org>, Gary Hook <gary.hook-5C7GfCeVMHo@public.gmane.org>, Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Arnaud Ebalard <arno-LkuqDEemtHBg9hUCZPvPmw@public.gmane.org>, Matthias Brugger <matthias.bgg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Shaohua Li <shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Steve French <sfrench-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, "Theodore Y. Ts'o" <tytso-3s7WtUTddSA@public.gmane.org>, Jaegeuk Kim <jaegeuk-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Dmitry Kasatkin <dmitry.kasatkin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-
-On 8/15/17 09:01, Mikulas Patocka wrote:
+On Mon, 2017-08-14 at 18:21 +0300, Gilad Ben-Yossef wrote:
+> The mediatek driver starts several async crypto ops and waits for their
+> completions. Move it over to generic code doing the same.
 > 
-> 
-> On Mon, 14 Aug 2017, Damien Le Moal wrote:
-> 
->> On Sun, 2017-08-13 at 22:47 -0400, Mikulas Patocka wrote:
->>>
->>> On Wed, 9 Aug 2017, hch@lst.de wrote:
->>>
->>>> Does commit 615d22a51c04856efe62af6e1d5b450aaf5cc2c0
->>>> "block: Fix __blkdev_issue_zeroout loop" fix the issue for you?
->>>>
->>>> --
->>>> dm-devel mailing list
->>>> dm-devel@redhat.com
->>>> https://www.redhat.com/mailman/listinfo/dm-devel
->>>
->>> I think that patch is incorrect. sector_t may be a 32-bit type and 
->>> nr_sects << 9 may overflow.
->>>
->>> static unsigned int __blkdev_sectors_to_bio_pages(sector_t nr_sects)
->>> {
->>>        sector_t bytes = (nr_sects << 9) + PAGE_SIZE - 1;
->>>
->>>        return min(bytes >> PAGE_SHIFT, (sector_t)BIO_MAX_PAGES);
->>> }
->>>
->>> Mikulas
->>
->> Mikulas,
->>
->> Does the follwing patch fix the problem ?
->>
->> From 947b3cf41e759b2b23f684e215e651d0c8037f88 Mon Sep 17 00:00:00 2001
->> From: Damien Le Moal <damien.lemoal@wdc.com>
->> Date: Mon, 14 Aug 2017 13:01:16 +0900
->> Subject: [PATCH] block: Fix __blkdev_sectors_to_bio_pages()
->>
->> On 32bit systems where sector_t is a 32bits type, the calculation of
->> bytes may overflow. Use the u64 type for the local calculation to avoid
->> overflows.
->>
->> Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
->> ---
->>  block/blk-lib.c | 4 ++--
->>  1 file changed, 2 insertions(+), 2 deletions(-)
->>
->> diff --git a/block/blk-lib.c b/block/blk-lib.c
->> index 3fe0aec90597..ccf22dba21f0 100644
->> --- a/block/blk-lib.c
->> +++ b/block/blk-lib.c
->> @@ -269,9 +269,9 @@ static int __blkdev_issue_write_zeroes(struct block_device
->> *bdev,
->>   */
->>  static unsigned int __blkdev_sectors_to_bio_pages(sector_t nr_sects)
->>  {
->> -	sector_t bytes = (nr_sects << 9) + PAGE_SIZE - 1;
->> +	u64 bytes = ((u64)nr_sects << 9) + PAGE_SIZE - 1;
->>  
->> -	return min(bytes >> PAGE_SHIFT, (sector_t)BIO_MAX_PAGES);
->> +	return min(bytes >> PAGE_SHIFT, (u64)BIO_MAX_PAGES);
->>  }
->>  
-> 
-> It's OK, but it is not needed to use 64-bit arithmetic here if all we need 
-> is to shift the value right. Here I submit a simplified patch, using the 
-> macro DIV_ROUND_UP_SECTOR_T (the macro gets optimized to just an addition 
-> and right shift).
-> 
-> 
-> 
-> From: Mikulas Patocka <mpatocka@redhat.com>
-> 
-> Fix possible integer overflow in __blkdev_sectors_to_bio_pages if sector_t 
-> is 32-bit.
-> 
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> Fixes: 615d22a51c04 ("block: Fix __blkdev_issue_zeroout loop")
-> 
+> Signed-off-by: Gilad Ben-Yossef <gilad-6S/DczAoZh3WXxRugSxzZg@public.gmane.org>
 > ---
->  block/blk-lib.c |    4 ++--
->  1 file changed, 2 insertions(+), 2 deletions(-)
+
+Acked-by: Ryder Lee <ryder.lee-NuS5LvNUpcJWk0Htik3J/w@public.gmane.org>
+
+>  drivers/crypto/mediatek/mtk-aes.c | 31 +++++--------------------------
+>  1 file changed, 5 insertions(+), 26 deletions(-)
 > 
-> Index: linux-2.6/block/blk-lib.c
-> ===================================================================
-> --- linux-2.6.orig/block/blk-lib.c
-> +++ linux-2.6/block/blk-lib.c
-> @@ -269,9 +269,9 @@ static int __blkdev_issue_write_zeroes(s
->   */
->  static unsigned int __blkdev_sectors_to_bio_pages(sector_t nr_sects)
->  {
-> -	sector_t bytes = (nr_sects << 9) + PAGE_SIZE - 1;
-> +	sector_t pages = DIV_ROUND_UP_SECTOR_T(nr_sects, PAGE_SIZE / 512);
+> diff --git a/drivers/crypto/mediatek/mtk-aes.c b/drivers/crypto/mediatek/mtk-aes.c
+> index 9e845e8..e2c7c95 100644
+> --- a/drivers/crypto/mediatek/mtk-aes.c
+> +++ b/drivers/crypto/mediatek/mtk-aes.c
+> @@ -137,11 +137,6 @@ struct mtk_aes_gcm_ctx {
+>  	struct crypto_skcipher *ctr;
+>  };
 >  
-> -	return min(bytes >> PAGE_SHIFT, (sector_t)BIO_MAX_PAGES);
-> +	return min(pages, (sector_t)BIO_MAX_PAGES);
+> -struct mtk_aes_gcm_setkey_result {
+> -	int err;
+> -	struct completion completion;
+> -};
+> -
+>  struct mtk_aes_drv {
+>  	struct list_head dev_list;
+>  	/* Device list lock */
+> @@ -936,17 +931,6 @@ static int mtk_aes_gcm_crypt(struct aead_request *req, u64 mode)
+>  				    &req->base);
 >  }
 >  
->  /**
-> 
-
-Nice ! Thank you.
-
-Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>
-
--- 
-Damien Le Moal,
-Western Digital
+> -static void mtk_gcm_setkey_done(struct crypto_async_request *req, int err)
+> -{
+> -	struct mtk_aes_gcm_setkey_result *result = req->data;
+> -
+> -	if (err == -EINPROGRESS)
+> -		return;
+> -
+> -	result->err = err;
+> -	complete(&result->completion);
+> -}
+> -
+>  /*
+>   * Because of the hardware limitation, we need to pre-calculate key(H)
+>   * for the GHASH operation. The result of the encryption operation
+> @@ -962,7 +946,7 @@ static int mtk_aes_gcm_setkey(struct crypto_aead *aead, const u8 *key,
+>  		u32 hash[4];
+>  		u8 iv[8];
+>  
+> -		struct mtk_aes_gcm_setkey_result result;
+> +		struct crypto_wait wait;
+>  
+>  		struct scatterlist sg[1];
+>  		struct skcipher_request req;
+> @@ -1002,22 +986,17 @@ static int mtk_aes_gcm_setkey(struct crypto_aead *aead, const u8 *key,
+>  	if (!data)
+>  		return -ENOMEM;
+>  
+> -	init_completion(&data->result.completion);
+> +	crypto_init_wait(&data->wait);
+>  	sg_init_one(data->sg, &data->hash, AES_BLOCK_SIZE);
+>  	skcipher_request_set_tfm(&data->req, ctr);
+>  	skcipher_request_set_callback(&data->req, CRYPTO_TFM_REQ_MAY_SLEEP |
+>  				      CRYPTO_TFM_REQ_MAY_BACKLOG,
+> -				      mtk_gcm_setkey_done, &data->result);
+> +				      crypto_req_done, &data->wait);
+>  	skcipher_request_set_crypt(&data->req, data->sg, data->sg,
+>  				   AES_BLOCK_SIZE, data->iv);
+>  
+> -	err = crypto_skcipher_encrypt(&data->req);
+> -	if (err == -EINPROGRESS || err == -EBUSY) {
+> -		err = wait_for_completion_interruptible(
+> -			&data->result.completion);
+> -		if (!err)
+> -			err = data->result.err;
+> -	}
+> +	err = crypto_wait_req(crypto_skcipher_encrypt(&data->req),
+> +			      &data->wait);
+>  	if (err)
+>  		goto out;
+>  
