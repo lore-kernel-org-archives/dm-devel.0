@@ -1,251 +1,143 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH] dm-crypt: limit the number of allocated pages
-Date: Mon, 14 Aug 2017 20:20:59 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1708142007510.24994@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1708132240130.18210@file01.intranet.prod.int.rdu2.redhat.com>
-	<CAGnHSEm2Jz35Em6h-a8ofXr9ApgBKJq5mOCG9ZtN4+FuRxj8Aw@mail.gmail.com>
+From: Jonathan Cameron <Jonathan.Cameron@huawei.com>
+Subject: Re: [PATCH v5 05/19] crypto: introduce crypto wait for async op
+Date: Tue, 15 Aug 2017 03:23:03 +0100
+Message-ID: <20170815032303.000042b2@huawei.com>
+References: <1502724094-23305-1-git-send-email-gilad@benyossef.com>
+ <1502724094-23305-6-git-send-email-gilad@benyossef.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAGnHSEm2Jz35Em6h-a8ofXr9ApgBKJq5mOCG9ZtN4+FuRxj8Aw@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Tom Yan <tom.ty89@gmail.com>
-Cc: Ondrej Kozina <okozina@redhat.com>, dm-devel@redhat.com, hch@lst.de, Mike Snitzer <msnitzer@redhat.com>, Milan Broz <mbroz@redhat.com>
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+In-Reply-To: <1502724094-23305-6-git-send-email-gilad@benyossef.com>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+To: Gilad Ben-Yossef <gilad@benyossef.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, linux-doc@vger.kernel.org, Gary Hook <gary.hook@amd.com>, David Howells <dhowells@redhat.com>, dm-devel@redhat.com, keyrings@vger.kernel.org, linux-ima-devel@lists.sourceforge.net, Alasdair Kergon <agk@redhat.com>, Boris Brezillon <boris.brezillon@free-electrons.com>, Herbert Xu <herbert@gondor.apana.org.au>, Jonathan Corbet <corbet@lwn.net>, Mimi Zohar <zohar@linux.vnet.ibm.com>, "Serge E. Hallyn" <serge@hallyn.com>, Tom Lendacky <thomas.lendacky@amd.com>, Eric Biggers <ebiggers3@gmail.com>, linux-cifs@vger.kernel.org, linux-ima-user@lists.sourceforge.net, Arnaud Ebalard <arno@natisbad.org>, linux-raid@vger.kernel.org, linux-fscrypt@vger.kernel.org, linux-mediatek@lists.infradead.org, James Morris <james.l.morris@oracle.com>, Matthias Brugger <matthias.bgg@gmail.com>, Jaegeuk Kim <jaegeuk@kernel.org>, linux-arm-kernel@lists.infradead.o
 List-Id: dm-devel.ids
 
+On Mon, 14 Aug 2017 18:21:15 +0300
+Gilad Ben-Yossef <gilad@benyossef.com> wrote:
 
-
-On Tue, 15 Aug 2017, Tom Yan wrote:
-
-> Just tested the patch with kernel 4.12.6. Well it sort of worked. No
-> more OOM or kernel panic. Memory takeup is around ~250M on a machine
-> with 8G RAM. However I keep getting this:
+> Invoking a possibly async. crypto op and waiting for completion
+> while correctly handling backlog processing is a common task
+> in the crypto API implementation and outside users of it.
 > 
-> Aug 15 04:04:10 archlinux kernel: INFO: task blkdiscard:538 blocked
-> for more than 120 seconds.
-> Aug 15 04:04:10 archlinux kernel:       Tainted: P         C O
-> 4.12.6-1-ARCH #1
-> Aug 15 04:04:10 archlinux kernel: "echo 0 >
-> /proc/sys/kernel/hung_task_timeout_secs" disables this message.
-> Aug 15 04:04:10 archlinux kernel: blkdiscard      D    0   538    537 0x00000000
-> Aug 15 04:04:10 archlinux kernel: Call Trace:
-> Aug 15 04:04:10 archlinux kernel:  __schedule+0x236/0x870
-> Aug 15 04:04:10 archlinux kernel:  schedule+0x3d/0x90
-> Aug 15 04:04:10 archlinux kernel:  schedule_timeout+0x21f/0x330
-> Aug 15 04:04:10 archlinux kernel:  io_schedule_timeout+0x1e/0x50
-> Aug 15 04:04:10 archlinux kernel:  ? io_schedule_timeout+0x1e/0x50
-> Aug 15 04:04:10 archlinux kernel:  wait_for_completion_io+0xa5/0x120
-> Aug 15 04:04:10 archlinux kernel:  ? wake_up_q+0x80/0x80
-> Aug 15 04:04:10 archlinux kernel:  submit_bio_wait+0x68/0x90
-> Aug 15 04:04:10 archlinux kernel:  blkdev_issue_zeroout+0x80/0xc0
-> Aug 15 04:04:10 archlinux kernel:  blkdev_ioctl+0x707/0x940
-> Aug 15 04:04:10 archlinux kernel:  ? blkdev_ioctl+0x707/0x940
-> Aug 15 04:04:10 archlinux kernel:  block_ioctl+0x3d/0x50
-> Aug 15 04:04:10 archlinux kernel:  do_vfs_ioctl+0xa5/0x600
-> Aug 15 04:04:10 archlinux kernel:  ? SYSC_newfstat+0x44/0x70
-> Aug 15 04:04:10 archlinux kernel:  ? getrawmonotonic64+0x36/0xc0
-> Aug 15 04:04:10 archlinux kernel:  SyS_ioctl+0x79/0x90
-> Aug 15 04:04:10 archlinux kernel:  entry_SYSCALL_64_fastpath+0x1a/0xa5
-> Aug 15 04:04:10 archlinux kernel: RIP: 0033:0x7f2b463378b7
-> Aug 15 04:04:10 archlinux kernel: RSP: 002b:00007fffb2dad8b8 EFLAGS:
-> 00000246 ORIG_RAX: 0000000000000010
-> Aug 15 04:04:10 archlinux kernel: RAX: ffffffffffffffda RBX:
-> 000000568a3922c8 RCX: 00007f2b463378b7
-> Aug 15 04:04:10 archlinux kernel: RDX: 00007fffb2dad910 RSI:
-> 000000000000127f RDI: 0000000000000003
-> Aug 15 04:04:10 archlinux kernel: RBP: 0000000000000000 R08:
-> 0000000000000200 R09: 0000000000000000
-> Aug 15 04:04:10 archlinux kernel: R10: 00007fffb2dad870 R11:
-> 0000000000000246 R12: 0000000000000000
-> Aug 15 04:04:10 archlinux kernel: R13: 0000000000000003 R14:
-> 00007fffb2dadae8 R15: 0000000000000000
+> This patch adds a generic implementation for doing so in
+> preparation for using it across the board instead of hand
+> rolled versions.
 > 
-> which I do not get if I do `blkdiscard -z` on the underlying device
-> (which does not support SCSI WRITE SAME) instead of the dm-crypt
-> container.
+> Signed-off-by: Gilad Ben-Yossef <gilad@benyossef.com>
+> CC: Eric Biggers <ebiggers3@gmail.com>
 
-It happens because encryption is too slow, it takes more than 120 seconds 
-to clear the device. I don't know what else it should do. It is not easy 
-to interrupt the operation because you would then have to deal with 
-dangling bios.
+One really trivial point inline I happened to notice.
 
-> In the first trial I got some more lower-level errors. blkdiscard
-> could not exit after the job was seemingly finished (no more write
-> according to iostat). The container could not be closed either so I
-> had to just disconnect the drive. I could not reproduce it in second
-> trial though, so I am not sure if it was just some coincidental
-> hardware hiccup. My systemd journal happened to be broken as well so
-> the log of that trial was lost.
-
-So, it's probably bug in error handling in the underlying device (or in 
-dm-crypt). Was the device that experienced errors the same as the root 
-device of the system?
-
-> I also have doubt in the approach. Can't we split the bio chain as per
-> how it was chained and allocate memory bio per bio, and if it's not
-> enough, also limit the memory allocation with a maximum number
-> (arbitrary or not) of bios?
-
-The number of in-flight bios could be also limited in next_bio (because if 
-you have really small memory and large device, the memory could be 
-exhausted by the allocation of bio structures). But this is not your case.
-
-Note that no pages are allocated in function that does the zeroing 
-(__blkdev_issue_zeroout). The function creates large number of bios and 
-all the bios point to the same page containing all zeroes. The memory 
-allocation happens when dm-crypt attempts to allocate pages that hold the 
-encrypted data.
-
-There are other cases where dm-crypt can cause memory exhaustion, so the 
-fix in dm-crypt is appropriate. Another case where it blows the memory is 
-when you create a device that has an odd number of sectors (so block size 
-512 is used), use dm-crypt on this device and write to the encrypted 
-device using the block device's page cache. In this case, dm-crypt 
-receives large amount of 512-byte bios, allocates a full 4k page for each 
-bio and it also exhausts memory. This patch fixes this problem as well.
-
-> On 14 August 2017 at 10:45, Mikulas Patocka <mpatocka@redhat.com> wrote:
-> > dm-crypt consumes excessive amount memory when the user attempts to zero
-> > a dm-crypt device with "blkdiscard -z". The command "blkdiscard -z" calls
-> > the BLKZEROOUT ioctl, it goes to the function __blkdev_issue_zeroout,
-> > __blkdev_issue_zeroout sends large amount of write bios that contain the
-> > zero page as their payload.
-> >
-> > For each incoming page, dm-crypt allocates another page that holds the
-> > encrypted data, so when processing "blkdiscard -z", dm-crypt tries to
-> > allocate the amount of memory that is equal to the size of the device.
-> > This can trigger OOM killer or cause system crash.
-> >
-> > This patch fixes the bug by limiting the amount of memory that dm-crypt
-> > allocates to 2% of total system memory.
-> >
-> > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> > Cc: stable@vger.kernel.org
-> >
-> > ---
-> >  drivers/md/dm-crypt.c |   60 +++++++++++++++++++++++++++++++++++++++++++++++++-
-> >  1 file changed, 59 insertions(+), 1 deletion(-)
-> >
-> > Index: linux-2.6/drivers/md/dm-crypt.c
-> > ===================================================================
-> > --- linux-2.6.orig/drivers/md/dm-crypt.c
-> > +++ linux-2.6/drivers/md/dm-crypt.c
-> > @@ -148,6 +148,8 @@ struct crypt_config {
-> >         mempool_t *tag_pool;
-> >         unsigned tag_pool_max_sectors;
-> >
-> > +       struct percpu_counter n_allocated_pages;
-> > +
-> >         struct bio_set *bs;
-> >         struct mutex bio_alloc_lock;
-> >
-> > @@ -219,6 +221,12 @@ struct crypt_config {
-> >  #define MAX_TAG_SIZE   480
-> >  #define POOL_ENTRY_SIZE        512
-> >
-> > +static DEFINE_SPINLOCK(dm_crypt_clients_lock);
-> > +static unsigned dm_crypt_clients_n = 0;
-> > +static volatile unsigned long dm_crypt_pages_per_client;
-> > +#define DM_CRYPT_MEMORY_PERCENT                        2
-> > +#define DM_CRYPT_MIN_PAGES_PER_CLIENT          (BIO_MAX_PAGES * 16)
-> > +
-> >  static void clone_init(struct dm_crypt_io *, struct bio *);
-> >  static void kcryptd_queue_crypt(struct dm_crypt_io *io);
-> >  static struct scatterlist *crypt_get_sg_data(struct crypt_config *cc,
-> > @@ -2158,6 +2166,37 @@ static int crypt_wipe_key(struct crypt_c
-> >         return r;
-> >  }
-> >
-> > +static void crypt_calculate_pages_per_client(void)
-> > +{
-> > +       unsigned long pages = (totalram_pages - totalhigh_pages) * DM_CRYPT_MEMORY_PERCENT / 100;
-> > +       if (!dm_crypt_clients_n)
-> > +               return;
-> > +       pages /= dm_crypt_clients_n;
-> > +       if (pages < DM_CRYPT_MIN_PAGES_PER_CLIENT)
-> > +               pages = DM_CRYPT_MIN_PAGES_PER_CLIENT;
-> > +       dm_crypt_pages_per_client = pages;
-> > +}
-> > +
-> > +static void *crypt_page_alloc(gfp_t gfp_mask, void *pool_data)
-> > +{
-> > +       struct crypt_config *cc = pool_data;
-> > +       struct page *page;
-> > +       if (unlikely(percpu_counter_compare(&cc->n_allocated_pages, dm_crypt_pages_per_client) >= 0) &&
-> > +           likely(gfp_mask & __GFP_NORETRY))
-> > +               return NULL;
-> > +       page = alloc_page(gfp_mask);
-> > +       if (likely(page != NULL))
-> > +               percpu_counter_add(&cc->n_allocated_pages, 1);
-> > +       return page;
-> > +}
-> > +
-> > +static void crypt_page_free(void *page, void *pool_data)
-> > +{
-> > +       struct crypt_config *cc = pool_data;
-> > +       __free_page(page);
-> > +       percpu_counter_sub(&cc->n_allocated_pages, 1);
-> > +}
-> > +
-> >  static void crypt_dtr(struct dm_target *ti)
-> >  {
-> >         struct crypt_config *cc = ti->private;
-> > @@ -2184,6 +2223,10 @@ static void crypt_dtr(struct dm_target *
-> >         mempool_destroy(cc->req_pool);
-> >         mempool_destroy(cc->tag_pool);
-> >
-> > +       if (cc->page_pool)
-> > +               WARN_ON(percpu_counter_sum(&cc->n_allocated_pages) != 0);
-> > +       percpu_counter_destroy(&cc->n_allocated_pages);
-> > +
-> >         if (cc->iv_gen_ops && cc->iv_gen_ops->dtr)
-> >                 cc->iv_gen_ops->dtr(cc);
-> >
-> > @@ -2198,6 +2241,12 @@ static void crypt_dtr(struct dm_target *
-> >
-> >         /* Must zero key material before freeing */
-> >         kzfree(cc);
-> > +
-> > +       spin_lock(&dm_crypt_clients_lock);
-> > +       WARN_ON(!dm_crypt_clients_n);
-> > +       dm_crypt_clients_n--;
-> > +       crypt_calculate_pages_per_client();
-> > +       spin_unlock(&dm_crypt_clients_lock);
-> >  }
-> >
-> >  static int crypt_ctr_ivmode(struct dm_target *ti, const char *ivmode)
-> > @@ -2636,6 +2685,15 @@ static int crypt_ctr(struct dm_target *t
-> >
-> >         ti->private = cc;
-> >
-> > +       spin_lock(&dm_crypt_clients_lock);
-> > +       dm_crypt_clients_n++;
-> > +       crypt_calculate_pages_per_client();
-> > +       spin_unlock(&dm_crypt_clients_lock);
-> > +
-> > +       ret = percpu_counter_init(&cc->n_allocated_pages, 0, GFP_KERNEL);
-> > +       if (ret < 0)
-> > +               goto bad;
-> > +
-> >         /* Optional parameters need to be read before cipher constructor */
-> >         if (argc > 5) {
-> >                 ret = crypt_ctr_optional(ti, argc - 5, &argv[5]);
-> > @@ -2690,7 +2748,7 @@ static int crypt_ctr(struct dm_target *t
-> >                 ALIGN(sizeof(struct dm_crypt_io) + cc->dmreq_start + additional_req_size,
-> >                       ARCH_KMALLOC_MINALIGN);
-> >
-> > -       cc->page_pool = mempool_create_page_pool(BIO_MAX_PAGES, 0);
-> > +       cc->page_pool = mempool_create(BIO_MAX_PAGES, crypt_page_alloc, crypt_page_free, cc);
-> >         if (!cc->page_pool) {
-> >                 ti->error = "Cannot allocate page mempool";
-> >                 goto bad;
+> ---
+>  crypto/api.c           | 13 +++++++++++++
+>  include/linux/crypto.h | 41 +++++++++++++++++++++++++++++++++++++++++
+>  2 files changed, 54 insertions(+)
 > 
+> diff --git a/crypto/api.c b/crypto/api.c
+> index 941cd4c..2a2479d 100644
+> --- a/crypto/api.c
+> +++ b/crypto/api.c
+> @@ -24,6 +24,7 @@
+>  #include <linux/sched/signal.h>
+>  #include <linux/slab.h>
+>  #include <linux/string.h>
+> +#include <linux/completion.h>
+>  #include "internal.h"
+>  
+>  LIST_HEAD(crypto_alg_list);
+> @@ -595,5 +596,17 @@ int crypto_has_alg(const char *name, u32 type, u32 mask)
+>  }
+>  EXPORT_SYMBOL_GPL(crypto_has_alg);
+>  
+> +void crypto_req_done(struct crypto_async_request *req, int err)
+> +{
+> +	struct crypto_wait *wait = req->data;
+> +
+> +	if (err == -EINPROGRESS)
+> +		return;
+> +
+> +	wait->err = err;
+> +	complete(&wait->completion);
+> +}
+> +EXPORT_SYMBOL_GPL(crypto_req_done);
+> +
+>  MODULE_DESCRIPTION("Cryptographic core API");
+>  MODULE_LICENSE("GPL");
+> diff --git a/include/linux/crypto.h b/include/linux/crypto.h
+> index 84da997..bb00186 100644
+> --- a/include/linux/crypto.h
+> +++ b/include/linux/crypto.h
+> @@ -24,6 +24,7 @@
+>  #include <linux/slab.h>
+>  #include <linux/string.h>
+>  #include <linux/uaccess.h>
+> +#include <linux/completion.h>
+>  
+>  /*
+>   * Autoloaded crypto modules should only use a prefixed name to avoid allowing
+> @@ -468,6 +469,45 @@ struct crypto_alg {
+>  } CRYPTO_MINALIGN_ATTR;
+>  
+>  /*
+> + * A helper struct for waiting for completion of async crypto ops
+> + */
+> +struct crypto_wait {
+> +	struct completion completion;
+> +	int err;
+> +};
+> +
+> +/*
+> + * Macro for declaring a crypto op async wait object on stack
+> + */
+> +#define DECLARE_CRYPTO_WAIT(_wait) \
+> +	struct crypto_wait _wait = { \
+> +		COMPLETION_INITIALIZER_ONSTACK((_wait).completion), 0 }
+> +
+> +/*
+> + * Async ops completion helper functioons
+> + */
+> +void crypto_req_done(struct crypto_async_request *req, int err);
+> +
+> +static inline int crypto_wait_req(int err, struct crypto_wait *wait)
+> +{
+> +	switch (err) {
+> +	case -EINPROGRESS:
+> +	case -EBUSY:
+> +		wait_for_completion(&wait->completion);
+> +		reinit_completion(&wait->completion);
+> +		err = wait->err;
+> +		break;
+> +	};
+> +
+> +	return err;
+> +}
+> +
+> +static inline void crypto_init_wait(struct crypto_wait *wait)
+> +{
+> +	init_completion(&wait->completion);
+> +}
+> +
+> +/*
+>   * Algorithm registration interface.
+>   */
+>  int crypto_register_alg(struct crypto_alg *alg);
+> @@ -1604,5 +1644,6 @@ static inline int crypto_comp_decompress(struct crypto_comp *tfm,
+>  						    src, slen, dst, dlen);
+>  }
+>  
+> +
+
+Trivial observation.  Shouldn't have this bonus blank line inserted here.
+
+>  #endif	/* _LINUX_CRYPTO_H */
+>  
