@@ -1,14 +1,15 @@
 From: Gris Ge <fge@redhat.com>
-Subject: [PATCH 2/3] multipath-tools: libdmmp: Improve timeout
-	mechanism
-Date: Wed, 16 Aug 2017 20:34:08 +0800
-Message-ID: <20170816123409.16535-2-fge@redhat.com>
+Subject: [PATCH 3/3] multipath-tools: libdmmp: New function to
+	flush and reconfig
+Date: Wed, 16 Aug 2017 20:34:09 +0800
+Message-ID: <20170816123409.16535-3-fge@redhat.com>
 References: <20170816123409.16535-1-fge@redhat.com>
+	<20170816123409.16535-2-fge@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170816123409.16535-1-fge@redhat.com>
+In-Reply-To: <20170816123409.16535-2-fge@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,225 +23,405 @@ To: dm-devel@redhat.com
 Cc: Gris Ge <fge@redhat.com>
 List-Id: dm-devel.ids
 
-Issue:
-    libdmmp return error of timeout before user requested timeout was
-    met.
-    This happens when multipathd daemon is starting with a lot(1k+) mpaths.
-
-Root cause:
-    The multipath has two timeout settings:
-        1. 'uxsock_timeout' in multipath.conf
-        2. libmpathcmd timeout argument.
-    And the first is not controllable in current libdmmp code.
-
-Fix:
-    * Only keep 1 timeout setting in libdmmp:
-        dmmp_context_timeout_set()/dmmp_context_timeout_get().
-    * libdmmp will keep reply until meet user requested timeout.
-    * Allow user to set timeout as 0 which mean infinite, only return
-      when error or pass.
-    * Updated libdmmp.h document to to indicate timeout 0 as infinite.
-    * Increase timeout setting in libdmmp test case to test this
-      mechanism.
+New functions:
+    * dmmp_reconfig() to invoke reconfiguration of multipathd daemon.
+    * dmmp_flush_mpath() to flush/del unused mpath.
 
 Signed-off-by: Gris Ge <fge@redhat.com>
 ---
- libdmmp/libdmmp.c           | 136 ++++++++++++++++++++++++++++++++++++--------
- libdmmp/libdmmp/libdmmp.h   |   1 +
- libdmmp/test/libdmmp_test.c |   2 +-
- 3 files changed, 114 insertions(+), 25 deletions(-)
+ libdmmp/libdmmp.c           | 143 +++++++++++++++++++++++++++++++++++++-------
+ libdmmp/libdmmp/libdmmp.h   |  60 +++++++++++++++++++
+ libdmmp/libdmmp_misc.c      |   5 +-
+ libdmmp/test/libdmmp_test.c |  47 ++++++++++++++-
+ 4 files changed, 229 insertions(+), 26 deletions(-)
 
 diff --git a/libdmmp/libdmmp.c b/libdmmp/libdmmp.c
-index 3906335a..6db348b4 100644
+index 6db348b4..b4e7f08f 100644
 --- a/libdmmp/libdmmp.c
 +++ b/libdmmp/libdmmp.c
-@@ -29,6 +29,7 @@
- #include <unistd.h>
- #include <assert.h>
- #include <json.h>
-+#include <time.h>
- #include <mpath_cmd.h>
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (C) 2015 - 2016 Red Hat, Inc.
++ * Copyright (C) 2015 - 2017 Red Hat, Inc.
+  *
+  * This program is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+@@ -19,6 +19,7 @@
+  */
  
- #include "libdmmp/libdmmp.h"
-@@ -54,6 +55,17 @@ struct dmmp_context {
- 	unsigned int tmo;
- };
+ #include <stdint.h>
++#include <stdbool.h>
+ #include <string.h>
+ #include <sys/time.h>
+ #include <sys/resource.h>
+@@ -45,6 +46,8 @@
+ #define _DMMP_JSON_MAJOR_VERSION		0
+ #define _DMMP_JSON_MAPS_KEY			"maps"
+ #define _ERRNO_STR_BUFF_SIZE			256
++#define _IPC_MAX_CMD_LEN			512
++/* ^ Was _MAX_CMD_LEN in ./libmultipath/uxsock.h */
  
-+/*
-+ * The multipathd daemon are using "uxsock_timeout" to define timeout value,
-+ * if timeout at daemon side, we will get message "timeout\n".
-+ * To unify this timeout with `dmmp_context_timeout_set()`, this function
-+ * will keep retry mpath_process_cmd() tile meet the time of
-+ * dmmp_context_timeout_get().
-+ * Need to free `*output` string manually.
-+ */
-+static int _process_cmd(struct dmmp_context *ctx, int fd, const char *cmd,
-+			char **output);
+ struct dmmp_context {
+ 	void (*log_func)(struct dmmp_context *ctx, int priority,
+@@ -66,6 +69,8 @@ struct dmmp_context {
+ static int _process_cmd(struct dmmp_context *ctx, int fd, const char *cmd,
+ 			char **output);
+ 
++static int _ipc_connect(struct dmmp_context *ctx, int *fd);
 +
  _dmmp_getter_func_gen(dmmp_context_log_priority_get,
  		      struct dmmp_context, ctx, log_priority,
  		      int);
-@@ -169,32 +181,11 @@ int dmmp_mpath_array_get(struct dmmp_context *ctx,
- 		goto out;
- 	}
+@@ -153,9 +158,7 @@ int dmmp_mpath_array_get(struct dmmp_context *ctx,
+ 	uint32_t i = 0;
+ 	int cur_json_major_version = -1;
+ 	int ar_maps_len = -1;
+-	int socket_fd = -1;
+-	int errno_save = 0;
+-	char errno_str_buff[_ERRNO_STR_BUFF_SIZE];
++	int ipc_fd = -1;
  
--	if (mpath_process_cmd(socket_fd, _DMMP_IPC_SHOW_JSON_CMD,
--			      &j_str, ctx->tmo) != 0) {
+ 	assert(ctx != NULL);
+ 	assert(dmmp_mps != NULL);
+@@ -164,24 +167,9 @@ int dmmp_mpath_array_get(struct dmmp_context *ctx,
+ 	*dmmp_mps = NULL;
+ 	*dmmp_mp_count = 0;
+ 
+-	socket_fd = mpath_connect();
+-	if (socket_fd == -1) {
 -		errno_save = errno;
 -		memset(errno_str_buff, 0, _ERRNO_STR_BUFF_SIZE);
 -		strerror_r(errno_save, errno_str_buff, _ERRNO_STR_BUFF_SIZE);
--		if (errno_save == ETIMEDOUT) {
--			rc = DMMP_ERR_IPC_TIMEOUT;
--			_error(ctx, "IPC communication timeout, try to "
--			       "increase it via dmmp_context_timeout_set()");
--			goto out;
+-		if (errno_save == ECONNREFUSED) {
+-			rc = DMMP_ERR_NO_DAEMON;
+-			_error(ctx, "Socket connection refuse. "
+-			       "Maybe multipathd daemon is not running");
+-		} else {
+-			_error(ctx, "IPC failed with error %d(%s)", errno_save,
+-			       errno_str_buff);
+-			rc = DMMP_ERR_IPC_ERROR;
 -		}
--		_error(ctx, "IPC failed when process command '%s' with "
--		       "error %d(%s)", _DMMP_IPC_SHOW_JSON_CMD, errno_save,
--		       errno_str_buff);
--		rc = DMMP_ERR_IPC_ERROR;
 -		goto out;
 -	}
--
--	if ((j_str == NULL) || (strlen(j_str) == 0)) {
--		_error(ctx, "IPC return empty reply for command %s",
--		       _DMMP_IPC_SHOW_JSON_CMD);
--		rc = DMMP_ERR_IPC_ERROR;
--		goto out;
--	}
-+	_good(_process_cmd(ctx, socket_fd, _DMMP_IPC_SHOW_JSON_CMD, &j_str),
-+	      rc, out);
++	_good(_ipc_connect(ctx, &ipc_fd), rc, out);
+ 
+-	_good(_process_cmd(ctx, socket_fd, _DMMP_IPC_SHOW_JSON_CMD, &j_str),
++	_good(_process_cmd(ctx, ipc_fd, _DMMP_IPC_SHOW_JSON_CMD, &j_str),
+ 	      rc, out);
  
  	_debug(ctx, "Got json output from multipathd: '%s'", j_str);
-+
- 	j_token = json_tokener_new();
- 	if (j_token == NULL) {
- 		rc = DMMP_ERR_BUG;
-@@ -283,3 +274,100 @@ out:
+@@ -258,8 +246,8 @@ int dmmp_mpath_array_get(struct dmmp_context *ctx,
+ 	}
  
+ out:
+-	if (socket_fd >= 0)
+-		mpath_disconnect(socket_fd);
++	if (ipc_fd >= 0)
++		mpath_disconnect(ipc_fd);
+ 	free(j_str);
+ 	if (j_token != NULL)
+ 		json_tokener_free(j_token);
+@@ -371,3 +359,112 @@ out:
+ 	}
  	return rc;
  }
 +
-+static int _process_cmd(struct dmmp_context *ctx, int fd, const char *cmd,
-+			char **output)
++static int _ipc_connect(struct dmmp_context *ctx, int *fd)
 +{
-+	int errno_save = 0;
 +	int rc = DMMP_OK;
++	int errno_save = 0;
 +	char errno_str_buff[_ERRNO_STR_BUFF_SIZE];
-+	struct timespec start_ts;
-+	struct timespec cur_ts;
-+	unsigned int ipc_tmo = 0;
-+	bool flag_check_tmo = false;
-+	unsigned int elapsed = 0;
 +
-+	assert(output != NULL);
 +	assert(ctx != NULL);
-+	assert(cmd != NULL);
++	assert(fd != NULL);
 +
-+	*output = NULL;
++	*fd = -1;
 +
-+	if (clock_gettime(CLOCK_MONOTONIC, &start_ts) != 0) {
-+		_error(ctx, "BUG: Failed to get CLOCK_MONOTONIC time "
-+		       "via clock_gettime(), error %d", errno);
-+		return DMMP_ERR_BUG;
-+	}
-+
-+	ipc_tmo = ctx->tmo;
-+	if (ctx->tmo == 0)
-+		ipc_tmo = _DEFAULT_UXSOCK_TIMEOUT;
-+
-+invoke:
-+	_debug(ctx, "Invoking IPC command '%s' with IPC tmo %u miliseconds",
-+	       cmd, ipc_tmo);
-+	flag_check_tmo = false;
-+	if (mpath_process_cmd(fd, cmd, output, ipc_tmo) != 0) {
++	*fd = mpath_connect();
++	if (*fd == -1) {
 +		errno_save = errno;
 +		memset(errno_str_buff, 0, _ERRNO_STR_BUFF_SIZE);
 +		strerror_r(errno_save, errno_str_buff, _ERRNO_STR_BUFF_SIZE);
-+		if (errno_save == ETIMEDOUT) {
-+			flag_check_tmo = true;
++		if (errno_save == ECONNREFUSED) {
++			rc = DMMP_ERR_NO_DAEMON;
++			_error(ctx, "Socket connection refuse. "
++			       "Maybe multipathd daemon is not running");
 +		} else {
-+			_error(ctx, "IPC failed when process command '%s' with "
-+			       "error %d(%s)", cmd, errno_save, errno_str_buff);
-+			_debug(ctx, "%s", *output);
++			_error(ctx, "IPC failed with error %d(%s)", errno_save,
++			       errno_str_buff);
 +			rc = DMMP_ERR_IPC_ERROR;
-+			goto out;
 +		}
-+	}
-+	if ((*output != NULL) &&
-+	    (strncmp(*output, "timeout", strlen("timeout")) == 0))
-+		flag_check_tmo = true;
-+
-+	if (flag_check_tmo == true) {
-+		free(*output);
-+		*output = NULL;
-+		if (ctx->tmo == 0) {
-+			_debug(ctx, "IPC timeout, but user requested infinite "
-+			       "timeout");
-+			goto invoke;
-+		}
-+
-+		if (clock_gettime(CLOCK_MONOTONIC, &cur_ts) != 0) {
-+			_error(ctx, "BUG: Failed to get CLOCK_MONOTONIC time "
-+			       "via clock_gettime(), error %d", errno);
-+			rc = DMMP_ERR_BUG;
-+			goto out;
-+		}
-+		elapsed = (cur_ts.tv_sec - start_ts.tv_sec) * 1000 +
-+			(cur_ts.tv_nsec - start_ts.tv_nsec) / 1000000;
-+
-+		if (elapsed >= ctx->tmo) {
-+			rc = DMMP_ERR_IPC_TIMEOUT;
-+			_error(ctx, "Timeout, try to increase it via "
-+			       "dmmp_context_timeout_set()");
-+			goto out;
-+		}
-+		if (ctx->tmo != 0)
-+			ipc_tmo = ctx->tmo - elapsed;
-+
-+		_debug(ctx, "IPC timeout, but user requested timeout has not "
-+		       "reached yet, still have %u milliseconds", ipc_tmo);
-+		goto invoke;
-+	} else {
-+		if ((*output == NULL) || (strlen(*output) == 0)) {
-+			_error(ctx, "IPC return empty reply for command %s",
-+			       cmd);
-+			rc = DMMP_ERR_IPC_ERROR;
-+			goto out;
-+		}
-+	}
-+
-+out:
-+	if (rc != DMMP_OK) {
-+		free(*output);
-+		*output = NULL;
 +	}
 +	return rc;
 +}
++
++int dmmp_flush_mpath(struct dmmp_context *ctx, const char *mpath_name)
++{
++	int rc = DMMP_OK;
++	struct dmmp_mpath **dmmp_mps = NULL;
++	uint32_t dmmp_mp_count = 0;
++	uint32_t i = 0;
++	bool found = false;
++	int ipc_fd = -1;
++	char cmd[_IPC_MAX_CMD_LEN];
++	char *output = NULL;
++
++	assert(ctx != NULL);
++	assert(mpath_name != NULL);
++
++	snprintf(cmd, _IPC_MAX_CMD_LEN, "del map %s", mpath_name);
++	if (strlen(cmd) == _IPC_MAX_CMD_LEN - 1) {
++		rc = DMMP_ERR_INVALID_ARGUMENT;
++		_error(ctx, "Invalid mpath name %s", mpath_name);
++		goto out;
++	}
++
++	_good(_ipc_connect(ctx, &ipc_fd), rc, out);
++	_good(_process_cmd(ctx, ipc_fd, cmd, &output), rc, out);
++
++	/* _process_cmd() already make sure output is not NULL */
++
++	if (strncmp(output, "fail", strlen("fail")) == 0) {
++		/* Check whether specified mpath exits */
++		_good(dmmp_mpath_array_get(ctx, &dmmp_mps, &dmmp_mp_count),
++		      rc, out);
++
++		for (i = 0; i < dmmp_mp_count; ++i) {
++			if (strcmp(dmmp_mpath_name_get(dmmp_mps[i]),
++				   mpath_name) == 0) {
++				found = true;
++				break;
++			}
++		}
++
++		if (found == false) {
++			rc = DMMP_ERR_MPATH_NOT_FOUND;
++			_error(ctx, "Specified mpath %s not found", mpath_name);
++			goto out;
++		}
++
++		rc = DMMP_ERR_MPATH_BUSY;
++		_error(ctx, "Specified mpath is in use");
++	} else if (strncmp(output, "ok", strlen("ok")) != 0) {
++		rc = DMMP_ERR_BUG;
++		_error(ctx, "Got unexpected output for cmd '%s': '%s'",
++		       cmd, output);
++	}
++
++out:
++	if (ipc_fd >= 0)
++		mpath_disconnect(ipc_fd);
++	dmmp_mpath_array_free(dmmp_mps, dmmp_mp_count);
++	free(output);
++	return rc;
++}
++
++int dmmp_reconfig(struct dmmp_context *ctx)
++{
++	int rc = DMMP_OK;
++	int ipc_fd = -1;
++	char *output = NULL;
++	char cmd[_IPC_MAX_CMD_LEN];
++
++	snprintf(cmd, _IPC_MAX_CMD_LEN, "%s", "reconfigure");
++
++	_good(_ipc_connect(ctx, &ipc_fd), rc, out);
++	_good(_process_cmd(ctx, ipc_fd, cmd, &output), rc, out);
++
++out:
++	if (ipc_fd >= 0)
++		mpath_disconnect(ipc_fd);
++	free(output);
++	return rc;
++}
 diff --git a/libdmmp/libdmmp/libdmmp.h b/libdmmp/libdmmp/libdmmp.h
-index 06791586..3f3fd017 100644
+index 3f3fd017..72b79b97 100644
 --- a/libdmmp/libdmmp/libdmmp.h
 +++ b/libdmmp/libdmmp/libdmmp.h
-@@ -171,6 +171,7 @@ DMMP_DLL_EXPORT void dmmp_context_free(struct dmmp_context *ctx);
+@@ -39,6 +39,9 @@ extern "C" {
+ #define DMMP_ERR_IPC_ERROR		4
+ #define DMMP_ERR_NO_DAEMON		5
+ #define DMMP_ERR_INCOMPATIBLE		6
++#define DMMP_ERR_MPATH_BUSY		7
++#define DMMP_ERR_MPATH_NOT_FOUND	8
++#define DMMP_ERR_INVALID_ARGUMENT	9
+ 
+ /*
+  * Use the syslog severity level as log priority
+@@ -647,6 +650,63 @@ DMMP_DLL_EXPORT uint32_t dmmp_path_status_get(struct dmmp_path *dmmp_p);
+  */
+ DMMP_DLL_EXPORT const char *dmmp_path_status_str(uint32_t path_status);
+ 
++/**
++ * dmmp_flush_mpath() - Flush specified multipath device map if unused.
++ *
++ * Flush a multipath device map specified as parameter, if unused.
++ *
++ * @ctx:
++ *	Pointer of 'struct dmmp_context'.
++ *	If this pointer is NULL, your program will be terminated by assert.
++ * @mpath_name:
++ *	const char *. The name of multipath device map.
++ *
++ * Return:
++ *	int. Valid error codes are:
++ *
++ *	* DMMP_OK
++ *
++ *	* DMMP_ERR_BUG
++ *
++ *	* DMMP_ERR_NO_MEMORY
++ *
++ *	* DMMP_ERR_NO_DAEMON
++ *
++ *	* DMMP_ERR_MPATH_BUSY
++ *
++ *	* DMMP_ERR_MPATH_NOT_FOUND
++ *
++ *	* DMMP_ERR_INVALID_ARGUMENT
++ *
++ *	Error number could be converted to string by dmmp_strerror().
++ */
++DMMP_DLL_EXPORT int dmmp_flush_mpath(struct dmmp_context *ctx,
++				     const char *mpath_name);
++
++/**
++ * dmmp_reconfig() - Instruct multipathd daemon to do reconfiguration.
++ *
++ * Instruct multipathd daemon to do reconfiguration.
++ *
++ * @ctx:
++ *	Pointer of 'struct dmmp_context'.
++ *	If this pointer is NULL, your program will be terminated by assert.
++ *
++ * Return:
++ *	int. Valid error codes are:
++ *
++ *	* DMMP_OK
++ *
++ *	* DMMP_ERR_BUG
++ *
++ *	* DMMP_ERR_NO_MEMORY
++ *
++ *	* DMMP_ERR_NO_DAEMON
++ *
++ *	Error number could be converted to string by dmmp_strerror().
++ */
++DMMP_DLL_EXPORT int dmmp_reconfig(struct dmmp_context *ctx);
++
+ #ifdef __cplusplus
+ } /* End of extern "C" */
+ #endif
+diff --git a/libdmmp/libdmmp_misc.c b/libdmmp/libdmmp_misc.c
+index 27f1161a..435ddfa5 100644
+--- a/libdmmp/libdmmp_misc.c
++++ b/libdmmp/libdmmp_misc.c
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (C) 2015 - 2016 Red Hat, Inc.
++ * Copyright (C) 2015 - 2017 Red Hat, Inc.
   *
-  * @tmo:
-  *	Timeout in milliseconds(1 seconds equal 1000 milliseconds).
-+ *	0 means infinite, function only return when error or pass.
-  *
-  * Return:
-  *	void
+  * This program is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+@@ -46,6 +46,9 @@ static const struct _num_str_conv _DMMP_RC_MSG_CONV[] = {
+ 	{DMMP_ERR_IPC_ERROR, "Error when communicate with multipathd daemon"},
+ 	{DMMP_ERR_NO_DAEMON, "The multipathd daemon not started"},
+ 	{DMMP_ERR_INCOMPATIBLE, "Incompatible multipathd daemon version"},
++	{DMMP_ERR_MPATH_BUSY, "Specified multipath device map is in use"},
++	{DMMP_ERR_MPATH_NOT_FOUND, "Specified multipath not found"},
++	{DMMP_ERR_INVALID_ARGUMENT, "Invalid argument"},
+ };
+ 
+ _dmmp_str_func_gen(dmmp_strerror, int, rc, _DMMP_RC_MSG_CONV);
 diff --git a/libdmmp/test/libdmmp_test.c b/libdmmp/test/libdmmp_test.c
-index 00b40e90..dad0e280 100644
+index dad0e280..56bd03e7 100644
 --- a/libdmmp/test/libdmmp_test.c
 +++ b/libdmmp/test/libdmmp_test.c
-@@ -35,7 +35,7 @@
- 	} while(0)
- #define PASS(...) fprintf(stdout, "PASS: "__VA_ARGS__ );
- #define FILE_NAME_SIZE 256
--#define TMO 10000	/* Forcing timeout to 10 seconds */
-+#define TMO 60000		/* Forcing timeout to 60 seconds */
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (C) 2015-2016 Red Hat, Inc.
++ * Copyright (C) 2015-2017 Red Hat, Inc.
+  *
+  * This program is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+@@ -24,6 +24,7 @@
+ #include <string.h>
+ #include <pthread.h>
+ #include <unistd.h>
++#include <stdbool.h>
  
- int test_paths(struct dmmp_path_group *mp_pg)
- {
+ #include <libdmmp/libdmmp.h>
+ 
+@@ -106,11 +107,14 @@ int main(int argc, char *argv[])
+ 	struct dmmp_context *ctx = NULL;
+ 	struct dmmp_mpath **dmmp_mps = NULL;
+ 	uint32_t dmmp_mp_count = 0;
++	uint32_t old_dmmp_mp_count = 0;
+ 	const char *name = NULL;
+ 	const char *wwid = NULL;
+ 	const char *kdev = NULL;
+ 	uint32_t i = 0;
+ 	int rc = EXIT_SUCCESS;
++	const char *old_name = NULL;
++	bool found = false;
+ 
+ 	ctx = dmmp_context_new();
+ 	dmmp_context_log_priority_set(ctx, DMMP_LOG_PRIORITY_DEBUG);
+@@ -119,7 +123,7 @@ int main(int argc, char *argv[])
+ 	dmmp_context_timeout_set(ctx, TMO);
+ 	if (dmmp_context_timeout_get(ctx) != TMO)
+ 		FAIL(rc, out, "dmmp_context_timeout_set(): Failed to set "
+-		     "timeout to %u", TMO);
++		     "timeout to %u\n", TMO);
+ 
+ 	if (dmmp_mpath_array_get(ctx, &dmmp_mps, &dmmp_mp_count) != 0)
+ 		FAIL(rc, out, "dmmp_mpath_array_get(): rc != 0\n");
+@@ -140,7 +144,46 @@ int main(int argc, char *argv[])
+ 		if (rc != 0)
+ 			goto out;
+ 	}
++
++	old_name = strdup(name);
++	if (old_name == NULL)
++		FAIL(rc, out, "strdup(): no memory\n");
++
++	old_dmmp_mp_count = dmmp_mp_count;
++
+ 	dmmp_mpath_array_free(dmmp_mps, dmmp_mp_count);
++
++	if (dmmp_flush_mpath(ctx, old_name) != DMMP_OK)
++		FAIL(rc, out, "dmmp_flush_mpath(): Failed\n");
++
++	PASS("dmmp_flush_mpath(): OK\n");
++
++	if (dmmp_reconfig(ctx) != DMMP_OK)
++		FAIL(rc, out, "dmmp_reconfig(): Failed\n");
++
++	PASS("dmmp_reconfig(): OK\n");
++
++	if (dmmp_mpath_array_get(ctx, &dmmp_mps, &dmmp_mp_count) != 0)
++		FAIL(rc, out, "dmmp_mpath_array_get(): rc != 0\n");
++	if (dmmp_mp_count == 0)
++		FAIL(rc, out, "dmmp_mpath_array_get(): "
++		     "Got no multipath devices\n");
++
++	if (dmmp_mp_count != old_dmmp_mp_count)
++		FAIL(rc, out, "Got different mpath count after reconfig: "
++		     "old %" PRIu32 ", new %" PRIu32 "\n", old_dmmp_mp_count,
++		     dmmp_mp_count);
++
++	for (i = 0; i < dmmp_mp_count; ++i) {
++		if (strcmp(old_name, dmmp_mpath_name_get(dmmp_mps[i])) == 0) {
++			found = true;
++			break;
++		}
++	}
++	if (found == false)
++		FAIL(rc, out, "dmmp_reconfig() does not recreate deleted "
++		     "mpath %s\n", old_name);
++
+ out:
+ 	dmmp_context_free(ctx);
+ 	exit(rc);
 -- 
 2.14.1
