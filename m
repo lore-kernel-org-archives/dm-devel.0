@@ -1,15 +1,15 @@
-From: "John Stoffel" <john@stoffel.org>
-Subject: Re: [PATCH] dm-crypt: limit the number of allocated pages
-Date: Thu, 17 Aug 2017 14:50:30 -0400
-Message-ID: <22933.58742.629722.398176@quad.stoffel.home>
-References: <alpine.LRH.2.02.1708132240130.18210@file01.intranet.prod.int.rdu2.redhat.com>
-	<22930.1510.64868.411152@quad.stoffel.home>
-	<alpine.LRH.2.02.1708142001390.24994@file01.intranet.prod.int.rdu2.redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 2/3] multipath-tools: libdmmp: Improve
+ timeout mechanism
+Date: Thu, 17 Aug 2017 23:29:56 +0200
+Message-ID: <1503005396.7232.11.camel@suse.com>
+References: <20170816123409.16535-1-fge@redhat.com>
+	<20170816123409.16535-2-fge@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.1708142001390.24994@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <20170816123409.16535-2-fge@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,53 +19,25 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Mike Snitzer <msnitzer@redhat.com>, John Stoffel <john@stoffel.org>, Tom Yan <tom.ty89@gmail.com>, dm-devel@redhat.com, Ondrej Kozina <okozina@redhat.com>, hch@lst.de, Milan Broz <mbroz@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
->>>>> "Mikulas" == Mikulas Patocka <mpatocka@redhat.com> writes:
-
-Mikulas> On Mon, 14 Aug 2017, John Stoffel wrote:
-
->> >>>>> "Mikulas" == Mikulas Patocka <mpatocka@redhat.com> writes:
->> 
-Mikulas> dm-crypt consumes excessive amount memory when the user attempts to zero
-Mikulas> a dm-crypt device with "blkdiscard -z". The command "blkdiscard -z" calls
-Mikulas> the BLKZEROOUT ioctl, it goes to the function __blkdev_issue_zeroout,
-Mikulas> __blkdev_issue_zeroout sends large amount of write bios that contain the
-Mikulas> zero page as their payload.
->> 
-Mikulas> For each incoming page, dm-crypt allocates another page that holds the
-Mikulas> encrypted data, so when processing "blkdiscard -z", dm-crypt tries to
-Mikulas> allocate the amount of memory that is equal to the size of the device.
-Mikulas> This can trigger OOM killer or cause system crash.
->> 
-Mikulas> This patch fixes the bug by limiting the amount of memory that dm-crypt
-Mikulas> allocates to 2% of total system memory.
->> 
->> Is this limit per-device or system wide?  it's not clear to me if the
->> minimum is just one page, or more so it might be nice to clarify
->> that.
-
-Mikulas> The limit is system-wide. The limit is divided by the number
-Mikulas> of active dm-crypt devices and each device receives an equal
-Mikulas> share.
-
-Ok, thanks for the clarification.  Can it be expanded dynamically?  I
-could see that for large systems, it might not scale well.  
-
-Mikulas> There is a lower bound of BIO_MAX_PAGES * 16. The per-device
-Mikulas> limit is never lower than this.
-
-Nice.
-
->> Also, for large memory systems, that's still alot of pages.  Maybe it
->> should be more exponential in it's clamping as memory sizes go up?  2%
->> of 2T is 4G, which is pretty darn big...
-
-Mikulas> The more we restrict it, the less parallelism is used in dm-crypt, so it 
-Mikulas> makes sense to have a big value on machines with many cores.
-
-True... but it's still a concern that it's hardcoded.
-
-Thanks for your replies.
+T24gV2VkLCAyMDE3LTA4LTE2IGF0IDIwOjM0ICswODAwLCBHcmlzIEdlIHdyb3RlOgo+IElzc3Vl
+Ogo+ICAgICBsaWJkbW1wIHJldHVybiBlcnJvciBvZiB0aW1lb3V0IGJlZm9yZSB1c2VyIHJlcXVl
+c3RlZCB0aW1lb3V0IHdhcwo+ICAgICBtZXQuCj4gICAgIFRoaXMgaGFwcGVucyB3aGVuIG11bHRp
+cGF0aGQgZGFlbW9uIGlzIHN0YXJ0aW5nIHdpdGggYSBsb3QoMWsrKQo+IG1wYXRocy4KPiAKPiBS
+b290IGNhdXNlOgo+ICAgICBUaGUgbXVsdGlwYXRoIGhhcyB0d28gdGltZW91dCBzZXR0aW5nczoK
+PiAgICAgICAgIDEuICd1eHNvY2tfdGltZW91dCcgaW4gbXVsdGlwYXRoLmNvbmYKPiAgICAgICAg
+IDIuIGxpYm1wYXRoY21kIHRpbWVvdXQgYXJndW1lbnQuCj4gICAgIEFuZCB0aGUgZmlyc3QgaXMg
+bm90IGNvbnRyb2xsYWJsZSBpbiBjdXJyZW50IGxpYmRtbXAgY29kZS4KPiAKPiBGaXg6Cj4gICAg
+ICogT25seSBrZWVwIDEgdGltZW91dCBzZXR0aW5nIGluIGxpYmRtbXA6Cj4gICAgICAgICBkbW1w
+X2NvbnRleHRfdGltZW91dF9zZXQoKS9kbW1wX2NvbnRleHRfdGltZW91dF9nZXQoKS4KPiAgICAg
+KiBsaWJkbW1wIHdpbGwga2VlcCByZXBseSB1bnRpbCBtZWV0IHVzZXIgcmVxdWVzdGVkIHRpbWVv
+dXQuCgpNYXliZSBJJ20gbWlzc2luZyBzb21ldGhpbmcgaGVyZSwgYnV0IGlmIHlvdSBqdXN0IHJl
+dHJ5IHRoZSB0aW1lZC1vdXQKY29tbWFuZCwgaXNuJ3QgaXQgbGlrZWx5IHRoYXQgeW91J2xsIGhp
+dCB0aGUgdXhzb2NrX3RpbWVvdXQgYWdhaW4gYW5kCmFnYWluPwoKQmVzdCwKTWFydGluCgotLSAK
+RHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUz
+IDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRo
+YXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwg
+bWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9t
+YWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
