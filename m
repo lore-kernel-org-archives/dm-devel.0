@@ -1,120 +1,252 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH] dm-crypt: limit the number of allocated pages
-Date: Sat, 19 Aug 2017 13:34:15 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1708191318110.2380@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1708132240130.18210@file01.intranet.prod.int.rdu2.redhat.com>
-	<CAGnHSEm2Jz35Em6h-a8ofXr9ApgBKJq5mOCG9ZtN4+FuRxj8Aw@mail.gmail.com>
-	<alpine.LRH.2.02.1708142007510.24994@file01.intranet.prod.int.rdu2.redhat.com>
-	<CAGnHSEnrTnvrkNdYJodSL51VUA+=FemdXEMnQ30rVwjCOHMoYA@mail.gmail.com>
+Subject: Re: [dm-devel] [PATCH v5 12/19] dm: move dm-verity to generic async
+ completion
+Date: Sat, 19 Aug 2017 16:08:02 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1708191605370.2380@file01.intranet.prod.int.rdu2.redhat.com>
+References: <1502724094-23305-1-git-send-email-gilad@benyossef.com> <1502724094-23305-13-git-send-email-gilad@benyossef.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAGnHSEnrTnvrkNdYJodSL51VUA+=FemdXEMnQ30rVwjCOHMoYA@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Tom Yan <tom.ty89@gmail.com>
-Cc: Ondrej Kozina <okozina@redhat.com>, dm-devel@redhat.com, hch@lst.de, Mike Snitzer <msnitzer@redhat.com>, Milan Broz <mbroz@redhat.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <1502724094-23305-13-git-send-email-gilad@benyossef.com>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Gilad Ben-Yossef <gilad@benyossef.com>
+Cc: Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, Jonathan Corbet <corbet@lwn.net>, David Howells <dhowells@redhat.com>, Tom Lendacky <thomas.lendacky@amd.com>, Gary Hook <gary.hook@amd.com>, Boris Brezillon <boris.brezillon@free-electrons.com>, Arnaud Ebalard <arno@natisbad.org>, Matthias Brugger <matthias.bgg@gmail.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, Steve French <sfrench@samba.org>, "Theodore Y. Ts'o" <tytso@mit.edu>, Jaegeuk Kim <jaegeuk@kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Dmitry Kasatkin <dmitry.kasatkin@gmail.com>, James Morris <james.l.morris@oracle.com>, "Serge E. Hallyn" <serge@hallyn.com>, linux-crypto@v
 List-Id: dm-devel.ids
 
 
 
-On Wed, 16 Aug 2017, Tom Yan wrote:
+On Mon, 14 Aug 2017, Gilad Ben-Yossef wrote:
 
-> What I find suspicious is `blkdiscard -z` the underlying device does
-> not lead to those warning (while it takes the same amount of time), it
-> makes me wonder if it's like, the dm layer is not doing certain thing
-> it should do to inform the block layer or whatsoever that the action
-> is ongoing as expected (like, notify about the completion of each
-> "part" of the request). There must be a reason that doing it to a SCSI
-> device directly does not trigger such warning, no?
-
-If you issue a single ioctl that takes extreme amount of time - the kernel 
-warns about being blocked for extreme amount of time - what else should it 
-do?
-
-You can change submit_bio_wait to call wait_for_completion_io_timeout 
-instead of wait_for_completion_io (and retry if the timeout was hit) - 
-that will shut the warning up, but it won't speed up the operation.
-
-The zeroing operation can't be made interruptible easily because if you 
-the operation were interrupted, there would be pending bios left.
-
-> Also when cat or cp /dev/zero to the crypt does cause any problem,
-
-cp /dev/zero generates large amount of small write syscalls (so every 
-single syscall completes quickly). blkdiscard -z generates one 
-long-lasting syscall that clears the whole device.
-
-> doesn't that to some extent show that the approach
-> __blkdev_issue_zeroout taken isn't proper/general enough?
+> dm-verity is starting async. crypto ops and waiting for them to complete.
+> Move it over to generic code doing the same.
 > 
-> >
-> > So, it's probably bug in error handling in the underlying device (or in
-> > dm-crypt). Was the device that experienced errors the same as the root
-> > device of the system?
-> >
-> 
-> I am not sure. It was two separate drives. The root device was a
-> usb-storage thumb drive and the drive used for blkdiscard trial was a
-> SATA drive on a uas adapter. Both of them are connected to a USB 2.0
-> hub. It might be just the hub having hiccup.
-> 
-> >
-> > The number of in-flight bios could be also limited in next_bio (because if
-> > you have really small memory and large device, the memory could be
-> > exhausted by the allocation of bio structures). But this is not your case.
-> >
-> 
-> Is the dm layer "aware of" next_bio? I mean, apparently what next_bio
-> does seems to be "chaining up" bios (of the whole request, which could
-> be the size of a disk or so), and when the chain reaches the dm layer,
-> it seems that it wasn't splited (in the "processing" sense, not
-> "alignment" sense, if you know what I mean) again properly.
+> This also fixes a possible data coruption bug created by the
+> use of wait_for_completion_interruptible() without dealing
+> correctly with an interrupt aborting the wait prior to the
+> async op finishing.
 
-The chained bios arrive independently to the dm layer and the dm layer 
-doesn't care about how they are changed.
+What is the exact problem there? The interruptible sleep is called from a 
+workqueue and workqueues have all signals blocked. Are signals unblocked 
+for some reason there?
 
-> > Note that no pages are allocated in function that does the zeroing
-> > (__blkdev_issue_zeroout). The function creates large number of bios and
-> > all the bios point to the same page containing all zeroes. The memory
-> > allocation happens when dm-crypt attempts to allocate pages that hold the
-> > encrypted data.
-> >
-> 
-> Yeah I know that. And that's where comes the problem. Shouldn't
-> dm-crypt decide how much to hold base on the capability of the
-> underlying device instead of the available memory? (e.g. blocks per
-> command, command per queue, maximum numbers of queues...)
-
-Changing the memory limit in dm-crypt doesn't change the number of bios 
-that dm-crypt receives. If you lower the memory limit, you decrease 
-performance (because there would be less parallelism) and you gain 
-nothing. It won't solve the long-wait problem.
-
-> > There are other cases where dm-crypt can cause memory exhaustion, so the
-> > fix in dm-crypt is appropriate. Another case where it blows the memory is
-> > when you create a device that has an odd number of sectors (so block size
-> > 512 is used), use dm-crypt on this device and write to the encrypted
-> > device using the block device's page cache. In this case, dm-crypt
-> > receives large amount of 512-byte bios, allocates a full 4k page for each
-> > bio and it also exhausts memory. This patch fixes this problem as well.
-> >
-> 
-> I am not saying that this patch is like totally wrong though. It's
-> just that it seems to be more of a supplement / precaution in case
-> things go terribly wrong, but not a fix that deals with the problem
-> under the hood.
-> 
-> P.S. I am sorry if any of these are non-sensical. I don't really know
-> much about how the block layer or the dm layer work. What I said are
-> pretty much base on instinct so don't mind me if I sounded naive.
+Should there be another patch for stable kernels that fixes the 
+interruptible sleep?
 
 Mikulas
+
+> Signed-off-by: Gilad Ben-Yossef <gilad@benyossef.com>
+> ---
+>  drivers/md/dm-verity-target.c | 81 +++++++++++--------------------------------
+>  drivers/md/dm-verity.h        |  5 ---
+>  2 files changed, 20 insertions(+), 66 deletions(-)
+> 
+> diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
+> index 79f18d4..8df08a8 100644
+> --- a/drivers/md/dm-verity-target.c
+> +++ b/drivers/md/dm-verity-target.c
+> @@ -92,74 +92,33 @@ static sector_t verity_position_at_level(struct dm_verity *v, sector_t block,
+>  	return block >> (level * v->hash_per_block_bits);
+>  }
+>  
+> -/*
+> - * Callback function for asynchrnous crypto API completion notification
+> - */
+> -static void verity_op_done(struct crypto_async_request *base, int err)
+> -{
+> -	struct verity_result *res = (struct verity_result *)base->data;
+> -
+> -	if (err == -EINPROGRESS)
+> -		return;
+> -
+> -	res->err = err;
+> -	complete(&res->completion);
+> -}
+> -
+> -/*
+> - * Wait for async crypto API callback
+> - */
+> -static inline int verity_complete_op(struct verity_result *res, int ret)
+> -{
+> -	switch (ret) {
+> -	case 0:
+> -		break;
+> -
+> -	case -EINPROGRESS:
+> -	case -EBUSY:
+> -		ret = wait_for_completion_interruptible(&res->completion);
+> -		if (!ret)
+> -			ret = res->err;
+> -		reinit_completion(&res->completion);
+> -		break;
+> -
+> -	default:
+> -		DMERR("verity_wait_hash: crypto op submission failed: %d", ret);
+> -	}
+> -
+> -	if (unlikely(ret < 0))
+> -		DMERR("verity_wait_hash: crypto op failed: %d", ret);
+> -
+> -	return ret;
+> -}
+> -
+>  static int verity_hash_update(struct dm_verity *v, struct ahash_request *req,
+>  				const u8 *data, size_t len,
+> -				struct verity_result *res)
+> +				struct crypto_wait *wait)
+>  {
+>  	struct scatterlist sg;
+>  
+>  	sg_init_one(&sg, data, len);
+>  	ahash_request_set_crypt(req, &sg, NULL, len);
+>  
+> -	return verity_complete_op(res, crypto_ahash_update(req));
+> +	return crypto_wait_req(crypto_ahash_update(req), wait);
+>  }
+>  
+>  /*
+>   * Wrapper for crypto_ahash_init, which handles verity salting.
+>   */
+>  static int verity_hash_init(struct dm_verity *v, struct ahash_request *req,
+> -				struct verity_result *res)
+> +				struct crypto_wait *wait)
+>  {
+>  	int r;
+>  
+>  	ahash_request_set_tfm(req, v->tfm);
+>  	ahash_request_set_callback(req, CRYPTO_TFM_REQ_MAY_SLEEP |
+>  					CRYPTO_TFM_REQ_MAY_BACKLOG,
+> -					verity_op_done, (void *)res);
+> -	init_completion(&res->completion);
+> +					crypto_req_done, (void *)wait);
+> +	crypto_init_wait(wait);
+>  
+> -	r = verity_complete_op(res, crypto_ahash_init(req));
+> +	r = crypto_wait_req(crypto_ahash_init(req), wait);
+>  
+>  	if (unlikely(r < 0)) {
+>  		DMERR("crypto_ahash_init failed: %d", r);
+> @@ -167,18 +126,18 @@ static int verity_hash_init(struct dm_verity *v, struct ahash_request *req,
+>  	}
+>  
+>  	if (likely(v->salt_size && (v->version >= 1)))
+> -		r = verity_hash_update(v, req, v->salt, v->salt_size, res);
+> +		r = verity_hash_update(v, req, v->salt, v->salt_size, wait);
+>  
+>  	return r;
+>  }
+>  
+>  static int verity_hash_final(struct dm_verity *v, struct ahash_request *req,
+> -			     u8 *digest, struct verity_result *res)
+> +			     u8 *digest, struct crypto_wait *wait)
+>  {
+>  	int r;
+>  
+>  	if (unlikely(v->salt_size && (!v->version))) {
+> -		r = verity_hash_update(v, req, v->salt, v->salt_size, res);
+> +		r = verity_hash_update(v, req, v->salt, v->salt_size, wait);
+>  
+>  		if (r < 0) {
+>  			DMERR("verity_hash_final failed updating salt: %d", r);
+> @@ -187,7 +146,7 @@ static int verity_hash_final(struct dm_verity *v, struct ahash_request *req,
+>  	}
+>  
+>  	ahash_request_set_crypt(req, NULL, digest, 0);
+> -	r = verity_complete_op(res, crypto_ahash_final(req));
+> +	r = crypto_wait_req(crypto_ahash_final(req), wait);
+>  out:
+>  	return r;
+>  }
+> @@ -196,17 +155,17 @@ int verity_hash(struct dm_verity *v, struct ahash_request *req,
+>  		const u8 *data, size_t len, u8 *digest)
+>  {
+>  	int r;
+> -	struct verity_result res;
+> +	struct crypto_wait wait;
+>  
+> -	r = verity_hash_init(v, req, &res);
+> +	r = verity_hash_init(v, req, &wait);
+>  	if (unlikely(r < 0))
+>  		goto out;
+>  
+> -	r = verity_hash_update(v, req, data, len, &res);
+> +	r = verity_hash_update(v, req, data, len, &wait);
+>  	if (unlikely(r < 0))
+>  		goto out;
+>  
+> -	r = verity_hash_final(v, req, digest, &res);
+> +	r = verity_hash_final(v, req, digest, &wait);
+>  
+>  out:
+>  	return r;
+> @@ -389,7 +348,7 @@ int verity_hash_for_block(struct dm_verity *v, struct dm_verity_io *io,
+>   * Calculates the digest for the given bio
+>   */
+>  int verity_for_io_block(struct dm_verity *v, struct dm_verity_io *io,
+> -			struct bvec_iter *iter, struct verity_result *res)
+> +			struct bvec_iter *iter, struct crypto_wait *wait)
+>  {
+>  	unsigned int todo = 1 << v->data_dev_block_bits;
+>  	struct bio *bio = dm_bio_from_per_bio_data(io, v->ti->per_io_data_size);
+> @@ -414,7 +373,7 @@ int verity_for_io_block(struct dm_verity *v, struct dm_verity_io *io,
+>  		 */
+>  		sg_set_page(&sg, bv.bv_page, len, bv.bv_offset);
+>  		ahash_request_set_crypt(req, &sg, NULL, len);
+> -		r = verity_complete_op(res, crypto_ahash_update(req));
+> +		r = crypto_wait_req(crypto_ahash_update(req), wait);
+>  
+>  		if (unlikely(r < 0)) {
+>  			DMERR("verity_for_io_block crypto op failed: %d", r);
+> @@ -482,7 +441,7 @@ static int verity_verify_io(struct dm_verity_io *io)
+>  	struct dm_verity *v = io->v;
+>  	struct bvec_iter start;
+>  	unsigned b;
+> -	struct verity_result res;
+> +	struct crypto_wait wait;
+>  
+>  	for (b = 0; b < io->n_blocks; b++) {
+>  		int r;
+> @@ -507,17 +466,17 @@ static int verity_verify_io(struct dm_verity_io *io)
+>  			continue;
+>  		}
+>  
+> -		r = verity_hash_init(v, req, &res);
+> +		r = verity_hash_init(v, req, &wait);
+>  		if (unlikely(r < 0))
+>  			return r;
+>  
+>  		start = io->iter;
+> -		r = verity_for_io_block(v, io, &io->iter, &res);
+> +		r = verity_for_io_block(v, io, &io->iter, &wait);
+>  		if (unlikely(r < 0))
+>  			return r;
+>  
+>  		r = verity_hash_final(v, req, verity_io_real_digest(v, io),
+> -					&res);
+> +					&wait);
+>  		if (unlikely(r < 0))
+>  			return r;
+>  
+> diff --git a/drivers/md/dm-verity.h b/drivers/md/dm-verity.h
+> index a59e0ad..b675bc0 100644
+> --- a/drivers/md/dm-verity.h
+> +++ b/drivers/md/dm-verity.h
+> @@ -90,11 +90,6 @@ struct dm_verity_io {
+>  	 */
+>  };
+>  
+> -struct verity_result {
+> -	struct completion completion;
+> -	int err;
+> -};
+> -
+>  static inline struct ahash_request *verity_io_hash_req(struct dm_verity *v,
+>  						     struct dm_verity_io *io)
+>  {
+> -- 
+> 2.1.4
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+> 
