@@ -1,65 +1,53 @@
-From: "John Stoffel" <john@stoffel.org>
-Subject: Re: [PATCH] dm-crypt: limit the number of allocated pages
-Date: Mon, 21 Aug 2017 10:06:45 -0400
-Message-ID: <22938.59637.741061.422812@quad.stoffel.home>
-References: <alpine.LRH.2.02.1708132240130.18210@file01.intranet.prod.int.rdu2.redhat.com>
-	<22930.1510.64868.411152@quad.stoffel.home>
-	<alpine.LRH.2.02.1708142001390.24994@file01.intranet.prod.int.rdu2.redhat.com>
-	<22933.58742.629722.398176@quad.stoffel.home>
-	<alpine.LRH.2.02.1708181253450.30782@file01.intranet.prod.int.rdu2.redhat.com>
-	<22935.14792.87054.266777@quad.stoffel.home>
-	<alpine.LRH.2.02.1708181523190.30782@file01.intranet.prod.int.rdu2.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 2/2] dm integrity: use init_completion instead of
+ COMPLETION_INITIALIZER_ONSTACK
+Date: Mon, 21 Aug 2017 12:13:54 -0400
+Message-ID: <20170821161354.GA8375@redhat.com>
+References: <20170815151242.2637861-1-arnd@arndb.de>
+ <20170815151242.2637861-2-arnd@arndb.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.1708181523190.30782@file01.intranet.prod.int.rdu2.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Mike Snitzer <msnitzer@redhat.com>, John Stoffel <john@stoffel.org>, Tom Yan <tom.ty89@gmail.com>, dm-devel@redhat.com, Ondrej Kozina <okozina@redhat.com>, hch@lst.de, Milan Broz <mbroz@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-raid-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20170815151242.2637861-2-arnd@arndb.de>
+Sender: linux-raid-owner@vger.kernel.org
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, Ingo Molnar <mingo@kernel.org>, Byungchul Park <byungchul.park@lge.com>, Peter Zijlstra <peterz@infradead.org>, Mikulas Patocka <mpatocka@redhat.com>, Jens Axboe <axboe@fb.com>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
->>>>> "Mikulas" == Mikulas Patocka <mpatocka@redhat.com> writes:
+On Tue, Aug 15 2017 at 11:11am -0400,
+Arnd Bergmann <arnd@arndb.de> wrote:
 
-Mikulas> On Fri, 18 Aug 2017, John Stoffel wrote:
+> The new lockdep support for completions causeed the stack usage
+> in dm-integrity to explode, in case of write_journal from 504 bytes
+> to 1120 (using arm gcc-7.1.1):
+> 
+> drivers/md/dm-integrity.c: In function 'write_journal':
+> drivers/md/dm-integrity.c:827:1: error: the frame size of 1120 bytes is larger than 1024 bytes [-Werror=frame-larger-than=]
+> 
+> The problem is that not only the size of 'struct completion' grows
+> significantly, but we end up having multiple copies of it on the stack
+> when we assign it from a local variable after the initial declaration.
+> 
+> COMPLETION_INITIALIZER_ONSTACK() is the right thing to use when we
+> want to declare and initialize a completion on the stack. However,
+> this driver doesn't do that and instead initializes the completion
+> just before it is used.
+> 
+> In this case, init_completion() does the same thing more efficiently,
+> and drops the stack usage for the function above down to 496 bytes.
+> While the other functions in this file are not bad enough to cause
+> a warning, they benefit equally from the change, so I do the change
+> across the entire file. In the one place where we reuse a completion,
+> I picked the cheaper reinit_completion() over init_completion().
+> 
+> Fixes: cd8084f91c02 ("locking/lockdep: Apply crossrelease to completions")
+> Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+> ---
+> The patch causing this is currently part of linux-next, scheduled for
+> 4.14, so it would be good to have this in the same release.
 
-Mikulas> The limit can't be changed. I expect that no one will run a system with 
-Mikulas> such a tight requirements that the memory is used up to the last 2%.
->> 
-Mikulas> If the user is near hitting the memory limit, he can just add swap space 
-Mikulas> to solve the problem instead of tuning dm-crypt.
->> 
->> My real concern is that we build up too many outstanding BIOs so that
->> they take along time to process.  I'm already seeing some reports
->> about timeouts after 120 seconds due to stacking of dm-crypt with
->> other stuff.
->> 
->> What I'm trying to say is that as memory grows, you need to slow down
->> the growth of the amount of memory that dm-crypt can allocate.  It's
->> more important to scale by the speed of the IO sub-system than the
->> size of memory.
->> 
->> But hey, you really addresed my concern with smaller memory systems
->> already.
->> 
->> John
+This looks good.  Please just stage it for 4.14 along with its
+dependencies via whatever tree they are going in.
 
-Mikulas> This patch doesn't restrict the number of in-flight bios. Lowering the 
-Mikulas> memory limit has no effect on the number of bios being allocated by some 
-Mikulas> other part of the kernel and submitted for dm-crypt.
-
-Good to know.  
-
-Mikulas> Some times ago I made a patch that limits the number of in-flight bios in 
-Mikulas> device mapper - see this:
-Mikulas> http://people.redhat.com/~mpatocka/patches/kernel/dm-limit-outstanding-bios/
-
-Interesting.  I'll try to find some time to look this over. 
+Acked-by: Mike Snitzer <snitzer@redhat.com>
