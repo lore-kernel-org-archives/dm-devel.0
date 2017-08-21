@@ -1,119 +1,65 @@
-From: Gilad Ben-Yossef <gilad@benyossef.com>
-Subject: [PATCH v6 19/19] crypto: adapt api sample to use async. op wait
-Date: Mon, 21 Aug 2017 17:05:05 +0300
-Message-ID: <1503324309-13673-20-git-send-email-gilad@benyossef.com>
-References: <1503324309-13673-1-git-send-email-gilad@benyossef.com>
-Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <1503324309-13673-1-git-send-email-gilad@benyossef.com>
-Sender: owner-linux-security-module@vger.kernel.org
-To: Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, Jonathan Corbet <corbet@lwn.net>, David Howells <dhowells@redhat.com>, Tom Lendacky <thomas.lendacky@amd.com>, Gary Hook <gary.hook@amd.com>, Boris Brezillon <boris.brezillon@free-electrons.com>, Arnaud Ebalard <arno@natisbad.org>, Matthias Brugger <matthias.bgg@gmail.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, Steve French <sfrench@samba.org>, "Theodore Y. Ts'o" <tytso@mit.edu>, Jaegeuk Kim <jaegeuk@kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Dmitry Kasatkin <dmitry.kasatkin@gmail.com>, James Morris <james.l.morris@oracle.com>, "Serge E. Hallyn" <serge@hallyn.com>, linux-crypto@v
-Cc: Ofir Drang <ofir.drang@arm.com>
+From: "John Stoffel" <john@stoffel.org>
+Subject: Re: [PATCH] dm-crypt: limit the number of allocated pages
+Date: Mon, 21 Aug 2017 10:06:45 -0400
+Message-ID: <22938.59637.741061.422812@quad.stoffel.home>
+References: <alpine.LRH.2.02.1708132240130.18210@file01.intranet.prod.int.rdu2.redhat.com>
+	<22930.1510.64868.411152@quad.stoffel.home>
+	<alpine.LRH.2.02.1708142001390.24994@file01.intranet.prod.int.rdu2.redhat.com>
+	<22933.58742.629722.398176@quad.stoffel.home>
+	<alpine.LRH.2.02.1708181253450.30782@file01.intranet.prod.int.rdu2.redhat.com>
+	<22935.14792.87054.266777@quad.stoffel.home>
+	<alpine.LRH.2.02.1708181523190.30782@file01.intranet.prod.int.rdu2.redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <alpine.LRH.2.02.1708181523190.30782@file01.intranet.prod.int.rdu2.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Mike Snitzer <msnitzer@redhat.com>, John Stoffel <john@stoffel.org>, Tom Yan <tom.ty89@gmail.com>, dm-devel@redhat.com, Ondrej Kozina <okozina@redhat.com>, hch@lst.de, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-The code sample is waiting for an async. crypto op completion.
-Adapt sample to use the new generic infrastructure to do the same.
+>>>>> "Mikulas" == Mikulas Patocka <mpatocka@redhat.com> writes:
 
-This also fixes a possible data coruption bug created by the
-use of wait_for_completion_interruptible() without dealing
-correctly with an interrupt aborting the wait prior to the
-async op finishing.
+Mikulas> On Fri, 18 Aug 2017, John Stoffel wrote:
 
-Signed-off-by: Gilad Ben-Yossef <gilad@benyossef.com>
----
- Documentation/crypto/api-samples.rst | 52 +++++++-----------------------------
- 1 file changed, 10 insertions(+), 42 deletions(-)
+Mikulas> The limit can't be changed. I expect that no one will run a system with 
+Mikulas> such a tight requirements that the memory is used up to the last 2%.
+>> 
+Mikulas> If the user is near hitting the memory limit, he can just add swap space 
+Mikulas> to solve the problem instead of tuning dm-crypt.
+>> 
+>> My real concern is that we build up too many outstanding BIOs so that
+>> they take along time to process.  I'm already seeing some reports
+>> about timeouts after 120 seconds due to stacking of dm-crypt with
+>> other stuff.
+>> 
+>> What I'm trying to say is that as memory grows, you need to slow down
+>> the growth of the amount of memory that dm-crypt can allocate.  It's
+>> more important to scale by the speed of the IO sub-system than the
+>> size of memory.
+>> 
+>> But hey, you really addresed my concern with smaller memory systems
+>> already.
+>> 
+>> John
 
-diff --git a/Documentation/crypto/api-samples.rst b/Documentation/crypto/api-samples.rst
-index 2531948..006827e 100644
---- a/Documentation/crypto/api-samples.rst
-+++ b/Documentation/crypto/api-samples.rst
-@@ -7,59 +7,27 @@ Code Example For Symmetric Key Cipher Operation
- ::
- 
- 
--    struct tcrypt_result {
--        struct completion completion;
--        int err;
--    };
--
-     /* tie all data structures together */
-     struct skcipher_def {
-         struct scatterlist sg;
-         struct crypto_skcipher *tfm;
-         struct skcipher_request *req;
--        struct tcrypt_result result;
-+        struct crypto_wait wait;
-     };
- 
--    /* Callback function */
--    static void test_skcipher_cb(struct crypto_async_request *req, int error)
--    {
--        struct tcrypt_result *result = req->data;
--
--        if (error == -EINPROGRESS)
--            return;
--        result->err = error;
--        complete(&result->completion);
--        pr_info("Encryption finished successfully\n");
--    }
--
-     /* Perform cipher operation */
-     static unsigned int test_skcipher_encdec(struct skcipher_def *sk,
-                          int enc)
-     {
--        int rc = 0;
-+        int rc;
- 
-         if (enc)
--            rc = crypto_skcipher_encrypt(sk->req);
-+            rc = crypto_wait_req(crypto_skcipher_encrypt(sk->req), &sk->wait);
-         else
--            rc = crypto_skcipher_decrypt(sk->req);
--
--        switch (rc) {
--        case 0:
--            break;
--        case -EINPROGRESS:
--        case -EBUSY:
--            rc = wait_for_completion_interruptible(
--                &sk->result.completion);
--            if (!rc && !sk->result.err) {
--                reinit_completion(&sk->result.completion);
--                break;
--            }
--        default:
--            pr_info("skcipher encrypt returned with %d result %d\n",
--                rc, sk->result.err);
--            break;
--        }
--        init_completion(&sk->result.completion);
-+            rc = crypto_wait_req(crypto_skcipher_decrypt(sk->req), &sk->wait);
-+
-+	if (rc)
-+		pr_info("skcipher encrypt returned with result %d\n", rc);
- 
-         return rc;
-     }
-@@ -89,8 +57,8 @@ Code Example For Symmetric Key Cipher Operation
-         }
- 
-         skcipher_request_set_callback(req, CRYPTO_TFM_REQ_MAY_BACKLOG,
--                          test_skcipher_cb,
--                          &sk.result);
-+                          crypto_req_done,
-+                          &sk.wait);
- 
-         /* AES 256 with random key */
-         get_random_bytes(&key, 32);
-@@ -122,7 +90,7 @@ Code Example For Symmetric Key Cipher Operation
-         /* We encrypt one block */
-         sg_init_one(&sk.sg, scratchpad, 16);
-         skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, ivdata);
--        init_completion(&sk.result.completion);
-+        crypto_init_wait(&sk.wait);
- 
-         /* encrypt data */
-         ret = test_skcipher_encdec(&sk, 1);
--- 
-2.1.4
+Mikulas> This patch doesn't restrict the number of in-flight bios. Lowering the 
+Mikulas> memory limit has no effect on the number of bios being allocated by some 
+Mikulas> other part of the kernel and submitted for dm-crypt.
 
+Good to know.  
+
+Mikulas> Some times ago I made a patch that limits the number of in-flight bios in 
+Mikulas> device mapper - see this:
+Mikulas> http://people.redhat.com/~mpatocka/patches/kernel/dm-limit-outstanding-bios/
+
+Interesting.  I'll try to find some time to look this over. 
