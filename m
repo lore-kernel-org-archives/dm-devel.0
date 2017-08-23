@@ -1,78 +1,81 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH] multipath-tools: intermittent IO error
- accounting to improve reliability
-Date: Tue, 22 Aug 2017 17:37:39 +0200
-Message-ID: <6cd9c342-b3c9-5ec0-153a-d7a4d431cc64@suse.de>
-References: <1503396479-12692-1-git-send-email-guanjunxiong@huawei.com>
+From: Ming Lei <ming.lei@redhat.com>
+Subject: Re: [v4.13-rc BUG] system lockup when running big buffered write(4M)
+ to IB SRP via mpath
+Date: Wed, 23 Aug 2017 19:35:27 +0800
+Message-ID: <20170823113526.GA8130@ming.t460p>
+References: <20170808141715.GB22763@ming.t460p>
+ <1502237504.4017.1.camel@redhat.com>
+ <1502245693.6511.3.camel@redhat.com>
+ <c072e942-0265-f0ad-561d-0e50d50e3cb1@redhat.com>
+ <1502298599.2356.7.camel@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1503396479-12692-1-git-send-email-guanjunxiong@huawei.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Guan Junxiong <guanjunxiong@huawei.com>, dm-devel@redhat.com, christophe.varoqui@opensvc.com
-Cc: chengjike.cheng@huawei.com, niuhaoxin@huawei.com, shenhong09@huawei.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1502298599.2356.7.camel@wdc.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Bart Van Assche <Bart.VanAssche@wdc.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "loberman@redhat.com" <loberman@redhat.com>
 List-Id: dm-devel.ids
 
-T24gMDgvMjIvMjAxNyAxMjowNyBQTSwgR3VhbiBKdW54aW9uZyB3cm90ZToKPiBUaGlzIHBhdGNo
-IGFkZHMgYSBuZXcgbWV0aG9kIG9mIHBhdGggc3RhdGUgY2hlY2tpbmcgYmFzZWQgb24gYWNjb3Vu
-dGluZwo+IElPIGVycm9yLiBUaGlzIGlzIHVzZWZ1bCBpbiBtYW55IHNjZW5hcmlvcyBzdWNoIGFz
-IGludGVybWl0dGVudCBJTyBlcnJvcgo+IGFuIGEgcGF0aCBkdWUgdG8gbmV0d29yayBjb25nZXN0
-aW9uLCBvciBhIHNoYWt5IGxpbmsuCj4gCj4gVGhyZWUgcGFyYW1ldGVycyBhcmUgYWRkZWQgZm9y
-IHRoZSBhZG1pbjogInBhdGhfaW9fZXJyX3NhbXBsZV90aW1lIiwKPiAicGF0aF9pb19lcnJfbnVt
-X3RocmVzaG9sZCIgYW5kICJwYXRoX2lvX2Vycl9yZWNvdmVyeV90aW1lIi4KPiBJZiBwYXRoX2lv
-X2Vycl9zYW1wbGVfdGltZSBhbmQgcGF0aF9pb19lcnJfcmVjb3ZlcnlfdGltZSBhcmUgc2V0IHRv
-IGEKPiB2YWx1ZSBncmVhdGVyIHRoYW4gMCwgd2hlbiBhIHBhdGggZmFpbCBldmVudCBvY2N1cnMg
-ZHVlIHRvIGFuIElPIGVycm9yLAo+IG11bHRpcGF0aGQgd2lsbCBlbnF1ZXVlIHRoaXMgcGF0aCBp
-bnRvIGEgcXVldWUgb2Ygd2hpY2ggZWFjaCBtZW1iZXIgaXMKPiBzZW50IGRpcmVjdCByZWFkaW5n
-IGFzeW5jaHJvbm91cyBpbyBhdCBhIGZpeGVkIHNhbXBsZSByYXRlIG9mIDEwMEhaLiBUaGUKPiBJ
-TyBhY2NvdW50aW5nIHByb2Nlc3MgZm9yIGEgcGF0aCB3aWxsIGxhc3QgZm9yIHBhdGhfaW9fZXJy
-X3NhbXBsZV90aW1lLgo+IElmIHRoZSBudW1iZXIgb2YgSU8gZXJyb3Igb24gYSBwYXJ0aWN1bGFy
-IHBhdGggaXMgZ3JlYXRlciB0aGFuIHRoZQo+IHBhdGhfaW9fZXJyX251bV90aHJlc2hvbGQsIHRo
-ZW4gdGhlIHBhdGggd2lsbCBub3QgcmVpbnN0YXRlIGZvcgo+IAo+IFRoaXMgaGVscHMgdXMgcGxh
-Y2UgdGhlIHBhdGggaW4gZGVsYXllZCBzdGF0ZSBpZiB3ZSBoaXQgYSBsb3Qgb2YKPiBpbnRlcm1p
-dHRlbnQgSU8gZXJyb3JzIG9uIGEgcGFydGljdWxhciBwYXRoIGR1ZSB0byBuZXR3b3JrL3Rhcmdl
-dAo+IGlzc3VlcyBhbmQgaXNvbGF0ZSBzdWNoIGRlZ3JhZGVkIHBhdGggYW5kIGFsbG93IHRoZSBh
-ZG1pbiB0byByZWN0aWZ5Cj4gdGhlIGVycm9ycyBvbiBhIHBhdGguCj4gCj4gU2lnbmVkLW9mZi1i
-eTogSnVueGlvbmcgR3VhbiA8Z3Vhbmp1bnhpb25nQGh1YXdlaS5jb20+Cj4gLS0tClRoZXJlIGhh
-dmUgYmVlbiBzZXZlcmFsIGF0dGVtcHRzIGZvciB0aGlzIG92ZXIgdGhlIHllYXJzOyBpZiB5b3Ug
-Y2hlY2sKdGhlIG1haWwgYXJjaGl2ZSBmb3IgJ2ZsYWt5IHBhdGNoJyB5b3UncmUgYm91bmQgdG8g
-aGl0IHNldmVyYWwgdGhyZWFkcwpkaXNjdXNzaW5nIHRoaXMuCkhvd2V2ZXIsIGVhY2ggaGFzIGZs
-b3VuZGVyZWQgZm9yIHNldmVyYWwgcHJvYmxlbXM6CgotIEFzIHdlIG5vdyBoYXZlIGFkdmFuY2Vk
-IHBhdGggc2VsZWN0b3JzIHRoZSBvdmVyYWxsIGNvbnNlbnN1cyBpcyB0aGF0CnRob3NlIHNlbGVj
-dG9ycyBfc2hvdWxkXyBiZSBhYmxlIHRvIGhhbmRsZSB0aGVzZSBzaXR1YXRpb25zOyBpZSBmb3Ig
-YQpmbGFreSBwYXRoIHRoZSBwYXRoIHNlbGVjdG9yIHNob3VsZCBzd2l0Y2ggYXdheSBmcm9tIGl0
-IGFuZCBtb3ZlIHRoZQpsb2FkIHRvIG90aGVyLCB1bmFmZmVjdGVkIHBhdGhzLgpIYXZlIHlvdSBj
-aGVja2VkIGlmIHRoZSBleGlzdGluZyBwYXRoIHNlbGVjdG9ycyBhcmUgYWJsZSB0byBjb3BlIHdp
-dGgKdGhpcyBzaXR1YXRpb24/IElmIG5vdCwgd2h5IG5vdD8KLSBCdXQgZXZlbiBpZiBzb21ldGhp
-bmcgbGlrZSB0aGlzIGlzIGltcGxlbWVudGVkLCB0aGUgcmVhbCBwcm9ibGVtIGhlcmUKaXMgcmVs
-aWFiaWxpdHkuIE11bHRpcGF0aCBpbnRlcm5hbGx5IG9ubHkgY29uc2lkZXJzIHR3byByZWFsIHBh
-dGgKc3RhdGVzOyB1c2VhYmxlIGFuZCB1bnVzZWFibGUuIENvbnNlcXVlbnRseSB0aGUgZmxha3kg
-cGF0aCBuZWVkcyB0byBiZQpwbGFjZWQgaW4gb25lIG9mIHRoZXNlOyBzbyB3aXRoIHlvdXIgcGF0
-Y2ggYWZ0ZXIgZW5vdWdoIGVycm9ycwphY2N1bXVsYXRlIHRoZSBmbGFreSBwYXRoIHdpbGwgYmUg
-cGxhY2VkIGluIGFuIHVudXNlYWJsZSBzdGF0ZQpldmVudHVhbGx5LiBJZiBhIGZhaWxvdmVyIGV2
-ZW50IG9jY3VycyB0aGUgZGFlbW9uIGNhbm5vdCBzd2l0Y2ggdG8gdGhlCmZsYWt5IHBhdGhzLCBh
-bmQgdGhlIHN5c3RlbSBiZWNvbWVzIHVudXNlYWJsZSBldmVuIHRob3VnaCBJL08gY291bGQgYmUK
-c2VudCB2aWEgdGhlIGZsYWt5IHBhdGhzLgotIEhvd2V2ZXIsIGZsYWt5IHBhdGggZGV0ZWN0aW9u
-IGlzIGltcGxlbWVudGVkLCBpdCB3aWxsIHdvcmsgbW9zdAplZmZpY2llbnRseSB3aGVuIG1vdmlu
-ZyBJL08gX2F3YXlfIGZyb20gdGhlIGZsYWt5IHBhdGguIEhvd2V2ZXIsIGluCmRvaW5nIHNvIHdl
-IGRvbid0IGhhdmUgYSBtZWNoYW5pc20gdG8gZmlndXJlIG91dCBpZiBhbmQgd2hlbiB0aGUgcGF0
-aCBpcwp1c2VhYmxlIGFnYWluIChhcyB3ZSdyZSBub3Qgc2VuZGluZyBJL08gdG8gaXQsIGFuZCB0
-aGUgVFVSIG9yIGFueSBvdGhlcgpwYXRoIGNoZWNrZXIgbWlnaHQgbm90IGJlIGFmZmVjdGVkIGZy
-b20gdGhlIGZsYWt5IGJlaGF2aW91cikuClNvIHdoZW4gc2hvdWxkIHdlIGRlY2xhcmUgYSBwYXRo
-IGFzICdnb29kJyBhZ2Fpbj8KCkNoZWVycywKCkhhbm5lcwotLSAKRHIuIEhhbm5lcyBSZWluZWNr
-ZQkJICAgVGVhbWxlYWQgU3RvcmFnZSAmIE5ldHdvcmtpbmcKaGFyZUBzdXNlLmRlCQkJICAgICAg
-ICAgICAgICAgKzQ5IDkxMSA3NDA1MyA2ODgKU1VTRSBMSU5VWCBHbWJILCBNYXhmZWxkc3RyLiA1
-LCA5MDQwOSBOw7xybmJlcmcKR0Y6IEYuIEltZW5kw7ZyZmZlciwgSi4gU21pdGhhcmQsIEouIEd1
-aWxkLCBELiBVcG1hbnl1LCBHLiBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpk
-bS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRo
-YXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On Wed, Aug 09, 2017 at 05:10:01PM +0000, Bart Van Assche wrote:
+> On Wed, 2017-08-09 at 12:43 -0400, Laurence Oberman wrote:
+> > Your latest patch on stock upstream without Ming's latest patches is 
+> > behaving for me.
+> > 
+> > As already mentioned, the requeue -11 and clone failure messages are 
+> > gone and I am not actually seeing any soft lockups or hard lockups.
+> > 
+> > When Ming gets back I will work with him on his patch set and the lockups.
+> > 
+> > Running 10 parallel writes which easily trips into soft lockups on 
+> > Ming's kernel (even with your patch) has been stable here on 4.13-RC3 
+> > with your patch.
+> > 
+> > I will leave it running for a while now but the patch is good.
+> > 
+> > If it survives 4 hours I will add a Tested-by to your latest patch.
+> 
+> Hello Laurence,
+> 
+> I'm working on an additional patch that should reduce unnecessary requeuing
+> even further. I will let you know when it's ready.
+> 
+> Additionally, please trim e-mails when replying such that e-mails do not get
+> too long.
+
+soft lockup still can be observed easily with patch d4acf3650c7c(
+block: Make blk_mq_delay_kick_requeue_list() rerun the queue at a quiet time),
+but no hard lockup.
+
+With the patchset of 'blk-mq-sched: improve SCSI-MQ performance', hard
+lockup can be observed following some failure log:
+
+	[  269.277653] device-mapper: multipath: blk_get_request() returned -11 - requeuing
+	[  269.321244] device-mapper: multipath: blk_get_request() returned -11 - requeuing
+	...
+	[  273.421688] scsi host2: SRP abort called
+	[  273.444577] scsi host2: Sending SRP abort for tag 0x6007e
+	[  273.673871] scsi host2: Null scmnd for RSP w/tag 0x0000000006007e received on ch 6 / QP 0x30
+	...
+	[  274.372110] device-mapper: multipath: blk_get_request() returned -11 - requeuing
+	[  278.658671] scsi host2: SRP abort called
+	[  278.690630] scsi host2: SRP abort called
+	[  278.717634] scsi host2: SRP abort called
+	[  278.745629] scsi host2: SRP abort called
+	[  279.083227] multipath_clone_and_map: 1092 callbacks suppressed
+	....
+	[  296.210503] scsi host2: SRP reset_device called
+	....
+	[  303.784287] NMI watchdog: Watchdog detected hard LOCKUP on cpu 10
+
+The trick thing is that both hard lockup and soft lockup share
+one same stack trace.
+
+Another question, I don't understand why request is allocated with
+GFP_ATOMIC in multipath_clone_and_map(), looks it shouldn't be
+necessary.
+
+
+--
+Ming
