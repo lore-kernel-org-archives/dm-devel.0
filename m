@@ -1,118 +1,51 @@
-From: Gilad Ben-Yossef <gilad@benyossef.com>
-Subject: [PATCH v7 19/19] crypto: adapt api sample to use async. op wait
-Date: Thu, 24 Aug 2017 17:19:06 +0300
-Message-ID: <1503584350-7831-20-git-send-email-gilad@benyossef.com>
-References: <1503584350-7831-1-git-send-email-gilad@benyossef.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1503584350-7831-1-git-send-email-gilad@benyossef.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, Jonathan Corbet <corbet@lwn.net>, David Howells <dhowells@redhat.com>, Tom Lendacky <thomas.lendacky@amd.com>, Gary Hook <gary.hook@amd.com>, Boris Brezillon <boris.brezillon@free-electrons.com>, Arnaud Ebalard <arno@natisbad.org>, Matthias Brugger <matthias.bgg@gmail.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, Steve French <sfrench@samba.org>, "Theodore Y. Ts'o" <tytso@mit.edu>, Jaegeuk Kim <jaegeuk@kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Dmitry Kasatkin <dmitry.kasatkin@gmail.com>, James Morris <james.l.morris@oracle.com>, "Serge E. Hallyn" <serge@hallyn.com>, linux-crypto@v
-Cc: Ofir Drang <ofir.drang@arm.com>
+From: Goktug YILDIRIM <goktug.yildirim@gmail.com>
+Subject: No SAS end device
+Date: Thu, 24 Aug 2017 22:06:14 +0300
+Message-ID: <863862A8-6318-4EBD-B754-BB10784C2596@gmail.com>
+Mime-Version: 1.0 (Mac OS X Mail 10.3 \(3273\))
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The code sample is waiting for an async. crypto op completion.
-Adapt sample to use the new generic infrastructure to do the same.
-
-This also fixes a possible data coruption bug created by the
-use of wait_for_completion_interruptible() without dealing
-correctly with an interrupt aborting the wait prior to the
-async op finishing.
-
-Signed-off-by: Gilad Ben-Yossef <gilad@benyossef.com>
----
- Documentation/crypto/api-samples.rst | 52 +++++++-----------------------------
- 1 file changed, 10 insertions(+), 42 deletions(-)
-
-diff --git a/Documentation/crypto/api-samples.rst b/Documentation/crypto/api-samples.rst
-index 2531948..006827e 100644
---- a/Documentation/crypto/api-samples.rst
-+++ b/Documentation/crypto/api-samples.rst
-@@ -7,59 +7,27 @@ Code Example For Symmetric Key Cipher Operation
- ::
- 
- 
--    struct tcrypt_result {
--        struct completion completion;
--        int err;
--    };
--
-     /* tie all data structures together */
-     struct skcipher_def {
-         struct scatterlist sg;
-         struct crypto_skcipher *tfm;
-         struct skcipher_request *req;
--        struct tcrypt_result result;
-+        struct crypto_wait wait;
-     };
- 
--    /* Callback function */
--    static void test_skcipher_cb(struct crypto_async_request *req, int error)
--    {
--        struct tcrypt_result *result = req->data;
--
--        if (error == -EINPROGRESS)
--            return;
--        result->err = error;
--        complete(&result->completion);
--        pr_info("Encryption finished successfully\n");
--    }
--
-     /* Perform cipher operation */
-     static unsigned int test_skcipher_encdec(struct skcipher_def *sk,
-                          int enc)
-     {
--        int rc = 0;
-+        int rc;
- 
-         if (enc)
--            rc = crypto_skcipher_encrypt(sk->req);
-+            rc = crypto_wait_req(crypto_skcipher_encrypt(sk->req), &sk->wait);
-         else
--            rc = crypto_skcipher_decrypt(sk->req);
--
--        switch (rc) {
--        case 0:
--            break;
--        case -EINPROGRESS:
--        case -EBUSY:
--            rc = wait_for_completion_interruptible(
--                &sk->result.completion);
--            if (!rc && !sk->result.err) {
--                reinit_completion(&sk->result.completion);
--                break;
--            }
--        default:
--            pr_info("skcipher encrypt returned with %d result %d\n",
--                rc, sk->result.err);
--            break;
--        }
--        init_completion(&sk->result.completion);
-+            rc = crypto_wait_req(crypto_skcipher_decrypt(sk->req), &sk->wait);
-+
-+	if (rc)
-+		pr_info("skcipher encrypt returned with result %d\n", rc);
- 
-         return rc;
-     }
-@@ -89,8 +57,8 @@ Code Example For Symmetric Key Cipher Operation
-         }
- 
-         skcipher_request_set_callback(req, CRYPTO_TFM_REQ_MAY_BACKLOG,
--                          test_skcipher_cb,
--                          &sk.result);
-+                          crypto_req_done,
-+                          &sk.wait);
- 
-         /* AES 256 with random key */
-         get_random_bytes(&key, 32);
-@@ -122,7 +90,7 @@ Code Example For Symmetric Key Cipher Operation
-         /* We encrypt one block */
-         sg_init_one(&sk.sg, scratchpad, 16);
-         skcipher_request_set_crypt(req, &sk.sg, &sk.sg, 16, ivdata);
--        init_completion(&sk.result.completion);
-+        crypto_init_wait(&sk.wait);
- 
-         /* encrypt data */
-         ret = test_skcipher_encdec(&sk, 1);
--- 
-2.1.4
+SGksCgpUaGlzIGlzIG15IGZpcnN0IHBvc3QgdG8gbGlzdC4gSSBhcG9sb2dpc2UgaWYgSSBmYWls
+IHRvIGZvbGxvdyBhIHByb3BlciB3YXkgdG8gYXNrIGZvciBoZWxwLgoKSSBoYXZlIGEgd2VpcmQg
+cHJvYmxlbSB3aGljaCBtYWtlcyBtZSBzcGVuZCBkYXlzIHRvIHNvbHZlLiBCdXQgYXQgdGhlIGVu
+ZCBJIGZpbmlzaGVkLXVwIHdpdGggbm8gY2x1ZXMuCgpNeSBsaW51eCBkaXN0cm8gaXMgYXJjaCBs
+aW51eC4gQW5kIHRoZSBrZXJuZWwgaXMgNC4xMi44LTEuCk11bHRpcGF0aCB0b29scyB2ZXJzaW9u
+IGlzIHYwLjYuNCAoMDMvMTEsIDIwMTYpLgoKQWxzbyBtdWx0aXBhdGguY29uZiBpcyBiZWxvdy4K
+ZGVmYXVsdHMgewoJZmluZF9tdWx0aXBhdGhzIHllcwoJdXNlcl9mcmllbmRseV9uYW1lcyBubwp9
+CgpibGFja2xpc3Qgewp9CgpJIGhhdmUgYSBkdWFsIHBvcnQgTFNJIGNvbnRyb2xsZXIgKExTSVNB
+UzMwMDg6IEZXVmVyc2lvbigxMy4wMC4wMC4wMCksIENoaXBSZXZpc2lvbigweDAyKSwgQmlvc1Zl
+cnNpb24oMTUuMDAuMDIuMDApKS4KCk15IExTSSBIQkEgaXMgY29ubmVjdGVkIHRvIGEgc3VwZXIg
+bWljcm8gSkJPRCB3aXRoIGR1YWwgY2FibGVzLiBBdCB0aGUgTFNJIEJJT1MgSSBlYXNpbHkgY29u
+ZmlybSB0aGF0IGRyaXZlcyBhcHBlYXIgaW4gYSBtdWx0aXBhdGggd2F5LgoKVG8gc2ltcGxpZnkg
+dGhlIHByb2JsZW0gSSBsZWZ0IHRvIG9ubHkgdHdvIGRyaXZlcyBpbnNlcnRlZC4gQm90aCBvZiB0
+aGVtIGFyZSBTZWFnYXRlIFNBUyBkcml2ZXMgYnV0IGluIGRpZmZlcmVudCBtb2RlbHMuCgpTZWFn
+YXRlIG1vZGVsIG51bWJlciBTVDYwMDBOTTAwMzQgd29ya3Mgd2l0aCBtdWx0aXBhdGguIEhvd2V2
+ZXIgbW9kZWwgbnVtYmVyIFNUNjAwME5NMDA5NSBzaW1wbHkgRE9FUyBOT1QhIEZpcm13YXJlcyAo
+aGJhICYgZHJpdmVzKSBhcmUgdXAgdG8gZGF0ZS4KCm11bHRpcGF0aCAtdjIgZW5kcyB1cCBmb3Ig
+U1Q2MDAwTk0wMDk1IGFzIGJlbG93LgpBdWcgMjQgMjE6NTQ6MTMgfCBzZHQ6IE5vIFNBUyBlbmQg
+ZGV2aWNlIGZvciAnZW5kX2RldmljZS0xMjoxJwpBdWcgMjQgMjE6NTQ6MTMgfCBzZGFpOiBObyBT
+QVMgZW5kIGRldmljZSBmb3IgJ2VuZF9kZXZpY2UtMTI6MycKQXVnIDI0IDIxOjU0OjEzIHwgMzUw
+MDBjNTAwOTNjYjIwM2I6IGlnbm9yaW5nIG1hcAoKCknigJl2ZSB0cmllZCBzYW1lIHNldHVwIHdp
+dGggQ2VudG9zIDcgKGtlcm5lbCAzLngpIGFuZCBtdWx0aXBhdGggd29ya3MgZm9yIGJvdGggb2Yg
+dGhlIGRyaXZlcy4gVGhpcyBzZWVtcyB0byBiZSBzb21ld2hhdCBkaXN0cm8gcHJvYmxlbSBidXQg
+c2luY2UgYXJjaCBsaW51eCBhbHdheXMgdXNlcyB2YW5pbGxhIHNvdXJjZXMgSSBndWVzcyBpdCB3
+b3VsZCBiZSBnb29kIHN0YXJ0IHRvIGFzayBmb3IgaGVscCBoZXJlLgpJ4oCZdmUgc2VhcmNoZWQg
+YSBsb3QgYW5kIHRoZXJlIGFyZSBsb3RzIG9mIOKAnCBObyBTQVMgZW5kIGRldmljZeKAnSBtZXNz
+YWdlcy4gSG93ZXZlciBJIGZhaWxlZCB0byBmaW5kIGEgbWF0Y2hpbmcgd2l0aCBteSBpc3N1ZS4K
+ClNpbmNlIEkgYW0gYSBtdWx0aXBhdGggbmV3YmllIGFueSBndWlkZSB3b3VsZCBiZSB2YWx1YWJs
+ZS4KClRoYW5rcyBpbiBhZHZhbmNlLgotR29rdHVnIFlpbGRpcmltCgoKCgoKCi0tCmRtLWRldmVs
+IG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20v
+bWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
