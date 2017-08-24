@@ -1,46 +1,118 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [v4.13-rc BUG] system lockup when running big buffered write(4M)
- to IB SRP via mpath
-Date: Wed, 23 Aug 2017 19:51:12 -0400
-Message-ID: <20170823235112.GB23028@redhat.com>
-References: <20170808141715.GB22763@ming.t460p>
- <1502237504.4017.1.camel@redhat.com>
- <1502245693.6511.3.camel@redhat.com>
- <c072e942-0265-f0ad-561d-0e50d50e3cb1@redhat.com>
- <1502298599.2356.7.camel@wdc.com>
- <20170823113526.GA8130@ming.t460p>
- <1503501161.2484.3.camel@wdc.com>
+From: Guan Junxiong <guanjunxiong@huawei.com>
+Subject: Re: [PATCH] multipath-tools: intermittent IO error
+ accounting to improve reliability
+Date: Thu, 24 Aug 2017 17:59:53 +0800
+Message-ID: <508b849f-026c-7365-7a4c-f2e8b2ef01a4@huawei.com>
+References: <1503396479-12692-1-git-send-email-guanjunxiong@huawei.com>
+	<6cd9c342-b3c9-5ec0-153a-d7a4d431cc64@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1503501161.2484.3.camel@wdc.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Bart Van Assche <Bart.VanAssche@wdc.com>
-Cc: "ming.lei@redhat.com" <ming.lei@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "loberman@redhat.com" <loberman@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <6cd9c342-b3c9-5ec0-153a-d7a4d431cc64@suse.de>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Hannes Reinecke <hare@suse.de>
+Cc: dm-devel@redhat.com, chengjike.cheng@huawei.com, niuhaoxin@huawei.com, shenhong09@huawei.com
 List-Id: dm-devel.ids
 
-On Wed, Aug 23 2017 at 11:12am -0400,
-Bart Van Assche <Bart.VanAssche@wdc.com> wrote:
+Hi, Hannes
+     Thanks for your comments. My reply inline.
 
-> On Wed, 2017-08-23 at 19:35 +0800, Ming Lei wrote:
-> > soft lockup still can be observed easily with patch d4acf3650c7c(
-> > block: Make blk_mq_delay_kick_requeue_list() rerun the queue at a quiet time),
-> > but no hard lockup.
+On 2017/8/22 23:37, Hannes Reinecke wrote:
+> On 08/22/2017 12:07 PM, Guan Junxiong wrote:
+>> This patch adds a new method of path state checking based on accounting
+>> IO error. This is useful in many scenarios such as intermittent IO error
+>> an a path due to network congestion, or a shaky link.
+>>
+>> Three parameters are added for the admin: "path_io_err_sample_time",
+>> "path_io_err_num_threshold" and "path_io_err_recovery_time".
+>> If path_io_err_sample_time and path_io_err_recovery_time are set to a
+>> value greater than 0, when a path fail event occurs due to an IO error,
+>> multipathd will enqueue this path into a queue of which each member is
+>> sent direct reading asynchronous io at a fixed sample rate of 100HZ. The
+>> IO accounting process for a path will last for path_io_err_sample_time.
+>> If the number of IO error on a particular path is greater than the
+>> path_io_err_num_threshold, then the path will not reinstate for
+>> path_io_err_recovery_time seconds.
+>>
+>> This helps us place the path in delayed state if we hit a lot of
+>> intermittent IO errors on a particular path due to network/target
+>> issues and isolate such degraded path and allow the admin to rectify
+>> the errors on a path.
+>>
+>> Signed-off-by: Junxiong Guan <guanjunxiong@huawei.com>
+>> ---
+> There have been several attempts for this over the years; if you check
+> the mail archive for 'flaky patch' you're bound to hit several threads
+> discussing this.
+> However, each has floundered for several problems:
 > 
-> Hello Ming,
+> - As we now have advanced path selectors the overall consensus is that
+> those selectors _should_ be able to handle these situations; ie for a
+> flaky path the path selector should switch away from it and move the
+> load to other, unaffected paths.
+> Have you checked if the existing path selectors are able to cope with
+> this situation? If not, why not?
+
+The existing path selectors in the kernel space are able to fail_path
+the flaky path when certain IO errors occurs. However only the user-space
+multipathd's checkers can detect whether the path is up. Therefore, for path
+with long-time intermittent IO or flaky path, that path selectors suffers
+from taking in the path and taking out the path _again_  _and_ _again_.
+Even the san_path_err_threshold , san_path_err_forget_rate and san_path_err_recovery_time
+is turned on, the detect sample interval of that path checkers is so big/coarse
+that it doesn't see what happens in the middle of the sample interval.
+
+Therefore, this patch introduces new method of detecting path state of IO erros
+especially for intermittent IO errors.
+
+> - But even if something like this is implemented, the real problem here
+> is reliability. Multipath internally only considers two real path
+> states; useable and unuseable. Consequently the flaky path needs to be
+> placed in one of these; so with your patch after enough errors
+> accumulate the flaky path will be placed in an unuseable state
+> eventually. If a failover event occurs the daemon cannot switch to the
+> flaky paths, and the system becomes unuseable even though I/O could be
+> sent via the flaky paths.
+
+Currently this patch will reinstate the flaky path if there is no active
+path after at most 1 tick. There is a windows time the system becomes
+unusable even though I/O could be sent via the flaky paths.Thanks for
+spotting this scenario. I will updated a patch solving this:
+If there is the only one active paths after a failover event occurs,
+the flaky path will reinstate as soon as possible because will can
+catch the DM_fail path event from udev event.
+
+> - However, flaky path detection is implemented, it will work most
+> efficiently when moving I/O _away_ from the flaky path. However, in
+> doing so we don't have a mechanism to figure out if and when the path is
+> useable again (as we're not sending I/O to it, and the TUR or any other
+> path checker might not be affected from the flaky behaviour).
+> So when should we declare a path as 'good' again?
+
+In this patch, the flaky path will stay only path_io_err_recovery_time seconds
+if there are more than one active path. After only path_io_err_recovery_time seconds,
+the flaky path will stay in normal, which means , when path checker detects it
+is up, it will reinstate into the usable path.
+
+However, how about we schedule the intermittent IO checking process again when
+the path_io_err_recovery_time seconds expires. If the number of IO erros is less
+than path_io_err_num_threshold, we declare the path as 'good' again.
+
+
+> Cheers,
 > 
-> I never claimed that commit d4acf3650c7c was a full solution to avoid these
-> soft lockups. I assume these results mean that patch series "[PATCH 0/7]
-> Device mapper and dm-mpath fixes" was not applied to the kernel used in your
-> tests? A colleague of you has reported that that patch series is sufficient
-> to avoid these soft lockups. See also
-> https://www.redhat.com/archives/dm-devel/2017-August/msg00122.html.
+> Hannes
+> 
 
-FYI, I'll try to review/stage that patchset for 4.14 over the next few
-days.
-
-(I'm not yet back to working full-time but will try to handle my
-upstream responsibilities)
-
-Mike
+Best wishes to you
+Guan Junxiong
