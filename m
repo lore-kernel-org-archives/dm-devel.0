@@ -1,23 +1,34 @@
-From: Ming Lei <ming.lei@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
 Subject: Re: dm-rq: do not update rq partially in each ending bio
-Date: Sat, 26 Aug 2017 01:14:50 +0800
-Message-ID: <20170825171449.GC13937@ming.t460p>
+Date: Fri, 25 Aug 2017 13:57:22 -0400
+Message-ID: <20170825175722.GA2298@redhat.com>
 References: <20170825152749.14435-1-ming.lei@redhat.com>
- <20170825154839.GA1695@redhat.com>
- <20170825160850.GA13937@ming.t460p>
- <20170825163233.GB1900@redhat.com>
- <20170825170752.GB13937@ming.t460p>
+	<20170825154839.GA1695@redhat.com>
+	<20170825160850.GA13937@ming.t460p>
+	<20170825163233.GB1900@redhat.com>
+	<20170825170752.GB13937@ming.t460p>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
 In-Reply-To: <20170825170752.GB13937@ming.t460p>
-Sender: linux-block-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, Jens Axboe <axboe@fb.com>, linux-block@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, Bart Van Assche <bart.vanassche@sandisk.com>, Laurence Oberman <loberman@redhat.com>, Bart Van Assche <Bart.VanAssche@wdc.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Ming Lei <ming.lei@redhat.com>
+Cc: linux-block@vger.kernel.org, Laurence Oberman <loberman@redhat.com>, Christoph Hellwig <hch@infradead.org>, Jens Axboe <axboe@fb.com>, dm-devel@redhat.com, Bart Van Assche <Bart.VanAssche@wdc.com>, Bart Van Assche <bart.vanassche@sandisk.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Sat, Aug 26, 2017 at 01:07:53AM +0800, Ming Lei wrote:
+On Fri, Aug 25 2017 at  1:07pm -0400,
+Ming Lei <ming.lei@redhat.com> wrote:
+
 > On Fri, Aug 25, 2017 at 12:32:33PM -0400, Mike Snitzer wrote:
 > > On Fri, Aug 25 2017 at 12:08pm -0400,
 > > Ming Lei <ming.lei@redhat.com> wrote:
@@ -64,9 +75,21 @@ On Sat, Aug 26, 2017 at 01:07:53AM +0800, Ming Lei wrote:
 > 
 > Just done the test with Bart's patch, still can
 > see soft lockup when running the test described
+> in commit log for a couple of minutes. BTW, my
+> test is much more aggressive than Laurence's, I
+> write 8M each time, and run 64 hammer_write.sh
+> concurrently.
 
-Looks no difference, hard lockup can be observed too 
-following soft lockup after a while with Bart's patch.
+OK, thanks for verifying as much.
+ 
+> I don't think the two are contradictory. Anyway,
+> this patch will decrease CPU utilization of SOFTIRQ, and
+> it is a improvement.
 
--- 
-Ming
+OK, looking closer I can see you accomplish the same (retaining partial
+completion) in a more optimal way.
+
+I'll include this in my review/staging of dm-multipath patches for 4.14.
+
+Thanks,
+Mike
