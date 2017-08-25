@@ -1,14 +1,17 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH] libmultipath: update INFINIDAT builtin config
-Date: Fri, 25 Aug 2017 02:26:55 +0200
-Message-ID: <364c3650-ef7d-5a17-6e34-a32f34ab31e7@gmail.com>
-References: <392CDE41-4C36-41B1-8811-B7EC93F0864C@infinidat.com>
+From: Tom Yan <tom.ty89@gmail.com>
+Subject: Re: [PATCH] dm-crypt: limit the number of allocated pages
+Date: Fri, 25 Aug 2017 12:58:59 +0800
+Message-ID: <CAGnHSEnDFc+XJDj9LtHjxJy+vSYS7HNK=F=nUH7tzsWPQozCeA@mail.gmail.com>
+References: <alpine.LRH.2.02.1708132240130.18210@file01.intranet.prod.int.rdu2.redhat.com>
+	<CAGnHSEm2Jz35Em6h-a8ofXr9ApgBKJq5mOCG9ZtN4+FuRxj8Aw@mail.gmail.com>
+	<alpine.LRH.2.02.1708142007510.24994@file01.intranet.prod.int.rdu2.redhat.com>
+	<CAGnHSEnrTnvrkNdYJodSL51VUA+=FemdXEMnQ30rVwjCOHMoYA@mail.gmail.com>
+	<alpine.LRH.2.02.1708191318110.2380@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <392CDE41-4C36-41B1-8811-B7EC93F0864C@infinidat.com>
-Content-Language: en-GB
+In-Reply-To: <alpine.LRH.2.02.1708191318110.2380@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,82 +21,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Arnon Yaari <arnony@infinidat.com>, dm-devel@redhat.com, Christophe Varoqui <christophe.varoqui@opensvc.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Ondrej Kozina <okozina@redhat.com>, dm-devel@redhat.com, hch@lst.de, Mike Snitzer <msnitzer@redhat.com>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-On 08/22/2017 03:37 PM, Arnon Yaari wrote:
+On 20 August 2017 at 01:34, Mikulas Patocka <mpatocka@redhat.com> wrote:
+>
+> If you issue a single ioctl that takes extreme amount of time - the kernel
+> warns about being blocked for extreme amount of time - what else should it
+> do?
+>
 
-> Based on the manufacturer documentation:
-> https://support.infinidat.com/hc/en-us/articles/202319222
-> 
-> Signed-off-by: Arnon Yaari <arnony@infinidat.com>
+But as I said, it does NOT warn about being blocked if the ioctl is
+issued for a SCSI device (i.e. blkdiscard -z /dev/sdX), so why the
+warning occurs / cannot be avoided in the case of a dm(-crypt)
+container?
 
-NACK.
+One thing I can see is, when blkdiscard -z is running on a dm-crypt
+container, iostat list it with a big avgqu-sz (not to be mixed up with
+avgrq-sz), starting from ~40000 (the underlying device is a 37G
+partition), gradually dropping to 0 (when the job is finished) with a
+step of ~40; all other items are 0 for the container (except %util,
+also 100% for most of the time). While for the underlying device, no
+matter if it is written to through a dm-crypt container, its lines
+stays at something like these:
 
-> ---
->  libmultipath/hwtable.c | 12 +++++++++++-
->  1 file changed, 11 insertions(+), 1 deletion(-)> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-> index 9e14ec1e..1ea48d58 100644
-> --- a/libmultipath/hwtable.c
-> +++ b/libmultipath/hwtable.c
-> @@ -969,8 +969,18 @@ static struct hwentry default_hw[] = {
->  		.vendor        = "NFINIDAT",
->  		.product       = "InfiniBox",
->  		.pgpolicy      = GROUP_BY_PRIO,
-
-> -		.pgfailback    = -FAILBACK_IMMEDIATE,
-> +		.pgfailback    = 30,
-
-Why is it needed?
-
->  		.prio_name     = PRIO_ALUA,
-> +		.checker_name  = TUR,
-
-Default value.
-
-> +		.selector      = "round-robin 0",
-
-round-robin is the dumbest, queue-length is smarter and
-service-time is the smartest and default selector.
-
-> +		.features      = "0",
-
-Default value.
-
-> +		.rr_weight     = RR_WEIGHT_PRIO,
-
-Useless with service-time
-
-> +		.no_path_retry = NO_PATH_RETRY_FAIL,
-
-Default value.
-
-> +		.minio         = 1,
-
-Useless with service-time
-
-> +		.minio_rq      = 1,
-
-Useless with service-time
-
-> +		.flush_on_last_del = FLUSH_ENABLED,
-
-Why is it needed?
-
-> +		.fast_io_fail  = 15,
-
-Why is it needed?
-
-> +		.dev_loss      = 15,
-
-Why is it needed?
-
->  	},
->  	/*
->  	 * Nimble Storage
-> 
-There is minimal info on how to send patches at the header of hwtable.c
-$ grep -A64 "Tuning suggestions" libmultipath/hwtable.c | less -S
-
-
-Thank you.
+Device:         rrqm/s   wrqm/s     r/s     w/s    rkB/s    wkB/s
+avgrq-sz avgqu-sz   await r_await w_await  svctm  %util
+sdb               0.00     0.00    0.00   85.00     0.00 43520.00
+1024.00   144.71 1664.89    0.00 1664.89  11.76 100.00
+sdb               0.00     0.00    0.00   86.00     0.00 44032.00
+1024.00   142.34 1694.70    0.00 1694.70  11.63 100.00
