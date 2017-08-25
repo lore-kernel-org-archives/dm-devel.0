@@ -1,11 +1,14 @@
-From: Goktug YILDIRIM <goktug.yildirim@gmail.com>
-Subject: No SAS end device
-Date: Thu, 24 Aug 2017 22:06:14 +0300
-Message-ID: <863862A8-6318-4EBD-B754-BB10784C2596@gmail.com>
-Mime-Version: 1.0 (Mac OS X Mail 10.3 \(3273\))
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: [PATCH] libmultipath: update INFINIDAT builtin config
+Date: Fri, 25 Aug 2017 02:26:55 +0200
+Message-ID: <364c3650-ef7d-5a17-6e34-a32f34ab31e7@gmail.com>
+References: <392CDE41-4C36-41B1-8811-B7EC93F0864C@infinidat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <392CDE41-4C36-41B1-8811-B7EC93F0864C@infinidat.com>
+Content-Language: en-GB
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,37 +18,82 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Arnon Yaari <arnony@infinidat.com>, dm-devel@redhat.com, Christophe Varoqui <christophe.varoqui@opensvc.com>
 List-Id: dm-devel.ids
 
-SGksCgpUaGlzIGlzIG15IGZpcnN0IHBvc3QgdG8gbGlzdC4gSSBhcG9sb2dpc2UgaWYgSSBmYWls
-IHRvIGZvbGxvdyBhIHByb3BlciB3YXkgdG8gYXNrIGZvciBoZWxwLgoKSSBoYXZlIGEgd2VpcmQg
-cHJvYmxlbSB3aGljaCBtYWtlcyBtZSBzcGVuZCBkYXlzIHRvIHNvbHZlLiBCdXQgYXQgdGhlIGVu
-ZCBJIGZpbmlzaGVkLXVwIHdpdGggbm8gY2x1ZXMuCgpNeSBsaW51eCBkaXN0cm8gaXMgYXJjaCBs
-aW51eC4gQW5kIHRoZSBrZXJuZWwgaXMgNC4xMi44LTEuCk11bHRpcGF0aCB0b29scyB2ZXJzaW9u
-IGlzIHYwLjYuNCAoMDMvMTEsIDIwMTYpLgoKQWxzbyBtdWx0aXBhdGguY29uZiBpcyBiZWxvdy4K
-ZGVmYXVsdHMgewoJZmluZF9tdWx0aXBhdGhzIHllcwoJdXNlcl9mcmllbmRseV9uYW1lcyBubwp9
-CgpibGFja2xpc3Qgewp9CgpJIGhhdmUgYSBkdWFsIHBvcnQgTFNJIGNvbnRyb2xsZXIgKExTSVNB
-UzMwMDg6IEZXVmVyc2lvbigxMy4wMC4wMC4wMCksIENoaXBSZXZpc2lvbigweDAyKSwgQmlvc1Zl
-cnNpb24oMTUuMDAuMDIuMDApKS4KCk15IExTSSBIQkEgaXMgY29ubmVjdGVkIHRvIGEgc3VwZXIg
-bWljcm8gSkJPRCB3aXRoIGR1YWwgY2FibGVzLiBBdCB0aGUgTFNJIEJJT1MgSSBlYXNpbHkgY29u
-ZmlybSB0aGF0IGRyaXZlcyBhcHBlYXIgaW4gYSBtdWx0aXBhdGggd2F5LgoKVG8gc2ltcGxpZnkg
-dGhlIHByb2JsZW0gSSBsZWZ0IHRvIG9ubHkgdHdvIGRyaXZlcyBpbnNlcnRlZC4gQm90aCBvZiB0
-aGVtIGFyZSBTZWFnYXRlIFNBUyBkcml2ZXMgYnV0IGluIGRpZmZlcmVudCBtb2RlbHMuCgpTZWFn
-YXRlIG1vZGVsIG51bWJlciBTVDYwMDBOTTAwMzQgd29ya3Mgd2l0aCBtdWx0aXBhdGguIEhvd2V2
-ZXIgbW9kZWwgbnVtYmVyIFNUNjAwME5NMDA5NSBzaW1wbHkgRE9FUyBOT1QhIEZpcm13YXJlcyAo
-aGJhICYgZHJpdmVzKSBhcmUgdXAgdG8gZGF0ZS4KCm11bHRpcGF0aCAtdjIgZW5kcyB1cCBmb3Ig
-U1Q2MDAwTk0wMDk1IGFzIGJlbG93LgpBdWcgMjQgMjE6NTQ6MTMgfCBzZHQ6IE5vIFNBUyBlbmQg
-ZGV2aWNlIGZvciAnZW5kX2RldmljZS0xMjoxJwpBdWcgMjQgMjE6NTQ6MTMgfCBzZGFpOiBObyBT
-QVMgZW5kIGRldmljZSBmb3IgJ2VuZF9kZXZpY2UtMTI6MycKQXVnIDI0IDIxOjU0OjEzIHwgMzUw
-MDBjNTAwOTNjYjIwM2I6IGlnbm9yaW5nIG1hcAoKCknigJl2ZSB0cmllZCBzYW1lIHNldHVwIHdp
-dGggQ2VudG9zIDcgKGtlcm5lbCAzLngpIGFuZCBtdWx0aXBhdGggd29ya3MgZm9yIGJvdGggb2Yg
-dGhlIGRyaXZlcy4gVGhpcyBzZWVtcyB0byBiZSBzb21ld2hhdCBkaXN0cm8gcHJvYmxlbSBidXQg
-c2luY2UgYXJjaCBsaW51eCBhbHdheXMgdXNlcyB2YW5pbGxhIHNvdXJjZXMgSSBndWVzcyBpdCB3
-b3VsZCBiZSBnb29kIHN0YXJ0IHRvIGFzayBmb3IgaGVscCBoZXJlLgpJ4oCZdmUgc2VhcmNoZWQg
-YSBsb3QgYW5kIHRoZXJlIGFyZSBsb3RzIG9mIOKAnCBObyBTQVMgZW5kIGRldmljZeKAnSBtZXNz
-YWdlcy4gSG93ZXZlciBJIGZhaWxlZCB0byBmaW5kIGEgbWF0Y2hpbmcgd2l0aCBteSBpc3N1ZS4K
-ClNpbmNlIEkgYW0gYSBtdWx0aXBhdGggbmV3YmllIGFueSBndWlkZSB3b3VsZCBiZSB2YWx1YWJs
-ZS4KClRoYW5rcyBpbiBhZHZhbmNlLgotR29rdHVnIFlpbGRpcmltCgoKCgoKCi0tCmRtLWRldmVs
-IG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20v
-bWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+On 08/22/2017 03:37 PM, Arnon Yaari wrote:
+
+> Based on the manufacturer documentation:
+> https://support.infinidat.com/hc/en-us/articles/202319222
+> 
+> Signed-off-by: Arnon Yaari <arnony@infinidat.com>
+
+NACK.
+
+> ---
+>  libmultipath/hwtable.c | 12 +++++++++++-
+>  1 file changed, 11 insertions(+), 1 deletion(-)> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+> index 9e14ec1e..1ea48d58 100644
+> --- a/libmultipath/hwtable.c
+> +++ b/libmultipath/hwtable.c
+> @@ -969,8 +969,18 @@ static struct hwentry default_hw[] = {
+>  		.vendor        = "NFINIDAT",
+>  		.product       = "InfiniBox",
+>  		.pgpolicy      = GROUP_BY_PRIO,
+
+> -		.pgfailback    = -FAILBACK_IMMEDIATE,
+> +		.pgfailback    = 30,
+
+Why is it needed?
+
+>  		.prio_name     = PRIO_ALUA,
+> +		.checker_name  = TUR,
+
+Default value.
+
+> +		.selector      = "round-robin 0",
+
+round-robin is the dumbest, queue-length is smarter and
+service-time is the smartest and default selector.
+
+> +		.features      = "0",
+
+Default value.
+
+> +		.rr_weight     = RR_WEIGHT_PRIO,
+
+Useless with service-time
+
+> +		.no_path_retry = NO_PATH_RETRY_FAIL,
+
+Default value.
+
+> +		.minio         = 1,
+
+Useless with service-time
+
+> +		.minio_rq      = 1,
+
+Useless with service-time
+
+> +		.flush_on_last_del = FLUSH_ENABLED,
+
+Why is it needed?
+
+> +		.fast_io_fail  = 15,
+
+Why is it needed?
+
+> +		.dev_loss      = 15,
+
+Why is it needed?
+
+>  	},
+>  	/*
+>  	 * Nimble Storage
+> 
+There is minimal info on how to send patches at the header of hwtable.c
+$ grep -A64 "Tuning suggestions" libmultipath/hwtable.c | less -S
+
+
+Thank you.
