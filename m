@@ -1,8 +1,8 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 1/4] multipathd: don't flood system with
-	sd_notify calls
-Date: Tue, 29 Aug 2017 00:05:33 +0200
-Message-ID: <20170828220536.13208-1-mwilck@suse.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: clarify how to dump the
+	multipathd config
+Date: Tue, 29 Aug 2017 01:27:56 +0200
+Message-ID: <20170828232756.13465-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -16,90 +16,44 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@suse.de>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-DAEMON_RUNNING is only used by checkerloop to indicate that
-path checkers are running. checkerloop switches back and forth
-between DAEMON_IDLE and DAEMON_RUNNING in every iteration, i.e.
-it performs two status changes per second on an idle system.
-The repeated sd_notify() calls cause a lot of traffic on dbus as
-systemd forwards these messages on the system bus. This can be
-seen with systemd.log_level=debug. Better skip these notifications
-that don't provide useful information to the user, who is very
-unlikely to catch the daemon in "running" state anyway.
-
-Signed-off-by: Martin Wilck <mwilck@suse.com>
+Reported-by: Martin Wilck <mwilck@suse.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- multipathd/main.c | 24 ++++++++++++++++++++----
- 1 file changed, 20 insertions(+), 4 deletions(-)
+ multipath/main.c           | 2 +-
+ multipath/multipath.conf.5 | 3 ++-
+ 2 files changed, 3 insertions(+), 2 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 4be2c579..b5e2b00d 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -161,15 +161,27 @@ sd_notify_status(void)
- 	case DAEMON_CONFIGURE:
- 		return "STATUS=configure";
- 	case DAEMON_IDLE:
--		return "STATUS=idle";
- 	case DAEMON_RUNNING:
--		return "STATUS=running";
-+		return "STATUS=up";
- 	case DAEMON_SHUTDOWN:
- 		return "STATUS=shutdown";
- 	}
- 	return NULL;
- }
- 
-+static void do_sd_notify(enum daemon_status old_state)
-+{
-+	/*
-+	 * Checkerloop switches back and forth between idle and running state.
-+	 * No need to tell systemd each time.
-+	 * These notifications cause a lot of overhead on dbus.
-+	 */
-+	if ((running_state == DAEMON_IDLE || running_state == DAEMON_RUNNING) &&
-+	    (old_state == DAEMON_IDLE || old_state == DAEMON_RUNNING))
-+		return;
-+	sd_notify(0, sd_notify_status());
-+}
-+
- static void config_cleanup(void *arg)
- {
- 	pthread_mutex_unlock(&config_lock);
-@@ -179,10 +191,12 @@ void post_config_state(enum daemon_status state)
- {
- 	pthread_mutex_lock(&config_lock);
- 	if (state != running_state) {
-+		enum daemon_status old_state = running_state;
-+
- 		running_state = state;
- 		pthread_cond_broadcast(&config_cond);
- #ifdef USE_SYSTEMD
--		sd_notify(0, sd_notify_status());
-+		do_sd_notify(old_state);
- #endif
- 	}
- 	pthread_mutex_unlock(&config_lock);
-@@ -195,6 +209,8 @@ int set_config_state(enum daemon_status state)
- 	pthread_cleanup_push(config_cleanup, NULL);
- 	pthread_mutex_lock(&config_lock);
- 	if (running_state != state) {
-+		enum daemon_status old_state = running_state;
-+
- 		if (running_state != DAEMON_IDLE) {
- 			struct timespec ts;
- 
-@@ -207,7 +223,7 @@ int set_config_state(enum daemon_status state)
- 			running_state = state;
- 			pthread_cond_broadcast(&config_cond);
- #ifdef USE_SYSTEMD
--			sd_notify(0, sd_notify_status());
-+			do_sd_notify(old_state);
- #endif
- 		}
- 	}
+diff --git a/multipath/main.c b/multipath/main.c
+index dede017..0047bf1 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -119,7 +119,7 @@ usage (char * progname)
+ 		"  -c      check if a device should be a path in a multipath device\n"
+ 		"  -q      allow queue_if_no_path when multipathd is not running\n"
+ 		"  -d      dry run, do not create or update devmaps\n"
+-		"  -t      dump internal hardware table\n"
++		"  -t      display the currently used multipathd configuration\n"
+ 		"  -r      force devmap reload\n"
+ 		"  -i      ignore wwids file\n"
+ 		"  -B      treat the bindings file as read only\n"
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index a78ec5b..57a771c 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -28,7 +28,8 @@ overwrite the built-in configuration table of \fBmultipathd\fP.
+ Any line whose first non-white-space character is a '#' is considered
+ a comment line. Empty lines are ignored.
+ .PP
+-Internal multipathd configuration can be displayed with the \fBmultipath -t\fR command.
++Currently used multipathd configuration can be displayed with the \fBmultipath -t\fR
++or \fBmultipathd show config\fR command.
+ .
+ .
+ .\" ----------------------------------------------------------------------------
 -- 
-2.14.0
+2.13.5
