@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 2/4] libmultipath: add_feature: skip pointless
-	NULL check
-Date: Tue, 29 Aug 2017 00:05:34 +0200
-Message-ID: <20170828220536.13208-2-mwilck@suse.com>
+Subject: [PATCH 4/4] multipath: delegate dangerous commands to
+	multipathd
+Date: Tue, 29 Aug 2017 00:05:36 +0200
+Message-ID: <20170828220536.13208-4-mwilck@suse.com>
 References: <20170828220536.13208-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,67 +22,129 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@s
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The case f == NULL is already handled by the code from
-b1ecdd46b6ec "segment faulty occured in add_feature()" above.
+Some multipath commands are dangerous to run while multipathd is running.
+For example, "multipath -r" may apply a modified configuration to the kernel,
+while multipathd is still using the old configuration, leading to
+inconsistent state between multipathd and the kernel.
+
+It is safer to use equivalent multipathd client commands instead.
+For now, do this only for "multipath -r", but other invocations
+may be added in the future. Perhaps some day, all "multipath"
+commands will be mapped to multipathd actions.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/structs.c | 27 ++++++++++++---------------
- 1 file changed, 12 insertions(+), 15 deletions(-)
+ Makefile.inc     |  2 +-
+ multipath/main.c | 73 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 74 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/structs.c b/libmultipath/structs.c
-index 28704676..11e33676 100644
---- a/libmultipath/structs.c
-+++ b/libmultipath/structs.c
-@@ -515,7 +515,7 @@ void setup_feature(struct multipath *mpp, char *feature)
+diff --git a/Makefile.inc b/Makefile.inc
+index 29c290a2..d012b3d7 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -90,7 +90,7 @@ OPTFLAGS	= -O2 -g -pipe -Wall -Wextra -Wformat=2 -Werror=implicit-int \
+ 		  -Wp,-D_FORTIFY_SOURCE=2 $(STACKPROT) \
+ 		  --param=ssp-buffer-size=4
  
- int add_feature(char **f, const char *n)
- {
--	int c = 0, d, l = 0;
-+	int c = 0, d, l;
- 	char *e, *p, *t;
- 	const char *q;
+-CFLAGS		= $(OPTFLAGS) -DLIB_STRING=\"${LIB}\" -DRUN_DIR=\"${RUN}\"
++CFLAGS		= $(OPTFLAGS) -D BIN_DIR=\"$(bindir)\" -DLIB_STRING=\"${LIB}\" -DRUN_DIR=\"${RUN}\"
+ BIN_CFLAGS	= -fPIE -DPIE
+ LIB_CFLAGS	= -fPIC
+ SHARED_FLAGS	= -shared
+diff --git a/multipath/main.c b/multipath/main.c
+index dede017e..b54aa9bb 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -502,6 +502,74 @@ get_dev_type(char *dev) {
+ 	return DEV_NONE;
+ }
  
-@@ -538,19 +538,18 @@ int add_feature(char **f, const char *n)
- 	}
- 
- 	/* Check if feature is already present */
--	if (*f) {
--		if (strstr(*f, n))
--			return 0;
-+	if (strstr(*f, n))
-+		return 0;
- 
--		/* Get feature count */
--		c = strtoul(*f, &e, 10);
--		if (*f == e)
--			/* parse error */
--			return 1;
-+	/* Get feature count */
-+	c = strtoul(*f, &e, 10);
-+	if (*f == e)
-+		/* parse error */
-+		return 1;
++/*
++ * Some multipath commands are dangerous to run while multipathd is running.
++ * For example, "multipath -r" may apply a modified configuration to the kernel,
++ * while multipathd is still using the old configuration, leading to
++ * inconsistent state.
++ *
++ * It is safer to use equivalent multipathd client commands instead.
++ */
++int delegate_to_multipathd(enum mpath_cmds cmd, const struct config *conf)
++{
++#define DELEGATE_MAX_ARGS 5
++	int fd = mpath_connect();
++	char mpd_path[PATH_MAX];
++	char *argv[DELEGATE_MAX_ARGS];
++	char log[4096], *p;
++	char verbosity[2] = { '0', '\0' };
++	int idx = 1, cmd_idx, sz, n, i;
 +
-+	/* Check if we need to increase feature count space */
-+	l = strlen(*f) + strlen(n) + 1;
- 
--		/* Check if we need to increase feature count space */
--		l = strlen(*f) + strlen(n) + 1;
--	}
- 	/* Count new features */
- 	if ((c % 10) == 9)
- 		l++;
-@@ -582,9 +581,7 @@ int add_feature(char **f, const char *n)
- 	snprintf(p, l + 2, "%0d ", c);
- 
- 	/* Copy the feature string */
--	p = NULL;
--	if (*f)
--		p = strchr(*f, ' ');
-+	p = strchr(*f, ' ');
- 
- 	if (p) {
- 		while (*p == ' ')
++	if (fd == -1)
++		return 0;
++	close(fd);
++
++	if (conf->verbosity > 0 && conf->verbosity < 8)
++		verbosity[0] = '0' + conf->verbosity;
++	argv[idx++] = "-v";
++	argv[idx++] = verbosity;
++
++	cmd_idx = idx;
++	if (cmd == CMD_CREATE && conf->force_reload == FORCE_RELOAD_YES) {
++		argv[idx++] = "reconfigure";
++	} /* Add other translations here */
++
++	if (idx == cmd_idx)
++		/* No command found, no need to delegate */
++		return 0;
++	else if (idx >= DELEGATE_MAX_ARGS) {
++		condlog(0, "internal error - argv overflow");
++		exit(1);
++	}
++
++	argv[idx] = NULL;
++	snprintf(mpd_path, sizeof(mpd_path), "%s/%s", BIN_DIR, "multipathd");
++	argv[0] = mpd_path;
++
++	condlog(1, "delegating command to multipathd");
++
++	sz = sizeof(log);
++	p = log;
++	i = 0;
++	n = snprintf(p, sz, "command: %s", argv[i++]);
++	while (i < idx && n < sz) {
++		sz -= n;
++		p += n;
++		n = snprintf(p, sz, " %s", argv[i++]);
++	}
++	condlog(2, "%s", log);
++	if (n >= sz)
++		condlog(2, "(command on previous line was truncated)");
++
++	if (execv(mpd_path, argv) == -1) {
++		condlog(0, "failed to execute multipathd: %s", strerror(errno));
++		exit(1);
++	}
++
++	/* not reached */
++	return 1;
++}
++
+ int
+ main (int argc, char *argv[])
+ {
+@@ -695,10 +763,15 @@ main (int argc, char *argv[])
+ 		} else
+ 			mpath_disconnect(fd);
+ 	}
++
+ 	if (cmd == CMD_REMOVE_WWID && !dev) {
+ 		condlog(0, "the -w option requires a device");
+ 		goto out;
+ 	}
++
++	if (delegate_to_multipathd(cmd, conf))
++		exit(0); /* not reached */
++
+ 	if (cmd == CMD_RESET_WWIDS) {
+ 		struct multipath * mpp;
+ 		int i;
 -- 
 2.14.0
