@@ -1,16 +1,15 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH] multipath-tools: intermittent IO error
- accounting to improve reliability
-Date: Mon, 28 Aug 2017 13:13:04 +0200
-Message-ID: <1503918784.4546.24.camel@suse.com>
-References: <1503396479-12692-1-git-send-email-guanjunxiong@huawei.com>
-	<6cd9c342-b3c9-5ec0-153a-d7a4d431cc64@suse.de>
-	<508b849f-026c-7365-7a4c-f2e8b2ef01a4@huawei.com>
+From: Gris Ge <fge@redhat.com>
+Subject: Re: [PATCH 2/3] multipath-tools: libdmmp: Improve
+ timeout mechanism
+Date: Mon, 28 Aug 2017 20:58:48 +0800
+Message-ID: <20170828125848.GA15058@redhat.com>
+References: <20170816123409.16535-1-fge@redhat.com>
+	<20170816123409.16535-2-fge@redhat.com>
+	<1503005396.7232.11.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: multipart/mixed; boundary="===============1686288372161014797=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <508b849f-026c-7365-7a4c-f2e8b2ef01a4@huawei.com>
+In-Reply-To: <1503005396.7232.11.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,63 +19,71 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Guan Junxiong <guanjunxiong@huawei.com>, Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com, chengjike.cheng@huawei.com, niuhaoxin@huawei.com, shenhong09@huawei.com
+To: Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gVGh1LCAyMDE3LTA4LTI0IGF0IDE3OjU5ICswODAwLCBHdWFuIEp1bnhpb25nIHdyb3RlOgo+
-IEhpLCBIYW5uZXMKPiAgICAgIFRoYW5rcyBmb3IgeW91ciBjb21tZW50cy4gTXkgcmVwbHkgaW5s
-aW5lLgo+IAo+IE9uIDIwMTcvOC8yMiAyMzozNywgSGFubmVzIFJlaW5lY2tlIHdyb3RlOgo+ID4g
-LSBBcyB3ZSBub3cgaGF2ZSBhZHZhbmNlZCBwYXRoIHNlbGVjdG9ycyB0aGUgb3ZlcmFsbCBjb25z
-ZW5zdXMgaXMKPiA+IHRoYXQKPiA+IHRob3NlIHNlbGVjdG9ycyBfc2hvdWxkXyBiZSBhYmxlIHRv
-IGhhbmRsZSB0aGVzZSBzaXR1YXRpb25zOyBpZSBmb3IKPiA+IGEKPiA+IGZsYWt5IHBhdGggdGhl
-IHBhdGggc2VsZWN0b3Igc2hvdWxkIHN3aXRjaCBhd2F5IGZyb20gaXQgYW5kIG1vdmUKPiA+IHRo
-ZQo+ID4gbG9hZCB0byBvdGhlciwgdW5hZmZlY3RlZCBwYXRocy4KPiA+IEhhdmUgeW91IGNoZWNr
-ZWQgaWYgdGhlIGV4aXN0aW5nIHBhdGggc2VsZWN0b3JzIGFyZSBhYmxlIHRvIGNvcGUKPiA+IHdp
-dGgKPiA+IHRoaXMgc2l0dWF0aW9uPyBJZiBub3QsIHdoeSBub3Q/Cj4gCj4gVGhlIGV4aXN0aW5n
-IHBhdGggc2VsZWN0b3JzIGluIHRoZSBrZXJuZWwgc3BhY2UgYXJlIGFibGUgdG8gZmFpbF9wYXRo
-Cj4gdGhlIGZsYWt5IHBhdGggd2hlbiBjZXJ0YWluIElPIGVycm9ycyBvY2N1cnMuIEhvd2V2ZXIg
-b25seSB0aGUgdXNlci0KPiBzcGFjZQo+IG11bHRpcGF0aGQncyBjaGVja2VycyBjYW4gZGV0ZWN0
-IHdoZXRoZXIgdGhlIHBhdGggaXMgdXAuIFRoZXJlZm9yZSwKPiBmb3IgcGF0aAo+IHdpdGggbG9u
-Zy10aW1lIGludGVybWl0dGVudCBJTyBvciBmbGFreSBwYXRoLCB0aGF0IHBhdGggc2VsZWN0b3Jz
-Cj4gc3VmZmVycwo+IGZyb20gdGFraW5nIGluIHRoZSBwYXRoIGFuZCB0YWtpbmcgb3V0IHRoZSBw
-YXRoIF9hZ2Fpbl8gIF9hbmRfCj4gX2FnYWluXy4KPiBFdmVuIHRoZSBzYW5fcGF0aF9lcnJfdGhy
-ZXNob2xkICwgc2FuX3BhdGhfZXJyX2ZvcmdldF9yYXRlIGFuZAo+IHNhbl9wYXRoX2Vycl9yZWNv
-dmVyeV90aW1lCj4gaXMgdHVybmVkIG9uLCB0aGUgZGV0ZWN0IHNhbXBsZSBpbnRlcnZhbCBvZiB0
-aGF0IHBhdGggY2hlY2tlcnMgaXMgc28KPiBiaWcvY29hcnNlCj4gdGhhdCBpdCBkb2Vzbid0IHNl
-ZSB3aGF0IGhhcHBlbnMgaW4gdGhlIG1pZGRsZSBvZiB0aGUgc2FtcGxlCj4gaW50ZXJ2YWwuCgpJ
-IGhhdmUgdGhlIGNvbmNlcm4gdGhhdCB3ZSBhcmUgaW50cm9kdWNpbmcgdG9vIG1hbnkgZGlmZmVy
-ZW50CnJlZ3VsYXRpb24gYWxnb3JpdGhtcy4gV2UgaGF2ZSBwYXRoIHNlbGVjdG9ycywgcGF0aCBj
-aGVja2VycywKc2FuX3BhdGhfZXJyX1hYWCwgYW5kIG5vdyBwYXRoX2lvX2Vycl9YWFggYXMgd2Vs
-bC4gV2UgbXVzdCBiZSBjZXJ0YWluCnRoYXQgdGhlc2UgcGxheSB0b2dldGhlciBpbiBhIHdlbGwt
-ZGVmaW5lZCBmYXNoaW9uIChtb3N0IGltcG9ydGFudGx5LAphdm9pZCB0aGF0IG9uZSBtZWNoYW5p
-c20gYWN0aXZhdGVzIGEgcGF0aCB3aGlsZSB0aGUgb3RoZXIgaXMgaW4gdGhlCnByb2Nlc3Mgb2Yg
-dGVhcmluZyBpdCBkb3duLCBldGMuKS4gV2UgbXVzdCBhbHNvIGF2b2lkIGNhdXNpbmcgdXNlcgpj
-b25mdXNpb24sIGFzIG11bHRpcGF0aCBjb25maWd1cmF0aW9uIGlzIGFscmVhZHkgYSBkYXVudGlu
-ZyB0YXNrIGZvcgptYW55LiBZb3VyIG5ldyBhbGdvcml0aG0gc2hvdWxkIGJlIG11dHVhbGx5IGV4
-Y2x1c2l2ZSB3aXRoCnNhbl9wYXRoX2Vycl9YWFguIFBlcmhhcHMgd2Ugc2hvdWxkIGV2ZW4gY29u
-c2lkZXIgZHJvcHBpbmcgdGhlCnNhbl9wYXRoX2Vycl9YWFggb3B0aW9ucyBlbnRpcmVseSBpZiB3
-ZSBjaG9vc2UgdG8gYWRvcHQgeW91ciBuZXcKYXBwcm9hY2guCgo+ID4gLSBIb3dldmVyLCBmbGFr
-eSBwYXRoIGRldGVjdGlvbiBpcyBpbXBsZW1lbnRlZCwgaXQgd2lsbCB3b3JrIG1vc3QKPiA+IGVm
-ZmljaWVudGx5IHdoZW4gbW92aW5nIEkvTyBfYXdheV8gZnJvbSB0aGUgZmxha3kgcGF0aC4gSG93
-ZXZlciwgaW4KPiA+IGRvaW5nIHNvIHdlIGRvbid0IGhhdmUgYSBtZWNoYW5pc20gdG8gZmlndXJl
-IG91dCBpZiBhbmQgd2hlbiB0aGUKPiA+IHBhdGggaXMKPiA+IHVzZWFibGUgYWdhaW4gKGFzIHdl
-J3JlIG5vdCBzZW5kaW5nIEkvTyB0byBpdCwgYW5kIHRoZSBUVVIgb3IgYW55Cj4gPiBvdGhlcgo+
-ID4gcGF0aCBjaGVja2VyIG1pZ2h0IG5vdCBiZSBhZmZlY3RlZCBmcm9tIHRoZSBmbGFreSBiZWhh
-dmlvdXIpLgo+ID4gU28gd2hlbiBzaG91bGQgd2UgZGVjbGFyZSBhIHBhdGggYXMgJ2dvb2QnIGFn
-YWluPwo+IAo+IEluIHRoaXMgcGF0Y2gsIHRoZSBmbGFreSBwYXRoIHdpbGwgc3RheSBvbmx5Cj4g
-cGF0aF9pb19lcnJfcmVjb3ZlcnlfdGltZSBzZWNvbmRzCj4gaWYgdGhlcmUgYXJlIG1vcmUgdGhh
-biBvbmUgYWN0aXZlIHBhdGguIEFmdGVyIG9ubHkKPiBwYXRoX2lvX2Vycl9yZWNvdmVyeV90aW1l
-IHNlY29uZHMsCj4gdGhlIGZsYWt5IHBhdGggd2lsbCBzdGF5IGluIG5vcm1hbCwgd2hpY2ggbWVh
-bnMgLCB3aGVuIHBhdGggY2hlY2tlcgo+IGRldGVjdHMgaXQKPiBpcyB1cCwgaXQgd2lsbCByZWlu
-c3RhdGUgaW50byB0aGUgdXNhYmxlIHBhdGguCj4gCj4gSG93ZXZlciwgaG93IGFib3V0IHdlIHNj
-aGVkdWxlIHRoZSBpbnRlcm1pdHRlbnQgSU8gY2hlY2tpbmcgcHJvY2Vzcwo+IGFnYWluIHdoZW4K
-PiB0aGUgcGF0aF9pb19lcnJfcmVjb3ZlcnlfdGltZSBzZWNvbmRzIGV4cGlyZXMuIElmIHRoZSBu
-dW1iZXIgb2YgSU8KPiBlcnJvcyBpcyBsZXNzCj4gdGhhbiBwYXRoX2lvX2Vycl9udW1fdGhyZXNo
-b2xkLCB3ZSBkZWNsYXJlIHRoZSBwYXRoIGFzICdnb29kJyBhZ2Fpbi4KClRoYXQgc291bmRzIGxp
-a2UgYSByZWFzb25hYmxlIGltcHJvdmVtZW50IG92ZXIgdGhlIG9yaWdpbmFsIHBhdGNoLgoKUmVn
-YXJkcywKTWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVs
-LiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTD
-tnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5i
-ZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6
-Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+
+--===============1686288372161014797==
+Content-Type: multipart/signed; micalg=pgp-sha256;
+	protocol="application/pgp-signature"; boundary="1yeeQ81UyVL57Vl7"
+Content-Disposition: inline
+
+
+--1yeeQ81UyVL57Vl7
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+
+On Thu, Aug 17, 2017 at 11:29:56PM +0200, Martin Wilck wrote:
+> On Wed, 2017-08-16 at 20:34 +0800, Gris Ge wrote:
+> > Issue:
+> >     libdmmp return error of timeout before user requested timeout was
+> >     met.
+>
+> Maybe I'm missing something here, but if you just retry the timed-out
+> command, isn't it likely that you'll hit the uxsock_timeout again and
+> again?
+>
+> Best,
+> Martin
+Hi Martin,
+
+You will get timeout again after `uxsock_timeout` seconds if the
+daemon/multipathd haven't finish its work on dm tables and invoking path
+checker. But eventually, you will the requested data.
+
+--=20
+Gris Ge
+
+--1yeeQ81UyVL57Vl7
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCAAdFiEE8f1XsqXpyNthgIbGbM3lj+QeKP8FAlmkE4QACgkQbM3lj+Qe
+KP9DhxAAgaMhACNJveRUwvMSMurH1Ie/I/SBqLvUfqnbZe+eHKAW0KNOZW6xgd11
+CD6UqiYj73iT7vxGgF6ulWLxnNJLR5JExYj5uUkSukDPCHju9oGxGSqab8TXZzdD
+BpFzMw/ZMyG+zfw/Y8L4shEVcS7e6gQHtIlcvCKvId+wgEltgP++JdJuIDqRWio8
+zyNrcVgA3Nu5e8R0IDLPuL6jRsicG0WSYCVi7NZ9dFNavVbjxCFY72rP0CI2wHOo
+13L3Cez/Hp6FKuBq+uFzvRFcUq96PzdcZ22QnESR9QUM7NMhmmJea7ETzwbWapgX
+fODTMFoYgmZX9IS9zTV8bXJnxKuIqb+CD58RnnRY3JQhqvXq3TAZ8j3qCpwqTrv+
+j5DeYNjj+UheEcJewOLFPnNDv1QZSOa6TU2hvZLrV3s/tcNd8toMyN4K1mm5rOVi
+nRAZsaFVzHB4VACUjjH5GRQ4zGii8DxLYXf8Wegq0j7V/VKp6MZ3Zy9qwLtMIslG
+j8zND0bNOFu16D91354v88GBY+Ku7EUyTkdjAYC4QVE8YpQ+lyccemwje9acG9sf
+b+w3bBpiaNHACOQS5uTUevzqQrHyGwmvsouJoKMrDsaS+1Yo266OFUFXnHP4BVGS
+VLmlR3dU89nS7b0F9L29sIUORSFo6KEhwdl+4ODBD8LxxrjUmy8=
+=AWKO
+-----END PGP SIGNATURE-----
+
+--1yeeQ81UyVL57Vl7--
+
+
+--===============1686288372161014797==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============1686288372161014797==--
