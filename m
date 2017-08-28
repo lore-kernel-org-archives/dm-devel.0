@@ -1,16 +1,12 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH] libmultipath: update INFINIDAT builtin config
-Date: Tue, 29 Aug 2017 01:02:18 +0200
-Message-ID: <089058c5-18f7-f197-1ca5-00a8a0e12c39@gmail.com>
-References: <392CDE41-4C36-41B1-8811-B7EC93F0864C@infinidat.com>
-	<364c3650-ef7d-5a17-6e34-a32f34ab31e7@gmail.com>
-	<FDDA478C-AA82-4C40-9E6E-981D53F79693@infinidat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: [PATCH 1/4] multipathd: don't flood system with
+	sd_notify calls
+Date: Tue, 29 Aug 2017 00:05:33 +0200
+Message-ID: <20170828220536.13208-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <FDDA478C-AA82-4C40-9E6E-981D53F79693@infinidat.com>
-Content-Language: en-GB
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,44 +16,90 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Arnon Yaari <arnony@infinidat.com>, dm-devel@redhat.com, Christophe Varoqui <christophe.varoqui@opensvc.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@suse.de>, Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gMDgvMjgvMjAxNyAwMzo1OSBQTSwgQXJub24gWWFhcmkgd3JvdGU6Cgo+PiBPbiAyNSBBdWcg
-MjAxNywgYXQgMzoyNiwgWG9zZSBWYXpxdWV6IFBlcmV6IDx4b3NlLnZhenF1ZXpAZ21haWwuY29t
-PiB3cm90ZToKCj4+IE9uIDA4LzIyLzIwMTcgMDM6MzcgUE0sIEFybm9uIFlhYXJpIHdyb3RlOgoK
-Pj4+IC0JCS5wZ2ZhaWxiYWNrICAgID0gLUZBSUxCQUNLX0lNTUVESUFURSwKPj4+ICsJCS5wZ2Zh
-aWxiYWNrICAgID0gMzAsCgo+PiBXaHkgaXMgaXQgbmVlZGVkPwoKPiBBbGwgdGhlIHZhbHVlcyBz
-dWdnZXN0ZWQgaGVyZSBhcmUgdGhlIHZhbHVlcyB0aGF0IHRoZSBjb21wYW554oCZcyBpbnRlcm9w
-ZXJhYmlsaXR5Cj4gdGVhbSBmb3VuZCB3b3JrIGJlc3QgZm9yIHRoZSBwcm9kdWN0IG9uIExpbnV4
-LiBUaGUgdGltZW91dCB2YWx1ZXMgYXJlIHRoZXJlCj4gYmVjYXVzZSBpbiBzb21lIHVwZ3JhZGUg
-c2NlbmFyaW9zIHdlIGRvbuKAmXQgd2FudCB0byBmYWlsIGRldmljZXMgdW50aWwgdGhlCj4gdXBn
-cmFkZSBmaW5pc2hlcy4KCldlcmUgdGhleSB0ZXN0ZWQgd2l0aCBhICpjdXJyZW50KiBrZXJuZWwg
-YW5kIG11bHRpcGF0aC10b29scz8KCj4gSSBkb27igJl0IHRoaW5rIHRoZXJlIGlzIGEgcmVhc29u
-IHRvIGFkZCBpbi1saW5lIGNvbW1lbnRzIGluIHRoZSBjb2RlIHRvCj4gZXhwbGFpbiB0aGUgdmFs
-dWVzIChub25lIG9mIHRoZSBvdGhlciB2ZW5kb3JzIGFyZSBkb2luZyB0aGF0KS4KCkl0IHNob3Vs
-ZCBiZSBkb2N1bWVudGVkIGluIHRoZSBib2R5IG9mIHRoZSBnaXQgcGF0Y2goY2hhbmdlbG9nKS4K
-CkFueXRoaW5nIG90aGVyIHRoYW4gZGVmYXVsdCB2YWx1ZXMgbXVzdCBiZSBkb2N1bWVudGVkLgpU
-aGlzIGlzIGEgc3RhbmRhcmQgcmVxdWVzdDogaHR0cHM6Ly9tYXJjLmluZm8vP3Q9MTQ5ODUwMzk5
-NzAwMDAzCgo+Pj4gKwkJLnNlbGVjdG9yICAgICAgPSAicm91bmQtcm9iaW4gMCIsCj4+Cj4+IHJv
-dW5kLXJvYmluIGlzIHRoZSBkdW1iZXN0LCBxdWV1ZS1sZW5ndGggaXMgc21hcnRlciBhbmQKPj4g
-c2VydmljZS10aW1lIGlzIHRoZSBzbWFydGVzdCBhbmQgZGVmYXVsdCBzZWxlY3Rvci4KPiAKPiBS
-ZWdhcmRsZXNzIG9mIHdoaWNoIGFsZ29yaXRobSBpcyDigJxkdW1iZXN04oCdIG9yIOKAnHNtYXJ0
-ZXN04oCdLCByb3VuZC1yb2Jpbgo+IGlzIGEgbGVnaXRpbWF0ZSBwYXRoIHNlbGVjdGlvbiBhbGdv
-cml0aG0gdGhhdCB0aGUgdmVuZG9yIGRlY2lkZWQgd29ya3MKPiBiZXN0IHdpdGggaXRzIHByb2R1
-Y3QuIFRoZSB2ZW5kb3Iga25vd3MgaXRzIHByb2R1Y3QgYmVzdCA6KQo+IFRoZSBwcm9kdWN04oCZ
-cyBjdXN0b21lcnMgc2V0IHRoZSB2YWx1ZXMgc3VnZ2VzdGVkIGhlcmUgKG1hbnVhbGx5IG9yCj4g
-dXNpbmcgdG9vbHMgcHJvdmlkZWQgYnkgdGhlIHZlbmRvciksIHdoZXRoZXIgdGhleSBhcmUgdXBz
-dHJlYW0gb3Igbm90LgoKSW4gYW4gKmlkZWFsIGVudmlyb25tZW50KiAsICJyb3VuZC1yb2JpbiIg
-InF1ZXVlLWxlbmd0aCIgYW5kICJzZXJ2aWNlLXRpbWUiCndvcmsgdGhlIHNhbWUgd2F5LCBkb2lu
-ZyBhIHJvdW5kIHJvYmluIGRpc3RyaWJ1dGlvbi4KCkJ1dCB3aGVuIHRoaW5ncyBnZXQgdWdseSwg
-InJvdW5kLXJvYmluIiBjb3VsZCBsb3N0IGRhdGEuCgoic2VydmljZS10aW1lIiB3b3JrcyBtdWNo
-IGJldHRlciBpbiBhbnkgZW52aXJvbm1lbnQsIGV2ZW4gYXN5bW1ldHJpY2FsLgpJbiBoaWdobHkg
-Y29uZ2VzdGVkIGxpbmtzLCB3aXRoIGRpZmZlcmVudCBsaW5rIHNwZWVkcywgZmF1bHR5IHBhdGhz
-LCAuLi4KCnBhdGhfc2VsZWN0b3IgaXMgbGlrZSBUQ1AgY29uZ2VzdGlvbiBjb250cm9sIGFsZ29y
-aXRobS4KCj4+PiArCQkubm9fcGF0aF9yZXRyeSA9IE5PX1BBVEhfUkVUUllfRkFJTCwKPj4KPj4g
-RGVmYXVsdCB2YWx1ZS4KPiAKPiBJc27igJl0IHRoZSBkZWZhdWx0IE5PX1BBVEhfUkVUUllfVU5E
-RUY/CgoKUHJhY3RpY2FsbHkgaXQncyB0aGUgc2FtZTogaHR0cHM6Ly9tYXJjLmluZm8vP2w9ZG0t
-ZGV2ZWwmbT0xNDc4NTQ1NDI2MjM3MzMKCgpUaGFuayB5b3UuCgotLQpkbS1kZXZlbCBtYWlsaW5n
-IGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4v
-bGlzdGluZm8vZG0tZGV2ZWw=
+DAEMON_RUNNING is only used by checkerloop to indicate that
+path checkers are running. checkerloop switches back and forth
+between DAEMON_IDLE and DAEMON_RUNNING in every iteration, i.e.
+it performs two status changes per second on an idle system.
+The repeated sd_notify() calls cause a lot of traffic on dbus as
+systemd forwards these messages on the system bus. This can be
+seen with systemd.log_level=debug. Better skip these notifications
+that don't provide useful information to the user, who is very
+unlikely to catch the daemon in "running" state anyway.
+
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ multipathd/main.c | 24 ++++++++++++++++++++----
+ 1 file changed, 20 insertions(+), 4 deletions(-)
+
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 4be2c579..b5e2b00d 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -161,15 +161,27 @@ sd_notify_status(void)
+ 	case DAEMON_CONFIGURE:
+ 		return "STATUS=configure";
+ 	case DAEMON_IDLE:
+-		return "STATUS=idle";
+ 	case DAEMON_RUNNING:
+-		return "STATUS=running";
++		return "STATUS=up";
+ 	case DAEMON_SHUTDOWN:
+ 		return "STATUS=shutdown";
+ 	}
+ 	return NULL;
+ }
+ 
++static void do_sd_notify(enum daemon_status old_state)
++{
++	/*
++	 * Checkerloop switches back and forth between idle and running state.
++	 * No need to tell systemd each time.
++	 * These notifications cause a lot of overhead on dbus.
++	 */
++	if ((running_state == DAEMON_IDLE || running_state == DAEMON_RUNNING) &&
++	    (old_state == DAEMON_IDLE || old_state == DAEMON_RUNNING))
++		return;
++	sd_notify(0, sd_notify_status());
++}
++
+ static void config_cleanup(void *arg)
+ {
+ 	pthread_mutex_unlock(&config_lock);
+@@ -179,10 +191,12 @@ void post_config_state(enum daemon_status state)
+ {
+ 	pthread_mutex_lock(&config_lock);
+ 	if (state != running_state) {
++		enum daemon_status old_state = running_state;
++
+ 		running_state = state;
+ 		pthread_cond_broadcast(&config_cond);
+ #ifdef USE_SYSTEMD
+-		sd_notify(0, sd_notify_status());
++		do_sd_notify(old_state);
+ #endif
+ 	}
+ 	pthread_mutex_unlock(&config_lock);
+@@ -195,6 +209,8 @@ int set_config_state(enum daemon_status state)
+ 	pthread_cleanup_push(config_cleanup, NULL);
+ 	pthread_mutex_lock(&config_lock);
+ 	if (running_state != state) {
++		enum daemon_status old_state = running_state;
++
+ 		if (running_state != DAEMON_IDLE) {
+ 			struct timespec ts;
+ 
+@@ -207,7 +223,7 @@ int set_config_state(enum daemon_status state)
+ 			running_state = state;
+ 			pthread_cond_broadcast(&config_cond);
+ #ifdef USE_SYSTEMD
+-			sd_notify(0, sd_notify_status());
++			do_sd_notify(old_state);
+ #endif
+ 		}
+ 	}
+-- 
+2.14.0
