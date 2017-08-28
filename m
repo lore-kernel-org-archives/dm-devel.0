@@ -1,14 +1,16 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 3/4] libmultipath: add_feature: allow only 1
-	feature
-Date: Tue, 29 Aug 2017 00:05:35 +0200
-Message-ID: <20170828220536.13208-3-mwilck@suse.com>
-References: <20170828220536.13208-1-mwilck@suse.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: [PATCH] libmultipath: update INFINIDAT builtin config
+Date: Tue, 29 Aug 2017 01:02:18 +0200
+Message-ID: <089058c5-18f7-f197-1ca5-00a8a0e12c39@gmail.com>
+References: <392CDE41-4C36-41B1-8811-B7EC93F0864C@infinidat.com>
+	<364c3650-ef7d-5a17-6e34-a32f34ab31e7@gmail.com>
+	<FDDA478C-AA82-4C40-9E6E-981D53F79693@infinidat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170828220536.13208-1-mwilck@suse.com>
+In-Reply-To: <FDDA478C-AA82-4C40-9E6E-981D53F79693@infinidat.com>
+Content-Language: en-GB
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,123 +20,44 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@suse.de>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com
+To: Arnon Yaari <arnony@infinidat.com>, dm-devel@redhat.com, Christophe Varoqui <christophe.varoqui@opensvc.com>
 List-Id: dm-devel.ids
 
-The existing test "if feature is already present" doesn't work for
-multiple features, and we are only using add_feature() for single
-feature additions anyway. Simplify the code by not allowing spaces
-in the feature string to be added. This way we can drop the
-complex "count new features" code. Moreover, print an error message if
-the existing features string is malformed.
-
-The old code calculated the width of the feature count twice, and the
-second time messed up the buffer length field passed to snprintf(); fix
-that, too.  Finally, replace several strcat() invocations by one
-strncpy() call to make the code easier to review.
-
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- libmultipath/structs.c | 64 +++++++++++++++++---------------------------------
- 1 file changed, 21 insertions(+), 43 deletions(-)
-
-diff --git a/libmultipath/structs.c b/libmultipath/structs.c
-index 11e33676..828e7907 100644
---- a/libmultipath/structs.c
-+++ b/libmultipath/structs.c
-@@ -516,8 +516,7 @@ void setup_feature(struct multipath *mpp, char *feature)
- int add_feature(char **f, const char *n)
- {
- 	int c = 0, d, l;
--	char *e, *p, *t;
--	const char *q;
-+	char *e, *t;
- 
- 	if (!f)
- 		return 1;
-@@ -526,6 +525,11 @@ int add_feature(char **f, const char *n)
- 	if (!n || *n == '0')
- 		return 0;
- 
-+	if (strchr(n, ' ') != NULL) {
-+		condlog(0, "internal error: feature \"%s\" contains spaces", n);
-+		return 1;
-+	}
-+
- 	/* default feature is null */
- 	if(!*f)
- 	{
-@@ -543,55 +547,29 @@ int add_feature(char **f, const char *n)
- 
- 	/* Get feature count */
- 	c = strtoul(*f, &e, 10);
--	if (*f == e)
--		/* parse error */
-+	if (*f == e || (*e != ' ' && *e != '\0')) {
-+		condlog(0, "parse error in feature string \"%s\"", *f);
- 		return 1;
--
--	/* Check if we need to increase feature count space */
--	l = strlen(*f) + strlen(n) + 1;
--
--	/* Count new features */
--	if ((c % 10) == 9)
--		l++;
--	c++;
--	q = n;
--	while (*q != '\0') {
--		if (*q == ' ' && q[1] != '\0' && q[1] != ' ') {
--			if ((c % 10) == 9)
--				l++;
--			c++;
--		}
--		q++;
- 	}
- 
-+	/* Add 1 digit and 1 space */
-+	l = strlen(e) + strlen(n) + 2;
-+
-+	c++;
-+	/* Check if we need more digits for feature count */
-+	for (d = c; d >= 10; d /= 10)
-+		l++;
-+
- 	t = MALLOC(l + 1);
- 	if (!t)
- 		return 1;
- 
--	memset(t, 0, l + 1);
-+	/* e: old feature string with leading space, or "" */
-+	if (*e == ' ')
-+		while (*(e + 1) == ' ')
-+			e++;
- 
--	/* Update feature count */
--	d = c;
--	l = 1;
--	while (d > 9) {
--		d /= 10;
--		l++;
--	}
--	p = t;
--	snprintf(p, l + 2, "%0d ", c);
--
--	/* Copy the feature string */
--	p = strchr(*f, ' ');
--
--	if (p) {
--		while (*p == ' ')
--			p++;
--		strcat(t, p);
--		strcat(t, " ");
--	} else {
--		p = t + strlen(t);
--	}
--	strcat(t, n);
-+	snprintf(t, l + 1, "%0d%s %s", c, e, n);
- 
- 	FREE(*f);
- 	*f = t;
--- 
-2.14.0
+T24gMDgvMjgvMjAxNyAwMzo1OSBQTSwgQXJub24gWWFhcmkgd3JvdGU6Cgo+PiBPbiAyNSBBdWcg
+MjAxNywgYXQgMzoyNiwgWG9zZSBWYXpxdWV6IFBlcmV6IDx4b3NlLnZhenF1ZXpAZ21haWwuY29t
+PiB3cm90ZToKCj4+IE9uIDA4LzIyLzIwMTcgMDM6MzcgUE0sIEFybm9uIFlhYXJpIHdyb3RlOgoK
+Pj4+IC0JCS5wZ2ZhaWxiYWNrICAgID0gLUZBSUxCQUNLX0lNTUVESUFURSwKPj4+ICsJCS5wZ2Zh
+aWxiYWNrICAgID0gMzAsCgo+PiBXaHkgaXMgaXQgbmVlZGVkPwoKPiBBbGwgdGhlIHZhbHVlcyBz
+dWdnZXN0ZWQgaGVyZSBhcmUgdGhlIHZhbHVlcyB0aGF0IHRoZSBjb21wYW554oCZcyBpbnRlcm9w
+ZXJhYmlsaXR5Cj4gdGVhbSBmb3VuZCB3b3JrIGJlc3QgZm9yIHRoZSBwcm9kdWN0IG9uIExpbnV4
+LiBUaGUgdGltZW91dCB2YWx1ZXMgYXJlIHRoZXJlCj4gYmVjYXVzZSBpbiBzb21lIHVwZ3JhZGUg
+c2NlbmFyaW9zIHdlIGRvbuKAmXQgd2FudCB0byBmYWlsIGRldmljZXMgdW50aWwgdGhlCj4gdXBn
+cmFkZSBmaW5pc2hlcy4KCldlcmUgdGhleSB0ZXN0ZWQgd2l0aCBhICpjdXJyZW50KiBrZXJuZWwg
+YW5kIG11bHRpcGF0aC10b29scz8KCj4gSSBkb27igJl0IHRoaW5rIHRoZXJlIGlzIGEgcmVhc29u
+IHRvIGFkZCBpbi1saW5lIGNvbW1lbnRzIGluIHRoZSBjb2RlIHRvCj4gZXhwbGFpbiB0aGUgdmFs
+dWVzIChub25lIG9mIHRoZSBvdGhlciB2ZW5kb3JzIGFyZSBkb2luZyB0aGF0KS4KCkl0IHNob3Vs
+ZCBiZSBkb2N1bWVudGVkIGluIHRoZSBib2R5IG9mIHRoZSBnaXQgcGF0Y2goY2hhbmdlbG9nKS4K
+CkFueXRoaW5nIG90aGVyIHRoYW4gZGVmYXVsdCB2YWx1ZXMgbXVzdCBiZSBkb2N1bWVudGVkLgpU
+aGlzIGlzIGEgc3RhbmRhcmQgcmVxdWVzdDogaHR0cHM6Ly9tYXJjLmluZm8vP3Q9MTQ5ODUwMzk5
+NzAwMDAzCgo+Pj4gKwkJLnNlbGVjdG9yICAgICAgPSAicm91bmQtcm9iaW4gMCIsCj4+Cj4+IHJv
+dW5kLXJvYmluIGlzIHRoZSBkdW1iZXN0LCBxdWV1ZS1sZW5ndGggaXMgc21hcnRlciBhbmQKPj4g
+c2VydmljZS10aW1lIGlzIHRoZSBzbWFydGVzdCBhbmQgZGVmYXVsdCBzZWxlY3Rvci4KPiAKPiBS
+ZWdhcmRsZXNzIG9mIHdoaWNoIGFsZ29yaXRobSBpcyDigJxkdW1iZXN04oCdIG9yIOKAnHNtYXJ0
+ZXN04oCdLCByb3VuZC1yb2Jpbgo+IGlzIGEgbGVnaXRpbWF0ZSBwYXRoIHNlbGVjdGlvbiBhbGdv
+cml0aG0gdGhhdCB0aGUgdmVuZG9yIGRlY2lkZWQgd29ya3MKPiBiZXN0IHdpdGggaXRzIHByb2R1
+Y3QuIFRoZSB2ZW5kb3Iga25vd3MgaXRzIHByb2R1Y3QgYmVzdCA6KQo+IFRoZSBwcm9kdWN04oCZ
+cyBjdXN0b21lcnMgc2V0IHRoZSB2YWx1ZXMgc3VnZ2VzdGVkIGhlcmUgKG1hbnVhbGx5IG9yCj4g
+dXNpbmcgdG9vbHMgcHJvdmlkZWQgYnkgdGhlIHZlbmRvciksIHdoZXRoZXIgdGhleSBhcmUgdXBz
+dHJlYW0gb3Igbm90LgoKSW4gYW4gKmlkZWFsIGVudmlyb25tZW50KiAsICJyb3VuZC1yb2JpbiIg
+InF1ZXVlLWxlbmd0aCIgYW5kICJzZXJ2aWNlLXRpbWUiCndvcmsgdGhlIHNhbWUgd2F5LCBkb2lu
+ZyBhIHJvdW5kIHJvYmluIGRpc3RyaWJ1dGlvbi4KCkJ1dCB3aGVuIHRoaW5ncyBnZXQgdWdseSwg
+InJvdW5kLXJvYmluIiBjb3VsZCBsb3N0IGRhdGEuCgoic2VydmljZS10aW1lIiB3b3JrcyBtdWNo
+IGJldHRlciBpbiBhbnkgZW52aXJvbm1lbnQsIGV2ZW4gYXN5bW1ldHJpY2FsLgpJbiBoaWdobHkg
+Y29uZ2VzdGVkIGxpbmtzLCB3aXRoIGRpZmZlcmVudCBsaW5rIHNwZWVkcywgZmF1bHR5IHBhdGhz
+LCAuLi4KCnBhdGhfc2VsZWN0b3IgaXMgbGlrZSBUQ1AgY29uZ2VzdGlvbiBjb250cm9sIGFsZ29y
+aXRobS4KCj4+PiArCQkubm9fcGF0aF9yZXRyeSA9IE5PX1BBVEhfUkVUUllfRkFJTCwKPj4KPj4g
+RGVmYXVsdCB2YWx1ZS4KPiAKPiBJc27igJl0IHRoZSBkZWZhdWx0IE5PX1BBVEhfUkVUUllfVU5E
+RUY/CgoKUHJhY3RpY2FsbHkgaXQncyB0aGUgc2FtZTogaHR0cHM6Ly9tYXJjLmluZm8vP2w9ZG0t
+ZGV2ZWwmbT0xNDc4NTQ1NDI2MjM3MzMKCgpUaGFuayB5b3UuCgotLQpkbS1kZXZlbCBtYWlsaW5n
+IGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4v
+bGlzdGluZm8vZG0tZGV2ZWw=
