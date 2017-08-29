@@ -1,13 +1,15 @@
-From: NeilBrown <neilb@suse.com>
-Subject: [PATCH 1/2] dm-crypt: remove BIOSET_NEED_RESCUER flag.
-Date: Wed, 30 Aug 2017 08:10:18 +1000
-Message-ID: <150404461886.12966.16601503710996159531.stgit@noble>
-References: <150404441182.12966.7067251378068944343.stgit@noble>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 1/4] multipathd: don't flood system with
+	sd_notify calls
+Date: Tue, 29 Aug 2017 08:36:56 +0200
+Message-ID: <a097d809-befc-64ed-df65-fbcf0a15cfe2@suse.de>
+References: <20170828220536.13208-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <150404441182.12966.7067251378068944343.stgit@noble>
+In-Reply-To: <20170828220536.13208-1-mwilck@suse.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,35 +19,64 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
+To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The BIOSET_NEED_RESCUER flag is only needed when a
-make_request_fn might do two allocations from the one bioset,
-and the second one could block until the first bio completes.
-
-dm-crypt does allocate from this bioset inside the dm make_request_fn,
-but does so using GFP_NOWAIT so that the allocation will not block.
-
-So BIOSET_NEED_RESCUER is not needed.
-
-Signed-off-by: NeilBrown <neilb@suse.com>
----
- drivers/md/dm-crypt.c |    3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
-
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index cdf6b1e12460..e7dc1a6b5a9d 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -2696,8 +2696,7 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 		goto bad;
- 	}
- 
--	cc->bs = bioset_create(MIN_IOS, 0, (BIOSET_NEED_BVECS |
--					    BIOSET_NEED_RESCUER));
-+	cc->bs = bioset_create(MIN_IOS, 0, BIOSET_NEED_BVECS);
- 	if (!cc->bs) {
- 		ti->error = "Cannot allocate crypt bioset";
- 		goto bad;
+T24gMDgvMjkvMjAxNyAxMjowNSBBTSwgTWFydGluIFdpbGNrIHdyb3RlOgo+IERBRU1PTl9SVU5O
+SU5HIGlzIG9ubHkgdXNlZCBieSBjaGVja2VybG9vcCB0byBpbmRpY2F0ZSB0aGF0Cj4gcGF0aCBj
+aGVja2VycyBhcmUgcnVubmluZy4gY2hlY2tlcmxvb3Agc3dpdGNoZXMgYmFjayBhbmQgZm9ydGgK
+PiBiZXR3ZWVuIERBRU1PTl9JRExFIGFuZCBEQUVNT05fUlVOTklORyBpbiBldmVyeSBpdGVyYXRp
+b24sIGkuZS4KPiBpdCBwZXJmb3JtcyB0d28gc3RhdHVzIGNoYW5nZXMgcGVyIHNlY29uZCBvbiBh
+biBpZGxlIHN5c3RlbS4KPiBUaGUgcmVwZWF0ZWQgc2Rfbm90aWZ5KCkgY2FsbHMgY2F1c2UgYSBs
+b3Qgb2YgdHJhZmZpYyBvbiBkYnVzIGFzCj4gc3lzdGVtZCBmb3J3YXJkcyB0aGVzZSBtZXNzYWdl
+cyBvbiB0aGUgc3lzdGVtIGJ1cy4gVGhpcyBjYW4gYmUKPiBzZWVuIHdpdGggc3lzdGVtZC5sb2df
+bGV2ZWw9ZGVidWcuIEJldHRlciBza2lwIHRoZXNlIG5vdGlmaWNhdGlvbnMKPiB0aGF0IGRvbid0
+IHByb3ZpZGUgdXNlZnVsIGluZm9ybWF0aW9uIHRvIHRoZSB1c2VyLCB3aG8gaXMgdmVyeQo+IHVu
+bGlrZWx5IHRvIGNhdGNoIHRoZSBkYWVtb24gaW4gInJ1bm5pbmciIHN0YXRlIGFueXdheS4KPiAK
+PiBTaWduZWQtb2ZmLWJ5OiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4KPiAtLS0KPiAg
+bXVsdGlwYXRoZC9tYWluLmMgfCAyNCArKysrKysrKysrKysrKysrKysrKy0tLS0KPiAgMSBmaWxl
+IGNoYW5nZWQsIDIwIGluc2VydGlvbnMoKyksIDQgZGVsZXRpb25zKC0pCj4gCj4gZGlmZiAtLWdp
+dCBhL211bHRpcGF0aGQvbWFpbi5jIGIvbXVsdGlwYXRoZC9tYWluLmMKPiBpbmRleCA0YmUyYzU3
+OS4uYjVlMmIwMGQgMTAwNjQ0Cj4gLS0tIGEvbXVsdGlwYXRoZC9tYWluLmMKPiArKysgYi9tdWx0
+aXBhdGhkL21haW4uYwo+IEBAIC0xNjEsMTUgKzE2MSwyNyBAQCBzZF9ub3RpZnlfc3RhdHVzKHZv
+aWQpCj4gIAljYXNlIERBRU1PTl9DT05GSUdVUkU6Cj4gIAkJcmV0dXJuICJTVEFUVVM9Y29uZmln
+dXJlIjsKPiAgCWNhc2UgREFFTU9OX0lETEU6Cj4gLQkJcmV0dXJuICJTVEFUVVM9aWRsZSI7Cj4g
+IAljYXNlIERBRU1PTl9SVU5OSU5HOgo+IC0JCXJldHVybiAiU1RBVFVTPXJ1bm5pbmciOwo+ICsJ
+CXJldHVybiAiU1RBVFVTPXVwIjsKPiAgCWNhc2UgREFFTU9OX1NIVVRET1dOOgo+ICAJCXJldHVy
+biAiU1RBVFVTPXNodXRkb3duIjsKPiAgCX0KPiAgCXJldHVybiBOVUxMOwo+ICB9Cj4gIAo+ICtz
+dGF0aWMgdm9pZCBkb19zZF9ub3RpZnkoZW51bSBkYWVtb25fc3RhdHVzIG9sZF9zdGF0ZSkKPiAr
+ewo+ICsJLyoKPiArCSAqIENoZWNrZXJsb29wIHN3aXRjaGVzIGJhY2sgYW5kIGZvcnRoIGJldHdl
+ZW4gaWRsZSBhbmQgcnVubmluZyBzdGF0ZS4KPiArCSAqIE5vIG5lZWQgdG8gdGVsbCBzeXN0ZW1k
+IGVhY2ggdGltZS4KPiArCSAqIFRoZXNlIG5vdGlmaWNhdGlvbnMgY2F1c2UgYSBsb3Qgb2Ygb3Zl
+cmhlYWQgb24gZGJ1cy4KPiArCSAqLwo+ICsJaWYgKChydW5uaW5nX3N0YXRlID09IERBRU1PTl9J
+RExFIHx8IHJ1bm5pbmdfc3RhdGUgPT0gREFFTU9OX1JVTk5JTkcpICYmCj4gKwkgICAgKG9sZF9z
+dGF0ZSA9PSBEQUVNT05fSURMRSB8fCBvbGRfc3RhdGUgPT0gREFFTU9OX1JVTk5JTkcpKQo+ICsJ
+CXJldHVybjsKPiArCXNkX25vdGlmeSgwLCBzZF9ub3RpZnlfc3RhdHVzKCkpOwo+ICt9Cj4gKwo+
+ICBzdGF0aWMgdm9pZCBjb25maWdfY2xlYW51cCh2b2lkICphcmcpCj4gIHsKPiAgCXB0aHJlYWRf
+bXV0ZXhfdW5sb2NrKCZjb25maWdfbG9jayk7Cj4gQEAgLTE3OSwxMCArMTkxLDEyIEBAIHZvaWQg
+cG9zdF9jb25maWdfc3RhdGUoZW51bSBkYWVtb25fc3RhdHVzIHN0YXRlKQo+ICB7Cj4gIAlwdGhy
+ZWFkX211dGV4X2xvY2soJmNvbmZpZ19sb2NrKTsKPiAgCWlmIChzdGF0ZSAhPSBydW5uaW5nX3N0
+YXRlKSB7Cj4gKwkJZW51bSBkYWVtb25fc3RhdHVzIG9sZF9zdGF0ZSA9IHJ1bm5pbmdfc3RhdGU7
+Cj4gKwo+ICAJCXJ1bm5pbmdfc3RhdGUgPSBzdGF0ZTsKPiAgCQlwdGhyZWFkX2NvbmRfYnJvYWRj
+YXN0KCZjb25maWdfY29uZCk7Cj4gICNpZmRlZiBVU0VfU1lTVEVNRAo+IC0JCXNkX25vdGlmeSgw
+LCBzZF9ub3RpZnlfc3RhdHVzKCkpOwo+ICsJCWRvX3NkX25vdGlmeShvbGRfc3RhdGUpOwo+ICAj
+ZW5kaWYKPiAgCX0KPiAgCXB0aHJlYWRfbXV0ZXhfdW5sb2NrKCZjb25maWdfbG9jayk7Cj4gQEAg
+LTE5NSw2ICsyMDksOCBAQCBpbnQgc2V0X2NvbmZpZ19zdGF0ZShlbnVtIGRhZW1vbl9zdGF0dXMg
+c3RhdGUpCj4gIAlwdGhyZWFkX2NsZWFudXBfcHVzaChjb25maWdfY2xlYW51cCwgTlVMTCk7Cj4g
+IAlwdGhyZWFkX211dGV4X2xvY2soJmNvbmZpZ19sb2NrKTsKPiAgCWlmIChydW5uaW5nX3N0YXRl
+ICE9IHN0YXRlKSB7Cj4gKwkJZW51bSBkYWVtb25fc3RhdHVzIG9sZF9zdGF0ZSA9IHJ1bm5pbmdf
+c3RhdGU7Cj4gKwo+ICAJCWlmIChydW5uaW5nX3N0YXRlICE9IERBRU1PTl9JRExFKSB7Cj4gIAkJ
+CXN0cnVjdCB0aW1lc3BlYyB0czsKPiAgCj4gQEAgLTIwNyw3ICsyMjMsNyBAQCBpbnQgc2V0X2Nv
+bmZpZ19zdGF0ZShlbnVtIGRhZW1vbl9zdGF0dXMgc3RhdGUpCj4gIAkJCXJ1bm5pbmdfc3RhdGUg
+PSBzdGF0ZTsKPiAgCQkJcHRocmVhZF9jb25kX2Jyb2FkY2FzdCgmY29uZmlnX2NvbmQpOwo+ICAj
+aWZkZWYgVVNFX1NZU1RFTUQKPiAtCQkJc2Rfbm90aWZ5KDAsIHNkX25vdGlmeV9zdGF0dXMoKSk7
+Cj4gKwkJCWRvX3NkX25vdGlmeShvbGRfc3RhdGUpOwo+ICAjZW5kaWYKPiAgCQl9Cj4gIAl9Cj4g
+ClJldmlld2VkLWJ5OiBIYW5uZXMgUmVpbmVja2UgPGhhcmVAc3VzZS5jb20+CgpDaGVlcnMsCgpI
+YW5uZXMKLS0gCkRyLiBIYW5uZXMgUmVpbmVja2UJCSAgIFRlYW1sZWFkIFN0b3JhZ2UgJiBOZXR3
+b3JraW5nCmhhcmVAc3VzZS5kZQkJCSAgICAgICAgICAgICAgICs0OSA5MTEgNzQwNTMgNjg4ClNV
+U0UgTElOVVggR21iSCwgTWF4ZmVsZHN0ci4gNSwgOTA0MDkgTsO8cm5iZXJnCkdGOiBGLiBJbWVu
+ZMO2cmZmZXIsIEouIFNtaXRoYXJkLCBKLiBHdWlsZCwgRC4gVXBtYW55dSwgRy4gTm9ydG9uCkhS
+QiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVs
+QHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRl
+dmVs
