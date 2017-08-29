@@ -1,8 +1,9 @@
-From: Arnon Yaari <arnony@infinidat.com>
-Subject: [PATCH v3] libmultipath: update INFINIDAT builtin config
-Date: Tue, 29 Aug 2017 14:27:22 +0300
-Message-ID: <B679B811-BCEC-476A-97E0-DB594913041F@infinidat.com>
-Mime-Version: 1.0 (Mac OS X Mail 10.3 \(3273\))
+From: NeilBrown <neilb@suse.com>
+Subject: [PATCH 0/2] Remove BIOSET_NEED_RESCUER from some DM
+	biosets
+Date: Wed, 30 Aug 2017 08:10:18 +1000
+Message-ID: <150404441182.12966.7067251378068944343.stgit@noble>
+Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
@@ -15,56 +16,41 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Based on the manufacturer documentation:
-https://support.infinidat.com/hc/en-us/articles/202319222
+hi,
+ I'm working towards the bioset rescuer threads completely.
+ Part of that is understanding where they are actually needed,
+ and removing them where they are not.
 
-INFINIDAT recommends round-robin path selector using
-a different path per IO. Timeout and path recovery values
-are adjusted for error-free hot upgrade scenarios.
+ bioset rescuer threads are only needed on a bioset where
+ a make_request_fn will
+    allocate from the bioset
+    submit that bio with generic_make_request
+    allocate again from the bioset, other then non-blocking allocation
 
-Signed-off-by: Arnon Yaari <arnony@infinidat.com>
+ Neither of the biosets in dm-crypt or dm-io are used with this pattern
+ so the flag can be removed.
+
+ The bioset allocated in dm.c *is* used with this pattern, so
+ some restructuring will be needed there before the flag can be
+ removed.
+
+Thanks,
+NeilBrown
+
 ---
-Changes in v2:
-  - Added maintainer information
-  - Removed default values
-Changes in v3:
-  - Changed patch message
 
- libmultipath/hwtable.c | 13 ++++++++++++-
- 1 file changed, 12 insertions(+), 1 deletion(-)
+NeilBrown (2):
+      dm-crypt: remove BIOSET_NEED_RESCUER flag.
+      dm-io: remove BIOSET_NEED_RESCUER flag from bios bioset
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 9e14ec1e..aa0ced53 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -964,13 +964,24 @@ static struct hwentry default_hw[] = {
- 	},
- 	/*
- 	 * Infinidat
-+	 *
-+	 * Maintainer: Arnon Yaari
-+	 * Mail: arnony@infinidat.com
- 	 */
- 	{
- 		.vendor        = "NFINIDAT",
- 		.product       = "InfiniBox",
- 		.pgpolicy      = GROUP_BY_PRIO,
--		.pgfailback    = -FAILBACK_IMMEDIATE,
-+		.pgfailback    = 30,
- 		.prio_name     = PRIO_ALUA,
-+		.selector      = "round-robin 0",
-+		.rr_weight     = RR_WEIGHT_PRIO,
-+		.no_path_retry = NO_PATH_RETRY_FAIL,
-+		.minio         = 1,
-+		.minio_rq      = 1,
-+		.flush_on_last_del = FLUSH_ENABLED,
-+		.fast_io_fail  = 15,
-+		.dev_loss      = 15,
- 	},
- 	/*
- 	 * Nimble Storage
+
+ drivers/md/dm-crypt.c |    3 +--
+ drivers/md/dm-io.c    |    3 +--
+ 2 files changed, 2 insertions(+), 4 deletions(-)
+
 --
-2.11.0
+Signature
