@@ -1,8 +1,7 @@
 From: NeilBrown <neilb@suse.com>
-Subject: [PATCH 2/2] dm-io: remove BIOSET_NEED_RESCUER flag from
-	bios bioset
+Subject: [PATCH 1/2] dm-crypt: remove BIOSET_NEED_RESCUER flag.
 Date: Wed, 30 Aug 2017 08:10:18 +1000
-Message-ID: <150404461891.12966.4056527092142829944.stgit@noble>
+Message-ID: <150404461886.12966.16601503710996159531.stgit@noble>
 References: <150404441182.12966.7067251378068944343.stgit@noble>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,33 +21,31 @@ To: Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-BIOSET_NEED_RESCUER is only need on a bioset is
-allocations will be made inside a make_request_fn()
-call.
+The BIOSET_NEED_RESCUER flag is only needed when a
+make_request_fn might do two allocations from the one bioset,
+and the second one could block until the first bio completes.
 
-dm_io() is called from make_request_fn() context.
-The closest it comes is in chunk_io() in
-dm-snap-persistent.  Here the code uses a separate
-thread to avoid problems.
+dm-crypt does allocate from this bioset inside the dm make_request_fn,
+but does so using GFP_NOWAIT so that the allocation will not block.
 
 So BIOSET_NEED_RESCUER is not needed.
 
 Signed-off-by: NeilBrown <neilb@suse.com>
 ---
- drivers/md/dm-io.c |    3 +--
+ drivers/md/dm-crypt.c |    3 +--
  1 file changed, 1 insertion(+), 2 deletions(-)
 
-diff --git a/drivers/md/dm-io.c b/drivers/md/dm-io.c
-index 25039607f3cb..bafd9f79aa3b 100644
---- a/drivers/md/dm-io.c
-+++ b/drivers/md/dm-io.c
-@@ -58,8 +58,7 @@ struct dm_io_client *dm_io_client_create(void)
- 	if (!client->pool)
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index cdf6b1e12460..e7dc1a6b5a9d 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -2696,8 +2696,7 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
  		goto bad;
+ 	}
  
--	client->bios = bioset_create(min_ios, 0, (BIOSET_NEED_BVECS |
--						  BIOSET_NEED_RESCUER));
-+	client->bios = bioset_create(min_ios, 0, BIOSET_NEED_BVECS);
- 	if (!client->bios)
+-	cc->bs = bioset_create(MIN_IOS, 0, (BIOSET_NEED_BVECS |
+-					    BIOSET_NEED_RESCUER));
++	cc->bs = bioset_create(MIN_IOS, 0, BIOSET_NEED_BVECS);
+ 	if (!cc->bs) {
+ 		ti->error = "Cannot allocate crypt bioset";
  		goto bad;
- 
