@@ -1,12 +1,14 @@
 From: NeilBrown <neilb@suse.com>
-Subject: [PATCH 0/2] Remove BIOSET_NEED_RESCUER from some DM
-	biosets
+Subject: [PATCH 2/2] dm-io: remove BIOSET_NEED_RESCUER flag from
+	bios bioset
 Date: Wed, 30 Aug 2017 08:10:18 +1000
-Message-ID: <150404441182.12966.7067251378068944343.stgit@noble>
+Message-ID: <150404461891.12966.4056527092142829944.stgit@noble>
+References: <150404441182.12966.7067251378068944343.stgit@noble>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <150404441182.12966.7067251378068944343.stgit@noble>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,37 +22,33 @@ To: Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-hi,
- I'm working towards the bioset rescuer threads completely.
- Part of that is understanding where they are actually needed,
- and removing them where they are not.
+BIOSET_NEED_RESCUER is only need on a bioset is
+allocations will be made inside a make_request_fn()
+call.
 
- bioset rescuer threads are only needed on a bioset where
- a make_request_fn will
-    allocate from the bioset
-    submit that bio with generic_make_request
-    allocate again from the bioset, other then non-blocking allocation
+dm_io() is called from make_request_fn() context.
+The closest it comes is in chunk_io() in
+dm-snap-persistent.  Here the code uses a separate
+thread to avoid problems.
 
- Neither of the biosets in dm-crypt or dm-io are used with this pattern
- so the flag can be removed.
+So BIOSET_NEED_RESCUER is not needed.
 
- The bioset allocated in dm.c *is* used with this pattern, so
- some restructuring will be needed there before the flag can be
- removed.
-
-Thanks,
-NeilBrown
-
+Signed-off-by: NeilBrown <neilb@suse.com>
 ---
+ drivers/md/dm-io.c |    3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
 
-NeilBrown (2):
-      dm-crypt: remove BIOSET_NEED_RESCUER flag.
-      dm-io: remove BIOSET_NEED_RESCUER flag from bios bioset
-
-
- drivers/md/dm-crypt.c |    3 +--
- drivers/md/dm-io.c    |    3 +--
- 2 files changed, 2 insertions(+), 4 deletions(-)
-
---
-Signature
+diff --git a/drivers/md/dm-io.c b/drivers/md/dm-io.c
+index 25039607f3cb..bafd9f79aa3b 100644
+--- a/drivers/md/dm-io.c
++++ b/drivers/md/dm-io.c
+@@ -58,8 +58,7 @@ struct dm_io_client *dm_io_client_create(void)
+ 	if (!client->pool)
+ 		goto bad;
+ 
+-	client->bios = bioset_create(min_ios, 0, (BIOSET_NEED_BVECS |
+-						  BIOSET_NEED_RESCUER));
++	client->bios = bioset_create(min_ios, 0, BIOSET_NEED_BVECS);
+ 	if (!client->bios)
+ 		goto bad;
+ 
