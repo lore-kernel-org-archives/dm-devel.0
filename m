@@ -1,63 +1,56 @@
-From: Remington Brasga <Remington.Brasga@taec.toshiba.com>
-Subject: Re: How to properly benchmark dm-cache
-Date: Fri, 1 Sep 2017 16:40:41 +0000
-Message-ID: <A4C6B4012E4D254597FE91E8CF2C135D01063C9909@EXMAIL1.taec.toshiba.com>
-References: <A4C6B4012E4D254597FE91E8CF2C135D01063C9714@EXMAIL1.taec.toshiba.com>
-	<20170901155829.GA17442@redhat.com>
+From: Josef Bacik <josef@toxicpanda.com>
+Subject: [RFC] Multi-device dm-log-writes
+Date: Fri, 1 Sep 2017 14:31:12 -0400
+Message-ID: <20170901183110.qjyxjrrksnub7y4a@destiny>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170901155829.GA17442@redhat.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>, Sanjay Rao <srao@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "ejt@redhat.com" <ejt@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: snitzer@redhat.com, amir73il@gmail.com, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, kernel-team@fb.com, clm@fb.com, osandov@fb.com, rwareing@fb.com
 List-Id: dm-devel.ids
 
-Hi Mike,
+Hello,
 
-I'm using the latest release of RHEL 7.4, kernel version 3.10.0-693.el7.x86_64.
+I'm looking at extending dm-log-writes to support multiple devices to log to a
+single log.  The benefit for this is testing things like btrfs's raid code, the
+xfs realtime device thing, and even mdraid.  I left room in the log format to
+change it as needed with this use case in mind, so I'm not worried about that.
+I'm more looking for verification that my plan doesn't suck, or if it does suck
+what would be a better approach.  I'll lay out the different parts to try and
+make this as quick and concise as possible.
 
-Thanks for sharing. I am looking forward to Sanjay's comments.
+1) Add a "log-writes-log" target that just takes the single device we are going
+to use as the log.  This will do the work of taking the log IO from the actual
+"log-writes" target and putting it in the log.
 
-Thanks,
--Remi
+2) Extend the "log-writes" target table format to include an "id" at the end of
+the table line that will be used to indicate which device the log entry will be
+fore.  In this case the "log device" portion will point at the "log-writes-log"
+device mapper target.  Everything would work normally, except in this mode we
+send the log bio's down with bi_sector = 0 and let the "log-writes-log" target
+do the actual mapping for the bio.
 
------Original Message-----
-From: Mike Snitzer [mailto:snitzer@redhat.com] 
-Sent: Friday, September 01, 2017 08:59
-To: Remington Brasga
-Cc: dm-devel@redhat.com; Sanjay Rao; ejt@redhat.com
-Subject: Re: How to properly benchmark dm-cache
+So to test with multiple devices you would have to do something like
 
-On Thu, Aug 31 2017 at  5:29pm -0400,
-Remington Brasga <Remington.Brasga@taec.toshiba.com> wrote:
+dmsetup create log --table "0 <size> log-writes-log <log device>"
+dmsetup create lw1 --table "0 <size> log-writes <device> /dev/mapper/log 0"
+dmsetup create lw2 --table "0 <size> log-writes <device> /dev/mapper/log 1"
+mkfs.btrfs -d raid1 -m raid1 /dev/mapper/lw1 /dev/mapper/lw2
+mount /dev/mapper/lw1 /mnt
+<do whatever>
+umount /mnt
+dmsetup remove lw1
+dmsetup remove lw2
+dmsetup remove log
 
->    Hi, I'm trying to benchmark dm-cache, but I'm having trouble getting the
->    benchmark to show positive results. I've tried TPC-B, TPC-C, TPC-H, SQL,
->    and a handful of other, but I think because they are simulations they
->    don't generate the `hot spots' required to promote blocks to the cache.
-> 
->    I know it's easy to show results using FIO with a specific configuration,
->    but I was hoping to use a real benchmark like the ones I've tried.
-> 
->    Does anyone have a good set of benchmarks that shows positive results?
+Mike, I would simply add a new struct target_type for log-writes-log that would
+do it's own ->map function to re-route the bio's coming into them.  I'd also
+change the ->ctr function of the log-writes target_type to handle the new id
+field and do the new fancy thing if we have that field populated.  Does that
+sound reasonable from an implementation point of view?
 
-Hi Remi,
+Any comments or suggestions are welcome.  I haven't written any code yet so I'm
+open to other ideas.  Thanks,
 
-Which kernel are you testing?
-
-I know Sanjay Rao (cc'd) has done various dm-cache testing with an OLTP workload against an Oracle DB and that he has seen very solid results with the latest dm-cache.
-
-I'm not sure if he, or others, tried any of the TPC variants but hopefully Sanjay can respond with where/how he got dm-cache to respond well to his tests.
-
-Mike
+Josef
