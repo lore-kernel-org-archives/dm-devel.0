@@ -1,133 +1,295 @@
-From: Remington Brasga <Remington.Brasga@taec.toshiba.com>
-Subject: How to properly benchmark dm-cache
-Date: Thu, 31 Aug 2017 21:29:20 +0000
-Message-ID: <A4C6B4012E4D254597FE91E8CF2C135D01063C9714@EXMAIL1.taec.toshiba.com>
+From: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH] dax: remove the pmem_dax_ops->flush abstraction
+Date: Thu, 31 Aug 2017 21:47:43 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1708312138390.32309@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============6313199412609734751=="
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 List-Id: dm-devel.ids
 
---===============6313199412609734751==
-Content-Language: en-US
-Content-Type: multipart/alternative;
-	boundary="_000_A4C6B4012E4D254597FE91E8CF2C135D01063C9714EXMAIL1taecto_"
+The patch abebfbe2f731 ("dm: add ->flush() dax operation support") is 
+buggy. A dm device may be composed of multiple underlying devices and all 
+of them need to be flushed. The patch just routes the flush request to the 
+first device and ignores the other devices.
 
---_000_A4C6B4012E4D254597FE91E8CF2C135D01063C9714EXMAIL1taecto_
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+It could be fixed by adding more complex logic to the device mapper. But 
+there is only one implementation of the method pmem_dax_ops->flush - that 
+is pmem_dax_flush() - and it calls arch_wb_cache_pmem(). Consequently, we 
+don't need the pmem_dax_ops->flush abstraction at all, we can call 
+arch_wb_cache_pmem() directly from dax_flush() because dax_dev->ops->flush 
+couldn't ever reach anything different from arch_wb_cache_pmem().
 
-Hi, I'm trying to benchmark dm-cache, but I'm having trouble getting the be=
-nchmark to show positive results. I've tried TPC-B, TPC-C, TPC-H, SQL, and =
-a handful of other, but I think because they are simulations they don't gen=
-erate the 'hot spots' required to promote blocks to the cache.
+It should be also pointed out that for some uses of persistent memory it 
+is needed to flush only very small amount of data (such as 1 cacheline), 
+and it would be overkill if we go through that device mapper machinery for 
+a single flushed cache line.
 
-I know it's easy to show results using FIO with a specific configuration, b=
-ut I was hoping to use a real benchmark like the ones I've tried.
+This patch removes the abstraction pmem_dax_ops->flush and calls 
+arch_wb_cache_pmem() directly from dax_flush(). It also removes device 
+mapper code that forwards the flushes.
 
-Does anyone have a good set of benchmarks that shows positive results?
+Signed-off-by: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 
-Thanks,
--Remi
+---
+ drivers/dax/super.c           |   21 ++++++++++++++-------
+ drivers/md/dm-linear.c        |   15 ---------------
+ drivers/md/dm-stripe.c        |   20 --------------------
+ drivers/md/dm.c               |   19 -------------------
+ drivers/nvdimm/pmem.c         |    7 -------
+ fs/dax.c                      |    4 ++--
+ include/linux/dax.h           |    5 +----
+ include/linux/device-mapper.h |    3 ---
+ 8 files changed, 17 insertions(+), 77 deletions(-)
 
---_000_A4C6B4012E4D254597FE91E8CF2C135D01063C9714EXMAIL1taecto_
-Content-Type: text/html; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-
-<html xmlns:v=3D"urn:schemas-microsoft-com:vml" xmlns:o=3D"urn:schemas-micr=
-osoft-com:office:office" xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
-xmlns:m=3D"http://schemas.microsoft.com/office/2004/12/omml" xmlns=3D"http:=
-//www.w3.org/TR/REC-html40">
-<head>
-<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dus-ascii"=
->
-<meta name=3D"Generator" content=3D"Microsoft Word 15 (filtered medium)">
-<style><!--
-/* Font Definitions */
-@font-face
-	{font-family:"MS Mincho";
-	panose-1:2 2 6 9 4 2 5 8 3 4;}
-@font-face
-	{font-family:"Cambria Math";
-	panose-1:2 4 5 3 5 4 6 3 2 4;}
-@font-face
-	{font-family:Calibri;
-	panose-1:2 15 5 2 2 2 4 3 2 4;}
-@font-face
-	{font-family:"\@MS Mincho";
-	panose-1:2 2 6 9 4 2 5 8 3 4;}
-/* Style Definitions */
-p.MsoNormal, li.MsoNormal, div.MsoNormal
-	{margin:0in;
-	margin-bottom:.0001pt;
-	font-size:11.0pt;
-	font-family:"Calibri",sans-serif;}
-a:link, span.MsoHyperlink
-	{mso-style-priority:99;
-	color:#0563C1;
-	text-decoration:underline;}
-a:visited, span.MsoHyperlinkFollowed
-	{mso-style-priority:99;
-	color:#954F72;
-	text-decoration:underline;}
-span.EmailStyle17
-	{mso-style-type:personal-compose;
-	font-family:"Calibri",sans-serif;
-	color:windowtext;}
-.MsoChpDefault
-	{mso-style-type:export-only;
-	font-family:"Calibri",sans-serif;}
-@page WordSection1
-	{size:8.5in 11.0in;
-	margin:1.0in 1.0in 1.0in 1.0in;}
-div.WordSection1
-	{page:WordSection1;}
---></style><!--[if gte mso 9]><xml>
-<o:shapedefaults v:ext=3D"edit" spidmax=3D"1026" />
-</xml><![endif]--><!--[if gte mso 9]><xml>
-<o:shapelayout v:ext=3D"edit">
-<o:idmap v:ext=3D"edit" data=3D"1" />
-</o:shapelayout></xml><![endif]-->
-</head>
-<body lang=3D"EN-US" link=3D"#0563C1" vlink=3D"#954F72">
-<div class=3D"WordSection1">
-<p class=3D"MsoNormal">Hi, I&#8217;m trying to benchmark dm-cache, but I&#8=
-217;m having trouble getting the benchmark to show positive results. I&#821=
-7;ve tried TPC-B, TPC-C, TPC-H, SQL, and a handful of other, but I think be=
-cause they are simulations they don&#8217;t generate the &#8216;hot
- spots&#8217; required to promote blocks to the cache.<o:p></o:p></p>
-<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-<p class=3D"MsoNormal">I know it&#8217;s easy to show results using FIO wit=
-h a specific configuration, but I was hoping to use a real benchmark like t=
-he ones I&#8217;ve tried.<o:p></o:p></p>
-<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-<p class=3D"MsoNormal">Does anyone have a good set of benchmarks that shows=
- positive results?<o:p></o:p></p>
-<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-<p class=3D"MsoNormal">Thanks,<o:p></o:p></p>
-<p class=3D"MsoNormal">-Remi <o:p></o:p></p>
-</div>
-</body>
-</html>
-
---_000_A4C6B4012E4D254597FE91E8CF2C135D01063C9714EXMAIL1taecto_--
-
-
---===============6313199412609734751==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============6313199412609734751==--
+Index: linux-2.6/drivers/md/dm-linear.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-linear.c
++++ linux-2.6/drivers/md/dm-linear.c
+@@ -184,20 +184,6 @@ static size_t linear_dax_copy_from_iter(
+ 	return dax_copy_from_iter(dax_dev, pgoff, addr, bytes, i);
+ }
+ 
+-static void linear_dax_flush(struct dm_target *ti, pgoff_t pgoff, void *addr,
+-		size_t size)
+-{
+-	struct linear_c *lc = ti->private;
+-	struct block_device *bdev = lc->dev->bdev;
+-	struct dax_device *dax_dev = lc->dev->dax_dev;
+-	sector_t dev_sector, sector = pgoff * PAGE_SECTORS;
+-
+-	dev_sector = linear_map_sector(ti, sector);
+-	if (bdev_dax_pgoff(bdev, dev_sector, ALIGN(size, PAGE_SIZE), &pgoff))
+-		return;
+-	dax_flush(dax_dev, pgoff, addr, size);
+-}
+-
+ static struct target_type linear_target = {
+ 	.name   = "linear",
+ 	.version = {1, 4, 0},
+@@ -212,7 +198,6 @@ static struct target_type linear_target
+ 	.iterate_devices = linear_iterate_devices,
+ 	.direct_access = linear_dax_direct_access,
+ 	.dax_copy_from_iter = linear_dax_copy_from_iter,
+-	.dax_flush = linear_dax_flush,
+ };
+ 
+ int __init dm_linear_init(void)
+Index: linux-2.6/drivers/md/dm-stripe.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-stripe.c
++++ linux-2.6/drivers/md/dm-stripe.c
+@@ -351,25 +351,6 @@ static size_t stripe_dax_copy_from_iter(
+ 	return dax_copy_from_iter(dax_dev, pgoff, addr, bytes, i);
+ }
+ 
+-static void stripe_dax_flush(struct dm_target *ti, pgoff_t pgoff, void *addr,
+-		size_t size)
+-{
+-	sector_t dev_sector, sector = pgoff * PAGE_SECTORS;
+-	struct stripe_c *sc = ti->private;
+-	struct dax_device *dax_dev;
+-	struct block_device *bdev;
+-	uint32_t stripe;
+-
+-	stripe_map_sector(sc, sector, &stripe, &dev_sector);
+-	dev_sector += sc->stripe[stripe].physical_start;
+-	dax_dev = sc->stripe[stripe].dev->dax_dev;
+-	bdev = sc->stripe[stripe].dev->bdev;
+-
+-	if (bdev_dax_pgoff(bdev, dev_sector, ALIGN(size, PAGE_SIZE), &pgoff))
+-		return;
+-	dax_flush(dax_dev, pgoff, addr, size);
+-}
+-
+ /*
+  * Stripe status:
+  *
+@@ -491,7 +472,6 @@ static struct target_type stripe_target
+ 	.io_hints = stripe_io_hints,
+ 	.direct_access = stripe_dax_direct_access,
+ 	.dax_copy_from_iter = stripe_dax_copy_from_iter,
+-	.dax_flush = stripe_dax_flush,
+ };
+ 
+ int __init dm_stripe_init(void)
+Index: linux-2.6/drivers/nvdimm/pmem.c
+===================================================================
+--- linux-2.6.orig/drivers/nvdimm/pmem.c
++++ linux-2.6/drivers/nvdimm/pmem.c
+@@ -243,16 +243,9 @@ static size_t pmem_copy_from_iter(struct
+ 	return copy_from_iter_flushcache(addr, bytes, i);
+ }
+ 
+-static void pmem_dax_flush(struct dax_device *dax_dev, pgoff_t pgoff,
+-		void *addr, size_t size)
+-{
+-	arch_wb_cache_pmem(addr, size);
+-}
+-
+ static const struct dax_operations pmem_dax_ops = {
+ 	.direct_access = pmem_dax_direct_access,
+ 	.copy_from_iter = pmem_copy_from_iter,
+-	.flush = pmem_dax_flush,
+ };
+ 
+ static const struct attribute_group *pmem_attribute_groups[] = {
+Index: linux-2.6/include/linux/device-mapper.h
+===================================================================
+--- linux-2.6.orig/include/linux/device-mapper.h
++++ linux-2.6/include/linux/device-mapper.h
+@@ -134,8 +134,6 @@ typedef long (*dm_dax_direct_access_fn)
+ 		long nr_pages, void **kaddr, pfn_t *pfn);
+ typedef size_t (*dm_dax_copy_from_iter_fn)(struct dm_target *ti, pgoff_t pgoff,
+ 		void *addr, size_t bytes, struct iov_iter *i);
+-typedef void (*dm_dax_flush_fn)(struct dm_target *ti, pgoff_t pgoff, void *addr,
+-		size_t size);
+ #define PAGE_SECTORS (PAGE_SIZE / 512)
+ 
+ void dm_error(const char *message);
+@@ -186,7 +184,6 @@ struct target_type {
+ 	dm_io_hints_fn io_hints;
+ 	dm_dax_direct_access_fn direct_access;
+ 	dm_dax_copy_from_iter_fn dax_copy_from_iter;
+-	dm_dax_flush_fn dax_flush;
+ 
+ 	/* For internal device-mapper use. */
+ 	struct list_head list;
+Index: linux-2.6/drivers/md/dm.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm.c
++++ linux-2.6/drivers/md/dm.c
+@@ -997,24 +997,6 @@ static size_t dm_dax_copy_from_iter(stru
+ 	return ret;
+ }
+ 
+-static void dm_dax_flush(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
+-		size_t size)
+-{
+-	struct mapped_device *md = dax_get_private(dax_dev);
+-	sector_t sector = pgoff * PAGE_SECTORS;
+-	struct dm_target *ti;
+-	int srcu_idx;
+-
+-	ti = dm_dax_get_live_target(md, sector, &srcu_idx);
+-
+-	if (!ti)
+-		goto out;
+-	if (ti->type->dax_flush)
+-		ti->type->dax_flush(ti, pgoff, addr, size);
+- out:
+-	dm_put_live_table(md, srcu_idx);
+-}
+-
+ /*
+  * A target may call dm_accept_partial_bio only from the map routine.  It is
+  * allowed for all bio types except REQ_PREFLUSH.
+@@ -3002,7 +2984,6 @@ static const struct block_device_operati
+ static const struct dax_operations dm_dax_ops = {
+ 	.direct_access = dm_dax_direct_access,
+ 	.copy_from_iter = dm_dax_copy_from_iter,
+-	.flush = dm_dax_flush,
+ };
+ 
+ /*
+Index: linux-2.6/fs/dax.c
+===================================================================
+--- linux-2.6.orig/fs/dax.c
++++ linux-2.6/fs/dax.c
+@@ -783,7 +783,7 @@ static int dax_writeback_one(struct bloc
+ 	}
+ 
+ 	dax_mapping_entry_mkclean(mapping, index, pfn_t_to_pfn(pfn));
+-	dax_flush(dax_dev, pgoff, kaddr, size);
++	dax_flush(dax_dev, kaddr, size);
+ 	/*
+ 	 * After we have flushed the cache, we can clear the dirty tag. There
+ 	 * cannot be new dirty data in the pfn after the flush has completed as
+@@ -978,7 +978,7 @@ int __dax_zero_page_range(struct block_d
+ 			return rc;
+ 		}
+ 		memset(kaddr + offset, 0, size);
+-		dax_flush(dax_dev, pgoff, kaddr + offset, size);
++		dax_flush(dax_dev, kaddr + offset, size);
+ 		dax_read_unlock(id);
+ 	}
+ 	return 0;
+Index: linux-2.6/drivers/dax/super.c
+===================================================================
+--- linux-2.6.orig/drivers/dax/super.c
++++ linux-2.6/drivers/dax/super.c
+@@ -189,8 +189,10 @@ static umode_t dax_visible(struct kobjec
+ 	if (!dax_dev)
+ 		return 0;
+ 
+-	if (a == &dev_attr_write_cache.attr && !dax_dev->ops->flush)
++#ifndef CONFIG_ARCH_HAS_PMEM_API
++	if (a == &dev_attr_write_cache.attr)
+ 		return 0;
++#endif
+ 	return a->mode;
+ }
+ 
+@@ -255,18 +257,23 @@ size_t dax_copy_from_iter(struct dax_dev
+ }
+ EXPORT_SYMBOL_GPL(dax_copy_from_iter);
+ 
+-void dax_flush(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
+-		size_t size)
++#ifdef CONFIG_ARCH_HAS_PMEM_API
++void arch_wb_cache_pmem(void *addr, size_t size);
++void dax_flush(struct dax_device *dax_dev, void *addr, size_t size)
+ {
+-	if (!dax_alive(dax_dev))
++	if (unlikely(!dax_alive(dax_dev)))
+ 		return;
+ 
+-	if (!test_bit(DAXDEV_WRITE_CACHE, &dax_dev->flags))
++	if (unlikely(!test_bit(DAXDEV_WRITE_CACHE, &dax_dev->flags)))
+ 		return;
+ 
+-	if (dax_dev->ops->flush)
+-		dax_dev->ops->flush(dax_dev, pgoff, addr, size);
++	arch_wb_cache_pmem(addr, size);
++}
++#else
++void dax_flush(struct dax_device *dax_dev, void *addr, size_t size)
++{
+ }
++#endif
+ EXPORT_SYMBOL_GPL(dax_flush);
+ 
+ void dax_write_cache(struct dax_device *dax_dev, bool wc)
+Index: linux-2.6/include/linux/dax.h
+===================================================================
+--- linux-2.6.orig/include/linux/dax.h
++++ linux-2.6/include/linux/dax.h
+@@ -19,8 +19,6 @@ struct dax_operations {
+ 	/* copy_from_iter: required operation for fs-dax direct-i/o */
+ 	size_t (*copy_from_iter)(struct dax_device *, pgoff_t, void *, size_t,
+ 			struct iov_iter *);
+-	/* flush: optional driver-specific cache management after writes */
+-	void (*flush)(struct dax_device *, pgoff_t, void *, size_t);
+ };
+ 
+ extern struct attribute_group dax_attribute_group;
+@@ -84,8 +82,7 @@ long dax_direct_access(struct dax_device
+ 		void **kaddr, pfn_t *pfn);
+ size_t dax_copy_from_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
+ 		size_t bytes, struct iov_iter *i);
+-void dax_flush(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
+-		size_t size);
++void dax_flush(struct dax_device *dax_dev, void *addr, size_t size);
+ void dax_write_cache(struct dax_device *dax_dev, bool wc);
+ bool dax_write_cache_enabled(struct dax_device *dax_dev);
