@@ -1,98 +1,86 @@
-From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH] dax: remove the pmem_dax_ops->flush abstraction
-Date: Thu, 31 Aug 2017 20:34:37 -0700
-Message-ID: <CAPcyv4jEO1g_OeG-T_veMtziXByNzEta5g00v-yTr7=yr6kpcA@mail.gmail.com>
-References: <alpine.LRH.2.02.1708312138390.32309@file01.intranet.prod.int.rdu2.redhat.com>
- <CAPcyv4j9KcgWU+rDY_5zAQ4xg3cx4Z3UkjTieVNMkWLc7C0OLg@mail.gmail.com>
- <alpine.LRH.2.02.1708312242080.32309@file01.intranet.prod.int.rdu2.redhat.com>
- <CAPcyv4iECaWuZNg4VOsSydtd9wnsS=JVfQ3ySHSQo0UP+J5gkw@mail.gmail.com>
+From: NeilBrown <neilb@suse.com>
+Subject: Re: [PATCH/rfc] dm: revise 'rescue' strategy for md->bs
+	allocations
+Date: Fri, 01 Sep 2017 13:48:40 +1000
+Message-ID: <87inh3dqp3.fsf@notabene.neil.brown.name>
+References: <878ti0fefq.fsf@notabene.neil.brown.name>
+	<alpine.LRH.2.02.1708312233010.32309@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <CAPcyv4iECaWuZNg4VOsSydtd9wnsS=JVfQ3ySHSQo0UP+J5gkw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Content-Type: multipart/mixed; boundary="===============5054300104588878727=="
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <alpine.LRH.2.02.1708312233010.32309@file01.intranet.prod.int.rdu2.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Aug 31, 2017 at 8:11 PM, Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
-> On Thu, Aug 31, 2017 at 7:49 PM, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
->>
->>
->> On Thu, 31 Aug 2017, Dan Williams wrote:
->>
->>> On Thu, Aug 31, 2017 at 6:47 PM, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
->>> > The patch abebfbe2f731 ("dm: add ->flush() dax operation support") is
->>> > buggy. A dm device may be composed of multiple underlying devices and all
->>> > of them need to be flushed. The patch just routes the flush request to the
->>> > first device and ignores the other devices.
->>> >
->>> > It could be fixed by adding more complex logic to the device mapper. But
->>> > there is only one implementation of the method pmem_dax_ops->flush - that
->>> > is pmem_dax_flush() - and it calls arch_wb_cache_pmem(). Consequently, we
->>> > don't need the pmem_dax_ops->flush abstraction at all, we can call
->>> > arch_wb_cache_pmem() directly from dax_flush() because dax_dev->ops->flush
->>> > couldn't ever reach anything different from arch_wb_cache_pmem().
->>>
->>> Unfortunately, this is not true, see usage of DAXDEV_WRITE_CACHE. This
->>> is for platforms that arrange for cpu caches to be flushed on
->>> power-fail, like standalone storage appliances, where it would be a
->>> waste for the kernel to track and flush dirty cachelines for dax.
->>> Theoretically this could be done on a per-address range basis (think
->>> battery backing a subset of the system memory). I think we need to fix
->>> the routing to flush the same dax_device that ->direct_access() was
->>> invoked.
->>
->> With my patch, dax_flush checks DAXDEV_WRITE_CACHE and doesn't do anything
->> if it's not set - it just doesn't go through device mapper.
->
-> True, but there's no guarantee that arch_wb_pmem() will be sufficient
-> going forward and the reason we routed this to the driver in the first
-> place was to allow driver / platform specific flush implementations.
->
->>
->>> > It should be also pointed out that for some uses of persistent memory it
->>> > is needed to flush only very small amount of data (such as 1 cacheline),
->>> > and it would be overkill if we go through that device mapper machinery for
->>> > a single flushed cache line.
->>>
->>> I think this is more an argument to not enable DAX on that
->>> device-mapper topology if operation routing impacts performance. DAX
->>> is meant to get the kernel out of the way most of the time.
->>
->> I don't understand what do you mean? I am writing a device mapper target
->> that uses persistent memory as a cache. When flushing the metadata,
->> sometimes it is needed to flush single cache lines. Ideally, I would use
->> the clwb instruction for this purpose, but that clwb is hidden behind a
->> complicated pmem_dax_ops->flush abstraction (and that abstraction will get
->> even more complicated if implemented correctly). How do you think I should
->> write that target without DAX?
->
-> I don't think you want DAX for this, I think you want direct control
-> of a persistent-memory address range.  For example the brd driver
-> supports DAX but I wouldn't recommend using it as the basis for a
-> directly managed cache.
->
-> So I think we need to dive deeper into what an in kernel interface to
-> access a contiguous persistent memory range looks like. DAX was not
-> designed with that use case in mind.
+--===============5054300104588878727==
+Content-Type: multipart/signed; boundary="=-=-=";
+	micalg=pgp-sha256; protocol="application/pgp-signature"
 
-For a cache driver using pmem, a strawman / starting point would be
-trying to do a ->direct_access() call for the full capacity of the
-device and then:
+--=-=-=
+Content-Type: text/plain
+Content-Transfer-Encoding: quoted-printable
 
-1/ validate that it returns the full capacity (this will preclude
-drivers like brd, and make sure the dax range is contiguous)
+On Thu, Aug 31 2017, Mikulas Patocka wrote:
 
-2/ use the returned pfn to walk the iomem resource tree and validate
-that you are talking to persistent memory and not some special
-dax-device range.
+>>=20
+>> Note that only current->bio_list[0] is offloaded.  current->bio_list[1]
+>> contains bios that were scheduled *before* the current one started, so
+>
+> These bios need to be offloaded too, otherwise you re-introduce this=20
+> deadlock: https://www.redhat.com/archives/dm-devel/2014-May/msg00089.html
+
+Thanks for the link.
+In the example the bio that is stuck was created in step 4.  The call
+to generic_make_request() will have placed it on current->bio_list[0].
+The top-level generic_make_request call by Process A is still running,
+so nothing will have moved the bio to ->bio_list[1].  That only happens
+after the ->make_request_fn completes, which must be after step 7.
+So the problem bio is on ->bio_list[0] and the code in my patch will
+pass it to a workqueue for handling.
+
+So I don't think the deadlock would be reintroduced.  Can you see
+something that I am missing?
+
+Thanks,
+NeilBrown
+
+--=-=-=
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCAAdFiEEG8Yp69OQ2HB7X0l6Oeye3VZigbkFAlmo2JoACgkQOeye3VZi
+gbkbeQ//Uz9IOgPykRTvvIYmIJb7a4WRW8UEVFjmgLVAPB9Q1anZTAxkkmbz6Hrk
+trKte6HXY/pjdpYs2nOQ1XwJEZnx4Tdrz3lidN1fHzzYYpAw6M7xWYz9e+a5avLF
+oE93pzklASrIbbw6BwG/aD7LIv1GOAt3yXC4AlLt54m8elAGOUnPPscXI+21Zymf
+CZk//b7mZG152/KT6RA9yOrr6eKQu1UE3cB3vlMU899A4EIzFQ8Tp28CvmAqhc23
+ohv/bPivm0tjN34mmg18rFGFB9nskLFhVEmUzlaC7keZ8pQLSGGttBJlN9lZSMiV
+LJaULQyJ1jZv/LsvJk+2l3LHGDCrmqEgQWpc6lcT3VYWtqsNUf1MuLQwYsnNoOpc
+jvnfUjW+yDnkArww0eYE6xDfJJe0+USvMa5DLgXs2zwVPlrYW2LeYHcj3WFYVcpm
+ii11cegG8EQwFDnJusLpde5vwSK48zo6zqsIa+LLp1kn6r4ICZ7cfIN3JMUFTInE
+BxGo8fgWJrrR59ae4OSHv90vwRk4tE9dBu2xI7ClhUfbfqqLtXO5rTxDA20go4i5
+X8R0vUWc9Qxg7A96ic91wJvX3VJN//8yID+JfjV+u5IkCZRRduhmM11FwhuE7/G5
+0VXBlYJAYa1z9DAkY5qrsWE1UjHQbnjjjGJQsGD0L/0SLIxaT1A=
+=T3FW
+-----END PGP SIGNATURE-----
+--=-=-=--
+
+
+--===============5054300104588878727==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============5054300104588878727==--
