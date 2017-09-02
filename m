@@ -1,87 +1,80 @@
-From: Josef Bacik <josef@toxicpanda.com>
-Subject: Re: Multi-device dm-log-writes
-Date: Fri, 1 Sep 2017 20:10:36 -0400
-Message-ID: <20170902001035.wqnlxxzbf5hsvubg@destiny>
-References: <20170901183110.qjyxjrrksnub7y4a@destiny>
- <20170901200532.GA18524@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH/rfc] dm: revise 'rescue' strategy for md->bs
+ allocations
+Date: Fri, 1 Sep 2017 21:34:51 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1709011947200.22293@file01.intranet.prod.int.rdu2.redhat.com>
+References: <878ti0fefq.fsf@notabene.neil.brown.name>
+	<alpine.LRH.2.02.1708312233010.32309@file01.intranet.prod.int.rdu2.redhat.com>
+	<87inh3dqp3.fsf@notabene.neil.brown.name>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20170901200532.GA18524@redhat.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Josef Bacik <josef@toxicpanda.com>, amir73il@gmail.com, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, kernel-team@fb.com, clm@fb.com, osandov@fb.com, rwareing@fb.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <87inh3dqp3.fsf@notabene.neil.brown.name>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: NeilBrown <neilb@suse.com>
+Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Sep 01, 2017 at 04:05:33PM -0400, Mike Snitzer wrote:
-> On Fri, Sep 01 2017 at  2:31pm -0400,
-> Josef Bacik <josef@toxicpanda.com> wrote:
+
+
+On Fri, 1 Sep 2017, NeilBrown wrote:
+
+> On Thu, Aug 31 2017, Mikulas Patocka wrote:
 > 
-> > Hello,
-> > 
-> > I'm looking at extending dm-log-writes to support multiple devices to log to a
-> > single log.  The benefit for this is testing things like btrfs's raid code, the
-> > xfs realtime device thing, and even mdraid.  I left room in the log format to
-> > change it as needed with this use case in mind, so I'm not worried about that.
-> > I'm more looking for verification that my plan doesn't suck, or if it does suck
-> > what would be a better approach.  I'll lay out the different parts to try and
-> > make this as quick and concise as possible.
-> > 
-> > 1) Add a "log-writes-log" target that just takes the single device we are going
-> > to use as the log.  This will do the work of taking the log IO from the actual
-> > "log-writes" target and putting it in the log.
-> > 
-> > 2) Extend the "log-writes" target table format to include an "id" at the end of
-> > the table line that will be used to indicate which device the log entry will be
-> > fore.  In this case the "log device" portion will point at the "log-writes-log"
-> > device mapper target.  Everything would work normally, except in this mode we
-> > send the log bio's down with bi_sector = 0 and let the "log-writes-log" target
-> > do the actual mapping for the bio.
-> > 
-> > So to test with multiple devices you would have to do something like
-> > 
-> > dmsetup create log --table "0 <size> log-writes-log <log device>"
-> > dmsetup create lw1 --table "0 <size> log-writes <device> /dev/mapper/log 0"
-> > dmsetup create lw2 --table "0 <size> log-writes <device> /dev/mapper/log 1"
-> > mkfs.btrfs -d raid1 -m raid1 /dev/mapper/lw1 /dev/mapper/lw2
-> > mount /dev/mapper/lw1 /mnt
-> > <do whatever>
-> > umount /mnt
-> > dmsetup remove lw1
-> > dmsetup remove lw2
-> > dmsetup remove log
-> 
-> This example illustrates the need for a separate log device nicely.
-> 
-> Though I'm not following why you'd want to override the bio's bi_sector
-> to be 0 when issuing the IO to the "log-writes-log" target device.
->  
-> > Mike, I would simply add a new struct target_type for log-writes-log that would
-> > do it's own ->map function to re-route the bio's coming into them.  I'd also
-> > change the ->ctr function of the log-writes target_type to handle the new id
-> > field and do the new fancy thing if we have that field populated.  Does that
-> > sound reasonable from an implementation point of view?
+> >> 
+> >> Note that only current->bio_list[0] is offloaded.  current->bio_list[1]
+> >> contains bios that were scheduled *before* the current one started, so
 > >
-> > Any comments or suggestions are welcome.  I haven't written any code yet so I'm
-> > open to other ideas.  Thanks,
+> > These bios need to be offloaded too, otherwise you re-introduce this 
+> > deadlock: https://www.redhat.com/archives/dm-devel/2014-May/msg00089.html
 > 
-> I'm still missing what type of mapping the "log-writes-log" target would
-> be doing if it just receives bios that have bi_sector of 0... I must be
-> missing something basic?  But wouldn't it be useful to preserve the
-> original bio offset for the IO and somehow encode which dev "id" the IO
-> came from (possibly as part of the per-bio-data) and use that as part of
-> the new ->map method?
+> Thanks for the link.
+> In the example the bio that is stuck was created in step 4.  The call
+> to generic_make_request() will have placed it on current->bio_list[0].
+> The top-level generic_make_request call by Process A is still running,
+> so nothing will have moved the bio to ->bio_list[1].  That only happens
+> after the ->make_request_fn completes, which must be after step 7.
+> So the problem bio is on ->bio_list[0] and the code in my patch will
+> pass it to a workqueue for handling.
 > 
+> So I don't think the deadlock would be reintroduced.  Can you see
+> something that I am missing?
+> 
+> Thanks,
+> NeilBrown
 
-Yeah sorry the bio's going to the "log-writes-log" target will be the log entry
-with the original sector information and device id plus the actual data that was
-written.  The bi_sector will be 0 because "log-writes-log" is going to put it
-where it actually goes, it's just a log so starts at sector 1 and goes on from
-there based on whatever we're logging.  See the lc->next_sector part we
-currently have, in this new setup the lc->next_sector would only matter for the
-"log-writes-log" target, and is what would be used to populate the bio that we
-are logging.  Thanks,
+Offloading only current->bio_list[0] will work in a simple case described 
+above, but not in the general case.
 
-Josef
-> Mike
+For example, suppose that we have a dm device where the first part is 
+linear and the second part is snapshot.
+
+* We receive bio A that crosses the linear/snapshot boundary
+* DM core creates bio B, submits it to the linear target and adds it to 
+current->bio_list[0]
+* DM core creates bio C, submits it to the snapshot target, the snapshot 
+target calls track_chunk for this bio and appends the bio to 
+current->bio_list[0]
+* Now, we return back to generic_make_request
+* We pop bio B from current->bio_list[0]
+* We execute bio_list_on_stack[1] = bio_list_on_stack[0], that moves bio C 
+to bio_list_on_stack[1] - and now we lose any possibility to offload bio C 
+to the rescue thread
+* The kcopyd thread for the snapshot takes the snapshot lock and waits for 
+bio C to finish
+* We process bio B - and if processing bio B reaches something that takes 
+the snapshot lock (for example an origin target for the snapshot), a 
+deadlock will happen. The deadlock could be avoided by offloading bio C to 
+the rescue thread, but bio C is already on bio_list_on_stack[1] and so it 
+won't be offloaded
+
+Mikulas
