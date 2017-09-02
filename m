@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 19/31] 11-dm-mpath.rules: handle new maps with
-	READY==0
-Date: Sun,  3 Sep 2017 00:38:48 +0200
-Message-ID: <20170902223900.7339-20-mwilck@suse.com>
+Subject: [PATCH 22/31] multipath.rules: set ID_FS_TYPE to
+	"mpath_member"
+Date: Sun,  3 Sep 2017 00:38:51 +0200
+Message-ID: <20170902223900.7339-23-mwilck@suse.com>
 References: <20170902223900.7339-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,43 +22,25 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-We need to distinguish the case where a device came up with
-ENV{MPATH_DEVICE_READY}=="0" in the first place from the case
-where it changed from "ready" to "not ready".
-
-Otherwise, we may save a wrong state in DM_DISABLE_OTHER_RULES_FLAG_OLD.
+... for devices that have been identified as such.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipath/11-dm-mpath.rules | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+ multipath/multipath.rules | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/multipath/11-dm-mpath.rules b/multipath/11-dm-mpath.rules
-index abf7987b..0be22ae4 100644
---- a/multipath/11-dm-mpath.rules
-+++ b/multipath/11-dm-mpath.rules
-@@ -39,7 +39,7 @@ ENV{DM_ACTION}=="PATH_FAILED", GOTO="mpath_action"
+diff --git a/multipath/multipath.rules b/multipath/multipath.rules
+index 86defc0c..bc1a8529 100644
+--- a/multipath/multipath.rules
++++ b/multipath/multipath.rules
+@@ -21,7 +21,7 @@ TEST!="$env{MPATH_SBIN_PATH}/multipath", ENV{MPATH_SBIN_PATH}="/usr/sbin"
  
- # This event is either a PATH_REINSTATED or a table reload where
- # there are active paths. Mark the device ready
--ENV{MPATH_DEVICE_READY}=""
-+ENV{MPATH_DEVICE_READY}="1"
+ ENV{DM_MULTIPATH_DEVICE_PATH}!="1", \
+ 	PROGRAM=="$env{MPATH_SBIN_PATH}/multipath -u %k", \
+-	ENV{DM_MULTIPATH_DEVICE_PATH}="1", ENV{ID_FS_TYPE}="none", \
++	ENV{DM_MULTIPATH_DEVICE_PATH}="1", ENV{ID_FS_TYPE}="mpath_member", \
+ 	ENV{SYSTEMD_READY}="0"
  
- LABEL="mpath_action"
- # DM_SUBSYSTEM_UDEV_FLAG0 is the "RELOAD" flag for multipath subsystem.
-@@ -58,10 +58,10 @@ ENV{MPATH_DEVICE_READY}=="0", ENV{DM_NOSCAN}="1"
- # Also skip all foreign rules if no path is available.
- # Remember the original value of DM_DISABLE_OTHER_RULES_FLAG
- # and restore it back once we have at least one path available.
--ENV{MPATH_DEVICE_READY}=="0", ENV{.MPATH_DEVICE_READY_OLD}!="0",\
-+ENV{MPATH_DEVICE_READY}=="0", ENV{.MPATH_DEVICE_READY_OLD}=="1",\
- 	ENV{DM_DISABLE_OTHER_RULES_FLAG_OLD}=="",\
--	ENV{DM_DISABLE_OTHER_RULES_FLAG_OLD}="$env{DM_UDEV_DISABLE_OTHER_RULES_FLAG}",\
--	ENV{DM_UDEV_DISABLE_OTHER_RULES_FLAG}="1"
-+	ENV{DM_DISABLE_OTHER_RULES_FLAG_OLD}="$env{DM_UDEV_DISABLE_OTHER_RULES_FLAG}"
-+ENV{MPATH_DEVICE_READY}=="0", ENV{DM_UDEV_DISABLE_OTHER_RULES_FLAG}="1"
- ENV{MPATH_DEVICE_READY}!="0", ENV{.MPATH_DEVICE_READY_OLD}=="0",\
- 	ENV{DM_UDEV_DISABLE_OTHER_RULES_FLAG}="$env{DM_DISABLE_OTHER_RULES_FLAG_OLD}",\
- 	ENV{DM_DISABLE_OTHER_RULES_FLAG_OLD}="",\
+ LABEL="end_mpath"
 -- 
 2.14.0
