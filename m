@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 24/31] kpartx.rules: respect
-	DM_UDEV_LOW_PRIORITY_FLAG
-Date: Sun,  3 Sep 2017 00:38:53 +0200
-Message-ID: <20170902223900.7339-25-mwilck@suse.com>
+Subject: [PATCH 07/31] test-kpartx: test deletion with empty part
+	table
+Date: Sun,  3 Sep 2017 00:38:36 +0200
+Message-ID: <20170902223900.7339-8-mwilck@suse.com>
 References: <20170902223900.7339-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,27 +22,47 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-kpartx.rules increased link priority unconditionally, but for
-explicitly marked low prio devices that shouldn't be done.
-Fix that. Also, use "+=" for OPTIONS, as most other rules do.
+Added a test case for "kpartx: fix part deletion without partition
+table".
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- kpartx/kpartx.rules | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ kpartx/test-kpartx | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
 
-diff --git a/kpartx/kpartx.rules b/kpartx/kpartx.rules
-index ea34e449..efd21a29 100644
---- a/kpartx/kpartx.rules
-+++ b/kpartx/kpartx.rules
-@@ -12,7 +12,7 @@ ENV{DM_UUID}!="?*", GOTO="kpartx_end"
- # with 0 dependencies
- IMPORT{program}=="kpartx_id %M %m $env{DM_UUID}"
+diff --git a/kpartx/test-kpartx b/kpartx/test-kpartx
+index 35b0f064..60b3eb23 100755
+--- a/kpartx/test-kpartx
++++ b/kpartx/test-kpartx
+@@ -68,6 +68,10 @@ mk_partitions() {
+     parted -s -- $1 mkpart prim ext2 1MiB -1s
+ }
  
--OPTIONS="link_priority=50"
-+ENV{DM_UDEV_LOW_PRIORITY_FLAG}!="1", OPTIONS+="link_priority=50"
++wipe_ptable() {
++    dd if=/dev/zero of=$1 bs=1b count=1
++}
++
+ step preparation
  
- ENV{DM_UUID}=="?*", ENV{DM_TYPE}=="?*" \
- 	SYMLINK+="disk/by-id/$env{DM_TYPE}-$env{DM_NAME}"
+ [[ $UID -eq 0 ]]
+@@ -165,8 +169,18 @@ mk_partitions $LO2
+ # Test invocation of kpartx with regular file here
+ LO2P1=/dev/mapper/$(basename $LO2)-foo1
+ $KPARTX $KPARTX_OPTS -a -p -foo $FILE2
++[[ -b $LO2P1 ]]
+ push_cleanup 'dmsetup remove -f $(basename $LO2P1)'
+ 
++step "remove partitions with deleted ptable"
++wipe_ptable $LO2
++$KPARTX $KPARTX_OPTS -d $LO2
++[[ ! -b $LO2P1 ]]
++
++mk_partitions $LO2
++$KPARTX $KPARTX_OPTS -a -p -foo $FILE2
++[[ -b $LO2P1 ]]
++
+ LO1P1=/dev/mapper/$(basename $LO1)-eggs1
+ $KPARTX $KPARTX_OPTS -a -p -eggs $LO1
+ push_cleanup 'dmsetup remove -f $(basename $LO1P1)'
 -- 
 2.14.0
