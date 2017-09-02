@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 12/31] libmultipath: use const char* in some dm
-	helpers
-Date: Sun,  3 Sep 2017 00:38:41 +0200
-Message-ID: <20170902223900.7339-13-mwilck@suse.com>
+Subject: [PATCH 29/31] multipath/kpartx rules: avoid superfluous
+	scanning
+Date: Sun,  3 Sep 2017 00:38:58 +0200
+Message-ID: <20170902223900.7339-30-mwilck@suse.com>
 References: <20170902223900.7339-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,50 +22,56 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Changing dm_get_info and dm_get_uuid for now.
+Multipath maps receive certain udev events that only indicate
+changes in the path list. Use MPATH_UNCHANGED to tell this to
+upper layers, so that they can ignore the event.
+
+multipathd-generated events with DM_SUBSYSTEM_UDEV_FLAG0 are one
+case, and kernel-generated PATH_FAILED and PATH_REINSTATED events
+are another.
+
+The LVM rules rely on DM_ACTIVATION, but other rules such as
+kpartx can't do that, because they'd miss e.g. partition table
+changes.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/devmapper.c | 4 ++--
- libmultipath/devmapper.h | 4 ++--
- 2 files changed, 4 insertions(+), 4 deletions(-)
+ kpartx/kpartx.rules         | 3 +++
+ multipath/11-dm-mpath.rules | 8 +++++++-
+ 2 files changed, 10 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index 7a3390a7..6e3abe3e 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -553,7 +553,7 @@ uuidout:
- 	return r;
- }
+diff --git a/kpartx/kpartx.rules b/kpartx/kpartx.rules
+index b8141141..1cbe9429 100644
+--- a/kpartx/kpartx.rules
++++ b/kpartx/kpartx.rules
+@@ -60,6 +60,9 @@ ENV{DM_UUID}!="mpath-?*", GOTO="mpath_kpartx_end"
+ ENV{DM_UDEV_PRIMARY_SOURCE_FLAG}!="1", IMPORT{db}="DM_SUBSYSTEM_UDEV_FLAG1"
+ ENV{DM_SUBSYSTEM_UDEV_FLAG1}=="1", GOTO="mpath_kpartx_end"
  
--int dm_get_uuid(char *name, char *uuid)
-+int dm_get_uuid(const char *name, char *uuid)
- {
- 	if (dm_get_prefixed_uuid(name, uuid))
- 		return 1;
-@@ -1308,7 +1308,7 @@ alloc_dminfo (void)
- }
++# 11-dm-mpath.rules sets MPATH_UNCHANGED for events that can be ignored.
++ENV{MPATH_UNCHANGED}=="1", GOTO="mpath_kpartx_end"
++
+ # Don't run kpartx now if we know it will fail or hang.
+ ENV{DM_SUSPENDED}=="1", GOTO="mpath_kpartx_end"
+ ENV{DM_NOSCAN}=="1", GOTO="mpath_kpartx_end"
+diff --git a/multipath/11-dm-mpath.rules b/multipath/11-dm-mpath.rules
+index 9bfd75f8..4a3f646d 100644
+--- a/multipath/11-dm-mpath.rules
++++ b/multipath/11-dm-mpath.rules
+@@ -49,7 +49,13 @@ LABEL="mpath_action"
+ # something that should be reacted upon since it would be useless extra work.
+ # It's exactly mpath's job to provide *seamless* device access to any of the
+ # paths that are available underneath.
+-ENV{DM_SUBSYSTEM_UDEV_FLAG0}=="1", ENV{DM_ACTIVATION}="0"
++ENV{DM_SUBSYSTEM_UDEV_FLAG0}=="1", \
++	ENV{DM_ACTIVATION}="0", ENV{MPATH_UNCHANGED}="1"
++
++# For path failed or reinstated events, unset DM_ACTIVATION.
++# This is similar to the DM_SUBSYSTEM_UDEV_FLAG0 case above.
++ENV{DM_ACTION}=="PATH_FAILED|PATH_REINSTATED", \
++	ENV{DM_ACTIVATION}="0", ENV{MPATH_UNCHANGED}="1"
  
- int
--dm_get_info (char * mapname, struct dm_info ** dmi)
-+dm_get_info (const char * mapname, struct dm_info ** dmi)
- {
- 	if (!mapname)
- 		return 1;
-diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
-index 99a554b5..5c824a21 100644
---- a/libmultipath/devmapper.h
-+++ b/libmultipath/devmapper.h
-@@ -59,8 +59,8 @@ int dm_get_major_minor (const char *name, int *major, int *minor);
- char * dm_mapname(int major, int minor);
- int dm_remove_partmaps (const char * mapname, int need_sync,
- 			int deferred_remove);
--int dm_get_uuid(char *name, char *uuid);
--int dm_get_info (char * mapname, struct dm_info ** dmi);
-+int dm_get_uuid(const char *name, char *uuid);
-+int dm_get_info (const char * mapname, struct dm_info ** dmi);
- int dm_rename (const char * old, char * new, char * delim, int skip_kpartx);
- int dm_reassign(const char * mapname);
- int dm_reassign_table(const char *name, char *old, char *new);
+ # Do not initiate scanning if no path is available,
+ # otherwise there would be a hang or IO error on access.
 -- 
 2.14.0
