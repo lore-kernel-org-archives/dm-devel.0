@@ -1,7 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 14/31] libmultipath: add dm_get_multipath
-Date: Sun,  3 Sep 2017 00:38:43 +0200
-Message-ID: <20170902223900.7339-15-mwilck@suse.com>
+Subject: [PATCH 23/31] kpartx.rules: don't rely on DM_DEPS and
+	DM_TABLE_STATE
+Date: Sun,  3 Sep 2017 00:38:52 +0200
+Message-ID: <20170902223900.7339-24-mwilck@suse.com>
 References: <20170902223900.7339-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,98 +22,38 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This function is simply factored out from dm_get_maps.
-No functional difference.
+These tests (which were SUSE-specific anyway) are not needed
+here. The kpartx invocation further down is guarded separately.
+SYMLINK actions must be run in any case for consistency, and
+there's no need to access the udev db here because kpartx_id
+also works on otherwise broken devices.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/devmapper.c | 43 +++++++++++++++++++++++++++----------------
- libmultipath/devmapper.h |  1 +
- 2 files changed, 28 insertions(+), 16 deletions(-)
+ kpartx/kpartx.rules | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
 
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index 6e3abe3e..fcac6bc7 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -1004,6 +1004,31 @@ dm_disablegroup(char * mapname, int index)
- 	return dm_groupmsg("disable", mapname, index);
- }
+diff --git a/kpartx/kpartx.rules b/kpartx/kpartx.rules
+index 64d550de..ea34e449 100644
+--- a/kpartx/kpartx.rules
++++ b/kpartx/kpartx.rules
+@@ -5,12 +5,12 @@
+ #
  
-+struct multipath *dm_get_multipath(const char *name)
-+{
-+	struct multipath *mpp = NULL;
-+
-+	mpp = alloc_multipath();
-+	if (!mpp)
-+		return NULL;
-+
-+	mpp->alias = STRDUP(name);
-+
-+	if (!mpp->alias)
-+		goto out;
-+
-+	if (dm_get_map(name, &mpp->size, NULL))
-+		goto out;
-+
-+	dm_get_uuid(name, mpp->wwid);
-+	dm_get_info(name, &mpp->dmi);
-+
-+	return mpp;
-+out:
-+	free_multipath(mpp, KEEP_PATHS);
-+	return NULL;
-+}
-+
- int
- dm_get_maps (vector mp)
- {
-@@ -1036,24 +1061,12 @@ dm_get_maps (vector mp)
- 		if (!dm_is_mpath(names->name))
- 			goto next;
+ KERNEL!="dm-*", GOTO="kpartx_end"
+-ACTION=="remove", GOTO="kpartx_end"
++ACTION!="add|change", GOTO="kpartx_end"
++ENV{DM_UUID}!="?*", GOTO="kpartx_end"
  
--		mpp = alloc_multipath();
+-ENV{DM_TABLE_STATE}!="LIVE", GOTO="kpartx_end"
+-ENV{DM_DEPS}=="0", GOTO="kpartx_end"
 -
-+		mpp = dm_get_multipath(names->name);
- 		if (!mpp)
- 			goto out;
+-ENV{DM_UUID}=="?*", IMPORT{program}=="kpartx_id %M %m $env{DM_UUID}"
++# kpartx_id is very robust, it works for suspended maps and maps
++# with 0 dependencies
++IMPORT{program}=="kpartx_id %M %m $env{DM_UUID}"
  
--		mpp->alias = STRDUP(names->name);
--
--		if (!mpp->alias)
--			goto out1;
--
--		if (dm_get_map(names->name, &mpp->size, NULL))
--			goto out1;
--
--		dm_get_uuid(names->name, mpp->wwid);
--		dm_get_info(names->name, &mpp->dmi);
--
- 		if (!vector_alloc_slot(mp))
--			goto out1;
-+			goto out;
+ OPTIONS="link_priority=50"
  
- 		vector_set_slot(mp, mpp);
- 		mpp = NULL;
-@@ -1064,8 +1077,6 @@ next:
- 
- 	r = 0;
- 	goto out;
--out1:
--	free_multipath(mpp, KEEP_PATHS);
- out:
- 	dm_task_destroy (dmt);
- 	return r;
-diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
-index 5c824a21..62e14d1c 100644
---- a/libmultipath/devmapper.h
-+++ b/libmultipath/devmapper.h
-@@ -65,6 +65,7 @@ int dm_rename (const char * old, char * new, char * delim, int skip_kpartx);
- int dm_reassign(const char * mapname);
- int dm_reassign_table(const char *name, char *old, char *new);
- int dm_setgeometry(struct multipath *mpp);
-+struct multipath *dm_get_multipath(const char *name);
- 
- #define VERSION_GE(v, minv) ( \
- 	(v[0] > minv[0]) || \
 -- 
 2.14.0
