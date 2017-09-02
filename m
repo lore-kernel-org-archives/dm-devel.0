@@ -1,8 +1,7 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 11/31] libmultipath: get_refwwid: use
-	get_udev_device
-Date: Sun,  3 Sep 2017 00:38:40 +0200
-Message-ID: <20170902223900.7339-12-mwilck@suse.com>
+Subject: [PATCH 14/31] libmultipath: add dm_get_multipath
+Date: Sun,  3 Sep 2017 00:38:43 +0200
+Message-ID: <20170902223900.7339-15-mwilck@suse.com>
 References: <20170902223900.7339-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,66 +21,98 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Call the factored-out function to obtain the udev device.
+This function is simply factored out from dm_get_maps.
+No functional difference.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/configure.c | 23 +++++++++++------------
- 1 file changed, 11 insertions(+), 12 deletions(-)
+ libmultipath/devmapper.c | 43 +++++++++++++++++++++++++++----------------
+ libmultipath/devmapper.h |  1 +
+ 2 files changed, 28 insertions(+), 16 deletions(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 7326132b..7a3db318 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -1176,12 +1176,12 @@ int get_refwwid(enum mpath_cmds cmd, char *dev, enum devtypes dev_type,
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index 6e3abe3e..fcac6bc7 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -1004,6 +1004,31 @@ dm_disablegroup(char * mapname, int index)
+ 	return dm_groupmsg("disable", mapname, index);
+ }
  
- 		pp = find_path_by_dev(pathvec, buff);
- 		if (!pp) {
--			struct udev_device *udevice = udev_device_new_from_subsystem_sysname(udev, "block", buff);
-+			struct udev_device *udevice =
-+				get_udev_device(buff, dev_type);
- 
--			if (!udevice) {
--				condlog(2, "%s: can't get udev device", buff);
-+			if (!udevice)
- 				return 1;
--			}
++struct multipath *dm_get_multipath(const char *name)
++{
++	struct multipath *mpp = NULL;
 +
- 			conf = get_multipath_config();
- 			ret = store_pathinfo(pathvec, conf, udevice,
- 					     flags, &pp);
-@@ -1214,12 +1214,12 @@ int get_refwwid(enum mpath_cmds cmd, char *dev, enum devtypes dev_type,
- 		}
- 		pp = find_path_by_dev(pathvec, buff);
- 		if (!pp) {
--			struct udev_device *udevice = udev_device_new_from_devnum(udev, 'b', parse_devt(dev));
-+			struct udev_device *udevice =
-+				get_udev_device(dev, dev_type);
- 
--			if (!udevice) {
--				condlog(2, "%s: can't get udev device", dev);
-+			if (!udevice)
- 				return 1;
--			}
++	mpp = alloc_multipath();
++	if (!mpp)
++		return NULL;
 +
- 			conf = get_multipath_config();
- 			ret = store_pathinfo(pathvec, conf, udevice,
- 					     flags, &pp);
-@@ -1244,12 +1244,11 @@ int get_refwwid(enum mpath_cmds cmd, char *dev, enum devtypes dev_type,
- 	}
- 
- 	if (dev_type == DEV_UEVENT) {
--		struct udev_device *udevice = udev_device_new_from_environment(udev);
-+		struct udev_device *udevice = get_udev_device(dev, dev_type);
- 
--		if (!udevice) {
--			condlog(2, "%s: can't get udev device", dev);
-+		if (!udevice)
- 			return 1;
--		}
++	mpp->alias = STRDUP(name);
 +
- 		conf = get_multipath_config();
- 		ret = store_pathinfo(pathvec, conf, udevice,
- 				     flags, &pp);
++	if (!mpp->alias)
++		goto out;
++
++	if (dm_get_map(name, &mpp->size, NULL))
++		goto out;
++
++	dm_get_uuid(name, mpp->wwid);
++	dm_get_info(name, &mpp->dmi);
++
++	return mpp;
++out:
++	free_multipath(mpp, KEEP_PATHS);
++	return NULL;
++}
++
+ int
+ dm_get_maps (vector mp)
+ {
+@@ -1036,24 +1061,12 @@ dm_get_maps (vector mp)
+ 		if (!dm_is_mpath(names->name))
+ 			goto next;
+ 
+-		mpp = alloc_multipath();
+-
++		mpp = dm_get_multipath(names->name);
+ 		if (!mpp)
+ 			goto out;
+ 
+-		mpp->alias = STRDUP(names->name);
+-
+-		if (!mpp->alias)
+-			goto out1;
+-
+-		if (dm_get_map(names->name, &mpp->size, NULL))
+-			goto out1;
+-
+-		dm_get_uuid(names->name, mpp->wwid);
+-		dm_get_info(names->name, &mpp->dmi);
+-
+ 		if (!vector_alloc_slot(mp))
+-			goto out1;
++			goto out;
+ 
+ 		vector_set_slot(mp, mpp);
+ 		mpp = NULL;
+@@ -1064,8 +1077,6 @@ next:
+ 
+ 	r = 0;
+ 	goto out;
+-out1:
+-	free_multipath(mpp, KEEP_PATHS);
+ out:
+ 	dm_task_destroy (dmt);
+ 	return r;
+diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
+index 5c824a21..62e14d1c 100644
+--- a/libmultipath/devmapper.h
++++ b/libmultipath/devmapper.h
+@@ -65,6 +65,7 @@ int dm_rename (const char * old, char * new, char * delim, int skip_kpartx);
+ int dm_reassign(const char * mapname);
+ int dm_reassign_table(const char *name, char *old, char *new);
+ int dm_setgeometry(struct multipath *mpp);
++struct multipath *dm_get_multipath(const char *name);
+ 
+ #define VERSION_GE(v, minv) ( \
+ 	(v[0] > minv[0]) || \
 -- 
 2.14.0
