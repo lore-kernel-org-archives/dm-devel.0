@@ -1,7 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 21/31] 11-dm-mpath.rules: Remember DM_ACTIVATION
-Date: Sun,  3 Sep 2017 00:38:50 +0200
-Message-ID: <20170902223900.7339-22-mwilck@suse.com>
+Subject: [PATCH 06/31] kpartx: fix part deletion without
+	partition table
+Date: Sun,  3 Sep 2017 00:38:35 +0200
+Message-ID: <20170902223900.7339-7-mwilck@suse.com>
 References: <20170902223900.7339-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,42 +22,72 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-If DM_ACTIVATION is set by the general dm rules, we need to
-bring up this device. But if the mpath device is not ready,
-that would be dangerous; it could hang or produce lots of IO
-errors. So remember this state, and try to activate when the
-map becomes usable later.
+If we are deleting partition mappings, there's no need to
+parse the partition table. We just look for mappings created
+by kpartx and destroy them. Without this patch, kpartx fails
+to delete partition mappings on devices on which the partition
+table has been destroyed.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipath/11-dm-mpath.rules | 8 ++++++++
- 1 file changed, 8 insertions(+)
+ kpartx/kpartx.c | 31 +++++++++++++++++--------------
+ 1 file changed, 17 insertions(+), 14 deletions(-)
 
-diff --git a/multipath/11-dm-mpath.rules b/multipath/11-dm-mpath.rules
-index 3f47744f..9bfd75f8 100644
---- a/multipath/11-dm-mpath.rules
-+++ b/multipath/11-dm-mpath.rules
-@@ -4,6 +4,7 @@ ENV{DM_UUID}!="mpath-?*", GOTO="mpath_end"
+diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+index 62f54308..442b6bd9 100644
+--- a/kpartx/kpartx.c
++++ b/kpartx/kpartx.c
+@@ -394,6 +394,22 @@ main(int argc, char **argv){
  
- IMPORT{db}="DM_DISABLE_OTHER_RULES_FLAG_OLD"
- IMPORT{db}="MPATH_DEVICE_READY"
-+IMPORT{db}="MPATH_NEEDS_ACTIVATION"
- 
- # If this uevent didn't come from dm, don't try to update the
- # device state
-@@ -55,6 +56,13 @@ ENV{DM_SUBSYSTEM_UDEV_FLAG0}=="1", ENV{DM_ACTIVATION}="0"
- # We'd like to avoid this, especially within udev processing.
- ENV{MPATH_DEVICE_READY}=="0", ENV{DM_NOSCAN}="1"
- 
-+# If DM_ACTIVATION is set, but can't be satisfied, remember it
-+# in MPATH_NEEDS_ACTIVATION, and activate at the next opportunity.
-+ENV{MPATH_DEVICE_READY}=="0", ENV{DM_ACTIVATION}=="1", \
-+	ENV{MPATH_NEEDS_ACTIVATION}="1", ENV{DM_ACTIVATION}="0"
-+ENV{MPATH_DEVICE_READY}!="0", ENV{MPATH_NEEDS_ACTIVATION}=="1", \
-+	ENV{DM_ACTIVATION}="1", ENV{MPATH_NEEDS_ACTIVATION}=""
+ 	/* add/remove partitions to the kernel devmapper tables */
+ 	int r = 0;
 +
- # Also skip all foreign rules if no path is available.
- # Remember the original value of DM_DISABLE_OTHER_RULES_FLAG
- # and restore it back once we have at least one path available.
++	if (what == DELETE) {
++		r = dm_remove_partmaps(mapname, uuid, buf.st_rdev,
++				       verbose);
++		if (loopdev) {
++			if (del_loop(loopdev)) {
++				if (verbose)
++					fprintf(stderr, "can't del loop : %s\n",
++					       loopdev);
++				r = 1;
++			} else
++				fprintf(stderr, "loop deleted : %s\n", loopdev);
++		}
++		goto end;
++	}
++
+ 	for (i = 0; i < ptct; i++) {
+ 		ptp = &pts[i];
+ 
+@@ -461,20 +477,6 @@ main(int argc, char **argv){
+ 
+ 			break;
+ 
+-		case DELETE:
+-			r = dm_remove_partmaps(mapname, uuid, buf.st_rdev,
+-					       verbose);
+-			if (loopdev) {
+-				if (del_loop(loopdev)) {
+-					if (verbose)
+-						printf("can't del loop : %s\n",
+-						       loopdev);
+-					exit(1);
+-				}
+-				printf("loop deleted : %s\n", loopdev);
+-			}
+-			break;
+-
+ 		case ADD:
+ 		case UPDATE:
+ 			/* ADD and UPDATE share the same code that adds new partitions. */
+@@ -656,6 +658,7 @@ main(int argc, char **argv){
+ 		printf("loop deleted : %s\n", device);
+ 	}
+ 
++end:
+ 	dm_lib_release();
+ 	dm_lib_exit();
+ 
 -- 
 2.14.0
