@@ -1,7 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 30/31] kpartx/del-part-nodes.rules: new udev file
-Date: Sun,  3 Sep 2017 00:38:59 +0200
-Message-ID: <20170902223900.7339-31-mwilck@suse.com>
+Subject: [PATCH 02/31] kpartx: helper functions for name and uuid
+	generation
+Date: Sun,  3 Sep 2017 00:38:31 +0200
+Message-ID: <20170902223900.7339-3-mwilck@suse.com>
 References: <20170902223900.7339-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,77 +22,76 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-A new udev rules file "68-del-part-nodes.rules" is introduced,
-based on code from Ben Marzinki. This code deletes partitions on
-multipath member devices. The purpose of this is to avoid users
-accidentally accessing partitions of member devices rather than of the
-multipath devcice. The deletion is done only once for every disk
-device. If the user wants to get the partitions back, he can run "partx
--a" or "partprobe" on the disk device.
-
-This code could be extended to wipe partitions on member devices
-of non-multipath dm targets if desired.
-
-Means to deactivate this behavior are provided via kernel parameter
-"dont_del_part_nodes", or a custom udev rules file setting the
-"DONT_DEL_PART_NODES" environment variable.
+strip_slash() is copied from kpartx.c, and will be removed there
+in a follow-up patch. The others are new helpers.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- kpartx/Makefile             |  1 +
- kpartx/del-part-nodes.rules | 32 ++++++++++++++++++++++++++++++++
- 2 files changed, 33 insertions(+)
- create mode 100644 kpartx/del-part-nodes.rules
+ kpartx/devmapper.c | 44 ++++++++++++++++++++++++++++++++++++++------
+ 1 file changed, 38 insertions(+), 6 deletions(-)
 
-diff --git a/kpartx/Makefile b/kpartx/Makefile
-index 7b75032e..7f5c1708 100644
---- a/kpartx/Makefile
-+++ b/kpartx/Makefile
-@@ -30,6 +30,7 @@ install: $(EXEC) $(EXEC).8
- 	$(INSTALL_PROGRAM) -m 755 kpartx_id $(DESTDIR)$(libudevdir)
- 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(libudevdir)/rules.d
- 	$(INSTALL_PROGRAM) -m 644 kpartx.rules $(DESTDIR)$(libudevdir)/rules.d/66-kpartx.rules
-+	$(INSTALL_PROGRAM) -m 644 del-part-nodes.rules $(DESTDIR)$(libudevdir)/rules.d/68-del-part-nodes.rules
- 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(man8dir)
- 	$(INSTALL_PROGRAM) -m 644 $(EXEC).8.gz $(DESTDIR)$(man8dir)
+diff --git a/kpartx/devmapper.c b/kpartx/devmapper.c
+index 4ab58ce9..3d382285 100644
+--- a/kpartx/devmapper.c
++++ b/kpartx/devmapper.c
+@@ -92,6 +92,42 @@ out:
+ 	return r;
+ }
  
-diff --git a/kpartx/del-part-nodes.rules b/kpartx/del-part-nodes.rules
-new file mode 100644
-index 00000000..cee945d9
---- /dev/null
-+++ b/kpartx/del-part-nodes.rules
-@@ -0,0 +1,32 @@
-+# These rules can delete partitions devnodes for slave devices
-+# for certain aggregate devices such as multipath.
-+# This is desirable to avoid confusion and keep the number
-+# of device nodes and symlinks within limits.
-+#
-+# This is done only once on the first "add" or "change" event for
-+# any given device.
-+#
-+# To suppress this, use the kernel parameter "dont_del_part_nodes",
-+# or create an udev rule file that sets ENV{DONT_DEL_PART_NODES}="1".
++static void
++strip_slash (char * device)
++{
++	char * p = device;
 +
-+SUBSYSTEM!="block", GOTO="end_del_part_nodes"
-+KERNEL!="sd*|dasd*|rbd*", GOTO="end_del_part_nodes"
-+ACTION!="add|change", GOTO="end_del_part_nodes"
++	while (*(p++) != 0x0) {
 +
-+IMPORT{cmdline}="dont_del_part_nodes"
-+ENV{dont_del_part_nodes}=="1", GOTO="end_del_part_nodes"
-+ENV{DONT_DEL_PART_NODES}=="1", GOTO="end_del_part_nodes"
++		if (*p == '/')
++			*p = '!';
++	}
++}
 +
-+# dm-multipath
-+ENV{DM_MULTIPATH_DEVICE_PATH}=="1", GOTO="del_part_nodes"
++static int format_partname(char *buf, size_t bufsiz,
++			   const char *mapname, const char *delim, int part)
++{
++	if (snprintf(buf, bufsiz, "%s%s%d", mapname, delim, part) >= bufsiz)
++		return 0;
++	strip_slash(buf);
++	return 1;
++}
 +
-+# Other aggregate device types can be added here.
++static char *make_prefixed_uuid(int part, const char *uuid)
++{
++	char *prefixed_uuid;
++	int len = MAX_PREFIX_LEN + strlen(uuid) + 1;
 +
-+GOTO="end_del_part_nodes"
++	prefixed_uuid = malloc(len);
++	if (!prefixed_uuid) {
++		fprintf(stderr, "cannot create prefixed uuid : %s\n",
++			strerror(errno));
++		return NULL;
++	}
++	snprintf(prefixed_uuid, len, UUID_PREFIX "%s", part, uuid);
++	return prefixed_uuid;
++}
 +
-+LABEL="del_part_nodes"
-+IMPORT{db}="DM_DEL_PART_NODES"
-+ENV{DM_DEL_PART_NODES}!="1", ENV{DM_DEL_PART_NODES}="1", \
-+	RUN+="/usr/sbin/partx -d --nr 1-1024 $env{DEVNAME}"
-+
-+LABEL="end_del_part_nodes"
+ int dm_addmap(int task, const char *name, const char *target,
+ 	      const char *params, uint64_t size, int ro, const char *uuid,
+ 	      int part, mode_t mode, uid_t uid, gid_t gid)
+@@ -117,13 +153,9 @@ int dm_addmap(int task, const char *name, const char *target,
+ 			goto addout;
+ 
+ 	if (task == DM_DEVICE_CREATE && uuid) {
+-		prefixed_uuid = malloc(MAX_PREFIX_LEN + strlen(uuid) + 1);
+-		if (!prefixed_uuid) {
+-			fprintf(stderr, "cannot create prefixed uuid : %s\n",
+-				strerror(errno));
++		prefixed_uuid = make_prefixed_uuid(part, uuid);
++		if (prefixed_uuid == NULL)
+ 			goto addout;
+-		}
+-		sprintf(prefixed_uuid, UUID_PREFIX "%s", part, uuid);
+ 		if (!dm_task_set_uuid(dmt, prefixed_uuid))
+ 			goto addout;
+ 	}
 -- 
 2.14.0
