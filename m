@@ -1,64 +1,107 @@
-From: Guan Junxiong <guanjunxiong@huawei.com>
-Subject: Re: [PATCH] multipath-tools: support for coalescing
- heterogenous paths
-Date: Sat, 2 Sep 2017 14:43:50 +0800
-Message-ID: <de4c2d55-4556-d576-75f9-b5fef5212a32@huawei.com>
-References: <1502957718-12152-1-git-send-email-guanjunxiong@huawei.com>
-	<5383fd74-7dc7-c986-8c45-c2e74d753427@huawei.com>
+From: Amir Goldstein <amir73il@gmail.com>
+Subject: Re: Multi-device dm-log-writes
+Date: Sat, 2 Sep 2017 11:12:17 +0300
+Message-ID: <CAOQ4uxgP=yUytPkfVQkKfoGjRDb+ha6uhZptSXrcA2W0=Dbr0g@mail.gmail.com>
+References: <20170901183110.qjyxjrrksnub7y4a@destiny> <20170901200532.GA18524@redhat.com>
+ <20170902001035.wqnlxxzbf5hsvubg@destiny>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <5383fd74-7dc7-c986-8c45-c2e74d753427@huawei.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: mwilck@suse.com
-Cc: xose.vazquez@gmail.com, chengjike.cheng@huawei.com, shenhong09@huawei.com, dm-devel@redhat.com, niuhaoxin@huawei.com
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20170902001035.wqnlxxzbf5hsvubg@destiny>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Josef Bacik <josef@toxicpanda.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, linux-fsdevel <linux-fsdevel@vger.kernel.org>, kernel-team@fb.com, Chris Mason <clm@fb.com>, osandov@fb.com, rwareing@fb.com
 List-Id: dm-devel.ids
 
-SGkgTWFydGlu77yMCgpJZiB0aW1lIGFsbG93cywgcGxlYXNlIGNvbnNpZGVyIHRoaXMgZmVhdHVy
-ZSBvZiBjb2FsZXNjaW5nIGhldGVyb2dlbm91cyBwYXRocwpieSB1ZGV2IHJ1bGVzIGFzIHN1Z2dl
-c3RlZCBieSB5b3UgaW4gdGhlIG9yaWdpbmFsIHBhdGNoLgpBbnkgY29tbWVudCBpcyB3ZWxjb21l
-LgoKVGhhbmtzLgoKQmVzdCBXaXNoZXMKR3VhbiBKdW54aW9uZwoKCgpPbiAyMDE3LzgvMjIgMjI6
-MjEsIEd1YW4gSnVueGlvbmcgd3JvdGU6Cj4gSGksIGd1eXMsCj4gCj4gQW55IGNvbW1lbnRzIGFi
-b3V0IHRoaXMgcGF0Y2g/Cj4gCj4gSU1PLCB0aGlzIGZlYXR1cmUgb2YgY29hbGVzY2luZyBoZXRl
-cm9nZW5vdXMgcGF0aHMgd2l0aG91dCBpbnRlcnJ1cHRpbmcKPiB1cGxheWVyIHRyYW5zYWN0aW9u
-IGlzIHdvcnRoeSB0byBpbnRlZ3JhdGUgaW50byBtdWx0aXBhdGgtdG9vbHMuIFBsZWFzZQo+IGNv
-bnNpZGVyIGFib3V0IGl0Lgo+IAo+IEkgYW0gZ2xhZCB0byBzZWUgaWYgdGhlcmUgaXMgYW55dGhp
-bmcgd2hpY2ggY2FuIGJlIGltcHJvdmUgZm9yIHRoaXMgcGF0Y2guCj4gCj4gVGhhbmtzCj4gR3Vh
-biBKdW54aW9uZwo+IAo+IAo+IE9uIDIwMTcvOC8xNyAxNjoxNSwgR3VhbiBKdW54aW9uZyB3cm90
-ZToKPj4gVGhpcyBwYXRjaCBzdXBwb3J0cyBjb2FsZXNjaW5nIGhldGVyb2dlbm91cyBwYXRocyBi
-eSB1c2luZwo+PiB1ZGV2IHJ1bGVzIGZpbGVzLiBUaGlzIGlzIHVzZWZ1bCBpbiB0aGUgc2NlbmFy
-aW8gb2YgbWlncmF0aW5nCj4+IGRhdGEgZm9yIGhldGVyb2dlbm91cyBhcnJheXMgd2l0aG91dCBp
-bnRlcnJ1cHRpbmcgdXBsYXllcgo+PiB0cmFuc2FjdGlvbi4gVGhlIHVkZXYgcnVsZXMgZmlsZSwg
-d2hpY2ggaXMgbG9jYXRlZCBpbiB0aGUKPj4gL2V0Yy91ZGV2L3J1bGVzLmQvIGRpcmVjdG9yeSwg
-aXMgYXV0b21hdGljYWxseSBnZW5lcmF0ZWQgYnkKPj4gbXVsdGlwYXRoIHdpdGggbmV3IG9wdGlv
-bnMgLW0gYW5kIC1uLgo+Pgo+PiBGb3IgZXhhbXBsZToKPj4gbXVsdGlwYXRoIC1tIGRtLTAgLW4g
-IDEwMDAwMzYwMDYwMTYwMjgKPj4KPj4gVGhlIGdlbmVhdGVkIHVkZXYgcnVsZXMgaXMgYXMgZm9s
-bG93czoKPj4gS0VSTkVMPT0ic2QqWyEwLTldfG52bWUqWzAtOV1uKlswLTldIiwgRU5We0RFVlRZ
-UEV9PT0iZGlzayIsCj4+IEVOVntJRF9TRVJJQUx9PT0iMTAwMDAzNjAwNjAxNjAyOCIsIEVOVntJ
-RF9TRVJJQUx9PSIzNjAwNjAxNi0KPj4gMDI4ZjAzNjAwNTg4ZGI1MjFkYzdjZTcxIgo+Pgo+PiBL
-RVJORUw9PSJzZCpbITAtOV18bnZtZSpbMC05XW4qWzAtOV0iLCBFTlZ7REVWVFlQRX09PSJkaXNr
-IiwKPj4gRU5We0lEX1dXTn09PSIxMDAwMDM2MDA2MDE2MDI4IiwgRU5We0lEX1dXTn09IjM2MDA2
-MDE2MDI4ZjAzNi0KPj4gMDA1ODhkYjUyMWRjN2NlNzEiCj4+Cj4+IEtFUk5FTD09InNkKlshMC05
-XXxudm1lKlswLTldbipbMC05XSIsIEVOVntERVZUWVBFfT09ImRpc2siLAo+PiBFTlZ7SURfVVVJ
-RH09PSIxMDAwMDM2MDA2MDE2MDI4IiwgRU5We0lEX1VVSUR9PSIzNjAwNjAxNjAyOGYwMy0KPj4g
-NjAwNTg4ZGI1MjFkYzdjZTcxIgo+Pgo+PiBTaWduZWQtb2ZmLWJ5OiBKdW54aW9uZyBHdWFuIDxn
-dWFuanVueGlvbmdAaHVhd2VpLmNvbT4KPj4gLS0tCj4+ICBsaWJtdWx0aXBhdGgvTWFrZWZpbGUg
-ICB8ICAgMyArLQo+PiAgbGlibXVsdGlwYXRoL2NvbmZpZy5oICAgfCAgIDEgKwo+PiAgbGlibXVs
-dGlwYXRoL3VkZXZydWxlLmMgfCAxOTEgKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysr
-KysrKysrKysrKysrKysrCj4+ICBsaWJtdWx0aXBhdGgvdWRldnJ1bGUuaCB8ICAxMyArKysrCj4+
-ICBtdWx0aXBhdGgvbWFpbi5jICAgICAgICB8ICAyOSArKysrKysrLQo+PiAgbXVsdGlwYXRoL211
-bHRpcGF0aC44ICAgfCAgMTIgKysrCj4+ICA2IGZpbGVzIGNoYW5nZWQsIDI0NyBpbnNlcnRpb25z
-KCspLCAyIGRlbGV0aW9ucygtKQo+PiAgY3JlYXRlIG1vZGUgMTAwNjQ0IGxpYm11bHRpcGF0aC91
-ZGV2cnVsZS5jCj4+ICBjcmVhdGUgbW9kZSAxMDA2NDQgbGlibXVsdGlwYXRoL3VkZXZydWxlLmgK
-Ci0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3
-LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+On Sat, Sep 2, 2017 at 3:10 AM, Josef Bacik <josef@toxicpanda.com> wrote:
+> On Fri, Sep 01, 2017 at 04:05:33PM -0400, Mike Snitzer wrote:
+>> On Fri, Sep 01 2017 at  2:31pm -0400,
+>> Josef Bacik <josef@toxicpanda.com> wrote:
+>>
+>> > Hello,
+>> >
+>> > I'm looking at extending dm-log-writes to support multiple devices to log to a
+>> > single log.  The benefit for this is testing things like btrfs's raid code, the
+>> > xfs realtime device thing, and even mdraid.  I left room in the log format to
+>> > change it as needed with this use case in mind, so I'm not worried about that.
+>> > I'm more looking for verification that my plan doesn't suck, or if it does suck
+>> > what would be a better approach.  I'll lay out the different parts to try and
+>> > make this as quick and concise as possible.
+>> >
+>> > 1) Add a "log-writes-log" target that just takes the single device we are going
+>> > to use as the log.  This will do the work of taking the log IO from the actual
+>> > "log-writes" target and putting it in the log.
+>> >
+>> > 2) Extend the "log-writes" target table format to include an "id" at the end of
+>> > the table line that will be used to indicate which device the log entry will be
+>> > fore.  In this case the "log device" portion will point at the "log-writes-log"
+>> > device mapper target.  Everything would work normally, except in this mode we
+>> > send the log bio's down with bi_sector = 0 and let the "log-writes-log" target
+>> > do the actual mapping for the bio.
+>> >
+>> > So to test with multiple devices you would have to do something like
+>> >
+>> > dmsetup create log --table "0 <size> log-writes-log <log device>"
+>> > dmsetup create lw1 --table "0 <size> log-writes <device> /dev/mapper/log 0"
+>> > dmsetup create lw2 --table "0 <size> log-writes <device> /dev/mapper/log 1"
+>> > mkfs.btrfs -d raid1 -m raid1 /dev/mapper/lw1 /dev/mapper/lw2
+>> > mount /dev/mapper/lw1 /mnt
+>> > <do whatever>
+>> > umount /mnt
+>> > dmsetup remove lw1
+>> > dmsetup remove lw2
+>> > dmsetup remove log
+>>
+>> This example illustrates the need for a separate log device nicely.
+>>
+>> Though I'm not following why you'd want to override the bio's bi_sector
+>> to be 0 when issuing the IO to the "log-writes-log" target device.
+>>
+>> > Mike, I would simply add a new struct target_type for log-writes-log that would
+>> > do it's own ->map function to re-route the bio's coming into them.  I'd also
+>> > change the ->ctr function of the log-writes target_type to handle the new id
+>> > field and do the new fancy thing if we have that field populated.  Does that
+>> > sound reasonable from an implementation point of view?
+>> >
+>> > Any comments or suggestions are welcome.  I haven't written any code yet so I'm
+>> > open to other ideas.  Thanks,
+>>
+>> I'm still missing what type of mapping the "log-writes-log" target would
+>> be doing if it just receives bios that have bi_sector of 0... I must be
+>> missing something basic?  But wouldn't it be useful to preserve the
+>> original bio offset for the IO and somehow encode which dev "id" the IO
+>> came from (possibly as part of the per-bio-data) and use that as part of
+>> the new ->map method?
+>>
+>
+> Yeah sorry the bio's going to the "log-writes-log" target will be the log entry
+> with the original sector information and device id plus the actual data that was
+> written.  The bi_sector will be 0 because "log-writes-log" is going to put it
+> where it actually goes, it's just a log so starts at sector 1 and goes on from
+> there based on whatever we're logging.  See the lc->next_sector part we
+> currently have, in this new setup the lc->next_sector would only matter for the
+> "log-writes-log" target, and is what would be used to populate the bio that we
+> are logging.  Thanks,
+>
+
+Me too was confused about the need for log-writes-log, but now I understand
+its purpose is to have a single logging kthread per log device.
+So basically, you could do the same thing without the need to setup the
+log-writes-log explicitly by the user and set it up / tear it down implicitly
+from log-writes device when setting up target for a new log device.
+
+I have no objection at all for the explicit setup step as long as we understand
+there is an alternative.
+
+Regarding the format of the log entry, please include in v2 format some sort
+of magic in entry header, I found it useful to detect log corruption
+during replay.
+I also found that if entry had hdr_len (the offset where hdr_data
+begins) if would
+have been easier for me to insert extra debugging fields (magic) into the header
+without breaking unmodified replay-log. (I added add magic after data,
+but that's
+just a simple example).
+
+Cheers,
+Amir.
