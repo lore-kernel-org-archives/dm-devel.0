@@ -1,8 +1,7 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 26/31] kpartx.rules: create by-partuuid and
-	by-partlabel symlinks
-Date: Sun,  3 Sep 2017 00:38:55 +0200
-Message-ID: <20170902223900.7339-27-mwilck@suse.com>
+Subject: [PATCH 30/31] kpartx/del-part-nodes.rules: new udev file
+Date: Sun,  3 Sep 2017 00:38:59 +0200
+Message-ID: <20170902223900.7339-31-mwilck@suse.com>
 References: <20170902223900.7339-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,37 +21,77 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The LVM rules do this since 2.02.173 (c48149cf80 "udev: also
-create /dev/disk/by-part{label,uuid} and gpt-auto-root symlinks").
-We have to do it here for partitions on unaccessible mpath maps.
+A new udev rules file "68-del-part-nodes.rules" is introduced,
+based on code from Ben Marzinki. This code deletes partitions on
+multipath member devices. The purpose of this is to avoid users
+accidentally accessing partitions of member devices rather than of the
+multipath devcice. The deletion is done only once for every disk
+device. If the user wants to get the partitions back, he can run "partx
+-a" or "partprobe" on the disk device.
+
+This code could be extended to wipe partitions on member devices
+of non-multipath dm targets if desired.
+
+Means to deactivate this behavior are provided via kernel parameter
+"dont_del_part_nodes", or a custom udev rules file setting the
+"DONT_DEL_PART_NODES" environment variable.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- kpartx/kpartx.rules | 6 ++++++
- 1 file changed, 6 insertions(+)
+ kpartx/Makefile             |  1 +
+ kpartx/del-part-nodes.rules | 32 ++++++++++++++++++++++++++++++++
+ 2 files changed, 33 insertions(+)
+ create mode 100644 kpartx/del-part-nodes.rules
 
-diff --git a/kpartx/kpartx.rules b/kpartx/kpartx.rules
-index 4e5a6d07..b05181a8 100644
---- a/kpartx/kpartx.rules
-+++ b/kpartx/kpartx.rules
-@@ -38,12 +38,18 @@ ENV{DM_UUID}!="part*-*-*", GOTO="import_end"
- ENV{ID_FS_USAGE}!="?*", IMPORT{db}="ID_FS_USAGE"
- ENV{ID_FS_UUID_ENC}!="?*", IMPORT{db}="ID_FS_UUID_ENC"
- ENV{ID_FS_LABEL_ENC}!="?*", IMPORT{db}="ID_FS_LABEL_ENC"
-+ENV{ID_PART_ENTRY_NAME}!="?*", IMPORT{db}="ID_PART_ENTRY_NAME"
-+ENV{ID_PART_ENTRY_UUID}!="?*", IMPORT{db}="ID_PART_ENTRY_UUID"
-+ENV{ID_PART_ENTRY_SCHEME}!="?*", IMPORT{db}="ID_PART_ENTRY_SCHEME"
- LABEL="import_end"
+diff --git a/kpartx/Makefile b/kpartx/Makefile
+index 7b75032e..7f5c1708 100644
+--- a/kpartx/Makefile
++++ b/kpartx/Makefile
+@@ -30,6 +30,7 @@ install: $(EXEC) $(EXEC).8
+ 	$(INSTALL_PROGRAM) -m 755 kpartx_id $(DESTDIR)$(libudevdir)
+ 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(libudevdir)/rules.d
+ 	$(INSTALL_PROGRAM) -m 644 kpartx.rules $(DESTDIR)$(libudevdir)/rules.d/66-kpartx.rules
++	$(INSTALL_PROGRAM) -m 644 del-part-nodes.rules $(DESTDIR)$(libudevdir)/rules.d/68-del-part-nodes.rules
+ 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(man8dir)
+ 	$(INSTALL_PROGRAM) -m 644 $(EXEC).8.gz $(DESTDIR)$(man8dir)
  
- ENV{ID_FS_USAGE}=="filesystem|other|crypto", ENV{ID_FS_UUID_ENC}=="?*", \
-        SYMLINK+="disk/by-uuid/$env{ID_FS_UUID_ENC}"
- ENV{ID_FS_USAGE}=="filesystem|other", ENV{ID_FS_LABEL_ENC}=="?*", \
-        SYMLINK+="disk/by-label/$env{ID_FS_LABEL_ENC}"
-+ENV{ID_PART_ENTRY_UUID}=="?*", SYMLINK+="disk/by-partuuid/$env{ID_PART_ENTRY_UUID}"
-+ENV{ID_PART_ENTRY_SCHEME}=="gpt", ENV{ID_PART_ENTRY_NAME}=="?*", \
-+       SYMLINK+="disk/by-partlabel/$env{ID_PART_ENTRY_NAME}"
- LABEL="symlink_end"
- 
- # Create dm tables for partitions
+diff --git a/kpartx/del-part-nodes.rules b/kpartx/del-part-nodes.rules
+new file mode 100644
+index 00000000..cee945d9
+--- /dev/null
++++ b/kpartx/del-part-nodes.rules
+@@ -0,0 +1,32 @@
++# These rules can delete partitions devnodes for slave devices
++# for certain aggregate devices such as multipath.
++# This is desirable to avoid confusion and keep the number
++# of device nodes and symlinks within limits.
++#
++# This is done only once on the first "add" or "change" event for
++# any given device.
++#
++# To suppress this, use the kernel parameter "dont_del_part_nodes",
++# or create an udev rule file that sets ENV{DONT_DEL_PART_NODES}="1".
++
++SUBSYSTEM!="block", GOTO="end_del_part_nodes"
++KERNEL!="sd*|dasd*|rbd*", GOTO="end_del_part_nodes"
++ACTION!="add|change", GOTO="end_del_part_nodes"
++
++IMPORT{cmdline}="dont_del_part_nodes"
++ENV{dont_del_part_nodes}=="1", GOTO="end_del_part_nodes"
++ENV{DONT_DEL_PART_NODES}=="1", GOTO="end_del_part_nodes"
++
++# dm-multipath
++ENV{DM_MULTIPATH_DEVICE_PATH}=="1", GOTO="del_part_nodes"
++
++# Other aggregate device types can be added here.
++
++GOTO="end_del_part_nodes"
++
++LABEL="del_part_nodes"
++IMPORT{db}="DM_DEL_PART_NODES"
++ENV{DM_DEL_PART_NODES}!="1", ENV{DM_DEL_PART_NODES}="1", \
++	RUN+="/usr/sbin/partx -d --nr 1-1024 $env{DEVNAME}"
++
++LABEL="end_del_part_nodes"
 -- 
 2.14.0
