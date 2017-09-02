@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 23/31] kpartx.rules: don't rely on DM_DEPS and
-	DM_TABLE_STATE
-Date: Sun,  3 Sep 2017 00:38:52 +0200
-Message-ID: <20170902223900.7339-24-mwilck@suse.com>
+Subject: [PATCH 17/31] 11-dm-mpath.rules: import more ID_FS_xxx
+	vars from db
+Date: Sun,  3 Sep 2017 00:38:46 +0200
+Message-ID: <20170902223900.7339-18-mwilck@suse.com>
 References: <20170902223900.7339-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,38 +22,29 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-These tests (which were SUSE-specific anyway) are not needed
-here. The kpartx invocation further down is guarded separately.
-SYMLINK actions must be run in any case for consistency, and
-there's no need to access the udev db here because kpartx_id
-also works on otherwise broken devices.
+We have code for importing blkid variables from db but this code
+is missing the _ENC variants needed for creating symlinks, and
+ID_FS_LABEL.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- kpartx/kpartx.rules | 10 +++++-----
- 1 file changed, 5 insertions(+), 5 deletions(-)
+ multipath/11-dm-mpath.rules | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
-diff --git a/kpartx/kpartx.rules b/kpartx/kpartx.rules
-index 64d550de..ea34e449 100644
---- a/kpartx/kpartx.rules
-+++ b/kpartx/kpartx.rules
-@@ -5,12 +5,12 @@
- #
+diff --git a/multipath/11-dm-mpath.rules b/multipath/11-dm-mpath.rules
+index d1ef85e5..2e42a1bd 100644
+--- a/multipath/11-dm-mpath.rules
++++ b/multipath/11-dm-mpath.rules
+@@ -72,7 +72,9 @@ ENV{DM_NOSCAN}!="1", GOTO="mpath_end"
+ ENV{ID_FS_TYPE}!="?*", IMPORT{db}="ID_FS_TYPE"
+ ENV{ID_FS_USAGE}!="?*", IMPORT{db}="ID_FS_USAGE"
+ ENV{ID_FS_UUID}!="?*", IMPORT{db}="ID_FS_UUID"
+-ENV{ID_FS_ENC}!="?*", IMPORT{db}="ID_FS_UUID_ENC"
++ENV{ID_FS_UUID_ENC}!="?*", IMPORT{db}="ID_FS_UUID_ENC"
++ENV{ID_FS_LABEL}!="?*", IMPORT{db}="ID_FS_LABEL"
++ENV{ID_FS_LABEL_ENC}!="?*", IMPORT{db}="ID_FS_LABEL_ENC"
+ ENV{ID_FS_VERSION}!="?*", IMPORT{db}="ID_FS_VERSION"
  
- KERNEL!="dm-*", GOTO="kpartx_end"
--ACTION=="remove", GOTO="kpartx_end"
-+ACTION!="add|change", GOTO="kpartx_end"
-+ENV{DM_UUID}!="?*", GOTO="kpartx_end"
- 
--ENV{DM_TABLE_STATE}!="LIVE", GOTO="kpartx_end"
--ENV{DM_DEPS}=="0", GOTO="kpartx_end"
--
--ENV{DM_UUID}=="?*", IMPORT{program}=="kpartx_id %M %m $env{DM_UUID}"
-+# kpartx_id is very robust, it works for suspended maps and maps
-+# with 0 dependencies
-+IMPORT{program}=="kpartx_id %M %m $env{DM_UUID}"
- 
- OPTIONS="link_priority=50"
- 
+ LABEL="mpath_end"
 -- 
 2.14.0
