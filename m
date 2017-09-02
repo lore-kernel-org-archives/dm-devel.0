@@ -1,8 +1,7 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 25/31] kpartx.rules: improved logic for by-uuid
-	and by-label links
-Date: Sun,  3 Sep 2017 00:38:54 +0200
-Message-ID: <20170902223900.7339-26-mwilck@suse.com>
+Subject: [PATCH 13/31] libmultipath: add DI_NOIO flag for pathinfo
+Date: Sun,  3 Sep 2017 00:38:42 +0200
+Message-ID: <20170902223900.7339-14-mwilck@suse.com>
 References: <20170902223900.7339-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,56 +21,54 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-If blkid can be run, these links are already set up by 13-dm-disk.rules.
-In the DM_NOSCAN=1 case, they are imported from db in 11-dm-mpath.rules
-for multipath maps, but not for partitions (there is currently no flag
-for kpartx-generated partitions that indicates whether the device will
-be able to do IO).
-
-Moreover, the previous logic for running IMPORT{db} was wrong (condition
-used '=="?*"' rather than '!="?*"').
+This flag can used to avoid any IO on the device itself. Useful
+for getting the path state without the risk of hanging or running
+into IO errors.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- kpartx/kpartx.rules | 24 ++++++++++++++++++------
- 1 file changed, 18 insertions(+), 6 deletions(-)
+ libmultipath/discovery.c | 8 ++++++++
+ libmultipath/discovery.h | 2 ++
+ 2 files changed, 10 insertions(+)
 
-diff --git a/kpartx/kpartx.rules b/kpartx/kpartx.rules
-index efd21a29..4e5a6d07 100644
---- a/kpartx/kpartx.rules
-+++ b/kpartx/kpartx.rules
-@@ -25,14 +25,26 @@ ENV{DM_WWN}=="?*", ENV{DM_PART}!="?*", \
- ENV{DM_WWN}=="?*", ENV{DM_PART}=="?*", \
- 	SYMLINK+="disk/by-id/wwn-$env{DM_WWN}-part$env{DM_PART}"
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 3a912d76..0ff2faa7 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1926,6 +1926,14 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
+ 	path_state = path_offline(pp);
+ 	if (path_state == PATH_REMOVED)
+ 		goto blank;
++	else if (mask & DI_NOIO) {
++		/*
++		 * Avoid any IO on the device itself.
++		 * Behave like DI_CHECKER in the "path unavailable" case.
++		 */
++		pp->chkrstate = pp->state = path_state;
++		return PATHINFO_OK;
++	}
  
--# Create persistent by-label/by-uuid links
--ENV{ID_FS_USAGE}=="?*", IMPORT{db}="ID_FS_USAGE"
--ENV{ID_FS_UUID_ENC}=="?*", IMPORT{db}="ID_FS_UUID_ENC"
-+# Create persistent by-label/by-uuid links.
-+# multipath maps with DM_NOSCAN!=1 are handled in 13-dm-disk.rules.
-+DM_UUID=="mpath-*", ENV{DM_NOSCAN}!="1", GOTO="symlink_end"
-+
-+# For partitions, we don't have DM_NOSCAN.
-+# Simply load variables from db if they aren't set.
-+# 11-dm-mpath.rules does this for mpath maps.
-+# Fixme: we have currently no way to avoid calling blkid on
-+# partitions of broken mpath maps.
-+ENV{DM_UUID}!="part*-*-*", GOTO="import_end"
-+ENV{ID_FS_USAGE}!="?*", IMPORT{db}="ID_FS_USAGE"
-+ENV{ID_FS_UUID_ENC}!="?*", IMPORT{db}="ID_FS_UUID_ENC"
-+ENV{ID_FS_LABEL_ENC}!="?*", IMPORT{db}="ID_FS_LABEL_ENC"
-+LABEL="import_end"
-+
- ENV{ID_FS_USAGE}=="filesystem|other|crypto", ENV{ID_FS_UUID_ENC}=="?*", \
--	SYMLINK+="disk/by-uuid/$env{ID_FS_UUID_ENC}"
--ENV{ID_FS_LABEL_ENC}=="?*", IMPORT{db}="ID_FS_LABEL_ENC"
-+       SYMLINK+="disk/by-uuid/$env{ID_FS_UUID_ENC}"
- ENV{ID_FS_USAGE}=="filesystem|other", ENV{ID_FS_LABEL_ENC}=="?*", \
--	SYMLINK+="disk/by-label/$env{ID_FS_LABEL_ENC}"
-+       SYMLINK+="disk/by-label/$env{ID_FS_LABEL_ENC}"
-+LABEL="symlink_end"
+ 	/*
+ 	 * fetch info not available through sysfs
+diff --git a/libmultipath/discovery.h b/libmultipath/discovery.h
+index 51c23d6f..65352881 100644
+--- a/libmultipath/discovery.h
++++ b/libmultipath/discovery.h
+@@ -62,6 +62,7 @@ enum discovery_mode {
+ 	__DI_PRIO,
+ 	__DI_WWID,
+ 	__DI_BLACKLIST,
++	__DI_NOIO,
+ };
  
- # Create dm tables for partitions
- ENV{DM_ACTION}=="PATH_FAILED|PATH_REINSTATED", GOTO="kpartx_end"
+ #define DI_SYSFS	(1 << __DI_SYSFS)
+@@ -70,6 +71,7 @@ enum discovery_mode {
+ #define DI_PRIO		(1 << __DI_PRIO)
+ #define DI_WWID		(1 << __DI_WWID)
+ #define DI_BLACKLIST	(1 << __DI_BLACKLIST)
++#define DI_NOIO		(1 << __DI_NOIO) /* Avoid IO on the device */
+ 
+ #define DI_ALL		(DI_SYSFS  | DI_SERIAL | DI_CHECKER | DI_PRIO | \
+ 			 DI_WWID)
 -- 
 2.14.0
