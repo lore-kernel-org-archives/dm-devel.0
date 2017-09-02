@@ -1,7 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 10/31] libmultipath: add get_udev_device
-Date: Sun,  3 Sep 2017 00:38:39 +0200
-Message-ID: <20170902223900.7339-11-mwilck@suse.com>
+Subject: [PATCH 09/31] libmultipath: support
+	MPATH_UDEV_NO_PATHS_FLAG on map creation
+Date: Sun,  3 Sep 2017 00:38:38 +0200
+Message-ID: <20170902223900.7339-10-mwilck@suse.com>
 References: <20170902223900.7339-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,69 +22,104 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This factors out the functionality of retrieving the
-udev_device from different device types from get_refwwid.
+Some vendor kernels (e.g. SUSE) have supported loading multipath
+maps without valid paths for a long time. Without that feature,
+problems can occur in failover scenarios when multipathd tries
+to (re)load maps after device failure/removal, because multipathd's
+attempts to reload the configuration may fail unnecessarily.
+The discussion in the kernel community is ongoing
+(see e.g. https://patchwork.kernel.org/patch/4579551/).
+
+One corner case of this is creation of a map with only failed
+paths. Such maps can be created if the kernel patch mentioned above
+is applied. The current udev rules for dm-multipath can't detect
+this situation. This patch fixes that by setting
+DM_SUBSYSTEM_UDEV_FLAG2, which is already used for the "map reload"
+case with no valid paths. Thus no additional udev rules are required
+to detect this situation.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/configure.c | 35 +++++++++++++++++++++++++++++++++++
- libmultipath/configure.h |  1 +
- 2 files changed, 36 insertions(+)
+ libmultipath/devmapper.c | 30 ++++++++++++++++++++----------
+ 1 file changed, 20 insertions(+), 10 deletions(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 74b6f52a..7326132b 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -1106,6 +1106,41 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
- 	return 0;
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index e701e806..7a3390a7 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -300,12 +300,14 @@ dm_device_remove (const char *name, int needsync, int deferred_remove) {
+ 
+ static int
+ dm_addmap (int task, const char *target, struct multipath *mpp,
+-	   char * params, int ro, int skip_kpartx) {
++	   char * params, int ro, uint16_t udev_flags) {
+ 	int r = 0;
+ 	struct dm_task *dmt;
+ 	char *prefixed_uuid = NULL;
+ 	uint32_t cookie = 0;
+-	uint16_t udev_flags = DM_UDEV_DISABLE_LIBRARY_FALLBACK | ((skip_kpartx == SKIP_KPARTX_ON)? MPATH_UDEV_NO_KPARTX_FLAG : 0);
++
++	/* Need to add this here to allow 0 to be passed in udev_flags */
++	udev_flags |= DM_UDEV_DISABLE_LIBRARY_FALLBACK;
+ 
+ 	if (!(dmt = libmp_dm_task_create (task)))
+ 		return 0;
+@@ -371,15 +373,27 @@ addout:
+ 	return r;
  }
  
-+struct udev_device *get_udev_device(const char *dev, enum devtypes dev_type)
++static uint16_t build_udev_flags(const struct multipath *mpp, int reload)
 +{
-+	struct udev_device *ud = NULL;
-+	const char *base;
-+
-+	if (dev == NULL || *dev == '\0')
-+		return NULL;
-+
-+	switch (dev_type) {
-+	case DEV_DEVNODE:
-+	case DEV_DEVMAP:
-+		/* This should be GNU basename, compiler will warn if not */
-+		base = basename(dev);
-+		if (*base == '\0')
-+			break;
-+		ud = udev_device_new_from_subsystem_sysname(udev, "block",
-+							    base);
-+		break;
-+	case DEV_DEVT:
-+		ud = udev_device_new_from_devnum(udev, 'b', parse_devt(dev));
-+		break;
-+	case DEV_UEVENT:
-+		ud = udev_device_new_from_environment(udev);
-+		break;
-+	default:
-+		condlog(0, "Internal error: get_udev_device called with invalid type %d\n",
-+			dev_type);
-+		break;
-+	}
-+	if (ud == NULL)
-+		condlog(2, "get_udev_device: failed to look up %s with type %d",
-+			dev, dev_type);
-+	return ud;
++	/* DM_UDEV_DISABLE_LIBRARY_FALLBACK is added in dm_addmap */
++	return	(mpp->skip_kpartx == SKIP_KPARTX_ON ?
++		 MPATH_UDEV_NO_KPARTX_FLAG : 0) |
++		(mpp->nr_active == 0 ?
++		 MPATH_UDEV_NO_PATHS_FLAG : 0) |
++		(reload && !mpp->force_udev_reload ?
++		 MPATH_UDEV_RELOAD_FLAG : 0);
 +}
 +
- /*
-  * returns:
-  * 0 - success
-diff --git a/libmultipath/configure.h b/libmultipath/configure.h
-index fd7f581d..0ffc28ef 100644
---- a/libmultipath/configure.h
-+++ b/libmultipath/configure.h
-@@ -36,3 +36,4 @@ int get_refwwid (enum mpath_cmds cmd, char * dev, enum devtypes dev_type,
- 		 vector pathvec, char **wwid);
- int reload_map(struct vectors *vecs, struct multipath *mpp, int refresh, int is_daemon);
- int sysfs_get_host_adapter_name(struct path *pp, char *adapter_name);
-+struct udev_device *get_udev_device(const char *dev, enum devtypes dev_type);
+ int dm_addmap_create (struct multipath *mpp, char * params)
+ {
+ 	int ro;
++	uint16_t udev_flags = build_udev_flags(mpp, 0);
+ 
+ 	for (ro = 0; ro <= 1; ro++) {
+ 		int err;
+ 
+ 		if (dm_addmap(DM_DEVICE_CREATE, TGT_MPATH, mpp, params, ro,
+-			      mpp->skip_kpartx))
++			      udev_flags))
+ 			return 1;
+ 		/*
+ 		 * DM_DEVICE_CREATE is actually DM_DEV_CREATE + DM_TABLE_LOAD.
+@@ -405,11 +419,7 @@ int dm_addmap_create (struct multipath *mpp, char * params)
+ int dm_addmap_reload(struct multipath *mpp, char *params, int flush)
+ {
+ 	int r = 0;
+-	uint16_t udev_flags = ((mpp->force_udev_reload)?
+-			       0 : MPATH_UDEV_RELOAD_FLAG) |
+-			      ((mpp->skip_kpartx == SKIP_KPARTX_ON)?
+-			       MPATH_UDEV_NO_KPARTX_FLAG : 0) |
+-			      ((mpp->nr_active)? 0 : MPATH_UDEV_NO_PATHS_FLAG);
++	uint16_t udev_flags = build_udev_flags(mpp, 1);
+ 
+ 	/*
+ 	 * DM_DEVICE_RELOAD cannot wait on a cookie, as
+@@ -419,12 +429,12 @@ int dm_addmap_reload(struct multipath *mpp, char *params, int flush)
+ 	 */
+ 	if (!mpp->force_readonly)
+ 		r = dm_addmap(DM_DEVICE_RELOAD, TGT_MPATH, mpp, params,
+-			      ADDMAP_RW, SKIP_KPARTX_OFF);
++			      ADDMAP_RW, 0);
+ 	if (!r) {
+ 		if (!mpp->force_readonly && errno != EROFS)
+ 			return 0;
+ 		r = dm_addmap(DM_DEVICE_RELOAD, TGT_MPATH, mpp,
+-			      params, ADDMAP_RO, SKIP_KPARTX_OFF);
++			      params, ADDMAP_RO, 0);
+ 	}
+ 	if (r)
+ 		r = dm_simplecmd(DM_DEVICE_RESUME, mpp->alias, !flush,
 -- 
 2.14.0
