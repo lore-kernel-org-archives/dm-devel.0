@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 02/31] kpartx: helper functions for name and uuid
-	generation
-Date: Sun,  3 Sep 2017 00:38:31 +0200
-Message-ID: <20170902223900.7339-3-mwilck@suse.com>
+Subject: [PATCH 04/31] test-kpartx: add tests for renaming
+	functionality
+Date: Sun,  3 Sep 2017 00:38:33 +0200
+Message-ID: <20170902223900.7339-5-mwilck@suse.com>
 References: <20170902223900.7339-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,76 +22,67 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-strip_slash() is copied from kpartx.c, and will be removed there
-in a follow-up patch. The others are new helpers.
+Add test for the functionality implemented in patch
+"kpartx: search partitions by UUID, and rename".
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- kpartx/devmapper.c | 44 ++++++++++++++++++++++++++++++++++++++------
- 1 file changed, 38 insertions(+), 6 deletions(-)
+ kpartx/test-kpartx | 36 ++++++++++++++++++++++++++++++++++++
+ 1 file changed, 36 insertions(+)
 
-diff --git a/kpartx/devmapper.c b/kpartx/devmapper.c
-index 4ab58ce9..3d382285 100644
---- a/kpartx/devmapper.c
-+++ b/kpartx/devmapper.c
-@@ -92,6 +92,42 @@ out:
- 	return r;
- }
+diff --git a/kpartx/test-kpartx b/kpartx/test-kpartx
+index 7c45cd14..35b0f064 100755
+--- a/kpartx/test-kpartx
++++ b/kpartx/test-kpartx
+@@ -207,6 +207,17 @@ usleep $WAIT_US
+ [[ -b $SPAN2P1 ]]
+ [[ -b $SPAN1P1 ]]
  
-+static void
-+strip_slash (char * device)
-+{
-+	char * p = device;
++step "rename partitions on DM device to default"
++$KPARTX $KPARTX_OPTS -u /dev/mapper/$SPAN1
++[[ ! -b ${SPAN1P1} ]]
++# This assumes that $SPAN1 ends in a non-digit
++[[ -b ${SPAN1P1//-spam/} ]]
 +
-+	while (*(p++) != 0x0) {
++step "rename partitions on DM device back from default"
++$KPARTX $KPARTX_OPTS -u -p -spam /dev/mapper/$SPAN1
++[[ -b ${SPAN1P1} ]]
++[[ ! -b ${SPANP1//-foo/} ]]
 +
-+		if (*p == '/')
-+			*p = '!';
-+	}
-+}
-+
-+static int format_partname(char *buf, size_t bufsiz,
-+			   const char *mapname, const char *delim, int part)
-+{
-+	if (snprintf(buf, bufsiz, "%s%s%d", mapname, delim, part) >= bufsiz)
-+		return 0;
-+	strip_slash(buf);
-+	return 1;
-+}
-+
-+static char *make_prefixed_uuid(int part, const char *uuid)
-+{
-+	char *prefixed_uuid;
-+	int len = MAX_PREFIX_LEN + strlen(uuid) + 1;
-+
-+	prefixed_uuid = malloc(len);
-+	if (!prefixed_uuid) {
-+		fprintf(stderr, "cannot create prefixed uuid : %s\n",
-+			strerror(errno));
-+		return NULL;
-+	}
-+	snprintf(prefixed_uuid, len, UUID_PREFIX "%s", part, uuid);
-+	return prefixed_uuid;
-+}
-+
- int dm_addmap(int task, const char *name, const char *target,
- 	      const char *params, uint64_t size, int ro, const char *uuid,
- 	      int part, mode_t mode, uid_t uid, gid_t gid)
-@@ -117,13 +153,9 @@ int dm_addmap(int task, const char *name, const char *target,
- 			goto addout;
+ step "delete partitions on DM devices"
+ $KPARTX $KPARTX_OPTS -d /dev/mapper/$SPAN1 >&2
+ usleep $WAIT_US
+@@ -223,6 +234,31 @@ usleep $WAIT_US
+ [[ -b $LO2P1 ]]
+ [[ ! -b $SPAN2P1 ]]
  
- 	if (task == DM_DEVICE_CREATE && uuid) {
--		prefixed_uuid = malloc(MAX_PREFIX_LEN + strlen(uuid) + 1);
--		if (!prefixed_uuid) {
--			fprintf(stderr, "cannot create prefixed uuid : %s\n",
--				strerror(errno));
-+		prefixed_uuid = make_prefixed_uuid(part, uuid);
-+		if (prefixed_uuid == NULL)
- 			goto addout;
--		}
--		sprintf(prefixed_uuid, UUID_PREFIX "%s", part, uuid);
- 		if (!dm_task_set_uuid(dmt, prefixed_uuid))
- 			goto addout;
- 	}
++step "rename partitions on loop device"
++$KPARTX $KPARTX_OPTS -u -p -spam $LO2
++[[ ! -b ${LO2P1} ]]
++[[ -b ${LO2P1//-foo/-spam} ]]
++
++step "rename partitions on loop device back"
++$KPARTX $KPARTX_OPTS -u -p -foo $LO2
++[[ -b ${LO2P1} ]]
++[[ ! -b ${LO2P1//-foo/-spam} ]]
++
++step "rename partitions on loop device to default"
++$KPARTX $KPARTX_OPTS -u $LO2
++#read a
++[[ ! -b ${LO2P1} ]]
++# $LO1 ends in a digit
++[[ -b ${LO2P1//-foo/p} ]]
++
++step "rename partitions on loop device back from default"
++$KPARTX $KPARTX_OPTS -u -p -foo $LO2
++[[ -b ${LO2P1} ]]
++[[ ! -b ${LO2P1//-foo/p} ]]
++
++step "rename partitions on loop devices"
++$KPARTX $KPARTX_OPTS -u -p spam $LO2
++
+ step "delete partitions on loop devices"
+ 
+ $KPARTX $KPARTX_OPTS -d $LO3
 -- 
 2.14.0
