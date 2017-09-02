@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 09/31] libmultipath: support
-	MPATH_UDEV_NO_PATHS_FLAG on map creation
-Date: Sun,  3 Sep 2017 00:38:38 +0200
-Message-ID: <20170902223900.7339-10-mwilck@suse.com>
+Subject: [PATCH 19/31] 11-dm-mpath.rules: handle new maps with
+	READY==0
+Date: Sun,  3 Sep 2017 00:38:48 +0200
+Message-ID: <20170902223900.7339-20-mwilck@suse.com>
 References: <20170902223900.7339-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,104 +22,43 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Some vendor kernels (e.g. SUSE) have supported loading multipath
-maps without valid paths for a long time. Without that feature,
-problems can occur in failover scenarios when multipathd tries
-to (re)load maps after device failure/removal, because multipathd's
-attempts to reload the configuration may fail unnecessarily.
-The discussion in the kernel community is ongoing
-(see e.g. https://patchwork.kernel.org/patch/4579551/).
+We need to distinguish the case where a device came up with
+ENV{MPATH_DEVICE_READY}=="0" in the first place from the case
+where it changed from "ready" to "not ready".
 
-One corner case of this is creation of a map with only failed
-paths. Such maps can be created if the kernel patch mentioned above
-is applied. The current udev rules for dm-multipath can't detect
-this situation. This patch fixes that by setting
-DM_SUBSYSTEM_UDEV_FLAG2, which is already used for the "map reload"
-case with no valid paths. Thus no additional udev rules are required
-to detect this situation.
+Otherwise, we may save a wrong state in DM_DISABLE_OTHER_RULES_FLAG_OLD.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/devmapper.c | 30 ++++++++++++++++++++----------
- 1 file changed, 20 insertions(+), 10 deletions(-)
+ multipath/11-dm-mpath.rules | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index e701e806..7a3390a7 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -300,12 +300,14 @@ dm_device_remove (const char *name, int needsync, int deferred_remove) {
+diff --git a/multipath/11-dm-mpath.rules b/multipath/11-dm-mpath.rules
+index abf7987b..0be22ae4 100644
+--- a/multipath/11-dm-mpath.rules
++++ b/multipath/11-dm-mpath.rules
+@@ -39,7 +39,7 @@ ENV{DM_ACTION}=="PATH_FAILED", GOTO="mpath_action"
  
- static int
- dm_addmap (int task, const char *target, struct multipath *mpp,
--	   char * params, int ro, int skip_kpartx) {
-+	   char * params, int ro, uint16_t udev_flags) {
- 	int r = 0;
- 	struct dm_task *dmt;
- 	char *prefixed_uuid = NULL;
- 	uint32_t cookie = 0;
--	uint16_t udev_flags = DM_UDEV_DISABLE_LIBRARY_FALLBACK | ((skip_kpartx == SKIP_KPARTX_ON)? MPATH_UDEV_NO_KPARTX_FLAG : 0);
-+
-+	/* Need to add this here to allow 0 to be passed in udev_flags */
-+	udev_flags |= DM_UDEV_DISABLE_LIBRARY_FALLBACK;
+ # This event is either a PATH_REINSTATED or a table reload where
+ # there are active paths. Mark the device ready
+-ENV{MPATH_DEVICE_READY}=""
++ENV{MPATH_DEVICE_READY}="1"
  
- 	if (!(dmt = libmp_dm_task_create (task)))
- 		return 0;
-@@ -371,15 +373,27 @@ addout:
- 	return r;
- }
- 
-+static uint16_t build_udev_flags(const struct multipath *mpp, int reload)
-+{
-+	/* DM_UDEV_DISABLE_LIBRARY_FALLBACK is added in dm_addmap */
-+	return	(mpp->skip_kpartx == SKIP_KPARTX_ON ?
-+		 MPATH_UDEV_NO_KPARTX_FLAG : 0) |
-+		(mpp->nr_active == 0 ?
-+		 MPATH_UDEV_NO_PATHS_FLAG : 0) |
-+		(reload && !mpp->force_udev_reload ?
-+		 MPATH_UDEV_RELOAD_FLAG : 0);
-+}
-+
- int dm_addmap_create (struct multipath *mpp, char * params)
- {
- 	int ro;
-+	uint16_t udev_flags = build_udev_flags(mpp, 0);
- 
- 	for (ro = 0; ro <= 1; ro++) {
- 		int err;
- 
- 		if (dm_addmap(DM_DEVICE_CREATE, TGT_MPATH, mpp, params, ro,
--			      mpp->skip_kpartx))
-+			      udev_flags))
- 			return 1;
- 		/*
- 		 * DM_DEVICE_CREATE is actually DM_DEV_CREATE + DM_TABLE_LOAD.
-@@ -405,11 +419,7 @@ int dm_addmap_create (struct multipath *mpp, char * params)
- int dm_addmap_reload(struct multipath *mpp, char *params, int flush)
- {
- 	int r = 0;
--	uint16_t udev_flags = ((mpp->force_udev_reload)?
--			       0 : MPATH_UDEV_RELOAD_FLAG) |
--			      ((mpp->skip_kpartx == SKIP_KPARTX_ON)?
--			       MPATH_UDEV_NO_KPARTX_FLAG : 0) |
--			      ((mpp->nr_active)? 0 : MPATH_UDEV_NO_PATHS_FLAG);
-+	uint16_t udev_flags = build_udev_flags(mpp, 1);
- 
- 	/*
- 	 * DM_DEVICE_RELOAD cannot wait on a cookie, as
-@@ -419,12 +429,12 @@ int dm_addmap_reload(struct multipath *mpp, char *params, int flush)
- 	 */
- 	if (!mpp->force_readonly)
- 		r = dm_addmap(DM_DEVICE_RELOAD, TGT_MPATH, mpp, params,
--			      ADDMAP_RW, SKIP_KPARTX_OFF);
-+			      ADDMAP_RW, 0);
- 	if (!r) {
- 		if (!mpp->force_readonly && errno != EROFS)
- 			return 0;
- 		r = dm_addmap(DM_DEVICE_RELOAD, TGT_MPATH, mpp,
--			      params, ADDMAP_RO, SKIP_KPARTX_OFF);
-+			      params, ADDMAP_RO, 0);
- 	}
- 	if (r)
- 		r = dm_simplecmd(DM_DEVICE_RESUME, mpp->alias, !flush,
+ LABEL="mpath_action"
+ # DM_SUBSYSTEM_UDEV_FLAG0 is the "RELOAD" flag for multipath subsystem.
+@@ -58,10 +58,10 @@ ENV{MPATH_DEVICE_READY}=="0", ENV{DM_NOSCAN}="1"
+ # Also skip all foreign rules if no path is available.
+ # Remember the original value of DM_DISABLE_OTHER_RULES_FLAG
+ # and restore it back once we have at least one path available.
+-ENV{MPATH_DEVICE_READY}=="0", ENV{.MPATH_DEVICE_READY_OLD}!="0",\
++ENV{MPATH_DEVICE_READY}=="0", ENV{.MPATH_DEVICE_READY_OLD}=="1",\
+ 	ENV{DM_DISABLE_OTHER_RULES_FLAG_OLD}=="",\
+-	ENV{DM_DISABLE_OTHER_RULES_FLAG_OLD}="$env{DM_UDEV_DISABLE_OTHER_RULES_FLAG}",\
+-	ENV{DM_UDEV_DISABLE_OTHER_RULES_FLAG}="1"
++	ENV{DM_DISABLE_OTHER_RULES_FLAG_OLD}="$env{DM_UDEV_DISABLE_OTHER_RULES_FLAG}"
++ENV{MPATH_DEVICE_READY}=="0", ENV{DM_UDEV_DISABLE_OTHER_RULES_FLAG}="1"
+ ENV{MPATH_DEVICE_READY}!="0", ENV{.MPATH_DEVICE_READY_OLD}=="0",\
+ 	ENV{DM_UDEV_DISABLE_OTHER_RULES_FLAG}="$env{DM_DISABLE_OTHER_RULES_FLAG_OLD}",\
+ 	ENV{DM_DISABLE_OTHER_RULES_FLAG_OLD}="",\
 -- 
 2.14.0
