@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 17/31] 11-dm-mpath.rules: import more ID_FS_xxx
-	vars from db
-Date: Sun,  3 Sep 2017 00:38:46 +0200
-Message-ID: <20170902223900.7339-18-mwilck@suse.com>
+Subject: [PATCH 12/31] libmultipath: use const char* in some dm
+	helpers
+Date: Sun,  3 Sep 2017 00:38:41 +0200
+Message-ID: <20170902223900.7339-13-mwilck@suse.com>
 References: <20170902223900.7339-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,29 +22,50 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-We have code for importing blkid variables from db but this code
-is missing the _ENC variants needed for creating symlinks, and
-ID_FS_LABEL.
+Changing dm_get_info and dm_get_uuid for now.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipath/11-dm-mpath.rules | 4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+ libmultipath/devmapper.c | 4 ++--
+ libmultipath/devmapper.h | 4 ++--
+ 2 files changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/multipath/11-dm-mpath.rules b/multipath/11-dm-mpath.rules
-index d1ef85e5..2e42a1bd 100644
---- a/multipath/11-dm-mpath.rules
-+++ b/multipath/11-dm-mpath.rules
-@@ -72,7 +72,9 @@ ENV{DM_NOSCAN}!="1", GOTO="mpath_end"
- ENV{ID_FS_TYPE}!="?*", IMPORT{db}="ID_FS_TYPE"
- ENV{ID_FS_USAGE}!="?*", IMPORT{db}="ID_FS_USAGE"
- ENV{ID_FS_UUID}!="?*", IMPORT{db}="ID_FS_UUID"
--ENV{ID_FS_ENC}!="?*", IMPORT{db}="ID_FS_UUID_ENC"
-+ENV{ID_FS_UUID_ENC}!="?*", IMPORT{db}="ID_FS_UUID_ENC"
-+ENV{ID_FS_LABEL}!="?*", IMPORT{db}="ID_FS_LABEL"
-+ENV{ID_FS_LABEL_ENC}!="?*", IMPORT{db}="ID_FS_LABEL_ENC"
- ENV{ID_FS_VERSION}!="?*", IMPORT{db}="ID_FS_VERSION"
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index 7a3390a7..6e3abe3e 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -553,7 +553,7 @@ uuidout:
+ 	return r;
+ }
  
- LABEL="mpath_end"
+-int dm_get_uuid(char *name, char *uuid)
++int dm_get_uuid(const char *name, char *uuid)
+ {
+ 	if (dm_get_prefixed_uuid(name, uuid))
+ 		return 1;
+@@ -1308,7 +1308,7 @@ alloc_dminfo (void)
+ }
+ 
+ int
+-dm_get_info (char * mapname, struct dm_info ** dmi)
++dm_get_info (const char * mapname, struct dm_info ** dmi)
+ {
+ 	if (!mapname)
+ 		return 1;
+diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
+index 99a554b5..5c824a21 100644
+--- a/libmultipath/devmapper.h
++++ b/libmultipath/devmapper.h
+@@ -59,8 +59,8 @@ int dm_get_major_minor (const char *name, int *major, int *minor);
+ char * dm_mapname(int major, int minor);
+ int dm_remove_partmaps (const char * mapname, int need_sync,
+ 			int deferred_remove);
+-int dm_get_uuid(char *name, char *uuid);
+-int dm_get_info (char * mapname, struct dm_info ** dmi);
++int dm_get_uuid(const char *name, char *uuid);
++int dm_get_info (const char * mapname, struct dm_info ** dmi);
+ int dm_rename (const char * old, char * new, char * delim, int skip_kpartx);
+ int dm_reassign(const char * mapname);
+ int dm_reassign_table(const char *name, char *old, char *new);
 -- 
 2.14.0
