@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 29/31] multipath/kpartx rules: avoid superfluous
-	scanning
-Date: Sun,  3 Sep 2017 00:38:58 +0200
-Message-ID: <20170902223900.7339-30-mwilck@suse.com>
+Subject: [PATCH 18/31] 11-dm-mpath.rules: no need to test before
+	IMPORT
+Date: Sun,  3 Sep 2017 00:38:47 +0200
+Message-ID: <20170902223900.7339-19-mwilck@suse.com>
 References: <20170902223900.7339-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,56 +22,38 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Multipath maps receive certain udev events that only indicate
-changes in the path list. Use MPATH_UNCHANGED to tell this to
-upper layers, so that they can ignore the event.
-
-multipathd-generated events with DM_SUBSYSTEM_UDEV_FLAG0 are one
-case, and kernel-generated PATH_FAILED and PATH_REINSTATED events
-are another.
-
-The LVM rules rely on DM_ACTIVATION, but other rules such as
-kpartx can't do that, because they'd miss e.g. partition table
-changes.
+This code is run before 13-dm-disk.rules which calls "blkid",
+therefore the code can be simplified because the condition checked
+always holds.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- kpartx/kpartx.rules         | 3 +++
- multipath/11-dm-mpath.rules | 8 +++++++-
- 2 files changed, 10 insertions(+), 1 deletion(-)
+ multipath/11-dm-mpath.rules | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
 
-diff --git a/kpartx/kpartx.rules b/kpartx/kpartx.rules
-index b8141141..1cbe9429 100644
---- a/kpartx/kpartx.rules
-+++ b/kpartx/kpartx.rules
-@@ -60,6 +60,9 @@ ENV{DM_UUID}!="mpath-?*", GOTO="mpath_kpartx_end"
- ENV{DM_UDEV_PRIMARY_SOURCE_FLAG}!="1", IMPORT{db}="DM_SUBSYSTEM_UDEV_FLAG1"
- ENV{DM_SUBSYSTEM_UDEV_FLAG1}=="1", GOTO="mpath_kpartx_end"
- 
-+# 11-dm-mpath.rules sets MPATH_UNCHANGED for events that can be ignored.
-+ENV{MPATH_UNCHANGED}=="1", GOTO="mpath_kpartx_end"
-+
- # Don't run kpartx now if we know it will fail or hang.
- ENV{DM_SUSPENDED}=="1", GOTO="mpath_kpartx_end"
- ENV{DM_NOSCAN}=="1", GOTO="mpath_kpartx_end"
 diff --git a/multipath/11-dm-mpath.rules b/multipath/11-dm-mpath.rules
-index 9bfd75f8..4a3f646d 100644
+index 2e42a1bd..abf7987b 100644
 --- a/multipath/11-dm-mpath.rules
 +++ b/multipath/11-dm-mpath.rules
-@@ -49,7 +49,13 @@ LABEL="mpath_action"
- # something that should be reacted upon since it would be useless extra work.
- # It's exactly mpath's job to provide *seamless* device access to any of the
- # paths that are available underneath.
--ENV{DM_SUBSYSTEM_UDEV_FLAG0}=="1", ENV{DM_ACTIVATION}="0"
-+ENV{DM_SUBSYSTEM_UDEV_FLAG0}=="1", \
-+	ENV{DM_ACTIVATION}="0", ENV{MPATH_UNCHANGED}="1"
-+
-+# For path failed or reinstated events, unset DM_ACTIVATION.
-+# This is similar to the DM_SUBSYSTEM_UDEV_FLAG0 case above.
-+ENV{DM_ACTION}=="PATH_FAILED|PATH_REINSTATED", \
-+	ENV{DM_ACTIVATION}="0", ENV{MPATH_UNCHANGED}="1"
+@@ -69,12 +69,12 @@ ENV{MPATH_DEVICE_READY}!="0", ENV{.MPATH_DEVICE_READY_OLD}=="0",\
  
- # Do not initiate scanning if no path is available,
- # otherwise there would be a hang or IO error on access.
+ LABEL="scan_import"
+ ENV{DM_NOSCAN}!="1", GOTO="mpath_end"
+-ENV{ID_FS_TYPE}!="?*", IMPORT{db}="ID_FS_TYPE"
+-ENV{ID_FS_USAGE}!="?*", IMPORT{db}="ID_FS_USAGE"
+-ENV{ID_FS_UUID}!="?*", IMPORT{db}="ID_FS_UUID"
+-ENV{ID_FS_UUID_ENC}!="?*", IMPORT{db}="ID_FS_UUID_ENC"
+-ENV{ID_FS_LABEL}!="?*", IMPORT{db}="ID_FS_LABEL"
+-ENV{ID_FS_LABEL_ENC}!="?*", IMPORT{db}="ID_FS_LABEL_ENC"
+-ENV{ID_FS_VERSION}!="?*", IMPORT{db}="ID_FS_VERSION"
++IMPORT{db}="ID_FS_TYPE"
++IMPORT{db}="ID_FS_USAGE"
++IMPORT{db}="ID_FS_UUID"
++IMPORT{db}="ID_FS_UUID_ENC"
++IMPORT{db}="ID_FS_LABEL"
++IMPORT{db}="ID_FS_LABEL_ENC"
++IMPORT{db}="ID_FS_VERSION"
+ 
+ LABEL="mpath_end"
 -- 
 2.14.0
