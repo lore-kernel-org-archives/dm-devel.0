@@ -1,8 +1,7 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 20/31] 11-dm-mpath.rules: don't set
-	READY->ACTIVATION
-Date: Sun,  3 Sep 2017 00:38:49 +0200
-Message-ID: <20170902223900.7339-21-mwilck@suse.com>
+Subject: [PATCH 21/31] 11-dm-mpath.rules: Remember DM_ACTIVATION
+Date: Sun,  3 Sep 2017 00:38:50 +0200
+Message-ID: <20170902223900.7339-22-mwilck@suse.com>
 References: <20170902223900.7339-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,27 +21,42 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The fact alone that a map changes from not ready to ready does
-not imply that it is activating.
+If DM_ACTIVATION is set by the general dm rules, we need to
+bring up this device. But if the mpath device is not ready,
+that would be dangerous; it could hang or produce lots of IO
+errors. So remember this state, and try to activate when the
+map becomes usable later.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipath/11-dm-mpath.rules | 3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
+ multipath/11-dm-mpath.rules | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
 diff --git a/multipath/11-dm-mpath.rules b/multipath/11-dm-mpath.rules
-index 0be22ae4..3f47744f 100644
+index 3f47744f..9bfd75f8 100644
 --- a/multipath/11-dm-mpath.rules
 +++ b/multipath/11-dm-mpath.rules
-@@ -64,8 +64,7 @@ ENV{MPATH_DEVICE_READY}=="0", ENV{.MPATH_DEVICE_READY_OLD}=="1",\
- ENV{MPATH_DEVICE_READY}=="0", ENV{DM_UDEV_DISABLE_OTHER_RULES_FLAG}="1"
- ENV{MPATH_DEVICE_READY}!="0", ENV{.MPATH_DEVICE_READY_OLD}=="0",\
- 	ENV{DM_UDEV_DISABLE_OTHER_RULES_FLAG}="$env{DM_DISABLE_OTHER_RULES_FLAG_OLD}",\
--	ENV{DM_DISABLE_OTHER_RULES_FLAG_OLD}="",\
--	ENV{DM_ACTIVATION}="1"
-+	ENV{DM_DISABLE_OTHER_RULES_FLAG_OLD}=""
+@@ -4,6 +4,7 @@ ENV{DM_UUID}!="mpath-?*", GOTO="mpath_end"
  
- LABEL="scan_import"
- ENV{DM_NOSCAN}!="1", GOTO="mpath_end"
+ IMPORT{db}="DM_DISABLE_OTHER_RULES_FLAG_OLD"
+ IMPORT{db}="MPATH_DEVICE_READY"
++IMPORT{db}="MPATH_NEEDS_ACTIVATION"
+ 
+ # If this uevent didn't come from dm, don't try to update the
+ # device state
+@@ -55,6 +56,13 @@ ENV{DM_SUBSYSTEM_UDEV_FLAG0}=="1", ENV{DM_ACTIVATION}="0"
+ # We'd like to avoid this, especially within udev processing.
+ ENV{MPATH_DEVICE_READY}=="0", ENV{DM_NOSCAN}="1"
+ 
++# If DM_ACTIVATION is set, but can't be satisfied, remember it
++# in MPATH_NEEDS_ACTIVATION, and activate at the next opportunity.
++ENV{MPATH_DEVICE_READY}=="0", ENV{DM_ACTIVATION}=="1", \
++	ENV{MPATH_NEEDS_ACTIVATION}="1", ENV{DM_ACTIVATION}="0"
++ENV{MPATH_DEVICE_READY}!="0", ENV{MPATH_NEEDS_ACTIVATION}=="1", \
++	ENV{DM_ACTIVATION}="1", ENV{MPATH_NEEDS_ACTIVATION}=""
++
+ # Also skip all foreign rules if no path is available.
+ # Remember the original value of DM_DISABLE_OTHER_RULES_FLAG
+ # and restore it back once we have at least one path available.
 -- 
 2.14.0
