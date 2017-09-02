@@ -1,16 +1,16 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH/rfc] dm: revise 'rescue' strategy for md->bs
- allocations
-Date: Fri, 1 Sep 2017 21:34:51 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1709011947200.22293@file01.intranet.prod.int.rdu2.redhat.com>
-References: <878ti0fefq.fsf@notabene.neil.brown.name>
-	<alpine.LRH.2.02.1708312233010.32309@file01.intranet.prod.int.rdu2.redhat.com>
-	<87inh3dqp3.fsf@notabene.neil.brown.name>
+From: Guan Junxiong <guanjunxiong@huawei.com>
+Subject: Re: [PATCH] multipath-tools: support for coalescing
+ heterogenous paths
+Date: Sat, 2 Sep 2017 14:43:50 +0800
+Message-ID: <de4c2d55-4556-d576-75f9-b5fef5212a32@huawei.com>
+References: <1502957718-12152-1-git-send-email-guanjunxiong@huawei.com>
+	<5383fd74-7dc7-c986-8c45-c2e74d753427@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <87inh3dqp3.fsf@notabene.neil.brown.name>
+In-Reply-To: <5383fd74-7dc7-c986-8c45-c2e74d753427@huawei.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,61 +20,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: NeilBrown <neilb@suse.com>
-Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
+To: mwilck@suse.com
+Cc: xose.vazquez@gmail.com, chengjike.cheng@huawei.com, shenhong09@huawei.com, dm-devel@redhat.com, niuhaoxin@huawei.com
 List-Id: dm-devel.ids
 
-
-
-On Fri, 1 Sep 2017, NeilBrown wrote:
-
-> On Thu, Aug 31 2017, Mikulas Patocka wrote:
-> 
-> >> 
-> >> Note that only current->bio_list[0] is offloaded.  current->bio_list[1]
-> >> contains bios that were scheduled *before* the current one started, so
-> >
-> > These bios need to be offloaded too, otherwise you re-introduce this 
-> > deadlock: https://www.redhat.com/archives/dm-devel/2014-May/msg00089.html
-> 
-> Thanks for the link.
-> In the example the bio that is stuck was created in step 4.  The call
-> to generic_make_request() will have placed it on current->bio_list[0].
-> The top-level generic_make_request call by Process A is still running,
-> so nothing will have moved the bio to ->bio_list[1].  That only happens
-> after the ->make_request_fn completes, which must be after step 7.
-> So the problem bio is on ->bio_list[0] and the code in my patch will
-> pass it to a workqueue for handling.
-> 
-> So I don't think the deadlock would be reintroduced.  Can you see
-> something that I am missing?
-> 
-> Thanks,
-> NeilBrown
-
-Offloading only current->bio_list[0] will work in a simple case described 
-above, but not in the general case.
-
-For example, suppose that we have a dm device where the first part is 
-linear and the second part is snapshot.
-
-* We receive bio A that crosses the linear/snapshot boundary
-* DM core creates bio B, submits it to the linear target and adds it to 
-current->bio_list[0]
-* DM core creates bio C, submits it to the snapshot target, the snapshot 
-target calls track_chunk for this bio and appends the bio to 
-current->bio_list[0]
-* Now, we return back to generic_make_request
-* We pop bio B from current->bio_list[0]
-* We execute bio_list_on_stack[1] = bio_list_on_stack[0], that moves bio C 
-to bio_list_on_stack[1] - and now we lose any possibility to offload bio C 
-to the rescue thread
-* The kcopyd thread for the snapshot takes the snapshot lock and waits for 
-bio C to finish
-* We process bio B - and if processing bio B reaches something that takes 
-the snapshot lock (for example an origin target for the snapshot), a 
-deadlock will happen. The deadlock could be avoided by offloading bio C to 
-the rescue thread, but bio C is already on bio_list_on_stack[1] and so it 
-won't be offloaded
-
-Mikulas
+SGkgTWFydGlu77yMCgpJZiB0aW1lIGFsbG93cywgcGxlYXNlIGNvbnNpZGVyIHRoaXMgZmVhdHVy
+ZSBvZiBjb2FsZXNjaW5nIGhldGVyb2dlbm91cyBwYXRocwpieSB1ZGV2IHJ1bGVzIGFzIHN1Z2dl
+c3RlZCBieSB5b3UgaW4gdGhlIG9yaWdpbmFsIHBhdGNoLgpBbnkgY29tbWVudCBpcyB3ZWxjb21l
+LgoKVGhhbmtzLgoKQmVzdCBXaXNoZXMKR3VhbiBKdW54aW9uZwoKCgpPbiAyMDE3LzgvMjIgMjI6
+MjEsIEd1YW4gSnVueGlvbmcgd3JvdGU6Cj4gSGksIGd1eXMsCj4gCj4gQW55IGNvbW1lbnRzIGFi
+b3V0IHRoaXMgcGF0Y2g/Cj4gCj4gSU1PLCB0aGlzIGZlYXR1cmUgb2YgY29hbGVzY2luZyBoZXRl
+cm9nZW5vdXMgcGF0aHMgd2l0aG91dCBpbnRlcnJ1cHRpbmcKPiB1cGxheWVyIHRyYW5zYWN0aW9u
+IGlzIHdvcnRoeSB0byBpbnRlZ3JhdGUgaW50byBtdWx0aXBhdGgtdG9vbHMuIFBsZWFzZQo+IGNv
+bnNpZGVyIGFib3V0IGl0Lgo+IAo+IEkgYW0gZ2xhZCB0byBzZWUgaWYgdGhlcmUgaXMgYW55dGhp
+bmcgd2hpY2ggY2FuIGJlIGltcHJvdmUgZm9yIHRoaXMgcGF0Y2guCj4gCj4gVGhhbmtzCj4gR3Vh
+biBKdW54aW9uZwo+IAo+IAo+IE9uIDIwMTcvOC8xNyAxNjoxNSwgR3VhbiBKdW54aW9uZyB3cm90
+ZToKPj4gVGhpcyBwYXRjaCBzdXBwb3J0cyBjb2FsZXNjaW5nIGhldGVyb2dlbm91cyBwYXRocyBi
+eSB1c2luZwo+PiB1ZGV2IHJ1bGVzIGZpbGVzLiBUaGlzIGlzIHVzZWZ1bCBpbiB0aGUgc2NlbmFy
+aW8gb2YgbWlncmF0aW5nCj4+IGRhdGEgZm9yIGhldGVyb2dlbm91cyBhcnJheXMgd2l0aG91dCBp
+bnRlcnJ1cHRpbmcgdXBsYXllcgo+PiB0cmFuc2FjdGlvbi4gVGhlIHVkZXYgcnVsZXMgZmlsZSwg
+d2hpY2ggaXMgbG9jYXRlZCBpbiB0aGUKPj4gL2V0Yy91ZGV2L3J1bGVzLmQvIGRpcmVjdG9yeSwg
+aXMgYXV0b21hdGljYWxseSBnZW5lcmF0ZWQgYnkKPj4gbXVsdGlwYXRoIHdpdGggbmV3IG9wdGlv
+bnMgLW0gYW5kIC1uLgo+Pgo+PiBGb3IgZXhhbXBsZToKPj4gbXVsdGlwYXRoIC1tIGRtLTAgLW4g
+IDEwMDAwMzYwMDYwMTYwMjgKPj4KPj4gVGhlIGdlbmVhdGVkIHVkZXYgcnVsZXMgaXMgYXMgZm9s
+bG93czoKPj4gS0VSTkVMPT0ic2QqWyEwLTldfG52bWUqWzAtOV1uKlswLTldIiwgRU5We0RFVlRZ
+UEV9PT0iZGlzayIsCj4+IEVOVntJRF9TRVJJQUx9PT0iMTAwMDAzNjAwNjAxNjAyOCIsIEVOVntJ
+RF9TRVJJQUx9PSIzNjAwNjAxNi0KPj4gMDI4ZjAzNjAwNTg4ZGI1MjFkYzdjZTcxIgo+Pgo+PiBL
+RVJORUw9PSJzZCpbITAtOV18bnZtZSpbMC05XW4qWzAtOV0iLCBFTlZ7REVWVFlQRX09PSJkaXNr
+IiwKPj4gRU5We0lEX1dXTn09PSIxMDAwMDM2MDA2MDE2MDI4IiwgRU5We0lEX1dXTn09IjM2MDA2
+MDE2MDI4ZjAzNi0KPj4gMDA1ODhkYjUyMWRjN2NlNzEiCj4+Cj4+IEtFUk5FTD09InNkKlshMC05
+XXxudm1lKlswLTldbipbMC05XSIsIEVOVntERVZUWVBFfT09ImRpc2siLAo+PiBFTlZ7SURfVVVJ
+RH09PSIxMDAwMDM2MDA2MDE2MDI4IiwgRU5We0lEX1VVSUR9PSIzNjAwNjAxNjAyOGYwMy0KPj4g
+NjAwNTg4ZGI1MjFkYzdjZTcxIgo+Pgo+PiBTaWduZWQtb2ZmLWJ5OiBKdW54aW9uZyBHdWFuIDxn
+dWFuanVueGlvbmdAaHVhd2VpLmNvbT4KPj4gLS0tCj4+ICBsaWJtdWx0aXBhdGgvTWFrZWZpbGUg
+ICB8ICAgMyArLQo+PiAgbGlibXVsdGlwYXRoL2NvbmZpZy5oICAgfCAgIDEgKwo+PiAgbGlibXVs
+dGlwYXRoL3VkZXZydWxlLmMgfCAxOTEgKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysr
+KysrKysrKysrKysrKysrCj4+ICBsaWJtdWx0aXBhdGgvdWRldnJ1bGUuaCB8ICAxMyArKysrCj4+
+ICBtdWx0aXBhdGgvbWFpbi5jICAgICAgICB8ICAyOSArKysrKysrLQo+PiAgbXVsdGlwYXRoL211
+bHRpcGF0aC44ICAgfCAgMTIgKysrCj4+ICA2IGZpbGVzIGNoYW5nZWQsIDI0NyBpbnNlcnRpb25z
+KCspLCAyIGRlbGV0aW9ucygtKQo+PiAgY3JlYXRlIG1vZGUgMTAwNjQ0IGxpYm11bHRpcGF0aC91
+ZGV2cnVsZS5jCj4+ICBjcmVhdGUgbW9kZSAxMDA2NDQgbGlibXVsdGlwYXRoL3VkZXZydWxlLmgK
+Ci0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3
+LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
