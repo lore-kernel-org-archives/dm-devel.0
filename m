@@ -1,18 +1,16 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH/rfc] dm: revise 'rescue' strategy for md->bs
- allocations
-Date: Mon, 4 Sep 2017 12:54:44 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1709041249100.9535@file01.intranet.prod.int.rdu2.redhat.com>
-References: <878ti0fefq.fsf@notabene.neil.brown.name>
-	<alpine.LRH.2.02.1708312233010.32309@file01.intranet.prod.int.rdu2.redhat.com>
-	<87inh3dqp3.fsf@notabene.neil.brown.name>
-	<alpine.LRH.2.02.1709011947200.22293@file01.intranet.prod.int.rdu2.redhat.com>
-	<87a82be2zf.fsf@notabene.neil.brown.name>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH] multipath-tools: intermittent IO error
+ accounting to improve reliability
+Date: Mon, 04 Sep 2017 21:36:42 +0200
+Message-ID: <1504553802.4605.10.camel@suse.com>
+References: <1503396479-12692-1-git-send-email-guanjunxiong@huawei.com>
+	<1503926901.4546.26.camel@suse.com>
+	<a82c0dc5-0aae-7c22-400d-9efc63f6bbaa@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <87a82be2zf.fsf@notabene.neil.brown.name>
+In-Reply-To: <a82c0dc5-0aae-7c22-400d-9efc63f6bbaa@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,92 +20,79 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: NeilBrown <neilb@suse.com>
-Cc: dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+To: Guan Junxiong <guanjunxiong@huawei.com>, dm-devel@redhat.com, christophe.varoqui@opensvc.com
+Cc: chengjike.cheng@huawei.com, niuhaoxin@huawei.com, shenhong09@huawei.com
 List-Id: dm-devel.ids
 
-
-
-On Mon, 4 Sep 2017, NeilBrown wrote:
-
-> On Fri, Sep 01 2017, Mikulas Patocka wrote:
-> 
-> > On Fri, 1 Sep 2017, NeilBrown wrote:
-> >
-> >> On Thu, Aug 31 2017, Mikulas Patocka wrote:
-> >> 
-> >> >> 
-> >> >> Note that only current->bio_list[0] is offloaded.  current->bio_list[1]
-> >> >> contains bios that were scheduled *before* the current one started, so
-> >> >
-> >> > These bios need to be offloaded too, otherwise you re-introduce this 
-> >> > deadlock: https://www.redhat.com/archives/dm-devel/2014-May/msg00089.html
-> >> 
-> >> Thanks for the link.
-> >> In the example the bio that is stuck was created in step 4.  The call
-> >> to generic_make_request() will have placed it on current->bio_list[0].
-> >> The top-level generic_make_request call by Process A is still running,
-> >> so nothing will have moved the bio to ->bio_list[1].  That only happens
-> >> after the ->make_request_fn completes, which must be after step 7.
-> >> So the problem bio is on ->bio_list[0] and the code in my patch will
-> >> pass it to a workqueue for handling.
-> >> 
-> >> So I don't think the deadlock would be reintroduced.  Can you see
-> >> something that I am missing?
-> >> 
-> >> Thanks,
-> >> NeilBrown
-> >
-> > Offloading only current->bio_list[0] will work in a simple case described 
-> > above, but not in the general case.
-> >
-> > For example, suppose that we have a dm device where the first part is 
-> > linear and the second part is snapshot.
-> >
-> > * We receive bio A that crosses the linear/snapshot boundary
-> > * DM core creates bio B, submits it to the linear target and adds it to 
-> > current->bio_list[0]
-> > * DM core creates bio C, submits it to the snapshot target, the snapshot 
-> > target calls track_chunk for this bio and appends the bio to 
-> > current->bio_list[0]
-> > * Now, we return back to generic_make_request
-> > * We pop bio B from current->bio_list[0]
-> > * We execute bio_list_on_stack[1] = bio_list_on_stack[0], that moves bio C 
-> > to bio_list_on_stack[1] - and now we lose any possibility to offload bio C 
-> > to the rescue thread
-> > * The kcopyd thread for the snapshot takes the snapshot lock and waits for 
-> > bio C to finish
-> 
-> Thanks for the explanation.
-> I cannot find this last step in the code.  "waits for BIO C to finish"
-> is presumably the called to __check_for_conflicting_io().  This is
-> called from kcopyd in merge_callback() -> snapshot_merge_next_chunks().
-> What lock is held at that time?
-
-The function pending_complete is called from the kcopyd callback. It takes 
-"down_write(&s->lock)" and calls __check_for_conflicting_io which waits 
-for I/Os to finish.
-
-> > * We process bio B - and if processing bio B reaches something that takes 
-> > the snapshot lock (for example an origin target for the snapshot), a 
-> > deadlock will happen. The deadlock could be avoided by offloading bio C to 
-> > the rescue thread, but bio C is already on bio_list_on_stack[1] and so it 
-> > won't be offloaded
-> 
-> I think the core issue behind this deadlock is that the same volume
-> can appear twice in the top-level device, in different regions.  An
-> outstanding request to one region can then interfere with a new request
-> to a different region.  That seems like a reasonable thing to do.
-> I cannot immediately see a generic way to handle this case that I am
-> happy with.  I'll keep hunting.
-
-You can have a snapshot and an origin for the same device in the same 
-tree - it is not common, but it is possible.
-
-Offloafing bios queued on current->bio_list avoids the deadlock, but your 
-patch breaks it by offloading only the first list and not the second.
-
-> Thanks,
-> NeilBrown
-
-Mikulas
+T24gVHVlLCAyMDE3LTA4LTI5IGF0IDExOjE4ICswODAwLCBHdWFuIEp1bnhpb25nIHdyb3RlOgoK
+PiBUaHJlZSBwYXJhbWV0ZXJzIGFyZSBhZGRlZCBmb3IgdGhlIGFkbWluOgo+ID4gPiAicGF0aF9p
+b19lcnJfc2FtcGxlX3RpbWUiLAo+ID4gPiAicGF0aF9pb19lcnJfbnVtX3RocmVzaG9sZCIgYW5k
+ICJwYXRoX2lvX2Vycl9yZWNvdmVyeV90aW1lIi4KPiA+ID4gSWYgcGF0aF9pb19lcnJfc2FtcGxl
+X3RpbWUgYW5kIHBhdGhfaW9fZXJyX3JlY292ZXJ5X3RpbWUgYXJlIHNldAo+ID4gPiB0byBhCj4g
+PiA+IHZhbHVlIGdyZWF0ZXIgdGhhbiAwLCB3aGVuIGEgcGF0aCBmYWlsIGV2ZW50IG9jY3VycyBk
+dWUgdG8gYW4gSU8KPiA+ID4gZXJyb3IsCj4gPiA+IG11bHRpcGF0aGQgd2lsbCBlbnF1ZXVlIHRo
+aXMgcGF0aCBpbnRvIGEgcXVldWUgb2Ygd2hpY2ggZWFjaAo+ID4gPiBtZW1iZXIKPiA+ID4gaXMK
+PiA+ID4gc2VudCBkaXJlY3QgcmVhZGluZyBhc3luY2hyb25vdXMgaW8gYXQgYSBmaXhlZCBzYW1w
+bGUgcmF0ZSBvZgo+ID4gPiAxMDBIWi4gCj4gPiAKPiA+IDEuIEkgZG9uJ3QgdGhpbmsgaXQncyBw
+cnVkZW50IHRvIHN0YXJ0IHRoZSBmbGFraW5lc3MgY2hlY2sgZm9yCj4gPiBldmVyeQo+ID4gUEFU
+SF9ET1dOIGV2ZW50LiBSYXRoZXIsIHRoZSB0ZXN0IHNob3VsZCBvbmx5IGJlIHN0YXJ0ZWQgZm9y
+IHBhdGhzCj4gPiB0aGF0Cj4gPiBoYXZlIGZhaWxlZCByZXBlYXRlZGx5IGluIGEgY2VydGFpbiB0
+aW1lIGZyYW1lLCBzbyB0aGF0IHdlIGhhdmUKPiA+IHJlYXNvbgo+ID4gdG8gYXNzdW1lIHRoZXkn
+cmUgZmxha3kuCj4gPiAKPiAKPiBTb3VuZHMgcmVhc29uYWJsZS4gQW5kIElNTywgYXQgbGVhc3Qg
+dHdvIG5ldyBvcHRpb25zIG9mCj4gbXVsdGlwYXRoLmNvbmYKPiBzaG91bGQgYmUgaW50cm9kdWNl
+ZDogdGltZSBmcmFtZSBhbmQgdGhyZXNob2xkIGlmIHdlIGxldCB0aGUgYWRtaW4KPiB0byB0dW5l
+IHRoaXMuIE9UT0gsIGlmIHdlIGRvbid0IHdhbnQgdG8gYm90aGVyIHRoZSBhZG1pbiwgd2UgaGFu
+ZGxlCj4gdGhlIHByZS1mbGFja3kgY2hlY2sgYXV0b21hdGljYWxseS4gIE1heWJlIDYwIHNlY29u
+ZCBvZiB0aW1lIGZyYW1lCj4gYW5kIDIgUEFUSF9VUC0+UEFUSF9ET1dOSCBldmVudHMgb2YgdGhy
+ZWRzaG9sZCBpcyByZWFzb25hYmxlLgo+IFdoaWNoIHNvbHV0aW9uIGRvIHlvdSBwcmVmZXI/CgpJ
+IHdvbmRlciBpZiB0aGUgZXhpc2l0aW5nIHNhbl9wYXRoX2Vycl90aHJlc2hvbGQgZXR4LiBjb3Vs
+ZCBiZSByZXVzZWQKZm9yIHRoYXQuIEFzIEkgc2FpZCBiZWZvcmUsIEkgY2FuJ3QgaW1hZ2luZSB0
+aGF0IHRoZXkgY291bGQgYmUgdXNlZApyZWFzb25hYmx5IGluIHBhcmFsbGVsIHdpdGggeW91ciBh
+cHByb2FjaCwgYW55d2F5LiBJIGNhbid0IGhlbHAgeW91d2l0aCB0aGUgZGVmYXVsdCB2YWx1ZXMs
+IHlvdSBoYXZlIGRvbmUgdGhlIHRlc3RpbmcuIAoKPiA+IDIuIEhvdyBkaWQgeW91IGNvbWUgdXAg
+d2l0aCB0aGUgMTAwSHogc2FtcGxlIHJhdGUgdmFsdWU/IEl0IHNvdW5kcwo+ID4gcXVpdGUgaGln
+aCBpbiB0aGUgZmlyc3QgcGxhY2UgKHRoYXQgd2FzIG15IGZpcnN0IHRob3VnaHQgd2hlbiBJCj4g
+PiByZWFkCj4gPiBpdCksIGFuZCBPVE9IIHRob3NlIHByb2Nlc3NlcyB0aGF0IHJ1biBpbnRvIGlu
+dGVybWl0dGVudCBJTyBlcnJvcnMKPiA+IGFyZQo+ID4gcHJvYmFibHkgdGhlIG9uZXMgdGhhdCBk
+byBJL08gYWxtb3N0IGNvbnRpbnVvdXNseSwgc28gbWF5YmUgcmVhZGluZwo+ID4gY29udGludW91
+c2x5IGZvciBhIGxpbWl0ZWQgdGltZSBpcyB0aGUgYmV0dGVyIGlkZWE/Cj4gPiAKPiAKPiBJIGFt
+IGFmcmFpZCBvZiB3aGV0aGVyIHJlYWRpbmcgZm9yIGEgbGltaXRlZCB0aW1lIHdpbGwgYWZmZWN0
+IHRoZQo+IHVzYWJsZQo+IGJhbmR3aWR0aCBvZiB0aGUgdHJ1ZSB1cC1sYXllciB0cmFuc2FjdGlv
+bi4gSWYgbm90LCByZWFkaW5nCj4gY29udGludW91c2x5Cj4gaXMgdGhlIG5lYXJlc3QgdG8gdGhl
+IHJlYWwgY2FzZS4KPiBIb3cgYWJvdXQgMTBIeiBzYW1wbGUgcmF0ZSBhbmQgMTBtcyBjb250aW51
+b3VzIHJlYWRpbmc/ICBJbiBvdGhlcgo+IHdvcmRzLAo+IGV2ZXJ5IDEwMG1zIGludGVydmFsLCB3
+ZSByZWFkIGNvbnRpbnVvdXNseSBmb3IgMTBtcy4KPiAKPiAKPiA+IDMuIEkgd291bGQgc3VnZ2Vz
+dCBzZXR0aW5nIHRoZSBkbSBzdGF0dXMgb2YgcGF0aHMgdW5kZXJnb2luZyB0aGUKPiA+IGZsYWtp
+bmVzcyB0ZXN0IHRvICJmYWlsZWQiIGltbWVkaWF0ZWx5LiBUaGF0IHdheSB0aGUgSU8gY2F1c2Vk
+IGJ5Cj4gPiB0aGUKPiA+IHRlc3Qgd2lsbCBub3QgaW50ZXJmZXJlIHdpdGggdGhlIHJlZ3VsYXIg
+SU8gb24gdGhlIHBhdGguIAo+ID4gCj4gCj4gR3JlYXQuCj4gCj4gPiA0LiBJIGNhbiBzZWUgdGhh
+dCB5b3UgY2hvc2UgYWlvIHRvIGF2b2lkIGhhdmluZyB0byBjcmVhdGUgYQo+ID4gc2VwYXJhdGUK
+PiA+IHRocmVhZCBmb3IgZWFjaCBwYXRoIGJlaW5nIGNoZWNrZWQuIEJ1dCBJJ20gd29uZGVyaW5n
+IHdoZXRoZXIgdXNpbmcKPiA+IGFpbwo+ID4gZm9yIHRoaXMgaXMgYSBnb29kIGNob2ljZSBpbiBn
+ZW5lcmFsLiBNeSBjb25jZXJuIHdpdGggYWlvIGlzIHRoYXQKPiA+IHRvIG15Cj4gPiBrbm93bGVk
+Z2UgdGhlcmUncyBubyBnb29kIGxvdy1sZXZlbCBjYW5jZWxsYXRpb24gbWVjaGFuaXNtLiBXaGVu
+Cj4gPiB5b3UKPiA+IGlvX2NhbmNlbCgpIG9uZSBvZiB5b3VyIHJlcXVlc3RzLCB5b3UgY2FuIGJl
+IHN1cmUgbm90IHRvIGdldAo+ID4gbm90aWZpZWQKPiA+IG9mIGl0cyBjb21wbGV0aW9uIGFueSBt
+b3JlLCBidXQgdGhhdCBkb2Vzbid0IG1lYW4gdGhhdCBpdCB3b3VsZG4ndAo+ID4gY29udGludWUg
+dG8gbHVyayBkb3duIGluIHRoZSBibG9jayBsYXllci4gQnV0IEkgbWF5IGJlIG92ZXJsb29raW5n
+Cj4gPiBlc3NlbnRpYWwgc3R1ZmYgaGVyZS4KPiA+IAo+ID4gPiBUaGV0aHIKPiA+ID4gSU8gYWNj
+b3VudGluZyBwcm9jZXNzIGZvciBhIHBhdGggd2lsbCBsYXN0IGZvcgo+ID4gPiBwYXRoX2lvX2Vy
+cl9zYW1wbGVfdGltZS4KPiA+ID4gSWYgdGhlIG51bWJlciBvZiBJTyBlcnJvciBvbiBhIHBhcnRp
+Y3VsYXIgcGF0aCBpcyBncmVhdGVyIHRoYW4KPiA+ID4gdGhlCj4gPiA+IHBhdGhfaW9fZXJyX251
+bV90aHJlc2hvbGQsIHRoZW4gdGhlIHBhdGggd2lsbCBub3QgcmVpbnN0YXRlIGZvcgo+ID4gCj4g
+PiBJdCB3b3VsZCBiZSBtb3JlIHVzZXItZnJpZW5kbHkgdG8gYWxsb3cgdGhlIHVzZXIgdG8gc3Bl
+Y2lmeSB0aGUKPiA+IGVycm9yCj4gPiByYXRlIHRocmVzaG9sZCBhcyBhIHBlcmNlbnRhZ2UKPiAK
+PiBFcnJvciByYXRlIHRocmVzaG9sZCBhcyBhIHBlcmNlbnRhZ2UgaXMgbm90IGVub3VnaCB0byBk
+aXN0aW5ndWlzaAo+IHNtYWxsCj4gZXJyb3IgcmF0ZS4gSG93IGFib3V0IGEgcGVybWlsbGFnZSBy
+YXRlICgxLzEwMDApPwo+IAo+IAo+ID4gPiArc3RydWN0IGlvX2Vycl9zdGF0X3BhdGggKmZpbmRf
+ZXJyX3BhdGhfYnlfZGV2KHZlY3RvciBwYXRodmVjLAo+ID4gPiBjaGFyCj4gPiA+ICpkZXYpCj4g
+PiAKPiA+IFlvdSBhcmUgcmUtaW1wbGVtZW50aW5nIGdlbmVyaWMgZnVuY3Rpb25hbGl0eSBoZXJl
+Cj4gPiAoZmluZF9wYXRoX2J5X2RldiksCj4gPiB3aHk/Cj4gPiAKPiAKPiBZZXMsIGJlY2F1c2Ug
+dGhlIHN0cnVjdHVyZSBpcyBkaWZmZXJlbnQ6IHN0cnVjdCAgaW9fZXJyX3N0YXRfcGF0aCBhbmQK
+PiBzdHJ1Y3QgcGF0aC4KCldoeSBkb24ndCB5b3UganVzdCBhZGQgYSBzdHJ1Y3QgaW9fZXJyX3N0
+YXRfcGF0aCogaW4gInN0cnVjdCBwYXRoIj8KClJlZ2FyZHMsCk1hcnRpbgoKLS0gCkRyLiBNYXJ0
+aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNV
+U0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3Jh
+aGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcg
+bGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9s
+aXN0aW5mby9kbS1kZXZlbA==
