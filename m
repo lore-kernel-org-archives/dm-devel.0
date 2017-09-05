@@ -1,16 +1,18 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH] multipath-tools: support for coalescing
- heterogenous paths
-Date: Mon, 04 Sep 2017 23:09:48 +0200
-Message-ID: <1504559388.4605.17.camel@suse.com>
-References: <1502957718-12152-1-git-send-email-guanjunxiong@huawei.com>
-	<5383fd74-7dc7-c986-8c45-c2e74d753427@huawei.com>
-	<de4c2d55-4556-d576-75f9-b5fef5212a32@huawei.com>
+From: Guan Junxiong <guanjunxiong@huawei.com>
+Subject: Re: [PATCH] multipath-tools: intermittent IO error
+ accounting to improve reliability
+Date: Tue, 5 Sep 2017 09:36:00 +0800
+Message-ID: <2735a984-8e37-fc43-d29d-db46e51751b9@huawei.com>
+References: <1503396479-12692-1-git-send-email-guanjunxiong@huawei.com>
+	<1503926901.4546.26.camel@suse.com>
+	<a82c0dc5-0aae-7c22-400d-9efc63f6bbaa@huawei.com>
+	<1504553802.4605.10.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <de4c2d55-4556-d576-75f9-b5fef5212a32@huawei.com>
+In-Reply-To: <1504553802.4605.10.camel@suse.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,67 +22,143 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Guan Junxiong <guanjunxiong@huawei.com>
-Cc: dm-devel@redhat.com, chengjike.cheng@huawei.com, xose.vazquez@gmail.com, niuhaoxin@huawei.com, shenhong09@huawei.com
+To: Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com, chengjike.cheng@huawei.com, niuhaoxin@huawei.com, shenhong09@huawei.com
 List-Id: dm-devel.ids
 
-T24gU2F0LCAyMDE3LTA5LTAyIGF0IDE0OjQzICswODAwLCBHdWFuIEp1bnhpb25nIHdyb3RlOgo+
-IE9uIDIwMTcvOC8yMiAyMjoyMSwgR3VhbiBKdW54aW9uZyB3cm90ZToKPiA+IEhpLCBndXlzLAo+
-ID4gCj4gPiBBbnkgY29tbWVudHMgYWJvdXQgdGhpcyBwYXRjaD8KPiA+IAo+ID4gSU1PLCB0aGlz
-IGZlYXR1cmUgb2YgY29hbGVzY2luZyBoZXRlcm9nZW5vdXMgcGF0aHMgd2l0aG91dAo+ID4gaW50
-ZXJydXB0aW5nCj4gPiB1cGxheWVyIHRyYW5zYWN0aW9uIGlzIHdvcnRoeSB0byBpbnRlZ3JhdGUg
-aW50byBtdWx0aXBhdGgtdG9vbHMuCj4gPiBQbGVhc2UKPiA+IGNvbnNpZGVyIGFib3V0IGl0Lgo+
-ID4gCj4gPiBJIGFtIGdsYWQgdG8gc2VlIGlmIHRoZXJlIGlzIGFueXRoaW5nIHdoaWNoIGNhbiBi
-ZSBpbXByb3ZlIGZvciB0aGlzCj4gPiBwYXRjaC4KCkkgYWRtaXQgSSBoYXZlbid0IGxvb2tlZCBp
-bnRvIHRoZSBkZXRhaWxzIHRoaXMgdGltZS4gQnV0IEkgc3Bva2Ugd2l0aApIYW5uZXMgYWJvdXQg
-aXQsIGFuZCB3ZSBhZ3JlZWQgdGhhdCB0aGlzIGlzIG5vdCBzb21ldGhpbmcgd2Ugd291bGQgbGlr
-ZQp0byBzZWUgaW4gdXBzdHJlYW0gbXVsdGlwYXRoLXRvb2xzLiBtdWx0aXBhdGggaXMgdGFraW5n
-IGVmZm9ydHMgdG8gbWFrZQpzdXJlIHRoYXQgd2UgZG8gKm5vdCogY29hbGVzY2UgYW55IGRldmlj
-ZXMgdGhhdCBhcmVuJ3QgYWN0dWFsbHkgcGF0aHMKdG8gdGhlIHNhbWUgZGlzay4gWW91ciBwYXRj
-aCBpcyB0cnlpbmcgdG8gZG8gdGhlIG9wcG9zaXRlLgoKQUZBSUNTIHRoaXMgaXMgYSBzcGVjaWFs
-IGZlYXR1cmUgcHJvdmlkZWQgYnkgY2VydGFpbiBzdG9yYWdlIGFycmF5cwpmcm9tIEh1YXdlaS4g
-SXQgZG9lc24ndCB3b3JrIGF0IGFsbCB3aXRob3V0IHRoZSBzdG9yYWdlIGFycmF5IGJlaW5nCnBy
-b3Blcmx5IGNvbmZpZ3VyZWQgdG8gdGFrZSBhcHByb3ByaWF0ZSBhY3Rpb24gdG8ga2VlcCB0aGUK
-ImhldGVyb2dlbmVvdXMgcGF0aHMiIGluIHN5bmMuIFdlIHRoaW5rIHN1cHBvcnQgZm9yIHRoaXMg
-YmVsb25ncyBpbnRvCkh1YXdlaSBzb2Z0d2FyZSBmb3IgdGhlIHRpbWUgYmVpbmcuIElmIHRoaXMg
-ZmVhdHVyZSBiZWNvbWVzCnN0YW5kYXJkaXplZCBpbiB0aGUgZnV0dXJlLCBhbmQgaWYgdGhlIE9T
-IGhhcyBzb21lIHJlbGlhYmxlLApzdGFuZGFyZGl6ZWQgbWVhbnMgdG8gZGV0ZWN0IHRoaXMgZmVh
-dHVyZSBpbiB0aGUgYXJyYXksIGl0IG1pZ2h0IGJlIGEKZGlmZmVyZW50IGlzc3VlLiBCdXQgZXZl
-biB0aGVuLCB3ZSdkIG5lZWQgdG8gdXNlIGV4dHJlbWUgY2F1dGlvbiBub3QgdG8KY29ycnVwdCBv
-dXIgdXNlcnMnIGRhdGEuCgpUaGlzIGlzIEhhbm5lcycgYW5kIG15IG9waW5pb24sIG90aGVycyBm
-ZWVsIGZyZWUgdG8gc3BlYWsgdXAgaWYgeW91CmRpc2FncmVlLgoKTWFydGluCgo+ID4gCj4gPiBU
-aGFua3MKPiA+IEd1YW4gSnVueGlvbmcKPiA+IAo+ID4gCj4gPiBPbiAyMDE3LzgvMTcgMTY6MTUs
-IEd1YW4gSnVueGlvbmcgd3JvdGU6Cj4gPiA+IFRoaXMgcGF0Y2ggc3VwcG9ydHMgY29hbGVzY2lu
-ZyBoZXRlcm9nZW5vdXMgcGF0aHMgYnkgdXNpbmcKPiA+ID4gdWRldiBydWxlcyBmaWxlcy4gVGhp
-cyBpcyB1c2VmdWwgaW4gdGhlIHNjZW5hcmlvIG9mIG1pZ3JhdGluZwo+ID4gPiBkYXRhIGZvciBo
-ZXRlcm9nZW5vdXMgYXJyYXlzIHdpdGhvdXQgaW50ZXJydXB0aW5nIHVwbGF5ZXIKPiA+ID4gdHJh
-bnNhY3Rpb24uIFRoZSB1ZGV2IHJ1bGVzIGZpbGUsIHdoaWNoIGlzIGxvY2F0ZWQgaW4gdGhlCj4g
-PiA+IC9ldGMvdWRldi9ydWxlcy5kLyBkaXJlY3RvcnksIGlzIGF1dG9tYXRpY2FsbHkgZ2VuZXJh
-dGVkIGJ5Cj4gPiA+IG11bHRpcGF0aCB3aXRoIG5ldyBvcHRpb25zIC1tIGFuZCAtbi4KPiA+ID4g
-Cj4gPiA+IEZvciBleGFtcGxlOgo+ID4gPiBtdWx0aXBhdGggLW0gZG0tMCAtbiAgMTAwMDAzNjAw
-NjAxNjAyOAo+ID4gPiAKPiA+ID4gVGhlIGdlbmVhdGVkIHVkZXYgcnVsZXMgaXMgYXMgZm9sbG93
-czoKPiA+ID4gS0VSTkVMPT0ic2QqWyEwLTldfG52bWUqWzAtOV1uKlswLTldIiwgRU5We0RFVlRZ
-UEV9PT0iZGlzayIsCj4gPiA+IEVOVntJRF9TRVJJQUx9PT0iMTAwMDAzNjAwNjAxNjAyOCIsIEVO
-VntJRF9TRVJJQUx9PSIzNjAwNjAxNi0KPiA+ID4gMDI4ZjAzNjAwNTg4ZGI1MjFkYzdjZTcxIgo+
-ID4gPiAKPiA+ID4gS0VSTkVMPT0ic2QqWyEwLTldfG52bWUqWzAtOV1uKlswLTldIiwgRU5We0RF
-VlRZUEV9PT0iZGlzayIsCj4gPiA+IEVOVntJRF9XV059PT0iMTAwMDAzNjAwNjAxNjAyOCIsIEVO
-VntJRF9XV059PSIzNjAwNjAxNjAyOGYwMzYtCj4gPiA+IDAwNTg4ZGI1MjFkYzdjZTcxIgo+ID4g
-PiAKPiA+ID4gS0VSTkVMPT0ic2QqWyEwLTldfG52bWUqWzAtOV1uKlswLTldIiwgRU5We0RFVlRZ
-UEV9PT0iZGlzayIsCj4gPiA+IEVOVntJRF9VVUlEfT09IjEwMDAwMzYwMDYwMTYwMjgiLCBFTlZ7
-SURfVVVJRH09IjM2MDA2MDE2MDI4ZjAzLQo+ID4gPiA2MDA1ODhkYjUyMWRjN2NlNzEiCj4gPiA+
-IAo+ID4gPiBTaWduZWQtb2ZmLWJ5OiBKdW54aW9uZyBHdWFuIDxndWFuanVueGlvbmdAaHVhd2Vp
-LmNvbT4KPiA+ID4gLS0tCj4gPiA+ICBsaWJtdWx0aXBhdGgvTWFrZWZpbGUgICB8ICAgMyArLQo+
-ID4gPiAgbGlibXVsdGlwYXRoL2NvbmZpZy5oICAgfCAgIDEgKwo+ID4gPiAgbGlibXVsdGlwYXRo
-L3VkZXZydWxlLmMgfCAxOTEKPiA+ID4gKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysr
-KysrKysrKysrKysrKysrCj4gPiA+ICBsaWJtdWx0aXBhdGgvdWRldnJ1bGUuaCB8ICAxMyArKysr
-Cj4gPiA+ICBtdWx0aXBhdGgvbWFpbi5jICAgICAgICB8ICAyOSArKysrKysrLQo+ID4gPiAgbXVs
-dGlwYXRoL211bHRpcGF0aC44ICAgfCAgMTIgKysrCj4gPiA+ICA2IGZpbGVzIGNoYW5nZWQsIDI0
-NyBpbnNlcnRpb25zKCspLCAyIGRlbGV0aW9ucygtKQo+ID4gPiAgY3JlYXRlIG1vZGUgMTAwNjQ0
-IGxpYm11bHRpcGF0aC91ZGV2cnVsZS5jCj4gPiA+ICBjcmVhdGUgbW9kZSAxMDA2NDQgbGlibXVs
-dGlwYXRoL3VkZXZydWxlLmgKPiAKPiAtLQo+IGRtLWRldmVsIG1haWxpbmcgbGlzdAo+IGRtLWRl
-dmVsQHJlZGhhdC5jb20KPiBodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8v
-ZG0tZGV2ZWwKCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0
-OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZm
-ZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcp
-CgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3
-dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+Hello Martin,
+Thanks for your remarks. I will adopt those in the next V4 patch.
+Some comments inline.
+
+Best Wishes
+Guan Junxiong
+
+On 2017/9/5 3:36, Martin Wilck wrote:
+> On Tue, 2017-08-29 at 11:18 +0800, Guan Junxiong wrote:
+> 
+>> Three parameters are added for the admin:
+>>>> "path_io_err_sample_time",
+>>>> "path_io_err_num_threshold" and "path_io_err_recovery_time".
+>>>> If path_io_err_sample_time and path_io_err_recovery_time are set
+>>>> to a
+>>>> value greater than 0, when a path fail event occurs due to an IO
+>>>> error,
+>>>> multipathd will enqueue this path into a queue of which each
+>>>> member
+>>>> is
+>>>> sent direct reading asynchronous io at a fixed sample rate of
+>>>> 100HZ. 
+>>>
+>>> 1. I don't think it's prudent to start the flakiness check for
+>>> every
+>>> PATH_DOWN event. Rather, the test should only be started for paths
+>>> that
+>>> have failed repeatedly in a certain time frame, so that we have
+>>> reason
+>>> to assume they're flaky.
+>>>
+>>
+>> Sounds reasonable. And IMO, at least two new options of
+>> multipath.conf
+>> should be introduced: time frame and threshold if we let the admin
+>> to tune this. OTOH, if we don't want to bother the admin, we handle
+>> the pre-flacky check automatically.  Maybe 60 second of time frame
+>> and 2 PATH_UP->PATH_DOWNH events of thredshold is reasonable.
+>> Which solution do you prefer?
+> 
+> I wonder if the exisiting san_path_err_threshold etx. could be reused
+> for that. As I said before, I can't imagine that they could be used
+> reasonably in parallel with your approach, anyway. I can't help youwith the default values, you have done the testing. 
+> 
+
+The existing san_path_err_XXX feature could be reused if we drop
+the san_path_err_recovery_time and keep  san_path_err_threadshold
+and san_path_err_forget_rate. I will adopt this in V4.
+
+
+
+
+>>> 2. How did you come up with the 100Hz sample rate value? It sounds
+>>> quite high in the first place (that was my first thought when I
+>>> read
+>>> it), and OTOH those processes that run into intermittent IO errors
+>>> are
+>>> probably the ones that do I/O almost continuously, so maybe reading
+>>> continuously for a limited time is the better idea?
+>>>
+>>
+>> I am afraid of whether reading for a limited time will affect the
+>> usable
+>> bandwidth of the true up-layer transaction. If not, reading
+>> continuously
+>> is the nearest to the real case.
+>> How about 10Hz sample rate and 10ms continuous reading?  In other
+>> words,
+>> every 100ms interval, we read continuously for 10ms.
+>>
+>>
+>>> 3. I would suggest setting the dm status of paths undergoing the
+>>> flakiness test to "failed" immediately. That way the IO caused by
+>>> the
+>>> test will not interfere with the regular IO on the path. 
+>>>
+OK, it's better the checking process will not interfere with the regular IO
+on the path. I will adopt this in V4.
+If we set the dm status of paths undergoing the flakiness test to
+"failed" immediately, the path_io_err_XXX can _not_ work in parallel with
+san_path_err_XXX feature. So the san_path_err_XXX feature will be dropped
+or reused.
+
+
+>>> 4. I can see that you chose aio to avoid having to create a
+>>> separate
+>>> thread for each path being checked. But I'm wondering whether using
+>>> aio
+>>> for this is a good choice in general. My concern with aio is that
+>>> to my
+>>> knowledge there's no good low-level cancellation mechanism. When
+>>> you
+>>> io_cancel() one of your requests, you can be sure not to get
+>>> notified
+>>> of its completion any more, but that doesn't mean that it wouldn't
+>>> continue to lurk down in the block layer. But I may be overlooking
+>>> essential stuff here.
+>>>
+>>>> Thethr
+>>>> IO accounting process for a path will last for
+>>>> path_io_err_sample_time.
+>>>> If the number of IO error on a particular path is greater than
+>>>> the
+>>>> path_io_err_num_threshold, then the path will not reinstate for
+>>>
+>>> It would be more user-friendly to allow the user to specify the
+>>> error
+>>> rate threshold as a percentage
+>>
+>> Error rate threshold as a percentage is not enough to distinguish
+>> small
+>> error rate. How about a permillage rate (1/1000)?
+>>
+>>
+>>>> +struct io_err_stat_path *find_err_path_by_dev(vector pathvec,
+>>>> char
+>>>> *dev)
+>>>
+>>> You are re-implementing generic functionality here
+>>> (find_path_by_dev),
+>>> why?
+>>>
+>>
+>> Yes, because the structure is different: struct  io_err_stat_path and
+>> struct path.
+> 
+> Why don't you just add a struct io_err_stat_path* in "struct path"?
+
+Great advice. Just a pointer in "struct path" . I will adopt this in V4. Thanks.
+
+> Regards,
+> Martin
+> 
+
+Best Wishes
+Guan Junxiong
