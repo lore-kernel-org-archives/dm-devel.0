@@ -1,13 +1,14 @@
-From: Guan Junxiong <guanjunxiong@huawei.com>
-Subject: [PATCH 2/3] multipath-tools: move get_next_string to util
-Date: Tue, 5 Sep 2017 21:45:04 +0800
-Message-ID: <1504619105-14788-3-git-send-email-guanjunxiong@huawei.com>
-References: <1504619105-14788-1-git-send-email-guanjunxiong@huawei.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH] multipath-tools: fix incorrect length for
+ strncmp in uevent.c
+Date: Tue, 05 Sep 2017 20:30:43 +0200
+Message-ID: <1504636243.4516.7.camel@suse.com>
+References: <1504583682-14112-1-git-send-email-guanjunxiong@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1504619105-14788-1-git-send-email-guanjunxiong@huawei.com>
+In-Reply-To: <1504583682-14112-1-git-send-email-guanjunxiong@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,73 +18,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, christophe.varoqui@opensvc.com, hare@suse.de, mwilck@suse.com, bmarzins@redhat.com, xose.vazquez@gmail.com
-Cc: guanjunxiong@huawei.com, philip.yang@huawei.com, niuhaoxin@huawei.com, shenhong09@huawei.com, chengjike.cheng@huawei.com
+To: Guan Junxiong <guanjunxiong@huawei.com>, dm-devel@redhat.com, christophe.varoqui@opensvc.com
+Cc: chengjike.cheng@huawei.com, niuhaoxin@huawei.com, shenhong09@huawei.com
 List-Id: dm-devel.ids
 
-The helper get_next_string is useful and generic. So move from
-exclusive weightedpath module to util module. It will be used
-in the next second patch.
-
-Signed-off-by: Junxiong Guan <guanjunxiong@huawei.com>
----
- libmultipath/prioritizers/weightedpath.c | 10 +---------
- libmultipath/util.c                      |  9 +++++++++
- libmultipath/util.h                      |  1 +
- 3 files changed, 11 insertions(+), 9 deletions(-)
-
-diff --git a/libmultipath/prioritizers/weightedpath.c b/libmultipath/prioritizers/weightedpath.c
-index 34a43a81..e0f3efbb 100644
---- a/libmultipath/prioritizers/weightedpath.c
-+++ b/libmultipath/prioritizers/weightedpath.c
-@@ -34,15 +34,7 @@
- #include <regex.h>
- #include "structs_vec.h"
- #include "print.h"
--
--char *get_next_string(char **temp, char *split_char)
--{
--	char *token = NULL;
--	token = strsep(temp, split_char);
--	while (token != NULL && !strcmp(token, ""))
--		token = strsep(temp, split_char);
--	return token;
--}
-+#include "util.h"
- 
- #define CHECK_LEN \
- do { \
-diff --git a/libmultipath/util.c b/libmultipath/util.c
-index dff2ed3c..528ba73b 100644
---- a/libmultipath/util.c
-+++ b/libmultipath/util.c
-@@ -64,6 +64,15 @@ filepresent (char * run) {
- 	return 0;
- }
- 
-+char *get_next_string(char **temp, char *split_char)
-+{
-+	char *token = NULL;
-+	token = strsep(temp, split_char);
-+	while (token != NULL && !strcmp(token, ""))
-+		token = strsep(temp, split_char);
-+	return token;
-+}
-+
- int
- get_word (char * sentence, char ** word)
- {
-diff --git a/libmultipath/util.h b/libmultipath/util.h
-index 45291be8..584ad948 100644
---- a/libmultipath/util.h
-+++ b/libmultipath/util.h
-@@ -6,6 +6,7 @@
- size_t strchop(char *);
- int basenamecpy (const char * src, char * dst, int);
- int filepresent (char * run);
-+char *get_next_string(char **temp, char *split_char);
- int get_word (char * sentence, char ** word);
- size_t strlcpy(char *dst, const char *src, size_t size);
- size_t strlcat(char *dst, const char *src, size_t size);
--- 
-2.11.1
+T24gVHVlLCAyMDE3LTA5LTA1IGF0IDExOjU0ICswODAwLCBHdWFuIEp1bnhpb25nIHdyb3RlOgo+
+IENjOiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4KPiBTaWduZWQtb2ZmLWJ5OiBKdW54
+aW9uZyBHdWFuIDxndWFuanVueGlvbmdAaHVhd2VpLmNvbT4KPiAtLS0KPiAgbGlibXVsdGlwYXRo
+L3VldmVudC5jIHwgNiArKystLS0KPiAgMSBmaWxlIGNoYW5nZWQsIDMgaW5zZXJ0aW9ucygrKSwg
+MyBkZWxldGlvbnMoLSkKPiAKPiBkaWZmIC0tZ2l0IGEvbGlibXVsdGlwYXRoL3VldmVudC5jIGIv
+bGlibXVsdGlwYXRoL3VldmVudC5jCj4gaW5kZXggZWI0NGRhNTYuLmE5ODYzM2U3IDEwMDY0NAo+
+IC0tLSBhL2xpYm11bHRpcGF0aC91ZXZlbnQuYwo+ICsrKyBiL2xpYm11bHRpcGF0aC91ZXZlbnQu
+Ywo+IEBAIC04ODUsNyArODg1LDcgQEAgaW50IHVldmVudF9nZXRfZGlza19ybyhzdHJ1Y3QgdWV2
+ZW50ICp1ZXYpCj4gIAlpbnQgaSwgcm8gPSAtMTsKPiAgCj4gIAlmb3IgKGkgPSAwOyB1ZXYtPmVu
+dnBbaV0gIT0gTlVMTDsgaSsrKSB7Cj4gLQkJaWYgKCFzdHJuY21wKHVldi0+ZW52cFtpXSwgIkRJ
+U0tfUk8iLCA2KSAmJgo+IHN0cmxlbih1ZXYtPmVudnBbaV0pID4gNykgewo+ICsJCWlmICghc3Ry
+bmNtcCh1ZXYtPmVudnBbaV0sICJESVNLX1JPIiwgNykgJiYKPiBzdHJsZW4odWV2LT5lbnZwW2ld
+KSA+IDgpIHsKPiAgCQkJcCA9IHVldi0+ZW52cFtpXSArIDg7Cj4gIAkJCXJvID0gc3RydG91bChw
+LCAmcSwgMTApOwo+ICAJCQlpZiAocCA9PSBxKSB7Cj4gQEAgLTkwNCw4ICs5MDQsOCBAQCBjaGFy
+ICp1ZXZlbnRfZ2V0X2RtX25hbWUoc3RydWN0IHVldmVudCAqdWV2KQo+ICAJaW50IGk7Cj4gIAo+
+ICAJZm9yIChpID0gMDsgdWV2LT5lbnZwW2ldICE9IE5VTEw7IGkrKykgewo+IC0JCWlmICghc3Ry
+bmNtcCh1ZXYtPmVudnBbaV0sICJETV9OQU1FIiwgNikgJiYKPiAtCQkgICAgc3RybGVuKHVldi0+
+ZW52cFtpXSkgPiA3KSB7Cj4gKwkJaWYgKCFzdHJuY21wKHVldi0+ZW52cFtpXSwgIkRNX05BTUUi
+LCA3KSAmJgo+ICsJCSAgICBzdHJsZW4odWV2LT5lbnZwW2ldKSA+IDgpIHsKPiAgCQkJcCA9IE1B
+TExPQyhzdHJsZW4odWV2LT5lbnZwW2ldICsgOCkgKyAxKTsKPiAgCQkJc3RyY3B5KHAsIHVldi0+
+ZW52cFtpXSArIDgpOwo+ICAJCQlicmVhazsKClJldmlld2VkLWJ5OiBNYXJ0aW4gV2lsY2sgPG13
+aWxja0BzdXNlLmNvbT4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBU
+ZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVu
+ZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xy
+bmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRw
+czovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
