@@ -1,17 +1,15 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 3/4] libmultipath: add_feature: allow only 1
- feature
-Date: Thu, 7 Sep 2017 17:37:13 -0500
-Message-ID: <20170907223713.GF3145@octiron.msp.redhat.com>
+Subject: Re: [PATCH 1/4] multipathd: don't flood system with
+	sd_notify calls
+Date: Thu, 7 Sep 2017 16:31:30 -0500
+Message-ID: <20170907213130.GB3145@octiron.msp.redhat.com>
 References: <20170828220536.13208-1-mwilck@suse.com>
-	<20170828220536.13208-3-mwilck@suse.com>
-	<20170907214209.GD3145@octiron.msp.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20170907214209.GD3145@octiron.msp.redhat.com>
+In-Reply-To: <20170828220536.13208-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,143 +23,90 @@ To: Martin Wilck <mwilck@suse.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Sep 07, 2017 at 04:42:09PM -0500, Benjamin Marzinski wrote:
-> On Tue, Aug 29, 2017 at 12:05:35AM +0200, Martin Wilck wrote:
-> > The existing test "if feature is already present" doesn't work for
-> > multiple features, and we are only using add_feature() for single
-> > feature additions anyway. Simplify the code by not allowing spaces
-> > in the feature string to be added. This way we can drop the
-> > complex "count new features" code. Moreover, print an error message if
-> > the existing features string is malformed.
-> > 
-> > The old code calculated the width of the feature count twice, and the
-> > second time messed up the buffer length field passed to snprintf(); fix
-> > that, too.  Finally, replace several strcat() invocations by one
-> > strncpy() call to make the code easier to review.
-> > 
-> > Signed-off-by: Martin Wilck <mwilck@suse.com>
-> > ---
-> >  libmultipath/structs.c | 64 +++++++++++++++++---------------------------------
-> >  1 file changed, 21 insertions(+), 43 deletions(-)
-> > 
-> > diff --git a/libmultipath/structs.c b/libmultipath/structs.c
-> > index 11e33676..828e7907 100644
-> > --- a/libmultipath/structs.c
-> > +++ b/libmultipath/structs.c
-> > @@ -516,8 +516,7 @@ void setup_feature(struct multipath *mpp, char *feature)
-> >  int add_feature(char **f, const char *n)
-> >  {
-> >  	int c = 0, d, l;
-> > -	char *e, *p, *t;
-> > -	const char *q;
-> > +	char *e, *t;
-> >  
-> >  	if (!f)
-> >  		return 1;
-> > @@ -526,6 +525,11 @@ int add_feature(char **f, const char *n)
-> >  	if (!n || *n == '0')
-> >  		return 0;
-> >  
-> > +	if (strchr(n, ' ') != NULL) {
-> > +		condlog(0, "internal error: feature \"%s\" contains spaces", n);
-> > +		return 1;
-> > +	}
-> > +
-> >  	/* default feature is null */
-> >  	if(!*f)
-> >  	{
-> > @@ -543,55 +547,29 @@ int add_feature(char **f, const char *n)
-> >  
-> >  	/* Get feature count */
-> >  	c = strtoul(*f, &e, 10);
-> > -	if (*f == e)
-> > -		/* parse error */
-> > +	if (*f == e || (*e != ' ' && *e != '\0')) {
-> > +		condlog(0, "parse error in feature string \"%s\"", *f);
-> >  		return 1;
-> > -
-> > -	/* Check if we need to increase feature count space */
-> > -	l = strlen(*f) + strlen(n) + 1;
-> > -
-> > -	/* Count new features */
-> > -	if ((c % 10) == 9)
-> > -		l++;
-> > -	c++;
-> > -	q = n;
-> > -	while (*q != '\0') {
-> > -		if (*q == ' ' && q[1] != '\0' && q[1] != ' ') {
-> > -			if ((c % 10) == 9)
-> > -				l++;
-> > -			c++;
-> > -		}
-> > -		q++;
-> >  	}
-> >  
-> > +	/* Add 1 digit and 1 space */
-> > +	l = strlen(e) + strlen(n) + 2;
-> > +
-> > +	c++;
-> > +	/* Check if we need more digits for feature count */
-> > +	for (d = c; d >= 10; d /= 10)
-> > +		l++;
-> > +
-> >  	t = MALLOC(l + 1);
-> >  	if (!t)
-> >  		return 1;
-> >  
-> > -	memset(t, 0, l + 1);
-> > +	/* e: old feature string with leading space, or "" */
-> > +	if (*e == ' ')
-> > +		while (*(e + 1) == ' ')
-> > +			e++;
-> >  
-> > -	/* Update feature count */
-> > -	d = c;
-> > -	l = 1;
-> > -	while (d > 9) {
-> > -		d /= 10;
-> > -		l++;
-> > -	}
-> > -	p = t;
-> > -	snprintf(p, l + 2, "%0d ", c);
-> > -
-> > -	/* Copy the feature string */
-> > -	p = strchr(*f, ' ');
-> > -
-> > -	if (p) {
-> > -		while (*p == ' ')
-> > -			p++;
-> > -		strcat(t, p);
-> > -		strcat(t, " ");
-> > -	} else {
-> > -		p = t + strlen(t);
-> > -	}
-> > -	strcat(t, n);
-> > +	snprintf(t, l + 1, "%0d%s %s", c, e, n);
+On Tue, Aug 29, 2017 at 12:05:33AM +0200, Martin Wilck wrote:
+> DAEMON_RUNNING is only used by checkerloop to indicate that
+> path checkers are running. checkerloop switches back and forth
+> between DAEMON_IDLE and DAEMON_RUNNING in every iteration, i.e.
+> it performs two status changes per second on an idle system.
+> The repeated sd_notify() calls cause a lot of traffic on dbus as
+> systemd forwards these messages on the system bus. This can be
+> seen with systemd.log_level=debug. Better skip these notifications
+> that don't provide useful information to the user, who is very
+> unlikely to catch the daemon in "running" state anyway.
 > 
-> Just one nit, that I know I'm guilty of too (so Coverity says).  If
-> you're sure that you have enough size for the string, you don't need
-> snprintf. If you want to make sure that the string isn't too big, you
-> should probably use "l" instead of "l + 1", so that you know that the
-> string will get null termintated (from your earlier memset), and you
-> won't read off the end of the array later. Otherwise, ACK. 
-
-Nevermind, I was having a brain fart and thinking of strncpy.
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  multipathd/main.c | 24 ++++++++++++++++++++----
+>  1 file changed, 20 insertions(+), 4 deletions(-)
+> 
+> diff --git a/multipathd/main.c b/multipathd/main.c
+> index 4be2c579..b5e2b00d 100644
+> --- a/multipathd/main.c
+> +++ b/multipathd/main.c
+> @@ -161,15 +161,27 @@ sd_notify_status(void)
+>  	case DAEMON_CONFIGURE:
+>  		return "STATUS=configure";
+>  	case DAEMON_IDLE:
+> -		return "STATUS=idle";
+>  	case DAEMON_RUNNING:
+> -		return "STATUS=running";
+> +		return "STATUS=up";
+>  	case DAEMON_SHUTDOWN:
+>  		return "STATUS=shutdown";
+>  	}
+>  	return NULL;
+>  }
+>  
+> +static void do_sd_notify(enum daemon_status old_state)
+> +{
+> +	/*
+> +	 * Checkerloop switches back and forth between idle and running state.
+> +	 * No need to tell systemd each time.
+> +	 * These notifications cause a lot of overhead on dbus.
+> +	 */
+> +	if ((running_state == DAEMON_IDLE || running_state == DAEMON_RUNNING) &&
+> +	    (old_state == DAEMON_IDLE || old_state == DAEMON_RUNNING))
+> +		return;
+> +	sd_notify(0, sd_notify_status());
+> +}
+> +
+>  static void config_cleanup(void *arg)
+>  {
+>  	pthread_mutex_unlock(&config_lock);
+> @@ -179,10 +191,12 @@ void post_config_state(enum daemon_status state)
+>  {
+>  	pthread_mutex_lock(&config_lock);
+>  	if (state != running_state) {
+> +		enum daemon_status old_state = running_state;
+> +
+>  		running_state = state;
+>  		pthread_cond_broadcast(&config_cond);
+>  #ifdef USE_SYSTEMD
+> -		sd_notify(0, sd_notify_status());
+> +		do_sd_notify(old_state);
+>  #endif
+>  	}
+>  	pthread_mutex_unlock(&config_lock);
+> @@ -195,6 +209,8 @@ int set_config_state(enum daemon_status state)
+>  	pthread_cleanup_push(config_cleanup, NULL);
+>  	pthread_mutex_lock(&config_lock);
+>  	if (running_state != state) {
+> +		enum daemon_status old_state = running_state;
+> +
+>  		if (running_state != DAEMON_IDLE) {
+>  			struct timespec ts;
+>  
+> @@ -207,7 +223,7 @@ int set_config_state(enum daemon_status state)
+>  			running_state = state;
+>  			pthread_cond_broadcast(&config_cond);
+>  #ifdef USE_SYSTEMD
+> -			sd_notify(0, sd_notify_status());
+> +			do_sd_notify(old_state);
+>  #endif
+>  		}
+>  	}
+> -- 
+> 2.14.0
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 
 -Ben
-
-> 
-> >  
-> >  	FREE(*f);
-> >  	*f = t;
-> > -- 
-> > 2.14.0
-> 
-> Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
-> 
-> -Ben
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
