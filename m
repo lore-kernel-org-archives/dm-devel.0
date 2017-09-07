@@ -1,371 +1,318 @@
-From: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH] dax: remove the pmem_dax_ops->flush abstraction
-Date: Wed, 6 Sep 2017 23:46:42 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1709062244320.22191@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1708312138390.32309@file01.intranet.prod.int.rdu2.redhat.com>
- <CAPcyv4j9KcgWU+rDY_5zAQ4xg3cx4Z3UkjTieVNMkWLc7C0OLg@mail.gmail.com>
- <alpine.LRH.2.02.1708312257500.15601@file01.intranet.prod.int.rdu2.redhat.com>
- <CAPcyv4iSTmh4j_EfFsbqwrXRd134QMYr+CkV6JuSsw9TX5ihWg@mail.gmail.com>
- <alpine.LRH.2.02.1709060220520.12322@file01.intranet.prod.int.rdu2.redhat.com>
- <CAPcyv4h8i4_NoHw-5+-5Uz41Fo5sL-xWe=2TA0v0hK0aV=CZtg@mail.gmail.com>
+From: Guan Junxiong <guanjunxiong@huawei.com>
+Subject: [PATCH] multipath-tools: calculate standard deviation on
+	a logarithmic scale for prioritizer path_latency
+Date: Thu, 7 Sep 2017 16:28:32 +0800
+Message-ID: <1504772912-13568-1-git-send-email-guanjunxiong@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <CAPcyv4h8i4_NoHw-5+-5Uz41Fo5sL-xWe=2TA0v0hK0aV=CZtg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com, christophe.varoqui@opensvc.com, hare@suse.de, mwilck@suse.com, xose.vazquez@gmail.com
+Cc: philip.yang@huawei.com, guanjunxiong@huawei.com, chengjike.cheng@huawei.com, niuhaoxin@huawei.com, shenhong09@huawei.com
 List-Id: dm-devel.ids
 
+There is a wrong calculation for standard deviation for prioritizers
+path_latency. Because the scale is logarithmic, we need to calculate
+the standard deviation on a log scale. However, if we first compute
+every logarithmic value of each sample of path latency, the standard
+deviation calculating is simple as before because the logarithm of
+logarithmic normal distribution is normal distribution.
 
+Besides, this patch discards the path_interval calculating because
+it is unreasonable to compare two different dimension of datas.
+Instead, this patch uses another condition which comparable.
 
-On Wed, 6 Sep 2017, Dan Williams wrote:
+In addition, the minimum base_num is large so that standard deviation
+is too small to meet the new condition given that the base_num is set
+to the smallest value i.e 2. This patch lets base_num range from 1.01
+to 100.
 
-> [ resend in plain text ]
-> 
-> On Tue, Sep 5, 2017 at 11:29 PM, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> >
-> >
-> > On Thu, 31 Aug 2017, Dan Williams wrote:
-> >
-> >> On Thu, Aug 31, 2017 at 8:04 PM, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> >> >
-> >> >
-> >> > On Thu, 31 Aug 2017, Dan Williams wrote:
-> >> >
-> >> >> On Thu, Aug 31, 2017 at 6:47 PM, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> >> >> > The patch abebfbe2f731 ("dm: add ->flush() dax operation support") is
-> >> >> > buggy. A dm device may be composed of multiple underlying devices and all
-> >> >> > of them need to be flushed. The patch just routes the flush request to the
-> >> >> > first device and ignores the other devices.
-> >> >> >
-> >> >> > It could be fixed by adding more complex logic to the device mapper. But
-> >> >> > there is only one implementation of the method pmem_dax_ops->flush - that
-> >> >> > is pmem_dax_flush() - and it calls arch_wb_cache_pmem(). Consequently, we
-> >> >> > don't need the pmem_dax_ops->flush abstraction at all, we can call
-> >> >> > arch_wb_cache_pmem() directly from dax_flush() because dax_dev->ops->flush
-> >> >> > couldn't ever reach anything different from arch_wb_cache_pmem().
-> >> >>
-> >> >> Unfortunately, this is not true, see usage of DAXDEV_WRITE_CACHE. This
-> >> >> is for platforms that arrange for cpu caches to be flushed on
-> >> >> power-fail, like standalone storage appliances, where it would be a
-> >> >
-> >> > BTW. if the system is capable of flushing caches on power failure, it is
-> >> > system-wide feature, it is not per-device feature. The CPU caches may
-> >> > store data for any persistent memory device.
-> >> >
-> >> > You either have enough remaining power to flush the CPU caches or not.
-> >>
-> >> Whether you need to flush caches or not can be a per-address range
-> >> attribute and can change over time.
-> >
-> > There is only one way to flush the cache (the clwb instruction), you don't
-> > need a method that abstracts over this instruction. A simple flag or
-> > static key that skips clwb() is sufficient.
-> >
-> > Linux kernel API is changeable, so you don't need to overdesign the API
-> > for future. If it ever happens that we have a system with two types of
-> > persistent memory that need different instructions to flush them, we can
-> > design a proper abstraction. But there is no reason to design the
-> > abstraction in advance for a situation that will perhaps never happen.
-> 
-> True, it is over designed and we can cross that complexity bridge in
-> the future when / if it arises.
-> 
-> Since dm is already checking dax_write_cache_enabled() to set its own
-> flush enabled bit I think your patch looks good. You can add:
-> 
-> Reviewed-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-
-OK - Here I resend the patch with the "Reviewed-by" line.
-
-Mikulas
-
-
-
-From: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: dax: remove the pmem_dax_ops->flush abstraction
-
-The patch abebfbe2f731 ("dm: add ->flush() dax operation support") is
-buggy. A dm device may be composed of multiple underlying devices and all
-of them need to be flushed. The patch just routes the flush request to the
-first device and ignores the other devices.
-
-It could be fixed by adding more complex logic to the device mapper. But
-there is only one implementation of the method pmem_dax_ops->flush - that
-is pmem_dax_flush() - and it calls arch_wb_cache_pmem(). Consequently, we
-don't need the pmem_dax_ops->flush abstraction at all, we can call
-arch_wb_cache_pmem() directly from dax_flush() because dax_dev->ops->flush
-couldn't ever reach anything different from arch_wb_cache_pmem().
-
-The code in dm_dax_flush slows down flushing a single cache line almost 
-twice, because it has to walk the device mapper table. Walking the device 
-mapper table is not needed at all, we can just flush the linear address.
-
-This patch removes the abstraction pmem_dax_ops->flush and calls
-arch_wb_cache_pmem() directly from dax_flush(). It also removes device
-mapper code that forwards the flushes.
-
-Signed-off-by: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Reviewed-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-
+Signed-off-by: Junxiong Guan <guanjunxiong@huawei.com>
 ---
- drivers/dax/super.c           |   21 ++++++++++++++-------
- drivers/md/dm-linear.c        |   15 ---------------
- drivers/md/dm-stripe.c        |   20 --------------------
- drivers/md/dm.c               |   19 -------------------
- drivers/nvdimm/pmem.c         |    7 -------
- fs/dax.c                      |    4 ++--
- include/linux/dax.h           |    5 +----
- include/linux/device-mapper.h |    3 ---
- 8 files changed, 17 insertions(+), 77 deletions(-)
 
-Index: linux-2.6/drivers/md/dm-linear.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-linear.c
-+++ linux-2.6/drivers/md/dm-linear.c
-@@ -184,20 +184,6 @@ static size_t linear_dax_copy_from_iter(
- 	return dax_copy_from_iter(dax_dev, pgoff, addr, bytes, i);
- }
+
+**Note**:
+This patch is based on the previous series of three small patches:
+multipath-tools: use direct IO and user-friend arguments for path-latency
+
+ libmultipath/prioritizers/path_latency.c | 169 +++++++++++++++++--------------
+ 1 file changed, 92 insertions(+), 77 deletions(-)
+
+diff --git a/libmultipath/prioritizers/path_latency.c b/libmultipath/prioritizers/path_latency.c
+index 69c9bd65..9d5397ec 100644
+--- a/libmultipath/prioritizers/path_latency.c
++++ b/libmultipath/prioritizers/path_latency.c
+@@ -38,10 +38,12 @@
+ #define pp_pl_log(prio, fmt, args...) condlog(prio, "path_latency prio: " fmt, ##args)
  
--static void linear_dax_flush(struct dm_target *ti, pgoff_t pgoff, void *addr,
--		size_t size)
--{
--	struct linear_c *lc = ti->private;
--	struct block_device *bdev = lc->dev->bdev;
--	struct dax_device *dax_dev = lc->dev->dax_dev;
--	sector_t dev_sector, sector = pgoff * PAGE_SECTORS;
--
--	dev_sector = linear_map_sector(ti, sector);
--	if (bdev_dax_pgoff(bdev, dev_sector, ALIGN(size, PAGE_SIZE), &pgoff))
--		return;
--	dax_flush(dax_dev, pgoff, addr, size);
--}
--
- static struct target_type linear_target = {
- 	.name   = "linear",
- 	.version = {1, 4, 0},
-@@ -212,7 +198,6 @@ static struct target_type linear_target
- 	.iterate_devices = linear_iterate_devices,
- 	.direct_access = linear_dax_direct_access,
- 	.dax_copy_from_iter = linear_dax_copy_from_iter,
--	.dax_flush = linear_dax_flush,
- };
+ #define MAX_IO_NUM		200
+-#define MIN_IO_NUM		2
++#define MIN_IO_NUM		20
++#define DEF_IO_NUM		100
  
- int __init dm_linear_init(void)
-Index: linux-2.6/drivers/md/dm-stripe.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-stripe.c
-+++ linux-2.6/drivers/md/dm-stripe.c
-@@ -351,25 +351,6 @@ static size_t stripe_dax_copy_from_iter(
- 	return dax_copy_from_iter(dax_dev, pgoff, addr, bytes, i);
- }
+ #define MAX_BASE_NUM		10
+-#define MIN_BASE_NUM		2
++#define MIN_BASE_NUM		1.01
++#define DEF_BASE_NUM		1.5
  
--static void stripe_dax_flush(struct dm_target *ti, pgoff_t pgoff, void *addr,
--		size_t size)
--{
--	sector_t dev_sector, sector = pgoff * PAGE_SECTORS;
--	struct stripe_c *sc = ti->private;
--	struct dax_device *dax_dev;
--	struct block_device *bdev;
--	uint32_t stripe;
--
--	stripe_map_sector(sc, sector, &stripe, &dev_sector);
--	dev_sector += sc->stripe[stripe].physical_start;
--	dax_dev = sc->stripe[stripe].dev->dax_dev;
--	bdev = sc->stripe[stripe].dev->bdev;
--
--	if (bdev_dax_pgoff(bdev, dev_sector, ALIGN(size, PAGE_SIZE), &pgoff))
--		return;
--	dax_flush(dax_dev, pgoff, addr, size);
--}
--
- /*
-  * Stripe status:
-  *
-@@ -491,7 +472,6 @@ static struct target_type stripe_target
- 	.io_hints = stripe_io_hints,
- 	.direct_access = stripe_dax_direct_access,
- 	.dax_copy_from_iter = stripe_dax_copy_from_iter,
--	.dax_flush = stripe_dax_flush,
- };
+ #define MAX_AVG_LATENCY		100000000.	/* Unit: us */
+ #define MIN_AVG_LATENCY		1.		/* Unit: us */
+@@ -53,7 +55,7 @@
  
- int __init dm_stripe_init(void)
-Index: linux-2.6/drivers/nvdimm/pmem.c
-===================================================================
---- linux-2.6.orig/drivers/nvdimm/pmem.c
-+++ linux-2.6/drivers/nvdimm/pmem.c
-@@ -243,16 +243,9 @@ static size_t pmem_copy_from_iter(struct
- 	return copy_from_iter_flushcache(addr, bytes, i);
- }
+ #define DEF_BLK_SIZE		4096
  
--static void pmem_dax_flush(struct dax_device *dax_dev, pgoff_t pgoff,
--		void *addr, size_t size)
--{
--	arch_wb_cache_pmem(addr, size);
--}
--
- static const struct dax_operations pmem_dax_ops = {
- 	.direct_access = pmem_dax_direct_access,
- 	.copy_from_iter = pmem_copy_from_iter,
--	.flush = pmem_dax_flush,
- };
+-static long long path_latency[MAX_IO_NUM];
++static double lg_path_latency[MAX_IO_NUM];
  
- static const struct attribute_group *pmem_attribute_groups[] = {
-Index: linux-2.6/include/linux/device-mapper.h
-===================================================================
---- linux-2.6.orig/include/linux/device-mapper.h
-+++ linux-2.6/include/linux/device-mapper.h
-@@ -134,8 +134,6 @@ typedef long (*dm_dax_direct_access_fn)
- 		long nr_pages, void **kaddr, pfn_t *pfn);
- typedef size_t (*dm_dax_copy_from_iter_fn)(struct dm_target *ti, pgoff_t pgoff,
- 		void *addr, size_t bytes, struct iov_iter *i);
--typedef void (*dm_dax_flush_fn)(struct dm_target *ti, pgoff_t pgoff, void *addr,
--		size_t size);
- #define PAGE_SECTORS (PAGE_SIZE / 512)
- 
- void dm_error(const char *message);
-@@ -186,7 +184,6 @@ struct target_type {
- 	dm_io_hints_fn io_hints;
- 	dm_dax_direct_access_fn direct_access;
- 	dm_dax_copy_from_iter_fn dax_copy_from_iter;
--	dm_dax_flush_fn dax_flush;
- 
- 	/* For internal device-mapper use. */
- 	struct list_head list;
-Index: linux-2.6/drivers/md/dm.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm.c
-+++ linux-2.6/drivers/md/dm.c
-@@ -997,24 +997,6 @@ static size_t dm_dax_copy_from_iter(stru
- 	return ret;
- }
- 
--static void dm_dax_flush(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
--		size_t size)
--{
--	struct mapped_device *md = dax_get_private(dax_dev);
--	sector_t sector = pgoff * PAGE_SECTORS;
--	struct dm_target *ti;
--	int srcu_idx;
--
--	ti = dm_dax_get_live_target(md, sector, &srcu_idx);
--
--	if (!ti)
--		goto out;
--	if (ti->type->dax_flush)
--		ti->type->dax_flush(ti, pgoff, addr, size);
-- out:
--	dm_put_live_table(md, srcu_idx);
--}
--
- /*
-  * A target may call dm_accept_partial_bio only from the map routine.  It is
-  * allowed for all bio types except REQ_PREFLUSH.
-@@ -3002,7 +2984,6 @@ static const struct block_device_operati
- static const struct dax_operations dm_dax_ops = {
- 	.direct_access = dm_dax_direct_access,
- 	.copy_from_iter = dm_dax_copy_from_iter,
--	.flush = dm_dax_flush,
- };
- 
- /*
-Index: linux-2.6/fs/dax.c
-===================================================================
---- linux-2.6.orig/fs/dax.c
-+++ linux-2.6/fs/dax.c
-@@ -783,7 +783,7 @@ static int dax_writeback_one(struct bloc
- 	}
- 
- 	dax_mapping_entry_mkclean(mapping, index, pfn_t_to_pfn(pfn));
--	dax_flush(dax_dev, pgoff, kaddr, size);
-+	dax_flush(dax_dev, kaddr, size);
- 	/*
- 	 * After we have flushed the cache, we can clear the dirty tag. There
- 	 * cannot be new dirty data in the pfn after the flush has completed as
-@@ -978,7 +978,7 @@ int __dax_zero_page_range(struct block_d
- 			return rc;
- 		}
- 		memset(kaddr + offset, 0, size);
--		dax_flush(dax_dev, pgoff, kaddr + offset, size);
-+		dax_flush(dax_dev, kaddr + offset, size);
- 		dax_read_unlock(id);
- 	}
- 	return 0;
-Index: linux-2.6/drivers/dax/super.c
-===================================================================
---- linux-2.6.orig/drivers/dax/super.c
-+++ linux-2.6/drivers/dax/super.c
-@@ -189,8 +189,10 @@ static umode_t dax_visible(struct kobjec
- 	if (!dax_dev)
- 		return 0;
- 
--	if (a == &dev_attr_write_cache.attr && !dax_dev->ops->flush)
-+#ifndef CONFIG_ARCH_HAS_PMEM_API
-+	if (a == &dev_attr_write_cache.attr)
- 		return 0;
-+#endif
- 	return a->mode;
- }
- 
-@@ -255,18 +257,23 @@ size_t dax_copy_from_iter(struct dax_dev
- }
- EXPORT_SYMBOL_GPL(dax_copy_from_iter);
- 
--void dax_flush(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
--		size_t size)
-+#ifdef CONFIG_ARCH_HAS_PMEM_API
-+void arch_wb_cache_pmem(void *addr, size_t size);
-+void dax_flush(struct dax_device *dax_dev, void *addr, size_t size)
+ static inline long long timeval_to_us(const struct timespec *tv)
  {
--	if (!dax_alive(dax_dev))
-+	if (unlikely(!dax_alive(dax_dev)))
- 		return;
- 
--	if (!test_bit(DAXDEV_WRITE_CACHE, &dax_dev->flags))
-+	if (unlikely(!test_bit(DAXDEV_WRITE_CACHE, &dax_dev->flags)))
- 		return;
- 
--	if (dax_dev->ops->flush)
--		dax_dev->ops->flush(dax_dev, pgoff, addr, size);
-+	arch_wb_cache_pmem(addr, size);
-+}
-+#else
-+void dax_flush(struct dax_device *dax_dev, void *addr, size_t size)
-+{
+@@ -129,7 +131,7 @@ static int do_directio_read(int fd, unsigned int timeout, char *buf, int sz)
+ 	return 0;
  }
-+#endif
- EXPORT_SYMBOL_GPL(dax_flush);
  
- void dax_write_cache(struct dax_device *dax_dev, bool wc)
-Index: linux-2.6/include/linux/dax.h
-===================================================================
---- linux-2.6.orig/include/linux/dax.h
-+++ linux-2.6/include/linux/dax.h
-@@ -19,8 +19,6 @@ struct dax_operations {
- 	/* copy_from_iter: required operation for fs-dax direct-i/o */
- 	size_t (*copy_from_iter)(struct dax_device *, pgoff_t, void *, size_t,
- 			struct iov_iter *);
--	/* flush: optional driver-specific cache management after writes */
--	void (*flush)(struct dax_device *, pgoff_t, void *, size_t);
- };
+-int check_args_valid(int io_num, int base_num)
++int check_args_valid(int io_num, double base_num)
+ {
+ 	if ((io_num < MIN_IO_NUM) || (io_num > MAX_IO_NUM)) {
+ 		pp_pl_log(0, "args io_num is outside the valid range");
+@@ -149,7 +151,7 @@ int check_args_valid(int io_num, int base_num)
+  * "io_num=20 base_num=10", this function can get io_num value 20 and
+  * base_num value 10.
+  */
+-static int get_ionum_and_basenum(char *args, int *ionum, int *basenum)
++static int get_ionum_and_basenum(char *args, int *ionum, double *basenum)
+ {
+ 	char split_char[] = " \t";
+ 	char *arg, *temp;
+@@ -177,7 +179,7 @@ static int get_ionum_and_basenum(char *args, int *ionum, int *basenum)
+ 			flag_io = 1;
+ 		}
+ 		else if (!strncmp(str, "base_num=", 9) && strlen(str) > 9) {
+-			*basenum = (int)strtol(str + 9, &str_inval, 10);
++			*basenum = strtod(str + 9, &str_inval);
+ 			if (str == str_inval)
+ 				goto out;
+ 			flag_base = 1;
+@@ -196,56 +198,36 @@ out:
+ 	return 0;
+ }
  
- extern struct attribute_group dax_attribute_group;
-@@ -84,8 +82,7 @@ long dax_direct_access(struct dax_device
- 		void **kaddr, pfn_t *pfn);
- size_t dax_copy_from_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
- 		size_t bytes, struct iov_iter *i);
--void dax_flush(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
--		size_t size);
-+void dax_flush(struct dax_device *dax_dev, void *addr, size_t size);
- void dax_write_cache(struct dax_device *dax_dev, bool wc);
- bool dax_write_cache_enabled(struct dax_device *dax_dev);
+-long long calc_standard_deviation(long long *path_latency, int size,
+-				  long long avglatency)
++double calc_standard_deviation(double *lg_path_latency, int size,
++				  double lg_avglatency)
+ {
+ 	int index;
+-	long long total = 0;
++	double sum = 0;
+ 
+ 	for (index = 0; index < size; index++) {
+-		total +=
+-		    (path_latency[index] - avglatency) * (path_latency[index] -
+-							  avglatency);
++		sum += (lg_path_latency[index] - lg_avglatency) *
++			(lg_path_latency[index] - lg_avglatency);
+ 	}
+ 
+-	total /= (size - 1);
++	sum /= (size - 1);
+ 
+-	return (long long)sqrt((double)total);
++	return sqrt(sum);
+ }
+ 
+-int calcPrio(double avglatency, double max_avglatency, double min_avglatency,
+-	     double base_num)
++/*
++ * Do not scale the prioriy in a certain range such as [0, 1024]
++ * because scaling will eliminate the effect of base_num.
++ */
++int calcPrio(double lg_avglatency, double lg_maxavglatency,
++		double lg_minavglatency)
+ {
+-	double lavglatency = log(avglatency) / log(base_num);
+-	double lmax_avglatency = log(max_avglatency) / log(base_num);
+-	double lmin_avglatency = log(min_avglatency) / log(base_num);
++	if (lg_avglatency <= lg_minavglatency)
++		return lg_maxavglatency - lg_minavglatency;
+ 
+-	if (lavglatency <= lmin_avglatency)
+-		return (int)(lmax_avglatency + 1.);
+-
+-	if (lavglatency > lmax_avglatency)
++	if (lg_avglatency >= lg_maxavglatency)
+ 		return 0;
+ 
+-	return (int)(lmax_avglatency - lavglatency + 1.);
+-}
+-
+-/* Calc the latency interval corresponding to the average latency */
+-long long calc_latency_interval(double avglatency, double max_avglatency,
+-				double min_avglatency, double base_num)
+-{
+-	double lavglatency = log(avglatency) / log(base_num);
+-	double lmax_avglatency = log(max_avglatency) / log(base_num);
+-	double lmin_avglatency = log(min_avglatency) / log(base_num);
+-
+-	if ((lavglatency <= lmin_avglatency)
+-	    || (lavglatency > lmax_avglatency))
+-		return 0;	/* Invalid value */
+-
+-	if ((double)((int)lavglatency) == lavglatency)
+-		return (long long)(avglatency - (avglatency / base_num));
+-	else
+-		return (long long)(pow(base_num, (double)((int)lavglatency + 1))
+-				   - pow(base_num, (double)((int)lavglatency)));
++	return lg_maxavglatency - lg_avglatency;
+ }
+ 
+ int getprio(struct path *pp, char *args, unsigned int timeout)
+@@ -253,26 +235,34 @@ int getprio(struct path *pp, char *args, unsigned int timeout)
+ 	int rc, temp;
+ 	int index = 0;
+ 	int io_num = 0;
+-	int base_num = 0;
+-	long long avglatency;
+-	long long latency_interval;
+-	long long standard_deviation;
+-	long long toldelay = 0;
++	double base_num = 0;
++	double lg_avglatency, lg_maxavglatency, lg_minavglatency;
++	double standard_deviation;
++	double lg_toldelay = 0;
+ 	long long before, after;
+ 	struct timespec tv;
+ 	int blksize;
+ 	char *buf;
+ 	int restore_flags = 0;
++	double lg_base;
++	long long sum_latency = 0;
++	long long arith_mean_lat;
+ 
+ 	if (pp->fd < 0)
+ 		return -1;
+ 
+ 	if (get_ionum_and_basenum(args, &io_num, &base_num) == 0) {
+-		pp_pl_log(0, "%s: get path_latency args fail", pp->dev);
+-		return DEFAULT_PRIORITY;
++		io_num = DEF_IO_NUM;
++		base_num = DEF_BASE_NUM;
++		pp_pl_log(0, "%s: fails to get path_latency args, set default:"
++				"io_num=%d base_num=%.3lf",
++				pp->dev, io_num, base_num);
+ 	}
+ 
+-	memset(path_latency, 0, sizeof(path_latency));
++	memset(lg_path_latency, 0, sizeof(lg_path_latency));
++	lg_base = log(base_num);
++	lg_maxavglatency = log(MAX_AVG_LATENCY) / lg_base;
++	lg_minavglatency = log(MIN_AVG_LATENCY) / lg_base;
+ 
+ 	prepare_directio_read(pp->fd, &blksize, &buf, &restore_flags);
+ 
+@@ -289,43 +279,68 @@ int getprio(struct path *pp, char *args, unsigned int timeout)
+ 
+ 		(void)clock_gettime(CLOCK_MONOTONIC, &tv);
+ 		after = timeval_to_us(&tv);
+-
+-		path_latency[index] = after - before;
+-		toldelay += path_latency[index++];
++		/*
++		 * We assume that the latency complies with Log-normal
++		 * distribution. The logarithm of latency is in normal
++		 * distribution.
++		 */
++		lg_path_latency[index] = log(after - before) / lg_base;
++		lg_toldelay += lg_path_latency[index++];
++		sum_latency += after - before;
+ 	}
+ 
+ 	cleanup_directio_read(pp->fd, buf, restore_flags);
+ 
+-	avglatency = toldelay / (long long)io_num;
+-	pp_pl_log(4, "%s: average latency is (%lld us)", pp->dev, avglatency);
++	lg_avglatency = lg_toldelay / (long long)io_num;
++	arith_mean_lat = sum_latency / (long long)io_num;
++	pp_pl_log(4, "%s: arithmetic mean latency is (%lld us), geometric mean latency is (%lld us)",
++			pp->dev, arith_mean_lat,
++			(long long)pow(base_num, lg_avglatency));
+ 
+-	if (avglatency > MAX_AVG_LATENCY) {
++	if (lg_avglatency > lg_maxavglatency) {
+ 		pp_pl_log(0,
+ 			  "%s: average latency (%lld us) is outside the thresold (%lld us)",
+-			  pp->dev, avglatency, (long long)MAX_AVG_LATENCY);
++			  pp->dev, (long long)pow(base_num, lg_avglatency),
++			  (long long)MAX_AVG_LATENCY);
+ 		return DEFAULT_PRIORITY;
+ 	}
+ 
++	standard_deviation = calc_standard_deviation(lg_path_latency,
++			index, lg_avglatency);
++	/*
++	 * In calPrio(), we let prio y = f(x) = log(max, base) - log (x, base);
++	 * So if we want to let the priority of the latency outside 2 standard
++	 * deviations can be distinguished from the latency inside 2 standard
++	 * deviation, in others words at most 95% are the same and at least 5%
++	 * are different according interval estimation of normal distribution,
++	 * we should warn the user to set the base_num to be smaller if the
++	 * log(x_threshold, base) is small than 2 standard deviation.
++	 * x_threshold is derived from:
++	 * y + 1 = f(x) + 1 = f(x) + log(base, base), so x_threadshold =
++	 * base_num; Note that we only can compare the logarithm of x_threshold
++	 * with the standard deviation because the standard deviation is derived
++	 * from logarithm of latency.
++	 *
++	 * therefore , we recommend the base_num to meet the condition :
++	 * 1 <= 2 * standard_deviation
++	 */
++	pp_pl_log(5, "%s: standard deviation for logarithm of latency = %.6f",
++			pp->dev, standard_deviation);
++	if (standard_deviation <= 0.5)
++		pp_pl_log(3, "%s: the base_num(%.3lf) is too big to distinguish different priority "
++			  "of two far-away latency. It is recommend to be set smaller",
++			  pp->dev, base_num);
+ 	/*
+-	 * Min average latency and max average latency are constant, the args
+-	 * base_num set can change latency_interval value corresponding to
+-	 * avglatency and is not constant.
+-	 * Warn the user if latency_interval is smaller than (2 * standard_deviation),
+-	 * or equal.
++	 * If the standard deviation is too large , we should also warn the user
+ 	 */
+-	standard_deviation =
+-	    calc_standard_deviation(path_latency, index, avglatency);
+-	latency_interval =
+-	    calc_latency_interval(avglatency, MAX_AVG_LATENCY, MIN_AVG_LATENCY,
+-				  base_num);
+-	if ((latency_interval != 0)
+-	    && (latency_interval <= (2 * standard_deviation)))
+-		pp_pl_log(3,
+-			  "%s: latency interval (%lld) according to average latency (%lld us) is smaller than "
+-			  "2 * standard deviation (%lld us), or equal, args base_num (%d) needs to be set bigger value",
+-			  pp->dev, latency_interval, avglatency,
+-			  standard_deviation, base_num);
+-
+-	rc = calcPrio(avglatency, MAX_AVG_LATENCY, MIN_AVG_LATENCY, base_num);
++
++	if (standard_deviation > 4)
++		pp_pl_log(3, "%s: the base_num(%.3lf) is too small to avoid noise disturbance "
++			  ".It is recommend to be set larger",
++			  pp->dev, base_num);
++
++
++	rc = calcPrio(lg_avglatency, lg_maxavglatency, lg_minavglatency);
++
+ 	return rc;
+ }
+-- 
+2.11.1
