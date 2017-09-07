@@ -1,59 +1,94 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: BFQ + dm-mpath
-Date: Thu, 7 Sep 2017 11:52:55 -0400
-Message-ID: <20170907155255.GA22848@redhat.com>
-References: <1503611578.2899.69.camel@wdc.com>
- <AE77899A-0365-4C7C-91E4-5ACCC396B26B@linaro.org>
- <ED23C7AC-F202-40E3-8421-E714BF446399@linaro.org>
- <1504620914.4135.11.camel@wdc.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH 2/4] libmultipath: add_feature: skip
+	pointless NULL check
+Date: Thu, 7 Sep 2017 16:33:09 -0500
+Message-ID: <20170907213309.GC3145@octiron.msp.redhat.com>
+References: <20170828220536.13208-1-mwilck@suse.com>
+	<20170828220536.13208-2-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1504620914.4135.11.camel@wdc.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Bart Van Assche <Bart.VanAssche@wdc.com>
-Cc: "paolo.valente@linaro.org" <paolo.valente@linaro.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, dm-devel@redhat.com, axboe@kernel.dk
+In-Reply-To: <20170828220536.13208-2-mwilck@suse.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Sep 05 2017 at 10:15am -0400,
-Bart Van Assche <Bart.VanAssche@wdc.com> wrote:
-
-> On Tue, 2017-09-05 at 09:56 +0200, Paolo Valente wrote:
-> > Ok, my suspects seem confirmed: the path dm_mq_queue_rq -> map_request
-> > -> setup_clone -> blk_rq_prep_clone creates a cloned request without
-> > invoking e->type->ops.mq.prepare_request for the target elevator e.
-> > The cloned request is therefore not initialized for the scheduler, but
-> > it is however inserted into the scheduler by
-> > blk_mq_sched_insert_request.  This seems an error for any scheduler
-> > that needs to initialize fields in the incoming request, or in general
-> > to take some preliminary action.
-> > 
-> > Am I missing something here?
+On Tue, Aug 29, 2017 at 12:05:34AM +0200, Martin Wilck wrote:
+> The case f == NULL is already handled by the code from
+> b1ecdd46b6ec "segment faulty occured in add_feature()" above.
 > 
-> (+Mike Snitzer)
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  libmultipath/structs.c | 27 ++++++++++++---------------
+>  1 file changed, 12 insertions(+), 15 deletions(-)
 > 
-> Mike, do you perhaps have the time to look into this memory leak?
+> diff --git a/libmultipath/structs.c b/libmultipath/structs.c
+> index 28704676..11e33676 100644
+> --- a/libmultipath/structs.c
+> +++ b/libmultipath/structs.c
+> @@ -515,7 +515,7 @@ void setup_feature(struct multipath *mpp, char *feature)
+>  
+>  int add_feature(char **f, const char *n)
+>  {
+> -	int c = 0, d, l = 0;
+> +	int c = 0, d, l;
+>  	char *e, *p, *t;
+>  	const char *q;
+>  
+> @@ -538,19 +538,18 @@ int add_feature(char **f, const char *n)
+>  	}
+>  
+>  	/* Check if feature is already present */
+> -	if (*f) {
+> -		if (strstr(*f, n))
+> -			return 0;
+> +	if (strstr(*f, n))
+> +		return 0;
+>  
+> -		/* Get feature count */
+> -		c = strtoul(*f, &e, 10);
+> -		if (*f == e)
+> -			/* parse error */
+> -			return 1;
+> +	/* Get feature count */
+> +	c = strtoul(*f, &e, 10);
+> +	if (*f == e)
+> +		/* parse error */
+> +		return 1;
+> +
+> +	/* Check if we need to increase feature count space */
+> +	l = strlen(*f) + strlen(n) + 1;
+>  
+> -		/* Check if we need to increase feature count space */
+> -		l = strlen(*f) + strlen(n) + 1;
+> -	}
+>  	/* Count new features */
+>  	if ((c % 10) == 9)
+>  		l++;
+> @@ -582,9 +581,7 @@ int add_feature(char **f, const char *n)
+>  	snprintf(p, l + 2, "%0d ", c);
+>  
+>  	/* Copy the feature string */
+> -	p = NULL;
+> -	if (*f)
+> -		p = strchr(*f, ' ');
+> +	p = strchr(*f, ' ');
+>  
+>  	if (p) {
+>  		while (*p == ' ')
+> -- 
+> 2.14.0
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-It isn't a memory leak, it is missing initialization in the case of
-cloned requests (if I'm understanding Paolo correctly).
-
-But cloned requests shouldn't be going through the scheduler.  Only the
-original requests should.
-
-Commit bd166ef18 ("blk-mq-sched: add framework for MQ capable IO
-schedulers") switched from blk_mq_insert_request() to
-blk_mq_sched_insert_request() and in doing so it opened dm-mpath up to
-this bug.
-
-Could be we need to take steps to ensure the block layer still
-supports bypassing the elevator by using direct insertion?
-
-Or blk_mq_sched_insert_request() needs updating to check if
-e->type->ops.mq.prepare_request were actually performed and to fallback
-to the !elevator case if not..
-
-Not sure on the fix, but I can look closer if others (like Jens or
-Paolo) don't have quicker suggestions.
-
-Mike
+-Ben
