@@ -1,16 +1,16 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 3/4] libmultipath: add_feature: allow only 1
-	feature
-Date: Thu, 7 Sep 2017 16:42:09 -0500
-Message-ID: <20170907214209.GD3145@octiron.msp.redhat.com>
+Subject: Re: [PATCH 4/4] multipath: delegate dangerous commands
+	to multipathd
+Date: Thu, 7 Sep 2017 16:57:58 -0500
+Message-ID: <20170907215758.GE3145@octiron.msp.redhat.com>
 References: <20170828220536.13208-1-mwilck@suse.com>
-	<20170828220536.13208-3-mwilck@suse.com>
+	<20170828220536.13208-4-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20170828220536.13208-3-mwilck@suse.com>
+In-Reply-To: <20170828220536.13208-4-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,132 +24,145 @@ To: Martin Wilck <mwilck@suse.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Aug 29, 2017 at 12:05:35AM +0200, Martin Wilck wrote:
-> The existing test "if feature is already present" doesn't work for
-> multiple features, and we are only using add_feature() for single
-> feature additions anyway. Simplify the code by not allowing spaces
-> in the feature string to be added. This way we can drop the
-> complex "count new features" code. Moreover, print an error message if
-> the existing features string is malformed.
+On Tue, Aug 29, 2017 at 12:05:36AM +0200, Martin Wilck wrote:
+> Some multipath commands are dangerous to run while multipathd is running.
+> For example, "multipath -r" may apply a modified configuration to the kernel,
+> while multipathd is still using the old configuration, leading to
+> inconsistent state between multipathd and the kernel.
 > 
-> The old code calculated the width of the feature count twice, and the
-> second time messed up the buffer length field passed to snprintf(); fix
-> that, too.  Finally, replace several strcat() invocations by one
-> strncpy() call to make the code easier to review.
+> It is safer to use equivalent multipathd client commands instead.
+> For now, do this only for "multipath -r", but other invocations
+> may be added in the future. Perhaps some day, all "multipath"
+> commands will be mapped to multipathd actions.
+
+Thanks. I've been meaning to do something like this forever.
+
 > 
 > Signed-off-by: Martin Wilck <mwilck@suse.com>
 > ---
->  libmultipath/structs.c | 64 +++++++++++++++++---------------------------------
->  1 file changed, 21 insertions(+), 43 deletions(-)
+>  Makefile.inc     |  2 +-
+>  multipath/main.c | 73 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+>  2 files changed, 74 insertions(+), 1 deletion(-)
 > 
-> diff --git a/libmultipath/structs.c b/libmultipath/structs.c
-> index 11e33676..828e7907 100644
-> --- a/libmultipath/structs.c
-> +++ b/libmultipath/structs.c
-> @@ -516,8 +516,7 @@ void setup_feature(struct multipath *mpp, char *feature)
->  int add_feature(char **f, const char *n)
->  {
->  	int c = 0, d, l;
-> -	char *e, *p, *t;
-> -	const char *q;
-> +	char *e, *t;
+> diff --git a/Makefile.inc b/Makefile.inc
+> index 29c290a2..d012b3d7 100644
+> --- a/Makefile.inc
+> +++ b/Makefile.inc
+> @@ -90,7 +90,7 @@ OPTFLAGS	= -O2 -g -pipe -Wall -Wextra -Wformat=2 -Werror=implicit-int \
+>  		  -Wp,-D_FORTIFY_SOURCE=2 $(STACKPROT) \
+>  		  --param=ssp-buffer-size=4
 >  
->  	if (!f)
->  		return 1;
-> @@ -526,6 +525,11 @@ int add_feature(char **f, const char *n)
->  	if (!n || *n == '0')
->  		return 0;
+> -CFLAGS		= $(OPTFLAGS) -DLIB_STRING=\"${LIB}\" -DRUN_DIR=\"${RUN}\"
+> +CFLAGS		= $(OPTFLAGS) -D BIN_DIR=\"$(bindir)\" -DLIB_STRING=\"${LIB}\" -DRUN_DIR=\"${RUN}\"
+>  BIN_CFLAGS	= -fPIE -DPIE
+>  LIB_CFLAGS	= -fPIC
+>  SHARED_FLAGS	= -shared
+> diff --git a/multipath/main.c b/multipath/main.c
+> index dede017e..b54aa9bb 100644
+> --- a/multipath/main.c
+> +++ b/multipath/main.c
+> @@ -502,6 +502,74 @@ get_dev_type(char *dev) {
+>  	return DEV_NONE;
+>  }
 >  
-> +	if (strchr(n, ' ') != NULL) {
-> +		condlog(0, "internal error: feature \"%s\" contains spaces", n);
-> +		return 1;
+> +/*
+> + * Some multipath commands are dangerous to run while multipathd is running.
+> + * For example, "multipath -r" may apply a modified configuration to the kernel,
+> + * while multipathd is still using the old configuration, leading to
+> + * inconsistent state.
+> + *
+> + * It is safer to use equivalent multipathd client commands instead.
+> + */
+> +int delegate_to_multipathd(enum mpath_cmds cmd, const struct config *conf)
+> +{
+> +#define DELEGATE_MAX_ARGS 5
+> +	int fd = mpath_connect();
+> +	char mpd_path[PATH_MAX];
+> +	char *argv[DELEGATE_MAX_ARGS];
+> +	char log[4096], *p;
+> +	char verbosity[2] = { '0', '\0' };
+> +	int idx = 1, cmd_idx, sz, n, i;
+> +
+> +	if (fd == -1)
+> +		return 0;
+> +	close(fd);
+> +
+> +	if (conf->verbosity > 0 && conf->verbosity < 8)
+> +		verbosity[0] = '0' + conf->verbosity;
+> +	argv[idx++] = "-v";
+> +	argv[idx++] = verbosity;
+> +
+> +	cmd_idx = idx;
+> +	if (cmd == CMD_CREATE && conf->force_reload == FORCE_RELOAD_YES) {
+> +		argv[idx++] = "reconfigure";
+> +	} /* Add other translations here */
+> +
+> +	if (idx == cmd_idx)
+> +		/* No command found, no need to delegate */
+> +		return 0;
+> +	else if (idx >= DELEGATE_MAX_ARGS) {
+> +		condlog(0, "internal error - argv overflow");
+> +		exit(1);
 > +	}
-> +
->  	/* default feature is null */
->  	if(!*f)
->  	{
-> @@ -543,55 +547,29 @@ int add_feature(char **f, const char *n)
->  
->  	/* Get feature count */
->  	c = strtoul(*f, &e, 10);
-> -	if (*f == e)
-> -		/* parse error */
-> +	if (*f == e || (*e != ' ' && *e != '\0')) {
-> +		condlog(0, "parse error in feature string \"%s\"", *f);
->  		return 1;
-> -
-> -	/* Check if we need to increase feature count space */
-> -	l = strlen(*f) + strlen(n) + 1;
-> -
-> -	/* Count new features */
-> -	if ((c % 10) == 9)
-> -		l++;
-> -	c++;
-> -	q = n;
-> -	while (*q != '\0') {
-> -		if (*q == ' ' && q[1] != '\0' && q[1] != ' ') {
-> -			if ((c % 10) == 9)
-> -				l++;
-> -			c++;
-> -		}
-> -		q++;
->  	}
->  
-> +	/* Add 1 digit and 1 space */
-> +	l = strlen(e) + strlen(n) + 2;
-> +
-> +	c++;
-> +	/* Check if we need more digits for feature count */
-> +	for (d = c; d >= 10; d /= 10)
-> +		l++;
-> +
->  	t = MALLOC(l + 1);
->  	if (!t)
->  		return 1;
->  
-> -	memset(t, 0, l + 1);
-> +	/* e: old feature string with leading space, or "" */
-> +	if (*e == ' ')
-> +		while (*(e + 1) == ' ')
-> +			e++;
->  
-> -	/* Update feature count */
-> -	d = c;
-> -	l = 1;
-> -	while (d > 9) {
-> -		d /= 10;
-> -		l++;
-> -	}
-> -	p = t;
-> -	snprintf(p, l + 2, "%0d ", c);
-> -
-> -	/* Copy the feature string */
-> -	p = strchr(*f, ' ');
-> -
-> -	if (p) {
-> -		while (*p == ' ')
-> -			p++;
-> -		strcat(t, p);
-> -		strcat(t, " ");
-> -	} else {
-> -		p = t + strlen(t);
-> -	}
-> -	strcat(t, n);
-> +	snprintf(t, l + 1, "%0d%s %s", c, e, n);
 
-Just one nit, that I know I'm guilty of too (so Coverity says).  If
-you're sure that you have enough size for the string, you don't need
-snprintf. If you want to make sure that the string isn't too big, you
-should probably use "l" instead of "l + 1", so that you know that the
-string will get null termintated (from your earlier memset), and you
-won't read off the end of the array later. Otherwise, ACK. 
+Why not just return 0 here, so that we can try the failing back to the
+multipath code. In the longer term, it's definitely worth asking if that
+code needs to exist at all, of if a large chunk of multipath code can
+just turn into wrapped calls to multipathd.
 
->  
->  	FREE(*f);
->  	*f = t;
-> -- 
-> 2.14.0
+> +
+> +	argv[idx] = NULL;
+> +	snprintf(mpd_path, sizeof(mpd_path), "%s/%s", BIN_DIR, "multipathd");
+> +	argv[0] = mpd_path;
+> +
+> +	condlog(1, "delegating command to multipathd");
+> +
+> +	sz = sizeof(log);
+> +	p = log;
+> +	i = 0;
+> +	n = snprintf(p, sz, "command: %s", argv[i++]);
+> +	while (i < idx && n < sz) {
+> +		sz -= n;
+> +		p += n;
+> +		n = snprintf(p, sz, " %s", argv[i++]);
+> +	}
+> +	condlog(2, "%s", log);
+> +	if (n >= sz)
+> +		condlog(2, "(command on previous line was truncated)");
+> +
+> +	if (execv(mpd_path, argv) == -1) {
+> +		condlog(0, "failed to execute multipathd: %s", strerror(errno));
+> +		exit(1);
+> +	}
 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+Why exec multipathd, instead of using the libmpathcmd api, like
+mpathpersist, libdmmp, and the multipathd client do?
 
 -Ben
+
+> +
+> +	/* not reached */
+> +	return 1;
+> +}
+> +
+>  int
+>  main (int argc, char *argv[])
+>  {
+> @@ -695,10 +763,15 @@ main (int argc, char *argv[])
+>  		} else
+>  			mpath_disconnect(fd);
+>  	}
+> +
+>  	if (cmd == CMD_REMOVE_WWID && !dev) {
+>  		condlog(0, "the -w option requires a device");
+>  		goto out;
+>  	}
+> +
+> +	if (delegate_to_multipathd(cmd, conf))
+> +		exit(0); /* not reached */
+> +
+>  	if (cmd == CMD_RESET_WWIDS) {
+>  		struct multipath * mpp;
+>  		int i;
+> -- 
+> 2.14.0
