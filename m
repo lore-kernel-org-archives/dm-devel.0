@@ -1,7 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 1/5] libmultipath: pull functions into util.c
-Date: Fri,  8 Sep 2017 13:45:50 -0500
-Message-ID: <1504896354-28181-2-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 3/5] libmpathpersist: fix update_prflag code
+Date: Fri,  8 Sep 2017 13:45:52 -0500
+Message-ID: <1504896354-28181-4-git-send-email-bmarzins@redhat.com>
 References: <1504896354-28181-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,178 +21,127 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-This patch just pulls safe_write out of rbd. and the persistent
-reservation key parsing code out of dict.c and puts them in util.c,
-so that other functions can make use of them.
+There are multiple problems with the prflag code. First, it doesn't do
+anything useful at all currently. update_prflags is called with "set"
+and "unset" instead of "setprstatus" and "unsetprstatus", so it doesn't
+actually enable persistent reservation tracking in multipathd when a key
+is registered. Second, the string is to store the multipathd message is
+64 bytes long, while just a WWID, which can be used as an alias, can be
+128 bytes long, so it's possible to run out of space in the message.
+Finally, it is called by mpath_persistent_reserve_out when doing a
+preempt and abort, which doesn't make any sense. This disables
+multipathd persistent reservation tracking when a node has just taken
+over the reservation on a device.
+
+This patch fixes these issues, cleans up the return codes and variable
+names, and splits update_prflag into two functions, so that the bulk of
+the work (now in do_update_pr), can be reused by other callers.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/checkers/rbd.c | 16 +---------------
- libmultipath/dict.c         | 26 +++++---------------------
- libmultipath/util.c         | 33 +++++++++++++++++++++++++++++++++
- libmultipath/util.h         |  4 ++++
- 4 files changed, 43 insertions(+), 36 deletions(-)
+ libmpathpersist/mpath_persist.c  |  9 ++++-----
+ libmpathpersist/mpath_updatepr.c | 33 +++++++++++++++++----------------
+ libmpathpersist/mpathpr.h        |  2 +-
+ 3 files changed, 22 insertions(+), 22 deletions(-)
 
-diff --git a/libmultipath/checkers/rbd.c b/libmultipath/checkers/rbd.c
-index 9ea0572..2c18009 100644
---- a/libmultipath/checkers/rbd.c
-+++ b/libmultipath/checkers/rbd.c
-@@ -28,6 +28,7 @@
- #include "../libmultipath/debug.h"
- #include "../libmultipath/util.h"
- #include "../libmultipath/time-util.h"
-+#include "../libmultipath/util.h"
+diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
+index 960d50d..33843a4 100644
+--- a/libmpathpersist/mpath_persist.c
++++ b/libmpathpersist/mpath_persist.c
+@@ -371,13 +371,12 @@ int mpath_persistent_reserve_out ( int fd, int rq_servact, int rq_scope,
+ 			++keyp;
+ 		}
+ 		if (prkey == 0)
+-			update_prflag(alias, "unset", noisy);
++			update_prflag(alias, 0);
+ 		else
+-			update_prflag(alias, "set", noisy);
++			update_prflag(alias, 1);
+ 	} else {
+-		if ((ret == MPATH_PR_SUCCESS) && ((rq_servact == MPATH_PROUT_CLEAR_SA) ||
+-					(rq_servact == MPATH_PROUT_PREE_AB_SA ))){
+-			update_prflag(alias, "unset", noisy);
++		if ((ret == MPATH_PR_SUCCESS) && (rq_servact == MPATH_PROUT_CLEAR_SA)) {
++			update_prflag(alias, 0);
+ 		}
+ 	}
+ out1:
+diff --git a/libmpathpersist/mpath_updatepr.c b/libmpathpersist/mpath_updatepr.c
+index b3701b2..6992879 100644
+--- a/libmpathpersist/mpath_updatepr.c
++++ b/libmpathpersist/mpath_updatepr.c
+@@ -18,42 +18,43 @@
+ #include "mpathpr.h"
  
- struct rbd_checker_context;
- typedef int (thread_fn)(struct rbd_checker_context *ct, char *msg);
-@@ -356,21 +357,6 @@ static int rbd_check(struct rbd_checker_context *ct, char *msg)
- 	return PATH_UP;
- }
  
--static int safe_write(int fd, const void *buf, size_t count)
--{
--	while (count > 0) {
--		ssize_t r = write(fd, buf, count);
--		if (r < 0) {
--			if (errno == EINTR)
--				continue;
--			return -errno;
+-int update_prflag(char * arg1, char * arg2, int noisy)
++static int do_update_pr(char *alias, char *arg)
+ {
+ 	int fd;
+-	char str[64];
++	char str[256];
+ 	char *reply;
+ 	int ret = 0;
+ 
+ 	fd = mpath_connect();
+ 	if (fd == -1) {
+ 		condlog (0, "ux socket connect error");
+-		return 1 ;
++		return -1;
+ 	}
+ 
+-	snprintf(str,sizeof(str),"map %s %s", arg1, arg2);
+-	condlog (2, "%s: pr flag message=%s", arg1, str);
++	snprintf(str,sizeof(str),"map %s %s", alias, arg);
++	condlog (2, "%s: pr message=%s", alias, str);
+ 	if (send_packet(fd, str) != 0) {
+-		condlog(2, "%s: message=%s send error=%d", arg1, str, errno);
++		condlog(2, "%s: message=%s send error=%d", alias, str, errno);
+ 		mpath_disconnect(fd);
+-		return -2;
++		return -1;
+ 	}
+ 	ret = recv_packet(fd, &reply, DEFAULT_REPLY_TIMEOUT);
+ 	if (ret < 0) {
+-		condlog(2, "%s: message=%s recv error=%d", arg1, str, errno);
+-		ret = -2;
++		condlog(2, "%s: message=%s recv error=%d", alias, str, errno);
++		ret = -1;
+ 	} else {
+-		condlog (2, "%s: message=%s reply=%s", arg1, str, reply);
+-		if (!reply || strncmp(reply,"ok", 2) == 0)
++		condlog (2, "%s: message=%s reply=%s", alias, str, reply);
++		if (reply && strncmp(reply,"ok", 2) == 0)
++			ret = 0;
++		else
+ 			ret = -1;
+-		else if (strncmp(reply, "fail", 4) == 0)
+-			ret = -2;
+-		else{
+-			ret = atoi(reply);
 -		}
--		count -= r;
--		buf = (char *)buf + r;
--	}
--	return 0;
--}
--
- static int sysfs_write_rbd_bus(const char *which, const char *buf,
- 			       size_t buf_len)
- {
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index 9dc1090..680b2c5 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -19,6 +19,7 @@
- #include "blacklist.h"
- #include "defaults.h"
- #include "prio.h"
-+#include "util.h"
- #include <errno.h>
- #include <inttypes.h>
- #include "mpath_cmd.h"
-@@ -963,32 +964,15 @@ set_reservation_key(vector strvec, void *ptr)
- {
- 	unsigned char **uchar_ptr = (unsigned char **)ptr;
- 	char *buff;
--	char *tbuff;
--	int j, k;
--	int len;
-+	int j;
- 	uint64_t prkey;
- 
- 	buff = set_value(strvec);
- 	if (!buff)
- 		return 1;
- 
--	tbuff = buff;
--
--	if (!memcmp("0x",buff, 2))
--		buff = buff + 2;
--
--	len = strlen(buff);
--
--	k = strspn(buff, "0123456789aAbBcCdDeEfF");
--
--	if (len != k) {
--		FREE(tbuff);
--		return 1;
--	}
--
--	if (1 != sscanf (buff, "%" SCNx64 "", &prkey))
--	{
--		FREE(tbuff);
-+	if (parse_prkey(buff, &prkey) != 0) {
-+		FREE(buff);
- 		return 1;
  	}
  
-@@ -1002,7 +986,7 @@ set_reservation_key(vector strvec, void *ptr)
- 		prkey >>= 8;
- 	}
- 
--	FREE(tbuff);
-+	FREE(buff);
- 	return 0;
- }
- 
-diff --git a/libmultipath/util.c b/libmultipath/util.c
-index dff2ed3..0800da5 100644
---- a/libmultipath/util.c
-+++ b/libmultipath/util.c
-@@ -11,6 +11,7 @@
- #include <unistd.h>
- #include <errno.h>
- 
-+#include "util.h"
- #include "debug.h"
- #include "memory.h"
- #include "checkers.h"
-@@ -416,3 +417,35 @@ int get_linux_version_code(void)
- 	pthread_once(&_lvc_initialized, _set_linux_version_code);
- 	return _linux_version_code;
+ 	free(reply);
+ 	mpath_disconnect(fd);
+ 	return ret;
  }
 +
-+int parse_prkey(char *ptr, uint64_t *prkey)
-+{
-+	if (!ptr)
-+		return 1;
-+	if (*ptr == '0')
-+		ptr++;
-+	if (*ptr == 'x' || *ptr == 'X')
-+		ptr++;
-+	if (*ptr == '\0' || strlen(ptr) > 16)
-+		return 1;
-+	if (strlen(ptr) != strspn(ptr, "0123456789aAbBcCdDeEfF"))
-+		return 1;
-+	if (sscanf(ptr, "%" SCNx64 "", prkey) != 1)
-+		return 1;
-+	return 0;
++int update_prflag(char *mapname, int set) {
++	return do_update_pr(mapname, (set)? "setprstatus" : "unsetprstatus");
 +}
-+
-+int safe_write(int fd, const void *buf, size_t count)
-+{
-+	while (count > 0) {
-+		ssize_t r = write(fd, buf, count);
-+		if (r < 0) {
-+			if (errno == EINTR)
-+				continue;
-+			return -errno;
-+		}
-+		count -= r;
-+		buf = (char *)buf + r;
-+	}
-+	return 0;
-+}
-diff --git a/libmultipath/util.h b/libmultipath/util.h
-index 45291be..3dc048e 100644
---- a/libmultipath/util.h
-+++ b/libmultipath/util.h
-@@ -2,6 +2,7 @@
- #define _UTIL_H
+diff --git a/libmpathpersist/mpathpr.h b/libmpathpersist/mpathpr.h
+index 99e641b..967ba52 100644
+--- a/libmpathpersist/mpathpr.h
++++ b/libmpathpersist/mpathpr.h
+@@ -45,7 +45,7 @@ int mpath_prout_rel(struct multipath *mpp,int rq_servact, int rq_scope,
+ int send_prout_activepath(char * dev, int rq_servact, int rq_scope,
+ 	unsigned int rq_type,   struct prout_param_descriptor * paramp, int noisy);
  
- #include <sys/types.h>
-+#include <inttypes.h>
+-int update_prflag(char * arg1, char * arg2, int noisy);
++int update_prflag(char *mapname, int set);
+ void * mpath_alloc_prin_response(int prin_sa);
+ int update_map_pr(struct multipath *mpp);
  
- size_t strchop(char *);
- int basenamecpy (const char * src, char * dst, int);
-@@ -16,6 +17,9 @@ char *parse_uid_attribute_by_attrs(char *uid_attrs, char *path_dev);
- void setup_thread_attr(pthread_attr_t *attr, size_t stacksize, int detached);
- int systemd_service_enabled(const char *dev);
- int get_linux_version_code(void);
-+int parse_prkey(char *ptr, uint64_t *prkey);
-+int safe_write(int fd, const void *buf, size_t count);
-+
- #define KERNEL_VERSION(maj, min, ptc) ((((maj) * 256) + (min)) * 256 + (ptc))
- 
- #define safe_sprintf(var, format, args...)	\
 -- 
 2.7.4
