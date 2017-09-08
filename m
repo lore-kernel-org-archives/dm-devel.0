@@ -1,15 +1,17 @@
-From: Martin Wilck <mwilck@suse.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
 Subject: Re: [PATCH 4/5] multipath: add alternate reservation_key
 	method
-Date: Fri, 08 Sep 2017 23:34:48 +0200
-Message-ID: <1504906488.4585.31.camel@suse.com>
+Date: Fri, 8 Sep 2017 18:00:17 -0500
+Message-ID: <20170908230017.GH3145@octiron.msp.redhat.com>
 References: <1504896354-28181-1-git-send-email-bmarzins@redhat.com>
 	<1504896354-28181-5-git-send-email-bmarzins@redhat.com>
+	<1504906488.4585.31.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1504896354-28181-5-git-send-email-bmarzins@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1504906488.4585.31.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,66 +21,107 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>
+To: Martin Wilck <mwilck@suse.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gRnJpLCAyMDE3LTA5LTA4IGF0IDEzOjQ1IC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gVGhlIHNjc2kgcGVyc2lzdGVudCByZXNlcnZhdGlvbiBBUEkgZG9lc24ndCBmb3JjZSBk
-ZXZpY2VzIHRvCj4gaW1wbGVtZW50Cj4gYW55IG1ldGhvZCB0byBkaXNwbGF5IHRoZSBtYXBwaW5n
-IGZyb20gYSByZXNlcnZhdGlvbiBrZXkgdG8gYW4gSV9UCj4gTmV4dXMKPiAodGhlIFJFQURfRlVM
-TF9TVEFUVVMgYWN0aW9uIGlzIGFuIG9wdGlvbmFsIGxhdGVyIGFkZGl0aW9uLCBhbmQgYQo+IG51
-bWJlcgo+IG9mIGRldmljZXMgZG9uJ3Qgc3VwcG9ydCBpdCkuIFRvIGFsbG93IG11bHRpcGF0aGQg
-dG8gZGV0ZXJtaW5lIHRoZQo+IGNvcnJlY3QgcmVzZXJ2YXRpb24ga2V5IGZvciBhIGRldmljZSB3
-aXRob3V0IHN1cHBvcnQgZnJvbSB0aGUgZGV2aWNlCj4gaXRzZWxmLCBpdCB1c2VzIHRoZSByZXNl
-cnZhdGlvbl9rZXkgY29uZmlndXJhdGlvbiBvcHRpb24uCj4gVW5mb3J0dW5hdGVseSwKPiB1c2lu
-ZyB0aGlzIG9wdGlvbiBmb3JjZXMgdGhlIG11bHRpcGF0aCBjb25maWd1cmF0aW9uIHRvIGJlIHVw
-ZGF0ZWQKPiB3aGVuZXZlciBhIG5ldyBzY3NpIHJlZ2lzdHJhdGlvbiBrZXkgaXMgdXNlZC4gIFRo
-aXMgaXNuJ3QgYWNjZXB0YWJsZQo+IHRvCj4gc29tZSB1c2Vycywgd2hvIHdhbnQgYSBzdGF0aWMg
-Y29uZmlndXJhdGlvbiBmaWxlLgo+IAo+IFRoaXMgcGF0Y2ggcHJvdmlkZXMgYW4gYWx0ZXJuYXRl
-IG1ldGhvZCBvZiBzZXR0aW5nIHRoZQo+IHJlc2VydmF0aW9uX2tleQo+IGZvciB0aGUgbXVsdGlw
-YXRoIGRldmljZS4gVGhlIHJlc2VydmF0aW9uX2tleSBjb25maWd1cmF0aW9uIG9wdGlvbgo+IG5v
-dwo+IGFsc28gYWNjZXB0cyB0aGUga2V5d29yZCAiZmlsZSIuIElmIHRoaXMgaXMgdXNlZCwgbXVs
-dHBhdGggd2lsbCBsb29rCj4gaW4KPiB0aGUgbmV3IHBya2V5cyBmaWxlIChieSBkZWZhdWx0ICIv
-ZXRjL211bHRpcGF0aC9wcmtleXMiKSBmb3IgYSBsaW5lCj4gd2l0aAo+IHRoZSBkZXZpY2Ugd3dp
-ZCBhbmQgaXQncyBhc3NvY2lhdGVkIHJlc2VydmF0aW9uX2tleS4gV2hlcmUgYSBkZXZpY2Uncwo+
-IHJlc2VydmF0aW9uIGtleSBjb21lcyBmcm9tIGlzIHRyYWNrZWQgYnkgdGhlIHBya2V5X3NvdXJj
-ZSB2YXJpYWJsZSwKPiB3aGljaCBpcyBzZXQgYW5kIHJlYWQgdGhyb3VnaCB0aGUgcmVzZXJ2YXRp
-b25fa2V5IGRpY3QuYyBmdW5jdGlvbnMuCj4gCj4gVGhlcmUgYXJlIGFsc28gbmV3IG11bHRpcGF0
-aGQgY29tbWFuZHMgdG8gZ2V0LCBzZXQsIGFuZCB1bnNldCB0aGUKPiBtYXBwaW5ncyBpbiB0aGUg
-cHJrZXN5IGZpbGUuIEN1cnJlbnRseSwKPiAKPiAibXVsdGlwYXRoZCBtYXAgJG1hcCBzZXRwcmtl
-eSBrZXkgJGtleSIgc2V0cyB0aGUgbWFwcGluZwo+ICJtdWx0aXBhdGhkIG1hcCAkbWFwIHVuc2V0
-cHJrZXkiIHVuc2V0cyB0aGUgbWFwcGluZwo+ICJtdWx0aXBhdGhkIG1hcCAkbWFwIGdldHBya2V5
-IiBnZXRzIHRoZSBjdXJyZW50IHJlc2VydmF0aW9uX2tleSBmb3IgYQo+IG11bHRpcGF0aCBkZXZp
-Y2UuCj4gCj4gVGhlcmUgaXMgc29tZSBsYWNrIG9mIHN5bW1ldHJ5IGhlcmUgd2hlcmUgeW91IGFy
-ZSBhbGxvd2VkIHRvIHNldCBhbmQKPiB1bnNldCBtYXBwaW5ncyBldmVuIGZvciBkZXZpY2VzIHRo
-YXQgYXJlbid0IGNvbmZpZ3VyZWQgdG8gdXNlIHRoZQo+IHBya2V5cwo+IGZpbGUsIGJ1dCB5b3Ug
-d2lsbCBvbmx5IGdldCB0aGUgbWFwcGluZyBmcm9tIHRoZSBwcmtleXMgZmlsZSBmb3IKPiBkZXZp
-Y2VzCj4gdGhhdCBhcmUgY29uZmlndXJlZCB0byB1c2UgaXQuIE90aGVyd2lzZSB5b3Ugd2lsbCBn
-ZXQgdGhlIG1hcHBpbmcKPiBmcm9tCj4gbXVsdGlwYXRoLmNvbmYuIEluIG90aGVyIHdvcmRzLCBz
-ZXRwcmtleSBhbmQgdW5zZXRwcmtleSByZXR1cm4KPiBzdWNjZXNzCj4gYnV0IGRvbid0IGRvIGFu
-eXRoaW5nIHVzZWZ1bCB1bmxlc3MgYSBkZXZpY2UgaXMgY29uZmlndXJlZCB3aXRoCj4gCj4gcmVz
-ZXJ2YXRpb25fa2V5IGZpbGUKPiAKPiBidXQgZ2V0cHJrZXkgd2lsbCByZXR1cm4gdGhlIGRldmlj
-ZSdzIGN1cnJlbnQgcmVzZXJ2YXRpb25fa2V5Cj4gcmVnYXJkbGVzcwo+IG9mIHdoZXJlIHRoZSBr
-ZXkgY2FtZSBmcm9tLgo+IAo+IFNpZ25lZC1vZmYtYnk6IEJlbmphbWluIE1hcnppbnNraSA8Ym1h
-cnppbnNAcmVkaGF0LmNvbT4KPiAtLS0KPiAgbGlibXVsdGlwYXRoL01ha2VmaWxlICAgICB8ICAg
-MiArLQo+ICBsaWJtdWx0aXBhdGgvY29uZmlnLmMgICAgIHwgICA2ICstCj4gIGxpYm11bHRpcGF0
-aC9jb25maWcuaCAgICAgfCAgIDMgKwo+ICBsaWJtdWx0aXBhdGgvZGVmYXVsdHMuaCAgIHwgICAx
-ICsKPiAgbGlibXVsdGlwYXRoL2RpY3QuYyAgICAgICB8ICA2NyArKysrKysrKysrKysrKystLS0t
-Cj4gIGxpYm11bHRpcGF0aC9kaWN0LmggICAgICAgfCAgIDIgKy0KPiAgbGlibXVsdGlwYXRoL3By
-a2V5LmMgICAgICB8IDE2Ngo+ICsrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysr
-KysrKysrKysKPiAgbGlibXVsdGlwYXRoL3Bya2V5LmggICAgICB8ICAxOSArKysrKysKPiAgbGli
-bXVsdGlwYXRoL3Byb3BzZWwuYyAgICB8ICAzMSArKysrKysrLS0KPiAgbGlibXVsdGlwYXRoL3N0
-cnVjdHMuaCAgICB8ICAgNyArKwo+ICBtdWx0aXBhdGhkL2NsaS5jICAgICAgICAgIHwgICA4ICsr
-Kwo+ICBtdWx0aXBhdGhkL2NsaS5oICAgICAgICAgIHwgICA4ICsrKwo+ICBtdWx0aXBhdGhkL2Ns
-aV9oYW5kbGVycy5jIHwgIDgyICsrKysrKysrKysrKysrKysrKysrKysrCj4gIG11bHRpcGF0aGQv
-Y2xpX2hhbmRsZXJzLmggfCAgIDMgKwo+ICBtdWx0aXBhdGhkL21haW4uYyAgICAgICAgIHwgICAz
-ICsKPiAgMTUgZmlsZXMgY2hhbmdlZCwgMzg4IGluc2VydGlvbnMoKyksIDIwIGRlbGV0aW9ucygt
-KQo+ICBjcmVhdGUgbW9kZSAxMDA2NDQgbGlibXVsdGlwYXRoL3Bya2V5LmMKPiAgY3JlYXRlIG1v
-ZGUgMTAwNjQ0IGxpYm11bHRpcGF0aC9wcmtleS5oCgpMb29rcyBvayB0byBtZS4gSSBzdXBwb3Nl
-IHlvdSB0ZXN0ZWQgdGhhdCBwYXJzaW5nIGNvZGUgZm9yIHRoZSBrZXkgZmlsZS4KUmV2aWV3ZWQt
-Ynk6IE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPgoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sg
-PG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGludXgg
-R21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRv
-bgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1k
-ZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9k
-bS1kZXZlbA==
+On Fri, Sep 08, 2017 at 11:34:48PM +0200, Martin Wilck wrote:
+> On Fri, 2017-09-08 at 13:45 -0500, Benjamin Marzinski wrote:
+> > The scsi persistent reservation API doesn't force devices to
+> > implement
+> > any method to display the mapping from a reservation key to an I_T
+> > Nexus
+> > (the READ_FULL_STATUS action is an optional later addition, and a
+> > number
+> > of devices don't support it). To allow multipathd to determine the
+> > correct reservation key for a device without support from the device
+> > itself, it uses the reservation_key configuration option.
+> > Unfortunately,
+> > using this option forces the multipath configuration to be updated
+> > whenever a new scsi registration key is used.  This isn't acceptable
+> > to
+> > some users, who want a static configuration file.
+> > =
+
+> > This patch provides an alternate method of setting the
+> > reservation_key
+> > for the multipath device. The reservation_key configuration option
+> > now
+> > also accepts the keyword "file". If this is used, multpath will look
+> > in
+> > the new prkeys file (by default "/etc/multipath/prkeys") for a line
+> > with
+> > the device wwid and it's associated reservation_key. Where a device's
+> > reservation key comes from is tracked by the prkey_source variable,
+> > which is set and read through the reservation_key dict.c functions.
+> > =
+
+> > There are also new multipathd commands to get, set, and unset the
+> > mappings in the prkesy file. Currently,
+> > =
+
+> > "multipathd map $map setprkey key $key" sets the mapping
+> > "multipathd map $map unsetprkey" unsets the mapping
+> > "multipathd map $map getprkey" gets the current reservation_key for a
+> > multipath device.
+> > =
+
+> > There is some lack of symmetry here where you are allowed to set and
+> > unset mappings even for devices that aren't configured to use the
+> > prkeys
+> > file, but you will only get the mapping from the prkeys file for
+> > devices
+> > that are configured to use it. Otherwise you will get the mapping
+> > from
+> > multipath.conf. In other words, setprkey and unsetprkey return
+> > success
+> > but don't do anything useful unless a device is configured with
+> > =
+
+> > reservation_key file
+> > =
+
+> > but getprkey will return the device's current reservation_key
+> > regardless
+> > of where the key came from.
+> > =
+
+> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> > ---
+> >  libmultipath/Makefile     |   2 +-
+> >  libmultipath/config.c     |   6 +-
+> >  libmultipath/config.h     |   3 +
+> >  libmultipath/defaults.h   |   1 +
+> >  libmultipath/dict.c       |  67 +++++++++++++++----
+> >  libmultipath/dict.h       |   2 +-
+> >  libmultipath/prkey.c      | 166
+> > ++++++++++++++++++++++++++++++++++++++++++++++
+> >  libmultipath/prkey.h      |  19 ++++++
+> >  libmultipath/propsel.c    |  31 +++++++--
+> >  libmultipath/structs.h    |   7 ++
+> >  multipathd/cli.c          |   8 +++
+> >  multipathd/cli.h          |   8 +++
+> >  multipathd/cli_handlers.c |  82 +++++++++++++++++++++++
+> >  multipathd/cli_handlers.h |   3 +
+> >  multipathd/main.c         |   3 +
+> >  15 files changed, 388 insertions(+), 20 deletions(-)
+> >  create mode 100644 libmultipath/prkey.c
+> >  create mode 100644 libmultipath/prkey.h
+> =
+
+> Looks ok to me. I suppose you tested that parsing code for the key file.
+> Reviewed-by: Martin Wilck <mwilck@suse.com>
+
+Yeah. I tested it, both with and without using the prkeys file.
+However, I may write up a unit test script for mpathpersist like
+test-kpartx, just to allow automated testing of this stuff.
+
+-Ben
+
+> =
+
+> -- =
+
+> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+> SUSE Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
+> HRB 21284 (AG N=FCrnberg)
