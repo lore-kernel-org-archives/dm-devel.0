@@ -1,78 +1,62 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 0/5] multipath: alternative reservation_key method
-Date: Fri,  8 Sep 2017 13:45:49 -0500
-Message-ID: <1504896354-28181-1-git-send-email-bmarzins@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm mpath: switch IO scheduler of underlying paths to "none"
+ [was: Re: BFQ + dm-mpath]
+Date: Fri, 8 Sep 2017 15:58:05 -0400
+Message-ID: <20170908195805.GA30517@redhat.com>
+References: <1503611578.2899.69.camel@wdc.com>
+ <AE77899A-0365-4C7C-91E4-5ACCC396B26B@linaro.org>
+ <ED23C7AC-F202-40E3-8421-E714BF446399@linaro.org>
+ <1504620914.4135.11.camel@wdc.com>
+ <20170907155255.GA22848@redhat.com>
+ <756D2B3A-CD5A-4351-BC39-C2BAB771C740@linaro.org>
+ <20170908164129.GA48286@redhat.com>
+ <113c15ac-75f5-ff5b-695d-920dc6d5f708@kernel.dk>
+ <20170908170727.GA29318@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Martin Wilck <mwilck@suse.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20170908170727.GA29318@redhat.com>
+Sender: linux-block-owner@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Paolo Valente <paolo.valente@linaro.org>, Bart Van Assche <Bart.VanAssche@wdc.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The scsi persistent reservation API doesn't force devices to implement any
-method to display the mapping from a reservation key to an I_T Nexus (the
-READ_FULL_STATUS action is an optional later addition, and a number of devices
-don't support it). To allow multipathd to determine the correct reservation key
-for a device without support from the device itself, it uses the
-reservation_key configuration option. Unfortunately, using this option forces
-the multipath configuration to be updated whenever a new scsi registration key
-is used.  This isn't acceptable to some users, who want a static configuration
-file. I've had multiple requests to allow persistent reservations without
-needing to set the reservation_key paramter beforehand.
+On Fri, Sep 08 2017 at  1:07pm -0400,
+Mike Snitzer <snitzer@redhat.com> wrote:
 
-This patch set provides an alternative method of setting the reservation_key
-for the multipath device. The reservation_key configuration option now also
-accepts the keyword "file". If this is used, multpath will look in the new
-prkeys file (by default "/etc/multipath/prkeys") for a line with the device
-wwid and it's associated reservation_key. The patches allow users to manually
-set reservation_key to multipath device mappings by using the multipathd
-client commands, but mpathpersist will automatically detect when devices are
-configured to use the prkeys file, and will set and clear the reservation
-keys automatically.
+> On Fri, Sep 08 2017 at 12:48pm -0400,
+> Jens Axboe <axboe@kernel.dk> wrote:
+> 
+> > > Please see the following untested patch.  All
+> > > testing/review/comments/acks appreciated.
+> > > 
+> > > I elected to use elevator_change() rather than fiddle with adding a new
+> > > blk-mq elevator hook (e.g. ->request_prepared) to verify that each
+> > > blk-mq elevator enabled request did in fact get prepared.
+> > > 
+> > > Bart, please test this patch and reply with your review/feedback.
+> > > 
+> > > Jens, if you're OK with this solution please reply with your Ack and
+> > > I'll send it to Linus along with the rest of the handful of DM changes I
+> > > have for 4.14.
+> > 
+> > I am not - we used to have this elevator change functionality from
+> > inside the kernel, and finally got rid of it when certain drivers killed
+> > it. I don't want to be bringing it back.
+> 
+> Fine.
 
-Benjamin Marzinski (5):
-  libmultipath: pull functions into util.c
-  libmultipath: change reservation_key to a uint64_t
-  libmpathpersist: fix update_prflag code
-  multipath: add alternate reservation_key method
-  mpathpersist: add support for prkeys file
+BTW, while I conceded "Fine": I think your justification for not
+reintroducing elevator_change() lacks substance.  What is inherently
+problematic about elevator_change()?
 
- libmpathpersist/mpath_persist.c  |  70 ++++++++---------
- libmpathpersist/mpath_updatepr.c |  43 ++++++----
- libmpathpersist/mpathpr.h        |   3 +-
- libmultipath/Makefile            |   2 +-
- libmultipath/byteorder.h         |  36 +++++++++
- libmultipath/checkers/rbd.c      |  16 +---
- libmultipath/config.c            |   9 ++-
- libmultipath/config.h            |   9 ++-
- libmultipath/defaults.h          |   1 +
- libmultipath/dict.c              | 106 +++++++++++++------------
- libmultipath/dict.h              |   2 +-
- libmultipath/prkey.c             | 166 +++++++++++++++++++++++++++++++++++++++
- libmultipath/prkey.h             |  19 +++++
- libmultipath/propsel.c           |  35 +++++++--
- libmultipath/structs.h           |  12 ++-
- libmultipath/util.c              |  33 ++++++++
- libmultipath/util.h              |   4 +
- multipathd/cli.c                 |   8 ++
- multipathd/cli.h                 |   8 ++
- multipathd/cli_handlers.c        |  82 +++++++++++++++++++
- multipathd/cli_handlers.h        |   3 +
- multipathd/main.c                |  26 ++----
- 22 files changed, 541 insertions(+), 152 deletions(-)
- create mode 100644 libmultipath/byteorder.h
- create mode 100644 libmultipath/prkey.c
- create mode 100644 libmultipath/prkey.h
+Having an elevator attached to a DM multipath device's underlying path's
+request_queue just asks for trouble (especially given the blk-mq
+elevator interface).
 
--- 
-2.7.4
+Please own this issue as a regression and help me arrive at a timely way
+forward.
+
+Thanks,
+Mike
