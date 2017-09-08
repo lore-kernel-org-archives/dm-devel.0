@@ -1,15 +1,16 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 1/4] multipathd: don't flood system with
-	sd_notify calls
-Date: Thu, 7 Sep 2017 16:31:30 -0500
-Message-ID: <20170907213130.GB3145@octiron.msp.redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 4/4] multipath: delegate dangerous commands
+	to multipathd
+Date: Fri, 08 Sep 2017 10:16:40 +0200
+Message-ID: <1504858600.4585.7.camel@suse.com>
 References: <20170828220536.13208-1-mwilck@suse.com>
+	<20170828220536.13208-4-mwilck@suse.com>
+	<20170907215758.GE3145@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20170828220536.13208-1-mwilck@suse.com>
+In-Reply-To: <20170907215758.GE3145@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,94 +20,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Aug 29, 2017 at 12:05:33AM +0200, Martin Wilck wrote:
-> DAEMON_RUNNING is only used by checkerloop to indicate that
-> path checkers are running. checkerloop switches back and forth
-> between DAEMON_IDLE and DAEMON_RUNNING in every iteration, i.e.
-> it performs two status changes per second on an idle system.
-> The repeated sd_notify() calls cause a lot of traffic on dbus as
-> systemd forwards these messages on the system bus. This can be
-> seen with systemd.log_level=debug. Better skip these notifications
-> that don't provide useful information to the user, who is very
-> unlikely to catch the daemon in "running" state anyway.
-> 
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  multipathd/main.c | 24 ++++++++++++++++++++----
->  1 file changed, 20 insertions(+), 4 deletions(-)
-> 
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index 4be2c579..b5e2b00d 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -161,15 +161,27 @@ sd_notify_status(void)
->  	case DAEMON_CONFIGURE:
->  		return "STATUS=configure";
->  	case DAEMON_IDLE:
-> -		return "STATUS=idle";
->  	case DAEMON_RUNNING:
-> -		return "STATUS=running";
-> +		return "STATUS=up";
->  	case DAEMON_SHUTDOWN:
->  		return "STATUS=shutdown";
->  	}
->  	return NULL;
->  }
->  
-> +static void do_sd_notify(enum daemon_status old_state)
-> +{
-> +	/*
-> +	 * Checkerloop switches back and forth between idle and running state.
-> +	 * No need to tell systemd each time.
-> +	 * These notifications cause a lot of overhead on dbus.
-> +	 */
-> +	if ((running_state == DAEMON_IDLE || running_state == DAEMON_RUNNING) &&
-> +	    (old_state == DAEMON_IDLE || old_state == DAEMON_RUNNING))
-> +		return;
-> +	sd_notify(0, sd_notify_status());
-> +}
-> +
->  static void config_cleanup(void *arg)
->  {
->  	pthread_mutex_unlock(&config_lock);
-> @@ -179,10 +191,12 @@ void post_config_state(enum daemon_status state)
->  {
->  	pthread_mutex_lock(&config_lock);
->  	if (state != running_state) {
-> +		enum daemon_status old_state = running_state;
-> +
->  		running_state = state;
->  		pthread_cond_broadcast(&config_cond);
->  #ifdef USE_SYSTEMD
-> -		sd_notify(0, sd_notify_status());
-> +		do_sd_notify(old_state);
->  #endif
->  	}
->  	pthread_mutex_unlock(&config_lock);
-> @@ -195,6 +209,8 @@ int set_config_state(enum daemon_status state)
->  	pthread_cleanup_push(config_cleanup, NULL);
->  	pthread_mutex_lock(&config_lock);
->  	if (running_state != state) {
-> +		enum daemon_status old_state = running_state;
-> +
->  		if (running_state != DAEMON_IDLE) {
->  			struct timespec ts;
->  
-> @@ -207,7 +223,7 @@ int set_config_state(enum daemon_status state)
->  			running_state = state;
->  			pthread_cond_broadcast(&config_cond);
->  #ifdef USE_SYSTEMD
-> -			sd_notify(0, sd_notify_status());
-> +			do_sd_notify(old_state);
->  #endif
->  		}
->  	}
-> -- 
-> 2.14.0
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
-
--Ben
+T24gVGh1LCAyMDE3LTA5LTA3IGF0IDE2OjU3IC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cj4gT24gVHVlLCBBdWcgMjksIDIwMTcgYXQgMTI6MDU6MzZBTSArMDIwMCwgTWFydGluIFdp
+bGNrIHdyb3RlOgo+ID4gU29tZSBtdWx0aXBhdGggY29tbWFuZHMgYXJlIGRhbmdlcm91cyB0byBy
+dW4gd2hpbGUgbXVsdGlwYXRoZCBpcwo+ID4gcnVubmluZy4KPiA+IEZvciBleGFtcGxlLCAibXVs
+dGlwYXRoIC1yIiBtYXkgYXBwbHkgYSBtb2RpZmllZCBjb25maWd1cmF0aW9uIHRvCj4gPiB0aGUg
+a2VybmVsLAo+ID4gd2hpbGUgbXVsdGlwYXRoZCBpcyBzdGlsbCB1c2luZyB0aGUgb2xkIGNvbmZp
+Z3VyYXRpb24sIGxlYWRpbmcgdG8KPiA+IGluY29uc2lzdGVudCBzdGF0ZSBiZXR3ZWVuIG11bHRp
+cGF0aGQgYW5kIHRoZSBrZXJuZWwuCj4gPiAKPiA+IEl0IGlzIHNhZmVyIHRvIHVzZSBlcXVpdmFs
+ZW50IG11bHRpcGF0aGQgY2xpZW50IGNvbW1hbmRzIGluc3RlYWQuCj4gPiBGb3Igbm93LCBkbyB0
+aGlzIG9ubHkgZm9yICJtdWx0aXBhdGggLXIiLCBidXQgb3RoZXIgaW52b2NhdGlvbnMKPiA+IG1h
+eSBiZSBhZGRlZCBpbiB0aGUgZnV0dXJlLiBQZXJoYXBzIHNvbWUgZGF5LCBhbGwgIm11bHRpcGF0
+aCIKPiA+IGNvbW1hbmRzIHdpbGwgYmUgbWFwcGVkIHRvIG11bHRpcGF0aGQgYWN0aW9ucy4KPiAK
+PiBUaGFua3MuIEkndmUgYmVlbiBtZWFuaW5nIHRvIGRvIHNvbWV0aGluZyBsaWtlIHRoaXMgZm9y
+ZXZlci4KClsuLi5dCgo+ICsJaWYgKGV4ZWN2KG1wZF9wYXRoLCBhcmd2KSA9PSAtMSkgewo+ID4g
+KwkJY29uZGxvZygwLCAiZmFpbGVkIHRvIGV4ZWN1dGUgbXVsdGlwYXRoZDogJXMiLAo+ID4gc3Ry
+ZXJyb3IoZXJybm8pKTsKPiA+ICsJCWV4aXQoMSk7Cj4gPiArCX0KPiAKPiBXaHkgZXhlYyBtdWx0
+aXBhdGhkLCBpbnN0ZWFkIG9mIHVzaW5nIHRoZSBsaWJtcGF0aGNtZCBhcGksIGxpa2UKPiBtcGF0
+aHBlcnNpc3QsIGxpYmRtbXAsIGFuZCB0aGUgbXVsdGlwYXRoZCBjbGllbnQgZG8/CgpUaGFua3Mg
+Zm9yIHRoZSByZXZpZXcuIEknbGwgbG9vayBpbnRvIHRoYXQsIGFuZCB5b3VyIG90aGVyIHN1Z2dl
+c3Rpb25zLgoKTWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwg
+VGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1l
+bmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8
+cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0
+cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
