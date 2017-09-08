@@ -1,94 +1,84 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: block: directly insert blk-mq request from
- blk_insert_cloned_request()
-Date: Fri, 8 Sep 2017 18:03:18 -0400
-Message-ID: <20170908220318.GA31120@redhat.com>
-References: <1504620914.4135.11.camel@wdc.com>
- <20170907155255.GA22848@redhat.com>
- <756D2B3A-CD5A-4351-BC39-C2BAB771C740@linaro.org>
- <20170908164129.GA48286@redhat.com>
- <113c15ac-75f5-ff5b-695d-920dc6d5f708@kernel.dk>
- <20170908170727.GA29318@redhat.com>
- <20170908195805.GA30517@redhat.com>
- <57b4bb39-f50c-ad5e-d47d-01f0f84ec3ca@kernel.dk>
- <20170908214236.GA49918@redhat.com>
- <49cc6184-48da-2a45-e50e-13430e14e197@kernel.dk>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 4/5] multipath: add alternate reservation_key
+	method
+Date: Fri, 08 Sep 2017 23:34:48 +0200
+Message-ID: <1504906488.4585.31.camel@suse.com>
+References: <1504896354-28181-1-git-send-email-bmarzins@redhat.com>
+	<1504896354-28181-5-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <49cc6184-48da-2a45-e50e-13430e14e197@kernel.dk>
-Sender: linux-block-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>
-Cc: Paolo Valente <paolo.valente@linaro.org>, Bart Van Assche <Bart.VanAssche@wdc.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, dm-devel@redhat.com
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1504896354-28181-5-git-send-email-bmarzins@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Sep 08 2017 at  5:50pm -0400,
-Jens Axboe <axboe@kernel.dk> wrote:
-
-> On 09/08/2017 03:42 PM, Mike Snitzer wrote:
-> > diff --git a/block/blk-core.c b/block/blk-core.c
-> > index d709c0e..7a06b2b 100644
-> > --- a/block/blk-core.c
-> > +++ b/block/blk-core.c
-> > @@ -2342,7 +2342,7 @@ blk_status_t blk_insert_cloned_request(struct request_queue *q, struct request *
-> >  	if (q->mq_ops) {
-> >  		if (blk_queue_io_stat(q))
-> >  			blk_account_io_start(rq, true);
-> > -		blk_mq_sched_insert_request(rq, false, true, false, false);
-> > +		blk_mq_insert_request(rq);
-> >  		return BLK_STS_OK;
-> >  	}
-> 
-> I think this is fine, since only dm uses this function. Would be nice to
-> have some check though, to ensure it doesn't get misused in the future.
-
-Not sure what kind of check you're thinking.
-
-> 
-> > diff --git a/block/blk-mq.c b/block/blk-mq.c
-> > index 3f18cff..5c5bb3f 100644
-> > --- a/block/blk-mq.c
-> > +++ b/block/blk-mq.c
-> > @@ -1401,6 +1401,24 @@ void __blk_mq_insert_request(struct blk_mq_hw_ctx *hctx, struct request *rq,
-> >  	blk_mq_hctx_mark_pending(hctx, ctx);
-> >  }
-> >  
-> > +static inline void blk_mq_queue_io(struct blk_mq_hw_ctx *hctx,
-> > +				   struct blk_mq_ctx *ctx,
-> > +				   struct request *rq)
-> > +{
-> > +	spin_lock(&ctx->lock);
-> > +	__blk_mq_insert_request(hctx, rq, false);
-> > +	spin_unlock(&ctx->lock);
-> > +}
-> 
-> Any particular reason it isn't just added to the dispatch queue?
-
-I just started from the blk_mq_insert_request() that was removed as part
-of commit bd166ef18 and then simplified it by reusing blk_mq_queue_io()
-rather than open-coding it again.  So I moved blk_mq_queue_io() higher
-in the file and re-used it.
-
-Is there more efficiency associated with adding direct to dispatch
-queue?  If so then I suppose it is worth it!  But me doing it would take
-a bit more effort (to review code and expand my horizons, but that is
-fine if that is what you'd prefer to see).
-
-> > +void blk_mq_insert_request(struct request *rq)
-> > +{
-> > +	struct blk_mq_ctx *ctx = rq->mq_ctx;
-> > +	struct blk_mq_hw_ctx *hctx = blk_mq_map_queue(rq->q, ctx->cpu);
-> > +
-> > +	blk_mq_queue_io(hctx, ctx, rq);
-> > +	blk_mq_run_hw_queue(hctx, false);
-> > +}
-> 
-> Would probably be cleaner as blk_mq_insert_and_run_request() or
-> something, to make sure it's understood that it also runs the queue.
-
-That's fine.  Feel free to tweak this patch however you like!  But if
-you'd like me to completely own driving this patch forward I'll fold
-this in to v2.
-
-Mike
+T24gRnJpLCAyMDE3LTA5LTA4IGF0IDEzOjQ1IC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cj4gVGhlIHNjc2kgcGVyc2lzdGVudCByZXNlcnZhdGlvbiBBUEkgZG9lc24ndCBmb3JjZSBk
+ZXZpY2VzIHRvCj4gaW1wbGVtZW50Cj4gYW55IG1ldGhvZCB0byBkaXNwbGF5IHRoZSBtYXBwaW5n
+IGZyb20gYSByZXNlcnZhdGlvbiBrZXkgdG8gYW4gSV9UCj4gTmV4dXMKPiAodGhlIFJFQURfRlVM
+TF9TVEFUVVMgYWN0aW9uIGlzIGFuIG9wdGlvbmFsIGxhdGVyIGFkZGl0aW9uLCBhbmQgYQo+IG51
+bWJlcgo+IG9mIGRldmljZXMgZG9uJ3Qgc3VwcG9ydCBpdCkuIFRvIGFsbG93IG11bHRpcGF0aGQg
+dG8gZGV0ZXJtaW5lIHRoZQo+IGNvcnJlY3QgcmVzZXJ2YXRpb24ga2V5IGZvciBhIGRldmljZSB3
+aXRob3V0IHN1cHBvcnQgZnJvbSB0aGUgZGV2aWNlCj4gaXRzZWxmLCBpdCB1c2VzIHRoZSByZXNl
+cnZhdGlvbl9rZXkgY29uZmlndXJhdGlvbiBvcHRpb24uCj4gVW5mb3J0dW5hdGVseSwKPiB1c2lu
+ZyB0aGlzIG9wdGlvbiBmb3JjZXMgdGhlIG11bHRpcGF0aCBjb25maWd1cmF0aW9uIHRvIGJlIHVw
+ZGF0ZWQKPiB3aGVuZXZlciBhIG5ldyBzY3NpIHJlZ2lzdHJhdGlvbiBrZXkgaXMgdXNlZC4gIFRo
+aXMgaXNuJ3QgYWNjZXB0YWJsZQo+IHRvCj4gc29tZSB1c2Vycywgd2hvIHdhbnQgYSBzdGF0aWMg
+Y29uZmlndXJhdGlvbiBmaWxlLgo+IAo+IFRoaXMgcGF0Y2ggcHJvdmlkZXMgYW4gYWx0ZXJuYXRl
+IG1ldGhvZCBvZiBzZXR0aW5nIHRoZQo+IHJlc2VydmF0aW9uX2tleQo+IGZvciB0aGUgbXVsdGlw
+YXRoIGRldmljZS4gVGhlIHJlc2VydmF0aW9uX2tleSBjb25maWd1cmF0aW9uIG9wdGlvbgo+IG5v
+dwo+IGFsc28gYWNjZXB0cyB0aGUga2V5d29yZCAiZmlsZSIuIElmIHRoaXMgaXMgdXNlZCwgbXVs
+dHBhdGggd2lsbCBsb29rCj4gaW4KPiB0aGUgbmV3IHBya2V5cyBmaWxlIChieSBkZWZhdWx0ICIv
+ZXRjL211bHRpcGF0aC9wcmtleXMiKSBmb3IgYSBsaW5lCj4gd2l0aAo+IHRoZSBkZXZpY2Ugd3dp
+ZCBhbmQgaXQncyBhc3NvY2lhdGVkIHJlc2VydmF0aW9uX2tleS4gV2hlcmUgYSBkZXZpY2Uncwo+
+IHJlc2VydmF0aW9uIGtleSBjb21lcyBmcm9tIGlzIHRyYWNrZWQgYnkgdGhlIHBya2V5X3NvdXJj
+ZSB2YXJpYWJsZSwKPiB3aGljaCBpcyBzZXQgYW5kIHJlYWQgdGhyb3VnaCB0aGUgcmVzZXJ2YXRp
+b25fa2V5IGRpY3QuYyBmdW5jdGlvbnMuCj4gCj4gVGhlcmUgYXJlIGFsc28gbmV3IG11bHRpcGF0
+aGQgY29tbWFuZHMgdG8gZ2V0LCBzZXQsIGFuZCB1bnNldCB0aGUKPiBtYXBwaW5ncyBpbiB0aGUg
+cHJrZXN5IGZpbGUuIEN1cnJlbnRseSwKPiAKPiAibXVsdGlwYXRoZCBtYXAgJG1hcCBzZXRwcmtl
+eSBrZXkgJGtleSIgc2V0cyB0aGUgbWFwcGluZwo+ICJtdWx0aXBhdGhkIG1hcCAkbWFwIHVuc2V0
+cHJrZXkiIHVuc2V0cyB0aGUgbWFwcGluZwo+ICJtdWx0aXBhdGhkIG1hcCAkbWFwIGdldHBya2V5
+IiBnZXRzIHRoZSBjdXJyZW50IHJlc2VydmF0aW9uX2tleSBmb3IgYQo+IG11bHRpcGF0aCBkZXZp
+Y2UuCj4gCj4gVGhlcmUgaXMgc29tZSBsYWNrIG9mIHN5bW1ldHJ5IGhlcmUgd2hlcmUgeW91IGFy
+ZSBhbGxvd2VkIHRvIHNldCBhbmQKPiB1bnNldCBtYXBwaW5ncyBldmVuIGZvciBkZXZpY2VzIHRo
+YXQgYXJlbid0IGNvbmZpZ3VyZWQgdG8gdXNlIHRoZQo+IHBya2V5cwo+IGZpbGUsIGJ1dCB5b3Ug
+d2lsbCBvbmx5IGdldCB0aGUgbWFwcGluZyBmcm9tIHRoZSBwcmtleXMgZmlsZSBmb3IKPiBkZXZp
+Y2VzCj4gdGhhdCBhcmUgY29uZmlndXJlZCB0byB1c2UgaXQuIE90aGVyd2lzZSB5b3Ugd2lsbCBn
+ZXQgdGhlIG1hcHBpbmcKPiBmcm9tCj4gbXVsdGlwYXRoLmNvbmYuIEluIG90aGVyIHdvcmRzLCBz
+ZXRwcmtleSBhbmQgdW5zZXRwcmtleSByZXR1cm4KPiBzdWNjZXNzCj4gYnV0IGRvbid0IGRvIGFu
+eXRoaW5nIHVzZWZ1bCB1bmxlc3MgYSBkZXZpY2UgaXMgY29uZmlndXJlZCB3aXRoCj4gCj4gcmVz
+ZXJ2YXRpb25fa2V5IGZpbGUKPiAKPiBidXQgZ2V0cHJrZXkgd2lsbCByZXR1cm4gdGhlIGRldmlj
+ZSdzIGN1cnJlbnQgcmVzZXJ2YXRpb25fa2V5Cj4gcmVnYXJkbGVzcwo+IG9mIHdoZXJlIHRoZSBr
+ZXkgY2FtZSBmcm9tLgo+IAo+IFNpZ25lZC1vZmYtYnk6IEJlbmphbWluIE1hcnppbnNraSA8Ym1h
+cnppbnNAcmVkaGF0LmNvbT4KPiAtLS0KPiAgbGlibXVsdGlwYXRoL01ha2VmaWxlICAgICB8ICAg
+MiArLQo+ICBsaWJtdWx0aXBhdGgvY29uZmlnLmMgICAgIHwgICA2ICstCj4gIGxpYm11bHRpcGF0
+aC9jb25maWcuaCAgICAgfCAgIDMgKwo+ICBsaWJtdWx0aXBhdGgvZGVmYXVsdHMuaCAgIHwgICAx
+ICsKPiAgbGlibXVsdGlwYXRoL2RpY3QuYyAgICAgICB8ICA2NyArKysrKysrKysrKysrKystLS0t
+Cj4gIGxpYm11bHRpcGF0aC9kaWN0LmggICAgICAgfCAgIDIgKy0KPiAgbGlibXVsdGlwYXRoL3By
+a2V5LmMgICAgICB8IDE2Ngo+ICsrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysr
+KysrKysrKysKPiAgbGlibXVsdGlwYXRoL3Bya2V5LmggICAgICB8ICAxOSArKysrKysKPiAgbGli
+bXVsdGlwYXRoL3Byb3BzZWwuYyAgICB8ICAzMSArKysrKysrLS0KPiAgbGlibXVsdGlwYXRoL3N0
+cnVjdHMuaCAgICB8ICAgNyArKwo+ICBtdWx0aXBhdGhkL2NsaS5jICAgICAgICAgIHwgICA4ICsr
+Kwo+ICBtdWx0aXBhdGhkL2NsaS5oICAgICAgICAgIHwgICA4ICsrKwo+ICBtdWx0aXBhdGhkL2Ns
+aV9oYW5kbGVycy5jIHwgIDgyICsrKysrKysrKysrKysrKysrKysrKysrCj4gIG11bHRpcGF0aGQv
+Y2xpX2hhbmRsZXJzLmggfCAgIDMgKwo+ICBtdWx0aXBhdGhkL21haW4uYyAgICAgICAgIHwgICAz
+ICsKPiAgMTUgZmlsZXMgY2hhbmdlZCwgMzg4IGluc2VydGlvbnMoKyksIDIwIGRlbGV0aW9ucygt
+KQo+ICBjcmVhdGUgbW9kZSAxMDA2NDQgbGlibXVsdGlwYXRoL3Bya2V5LmMKPiAgY3JlYXRlIG1v
+ZGUgMTAwNjQ0IGxpYm11bHRpcGF0aC9wcmtleS5oCgpMb29rcyBvayB0byBtZS4gSSBzdXBwb3Nl
+IHlvdSB0ZXN0ZWQgdGhhdCBwYXJzaW5nIGNvZGUgZm9yIHRoZSBrZXkgZmlsZS4KUmV2aWV3ZWQt
+Ynk6IE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPgoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sg
+PG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGludXgg
+R21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRv
+bgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1k
+ZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9k
+bS1kZXZlbA==
