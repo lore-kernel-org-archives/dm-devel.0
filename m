@@ -1,122 +1,366 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm mpath: switch IO scheduler of underlying paths to "none"
- [was: Re: BFQ + dm-mpath]
-Date: Fri, 8 Sep 2017 13:07:28 -0400
-Message-ID: <20170908170727.GA29318@redhat.com>
-References: <1503611578.2899.69.camel@wdc.com>
- <AE77899A-0365-4C7C-91E4-5ACCC396B26B@linaro.org>
- <ED23C7AC-F202-40E3-8421-E714BF446399@linaro.org>
- <1504620914.4135.11.camel@wdc.com>
- <20170907155255.GA22848@redhat.com>
- <756D2B3A-CD5A-4351-BC39-C2BAB771C740@linaro.org>
- <20170908164129.GA48286@redhat.com>
- <113c15ac-75f5-ff5b-695d-920dc6d5f708@kernel.dk>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: [PATCH 2/5] libmultipath: change reservation_key to a
+	uint64_t
+Date: Fri,  8 Sep 2017 13:45:51 -0500
+Message-ID: <1504896354-28181-3-git-send-email-bmarzins@redhat.com>
+References: <1504896354-28181-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <113c15ac-75f5-ff5b-695d-920dc6d5f708@kernel.dk>
-Sender: linux-block-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>
-Cc: Paolo Valente <paolo.valente@linaro.org>, Bart Van Assche <Bart.VanAssche@wdc.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1504896354-28181-1-git-send-email-bmarzins@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-On Fri, Sep 08 2017 at 12:48pm -0400,
-Jens Axboe <axboe@kernel.dk> wrote:
+The reservation key is currently being stored as any array of 8 unsigned
+chars.  This is exactly the same in-memory representation as a big
+endian 64 bit integer. However, the code for dealing with a big endian
+64 bit integer is much simpler, so switch to use that instead.
 
-> On 09/08/2017 10:41 AM, Mike Snitzer wrote:
-> > On Fri, Sep 08 2017 at  5:13P -0400,
-> > Paolo Valente <paolo.valente@linaro.org> wrote:
-> > 
-> >>
-> >>> Il giorno 07 set 2017, alle ore 17:52, Mike Snitzer <snitzer@redhat.com> ha scritto:
-> >>>
-> >>> On Tue, Sep 05 2017 at 10:15am -0400,
-> >>> Bart Van Assche <Bart.VanAssche@wdc.com> wrote:
-> >>>
-> >>>> On Tue, 2017-09-05 at 09:56 +0200, Paolo Valente wrote:
-> >>>>> Ok, my suspects seem confirmed: the path dm_mq_queue_rq -> map_request
-> >>>>> -> setup_clone -> blk_rq_prep_clone creates a cloned request without
-> >>>>> invoking e->type->ops.mq.prepare_request for the target elevator e.
-> >>>>> The cloned request is therefore not initialized for the scheduler, but
-> >>>>> it is however inserted into the scheduler by
-> >>>>> blk_mq_sched_insert_request.  This seems an error for any scheduler
-> >>>>> that needs to initialize fields in the incoming request, or in general
-> >>>>> to take some preliminary action.
-> >>>>>
-> >>>>> Am I missing something here?
-> >>>>
-> >>>> (+Mike Snitzer)
-> >>>>
-> >>>> Mike, do you perhaps have the time to look into this memory leak?
-> >>>
-> >>> It isn't a memory leak, it is missing initialization in the case of
-> >>> cloned requests (if I'm understanding Paolo correctly).
-> >>>
-> >>
-> >> Exactly!
-> >>
-> >>> But cloned requests shouldn't be going through the scheduler.  Only the
-> >>> original requests should.
-> >>>
-> >>> Commit bd166ef18 ("blk-mq-sched: add framework for MQ capable IO
-> >>> schedulers") switched from blk_mq_insert_request() to
-> >>> blk_mq_sched_insert_request() and in doing so it opened dm-mpath up to
-> >>> this bug.
-> >>>
-> >>> Could be we need to take steps to ensure the block layer still
-> >>> supports bypassing the elevator by using direct insertion?
-> >>>
-> >>> Or blk_mq_sched_insert_request() needs updating to check if
-> >>> e->type->ops.mq.prepare_request were actually performed and to fallback
-> >>> to the !elevator case if not..
-> >>>
-> >>> Not sure on the fix, but I can look closer if others (like Jens or
-> >>> Paolo) don't have quicker suggestions.
-> >>>
-> >>
-> >> No quick suggestion from me :(
-> >>
-> >> Thanks for analyzing this bug,
-> > 
-> > Please see the following untested patch.  All
-> > testing/review/comments/acks appreciated.
-> > 
-> > I elected to use elevator_change() rather than fiddle with adding a new
-> > blk-mq elevator hook (e.g. ->request_prepared) to verify that each
-> > blk-mq elevator enabled request did in fact get prepared.
-> > 
-> > Bart, please test this patch and reply with your review/feedback.
-> > 
-> > Jens, if you're OK with this solution please reply with your Ack and
-> > I'll send it to Linus along with the rest of the handful of DM changes I
-> > have for 4.14.
-> 
-> I am not - we used to have this elevator change functionality from
-> inside the kernel, and finally got rid of it when certain drivers killed
-> it. I don't want to be bringing it back.
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmpathpersist/mpath_persist.c | 23 +++++++----------------
+ libmultipath/byteorder.h        | 36 ++++++++++++++++++++++++++++++++++++
+ libmultipath/config.c           |  3 ---
+ libmultipath/config.h           |  6 ++++--
+ libmultipath/dict.c             | 31 ++++---------------------------
+ libmultipath/propsel.c          |  6 +++---
+ libmultipath/structs.h          |  5 ++++-
+ multipathd/main.c               | 23 +++++------------------
+ 8 files changed, 63 insertions(+), 70 deletions(-)
+ create mode 100644 libmultipath/byteorder.h
 
-Fine.
-
-> Sounds like we have two issues here. One is that we run into issues with
-> stacking IO schedulers, and the other is that we'd rather not have
-> multiple schedulers in play for a stacked setup.
-> 
-> Maybe it'd be cleaner to have the dm-mq side of things not insert
-> through the scheduler, but rather just FIFO on the target end?
-
-That was how blk_insert_cloned_request() was before.  From the patch
-header (you may have missed it):
-
-"Commit bd166ef18 ("blk-mq-sched: add framework for MQ capable IO
-schedulers") switched blk_insert_cloned_request() from using
-blk_mq_insert_request() to blk_mq_sched_insert_request().  Which
-incorrectly added elevator machinery into a call chain that isn't
-supposed to have any."
-
-So shouldn't blk_insert_cloned_request() be made to _not_ use
-blk_mq_sched_insert_request()?  We'd need a new block interface
-established, or equivalent open-coded in blk_insert_cloned_request(),
-to handle direct dispatch to an mq request_queue's queue(s).
-
-Mike
+diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
+index aab6d95..960d50d 100644
+--- a/libmpathpersist/mpath_persist.c
++++ b/libmpathpersist/mpath_persist.c
+@@ -776,7 +776,7 @@ int mpath_prout_rel(struct multipath *mpp,int rq_servact, int rq_scope,
+ 	}
+ 
+ 	if (mpp->reservation_key ){
+-		memcpy (pamp->key, mpp->reservation_key, 8);
++		memcpy (pamp->key, &mpp->reservation_key, 8);
+ 		condlog (3, "%s: reservation key set.", mpp->wwid);
+ 	}
+ 
+@@ -794,7 +794,7 @@ int mpath_prout_rel(struct multipath *mpp,int rq_servact, int rq_scope,
+ 	for (i = 0; i < num; i++){
+ 		if (mpp->reservation_key &&
+ 			memcmp(pr_buff->prin_descriptor.prin_readfd.descriptors[i]->key,
+-			       mpp->reservation_key, 8)){
++			       &mpp->reservation_key, 8)){
+ 			/*register with tarnsport id*/
+ 			memset(pamp, 0, length);
+ 			pamp->trnptid_list[0] = pptr;
+@@ -828,7 +828,7 @@ int mpath_prout_rel(struct multipath *mpp,int rq_servact, int rq_scope,
+ 
+ 	if (found){
+ 		memset (pamp, 0, length);
+-		memcpy (pamp->sa_key, mpp->reservation_key, 8);
++		memcpy (pamp->sa_key, &mpp->reservation_key, 8);
+ 		memset (pamp->key, 0, 8);
+ 		status = mpath_prout_reg(mpp, MPATH_PROUT_REG_SA, rq_scope, rq_type, pamp, noisy);
+ 	}
+@@ -873,9 +873,7 @@ int update_map_pr(struct multipath *mpp)
+ {
+ 	int noisy=0;
+ 	struct prin_resp *resp;
+-	int i,j, ret, isFound;
+-	unsigned char *keyp;
+-	uint64_t prkey;
++	int i, ret, isFound;
+ 
+ 	if (!mpp->reservation_key)
+ 	{
+@@ -906,15 +904,8 @@ int update_map_pr(struct multipath *mpp)
+ 		return MPATH_PR_SUCCESS;
+ 	}
+ 
+-	prkey = 0;
+-	keyp = mpp->reservation_key;
+-	for (j = 0; j < 8; ++j) {
+-		if (j > 0)
+-			prkey <<= 8;
+-		prkey |= *keyp;
+-		++keyp;
+-	}
+-	condlog(2, "%s: Multipath  reservation_key: 0x%" PRIx64 " ", mpp->alias, prkey);
++	condlog(2, "%s: Multipath  reservation_key: 0x%" PRIx64 " ", mpp->alias,
++		be64_to_cpu(mpp->reservation_key));
+ 
+ 	isFound =0;
+ 	for (i = 0; i < resp->prin_descriptor.prin_readkeys.additional_length/8; i++ )
+@@ -922,7 +913,7 @@ int update_map_pr(struct multipath *mpp)
+ 		condlog(2, "%s: PR IN READKEYS[%d]  reservation key:", mpp->alias, i);
+ 		dumpHex((char *)&resp->prin_descriptor.prin_readkeys.key_list[i*8], 8 , 1);
+ 
+-		if (!memcmp(mpp->reservation_key, &resp->prin_descriptor.prin_readkeys.key_list[i*8], 8))
++		if (!memcmp(&mpp->reservation_key, &resp->prin_descriptor.prin_readkeys.key_list[i*8], 8))
+ 		{
+ 			condlog(2, "%s: reservation key found in pr in readkeys response", mpp->alias);
+ 			isFound =1;
+diff --git a/libmultipath/byteorder.h b/libmultipath/byteorder.h
+new file mode 100644
+index 0000000..5ddb661
+--- /dev/null
++++ b/libmultipath/byteorder.h
+@@ -0,0 +1,36 @@
++#ifndef BYTEORDER_H_INCLUDED
++#define BYTEORDER_H_INCLUDED
++
++#ifdef __linux__
++#  include <endian.h>
++#  include <byteswap.h>
++#else
++#  error unsupported
++#endif
++
++#if BYTE_ORDER == LITTLE_ENDIAN
++#  define le16_to_cpu(x) (x)
++#  define be16_to_cpu(x) bswap_16(x)
++#  define le32_to_cpu(x) (x)
++#  define le64_to_cpu(x) (x)
++#  define be32_to_cpu(x) bswap_32(x)
++#  define be64_to_cpu(x) bswap_64(x)
++#elif BYTE_ORDER == BIG_ENDIAN
++#  define le16_to_cpu(x) bswap_16(x)
++#  define be16_to_cpu(x) (x)
++#  define le32_to_cpu(x) bswap_32(x)
++#  define le64_to_cpu(x) bswap_64(x)
++#  define be32_to_cpu(x) (x)
++#  define be64_to_cpu(x) (x)
++#else
++#  error unsupported
++#endif
++
++#define cpu_to_le16(x) le16_to_cpu(x)
++#define cpu_to_be16(x) be16_to_cpu(x)
++#define cpu_to_le32(x) le32_to_cpu(x)
++#define cpu_to_be32(x) be32_to_cpu(x)
++#define cpu_to_le64(x) le64_to_cpu(x)
++#define cpu_to_be64(x) be64_to_cpu(x)
++
++#endif				/* BYTEORDER_H_INCLUDED */
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index b21a3aa..dba4bc4 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -532,9 +532,6 @@ free_config (struct config * conf)
+ 	if (conf->config_dir)
+ 		FREE(conf->config_dir);
+ 
+-	if (conf->reservation_key)
+-		FREE(conf->reservation_key);
+-
+ 	free_blacklist(conf->blist_devnode);
+ 	free_blacklist(conf->blist_wwid);
+ 	free_blacklist(conf->blist_property);
+diff --git a/libmultipath/config.h b/libmultipath/config.h
+index ffc69b5..c504570 100644
+--- a/libmultipath/config.h
++++ b/libmultipath/config.h
+@@ -4,6 +4,8 @@
+ #include <sys/types.h>
+ #include <stdint.h>
+ #include <urcu.h>
++#include <inttypes.h>
++#include "byteorder.h"
+ 
+ #define ORIGIN_DEFAULT 0
+ #define ORIGIN_CONFIG  1
+@@ -90,7 +92,7 @@ struct mpentry {
+ 
+ 	char * prio_name;
+ 	char * prio_args;
+-	unsigned char * reservation_key;
++	uint64_t  reservation_key; /* stored in big-endian format */
+ 	int pgpolicy;
+ 	int pgfailback;
+ 	int rr_weight;
+@@ -183,7 +185,7 @@ struct config {
+ 	char * alias_prefix;
+ 	char * partition_delim;
+ 	char * config_dir;
+-	unsigned char * reservation_key;
++	uint64_t  reservation_key; /* stored in big-endian format */
+ 
+ 	vector keywords;
+ 	vector mptable;
+diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+index 680b2c5..f37348b 100644
+--- a/libmultipath/dict.c
++++ b/libmultipath/dict.c
+@@ -962,9 +962,8 @@ snprint_def_log_checker_err (struct config *conf, char * buff, int len, void * d
+ static int
+ set_reservation_key(vector strvec, void *ptr)
+ {
+-	unsigned char **uchar_ptr = (unsigned char **)ptr;
++	uint64_t *be64_ptr = (uint64_t *)ptr;
+ 	char *buff;
+-	int j;
+ 	uint64_t prkey;
+ 
+ 	buff = set_value(strvec);
+@@ -976,16 +975,7 @@ set_reservation_key(vector strvec, void *ptr)
+ 		return 1;
+ 	}
+ 
+-	if (!*uchar_ptr)
+-		*uchar_ptr = (unsigned char *) malloc(8);
+-
+-	memset(*uchar_ptr, 0, 8);
+-
+-	for (j = 7; j >= 0; --j) {
+-		(*uchar_ptr)[j] = (prkey & 0xff);
+-		prkey >>= 8;
+-	}
+-
++	*be64_ptr = cpu_to_be64(prkey);
+ 	FREE(buff);
+ 	return 0;
+ }
+@@ -993,21 +983,8 @@ set_reservation_key(vector strvec, void *ptr)
+ int
+ print_reservation_key(char * buff, int len, void * ptr)
+ {
+-	unsigned char **uchar_ptr = (unsigned char **)ptr;
+-	int i;
+-	unsigned char *keyp;
+-	uint64_t prkey = 0;
+-
+-	if (!*uchar_ptr)
+-		return 0;
+-	keyp = (unsigned char *)(*uchar_ptr);
+-	for (i = 0; i < 8; i++) {
+-		if (i > 0)
+-			prkey <<= 8;
+-		prkey |= *keyp;
+-		keyp++;
+-	}
+-	return snprintf(buff, len, "0x%" PRIx64, prkey);
++	uint64_t *be64_ptr = (uint64_t *)ptr;
++	return snprintf(buff, len, "0x%" PRIx64, be64_to_cpu(*be64_ptr));
+ }
+ 
+ declare_def_handler(reservation_key, set_reservation_key)
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index 175fbe1..b55b75b 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -609,14 +609,14 @@ out:
+ 
+ int select_reservation_key(struct config *conf, struct multipath *mp)
+ {
+-	char *origin, buff[12];
++	char *origin, buff[PRKEY_SIZE];
+ 
+ 	mp_set_mpe(reservation_key);
+ 	mp_set_conf(reservation_key);
+-	mp->reservation_key = NULL;
++	mp->reservation_key = 0;
+ 	return 0;
+ out:
+-	print_reservation_key(buff, 12, &mp->reservation_key);
++	print_reservation_key(buff, PRKEY_SIZE, &mp->reservation_key);
+ 	condlog(3, "%s: reservation_key = %s %s", mp->alias, buff, origin);
+ 	return 0;
+ }
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index 8ea984d..a32fe12 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -2,8 +2,10 @@
+ #define _STRUCTS_H
+ 
+ #include <sys/types.h>
++#include <inttypes.h>
+ 
+ #include "prio.h"
++#include "byteorder.h"
+ 
+ #define WWID_SIZE		128
+ #define SERIAL_SIZE		65
+@@ -17,6 +19,7 @@
+ #define NAME_SIZE		512
+ #define HOST_NAME_LEN		16
+ #define SLOT_NAME_SIZE		40
++#define PRKEY_SIZE		19
+ 
+ #define SCSI_VENDOR_SIZE	9
+ #define SCSI_PRODUCT_SIZE	17
+@@ -306,7 +309,7 @@ struct multipath {
+ 	void * mpcontext;
+ 
+ 	/* persistent management data*/
+-	unsigned char * reservation_key;
++	uint64_t  reservation_key; /* stored in big-endian format */
+ 	unsigned char prflag;
+ };
+ 
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 4be2c57..580d67c 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -2786,10 +2786,8 @@ main (int argc, char *argv[])
+ void *  mpath_pr_event_handler_fn (void * pathp )
+ {
+ 	struct multipath * mpp;
+-	int i,j, ret, isFound;
++	int i, ret, isFound;
+ 	struct path * pp = (struct path *)pathp;
+-	unsigned char *keyp;
+-	uint64_t prkey;
+ 	struct prout_param_descriptor *param;
+ 	struct prin_resp *resp;
+ 
+@@ -2817,22 +2815,15 @@ void *  mpath_pr_event_handler_fn (void * pathp )
+ 		ret = MPATH_PR_SUCCESS;
+ 		goto out;
+ 	}
+-	prkey = 0;
+-	keyp = (unsigned char *)mpp->reservation_key;
+-	for (j = 0; j < 8; ++j) {
+-		if (j > 0)
+-			prkey <<= 8;
+-		prkey |= *keyp;
+-		++keyp;
+-	}
+-	condlog(2, "Multipath  reservation_key: 0x%" PRIx64 " ", prkey);
++	condlog(2, "Multipath  reservation_key: 0x%" PRIx64 " ",
++		be64_to_cpu(mpp->reservation_key));
+ 
+ 	isFound =0;
+ 	for (i = 0; i < resp->prin_descriptor.prin_readkeys.additional_length/8; i++ )
+ 	{
+ 		condlog(2, "PR IN READKEYS[%d]  reservation key:",i);
+ 		dumpHex((char *)&resp->prin_descriptor.prin_readkeys.key_list[i*8], 8 , -1);
+-		if (!memcmp(mpp->reservation_key, &resp->prin_descriptor.prin_readkeys.key_list[i*8], 8))
++		if (!memcmp(&mpp->reservation_key, &resp->prin_descriptor.prin_readkeys.key_list[i*8], 8))
+ 		{
+ 			condlog(2, "%s: pr key found in prin readkeys response", mpp->alias);
+ 			isFound =1;
+@@ -2849,11 +2840,7 @@ void *  mpath_pr_event_handler_fn (void * pathp )
+ 
+ 	param= malloc(sizeof(struct prout_param_descriptor));
+ 	memset(param, 0 , sizeof(struct prout_param_descriptor));
+-
+-	for (j = 7; j >= 0; --j) {
+-		param->sa_key[j] = (prkey & 0xff);
+-		prkey >>= 8;
+-	}
++	memcpy(param->sa_key, &mpp->reservation_key, 8);
+ 	param->num_transportid = 0;
+ 
+ 	condlog(3, "device %s:%s", pp->dev, pp->mpp->wwid);
+-- 
+2.7.4
