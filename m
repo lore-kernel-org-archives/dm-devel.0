@@ -1,94 +1,46 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 2/5] libmultipath: change reservation_key to
-	a uint64_t
-Date: Fri, 8 Sep 2017 17:55:03 -0500
-Message-ID: <20170908225503.GG3145@octiron.msp.redhat.com>
-References: <1504896354-28181-1-git-send-email-bmarzins@redhat.com>
-	<1504896354-28181-3-git-send-email-bmarzins@redhat.com>
-	<1504904957.4585.26.camel@suse.com>
+From: Dan Williams <dan.j.williams@intel.com>
+Subject: Re: [PATCH v3 0/2] dax, dm: stop requiring dax for device-mapper
+Date: Sat, 9 Sep 2017 11:56:43 -0700
+Message-ID: <CAPcyv4iTkv_5yR2aLz+wwE=XkwmwOtWUB3_4O3jcVjkf27XYwQ@mail.gmail.com>
+References: <150169667935.39569.15808116323143633486.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <20170802185537.GA16551@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1504904957.4585.26.camel@suse.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20170802185537.GA16551@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: kbuild test robot <lkp@intel.com>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Michael Ellerman <mpe@ellerman.id.au>, Heiko Carstens <heiko.carstens@de.ibm.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Martin Schwidefsky <schwidefsky@de.ibm.com>, dm-devel@redhat.com, Paul Mackerras <paulus@samba.org>, Alasdair Kergon <agk@redhat.com>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Bart Van Assche <Bart.VanAssche@wdc.com>, Gerald Schaefer <gerald.schaefer@de.ibm.com>, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Sep 08, 2017 at 11:09:17PM +0200, Martin Wilck wrote:
-> On Fri, 2017-09-08 at 13:45 -0500, Benjamin Marzinski wrote:
-> > The reservation key is currently being stored as any array of 8
-> > unsigned
-> > chars.  This is exactly the same in-memory representation as a big
-> > endian 64 bit integer. However, the code for dealing with a big
-> > endian
-> > 64 bit integer is much simpler, so switch to use that instead.
-> > =
+On Wed, Aug 2, 2017 at 11:55 AM, Mike Snitzer <snitzer@redhat.com> wrote:
+> On Wed, Aug 02 2017 at  1:57pm -0400,
+> Dan Williams <dan.j.williams@intel.com> wrote:
+>
+>> Changes since v2 [1]:
+>> * rebase on -next to integrate with commit 273752c9ff03 "dm, dax: Make
+>>   sure dm_dax_flush() is called if device supports it" (kbuild robot)
+>> * fix CONFIG_DAX dependencies to upgrade CONFIG_DAX=m to CONFIG_DAX=y
+>>   (kbuild robot)
+>>
+>> [1]: https://www.spinics.net/lists/kernel/msg2570522.html
+>>
+>> ---
+>>
+>> Bart points out that the DAX core is unconditionally enabled if
+>> device-mapper is enabled. Add some config machinery and some
+>> stub-static-inline routines to allow dax infrastructure to be deleted
+>> from device-mapper at compile time.
+>>
+>> Since this depends on commit 273752c9ff03 that's already in -next, this
+>> should go through the device-mapper tree.
+>
+> Commit 273752c9ff03eb83856601b2a3458218bb949e46 is upstream as of
+> v4.13-rc3 -- so no real need to have this go via linux-dm.git
+>
+> That said, I don't mind picking it up once we are satisfied with the
+> implementation.  I'll start reviewing shortly.
 
-> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> > ---
-> >  libmpathpersist/mpath_persist.c | 23 +++++++----------------
-> >  libmultipath/byteorder.h        | 36
-> > ++++++++++++++++++++++++++++++++++++
-> >  libmultipath/config.c           |  3 ---
-> >  libmultipath/config.h           |  6 ++++--
-> >  libmultipath/dict.c             | 31 ++++---------------------------
-> >  libmultipath/propsel.c          |  6 +++---
-> >  libmultipath/structs.h          |  5 ++++-
-> >  multipathd/main.c               | 23 +++++------------------
-> >  8 files changed, 63 insertions(+), 70 deletions(-)
-> >  create mode 100644 libmultipath/byteorder.h
-> > =
+Hi Mike,
 
-> >  =
-
-> >  	char * prio_name;
-> >  	char * prio_args;
-> > -	unsigned char * reservation_key;
-> > +	uint64_t  reservation_key; /* stored in big-endian format */
-> =
-
-> I would prefer if you could encapsulate this into a type that can't be
-> implicitly converted to an int, such as
-> =
-
-> struct res_key {
-> 	uint64_t _v;
-> } reservation_key;
-> =
-
-> together with macros like
-> =
-
-> #define reskey_to_uint64(r) be64_to_cpu((r)->_v)
-> #define set_reskey_from_uint64(r, x) do { (r)->_v =3D (x); } while (0)
-> =
-
-> Using be64_to_cpu is all too easily forgotten, which leads to nasty
-> bugs.
-
-That's a good idea. I'll resend with a structure instead of a straight
-uint64_t.
-
--Ben
-
-> =
-
-> Apart from that, ack.
-> =
-
-> -- =
-
-> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-> SUSE Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
-> HRB 21284 (AG N=FCrnberg)
+Friendly reminder about this cleanup...
