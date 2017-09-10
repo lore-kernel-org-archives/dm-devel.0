@@ -1,46 +1,69 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: Re: [PATCH v3 0/2] dax, dm: stop requiring dax for device-mapper
-Date: Sat, 9 Sep 2017 11:56:43 -0700
-Message-ID: <CAPcyv4iTkv_5yR2aLz+wwE=XkwmwOtWUB3_4O3jcVjkf27XYwQ@mail.gmail.com>
-References: <150169667935.39569.15808116323143633486.stgit@dwillia2-desk3.amr.corp.intel.com>
- <20170802185537.GA16551@redhat.com>
+From: Milan Broz <gmazyland@gmail.com>
+Subject: Re: Testing dm-integrity (WAS: Re: Support for data CRC)
+Date: Sun, 10 Sep 2017 22:06:13 +0200
+Message-ID: <bb924fb0-ba74-1f14-d1ce-ea567c641c54@gmail.com>
+References: <20170821190414.long2535xppcxvvd@breakpoint.cc>
+	<CAJCQCtSUS9yZfv9xLe9a5o5x8ZSkOUWC_6QaeUi6oQ_QXg4GRQ@mail.gmail.com>
+	<20170822111053.7jypthbydpkn2tj4@breakpoint.cc>
+	<CAJCQCtTF2bWgB1++v3XOwaPqpPxc7-0Lv+Qc_3bebb0zMDNszA@mail.gmail.com>
+	<20170910194350.v5fzbgrzihpjg2pv@breakpoint.cc>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170802185537.GA16551@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: kbuild test robot <lkp@intel.com>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Michael Ellerman <mpe@ellerman.id.au>, Heiko Carstens <heiko.carstens@de.ibm.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Martin Schwidefsky <schwidefsky@de.ibm.com>, dm-devel@redhat.com, Paul Mackerras <paulus@samba.org>, Alasdair Kergon <agk@redhat.com>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Bart Van Assche <Bart.VanAssche@wdc.com>, Gerald Schaefer <gerald.schaefer@de.ibm.com>, Mikulas Patocka <mpatocka@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20170910194350.v5fzbgrzihpjg2pv@breakpoint.cc>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Sebastian Andrzej Siewior <sebastian@breakpoint.cc>, dm-devel@redhat.com
+Cc: xfs list <linux-xfs@vger.kernel.org>, Mikulas Patocka <mpatocka@redhat.com>, Chris Murphy <lists@colorremedies.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Aug 2, 2017 at 11:55 AM, Mike Snitzer <snitzer@redhat.com> wrote:
-> On Wed, Aug 02 2017 at  1:57pm -0400,
-> Dan Williams <dan.j.williams@intel.com> wrote:
->
->> Changes since v2 [1]:
->> * rebase on -next to integrate with commit 273752c9ff03 "dm, dax: Make
->>   sure dm_dax_flush() is called if device supports it" (kbuild robot)
->> * fix CONFIG_DAX dependencies to upgrade CONFIG_DAX=m to CONFIG_DAX=y
->>   (kbuild robot)
->>
->> [1]: https://www.spinics.net/lists/kernel/msg2570522.html
->>
->> ---
->>
->> Bart points out that the DAX core is unconditionally enabled if
->> device-mapper is enabled. Add some config machinery and some
->> stub-static-inline routines to allow dax infrastructure to be deleted
->> from device-mapper at compile time.
->>
->> Since this depends on commit 273752c9ff03 that's already in -next, this
->> should go through the device-mapper tree.
->
-> Commit 273752c9ff03eb83856601b2a3458218bb949e46 is upstream as of
-> v4.13-rc3 -- so no real need to have this go via linux-dm.git
->
-> That said, I don't mind picking it up once we are satisfied with the
-> implementation.  I'll start reviewing shortly.
 
-Hi Mike,
+On 09/10/2017 09:43 PM, Sebastian Andrzej Siewior wrote:
+> On 2017-08-22 16:37:07 [-0600], Chris Murphy wrote:
+>> Documentation says either crc or hash is possible, including crc32.
+>> https://www.kernel.org/doc/Documentation/device-mapper/dm-integrity.txt
+>>> My idea was that if the "normal" path is faulty (and noticed by the crc
+>>> check) it (xfs or the dm layer) would try to read the data via an
+>>> alternative path if possible (say on RAID1/5/6).
+>>
+>> Yes you have to build each layer you want separately with this method.
+> 
+> So I tried this:
+> 
+> dmsetup create test-raid1 --table '0 4194304 raid raid1 3 0 region_size 1024 2 - /dev/vdc - /dev/vdd'
+> 
+> # creating the target (size 1)
+> provided_data_sectors=1
+> table="0 $provided_data_sectors integrity /dev/mapper/test-raid1 4096 - D 1 internal_hash:crc32c"
+> dmsetup create dm-int --table "$table"
+> dmsetup remove /dev/mapper/dm-int
+> 
+> # hexdumped. is there a tool for that?
 
-Friendly reminder about this cleanup...
+There is integritysetup tool (part of cryptsetup package) that automates format and mount of dm-integrity devices.
+For now in devel git, I expect we will do some release package this month.
+(So no need to use dmsetup here.)
+
+...
+
+> at some point I expected dm-integrity to check the other disk in RAID.
+
+The dm-integrity has no connection to RAID, it will just return EILSEQ (instead of EIO error)
+to inform that the error is an data integrity error, not a media (or other) IO error.
+
+> Isn't this possible or is my setup wrong at some point? If it is not
+> possible, could it be made possible?
+
+It is up to RAID driver to handle integrity error properly (the same should happen
+for hardware DIF integrity error I guess - you can try to simulate it with scsi_debug).
+
+Milan
