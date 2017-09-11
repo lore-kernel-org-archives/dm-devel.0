@@ -1,46 +1,48 @@
-From: Sebastian Andrzej Siewior <sebastian@breakpoint.cc>
-Subject: Re: Testing dm-integrity (WAS: Re: Support for data CRC)
-Date: Mon, 11 Sep 2017 08:38:56 +0200
-Message-ID: <20170911063855.x25kajaqoxatt6zq@breakpoint.cc>
-References: <20170821190414.long2535xppcxvvd@breakpoint.cc>
-	<CAJCQCtSUS9yZfv9xLe9a5o5x8ZSkOUWC_6QaeUi6oQ_QXg4GRQ@mail.gmail.com>
-	<20170822111053.7jypthbydpkn2tj4@breakpoint.cc>
-	<CAJCQCtTF2bWgB1++v3XOwaPqpPxc7-0Lv+Qc_3bebb0zMDNszA@mail.gmail.com>
-	<20170910194350.v5fzbgrzihpjg2pv@breakpoint.cc>
-	<bb924fb0-ba74-1f14-d1ce-ea567c641c54@gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v3 2/2] dm: allow device-mapper to operate without dax
+ support
+Date: Mon, 11 Sep 2017 10:41:11 -0400
+Message-ID: <20170911144111.GA15556@redhat.com>
+References: <150169667935.39569.15808116323143633486.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <150169668989.39569.8174620146135008137.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <bb924fb0-ba74-1f14-d1ce-ea567c641c54@gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Milan Broz <gmazyland@gmail.com>
-Cc: xfs list <linux-xfs@vger.kernel.org>, Mikulas Patocka <mpatocka@redhat.com>, dm-devel@redhat.com, Chris Murphy <lists@colorremedies.com>, Mike Snitzer <snitzer@redhat.com>
+In-Reply-To: <150169668989.39569.8174620146135008137.stgit@dwillia2-desk3.amr.corp.intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Dan Williams <dan.j.williams@intel.com>
+Cc: kbuild test robot <lkp@intel.com>, linux-nvdimm@lists.01.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Bart Van Assche <Bart.VanAssche@wdc.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On 2017-09-10 22:06:13 [+0200], Milan Broz wrote:
-> There is integritysetup tool (part of cryptsetup package) that automates format and mount of dm-integrity devices.
-> For now in devel git, I expect we will do some release package this month.
-> (So no need to use dmsetup here.)
-ah, good, thank. I read the documentation and it mentioned just those
-steps not a pointer to tool.
+On Wed, Aug 02 2017 at  1:58pm -0400,
+Dan Williams <dan.j.williams@intel.com> wrote:
 
-> > at some point I expected dm-integrity to check the other disk in RAID.
+> Rather than have device-mapper directly 'select DAX', let the fact that
+> BLK_DEV_PMEM selects dax act as a gate for the device-mapper dax
+> support. We arrange for all the dax core routines to compile to nops
+> when CONFIG_DAX=n. With that in place we can simply handle the
+> alloc_dax() error as expected and ifdef out the other device-mapper-dax
+> support code.
 > 
-> The dm-integrity has no connection to RAID, it will just return EILSEQ (instead of EIO error)
-> to inform that the error is an data integrity error, not a media (or other) IO error.
+> Now, if dax is provided by a leaf driver that driver may only arrange to
+> compile the dax core as a module. Since device-mapper dax support is
+> consumed by the always-built-in portion of the device-mapper
+> implementation we need to upgrade from DAX=m to DAX=y.
 
-okay. Now I have a pointer where to look next.
+I applied the patches and then got nervous once I dug in.. this last
+paragraph makes little sense to me.  "the always-built-in portion of the
+device-mapper implementation" is why: DM core can happily be compiled as
+a module (dm-mod.ko).
 
-> Milan
+And I'm not sure why you're referencing DAX related
+drivers/md/dm-builtin.c, why are you attachd DM's DAX support to that?
+I'm not seeing where that is actually happening.
 
-Sebastian
+I don't see why DM's support for DAX would need to force DAX to be
+builtin rather than just a module.
+
+Sorry I didn't get around to looking at this until now, but it seems you
+went wrong along the way?  Or maybe I'm just missing something?
+
+Mike
