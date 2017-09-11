@@ -1,78 +1,131 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-zoned: Avoid metadata flush writeback throttling
-Date: Mon, 11 Sep 2017 11:05:55 -0400
-Message-ID: <20170911150555.GA15818@redhat.com>
-References: <20170724074422.23948-1-damien.lemoal@wdc.com>
-	<20170724080320.GA16608@infradead.org>
-	<0ee663a1-f497-1d10-f252-91fee072322a@wdc.com>
+From: Jens Axboe <axboe@kernel.dk>
+Subject: Re: fix an integer overflow in __blkdev_sectors_to_bio_pages
+Date: Mon, 11 Sep 2017 09:47:12 -0600
+Message-ID: <a64af29c-e247-6381-fcd9-23720a3a86fa@kernel.dk>
+References: <CAGnHSEngW1Ugf66V5henR9fMEev0xcJnKVY9MjJb19gy3CkgNA@mail.gmail.com>
+ <20170809133833.GA25681@lst.de>
+ <alpine.LRH.2.02.1708132245190.18210@file01.intranet.prod.int.rdu2.redhat.com>
+ <1502683489.903.1.camel@wdc.com>
+ <alpine.LRH.2.02.1708141926170.24994@file01.intranet.prod.int.rdu2.redhat.com>
+ <20170911145833.GB15556@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <0ee663a1-f497-1d10-f252-91fee072322a@wdc.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Damien Le Moal <damien.lemoal@wdc.com>
-Cc: Christoph Hellwig <hch@infradead.org>, Bart Van Assche <bart.vanassche@sandisk.com>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Alasdair Kergon <agk@redhat.com>
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20170911145833.GB15556@redhat.com>
+Content-Language: en-US
+Sender: linux-block-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>, axboe@kernel.dk, Mikulas Patocka <mpatocka@redhat.com>
+Cc: Damien Le Moal <Damien.LeMoal@wdc.com>, "hch@lst.de" <hch@lst.de>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "tom.ty89@gmail.com" <tom.ty89@gmail.com>, "gmazyland@gmail.com" <gmazyland@gmail.com>
 List-Id: dm-devel.ids
 
-On Mon, Jul 24 2017 at  5:16am -0400,
-Damien Le Moal <damien.lemoal@wdc.com> wrote:
+On 09/11/2017 08:58 AM, Mike Snitzer wrote:
+> On Mon, Aug 14 2017 at  8:01pm -0400,
+> Mikulas Patocka <mpatocka@redhat.com> wrote:
+> 
+>>
+>>
+>> On Mon, 14 Aug 2017, Damien Le Moal wrote:
+>>
+>>> On Sun, 2017-08-13 at 22:47 -0400, Mikulas Patocka wrote:
+>>>>
+>>>> On Wed, 9 Aug 2017, hch@lst.de wrote:
+>>>>
+>>>>> Does commit 615d22a51c04856efe62af6e1d5b450aaf5cc2c0
+>>>>> "block: Fix __blkdev_issue_zeroout loop" fix the issue for you?
+>>>>>
+>>>>> --
+>>>>> dm-devel mailing list
+>>>>> dm-devel@redhat.com
+>>>>> https://www.redhat.com/mailman/listinfo/dm-devel
+>>>>
+>>>> I think that patch is incorrect. sector_t may be a 32-bit type and 
+>>>> nr_sects << 9 may overflow.
+>>>>
+>>>> static unsigned int __blkdev_sectors_to_bio_pages(sector_t nr_sects)
+>>>> {
+>>>>        sector_t bytes = (nr_sects << 9) + PAGE_SIZE - 1;
+>>>>
+>>>>        return min(bytes >> PAGE_SHIFT, (sector_t)BIO_MAX_PAGES);
+>>>> }
+>>>>
+>>>> Mikulas
+>>>
+>>> Mikulas,
+>>>
+>>> Does the follwing patch fix the problem ?
+>>>
+>>> From 947b3cf41e759b2b23f684e215e651d0c8037f88 Mon Sep 17 00:00:00 2001
+>>> From: Damien Le Moal <damien.lemoal@wdc.com>
+>>> Date: Mon, 14 Aug 2017 13:01:16 +0900
+>>> Subject: [PATCH] block: Fix __blkdev_sectors_to_bio_pages()
+>>>
+>>> On 32bit systems where sector_t is a 32bits type, the calculation of
+>>> bytes may overflow. Use the u64 type for the local calculation to avoid
+>>> overflows.
+>>>
+>>> Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
+>>> ---
+>>>  block/blk-lib.c | 4 ++--
+>>>  1 file changed, 2 insertions(+), 2 deletions(-)
+>>>
+>>> diff --git a/block/blk-lib.c b/block/blk-lib.c
+>>> index 3fe0aec90597..ccf22dba21f0 100644
+>>> --- a/block/blk-lib.c
+>>> +++ b/block/blk-lib.c
+>>> @@ -269,9 +269,9 @@ static int __blkdev_issue_write_zeroes(struct block_device
+>>> *bdev,
+>>>   */
+>>>  static unsigned int __blkdev_sectors_to_bio_pages(sector_t nr_sects)
+>>>  {
+>>> -	sector_t bytes = (nr_sects << 9) + PAGE_SIZE - 1;
+>>> +	u64 bytes = ((u64)nr_sects << 9) + PAGE_SIZE - 1;
+>>>  
+>>> -	return min(bytes >> PAGE_SHIFT, (sector_t)BIO_MAX_PAGES);
+>>> +	return min(bytes >> PAGE_SHIFT, (u64)BIO_MAX_PAGES);
+>>>  }
+>>>  
+>>
+>> It's OK, but it is not needed to use 64-bit arithmetic here if all we need 
+>> is to shift the value right. Here I submit a simplified patch, using the 
+>> macro DIV_ROUND_UP_SECTOR_T (the macro gets optimized to just an addition 
+>> and right shift).
+>>
+>>
+>>
+>> From: Mikulas Patocka <mpatocka@redhat.com>
+>>
+>> Fix possible integer overflow in __blkdev_sectors_to_bio_pages if sector_t 
+>> is 32-bit.
+>>
+>> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+>> Fixes: 615d22a51c04 ("block: Fix __blkdev_issue_zeroout loop")
+>>
+>> ---
+>>  block/blk-lib.c |    4 ++--
+>>  1 file changed, 2 insertions(+), 2 deletions(-)
+>>
+>> Index: linux-2.6/block/blk-lib.c
+>> ===================================================================
+>> --- linux-2.6.orig/block/blk-lib.c
+>> +++ linux-2.6/block/blk-lib.c
+>> @@ -269,9 +269,9 @@ static int __blkdev_issue_write_zeroes(s
+>>   */
+>>  static unsigned int __blkdev_sectors_to_bio_pages(sector_t nr_sects)
+>>  {
+>> -	sector_t bytes = (nr_sects << 9) + PAGE_SIZE - 1;
+>> +	sector_t pages = DIV_ROUND_UP_SECTOR_T(nr_sects, PAGE_SIZE / 512);
+>>  
+>> -	return min(bytes >> PAGE_SHIFT, (sector_t)BIO_MAX_PAGES);
+>> +	return min(pages, (sector_t)BIO_MAX_PAGES);
+>>  }
+>>  
+>>  /**
+>>
+> 
+> Jens can you pick this up?
 
-> 
-> 
-> On 7/24/17 17:03, Christoph Hellwig wrote:
-> > On Mon, Jul 24, 2017 at 04:44:22PM +0900, Damien Le Moal wrote:
-> >> Avoid metadata flush to be blocked by the writeback throttling code in
-> >> wbt_wait(). Otherwise, we can end up with a deadlock under heavy write
-> >> load with all chunk works active. In such situation, a deadlock can
-> >> happen if the flush work is blocked by the throttling code while holding
-> >> the metadata lock: as the chunk works will wait for the metadata lock
-> >> too, no progress can be made.
-> >>
-> >> Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
-> >> ---
-> >>  drivers/md/dm-zoned-metadata.c | 3 ++-
-> >>  1 file changed, 2 insertions(+), 1 deletion(-)
-> >>
-> >> diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
-> >> index 884ff7c170a0..f694fb98b002 100644
-> >> --- a/drivers/md/dm-zoned-metadata.c
-> >> +++ b/drivers/md/dm-zoned-metadata.c
-> >> @@ -567,7 +567,8 @@ static void dmz_write_mblock(struct dmz_metadata *zmd, struct dmz_mblock *mblk,
-> >>  	bio->bi_bdev = zmd->dev->bdev;
-> >>  	bio->bi_private = mblk;
-> >>  	bio->bi_end_io = dmz_mblock_bio_end_io;
-> >> -	bio_set_op_attrs(bio, REQ_OP_WRITE, REQ_META | REQ_PRIO);
-> >> +	bio_set_op_attrs(bio, REQ_OP_WRITE,
-> >> +			 REQ_META | REQ_PRIO | REQ_SYNC | REQ_IDLE);
-> > 
-> > Please just assign bi_opf directly instea dof using bio_set_op_attrs
-> > in new code.
-> 
-> OK. Will do.
-> 
-> > Also what do you need REQ_IDLE for?
-> 
-> It is not really needed here, but the wbt_should_throttle() code test is:
-> 
-> if ((bio->bi_opf & (REQ_SYNC | REQ_IDLE)) == (REQ_SYNC | REQ_IDLE))
-> 	return false;
-> 
-> So if REQ_IDLE is not set, wbt will trigger.
-> 
-> Having a req flag that says "no wb throttling please" would be a lot
-> cleaner...
+Yep added, thanks.
 
-Did you have a new version of this patch?
-
-Thanks,
-Mike
+-- 
+Jens Axboe
