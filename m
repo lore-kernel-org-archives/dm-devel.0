@@ -1,19 +1,17 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: Testing dm-integrity (WAS: Re: Support for data CRC)
-Date: Mon, 11 Sep 2017 19:44:54 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1709111942050.31898@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20170821190414.long2535xppcxvvd@breakpoint.cc>
-	<CAJCQCtSUS9yZfv9xLe9a5o5x8ZSkOUWC_6QaeUi6oQ_QXg4GRQ@mail.gmail.com>
-	<20170822111053.7jypthbydpkn2tj4@breakpoint.cc>
-	<CAJCQCtTF2bWgB1++v3XOwaPqpPxc7-0Lv+Qc_3bebb0zMDNszA@mail.gmail.com>
-	<20170910194350.v5fzbgrzihpjg2pv@breakpoint.cc>
-	<bb924fb0-ba74-1f14-d1ce-ea567c641c54@gmail.com>
-	<20170911063855.x25kajaqoxatt6zq@breakpoint.cc>
+From: Damien Le Moal <damien.lemoal@wdc.com>
+Subject: Re: dm-zoned: Avoid metadata flush writeback throttling
+Date: Tue, 12 Sep 2017 14:46:58 +0900
+Message-ID: <98dbb761-119c-c128-2d5b-f356f99b4aa6@wdc.com>
+References: <20170724074422.23948-1-damien.lemoal@wdc.com>
+	<20170724080320.GA16608@infradead.org>
+	<0ee663a1-f497-1d10-f252-91fee072322a@wdc.com>
+	<20170911150555.GA15818@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170911063855.x25kajaqoxatt6zq@breakpoint.cc>
+In-Reply-To: <20170911150555.GA15818@redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,35 +21,70 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Sebastian Andrzej Siewior <sebastian@breakpoint.cc>
-Cc: xfs list <linux-xfs@vger.kernel.org>, dm-devel@redhat.com, Chris Murphy <lists@colorremedies.com>, Milan Broz <gmazyland@gmail.com>, Mike Snitzer <snitzer@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Christoph Hellwig <hch@infradead.org>, Bart Van Assche <bart.vanassche@sandisk.com>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
+Mike,
 
-
-On Mon, 11 Sep 2017, Sebastian Andrzej Siewior wrote:
-
-> On 2017-09-10 22:06:13 [+0200], Milan Broz wrote:
-> > There is integritysetup tool (part of cryptsetup package) that automates format and mount of dm-integrity devices.
-> > For now in devel git, I expect we will do some release package this month.
-> > (So no need to use dmsetup here.)
-> ah, good, thank. I read the documentation and it mentioned just those
-> steps not a pointer to tool.
+On 9/12/17 00:05, Mike Snitzer wrote:
+> On Mon, Jul 24 2017 at  5:16am -0400,
+> Damien Le Moal <damien.lemoal@wdc.com> wrote:
 > 
-> > > at some point I expected dm-integrity to check the other disk in RAID.
+>>
+>>
+>> On 7/24/17 17:03, Christoph Hellwig wrote:
+>>> On Mon, Jul 24, 2017 at 04:44:22PM +0900, Damien Le Moal wrote:
+>>>> Avoid metadata flush to be blocked by the writeback throttling code in
+>>>> wbt_wait(). Otherwise, we can end up with a deadlock under heavy write
+>>>> load with all chunk works active. In such situation, a deadlock can
+>>>> happen if the flush work is blocked by the throttling code while holding
+>>>> the metadata lock: as the chunk works will wait for the metadata lock
+>>>> too, no progress can be made.
+>>>>
+>>>> Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
+>>>> ---
+>>>>  drivers/md/dm-zoned-metadata.c | 3 ++-
+>>>>  1 file changed, 2 insertions(+), 1 deletion(-)
+>>>>
+>>>> diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
+>>>> index 884ff7c170a0..f694fb98b002 100644
+>>>> --- a/drivers/md/dm-zoned-metadata.c
+>>>> +++ b/drivers/md/dm-zoned-metadata.c
+>>>> @@ -567,7 +567,8 @@ static void dmz_write_mblock(struct dmz_metadata *zmd, struct dmz_mblock *mblk,
+>>>>  	bio->bi_bdev = zmd->dev->bdev;
+>>>>  	bio->bi_private = mblk;
+>>>>  	bio->bi_end_io = dmz_mblock_bio_end_io;
+>>>> -	bio_set_op_attrs(bio, REQ_OP_WRITE, REQ_META | REQ_PRIO);
+>>>> +	bio_set_op_attrs(bio, REQ_OP_WRITE,
+>>>> +			 REQ_META | REQ_PRIO | REQ_SYNC | REQ_IDLE);
+>>>
+>>> Please just assign bi_opf directly instea dof using bio_set_op_attrs
+>>> in new code.
+>>
+>> OK. Will do.
+>>
+>>> Also what do you need REQ_IDLE for?
+>>
+>> It is not really needed here, but the wbt_should_throttle() code test is:
+>>
+>> if ((bio->bi_opf & (REQ_SYNC | REQ_IDLE)) == (REQ_SYNC | REQ_IDLE))
+>> 	return false;
+>>
+>> So if REQ_IDLE is not set, wbt will trigger.
+>>
+>> Having a req flag that says "no wb throttling please" would be a lot
+>> cleaner...
+> 
+> Did you have a new version of this patch?
+> 
+> Thanks,
+> Mike
 
-If you need to check the other disk in case of error, you need to put 
-dm-integrity below the RAID driver - i.e. create two dm-integrity targets 
-on two physical disks and put the RAID target above them.
+My apologies, I forgot about this one. Sending right away.
 
-Mikulas
+Best regards.
 
-> > The dm-integrity has no connection to RAID, it will just return EILSEQ (instead of EIO error)
-> > to inform that the error is an data integrity error, not a media (or other) IO error.
-> 
-> okay. Now I have a pointer where to look next.
-> 
-> > Milan
-> 
-> Sebastian
-> 
+-- 
+Damien Le Moal,
+Western Digital
