@@ -1,18 +1,16 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH] dm-crypt: limit the number of allocated pages
-Date: Mon, 11 Sep 2017 19:57:56 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1709111952270.31898@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1708132240130.18210@file01.intranet.prod.int.rdu2.redhat.com>
-	<CAGnHSEm2Jz35Em6h-a8ofXr9ApgBKJq5mOCG9ZtN4+FuRxj8Aw@mail.gmail.com>
-	<alpine.LRH.2.02.1708142007510.24994@file01.intranet.prod.int.rdu2.redhat.com>
-	<CAGnHSEnrTnvrkNdYJodSL51VUA+=FemdXEMnQ30rVwjCOHMoYA@mail.gmail.com>
-	<alpine.LRH.2.02.1708191318110.2380@file01.intranet.prod.int.rdu2.redhat.com>
-	<CAGnHSEnDFc+XJDj9LtHjxJy+vSYS7HNK=F=nUH7tzsWPQozCeA@mail.gmail.com>
+Subject: Re: dm-zoned: Avoid metadata flush writeback throttling
+Date: Tue, 12 Sep 2017 02:12:28 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1709120206430.12577@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20170724074422.23948-1-damien.lemoal@wdc.com>
+	<20170724080320.GA16608@infradead.org>
+	<0ee663a1-f497-1d10-f252-91fee072322a@wdc.com>
+	<20170911150555.GA15818@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAGnHSEnDFc+XJDj9LtHjxJy+vSYS7HNK=F=nUH7tzsWPQozCeA@mail.gmail.com>
+In-Reply-To: <20170911150555.GA15818@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,50 +20,74 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Tom Yan <tom.ty89@gmail.com>
-Cc: Ondrej Kozina <okozina@redhat.com>, dm-devel@redhat.com, hch@lst.de, Mike Snitzer <msnitzer@redhat.com>, Milan Broz <mbroz@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Christoph Hellwig <hch@infradead.org>, Bart Van Assche <bart.vanassche@sandisk.com>, Damien Le Moal <damien.lemoal@wdc.com>, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
 
 
-On Fri, 25 Aug 2017, Tom Yan wrote:
+On Mon, 11 Sep 2017, Mike Snitzer wrote:
 
-> On 20 August 2017 at 01:34, Mikulas Patocka <mpatocka@redhat.com> wrote:
-> >
-> > If you issue a single ioctl that takes extreme amount of time - the kernel
-> > warns about being blocked for extreme amount of time - what else should it
-> > do?
-> >
+> On Mon, Jul 24 2017 at  5:16am -0400,
+> Damien Le Moal <damien.lemoal@wdc.com> wrote:
 > 
-> But as I said, it does NOT warn about being blocked if the ioctl is
-> issued for a SCSI device (i.e. blkdiscard -z /dev/sdX), so why the
-> warning occurs / cannot be avoided in the case of a dm(-crypt)
-> container?
+> > 
+> > 
+> > On 7/24/17 17:03, Christoph Hellwig wrote:
+> > > On Mon, Jul 24, 2017 at 04:44:22PM +0900, Damien Le Moal wrote:
+> > >> Avoid metadata flush to be blocked by the writeback throttling code in
+> > >> wbt_wait(). Otherwise, we can end up with a deadlock under heavy write
+> > >> load with all chunk works active. In such situation, a deadlock can
+> > >> happen if the flush work is blocked by the throttling code while holding
+> > >> the metadata lock: as the chunk works will wait for the metadata lock
+> > >> too, no progress can be made.
 
-The SCSI disk blocks in the make_request_fn routine, dm-crypt accepts the 
-requests without blocking there. If you set high nr_requests value for the 
-SCSI disk, it would not block and the same warning would occur.
+Could you explain, what's the specific problem here?
 
-> One thing I can see is, when blkdiscard -z is running on a dm-crypt
-> container, iostat list it with a big avgqu-sz (not to be mixed up with
-> avgrq-sz), starting from ~40000 (the underlying device is a 37G
+The writeback throttling code is executed at request level and the 
+dm-zoned target working above it, at bio level. So I don't see how 
+dm-zoned progress could be blocked by writeback throttling.
 
-There is large nubmer of requests in flight, so it reports large number of 
-requests in flight. This isn't problem. The disk has 37G, average request 
-size is 1024kB, 37G/1024k=37888.
+Maybe you have some other bug in your code and this patch just masks it?
 
 Mikulas
 
-> partition), gradually dropping to 0 (when the job is finished) with a
-> step of ~40; all other items are 0 for the container (except %util,
-> also 100% for most of the time). While for the underlying device, no
-> matter if it is written to through a dm-crypt container, its lines
-> stays at something like these:
+> > >> Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
+> > >> ---
+> > >>  drivers/md/dm-zoned-metadata.c | 3 ++-
+> > >>  1 file changed, 2 insertions(+), 1 deletion(-)
+> > >>
+> > >> diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
+> > >> index 884ff7c170a0..f694fb98b002 100644
+> > >> --- a/drivers/md/dm-zoned-metadata.c
+> > >> +++ b/drivers/md/dm-zoned-metadata.c
+> > >> @@ -567,7 +567,8 @@ static void dmz_write_mblock(struct dmz_metadata *zmd, struct dmz_mblock *mblk,
+> > >>  	bio->bi_bdev = zmd->dev->bdev;
+> > >>  	bio->bi_private = mblk;
+> > >>  	bio->bi_end_io = dmz_mblock_bio_end_io;
+> > >> -	bio_set_op_attrs(bio, REQ_OP_WRITE, REQ_META | REQ_PRIO);
+> > >> +	bio_set_op_attrs(bio, REQ_OP_WRITE,
+> > >> +			 REQ_META | REQ_PRIO | REQ_SYNC | REQ_IDLE);
+> > > 
+> > > Please just assign bi_opf directly instea dof using bio_set_op_attrs
+> > > in new code.
+> > 
+> > OK. Will do.
+> > 
+> > > Also what do you need REQ_IDLE for?
+> > 
+> > It is not really needed here, but the wbt_should_throttle() code test is:
+> > 
+> > if ((bio->bi_opf & (REQ_SYNC | REQ_IDLE)) == (REQ_SYNC | REQ_IDLE))
+> > 	return false;
+> > 
+> > So if REQ_IDLE is not set, wbt will trigger.
+> > 
+> > Having a req flag that says "no wb throttling please" would be a lot
+> > cleaner...
 > 
-> Device:         rrqm/s   wrqm/s     r/s     w/s    rkB/s    wkB/s
-> avgrq-sz avgqu-sz   await r_await w_await  svctm  %util
-> sdb               0.00     0.00    0.00   85.00     0.00 43520.00
-> 1024.00   144.71 1664.89    0.00 1664.89  11.76 100.00
-> sdb               0.00     0.00    0.00   86.00     0.00 44032.00
-> 1024.00   142.34 1694.70    0.00 1694.70  11.63 100.00
+> Did you have a new version of this patch?
+> 
+> Thanks,
+> Mike
 > 
