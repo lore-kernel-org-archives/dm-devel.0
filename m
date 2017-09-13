@@ -1,16 +1,16 @@
-From: Martin Wilck <mwilck@suse.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
 Subject: Re: [PATCH 20/31] 11-dm-mpath.rules: don't set
 	READY->ACTIVATION
-Date: Wed, 13 Sep 2017 23:33:10 +0200
-Message-ID: <1505338390.4875.1.camel@suse.com>
+Date: Wed, 13 Sep 2017 16:19:06 -0500
+Message-ID: <20170913211906.GM3145@octiron.msp.redhat.com>
 References: <20170902223900.7339-1-mwilck@suse.com>
 	<20170902223900.7339-21-mwilck@suse.com>
-	<20170913211906.GM3145@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170913211906.GM3145@octiron.msp.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20170902223900.7339-21-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,61 +20,84 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <mwilck@suse.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gV2VkLCAyMDE3LTA5LTEzIGF0IDE2OjE5IC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gT24gU3VuLCBTZXAgMDMsIDIwMTcgYXQgMTI6Mzg6NDlBTSArMDIwMCwgTWFydGluIFdp
-bGNrIHdyb3RlOgo+ID4gVGhlIGZhY3QgYWxvbmUgdGhhdCBhIG1hcCBjaGFuZ2VzIGZyb20gbm90
-IHJlYWR5IHRvIHJlYWR5IGRvZXMKPiA+IG5vdCBpbXBseSB0aGF0IGl0IGlzIGFjdGl2YXRpbmcu
-Cj4gCj4gTkFLIG9uIHRoaXMgb25lIGFuZAo+IFtQQVRDSCAyMS8zMV0gMTEtZG0tbXBhdGgucnVs
-ZXM6IFJlbWVtYmVyIERNX0FDVElWQVRJT04KPiAKPiBUaGlzIGJyZWFrcyB0aGluZ3MuIEl0J3Mg
-b2Z0ZW4gdGhlIGNhc2UgdGhhdCB0aGVyZSBhcmUgZGV2aWNlcwo+IHN0YWNrZWQKPiBvbiB0b3Ag
-b2YgbXVsdGlwYXRoLiAgV2hlbiBtdWx0aXBhdGggbG9zZXMgYWxsIG9mIGl0cyBwYXRocywgaWYg
-aXQKPiBkb2Vzbid0IGhhdmUgcXVldWVfaWZfbm9fcGF0aCBzZXQsIGl0IGNhbiBmYWlsIElPIHVw
-IHRvIHRoZXNlIGhpZ2hlcgo+IGRldmljZXMsIGZvcmNpbmcgdGhlbSB0byByZWFjdCB0byB0aGUg
-ZmFpbHVyZS4gIFRoZXJlIGlzIG5vIHdheSB0aGF0Cj4gSQo+IGtub3cgb2YgdG8gYmUgYWJsZSB0
-byBjaGVjayBpbiB1ZGV2IHRvIHNlZSBpZiB0aGlzIGhhcyBvY2N1cmVkLiBUaGUKPiBvbmx5Cj4g
-c2FmZSBjb3Vyc2Ugb2YgYWN0aW9uIGlzIHRvIGFzc3VtZSB0aGUgd29yc3QgYW5kIG5vdGlmeSBs
-dm0gdGhhdAo+IHRoaW5ncwo+IGFyZSBiZXR0ZXIgbm93LgoKWW91IGFyZSByaWdodCwgdGhhbmtz
-LiBJIGRpZG4ndCBjb25zaWRlciB0aGUgY2FzZSB3aXRob3V0IHF1ZXVlaW5nLgpJIHNlZSBubyBw
-cm9ibGVtIHdpdGgganVzdCBza2lwcGluZyB0aGVzZSB0d28uCgpCZXN0LApNYXJ0aW4KCj4gCj4g
-QSBzaW1wbGUgcmVwcm9kdWNlciBvZiB0aGUgcHJvYmxlbSBpcyBzb21ldGhpbmcgbGlrZToKPiAK
-PiAtIGNyZWF0ZSAyIG11bHRpcGF0aCBkZXZpY2VzIChjYWxsIHRoZW0gbXBhdGhhIGFuZCBtcGF0
-aGIpCj4gLSBzZXQgdXAgcmFpZDEgb24gdG9wIG9mIHRoZW0KPiAKPiAjIHB2Y3JlYXRlIC9kZXYv
-bWFwcGVyL21wYXRoYQo+ICMgcHZjcmVhdGUgL2Rldi9tYXBwZXIvbXBhdGhjCj4gIyB2Z2NyZWF0
-ZSB0ZXN0IC9kZXYvbWFwcGVyL21wYXRoYiAvZGV2L21hcHBlci9tcGF0aGEKPiAjIGx2Y3JlYXRl
-IC0tdHlwZSByYWlkMSAtbSAxIC1MIDFHIC1uIHJhaWQgdGVzdAo+IAo+IC0gdmVyaWZ5IHRoYXQg
-ZXZlcnl0aGluZyBpcyBvLmsuCj4gCj4gIyBkZCBpZj0vZGV2L3plcm8gb2Y9L2Rldi90ZXN0L3Jh
-aWQgYnM9MU0gY291bnQ9MTAwCj4gIyBtdWx0aXBhdGggLWxsCj4gIyBwdnMKPiAjIHZncwo+ICMg
-bHZzCj4gCj4gLSByZW1vdmUgYWxsIG9mIHRoZSBwYXRoIGRldmljZXMgZnJvbSBtcGF0aGEKPiAt
-IHZlcmlmeSB0aGF0IHRoZSByYWlkIGRldmljZSBpcyBpbiBwYXJ0aWFsIG1vZGUKPiAKPiAjIGRk
-IGlmPS9kZXYvemVybyBvZj0vZGV2L3Rlc3QvcmFpZCBicz0xTSBjb3VudD0xMDAgCj4gIyBtdWx0
-aXBhdGggLWxsCj4gIyBwdnMKPiAjIHZncwo+ICMgbHZzCj4gCj4gLSBhZGQgdGhlIHBhdGggZGV2
-aWNlcyBiYWNrIHRvIHRoZSBzeXN0ZW0KPiAtIGNoZWNrIGlmIHRoZSByYWlkIGRldmljZSBoYXMg
-cmVjb3ZlcmVkCj4gCj4gIyBtdWx0aXBhdGggLWxsCj4gIyBwdnMKPiAjIHZncwo+ICMgbHZzCj4g
-Cj4gV2l0aCB0aGVzZSBwYXRjaGVzLCB0aGUgcmFpZCBkZXZpY2UgcmVtYWlucyBpbiBwYXJ0aWFs
-IG1vZGUsIGFuZCB0aGUKPiBtcGF0aGEgcHYgaXMgc3RpbGwgbGlzdGVkIGFzIHVua25vd24uIElm
-IEkgcmV2ZXJ0IHRoZXNlIHR3byBwYXRjaGVzLAo+IGV2ZXJ5dGhpbmcgd29ya3MgZmluZSBhZ2Fp
-bi4KPiAKPiAtQmVuCj4gCj4gPiBTaWduZWQtb2ZmLWJ5OiBNYXJ0aW4gV2lsY2sgPG13aWxja0Bz
-dXNlLmNvbT4KPiA+IC0tLQo+ID4gIG11bHRpcGF0aC8xMS1kbS1tcGF0aC5ydWxlcyB8IDMgKy0t
-Cj4gPiAgMSBmaWxlIGNoYW5nZWQsIDEgaW5zZXJ0aW9uKCspLCAyIGRlbGV0aW9ucygtKQo+ID4g
-Cj4gPiBkaWZmIC0tZ2l0IGEvbXVsdGlwYXRoLzExLWRtLW1wYXRoLnJ1bGVzIGIvbXVsdGlwYXRo
-LzExLWRtLQo+ID4gbXBhdGgucnVsZXMKPiA+IGluZGV4IDBiZTIyYWU0Li4zZjQ3NzQ0ZiAxMDA2
-NDQKPiA+IC0tLSBhL211bHRpcGF0aC8xMS1kbS1tcGF0aC5ydWxlcwo+ID4gKysrIGIvbXVsdGlw
-YXRoLzExLWRtLW1wYXRoLnJ1bGVzCj4gPiBAQCAtNjQsOCArNjQsNyBAQCBFTlZ7TVBBVEhfREVW
-SUNFX1JFQURZfT09IjAiLAo+ID4gRU5Wey5NUEFUSF9ERVZJQ0VfUkVBRFlfT0xEfT09IjEiLFwK
-PiA+ICBFTlZ7TVBBVEhfREVWSUNFX1JFQURZfT09IjAiLAo+ID4gRU5We0RNX1VERVZfRElTQUJM
-RV9PVEhFUl9SVUxFU19GTEFHfT0iMSIKPiA+ICBFTlZ7TVBBVEhfREVWSUNFX1JFQURZfSE9IjAi
-LCBFTlZ7Lk1QQVRIX0RFVklDRV9SRUFEWV9PTER9PT0iMCIsXAo+ID4gIAlFTlZ7RE1fVURFVl9E
-SVNBQkxFX09USEVSX1JVTEVTX0ZMQUd9PSIkZW52e0RNX0RJU0FCTEVfT1RICj4gPiBFUl9SVUxF
-U19GTEFHX09MRH0iLFwKPiA+IC0JRU5We0RNX0RJU0FCTEVfT1RIRVJfUlVMRVNfRkxBR19PTER9
-PSIiLFwKPiA+IC0JRU5We0RNX0FDVElWQVRJT059PSIxIgo+ID4gKwlFTlZ7RE1fRElTQUJMRV9P
-VEhFUl9SVUxFU19GTEFHX09MRH09IiIKPiA+ICAKPiA+ICBMQUJFTD0ic2Nhbl9pbXBvcnQiCj4g
-PiAgRU5We0RNX05PU0NBTn0hPSIxIiwgR09UTz0ibXBhdGhfZW5kIgo+ID4gLS0gCj4gPiAyLjE0
-LjAKPiAKPiAKCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0
-OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZm
-ZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcp
-CgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3
-dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On Sun, Sep 03, 2017 at 12:38:49AM +0200, Martin Wilck wrote:
+> The fact alone that a map changes from not ready to ready does
+> not imply that it is activating.
+
+NAK on this one and
+[PATCH 21/31] 11-dm-mpath.rules: Remember DM_ACTIVATION
+
+This breaks things. It's often the case that there are devices stacked
+on top of multipath.  When multipath loses all of its paths, if it
+doesn't have queue_if_no_path set, it can fail IO up to these higher
+devices, forcing them to react to the failure.  There is no way that I
+know of to be able to check in udev to see if this has occured. The only
+safe course of action is to assume the worst and notify lvm that things
+are better now.
+
+A simple reproducer of the problem is something like:
+
+- create 2 multipath devices (call them mpatha and mpathb)
+- set up raid1 on top of them
+
+# pvcreate /dev/mapper/mpatha
+# pvcreate /dev/mapper/mpathc
+# vgcreate test /dev/mapper/mpathb /dev/mapper/mpatha
+# lvcreate --type raid1 -m 1 -L 1G -n raid test
+
+- verify that everything is o.k.
+
+# dd if=/dev/zero of=/dev/test/raid bs=1M count=100
+# multipath -ll
+# pvs
+# vgs
+# lvs
+
+- remove all of the path devices from mpatha
+- verify that the raid device is in partial mode
+
+# dd if=/dev/zero of=/dev/test/raid bs=1M count=100 
+# multipath -ll
+# pvs
+# vgs
+# lvs
+
+- add the path devices back to the system
+- check if the raid device has recovered
+
+# multipath -ll
+# pvs
+# vgs
+# lvs
+
+With these patches, the raid device remains in partial mode, and the
+mpatha pv is still listed as unknown. If I revert these two patches,
+everything works fine again.
+
+-Ben
+
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  multipath/11-dm-mpath.rules | 3 +--
+>  1 file changed, 1 insertion(+), 2 deletions(-)
+> 
+> diff --git a/multipath/11-dm-mpath.rules b/multipath/11-dm-mpath.rules
+> index 0be22ae4..3f47744f 100644
+> --- a/multipath/11-dm-mpath.rules
+> +++ b/multipath/11-dm-mpath.rules
+> @@ -64,8 +64,7 @@ ENV{MPATH_DEVICE_READY}=="0", ENV{.MPATH_DEVICE_READY_OLD}=="1",\
+>  ENV{MPATH_DEVICE_READY}=="0", ENV{DM_UDEV_DISABLE_OTHER_RULES_FLAG}="1"
+>  ENV{MPATH_DEVICE_READY}!="0", ENV{.MPATH_DEVICE_READY_OLD}=="0",\
+>  	ENV{DM_UDEV_DISABLE_OTHER_RULES_FLAG}="$env{DM_DISABLE_OTHER_RULES_FLAG_OLD}",\
+> -	ENV{DM_DISABLE_OTHER_RULES_FLAG_OLD}="",\
+> -	ENV{DM_ACTIVATION}="1"
+> +	ENV{DM_DISABLE_OTHER_RULES_FLAG_OLD}=""
+>  
+>  LABEL="scan_import"
+>  ENV{DM_NOSCAN}!="1", GOTO="mpath_end"
+> -- 
+> 2.14.0
