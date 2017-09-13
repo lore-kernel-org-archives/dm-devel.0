@@ -1,16 +1,16 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 21/31] 11-dm-mpath.rules: Remember
-	DM_ACTIVATION
-Date: Wed, 13 Sep 2017 16:19:42 -0500
-Message-ID: <20170913211942.GN3145@octiron.msp.redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 20/31] 11-dm-mpath.rules: don't set
+	READY->ACTIVATION
+Date: Wed, 13 Sep 2017 23:33:10 +0200
+Message-ID: <1505338390.4875.1.camel@suse.com>
 References: <20170902223900.7339-1-mwilck@suse.com>
-	<20170902223900.7339-22-mwilck@suse.com>
+	<20170902223900.7339-21-mwilck@suse.com>
+	<20170913211906.GM3145@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20170902223900.7339-22-mwilck@suse.com>
+In-Reply-To: <20170913211906.GM3145@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,54 +20,61 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Sun, Sep 03, 2017 at 12:38:50AM +0200, Martin Wilck wrote:
-> If DM_ACTIVATION is set by the general dm rules, we need to
-> bring up this device. But if the mpath device is not ready,
-> that would be dangerous; it could hang or produce lots of IO
-> errors. So remember this state, and try to activate when the
-> map becomes usable later.
-
-NAK. See reasons in
-
-[PATCH 20/31] 11-dm-mpath.rules: don't set READY->ACTIVATION
-
--Ben
-
-> 
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  multipath/11-dm-mpath.rules | 8 ++++++++
->  1 file changed, 8 insertions(+)
-> 
-> diff --git a/multipath/11-dm-mpath.rules b/multipath/11-dm-mpath.rules
-> index 3f47744f..9bfd75f8 100644
-> --- a/multipath/11-dm-mpath.rules
-> +++ b/multipath/11-dm-mpath.rules
-> @@ -4,6 +4,7 @@ ENV{DM_UUID}!="mpath-?*", GOTO="mpath_end"
->  
->  IMPORT{db}="DM_DISABLE_OTHER_RULES_FLAG_OLD"
->  IMPORT{db}="MPATH_DEVICE_READY"
-> +IMPORT{db}="MPATH_NEEDS_ACTIVATION"
->  
->  # If this uevent didn't come from dm, don't try to update the
->  # device state
-> @@ -55,6 +56,13 @@ ENV{DM_SUBSYSTEM_UDEV_FLAG0}=="1", ENV{DM_ACTIVATION}="0"
->  # We'd like to avoid this, especially within udev processing.
->  ENV{MPATH_DEVICE_READY}=="0", ENV{DM_NOSCAN}="1"
->  
-> +# If DM_ACTIVATION is set, but can't be satisfied, remember it
-> +# in MPATH_NEEDS_ACTIVATION, and activate at the next opportunity.
-> +ENV{MPATH_DEVICE_READY}=="0", ENV{DM_ACTIVATION}=="1", \
-> +	ENV{MPATH_NEEDS_ACTIVATION}="1", ENV{DM_ACTIVATION}="0"
-> +ENV{MPATH_DEVICE_READY}!="0", ENV{MPATH_NEEDS_ACTIVATION}=="1", \
-> +	ENV{DM_ACTIVATION}="1", ENV{MPATH_NEEDS_ACTIVATION}=""
-> +
->  # Also skip all foreign rules if no path is available.
->  # Remember the original value of DM_DISABLE_OTHER_RULES_FLAG
->  # and restore it back once we have at least one path available.
-> -- 
-> 2.14.0
+T24gV2VkLCAyMDE3LTA5LTEzIGF0IDE2OjE5IC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cj4gT24gU3VuLCBTZXAgMDMsIDIwMTcgYXQgMTI6Mzg6NDlBTSArMDIwMCwgTWFydGluIFdp
+bGNrIHdyb3RlOgo+ID4gVGhlIGZhY3QgYWxvbmUgdGhhdCBhIG1hcCBjaGFuZ2VzIGZyb20gbm90
+IHJlYWR5IHRvIHJlYWR5IGRvZXMKPiA+IG5vdCBpbXBseSB0aGF0IGl0IGlzIGFjdGl2YXRpbmcu
+Cj4gCj4gTkFLIG9uIHRoaXMgb25lIGFuZAo+IFtQQVRDSCAyMS8zMV0gMTEtZG0tbXBhdGgucnVs
+ZXM6IFJlbWVtYmVyIERNX0FDVElWQVRJT04KPiAKPiBUaGlzIGJyZWFrcyB0aGluZ3MuIEl0J3Mg
+b2Z0ZW4gdGhlIGNhc2UgdGhhdCB0aGVyZSBhcmUgZGV2aWNlcwo+IHN0YWNrZWQKPiBvbiB0b3Ag
+b2YgbXVsdGlwYXRoLiAgV2hlbiBtdWx0aXBhdGggbG9zZXMgYWxsIG9mIGl0cyBwYXRocywgaWYg
+aXQKPiBkb2Vzbid0IGhhdmUgcXVldWVfaWZfbm9fcGF0aCBzZXQsIGl0IGNhbiBmYWlsIElPIHVw
+IHRvIHRoZXNlIGhpZ2hlcgo+IGRldmljZXMsIGZvcmNpbmcgdGhlbSB0byByZWFjdCB0byB0aGUg
+ZmFpbHVyZS4gIFRoZXJlIGlzIG5vIHdheSB0aGF0Cj4gSQo+IGtub3cgb2YgdG8gYmUgYWJsZSB0
+byBjaGVjayBpbiB1ZGV2IHRvIHNlZSBpZiB0aGlzIGhhcyBvY2N1cmVkLiBUaGUKPiBvbmx5Cj4g
+c2FmZSBjb3Vyc2Ugb2YgYWN0aW9uIGlzIHRvIGFzc3VtZSB0aGUgd29yc3QgYW5kIG5vdGlmeSBs
+dm0gdGhhdAo+IHRoaW5ncwo+IGFyZSBiZXR0ZXIgbm93LgoKWW91IGFyZSByaWdodCwgdGhhbmtz
+LiBJIGRpZG4ndCBjb25zaWRlciB0aGUgY2FzZSB3aXRob3V0IHF1ZXVlaW5nLgpJIHNlZSBubyBw
+cm9ibGVtIHdpdGgganVzdCBza2lwcGluZyB0aGVzZSB0d28uCgpCZXN0LApNYXJ0aW4KCj4gCj4g
+QSBzaW1wbGUgcmVwcm9kdWNlciBvZiB0aGUgcHJvYmxlbSBpcyBzb21ldGhpbmcgbGlrZToKPiAK
+PiAtIGNyZWF0ZSAyIG11bHRpcGF0aCBkZXZpY2VzIChjYWxsIHRoZW0gbXBhdGhhIGFuZCBtcGF0
+aGIpCj4gLSBzZXQgdXAgcmFpZDEgb24gdG9wIG9mIHRoZW0KPiAKPiAjIHB2Y3JlYXRlIC9kZXYv
+bWFwcGVyL21wYXRoYQo+ICMgcHZjcmVhdGUgL2Rldi9tYXBwZXIvbXBhdGhjCj4gIyB2Z2NyZWF0
+ZSB0ZXN0IC9kZXYvbWFwcGVyL21wYXRoYiAvZGV2L21hcHBlci9tcGF0aGEKPiAjIGx2Y3JlYXRl
+IC0tdHlwZSByYWlkMSAtbSAxIC1MIDFHIC1uIHJhaWQgdGVzdAo+IAo+IC0gdmVyaWZ5IHRoYXQg
+ZXZlcnl0aGluZyBpcyBvLmsuCj4gCj4gIyBkZCBpZj0vZGV2L3plcm8gb2Y9L2Rldi90ZXN0L3Jh
+aWQgYnM9MU0gY291bnQ9MTAwCj4gIyBtdWx0aXBhdGggLWxsCj4gIyBwdnMKPiAjIHZncwo+ICMg
+bHZzCj4gCj4gLSByZW1vdmUgYWxsIG9mIHRoZSBwYXRoIGRldmljZXMgZnJvbSBtcGF0aGEKPiAt
+IHZlcmlmeSB0aGF0IHRoZSByYWlkIGRldmljZSBpcyBpbiBwYXJ0aWFsIG1vZGUKPiAKPiAjIGRk
+IGlmPS9kZXYvemVybyBvZj0vZGV2L3Rlc3QvcmFpZCBicz0xTSBjb3VudD0xMDAgCj4gIyBtdWx0
+aXBhdGggLWxsCj4gIyBwdnMKPiAjIHZncwo+ICMgbHZzCj4gCj4gLSBhZGQgdGhlIHBhdGggZGV2
+aWNlcyBiYWNrIHRvIHRoZSBzeXN0ZW0KPiAtIGNoZWNrIGlmIHRoZSByYWlkIGRldmljZSBoYXMg
+cmVjb3ZlcmVkCj4gCj4gIyBtdWx0aXBhdGggLWxsCj4gIyBwdnMKPiAjIHZncwo+ICMgbHZzCj4g
+Cj4gV2l0aCB0aGVzZSBwYXRjaGVzLCB0aGUgcmFpZCBkZXZpY2UgcmVtYWlucyBpbiBwYXJ0aWFs
+IG1vZGUsIGFuZCB0aGUKPiBtcGF0aGEgcHYgaXMgc3RpbGwgbGlzdGVkIGFzIHVua25vd24uIElm
+IEkgcmV2ZXJ0IHRoZXNlIHR3byBwYXRjaGVzLAo+IGV2ZXJ5dGhpbmcgd29ya3MgZmluZSBhZ2Fp
+bi4KPiAKPiAtQmVuCj4gCj4gPiBTaWduZWQtb2ZmLWJ5OiBNYXJ0aW4gV2lsY2sgPG13aWxja0Bz
+dXNlLmNvbT4KPiA+IC0tLQo+ID4gIG11bHRpcGF0aC8xMS1kbS1tcGF0aC5ydWxlcyB8IDMgKy0t
+Cj4gPiAgMSBmaWxlIGNoYW5nZWQsIDEgaW5zZXJ0aW9uKCspLCAyIGRlbGV0aW9ucygtKQo+ID4g
+Cj4gPiBkaWZmIC0tZ2l0IGEvbXVsdGlwYXRoLzExLWRtLW1wYXRoLnJ1bGVzIGIvbXVsdGlwYXRo
+LzExLWRtLQo+ID4gbXBhdGgucnVsZXMKPiA+IGluZGV4IDBiZTIyYWU0Li4zZjQ3NzQ0ZiAxMDA2
+NDQKPiA+IC0tLSBhL211bHRpcGF0aC8xMS1kbS1tcGF0aC5ydWxlcwo+ID4gKysrIGIvbXVsdGlw
+YXRoLzExLWRtLW1wYXRoLnJ1bGVzCj4gPiBAQCAtNjQsOCArNjQsNyBAQCBFTlZ7TVBBVEhfREVW
+SUNFX1JFQURZfT09IjAiLAo+ID4gRU5Wey5NUEFUSF9ERVZJQ0VfUkVBRFlfT0xEfT09IjEiLFwK
+PiA+ICBFTlZ7TVBBVEhfREVWSUNFX1JFQURZfT09IjAiLAo+ID4gRU5We0RNX1VERVZfRElTQUJM
+RV9PVEhFUl9SVUxFU19GTEFHfT0iMSIKPiA+ICBFTlZ7TVBBVEhfREVWSUNFX1JFQURZfSE9IjAi
+LCBFTlZ7Lk1QQVRIX0RFVklDRV9SRUFEWV9PTER9PT0iMCIsXAo+ID4gIAlFTlZ7RE1fVURFVl9E
+SVNBQkxFX09USEVSX1JVTEVTX0ZMQUd9PSIkZW52e0RNX0RJU0FCTEVfT1RICj4gPiBFUl9SVUxF
+U19GTEFHX09MRH0iLFwKPiA+IC0JRU5We0RNX0RJU0FCTEVfT1RIRVJfUlVMRVNfRkxBR19PTER9
+PSIiLFwKPiA+IC0JRU5We0RNX0FDVElWQVRJT059PSIxIgo+ID4gKwlFTlZ7RE1fRElTQUJMRV9P
+VEhFUl9SVUxFU19GTEFHX09MRH09IiIKPiA+ICAKPiA+ICBMQUJFTD0ic2Nhbl9pbXBvcnQiCj4g
+PiAgRU5We0RNX05PU0NBTn0hPSIxIiwgR09UTz0ibXBhdGhfZW5kIgo+ID4gLS0gCj4gPiAyLjE0
+LjAKPiAKPiAKCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0
+OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZm
+ZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcp
+CgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3
+dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
