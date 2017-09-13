@@ -1,12 +1,16 @@
-From: Milan Broz <gmazyland@gmail.com>
-Subject: [PATCH] dm-crypt: Reject sector_size feature if device
-	length is not aligned to it
-Date: Wed, 13 Sep 2017 15:45:56 +0200
-Message-ID: <20170913134556.23145-1-gmazyland@gmail.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: [PATCH 4/5] multipath: add alternate reservation_key
+ method
+Date: Wed, 13 Sep 2017 17:22:59 +0200
+Message-ID: <d89bf483-e381-4959-0922-687bcbcc48b6@gmail.com>
+References: <1504896354-28181-1-git-send-email-bmarzins@redhat.com>
+	<1504896354-28181-5-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1504896354-28181-5-git-send-email-bmarzins@redhat.com>
+Content-Language: en-GB
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,33 +20,19 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: mpatocka@redhat.com, Milan Broz <gmazyland@gmail.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>
+Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-If a crypt mapping uses optional sector_size feature, additional
-restrictions to mapped device segment size must be applied in constructor,
-otherwise the device activation will fail later.
+On 09/08/2017 08:45 PM, Benjamin Marzinski wrote:
 
-Signed-off-by: Milan Broz <gmazyland@gmail.com>
----
- drivers/md/dm-crypt.c | 4 ++++
- 1 file changed, 4 insertions(+)
+> There are also new multipathd commands to get, set, and unset the
+> mappings in the prkesy file. Currently,
+> 
+> "multipathd map $map setprkey key $key" sets the mapping
+> "multipathd map $map unsetprkey" unsets the mapping
+> "multipathd map $map getprkey" gets the current reservation_key for a
+> multipath device.
 
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 54aef8ed97db..488ecd0b1bd0 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -2584,6 +2584,10 @@ static int crypt_ctr_optional(struct dm_target *ti, unsigned int argc, char **ar
- 				ti->error = "Invalid feature value for sector_size";
- 				return -EINVAL;
- 			}
-+			if (ti->len & ((cc->sector_size >> SECTOR_SHIFT) - 1)) {
-+				ti->error = "Device size is not multiple of sector_size feature";
-+				return -EINVAL;
-+			}
- 			cc->sector_shift = __ffs(cc->sector_size) - SECTOR_SHIFT;
- 		} else if (!strcasecmp(opt_string, "iv_large_sectors"))
- 			set_bit(CRYPT_IV_LARGE_SECTORS, &cc->cipher_flags);
--- 
-2.14.1
+
+multipathd.8 should be updated with these new commands.
