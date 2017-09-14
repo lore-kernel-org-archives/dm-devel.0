@@ -1,16 +1,12 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 21/31] 11-dm-mpath.rules: Remember
-	DM_ACTIVATION
-Date: Thu, 14 Sep 2017 15:06:43 +0200
-Message-ID: <1505394403.4493.17.camel@suse.com>
-References: <20170902223900.7339-1-mwilck@suse.com>
-	<20170902223900.7339-22-mwilck@suse.com>
-	<20170913211942.GN3145@octiron.msp.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [git pull] device mapper changes for 4.14
+Date: Thu, 14 Sep 2017 10:28:30 -0400
+Message-ID: <20170914142830.GA5291@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170913211942.GN3145@octiron.msp.redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,52 +16,95 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Arnd Bergmann <arnd@arndb.de>, Eric Biggers <ebiggers@google.com>, Josef Bacik <jbacik@fb.com>, Ming Lei <ming.lei@redhat.com>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Alasdair G Kergon <agk@redhat.com>, Bart Van Assche <bart.vanassche@wdc.com>, Bhumika Goyal <bhumirks@gmail.com>, Hyunchul Lee <cheol.lee@lge.com>
 List-Id: dm-devel.ids
 
-SGkgQmVuLAoKT24gV2VkLCAyMDE3LTA5LTEzIGF0IDE2OjE5IC0wNTAwLCBCZW5qYW1pbiBNYXJ6
-aW5za2kgd3JvdGU6Cj4gT24gU3VuLCBTZXAgMDMsIDIwMTcgYXQgMTI6Mzg6NTBBTSArMDIwMCwg
-TWFydGluIFdpbGNrIHdyb3RlOgo+ID4gSWYgRE1fQUNUSVZBVElPTiBpcyBzZXQgYnkgdGhlIGdl
-bmVyYWwgZG0gcnVsZXMsIHdlIG5lZWQgdG8KPiA+IGJyaW5nIHVwIHRoaXMgZGV2aWNlLiBCdXQg
-aWYgdGhlIG1wYXRoIGRldmljZSBpcyBub3QgcmVhZHksCj4gPiB0aGF0IHdvdWxkIGJlIGRhbmdl
-cm91czsgaXQgY291bGQgaGFuZyBvciBwcm9kdWNlIGxvdHMgb2YgSU8KPiA+IGVycm9ycy4gU28g
-cmVtZW1iZXIgdGhpcyBzdGF0ZSwgYW5kIHRyeSB0byBhY3RpdmF0ZSB3aGVuIHRoZQo+ID4gbWFw
-IGJlY29tZXMgdXNhYmxlIGxhdGVyLgo+IAo+IE5BSy4gU2VlIHJlYXNvbnMgaW4KPiAKPiBbUEFU
-Q0ggMjAvMzFdIDExLWRtLW1wYXRoLnJ1bGVzOiBkb24ndCBzZXQgUkVBRFktPkFDVElWQVRJT04K
-ClNvcnJ5IGZvciBiZWluZyBzbG93LiBSZS1yZWFkaW5nIHRoaXMsIEkgZG9uJ3QgdW5kZXJzdGFu
-ZCBhbnkgbW9yZSB3aHkKeW91ciB2YWxpZCBhcmd1bWVudCBhZ2FpbnN0IDIwLzMxIGludmFsaWRh
-dGVzIHRoaXMgb25lIGFzIHdlbGwuIDIxLzMxCmFmZmVjdHMgb25seSB0aGUgY2FzZSBNUEFUSF9E
-RVZJQ0VfUkVBRFkhPTAsIGluIHdoaWNoIGNhc2UgaXQgd2lsbCBhZGQKYW5vdGhlciBjYXNlIHdo
-ZXJlIERNX0FDVElWQVRJT04gaXMgc2V0LgoKUmVnYXJkcwpNYXJ0aW4KCj4gCj4gLUJlbgo+IAo+
-ID4gCj4gPiBTaWduZWQtb2ZmLWJ5OiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4KPiA+
-IC0tLQo+ID4gIG11bHRpcGF0aC8xMS1kbS1tcGF0aC5ydWxlcyB8IDggKysrKysrKysKPiA+ICAx
-IGZpbGUgY2hhbmdlZCwgOCBpbnNlcnRpb25zKCspCj4gPiAKPiA+IGRpZmYgLS1naXQgYS9tdWx0
-aXBhdGgvMTEtZG0tbXBhdGgucnVsZXMgYi9tdWx0aXBhdGgvMTEtZG0tCj4gPiBtcGF0aC5ydWxl
-cwo+ID4gaW5kZXggM2Y0Nzc0NGYuLjliZmQ3NWY4IDEwMDY0NAo+ID4gLS0tIGEvbXVsdGlwYXRo
-LzExLWRtLW1wYXRoLnJ1bGVzCj4gPiArKysgYi9tdWx0aXBhdGgvMTEtZG0tbXBhdGgucnVsZXMK
-PiA+IEBAIC00LDYgKzQsNyBAQCBFTlZ7RE1fVVVJRH0hPSJtcGF0aC0/KiIsIEdPVE89Im1wYXRo
-X2VuZCIKPiA+ICAKPiA+ICBJTVBPUlR7ZGJ9PSJETV9ESVNBQkxFX09USEVSX1JVTEVTX0ZMQUdf
-T0xEIgo+ID4gIElNUE9SVHtkYn09Ik1QQVRIX0RFVklDRV9SRUFEWSIKPiA+ICtJTVBPUlR7ZGJ9
-PSJNUEFUSF9ORUVEU19BQ1RJVkFUSU9OIgo+ID4gIAo+ID4gICMgSWYgdGhpcyB1ZXZlbnQgZGlk
-bid0IGNvbWUgZnJvbSBkbSwgZG9uJ3QgdHJ5IHRvIHVwZGF0ZSB0aGUKPiA+ICAjIGRldmljZSBz
-dGF0ZQo+ID4gQEAgLTU1LDYgKzU2LDEzIEBAIEVOVntETV9TVUJTWVNURU1fVURFVl9GTEFHMH09
-PSIxIiwKPiA+IEVOVntETV9BQ1RJVkFUSU9OfT0iMCIKPiA+ICAjIFdlJ2QgbGlrZSB0byBhdm9p
-ZCB0aGlzLCBlc3BlY2lhbGx5IHdpdGhpbiB1ZGV2IHByb2Nlc3NpbmcuCj4gPiAgRU5We01QQVRI
-X0RFVklDRV9SRUFEWX09PSIwIiwgRU5We0RNX05PU0NBTn09IjEiCj4gPiAgCj4gPiArIyBJZiBE
-TV9BQ1RJVkFUSU9OIGlzIHNldCwgYnV0IGNhbid0IGJlIHNhdGlzZmllZCwgcmVtZW1iZXIgaXQK
-PiA+ICsjIGluIE1QQVRIX05FRURTX0FDVElWQVRJT04sIGFuZCBhY3RpdmF0ZSBhdCB0aGUgbmV4
-dCBvcHBvcnR1bml0eS4KPiA+ICtFTlZ7TVBBVEhfREVWSUNFX1JFQURZfT09IjAiLCBFTlZ7RE1f
-QUNUSVZBVElPTn09PSIxIiwgXAo+ID4gKwlFTlZ7TVBBVEhfTkVFRFNfQUNUSVZBVElPTn09IjEi
-LCBFTlZ7RE1fQUNUSVZBVElPTn09IjAiCj4gPiArRU5We01QQVRIX0RFVklDRV9SRUFEWX0hPSIw
-IiwgRU5We01QQVRIX05FRURTX0FDVElWQVRJT059PT0iMSIsIFwKPiA+ICsJRU5We0RNX0FDVElW
-QVRJT059PSIxIiwgRU5We01QQVRIX05FRURTX0FDVElWQVRJT059PSIiCj4gPiArCj4gPiAgIyBB
-bHNvIHNraXAgYWxsIGZvcmVpZ24gcnVsZXMgaWYgbm8gcGF0aCBpcyBhdmFpbGFibGUuCj4gPiAg
-IyBSZW1lbWJlciB0aGUgb3JpZ2luYWwgdmFsdWUgb2YgRE1fRElTQUJMRV9PVEhFUl9SVUxFU19G
-TEFHCj4gPiAgIyBhbmQgcmVzdG9yZSBpdCBiYWNrIG9uY2Ugd2UgaGF2ZSBhdCBsZWFzdCBvbmUg
-cGF0aCBhdmFpbGFibGUuCj4gPiAtLSAKPiA+IDIuMTQuMAo+IAo+IAoKLS0gCkRyLiBNYXJ0aW4g
-V2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0Ug
-TGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFt
-IE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlz
-dApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0
-aW5mby9kbS1kZXZlbA==
+Hi Linus,
+
+The following changes since commit 1c23484c355ec360ca2f37914f8a4802c6baeead:
+
+  dm mpath: do not lock up a CPU with requeuing activity (2017-08-28 09:58:27 -0400)
+
+are available in the git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-4.14/dm-changes
+
+for you to fetch changes up to c3ca015fab6df124c933b91902f3f2a3473f9da5:
+
+  dax: remove the pmem_dax_ops->flush abstraction (2017-09-11 11:00:55 -0400)
+
+Please pull, thanks!
+Mike
+
+----------------------------------------------------------------
+- Some request-based DM core and DM multipath fixes and cleanups
+
+- Constify a few variables in DM core and DM integrity
+
+- Add bufio optimization and checksum failure accounting to DM integrity
+
+- Fix DM integrity to avoid checking integrity of failed reads
+
+- Fix DM integrity to use init_completion
+
+- A couple DM log-writes target fixes
+
+- Simplify DAX flushing by eliminating the unnecessary flush abstraction
+  that was stood up for DM's use.
+
+----------------------------------------------------------------
+Arnd Bergmann (1):
+      dm integrity: use init_completion instead of COMPLETION_INITIALIZER_ONSTACK
+
+Bart Van Assche (3):
+      dm mpath: avoid that building with W=1 causes gcc 7 to complain about fall-through
+      dm mpath: complain about unsupported __multipath_map_bio() return values
+      dm rq: make dm-sq requeuing behavior consistent with dm-mq behavior
+
+Bhumika Goyal (1):
+      dm integrity: make blk_integrity_profile structure const
+
+Eric Biggers (2):
+      dm: constify argument arrays
+      dm ioctl: constify ioctl lookup table
+
+Hyunchul Lee (1):
+      dm integrity: do not check integrity for failed read operations
+
+Josef Bacik (2):
+      dm log writes: don't use all the cpu while waiting to log blocks
+      dm log writes: fix >512b sectorsize support
+
+Mikulas Patocka (3):
+      dm integrity: optimize writing dm-bufio buffers that are partially changed
+      dm integrity: count and display checksum failures
+      dax: remove the pmem_dax_ops->flush abstraction
+
+Ming Lei (1):
+      dm rq: do not update rq partially in each ending bio
+
+ drivers/dax/super.c           | 21 ++++++----
+ drivers/md/dm-bufio.c         | 95 ++++++++++++++++++++++++++++++-------------
+ drivers/md/dm-bufio.h         |  9 ++++
+ drivers/md/dm-cache-target.c  |  4 +-
+ drivers/md/dm-crypt.c         |  2 +-
+ drivers/md/dm-flakey.c        |  4 +-
+ drivers/md/dm-integrity.c     | 42 +++++++++++--------
+ drivers/md/dm-ioctl.c         |  2 +-
+ drivers/md/dm-linear.c        | 15 -------
+ drivers/md/dm-log-writes.c    | 44 ++++++++++++++------
+ drivers/md/dm-mpath.c         | 15 ++++---
+ drivers/md/dm-rq.c            | 27 ++++++------
+ drivers/md/dm-rq.h            |  1 +
+ drivers/md/dm-stripe.c        | 20 ---------
+ drivers/md/dm-switch.c        |  2 +-
+ drivers/md/dm-table.c         |  7 ++--
+ drivers/md/dm-thin.c          |  2 +-
+ drivers/md/dm-verity-target.c |  2 +-
+ drivers/md/dm.c               | 19 ---------
+ drivers/nvdimm/pmem.c         |  7 ----
+ fs/dax.c                      |  4 +-
+ include/linux/dax.h           |  5 +--
+ include/linux/device-mapper.h |  7 +---
+ 23 files changed, 189 insertions(+), 167 deletions(-)
