@@ -1,7 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v2 1/5] libmultipath: pull functions into util.c
-Date: Fri, 15 Sep 2017 17:25:31 -0500
-Message-ID: <1505514336-27839-2-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 5/5] mpathpersist: add support for prkeys file
+Date: Fri, 15 Sep 2017 17:25:36 -0500
+Message-ID: <1505514336-27839-7-git-send-email-bmarzins@redhat.com>
 References: <1505514336-27839-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,178 +21,121 @@ To: dm-devel@redhat.com
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-This patch just pulls safe_write out of rbd. and the persistent
-reservation key parsing code out of dict.c and puts them in util.c,
-so that other functions can make use of them.
+When the reservation_key is set to "file", the reservation key needs to
+be added to the prkeys file for multipathd to be able to register new
+paths as they are added to the device.  This patch adds support to the
+mpathpersist command to message multipathd when a key is registered or
+unregistered to either add or remove the mapping from the prkeys file.
+
+With these changes, once a device is configured to use the prkeys file,
+running mpathpersist commands will automatically update the prkeys file
+as necessary.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/checkers/rbd.c | 16 +---------------
- libmultipath/dict.c         | 26 +++++---------------------
- libmultipath/util.c         | 33 +++++++++++++++++++++++++++++++++
- libmultipath/util.h         |  4 ++++
- 4 files changed, 43 insertions(+), 36 deletions(-)
+ libmpathpersist/mpath_persist.c  | 42 +++++++++++++++++++++++++---------------
+ libmpathpersist/mpath_updatepr.c | 10 ++++++++++
+ libmpathpersist/mpathpr.h        |  1 +
+ 3 files changed, 37 insertions(+), 16 deletions(-)
 
-diff --git a/libmultipath/checkers/rbd.c b/libmultipath/checkers/rbd.c
-index 9ea0572..2c18009 100644
---- a/libmultipath/checkers/rbd.c
-+++ b/libmultipath/checkers/rbd.c
-@@ -28,6 +28,7 @@
- #include "../libmultipath/debug.h"
- #include "../libmultipath/util.h"
- #include "../libmultipath/time-util.h"
-+#include "../libmultipath/util.h"
- 
- struct rbd_checker_context;
- typedef int (thread_fn)(struct rbd_checker_context *ct, char *msg);
-@@ -356,21 +357,6 @@ static int rbd_check(struct rbd_checker_context *ct, char *msg)
- 	return PATH_UP;
- }
- 
--static int safe_write(int fd, const void *buf, size_t count)
--{
--	while (count > 0) {
--		ssize_t r = write(fd, buf, count);
--		if (r < 0) {
--			if (errno == EINTR)
--				continue;
--			return -errno;
--		}
--		count -= r;
--		buf = (char *)buf + r;
--	}
--	return 0;
--}
--
- static int sysfs_write_rbd_bus(const char *which, const char *buf,
- 			       size_t buf_len)
- {
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index 9dc1090..680b2c5 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -19,6 +19,7 @@
- #include "blacklist.h"
- #include "defaults.h"
- #include "prio.h"
-+#include "util.h"
- #include <errno.h>
- #include <inttypes.h>
- #include "mpath_cmd.h"
-@@ -963,32 +964,15 @@ set_reservation_key(vector strvec, void *ptr)
- {
- 	unsigned char **uchar_ptr = (unsigned char **)ptr;
- 	char *buff;
--	char *tbuff;
--	int j, k;
--	int len;
-+	int j;
+diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
+index 9f6e07a..b5ed556 100644
+--- a/libmpathpersist/mpath_persist.c
++++ b/libmpathpersist/mpath_persist.c
+@@ -261,8 +261,6 @@ int mpath_persistent_reserve_out ( int fd, int rq_servact, int rq_scope,
+ 	int map_present;
+ 	int major, minor;
+ 	int ret;
+-	int j;
+-	unsigned char *keyp;
  	uint64_t prkey;
+ 	struct config *conf;
  
- 	buff = set_value(strvec);
- 	if (!buff)
- 		return 1;
+@@ -339,6 +337,26 @@ int mpath_persistent_reserve_out ( int fd, int rq_servact, int rq_scope,
+ 	select_reservation_key(conf, mpp);
+ 	put_multipath_config(conf);
  
--	tbuff = buff;
--
--	if (!memcmp("0x",buff, 2))
--		buff = buff + 2;
--
--	len = strlen(buff);
--
--	k = strspn(buff, "0123456789aAbBcCdDeEfF");
--
--	if (len != k) {
--		FREE(tbuff);
--		return 1;
--	}
--
--	if (1 != sscanf (buff, "%" SCNx64 "", &prkey))
--	{
--		FREE(tbuff);
-+	if (parse_prkey(buff, &prkey) != 0) {
-+		FREE(buff);
- 		return 1;
- 	}
- 
-@@ -1002,7 +986,7 @@ set_reservation_key(vector strvec, void *ptr)
- 		prkey >>= 8;
- 	}
- 
--	FREE(tbuff);
-+	FREE(buff);
- 	return 0;
- }
- 
-diff --git a/libmultipath/util.c b/libmultipath/util.c
-index dff2ed3..0800da5 100644
---- a/libmultipath/util.c
-+++ b/libmultipath/util.c
-@@ -11,6 +11,7 @@
- #include <unistd.h>
- #include <errno.h>
- 
-+#include "util.h"
- #include "debug.h"
- #include "memory.h"
- #include "checkers.h"
-@@ -416,3 +417,35 @@ int get_linux_version_code(void)
- 	pthread_once(&_lvc_initialized, _set_linux_version_code);
- 	return _linux_version_code;
- }
-+
-+int parse_prkey(char *ptr, uint64_t *prkey)
-+{
-+	if (!ptr)
-+		return 1;
-+	if (*ptr == '0')
-+		ptr++;
-+	if (*ptr == 'x' || *ptr == 'X')
-+		ptr++;
-+	if (*ptr == '\0' || strlen(ptr) > 16)
-+		return 1;
-+	if (strlen(ptr) != strspn(ptr, "0123456789aAbBcCdDeEfF"))
-+		return 1;
-+	if (sscanf(ptr, "%" SCNx64 "", prkey) != 1)
-+		return 1;
-+	return 0;
-+}
-+
-+int safe_write(int fd, const void *buf, size_t count)
-+{
-+	while (count > 0) {
-+		ssize_t r = write(fd, buf, count);
-+		if (r < 0) {
-+			if (errno == EINTR)
-+				continue;
-+			return -errno;
++	memcpy(&prkey, paramp->sa_key, 8);
++	if (mpp->prkey_source == PRKEY_SOURCE_FILE && prkey &&
++	    ((!get_be64(mpp->reservation_key) && MPATH_PROUT_REG_SA) ||
++	     MPATH_PROUT_REG_IGN_SA)) {
++		memcpy(&mpp->reservation_key, paramp->sa_key, 8);
++		if (update_prkey(alias, get_be64(mpp->reservation_key))) {
++			condlog(0, "%s: failed to set prkey for multipathd.",
++				alias);
++			ret = MPATH_PR_DMMP_ERROR;
++			goto out1;
 +		}
-+		count -= r;
-+		buf = (char *)buf + r;
 +	}
-+	return 0;
-+}
-diff --git a/libmultipath/util.h b/libmultipath/util.h
-index 45291be..3dc048e 100644
---- a/libmultipath/util.h
-+++ b/libmultipath/util.h
-@@ -2,6 +2,7 @@
- #define _UTIL_H
- 
- #include <sys/types.h>
-+#include <inttypes.h>
- 
- size_t strchop(char *);
- int basenamecpy (const char * src, char * dst, int);
-@@ -16,6 +17,9 @@ char *parse_uid_attribute_by_attrs(char *uid_attrs, char *path_dev);
- void setup_thread_attr(pthread_attr_t *attr, size_t stacksize, int detached);
- int systemd_service_enabled(const char *dev);
- int get_linux_version_code(void);
-+int parse_prkey(char *ptr, uint64_t *prkey);
-+int safe_write(int fd, const void *buf, size_t count);
 +
- #define KERNEL_VERSION(maj, min, ptc) ((((maj) * 256) + (min)) * 256 + (ptc))
++	if (memcmp(paramp->key, &mpp->reservation_key, 8) &&
++	    memcmp(paramp->sa_key, &mpp->reservation_key, 8)) {
++		condlog(0, "%s: configured reservation key doesn't match: 0x%" PRIx64, alias, get_be64(mpp->reservation_key));
++		ret = MPATH_PR_SYNTAX_ERROR;
++		goto out1;
++	}
++
+ 	switch(rq_servact)
+ 	{
+ 	case MPATH_PROUT_REG_SA:
+@@ -362,22 +380,14 @@ int mpath_persistent_reserve_out ( int fd, int rq_servact, int rq_scope,
+ 	if ((ret == MPATH_PR_SUCCESS) && ((rq_servact == MPATH_PROUT_REG_SA) ||
+ 				(rq_servact ==  MPATH_PROUT_REG_IGN_SA)))
+ 	{
+-		keyp=paramp->sa_key;
+-		prkey = 0;
+-		for (j = 0; j < 8; ++j) {
+-			if (j > 0)
+-				prkey <<= 8;
+-			prkey |= *keyp;
+-			++keyp;
+-		}
+-		if (prkey == 0)
++		if (prkey == 0) {
+ 			update_prflag(alias, 0);
+-		else
++			update_prkey(alias, 0);
++		} else
+ 			update_prflag(alias, 1);
+-	} else {
+-		if ((ret == MPATH_PR_SUCCESS) && (rq_servact == MPATH_PROUT_CLEAR_SA)) {
+-			update_prflag(alias, 0);
+-		}
++	} else if ((ret == MPATH_PR_SUCCESS) && (rq_servact == MPATH_PROUT_CLEAR_SA)) {
++		update_prflag(alias, 0);
++		update_prkey(alias, 0);
+ 	}
+ out1:
+ 	free_multipathvec(curmp, KEEP_PATHS);
+diff --git a/libmpathpersist/mpath_updatepr.c b/libmpathpersist/mpath_updatepr.c
+index 6992879..8063e90 100644
+--- a/libmpathpersist/mpath_updatepr.c
++++ b/libmpathpersist/mpath_updatepr.c
+@@ -58,3 +58,13 @@ static int do_update_pr(char *alias, char *arg)
+ int update_prflag(char *mapname, int set) {
+ 	return do_update_pr(mapname, (set)? "setprstatus" : "unsetprstatus");
+ }
++
++int update_prkey(char *mapname, uint64_t prkey) {
++	char str[256];
++
++	if (prkey)
++		sprintf(str, "setprkey key %" PRIx64, prkey);
++	else
++		sprintf(str, "unsetprkey");
++	return do_update_pr(mapname, str);
++}
+diff --git a/libmpathpersist/mpathpr.h b/libmpathpersist/mpathpr.h
+index 967ba52..72feb60 100644
+--- a/libmpathpersist/mpathpr.h
++++ b/libmpathpersist/mpathpr.h
+@@ -46,6 +46,7 @@ int send_prout_activepath(char * dev, int rq_servact, int rq_scope,
+ 	unsigned int rq_type,   struct prout_param_descriptor * paramp, int noisy);
  
- #define safe_sprintf(var, format, args...)	\
+ int update_prflag(char *mapname, int set);
++int update_prkey(char *mapname, uint64_t prkey);
+ void * mpath_alloc_prin_response(int prin_sa);
+ int update_map_pr(struct multipath *mpp);
+ 
 -- 
 2.7.4
