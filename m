@@ -1,7 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 1/4] discovery: sanitize NVMe discovery
-Date: Fri, 15 Sep 2017 08:30:27 +0200
-Message-ID: <1505457030-119611-2-git-send-email-hare@suse.de>
+Subject: [PATCH 3/4] Add 'none' checker
+Date: Fri, 15 Sep 2017 08:30:29 +0200
+Message-ID: <1505457030-119611-4-git-send-email-hare@suse.de>
 References: <1505457030-119611-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,71 +21,198 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Hannes Reinecke <hare@suse.com>
 List-Id: dm-devel.ids
 
-Bring the output of NVMe discovery inline with the other transports,
-and set the sg_id mappings to avoid ugly '#' outputs.
+For NVMe we don't have a good way of checking the path state, so
+add a new checker 'none' which doesn't do any checking, but rely
+on the internal sysfs state for path checking.
 
 Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- libmultipath/discovery.c | 41 +++++++++++++++++++++++++----------------
- 1 file changed, 25 insertions(+), 16 deletions(-)
+ libmultipath/checkers.c    | 22 ++++++++++++++++------
+ libmultipath/checkers.h    |  3 ++-
+ libmultipath/discovery.c   | 10 ++++++----
+ libmultipath/discovery.h   |  2 +-
+ multipath/multipath.conf.5 |  3 +++
+ multipathd/main.c          |  2 +-
+ 6 files changed, 29 insertions(+), 13 deletions(-)
 
+diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
+index c32f727..cd6d6a3 100644
+--- a/libmultipath/checkers.c
++++ b/libmultipath/checkers.c
+@@ -19,6 +19,7 @@ char *checker_state_names[] = {
+ 	"timeout",
+ 	"removed",
+ 	"delayed",
++	"none",
+ };
+ 
+ static LIST_HEAD(checkers);
+@@ -102,6 +103,8 @@ struct checker * add_checker (char *multipath_dir, char * name)
+ 	if (!c)
+ 		return NULL;
+ 	snprintf(c->name, CHECKER_NAME_LEN, "%s", name);
++	if (!strncmp(c->name, NONE, 4))
++		goto done;
+ 	snprintf(libname, LIB_CHECKER_NAMELEN, "%s/libcheck%s.so",
+ 		 multipath_dir, name);
+ 	if (stat(libname,&stbuf) < 0) {
+@@ -145,7 +148,7 @@ struct checker * add_checker (char *multipath_dir, char * name)
+ 		condlog(0, "A dynamic linking error occurred: (%s)", errstr);
+ 	if (!c->repair)
+ 		goto out;
+-
++done:
+ 	c->fd = -1;
+ 	c->sync = 1;
+ 	list_add(&c->node, &checkers);
+@@ -195,14 +198,16 @@ int checker_init (struct checker * c, void ** mpctxt_addr)
+ 	if (!c)
+ 		return 1;
+ 	c->mpcontext = mpctxt_addr;
+-	return c->init(c);
++	if (c->init)
++		return c->init(c);
++	return 0;
+ }
+ 
+ void checker_put (struct checker * dst)
+ {
+ 	struct checker * src;
+ 
+-	if (!dst || !dst->check)
++	if (!dst || !strlen(dst->name))
+ 		return;
+ 	src = checker_lookup(dst->name);
+ 	if (dst->free)
+@@ -221,11 +226,11 @@ void checker_repair (struct checker * c)
+ 		MSG(c, "checker disabled");
+ 		return;
+ 	}
+-
+-	c->repair(c);
++	if (c->repair)
++		c->repair(c);
+ }
+ 
+-int checker_check (struct checker * c)
++int checker_check (struct checker * c, int path_state)
+ {
+ 	int r;
+ 
+@@ -237,6 +242,9 @@ int checker_check (struct checker * c)
+ 		MSG(c, "checker disabled");
+ 		return PATH_UNCHECKED;
+ 	}
++	if (!strncmp(c->name, NONE, 4))
++		return path_state;
++
+ 	if (c->fd < 0) {
+ 		MSG(c, "no usable fd");
+ 		return PATH_WILD;
+@@ -250,6 +258,8 @@ int checker_selected (struct checker * c)
+ {
+ 	if (!c)
+ 		return 0;
++	if (!strncmp(c->name, NONE, 4))
++		return 1;
+ 	return (c->check) ? 1 : 0;
+ }
+ 
+diff --git a/libmultipath/checkers.h b/libmultipath/checkers.h
+index 1d225de..713399f 100644
+--- a/libmultipath/checkers.h
++++ b/libmultipath/checkers.h
+@@ -85,6 +85,7 @@ enum path_check_state {
+ #define EMC_CLARIION "emc_clariion"
+ #define READSECTOR0  "readsector0"
+ #define CCISS_TUR    "cciss_tur"
++#define NONE         "none"
+ #define RBD          "rbd"
+ 
+ #define ASYNC_TIMEOUT_SEC	30
+@@ -135,7 +136,7 @@ void checker_set_fd (struct checker *, int);
+ void checker_enable (struct checker *);
+ void checker_disable (struct checker *);
+ void checker_repair (struct checker *);
+-int checker_check (struct checker *);
++int checker_check (struct checker *, int);
+ int checker_selected (struct checker *);
+ char * checker_name (struct checker *);
+ char * checker_message (struct checker *);
 diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 3a912d7..95c138b 100644
+index a880f4b..225fd4d 100644
 --- a/libmultipath/discovery.c
 +++ b/libmultipath/discovery.c
-@@ -1194,28 +1194,37 @@ scsi_sysfs_pathinfo (struct path * pp, vector hwtable)
- static int
- nvme_sysfs_pathinfo (struct path * pp, vector hwtable)
+@@ -1550,7 +1550,7 @@ cciss_ioctl_pathinfo (struct path * pp, int mask)
+ }
+ 
+ int
+-get_state (struct path * pp, struct config *conf, int daemon)
++get_state (struct path * pp, struct config *conf, int daemon, int oldstate)
  {
--	struct udev_device *parent, *nvme = NULL;
-+	struct udev_device *parent;
-+	const char *attr_path = NULL;
+ 	struct checker * c = &pp->checker;
+ 	int state;
+@@ -1588,8 +1588,9 @@ get_state (struct path * pp, struct config *conf, int daemon)
+ 	if (!conf->checker_timeout &&
+ 	    sysfs_get_timeout(pp, &(c->timeout)) <= 0)
+ 		c->timeout = DEF_TIMEOUT;
+-	state = checker_check(c);
+-	condlog(3, "%s: state = %s", pp->dev, checker_state_name(state));
++	state = checker_check(c, oldstate);
++	condlog(3, "%s: %s state = %s", pp->dev,
++		checker_name(c), checker_state_name(state));
+ 	if (state != PATH_UP && state != PATH_GHOST &&
+ 	    strlen(checker_message(c)))
+ 		condlog(3, "%s: checker msg is \"%s\"",
+@@ -1960,7 +1961,8 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
  
--	parent = pp->udev;
--	while (parent) {
--		const char *subsys = udev_device_get_subsystem(parent);
-+	attr_path = udev_device_get_sysname(pp->udev);
-+	if (!attr_path)
-+		return 1;
+ 	if (mask & DI_CHECKER) {
+ 		if (path_state == PATH_UP) {
+-			pp->chkrstate = pp->state = get_state(pp, conf, 0);
++			pp->chkrstate = pp->state = get_state(pp, conf, 0,
++							      path_state);
+ 			if (pp->state == PATH_UNCHECKED ||
+ 			    pp->state == PATH_WILD)
+ 				goto blank;
+diff --git a/libmultipath/discovery.h b/libmultipath/discovery.h
+index 51c23d6..6a54b78 100644
+--- a/libmultipath/discovery.h
++++ b/libmultipath/discovery.h
+@@ -34,7 +34,7 @@ int path_discovery (vector pathvec, int flag);
  
--		if (subsys && !strncmp(subsys, "nvme", 4)) {
--			nvme = parent;
--			break;
--		}
--		parent = udev_device_get_parent(parent);
--	}
--	if (!nvme)
-+	if (sscanf(attr_path, "nvme%dn%d",
-+		   &pp->sg_id.host_no,
-+		   &pp->sg_id.scsi_id) != 2)
-+		return 1;
-+	pp->sg_id.channel = 0;
-+	pp->sg_id.lun = 0;
-+
-+	parent = udev_device_get_parent(pp->udev);
-+	if (!parent)
- 		return 1;
+ int do_tur (char *);
+ int path_offline (struct path *);
+-int get_state (struct path * pp, struct config * conf, int daemon);
++int get_state (struct path * pp, struct config * conf, int daemon, int state);
+ int get_vpd_sgio (int fd, int pg, char * str, int maxlen);
+ int pathinfo (struct path * pp, struct config * conf, int mask);
+ int alloc_path_with_pathinfo (struct config *conf, struct udev_device *udevice,
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index d9ac279..e0cada3 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -451,6 +451,9 @@ Please use \fItur\fR instead.
+ (Hardware-dependent)
+ Check the path state for HP/COMPAQ Smart Array(CCISS) controllers.
+ .TP
++.I none
++Do not check the device, fallback to use the values retrieved from sysfs
++.TP
+ .I rbd
+ Check if the path is in the Ceph blacklist and remap the path if it is.
+ .TP
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 4be2c57..657ff83 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1623,7 +1623,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
  
- 	snprintf(pp->vendor_id, SCSI_VENDOR_SIZE, "NVME");
--	snprintf(pp->product_id, SCSI_PRODUCT_SIZE, "%s", udev_device_get_sysattr_value(nvme, "model"));
--	snprintf(pp->serial, SERIAL_SIZE, "%s", udev_device_get_sysattr_value(nvme, "serial"));
--	snprintf(pp->rev, SCSI_REV_SIZE, "%s", udev_device_get_sysattr_value(nvme, "firmware_rev"));
-+	snprintf(pp->product_id, SCSI_PRODUCT_SIZE, "%s",
-+		 udev_device_get_sysattr_value(parent, "model"));
-+	snprintf(pp->serial, SERIAL_SIZE, "%s",
-+		 udev_device_get_sysattr_value(parent, "serial"));
-+	snprintf(pp->rev, SCSI_REV_SIZE, "%s",
-+		 udev_device_get_sysattr_value(parent, "firmware_rev"));
-+
-+	condlog(3, "%s: vendor = %s", pp->dev, pp->vendor_id);
-+	condlog(3, "%s: product = %s", pp->dev, pp->product_id);
-+	condlog(3, "%s: serial = %s", pp->dev, pp->serial);
-+	condlog(3, "%s: rev = %s", pp->dev, pp->rev);
- 
--	condlog(3, "%s: vendor:%s product:%s serial:%s rev:%s", pp->dev,
--		pp->vendor_id, pp->product_id, pp->serial, pp->rev);
- 	pp->hwe = find_hwe(hwtable, pp->vendor_id, pp->product_id, NULL);
- 
- 	return 0;
+ 	if (newstate == PATH_UP) {
+ 		conf = get_multipath_config();
+-		newstate = get_state(pp, conf, 1);
++		newstate = get_state(pp, conf, 1, newstate);
+ 		put_multipath_config(conf);
+ 	} else
+ 		checker_clear_message(&pp->checker);
 -- 
 1.8.5.6
