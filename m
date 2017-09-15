@@ -1,36 +1,72 @@
-From: Bart Van Assche <Bart.VanAssche@wdc.com>
-Subject: Re: [PATCH 1/5] block: don't call blk_mq_delay_run_hw_queue() in case
- of BLK_STS_RESOURCE
-Date: Fri, 15 Sep 2017 17:57:31 +0000
-Message-ID: <1505498249.3420.15.camel@wdc.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 2/5] dm-mpath: return DM_MAPIO_REQUEUE in case of rq
+ allocation failure
+Date: Fri, 15 Sep 2017 16:06:55 -0400
+Message-ID: <20170915200655.GA28136@redhat.com>
 References: <20170915164456.9803-1-ming.lei@redhat.com>
-         <20170915164456.9803-2-ming.lei@redhat.com>
+ <20170915164456.9803-3-ming.lei@redhat.com>
+ <1505496592.3420.10.camel@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20170915164456.9803-2-ming.lei@redhat.com>
-Content-Language: en-US
-Content-ID: <AE021C02FFF9F84EAC8F00EC0E2AD6D2@namprd04.prod.outlook.com>
+Content-Disposition: inline
+In-Reply-To: <1505496592.3420.10.camel@wdc.com>
 Sender: linux-block-owner@vger.kernel.org
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>, "axboe@fb.com" <axboe@fb.com>, "ming.lei@redhat.com" <ming.lei@redhat.com>, "snitzer@redhat.com" <snitzer@redhat.com>
-Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "hch@infradead.org" <hch@infradead.org>, "sagi@grimberg.me" <sagi@grimberg.me>, Bart Van Assche <Bart.VanAssche@wdc.com>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, "jejb@linux.vnet.ibm.com" <jejb@linux.vnet.ibm.com>, "loberman@redhat.com" <loberman@redhat.com>
+To: Bart Van Assche <Bart.VanAssche@wdc.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "axboe@fb.com" <axboe@fb.com>, "ming.lei@redhat.com" <ming.lei@redhat.com>, "hch@infradead.org" <hch@infradead.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "loberman@redhat.com" <loberman@redhat.com>
 List-Id: dm-devel.ids
 
-T24gU2F0LCAyMDE3LTA5LTE2IGF0IDAwOjQ0ICswODAwLCBNaW5nIExlaSB3cm90ZToNCj4gSWYg
-LnF1ZXVlX3JxKCkgcmV0dXJucyBCTEtfU1RTX1JFU09VUkNFLCBibGstbXEgd2lsbCByZXJ1bg0K
-PiB0aGUgcXVldWUgaW4gdGhlIHRocmVlIHNpdHVhdGlvbnM6DQo+IA0KPiAxKSBpZiBCTEtfTVFf
-U19TQ0hFRF9SRVNUQVJUIGlzIHNldA0KPiAtIHF1ZXVlIGlzIHJlcnVuIGFmdGVyIG9uZSBycSBp
-cyBjb21wbGV0ZWQsIHNlZSBibGtfbXFfc2NoZWRfcmVzdGFydCgpDQo+IHdoaWNoIGlzIHJ1biBm
-cm9tIGJsa19tcV9mcmVlX3JlcXVlc3QoKQ0KPiANCj4gMikgQkxLX01RX1NfVEFHX1dBSVRJTkcg
-aXMgc2V0DQo+IC0gcXVldWUgaXMgcmVydW4gYWZ0ZXIgb25lIHRhZyBpcyBmcmVlZA0KPiANCj4g
-Mykgb3RoZXJ3aXNlDQo+IC0gcXVldWUgaXMgcnVuIGltbWVkaWF0ZWx5IGluIGJsa19tcV9kaXNw
-YXRjaF9ycV9saXN0KCkNCj4gDQo+IFNvIGNhbGxpbmcgYmxrX21xX2RlbGF5X3J1bl9od19xdWV1
-ZSgpIGluc2lkZSAucXVldWVfcnEoKSBkb2Vzbid0IG1ha2UNCj4gc2Vuc2UgYmVjYXVzZSBubyBt
-YXR0ZXIgaXQgaXMgY2FsbGVkIG9yIG5vdCwgdGhlIHF1ZXVlIHN0aWxsIHdpbGwgYmUNCj4gcmVy
-dW4gc29vbiBpbiBhYm92ZSB0aHJlZSBzaXR1YXRpb25zLCBhbmQgdGhlIGJ1c3kgcmVxIGNhbiBi
-ZSBkaXNwYXRjaGVkDQo+IGFnYWluLg0KDQpOQUsNCg0KQmxvY2sgZHJpdmVycyBjYWxsIGJsa19t
-cV9kZWxheV9ydW5faHdfcXVldWUoKSBpZiBpdCBpcyBrbm93biB0aGF0IHRoZSBxdWV1ZQ0KaGFz
-IHRvIGJlIHJlcnVuIGxhdGVyIGV2ZW4gaWYgbm8gcmVxdWVzdCBoYXMgY29tcGxldGVkIGJlZm9y
-ZSB0aGUgZGVsYXkgaGFzDQpleHBpcmVkLiBUaGlzIHBhdGNoIGJyZWFrcyBhdCBsZWFzdCB0aGUg
-U0NTSSBjb3JlIGFuZCB0aGUgZG0tbXBhdGggZHJpdmVycy4NCg0KQmFydC4=
+On Fri, Sep 15 2017 at  1:29pm -0400,
+Bart Van Assche <Bart.VanAssche@wdc.com> wrote:
+
+> On Sat, 2017-09-16 at 00:44 +0800, Ming Lei wrote:
+> > blk-mq will rerun queue via RESTART after one request is completion,
+> > so not necessary to wait random time for requeuing, it should trust
+> > blk-mq to do it.
+> > 
+> > Signed-off-by: Ming Lei <ming.lei@redhat.com>
+> > ---
+> >  drivers/md/dm-mpath.c | 2 +-
+> >  1 file changed, 1 insertion(+), 1 deletion(-)
+> > 
+> > diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+> > index 96aedaac2c64..f5a1088a6e79 100644
+> > --- a/drivers/md/dm-mpath.c
+> > +++ b/drivers/md/dm-mpath.c
+> > @@ -505,7 +505,7 @@ static int multipath_clone_and_map(struct dm_target *ti, struct request *rq,
+> >  			atomic_inc(&m->pg_init_in_progress);
+> >  			activate_or_offline_path(pgpath);
+> >  		}
+> > -		return DM_MAPIO_DELAY_REQUEUE;
+> > +		return DM_MAPIO_REQUEUE;
+> >  	}
+> >  	clone->bio = clone->biotail = NULL;
+> >  	clone->rq_disk = bdev->bd_disk;
+> 
+> So you are reverting the patch below? Thank you very much.
+> 
+> commit 1c23484c355ec360ca2f37914f8a4802c6baeead
+> Author: Bart Van Assche <bart.vanassche@wdc.com>
+> Date:   Wed Aug 9 11:32:12 2017 -0700
+> 
+>     dm mpath: do not lock up a CPU with requeuing activity
+>     
+>     When using the block layer in single queue mode, get_request()
+>     returns ERR_PTR(-EAGAIN) if the queue is dying and the REQ_NOWAIT
+>     flag has been passed to get_request(). Avoid that the kernel
+>     reports soft lockup complaints in this case due to continuous
+>     requeuing activity.
+>     
+>     Fixes: 7083abbbf ("dm mpath: avoid that path removal can trigger an infinite loop")
+>     Cc: stable@vger.kernel.org
+>     Signed-off-by: Bart Van Assche <bart.vanassche@wdc.com>
+>     Tested-by: Laurence Oberman <loberman@redhat.com>
+>     Reviewed-by: Christoph Hellwig <hch@lst.de>
+>     Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+
+The problem is that multipath_clone_and_map() is now treated as common
+code (thanks to both blk-mq and old .request_fn now enjoying the use of
+blk_get_request) BUT: Ming please understand that this code is used by
+old .request_fn too.  So it would seem that the use of
+DM_MAPIO_DELAY_REQUEUE vs DM_MAPIO_REQUEUE needs to be based on dm-sq vs
+dm-mq.
