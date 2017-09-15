@@ -1,70 +1,76 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 5/5] dm-mpath: improve I/O schedule
-Date: Fri, 15 Sep 2017 16:10:24 -0400
-Message-ID: <20170915201023.GB28136@redhat.com>
-References: <20170915164456.9803-1-ming.lei@redhat.com>
- <20170915164456.9803-6-ming.lei@redhat.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH 20/31] 11-dm-mpath.rules: don't set
+	READY->ACTIVATION
+Date: Fri, 15 Sep 2017 15:33:59 -0500
+Message-ID: <20170915203359.GR3145@octiron.msp.redhat.com>
+References: <20170902223900.7339-1-mwilck@suse.com>
+	<20170902223900.7339-21-mwilck@suse.com>
+	<20170913211906.GM3145@octiron.msp.redhat.com>
+	<1505393299.4493.14.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20170915164456.9803-6-ming.lei@redhat.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Ming Lei <ming.lei@redhat.com>
-Cc: dm-devel@redhat.com, Jens Axboe <axboe@fb.com>, linux-block@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, Bart Van Assche <bart.vanassche@sandisk.com>, Laurence Oberman <loberman@redhat.com>
+In-Reply-To: <1505393299.4493.14.camel@suse.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Sep 15 2017 at 12:44pm -0400,
-Ming Lei <ming.lei@redhat.com> wrote:
+On Thu, Sep 14, 2017 at 02:48:19PM +0200, Martin Wilck wrote:
+> On Wed, 2017-09-13 at 16:19 -0500, Benjamin Marzinski wrote:
+> > On Sun, Sep 03, 2017 at 12:38:49AM +0200, Martin Wilck wrote:
+> > > The fact alone that a map changes from not ready to ready does
+> > > not imply that it is activating.
+> > =
 
-> The actual I/O schedule is done in dm-mpath layer, and the
-> underlying I/O schedule is simply bypassed.
-> 
-> This patch sets underlying queue's nr_requests as its queue's
-> queue_depth, then  we can get its queue busy feedback by simply
-> checking if blk_get_request() returns successfully.
-> 
-> In this way, dm-mpath can reports its queue busy to block layer
-> effectively, so I/O scheduling is improved much.
-> 
-> Follows the test results on lpfc*:
-> 
-> - fio(libaio, bs:4k, dio, queue_depth:64, 64 jobs,
->       over dm-mpath disk)
-> - system(12 cores, dual sockets, mem: 64G)
-> 
-> ---------------------------------------
->           |v4.13+         |v4.13+
->           |+scsi_mq_perf  |+scsi_mq_perf+patches
-> -----------------------------------------
->  IOPS(K)  |MQ-DEADLINE    |MQ-DEADLINE
-> ------------------------------------------
-> read      |       30.71   |      343.91
-> -----------------------------------------
-> randread  |       22.98   |       17.17
-> ------------------------------------------
-> write     |       16.45   |      390.88
-> ------------------------------------------
-> randwrite |       16.21   |       16.09
-> ---------------------------------------
-> 
-> *:
-> 1) lpfc.lpfc_lun_queue_depth=3, so that it is same with .cmd_per_lun
-> 2) scsi_mq_perf means the patchset of 'blk-mq-sched: improve SCSI-MQ performance(V4)'[1]
-> 3) v4.13+: top commit is 46c1e79fee41 Merge branch 'perf-urgent-for-linus'
-> 4) the patchset 'blk-mq-sched: improve SCSI-MQ performance(V4)' focuses
-> on improving on SCSI-MQ, and all the test result in that coverletter was
-> against the raw lpfc/ib(run after 'multipath -F'), instead of dm-mpath.
-> 5) this patchset itself doesn't depend on the scsi_mq_perf patchset[1]
-> 
-> [1] https://marc.info/?t=150436555700002&r=1&w=2
-> 
-> Signed-off-by: Ming Lei <ming.lei@redhat.com>
+> > NAK on this one and
+> > [PATCH 21/31] 11-dm-mpath.rules: Remember DM_ACTIVATION
+> > =
 
-Very impressive gains Ming!
+> > This breaks things. It's often the case that there are devices
+> > stacked
+> > on top of multipath.  When multipath loses all of its paths, if it
+> > doesn't have queue_if_no_path set, it can fail IO up to these higher
+> > devices, forcing them to react to the failure.
+> =
 
-I'll review in more detail next week but Bart's concerns on patch 1 and
-2 definitely need consideration.
+> Thinking about this again, most of the stuff we do in the multipath-
+> related udev rules is for the queueing case. Without
+> "queue_if_no_path", all that checking whether or not the map will
+> sustain IO is useless; it would be better to simply pass the device on
+> to upper layers, which will try to probe it and fail, which is intended
+> in the non-queueing setup. Perhaps we should check "queue_if_no_path"
+> early on and skip most of the stuff we  do in the queueing case?
 
-Thanks,
-Mike
+I don't really see the benefit in scanning when we're just going to get
+back errors, and lose the stored info in the udev database. If IO
+happens to the device, the upper layers will find out that it's broken.
+If we can lose all our paths, and then have some come back without any
+IO going down, why not hide this from the upper layers?
+
+-Ben
+ =
+
+> If we did this, maybe even my patches 20/21 might be worth
+> reconsideration for the "queue_if_no_path" case only?
+> =
+
+> Cheers,
+> Martin
+> =
+
+> -- =
+
+> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+> SUSE Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
+> HRB 21284 (AG N=FCrnberg)
