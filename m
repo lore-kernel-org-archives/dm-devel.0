@@ -1,57 +1,54 @@
-From: Guan Junxiong <guanjunxiong@huawei.com>
-Subject: Re: [PATCH 4/4] hwtable: set 'none' as default checker
- for NVMe
-Date: Fri, 15 Sep 2017 18:00:32 +0800
-Message-ID: <cca18089-49ea-506d-bc9a-00160827e2d3@huawei.com>
-References: <1505457030-119611-1-git-send-email-hare@suse.de>
-	<1505457030-119611-5-git-send-email-hare@suse.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1505457030-119611-5-git-send-email-hare@suse.de>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>, Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: dm-devel@redhat.com, niuhaoxin <niuhaoxin@huawei.com>, "Shenhong (C)" <shenhong09@huawei.com>
+From: Ming Lei <ming.lei@redhat.com>
+Subject: [PATCH 0/5] dm-mpath: improve I/O schedule
+Date: Sat, 16 Sep 2017 00:33:00 +0800
+Message-ID: <20170915163305.9350-1-ming.lei@redhat.com>
+Return-path: <linux-block-owner@vger.kernel.org>
+Sender: linux-block-owner@vger.kernel.org
+To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Jens Axboe <axboe@fb.com>
+Cc: linux-block@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, Bart Van Assche <bart.vanassche@sandisk.com>, Laurence Oberman <loberman@redhat.com>, Ming Lei <ming.lei@redhat.com>
 List-Id: dm-devel.ids
 
-Looks good.
+Hi,
 
-Reviewed-by: Guan Junxiong <guanjunxiong@huawei.com>
+We depend on I/O scheduler in dm-mpath layer, and underlying
+I/O scheduler is bypassed basically.
 
+I/O scheduler depends on queue busy condition to
+trigger I/O merge, unfortunatley inside dm-mpath,
+the underlying queue busy feedback is not accurate
+enough, and we just allocate one request and dispatcch
+it out to underlying queue, no matter if that queue
+is busy or not. Then I/O merge is hard to trigger.
 
-On 2017/9/15 14:30, Hannes Reinecke wrote:
-> We shouldn't be using the directio checker for NVMe, as this might
-> cause spurious path failures under high load.
-> As the 'state' attribute provides reliable information about the link
-> status it's sufficient to just check this and don't call any
-> path checkers.
-> 
-> Signed-off-by: Hannes Reinecke <hare@suse.com>
-> ---
->  libmultipath/hwtable.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-> index 9e14ec1..9ac09ff 100644
-> --- a/libmultipath/hwtable.c
-> +++ b/libmultipath/hwtable.c
-> @@ -1113,7 +1113,7 @@ static struct hwentry default_hw[] = {
->  		.vendor        = "NVME",
->  		.product       = ".*",
->  		.uid_attribute = "ID_WWN",
-> -		.checker_name  = DIRECTIO,
-> +		.checker_name  = NONE,
->  		.retain_hwhandler = RETAIN_HWHANDLER_OFF,
->  	},
->  	/*
-> 
+This patchset sets underlying queue's nr_request as
+the queue's queue depth, so that queue busy is figured
+out by checking if request is allocated successfully.
+
+From test result on mq-deadline, sequential I/O performance
+is improved a lot, see test result in patch 5's commit log.
+
+Any comments are welcome!
+
+Thanks,
+Ming
+
+Ming Lei (5):
+  block: don't call blk_mq_delay_run_hw_queue() in case of
+    BLK_STS_RESOURCE
+  dm-mpath: return DM_MAPIO_REQUEUE in case of rq allocation failure
+  dm-mpath: remove annoying message of 'blk_get_request() returned -11'
+  block: export blk_update_nr_requests
+  dm-mpath: improve I/O schedule
+
+ block/blk-core.c        |  4 +++-
+ block/blk-sysfs.c       |  5 +----
+ block/blk.h             |  2 --
+ drivers/md/dm-mpath.c   | 30 +++++++++++++++++++++++++++---
+ drivers/md/dm-rq.c      |  1 -
+ drivers/nvme/host/fc.c  |  3 ---
+ drivers/scsi/scsi_lib.c |  4 ----
+ include/linux/blkdev.h  |  1 +
+ 8 files changed, 32 insertions(+), 18 deletions(-)
+
+-- 
+2.9.5
