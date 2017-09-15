@@ -1,72 +1,70 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 2/5] dm-mpath: return DM_MAPIO_REQUEUE in case of rq
- allocation failure
-Date: Fri, 15 Sep 2017 16:06:55 -0400
-Message-ID: <20170915200655.GA28136@redhat.com>
+Subject: Re: [PATCH 5/5] dm-mpath: improve I/O schedule
+Date: Fri, 15 Sep 2017 16:10:24 -0400
+Message-ID: <20170915201023.GB28136@redhat.com>
 References: <20170915164456.9803-1-ming.lei@redhat.com>
- <20170915164456.9803-3-ming.lei@redhat.com>
- <1505496592.3420.10.camel@wdc.com>
+ <20170915164456.9803-6-ming.lei@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-block-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1505496592.3420.10.camel@wdc.com>
+In-Reply-To: <20170915164456.9803-6-ming.lei@redhat.com>
 Sender: linux-block-owner@vger.kernel.org
-To: Bart Van Assche <Bart.VanAssche@wdc.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "axboe@fb.com" <axboe@fb.com>, "ming.lei@redhat.com" <ming.lei@redhat.com>, "hch@infradead.org" <hch@infradead.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "loberman@redhat.com" <loberman@redhat.com>
+To: Ming Lei <ming.lei@redhat.com>
+Cc: dm-devel@redhat.com, Jens Axboe <axboe@fb.com>, linux-block@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, Bart Van Assche <bart.vanassche@sandisk.com>, Laurence Oberman <loberman@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Sep 15 2017 at  1:29pm -0400,
-Bart Van Assche <Bart.VanAssche@wdc.com> wrote:
+On Fri, Sep 15 2017 at 12:44pm -0400,
+Ming Lei <ming.lei@redhat.com> wrote:
 
-> On Sat, 2017-09-16 at 00:44 +0800, Ming Lei wrote:
-> > blk-mq will rerun queue via RESTART after one request is completion,
-> > so not necessary to wait random time for requeuing, it should trust
-> > blk-mq to do it.
-> > 
-> > Signed-off-by: Ming Lei <ming.lei@redhat.com>
-> > ---
-> >  drivers/md/dm-mpath.c | 2 +-
-> >  1 file changed, 1 insertion(+), 1 deletion(-)
-> > 
-> > diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-> > index 96aedaac2c64..f5a1088a6e79 100644
-> > --- a/drivers/md/dm-mpath.c
-> > +++ b/drivers/md/dm-mpath.c
-> > @@ -505,7 +505,7 @@ static int multipath_clone_and_map(struct dm_target *ti, struct request *rq,
-> >  			atomic_inc(&m->pg_init_in_progress);
-> >  			activate_or_offline_path(pgpath);
-> >  		}
-> > -		return DM_MAPIO_DELAY_REQUEUE;
-> > +		return DM_MAPIO_REQUEUE;
-> >  	}
-> >  	clone->bio = clone->biotail = NULL;
-> >  	clone->rq_disk = bdev->bd_disk;
+> The actual I/O schedule is done in dm-mpath layer, and the
+> underlying I/O schedule is simply bypassed.
 > 
-> So you are reverting the patch below? Thank you very much.
+> This patch sets underlying queue's nr_requests as its queue's
+> queue_depth, then  we can get its queue busy feedback by simply
+> checking if blk_get_request() returns successfully.
 > 
-> commit 1c23484c355ec360ca2f37914f8a4802c6baeead
-> Author: Bart Van Assche <bart.vanassche@wdc.com>
-> Date:   Wed Aug 9 11:32:12 2017 -0700
+> In this way, dm-mpath can reports its queue busy to block layer
+> effectively, so I/O scheduling is improved much.
 > 
->     dm mpath: do not lock up a CPU with requeuing activity
->     
->     When using the block layer in single queue mode, get_request()
->     returns ERR_PTR(-EAGAIN) if the queue is dying and the REQ_NOWAIT
->     flag has been passed to get_request(). Avoid that the kernel
->     reports soft lockup complaints in this case due to continuous
->     requeuing activity.
->     
->     Fixes: 7083abbbf ("dm mpath: avoid that path removal can trigger an infinite loop")
->     Cc: stable@vger.kernel.org
->     Signed-off-by: Bart Van Assche <bart.vanassche@wdc.com>
->     Tested-by: Laurence Oberman <loberman@redhat.com>
->     Reviewed-by: Christoph Hellwig <hch@lst.de>
->     Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> Follows the test results on lpfc*:
+> 
+> - fio(libaio, bs:4k, dio, queue_depth:64, 64 jobs,
+>       over dm-mpath disk)
+> - system(12 cores, dual sockets, mem: 64G)
+> 
+> ---------------------------------------
+>           |v4.13+         |v4.13+
+>           |+scsi_mq_perf  |+scsi_mq_perf+patches
+> -----------------------------------------
+>  IOPS(K)  |MQ-DEADLINE    |MQ-DEADLINE
+> ------------------------------------------
+> read      |       30.71   |      343.91
+> -----------------------------------------
+> randread  |       22.98   |       17.17
+> ------------------------------------------
+> write     |       16.45   |      390.88
+> ------------------------------------------
+> randwrite |       16.21   |       16.09
+> ---------------------------------------
+> 
+> *:
+> 1) lpfc.lpfc_lun_queue_depth=3, so that it is same with .cmd_per_lun
+> 2) scsi_mq_perf means the patchset of 'blk-mq-sched: improve SCSI-MQ performance(V4)'[1]
+> 3) v4.13+: top commit is 46c1e79fee41 Merge branch 'perf-urgent-for-linus'
+> 4) the patchset 'blk-mq-sched: improve SCSI-MQ performance(V4)' focuses
+> on improving on SCSI-MQ, and all the test result in that coverletter was
+> against the raw lpfc/ib(run after 'multipath -F'), instead of dm-mpath.
+> 5) this patchset itself doesn't depend on the scsi_mq_perf patchset[1]
+> 
+> [1] https://marc.info/?t=150436555700002&r=1&w=2
+> 
+> Signed-off-by: Ming Lei <ming.lei@redhat.com>
 
-The problem is that multipath_clone_and_map() is now treated as common
-code (thanks to both blk-mq and old .request_fn now enjoying the use of
-blk_get_request) BUT: Ming please understand that this code is used by
-old .request_fn too.  So it would seem that the use of
-DM_MAPIO_DELAY_REQUEUE vs DM_MAPIO_REQUEUE needs to be based on dm-sq vs
-dm-mq.
+Very impressive gains Ming!
+
+I'll review in more detail next week but Bart's concerns on patch 1 and
+2 definitely need consideration.
+
+Thanks,
+Mike
