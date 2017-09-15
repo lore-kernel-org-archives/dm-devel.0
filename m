@@ -1,51 +1,36 @@
 From: Bart Van Assche <Bart.VanAssche@wdc.com>
-Subject: Re: [PATCH 2/5] dm-mpath: return DM_MAPIO_REQUEUE in case of rq
- allocation failure
-Date: Fri, 15 Sep 2017 17:29:53 +0000
-Message-ID: <1505496592.3420.10.camel@wdc.com>
+Subject: Re: [PATCH 1/5] block: don't call blk_mq_delay_run_hw_queue() in case
+ of BLK_STS_RESOURCE
+Date: Fri, 15 Sep 2017 17:57:31 +0000
+Message-ID: <1505498249.3420.15.camel@wdc.com>
 References: <20170915164456.9803-1-ming.lei@redhat.com>
-         <20170915164456.9803-3-ming.lei@redhat.com>
+         <20170915164456.9803-2-ming.lei@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: base64
 Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20170915164456.9803-3-ming.lei@redhat.com>
+In-Reply-To: <20170915164456.9803-2-ming.lei@redhat.com>
 Content-Language: en-US
-Content-ID: <3968E23658B38F4F8A6DE200F724B996@namprd04.prod.outlook.com>
+Content-ID: <AE021C02FFF9F84EAC8F00EC0E2AD6D2@namprd04.prod.outlook.com>
 Sender: linux-block-owner@vger.kernel.org
 To: "dm-devel@redhat.com" <dm-devel@redhat.com>, "axboe@fb.com" <axboe@fb.com>, "ming.lei@redhat.com" <ming.lei@redhat.com>, "snitzer@redhat.com" <snitzer@redhat.com>
-Cc: Bart Van Assche <Bart.VanAssche@wdc.com>, "hch@infradead.org" <hch@infradead.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "loberman@redhat.com" <loberman@redhat.com>
+Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "hch@infradead.org" <hch@infradead.org>, "sagi@grimberg.me" <sagi@grimberg.me>, Bart Van Assche <Bart.VanAssche@wdc.com>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, "jejb@linux.vnet.ibm.com" <jejb@linux.vnet.ibm.com>, "loberman@redhat.com" <loberman@redhat.com>
 List-Id: dm-devel.ids
 
-T24gU2F0LCAyMDE3LTA5LTE2IGF0IDAwOjQ0ICswODAwLCBNaW5nIExlaSB3cm90ZToNCj4gYmxr
-LW1xIHdpbGwgcmVydW4gcXVldWUgdmlhIFJFU1RBUlQgYWZ0ZXIgb25lIHJlcXVlc3QgaXMgY29t
-cGxldGlvbiwNCj4gc28gbm90IG5lY2Vzc2FyeSB0byB3YWl0IHJhbmRvbSB0aW1lIGZvciByZXF1
-ZXVpbmcsIGl0IHNob3VsZCB0cnVzdA0KPiBibGstbXEgdG8gZG8gaXQuDQo+IA0KPiBTaWduZWQt
-b2ZmLWJ5OiBNaW5nIExlaSA8bWluZy5sZWlAcmVkaGF0LmNvbT4NCj4gLS0tDQo+ICBkcml2ZXJz
-L21kL2RtLW1wYXRoLmMgfCAyICstDQo+ICAxIGZpbGUgY2hhbmdlZCwgMSBpbnNlcnRpb24oKyks
-IDEgZGVsZXRpb24oLSkNCj4gDQo+IGRpZmYgLS1naXQgYS9kcml2ZXJzL21kL2RtLW1wYXRoLmMg
-Yi9kcml2ZXJzL21kL2RtLW1wYXRoLmMNCj4gaW5kZXggOTZhZWRhYWMyYzY0Li5mNWExMDg4YTZl
-NzkgMTAwNjQ0DQo+IC0tLSBhL2RyaXZlcnMvbWQvZG0tbXBhdGguYw0KPiArKysgYi9kcml2ZXJz
-L21kL2RtLW1wYXRoLmMNCj4gQEAgLTUwNSw3ICs1MDUsNyBAQCBzdGF0aWMgaW50IG11bHRpcGF0
-aF9jbG9uZV9hbmRfbWFwKHN0cnVjdCBkbV90YXJnZXQgKnRpLCBzdHJ1Y3QgcmVxdWVzdCAqcnEs
-DQo+ICAJCQlhdG9taWNfaW5jKCZtLT5wZ19pbml0X2luX3Byb2dyZXNzKTsNCj4gIAkJCWFjdGl2
-YXRlX29yX29mZmxpbmVfcGF0aChwZ3BhdGgpOw0KPiAgCQl9DQo+IC0JCXJldHVybiBETV9NQVBJ
-T19ERUxBWV9SRVFVRVVFOw0KPiArCQlyZXR1cm4gRE1fTUFQSU9fUkVRVUVVRTsNCj4gIAl9DQo+
-ICAJY2xvbmUtPmJpbyA9IGNsb25lLT5iaW90YWlsID0gTlVMTDsNCj4gIAljbG9uZS0+cnFfZGlz
-ayA9IGJkZXYtPmJkX2Rpc2s7DQoNClNvIHlvdSBhcmUgcmV2ZXJ0aW5nIHRoZSBwYXRjaCBiZWxv
-dz8gVGhhbmsgeW91IHZlcnkgbXVjaC4NCg0KY29tbWl0IDFjMjM0ODRjMzU1ZWMzNjBjYTJmMzc5
-MTRmOGE0ODAyYzZiYWVlYWQNCkF1dGhvcjogQmFydCBWYW4gQXNzY2hlIDxiYXJ0LnZhbmFzc2No
-ZUB3ZGMuY29tPg0KRGF0ZTogICBXZWQgQXVnIDkgMTE6MzI6MTIgMjAxNyAtMDcwMA0KDQogICAg
-ZG0gbXBhdGg6IGRvIG5vdCBsb2NrIHVwIGEgQ1BVIHdpdGggcmVxdWV1aW5nIGFjdGl2aXR5DQog
-ICAgDQogICAgV2hlbiB1c2luZyB0aGUgYmxvY2sgbGF5ZXIgaW4gc2luZ2xlIHF1ZXVlIG1vZGUs
-IGdldF9yZXF1ZXN0KCkNCiAgICByZXR1cm5zIEVSUl9QVFIoLUVBR0FJTikgaWYgdGhlIHF1ZXVl
-IGlzIGR5aW5nIGFuZCB0aGUgUkVRX05PV0FJVA0KICAgIGZsYWcgaGFzIGJlZW4gcGFzc2VkIHRv
-IGdldF9yZXF1ZXN0KCkuIEF2b2lkIHRoYXQgdGhlIGtlcm5lbA0KICAgIHJlcG9ydHMgc29mdCBs
-b2NrdXAgY29tcGxhaW50cyBpbiB0aGlzIGNhc2UgZHVlIHRvIGNvbnRpbnVvdXMNCiAgICByZXF1
-ZXVpbmcgYWN0aXZpdHkuDQogICAgDQogICAgRml4ZXM6IDcwODNhYmJiZiAoImRtIG1wYXRoOiBh
-dm9pZCB0aGF0IHBhdGggcmVtb3ZhbCBjYW4gdHJpZ2dlciBhbiBpbmZpbml0ZSBsb29wIikNCiAg
-ICBDYzogc3RhYmxlQHZnZXIua2VybmVsLm9yZw0KICAgIFNpZ25lZC1vZmYtYnk6IEJhcnQgVmFu
-IEFzc2NoZSA8YmFydC52YW5hc3NjaGVAd2RjLmNvbT4NCiAgICBUZXN0ZWQtYnk6IExhdXJlbmNl
-IE9iZXJtYW4gPGxvYmVybWFuQHJlZGhhdC5jb20+DQogICAgUmV2aWV3ZWQtYnk6IENocmlzdG9w
-aCBIZWxsd2lnIDxoY2hAbHN0LmRlPg0KICAgIFNpZ25lZC1vZmYtYnk6IE1pa2UgU25pdHplciA8
-c25pdHplckByZWRoYXQuY29tPg==
+T24gU2F0LCAyMDE3LTA5LTE2IGF0IDAwOjQ0ICswODAwLCBNaW5nIExlaSB3cm90ZToNCj4gSWYg
+LnF1ZXVlX3JxKCkgcmV0dXJucyBCTEtfU1RTX1JFU09VUkNFLCBibGstbXEgd2lsbCByZXJ1bg0K
+PiB0aGUgcXVldWUgaW4gdGhlIHRocmVlIHNpdHVhdGlvbnM6DQo+IA0KPiAxKSBpZiBCTEtfTVFf
+U19TQ0hFRF9SRVNUQVJUIGlzIHNldA0KPiAtIHF1ZXVlIGlzIHJlcnVuIGFmdGVyIG9uZSBycSBp
+cyBjb21wbGV0ZWQsIHNlZSBibGtfbXFfc2NoZWRfcmVzdGFydCgpDQo+IHdoaWNoIGlzIHJ1biBm
+cm9tIGJsa19tcV9mcmVlX3JlcXVlc3QoKQ0KPiANCj4gMikgQkxLX01RX1NfVEFHX1dBSVRJTkcg
+aXMgc2V0DQo+IC0gcXVldWUgaXMgcmVydW4gYWZ0ZXIgb25lIHRhZyBpcyBmcmVlZA0KPiANCj4g
+Mykgb3RoZXJ3aXNlDQo+IC0gcXVldWUgaXMgcnVuIGltbWVkaWF0ZWx5IGluIGJsa19tcV9kaXNw
+YXRjaF9ycV9saXN0KCkNCj4gDQo+IFNvIGNhbGxpbmcgYmxrX21xX2RlbGF5X3J1bl9od19xdWV1
+ZSgpIGluc2lkZSAucXVldWVfcnEoKSBkb2Vzbid0IG1ha2UNCj4gc2Vuc2UgYmVjYXVzZSBubyBt
+YXR0ZXIgaXQgaXMgY2FsbGVkIG9yIG5vdCwgdGhlIHF1ZXVlIHN0aWxsIHdpbGwgYmUNCj4gcmVy
+dW4gc29vbiBpbiBhYm92ZSB0aHJlZSBzaXR1YXRpb25zLCBhbmQgdGhlIGJ1c3kgcmVxIGNhbiBi
+ZSBkaXNwYXRjaGVkDQo+IGFnYWluLg0KDQpOQUsNCg0KQmxvY2sgZHJpdmVycyBjYWxsIGJsa19t
+cV9kZWxheV9ydW5faHdfcXVldWUoKSBpZiBpdCBpcyBrbm93biB0aGF0IHRoZSBxdWV1ZQ0KaGFz
+IHRvIGJlIHJlcnVuIGxhdGVyIGV2ZW4gaWYgbm8gcmVxdWVzdCBoYXMgY29tcGxldGVkIGJlZm9y
+ZSB0aGUgZGVsYXkgaGFzDQpleHBpcmVkLiBUaGlzIHBhdGNoIGJyZWFrcyBhdCBsZWFzdCB0aGUg
+U0NTSSBjb3JlIGFuZCB0aGUgZG0tbXBhdGggZHJpdmVycy4NCg0KQmFydC4=
