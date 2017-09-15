@@ -1,18 +1,15 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 21/31] 11-dm-mpath.rules: Remember
-	DM_ACTIVATION
-Date: Fri, 15 Sep 2017 15:40:32 -0500
-Message-ID: <20170915204032.GS3145@octiron.msp.redhat.com>
-References: <20170902223900.7339-1-mwilck@suse.com>
-	<20170902223900.7339-22-mwilck@suse.com>
-	<20170913211942.GN3145@octiron.msp.redhat.com>
-	<1505394403.4493.17.camel@suse.com>
+Subject: Re: [PATCH v2 4/4] multipath: delegate dangerous
+ commands to multipathd
+Date: Fri, 15 Sep 2017 16:47:55 -0500
+Message-ID: <20170915214755.GU3145@octiron.msp.redhat.com>
+References: <20170914194926.17522-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1505394403.4493.17.camel@suse.com>
+In-Reply-To: <20170914194926.17522-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,100 +23,121 @@ To: Martin Wilck <mwilck@suse.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Sep 14, 2017 at 03:06:43PM +0200, Martin Wilck wrote:
-> Hi Ben,
-> =
+On Thu, Sep 14, 2017 at 09:49:26PM +0200, Martin Wilck wrote:
+> Some multipath commands are dangerous to run while multipathd is running.
+> For example, "multipath -r" may apply a modified configuration to the kernel,
+> while multipathd is still using the old configuration, leading to
+> inconsistent state between multipathd and the kernel.
+> 
+> It is safer to use equivalent multipathd client commands instead.
+> For now, do this only for "multipath -r", but other invocations
+> may be added in the future. Perhaps some day, all "multipath"
+> commands will be mapped to multipathd actions.
+> 
+> Note that with delegation, "multipath -r" will not produce any
+> terminal output, so this may affect users who capture "multipath -r"
+> output for parsing it. It would be very hard to produce compatible output
+> to the normal multipath command for different verbosity levels. I
+> considered running "show topology" after "reconfigure", but the output
+> would have slightly different format and would only match -v2, anyway.
+> 
+> I plan to convert more multipath commands, but that needs some more
+> thought. Some additional multipathd client commands need to be
+> implemented first.
+> 
+> Changes wrt v2:
+>  - use libmpathcmd rather than exec'ing multipathd (Ben Marzinski)
+>  - pass more parameters from main program, preparing for other commands
+> 
 
-> On Wed, 2017-09-13 at 16:19 -0500, Benjamin Marzinski wrote:
-> > On Sun, Sep 03, 2017 at 12:38:50AM +0200, Martin Wilck wrote:
-> > > If DM_ACTIVATION is set by the general dm rules, we need to
-> > > bring up this device. But if the mpath device is not ready,
-> > > that would be dangerous; it could hang or produce lots of IO
-> > > errors. So remember this state, and try to activate when the
-> > > map becomes usable later.
-> > =
-
-> > NAK. See reasons in
-> > =
-
-> > [PATCH 20/31] 11-dm-mpath.rules: don't set READY->ACTIVATION
-> =
-
-> Sorry for being slow. Re-reading this, I don't understand any more why
-> your valid argument against 20/31 invalidates this one as well. 21/31
-> affects only the case MPATH_DEVICE_READY!=3D0, in which case it will add
-> another case where DM_ACTIVATION is set.
-
-If we are always setting DM_ACTIVATION when MPATH_DEVICE_READY changes
-from zero to non-zero, we don't need to remember that we had to disable
-DM_ACTIVATION when the device wasn't ready, and make sure to set it
-now, because we are always setting it when we change to a device ready
-state... right?
+ACK
 
 -Ben
 
-> =
-
-> Regards
-> Martin
-> =
-
-> > =
-
-> > -Ben
-> > =
-
-> > > =
-
-> > > Signed-off-by: Martin Wilck <mwilck@suse.com>
-> > > ---
-> > >  multipath/11-dm-mpath.rules | 8 ++++++++
-> > >  1 file changed, 8 insertions(+)
-> > > =
-
-> > > diff --git a/multipath/11-dm-mpath.rules b/multipath/11-dm-
-> > > mpath.rules
-> > > index 3f47744f..9bfd75f8 100644
-> > > --- a/multipath/11-dm-mpath.rules
-> > > +++ b/multipath/11-dm-mpath.rules
-> > > @@ -4,6 +4,7 @@ ENV{DM_UUID}!=3D"mpath-?*", GOTO=3D"mpath_end"
-> > >  =
-
-> > >  IMPORT{db}=3D"DM_DISABLE_OTHER_RULES_FLAG_OLD"
-> > >  IMPORT{db}=3D"MPATH_DEVICE_READY"
-> > > +IMPORT{db}=3D"MPATH_NEEDS_ACTIVATION"
-> > >  =
-
-> > >  # If this uevent didn't come from dm, don't try to update the
-> > >  # device state
-> > > @@ -55,6 +56,13 @@ ENV{DM_SUBSYSTEM_UDEV_FLAG0}=3D=3D"1",
-> > > ENV{DM_ACTIVATION}=3D"0"
-> > >  # We'd like to avoid this, especially within udev processing.
-> > >  ENV{MPATH_DEVICE_READY}=3D=3D"0", ENV{DM_NOSCAN}=3D"1"
-> > >  =
-
-> > > +# If DM_ACTIVATION is set, but can't be satisfied, remember it
-> > > +# in MPATH_NEEDS_ACTIVATION, and activate at the next opportunity.
-> > > +ENV{MPATH_DEVICE_READY}=3D=3D"0", ENV{DM_ACTIVATION}=3D=3D"1", \
-> > > +	ENV{MPATH_NEEDS_ACTIVATION}=3D"1", ENV{DM_ACTIVATION}=3D"0"
-> > > +ENV{MPATH_DEVICE_READY}!=3D"0", ENV{MPATH_NEEDS_ACTIVATION}=3D=3D"1"=
-, \
-> > > +	ENV{DM_ACTIVATION}=3D"1", ENV{MPATH_NEEDS_ACTIVATION}=3D""
-> > > +
-> > >  # Also skip all foreign rules if no path is available.
-> > >  # Remember the original value of DM_DISABLE_OTHER_RULES_FLAG
-> > >  # and restore it back once we have at least one path available.
-> > > -- =
-
-> > > 2.14.0
-> > =
-
-> > =
-
-> =
-
-> -- =
-
-> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-> SUSE Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
-> HRB 21284 (AG N=FCrnberg)
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  multipath/main.c | 62 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+>  1 file changed, 62 insertions(+)
+> 
+> diff --git a/multipath/main.c b/multipath/main.c
+> index dede017e9202..48a75b6855d9 100644
+> --- a/multipath/main.c
+> +++ b/multipath/main.c
+> @@ -502,6 +502,64 @@ get_dev_type(char *dev) {
+>  	return DEV_NONE;
+>  }
+>  
+> +/*
+> + * Some multipath commands are dangerous to run while multipathd is running.
+> + * For example, "multipath -r" may apply a modified configuration to the kernel,
+> + * while multipathd is still using the old configuration, leading to
+> + * inconsistent state.
+> + *
+> + * It is safer to use equivalent multipathd client commands instead.
+> + */
+> +int delegate_to_multipathd(enum mpath_cmds cmd, const char *dev,
+> +			   enum devtypes dev_type, const struct config *conf)
+> +{
+> +	int fd;
+> +	char command[1024], *p, *reply;
+> +	int n, r = 0;
+> +
+> +	fd = mpath_connect();
+> +	if (fd == -1)
+> +		return 0;
+> +
+> +	p = command;
+> +	*p = '\0';
+> +	n = sizeof(command);
+> +
+> +	if (cmd == CMD_CREATE && conf->force_reload == FORCE_RELOAD_YES) {
+> +		p += snprintf(p, n, "reconfigure");
+> +	}
+> +	/* Add other translations here */
+> +
+> +	if (strlen(command) == 0)
+> +		/* No command found, no need to delegate */
+> +		return 0;
+> +	else if (p >= command + sizeof(command)) {
+> +		condlog(0, "internal error - command buffer overflow");
+> +		r = -1;
+> +		goto out;
+> +	}
+> +
+> +	condlog(3, "delegating command to multipathd");
+> +	r = mpath_process_cmd(fd, command, &reply, conf->uxsock_timeout);
+> +
+> +	if (r == -1) {
+> +		condlog(1, "error in multipath command %s: %s",
+> +			command, strerror(errno));
+> +		goto out;
+> +	}
+> +
+> +	if (reply != NULL && *reply != '\0' && strcmp(reply, "ok\n"))
+> +		printf("%s", reply);
+> +	r = 1;
+> +
+> +out:
+> +	FREE(reply);
+> +	close(fd);
+> +	if (r < 0)
+> +		exit(1);
+> +	return r;
+> +}
+> +
+>  int
+>  main (int argc, char *argv[])
+>  {
+> @@ -699,6 +757,10 @@ main (int argc, char *argv[])
+>  		condlog(0, "the -w option requires a device");
+>  		goto out;
+>  	}
+> +
+> +	if (delegate_to_multipathd(cmd, dev, dev_type, conf))
+> +		exit(0);
+> +
+>  	if (cmd == CMD_RESET_WWIDS) {
+>  		struct multipath * mpp;
+>  		int i;
+> -- 
+> 2.14.0
