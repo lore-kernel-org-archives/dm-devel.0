@@ -1,14 +1,13 @@
 From: Guan Junxiong <guanjunxiong@huawei.com>
-Subject: Re: [PATCH 1/4] discovery: sanitize NVMe discovery
-Date: Fri, 15 Sep 2017 18:00:01 +0800
-Message-ID: <b7d83b8e-f46d-3281-f572-6c9551e25fca@huawei.com>
+Subject: Re: [PATCH 0/4] NVMe path failover update
+Date: Fri, 15 Sep 2017 17:59:55 +0800
+Message-ID: <e965897d-c403-f5f5-d6f2-c2c428baa68e@huawei.com>
 References: <1505457030-119611-1-git-send-email-hare@suse.de>
-	<1505457030-119611-2-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1505457030-119611-2-git-send-email-hare@suse.de>
+In-Reply-To: <1505457030-119611-1-git-send-email-hare@suse.de>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -19,38 +18,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>, Christophe Varoqui <christophe.varoqui@opensvc.com>
+To: Hannes Reinecke <hare@suse.de>
 Cc: dm-devel@redhat.com, niuhaoxin <niuhaoxin@huawei.com>, "Shenhong (C)" <shenhong09@huawei.com>
 List-Id: dm-devel.ids
+
+Hi Hannes,
+
+Thanks for improving DM-multipath over NVMe.  Please find my comment.
+
+Cheers
+Guan Junxiong
 
 
 
 On 2017/9/15 14:30, Hannes Reinecke wrote:
-> Bring the output of NVMe discovery inline with the other transports,
-> and set the sg_id mappings to avoid ugly '#' outputs.
+> Hi all,
 > 
-> Signed-off-by: Hannes Reinecke <hare@suse.com>
-> ---
+> the current NVMe support is fairly rudimentary, and we've had reports
+> about spurious path failures under high load.
+> Which is a bit disappointing, seeing that high load is exactly what
+> NVMe is about ...
+> So here's a patchset to clean up the situation somewhat.
+> In particular:
+> - I've fixed up the discovery to fall in line with the other transports,
+>   like filling out the sg_id fields (so that we're not greeted with weird
+>   hashes in the topology output)
 
-> -	}
-> -	if (!nvme)
-> +	if (sscanf(attr_path, "nvme%dn%d",
-> +		   &pp->sg_id.host_no,
-> +		   &pp->sg_id.scsi_id) != 2)
-> +		return 1;
-> +	pp->sg_id.channel = 0;
-> +	pp->sg_id.lun = 0;
-> +
-
-
-As seen in PATCH0/4, it's better to use nvme_id fields which shows the true
-topology of NVMe/NVMf storage something like this: host NQN ->portid->subsytem NQN ->
-controller ID ->namespace id .
-The NQN is too long may be we could select the last few bytes.
-
-However, your current method looks fine. And some suggestions:
-
-(1)How about assigning sg_id.channel to controller id of target (seen in the
-/sys/class/nvme/nvme0/nvme0n1/device/cntlid)
-(2)And assigning sg_id.lun to namespace ID of target(seen in the
-:/sys/class/nvme/nvme0/nvme0n1/nsid)
+Great, that is something I want to touch.  IMO, it's better to use a union
+fields such as nvme_id fields which shows the true topology of NVMe/NVMf storage
+such as: host NQN ->portid->subsytem NQN ->controller ID ->namespace id .
