@@ -1,7 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: libmultipath: add pthread_cleanup hook for udev monitor
-Date: Fri, 15 Sep 2017 08:14:30 +0200
-Message-ID: <1505456070-116960-1-git-send-email-hare@suse.de>
+Subject: [PATCH] libmultipath: sanitize fd handling
+Date: Fri, 15 Sep 2017 08:15:12 +0200
+Message-ID: <1505456112-117105-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -19,50 +19,50 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Hannes Reinecke <hare@suse.com>
 List-Id: dm-devel.ids
 
-The udev monitor from uevent_listen() needs to be cleaned up from
-a pthread cleanup hook.
-Valgrind complained here.
+One should remember that '0' _is_ a valid fd, so we need to set
+the fd to '-1' upon allocating the path structure and ensure we're
+checking for a value _smaller_ than 0 to detect an invalid fd.
 
 Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- libmultipath/uevent.c | 11 ++++++++++-
- 1 file changed, 10 insertions(+), 1 deletion(-)
+ libmultipath/checkers.c | 4 ++--
+ libmultipath/print.c    | 2 +-
+ 2 files changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
-index eb44da56..8b511eb2 100644
---- a/libmultipath/uevent.c
-+++ b/libmultipath/uevent.c
-@@ -361,6 +361,14 @@ static void uevent_cleanup(void *arg)
- 	udev_unref(udev);
- }
- 
-+static void monitor_cleanup(void *arg)
-+{
-+	struct udev_monitor *monitor = arg;
-+
-+	condlog(3, "Releasing uevent_monitor() resources");
-+	udev_monitor_unref(monitor);
-+}
-+
- /*
-  * Service the uevent queue.
-  */
-@@ -749,6 +757,7 @@ int uevent_listen(struct udev *udev)
- 		condlog(2, "failed to create udev monitor");
+diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
+index 05e024f8..c32f7274 100644
+--- a/libmultipath/checkers.c
++++ b/libmultipath/checkers.c
+@@ -146,7 +146,7 @@ struct checker * add_checker (char *multipath_dir, char * name)
+ 	if (!c->repair)
  		goto out;
+ 
+-	c->fd = 0;
++	c->fd = -1;
+ 	c->sync = 1;
+ 	list_add(&c->node, &checkers);
+ 	return c;
+@@ -237,7 +237,7 @@ int checker_check (struct checker * c)
+ 		MSG(c, "checker disabled");
+ 		return PATH_UNCHECKED;
  	}
-+	pthread_cleanup_push(monitor_cleanup, monitor);
- #ifdef LIBUDEV_API_RECVBUF
- 	if (udev_monitor_set_receive_buffer_size(monitor, 128 * 1024 * 1024))
- 		condlog(2, "failed to increase buffer size");
-@@ -834,7 +843,7 @@ int uevent_listen(struct udev *udev)
- 	need_failback = 0;
- out:
- 	if (monitor)
--		udev_monitor_unref(monitor);
-+		pthread_cleanup_pop(1);
- 	if (need_failback)
- 		err = failback_listen();
- 	pthread_cleanup_pop(1);
+-	if (c->fd <= 0) {
++	if (c->fd < 0) {
+ 		MSG(c, "no usable fd");
+ 		return PATH_WILD;
+ 	}
+diff --git a/libmultipath/print.c b/libmultipath/print.c
+index 95dff90b..65a98247 100644
+--- a/libmultipath/print.c
++++ b/libmultipath/print.c
+@@ -1677,7 +1677,7 @@ int snprint_status(char *buff, int len, struct vectors *vecs)
+ 	int monitored_count = 0;
+ 
+ 	vector_foreach_slot(vecs->pathvec, pp, i)
+-		if (pp->fd != -1)
++		if (pp->fd >= 0)
+ 			monitored_count++;
+ 	fwd += snprintf(buff + fwd, len - fwd, "\npaths: %d\nbusy: %s\n",
+ 			monitored_count, is_uevent_busy()? "True" : "False");
 -- 
 2.12.0
