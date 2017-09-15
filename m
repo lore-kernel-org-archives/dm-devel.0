@@ -1,15 +1,15 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 1/4] discovery: sanitize NVMe discovery
-Date: Fri, 15 Sep 2017 13:08:09 +0200
-Message-ID: <87b38491-9fd7-736c-129e-1d38c5a68ee8@suse.de>
+From: Guan Junxiong <guanjunxiong@huawei.com>
+Subject: Re: [PATCH 4/4] hwtable: set 'none' as default checker
+ for NVMe
+Date: Fri, 15 Sep 2017 18:00:32 +0800
+Message-ID: <cca18089-49ea-506d-bc9a-00160827e2d3@huawei.com>
 References: <1505457030-119611-1-git-send-email-hare@suse.de>
-	<1505457030-119611-2-git-send-email-hare@suse.de>
-	<b7d83b8e-f46d-3281-f572-6c9551e25fca@huawei.com>
+	<1505457030-119611-5-git-send-email-hare@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <b7d83b8e-f46d-3281-f572-6c9551e25fca@huawei.com>
+In-Reply-To: <1505457030-119611-5-git-send-email-hare@suse.de>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -20,35 +20,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Guan Junxiong <guanjunxiong@huawei.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
+To: Hannes Reinecke <hare@suse.de>, Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, niuhaoxin <niuhaoxin@huawei.com>, "Shenhong (C)" <shenhong09@huawei.com>
 List-Id: dm-devel.ids
 
-T24gMDkvMTUvMjAxNyAxMjowMCBQTSwgR3VhbiBKdW54aW9uZyB3cm90ZToKPiAKPiAKPiBPbiAy
-MDE3LzkvMTUgMTQ6MzAsIEhhbm5lcyBSZWluZWNrZSB3cm90ZToKPj4gQnJpbmcgdGhlIG91dHB1
-dCBvZiBOVk1lIGRpc2NvdmVyeSBpbmxpbmUgd2l0aCB0aGUgb3RoZXIgdHJhbnNwb3J0cywKPj4g
-YW5kIHNldCB0aGUgc2dfaWQgbWFwcGluZ3MgdG8gYXZvaWQgdWdseSAnIycgb3V0cHV0cy4KPj4K
-Pj4gU2lnbmVkLW9mZi1ieTogSGFubmVzIFJlaW5lY2tlIDxoYXJlQHN1c2UuY29tPgo+PiAtLS0K
-PiAKPj4gLQl9Cj4+IC0JaWYgKCFudm1lKQo+PiArCWlmIChzc2NhbmYoYXR0cl9wYXRoLCAibnZt
-ZSVkbiVkIiwKPj4gKwkJICAgJnBwLT5zZ19pZC5ob3N0X25vLAo+PiArCQkgICAmcHAtPnNnX2lk
-LnNjc2lfaWQpICE9IDIpCj4+ICsJCXJldHVybiAxOwo+PiArCXBwLT5zZ19pZC5jaGFubmVsID0g
-MDsKPj4gKwlwcC0+c2dfaWQubHVuID0gMDsKPj4gKwo+IAo+IAo+IEFzIHNlZW4gaW4gUEFUQ0gw
-LzQsIGl0J3MgYmV0dGVyIHRvIHVzZSBudm1lX2lkIGZpZWxkcyB3aGljaCBzaG93cyB0aGUgdHJ1
-ZQo+IHRvcG9sb2d5IG9mIE5WTWUvTlZNZiBzdG9yYWdlIHNvbWV0aGluZyBsaWtlIHRoaXM6IGhv
-c3QgTlFOIC0+cG9ydGlkLT5zdWJzeXRlbSBOUU4gLT4KPiBjb250cm9sbGVyIElEIC0+bmFtZXNw
-YWNlIGlkIC4KPiBUaGUgTlFOIGlzIHRvbyBsb25nIG1heSBiZSB3ZSBjb3VsZCBzZWxlY3QgdGhl
-IGxhc3QgZmV3IGJ5dGVzLgo+IAo+IEhvd2V2ZXIsIHlvdXIgY3VycmVudCBtZXRob2QgbG9va3Mg
-ZmluZS4gQW5kIHNvbWUgc3VnZ2VzdGlvbnM6Cj4gCj4gKDEpSG93IGFib3V0IGFzc2lnbmluZyBz
-Z19pZC5jaGFubmVsIHRvIGNvbnRyb2xsZXIgaWQgb2YgdGFyZ2V0IChzZWVuIGluIHRoZQo+IC9z
-eXMvY2xhc3MvbnZtZS9udm1lMC9udm1lMG4xL2RldmljZS9jbnRsaWQpCj4gKDIpQW5kIGFzc2ln
-bmluZyBzZ19pZC5sdW4gdG8gbmFtZXNwYWNlIElEIG9mIHRhcmdldChzZWVuIGluIHRoZQo+IDov
-c3lzL2NsYXNzL252bWUvbnZtZTAvbnZtZTBuMS9uc2lkKQo+IApTdXJlLCBnb29kIGlkZWEuIFRo
-ZSBhYm92ZSBwYXRjaCB3YXMganVzdCBhIHN0b3AtZ2FwIG1lYXN1cmUgdG8gZ2V0IHJpZApvZiB0
-aGUgJyMnIGluIHRoZSB0b3BvbG9neSBvdXRwdXQuCgpXaWxsIGJlIHVwZGF0aW5nIHRoZSBwYXRj
-aC4KCkNoZWVycywKCkhhbm5lcwotLSAKRHIuIEhhbm5lcyBSZWluZWNrZQkJICAgVGVhbWxlYWQg
-U3RvcmFnZSAmIE5ldHdvcmtpbmcKaGFyZUBzdXNlLmRlCQkJICAgICAgICAgICAgICAgKzQ5IDkx
-MSA3NDA1MyA2ODgKU1VTRSBMSU5VWCBHbWJILCBNYXhmZWxkc3RyLiA1LCA5MDQwOSBOw7xybmJl
-cmcKR0Y6IEYuIEltZW5kw7ZyZmZlciwgSi4gU21pdGhhcmQsIEouIEd1aWxkLCBELiBVcG1hbnl1
-LCBHLiBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5n
-IGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4v
-bGlzdGluZm8vZG0tZGV2ZWw=
+Looks good.
+
+Reviewed-by: Guan Junxiong <guanjunxiong@huawei.com>
+
+
+On 2017/9/15 14:30, Hannes Reinecke wrote:
+> We shouldn't be using the directio checker for NVMe, as this might
+> cause spurious path failures under high load.
+> As the 'state' attribute provides reliable information about the link
+> status it's sufficient to just check this and don't call any
+> path checkers.
+> 
+> Signed-off-by: Hannes Reinecke <hare@suse.com>
+> ---
+>  libmultipath/hwtable.c | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+> 
+> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+> index 9e14ec1..9ac09ff 100644
+> --- a/libmultipath/hwtable.c
+> +++ b/libmultipath/hwtable.c
+> @@ -1113,7 +1113,7 @@ static struct hwentry default_hw[] = {
+>  		.vendor        = "NVME",
+>  		.product       = ".*",
+>  		.uid_attribute = "ID_WWN",
+> -		.checker_name  = DIRECTIO,
+> +		.checker_name  = NONE,
+>  		.retain_hwhandler = RETAIN_HWHANDLER_OFF,
+>  	},
+>  	/*
+> 
