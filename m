@@ -1,15 +1,11 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 31/31] kpartx.rules: move symlink code to
-	other files
-Date: Thu, 14 Sep 2017 22:00:10 +0200
-Message-ID: <20170914200010.19129-2-mwilck@suse.com>
-References: <20170913212858.GQ3145@octiron.msp.redhat.com>
-	<20170914200010.19129-1-mwilck@suse.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: libmultipath: add pthread_cleanup hook for udev monitor
+Date: Fri, 15 Sep 2017 08:14:30 +0200
+Message-ID: <1505456070-116960-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170914200010.19129-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,194 +15,54 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: dm-devel@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: dm-devel@redhat.com, Hannes Reinecke <hare@suse.com>
 List-Id: dm-devel.ids
 
-Current kpartx.rules combines two purposes: setting properties and
-creating symlinks for dm partition devices, and creating such
-partition devices on top of other devices. This is contrary to
-common conventions for udev rules files.
+The udev monitor from uevent_listen() needs to be cleaned up from
+a pthread cleanup hook.
+Valgrind complained here.
 
-This patch moves the code for properties and symlinks into other
-files. The code that generates symlinks for multipath maps is moved
-to 11-dm-mpath.rules, and for partitions we introduce a new file
-11-dm-parts.rules. Necessarily this results in minor code duplication.
-OTOH quite some code is removed because the properties are now set
-before 13-dm-disk.rules runs, so we can rely on the latter to create
-the symlinks.
-
-The reason I put this last in the series is that it will possibly
-require changes in other packages, notably dracut, in order to make
-sure partitions mappings are cleanly set up during boot.
-
-Signed-off-by: Martin Wilck <mwilck@suse.com>
+Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- kpartx/Makefile             |  2 ++
- kpartx/dm-parts.rules       | 39 +++++++++++++++++++++++++++++++++++++++
- kpartx/kpartx.rules         | 44 --------------------------------------------
- multipath/11-dm-mpath.rules | 22 +++++++++++++++++++++-
- 4 files changed, 62 insertions(+), 45 deletions(-)
- create mode 100644 kpartx/dm-parts.rules
+ libmultipath/uevent.c | 11 ++++++++++-
+ 1 file changed, 10 insertions(+), 1 deletion(-)
 
-diff --git a/kpartx/Makefile b/kpartx/Makefile
-index da1e1fbddce5..bf7362d95efd 100644
---- a/kpartx/Makefile
-+++ b/kpartx/Makefile
-@@ -29,6 +29,7 @@ install: $(EXEC) $(EXEC).8
- 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(libudevdir)
- 	$(INSTALL_PROGRAM) -m 755 kpartx_id $(DESTDIR)$(libudevdir)
- 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(libudevdir)/rules.d
-+	$(INSTALL_PROGRAM) -m 644 dm-parts.rules $(DESTDIR)$(libudevdir)/rules.d/11-dm-parts.rules
- 	$(INSTALL_PROGRAM) -m 644 kpartx.rules $(DESTDIR)$(libudevdir)/rules.d/66-kpartx.rules
- 	$(INSTALL_PROGRAM) -m 644 del-part-nodes.rules $(DESTDIR)$(libudevdir)/rules.d/68-del-part-nodes.rules
- 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(man8dir)
-@@ -38,6 +39,7 @@ uninstall:
- 	$(RM) $(DESTDIR)$(bindir)/$(EXEC)
- 	$(RM) $(DESTDIR)$(man8dir)/$(EXEC).8.gz
- 	$(RM) $(DESTDIR)$(libudevdir)/kpartx_id
-+	$(RM) $(DESTDIR)$(libudevdir)/rules.d/11-dm-parts.rules
- 	$(RM) $(DESTDIR)$(libudevdir)/rules.d/66-kpartx.rules
- 	$(RM) $(DESTDIR)$(libudevdir)/rules.d/67-kpartx-compat.rules
- 	$(RM) $(DESTDIR)$(libudevdir)/rules.d/68-del-part-nodes.rules
-diff --git a/kpartx/dm-parts.rules b/kpartx/dm-parts.rules
-new file mode 100644
-index 000000000000..235642fd9ae3
---- /dev/null
-+++ b/kpartx/dm-parts.rules
-@@ -0,0 +1,39 @@
-+# Rules for partitions created by kpartx
-+
-+KERNEL!="dm-*", GOTO="dm_parts_end"
-+ACTION!="add|change", GOTO="dm_parts_end"
-+ENV{DM_UUID}!="part[0-9]*", GOTO="dm_parts_end"
-+
-+# We must take care that symlinks don't get lost,
-+# even if blkid fails in 13-dm-disk.rules later.
-+#
-+# Fixme: we have currently no way to avoid calling blkid on
-+# partitions of broken mpath maps such as DM_NOSCAN.
-+# But when partition devices appear, kpartx has likely read
-+# the partition table shortly before, so odds are not bad
-+# that blkid will also succeed.
-+
-+IMPORT{db}="ID_FS_USAGE"
-+IMPORT{db}="ID_FS_UUID_ENC"
-+IMPORT{db}="ID_FS_LABEL_ENC"
-+IMPORT{db}="ID_PART_ENTRY_NAME"
-+IMPORT{db}="ID_PART_ENTRY_UUID"
-+IMPORT{db}="ID_PART_ENTRY_SCHEME"
-+
-+# Maps should take precedence over their members.
-+ENV{DM_UDEV_LOW_PRIORITY_FLAG}!="1", OPTIONS+="link_priority=50"
-+
-+# Set some additional symlinks that typically exist for mpath
-+# path members, too, and should be overridden.
-+#
-+# kpartx_id is very robust, it works for suspended maps and maps
-+# with 0 dependencies. It sets DM_TYPE, DM_PART, DM_WWN
-+IMPORT{program}=="kpartx_id %M %m $env{DM_UUID}"
-+
-+# DM_TYPE only has a reasonable value for partitions on multipath.
-+ENV{DM_UUID}=="*-mpath-*", ENV{DM_TYPE}=="?*" \
-+	SYMLINK+="disk/by-id/$env{DM_TYPE}-$env{DM_NAME}"
-+ENV{DM_WWN}=="?*", ENV{DM_PART}=="?*", \
-+	SYMLINK+="disk/by-id/wwn-$env{DM_WWN}-part$env{DM_PART}"
-+
-+LABEL="dm_parts_end"
-diff --git a/kpartx/kpartx.rules b/kpartx/kpartx.rules
-index 1cbe94298081..8f9904945f6a 100644
---- a/kpartx/kpartx.rules
-+++ b/kpartx/kpartx.rules
-@@ -8,50 +8,6 @@ KERNEL!="dm-*", GOTO="kpartx_end"
- ACTION!="add|change", GOTO="kpartx_end"
- ENV{DM_UUID}!="?*", GOTO="kpartx_end"
+diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
+index eb44da56..8b511eb2 100644
+--- a/libmultipath/uevent.c
++++ b/libmultipath/uevent.c
+@@ -361,6 +361,14 @@ static void uevent_cleanup(void *arg)
+ 	udev_unref(udev);
+ }
  
--# kpartx_id is very robust, it works for suspended maps and maps
--# with 0 dependencies
--IMPORT{program}=="kpartx_id %M %m $env{DM_UUID}"
--
--ENV{DM_UDEV_LOW_PRIORITY_FLAG}!="1", OPTIONS+="link_priority=50"
--
--ENV{DM_UUID}=="*mpath-*", ENV{DM_TYPE}=="?*" \
--	SYMLINK+="disk/by-id/$env{DM_TYPE}-$env{DM_NAME}"
--
--# Create persistent links for multipath tables
--ENV{DM_WWN}=="?*", ENV{DM_PART}!="?*", \
--	SYMLINK+="disk/by-id/wwn-$env{DM_WWN}"
--
--# Create persistent links for partitions
--ENV{DM_WWN}=="?*", ENV{DM_PART}=="?*", \
--	SYMLINK+="disk/by-id/wwn-$env{DM_WWN}-part$env{DM_PART}"
--
--# Create persistent by-label/by-uuid links.
--# multipath maps with DM_NOSCAN!=1 are handled in 13-dm-disk.rules.
--DM_UUID=="mpath-*", ENV{DM_NOSCAN}!="1", GOTO="symlink_end"
--
--# For partitions, we don't have DM_NOSCAN.
--# Simply load variables from db if they aren't set.
--# 11-dm-mpath.rules does this for mpath maps.
--# Fixme: we have currently no way to avoid calling blkid on
--# partitions of broken mpath maps.
--ENV{DM_UUID}!="part*-*-*", GOTO="import_end"
--ENV{ID_FS_USAGE}!="?*", IMPORT{db}="ID_FS_USAGE"
--ENV{ID_FS_UUID_ENC}!="?*", IMPORT{db}="ID_FS_UUID_ENC"
--ENV{ID_FS_LABEL_ENC}!="?*", IMPORT{db}="ID_FS_LABEL_ENC"
--ENV{ID_PART_ENTRY_NAME}!="?*", IMPORT{db}="ID_PART_ENTRY_NAME"
--ENV{ID_PART_ENTRY_UUID}!="?*", IMPORT{db}="ID_PART_ENTRY_UUID"
--ENV{ID_PART_ENTRY_SCHEME}!="?*", IMPORT{db}="ID_PART_ENTRY_SCHEME"
--LABEL="import_end"
--
--ENV{ID_FS_USAGE}=="filesystem|other|crypto", ENV{ID_FS_UUID_ENC}=="?*", \
--       SYMLINK+="disk/by-uuid/$env{ID_FS_UUID_ENC}"
--ENV{ID_FS_USAGE}=="filesystem|other", ENV{ID_FS_LABEL_ENC}=="?*", \
--       SYMLINK+="disk/by-label/$env{ID_FS_LABEL_ENC}"
--ENV{ID_PART_ENTRY_UUID}=="?*", SYMLINK+="disk/by-partuuid/$env{ID_PART_ENTRY_UUID}"
--ENV{ID_PART_ENTRY_SCHEME}=="gpt", ENV{ID_PART_ENTRY_NAME}=="?*", \
--       SYMLINK+="disk/by-partlabel/$env{ID_PART_ENTRY_NAME}"
--LABEL="symlink_end"
--
- # Create dm tables for partitions on multipath devices.
- ENV{DM_UUID}!="mpath-?*", GOTO="mpath_kpartx_end"
- 
-diff --git a/multipath/11-dm-mpath.rules b/multipath/11-dm-mpath.rules
-index 4a3f646d264d..132a92345cdc 100644
---- a/multipath/11-dm-mpath.rules
-+++ b/multipath/11-dm-mpath.rules
-@@ -80,8 +80,12 @@ ENV{MPATH_DEVICE_READY}!="0", ENV{.MPATH_DEVICE_READY_OLD}=="0",\
- 	ENV{DM_UDEV_DISABLE_OTHER_RULES_FLAG}="$env{DM_DISABLE_OTHER_RULES_FLAG_OLD}",\
- 	ENV{DM_DISABLE_OTHER_RULES_FLAG_OLD}=""
- 
-+# The code to check multipath state ends here. We need to set
-+# properties and symlinks regardless whether the map is usable or
-+# not. If symlinks get lost, systemd may auto-unmount file systems.
++static void monitor_cleanup(void *arg)
++{
++	struct udev_monitor *monitor = arg;
 +
- LABEL="scan_import"
--ENV{DM_NOSCAN}!="1", GOTO="mpath_end"
-+ENV{DM_NOSCAN}!="1", GOTO="import_end"
- IMPORT{db}="ID_FS_TYPE"
- IMPORT{db}="ID_FS_USAGE"
- IMPORT{db}="ID_FS_UUID"
-@@ -90,4 +94,20 @@ IMPORT{db}="ID_FS_LABEL"
- IMPORT{db}="ID_FS_LABEL_ENC"
- IMPORT{db}="ID_FS_VERSION"
- 
-+LABEL="import_end"
++	condlog(3, "Releasing uevent_monitor() resources");
++	udev_monitor_unref(monitor);
++}
 +
-+# Multipath maps should take precedence over their members.
-+ENV{DM_UDEV_LOW_PRIORITY_FLAG}!="1", OPTIONS+="link_priority=50"
-+
-+# Set some additional symlinks that typically exist for mpath
-+# path members, too, and should be overridden.
-+
-+# kpartx_id is very robust, it works for suspended maps and maps
-+# with 0 dependencies. It sets DM_TYPE, DM_PART, DM_WWN
-+TEST=="/usr/lib/udev/kpartx_id", \
-+	IMPORT{program}=="kpartx_id %M %m $env{DM_UUID}"
-+
-+ENV{DM_TYPE}=="?*", SYMLINK+="disk/by-id/$env{DM_TYPE}-$env{DM_NAME}"
-+ENV{DM_WWN}=="?*", SYMLINK+="disk/by-id/wwn-$env{DM_WWN}"
-+
- LABEL="mpath_end"
+ /*
+  * Service the uevent queue.
+  */
+@@ -749,6 +757,7 @@ int uevent_listen(struct udev *udev)
+ 		condlog(2, "failed to create udev monitor");
+ 		goto out;
+ 	}
++	pthread_cleanup_push(monitor_cleanup, monitor);
+ #ifdef LIBUDEV_API_RECVBUF
+ 	if (udev_monitor_set_receive_buffer_size(monitor, 128 * 1024 * 1024))
+ 		condlog(2, "failed to increase buffer size");
+@@ -834,7 +843,7 @@ int uevent_listen(struct udev *udev)
+ 	need_failback = 0;
+ out:
+ 	if (monitor)
+-		udev_monitor_unref(monitor);
++		pthread_cleanup_pop(1);
+ 	if (need_failback)
+ 		err = failback_listen();
+ 	pthread_cleanup_pop(1);
 -- 
-2.14.0
+2.12.0
