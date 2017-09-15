@@ -1,76 +1,36 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 20/31] 11-dm-mpath.rules: don't set
-	READY->ACTIVATION
-Date: Fri, 15 Sep 2017 15:33:59 -0500
-Message-ID: <20170915203359.GR3145@octiron.msp.redhat.com>
-References: <20170902223900.7339-1-mwilck@suse.com>
-	<20170902223900.7339-21-mwilck@suse.com>
-	<20170913211906.GM3145@octiron.msp.redhat.com>
-	<1505393299.4493.14.camel@suse.com>
+From: Bart Van Assche <Bart.VanAssche@wdc.com>
+Subject: Re: [PATCH 2/5] dm-mpath: return DM_MAPIO_REQUEUE in case of rq
+ allocation failure
+Date: Fri, 15 Sep 2017 20:48:56 +0000
+Message-ID: <1505508534.2417.9.camel@wdc.com>
+References: <20170915164456.9803-1-ming.lei@redhat.com>
+         <20170915164456.9803-3-ming.lei@redhat.com>
+         <1505496592.3420.10.camel@wdc.com> <20170915200655.GA28136@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1505393299.4493.14.camel@suse.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20170915200655.GA28136@redhat.com>
+Content-Language: en-US
+Content-ID: <E6BD8414F4F2C34E9B0C960E2E227021@namprd04.prod.outlook.com>
+Sender: linux-block-owner@vger.kernel.org
+To: "snitzer@redhat.com" <snitzer@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "hch@infradead.org" <hch@infradead.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "axboe@fb.com" <axboe@fb.com>, "ming.lei@redhat.com" <ming.lei@redhat.com>, "loberman@redhat.com" <loberman@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Sep 14, 2017 at 02:48:19PM +0200, Martin Wilck wrote:
-> On Wed, 2017-09-13 at 16:19 -0500, Benjamin Marzinski wrote:
-> > On Sun, Sep 03, 2017 at 12:38:49AM +0200, Martin Wilck wrote:
-> > > The fact alone that a map changes from not ready to ready does
-> > > not imply that it is activating.
-> > =
-
-> > NAK on this one and
-> > [PATCH 21/31] 11-dm-mpath.rules: Remember DM_ACTIVATION
-> > =
-
-> > This breaks things. It's often the case that there are devices
-> > stacked
-> > on top of multipath.  When multipath loses all of its paths, if it
-> > doesn't have queue_if_no_path set, it can fail IO up to these higher
-> > devices, forcing them to react to the failure.
-> =
-
-> Thinking about this again, most of the stuff we do in the multipath-
-> related udev rules is for the queueing case. Without
-> "queue_if_no_path", all that checking whether or not the map will
-> sustain IO is useless; it would be better to simply pass the device on
-> to upper layers, which will try to probe it and fail, which is intended
-> in the non-queueing setup. Perhaps we should check "queue_if_no_path"
-> early on and skip most of the stuff we  do in the queueing case?
-
-I don't really see the benefit in scanning when we're just going to get
-back errors, and lose the stored info in the udev database. If IO
-happens to the device, the upper layers will find out that it's broken.
-If we can lose all our paths, and then have some come back without any
-IO going down, why not hide this from the upper layers?
-
--Ben
- =
-
-> If we did this, maybe even my patches 20/21 might be worth
-> reconsideration for the "queue_if_no_path" case only?
-> =
-
-> Cheers,
-> Martin
-> =
-
-> -- =
-
-> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-> SUSE Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
-> HRB 21284 (AG N=FCrnberg)
+T24gRnJpLCAyMDE3LTA5LTE1IGF0IDE2OjA2IC0wNDAwLCBNaWtlIFNuaXR6ZXIgd3JvdGU6DQo+
+IFRoZSBwcm9ibGVtIGlzIHRoYXQgbXVsdGlwYXRoX2Nsb25lX2FuZF9tYXAoKSBpcyBub3cgdHJl
+YXRlZCBhcyBjb21tb24NCj4gY29kZSAodGhhbmtzIHRvIGJvdGggYmxrLW1xIGFuZCBvbGQgLnJl
+cXVlc3RfZm4gbm93IGVuam95aW5nIHRoZSB1c2Ugb2YNCj4gYmxrX2dldF9yZXF1ZXN0KSBCVVQ6
+IE1pbmcgcGxlYXNlIHVuZGVyc3RhbmQgdGhhdCB0aGlzIGNvZGUgaXMgdXNlZCBieQ0KPiBvbGQg
+LnJlcXVlc3RfZm4gdG9vLiAgU28gaXQgd291bGQgc2VlbSB0aGF0IHRoZSB1c2Ugb2YNCj4gRE1f
+TUFQSU9fREVMQVlfUkVRVUVVRSB2cyBETV9NQVBJT19SRVFVRVVFIG5lZWRzIHRvIGJlIGJhc2Vk
+IG9uIGRtLXNxIHZzDQo+IGRtLW1xLg0KDQpIZWxsbyBNaWtlLA0KDQpNeSBwcm9wb3NhbCBpcyB0
+byBsZWF2ZSBvdXQgcGF0Y2hlcyAxIGFuZCAyIGVudGlyZWx5LiBTaW5jZSB0aGUgU0NTSSBjb3Jl
+DQpjYWxscyBibGtfbXFfcnVuX2h3X3F1ZXVlcygpIGFueXdheSBhZnRlciBhIHJlcXVlc3QgaGFz
+IGZpbmlzaGVkIGl0IGlzIG5vdA0KY2xlYXIgdG8gbWUgd2hhdCB0aGUgbW90aXZhdGlvbiB3YXMg
+YmVoaW5kIHRoZSBkZXZlbG9wbWVudCBvZiBwYXRjaGVzIDEgYW5kDQoyIGluIHRoaXMgc2VyaWVz
+LiBJZiB0aGUgZ29hbCB3YXMgdG8gcmVydW4gYSBxdWV1ZSBhZnRlciBhIHJlcXVlc3QgaGFzDQpm
+aW5pc2hlZCBJIHRoaW5rIHRoZSBzYW1lIGFwcHJvYWNoIHNob3VsZCBiZSB0YWtlbiBmb3IgZG0g
+YXMgZm9yIHRoZSBTQ1NJDQpjb3JlLCBuYW1lbHkgdG8gcnVuIHRoZSBxdWV1ZSBmcm9tIGluc2lk
+ZSB0aGUgZW5kX2lvIGNhbGxiYWNrLg0KDQpCYXJ0Lg==
