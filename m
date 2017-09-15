@@ -1,15 +1,16 @@
-From: Guan Junxiong <guanjunxiong@huawei.com>
+From: Hannes Reinecke <hare@suse.de>
 Subject: Re: [PATCH 2/4] libmultipath/discovery: modify NVMe path
  states
-Date: Fri, 15 Sep 2017 18:00:16 +0800
-Message-ID: <6fc42f4a-6fff-72c0-e724-714f33da4a53@huawei.com>
+Date: Fri, 15 Sep 2017 13:06:21 +0200
+Message-ID: <e9c643c2-c7d0-12c5-ccaf-1d194fcd8009@suse.de>
 References: <1505457030-119611-1-git-send-email-hare@suse.de>
 	<1505457030-119611-3-git-send-email-hare@suse.de>
+	<6fc42f4a-6fff-72c0-e724-714f33da4a53@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1505457030-119611-3-git-send-email-hare@suse.de>
+In-Reply-To: <6fc42f4a-6fff-72c0-e724-714f33da4a53@huawei.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -20,48 +21,41 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>, Christophe Varoqui <christophe.varoqui@opensvc.com>
+To: Guan Junxiong <guanjunxiong@huawei.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Hannes Reinecke <hare@suse.com>, "Shenhong (C)" <shenhong09@huawei.com>, niuhaoxin <niuhaoxin@huawei.com>
 List-Id: dm-devel.ids
 
-
-
-On 2017/9/15 14:30, Hannes Reinecke wrote:
-> The NVMe path states 'resetting' and 'reconnecting' indicate that
-> the controller could not talk to the namespace, which translates
-> into a path down state, not a path pending state.
-> Path pending should only be used for short lived intermediate states
-> like 'new' or 'deleting'.
-> I agree with the statements --Path pending should only be used for short
-lived intermediate states. But it's better to schedule path state checking
-so soon as possible in the next second for  "resetting" and "reconnecting"
-states  because those two states is transient in a short time.
-How about introducing a new state for multipath: PATH_TRANSITING to distinguish
-PATH_PENDING?
-
-PATH_TRANSITING should also  schedule path state checking
-so soon as possible in the next second.
-
-Thanks
-Guan
-
-> Signed-off-by: Hannes Reinecke <hare@suse.com>
-> ---
->  libmultipath/discovery.c | 3 +--
->  1 file changed, 1 insertion(+), 2 deletions(-)
-> 
-> diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-> index 95c138b..a880f4b 100644
-> --- a/libmultipath/discovery.c
-> +++ b/libmultipath/discovery.c
-> @@ -1449,8 +1449,7 @@ path_offline (struct path * pp)
->  		}
->  		pp->offline = 0;
->  		if (!strncmp(buff, "new", 3) ||
-> -		    !strncmp(buff, "reconnecting", 12) ||
-> -		    !strncmp(buff, "resetting", 9))
-> +		    !strncmp(buff, "deleting", 8))
->  			return PATH_PENDING;
->  		else if (!strncmp(buff, "live", 4))
->  			return PATH_UP;
-> 
+T24gMDkvMTUvMjAxNyAxMjowMCBQTSwgR3VhbiBKdW54aW9uZyB3cm90ZToKPiAKPiAKPiBPbiAy
+MDE3LzkvMTUgMTQ6MzAsIEhhbm5lcyBSZWluZWNrZSB3cm90ZToKPj4gVGhlIE5WTWUgcGF0aCBz
+dGF0ZXMgJ3Jlc2V0dGluZycgYW5kICdyZWNvbm5lY3RpbmcnIGluZGljYXRlIHRoYXQKPj4gdGhl
+IGNvbnRyb2xsZXIgY291bGQgbm90IHRhbGsgdG8gdGhlIG5hbWVzcGFjZSwgd2hpY2ggdHJhbnNs
+YXRlcwo+PiBpbnRvIGEgcGF0aCBkb3duIHN0YXRlLCBub3QgYSBwYXRoIHBlbmRpbmcgc3RhdGUu
+Cj4+IFBhdGggcGVuZGluZyBzaG91bGQgb25seSBiZSB1c2VkIGZvciBzaG9ydCBsaXZlZCBpbnRl
+cm1lZGlhdGUgc3RhdGVzCj4+IGxpa2UgJ25ldycgb3IgJ2RlbGV0aW5nJy4KPiBJIGFncmVlIHdp
+dGggdGhlIHN0YXRlbWVudHMgLS1QYXRoIHBlbmRpbmcgc2hvdWxkIG9ubHkgYmUgdXNlZCBmb3Ig
+c2hvcnQKPiBsaXZlZCBpbnRlcm1lZGlhdGUgc3RhdGVzLiBCdXQgaXQncyBiZXR0ZXIgdG8gc2No
+ZWR1bGUgcGF0aCBzdGF0ZSBjaGVja2luZwo+IHNvIHNvb24gYXMgcG9zc2libGUgaW4gdGhlIG5l
+eHQgc2Vjb25kIGZvciAgInJlc2V0dGluZyIgYW5kICJyZWNvbm5lY3RpbmciCj4gc3RhdGVzICBi
+ZWNhdXNlIHRob3NlIHR3byBzdGF0ZXMgaXMgdHJhbnNpZW50IGluIGEgc2hvcnQgdGltZS4KPiBI
+b3cgYWJvdXQgaW50cm9kdWNpbmcgYSBuZXcgc3RhdGUgZm9yIG11bHRpcGF0aDogUEFUSF9UUkFO
+U0lUSU5HIHRvIGRpc3Rpbmd1aXNoCj4gUEFUSF9QRU5ESU5HPwo+IApJIGJlZyB0byBkaXNhZ3Jl
+ZS4KCidyZWNvbm5lY3RpbmcnIGlzIHRlbGxpbmcgdXMgdGhhdCB0aGUgY29udHJvbGxlciBpcyB0
+cnlpbmcgdG8gcmVjb25uZWN0CnRvIHRoZSBuYW1lc3BhY2UsIHdoaWNoIHdpbGwgY29udGludWUg
+dW50aWwgS0FUTyBleHBpcmVzIElJUkMuCldoaWNoIGNhbiB3ZWxsIGJlIHNldmVyYWwgc2Vjb25k
+cywgcGx1cyB0aGlzIGFjdHVhbGx5IF9pc18gYSBwYXRoIGRvd24Kc3RhdGUgKHBhdGggZG93biBz
+aWduYWxzIHRoYXQgdGhlIHRyYW5zcG9ydCBsYXllciBsb3N0IGNvbm5lY3Rpb24gdG8gdGhlCnJl
+bW90ZSBzeXN0ZW0sIHdoaWNoIGlzIGV4YWN0bHkgd2hhdCB0aGlzIGVycm9yIGlzKS4KQW5kICdy
+ZXNldHRpbmcnIGlzIHRoZSBjb250cm9sbGVyIGVudGVyaW5nIHJlc2V0IGFmdGVyIEtBVE8gZXhw
+aXJlZCwgc28KbW9zdCBkZWZpbml0ZWx5IGEgcGF0aCBkb3duIGV2ZW50LgpBbmQgdGhpcyB0b29r
+IHNldmVyYWwgbWludXRlcyBvbiB0aGUgbWFjaGluZSBJJ3ZlIHRlc3RlZCB3aXRoLCBzbyBpdCdz
+CmFueXRoaW5nIGJ1dCBmYXN0LgoKT3IgdG8gcHV0IGl0IGFub3RoZXIgd2F5IHJvdW5kOiBpZiB3
+ZSB0cmVhdCB0aGVzZSBldmVudHMgYXMKUEFUSF9QRU5ESU5HLCB3aGljaCBldmVudHMgd291bGQg
+dGhlbiBzaWduYWwgYSBQQVRIX0RPV04/CldlIG9ubHkgaGF2ZQoKbmV3CmxpdmUKcmVjb25uZWN0
+aW5nCnJlc2V0dGluZwpkZWxldGluZwpkZWFkCgp0byBjaG9vc2UgZnJvbSAuLi4KCkNoZWVycywK
+Ckhhbm5lcwotLSAKRHIuIEhhbm5lcyBSZWluZWNrZQkJICAgVGVhbWxlYWQgU3RvcmFnZSAmIE5l
+dHdvcmtpbmcKaGFyZUBzdXNlLmRlCQkJICAgICAgICAgICAgICAgKzQ5IDkxMSA3NDA1MyA2ODgK
+U1VTRSBMSU5VWCBHbWJILCBNYXhmZWxkc3RyLiA1LCA5MDQwOSBOw7xybmJlcmcKR0Y6IEYuIElt
+ZW5kw7ZyZmZlciwgSi4gU21pdGhhcmQsIEouIEd1aWxkLCBELiBVcG1hbnl1LCBHLiBOb3J0b24K
+SFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2
+ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0t
+ZGV2ZWw=
