@@ -1,11 +1,14 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH] libmultipath: sanitize fd handling
-Date: Fri, 15 Sep 2017 08:15:12 +0200
-Message-ID: <1505456112-117105-1-git-send-email-hare@suse.de>
+Subject: [PATCH 4/4] hwtable: set 'none' as default checker for
+	NVMe
+Date: Fri, 15 Sep 2017 08:30:30 +0200
+Message-ID: <1505457030-119611-5-git-send-email-hare@suse.de>
+References: <1505457030-119611-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1505457030-119611-1-git-send-email-hare@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,50 +22,29 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Hannes Reinecke <hare@suse.com>
 List-Id: dm-devel.ids
 
-One should remember that '0' _is_ a valid fd, so we need to set
-the fd to '-1' upon allocating the path structure and ensure we're
-checking for a value _smaller_ than 0 to detect an invalid fd.
+We shouldn't be using the directio checker for NVMe, as this might
+cause spurious path failures under high load.
+As the 'state' attribute provides reliable information about the link
+status it's sufficient to just check this and don't call any
+path checkers.
 
 Signed-off-by: Hannes Reinecke <hare@suse.com>
 ---
- libmultipath/checkers.c | 4 ++--
- libmultipath/print.c    | 2 +-
- 2 files changed, 3 insertions(+), 3 deletions(-)
+ libmultipath/hwtable.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
-index 05e024f8..c32f7274 100644
---- a/libmultipath/checkers.c
-+++ b/libmultipath/checkers.c
-@@ -146,7 +146,7 @@ struct checker * add_checker (char *multipath_dir, char * name)
- 	if (!c->repair)
- 		goto out;
- 
--	c->fd = 0;
-+	c->fd = -1;
- 	c->sync = 1;
- 	list_add(&c->node, &checkers);
- 	return c;
-@@ -237,7 +237,7 @@ int checker_check (struct checker * c)
- 		MSG(c, "checker disabled");
- 		return PATH_UNCHECKED;
- 	}
--	if (c->fd <= 0) {
-+	if (c->fd < 0) {
- 		MSG(c, "no usable fd");
- 		return PATH_WILD;
- 	}
-diff --git a/libmultipath/print.c b/libmultipath/print.c
-index 95dff90b..65a98247 100644
---- a/libmultipath/print.c
-+++ b/libmultipath/print.c
-@@ -1677,7 +1677,7 @@ int snprint_status(char *buff, int len, struct vectors *vecs)
- 	int monitored_count = 0;
- 
- 	vector_foreach_slot(vecs->pathvec, pp, i)
--		if (pp->fd != -1)
-+		if (pp->fd >= 0)
- 			monitored_count++;
- 	fwd += snprintf(buff + fwd, len - fwd, "\npaths: %d\nbusy: %s\n",
- 			monitored_count, is_uevent_busy()? "True" : "False");
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index 9e14ec1..9ac09ff 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -1113,7 +1113,7 @@ static struct hwentry default_hw[] = {
+ 		.vendor        = "NVME",
+ 		.product       = ".*",
+ 		.uid_attribute = "ID_WWN",
+-		.checker_name  = DIRECTIO,
++		.checker_name  = NONE,
+ 		.retain_hwhandler = RETAIN_HWHANDLER_OFF,
+ 	},
+ 	/*
 -- 
-2.12.0
+1.8.5.6
