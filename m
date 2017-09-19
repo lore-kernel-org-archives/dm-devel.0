@@ -1,37 +1,55 @@
-From: Bart Van Assche <Bart.VanAssche@wdc.com>
-Subject: Re: [PATCH 1/5] block: don't call blk_mq_delay_run_hw_queue() in case
- of BLK_STS_RESOURCE
-Date: Tue, 19 Sep 2017 15:36:35 +0000
-Message-ID: <1505835394.2671.18.camel@wdc.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 1/5] block: don't call blk_mq_delay_run_hw_queue() in
+ case of BLK_STS_RESOURCE
+Date: Tue, 19 Sep 2017 11:48:23 -0400
+Message-ID: <20170919154823.GA22809@redhat.com>
 References: <20170915164456.9803-1-ming.lei@redhat.com>
-         <20170915164456.9803-2-ming.lei@redhat.com>
-         <1505498249.3420.15.camel@wdc.com> <20170917124000.GB6289@ming.t460p>
-         <1505747894.2685.6.camel@wdc.com> <20170919054308.GA2517@ming.t460p>
+ <20170915164456.9803-2-ming.lei@redhat.com>
+ <1505498249.3420.15.camel@wdc.com>
+ <20170917124000.GB6289@ming.t460p>
+ <1505747894.2685.6.camel@wdc.com>
+ <20170919054308.GA2517@ming.t460p>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
 In-Reply-To: <20170919054308.GA2517@ming.t460p>
-Content-Language: en-US
-Content-ID: <5462BC681FD65D4DB6D925A413648C94@namprd04.prod.outlook.com>
 Sender: linux-block-owner@vger.kernel.org
-To: "ming.lei@redhat.com" <ming.lei@redhat.com>
-Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "hch@infradead.org" <hch@infradead.org>, "sagi@grimberg.me" <sagi@grimberg.me>, "snitzer@redhat.com" <snitzer@redhat.com>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "axboe@fb.com" <axboe@fb.com>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, "jejb@linux.vnet.ibm.com" <jejb@linux.vnet.ibm.com>, "loberman@redhat.com" <loberman@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Ming Lei <ming.lei@redhat.com>
+Cc: Bart Van Assche <Bart.VanAssche@wdc.com>, "hch@infradead.org" <hch@infradead.org>, "jejb@linux.vnet.ibm.com" <jejb@linux.vnet.ibm.com>, "sagi@grimberg.me" <sagi@grimberg.me>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "axboe@fb.com" <axboe@fb.com>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "loberman@redhat.com" <loberman@redhat.com>
 List-Id: dm-devel.ids
 
-T24gVHVlLCAyMDE3LTA5LTE5IGF0IDEzOjQzICswODAwLCBNaW5nIExlaSB3cm90ZToNCj4gT24g
-TW9uLCBTZXAgMTgsIDIwMTcgYXQgMDM6MTg6MTZQTSArMDAwMCwgQmFydCBWYW4gQXNzY2hlIHdy
-b3RlOg0KPiA+IElmIHlvdSBhcmUgc3RpbGwgbG9va2luZyBhdCByZW1vdmluZyB0aGUgYmxrX21x
-X2RlbGF5X3J1bl9od19xdWV1ZSgpIGNhbGxzDQo+ID4gdGhlbiBJIHRoaW5rIHlvdSBhcmUgbG9v
-a2luZyBpbiB0aGUgd3JvbmcgZGlyZWN0aW9uLiBXaGF0IGtpbmQgb2YgcHJvYmxlbQ0KPiA+IGFy
-ZSB5b3UgdHJ5aW5nIHRvIHNvbHZlPyBJcyBpdCBwZXJoYXBzIHRoYXQgdGhlcmUgY2FuIGJlIGEg
-ZGVsYXkgYmV0d2Vlbg0KPiANCj4gQWN0dWFsbHkgdGhlIGltcHJvdmVtZW50IG9uIGRtLXJxIElP
-IHNjaGVkdWxlKHRoZSBwYXRjaCAyIH4gNSkgZG9lc24ndA0KPiBuZWVkIHRoaXMgcGF0Y2guDQoN
-ClRoZSBhcHByb2FjaCBvZiB0aGlzIHBhdGNoIHNlcmllcyBsb29rcyB3cm9uZyB0byBtZSBhbmQg
-cGF0Y2ggNS81IGlzIGFuIHVnbHkNCmhhY2sgaW4gbXkgb3Bpbmlvbi4gVGhhdCdzIHdoeSBJIGFz
-a2VkIHlvdSB0byBkcm9wIHRoZSBlbnRpcmUgcGF0Y2ggc2VyaWVzIGFuZA0KdG8gdGVzdCB3aGV0
-aGVyIGluc2VydGluZyBhIHF1ZXVlIHJ1biBjYWxsIGludG8gdGhlIGRtLW1wYXRoIGVuZF9pbyBj
-YWxsYmFjaw0KeWllbGRzIGEgc2ltaWxhciBwZXJmb3JtYW5jZSBpbXByb3ZlbWVudCB0byB0aGUg
-cGF0Y2hlcyB5b3UgcG9zdGVkLiBQbGVhc2UgZG8NCm5vdCBleHBlY3QgbWUgdG8gc3BlbmQgbW9y
-ZSB0aW1lIG9uIHRoaXMgcGF0Y2ggc2VyaWVzIGlmIHlvdSBkbyBub3QgY29tZSB1cA0Kd2l0aCBt
-ZWFzdXJlbWVudCByZXN1bHRzIGZvciB0aGUgcHJvcG9zZWQgYWx0ZXJuYXRpdmUuDQoNCkJhcnQu
+On Tue, Sep 19 2017 at  1:43am -0400,
+Ming Lei <ming.lei@redhat.com> wrote:
+
+> On Mon, Sep 18, 2017 at 03:18:16PM +0000, Bart Van Assche wrote:
+> > On Sun, 2017-09-17 at 20:40 +0800, Ming Lei wrote:
+> > > "if no request has completed before the delay has expired" can't be a
+> > > reason to rerun the queue, because the queue can still be busy.
+> > 
+> > That statement of you shows that there are important aspects of the SCSI
+> > core and dm-mpath driver that you don't understand.
+> 
+> Then can you tell me why blk-mq's SCHED_RESTART can't cover
+> the rerun when there are in-flight requests? What is the case
+> in which dm-rq can return BUSY and there aren't any in-flight
+> requests meantime?
+> 
+> Also you are the author of adding 'blk_mq_delay_run_hw_queue(
+> hctx, 100/*ms*/)' in dm-rq, you never explain in commit
+> 6077c2d706097c0(dm rq: Avoid that request processing stalls
+> sporadically) what the root cause is for your request stall
+> and why this patch fixes your issue. Even you don't explain
+> why is the delay 100ms?
+> 
+> So it is a workaound, isn't it?
+> 
+> My concern is that it isn't good to add blk_mq_delay_run_hw_queue(hctx, 100/*ms*/)
+> in the hot path since it should been covered by SCHED_RESTART
+> if there are in-flight requests.
+
+This thread proves that it is definitely brittle to be relying on fixed
+delays like this:
+https://patchwork.kernel.org/patch/9703249/
+
+Mike
