@@ -1,37 +1,34 @@
-From: Ming Lei <tom.leiming@gmail.com>
-Subject: Re: [PATCH 1/5] block: don't call blk_mq_delay_run_hw_queue() in case
- of BLK_STS_RESOURCE
-Date: Wed, 20 Sep 2017 00:55:37 +0800
-Message-ID: <CACVXFVNvGna59hYG+gF7O41tKNURdbb+gm0sW-FGemnJi0RrRg@mail.gmail.com>
-References: <20170915164456.9803-1-ming.lei@redhat.com> <20170915164456.9803-2-ming.lei@redhat.com>
- <1505498249.3420.15.camel@wdc.com> <20170917124000.GB6289@ming.t460p>
- <1505747894.2685.6.camel@wdc.com> <20170919054308.GA2517@ming.t460p>
- <1505835394.2671.18.camel@wdc.com> <20170919155603.GB22809@redhat.com>
- <20170919160401.GC19830@ming.t460p> <1505839754.2671.42.camel@wdc.com>
+From: Andy Grover <agrover@redhat.com>
+Subject: Re: [PATCH 3/3] dm-ioctl: report event number in
+ DM_LIST_DEVICES
+Date: Tue, 19 Sep 2017 09:47:13 -0700
+Message-ID: <25fc48c9-90d1-44a8-5a3f-417687ed8be3@redhat.com>
+References: <20170917023849.GA4094@asgard.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1505839754.2671.42.camel@wdc.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Bart Van Assche <Bart.VanAssche@wdc.com>
-Cc: "ming.lei@redhat.com" <ming.lei@redhat.com>, "snitzer@redhat.com" <snitzer@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "hch@infradead.org" <hch@infradead.org>, "sagi@grimberg.me" <sagi@grimberg.me>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "axboe@fb.com" <axboe@fb.com>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, "jejb@linux.vnet.ibm.com" <jejb@linux.vnet.ibm.com>, "loberman@redhat.com" <loberman@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20170917023849.GA4094@asgard.redhat.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Sep 20, 2017 at 12:49 AM, Bart Van Assche
-<Bart.VanAssche@wdc.com> wrote:
-> On Wed, 2017-09-20 at 00:04 +0800, Ming Lei wrote:
->> Run queue at end_io is definitely wrong, because blk-mq has SCHED_RESTART
->> to do that already.
->
-> Sorry but I disagree. If SCHED_RESTART is set that causes the blk-mq core to
-> reexamine the software queues and the hctx dispatch list but not the requeue
-> list. If a block driver returns BLK_STS_RESOURCE then requests end up on the
-> requeue list. Hence the following code in scsi_end_request():
+On 09/16/2017 07:41 PM, Eugene Syromiatnikov wrote:
+>> +			event_nr = align_ptr(((void *) (nl + 1)) + strlen(hc->name) + 1);
+> If my understanding is correct, (nl + 1) differs between 32-bit and
+> 64-bit kernels (as the structure contains of one 8-byte and one 4-byte field),
+> so this logic is probably broken for compat.
 
-That doesn't need SCHED_RESTART, because it is requeue's
-responsibility to do that,
-see blk_mq_requeue_work(), which will run hw queue at the end of this func.
+I don't understand.. how does this change the result from the 
+calculation depending on the platform arch? 4 + 8 = 12.
 
-
--- 
-Ming Lei
+Thanks -- Andy
