@@ -1,19 +1,20 @@
-From: Muneendra Kumar M <mmandala@Brocade.com>
+From: Guan Junxiong <guanjunxiong@huawei.com>
 Subject: Re: [PATCH V4 1/2] multipath-tools: intermittent IO
  error accounting to improve reliability
-Date: Tue, 19 Sep 2017 10:59:59 +0000
-Message-ID: <8d45c076cf6c47d39bf2aade3ade7f51@BRMWP-EXMB12.corp.brocade.com>
+Date: Tue, 19 Sep 2017 20:53:01 +0800
+Message-ID: <52829afa-ed9e-cc39-a492-3e678b8e0d03@huawei.com>
 References: <1505619638-20912-1-git-send-email-guanjunxiong@huawei.com>
 	<1505619638-20912-2-git-send-email-guanjunxiong@huawei.com>
 	<fd6ead563a154984abc2654fd1a8ea30@BRMWP-EXMB12.corp.brocade.com>
 	<7035dfdb-1c49-aa3f-3836-1ec316707c47@huawei.com>
 	<1505764297.12944.2.camel@suse.com>
 	<e596eefc-2d42-e840-57cf-6219d43de9d9@huawei.com>
+	<8d45c076cf6c47d39bf2aade3ade7f51@BRMWP-EXMB12.corp.brocade.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <e596eefc-2d42-e840-57cf-6219d43de9d9@huawei.com>
+In-Reply-To: <8d45c076cf6c47d39bf2aade3ade7f51@BRMWP-EXMB12.corp.brocade.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -24,171 +25,54 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Guan Junxiong <guanjunxiong@huawei.com>, Martin Wilck <mwilck@suse.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
+To: Muneendra Kumar M <mmandala@Brocade.com>, Martin Wilck <mwilck@suse.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
 Cc: "chengjike.cheng@huawei.com" <chengjike.cheng@huawei.com>, "niuhaoxin@huawei.com" <niuhaoxin@huawei.com>, "shenhong09@huawei.com" <shenhong09@huawei.com>
 List-Id: dm-devel.ids
 
-Hi Guan/Martin,
-Below are my points.
+Hi Muneendra ,
+Thanks for your suggestion. My comments inline.
 
->>> "san_path_double_fault_time"  is great.  One less additional parameter and still covering most scenarios are appreciated.
-
-This looks good and I completely agree with Guan.
-
-One question san_path_double_fault_time is the time between two failed states (failed-active-failed )is this correct ?.
-Then this holds good.
-
-Instead of san_path_double_fault_time can we call it as san_path_double_failed_time as the name suggests the time between two failed states is this ok ?
-
-In SAN  topology (FC,NVME,SCSI)transient intermittent network errors make the ITL paths  as marginal paths. 
-
-So instead of calling "path_io_err_sample_time", "path_io_err_rate_threshold" and "path_io_err_recovery_time"
-can we name as "marginal_path_err_detection_time", " marginal_path_err_rate_threshold" and " marginal_path_err_recovery_time"
-
-Some other names should also be good as the io_path is general word from my view.
-
-If we agree with this one more thing which I would like to add as part of this patch.
-
-Whenever the path is in XXX_io_error_recovery_time  and if the user runs multipath -ll command the path the state of the path is shown as failed as shown below.
-
-	| `- 6:0:0:0 sdb 8:16  failed ready  running
-
-Can we add a new state as marginal so that when the admin run the multipath command and found that the state is in marginal he can quickly come to know that this a marginal 
-Path and needs to be recovered .If we keep the state as failed the admin cannot understand from past how much time the device is in failed state.
-
-
-Regards,
-Muneendra.
-
-
------Original Message-----
-From: Guan Junxiong [mailto:guanjunxiong@huawei.com] 
-Sent: Tuesday, September 19, 2017 7:03 AM
-To: Martin Wilck <mwilck@suse.com>; Muneendra Kumar M <mmandala@Brocade.com>; dm-devel@redhat.com; christophe.varoqui@opensvc.com
-Cc: shenhong09@huawei.com; niuhaoxin@huawei.com; chengjike.cheng@huawei.com
-Subject: Re: [PATCH V4 1/2] multipath-tools: intermittent IO error accounting to improve reliability
-
-
-
-On 2017/9/19 3:51, Martin Wilck wrote:
-> On Mon, 2017-09-18 at 22:36 +0800, Guan Junxiong wrote:
->> Hi Muneendra,
->>
->> Thanks for you feedback.  My comments are incline below.
->>
->> On 2017/9/18 20:53, Muneendra Kumar M wrote:
->>> Hi Guan,
->>> This a good effort for detecting the intermittent IO error 
->>> accounting to improve reliability.
->>> Your new algorithm is  mutually exclusive with san_path_err_XXX.
->>> It resolved the below issue which you have mentioned .
->>>>> Even the san_path_err_threshold , san_path_err_forget_rate and 
->>>>> san_path_err_recovery_time is turned on, the detect sample 
->>>>> interval of that path checkers is so big/coarse that it doesn't 
->>>>> see what happens in the middle of the sample interval.
->>>
->>> But I have some concerns.
->>>
->>> Correct me if my understanding on the below line is correct
->>>>> On a particular path when a path failing events occur twice in
->>>>> 60 second due to an IO error, multipathd will fail the path and 
->>>>> enqueue this path into a queue of which each member is sent a 
->>>>> couple of continuous direct reading asynchronous io at a fixed 
->>>>> sample rate of 10HZ.
->>>
->>> Once we hit the above condition (2 errors in 60 secs) for a 
->>> path_io_err_sample_time we keeps on injecting the asynchronous io at 
->>> a fixed sample rate of 10HZ.
->>> And during this path_io_err_sample_time if we hit the the 
->>> path_io_err_rate_threshold then we will not reinstantate this path 
->>> for a path_io_err_recovery_time.
->>> Is this understanding correct?
->>>
->>
->> Partial correct.
->> If we hit the above condition (2 errors in 60 secs), we will fail the 
->> path first before injecting a couple of asynchronous IOs to keep the 
->> testing not affected by other IOs.
->> And after this path_io_err_sample_time :
->> (1) if we hit the the path_io_err_rate_threshold, the failed path 
->> will keep unchanged  and then after the path_io_err_recovery_time 
->> (which is confusing, sorry, I will rename it to "recheck"), we will 
->> reschedule this IO error checking process again.
->> (2) if we do NOT hit the path_io_err_rate_threshold, the failed path 
->> will reinstated by path checking thread in a tick (1 second) ASAP.
->>
->>
->>> If the above understanding is correct then my concern is :
->>> 1) On a particular path if we are seeing continuous errors but not 
->>> within 60 secs (may be for every 120 secs) of duration how do we 
->>> handle this. Still this a shaky link.
->>> This is what our customers are pointing out.
->>> And if i am not wrong the new algorithm will comes into place only  
->>> if a path failing events occur twice in 60 seconds.
->>>
->>> Then this will not solve the intermittent IO error issue which we 
->>> are seeing as the data is still going on the shaky path .
->>> I think this is the place where we need to pull in  in 
->>> san_path_err_forget_rate .
->>>
->>
->> Yes .  I have thought about using some adjustable parameters such as 
->> san_path_err_pre_check_time and  san_path_err_threshold to cover ALL 
->> the scenarios the user encounters.
->> In the above fixed example,san_path_err_pre_check_time is set to 60 
->> seconds, san_path_err_threshold is set 2.
->> However, if I adopt this, we have 5 parameters 
->> (san_path_err_pre_check_time and  san_path_err_threshold + 3 
->> path_io_err_XXXs ) to support this feature. You know, mulitpath.conf 
->> configuration is becoming more and more daunting as Martin pointed in 
->> the V1 of this patch.
->>
->> But now, maybe it is acceptable for users to use the 5 parameters if 
->> we set san_path_err_pre_check_time and  san_path_err_threshold to 
->> some default values such as 60 second and 2 respectively.
->> **Martin** , **Muneendra**, how about this a little compromising 
->> method?  If it is OK , I will update in next version of patch.
+On 2017/9/19 18:59, Muneendra Kumar M wrote:
+> Hi Guan/Martin,
+> Below are my points.
 > 
-> Hm, that sounds a lot like san_path_err_threshold and 
-> san_path_err_forget_rate, which you were about to remove.
+>>>> "san_path_double_fault_time"  is great.  One less additional parameter and still covering most scenarios are appreciated.
+> This looks good and I completely agree with Guan.
 > 
-> Maybe we can simplify the algorithm by checking paths which fail in a 
-> given time interval after they've been reinstated? That would be one 
-> less additional parameter.
+> One question san_path_double_fault_time is the time between two failed states (failed-active-failed )is this correct ?.
+> Then this holds good.
+> 
+> Instead of san_path_double_fault_time can we call it as san_path_double_failed_time as the name suggests the time between two failed states is this ok ?
 > 
 
-"san_path_double_fault_time"  is great.  One less additional parameter and still covering most scenarios are appreciated.
+Both names are fine for me.
 
+> In SAN  topology (FC,NVME,SCSI)transient intermittent network errors make the ITL paths  as marginal paths. 
+>
+>
+> So instead of calling "path_io_err_sample_time", "path_io_err_rate_threshold" and "path_io_err_recovery_time"
+> can we name as "marginal_path_err_detection_time", " marginal_path_err_rate_threshold" and " marginal_path_err_recovery_time"
+> 
+> Some other names should also be good as the io_path is general word from my view.
+> >
 
-> The big question is: how do administrators derive appropriate values 
-> for these parameters for their environment? IIUC the values don't 
-> depend on the storage array, but rather on the environment as a whole; 
-> all kinds of things like switches, cabling, or even network load can 
-> affect the behavior, so multipathd's hwtable will not help us provide 
-> good defaults. Yet we have to assume that a very high percentage of 
-> installations will just use default or vendor-recommended values. Even 
-> if the documentation of the algorithm and its parameters was perfect 
-> (which it currently isn't), most admins won't have a clue how to set 
-> them. AFAICS we don't even have a test procedure to derive the optimal 
-> settings experimentally, thus guesswork is going to be applied, with 
-> questionable odds for success.
-> 
-> IOW: the whole stuff is basically useless without good default values.
-> It would be up to you hardware guys to come up with them.
-> 
+Can you explain "the marginal paths" in details?  Can the users easily catch the meaning of  marginal paths?
+IMO, path_io_err_XXXs are easy to under_stand
 
-I agree.  So let users to come up with those values. What we can do  is to log the testing result such as path_io_err_rate in the given sample time.
+> If we agree with this one more thing which I would like to add as part of this patch.
+> 
+> Whenever the path is in XXX_io_error_recovery_time  and if the user runs multipath -ll command the path the state of the path is shown as failed as shown below.
+> 
+> 	| `- 6:0:0:0 sdb 8:16  failed ready  running
+> 
+> Can we add a new state as marginal so that when the admin run the multipath command and found that the state is in marginal he can quickly come to know that this a marginal 
+> Path and needs to be recovered .If we keep the state as failed the admin cannot understand from past how much time the device is in failed state.
+> 
+>
 
->> san_path_err_forget_rate is hard to understand, shall we use Regards 
->> san_path_err_pre_check_time
-> 
-> A 'rate' would be something which is measured in Hz, which is not the 
-> case here. Calling it a 'time' is more accurate. If we go with my 
-> proposal above, we might call it "san_path_double_fault_time".
-> 
-> Regards
-> Martin
-> 
+If the user use multipathd -k , then input "show paths", the multipathd will show the path in the state of "delayed".
+But we can't find the exactly reason of the delayed state path because other features such as path waiting uses it.
+Shall we use existing PATH_SHAKY ?
 
-Regards
+Regards.
 Guan
