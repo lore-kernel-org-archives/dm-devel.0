@@ -1,61 +1,194 @@
-From: Ming Lei <ming.lei@redhat.com>
-Subject: Re: [PATCH 1/5] block: don't call blk_mq_delay_run_hw_queue() in
- case of BLK_STS_RESOURCE
-Date: Tue, 19 Sep 2017 13:43:13 +0800
-Message-ID: <20170919054308.GA2517@ming.t460p>
-References: <20170915164456.9803-1-ming.lei@redhat.com>
- <20170915164456.9803-2-ming.lei@redhat.com>
- <1505498249.3420.15.camel@wdc.com>
- <20170917124000.GB6289@ming.t460p>
- <1505747894.2685.6.camel@wdc.com>
+From: Muneendra Kumar M <mmandala@Brocade.com>
+Subject: Re: [PATCH V4 1/2] multipath-tools: intermittent IO
+ error accounting to improve reliability
+Date: Tue, 19 Sep 2017 10:59:59 +0000
+Message-ID: <8d45c076cf6c47d39bf2aade3ade7f51@BRMWP-EXMB12.corp.brocade.com>
+References: <1505619638-20912-1-git-send-email-guanjunxiong@huawei.com>
+	<1505619638-20912-2-git-send-email-guanjunxiong@huawei.com>
+	<fd6ead563a154984abc2654fd1a8ea30@BRMWP-EXMB12.corp.brocade.com>
+	<7035dfdb-1c49-aa3f-3836-1ec316707c47@huawei.com>
+	<1505764297.12944.2.camel@suse.com>
+	<e596eefc-2d42-e840-57cf-6219d43de9d9@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1505747894.2685.6.camel@wdc.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Bart Van Assche <Bart.VanAssche@wdc.com>
-Cc: "hch@infradead.org" <hch@infradead.org>, "jejb@linux.vnet.ibm.com" <jejb@linux.vnet.ibm.com>, "sagi@grimberg.me" <sagi@grimberg.me>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "axboe@fb.com" <axboe@fb.com>, "snitzer@redhat.com" <snitzer@redhat.com>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "loberman@redhat.com" <loberman@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <e596eefc-2d42-e840-57cf-6219d43de9d9@huawei.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Guan Junxiong <guanjunxiong@huawei.com>, Martin Wilck <mwilck@suse.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
+Cc: "chengjike.cheng@huawei.com" <chengjike.cheng@huawei.com>, "niuhaoxin@huawei.com" <niuhaoxin@huawei.com>, "shenhong09@huawei.com" <shenhong09@huawei.com>
 List-Id: dm-devel.ids
 
-On Mon, Sep 18, 2017 at 03:18:16PM +0000, Bart Van Assche wrote:
-> On Sun, 2017-09-17 at 20:40 +0800, Ming Lei wrote:
-> > "if no request has completed before the delay has expired" can't be a
-> > reason to rerun the queue, because the queue can still be busy.
+Hi Guan/Martin,
+Below are my points.
+
+>>> "san_path_double_fault_time"  is great.  One less additional parameter and still covering most scenarios are appreciated.
+
+This looks good and I completely agree with Guan.
+
+One question san_path_double_fault_time is the time between two failed states (failed-active-failed )is this correct ?.
+Then this holds good.
+
+Instead of san_path_double_fault_time can we call it as san_path_double_failed_time as the name suggests the time between two failed states is this ok ?
+
+In SAN  topology (FC,NVME,SCSI)transient intermittent network errors make the ITL paths  as marginal paths. 
+
+So instead of calling "path_io_err_sample_time", "path_io_err_rate_threshold" and "path_io_err_recovery_time"
+can we name as "marginal_path_err_detection_time", " marginal_path_err_rate_threshold" and " marginal_path_err_recovery_time"
+
+Some other names should also be good as the io_path is general word from my view.
+
+If we agree with this one more thing which I would like to add as part of this patch.
+
+Whenever the path is in XXX_io_error_recovery_time  and if the user runs multipath -ll command the path the state of the path is shown as failed as shown below.
+
+	| `- 6:0:0:0 sdb 8:16  failed ready  running
+
+Can we add a new state as marginal so that when the admin run the multipath command and found that the state is in marginal he can quickly come to know that this a marginal 
+Path and needs to be recovered .If we keep the state as failed the admin cannot understand from past how much time the device is in failed state.
+
+
+Regards,
+Muneendra.
+
+
+-----Original Message-----
+From: Guan Junxiong [mailto:guanjunxiong@huawei.com] 
+Sent: Tuesday, September 19, 2017 7:03 AM
+To: Martin Wilck <mwilck@suse.com>; Muneendra Kumar M <mmandala@Brocade.com>; dm-devel@redhat.com; christophe.varoqui@opensvc.com
+Cc: shenhong09@huawei.com; niuhaoxin@huawei.com; chengjike.cheng@huawei.com
+Subject: Re: [PATCH V4 1/2] multipath-tools: intermittent IO error accounting to improve reliability
+
+
+
+On 2017/9/19 3:51, Martin Wilck wrote:
+> On Mon, 2017-09-18 at 22:36 +0800, Guan Junxiong wrote:
+>> Hi Muneendra,
+>>
+>> Thanks for you feedback.  My comments are incline below.
+>>
+>> On 2017/9/18 20:53, Muneendra Kumar M wrote:
+>>> Hi Guan,
+>>> This a good effort for detecting the intermittent IO error 
+>>> accounting to improve reliability.
+>>> Your new algorithm is  mutually exclusive with san_path_err_XXX.
+>>> It resolved the below issue which you have mentioned .
+>>>>> Even the san_path_err_threshold , san_path_err_forget_rate and 
+>>>>> san_path_err_recovery_time is turned on, the detect sample 
+>>>>> interval of that path checkers is so big/coarse that it doesn't 
+>>>>> see what happens in the middle of the sample interval.
+>>>
+>>> But I have some concerns.
+>>>
+>>> Correct me if my understanding on the below line is correct
+>>>>> On a particular path when a path failing events occur twice in
+>>>>> 60 second due to an IO error, multipathd will fail the path and 
+>>>>> enqueue this path into a queue of which each member is sent a 
+>>>>> couple of continuous direct reading asynchronous io at a fixed 
+>>>>> sample rate of 10HZ.
+>>>
+>>> Once we hit the above condition (2 errors in 60 secs) for a 
+>>> path_io_err_sample_time we keeps on injecting the asynchronous io at 
+>>> a fixed sample rate of 10HZ.
+>>> And during this path_io_err_sample_time if we hit the the 
+>>> path_io_err_rate_threshold then we will not reinstantate this path 
+>>> for a path_io_err_recovery_time.
+>>> Is this understanding correct?
+>>>
+>>
+>> Partial correct.
+>> If we hit the above condition (2 errors in 60 secs), we will fail the 
+>> path first before injecting a couple of asynchronous IOs to keep the 
+>> testing not affected by other IOs.
+>> And after this path_io_err_sample_time :
+>> (1) if we hit the the path_io_err_rate_threshold, the failed path 
+>> will keep unchanged  and then after the path_io_err_recovery_time 
+>> (which is confusing, sorry, I will rename it to "recheck"), we will 
+>> reschedule this IO error checking process again.
+>> (2) if we do NOT hit the path_io_err_rate_threshold, the failed path 
+>> will reinstated by path checking thread in a tick (1 second) ASAP.
+>>
+>>
+>>> If the above understanding is correct then my concern is :
+>>> 1) On a particular path if we are seeing continuous errors but not 
+>>> within 60 secs (may be for every 120 secs) of duration how do we 
+>>> handle this. Still this a shaky link.
+>>> This is what our customers are pointing out.
+>>> And if i am not wrong the new algorithm will comes into place only  
+>>> if a path failing events occur twice in 60 seconds.
+>>>
+>>> Then this will not solve the intermittent IO error issue which we 
+>>> are seeing as the data is still going on the shaky path .
+>>> I think this is the place where we need to pull in  in 
+>>> san_path_err_forget_rate .
+>>>
+>>
+>> Yes .  I have thought about using some adjustable parameters such as 
+>> san_path_err_pre_check_time and  san_path_err_threshold to cover ALL 
+>> the scenarios the user encounters.
+>> In the above fixed example,san_path_err_pre_check_time is set to 60 
+>> seconds, san_path_err_threshold is set 2.
+>> However, if I adopt this, we have 5 parameters 
+>> (san_path_err_pre_check_time and  san_path_err_threshold + 3 
+>> path_io_err_XXXs ) to support this feature. You know, mulitpath.conf 
+>> configuration is becoming more and more daunting as Martin pointed in 
+>> the V1 of this patch.
+>>
+>> But now, maybe it is acceptable for users to use the 5 parameters if 
+>> we set san_path_err_pre_check_time and  san_path_err_threshold to 
+>> some default values such as 60 second and 2 respectively.
+>> **Martin** , **Muneendra**, how about this a little compromising 
+>> method?  If it is OK , I will update in next version of patch.
 > 
-> That statement of you shows that there are important aspects of the SCSI
-> core and dm-mpath driver that you don't understand.
-
-Then can you tell me why blk-mq's SCHED_RESTART can't cover
-the rerun when there are in-flight requests? What is the case
-in which dm-rq can return BUSY and there aren't any in-flight
-requests meantime?
-
-Also you are the author of adding 'blk_mq_delay_run_hw_queue(
-hctx, 100/*ms*/)' in dm-rq, you never explain in commit
-6077c2d706097c0(dm rq: Avoid that request processing stalls
-sporadically) what the root cause is for your request stall
-and why this patch fixes your issue. Even you don't explain
-why is the delay 100ms?
-
-So it is a workaound, isn't it?
-
-My concern is that it isn't good to add blk_mq_delay_run_hw_queue(hctx, 100/*ms*/)
-in the hot path since it should been covered by SCHED_RESTART
-if there are in-flight requests.
-
+> Hm, that sounds a lot like san_path_err_threshold and 
+> san_path_err_forget_rate, which you were about to remove.
 > 
-> > I suggest to understand the root cause, instead of keeping this
-> > ugly random delay because run hw queue after 100ms may be useless
-> > in 99.99% times.
+> Maybe we can simplify the algorithm by checking paths which fail in a 
+> given time interval after they've been reinstated? That would be one 
+> less additional parameter.
 > 
-> If you are still looking at removing the blk_mq_delay_run_hw_queue() calls
-> then I think you are looking in the wrong direction. What kind of problem
-> are you trying to solve? Is it perhaps that there can be a delay between
 
-Actually the improvement on dm-rq IO schedule(the patch 2 ~ 5) doesn't
-need this patch.
+"san_path_double_fault_time"  is great.  One less additional parameter and still covering most scenarios are appreciated.
 
 
--- 
-Ming
+> The big question is: how do administrators derive appropriate values 
+> for these parameters for their environment? IIUC the values don't 
+> depend on the storage array, but rather on the environment as a whole; 
+> all kinds of things like switches, cabling, or even network load can 
+> affect the behavior, so multipathd's hwtable will not help us provide 
+> good defaults. Yet we have to assume that a very high percentage of 
+> installations will just use default or vendor-recommended values. Even 
+> if the documentation of the algorithm and its parameters was perfect 
+> (which it currently isn't), most admins won't have a clue how to set 
+> them. AFAICS we don't even have a test procedure to derive the optimal 
+> settings experimentally, thus guesswork is going to be applied, with 
+> questionable odds for success.
+> 
+> IOW: the whole stuff is basically useless without good default values.
+> It would be up to you hardware guys to come up with them.
+> 
+
+I agree.  So let users to come up with those values. What we can do  is to log the testing result such as path_io_err_rate in the given sample time.
+
+>> san_path_err_forget_rate is hard to understand, shall we use Regards 
+>> san_path_err_pre_check_time
+> 
+> A 'rate' would be something which is measured in Hz, which is not the 
+> case here. Calling it a 'time' is more accurate. If we go with my 
+> proposal above, we might call it "san_path_double_fault_time".
+> 
+> Regards
+> Martin
+> 
+
+Regards
+Guan
