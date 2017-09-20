@@ -1,22 +1,12 @@
-From: Muneendra Kumar M <mmandala@Brocade.com>
-Subject: Re: [PATCH V4 1/2] multipath-tools: intermittent IO
- error accounting to improve reliability
-Date: Wed, 20 Sep 2017 12:58:36 +0000
-Message-ID: <b9fadaaabca54790969d3b31ba9dddb8@BRMWP-EXMB12.corp.brocade.com>
-References: <1505619638-20912-1-git-send-email-guanjunxiong@huawei.com>
-	<1505619638-20912-2-git-send-email-guanjunxiong@huawei.com>
-	<fd6ead563a154984abc2654fd1a8ea30@BRMWP-EXMB12.corp.brocade.com>
-	<7035dfdb-1c49-aa3f-3836-1ec316707c47@huawei.com>
-	<1505764297.12944.2.camel@suse.com>
-	<e596eefc-2d42-e840-57cf-6219d43de9d9@huawei.com>
-	<8d45c076cf6c47d39bf2aade3ade7f51@BRMWP-EXMB12.corp.brocade.com>
-	<52829afa-ed9e-cc39-a492-3e678b8e0d03@huawei.com>
+From: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Subject: Re: multipath-tools 0.7.3
+Date: Wed, 20 Sep 2017 19:18:24 +0200
+Message-ID: <CABr-GncZ+_GR8y9YDCUYb3Ta-Pkiz=iNPgdWJJJ=x2_3RDyA0Q@mail.gmail.com>
+References: <CABr-Gncov7Fb_ijSAeHRYYRrQPtonkObSNgdfqzUnnbhAfs4CA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: multipart/mixed; boundary="===============3384828331019700443=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <52829afa-ed9e-cc39-a492-3e678b8e0d03@huawei.com>
-Content-Language: en-US
+In-Reply-To: <CABr-Gncov7Fb_ijSAeHRYYRrQPtonkObSNgdfqzUnnbhAfs4CA@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,131 +16,317 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Guan Junxiong <guanjunxiong@huawei.com>, Martin Wilck <mwilck@suse.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
-Cc: "chengjike.cheng@huawei.com" <chengjike.cheng@huawei.com>, "niuhaoxin@huawei.com" <niuhaoxin@huawei.com>, "shenhong09@huawei.com" <shenhong09@huawei.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-SGkgR3VhbiwKPj4+U2hhbGwgd2UgdXNlIGV4aXN0aW5nIFBBVEhfU0hBS1kgPwpBcyB0aGUgcGF0
-aF9zaGFreSBJbmRpY2F0ZXMgcGF0aCBub3QgYXZhaWxhYmxlIGZvciAibm9ybWFsIiBvcGVyYXRp
-b25zIHdlIGNhbiB1c2UgdGhpcyBzdGF0ZS4gVGhhdCdzICBhIGdvb2QgaWRlYS4KClJlZ2FyZGlu
-ZyB0aGUgbWFyZ2luYWwgcGF0aHMgYmVsb3cgaXMgbXkgZXhwbGFuYXRpb24uIEFuZCBicm9jYWRl
-IGlzIHB1Ymxpc2hpbmcgY291cGxlIG9mIHdoaXRlIHBhcGVycyByZWdhcmRpbmcgdGhlIHNhbWUg
-dG8gZWR1Y2F0ZSB0aGUgU0FOIGFkbWluaXN0cmF0b3JzIGFuZCB0aGUgc2FuIGNvbW11bml0eS4K
-Ck1hcmdpbmFsIHBhdGg6CgpBIGhvc3QsIHRhcmdldCwgTFVOIChJVEwgcGF0aCkgZmxvdyAgZ29l
-cyB0aHJvdWdoIFNBTi4gSXQgaXMgdG8gYmUgbm90ZWQgdGhhdCB0aGUgZm9yIGVhY2ggSS9PIHJl
-cXVlc3QgdGhhdCBnb2VzIHRvIHRoZSBTQ1NJIGxheWVyLCBpdCB0cmFuc2Zvcm1zIGludG8gYSBz
-aW5nbGUgU0NTSSBleGNoYW5nZS4gIEluIGEgc2luZ2xlIFNBTiwgdGhlcmUgYXJlIHR5cGljYWxs
-eSBtdWx0aXBsZSBTQU4gbmV0d29yayBwYXRocyAgZm9yIGEgSVRMIGZsb3cvcGF0aC4gRWFjaCBT
-Q1NJIGV4Y2hhbmdlICBjYW4gdGFrZSBvbmUgb2YgdGhlIHZhcmlvdXMgbmV0d29yayBwYXRocyB0
-aGF0IGFyZSBhdmFpbGFibGUgZm9yIHRoZSBJVEwgcGF0aC4gIEEgU0FOIGNhbiBiZSBiYXNlZCBv
-biBFdGhlcm5ldCwgRkMsIEluZmluaWJhbmQgcGh5c2ljYWwgbmV0d29ya3MgdG8gY2FycnkgYmxv
-Y2sgc3RvcmFnZSB0cmFmZmljIChTQ1NJLCBOVk1lIGV0Yy4pCgpUaGVyZSBhcmUgdHlwaWNhbGx5
-IHR3byB0eXBlIG9mIFNBTiBuZXR3b3JrIHByb2JsZW1zIHRoYXQgYXJlIGNhdGVnb3JpemVkIGFz
-IG1hcmdpbmFsIGlzc3Vlcy4gVGhlc2UgaXNzdWVzIGJ5IG5hdHVyZSBhcmUgbm90IHBlcm1hbmVu
-dCBpbiB0aW1lIGFuZCBkbyBjb21lIGFuZCBnbyBhd2F5IG92ZXIgdGltZS4KMSkgU3dpdGNoZXMg
-aW4gdGhlIFNBTiBjYW4gaGF2ZSBpbnRlcm1pdHRlbnQgZnJhbWUgZHJvcHMgb3IgaW50ZXJtaXR0
-ZW50IGZyYW1lIGNvcnJ1cHRpb25zIGR1ZSB0byBiYWQgb3B0aWNzIGNhYmxlIChTRlApIG9yIGFu
-eSBzdWNoIHdlYXIvdGVhciAgcG9ydCBpc3N1ZXMuIFRoaXMgY2F1c2VzIElUTCBmbG93cyB0aGF0
-IGdvIHRocm91Z2ggdGhlIGZhdWx0eSBzd2l0Y2gvcG9ydCB0byBpbnRlcm1pdHRlbnRseSBleHBl
-cmllbmNlIGZyYW1lIGRyb3BzLiAgCjIpIFRoZXJlIGV4aXN0cyBTQU4gdG9wb2xvZ2llcyB3aGVy
-ZSB0aGVyZSBhcmUgc3dpdGNoIHBvcnRzIGluIHRoZSBmYWJyaWMgdGhhdCBiZWNvbWVzIHRoZSBv
-bmx5ICBjb25kdWl0IGZvciBtYW55IGRpZmZlcmVudCBJVEwgZmxvd3MgYWNyb3NzIG11bHRpcGxl
-IGhvc3RzLiBUaGVzZSBzaW5nbGUgbmV0d29yayBwYXRocyBhcmUgZXNzZW50aWFsbHkgc2hhcmVk
-IGFjcm9zcyBtdWx0aXBsZSBJVEwgZmxvd3MuIFVuZGVyIHRoZXNlIGNvbmRpdGlvbnMgaWYgdGhl
-IHBvcnQgbGluayBiYW5kd2lkdGggaXMgbm90IGFibGUgdG8gaGFuZGxlIHRoZSBuZXQgc3VtIG9m
-IHRoZSBzaGFyZWQgSVRMIGZsb3dzIGJhbmR3aWR0aCBnb2luZyB0aHJvdWdoIHRoZSBzaW5nbGUg
-cGF0aCAgdGhlbiB3ZSBjb3VsZCBzZWUgaW50ZXJtaXR0ZW50IG5ldHdvcmsgY29uZ2VzdGlvbiBw
-cm9ibGVtcy4gVGhpcyBjb25kaXRpb24gaXMgY2FsbGVkIG5ldHdvcmsgb3ZlcnN1YnNjcmlwdGlv
-bi4gVGhlIGludGVybWl0dGVudCBjb25nZXN0aW9ucyBjYW4gZGVsYXkgU0NTSSBleGNoYW5nZSBj
-b21wbGV0aW9uIHRpbWUgKGluY3JlYXNlIGluIEkvTyBsYXRlbmN5IGlzIG9ic2VydmVkKS4KClRv
-IG92ZXJjb21lIHRoZSBhYm92ZSBuZXR3b3JrIGlzc3VlcyBhbmQgbWFueSBtb3JlIHN1Y2ggdGFy
-Z2V0IGlzc3VlcywgdGhlcmUgYXJlIGZyYW1lIGxldmVsIHJldHJpZXMgdGhhdCBhcmUgZG9uZSBp
-biBIQkEgZGV2aWNlIGZpcm13YXJlIGFuZCBJL08gcmV0cmllcyBpbiB0aGUgU0NTSSBsYXllci4g
-VGhlc2UgcmV0cmllcyBtaWdodCBzdWNjZWVkIGJlY2F1c2Ugb2YgdHdvIHJlYXNvbnM6CjEpIFRo
-ZSBpbnRlcm1pdHRlbnQgc3dpdGNoL3BvcnQgaXNzdWUgaXMgbm90IG9ic2VydmVkCjIpIFRoZSBy
-ZXRyeSBJL08gaXMgYSBuZXcgIFNDU0kgZXhjaGFuZ2UuIFRoaXMgU0NTSSBleGNoYW5nZSAgY2Fu
-IHRha2UgYW4gYWx0ZXJuYXRlIFNBTiBwYXRoIGZvciB0aGUgSVRMIGZsb3csIGlmIHN1Y2ggYW4g
-U0FOIHBhdGggZXhpc3RzLgozKSBOZXR3b3JrIGNvbmdlc3Rpb24gZGlzYXBwZWFycyBtb21lbnRh
-cmlseSBiZWNhdXNlIHRoZSBuZXQgSS9PIGJhbmR3aWR0aCBjb21pbmcgZnJvbSBtdWx0aXBsZSBJ
-VEwgZmxvd3Mgb24gdGhlIHNpbmdsZSBzaGFyZWQgbmV0d29yayBwYXRoIGlzIHNvbWV0aGluZyB0
-aGUgcGF0aCBjYW4gaGFuZGxlCgpIb3dldmVyIGluIHNvbWUgY2FzZXMgd2UgaGF2ZSBzZWVuIEkv
-TyByZXRyaWVzIGRvbuKAmXQgc3VjY2VlZCBiZWNhdXNlIHRoZSByZXRyeSBJL09zIGhpdHMgYSBT
-QU4gbmV0d29yayBwYXRoIHRoYXQgaGFzICBpbnRlcm1pdHRlbnQgc3dpdGNoL3BvcnQgaXNzdWUg
-YW5kL29yIG5ldHdvcmsgY29uZ2VzdGlvbi4gCgpPbiB0aGUgaG9zdCAgdGh1cyB3ZSBzZWUgY29u
-ZmlndXJhdGlvbnMgdHdvIG9yIG1vcmUgSVRMIHBhdGggc2hhcmluZyB0aGUgc2FtZSB0YXJnZXQv
-TFVOIGdvaW5nIHRocm91Z2ggdHdvIG9yIG1vcmUgSEJBIHBvcnRzLiBUaGVzZSBIQkEgcG9ydHMg
-YXJlIGNvbm5lY3RlZCB0byB0d28gb3IgbW9yZSBTQU4gdG8gdGhlIHNhbWUgdGFyZ2V0L0xVTi4K
-SWYgdGhlIEkvTyBmYWlscyBhdCB0aGUgbXVsdGlwYXRoIGxheWVyIHRoZW4sIHRoZSBJVEwgcGF0
-aCBpcyB0dXJuZWQgaW50byBGYWlsZWQgc3RhdGUuIEJlY2F1c2Ugb2YgdGhlIG1hcmdpbmFsIG5h
-dHVyZSBvZiB0aGUgbmV0d29yaywgdGhlIG5leHQgSGVhbHRoIENoZWNrIGNvbW1hbmQgc2VudCBm
-cm9tIG11bHRpcGF0aCBsYXllciBtaWdodCBzdWNjZWVkLCB3aGljaCByZXN1bHRzIGluIG1ha2lu
-ZyB0aGUgSVRMIHBhdGggaW50byBBY3RpdmUgc3RhdGUuIFlvdSBlbmQgdXAgc2VlaW5nIHRoZSBE
-TSBwYXRoIHN0YXRlIGdvaW5nICBpbnRvIEFjdGl2ZSwgRmFpbGVkLCBBY3RpdmUgdHJhbnNpdGlv
-bnMuIFRoaXMgcmVzdWx0cyBpbiBvdmVyYWxsIHJlZHVjdGlvbiBpbiBhcHBsaWNhdGlvbiBJL08g
-dGhyb3VnaHB1dCBhbmQgc29tZXRpbWUgYXBwbGljYXRpb24gSS9PIGZhaWx1cmVzIChiZWNhdXNl
-IG9mIHRpbWluZyBjb25zdHJhaW50cykuIEFsbCB0aGlzIGNhbiBoYXBwZW4gYmVjYXVzZSBvZiBJ
-L08gcmV0cmllcyBhbmQgSS9PIHJlcXVlc3QgbW92aW5nIGFjcm9zcyBtdWx0aXBsZSBwYXRocyBv
-ZiB0aGUgRE0gZGV2aWNlLiBJbiB0aGUgaG9zdCBpdCBpcyAgdG8gYmUgbm90ZWQgYWxsIEkvTyBy
-ZXRyaWVzIG9uIGEgc2luZ2xlIHBhdGggYW5kIEkvTyBtb3ZlbWVudCBhY3Jvc3MgbXVsdGlwbGUg
-cGF0aHMgcmVzdWx0cyBpbiBzbG93aW5nIGRvd24gdGhlIGZvcndhcmQgcHJvZ3Jlc3Mgb2YgbmV3
-IGFwcGxpY2F0aW9uIEkvTy4gUmVhc29uIGJlaGluZCwgdGhlIGFib3ZlIEkvTyAgcmUtcXVldWUg
-YWN0aW9ucyBhcmUgZ2l2ZW4gaGlnaGVyIHByaW9yaXR5IHRoYW4gdGhlIG5ld2VyIEkvTyByZXF1
-ZXN0cyBjb21pbmcgZnJvbSB0aGUgYXBwbGljYXRpb24uIAoKVGhlIGFib3ZlIGNvbmRpdGlvbiBv
-ZiB0aGUgIElUTCBwYXRoIGlzIGhlbmNlIGNhbGxlZCDigJxtYXJnaW5hbOKAnS4KCldoYXQgd2Ug
-ZGVzaXJlIGlzIGZvciB0aGUgRE0gdG8gZGV0ZXJtaW5pc3RpY2FsbHkgIGNhdGVnb3JpemUgYSBJ
-VEwgUGF0aCBhcyDigJxtYXJnaW5hbOKAnSBhbmQgbW92ZSBhbGwgdGhlIHBlbmRpbmcgSS9PcyBm
-cm9tIHRoZSBtYXJnaW5hbCBQYXRoIHRvIGFuIEFjdGl2ZSBQYXRoLiBUaGlzIHdpbGwgaGVscCBp
-biBtZWV0aW5nIGFwcGxpY2F0aW9uIEkvTyB0aW1pbmcgY29uc3RyYWludHMuIEFsc28gYSBjYXBh
-YmlsaXR5IHRvIGF1dG9tYXRpY2FsbHkgcmUtaW5zdGFudGlhdGUgdGhlIG1hcmdpbmFsIHBhdGgg
-aW50byBBY3RpdmUgb25jZSB0aGUgbWFyZ2luYWwgY29uZGl0aW9uIGluIHRoZSBuZXR3b3JrIGlz
-IGZpeGVkLgoKCkJhc2VkIG9uIHRoZSBhYm92ZSBleHBsYW5hdGlvbiBJIHdhbnQgdG8gcmVuYW1l
-IHRoZSBuYW1lcyBhcyBtYXJnaW5hbF9wYXRoX1hYWFggYW5kIHRoaXMgaXMgaXJyZXNwZWN0aXZl
-IG9mIGFueSBzdG9yYWdlIG5ldHdvcmsuCgpSZWdhcmRzLApNdW5lZW5kcmEuCgoKCi0tLS0tT3Jp
-Z2luYWwgTWVzc2FnZS0tLS0tCkZyb206IEd1YW4gSnVueGlvbmcgW21haWx0bzpndWFuanVueGlv
-bmdAaHVhd2VpLmNvbV0gClNlbnQ6IFR1ZXNkYXksIFNlcHRlbWJlciAxOSwgMjAxNyA2OjIzIFBN
-ClRvOiBNdW5lZW5kcmEgS3VtYXIgTSA8bW1hbmRhbGFAQnJvY2FkZS5jb20+OyBNYXJ0aW4gV2ls
-Y2sgPG13aWxja0BzdXNlLmNvbT47IGRtLWRldmVsQHJlZGhhdC5jb207IGNocmlzdG9waGUudmFy
-b3F1aUBvcGVuc3ZjLmNvbQpDYzogc2hlbmhvbmcwOUBodWF3ZWkuY29tOyBuaXVoYW94aW5AaHVh
-d2VpLmNvbTsgY2hlbmdqaWtlLmNoZW5nQGh1YXdlaS5jb20KU3ViamVjdDogUmU6IFtQQVRDSCBW
-NCAxLzJdIG11bHRpcGF0aC10b29sczogaW50ZXJtaXR0ZW50IElPIGVycm9yIGFjY291bnRpbmcg
-dG8gaW1wcm92ZSByZWxpYWJpbGl0eQoKSGkgTXVuZWVuZHJhICwKVGhhbmtzIGZvciB5b3VyIHN1
-Z2dlc3Rpb24uIE15IGNvbW1lbnRzIGlubGluZS4KCk9uIDIwMTcvOS8xOSAxODo1OSwgTXVuZWVu
-ZHJhIEt1bWFyIE0gd3JvdGU6Cj4gSGkgR3Vhbi9NYXJ0aW4sCj4gQmVsb3cgYXJlIG15IHBvaW50
-cy4KPiAKPj4+PiAic2FuX3BhdGhfZG91YmxlX2ZhdWx0X3RpbWUiICBpcyBncmVhdC4gIE9uZSBs
-ZXNzIGFkZGl0aW9uYWwgcGFyYW1ldGVyIGFuZCBzdGlsbCBjb3ZlcmluZyBtb3N0IHNjZW5hcmlv
-cyBhcmUgYXBwcmVjaWF0ZWQuCj4gVGhpcyBsb29rcyBnb29kIGFuZCBJIGNvbXBsZXRlbHkgYWdy
-ZWUgd2l0aCBHdWFuLgo+IAo+IE9uZSBxdWVzdGlvbiBzYW5fcGF0aF9kb3VibGVfZmF1bHRfdGlt
-ZSBpcyB0aGUgdGltZSBiZXR3ZWVuIHR3byBmYWlsZWQgc3RhdGVzIChmYWlsZWQtYWN0aXZlLWZh
-aWxlZCApaXMgdGhpcyBjb3JyZWN0ID8uCj4gVGhlbiB0aGlzIGhvbGRzIGdvb2QuCj4gCj4gSW5z
-dGVhZCBvZiBzYW5fcGF0aF9kb3VibGVfZmF1bHRfdGltZSBjYW4gd2UgY2FsbCBpdCBhcyBzYW5f
-cGF0aF9kb3VibGVfZmFpbGVkX3RpbWUgYXMgdGhlIG5hbWUgc3VnZ2VzdHMgdGhlIHRpbWUgYmV0
-d2VlbiB0d28gZmFpbGVkIHN0YXRlcyBpcyB0aGlzIG9rID8KPiAKCkJvdGggbmFtZXMgYXJlIGZp
-bmUgZm9yIG1lLgoKPiBJbiBTQU4gIHRvcG9sb2d5IChGQyxOVk1FLFNDU0kpdHJhbnNpZW50IGlu
-dGVybWl0dGVudCBuZXR3b3JrIGVycm9ycyBtYWtlIHRoZSBJVEwgcGF0aHMgIGFzIG1hcmdpbmFs
-IHBhdGhzLiAKPgo+Cj4gU28gaW5zdGVhZCBvZiBjYWxsaW5nICJwYXRoX2lvX2Vycl9zYW1wbGVf
-dGltZSIsICJwYXRoX2lvX2Vycl9yYXRlX3RocmVzaG9sZCIgYW5kICJwYXRoX2lvX2Vycl9yZWNv
-dmVyeV90aW1lIgo+IGNhbiB3ZSBuYW1lIGFzICJtYXJnaW5hbF9wYXRoX2Vycl9kZXRlY3Rpb25f
-dGltZSIsICIgbWFyZ2luYWxfcGF0aF9lcnJfcmF0ZV90aHJlc2hvbGQiIGFuZCAiIG1hcmdpbmFs
-X3BhdGhfZXJyX3JlY292ZXJ5X3RpbWUiCj4gCj4gU29tZSBvdGhlciBuYW1lcyBzaG91bGQgYWxz
-byBiZSBnb29kIGFzIHRoZSBpb19wYXRoIGlzIGdlbmVyYWwgd29yZCBmcm9tIG15IHZpZXcuCj4g
-PgoKQ2FuIHlvdSBleHBsYWluICJ0aGUgbWFyZ2luYWwgcGF0aHMiIGluIGRldGFpbHM/ICBDYW4g
-dGhlIHVzZXJzIGVhc2lseSBjYXRjaCB0aGUgbWVhbmluZyBvZiAgbWFyZ2luYWwgcGF0aHM/CklN
-TywgcGF0aF9pb19lcnJfWFhYcyBhcmUgZWFzeSB0byB1bmRlcl9zdGFuZAoKPiBJZiB3ZSBhZ3Jl
-ZSB3aXRoIHRoaXMgb25lIG1vcmUgdGhpbmcgd2hpY2ggSSB3b3VsZCBsaWtlIHRvIGFkZCBhcyBw
-YXJ0IG9mIHRoaXMgcGF0Y2guCj4gCj4gV2hlbmV2ZXIgdGhlIHBhdGggaXMgaW4gWFhYX2lvX2Vy
-cm9yX3JlY292ZXJ5X3RpbWUgIGFuZCBpZiB0aGUgdXNlciBydW5zIG11bHRpcGF0aCAtbGwgY29t
-bWFuZCB0aGUgcGF0aCB0aGUgc3RhdGUgb2YgdGhlIHBhdGggaXMgc2hvd24gYXMgZmFpbGVkIGFz
-IHNob3duIGJlbG93Lgo+IAo+IAl8IGAtIDY6MDowOjAgc2RiIDg6MTYgIGZhaWxlZCByZWFkeSAg
-cnVubmluZwo+IAo+IENhbiB3ZSBhZGQgYSBuZXcgc3RhdGUgYXMgbWFyZ2luYWwgc28gdGhhdCB3
-aGVuIHRoZSBhZG1pbiBydW4gdGhlIAo+IG11bHRpcGF0aCBjb21tYW5kIGFuZCBmb3VuZCB0aGF0
-IHRoZSBzdGF0ZSBpcyBpbiBtYXJnaW5hbCBoZSBjYW4gcXVpY2tseSBjb21lIHRvIGtub3cgdGhh
-dCB0aGlzIGEgbWFyZ2luYWwgUGF0aCBhbmQgbmVlZHMgdG8gYmUgcmVjb3ZlcmVkIC5JZiB3ZSBr
-ZWVwIHRoZSBzdGF0ZSBhcyBmYWlsZWQgdGhlIGFkbWluIGNhbm5vdCB1bmRlcnN0YW5kIGZyb20g
-cGFzdCBob3cgbXVjaCB0aW1lIHRoZSBkZXZpY2UgaXMgaW4gZmFpbGVkIHN0YXRlLgo+IAo+CgpJ
-ZiB0aGUgdXNlciB1c2UgbXVsdGlwYXRoZCAtayAsIHRoZW4gaW5wdXQgInNob3cgcGF0aHMiLCB0
-aGUgbXVsdGlwYXRoZCB3aWxsIHNob3cgdGhlIHBhdGggaW4gdGhlIHN0YXRlIG9mICJkZWxheWVk
-Ii4KQnV0IHdlIGNhbid0IGZpbmQgdGhlIGV4YWN0bHkgcmVhc29uIG9mIHRoZSBkZWxheWVkIHN0
-YXRlIHBhdGggYmVjYXVzZSBvdGhlciBmZWF0dXJlcyBzdWNoIGFzIHBhdGggd2FpdGluZyB1c2Vz
-IGl0LgpTaGFsbCB3ZSB1c2UgZXhpc3RpbmcgUEFUSF9TSEFLWSA/CgpSZWdhcmRzLgpHdWFuCgoK
-Ci0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3
-LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+--===============3384828331019700443==
+Content-Type: multipart/alternative; boundary="94eb2c11cd46d0f7720559a2298c"
+
+--94eb2c11cd46d0f7720559a2298c
+Content-Type: text/plain; charset="UTF-8"
+
+Oops, the shortlog was truncated.
+Here it is again:
+
+Arnon Yaari (1):
+      libmultipath: update INFINIDAT builtin config
+
+Benjamin Marzinski (5):
+      libmultipath: pull functions into util.c
+      libmultipath: change reservation_key to a be64
+      libmpathpersist: fix update_prflag code
+      multipath: add alternate reservation_key method
+      mpathpersist: add support for prkeys file
+
+Christophe Varoqui (1):
+      Bump version to 0.7.3
+
+Gris Ge (3):
+      multipath-tools: Remove the limitation of IPC command reply length.
+      multipath-tools: libdmmp: Improve timeout mechanism
+      multipath-tools: libdmmp: New function to flush and reconfig
+
+Guan Junxiong (1):
+      multipath-tools: fix incorrect length for strncmp in uevent.c
+
+Hannes Reinecke (6):
+      libmultipath: add pthread_cleanup hook for udev monitor
+      libmultipath: sanitize fd handling
+      discovery: sanitize NVMe discovery
+      libmultipath/discovery: modify NVMe path states
+      Add 'none' checker
+      hwtable: set 'none' as default checker for NVMe
+
+Martin Wilck (35):
+      multipathd: don't flood system with sd_notify calls
+      libmultipath: add_feature: skip pointless NULL check
+      libmultipath: add_feature: allow only 1 feature
+      kpartx/devmapper.h: remove dm_no_partitions
+      libmultipath: cli_add_map: Use CMD_NONE
+      multipath-tools: link internal libraries before foreigns
+      libmultipath: fix partition_delimiter config option
+      kpartx: helper functions for name and uuid generation
+      kpartx: search partitions by UUID, and rename
+      test-kpartx: add tests for renaming functionality
+      kpartx: fix a corner case when renaming partitions
+      kpartx: fix part deletion without partition table
+      test-kpartx: test deletion with empty part table
+      kpartx: only recognize dasd part table on DASD
+      libmultipath: support MPATH_UDEV_NO_PATHS_FLAG on map creation
+      libmultipath: add get_udev_device
+      libmultipath: get_refwwid: use get_udev_device
+      libmultipath: use const char* in some dm helpers
+      libmultipath: add DI_NOIO flag for pathinfo
+      libmultipath: add dm_get_multipath
+      multipath: implement "check usable paths" (-C/-U)
+      11-dm-mpath.rules: multipath -U for READY check
+      11-dm-mpath.rules: import more ID_FS_xxx vars from db
+      11-dm-mpath.rules: no need to test before IMPORT
+      11-dm-mpath.rules: handle new maps with READY==0
+      multipath.rules: set ID_FS_TYPE to "mpath_member"
+      kpartx.rules: don't rely on DM_DEPS and DM_TABLE_STATE
+      kpartx.rules: respect DM_UDEV_LOW_PRIORITY_FLAG
+      kpartx.rules: improved logic for by-uuid and by-label links
+      kpartx.rules: create by-partuuid and by-partlabel symlinks
+      kpartx.rules: generate type-name links only for multipath devices
+      kpartx.rules: fix logic for adding partitions
+      multipath/kpartx rules: avoid superfluous scanning
+      kpartx/del-part-nodes.rules: new udev file
+      kpartx.rules: move symlink code to other files
+
+Xose Vazquez Perez (8):
+      multipath-tools: minor edition and corrections in multipath.conf.5
+      multipath-tools: clarify how to dump the multipathd config
+      multipath-tools: replace "setting: array" with "setting: storage
+device" at multipath output
+      multipath-tools: remove Sun StorEdge T4(6020,6120,6320) arrays from
+hwtable
+      multipath-tools: add support for all arrays from Sun StorEdge 3000
+family
+      multipath-tools: add Xiotech iglu blaze arrays to hwtable
+      multipath-tools: add Dot Hill/Seagate arrays to hwtable
+      multipath-tools: add info about adding new hardware
+
+
+On Wed, Sep 20, 2017 at 7:15 PM, Christophe Varoqui <
+christophe.varoqui@opensvc.com> wrote:
+
+> Arnon Yaari (1):
+>       libmultipath: update INFINIDAT builtin config
+>
+> Benjamin Marzinski (5):
+>       libmultipath: pull functions into util.c
+>       libmultipath: change reservation_key to a be64
+>       libmpathpersist: fix update_prflag code
+>       multipath: add alternate reservation_key method
+>       mpathpersist: add support for prkeys file
+>
+> Christophe Varoqui (1):
+>       Bump version to 0.7.3
+>
+> Gris Ge (3):
+>       multipath-tools: Remove the limitation of IPC command reply length.
+>       multipath-tools: libdmmp: Improve timeout mechanism
+>       multipath-tools: libdmmp: New function to flush and reconfig
+>
+> Guan Junxiong (1):
+>       multipath-tools: fix incorrect length for strncmp in uevent.c
+>
+> Hannes Reinecke (6):
+>       libmultipath: add pthread_cleanup hook for udev monitor
+>       libmultipath: sanitize fd handling
+>       discovery: sanitize NVMe discovery
+>       libmultipath/discovery: modify NVMe path states
+>       Add 'none' checker
+>       hwtable: set 'none' as default checker for NVMe
+>
+> Martin Wilck (35):
+>       multipathd: don't flood system with sd_notify calls
+>       libmultipath: add_feature: skip pointless NULL check
+>       libmultipath: add_feature: allow only 1 feature
+>       kpartx/devmapper.h: remove dm_no_partitions
+>       libmultipath: cli_add_map: Use CMD_NONE
+>       multipath-tools: link internal libraries before foreigns
+>       libmultipath: fix partition_delimiter config option
+>       kpartx: helper functions for name and uuid generation
+>       kpartx: search partitions by UUID, and rename
+>       test-kpartx: add tests for renaming functionality
+>       kpartx: fix a corner case when renaming partitions
+>       kpartx: fix part deletion without partition table
+>       test-kpartx: test deletion with empty part table
+>       kpartx: only recognize dasd part table on DASD
+>       libmultipath: support MPATH_UDEV_NO_PATHS_FLAG on map creation
+>       libmultipath: add get_udev_device
+>       libmultipath: get_refwwid: use get_udev_device
+>       libmultipath: use const char* in some dm helpers
+>       libmultipath: add DI_NOIO flag for pathinfo
+>       libmultipath: add dm_get_multipath
+>       multipath: implement "check usable paths" (-C/-U)
+>       11-dm-mpath.rules: multipath -U for READY check
+>       11-dm-mpath.rules: import more ID_FS_xxx vars from db
+>       11-dm-mpath.rules: no need to test before IMPORT
+>       11-dm-mpath.rules: handle new maps with READY==0
+>       multipath.rules: set ID_FS_TYPE to "mpath_member"
+>       kpartx.rules: don't rely on DM_DEPS and DM_TABLE_STATE
+>       kpartx.rules: respect DM_UDEV_LOW_PRIORITY_FLAG
+>       kpartx.rules: improved logic for by-uuid and by-label links
+>
+>
+
+--94eb2c11cd46d0f7720559a2298c
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>Oops, the shortlog was truncated.</div><div>Here it i=
+s again:</div><div><br></div><div><div class=3D"gmail-adn gmail-ads"><div c=
+lass=3D"gmail-gs"><div id=3D"gmail-:61d" class=3D"gmail-ii gmail-gt gmail-a=
+dP gmail-adO" style=3D"font-size:12.8px"><div id=3D"gmail-:61c" class=3D"gm=
+ail-a3s gmail-aXjCH gmail-m15ea049c9d830a30"><div dir=3D"ltr"><div>Arnon Ya=
+ari (1):</div><div>=C2=A0 =C2=A0 =C2=A0 libmultipath: update INFINIDAT buil=
+tin config</div><div><br></div><div>Benjamin Marzinski (5):</div><div>=C2=
+=A0 =C2=A0 =C2=A0 libmultipath: pull functions into util.c</div><div>=C2=A0=
+ =C2=A0 =C2=A0 libmultipath: change reservation_key to a be64</div><div>=C2=
+=A0 =C2=A0 =C2=A0 libmpathpersist: fix update_prflag code</div><div>=C2=A0 =
+=C2=A0 =C2=A0 multipath: add alternate reservation_key method</div><div>=C2=
+=A0 =C2=A0 =C2=A0 mpathpersist: add support for prkeys file</div><div><br><=
+/div><div>Christophe Varoqui (1):</div><div>=C2=A0 =C2=A0 =C2=A0 Bump versi=
+on to 0.7.3</div><div><br></div><div>Gris Ge (3):</div><div>=C2=A0 =C2=A0 =
+=C2=A0 multipath-tools: Remove the limitation of IPC command reply length.<=
+/div><div>=C2=A0 =C2=A0 =C2=A0 multipath-tools: libdmmp: Improve timeout me=
+chanism</div><div>=C2=A0 =C2=A0 =C2=A0 multipath-tools: libdmmp: New functi=
+on to flush and reconfig</div><div><br></div><div>Guan Junxiong (1):</div><=
+div>=C2=A0 =C2=A0 =C2=A0 multipath-tools: fix incorrect length for strncmp =
+in uevent.c</div><div><br></div><div>Hannes Reinecke (6):</div><div>=C2=A0 =
+=C2=A0 =C2=A0 libmultipath: add pthread_cleanup hook for udev monitor</div>=
+<div>=C2=A0 =C2=A0 =C2=A0 libmultipath: sanitize fd handling</div><div>=C2=
+=A0 =C2=A0 =C2=A0 discovery: sanitize NVMe discovery</div><div>=C2=A0 =C2=
+=A0 =C2=A0 libmultipath/discovery: modify NVMe path states</div><div>=C2=A0=
+ =C2=A0 =C2=A0 Add &#39;none&#39; checker</div><div>=C2=A0 =C2=A0 =C2=A0 hw=
+table: set &#39;none&#39; as default checker for NVMe</div><div><br></div><=
+div>Martin Wilck (35):</div><div>=C2=A0 =C2=A0 =C2=A0 multipathd: don&#39;t=
+ flood system with sd_notify calls</div><div>=C2=A0 =C2=A0 =C2=A0 libmultip=
+ath: add_feature: skip pointless NULL check</div><div>=C2=A0 =C2=A0 =C2=A0 =
+libmultipath: add_feature: allow only 1 feature</div><div>=C2=A0 =C2=A0 =C2=
+=A0 kpartx/devmapper.h: remove dm_no_partitions</div><div>=C2=A0 =C2=A0 =C2=
+=A0 libmultipath: cli_add_map: Use CMD_NONE</div><div>=C2=A0 =C2=A0 =C2=A0 =
+multipath-tools: link internal libraries before foreigns</div><div>=C2=A0 =
+=C2=A0 =C2=A0 libmultipath: fix partition_delimiter config option</div><div=
+>=C2=A0 =C2=A0 =C2=A0 kpartx: helper functions for name and uuid generation=
+</div><div>=C2=A0 =C2=A0 =C2=A0 kpartx: search partitions by UUID, and rena=
+me</div><div>=C2=A0 =C2=A0 =C2=A0 test-kpartx: add tests for renaming funct=
+ionality</div><div>=C2=A0 =C2=A0 =C2=A0 kpartx: fix a corner case when rena=
+ming partitions</div><div>=C2=A0 =C2=A0 =C2=A0 kpartx: fix part deletion wi=
+thout partition table</div><div>=C2=A0 =C2=A0 =C2=A0 test-kpartx: test dele=
+tion with empty part table</div><div>=C2=A0 =C2=A0 =C2=A0 kpartx: only reco=
+gnize dasd part table on DASD</div><div>=C2=A0 =C2=A0 =C2=A0 libmultipath: =
+support MPATH_UDEV_NO_PATHS_FLAG on map creation</div><div>=C2=A0 =C2=A0 =
+=C2=A0 libmultipath: add get_udev_device</div><div>=C2=A0 =C2=A0 =C2=A0 lib=
+multipath: get_refwwid: use get_udev_device</div><div>=C2=A0 =C2=A0 =C2=A0 =
+libmultipath: use const char* in some dm helpers</div><div>=C2=A0 =C2=A0 =
+=C2=A0 libmultipath: add DI_NOIO flag for pathinfo</div><div>=C2=A0 =C2=A0 =
+=C2=A0 libmultipath: add dm_get_multipath</div><div>=C2=A0 =C2=A0 =C2=A0 mu=
+ltipath: implement &quot;check usable paths&quot; (-C/-U)</div><div>=C2=A0 =
+=C2=A0 =C2=A0 11-dm-mpath.rules: multipath -U for READY check</div><div>=C2=
+=A0 =C2=A0 =C2=A0 11-dm-mpath.rules: import more ID_FS_xxx vars from db</di=
+v><div>=C2=A0 =C2=A0 =C2=A0 11-dm-mpath.rules: no need to test before IMPOR=
+T</div><div>=C2=A0 =C2=A0 =C2=A0 11-dm-mpath.rules: handle new maps with RE=
+ADY=3D=3D0</div><div>=C2=A0 =C2=A0 =C2=A0 multipath.rules: set ID_FS_TYPE t=
+o &quot;mpath_member&quot;</div><div>=C2=A0 =C2=A0 =C2=A0 kpartx.rules: don=
+&#39;t rely on DM_DEPS and DM_TABLE_STATE</div><div>=C2=A0 =C2=A0 =C2=A0 kp=
+artx.rules: respect DM_UDEV_LOW_PRIORITY_FLAG</div><div>=C2=A0 =C2=A0 =C2=
+=A0 kpartx.rules: improved logic for by-uuid and by-label links</div><div c=
+lass=3D"gmail-yj6qo"></div></div></div></div><div class=3D"gmail-hi"></div>=
+</div><div class=3D"gmail-ajx"></div></div><div class=3D"gmail-gA gmail-gt"=
+ style=3D"font-size:12.8px"><div class=3D"gmail-gB gmail-acO"><div class=3D=
+"gmail-ip gmail-adB"><div class=3D"gmail-M9"><div id=3D"gmail-:65t" style=
+=3D"font-size:12.8px"></div></div></div></div></div></div><div><div>=C2=A0 =
+=C2=A0 =C2=A0 kpartx.rules: create by-partuuid and by-partlabel symlinks</d=
+iv><div>=C2=A0 =C2=A0 =C2=A0 kpartx.rules: generate type-name links only fo=
+r multipath devices</div><div>=C2=A0 =C2=A0 =C2=A0 kpartx.rules: fix logic =
+for adding partitions</div><div>=C2=A0 =C2=A0 =C2=A0 multipath/kpartx rules=
+: avoid superfluous scanning</div><div>=C2=A0 =C2=A0 =C2=A0 kpartx/del-part=
+-nodes.rules: new udev file</div><div>=C2=A0 =C2=A0 =C2=A0 kpartx.rules: mo=
+ve symlink code to other files</div><div><br></div><div>Xose Vazquez Perez =
+(8):</div><div>=C2=A0 =C2=A0 =C2=A0 multipath-tools: minor edition and corr=
+ections in multipath.conf.5</div><div>=C2=A0 =C2=A0 =C2=A0 multipath-tools:=
+ clarify how to dump the multipathd config</div><div>=C2=A0 =C2=A0 =C2=A0 m=
+ultipath-tools: replace &quot;setting: array&quot; with &quot;setting: stor=
+age device&quot; at multipath output</div><div>=C2=A0 =C2=A0 =C2=A0 multipa=
+th-tools: remove Sun StorEdge T4(6020,6120,6320) arrays from hwtable</div><=
+div>=C2=A0 =C2=A0 =C2=A0 multipath-tools: add support for all arrays from S=
+un StorEdge 3000 family</div><div>=C2=A0 =C2=A0 =C2=A0 multipath-tools: add=
+ Xiotech iglu blaze arrays to hwtable</div><div>=C2=A0 =C2=A0 =C2=A0 multip=
+ath-tools: add Dot Hill/Seagate arrays to hwtable</div><div>=C2=A0 =C2=A0 =
+=C2=A0 multipath-tools: add info about adding new hardware</div></div><div>=
+<br></div></div><div class=3D"gmail_extra"><br><div class=3D"gmail_quote">O=
+n Wed, Sep 20, 2017 at 7:15 PM, Christophe Varoqui <span dir=3D"ltr">&lt;<a=
+ href=3D"mailto:christophe.varoqui@opensvc.com" target=3D"_blank">christoph=
+e.varoqui@opensvc.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_q=
+uote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1e=
+x"><div dir=3D"ltr"><div>Arnon Yaari (1):</div><div>=C2=A0 =C2=A0 =C2=A0 li=
+bmultipath: update INFINIDAT builtin config</div><div><br></div><div>Benjam=
+in Marzinski (5):</div><div>=C2=A0 =C2=A0 =C2=A0 libmultipath: pull functio=
+ns into util.c</div><div>=C2=A0 =C2=A0 =C2=A0 libmultipath: change reservat=
+ion_key to a be64</div><div>=C2=A0 =C2=A0 =C2=A0 libmpathpersist: fix updat=
+e_prflag code</div><div>=C2=A0 =C2=A0 =C2=A0 multipath: add alternate reser=
+vation_key method</div><div>=C2=A0 =C2=A0 =C2=A0 mpathpersist: add support =
+for prkeys file</div><div><br></div><div>Christophe Varoqui (1):</div><div>=
+=C2=A0 =C2=A0 =C2=A0 Bump version to 0.7.3</div><div><br></div><div>Gris Ge=
+ (3):</div><div>=C2=A0 =C2=A0 =C2=A0 multipath-tools: Remove the limitation=
+ of IPC command reply length.</div><div>=C2=A0 =C2=A0 =C2=A0 multipath-tool=
+s: libdmmp: Improve timeout mechanism</div><div>=C2=A0 =C2=A0 =C2=A0 multip=
+ath-tools: libdmmp: New function to flush and reconfig</div><div><br></div>=
+<div>Guan Junxiong (1):</div><div>=C2=A0 =C2=A0 =C2=A0 multipath-tools: fix=
+ incorrect length for strncmp in uevent.c</div><div><br></div><div>Hannes R=
+einecke (6):</div><div>=C2=A0 =C2=A0 =C2=A0 libmultipath: add pthread_clean=
+up hook for udev monitor</div><div>=C2=A0 =C2=A0 =C2=A0 libmultipath: sanit=
+ize fd handling</div><div>=C2=A0 =C2=A0 =C2=A0 discovery: sanitize NVMe dis=
+covery</div><div>=C2=A0 =C2=A0 =C2=A0 libmultipath/discovery: modify NVMe p=
+ath states</div><div>=C2=A0 =C2=A0 =C2=A0 Add &#39;none&#39; checker</div><=
+div>=C2=A0 =C2=A0 =C2=A0 hwtable: set &#39;none&#39; as default checker for=
+ NVMe</div><div><br></div><div>Martin Wilck (35):</div><div>=C2=A0 =C2=A0 =
+=C2=A0 multipathd: don&#39;t flood system with sd_notify calls</div><div>=
+=C2=A0 =C2=A0 =C2=A0 libmultipath: add_feature: skip pointless NULL check</=
+div><div>=C2=A0 =C2=A0 =C2=A0 libmultipath: add_feature: allow only 1 featu=
+re</div><div>=C2=A0 =C2=A0 =C2=A0 kpartx/devmapper.h: remove dm_no_partitio=
+ns</div><div>=C2=A0 =C2=A0 =C2=A0 libmultipath: cli_add_map: Use CMD_NONE</=
+div><div>=C2=A0 =C2=A0 =C2=A0 multipath-tools: link internal libraries befo=
+re foreigns</div><div>=C2=A0 =C2=A0 =C2=A0 libmultipath: fix partition_deli=
+miter config option</div><div>=C2=A0 =C2=A0 =C2=A0 kpartx: helper functions=
+ for name and uuid generation</div><div>=C2=A0 =C2=A0 =C2=A0 kpartx: search=
+ partitions by UUID, and rename</div><div>=C2=A0 =C2=A0 =C2=A0 test-kpartx:=
+ add tests for renaming functionality</div><div>=C2=A0 =C2=A0 =C2=A0 kpartx=
+: fix a corner case when renaming partitions</div><div>=C2=A0 =C2=A0 =C2=A0=
+ kpartx: fix part deletion without partition table</div><div>=C2=A0 =C2=A0 =
+=C2=A0 test-kpartx: test deletion with empty part table</div><div>=C2=A0 =
+=C2=A0 =C2=A0 kpartx: only recognize dasd part table on DASD</div><div>=C2=
+=A0 =C2=A0 =C2=A0 libmultipath: support MPATH_UDEV_NO_PATHS_FLAG on map cre=
+ation</div><div>=C2=A0 =C2=A0 =C2=A0 libmultipath: add get_udev_device</div=
+><div>=C2=A0 =C2=A0 =C2=A0 libmultipath: get_refwwid: use get_udev_device</=
+div><div>=C2=A0 =C2=A0 =C2=A0 libmultipath: use const char* in some dm help=
+ers</div><div>=C2=A0 =C2=A0 =C2=A0 libmultipath: add DI_NOIO flag for pathi=
+nfo</div><div>=C2=A0 =C2=A0 =C2=A0 libmultipath: add dm_get_multipath</div>=
+<div>=C2=A0 =C2=A0 =C2=A0 multipath: implement &quot;check usable paths&quo=
+t; (-C/-U)</div><div>=C2=A0 =C2=A0 =C2=A0 11-dm-mpath.rules: multipath -U f=
+or READY check</div><div>=C2=A0 =C2=A0 =C2=A0 11-dm-mpath.rules: import mor=
+e ID_FS_xxx vars from db</div><div>=C2=A0 =C2=A0 =C2=A0 11-dm-mpath.rules: =
+no need to test before IMPORT</div><div>=C2=A0 =C2=A0 =C2=A0 11-dm-mpath.ru=
+les: handle new maps with READY=3D=3D0</div><div>=C2=A0 =C2=A0 =C2=A0 multi=
+path.rules: set ID_FS_TYPE to &quot;mpath_member&quot;</div><div>=C2=A0 =C2=
+=A0 =C2=A0 kpartx.rules: don&#39;t rely on DM_DEPS and DM_TABLE_STATE</div>=
+<div>=C2=A0 =C2=A0 =C2=A0 kpartx.rules: respect DM_UDEV_LOW_PRIORITY_FLAG</=
+div><div>=C2=A0 =C2=A0 =C2=A0 kpartx.rules: improved logic for by-uuid and =
+by-label links</div><div><br></div></div>
+</blockquote></div><br></div>
+
+--94eb2c11cd46d0f7720559a2298c--
+
+
+--===============3384828331019700443==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============3384828331019700443==--
