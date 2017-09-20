@@ -1,7 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v3 5/6] mpathpersist: add support for prkeys file
-Date: Wed, 20 Sep 2017 14:35:16 -0500
-Message-ID: <1505936117-19547-6-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v3 2/6] libmultipath: change reservation_key to a
+	be64
+Date: Wed, 20 Sep 2017 14:35:13 -0500
+Message-ID: <1505936117-19547-3-git-send-email-bmarzins@redhat.com>
 References: <1505936117-19547-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,122 +22,384 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-When the reservation_key is set to "file", the reservation key needs to
-be added to the prkeys file for multipathd to be able to register new
-paths as they are added to the device.  This patch adds support to the
-mpathpersist command to message multipathd when a key is registered or
-unregistered to either add or remove the mapping from the prkeys file.
-
-With these changes, once a device is configured to use the prkeys file,
-running mpathpersist commands will automatically update the prkeys file
-as necessary.
+The reservation key is currently being stored as any array of 8 unsigned
+chars.  This is exactly the same in-memory representation as a big
+endian 64 bit integer. However, the code for dealing with a big endian
+64 bit integer is much simpler, so switch to use that instead.  Instead
+of directly using a uint64_t, which could cause problems if people
+forgot the conversion from cpu order to big endian, Martin suggested
+using a structure and some helper macros to store it.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmpathpersist/mpath_persist.c  | 43 +++++++++++++++++++++++++---------------
- libmpathpersist/mpath_updatepr.c | 10 ++++++++++
- libmpathpersist/mpathpr.h        |  1 +
- 3 files changed, 38 insertions(+), 16 deletions(-)
+ libmpathpersist/mpath_persist.c | 31 +++++++++++------------------
+ libmultipath/byteorder.h        | 44 +++++++++++++++++++++++++++++++++++++++++
+ libmultipath/config.c           |  3 ---
+ libmultipath/config.h           |  6 ++++--
+ libmultipath/dict.c             | 31 ++++-------------------------
+ libmultipath/propsel.c          | 10 +++++-----
+ libmultipath/structs.h          |  5 ++++-
+ multipathd/main.c               | 25 ++++++-----------------
+ 8 files changed, 78 insertions(+), 77 deletions(-)
+ create mode 100644 libmultipath/byteorder.h
 
 diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
-index 9f6e07a..84ab293 100644
+index aab6d95..226a0b3 100644
 --- a/libmpathpersist/mpath_persist.c
 +++ b/libmpathpersist/mpath_persist.c
-@@ -261,8 +261,6 @@ int mpath_persistent_reserve_out ( int fd, int rq_servact, int rq_scope,
- 	int map_present;
- 	int major, minor;
- 	int ret;
--	int j;
--	unsigned char *keyp;
- 	uint64_t prkey;
- 	struct config *conf;
- 
-@@ -339,6 +337,27 @@ int mpath_persistent_reserve_out ( int fd, int rq_servact, int rq_scope,
- 	select_reservation_key(conf, mpp);
- 	put_multipath_config(conf);
- 
-+	memcpy(&prkey, paramp->sa_key, 8);
-+	if (mpp->prkey_source == PRKEY_SOURCE_FILE && prkey &&
-+	    ((!get_be64(mpp->reservation_key) &&
-+	      rq_servact == MPATH_PROUT_REG_SA) ||
-+	     rq_servact == MPATH_PROUT_REG_IGN_SA)) {
-+		memcpy(&mpp->reservation_key, paramp->sa_key, 8);
-+		if (update_prkey(alias, get_be64(mpp->reservation_key))) {
-+			condlog(0, "%s: failed to set prkey for multipathd.",
-+				alias);
-+			ret = MPATH_PR_DMMP_ERROR;
-+			goto out1;
-+		}
-+	}
-+
-+	if (memcmp(paramp->key, &mpp->reservation_key, 8) &&
-+	    memcmp(paramp->sa_key, &mpp->reservation_key, 8)) {
-+		condlog(0, "%s: configured reservation key doesn't match: 0x%" PRIx64, alias, get_be64(mpp->reservation_key));
-+		ret = MPATH_PR_SYNTAX_ERROR;
-+		goto out1;
-+	}
-+
- 	switch(rq_servact)
- 	{
- 	case MPATH_PROUT_REG_SA:
-@@ -362,22 +381,14 @@ int mpath_persistent_reserve_out ( int fd, int rq_servact, int rq_scope,
- 	if ((ret == MPATH_PR_SUCCESS) && ((rq_servact == MPATH_PROUT_REG_SA) ||
- 				(rq_servact ==  MPATH_PROUT_REG_IGN_SA)))
- 	{
--		keyp=paramp->sa_key;
--		prkey = 0;
--		for (j = 0; j < 8; ++j) {
--			if (j > 0)
--				prkey <<= 8;
--			prkey |= *keyp;
--			++keyp;
--		}
--		if (prkey == 0)
-+		if (prkey == 0) {
- 			update_prflag(alias, 0);
--		else
-+			update_prkey(alias, 0);
-+		} else
- 			update_prflag(alias, 1);
--	} else {
--		if ((ret == MPATH_PR_SUCCESS) && (rq_servact == MPATH_PROUT_CLEAR_SA)) {
--			update_prflag(alias, 0);
--		}
-+	} else if ((ret == MPATH_PR_SUCCESS) && (rq_servact == MPATH_PROUT_CLEAR_SA)) {
-+		update_prflag(alias, 0);
-+		update_prkey(alias, 0);
+@@ -775,8 +775,8 @@ int mpath_prout_rel(struct multipath *mpp,int rq_servact, int rq_scope,
+ 		goto out1;
  	}
- out1:
- 	free_multipathvec(curmp, KEEP_PATHS);
-diff --git a/libmpathpersist/mpath_updatepr.c b/libmpathpersist/mpath_updatepr.c
-index 6992879..8063e90 100644
---- a/libmpathpersist/mpath_updatepr.c
-+++ b/libmpathpersist/mpath_updatepr.c
-@@ -58,3 +58,13 @@ static int do_update_pr(char *alias, char *arg)
- int update_prflag(char *mapname, int set) {
- 	return do_update_pr(mapname, (set)? "setprstatus" : "unsetprstatus");
+ 
+-	if (mpp->reservation_key ){
+-		memcpy (pamp->key, mpp->reservation_key, 8);
++	if (get_be64(mpp->reservation_key)){
++		memcpy (pamp->key, &mpp->reservation_key, 8);
+ 		condlog (3, "%s: reservation key set.", mpp->wwid);
+ 	}
+ 
+@@ -792,9 +792,9 @@ int mpath_prout_rel(struct multipath *mpp,int rq_servact, int rq_scope,
+ 	pptr=pamp->trnptid_list[0];
+ 
+ 	for (i = 0; i < num; i++){
+-		if (mpp->reservation_key &&
++		if (get_be64(mpp->reservation_key) &&
+ 			memcmp(pr_buff->prin_descriptor.prin_readfd.descriptors[i]->key,
+-			       mpp->reservation_key, 8)){
++			       &mpp->reservation_key, 8)){
+ 			/*register with tarnsport id*/
+ 			memset(pamp, 0, length);
+ 			pamp->trnptid_list[0] = pptr;
+@@ -819,7 +819,7 @@ int mpath_prout_rel(struct multipath *mpp,int rq_servact, int rq_scope,
+ 		}
+ 		else
+ 		{
+-			if (mpp->reservation_key)
++			if (get_be64(mpp->reservation_key))
+ 				found = 1;
+ 		}
+ 
+@@ -828,7 +828,7 @@ int mpath_prout_rel(struct multipath *mpp,int rq_servact, int rq_scope,
+ 
+ 	if (found){
+ 		memset (pamp, 0, length);
+-		memcpy (pamp->sa_key, mpp->reservation_key, 8);
++		memcpy (pamp->sa_key, &mpp->reservation_key, 8);
+ 		memset (pamp->key, 0, 8);
+ 		status = mpath_prout_reg(mpp, MPATH_PROUT_REG_SA, rq_scope, rq_type, pamp, noisy);
+ 	}
+@@ -873,11 +873,9 @@ int update_map_pr(struct multipath *mpp)
+ {
+ 	int noisy=0;
+ 	struct prin_resp *resp;
+-	int i,j, ret, isFound;
+-	unsigned char *keyp;
+-	uint64_t prkey;
++	int i, ret, isFound;
+ 
+-	if (!mpp->reservation_key)
++	if (!get_be64(mpp->reservation_key))
+ 	{
+ 		/* Nothing to do. Assuming pr mgmt feature is disabled*/
+ 		condlog(3, "%s: reservation_key not set in multipath.conf", mpp->alias);
+@@ -906,15 +904,8 @@ int update_map_pr(struct multipath *mpp)
+ 		return MPATH_PR_SUCCESS;
+ 	}
+ 
+-	prkey = 0;
+-	keyp = mpp->reservation_key;
+-	for (j = 0; j < 8; ++j) {
+-		if (j > 0)
+-			prkey <<= 8;
+-		prkey |= *keyp;
+-		++keyp;
+-	}
+-	condlog(2, "%s: Multipath  reservation_key: 0x%" PRIx64 " ", mpp->alias, prkey);
++	condlog(2, "%s: Multipath  reservation_key: 0x%" PRIx64 " ", mpp->alias,
++		get_be64(mpp->reservation_key));
+ 
+ 	isFound =0;
+ 	for (i = 0; i < resp->prin_descriptor.prin_readkeys.additional_length/8; i++ )
+@@ -922,7 +913,7 @@ int update_map_pr(struct multipath *mpp)
+ 		condlog(2, "%s: PR IN READKEYS[%d]  reservation key:", mpp->alias, i);
+ 		dumpHex((char *)&resp->prin_descriptor.prin_readkeys.key_list[i*8], 8 , 1);
+ 
+-		if (!memcmp(mpp->reservation_key, &resp->prin_descriptor.prin_readkeys.key_list[i*8], 8))
++		if (!memcmp(&mpp->reservation_key, &resp->prin_descriptor.prin_readkeys.key_list[i*8], 8))
+ 		{
+ 			condlog(2, "%s: reservation key found in pr in readkeys response", mpp->alias);
+ 			isFound =1;
+diff --git a/libmultipath/byteorder.h b/libmultipath/byteorder.h
+new file mode 100644
+index 0000000..5c77146
+--- /dev/null
++++ b/libmultipath/byteorder.h
+@@ -0,0 +1,44 @@
++#ifndef BYTEORDER_H_INCLUDED
++#define BYTEORDER_H_INCLUDED
++
++#ifdef __linux__
++#  include <endian.h>
++#  include <byteswap.h>
++#else
++#  error unsupported
++#endif
++
++#if BYTE_ORDER == LITTLE_ENDIAN
++#  define le16_to_cpu(x) (x)
++#  define be16_to_cpu(x) bswap_16(x)
++#  define le32_to_cpu(x) (x)
++#  define le64_to_cpu(x) (x)
++#  define be32_to_cpu(x) bswap_32(x)
++#  define be64_to_cpu(x) bswap_64(x)
++#elif BYTE_ORDER == BIG_ENDIAN
++#  define le16_to_cpu(x) bswap_16(x)
++#  define be16_to_cpu(x) (x)
++#  define le32_to_cpu(x) bswap_32(x)
++#  define le64_to_cpu(x) bswap_64(x)
++#  define be32_to_cpu(x) (x)
++#  define be64_to_cpu(x) (x)
++#else
++#  error unsupported
++#endif
++
++#define cpu_to_le16(x) le16_to_cpu(x)
++#define cpu_to_be16(x) be16_to_cpu(x)
++#define cpu_to_le32(x) le32_to_cpu(x)
++#define cpu_to_be32(x) be32_to_cpu(x)
++#define cpu_to_le64(x) le64_to_cpu(x)
++#define cpu_to_be64(x) be64_to_cpu(x)
++
++struct be64 {
++	uint64_t _v;
++};
++
++#define get_be64(x) be64_to_cpu((x)._v)
++#define put_be64(x, y) do { (x)._v = cpu_to_be64(y); } while (0)
++
++
++#endif				/* BYTEORDER_H_INCLUDED */
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index b21a3aa..dba4bc4 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -532,9 +532,6 @@ free_config (struct config * conf)
+ 	if (conf->config_dir)
+ 		FREE(conf->config_dir);
+ 
+-	if (conf->reservation_key)
+-		FREE(conf->reservation_key);
+-
+ 	free_blacklist(conf->blist_devnode);
+ 	free_blacklist(conf->blist_wwid);
+ 	free_blacklist(conf->blist_property);
+diff --git a/libmultipath/config.h b/libmultipath/config.h
+index ffc69b5..d1ca7d3 100644
+--- a/libmultipath/config.h
++++ b/libmultipath/config.h
+@@ -4,6 +4,8 @@
+ #include <sys/types.h>
+ #include <stdint.h>
+ #include <urcu.h>
++#include <inttypes.h>
++#include "byteorder.h"
+ 
+ #define ORIGIN_DEFAULT 0
+ #define ORIGIN_CONFIG  1
+@@ -90,7 +92,7 @@ struct mpentry {
+ 
+ 	char * prio_name;
+ 	char * prio_args;
+-	unsigned char * reservation_key;
++	struct be64  reservation_key;
+ 	int pgpolicy;
+ 	int pgfailback;
+ 	int rr_weight;
+@@ -183,7 +185,7 @@ struct config {
+ 	char * alias_prefix;
+ 	char * partition_delim;
+ 	char * config_dir;
+-	unsigned char * reservation_key;
++	struct be64  reservation_key;
+ 
+ 	vector keywords;
+ 	vector mptable;
+diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+index 680b2c5..50d618c 100644
+--- a/libmultipath/dict.c
++++ b/libmultipath/dict.c
+@@ -962,9 +962,8 @@ snprint_def_log_checker_err (struct config *conf, char * buff, int len, void * d
+ static int
+ set_reservation_key(vector strvec, void *ptr)
+ {
+-	unsigned char **uchar_ptr = (unsigned char **)ptr;
++	struct be64 *be64_ptr = (struct be64 *)ptr;
+ 	char *buff;
+-	int j;
+ 	uint64_t prkey;
+ 
+ 	buff = set_value(strvec);
+@@ -976,16 +975,7 @@ set_reservation_key(vector strvec, void *ptr)
+ 		return 1;
+ 	}
+ 
+-	if (!*uchar_ptr)
+-		*uchar_ptr = (unsigned char *) malloc(8);
+-
+-	memset(*uchar_ptr, 0, 8);
+-
+-	for (j = 7; j >= 0; --j) {
+-		(*uchar_ptr)[j] = (prkey & 0xff);
+-		prkey >>= 8;
+-	}
+-
++	put_be64(*be64_ptr, prkey);
+ 	FREE(buff);
+ 	return 0;
  }
-+
-+int update_prkey(char *mapname, uint64_t prkey) {
-+	char str[256];
-+
-+	if (prkey)
-+		sprintf(str, "setprkey key %" PRIx64, prkey);
-+	else
-+		sprintf(str, "unsetprkey");
-+	return do_update_pr(mapname, str);
-+}
-diff --git a/libmpathpersist/mpathpr.h b/libmpathpersist/mpathpr.h
-index 967ba52..72feb60 100644
---- a/libmpathpersist/mpathpr.h
-+++ b/libmpathpersist/mpathpr.h
-@@ -46,6 +46,7 @@ int send_prout_activepath(char * dev, int rq_servact, int rq_scope,
- 	unsigned int rq_type,   struct prout_param_descriptor * paramp, int noisy);
+@@ -993,21 +983,8 @@ set_reservation_key(vector strvec, void *ptr)
+ int
+ print_reservation_key(char * buff, int len, void * ptr)
+ {
+-	unsigned char **uchar_ptr = (unsigned char **)ptr;
+-	int i;
+-	unsigned char *keyp;
+-	uint64_t prkey = 0;
+-
+-	if (!*uchar_ptr)
+-		return 0;
+-	keyp = (unsigned char *)(*uchar_ptr);
+-	for (i = 0; i < 8; i++) {
+-		if (i > 0)
+-			prkey <<= 8;
+-		prkey |= *keyp;
+-		keyp++;
+-	}
+-	return snprintf(buff, len, "0x%" PRIx64, prkey);
++	struct be64 *be64_ptr = (struct be64 *)ptr;
++	return snprintf(buff, len, "0x%" PRIx64, get_be64(*be64_ptr));
+ }
  
- int update_prflag(char *mapname, int set);
-+int update_prkey(char *mapname, uint64_t prkey);
- void * mpath_alloc_prin_response(int prin_sa);
- int update_map_pr(struct multipath *mpp);
+ declare_def_handler(reservation_key, set_reservation_key)
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index 175fbe1..429e039 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -609,14 +609,14 @@ out:
  
+ int select_reservation_key(struct config *conf, struct multipath *mp)
+ {
+-	char *origin, buff[12];
++	char *origin, buff[PRKEY_SIZE];
+ 
+-	mp_set_mpe(reservation_key);
+-	mp_set_conf(reservation_key);
+-	mp->reservation_key = NULL;
++	mp_set_mpe(reservation_key._v);
++	mp_set_conf(reservation_key._v);
++	put_be64(mp->reservation_key, 0);
+ 	return 0;
+ out:
+-	print_reservation_key(buff, 12, &mp->reservation_key);
++	print_reservation_key(buff, PRKEY_SIZE, &mp->reservation_key);
+ 	condlog(3, "%s: reservation_key = %s %s", mp->alias, buff, origin);
+ 	return 0;
+ }
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index 8ea984d..b4c0bd6 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -2,8 +2,10 @@
+ #define _STRUCTS_H
+ 
+ #include <sys/types.h>
++#include <inttypes.h>
+ 
+ #include "prio.h"
++#include "byteorder.h"
+ 
+ #define WWID_SIZE		128
+ #define SERIAL_SIZE		65
+@@ -17,6 +19,7 @@
+ #define NAME_SIZE		512
+ #define HOST_NAME_LEN		16
+ #define SLOT_NAME_SIZE		40
++#define PRKEY_SIZE		19
+ 
+ #define SCSI_VENDOR_SIZE	9
+ #define SCSI_PRODUCT_SIZE	17
+@@ -306,7 +309,7 @@ struct multipath {
+ 	void * mpcontext;
+ 
+ 	/* persistent management data*/
+-	unsigned char * reservation_key;
++	struct be64  reservation_key;
+ 	unsigned char prflag;
+ };
+ 
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 4be2c57..16c5e0c 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -2786,10 +2786,8 @@ main (int argc, char *argv[])
+ void *  mpath_pr_event_handler_fn (void * pathp )
+ {
+ 	struct multipath * mpp;
+-	int i,j, ret, isFound;
++	int i, ret, isFound;
+ 	struct path * pp = (struct path *)pathp;
+-	unsigned char *keyp;
+-	uint64_t prkey;
+ 	struct prout_param_descriptor *param;
+ 	struct prin_resp *resp;
+ 
+@@ -2817,22 +2815,15 @@ void *  mpath_pr_event_handler_fn (void * pathp )
+ 		ret = MPATH_PR_SUCCESS;
+ 		goto out;
+ 	}
+-	prkey = 0;
+-	keyp = (unsigned char *)mpp->reservation_key;
+-	for (j = 0; j < 8; ++j) {
+-		if (j > 0)
+-			prkey <<= 8;
+-		prkey |= *keyp;
+-		++keyp;
+-	}
+-	condlog(2, "Multipath  reservation_key: 0x%" PRIx64 " ", prkey);
++	condlog(2, "Multipath  reservation_key: 0x%" PRIx64 " ",
++		get_be64(mpp->reservation_key));
+ 
+ 	isFound =0;
+ 	for (i = 0; i < resp->prin_descriptor.prin_readkeys.additional_length/8; i++ )
+ 	{
+ 		condlog(2, "PR IN READKEYS[%d]  reservation key:",i);
+ 		dumpHex((char *)&resp->prin_descriptor.prin_readkeys.key_list[i*8], 8 , -1);
+-		if (!memcmp(mpp->reservation_key, &resp->prin_descriptor.prin_readkeys.key_list[i*8], 8))
++		if (!memcmp(&mpp->reservation_key, &resp->prin_descriptor.prin_readkeys.key_list[i*8], 8))
+ 		{
+ 			condlog(2, "%s: pr key found in prin readkeys response", mpp->alias);
+ 			isFound =1;
+@@ -2849,11 +2840,7 @@ void *  mpath_pr_event_handler_fn (void * pathp )
+ 
+ 	param= malloc(sizeof(struct prout_param_descriptor));
+ 	memset(param, 0 , sizeof(struct prout_param_descriptor));
+-
+-	for (j = 7; j >= 0; --j) {
+-		param->sa_key[j] = (prkey & 0xff);
+-		prkey >>= 8;
+-	}
++	memcpy(param->sa_key, &mpp->reservation_key, 8);
+ 	param->num_transportid = 0;
+ 
+ 	condlog(3, "device %s:%s", pp->dev, pp->mpp->wwid);
+@@ -2880,7 +2867,7 @@ int mpath_pr_event_handle(struct path *pp)
+ 
+ 	mpp = pp->mpp;
+ 
+-	if (!mpp->reservation_key)
++	if (get_be64(mpp->reservation_key))
+ 		return -1;
+ 
+ 	pthread_attr_init(&attr);
 -- 
 2.7.4
