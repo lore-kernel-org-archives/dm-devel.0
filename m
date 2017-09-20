@@ -1,14 +1,12 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-mpath: Improve handling of busy paths
-Date: Wed, 20 Sep 2017 14:56:37 -0400
-Message-ID: <20170920185637.GA30126@redhat.com>
-References: <20170920181212.5532-1-bart.vanassche@wdc.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: [PATCH v3 0/6] multipath: alternative reservation_key
+	method
+Date: Wed, 20 Sep 2017 14:35:11 -0500
+Message-ID: <1505936117-19547-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20170920181212.5532-1-bart.vanassche@wdc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,93 +16,78 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <bart.vanassche@wdc.com>
-Cc: Jens Axboe <axboe@kernel.dk>, dm-devel@redhat.com, Ming Lei <ming.lei@redhat.com>, Christoph Hellwig <hch@lst.de>, Hannes Reinecke <hare@suse.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-On Wed, Sep 20 2017 at  2:12pm -0400,
-Bart Van Assche <bart.vanassche@wdc.com> wrote:
+The scsi persistent reservation API doesn't force devices to implement any
+method to display the mapping from a reservation key to an I_T Nexus (the
+READ_FULL_STATUS action is an optional later addition, and a number of devices
+don't support it). To allow multipathd to determine the correct reservation key
+for a device without support from the device itself, it uses the
+reservation_key configuration option. Unfortunately, using this option forces
+the multipath configuration to be updated whenever a new scsi registration key
+is used.  This isn't acceptable to some users, who want a static configuration
+file. I've had multiple requests to allow persistent reservations without
+needing to set the reservation_key paramter beforehand.
 
-> Instead of retrying request allocation after a delay if a path is
-> busy, wait until the underlying path has completed a request. This
-> patch avoids that submission of requests to busy paths is delayed and
-> hence creates more opportunities for merging sequential I/O requests.
-> 
-> Reported-by: Ming Lei <ming.lei@redhat.com>
-> Signed-off-by: Bart Van Assche <bart.vanassche@wdc.com>
-> Cc: Christoph Hellwig <hch@lst.de>
-> Cc: Hannes Reinecke <hare@suse.com>
-> Cc: Jens Axboe <axboe@kernel.dk>
-> Cc: Ming Lei <ming.lei@redhat.com>
-> ---
->  drivers/md/dm-mpath.c | 10 +++++++++-
->  drivers/md/dm-rq.c    |  3 ++-
->  2 files changed, 11 insertions(+), 2 deletions(-)
-> 
-> diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-> index 11f273d2f018..b60ef655fa0c 100644
-> --- a/drivers/md/dm-mpath.c
-> +++ b/drivers/md/dm-mpath.c
-> @@ -495,7 +495,13 @@ static int multipath_clone_and_map(struct dm_target *ti, struct request *rq,
->  
->  	bdev = pgpath->path.dev->bdev;
->  	q = bdev_get_queue(bdev);
-> -	clone = blk_get_request(q, rq->cmd_flags | REQ_NOMERGE, GFP_ATOMIC);
-> +	/*
-> +	 * For blk-mq this code is called from inside dm_mq_queue_rq() and
-> +	 * sleeping is allowed due to BLK_MQ_F_BLOCKING.  For the legacy block
-> +	 * layer this code is called from workqueue context. Hence unlocking
-> +	 * and reacquiring the queue lock is not necessary.
-> +	 */
-> +	clone = blk_get_request(q, rq->cmd_flags | REQ_NOMERGE, GFP_NOIO);
->  	if (IS_ERR(clone)) {
->  		/* EBUSY, ENODEV or EWOULDBLOCK: requeue */
->  		bool queue_dying = blk_queue_dying(q);
+This patch set provides an alternative method of setting the reservation_key
+for the multipath device. The reservation_key configuration option now also
+accepts the keyword "file". If this is used, multpath will look in the new
+prkeys file (by default "/etc/multipath/prkeys") for a line with the device
+wwid and it's associated reservation_key. The patches allow users to manually
+set reservation_key to multipath device mappings by using the multipathd
+client commands, but mpathpersist will automatically detect when devices are
+configured to use the prkeys file, and will set and clear the reservation
+keys automatically.
 
-It concerns me that we'd basically be allowing one or more really poorly
-behaving underlying path(s) to sabotage the entire dm-multipath device
-by blocking waiting for a request/tag on potentially pathologically
-saturated and/or substandard path(s) (of particular concern when using
-the round-robin path selector).
+Changes in v3:
+ - Add documentation for new options and commands (Xose Vazquez Perez)
+   [PATCH v3 6/6] multipath: add man page info for my prkey changes
+ - Fix error in checking if multipathd needs to set the prkey for a device
+   in mpath_persistent_reserve_out
+   [PATCH v3 5/6] mpathpersist: add support for prkeys file
 
-> @@ -504,6 +510,8 @@ static int multipath_clone_and_map(struct dm_target *ti, struct request *rq,
->  		if (queue_dying) {
->  			atomic_inc(&m->pg_init_in_progress);
->  			activate_or_offline_path(pgpath);
-> +		} else {
-> +			WARN_ON_ONCE(true);
->  		}
->  		return DM_MAPIO_DELAY_REQUEUE;
->  	}
+Changes in v2:
+ - use struct be64 instead of uint64_t to hold the reservation_key
+   (Martin Wilck)
 
-There is no reason for this WARN_ON_ONCE to be part of this patch.
-Really not seeing the point of it at all though.
+Benjamin Marzinski (6):
+  libmultipath: pull functions into util.c
+  libmultipath: change reservation_key to a be64
+  libmpathpersist: fix update_prflag code
+  multipath: add alternate reservation_key method
+  mpathpersist: add support for prkeys file
+  multipath: add man page info for my prkey changes
 
-> diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
-> index eadfcfd106ff..f25a3cdb7f84 100644
-> --- a/drivers/md/dm-rq.c
-> +++ b/drivers/md/dm-rq.c
-> @@ -789,7 +789,8 @@ int dm_mq_init_request_queue(struct mapped_device *md, struct dm_table *t)
->  	md->tag_set->ops = &dm_mq_ops;
->  	md->tag_set->queue_depth = dm_get_blk_mq_queue_depth();
->  	md->tag_set->numa_node = md->numa_node_id;
-> -	md->tag_set->flags = BLK_MQ_F_SHOULD_MERGE | BLK_MQ_F_SG_MERGE;
-> +	md->tag_set->flags = BLK_MQ_F_SHOULD_MERGE | BLK_MQ_F_SG_MERGE |
-> +		BLK_MQ_F_BLOCKING;
->  	md->tag_set->nr_hw_queues = dm_get_blk_mq_nr_hw_queues();
->  	md->tag_set->driver_data = md;
->  
-> -- 
-> 2.14.1
-> 
+ libmpathpersist/mpath_persist.c  |  79 ++++++++++---------
+ libmpathpersist/mpath_updatepr.c |  43 ++++++----
+ libmpathpersist/mpathpr.h        |   3 +-
+ libmultipath/Makefile            |   2 +-
+ libmultipath/byteorder.h         |  44 +++++++++++
+ libmultipath/checkers/rbd.c      |  16 +---
+ libmultipath/config.c            |   9 ++-
+ libmultipath/config.h            |   9 ++-
+ libmultipath/defaults.h          |   1 +
+ libmultipath/dict.c              | 105 +++++++++++++------------
+ libmultipath/dict.h              |   4 +-
+ libmultipath/prkey.c             | 166 +++++++++++++++++++++++++++++++++++++++
+ libmultipath/prkey.h             |  19 +++++
+ libmultipath/propsel.c           |  35 +++++++--
+ libmultipath/structs.h           |  12 ++-
+ libmultipath/util.c              |  33 ++++++++
+ libmultipath/util.h              |   4 +
+ multipath/multipath.conf.5       |  17 ++++
+ multipathd/cli.c                 |   8 ++
+ multipathd/cli.h                 |   8 ++
+ multipathd/cli_handlers.c        |  82 +++++++++++++++++++
+ multipathd/cli_handlers.h        |   3 +
+ multipathd/main.c                |  28 +++----
+ multipathd/multipathd.8          |  16 ++++
+ 24 files changed, 590 insertions(+), 156 deletions(-)
+ create mode 100644 libmultipath/byteorder.h
+ create mode 100644 libmultipath/prkey.c
+ create mode 100644 libmultipath/prkey.h
 
-This type of change needs to be carefully tested.  It is very
-fundamental and takes us further and further away from avoiding
-deadlocks/stalls.
-
-Have you run this change through your IB SRP test harness?
-
-I can run it through the mptest suite but that falls way short of
-real-world destructive multipath testing in the face of heavy IO.
-
-Mike
+-- 
+2.7.4
