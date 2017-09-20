@@ -1,52 +1,62 @@
-From: Ming Lei <ming.lei@redhat.com>
-Subject: Re: [PATCH 1/5] block: don't call blk_mq_delay_run_hw_queue() in
- case of BLK_STS_RESOURCE
-Date: Wed, 20 Sep 2017 09:19:26 +0800
-Message-ID: <20170920011925.GB23062@ming.t460p>
-References: <20170915164456.9803-1-ming.lei@redhat.com>
- <20170915164456.9803-2-ming.lei@redhat.com>
- <1505498249.3420.15.camel@wdc.com>
- <20170917124000.GB6289@ming.t460p>
- <1505747894.2685.6.camel@wdc.com>
- <20170919054308.GA2517@ming.t460p>
- <1505835394.2671.18.camel@wdc.com>
- <20170919155603.GB22809@redhat.com>
- <20170919160401.GC19830@ming.t460p>
- <1505839754.2671.42.camel@wdc.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH] libmultipath: sanitize fd handling
+Date: Wed, 20 Sep 2017 13:32:49 +0200
+Message-ID: <1505907169.4256.7.camel@suse.com>
+References: <1505456112-117105-1-git-send-email-hare@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1505839754.2671.42.camel@wdc.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Bart Van Assche <Bart.VanAssche@wdc.com>
-Cc: "snitzer@redhat.com" <snitzer@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "hch@infradead.org" <hch@infradead.org>, "sagi@grimberg.me" <sagi@grimberg.me>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "axboe@fb.com" <axboe@fb.com>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, "jejb@linux.vnet.ibm.com" <jejb@linux.vnet.ibm.com>, "loberman@redhat.com" <loberman@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1505456112-117105-1-git-send-email-hare@suse.de>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Hannes Reinecke <hare@suse.de>, Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: dm-devel@redhat.com, Hannes Reinecke <hare@suse.com>
 List-Id: dm-devel.ids
 
-On Tue, Sep 19, 2017 at 04:49:15PM +0000, Bart Van Assche wrote:
-> On Wed, 2017-09-20 at 00:04 +0800, Ming Lei wrote:
-> > Run queue at end_io is definitely wrong, because blk-mq has SCHED_RESTART
-> > to do that already.
-> 
-> Sorry but I disagree. If SCHED_RESTART is set that causes the blk-mq core to
-> reexamine the software queues and the hctx dispatch list but not the requeue
-> list. If a block driver returns BLK_STS_RESOURCE then requests end up on the
-> requeue list. Hence the following code in scsi_end_request():
-> 
-> 	if (scsi_target(sdev)->single_lun || !list_empty(&sdev->host->starved_list))
-> 		kblockd_schedule_work(&sdev->requeue_work);
-> 	else
-> 		blk_mq_run_hw_queues(q, true);
-
-Let's focus on dm-rq.
-
-I have explained before, dm-rq is different with SCSI's, we don't need
-to requeue request any more in dm-rq if blk_get_request() returns NULL
-in multipath_clone_and_map(), since SCHED_RESTART can cover that
-definitely.
-
-Not mention dm_mq_delay_requeue_request() will run the queue explicitly
-if it has to be done. That needn't SCHED_RESTART to cover, right?
-
--- 
-Ming
+T24gRnJpLCAyMDE3LTA5LTE1IGF0IDA4OjE1ICswMjAwLCBIYW5uZXMgUmVpbmVja2Ugd3JvdGU6
+Cj4gT25lIHNob3VsZCByZW1lbWJlciB0aGF0ICcwJyBfaXNfIGEgdmFsaWQgZmQsIHNvIHdlIG5l
+ZWQgdG8gc2V0Cj4gdGhlIGZkIHRvICctMScgdXBvbiBhbGxvY2F0aW5nIHRoZSBwYXRoIHN0cnVj
+dHVyZSBhbmQgZW5zdXJlIHdlJ3JlCj4gY2hlY2tpbmcgZm9yIGEgdmFsdWUgX3NtYWxsZXJfIHRo
+YW4gMCB0byBkZXRlY3QgYW4gaW52YWxpZCBmZC4KPiAKPiA+IGRpZmYgLS1naXQgYS9saWJtdWx0
+aXBhdGgvY2hlY2tlcnMuYyBiL2xpYm11bHRpcGF0aC9jaGVja2Vycy5jCj4gPiBpbmRleCAwNWUw
+MjRmOC4uYzMyZjcyNzQgMTAwNjQ0Cj4gPiAtLS0gYS9saWJtdWx0aXBhdGgvY2hlY2tlcnMuYwo+
+ID4gKysrIGIvbGlibXVsdGlwYXRoL2NoZWNrZXJzLmMKPiA+IEBAIC0xNDYsNyArMTQ2LDcgQEAg
+c3RydWN0IGNoZWNrZXIgKiBhZGRfY2hlY2tlciAoY2hhcgo+ID4gKm11bHRpcGF0aF9kaXIsIGNo
+YXIgKiBuYW1lKQo+ID4gIAlpZiAoIWMtPnJlcGFpcikKPiA+ICAJCWdvdG8gb3V0Owo+ID4gIAo+
+ID4gLQljLT5mZCA9IDA7Cj4gPiArCWMtPmZkID0gLTE7Cj4gPiAgCWMtPnN5bmMgPSAxOwo+ID4g
+IAlsaXN0X2FkZCgmYy0+bm9kZSwgJmNoZWNrZXJzKTsKPiA+ICAJcmV0dXJuIGM7Cj4gPiBAQCAt
+MjM3LDcgKzIzNyw3IEBAIGludCBjaGVja2VyX2NoZWNrIChzdHJ1Y3QgY2hlY2tlciAqIGMpCj4g
+PiAgCQlNU0coYywgImNoZWNrZXIgZGlzYWJsZWQiKTsKPiA+ICAJCXJldHVybiBQQVRIX1VOQ0hF
+Q0tFRDsKPiA+ICAJfQo+ID4gLQlpZiAoYy0+ZmQgPD0gMCkgewo+ID4gKwlpZiAoYy0+ZmQgPCAw
+KSB7Cj4gPiAgCQlNU0coYywgIm5vIHVzYWJsZSBmZCIpOwo+ID4gIAkJcmV0dXJuIFBBVEhfV0lM
+RDsKPiA+ICAJfQo+ID4gZGlmZiAtLWdpdCBhL2xpYm11bHRpcGF0aC9wcmludC5jIGIvbGlibXVs
+dGlwYXRoL3ByaW50LmMKPiA+IGluZGV4IDk1ZGZmOTBiLi42NWE5ODI0NyAxMDA2NDQKPiA+IC0t
+LSBhL2xpYm11bHRpcGF0aC9wcmludC5jCj4gPiArKysgYi9saWJtdWx0aXBhdGgvcHJpbnQuYwo+
+ID4gQEAgLTE2NzcsNyArMTY3Nyw3IEBAIGludCBzbnByaW50X3N0YXR1cyhjaGFyICpidWZmLCBp
+bnQgbGVuLAo+IHN0cnVjdAo+ID4gdmVjdG9ycyAqdmVjcykKPiA+ICAJaW50IG1vbml0b3JlZF9j
+b3VudCA9IDA7Cj4gPiAgCj4gPiAgCXZlY3Rvcl9mb3JlYWNoX3Nsb3QodmVjcy0+cGF0aHZlYywg
+cHAsIGkpCj4gPiAtCQlpZiAocHAtPmZkICE9IC0xKQo+ID4gKwkJaWYgKHBwLT5mZCA+PSAwKQo+
+ID4gIAkJCW1vbml0b3JlZF9jb3VudCsrOwo+ID4gIAlmd2QgKz0gc25wcmludGYoYnVmZiArIGZ3
+ZCwgbGVuIC0gZndkLCAiXG5wYXRoczogJWRcbmJ1c3k6Cj4gPiAlc1xuIiwKPiA+ICAJCQltb25p
+dG9yZWRfY291bnQsIGlzX3VldmVudF9idXN5KCk/ICJUcnVlIgo+IDoKPiA+ICJGYWxzZSIpOwo+
+IAo+IFNpZ25lZC1vZmYtYnk6IEhhbm5lcyBSZWluZWNrZSA8aGFyZUBzdXNlLmNvbT4KPiAtLS0K
+PiAgbGlibXVsdGlwYXRoL2NoZWNrZXJzLmMgfCA0ICsrLS0KPiAgbGlibXVsdGlwYXRoL3ByaW50
+LmMgICAgfCAyICstCj4gIDIgZmlsZXMgY2hhbmdlZCwgMyBpbnNlcnRpb25zKCspLCAzIGRlbGV0
+aW9ucygtKQo+IAoKVGhlcmUncyBvbmUgbW9yZSB3cm9uZyBmZCByZWZlcmVuY2UgaW4KbGlibXVs
+dGlwYXRoL2NoZWNrZXJzL2NjaXNzX3R1ci5jOjc2LiBBbmQgYSBuaXRwaWNrOiBUaGUgY29tbWVu
+dCBpbgpjaGVja2Vycy5oOjE0IHNob3VsZCBiZSBmaXhlZCBhcyB3ZWxsLgoKQXBhcnQgZnJvbSB0
+aGF0OiBuaWNlIChhbHRob3VnaCBub3Qgc3RyaWN0bHkgbmVjZXNzYXJ5LCBhcyBtdWx0aXBhdGhk
+CmN1cnJlbnRseSBydW5zIHdpdGggZmQgMCBjb25uZWN0ZWQgdG8gL2Rldi9udWxsIHVuZGVyIG5v
+cm1hbApjb25kaXRpb25zKS4KCk1hcnRpbiAKLS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0Bz
+dXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6
+IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEy
+ODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRo
+YXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
