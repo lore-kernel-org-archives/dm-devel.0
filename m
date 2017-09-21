@@ -1,23 +1,15 @@
-From: Guan Junxiong <guanjunxiong@huawei.com>
-Subject: Re: [PATCH V4 1/2] multipath-tools: intermittent IO
- error accounting to improve reliability
-Date: Thu, 21 Sep 2017 18:04:38 +0800
-Message-ID: <658d39ce-5ac8-f102-96a8-c332da403e90@huawei.com>
-References: <1505619638-20912-1-git-send-email-guanjunxiong@huawei.com>
-	<1505619638-20912-2-git-send-email-guanjunxiong@huawei.com>
-	<fd6ead563a154984abc2654fd1a8ea30@BRMWP-EXMB12.corp.brocade.com>
-	<7035dfdb-1c49-aa3f-3836-1ec316707c47@huawei.com>
-	<1505764297.12944.2.camel@suse.com>
-	<e596eefc-2d42-e840-57cf-6219d43de9d9@huawei.com>
-	<8d45c076cf6c47d39bf2aade3ade7f51@BRMWP-EXMB12.corp.brocade.com>
-	<52829afa-ed9e-cc39-a492-3e678b8e0d03@huawei.com>
-	<b9fadaaabca54790969d3b31ba9dddb8@BRMWP-EXMB12.corp.brocade.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: [PATCH v3 0/6] multipath: alternative
+	reservation_key method
+Date: Thu, 21 Sep 2017 13:24:51 +0200
+Message-ID: <5f73ebac-80e7-8ee5-9095-92208beb477d@gmail.com>
+References: <1505936117-19547-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <b9fadaaabca54790969d3b31ba9dddb8@BRMWP-EXMB12.corp.brocade.com>
-Content-Language: en-US
+In-Reply-To: <1505936117-19547-1-git-send-email-bmarzins@redhat.com>
+Content-Language: en-GB
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,90 +19,79 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Muneendra Kumar M <mmandala@Brocade.com>, Martin Wilck <mwilck@suse.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
-Cc: "chengjike.cheng@huawei.com" <chengjike.cheng@huawei.com>, "niuhaoxin@huawei.com" <niuhaoxin@huawei.com>, "shenhong09@huawei.com" <shenhong09@huawei.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
 List-Id: dm-devel.ids
 
-SGksIE11bmVlbmRyYQoKICBUaGFua3MgZm9yIHlvdXIgY2xhcmlmaWNhdGlvbi4gSSBhZG9wdCB0
-aGlzIHJlbmFtaW5nLiBJZiBpdCBpcyBjb252ZW5pZW50IGZvciB5b3UsIHBsZWFzZSByZXZpZXcg
-dGhlIFY1IHBhdGNoIHRoYXQgSSBzZW50IG91dCAyIGhvdXJzIGFnby4KClJlZ2FyZHMsCkd1YW4K
-Ck9uIDIwMTcvOS8yMCAyMDo1OCwgTXVuZWVuZHJhIEt1bWFyIE0gd3JvdGU6Cj4gSGkgR3VhbiwK
-Pj4+PiBTaGFsbCB3ZSB1c2UgZXhpc3RpbmcgUEFUSF9TSEFLWSA/Cj4gQXMgdGhlIHBhdGhfc2hh
-a3kgSW5kaWNhdGVzIHBhdGggbm90IGF2YWlsYWJsZSBmb3IgIm5vcm1hbCIgb3BlcmF0aW9ucyB3
-ZSBjYW4gdXNlIHRoaXMgc3RhdGUuIFRoYXQncyAgYSBnb29kIGlkZWEuCj4gCj4gUmVnYXJkaW5n
-IHRoZSBtYXJnaW5hbCBwYXRocyBiZWxvdyBpcyBteSBleHBsYW5hdGlvbi4gQW5kIGJyb2NhZGUg
-aXMgcHVibGlzaGluZyBjb3VwbGUgb2Ygd2hpdGUgcGFwZXJzIHJlZ2FyZGluZyB0aGUgc2FtZSB0
-byBlZHVjYXRlIHRoZSBTQU4gYWRtaW5pc3RyYXRvcnMgYW5kIHRoZSBzYW4gY29tbXVuaXR5Lgo+
-IAo+IE1hcmdpbmFsIHBhdGg6Cj4gCj4gQSBob3N0LCB0YXJnZXQsIExVTiAoSVRMIHBhdGgpIGZs
-b3cgIGdvZXMgdGhyb3VnaCBTQU4uIEl0IGlzIHRvIGJlIG5vdGVkIHRoYXQgdGhlIGZvciBlYWNo
-IEkvTyByZXF1ZXN0IHRoYXQgZ29lcyB0byB0aGUgU0NTSSBsYXllciwgaXQgdHJhbnNmb3JtcyBp
-bnRvIGEgc2luZ2xlIFNDU0kgZXhjaGFuZ2UuICBJbiBhIHNpbmdsZSBTQU4sIHRoZXJlIGFyZSB0
-eXBpY2FsbHkgbXVsdGlwbGUgU0FOIG5ldHdvcmsgcGF0aHMgIGZvciBhIElUTCBmbG93L3BhdGgu
-IEVhY2ggU0NTSSBleGNoYW5nZSAgY2FuIHRha2Ugb25lIG9mIHRoZSB2YXJpb3VzIG5ldHdvcmsg
-cGF0aHMgdGhhdCBhcmUgYXZhaWxhYmxlIGZvciB0aGUgSVRMIHBhdGguICBBIFNBTiBjYW4gYmUg
-YmFzZWQgb24gRXRoZXJuZXQsIEZDLCBJbmZpbmliYW5kIHBoeXNpY2FsIG5ldHdvcmtzIHRvIGNh
-cnJ5IGJsb2NrIHN0b3JhZ2UgdHJhZmZpYyAoU0NTSSwgTlZNZSBldGMuKQo+IAo+IFRoZXJlIGFy
-ZSB0eXBpY2FsbHkgdHdvIHR5cGUgb2YgU0FOIG5ldHdvcmsgcHJvYmxlbXMgdGhhdCBhcmUgY2F0
-ZWdvcml6ZWQgYXMgbWFyZ2luYWwgaXNzdWVzLiBUaGVzZSBpc3N1ZXMgYnkgbmF0dXJlIGFyZSBu
-b3QgcGVybWFuZW50IGluIHRpbWUgYW5kIGRvIGNvbWUgYW5kIGdvIGF3YXkgb3ZlciB0aW1lLgo+
-IDEpIFN3aXRjaGVzIGluIHRoZSBTQU4gY2FuIGhhdmUgaW50ZXJtaXR0ZW50IGZyYW1lIGRyb3Bz
-IG9yIGludGVybWl0dGVudCBmcmFtZSBjb3JydXB0aW9ucyBkdWUgdG8gYmFkIG9wdGljcyBjYWJs
-ZSAoU0ZQKSBvciBhbnkgc3VjaCB3ZWFyL3RlYXIgIHBvcnQgaXNzdWVzLiBUaGlzIGNhdXNlcyBJ
-VEwgZmxvd3MgdGhhdCBnbyB0aHJvdWdoIHRoZSBmYXVsdHkgc3dpdGNoL3BvcnQgdG8gaW50ZXJt
-aXR0ZW50bHkgZXhwZXJpZW5jZSBmcmFtZSBkcm9wcy4gIAo+IDIpIFRoZXJlIGV4aXN0cyBTQU4g
-dG9wb2xvZ2llcyB3aGVyZSB0aGVyZSBhcmUgc3dpdGNoIHBvcnRzIGluIHRoZSBmYWJyaWMgdGhh
-dCBiZWNvbWVzIHRoZSBvbmx5ICBjb25kdWl0IGZvciBtYW55IGRpZmZlcmVudCBJVEwgZmxvd3Mg
-YWNyb3NzIG11bHRpcGxlIGhvc3RzLiBUaGVzZSBzaW5nbGUgbmV0d29yayBwYXRocyBhcmUgZXNz
-ZW50aWFsbHkgc2hhcmVkIGFjcm9zcyBtdWx0aXBsZSBJVEwgZmxvd3MuIFVuZGVyIHRoZXNlIGNv
-bmRpdGlvbnMgaWYgdGhlIHBvcnQgbGluayBiYW5kd2lkdGggaXMgbm90IGFibGUgdG8gaGFuZGxl
-IHRoZSBuZXQgc3VtIG9mIHRoZSBzaGFyZWQgSVRMIGZsb3dzIGJhbmR3aWR0aCBnb2luZyB0aHJv
-dWdoIHRoZSBzaW5nbGUgcGF0aCAgdGhlbiB3ZSBjb3VsZCBzZWUgaW50ZXJtaXR0ZW50IG5ldHdv
-cmsgY29uZ2VzdGlvbiBwcm9ibGVtcy4gVGhpcyBjb25kaXRpb24gaXMgY2FsbGVkIG5ldHdvcmsg
-b3ZlcnN1YnNjcmlwdGlvbi4gVGhlIGludGVybWl0dGVudCBjb25nZXN0aW9ucyBjYW4gZGVsYXkg
-U0NTSSBleGNoYW5nZSBjb21wbGV0aW9uIHRpbWUgKGluY3JlYXNlIGluIEkvTyBsYXRlbmN5IGlz
-IG9ic2VydmVkKS4KPiAKPiBUbyBvdmVyY29tZSB0aGUgYWJvdmUgbmV0d29yayBpc3N1ZXMgYW5k
-IG1hbnkgbW9yZSBzdWNoIHRhcmdldCBpc3N1ZXMsIHRoZXJlIGFyZSBmcmFtZSBsZXZlbCByZXRy
-aWVzIHRoYXQgYXJlIGRvbmUgaW4gSEJBIGRldmljZSBmaXJtd2FyZSBhbmQgSS9PIHJldHJpZXMg
-aW4gdGhlIFNDU0kgbGF5ZXIuIFRoZXNlIHJldHJpZXMgbWlnaHQgc3VjY2VlZCBiZWNhdXNlIG9m
-IHR3byByZWFzb25zOgo+IDEpIFRoZSBpbnRlcm1pdHRlbnQgc3dpdGNoL3BvcnQgaXNzdWUgaXMg
-bm90IG9ic2VydmVkCj4gMikgVGhlIHJldHJ5IEkvTyBpcyBhIG5ldyAgU0NTSSBleGNoYW5nZS4g
-VGhpcyBTQ1NJIGV4Y2hhbmdlICBjYW4gdGFrZSBhbiBhbHRlcm5hdGUgU0FOIHBhdGggZm9yIHRo
-ZSBJVEwgZmxvdywgaWYgc3VjaCBhbiBTQU4gcGF0aCBleGlzdHMuCj4gMykgTmV0d29yayBjb25n
-ZXN0aW9uIGRpc2FwcGVhcnMgbW9tZW50YXJpbHkgYmVjYXVzZSB0aGUgbmV0IEkvTyBiYW5kd2lk
-dGggY29taW5nIGZyb20gbXVsdGlwbGUgSVRMIGZsb3dzIG9uIHRoZSBzaW5nbGUgc2hhcmVkIG5l
-dHdvcmsgcGF0aCBpcyBzb21ldGhpbmcgdGhlIHBhdGggY2FuIGhhbmRsZQo+IAo+IEhvd2V2ZXIg
-aW4gc29tZSBjYXNlcyB3ZSBoYXZlIHNlZW4gSS9PIHJldHJpZXMgZG9u4oCZdCBzdWNjZWVkIGJl
-Y2F1c2UgdGhlIHJldHJ5IEkvT3MgaGl0cyBhIFNBTiBuZXR3b3JrIHBhdGggdGhhdCBoYXMgIGlu
-dGVybWl0dGVudCBzd2l0Y2gvcG9ydCBpc3N1ZSBhbmQvb3IgbmV0d29yayBjb25nZXN0aW9uLiAK
-PiAKPiBPbiB0aGUgaG9zdCAgdGh1cyB3ZSBzZWUgY29uZmlndXJhdGlvbnMgdHdvIG9yIG1vcmUg
-SVRMIHBhdGggc2hhcmluZyB0aGUgc2FtZSB0YXJnZXQvTFVOIGdvaW5nIHRocm91Z2ggdHdvIG9y
-IG1vcmUgSEJBIHBvcnRzLiBUaGVzZSBIQkEgcG9ydHMgYXJlIGNvbm5lY3RlZCB0byB0d28gb3Ig
-bW9yZSBTQU4gdG8gdGhlIHNhbWUgdGFyZ2V0L0xVTi4KPiBJZiB0aGUgSS9PIGZhaWxzIGF0IHRo
-ZSBtdWx0aXBhdGggbGF5ZXIgdGhlbiwgdGhlIElUTCBwYXRoIGlzIHR1cm5lZCBpbnRvIEZhaWxl
-ZCBzdGF0ZS4gQmVjYXVzZSBvZiB0aGUgbWFyZ2luYWwgbmF0dXJlIG9mIHRoZSBuZXR3b3JrLCB0
-aGUgbmV4dCBIZWFsdGggQ2hlY2sgY29tbWFuZCBzZW50IGZyb20gbXVsdGlwYXRoIGxheWVyIG1p
-Z2h0IHN1Y2NlZWQsIHdoaWNoIHJlc3VsdHMgaW4gbWFraW5nIHRoZSBJVEwgcGF0aCBpbnRvIEFj
-dGl2ZSBzdGF0ZS4gWW91IGVuZCB1cCBzZWVpbmcgdGhlIERNIHBhdGggc3RhdGUgZ29pbmcgIGlu
-dG8gQWN0aXZlLCBGYWlsZWQsIEFjdGl2ZSB0cmFuc2l0aW9ucy4gVGhpcyByZXN1bHRzIGluIG92
-ZXJhbGwgcmVkdWN0aW9uIGluIGFwcGxpY2F0aW9uIEkvTyB0aHJvdWdocHV0IGFuZCBzb21ldGlt
-ZSBhcHBsaWNhdGlvbiBJL08gZmFpbHVyZXMgKGJlY2F1c2Ugb2YgdGltaW5nIGNvbnN0cmFpbnRz
-KS4gQWxsIHRoaXMgY2FuIGhhcHBlbiBiZWNhdXNlIG9mIEkvTyByZXRyaWVzIGFuZCBJL08gcmVx
-dWVzdCBtb3ZpbmcgYWNyb3NzIG11bHRpcGxlIHBhdGhzIG9mIHRoZSBETSBkZXZpY2UuIEluIHRo
-ZSBob3N0IGl0IGlzICB0byBiZSBub3RlZCBhbGwgSS9PIHJldHJpZXMgb24gYSBzaW5nbGUgcGF0
-aCBhbmQgSS9PIG1vdmVtZW50IGFjcm9zcyBtdWx0aXBsZSBwYXRocyByZXN1bHRzIGluIHNsb3dp
-bmcgZG93biB0aGUgZm9yd2FyZCBwcm9ncmVzcyBvZiBuZXcgYXBwbGljYXRpb24gSS9PLiBSZWFz
-b24gYmVoaW5kLCB0aGUgYWJvdmUgSS9PICByZS1xdWV1ZSBhY3Rpb25zIGFyZSBnaXZlbiBoaWdo
-ZXIgcHJpb3JpdHkgdGhhbiB0aGUgbmV3ZXIgSS9PIHJlcXVlc3RzIGNvbWluZyBmcm9tIHRoZSBh
-cHBsaWNhdGlvbi4gCj4gCj4gVGhlIGFib3ZlIGNvbmRpdGlvbiBvZiB0aGUgIElUTCBwYXRoIGlz
-IGhlbmNlIGNhbGxlZCDigJxtYXJnaW5hbOKAnS4KPiAKPiBXaGF0IHdlIGRlc2lyZSBpcyBmb3Ig
-dGhlIERNIHRvIGRldGVybWluaXN0aWNhbGx5ICBjYXRlZ29yaXplIGEgSVRMIFBhdGggYXMg4oCc
-bWFyZ2luYWzigJ0gYW5kIG1vdmUgYWxsIHRoZSBwZW5kaW5nIEkvT3MgZnJvbSB0aGUgbWFyZ2lu
-YWwgUGF0aCB0byBhbiBBY3RpdmUgUGF0aC4gVGhpcyB3aWxsIGhlbHAgaW4gbWVldGluZyBhcHBs
-aWNhdGlvbiBJL08gdGltaW5nIGNvbnN0cmFpbnRzLiBBbHNvIGEgY2FwYWJpbGl0eSB0byBhdXRv
-bWF0aWNhbGx5IHJlLWluc3RhbnRpYXRlIHRoZSBtYXJnaW5hbCBwYXRoIGludG8gQWN0aXZlIG9u
-Y2UgdGhlIG1hcmdpbmFsIGNvbmRpdGlvbiBpbiB0aGUgbmV0d29yayBpcyBmaXhlZC4KPiAKPiAK
-PiBCYXNlZCBvbiB0aGUgYWJvdmUgZXhwbGFuYXRpb24gSSB3YW50IHRvIHJlbmFtZSB0aGUgbmFt
-ZXMgYXMgbWFyZ2luYWxfcGF0aF9YWFhYIGFuZCB0aGlzIGlzIGlycmVzcGVjdGl2ZSBvZiBhbnkg
-c3RvcmFnZSBuZXR3b3JrLgo+IAo+IFJlZ2FyZHMsCj4gTXVuZWVuZHJhLgoKLS0KZG0tZGV2ZWwg
-bWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9t
-YWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+On 09/20/2017 09:35 PM, Benjamin Marzinski wrote:
+
+FYI, v1 was included in 0.7.3
+
+> The scsi persistent reservation API doesn't force devices to implement any
+> method to display the mapping from a reservation key to an I_T Nexus (the
+> READ_FULL_STATUS action is an optional later addition, and a number of devices
+> don't support it). To allow multipathd to determine the correct reservation key
+> for a device without support from the device itself, it uses the
+> reservation_key configuration option. Unfortunately, using this option forces
+> the multipath configuration to be updated whenever a new scsi registration key
+> is used.  This isn't acceptable to some users, who want a static configuration
+> file. I've had multiple requests to allow persistent reservations without
+> needing to set the reservation_key paramter beforehand.
+> 
+> This patch set provides an alternative method of setting the reservation_key
+> for the multipath device. The reservation_key configuration option now also
+> accepts the keyword "file". If this is used, multpath will look in the new
+> prkeys file (by default "/etc/multipath/prkeys") for a line with the device
+> wwid and it's associated reservation_key. The patches allow users to manually
+> set reservation_key to multipath device mappings by using the multipathd
+> client commands, but mpathpersist will automatically detect when devices are
+> configured to use the prkeys file, and will set and clear the reservation
+> keys automatically.
+> 
+> Changes in v3:
+>  - Add documentation for new options and commands (Xose Vazquez Perez)
+>    [PATCH v3 6/6] multipath: add man page info for my prkey changes
+>  - Fix error in checking if multipathd needs to set the prkey for a device
+>    in mpath_persistent_reserve_out
+>    [PATCH v3 5/6] mpathpersist: add support for prkeys file
+> 
+> Changes in v2:
+>  - use struct be64 instead of uint64_t to hold the reservation_key
+>    (Martin Wilck)
+> 
+> Benjamin Marzinski (6):
+>   libmultipath: pull functions into util.c
+>   libmultipath: change reservation_key to a be64
+>   libmpathpersist: fix update_prflag code
+>   multipath: add alternate reservation_key method
+>   mpathpersist: add support for prkeys file
+>   multipath: add man page info for my prkey changes
+> 
+>  libmpathpersist/mpath_persist.c  |  79 ++++++++++---------
+>  libmpathpersist/mpath_updatepr.c |  43 ++++++----
+>  libmpathpersist/mpathpr.h        |   3 +-
+>  libmultipath/Makefile            |   2 +-
+>  libmultipath/byteorder.h         |  44 +++++++++++
+>  libmultipath/checkers/rbd.c      |  16 +---
+>  libmultipath/config.c            |   9 ++-
+>  libmultipath/config.h            |   9 ++-
+>  libmultipath/defaults.h          |   1 +
+>  libmultipath/dict.c              | 105 +++++++++++++------------
+>  libmultipath/dict.h              |   4 +-
+>  libmultipath/prkey.c             | 166 +++++++++++++++++++++++++++++++++++++++
+>  libmultipath/prkey.h             |  19 +++++
+>  libmultipath/propsel.c           |  35 +++++++--
+>  libmultipath/structs.h           |  12 ++-
+>  libmultipath/util.c              |  33 ++++++++
+>  libmultipath/util.h              |   4 +
+>  multipath/multipath.conf.5       |  17 ++++
+>  multipathd/cli.c                 |   8 ++
+>  multipathd/cli.h                 |   8 ++
+>  multipathd/cli_handlers.c        |  82 +++++++++++++++++++
+>  multipathd/cli_handlers.h        |   3 +
+>  multipathd/main.c                |  28 +++----
+>  multipathd/multipathd.8          |  16 ++++
+>  24 files changed, 590 insertions(+), 156 deletions(-)
+>  create mode 100644 libmultipath/byteorder.h
+>  create mode 100644 libmultipath/prkey.c
+>  create mode 100644 libmultipath/prkey.h
+> 
