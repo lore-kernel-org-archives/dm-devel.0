@@ -1,16 +1,12 @@
-From: Ming Lei <ming.lei@redhat.com>
-Subject: Re: [PATCH] dm-mpath: Improve handling of busy paths
-Date: Thu, 21 Sep 2017 09:41:06 +0800
-Message-ID: <20170921014102.GA6854@ming.t460p>
-References: <20170920181212.5532-1-bart.vanassche@wdc.com>
-	<20170920223605.GC5105@ming.t460p>
-	<1505949968.2509.32.camel@wdc.com>
+From: Guan Junxiong <guanjunxiong@huawei.com>
+Subject: [PATCH V5 0/2] multipath-tools: intermittent IO error
+	accounting to improve reliability
+Date: Thu, 21 Sep 2017 16:07:57 +0800
+Message-ID: <1505981279-11288-1-git-send-email-guanjunxiong@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1505949968.2509.32.camel@wdc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,43 +16,90 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <Bart.VanAssche@wdc.com>
-Cc: "axboe@kernel.dk" <axboe@kernel.dk>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "hch@lst.de" <hch@lst.de>, "snitzer@redhat.com" <snitzer@redhat.com>, "hare@suse.com" <hare@suse.com>
+To: dm-devel@redhat.com, christophe.varoqui@opensvc.com, hare@suse.de, mwilck@suse.com, mmandala@Brocade.com
+Cc: guanjunxiong@huawei.com, chengjike.cheng@huawei.com, niuhaoxin@huawei.com, shenhong09@huawei.com
 List-Id: dm-devel.ids
 
-On Wed, Sep 20, 2017 at 11:26:09PM +0000, Bart Van Assche wrote:
-> On Thu, 2017-09-21 at 06:36 +0800, Ming Lei wrote:
-> > Actually with GFP_ATOMIC, dispatch in dm-rq can't move on and no request
-> > will be dequeued from IO scheduler queue if this allocation fails, that
-> > means IO merge is still working at that time if the patchset of
-> > 'blk-mq-sched: improve SCSI-MQ performance' is applied.
-> > 
-> > As my test done, the sequential I/O performance is still not good
-> > even though the patchset is applied.
-> > 
-> > That isn't strange because queue depth of IO scheduler queue can be
-> > much bigger than either q->queue_depth or .cmd_per_lun, that means
-> > the underlying queue has been busy for a while before the allocation
-> > fails.
-> 
-> Hello Ming,
-> 
-> This patch is intended as an alternative for your patch series "dm-mpath:
-> improve I/O schedule". I wanted to show that it is possible to reduce
+Hi ALL,
 
-Hi Bart,
+This patchset add a new method of path state checking based on accounting
+IO error. This is useful in many scenarios such as intermittent IO error
+an a path due to network congestion, or a shaky link.
 
-As I explained, this patch can't fix the I/O merge issue since it is easy
-to trigger queue busy before running out of requests, that is why I
-changes the 'nr_request' in the patch 5 of 'dm-mpath: improve I/O schedule'.
+PATCH 1/2 implements the algorithm that sends a couple of continuous IOs
+to a path which suffers two failed events in less than a given time. Those
+IOs are sent at a fix rate of 10 Hz.
+PATCH 2/2 discard the original algorithm because of this:
+the detect sample interval of that path checkers is so big/coarse that
+it doesn't see what happens in the middle of the sample interval. We have
+the PATCH 1/2 as a better method.
 
-> dm-mpath request submission latency if the underlying driver returns
-> "busy" frequently without touching the "return DM_MAPIO_DELAY_REQUEUE"
+Changes from V4:
+* path_io_err_XXX -> marginal_path_err_XXX. (Mumeendra)
+* add one more parameters named marginal_path_double_failed_time instead
+  of the fixed 60 seconds for the pre-checking of a shaky path. (Martin)
+* fix for "reschedule checking after %d seconds" log 
+* path_io_err_recovery_time -> marginal_path_err_recheck_gap_time.
+* put the marginal path into PATH_SHAKY instead of PATH_DELAYED 
+* Modify the commit comments to sync with the changes above.
 
-I already explained, the DM_MAPIO_DELAY_REQUEUE can be changed
-to DM_MAPIO_REQUEUE at least for dm-rq-mq via SCHED_RESTART, even
-for dm-rq-sq, it should be possible but need to make sure there
-is in-flight requests because we run queue in rq_completed().
+
+Changes from V3:
+* add a patch for discard the san_path_XXX_feature 
+* fail the path in the kernel before enqueueing the path for checking
+  rather than after knowing the checking result to make it more
+  reliable. (Martin)
+* use posix_memalign instead of manual alignment for direct IO buffer. (Martin) 
+* use PATH_MAX to avoid certain compiler warning when opening file
+  rather than FILE_NAME_SIZE. (Martin)
+* discard unnecessary sanity check when getting block size (Martin)
+* do not return 0 in send_each_aync_io if io_starttime of a path is
+  not set(Martin)
+* Wait 10ms instead of 60 second if every path is down. (Martin)
+* rename handle_async_io_timeout to poll_async_io_timeout and use polling
+  method because io_getevents does not return 0 if there are timeout IO
+  and normal IO.
+* rename hit_io_err_recover_time ro hit_io_err_recheck_time 
+* modify the multipath.conf.5 and commit comments to keep sync with the
+  above changes
+
+
+Changes from V2:
+* fix uncondistional rescedule forverver
+* use script/checkpatch.pl in Linux to cleanup informal coding style
+* fix "continous" and "internel" typos
+
+
+Changes from V1:
+* send continous IO instead of a single IO in a sample interval (Martin)
+* when recover time expires, we reschedule the checking process (Hannes)
+* Use the error rate threshold as a permillage instead of IO number(Martin)
+* Use a common io_context for libaio for all paths (Martin)
+* Other small fixes (Martin)
+
+
+Junxiong Guan (2):
+  multipath-tools: intermittent IO error accounting to improve
+    reliability
+  multipath-tools: discard san_path_err_XXX feature
+
+ libmultipath/Makefile      |   5 +-
+ libmultipath/config.c      |   3 -
+ libmultipath/config.h      |  21 +-
+ libmultipath/configure.c   |   7 +-
+ libmultipath/dict.c        |  88 +++---
+ libmultipath/io_err_stat.c | 744 +++++++++++++++++++++++++++++++++++++++++++++
+ libmultipath/io_err_stat.h |  15 +
+ libmultipath/propsel.c     |  70 +++--
+ libmultipath/propsel.h     |   7 +-
+ libmultipath/structs.h     |  15 +-
+ libmultipath/uevent.c      |  32 ++
+ libmultipath/uevent.h      |   2 +
+ multipath/multipath.conf.5 |  89 ++++--
+ multipathd/main.c          | 140 ++++-----
+ 14 files changed, 1043 insertions(+), 195 deletions(-)
+ create mode 100644 libmultipath/io_err_stat.c
+ create mode 100644 libmultipath/io_err_stat.h
 
 -- 
-Ming
+2.11.1
