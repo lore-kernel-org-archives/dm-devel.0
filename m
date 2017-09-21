@@ -1,12 +1,14 @@
 From: Guan Junxiong <guanjunxiong@huawei.com>
-Subject: [PATCH V6 0/2] multipath-tools: intermittent IO error
-	accounting to improve reliability
-Date: Thu, 21 Sep 2017 21:43:44 +0800
-Message-ID: <1506001426-456-1-git-send-email-guanjunxiong@huawei.com>
+Subject: [PATCH V2 3/4] multipath-tools: use user-friendly
+	prio_args for path-latency
+Date: Thu, 21 Sep 2017 21:23:18 +0800
+Message-ID: <1506000199-9644-4-git-send-email-guanjunxiong@huawei.com>
+References: <1506000199-9644-1-git-send-email-guanjunxiong@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1506000199-9644-1-git-send-email-guanjunxiong@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,95 +18,159 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, christophe.varoqui@opensvc.com
-Cc: guanjunxiong@huawei.com, chengjike.cheng@huawei.com, shenhong09@huawei.com, niuhaoxin@huawei.com, mmandala@Brocade.com, mwilck@suse.com
+To: christophe.varoqui@opensvc.com, dm-devel@redhat.com, hare@suse.de
+Cc: xose.vazquez@gmail.com, guanjunxiong@huawei.com, chengjike.cheng@huawei.com, shenhong09@huawei.com, niuhaoxin@huawei.com, mwilck@suse.com
 List-Id: dm-devel.ids
 
-Hi ALL,
+The original prio_args for prioritizer is like this: 20|10 which
+is somewhat unconvenient for user. This patch drops it and use
+a syntax that similar to other prioritizers, for example :
+"base_num=5 io_num=10".
 
-This patchset add a new method of path state checking based on accounting
-IO error. This is useful in many scenarios such as intermittent IO error
-an a path due to network congestion, or a shaky link.
+Signed-off-by: Junxiong Guan <guanjunxiong@huawei.com>
+---
+ libmultipath/prioritizers/path_latency.c | 71 +++++++++++++++++---------------
+ multipath/multipath.conf.5               |  2 +-
+ 2 files changed, 38 insertions(+), 35 deletions(-)
 
-PATCH 1/2 implements the algorithm that sends a couple of continuous IOs
-to a path which suffers two failed events in less than a given time. Those
-IOs are sent at a fix rate of 10 Hz.
-PATCH 2/2 discard the original algorithm because of this:
-the detect sample interval of that path checkers is so big/coarse that
-it doesn't see what happens in the middle of the sample interval. We have
-the PATCH 1/2 as a better method.
-
-
-Changes from V5:
-* rebase on the latest release 0.7.3 
-
-
-Changes from V4:
-* path_io_err_XXX -> marginal_path_err_XXX. (Mumeendra)
-* add one more parameters named marginal_path_double_failed_time instead
-  of the fixed 60 seconds for the pre-checking of a shaky path. (Martin)
-* fix for "reschedule checking after %d seconds" log 
-* path_io_err_recovery_time -> marginal_path_err_recheck_gap_time.
-* put the marginal path into PATH_SHAKY instead of PATH_DELAYED 
-* Modify the commit comments to sync with the changes above.
-
-
-Changes from V3:
-* add a patch for discard the san_path_XXX_feature 
-* fail the path in the kernel before enqueueing the path for checking
-  rather than after knowing the checking result to make it more
-  reliable. (Martin)
-* use posix_memalign instead of manual alignment for direct IO buffer. (Martin) 
-* use PATH_MAX to avoid certain compiler warning when opening file
-  rather than FILE_NAME_SIZE. (Martin)
-* discard unnecessary sanity check when getting block size (Martin)
-* do not return 0 in send_each_aync_io if io_starttime of a path is
-  not set(Martin)
-* Wait 10ms instead of 60 second if every path is down. (Martin)
-* rename handle_async_io_timeout to poll_async_io_timeout and use polling
-  method because io_getevents does not return 0 if there are timeout IO
-  and normal IO.
-* rename hit_io_err_recover_time ro hit_io_err_recheck_time 
-* modify the multipath.conf.5 and commit comments to keep sync with the
-  above changes
-
-
-Changes from V2:
-* fix uncondistional rescedule forverver
-* use script/checkpatch.pl in Linux to cleanup informal coding style
-* fix "continous" and "internel" typos
-
-
-Changes from V1:
-* send continous IO instead of a single IO in a sample interval (Martin)
-* when recover time expires, we reschedule the checking process (Hannes)
-* Use the error rate threshold as a permillage instead of IO number(Martin)
-* Use a common io_context for libaio for all paths (Martin)
-* Other small fixes (Martin)
-
-
-Junxiong Guan (2):
-  multipath-tools: intermittent IO error accounting to improve
-    reliability
-  multipath-tools: discard san_path_err_XXX feature
-
- libmultipath/Makefile      |   5 +-
- libmultipath/config.c      |   3 -
- libmultipath/config.h      |  21 +-
- libmultipath/configure.c   |   7 +-
- libmultipath/dict.c        |  88 +++---
- libmultipath/io_err_stat.c | 744 +++++++++++++++++++++++++++++++++++++++++++++
- libmultipath/io_err_stat.h |  15 +
- libmultipath/propsel.c     |  70 +++--
- libmultipath/propsel.h     |   7 +-
- libmultipath/structs.h     |  15 +-
- libmultipath/uevent.c      |  32 ++
- libmultipath/uevent.h      |   2 +
- multipath/multipath.conf.5 |  89 ++++--
- multipathd/main.c          | 140 ++++-----
- 14 files changed, 1043 insertions(+), 195 deletions(-)
- create mode 100644 libmultipath/io_err_stat.c
- create mode 100644 libmultipath/io_err_stat.h
-
+diff --git a/libmultipath/prioritizers/path_latency.c b/libmultipath/prioritizers/path_latency.c
+index c75ae03f..69c9bd65 100644
+--- a/libmultipath/prioritizers/path_latency.c
++++ b/libmultipath/prioritizers/path_latency.c
+@@ -15,6 +15,7 @@
+  *    scale, the priority "rc" of each path can be provided.
+  *
+  * Author(s): Yang Feng <philip.yang@huawei.com>
++ * Revised:   Guan Junxiong <guanjunxiong@huawei.com>
+  *
+  * This file is released under the GPL version 2, or any later version.
+  */
+@@ -32,6 +33,7 @@
+ #include "debug.h"
+ #include "prio.h"
+ #include "structs.h"
++#include "util.h"
+ 
+ #define pp_pl_log(prio, fmt, args...) condlog(prio, "path_latency prio: " fmt, ##args)
+ 
+@@ -46,8 +48,6 @@
+ 
+ #define DEFAULT_PRIORITY	0
+ 
+-#define MAX_CHAR_SIZE		30
+-
+ #define USEC_PER_SEC		1000000LL
+ #define NSEC_PER_USEC		1000LL
+ 
+@@ -145,52 +145,55 @@ int check_args_valid(int io_num, int base_num)
+ }
+ 
+ /*
+- * In multipath.conf, args form: io_num|base_num. For example,
+- * args is "20|10", this function can get io_num value 20, and
++ * In multipath.conf, args form: io_num=n base_num=m. For example, args are
++ * "io_num=20 base_num=10", this function can get io_num value 20 and
+  * base_num value 10.
+  */
+ static int get_ionum_and_basenum(char *args, int *ionum, int *basenum)
+ {
+-	char source[MAX_CHAR_SIZE];
+-	char vertica = '|';
+-	char *endstrbefore = NULL;
+-	char *endstrafter = NULL;
+-	unsigned int size = strlen(args);
++	char split_char[] = " \t";
++	char *arg, *temp;
++	char *str, *str_inval;
++	int i;
++	int flag_io = 0, flag_base = 0;
+ 
+ 	if ((args == NULL) || (ionum == NULL) || (basenum == NULL)) {
+ 		pp_pl_log(0, "args string is NULL");
+ 		return 0;
+ 	}
+ 
+-	if ((size < 1) || (size > MAX_CHAR_SIZE - 1)) {
+-		pp_pl_log(0, "args string's size is too long");
+-		return 0;
+-	}
+-
+-	memcpy(source, args, size + 1);
+-
+-	if (!isdigit(source[0])) {
+-		pp_pl_log(0, "invalid prio_args format: %s", source);
++	arg = temp = STRDUP(args);
++	if (!arg)
+ 		return 0;
+-	}
+ 
+-	*ionum = (int)strtoul(source, &endstrbefore, 10);
+-	if (endstrbefore[0] != vertica) {
+-		pp_pl_log(0, "invalid prio_args format: %s", source);
+-		return 0;
+-	}
+-
+-	if (!isdigit(endstrbefore[1])) {
+-		pp_pl_log(0, "invalid prio_args format: %s", source);
+-		return 0;
++	for (i = 0; i < 2; i++) {
++		str = get_next_string(&temp, split_char);
++		if (!str)
++			goto out;
++		if (!strncmp(str, "io_num=", 7) && strlen(str) > 7) {
++			*ionum = (int)strtoul(str + 7, &str_inval, 10);
++			if (str == str_inval)
++				goto out;
++			flag_io = 1;
++		}
++		else if (!strncmp(str, "base_num=", 9) && strlen(str) > 9) {
++			*basenum = (int)strtol(str + 9, &str_inval, 10);
++			if (str == str_inval)
++				goto out;
++			flag_base = 1;
++		}
+ 	}
+ 
+-	*basenum = (long long)strtol(&endstrbefore[1], &endstrafter, 10);
+-	if (check_args_valid(*ionum, *basenum) == 0) {
+-		return 0;
+-	}
++	if (!flag_io || !flag_base)
++		goto out;
++	if (check_args_valid(*ionum, *basenum) == 0)
++		goto out;
+ 
++	FREE(arg);
+ 	return 1;
++out:
++	FREE(arg);
++	return 0;
+ }
+ 
+ long long calc_standard_deviation(long long *path_latency, int size,
+@@ -249,8 +252,8 @@ int getprio(struct path *pp, char *args, unsigned int timeout)
+ {
+ 	int rc, temp;
+ 	int index = 0;
+-	int io_num;
+-	int base_num;
++	int io_num = 0;
++	int base_num = 0;
+ 	long long avglatency;
+ 	long long latency_interval;
+ 	long long standard_deviation;
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index 5b6dde71..ad1b8eba 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -351,7 +351,7 @@ these values can be looked up through sysfs or by running \fImultipathd show pat
+ .RE
+ .TP 12
+ .I path_latency
+-Needs a value of the form \fI"<io_num>|<base_num>"\fR
++Needs a value of the form "io_num=\fI<20>\fR base_num=\fI<10>\fR"
+ .RS
+ .TP 8
+ .I io_num
 -- 
 2.11.1
