@@ -1,38 +1,52 @@
-From: Bart Van Assche <Bart.VanAssche@wdc.com>
-Subject: Re: [PATCH] dm-mpath: return DM_MAPIO_REQUEUE in case of rq
- allocation failure
-Date: Fri, 22 Sep 2017 15:06:16 +0000
-Message-ID: <1506092775.2512.5.camel@wdc.com>
-References: <20170922013506.22510-1-ming.lei@redhat.com>
+From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH v5 0/2] dax, dm: stop requiring dax for device-mapper
+Date: Fri, 22 Sep 2017 09:25:00 -0700
+Message-ID: <150609750020.25862.11458070207401120153.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20170922013506.22510-1-ming.lei@redhat.com>
-Content-Language: en-US
-Content-ID: <4982E78E07632245849EDF7FD419D796@namprd04.prod.outlook.com>
-Sender: linux-block-owner@vger.kernel.org
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>, "axboe@fb.com" <axboe@fb.com>, "ming.lei@redhat.com" <ming.lei@redhat.com>, "snitzer@redhat.com" <snitzer@redhat.com>
-Cc: Bart Van Assche <Bart.VanAssche@wdc.com>, "hch@infradead.org" <hch@infradead.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "loberman@redhat.com" <loberman@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: kbuild test robot <lkp-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Bart Van Assche <Bart.VanAssche-Sjgp3cTcYWE@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Gerald Schaefer <gerald.schaefer-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Martin Schwidefsky <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-T24gRnJpLCAyMDE3LTA5LTIyIGF0IDA5OjM1ICswODAwLCBNaW5nIExlaSB3cm90ZToNCj4gKwkJ
-LyoNCj4gKwkJICogYmxrLW1xJ3MgU0NIRURfUkVTVEFSVCBjYW4gY292ZXIgdGhpcyByZXF1ZXVl
-LCBzbw0KPiArCQkgKiB3ZSBuZWVkbid0IHRvIGRlYWwgd2l0aCBpdCBieSBERUxBWV9SRVFVRVVF
-LiBNb3JlDQo+ICsJCSAqIGltcG9ydGFudGx5LCB3ZSBoYXZlIHRvIHJldHVybiBETV9NQVBJT19S
-RVFVRVVFDQo+ICsJCSAqIHNvIHRoYXQgYmxrLW1xIGNhbiBnZXQgdGhlIHF1ZXVlIGJ1c3kgZmVl
-ZGJhY2ssDQo+ICsJCSAqIG90aGVyd2lzZSBJL08gbWVyZ2UgY2FuIGJlIGh1cnQuDQo+ICsJCSAq
-Lw0KPiArCQlpZiAocS0+bXFfb3BzKQ0KPiArCQkJcmV0dXJuIERNX01BUElPX1JFUVVFVUU7DQo+
-ICsJCWVsc2UNCj4gKwkJCXJldHVybiBETV9NQVBJT19ERUxBWV9SRVFVRVVFOw0KPiAgCX0NCg0K
-VGhpcyBwYXRjaCBpcyBpbmZlcmlvciB0byB3aGF0IEkgcG9zdGVkIGJlY2F1c2UgdGhpcyBwYXRj
-aCBkb2VzIG5vdCBhdm9pZA0KdGhlIGRlbGF5IGlmIG11bHRpcGxlIExVTnMgYXJlIGFzc29jaWF0
-ZWQgd2l0aCB0aGUgc2FtZSBTQ1NJIGhvc3QuIENvbnNpZGVyDQplLmcuIHRoZSBmb2xsb3dpbmcg
-Y29uZmlndXJhdGlvbjoNCiogQSBzaW5nbGUgU0NTSSBob3N0IHdpdGggdHdvIFNDU0kgTFVOcyBh
-c3NvY2lhdGVkIHRvIHRoYXQgaG9zdCwgZS5nLiAvZGV2L3NkYQ0KICBhbmQgL2Rldi9zZGIuDQoq
-IEEgZG0tbXBhdGggaW5zdGFuY2UgaGFzIGJlZW4gY3JlYXRlZCBvbiB0b3Agb2YgL2Rldi9zZGEu
-DQpJZiBhbGwgdGFncyBhcmUgaW4gdXNlIGJ5IHJlcXVlc3RzIHF1ZXVlZCB0byAvZGV2L3NkYiwg
-bm8gZG0gcmVxdWVzdHMgYXJlIGluDQpwcm9ncmVzcyBhbmQgYSByZXF1ZXN0IGlzIHN1Ym1pdHRl
-ZCBhZ2FpbnN0IHRoZSBkbS1tcGF0aCBkZXZpY2UgdGhlbiB0aGUNCmJsa19nZXRfcmVxdWVzdChx
-LCBHRlBfQVRPTUlDKSBjYWxsIHdpbGwgZmFpbC4gVGhlIHJlcXVlc3Qgd2lsbCBiZSByZXF1ZXVl
-ZA0KYW5kIHRoZSBxdWV1ZSB3aWxsIGJlIHJlcnVuIGFmdGVyIGEgZGVsYXkuDQoNCk15IHBhdGNo
-IGRvZXMgbm90IGludHJvZHVjZSBhIGRlbGF5IGluIHRoaXMgY2FzZS4NCg0KQmFydC4=
+
+Changes since v4:
+* redo a botched send of v3
+* rebase on 4.14-rc1
+* rewrite the changelog of patch2 to drop broken references to the
+  "built-in portion of device-mapper" (Mike)
+
+---
+
+Bart points out that the DAX core is unconditionally enabled if
+device-mapper is enabled. Add some config machinery and stub routines to
+allow device-mapper to build and run with CONFIG_DAX=n.
+
+---
+
+Dan Williams (2):
+      dax: introduce CONFIG_DAX_DRIVER
+      dm: allow device-mapper to operate without dax support
+
+
+ arch/powerpc/platforms/Kconfig |    1 +
+ drivers/block/Kconfig          |    1 +
+ drivers/dax/Kconfig            |    4 +++-
+ drivers/md/Kconfig             |    2 +-
+ drivers/md/dm-linear.c         |    6 ++++++
+ drivers/md/dm-stripe.c         |    6 ++++++
+ drivers/md/dm.c                |   10 ++++++----
+ drivers/nvdimm/Kconfig         |    1 +
+ drivers/s390/block/Kconfig     |    1 +
+ include/linux/dax.h            |   30 ++++++++++++++++++++++++------
+ 10 files changed, 50 insertions(+), 12 deletions(-)
