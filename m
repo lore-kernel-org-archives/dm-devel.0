@@ -1,194 +1,36 @@
-From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH v5 2/2] dm: allow device-mapper to operate without dax support
-Date: Fri, 22 Sep 2017 09:25:11 -0700
-Message-ID: <150609751116.25862.15738804417151935191.stgit@dwillia2-desk3.amr.corp.intel.com>
-References: <150609750020.25862.11458070207401120153.stgit@dwillia2-desk3.amr.corp.intel.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: [BUG] multipath-tools: missing internal values
+	(multipath -t)
+Date: Fri, 22 Sep 2017 17:59:02 +0200
+Message-ID: <48b41013-08b3-4258-6b3b-19ee8702c6ca@gmail.com>
+References: <5a9ce04c-3996-9f88-1682-822b0d7b9e65@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <150609750020.25862.11458070207401120153.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-Cc: kbuild test robot <lkp-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Bart Van Assche <Bart.VanAssche-Sjgp3cTcYWE@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <5a9ce04c-3996-9f88-1682-822b0d7b9e65@gmail.com>
+Content-Language: en-GB
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Change device-mapper's 'select DAX' dependency to be dependent on the
-presence of at least one DAX_DRIVER. This allows device-mapper to be
-built without bringing the DAX core along which is especially wasteful
-when there are no DAX drivers, like BLK_DEV_PMEM, configured.
+On 04/25/2017 04:26 PM, Xose Vazquez Perez wrote:
 
-Cc: Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Reported-by: Bart Van Assche <Bart.VanAssche-Sjgp3cTcYWE@public.gmane.org>
-Reported-by: kbuild test robot <lkp-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Signed-off-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
----
- drivers/md/Kconfig     |    2 +-
- drivers/md/dm-linear.c |    6 ++++++
- drivers/md/dm-stripe.c |    6 ++++++
- drivers/md/dm.c        |   10 ++++++----
- include/linux/dax.h    |   30 ++++++++++++++++++++++++------
- 5 files changed, 43 insertions(+), 11 deletions(-)
+> These values:
+> no_path_retry
+> dev_loss_tmo
+> reservation_key
+> partition_delimite
+> delay_watch_checks
+> delay_wait_checks
+> are missing from the "defaults section" of multipath -t output.
 
-diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
-index 4a249ee86364..baeea31dc858 100644
---- a/drivers/md/Kconfig
-+++ b/drivers/md/Kconfig
-@@ -200,7 +200,7 @@ config BLK_DEV_DM_BUILTIN
- config BLK_DEV_DM
- 	tristate "Device mapper support"
- 	select BLK_DEV_DM_BUILTIN
--	select DAX
-+	select DAX if DAX_DRIVER
- 	---help---
- 	  Device-mapper is a low level volume manager.  It works by allowing
- 	  people to specify mappings for ranges of logical sectors.  Various
-diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
-index d5f8eff7c11d..df4b6f0489aa 100644
---- a/drivers/md/dm-linear.c
-+++ b/drivers/md/dm-linear.c
-@@ -154,6 +154,7 @@ static int linear_iterate_devices(struct dm_target *ti,
- 	return fn(ti, lc->dev, lc->start, ti->len, data);
- }
- 
-+#if IS_ENABLED(CONFIG_DAX)
- static long linear_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
- 		long nr_pages, void **kaddr, pfn_t *pfn)
- {
-@@ -184,6 +185,11 @@ static size_t linear_dax_copy_from_iter(struct dm_target *ti, pgoff_t pgoff,
- 	return dax_copy_from_iter(dax_dev, pgoff, addr, bytes, i);
- }
- 
-+#else
-+#define linear_dax_direct_access NULL
-+#define linear_dax_copy_from_iter NULL
-+#endif
-+
- static struct target_type linear_target = {
- 	.name   = "linear",
- 	.version = {1, 4, 0},
-diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
-index b5e892149c54..8cb98ee2c9db 100644
---- a/drivers/md/dm-stripe.c
-+++ b/drivers/md/dm-stripe.c
-@@ -311,6 +311,7 @@ static int stripe_map(struct dm_target *ti, struct bio *bio)
- 	return DM_MAPIO_REMAPPED;
- }
- 
-+#if IS_ENABLED(CONFIG_DAX)
- static long stripe_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
- 		long nr_pages, void **kaddr, pfn_t *pfn)
- {
-@@ -351,6 +352,11 @@ static size_t stripe_dax_copy_from_iter(struct dm_target *ti, pgoff_t pgoff,
- 	return dax_copy_from_iter(dax_dev, pgoff, addr, bytes, i);
- }
- 
-+#else
-+#define stripe_dax_direct_access NULL
-+#define stripe_dax_copy_from_iter NULL
-+#endif
-+
- /*
-  * Stripe status:
-  *
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 6e54145969c5..e364c584a676 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1685,7 +1685,7 @@ static void cleanup_mapped_device(struct mapped_device *md)
- static struct mapped_device *alloc_dev(int minor)
- {
- 	int r, numa_node_id = dm_get_numa_node();
--	struct dax_device *dax_dev;
-+	struct dax_device *dax_dev = NULL;
- 	struct mapped_device *md;
- 	void *old_md;
- 
-@@ -1751,9 +1751,11 @@ static struct mapped_device *alloc_dev(int minor)
- 	md->disk->private_data = md;
- 	sprintf(md->disk->disk_name, "dm-%d", minor);
- 
--	dax_dev = alloc_dax(md, md->disk->disk_name, &dm_dax_ops);
--	if (!dax_dev)
--		goto bad;
-+	if (IS_ENABLED(CONFIG_DAX)) {
-+		dax_dev = alloc_dax(md, md->disk->disk_name, &dm_dax_ops);
-+		if (!dax_dev)
-+			goto bad;
-+	}
- 	md->dax_dev = dax_dev;
- 
- 	add_disk(md->disk);
-diff --git a/include/linux/dax.h b/include/linux/dax.h
-index 122197124b9d..898403da0458 100644
---- a/include/linux/dax.h
-+++ b/include/linux/dax.h
-@@ -25,16 +25,39 @@ extern struct attribute_group dax_attribute_group;
- 
- #if IS_ENABLED(CONFIG_DAX)
- struct dax_device *dax_get_by_host(const char *host);
-+struct dax_device *alloc_dax(void *private, const char *host,
-+		const struct dax_operations *ops);
- void put_dax(struct dax_device *dax_dev);
-+void kill_dax(struct dax_device *dax_dev);
-+void dax_write_cache(struct dax_device *dax_dev, bool wc);
-+bool dax_write_cache_enabled(struct dax_device *dax_dev);
- #else
- static inline struct dax_device *dax_get_by_host(const char *host)
- {
- 	return NULL;
- }
--
-+static inline struct dax_device *alloc_dax(void *private, const char *host,
-+		const struct dax_operations *ops)
-+{
-+	/*
-+	 * Callers should check IS_ENABLED(CONFIG_DAX) to know if this
-+	 * NULL is an error or expected.
-+	 */
-+	return NULL;
-+}
- static inline void put_dax(struct dax_device *dax_dev)
- {
- }
-+static inline void kill_dax(struct dax_device *dax_dev)
-+{
-+}
-+static inline void dax_write_cache(struct dax_device *dax_dev, bool wc)
-+{
-+}
-+static inline bool dax_write_cache_enabled(struct dax_device *dax_dev)
-+{
-+	return false;
-+}
- #endif
- 
- int bdev_dax_pgoff(struct block_device *, sector_t, size_t, pgoff_t *pgoff);
-@@ -79,18 +102,13 @@ static inline struct dax_device *fs_dax_get_by_bdev(struct block_device *bdev)
- 
- int dax_read_lock(void);
- void dax_read_unlock(int id);
--struct dax_device *alloc_dax(void *private, const char *host,
--		const struct dax_operations *ops);
- bool dax_alive(struct dax_device *dax_dev);
--void kill_dax(struct dax_device *dax_dev);
- void *dax_get_private(struct dax_device *dax_dev);
- long dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff, long nr_pages,
- 		void **kaddr, pfn_t *pfn);
- size_t dax_copy_from_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
- 		size_t bytes, struct iov_iter *i);
- void dax_flush(struct dax_device *dax_dev, void *addr, size_t size);
--void dax_write_cache(struct dax_device *dax_dev, bool wc);
--bool dax_write_cache_enabled(struct dax_device *dax_dev);
- 
- ssize_t dax_iomap_rw(struct kiocb *iocb, struct iov_iter *iter,
- 		const struct iomap_ops *ops);
+It still happens in 0.7.3
