@@ -1,51 +1,52 @@
-From: Ming Lei <ming.lei@redhat.com>
-Subject: [PATCH] dm-mpath: return DM_MAPIO_REQUEUE in case of rq allocation failure
-Date: Fri, 22 Sep 2017 09:35:06 +0800
-Message-ID: <20170922013506.22510-1-ming.lei@redhat.com>
-Return-path: <linux-block-owner@vger.kernel.org>
-Sender: linux-block-owner@vger.kernel.org
-To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Jens Axboe <axboe@fb.com>
-Cc: linux-block@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, Bart Van Assche <bart.vanassche@sandisk.com>, Laurence Oberman <loberman@redhat.com>, Ming Lei <ming.lei@redhat.com>
+From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH v4 0/2] dax, dm: stop requiring dax for device-mapper
+Date: Thu, 21 Sep 2017 21:26:47 -0700
+Message-ID: <150605440733.23744.13594748177867932146.stgit@dwillia2-desk3.amr.corp.intel.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Bart Van Assche <Bart.VanAssche-Sjgp3cTcYWE@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Martin Schwidefsky <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Gerald Schaefer <gerald.schaefer-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-blk-mq will rerun queue via RESTART after one request is completed,
-so not necessary to wait random time for requeuing, we should trust
-blk-mq to do it.
+Changes since v3 [1]:
+* rebase on 4.14-rc1
+* rewrite the changelog of patch2 to drop broken references to the
+  "built-in portion of device-mapper" (Mike)
 
-More importantly, we need return BLK_STS_RESOURCE to blk-mq
-so that dequeue from I/O scheduler can be stopped, then
-I/O merge gets improved.
+[1]: https://lists.01.org/pipermail/linux-nvdimm/2017-August/011545.html
 
-Signed-off-by: Ming Lei <ming.lei@redhat.com>
 ---
- drivers/md/dm-mpath.c | 14 +++++++++++++-
- 1 file changed, 13 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 11f273d2f018..0902f7762306 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -504,8 +504,20 @@ static int multipath_clone_and_map(struct dm_target *ti, struct request *rq,
- 		if (queue_dying) {
- 			atomic_inc(&m->pg_init_in_progress);
- 			activate_or_offline_path(pgpath);
-+			return DM_MAPIO_DELAY_REQUEUE;
- 		}
--		return DM_MAPIO_DELAY_REQUEUE;
-+
-+		/*
-+		 * blk-mq's SCHED_RESTART can cover this requeue, so
-+		 * we needn't to deal with it by DELAY_REQUEUE. More
-+		 * importantly, we have to return DM_MAPIO_REQUEUE
-+		 * so that blk-mq can get the queue busy feedback,
-+		 * otherwise I/O merge can be hurt.
-+		 */
-+		if (q->mq_ops)
-+			return DM_MAPIO_REQUEUE;
-+		else
-+			return DM_MAPIO_DELAY_REQUEUE;
- 	}
- 	clone->bio = clone->biotail = NULL;
- 	clone->rq_disk = bdev->bd_disk;
--- 
-2.9.5
+Bart points out that the DAX core is unconditionally enabled if
+device-mapper is enabled. Add some config machinery and stub routines to
+allow device-mapper to build and run with CONFIG_DAX=n.
+
+---
+
+Dan Williams (2):
+      dax: introduce CONFIG_DAX_DRIVER
+      dm: allow device-mapper to operate without dax support
+
+
+ arch/powerpc/platforms/Kconfig |    1 +
+ drivers/block/Kconfig          |    1 +
+ drivers/dax/Kconfig            |    4 +++-
+ drivers/md/Kconfig             |    2 +-
+ drivers/md/dm-linear.c         |    6 ++++++
+ drivers/md/dm-stripe.c         |    6 ++++++
+ drivers/md/dm.c                |   10 ++++++----
+ drivers/nvdimm/Kconfig         |    1 +
+ drivers/s390/block/Kconfig     |    1 +
+ include/linux/dax.h            |   30 ++++++++++++++++++++++++------
+ 10 files changed, 50 insertions(+), 12 deletions(-)
