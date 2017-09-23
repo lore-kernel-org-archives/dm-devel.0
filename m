@@ -1,63 +1,47 @@
-From: Bart Van Assche <Bart.VanAssche@wdc.com>
-Subject: Re: [PATCH] dm-mpath: return DM_MAPIO_REQUEUE in case of rq
- allocation failure
-Date: Fri, 22 Sep 2017 17:54:48 +0000
-Message-ID: <1506102888.2512.9.camel@wdc.com>
-References: <20170922013506.22510-1-ming.lei@redhat.com>
-         <1506092775.2512.5.camel@wdc.com> <20170922174431.GA21108@ming.t460p>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH 2/5] multipath-tools: add XIV/NEXTRA to hardware
+	table
+Date: Sun, 24 Sep 2017 01:39:00 +0200
+Message-ID: <20170923233903.24792-3-xose.vazquez@gmail.com>
+References: <20170923233903.24792-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20170922174431.GA21108@ming.t460p>
-Content-Language: en-US
-Content-ID: <33C3EB67436EAD4395347785BF7790A8@namprd04.prod.outlook.com>
-Sender: linux-block-owner@vger.kernel.org
-To: "ming.lei@redhat.com" <ming.lei@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "hch@infradead.org" <hch@infradead.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "axboe@fb.com" <axboe@fb.com>, "snitzer@redhat.com" <snitzer@redhat.com>, "loberman@redhat.com" <loberman@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20170923233903.24792-1-xose.vazquez@gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-T24gU2F0LCAyMDE3LTA5LTIzIGF0IDAxOjQ0ICswODAwLCBNaW5nIExlaSB3cm90ZToNCj4gT24g
-RnJpLCBTZXAgMjIsIDIwMTcgYXQgMDM6MDY6MTZQTSArMDAwMCwgQmFydCBWYW4gQXNzY2hlIHdy
-b3RlOg0KPiA+IE9uIEZyaSwgMjAxNy0wOS0yMiBhdCAwOTozNSArMDgwMCwgTWluZyBMZWkgd3Jv
-dGU6DQo+ID4gPiArCQkvKg0KPiA+ID4gKwkJICogYmxrLW1xJ3MgU0NIRURfUkVTVEFSVCBjYW4g
-Y292ZXIgdGhpcyByZXF1ZXVlLCBzbw0KPiA+ID4gKwkJICogd2UgbmVlZG4ndCB0byBkZWFsIHdp
-dGggaXQgYnkgREVMQVlfUkVRVUVVRS4gTW9yZQ0KPiA+ID4gKwkJICogaW1wb3J0YW50bHksIHdl
-IGhhdmUgdG8gcmV0dXJuIERNX01BUElPX1JFUVVFVUUNCj4gPiA+ICsJCSAqIHNvIHRoYXQgYmxr
-LW1xIGNhbiBnZXQgdGhlIHF1ZXVlIGJ1c3kgZmVlZGJhY2ssDQo+ID4gPiArCQkgKiBvdGhlcndp
-c2UgSS9PIG1lcmdlIGNhbiBiZSBodXJ0Lg0KPiA+ID4gKwkJICovDQo+ID4gPiArCQlpZiAocS0+
-bXFfb3BzKQ0KPiA+ID4gKwkJCXJldHVybiBETV9NQVBJT19SRVFVRVVFOw0KPiA+ID4gKwkJZWxz
-ZQ0KPiA+ID4gKwkJCXJldHVybiBETV9NQVBJT19ERUxBWV9SRVFVRVVFOw0KPiA+ID4gIAl9DQo+
-ID4gDQo+ID4gVGhpcyBwYXRjaCBpcyBpbmZlcmlvciB0byB3aGF0IEkgcG9zdGVkIGJlY2F1c2Ug
-dGhpcyBwYXRjaCBkb2VzIG5vdCBhdm9pZA0KPiA+IHRoZSBkZWxheSBpZiBtdWx0aXBsZSBMVU5z
-IGFyZSBhc3NvY2lhdGVkIHdpdGggdGhlIHNhbWUgU0NTSSBob3N0LiBDb25zaWRlcg0KPiA+IGUu
-Zy4gdGhlIGZvbGxvd2luZyBjb25maWd1cmF0aW9uOg0KPiA+ICogQSBzaW5nbGUgU0NTSSBob3N0
-IHdpdGggdHdvIFNDU0kgTFVOcyBhc3NvY2lhdGVkIHRvIHRoYXQgaG9zdCwgZS5nLiAvZGV2L3Nk
-YQ0KPiA+ICAgYW5kIC9kZXYvc2RiLg0KPiA+ICogQSBkbS1tcGF0aCBpbnN0YW5jZSBoYXMgYmVl
-biBjcmVhdGVkIG9uIHRvcCBvZiAvZGV2L3NkYS4NCj4gPiBJZiBhbGwgdGFncyBhcmUgaW4gdXNl
-IGJ5IHJlcXVlc3RzIHF1ZXVlZCB0byAvZGV2L3NkYiwgbm8gZG0gcmVxdWVzdHMgYXJlIGluDQo+
-ID4gcHJvZ3Jlc3MgYW5kIGEgcmVxdWVzdCBpcyBzdWJtaXR0ZWQgYWdhaW5zdCB0aGUgZG0tbXBh
-dGggZGV2aWNlIHRoZW4gdGhlDQo+ID4gYmxrX2dldF9yZXF1ZXN0KHEsIEdGUF9BVE9NSUMpIGNh
-bGwgd2lsbCBmYWlsLiBUaGUgcmVxdWVzdCB3aWxsIGJlIHJlcXVldWVkDQo+ID4gYW5kIHRoZSBx
-dWV1ZSB3aWxsIGJlIHJlcnVuIGFmdGVyIGEgZGVsYXkuDQo+ID4gDQo+ID4gTXkgcGF0Y2ggZG9l
-cyBub3QgaW50cm9kdWNlIGEgZGVsYXkgaW4gdGhpcyBjYXNlLg0KPiANCj4gVGhhdCBkZWxheSBt
-YXkgbm90IG1hdHRlciBiZWNhdXNlIFNDSEVEX1JFU1RBUlQgd2lsbCBydW4gcXVldWUganVzdA0K
-PiBhZnRlciBvbmUgcmVxdWVzdCBpcyBjb21wbGV0ZWQuDQoNCkRpZCB5b3UgdW5kZXJzdGFuZCB3
-aGF0IEkgd3JvdGU/IFNDSEVEX1JFU1RBUlQgd2lsbCBiZSBzZXQgZm9yIC9kZXYvc2RiIGJ1dCBu
-b3QNCmZvciB0aGUgZG0gcXVldWUuIFRoYXQncyB3aGF0IEkgd2FzIHRyeWluZyB0byBleHBsYWlu
-IHRvIHlvdSBpbiBteSBwcmV2aW91cyBlLW1haWwuDQoNCj4gVGhlcmUgaXMgYXQgbGVhc3Qgb25l
-IGlzc3VlIHdpdGggZ2V0X3JlcXVlc3QoR0ZQX05PSU8pOiBBSU8NCj4gcGVyZm9ybWFuY2UgcmVn
-cmVzc2lvbiBtYXkgbm90IGJlIGNhdXNlZCwgb3IgZXZlbiBBSU8gbWF5IG5vdA0KPiBiZSBwb3Nz
-aWJsZS4gRm9yIGV4YW1wbGUsIHVzZXIgcnVucyBmaW8obGliYWlvLCByYW5kcmVhZCwgc2luZ2xl
-DQo+IGpvYiwgcXVldWUgZGVwdGg6IDY0LCBkZXZpY2U6IGRtLW1wYXRoIGRpc2spLCBpZiBnZXRf
-cmVxdWVzdChHRlBfTk9JTykNCj4gb2Z0ZW4gYmxvY2tzIGJlY2F1c2Ugb2Ygc2hhcmVkIHRhZ3Mg
-b3Igb3V0IG9mIHRhZywgdGhlIGFjdHVhbCBxdWV1ZQ0KPiBkZXB0aCB3b24ndCByZWFjaCA2NCBh
-dCBhbGwsIGFuZCBtYXkgYmUganVzdCAxIGluIHRoZSB3b3JzdCBjYXNlLg0KPiBPbmNlIHRoZSBh
-Y3R1YWwgcXVldWUgZGVwdGggaXMgZGVjcmVhc2VkIG11Y2gsIHJhbmRvbSBJL08gcGVyZm9ybWFu
-Y2UNCj4gc2hvdWxkIGJlIGh1cnQgYSBsb3QuDQoNClRoYXQncyB3aHkgd2UgbmVlZCB0byBtb2Rp
-Znkgc2NzaV9sbGRfYnVzeSgpLiBJZiBzY3NpX2xsZF9idXN5KCkgd2lsbCBiZQ0KbW9kaWZpZWQg
-YXMgSSBwcm9wb3NlZCBpbiBhIHByZXZpb3VzIGUtbWFpbCB0aGVuIGl0IHdpbGwgYmVjb21lIHZl
-cnkNCnVubGlrZWx5IHRoYXQgbm8gdGFnIGlzIGF2YWlsYWJsZSB3aGVuIGJsa19nZXRfcmVxdWVz
-dCgpIGlzIGNhbGxlZC4gV2l0aCB0aGF0DQpzY3NpX2xsZF9idXN5KCkgbW9kaWZpY2F0aW9uIGl0
-IGlzIGV2ZW4gcG9zc2libGUgdGhhdCB3ZSBkb24ndCBuZWVkIHRvIG1vZGlmeQ0KdGhlIGRtLW1w
-YXRoIGRyaXZlci4NCg0KQmFydC4=
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ libmultipath/hwtable.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index 2400473..6074e93 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -568,8 +568,8 @@ static struct hwentry default_hw[] = {
+ 	},
+ 	{
+ 		/* XIV Storage System / FlashSystem A9000/A9000R */
+-		.vendor        = "IBM",
+-		.product       = "2810XIV",
++		.vendor        = "(XIV|IBM)",
++		.product       = "(NEXTRA|2810XIV)",
+ 		.no_path_retry = NO_PATH_RETRY_QUEUE,
+ 		.pgpolicy      = MULTIBUS,
+ 	},
+-- 
+2.13.5
