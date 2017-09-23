@@ -1,8 +1,8 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 2/5] multipath-tools: add XIV/NEXTRA to hardware
-	table
-Date: Sun, 24 Sep 2017 01:39:00 +0200
-Message-ID: <20170923233903.24792-3-xose.vazquez@gmail.com>
+Subject: [PATCH 5/5] multipath-tools: add AccelStor/NeoSapphire
+	to hardware table
+Date: Sun, 24 Sep 2017 01:39:03 +0200
+Message-ID: <20170923233903.24792-6-xose.vazquez@gmail.com>
 References: <20170923233903.24792-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -25,23 +25,29 @@ Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ libmultipath/hwtable.c | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
 
 diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 2400473..6074e93 100644
+index bd06d08..efa81ba 100644
 --- a/libmultipath/hwtable.c
 +++ b/libmultipath/hwtable.c
-@@ -568,8 +568,8 @@ static struct hwentry default_hw[] = {
+@@ -1170,6 +1170,16 @@ static struct hwentry default_hw[] = {
+ 		.no_path_retry = 30,
  	},
+ 	/*
++	 * AccelStor
++	 */
++	{
++		/* NeoSapphire */
++		.vendor        = "AStor",
++		.product       = "NeoSapphire",
++		.pgpolicy      = MULTIBUS,
++		.no_path_retry = 30,
++	},
++	/*
+ 	 * EOL
+ 	 */
  	{
- 		/* XIV Storage System / FlashSystem A9000/A9000R */
--		.vendor        = "IBM",
--		.product       = "2810XIV",
-+		.vendor        = "(XIV|IBM)",
-+		.product       = "(NEXTRA|2810XIV)",
- 		.no_path_retry = NO_PATH_RETRY_QUEUE,
- 		.pgpolicy      = MULTIBUS,
- 	},
 -- 
 2.13.5
