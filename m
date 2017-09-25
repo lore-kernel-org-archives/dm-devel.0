@@ -1,77 +1,52 @@
-From: Ming Lei <ming.lei@redhat.com>
-Subject: Re: [PATCH] dm-mpath: return DM_MAPIO_REQUEUE in case of rq
- allocation failure
-Date: Mon, 25 Sep 2017 11:06:43 +0800
-Message-ID: <20170925030641.GB7090@ming.t460p>
-References: <20170922013506.22510-1-ming.lei@redhat.com>
- <1506092775.2512.5.camel@wdc.com>
- <20170922174431.GA21108@ming.t460p>
- <1506102888.2512.9.camel@wdc.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: multipath-tools 0.7.3
+Date: Mon, 25 Sep 2017 13:49:01 +0200
+Message-ID: <1506340141.4495.3.camel@suse.com>
+References: <CABr-Gncov7Fb_ijSAeHRYYRrQPtonkObSNgdfqzUnnbhAfs4CA@mail.gmail.com>
+	<CABr-GncZ+_GR8y9YDCUYb3Ta-Pkiz=iNPgdWJJJ=x2_3RDyA0Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1506102888.2512.9.camel@wdc.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Bart Van Assche <Bart.VanAssche@wdc.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "hch@infradead.org" <hch@infradead.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "axboe@fb.com" <axboe@fb.com>, "snitzer@redhat.com" <snitzer@redhat.com>, "loberman@redhat.com" <loberman@redhat.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CABr-GncZ+_GR8y9YDCUYb3Ta-Pkiz=iNPgdWJJJ=x2_3RDyA0Q@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, device-mapper development <dm-devel@redhat.com>
+Cc: Gris Ge <fge@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Sep 22, 2017 at 05:54:48PM +0000, Bart Van Assche wrote:
-> On Sat, 2017-09-23 at 01:44 +0800, Ming Lei wrote:
-> > On Fri, Sep 22, 2017 at 03:06:16PM +0000, Bart Van Assche wrote:
-> > > On Fri, 2017-09-22 at 09:35 +0800, Ming Lei wrote:
-> > > > +		/*
-> > > > +		 * blk-mq's SCHED_RESTART can cover this requeue, so
-> > > > +		 * we needn't to deal with it by DELAY_REQUEUE. More
-> > > > +		 * importantly, we have to return DM_MAPIO_REQUEUE
-> > > > +		 * so that blk-mq can get the queue busy feedback,
-> > > > +		 * otherwise I/O merge can be hurt.
-> > > > +		 */
-> > > > +		if (q->mq_ops)
-> > > > +			return DM_MAPIO_REQUEUE;
-> > > > +		else
-> > > > +			return DM_MAPIO_DELAY_REQUEUE;
-> > > >  	}
-> > > 
-> > > This patch is inferior to what I posted because this patch does not avoid
-> > > the delay if multiple LUNs are associated with the same SCSI host. Consider
-> > > e.g. the following configuration:
-> > > * A single SCSI host with two SCSI LUNs associated to that host, e.g. /dev/sda
-> > >   and /dev/sdb.
-> > > * A dm-mpath instance has been created on top of /dev/sda.
-> > > If all tags are in use by requests queued to /dev/sdb, no dm requests are in
-> > > progress and a request is submitted against the dm-mpath device then the
-> > > blk_get_request(q, GFP_ATOMIC) call will fail. The request will be requeued
-> > > and the queue will be rerun after a delay.
-> > > 
-> > > My patch does not introduce a delay in this case.
-> > 
-> > That delay may not matter because SCHED_RESTART will run queue just
-> > after one request is completed.
-> 
-> Did you understand what I wrote? SCHED_RESTART will be set for /dev/sdb but not
-> for the dm queue. That's what I was trying to explain to you in my previous e-mail.
-
-The patch I posted in this thread will set SCHED_RESTART for dm queue.
-
-> 
-> > There is at least one issue with get_request(GFP_NOIO): AIO
-> > performance regression may not be caused, or even AIO may not
-> > be possible. For example, user runs fio(libaio, randread, single
-> > job, queue depth: 64, device: dm-mpath disk), if get_request(GFP_NOIO)
-> > often blocks because of shared tags or out of tag, the actual queue
-> > depth won't reach 64 at all, and may be just 1 in the worst case.
-> > Once the actual queue depth is decreased much, random I/O performance
-> > should be hurt a lot.
-> 
-> That's why we need to modify scsi_lld_busy(). If scsi_lld_busy() will be
-> modified as I proposed in a previous e-mail then it will become very
-> unlikely that no tag is available when blk_get_request() is called. With that
-> scsi_lld_busy() modification it is even possible that we don't need to modify
-> the dm-mpath driver.
-
-Then post out a whole solution, and I'd like to take a look and test.
-
--- 
-Ming
+SGkgQ2hyaXN0b3BoZSwKCnRoYW5rcyBhIGxvdCBmb3IgbWVyZ2luZy4KCkkgdGhpbmsgeW91IG1p
+c3NlZCBhIGZldyBwYXRjaGVzLiBwbGVhc2UgZG91YmxlLWNoZWNrOgoKQ2hyaXMgR2U6CgltdWx0
+aXBhdGhkIGRhZW1vbjogRml4IGluY29ycmVjdCB1c2Ugb2YgQ0xPQ0tfTU9OT1RPTklDIGluIHB0
+aHJlYWQgCglodHRwczovL3d3dy5yZWRoYXQuY29tL2FyY2hpdmVzL2RtLWRldmVsLzIwMTctQXVn
+dXN0L21zZzAwMTEyLmh0bWwKCkJlbiBNYXJ6aW5rc2k6CgltcGF0aHBlcnNpc3Q6IGFkZCBzdXBw
+b3J0IGZvciBwcmtleXMgZmlsZSAodjMpCglodHRwczovL3d3dy5yZWRoYXQuY29tL2FyY2hpdmVz
+L2RtLWRldmVsLzIwMTctU2VwdGVtYmVyL21zZzAwMjc0Lmh0bWwKCllvdSBtZXJnZWQgdjIgb2Yg
+dGhpcyBwYXRjaCwgd2hpY2ggc2VlbXMgYnJva2VuLiBBbHNvLCB3aGVuIGFkZGluZyB0aGlzLAp5
+b3UgbWlnaHQgd2FudCB0byBjb25zaWRlciBhZGRpbmcgQmVuJ3MgbWFuIHBhZ2UgYWRkaXRpb25z
+LCB0b286CgoJbXVsdGlwYXRoOiBhZGQgbWFuIHBhZ2UgaW5mbyBmb3IgbXkgcHJrZXkgY2hhbmdl
+cwoJaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9hcmNoaXZlcy9kbS1kZXZlbC8yMDE3LVNlcHRlbWJl
+ci9tc2cwMDI3NS5odG1sCgpNYXJ0aW4gV2lsY2sKCW11bHRpcGF0aDogZGVsZWdhdGUgZGFuZ2Vy
+b3VzIGNvbW1hbmRzIHRvIG11bHRpcGF0aGQgKHYyKQoJaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9h
+cmNoaXZlcy9kbS1kZXZlbC8yMDE3LVNlcHRlbWJlci9tc2cwMDE4Mi5odG1sCgoKQWxzbywgcGxl
+YXNlIGNvbnNpZGVyIG1lcmdpbmcgdGhlIGZvbGxvd2luZyBidWcgZml4OgoKTWFydGluIFdpbGNr
+OgoJaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9hcmNoaXZlcy9kbS1kZXZlbC8yMDE3LVNlcHRlbWJl
+ci9tc2cwMDI3Ny5odG1sCglXaXRob3V0IHRoaXMgb25lLCAyYmUxZmJmMDZjOTAgCgkibGlibXVs
+dGlwYXRoOiBzYW5pdGl6ZSBmZCBoYW5kbGluZyIgbWF5IGNhdXNlIHJlZ3Jlc3Npb25zLgoKTW9y
+ZW92ZXIsIEknZCBzdGlsbCBsaWtlIHRvIHVuZGVyc3RhbmQgdGhlIGlzc3VlcyB5b3UgaGF2ZSB3
+aXRoIHRoZQpsYXN0IHBhcnQgb2YgbXkgaHdoYW5kbGVyIHNlcmllcyAKKGh0dHBzOi8vd3d3LnJl
+ZGhhdC5jb20vYXJjaGl2ZXMvZG0tZGV2ZWwvMjAxNy1BdWd1c3QvbXNnMDAwOTguaHRtbCkuCldp
+dGhvdXQga25vd2luZyB5b3VyIGNvbmNlcm5zLCBJJ20gdW5zdXJlIGhvdyB0byBpbXByb3ZlIHRo
+ZSBzZXJpZXMgdG8KZ2V0IGl0IHJlYWR5IGZvciBtZXJnaW5nLgoKUmVnYXJkcywKTWFydGluCgot
+LSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0
+MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNt
+aXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2
+ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNv
+bS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
