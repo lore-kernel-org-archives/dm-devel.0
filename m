@@ -1,79 +1,87 @@
-From: Bart Van Assche <Bart.VanAssche@wdc.com>
+From: Ming Lei <ming.lei@redhat.com>
 Subject: Re: [PATCH] dm-mpath: return DM_MAPIO_REQUEUE in case of rq
  allocation failure
-Date: Mon, 25 Sep 2017 15:23:16 +0000
-Message-ID: <1506352994.2641.4.camel@wdc.com>
+Date: Tue, 26 Sep 2017 00:10:15 +0800
+Message-ID: <20170925161014.GB16470@ming.t460p>
 References: <20170922013506.22510-1-ming.lei@redhat.com>
-         <1506092775.2512.5.camel@wdc.com> <20170922174431.GA21108@ming.t460p>
-         <1506102888.2512.9.camel@wdc.com> <20170925030641.GB7090@ming.t460p>
+ <1506092775.2512.5.camel@wdc.com>
+ <20170922174431.GA21108@ming.t460p>
+ <1506102888.2512.9.camel@wdc.com>
+ <20170925030641.GB7090@ming.t460p>
+ <1506352994.2641.4.camel@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20170925030641.GB7090@ming.t460p>
-Content-Language: en-US
-Content-ID: <133A4F74899EBC48B6AEF017C214A021@namprd04.prod.outlook.com>
+Content-Disposition: inline
+In-Reply-To: <1506352994.2641.4.camel@wdc.com>
 Sender: linux-block-owner@vger.kernel.org
-To: "ming.lei@redhat.com" <ming.lei@redhat.com>
+To: Bart Van Assche <Bart.VanAssche@wdc.com>
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "hch@infradead.org" <hch@infradead.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "axboe@fb.com" <axboe@fb.com>, "snitzer@redhat.com" <snitzer@redhat.com>, "loberman@redhat.com" <loberman@redhat.com>
 List-Id: dm-devel.ids
 
-T24gTW9uLCAyMDE3LTA5LTI1IGF0IDExOjA2ICswODAwLCBNaW5nIExlaSB3cm90ZToNCj4gT24g
-RnJpLCBTZXAgMjIsIDIwMTcgYXQgMDU6NTQ6NDhQTSArMDAwMCwgQmFydCBWYW4gQXNzY2hlIHdy
-b3RlOg0KPiA+IE9uIFNhdCwgMjAxNy0wOS0yMyBhdCAwMTo0NCArMDgwMCwgTWluZyBMZWkgd3Jv
-dGU6DQo+ID4gPiBPbiBGcmksIFNlcCAyMiwgMjAxNyBhdCAwMzowNjoxNlBNICswMDAwLCBCYXJ0
-IFZhbiBBc3NjaGUgd3JvdGU6DQo+ID4gPiA+IE9uIEZyaSwgMjAxNy0wOS0yMiBhdCAwOTozNSAr
-MDgwMCwgTWluZyBMZWkgd3JvdGU6DQo+ID4gPiA+ID4gKwkJLyoNCj4gPiA+ID4gPiArCQkgKiBi
-bGstbXEncyBTQ0hFRF9SRVNUQVJUIGNhbiBjb3ZlciB0aGlzIHJlcXVldWUsIHNvDQo+ID4gPiA+
-ID4gKwkJICogd2UgbmVlZG4ndCB0byBkZWFsIHdpdGggaXQgYnkgREVMQVlfUkVRVUVVRS4gTW9y
-ZQ0KPiA+ID4gPiA+ICsJCSAqIGltcG9ydGFudGx5LCB3ZSBoYXZlIHRvIHJldHVybiBETV9NQVBJ
-T19SRVFVRVVFDQo+ID4gPiA+ID4gKwkJICogc28gdGhhdCBibGstbXEgY2FuIGdldCB0aGUgcXVl
-dWUgYnVzeSBmZWVkYmFjaywNCj4gPiA+ID4gPiArCQkgKiBvdGhlcndpc2UgSS9PIG1lcmdlIGNh
-biBiZSBodXJ0Lg0KPiA+ID4gPiA+ICsJCSAqLw0KPiA+ID4gPiA+ICsJCWlmIChxLT5tcV9vcHMp
-DQo+ID4gPiA+ID4gKwkJCXJldHVybiBETV9NQVBJT19SRVFVRVVFOw0KPiA+ID4gPiA+ICsJCWVs
-c2UNCj4gPiA+ID4gPiArCQkJcmV0dXJuIERNX01BUElPX0RFTEFZX1JFUVVFVUU7DQo+ID4gPiA+
-ID4gIAl9DQo+ID4gPiA+IA0KPiA+ID4gPiBUaGlzIHBhdGNoIGlzIGluZmVyaW9yIHRvIHdoYXQg
-SSBwb3N0ZWQgYmVjYXVzZSB0aGlzIHBhdGNoIGRvZXMgbm90IGF2b2lkDQo+ID4gPiA+IHRoZSBk
-ZWxheSBpZiBtdWx0aXBsZSBMVU5zIGFyZSBhc3NvY2lhdGVkIHdpdGggdGhlIHNhbWUgU0NTSSBo
-b3N0LiBDb25zaWRlcg0KPiA+ID4gPiBlLmcuIHRoZSBmb2xsb3dpbmcgY29uZmlndXJhdGlvbjoN
-Cj4gPiA+ID4gKiBBIHNpbmdsZSBTQ1NJIGhvc3Qgd2l0aCB0d28gU0NTSSBMVU5zIGFzc29jaWF0
-ZWQgdG8gdGhhdCBob3N0LCBlLmcuIC9kZXYvc2RhDQo+ID4gPiA+ICAgYW5kIC9kZXYvc2RiLg0K
-PiA+ID4gPiAqIEEgZG0tbXBhdGggaW5zdGFuY2UgaGFzIGJlZW4gY3JlYXRlZCBvbiB0b3Agb2Yg
-L2Rldi9zZGEuDQo+ID4gPiA+IElmIGFsbCB0YWdzIGFyZSBpbiB1c2UgYnkgcmVxdWVzdHMgcXVl
-dWVkIHRvIC9kZXYvc2RiLCBubyBkbSByZXF1ZXN0cyBhcmUgaW4NCj4gPiA+ID4gcHJvZ3Jlc3Mg
-YW5kIGEgcmVxdWVzdCBpcyBzdWJtaXR0ZWQgYWdhaW5zdCB0aGUgZG0tbXBhdGggZGV2aWNlIHRo
-ZW4gdGhlDQo+ID4gPiA+IGJsa19nZXRfcmVxdWVzdChxLCBHRlBfQVRPTUlDKSBjYWxsIHdpbGwg
-ZmFpbC4gVGhlIHJlcXVlc3Qgd2lsbCBiZSByZXF1ZXVlZA0KPiA+ID4gPiBhbmQgdGhlIHF1ZXVl
-IHdpbGwgYmUgcmVydW4gYWZ0ZXIgYSBkZWxheS4NCj4gPiA+ID4gDQo+ID4gPiA+IE15IHBhdGNo
-IGRvZXMgbm90IGludHJvZHVjZSBhIGRlbGF5IGluIHRoaXMgY2FzZS4NCj4gPiA+IA0KPiA+ID4g
-VGhhdCBkZWxheSBtYXkgbm90IG1hdHRlciBiZWNhdXNlIFNDSEVEX1JFU1RBUlQgd2lsbCBydW4g
-cXVldWUganVzdA0KPiA+ID4gYWZ0ZXIgb25lIHJlcXVlc3QgaXMgY29tcGxldGVkLg0KPiA+IA0K
-PiA+IERpZCB5b3UgdW5kZXJzdGFuZCB3aGF0IEkgd3JvdGU/IFNDSEVEX1JFU1RBUlQgd2lsbCBi
-ZSBzZXQgZm9yIC9kZXYvc2RiIGJ1dCBub3QNCj4gPiBmb3IgdGhlIGRtIHF1ZXVlLiBUaGF0J3Mg
-d2hhdCBJIHdhcyB0cnlpbmcgdG8gZXhwbGFpbiB0byB5b3UgaW4gbXkgcHJldmlvdXMgZS1tYWls
-Lg0KPiANCj4gVGhlIHBhdGNoIEkgcG9zdGVkIGluIHRoaXMgdGhyZWFkIHdpbGwgc2V0IFNDSEVE
-X1JFU1RBUlQgZm9yIGRtIHF1ZXVlLg0KDQpUaGlzIGlzIG5vdCBob3cgY29tbXVuaWNhdGlvbiBv
-biBhbiBvcGVuIHNvdXJjZSBtYWlsaW5nIGxpc3QgaXMgYXNzdW1lZCB0byB3b3JrLg0KSWYgeW91
-IGtub3cgdGhhdCB5b3UgYXJlIHdyb25nIHlvdSBhcmUgYXNzdW1lZCBlaXRoZXIgdG8gc2h1dCB1
-cCBvciB0byBhZG1pdCBpdC4NCkFuZCBpZiB5b3UgZGlzYWdyZWUgd2l0aCB0aGUgZGV0YWlsZWQg
-ZXhwbGFuYXRpb24gSSBnYXZlIHlvdSBhcmUgYXNzdW1lZCB0bw0KZXhwbGFpbiBpbiBkZXRhaWwg
-d2h5IHlvdSB0aGluayBpdCBpcyB3cm9uZy4NCg0KPiA+ID4gVGhlcmUgaXMgYXQgbGVhc3Qgb25l
-IGlzc3VlIHdpdGggZ2V0X3JlcXVlc3QoR0ZQX05PSU8pOiBBSU8NCj4gPiA+IHBlcmZvcm1hbmNl
-IHJlZ3Jlc3Npb24gbWF5IG5vdCBiZSBjYXVzZWQsIG9yIGV2ZW4gQUlPIG1heSBub3QNCj4gPiA+
-IGJlIHBvc3NpYmxlLiBGb3IgZXhhbXBsZSwgdXNlciBydW5zIGZpbyhsaWJhaW8sIHJhbmRyZWFk
-LCBzaW5nbGUNCj4gPiA+IGpvYiwgcXVldWUgZGVwdGg6IDY0LCBkZXZpY2U6IGRtLW1wYXRoIGRp
-c2spLCBpZiBnZXRfcmVxdWVzdChHRlBfTk9JTykNCj4gPiA+IG9mdGVuIGJsb2NrcyBiZWNhdXNl
-IG9mIHNoYXJlZCB0YWdzIG9yIG91dCBvZiB0YWcsIHRoZSBhY3R1YWwgcXVldWUNCj4gPiA+IGRl
-cHRoIHdvbid0IHJlYWNoIDY0IGF0IGFsbCwgYW5kIG1heSBiZSBqdXN0IDEgaW4gdGhlIHdvcnN0
-IGNhc2UuDQo+ID4gPiBPbmNlIHRoZSBhY3R1YWwgcXVldWUgZGVwdGggaXMgZGVjcmVhc2VkIG11
-Y2gsIHJhbmRvbSBJL08gcGVyZm9ybWFuY2UNCj4gPiA+IHNob3VsZCBiZSBodXJ0IGEgbG90Lg0K
-PiA+IA0KPiA+IFRoYXQncyB3aHkgd2UgbmVlZCB0byBtb2RpZnkgc2NzaV9sbGRfYnVzeSgpLiBJ
-ZiBzY3NpX2xsZF9idXN5KCkgd2lsbCBiZQ0KPiA+IG1vZGlmaWVkIGFzIEkgcHJvcG9zZWQgaW4g
-YSBwcmV2aW91cyBlLW1haWwgdGhlbiBpdCB3aWxsIGJlY29tZSB2ZXJ5DQo+ID4gdW5saWtlbHkg
-dGhhdCBubyB0YWcgaXMgYXZhaWxhYmxlIHdoZW4gYmxrX2dldF9yZXF1ZXN0KCkgaXMgY2FsbGVk
-LiBXaXRoIHRoYXQNCj4gPiBzY3NpX2xsZF9idXN5KCkgbW9kaWZpY2F0aW9uIGl0IGlzIGV2ZW4g
-cG9zc2libGUgdGhhdCB3ZSBkb24ndCBuZWVkIHRvIG1vZGlmeQ0KPiA+IHRoZSBkbS1tcGF0aCBk
-cml2ZXIuDQo+IA0KPiBUaGVuIHBvc3Qgb3V0IGEgd2hvbGUgc29sdXRpb24sIGFuZCBJJ2QgbGlr
-ZSB0byB0YWtlIGEgbG9vayBhbmQgdGVzdC4NCg0KSSB3aWxsIGRvIHRoYXQgYXMgc29vbiBhcyBJ
-IGhhdmUgdGhlIHRpbWUgdG8gcnVuIHNvbWUgbWVhc3VyZW1lbnRzLiBUaGUgcmVzdCBvZg0KdGhp
-cyB3ZWVrIEkgd2lsbCBiZSB0cmF2ZWxpbmcuDQoNCkJhcnQu
+On Mon, Sep 25, 2017 at 03:23:16PM +0000, Bart Van Assche wrote:
+> On Mon, 2017-09-25 at 11:06 +0800, Ming Lei wrote:
+> > On Fri, Sep 22, 2017 at 05:54:48PM +0000, Bart Van Assche wrote:
+> > > On Sat, 2017-09-23 at 01:44 +0800, Ming Lei wrote:
+> > > > On Fri, Sep 22, 2017 at 03:06:16PM +0000, Bart Van Assche wrote:
+> > > > > On Fri, 2017-09-22 at 09:35 +0800, Ming Lei wrote:
+> > > > > > +		/*
+> > > > > > +		 * blk-mq's SCHED_RESTART can cover this requeue, so
+> > > > > > +		 * we needn't to deal with it by DELAY_REQUEUE. More
+> > > > > > +		 * importantly, we have to return DM_MAPIO_REQUEUE
+> > > > > > +		 * so that blk-mq can get the queue busy feedback,
+> > > > > > +		 * otherwise I/O merge can be hurt.
+> > > > > > +		 */
+> > > > > > +		if (q->mq_ops)
+> > > > > > +			return DM_MAPIO_REQUEUE;
+> > > > > > +		else
+> > > > > > +			return DM_MAPIO_DELAY_REQUEUE;
+> > > > > >  	}
+> > > > > 
+> > > > > This patch is inferior to what I posted because this patch does not avoid
+> > > > > the delay if multiple LUNs are associated with the same SCSI host. Consider
+> > > > > e.g. the following configuration:
+> > > > > * A single SCSI host with two SCSI LUNs associated to that host, e.g. /dev/sda
+> > > > >   and /dev/sdb.
+> > > > > * A dm-mpath instance has been created on top of /dev/sda.
+> > > > > If all tags are in use by requests queued to /dev/sdb, no dm requests are in
+> > > > > progress and a request is submitted against the dm-mpath device then the
+> > > > > blk_get_request(q, GFP_ATOMIC) call will fail. The request will be requeued
+> > > > > and the queue will be rerun after a delay.
+> > > > > 
+> > > > > My patch does not introduce a delay in this case.
+> > > > 
+> > > > That delay may not matter because SCHED_RESTART will run queue just
+> > > > after one request is completed.
+> > > 
+> > > Did you understand what I wrote? SCHED_RESTART will be set for /dev/sdb but not
+> > > for the dm queue. That's what I was trying to explain to you in my previous e-mail.
+> > 
+> > The patch I posted in this thread will set SCHED_RESTART for dm queue.
+> 
+> This is not how communication on an open source mailing list is assumed to work.
+> If you know that you are wrong you are assumed either to shut up or to admit it.
+
+You just mentioned 'This patch is inferior' and never explained my patch
+is wrong, so please go ahead and show me why this patch(the post in this
+thread, also the following link) is wrong.
+
+	https://marc.info/?l=linux-block&m=150604412910113&w=2
+
+I admit both are two ways for the issue, but I don't think my patch
+is wrong. Your approach can be a very big change because .queue_rq()
+will block, and I also mentioned it might cause AIO regression.
+
+I don't understand why you say there is communication issue since
+no much discussion yet in this thread.
+
+Please see the whole discussion:
+
+	https://marc.info/?t=150604442500001&r=1&w=2
+
+> And if you disagree with the detailed explanation I gave you are assumed to
+> explain in detail why you think it is wrong.
+
+
+-- 
+Ming
