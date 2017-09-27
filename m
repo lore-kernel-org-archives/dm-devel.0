@@ -1,35 +1,65 @@
-From: Jeffy Chen <jeffy.chen@rock-chips.com>
-Subject: [PATCH] dm-crypt: Fix memory leak in crypt_ctr_cipher_old()
-Date: Wed, 27 Sep 2017 20:28:57 +0800
-Message-ID: <20170927122857.19227-1-jeffy.chen@rock-chips.com>
-Return-path: <linux-raid-owner@vger.kernel.org>
-Sender: linux-raid-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: Jeffy Chen <jeffy.chen@rock-chips.com>, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>, linux-raid@vger.kernel.org, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH 2/4] bio: have bio_kmap_irq return the size of
+	mapped data
+Date: Wed, 27 Sep 2017 11:44:50 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1709271144280.9676@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1709271122410.9676@file01.intranet.prod.int.rdu2.redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <alpine.LRH.2.02.1709271122410.9676@file01.intranet.prod.int.rdu2.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com, Mike Snitzer <msnitzer@redhat.com>, Jonathan Brassow <jbrassow@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>, Edward Thornber <thornber@redhat.com>
 List-Id: dm-devel.ids
 
-Fix memory leak of cipher_api.
+From 7665b026ad2b56350267dc2a03150618598372dc Mon Sep 17 00:00:00 2001
+From: Mikulas Patocka <mpatocka@redhat.com>
+Date: Thu, 14 Jan 2016 14:48:25 -0500
+Subject: bio: have bio_kmap_irq return the size of mapped data
 
-Fixes: 33d2f09fcb35 (dm crypt: introduce new format of cipher with "capi:" prefix)
-Signed-off-by: Jeffy Chen <jeffy.chen@rock-chips.com>
+The function bio_kmap_irq is not usable because it does not return the
+size of the mapped data.
+
+Fix bio_kmap_irq and __bio_kmap_irq so that they return the size of
+mapped data.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
+ include/linux/bio.h |   10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
 
- drivers/md/dm-crypt.c | 1 +
- 1 file changed, 1 insertion(+)
-
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index a55ffd4f5933..04be8ce1742e 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -2467,6 +2467,7 @@ static int crypt_ctr_cipher_old(struct dm_target *ti, char *cipher_in, char *key
- 		return ret;
- 	}
+Index: linux-2.6/include/linux/bio.h
+===================================================================
+--- linux-2.6.orig/include/linux/bio.h
++++ linux-2.6/include/linux/bio.h
+@@ -549,14 +549,16 @@ static inline void bvec_kunmap_irq(char
+ #endif
  
-+	kfree(cipher_api);
- 	return 0;
- bad_mem:
- 	ti->error = "Cannot allocate cipher strings";
--- 
-2.11.0
-
-
+ static inline char *__bio_kmap_irq(struct bio *bio, struct bvec_iter iter,
+-				   unsigned long *flags)
++				   unsigned long *flags, unsigned *size)
+ {
+-	return bvec_kmap_irq(&bio_iter_iovec(bio, iter), flags);
++	struct bio_vec bv = bio_iter_iovec(bio, iter);
++	*size = bv.bv_len;
++	return bvec_kmap_irq(&bv, flags);
+ }
+ #define __bio_kunmap_irq(buf, flags)	bvec_kunmap_irq(buf, flags)
+ 
+-#define bio_kmap_irq(bio, flags) \
+-	__bio_kmap_irq((bio), (bio)->bi_iter, (flags))
++#define bio_kmap_irq(bio, flags, size) \
++	__bio_kmap_irq((bio), (bio)->bi_iter, (flags), (size))
+ #define bio_kunmap_irq(buf,flags)	__bio_kunmap_irq(buf, flags)
+ 
+ /*
