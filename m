@@ -1,7 +1,8 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 4/4] The dm-writecache target
-Date: Wed, 27 Sep 2017 11:46:41 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1709271146210.9676@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: [PATCH 1/4] dax: remove the pmem_dax_ops->flush
+	abstraction
+Date: Wed, 27 Sep 2017 11:44:23 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1709271143460.9676@file01.intranet.prod.int.rdu2.redhat.com>
 References: <alpine.LRH.2.02.1709271122410.9676@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -20,2164 +21,290 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com, Mike Snitzer <msnitzer@redhat.com>, Jonathan Brassow <jbrassow@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>, Edward Thornber <thornber@redhat.com>
 List-Id: dm-devel.ids
 
----
- drivers/md/Kconfig         |   24 
- drivers/md/Makefile        |    1 
- drivers/md/dm-writecache.c | 2103 +++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 2128 insertions(+)
+This patch is needed only on kernel 4.13, it is already included in 4.14.
 
-Index: linux-2.6/drivers/md/Kconfig
+commit c3ca015fab6df124c933b91902f3f2a3473f9da5
+Author: Mikulas Patocka <mpatocka@redhat.com>
+Date:   Thu Aug 31 21:47:43 2017 -0400
+
+    dax: remove the pmem_dax_ops->flush abstraction
+    
+    Commit abebfbe2f731 ("dm: add ->flush() dax operation support") is
+    buggy. A DM device may be composed of multiple underlying devices and
+    all of them need to be flushed. That commit just routes the flush
+    request to the first device and ignores the other devices.
+    
+    It could be fixed by adding more complex logic to the device mapper. But
+    there is only one implementation of the method pmem_dax_ops->flush - that
+    is pmem_dax_flush() - and it calls arch_wb_cache_pmem(). Consequently, we
+    don't need the pmem_dax_ops->flush abstraction at all, we can call
+    arch_wb_cache_pmem() directly from dax_flush() because dax_dev->ops->flush
+    can't ever reach anything different from arch_wb_cache_pmem().
+    
+    It should be also pointed out that for some uses of persistent memory it
+    is needed to flush only a very small amount of data (such as 1 cacheline),
+    and it would be overkill if we go through that device mapper machinery for
+    a single flushed cache line.
+    
+    Fix this by removing the pmem_dax_ops->flush abstraction and call
+    arch_wb_cache_pmem() directly from dax_flush(). Also, remove the device
+    mapper code that forwards the flushes.
+    
+    Fixes: abebfbe2f731 ("dm: add ->flush() dax operation support")
+    Cc: stable@vger.kernel.org
+    Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+    Reviewed-by: Dan Williams <dan.j.williams@intel.com>
+    Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+
+---
+ drivers/dax/super.c           |   21 ++++++++++++++-------
+ drivers/md/dm-linear.c        |   15 ---------------
+ drivers/md/dm-stripe.c        |   20 --------------------
+ drivers/md/dm.c               |   19 -------------------
+ drivers/nvdimm/pmem.c         |    7 -------
+ fs/dax.c                      |    4 ++--
+ include/linux/dax.h           |    5 +----
+ include/linux/device-mapper.h |    3 ---
+ 8 files changed, 17 insertions(+), 77 deletions(-)
+
+Index: linux-2.6/drivers/dax/super.c
 ===================================================================
---- linux-2.6.orig/drivers/md/Kconfig
-+++ linux-2.6/drivers/md/Kconfig
-@@ -326,6 +326,30 @@ config DM_CACHE_SMQ
-          of less memory utilization, improved performance and increased
-          adaptability in the face of changing workloads.
+--- linux-2.6.orig/drivers/dax/super.c
++++ linux-2.6/drivers/dax/super.c
+@@ -189,8 +189,10 @@ static umode_t dax_visible(struct kobjec
+ 	if (!dax_dev)
+ 		return 0;
  
-+config DM_WRITECACHE
-+	tristate "Writecache target"
-+	depends on BLK_DEV_DM
-+	---help---
-+	   The writecache target caches writes on persistent memory or SSD.
-+	   It is intended for databases or other programs that need extremely
-+	   low commit latency.
-+
-+	   The writecache target doesn't cache reads because reads are supposed
-+	   to be cached in standard RAM.
-+
-+config DM_WRITECACHE_HANDLE_HARDWARE_ERRORS
-+	bool "Handle hardware errors in the writecache target"
-+	depends on DM_WRITECACHE
-+	default y
-+	---help---
-+	  This options makes the dm-writecache target test for hardware errors,
-+	  so that on hardware error, the device is disabled instead of crashing
-+	  the whole kernel. Select 'No', if you have persistent memory based on
-+	  standard DRAM. Select 'Yes', if you have persistent memory based on
-+	  3D Xpoint or other error-prone technology.
-+
-+	  If unsure, say Y.
-+
- config DM_ERA
-        tristate "Era target (EXPERIMENTAL)"
-        depends on BLK_DEV_DM
-Index: linux-2.6/drivers/md/Makefile
-===================================================================
---- linux-2.6.orig/drivers/md/Makefile
-+++ linux-2.6/drivers/md/Makefile
-@@ -62,6 +62,7 @@ obj-$(CONFIG_DM_ERA)		+= dm-era.o
- obj-$(CONFIG_DM_LOG_WRITES)	+= dm-log-writes.o
- obj-$(CONFIG_DM_INTEGRITY)	+= dm-integrity.o
- obj-$(CONFIG_DM_ZONED)		+= dm-zoned.o
-+obj-$(CONFIG_DM_WRITECACHE)	+= dm-writecache.o
- 
- ifeq ($(CONFIG_DM_UEVENT),y)
- dm-mod-objs			+= dm-uevent.o
-Index: linux-2.6/drivers/md/dm-writecache.c
-===================================================================
---- /dev/null
-+++ linux-2.6/drivers/md/dm-writecache.c
-@@ -0,0 +1,2103 @@
-+#include <linux/device-mapper.h>
-+
-+#include <linux/module.h>
-+#include <linux/init.h>
-+#include <linux/vmalloc.h>
-+#include <linux/kthread.h>
-+#include <linux/dm-io.h>
-+#include <linux/dm-kcopyd.h>
-+#include <linux/dax.h>
-+
-+#define DM_MSG_PREFIX	"writecache"
-+
-+/*
-+ * Persistent memory is not covered with page structures. Thus, when we need to
-+ * write data that is in the persistent memory, we need to copy them to a
-+ * temporary location that has struct page. When the macro
-+ * WC_COPY_TO_PAGES_BEFORE_WRITING is defined, such copying is performed.
-+ *
-+ * If the persistent memory were covered with page structures, this macro can be
-+ * undefined.
-+ */
-+#define WC_COPY_TO_PAGES_BEFORE_WRITING
-+
-+/*
-+ * If the architecture doesn't support persistent memory, we can use this driver
-+ * in SSD-only mode.
-+ */
+-	if (a == &dev_attr_write_cache.attr && !dax_dev->ops->flush)
 +#ifndef CONFIG_ARCH_HAS_PMEM_API
-+#define WC_ONLY_SSD
++	if (a == &dev_attr_write_cache.attr)
+ 		return 0;
 +#endif
-+
-+#define BITMAP_GRANULARITY	65536
-+#if BITMAP_GRANULARITY < PAGE_SIZE
-+#undef BITMAP_GRANULARITY
-+#define BITMAP_GRANULARITY	PAGE_SIZE
-+#endif
-+
-+/* compatibility with the kernel 4.13 */
-+#ifndef bio_set_dev
-+#define bio_set_dev(bio, dev)	((bio)->bi_bdev = (dev))
-+#endif
-+
-+struct wc_pmem_holder {
-+	struct dm_dev *dev;
-+	bool vmapped;
-+};
-+
-+static int persistent_memory_claim(struct dm_target *ti, const char *name,
-+				   struct wc_pmem_holder *pmem_holder, void **addr, uint64_t *size)
-+{
-+	int r;
-+	loff_t s;
-+	long p, da;
-+	pfn_t pfn;
-+
-+	pmem_holder->vmapped = false;
-+
-+	r = dm_get_device(ti, name, FMODE_READ | FMODE_WRITE, &pmem_holder->dev);
-+	if (r)
-+		goto err0;
-+
-+	if (!pmem_holder->dev->dax_dev) {
-+		r = -EOPNOTSUPP;
-+		goto err1;
-+	}
-+	s = i_size_read(pmem_holder->dev->bdev->bd_inode);
-+	p = s >> PAGE_SHIFT;
-+	if (p != s >> PAGE_SHIFT) {
-+		r = -EOVERFLOW;
-+		goto err1;
-+	}
-+
-+	da = dax_direct_access(pmem_holder->dev->dax_dev, 0, p, addr, &pfn);
-+	if (da < 0) {
-+		r = da;
-+		goto err1;
-+	}
-+	if (da != p) {
-+		long i;
-+		pfn_t *pfns;
-+		pfns = kvmalloc(p * sizeof(pfn_t), GFP_KERNEL);
-+		if (!pfns) {
-+			r = -ENOMEM;
-+			goto err1;
-+		}
-+		i = 0;
-+		do {
-+			long daa;
-+			daa = dax_direct_access(pmem_holder->dev->dax_dev, i, p - i, addr, &pfn);
-+			if (daa <= 0) {
-+				r = daa ? daa : -EINVAL;
-+				kvfree(pfns);
-+				goto err1;
-+			}
-+			while (daa--) {
-+				pfns[i++] = pfn;
-+				pfn.val++;
-+			}
-+		} while (i < p);
-+		*addr = vmap_pfn(pfns, p, VM_MAP, PAGE_KERNEL);
-+		kvfree(pfns);
-+		if (!*addr) {
-+			r = -ENOMEM;
-+			goto err1;
-+		}
-+		pmem_holder->vmapped = true;
-+	}
-+	*size = s;
-+	return 0;
-+
-+err1:
-+	dm_put_device(ti, pmem_holder->dev);
-+err0:
-+	return r;
+ 	return a->mode;
+ }
+ 
+@@ -255,18 +257,23 @@ size_t dax_copy_from_iter(struct dax_dev
+ }
+ EXPORT_SYMBOL_GPL(dax_copy_from_iter);
+ 
+-void dax_flush(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
+-		size_t size)
++#ifdef CONFIG_ARCH_HAS_PMEM_API
++void arch_wb_cache_pmem(void *addr, size_t size);
++void dax_flush(struct dax_device *dax_dev, void *addr, size_t size)
+ {
+-	if (!dax_alive(dax_dev))
++	if (unlikely(!dax_alive(dax_dev)))
+ 		return;
+ 
+-	if (!test_bit(DAXDEV_WRITE_CACHE, &dax_dev->flags))
++	if (unlikely(!test_bit(DAXDEV_WRITE_CACHE, &dax_dev->flags)))
+ 		return;
+ 
+-	if (dax_dev->ops->flush)
+-		dax_dev->ops->flush(dax_dev, pgoff, addr, size);
++	arch_wb_cache_pmem(addr, size);
 +}
-+
-+static void persistent_memory_release(struct dm_target *ti, struct wc_pmem_holder *pmem_holder,
-+				      void *addr, size_t size)
-+{
-+	if (pmem_holder->vmapped)
-+		vunmap(addr);
-+	dm_put_device(ti, pmem_holder->dev);
-+}
-+
-+#ifndef WC_COPY_TO_PAGES_BEFORE_WRITING
-+
-+static struct page *persistent_memory_page(void *addr)
-+{
-+	return vmalloc_to_page(addr);
-+}
-+
-+static unsigned persistent_memory_page_offset(void *addr)
-+{
-+	return (unsigned long)addr & (PAGE_SIZE - 1);
-+}
-+
-+static void persistent_memory_flush_cache(void *ptr, size_t size)
-+{
-+	flush_kernel_vmap_range(ptr, size);
-+}
-+
-+#endif
-+
-+static void persistent_memory_flush(struct wc_pmem_holder *pmem_holder, void *ptr, size_t size)
-+{
-+	dax_flush(pmem_holder->dev->dax_dev, ptr, size);
-+}
-+
-+static void persistent_memory_commit_flushed(void)
-+{
-+	/* the pcommit instruction is gone */
-+}
-+
-+#define MEMORY_SUPERBLOCK_MAGIC		0x23489321
-+#define MEMORY_SUPERBLOCK_VERSION	1
-+
-+struct wc_memory_entry {
-+	uint64_t original_sector;
-+	uint64_t seq_count;
-+};
-+
-+struct wc_memory_superblock {
-+	union {
-+		struct {
-+			uint32_t magic;
-+			uint32_t version;
-+			uint32_t block_size;
-+			uint32_t pad;
-+			uint64_t n_blocks;
-+			uint64_t seq_count;
-+		};
-+		uint8_t padding[64];
-+	};
-+	struct wc_memory_entry entries[0];
-+};
-+
-+struct wc_entry {
-+	struct rb_node rb_node;
-+	struct list_head lru;
-+	unsigned short wc_list_contiguous;
-+	bool write_in_progress
-+#if BITS_PER_LONG == 64
-+		:1
-+#endif
-+	;
-+	unsigned long index
-+#if BITS_PER_LONG == 64
-+		:47
-+#endif
-+	;
-+#ifdef CONFIG_DM_WRITECACHE_HANDLE_HARDWARE_ERRORS
-+	uint64_t original_sector;
-+	uint64_t seq_count;
-+#endif
-+};
-+
-+#ifndef WC_ONLY_SSD
-+#define WC_MODE_PMEM(wc)			((wc)->pmem_mode)
 +#else
-+#define WC_MODE_PMEM(wc)			false
++void dax_flush(struct dax_device *dax_dev, void *addr, size_t size)
++{
+ }
 +#endif
-+
-+struct dm_writecache {
-+#ifndef WC_ONLY_SSD
-+	bool pmem_mode;
-+#endif
-+	struct mutex lock;
-+	struct rb_root tree;
-+	struct list_head lru;
-+	struct list_head writeback_start;
-+	struct list_head writeback;
-+	struct list_head freelist;
-+	size_t freelist_size;
-+	size_t writeback_size;
-+	size_t freelist_high_watermark;
-+	size_t freelist_low_watermark;
-+	wait_queue_head_t freelist_wait;
-+
-+	struct dm_target *ti;
-+	struct dm_dev *dev;
-+	struct dm_dev *ssd_dev;
-+	void *memory_map;
-+	uint64_t memory_map_size;
-+	size_t metadata_sectors;
-+	void *block_start;
-+	struct wc_entry *entries;
-+	unsigned block_size;
-+	unsigned char block_size_bits;
-+	size_t n_blocks;
-+	uint64_t seq_count;
-+	int error;
-+	bool high_wm_percent_set;
-+	bool low_wm_percent_set;
-+
-+	bool overwrote_committed;
-+
-+	atomic_t bio_in_progress[2];
-+	wait_queue_head_t bio_in_progress_wait[2];
-+
-+	struct dm_io_client *dm_io;
-+
-+	unsigned writeback_all;
-+	struct workqueue_struct *writeback_wq;
-+	struct work_struct writeback_work;
-+
-+	wait_queue_head_t endio_thread_wait;
-+	struct list_head endio_list;
-+	struct task_struct *endio_thread;
-+
-+	struct task_struct *flush_thread;
-+	struct bio *flush_bio;
-+	struct completion flush_completion;
-+
-+	struct bio_set *bio_set;
-+	mempool_t *copy_pool;
-+#ifdef WC_COPY_TO_PAGES_BEFORE_WRITING
-+	mempool_t *page_pool;
-+#endif
-+	struct wc_pmem_holder pmem_holder;
-+	const char *memory_name;
-+
-+	struct dm_kcopyd_client *dm_kcopyd;
-+	unsigned long *dirty_bitmap;
-+	unsigned dirty_bitmap_size;
-+};
-+
-+#define WB_LIST_INLINE		16
-+
-+struct writeback_struct {
-+	struct list_head endio_entry;
-+	struct dm_writecache *wc;
-+	struct wc_entry **wc_list;
-+	unsigned wc_list_n;
-+#ifdef WC_COPY_TO_PAGES_BEFORE_WRITING
-+	unsigned page_offset;
-+	struct page *page;
-+#endif
-+	struct wc_entry *wc_list_inline[WB_LIST_INLINE];
-+	struct bio bio;
-+};
-+
-+struct copy_struct {
-+	struct list_head endio_entry;
-+	struct dm_writecache *wc;
-+	struct wc_entry *e;
-+	int error;
-+};
-+
-+DECLARE_DM_KCOPYD_THROTTLE_WITH_MODULE_PARM(dm_writecache_throttle,
-+					    "A percentage of time allocated for data copying");
-+
-+static struct wc_memory_superblock *sb(struct dm_writecache *wc)
-+{
-+	return wc->memory_map;
-+}
-+
-+static struct wc_memory_entry *memory_entry(struct dm_writecache *wc, struct wc_entry *e)
-+{
-+	if (is_power_of_2(sizeof(struct wc_entry)) && 0)
-+		return &sb(wc)->entries[e - wc->entries];
-+	else
-+		return &sb(wc)->entries[e->index];
-+}
-+
-+static void *memory_data(struct dm_writecache *wc, struct wc_entry *e)
-+{
-+	return (char *)wc->block_start + (e->index << wc->block_size_bits);
-+}
-+
-+static sector_t cache_sector(struct dm_writecache *wc, struct wc_entry *e)
-+{
-+	return wc->metadata_sectors +
-+		((sector_t)e->index << (wc->block_size_bits - SECTOR_SHIFT));
-+}
-+
-+static uint64_t read_original_sector(struct dm_writecache *wc, struct wc_entry *e)
-+{
-+#ifdef CONFIG_DM_WRITECACHE_HANDLE_HARDWARE_ERRORS
-+	return e->original_sector;
-+#else
-+	return le64_to_cpu(memory_entry(wc, e)->original_sector);
-+#endif
-+}
-+
-+static uint64_t read_seq_count(struct dm_writecache *wc, struct wc_entry *e)
-+{
-+#ifdef CONFIG_DM_WRITECACHE_HANDLE_HARDWARE_ERRORS
-+	return e->seq_count;
-+#else
-+	return le64_to_cpu(memory_entry(wc, e)->seq_count);
-+#endif
-+}
-+
-+static void clear_seq_count(struct dm_writecache *wc, struct wc_entry *e)
-+{
-+#ifdef CONFIG_DM_WRITECACHE_HANDLE_HARDWARE_ERRORS
-+	e->seq_count = -1;
-+#endif
-+	ACCESS_ONCE(memory_entry(wc, e)->seq_count) = cpu_to_le64(-1);
-+}
-+
-+static void write_original_sector_seq_count(struct dm_writecache *wc, struct wc_entry *e,
-+					    uint64_t original_sector, uint64_t seq_count)
-+{
-+	struct wc_memory_entry *wme;
-+#ifdef CONFIG_DM_WRITECACHE_HANDLE_HARDWARE_ERRORS
-+	e->original_sector = original_sector;
-+	e->seq_count = seq_count;
-+#endif
-+	wme = memory_entry(wc, e);
-+	ACCESS_ONCE(wme->original_sector) = cpu_to_le64(original_sector);
-+	ACCESS_ONCE(wme->seq_count) = cpu_to_le64(seq_count);
-+}
-+
-+#define writecache_error(wc, err, msg, arg...)				\
-+do {									\
-+	if (!cmpxchg(&(wc)->error, 0, err))				\
-+		DMERR(msg, ##arg);					\
-+	wake_up(&(wc)->freelist_wait);					\
-+} while (0)
-+
-+#define writecache_has_error(wc)	(unlikely(ACCESS_ONCE((wc)->error)))
-+
-+static void writecache_flush_all(struct dm_writecache *wc)
-+{
-+	if (WC_MODE_PMEM(wc))
-+		persistent_memory_flush(&wc->pmem_holder, wc->memory_map, wc->memory_map_size);
-+	else
-+		memset(wc->dirty_bitmap, -1, wc->dirty_bitmap_size);
-+}
-+
-+static void writecache_flush_region(struct dm_writecache *wc, void *ptr, size_t size)
-+{
-+	if (WC_MODE_PMEM(wc))
-+		persistent_memory_flush(&wc->pmem_holder, ptr, size);
-+	else
-+		__set_bit(((char *)ptr - (char *)wc->memory_map) / BITMAP_GRANULARITY,
-+			  wc->dirty_bitmap);
-+}
-+
-+static void writecache_disk_flush(struct dm_writecache *wc, struct dm_dev *dev);
-+
-+struct io_notify {
-+	struct dm_writecache *wc;
-+	struct completion c;
-+	atomic_t count;
-+};
-+
-+void writecache_notify_io(unsigned long error, void *context)
-+{
-+	struct io_notify *endio = context;
-+
-+	if (unlikely(error != 0))
-+		writecache_error(endio->wc, -EIO, "error writing metadata");
-+	BUG_ON(atomic_read(&endio->count) <= 0);
-+	if (atomic_dec_and_test(&endio->count))
-+		complete(&endio->c);
-+}
-+
-+static void ssd_commit_flushed(struct dm_writecache *wc)
-+{
-+	int r;
-+	struct dm_io_region region;
-+	struct dm_io_request req;
-+	struct io_notify endio = {
-+		wc,
-+		COMPLETION_INITIALIZER_ONSTACK(endio.c),
-+		ATOMIC_INIT(1),
-+	};
-+	unsigned bitmap_bits = wc->dirty_bitmap_size * BITS_PER_LONG;
-+	unsigned i = 0;
-+
-+	while (1) {
-+		unsigned j;
-+		i = find_next_bit(wc->dirty_bitmap, bitmap_bits, i);
-+		if (unlikely(i == bitmap_bits))
-+			break;
-+		j = find_next_zero_bit(wc->dirty_bitmap, bitmap_bits, i);
-+
-+		region.bdev = wc->ssd_dev->bdev;
-+		region.sector = (sector_t)i * (BITMAP_GRANULARITY >> SECTOR_SHIFT);
-+		region.count = (sector_t)(j - i) * (BITMAP_GRANULARITY >> SECTOR_SHIFT);
-+
-+		if (unlikely(region.sector >= wc->metadata_sectors))
-+			break;
-+		if (unlikely(region.sector + region.count > wc->metadata_sectors))
-+			region.count = wc->metadata_sectors - region.sector;
-+
-+		atomic_inc(&endio.count);
-+		req.bi_op = REQ_OP_WRITE;
-+		req.bi_op_flags = REQ_SYNC;
-+		req.mem.type = DM_IO_VMA;
-+		req.mem.ptr.vma = (char *)wc->memory_map + (size_t)i * BITMAP_GRANULARITY;
-+		req.client = wc->dm_io;
-+		req.notify.fn = writecache_notify_io;
-+		req.notify.context = &endio;
-+
-+		r = dm_io(&req, 1, &region, NULL);
-+		if (unlikely(r)) {
-+			/*
-+			 * Async dm-io (implied by notify.fn above) won't return an error, but
-+			 * if that changes in the future we must catch it: so panic in defense.
-+			 */
-+			panic(DM_NAME ": " DM_MSG_PREFIX ": dm io error %d", r);
-+		}
-+		i = j;
-+	}
-+
-+	writecache_notify_io(0, &endio);
-+	wait_for_completion_io(&endio.c);
-+
-+	writecache_disk_flush(wc, wc->ssd_dev);
-+
-+	memset(wc->dirty_bitmap, 0, wc->dirty_bitmap_size);
-+}
-+
-+static void writecache_commit_flushed(struct dm_writecache *wc)
-+{
-+	if (WC_MODE_PMEM(wc))
-+		persistent_memory_commit_flushed();
-+	else
-+		ssd_commit_flushed(wc);
-+}
-+
-+static void writecache_disk_flush(struct dm_writecache *wc, struct dm_dev *dev)
-+{
-+	int r;
-+	struct dm_io_region region;
-+	struct dm_io_request req;
-+
-+	region.bdev = dev->bdev;
-+	region.sector = 0;
-+	region.count = 0;
-+	req.bi_op = REQ_OP_WRITE;
-+	req.bi_op_flags = REQ_PREFLUSH | REQ_SYNC;
-+	req.mem.type = DM_IO_KMEM;
-+	req.mem.ptr.addr = NULL;
-+	req.client = wc->dm_io;
-+	req.notify.fn = NULL;
-+
-+	r = dm_io(&req, 1, &region, NULL);
-+	if (unlikely(r))
-+		writecache_error(wc, r, "error flushing metadata: %d", r);
-+}
-+
-+static void writecache_wait_for_ios(struct dm_writecache *wc, int direction)
-+{
-+	wait_event(wc->bio_in_progress_wait[direction],
-+		   !atomic_read(&wc->bio_in_progress[direction]));
-+}
-+
-+#define WFE_RETURN_FOLLOWING	1
-+#define WFE_LOWEST_SEQ		2
-+
-+static struct wc_entry *writecache_find_entry(struct dm_writecache *wc, uint64_t block, int flags)
-+{
-+	struct wc_entry *e;
-+	struct rb_node *node = wc->tree.rb_node;
-+
-+	if (unlikely(!node))
-+		return NULL;
-+
-+	while (1) {
-+		e = container_of(node, struct wc_entry, rb_node);
-+		if (read_original_sector(wc, e) == block)
-+			break;
-+		node = (read_original_sector(wc, e) >= block ?
-+			e->rb_node.rb_left : e->rb_node.rb_right);
-+		if (unlikely(!node)) {
-+			if (!(flags & WFE_RETURN_FOLLOWING))
-+				return NULL;
-+			if (read_original_sector(wc, e) >= block) {
-+				break;
-+			} else {
-+				node = rb_next(&e->rb_node);
-+				if (unlikely(!node))
-+					return NULL;
-+				e = container_of(node, struct wc_entry, rb_node);
-+				break;
-+			}
-+		}
-+	}
-+
-+	while (1) {
-+		struct wc_entry *e2;
-+		if (flags & WFE_LOWEST_SEQ)
-+			node = rb_prev(&e->rb_node);
-+		else
-+			node = rb_next(&e->rb_node);
-+		if (!node)
-+			return e;
-+		e2 = container_of(node, struct wc_entry, rb_node);
-+		if (read_original_sector(wc, e2) != block)
-+			return e;
-+		e = e2;
-+	}
-+}
-+
-+static void writecache_insert_entry(struct dm_writecache *wc, struct wc_entry *ins)
-+{
-+	struct wc_entry *e;
-+	struct rb_node **node = &wc->tree.rb_node, *parent = NULL;
-+
-+	while (*node) {
-+		e = container_of(*node, struct wc_entry, rb_node);
-+		parent = &e->rb_node;
-+		node = read_original_sector(wc, e) > read_original_sector(wc, ins) ?
-+			&parent->rb_left : &parent->rb_right;
-+	}
-+	rb_link_node(&ins->rb_node, parent, node);
-+	rb_insert_color(&ins->rb_node, &wc->tree);
-+	list_add(&ins->lru, &wc->lru);
-+}
-+
-+static void writecache_unlink(struct dm_writecache *wc, struct wc_entry *e)
-+{
-+	list_del(&e->lru);
-+	rb_erase(&e->rb_node, &wc->tree);
-+}
-+
-+static void writecache_add_to_freelist(struct dm_writecache *wc, struct wc_entry *e)
-+{
-+	list_add_tail(&e->lru, &wc->freelist);
-+	wc->freelist_size++;
-+}
-+
-+struct wc_entry *writecache_pop_from_freelist(struct dm_writecache *wc)
-+{
-+	struct wc_entry *e;
-+
-+	if (unlikely(list_empty(&wc->freelist)))
-+		return NULL;
-+	e = container_of(wc->freelist.next, struct wc_entry, lru);
-+	list_del(&e->lru);
-+	wc->freelist_size--;
-+	if (unlikely(wc->freelist_size <= wc->freelist_high_watermark))
-+		queue_work(wc->writeback_wq, &wc->writeback_work);
-+
-+	return e;
-+}
-+
-+static void writecache_free_entry(struct dm_writecache *wc, struct wc_entry *e)
-+{
-+	writecache_unlink(wc, e);
-+	writecache_add_to_freelist(wc, e);
-+	clear_seq_count(wc, e);
-+	writecache_flush_region(wc, memory_entry(wc, e), sizeof(struct wc_memory_entry));
-+	if (unlikely(waitqueue_active(&wc->freelist_wait)))
-+		wake_up(&wc->freelist_wait);
-+}
-+
-+static void writecache_wait_on_freelist(struct dm_writecache *wc)
-+{
-+	DECLARE_WAITQUEUE(wait, current);
-+
-+	add_wait_queue(&wc->freelist_wait, &wait);
-+	set_current_state(TASK_UNINTERRUPTIBLE);
-+	mutex_unlock(&wc->lock);
-+	io_schedule();
-+	mutex_lock(&wc->lock);
-+	remove_wait_queue(&wc->freelist_wait, &wait);
-+}
-+
-+static void writecache_poison_lists(struct dm_writecache *wc)
-+{
-+	/*
-+	 * Catch incorrect access to these values while the device is suspended.
-+	 */
-+	memset(&wc->tree, -1, sizeof wc->tree);
-+	wc->lru.next = LIST_POISON1;
-+	wc->lru.prev = LIST_POISON2;
-+	wc->writeback_start.next = LIST_POISON1;
-+	wc->writeback_start.prev = LIST_POISON2;
-+	wc->writeback.next = LIST_POISON1;
-+	wc->writeback.prev = LIST_POISON2;
-+	wc->freelist.next = LIST_POISON1;
-+	wc->freelist.prev = LIST_POISON2;
-+}
-+
-+static void writecache_flush_entry(struct dm_writecache *wc, struct wc_entry *e)
-+{
-+	writecache_flush_region(wc, memory_entry(wc, e), sizeof(struct wc_memory_entry));
-+	if (WC_MODE_PMEM(wc))
-+		writecache_flush_region(wc, memory_data(wc, e), wc->block_size);
-+}
-+
-+static bool writecache_entry_is_committed(struct dm_writecache *wc, struct wc_entry *e)
-+{
-+	return read_seq_count(wc, e) < wc->seq_count;
-+}
-+
-+static void writecache_flush(struct dm_writecache *wc)
-+{
-+	struct wc_entry *e, *e2;
-+	unsigned long j = jiffies;
-+
-+	if (list_empty(&wc->lru))
-+		return;
-+
-+	e = container_of(wc->lru.next, struct wc_entry, lru);
-+	if (writecache_entry_is_committed(wc, e)) {
-+		if (wc->overwrote_committed) {
-+			writecache_wait_for_ios(wc, WRITE);
-+			writecache_disk_flush(wc, wc->ssd_dev);
-+			wc->overwrote_committed = false;
-+		}
-+		return;
-+	}
-+	j = jiffies - j;
-+#ifdef X
-+	printk("flush 1 in %u.%03us\n", jiffies_to_msecs(j) / 1000, jiffies_to_msecs(j) % 1000);
-+#endif
-+	j = jiffies;
-+	while (1) {
-+		writecache_flush_entry(wc, e);
-+		if (unlikely(e->lru.next == &wc->lru))
-+			break;
-+		e2 = container_of(e->lru.next, struct wc_entry, lru);
-+		if (writecache_entry_is_committed(wc, e2))
-+			break;
-+		e = e2;
-+		cond_resched();
-+	}
-+	j = jiffies - j;
-+#ifdef X
-+	printk("flush 2 in %u.%03us\n", jiffies_to_msecs(j) / 1000, jiffies_to_msecs(j) % 1000);
-+#endif
-+	j = jiffies;
-+	writecache_commit_flushed(wc);
-+
-+	j = jiffies - j;
-+#ifdef X
-+	printk("flush 3 in %u.%03us\n", jiffies_to_msecs(j) / 1000, jiffies_to_msecs(j) % 1000);
-+#endif
-+	j = jiffies;
-+	writecache_wait_for_ios(wc, WRITE);
-+	j = jiffies - j;
-+#ifdef X
-+	printk("flush 4 in %u.%03us\n", jiffies_to_msecs(j) / 1000, jiffies_to_msecs(j) % 1000);
-+#endif
-+	j = jiffies;
-+
-+	wc->seq_count++;
-+	ACCESS_ONCE(sb(wc)->seq_count) = cpu_to_le64(wc->seq_count);
-+	writecache_flush_region(wc, &sb(wc)->seq_count, sizeof sb(wc)->seq_count);
-+	writecache_commit_flushed(wc);
-+
-+	wc->overwrote_committed = false;
-+
-+	while (1) {
-+		/* Free another committed entry with lower seq-count */
-+		struct rb_node *rb_node = rb_prev(&e->rb_node);
-+
-+		if (rb_node) {
-+			e2 = container_of(rb_node, struct wc_entry, rb_node);
-+			if (read_original_sector(wc, e2) == read_original_sector(wc, e) &&
-+			    likely(!e2->write_in_progress))
-+				writecache_free_entry(wc, e2);
-+		}
-+		if (unlikely(e->lru.prev == &wc->lru))
-+			break;
-+		e = container_of(e->lru.prev, struct wc_entry, lru);
-+		cond_resched();
-+	}
-+	j = jiffies - j;
-+#ifdef X
-+	printk("flush 5 in %u.%03us\n", jiffies_to_msecs(j) / 1000, jiffies_to_msecs(j) % 1000);
-+#endif
-+	j = jiffies;
-+}
-+
-+static void writecache_discard(struct dm_writecache *wc, sector_t start, sector_t end)
-+{
-+	struct wc_entry *e;
-+	bool discarded_something = false;
-+
-+	e = writecache_find_entry(wc, start, WFE_RETURN_FOLLOWING | WFE_LOWEST_SEQ);
-+	if (unlikely(!e))
-+		return;
-+
-+	while (read_original_sector(wc, e) < end) {
-+		struct rb_node *node = rb_next(&e->rb_node);
-+
-+		if (likely(!e->write_in_progress)) {
-+			if (!discarded_something) {
-+				writecache_wait_for_ios(wc, READ);
-+				writecache_wait_for_ios(wc, WRITE);
-+				discarded_something = true;
-+			}
-+			writecache_free_entry(wc, e);
-+		}
-+
-+		if (!node)
-+			break;
-+
-+		e = container_of(node, struct wc_entry, rb_node);
-+	}
-+
-+	if (discarded_something)
-+		writecache_commit_flushed(wc);
-+}
-+
-+static bool writecache_wait_for_writeback(struct dm_writecache *wc)
-+{
-+	if (!list_empty(&wc->writeback_start) || !list_empty(&wc->writeback)) {
-+		writecache_wait_on_freelist(wc);
-+		return true;
-+	}
-+	return false;
-+}
-+
-+static void writecache_suspend(struct dm_target *ti)
-+{
-+	struct dm_writecache *wc = ti->private;
-+
-+	flush_workqueue(wc->writeback_wq);
-+
-+	mutex_lock(&wc->lock);
-+	writecache_flush(wc);
-+	while (writecache_wait_for_writeback(wc)) ;
-+	mutex_unlock(&wc->lock);
-+
-+	writecache_poison_lists(wc);
-+}
-+
-+static void writecache_resume(struct dm_target *ti)
-+{
-+	struct dm_writecache *wc = ti->private;
-+	size_t b;
-+	bool need_flush = false;
-+
-+	mutex_lock(&wc->lock);
-+
-+	wc->tree = RB_ROOT;
-+	INIT_LIST_HEAD(&wc->lru);
-+	INIT_LIST_HEAD(&wc->writeback_start);
-+	INIT_LIST_HEAD(&wc->writeback);
-+	INIT_LIST_HEAD(&wc->freelist);
-+	wc->freelist_size = 0;
-+
-+	for (b = 0; b < wc->n_blocks; b++) {
-+		struct wc_entry *e = &wc->entries[b];
-+		e->index = b;
-+		e->write_in_progress = false;
-+	}
-+#ifdef CONFIG_DM_WRITECACHE_HANDLE_HARDWARE_ERRORS
-+	for (b = 0; b < wc->n_blocks; b++) {
-+		struct wc_entry *e = &wc->entries[b];
-+		struct wc_memory_entry wme;
-+		int r;
-+		if (writecache_has_error(wc)) {
-+			e->original_sector = -1;
-+			e->seq_count = -1;
-+			continue;
-+		}
-+		r = memcpy_mcsafe(&wme, memory_entry(wc, e), sizeof(struct wc_memory_entry));
-+		if (unlikely(r)) {
-+			writecache_error(wc, r, "hardware memory error when reading metadata entry %lu: %d", (unsigned long)b, r);
-+			e->original_sector = -1;
-+			e->seq_count = -1;
-+		} else {
-+			e->original_sector = le64_to_cpu(wme.original_sector);
-+			e->seq_count = le64_to_cpu(wme.seq_count);
-+		}
-+	}
-+#endif
-+	for (b = 0; b < wc->n_blocks; b++) {
-+		struct wc_entry *e = &wc->entries[b];
-+		if (!writecache_entry_is_committed(wc, e)) {
-+			if (read_seq_count(wc, e) != -1) {
-+erase_this:
-+				write_original_sector_seq_count(wc, e, -1, -1);
-+				need_flush = true;
-+			}
-+			writecache_add_to_freelist(wc, e);
-+
-+		} else {
-+			struct wc_entry *old;
-+
-+			old = writecache_find_entry(wc, read_original_sector(wc, e), 0);
-+			if (unlikely(!old)) {
-+				writecache_insert_entry(wc, e);
-+			} else {
-+				if (unlikely(read_seq_count(wc, old) == read_seq_count(wc, e))) {
-+					writecache_error(wc, -EINVAL, "two identical entries, position %llu, sector %llu, sequence %llu",
-+						 (unsigned long long)b, (unsigned long long)read_original_sector(wc, e),
-+						 (unsigned long long)read_seq_count(wc, e));
-+				}
-+				if (read_seq_count(wc, old) > read_seq_count(wc, e)) {
-+					goto erase_this;
-+				} else {
-+					writecache_free_entry(wc, old);
-+					writecache_insert_entry(wc, e);
-+					need_flush = true;
-+				}
-+			}
-+		}
-+		cond_resched();
-+	}
-+
-+	if (need_flush) {
-+		writecache_flush_all(wc);
-+		writecache_commit_flushed(wc);
-+	}
-+
-+	mutex_unlock(&wc->lock);
-+}
-+
-+static int process_flush_mesg(unsigned argc, char **argv, struct dm_writecache *wc)
-+{
-+	uint64_t seq;
-+	struct wc_entry *e;
-+
-+	if (argc != 1)
-+		return -EINVAL;
-+
-+	mutex_lock(&wc->lock);
-+	if (unlikely(dm_suspended(wc->ti))) {
-+		mutex_unlock(&wc->lock);
-+		return -EBUSY;
-+	}
-+	if (writecache_has_error(wc)) {
-+		mutex_unlock(&wc->lock);
-+		return -EIO;
-+	}
-+
-+	writecache_flush(wc);
-+	seq = wc->seq_count;
-+	wc->writeback_all++;
-+	mutex_unlock(&wc->lock);
-+
-+	queue_work(wc->writeback_wq, &wc->writeback_work);
-+	flush_workqueue(wc->writeback_wq);
-+
-+	mutex_lock(&wc->lock);
-+	wc->writeback_all--;
-+ waited:
-+	if (unlikely(dm_suspended(wc->ti))) {
-+		mutex_unlock(&wc->lock);
-+		return -EBUSY;
-+	}
-+	if (writecache_has_error(wc)) {
-+		mutex_unlock(&wc->lock);
-+		return -EIO;
-+	}
-+	e = NULL;
-+	if (!list_empty(&wc->writeback))
-+		e = container_of(wc->writeback.prev, struct wc_entry, lru);
-+	else if (!list_empty(&wc->writeback_start))
-+		e = container_of(wc->writeback_start.prev, struct wc_entry, lru);
-+	else if (!list_empty(&wc->lru))
-+		e = container_of(wc->lru.prev, struct wc_entry, lru);
-+	if (e && read_seq_count(wc, e) < seq) {
-+		writecache_wait_on_freelist(wc);
-+		goto waited;
-+	}
-+	mutex_unlock(&wc->lock);
-+
-+	return 0;
-+}
-+
-+static int writecache_message(struct dm_target *ti, unsigned argc, char **argv)
-+{
-+	int r = -EINVAL;
-+	struct dm_writecache *wc = ti->private;
-+
-+	if (!strcasecmp(argv[0], "flush"))
-+		r = process_flush_mesg(argc, argv, wc);
-+	else
-+		DMWARN("unrecognised message received: %s", argv[0]);
-+
-+	return r;
-+}
-+
-+static void bio_copy_block(struct dm_writecache *wc, struct bio *bio, void *data)
-+{
-+	void *buf;
-+	unsigned long flags;
-+	unsigned size;
-+	int rw = bio_data_dir(bio);
-+	unsigned remaining_size = wc->block_size;
-+
-+	do {
-+		buf = bio_kmap_irq(bio, &flags, &size);
-+		if (unlikely(size > remaining_size))
-+			size = remaining_size;
-+
-+		if (rw == READ) {
-+			int r;
-+			r = memcpy_mcsafe(buf, data, size);
-+			flush_dcache_page(bio_page(bio));
-+			if (unlikely(r)) {
-+				writecache_error(wc, r, "hardware memory error when reading data: %d", r);
-+				bio->bi_status = BLK_STS_IOERR;
-+			}
-+		} else {
-+			flush_dcache_page(bio_page(bio));
-+			memcpy(data, buf, size);
-+		}
-+
-+		bio_kunmap_irq(buf, &flags);
-+
-+		data = (char *)data + size;
-+		remaining_size -= size;
-+		bio_advance(bio, size);
-+	} while (unlikely(remaining_size));
-+}
-+
-+static int writecache_flush_thread(void *data)
-+{
-+	struct dm_writecache *wc = data;
-+
-+	while (!kthread_should_stop()) {
-+		struct bio *bio;
-+
-+		bio = wc->flush_bio;
-+		if (unlikely(!bio)) {
-+		} else if (bio->bi_opf & REQ_PREFLUSH) {
-+			writecache_flush(wc);
-+		} else if (bio_op(bio) == REQ_OP_DISCARD) {
-+			writecache_discard(wc, bio->bi_iter.bi_sector,
-+					   bio->bi_iter.bi_sector + (bio->bi_iter.bi_size >> SECTOR_SHIFT));
-+		} else {
-+			BUG();
-+		}
-+
-+		set_current_state(TASK_INTERRUPTIBLE);
-+		wc->flush_bio = (void *)1;	/* for debugging - catch uninitialized use */
-+		complete(&wc->flush_completion);
-+
-+		schedule();
-+	}
-+
-+	set_current_state(TASK_RUNNING);
-+
-+	return 0;
-+}
-+
-+static void writecache_offload_bio(struct dm_writecache *wc, struct bio *bio)
-+{
-+	wc->flush_bio = bio;
-+	reinit_completion(&wc->flush_completion);
-+	wake_up_process(wc->flush_thread);
-+	wait_for_completion_io(&wc->flush_completion);
-+}
-+
-+static int writecache_map(struct dm_target *ti, struct bio *bio)
-+{
-+	struct wc_entry *e;
-+	struct dm_writecache *wc = ti->private;
-+
-+	bio->bi_private = NULL;
-+
-+	mutex_lock(&wc->lock);
-+
-+	if (unlikely(bio->bi_opf & REQ_PREFLUSH)) {
-+		if (writecache_has_error(wc))
-+			goto unlock_error;
-+		if (WC_MODE_PMEM(wc))
-+			writecache_flush(wc);
-+		else
-+			writecache_offload_bio(wc, bio);
-+		goto unlock_ok;
-+	}
-+
-+	bio->bi_iter.bi_sector = dm_target_offset(ti, bio->bi_iter.bi_sector);
-+
-+	if (unlikely((bio->bi_iter.bi_sector & (wc->block_size / 512 - 1)) != 0) ||
-+	    unlikely((bio->bi_iter.bi_size & (wc->block_size - 1)) != 0)) {
-+		DMWARN("I/O is not aligned, sector %llu, size %u, block size %u",
-+			(unsigned long long)bio->bi_iter.bi_sector,
-+			bio->bi_iter.bi_size, wc->block_size);
-+		goto unlock_error;
-+	}
-+
-+	if (unlikely(bio_op(bio) == REQ_OP_DISCARD)) {
-+		if (writecache_has_error(wc))
-+			goto unlock_error;
-+		if (WC_MODE_PMEM(wc))
-+			writecache_discard(wc, bio->bi_iter.bi_sector,
-+					   bio->bi_iter.bi_sector + (bio->bi_iter.bi_size >> SECTOR_SHIFT));
-+		else
-+			writecache_offload_bio(wc, bio);
-+		goto unlock_remap_origin;
-+	}
-+
-+	if (bio_data_dir(bio) == READ) {
-+next_block:
-+		e = writecache_find_entry(wc, bio->bi_iter.bi_sector, WFE_RETURN_FOLLOWING);
-+		if (e && read_original_sector(wc, e) == bio->bi_iter.bi_sector) {
-+			if (WC_MODE_PMEM(wc)) {
-+				bio_copy_block(wc, bio, memory_data(wc, e));
-+				if (bio->bi_iter.bi_size)
-+					goto next_block;
-+				goto unlock_ok;
-+			} else {
-+				dm_accept_partial_bio(bio, wc->block_size >> SECTOR_SHIFT);
-+				bio_set_dev(bio, wc->ssd_dev->bdev);
-+				bio->bi_iter.bi_sector = cache_sector(wc, e);
-+				if (!writecache_entry_is_committed(wc, e))
-+					writecache_wait_for_ios(wc, WRITE);
-+				goto unlock_remap;
-+			}
-+		} else {
-+			if (e) {
-+				sector_t next_boundary =
-+					read_original_sector(wc, e) - bio->bi_iter.bi_sector;
-+				if (next_boundary < bio->bi_iter.bi_size >> SECTOR_SHIFT) {
-+					dm_accept_partial_bio(bio, next_boundary);
-+				}
-+			}
-+			goto unlock_remap_origin;
-+		}
-+	} else {
-+		do {
-+			if (writecache_has_error(wc))
-+				goto unlock_error;
-+			e = writecache_find_entry(wc, bio->bi_iter.bi_sector, 0);
-+			if (e) {
-+				if (!writecache_entry_is_committed(wc, e))
-+					goto bio_copy;
-+				if (!WC_MODE_PMEM(wc) && !e->write_in_progress) {
-+					wc->overwrote_committed = true;
-+					goto bio_copy;
-+				}
-+			}
-+			e = writecache_pop_from_freelist(wc);
-+			if (unlikely(!e)) {
-+				writecache_wait_on_freelist(wc);
-+				continue;
-+			}
-+			write_original_sector_seq_count(wc, e, bio->bi_iter.bi_sector, wc->seq_count);
-+			writecache_insert_entry(wc, e);
-+bio_copy:
-+			if (WC_MODE_PMEM(wc)) {
-+				bio_copy_block(wc, bio, memory_data(wc, e));
-+			} else {
-+				dm_accept_partial_bio(bio, wc->block_size >> SECTOR_SHIFT);
-+				bio_set_dev(bio, wc->ssd_dev->bdev);
-+				bio->bi_iter.bi_sector = cache_sector(wc, e);
-+				goto unlock_remap;
-+			}
-+		} while (bio->bi_iter.bi_size);
-+
-+		goto unlock_ok;
-+	}
-+
-+unlock_remap_origin:
-+	bio_set_dev(bio, wc->dev->bdev);
-+	mutex_unlock(&wc->lock);
-+	return DM_MAPIO_REMAPPED;
-+
-+unlock_remap:
-+	bio->bi_private = (void *)1;
-+	atomic_inc(&wc->bio_in_progress[bio_data_dir(bio)]);
-+	mutex_unlock(&wc->lock);
-+	return DM_MAPIO_REMAPPED;
-+
-+unlock_ok:
-+	mutex_unlock(&wc->lock);
-+	bio_endio(bio);
-+	return DM_MAPIO_SUBMITTED;
-+
-+unlock_error:
-+	mutex_unlock(&wc->lock);
-+	bio_io_error(bio);
-+	return DM_MAPIO_SUBMITTED;
-+}
-+
-+static int writecache_end_io(struct dm_target *ti, struct bio *bio, blk_status_t *status)
-+{
-+	struct dm_writecache *wc = ti->private;
-+
-+	if (bio->bi_private != NULL) {
-+		int dir = bio_data_dir(bio);
-+		if (atomic_dec_and_test(&wc->bio_in_progress[dir]))
-+			if (unlikely(waitqueue_active(&wc->bio_in_progress_wait[dir])))
-+				wake_up(&wc->bio_in_progress_wait[dir]);
-+	}
-+	return 0;
-+}
-+
-+static int writecache_iterate_devices(struct dm_target *ti, iterate_devices_callout_fn fn, void *data)
-+{
-+	struct dm_writecache *wc = ti->private;
-+
-+	return fn(ti, wc->dev, 0, ti->len, data);
-+}
-+
-+static void writecache_io_hints(struct dm_target *ti, struct queue_limits *limits)
-+{
-+	struct dm_writecache *wc = ti->private;
-+
-+	if (limits->logical_block_size < wc->block_size)
-+		limits->logical_block_size = wc->block_size;
-+
-+	if (limits->physical_block_size < wc->block_size)
-+		limits->physical_block_size = wc->block_size;
-+
-+	if (limits->io_min < wc->block_size)
-+		limits->io_min = wc->block_size;
-+}
-+
-+
-+static void writecache_writeback_endio(struct bio *bio)
-+{
-+	struct writeback_struct *wb = container_of(bio, struct writeback_struct, bio);
-+	struct dm_writecache *wc = wb->wc;
-+	unsigned long flags;
-+
-+	spin_lock_irqsave(&wc->endio_thread_wait.lock, flags);
-+	list_add_tail(&wb->endio_entry, &wc->endio_list);
-+	wake_up_locked(&wc->endio_thread_wait);
-+	spin_unlock_irqrestore(&wc->endio_thread_wait.lock, flags);
-+}
-+
-+static void writecache_copy_endio(int read_err, unsigned long write_err, void *ptr)
-+{
-+	struct copy_struct *c = ptr;
-+	struct dm_writecache *wc = c->wc;
-+	unsigned long flags;
-+
-+	c->error = likely(!(read_err | write_err)) ? 0 : -EIO;
-+
-+	spin_lock_irqsave(&wc->endio_thread_wait.lock, flags);	/* !!! TODO: use spin_lock_irq */
-+	list_add_tail(&c->endio_entry, &wc->endio_list);
-+	wake_up_locked(&wc->endio_thread_wait);
-+	spin_unlock_irqrestore(&wc->endio_thread_wait.lock, flags);
-+}
-+
-+static void __writecache_endio_pmem(struct dm_writecache *wc, struct list_head *list)
-+{
-+	unsigned i;
-+	struct writeback_struct *wb;
-+	struct wc_entry *e;
-+
-+	do {
-+		wb = list_entry(list->next, struct writeback_struct, endio_entry);
-+		list_del(&wb->endio_entry);
-+
-+#ifdef WC_COPY_TO_PAGES_BEFORE_WRITING
-+		{
-+			struct bio_vec *bv;
-+			bio_for_each_segment_all(bv, &wb->bio, i)
-+				mempool_free(bv->bv_page, wc->page_pool);
-+		}
-+#endif
-+		if (unlikely(wb->bio.bi_status != BLK_STS_OK))
-+			writecache_error(wc, blk_status_to_errno(wb->bio.bi_status),
-+					"write error %d", wb->bio.bi_status);
-+		i = 0;
-+		do {
-+			e = wb->wc_list[i];
-+			BUG_ON(!e->write_in_progress);
-+			e->write_in_progress = false;
-+			if (!writecache_has_error(wc))
-+				writecache_free_entry(wc, e);
-+			wc->writeback_size--;
-+		} while (++i < wb->wc_list_n);
-+
-+		if (wb->wc_list != wb->wc_list_inline)
-+			kfree(wb->wc_list);
-+		bio_put(&wb->bio);
-+	} while (!list_empty(list));
-+}
-+
-+static void __writecache_endio_ssd(struct dm_writecache *wc, struct list_head *list)
-+{
-+	struct copy_struct *c;
-+	struct wc_entry *e;
-+
-+	do {
-+		c = list_entry(list->next, struct copy_struct, endio_entry);
-+		list_del(&c->endio_entry);
-+
-+		if (unlikely(c->error))
-+			writecache_error(wc, c->error, "copy error");
-+
-+		e = c->e;
-+		BUG_ON(!e->write_in_progress);
-+		e->write_in_progress = false;
-+		if (!writecache_has_error(wc))
-+			writecache_free_entry(wc, e);
-+
-+		wc->writeback_size--;
-+		mempool_free(c, wc->copy_pool);
-+	} while (!list_empty(list));
-+}
-+
-+static int writecache_endio_thread(void *data)
-+{
-+	struct dm_writecache *wc = data;
-+
-+	while (1) {
-+		DECLARE_WAITQUEUE(wait, current);
-+		struct list_head list;
-+
-+		spin_lock_irq(&wc->endio_thread_wait.lock);
-+continue_locked:
-+		if (!list_empty(&wc->endio_list))
-+			goto pop_from_list;
-+		set_current_state(TASK_INTERRUPTIBLE);
-+		__add_wait_queue(&wc->endio_thread_wait, &wait);
-+		spin_unlock_irq(&wc->endio_thread_wait.lock);
-+
-+		if (unlikely(kthread_should_stop())) {
-+			set_current_state(TASK_RUNNING);
-+			remove_wait_queue(&wc->endio_thread_wait, &wait);
-+			break;
-+		}
-+
-+		schedule();
-+
-+		spin_lock_irq(&wc->endio_thread_wait.lock);
-+		__remove_wait_queue(&wc->endio_thread_wait, &wait);
-+		goto continue_locked;
-+
-+pop_from_list:
-+		list = wc->endio_list;
-+		list.next->prev = list.prev->next = &list;
-+		INIT_LIST_HEAD(&wc->endio_list);
-+		spin_unlock_irq(&wc->endio_thread_wait.lock);
-+
-+		writecache_disk_flush(wc, wc->dev);
-+
-+		mutex_lock(&wc->lock);
-+
-+		if (WC_MODE_PMEM(wc))
-+			__writecache_endio_pmem(wc, &list);
-+		else
-+			__writecache_endio_ssd(wc, &list);
-+
-+		writecache_wait_for_ios(wc, READ);
-+		writecache_commit_flushed(wc);
-+
-+		mutex_unlock(&wc->lock);
-+	}
-+
-+	return 0;
-+}
-+
-+static bool wc_add_block(struct writeback_struct *wb, struct wc_entry *e, gfp_t gfp)
-+{
-+	struct dm_writecache *wc = wb->wc;
-+	unsigned block_size = wc->block_size;
-+
-+#ifndef WC_COPY_TO_PAGES_BEFORE_WRITING
-+	void *address = memory_data(wc, e);
-+	persistent_memory_flush_cache(address, block_size);
-+	return bio_add_page(&wb->bio, persistent_memory_page(address),
-+			    block_size, persistent_memory_page_offset(address)) != 0;
-+#else
-+	int r;
-+	if (wb->page_offset == PAGE_SIZE) {
-+		wb->page = mempool_alloc(wc->page_pool, gfp);
-+		if (unlikely(!wb->page))
-+			return false;
-+		wb->page_offset = 0;
-+	}
-+
-+	r = memcpy_mcsafe((char *)page_address(wb->page) + wb->page_offset, memory_data(wc, e), block_size);
-+	if (unlikely(r))
-+		writecache_error(wc, r, "hardware memory error when attempting to writeback block %lu: %d", (unsigned long)e->index, r);
-+
-+	if (unlikely(!bio_add_page(&wb->bio, wb->page, block_size, wb->page_offset))) {
-+		if (!wb->page_offset) {
-+			mempool_free(wb->page, wc->page_pool);
-+			wb->page_offset = PAGE_SIZE;
-+		}
-+		return false;
-+	}
-+	wb->page_offset += block_size;
-+	return true;
-+#endif
-+}
-+
-+static void __writecache_writeback_pmem(struct dm_writecache *wc)
-+{
-+	struct wc_entry *e, *f;
-+	struct bio *bio;
-+	struct writeback_struct *wb;
-+	unsigned max_pages;
-+
-+	while (!list_empty(&wc->writeback_start)) {
-+		e = container_of(wc->writeback_start.prev, struct wc_entry, lru);
-+		list_del(&e->lru);
-+		list_add(&e->lru, &wc->writeback);
-+
-+		mutex_unlock(&wc->lock);
-+
-+		max_pages = e->wc_list_contiguous;
-+
-+		bio = bio_alloc_bioset(GFP_NOIO, max_pages, wc->bio_set);
-+		wb = container_of(bio, struct writeback_struct, bio);
-+		wb->wc = wc;
-+		wb->bio.bi_end_io = writecache_writeback_endio;
-+		bio_set_dev(&wb->bio, wc->dev->bdev);
-+		wb->bio.bi_iter.bi_sector = read_original_sector(wc, e);
-+#ifdef WC_COPY_TO_PAGES_BEFORE_WRITING
-+		wb->page_offset = PAGE_SIZE;
-+#endif
-+		if (max_pages > WB_LIST_INLINE) {
-+			wb->wc_list = kmalloc(max_pages * sizeof(struct wc_entry *),
-+					      GFP_NOIO | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN);
-+			if (unlikely(!wb->wc_list))
-+				goto use_inline_list;
-+		} else {
-+use_inline_list:
-+			wb->wc_list = wb->wc_list_inline;
-+			max_pages = WB_LIST_INLINE;
-+		}
-+
-+		BUG_ON(!wc_add_block(wb, e, GFP_NOIO));
-+
-+		wb->wc_list[0] = e;
-+		wb->wc_list_n = 1;
-+
-+		while (!list_empty(&wc->writeback_start) && wb->wc_list_n < max_pages) {
-+			f = container_of(wc->writeback_start.prev, struct wc_entry, lru);
-+			if (read_original_sector(wc, f) !=
-+			    read_original_sector(wc, e) + (wc->block_size >> SECTOR_SHIFT))
-+				break;
-+			if (!wc_add_block(wb, f, GFP_NOWAIT | __GFP_NOWARN))
-+				break;
-+			list_del(&f->lru);
-+			list_add(&f->lru, &wc->writeback);
-+			wb->wc_list[wb->wc_list_n++] = f;
-+			e = f;
-+		}
-+		bio_set_op_attrs(&wb->bio, REQ_OP_WRITE, 0);
-+		if (writecache_has_error(wc)) {
-+			bio->bi_status = BLK_STS_IOERR;
-+			bio_endio(&wb->bio);
-+		} else {
-+			submit_bio(&wb->bio);
-+		}
-+		cond_resched();
-+
-+		mutex_lock(&wc->lock);
-+	}
-+}
-+
-+static void __writecache_writeback_ssd(struct dm_writecache *wc)
-+{
-+	struct wc_entry *e;
-+	struct dm_io_region from, to;
-+	struct copy_struct *c;
-+
-+	while (!list_empty(&wc->writeback_start)) {
-+		e = container_of(wc->writeback_start.prev, struct wc_entry, lru);
-+		list_del(&e->lru);
-+		list_add(&e->lru, &wc->writeback);
-+		mutex_unlock(&wc->lock);
-+
-+		from.bdev = wc->ssd_dev->bdev;
-+		from.sector = cache_sector(wc, e);
-+		from.count = wc->block_size >> SECTOR_SHIFT;
-+		to.bdev = wc->dev->bdev;
-+		to.sector = read_original_sector(wc, e);
-+		to.count = wc->block_size >> SECTOR_SHIFT;
-+
-+		c = mempool_alloc(wc->copy_pool, GFP_NOIO);
-+		c->wc = wc;
-+		c->e = e;
-+
-+		dm_kcopyd_copy(wc->dm_kcopyd, &from, 1, &to, 0, writecache_copy_endio, c);
-+
-+		mutex_lock(&wc->lock);
-+	}
-+}
-+
-+static void writecache_writeback(struct work_struct *work)
-+{
-+	struct dm_writecache *wc = container_of(work, struct dm_writecache, writeback_work);
-+	struct blk_plug plug;
-+	struct wc_entry *e, *f, *g;
-+	struct rb_node *node, *next_node;
-+	struct list_head skipped;
-+#ifdef X
-+	unsigned long n_walked;
-+	unsigned long j;
-+#endif
-+
-+	mutex_lock(&wc->lock);
-+restart:
-+	if (writecache_has_error(wc) || unlikely(dm_suspended(wc->ti))) {
-+		mutex_unlock(&wc->lock);
-+		return;
-+	}
-+
-+	if (unlikely(wc->writeback_all)) {
-+		if (writecache_wait_for_writeback(wc))
-+			goto restart;
-+	}
-+
-+	if (wc->overwrote_committed)
-+		writecache_wait_for_ios(wc, WRITE);
-+
-+#ifdef X
-+	n_walked = 0;
-+	j = jiffies;
-+#endif
-+	INIT_LIST_HEAD(&skipped);
-+	while (!list_empty(&wc->lru) &&
-+	       (wc->writeback_all ||
-+		wc->freelist_size + wc->writeback_size <= wc->freelist_high_watermark)) {
-+#ifdef X
-+		n_walked++;
-+#endif
-+		e = container_of(wc->lru.prev, struct wc_entry, lru);
-+		BUG_ON(e->write_in_progress);
-+		if (unlikely(!writecache_entry_is_committed(wc, e))) {
-+#ifdef X
-+			unsigned long j2 = jiffies;
-+#endif
-+			writecache_flush(wc);
-+#ifdef X
-+			j2 = jiffies - j2;
-+			printk("flush in %u.%03us\n", jiffies_to_msecs(j2) / 1000, jiffies_to_msecs(j2) % 1000);
-+#endif
-+		}
-+		node = rb_prev(&e->rb_node);
-+		if (node) {
-+			f = container_of(node, struct wc_entry, rb_node);
-+			if (unlikely(read_original_sector(wc, f) ==
-+				     read_original_sector(wc, e))) {
-+				BUG_ON(!f->write_in_progress);
-+				list_del(&e->lru);
-+				list_add(&e->lru, &skipped);
-+				continue;
-+			}
-+		}
-+		wc->writeback_size++;
-+		list_del(&e->lru);
-+		list_add(&e->lru, &wc->writeback_start);
-+		e->write_in_progress = true;
-+		e->wc_list_contiguous = 1;
-+
-+		f = e;
-+
-+		if (!WC_MODE_PMEM(wc)) {
-+			cond_resched();
-+			continue;
-+		}
-+
-+		/* Only coalesce if we are on pmem */
-+		while (1) {
-+			next_node = rb_next(&f->rb_node);
-+			if (unlikely(!next_node))
-+				break;
-+			g = container_of(next_node, struct wc_entry, rb_node);
-+			if (read_original_sector(wc, g) ==
-+			    read_original_sector(wc, f)) {
-+				f = g;
-+				continue;
-+			}
-+			if (read_original_sector(wc, g) !=
-+			    read_original_sector(wc, f) + (wc->block_size >> SECTOR_SHIFT))
-+				break;
-+			if (unlikely(g->write_in_progress))
-+				break;
-+			if (unlikely(!writecache_entry_is_committed(wc, g)))
-+				break;
-+
-+			wc->writeback_size++;
-+			list_del(&g->lru);
-+			list_add(&g->lru, &wc->writeback_start);
-+			g->write_in_progress = true;
-+			g->wc_list_contiguous = BIO_MAX_PAGES;
-+			f = g;
-+			e->wc_list_contiguous++;
-+			if (unlikely(e->wc_list_contiguous == BIO_MAX_PAGES))
-+				break;
-+		}
-+		cond_resched();
-+	}
-+
-+	list_splice_tail(&skipped, &wc->lru);
-+
-+#ifdef X
-+	j = jiffies - j;
-+	printk("walked %lu in %u.%03us\n", n_walked, jiffies_to_msecs(j) / 1000, jiffies_to_msecs(j) % 1000);
-+#endif
-+	mutex_unlock(&wc->lock);
-+
-+	blk_start_plug(&plug);
-+	mutex_lock(&wc->lock);
-+
-+	if (WC_MODE_PMEM(wc))
-+		__writecache_writeback_pmem(wc);
-+	else
-+		__writecache_writeback_ssd(wc);
-+
-+	mutex_unlock(&wc->lock);
-+	blk_finish_plug(&plug);
-+}
-+
-+static int calculate_memory_size(uint64_t device_size, unsigned block_size,
-+				 size_t *n_blocks_p, size_t *n_metadata_blocks_p)
-+{
-+	uint64_t n_blocks, offset;
-+	struct wc_entry e;
-+
-+	n_blocks = device_size;
-+	do_div(n_blocks, block_size + sizeof(struct wc_memory_entry));
-+
-+	while (1) {
-+		if (!n_blocks)
-+			return -ENOSPC;
-+		/* Verify the following entries[n_blocks] won't overflow */
-+		if (n_blocks >= (size_t)-sizeof(struct wc_memory_superblock) / sizeof(struct wc_memory_entry))
-+			return -EFBIG;
-+		offset = offsetof(struct wc_memory_superblock, entries[n_blocks]);
-+		offset = (offset + block_size - 1) & ~(uint64_t)(block_size - 1);
-+		if (offset + n_blocks * block_size <= device_size)
-+			break;
-+		n_blocks--;
-+	}
-+
-+	/* check if the bit field overflows */
-+	e.index = n_blocks;
-+	if (e.index != n_blocks)
-+		return -EFBIG;
-+
-+	if (n_blocks_p)
-+		*n_blocks_p = n_blocks;
-+	if (n_metadata_blocks_p)
-+		*n_metadata_blocks_p = offset >> __ffs(block_size);
-+	return 0;
-+}
-+
-+static int init_memory(struct dm_writecache *wc)
-+{
-+	size_t b, n_blocks;
-+	int r;
-+
-+	r = calculate_memory_size(wc->memory_map_size, wc->block_size, &n_blocks, NULL);
-+	if (r)
-+		return r;
-+
-+	memset(sb(wc), 0, sizeof(struct wc_memory_superblock));
-+	sb(wc)->version = cpu_to_le32(MEMORY_SUPERBLOCK_VERSION);
-+	sb(wc)->block_size = cpu_to_le32(wc->block_size);
-+	sb(wc)->n_blocks = cpu_to_le64(n_blocks);
-+	sb(wc)->seq_count = cpu_to_le64(0);
-+
-+	for (b = 0; b < n_blocks; b++) {
-+		sb(wc)->entries[b].original_sector = cpu_to_le64(-1);
-+		sb(wc)->entries[b].seq_count = cpu_to_le64(-1);
-+	}
-+
-+	writecache_flush_all(wc);
-+	writecache_commit_flushed(wc);
-+	sb(wc)->magic = cpu_to_le32(MEMORY_SUPERBLOCK_MAGIC);
-+	writecache_flush_region(wc, &sb(wc)->magic, sizeof sb(wc)->magic);
-+	writecache_commit_flushed(wc);
-+
-+	return 0;
-+}
-+
-+static void writecache_dtr(struct dm_target *ti)
-+{
-+	struct dm_writecache *wc = ti->private;
-+
-+	if (!wc)
-+		return;
-+
-+	if (wc->endio_thread)
-+		kthread_stop(wc->endio_thread);
-+
-+	if (wc->flush_thread)
-+		kthread_stop(wc->flush_thread);
-+
-+#ifdef WC_COPY_TO_PAGES_BEFORE_WRITING
-+	mempool_destroy(wc->page_pool);
-+#endif
-+
-+	if (wc->bio_set)
-+		bioset_free(wc->bio_set);
-+
-+	mempool_destroy(wc->copy_pool);
-+
-+	if (wc->writeback_wq)
-+		destroy_workqueue(wc->writeback_wq);
-+
-+	if (wc->dev)
-+		dm_put_device(ti, wc->dev);
-+
-+	if (wc->ssd_dev)
-+		dm_put_device(ti, wc->ssd_dev);
-+
-+	if (wc->entries)
-+		vfree(wc->entries);
-+
-+	if (wc->memory_map) {
-+		if (WC_MODE_PMEM(wc))
-+			persistent_memory_release(ti, &wc->pmem_holder,
-+						  wc->memory_map, wc->memory_map_size);
-+		else
-+			vfree(wc->memory_map);
-+	}
-+
-+	kfree(wc->memory_name);
-+
-+	if (wc->dm_kcopyd)
-+		dm_kcopyd_client_destroy(wc->dm_kcopyd);
-+
-+	if (wc->dm_io)
-+		dm_io_client_destroy(wc->dm_io);
-+
-+	if (wc->dirty_bitmap)
-+		vfree(wc->dirty_bitmap);
-+
-+	kfree(wc);
-+}
-+
-+static int writecache_ctr(struct dm_target *ti, unsigned argc, char **argv)
-+{
-+	struct dm_writecache *wc;
-+	struct dm_arg_set as;
-+	const char *string;
-+	unsigned opt_params;
-+	size_t offset, data_size;
-+	int i, r;
-+	char dummy;
-+	int high_wm_percent = 95;
-+	int low_wm_percent = 90;
-+	uint64_t x;
-+	struct wc_memory_superblock s;
-+
-+	static struct dm_arg _args[] = {
-+		{0, 4, "Invalid number of feature args"},
-+	};
-+
-+	as.argc = argc;
-+	as.argv = argv;
-+
-+	wc = kzalloc(sizeof(struct dm_writecache), GFP_KERNEL);
-+	if (!wc) {
-+		ti->error = "Cannot allocate writecache structure";
-+		r = -ENOMEM;
-+		goto bad;
-+	}
-+	ti->private = wc;
-+	wc->ti = ti;
-+
-+	mutex_init(&wc->lock);
-+	writecache_poison_lists(wc);
-+	init_waitqueue_head(&wc->freelist_wait);
-+
-+	for (i = 0; i < 2; i++) {
-+		atomic_set(&wc->bio_in_progress[i], 0);
-+		init_waitqueue_head(&wc->bio_in_progress_wait[i]);
-+	}
-+
-+	wc->dm_io = dm_io_client_create();
-+	if (!wc->dm_io) {
-+		r = -ENOMEM;
-+		ti->error = "Unable to allocate dm-io client";
-+		goto bad;
-+	}
-+
-+	wc->writeback_wq = alloc_workqueue("writecache-writeabck",
-+					   WQ_MEM_RECLAIM | WQ_UNBOUND, 1);
-+	if (!wc->writeback_wq) {
-+		r = -ENOMEM;
-+		ti->error = "Could not allocate writeback workqueue";
-+		goto bad;
-+	}
-+	INIT_WORK(&wc->writeback_work, writecache_writeback);
-+
-+	init_waitqueue_head(&wc->endio_thread_wait);
-+	INIT_LIST_HEAD(&wc->endio_list);
-+	wc->endio_thread = kthread_create(writecache_endio_thread, wc, "writecache_endio");
-+	if (IS_ERR(wc->endio_thread)) {
-+		r = PTR_ERR(wc->endio_thread);
-+		wc->endio_thread = NULL;
-+		ti->error = "Couldn't spawn endio thread";
-+		goto bad;
-+	}
-+	wake_up_process(wc->endio_thread);
-+
-+	/*
-+	 * Parse the mode (pmem or ssd)
-+	 */
-+	string = dm_shift_arg(&as);
-+	if (!string)
-+		goto bad_arguments;
-+
-+	if (!strcasecmp(string, "s")) {
-+#ifndef WC_ONLY_SSD
-+		wc->pmem_mode = false;
-+#endif
-+	} else if (!strcasecmp(string, "p")) {
-+#ifndef WC_ONLY_SSD
-+		wc->pmem_mode = true;
-+#else
-+		r = -EOPNOTSUPP;
-+		ti->error = "Persistent memory not supported on this architecture";
-+#endif
-+	} else {
-+		goto bad_arguments;
-+	}
-+
-+	if (WC_MODE_PMEM(wc)) {
-+		wc->bio_set = bioset_create(BIO_POOL_SIZE,
-+					    offsetof(struct writeback_struct, bio),
-+					    BIOSET_NEED_BVECS);
-+		if (!wc->bio_set) {
-+			r = -ENOMEM;
-+			ti->error = "Could not allocate bio set";
-+			goto bad;
-+		}
-+	} else {
-+		wc->copy_pool = mempool_create_kmalloc_pool(1, sizeof(struct copy_struct));
-+		if (!wc->copy_pool) {
-+			r = -ENOMEM;
-+			ti->error = "Could not allocate mempool";
-+			goto bad;
-+		}
-+	}
-+#ifdef WC_COPY_TO_PAGES_BEFORE_WRITING
-+	if (WC_MODE_PMEM(wc)) {
-+		wc->page_pool = mempool_create_page_pool(BIO_POOL_SIZE, 0);
-+		if (!wc->page_pool) {
-+			r = -ENOMEM;
-+			ti->error = "Could not allocate page mempool";
-+			goto bad;
-+		}
-+	}
-+#endif
-+	/*
-+	 * Parse the origin data device
-+	 */
-+	string = dm_shift_arg(&as);
-+	if (!string)
-+		goto bad_arguments;
-+	r = dm_get_device(ti, string, dm_table_get_mode(ti->table), &wc->dev);
-+	if (r) {
-+		ti->error = "Origin data device lookup failed";
-+		goto bad;
-+	}
-+
-+	/*
-+	 * Parse cache data device (be it pmem or ssd)
-+	 */
-+	string = dm_shift_arg(&as);
-+	if (!string)
-+		goto bad_arguments;
-+	if (WC_MODE_PMEM(wc)) {
-+		wc->memory_name = kstrdup(string, GFP_KERNEL);
-+		if (!wc->memory_name) {
-+			r = -ENOMEM;
-+			ti->error = "Could not allocate string";
-+			goto bad;
-+		}
-+
-+		r = persistent_memory_claim(ti, wc->memory_name, &wc->pmem_holder,
-+					    &wc->memory_map, &wc->memory_map_size);
-+		if (r) {
-+			ti->error = "Unable to map persistent memory for cache";
-+			goto bad;
-+		}
-+	} else {
-+		r = dm_get_device(ti, string, dm_table_get_mode(ti->table), &wc->ssd_dev);
-+		if (r) {
-+			ti->error = "Cache data device lookup failed";
-+			goto bad;
-+		}
-+		wc->memory_map_size = i_size_read(wc->ssd_dev->bdev->bd_inode);
-+	}
-+
-+	/*
-+	 * Parse the cache block size
-+	 */
-+	string = dm_shift_arg(&as);
-+	if (!string)
-+		goto bad_arguments;
-+	if (sscanf(string, "%u%c", &wc->block_size, &dummy) != 1 ||
-+	    wc->block_size < 512 || wc->block_size > PAGE_SIZE ||
-+	    (wc->block_size & (wc->block_size - 1))) {
-+		r = -EINVAL;
-+		ti->error = "Invalid block size";
-+		goto bad;
-+	}
-+	wc->block_size_bits = __ffs(wc->block_size);
-+
-+	/*
-+	 * Parse optional arguments
-+	 */
-+	r = dm_read_arg_group(_args, &as, &opt_params, &ti->error);
-+	if (r)
-+		goto bad;
-+
-+	while (opt_params) {
-+		string = dm_shift_arg(&as);
-+		if (!strcasecmp(string, "high-watermark")) {
-+			string = dm_shift_arg(&as);
-+			if (!string)
-+				goto invalid_optional;
-+			if (sscanf(string, "%d%%%c", &high_wm_percent, &dummy) == 1) {
-+				if (high_wm_percent < 0 || high_wm_percent > 100)
-+					goto invalid_optional;
-+				wc->high_wm_percent_set = true;
-+			} else
-+				goto invalid_optional;
-+		} else if (!strcasecmp(string, "low-watermark")) {
-+			string = dm_shift_arg(&as);
-+			if (!string)
-+				goto invalid_optional;
-+			if (sscanf(string, "%d%%%c", &low_wm_percent, &dummy) == 1) {
-+				if (low_wm_percent < 0 || low_wm_percent > 100)
-+					goto invalid_optional;
-+				wc->low_wm_percent_set = true;
-+			} else
-+				goto invalid_optional;
-+		} else {
-+invalid_optional:
-+			r = -EINVAL;
-+			ti->error = "Invalid optional argument";
-+			goto bad;
-+		}
-+	}
-+
-+	if (!WC_MODE_PMEM(wc)) {
-+		struct dm_io_region region;
-+		struct dm_io_request req;
-+		size_t n_blocks, n_metadata_blocks;
-+		uint64_t n_bitmap_bits;
-+
-+		init_completion(&wc->flush_completion);
-+		wc->flush_thread = kthread_create(writecache_flush_thread, wc, "writecache_flush");
-+		if (IS_ERR(wc->flush_thread)) {
-+			r = PTR_ERR(wc->flush_thread);
-+			wc->flush_thread = NULL;
-+			ti->error = "Couldn't spawn endio thread";
-+			goto bad;
-+		}
-+		writecache_offload_bio(wc, NULL);
-+
-+		r = calculate_memory_size(wc->memory_map_size, wc->block_size,
-+					  &n_blocks, &n_metadata_blocks);
-+		if (r) {
-+			ti->error = "Invalid device size";
-+			goto bad;
-+		}
-+
-+		n_bitmap_bits = (((uint64_t)n_metadata_blocks << wc->block_size_bits) + BITMAP_GRANULARITY - 1) / BITMAP_GRANULARITY;
-+		/* this is limitation of test_bit functions */
-+		if (n_bitmap_bits > 1U << 31) {
-+			r = -EFBIG;
-+			ti->error = "Invalid device size";
-+		}
-+
-+		wc->memory_map = vmalloc(n_metadata_blocks << wc->block_size_bits);
-+		if (!wc->memory_map) {
-+			r = -ENOMEM;
-+			ti->error = "Unable to allocate memory for metadata";
-+			goto bad;
-+		}
-+
-+		wc->dm_kcopyd = dm_kcopyd_client_create(&dm_kcopyd_throttle);
-+		if (!wc->dm_kcopyd) {
-+			r = -ENOMEM;
-+			ti->error = "Unable to allocate dm-kcopyd client";
-+			goto bad;
-+		}
-+
-+		wc->metadata_sectors = n_metadata_blocks << (wc->block_size_bits - SECTOR_SHIFT);
-+		wc->dirty_bitmap_size = (n_bitmap_bits + BITS_PER_LONG - 1) / BITS_PER_LONG * sizeof(unsigned long);
-+		wc->dirty_bitmap = vzalloc(wc->dirty_bitmap_size);
-+		if (!wc->dirty_bitmap) {
-+			r = -ENOMEM;
-+			ti->error = "Unable to allocate dirty bitmap";
-+			goto bad;
-+		}
-+
-+		region.bdev = wc->ssd_dev->bdev;
-+		region.sector = 0;
-+		region.count = wc->metadata_sectors;
-+		req.bi_op = REQ_OP_READ;
-+		req.bi_op_flags = REQ_SYNC;
-+		req.mem.type = DM_IO_VMA;
-+		req.mem.ptr.vma = (char *)wc->memory_map;
-+		req.client = wc->dm_io;
-+		req.notify.fn = NULL;
-+
-+		r = dm_io(&req, 1, &region, NULL);
-+		if (unlikely(r)) {
-+			ti->error = "Unable to read metadata";
-+			goto bad;
-+		}
-+	}
-+
-+	r = memcpy_mcsafe(&s, sb(wc), sizeof(struct wc_memory_superblock));
-+	if (r) {
-+		ti->error = "Hardware memory error when reading superblock";
-+		goto bad;
-+	}
-+	if (!le32_to_cpu(le32_to_cpu(s.magic)) && !le32_to_cpu(s.version)) {
-+		r = init_memory(wc);
-+		if (r) {
-+			ti->error = "Unable to initialize device";
-+			goto bad;
-+		}
-+		r = memcpy_mcsafe(&s, sb(wc), sizeof(struct wc_memory_superblock));
-+		if (r) {
-+			ti->error = "Hardware memory error when reading superblock";
-+			goto bad;
-+		}
-+	}
-+
-+	if (le32_to_cpu(s.magic) != MEMORY_SUPERBLOCK_MAGIC) {
-+		ti->error = "Invalid magic in the superblock";
-+		r = -EINVAL;
-+		goto bad;
-+	}
-+
-+	if (le32_to_cpu(s.version) != MEMORY_SUPERBLOCK_VERSION) {
-+		ti->error = "Invalid version in the superblock";
-+		r = -EINVAL;
-+		goto bad;
-+	}
-+
-+	if (le32_to_cpu(s.block_size) != wc->block_size) {
-+		ti->error = "Block size does not match superblock";
-+		r = -EINVAL;
-+		goto bad;
-+	}
-+
-+	wc->n_blocks = le64_to_cpu(s.n_blocks);
-+	wc->seq_count = le64_to_cpu(s.seq_count);
-+
-+	offset = wc->n_blocks * sizeof(struct wc_memory_entry);
-+	if (offset / sizeof(struct wc_memory_entry) != le64_to_cpu(sb(wc)->n_blocks)) {
-+overflow:
-+		ti->error = "Overflow in size calculation";
-+		r = -EINVAL;
-+		goto bad;
-+	}
-+	offset += sizeof(struct wc_memory_superblock);
-+	if (offset < sizeof(struct wc_memory_superblock))
-+		goto overflow;
-+	offset = (offset + wc->block_size - 1) & ~(size_t)(wc->block_size - 1);
-+	data_size = wc->n_blocks * (size_t)wc->block_size;
-+	if (!offset || (data_size / wc->block_size != wc->n_blocks) ||
-+	    (offset + data_size < offset))
-+		goto overflow;
-+	if (offset + data_size > wc->memory_map_size) {
-+		ti->error = "Memory area is too small";
-+		r = -EINVAL;
-+		goto bad;
-+	}
-+
-+	wc->metadata_sectors = offset >> SECTOR_SHIFT;
-+	wc->block_start = (char *)sb(wc) + offset;
-+
-+	x = (uint64_t)wc->n_blocks * (100 - high_wm_percent);
-+	do_div(x, 100);
-+	wc->freelist_high_watermark = x;
-+	x = (uint64_t)wc->n_blocks * (100 - low_wm_percent);
-+	do_div(x, 100);
-+	wc->freelist_low_watermark = x;
-+
-+	wc->entries = vmalloc(sizeof(struct wc_entry) * wc->n_blocks);
-+	if (unlikely(!wc->entries)) {
-+		ti->error = "Cannot allocate memory";
-+		r = -ENOMEM;
-+		goto bad;
-+	}
-+
-+	ti->num_flush_bios = 1;
-+	ti->flush_supported = true;
-+	ti->num_discard_bios = 1;
-+
-+	return 0;
-+
-+bad_arguments:
-+	r = -EINVAL;
-+	ti->error = "Bad arguments";
-+bad:
-+	writecache_dtr(ti);
-+	return r;
-+}
-+
-+static void writecache_status(struct dm_target *ti, status_type_t type,
-+			      unsigned status_flags, char *result, unsigned maxlen)
-+{
-+	struct dm_writecache *wc = ti->private;
-+	unsigned extra_args;
-+	unsigned sz = 0;
-+	uint64_t x;
-+
-+	switch (type) {
-+	case STATUSTYPE_INFO:
-+		DMEMIT("%ld %llu %llu %llu", writecache_has_error(wc), (unsigned long long)wc->n_blocks,
-+		       (unsigned long long)wc->freelist_size, (unsigned long long)wc->writeback_size);
-+		break;
-+	case STATUSTYPE_TABLE:
-+		if (WC_MODE_PMEM(wc))
-+			DMEMIT("p %s %s %u ", wc->dev->name, wc->memory_name, wc->block_size);
-+		else
-+			DMEMIT("s %s %s %u ", wc->dev->name, wc->ssd_dev->name, wc->block_size);
-+		extra_args = 0;
-+		if (wc->high_wm_percent_set)
-+			extra_args += 2;
-+		if (wc->low_wm_percent_set)
-+			extra_args += 2;
-+		DMEMIT("%u", extra_args);
-+		if (wc->high_wm_percent_set) {
-+			x = (uint64_t)wc->freelist_high_watermark * 100;
-+			do_div(x, (size_t)wc->n_blocks);
-+			DMEMIT(" high-watermark %u%%", 100 - (unsigned)x);
-+		}
-+		if (wc->low_wm_percent_set) {
-+			x = (uint64_t)wc->freelist_low_watermark * 100;
-+			do_div(x, (size_t)wc->n_blocks);
-+			DMEMIT(" low-watermark %u%%", 100 - (unsigned)x);
-+		}
-+		break;
-+	}
-+}
-+
-+static struct target_type writecache_target = {
-+	.name			= "writecache",
-+	.version		= {1, 0, 0},
-+	.module			= THIS_MODULE,
-+	.ctr			= writecache_ctr,
-+	.dtr			= writecache_dtr,
-+	.status			= writecache_status,
-+	.postsuspend		= writecache_suspend,
-+	.resume			= writecache_resume,
-+	.message		= writecache_message,
-+	.map			= writecache_map,
-+	.end_io			= writecache_end_io,
-+	.iterate_devices	= writecache_iterate_devices,
-+	.io_hints		= writecache_io_hints,
-+};
-+
-+static int __init dm_writecache_init(void)
-+{
-+	int r;
-+
-+	r = dm_register_target(&writecache_target);
-+	if (r < 0) {
-+		DMERR("register failed %d", r);
-+		return r;
-+	}
-+
-+	return 0;
-+}
-+
-+static void __exit dm_writecache_exit(void)
-+{
-+	dm_unregister_target(&writecache_target);
-+}
-+
-+module_init(dm_writecache_init);
-+module_exit(dm_writecache_exit);
-+
-+MODULE_DESCRIPTION(DM_NAME " writecache target");
-+MODULE_AUTHOR("Mikulas Patocka <mpatocka@redhat.com>");
-+MODULE_LICENSE("GPL");
+ EXPORT_SYMBOL_GPL(dax_flush);
+ 
+ void dax_write_cache(struct dax_device *dax_dev, bool wc)
+Index: linux-2.6/drivers/md/dm-linear.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-linear.c
++++ linux-2.6/drivers/md/dm-linear.c
+@@ -184,20 +184,6 @@ static size_t linear_dax_copy_from_iter(
+ 	return dax_copy_from_iter(dax_dev, pgoff, addr, bytes, i);
+ }
+ 
+-static void linear_dax_flush(struct dm_target *ti, pgoff_t pgoff, void *addr,
+-		size_t size)
+-{
+-	struct linear_c *lc = ti->private;
+-	struct block_device *bdev = lc->dev->bdev;
+-	struct dax_device *dax_dev = lc->dev->dax_dev;
+-	sector_t dev_sector, sector = pgoff * PAGE_SECTORS;
+-
+-	dev_sector = linear_map_sector(ti, sector);
+-	if (bdev_dax_pgoff(bdev, dev_sector, ALIGN(size, PAGE_SIZE), &pgoff))
+-		return;
+-	dax_flush(dax_dev, pgoff, addr, size);
+-}
+-
+ static struct target_type linear_target = {
+ 	.name   = "linear",
+ 	.version = {1, 4, 0},
+@@ -212,7 +198,6 @@ static struct target_type linear_target
+ 	.iterate_devices = linear_iterate_devices,
+ 	.direct_access = linear_dax_direct_access,
+ 	.dax_copy_from_iter = linear_dax_copy_from_iter,
+-	.dax_flush = linear_dax_flush,
+ };
+ 
+ int __init dm_linear_init(void)
+Index: linux-2.6/drivers/md/dm-stripe.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-stripe.c
++++ linux-2.6/drivers/md/dm-stripe.c
+@@ -351,25 +351,6 @@ static size_t stripe_dax_copy_from_iter(
+ 	return dax_copy_from_iter(dax_dev, pgoff, addr, bytes, i);
+ }
+ 
+-static void stripe_dax_flush(struct dm_target *ti, pgoff_t pgoff, void *addr,
+-		size_t size)
+-{
+-	sector_t dev_sector, sector = pgoff * PAGE_SECTORS;
+-	struct stripe_c *sc = ti->private;
+-	struct dax_device *dax_dev;
+-	struct block_device *bdev;
+-	uint32_t stripe;
+-
+-	stripe_map_sector(sc, sector, &stripe, &dev_sector);
+-	dev_sector += sc->stripe[stripe].physical_start;
+-	dax_dev = sc->stripe[stripe].dev->dax_dev;
+-	bdev = sc->stripe[stripe].dev->bdev;
+-
+-	if (bdev_dax_pgoff(bdev, dev_sector, ALIGN(size, PAGE_SIZE), &pgoff))
+-		return;
+-	dax_flush(dax_dev, pgoff, addr, size);
+-}
+-
+ /*
+  * Stripe status:
+  *
+@@ -491,7 +472,6 @@ static struct target_type stripe_target
+ 	.io_hints = stripe_io_hints,
+ 	.direct_access = stripe_dax_direct_access,
+ 	.dax_copy_from_iter = stripe_dax_copy_from_iter,
+-	.dax_flush = stripe_dax_flush,
+ };
+ 
+ int __init dm_stripe_init(void)
+Index: linux-2.6/drivers/md/dm.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm.c
++++ linux-2.6/drivers/md/dm.c
+@@ -987,24 +987,6 @@ static size_t dm_dax_copy_from_iter(stru
+ 	return ret;
+ }
+ 
+-static void dm_dax_flush(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
+-		size_t size)
+-{
+-	struct mapped_device *md = dax_get_private(dax_dev);
+-	sector_t sector = pgoff * PAGE_SECTORS;
+-	struct dm_target *ti;
+-	int srcu_idx;
+-
+-	ti = dm_dax_get_live_target(md, sector, &srcu_idx);
+-
+-	if (!ti)
+-		goto out;
+-	if (ti->type->dax_flush)
+-		ti->type->dax_flush(ti, pgoff, addr, size);
+- out:
+-	dm_put_live_table(md, srcu_idx);
+-}
+-
+ /*
+  * A target may call dm_accept_partial_bio only from the map routine.  It is
+  * allowed for all bio types except REQ_PREFLUSH.
+@@ -2992,7 +2974,6 @@ static const struct block_device_operati
+ static const struct dax_operations dm_dax_ops = {
+ 	.direct_access = dm_dax_direct_access,
+ 	.copy_from_iter = dm_dax_copy_from_iter,
+-	.flush = dm_dax_flush,
+ };
+ 
+ /*
+Index: linux-2.6/drivers/nvdimm/pmem.c
+===================================================================
+--- linux-2.6.orig/drivers/nvdimm/pmem.c
++++ linux-2.6/drivers/nvdimm/pmem.c
+@@ -243,16 +243,9 @@ static size_t pmem_copy_from_iter(struct
+ 	return copy_from_iter_flushcache(addr, bytes, i);
+ }
+ 
+-static void pmem_dax_flush(struct dax_device *dax_dev, pgoff_t pgoff,
+-		void *addr, size_t size)
+-{
+-	arch_wb_cache_pmem(addr, size);
+-}
+-
+ static const struct dax_operations pmem_dax_ops = {
+ 	.direct_access = pmem_dax_direct_access,
+ 	.copy_from_iter = pmem_copy_from_iter,
+-	.flush = pmem_dax_flush,
+ };
+ 
+ static const struct attribute_group *pmem_attribute_groups[] = {
+Index: linux-2.6/fs/dax.c
+===================================================================
+--- linux-2.6.orig/fs/dax.c
++++ linux-2.6/fs/dax.c
+@@ -786,7 +786,7 @@ static int dax_writeback_one(struct bloc
+ 	}
+ 
+ 	dax_mapping_entry_mkclean(mapping, index, pfn_t_to_pfn(pfn));
+-	dax_flush(dax_dev, pgoff, kaddr, size);
++	dax_flush(dax_dev, kaddr, size);
+ 	/*
+ 	 * After we have flushed the cache, we can clear the dirty tag. There
+ 	 * cannot be new dirty data in the pfn after the flush has completed as
+@@ -981,7 +981,7 @@ int __dax_zero_page_range(struct block_d
+ 			return rc;
+ 		}
+ 		memset(kaddr + offset, 0, size);
+-		dax_flush(dax_dev, pgoff, kaddr + offset, size);
++		dax_flush(dax_dev, kaddr + offset, size);
+ 		dax_read_unlock(id);
+ 	}
+ 	return 0;
+Index: linux-2.6/include/linux/dax.h
+===================================================================
+--- linux-2.6.orig/include/linux/dax.h
++++ linux-2.6/include/linux/dax.h
+@@ -19,8 +19,6 @@ struct dax_operations {
+ 	/* copy_from_iter: required operation for fs-dax direct-i/o */
+ 	size_t (*copy_from_iter)(struct dax_device *, pgoff_t, void *, size_t,
+ 			struct iov_iter *);
+-	/* flush: optional driver-specific cache management after writes */
+-	void (*flush)(struct dax_device *, pgoff_t, void *, size_t);
+ };
+ 
+ extern struct attribute_group dax_attribute_group;
+@@ -84,8 +82,7 @@ long dax_direct_access(struct dax_device
+ 		void **kaddr, pfn_t *pfn);
+ size_t dax_copy_from_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
+ 		size_t bytes, struct iov_iter *i);
+-void dax_flush(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
+-		size_t size);
++void dax_flush(struct dax_device *dax_dev, void *addr, size_t size);
+ void dax_write_cache(struct dax_device *dax_dev, bool wc);
+ bool dax_write_cache_enabled(struct dax_device *dax_dev);
+ 
+Index: linux-2.6/include/linux/device-mapper.h
+===================================================================
+--- linux-2.6.orig/include/linux/device-mapper.h
++++ linux-2.6/include/linux/device-mapper.h
+@@ -134,8 +134,6 @@ typedef long (*dm_dax_direct_access_fn)
+ 		long nr_pages, void **kaddr, pfn_t *pfn);
+ typedef size_t (*dm_dax_copy_from_iter_fn)(struct dm_target *ti, pgoff_t pgoff,
+ 		void *addr, size_t bytes, struct iov_iter *i);
+-typedef void (*dm_dax_flush_fn)(struct dm_target *ti, pgoff_t pgoff, void *addr,
+-		size_t size);
+ #define PAGE_SECTORS (PAGE_SIZE / 512)
+ 
+ void dm_error(const char *message);
+@@ -186,7 +184,6 @@ struct target_type {
+ 	dm_io_hints_fn io_hints;
+ 	dm_dax_direct_access_fn direct_access;
+ 	dm_dax_copy_from_iter_fn dax_copy_from_iter;
+-	dm_dax_flush_fn dax_flush;
+ 
+ 	/* For internal device-mapper use. */
+ 	struct list_head list;
