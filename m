@@ -1,14 +1,15 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 1/4] dax: remove the pmem_dax_ops->flush
-	abstraction
-Date: Wed, 27 Sep 2017 11:44:23 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1709271143460.9676@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1709271122410.9676@file01.intranet.prod.int.rdu2.redhat.com>
+From: Guan Junxiong <guanjunxiong@huawei.com>
+Subject: Re: [PATCH V6 0/2] multipath-tools: intermittent IO
+ error accounting to improve reliability
+Date: Thu, 28 Sep 2017 15:35:52 +0800
+Message-ID: <449a6c27-e8cd-18fc-60b6-c77cf2f45977@huawei.com>
+References: <1506001426-456-1-git-send-email-guanjunxiong@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.1709271122410.9676@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <1506001426-456-1-git-send-email-guanjunxiong@huawei.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,293 +19,78 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, Mike Snitzer <msnitzer@redhat.com>, Jonathan Brassow <jbrassow@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>, Edward Thornber <thornber@redhat.com>
+To: mmandala@Brocade.com, mwilck@suse.com
+Cc: dm-devel@redhat.com, chengjike.cheng@huawei.com, niuhaoxin@huawei.com, shenhong09@huawei.com
 List-Id: dm-devel.ids
 
-This patch is needed only on kernel 4.13, it is already included in 4.14.
-
-commit c3ca015fab6df124c933b91902f3f2a3473f9da5
-Author: Mikulas Patocka <mpatocka@redhat.com>
-Date:   Thu Aug 31 21:47:43 2017 -0400
-
-    dax: remove the pmem_dax_ops->flush abstraction
-    
-    Commit abebfbe2f731 ("dm: add ->flush() dax operation support") is
-    buggy. A DM device may be composed of multiple underlying devices and
-    all of them need to be flushed. That commit just routes the flush
-    request to the first device and ignores the other devices.
-    
-    It could be fixed by adding more complex logic to the device mapper. But
-    there is only one implementation of the method pmem_dax_ops->flush - that
-    is pmem_dax_flush() - and it calls arch_wb_cache_pmem(). Consequently, we
-    don't need the pmem_dax_ops->flush abstraction at all, we can call
-    arch_wb_cache_pmem() directly from dax_flush() because dax_dev->ops->flush
-    can't ever reach anything different from arch_wb_cache_pmem().
-    
-    It should be also pointed out that for some uses of persistent memory it
-    is needed to flush only a very small amount of data (such as 1 cacheline),
-    and it would be overkill if we go through that device mapper machinery for
-    a single flushed cache line.
-    
-    Fix this by removing the pmem_dax_ops->flush abstraction and call
-    arch_wb_cache_pmem() directly from dax_flush(). Also, remove the device
-    mapper code that forwards the flushes.
-    
-    Fixes: abebfbe2f731 ("dm: add ->flush() dax operation support")
-    Cc: stable@vger.kernel.org
-    Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-    Reviewed-by: Dan Williams <dan.j.williams@intel.com>
-    Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-
----
- drivers/dax/super.c           |   21 ++++++++++++++-------
- drivers/md/dm-linear.c        |   15 ---------------
- drivers/md/dm-stripe.c        |   20 --------------------
- drivers/md/dm.c               |   19 -------------------
- drivers/nvdimm/pmem.c         |    7 -------
- fs/dax.c                      |    4 ++--
- include/linux/dax.h           |    5 +----
- include/linux/device-mapper.h |    3 ---
- 8 files changed, 17 insertions(+), 77 deletions(-)
-
-Index: linux-2.6/drivers/dax/super.c
-===================================================================
---- linux-2.6.orig/drivers/dax/super.c
-+++ linux-2.6/drivers/dax/super.c
-@@ -189,8 +189,10 @@ static umode_t dax_visible(struct kobjec
- 	if (!dax_dev)
- 		return 0;
- 
--	if (a == &dev_attr_write_cache.attr && !dax_dev->ops->flush)
-+#ifndef CONFIG_ARCH_HAS_PMEM_API
-+	if (a == &dev_attr_write_cache.attr)
- 		return 0;
-+#endif
- 	return a->mode;
- }
- 
-@@ -255,18 +257,23 @@ size_t dax_copy_from_iter(struct dax_dev
- }
- EXPORT_SYMBOL_GPL(dax_copy_from_iter);
- 
--void dax_flush(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
--		size_t size)
-+#ifdef CONFIG_ARCH_HAS_PMEM_API
-+void arch_wb_cache_pmem(void *addr, size_t size);
-+void dax_flush(struct dax_device *dax_dev, void *addr, size_t size)
- {
--	if (!dax_alive(dax_dev))
-+	if (unlikely(!dax_alive(dax_dev)))
- 		return;
- 
--	if (!test_bit(DAXDEV_WRITE_CACHE, &dax_dev->flags))
-+	if (unlikely(!test_bit(DAXDEV_WRITE_CACHE, &dax_dev->flags)))
- 		return;
- 
--	if (dax_dev->ops->flush)
--		dax_dev->ops->flush(dax_dev, pgoff, addr, size);
-+	arch_wb_cache_pmem(addr, size);
-+}
-+#else
-+void dax_flush(struct dax_device *dax_dev, void *addr, size_t size)
-+{
- }
-+#endif
- EXPORT_SYMBOL_GPL(dax_flush);
- 
- void dax_write_cache(struct dax_device *dax_dev, bool wc)
-Index: linux-2.6/drivers/md/dm-linear.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-linear.c
-+++ linux-2.6/drivers/md/dm-linear.c
-@@ -184,20 +184,6 @@ static size_t linear_dax_copy_from_iter(
- 	return dax_copy_from_iter(dax_dev, pgoff, addr, bytes, i);
- }
- 
--static void linear_dax_flush(struct dm_target *ti, pgoff_t pgoff, void *addr,
--		size_t size)
--{
--	struct linear_c *lc = ti->private;
--	struct block_device *bdev = lc->dev->bdev;
--	struct dax_device *dax_dev = lc->dev->dax_dev;
--	sector_t dev_sector, sector = pgoff * PAGE_SECTORS;
--
--	dev_sector = linear_map_sector(ti, sector);
--	if (bdev_dax_pgoff(bdev, dev_sector, ALIGN(size, PAGE_SIZE), &pgoff))
--		return;
--	dax_flush(dax_dev, pgoff, addr, size);
--}
--
- static struct target_type linear_target = {
- 	.name   = "linear",
- 	.version = {1, 4, 0},
-@@ -212,7 +198,6 @@ static struct target_type linear_target
- 	.iterate_devices = linear_iterate_devices,
- 	.direct_access = linear_dax_direct_access,
- 	.dax_copy_from_iter = linear_dax_copy_from_iter,
--	.dax_flush = linear_dax_flush,
- };
- 
- int __init dm_linear_init(void)
-Index: linux-2.6/drivers/md/dm-stripe.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-stripe.c
-+++ linux-2.6/drivers/md/dm-stripe.c
-@@ -351,25 +351,6 @@ static size_t stripe_dax_copy_from_iter(
- 	return dax_copy_from_iter(dax_dev, pgoff, addr, bytes, i);
- }
- 
--static void stripe_dax_flush(struct dm_target *ti, pgoff_t pgoff, void *addr,
--		size_t size)
--{
--	sector_t dev_sector, sector = pgoff * PAGE_SECTORS;
--	struct stripe_c *sc = ti->private;
--	struct dax_device *dax_dev;
--	struct block_device *bdev;
--	uint32_t stripe;
--
--	stripe_map_sector(sc, sector, &stripe, &dev_sector);
--	dev_sector += sc->stripe[stripe].physical_start;
--	dax_dev = sc->stripe[stripe].dev->dax_dev;
--	bdev = sc->stripe[stripe].dev->bdev;
--
--	if (bdev_dax_pgoff(bdev, dev_sector, ALIGN(size, PAGE_SIZE), &pgoff))
--		return;
--	dax_flush(dax_dev, pgoff, addr, size);
--}
--
- /*
-  * Stripe status:
-  *
-@@ -491,7 +472,6 @@ static struct target_type stripe_target
- 	.io_hints = stripe_io_hints,
- 	.direct_access = stripe_dax_direct_access,
- 	.dax_copy_from_iter = stripe_dax_copy_from_iter,
--	.dax_flush = stripe_dax_flush,
- };
- 
- int __init dm_stripe_init(void)
-Index: linux-2.6/drivers/md/dm.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm.c
-+++ linux-2.6/drivers/md/dm.c
-@@ -987,24 +987,6 @@ static size_t dm_dax_copy_from_iter(stru
- 	return ret;
- }
- 
--static void dm_dax_flush(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
--		size_t size)
--{
--	struct mapped_device *md = dax_get_private(dax_dev);
--	sector_t sector = pgoff * PAGE_SECTORS;
--	struct dm_target *ti;
--	int srcu_idx;
--
--	ti = dm_dax_get_live_target(md, sector, &srcu_idx);
--
--	if (!ti)
--		goto out;
--	if (ti->type->dax_flush)
--		ti->type->dax_flush(ti, pgoff, addr, size);
-- out:
--	dm_put_live_table(md, srcu_idx);
--}
--
- /*
-  * A target may call dm_accept_partial_bio only from the map routine.  It is
-  * allowed for all bio types except REQ_PREFLUSH.
-@@ -2992,7 +2974,6 @@ static const struct block_device_operati
- static const struct dax_operations dm_dax_ops = {
- 	.direct_access = dm_dax_direct_access,
- 	.copy_from_iter = dm_dax_copy_from_iter,
--	.flush = dm_dax_flush,
- };
- 
- /*
-Index: linux-2.6/drivers/nvdimm/pmem.c
-===================================================================
---- linux-2.6.orig/drivers/nvdimm/pmem.c
-+++ linux-2.6/drivers/nvdimm/pmem.c
-@@ -243,16 +243,9 @@ static size_t pmem_copy_from_iter(struct
- 	return copy_from_iter_flushcache(addr, bytes, i);
- }
- 
--static void pmem_dax_flush(struct dax_device *dax_dev, pgoff_t pgoff,
--		void *addr, size_t size)
--{
--	arch_wb_cache_pmem(addr, size);
--}
--
- static const struct dax_operations pmem_dax_ops = {
- 	.direct_access = pmem_dax_direct_access,
- 	.copy_from_iter = pmem_copy_from_iter,
--	.flush = pmem_dax_flush,
- };
- 
- static const struct attribute_group *pmem_attribute_groups[] = {
-Index: linux-2.6/fs/dax.c
-===================================================================
---- linux-2.6.orig/fs/dax.c
-+++ linux-2.6/fs/dax.c
-@@ -786,7 +786,7 @@ static int dax_writeback_one(struct bloc
- 	}
- 
- 	dax_mapping_entry_mkclean(mapping, index, pfn_t_to_pfn(pfn));
--	dax_flush(dax_dev, pgoff, kaddr, size);
-+	dax_flush(dax_dev, kaddr, size);
- 	/*
- 	 * After we have flushed the cache, we can clear the dirty tag. There
- 	 * cannot be new dirty data in the pfn after the flush has completed as
-@@ -981,7 +981,7 @@ int __dax_zero_page_range(struct block_d
- 			return rc;
- 		}
- 		memset(kaddr + offset, 0, size);
--		dax_flush(dax_dev, pgoff, kaddr + offset, size);
-+		dax_flush(dax_dev, kaddr + offset, size);
- 		dax_read_unlock(id);
- 	}
- 	return 0;
-Index: linux-2.6/include/linux/dax.h
-===================================================================
---- linux-2.6.orig/include/linux/dax.h
-+++ linux-2.6/include/linux/dax.h
-@@ -19,8 +19,6 @@ struct dax_operations {
- 	/* copy_from_iter: required operation for fs-dax direct-i/o */
- 	size_t (*copy_from_iter)(struct dax_device *, pgoff_t, void *, size_t,
- 			struct iov_iter *);
--	/* flush: optional driver-specific cache management after writes */
--	void (*flush)(struct dax_device *, pgoff_t, void *, size_t);
- };
- 
- extern struct attribute_group dax_attribute_group;
-@@ -84,8 +82,7 @@ long dax_direct_access(struct dax_device
- 		void **kaddr, pfn_t *pfn);
- size_t dax_copy_from_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
- 		size_t bytes, struct iov_iter *i);
--void dax_flush(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
--		size_t size);
-+void dax_flush(struct dax_device *dax_dev, void *addr, size_t size);
- void dax_write_cache(struct dax_device *dax_dev, bool wc);
- bool dax_write_cache_enabled(struct dax_device *dax_dev);
- 
-Index: linux-2.6/include/linux/device-mapper.h
-===================================================================
---- linux-2.6.orig/include/linux/device-mapper.h
-+++ linux-2.6/include/linux/device-mapper.h
-@@ -134,8 +134,6 @@ typedef long (*dm_dax_direct_access_fn)
- 		long nr_pages, void **kaddr, pfn_t *pfn);
- typedef size_t (*dm_dax_copy_from_iter_fn)(struct dm_target *ti, pgoff_t pgoff,
- 		void *addr, size_t bytes, struct iov_iter *i);
--typedef void (*dm_dax_flush_fn)(struct dm_target *ti, pgoff_t pgoff, void *addr,
--		size_t size);
- #define PAGE_SECTORS (PAGE_SIZE / 512)
- 
- void dm_error(const char *message);
-@@ -186,7 +184,6 @@ struct target_type {
- 	dm_io_hints_fn io_hints;
- 	dm_dax_direct_access_fn direct_access;
- 	dm_dax_copy_from_iter_fn dax_copy_from_iter;
--	dm_dax_flush_fn dax_flush;
- 
- 	/* For internal device-mapper use. */
- 	struct list_head list;
+SGnvvIxNYXJ0aW4gYW5kIE11bmVlbmRyYQoKQW55IGZlZWRiYWNrIGFib3V0IHRoaXMgdmVyc2lv
+biBvZiBwYXRjaGVzPwpJZiB0aGlzIHZlcnNpb24gbG9va3MgZ29vZCBmb3IgeW91LCBjYW4gSSBh
+ZGQgeW91ciByZXZpZXdlZC1ieSB0YWdzIGludG8gdGhlIG5leHQgdmVyc2lvbj8KCkxvb2tpbmcg
+Zm9yd2FyZCB0byB5b3UgcmVwbHkuCgpSZWdhcmRzCkd1YW4gSnVueGlvbmcKCgpPbiAyMDE3Lzkv
+MjEgMjE6NDMsIEd1YW4gSnVueGlvbmcgd3JvdGU6Cj4gSGkgQUxMLAo+IAo+IFRoaXMgcGF0Y2hz
+ZXQgYWRkIGEgbmV3IG1ldGhvZCBvZiBwYXRoIHN0YXRlIGNoZWNraW5nIGJhc2VkIG9uIGFjY291
+bnRpbmcKPiBJTyBlcnJvci4gVGhpcyBpcyB1c2VmdWwgaW4gbWFueSBzY2VuYXJpb3Mgc3VjaCBh
+cyBpbnRlcm1pdHRlbnQgSU8gZXJyb3IKPiBhbiBhIHBhdGggZHVlIHRvIG5ldHdvcmsgY29uZ2Vz
+dGlvbiwgb3IgYSBzaGFreSBsaW5rLgo+IAo+IFBBVENIIDEvMiBpbXBsZW1lbnRzIHRoZSBhbGdv
+cml0aG0gdGhhdCBzZW5kcyBhIGNvdXBsZSBvZiBjb250aW51b3VzIElPcwo+IHRvIGEgcGF0aCB3
+aGljaCBzdWZmZXJzIHR3byBmYWlsZWQgZXZlbnRzIGluIGxlc3MgdGhhbiBhIGdpdmVuIHRpbWUu
+IFRob3NlCj4gSU9zIGFyZSBzZW50IGF0IGEgZml4IHJhdGUgb2YgMTAgSHouCj4gUEFUQ0ggMi8y
+IGRpc2NhcmQgdGhlIG9yaWdpbmFsIGFsZ29yaXRobSBiZWNhdXNlIG9mIHRoaXM6Cj4gdGhlIGRl
+dGVjdCBzYW1wbGUgaW50ZXJ2YWwgb2YgdGhhdCBwYXRoIGNoZWNrZXJzIGlzIHNvIGJpZy9jb2Fy
+c2UgdGhhdAo+IGl0IGRvZXNuJ3Qgc2VlIHdoYXQgaGFwcGVucyBpbiB0aGUgbWlkZGxlIG9mIHRo
+ZSBzYW1wbGUgaW50ZXJ2YWwuIFdlIGhhdmUKPiB0aGUgUEFUQ0ggMS8yIGFzIGEgYmV0dGVyIG1l
+dGhvZC4KPiAKPiAKPiBDaGFuZ2VzIGZyb20gVjU6Cj4gKiByZWJhc2Ugb24gdGhlIGxhdGVzdCBy
+ZWxlYXNlIDAuNy4zIAo+IAo+IAo+IENoYW5nZXMgZnJvbSBWNDoKPiAqIHBhdGhfaW9fZXJyX1hY
+WCAtPiBtYXJnaW5hbF9wYXRoX2Vycl9YWFguIChNdW1lZW5kcmEpCj4gKiBhZGQgb25lIG1vcmUg
+cGFyYW1ldGVycyBuYW1lZCBtYXJnaW5hbF9wYXRoX2RvdWJsZV9mYWlsZWRfdGltZSBpbnN0ZWFk
+Cj4gICBvZiB0aGUgZml4ZWQgNjAgc2Vjb25kcyBmb3IgdGhlIHByZS1jaGVja2luZyBvZiBhIHNo
+YWt5IHBhdGguIChNYXJ0aW4pCj4gKiBmaXggZm9yICJyZXNjaGVkdWxlIGNoZWNraW5nIGFmdGVy
+ICVkIHNlY29uZHMiIGxvZyAKPiAqIHBhdGhfaW9fZXJyX3JlY292ZXJ5X3RpbWUgLT4gbWFyZ2lu
+YWxfcGF0aF9lcnJfcmVjaGVja19nYXBfdGltZS4KPiAqIHB1dCB0aGUgbWFyZ2luYWwgcGF0aCBp
+bnRvIFBBVEhfU0hBS1kgaW5zdGVhZCBvZiBQQVRIX0RFTEFZRUQgCj4gKiBNb2RpZnkgdGhlIGNv
+bW1pdCBjb21tZW50cyB0byBzeW5jIHdpdGggdGhlIGNoYW5nZXMgYWJvdmUuCj4gCj4gCj4gQ2hh
+bmdlcyBmcm9tIFYzOgo+ICogYWRkIGEgcGF0Y2ggZm9yIGRpc2NhcmQgdGhlIHNhbl9wYXRoX1hY
+WF9mZWF0dXJlIAo+ICogZmFpbCB0aGUgcGF0aCBpbiB0aGUga2VybmVsIGJlZm9yZSBlbnF1ZXVl
+aW5nIHRoZSBwYXRoIGZvciBjaGVja2luZwo+ICAgcmF0aGVyIHRoYW4gYWZ0ZXIga25vd2luZyB0
+aGUgY2hlY2tpbmcgcmVzdWx0IHRvIG1ha2UgaXQgbW9yZQo+ICAgcmVsaWFibGUuIChNYXJ0aW4p
+Cj4gKiB1c2UgcG9zaXhfbWVtYWxpZ24gaW5zdGVhZCBvZiBtYW51YWwgYWxpZ25tZW50IGZvciBk
+aXJlY3QgSU8gYnVmZmVyLiAoTWFydGluKSAKPiAqIHVzZSBQQVRIX01BWCB0byBhdm9pZCBjZXJ0
+YWluIGNvbXBpbGVyIHdhcm5pbmcgd2hlbiBvcGVuaW5nIGZpbGUKPiAgIHJhdGhlciB0aGFuIEZJ
+TEVfTkFNRV9TSVpFLiAoTWFydGluKQo+ICogZGlzY2FyZCB1bm5lY2Vzc2FyeSBzYW5pdHkgY2hl
+Y2sgd2hlbiBnZXR0aW5nIGJsb2NrIHNpemUgKE1hcnRpbikKPiAqIGRvIG5vdCByZXR1cm4gMCBp
+biBzZW5kX2VhY2hfYXluY19pbyBpZiBpb19zdGFydHRpbWUgb2YgYSBwYXRoIGlzCj4gICBub3Qg
+c2V0KE1hcnRpbikKPiAqIFdhaXQgMTBtcyBpbnN0ZWFkIG9mIDYwIHNlY29uZCBpZiBldmVyeSBw
+YXRoIGlzIGRvd24uIChNYXJ0aW4pCj4gKiByZW5hbWUgaGFuZGxlX2FzeW5jX2lvX3RpbWVvdXQg
+dG8gcG9sbF9hc3luY19pb190aW1lb3V0IGFuZCB1c2UgcG9sbGluZwo+ICAgbWV0aG9kIGJlY2F1
+c2UgaW9fZ2V0ZXZlbnRzIGRvZXMgbm90IHJldHVybiAwIGlmIHRoZXJlIGFyZSB0aW1lb3V0IElP
+Cj4gICBhbmQgbm9ybWFsIElPLgo+ICogcmVuYW1lIGhpdF9pb19lcnJfcmVjb3Zlcl90aW1lIHJv
+IGhpdF9pb19lcnJfcmVjaGVja190aW1lIAo+ICogbW9kaWZ5IHRoZSBtdWx0aXBhdGguY29uZi41
+IGFuZCBjb21taXQgY29tbWVudHMgdG8ga2VlcCBzeW5jIHdpdGggdGhlCj4gICBhYm92ZSBjaGFu
+Z2VzCj4gCj4gCj4gQ2hhbmdlcyBmcm9tIFYyOgo+ICogZml4IHVuY29uZGlzdGlvbmFsIHJlc2Nl
+ZHVsZSBmb3J2ZXJ2ZXIKPiAqIHVzZSBzY3JpcHQvY2hlY2twYXRjaC5wbCBpbiBMaW51eCB0byBj
+bGVhbnVwIGluZm9ybWFsIGNvZGluZyBzdHlsZQo+ICogZml4ICJjb250aW5vdXMiIGFuZCAiaW50
+ZXJuZWwiIHR5cG9zCj4gCj4gCj4gQ2hhbmdlcyBmcm9tIFYxOgo+ICogc2VuZCBjb250aW5vdXMg
+SU8gaW5zdGVhZCBvZiBhIHNpbmdsZSBJTyBpbiBhIHNhbXBsZSBpbnRlcnZhbCAoTWFydGluKQo+
+ICogd2hlbiByZWNvdmVyIHRpbWUgZXhwaXJlcywgd2UgcmVzY2hlZHVsZSB0aGUgY2hlY2tpbmcg
+cHJvY2VzcyAoSGFubmVzKQo+ICogVXNlIHRoZSBlcnJvciByYXRlIHRocmVzaG9sZCBhcyBhIHBl
+cm1pbGxhZ2UgaW5zdGVhZCBvZiBJTyBudW1iZXIoTWFydGluKQo+ICogVXNlIGEgY29tbW9uIGlv
+X2NvbnRleHQgZm9yIGxpYmFpbyBmb3IgYWxsIHBhdGhzIChNYXJ0aW4pCj4gKiBPdGhlciBzbWFs
+bCBmaXhlcyAoTWFydGluKQo+IAo+IAo+IEp1bnhpb25nIEd1YW4gKDIpOgo+ICAgbXVsdGlwYXRo
+LXRvb2xzOiBpbnRlcm1pdHRlbnQgSU8gZXJyb3IgYWNjb3VudGluZyB0byBpbXByb3ZlCj4gICAg
+IHJlbGlhYmlsaXR5Cj4gICBtdWx0aXBhdGgtdG9vbHM6IGRpc2NhcmQgc2FuX3BhdGhfZXJyX1hY
+WCBmZWF0dXJlCj4gCj4gIGxpYm11bHRpcGF0aC9NYWtlZmlsZSAgICAgIHwgICA1ICstCj4gIGxp
+Ym11bHRpcGF0aC9jb25maWcuYyAgICAgIHwgICAzIC0KPiAgbGlibXVsdGlwYXRoL2NvbmZpZy5o
+ICAgICAgfCAgMjEgKy0KPiAgbGlibXVsdGlwYXRoL2NvbmZpZ3VyZS5jICAgfCAgIDcgKy0KPiAg
+bGlibXVsdGlwYXRoL2RpY3QuYyAgICAgICAgfCAgODggKysrLS0tCj4gIGxpYm11bHRpcGF0aC9p
+b19lcnJfc3RhdC5jIHwgNzQ0ICsrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysr
+KysrKysrKwo+ICBsaWJtdWx0aXBhdGgvaW9fZXJyX3N0YXQuaCB8ICAxNSArCj4gIGxpYm11bHRp
+cGF0aC9wcm9wc2VsLmMgICAgIHwgIDcwICsrKy0tCj4gIGxpYm11bHRpcGF0aC9wcm9wc2VsLmgg
+ICAgIHwgICA3ICstCj4gIGxpYm11bHRpcGF0aC9zdHJ1Y3RzLmggICAgIHwgIDE1ICstCj4gIGxp
+Ym11bHRpcGF0aC91ZXZlbnQuYyAgICAgIHwgIDMyICsrCj4gIGxpYm11bHRpcGF0aC91ZXZlbnQu
+aCAgICAgIHwgICAyICsKPiAgbXVsdGlwYXRoL211bHRpcGF0aC5jb25mLjUgfCAgODkgKysrKy0t
+Cj4gIG11bHRpcGF0aGQvbWFpbi5jICAgICAgICAgIHwgMTQwICsrKystLS0tLQo+ICAxNCBmaWxl
+cyBjaGFuZ2VkLCAxMDQzIGluc2VydGlvbnMoKyksIDE5NSBkZWxldGlvbnMoLSkKPiAgY3JlYXRl
+IG1vZGUgMTAwNjQ0IGxpYm11bHRpcGF0aC9pb19lcnJfc3RhdC5jCj4gIGNyZWF0ZSBtb2RlIDEw
+MDY0NCBsaWJtdWx0aXBhdGgvaW9fZXJyX3N0YXQuaAo+IAoKLS0KZG0tZGV2ZWwgbWFpbGluZyBs
+aXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xp
+c3RpbmZvL2RtLWRldmVs
