@@ -1,18 +1,13 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: BUG: unable to handle kernel paging request
-Date: Fri, 29 Sep 2017 11:08:28 -0400
-Message-ID: <20170929150828.GA24949@redhat.com>
-References: <f5fcde71-f10d-7b38-6a66-bef9714e5c4c@citrix.com>
-	<20170928175606.GA19419@redhat.com>
-	<d072404e-dba4-dee7-b1d8-b55c569be51e@citrix.com>
-	<20170928201737.GA19972@redhat.com>
-	<9758c2f9-5b47-f354-9d11-8235b3dcf93c@citrix.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 0/5] new devices + one fix
+Date: Fri, 29 Sep 2017 21:10:23 +0200
+Message-ID: <1506712223.20850.11.camel@suse.com>
+References: <20170923233903.24792-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <9758c2f9-5b47-f354-9d11-8235b3dcf93c@citrix.com>
+In-Reply-To: <20170923233903.24792-1-xose.vazquez@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,35 +17,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Igor Druzhinin <igor.druzhinin@citrix.com>
-Cc: bart.vanassche@sandisk.com, dm-devel@redhat.com
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Sep 28 2017 at  7:19pm -0400,
-Igor Druzhinin <igor.druzhinin@citrix.com> wrote:
-
-> On 28/09/17 21:17, Mike Snitzer wrote:
-> > 
-> > Anyway, the issue you're talking about was also fixed, just not sure of
-> > the fix right now but will keep looking.
-> > 
-> > See: https://www.redhat.com/archives/dm-devel/2016-February/msg00073.html
-> > 
-> > Could be the various fixes that Bart did to cope with queue teardown
-> > races.
-> 
-> Do you mean those fixes?
-> 
-> https://www.spinics.net/lists/linux-scsi/msg101312.html
-
-Yes, but there have been _a lot_ of fixes and performance improvements
-to DM multipath's blk-mq support independent of those fixes (fixes range
-from SCSI, to block core to DM core, to DM multipath).
-
-Trying to make a "stable" 4.4 kernel have all the fixes is a noble task
-but I have no interest in taking it on.  Nor do I have time to coach you
-(or others) through it.
-
-Just rebase to a newer kernel!  (Sorry)
-
-Mike
+SGkgWG9zZSwKCk9uIFN1biwgMjAxNy0wOS0yNCBhdCAwMTozOCArMDIwMCwgWG9zZSBWYXpxdWV6
+IFBlcmV6IHdyb3RlOgo+IENjOiBDaHJpc3RvcGhlIFZhcm9xdWkgPGNocmlzdG9waGUudmFyb3F1
+aUBvcGVuc3ZjLmNvbT4KPiBDYzogZGV2aWNlLW1hcHBlciBkZXZlbG9wbWVudCA8ZG0tZGV2ZWxA
+cmVkaGF0LmNvbT4KPiBTaWduZWQtb2ZmLWJ5OiBYb3NlIFZhenF1ZXogUGVyZXogPHhvc2UudmF6
+cXVlekBnbWFpbC5jb20+Cj4gCj4gWG9zZSBWYXpxdWV6IFBlcmV6ICg1KToKPiAgIG11bHRpcGF0
+aC10b29sczogYWRkIFhJT3RlY2gvTWFnbml0dWRlIHRvIGhhcmR3YXJlIHRhYmxlCj4gICBtdWx0
+aXBhdGgtdG9vbHM6IGFkZCBYSVYvTkVYVFJBIHRvIGhhcmR3YXJlIHRhYmxlCj4gICBtdWx0aXBh
+dGgtdG9vbHM6IGRlbGV0ZSBsaWJkbW1wLnBjIGluIHVuaW5zdGFsbAo+ICAgbXVsdGlwYXRoLXRv
+b2xzOiBhZGQgVE1TL1JhbVNhbiB0byBoYXJkd2FyZSB0YWJsZQo+ICAgbXVsdGlwYXRoLXRvb2xz
+OiBhZGQgQWNjZWxTdG9yL05lb1NhcHBoaXJlIHRvIGhhcmR3YXJlIHRhYmxlCj4gCj4gIGxpYmRt
+bXAvTWFrZWZpbGUgICAgICAgfCAgMSArCj4gIGxpYm11bHRpcGF0aC9od3RhYmxlLmMgfCAyNyAr
+KysrKysrKysrKysrKysrKysrKysrLS0tLS0KPiAgMiBmaWxlcyBjaGFuZ2VkLCAyMyBpbnNlcnRp
+b25zKCspLCA1IGRlbGV0aW9ucygtKQoKSSdkIGFwcHJlY2lhdGUgc29tZSBpbmZvcm1hdGlvbiBv
+ciByZWZlcmVuY2VzIHdoZXJlIHlvdSBnYXRoZXJlZCB0aGUKaW5mb3JtYXRpb24gYWJvdXQgYW5k
+IHR1bmluZyByZWNvbW1lbmRhdGlvbnMgZm9yIHRoZSBuZXcgZGV2aWNlcy4gCgpNYXJ0aW4KCi0t
+IApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQw
+NTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21p
+dGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZl
+bCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29t
+L21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
