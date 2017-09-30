@@ -1,7 +1,7 @@
 From: Ming Lei <ming.lei@redhat.com>
-Subject: [PATCH 4/5] dm-mpath: cache ti->clone during requeue
-Date: Sat, 30 Sep 2017 19:46:51 +0800
-Message-ID: <20170930114652.32441-5-ming.lei@redhat.com>
+Subject: [PATCH 5/5] dm-rq: improve I/O merge by dealing with underlying STS_RESOURCE
+Date: Sat, 30 Sep 2017 19:46:52 +0800
+Message-ID: <20170930114652.32441-6-ming.lei@redhat.com>
 References: <20170930114652.32441-1-ming.lei@redhat.com>
 Return-path: <linux-block-owner@vger.kernel.org>
 In-Reply-To: <20170930114652.32441-1-ming.lei@redhat.com>
@@ -10,181 +10,143 @@ To: Jens Axboe <axboe@fb.com>, linux-block@vger.kernel.org, Christoph Hellwig <h
 Cc: Bart Van Assche <bart.vanassche@sandisk.com>, Laurence Oberman <loberman@redhat.com>, linux-kernel@vger.kernel.org, Omar Sandoval <osandov@fb.com>, Ming Lei <ming.lei@redhat.com>
 List-Id: dm-devel.ids
 
-During requeue, block layer won't change the request any
-more, such as no merge, so we can cache ti->clone and
-let .clone_and_map_rq check if the cache can be hit.
+If the underlying queue returns BLK_STS_RESOURCE, we let dm-rq
+handle the requeue instead of blk-mq, then I/O merge can be
+improved because underlying's out-of-resource can be perceived
+and handled by dm-rq now.
+
+Follows IOPS test of mpath on lpfc, fio(libaio, bs:4k, dio,
+queue_depth:64, 8 jobs).
+
+1) blk-mq none scheduler
+-----------------------------------------------------
+ IOPS(K)  |v4.14-rc2    |v4.14-rc2 with| v4.14-rc2 with
+          |             |[1][2]        | [1] [2] [3]
+-----------------------------------------------------
+read      |       53.69 |       40.26  |       94.61
+-----------------------------------------------------
+randread  |       24.64 |       30.08  |       35.57
+-----------------------------------------------------
+write     |       39.55 |       41.51  |      216.84
+-----------------------------------------------------
+randwrite |       33.97 |       34.27  |       33.98
+-----------------------------------------------------
+
+2) blk-mq mq-deadline scheduler
+-----------------------------------------------------
+ IOPS(K)  |v4.14-rc2    |v4.14-rc2 with| v4.14-rc2 with
+          |             |[1][2]        | [1] [2] [3]
+-----------------------------------------------------
+ IOPS(K)  |MQ-DEADLINE  |MQ-DEADLINE  |MQ-DEADLINE
+-----------------------------------------------------
+read      |       23.81 |       21.91 |       89.94
+-----------------------------------------------------
+randread  |       38.47 |       38.96 |       38.02
+-----------------------------------------------------
+write     |       39.52 |        40.2 |      225.75
+-----------------------------------------------------
+randwrite |        34.8 |       33.73 |       33.44
+-----------------------------------------------------
+
+[1] [PATCH V5 0/7] blk-mq-sched: improve sequential I/O performance(part 1)
+
+	https://marc.info/?l=linux-block&m=150676854821077&w=2
+
+[2] [PATCH V5 0/8] blk-mq: improve bio merge for none scheduler
+
+	https://marc.info/?l=linux-block&m=150677085521416&w=2
+
+[3] this patchset
 
 Signed-off-by: Ming Lei <ming.lei@redhat.com>
 ---
- drivers/md/dm-mpath.c | 31 ++++++++++++++++++++++++-------
- drivers/md/dm-rq.c    | 41 +++++++++++++++++++++++++++++------------
- 2 files changed, 53 insertions(+), 19 deletions(-)
+ block/blk-mq.c     | 17 +----------------
+ drivers/md/dm-rq.c | 14 ++++++++++++--
+ 2 files changed, 13 insertions(+), 18 deletions(-)
 
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 9ee223170ee9..52e4730541fd 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -457,6 +457,11 @@ do {									\
- 		 dm_noflush_suspending((m)->ti));			\
- } while (0)
- 
-+static void multipath_release_clone(struct request *clone)
-+{
-+	blk_put_request(clone);
-+}
-+
- /*
-  * Map cloned requests (request-based multipath)
-  */
-@@ -470,7 +475,7 @@ static int multipath_clone_and_map(struct dm_target *ti, struct request *rq,
- 	struct block_device *bdev;
- 	struct dm_mpath_io *mpio = get_mpio(map_context);
- 	struct request_queue *q;
--	struct request *clone;
-+	struct request *clone = *__clone;
- 
- 	/* Do we need to select a new pgpath? */
- 	pgpath = lockless_dereference(m->current_pgpath);
-@@ -493,7 +498,23 @@ static int multipath_clone_and_map(struct dm_target *ti, struct request *rq,
- 
- 	bdev = pgpath->path.dev->bdev;
- 	q = bdev_get_queue(bdev);
--	clone = blk_get_request(q, rq->cmd_flags | REQ_NOMERGE, GFP_ATOMIC);
-+
-+	/*
-+	 * This request may be from requeue path, and its clone
-+	 * may have been allocated before. We need to check
-+	 * if the cached clone can be hit.
-+	 */
-+	if (clone) {
-+		if (clone->q != q) {
-+			blk_rq_unprep_clone(clone);
-+			multipath_release_clone(clone);
-+			clone = NULL;
-+		} else
-+			goto start_io;
-+	}
-+
-+	if (!clone)
-+		clone = blk_get_request(q, rq->cmd_flags | REQ_NOMERGE, GFP_ATOMIC);
- 	if (IS_ERR(clone)) {
- 		/* EBUSY, ENODEV or EWOULDBLOCK: requeue */
- 		bool queue_dying = blk_queue_dying(q);
-@@ -520,6 +541,7 @@ static int multipath_clone_and_map(struct dm_target *ti, struct request *rq,
- 	clone->cmd_flags |= REQ_FAILFAST_TRANSPORT;
- 	*__clone = clone;
- 
-+ start_io:
- 	if (pgpath->pg->ps.type->start_io)
- 		pgpath->pg->ps.type->start_io(&pgpath->pg->ps,
- 					      &pgpath->path,
-@@ -527,11 +549,6 @@ static int multipath_clone_and_map(struct dm_target *ti, struct request *rq,
- 	return DM_MAPIO_REMAPPED;
+diff --git a/block/blk-mq.c b/block/blk-mq.c
+index 9a3a561a63b5..58d2268f9733 100644
+--- a/block/blk-mq.c
++++ b/block/blk-mq.c
+@@ -1467,17 +1467,6 @@ void __blk_mq_insert_request(struct blk_mq_hw_ctx *hctx, struct request *rq,
+ 	blk_mq_hctx_mark_pending(hctx, ctx);
  }
  
--static void multipath_release_clone(struct request *clone)
+-static void blk_mq_request_direct_insert(struct blk_mq_hw_ctx *hctx,
+-					 struct request *rq)
 -{
--	blk_put_request(clone);
+-	spin_lock(&hctx->lock);
+-	list_add_tail(&rq->queuelist, &hctx->dispatch);
+-	set_bit(BLK_MQ_S_DISPATCH_BUSY, &hctx->state);
+-	spin_unlock(&hctx->lock);
+-
+-	blk_mq_run_hw_queue(hctx, false);
 -}
 -
  /*
-  * Map cloned bios (bio-based multipath)
-  */
+  * Should only be used carefully, when the caller knows we want to
+  * bypass a potential IO scheduler on the target device.
+@@ -1487,12 +1476,8 @@ blk_status_t blk_mq_request_bypass_insert(struct request *rq)
+ 	struct blk_mq_ctx *ctx = rq->mq_ctx;
+ 	struct blk_mq_hw_ctx *hctx = blk_mq_map_queue(rq->q, ctx->cpu);
+ 	blk_qc_t cookie;
+-	blk_status_t ret;
+ 
+-	ret = blk_mq_try_issue_directly(hctx, rq, &cookie, true);
+-	if (ret == BLK_STS_RESOURCE)
+-		blk_mq_request_direct_insert(hctx, rq);
+-	return ret;
++	return blk_mq_try_issue_directly(hctx, rq, &cookie, true);
+ }
+ 
+ void blk_mq_insert_requests(struct blk_mq_hw_ctx *hctx, struct blk_mq_ctx *ctx,
 diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
-index 46f012185b43..2ef524bddd38 100644
+index 2ef524bddd38..feb49c4d6fa2 100644
 --- a/drivers/md/dm-rq.c
 +++ b/drivers/md/dm-rq.c
-@@ -221,6 +221,12 @@ static void dm_end_request(struct request *clone, blk_status_t error)
- 	blk_rq_unprep_clone(clone);
- 	tio->ti->type->release_clone_rq(clone);
+@@ -405,7 +405,7 @@ static void end_clone_request(struct request *clone, blk_status_t error)
+ 	dm_complete_request(tio->orig, error);
+ }
  
-+	/*
-+	 * We move the clearing from tio_init in .queue_rq to here because
-+	 * tio->clone may be cached during requeue
-+	 */
-+	tio->clone = NULL;
-+
- 	rq_end_stats(md, rq);
- 	if (!rq->q->mq_ops)
- 		blk_end_request_all(rq, error);
-@@ -267,11 +273,15 @@ static void dm_requeue_original_request(struct dm_rq_target_io *tio, bool delay_
- 	int rw = rq_data_dir(rq);
- 	unsigned long delay_ms = delay_requeue ? 100 : 0;
- 
-+	/*
-+	 * This request won't be changed any more during requeue,
-+	 * so we cache tio->clone and let .clone_and_map_rq decide
-+	 * to use the cached clone or allocate a new clone, and
-+	 * the cached clone has to be freed before allocating a
-+	 * new one.
-+	 */
-+
- 	rq_end_stats(md, rq);
--	if (tio->clone) {
--		blk_rq_unprep_clone(tio->clone);
--		tio->ti->type->release_clone_rq(tio->clone);
--	}
- 
- 	if (!rq->q->mq_ops)
- 		dm_old_requeue_request(rq, delay_ms);
-@@ -448,7 +458,6 @@ static void init_tio(struct dm_rq_target_io *tio, struct request *rq,
+-static void dm_dispatch_clone_request(struct request *clone, struct request *rq)
++static blk_status_t dm_dispatch_clone_request(struct request *clone, struct request *rq)
  {
- 	tio->md = md;
- 	tio->ti = NULL;
--	tio->clone = NULL;
- 	tio->orig = rq;
- 	tio->error = 0;
- 	tio->completed = 0;
-@@ -456,8 +465,12 @@ static void init_tio(struct dm_rq_target_io *tio, struct request *rq,
- 	 * Avoid initializing info for blk-mq; it passes
- 	 * target-specific data through info.ptr
- 	 * (see: dm_mq_init_request)
-+	 *
-+	 * If tio->clone is cached during requeue, we don't
-+	 * clear tio->info, and delay the initialization
-+	 * to .clone_and_map_rq if the cache isn't hit.
- 	 */
--	if (!md->init_tio_pdu)
-+	if (!md->init_tio_pdu && !tio->clone)
- 		memset(&tio->info, 0, sizeof(tio->info));
- 	if (md->kworker_task)
- 		kthread_init_work(&tio->work, map_tio_request);
-@@ -475,7 +488,8 @@ static int map_request(struct dm_rq_target_io *tio)
- 	struct dm_target *ti = tio->ti;
- 	struct mapped_device *md = tio->md;
+ 	blk_status_t r;
+ 
+@@ -417,6 +417,7 @@ static void dm_dispatch_clone_request(struct request *clone, struct request *rq)
+ 	if (r != BLK_STS_OK && r != BLK_STS_RESOURCE)
+ 		/* must complete clone in terms of original request */
+ 		dm_complete_request(rq, r);
++	return r;
+ }
+ 
+ static int dm_rq_bio_constructor(struct bio *bio, struct bio *bio_orig,
+@@ -490,8 +491,10 @@ static int map_request(struct dm_rq_target_io *tio)
  	struct request *rq = tio->orig;
--	struct request *clone = NULL;
-+	struct request *cache = tio->clone;
-+	struct request *clone = cache;
+ 	struct request *cache = tio->clone;
+ 	struct request *clone = cache;
++	blk_status_t ret;
  
  	r = ti->type->clone_and_map_rq(ti, rq, &tio->info, &clone);
++ again:
  	switch (r) {
-@@ -483,10 +497,13 @@ static int map_request(struct dm_rq_target_io *tio)
+ 	case DM_MAPIO_SUBMITTED:
  		/* The target has taken the I/O to submit by itself later */
- 		break;
- 	case DM_MAPIO_REMAPPED:
--		if (setup_clone(clone, rq, tio, GFP_ATOMIC)) {
--			/* -ENOMEM */
--			ti->type->release_clone_rq(clone);
--			return DM_MAPIO_REQUEUE;
-+		/* cache not hit or not cached */
-+		if (!cache || clone != cache) {
-+			if (setup_clone(clone, rq, tio, GFP_ATOMIC)) {
-+				/* -ENOMEM */
-+				ti->type->release_clone_rq(clone);
-+				return DM_MAPIO_REQUEUE;
-+			}
- 		}
- 
+@@ -509,7 +512,14 @@ static int map_request(struct dm_rq_target_io *tio)
  		/* The target has remapped the I/O so dispatch it */
-@@ -555,7 +572,7 @@ static int __dm_rq_init_rq(struct mapped_device *md, struct request *rq)
- 	 * be available in dm_mq_queue_rq.
- 	 */
- 	tio->md = md;
--
-+	tio->clone = NULL;
- 	if (md->init_tio_pdu) {
- 		/* target-specific per-io data is immediately after the tio */
- 		tio->info.ptr = tio + 1;
+ 		trace_block_rq_remap(clone->q, clone, disk_devt(dm_disk(md)),
+ 				     blk_rq_pos(rq));
+-		dm_dispatch_clone_request(clone, rq);
++		ret = dm_dispatch_clone_request(clone, rq);
++		if (ret == BLK_STS_RESOURCE) {
++			if (!rq->q->mq_ops)
++				r = DM_MAPIO_DELAY_REQUEUE;
++			else
++				r = DM_MAPIO_REQUEUE;
++			goto again;
++		}
+ 		break;
+ 	case DM_MAPIO_REQUEUE:
+ 		/* The target wants to requeue the I/O */
 -- 
 2.9.5
