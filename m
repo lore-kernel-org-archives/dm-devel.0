@@ -1,7 +1,7 @@
 From: Ming Lei <ming.lei@redhat.com>
-Subject: [PATCH V5 5/8] block: add check on elevator for supporting bio merge via hashtable from blk-mq sw queue
-Date: Sat, 30 Sep 2017 19:26:52 +0800
-Message-ID: <20170930112655.31451-6-ming.lei@redhat.com>
+Subject: [PATCH V5 6/8] block: introduce .last_merge and .hash to blk_mq_ctx
+Date: Sat, 30 Sep 2017 19:26:53 +0800
+Message-ID: <20170930112655.31451-7-ming.lei@redhat.com>
 References: <20170930112655.31451-1-ming.lei@redhat.com>
 Return-path: <linux-block-owner@vger.kernel.org>
 In-Reply-To: <20170930112655.31451-1-ming.lei@redhat.com>
@@ -10,65 +10,94 @@ To: Jens Axboe <axboe@fb.com>, linux-block@vger.kernel.org, Christoph Hellwig <h
 Cc: Bart Van Assche <bart.vanassche@sandisk.com>, Laurence Oberman <loberman@redhat.com>, Paolo Valente <paolo.valente@linaro.org>, Oleksandr Natalenko <oleksandr@natalenko.name>, Tom Nguyen <tom81094@gmail.com>, linux-kernel@vger.kernel.org, Omar Sandoval <osandov@fb.com>, Ming Lei <ming.lei@redhat.com>
 List-Id: dm-devel.ids
 
-blk_mq_sched_try_merge() will be reused in following patches
-to support bio merge to blk-mq sw queue, so add checkes to
-related functions which are called from blk_mq_sched_try_merge().
+Prepare for supporting bio merge to sw queue if no
+blk-mq io scheduler is taken.
 
 Tested-by: Oleksandr Natalenko <oleksandr@natalenko.name>
 Tested-by: Tom Nguyen <tom81094@gmail.com>
 Tested-by: Paolo Valente <paolo.valente@linaro.org>
 Signed-off-by: Ming Lei <ming.lei@redhat.com>
 ---
- block/elevator.c | 16 ++++++++++++++++
- 1 file changed, 16 insertions(+)
+ block/blk-mq.h   |  4 ++++
+ block/blk.h      |  3 +++
+ block/elevator.c | 22 +++++++++++++++++++---
+ 3 files changed, 26 insertions(+), 3 deletions(-)
 
+diff --git a/block/blk-mq.h b/block/blk-mq.h
+index 5bca6ce1f01d..85ea8615fecf 100644
+--- a/block/blk-mq.h
++++ b/block/blk-mq.h
+@@ -18,6 +18,10 @@ struct blk_mq_ctx {
+ 	unsigned long		rq_dispatched[2];
+ 	unsigned long		rq_merged;
+ 
++	/* bio merge via request hash table */
++	struct request		*last_merge;
++	DECLARE_HASHTABLE(hash, ELV_HASH_BITS);
++
+ 	/* incremented at completion time */
+ 	unsigned long		____cacheline_aligned_in_smp rq_completed[2];
+ 
+diff --git a/block/blk.h b/block/blk.h
+index eb3436d4a73f..fa4f232afc18 100644
+--- a/block/blk.h
++++ b/block/blk.h
+@@ -198,6 +198,9 @@ static inline struct request *rqhash_find(struct hlist_head *hash, sector_t offs
+ 	return NULL;
+ }
+ 
++enum elv_merge elv_merge_ctx(struct request_queue *q, struct request **req,
++                struct bio *bio, struct blk_mq_ctx *ctx);
++
+ void blk_insert_flush(struct request *rq);
+ 
+ static inline struct request *__elv_next_request(struct request_queue *q)
 diff --git a/block/elevator.c b/block/elevator.c
-index e11c7873fc21..2424aea85393 100644
+index 2424aea85393..0e13e5c18982 100644
 --- a/block/elevator.c
 +++ b/block/elevator.c
-@@ -71,6 +71,10 @@ bool elv_bio_merge_ok(struct request *rq, struct bio *bio)
- 	if (!blk_rq_merge_ok(rq, bio))
- 		return false;
+@@ -471,6 +471,13 @@ enum elv_merge elv_merge(struct request_queue *q, struct request **req,
+ 	return __elv_merge(q, req, bio, q->elevator->hash, q->last_merge);
+ }
  
-+	/* We need to support to merge bio from sw queue */
-+	if (!rq->q->elevator)
-+		return true;
++enum elv_merge elv_merge_ctx(struct request_queue *q, struct request **req,
++		struct bio *bio, struct blk_mq_ctx *ctx)
++{
++	WARN_ON_ONCE(!q->mq_ops);
++	return __elv_merge(q, req, bio, ctx->hash, ctx->last_merge);
++}
 +
- 	if (!elv_iosched_allow_bio_merge(rq, bio))
- 		return false;
- 
-@@ -449,6 +453,10 @@ static enum elv_merge __elv_merge(struct request_queue *q,
- 		return ELEVATOR_BACK_MERGE;
- 	}
- 
-+	/* no elevator when merging bio to blk-mq sw queue */
-+	if (!e)
-+		return ELEVATOR_NO_MERGE;
-+
- 	if (e->uses_mq && e->type->ops.mq.request_merge)
- 		return e->type->ops.mq.request_merge(q, req, bio);
- 	else if (!e->uses_mq && e->type->ops.sq.elevator_merge_fn)
-@@ -711,6 +719,10 @@ struct request *elv_latter_request(struct request_queue *q, struct request *rq)
+ /*
+  * Attempt to do an insertion back merge. Only check for the case where
+  * we can append 'rq' to an existing request, so we can throw 'rq' away
+@@ -516,16 +523,25 @@ void elv_merged_request(struct request_queue *q, struct request *rq,
+ 		enum elv_merge type)
  {
  	struct elevator_queue *e = q->elevator;
- 
-+	/* no elevator when merging bio to blk-mq sw queue */
-+	if (!e)
-+		return NULL;
++	struct hlist_head *hash = e->hash;
 +
- 	if (e->uses_mq && e->type->ops.mq.next_request)
- 		return e->type->ops.mq.next_request(q, rq);
- 	else if (!e->uses_mq && e->type->ops.sq.elevator_latter_req_fn)
-@@ -723,6 +735,10 @@ struct request *elv_former_request(struct request_queue *q, struct request *rq)
- {
- 	struct elevator_queue *e = q->elevator;
- 
-+	/* no elevator when merging bio to blk-mq sw queue */
-+	if (!e)
-+		return NULL;
++	/* we do bio merge on blk-mq sw queue */
++	if (q->mq_ops && !e) {
++		rq->mq_ctx->last_merge = rq;
++		hash = rq->mq_ctx->hash;
++		goto reposition;
++	}
 +
- 	if (e->uses_mq && e->type->ops.mq.former_request)
- 		return e->type->ops.mq.former_request(q, rq);
- 	if (!e->uses_mq && e->type->ops.sq.elevator_former_req_fn)
++	q->last_merge = rq;
+ 
+ 	if (e->uses_mq && e->type->ops.mq.request_merged)
+ 		e->type->ops.mq.request_merged(q, rq, type);
+ 	else if (!e->uses_mq && e->type->ops.sq.elevator_merged_fn)
+ 		e->type->ops.sq.elevator_merged_fn(q, rq, type);
+ 
++ reposition:
+ 	if (type == ELEVATOR_BACK_MERGE)
+-		elv_rqhash_reposition(q, rq);
+-
+-	q->last_merge = rq;
++		rqhash_reposition(hash, rq);
+ }
+ 
+ void elv_merge_requests(struct request_queue *q, struct request *rq,
 -- 
 2.9.5
