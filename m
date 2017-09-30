@@ -1,111 +1,48 @@
 From: Ming Lei <ming.lei@redhat.com>
-Subject: Re: [PATCH V5 00/14] blk-mq-sched: improve sequential I/O
- performance(part 1)
-Date: Sat, 30 Sep 2017 18:32:12 +0800
-Message-ID: <20170930103211.GA29093@ming.t460p>
-References: <20170930102720.30219-1-ming.lei@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20170930102720.30219-1-ming.lei@redhat.com>
-Sender: linux-block-owner@vger.kernel.org
+Subject: [PATCH V5 0/8] blk-mq: improve bio merge for none scheduler
+Date: Sat, 30 Sep 2017 19:26:47 +0800
+Message-ID: <20170930112655.31451-1-ming.lei@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
 To: Jens Axboe <axboe@fb.com>, linux-block@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
-Cc: Bart Van Assche <bart.vanassche@sandisk.com>, Laurence Oberman <loberman@redhat.com>, Paolo Valente <paolo.valente@linaro.org>, Oleksandr Natalenko <oleksandr@natalenko.name>, Tom Nguyen <tom81094@gmail.com>, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, Omar Sandoval <osandov@fb.com>
+Cc: Bart Van Assche <bart.vanassche@sandisk.com>, Laurence Oberman <loberman@redhat.com>, Paolo Valente <paolo.valente@linaro.org>, Oleksandr Natalenko <oleksandr@natalenko.name>, Tom Nguyen <tom81094@gmail.com>, linux-kernel@vger.kernel.org, Omar Sandoval <osandov@fb.com>, Ming Lei <ming.lei@redhat.com>
 List-Id: dm-devel.ids
 
-On Sat, Sep 30, 2017 at 06:27:13PM +0800, Ming Lei wrote:
-> Hi Jens,
-> 
-> In Red Hat internal storage test wrt. blk-mq scheduler, we
-> found that I/O performance is much bad with mq-deadline, especially
-> about sequential I/O on some multi-queue SCSI devcies(lpfc, qla2xxx,
-> SRP...)
-> 
-> Turns out one big issue causes the performance regression: requests
-> are still dequeued from sw queue/scheduler queue even when ldd's
-> queue is busy, so I/O merge becomes quite difficult to make, then
-> sequential IO degrades a lot.
-> 
-> This issue becomes one of mains reasons for reverting default SCSI_MQ
-> in V4.13.
-> 
-> The 1st patch takes direct issue in blk_mq_request_bypass_insert(),
-> then we can improve dm-mpath's performance in part 2, which will
-> be posted out soon.
-> 
-> The 2nd six patches improve this situation, and brings back
-> some performance loss.
-> 
-> With this change, SCSI-MQ sequential I/O performance is
-> improved much, Paolo reported that mq-deadline performance
-> improved much[2] in his dbench test wrt V2. Also performanc
-> improvement on lpfc/qla2xx was observed with V1.[1]
-> 
-> Please consider it for V4.15.
-> 
-> [1] http://marc.info/?l=linux-block&m=150151989915776&w=2
-> [2] https://marc.info/?l=linux-block&m=150217980602843&w=2
-> 
-> V5:
-> 	- address some comments from Omar
-> 	- add Tested-by & Reveiewed-by tag
-> 	- use direct issue for blk_mq_request_bypass_insert(), and
-> 	start to consider to improve sequential I/O for dm-mpath
-> 	- only include part 1(the original patch 1 ~ 6), as suggested
-> 	by Omar
-> 
-> V4:
-> 	- add Reviewed-by tag
-> 	- some trival change: typo fix in commit log or comment,
-> 	variable name, no actual functional change
-> 
-> V3:
-> 	- totally round robin for picking req from ctx, as suggested
-> 	by Bart
-> 	- remove one local variable in __sbitmap_for_each_set()
-> 	- drop patches of single dispatch list, which can improve
-> 	performance on mq-deadline, but cause a bit degrade on
-> 	none because all hctxs need to be checked after ->dispatch
-> 	is flushed. Will post it again once it is mature.
-> 	- rebase on v4.13-rc6 with block for-next
-> 
-> V2:
-> 	- dequeue request from sw queues in round roubin's style
-> 	as suggested by Bart, and introduces one helper in sbitmap
-> 	for this purpose
-> 	- improve bio merge via hash table from sw queue
-> 	- add comments about using DISPATCH_BUSY state in lockless way,
-> 	simplifying handling on busy state,
-> 	- hold ctx->lock when clearing ctx busy bit as suggested
-> 	by Bart
-> 
-> 
-> Ming Lei (7):
->   blk-mq: issue rq directly in blk_mq_request_bypass_insert()
->   blk-mq-sched: fix scheduler bad performance
->   sbitmap: introduce __sbitmap_for_each_set()
->   blk-mq: introduce blk_mq_dequeue_from_ctx()
->   blk-mq-sched: move actual dispatching into one helper
->   blk-mq-sched: improve dispatching from sw queue
->   blk-mq-sched: don't dequeue request until all in ->dispatch are
->     flushed
-> 
->  block/blk-core.c        |   3 +-
->  block/blk-mq-debugfs.c  |   1 +
->  block/blk-mq-sched.c    | 104 ++++++++++++++++++++++++++++++++++++-------
->  block/blk-mq.c          | 114 +++++++++++++++++++++++++++++++++++++++---------
->  block/blk-mq.h          |   4 +-
->  drivers/md/dm-rq.c      |   2 +-
->  include/linux/blk-mq.h  |   3 ++
->  include/linux/sbitmap.h |  64 +++++++++++++++++++--------
->  8 files changed, 238 insertions(+), 57 deletions(-)
+Hi,
 
-Oops, the title should have been:
+Patch 1 ~ 2 uses q->queue_depth as hint for setting up
+scheduler queue depth.
 
-[PATCH V5 0/7] blk-mq-sched: improve sequential I/O performance(part 1)
+Patch 3 ~ 8 improve bio merge via hash table in sw queue,
+which makes bio merge more efficient than current approch
+in which only the last 8 requests in sw queue are checked.
 
-Sorry for that.
+Also this way has been used in block legacy path for long time,
+and blk-mq scheduler uses hash table to do bio merge too.
+
+V5:
+	- splitted from previous patchset of 'blk-mq-sched: improve
+	SCSI-MQ performance V4'
+
+Ming Lei (8):
+  blk-mq-sched: introduce blk_mq_sched_queue_depth()
+  blk-mq-sched: use q->queue_depth as hint for q->nr_requests
+  block: introduce rqhash helpers
+  block: move actual bio merge code into __elv_merge
+  block: add check on elevator for supporting bio merge via hashtable
+    from blk-mq sw queue
+  block: introduce .last_merge and .hash to blk_mq_ctx
+  blk-mq-sched: refactor blk_mq_sched_try_merge()
+  blk-mq: improve bio merge from blk-mq sw queue
+
+ block/blk-mq-sched.c | 75 +++++++++++++++---------------------------
+ block/blk-mq-sched.h | 23 +++++++++++++
+ block/blk-mq.c       | 55 ++++++++++++++++++++++++++++---
+ block/blk-mq.h       |  5 +++
+ block/blk-settings.c |  2 ++
+ block/blk.h          | 55 +++++++++++++++++++++++++++++++
+ block/elevator.c     | 93 +++++++++++++++++++++++++++++++---------------------
+ 7 files changed, 216 insertions(+), 92 deletions(-)
 
 -- 
-Ming
+2.9.5
