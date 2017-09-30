@@ -1,145 +1,167 @@
 From: Ming Lei <ming.lei@redhat.com>
-Subject: [PATCH V5 2/8] blk-mq-sched: use q->queue_depth as hint for q->nr_requests
-Date: Sat, 30 Sep 2017 19:26:49 +0800
-Message-ID: <20170930112655.31451-3-ming.lei@redhat.com>
+Subject: [PATCH V5 3/8] block: introduce rqhash helpers
+Date: Sat, 30 Sep 2017 19:26:50 +0800
+Message-ID: <20170930112655.31451-4-ming.lei@redhat.com>
 References: <20170930112655.31451-1-ming.lei@redhat.com>
-Return-path: <linux-block-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20170930112655.31451-1-ming.lei@redhat.com>
-Sender: linux-block-owner@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: Jens Axboe <axboe@fb.com>, linux-block@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
 Cc: Bart Van Assche <bart.vanassche@sandisk.com>, Laurence Oberman <loberman@redhat.com>, Paolo Valente <paolo.valente@linaro.org>, Oleksandr Natalenko <oleksandr@natalenko.name>, Tom Nguyen <tom81094@gmail.com>, linux-kernel@vger.kernel.org, Omar Sandoval <osandov@fb.com>, Ming Lei <ming.lei@redhat.com>
 List-Id: dm-devel.ids
 
-SCSI sets q->queue_depth from shost->cmd_per_lun, and
-q->queue_depth is per request_queue and more related to
-scheduler queue compared with hw queue depth, which can be
-shared by queues, such as TAG_SHARED.
+We need this helpers for supporting to use hashtable to improve
+bio merge from sw queue in the following patches.
 
-This patch tries to use q->queue_depth as hint for computing
-q->nr_requests, which should be more effective than
-current way.
+No functional change.
 
-Reviewed-by: Bart Van Assche <bart.vanassche@wdc.com>
-Reviewed-by: Christoph Hellwig <hch@lst.de>
 Tested-by: Oleksandr Natalenko <oleksandr@natalenko.name>
 Tested-by: Tom Nguyen <tom81094@gmail.com>
 Tested-by: Paolo Valente <paolo.valente@linaro.org>
 Signed-off-by: Ming Lei <ming.lei@redhat.com>
 ---
- block/blk-mq-sched.h | 18 +++++++++++++++---
- block/blk-mq.c       | 27 +++++++++++++++++++++++++--
- block/blk-mq.h       |  1 +
- block/blk-settings.c |  2 ++
- 4 files changed, 43 insertions(+), 5 deletions(-)
+ block/blk.h      | 52 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ block/elevator.c | 36 +++++++-----------------------------
+ 2 files changed, 59 insertions(+), 29 deletions(-)
 
-diff --git a/block/blk-mq-sched.h b/block/blk-mq-sched.h
-index 1d47f3fda1d0..906b10c54f78 100644
---- a/block/blk-mq-sched.h
-+++ b/block/blk-mq-sched.h
-@@ -99,12 +99,24 @@ static inline bool blk_mq_sched_needs_restart(struct blk_mq_hw_ctx *hctx)
- static inline unsigned blk_mq_sched_queue_depth(struct request_queue *q)
- {
- 	/*
--	 * Default to double of smaller one between hw queue_depth and 128,
-+	 * q->queue_depth is more close to scheduler queue, so use it
-+	 * as hint for computing scheduler queue depth if it is valid
-+	 */
-+	unsigned q_depth = q->queue_depth ?: q->tag_set->queue_depth;
-+
-+	/*
-+	 * Default to double of smaller one between queue depth and 128,
- 	 * since we don't split into sync/async like the old code did.
- 	 * Additionally, this is a per-hw queue depth.
- 	 */
--	return 2 * min_t(unsigned int, q->tag_set->queue_depth,
--				   BLKDEV_MAX_RQ);
-+	q_depth = 2 * min_t(unsigned int, q_depth, BLKDEV_MAX_RQ);
-+
-+	/*
-+	 * when queue depth of driver is too small, we set queue depth
-+	 * of scheduler queue as 128 which is the default setting of
-+	 * block legacy code.
-+	 */
-+	return max_t(unsigned, q_depth, BLKDEV_MAX_RQ);
- }
+diff --git a/block/blk.h b/block/blk.h
+index fcb9775b997d..eb3436d4a73f 100644
+--- a/block/blk.h
++++ b/block/blk.h
+@@ -146,6 +146,58 @@ static inline void blk_clear_rq_complete(struct request *rq)
+  */
+ #define ELV_ON_HASH(rq) ((rq)->rq_flags & RQF_HASHED)
  
- #endif
-diff --git a/block/blk-mq.c b/block/blk-mq.c
-index 7cb3f87334c0..561a663cdd0e 100644
---- a/block/blk-mq.c
-+++ b/block/blk-mq.c
-@@ -2694,7 +2694,9 @@ void blk_mq_free_tag_set(struct blk_mq_tag_set *set)
- }
- EXPORT_SYMBOL(blk_mq_free_tag_set);
- 
--int blk_mq_update_nr_requests(struct request_queue *q, unsigned int nr)
-+static int __blk_mq_update_nr_requests(struct request_queue *q,
-+				       bool sched_only,
-+				       unsigned int nr)
- {
- 	struct blk_mq_tag_set *set = q->tag_set;
- 	struct blk_mq_hw_ctx *hctx;
-@@ -2713,7 +2715,7 @@ int blk_mq_update_nr_requests(struct request_queue *q, unsigned int nr)
- 		 * If we're using an MQ scheduler, just update the scheduler
- 		 * queue depth. This is similar to what the old code would do.
- 		 */
--		if (!hctx->sched_tags) {
-+		if (!sched_only && !hctx->sched_tags) {
- 			ret = blk_mq_tag_update_depth(hctx, &hctx->tags,
- 							min(nr, set->queue_depth),
- 							false);
-@@ -2733,6 +2735,27 @@ int blk_mq_update_nr_requests(struct request_queue *q, unsigned int nr)
- 	return ret;
- }
- 
-+int blk_mq_update_nr_requests(struct request_queue *q, unsigned int nr)
-+{
-+	return __blk_mq_update_nr_requests(q, false, nr);
-+}
-+
 +/*
-+ * When drivers update q->queue_depth, this API is called so that
-+ * we can use this queue depth as hint for adjusting scheduler
-+ * queue depth.
++ * Merge hash stuff.
 + */
-+int blk_mq_update_sched_queue_depth(struct request_queue *q)
++#define rq_hash_key(rq)		(blk_rq_pos(rq) + blk_rq_sectors(rq))
++
++#define bucket(head, key)	&((head)[hash_min((key), ELV_HASH_BITS)])
++
++static inline void __rqhash_del(struct request *rq)
 +{
-+	unsigned nr;
-+
-+	if (!q->mq_ops || !q->elevator)
-+		return 0;
-+
-+	nr = blk_mq_sched_queue_depth(q);
-+	return __blk_mq_update_nr_requests(q, true, nr);
++	hash_del(&rq->hash);
++	rq->rq_flags &= ~RQF_HASHED;
 +}
 +
- static void __blk_mq_update_nr_hw_queues(struct blk_mq_tag_set *set,
- 							int nr_hw_queues)
- {
-diff --git a/block/blk-mq.h b/block/blk-mq.h
-index 915de58572e7..5bca6ce1f01d 100644
---- a/block/blk-mq.h
-+++ b/block/blk-mq.h
-@@ -37,6 +37,7 @@ bool blk_mq_get_driver_tag(struct request *rq, struct blk_mq_hw_ctx **hctx,
- 				bool wait);
- struct request *blk_mq_dequeue_from_ctx(struct blk_mq_hw_ctx *hctx,
- 					struct blk_mq_ctx *start);
-+int blk_mq_update_sched_queue_depth(struct request_queue *q);
++static inline void rqhash_del(struct request *rq)
++{
++	if (ELV_ON_HASH(rq))
++		__rqhash_del(rq);
++}
++
++static inline void rqhash_add(struct hlist_head *hash, struct request *rq)
++{
++	BUG_ON(ELV_ON_HASH(rq));
++	hlist_add_head(&rq->hash, bucket(hash, rq_hash_key(rq)));
++	rq->rq_flags |= RQF_HASHED;
++}
++
++static inline void rqhash_reposition(struct hlist_head *hash, struct request *rq)
++{
++	__rqhash_del(rq);
++	rqhash_add(hash, rq);
++}
++
++static inline struct request *rqhash_find(struct hlist_head *hash, sector_t offset)
++{
++	struct hlist_node *next;
++	struct request *rq = NULL;
++
++	hlist_for_each_entry_safe(rq, next, bucket(hash, offset), hash) {
++		BUG_ON(!ELV_ON_HASH(rq));
++
++		if (unlikely(!rq_mergeable(rq))) {
++			__rqhash_del(rq);
++			continue;
++		}
++
++		if (rq_hash_key(rq) == offset)
++			return rq;
++	}
++
++	return NULL;
++}
++
+ void blk_insert_flush(struct request *rq);
+ 
+ static inline struct request *__elv_next_request(struct request_queue *q)
+diff --git a/block/elevator.c b/block/elevator.c
+index 153926a90901..824cc3e69ac3 100644
+--- a/block/elevator.c
++++ b/block/elevator.c
+@@ -47,11 +47,6 @@ static DEFINE_SPINLOCK(elv_list_lock);
+ static LIST_HEAD(elv_list);
  
  /*
-  * Internal helpers for allocating/freeing the request map
-diff --git a/block/blk-settings.c b/block/blk-settings.c
-index 8559e9563c52..c2db38d2ec2b 100644
---- a/block/blk-settings.c
-+++ b/block/blk-settings.c
-@@ -878,6 +878,8 @@ void blk_set_queue_depth(struct request_queue *q, unsigned int depth)
- {
- 	q->queue_depth = depth;
- 	wbt_set_queue_depth(q->rq_wb, depth);
-+
-+	WARN_ON(blk_mq_update_sched_queue_depth(q));
- }
- EXPORT_SYMBOL(blk_set_queue_depth);
+- * Merge hash stuff.
+- */
+-#define rq_hash_key(rq)		(blk_rq_pos(rq) + blk_rq_sectors(rq))
+-
+-/*
+  * Query io scheduler to see if the current process issuing bio may be
+  * merged with rq.
+  */
+@@ -268,14 +263,12 @@ EXPORT_SYMBOL(elevator_exit);
  
+ static inline void __elv_rqhash_del(struct request *rq)
+ {
+-	hash_del(&rq->hash);
+-	rq->rq_flags &= ~RQF_HASHED;
++	__rqhash_del(rq);
+ }
+ 
+ void elv_rqhash_del(struct request_queue *q, struct request *rq)
+ {
+-	if (ELV_ON_HASH(rq))
+-		__elv_rqhash_del(rq);
++	rqhash_del(rq);
+ }
+ EXPORT_SYMBOL_GPL(elv_rqhash_del);
+ 
+@@ -283,37 +276,22 @@ void elv_rqhash_add(struct request_queue *q, struct request *rq)
+ {
+ 	struct elevator_queue *e = q->elevator;
+ 
+-	BUG_ON(ELV_ON_HASH(rq));
+-	hash_add(e->hash, &rq->hash, rq_hash_key(rq));
+-	rq->rq_flags |= RQF_HASHED;
++	rqhash_add(e->hash, rq);
+ }
+ EXPORT_SYMBOL_GPL(elv_rqhash_add);
+ 
+ void elv_rqhash_reposition(struct request_queue *q, struct request *rq)
+ {
+-	__elv_rqhash_del(rq);
+-	elv_rqhash_add(q, rq);
++	struct elevator_queue *e = q->elevator;
++
++	rqhash_reposition(e->hash, rq);
+ }
+ 
+ struct request *elv_rqhash_find(struct request_queue *q, sector_t offset)
+ {
+ 	struct elevator_queue *e = q->elevator;
+-	struct hlist_node *next;
+-	struct request *rq;
+-
+-	hash_for_each_possible_safe(e->hash, rq, next, hash, offset) {
+-		BUG_ON(!ELV_ON_HASH(rq));
+ 
+-		if (unlikely(!rq_mergeable(rq))) {
+-			__elv_rqhash_del(rq);
+-			continue;
+-		}
+-
+-		if (rq_hash_key(rq) == offset)
+-			return rq;
+-	}
+-
+-	return NULL;
++	return rqhash_find(e->hash, offset);
+ }
+ 
+ /*
 -- 
 2.9.5
