@@ -1,7 +1,7 @@
 From: Ming Lei <ming.lei@redhat.com>
-Subject: [PATCH 1/5] dm-mpath: remove annoying message of 'blk_get_request() returned -11'
-Date: Sat, 30 Sep 2017 19:46:48 +0800
-Message-ID: <20170930114652.32441-2-ming.lei@redhat.com>
+Subject: [PATCH 2/5] dm-mpath: don't call blk_mq_delay_run_hw_queue() in case of BLK_STS_RESOURCE
+Date: Sat, 30 Sep 2017 19:46:49 +0800
+Message-ID: <20170930114652.32441-3-ming.lei@redhat.com>
 References: <20170930114652.32441-1-ming.lei@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20170930114652.32441-1-ming.lei@redhat.com>
@@ -10,26 +10,67 @@ To: Jens Axboe <axboe@fb.com>, linux-block@vger.kernel.org, Christoph Hellwig <h
 Cc: Bart Van Assche <bart.vanassche@sandisk.com>, Laurence Oberman <loberman@redhat.com>, linux-kernel@vger.kernel.org, Omar Sandoval <osandov@fb.com>, Ming Lei <ming.lei@redhat.com>
 List-Id: dm-devel.ids
 
-It is very normal to see allocation failure, so not necessary
-to dump it and annoy people.
+If .queue_rq() returns BLK_STS_RESOURCE, blk-mq will rerun
+the queue in the three situations:
+
+1) if BLK_MQ_S_SCHED_RESTART is set
+- queue is rerun after one rq is completed, see blk_mq_sched_restart()
+which is run from blk_mq_free_request()
+
+2) BLK_MQ_S_TAG_WAITING is set
+- queue is rerun after one tag is freed
+
+3) otherwise
+- queue is run immediately in blk_mq_dispatch_rq_list()
+
+This random dealy of running hw queue is introduced by commit
+6077c2d706097c0(dm rq: Avoid that request processing stalls sporadically),
+which claimed one request processing stalling is fixed,
+but never explained the behind idea, and it is a workaound at most.
+Even the question isn't explained by anyone in recent discussion.
+
+Also calling blk_mq_delay_run_hw_queue() inside .queue_rq() is
+a horrible hack because it makes BLK_MQ_S_SCHED_RESTART not
+working, and will degrade I/O peformance a lot.
+
+Finally this patch makes sure that dm-rq returns
+BLK_STS_RESOURCE to blk-mq only when underlying queue is
+out of resource, so we switch to return DM_MAPIO_DELAY_REQUEU
+if either MPATHF_QUEUE_IO or MPATHF_PG_INIT_REQUIRED is set in
+multipath_clone_and_map().
 
 Signed-off-by: Ming Lei <ming.lei@redhat.com>
 ---
- drivers/md/dm-mpath.c | 2 --
- 1 file changed, 2 deletions(-)
+ drivers/md/dm-mpath.c | 4 +---
+ drivers/md/dm-rq.c    | 1 -
+ 2 files changed, 1 insertion(+), 4 deletions(-)
 
 diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 11f273d2f018..e8094d8fbe0d 100644
+index e8094d8fbe0d..97e4bd100fa1 100644
 --- a/drivers/md/dm-mpath.c
 +++ b/drivers/md/dm-mpath.c
-@@ -499,8 +499,6 @@ static int multipath_clone_and_map(struct dm_target *ti, struct request *rq,
- 	if (IS_ERR(clone)) {
- 		/* EBUSY, ENODEV or EWOULDBLOCK: requeue */
- 		bool queue_dying = blk_queue_dying(q);
--		DMERR_LIMIT("blk_get_request() returned %ld%s - requeuing",
--			    PTR_ERR(clone), queue_dying ? " (path offline)" : "");
- 		if (queue_dying) {
- 			atomic_inc(&m->pg_init_in_progress);
- 			activate_or_offline_path(pgpath);
+@@ -484,9 +484,7 @@ static int multipath_clone_and_map(struct dm_target *ti, struct request *rq,
+ 		return DM_MAPIO_KILL;
+ 	} else if (test_bit(MPATHF_QUEUE_IO, &m->flags) ||
+ 		   test_bit(MPATHF_PG_INIT_REQUIRED, &m->flags)) {
+-		if (pg_init_all_paths(m))
+-			return DM_MAPIO_DELAY_REQUEUE;
+-		return DM_MAPIO_REQUEUE;
++		return DM_MAPIO_DELAY_REQUEUE;
+ 	}
+ 
+ 	memset(mpio, 0, sizeof(*mpio));
+diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+index f5e2b6967357..46f012185b43 100644
+--- a/drivers/md/dm-rq.c
++++ b/drivers/md/dm-rq.c
+@@ -758,7 +758,6 @@ static blk_status_t dm_mq_queue_rq(struct blk_mq_hw_ctx *hctx,
+ 		/* Undo dm_start_request() before requeuing */
+ 		rq_end_stats(md, rq);
+ 		rq_completed(md, rq_data_dir(rq), false);
+-		blk_mq_delay_run_hw_queue(hctx, 100/*ms*/);
+ 		return BLK_STS_RESOURCE;
+ 	}
+ 
 -- 
 2.9.5
