@@ -1,17 +1,17 @@
 From: Ming Lei <ming.lei@redhat.com>
-Subject: [PATCH V5 3/8] block: introduce rqhash helpers
-Date: Sat, 30 Sep 2017 19:26:50 +0800
-Message-ID: <20170930112655.31451-4-ming.lei@redhat.com>
+Subject: [PATCH V5 4/8] block: move actual bio merge code into __elv_merge
+Date: Sat, 30 Sep 2017 19:26:51 +0800
+Message-ID: <20170930112655.31451-5-ming.lei@redhat.com>
 References: <20170930112655.31451-1-ming.lei@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-block-owner@vger.kernel.org>
 In-Reply-To: <20170930112655.31451-1-ming.lei@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: linux-block-owner@vger.kernel.org
 To: Jens Axboe <axboe@fb.com>, linux-block@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
 Cc: Bart Van Assche <bart.vanassche@sandisk.com>, Laurence Oberman <loberman@redhat.com>, Paolo Valente <paolo.valente@linaro.org>, Oleksandr Natalenko <oleksandr@natalenko.name>, Tom Nguyen <tom81094@gmail.com>, linux-kernel@vger.kernel.org, Omar Sandoval <osandov@fb.com>, Ming Lei <ming.lei@redhat.com>
 List-Id: dm-devel.ids
 
-We need this helpers for supporting to use hashtable to improve
-bio merge from sw queue in the following patches.
+So that we can reuse __elv_merge() to merge bio
+into requests from sw queue in the following patches.
 
 No functional change.
 
@@ -20,148 +20,61 @@ Tested-by: Tom Nguyen <tom81094@gmail.com>
 Tested-by: Paolo Valente <paolo.valente@linaro.org>
 Signed-off-by: Ming Lei <ming.lei@redhat.com>
 ---
- block/blk.h      | 52 ++++++++++++++++++++++++++++++++++++++++++++++++++++
- block/elevator.c | 36 +++++++-----------------------------
- 2 files changed, 59 insertions(+), 29 deletions(-)
+ block/elevator.c | 19 +++++++++++++------
+ 1 file changed, 13 insertions(+), 6 deletions(-)
 
-diff --git a/block/blk.h b/block/blk.h
-index fcb9775b997d..eb3436d4a73f 100644
---- a/block/blk.h
-+++ b/block/blk.h
-@@ -146,6 +146,58 @@ static inline void blk_clear_rq_complete(struct request *rq)
-  */
- #define ELV_ON_HASH(rq) ((rq)->rq_flags & RQF_HASHED)
- 
-+/*
-+ * Merge hash stuff.
-+ */
-+#define rq_hash_key(rq)		(blk_rq_pos(rq) + blk_rq_sectors(rq))
-+
-+#define bucket(head, key)	&((head)[hash_min((key), ELV_HASH_BITS)])
-+
-+static inline void __rqhash_del(struct request *rq)
-+{
-+	hash_del(&rq->hash);
-+	rq->rq_flags &= ~RQF_HASHED;
-+}
-+
-+static inline void rqhash_del(struct request *rq)
-+{
-+	if (ELV_ON_HASH(rq))
-+		__rqhash_del(rq);
-+}
-+
-+static inline void rqhash_add(struct hlist_head *hash, struct request *rq)
-+{
-+	BUG_ON(ELV_ON_HASH(rq));
-+	hlist_add_head(&rq->hash, bucket(hash, rq_hash_key(rq)));
-+	rq->rq_flags |= RQF_HASHED;
-+}
-+
-+static inline void rqhash_reposition(struct hlist_head *hash, struct request *rq)
-+{
-+	__rqhash_del(rq);
-+	rqhash_add(hash, rq);
-+}
-+
-+static inline struct request *rqhash_find(struct hlist_head *hash, sector_t offset)
-+{
-+	struct hlist_node *next;
-+	struct request *rq = NULL;
-+
-+	hlist_for_each_entry_safe(rq, next, bucket(hash, offset), hash) {
-+		BUG_ON(!ELV_ON_HASH(rq));
-+
-+		if (unlikely(!rq_mergeable(rq))) {
-+			__rqhash_del(rq);
-+			continue;
-+		}
-+
-+		if (rq_hash_key(rq) == offset)
-+			return rq;
-+	}
-+
-+	return NULL;
-+}
-+
- void blk_insert_flush(struct request *rq);
- 
- static inline struct request *__elv_next_request(struct request_queue *q)
 diff --git a/block/elevator.c b/block/elevator.c
-index 153926a90901..824cc3e69ac3 100644
+index 824cc3e69ac3..e11c7873fc21 100644
 --- a/block/elevator.c
 +++ b/block/elevator.c
-@@ -47,11 +47,6 @@ static DEFINE_SPINLOCK(elv_list_lock);
- static LIST_HEAD(elv_list);
- 
- /*
-- * Merge hash stuff.
-- */
--#define rq_hash_key(rq)		(blk_rq_pos(rq) + blk_rq_sectors(rq))
--
--/*
-  * Query io scheduler to see if the current process issuing bio may be
-  * merged with rq.
-  */
-@@ -268,14 +263,12 @@ EXPORT_SYMBOL(elevator_exit);
- 
- static inline void __elv_rqhash_del(struct request *rq)
- {
--	hash_del(&rq->hash);
--	rq->rq_flags &= ~RQF_HASHED;
-+	__rqhash_del(rq);
+@@ -409,8 +409,9 @@ void elv_dispatch_add_tail(struct request_queue *q, struct request *rq)
  }
+ EXPORT_SYMBOL(elv_dispatch_add_tail);
  
- void elv_rqhash_del(struct request_queue *q, struct request *rq)
- {
--	if (ELV_ON_HASH(rq))
--		__elv_rqhash_del(rq);
-+	rqhash_del(rq);
- }
- EXPORT_SYMBOL_GPL(elv_rqhash_del);
- 
-@@ -283,37 +276,22 @@ void elv_rqhash_add(struct request_queue *q, struct request *rq)
+-enum elv_merge elv_merge(struct request_queue *q, struct request **req,
+-		struct bio *bio)
++static enum elv_merge __elv_merge(struct request_queue *q,
++		struct request **req, struct bio *bio,
++		struct hlist_head *hash, struct request *last_merge)
  {
  	struct elevator_queue *e = q->elevator;
+ 	struct request *__rq;
+@@ -427,11 +428,11 @@ enum elv_merge elv_merge(struct request_queue *q, struct request **req,
+ 	/*
+ 	 * First try one-hit cache.
+ 	 */
+-	if (q->last_merge && elv_bio_merge_ok(q->last_merge, bio)) {
+-		enum elv_merge ret = blk_try_merge(q->last_merge, bio);
++	if (last_merge && elv_bio_merge_ok(last_merge, bio)) {
++		enum elv_merge ret = blk_try_merge(last_merge, bio);
  
--	BUG_ON(ELV_ON_HASH(rq));
--	hash_add(e->hash, &rq->hash, rq_hash_key(rq));
--	rq->rq_flags |= RQF_HASHED;
-+	rqhash_add(e->hash, rq);
+ 		if (ret != ELEVATOR_NO_MERGE) {
+-			*req = q->last_merge;
++			*req = last_merge;
+ 			return ret;
+ 		}
+ 	}
+@@ -442,7 +443,7 @@ enum elv_merge elv_merge(struct request_queue *q, struct request **req,
+ 	/*
+ 	 * See if our hash lookup can find a potential backmerge.
+ 	 */
+-	__rq = elv_rqhash_find(q, bio->bi_iter.bi_sector);
++	__rq = rqhash_find(hash, bio->bi_iter.bi_sector);
+ 	if (__rq && elv_bio_merge_ok(__rq, bio)) {
+ 		*req = __rq;
+ 		return ELEVATOR_BACK_MERGE;
+@@ -456,6 +457,12 @@ enum elv_merge elv_merge(struct request_queue *q, struct request **req,
+ 	return ELEVATOR_NO_MERGE;
  }
- EXPORT_SYMBOL_GPL(elv_rqhash_add);
  
- void elv_rqhash_reposition(struct request_queue *q, struct request *rq)
- {
--	__elv_rqhash_del(rq);
--	elv_rqhash_add(q, rq);
-+	struct elevator_queue *e = q->elevator;
++enum elv_merge elv_merge(struct request_queue *q, struct request **req,
++		struct bio *bio)
++{
++	return __elv_merge(q, req, bio, q->elevator->hash, q->last_merge);
++}
 +
-+	rqhash_reposition(e->hash, rq);
- }
- 
- struct request *elv_rqhash_find(struct request_queue *q, sector_t offset)
- {
- 	struct elevator_queue *e = q->elevator;
--	struct hlist_node *next;
--	struct request *rq;
--
--	hash_for_each_possible_safe(e->hash, rq, next, hash, offset) {
--		BUG_ON(!ELV_ON_HASH(rq));
- 
--		if (unlikely(!rq_mergeable(rq))) {
--			__elv_rqhash_del(rq);
--			continue;
--		}
--
--		if (rq_hash_key(rq) == offset)
--			return rq;
--	}
--
--	return NULL;
-+	return rqhash_find(e->hash, offset);
- }
- 
  /*
+  * Attempt to do an insertion back merge. Only check for the case where
+  * we can append 'rq' to an existing request, so we can throw 'rq' away
 -- 
 2.9.5
