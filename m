@@ -1,94 +1,52 @@
-From: Milan Broz <gmazyland@gmail.com>
-Subject: Re: [PATCH] dm-crypt: Reject sector_size feature if
- device length is not aligned to it
-Date: Sat, 30 Sep 2017 20:31:09 +0200
-Message-ID: <b6c539ce-c841-a21c-1a2c-4ee93d826680@gmail.com>
-References: <20170913134556.23145-1-gmazyland@gmail.com>
+From: =?UTF-8?q?J=C3=A9r=C3=A9my=20Lefaure?=
+        <jeremy.lefaure@lse.epita.fr>
+Subject: [PATCH 00/18] use ARRAY_SIZE macro
+Date: Sun,  1 Oct 2017 15:30:38 -0400
+Message-ID: <20171001193101.8898-1-jeremy.lefaure@lse.epita.fr>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20170913134556.23145-1-gmazyland@gmail.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Mike Snitzer <msnitzer@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+Cc: alsa-devel@alsa-project.org, amd-gfx@lists.freedesktop.org, brcm80211-dev-list@cypress.com, brcm80211-dev-list.pdl@broadcom.com, devel@acpica.org, devel@driverdev.osuosl.org, dm-devel@redhat.com, dri-devel@lists.freedesktop.org, ecryptfs@vger.kernel.org, intel-gfx@lists.freedesktop.org, intel-gvt-dev@lists.freedesktop.org, intel-wired-lan@lists.osuosl.org, Jason Gunthorpe <jgunthorpe@obsidianresearch.com>, linux-acpi@vger.kernel.org, linux-integrity@vger.kernel.org, linux-kernel@vger.kernel.org, linux-media@vger.kernel.org, linux-nfs@vger.kernel.org, linux-raid@vger.kernel.org, linux-rdma@vger.kernel.org, linux-scsi@vger.kernel.org, linux-usb@vger.kernel.org, linux-video@atrey.karlin.mff.cuni.cz, linux-wireless@vger.kernel.org, netdev@vger.kernel.org, nouveau@lists.
 List-Id: dm-devel.ids
 
-On 09/13/2017 03:45 PM, Milan Broz wrote:
-> If a crypt mapping uses optional sector_size feature, additional
-> restrictions to mapped device segment size must be applied in constructor,
-> otherwise the device activation will fail later.
+Hi everyone,
+Using ARRAY_SIZE improves the code readability. I used coccinelle (I
+made a change to the array_size.cocci file [1]) to find several places
+where ARRAY_SIZE could be used instead of other macros or sizeof
+division.
 
-Hi,
+I tried to divide the changes into a patch per subsystem (excepted for
+staging). If one of the patch should be split into several patches, let
+me know.
 
-we had some discussion with Mikulas if this check should be better in generic DM code.
+In order to reduce the size of the To: and Cc: lines, each patch of the
+series is sent only to the maintainers and lists concerned by the patch.
+This cover letter is sent to every list concerned by this series.
 
-I think that for this case it is not a good idea - dm-crypt can increase
-encryption sector size during load (it is stupid to do, but I see no reason why to block it).
-And then only constructor of the target itself know what is possible and what should be rejected.
+This series is based on linux-next next-20170929. Each patch has been
+tested by building the relevant files with W=1.
 
-Anyway, there is a short reproducer what this patch solves:
+This series contains the following patches:
+[PATCH 01/18] sound: use ARRAY_SIZE
+[PATCH 02/18] tracing/filter: use ARRAY_SIZE
+[PATCH 03/18] media: use ARRAY_SIZE
+[PATCH 04/18] IB/mlx5: Use ARRAY_SIZE
+[PATCH 05/18] net: use ARRAY_SIZE
+[PATCH 06/18] drm: use ARRAY_SIZE
+[PATCH 07/18] scsi: bfa: use ARRAY_SIZE
+[PATCH 08/18] ecryptfs: use ARRAY_SIZE
+[PATCH 09/18] nfsd: use ARRAY_SIZE
+[PATCH 10/18] orangefs: use ARRAY_SIZE
+[PATCH 11/18] dm space map metadata: use ARRAY_SIZE
+[PATCH 12/18] x86: use ARRAY_SIZE
+[PATCH 13/18] tpm: use ARRAY_SIZE
+[PATCH 14/18] ipmi: use ARRAY_SIZE
+[PATCH 15/18] acpi: use ARRAY_SIZE
+[PATCH 16/18] media: staging: atomisp: use ARRAY_SIZE
+[PATCH 17/18] staging: rtl8723bs: use ARRAY_SIZE
+[PATCH 18/18] staging: rtlwifi: use ARRAY_SIZE
 
-Create simple mapping with 4096 encryption sector:
 
-# dmsetup create test --table "0 8 crypt cipher_null - 0 /dev/sdb 0 1 sector_size:4096"
-
-Now load new unaligned-length table (this should fail!)
-# dmsetup load test --table "0 9 crypt cipher_null - 0 /dev/sdb 0 1 sector_size:4096"
-
-Inactive table is apparently accepted:
-# dmsetup table --inactive
-test: 0 9 crypt cipher_null 0 0 8:16 0 1 sector_size:4096
-
-And now, resume fails, keeping the device in suspended state afterward:
-
-# dmsetup resume test
-device-mapper: resume ioctl on test failed: Invalid argument
-Command failed
-kernel: device-mapper: table: 254:0: len=9 not aligned to h/w logical block size 4096 of sdb
-
-# dmsetup info -c
-Name             Maj Min Stat Open Targ Event  UUID
-test             254   0 L-sw    0    1      0
-
-With the patch applied, the load step correctly fails:
-# dmsetup load test --table "0 9 crypt cipher_null - 0 /dev/sdb 0 1 sector_size:4096"
-device-mapper: reload ioctl on test failed: Invalid argument
-kernel: device-mapper: table: 254:0: crypt: Device size is not multiple of sector_size feature
-
-Please consider this for 4.14 (and stable 4.12+ perhaps).
-
-Thanks,
-Milan
-
-> 
-> Signed-off-by: Milan Broz <gmazyland@gmail.com>
-> ---
->  drivers/md/dm-crypt.c | 4 ++++
->  1 file changed, 4 insertions(+)
-> 
-> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-> index 54aef8ed97db..488ecd0b1bd0 100644
-> --- a/drivers/md/dm-crypt.c
-> +++ b/drivers/md/dm-crypt.c
-> @@ -2584,6 +2584,10 @@ static int crypt_ctr_optional(struct dm_target *ti, unsigned int argc, char **ar
->  				ti->error = "Invalid feature value for sector_size";
->  				return -EINVAL;
->  			}
-> +			if (ti->len & ((cc->sector_size >> SECTOR_SHIFT) - 1)) {
-> +				ti->error = "Device size is not multiple of sector_size feature";
-> +				return -EINVAL;
-> +			}
->  			cc->sector_shift = __ffs(cc->sector_size) - SECTOR_SHIFT;
->  		} else if (!strcasecmp(opt_string, "iv_large_sectors"))
->  			set_bit(CRYPT_IV_LARGE_SECTORS, &cc->cipher_flags);
-> 
+[1]: https://lkml.org/lkml/2017/9/13/689
