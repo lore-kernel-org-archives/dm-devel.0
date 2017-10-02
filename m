@@ -1,51 +1,49 @@
-From: Michael Lass <bevan@bi-co.net>
-Subject: [PATCH] multipath-tools: libdmmp: Fix build for members
-	of samba domain
-Date: Mon,  2 Oct 2017 20:27:32 +0200
-Message-ID: <20171002182732.5367-1-bevan@bi-co.net>
+From: bfields@fieldses.org (J. Bruce Fields)
+Subject: Re: [PATCH 00/18] use ARRAY_SIZE macro
+Date: Mon, 2 Oct 2017 15:22:24 -0400
+Message-ID: <20171002192224.GD1903@fieldses.org>
+References: <20171001193101.8898-1-jeremy.lefaure@lse.epita.fr>
+ <20171001220131.GA11812@eros>
+ <20171001205220.10b78086@blatinox-laptop.localdomain>
+ <20171002053554.GA28743@kroah.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Michael Lass <bevan@bi-co.net>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <netdev-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20171002053554.GA28743@kroah.com>
+Sender: netdev-owner@vger.kernel.org
+To: Greg KH <greg@kroah.com>
+Cc: =?utf-8?B?SsOpcsOpbXk=?= Lefaure <jeremy.lefaure@lse.epita.fr>, "Tobin C. Harding" <me@tobin.cc>, alsa-devel@alsa-project.org, nouveau@lists.freedesktop.org, dri-devel@lists.freedesktop.org, dm-devel@redhat.com, brcm80211-dev-list@cypress.com, devel@driverdev.osuosl.org, linux-scsi@vger.kernel.org, linux-rdma@vger.kernel.org, amd-gfx@lists.freedesktop.org, Jason Gunthorpe <jgunthorpe@obsidianresearch.com>, linux-acpi@vger.kernel.org, linux-video@atrey.karlin.mff.cuni.cz, intel-wired-lan@lists.osuosl.org, linux-media@vger.kernel.org, intel-gfx@lists.freedesktop.org, ecryptfs@vger.kernel.org, linux-nfs@vger.kernel.org, linux-raid@vger.kernel.org, openipmi-developer@lists.sourceforge.net, intel-gvt-dev@lists.freedesktop.org, devel@acpica.org, brcm80211-dev-list.pdl@broadcom.com, netde
 List-Id: dm-devel.ids
 
-When the user building libdmmp is part of a samba domain, mktemp will create
-a path like /tmp/MYDOMAIN\mylogin/tmp.* Use quotation marks to allow using a
-path containing backslashes as build otherwise fails for these users.
+On Mon, Oct 02, 2017 at 07:35:54AM +0200, Greg KH wrote:
+> On Sun, Oct 01, 2017 at 08:52:20PM -0400, Jérémy Lefaure wrote:
+> > On Mon, 2 Oct 2017 09:01:31 +1100
+> > "Tobin C. Harding" <me@tobin.cc> wrote:
+> > 
+> > > > In order to reduce the size of the To: and Cc: lines, each patch of the
+> > > > series is sent only to the maintainers and lists concerned by the patch.
+> > > > This cover letter is sent to every list concerned by this series.  
+> > > 
+> > > Why don't you just send individual patches for each subsystem? I'm not a maintainer but I don't see
+> > > how any one person is going to be able to apply this whole series, it is making it hard for
+> > > maintainers if they have to pick patches out from among the series (if indeed any will bother
+> > > doing that).
+> > Yeah, maybe it would have been better to send individual patches.
+> > 
+> > From my point of view it's a series because the patches are related (I
+> > did a git format-patch from my local branch). But for the maintainers
+> > point of view, they are individual patches.
+> 
+> And the maintainers view is what matters here, if you wish to get your
+> patches reviewed and accepted...
 
-Signed-off-by: Michael Lass <bevan@bi-co.net>
----
- libdmmp/Makefile | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+Mainly I'd just like to know which you're asking for.  Do you want me to
+apply this, or to ACK it so someone else can?  If it's sent as a series
+I tend to assume the latter.
 
-diff --git a/libdmmp/Makefile b/libdmmp/Makefile
-index cdd26ed7..a5031b67 100644
---- a/libdmmp/Makefile
-+++ b/libdmmp/Makefile
-@@ -75,10 +75,10 @@ docs/man/$(EXTRA_MAN_FILES).gz: $(HEADERS)
- 		$(INSTALL_PROGRAM) -v -m 644 -D docs/$$file docs/man/$$file; \
- 	done
- 	cat $(HEADERS) | \
--	    perl docs/doc-preclean.pl > $(TEMPFILE)
--	perl docs/kernel-doc -man $(TEMPFILE) | \
-+	    perl docs/doc-preclean.pl > "$(TEMPFILE)"
-+	perl docs/kernel-doc -man "$(TEMPFILE)" | \
- 	    perl docs/split-man.pl docs/man
--	-rm -f $(TEMPFILE)
-+	-rm -f "$(TEMPFILE)"
- 	@for file in docs/man/*.3; do \
- 		gzip -f $$file; \
- 	done
--- 
-2.14.2
+But in this case I'm assuming it's the former, so I'll pick up the nfsd
+one....
+
+--b.
