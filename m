@@ -1,152 +1,54 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH, resend] block: remove QUEUE_FLAG_STACKABLE
-Date: Thu,  5 Oct 2017 21:22:52 +0200
-Message-ID: <20171005192252.21090-1-hch@lst.de>
-Return-path: <linux-block-owner@vger.kernel.org>
-Sender: linux-block-owner@vger.kernel.org
-To: axboe@kernel.dk
-Cc: linux-block@vger.kernel.org, dm-devel@redhat.com
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH v4 1/6] libmultipath: add detect_checker
+	option
+Date: Thu,  5 Oct 2017 22:25:50 +0200
+Message-ID: <20171005202551.10719-1-mwilck@suse.com>
+References: <20170925164924.GX3145@octiron.msp.redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20170925164924.GX3145@octiron.msp.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Martin Wilck <mwilck@suse.de>, dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-We already have a queue_is_rq_based helper to check if a request_queue
-is request based, so we can remove the flag for it.
+On Mon, 2017-09-25 at 11:49 -0500, Benjamin Marzinski wrote:
+> On Mon, Sep 25, 2017 at 06:15:20PM +0200, Xose Vazquez Perez wrote:
+> > On 02/27/2017 07:26 PM, Benjamin Marzinski wrote:
+> > 
+> > > This patch adds a detect_checker option that works just like the
+> > > detect_prio option.  It currently only detects ALUA devices, and
+> > > if it finds ALUA support, it sets the priortizier to TUR. This is
+> > > useful for devices like the VNX2, where it should be using the
+> > > TUR checker when in ALUA mode (or so I have been told). It is set
+> > > on by
+> > > default just like detect_prio and retain_attached_hw_handler.
+> > 
+> > RDAC devices are going also to be affected with this change.
+> > Is it desired?
+> 
+> No. I'll send a patch that adds a check_rdac() call before setting
+> the
+> checker type to TUR.
+> 
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
----
- block/blk-mq-debugfs.c |  1 -
- block/elevator.c       |  2 +-
- drivers/md/dm-rq.c     |  2 +-
- drivers/md/dm-table.c  | 15 +--------------
- drivers/md/dm.c        | 11 -----------
- include/linux/blkdev.h |  5 -----
- 6 files changed, 3 insertions(+), 33 deletions(-)
+Like this, perhaps?
 
-diff --git a/block/blk-mq-debugfs.c b/block/blk-mq-debugfs.c
-index 980e73095643..7f4a1ba532af 100644
---- a/block/blk-mq-debugfs.c
-+++ b/block/blk-mq-debugfs.c
-@@ -54,7 +54,6 @@ static const char *const blk_queue_flag_name[] = {
- 	QUEUE_FLAG_NAME(NOMERGES),
- 	QUEUE_FLAG_NAME(SAME_COMP),
- 	QUEUE_FLAG_NAME(FAIL_IO),
--	QUEUE_FLAG_NAME(STACKABLE),
- 	QUEUE_FLAG_NAME(NONROT),
- 	QUEUE_FLAG_NAME(IO_STAT),
- 	QUEUE_FLAG_NAME(DISCARD),
-diff --git a/block/elevator.c b/block/elevator.c
-index 153926a90901..7ae50eb2732b 100644
---- a/block/elevator.c
-+++ b/block/elevator.c
-@@ -1118,7 +1118,7 @@ ssize_t elv_iosched_show(struct request_queue *q, char *name)
- 	struct elevator_type *__e;
- 	int len = 0;
- 
--	if (!blk_queue_stackable(q))
-+	if (!queue_is_rq_based(q))
- 		return sprintf(name, "none\n");
- 
- 	if (!q->elevator)
-diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
-index eadfcfd106ff..9d32f25489c2 100644
---- a/drivers/md/dm-rq.c
-+++ b/drivers/md/dm-rq.c
-@@ -56,7 +56,7 @@ static unsigned dm_get_blk_mq_queue_depth(void)
- 
- int dm_request_based(struct mapped_device *md)
- {
--	return blk_queue_stackable(md->queue);
-+	return queue_is_rq_based(md->queue);
- }
- 
- static void dm_old_start_queue(struct request_queue *q)
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index ef7b8f201f73..75281828f2cb 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -1000,7 +1000,7 @@ static int dm_table_determine_type(struct dm_table *t)
- 	list_for_each_entry(dd, devices, list) {
- 		struct request_queue *q = bdev_get_queue(dd->dm_dev->bdev);
- 
--		if (!blk_queue_stackable(q)) {
-+		if (!queue_is_rq_based(q)) {
- 			DMERR("table load rejected: including"
- 			      " non-request-stackable devices");
- 			return -EINVAL;
-@@ -1847,19 +1847,6 @@ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
- 	 */
- 	if (blk_queue_add_random(q) && dm_table_all_devices_attribute(t, device_is_not_random))
- 		queue_flag_clear_unlocked(QUEUE_FLAG_ADD_RANDOM, q);
--
--	/*
--	 * QUEUE_FLAG_STACKABLE must be set after all queue settings are
--	 * visible to other CPUs because, once the flag is set, incoming bios
--	 * are processed by request-based dm, which refers to the queue
--	 * settings.
--	 * Until the flag set, bios are passed to bio-based dm and queued to
--	 * md->deferred where queue settings are not needed yet.
--	 * Those bios are passed to request-based dm at the resume time.
--	 */
--	smp_mb();
--	if (dm_table_request_based(t))
--		queue_flag_set_unlocked(QUEUE_FLAG_STACKABLE, q);
- }
- 
- unsigned int dm_table_get_num_targets(struct dm_table *t)
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 6e54145969c5..8d07ad61221c 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1612,17 +1612,6 @@ static void dm_wq_work(struct work_struct *work);
- 
- void dm_init_md_queue(struct mapped_device *md)
- {
--	/*
--	 * Request-based dm devices cannot be stacked on top of bio-based dm
--	 * devices.  The type of this dm device may not have been decided yet.
--	 * The type is decided at the first table loading time.
--	 * To prevent problematic device stacking, clear the queue flag
--	 * for request stacking support until then.
--	 *
--	 * This queue is new, so no concurrency on the queue_flags.
--	 */
--	queue_flag_clear_unlocked(QUEUE_FLAG_STACKABLE, md->queue);
--
- 	/*
- 	 * Initialize data that will only be used by a non-blk-mq DM queue
- 	 * - must do so here (in alloc_dev callchain) before queue is used
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 02fa42d24b52..9fb71fc7d0e8 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -609,7 +609,6 @@ struct request_queue {
- #define QUEUE_FLAG_NOMERGES     5	/* disable merge attempts */
- #define QUEUE_FLAG_SAME_COMP	6	/* complete on same CPU-group */
- #define QUEUE_FLAG_FAIL_IO	7	/* fake timeout */
--#define QUEUE_FLAG_STACKABLE	8	/* supports request stacking */
- #define QUEUE_FLAG_NONROT	9	/* non-rotational device (SSD) */
- #define QUEUE_FLAG_VIRT        QUEUE_FLAG_NONROT /* paravirt device */
- #define QUEUE_FLAG_IO_STAT     10	/* do IO stats */
-@@ -633,12 +632,10 @@ struct request_queue {
- #define QUEUE_FLAG_QUIESCED    28	/* queue has been quiesced */
- 
- #define QUEUE_FLAG_DEFAULT	((1 << QUEUE_FLAG_IO_STAT) |		\
--				 (1 << QUEUE_FLAG_STACKABLE)	|	\
- 				 (1 << QUEUE_FLAG_SAME_COMP)	|	\
- 				 (1 << QUEUE_FLAG_ADD_RANDOM))
- 
- #define QUEUE_FLAG_MQ_DEFAULT	((1 << QUEUE_FLAG_IO_STAT) |		\
--				 (1 << QUEUE_FLAG_STACKABLE)	|	\
- 				 (1 << QUEUE_FLAG_SAME_COMP)	|	\
- 				 (1 << QUEUE_FLAG_POLL))
- 
-@@ -722,8 +719,6 @@ static inline void queue_flag_clear(unsigned int flag, struct request_queue *q)
- #define blk_queue_nonrot(q)	test_bit(QUEUE_FLAG_NONROT, &(q)->queue_flags)
- #define blk_queue_io_stat(q)	test_bit(QUEUE_FLAG_IO_STAT, &(q)->queue_flags)
- #define blk_queue_add_random(q)	test_bit(QUEUE_FLAG_ADD_RANDOM, &(q)->queue_flags)
--#define blk_queue_stackable(q)	\
--	test_bit(QUEUE_FLAG_STACKABLE, &(q)->queue_flags)
- #define blk_queue_discard(q)	test_bit(QUEUE_FLAG_DISCARD, &(q)->queue_flags)
- #define blk_queue_secure_erase(q) \
- 	(test_bit(QUEUE_FLAG_SECERASE, &(q)->queue_flags))
+Martin Wilck (1):
+  limbultipath: prefer RDAC checker with detect_checker
+
+ libmultipath/propsel.c | 52 +++++++++++++++++++++++++++++---------------------
+ 1 file changed, 30 insertions(+), 22 deletions(-)
+
 -- 
-2.14.1
+2.14.2
