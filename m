@@ -1,38 +1,152 @@
-From: "J. Bruce Fields" <bfields@fieldses.org>
-Subject: Re: [PATCH 00/18] use ARRAY_SIZE macro
-Date: Thu, 5 Oct 2017 13:57:15 -0400
-Message-ID: <20171005175715.GA19093@fieldses.org>
-References: <20171001193101.8898-1-jeremy.lefaure@lse.epita.fr>
- <20171001220131.GA11812@eros>
- <20171001205220.10b78086@blatinox-laptop.localdomain>
- <20171002053554.GA28743@kroah.com>
- <20171002192224.GD1903@fieldses.org>
- <20171002213312.3f904290@blatinox-laptop.localdomain>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <netdev-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20171002213312.3f904290@blatinox-laptop.localdomain>
-Sender: netdev-owner@vger.kernel.org
-To: =?utf-8?B?SsOpcsOpbXk=?= Lefaure <jeremy.lefaure@lse.epita.fr>
-Cc: Greg KH <greg@kroah.com>, "Tobin C. Harding" <me@tobin.cc>, alsa-devel@alsa-project.org, nouveau@lists.freedesktop.org, dri-devel@lists.freedesktop.org, dm-devel@redhat.com, brcm80211-dev-list@cypress.com, devel@driverdev.osuosl.org, linux-scsi@vger.kernel.org, linux-rdma@vger.kernel.org, amd-gfx@lists.freedesktop.org, Jason Gunthorpe <jgunthorpe@obsidianresearch.com>, linux-acpi@vger.kernel.org, linux-video@atrey.karlin.mff.cuni.cz, intel-wired-lan@lists.osuosl.org, linux-media@vger.kernel.org, intel-gfx@lists.freedesktop.org, ecryptfs@vger.kernel.org, linux-nfs@vger.kernel.org, linux-raid@vger.kernel.org, openipmi-developer@lists.sourceforge.net, intel-gvt-dev@lists.freedesktop.org, devel@acpica.org, brcm80211-dev-list.pdl@broadcom.com, netdev@vger.kernel.org, linux-usb@v
+From: Christoph Hellwig <hch@lst.de>
+Subject: [PATCH, resend] block: remove QUEUE_FLAG_STACKABLE
+Date: Thu,  5 Oct 2017 21:22:52 +0200
+Message-ID: <20171005192252.21090-1-hch@lst.de>
+Return-path: <linux-block-owner@vger.kernel.org>
+Sender: linux-block-owner@vger.kernel.org
+To: axboe@kernel.dk
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Oct 02, 2017 at 09:33:12PM -0400, Jérémy Lefaure wrote:
-> On Mon, 2 Oct 2017 15:22:24 -0400
-> bfields@fieldses.org (J. Bruce Fields) wrote:
-> 
-> > Mainly I'd just like to know which you're asking for.  Do you want me to
-> > apply this, or to ACK it so someone else can?  If it's sent as a series
-> > I tend to assume the latter.
-> > 
-> > But in this case I'm assuming it's the former, so I'll pick up the nfsd
-> > one....
-> Could you to apply the NFSD patch ("nfsd: use ARRAY_SIZE") with the
-> Reviewed-by: Jeff Layton <jlayton@redhat.com>) tag please ?
-> 
-> This patch is an individual patch and it should not have been sent in a
-> series (sorry about that).
+We already have a queue_is_rq_based helper to check if a request_queue
+is request based, so we can remove the flag for it.
 
-Applying for 4.15, thanks.--b.
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+---
+ block/blk-mq-debugfs.c |  1 -
+ block/elevator.c       |  2 +-
+ drivers/md/dm-rq.c     |  2 +-
+ drivers/md/dm-table.c  | 15 +--------------
+ drivers/md/dm.c        | 11 -----------
+ include/linux/blkdev.h |  5 -----
+ 6 files changed, 3 insertions(+), 33 deletions(-)
+
+diff --git a/block/blk-mq-debugfs.c b/block/blk-mq-debugfs.c
+index 980e73095643..7f4a1ba532af 100644
+--- a/block/blk-mq-debugfs.c
++++ b/block/blk-mq-debugfs.c
+@@ -54,7 +54,6 @@ static const char *const blk_queue_flag_name[] = {
+ 	QUEUE_FLAG_NAME(NOMERGES),
+ 	QUEUE_FLAG_NAME(SAME_COMP),
+ 	QUEUE_FLAG_NAME(FAIL_IO),
+-	QUEUE_FLAG_NAME(STACKABLE),
+ 	QUEUE_FLAG_NAME(NONROT),
+ 	QUEUE_FLAG_NAME(IO_STAT),
+ 	QUEUE_FLAG_NAME(DISCARD),
+diff --git a/block/elevator.c b/block/elevator.c
+index 153926a90901..7ae50eb2732b 100644
+--- a/block/elevator.c
++++ b/block/elevator.c
+@@ -1118,7 +1118,7 @@ ssize_t elv_iosched_show(struct request_queue *q, char *name)
+ 	struct elevator_type *__e;
+ 	int len = 0;
+ 
+-	if (!blk_queue_stackable(q))
++	if (!queue_is_rq_based(q))
+ 		return sprintf(name, "none\n");
+ 
+ 	if (!q->elevator)
+diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+index eadfcfd106ff..9d32f25489c2 100644
+--- a/drivers/md/dm-rq.c
++++ b/drivers/md/dm-rq.c
+@@ -56,7 +56,7 @@ static unsigned dm_get_blk_mq_queue_depth(void)
+ 
+ int dm_request_based(struct mapped_device *md)
+ {
+-	return blk_queue_stackable(md->queue);
++	return queue_is_rq_based(md->queue);
+ }
+ 
+ static void dm_old_start_queue(struct request_queue *q)
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index ef7b8f201f73..75281828f2cb 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1000,7 +1000,7 @@ static int dm_table_determine_type(struct dm_table *t)
+ 	list_for_each_entry(dd, devices, list) {
+ 		struct request_queue *q = bdev_get_queue(dd->dm_dev->bdev);
+ 
+-		if (!blk_queue_stackable(q)) {
++		if (!queue_is_rq_based(q)) {
+ 			DMERR("table load rejected: including"
+ 			      " non-request-stackable devices");
+ 			return -EINVAL;
+@@ -1847,19 +1847,6 @@ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+ 	 */
+ 	if (blk_queue_add_random(q) && dm_table_all_devices_attribute(t, device_is_not_random))
+ 		queue_flag_clear_unlocked(QUEUE_FLAG_ADD_RANDOM, q);
+-
+-	/*
+-	 * QUEUE_FLAG_STACKABLE must be set after all queue settings are
+-	 * visible to other CPUs because, once the flag is set, incoming bios
+-	 * are processed by request-based dm, which refers to the queue
+-	 * settings.
+-	 * Until the flag set, bios are passed to bio-based dm and queued to
+-	 * md->deferred where queue settings are not needed yet.
+-	 * Those bios are passed to request-based dm at the resume time.
+-	 */
+-	smp_mb();
+-	if (dm_table_request_based(t))
+-		queue_flag_set_unlocked(QUEUE_FLAG_STACKABLE, q);
+ }
+ 
+ unsigned int dm_table_get_num_targets(struct dm_table *t)
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 6e54145969c5..8d07ad61221c 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1612,17 +1612,6 @@ static void dm_wq_work(struct work_struct *work);
+ 
+ void dm_init_md_queue(struct mapped_device *md)
+ {
+-	/*
+-	 * Request-based dm devices cannot be stacked on top of bio-based dm
+-	 * devices.  The type of this dm device may not have been decided yet.
+-	 * The type is decided at the first table loading time.
+-	 * To prevent problematic device stacking, clear the queue flag
+-	 * for request stacking support until then.
+-	 *
+-	 * This queue is new, so no concurrency on the queue_flags.
+-	 */
+-	queue_flag_clear_unlocked(QUEUE_FLAG_STACKABLE, md->queue);
+-
+ 	/*
+ 	 * Initialize data that will only be used by a non-blk-mq DM queue
+ 	 * - must do so here (in alloc_dev callchain) before queue is used
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 02fa42d24b52..9fb71fc7d0e8 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -609,7 +609,6 @@ struct request_queue {
+ #define QUEUE_FLAG_NOMERGES     5	/* disable merge attempts */
+ #define QUEUE_FLAG_SAME_COMP	6	/* complete on same CPU-group */
+ #define QUEUE_FLAG_FAIL_IO	7	/* fake timeout */
+-#define QUEUE_FLAG_STACKABLE	8	/* supports request stacking */
+ #define QUEUE_FLAG_NONROT	9	/* non-rotational device (SSD) */
+ #define QUEUE_FLAG_VIRT        QUEUE_FLAG_NONROT /* paravirt device */
+ #define QUEUE_FLAG_IO_STAT     10	/* do IO stats */
+@@ -633,12 +632,10 @@ struct request_queue {
+ #define QUEUE_FLAG_QUIESCED    28	/* queue has been quiesced */
+ 
+ #define QUEUE_FLAG_DEFAULT	((1 << QUEUE_FLAG_IO_STAT) |		\
+-				 (1 << QUEUE_FLAG_STACKABLE)	|	\
+ 				 (1 << QUEUE_FLAG_SAME_COMP)	|	\
+ 				 (1 << QUEUE_FLAG_ADD_RANDOM))
+ 
+ #define QUEUE_FLAG_MQ_DEFAULT	((1 << QUEUE_FLAG_IO_STAT) |		\
+-				 (1 << QUEUE_FLAG_STACKABLE)	|	\
+ 				 (1 << QUEUE_FLAG_SAME_COMP)	|	\
+ 				 (1 << QUEUE_FLAG_POLL))
+ 
+@@ -722,8 +719,6 @@ static inline void queue_flag_clear(unsigned int flag, struct request_queue *q)
+ #define blk_queue_nonrot(q)	test_bit(QUEUE_FLAG_NONROT, &(q)->queue_flags)
+ #define blk_queue_io_stat(q)	test_bit(QUEUE_FLAG_IO_STAT, &(q)->queue_flags)
+ #define blk_queue_add_random(q)	test_bit(QUEUE_FLAG_ADD_RANDOM, &(q)->queue_flags)
+-#define blk_queue_stackable(q)	\
+-	test_bit(QUEUE_FLAG_STACKABLE, &(q)->queue_flags)
+ #define blk_queue_discard(q)	test_bit(QUEUE_FLAG_DISCARD, &(q)->queue_flags)
+ #define blk_queue_secure_erase(q) \
+ 	(test_bit(QUEUE_FLAG_SECERASE, &(q)->queue_flags))
+-- 
+2.14.1
