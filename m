@@ -1,56 +1,45 @@
-From: Ming Lei <ming.lei@redhat.com>
-Subject: Re: [PATCH V5 4/7] blk-mq: introduce blk_mq_dequeue_from_ctx()
-Date: Mon, 9 Oct 2017 12:36:51 +0800
-Message-ID: <20171009043650.GB19029@ming.t460p>
-References: <20170930102720.30219-1-ming.lei@redhat.com>
- <20170930102720.30219-5-ming.lei@redhat.com>
- <20171003090109.GB21184@infradead.org>
+From: "Schremmer, Steven" <Steve.Schremmer@netapp.com>
+Subject: Re: [PATCH 1/1] limbultipath: prefer RDAC checker
+	with	detect_checker
+Date: Fri, 6 Oct 2017 15:35:08 +0000
+Message-ID: <BN6PR06MB2481FB5ADB2291F0854722828C710@BN6PR06MB2481.namprd06.prod.outlook.com>
+References: <20170925164924.GX3145@octiron.msp.redhat.com>
+	<20171005202551.10719-1-mwilck@suse.com>
+	<20171005202551.10719-2-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20171003090109.GB21184@infradead.org>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Christoph Hellwig <hch@infradead.org>
-Cc: Jens Axboe <axboe@fb.com>, linux-block@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Bart Van Assche <bart.vanassche@sandisk.com>, Laurence Oberman <loberman@redhat.com>, Paolo Valente <paolo.valente@linaro.org>, Oleksandr Natalenko <oleksandr@natalenko.name>, Tom Nguyen <tom81094@gmail.com>, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, Omar Sandoval <osandov@fb.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20171005202551.10719-2-mwilck@suse.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Martin Wilck <mwilck@suse.de>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-On Tue, Oct 03, 2017 at 02:01:09AM -0700, Christoph Hellwig wrote:
-> On Sat, Sep 30, 2017 at 06:27:17PM +0800, Ming Lei wrote:
-> > This function is introduced for dequeuing request
-> > from sw queue so that we can dispatch it in
-> > scheduler's way.
-> > 
-> > More importantly, some SCSI devices may set
-> > q->queue_depth, which is a per-request_queue limit,
-> > and applied on pending I/O from all hctxs. This
-> > function is introduced for avoiding to dequeue too
-> > many requests from sw queue when ->dispatch isn't
-> > flushed completely.
+> From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com] On Behalf Of Martin Wilck
+> Sent: Thursday, October 05, 2017 3:26 PM
+> To: Benjamin Marzinski <bmarzins@redhat.com>
+> Cc: Martin Wilck <mwilck@suse.de>; dm-devel@redhat.com; Xose Vazquez Perez <xose.vazquez@gmail.com>
+> Subject: [dm-devel] [PATCH 1/1] limbultipath: prefer RDAC checker with detect_checker
 > 
-> Weird commit log formatting, please use your 70+ chacters to format the
-> text.
-
-OK.
-
+> With "detect_checker yes", ALUA is used for all storage devices
+> that support ALUA. But currently RDAC is still preferred for RDAC
+> devices
+> (https://www.redhat.com/archives/dm-devel/2017-September/msg00326.html)
 > 
-> > @@ -882,6 +882,44 @@ void blk_mq_flush_busy_ctxs(struct blk_mq_hw_ctx *hctx, struct list_head *list)
-> >  }
-> >  EXPORT_SYMBOL_GPL(blk_mq_flush_busy_ctxs);
-> >  
-> > +struct dispatch_rq_data {
-> > +	struct blk_mq_hw_ctx *hctx;
-> > +	struct request *rq;
-> > +};
-> > +
-> > +static bool dispatch_rq_from_ctx(struct sbitmap *sb, unsigned int bitnr, void *data)
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  libmultipath/propsel.c | 52 +++++++++++++++++++++++++++++---------------------
+>  1 file changed, 30 insertions(+), 22 deletions(-)
 > 
-> Overly long line.
-> 
-> But except for that this looks ok to me except for the fact that you
-> just add an unused function.
 
-OK
-
--- 
-Ming
+Reviewed-by: Steve Schremmer <steve.schremmer@netapp.com>
