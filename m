@@ -1,41 +1,48 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 1/1] multipath-tools: Skip CHANGE uevent for
- non-mpath devices
-Date: Sat, 07 Oct 2017 01:20:18 +0200
-Message-ID: <1507332018.17546.1.camel@suse.com>
-References: <1507321967-12942-1-git-send-email-ritika.srivastava@oracle.com>
+From: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
+Subject: Re: [PATCH v8 01/20] crypto: change transient busy return code to
+ -EAGAIN
+Date: Sat, 7 Oct 2017 11:05:41 +0800
+Message-ID: <20171007030541.GA29421@gondor.apana.org.au>
+References: <1504615144-29770-1-git-send-email-gilad@benyossef.com>
+ <1504615144-29770-2-git-send-email-gilad@benyossef.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1507321967-12942-1-git-send-email-ritika.srivastava@oracle.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, Ritika Srivastava <ritika.srivastava@oracle.com>
-Cc: Martin Wilck <mwilck@suse.de>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1504615144-29770-2-git-send-email-gilad-6S/DczAoZh3WXxRugSxzZg@public.gmane.org>
+Sender: linux-cifs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Gilad Ben-Yossef <gilad-6S/DczAoZh3WXxRugSxzZg@public.gmane.org>
+Cc: "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Tom Lendacky <thomas.lendacky-5C7GfCeVMHo@public.gmane.org>, Gary Hook <gary.hook-5C7GfCeVMHo@public.gmane.org>, Boris Brezillon <boris.brezillon-wi1+55ScJUtKEb57/3fJTNBPR1lH4CV8@public.gmane.org>, Arnaud Ebalard <arno-LkuqDEemtHBg9hUCZPvPmw@public.gmane.org>, Matthias Brugger <matthias.bgg-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Shaohua Li <shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Steve French <sfrench-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, "Theodore Y. Ts'o" <tytso-3s7WtUTddSA@public.gmane.org>, Jaegeuk Kim <jaegeuk-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Steffen Klassert <steffen.klassert-opNxpl+3fjRBDgjK7y7TUQ@public.gmane.org>, Alexey Kuznetsov <kuznet-v/Mj1YrvjDBInbfyfbPRSQ@public.gmane.org>, Hideaki YOSHIFUJI <yoshfuji-VfPWfsRibaP+Ru+s062T9g@public.gmane.org>, Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Dmitry Kasatkin <dmitry.kasatkin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: dm-devel.ids
 
-T24gRnJpLCAyMDE3LTEwLTA2IGF0IDEzOjMyIC0wNzAwLCBSaXRpa2EgU3JpdmFzdGF2YSB3cm90
-ZToKPiBPbiByZW1vdmFsIG9mIGx2IGRldmljZSBzbmFwc2hvdCB1c2luZyBsdnJlbW92ZSwgQ0hB
-TkdFIHVldmVudCBhbmQKPiBSRU1PVkUgdWV2ZW50IGlzIGdlbmVyYXRlZCBmb3IgdGhlIGRtIGRl
-dmljZS4KPiBXaGVuIG11bHRpcGF0aCB0cmllcyB0byBwcm9jZXNzIHRoZSBDSEFOR0UgdWV2ZW50
-LCBpdCBpcyBub3QgYWJsZSB0bwo+IGZpbmQgdGhlIGRtL21hcCBuYW1lIGFuZAo+IHJldHVybnMg
-MSBkdWUgdG8gd2hpY2ggdGhlIGZvbGxvd2luZyBlcnJvciBpcyBwcmludGVkCj4gInVldmVudCB0
-cmlnZ2VyIGVycm9yIgo+IFRoaXMgc2NlbmFyaW8gaXMgbm90IGFjdHVhbGx5IGFuIGVycm9yIGFu
-ZCBpcyBtaXNsZWFkaW5nLgo+IAo+IFRvIGZpeCBpdCwgdGhlIHByb3Bvc2FsIGlzIHRvIG9ubHkg
-cHJvY2VzcyB0aGUgY2hhbmdlIHVldmVudCBpbgo+IG11bHRpcGF0aCBmb3IgYSBtdWx0aXBhdGgg
-ZGV2aWNlLgo+IAo+IFNpZ25lZC1vZmYtYnk6IFJpdGlrYSBTcml2YXN0YXZhIDxyaXRpa2Euc3Jp
-dmFzdGF2YUBvcmFjbGUuY29tPgoKT0ssIGJ1dCBJTU8gaXQgY291bGQgYmUgZG9uZSBtb3JlIG5p
-Y2VseS4gSSdsbCBwb3N0IGFuIGFsdGVybmF0aXZlCnBhdGNoIHNvb24uCgpSZWdhcmRzLApNYXJ0
-aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5
-MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEph
-bmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpk
-bS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRo
-YXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On Tue, Sep 05, 2017 at 03:38:40PM +0300, Gilad Ben-Yossef wrote:
+>
+> diff --git a/crypto/algif_hash.c b/crypto/algif_hash.c
+> index 5e92bd2..3b3c154 100644
+> --- a/crypto/algif_hash.c
+> +++ b/crypto/algif_hash.c
+> @@ -39,6 +39,20 @@ struct algif_hash_tfm {
+>  	bool has_key;
+>  };
+>  
+> +/* Previous versions of crypto_* ops used to return -EBUSY
+> + * rather than -EAGAIN to indicate being tied up. The in
+> + * kernel API changed but we don't want to break the user
+> + * space API. As only the hash user interface exposed this
+> + * error ever to the user, do the translation here.
+> + */
+> +static inline int crypto_user_err(int err)
+> +{
+> +	if (err == -EAGAIN)
+> +		return -EBUSY;
+> +
+> +	return err;
+
+I don't see the need to carry along this baggage.  Does anyone
+in user-space actually rely on EBUSY?
+
+Cheers,
+-- 
+Email: Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
