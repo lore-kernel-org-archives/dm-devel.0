@@ -1,168 +1,140 @@
-From: Muneendra Kumar M <mmandala@Brocade.com>
-Subject: Re: [PATCH V4 1/2] multipath-tools: intermittent IO
- error accounting to improve reliability
-Date: Mon, 9 Oct 2017 11:39:18 +0000
-Message-ID: <3e4d6dc552c240058909b44509935511@BRMWP-EXMB12.corp.brocade.com>
-References: <1505619638-20912-1-git-send-email-guanjunxiong@huawei.com>
-	<1505619638-20912-2-git-send-email-guanjunxiong@huawei.com>
-	<fd6ead563a154984abc2654fd1a8ea30@BRMWP-EXMB12.corp.brocade.com>
-	<7035dfdb-1c49-aa3f-3836-1ec316707c47@huawei.com>
-	<1505764297.12944.2.camel@suse.com>
-	<e596eefc-2d42-e840-57cf-6219d43de9d9@huawei.com>
-	<8d45c076cf6c47d39bf2aade3ade7f51@BRMWP-EXMB12.corp.brocade.com>
-	<52829afa-ed9e-cc39-a492-3e678b8e0d03@huawei.com>
-	<b9fadaaabca54790969d3b31ba9dddb8@BRMWP-EXMB12.corp.brocade.com>
-	<658d39ce-5ac8-f102-96a8-c332da403e90@huawei.com>
-	<615cdd5a955944e49986dca01bf406a5@BRMWP-EXMB12.corp.brocade.com>
-	<06296b9f-e8da-77f2-d28f-db43c94c6c50@huawei.com>
+From: John Garry <john.garry@huawei.com>
+Subject: Re: [PATCH V5 00/14] blk-mq-sched: improve sequential I/O
+ performance(part 1)
+Date: Mon, 9 Oct 2017 13:09:22 +0100
+Message-ID: <1e56f7e1-2a2f-26c9-9c74-97e0d22bc98b@huawei.com>
+References: <20170930102720.30219-1-ming.lei@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <06296b9f-e8da-77f2-d28f-db43c94c6c50@huawei.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Guan Junxiong <guanjunxiong@huawei.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, niuhaoxin <niuhaoxin@huawei.com>, "Shenhong (C)" <shenhong09@huawei.com>, Martin Wilck <mwilck@suse.com>
+Content-Type: text/plain; charset="windows-1252"; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20170930102720.30219-1-ming.lei@redhat.com>
+Sender: linux-block-owner@vger.kernel.org
+To: Ming Lei <ming.lei@redhat.com>, Jens Axboe <axboe@fb.com>, linux-block@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
+Cc: Bart Van Assche <bart.vanassche@sandisk.com>, Laurence Oberman <loberman@redhat.com>, Paolo Valente <paolo.valente@linaro.org>, Oleksandr Natalenko <oleksandr@natalenko.name>, Tom Nguyen <tom81094@gmail.com>, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, Omar Sandoval <osandov@fb.com>, Linuxarm <linuxarm@huawei.com>
 List-Id: dm-devel.ids
 
-SGkgR3VhbiwKVGhhbmtzIGZvciB0aGUgaW5mby4KQ2hhbmdlcyBsb29rcyBmaW5lLgpJbnN0ZWFk
-IG9mIG1hcmdpbmFsX3BhdGhfZXJyX3JlY2hlY2tfZ2FwX3RpbWUsIG1hcmdpbmFsX3BhdGhfcmVj
-b3ZlcnlfdGltZSB3aWxsIGxvb2tzIHJlYXNvbmFibGUuIApUaGlzIHdhcyBvbmx5IG15IGlucHV0
-LgoKUmVnYXJkcywKTXVuZWVuZHJhLgoKLS0tLS1PcmlnaW5hbCBNZXNzYWdlLS0tLS0KRnJvbTog
-R3VhbiBKdW54aW9uZyBbbWFpbHRvOmd1YW5qdW54aW9uZ0BodWF3ZWkuY29tXSAKU2VudDogTW9u
-ZGF5LCBPY3RvYmVyIDA5LCAyMDE3IDY6MTMgQU0KVG86IE11bmVlbmRyYSBLdW1hciBNIDxtbWFu
-ZGFsYUBCcm9jYWRlLmNvbT4KQ2M6IFNoZW5ob25nIChDKSA8c2hlbmhvbmcwOUBodWF3ZWkuY29t
-Pjsgbml1aGFveGluIDxuaXVoYW94aW5AaHVhd2VpLmNvbT47IE1hcnRpbiBXaWxjayA8bXdpbGNr
-QHN1c2UuY29tPjsgQ2hyaXN0b3BoZSBWYXJvcXVpIDxjaHJpc3RvcGhlLnZhcm9xdWlAb3BlbnN2
-Yy5jb20+OyBkbS1kZXZlbEByZWRoYXQuY29tClN1YmplY3Q6IFJlOiBbUEFUQ0ggVjQgMS8yXSBt
-dWx0aXBhdGgtdG9vbHM6IGludGVybWl0dGVudCBJTyBlcnJvciBhY2NvdW50aW5nIHRvIGltcHJv
-dmUgcmVsaWFiaWxpdHkKCkhpIE11bmVlbmRyYSwKU29ycnkgZm9yIGxhdGUgcmVwbHkgYmVjYXVz
-ZSBvZiBOYXRpb25hbCBIb2xpZGF5LgoKT24gMjAxNy8xMC82IDEzOjU0LCBNdW5lZW5kcmEgS3Vt
-YXIgTSB3cm90ZToKPiBIaSBHdWFuLAo+IERpZCB5b3UgcHVzaCB0aGUgcGF0Y2ggdG8gbWFpbmxp
-bmUuCj4gSWYgc28gY2FuIHlvdSBqdXN0IHByb3ZpZGUgbWUgdGhvc2UgZGV0YWlscy4KPiBJZiBu
-b3QgY2FuIHlvdSBqdXN0IGxldCBtZSBrbm93IHRoZSBzdGF0dXMuCj4gCgpZZXMsIEkgcHVzaGVk
-IFZlcnNpb24gNiBvZiB0aGUgcGF0Y2ggdG8gdGhlIG1haWwgbGlzdCBidXQgaXQgaGFzbid0IGJl
-ZW4gbWVyZ2VkIHlldC4KSXQgaXMgc3RpbGwgd2FpdGluZyBmb3IgcmV2aWV3LgpZb3UgY2FuIGZp
-bmQgaXQgYXQgdGhpcyBsaW5rOgpodHRwczovL3VybGRlZmVuc2UucHJvb2Zwb2ludC5jb20vdjIv
-dXJsP3U9aHR0cHMtM0FfX3d3dy5yZWRoYXQuY29tX2FyY2hpdmVzX2RtLTJEZGV2ZWxfMjAxNy0y
-RFNlcHRlbWJlcl9tc2cwMDI5Ni5odG1sJmQ9RHdJRGFRJmM9SUxfWHFRV09qdWJnZnFJTmkyalR6
-ZyZyPUUzZnRjNDdCNkJHdFo0ZlZhWXZrdXYxOXdLdkNfTWM2bmhYYUExc0JJUDAmbT1OOFQwNG9X
-Nmowa2tjZjVmTHA4alhBMXk3NVNSTjZQTTlELWRNNW5jMmQ0JnM9c0JaVFRqcENWWkIzTkJnR1h3
-UENFMWZCdHFBbXg3NXMwRGtBc1ZZUnJ3YyZlPQoKPiBBcyBjb3VwbGUgb2Ygb3VyIGNsaWVudHMg
-YXJlIGFscmVhZHkgdXNpbmcgdGhlIHByZXZpb3VzIHBhdGNoKHNhbl9wYXRoX1hYKS4KPiBJZiB5
-b3VyIHBhdGNoIGlzIHB1c2hlZCB0aGVuIEkgY2FuIGdpdmUgdGhlbSB0aGUgdXBkYXRlZCBwYXRj
-aCBhbmQgdGVzdCB0aGUgc2FtZS4KPiAKCklmIHRoZSBwYXRjaCBpZiBPSyBmb3IgeW91LCBjYW4g
-SSBhZGQgeW91ciBSZXZpZXdlZC1ieSB0YWcgaW50byB0aGlzIHBhdGNoPwoKUmVnYXJkcywKR3Vh
-bgoKPiBSZWdhcmRzLAo+IE11bmVlbmRyYS4KPiAKPiAKPiAtLS0tLU9yaWdpbmFsIE1lc3NhZ2Ut
-LS0tLQo+IEZyb206IE11bmVlbmRyYSBLdW1hciBNIAo+IFNlbnQ6IFRodXJzZGF5LCBTZXB0ZW1i
-ZXIgMjEsIDIwMTcgMzo0MSBQTQo+IFRvOiAnR3VhbiBKdW54aW9uZycgPGd1YW5qdW54aW9uZ0Bo
-dWF3ZWkuY29tPjsgTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+OyBkbS1kZXZlbEByZWRo
-YXQuY29tOyBjaHJpc3RvcGhlLnZhcm9xdWlAb3BlbnN2Yy5jb20KPiBDYzogc2hlbmhvbmcwOUBo
-dWF3ZWkuY29tOyBuaXVoYW94aW5AaHVhd2VpLmNvbTsgY2hlbmdqaWtlLmNoZW5nQGh1YXdlaS5j
-b20KPiBTdWJqZWN0OiBSRTogW1BBVENIIFY0IDEvMl0gbXVsdGlwYXRoLXRvb2xzOiBpbnRlcm1p
-dHRlbnQgSU8gZXJyb3IgYWNjb3VudGluZyB0byBpbXByb3ZlIHJlbGlhYmlsaXR5Cj4gCj4gSGkg
-R3VhbiwKPiBUaGFua3MgZm9yIGFkb3B0aW5nIHRoZSBuYW1pbmcgY29udmVudGlvbi4gCj4gSW5z
-dGVhZCBvZiBtYXJnaW5hbF9wYXRoX2Vycl9yZWNoZWNrX2dhcF90aW1lLCBtYXJnaW5hbF9wYXRo
-X3JlY292ZXJ5X3RpbWUgd2lsbCBsb29rcyByZWFzb25hYmxlLkNvdWxkIHlvdSBwbGVhc2UgcmVs
-b29rIGludG8gaXQuCj4gCj4gSSB3aWxsIHJldmlldyB0aGUgY29kZSBpbiBhIGRheSB0aW1lLgo+
-IAo+IFJlZ2FyZHMsCj4gTXVuZWVuZHJhLgo+IAo+IC0tLS0tT3JpZ2luYWwgTWVzc2FnZS0tLS0t
-Cj4gRnJvbTogR3VhbiBKdW54aW9uZyBbbWFpbHRvOmd1YW5qdW54aW9uZ0BodWF3ZWkuY29tXSAK
-PiBTZW50OiBUaHVyc2RheSwgU2VwdGVtYmVyIDIxLCAyMDE3IDM6MzUgUE0KPiBUbzogTXVuZWVu
-ZHJhIEt1bWFyIE0gPG1tYW5kYWxhQEJyb2NhZGUuY29tPjsgTWFydGluIFdpbGNrIDxtd2lsY2tA
-c3VzZS5jb20+OyBkbS1kZXZlbEByZWRoYXQuY29tOyBjaHJpc3RvcGhlLnZhcm9xdWlAb3BlbnN2
-Yy5jb20KPiBDYzogc2hlbmhvbmcwOUBodWF3ZWkuY29tOyBuaXVoYW94aW5AaHVhd2VpLmNvbTsg
-Y2hlbmdqaWtlLmNoZW5nQGh1YXdlaS5jb20KPiBTdWJqZWN0OiBSZTogW1BBVENIIFY0IDEvMl0g
-bXVsdGlwYXRoLXRvb2xzOiBpbnRlcm1pdHRlbnQgSU8gZXJyb3IgYWNjb3VudGluZyB0byBpbXBy
-b3ZlIHJlbGlhYmlsaXR5Cj4gCj4gSGksIE11bmVlbmRyYQo+IAo+ICAgVGhhbmtzIGZvciB5b3Vy
-IGNsYXJpZmljYXRpb24uIEkgYWRvcHQgdGhpcyByZW5hbWluZy4gSWYgaXQgaXMgY29udmVuaWVu
-dCBmb3IgeW91LCBwbGVhc2UgcmV2aWV3IHRoZSBWNSBwYXRjaCB0aGF0IEkgc2VudCBvdXQgMiBo
-b3VycyBhZ28uCj4gCj4gUmVnYXJkcywKPiBHdWFuCj4gCj4gT24gMjAxNy85LzIwIDIwOjU4LCBN
-dW5lZW5kcmEgS3VtYXIgTSB3cm90ZToKPj4gSGkgR3VhbiwKPj4+Pj4gU2hhbGwgd2UgdXNlIGV4
-aXN0aW5nIFBBVEhfU0hBS1kgPwo+PiBBcyB0aGUgcGF0aF9zaGFreSBJbmRpY2F0ZXMgcGF0aCBu
-b3QgYXZhaWxhYmxlIGZvciAibm9ybWFsIiBvcGVyYXRpb25zIHdlIGNhbiB1c2UgdGhpcyBzdGF0
-ZS4gVGhhdCdzICBhIGdvb2QgaWRlYS4KPj4KPj4gUmVnYXJkaW5nIHRoZSBtYXJnaW5hbCBwYXRo
-cyBiZWxvdyBpcyBteSBleHBsYW5hdGlvbi4gQW5kIGJyb2NhZGUgaXMgcHVibGlzaGluZyBjb3Vw
-bGUgb2Ygd2hpdGUgcGFwZXJzIHJlZ2FyZGluZyB0aGUgc2FtZSB0byBlZHVjYXRlIHRoZSBTQU4g
-YWRtaW5pc3RyYXRvcnMgYW5kIHRoZSBzYW4gY29tbXVuaXR5Lgo+Pgo+PiBNYXJnaW5hbCBwYXRo
-Ogo+Pgo+PiBBIGhvc3QsIHRhcmdldCwgTFVOIChJVEwgcGF0aCkgZmxvdyAgZ29lcyB0aHJvdWdo
-IFNBTi4gSXQgaXMgdG8gYmUgbm90ZWQgdGhhdCB0aGUgZm9yIGVhY2ggSS9PIHJlcXVlc3QgdGhh
-dCBnb2VzIHRvIHRoZSBTQ1NJIGxheWVyLCBpdCB0cmFuc2Zvcm1zIGludG8gYSBzaW5nbGUgU0NT
-SSBleGNoYW5nZS4gIEluIGEgc2luZ2xlIFNBTiwgdGhlcmUgYXJlIHR5cGljYWxseSBtdWx0aXBs
-ZSBTQU4gbmV0d29yayBwYXRocyAgZm9yIGEgSVRMIGZsb3cvcGF0aC4gRWFjaCBTQ1NJIGV4Y2hh
-bmdlICBjYW4gdGFrZSBvbmUgb2YgdGhlIHZhcmlvdXMgbmV0d29yayBwYXRocyB0aGF0IGFyZSBh
-dmFpbGFibGUgZm9yIHRoZSBJVEwgcGF0aC4gIEEgU0FOIGNhbiBiZSBiYXNlZCBvbiBFdGhlcm5l
-dCwgRkMsIEluZmluaWJhbmQgcGh5c2ljYWwgbmV0d29ya3MgdG8gY2FycnkgYmxvY2sgc3RvcmFn
-ZSB0cmFmZmljIChTQ1NJLCBOVk1lIGV0Yy4pCj4+Cj4+IFRoZXJlIGFyZSB0eXBpY2FsbHkgdHdv
-IHR5cGUgb2YgU0FOIG5ldHdvcmsgcHJvYmxlbXMgdGhhdCBhcmUgY2F0ZWdvcml6ZWQgYXMgbWFy
-Z2luYWwgaXNzdWVzLiBUaGVzZSBpc3N1ZXMgYnkgbmF0dXJlIGFyZSBub3QgcGVybWFuZW50IGlu
-IHRpbWUgYW5kIGRvIGNvbWUgYW5kIGdvIGF3YXkgb3ZlciB0aW1lLgo+PiAxKSBTd2l0Y2hlcyBp
-biB0aGUgU0FOIGNhbiBoYXZlIGludGVybWl0dGVudCBmcmFtZSBkcm9wcyBvciBpbnRlcm1pdHRl
-bnQgZnJhbWUgY29ycnVwdGlvbnMgZHVlIHRvIGJhZCBvcHRpY3MgY2FibGUgKFNGUCkgb3IgYW55
-IHN1Y2ggd2Vhci90ZWFyICBwb3J0IGlzc3Vlcy4gVGhpcyBjYXVzZXMgSVRMIGZsb3dzIHRoYXQg
-Z28gdGhyb3VnaCB0aGUgZmF1bHR5IHN3aXRjaC9wb3J0IHRvIGludGVybWl0dGVudGx5IGV4cGVy
-aWVuY2UgZnJhbWUgZHJvcHMuICAKPj4gMikgVGhlcmUgZXhpc3RzIFNBTiB0b3BvbG9naWVzIHdo
-ZXJlIHRoZXJlIGFyZSBzd2l0Y2ggcG9ydHMgaW4gdGhlIGZhYnJpYyB0aGF0IGJlY29tZXMgdGhl
-IG9ubHkgIGNvbmR1aXQgZm9yIG1hbnkgZGlmZmVyZW50IElUTCBmbG93cyBhY3Jvc3MgbXVsdGlw
-bGUgaG9zdHMuIFRoZXNlIHNpbmdsZSBuZXR3b3JrIHBhdGhzIGFyZSBlc3NlbnRpYWxseSBzaGFy
-ZWQgYWNyb3NzIG11bHRpcGxlIElUTCBmbG93cy4gVW5kZXIgdGhlc2UgY29uZGl0aW9ucyBpZiB0
-aGUgcG9ydCBsaW5rIGJhbmR3aWR0aCBpcyBub3QgYWJsZSB0byBoYW5kbGUgdGhlIG5ldCBzdW0g
-b2YgdGhlIHNoYXJlZCBJVEwgZmxvd3MgYmFuZHdpZHRoIGdvaW5nIHRocm91Z2ggdGhlIHNpbmds
-ZSBwYXRoICB0aGVuIHdlIGNvdWxkIHNlZSBpbnRlcm1pdHRlbnQgbmV0d29yayBjb25nZXN0aW9u
-IHByb2JsZW1zLiBUaGlzIGNvbmRpdGlvbiBpcyBjYWxsZWQgbmV0d29yayBvdmVyc3Vic2NyaXB0
-aW9uLiBUaGUgaW50ZXJtaXR0ZW50IGNvbmdlc3Rpb25zIGNhbiBkZWxheSBTQ1NJIGV4Y2hhbmdl
-IGNvbXBsZXRpb24gdGltZSAoaW5jcmVhc2UgaW4gSS9PIGxhdGVuY3kgaXMgb2JzZXJ2ZWQpLgo+
-Pgo+PiBUbyBvdmVyY29tZSB0aGUgYWJvdmUgbmV0d29yayBpc3N1ZXMgYW5kIG1hbnkgbW9yZSBz
-dWNoIHRhcmdldCBpc3N1ZXMsIHRoZXJlIGFyZSBmcmFtZSBsZXZlbCByZXRyaWVzIHRoYXQgYXJl
-IGRvbmUgaW4gSEJBIGRldmljZSBmaXJtd2FyZSBhbmQgSS9PIHJldHJpZXMgaW4gdGhlIFNDU0kg
-bGF5ZXIuIFRoZXNlIHJldHJpZXMgbWlnaHQgc3VjY2VlZCBiZWNhdXNlIG9mIHR3byByZWFzb25z
-Ogo+PiAxKSBUaGUgaW50ZXJtaXR0ZW50IHN3aXRjaC9wb3J0IGlzc3VlIGlzIG5vdCBvYnNlcnZl
-ZAo+PiAyKSBUaGUgcmV0cnkgSS9PIGlzIGEgbmV3ICBTQ1NJIGV4Y2hhbmdlLiBUaGlzIFNDU0kg
-ZXhjaGFuZ2UgIGNhbiB0YWtlIGFuIGFsdGVybmF0ZSBTQU4gcGF0aCBmb3IgdGhlIElUTCBmbG93
-LCBpZiBzdWNoIGFuIFNBTiBwYXRoIGV4aXN0cy4KPj4gMykgTmV0d29yayBjb25nZXN0aW9uIGRp
-c2FwcGVhcnMgbW9tZW50YXJpbHkgYmVjYXVzZSB0aGUgbmV0IEkvTyBiYW5kd2lkdGggY29taW5n
-IGZyb20gbXVsdGlwbGUgSVRMIGZsb3dzIG9uIHRoZSBzaW5nbGUgc2hhcmVkIG5ldHdvcmsgcGF0
-aCBpcyBzb21ldGhpbmcgdGhlIHBhdGggY2FuIGhhbmRsZQo+Pgo+PiBIb3dldmVyIGluIHNvbWUg
-Y2FzZXMgd2UgaGF2ZSBzZWVuIEkvTyByZXRyaWVzIGRvbuKAmXQgc3VjY2VlZCBiZWNhdXNlIHRo
-ZSByZXRyeSBJL09zIGhpdHMgYSBTQU4gbmV0d29yayBwYXRoIHRoYXQgaGFzICBpbnRlcm1pdHRl
-bnQgc3dpdGNoL3BvcnQgaXNzdWUgYW5kL29yIG5ldHdvcmsgY29uZ2VzdGlvbi4gCj4+Cj4+IE9u
-IHRoZSBob3N0ICB0aHVzIHdlIHNlZSBjb25maWd1cmF0aW9ucyB0d28gb3IgbW9yZSBJVEwgcGF0
-aCBzaGFyaW5nIHRoZSBzYW1lIHRhcmdldC9MVU4gZ29pbmcgdGhyb3VnaCB0d28gb3IgbW9yZSBI
-QkEgcG9ydHMuIFRoZXNlIEhCQSBwb3J0cyBhcmUgY29ubmVjdGVkIHRvIHR3byBvciBtb3JlIFNB
-TiB0byB0aGUgc2FtZSB0YXJnZXQvTFVOLgo+PiBJZiB0aGUgSS9PIGZhaWxzIGF0IHRoZSBtdWx0
-aXBhdGggbGF5ZXIgdGhlbiwgdGhlIElUTCBwYXRoIGlzIHR1cm5lZCBpbnRvIEZhaWxlZCBzdGF0
-ZS4gQmVjYXVzZSBvZiB0aGUgbWFyZ2luYWwgbmF0dXJlIG9mIHRoZSBuZXR3b3JrLCB0aGUgbmV4
-dCBIZWFsdGggQ2hlY2sgY29tbWFuZCBzZW50IGZyb20gbXVsdGlwYXRoIGxheWVyIG1pZ2h0IHN1
-Y2NlZWQsIHdoaWNoIHJlc3VsdHMgaW4gbWFraW5nIHRoZSBJVEwgcGF0aCBpbnRvIEFjdGl2ZSBz
-dGF0ZS4gWW91IGVuZCB1cCBzZWVpbmcgdGhlIERNIHBhdGggc3RhdGUgZ29pbmcgIGludG8gQWN0
-aXZlLCBGYWlsZWQsIEFjdGl2ZSB0cmFuc2l0aW9ucy4gVGhpcyByZXN1bHRzIGluIG92ZXJhbGwg
-cmVkdWN0aW9uIGluIGFwcGxpY2F0aW9uIEkvTyB0aHJvdWdocHV0IGFuZCBzb21ldGltZSBhcHBs
-aWNhdGlvbiBJL08gZmFpbHVyZXMgKGJlY2F1c2Ugb2YgdGltaW5nIGNvbnN0cmFpbnRzKS4gQWxs
-IHRoaXMgY2FuIGhhcHBlbiBiZWNhdXNlIG9mIEkvTyByZXRyaWVzIGFuZCBJL08gcmVxdWVzdCBt
-b3ZpbmcgYWNyb3NzIG11bHRpcGxlIHBhdGhzIG9mIHRoZSBETSBkZXZpY2UuIEluIHRoZSBob3N0
-IGl0IGlzICB0byBiZSBub3RlZCBhbGwgSS9PIHJldHJpZXMgb24gYSBzaW5nbGUgcGF0aCBhbmQg
-SS9PIG1vdmVtZW50IGFjcm9zcyBtdWx0aXBsZSBwYXRocyByZXN1bHRzIGluIHNsb3dpbmcgZG93
-biB0aGUgZm9yd2FyZCBwcm9ncmVzcyBvZiBuZXcgYXBwbGljYXRpb24gSS9PLiBSZWFzb24gYmVo
-aW5kLCB0aGUgYWJvdmUgSS9PICByZS1xdWV1ZSBhY3Rpb25zIGFyZSBnaXZlbiBoaWdoZXIgcHJp
-b3JpdHkgdGhhbiB0aGUgbmV3ZXIgSS9PIHJlcXVlc3RzIGNvbWluZyBmcm9tIHRoZSBhcHBsaWNh
-dGlvbi4gCj4+Cj4+IFRoZSBhYm92ZSBjb25kaXRpb24gb2YgdGhlICBJVEwgcGF0aCBpcyBoZW5j
-ZSBjYWxsZWQg4oCcbWFyZ2luYWzigJ0uCj4+Cj4+IFdoYXQgd2UgZGVzaXJlIGlzIGZvciB0aGUg
-RE0gdG8gZGV0ZXJtaW5pc3RpY2FsbHkgIGNhdGVnb3JpemUgYSBJVEwgUGF0aCBhcyDigJxtYXJn
-aW5hbOKAnSBhbmQgbW92ZSBhbGwgdGhlIHBlbmRpbmcgSS9PcyBmcm9tIHRoZSBtYXJnaW5hbCBQ
-YXRoIHRvIGFuIEFjdGl2ZSBQYXRoLiBUaGlzIHdpbGwgaGVscCBpbiBtZWV0aW5nIGFwcGxpY2F0
-aW9uIEkvTyB0aW1pbmcgY29uc3RyYWludHMuIEFsc28gYSBjYXBhYmlsaXR5IHRvIGF1dG9tYXRp
-Y2FsbHkgcmUtaW5zdGFudGlhdGUgdGhlIG1hcmdpbmFsIHBhdGggaW50byBBY3RpdmUgb25jZSB0
-aGUgbWFyZ2luYWwgY29uZGl0aW9uIGluIHRoZSBuZXR3b3JrIGlzIGZpeGVkLgo+Pgo+Pgo+PiBC
-YXNlZCBvbiB0aGUgYWJvdmUgZXhwbGFuYXRpb24gSSB3YW50IHRvIHJlbmFtZSB0aGUgbmFtZXMg
-YXMgbWFyZ2luYWxfcGF0aF9YWFhYIGFuZCB0aGlzIGlzIGlycmVzcGVjdGl2ZSBvZiBhbnkgc3Rv
-cmFnZSBuZXR3b3JrLgo+Pgo+PiBSZWdhcmRzLAo+PiBNdW5lZW5kcmEuCj4gCgoKLS0KZG0tZGV2
-ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNv
-bS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+On 30/09/2017 11:27, Ming Lei wrote:
+> Hi Jens,
+>
+> In Red Hat internal storage test wrt. blk-mq scheduler, we
+> found that I/O performance is much bad with mq-deadline, especially
+> about sequential I/O on some multi-queue SCSI devcies(lpfc, qla2xxx,
+> SRP...)
+>
+> Turns out one big issue causes the performance regression: requests
+> are still dequeued from sw queue/scheduler queue even when ldd's
+> queue is busy, so I/O merge becomes quite difficult to make, then
+> sequential IO degrades a lot.
+>
+> This issue becomes one of mains reasons for reverting default SCSI_MQ
+> in V4.13.
+>
+> The 1st patch takes direct issue in blk_mq_request_bypass_insert(),
+> then we can improve dm-mpath's performance in part 2, which will
+> be posted out soon.
+>
+> The 2nd six patches improve this situation, and brings back
+> some performance loss.
+>
+> With this change, SCSI-MQ sequential I/O performance is
+> improved much, Paolo reported that mq-deadline performance
+> improved much[2] in his dbench test wrt V2. Also performanc
+> improvement on lpfc/qla2xx was observed with V1.[1]
+>
+> Please consider it for V4.15.
+>
+> [1] http://marc.info/?l=linux-block&m=150151989915776&w=2
+> [2] https://marc.info/?l=linux-block&m=150217980602843&w=2
+>
+
+I tested this series for the SAS controller on HiSilicon hip07 platform 
+as I am interested in enabling MQ for this driver. Driver is 
+./drivers/scsi/hisi_sas/.
+
+So I found that that performance is improved when enabling default 
+SCSI_MQ with this series vs baseline. However, it is still not as a good 
+as when default SCSI_MQ is disabled.
+
+Here are some figures I got with fio:
+4.14-rc2 without default SCSI_MQ
+read, rw, write IOPS	
+952K, 133K/133K, 800K
+
+4.14-rc2 with default SCSI_MQ
+read, rw, write IOPS	
+311K, 117K/117K, 320K
+
+This series* without default SCSI_MQ
+read, rw, write IOPS	
+975K, 132K/132K, 790K
+
+This series* with default SCSI_MQ
+read, rw, write IOPS	
+770K, 164K/164K, 594K
+
+Please note that hisi_sas driver does not enable mq by exposing multiple 
+queues to upper layer (even though it has multiple queues). I have been 
+playing with enabling it, but my performance is always worse...
+
+* I'm using 
+https://github.com/ming1/linux/commits/blk_mq_improve_scsi_mpath_perf_V5.1, 
+as advised by Ming Lei.
+
+Thanks,
+John
+
+> V5:
+> 	- address some comments from Omar
+> 	- add Tested-by & Reveiewed-by tag
+> 	- use direct issue for blk_mq_request_bypass_insert(), and
+> 	start to consider to improve sequential I/O for dm-mpath
+> 	- only include part 1(the original patch 1 ~ 6), as suggested
+> 	by Omar
+>
+> V4:
+> 	- add Reviewed-by tag
+> 	- some trival change: typo fix in commit log or comment,
+> 	variable name, no actual functional change
+>
+> V3:
+> 	- totally round robin for picking req from ctx, as suggested
+> 	by Bart
+> 	- remove one local variable in __sbitmap_for_each_set()
+> 	- drop patches of single dispatch list, which can improve
+> 	performance on mq-deadline, but cause a bit degrade on
+> 	none because all hctxs need to be checked after ->dispatch
+> 	is flushed. Will post it again once it is mature.
+> 	- rebase on v4.13-rc6 with block for-next
+>
+> V2:
+> 	- dequeue request from sw queues in round roubin's style
+> 	as suggested by Bart, and introduces one helper in sbitmap
+> 	for this purpose
+> 	- improve bio merge via hash table from sw queue
+> 	- add comments about using DISPATCH_BUSY state in lockless way,
+> 	simplifying handling on busy state,
+> 	- hold ctx->lock when clearing ctx busy bit as suggested
+> 	by Bart
+>
+>
+> Ming Lei (7):
+>   blk-mq: issue rq directly in blk_mq_request_bypass_insert()
+>   blk-mq-sched: fix scheduler bad performance
+>   sbitmap: introduce __sbitmap_for_each_set()
+>   blk-mq: introduce blk_mq_dequeue_from_ctx()
+>   blk-mq-sched: move actual dispatching into one helper
+>   blk-mq-sched: improve dispatching from sw queue
+>   blk-mq-sched: don't dequeue request until all in ->dispatch are
+>     flushed
+>
+>  block/blk-core.c        |   3 +-
+>  block/blk-mq-debugfs.c  |   1 +
+>  block/blk-mq-sched.c    | 104 ++++++++++++++++++++++++++++++++++++-------
+>  block/blk-mq.c          | 114 +++++++++++++++++++++++++++++++++++++++---------
+>  block/blk-mq.h          |   4 +-
+>  drivers/md/dm-rq.c      |   2 +-
+>  include/linux/blk-mq.h  |   3 ++
+>  include/linux/sbitmap.h |  64 +++++++++++++++++++--------
+>  8 files changed, 238 insertions(+), 57 deletions(-)
+>
