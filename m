@@ -1,192 +1,152 @@
-From: Ben Hutchings <ben@decadent.org.uk>
-Subject: Re: [PATCH 3.16,4.1] dm: flush queued bios when process blocks to
- avoid deadlock
-Date: Sun, 08 Oct 2017 23:53:26 +0100
-Message-ID: <1507503206.2677.108.camel@decadent.org.uk>
-References: <alpine.LRH.2.02.1703151618110.1934@file01.intranet.prod.int.rdu2.redhat.com>
+From: Guan Junxiong <guanjunxiong@huawei.com>
+Subject: Re: [PATCH V4 1/2] multipath-tools: intermittent IO
+ error accounting to improve reliability
+Date: Mon, 9 Oct 2017 08:42:37 +0800
+Message-ID: <06296b9f-e8da-77f2-d28f-db43c94c6c50@huawei.com>
+References: <1505619638-20912-1-git-send-email-guanjunxiong@huawei.com>
+	<1505619638-20912-2-git-send-email-guanjunxiong@huawei.com>
+	<fd6ead563a154984abc2654fd1a8ea30@BRMWP-EXMB12.corp.brocade.com>
+	<7035dfdb-1c49-aa3f-3836-1ec316707c47@huawei.com>
+	<1505764297.12944.2.camel@suse.com>
+	<e596eefc-2d42-e840-57cf-6219d43de9d9@huawei.com>
+	<8d45c076cf6c47d39bf2aade3ade7f51@BRMWP-EXMB12.corp.brocade.com>
+	<52829afa-ed9e-cc39-a492-3e678b8e0d03@huawei.com>
+	<b9fadaaabca54790969d3b31ba9dddb8@BRMWP-EXMB12.corp.brocade.com>
+	<658d39ce-5ac8-f102-96a8-c332da403e90@huawei.com>
+	<615cdd5a955944e49986dca01bf406a5@BRMWP-EXMB12.corp.brocade.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg="pgp-sha512";
-        protocol="application/pgp-signature"; boundary="=-iV83WyRQ7IUd8g9E06ql"
-Return-path: <stable-owner@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.02.1703151618110.1934@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: stable-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>, stable@vger.kernel.org, Sasha Levin <sasha.levin@oracle.com>
-Cc: Mike Snitzer <msnitzer@redhat.com>, dm-devel@redhat.com
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <615cdd5a955944e49986dca01bf406a5@BRMWP-EXMB12.corp.brocade.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Muneendra Kumar M <mmandala@Brocade.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, niuhaoxin <niuhaoxin@huawei.com>, "Shenhong (C)" <shenhong09@huawei.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-
---=-iV83WyRQ7IUd8g9E06ql
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-
-On Wed, 2017-03-15 at 16:22 -0400, Mikulas Patocka wrote:
-> Hi
->=20
-> This is backport of the upstram patch=20
-> d67a5f4b5947aba4bfe9a80a2b86079c215ca755 for stable branches 3.16 and 4.1=
-.
-
-Queued up for 3.16, thanks.
-
-Ben.
-
-> Mikulas
->=20
->=20
-> commit d67a5f4b5947aba4bfe9a80a2b86079c215ca755
-> Author: Mikulas Patocka <mpatocka@redhat.com>
-> Date:   Wed Feb 15 11:26:10 2017 -0500
->=20
->     dm: flush queued bios when process blocks to avoid deadlock
->    =20
->     Commit df2cb6daa4 ("block: Avoid deadlocks with bio allocation by
->     stacking drivers") created a workqueue for every bio set and code
->     in bio_alloc_bioset() that tries to resolve some low-memory deadlocks
->     by redirecting bios queued on current->bio_list to the workqueue if t=
-he
->     system is low on memory.  However other deadlocks (see below **) may
->     happen, without any low memory condition, because generic_make_reques=
-t
->     is queuing bios to current->bio_list (rather than submitting them).
->    =20
->     ** the related dm-snapshot deadlock is detailed here:
->     https://www.redhat.com/archives/dm-devel/2016-July/msg00065.html
->    =20
->     Fix this deadlock by redirecting any bios on current->bio_list to the
->     bio_set's rescue workqueue on every schedule() call.  Consequently,
->     when the process blocks on a mutex, the bios queued on
->     current->bio_list are dispatched to independent workqueus and they ca=
-n
->     complete without waiting for the mutex to be available.
->    =20
->     The structure blk_plug contains an entry cb_list and this list can co=
-ntain
->     arbitrary callback functions that are called when the process blocks.
->     To implement this fix DM (ab)uses the onstack plug's cb_list interfac=
-e
->     to get its flush_current_bio_list() called at schedule() time.
->    =20
->     This fixes the snapshot deadlock - if the map method blocks,
->     flush_current_bio_list() will be called and it redirects bios waiting
->     on current->bio_list to appropriate workqueues.
->    =20
->     Fixes: https://bugzilla.redhat.com/show_bug.cgi?id=3D1267650
->     Depends-on: df2cb6daa4 ("block: Avoid deadlocks with bio allocation b=
-y stacking drivers")
->     Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
->     Signed-off-by: Mike Snitzer <snitzer@redhat.com>
->=20
-> ---
->  drivers/md/dm.c |   55 +++++++++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  1 file changed, 55 insertions(+)
->=20
-> Index: linux-stable/drivers/md/dm.c
-> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> --- linux-stable.orig/drivers/md/dm.c
-> +++ linux-stable/drivers/md/dm.c
-> @@ -1435,11 +1435,62 @@ void dm_accept_partial_bio(struct bio *b
->  }
->  EXPORT_SYMBOL_GPL(dm_accept_partial_bio);
-> =20
-> +/*
-> + * Flush current->bio_list when the target map method blocks.
-> + * This fixes deadlocks in snapshot and possibly in other targets.
-> + */
-> +struct dm_offload {
-> +       struct blk_plug plug;
-> +       struct blk_plug_cb cb;
-> +};
-> +
-> +static void flush_current_bio_list(struct blk_plug_cb *cb, bool from_sch=
-edule)
-> +{
-> +       struct dm_offload *o =3D container_of(cb, struct dm_offload, cb);
-> +       struct bio_list list;
-> +       struct bio *bio;
-> +
-> +       INIT_LIST_HEAD(&o->cb.list);
-> +
-> +       if (unlikely(!current->bio_list))
-> +               return;
-> +
-> +       list =3D *current->bio_list;
-> +       bio_list_init(current->bio_list);
-> +
-> +       while ((bio =3D bio_list_pop(&list))) {
-> +               struct bio_set *bs =3D bio->bi_pool;
-> +               if (unlikely(!bs) || bs =3D=3D fs_bio_set) {
-> +                       bio_list_add(current->bio_list, bio);
-> +                       continue;
-> +               }
-> +
-> +               spin_lock(&bs->rescue_lock);
-> +               bio_list_add(&bs->rescue_list, bio);
-> +               queue_work(bs->rescue_workqueue, &bs->rescue_work);
-> +               spin_unlock(&bs->rescue_lock);
-> +       }
-> +}
-> +
-> +static void dm_offload_start(struct dm_offload *o)
-> +{
-> +       blk_start_plug(&o->plug);
-> +       o->cb.callback =3D flush_current_bio_list;
-> +       list_add(&o->cb.list, &current->plug->cb_list);
-> +}
-> +
-> +static void dm_offload_end(struct dm_offload *o)
-> +{
-> +       list_del(&o->cb.list);
-> +       blk_finish_plug(&o->plug);
-> +}
-> +
->  static void __map_bio(struct dm_target_io *tio)
->  {
->         int r;
->         sector_t sector;
->         struct mapped_device *md;
-> +       struct dm_offload o;
->         struct bio *clone =3D &tio->clone;
->         struct dm_target *ti =3D tio->ti;
-> =20
-> @@ -1452,7 +1503,11 @@ static void __map_bio(struct dm_target_i
->          */
->         atomic_inc(&tio->io->io_count);
->         sector =3D clone->bi_iter.bi_sector;
-> +
-> +       dm_offload_start(&o);
->         r =3D ti->type->map(ti, clone);
-> +       dm_offload_end(&o);
-> +
->         if (r =3D=3D DM_MAPIO_REMAPPED) {
->                 /* the bio has been remapped so dispatch it */
-> =20
---=20
-Ben Hutchings
-compatible: Gracefully accepts erroneous data from any source
-
-
---=-iV83WyRQ7IUd8g9E06ql
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part
-
------BEGIN PGP SIGNATURE-----
-
-iQIzBAABCgAdFiEErCspvTSmr92z9o8157/I7JWGEQkFAlnarGcACgkQ57/I7JWG
-EQm8DA//ThgkNY4dBTwe5VgwoiY9YG4oy3AZ78jX76m2INmt2R3t41MLlYT7ZYDP
-KMcv4R6aZud+EKQZJHJzlSOdSm4dh9+BF9tmpxrXoYKNLBlp+AyKBK25r8mKtzXr
-opnXkIcl7cPH5L8VSYW9O0yRTW/vAtjRX+lZ5VuJOnftyF2SWGV89SiCy2ngJyNl
-nrIIyKsfX/qt6IPsyGAytblA8usVXirIPdcUzUxbnZZ6q5cJaGK492nWz7nmB/9a
-Q8P0yASmGG+o0UI1fytRT/IieHW4KojhP+z/wOSgdjfCjJ+Wa3eLzqCe9jLJAvdK
-KUx9djyqLn2n2aHA8vZ1LZMTvf5w1zTODmkw2dgI9/7dLBMrzmTBUtWJSvcpXd7b
-lLV/+QWLBh3D+zVBJ171pk7KhzWNM2tF2qFcpgCqVR8W9WqmTJddTjXSKratKzRN
-i+EJqCpYf5t+jgbeGicLrvZq0/2+JTyOL9fS/VKIYopSwC8H9Av+hxoOAhm0ycEP
-rqeMQLxdrNIlmflnYMcIc4VO4a5KEBWuAELK6A3vgnLOzG1+/9QcBf8j2oWewG9v
-IHG0aIbq9di2lmIKmQSwks8NO0alPEOcXMDbpplTOZFy7MXIq8NQJRbpKwTi4Wy9
-QIobQxll4VMMxxY3My3AcEx2Vd6Sh1/VyPgQSBUQKNeqCmFgdP8=
-=rXFX
------END PGP SIGNATURE-----
-
---=-iV83WyRQ7IUd8g9E06ql--
+SGkgTXVuZWVuZHJhLApTb3JyeSBmb3IgbGF0ZSByZXBseSBiZWNhdXNlIG9mIE5hdGlvbmFsIEhv
+bGlkYXkuCgpPbiAyMDE3LzEwLzYgMTM6NTQsIE11bmVlbmRyYSBLdW1hciBNIHdyb3RlOgo+IEhp
+IEd1YW4sCj4gRGlkIHlvdSBwdXNoIHRoZSBwYXRjaCB0byBtYWlubGluZS4KPiBJZiBzbyBjYW4g
+eW91IGp1c3QgcHJvdmlkZSBtZSB0aG9zZSBkZXRhaWxzLgo+IElmIG5vdCBjYW4geW91IGp1c3Qg
+bGV0IG1lIGtub3cgdGhlIHN0YXR1cy4KPiAKClllcywgSSBwdXNoZWQgVmVyc2lvbiA2IG9mIHRo
+ZSBwYXRjaCB0byB0aGUgbWFpbCBsaXN0IGJ1dCBpdCBoYXNuJ3QgYmVlbiBtZXJnZWQgeWV0LgpJ
+dCBpcyBzdGlsbCB3YWl0aW5nIGZvciByZXZpZXcuCllvdSBjYW4gZmluZCBpdCBhdCB0aGlzIGxp
+bms6Cmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vYXJjaGl2ZXMvZG0tZGV2ZWwvMjAxNy1TZXB0ZW1i
+ZXIvbXNnMDAyOTYuaHRtbAoKPiBBcyBjb3VwbGUgb2Ygb3VyIGNsaWVudHMgYXJlIGFscmVhZHkg
+dXNpbmcgdGhlIHByZXZpb3VzIHBhdGNoKHNhbl9wYXRoX1hYKS4KPiBJZiB5b3VyIHBhdGNoIGlz
+IHB1c2hlZCB0aGVuIEkgY2FuIGdpdmUgdGhlbSB0aGUgdXBkYXRlZCBwYXRjaCBhbmQgdGVzdCB0
+aGUgc2FtZS4KPiAKCklmIHRoZSBwYXRjaCBpZiBPSyBmb3IgeW91LCBjYW4gSSBhZGQgeW91ciBS
+ZXZpZXdlZC1ieSB0YWcgaW50byB0aGlzIHBhdGNoPwoKUmVnYXJkcywKR3VhbgoKPiBSZWdhcmRz
+LAo+IE11bmVlbmRyYS4KPiAKPiAKPiAtLS0tLU9yaWdpbmFsIE1lc3NhZ2UtLS0tLQo+IEZyb206
+IE11bmVlbmRyYSBLdW1hciBNIAo+IFNlbnQ6IFRodXJzZGF5LCBTZXB0ZW1iZXIgMjEsIDIwMTcg
+Mzo0MSBQTQo+IFRvOiAnR3VhbiBKdW54aW9uZycgPGd1YW5qdW54aW9uZ0BodWF3ZWkuY29tPjsg
+TWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+OyBkbS1kZXZlbEByZWRoYXQuY29tOyBjaHJp
+c3RvcGhlLnZhcm9xdWlAb3BlbnN2Yy5jb20KPiBDYzogc2hlbmhvbmcwOUBodWF3ZWkuY29tOyBu
+aXVoYW94aW5AaHVhd2VpLmNvbTsgY2hlbmdqaWtlLmNoZW5nQGh1YXdlaS5jb20KPiBTdWJqZWN0
+OiBSRTogW1BBVENIIFY0IDEvMl0gbXVsdGlwYXRoLXRvb2xzOiBpbnRlcm1pdHRlbnQgSU8gZXJy
+b3IgYWNjb3VudGluZyB0byBpbXByb3ZlIHJlbGlhYmlsaXR5Cj4gCj4gSGkgR3VhbiwKPiBUaGFu
+a3MgZm9yIGFkb3B0aW5nIHRoZSBuYW1pbmcgY29udmVudGlvbi4gCj4gSW5zdGVhZCBvZiBtYXJn
+aW5hbF9wYXRoX2Vycl9yZWNoZWNrX2dhcF90aW1lLCBtYXJnaW5hbF9wYXRoX3JlY292ZXJ5X3Rp
+bWUgd2lsbCBsb29rcyByZWFzb25hYmxlLkNvdWxkIHlvdSBwbGVhc2UgcmVsb29rIGludG8gaXQu
+Cj4gCj4gSSB3aWxsIHJldmlldyB0aGUgY29kZSBpbiBhIGRheSB0aW1lLgo+IAo+IFJlZ2FyZHMs
+Cj4gTXVuZWVuZHJhLgo+IAo+IC0tLS0tT3JpZ2luYWwgTWVzc2FnZS0tLS0tCj4gRnJvbTogR3Vh
+biBKdW54aW9uZyBbbWFpbHRvOmd1YW5qdW54aW9uZ0BodWF3ZWkuY29tXSAKPiBTZW50OiBUaHVy
+c2RheSwgU2VwdGVtYmVyIDIxLCAyMDE3IDM6MzUgUE0KPiBUbzogTXVuZWVuZHJhIEt1bWFyIE0g
+PG1tYW5kYWxhQEJyb2NhZGUuY29tPjsgTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+OyBk
+bS1kZXZlbEByZWRoYXQuY29tOyBjaHJpc3RvcGhlLnZhcm9xdWlAb3BlbnN2Yy5jb20KPiBDYzog
+c2hlbmhvbmcwOUBodWF3ZWkuY29tOyBuaXVoYW94aW5AaHVhd2VpLmNvbTsgY2hlbmdqaWtlLmNo
+ZW5nQGh1YXdlaS5jb20KPiBTdWJqZWN0OiBSZTogW1BBVENIIFY0IDEvMl0gbXVsdGlwYXRoLXRv
+b2xzOiBpbnRlcm1pdHRlbnQgSU8gZXJyb3IgYWNjb3VudGluZyB0byBpbXByb3ZlIHJlbGlhYmls
+aXR5Cj4gCj4gSGksIE11bmVlbmRyYQo+IAo+ICAgVGhhbmtzIGZvciB5b3VyIGNsYXJpZmljYXRp
+b24uIEkgYWRvcHQgdGhpcyByZW5hbWluZy4gSWYgaXQgaXMgY29udmVuaWVudCBmb3IgeW91LCBw
+bGVhc2UgcmV2aWV3IHRoZSBWNSBwYXRjaCB0aGF0IEkgc2VudCBvdXQgMiBob3VycyBhZ28uCj4g
+Cj4gUmVnYXJkcywKPiBHdWFuCj4gCj4gT24gMjAxNy85LzIwIDIwOjU4LCBNdW5lZW5kcmEgS3Vt
+YXIgTSB3cm90ZToKPj4gSGkgR3VhbiwKPj4+Pj4gU2hhbGwgd2UgdXNlIGV4aXN0aW5nIFBBVEhf
+U0hBS1kgPwo+PiBBcyB0aGUgcGF0aF9zaGFreSBJbmRpY2F0ZXMgcGF0aCBub3QgYXZhaWxhYmxl
+IGZvciAibm9ybWFsIiBvcGVyYXRpb25zIHdlIGNhbiB1c2UgdGhpcyBzdGF0ZS4gVGhhdCdzICBh
+IGdvb2QgaWRlYS4KPj4KPj4gUmVnYXJkaW5nIHRoZSBtYXJnaW5hbCBwYXRocyBiZWxvdyBpcyBt
+eSBleHBsYW5hdGlvbi4gQW5kIGJyb2NhZGUgaXMgcHVibGlzaGluZyBjb3VwbGUgb2Ygd2hpdGUg
+cGFwZXJzIHJlZ2FyZGluZyB0aGUgc2FtZSB0byBlZHVjYXRlIHRoZSBTQU4gYWRtaW5pc3RyYXRv
+cnMgYW5kIHRoZSBzYW4gY29tbXVuaXR5Lgo+Pgo+PiBNYXJnaW5hbCBwYXRoOgo+Pgo+PiBBIGhv
+c3QsIHRhcmdldCwgTFVOIChJVEwgcGF0aCkgZmxvdyAgZ29lcyB0aHJvdWdoIFNBTi4gSXQgaXMg
+dG8gYmUgbm90ZWQgdGhhdCB0aGUgZm9yIGVhY2ggSS9PIHJlcXVlc3QgdGhhdCBnb2VzIHRvIHRo
+ZSBTQ1NJIGxheWVyLCBpdCB0cmFuc2Zvcm1zIGludG8gYSBzaW5nbGUgU0NTSSBleGNoYW5nZS4g
+IEluIGEgc2luZ2xlIFNBTiwgdGhlcmUgYXJlIHR5cGljYWxseSBtdWx0aXBsZSBTQU4gbmV0d29y
+ayBwYXRocyAgZm9yIGEgSVRMIGZsb3cvcGF0aC4gRWFjaCBTQ1NJIGV4Y2hhbmdlICBjYW4gdGFr
+ZSBvbmUgb2YgdGhlIHZhcmlvdXMgbmV0d29yayBwYXRocyB0aGF0IGFyZSBhdmFpbGFibGUgZm9y
+IHRoZSBJVEwgcGF0aC4gIEEgU0FOIGNhbiBiZSBiYXNlZCBvbiBFdGhlcm5ldCwgRkMsIEluZmlu
+aWJhbmQgcGh5c2ljYWwgbmV0d29ya3MgdG8gY2FycnkgYmxvY2sgc3RvcmFnZSB0cmFmZmljIChT
+Q1NJLCBOVk1lIGV0Yy4pCj4+Cj4+IFRoZXJlIGFyZSB0eXBpY2FsbHkgdHdvIHR5cGUgb2YgU0FO
+IG5ldHdvcmsgcHJvYmxlbXMgdGhhdCBhcmUgY2F0ZWdvcml6ZWQgYXMgbWFyZ2luYWwgaXNzdWVz
+LiBUaGVzZSBpc3N1ZXMgYnkgbmF0dXJlIGFyZSBub3QgcGVybWFuZW50IGluIHRpbWUgYW5kIGRv
+IGNvbWUgYW5kIGdvIGF3YXkgb3ZlciB0aW1lLgo+PiAxKSBTd2l0Y2hlcyBpbiB0aGUgU0FOIGNh
+biBoYXZlIGludGVybWl0dGVudCBmcmFtZSBkcm9wcyBvciBpbnRlcm1pdHRlbnQgZnJhbWUgY29y
+cnVwdGlvbnMgZHVlIHRvIGJhZCBvcHRpY3MgY2FibGUgKFNGUCkgb3IgYW55IHN1Y2ggd2Vhci90
+ZWFyICBwb3J0IGlzc3Vlcy4gVGhpcyBjYXVzZXMgSVRMIGZsb3dzIHRoYXQgZ28gdGhyb3VnaCB0
+aGUgZmF1bHR5IHN3aXRjaC9wb3J0IHRvIGludGVybWl0dGVudGx5IGV4cGVyaWVuY2UgZnJhbWUg
+ZHJvcHMuICAKPj4gMikgVGhlcmUgZXhpc3RzIFNBTiB0b3BvbG9naWVzIHdoZXJlIHRoZXJlIGFy
+ZSBzd2l0Y2ggcG9ydHMgaW4gdGhlIGZhYnJpYyB0aGF0IGJlY29tZXMgdGhlIG9ubHkgIGNvbmR1
+aXQgZm9yIG1hbnkgZGlmZmVyZW50IElUTCBmbG93cyBhY3Jvc3MgbXVsdGlwbGUgaG9zdHMuIFRo
+ZXNlIHNpbmdsZSBuZXR3b3JrIHBhdGhzIGFyZSBlc3NlbnRpYWxseSBzaGFyZWQgYWNyb3NzIG11
+bHRpcGxlIElUTCBmbG93cy4gVW5kZXIgdGhlc2UgY29uZGl0aW9ucyBpZiB0aGUgcG9ydCBsaW5r
+IGJhbmR3aWR0aCBpcyBub3QgYWJsZSB0byBoYW5kbGUgdGhlIG5ldCBzdW0gb2YgdGhlIHNoYXJl
+ZCBJVEwgZmxvd3MgYmFuZHdpZHRoIGdvaW5nIHRocm91Z2ggdGhlIHNpbmdsZSBwYXRoICB0aGVu
+IHdlIGNvdWxkIHNlZSBpbnRlcm1pdHRlbnQgbmV0d29yayBjb25nZXN0aW9uIHByb2JsZW1zLiBU
+aGlzIGNvbmRpdGlvbiBpcyBjYWxsZWQgbmV0d29yayBvdmVyc3Vic2NyaXB0aW9uLiBUaGUgaW50
+ZXJtaXR0ZW50IGNvbmdlc3Rpb25zIGNhbiBkZWxheSBTQ1NJIGV4Y2hhbmdlIGNvbXBsZXRpb24g
+dGltZSAoaW5jcmVhc2UgaW4gSS9PIGxhdGVuY3kgaXMgb2JzZXJ2ZWQpLgo+Pgo+PiBUbyBvdmVy
+Y29tZSB0aGUgYWJvdmUgbmV0d29yayBpc3N1ZXMgYW5kIG1hbnkgbW9yZSBzdWNoIHRhcmdldCBp
+c3N1ZXMsIHRoZXJlIGFyZSBmcmFtZSBsZXZlbCByZXRyaWVzIHRoYXQgYXJlIGRvbmUgaW4gSEJB
+IGRldmljZSBmaXJtd2FyZSBhbmQgSS9PIHJldHJpZXMgaW4gdGhlIFNDU0kgbGF5ZXIuIFRoZXNl
+IHJldHJpZXMgbWlnaHQgc3VjY2VlZCBiZWNhdXNlIG9mIHR3byByZWFzb25zOgo+PiAxKSBUaGUg
+aW50ZXJtaXR0ZW50IHN3aXRjaC9wb3J0IGlzc3VlIGlzIG5vdCBvYnNlcnZlZAo+PiAyKSBUaGUg
+cmV0cnkgSS9PIGlzIGEgbmV3ICBTQ1NJIGV4Y2hhbmdlLiBUaGlzIFNDU0kgZXhjaGFuZ2UgIGNh
+biB0YWtlIGFuIGFsdGVybmF0ZSBTQU4gcGF0aCBmb3IgdGhlIElUTCBmbG93LCBpZiBzdWNoIGFu
+IFNBTiBwYXRoIGV4aXN0cy4KPj4gMykgTmV0d29yayBjb25nZXN0aW9uIGRpc2FwcGVhcnMgbW9t
+ZW50YXJpbHkgYmVjYXVzZSB0aGUgbmV0IEkvTyBiYW5kd2lkdGggY29taW5nIGZyb20gbXVsdGlw
+bGUgSVRMIGZsb3dzIG9uIHRoZSBzaW5nbGUgc2hhcmVkIG5ldHdvcmsgcGF0aCBpcyBzb21ldGhp
+bmcgdGhlIHBhdGggY2FuIGhhbmRsZQo+Pgo+PiBIb3dldmVyIGluIHNvbWUgY2FzZXMgd2UgaGF2
+ZSBzZWVuIEkvTyByZXRyaWVzIGRvbuKAmXQgc3VjY2VlZCBiZWNhdXNlIHRoZSByZXRyeSBJL09z
+IGhpdHMgYSBTQU4gbmV0d29yayBwYXRoIHRoYXQgaGFzICBpbnRlcm1pdHRlbnQgc3dpdGNoL3Bv
+cnQgaXNzdWUgYW5kL29yIG5ldHdvcmsgY29uZ2VzdGlvbi4gCj4+Cj4+IE9uIHRoZSBob3N0ICB0
+aHVzIHdlIHNlZSBjb25maWd1cmF0aW9ucyB0d28gb3IgbW9yZSBJVEwgcGF0aCBzaGFyaW5nIHRo
+ZSBzYW1lIHRhcmdldC9MVU4gZ29pbmcgdGhyb3VnaCB0d28gb3IgbW9yZSBIQkEgcG9ydHMuIFRo
+ZXNlIEhCQSBwb3J0cyBhcmUgY29ubmVjdGVkIHRvIHR3byBvciBtb3JlIFNBTiB0byB0aGUgc2Ft
+ZSB0YXJnZXQvTFVOLgo+PiBJZiB0aGUgSS9PIGZhaWxzIGF0IHRoZSBtdWx0aXBhdGggbGF5ZXIg
+dGhlbiwgdGhlIElUTCBwYXRoIGlzIHR1cm5lZCBpbnRvIEZhaWxlZCBzdGF0ZS4gQmVjYXVzZSBv
+ZiB0aGUgbWFyZ2luYWwgbmF0dXJlIG9mIHRoZSBuZXR3b3JrLCB0aGUgbmV4dCBIZWFsdGggQ2hl
+Y2sgY29tbWFuZCBzZW50IGZyb20gbXVsdGlwYXRoIGxheWVyIG1pZ2h0IHN1Y2NlZWQsIHdoaWNo
+IHJlc3VsdHMgaW4gbWFraW5nIHRoZSBJVEwgcGF0aCBpbnRvIEFjdGl2ZSBzdGF0ZS4gWW91IGVu
+ZCB1cCBzZWVpbmcgdGhlIERNIHBhdGggc3RhdGUgZ29pbmcgIGludG8gQWN0aXZlLCBGYWlsZWQs
+IEFjdGl2ZSB0cmFuc2l0aW9ucy4gVGhpcyByZXN1bHRzIGluIG92ZXJhbGwgcmVkdWN0aW9uIGlu
+IGFwcGxpY2F0aW9uIEkvTyB0aHJvdWdocHV0IGFuZCBzb21ldGltZSBhcHBsaWNhdGlvbiBJL08g
+ZmFpbHVyZXMgKGJlY2F1c2Ugb2YgdGltaW5nIGNvbnN0cmFpbnRzKS4gQWxsIHRoaXMgY2FuIGhh
+cHBlbiBiZWNhdXNlIG9mIEkvTyByZXRyaWVzIGFuZCBJL08gcmVxdWVzdCBtb3ZpbmcgYWNyb3Nz
+IG11bHRpcGxlIHBhdGhzIG9mIHRoZSBETSBkZXZpY2UuIEluIHRoZSBob3N0IGl0IGlzICB0byBi
+ZSBub3RlZCBhbGwgSS9PIHJldHJpZXMgb24gYSBzaW5nbGUgcGF0aCBhbmQgSS9PIG1vdmVtZW50
+IGFjcm9zcyBtdWx0aXBsZSBwYXRocyByZXN1bHRzIGluIHNsb3dpbmcgZG93biB0aGUgZm9yd2Fy
+ZCBwcm9ncmVzcyBvZiBuZXcgYXBwbGljYXRpb24gSS9PLiBSZWFzb24gYmVoaW5kLCB0aGUgYWJv
+dmUgSS9PICByZS1xdWV1ZSBhY3Rpb25zIGFyZSBnaXZlbiBoaWdoZXIgcHJpb3JpdHkgdGhhbiB0
+aGUgbmV3ZXIgSS9PIHJlcXVlc3RzIGNvbWluZyBmcm9tIHRoZSBhcHBsaWNhdGlvbi4gCj4+Cj4+
+IFRoZSBhYm92ZSBjb25kaXRpb24gb2YgdGhlICBJVEwgcGF0aCBpcyBoZW5jZSBjYWxsZWQg4oCc
+bWFyZ2luYWzigJ0uCj4+Cj4+IFdoYXQgd2UgZGVzaXJlIGlzIGZvciB0aGUgRE0gdG8gZGV0ZXJt
+aW5pc3RpY2FsbHkgIGNhdGVnb3JpemUgYSBJVEwgUGF0aCBhcyDigJxtYXJnaW5hbOKAnSBhbmQg
+bW92ZSBhbGwgdGhlIHBlbmRpbmcgSS9PcyBmcm9tIHRoZSBtYXJnaW5hbCBQYXRoIHRvIGFuIEFj
+dGl2ZSBQYXRoLiBUaGlzIHdpbGwgaGVscCBpbiBtZWV0aW5nIGFwcGxpY2F0aW9uIEkvTyB0aW1p
+bmcgY29uc3RyYWludHMuIEFsc28gYSBjYXBhYmlsaXR5IHRvIGF1dG9tYXRpY2FsbHkgcmUtaW5z
+dGFudGlhdGUgdGhlIG1hcmdpbmFsIHBhdGggaW50byBBY3RpdmUgb25jZSB0aGUgbWFyZ2luYWwg
+Y29uZGl0aW9uIGluIHRoZSBuZXR3b3JrIGlzIGZpeGVkLgo+Pgo+Pgo+PiBCYXNlZCBvbiB0aGUg
+YWJvdmUgZXhwbGFuYXRpb24gSSB3YW50IHRvIHJlbmFtZSB0aGUgbmFtZXMgYXMgbWFyZ2luYWxf
+cGF0aF9YWFhYIGFuZCB0aGlzIGlzIGlycmVzcGVjdGl2ZSBvZiBhbnkgc3RvcmFnZSBuZXR3b3Jr
+Lgo+Pgo+PiBSZWdhcmRzLAo+PiBNdW5lZW5kcmEuCj4gCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxp
+c3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlz
+dGluZm8vZG0tZGV2ZWw=
