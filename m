@@ -1,152 +1,41 @@
-From: Guan Junxiong <guanjunxiong@huawei.com>
-Subject: Re: [PATCH V4 1/2] multipath-tools: intermittent IO
- error accounting to improve reliability
-Date: Mon, 9 Oct 2017 08:42:37 +0800
-Message-ID: <06296b9f-e8da-77f2-d28f-db43c94c6c50@huawei.com>
-References: <1505619638-20912-1-git-send-email-guanjunxiong@huawei.com>
-	<1505619638-20912-2-git-send-email-guanjunxiong@huawei.com>
-	<fd6ead563a154984abc2654fd1a8ea30@BRMWP-EXMB12.corp.brocade.com>
-	<7035dfdb-1c49-aa3f-3836-1ec316707c47@huawei.com>
-	<1505764297.12944.2.camel@suse.com>
-	<e596eefc-2d42-e840-57cf-6219d43de9d9@huawei.com>
-	<8d45c076cf6c47d39bf2aade3ade7f51@BRMWP-EXMB12.corp.brocade.com>
-	<52829afa-ed9e-cc39-a492-3e678b8e0d03@huawei.com>
-	<b9fadaaabca54790969d3b31ba9dddb8@BRMWP-EXMB12.corp.brocade.com>
-	<658d39ce-5ac8-f102-96a8-c332da403e90@huawei.com>
-	<615cdd5a955944e49986dca01bf406a5@BRMWP-EXMB12.corp.brocade.com>
+From: Ming Lei <ming.lei@redhat.com>
+Subject: Re: [PATCH V5 8/8] blk-mq: improve bio merge from blk-mq sw queue
+Date: Mon, 9 Oct 2017 12:28:37 +0800
+Message-ID: <20171009042835.GA19029@ming.t460p>
+References: <20170930112655.31451-1-ming.lei@redhat.com>
+ <20170930112655.31451-9-ming.lei@redhat.com>
+ <20171003092143.GF2771@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <615cdd5a955944e49986dca01bf406a5@BRMWP-EXMB12.corp.brocade.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Muneendra Kumar M <mmandala@Brocade.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, niuhaoxin <niuhaoxin@huawei.com>, "Shenhong (C)" <shenhong09@huawei.com>, Martin Wilck <mwilck@suse.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20171003092143.GF2771@infradead.org>
+Sender: linux-block-owner@vger.kernel.org
+To: Christoph Hellwig <hch@infradead.org>
+Cc: Jens Axboe <axboe@fb.com>, linux-block@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Bart Van Assche <bart.vanassche@sandisk.com>, Laurence Oberman <loberman@redhat.com>, Paolo Valente <paolo.valente@linaro.org>, Oleksandr Natalenko <oleksandr@natalenko.name>, Tom Nguyen <tom81094@gmail.com>, linux-kernel@vger.kernel.org, Omar Sandoval <osandov@fb.com>
 List-Id: dm-devel.ids
 
-SGkgTXVuZWVuZHJhLApTb3JyeSBmb3IgbGF0ZSByZXBseSBiZWNhdXNlIG9mIE5hdGlvbmFsIEhv
-bGlkYXkuCgpPbiAyMDE3LzEwLzYgMTM6NTQsIE11bmVlbmRyYSBLdW1hciBNIHdyb3RlOgo+IEhp
-IEd1YW4sCj4gRGlkIHlvdSBwdXNoIHRoZSBwYXRjaCB0byBtYWlubGluZS4KPiBJZiBzbyBjYW4g
-eW91IGp1c3QgcHJvdmlkZSBtZSB0aG9zZSBkZXRhaWxzLgo+IElmIG5vdCBjYW4geW91IGp1c3Qg
-bGV0IG1lIGtub3cgdGhlIHN0YXR1cy4KPiAKClllcywgSSBwdXNoZWQgVmVyc2lvbiA2IG9mIHRo
-ZSBwYXRjaCB0byB0aGUgbWFpbCBsaXN0IGJ1dCBpdCBoYXNuJ3QgYmVlbiBtZXJnZWQgeWV0LgpJ
-dCBpcyBzdGlsbCB3YWl0aW5nIGZvciByZXZpZXcuCllvdSBjYW4gZmluZCBpdCBhdCB0aGlzIGxp
-bms6Cmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vYXJjaGl2ZXMvZG0tZGV2ZWwvMjAxNy1TZXB0ZW1i
-ZXIvbXNnMDAyOTYuaHRtbAoKPiBBcyBjb3VwbGUgb2Ygb3VyIGNsaWVudHMgYXJlIGFscmVhZHkg
-dXNpbmcgdGhlIHByZXZpb3VzIHBhdGNoKHNhbl9wYXRoX1hYKS4KPiBJZiB5b3VyIHBhdGNoIGlz
-IHB1c2hlZCB0aGVuIEkgY2FuIGdpdmUgdGhlbSB0aGUgdXBkYXRlZCBwYXRjaCBhbmQgdGVzdCB0
-aGUgc2FtZS4KPiAKCklmIHRoZSBwYXRjaCBpZiBPSyBmb3IgeW91LCBjYW4gSSBhZGQgeW91ciBS
-ZXZpZXdlZC1ieSB0YWcgaW50byB0aGlzIHBhdGNoPwoKUmVnYXJkcywKR3VhbgoKPiBSZWdhcmRz
-LAo+IE11bmVlbmRyYS4KPiAKPiAKPiAtLS0tLU9yaWdpbmFsIE1lc3NhZ2UtLS0tLQo+IEZyb206
-IE11bmVlbmRyYSBLdW1hciBNIAo+IFNlbnQ6IFRodXJzZGF5LCBTZXB0ZW1iZXIgMjEsIDIwMTcg
-Mzo0MSBQTQo+IFRvOiAnR3VhbiBKdW54aW9uZycgPGd1YW5qdW54aW9uZ0BodWF3ZWkuY29tPjsg
-TWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+OyBkbS1kZXZlbEByZWRoYXQuY29tOyBjaHJp
-c3RvcGhlLnZhcm9xdWlAb3BlbnN2Yy5jb20KPiBDYzogc2hlbmhvbmcwOUBodWF3ZWkuY29tOyBu
-aXVoYW94aW5AaHVhd2VpLmNvbTsgY2hlbmdqaWtlLmNoZW5nQGh1YXdlaS5jb20KPiBTdWJqZWN0
-OiBSRTogW1BBVENIIFY0IDEvMl0gbXVsdGlwYXRoLXRvb2xzOiBpbnRlcm1pdHRlbnQgSU8gZXJy
-b3IgYWNjb3VudGluZyB0byBpbXByb3ZlIHJlbGlhYmlsaXR5Cj4gCj4gSGkgR3VhbiwKPiBUaGFu
-a3MgZm9yIGFkb3B0aW5nIHRoZSBuYW1pbmcgY29udmVudGlvbi4gCj4gSW5zdGVhZCBvZiBtYXJn
-aW5hbF9wYXRoX2Vycl9yZWNoZWNrX2dhcF90aW1lLCBtYXJnaW5hbF9wYXRoX3JlY292ZXJ5X3Rp
-bWUgd2lsbCBsb29rcyByZWFzb25hYmxlLkNvdWxkIHlvdSBwbGVhc2UgcmVsb29rIGludG8gaXQu
-Cj4gCj4gSSB3aWxsIHJldmlldyB0aGUgY29kZSBpbiBhIGRheSB0aW1lLgo+IAo+IFJlZ2FyZHMs
-Cj4gTXVuZWVuZHJhLgo+IAo+IC0tLS0tT3JpZ2luYWwgTWVzc2FnZS0tLS0tCj4gRnJvbTogR3Vh
-biBKdW54aW9uZyBbbWFpbHRvOmd1YW5qdW54aW9uZ0BodWF3ZWkuY29tXSAKPiBTZW50OiBUaHVy
-c2RheSwgU2VwdGVtYmVyIDIxLCAyMDE3IDM6MzUgUE0KPiBUbzogTXVuZWVuZHJhIEt1bWFyIE0g
-PG1tYW5kYWxhQEJyb2NhZGUuY29tPjsgTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+OyBk
-bS1kZXZlbEByZWRoYXQuY29tOyBjaHJpc3RvcGhlLnZhcm9xdWlAb3BlbnN2Yy5jb20KPiBDYzog
-c2hlbmhvbmcwOUBodWF3ZWkuY29tOyBuaXVoYW94aW5AaHVhd2VpLmNvbTsgY2hlbmdqaWtlLmNo
-ZW5nQGh1YXdlaS5jb20KPiBTdWJqZWN0OiBSZTogW1BBVENIIFY0IDEvMl0gbXVsdGlwYXRoLXRv
-b2xzOiBpbnRlcm1pdHRlbnQgSU8gZXJyb3IgYWNjb3VudGluZyB0byBpbXByb3ZlIHJlbGlhYmls
-aXR5Cj4gCj4gSGksIE11bmVlbmRyYQo+IAo+ICAgVGhhbmtzIGZvciB5b3VyIGNsYXJpZmljYXRp
-b24uIEkgYWRvcHQgdGhpcyByZW5hbWluZy4gSWYgaXQgaXMgY29udmVuaWVudCBmb3IgeW91LCBw
-bGVhc2UgcmV2aWV3IHRoZSBWNSBwYXRjaCB0aGF0IEkgc2VudCBvdXQgMiBob3VycyBhZ28uCj4g
-Cj4gUmVnYXJkcywKPiBHdWFuCj4gCj4gT24gMjAxNy85LzIwIDIwOjU4LCBNdW5lZW5kcmEgS3Vt
-YXIgTSB3cm90ZToKPj4gSGkgR3VhbiwKPj4+Pj4gU2hhbGwgd2UgdXNlIGV4aXN0aW5nIFBBVEhf
-U0hBS1kgPwo+PiBBcyB0aGUgcGF0aF9zaGFreSBJbmRpY2F0ZXMgcGF0aCBub3QgYXZhaWxhYmxl
-IGZvciAibm9ybWFsIiBvcGVyYXRpb25zIHdlIGNhbiB1c2UgdGhpcyBzdGF0ZS4gVGhhdCdzICBh
-IGdvb2QgaWRlYS4KPj4KPj4gUmVnYXJkaW5nIHRoZSBtYXJnaW5hbCBwYXRocyBiZWxvdyBpcyBt
-eSBleHBsYW5hdGlvbi4gQW5kIGJyb2NhZGUgaXMgcHVibGlzaGluZyBjb3VwbGUgb2Ygd2hpdGUg
-cGFwZXJzIHJlZ2FyZGluZyB0aGUgc2FtZSB0byBlZHVjYXRlIHRoZSBTQU4gYWRtaW5pc3RyYXRv
-cnMgYW5kIHRoZSBzYW4gY29tbXVuaXR5Lgo+Pgo+PiBNYXJnaW5hbCBwYXRoOgo+Pgo+PiBBIGhv
-c3QsIHRhcmdldCwgTFVOIChJVEwgcGF0aCkgZmxvdyAgZ29lcyB0aHJvdWdoIFNBTi4gSXQgaXMg
-dG8gYmUgbm90ZWQgdGhhdCB0aGUgZm9yIGVhY2ggSS9PIHJlcXVlc3QgdGhhdCBnb2VzIHRvIHRo
-ZSBTQ1NJIGxheWVyLCBpdCB0cmFuc2Zvcm1zIGludG8gYSBzaW5nbGUgU0NTSSBleGNoYW5nZS4g
-IEluIGEgc2luZ2xlIFNBTiwgdGhlcmUgYXJlIHR5cGljYWxseSBtdWx0aXBsZSBTQU4gbmV0d29y
-ayBwYXRocyAgZm9yIGEgSVRMIGZsb3cvcGF0aC4gRWFjaCBTQ1NJIGV4Y2hhbmdlICBjYW4gdGFr
-ZSBvbmUgb2YgdGhlIHZhcmlvdXMgbmV0d29yayBwYXRocyB0aGF0IGFyZSBhdmFpbGFibGUgZm9y
-IHRoZSBJVEwgcGF0aC4gIEEgU0FOIGNhbiBiZSBiYXNlZCBvbiBFdGhlcm5ldCwgRkMsIEluZmlu
-aWJhbmQgcGh5c2ljYWwgbmV0d29ya3MgdG8gY2FycnkgYmxvY2sgc3RvcmFnZSB0cmFmZmljIChT
-Q1NJLCBOVk1lIGV0Yy4pCj4+Cj4+IFRoZXJlIGFyZSB0eXBpY2FsbHkgdHdvIHR5cGUgb2YgU0FO
-IG5ldHdvcmsgcHJvYmxlbXMgdGhhdCBhcmUgY2F0ZWdvcml6ZWQgYXMgbWFyZ2luYWwgaXNzdWVz
-LiBUaGVzZSBpc3N1ZXMgYnkgbmF0dXJlIGFyZSBub3QgcGVybWFuZW50IGluIHRpbWUgYW5kIGRv
-IGNvbWUgYW5kIGdvIGF3YXkgb3ZlciB0aW1lLgo+PiAxKSBTd2l0Y2hlcyBpbiB0aGUgU0FOIGNh
-biBoYXZlIGludGVybWl0dGVudCBmcmFtZSBkcm9wcyBvciBpbnRlcm1pdHRlbnQgZnJhbWUgY29y
-cnVwdGlvbnMgZHVlIHRvIGJhZCBvcHRpY3MgY2FibGUgKFNGUCkgb3IgYW55IHN1Y2ggd2Vhci90
-ZWFyICBwb3J0IGlzc3Vlcy4gVGhpcyBjYXVzZXMgSVRMIGZsb3dzIHRoYXQgZ28gdGhyb3VnaCB0
-aGUgZmF1bHR5IHN3aXRjaC9wb3J0IHRvIGludGVybWl0dGVudGx5IGV4cGVyaWVuY2UgZnJhbWUg
-ZHJvcHMuICAKPj4gMikgVGhlcmUgZXhpc3RzIFNBTiB0b3BvbG9naWVzIHdoZXJlIHRoZXJlIGFy
-ZSBzd2l0Y2ggcG9ydHMgaW4gdGhlIGZhYnJpYyB0aGF0IGJlY29tZXMgdGhlIG9ubHkgIGNvbmR1
-aXQgZm9yIG1hbnkgZGlmZmVyZW50IElUTCBmbG93cyBhY3Jvc3MgbXVsdGlwbGUgaG9zdHMuIFRo
-ZXNlIHNpbmdsZSBuZXR3b3JrIHBhdGhzIGFyZSBlc3NlbnRpYWxseSBzaGFyZWQgYWNyb3NzIG11
-bHRpcGxlIElUTCBmbG93cy4gVW5kZXIgdGhlc2UgY29uZGl0aW9ucyBpZiB0aGUgcG9ydCBsaW5r
-IGJhbmR3aWR0aCBpcyBub3QgYWJsZSB0byBoYW5kbGUgdGhlIG5ldCBzdW0gb2YgdGhlIHNoYXJl
-ZCBJVEwgZmxvd3MgYmFuZHdpZHRoIGdvaW5nIHRocm91Z2ggdGhlIHNpbmdsZSBwYXRoICB0aGVu
-IHdlIGNvdWxkIHNlZSBpbnRlcm1pdHRlbnQgbmV0d29yayBjb25nZXN0aW9uIHByb2JsZW1zLiBU
-aGlzIGNvbmRpdGlvbiBpcyBjYWxsZWQgbmV0d29yayBvdmVyc3Vic2NyaXB0aW9uLiBUaGUgaW50
-ZXJtaXR0ZW50IGNvbmdlc3Rpb25zIGNhbiBkZWxheSBTQ1NJIGV4Y2hhbmdlIGNvbXBsZXRpb24g
-dGltZSAoaW5jcmVhc2UgaW4gSS9PIGxhdGVuY3kgaXMgb2JzZXJ2ZWQpLgo+Pgo+PiBUbyBvdmVy
-Y29tZSB0aGUgYWJvdmUgbmV0d29yayBpc3N1ZXMgYW5kIG1hbnkgbW9yZSBzdWNoIHRhcmdldCBp
-c3N1ZXMsIHRoZXJlIGFyZSBmcmFtZSBsZXZlbCByZXRyaWVzIHRoYXQgYXJlIGRvbmUgaW4gSEJB
-IGRldmljZSBmaXJtd2FyZSBhbmQgSS9PIHJldHJpZXMgaW4gdGhlIFNDU0kgbGF5ZXIuIFRoZXNl
-IHJldHJpZXMgbWlnaHQgc3VjY2VlZCBiZWNhdXNlIG9mIHR3byByZWFzb25zOgo+PiAxKSBUaGUg
-aW50ZXJtaXR0ZW50IHN3aXRjaC9wb3J0IGlzc3VlIGlzIG5vdCBvYnNlcnZlZAo+PiAyKSBUaGUg
-cmV0cnkgSS9PIGlzIGEgbmV3ICBTQ1NJIGV4Y2hhbmdlLiBUaGlzIFNDU0kgZXhjaGFuZ2UgIGNh
-biB0YWtlIGFuIGFsdGVybmF0ZSBTQU4gcGF0aCBmb3IgdGhlIElUTCBmbG93LCBpZiBzdWNoIGFu
-IFNBTiBwYXRoIGV4aXN0cy4KPj4gMykgTmV0d29yayBjb25nZXN0aW9uIGRpc2FwcGVhcnMgbW9t
-ZW50YXJpbHkgYmVjYXVzZSB0aGUgbmV0IEkvTyBiYW5kd2lkdGggY29taW5nIGZyb20gbXVsdGlw
-bGUgSVRMIGZsb3dzIG9uIHRoZSBzaW5nbGUgc2hhcmVkIG5ldHdvcmsgcGF0aCBpcyBzb21ldGhp
-bmcgdGhlIHBhdGggY2FuIGhhbmRsZQo+Pgo+PiBIb3dldmVyIGluIHNvbWUgY2FzZXMgd2UgaGF2
-ZSBzZWVuIEkvTyByZXRyaWVzIGRvbuKAmXQgc3VjY2VlZCBiZWNhdXNlIHRoZSByZXRyeSBJL09z
-IGhpdHMgYSBTQU4gbmV0d29yayBwYXRoIHRoYXQgaGFzICBpbnRlcm1pdHRlbnQgc3dpdGNoL3Bv
-cnQgaXNzdWUgYW5kL29yIG5ldHdvcmsgY29uZ2VzdGlvbi4gCj4+Cj4+IE9uIHRoZSBob3N0ICB0
-aHVzIHdlIHNlZSBjb25maWd1cmF0aW9ucyB0d28gb3IgbW9yZSBJVEwgcGF0aCBzaGFyaW5nIHRo
-ZSBzYW1lIHRhcmdldC9MVU4gZ29pbmcgdGhyb3VnaCB0d28gb3IgbW9yZSBIQkEgcG9ydHMuIFRo
-ZXNlIEhCQSBwb3J0cyBhcmUgY29ubmVjdGVkIHRvIHR3byBvciBtb3JlIFNBTiB0byB0aGUgc2Ft
-ZSB0YXJnZXQvTFVOLgo+PiBJZiB0aGUgSS9PIGZhaWxzIGF0IHRoZSBtdWx0aXBhdGggbGF5ZXIg
-dGhlbiwgdGhlIElUTCBwYXRoIGlzIHR1cm5lZCBpbnRvIEZhaWxlZCBzdGF0ZS4gQmVjYXVzZSBv
-ZiB0aGUgbWFyZ2luYWwgbmF0dXJlIG9mIHRoZSBuZXR3b3JrLCB0aGUgbmV4dCBIZWFsdGggQ2hl
-Y2sgY29tbWFuZCBzZW50IGZyb20gbXVsdGlwYXRoIGxheWVyIG1pZ2h0IHN1Y2NlZWQsIHdoaWNo
-IHJlc3VsdHMgaW4gbWFraW5nIHRoZSBJVEwgcGF0aCBpbnRvIEFjdGl2ZSBzdGF0ZS4gWW91IGVu
-ZCB1cCBzZWVpbmcgdGhlIERNIHBhdGggc3RhdGUgZ29pbmcgIGludG8gQWN0aXZlLCBGYWlsZWQs
-IEFjdGl2ZSB0cmFuc2l0aW9ucy4gVGhpcyByZXN1bHRzIGluIG92ZXJhbGwgcmVkdWN0aW9uIGlu
-IGFwcGxpY2F0aW9uIEkvTyB0aHJvdWdocHV0IGFuZCBzb21ldGltZSBhcHBsaWNhdGlvbiBJL08g
-ZmFpbHVyZXMgKGJlY2F1c2Ugb2YgdGltaW5nIGNvbnN0cmFpbnRzKS4gQWxsIHRoaXMgY2FuIGhh
-cHBlbiBiZWNhdXNlIG9mIEkvTyByZXRyaWVzIGFuZCBJL08gcmVxdWVzdCBtb3ZpbmcgYWNyb3Nz
-IG11bHRpcGxlIHBhdGhzIG9mIHRoZSBETSBkZXZpY2UuIEluIHRoZSBob3N0IGl0IGlzICB0byBi
-ZSBub3RlZCBhbGwgSS9PIHJldHJpZXMgb24gYSBzaW5nbGUgcGF0aCBhbmQgSS9PIG1vdmVtZW50
-IGFjcm9zcyBtdWx0aXBsZSBwYXRocyByZXN1bHRzIGluIHNsb3dpbmcgZG93biB0aGUgZm9yd2Fy
-ZCBwcm9ncmVzcyBvZiBuZXcgYXBwbGljYXRpb24gSS9PLiBSZWFzb24gYmVoaW5kLCB0aGUgYWJv
-dmUgSS9PICByZS1xdWV1ZSBhY3Rpb25zIGFyZSBnaXZlbiBoaWdoZXIgcHJpb3JpdHkgdGhhbiB0
-aGUgbmV3ZXIgSS9PIHJlcXVlc3RzIGNvbWluZyBmcm9tIHRoZSBhcHBsaWNhdGlvbi4gCj4+Cj4+
-IFRoZSBhYm92ZSBjb25kaXRpb24gb2YgdGhlICBJVEwgcGF0aCBpcyBoZW5jZSBjYWxsZWQg4oCc
-bWFyZ2luYWzigJ0uCj4+Cj4+IFdoYXQgd2UgZGVzaXJlIGlzIGZvciB0aGUgRE0gdG8gZGV0ZXJt
-aW5pc3RpY2FsbHkgIGNhdGVnb3JpemUgYSBJVEwgUGF0aCBhcyDigJxtYXJnaW5hbOKAnSBhbmQg
-bW92ZSBhbGwgdGhlIHBlbmRpbmcgSS9PcyBmcm9tIHRoZSBtYXJnaW5hbCBQYXRoIHRvIGFuIEFj
-dGl2ZSBQYXRoLiBUaGlzIHdpbGwgaGVscCBpbiBtZWV0aW5nIGFwcGxpY2F0aW9uIEkvTyB0aW1p
-bmcgY29uc3RyYWludHMuIEFsc28gYSBjYXBhYmlsaXR5IHRvIGF1dG9tYXRpY2FsbHkgcmUtaW5z
-dGFudGlhdGUgdGhlIG1hcmdpbmFsIHBhdGggaW50byBBY3RpdmUgb25jZSB0aGUgbWFyZ2luYWwg
-Y29uZGl0aW9uIGluIHRoZSBuZXR3b3JrIGlzIGZpeGVkLgo+Pgo+Pgo+PiBCYXNlZCBvbiB0aGUg
-YWJvdmUgZXhwbGFuYXRpb24gSSB3YW50IHRvIHJlbmFtZSB0aGUgbmFtZXMgYXMgbWFyZ2luYWxf
-cGF0aF9YWFhYIGFuZCB0aGlzIGlzIGlycmVzcGVjdGl2ZSBvZiBhbnkgc3RvcmFnZSBuZXR3b3Jr
-Lgo+Pgo+PiBSZWdhcmRzLAo+PiBNdW5lZW5kcmEuCj4gCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxp
-c3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlz
-dGluZm8vZG0tZGV2ZWw=
+On Tue, Oct 03, 2017 at 02:21:43AM -0700, Christoph Hellwig wrote:
+> This looks generally good to me, but I really worry about the impact
+> on very high iops devices.  Did you try this e.g. for random reads
+> from unallocated blocks on an enterprise NVMe SSD?
+
+Looks no such impact, please see the following data
+in the fio test(libaio, direct, bs=4k, 64jobs, randread, none scheduler)
+
+[root@storageqe-62 results]# ../parse_fio 4.14.0-rc2.no_blk_mq_perf+-nvme-64jobs-mq-none.log 4.14.0-rc2.BLK_MQ_PERF_V5+-nvme-64jobs-mq-none.log
+---------------------------------------
+ IOPS(K)  |    NONE     |    NONE
+---------------------------------------
+randread  |      650.98 |      653.15
+---------------------------------------
+
+OR:
+
+If you worry about this impact, can we simply disable merge on NVMe
+for none scheduler? It is basically impossible to merge NVMe's
+request/bio when none is used, but it can be doable in case of kyber
+scheduler.
+
+-- 
+Ming
