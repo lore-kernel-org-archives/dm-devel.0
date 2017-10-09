@@ -1,41 +1,56 @@
 From: Ming Lei <ming.lei@redhat.com>
-Subject: Re: [PATCH V5 8/8] blk-mq: improve bio merge from blk-mq sw queue
-Date: Mon, 9 Oct 2017 12:28:37 +0800
-Message-ID: <20171009042835.GA19029@ming.t460p>
-References: <20170930112655.31451-1-ming.lei@redhat.com>
- <20170930112655.31451-9-ming.lei@redhat.com>
- <20171003092143.GF2771@infradead.org>
+Subject: Re: [PATCH V5 4/7] blk-mq: introduce blk_mq_dequeue_from_ctx()
+Date: Mon, 9 Oct 2017 12:36:51 +0800
+Message-ID: <20171009043650.GB19029@ming.t460p>
+References: <20170930102720.30219-1-ming.lei@redhat.com>
+ <20170930102720.30219-5-ming.lei@redhat.com>
+ <20171003090109.GB21184@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
+Return-path: <linux-scsi-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20171003092143.GF2771@infradead.org>
-Sender: linux-block-owner@vger.kernel.org
+In-Reply-To: <20171003090109.GB21184@infradead.org>
+Sender: linux-scsi-owner@vger.kernel.org
 To: Christoph Hellwig <hch@infradead.org>
-Cc: Jens Axboe <axboe@fb.com>, linux-block@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Bart Van Assche <bart.vanassche@sandisk.com>, Laurence Oberman <loberman@redhat.com>, Paolo Valente <paolo.valente@linaro.org>, Oleksandr Natalenko <oleksandr@natalenko.name>, Tom Nguyen <tom81094@gmail.com>, linux-kernel@vger.kernel.org, Omar Sandoval <osandov@fb.com>
+Cc: Jens Axboe <axboe@fb.com>, linux-block@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Bart Van Assche <bart.vanassche@sandisk.com>, Laurence Oberman <loberman@redhat.com>, Paolo Valente <paolo.valente@linaro.org>, Oleksandr Natalenko <oleksandr@natalenko.name>, Tom Nguyen <tom81094@gmail.com>, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, Omar Sandoval <osandov@fb.com>
 List-Id: dm-devel.ids
 
-On Tue, Oct 03, 2017 at 02:21:43AM -0700, Christoph Hellwig wrote:
-> This looks generally good to me, but I really worry about the impact
-> on very high iops devices.  Did you try this e.g. for random reads
-> from unallocated blocks on an enterprise NVMe SSD?
+On Tue, Oct 03, 2017 at 02:01:09AM -0700, Christoph Hellwig wrote:
+> On Sat, Sep 30, 2017 at 06:27:17PM +0800, Ming Lei wrote:
+> > This function is introduced for dequeuing request
+> > from sw queue so that we can dispatch it in
+> > scheduler's way.
+> > 
+> > More importantly, some SCSI devices may set
+> > q->queue_depth, which is a per-request_queue limit,
+> > and applied on pending I/O from all hctxs. This
+> > function is introduced for avoiding to dequeue too
+> > many requests from sw queue when ->dispatch isn't
+> > flushed completely.
+> 
+> Weird commit log formatting, please use your 70+ chacters to format the
+> text.
 
-Looks no such impact, please see the following data
-in the fio test(libaio, direct, bs=4k, 64jobs, randread, none scheduler)
+OK.
 
-[root@storageqe-62 results]# ../parse_fio 4.14.0-rc2.no_blk_mq_perf+-nvme-64jobs-mq-none.log 4.14.0-rc2.BLK_MQ_PERF_V5+-nvme-64jobs-mq-none.log
----------------------------------------
- IOPS(K)  |    NONE     |    NONE
----------------------------------------
-randread  |      650.98 |      653.15
----------------------------------------
+> 
+> > @@ -882,6 +882,44 @@ void blk_mq_flush_busy_ctxs(struct blk_mq_hw_ctx *hctx, struct list_head *list)
+> >  }
+> >  EXPORT_SYMBOL_GPL(blk_mq_flush_busy_ctxs);
+> >  
+> > +struct dispatch_rq_data {
+> > +	struct blk_mq_hw_ctx *hctx;
+> > +	struct request *rq;
+> > +};
+> > +
+> > +static bool dispatch_rq_from_ctx(struct sbitmap *sb, unsigned int bitnr, void *data)
+> 
+> Overly long line.
+> 
+> But except for that this looks ok to me except for the fact that you
+> just add an unused function.
 
-OR:
-
-If you worry about this impact, can we simply disable merge on NVMe
-for none scheduler? It is basically impossible to merge NVMe's
-request/bio when none is used, but it can be doable in case of kyber
-scheduler.
+OK
 
 -- 
 Ming
