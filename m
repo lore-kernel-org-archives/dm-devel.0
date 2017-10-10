@@ -1,103 +1,75 @@
-From: John Garry <john.garry@huawei.com>
-Subject: Re: [PATCH V5 00/14] blk-mq-sched: improve sequential I/O
- performance(part 1)
-Date: Tue, 10 Oct 2017 16:10:54 +0100
-Message-ID: <e31eefb6-56ed-d75b-f52e-641beb09d203@huawei.com>
-References: <20170930102720.30219-1-ming.lei@redhat.com>
- <1e56f7e1-2a2f-26c9-9c74-97e0d22bc98b@huawei.com>
- <20171009150439.GA30189@ming.t460p> <20171010014653.GA3247@ming.t460p>
- <cb622a02-5187-5ee0-bccd-e867e8e7ee7d@huawei.com>
- <20171010134519.GA20770@ming.t460p>
+From: Omar Sandoval <osandov@osandov.com>
+Subject: Re: [PATCH V6 1/5] blk-mq-sched: fix scheduler bad performance
+Date: Tue, 10 Oct 2017 11:10:22 -0700
+Message-ID: <20171010181022.GB30738@vader.DHCP.thefacebook.com>
+References: <20171009112424.30524-1-ming.lei@redhat.com>
+ <20171009112424.30524-2-ming.lei@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20171010134519.GA20770@ming.t460p>
+Content-Disposition: inline
+In-Reply-To: <20171009112424.30524-2-ming.lei@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Ming Lei <ming.lei@redhat.com>
-Cc: Jens Axboe <axboe@fb.com>, linux-block@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Bart Van Assche <bart.vanassche@sandisk.com>, Laurence Oberman <loberman@redhat.com>, Paolo Valente <paolo.valente@linaro.org>, Oleksandr Natalenko <oleksandr@natalenko.name>, Tom Nguyen <tom81094@gmail.com>, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, Omar Sandoval <osandov@fb.com>, Linuxarm <linuxarm@huawei.com>
+Cc: Jens Axboe <axboe@fb.com>, linux-block@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Bart Van Assche <bart.vanassche@sandisk.com>, Laurence Oberman <loberman@redhat.com>, Paolo Valente <paolo.valente@linaro.org>, Oleksandr Natalenko <oleksandr@natalenko.name>, Tom Nguyen <tom81094@gmail.com>, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, Omar Sandoval <osandov@fb.com>
 List-Id: dm-devel.ids
 
-On 10/10/2017 14:45, Ming Lei wrote:
-> Hi John,
->
-> All change in V6.2 is blk-mq/scsi-mq only, which shouldn't
-> affect non SCSI_MQ, so I suggest you to compare the perf
-> between deadline and mq-deadline, like Johannes mentioned.
->
->> >
->> > V6.2 series with default SCSI_MQ
->> > read, rw, write IOPS	
->> > 700K, 130K/128K, 640K
-> If possible, could you provide your fio script and log on both
-> non SCSI_MQ(deadline) and SCSI_MQ(mq_deadline)? Maybe some clues
-> can be figured out.
->
-> Also, I just put another patch on V6.2 branch, which may improve
-> a bit too. You may try that in your test.
->
-> 	https://github.com/ming1/linux/commit/e31e2eec46c9b5ae7cfa181e9b77adad2c6a97ce
->
-> -- Ming .
+On Mon, Oct 09, 2017 at 07:24:20PM +0800, Ming Lei wrote:
+> When hw queue is busy, we shouldn't take requests from
+> scheduler queue any more, otherwise it is difficult to do
+> IO merge.
+> 
+> This patch fixes the awful IO performance on some
+> SCSI devices(lpfc, qla2xxx, ...) when mq-deadline/kyber
+> is used by not taking requests if hw queue is busy.
+> 
+> Reviewed-by: Bart Van Assche <bart.vanassche@wdc.com>
+> Reviewed-by: Christoph Hellwig <hch@lst.de>
 
-Hi Ming Lei,
+Reviewed-by: Omar Sandoval <osandov@fb.com>
 
-OK, I have tested deadline vs mq-deadline for your v6.2 branch and 
-4.12-rc2. Unfortunately I don't have time now to test your experimental 
-patches.
-
-4.14-rc2 without default SCSI_MQ, deadline scheduler
-read, rw, write IOPS	
-920K, 115K/115K, 806K
-
-4.14-rc2 with default SCSI_MQ, mq-deadline scheduler
-read, rw, write IOPS	
-280K, 99K/99K, 300K
-
-V6.2 series without default SCSI_MQ, deadline scheduler
-read, rw, write IOPS	
-919K, 117K/117K, 806K
-
-V6.2 series with default SCSI_MQ, mq-deadline scheduler
-read, rw, write IOPS	
-688K, 128K/128K, 630K
-
-I think that the non-mq results look a bit more sensible - that is, 
-consistent results.
-
-Here's my script sample:
-[global]
-rw=rW
-direct=1
-ioengine=libaio
-iodepth=2048
-numjobs=1
-bs=4k
-;size=10240000m
-;zero_buffers=1
-group_reporting=1
-group_reporting=1
-;ioscheduler=noop
-cpumask=0xff
-;cpus_allowed=0-3
-;gtod_reduce=1
-;iodepth_batch=2
-;iodepth_batch_complete=2
-runtime=100000000
-;thread
-loops = 10000
-
-[job1]
-filename=/dev/sdb:
-[job1]
-filename=/dev/sdc:
-[job1]
-filename=/dev/sdd:
-[job1]
-filename=/dev/sde:
-[job1]
-filename=/dev/sdf:
-[job1]
-filename=/dev/sdg:
-
-John
+> Signed-off-by: Ming Lei <ming.lei@redhat.com>
+> ---
+>  block/blk-mq-sched.c | 12 ++++++------
+>  1 file changed, 6 insertions(+), 6 deletions(-)
+> 
+> diff --git a/block/blk-mq-sched.c b/block/blk-mq-sched.c
+> index 4ab69435708c..eca011fdfa0e 100644
+> --- a/block/blk-mq-sched.c
+> +++ b/block/blk-mq-sched.c
+> @@ -94,7 +94,7 @@ void blk_mq_sched_dispatch_requests(struct blk_mq_hw_ctx *hctx)
+>  	struct request_queue *q = hctx->queue;
+>  	struct elevator_queue *e = q->elevator;
+>  	const bool has_sched_dispatch = e && e->type->ops.mq.dispatch_request;
+> -	bool did_work = false;
+> +	bool do_sched_dispatch = true;
+>  	LIST_HEAD(rq_list);
+>  
+>  	/* RCU or SRCU read lock is needed before checking quiesced flag */
+> @@ -125,18 +125,18 @@ void blk_mq_sched_dispatch_requests(struct blk_mq_hw_ctx *hctx)
+>  	 */
+>  	if (!list_empty(&rq_list)) {
+>  		blk_mq_sched_mark_restart_hctx(hctx);
+> -		did_work = blk_mq_dispatch_rq_list(q, &rq_list);
+> +		do_sched_dispatch = blk_mq_dispatch_rq_list(q, &rq_list);
+>  	} else if (!has_sched_dispatch) {
+>  		blk_mq_flush_busy_ctxs(hctx, &rq_list);
+>  		blk_mq_dispatch_rq_list(q, &rq_list);
+>  	}
+>  
+>  	/*
+> -	 * We want to dispatch from the scheduler if we had no work left
+> -	 * on the dispatch list, OR if we did have work but weren't able
+> -	 * to make progress.
+> +	 * We want to dispatch from the scheduler if there was nothing
+> +	 * on the dispatch list or we were able to dispatch from the
+> +	 * dispatch list.
+>  	 */
+> -	if (!did_work && has_sched_dispatch) {
+> +	if (do_sched_dispatch && has_sched_dispatch) {
+>  		do {
+>  			struct request *rq;
+>  
+> -- 
+> 2.9.5
+> 
