@@ -1,14 +1,14 @@
 From: Guan Junxiong <guanjunxiong@huawei.com>
-Subject: Re: [PATCH V6 0/2] multipath-tools: intermittent IO
- error accounting to improve reliability
-Date: Tue, 10 Oct 2017 21:25:12 +0800
-Message-ID: <8fe8ab1c-0d66-655e-2ce0-3e648e26eb26@huawei.com>
-References: <1506001426-456-1-git-send-email-guanjunxiong@huawei.com>
+Subject: Re: [PATCH V2 0/4]multipath-tools: some fixup and
+ enhancement for path-latency
+Date: Tue, 10 Oct 2017 21:28:57 +0800
+Message-ID: <61c4c75b-dcd1-1b0b-1437-47b81e69de09@huawei.com>
+References: <1506000199-9644-1-git-send-email-guanjunxiong@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1506001426-456-1-git-send-email-guanjunxiong@huawei.com>
+In-Reply-To: <1506000199-9644-1-git-send-email-guanjunxiong@huawei.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -19,101 +19,81 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, christophe.varoqui@opensvc.com
-Cc: chengjike.cheng@huawei.com, mmandala@Brocade.com, mwilck@suse.com, shenhong09@huawei.com, niuhaoxin@huawei.com
+To: christophe.varoqui@opensvc.com, dm-devel@redhat.com, hare@suse.de
+Cc: chengjike.cheng@huawei.com, xose.vazquez@gmail.com, Yang Feng <philip.yang@huawei.com>, shenhong09@huawei.com, niuhaoxin@huawei.com, mwilck@suse.com
 List-Id: dm-devel.ids
 
-Hi Martin and Muneendra,
+Hi Christophe,
 
-Any updated status about this version of patches?
+Please consider this series of patches.
+
+>
+> This series of patches help to make IO processing more common for
+> path-latency prioritizer, make the multipath.conf more user-friendly
+> and fixup the error of calculation on log scale standard deviation.
+>
+
+Thanks very much.
 
 Regards
 Guan
 
-On 2017/9/21 21:43, Guan Junxiong wrote:
-> Hi ALL,
+On 2017/9/21 21:23, Guan Junxiong wrote:
+> Hi Christophe,
 > 
-> This patchset add a new method of path state checking based on accounting
-> IO error. This is useful in many scenarios such as intermittent IO error
-> an a path due to network congestion, or a shaky link.
+> Please consider this series of patches.
 > 
-> PATCH 1/2 implements the algorithm that sends a couple of continuous IOs
-> to a path which suffers two failed events in less than a given time. Those
-> IOs are sent at a fix rate of 10 Hz.
-> PATCH 2/2 discard the original algorithm because of this:
-> the detect sample interval of that path checkers is so big/coarse that
-> it doesn't see what happens in the middle of the sample interval. We have
-> the PATCH 1/2 as a better method.
+> This series of patches help to make IO processing more common for
+> path-latency prioritizer, make the multipath.conf more user-friendly
+> and fixup the error of calculation on log scale standard deviation.  
 > 
+> First, the SCSI-to-NVMe translations which was blamed broken has been removed
+> since linux kernel 4.13, so that SG_IO IOCTL used in the reading is not
+> supported. Instead, PATCH 1/4 drops sg_read method and uses direct IO
+> reading both for NVMe device and SCSI device.
 > 
-> Changes from V5:
-> * rebase on the latest release 0.7.3 
+> Second, the original prio_args for prioritizer is like this: 20|10 which
+> is somewhat unconvenient for user. PATCH 3/4 drops it and use a syntax that
+> similar to other prioritizers, for example :
+> "base_num=5 io_num=10".
 > 
+> PATCH 2/4 can be an independent patch.
 > 
-> Changes from V4:
-> * path_io_err_XXX -> marginal_path_err_XXX. (Mumeendra)
-> * add one more parameters named marginal_path_double_failed_time instead
->   of the fixed 60 seconds for the pre-checking of a shaky path. (Martin)
-> * fix for "reschedule checking after %d seconds" log 
-> * path_io_err_recovery_time -> marginal_path_err_recheck_gap_time.
-> * put the marginal path into PATH_SHAKY instead of PATH_DELAYED 
-> * Modify the commit comments to sync with the changes above.
+> Third, Martin has pointed that standard deviation in the path-latency prioritizer
+> is wrong. We have solved this and here come the PATCH 4/4.  
 > 
 > 
-> Changes from V3:
-> * add a patch for discard the san_path_XXX_feature 
-> * fail the path in the kernel before enqueueing the path for checking
->   rather than after knowing the checking result to make it more
->   reliable. (Martin)
-> * use posix_memalign instead of manual alignment for direct IO buffer. (Martin) 
-> * use PATH_MAX to avoid certain compiler warning when opening file
->   rather than FILE_NAME_SIZE. (Martin)
-> * discard unnecessary sanity check when getting block size (Martin)
-> * do not return 0 in send_each_aync_io if io_starttime of a path is
->   not set(Martin)
-> * Wait 10ms instead of 60 second if every path is down. (Martin)
-> * rename handle_async_io_timeout to poll_async_io_timeout and use polling
->   method because io_getevents does not return 0 if there are timeout IO
->   and normal IO.
-> * rename hit_io_err_recover_time ro hit_io_err_recheck_time 
-> * modify the multipath.conf.5 and commit comments to keep sync with the
->   above changes
-> 
-> 
-> Changes from V2:
-> * fix uncondistional rescedule forverver
-> * use script/checkpatch.pl in Linux to cleanup informal coding style
-> * fix "continous" and "internel" typos
+> Thanks
+> Guan Junxiong
 > 
 > 
 > Changes from V1:
-> * send continous IO instead of a single IO in a sample interval (Martin)
-> * when recover time expires, we reschedule the checking process (Hannes)
-> * Use the error rate threshold as a permillage instead of IO number(Martin)
-> * Use a common io_context for libaio for all paths (Martin)
-> * Other small fixes (Martin)
+> * add PATCH 4/4 
+> * rebase on the 0.7.3 tag
 > 
+> Junxiong Guan (3):
+>   multipath-tools: use direct IO for path latency prioritizer
+>   multipath-tools: move get_next_string to util
+>   multipath-tools: use user-friendly prio_args for path-latency
 > 
-> Junxiong Guan (2):
->   multipath-tools: intermittent IO error accounting to improve
->     reliability
->   multipath-tools: discard san_path_err_XXX feature
+>  libmultipath/prioritizers/path_latency.c | 156 +++++++++++++++++++++++--------
+>  libmultipath/prioritizers/weightedpath.c |  10 +-
+>  libmultipath/util.c                      |   9 ++
+>  libmultipath/util.h                      |   1 +
+>  multipath/multipath.conf.5               |   2 +-
+>  5 files changed, 127 insertions(+), 51 deletions(-)
 > 
->  libmultipath/Makefile      |   5 +-
->  libmultipath/config.c      |   3 -
->  libmultipath/config.h      |  21 +-
->  libmultipath/configure.c   |   7 +-
->  libmultipath/dict.c        |  88 +++---
->  libmultipath/io_err_stat.c | 744 +++++++++++++++++++++++++++++++++++++++++++++
->  libmultipath/io_err_stat.h |  15 +
->  libmultipath/propsel.c     |  70 +++--
->  libmultipath/propsel.h     |   7 +-
->  libmultipath/structs.h     |  15 +-
->  libmultipath/uevent.c      |  32 ++
->  libmultipath/uevent.h      |   2 +
->  multipath/multipath.conf.5 |  89 ++++--
->  multipathd/main.c          | 140 ++++-----
->  14 files changed, 1043 insertions(+), 195 deletions(-)
->  create mode 100644 libmultipath/io_err_stat.c
->  create mode 100644 libmultipath/io_err_stat.h
+> Guan Junxiong (4):
+>   multipath-tools: use direct IO for path latency prioritizer
+>   multipath-tools: move get_next_string to util
+>   multipath-tools: use user-friendly prio_args for path-latency
+>   multipath-tools: calculate standard deviation on a logarithmic scale
+>     for prioritizer path_latency
+> 
+>  libmultipath/prioritizers/path_latency.c | 321 ++++++++++++++++++++-----------
+>  libmultipath/prioritizers/weightedpath.c |  10 +-
+>  libmultipath/util.c                      |   9 +
+>  libmultipath/util.h                      |   1 +
+>  multipath/multipath.conf.5               |   2 +-
+>  5 files changed, 217 insertions(+), 126 deletions(-)
 > 
