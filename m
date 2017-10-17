@@ -1,36 +1,70 @@
-From: Michael Lyle <mlyle@lyle.org>
-Subject: Re: [PATCH] md: Convert timers to use timer_setup()
-Date: Mon, 16 Oct 2017 20:06:06 -0700
-Message-ID: <390e7ce2-fda1-ad11-6c96-0ea44615c845@lyle.org>
-References: <20171017000148.GA102867@beast>
+From: Arnon Yaari <arnony@infinidat.com>
+Subject: [PATCH v3] libmultipath: update INFINIDAT builtin config
+Date: Tue, 17 Oct 2017 10:55:36 +0300
+Message-ID: <CAK2gM1vmua3z7ZQtudyeTQbxivw0qxkGt5K2kJQFJN9UsQL6CQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-bcache-owner@vger.kernel.org>
-In-Reply-To: <20171017000148.GA102867@beast>
-Content-Language: en-US
-Sender: linux-bcache-owner@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>, Shaohua Li <shli@fb.com>
-Cc: Kent Overstreet <kent.overstreet@gmail.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, linux-bcache@vger.kernel.org, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 10/16/2017 05:01 PM, Kees Cook wrote:
-> In preparation for unconditionally passing the struct timer_list pointer to
-> all timer callbacks, switch to using the new timer_setup() and from_timer()
-> to pass the timer pointer explicitly.
-> 
-> Cc: Kent Overstreet <kent.overstreet@gmail.com>
-> Cc: Shaohua Li <shli@kernel.org>
-> Cc: Alasdair Kergon <agk@redhat.com>
-> Cc: Mike Snitzer <snitzer@redhat.com>
-> Cc: dm-devel@redhat.com
-> Cc: linux-bcache@vger.kernel.org
-> Cc: linux-raid@vger.kernel.org
-> Signed-off-by: Kees Cook <keescook@chromium.org>
+Based on the manufacturer documentation:
+https://support.infinidat.com/hc/en-us/articles/202319222
 
-This looks good to me-- I'm fine with Jens or someone else picking this
-up directly, or would take a bcache-specific one to apply to my tree.
+INFINIDAT recommends round-robin path selector using
+a different path per IO. Timeout and path recovery values
+are adjusted for error-free hot upgrade scenarios.
 
-Reviewed-by: Michael Lyle <mlyle@lyle.org>
+Signed-off-by: Arnon Yaari <arnony@infinidat.com>
+---
+Changes in v2:
+ - Added maintainer information
+ - Removed default values
+Changes in v3:
+ - Changed patch message
 
-> [snip]
+libmultipath/hwtable.c | 13 ++++++++++++-
+1 file changed, 12 insertions(+), 1 deletion(-)
+
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index 9e14ec1e..aa0ced53 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -964,13 +964,24 @@ static struct hwentry default_hw[] = {
+    },
+    /*
+     * Infinidat
++    *
++    * Maintainer: Arnon Yaari
++    * Mail: arnony@infinidat.com
+     */
+    {
+        .vendor        = "NFINIDAT",
+        .product       = "InfiniBox",
+        .pgpolicy      = GROUP_BY_PRIO,
+-       .pgfailback    = -FAILBACK_IMMEDIATE,
++       .pgfailback    = 30,
+        .prio_name     = PRIO_ALUA,
++       .selector      = "round-robin 0",
++       .rr_weight     = RR_WEIGHT_PRIO,
++       .no_path_retry = NO_PATH_RETRY_FAIL,
++       .minio         = 1,
++       .minio_rq      = 1,
++       .flush_on_last_del = FLUSH_ENABLED,
++       .fast_io_fail  = 15,
++       .dev_loss      = 15,
+    },
+    /*
+     * Nimble Storage
+--
+2.11.0
