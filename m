@@ -1,47 +1,43 @@
-From: Ming Lei <tom.leiming@gmail.com>
-Subject: Re: scheduling/merging on top of a DM target?
-Date: Mon, 23 Oct 2017 18:29:36 +0800
-Message-ID: <CACVXFVOso-so94E5GkuSg+uKbRDsKwYS7-R317dQ2c3L_45CYQ@mail.gmail.com>
-References: <EDBECBAD-E043-4121-BF97-5D2AE11463E7@ccs.neu.edu>
+From: Josef Bacik <josef@toxicpanda.com>
+Subject: Re: [PATCH 2/2] dm log writes: add support for DAX
+Date: Mon, 23 Oct 2017 13:34:09 -0400
+Message-ID: <20171023173408.z6gog67bdp5s7jzy@destiny>
+References: <20171020052404.13762-1-ross.zwisler@linux.intel.com>
+ <20171020052404.13762-2-ross.zwisler@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <EDBECBAD-E043-4121-BF97-5D2AE11463E7@ccs.neu.edu>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Peter Desnoyers <pjd@ccs.neu.edu>
-Cc: "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-ext4-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20171020052404.13762-2-ross.zwisler@linux.intel.com>
+Sender: linux-ext4-owner@vger.kernel.org
+To: Ross Zwisler <ross.zwisler@linux.intel.com>
+Cc: linux-kernel@vger.kernel.org, Josef Bacik <jbacik@fb.com>, Alasdair Kergon <agk@redhat.com>, Dan Williams <dan.j.williams@intel.com>, Dave Chinner <david@fromorbit.com>, Jan Kara <jack@suse.cz>, Mike Snitzer <snitzer@redhat.com>, Shaohua Li <shli@kernel.org>, dm-devel@redhat.com, linux-nvdimm@lists.01.org, linux-raid@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org, Christoph Hellwig <hch@infradead.org>
 List-Id: dm-devel.ids
 
-T24gTW9uLCBPY3QgMjMsIDIwMTcgYXQgMjoxNiBBTSwgUGV0ZXIgRGVzbm95ZXJzIDxwamRAY2Nz
-Lm5ldS5lZHU+IHdyb3RlOgo+IFdl4oCZcmUgZW11bGF0aW5nIHNvbWUgaW4tZGlzayBhbGdvcml0
-aG1zIGluIGEgZGV2aWNlIG1hcHBlciB0YXJnZXQsIGFuZCB3b3VsZCBsaWtlIHRvIGJlIGFibGUg
-dG8gZG8gYSBmYWlyIGNvbXBhcmlzb24gYmV0d2VlbiB0aGUgZW11bGF0ZWQgYW5kIHJlYWwgdmVy
-c2lvbnM7IGhvd2V2ZXIgdGhleSBzZWUgcmFkaWNhbGx5IGRpZmZlcmVudCBJL08gc3RyZWFtcywg
-ZXZpZGVudGx5IGJlY2F1c2UgdGhlcmXigJlzIG5vIHNjaGVkdWxpbmcgLyByZXF1ZXN0IG1lcmdp
-bmcgLyBldGMuIG9uIHRvcCBvZiB0aGUgYmlvLWJhc2VkIGRldmljZSBtYXBwZXIgdGFyZ2V0Lgo+
-Cj4gSXQgYXBwZWFycyB0aGF0IGlmIG91ciBkZXZpY2UgbWFwcGVyIHdlcmUgcmVxdWVzdC1iYXNl
-ZCBpbnN0ZWFkIG9mIGJpby1iYXNlZCB3ZSB3b3VsZG7igJl0IGhhdmUgdGhpcyBpc3N1ZSwgYnV0
-IGFmdGVyIHJlYWRpbmcgYSBidW5jaCBvZiBoaXN0b3J5IG9uIHRoZSBtYWlsaW5nIGxpc3QgYXJj
-aGl2ZXMgSSBkb27igJl0IHRoaW5rIHRoaXMgaXMgZ29pbmcgdG8gaGFwcGVuIGVhc2lseS4KPgo+
-IERvZXMgYW55b25lIGhhdmUgYW55IHRob3VnaHRzIG9uIHF1aWNrLWFuZC1kaXJ0eSB3YXlzIHRv
-IGFwcHJveGltYXRlIHRoaXMgc28gd2UgY2FuIGdldCBzb21lIHByZWxpbWluYXJ5IG1lYXN1cmVt
-ZW50cz8gZG0tbXVsdGlwYXRoIHdvbuKAmXQgc3RhY2sgb24gYSBiaW8tYmFzZWQgdGFyZ2V0LCBh
-bmQgYXR0ZW1wdHMgdG8gc3RhY2sgbG9vcGJhY2sgYW5kIHZhcmlvdXMgaXNjc2kgdGFyZ2V0cyBv
-biB0b3AgaGF2ZW7igJl0IGFjaGlldmVkIHRoZSBkZXNpcmVkIHJlc3VsdHMuIChpbiBnZW5lcmFs
-IHRoZXNlIGhhdmUgcmVzdWx0ZWQgaW4gb3VyIGRtIHRhcmdldCBzZWVpbmcgaW5kaXZpZHVhbCA0
-SyBJL09zLCBpbnN0ZWFkIG9mIHRoZSBsYXJnZXIgSS9PcyBhdCB0aGUgaGlnaGVyIGxheWVyKQo+
-CgpJIHBvc3RlZCBvdXQgb25lIHBhdGNoc2V0IGZvciBhZGRyZXNzaW5nIHRoZSBpc3N1ZToKCmh0
-dHBzOi8vbWFyYy5pbmZvLz9sPWxpbnV4LWJsb2NrJm09MTUwNjc3MzM0MDIxODE3Jnc9MgoKQnV0
-IGl0IGhhcyBiZWVuIG9ic29sZXRlLCB3aWxsIHBvc3Qgb3V0IGEgbmV3IHZlcnNpb24Kd2hlbiBJ
-IGdldCB0aW1lIHRvIGRvIHRoYXQuCgoKLS0gCk1pbmcgTGVpCgotLQpkbS1kZXZlbCBtYWlsaW5n
-IGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4v
-bGlzdGluZm8vZG0tZGV2ZWw=
+On Thu, Oct 19, 2017 at 11:24:04PM -0600, Ross Zwisler wrote:
+> Now that we have the ability log filesystem writes using a flat buffer, add
+> support for DAX.  Unfortunately we can't easily track data that has been
+> written via mmap() now that the dax_flush() abstraction was removed by this
+> commit:
+> 
+> commit c3ca015fab6d ("dax: remove the pmem_dax_ops->flush abstraction")
+> 
+> Otherwise we could just treat each flush as a big write, and store the data
+> that is being synced to media.  It may be worthwhile to add the dax_flush()
+> entry point back, just as a notifier so we can do this logging.
+> 
+> The motivation for this support is the need for an xfstest that can test
+> the new MAP_SYNC DAX flag.  By logging the filesystem activity with
+> dm-log-writes we can show that the MAP_SYNC page faults are writing out
+> their metadata as they happen, instead of requiring an explicit
+> msync/fsync.
+> 
+> Signed-off-by: Ross Zwisler <ross.zwisler@linux.intel.com>
+> ---
+
+Ok this is just my ignorance of how DAX works shining through, but do we need a
+new flag to indicate this is DAX data?  You are logging it like it's just normal
+data going to a certain sector, is that good enough?  If it is then hooray this
+looks fine to me, I'm just slightly confused.  Thanks,
+
+Josef
