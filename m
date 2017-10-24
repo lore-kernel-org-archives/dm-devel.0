@@ -1,12 +1,14 @@
 From: Guan Junxiong <guanjunxiong@huawei.com>
-Subject: [PATCH v7 0/2] multipath-tools: intermittent IO error
-	accounting to improve reliability
-Date: Tue, 24 Oct 2017 09:57:21 +0800
-Message-ID: <1508810243-33556-1-git-send-email-guanjunxiong@huawei.com>
+Subject: [PATCH v7 2/2] multipath-tools: discard san_path_err_XXX
+	feature
+Date: Tue, 24 Oct 2017 09:57:23 +0800
+Message-ID: <1508810243-33556-3-git-send-email-guanjunxiong@huawei.com>
+References: <1508810243-33556-1-git-send-email-guanjunxiong@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1508810243-33556-1-git-send-email-guanjunxiong@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,133 +22,460 @@ To: christophe.varoqui@opensvc.com
 Cc: guanjunxiong@huawei.com, shenhong09@huawei.com, dm-devel@redhat.com, niuhaoxin@huawei.com, mmandala@Brocade.com, mwilck@suse.com
 List-Id: dm-devel.ids
 
-SGkgQ2hyaXN0b3BoZSBhbmQgQWxsLAoKVGhpcyBwYXRjaCBzZXQgYWRkcyBhIG5ldyBtZXRob2Qg
-b2YgcGF0aCBzdGF0ZSBjaGVja2luZyBiYXNlZCBvbiBhY2NvdW50aW5nCklPIGVycm9yLiBUaGlz
-IGlzIHVzZWZ1bCBpbiBtYW55IHNjZW5hcmlvcyBzdWNoIGFzIGludGVybWl0dGVudCBJTyBlcnJv
-cgpvbiBhIHBhdGggZHVlIHRvIGludGVybWl0dGVudCBmcmFtZSBkcm9wcywgaW50ZXJtaXR0ZW50
-IGNvcnJ1cHRpb25zLCBuZXR3b3JrCmNvbmdlc3Rpb24gb3IgYSBzaGFreSBsaW5rLgoKVGhpcyBw
-YXRjaCBzZXQgaXMgb2Ygc2lnbmlmaWNhbmNlIGJlY2F1c2Ugb2YgdGhpcyAocXVvdGVkIGZyb20g
-dGhlIGRpc2N1c3Npb24Kd2l0aCBNdW5lZW5kcmEsIEJyb2NhZGUpOgoKVGhlcmUgYXJlIHR5cGlj
-YWxseSB0d28gdHlwZSBvZiBTQU4gbmV0d29yayBwcm9ibGVtcyB0aGF0IGFyZSBjYXRlZ29yaXpl
-ZCBhcwptYXJnaW5hbCBpc3N1ZXMuIFRoZXNlIGlzc3VlcyBieSBuYXR1cmUgYXJlIG5vdCBwZXJt
-YW5lbnQgaW4gdGltZSBhbmQgZG8gY29tZQphbmQgZ28gYXdheSBvdmVyIHRpbWUuCjEpIFN3aXRj
-aGVzIGluIHRoZSBTQU4gY2FuIGhhdmUgaW50ZXJtaXR0ZW50IGZyYW1lIGRyb3BzIG9yIGludGVy
-bWl0dGVudAogICBmcmFtZSBjb3JydXB0aW9ucyBkdWUgdG8gYmFkIG9wdGljcyBjYWJsZSAoU0ZQ
-KSBvciBhbnkgc3VjaCB3ZWFyL3RlYXIgcG9ydAogICBpc3N1ZXMuIFRoaXMgY2F1c2VzIElUTCBm
-bG93cyB0aGF0IGdvIHRocm91Z2ggdGhlIGZhdWx0eSBzd2l0Y2gvcG9ydCB0bwogICBpbnRlcm1p
-dHRlbnRseSBleHBlcmllbmNlIGZyYW1lIGRyb3BzLiAgCjIpIFRoZXJlIGV4aXN0cyBTQU4gdG9w
-b2xvZ2llcyB3aGVyZSB0aGVyZSBhcmUgc3dpdGNoIHBvcnRzIGluIHRoZSBmYWJyaWMKICAgdGhh
-dCBiZWNvbWVzIHRoZSBvbmx5ICBjb25kdWl0IGZvciBtYW55IGRpZmZlcmVudCBJVEwoaG9zdC0t
-dGFyZ2V0LS1MVU4pCiAgIGZsb3dzIGFjcm9zcyBtdWx0aXBsZSBob3N0cy4gVGhlc2Ugc2luZ2xl
-IG5ldHdvcmsgcGF0aHMgYXJlIGVzc2VudGlhbGx5CiAgIHNoYXJlZCBhY3Jvc3MgbXVsdGlwbGUg
-SVRMIGZsb3dzLiBVbmRlciB0aGVzZSBjb25kaXRpb25zIGlmIHRoZSBwb3J0IGxpbmsKICAgYmFu
-ZHdpZHRoIGlzIG5vdCBhYmxlIHRvIGhhbmRsZSB0aGUgbmV0IHN1bSBvZiB0aGUgc2hhcmVkIElU
-TCBmbG93cyBiYW5kd2lkdGgKICAgZ29pbmcgdGhyb3VnaCB0aGUgc2luZ2xlIHBhdGggIHRoZW4g
-d2UgY291bGQgc2VlIGludGVybWl0dGVudCBuZXR3b3JrCiAgIGNvbmdlc3Rpb24gcHJvYmxlbXMu
-IFRoaXMgY29uZGl0aW9uIGlzIGNhbGxlZCBuZXR3b3JrIG92ZXJzdWJzY3JpcHRpb24uCiAgIFRo
-ZSBpbnRlcm1pdHRlbnQgY29uZ2VzdGlvbnMgY2FuIGRlbGF5IFNDU0kgZXhjaGFuZ2UgY29tcGxl
-dGlvbiB0aW1lCiAgIChpbmNyZWFzZSBpbiBJL08gbGF0ZW5jeSBpcyBvYnNlcnZlZCkuCgpUbyBv
-dmVyY29tZSB0aGUgYWJvdmUgbmV0d29yayBpc3N1ZXMgYW5kIG1hbnkgbW9yZSBzdWNoIHRhcmdl
-dCBpc3N1ZXMsIHRoZXJlCmFyZSBmcmFtZSBsZXZlbCByZXRyaWVzIHRoYXQgYXJlIGRvbmUgaW4g
-SEJBIGRldmljZSBmaXJtd2FyZSBhbmQgSS9PIHJldHJpZXMKaW4gdGhlIFNDU0kgbGF5ZXIuIFRo
-ZXNlIHJldHJpZXMgbWlnaHQgc3VjY2VlZCBiZWNhdXNlIG9mIHR3byByZWFzb25zOgoxKSBUaGUg
-aW50ZXJtaXR0ZW50IHN3aXRjaC9wb3J0IGlzc3VlIGlzIG5vdCBvYnNlcnZlZAoyKSBUaGUgcmV0
-cnkgSS9PIGlzIGEgbmV3ICBTQ1NJIGV4Y2hhbmdlLiBUaGlzIFNDU0kgZXhjaGFuZ2UgY2FuIHRh
-a2UgYW4KICAgYWx0ZXJuYXRlIFNBTiBwYXRoIGZvciB0aGUgSVRMIGZsb3csIGlmIHN1Y2ggYW4g
-U0FOIHBhdGggZXhpc3RzLgozKSBOZXR3b3JrIGNvbmdlc3Rpb24gZGlzYXBwZWFycyBtb21lbnRh
-cmlseSBiZWNhdXNlIHRoZSBuZXQgSS9PIGJhbmR3aWR0aAogICBjb21pbmcgZnJvbSBtdWx0aXBs
-ZSBJVEwgZmxvd3Mgb24gdGhlIHNpbmdsZSBzaGFyZWQgbmV0d29yayBwYXRoIGlzCiAgIHNvbWV0
-aGluZyB0aGUgcGF0aCBjYW4gaGFuZGxlCgpIb3dldmVyIGluIHNvbWUgY2FzZXMgd2UgaGF2ZSBz
-ZWVuIEkvTyByZXRyaWVzIGRvbid0IHN1Y2NlZWQgYmVjYXVzZSB0aGUgcmV0cnkKSS9PcyBoaXRz
-IGEgU0FOIG5ldHdvcmsgcGF0aCB0aGF0IGhhcyBpbnRlcm1pdHRlbnQgc3dpdGNoL3BvcnQgaXNz
-dWUgYW5kL29yCm5ldHdvcmsgY29uZ2VzdGlvbi4gCgpPbiB0aGUgaG9zdCB0aHVzIHdlIHNlZSBj
-b25maWd1cmF0aW9ucyB0d28gb3IgbW9yZSBJVEwgcGF0aCBzaGFyaW5nIHRoZSBzYW1lCnRhcmdl
-dC9MVU4gZ29pbmcgdGhyb3VnaCB0d28gb3IgbW9yZSBIQkEgcG9ydHMuIFRoZXNlIEhCQSBwb3J0
-cyBhcmUgY29ubmVjdGVkCnRvIHR3byBvciBtb3JlIFNBTiB0byB0aGUgc2FtZSB0YXJnZXQvTFVO
-LgpJZiB0aGUgSS9PIGZhaWxzIGF0IHRoZSBtdWx0aXBhdGggbGF5ZXIgdGhlbiwgdGhlIElUTCBw
-YXRoIGlzIHR1cm5lZCBpbnRvCkZhaWxlZCBzdGF0ZS4gQmVjYXVzZSBvZiB0aGUgbWFyZ2luYWwg
-bmF0dXJlIG9mIHRoZSBuZXR3b3JrLCB0aGUgbmV4dCBIZWFsdGgKQ2hlY2sgY29tbWFuZCBzZW50
-IGZyb20gbXVsdGlwYXRoIGxheWVyIG1pZ2h0IHN1Y2NlZWQsIHdoaWNoIHJlc3VsdHMgaW4gbWFr
-aW5nCnRoZSBJVEwgcGF0aCBpbnRvIEFjdGl2ZSBzdGF0ZS4gWW91IGVuZCB1cCBzZWVpbmcgdGhl
-IERNIHBhdGggc3RhdGUgZ29pbmcgaW50bwpBY3RpdmUsIEZhaWxlZCwgQWN0aXZlIHRyYW5zaXRp
-b25zLiBUaGlzIHJlc3VsdHMgaW4gb3ZlcmFsbCByZWR1Y3Rpb24gaW4KYXBwbGljYXRpb24gSS9P
-IHRocm91Z2hwdXQgYW5kIHNvbWV0aW1lIGFwcGxpY2F0aW9uIEkvTyBmYWlsdXJlcyAoYmVjYXVz
-ZSBvZgp0aW1pbmcgY29uc3RyYWludHMpLiBBbGwgdGhpcyBjYW4gaGFwcGVuIGJlY2F1c2Ugb2Yg
-SS9PIHJldHJpZXMgYW5kIEkvTyByZXF1ZXN0Cm1vdmluZyBhY3Jvc3MgbXVsdGlwbGUgcGF0aHMg
-b2YgdGhlIERNIGRldmljZS4gSW4gdGhlIGhvc3QgaXQgaXMgdG8gYmUgbm90ZWQKYWxsIEkvTyBy
-ZXRyaWVzIG9uIGEgc2luZ2xlIHBhdGggYW5kIEkvTyBtb3ZlbWVudCBhY3Jvc3MgbXVsdGlwbGUg
-cGF0aHMgcmVzdWx0cwppbiBzbG93aW5nIGRvd24gdGhlIGZvcndhcmQgcHJvZ3Jlc3Mgb2YgbmV3
-IGFwcGxpY2F0aW9uIEkvTy4gUmVhc29uIGJlaGluZCwKdGhlIGFib3ZlIEkvTyByZS1xdWV1ZSBh
-Y3Rpb25zIGFyZSBnaXZlbiBoaWdoZXIgcHJpb3JpdHkgdGhhbiB0aGUgbmV3ZXIgSS9PCnJlcXVl
-c3RzIGNvbWluZyBmcm9tIHRoZSBhcHBsaWNhdGlvbi4gCgpUaGUgYWJvdmUgY29uZGl0aW9uIG9m
-IHRoZSAgSVRMIHBhdGggaXMgaGVuY2UgY2FsbGVkICJtYXJnaW5hbCIuCgpXaGF0IHdlIGRlc2ly
-ZSBpcyBmb3IgdGhlIERNIHRvIGRldGVybWluaXN0aWNhbGx5ICBjYXRlZ29yaXplIGEgSVRMIFBh
-dGggYXMK4oCcbWFyZ2luYWzigJ0gYW5kIG1vdmUgYWxsIHRoZSBwZW5kaW5nIEkvT3MgZnJvbSB0
-aGUgbWFyZ2luYWwgUGF0aCB0byBhbiBBY3RpdmUKUGF0aC4gVGhpcyB3aWxsIGhlbHAgaW4gbWVl
-dGluZyBhcHBsaWNhdGlvbiBJL08gdGltaW5nIGNvbnN0cmFpbnRzLiBBbHNvIGEKY2FwYWJpbGl0
-eSB0byBhdXRvbWF0aWNhbGx5IHJlLWluc3RhbnRpYXRlIHRoZSBtYXJnaW5hbCBwYXRoIGludG8g
-QWN0aXZlIG9uY2UKdGhlIG1hcmdpbmFsIGNvbmRpdGlvbiBpbiB0aGUgbmV0d29yayBpcyBmaXhl
-ZC4KCgpIZXJlIGlzIHRoZSBkZXNjcmlwdGlvbiBvZiBpbXBsZW1lbnRhdGlvbjoKMSkgUEFUQ0gg
-MS8yIGltcGxlbWVudHMgdGhlIGFsZ29yaXRobSB0aGF0IHNlbmRzIGEgY291cGxlIG9mIGNvbnRp
-bnVvdXMgSU9zCnRvIGEgcGF0aCB3aGljaCBzdWZmZXJzIHR3byBmYWlsZWQgZXZlbnRzIGluIGxl
-c3MgdGhhbiBhIGdpdmVuIHRpbWUuIFRob3NlCklPcyBhcmUgc2VudCBhdCBhIGZpeCByYXRlIG9m
-IDEwIEh6LgoyKSBQQVRDSCAyLzIgZGlzY2FyZCB0aGUgb3JpZ2luYWwgYWxnb3JpdGhtIGJlY2F1
-c2Ugb2YgdGhpczoKdGhlIGRldGVjdCBzYW1wbGUgaW50ZXJ2YWwgb2YgdGhhdCBwYXRoIGNoZWNr
-ZXJzIGlzIHNvIGJpZy9jb2Fyc2UgdGhhdAppdCBkb2Vzbid0IHNlZSB3aGF0IGhhcHBlbnMgaW4g
-dGhlIG1pZGRsZSBvZiB0aGUgc2FtcGxlIGludGVydmFsLiBXZSBoYXZlCnRoZSBQQVRDSCAxLzIg
-YXMgYSBiZXR0ZXIgbWV0aG9kLgoKCkNoYW5nZXMgZnJvbSBWNjoKKiBmaXggdGhlIHdhcm5pbmcg
-b2YgdW53cmFwcGVkIGNvbW1pdCBkZXNjcmlwdGlvbiBpbiBwYXRjaCAxLzIgCiogYWRkIFJldmll
-d2VkLWJ5IHRhZyBvZiBNdW5lZW5kcmEKKiBhZGQgZGV0YWlsZWQgc2NlbmFyaW8gZGlzY3JpcHRp
-b24gaW4gdGhlIGNvdmVyIGxldHRlcgoKQ2hhbmdlcyBmcm9tIFY1OgoqIHJlYmFzZSBvbiB0aGUg
-bGF0ZXN0IHJlbGVhc2UgMC43LjMgCgoKQ2hhbmdlcyBmcm9tIFY0OgoqIHBhdGhfaW9fZXJyX1hY
-WCAtPiBtYXJnaW5hbF9wYXRoX2Vycl9YWFguIChNdW1lZW5kcmEpCiogYWRkIG9uZSBtb3JlIHBh
-cmFtZXRlcnMgbmFtZWQgbWFyZ2luYWxfcGF0aF9kb3VibGVfZmFpbGVkX3RpbWUgaW5zdGVhZAog
-IG9mIHRoZSBmaXhlZCA2MCBzZWNvbmRzIGZvciB0aGUgcHJlLWNoZWNraW5nIG9mIGEgc2hha3kg
-cGF0aC4gKE1hcnRpbikKKiBmaXggZm9yICJyZXNjaGVkdWxlIGNoZWNraW5nIGFmdGVyICVkIHNl
-Y29uZHMiIGxvZyAKKiBwYXRoX2lvX2Vycl9yZWNvdmVyeV90aW1lIC0+IG1hcmdpbmFsX3BhdGhf
-ZXJyX3JlY2hlY2tfZ2FwX3RpbWUuCiogcHV0IHRoZSBtYXJnaW5hbCBwYXRoIGludG8gUEFUSF9T
-SEFLWSBpbnN0ZWFkIG9mIFBBVEhfREVMQVlFRCAKKiBNb2RpZnkgdGhlIGNvbW1pdCBjb21tZW50
-cyB0byBzeW5jIHdpdGggdGhlIGNoYW5nZXMgYWJvdmUuCgoKQ2hhbmdlcyBmcm9tIFYzOgoqIGFk
-ZCBhIHBhdGNoIGZvciBkaXNjYXJkIHRoZSBzYW5fcGF0aF9YWFhfZmVhdHVyZSAKKiBmYWlsIHRo
-ZSBwYXRoIGluIHRoZSBrZXJuZWwgYmVmb3JlIGVucXVldWVpbmcgdGhlIHBhdGggZm9yIGNoZWNr
-aW5nCiAgcmF0aGVyIHRoYW4gYWZ0ZXIga25vd2luZyB0aGUgY2hlY2tpbmcgcmVzdWx0IHRvIG1h
-a2UgaXQgbW9yZQogIHJlbGlhYmxlLiAoTWFydGluKQoqIHVzZSBwb3NpeF9tZW1hbGlnbiBpbnN0
-ZWFkIG9mIG1hbnVhbCBhbGlnbm1lbnQgZm9yIGRpcmVjdCBJTyBidWZmZXIuIChNYXJ0aW4pIAoq
-IHVzZSBQQVRIX01BWCB0byBhdm9pZCBjZXJ0YWluIGNvbXBpbGVyIHdhcm5pbmcgd2hlbiBvcGVu
-aW5nIGZpbGUKICByYXRoZXIgdGhhbiBGSUxFX05BTUVfU0laRS4gKE1hcnRpbikKKiBkaXNjYXJk
-IHVubmVjZXNzYXJ5IHNhbml0eSBjaGVjayB3aGVuIGdldHRpbmcgYmxvY2sgc2l6ZSAoTWFydGlu
-KQoqIGRvIG5vdCByZXR1cm4gMCBpbiBzZW5kX2VhY2hfYXluY19pbyBpZiBpb19zdGFydHRpbWUg
-b2YgYSBwYXRoIGlzCiAgbm90IHNldChNYXJ0aW4pCiogV2FpdCAxMG1zIGluc3RlYWQgb2YgNjAg
-c2Vjb25kIGlmIGV2ZXJ5IHBhdGggaXMgZG93bi4gKE1hcnRpbikKKiByZW5hbWUgaGFuZGxlX2Fz
-eW5jX2lvX3RpbWVvdXQgdG8gcG9sbF9hc3luY19pb190aW1lb3V0IGFuZCB1c2UgcG9sbGluZwog
-IG1ldGhvZCBiZWNhdXNlIGlvX2dldGV2ZW50cyBkb2VzIG5vdCByZXR1cm4gMCBpZiB0aGVyZSBh
-cmUgdGltZW91dCBJTwogIGFuZCBub3JtYWwgSU8uCiogcmVuYW1lIGhpdF9pb19lcnJfcmVjb3Zl
-cl90aW1lIHJvIGhpdF9pb19lcnJfcmVjaGVja190aW1lIAoqIG1vZGlmeSB0aGUgbXVsdGlwYXRo
-LmNvbmYuNSBhbmQgY29tbWl0IGNvbW1lbnRzIHRvIGtlZXAgc3luYyB3aXRoIHRoZQogIGFib3Zl
-IGNoYW5nZXMKCgpDaGFuZ2VzIGZyb20gVjI6CiogZml4IHVuY29uZGlzdGlvbmFsIHJlc2NlZHVs
-ZSBmb3J2ZXJ2ZXIKKiB1c2Ugc2NyaXB0L2NoZWNrcGF0Y2gucGwgaW4gTGludXggdG8gY2xlYW51
-cCBpbmZvcm1hbCBjb2Rpbmcgc3R5bGUKKiBmaXggImNvbnRpbm91cyIgYW5kICJpbnRlcm5lbCIg
-dHlwb3MKCgpDaGFuZ2VzIGZyb20gVjE6Ciogc2VuZCBjb250aW5vdXMgSU8gaW5zdGVhZCBvZiBh
-IHNpbmdsZSBJTyBpbiBhIHNhbXBsZSBpbnRlcnZhbCAoTWFydGluKQoqIHdoZW4gcmVjb3ZlciB0
-aW1lIGV4cGlyZXMsIHdlIHJlc2NoZWR1bGUgdGhlIGNoZWNraW5nIHByb2Nlc3MgKEhhbm5lcykK
-KiBVc2UgdGhlIGVycm9yIHJhdGUgdGhyZXNob2xkIGFzIGEgcGVybWlsbGFnZSBpbnN0ZWFkIG9m
-IElPIG51bWJlcihNYXJ0aW4pCiogVXNlIGEgY29tbW9uIGlvX2NvbnRleHQgZm9yIGxpYmFpbyBm
-b3IgYWxsIHBhdGhzIChNYXJ0aW4pCiogT3RoZXIgc21hbGwgZml4ZXMgKE1hcnRpbikKCgpKdW54
-aW9uZyBHdWFuICgyKToKICBtdWx0aXBhdGgtdG9vbHM6IGludGVybWl0dGVudCBJTyBlcnJvciBh
-Y2NvdW50aW5nIHRvIGltcHJvdmUKICAgIHJlbGlhYmlsaXR5CiAgbXVsdGlwYXRoLXRvb2xzOiBk
-aXNjYXJkIHNhbl9wYXRoX2Vycl9YWFggZmVhdHVyZQoKIGxpYm11bHRpcGF0aC9NYWtlZmlsZSAg
-ICAgIHwgICA1ICstCiBsaWJtdWx0aXBhdGgvY29uZmlnLmMgICAgICB8ICAgMyAtCiBsaWJtdWx0
-aXBhdGgvY29uZmlnLmggICAgICB8ICAyMSArLQogbGlibXVsdGlwYXRoL2NvbmZpZ3VyZS5jICAg
-fCAgIDcgKy0KIGxpYm11bHRpcGF0aC9kaWN0LmMgICAgICAgIHwgIDg4ICsrKy0tLQogbGlibXVs
-dGlwYXRoL2lvX2Vycl9zdGF0LmMgfCA3NDQgKysrKysrKysrKysrKysrKysrKysrKysrKysrKysr
-KysrKysrKysrKysrKysrCiBsaWJtdWx0aXBhdGgvaW9fZXJyX3N0YXQuaCB8ICAxNSArCiBsaWJt
-dWx0aXBhdGgvcHJvcHNlbC5jICAgICB8ICA3MCArKystLQogbGlibXVsdGlwYXRoL3Byb3BzZWwu
-aCAgICAgfCAgIDcgKy0KIGxpYm11bHRpcGF0aC9zdHJ1Y3RzLmggICAgIHwgIDE1ICstCiBsaWJt
-dWx0aXBhdGgvdWV2ZW50LmMgICAgICB8ICAzMiArKwogbGlibXVsdGlwYXRoL3VldmVudC5oICAg
-ICAgfCAgIDIgKwogbXVsdGlwYXRoL211bHRpcGF0aC5jb25mLjUgfCAgODkgKysrKy0tCiBtdWx0
-aXBhdGhkL21haW4uYyAgICAgICAgICB8IDE0MCArKysrLS0tLS0KIDE0IGZpbGVzIGNoYW5nZWQs
-IDEwNDMgaW5zZXJ0aW9ucygrKSwgMTk1IGRlbGV0aW9ucygtKQogY3JlYXRlIG1vZGUgMTAwNjQ0
-IGxpYm11bHRpcGF0aC9pb19lcnJfc3RhdC5jCiBjcmVhdGUgbW9kZSAxMDA2NDQgbGlibXVsdGlw
-YXRoL2lvX2Vycl9zdGF0LmgKCi0tIAoyLjExLjEKCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QK
-ZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGlu
-Zm8vZG0tZGV2ZWw=
+Even the san_path_err_threshold , san_path_err_forget_rate and
+san_path_err_recovery_time is turned on, the detect sample interval of
+that path checkers is so big/coarse that it doesn't see what happens
+in the middle of the sample interval.
+
+Now we have new method  of detecting path state of IO erros
+especially for intermittent IO errors in the previous patch.
+
+Therefore, discard the original commit "c3705a12b893cc302a89587c4d37".
+
+Reviewed-by: M Muneendra Kumar <mmandala@brocade.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: Martin Wilck <mwilck@suse.com>
+Cc: M Muneendra Kumar <mmandala@brocade.com>
+Signed-off-by: Junxiong Guan <guanjunxiong@huawei.com>
+---
+ libmultipath/config.c      |  3 --
+ libmultipath/config.h      |  9 -----
+ libmultipath/configure.c   |  3 --
+ libmultipath/dict.c        | 39 ---------------------
+ libmultipath/propsel.c     | 47 --------------------------
+ libmultipath/propsel.h     |  3 --
+ libmultipath/structs.h     |  7 ----
+ multipath/multipath.conf.5 | 57 -------------------------------
+ multipathd/main.c          | 84 ----------------------------------------------
+ 9 files changed, 252 deletions(-)
+
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index ea2359a..eb03f0a 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -351,9 +351,6 @@ merge_hwe (struct hwentry * dst, struct hwentry * src)
+ 	merge_num(delay_wait_checks);
+ 	merge_num(skip_kpartx);
+ 	merge_num(max_sectors_kb);
+-	merge_num(san_path_err_threshold);
+-	merge_num(san_path_err_forget_rate);
+-	merge_num(san_path_err_recovery_time);
+ 
+ 	snprintf(id, sizeof(id), "%s/%s", dst->vendor, dst->product);
+ 	reconcile_features_with_options(id, &dst->features,
+diff --git a/libmultipath/config.h b/libmultipath/config.h
+index 72b68cc..51fe27b 100644
+--- a/libmultipath/config.h
++++ b/libmultipath/config.h
+@@ -75,9 +75,6 @@ struct hwentry {
+ 	int deferred_remove;
+ 	int delay_watch_checks;
+ 	int delay_wait_checks;
+-	int san_path_err_threshold;
+-	int san_path_err_forget_rate;
+-	int san_path_err_recovery_time;
+ 	int marginal_path_err_sample_time;
+ 	int marginal_path_err_rate_threshold;
+ 	int marginal_path_err_recheck_gap_time;
+@@ -111,9 +108,6 @@ struct mpentry {
+ 	int deferred_remove;
+ 	int delay_watch_checks;
+ 	int delay_wait_checks;
+-	int san_path_err_threshold;
+-	int san_path_err_forget_rate;
+-	int san_path_err_recovery_time;
+ 	int marginal_path_err_sample_time;
+ 	int marginal_path_err_rate_threshold;
+ 	int marginal_path_err_recheck_gap_time;
+@@ -164,9 +158,6 @@ struct config {
+ 	int processed_main_config;
+ 	int delay_watch_checks;
+ 	int delay_wait_checks;
+-	int san_path_err_threshold;
+-	int san_path_err_forget_rate;
+-	int san_path_err_recovery_time;
+ 	int marginal_path_err_sample_time;
+ 	int marginal_path_err_rate_threshold;
+ 	int marginal_path_err_recheck_gap_time;
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 4cf4fd6..09821e8 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -295,9 +295,6 @@ int setup_map(struct multipath *mpp, char *params, int params_size)
+ 	select_deferred_remove(conf, mpp);
+ 	select_delay_watch_checks(conf, mpp);
+ 	select_delay_wait_checks(conf, mpp);
+-	select_san_path_err_threshold(conf, mpp);
+-	select_san_path_err_forget_rate(conf, mpp);
+-	select_san_path_err_recovery_time(conf, mpp);
+ 	select_marginal_path_err_sample_time(conf, mpp);
+ 	select_marginal_path_err_rate_threshold(conf, mpp);
+ 	select_marginal_path_err_recheck_gap_time(conf, mpp);
+diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+index 319d661..3b36e1d 100644
+--- a/libmultipath/dict.c
++++ b/libmultipath/dict.c
+@@ -1083,33 +1083,6 @@ declare_hw_handler(delay_wait_checks, set_off_int_undef)
+ declare_hw_snprint(delay_wait_checks, print_off_int_undef)
+ declare_mp_handler(delay_wait_checks, set_off_int_undef)
+ declare_mp_snprint(delay_wait_checks, print_off_int_undef)
+-declare_def_handler(san_path_err_threshold, set_off_int_undef)
+-declare_def_snprint_defint(san_path_err_threshold, print_off_int_undef,
+-			   DEFAULT_ERR_CHECKS)
+-declare_ovr_handler(san_path_err_threshold, set_off_int_undef)
+-declare_ovr_snprint(san_path_err_threshold, print_off_int_undef)
+-declare_hw_handler(san_path_err_threshold, set_off_int_undef)
+-declare_hw_snprint(san_path_err_threshold, print_off_int_undef)
+-declare_mp_handler(san_path_err_threshold, set_off_int_undef)
+-declare_mp_snprint(san_path_err_threshold, print_off_int_undef)
+-declare_def_handler(san_path_err_forget_rate, set_off_int_undef)
+-declare_def_snprint_defint(san_path_err_forget_rate, print_off_int_undef,
+-			   DEFAULT_ERR_CHECKS)
+-declare_ovr_handler(san_path_err_forget_rate, set_off_int_undef)
+-declare_ovr_snprint(san_path_err_forget_rate, print_off_int_undef)
+-declare_hw_handler(san_path_err_forget_rate, set_off_int_undef)
+-declare_hw_snprint(san_path_err_forget_rate, print_off_int_undef)
+-declare_mp_handler(san_path_err_forget_rate, set_off_int_undef)
+-declare_mp_snprint(san_path_err_forget_rate, print_off_int_undef)
+-declare_def_handler(san_path_err_recovery_time, set_off_int_undef)
+-declare_def_snprint_defint(san_path_err_recovery_time, print_off_int_undef,
+-			   DEFAULT_ERR_CHECKS)
+-declare_ovr_handler(san_path_err_recovery_time, set_off_int_undef)
+-declare_ovr_snprint(san_path_err_recovery_time, print_off_int_undef)
+-declare_hw_handler(san_path_err_recovery_time, set_off_int_undef)
+-declare_hw_snprint(san_path_err_recovery_time, print_off_int_undef)
+-declare_mp_handler(san_path_err_recovery_time, set_off_int_undef)
+-declare_mp_snprint(san_path_err_recovery_time, print_off_int_undef)
+ declare_def_handler(marginal_path_err_sample_time, set_off_int_undef)
+ declare_def_snprint_defint(marginal_path_err_sample_time, print_off_int_undef,
+ 			   DEFAULT_ERR_CHECKS)
+@@ -1482,9 +1455,6 @@ init_keywords(vector keywords)
+ 	install_keyword("config_dir", &def_config_dir_handler, &snprint_def_config_dir);
+ 	install_keyword("delay_watch_checks", &def_delay_watch_checks_handler, &snprint_def_delay_watch_checks);
+ 	install_keyword("delay_wait_checks", &def_delay_wait_checks_handler, &snprint_def_delay_wait_checks);
+-	install_keyword("san_path_err_threshold", &def_san_path_err_threshold_handler, &snprint_def_san_path_err_threshold);
+-	install_keyword("san_path_err_forget_rate", &def_san_path_err_forget_rate_handler, &snprint_def_san_path_err_forget_rate);
+-	install_keyword("san_path_err_recovery_time", &def_san_path_err_recovery_time_handler, &snprint_def_san_path_err_recovery_time);
+ 	install_keyword("marginal_path_err_sample_time", &def_marginal_path_err_sample_time_handler, &snprint_def_marginal_path_err_sample_time);
+ 	install_keyword("marginal_path_err_rate_threshold", &def_marginal_path_err_rate_threshold_handler, &snprint_def_marginal_path_err_rate_threshold);
+ 	install_keyword("marginal_path_err_recheck_gap_time", &def_marginal_path_err_recheck_gap_time_handler, &snprint_def_marginal_path_err_recheck_gap_time);
+@@ -1573,9 +1543,6 @@ init_keywords(vector keywords)
+ 	install_keyword("deferred_remove", &hw_deferred_remove_handler, &snprint_hw_deferred_remove);
+ 	install_keyword("delay_watch_checks", &hw_delay_watch_checks_handler, &snprint_hw_delay_watch_checks);
+ 	install_keyword("delay_wait_checks", &hw_delay_wait_checks_handler, &snprint_hw_delay_wait_checks);
+-	install_keyword("san_path_err_threshold", &hw_san_path_err_threshold_handler, &snprint_hw_san_path_err_threshold);
+-	install_keyword("san_path_err_forget_rate", &hw_san_path_err_forget_rate_handler, &snprint_hw_san_path_err_forget_rate);
+-	install_keyword("san_path_err_recovery_time", &hw_san_path_err_recovery_time_handler, &snprint_hw_san_path_err_recovery_time);
+ 	install_keyword("marginal_path_err_sample_time", &hw_marginal_path_err_sample_time_handler, &snprint_hw_marginal_path_err_sample_time);
+ 	install_keyword("marginal_path_err_rate_threshold", &hw_marginal_path_err_rate_threshold_handler, &snprint_hw_marginal_path_err_rate_threshold);
+ 	install_keyword("marginal_path_err_recheck_gap_time", &hw_marginal_path_err_recheck_gap_time_handler, &snprint_hw_marginal_path_err_recheck_gap_time);
+@@ -1610,9 +1577,6 @@ init_keywords(vector keywords)
+ 	install_keyword("deferred_remove", &ovr_deferred_remove_handler, &snprint_ovr_deferred_remove);
+ 	install_keyword("delay_watch_checks", &ovr_delay_watch_checks_handler, &snprint_ovr_delay_watch_checks);
+ 	install_keyword("delay_wait_checks", &ovr_delay_wait_checks_handler, &snprint_ovr_delay_wait_checks);
+-	install_keyword("san_path_err_threshold", &ovr_san_path_err_threshold_handler, &snprint_ovr_san_path_err_threshold);
+-	install_keyword("san_path_err_forget_rate", &ovr_san_path_err_forget_rate_handler, &snprint_ovr_san_path_err_forget_rate);
+-	install_keyword("san_path_err_recovery_time", &ovr_san_path_err_recovery_time_handler, &snprint_ovr_san_path_err_recovery_time);
+ 	install_keyword("marginal_path_err_sample_time", &ovr_marginal_path_err_sample_time_handler, &snprint_ovr_marginal_path_err_sample_time);
+ 	install_keyword("marginal_path_err_rate_threshold", &ovr_marginal_path_err_rate_threshold_handler, &snprint_ovr_marginal_path_err_rate_threshold);
+ 	install_keyword("marginal_path_err_recheck_gap_time", &ovr_marginal_path_err_recheck_gap_time_handler, &snprint_ovr_marginal_path_err_recheck_gap_time);
+@@ -1646,9 +1610,6 @@ init_keywords(vector keywords)
+ 	install_keyword("deferred_remove", &mp_deferred_remove_handler, &snprint_mp_deferred_remove);
+ 	install_keyword("delay_watch_checks", &mp_delay_watch_checks_handler, &snprint_mp_delay_watch_checks);
+ 	install_keyword("delay_wait_checks", &mp_delay_wait_checks_handler, &snprint_mp_delay_wait_checks);
+-	install_keyword("san_path_err_threshold", &mp_san_path_err_threshold_handler, &snprint_mp_san_path_err_threshold);
+-	install_keyword("san_path_err_forget_rate", &mp_san_path_err_forget_rate_handler, &snprint_mp_san_path_err_forget_rate);
+-	install_keyword("san_path_err_recovery_time", &mp_san_path_err_recovery_time_handler, &snprint_mp_san_path_err_recovery_time);
+ 	install_keyword("marginal_path_err_sample_time", &mp_marginal_path_err_sample_time_handler, &snprint_mp_marginal_path_err_sample_time);
+ 	install_keyword("marginal_path_err_rate_threshold", &mp_marginal_path_err_rate_threshold_handler, &snprint_mp_marginal_path_err_rate_threshold);
+ 	install_keyword("marginal_path_err_recheck_gap_time", &mp_marginal_path_err_recheck_gap_time_handler, &snprint_mp_marginal_path_err_recheck_gap_time);
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index f8e8002..1aa7f58 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -755,53 +755,6 @@ out:
+ 
+ }
+ 
+-int select_san_path_err_threshold(struct config *conf, struct multipath *mp)
+-{
+-	char *origin, buff[12];
+-
+-	mp_set_mpe(san_path_err_threshold);
+-	mp_set_ovr(san_path_err_threshold);
+-	mp_set_hwe(san_path_err_threshold);
+-	mp_set_conf(san_path_err_threshold);
+-	mp_set_default(san_path_err_threshold, DEFAULT_ERR_CHECKS);
+-out:
+-	print_off_int_undef(buff, 12, &mp->san_path_err_threshold);
+-	condlog(3, "%s: san_path_err_threshold = %s %s", mp->alias, buff, origin);
+-	return 0;
+-}
+-
+-int select_san_path_err_forget_rate(struct config *conf, struct multipath *mp)
+-{
+-	char *origin, buff[12];
+-
+-	mp_set_mpe(san_path_err_forget_rate);
+-	mp_set_ovr(san_path_err_forget_rate);
+-	mp_set_hwe(san_path_err_forget_rate);
+-	mp_set_conf(san_path_err_forget_rate);
+-	mp_set_default(san_path_err_forget_rate, DEFAULT_ERR_CHECKS);
+-out:
+-	print_off_int_undef(buff, 12, &mp->san_path_err_forget_rate);
+-	condlog(3, "%s: san_path_err_forget_rate = %s %s", mp->alias, buff, origin);
+-	return 0;
+-
+-}
+-
+-int select_san_path_err_recovery_time(struct config *conf, struct multipath *mp)
+-{
+-	char *origin, buff[12];
+-
+-	mp_set_mpe(san_path_err_recovery_time);
+-	mp_set_ovr(san_path_err_recovery_time);
+-	mp_set_hwe(san_path_err_recovery_time);
+-	mp_set_conf(san_path_err_recovery_time);
+-	mp_set_default(san_path_err_recovery_time, DEFAULT_ERR_CHECKS);
+-out:
+-	print_off_int_undef(buff, 12, &mp->san_path_err_recovery_time);
+-	condlog(3, "%s: san_path_err_recovery_time = %s %s", mp->alias, buff, origin);
+-	return 0;
+-
+-}
+-
+ int select_marginal_path_err_sample_time(struct config *conf, struct multipath *mp)
+ {
+ 	char *origin, buff[12];
+diff --git a/libmultipath/propsel.h b/libmultipath/propsel.h
+index e7ed799..347cb32 100644
+--- a/libmultipath/propsel.h
++++ b/libmultipath/propsel.h
+@@ -25,9 +25,6 @@ int select_delay_watch_checks (struct config *conf, struct multipath * mp);
+ int select_delay_wait_checks (struct config *conf, struct multipath * mp);
+ int select_skip_kpartx (struct config *conf, struct multipath * mp);
+ int select_max_sectors_kb (struct config *conf, struct multipath * mp);
+-int select_san_path_err_forget_rate(struct config *conf, struct multipath *mp);
+-int select_san_path_err_threshold(struct config *conf, struct multipath *mp);
+-int select_san_path_err_recovery_time(struct config *conf, struct multipath *mp);
+ int select_marginal_path_err_sample_time(struct config *conf, struct multipath *mp);
+ int select_marginal_path_err_rate_threshold(struct config *conf, struct multipath *mp);
+ int select_marginal_path_err_recheck_gap_time(struct config *conf, struct multipath *mp);
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index 139d10a..c2cf3fb 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -240,10 +240,6 @@ struct path {
+ 	int initialized;
+ 	int retriggers;
+ 	int wwid_changed;
+-	unsigned int path_failures;
+-	time_t dis_reinstate_time;
+-	int disable_reinstate;
+-	int san_path_err_forget_rate;
+ 	time_t io_err_dis_reinstate_time;
+ 	int io_err_disable_reinstate;
+ 	int io_err_pathfail_cnt;
+@@ -279,9 +275,6 @@ struct multipath {
+ 	int deferred_remove;
+ 	int delay_watch_checks;
+ 	int delay_wait_checks;
+-	int san_path_err_threshold;
+-	int san_path_err_forget_rate;
+-	int san_path_err_recovery_time;
+ 	int marginal_path_err_sample_time;
+ 	int marginal_path_err_rate_threshold;
+ 	int marginal_path_err_recheck_gap_time;
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index 2029c1a..cedcd9d 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -824,45 +824,6 @@ The default is: \fB/etc/multipath/conf.d/\fR
+ .
+ .
+ .TP
+-.B san_path_err_threshold
+-If set to a value greater than 0, multipathd will watch paths and check how many
+-times a path has been failed due to errors.If the number of failures on a particular
+-path is greater then the san_path_err_threshold then the path will not  reinstante
+-till san_path_err_recovery_time.These path failures should occur within a
+-san_path_err_forget_rate checks, if not we will consider the path is good enough
+-to reinstantate.
+-.RS
+-.TP
+-The default is: \fBno\fR
+-.RE
+-.
+-.
+-.TP
+-.B san_path_err_forget_rate
+-If set to a value greater than 0, multipathd will check whether the path failures
+-has exceeded  the san_path_err_threshold within this many checks i.e
+-san_path_err_forget_rate . If so we will not reinstante the path till
+-san_path_err_recovery_time.
+-.RS
+-.TP
+-The default is: \fBno\fR
+-.RE
+-.
+-.
+-.TP
+-.B san_path_err_recovery_time
+-If set to a value greater than 0, multipathd will make sure that when path failures
+-has exceeded the san_path_err_threshold within san_path_err_forget_rate then the path
+-will be placed in failed state for san_path_err_recovery_time duration.Once san_path_err_recovery_time
+-has timeout  we will reinstante the failed path .
+-san_path_err_recovery_time value should be in secs.
+-.RS
+-.TP
+-The default is: \fBno\fR
+-.RE
+-.
+-.
+-.TP
+ .B marginal_path_double_failed_time
+ One of the four parameters of supporting path check based on accounting IO
+ error such as intermittent error. When a path failed event occurs twice in
+@@ -1195,12 +1156,6 @@ are taken from the \fIdefaults\fR or \fIdevices\fR section:
+ .TP
+ .B deferred_remove
+ .TP
+-.B san_path_err_threshold
+-.TP
+-.B san_path_err_forget_rate
+-.TP
+-.B san_path_err_recovery_time
+-.TP
+ .B marginal_path_err_sample_time
+ .TP
+ .B marginal_path_err_rate_threshold
+@@ -1330,12 +1285,6 @@ section:
+ .TP
+ .B deferred_remove
+ .TP
+-.B san_path_err_threshold
+-.TP
+-.B san_path_err_forget_rate
+-.TP
+-.B san_path_err_recovery_time
+-.TP
+ .B marginal_path_err_sample_time
+ .TP
+ .B marginal_path_err_rate_threshold
+@@ -1410,12 +1359,6 @@ the values are taken from the \fIdevices\fR or \fIdefaults\fR sections:
+ .TP
+ .B deferred_remove
+ .TP
+-.B san_path_err_threshold
+-.TP
+-.B san_path_err_forget_rate
+-.TP
+-.B san_path_err_recovery_time
+-.TP
+ .B marginal_path_err_sample_time
+ .TP
+ .B marginal_path_err_rate_threshold
+diff --git a/multipathd/main.c b/multipathd/main.c
+index eeba195..27fd973 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1552,84 +1552,6 @@ void repair_path(struct path * pp)
+ 	LOG_MSG(1, checker_message(&pp->checker));
+ }
+ 
+-static int check_path_reinstate_state(struct path * pp) {
+-	struct timespec curr_time;
+-	if (!((pp->mpp->san_path_err_threshold > 0) &&
+-				(pp->mpp->san_path_err_forget_rate > 0) &&
+-				(pp->mpp->san_path_err_recovery_time >0))) {
+-		return 0;
+-	}
+-
+-	if (pp->disable_reinstate) {
+-		/* If we don't know how much time has passed, automatically
+-		 * reinstate the path, just to be safe. Also, if there are
+-		 * no other usable paths, reinstate the path
+-		 */
+-		if (clock_gettime(CLOCK_MONOTONIC, &curr_time) != 0 ||
+-				pp->mpp->nr_active == 0) {
+-			condlog(2, "%s : reinstating path early", pp->dev);
+-			goto reinstate_path;
+-		}
+-		if ((curr_time.tv_sec - pp->dis_reinstate_time ) > pp->mpp->san_path_err_recovery_time) {
+-			condlog(2,"%s : reinstate the path after err recovery time", pp->dev);
+-			goto reinstate_path;
+-		}
+-		return 1;
+-	}
+-	/* forget errors on a working path */
+-	if ((pp->state == PATH_UP || pp->state == PATH_GHOST) &&
+-			pp->path_failures > 0) {
+-		if (pp->san_path_err_forget_rate > 0){
+-			pp->san_path_err_forget_rate--;
+-		} else {
+-			/* for every san_path_err_forget_rate number of
+-			 * successful path checks decrement path_failures by 1
+-			 */
+-			pp->path_failures--;
+-			pp->san_path_err_forget_rate = pp->mpp->san_path_err_forget_rate;
+-		}
+-		return 0;
+-	}
+-
+-	/* If the path isn't recovering from a failed state, do nothing */
+-	if (pp->state != PATH_DOWN && pp->state != PATH_SHAKY &&
+-			pp->state != PATH_TIMEOUT)
+-		return 0;
+-
+-	if (pp->path_failures == 0)
+-		pp->san_path_err_forget_rate = pp->mpp->san_path_err_forget_rate;
+-
+-	pp->path_failures++;
+-
+-	/* if we don't know the currently time, we don't know how long to
+-	 * delay the path, so there's no point in checking if we should
+-	 */
+-
+-	if (clock_gettime(CLOCK_MONOTONIC, &curr_time) != 0)
+-		return 0;
+-	/* when path failures has exceeded the san_path_err_threshold
+-	 * place the path in delayed state till san_path_err_recovery_time
+-	 * so that the cutomer can rectify the issue within this time. After
+-	 * the completion of san_path_err_recovery_time it should
+-	 * automatically reinstate the path
+-	 */
+-	if (pp->path_failures > pp->mpp->san_path_err_threshold) {
+-		condlog(2, "%s : hit error threshold. Delaying path reinstatement", pp->dev);
+-		pp->dis_reinstate_time = curr_time.tv_sec;
+-		pp->disable_reinstate = 1;
+-
+-		return 1;
+-	} else {
+-		return 0;
+-	}
+-
+-reinstate_path:
+-	pp->path_failures = 0;
+-	pp->disable_reinstate = 0;
+-	pp->san_path_err_forget_rate = 0;
+-	return 0;
+-}
+-
+ /*
+  * Returns '1' if the path has been checked, '-1' if it was blacklisted
+  * and '0' otherwise
+@@ -1743,12 +1665,6 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+ 	if (!pp->mpp)
+ 		return 0;
+ 
+-	if ((newstate == PATH_UP || newstate == PATH_GHOST) &&
+-			check_path_reinstate_state(pp)) {
+-		pp->state = PATH_DELAYED;
+-		return 1;
+-	}
+-
+ 	if (pp->io_err_disable_reinstate && hit_io_err_recheck_time(pp)) {
+ 		pp->state = PATH_SHAKY;
+ 		/*
+-- 
+2.6.4.windows.1
