@@ -1,373 +1,97 @@
-From: Yael Chemla <yael.chemla@foss.arm.com>
-Subject: [PATCH] md: dm-verity: aggregate crypto API calls
-Date: Wed, 25 Oct 2017 09:58:19 +0100
-Message-ID: <1508921899-24801-1-git-send-email-yael.chemla@foss.arm.com>
+From: Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [fstests PATCH v2] generic: add test for DAX MAP_SYNC support
+Date: Wed, 25 Oct 2017 15:19:22 +0300
+Message-ID: <CAOQ4uxh25JmAv3DjCp11fAfpHVP=d2sp+=Gk4SxYfBtmOgaUPw@mail.gmail.com>
+References: <20171020052943.15104-1-ross.zwisler@linux.intel.com>
+ <20171020212556.30816-1-ross.zwisler@linux.intel.com>
+ <CAOQ4uxjWp3khOix__jqfsiyjhNehGtkqXXv1o7EuGB1j3b2moQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Yael Chemla <yael.chemla@foss.arm.com>
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <CAOQ4uxjWp3khOix__jqfsiyjhNehGtkqXXv1o7EuGB1j3b2moQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Cc: linux-xfs <linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Eryu Guan <eguan-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, Josef Bacik <jbacik-b10kYP2dOMg@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, fstests <fstests-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Shaohua Li <shli-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-Current implementation makes multiple crypto API calls for a single
-block, forcing underlying crypto tfm implementation to "stop & go",
-leading to under utilization of CPU (e.g. SIMD state saves) or HW
-engines. To fix it unify calls to crypto init/update/final into a digest
-call with a single sg which contains multiple buffers.
+On Sun, Oct 22, 2017 at 9:56 AM, Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> On Sat, Oct 21, 2017 at 12:25 AM, Ross Zwisler
+> <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org> wrote:
+>> Add a test that exercises DAX's new MAP_SYNC flag.
+>>
+>> This test creates a file and writes to it via an mmap(), but never syncs
+>> via fsync/msync.  This process is tracked via dm-log-writes, then replayed.
+>>
+>> If MAP_SYNC is working the dm-log-writes replay will show the test file
+>> with 1MiB of on-media block allocations.  This is because each allocating
+>> page fault included an implicit metadata sync.  If MAP_SYNC isn't working
+>> (which you can test by fiddling with the parameters to mmap()) the file
+>> will be smaller or missing entirely.
+>>
+>> Note that dm-log-writes doesn't track the data that we write via the
+>> mmap(), so we can't do any data integrity checking.  We can only verify
+>> that the metadata writes for the page faults happened.
+>>
+>> Signed-off-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+>>
+>> ---
+>>
+>> Changes since v1:
+>>  - Addressed review feedback from Amir.  Thank you for the review!
+>
+> Looks good.
+>
+>>
+>> ---
+>>  .gitignore            |  1 +
+>>  common/dmlogwrites    |  1 -
+>>  src/Makefile          |  3 +-
+>>  src/t_map_sync.c      | 92 +++++++++++++++++++++++++++++++++++++++++++++++++++
+>>  tests/generic/466     | 76 ++++++++++++++++++++++++++++++++++++++++++
+>>  tests/generic/466.out |  3 ++
+>>  tests/generic/group   |  1 +
+>>  7 files changed, 175 insertions(+), 2 deletions(-)
+>>  create mode 100644 src/t_map_sync.c
+>>  create mode 100755 tests/generic/466
+>>  create mode 100644 tests/generic/466.out
+>>
+>> diff --git a/.gitignore b/.gitignore
+>> index 2014c08..9fc0695 100644
+>> --- a/.gitignore
+>> +++ b/.gitignore
+>> @@ -119,6 +119,7 @@
+>>  /src/t_getcwd
+>>  /src/t_holes
+>>  /src/t_immutable
+>> +/src/t_map_sync
+>>  /src/t_mmap_cow_race
+>>  /src/t_mmap_dio
+>>  /src/t_mmap_fallocate
+>> diff --git a/common/dmlogwrites b/common/dmlogwrites
+>> index 247c744..5b57df9 100644
+>> --- a/common/dmlogwrites
+>> +++ b/common/dmlogwrites
+>> @@ -23,7 +23,6 @@ _require_log_writes()
+>>         [ -z "$LOGWRITES_DEV" -o ! -b "$LOGWRITES_DEV" ] && \
+>>                 _notrun "This test requires a valid \$LOGWRITES_DEV"
+>>
+>> -       _exclude_scratch_mount_option dax
 
-This also opens the way later on to parallelizing the work on different
-blocks.
+Wait. It this really ok to relax no dax from _require_log_writes()?
+Shouldn't you check log-write target version or something to verify
+that log-writes+dax is really supported?
+I think you should.
 
-Tested on physical Arm 32 and x86_64 and virtual ARM 64.
 
-Performance numbers were not changed.
-
-Signed-off-by: Yael Chemla <yael.chemla@foss.arm.com>
----
- drivers/md/dm-verity-target.c | 226 +++++++++++++++++++++++++-----------------
- 1 file changed, 137 insertions(+), 89 deletions(-)
-
-diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-index bda3caca23ca..c8758443ef64 100644
---- a/drivers/md/dm-verity-target.c
-+++ b/drivers/md/dm-verity-target.c
-@@ -35,10 +35,18 @@
- 
- #define DM_VERITY_OPTS_MAX		(2 + DM_VERITY_OPTS_FEC)
- 
-+/* only two elements in static scatter list: salt and data */
-+#define SG_FIXED_ITEMS	2
-+
- static unsigned dm_verity_prefetch_cluster = DM_VERITY_DEFAULT_PREFETCH_SIZE;
- 
- module_param_named(prefetch_cluster, dm_verity_prefetch_cluster, uint, S_IRUGO | S_IWUSR);
- 
-+enum salt_location {
-+	START_SG,
-+	END_SG
-+};
-+
- struct dm_verity_prefetch_work {
- 	struct work_struct work;
- 	struct dm_verity *v;
-@@ -133,80 +141,67 @@ static inline int verity_complete_op(struct verity_result *res, int ret)
- 	return ret;
- }
- 
--static int verity_hash_update(struct dm_verity *v, struct ahash_request *req,
--				const u8 *data, size_t len,
--				struct verity_result *res)
--{
--	struct scatterlist sg;
--
--	sg_init_one(&sg, data, len);
--	ahash_request_set_crypt(req, &sg, NULL, len);
--
--	return verity_complete_op(res, crypto_ahash_update(req));
--}
--
- /*
-- * Wrapper for crypto_ahash_init, which handles verity salting.
-+ * verity_is_salt_required - check if according to verity version and
-+ * verity salt's size there's a need to insert a salt.
-+ * note: verity's version indicates where the salt should be added.
-+ * (before or after buffer)
-+ * @where - START_SG - before buffer / END_SG - after buffer
-  */
--static int verity_hash_init(struct dm_verity *v, struct ahash_request *req,
--				struct verity_result *res)
-+static inline bool verity_is_salt_required(struct dm_verity *v,
-+		enum salt_location where)
- {
--	int r;
--
--	ahash_request_set_tfm(req, v->tfm);
--	ahash_request_set_callback(req, CRYPTO_TFM_REQ_MAY_SLEEP |
--					CRYPTO_TFM_REQ_MAY_BACKLOG,
--					verity_op_done, (void *)res);
--	init_completion(&res->completion);
--
--	r = verity_complete_op(res, crypto_ahash_init(req));
--
--	if (unlikely(r < 0)) {
--		DMERR("crypto_ahash_init failed: %d", r);
--		return r;
-+	if (likely(v->salt_size) &&
-+	    ((where == START_SG && likely(v->version >= 1)) ||
-+	    (where == END_SG && unlikely(!v->version)))) {
-+		return true;
- 	}
--
--	if (likely(v->salt_size && (v->version >= 1)))
--		r = verity_hash_update(v, req, v->salt, v->salt_size, res);
--
--	return r;
-+	return false;
- }
- 
--static int verity_hash_final(struct dm_verity *v, struct ahash_request *req,
--			     u8 *digest, struct verity_result *res)
-+/*
-+ * verity_add_salt - add verity's salt into a scatterlist
-+ * @nents - number of elements already inserted into sg
-+ * @total_len - total number of items in scatterlist array
-+ */
-+static void verity_add_salt(struct dm_verity *v, struct scatterlist *sg,
-+	unsigned int *nents, unsigned int *total_len)
- {
--	int r;
--
--	if (unlikely(v->salt_size && (!v->version))) {
--		r = verity_hash_update(v, req, v->salt, v->salt_size, res);
--
--		if (r < 0) {
--			DMERR("verity_hash_final failed updating salt: %d", r);
--			goto out;
--		}
--	}
--
--	ahash_request_set_crypt(req, NULL, digest, 0);
--	r = verity_complete_op(res, crypto_ahash_final(req));
--out:
--	return r;
-+	sg_set_buf(&sg[*nents], v->salt, v->salt_size);
-+	(*nents)++;
-+	(*total_len) += v->salt_size;
- }
- 
- int verity_hash(struct dm_verity *v, struct ahash_request *req,
- 		const u8 *data, size_t len, u8 *digest)
- {
--	int r;
-+	int r, total_len = 0, indx = 0;
- 	struct verity_result res;
-+	struct scatterlist sg[SG_FIXED_ITEMS];
- 
--	r = verity_hash_init(v, req, &res);
--	if (unlikely(r < 0))
--		goto out;
-+	sg_init_table(sg, SG_FIXED_ITEMS);
-+	ahash_request_set_tfm(req, v->tfm);
-+	ahash_request_set_callback(req, CRYPTO_TFM_REQ_MAY_SLEEP |
-+					CRYPTO_TFM_REQ_MAY_BACKLOG,
-+					verity_op_done, (void *)&res);
-+	if (verity_is_salt_required(v, START_SG) == true)
-+		verity_add_salt(v, sg, &indx, &total_len);
- 
--	r = verity_hash_update(v, req, data, len, &res);
--	if (unlikely(r < 0))
--		goto out;
-+	sg_set_buf(&sg[indx], data, len);
-+	indx++;
-+	total_len += len;
-+	if (verity_is_salt_required(v, END_SG) == true)
-+		verity_add_salt(v, sg, &indx, &total_len);
-+
-+	ahash_request_set_crypt(req, sg, digest, len+v->salt_size);
-+	init_completion(&res.completion);
- 
--	r = verity_hash_final(v, req, digest, &res);
-+	r = verity_complete_op(&res, crypto_ahash_digest(req));
-+
-+	if (unlikely(r < 0)) {
-+		DMERR("ahash_request_set_crypt failed: %d", r);
-+		goto out;
-+	}
- 
- out:
- 	return r;
-@@ -389,20 +384,17 @@ int verity_hash_for_block(struct dm_verity *v, struct dm_verity_io *io,
-  * Calculates the digest for the given bio
-  */
- int verity_for_io_block(struct dm_verity *v, struct dm_verity_io *io,
--			struct bvec_iter *iter, struct verity_result *res)
-+		struct bvec_iter *iter, struct verity_result *res,
-+		struct scatterlist *sg, unsigned int *nents,
-+		unsigned int *total_len)
- {
- 	unsigned int todo = 1 << v->data_dev_block_bits;
- 	struct bio *bio = dm_bio_from_per_bio_data(io, v->ti->per_io_data_size);
--	struct scatterlist sg;
--	struct ahash_request *req = verity_io_hash_req(v, io);
- 
- 	do {
--		int r;
- 		unsigned int len;
- 		struct bio_vec bv = bio_iter_iovec(bio, *iter);
- 
--		sg_init_table(&sg, 1);
--
- 		len = bv.bv_len;
- 
- 		if (likely(len >= todo))
-@@ -412,22 +404,43 @@ int verity_for_io_block(struct dm_verity *v, struct dm_verity_io *io,
- 		 * until you consider the typical block size is 4,096B.
- 		 * Going through this loops twice should be very rare.
- 		 */
--		sg_set_page(&sg, bv.bv_page, len, bv.bv_offset);
--		ahash_request_set_crypt(req, &sg, NULL, len);
--		r = verity_complete_op(res, crypto_ahash_update(req));
--
--		if (unlikely(r < 0)) {
--			DMERR("verity_for_io_block crypto op failed: %d", r);
--			return r;
--		}
-+		sg_set_page(&sg[*nents], bv.bv_page, len, bv.bv_offset);
- 
- 		bio_advance_iter(bio, iter, len);
- 		todo -= len;
-+		(*nents)++;
-+		(*total_len) += len;
- 	} while (todo);
- 
- 	return 0;
- }
- 
-+/* calculate how many buffers required to accomudate bio_vec starting
-+ * from iter
-+ */
-+unsigned int verity_calc_buffs_for_bv(struct dm_verity *v,
-+	struct dm_verity_io *io, struct bvec_iter iter)
-+{
-+	unsigned int todo = 1 << v->data_dev_block_bits;
-+	struct bio *bio = dm_bio_from_per_bio_data(io, v->ti->per_io_data_size);
-+	unsigned int buff_count = 0;
-+
-+	do {
-+		unsigned int len;
-+		struct bio_vec bv = bio_iter_iovec(bio, iter);
-+
-+		len = bv.bv_len;
-+		if (likely(len >= todo))
-+			len = todo;
-+
-+		bio_advance_iter(bio, &iter, len);
-+		todo -= len;
-+		buff_count++;
-+	} while (todo);
-+
-+	return buff_count;
-+}
-+
- /*
-  * Calls function process for 1 << v->data_dev_block_bits bytes in the bio_vec
-  * starting from iter.
-@@ -483,16 +496,30 @@ static int verity_verify_io(struct dm_verity_io *io)
- 	struct bvec_iter start;
- 	unsigned b;
- 	struct verity_result res;
-+	struct scatterlist *sg;
-+	int r;
- 
- 	for (b = 0; b < io->n_blocks; b++) {
--		int r;
-+		unsigned int nents;
-+		unsigned int total_len = 0;
-+		unsigned int num_of_buffs = 0;
- 		struct ahash_request *req = verity_io_hash_req(v, io);
- 
-+		/* an extra one for the salt buffer */
-+		num_of_buffs = verity_calc_buffs_for_bv(v, io, io->iter) + 1;
-+		WARN_ON(num_of_buffs < 1);
-+
-+		sg = kmalloc_array(num_of_buffs, sizeof(struct scatterlist),
-+				     GFP_KERNEL);
-+		if (!sg)
-+			return -ENOMEM;
-+		sg_init_table(sg, num_of_buffs);
-+
- 		r = verity_hash_for_block(v, io, io->block + b,
- 					  verity_io_want_digest(v, io),
- 					  &is_zero);
- 		if (unlikely(r < 0))
--			return r;
-+			goto err_memfree;
- 
- 		if (is_zero) {
- 			/*
-@@ -502,37 +529,58 @@ static int verity_verify_io(struct dm_verity_io *io)
- 			r = verity_for_bv_block(v, io, &io->iter,
- 						verity_bv_zero);
- 			if (unlikely(r < 0))
--				return r;
-+				goto err_memfree;
- 
- 			continue;
- 		}
- 
--		r = verity_hash_init(v, req, &res);
--		if (unlikely(r < 0))
--			return r;
-+		ahash_request_set_tfm(req, v->tfm);
-+		ahash_request_set_callback(req, CRYPTO_TFM_REQ_MAY_SLEEP |
-+						CRYPTO_TFM_REQ_MAY_BACKLOG,
-+						verity_op_done, (void *)&res);
- 
--		start = io->iter;
--		r = verity_for_io_block(v, io, &io->iter, &res);
--		if (unlikely(r < 0))
--			return r;
-+		nents = 0;
-+		total_len = 0;
-+		if (verity_is_salt_required(v, START_SG) == true)
-+			verity_add_salt(v, sg, &nents, &total_len);
- 
--		r = verity_hash_final(v, req, verity_io_real_digest(v, io),
--					&res);
--		if (unlikely(r < 0))
--			return r;
-+		start = io->iter;
-+		verity_for_io_block(v, io, &io->iter, &res, sg, &nents,
-+				&total_len);
-+		if (verity_is_salt_required(v, END_SG) == true)
-+			verity_add_salt(v, sg, &nents, &total_len);
-+		/*
-+		 * need to mark end of chain, since we might have allocated
-+		 * more than we actually use
-+		 */
-+		sg_mark_end(&sg[nents-1]);
- 
-+		ahash_request_set_crypt(req, sg, verity_io_real_digest(v, io),
-+				total_len);
-+		init_completion(&res.completion);
-+		r = verity_complete_op(&res, crypto_ahash_digest(req));
-+		kfree(sg);
-+		if (unlikely(r < 0)) {
-+			DMERR("crypto_ahash_digest failed: %d", r);
-+			goto err_memfree;
-+		}
- 		if (likely(memcmp(verity_io_real_digest(v, io),
--				  verity_io_want_digest(v, io), v->digest_size) == 0))
-+		    verity_io_want_digest(v, io), v->digest_size) == 0))
- 			continue;
- 		else if (verity_fec_decode(v, io, DM_VERITY_BLOCK_TYPE_DATA,
- 					   io->block + b, NULL, &start) == 0)
- 			continue;
- 		else if (verity_handle_err(v, DM_VERITY_BLOCK_TYPE_DATA,
--					   io->block + b))
--			return -EIO;
-+					   io->block + b)) {
-+			goto err_memfree;
-+		}
- 	}
- 
- 	return 0;
-+
-+err_memfree:
-+	kfree(sg);
-+	return r;
- }
- 
- /*
--- 
-2.11.0
+>>         _require_dm_target log-writes
+>>         _require_test_program "log-writes/replay-log"
+>>  }
