@@ -1,7 +1,7 @@
-From: yaeceh01 <yael.chemla@foss.arm.com>
+From: Yael Chemla <yael.chemla@foss.arm.com>
 Subject: [PATCH] md: dm-verity: aggregate crypto API calls
-Date: Wed, 25 Oct 2017 09:26:19 +0100
-Message-ID: <1508919979-23641-1-git-send-email-yael.chemla@foss.arm.com>
+Date: Wed, 25 Oct 2017 09:58:19 +0100
+Message-ID: <1508921899-24801-1-git-send-email-yael.chemla@foss.arm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -18,8 +18,6 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 Cc: Yael Chemla <yael.chemla@foss.arm.com>
 List-Id: dm-devel.ids
-
-From: Yael Chemla <yael.chemla@foss.arm.com>
 
 Current implementation makes multiple crypto API calls for a single
 block, forcing underlying crypto tfm implementation to "stop & go",
