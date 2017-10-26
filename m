@@ -1,51 +1,36 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: Pushing the multipath state info into the fabric
-Date: Thu, 26 Oct 2017 10:35:32 -0400
-Message-ID: <20171026143532.GA5490@redhat.com>
-References: <003dec9a190f45aa91bff7e0010968e1@BRMWP-EXMB12.corp.brocade.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <003dec9a190f45aa91bff7e0010968e1@BRMWP-EXMB12.corp.brocade.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Muneendra Kumar M <mmandala@Brocade.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: [PATCH] dmraid: remove partitions with O_RDONLY
+Date: Thu, 26 Oct 2017 22:47:22 +0200
+Message-ID: <20171026204722.9150-1-mwilck@suse.com>
+Return-path: <linux-raid-owner@vger.kernel.org>
+Sender: linux-raid-owner@vger.kernel.org
+To: Heinz Mauelshagen <heinzm@redhat.com>
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.de>, linux-raid@vger.kernel.org, Neil Brown <neilb@suse.com>, Hannes Reinecke <hare@suse.de>
 List-Id: dm-devel.ids
 
-On Thu, Oct 26 2017 at  6:18am -0400,
-Muneendra Kumar M <mmandala@Brocade.com> wrote:
+It's not necessary to use O_RDWR to use BLKPG_DEL_PARTITION.
+It's actually harmful, because closing the device will cause
+an IN_CLOSE_WRITE inotify event, which will trigger a BLKRRPART
+from systemd, which will reinstate all partitions just deleted.
 
->    Hi ,
-> 
-> 
-> 
->    We are working on the SAN fabric side to collect and present the multipath
->    status information to the SAN administrators.
-> 
->    So, I am looking forward to push the multipath state information to the
->    fabric in the form of CT (Common Transport) frames, by using the libhba
->    APIs.
-> 
->    Since the multipath daemon is already keeping track of the multipath
->    device and state info, I feel that it is the correct place to add the code
->    to push the info to the fabric.
-> 
->    Please kindly let me know your thoughts on this.
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ lib/device/partition.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Sounds like you'd probably want to expose APIs that enable you to access
-the state you require from multipathd rather than train multipathd to
-inject anything into the fabric.
+diff --git a/lib/device/partition.c b/lib/device/partition.c
+index 9352b0437694..a01cc3583514 100644
+--- a/lib/device/partition.c
++++ b/lib/device/partition.c
+@@ -22,7 +22,7 @@ _remove_subset_partitions(struct lib_context *lc, struct raid_set *rs)
+ 	};
+ 
+ 	list_for_each_entry(rd, &rs->devs, devs) {
+-		int fd = open(rd->di->path, O_RDWR);
++		int fd = open(rd->di->path, O_RDONLY);
+ 		if (fd < 0)
+ 			LOG_ERR(lc, 0, "opening %s: %s\n", rd->di->path,
+ 				strerror(errno));
+-- 
+2.14.2
 
-But that is just my initial take.
-
-Mike
