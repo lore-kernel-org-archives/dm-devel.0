@@ -1,16 +1,14 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: Re: =?utf-8?b?562U5aSNOiAgZG1zZXR1cCBoYW5ncyBmb3JldmVy?=
-Date: Fri, 27 Oct 2017 14:28:08 +0200
-Message-ID: <47282d76-c136-d950-fe3e-5f0e56cf69a8@redhat.com>
-References: <97CEEE909D5FE84999281EA4585EB0ED0165DE36@DGGEMA505-MBS.china.huawei.com>
-	<62d9bc5f-01c7-6109-eff5-8d5cc0ddfed0@redhat.com>
-	<97CEEE909D5FE84999281EA4585EB0ED0165EFCA@DGGEMA505-MBS.china.huawei.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: [RFC] where is upstream multipath-tool git repo
+Date: Fri, 27 Oct 2017 18:13:36 +0200
+Message-ID: <6229cb6f-7e16-eae3-d8ee-031197de6128@gmail.com>
+References: <63ADC13FD55D6546B7DECE290D39E373CED71927@H3CMLB14-EX.srv.huawei-3com.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <97CEEE909D5FE84999281EA4585EB0ED0165EFCA@DGGEMA505-MBS.china.huawei.com>
-Content-Language: en-US
+In-Reply-To: <63ADC13FD55D6546B7DECE290D39E373CED71927@H3CMLB14-EX.srv.huawei-3com.com>
+Content-Language: en-GB
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,51 +18,14 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Zhangyanfei (YF)" <yanfei.zhang@huawei.com>, "agk@redhat.com" <agk@redhat.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Fengtiantian <fengtiantian@huawei.com>, "linux-lvm@redhat.com" <linux-lvm@redhat.com>, guijianfeng <guijianfeng@huawei.com>
+To: Changwei Ge <ge.changwei@h3c.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
 List-Id: dm-devel.ids
 
-RG5lIDI3LjEwLjIwMTcgdiAxMDowMCBaaGFuZ3lhbmZlaSAoWUYpIG5hcHNhbChhKToKPiBIZWxs
-bwo+IAo+IElmIHRoZSB1ZGV2ZCBkYWVtb24gd291bGQgbm90IHRpbWVvdXQsIEkgdGhpbmsgZG1z
-ZXR1cCBtYW5kYXRvcnkgd2FpdCB1ZGV2IGZpbmFsaXppbmcgYW55IHRpbWVvdXRzIGlzIGdvb2Qg
-aWRlYS4KPiBCdXQgdWRldmQgd291bGQgdGltZW91dCBpbiAxODAgc2VuY29uZCBhbmQga2lsbCB0
-aGUgZXZlbnQgcHJvY2Vzcyggc3lzdGVtZC11ZGV2ZFszOTAyOV06IHRpbWVvdXQ6IGtpbGxpbmcp
-LiBJbiB0aGlzIHNpdHVhdGlvbiwgSSB0aGluayAKClRoZSBwb2ludCBoZXJlIGlzIC0gdWRldiBz
-aG91bGQgbm90IGJlICdyYW5kb21seScga2lsbGluZyB3b3JrZXJzIC0gYW5kIGlmIGl0IApuZWVk
-cyBzbyAtIGl0IHNob3VsZCBwcm92aWRlIGEgJ3JlY292ZXJ5JyBwYXRoIG1lY2hhbmlzbSwgd2hl
-cmUgc3VjaCBwYXRoCmFmdGVyIGtpbGxpbmcgd29ya2VyIGlzIHN1cHBvcnRlZC4KCklmIHRoaXMg
-bWVjaGFuaXNtIGlzIG1pc3NpbmcgLSB5b3UgZW5kLXVwIHdpdGggYSBkZXZpY2Ugd2hpY2ggaXMg
-Tk9UIHByZXNlbnQgCmluIHVkZXYgREIgLSB5ZXQgLSB0aGVyZSBpcyBzb21lICdlc290ZXJpYycg
-ZG0gZGV2aWNlIHdoaWNoIGlzIHRoZXJlCmFuZCB5b3UgZG9uJ3Qga25vdyBpZiBpdCdzIHVzYWJs
-ZSBvciBub3QuCgptYW5kYXRvcnkgd2FpdCB1ZGV2IGZpbmFsaXppbmcgaXMgdXNlbGVzcywgYmVj
-YXVzZSB1ZGV2IGhhcyBiZWVuIGtpbGxlZCBhbmQgCmNhbid0IGNvb3JkaW5hdGlvbiBkbXNldHVw
-IGZvcmV2ZXIuIFNvIEkgdGhpbmsgaXQncyBiZXR0ZXIgdG8gdGVsbCB0aGUgb25lIHdobyAKY2Fs
-bCB0aGUgZG1zZXR1cCwgdGhlIHByb2Nlc3MgZXJyb3IgcmV0dXJuLCB0aGFuIGxldCB0aGUgcHJv
-Y2VzcyB3YWl0IGZvcmV2ZXIuCj4gCj4gSWYgbm90IGFkZCB0aGUgZG1zZXR1cCB0aW1lb3V0IG1l
-Y2hhbmlzbSwgd2hpY2ggc3RyYXRlZ3kgdG8gc29sdmUgdGhpcyBpc3N1ZSBiZXR0ZXI/CgpZb3Ug
-Y2FuIGFsd2F5cyB1c2UgaS5lLiBjcm9uIGpvYiBhbmQgZXZlcnkgMTUgbWludXRlcyBydW46Cgon
-ZG1zZXR1cCB1ZGV2Y29tcGxldGVfYWxsIDE1JwoKVG8gY29tcGxldGUgYW55IGJsb2NrZWQgZG1z
-ZXR1cC9sdm0gY29tbWFuZCBvbiBhIGNvb2tpZS4uLgoKVGhlIGtleXBvaW50IGhlcmUgaXMgLSB5
-b3UgaGF2ZSBzeXN0ZW0gd2l0aCBicm9rZW4gZGV2aWNlIGxpc3QgLSBzbyBhbnkgbmV4dCAKaS5l
-LiBsdm0yIGNvbW1hbmQgbWF5ICdmcmVlemUnICB3aGlsZSBpdCB3b3VsZCB0cnkgdG8gcmVhZCBh
-IGRldmljZSB0aGF0IGNhbiAKZnJlZXplIHRoZSByZWFkaW5nIHRhc2sgLSB0aGlzIGlzIGNlcnRh
-aW5seSBiYWQgY2FzZS4KCj4gMeOAgWd1YXJhbnRlZSB0aGUgdWRldiBuZXZlciB0aW1lb3V0Lihi
-dXQgSSB0aGluayBpdCBpcyBkaWZmaWN1bHQgdG8gbWFrZSBzdXJlIGFueSB1ZGV2IGV2ZW50IHdp
-bGwgZmluaXNoIGluIDE4MCBzZW5jb25kIGluIGFueSBhYm5vcm1hbCBzaXR1YXRpb24pCj4gMuOA
-gW1vZGlmeSB0aGUgdWRldiBkYWVtb24sIGlmIHVkZXYgZXZlbnQgdGltZW91dO+8jGFsc28gbm90
-aWZ5IHRoZSBkbXNldHVwIGl0J3MgZG9uZS4KPiAz44CBdGhlIG9uZSB3aG8gY2FsbCB0aGUgY29t
-bWFuZCBkbXNldHVwIG5lZWRlZCB0aW1lb3V0IGl0c2VsZi4KCkluIHByaW5jaXBsZSB0aW1lb3V0
-cyBhcmUgQkFEIHdoZW4gd2UgdGFsayBhYm91dCBzdG9yYWdlLgpUaGVyZSBuZWVkcyB0byBiZSBz
-b21lIGNsZWFyICdzdGF0ZS1tYWNoaW5lJyBtZWNoYW5pc20uCgpJdCBkb2Vzbid0IG1ha2UgbXVj
-aCBzZW5zZSB0byBraWxsIHdvcmtlciB3aGljaCBhY3R1YWxseSBtaWdodCBub3QgZXZlbiBiZSAK
-cG9zc2libGUgaWYgdGhlIHdvcmtlciBmcmVlemVzIGluc2lkZSBrZXJuZWwuCgoKQW5kIHRoZW4g
-dGhlcmUgaXMgZXZlbiAybmQuIGNhdGVnb3J5IG9mICdraWxscycgb2Ygd29ya2VycyAtIHRoaXMg
-aGFwcGVucyBvbiAKb3ZlcmxvYWRlZCBtYWNoaW5lcyBydW5uaW5nIGdhemlsbGlvbiAndmlydHVh
-bCBndWVzdCcgaW5zdGFuY2VzIHdpdGhvdXQgYW55IApyZXNvdXJjZSBjaGVjayBtZWNoYW5pc20g
-d2l0aCBhc3N1bXB0aW9uICJPT00iIGtpbGxlciBpcyBiZWF1dGlmdWwgcmVzb3VyY2UgCm1hbmFn
-ZXIgaW4ga2VybmVsIC0gaG93ZXZlciBzdWNoIHN5c3RlbXMgYXJlIGRlc3RpbmVkIGZvciBhIG5l
-YXItdGltZSByZWJvb3QgLSAKICBhbnlvbmUgd2hvIHRyaWVzIHRvICdyZWNvdmVyJyBmcm9tICBh
-biBPT00gZG9lc24ndCByZWFsaXplIGhvdyBjb21wbGV4IHRoYXQgCndvdWxkIGJlIC0gc28gdGhp
-cyBjYXNlIGlzIG5vdCB3b3J0aCBkbXNldHVwIHRpbWVvdXQgZWl0aGVyLgoKClJlZ2FyZHMKClpk
-ZW5lawoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6
-Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+On 10/27/2017 04:31 AM, Changwei Ge wrote:
+
+> Does anyone have any idea where I can find the upstream multipath-tool 
+> git repository including the lately fixed issues?
+
+Full project info at: http://christophe.varoqui.free.fr/
+
+There are still pending patches: https://marc.info/?l=dm-devel&m=150634203214761
