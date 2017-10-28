@@ -1,14 +1,11 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [RFC] where is upstream multipath-tool git repo
-Date: Fri, 27 Oct 2017 18:13:36 +0200
-Message-ID: <6229cb6f-7e16-eae3-d8ee-031197de6128@gmail.com>
-References: <63ADC13FD55D6546B7DECE290D39E373CED71927@H3CMLB14-EX.srv.huawei-3com.com>
+From: Damien Le Moal <damien.lemoal@wdc.com>
+Subject: [PATCH] dm: dm-zoned: Ignore last smaller runt zone
+Date: Sat, 28 Oct 2017 16:39:34 +0900
+Message-ID: <20171028073934.23293-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <63ADC13FD55D6546B7DECE290D39E373CED71927@H3CMLB14-EX.srv.huawei-3com.com>
-Content-Language: en-GB
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,14 +15,74 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Changwei Ge <ge.changwei@h3c.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
+To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On 10/27/2017 04:31 AM, Changwei Ge wrote:
+The scsi layer allows ZBC drives to have a smaller last runt zone. For
+such device, specifying the entire capacity for a dm-zoned target table
+entry fails as the specified capacity is not aligned on the device zone
+size indicated in the request queue structure of the device.
 
-> Does anyone have any idea where I can find the upstream multipath-tool 
-> git repository including the lately fixed issues?
+Fix this problem by ignoring the last runt zone in the entry length
+when seting up the dm-zoned target (ctr method) and when iterating table
+entries of the target (iterate_devices method). This allows dm-zoned
+users to still easily setup a target using the entire device capacity
+(as mandated by dm-zoned) or the aligned capacity excluding thelast runt
+zone.
 
-Full project info at: http://christophe.varoqui.free.fr/
+While at it, replace direct references to the device queue chunk_sectors
+limit with calls to the accessor blk_queue_zone_sectors().
 
-There are still pending patches: https://marc.info/?l=dm-devel&m=150634203214761
+Reported-by: Peter Desnoyers <pjd@ccs.neu.edu>
+Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
+---
+ drivers/md/dm-zoned-target.c | 13 +++++++++----
+ 1 file changed, 9 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
+index b87c1741da4b..6d7bda6f8190 100644
+--- a/drivers/md/dm-zoned-target.c
++++ b/drivers/md/dm-zoned-target.c
+@@ -660,6 +660,7 @@ static int dmz_get_zoned_device(struct dm_target *ti, char *path)
+ 	struct dmz_target *dmz = ti->private;
+ 	struct request_queue *q;
+ 	struct dmz_dev *dev;
++	sector_t aligned_capacity;
+ 	int ret;
+ 
+ 	/* Get the target device */
+@@ -685,15 +686,17 @@ static int dmz_get_zoned_device(struct dm_target *ti, char *path)
+ 		goto err;
+ 	}
+ 
++	q = bdev_get_queue(dev->bdev);
+ 	dev->capacity = i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT;
+-	if (ti->begin || (ti->len != dev->capacity)) {
++	aligned_capacity = dev->capacity & ~(blk_queue_zone_sectors(q) - 1);
++	if (ti->begin ||
++	    ((ti->len != dev->capacity) && (ti->len != aligned_capacity))) {
+ 		ti->error = "Partial mapping not supported";
+ 		ret = -EINVAL;
+ 		goto err;
+ 	}
+ 
+-	q = bdev_get_queue(dev->bdev);
+-	dev->zone_nr_sectors = q->limits.chunk_sectors;
++	dev->zone_nr_sectors = blk_queue_zone_sectors(q);
+ 	dev->zone_nr_sectors_shift = ilog2(dev->zone_nr_sectors);
+ 
+ 	dev->zone_nr_blocks = dmz_sect2blk(dev->zone_nr_sectors);
+@@ -929,8 +932,10 @@ static int dmz_iterate_devices(struct dm_target *ti,
+ 			       iterate_devices_callout_fn fn, void *data)
+ {
+ 	struct dmz_target *dmz = ti->private;
++	struct dmz_dev *dev = dmz->dev;
++	sector_t capacity = dev->capacity & ~(dev->zone_nr_sectors - 1);
+ 
+-	return fn(ti, dmz->ddev, 0, dmz->dev->capacity, data);
++	return fn(ti, dmz->ddev, 0, capacity, data);
+ }
+ 
+ static struct target_type dmz_type = {
+-- 
+2.13.6
