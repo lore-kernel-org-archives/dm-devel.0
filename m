@@ -1,11 +1,15 @@
-From: Damien Le Moal <damien.lemoal@wdc.com>
-Subject: [PATCH] dm: dm-zoned: Ignore last smaller runt zone
-Date: Sat, 28 Oct 2017 16:39:34 +0900
-Message-ID: <20171028073934.23293-1-damien.lemoal@wdc.com>
+From: Muneendra Kumar M <mmandala@Brocade.com>
+Subject: Re: Pushing the multipath state info into the fabric
+Date: Mon, 30 Oct 2017 04:40:53 +0000
+Message-ID: <9a527555006647c6b4586fe78cf6d7b1@BRMWP-EXMB12.corp.brocade.com>
+References: <003dec9a190f45aa91bff7e0010968e1@BRMWP-EXMB12.corp.brocade.com>
+	<20171026143532.GA5490@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20171026143532.GA5490@redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,74 +19,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-The scsi layer allows ZBC drives to have a smaller last runt zone. For
-such device, specifying the entire capacity for a dm-zoned target table
-entry fails as the specified capacity is not aligned on the device zone
-size indicated in the request queue structure of the device.
+Hi Mike,
+Our intention is to train the multipathd for pushing the  multipath info into the fabric using LIBHBA api's.
+Can we call libhba apis in multipathd to push the info into fabric?
 
-Fix this problem by ignoring the last runt zone in the entry length
-when seting up the dm-zoned target (ctr method) and when iterating table
-entries of the target (iterate_devices method). This allows dm-zoned
-users to still easily setup a target using the entire device capacity
-(as mandated by dm-zoned) or the aligned capacity excluding thelast runt
-zone.
+Regards,
+Muneendra.
 
-While at it, replace direct references to the device queue chunk_sectors
-limit with calls to the accessor blk_queue_zone_sectors().
+-----Original Message-----
+From: Mike Snitzer [mailto:snitzer@redhat.com] 
+Sent: Thursday, October 26, 2017 8:06 PM
+To: Muneendra Kumar M <mmandala@Brocade.com>
+Cc: dm-devel@redhat.com
+Subject: Re: Pushing the multipath state info into the fabric
 
-Reported-by: Peter Desnoyers <pjd@ccs.neu.edu>
-Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
----
- drivers/md/dm-zoned-target.c | 13 +++++++++----
- 1 file changed, 9 insertions(+), 4 deletions(-)
+On Thu, Oct 26 2017 at  6:18am -0400,
+Muneendra Kumar M <mmandala@Brocade.com> wrote:
 
-diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
-index b87c1741da4b..6d7bda6f8190 100644
---- a/drivers/md/dm-zoned-target.c
-+++ b/drivers/md/dm-zoned-target.c
-@@ -660,6 +660,7 @@ static int dmz_get_zoned_device(struct dm_target *ti, char *path)
- 	struct dmz_target *dmz = ti->private;
- 	struct request_queue *q;
- 	struct dmz_dev *dev;
-+	sector_t aligned_capacity;
- 	int ret;
- 
- 	/* Get the target device */
-@@ -685,15 +686,17 @@ static int dmz_get_zoned_device(struct dm_target *ti, char *path)
- 		goto err;
- 	}
- 
-+	q = bdev_get_queue(dev->bdev);
- 	dev->capacity = i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT;
--	if (ti->begin || (ti->len != dev->capacity)) {
-+	aligned_capacity = dev->capacity & ~(blk_queue_zone_sectors(q) - 1);
-+	if (ti->begin ||
-+	    ((ti->len != dev->capacity) && (ti->len != aligned_capacity))) {
- 		ti->error = "Partial mapping not supported";
- 		ret = -EINVAL;
- 		goto err;
- 	}
- 
--	q = bdev_get_queue(dev->bdev);
--	dev->zone_nr_sectors = q->limits.chunk_sectors;
-+	dev->zone_nr_sectors = blk_queue_zone_sectors(q);
- 	dev->zone_nr_sectors_shift = ilog2(dev->zone_nr_sectors);
- 
- 	dev->zone_nr_blocks = dmz_sect2blk(dev->zone_nr_sectors);
-@@ -929,8 +932,10 @@ static int dmz_iterate_devices(struct dm_target *ti,
- 			       iterate_devices_callout_fn fn, void *data)
- {
- 	struct dmz_target *dmz = ti->private;
-+	struct dmz_dev *dev = dmz->dev;
-+	sector_t capacity = dev->capacity & ~(dev->zone_nr_sectors - 1);
- 
--	return fn(ti, dmz->ddev, 0, dmz->dev->capacity, data);
-+	return fn(ti, dmz->ddev, 0, capacity, data);
- }
- 
- static struct target_type dmz_type = {
--- 
-2.13.6
+>    Hi ,
+> 
+> 
+> 
+>    We are working on the SAN fabric side to collect and present the multipath
+>    status information to the SAN administrators.
+> 
+>    So, I am looking forward to push the multipath state information to the
+>    fabric in the form of CT (Common Transport) frames, by using the libhba
+>    APIs.
+> 
+>    Since the multipath daemon is already keeping track of the multipath
+>    device and state info, I feel that it is the correct place to add the code
+>    to push the info to the fabric.
+> 
+>    Please kindly let me know your thoughts on this.
+
+Sounds like you'd probably want to expose APIs that enable you to access the state you require from multipathd rather than train multipathd to inject anything into the fabric.
+
+But that is just my initial take.
+
+Mike
