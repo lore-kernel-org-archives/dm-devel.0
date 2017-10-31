@@ -1,15 +1,11 @@
-From: "Zhangyanfei (YF)" <yanfei.zhang@huawei.com>
-Subject: =?utf-8?b?562U5aSNOiAgZG1zZXR1cCBoYW5ncyBmb3JldmVy?=
-Date: Fri, 27 Oct 2017 08:00:57 +0000
-Message-ID: <97CEEE909D5FE84999281EA4585EB0ED0165EFCA@DGGEMA505-MBS.china.huawei.com>
-References: <97CEEE909D5FE84999281EA4585EB0ED0165DE36@DGGEMA505-MBS.china.huawei.com>
-	<62d9bc5f-01c7-6109-eff5-8d5cc0ddfed0@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm: allocate struct mapped_device with kvzalloc
+Date: Tue, 31 Oct 2017 19:33:02 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1710311931190.28120@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <62d9bc5f-01c7-6109-eff5-8d5cc0ddfed0@redhat.com>
-Content-Language: zh-CN
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,61 +15,84 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Zdenek Kabelac <zkabelac@redhat.com>, "agk@redhat.com" <agk@redhat.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Fengtiantian <fengtiantian@huawei.com>, "linux-lvm@redhat.com" <linux-lvm@redhat.com>, guijianfeng <guijianfeng@huawei.com>
+To: Mike Snitzer <msnitzer@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-SGVsbG8KCklmIHRoZSB1ZGV2ZCBkYWVtb24gd291bGQgbm90IHRpbWVvdXQsIEkgdGhpbmsgZG1z
-ZXR1cCBtYW5kYXRvcnkgd2FpdCB1ZGV2IGZpbmFsaXppbmcgYW55IHRpbWVvdXRzIGlzIGdvb2Qg
-aWRlYS4KQnV0IHVkZXZkIHdvdWxkIHRpbWVvdXQgaW4gMTgwIHNlbmNvbmQgYW5kIGtpbGwgdGhl
-IGV2ZW50IHByb2Nlc3MoIHN5c3RlbWQtdWRldmRbMzkwMjldOiB0aW1lb3V0OiBraWxsaW5nKS4g
-SW4gdGhpcyBzaXR1YXRpb24sIEkgdGhpbmsgbWFuZGF0b3J5IHdhaXQgdWRldiBmaW5hbGl6aW5n
-IGlzIHVzZWxlc3MsIGJlY2F1c2UgdWRldiBoYXMgYmVlbiBraWxsZWQgYW5kIGNhbid0IGNvb3Jk
-aW5hdGlvbiBkbXNldHVwIGZvcmV2ZXIuIFNvIEkgdGhpbmsgaXQncyBiZXR0ZXIgdG8gdGVsbCB0
-aGUgb25lIHdobyBjYWxsIHRoZSBkbXNldHVwLCB0aGUgcHJvY2VzcyBlcnJvciByZXR1cm4sIHRo
-YW4gbGV0IHRoZSBwcm9jZXNzIHdhaXQgZm9yZXZlci4gCgpJZiBub3QgYWRkIHRoZSBkbXNldHVw
-IHRpbWVvdXQgbWVjaGFuaXNtLCB3aGljaCBzdHJhdGVneSB0byBzb2x2ZSB0aGlzIGlzc3VlIGJl
-dHRlcj8KMeOAgWd1YXJhbnRlZSB0aGUgdWRldiBuZXZlciB0aW1lb3V0LihidXQgSSB0aGluayBp
-dCBpcyBkaWZmaWN1bHQgdG8gbWFrZSBzdXJlIGFueSB1ZGV2IGV2ZW50IHdpbGwgZmluaXNoIGlu
-IDE4MCBzZW5jb25kIGluIGFueSBhYm5vcm1hbCBzaXR1YXRpb24pCjLjgIFtb2RpZnkgdGhlIHVk
-ZXYgZGFlbW9uLCBpZiB1ZGV2IGV2ZW50IHRpbWVvdXTvvIxhbHNvIG5vdGlmeSB0aGUgZG1zZXR1
-cCBpdCdzIGRvbmUuCjPjgIF0aGUgb25lIHdobyBjYWxsIHRoZSBjb21tYW5kIGRtc2V0dXAgbmVl
-ZGVkIHRpbWVvdXQgaXRzZWxmLgoKVGhhbmtzCgotLS0tLemCruS7tuWOn+S7ti0tLS0tCuWPkeS7
-tuS6ujogWmRlbmVrIEthYmVsYWMgW21haWx0bzp6a2FiZWxhY0ByZWRoYXQuY29tXSAK5Y+R6YCB
-5pe26Ze0OiAyMDE35bm0MTDmnIgyNuaXpSAxNjozOQrmlLbku7bkuro6IFpoYW5neWFuZmVpIChZ
-RikgPHlhbmZlaS56aGFuZ0BodWF3ZWkuY29tPjsgYWdrQHJlZGhhdC5jb207IGNocmlzdG9waGUu
-dmFyb3F1aUBvcGVuc3ZjLmNvbQrmioTpgIE6IGRtLWRldmVsQHJlZGhhdC5jb207IGd1aWppYW5m
-ZW5nIDxndWlqaWFuZmVuZ0BodWF3ZWkuY29tPjsgRmVuZ3RpYW50aWFuIDxmZW5ndGlhbnRpYW5A
-aHVhd2VpLmNvbT47IGxpbnV4LWx2bUByZWRoYXQuY29tCuS4u+mimDogUmU6IFtkbS1kZXZlbF0g
-ZG1zZXR1cCBoYW5ncyBmb3JldmVyCgpEbmUgMjYuMTAuMjAxNyB2IDEwOjA3IFpoYW5neWFuZmVp
-IChZRikgbmFwc2FsKGEpOgo+IEhlbGxvCj4gCj4gSSBmaW5kIGFuIGlzc3VlIHdoZW4gdXNlIMKg
-ZG1zZXR1cCBpbiB0aGUgc2l0dWF0aW9uIHVkZXYgZXZlbnQgdGltZW91dC4KPiAKPiBEbXNldHVw
-IHVzZSB0aGUgZG1fdWRldl93YWl0IGZ1bmN0aW9uIHN5bmMgd2l0aCB1ZGV2IGV2ZW50LldoZW4g
-dXNlIAo+IHRoZSBkbXNldHVwIGdlbmVyYXRlIGEgbmV3IGRtLWRpc2ssIGlmIHRoZSByYXcgZGlz
-ayBpcyBhYm5vcm1hbChmb3IgCj4gZXhhbXBsZSAsYSBpcHNhbiBkaXNrIGh1bmcgSU8gcmVxdWVz
-dCksIHRoZSB1ZGV2ZCBkYWVtb24gaGFuZGxlIHRoZSAKPiBkbS1kaXNrIHVkZXYgZXZlbnQgbWF5
-YmUgdGltZW91dCwgYW5kIHdpbGwgbm90IG5vdGlmeSB0aGUgZG1zZXR1cCDCoGJ5IAo+IHNlbWFw
-aG9yZS4gQW5kIGJlY2F1c2UgdGhlCj4gIMKgZG1fdWRldl93YWl0IHVzZSB0aGUgc2Vtb3AgdG8g
-c3luYyB3aXRoIHVkZXZkLCBpZiB1ZGV2ZCBldmVudCAKPiB0aW1lb3V0LCB0aGUgZG1zZXR1cCB3
-aWxsIGh1bmcgZm9yZXZlciBldmVuIHdoZW4gdGhlIHJhdyBkaXNrIGJlIHJlY292ZXJ5Lgo+IAo+
-IEkgd29uZGVyIGlmIHdlIGNvdWxkIHVzZSB0aGUgc2VtdGltZWRvcCBpbnN0ZWFkIHNlbW9wIHRv
-IGFkZCB0aGUgCj4gdGltZW91dCBpbiBmdW5jdGlvbiDCoGRtX3VkZXZfd2FpdC4gSWYgdGhlIHVk
-ZXZkIGRhZW1vbiB0aW1lb3V0IHdoZW4gCj4gaGFuZGxlIHRoZSBkbSBldmVudCwgdGhlIGRtX3Vk
-ZXZfd2FpdCBjb3VsZCB0aW1lb3V0IHRvbywgYW5kIHRoZSBkbXNldHVwIGNvdWxkIHJldHVybiBl
-cnJvci4KPiAKPiBUaGlzIGlzIG15IHBhdGNoIGJhc2UgbHZtMi0yLjAyLjExNS0zOgoKCkhpCgoK
-VW5mb3J0dW5hdGVseSB0aGUgc2FtZSBhcmd1bWVudCB3aHkgdGhpcyBjYW4ndCByZWFsbHkgd29y
-ayBzdGlsbCBhcHBsaWVzLgoKSWYgdGhlICBkbSB3aWxsIHN0YXJ0IHRvIHRpbWVvdXQgb24gaXQn
-cyBvd24gLSB3aXRob3V0IGNvb3JkaW5hdGlvbiB3aXRoIHVkZXYsIHlvdXIgc3lzdGVtJ3MgbG9n
-aWMgd2lsbCBlbmQtdXAgd2l0aCBvbmUgYmlnIG1lc3MuCgpTbyBpZiB0aGUgZG0gd291bGQgaGFu
-ZGxlIHRpbWVvdXQgLSB5b3Ugd291bGQgYWxzbyBuZWVkIHRvIHByb3ZpZGUgbWVjaGFuaXNtIHRv
-IGNvcnJlY3QgYXNzb2NpYXRlZCBzZXJ2aWNlcyBhcm91bmQgaXQuCgpUaGUgbWFpbiBjYXNlIGhl
-cmUgaXMgLSBpdCdzIG1hbmRhdG9yeSBpdCdzIHVkZXYgZmluYWxpemluZyBhbnkgdGltZW91dHMg
-c28gaXQncyBpbiBzeW5jIHdpdGggZGIgY29udGVudC4KCk1vcmVvdmVyIGlmIHlvdSBzdGFydCB0
-byB0aW1lb3V0IC0geW91IHR5cGljYWxseSBtYXNrIHNvbWUgc3lzdGVtIGZhaWx1cmUuIEluIG1h
-am9yaXR5IG9mIGNhc2VzIEkndmUgZXZlciBzZWVuIC0gaXQncyBiZWVuIGFsd2F5cyBhIGJ1ZyBm
-cm9tIHRoaXMgY2F0ZWdvcnkgKGJ1Z2d5IHVkZXYgcnVsZSwgb3Igc2VydmljZSkuIFNvIGl0J3Mg
-YWx3YXlzIGJldHRlciB0byBmaXggdGhlIGJ1ZyB0aGVuIGtlZXAgaXQgbWFza2VkLgoKQUZBSUsg
-SSdkIGxpa2UgdG8gc2VlIHRoZSBzZW1hcGhvcmUgdG8gZ28gYXdheSAtIGJ1dCBpdCBuZWVkcyB3
-aWRlciBjb29wZXJhdGlvbi4KCgpSZWdhcmRzCgpaZGVuZWsKCgoKLS0KZG0tZGV2ZWwgbWFpbGlu
-ZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFu
-L2xpc3RpbmZvL2RtLWRldmVs
+The structure srcu_struct can be very big, its size is proportional to the 
+value CONFIG_NR_CPUS. The Fedora kernel has CONFIG_NR_CPUS 8192, the field 
+io_barrier in the struct mapped_device has 84kB in the debugging kernel 
+and 50kB in the non-debugging kernel. The large size may result in failure 
+of the function kzalloc_node.
+
+In order to avoid the allocation failure, we use the function
+kvzalloc_node, this function falls back to vmalloc if a large contiguous
+chunk of memory is not available. This patch also moves the field
+io_barrier to the last position of struct mapped_device - the reason is
+that on many processor architectures, short memory offsets result in
+smaller code than long memory offsets - on x86-64 it reduces code size by
+320 bytes.
+
+Note to stable kernel maintainers - the kernels 4.11 and older don't have
+the function kvzalloc_node, you can use the function vzalloc_node instead.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org
+
+---
+ drivers/md/dm-core.h |    3 ++-
+ drivers/md/dm.c      |    6 +++---
+ 2 files changed, 5 insertions(+), 4 deletions(-)
+
+Index: linux-2.6/drivers/md/dm-core.h
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-core.h
++++ linux-2.6/drivers/md/dm-core.h
+@@ -29,7 +29,6 @@ struct dm_kobject_holder {
+  * DM targets must _not_ deference a mapped_device to directly access its members!
+  */
+ struct mapped_device {
+-	struct srcu_struct io_barrier;
+ 	struct mutex suspend_lock;
+ 
+ 	/*
+@@ -127,6 +126,8 @@ struct mapped_device {
+ 	struct blk_mq_tag_set *tag_set;
+ 	bool use_blk_mq:1;
+ 	bool init_tio_pdu:1;
++
++	struct srcu_struct io_barrier;
+ };
+ 
+ void dm_init_md_queue(struct mapped_device *md);
+Index: linux-2.6/drivers/md/dm.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm.c
++++ linux-2.6/drivers/md/dm.c
+@@ -1695,7 +1695,7 @@ static struct mapped_device *alloc_dev(i
+ 	struct mapped_device *md;
+ 	void *old_md;
+ 
+-	md = kzalloc_node(sizeof(*md), GFP_KERNEL, numa_node_id);
++	md = kvzalloc_node(sizeof(*md), GFP_KERNEL, numa_node_id);
+ 	if (!md) {
+ 		DMWARN("unable to allocate device, out of memory.");
+ 		return NULL;
+@@ -1795,7 +1795,7 @@ bad_io_barrier:
+ bad_minor:
+ 	module_put(THIS_MODULE);
+ bad_module_get:
+-	kfree(md);
++	kvfree(md);
+ 	return NULL;
+ }
+ 
+@@ -1814,7 +1814,7 @@ static void free_dev(struct mapped_devic
+ 	free_minor(minor);
+ 
+ 	module_put(THIS_MODULE);
+-	kfree(md);
++	kvfree(md);
+ }
+ 
+ static void __bind_mempools(struct mapped_device *md, struct dm_table *t)
