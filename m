@@ -1,83 +1,111 @@
-From: Hou Tao <houtao1@huawei.com>
-Subject: [PATCH] dm: fix race between dm_get_from_kobject() and
-	__dm_destroy()
-Date: Wed, 1 Nov 2017 15:42:36 +0800
-Message-ID: <20171101074236.21901-1-houtao1@huawei.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: SRCU's apparent use of NR_CPUS? [was: re: dm: allocate struct
+ mapped_device with kvzalloc]
+Date: Wed, 1 Nov 2017 11:48:44 -0400
+Message-ID: <20171101154844.GA25792@redhat.com>
+References: <alpine.LRH.2.02.1710311931190.28120@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: agk@redhat.com, snitzer@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1710311931190.28120@file01.intranet.prod.int.rdu2.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Zdenek Kabelac <zkabelac@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>, dm-devel@redhat.com, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-We got a BUG_ON when testing the repeating creation and removal
-of dm devices:
+[cc'ing Paul, and LKML, to get his/others' take on SRCU cpu scaling]
 
-    kernel BUG at drivers/md/dm.c:2919!
-    CPU: 7 PID: 750 Comm: systemd-udevd Not tainted 4.1.44
-    Call Trace:
-     [<ffffffff81649e8b>] dm_get_from_kobject+0x34/0x3a
-     [<ffffffff81650ef1>] dm_attr_show+0x2b/0x5e
-     [<ffffffff817b46d1>] ? mutex_lock+0x26/0x44
-     [<ffffffff811df7f5>] sysfs_kf_seq_show+0x83/0xcf
-     [<ffffffff811de257>] kernfs_seq_show+0x23/0x25
-     [<ffffffff81199118>] seq_read+0x16f/0x325
-     [<ffffffff811de994>] kernfs_fop_read+0x3a/0x13f
-     [<ffffffff8117b625>] __vfs_read+0x26/0x9d
-     [<ffffffff8130eb59>] ? security_file_permission+0x3c/0x44
-     [<ffffffff8117bdb8>] ? rw_verify_area+0x83/0xd9
-     [<ffffffff8117be9d>] vfs_read+0x8f/0xcf
-     [<ffffffff81193e34>] ? __fdget_pos+0x12/0x41
-     [<ffffffff8117c686>] SyS_read+0x4b/0x76
-     [<ffffffff817b606e>] system_call_fastpath+0x12/0x71
+On Tue, Oct 31 2017 at  7:33pm -0400,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-The bug can be easily triggered, if an extra delay (e.g., 10ms) is added
-between the test of DMF_FREEING & DMF_DELETING and dm_get() in
-dm_get_from_kobject().
+> The structure srcu_struct can be very big, its size is proportional to the 
+> value CONFIG_NR_CPUS. The Fedora kernel has CONFIG_NR_CPUS 8192, the field 
+> io_barrier in the struct mapped_device has 84kB in the debugging kernel 
+> and 50kB in the non-debugging kernel. The large size may result in failure 
+> of the function kzalloc_node.
+> 
+> In order to avoid the allocation failure, we use the function
+> kvzalloc_node, this function falls back to vmalloc if a large contiguous
+> chunk of memory is not available. This patch also moves the field
+> io_barrier to the last position of struct mapped_device - the reason is
+> that on many processor architectures, short memory offsets result in
+> smaller code than long memory offsets - on x86-64 it reduces code size by
+> 320 bytes.
+> 
+> Note to stable kernel maintainers - the kernels 4.11 and older don't have
+> the function kvzalloc_node, you can use the function vzalloc_node instead.
+> 
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> Cc: stable@vger.kernel.org
 
-To fix it, we need to ensure the test of DMF_FREEING & DMF_DELETING and
-dm_get() are done in a atomical way, so _minor_lock is used.
+This looks reasonable as a near-term workaround.. BUT:
+Paul has there been any discussion about how to make SRCU support
+dynamically scaling up to NR_CPUS maximum as 'nr_cpus' changes (rather
+than accounting for worst case of NR_CPUS up-front)?
 
-The other callers of dm_get() have also been checked. Their usages of
-dm_get() are OK: some callers invoke dm_get() under _minor_lock,
-some callers invoke it under _hash_lock, and dm_start_request() invoke
-it after increasing md->open_count.
+(But I had a quick look at scrutree.h and I'm not seeing explicit use of
+NR_CPUS, so it is likely occuring via implicit percpu through some
+member of 'struct srcu_struct', e.g. 'sda'?)
 
-Signed-off-by: Hou Tao <houtao1@huawei.com>
----
- drivers/md/dm.c | 7 +++++--
- 1 file changed, 5 insertions(+), 2 deletions(-)
+Thanks,
+Mike
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 4be8532..97d383b 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -2709,11 +2709,14 @@ struct mapped_device *dm_get_from_kobject(struct kobject *kobj)
- 
- 	md = container_of(kobj, struct mapped_device, kobj_holder.kobj);
- 
-+	spin_lock(&_minor_lock);
- 	if (test_bit(DMF_FREEING, &md->flags) ||
- 	    dm_deleting_md(md))
--		return NULL;
-+		md = NULL;
-+	else
-+		dm_get(md);
-+	spin_unlock(&_minor_lock);
- 
--	dm_get(md);
- 	return md;
- }
- 
--- 
-2.9.5
+> 
+> ---
+>  drivers/md/dm-core.h |    3 ++-
+>  drivers/md/dm.c      |    6 +++---
+>  2 files changed, 5 insertions(+), 4 deletions(-)
+> 
+> Index: linux-2.6/drivers/md/dm-core.h
+> ===================================================================
+> --- linux-2.6.orig/drivers/md/dm-core.h
+> +++ linux-2.6/drivers/md/dm-core.h
+> @@ -29,7 +29,6 @@ struct dm_kobject_holder {
+>   * DM targets must _not_ deference a mapped_device to directly access its members!
+>   */
+>  struct mapped_device {
+> -	struct srcu_struct io_barrier;
+>  	struct mutex suspend_lock;
+>  
+>  	/*
+> @@ -127,6 +126,8 @@ struct mapped_device {
+>  	struct blk_mq_tag_set *tag_set;
+>  	bool use_blk_mq:1;
+>  	bool init_tio_pdu:1;
+> +
+> +	struct srcu_struct io_barrier;
+>  };
+>  
+>  void dm_init_md_queue(struct mapped_device *md);
+> Index: linux-2.6/drivers/md/dm.c
+> ===================================================================
+> --- linux-2.6.orig/drivers/md/dm.c
+> +++ linux-2.6/drivers/md/dm.c
+> @@ -1695,7 +1695,7 @@ static struct mapped_device *alloc_dev(i
+>  	struct mapped_device *md;
+>  	void *old_md;
+>  
+> -	md = kzalloc_node(sizeof(*md), GFP_KERNEL, numa_node_id);
+> +	md = kvzalloc_node(sizeof(*md), GFP_KERNEL, numa_node_id);
+>  	if (!md) {
+>  		DMWARN("unable to allocate device, out of memory.");
+>  		return NULL;
+> @@ -1795,7 +1795,7 @@ bad_io_barrier:
+>  bad_minor:
+>  	module_put(THIS_MODULE);
+>  bad_module_get:
+> -	kfree(md);
+> +	kvfree(md);
+>  	return NULL;
+>  }
+>  
+> @@ -1814,7 +1814,7 @@ static void free_dev(struct mapped_devic
+>  	free_minor(minor);
+>  
+>  	module_put(THIS_MODULE);
+> -	kfree(md);
+> +	kvfree(md);
+>  }
+>  
+>  static void __bind_mempools(struct mapped_device *md, struct dm_table *t)
