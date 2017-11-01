@@ -1,14 +1,15 @@
 From: Tariq Mustafa <tmustafa@hotmail.com>
 Subject: Re: Replacement for dm_dispatch_request for older
  request based targets
-Date: Wed, 1 Nov 2017 18:10:58 +0000
-Message-ID: <BY2PR18MB03442D771B14B459A7319095C25F0@BY2PR18MB0344.namprd18.prod.outlook.com>
+Date: Wed, 1 Nov 2017 18:54:20 +0000
+Message-ID: <BY2PR18MB0344A93463B7C7A3EDEAA878C25F0@BY2PR18MB0344.namprd18.prod.outlook.com>
 References: <BY2PR18MB03446D72103BA92941E3CF46C25F0@BY2PR18MB0344.namprd18.prod.outlook.com>,
-	<20171101160857.GA25886@redhat.com>
+	<20171101160857.GA25886@redhat.com>,
+	<BY2PR18MB03442D771B14B459A7319095C25F0@BY2PR18MB0344.namprd18.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0733891375843044665=="
+Content-Type: multipart/mixed; boundary="===============4688717293992642863=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20171101160857.GA25886@redhat.com>
+In-Reply-To: <BY2PR18MB03442D771B14B459A7319095C25F0@BY2PR18MB0344.namprd18.prod.outlook.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -23,14 +24,29 @@ To: Mike Snitzer <snitzer@redhat.com>
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============0733891375843044665==
+--===============4688717293992642863==
 Content-Language: en-US
 Content-Type: multipart/alternative;
-	boundary="_000_BY2PR18MB03442D771B14B459A7319095C25F0BY2PR18MB0344namp_"
+	boundary="_000_BY2PR18MB0344A93463B7C7A3EDEAA878C25F0BY2PR18MB0344namp_"
 
---_000_BY2PR18MB03442D771B14B459A7319095C25F0BY2PR18MB0344namp_
+--_000_BY2PR18MB0344A93463B7C7A3EDEAA878C25F0BY2PR18MB0344namp_
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: quoted-printable
+
+Sorry, here is a correction to my last comment;
+
+
+.map_rq would be returning DM_MAPIO_SUBMITTED for this IO
+
+________________________________
+From: dm-devel-bounces@redhat.com <dm-devel-bounces@redhat.com> on behalf o=
+f Tariq Mustafa <tmustafa@hotmail.com>
+Sent: Wednesday, November 1, 2017 11:10:58 AM
+To: Mike Snitzer
+Cc: dm-devel@redhat.com
+Subject: Re: [dm-devel] Replacement for dm_dispatch_request for older reque=
+st based targets
+
 
 Thanks Mike. I was looking at the request based crypt, and saw the followin=
 g code;
@@ -113,7 +129,7 @@ Please explain what you're trying to do if you need more help.
 Thanks,
 Mike
 
---_000_BY2PR18MB03442D771B14B459A7319095C25F0BY2PR18MB0344namp_
+--_000_BY2PR18MB0344A93463B7C7A3EDEAA878C25F0BY2PR18MB0344namp_
 Content-Type: text/html; charset="us-ascii"
 Content-Transfer-Encoding: quoted-printable
 
@@ -126,6 +142,29 @@ Content-Transfer-Encoding: quoted-printable
 ding-left: 4pt; border-left: #800000 2px solid; } --></style>
 </head>
 <body>
+<style type=3D"text/css" style=3D"display:none;"><!-- P {margin-top:0;margi=
+n-bottom:0;} --></style>
+<div id=3D"divtagdefaultwrapper" style=3D"font-size:12pt;color:#000000;font=
+-family:Calibri,Helvetica,sans-serif;" dir=3D"ltr">
+<p>Sorry, here is a correction to my last comment;</p>
+<p><br>
+</p>
+<pre style=3D"margin-top: 14pt; margin-bottom: 14pt; white-space: pre-wrap;=
+">.map_rq would be returning DM_MAPIO_SUBMITTED for this IO</pre>
+</div>
+<hr style=3D"display:inline-block;width:98%" tabindex=3D"-1">
+<div id=3D"divRplyFwdMsg" dir=3D"ltr"><font face=3D"Calibri, sans-serif" st=
+yle=3D"font-size:11pt" color=3D"#000000"><b>From:</b> dm-devel-bounces@redh=
+at.com &lt;dm-devel-bounces@redhat.com&gt; on behalf of Tariq Mustafa &lt;t=
+mustafa@hotmail.com&gt;<br>
+<b>Sent:</b> Wednesday, November 1, 2017 11:10:58 AM<br>
+<b>To:</b> Mike Snitzer<br>
+<b>Cc:</b> dm-devel@redhat.com<br>
+<b>Subject:</b> Re: [dm-devel] Replacement for dm_dispatch_request for olde=
+r request based targets</font>
+<div>&nbsp;</div>
+</div>
+<div>
 <meta content=3D"text/html; charset=3DUTF-8">
 <style type=3D"text/css" style=3D"">
 <!--
@@ -245,18 +284,18 @@ Please explain what you're trying to do if you need more help.<br>
 Thanks,<br>
 Mike<br>
 </div>
-</span></font>
+</span></font></div>
 </body>
 </html>
 
---_000_BY2PR18MB03442D771B14B459A7319095C25F0BY2PR18MB0344namp_--
+--_000_BY2PR18MB0344A93463B7C7A3EDEAA878C25F0BY2PR18MB0344namp_--
 
 
---===============0733891375843044665==
+--===============4688717293992642863==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============0733891375843044665==--
+--===============4688717293992642863==--
