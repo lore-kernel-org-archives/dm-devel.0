@@ -1,11 +1,12 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm: allocate struct mapped_device with kvzalloc
-Date: Tue, 31 Oct 2017 19:33:02 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1710311931190.28120@file01.intranet.prod.int.rdu2.redhat.com>
+From: Tariq Mustafa <tmustafa@hotmail.com>
+Subject: Replacement for dm_dispatch_request for older request
+	based targets
+Date: Wed, 1 Nov 2017 06:23:25 +0000
+Message-ID: <BY2PR18MB03446D72103BA92941E3CF46C25F0@BY2PR18MB0344.namprd18.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============2882594280827124160=="
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,84 +16,80 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <msnitzer@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
-Cc: dm-devel@redhat.com
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-The structure srcu_struct can be very big, its size is proportional to the 
-value CONFIG_NR_CPUS. The Fedora kernel has CONFIG_NR_CPUS 8192, the field 
-io_barrier in the struct mapped_device has 84kB in the debugging kernel 
-and 50kB in the non-debugging kernel. The large size may result in failure 
-of the function kzalloc_node.
+--===============2882594280827124160==
+Content-Language: en-US
+Content-Type: multipart/alternative;
+	boundary="_000_BY2PR18MB03446D72103BA92941E3CF46C25F0BY2PR18MB0344namp_"
 
-In order to avoid the allocation failure, we use the function
-kvzalloc_node, this function falls back to vmalloc if a large contiguous
-chunk of memory is not available. This patch also moves the field
-io_barrier to the last position of struct mapped_device - the reason is
-that on many processor architectures, short memory offsets result in
-smaller code than long memory offsets - on x86-64 it reduces code size by
-320 bytes.
+--_000_BY2PR18MB03446D72103BA92941E3CF46C25F0BY2PR18MB0344namp_
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 
-Note to stable kernel maintainers - the kernels 4.11 and older don't have
-the function kvzalloc_node, you can use the function vzalloc_node instead.
+Hello,
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Cc: stable@vger.kernel.org
 
----
- drivers/md/dm-core.h |    3 ++-
- drivers/md/dm.c      |    6 +++---
- 2 files changed, 5 insertions(+), 4 deletions(-)
+I am trying to figure out what would be the appropriate replacement for "dm=
+_dispatch_request()" on the newer kernel? This export has been removed (by =
+commit - [dbf978]<https://sourceforge.net/p/android-x86/kernel/ci/dbf9782c1=
+078c537831201c73ac60c9623ae9370/>), what would be an equivalent call to sub=
+mit the request.
 
-Index: linux-2.6/drivers/md/dm-core.h
-===================================================================
---- linux-2.6.orig/drivers/md/dm-core.h
-+++ linux-2.6/drivers/md/dm-core.h
-@@ -29,7 +29,6 @@ struct dm_kobject_holder {
-  * DM targets must _not_ deference a mapped_device to directly access its members!
-  */
- struct mapped_device {
--	struct srcu_struct io_barrier;
- 	struct mutex suspend_lock;
- 
- 	/*
-@@ -127,6 +126,8 @@ struct mapped_device {
- 	struct blk_mq_tag_set *tag_set;
- 	bool use_blk_mq:1;
- 	bool init_tio_pdu:1;
-+
-+	struct srcu_struct io_barrier;
- };
- 
- void dm_init_md_queue(struct mapped_device *md);
-Index: linux-2.6/drivers/md/dm.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm.c
-+++ linux-2.6/drivers/md/dm.c
-@@ -1695,7 +1695,7 @@ static struct mapped_device *alloc_dev(i
- 	struct mapped_device *md;
- 	void *old_md;
- 
--	md = kzalloc_node(sizeof(*md), GFP_KERNEL, numa_node_id);
-+	md = kvzalloc_node(sizeof(*md), GFP_KERNEL, numa_node_id);
- 	if (!md) {
- 		DMWARN("unable to allocate device, out of memory.");
- 		return NULL;
-@@ -1795,7 +1795,7 @@ bad_io_barrier:
- bad_minor:
- 	module_put(THIS_MODULE);
- bad_module_get:
--	kfree(md);
-+	kvfree(md);
- 	return NULL;
- }
- 
-@@ -1814,7 +1814,7 @@ static void free_dev(struct mapped_devic
- 	free_minor(minor);
- 
- 	module_put(THIS_MODULE);
--	kfree(md);
-+	kvfree(md);
- }
- 
- static void __bind_mempools(struct mapped_device *md, struct dm_table *t)
+
+Thanks in advance.
+
+
+Regards,
+
+Tariq
+
+--_000_BY2PR18MB03446D72103BA92941E3CF46C25F0BY2PR18MB0344namp_
+Content-Type: text/html; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+
+<html>
+<head>
+<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Diso-8859-=
+1">
+<style type=3D"text/css" style=3D"display:none;"><!-- P {margin-top:0;margi=
+n-bottom:0;} --></style>
+</head>
+<body dir=3D"ltr">
+<div id=3D"divtagdefaultwrapper" style=3D"font-size:12pt;color:#000000;font=
+-family:Calibri,Helvetica,sans-serif;" dir=3D"ltr">
+<p>Hello,</p>
+<p><br>
+</p>
+<p>I am trying to figure out what would be the appropriate replacement for =
+&quot;dm_dispatch_request()&quot; on the newer kernel? This export has been=
+ removed (by&nbsp;commit -&nbsp;<a class=3D"rev" href=3D"https://sourceforg=
+e.net/p/android-x86/kernel/ci/dbf9782c1078c537831201c73ac60c9623ae9370/" st=
+yle=3D"background-color: transparent; box-sizing: inherit; margin: 0px; pad=
+ding: 0px; font-size: 13px; vertical-align: baseline; outline: none; color:=
+ rgb(0, 102, 153); text-decoration: none; font-family: sans-serif;">[dbf978=
+]</a>)<span style=3D"font-size: 12pt;">,
+ what would be an equivalent call to submit the request.</span></p>
+<p><br>
+</p>
+<p>Thanks in advance.</p>
+<p><br>
+</p>
+<p>Regards,</p>
+<p>Tariq</p>
+</div>
+</body>
+</html>
+
+--_000_BY2PR18MB03446D72103BA92941E3CF46C25F0BY2PR18MB0344namp_--
+
+
+--===============2882594280827124160==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============2882594280827124160==--
