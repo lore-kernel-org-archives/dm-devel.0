@@ -1,95 +1,164 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: SRCU's apparent use of NR_CPUS? [was: re: dm: allocate struct
- mapped_device with kvzalloc]
-Date: Wed, 1 Nov 2017 17:32:22 -0400
-Message-ID: <20171101213222.GA27306@redhat.com>
-References: <alpine.LRH.2.02.1710311931190.28120@file01.intranet.prod.int.rdu2.redhat.com>
- <20171101154844.GA25792@redhat.com>
- <20171101162306.GU3659@linux.vnet.ibm.com>
+From: Guan Junxiong <guanjunxiong@huawei.com>
+Subject: Re: [PATCH v7 0/2] multipath-tools: intermittent IO
+ error accounting to improve reliability
+Date: Thu, 2 Nov 2017 08:49:51 +0800
+Message-ID: <e00f7a97-92da-7b91-8f37-329f2a87c958@huawei.com>
+References: <1508810243-33556-1-git-send-email-guanjunxiong@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20171101162306.GU3659@linux.vnet.ibm.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, linux-kernel@vger.kernel.org, "Alasdair G. Kergon" <agk@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1508810243-33556-1-git-send-email-guanjunxiong@huawei.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: christophe.varoqui@opensvc.com
+Cc: dm-devel@redhat.com, mmandala@Brocade.com, mwilck@suse.com, shenhong09@huawei.com, niuhaoxin@huawei.com
 List-Id: dm-devel.ids
 
-On Wed, Nov 01 2017 at 12:23pm -0400,
-Paul E. McKenney <paulmck@linux.vnet.ibm.com> wrote:
-
-> On Wed, Nov 01, 2017 at 11:48:44AM -0400, Mike Snitzer wrote:
-> > [cc'ing Paul, and LKML, to get his/others' take on SRCU cpu scaling]
-> > 
-> > On Tue, Oct 31 2017 at  7:33pm -0400,
-> > Mikulas Patocka <mpatocka@redhat.com> wrote:
-> > 
-> > > The structure srcu_struct can be very big, its size is proportional to the 
-> > > value CONFIG_NR_CPUS. The Fedora kernel has CONFIG_NR_CPUS 8192, the field 
-> > > io_barrier in the struct mapped_device has 84kB in the debugging kernel 
-> > > and 50kB in the non-debugging kernel. The large size may result in failure 
-> > > of the function kzalloc_node.
-> > > 
-> > > In order to avoid the allocation failure, we use the function
-> > > kvzalloc_node, this function falls back to vmalloc if a large contiguous
-> > > chunk of memory is not available. This patch also moves the field
-> > > io_barrier to the last position of struct mapped_device - the reason is
-> > > that on many processor architectures, short memory offsets result in
-> > > smaller code than long memory offsets - on x86-64 it reduces code size by
-> > > 320 bytes.
-> > > 
-> > > Note to stable kernel maintainers - the kernels 4.11 and older don't have
-> > > the function kvzalloc_node, you can use the function vzalloc_node instead.
-> > > 
-> > > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> > > Cc: stable@vger.kernel.org
-> > 
-> > This looks reasonable as a near-term workaround.. BUT:
-> > Paul has there been any discussion about how to make SRCU support
-> > dynamically scaling up to NR_CPUS maximum as 'nr_cpus' changes (rather
-> > than accounting for worst case of NR_CPUS up-front)?
-> 
-> This is the first I have heard of this being a problem.
-> 
-> For static instances of srcu_struct, life is hard.
-> 
-> But it should not be all that difficult for SRCU to provide an allocator
-> for the dynamic cases, which given your kzalloc_node() above is the case
-> you are worried about, at least assuming that these allocations happen
-> after rcu_init() is invoked (which is pretty early).
-> 
-> My approach would be to move the srcu_struct ->node[] array to its
-> own structure, with a pointer from srcu_struct, allowing short-sized
-> allocations to be used.  (But I do need to check to make sure that there
-> are no gotchas, and with RCU there usually are a few.)  Obviously some
-> -serious- testing would be required -- do you have a range of systems
-> to test on?
-
-If you'd like to give it a try I'd be happy to work on getting you test
-coverage.
-
-I do have access to a pretty wide range of systems.  What type of
-testing would you like to see?
-
-(From where I sit as DM maintainer my testing would be DM-specific, just
-loading a DM device would make use of the SRCU code in question, so
-please let me know if there is anything more general you'd like done)
- 
-> However, you would still have your potential failure case for systems
-> that really did have large numbers of CPUs, some of which really do
-> exist in the wild.
-> 
-> > (But I had a quick look at scrutree.h and I'm not seeing explicit use of
-> > NR_CPUS, so it is likely occuring via implicit percpu through some
-> > member of 'struct srcu_struct', e.g. 'sda'?)
-> 
-> The srcu_struct structure sees NR_CPUS via include/linux/rcu_node_tree.h,
-> which sizes the srcu_node array at build time.
-> 
-> The sda pointer references a per-CPU allocation, which I believe already
-> is sized to the actual system rather than to NR_CPUS.
-
-OK, thanks for clarifying.
-
-Mike
+RGVhciBDaHJpc3RvcGhlLAoKQ291bGQgeW91IHBsZWFzZSBjb25zaWRlciBhcHBseWluZyB0aGlz
+IHBhdGNoIG9yIGdpdmUgYW55IGZlZWRiYWNrIGFib3V0IGl0PwpXZSAoSHVhd2VpIGFuZCBCcm9j
+YWRlKSBhcmUgbG9va2luZyBmb3J3YXJkIHRvIHlvdSByZXBseS4KVGhhbmtzLgoKUmVnYXJkcwpH
+dWFuIEp1bnhpb25nCgouCgoKT24gMjAxNy8xMC8yNCA5OjU3LCBHdWFuIEp1bnhpb25nIHdyb3Rl
+Ogo+IEhpIENocmlzdG9waGUgYW5kIEFsbCwKPiAKPiBUaGlzIHBhdGNoIHNldCBhZGRzIGEgbmV3
+IG1ldGhvZCBvZiBwYXRoIHN0YXRlIGNoZWNraW5nIGJhc2VkIG9uIGFjY291bnRpbmcKPiBJTyBl
+cnJvci4gVGhpcyBpcyB1c2VmdWwgaW4gbWFueSBzY2VuYXJpb3Mgc3VjaCBhcyBpbnRlcm1pdHRl
+bnQgSU8gZXJyb3IKPiBvbiBhIHBhdGggZHVlIHRvIGludGVybWl0dGVudCBmcmFtZSBkcm9wcywg
+aW50ZXJtaXR0ZW50IGNvcnJ1cHRpb25zLCBuZXR3b3JrCj4gY29uZ2VzdGlvbiBvciBhIHNoYWt5
+IGxpbmsuCj4gCj4gVGhpcyBwYXRjaCBzZXQgaXMgb2Ygc2lnbmlmaWNhbmNlIGJlY2F1c2Ugb2Yg
+dGhpcyAocXVvdGVkIGZyb20gdGhlIGRpc2N1c3Npb24KPiB3aXRoIE11bmVlbmRyYSwgQnJvY2Fk
+ZSk6Cj4gCj4gVGhlcmUgYXJlIHR5cGljYWxseSB0d28gdHlwZSBvZiBTQU4gbmV0d29yayBwcm9i
+bGVtcyB0aGF0IGFyZSBjYXRlZ29yaXplZCBhcwo+IG1hcmdpbmFsIGlzc3Vlcy4gVGhlc2UgaXNz
+dWVzIGJ5IG5hdHVyZSBhcmUgbm90IHBlcm1hbmVudCBpbiB0aW1lIGFuZCBkbyBjb21lCj4gYW5k
+IGdvIGF3YXkgb3ZlciB0aW1lLgo+IDEpIFN3aXRjaGVzIGluIHRoZSBTQU4gY2FuIGhhdmUgaW50
+ZXJtaXR0ZW50IGZyYW1lIGRyb3BzIG9yIGludGVybWl0dGVudAo+ICAgIGZyYW1lIGNvcnJ1cHRp
+b25zIGR1ZSB0byBiYWQgb3B0aWNzIGNhYmxlIChTRlApIG9yIGFueSBzdWNoIHdlYXIvdGVhciBw
+b3J0Cj4gICAgaXNzdWVzLiBUaGlzIGNhdXNlcyBJVEwgZmxvd3MgdGhhdCBnbyB0aHJvdWdoIHRo
+ZSBmYXVsdHkgc3dpdGNoL3BvcnQgdG8KPiAgICBpbnRlcm1pdHRlbnRseSBleHBlcmllbmNlIGZy
+YW1lIGRyb3BzLiAgCj4gMikgVGhlcmUgZXhpc3RzIFNBTiB0b3BvbG9naWVzIHdoZXJlIHRoZXJl
+IGFyZSBzd2l0Y2ggcG9ydHMgaW4gdGhlIGZhYnJpYwo+ICAgIHRoYXQgYmVjb21lcyB0aGUgb25s
+eSAgY29uZHVpdCBmb3IgbWFueSBkaWZmZXJlbnQgSVRMKGhvc3QtLXRhcmdldC0tTFVOKQo+ICAg
+IGZsb3dzIGFjcm9zcyBtdWx0aXBsZSBob3N0cy4gVGhlc2Ugc2luZ2xlIG5ldHdvcmsgcGF0aHMg
+YXJlIGVzc2VudGlhbGx5Cj4gICAgc2hhcmVkIGFjcm9zcyBtdWx0aXBsZSBJVEwgZmxvd3MuIFVu
+ZGVyIHRoZXNlIGNvbmRpdGlvbnMgaWYgdGhlIHBvcnQgbGluawo+ICAgIGJhbmR3aWR0aCBpcyBu
+b3QgYWJsZSB0byBoYW5kbGUgdGhlIG5ldCBzdW0gb2YgdGhlIHNoYXJlZCBJVEwgZmxvd3MgYmFu
+ZHdpZHRoCj4gICAgZ29pbmcgdGhyb3VnaCB0aGUgc2luZ2xlIHBhdGggIHRoZW4gd2UgY291bGQg
+c2VlIGludGVybWl0dGVudCBuZXR3b3JrCj4gICAgY29uZ2VzdGlvbiBwcm9ibGVtcy4gVGhpcyBj
+b25kaXRpb24gaXMgY2FsbGVkIG5ldHdvcmsgb3ZlcnN1YnNjcmlwdGlvbi4KPiAgICBUaGUgaW50
+ZXJtaXR0ZW50IGNvbmdlc3Rpb25zIGNhbiBkZWxheSBTQ1NJIGV4Y2hhbmdlIGNvbXBsZXRpb24g
+dGltZQo+ICAgIChpbmNyZWFzZSBpbiBJL08gbGF0ZW5jeSBpcyBvYnNlcnZlZCkuCj4gCj4gVG8g
+b3ZlcmNvbWUgdGhlIGFib3ZlIG5ldHdvcmsgaXNzdWVzIGFuZCBtYW55IG1vcmUgc3VjaCB0YXJn
+ZXQgaXNzdWVzLCB0aGVyZQo+IGFyZSBmcmFtZSBsZXZlbCByZXRyaWVzIHRoYXQgYXJlIGRvbmUg
+aW4gSEJBIGRldmljZSBmaXJtd2FyZSBhbmQgSS9PIHJldHJpZXMKPiBpbiB0aGUgU0NTSSBsYXll
+ci4gVGhlc2UgcmV0cmllcyBtaWdodCBzdWNjZWVkIGJlY2F1c2Ugb2YgdHdvIHJlYXNvbnM6Cj4g
+MSkgVGhlIGludGVybWl0dGVudCBzd2l0Y2gvcG9ydCBpc3N1ZSBpcyBub3Qgb2JzZXJ2ZWQKPiAy
+KSBUaGUgcmV0cnkgSS9PIGlzIGEgbmV3ICBTQ1NJIGV4Y2hhbmdlLiBUaGlzIFNDU0kgZXhjaGFu
+Z2UgY2FuIHRha2UgYW4KPiAgICBhbHRlcm5hdGUgU0FOIHBhdGggZm9yIHRoZSBJVEwgZmxvdywg
+aWYgc3VjaCBhbiBTQU4gcGF0aCBleGlzdHMuCj4gMykgTmV0d29yayBjb25nZXN0aW9uIGRpc2Fw
+cGVhcnMgbW9tZW50YXJpbHkgYmVjYXVzZSB0aGUgbmV0IEkvTyBiYW5kd2lkdGgKPiAgICBjb21p
+bmcgZnJvbSBtdWx0aXBsZSBJVEwgZmxvd3Mgb24gdGhlIHNpbmdsZSBzaGFyZWQgbmV0d29yayBw
+YXRoIGlzCj4gICAgc29tZXRoaW5nIHRoZSBwYXRoIGNhbiBoYW5kbGUKPiAKPiBIb3dldmVyIGlu
+IHNvbWUgY2FzZXMgd2UgaGF2ZSBzZWVuIEkvTyByZXRyaWVzIGRvbid0IHN1Y2NlZWQgYmVjYXVz
+ZSB0aGUgcmV0cnkKPiBJL09zIGhpdHMgYSBTQU4gbmV0d29yayBwYXRoIHRoYXQgaGFzIGludGVy
+bWl0dGVudCBzd2l0Y2gvcG9ydCBpc3N1ZSBhbmQvb3IKPiBuZXR3b3JrIGNvbmdlc3Rpb24uIAo+
+IAo+IE9uIHRoZSBob3N0IHRodXMgd2Ugc2VlIGNvbmZpZ3VyYXRpb25zIHR3byBvciBtb3JlIElU
+TCBwYXRoIHNoYXJpbmcgdGhlIHNhbWUKPiB0YXJnZXQvTFVOIGdvaW5nIHRocm91Z2ggdHdvIG9y
+IG1vcmUgSEJBIHBvcnRzLiBUaGVzZSBIQkEgcG9ydHMgYXJlIGNvbm5lY3RlZAo+IHRvIHR3byBv
+ciBtb3JlIFNBTiB0byB0aGUgc2FtZSB0YXJnZXQvTFVOLgo+IElmIHRoZSBJL08gZmFpbHMgYXQg
+dGhlIG11bHRpcGF0aCBsYXllciB0aGVuLCB0aGUgSVRMIHBhdGggaXMgdHVybmVkIGludG8KPiBG
+YWlsZWQgc3RhdGUuIEJlY2F1c2Ugb2YgdGhlIG1hcmdpbmFsIG5hdHVyZSBvZiB0aGUgbmV0d29y
+aywgdGhlIG5leHQgSGVhbHRoCj4gQ2hlY2sgY29tbWFuZCBzZW50IGZyb20gbXVsdGlwYXRoIGxh
+eWVyIG1pZ2h0IHN1Y2NlZWQsIHdoaWNoIHJlc3VsdHMgaW4gbWFraW5nCj4gdGhlIElUTCBwYXRo
+IGludG8gQWN0aXZlIHN0YXRlLiBZb3UgZW5kIHVwIHNlZWluZyB0aGUgRE0gcGF0aCBzdGF0ZSBn
+b2luZyBpbnRvCj4gQWN0aXZlLCBGYWlsZWQsIEFjdGl2ZSB0cmFuc2l0aW9ucy4gVGhpcyByZXN1
+bHRzIGluIG92ZXJhbGwgcmVkdWN0aW9uIGluCj4gYXBwbGljYXRpb24gSS9PIHRocm91Z2hwdXQg
+YW5kIHNvbWV0aW1lIGFwcGxpY2F0aW9uIEkvTyBmYWlsdXJlcyAoYmVjYXVzZSBvZgo+IHRpbWlu
+ZyBjb25zdHJhaW50cykuIEFsbCB0aGlzIGNhbiBoYXBwZW4gYmVjYXVzZSBvZiBJL08gcmV0cmll
+cyBhbmQgSS9PIHJlcXVlc3QKPiBtb3ZpbmcgYWNyb3NzIG11bHRpcGxlIHBhdGhzIG9mIHRoZSBE
+TSBkZXZpY2UuIEluIHRoZSBob3N0IGl0IGlzIHRvIGJlIG5vdGVkCj4gYWxsIEkvTyByZXRyaWVz
+IG9uIGEgc2luZ2xlIHBhdGggYW5kIEkvTyBtb3ZlbWVudCBhY3Jvc3MgbXVsdGlwbGUgcGF0aHMg
+cmVzdWx0cwo+IGluIHNsb3dpbmcgZG93biB0aGUgZm9yd2FyZCBwcm9ncmVzcyBvZiBuZXcgYXBw
+bGljYXRpb24gSS9PLiBSZWFzb24gYmVoaW5kLAo+IHRoZSBhYm92ZSBJL08gcmUtcXVldWUgYWN0
+aW9ucyBhcmUgZ2l2ZW4gaGlnaGVyIHByaW9yaXR5IHRoYW4gdGhlIG5ld2VyIEkvTwo+IHJlcXVl
+c3RzIGNvbWluZyBmcm9tIHRoZSBhcHBsaWNhdGlvbi4gCj4gCj4gVGhlIGFib3ZlIGNvbmRpdGlv
+biBvZiB0aGUgIElUTCBwYXRoIGlzIGhlbmNlIGNhbGxlZCAibWFyZ2luYWwiLgo+IAo+IFdoYXQg
+d2UgZGVzaXJlIGlzIGZvciB0aGUgRE0gdG8gZGV0ZXJtaW5pc3RpY2FsbHkgIGNhdGVnb3JpemUg
+YSBJVEwgUGF0aCBhcwo+IOKAnG1hcmdpbmFs4oCdIGFuZCBtb3ZlIGFsbCB0aGUgcGVuZGluZyBJ
+L09zIGZyb20gdGhlIG1hcmdpbmFsIFBhdGggdG8gYW4gQWN0aXZlCj4gUGF0aC4gVGhpcyB3aWxs
+IGhlbHAgaW4gbWVldGluZyBhcHBsaWNhdGlvbiBJL08gdGltaW5nIGNvbnN0cmFpbnRzLiBBbHNv
+IGEKPiBjYXBhYmlsaXR5IHRvIGF1dG9tYXRpY2FsbHkgcmUtaW5zdGFudGlhdGUgdGhlIG1hcmdp
+bmFsIHBhdGggaW50byBBY3RpdmUgb25jZQo+IHRoZSBtYXJnaW5hbCBjb25kaXRpb24gaW4gdGhl
+IG5ldHdvcmsgaXMgZml4ZWQuCj4gCj4gCj4gSGVyZSBpcyB0aGUgZGVzY3JpcHRpb24gb2YgaW1w
+bGVtZW50YXRpb246Cj4gMSkgUEFUQ0ggMS8yIGltcGxlbWVudHMgdGhlIGFsZ29yaXRobSB0aGF0
+IHNlbmRzIGEgY291cGxlIG9mIGNvbnRpbnVvdXMgSU9zCj4gdG8gYSBwYXRoIHdoaWNoIHN1ZmZl
+cnMgdHdvIGZhaWxlZCBldmVudHMgaW4gbGVzcyB0aGFuIGEgZ2l2ZW4gdGltZS4gVGhvc2UKPiBJ
+T3MgYXJlIHNlbnQgYXQgYSBmaXggcmF0ZSBvZiAxMCBIei4KPiAyKSBQQVRDSCAyLzIgZGlzY2Fy
+ZCB0aGUgb3JpZ2luYWwgYWxnb3JpdGhtIGJlY2F1c2Ugb2YgdGhpczoKPiB0aGUgZGV0ZWN0IHNh
+bXBsZSBpbnRlcnZhbCBvZiB0aGF0IHBhdGggY2hlY2tlcnMgaXMgc28gYmlnL2NvYXJzZSB0aGF0
+Cj4gaXQgZG9lc24ndCBzZWUgd2hhdCBoYXBwZW5zIGluIHRoZSBtaWRkbGUgb2YgdGhlIHNhbXBs
+ZSBpbnRlcnZhbC4gV2UgaGF2ZQo+IHRoZSBQQVRDSCAxLzIgYXMgYSBiZXR0ZXIgbWV0aG9kLgo+
+IAo+IAo+IENoYW5nZXMgZnJvbSBWNjoKPiAqIGZpeCB0aGUgd2FybmluZyBvZiB1bndyYXBwZWQg
+Y29tbWl0IGRlc2NyaXB0aW9uIGluIHBhdGNoIDEvMiAKPiAqIGFkZCBSZXZpZXdlZC1ieSB0YWcg
+b2YgTXVuZWVuZHJhCj4gKiBhZGQgZGV0YWlsZWQgc2NlbmFyaW8gZGlzY3JpcHRpb24gaW4gdGhl
+IGNvdmVyIGxldHRlcgo+IAo+IENoYW5nZXMgZnJvbSBWNToKPiAqIHJlYmFzZSBvbiB0aGUgbGF0
+ZXN0IHJlbGVhc2UgMC43LjMgCj4gCj4gCj4gQ2hhbmdlcyBmcm9tIFY0Ogo+ICogcGF0aF9pb19l
+cnJfWFhYIC0+IG1hcmdpbmFsX3BhdGhfZXJyX1hYWC4gKE11bWVlbmRyYSkKPiAqIGFkZCBvbmUg
+bW9yZSBwYXJhbWV0ZXJzIG5hbWVkIG1hcmdpbmFsX3BhdGhfZG91YmxlX2ZhaWxlZF90aW1lIGlu
+c3RlYWQKPiAgIG9mIHRoZSBmaXhlZCA2MCBzZWNvbmRzIGZvciB0aGUgcHJlLWNoZWNraW5nIG9m
+IGEgc2hha3kgcGF0aC4gKE1hcnRpbikKPiAqIGZpeCBmb3IgInJlc2NoZWR1bGUgY2hlY2tpbmcg
+YWZ0ZXIgJWQgc2Vjb25kcyIgbG9nIAo+ICogcGF0aF9pb19lcnJfcmVjb3ZlcnlfdGltZSAtPiBt
+YXJnaW5hbF9wYXRoX2Vycl9yZWNoZWNrX2dhcF90aW1lLgo+ICogcHV0IHRoZSBtYXJnaW5hbCBw
+YXRoIGludG8gUEFUSF9TSEFLWSBpbnN0ZWFkIG9mIFBBVEhfREVMQVlFRCAKPiAqIE1vZGlmeSB0
+aGUgY29tbWl0IGNvbW1lbnRzIHRvIHN5bmMgd2l0aCB0aGUgY2hhbmdlcyBhYm92ZS4KPiAKPiAK
+PiBDaGFuZ2VzIGZyb20gVjM6Cj4gKiBhZGQgYSBwYXRjaCBmb3IgZGlzY2FyZCB0aGUgc2FuX3Bh
+dGhfWFhYX2ZlYXR1cmUgCj4gKiBmYWlsIHRoZSBwYXRoIGluIHRoZSBrZXJuZWwgYmVmb3JlIGVu
+cXVldWVpbmcgdGhlIHBhdGggZm9yIGNoZWNraW5nCj4gICByYXRoZXIgdGhhbiBhZnRlciBrbm93
+aW5nIHRoZSBjaGVja2luZyByZXN1bHQgdG8gbWFrZSBpdCBtb3JlCj4gICByZWxpYWJsZS4gKE1h
+cnRpbikKPiAqIHVzZSBwb3NpeF9tZW1hbGlnbiBpbnN0ZWFkIG9mIG1hbnVhbCBhbGlnbm1lbnQg
+Zm9yIGRpcmVjdCBJTyBidWZmZXIuIChNYXJ0aW4pIAo+ICogdXNlIFBBVEhfTUFYIHRvIGF2b2lk
+IGNlcnRhaW4gY29tcGlsZXIgd2FybmluZyB3aGVuIG9wZW5pbmcgZmlsZQo+ICAgcmF0aGVyIHRo
+YW4gRklMRV9OQU1FX1NJWkUuIChNYXJ0aW4pCj4gKiBkaXNjYXJkIHVubmVjZXNzYXJ5IHNhbml0
+eSBjaGVjayB3aGVuIGdldHRpbmcgYmxvY2sgc2l6ZSAoTWFydGluKQo+ICogZG8gbm90IHJldHVy
+biAwIGluIHNlbmRfZWFjaF9heW5jX2lvIGlmIGlvX3N0YXJ0dGltZSBvZiBhIHBhdGggaXMKPiAg
+IG5vdCBzZXQoTWFydGluKQo+ICogV2FpdCAxMG1zIGluc3RlYWQgb2YgNjAgc2Vjb25kIGlmIGV2
+ZXJ5IHBhdGggaXMgZG93bi4gKE1hcnRpbikKPiAqIHJlbmFtZSBoYW5kbGVfYXN5bmNfaW9fdGlt
+ZW91dCB0byBwb2xsX2FzeW5jX2lvX3RpbWVvdXQgYW5kIHVzZSBwb2xsaW5nCj4gICBtZXRob2Qg
+YmVjYXVzZSBpb19nZXRldmVudHMgZG9lcyBub3QgcmV0dXJuIDAgaWYgdGhlcmUgYXJlIHRpbWVv
+dXQgSU8KPiAgIGFuZCBub3JtYWwgSU8uCj4gKiByZW5hbWUgaGl0X2lvX2Vycl9yZWNvdmVyX3Rp
+bWUgcm8gaGl0X2lvX2Vycl9yZWNoZWNrX3RpbWUgCj4gKiBtb2RpZnkgdGhlIG11bHRpcGF0aC5j
+b25mLjUgYW5kIGNvbW1pdCBjb21tZW50cyB0byBrZWVwIHN5bmMgd2l0aCB0aGUKPiAgIGFib3Zl
+IGNoYW5nZXMKPiAKPiAKPiBDaGFuZ2VzIGZyb20gVjI6Cj4gKiBmaXggdW5jb25kaXN0aW9uYWwg
+cmVzY2VkdWxlIGZvcnZlcnZlcgo+ICogdXNlIHNjcmlwdC9jaGVja3BhdGNoLnBsIGluIExpbnV4
+IHRvIGNsZWFudXAgaW5mb3JtYWwgY29kaW5nIHN0eWxlCj4gKiBmaXggImNvbnRpbm91cyIgYW5k
+ICJpbnRlcm5lbCIgdHlwb3MKPiAKPiAKPiBDaGFuZ2VzIGZyb20gVjE6Cj4gKiBzZW5kIGNvbnRp
+bm91cyBJTyBpbnN0ZWFkIG9mIGEgc2luZ2xlIElPIGluIGEgc2FtcGxlIGludGVydmFsIChNYXJ0
+aW4pCj4gKiB3aGVuIHJlY292ZXIgdGltZSBleHBpcmVzLCB3ZSByZXNjaGVkdWxlIHRoZSBjaGVj
+a2luZyBwcm9jZXNzIChIYW5uZXMpCj4gKiBVc2UgdGhlIGVycm9yIHJhdGUgdGhyZXNob2xkIGFz
+IGEgcGVybWlsbGFnZSBpbnN0ZWFkIG9mIElPIG51bWJlcihNYXJ0aW4pCj4gKiBVc2UgYSBjb21t
+b24gaW9fY29udGV4dCBmb3IgbGliYWlvIGZvciBhbGwgcGF0aHMgKE1hcnRpbikKPiAqIE90aGVy
+IHNtYWxsIGZpeGVzIChNYXJ0aW4pCj4gCj4gCj4gSnVueGlvbmcgR3VhbiAoMik6Cj4gICBtdWx0
+aXBhdGgtdG9vbHM6IGludGVybWl0dGVudCBJTyBlcnJvciBhY2NvdW50aW5nIHRvIGltcHJvdmUK
+PiAgICAgcmVsaWFiaWxpdHkKPiAgIG11bHRpcGF0aC10b29sczogZGlzY2FyZCBzYW5fcGF0aF9l
+cnJfWFhYIGZlYXR1cmUKPiAKPiAgbGlibXVsdGlwYXRoL01ha2VmaWxlICAgICAgfCAgIDUgKy0K
+PiAgbGlibXVsdGlwYXRoL2NvbmZpZy5jICAgICAgfCAgIDMgLQo+ICBsaWJtdWx0aXBhdGgvY29u
+ZmlnLmggICAgICB8ICAyMSArLQo+ICBsaWJtdWx0aXBhdGgvY29uZmlndXJlLmMgICB8ICAgNyAr
+LQo+ICBsaWJtdWx0aXBhdGgvZGljdC5jICAgICAgICB8ICA4OCArKystLS0KPiAgbGlibXVsdGlw
+YXRoL2lvX2Vycl9zdGF0LmMgfCA3NDQgKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysr
+KysrKysrKysrKysrCj4gIGxpYm11bHRpcGF0aC9pb19lcnJfc3RhdC5oIHwgIDE1ICsKPiAgbGli
+bXVsdGlwYXRoL3Byb3BzZWwuYyAgICAgfCAgNzAgKysrLS0KPiAgbGlibXVsdGlwYXRoL3Byb3Bz
+ZWwuaCAgICAgfCAgIDcgKy0KPiAgbGlibXVsdGlwYXRoL3N0cnVjdHMuaCAgICAgfCAgMTUgKy0K
+PiAgbGlibXVsdGlwYXRoL3VldmVudC5jICAgICAgfCAgMzIgKysKPiAgbGlibXVsdGlwYXRoL3Vl
+dmVudC5oICAgICAgfCAgIDIgKwo+ICBtdWx0aXBhdGgvbXVsdGlwYXRoLmNvbmYuNSB8ICA4OSAr
+KysrLS0KPiAgbXVsdGlwYXRoZC9tYWluLmMgICAgICAgICAgfCAxNDAgKysrKy0tLS0tCj4gIDE0
+IGZpbGVzIGNoYW5nZWQsIDEwNDMgaW5zZXJ0aW9ucygrKSwgMTk1IGRlbGV0aW9ucygtKQo+ICBj
+cmVhdGUgbW9kZSAxMDA2NDQgbGlibXVsdGlwYXRoL2lvX2Vycl9zdGF0LmMKPiAgY3JlYXRlIG1v
+ZGUgMTAwNjQ0IGxpYm11bHRpcGF0aC9pb19lcnJfc3RhdC5oCj4gCgotLQpkbS1kZXZlbCBtYWls
+aW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxt
+YW4vbGlzdGluZm8vZG0tZGV2ZWw=
