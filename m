@@ -1,159 +1,151 @@
-From: Stefan Ring <stefanrin@gmail.com>
-Subject: Significantly dropped dm-cache performance in 4.13
-	compared to 4.11
-Date: Fri, 3 Nov 2017 19:50:23 +0100
-Message-ID: <CAAxjCExHqssZ8vuCC19_NP1io=StFAYk48nqDfudhjD-PyLZCg@mail.gmail.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: SRCU's apparent use of NR_CPUS? [was: re: dm: allocate struct
+ mapped_device with kvzalloc]
+Date: Fri, 3 Nov 2017 16:10:50 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1711031608500.21925@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1710311931190.28120@file01.intranet.prod.int.rdu2.redhat.com> <20171101154844.GA25792@redhat.com> <20171101162306.GU3659@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20171101162306.GU3659@linux.vnet.ibm.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-SGF2aW5nIGp1c3QgdXBncmFkZWQgZnJvbSBhIDQuMTEga2VybmVsIHRvIGEgNC4xMyBvbmUsIEkg
-c2VlIGEKc2lnbmlmaWNhbnRseSBoaWdoZXIgc2NydWIgdGltZSBmb3IgYSBaRlMgb24gTGludXgg
-KD1ab0wpIHBvb2wgdGhhdApsaXZlcyBvbiBhIGRtLWNhY2hlIGRldmljZSBjb25zaXN0aW5nIG9m
-IGEgODAwIEdCIHBhcnRpdGlvbiBvbiBvbmUKc3Bpbm5pbmcgMVRCIGRpc2sgYW5kIG9uZSBwYXJ0
-aXRpb24gb24gYW4gU0REIChzb21ldGhpbmcgYmV0d2VlbiAxMDAKYW5kIDIwMCBHQikuIFpGUyBz
-Y3J1YmJpbmcgY29uc2lzdHMgb2YgcmVhZGluZyBldmVyeXRoaW5nIHN0b3JlZCBpbgp0aGUgcG9v
-bCBmcm9tIHN0YXJ0IHRvIGZpbmlzaCwgcm91Z2hseSBpbiB0aGUgb3JkZXIgdGhhdCBpdCB3YXMK
-d3JpdHRlbi4gVGhlIGRhdGEgb24gdGhlIHBvb2wgaXMgZm9yIHRoZSBtb3N0IHBhcnQgbW9yZSBv
-ciBsZXNzCmxpbmVhciwgYW5kIHRoZSBzY3J1YmJpbmcgdXNlZCB0byBhY2hpZXZlIHJlYWQgcmF0
-ZXMgZnJvbSB0aGUgc3Bpbm5pbmcKZGlzayBpbiBleGNlc3Mgb2YgMTAwTUIvc2VjLiBXaXRoIHRo
-ZSBvbGQga2VybmVsLCB0aGF0IGlzLiBUaGVzZSBhcmUKdGhlIHNjcnViIHRpbWVzIGZvciBib3Ro
-IGtlcm5lbHM6Cgo0LjExLjUtMzAwLmZjMjY6IDFoNTZtCjQuMTMuOS0yMDAuZmMyNjogNGgzMm0K
-Ck5vdGhpbmcgY2hhbmdlZCBiZXR3ZWVuIHRob3NlIHR3byBydW5zIGV4Y2VwdCBmb3IgdGhlIGJv
-b3RlZCBrZXJuZWwuClpvTCBpcyB2ZXJzaW9uIDAuNy4zIGluIGJvdGggY2FzZXMuIE9yaWdpbmFs
-bHksIEkgc3VzcGVjdGVkIFpvTCAwLjcueAp0byBiZSB0aGUgY3VscHJpdCwgd2hpY2ggSSB1cGdy
-YWRlZCBzaW11bHRhbmVvdXNseSB0byB0aGUga2VybmVsLCBmcm9tCjAuNi41LjExLiBIb3dldmVy
-LCBJIGJ1aWx0IGFuZCBpbnN0YWxsZWQgaXQgZm9yIGJvdGgga2VybmVsIHZlcnNpb25zCmZyb20g
-dGhlIGV4YWN0IHNhbWUgc291cmNlcywgYW5kIHNjcnViIHRpbWVzIGFyZSBjb21wYXJhYmxlIHRv
-IHdoYXQKdGhleSB3ZXJlIGJlZm9yZSBvbiBteSBob21lIHN5c3RlbSB3aGljaCB1c2VzIFpvTCBv
-biBmb3VyIHNwaW5uaW5nCmRpc2tzIHdpdGhvdXQgYW4gaW50ZXJwb3NlZCBkbS1jYWNoZS4KClR5
-cGljYWwgb3V0cHV0IGZvciBpb3N0YXQgLWRteCAzIHdpdGgga2VybmVsIDQuMTMgd2hpbGUgc2Ny
-dWIgaXMgZ29pbmcKb24uIE90aGVyd2lzZSwgdGhlcmUgaXMgbm8gSS9PIGFjdGl2aXR5IG9uIHRo
-ZSBzeXN0ZW06CgpEZXZpY2U6ICAgICAgICAgcnJxbS9zICAgd3JxbS9zICAgICByL3MgICAgIHcv
-cyAgICByTUIvcyAgICB3TUIvcwphdmdycS1zeiBhdmdxdS1zeiAgIGF3YWl0IHJfYXdhaXQgd19h
-d2FpdCAgc3ZjdG0gICV1dGlsCnNkYSAgICAgICAgICAgICAzMDAuNjcgICAgIDAuMDAgIDQ2Mi42
-NyAgICAwLjAwICAgIDY4LjE2ICAgICAwLjAwCjMwMS42OSAgICAgMi42MyAgICA1LjYxICAgIDUu
-NjEgICAgMC4wMCAgIDIuMTYgIDk5LjkwCnNkYiAgICAgICAgICAgICAgIDAuMDAgICAxOTQuNjcg
-ICAgNi4wMCAgIDgzLjMzICAgICAwLjM4ICAgIDE0LjAxCjMyOS44MiAgICAgMC4yMCAgICAyLjIy
-ICAgIDAuNTAgICAgMi4zNCAgIDEuNTggIDE0LjEzCmRtLTAgICAgICAgICAgICAgIDAuMDAgICAg
-IDAuMDAgICAgNi4wMCAgMjIxLjMzICAgICAwLjM4ICAgIDEzLjgzCjEyOC4wMSAgICAgMC41NCAg
-ICAyLjM4ICAgIDAuNTAgICAgMi40MyAgIDAuMjkgICA2LjYzCmRtLTEgICAgICAgICAgICAgIDAu
-MDAgICAgIDAuMDAgICAgMC4wMCAgIDUzLjY3ICAgICAwLjAwICAgICAwLjE3CjYuMzEgICAgIDAu
-MTIgICAgMi4yOCAgICAwLjAwICAgIDIuMjggICAyLjA2ICAxMS4wNwpkbS0yICAgICAgICAgICAg
-ICAwLjAwICAgICAwLjAwICA3NjMuMzMgICAgMC4wMCAgICA2OC4xNiAgICAgMC4wMAoxODIuODYg
-ICAgIDguMDUgICAxMC40OSAgIDEwLjQ5ICAgIDAuMDAgICAxLjMxICA5OS45MwpkbS0zICAgICAg
-ICAgICAgICAwLjAwICAgICAwLjAwICA0NDAuMDAgICAgMC4wMCAgICA1NC43MCAgICAgMC4wMAoy
-NTQuNjAgICAgIDEuOTggICAgNC40MSAgICA0LjQxICAgIDAuMDAgICAyLjI3IDEwMC4wMwoKRGV2
-aWNlOiAgICAgICAgIHJycW0vcyAgIHdycW0vcyAgICAgci9zICAgICB3L3MgICAgck1CL3MgICAg
-d01CL3MKYXZncnEtc3ogYXZncXUtc3ogICBhd2FpdCByX2F3YWl0IHdfYXdhaXQgIHN2Y3RtICAl
-dXRpbApzZGEgICAgICAgICAgICAgNDY4LjAwICAgICAxLjAwICA1MTkuNjcgICAyMC4wMCAgICA4
-Mi4zOSAgICAgMC4yNAozMTMuNjAgICAgIDIuOTMgICAgNS4zOCAgICA1LjQ5ICAgIDIuNTAgICAx
-LjgzICA5OC42MwpzZGIgICAgICAgICAgICAgICAwLjAwICAgMzU2LjAwICAgMTguNjcgIDEwOS4z
-MyAgICAgMS4wMCAgICAyNS44MAo0MjguNzMgICAgIDAuMTUgICAgMS4yMCAgICAxLjIwICAgIDEu
-MjAgICAxLjA0ICAxMy4zMwpkbS0wICAgICAgICAgICAgICAwLjAwICAgICAwLjAwICAgMTguNjcg
-IDQyNi4wMCAgICAgMS4wMCAgICAyNS43NQoxMjMuMjAgICAgIDAuNTIgICAgMS4xNiAgICAxLjIw
-ICAgIDEuMTYgICAwLjE5ICAgOC4zMwpkbS0xICAgICAgICAgICAgICAwLjAwICAgICAwLjAwICAg
-IDAuMDAgICAzOS42NyAgICAgMC4wMCAgICAgMC4xMwo2LjY2ICAgICAwLjA2ICAgIDEuNTIgICAg
-MC4wMCAgICAxLjUyICAgMS40MyAgIDUuNjcKZG0tMiAgICAgICAgICAgICAgMC4wMCAgICAgMC4w
-MCAgOTg4LjAwICAgMjEuMDAgICAgODIuNjggICAgIDAuMjQKMTY4LjMxICAgICA5LjYzICAgIDgu
-OTcgICAgOS4xMSAgICAyLjM4ICAgMC45OCAgOTguNjAKZG0tMyAgICAgICAgICAgICAgMC4wMCAg
-ICAgMC4wMCAgNDg1LjAwICAgMTkuMzMgICAgNTcuODQgICAgIDAuMjQKMjM1Ljg4ICAgICAyLjE0
-ICAgIDQuMjkgICAgNC40MSAgICAxLjQxICAgMS45OCAgOTkuODcKCmRtLTMgaXMgdGhlIGNhY2hl
-ZCBkZXZpY2Ugd2hpY2ggWm9MIHJlYWRzIGZyb20uIHNkYS9kbS0yIGlzIHRoZQpzcGlubmluZyBk
-aXNrLCBzZGIvZG0tMCBpcyB0aGUgY2FjaGUgU0RELgoKSXQgc3RyaWtlcyBtZSBhcyBvZGQgdGhh
-dCB0aGUgYW1vdW50IHJlYWQgZnJvbSB0aGUgc3Bpbm5pbmcgZGlzayBpcwphY3R1YWxseSBtb3Jl
-IHRoYW4gd2hhdCBjb21lcyBvdXQgb2YgdGhlIGNvbWJpbmVkIGRldmljZSBpbiB0aGUgZW5kLgpJ
-dCBpcyBleGFjdGx5IHRoZSBvdGhlciB3YXkgYXJvdW5kIHdpdGggdGhlIG9sZGVyIGtlcm5lbCwg
-d2hpY2ggbWFrZXMKbXVjaCBtb3JlIHNlbnNlIHRvIG1lLiBJdCBsb29rcyBsaWtlIHRoaXMgd2l0
-aCA0LjExLCB3aGVyZSB0aGUKcmVzdWx0aW5nIGFtb3VudCBvZiBkYXRhIGlzIHRoZSBzdW0gb2Yg
-Ym90aCByZWFkczoKClR5cGljYWwgc2FtcGxlcyB3aXRoIGtlcm5lbCA0LjExOgoKRGV2aWNlOiAg
-ICAgICAgIHJycW0vcyAgIHdycW0vcyAgICAgci9zICAgICB3L3MgICAgck1CL3MgICAgd01CL3MK
-YXZncnEtc3ogYXZncXUtc3ogICBhd2FpdCByX2F3YWl0IHdfYXdhaXQgIHN2Y3RtICAldXRpbApz
-ZGEgICAgICAgICAgICAgIDg3LjY3ICAgICAwLjAwICA2MTguMzMgICAgMC4wMCAgICA2Mi41MyAg
-ICAgMC4wMAoyMDcuMTIgICAgIDEuNTggICAgMi41NiAgICAyLjU2ICAgIDAuMDAgICAxLjM2ICA4
-NC4zNwpzZGIgICAgICAgICAgICAgICAwLjY3ICAgICAwLjAwIDEwNTcuMDAgICAgMC4wMCAgICA4
-Ni45NiAgICAgMC4wMAoxNjguNDkgICAgIDAuNDQgICAgMC40MSAgICAwLjQxICAgIDAuMDAgICAw
-LjIzICAyNC4zNwpkbS0wICAgICAgICAgICAgICAwLjAwICAgICAwLjAwIDEwNTcuNjcgICAgMC4w
-MCAgICA4Ni45NiAgICAgMC4wMAoxNjguMzggICAgIDAuNDQgICAgMC40MiAgICAwLjQyICAgIDAu
-MDAgICAwLjIzICAyNC40MApkbS0xICAgICAgICAgICAgICAwLjAwICAgICAwLjAwICAgIDAuMDAg
-ICAgMC4wMCAgICAgMC4wMCAgICAgMC4wMAowLjAwICAgICAwLjAwICAgIDAuMDAgICAgMC4wMCAg
-ICAwLjAwICAgMC4wMCAgIDAuMDAKZG0tMiAgICAgICAgICAgICAgMC4wMCAgICAgMC4wMCAgNzA2
-LjAwICAgIDAuMDAgICAgNjIuNTYgICAgIDAuMDAKMTgxLjQ4ICAgICAxLjc0ICAgIDIuNDYgICAg
-Mi40NiAgICAwLjAwICAgMS4xOSAgODQuMzMKZG0tMyAgICAgICAgICAgICAgMC4wMCAgICAgMC4w
-MCAxNDg4LjMzICAgIDAuMDAgICAxNDkuNTIgICAgIDAuMDAKMjA1Ljc0ICAgICAxLjk3ICAgIDEu
-MzIgICAgMS4zMiAgICAwLjAwICAgMC42NyAxMDAuMDAKCkRldmljZTogICAgICAgICBycnFtL3Mg
-ICB3cnFtL3MgICAgIHIvcyAgICAgdy9zICAgIHJNQi9zICAgIHdNQi9zCmF2Z3JxLXN6IGF2Z3F1
-LXN6ICAgYXdhaXQgcl9hd2FpdCB3X2F3YWl0ICBzdmN0bSAgJXV0aWwKc2RhICAgICAgICAgICAg
-IDE2NS4zMyAgICAgMC4wMCAgNzQ3LjMzICAgIDAuMDAgICAgOTEuNDIgICAgIDAuMDAKMjUwLjUy
-ICAgICAxLjcwICAgIDIuMjcgICAgMi4yNyAgICAwLjAwICAgMS4xNCAgODUuMzcKc2RiICAgICAg
-ICAgICAgICAgMC4wMCAgICAgMC4wMCAgNzQ2LjMzICAgIDAuMDAgICAgNjQuNTQgICAgIDAuMDAK
-MTc3LjA5ICAgICAwLjM2ICAgIDAuNDkgICAgMC40OSAgICAwLjAwICAgMC4yMyAgMTcuMDAKZG0t
-MCAgICAgICAgICAgICAgMC4wMCAgICAgMC4wMCAgNzQ2LjMzICAgIDAuMDAgICAgNjQuNTQgICAg
-IDAuMDAKMTc3LjA5ICAgICAwLjM3ICAgIDAuNDkgICAgMC40OSAgICAwLjAwICAgMC4yMyAgMTcu
-MDcKZG0tMSAgICAgICAgICAgICAgMC4wMCAgICAgMC4wMCAgICAwLjAwICAgIDAuMDAgICAgIDAu
-MDAgICAgIDAuMDAKMC4wMCAgICAgMC4wMCAgICAwLjAwICAgIDAuMDAgICAgMC4wMCAgIDAuMDAg
-ICAwLjAwCmRtLTIgICAgICAgICAgICAgIDAuMDAgICAgIDAuMDAgIDkxMi42NyAgICAwLjAwICAg
-IDkxLjM5ICAgICAwLjAwCjIwNS4wNyAgICAgMi4wMiAgICAyLjIxICAgIDIuMjEgICAgMC4wMCAg
-IDAuOTQgIDg1LjM3CmRtLTMgICAgICAgICAgICAgIDAuMDAgICAgIDAuMDAgMTM2My4wMCAgICAw
-LjAwICAgMTU1LjkyICAgICAwLjAwCjIzNC4yOCAgICAgMi4wMiAgICAxLjQ4ICAgIDEuNDggICAg
-MC4wMCAgIDAuNzMgMTAwLjAwCgpEZXZpY2U6ICAgICAgICAgcnJxbS9zICAgd3JxbS9zICAgICBy
-L3MgICAgIHcvcyAgICByTUIvcyAgICB3TUIvcwphdmdycS1zeiBhdmdxdS1zeiAgIGF3YWl0IHJf
-YXdhaXQgd19hd2FpdCAgc3ZjdG0gICV1dGlsCnNkYSAgICAgICAgICAgICAxNjEuMDAgICAgIDAu
-MDAgIDY4NC42NyAgICAwLjAwICAgIDg0LjYzICAgICAwLjAwCjI1My4xNCAgICAgMS45MyAgICAy
-LjgzICAgIDIuODMgICAgMC4wMCAgIDEuNDUgIDk5LjI3CnNkYiAgICAgICAgICAgICAgIDAuMDAg
-ICAgIDAuMDAgICA2Mi42NyAgICAwLjAwICAgICA2LjA1ICAgICAwLjAwCjE5Ny41NyAgICAgMC4w
-MyAgICAwLjQ4ICAgIDAuNDggICAgMC4wMCAgIDAuMzIgICAyLjAzCmRtLTAgICAgICAgICAgICAg
-IDAuMDAgICAgIDAuMDAgICA2Mi42NyAgICAwLjAwICAgICA2LjA1ICAgICAwLjAwCjE5Ny41NyAg
-ICAgMC4wMyAgICAwLjQ4ICAgIDAuNDggICAgMC4wMCAgIDAuMzIgICAyLjAzCmRtLTEgICAgICAg
-ICAgICAgIDAuMDAgICAgIDAuMDAgICAgMC4wMCAgICAwLjAwICAgICAwLjAwICAgICAwLjAwCjAu
-MDAgICAgIDAuMDAgICAgMC4wMCAgICAwLjAwICAgIDAuMDAgICAwLjAwICAgMC4wMApkbS0yICAg
-ICAgICAgICAgICAwLjAwICAgICAwLjAwICA4NDUuNjcgICAgMC4wMCAgICA4NC42MyAgICAgMC4w
-MAoyMDQuOTQgICAgIDIuMjYgICAgMi42OCAgICAyLjY4ICAgIDAuMDAgICAxLjE3ICA5OS4zMApk
-bS0zICAgICAgICAgICAgICAwLjAwICAgICAwLjAwICA3MjcuNjcgICAgMC4wMCAgICA5MC42NyAg
-ICAgMC4wMAoyNTUuMTkgICAgIDEuOTcgICAgMi43MCAgICAyLjcwICAgIDAuMDAgICAxLjM3IDEw
-MC4wMAoKRGV2aWNlOiAgICAgICAgIHJycW0vcyAgIHdycW0vcyAgICAgci9zICAgICB3L3MgICAg
-ck1CL3MgICAgd01CL3MKYXZncnEtc3ogYXZncXUtc3ogICBhd2FpdCByX2F3YWl0IHdfYXdhaXQg
-IHN2Y3RtICAldXRpbApzZGEgICAgICAgICAgICAgMTYwLjY3ICAgICAwLjAwICA3MzguNjcgICAg
-MC4wMCAgICA4OS43NCAgICAgMC4wMAoyNDguODEgICAgIDEuODMgICAgMi40OCAgICAyLjQ4ICAg
-IDAuMDAgICAxLjI5ICA5NS4yMwpzZGIgICAgICAgICAgICAgICAwLjMzICAgICAwLjAwICAzMDMu
-MzMgICAgMC4wMCAgICAyOC4wMiAgICAgMC4wMAoxODkuMTcgICAgIDAuMTQgICAgMC40NyAgICAw
-LjQ3ICAgIDAuMDAgICAwLjI1ICAgNy43MwpkbS0wICAgICAgICAgICAgICAwLjAwICAgICAwLjAw
-ICAzMDMuNjcgICAgMC4wMCAgICAyOC4wMiAgICAgMC4wMAoxODguOTYgICAgIDAuMTQgICAgMC40
-NyAgICAwLjQ3ICAgIDAuMDAgICAwLjI2ICAgNy44NwpkbS0xICAgICAgICAgICAgICAwLjAwICAg
-ICAwLjAwICAgIDAuMDAgICAgMC4wMCAgICAgMC4wMCAgICAgMC4wMAowLjAwICAgICAwLjAwICAg
-IDAuMDAgICAgMC4wMCAgICAwLjAwICAgMC4wMCAgIDAuMDAKZG0tMiAgICAgICAgICAgICAgMC4w
-MCAgICAgMC4wMCAgODk5LjMzICAgIDAuMDAgICAgODkuNzQgICAgIDAuMDAKMjA0LjM2ICAgICAy
-LjE3ICAgIDIuNDEgICAgMi40MSAgICAwLjAwICAgMS4wNiAgOTUuMjcKZG0tMyAgICAgICAgICAg
-ICAgMC4wMCAgICAgMC4wMCAgOTc4LjY3ICAgIDAuMDAgICAxMTcuNzYgICAgIDAuMDAKMjQ2LjQy
-ICAgICAxLjk2ICAgIDIuMDAgICAgMi4wMCAgICAwLjAwICAgMS4wMiAxMDAuMDAKCiQgbHMgLWwg
-L2Rldi9tYXBwZXIvCnRvdGFsIDAKY3J3LS0tLS0tLSAxIHJvb3Qgcm9vdCAxMCwgMjM2IE5vdiAg
-MyAwOTowOCBjb250cm9sCmxyd3hyd3hyd3ggMSByb290IHJvb3QgICAgICAgNyBOb3YgIDMgMDk6
-MDggdmdfemZzLWx2X2NhY2hlZGF0YV9jZGF0YSAtPiAuLi9kbS0wCmxyd3hyd3hyd3ggMSByb290
-IHJvb3QgICAgICAgNyBOb3YgIDMgMDk6MDggdmdfemZzLWx2X2NhY2hlZGF0YV9jbWV0YSAtPiAu
-Li9kbS0xCmxyd3hyd3hyd3ggMSByb290IHJvb3QgICAgICAgNyBOb3YgIDMgMDk6MDggdmdfemZz
-LWx2X3pmc2Rpc2sgLT4gLi4vZG0tMwpscnd4cnd4cnd4IDEgcm9vdCByb290ICAgICAgIDcgTm92
-ICAzIDA5OjA4IHZnX3pmcy1sdl96ZnNkaXNrX2NvcmlnIC0+IC4uL2RtLTIKCiQgc3VkbyBkbXNl
-dHVwIGxzIC0tdHJlZQp2Z196ZnMtbHZfemZzZGlzayAoMjUzOjMpCiDilJzilIB2Z196ZnMtbHZf
-emZzZGlza19jb3JpZyAoMjUzOjIpCiDilIIgIOKUlOKUgCAoODo2KQog4pSc4pSAdmdfemZzLWx2
-X2NhY2hlZGF0YV9jZGF0YSAoMjUzOjApCiDilIIgIOKUlOKUgCAoODoyMSkKIOKUlOKUgHZnX3pm
-cy1sdl9jYWNoZWRhdGFfY21ldGEgKDI1MzoxKQogICAg4pSU4pSAICg4OjIxKQoKJCBzdWRvIGRt
-c2V0dXAgdGFibGUgdmdfemZzLWx2X3pmc2Rpc2sKMCAxODc2MDQxNzI4IGNhY2hlIDI1MzoxIDI1
-MzowIDI1MzoyIDEwMjQgMSB3cml0ZXRocm91Z2ggc21xIDAKCiQgc3VkbyBkbXNldHVwIHN0YXR1
-cyAvZGV2L21hcHBlci92Z196ZnMtbHZfemZzZGlzawowIDE4NzYwNDE3MjggY2FjaGUgOCAxMjk2
-LzU0MjcyIDEwMjQgNDMwNzA2LzQzMDcyMCA5MTYyMTEwNiAxNjM2MjQ0ODkKMzIzNDUyMDEgMTY0
-MTc5MzEgMzA3Njg2IDMwNzY2OCAwIDEgd3JpdGV0aHJvdWdoIDIgbWlncmF0aW9uX3RocmVzaG9s
-ZAoyMDQ4IHNtcSAwIHJ3IC0KCkFueSBpZGVhcz8KCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApk
-bS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5m
-by9kbS1kZXZlbA==
+
+
+On Wed, 1 Nov 2017, Paul E. McKenney wrote:
+
+> On Wed, Nov 01, 2017 at 11:48:44AM -0400, Mike Snitzer wrote:
+> > [cc'ing Paul, and LKML, to get his/others' take on SRCU cpu scaling]
+> > 
+> > On Tue, Oct 31 2017 at  7:33pm -0400,
+> > Mikulas Patocka <mpatocka@redhat.com> wrote:
+> > 
+> > > The structure srcu_struct can be very big, its size is proportional to the 
+> > > value CONFIG_NR_CPUS. The Fedora kernel has CONFIG_NR_CPUS 8192, the field 
+> > > io_barrier in the struct mapped_device has 84kB in the debugging kernel 
+> > > and 50kB in the non-debugging kernel. The large size may result in failure 
+> > > of the function kzalloc_node.
+> > > 
+> > > In order to avoid the allocation failure, we use the function
+> > > kvzalloc_node, this function falls back to vmalloc if a large contiguous
+> > > chunk of memory is not available. This patch also moves the field
+> > > io_barrier to the last position of struct mapped_device - the reason is
+> > > that on many processor architectures, short memory offsets result in
+> > > smaller code than long memory offsets - on x86-64 it reduces code size by
+> > > 320 bytes.
+> > > 
+> > > Note to stable kernel maintainers - the kernels 4.11 and older don't have
+> > > the function kvzalloc_node, you can use the function vzalloc_node instead.
+> > > 
+> > > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> > > Cc: stable@vger.kernel.org
+> > 
+> > This looks reasonable as a near-term workaround.. BUT:
+> > Paul has there been any discussion about how to make SRCU support
+> > dynamically scaling up to NR_CPUS maximum as 'nr_cpus' changes (rather
+> > than accounting for worst case of NR_CPUS up-front)?
+> 
+> This is the first I have heard of this being a problem.
+> 
+> For static instances of srcu_struct, life is hard.
+> 
+> But it should not be all that difficult for SRCU to provide an allocator
+> for the dynamic cases, which given your kzalloc_node() above is the case
+> you are worried about, at least assuming that these allocations happen
+> after rcu_init() is invoked (which is pretty early).
+> 
+> My approach would be to move the srcu_struct ->node[] array to its
+> own structure, with a pointer from srcu_struct, allowing short-sized
+> allocations to be used.  (But I do need to check to make sure that there
+> are no gotchas, and with RCU there usually are a few.)  Obviously some
+> -serious- testing would be required -- do you have a range of systems
+> to test on?
+> 
+> However, you would still have your potential failure case for systems
+> that really did have large numbers of CPUs, some of which really do
+> exist in the wild.
+
+So - you can allocate srcu_struct->node with kvmalloc - it will 
+automatically fallback to vmalloc if the allocation is too large for 
+kmalloc.
+
+Mikulas
+
+> > (But I had a quick look at scrutree.h and I'm not seeing explicit use of
+> > NR_CPUS, so it is likely occuring via implicit percpu through some
+> > member of 'struct srcu_struct', e.g. 'sda'?)
+> 
+> The srcu_struct structure sees NR_CPUS via include/linux/rcu_node_tree.h,
+> which sizes the srcu_node array at build time.
+> 
+> The sda pointer references a per-CPU allocation, which I believe already
+> is sized to the actual system rather than to NR_CPUS.
+> 
+> 							Thanx, Paul
+> 
+> > Thanks,
+> > Mike
+> > 
+> > > 
+> > > ---
+> > >  drivers/md/dm-core.h |    3 ++-
+> > >  drivers/md/dm.c      |    6 +++---
+> > >  2 files changed, 5 insertions(+), 4 deletions(-)
+> > > 
+> > > Index: linux-2.6/drivers/md/dm-core.h
+> > > ===================================================================
+> > > --- linux-2.6.orig/drivers/md/dm-core.h
+> > > +++ linux-2.6/drivers/md/dm-core.h
+> > > @@ -29,7 +29,6 @@ struct dm_kobject_holder {
+> > >   * DM targets must _not_ deference a mapped_device to directly access its members!
+> > >   */
+> > >  struct mapped_device {
+> > > -	struct srcu_struct io_barrier;
+> > >  	struct mutex suspend_lock;
+> > >  
+> > >  	/*
+> > > @@ -127,6 +126,8 @@ struct mapped_device {
+> > >  	struct blk_mq_tag_set *tag_set;
+> > >  	bool use_blk_mq:1;
+> > >  	bool init_tio_pdu:1;
+> > > +
+> > > +	struct srcu_struct io_barrier;
+> > >  };
+> > >  
+> > >  void dm_init_md_queue(struct mapped_device *md);
+> > > Index: linux-2.6/drivers/md/dm.c
+> > > ===================================================================
+> > > --- linux-2.6.orig/drivers/md/dm.c
+> > > +++ linux-2.6/drivers/md/dm.c
+> > > @@ -1695,7 +1695,7 @@ static struct mapped_device *alloc_dev(i
+> > >  	struct mapped_device *md;
+> > >  	void *old_md;
+> > >  
+> > > -	md = kzalloc_node(sizeof(*md), GFP_KERNEL, numa_node_id);
+> > > +	md = kvzalloc_node(sizeof(*md), GFP_KERNEL, numa_node_id);
+> > >  	if (!md) {
+> > >  		DMWARN("unable to allocate device, out of memory.");
+> > >  		return NULL;
+> > > @@ -1795,7 +1795,7 @@ bad_io_barrier:
+> > >  bad_minor:
+> > >  	module_put(THIS_MODULE);
+> > >  bad_module_get:
+> > > -	kfree(md);
+> > > +	kvfree(md);
+> > >  	return NULL;
+> > >  }
+> > >  
+> > > @@ -1814,7 +1814,7 @@ static void free_dev(struct mapped_devic
+> > >  	free_minor(minor);
+> > >  
+> > >  	module_put(THIS_MODULE);
+> > > -	kfree(md);
+> > > +	kvfree(md);
+> > >  }
+> > >  
+> > >  static void __bind_mempools(struct mapped_device *md, struct dm_table *t)
+> > 
+> 
