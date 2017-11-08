@@ -1,34 +1,40 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: Re: [dm-devel] [PATCH] vmalloc: introduce vmap_pfn for persistent memory
-Date: Wed, 8 Nov 2017 07:41:23 -0800
-Message-ID: <CAPcyv4jw5CDJYo-uhxq1hWJo90R87m0qju-k8WKgyd34QKnz0Q@mail.gmail.com>
-References: <alpine.LRH.2.02.1711071645240.1339@file01.intranet.prod.int.rdu2.redhat.com>
- <20171108095909.GA7390@infradead.org> <alpine.LRH.2.02.1711080725490.12294@file01.intranet.prod.int.rdu2.redhat.com>
- <20171108150447.GA10374@infradead.org> <alpine.LRH.2.02.1711081007570.8618@file01.intranet.prod.int.rdu2.redhat.com>
- <20171108153522.GB24548@infradead.org>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [dm-devel] [PATCH] vmalloc: introduce vmap_pfn for persistent
+ memory
+Date: Wed, 8 Nov 2017 12:42:38 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1711081236570.1168@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1711071645240.1339@file01.intranet.prod.int.rdu2.redhat.com> <20171108095909.GA7390@infradead.org> <alpine.LRH.2.02.1711080725490.12294@file01.intranet.prod.int.rdu2.redhat.com> <20171108150447.GA10374@infradead.org>
+ <alpine.LRH.2.02.1711081007570.8618@file01.intranet.prod.int.rdu2.redhat.com> <20171108153522.GB24548@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <20171108153522.GB24548@infradead.org>
 Sender: owner-linux-mm@kvack.org
 To: Christoph Hellwig <hch@infradead.org>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Christoph Hellwig <hch@lst.de>, Linux MM <linux-mm@kvack.org>, dm-devel@redhat.com, Ross Zwisler <ross.zwisler@linux.intel.com>, Laura Abbott <labbott@redhat.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>
+Cc: linux-nvdimm@lists.01.org, Christoph Hellwig <hch@lst.de>, linux-mm@kvack.org, dm-devel@redhat.com, Ross Zwisler <ross.zwisler@linux.intel.com>, Laura Abbott <labbott@redhat.com>, Dan Williams <dan.j.williams@intel.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>
 List-Id: dm-devel.ids
 
-On Wed, Nov 8, 2017 at 7:35 AM, Christoph Hellwig <hch@infradead.org> wrote:
+
+
+On Wed, 8 Nov 2017, Christoph Hellwig wrote:
+
 > On Wed, Nov 08, 2017 at 10:21:38AM -0500, Mikulas Patocka wrote:
->> > And what do you do for an architecture with virtuall indexed caches?
->>
->> Persistent memory is not supported on such architectures - it is only
->> supported on x86-64 and arm64.
->
+> > > And what do you do for an architecture with virtuall indexed caches?
+> > 
+> > Persistent memory is not supported on such architectures - it is only 
+> > supported on x86-64 and arm64.
+> 
 > For now.  But once support is added your driver will just corrupt data
 > unless you have the right API in place.
 
-I'm also in the process of ripping out page-less dax support. With
-pages we can potentially leverage the VIVT-cache support in some
-architectures, likely with more supporting infrastructure for
-dax_flush().
+If dax_flush were able to flush vmapped area, I don't see a problem with 
+it.
+
+You obviously can't access the same device simultaneously through vmapped 
+area and direct mapping. But when the persistent memory driver is using 
+the device, no one is expected to touch it anyway.
+
+Mikulas
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
