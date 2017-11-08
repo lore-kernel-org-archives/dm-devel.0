@@ -1,7 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 1/6] mpathpersist: Fix invalid condition check
-Date: Tue,  7 Nov 2017 18:15:11 -0600
-Message-ID: <1510100116-6206-2-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 4/6] mutipath: updated Huawei storage config
+Date: Tue,  7 Nov 2017 18:15:14 -0600
+Message-ID: <1510100116-6206-5-git-send-email-bmarzins@redhat.com>
 References: <1510100116-6206-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,32 +21,27 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-In commit 1990257c (mpathpersist: add support for prkeys file), the
-check to see if mpathpersist needed to tell multipathd to update a
-device's prkey was wrong. It had a typo that made it evaluate to true
-for any service action, instead of just for registrations. This is the
-correct check.
+I was given this updated built-in config by Zhou Weigang from
+Huawei.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmpathpersist/mpath_persist.c | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+ libmultipath/hwtable.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
-index b5ed556..84ab293 100644
---- a/libmpathpersist/mpath_persist.c
-+++ b/libmpathpersist/mpath_persist.c
-@@ -339,8 +339,9 @@ int mpath_persistent_reserve_out ( int fd, int rq_servact, int rq_scope,
- 
- 	memcpy(&prkey, paramp->sa_key, 8);
- 	if (mpp->prkey_source == PRKEY_SOURCE_FILE && prkey &&
--	    ((!get_be64(mpp->reservation_key) && MPATH_PROUT_REG_SA) ||
--	     MPATH_PROUT_REG_IGN_SA)) {
-+	    ((!get_be64(mpp->reservation_key) &&
-+	      rq_servact == MPATH_PROUT_REG_SA) ||
-+	     rq_servact == MPATH_PROUT_REG_IGN_SA)) {
- 		memcpy(&mpp->reservation_key, paramp->sa_key, 8);
- 		if (update_prkey(alias, get_be64(mpp->reservation_key))) {
- 			condlog(0, "%s: failed to set prkey for multipathd.",
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index b018ddf..78de1fa 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -940,7 +940,8 @@ static struct hwentry default_hw[] = {
+ 		/* OceanStor V3 */
+ 		.vendor        = "HUAWEI",
+ 		.product       = "XSG1",
+-		.pgpolicy      = MULTIBUS,
++		.pgpolicy      = GROUP_BY_PRIO,
++		.prio_name     = PRIO_ALUA,
+ 	},
+ 	/*
+ 	 * Red Hat
 -- 
 2.7.4
