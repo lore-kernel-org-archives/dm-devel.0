@@ -1,7 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 5/6] multipath: fix doc typo
-Date: Tue,  7 Nov 2017 18:15:15 -0600
-Message-ID: <1510100116-6206-6-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 1/6] mpathpersist: Fix invalid condition check
+Date: Tue,  7 Nov 2017 18:15:11 -0600
+Message-ID: <1510100116-6206-2-git-send-email-bmarzins@redhat.com>
 References: <1510100116-6206-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,26 +21,32 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-The dev_loss_tmo cap if fast_io_fail_tmo isn't set is 600 seconds,
-not 300 seconds.
+In commit 1990257c (mpathpersist: add support for prkeys file), the
+check to see if mpathpersist needed to tell multipathd to update a
+device's prkey was wrong. It had a typo that made it evaluate to true
+for any service action, instead of just for registrations. This is the
+correct check.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipath/multipath.conf.5 | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmpathpersist/mpath_persist.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index 92ad8b1..4bd1a8d 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -653,7 +653,7 @@ seconds, or 68 years. It will be automatically adjusted to the overall
- retry interval \fIno_path_retry\fR * \fIpolling_interval\fR
- if a number of retries is given with \fIno_path_retry\fR and the
- overall retry interval is longer than the specified \fIdev_loss_tmo\fR value.
--The Linux kernel will cap this value to \fI300\fR if \fIfast_io_fail_tmo\fR
-+The Linux kernel will cap this value to \fI600\fR if \fIfast_io_fail_tmo\fR
- is not set. See KNOWN ISSUES.
- .RS
- .TP
+diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
+index b5ed556..84ab293 100644
+--- a/libmpathpersist/mpath_persist.c
++++ b/libmpathpersist/mpath_persist.c
+@@ -339,8 +339,9 @@ int mpath_persistent_reserve_out ( int fd, int rq_servact, int rq_scope,
+ 
+ 	memcpy(&prkey, paramp->sa_key, 8);
+ 	if (mpp->prkey_source == PRKEY_SOURCE_FILE && prkey &&
+-	    ((!get_be64(mpp->reservation_key) && MPATH_PROUT_REG_SA) ||
+-	     MPATH_PROUT_REG_IGN_SA)) {
++	    ((!get_be64(mpp->reservation_key) &&
++	      rq_servact == MPATH_PROUT_REG_SA) ||
++	     rq_servact == MPATH_PROUT_REG_IGN_SA)) {
+ 		memcpy(&mpp->reservation_key, paramp->sa_key, 8);
+ 		if (update_prkey(alias, get_be64(mpp->reservation_key))) {
+ 			condlog(0, "%s: failed to set prkey for multipathd.",
 -- 
 2.7.4
