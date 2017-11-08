@@ -1,50 +1,39 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH] vmalloc: introduce vmap_pfn for persistent memory
-Date: Wed, 8 Nov 2017 07:33:09 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1711080725490.12294@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1711071645240.1339@file01.intranet.prod.int.rdu2.redhat.com> <20171108095909.GA7390@infradead.org>
+Subject: Re: [PATCH] bio: have bio_kmap_irq return the size of mapped data
+ (fwd)
+Date: Wed, 8 Nov 2017 07:38:44 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1711080733220.12294@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1711071641090.1339@file01.intranet.prod.int.rdu2.redhat.com> <20171108094730.GA7074@infradead.org>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20171108095909.GA7390@infradead.org>
-Sender: owner-linux-mm@kvack.org
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20171108094730.GA7074@infradead.org>
+Sender: linux-block-owner@vger.kernel.org
 To: Christoph Hellwig <hch@infradead.org>
-Cc: Ross Zwisler <ross.zwisler@linux.intel.com>, linux-mm@kvack.org, linux-nvdimm@lists.01.org, Dan Williams <dan.j.williams@intel.com>, dm-devel@redhat.com, Laura Abbott <labbott@redhat.com>, Christoph Hellwig <hch@lst.de>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>
+Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 
 
 On Wed, 8 Nov 2017, Christoph Hellwig wrote:
 
-> On Tue, Nov 07, 2017 at 05:03:11PM -0500, Mikulas Patocka wrote:
+> On Tue, Nov 07, 2017 at 04:45:17PM -0500, Mikulas Patocka wrote:
 > > Hi
 > > 
-> > I am developing a driver that uses persistent memory for caching. A 
-> > persistent memory device can be mapped in several discontiguous ranges.
-> > 
-> > The kernel has a function vmap that takes an array of pointers to pages 
-> > and maps these pages to contiguous linear address space. However, it can't 
-> > be used on persistent memory because persistent memory may not be backed 
-> > by page structures.
-> > 
-> > This patch introduces a new function vmap_pfn, it works like vmap, but 
-> > takes an array of pfn_t - so it can be used on persistent memory.
+> > I need the function bio_kmap_irq in the driver that I am developing, but 
+> > it doesn't return the size of the mapped data. I've made this patch to fix 
+> > it.
 > 
-> How is cache flushing going to work for this interface assuming
-> that your write to/from the virtual address and expect it to be
-> persisted on pmem?
+> To be honest I think we should just remove bio_kmap_irq.  It is currently
+> unused and assumes there is only a single bvec to map.
 
-We could use the function clwb() (or arch-independent wrapper dax_flush()) 
-- that uses the clflushopt instruction on Broadwell or clwb on Skylake - 
-but it is very slow, write performance on Broadwell is only 350MB/s.
+It could be removed from include/linux/bio.h and moved to my driver. But 
+if we leave it in bio.h, it could be used by others as well.
 
-So in practice I use the movnti instruction that bypasses cache. The 
-write-combining buffer is flushed with sfence.
+bio_kmap_irq can iterate over the whole bio if we use bio_advance on the 
+bio.
+
+> I think you're much better off using a proper bvec iterator in your
+> caller and then call bvec_kmap_irq/bvec_kunmap_irq manually.
 
 Mikulas
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
