@@ -1,59 +1,45 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [dm-devel] [PATCH] bio: have bio_kmap_irq return the size of
- mapped data (fwd)
-Date: Wed, 8 Nov 2017 10:09:49 -0800
-Message-ID: <20171108180949.GA31470@infradead.org>
-References: <alpine.LRH.2.02.1711071641090.1339@file01.intranet.prod.int.rdu2.redhat.com>
- <20171108094730.GA7074@infradead.org>
- <alpine.LRH.2.02.1711080733220.12294@file01.intranet.prod.int.rdu2.redhat.com>
- <20171108150559.GB10374@infradead.org>
- <650d7a0d-f344-155a-5b53-4ce368c4aca4@kernel.dk>
- <20171108153436.GA24548@infradead.org>
- <aabd8f47-3b9f-ffb5-474e-ab0841806a39@kernel.dk>
- <20171108180358.GA6724@infradead.org>
- <cd9e59d1-5619-5985-6938-e08ad4ccb40c@kernel.dk>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [dm-devel] [PATCH] vmalloc: introduce vmap_pfn for persistent
+ memory
+Date: Wed, 8 Nov 2017 15:15:56 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1711081514320.29922@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1711071645240.1339@file01.intranet.prod.int.rdu2.redhat.com> <20171108095909.GA7390@infradead.org> <alpine.LRH.2.02.1711080725490.12294@file01.intranet.prod.int.rdu2.redhat.com> <20171108150447.GA10374@infradead.org>
+ <alpine.LRH.2.02.1711081007570.8618@file01.intranet.prod.int.rdu2.redhat.com> <20171108153522.GB24548@infradead.org> <CAPcyv4jw5CDJYo-uhxq1hWJo90R87m0qju-k8WKgyd34QKnz0Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <cd9e59d1-5619-5985-6938-e08ad4ccb40c@kernel.dk>
-Sender: linux-block-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>
-Cc: Christoph Hellwig <hch@infradead.org>, Mikulas Patocka <mpatocka@redhat.com>, linux-block@vger.kernel.org, dm-devel@redhat.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <CAPcyv4jw5CDJYo-uhxq1hWJo90R87m0qju-k8WKgyd34QKnz0Q@mail.gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: Dan Williams <dan.j.williams@intel.com>
+Cc: Christoph Hellwig <hch@infradead.org>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Christoph Hellwig <hch@lst.de>, Linux MM <linux-mm@kvack.org>, dm-devel@redhat.com, Ross Zwisler <ross.zwisler@linux.intel.com>, Laura Abbott <labbott@redhat.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>
 List-Id: dm-devel.ids
 
-On Wed, Nov 08, 2017 at 11:08:13AM -0700, Jens Axboe wrote:
-> On 11/08/2017 11:03 AM, Christoph Hellwig wrote:
-> > On Wed, Nov 08, 2017 at 08:36:25AM -0700, Jens Axboe wrote:
-> >> On 11/08/2017 08:34 AM, Christoph Hellwig wrote:
-> >>> On Wed, Nov 08, 2017 at 08:20:58AM -0700, Jens Axboe wrote:
-> >>>> On top of that, there are no users of it at all...
-> >>>
-> >>> But Mikulas wants to add one :)
+
+
+On Wed, 8 Nov 2017, Dan Williams wrote:
+
+> On Wed, Nov 8, 2017 at 7:35 AM, Christoph Hellwig <hch@infradead.org> wrote:
+> > On Wed, Nov 08, 2017 at 10:21:38AM -0500, Mikulas Patocka wrote:
+> >> > And what do you do for an architecture with virtuall indexed caches?
 > >>
-> >> I know...
-> >>
-> >>> Note that __bio_kmap_atomic has the same issues, only has a single
-> >>> users either and would be cleaner if opencoded there as it already
-> >>> has the current bvec.  See patch below.
-> >>
-> >> Kill them all with fire. The open coded version is much clearer.
-> > 
-> > Feel free to throw the patch in under either your or my name.
+> >> Persistent memory is not supported on such architectures - it is only
+> >> supported on x86-64 and arm64.
+> >
+> > For now.  But once support is added your driver will just corrupt data
+> > unless you have the right API in place.
 > 
-> I'll do a combo. Just checking if it's OK I add your signed-off-by
-> to the patch, I don't want something with you as an author, but
-> not having an SOB.
+> I'm also in the process of ripping out page-less dax support. With
+> pages we can potentially leverage the VIVT-cache support in some
+> architectures, likely with more supporting infrastructure for
+> dax_flush().
 
-sure:
+Should I remove all the code for page-less persistent memory from my 
+driver?
 
-Reviewed-by: Christoph Hellwig <hch@lst.de>
+Mikulas
 
-for my incremental bio_kmap_atomic removal.  But I can also just
-send a correct patch, give me a few minutes.
-
-> 
-> -- 
-> Jens Axboe
-> 
----end quoted text---
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
