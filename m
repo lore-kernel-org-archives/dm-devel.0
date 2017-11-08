@@ -1,44 +1,28 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 3/6] multipath: there is no "none" path state
-Date: Tue,  7 Nov 2017 18:15:13 -0600
-Message-ID: <1510100116-6206-4-git-send-email-bmarzins@redhat.com>
-References: <1510100116-6206-1-git-send-email-bmarzins@redhat.com>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [PATCH] bio: have bio_kmap_irq return the size of mapped data
+ (fwd)
+Date: Wed, 8 Nov 2017 01:47:30 -0800
+Message-ID: <20171108094730.GA7074@infradead.org>
+References: <alpine.LRH.2.02.1711071641090.1339@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1510100116-6206-1-git-send-email-bmarzins@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Martin Wilck <mwilck@suse.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1711071641090.1339@file01.intranet.prod.int.rdu2.redhat.com>
+Sender: linux-block-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-There is a "none" path checker, but not a "none" path state.
+On Tue, Nov 07, 2017 at 04:45:17PM -0500, Mikulas Patocka wrote:
+> Hi
+> 
+> I need the function bio_kmap_irq in the driver that I am developing, but 
+> it doesn't return the size of the mapped data. I've made this patch to fix 
+> it.
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmultipath/checkers.c | 1 -
- 1 file changed, 1 deletion(-)
+To be honest I think we should just remove bio_kmap_irq.  It is currently
+unused and assumes there is only a single bvec to map.
 
-diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
-index cd6d6a3..94d8486 100644
---- a/libmultipath/checkers.c
-+++ b/libmultipath/checkers.c
-@@ -19,7 +19,6 @@ char *checker_state_names[] = {
- 	"timeout",
- 	"removed",
- 	"delayed",
--	"none",
- };
- 
- static LIST_HEAD(checkers);
--- 
-2.7.4
+I think you're much better off using a proper bvec iterator in your
+caller and then call bvec_kmap_irq/bvec_kunmap_irq manually.
