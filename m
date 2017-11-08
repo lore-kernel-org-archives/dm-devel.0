@@ -1,7 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 4/6] mutipath: updated Huawei storage config
-Date: Tue,  7 Nov 2017 18:15:14 -0600
-Message-ID: <1510100116-6206-5-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 3/6] multipath: there is no "none" path state
+Date: Tue,  7 Nov 2017 18:15:13 -0600
+Message-ID: <1510100116-6206-4-git-send-email-bmarzins@redhat.com>
 References: <1510100116-6206-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,27 +21,24 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-I was given this updated built-in config by Zhou Weigang from
-Huawei.
+There is a "none" path checker, but not a "none" path state.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/hwtable.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ libmultipath/checkers.c | 1 -
+ 1 file changed, 1 deletion(-)
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index b018ddf..78de1fa 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -940,7 +940,8 @@ static struct hwentry default_hw[] = {
- 		/* OceanStor V3 */
- 		.vendor        = "HUAWEI",
- 		.product       = "XSG1",
--		.pgpolicy      = MULTIBUS,
-+		.pgpolicy      = GROUP_BY_PRIO,
-+		.prio_name     = PRIO_ALUA,
- 	},
- 	/*
- 	 * Red Hat
+diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
+index cd6d6a3..94d8486 100644
+--- a/libmultipath/checkers.c
++++ b/libmultipath/checkers.c
+@@ -19,7 +19,6 @@ char *checker_state_names[] = {
+ 	"timeout",
+ 	"removed",
+ 	"delayed",
+-	"none",
+ };
+ 
+ static LIST_HEAD(checkers);
 -- 
 2.7.4
