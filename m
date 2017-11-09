@@ -1,46 +1,42 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: Re: [dm-devel] [PATCH] vmalloc: introduce vmap_pfn for persistent memory
-Date: Wed, 8 Nov 2017 13:26:32 -0800
-Message-ID: <CAPcyv4hR7DQ98ZCqqeyD2ihO0jWpQqPv_+s4v6iVaiNWrv96vw@mail.gmail.com>
-References: <alpine.LRH.2.02.1711071645240.1339@file01.intranet.prod.int.rdu2.redhat.com>
- <20171108095909.GA7390@infradead.org> <alpine.LRH.2.02.1711080725490.12294@file01.intranet.prod.int.rdu2.redhat.com>
- <20171108150447.GA10374@infradead.org> <alpine.LRH.2.02.1711081007570.8618@file01.intranet.prod.int.rdu2.redhat.com>
- <20171108153522.GB24548@infradead.org> <alpine.LRH.2.02.1711081236570.1168@file01.intranet.prod.int.rdu2.redhat.com>
- <20171108174747.GA12199@infradead.org> <alpine.LRH.2.02.1711081516010.29922@file01.intranet.prod.int.rdu2.redhat.com>
+From: Stefan Ring <stefanrin@gmail.com>
+Subject: Re: Significantly dropped dm-cache performance in 4.13
+ compared to 4.11
+Date: Thu, 9 Nov 2017 16:15:30 +0100
+Message-ID: <CAAxjCEy5yc7G1iBznLFCwEVWgkijSUD29oZwHsD5b2+zyA94ig@mail.gmail.com>
+References: <CAAxjCExHqssZ8vuCC19_NP1io=StFAYk48nqDfudhjD-PyLZCg@mail.gmail.com>
+	<20171107144157.6yng4owvmmcm33qj@reti>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <alpine.LRH.2.02.1711081516010.29922@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: owner-linux-mm@kvack.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Christoph Hellwig <hch@infradead.org>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Christoph Hellwig <hch@lst.de>, Linux MM <linux-mm@kvack.org>, dm-devel@redhat.com, Ross Zwisler <ross.zwisler@linux.intel.com>, Laura Abbott <labbott@redhat.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20171107144157.6yng4owvmmcm33qj@reti>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Nov 8, 2017 at 12:26 PM, Mikulas Patocka <mpatocka@redhat.com> wrote:
-> On Wed, 8 Nov 2017, Christoph Hellwig wrote:
+On Tue, Nov 7, 2017 at 3:41 PM, Joe Thornber <thornber@redhat.com> wrote:
+> On Fri, Nov 03, 2017 at 07:50:23PM +0100, Stefan Ring wrote:
+>> It strikes me as odd that the amount read from the spinning disk is
+>> actually more than what comes out of the combined device in the end.
 >
->> Can you start by explaining what you actually need the vmap for?
->
-> It is possible to use lvm on persistent memory. You can create linear or
-> striped logical volumes on persistent memory and these volumes still have
-> the direct_access method, so they can be mapped with the function
-> dax_direct_access().
->
-> If we create logical volumes on persistent memory, the method
-> dax_direct_access() won't return the whole device, it will return only a
-> part. When dax_direct_access() returns the whole device, my driver just
-> uses it without vmap. When dax_direct_access() return only a part of the
-> device, my driver calls it repeatedly to get all the parts and then
-> assembles the parts into a linear address space with vmap.
+> This suggests dm-cache is trying to promote too way too much.
+> I'll try and reproduce the issue, your setup sounds pretty straight forward.
 
-I know I proposed "call dax_direct_access() once" as a strawman for an
-in-kernel driver user, but it's better to call it per access so you
-can better stay in sync with base driver events like new media errors
-and unplug / driver-unload. Either that, or at least have a plan how
-to handle those events.
+I think it's actually the most straight-forward you can get ;).
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+I've also tested kernel 4.12 in the meantime, which behaves just like
+4.13. So the difference in behavior seems to have been introduced
+somewhere between 4.11 and 4.12.
+
+I've also done plain dd from the dm-cache disk to /dev/null a few
+times, which wrote enormous amounts of data to the SDD. My poor SSD
+has received the same amount of writes during the last week that it
+has had to endure during the entire previous year.
