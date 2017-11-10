@@ -1,48 +1,33 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: Re: [dm-devel] [PATCH] vmalloc: introduce vmap_pfn for persistent memory
-Date: Thu, 9 Nov 2017 10:58:43 -0800
-Message-ID: <CAPcyv4j6K13wjn+BQJ-_S1iuuxuU6_XsfhwKRc9ZkxxGH9xc-Q@mail.gmail.com>
-References: <alpine.LRH.2.02.1711071645240.1339@file01.intranet.prod.int.rdu2.redhat.com>
- <20171108095909.GA7390@infradead.org> <alpine.LRH.2.02.1711080725490.12294@file01.intranet.prod.int.rdu2.redhat.com>
- <20171108150447.GA10374@infradead.org> <alpine.LRH.2.02.1711081007570.8618@file01.intranet.prod.int.rdu2.redhat.com>
- <20171108153522.GB24548@infradead.org> <alpine.LRH.2.02.1711081236570.1168@file01.intranet.prod.int.rdu2.redhat.com>
- <20171108174747.GA12199@infradead.org> <alpine.LRH.2.02.1711081516010.29922@file01.intranet.prod.int.rdu2.redhat.com>
- <CAPcyv4hR7DQ98ZCqqeyD2ihO0jWpQqPv_+s4v6iVaiNWrv96vw@mail.gmail.com>
- <alpine.LRH.2.02.1711091130070.9079@file01.intranet.prod.int.rdu2.redhat.com>
- <CAPcyv4jb4UW_qjzenyKCbbufSL0rHGBU4OHDQo9BH212Kjtppg@mail.gmail.com>
- <alpine.LRH.2.02.1711091231240.28067@file01.intranet.prod.int.rdu2.redhat.com>
- <CAPcyv4jsUuROY9Bk8xXupuJq22xRUDoiiTSqegv-njUR6MxeYw@mail.gmail.com> <alpine.LRH.2.02.1711091340140.5328@file01.intranet.prod.int.rdu2.redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] brd: remove unused brd_mutex
+Date: Fri, 10 Nov 2017 12:29:34 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1711101228030.15978@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <alpine.LRH.2.02.1711091340140.5328@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: owner-linux-mm@kvack.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Christoph Hellwig <hch@infradead.org>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Christoph Hellwig <hch@lst.de>, Linux MM <linux-mm@kvack.org>, dm-devel@redhat.com, Ross Zwisler <ross.zwisler@linux.intel.com>, Laura Abbott <labbott@redhat.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, "Luck, Tony" <tony.luck@intel.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-block-owner@vger.kernel.org>
+Sender: linux-block-owner@vger.kernel.org
+To: Jens Axboe <axboe@fb.com>, linux-block@vger.kernel.org
+Cc: Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Nov 9, 2017 at 10:51 AM, Mikulas Patocka <mpatocka@redhat.com> wrote:
-[..]
->> The drivers don't need to react, once the pages are pinned for dma the
->> hot-unplug will not progress until all those page references are
->> dropped.
->
-> I am not talking about moving pages here, I'm talking about possible
-> hardware errors in persistent memory. In this situation, the storage
-> controller receives an error on the bus - and the question is, how will it
-> react. Ideally, it should abort just this transfer and return an error
-> that the driver will propagate up. But I'm skeptical that someone is
-> really testing the controllers and drivers for this possiblity.
+Remove unused mutex brd_mutex. It is unused since the commit ff26956875c2
+("brd: remove support for BLKFLSBUF").
 
-This is something that drive controllers already need to deal with
-today on DRAM, but I suspect you are right because in general
-error-path testing in drivers is rare to non-existent in Linux. We can
-endeavor to do better with persistent memory where we have some
-explicit error injection facilities defined in ACPI that might enjoy
-wider support than the existing EINJ facility.
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+---
+ drivers/block/brd.c |    1 -
+ 1 file changed, 1 deletion(-)
+
+Index: linux-2.6/drivers/block/brd.c
+===================================================================
+--- linux-2.6.orig/drivers/block/brd.c
++++ linux-2.6/drivers/block/brd.c
+@@ -60,7 +60,6 @@ struct brd_device {
+ /*
+  * Look up and return a brd's page for a given sector.
+  */
+-static DEFINE_MUTEX(brd_mutex);
+ static struct page *brd_lookup_page(struct brd_device *brd, sector_t sector)
+ {
+ 	pgoff_t idx;
