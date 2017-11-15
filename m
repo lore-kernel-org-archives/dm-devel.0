@@ -1,15 +1,13 @@
-From: Guan Junxiong <guanjunxiong@huawei.com>
-Subject: Re: [PATCH v7 0/2] multipath-tools: intermittent IO
- error accounting to improve reliability
-Date: Wed, 15 Nov 2017 17:00:26 +0800
-Message-ID: <1f7f00c5-1970-3ad4-d307-51b2a85cefdc@huawei.com>
-References: <1508810243-33556-1-git-send-email-guanjunxiong@huawei.com>
+From: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Subject: Re: [PATCH 2/2] multipath-tools: output more topology
+	info for NVMe discovery
+Date: Wed, 15 Nov 2017 23:40:39 +0100
+Message-ID: <CABr-Gnd2O2X1h76k=cVmGEVxkzMPgTej01vwVULTkQjf7iQs=A@mail.gmail.com>
+References: <1507793730-13400-1-git-send-email-yangjie65@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: multipart/mixed; boundary="===============6723357661691228893=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1508810243-33556-1-git-send-email-guanjunxiong@huawei.com>
-Content-Language: en-US
+In-Reply-To: <1507793730-13400-1-git-send-email-yangjie65@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,95 +17,127 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe.varoqui@opensvc.com
-Cc: dm-devel@redhat.com, mmandala@Brocade.com, mwilck@suse.com, shenhong09@huawei.com, niuhaoxin@huawei.com
+To: y00378701 <yangjie65@huawei.com>
+Cc: Guan Junxiong <guanjunxiong@huawei.com>, device-mapper development <dm-devel@redhat.com>, niuhaoxin@huawei.com, shenhong09@huawei.com
 List-Id: dm-devel.ids
 
-RGVhciBDaHJpc3RvcGhlLAoKQW55IGFkdmFuY2UgYWJvdXQgdGhpcyBwYXRjaD8gIFdlIGFyZSBs
-b29raW5nIGZvcndhcmQgdG8geW91ciByZXBseS4KVGhpcyBwYXRjaCBzZXQgaXMgb2Ygc2lnbmlm
-aWNhbmNlIGFzIGRlc2NyaWJlZCBpbiB0aGUgZm9sbG93aW5nIHByZXZpb3VzCmNvdmVyIGxldHRl
-ci4gUGxlYXNlIGNvbnNpZGVyIHRoaXMgcGF0Y2guCgpXZSBhcmUgbG9va2luZyBmb3J3YXJkIHRv
-IHlvdXIgcmVwbHkuCgpUaGFua3MgdmVyeSBtdWNoLgoKR3VhbiBKdW54aW9uZyAoIEh1YXdlaSkK
-TXVuZWVuZHJhIChCcm9jYWRlKQoKCk9uIDIwMTcvMTAvMjQgOTo1NywgR3VhbiBKdW54aW9uZyB3
-cm90ZToKPiBIaSBDaHJpc3RvcGhlIGFuZCBBbGwsCj4gCj4gVGhpcyBwYXRjaCBzZXQgYWRkcyBh
-IG5ldyBtZXRob2Qgb2YgcGF0aCBzdGF0ZSBjaGVja2luZyBiYXNlZCBvbiBhY2NvdW50aW5nCj4g
-SU8gZXJyb3IuIFRoaXMgaXMgdXNlZnVsIGluIG1hbnkgc2NlbmFyaW9zIHN1Y2ggYXMgaW50ZXJt
-aXR0ZW50IElPIGVycm9yCj4gb24gYSBwYXRoIGR1ZSB0byBpbnRlcm1pdHRlbnQgZnJhbWUgZHJv
-cHMsIGludGVybWl0dGVudCBjb3JydXB0aW9ucywgbmV0d29yawo+IGNvbmdlc3Rpb24gb3IgYSBz
-aGFreSBsaW5rLgo+IAo+IFRoaXMgcGF0Y2ggc2V0IGlzIG9mIHNpZ25pZmljYW5jZSBiZWNhdXNl
-IG9mIHRoaXMgKHF1b3RlZCBmcm9tIHRoZSBkaXNjdXNzaW9uCj4gd2l0aCBNdW5lZW5kcmEsIEJy
-b2NhZGUpOgo+IAo+IFRoZXJlIGFyZSB0eXBpY2FsbHkgdHdvIHR5cGUgb2YgU0FOIG5ldHdvcmsg
-cHJvYmxlbXMgdGhhdCBhcmUgY2F0ZWdvcml6ZWQgYXMKPiBtYXJnaW5hbCBpc3N1ZXMuIFRoZXNl
-IGlzc3VlcyBieSBuYXR1cmUgYXJlIG5vdCBwZXJtYW5lbnQgaW4gdGltZSBhbmQgZG8gY29tZQo+
-IGFuZCBnbyBhd2F5IG92ZXIgdGltZS4KPiAxKSBTd2l0Y2hlcyBpbiB0aGUgU0FOIGNhbiBoYXZl
-IGludGVybWl0dGVudCBmcmFtZSBkcm9wcyBvciBpbnRlcm1pdHRlbnQKPiAgICBmcmFtZSBjb3Jy
-dXB0aW9ucyBkdWUgdG8gYmFkIG9wdGljcyBjYWJsZSAoU0ZQKSBvciBhbnkgc3VjaCB3ZWFyL3Rl
-YXIgcG9ydAo+ICAgIGlzc3Vlcy4gVGhpcyBjYXVzZXMgSVRMIGZsb3dzIHRoYXQgZ28gdGhyb3Vn
-aCB0aGUgZmF1bHR5IHN3aXRjaC9wb3J0IHRvCj4gICAgaW50ZXJtaXR0ZW50bHkgZXhwZXJpZW5j
-ZSBmcmFtZSBkcm9wcy4gIAo+IDIpIFRoZXJlIGV4aXN0cyBTQU4gdG9wb2xvZ2llcyB3aGVyZSB0
-aGVyZSBhcmUgc3dpdGNoIHBvcnRzIGluIHRoZSBmYWJyaWMKPiAgICB0aGF0IGJlY29tZXMgdGhl
-IG9ubHkgIGNvbmR1aXQgZm9yIG1hbnkgZGlmZmVyZW50IElUTChob3N0LS10YXJnZXQtLUxVTikK
-PiAgICBmbG93cyBhY3Jvc3MgbXVsdGlwbGUgaG9zdHMuIFRoZXNlIHNpbmdsZSBuZXR3b3JrIHBh
-dGhzIGFyZSBlc3NlbnRpYWxseQo+ICAgIHNoYXJlZCBhY3Jvc3MgbXVsdGlwbGUgSVRMIGZsb3dz
-LiBVbmRlciB0aGVzZSBjb25kaXRpb25zIGlmIHRoZSBwb3J0IGxpbmsKPiAgICBiYW5kd2lkdGgg
-aXMgbm90IGFibGUgdG8gaGFuZGxlIHRoZSBuZXQgc3VtIG9mIHRoZSBzaGFyZWQgSVRMIGZsb3dz
-IGJhbmR3aWR0aAo+ICAgIGdvaW5nIHRocm91Z2ggdGhlIHNpbmdsZSBwYXRoICB0aGVuIHdlIGNv
-dWxkIHNlZSBpbnRlcm1pdHRlbnQgbmV0d29yawo+ICAgIGNvbmdlc3Rpb24gcHJvYmxlbXMuIFRo
-aXMgY29uZGl0aW9uIGlzIGNhbGxlZCBuZXR3b3JrIG92ZXJzdWJzY3JpcHRpb24uCj4gICAgVGhl
-IGludGVybWl0dGVudCBjb25nZXN0aW9ucyBjYW4gZGVsYXkgU0NTSSBleGNoYW5nZSBjb21wbGV0
-aW9uIHRpbWUKPiAgICAoaW5jcmVhc2UgaW4gSS9PIGxhdGVuY3kgaXMgb2JzZXJ2ZWQpLgo+IAo+
-IFRvIG92ZXJjb21lIHRoZSBhYm92ZSBuZXR3b3JrIGlzc3VlcyBhbmQgbWFueSBtb3JlIHN1Y2gg
-dGFyZ2V0IGlzc3VlcywgdGhlcmUKPiBhcmUgZnJhbWUgbGV2ZWwgcmV0cmllcyB0aGF0IGFyZSBk
-b25lIGluIEhCQSBkZXZpY2UgZmlybXdhcmUgYW5kIEkvTyByZXRyaWVzCj4gaW4gdGhlIFNDU0kg
-bGF5ZXIuIFRoZXNlIHJldHJpZXMgbWlnaHQgc3VjY2VlZCBiZWNhdXNlIG9mIHR3byByZWFzb25z
-Ogo+IDEpIFRoZSBpbnRlcm1pdHRlbnQgc3dpdGNoL3BvcnQgaXNzdWUgaXMgbm90IG9ic2VydmVk
-Cj4gMikgVGhlIHJldHJ5IEkvTyBpcyBhIG5ldyAgU0NTSSBleGNoYW5nZS4gVGhpcyBTQ1NJIGV4
-Y2hhbmdlIGNhbiB0YWtlIGFuCj4gICAgYWx0ZXJuYXRlIFNBTiBwYXRoIGZvciB0aGUgSVRMIGZs
-b3csIGlmIHN1Y2ggYW4gU0FOIHBhdGggZXhpc3RzLgo+IDMpIE5ldHdvcmsgY29uZ2VzdGlvbiBk
-aXNhcHBlYXJzIG1vbWVudGFyaWx5IGJlY2F1c2UgdGhlIG5ldCBJL08gYmFuZHdpZHRoCj4gICAg
-Y29taW5nIGZyb20gbXVsdGlwbGUgSVRMIGZsb3dzIG9uIHRoZSBzaW5nbGUgc2hhcmVkIG5ldHdv
-cmsgcGF0aCBpcwo+ICAgIHNvbWV0aGluZyB0aGUgcGF0aCBjYW4gaGFuZGxlCj4gCj4gSG93ZXZl
-ciBpbiBzb21lIGNhc2VzIHdlIGhhdmUgc2VlbiBJL08gcmV0cmllcyBkb24ndCBzdWNjZWVkIGJl
-Y2F1c2UgdGhlIHJldHJ5Cj4gSS9PcyBoaXRzIGEgU0FOIG5ldHdvcmsgcGF0aCB0aGF0IGhhcyBp
-bnRlcm1pdHRlbnQgc3dpdGNoL3BvcnQgaXNzdWUgYW5kL29yCj4gbmV0d29yayBjb25nZXN0aW9u
-LiAKPiAKPiBPbiB0aGUgaG9zdCB0aHVzIHdlIHNlZSBjb25maWd1cmF0aW9ucyB0d28gb3IgbW9y
-ZSBJVEwgcGF0aCBzaGFyaW5nIHRoZSBzYW1lCj4gdGFyZ2V0L0xVTiBnb2luZyB0aHJvdWdoIHR3
-byBvciBtb3JlIEhCQSBwb3J0cy4gVGhlc2UgSEJBIHBvcnRzIGFyZSBjb25uZWN0ZWQKPiB0byB0
-d28gb3IgbW9yZSBTQU4gdG8gdGhlIHNhbWUgdGFyZ2V0L0xVTi4KPiBJZiB0aGUgSS9PIGZhaWxz
-IGF0IHRoZSBtdWx0aXBhdGggbGF5ZXIgdGhlbiwgdGhlIElUTCBwYXRoIGlzIHR1cm5lZCBpbnRv
-Cj4gRmFpbGVkIHN0YXRlLiBCZWNhdXNlIG9mIHRoZSBtYXJnaW5hbCBuYXR1cmUgb2YgdGhlIG5l
-dHdvcmssIHRoZSBuZXh0IEhlYWx0aAo+IENoZWNrIGNvbW1hbmQgc2VudCBmcm9tIG11bHRpcGF0
-aCBsYXllciBtaWdodCBzdWNjZWVkLCB3aGljaCByZXN1bHRzIGluIG1ha2luZwo+IHRoZSBJVEwg
-cGF0aCBpbnRvIEFjdGl2ZSBzdGF0ZS4gWW91IGVuZCB1cCBzZWVpbmcgdGhlIERNIHBhdGggc3Rh
-dGUgZ29pbmcgaW50bwo+IEFjdGl2ZSwgRmFpbGVkLCBBY3RpdmUgdHJhbnNpdGlvbnMuIFRoaXMg
-cmVzdWx0cyBpbiBvdmVyYWxsIHJlZHVjdGlvbiBpbgo+IGFwcGxpY2F0aW9uIEkvTyB0aHJvdWdo
-cHV0IGFuZCBzb21ldGltZSBhcHBsaWNhdGlvbiBJL08gZmFpbHVyZXMgKGJlY2F1c2Ugb2YKPiB0
-aW1pbmcgY29uc3RyYWludHMpLiBBbGwgdGhpcyBjYW4gaGFwcGVuIGJlY2F1c2Ugb2YgSS9PIHJl
-dHJpZXMgYW5kIEkvTyByZXF1ZXN0Cj4gbW92aW5nIGFjcm9zcyBtdWx0aXBsZSBwYXRocyBvZiB0
-aGUgRE0gZGV2aWNlLiBJbiB0aGUgaG9zdCBpdCBpcyB0byBiZSBub3RlZAo+IGFsbCBJL08gcmV0
-cmllcyBvbiBhIHNpbmdsZSBwYXRoIGFuZCBJL08gbW92ZW1lbnQgYWNyb3NzIG11bHRpcGxlIHBh
-dGhzIHJlc3VsdHMKPiBpbiBzbG93aW5nIGRvd24gdGhlIGZvcndhcmQgcHJvZ3Jlc3Mgb2YgbmV3
-IGFwcGxpY2F0aW9uIEkvTy4gUmVhc29uIGJlaGluZCwKPiB0aGUgYWJvdmUgSS9PIHJlLXF1ZXVl
-IGFjdGlvbnMgYXJlIGdpdmVuIGhpZ2hlciBwcmlvcml0eSB0aGFuIHRoZSBuZXdlciBJL08KPiBy
-ZXF1ZXN0cyBjb21pbmcgZnJvbSB0aGUgYXBwbGljYXRpb24uIAo+IAo+IFRoZSBhYm92ZSBjb25k
-aXRpb24gb2YgdGhlICBJVEwgcGF0aCBpcyBoZW5jZSBjYWxsZWQgIm1hcmdpbmFsIi4KPiAKPiBX
-aGF0IHdlIGRlc2lyZSBpcyBmb3IgdGhlIERNIHRvIGRldGVybWluaXN0aWNhbGx5ICBjYXRlZ29y
-aXplIGEgSVRMIFBhdGggYXMKPiDigJxtYXJnaW5hbOKAnSBhbmQgbW92ZSBhbGwgdGhlIHBlbmRp
-bmcgSS9PcyBmcm9tIHRoZSBtYXJnaW5hbCBQYXRoIHRvIGFuIEFjdGl2ZQo+IFBhdGguIFRoaXMg
-d2lsbCBoZWxwIGluIG1lZXRpbmcgYXBwbGljYXRpb24gSS9PIHRpbWluZyBjb25zdHJhaW50cy4g
-QWxzbyBhCj4gY2FwYWJpbGl0eSB0byBhdXRvbWF0aWNhbGx5IHJlLWluc3RhbnRpYXRlIHRoZSBt
-YXJnaW5hbCBwYXRoIGludG8gQWN0aXZlIG9uY2UKPiB0aGUgbWFyZ2luYWwgY29uZGl0aW9uIGlu
-IHRoZSBuZXR3b3JrIGlzIGZpeGVkLgo+IAo+IAo+IEhlcmUgaXMgdGhlIGRlc2NyaXB0aW9uIG9m
-IGltcGxlbWVudGF0aW9uOgo+IDEpIFBBVENIIDEvMiBpbXBsZW1lbnRzIHRoZSBhbGdvcml0aG0g
-dGhhdCBzZW5kcyBhIGNvdXBsZSBvZiBjb250aW51b3VzIElPcwo+IHRvIGEgcGF0aCB3aGljaCBz
-dWZmZXJzIHR3byBmYWlsZWQgZXZlbnRzIGluIGxlc3MgdGhhbiBhIGdpdmVuIHRpbWUuIFRob3Nl
-Cj4gSU9zIGFyZSBzZW50IGF0IGEgZml4IHJhdGUgb2YgMTAgSHouCj4gMikgUEFUQ0ggMi8yIGRp
-c2NhcmQgdGhlIG9yaWdpbmFsIGFsZ29yaXRobSBiZWNhdXNlIG9mIHRoaXM6Cj4gdGhlIGRldGVj
-dCBzYW1wbGUgaW50ZXJ2YWwgb2YgdGhhdCBwYXRoIGNoZWNrZXJzIGlzIHNvIGJpZy9jb2Fyc2Ug
-dGhhdAo+IGl0IGRvZXNuJ3Qgc2VlIHdoYXQgaGFwcGVucyBpbiB0aGUgbWlkZGxlIG9mIHRoZSBz
-YW1wbGUgaW50ZXJ2YWwuIFdlIGhhdmUKPiB0aGUgUEFUQ0ggMS8yIGFzIGEgYmV0dGVyIG1ldGhv
-ZC4KPiAKPiAKPiBDaGFuZ2VzIGZyb20gVjY6Cj4gKiBmaXggdGhlIHdhcm5pbmcgb2YgdW53cmFw
-cGVkIGNvbW1pdCBkZXNjcmlwdGlvbiBpbiBwYXRjaCAxLzIgCj4gKiBhZGQgUmV2aWV3ZWQtYnkg
-dGFnIG9mIE11bmVlbmRyYQo+ICogYWRkIGRldGFpbGVkIHNjZW5hcmlvIGRpc2NyaXB0aW9uIGlu
-IHRoZSBjb3ZlciBsZXR0ZXIKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRo
-YXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+--===============6723357661691228893==
+Content-Type: multipart/alternative; boundary="001a114a9b2e6486fa055e0d31d5"
+
+--001a114a9b2e6486fa055e0d31d5
+Content-Type: text/plain; charset="UTF-8"
+
+Hi,
+
+this patch seems to be orphaned from its patchset.
+Do you maintain your request for inclusion ?
+
+Thanks.
+
+On Thu, Oct 12, 2017 at 9:35 AM, y00378701 <yangjie65@huawei.com> wrote:
+
+> Assign sg_id.channel to controller id of the NVMe/NVMf target
+> and assign sg_id.lun to namespace ID of the target.
+>
+> Signed-off-by: Jie Yang yangjie65@huawei.com
+> Reviewed-by: Guan Junxiong guanjunxiong@huawei.com
+> ---
+>  libmultipath/discovery.c | 4 +++-
+>  1 file changed, 3 insertions(+), 1 deletion(-)
+>
+> diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+> index efac824..f1d303e 100644
+> --- a/libmultipath/discovery.c
+> +++ b/libmultipath/discovery.c
+> @@ -1206,12 +1206,14 @@ nvme_sysfs_pathinfo (struct path * pp, vector
+> hwtable)
+>                    &pp->sg_id.scsi_id) != 2)
+>                 return 1;
+>         pp->sg_id.channel = 0;
+> -       pp->sg_id.lun = 0;
+> +       pp->sg_id.lun = atoi(udev_device_get_sysattr_value(pp->udev,
+> "nsid"));
+>
+>         parent = udev_device_get_parent(pp->udev);
+>         if (!parent)
+>                 return 1;
+>
+> +       pp->sg_id.channel = atoi(udev_device_get_sysattr_value(parent,
+> "cntlid"));
+> +
+>         snprintf(pp->vendor_id, SCSI_VENDOR_SIZE, "NVME");
+>         snprintf(pp->product_id, SCSI_PRODUCT_SIZE, "%s",
+>                  udev_device_get_sysattr_value(parent, "model"));
+> --
+> 2.8.1.windows.1
+>
+>
+>
+
+--001a114a9b2e6486fa055e0d31d5
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi,<div><br></div><div>this patch seems to be orphaned fro=
+m its patchset.</div><div>Do you maintain your request for inclusion ?</div=
+><div><br></div><div>Thanks.</div></div><div class=3D"gmail_extra"><br><div=
+ class=3D"gmail_quote">On Thu, Oct 12, 2017 at 9:35 AM, y00378701 <span dir=
+=3D"ltr">&lt;<a href=3D"mailto:yangjie65@huawei.com" target=3D"_blank">yang=
+jie65@huawei.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote"=
+ style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex">As=
+sign sg_id.channel to controller id of the NVMe/NVMf target<br>
+and assign sg_id.lun to namespace ID of the target.<br>
+<br>
+Signed-off-by: Jie Yang <a href=3D"mailto:yangjie65@huawei.com">yangjie65@h=
+uawei.com</a><br>
+Reviewed-by: Guan Junxiong <a href=3D"mailto:guanjunxiong@huawei.com">guanj=
+unxiong@huawei.com</a><br>
+---<br>
+=C2=A0libmultipath/discovery.c | 4 +++-<br>
+=C2=A01 file changed, 3 insertions(+), 1 deletion(-)<br>
+<br>
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c<br>
+index efac824..f1d303e 100644<br>
+--- a/libmultipath/discovery.c<br>
++++ b/libmultipath/discovery.c<br>
+@@ -1206,12 +1206,14 @@ nvme_sysfs_pathinfo (struct path * pp, vector hwtab=
+le)<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0&amp;p=
+p-&gt;sg_id.scsi_id) !=3D 2)<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return 1;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 pp-&gt;sg_id.channel =3D 0;<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0pp-&gt;sg_id.lun =3D 0;<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0pp-&gt;sg_id.lun =3D atoi(udev_device_get_sysat=
+tr_<wbr>value(pp-&gt;udev, &quot;nsid&quot;));<br>
+<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 parent =3D udev_device_get_parent(pp-&gt;<wbr>u=
+dev);<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (!parent)<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return 1;<br>
+<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0pp-&gt;sg_id.channel =3D atoi(udev_device_get_s=
+ysattr_<wbr>value(parent, &quot;cntlid&quot;));<br>
++<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 snprintf(pp-&gt;vendor_id, SCSI_VENDOR_SIZE, &q=
+uot;NVME&quot;);<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 snprintf(pp-&gt;product_id, SCSI_PRODUCT_SIZE, =
+&quot;%s&quot;,<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0udev_device_g=
+et_sysattr_value(<wbr>parent, &quot;model&quot;));<br>
+<span class=3D"HOEnZb"><font color=3D"#888888">--<br>
+2.8.1.windows.1<br>
+<br>
+<br>
+</font></span></blockquote></div><br></div>
+
+--001a114a9b2e6486fa055e0d31d5--
+
+
+--===============6723357661691228893==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============6723357661691228893==--
