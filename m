@@ -1,74 +1,94 @@
-From: Eric Biggers <ebiggers@google.com>
-Subject: [PATCH] dm bufio: fix integer overflow when limiting maximum cache size
-Date: Wed, 15 Nov 2017 16:38:09 -0800
-Message-ID: <20171116003809.28767-1-ebiggers@google.com>
-Return-path: <stable-owner@vger.kernel.org>
-Sender: stable-owner@vger.kernel.org
-To: dm-devel@redhat.com
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Sami Tolvanen <samitolvanen@google.com>, Will Drewry <wad@chromium.org>, Michael Halcrow <mhalcrow@google.com>, Eric Biggers <ebiggers@google.com>, stable@vger.kernel.org
+From: Qu Wenruo <quwenruo.btrfs@gmx.com>
+Subject: Ideas to reuse filesystem's checksum to enhance dm-raid1/10/5/6?
+Date: Thu, 16 Nov 2017 10:18:25 +0800
+Message-ID: <477d2d2b-3893-50c1-5946-076670a03f2d@gmx.com>
+Mime-Version: 1.0
+Content-Type: multipart/signed; micalg=pgp-sha256;
+ protocol="application/pgp-signature";
+ boundary="eOQUfBvoGWqjAE7W4pUGjjRG1DCv9Qhe0"
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: linux-block@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org
+Cc: "linux-btrfs@vger.kernel.org" <linux-btrfs@vger.kernel.org>
 List-Id: dm-devel.ids
 
-The default max_cache_size_bytes for dm-bufio is meant to be the lesser
-of 25% of the size of the vmalloc area and 2% of the size of lowmem.
-However, on 32-bit systems the intermediate result in the expression
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--eOQUfBvoGWqjAE7W4pUGjjRG1DCv9Qhe0
+Content-Type: multipart/mixed; boundary="Tn70opXBD3sqVkGlvgOKIHq9dW1FDpFKx";
+ protected-headers="v1"
+From: Qu Wenruo <quwenruo.btrfs@gmx.com>
+To: linux-block@vger.kernel.org, dm-devel@redhat.com,
+ linux-fsdevel@vger.kernel.org
+Cc: "linux-btrfs@vger.kernel.org" <linux-btrfs@vger.kernel.org>
+Message-ID: <477d2d2b-3893-50c1-5946-076670a03f2d@gmx.com>
+Subject: Ideas to reuse filesystem's checksum to enhance dm-raid1/10/5/6?
 
-    (VMALLOC_END - VMALLOC_START) * DM_BUFIO_VMALLOC_PERCENT / 100
+--Tn70opXBD3sqVkGlvgOKIHq9dW1FDpFKx
+Content-Type: text/plain; charset=utf-8
+Content-Language: en-US
+Content-Transfer-Encoding: quoted-printable
 
-overflows, causing the wrong result to be computed.  For example, on a
-32-bit system where the vmalloc area is 520093696 bytes, the result is
-1174405 rather than the expected 130023424, which makes the maximum
-cache size much too small (far less than 2% of lowmem).  This causes
-severe performance problems for dm-verity users on affected systems.
+Hi all,
 
-Fix this by using mult_frac() to correctly multiply by a percentage.  Do
-this for all places in dm-bufio that multiply by a percentage.  Also
-replace (VMALLOC_END - VMALLOC_START) with VMALLOC_TOTAL, which contrary
-to the comment is now defined in include/linux/vmalloc.h.
+[Background]
+Recently I'm considering the possibility to use checksum from filesystem
+to enhance device-mapper raid.
 
-Fixes: 95d402f057f2 ("dm: add bufio")
-Cc: <stable@vger.kernel.org> # v3.2+
-Signed-off-by: Eric Biggers <ebiggers@google.com>
----
- drivers/md/dm-bufio.c | 15 ++++++---------
- 1 file changed, 6 insertions(+), 9 deletions(-)
+The idea behind it is quite simple, since most modern filesystems have
+checksum for their metadata, and even some (btrfs) have checksum for data=
+=2E
 
-diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
-index 33bb074d6941..b8ac591aaaa7 100644
---- a/drivers/md/dm-bufio.c
-+++ b/drivers/md/dm-bufio.c
-@@ -974,7 +974,8 @@ static void __get_memory_limit(struct dm_bufio_client *c,
- 		buffers = c->minimum_buffers;
- 
- 	*limit_buffers = buffers;
--	*threshold_buffers = buffers * DM_BUFIO_WRITEBACK_PERCENT / 100;
-+	*threshold_buffers = mult_frac(buffers,
-+				       DM_BUFIO_WRITEBACK_PERCENT, 100);
- }
- 
- /*
-@@ -1910,19 +1911,15 @@ static int __init dm_bufio_init(void)
- 	memset(&dm_bufio_caches, 0, sizeof dm_bufio_caches);
- 	memset(&dm_bufio_cache_names, 0, sizeof dm_bufio_cache_names);
- 
--	mem = (__u64)((totalram_pages - totalhigh_pages) *
--		      DM_BUFIO_MEMORY_PERCENT / 100) << PAGE_SHIFT;
-+	mem = (__u64)mult_frac(totalram_pages - totalhigh_pages,
-+			       DM_BUFIO_MEMORY_PERCENT, 100) << PAGE_SHIFT;
- 
- 	if (mem > ULONG_MAX)
- 		mem = ULONG_MAX;
- 
- #ifdef CONFIG_MMU
--	/*
--	 * Get the size of vmalloc space the same way as VMALLOC_TOTAL
--	 * in fs/proc/internal.h
--	 */
--	if (mem > (VMALLOC_END - VMALLOC_START) * DM_BUFIO_VMALLOC_PERCENT / 100)
--		mem = (VMALLOC_END - VMALLOC_START) * DM_BUFIO_VMALLOC_PERCENT / 100;
-+	if (mem > mult_frac(VMALLOC_TOTAL, DM_BUFIO_VMALLOC_PERCENT, 100))
-+		mem = mult_frac(VMALLOC_TOTAL, DM_BUFIO_VMALLOC_PERCENT, 100);
- #endif
- 
- 	dm_bufio_default_cache_size = mem;
--- 
-2.15.0.448.gf294e3d99a-goog
+And for btrfs RAID1/10 (just ignore the RAID5/6 for now), at read time
+it can use the checksum to determine which copy is correct so it can
+return the correct data even one copy get corrupted.
+
+[Objective]
+The final objective is to allow device mapper to do the checksum
+verification (and repair if possible).
+
+If only for verification, it's not much different from current endio
+hook method used by most of the fs.
+However if we can move the repair part from filesystem (well, only btrfs
+supports it yet), it would benefit all fs.
+
+[What we have]
+The nearest infrastructure I found in kernel is bio_integrity_payload.
+
+However I found it's bounded to device, as it's designed to support
+SCSI/SATA integrity protocol.
+While for such use case, it's more bounded to filesystem, as fs (or
+higher layer dm device) is the source of integrity data, and device
+(dm-raid) only do the verification and possible repair.
+
+I'm not sure if this is a good idea to reuse or abuse
+bio_integrity_payload for this purpose.
+
+Should we use some new infrastructure or enhance existing
+bio_integrity_payload?
+
+(Or is this a valid idea or just another crazy dream?)
+
+Thanks,
+Qu
+
+
+--Tn70opXBD3sqVkGlvgOKIHq9dW1FDpFKx--
+
+--eOQUfBvoGWqjAE7W4pUGjjRG1DCv9Qhe0
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQFLBAEBCAA1FiEELd9y5aWlW6idqkLhwj2R86El/qgFAloM9XIXHHF1d2VucnVv
+LmJ0cmZzQGdteC5jb20ACgkQwj2R86El/qgZXAf/VtY9KOwLGKMEjf9S/K97oF56
+kM02xIgYciwNV0inleo2fpw7MNdhKNJKpgjaC4TXEiGQHziv64CffFaeYWm3nxnt
+VUNOos/PgOrxjie0/dBlLdeQrwb/kgk86jYOUDNYgPHTkF6olsmyG+7YInJnawdX
+7oGqPNS2bR0CI1SBHUcT0JfZ68HmCGNck1dNvX6HAd0fP20h8Gq2a6eT5oordRpV
+8U9WUnYUuvxXANSpZyxRHAsDn/2LqBAQ7wer6tj2vJvHPfqkD4o3ShhnvPvfrJIy
+xlW+irIAJ2njWVKEIlMtUEcc93WLXmjfYNXEJwzn/8QN15ivWg67zB4fNOZn3Q==
+=0aS5
+-----END PGP SIGNATURE-----
+
+--eOQUfBvoGWqjAE7W4pUGjjRG1DCv9Qhe0--
