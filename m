@@ -1,72 +1,60 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] more device mapper changes for 4.15
-Date: Thu, 16 Nov 2017 17:13:31 -0500
-Message-ID: <20171116221330.GA16904@redhat.com>
+From: Chris Murphy <lists@colorremedies.com>
+Subject: Re: Ideas to reuse filesystem's checksum to enhance dm-raid1/10/5/6?
+Date: Thu, 16 Nov 2017 15:32:05 -0700
+Message-ID: <CAJCQCtRUGEdu13RCKFb6uZQ3UCzoAByhu97FdwQoFPxvsOua0Q@mail.gmail.com>
+References: <477d2d2b-3893-50c1-5946-076670a03f2d@gmx.com> <7ed134fc-1616-a1ab-6701-a917af0522da@suse.com>
+ <5357fd4a-51b1-ebfb-27de-4d022d9749c0@gmx.com> <4df8d248-5def-9d29-89eb-7d9b977f089e@suse.com>
+ <354402cd-587d-72d8-aaa1-87a1b5c9f03c@gmx.com> <6e0f8a37-c3f8-61f0-d51d-01b72c3c65b7@redhat.com>
+ <189cda7b-e3ee-4379-c7f2-57efd759b78a@gmx.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@redhat.com, Ming Lei <ming.lei@redhat.com>, Alasdair G Kergon <agk@redhat.com>, Eric Biggers <ebiggers@google.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <189cda7b-e3ee-4379-c7f2-57efd759b78a@gmx.com>
+Sender: linux-block-owner@vger.kernel.org
+To: Qu Wenruo <quwenruo.btrfs@gmx.com>
+Cc: Zdenek Kabelac <zkabelac@redhat.com>, Nikolay Borisov <nborisov@suse.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, Linux FS Devel <linux-fsdevel@vger.kernel.org>, "linux-btrfs@vger.kernel.org" <linux-btrfs@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Hi Linus,
+On Thu, Nov 16, 2017 at 3:04 AM, Qu Wenruo <quwenruo.btrfs@gmx.com> wrote:
 
-Given your expected travel I figured I'd get these fixes to you sooner
-rather than later.
+> For example, if we use the following device mapper layout:
+>
+>         FS (can be any fs with metadata csum)
+>                 |
+>              dm-integrity
+>                 |
+>              dm-raid1
+>                / \
+>          disk1     disk2
 
-The following changes since commit ef7afb3656854de04fe03b0b9b4f3722b5722d8d:
 
-  dm cache: lift common migration preparation code to alloc_migration() (2017-11-10 15:45:07 -0500)
+You would instead do dm-integrity per physical device, then make the
+two dm-integrity devices, members of md raid1 array. Now when
+integrity fails, basically it's UNC error to raid1 which then gets the
+copy from the other device.
 
-are available in the git repository at:
+But what you're getting at, that dm-integrity is more complicated, is
+true, in that it's at least partly COW based in order to get the
+atomic write guarantee needed to ensure data blocks and csums are
+always in sync, and reliable. But this also applies to the entire file
+system. The READ bio concept you're proposing leverages pretty much
+already existing code, has no write performance penalty or complexity
+at all, but does miss data for file systems that don't csum data
+blocks. It's good the file system can stay alive, but data is the much
+bigger target in terms of percent space on the physical media, and
+more likely to be corrupt or go missing due to media defect or
+whatever. It's still possible for silent data corruption to happen.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-4.15/dm-changes-2
 
-for you to fetch changes up to 74d4108d9e681dbbe4a2940ed8fdff1f6868184c:
 
-  dm bufio: fix integer overflow when limiting maximum cache size (2017-11-16 16:49:57 -0500)
 
-Please pull, thanks.
-Mike
+> I just want to make device-mapper raid able to handle such case too.
+> Especially when most fs supports checksum for their metadata.
 
-----------------------------------------------------------------
-- A DM multipath stable@ fix to silence an annoying error message that
-  isn't _really_ an error
+XFS by default does metadata csums. But ext4 doesn't use it for either
+metadata or the journal by default still, it is still optional. So for
+now it mainly benefits XFS.
 
-- A DM core @stable fix for discard support that was enabled for an
-  entire DM device despite only having partial support for discards due
-  to a mix of discard capabilities across the underlying devices.
 
-- A couple other DM core discard fixes.
-
-- A DM bufio @stable fix that resolves a 32-bit overflow
-
-----------------------------------------------------------------
-Eric Biggers (1):
-      dm bufio: fix integer overflow when limiting maximum cache size
-
-Mike Snitzer (3):
-      dm: discard support requires all targets in a table support discards
-      dm: do not set 'discards_supported' in targets that do not need it
-      dm: clear all discard attributes in queue_limits when discards are disabled
-
-Ming Lei (1):
-      dm mpath: remove annoying message of 'blk_get_request() returned -11'
-
- drivers/md/dm-bufio.c      | 15 ++++++---------
- drivers/md/dm-era-target.c |  1 -
- drivers/md/dm-mpath.c      |  2 --
- drivers/md/dm-raid.c       |  6 ------
- drivers/md/dm-table.c      | 43 ++++++++++++++++++++++---------------------
- 5 files changed, 28 insertions(+), 39 deletions(-)
+-- 
+Chris Murphy
