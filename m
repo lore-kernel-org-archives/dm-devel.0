@@ -1,102 +1,138 @@
-From: Ross Zwisler <ross.zwisler@linux.intel.com>
-Subject: Re: [fstests PATCH v3] generic: add test for DAX MAP_SYNC support
-Date: Thu, 16 Nov 2017 15:59:47 -0700
-Message-ID: <20171116225947.GA23070@linux.intel.com>
-References: <CAOQ4uxh25JmAv3DjCp11fAfpHVP=d2sp+=Gk4SxYfBtmOgaUPw@mail.gmail.com>
- <20171025204704.3382-1-ross.zwisler@linux.intel.com>
- <CAOQ4uxjAnMed7-BTZWe6JUC4Fa-nApKvx9-_PzewmfcZ48cP7g@mail.gmail.com>
+From: Qu Wenruo <quwenruo.btrfs@gmx.com>
+Subject: Re: Ideas to reuse filesystem's checksum to enhance dm-raid1/10/5/6?
+Date: Fri, 17 Nov 2017 09:22:11 +0800
+Message-ID: <4baeb223-85d3-4c0c-e6d3-d0b495c2d950@gmx.com>
+References: <477d2d2b-3893-50c1-5946-076670a03f2d@gmx.com>
+ <7ed134fc-1616-a1ab-6701-a917af0522da@suse.com>
+ <5357fd4a-51b1-ebfb-27de-4d022d9749c0@gmx.com>
+ <4df8d248-5def-9d29-89eb-7d9b977f089e@suse.com>
+ <354402cd-587d-72d8-aaa1-87a1b5c9f03c@gmx.com>
+ <6e0f8a37-c3f8-61f0-d51d-01b72c3c65b7@redhat.com>
+ <189cda7b-e3ee-4379-c7f2-57efd759b78a@gmx.com>
+ <CAJCQCtRUGEdu13RCKFb6uZQ3UCzoAByhu97FdwQoFPxvsOua0Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-ext4-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAOQ4uxjAnMed7-BTZWe6JUC4Fa-nApKvx9-_PzewmfcZ48cP7g@mail.gmail.com>
-Sender: linux-ext4-owner@vger.kernel.org
-To: Amir Goldstein <amir73il@gmail.com>
-Cc: Ross Zwisler <ross.zwisler@linux.intel.com>, Josef Bacik <jbacik@fb.com>, Eryu Guan <eguan@redhat.com>, fstests <fstests@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, Alasdair Kergon <agk@redhat.com>, Dan Williams <dan.j.williams@intel.com>, Dave Chinner <david@fromorbit.com>, Jan Kara <jack@suse.cz>, Mike Snitzer <snitzer@redhat.com>, Shaohua Li <shli@kernel.org>, dm-devel@redhat.com, linux-nvdimm@lists.01.org, linux-raid@vger.kernel.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Ext4 <linux-ext4@vger.kernel.org>, linux-xfs <linux-xfs@vger.kernel.org>, Christoph Hellwig <hch@infradead.org>
+Content-Type: multipart/signed; micalg=pgp-sha256;
+ protocol="application/pgp-signature";
+ boundary="UDe1UiNvSrHhMaFc1ajc9VC7ufJW3NpCu"
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <CAJCQCtRUGEdu13RCKFb6uZQ3UCzoAByhu97FdwQoFPxvsOua0Q@mail.gmail.com>
+Sender: linux-block-owner@vger.kernel.org
+To: Chris Murphy <lists@colorremedies.com>
+Cc: Zdenek Kabelac <zkabelac@redhat.com>, Nikolay Borisov <nborisov@suse.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, Linux FS Devel <linux-fsdevel@vger.kernel.org>, "linux-btrfs@vger.kernel.org" <linux-btrfs@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Thu, Oct 26, 2017 at 07:59:39AM +0300, Amir Goldstein wrote:
-> On Wed, Oct 25, 2017 at 11:47 PM, Ross Zwisler
-> <ross.zwisler@linux.intel.com> wrote:
-> > Add a test that exercises DAX's new MAP_SYNC flag.
-> >
-> > This test creates a file and writes to it via an mmap(), but never syncs
-> > via fsync/msync.  This process is tracked via dm-log-writes, then replayed.
-> >
-> > If MAP_SYNC is working the dm-log-writes replay will show the test file
-> > with 1MiB of on-media block allocations.  This is because each allocating
-> > page fault included an implicit metadata sync.  If MAP_SYNC isn't working
-> > (which you can test by fiddling with the parameters to mmap()) the file
-> > will be smaller or missing entirely.
-> >
-> > Note that dm-log-writes doesn't track the data that we write via the
-> > mmap(), so we can't do any data integrity checking.  We can only verify
-> > that the metadata writes for the page faults happened.
-> >
-> > Signed-off-by: Ross Zwisler <ross.zwisler@linux.intel.com>
-> >
-> > ---
-> >
-> > Changes since v2:
-> >  - Fixed _require_log_writes() so that DAX will be disallowed if the
-> >    version of the dm-log-writes target is older than v1.1.0.  (Amir)
-> 
-> It seems like your kernel patch bumped the version to 1.0.1...
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--UDe1UiNvSrHhMaFc1ajc9VC7ufJW3NpCu
+Content-Type: multipart/mixed; boundary="ShqAOAi04N0h0iqoW6GFuLxW41re3fgmu";
+ protected-headers="v1"
+From: Qu Wenruo <quwenruo.btrfs@gmx.com>
+To: Chris Murphy <lists@colorremedies.com>
+Cc: Zdenek Kabelac <zkabelac@redhat.com>, Nikolay Borisov
+ <nborisov@suse.com>, linux-block@vger.kernel.org, dm-devel@redhat.com,
+ Linux FS Devel <linux-fsdevel@vger.kernel.org>,
+ "linux-btrfs@vger.kernel.org" <linux-btrfs@vger.kernel.org>
+Message-ID: <4baeb223-85d3-4c0c-e6d3-d0b495c2d950@gmx.com>
+Subject: Re: Ideas to reuse filesystem's checksum to enhance dm-raid1/10/5/6?
+References: <477d2d2b-3893-50c1-5946-076670a03f2d@gmx.com>
+ <7ed134fc-1616-a1ab-6701-a917af0522da@suse.com>
+ <5357fd4a-51b1-ebfb-27de-4d022d9749c0@gmx.com>
+ <4df8d248-5def-9d29-89eb-7d9b977f089e@suse.com>
+ <354402cd-587d-72d8-aaa1-87a1b5c9f03c@gmx.com>
+ <6e0f8a37-c3f8-61f0-d51d-01b72c3c65b7@redhat.com>
+ <189cda7b-e3ee-4379-c7f2-57efd759b78a@gmx.com>
+ <CAJCQCtRUGEdu13RCKFb6uZQ3UCzoAByhu97FdwQoFPxvsOua0Q@mail.gmail.com>
+In-Reply-To: <CAJCQCtRUGEdu13RCKFb6uZQ3UCzoAByhu97FdwQoFPxvsOua0Q@mail.gmail.com>
 
-Ah, yep, that's the version number that I submitted but Mike changed it to
-v1.1.0 in his tree.  Here's the patch that was merged for v4.15-rc1:
+--ShqAOAi04N0h0iqoW6GFuLxW41re3fgmu
+Content-Type: text/plain; charset=utf-8
+Content-Language: en-US
+Content-Transfer-Encoding: quoted-printable
 
-https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/drivers?id=98d82f48f1983ceef5c8d2f6c87bfee2918790ee
 
-> >
-> > ---
-> >  .gitignore            |  1 +
-> >  common/dmlogwrites    |  4 ++-
-> >  common/rc             |  6 ++--
-> >  src/Makefile          |  3 +-
-> >  src/t_map_sync.c      | 92 +++++++++++++++++++++++++++++++++++++++++++++++++++
-> >  tests/generic/466     | 76 ++++++++++++++++++++++++++++++++++++++++++
-> >  tests/generic/466.out |  3 ++
-> >  tests/generic/group   |  1 +
-> >  8 files changed, 182 insertions(+), 4 deletions(-)
-> >  create mode 100644 src/t_map_sync.c
-> >  create mode 100755 tests/generic/466
-> >  create mode 100644 tests/generic/466.out
-> >
-> > diff --git a/.gitignore b/.gitignore
-> > index 2014c08..9fc0695 100644
-> > --- a/.gitignore
-> > +++ b/.gitignore
-> > @@ -119,6 +119,7 @@
-> >  /src/t_getcwd
-> >  /src/t_holes
-> >  /src/t_immutable
-> > +/src/t_map_sync
-> >  /src/t_mmap_cow_race
-> >  /src/t_mmap_dio
-> >  /src/t_mmap_fallocate
-> > diff --git a/common/dmlogwrites b/common/dmlogwrites
-> > index 247c744..71d008d 100644
-> > --- a/common/dmlogwrites
-> > +++ b/common/dmlogwrites
-> > @@ -23,8 +23,10 @@ _require_log_writes()
-> >         [ -z "$LOGWRITES_DEV" -o ! -b "$LOGWRITES_DEV" ] && \
-> >                 _notrun "This test requires a valid \$LOGWRITES_DEV"
-> >
-> > -       _exclude_scratch_mount_option dax
-> >         _require_dm_target log-writes
-> > +       if [[ ${DMTARGET_VER[0]} == 1 && ${DMTARGET_VER[1]} < 1 ]]; then
-> > +               _exclude_scratch_mount_option dax
-> > +       fi
-> 
-> IMO, this would be better as:
-> 
->         local z=0
->         _scratch_has_mount_option dax && z=1
->         _require_dm_target log-writes 1 0 $z
-> 
-> Or something like that
 
-Yep, this is nicer.  Fixed.
+On 2017=E5=B9=B411=E6=9C=8817=E6=97=A5 06:32, Chris Murphy wrote:
+> On Thu, Nov 16, 2017 at 3:04 AM, Qu Wenruo <quwenruo.btrfs@gmx.com> wro=
+te:
+>=20
+>> For example, if we use the following device mapper layout:
+>>
+>>         FS (can be any fs with metadata csum)
+>>                 |
+>>              dm-integrity
+>>                 |
+>>              dm-raid1
+>>                / \
+>>          disk1     disk2
+>=20
+>=20
+> You would instead do dm-integrity per physical device, then make the
+> two dm-integrity devices, members of md raid1 array. Now when
+> integrity fails, basically it's UNC error to raid1 which then gets the
+> copy from the other device.
 
-Thanks for the review.
+
+Yep, dm-integrity under raid1 makes much more sense here.
+
+Although, double the CPU usage for each device added in.
+
+>=20
+> But what you're getting at, that dm-integrity is more complicated, is
+> true, in that it's at least partly COW based in order to get the
+> atomic write guarantee needed to ensure data blocks and csums are
+> always in sync, and reliable. But this also applies to the entire file
+> system. The READ bio concept you're proposing leverages pretty much
+> already existing code, has no write performance penalty or complexity
+> at all, but does miss data for file systems that don't csum data
+> blocks.
+
+That's true, since currently only Btrfs supports data csum.
+And to make filesystem to support data csum, it needs CoW support while
+only XFS and Btrfs supports CoW yet.
+
+> It's good the file system can stay alive, but data is the much
+> bigger target in terms of percent space on the physical media,
+
+It's also true.
+(Although working on btrfs sometimes makes me care more about safe metada=
+ta)
+
+Thanks,
+Qu
+
+> and
+> more likely to be corrupt or go missing due to media defect or
+> whatever. It's still possible for silent data corruption to happen.
+>=20
+>=20
+>=20
+>=20
+>> I just want to make device-mapper raid able to handle such case too.
+>> Especially when most fs supports checksum for their metadata.
+>=20
+> XFS by default does metadata csums. But ext4 doesn't use it for either
+> metadata or the journal by default still, it is still optional. So for
+> now it mainly benefits XFS.
+>=20
+>=20
+
+
+--ShqAOAi04N0h0iqoW6GFuLxW41re3fgmu--
+
+--UDe1UiNvSrHhMaFc1ajc9VC7ufJW3NpCu
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQFLBAEBCAA1FiEELd9y5aWlW6idqkLhwj2R86El/qgFAloOOcMXHHF1d2VucnVv
+LmJ0cmZzQGdteC5jb20ACgkQwj2R86El/qhEWwgApekvUyYq5aMVhmKXv2womaeu
+YjQMMsOnaJFPxtu0bTAUZ2VdzFCVYvMLE7jXOsliTusr3z2iLVOllPHRpkNK+lSr
+m0vDZlHVQ63bQU6mnTRVd/qCP7gt6cI70wWu506UkoBTIurP1w8CJvMhbTAjtU4L
+/0nzfMMjesTXoQgQtuh2tbICiHz7CFwhl7IWJVtekxXsdJMjMGG4qoo1Bs215dbm
+/uqU46yevkeItvOBgvUVyuThqJuOIVgYvKdLiPEUNvHaX2nYDVqC4Mi4dYbWlqR4
+GC7OeP8df7QFBxQiW7VvG8uPI6gPoJA1eJRb5uj61Ftp3PIuDQpm6m8MnuHF9g==
+=5CCQ
+-----END PGP SIGNATURE-----
+
+--UDe1UiNvSrHhMaFc1ajc9VC7ufJW3NpCu--
