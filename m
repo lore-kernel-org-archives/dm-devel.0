@@ -1,79 +1,48 @@
-From: Andreas Dilger <adilger@dilger.ca>
-Subject: Re: Ideas to reuse filesystem's checksum to enhance dm-raid1/10/5/6?
-Date: Thu, 16 Nov 2017 18:26:14 -0700
-Message-ID: <74E5DB55-6E0F-4A00-BF94-0D2DEDC87C69@dilger.ca>
-References: <477d2d2b-3893-50c1-5946-076670a03f2d@gmx.com>
-Mime-Version: 1.0 (Mac OS X Mail 10.3 \(3273\))
-Content-Type: multipart/signed;
- boundary="Apple-Mail=_78A525E9-FAA6-40ED-BCA3-317A88CA682F";
- protocol="application/pgp-signature"; micalg=pgp-sha1
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <477d2d2b-3893-50c1-5946-076670a03f2d@gmx.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Qu Wenruo <quwenruo.btrfs@gmx.com>, "Darrick J. Wong" <darrick.wong@oracle.com>
-Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, "linux-btrfs@vger.kernel.org" <linux-btrfs@vger.kernel.org>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH] scsi_dh: add new rdac devices
+Date: Fri, 17 Nov 2017 22:05:13 +0100
+Message-ID: <20171117210513.9667-1-xose.vazquez@gmail.com>
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Sender: linux-scsi-owner@vger.kernel.org
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>, Hannes Reinecke <hare@suse.de>, Christophe Varoqui <christophe.varoqui@opensvc.com>, "Martin K . Petersen" <martin.petersen@oracle.com>, "James E . J . Bottomley" <jejb@linux.vnet.ibm.com>, SCSI ML <linux-scsi@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+Add IBM 3542 and 3552, arrays: FAStT200 and FAStT500.
+Add full STK OPENstorage family, arrays: 9176, D173, D178, D210, D220, D240 and D280.
+Add STK BladeCtlr family, arrays: B210, B220, B240 and B280.
 
---Apple-Mail=_78A525E9-FAA6-40ED-BCA3-317A88CA682F
-Content-Transfer-Encoding: 7bit
-Content-Type: text/plain;
-	charset=us-ascii
+These changes were done in multipath-tools time ago.
 
-On Nov 15, 2017, at 7:18 PM, Qu Wenruo <quwenruo.btrfs@gmx.com> wrote:
-> 
-> [Background]
-> Recently I'm considering the possibility to use checksum from filesystem
-> to enhance device-mapper raid.
-> 
-> The idea behind it is quite simple, since most modern filesystems have
-> checksum for their metadata, and even some (btrfs) have checksum for data.
-> 
-> And for btrfs RAID1/10 (just ignore the RAID5/6 for now), at read time
-> it can use the checksum to determine which copy is correct so it can
-> return the correct data even one copy get corrupted.
-> 
-> [Objective]
-> The final objective is to allow device mapper to do the checksum
-> verification (and repair if possible).
-> 
-> If only for verification, it's not much different from current endio
-> hook method used by most of the fs.
-> However if we can move the repair part from filesystem (well, only btrfs
-> supports it yet), it would benefit all fs.
+Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>
+Cc: Hannes Reinecke <hare@suse.de>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: Martin K. Petersen <martin.petersen@oracle.com>
+Cc: James E.J. Bottomley <jejb@linux.vnet.ibm.com>
+Cc: SCSI ML <linux-scsi@vger.kernel.org>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ drivers/scsi/scsi_dh.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
 
-I recall Darrick was looking into a mechanism to do this.  Rather than
-changing the whole block layer to take a callback to do a checksum, what
-we looked at was to allow the upper-layer read to specify a "retry count"
-to the lower-layer block device.  If the lower layer is able to retry the
-read then it will read a different device (or combination of devices for
-e.g. RAID-6) based on the retry count, until the upper layer gets a good
-read (based on checksum, or whatever).  If there are no more devices (or
-combinations) to try then a final error is returned.
-
-Darrick can probably point at the original thread/patch.
-
-Cheers, Andreas
-
-
-
-
-
-
---Apple-Mail=_78A525E9-FAA6-40ED-BCA3-317A88CA682F
-Content-Transfer-Encoding: 7bit
-Content-Disposition: attachment;
-	filename=signature.asc
-Content-Type: application/pgp-signature;
-	name=signature.asc
-Content-Description: Message signed with OpenPGP
-
------BEGIN PGP SIGNATURE-----
-Comment: GPGTools - http://gpgtools.org
-
-iD8DBQFaDjq3pIg59Q01vtYRAmZhAJ9K06HBQQAnRGfZJJvb1TO4hTFfngCfTyg9
-E2mzVop1nAVtDDgFdWDGOy8=
-=z0v4
------END PGP SIGNATURE-----
-
---Apple-Mail=_78A525E9-FAA6-40ED-BCA3-317A88CA682F--
+diff --git a/drivers/scsi/scsi_dh.c b/drivers/scsi/scsi_dh.c
+index 2b785d09d5bd..b88b5dbbc444 100644
+--- a/drivers/scsi/scsi_dh.c
++++ b/drivers/scsi/scsi_dh.c
+@@ -56,10 +56,13 @@ static const struct scsi_dh_blist scsi_dh_blist[] = {
+ 	{"IBM", "1815",			"rdac", },
+ 	{"IBM", "1818",			"rdac", },
+ 	{"IBM", "3526",			"rdac", },
++	{"IBM", "3542",			"rdac", },
++	{"IBM", "3552",			"rdac", },
+ 	{"SGI", "TP9",			"rdac", },
+ 	{"SGI", "IS",			"rdac", },
+-	{"STK", "OPENstorage D280",	"rdac", },
++	{"STK", "OPENstorage",		"rdac", },
+ 	{"STK", "FLEXLINE 380",		"rdac", },
++	{"STK", "BladeCtlr",		"rdac", },
+ 	{"SUN", "CSM",			"rdac", },
+ 	{"SUN", "LCSM100",		"rdac", },
+ 	{"SUN", "STK6580_6780",		"rdac", },
+-- 
+2.14.3
