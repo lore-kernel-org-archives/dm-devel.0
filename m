@@ -1,48 +1,42 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] scsi_dh: add new rdac devices
-Date: Fri, 17 Nov 2017 22:05:13 +0100
-Message-ID: <20171117210513.9667-1-xose.vazquez@gmail.com>
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Sender: linux-scsi-owner@vger.kernel.org
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>, Hannes Reinecke <hare@suse.de>, Christophe Varoqui <christophe.varoqui@opensvc.com>, "Martin K . Petersen" <martin.petersen@oracle.com>, "James E . J . Bottomley" <jejb@linux.vnet.ibm.com>, SCSI ML <linux-scsi@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: [PATCH 0/4] path latency prio fixes
+Date: Sat, 18 Nov 2017 01:11:30 +0100
+Message-ID: <20171118001134.26622-1-mwilck@suse.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Guan Junxiong <guanjunxiong@huawei.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Add IBM 3542 and 3552, arrays: FAStT200 and FAStT500.
-Add full STK OPENstorage family, arrays: 9176, D173, D178, D210, D220, D240 and D280.
-Add STK BladeCtlr family, arrays: B210, B220, B240 and B280.
+Hi Christophe and Guan,
 
-These changes were done in multipath-tools time ago.
+I was hoping to get down to the review before Christophe committed
+your your patch "calculate standard deviation on a logarithmic scale for
+prioritizer path_latency". I failed to do this in timely manner, sorry.
 
-Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>
-Cc: Hannes Reinecke <hare@suse.de>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: Martin K. Petersen <martin.petersen@oracle.com>
-Cc: James E.J. Bottomley <jejb@linux.vnet.ibm.com>
-Cc: SCSI ML <linux-scsi@vger.kernel.org>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- drivers/scsi/scsi_dh.c | 5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+But I still have some issues with the patch. Please check these fixes.
+I also have remaining issues with the "intermittent IO accounting"
+patch, will send these later.
 
-diff --git a/drivers/scsi/scsi_dh.c b/drivers/scsi/scsi_dh.c
-index 2b785d09d5bd..b88b5dbbc444 100644
---- a/drivers/scsi/scsi_dh.c
-+++ b/drivers/scsi/scsi_dh.c
-@@ -56,10 +56,13 @@ static const struct scsi_dh_blist scsi_dh_blist[] = {
- 	{"IBM", "1815",			"rdac", },
- 	{"IBM", "1818",			"rdac", },
- 	{"IBM", "3526",			"rdac", },
-+	{"IBM", "3542",			"rdac", },
-+	{"IBM", "3552",			"rdac", },
- 	{"SGI", "TP9",			"rdac", },
- 	{"SGI", "IS",			"rdac", },
--	{"STK", "OPENstorage D280",	"rdac", },
-+	{"STK", "OPENstorage",		"rdac", },
- 	{"STK", "FLEXLINE 380",		"rdac", },
-+	{"STK", "BladeCtlr",		"rdac", },
- 	{"SUN", "CSM",			"rdac", },
- 	{"SUN", "LCSM100",		"rdac", },
- 	{"SUN", "STK6580_6780",		"rdac", },
+Martin Wilck (4):
+  libmultipath: path latency: fix default base num
+  libmultipath: path latency: log threshold with p2
+  libmultipath: path latency: simplify getprio()
+  libmultipath: path latency: remove warnings
+
+ libmultipath/prioritizers/path_latency.c | 112 ++++++++++---------------------
+ 1 file changed, 34 insertions(+), 78 deletions(-)
+
 -- 
-2.14.3
+2.15.0
