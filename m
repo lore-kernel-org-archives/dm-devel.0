@@ -1,11 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 0/4] path latency prio fixes
-Date: Sat, 18 Nov 2017 01:11:30 +0100
-Message-ID: <20171118001134.26622-1-mwilck@suse.com>
+Subject: [PATCH 2/4] libmultipath: path latency: log threshold
+	with p2
+Date: Sat, 18 Nov 2017 01:11:32 +0100
+Message-ID: <20171118001134.26622-3-mwilck@suse.com>
+References: <20171118001134.26622-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20171118001134.26622-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,24 +22,26 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Guan Junxiong <guanjunx
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Christophe and Guan,
+This is not a critical error. It just means that the path in
+question will have low priority (rightly so, if it has >100s latency).
 
-I was hoping to get down to the review before Christophe committed
-your your patch "calculate standard deviation on a logarithmic scale for
-prioritizer path_latency". I failed to do this in timely manner, sorry.
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ libmultipath/prioritizers/path_latency.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-But I still have some issues with the patch. Please check these fixes.
-I also have remaining issues with the "intermittent IO accounting"
-patch, will send these later.
-
-Martin Wilck (4):
-  libmultipath: path latency: fix default base num
-  libmultipath: path latency: log threshold with p2
-  libmultipath: path latency: simplify getprio()
-  libmultipath: path latency: remove warnings
-
- libmultipath/prioritizers/path_latency.c | 112 ++++++++++---------------------
- 1 file changed, 34 insertions(+), 78 deletions(-)
-
+diff --git a/libmultipath/prioritizers/path_latency.c b/libmultipath/prioritizers/path_latency.c
+index b8c5bc7c50a4..ce5c95dd7075 100644
+--- a/libmultipath/prioritizers/path_latency.c
++++ b/libmultipath/prioritizers/path_latency.c
+@@ -299,7 +299,7 @@ int getprio(struct path *pp, char *args, unsigned int timeout)
+ 			(long long)pow(base_num, lg_avglatency));
+ 
+ 	if (lg_avglatency > lg_maxavglatency) {
+-		pp_pl_log(0,
++		pp_pl_log(2,
+ 			  "%s: average latency (%lld us) is outside the thresold (%lld us)",
+ 			  pp->dev, (long long)pow(base_num, lg_avglatency),
+ 			  (long long)MAX_AVG_LATENCY);
 -- 
 2.15.0
