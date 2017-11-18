@@ -1,8 +1,7 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 1/4] libmultipath: path latency: fix default base
-	num
-Date: Sat, 18 Nov 2017 01:11:31 +0100
-Message-ID: <20171118001134.26622-2-mwilck@suse.com>
+Subject: [PATCH 4/4] libmultipath: path latency: remove warnings
+Date: Sat, 18 Nov 2017 01:11:34 +0100
+Message-ID: <20171118001134.26622-5-mwilck@suse.com>
 References: <20171118001134.26622-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,30 +21,71 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Guan Junxiong <guanjunx
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-I don't think anyone can measure latency to 1% accuracy. It's
-better to not even pretend to be able to. 10% should be fine
-even for the most latency-critical environments.
+The warnings at here are pointless. We are looking at a single
+path only. Firstly, the standdard deviation for this measurement
+can't be "too low" - the lower, the more precise the measurement,
+the better. Secondly, a high standard deviation indicates an
+unstable path with highly variable latency. Not good, but nothing
+to warn about here.
+
+What matters for the selection of "base_num" is not how a single
+path behaves, but how different paths of the same path group relate
+to each other, which we don't know at this point at the code.
+
+What we want to avoid is too fine a differentiation, in particular
+in combination with group_by_prio, because we'd loose the ability for
+load balancing. But this is rather a topic for the man page or a
+"best practices" document.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/prioritizers/path_latency.c | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+ libmultipath/prioritizers/path_latency.c | 34 --------------------------------
+ 1 file changed, 34 deletions(-)
 
 diff --git a/libmultipath/prioritizers/path_latency.c b/libmultipath/prioritizers/path_latency.c
-index 9d5397ec1b3a..b8c5bc7c50a4 100644
+index 44472b77dd86..b8e2765d9c16 100644
 --- a/libmultipath/prioritizers/path_latency.c
 +++ b/libmultipath/prioritizers/path_latency.c
-@@ -42,8 +42,9 @@
- #define DEF_IO_NUM		100
+@@ -289,40 +289,6 @@ int getprio(struct path *pp, char *args, unsigned int timeout)
+ 		return DEFAULT_PRIORITY;
+ 	}
  
- #define MAX_BASE_NUM		10
--#define MIN_BASE_NUM		1.01
--#define DEF_BASE_NUM		1.5
-+#define MIN_BASE_NUM		1.1
-+// This is 10**(1/4). 4 prio steps correspond to a factor of 10.
-+#define DEF_BASE_NUM		1.77827941004
+-	standard_deviation = calc_standard_deviation(lg_path_latency,
+-			index, lg_avglatency);
+-	/*
+-	 * In calPrio(), we let prio y = f(x) = log(max, base) - log (x, base);
+-	 * So if we want to let the priority of the latency outside 2 standard
+-	 * deviations can be distinguished from the latency inside 2 standard
+-	 * deviation, in others words at most 95% are the same and at least 5%
+-	 * are different according interval estimation of normal distribution,
+-	 * we should warn the user to set the base_num to be smaller if the
+-	 * log(x_threshold, base) is small than 2 standard deviation.
+-	 * x_threshold is derived from:
+-	 * y + 1 = f(x) + 1 = f(x) + log(base, base), so x_threadshold =
+-	 * base_num; Note that we only can compare the logarithm of x_threshold
+-	 * with the standard deviation because the standard deviation is derived
+-	 * from logarithm of latency.
+-	 *
+-	 * therefore , we recommend the base_num to meet the condition :
+-	 * 1 <= 2 * standard_deviation
+-	 */
+-	pp_pl_log(5, "%s: standard deviation for logarithm of latency = %.6f",
+-			pp->dev, standard_deviation);
+-	if (standard_deviation <= 0.5)
+-		pp_pl_log(3, "%s: the base_num(%.3lf) is too big to distinguish different priority "
+-			  "of two far-away latency. It is recommend to be set smaller",
+-			  pp->dev, base_num);
+-	/*
+-	 * If the standard deviation is too large , we should also warn the user
+-	 */
+-
+-	if (standard_deviation > 4)
+-		pp_pl_log(3, "%s: the base_num(%.3lf) is too small to avoid noise disturbance "
+-			  ".It is recommend to be set larger",
+-			  pp->dev, base_num);
+-
+ 	standard_deviation = sqrt((sum_squares - lg_toldelay * lg_toldelay)
+ 				  / (io_num -1));
  
- #define MAX_AVG_LATENCY		100000000.	/* Unit: us */
- #define MIN_AVG_LATENCY		1.		/* Unit: us */
 -- 
 2.15.0
