@@ -1,53 +1,63 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: add README.alua with
-	instructions to enable ALUA
-Date: Mon, 20 Nov 2017 19:53:15 +0100
-Message-ID: <20171120185315.3026-1-xose.vazquez@gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v2 2/2] blk-throttle: fix wrong initialization in case of
+ dm device
+Date: Mon, 20 Nov 2017 16:02:03 -0500
+Message-ID: <CAMM=eLes8Z05HseDYjt+S3HC7jvfyREZrRqGBbTzxEfy8KHEEA@mail.gmail.com>
+References: <241a6fbe-f2d2-3d11-ba45-afc5b02de9c2@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <241a6fbe-f2d2-3d11-ba45-afc5b02de9c2@gmail.com>
+Sender: linux-block-owner@vger.kernel.org
+To: Joseph Qi <jiangqi903@gmail.com>
+Cc: Jens Axboe <axboe@kernel.dk>, Shaohua Li <shli@fb.com>, linux-block <linux-block@vger.kernel.org>, qijiang.qj@alibaba-inc.com, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-ALUA is supported in some storage devices, but usually it's disabled by default.
+On Sun, Nov 19, 2017 at 9:00 PM, Joseph Qi <jiangqi903@gmail.com> wrote:
+> From: Joseph Qi <qijiang.qj@alibaba-inc.com>
+>
+> dm device set QUEUE_FLAG_NONROT in resume, which is after register
+> queue. That is to mean, the previous initialization in
+> blk_throtl_register_queue is wrong in this case.
+> Fix it by checking and then updating the info during root tg
+> initialization as we don't have a better choice.
 
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- README.alua | 14 ++++++++++++++
- 1 file changed, 14 insertions(+)
- create mode 100644 README.alua
+Given DM motivated this change, curious why you didn't send this to dm-devel?
 
-diff --git a/README.alua b/README.alua
-new file mode 100644
-index 0000000..134696a
---- /dev/null
-+++ b/README.alua
-@@ -0,0 +1,14 @@
-+This is a rough guide, consult your storage device manufacturer documentation.
-+
-+ALUA is supported in some devices, but usually it's disabled by default.
-+To enable ALUA, the following options should be changed:
-+
-+- EMC CLARiiON/VNX:
-+   "Failover Mode" should be changed to "4".
-+
-+- HPE 3PAR:
-+   "Host:" should be changed to "Generic-ALUA Persona 2 (UARepLun, SESLun, ALUA)".
-+
-+- Promise VTrak/Vess:
-+   "LUN Affinity" and "ALUA" should be changed to "Enable", "Redundancy Type"
-+   must be "Active-Active".
--- 
-2.14.3
+In any case, not sure why you need to reference "resume".  Very few
+people will appreciate that detail.
+
+Better to just say: DM device sets QUEUE_FLAG_NONROT after the queue
+is registered.
+
+> Signed-off-by: Joseph Qi <qijiang.qj@alibaba-inc.com>
+> ---
+>  block/blk-throttle.c | 17 +++++++++++++++++
+>  1 file changed, 17 insertions(+)
+>
+> diff --git a/block/blk-throttle.c b/block/blk-throttle.c
+> index bf52035..6d6b220 100644
+> --- a/block/blk-throttle.c
+> +++ b/block/blk-throttle.c
+> @@ -541,6 +541,23 @@ static void throtl_pd_init(struct blkg_policy_data *pd)
+>         if (cgroup_subsys_on_dfl(io_cgrp_subsys) && blkg->parent)
+>                 sq->parent_sq = &blkg_to_tg(blkg->parent)->service_queue;
+>         tg->td = td;
+> +
+> +       /*
+> +        * dm device set QUEUE_FLAG_NONROT in resume, which is after resister
+> +        * queue, so the previous initialization is wrong in this case. Check
+> +        * and update it here.
+> +        */
+
+typo: s/resister/register/
+But again, best to say:
+DM device sets QUEUE_FLAG_NONROT after the queue is registered, ...
+
+Also, an alternative to your patch would be to have DM's
+dm_table_set_restrictions() call a blk-throttle function to setup
+blk-throttle after it is done setting queue flags?
+Saves all other drivers from having to run this 2 stage initialization
+code.. just a thought.
+
+Mike
