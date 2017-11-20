@@ -1,61 +1,54 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 0/4] path latency prio fixes
-Date: Mon, 20 Nov 2017 10:11:02 +0100
-Message-ID: <1511169062.25459.37.camel@suse.com>
-References: <20171118001134.26622-1-mwilck@suse.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 00/13] block: assorted cleanup for bio splitting and cloning.
+Date: Mon, 20 Nov 2017 11:43:44 -0500
+Message-ID: <CAMM=eLf9Vu-z1ZEsGtRoSkhpaaQXAdr8TsUYUCSmAjqrqo=W-w@mail.gmail.com>
+References: <149776047907.23258.8058071140236879834.stgit@noble>
+ <20170618184143.GA10920@kernel.dk> <87poe13rmm.fsf@notabene.neil.brown.name>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20171118001134.26622-1-mwilck@suse.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Guan Junxiong <guanjunxiong@huawei.com>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <87poe13rmm.fsf@notabene.neil.brown.name>
+Sender: linux-block-owner@vger.kernel.org
+To: NeilBrown <neilb@suse.com>
+Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-SGkgR3VhbiwKCndoaWxlIHN0YXJpbmcgYXQgdGhpcyBjb2RlIHRoZSBvdGhlciBkYXksIEkgcmVh
-bGl6ZWQgYW5vdGhlciBwb3NzaWJsZQppc3N1ZSB3aXRoIHlvdXIgbGF0ZW5jeSBwcmlvcml0aXpl
-ci4gCgpJdCB3aWxsIGNhdXNlIHNpZ25pZmljYW50IElPIHRvIGV2ZXJ5IHBhdGggb2YgYSBtYXAg
-ZHVyaW5nIG11bHRpcGF0aCAvCm11bHRpcGF0aGQgc3RhcnR1cC4gSWYgYW55IHBhdGhzIHJlYWxs
-eSBoYXZlIGxhdGVuY2llcyBhcyBsb25nIGFzIHlvdXIKcGF0Y2ggY29uc2lkZXJzICh1cCB0byAx
-MDBzKSwgb3Igd29yc2UgaWYgdGhleSBkb24ndCByZXNwb25kIGF0IGFsbCwKc3RhcnR1cCBtYXkg
-YmUgKm1hc3NpdmVseSogZGVsYXllZCBvciBtYXkgZXZlbiBuZXZlciBjb21wbGV0ZS4gU28gaWYg
-d2UKYSBzdG9yYWdlIHdpdGggdHdvIG1pcnJvcnMgd2l0aCBhIGZhc3QgYW5kIGEgc2xvdyBsZWcg
-KEkgcmVja29uIHRoYXQncwp0aGUgc2NlbmFyaW8gdGhpcyBwYXRjaCB3YXMgbWFkZSBmb3IpLCBh
-bmQgaWYgd2UncmUgb3V0IG9mIGx1Y2sgYW5kIHRoZQpzbG93IGxlZyBpcyBwcm9iZWQgZmlyc3Qs
-IHdlIG1heSBlbmQgdXAgaW4gYSBzaXR1YXRpb24gd2hlcmUgdGhlIGZhc3QKbGVnLCB3aGljaCBt
-YXkgYmUgZnVsbHkgdXAgYW5kIGhlYWx0aHksIGlzIG5ldmVyIHNldCB1cCAob3Igd2l0aCBiaWcK
-ZGVsYXkpIGJlY2F1c2UgbXVsdGlwYXRoZCBrZWVwcyB3YWl0aW5nIGZvciB0aGUgc2xvdyBsZWcg
-dG8gcmVzcG9uZC4KClNpbWlsYXIgZGVsYXlzIGNhbiBvY2N1ciB3aGVuZXZlciBwYXRoaW5mbygu
-Li4sIERJX1BSSU8pIGlzIGNhbGxlZC4KVW5sZXNzIEknbSBvdmVybG9va2luZyBzb21ldGhpbmcg
-ZXNzZW50aWFsIGhlcmUsIHRoYXQncyBhIHJlYWxseQpkYW5nZXJvdXMgdGhpbmcgdG8gZG8uIEkg
-YmVsaWV2ZSB0aGF0IGJlZm9yZSBhY3RpdmF0aW5nIHRoaXMgcHJpbwpjaGVja2VyIGZvciAgZXZl
-cnlvbmUsIHdlIG5lZWQgZmluZCBhIHdheSB0byBhdm9pZCB0aGlzIHNjZW5hcmlvLiAKCkJ5IHVz
-aW5nIGFpbyB3aXRoIGEgcmVhc29uYWJsZSB0aW1lb3V0IGZvciB0aGUgbGF0ZW5jeSBjaGVjayBy
-YXRoZXIKdGhlbiBzeW5jIElPLCB3ZSBjb3VsZCBhdCBsZWFzdCBzZXQgYW4gdXBwZXIgbGltaXQg
-Zm9yIHRoZSB0aW1lCmdldF9wcmlvIHRha2VzLiBUaGF0IHdvdWxkIGJlIGEgZmlyc3Qgc3RlcC4g
-QnV0IEkgZG9uJ3QgdGhpbmsgdGhhdAp3b3VsZCBiZSBzdWZmaWNpZW50LiAKCldoYXQgd2UnZCBy
-ZWFsbHkgbmVlZCBpcyBhbiBhc3luY2hyb25vdXMgcHJpb3JpdHkgY2hlY2tlciwgc2ltaWxhciB0
-bwp0aGUgYXN5bmNocm9ub3VzIHBhdGggY2hlY2tlci4gVGhlIGdldF9wcmlvKCkgY2FsbCB3b3Vs
-ZCByZXR1cm4KaW1tZWRpYXRlbHkgd2l0aCBzb21lIHNwZWNpYWwgcmV0dXJuIGNvZGUgaW5kaWNh
-dGluZyB0byB0aGUgY2FsbGVyIHRoYXQKYSBwcmlvcml0eSBjaGVjayBpcyBydW5uaW5nIHRoZSBi
-YWNrZ3JvdW5kLiBBIHByZWxpbWluYXJ5IHByaW8gd291bGQgYmUKc2V0IGZvciB0aGUgcGF0aCBp
-biBwYXRoaW5mbygpLCBhbmQgbXVsdGlwYXRoZCB3b3VsZCByZS1jaGVjayBsYXRlciAob3IKZ2V0
-IHNvbWUgc29ydCBvZiBldmVudCkgd2hlbiB0aGUgcHJpb3JpdHkgY2hlY2sgaGFzIGFjdHVhbGx5
-IGJlZW4gZG9uZS4KQW4gb3BlbiBxdWVzdGlvbiBpcyB3aGF0IG11bHRpcGF0aGQgc2hvdWxkIGRv
-IHdydCBwYXRoIGdyb3VwaW5nIGlmIGl0Cm9ubHkgaGFzIHByZWxpbWluYXJ5IHByaW8gdmFsdWVz
-LCBpbiBwYXJ0aWN1bGFyIHdpdGggZ3JvdXBfYnlfcHJpby4KClB1dHRpbmcgSGFubmVzIGFuZCBC
-ZW4gb24gQ0MgYmVjYXVzZSBJJ2QgbGlrZSB0byBnZXQgdGhlaXIgb3BpbmlvbiwKdG9vLgoKUmVn
-YXJkcwpNYXJ0aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwu
-ICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2
-cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJl
-cmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczov
-L3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On Sun, Jun 18, 2017 at 5:36 PM, NeilBrown <neilb@suse.com> wrote:
+> On Sun, Jun 18 2017, Jens Axboe wrote:
+>
+>> On Sun, Jun 18 2017, NeilBrown wrote:
+>>> This is a resend of my series of patches working
+>>> towards removing the bioset work queues.
+>>>
+>>> This set is based on for-4.13/block.
+>>>
+>>> It incorporates the revised versions of all the patches that were
+>>> resent following feedback on the last set.
+>>>
+>>> It also includes a minor grammatic improvement to a comment, and
+>>> simple changes to compensate for a couple of changes to the block tree
+>>> since the last posting.
+>>>
+>>> I hope to eventually get rid of the new BIOSET_NEED_RESCUER flag,
+>>> but that needs work in dm and probably bcache first.
+>>
+>> Thanks Neil, applied.
+>
+> Thanks a lot Jens.
+
+I missed this line of work until now.  Not quite sure why I wasn't
+cc'd or my review/ack required for the DM changes in this patchset.
+
+But I've now queued this patch for once Linus gets back (reverts DM
+changes from commit 47e0fb461f):
+https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=c9fdc42ba23eabd1ba7aef199fb9bb4b4fe5c545
+
+As is, it is my understanding that DM has no need for a bio_set's
+rescue_workqueue.  So its removal would appear to only be gated by
+bcache?
+
+But I could be mistaken, moving forward please let me know what you
+feel needs doing in DM to make it a better citizen.
+
+Thanks,
+Mike
