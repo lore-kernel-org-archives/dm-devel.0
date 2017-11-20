@@ -1,16 +1,16 @@
-From: Guan Junxiong <guanjunxiong@huawei.com>
-Subject: Re: [PATCH 4/4] libmultipath: path latency: remove
-	warnings
-Date: Sun, 19 Nov 2017 11:00:38 +0800
-Message-ID: <40620b36-625e-63f7-2387-367f46b5de09@huawei.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 3/4] libmultipath: path latency: simplify
+	getprio()
+Date: Mon, 20 Nov 2017 09:46:46 +0100
+Message-ID: <1511167606.25459.21.camel@suse.com>
 References: <20171118001134.26622-1-mwilck@suse.com>
-	<20171118001134.26622-5-mwilck@suse.com>
+	<20171118001134.26622-4-mwilck@suse.com>
+	<74584b90-53c7-341e-d422-dca85c267c90@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20171118001134.26622-5-mwilck@suse.com>
-Content-Language: en-US
+In-Reply-To: <74584b90-53c7-341e-d422-dca85c267c90@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,37 +20,61 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
+To: Guan Junxiong <guanjunxiong@huawei.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, niuhaoxin <niuhaoxin@huawei.com>, "Shenhong (C)" <shenhong09@huawei.com>
 List-Id: dm-devel.ids
 
-
-Looks fine.
-
-Reviewed-by: Guan Junxiong <guanjunxiong@huawei.com>
-
-On 2017/11/18 8:11, Martin Wilck wrote:
-> The warnings at here are pointless. We are looking at a single
-> path only. Firstly, the standdard deviation for this measurement
-> can't be "too low" - the lower, the more precise the measurement,
-> the better. Secondly, a high standard deviation indicates an
-> unstable path with highly variable latency. Not good, but nothing
-> to warn about here.
-> 
-> What matters for the selection of "base_num" is not how a single
-> path behaves, but how different paths of the same path group relate
-> to each other, which we don't know at this point at the code.
-> 
-
-Oh, you are right. Thanks.
-
-> What we want to avoid is too fine a differentiation, in particular
-> in combination with group_by_prio, because we'd loose the ability for
-> load balancing. But this is rather a topic for the man page or a
-> "best practices" document.
-> 
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  libmultipath/prioritizers/path_latency.c | 34 --------------------------------
->  1 file changed, 34 deletions(-)
-> 
+SGVsbG8gR3VhbiwKCj4gT24gMjAxNy8xMS8xOCA4OjExLCBNYXJ0aW4gV2lsY2sgd3JvdGU6Cj4g
+PiBUaGUgbG9nIHN0YW5kYXJkIGRldmlhdGlvbiBjYW4gYmUgY2FsY3VsYXRlZCBtdWNoIG1vcmUg
+c2ltcGx5Cj4gPiBieSByZWFsaXppbmcKPiA+IAo+ID4gICAgc3VtX24gKHhfaSAtIGF2Zyh4KSle
+MiA9PSBzdW1fbiB4X2leMiAtIG4gKiBhdmcoeCleMgo+ID4gCj4gCj4gSSBkZXJpdmUgdGhlIGVx
+dWF0aW9uOgo+ICBzdW1fbiB7KHhfaSAtIGF2Zyh4KSleMn0gPSBzdW1fbnt4X2leMiAtMip4X2kq
+YXZnKHgpICsgYXZnKHgpXjJ9Cj4gICAgICAgICAgICAgICAgICAgICAgICAgICA9IHN1bV9ue3hf
+aV4yfSAtIDIqYXZnKHgpKnN1bV9ue3hfaX0gKwo+IHN1bV9ue2F2Zyh4KV4yfQo+ICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgPSBzdW1fbnt4X2leMn0gLSAyKmF2Zyh4KSphdmcoeCkgKwo+IG4q
+YXZnKHgpXjIKPiAgICAgICAgICAgICAgICAgICAgICAgICAgID0gIHN1bV9ue3hfaV4yfSArIChu
+LTIpKmF2Zyh4KV4yCgpObywgdGhhdCdzIHdyb25nOgoKICAgIGF2Zyh4KSA9ICgxL24pICogc3Vt
+X24oeF9pKQo9PiAgc3VtX24oeF9pKSA9IG4gKiBhdmcoeCkKClRodXMgdGhlIDJuZCB0ZXJtIGlu
+IHRoZSBsaW5lIGJlZm9yZSB0aGUgbGFzdCBpbiB5b3VyIGRlcml2YXRpb24KaXMgbm90ICItIDIq
+YXZnKHgpKmF2Zyh4KSIsIGJ1dCAiLSAyKm4qYXZnKHgpKmF2Zyh4KSIsIGFuZCB0aGUgZW5kCnJl
+c3VsdCBiZWNvbWVzIHN1bV9uKHhfaV4yKSAtIG4qYXZnKHgpXjIuCgo+IAo+ID4gQWxzbywgdXNl
+IHRpbWVzcGVjc3ViIHJhdGhlciB0aGFuIHRoZSBjdXN0b20gdGltZXZhbF90b191c2VjLAo+ID4g
+YW5kIGF2b2lkIHRha2luZyBsb2coMCkuCj4gPiAKPiAKPiBHcmVhdC4KPiAKPiAKPiA+ICsJcHBf
+cGxfbG9nKDMsICIlczogbGF0ZW5jeSBhdmc9JS4yZSB1bmNlcnRhaW50eT0lLjFmCj4gPiBwcmlv
+PSVkXG4iLAo+IAo+IGxhdGVuY3kgYXZnIC0+IGxhdGVuY3kgZ2VvbWV0cmljIGF2ZyA/IEJlY2F1
+c2UgaW4gbW9zdCBjYXNlcywKPiBhdmcgbWVhbnMgYXJpdGhtZXRpYyBhdmcgLCBidXQgaW4gdGhp
+cyBjYXNlLCBpdCBtZWFucyBnZW9tZXRyaWMgYXZnLgoKWWVzLCBJIG1lYW50IHRoZSBnZW9tZXRy
+aWMgYXZlcmFnZS4gSSBkb24ndCB0aGluayB3ZSBzaG91bGQgYm90aGVyIHRoZQp1c2VyIHdpdGgg
+dGhlc2Ugc3VidGxldGllcy4gV2VsbCwgbWF5YmUgaXQgd291bGQgZmVlbCBiZXR0ZXIgaWYgd2Un
+ZAp1c2UgImdlb21ldHJpYyBtZWFuIiByYXRoZXIgdGhhbiAiYXZnIiBpbiB0aGUgbG9nIG1lc3Nh
+Z2UsIGFsaG91Z2ggdGhhdAptaWdodCBhZ2FpbiBpcnJpdGF0ZSBzb21lIHBlb3BsZSB3aG8gZG9u
+J3Qga25vdyB0aGUgdGVybSAuLi4gSSByZWFsbHkKZG9uJ3QgY2FyZSBtdWNoLgoKPiA+ICsJCSAg
+cHAtPmRldiwgZXhwKGxnX2F2Z2xhdGVuY3kgKiBsZ19iYXNlKSwKPiA+ICsJCSAgZXhwKHN0YW5k
+YXJkX2RldmlhdGlvbiAqIGxnX2Jhc2UpLCByYyk7Cj4gCj4gSG93IGNhbiB5b3UgZ2V0IHRoZSB1
+bmNlcnRhaW50eSBvZiBMb2ctbm9ybWFsIGRpc3RyaWJ1dGlvbgo+IGlzIHRoZSBleHAoc3RhbmRh
+cmRfZGV2aWF0aW9uICogbGdfYmFzZSkgPwoKVGhlICJ3aWR0aCIgb2YgdGhlIG5vcm1hbCBkaXN0
+cmlidXRpb24gaXMgbWVhc3VyZWQgaW4gdGVybXMgb2YgdGhlCnN0YW5kYXJkIGRldmlhdGlvbiwg
+c2lnbWEuIEluIHlvdXIgcGF0Y2gsIHlvdSBjb3JyZWN0bHkgYWNjb3VudGVkIGZvcgp0aGUgY29u
+ZmlkZW5jZSBsZXZlbHMgb2YgdGhlIDIqc2lnbWEgZW52aXJvbm1lbnQgCihodHRwczovL2VuLndp
+a2lwZWRpYS5vcmcvd2lraS82OCVFMiU4MCU5Mzk1JUUyJTgwJTkzOTkuN19ydWxlKS4KCkhlcmUs
+IHdlJ3JlIGFzc3VtaW5nIGEgbG9nLW5vcm1hbCBkaXN0cmlidXRpb24gZm9yIHRoZSBsYXRlbmN5
+IChpdCdzIGEKcHJhY3RpY2FsIGFzc3VtcHRpb24sIG5vdCBhIHN0YXRpc3RpY2FsIGFzc2VydGlv
+biAtIGluIHJlYWxpdHkgdGhlCmxhdGVuY3kgcHJvYmFibHkgcmF0aGVyIGZvbGxvd3MgYW4gZXhw
+b25lbnRpYWwgb3IgUG9pc3NvbiBkaXN0cmlidXRpb24KYnV0IHdlIGRvbid0IG5lZWQgdG8gZ28g
+aW50byB0aGF0IGRldGFpbCkuIFRoYXQgbWVhbnMgd2UncmUgYXNzdW1pbmcKdGhhdCBsb2cobGF0
+ZW5jeSkgY2FuIGJlIGRlc2NyaWJlZCBieSBhIG5vcm1hbCBkaXN0cmlidXRpb24gd2l0aCBhCmNl
+cnRhaW4gc3RhbmRhcmQgZGV2aWF0aW9uIHNpZ21hIGFyb3VuZCB0aGUgbG9nIG9mIHRoZSBnZW9t
+ZXRyaWMgbWVhbi4KQWdhaW4sIHNpZ21hIGlzIHRoZSAid2lkdGgiIG9mIHRoYXQgbm9ybWFsIGRp
+c3RyaWJ1dGlvbi4gVGh1cyB3aXRoIH42OCUKcHJvYmFiaWxpdHksIHRoZSBsb2cgb2YgdGhlIHRo
+ZSBsYXRlbmN5IGlzIGluIHRoZSAxLXNpZ21hIGludGVydmFsCmFyb3VuZCB0aGUgYXZlcmFnZS4g
+VHJhbnNsYXRpbmcgdGhhdCBiYWNrIGludG8gInJlYWwiIGxhdGVuY3ksIHdpdGggNjglCmxpa2Vs
+eWhvb2QgaXQgd2lsbCBiZSBpbiB0aGUgaW50ZXJ2YWwgWygxL0YpICogZ20sIEYqZ21dLCB3aGVy
+ZSBnbSBpcwp0aGUgZ2VvbWV0cmljIG1lYW4gYW5kIEY9ZXhwKHNpZ21hKS4gVGhlcmVmb3JlLCBG
+ICh3aGljaCBpcwpleHAoc3RhbmRhcmRfZGV2aWF0aW9uICogbGdfYmFzZSkpIGNhbiBiZSB1c2Vk
+IGFzIGFuIGVzdGltYXRlIG9mIHRoZQoidW5jZXJ0YWludHkgZmFjdG9yIiBmb3IgdGhlIGxhdGVu
+Y3kuCgpBZ3JlZWQ/CgpSZWdhcmRzCk1hcnRpbgoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxj
+a0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGludXggR21iSCwg
+R0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIg
+MjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEBy
+ZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZl
+bA==
