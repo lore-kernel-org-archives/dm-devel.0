@@ -1,8 +1,8 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH] libmultipath: fix return code of
-	sysfs_get_timeout
-Date: Mon, 20 Nov 2017 19:12:36 +0100
-Message-ID: <20171120181236.6697-1-mwilck@suse.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: add README.alua with
+	instructions to enable ALUA
+Date: Mon, 20 Nov 2017 19:53:15 +0100
+Message-ID: <20171120185315.3026-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -16,31 +16,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: dm-devel@redhat.com
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-This function should return 1 on success, as the other sysfs_get_XXX
-functions. The callers actually expect this - therefore timeout values
-from sysfs are never used.
+ALUA is supported in some storage devices, but usually it's disabled by default.
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/discovery.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ README.alua | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+ create mode 100644 README.alua
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index cadf4617894f..3ae934261b65 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -276,7 +276,7 @@ sysfs_get_timeout(struct path *pp, unsigned int *timeout)
- 	}
- 	*timeout = t;
- 
--	return 0;
-+	return 1;
- }
- 
- int
+diff --git a/README.alua b/README.alua
+new file mode 100644
+index 0000000..134696a
+--- /dev/null
++++ b/README.alua
+@@ -0,0 +1,14 @@
++This is a rough guide, consult your storage device manufacturer documentation.
++
++ALUA is supported in some devices, but usually it's disabled by default.
++To enable ALUA, the following options should be changed:
++
++- EMC CLARiiON/VNX:
++   "Failover Mode" should be changed to "4".
++
++- HPE 3PAR:
++   "Host:" should be changed to "Generic-ALUA Persona 2 (UARepLun, SESLun, ALUA)".
++
++- Promise VTrak/Vess:
++   "LUN Affinity" and "ALUA" should be changed to "Enable", "Redundancy Type"
++   must be "Active-Active".
 -- 
-2.15.0
+2.14.3
