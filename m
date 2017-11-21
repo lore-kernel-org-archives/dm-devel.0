@@ -1,11 +1,14 @@
 From: Gris Ge <fge@redhat.com>
-Subject: [PATCH 0/4] multipath-tools: libdmmp improvements.
-Date: Tue, 21 Nov 2017 22:09:13 +0800
-Message-ID: <20171121140917.18298-1-fge@redhat.com>
+Subject: [PATCH 1/4] multipathd daemon: Fix incorrect use of
+	CLOCK_MONOTONIC in pthread
+Date: Tue, 21 Nov 2017 22:09:14 +0800
+Message-ID: <20171121140917.18298-2-fge@redhat.com>
+References: <20171121140917.18298-1-fge@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20171121140917.18298-1-fge@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,22 +22,34 @@ To: dm-devel@redhat.com
 Cc: Gris Ge <fge@redhat.com>
 List-Id: dm-devel.ids
 
- * Patch 1/4 is a resend.
- * Patch 2/4, 3/4, and 4/4 add new functions to libdmmp library.
+Issue:
+    When multipathd is starting up, it will reply "timeout\n" immediatly
+    when got any IPC command from socket. The expected way is to wait
+    uxsock_timeout/1000 seconds.
 
-Gris Ge (4):
-  multipathd daemon: Fix incorrect use of CLOCK_MONOTONIC in pthread
-  multipath-tools: libdmmp: Allow log function as NULL.
-  multipath-tools: libdmmp: Add new function dmmp_last_error_msg()
-  multipath-tools: libdmmp: Add new error DMMP_ERR_PERMISSION_DENY
+Root cause:
+    pthread_mutex_timedlock() is expecting a CLOCK_REALTIME time.
 
- libdmmp/Makefile            |  2 +-
- libdmmp/libdmmp.c           | 20 ++++++++++++++++++++
- libdmmp/libdmmp/libdmmp.h   | 23 ++++++++++++++++++++++-
- libdmmp/libdmmp_misc.c      |  1 +
- libdmmp/test/libdmmp_test.c | 12 ++++++++----
- multipathd/cli.c            |  2 +-
- 6 files changed, 53 insertions(+), 7 deletions(-)
+Fix:
+    Use CLOCK_REALTIME for pthread_mutex_timedlock().
 
+Signed-off-by: Gris Ge <fge@redhat.com>
+---
+ multipathd/cli.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/multipathd/cli.c b/multipathd/cli.c
+index deb72cbe..f10f862c 100644
+--- a/multipathd/cli.c
++++ b/multipathd/cli.c
+@@ -480,7 +480,7 @@ parse_cmd (char * cmd, char ** reply, int * len, void * data, int timeout )
+ 	/*
+ 	 * execute handler
+ 	 */
+-	if (clock_gettime(CLOCK_MONOTONIC, &tmo) == 0) {
++	if (clock_gettime(CLOCK_REALTIME, &tmo) == 0) {
+ 		tmo.tv_sec += timeout;
+ 	} else {
+ 		tmo.tv_sec = 0;
 -- 
 2.15.0
