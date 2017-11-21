@@ -1,61 +1,37 @@
-From: Joseph Qi <jiangqi903@gmail.com>
-Subject: [PATCH v3 2/2] blk-throttle: fix wrong initialization in case of dm
- device
-Date: Tue, 21 Nov 2017 09:42:11 +0800
-Message-ID: <686ebf99-3c0a-491b-7df5-70740bebceeb@gmail.com>
+From: Theodore Ts'o <tytso@mit.edu>
+Subject: Re: [dm-devel] Ideas to reuse filesystem's checksum to enhance
+ dm-raid1/10/5/6?
+Date: Mon, 20 Nov 2017 21:53:29 -0500
+Message-ID: <20171121025329.ll72kg6yqkjeaz5o@thunk.org>
+References: <477d2d2b-3893-50c1-5946-076670a03f2d@gmx.com>
+ <7ed134fc-1616-a1ab-6701-a917af0522da@suse.com>
+ <5357fd4a-51b1-ebfb-27de-4d022d9749c0@gmx.com>
+ <4df8d248-5def-9d29-89eb-7d9b977f089e@suse.com>
+ <354402cd-587d-72d8-aaa1-87a1b5c9f03c@gmx.com>
+ <6e0f8a37-c3f8-61f0-d51d-01b72c3c65b7@redhat.com>
+ <189cda7b-e3ee-4379-c7f2-57efd759b78a@gmx.com>
+ <CAJCQCtRUGEdu13RCKFb6uZQ3UCzoAByhu97FdwQoFPxvsOua0Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Language: en-US
-Sender: linux-block-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>
-Cc: linux-block <linux-block@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, Shaohua Li <shli@kernel.org>, Mike Snitzer <snitzer@redhat.com>, qijiang.qj@alibaba-inc.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CAJCQCtRUGEdu13RCKFb6uZQ3UCzoAByhu97FdwQoFPxvsOua0Q@mail.gmail.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Chris Murphy <lists@colorremedies.com>
+Cc: Qu Wenruo <quwenruo.btrfs@gmx.com>, Nikolay Borisov <nborisov@suse.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, "linux-btrfs@vger.kernel.org" <linux-btrfs@vger.kernel.org>
 List-Id: dm-devel.ids
 
-From: Joseph Qi <qijiang.qj@alibaba-inc.com>
+On Thu, Nov 16, 2017 at 03:32:05PM -0700, Chris Murphy wrote:
+> 
+> XFS by default does metadata csums. But ext4 doesn't use it for either
+> metadata or the journal by default still, it is still optional. So for
+> now it mainly benefits XFS.
 
-DM device sets QUEUE_FLAG_NONROT after the queue is registered. That is
-to mean, the previous initialization in blk_throtl_register_queue is
-wrong in this case.
-Fix it by checking and then updating the info during root tg
-initialization as we don't have a better choice.
+Metadata checksums are enabled by default in the version of e2fsprogs
+shipped by Debian.  Since there were no real problems reported by
+Debian users, in the next release of e2fsprogs, coming soon, it will
+be enabled by default for all new ext4 file systems.
 
-Signed-off-by: Joseph Qi <qijiang.qj@alibaba-inc.com>
-Reviewed-by: Shaohua Li <shli@kernel.org>
----
- block/blk-throttle.c | 19 +++++++++++++++++++
- 1 file changed, 19 insertions(+)
+Regards,
 
-diff --git a/block/blk-throttle.c b/block/blk-throttle.c
-index bf52035..7150f14 100644
---- a/block/blk-throttle.c
-+++ b/block/blk-throttle.c
-@@ -541,6 +541,25 @@ static void throtl_pd_init(struct blkg_policy_data *pd)
- 	if (cgroup_subsys_on_dfl(io_cgrp_subsys) && blkg->parent)
- 		sq->parent_sq = &blkg_to_tg(blkg->parent)->service_queue;
- 	tg->td = td;
-+
-+#ifdef CONFIG_BLK_DEV_THROTTLING_LOW
-+	/*
-+	 * DM device sets QUEUE_FLAG_NONROT after the queue is registered,
-+	 * so the previous initialization is wrong in this case. Check and
-+	 * update it here.
-+	 */
-+	if (blk_queue_nonrot(blkg->q) &&
-+	    td->filtered_latency != LATENCY_FILTERED_SSD) {
-+		int i;
-+
-+		td->throtl_slice = DFL_THROTL_SLICE_SSD;
-+		td->filtered_latency = LATENCY_FILTERED_SSD;
-+		for (i = 0; i < LATENCY_BUCKET_SIZE; i++) {
-+			td->avg_buckets[READ][i].latency = 0;
-+			td->avg_buckets[WRITE][i].latency = 0;
-+		}
-+	}
-+#endif
- }
- 
- /*
--- 
-1.9.4
+					- Ted
