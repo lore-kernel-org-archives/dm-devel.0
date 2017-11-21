@@ -1,14 +1,11 @@
 From: Gris Ge <fge@redhat.com>
-Subject: [PATCH 2/4] multipath-tools: libdmmp: Allow log function
-	as NULL.
-Date: Tue, 21 Nov 2017 22:09:15 +0800
-Message-ID: <20171121140917.18298-3-fge@redhat.com>
-References: <20171121140917.18298-1-fge@redhat.com>
+Subject: [PATCH 0/4] multipath-tools: libdmmp improvements.
+Date: Tue, 21 Nov 2017 22:09:13 +0800
+Message-ID: <20171121140917.18298-1-fge@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20171121140917.18298-1-fge@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,42 +19,22 @@ To: dm-devel@redhat.com
 Cc: Gris Ge <fge@redhat.com>
 List-Id: dm-devel.ids
 
- * Do nothing when user set log function to NULL.
- * Update document to reflect so.
+ * Patch 1/4 is a resend.
+ * Patch 2/4, 3/4, and 4/4 add new functions to libdmmp library.
 
-Signed-off-by: Gris Ge <fge@redhat.com>
----
- libdmmp/libdmmp.c         | 3 +++
- libdmmp/libdmmp/libdmmp.h | 3 ++-
- 2 files changed, 5 insertions(+), 1 deletion(-)
+Gris Ge (4):
+  multipathd daemon: Fix incorrect use of CLOCK_MONOTONIC in pthread
+  multipath-tools: libdmmp: Allow log function as NULL.
+  multipath-tools: libdmmp: Add new function dmmp_last_error_msg()
+  multipath-tools: libdmmp: Add new error DMMP_ERR_PERMISSION_DENY
 
-diff --git a/libdmmp/libdmmp.c b/libdmmp/libdmmp.c
-index b4e7f08f..74cdb0a6 100644
---- a/libdmmp/libdmmp.c
-+++ b/libdmmp/libdmmp.c
-@@ -89,6 +89,9 @@ void _dmmp_log(struct dmmp_context *ctx, int priority, const char *file,
- {
- 	va_list args;
- 
-+	if (ctx->log_func == NULL)
-+		return;
-+
- 	va_start(args, format);
- 	ctx->log_func(ctx, priority, file, line, func_name, format, args);
- 	va_end(args);
-diff --git a/libdmmp/libdmmp/libdmmp.h b/libdmmp/libdmmp/libdmmp.h
-index 72b79b97..6e233e4f 100644
---- a/libdmmp/libdmmp/libdmmp.h
-+++ b/libdmmp/libdmmp/libdmmp.h
-@@ -258,7 +258,8 @@ DMMP_DLL_EXPORT int dmmp_context_log_priority_get(struct dmmp_context *ctx);
-  *	Pointer of 'struct dmmp_context'.
-  *	If this pointer is NULL, your program will be terminated by assert.
-  * @log_func:
-- *	Pointer of log handler function.
-+ *	Pointer of log handler function. If set to NULL, all log will be
-+ *	ignored.
-  *
-  * Return:
-  *	void
+ libdmmp/Makefile            |  2 +-
+ libdmmp/libdmmp.c           | 20 ++++++++++++++++++++
+ libdmmp/libdmmp/libdmmp.h   | 23 ++++++++++++++++++++++-
+ libdmmp/libdmmp_misc.c      |  1 +
+ libdmmp/test/libdmmp_test.c | 12 ++++++++----
+ multipathd/cli.c            |  2 +-
+ 6 files changed, 53 insertions(+), 7 deletions(-)
+
 -- 
 2.15.0
