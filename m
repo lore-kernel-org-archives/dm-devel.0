@@ -1,29 +1,23 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: new patchset to eliminate DM's use of      BIOSET_NEED_RESCUER
-Date: Tue, 21 Nov 2017 23:28:38 -0500
-Message-ID: <20171122042838.GB20417@redhat.com>
-References: <CAMM=eLf9Vu-z1ZEsGtRoSkhpaaQXAdr8TsUYUCSmAjqrqo=W-w@mail.gmail.com>
- <87a7zg31vx.fsf@notabene.neil.brown.name>
- <20171121013533.GA14520@redhat.com>
- <20171121121049.GA17014@redhat.com>
- <20171121124311.GA17243@redhat.com>
- <20171121194709.GA18903@redhat.com>
- <alpine.LRH.2.02.1711211613000.10766@file01.intranet.prod.int.rdu2.redhat.com>
- <20171121225119.GA19630@redhat.com>
- <alpine.LRH.2.02.1711212009040.28456@file01.intranet.prod.int.rdu2.redhat.com>
- <87bmjv0xos.fsf@notabene.neil.brown.name>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [dm-devel] new patchset to eliminate DM's use of
+ BIOSET_NEED_RESCUER
+Date: Wed, 22 Nov 2017 13:24:33 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1711221250090.21196@file01.intranet.prod.int.rdu2.redhat.com>
+References: <149776047907.23258.8058071140236879834.stgit@noble> <20170618184143.GA10920@kernel.dk> <87poe13rmm.fsf@notabene.neil.brown.name> <CAMM=eLf9Vu-z1ZEsGtRoSkhpaaQXAdr8TsUYUCSmAjqrqo=W-w@mail.gmail.com> <87a7zg31vx.fsf@notabene.neil.brown.name>
+ <20171121013533.GA14520@redhat.com> <20171121121049.GA17014@redhat.com> <20171121124311.GA17243@redhat.com> <20171121194709.GA18903@redhat.com> <alpine.LRH.2.02.1711211613000.10766@file01.intranet.prod.int.rdu2.redhat.com> <20171121225119.GA19630@redhat.com>
+ <alpine.LRH.2.02.1711212009040.28456@file01.intranet.prod.int.rdu2.redhat.com> <87bmjv0xos.fsf@notabene.neil.brown.name>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
 In-Reply-To: <87bmjv0xos.fsf@notabene.neil.brown.name>
 Sender: linux-block-owner@vger.kernel.org
 To: NeilBrown <neilb@suse.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, Jens Axboe <axboe@kernel.dk>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-block@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, Jens Axboe <axboe@kernel.dk>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-block@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Nov 21 2017 at 11:00pm -0500,
-NeilBrown <neilb@suse.com> wrote:
+
+
+On Wed, 22 Nov 2017, NeilBrown wrote:
 
 > On Tue, Nov 21 2017, Mikulas Patocka wrote:
 > 
@@ -110,19 +104,14 @@ NeilBrown <neilb@suse.com> wrote:
 > makes just one __map_bio() call, and so will behave exactly the way
 > generic_make_request() expects and copes with - thus avoiding awkward
 > dependencies and deadlocks.  Except....
-
-Yes, FYI I've also verified that even with just the "depth-first" patch
-(and dm_offload disabled) the snapshot deadlock is fixed.
- 
+> 
 > a/ If any target defines ->num_write_bios() to return >1,
 >    __clone_and_map_data_bio() will make multiple calls to alloc_tio()
 >    and __map_bio(), which might need rescuing.
 >    But no target defines num_write_bios, and none have since it was
 >    removed from dm-cache 4.5 years ago.
 >    Can we discard num_write_bios??
-
-Yes.
-
+> 
 > b/ If any target sets any of num_{flush,discard,write_same,write_zeroes}_bios
 >    to a value > 1, then __send_duplicate_bios() will also make multiple
 >    calls to alloc_tio() and __map_bio().
@@ -149,66 +138,34 @@ Yes.
 > at once safely.
 > A third would be needed to remove dm_offload() etc... but I cannot quite
 > fit that in today - must be off.
-
-Great.
-
-> From: NeilBrown <neilb@suse.com>
-> Date: Wed, 22 Nov 2017 14:25:18 +1100
-> Subject: [PATCH] DM: remove num_write_bios target interface.
 > 
-> No target provides num_write_bios and none has done
-> since 2013.
-> Having the possibility of num_write_bios > 1 complicates
-> bio allocation.
-> So remove the interface and assume there is only one bio
-> needed.
-> If a target ever needs more, it must provide a suitable
-> bioset and allocate itself based on its particular needs.
-> 
-> Signed-off-by: NeilBrown <neilb@suse.com>
-> ---
->  drivers/md/dm.c               | 22 ++++------------------
->  include/linux/device-mapper.h | 15 ---------------
->  2 files changed, 4 insertions(+), 33 deletions(-)
-> 
-> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> index b20febd6cbc7..8c1a05609eea 100644
-> --- a/drivers/md/dm.c
-> +++ b/drivers/md/dm.c
-> @@ -1323,27 +1323,13 @@ static int __clone_and_map_data_bio(struct clone_info *ci, struct dm_target *ti,
->  {
->  	struct bio *bio = ci->bio;
->  	struct dm_target_io *tio;
-> -	unsigned target_bio_nr;
-> -	unsigned num_target_bios = 1;
->  	int r = 0;
->  
-> -	/*
-> -	 * Does the target want to receive duplicate copies of the bio?
-> -	 */
-> -	if (bio_data_dir(bio) == WRITE && ti->num_write_bios)
-> -		num_target_bios = ti->num_write_bios(ti, bio);
-> -
-> -	for (target_bio_nr = 0; target_bio_nr < num_target_bios; target_bio_nr++) {
-> -		tio = alloc_tio(ci, ti, target_bio_nr);
-> -		tio->len_ptr = len;
-> -		r = clone_bio(tio, bio, sector, *len);
-> -		if (r < 0) {
-> -			free_tio(tio);
-> -			break;
-> -		}
-> +	tio = alloc_tio(ci, ti, 0);
-> +	tio->len_ptr = len;
-> +	r = clone_bio(tio, bio, sector, *len);
-> +	if (r >= 0)
->  		__map_bio(tio);
-> -	}
-> -
+> Thanks,
+> NeilBrown
 
-This bit is wrong, free_tio() is needed if clone_bio() fails.  I can fix
-it up though.
+Another problem is this:
 
-I'll work through your patches tomorrow.
+struct bio *b = bio_clone_bioset(bio, GFP_NOIO, md->queue->bio_split);
+bio_advance(b, (bio_sectors(b) - ci.sector_count) << 9);
+bio_chain(b, bio);
 
-Thanks,
-Mike
+What if it blocks because the bioset is exhausted?
+
+The code basically builds a chain of bios of unlimited length (suppose for 
+example a case when we are splitting on every sector boundary, so there 
+will be one bio for every sector in the original bio), it could exhaust 
+the bioset easily.
+
+It would be better to use mechanism from md-raid that chains all the 
+sub-bios to the same master bio and doesn't create long chains of bios:
+
+        if (max_sectors < bio_sectors(bio)) {
+                struct bio *split = bio_split(bio, max_sectors,
+                                              gfp, conf->bio_split);
+                bio_chain(split, bio);
+                generic_make_request(bio);
+                bio = split;
+                r1_bio->master_bio = bio;
+                r1_bio->sectors = max_sectors;
+        }
+
+Mikulas
