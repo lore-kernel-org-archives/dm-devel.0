@@ -1,62 +1,39 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [dm-devel] [PATCH 1/2] swait: export the symbols
- __prepare_to_swait and __finish_swait
-Date: Thu, 23 Nov 2017 00:28:57 -0800
-Message-ID: <20171123082857.GA17859@infradead.org>
-References: <alpine.LRH.2.02.1711222134370.2330@file01.intranet.prod.int.rdu2.redhat.com>
+From: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [dm-devel] [PATCH 2/2] dm-writecache
+Date: Thu, 23 Nov 2017 00:29:46 -0800
+Message-ID: <20171123082946.GB17859@infradead.org>
+References: <alpine.LRH.2.02.1711222135371.2330@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1711222134370.2330@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com, Mike Snitzer <msnitzer@redhat.com>, Daniel Wagner <daniel.wagner@bmw-carit.de>, Thomas Gleixner <tglx@linutronix.de>, Peter Zijlstra <peterz@infradead.org>, linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+In-Reply-To: <alpine.LRH.2.02.1711222135371.2330-Hpncn10jQN4oNljnaZt3ZvA+iT7yCHsGwRM8/txMwJMAicBL8TP8PQ@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Mike Snitzer <msnitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 List-Id: dm-devel.ids
 
-Please run this past the swait authors.  It is supposed to be a simple
-and self-contained API so I'd expect this patch to be seen critical.
+> +/*
+> + * The clflushopt instruction is very slow on Broadwell, so we use non-temporal
+> + * stores instead.
+> + */
+> +#ifdef CONFIG_X86_64
+> +#define NT_STORE(dest, src)	asm ("movnti %1, %0" : "=m"(dest) : "r"(src))
+> +#define FLUSH_RANGE(dax, ptr, size)  do { } while (0)
+> +#define COMMIT_FLUSHED()	wmb()
+> +#else
+> +#define NT_STORE(dest, src)	ACCESS_ONCE(dest) = (src)
+> +#define FLUSH_RANGE		dax_flush
+> +#define COMMIT_FLUSHED()	do { } while (0)
+> +#endif
 
-You might be better off to just use the normal complex waitqueues if
-you want to micro-optimize like this.
-
-On Wed, Nov 22, 2017 at 09:35:36PM -0500, Mikulas Patocka wrote:
-> In order to reduce locking overhead, I use the spinlock in
-> swait_queue_head to protect not only the wait queue, but also the list of
-> events. Consequently, I need to use unlocked functions __prepare_to_swait
-> and __finish_swait. These functions are declared in the file
-> include/linux/swait.h, but they are not exported, and so they are not
-> useable from kernel modules.
-> 
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> 
-> ---
->  kernel/sched/swait.c |    2 ++
->  1 file changed, 2 insertions(+)
-> 
-> Index: linux-2.6/kernel/sched/swait.c
-> ===================================================================
-> --- linux-2.6.orig/kernel/sched/swait.c
-> +++ linux-2.6/kernel/sched/swait.c
-> @@ -73,6 +73,7 @@ void __prepare_to_swait(struct swait_que
->  	if (list_empty(&wait->task_list))
->  		list_add(&wait->task_list, &q->task_list);
->  }
-> +EXPORT_SYMBOL(__prepare_to_swait);
->  
->  void prepare_to_swait(struct swait_queue_head *q, struct swait_queue *wait, int state)
->  {
-> @@ -102,6 +103,7 @@ void __finish_swait(struct swait_queue_h
->  	if (!list_empty(&wait->task_list))
->  		list_del_init(&wait->task_list);
->  }
-> +EXPORT_SYMBOL(__finish_swait);
->  
->  void finish_swait(struct swait_queue_head *q, struct swait_queue *wait)
->  {
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
----end quoted text---
+Please go through the proper pmem APIs.
