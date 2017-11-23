@@ -1,36 +1,80 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: new patchset to eliminate DM's use of BIOSET_NEED_RESCUER
-Date: Wed, 22 Nov 2017 16:18:29 -0500
-Message-ID: <20171122211828.GA29014@redhat.com>
-References: <87a7zg31vx.fsf@notabene.neil.brown.name>
- <20171121013533.GA14520@redhat.com>
- <20171121121049.GA17014@redhat.com>
- <20171121124311.GA17243@redhat.com>
- <20171121194709.GA18903@redhat.com>
- <alpine.LRH.2.02.1711211613000.10766@file01.intranet.prod.int.rdu2.redhat.com>
- <20171121225119.GA19630@redhat.com>
- <alpine.LRH.2.02.1711212009040.28456@file01.intranet.prod.int.rdu2.redhat.com>
- <87bmjv0xos.fsf@notabene.neil.brown.name>
- <20171122042838.GB20417@redhat.com>
+From: Guan Junxiong <guanjunxiong@huawei.com>
+Subject: Re: [PATCH 3/4] libmultipath: path latency: simplify
+	getprio()
+Date: Thu, 23 Nov 2017 10:20:48 +0800
+Message-ID: <ee0117c2-502f-d211-f55e-20a23c98874a@huawei.com>
+References: <06F84A57D601574CAA706EE1A6270A5F01039500@DGGEMM505-MBX.china.huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20171122042838.GB20417@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: NeilBrown <neilb@suse.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, Jens Axboe <axboe@kernel.dk>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-block@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <06F84A57D601574CAA706EE1A6270A5F01039500@DGGEMM505-MBX.china.huawei.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Martin Wilck <mwilck@suse.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, niuhaoxin <niuhaoxin@huawei.com>, "Shenhong (C)" <shenhong09@huawei.com>
 List-Id: dm-devel.ids
 
-On Tue, Nov 21 2017 at 11:28pm -0500,
-Mike Snitzer <snitzer@redhat.com> wrote:
-
-> 
-> I'll work through your patches tomorrow.
-
-Please see the top 3 patches on this branch:
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-4.16
-
-This rebased dm-4.16 branch seems to be working well so far.
-
-Mike
+SGkgTWFydGlu77yMCgpUaGFua3MgZm9yIHlvdXIgY2xhcmlmaWNhdGlvbi4gSSBhZ3JlZSB3aXRo
+IHlvdSBub3cgaW4gdGhpcyB0aHJlYWQuCgpSZWdhcmRzLApHdWFuCgoKT24gMjAxNy8xMS8yMCAx
+MDoxMCwgTWFydGluIHdyb3RlOgo+IAo+IEhlbGxvIEd1YW4sCj4gCj4+IE9uIDIwMTcvMTEvMTgg
+ODoxMSwgTWFydGluIFdpbGNrIHdyb3RlOgo+Pj4gVGhlIGxvZyBzdGFuZGFyZCBkZXZpYXRpb24g
+Y2FuIGJlIGNhbGN1bGF0ZWQgbXVjaCBtb3JlIHNpbXBseQo+Pj4gYnkgcmVhbGl6aW5nCj4+Pgo+
+Pj4gICAgc3VtX24gKHhfaSAtIGF2Zyh4KSleMiA9PSBzdW1fbiB4X2leMiAtIG4gKiBhdmcoeCle
+Mgo+Pj4KPj4KPj4gSSBkZXJpdmUgdGhlIGVxdWF0aW9uOgo+PiAgc3VtX24geyh4X2kgLSBhdmco
+eCkpXjJ9ID0gc3VtX257eF9pXjIgLTIqeF9pKmF2Zyh4KSArIGF2Zyh4KV4yfQo+PiAgICAgICAg
+ICAgICAgICAgICAgICAgICAgID0gc3VtX257eF9pXjJ9IC0gMiphdmcoeCkqc3VtX257eF9pfSAr
+Cj4+IHN1bV9ue2F2Zyh4KV4yfQo+PiAgICAgICAgICAgICAgICAgICAgICAgICAgID0gc3VtX257
+eF9pXjJ9IC0gMiphdmcoeCkqYXZnKHgpICsKPj4gbiphdmcoeCleMgo+PiAgICAgICAgICAgICAg
+ICAgICAgICAgICAgID0gIHN1bV9ue3hfaV4yfSArIChuLTIpKmF2Zyh4KV4yCj4gCj4gTm8sIHRo
+YXQncyB3cm9uZzoKPiAKPiAgICAgYXZnKHgpID0gKDEvbikgKiBzdW1fbih4X2kpCj4gPT4gIHN1
+bV9uKHhfaSkgPSBuICogYXZnKHgpCj4gCj4gVGh1cyB0aGUgMm5kIHRlcm0gaW4gdGhlIGxpbmUg
+YmVmb3JlIHRoZSBsYXN0IGluIHlvdXIgZGVyaXZhdGlvbgo+IGlzIG5vdCAiLSAyKmF2Zyh4KSph
+dmcoeCkiLCBidXQgIi0gMipuKmF2Zyh4KSphdmcoeCkiLCBhbmQgdGhlIGVuZAo+IHJlc3VsdCBi
+ZWNvbWVzIHN1bV9uKHhfaV4yKSAtIG4qYXZnKHgpXjIuCj4gPj4KPj4+IEFsc28sIHVzZSB0aW1l
+c3BlY3N1YiByYXRoZXIgdGhhbiB0aGUgY3VzdG9tIHRpbWV2YWxfdG9fdXNlYywKPj4+IGFuZCBh
+dm9pZCB0YWtpbmcgbG9nKDApLgo+Pj4KPj4KPj4gR3JlYXQuCj4+Cj4+Cj4+PiArCXBwX3BsX2xv
+ZygzLCAiJXM6IGxhdGVuY3kgYXZnPSUuMmUgdW5jZXJ0YWludHk9JS4xZgo+Pj4gcHJpbz0lZFxu
+IiwKPj4KPj4gbGF0ZW5jeSBhdmcgLT4gbGF0ZW5jeSBnZW9tZXRyaWMgYXZnID8gQmVjYXVzZSBp
+biBtb3N0IGNhc2VzLAo+PiBhdmcgbWVhbnMgYXJpdGhtZXRpYyBhdmcgLCBidXQgaW4gdGhpcyBj
+YXNlLCBpdCBtZWFucyBnZW9tZXRyaWMgYXZnLgo+IAo+IFllcywgSSBtZWFudCB0aGUgZ2VvbWV0
+cmljIGF2ZXJhZ2UuIEkgZG9uJ3QgdGhpbmsgd2Ugc2hvdWxkIGJvdGhlciB0aGUKPiB1c2VyIHdp
+dGggdGhlc2Ugc3VidGxldGllcy4gV2VsbCwgbWF5YmUgaXQgd291bGQgZmVlbCBiZXR0ZXIgaWYg
+d2UnZAo+IHVzZSAiZ2VvbWV0cmljIG1lYW4iIHJhdGhlciB0aGFuICJhdmciIGluIHRoZSBsb2cg
+bWVzc2FnZSwgYWxob3VnaCB0aGF0Cj4gbWlnaHQgYWdhaW4gaXJyaXRhdGUgc29tZSBwZW9wbGUg
+d2hvIGRvbid0IGtub3cgdGhlIHRlcm0gLi4uIEkgcmVhbGx5Cj4gZG9uJ3QgY2FyZSBtdWNoLgo+
+IAo+Pj4gKwkJICBwcC0+ZGV2LCBleHAobGdfYXZnbGF0ZW5jeSAqIGxnX2Jhc2UpLAo+Pj4gKwkJ
+ICBleHAoc3RhbmRhcmRfZGV2aWF0aW9uICogbGdfYmFzZSksIHJjKTsKPj4KPj4gSG93IGNhbiB5
+b3UgZ2V0IHRoZSB1bmNlcnRhaW50eSBvZiBMb2ctbm9ybWFsIGRpc3RyaWJ1dGlvbgo+PiBpcyB0
+aGUgZXhwKHN0YW5kYXJkX2RldmlhdGlvbiAqIGxnX2Jhc2UpID8KPiAKPiBUaGUgIndpZHRoIiBv
+ZiB0aGUgbm9ybWFsIGRpc3RyaWJ1dGlvbiBpcyBtZWFzdXJlZCBpbiB0ZXJtcyBvZiB0aGUKPiBz
+dGFuZGFyZCBkZXZpYXRpb24sIHNpZ21hLiBJbiB5b3VyIHBhdGNoLCB5b3UgY29ycmVjdGx5IGFj
+Y291bnRlZCBmb3IKPiB0aGUgY29uZmlkZW5jZSBsZXZlbHMgb2YgdGhlIDIqc2lnbWEgZW52aXJv
+bm1lbnQgCj4gKGh0dHBzOi8vZW4ud2lraXBlZGlhLm9yZy93aWtpLzY4JUUyJTgwJTkzOTUlRTIl
+ODAlOTM5OS43X3J1bGUpLgo+IAo+IEhlcmUsIHdlJ3JlIGFzc3VtaW5nIGEgbG9nLW5vcm1hbCBk
+aXN0cmlidXRpb24gZm9yIHRoZSBsYXRlbmN5IChpdCdzIGEKPiBwcmFjdGljYWwgYXNzdW1wdGlv
+biwgbm90IGEgc3RhdGlzdGljYWwgYXNzZXJ0aW9uIC0gaW4gcmVhbGl0eSB0aGUKPiBsYXRlbmN5
+IHByb2JhYmx5IHJhdGhlciBmb2xsb3dzIGFuIGV4cG9uZW50aWFsIG9yIFBvaXNzb24gZGlzdHJp
+YnV0aW9uCj4gYnV0IHdlIGRvbid0IG5lZWQgdG8gZ28gaW50byB0aGF0IGRldGFpbCkuIFRoYXQg
+bWVhbnMgd2UncmUgYXNzdW1pbmcKPiB0aGF0IGxvZyhsYXRlbmN5KSBjYW4gYmUgZGVzY3JpYmVk
+IGJ5IGEgbm9ybWFsIGRpc3RyaWJ1dGlvbiB3aXRoIGEKPiBjZXJ0YWluIHN0YW5kYXJkIGRldmlh
+dGlvbiBzaWdtYSBhcm91bmQgdGhlIGxvZyBvZiB0aGUgZ2VvbWV0cmljIG1lYW4uCj4gQWdhaW4s
+IHNpZ21hIGlzIHRoZSAid2lkdGgiIG9mIHRoYXQgbm9ybWFsIGRpc3RyaWJ1dGlvbi4gVGh1cyB3
+aXRoIH42OCUKPiBwcm9iYWJpbGl0eSwgdGhlIGxvZyBvZiB0aGUgdGhlIGxhdGVuY3kgaXMgaW4g
+dGhlIDEtc2lnbWEgaW50ZXJ2YWwKPiBhcm91bmQgdGhlIGF2ZXJhZ2UuIFRyYW5zbGF0aW5nIHRo
+YXQgYmFjayBpbnRvICJyZWFsIiBsYXRlbmN5LCB3aXRoIDY4JQo+IGxpa2VseWhvb2QgaXQgd2ls
+bCBiZSBpbiB0aGUgaW50ZXJ2YWwgWygxL0YpICogZ20sIEYqZ21dLCB3aGVyZSBnbSBpcwo+IHRo
+ZSBnZW9tZXRyaWMgbWVhbiBhbmQgRj1leHAoc2lnbWEpLiBUaGVyZWZvcmUsIEYgKHdoaWNoIGlz
+Cj4gZXhwKHN0YW5kYXJkX2RldmlhdGlvbiAqIGxnX2Jhc2UpKSBjYW4gYmUgdXNlZCBhcyBhbiBl
+c3RpbWF0ZSBvZiB0aGUKPiAidW5jZXJ0YWludHkgZmFjdG9yIiBmb3IgdGhlIGxhdGVuY3kuCj4g
+Cj4gQWdyZWVkPwo+IAo+IFJlZ2FyZHMKPiBNYXJ0aW4KPiAKCi0tCmRtLWRldmVsIG1haWxpbmcg
+bGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9s
+aXN0aW5mby9kbS1kZXZlbA==
