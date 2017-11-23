@@ -1,39 +1,36 @@
-From: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: Re: [dm-devel] [PATCH 2/2] dm-writecache
-Date: Thu, 23 Nov 2017 00:29:46 -0800
-Message-ID: <20171123082946.GB17859@infradead.org>
-References: <alpine.LRH.2.02.1711222135371.2330@file01.intranet.prod.int.rdu2.redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 3/4] libmultipath: path latency: simplify
+	getprio()
+Date: Thu, 23 Nov 2017 13:23:13 +0100
+Message-ID: <1511439793.1655.37.camel@suse.com>
+References: <06F84A57D601574CAA706EE1A6270A5F01039500@DGGEMM505-MBX.china.huawei.com>
+	<ee0117c2-502f-d211-f55e-20a23c98874a@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1711222135371.2330-Hpncn10jQN4oNljnaZt3ZvA+iT7yCHsGwRM8/txMwJMAicBL8TP8PQ@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Mike Snitzer <msnitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <ee0117c2-502f-d211-f55e-20a23c98874a@huawei.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Guan Junxiong <guanjunxiong@huawei.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, niuhaoxin <niuhaoxin@huawei.com>, "Shenhong (C)" <shenhong09@huawei.com>
 List-Id: dm-devel.ids
 
-> +/*
-> + * The clflushopt instruction is very slow on Broadwell, so we use non-temporal
-> + * stores instead.
-> + */
-> +#ifdef CONFIG_X86_64
-> +#define NT_STORE(dest, src)	asm ("movnti %1, %0" : "=m"(dest) : "r"(src))
-> +#define FLUSH_RANGE(dax, ptr, size)  do { } while (0)
-> +#define COMMIT_FLUSHED()	wmb()
-> +#else
-> +#define NT_STORE(dest, src)	ACCESS_ONCE(dest) = (src)
-> +#define FLUSH_RANGE		dax_flush
-> +#define COMMIT_FLUSHED()	do { } while (0)
-> +#endif
-
-Please go through the proper pmem APIs.
+T24gVGh1LCAyMDE3LTExLTIzIGF0IDEwOjIwICswODAwLCBHdWFuIEp1bnhpb25nIHdyb3RlOgo+
+IEhpIE1hcnRpbu+8jAo+IAo+IFRoYW5rcyBmb3IgeW91ciBjbGFyaWZpY2F0aW9uLiBJIGFncmVl
+IHdpdGggeW91IG5vdyBpbiB0aGlzIHRocmVhZC4KClRoYW5rIHlvdS4gSSdkIGJlIGdyYXRlZnVs
+IGlmIHlvdSBjb3VsZCBnaXZlIHRoZXNlIHBhdGNoZXMgYSB0ZXN0IGluCnlvdXIgZW52aXJvbm1l
+bnQsIEkgYmVsaWV2ZSB5b3UgaGF2ZSBiZXR0ZXIgdGVzdGluZyBlcXVpcG1lbnQgZm9yIHRoaXMK
+c3R1ZmYgdGhhbiBJIGRvLiAKCkp1c3QgaW4gY2FzZSBJIG1hZGUgYSBzaWxseSBtaXN0YWtlLgoK
+TWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLiArNDkg
+KDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVy
+LCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoK
+LS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cu
+cmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
