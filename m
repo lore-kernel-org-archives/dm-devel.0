@@ -1,77 +1,107 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [dm-devel] [PATCH 1/2] swait: export the symbols __prepare_to_swait
- and __finish_swait
-Date: Thu, 23 Nov 2017 17:27:18 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1711231722440.12809@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1711222134370.2330@file01.intranet.prod.int.rdu2.redhat.com> <20171123082857.GA17859@infradead.org>
+From: NeilBrown <neilb@suse.com>
+Subject: [PATCH] dm: use cloned bio as head, not remainder, in __split_and_process_bio()
+Date: Fri, 24 Nov 2017 09:52:16 +1100
+Message-ID: <878tewzjz3.fsf@notabene.neil.brown.name>
+References: <149776047907.23258.8058071140236879834.stgit@noble> <20170618184143.GA10920@kernel.dk> <87poe13rmm.fsf@notabene.neil.brown.name> <CAMM=eLf9Vu-z1ZEsGtRoSkhpaaQXAdr8TsUYUCSmAjqrqo=W-w@mail.gmail.com> <87a7zg31vx.fsf@notabene.neil.brown.name> <20171121013533.GA14520@redhat.com> <20171121121049.GA17014@redhat.com> <20171121124311.GA17243@redhat.com> <20171121194709.GA18903@redhat.com> <alpine.LRH.2.02.1711211613000.10766@file01.intranet.prod.int.rdu2.redhat.com> <20171121225119.GA19630@redhat.com> <alpine.LRH.2.02.1711212009040.28456@file01.intranet.prod.int.rdu2.redhat.com> <87bmjv0xos.fsf@notabene.neil.brown.name> <alpine.LRH.2.02.1711221250090.21196@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: multipart/signed; boundary="=-=-=";
+        micalg=pgp-sha256; protocol="application/pgp-signature"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20171123082857.GA17859@infradead.org>
+In-Reply-To: <alpine.LRH.2.02.1711221250090.21196@file01.intranet.prod.int.rdu2.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@infradead.org>
-Cc: dm-devel@redhat.com, Mike Snitzer <msnitzer@redhat.com>, Daniel Wagner <daniel.wagner@bmw-carit.de>, Thomas Gleixner <tglx@linutronix.de>, Peter Zijlstra <peterz@infradead.org>, linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, Jens Axboe <axboe@kernel.dk>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-block@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
+--=-=-=
+Content-Type: text/plain
+Content-Transfer-Encoding: quoted-printable
 
 
-On Thu, 23 Nov 2017, Christoph Hellwig wrote:
+When we use bio_clone_bioset() to split off the front part of a bio
+and chain the two together and submit the remainder to
+generic_make_request(), it is important that the newly allocated
+bio is used as the head to be processed immediately, and the original
+bio gets "bio_advance()"d and sent to generic_make_request() as the
+remainder.
 
-> Please run this past the swait authors.  It is supposed to be a simple
-> and self-contained API so I'd expect this patch to be seen critical.
+If the newly allocated bio is used as the remainder, and if it then
+needs to be split again, then the next bio_clone_bioset() call will
+be made while holding a reference a bio (result of the first clone)
+from the same bioset.  This can potentially exhaust the bioset mempool
+and result in a memory allocation deadlock.
 
-I already sent it to Peter Zijlstra and didn't get a response yet.
+So the result of the bio_clone_bioset() must be attached to the new
+dm_io struct, and the original must be resubmitted.  The current code
+is backwards.
 
-> You might be better off to just use the normal complex waitqueues if
-> you want to micro-optimize like this.
+Note that there is no race caused by reassigning cio.io->bio after already
+calling __map_bio().  This bio will only be dereferenced again after
+dec_pending() has found io->io_count to be zero, and this cannot happen
+before the dec_pending() call at the end of __split_and_process_bio().
 
-If we wanted to micro-optimize, we should use the simpler wait queue 
-variant.
+Reported-by: Mikulas Patocka <mpatocka@redhat.com>
+Signed-off-by: NeilBrown <neilb@suse.com>
+=2D--
+
+Hi,
+ I think this should resolve the problem Mikulas noticed that the
+ bios form a deep chain instead of a wide tree.
+
+Thanks,
+NeilBrown
+
+ drivers/md/dm.c | 11 +++++++++--
+ 1 file changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 99ec215f7dcb..2e0e10a1c030 100644
+=2D-- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1482,12 +1482,19 @@ static void __split_and_process_bio(struct mapped_d=
+evice *md,
+ 				 * Remainder must be passed to generic_make_request()
+ 				 * so that it gets handled *after* bios already submitted
+ 				 * have been completely processed.
++				 * We take a clone of the original to store in
++				 * ci.io->bio to be used by end_io_acct() and
++				 * for dec_pending to use for completion handling.
++				 * As this path is not used for REQ_OP_ZONE_REPORT,
++				 * the usage of io->bio in dm_remap_zone_report()
++				 * won't be affected by this reassignment.
+ 				 */
+ 				struct bio *b =3D bio_clone_bioset(bio, GFP_NOIO,
+ 								 md->queue->bio_split);
+=2D				bio_advance(b, (bio_sectors(b) - ci.sector_count) << 9);
++				ci.io->bio =3D b;
++				bio_advance(bio, (bio_sectors(bio) - ci.sector_count) << 9);
+ 				bio_chain(b, bio);
+=2D				generic_make_request(b);
++				generic_make_request(bio);
+ 				break;
+ 			}
+ 		}
+=2D-=20
+2.14.0.rc0.dirty
 
 
-If these functions are not supposed to be used by others, then
-- why are they in in file swait.h?
-- why does the implementation export swake_up_locked which assumes that 
-someone else will lock the spinlock before calling it?
+--=-=-=
+Content-Type: application/pgp-signature; name="signature.asc"
 
-> On Wed, Nov 22, 2017 at 09:35:36PM -0500, Mikulas Patocka wrote:
-> > In order to reduce locking overhead, I use the spinlock in
-> > swait_queue_head to protect not only the wait queue, but also the list of
-> > events. Consequently, I need to use unlocked functions __prepare_to_swait
-> > and __finish_swait. These functions are declared in the file
-> > include/linux/swait.h, but they are not exported, and so they are not
-> > useable from kernel modules.
-> > 
-> > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> > 
-> > ---
-> >  kernel/sched/swait.c |    2 ++
-> >  1 file changed, 2 insertions(+)
-> > 
-> > Index: linux-2.6/kernel/sched/swait.c
-> > ===================================================================
-> > --- linux-2.6.orig/kernel/sched/swait.c
-> > +++ linux-2.6/kernel/sched/swait.c
-> > @@ -73,6 +73,7 @@ void __prepare_to_swait(struct swait_que
-> >  	if (list_empty(&wait->task_list))
-> >  		list_add(&wait->task_list, &q->task_list);
-> >  }
-> > +EXPORT_SYMBOL(__prepare_to_swait);
-> >  
-> >  void prepare_to_swait(struct swait_queue_head *q, struct swait_queue *wait, int state)
-> >  {
-> > @@ -102,6 +103,7 @@ void __finish_swait(struct swait_queue_h
-> >  	if (!list_empty(&wait->task_list))
-> >  		list_del_init(&wait->task_list);
-> >  }
-> > +EXPORT_SYMBOL(__finish_swait);
-> >  
-> >  void finish_swait(struct swait_queue_head *q, struct swait_queue *wait)
-> >  {
-> > 
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://www.redhat.com/mailman/listinfo/dm-devel
-> ---end quoted text---
-> 
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCAAdFiEEG8Yp69OQ2HB7X0l6Oeye3VZigbkFAloXUSEACgkQOeye3VZi
+gbnB6Q/8DjyvCH8cNZIxE2acp43X7QW3kf+K/EMsKfpr79+gfLIcORJlP8GtsHe6
+n8kIQEKUMXGbTH6zrEcZ27GaZ9X4EA/vDxQ5R56mgTobCBcGZUP/cVfDgp0pfndi
+5CwWve2S7s2a0/Emym7oxWnJhC/84aMC/7HWBV1BOty1hO4UtnD9VHdFFTkLnXuO
+66qrdbV85QLTi80W/MvMXdtykXz6Z2n7FegvL3/v9GK2YEd0Q7+FjxhPxnLl10Iw
+NzJRQ0TYcoTeRxMUeYzjpA602tp5PX5wfbSamdsv1YXWia9eVGxO38UmWQll8CPo
+CT/vG39bFS1cip5bJ9BCvYP3ZE6UIaceLQ6G50dROlLSqeL2UATp4BA9UqArZPVd
+rdddQaiLQTnTnibcF4O/aovEJugtSaNkbynsIGvPsSFLEvK8qbicaezm0bycvU3d
+nR99TYG7yL/lo5Vs9FRv3eRMf5g4BLwINoyp0PilAq6cP5TwB/sQXMrVsY3arPyA
+Td+rOVwpdXCQ7hiA8cC9uSSxID6g9IeXCbOIhvYHofad9z1SvmKryllGvTBC892d
+n6+GocfYyWAv4qoJ/04tnEU4k0T2fb/eu7w1pSA1OSd9Rqm/L2ysy7S5L8wElLGk
+h7Hg+Uflt0GL6NycJ+6D6H5yZwdv9BdQcSgXp5Yq3Mw3l3yIu/I=
+=+nQ0
+-----END PGP SIGNATURE-----
+--=-=-=--
