@@ -1,32 +1,41 @@
-From: Changwei Ge <ge.changwei@h3c.com>
-Subject: [RFC] dm-devel mailing list can't be joined
-Date: Fri, 24 Nov 2017 01:56:10 +0000
-Message-ID: <63ADC13FD55D6546B7DECE290D39E373CED7EEBC@H3CMLB14-EX.srv.huawei-3com.com>
+From: "Reshetova, Elena" <elena.reshetova@intel.com>
+Subject: RE: [dm-devel] [PATCH 3/4] dm: convert dm_dev_internal.count from
+        atomic_t to refcount_t
+Date: Fri, 24 Nov 2017 07:36:26 +0000
+Message-ID: <2236FBA76BA1254E88B949DDB74E612B802C1F07@IRSMSX102.ger.corp.intel.com>
+References: <1508485059-21881-1-git-send-email-elena.reshetova@intel.com>
+ <1508485059-21881-4-git-send-email-elena.reshetova@intel.com>
+ <20171123154941.GA15790@agk-dp.fab.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20171123154941.GA15790@agk-dp.fab.redhat.com>
 Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
-Cc: Wuchongyun <wu.chongyun@h3c.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "keescook@chromium.org" <keescook@chromium.org>, "snitzer@redhat.com" <snitzer@redhat.com>, "peterz@infradead.org" <peterz@infradead.org>, "shli@kernel.org" <shli@kernel.org>, "koverstreet@google.com" <koverstreet@google.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>, "linux-bcache@vger.kernel.org" <linux-bcache@vger.kernel.org>, "ejt@redhat.comg" <ejt@redhat.comg>, "kent.overstreet@gmail.com" <kent.overstreet@gmail.com>, Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
+> On Fri, Oct 20, 2017 at 10:37:38AM +0300, Elena Reshetova wrote:
+> >  	} else if (dd->dm_dev->mode != (mode | dd->dm_dev->mode)) {
+> >  		r = upgrade_mode(dd, mode, t->md);
+> >  		if (r)
+> >  			return r;
+> > +		refcount_inc(&dd->count);
+> >  	}
+> 
+> Missing here:
+> 
+>         else
+> 		refcount_inc(&dd->count);
+> 
+> ?
 
-It's strange dm-devel mailing list can't be joined right now since no 
-CAPTCHA shows up on portal website 
-https://www.redhat.com/mailman/listinfo/dm-devel.
+Oh, yes, thanks for catching this! I think this got unnoticed so far and patch was merged, so I am going to send a followup patch now. 
 
-Does anyone has any idea how to join dm-devel@redhat.com now?
+Best Regards,
+Elena.
 
-Thanks,
-Changwei
+> 
+> Alasdair
