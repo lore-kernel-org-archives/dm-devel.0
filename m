@@ -1,38 +1,37 @@
-From: "Reshetova, Elena" <elena.reshetova@intel.com>
-Subject: RE: [PATCH 4/4] dm: convert table_device.count from atomic_t to
-        refcount_t
-Date: Fri, 24 Nov 2017 14:44:40 +0000
-Message-ID: <2236FBA76BA1254E88B949DDB74E612B802C2094@IRSMSX102.ger.corp.intel.com>
-References: <1508485059-21881-1-git-send-email-elena.reshetova@intel.com>
- <1508485059-21881-5-git-send-email-elena.reshetova@intel.com>
- <92f8c04f-ef1a-c41b-e82f-8d68a3ec84b5@redhat.com>
- <2236FBA76BA1254E88B949DDB74E612B802C1F4D@IRSMSX102.ger.corp.intel.com>
- <20171124140413.GG5952@agk-dp.fab.redhat.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: [RFC] dm-devel mailing list can't be joined
+Date: Fri, 24 Nov 2017 16:31:07 +0100
+Message-ID: <745d144e-4756-3bb8-c3ae-8924dca82cc4@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-bcache-owner@vger.kernel.org>
-In-Reply-To: <20171124140413.GG5952@agk-dp.fab.redhat.com>
-Content-Language: en-US
-Sender: linux-bcache-owner@vger.kernel.org
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: Zdenek Kabelac <zkabelac@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-bcache@vger.kernel.org" <linux-bcache@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>, "kent.overstreet@gmail.com" <kent.overstreet@gmail.com>, "koverstreet@google.com" <koverstreet@google.com>, "ejt@redhat.com" <ejt@redhat.com>, "snitzer@redhat.com" <snitzer@redhat.com>, "shli@kernel.org" <shli@kernel.org>, "peterz@infradead.org" <peterz@infradead.org>, "keescook@chromium.org" <keescook@chromium.org>
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: en-GB
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>, Changwei Ge <ge.changwei@h3c.com>
 List-Id: dm-devel.ids
 
-> On Fri, Nov 24, 2017 at 08:29:42AM +0000, Reshetova, Elena wrote:
-> > By looking at the code, I don't see where the change in the reference counting
-> > could have caused this.
-> 
-> The cause was the bug I identified in patch 3, not this patch.
+Changwei Ge wrote:
 
-Oh, ok, because I could not figure an issue with this patch. 
-I will send the fixing patch shortly. 
+> It's strange dm-devel mailing list can't be joined right now since no 
+> CAPTCHA shows up on portal website 
+> https://www.redhat.com/mailman/listinfo/dm-devel.
 
-Best Regards,
-Elena.
+Here it is working fine. Disable blocker add-ons or try a
+different web browser.
 
-> 
-> The regression is easily hit - tables that reference the same underlying device
-> more than once are very common.
-> 
-> Alasdair
+> Does anyone has any idea how to join dm-devel@redhat.com now?
+
+Mailman is reachable also through email commands to: <dm-devel-request@redhat.com>
+Send "help" in the subject line or in the body of the
+message. For more info, and detailed instructions go to:
+http://www.list.org/mailman-member/node41.html
+http://www.list.org/mailman-member/node42.html
