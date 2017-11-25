@@ -1,67 +1,38 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: Re: [PATCH 2/2] dm-writecache
-Date: Fri, 24 Nov 2017 21:43:30 -0800
-Message-ID: <CAA9_cmcRe8KXO+jWy8knqg4EMCgBYF1JAdgR=A2qHkVES+i9ZA@mail.gmail.com>
-References: <alpine.LRH.2.02.1711222135371.2330@file01.intranet.prod.int.rdu2.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [dm-devel] [PATCH 3/4] dm: convert dm_dev_internal.count from
+ atomic_t to refcount_t
+Date: Sat, 25 Nov 2017 00:56:32 -0500
+Message-ID: <CAMM=eLfrnQqBH06pPnNKfmeF=AjScAxjR1WD7Ur9NAEY=4Sxog@mail.gmail.com>
+References: <1508485059-21881-1-git-send-email-elena.reshetova@intel.com>
+ <1508485059-21881-4-git-send-email-elena.reshetova@intel.com>
+ <20171123154941.GA15790@agk-dp.fab.redhat.com> <2236FBA76BA1254E88B949DDB74E612B802C1F07@IRSMSX102.ger.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.1711222135371.2330@file01.intranet.prod.int.rdu2.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <msnitzer@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <2236FBA76BA1254E88B949DDB74E612B802C1F07@IRSMSX102.ger.corp.intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Reshetova, Elena" <elena.reshetova@intel.com>
+Cc: Alasdair G Kergon <agk@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "keescook@chromium.org" <keescook@chromium.org>, "peterz@infradead.org" <peterz@infradead.org>, "shli@kernel.org" <shli@kernel.org>, "koverstreet@google.com" <koverstreet@google.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>, "linux-bcache@vger.kernel.org" <linux-bcache@vger.kernel.org>, "ejt@redhat.comg" <ejt@redhat.comg>, "kent.overstreet@gmail.com" <kent.overstreet@gmail.com>, Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Nov 22, 2017 at 6:36 PM, Mikulas Patocka <mpatocka@redhat.com> wrote:
-> Hi
+On Fri, Nov 24, 2017 at 2:36 AM, Reshetova, Elena
+<elena.reshetova@intel.com> wrote:
+>> On Fri, Oct 20, 2017 at 10:37:38AM +0300, Elena Reshetova wrote:
+>> >     } else if (dd->dm_dev->mode != (mode | dd->dm_dev->mode)) {
+>> >             r = upgrade_mode(dd, mode, t->md);
+>> >             if (r)
+>> >                     return r;
+>> > +           refcount_inc(&dd->count);
+>> >     }
+>>
+>> Missing here:
+>>
+>>         else
+>>               refcount_inc(&dd->count);
+>>
+>> ?
 >
-> Here I'm sending slighly update dm-writecache target.
->
+> Oh, yes, thanks for catching this! I think this got unnoticed so far and patch was merged, so I am going to send a followup patch now.
 
-I would expect some theory of operation documentation in the changelog
-or in Documentation/ for a new driver.
-
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
->
-[..]
-> +/*
-> + * The clflushopt instruction is very slow on Broadwell, so we use non-temporal
-> + * stores instead.
-> + */
-
-The clflushopt instruction's first instantiation in a cpu was after
-Broadwell. Also, the performance of clflushopt does not much matter
-when running on a system without ADR (asynchronous DRAM refresh) where
-flushing the cpu cache can just leave the writes stranded on their way
-to the DIMM. ADR is not available on general purpose servers until
-ACPI 6.x NFIT-defined persistent memory platforms.
-
-> +#ifdef CONFIG_X86_64
-
-In general something is broken if we end up with per-arch ifdefs like
-this in drivers to handle persistent memory. This should be using the
-pmem api or extensions of it, and we need to settle on a mechanism for
-upper-level drivers to ask if pmem is driving platform protected
-persistent memory.
-
-> +#define NT_STORE(dest, src)    asm ("movnti %1, %0" : "=m"(dest) : "r"(src))
-> +#define FLUSH_RANGE(dax, ptr, size)  do { } while (0)
-> +#define COMMIT_FLUSHED()       wmb()
-> +#else
-> +#define NT_STORE(dest, src)    ACCESS_ONCE(dest) = (src)
-> +#define FLUSH_RANGE            dax_flush
-> +#define COMMIT_FLUSHED()       do { } while (0)
-
-Is this just for test purposes? How does the user discover that they
-are running in a degraded mode as far as persistence guarantees? I
-think we should be falling back DM_WRITECACHE_ONLY_SSD mode if we're
-not on a pmem platform.
+I pushed this fix and will send to Linus next week:
+https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.15&id=d908af82d06cc420f9581c97c6db941cb87e4434
