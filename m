@@ -1,56 +1,57 @@
-From: amulhern@redhat.com
-Subject: [PATCH 4/7] dm: documentation fix
-Date: Mon, 27 Nov 2017 10:02:42 -0500
-Message-ID: <20171127150245.27959-4-amulhern@redhat.com>
-References: <20171127150245.27959-1-amulhern@redhat.com>
+From: Bart Van Assche <Bart.VanAssche@wdc.com>
+Subject: Re: [PATCH V2 1/5] dm-mpath: don't call blk_mq_delay_run_hw_queue()
+ in case of BLK_STS_RESOURCE
+Date: Mon, 27 Nov 2017 17:14:46 +0000
+Message-ID: <1511802882.2993.4.camel@wdc.com>
+References: <20171127050721.5884-1-ming.lei@redhat.com>
+         <20171127050721.5884-2-ming.lei@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20171127150245.27959-1-amulhern@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: mulhern <amulhern@redhat.com>, snitzer@redhat.com
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20171127050721.5884-2-ming.lei@redhat.com>
+Content-Language: en-US
+Content-ID: <221160CB3AE1554BB81F5CDFA9FCDC8C@namprd04.prod.outlook.com>
+Sender: linux-block-owner@vger.kernel.org
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "axboe@fb.com" <axboe@fb.com>, "ming.lei@redhat.com" <ming.lei@redhat.com>, "snitzer@redhat.com" <snitzer@redhat.com>
+Cc: "hch@infradead.org" <hch@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "hare@suse.com" <hare@suse.com>, "osandov@fb.com" <osandov@fb.com>
 List-Id: dm-devel.ids
 
-From: mulhern <amulhern@redhat.com>
-
-Be consistent in specifying sectors and SI units
-
-Signed-off-by: mulhern <amulhern@redhat.com>
----
- Documentation/device-mapper/cache.txt | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
-
-diff --git a/Documentation/device-mapper/cache.txt b/Documentation/device-mapper/cache.txt
-index 0435244..79c7b6d 100644
---- a/Documentation/device-mapper/cache.txt
-+++ b/Documentation/device-mapper/cache.txt
-@@ -59,7 +59,7 @@ Fixed block size
- The origin is divided up into blocks of a fixed size.  This block size
- is configurable when you first create the cache.  Typically we've been
- using block sizes of 256KB - 1024KB.  The block size must be between 64
--(32KB) and 2097152 (1GB) and a multiple of 64 (32KB).
-+sectors (32KB) and 2097152 sectors (1GB) and a multiple of 64 sectors (32KB).
- 
- Having a fixed block size simplifies the target a lot.  But it is
- something of a compromise.  For instance, a small part of a block may be
-@@ -119,7 +119,7 @@ doing here to avoid migrating during those peak io moments.
- 
- For the time being, a message "migration_threshold <#sectors>"
- can be used to set the maximum number of sectors being migrated,
--the default being 204800 sectors (or 100MB).
-+the default being 204800 sectors (100MB).
- 
- Updating on-disk metadata
- -------------------------
--- 
-2.9.5
+T24gTW9uLCAyMDE3LTExLTI3IGF0IDEzOjA3ICswODAwLCBNaW5nIExlaSB3cm90ZToNCj4gSWYg
+LnF1ZXVlX3JxKCkgcmV0dXJucyBCTEtfU1RTX1JFU09VUkNFLCBibGstbXEgd2lsbCByZXJ1biB0
+aGUgcXVldWUgaW4NCj4gdGhlIHRocmVlIHNpdHVhdGlvbnM6DQo+IA0KPiAxKSBpZiBCTEtfTVFf
+U19TQ0hFRF9SRVNUQVJUIGlzIHNldA0KPiAtIHF1ZXVlIGlzIHJlcnVuIGFmdGVyIG9uZSBycSBp
+cyBjb21wbGV0ZWQsIHNlZSBibGtfbXFfc2NoZWRfcmVzdGFydCgpDQo+IHdoaWNoIGlzIHJ1biBm
+cm9tIGJsa19tcV9mcmVlX3JlcXVlc3QoKQ0KPiANCj4gMikgcnVuIG91dCBvZiBkcml2ZXIgdGFn
+DQo+IC0gcXVldWUgaXMgcmVydW4gYWZ0ZXIgb25lIHRhZyBpcyBmcmVlZA0KPiANCj4gMykgb3Ro
+ZXJ3aXNlDQo+IC0gcXVldWUgaXMgcnVuIGltbWVkaWF0ZWx5IGluIGJsa19tcV9kaXNwYXRjaF9y
+cV9saXN0KCkNCj4gDQo+IFRoaXMgcmFuZG9tIGRlYWx5IG9mIHJ1bm5pbmcgaHcgcXVldWUgaXMg
+aW50cm9kdWNlZCBieSBjb21taXQgNjA3N2MyZDcwNjA5N2MwDQo+IChkbSBycTogQXZvaWQgdGhh
+dCByZXF1ZXN0IHByb2Nlc3Npbmcgc3RhbGxzIHNwb3JhZGljYWxseSksIHdoaWNoIGNsYWltZWQN
+Cj4gb25lIHJlcXVlc3QgcHJvY2Vzc2luZyBzdGFsbGluZyBpcyBmaXhlZCwgYnV0IG5ldmVyIGV4
+cGxhaW5lZCB0aGUgYmVoaW5kDQo+IGlkZWEsIGFuZCBpdCBpcyBhIHdvcmthb3VuZCBhdCBtb3N0
+LiBFdmVuIHRoZSBxdWVzdGlvbiBpc24ndCBleHBsYWluZWQgYnkNCj4gYW55b25lIGluIHJlY2Vu
+dCBkaXNjdXNzaW9uLg0KPiANCj4gQWxzbyBjYWxsaW5nIGJsa19tcV9kZWxheV9ydW5faHdfcXVl
+dWUoKSBpbnNpZGUgLnF1ZXVlX3JxKCkgaXMgYSBob3JyaWJsZQ0KPiBoYWNrIGJlY2F1c2UgaXQg
+bWFrZXMgQkxLX01RX1NfU0NIRURfUkVTVEFSVCBub3Qgd29ya2luZywgYW5kIGRlZ3JhZGVzIEkv
+Tw0KPiBwZWZvcm1hbmNlIGEgbG90Lg0KPiANCj4gRmluYWxseSB0aGlzIHBhdGNoIG1ha2VzIHN1
+cmUgdGhhdCBkbS1ycSByZXR1cm5zIEJMS19TVFNfUkVTT1VSQ0UgdG8gYmxrLW1xDQo+IG9ubHkg
+d2hlbiB1bmRlcmx5aW5nIHF1ZXVlIGlzIG91dCBvZiByZXNvdXJjZSwgc28gd2Ugc3dpdGNoIHRv
+IHJldHVybg0KPiBETV9NQVBJT19ERUxBWV9SRVFVRVUgaWYgZWl0aGVyIE1QQVRIRl9RVUVVRV9J
+TyBvciBNUEFUSEZfUEdfSU5JVF9SRVFVSVJFRA0KPiBpcyBzZXQgaW4gbXVsdGlwYXRoX2Nsb25l
+X2FuZF9tYXAoKS4NCg0KU29ycnkgYnV0IGluIG15IG9waW5pb24gdGhlIGFib3ZlIGRlc2NyaXB0
+aW9uIHNob3dzIHRoYXQgeW91IGRvbid0IHVuZGVyc3RhbmQNCnRoZSBkbS1tcGF0aCBkcml2ZXIg
+Y29tcGxldGVseS4NCg0KPiBkaWZmIC0tZ2l0IGEvZHJpdmVycy9tZC9kbS1tcGF0aC5jIGIvZHJp
+dmVycy9tZC9kbS1tcGF0aC5jDQo+IGluZGV4IGM4ZmFhMmI4NTg0Mi4uOGZlM2Y0NTQwN2NlIDEw
+MDY0NA0KPiAtLS0gYS9kcml2ZXJzL21kL2RtLW1wYXRoLmMNCj4gKysrIGIvZHJpdmVycy9tZC9k
+bS1tcGF0aC5jDQo+IEBAIC00ODQsOSArNDg0LDcgQEAgc3RhdGljIGludCBtdWx0aXBhdGhfY2xv
+bmVfYW5kX21hcChzdHJ1Y3QgZG1fdGFyZ2V0ICp0aSwgc3RydWN0IHJlcXVlc3QgKnJxLA0KPiAg
+CQlyZXR1cm4gRE1fTUFQSU9fS0lMTDsNCj4gIAl9IGVsc2UgaWYgKHRlc3RfYml0KE1QQVRIRl9R
+VUVVRV9JTywgJm0tPmZsYWdzKSB8fA0KPiAgCQkgICB0ZXN0X2JpdChNUEFUSEZfUEdfSU5JVF9S
+RVFVSVJFRCwgJm0tPmZsYWdzKSkgew0KPiAtCQlpZiAocGdfaW5pdF9hbGxfcGF0aHMobSkpDQo+
+IC0JCQlyZXR1cm4gRE1fTUFQSU9fREVMQVlfUkVRVUVVRTsNCj4gLQkJcmV0dXJuIERNX01BUElP
+X1JFUVVFVUU7DQo+ICsJCXJldHVybiBETV9NQVBJT19ERUxBWV9SRVFVRVVFOw0KPiAgCX0NCg0K
+VGhpcyBwYXRjaCByZW1vdmVzIGEgcGdfaW5pdF9hbGxfcGF0aHMoKSBjYWxsIGJ1dCB5b3UgZG9u
+J3QgZXhwbGFpbiB3aHkgeW91DQp0aGluayBpdCBpcyBhbGxvd2VkIHRvIHJlbW92ZSB0aGF0IGNh
+bGwuIERpZCB5b3UgcGVyaGFwcyByZW1vdmUgdGhhdCBjYWxsIGJ5DQptaXN0YWtlPw0KDQpCYXJ0
+Lg==
