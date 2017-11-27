@@ -1,7 +1,7 @@
 From: amulhern@redhat.com
-Subject: [PATCH 7/7] dm: documentation fix
-Date: Mon, 27 Nov 2017 10:02:45 -0500
-Message-ID: <20171127150245.27959-7-amulhern@redhat.com>
+Subject: [PATCH 2/7] dm: documentation fix
+Date: Mon, 27 Nov 2017 10:02:40 -0500
+Message-ID: <20171127150245.27959-2-amulhern@redhat.com>
 References: <20171127150245.27959-1-amulhern@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,26 +23,36 @@ List-Id: dm-devel.ids
 
 From: mulhern <amulhern@redhat.com>
 
-Extend thinpool status format string with omitted fields.
+Use possessive pronoun where appropriate
+
+Instead of contraction.
 
 Signed-off-by: mulhern <amulhern@redhat.com>
 ---
- Documentation/device-mapper/thin-provisioning.txt | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ Documentation/device-mapper/cache-policies.txt | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/Documentation/device-mapper/thin-provisioning.txt b/Documentation/device-mapper/thin-provisioning.txt
-index fb10d18..4bcd4b7 100644
---- a/Documentation/device-mapper/thin-provisioning.txt
-+++ b/Documentation/device-mapper/thin-provisioning.txt
-@@ -276,7 +276,8 @@ ii) Status
+diff --git a/Documentation/device-mapper/cache-policies.txt b/Documentation/device-mapper/cache-policies.txt
+index d3ca8af..86786d8 100644
+--- a/Documentation/device-mapper/cache-policies.txt
++++ b/Documentation/device-mapper/cache-policies.txt
+@@ -60,7 +60,7 @@ Memory usage:
+ The mq policy used a lot of memory; 88 bytes per cache block on a 64
+ bit machine.
  
-     <transaction id> <used metadata blocks>/<total metadata blocks>
-     <used data blocks>/<total data blocks> <held metadata root>
--    ro|rw|out_of_data_space [no_]discard_passdown
-+    ro|rw|out_of_data_space [no_]discard_passdown [error|queue]_if_no_space
-+    needs_check|-
+-smq uses 28bit indexes to implement it's data structures rather than
++smq uses 28bit indexes to implement its data structures rather than
+ pointers.  It avoids storing an explicit hit count for each block.  It
+ has a 'hotspot' queue, rather than a pre-cache, which uses a quarter of
+ the entries (each hotspot block covers a larger area than a single
+@@ -84,7 +84,7 @@ resulting in better promotion/demotion decisions.
  
-     transaction id:
- 	A 64-bit number used by userspace to help synchronise with metadata
+ Adaptability:
+ The mq policy maintained a hit count for each cache block.  For a
+-different block to get promoted to the cache it's hit count has to
++different block to get promoted to the cache its hit count has to
+ exceed the lowest currently in the cache.  This meant it could take a
+ long time for the cache to adapt between varying IO patterns.
+ 
 -- 
 2.9.5
