@@ -1,190 +1,66 @@
-From: Ming Lei <ming.lei@redhat.com>
-Subject: [PATCH V2 5/5] blk-mq: issue request directly for blk_insert_cloned_request
-Date: Mon, 27 Nov 2017 13:07:21 +0800
-Message-ID: <20171127050721.5884-6-ming.lei@redhat.com>
-References: <20171127050721.5884-1-ming.lei@redhat.com>
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20171127050721.5884-1-ming.lei@redhat.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Jens Axboe <axboe@fb.com>, linux-block@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
-Cc: Christoph Hellwig <hch@infradead.org>, Bart Van Assche <bart.vanassche@sandisk.com>, linux-kernel@vger.kernel.org, Hannes Reinecke <hare@suse.com>, Omar Sandoval <osandov@fb.com>, Ming Lei <ming.lei@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm: use cloned bio as head, not remainder, in
+ __split_and_process_bio()
+Date: Mon, 27 Nov 2017 09:23:44 -0500
+Message-ID: <20171127142344.GA25881@redhat.com>
+References: <20171121013533.GA14520@redhat.com>
+ <20171121121049.GA17014@redhat.com>
+ <20171121124311.GA17243@redhat.com>
+ <20171121194709.GA18903@redhat.com>
+ <alpine.LRH.2.02.1711211613000.10766@file01.intranet.prod.int.rdu2.redhat.com>
+ <20171121225119.GA19630@redhat.com>
+ <alpine.LRH.2.02.1711212009040.28456@file01.intranet.prod.int.rdu2.redhat.com>
+ <87bmjv0xos.fsf@notabene.neil.brown.name>
+ <alpine.LRH.2.02.1711221250090.21196@file01.intranet.prod.int.rdu2.redhat.com>
+ <878tewzjz3.fsf@notabene.neil.brown.name>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <878tewzjz3.fsf@notabene.neil.brown.name>
+Sender: linux-kernel-owner@vger.kernel.org
+To: NeilBrown <neilb@suse.com>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, Jens Axboe <axboe@kernel.dk>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-block@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
-blk_insert_cloned_request() is called in fast path of dm-rq driver, and
-in this function we append request to hctx->dispatch_list of the underlying
-queue directly.
+On Thu, Nov 23 2017 at  5:52pm -0500,
+NeilBrown <neilb@suse.com> wrote:
 
-1) This way isn't efficient enough because hctx lock is always required
+> 
+> When we use bio_clone_bioset() to split off the front part of a bio
+> and chain the two together and submit the remainder to
+> generic_make_request(), it is important that the newly allocated
+> bio is used as the head to be processed immediately, and the original
+> bio gets "bio_advance()"d and sent to generic_make_request() as the
+> remainder.
+> 
+> If the newly allocated bio is used as the remainder, and if it then
+> needs to be split again, then the next bio_clone_bioset() call will
+> be made while holding a reference a bio (result of the first clone)
+> from the same bioset.  This can potentially exhaust the bioset mempool
+> and result in a memory allocation deadlock.
+> 
+> So the result of the bio_clone_bioset() must be attached to the new
+> dm_io struct, and the original must be resubmitted.  The current code
+> is backwards.
+> 
+> Note that there is no race caused by reassigning cio.io->bio after already
+> calling __map_bio().  This bio will only be dereferenced again after
+> dec_pending() has found io->io_count to be zero, and this cannot happen
+> before the dec_pending() call at the end of __split_and_process_bio().
+> 
+> Reported-by: Mikulas Patocka <mpatocka@redhat.com>
+> Signed-off-by: NeilBrown <neilb@suse.com>
+> ---
+> 
+> Hi,
+>  I think this should resolve the problem Mikulas noticed that the
+>  bios form a deep chain instead of a wide tree.
 
-2) With blk_insert_cloned_request(), we bypass underlying queue's IO scheduler
-totally, and depend on DM rq driver to do IO schedule completely. But DM
-rq driver can't get underlying queue's dispatch feedback at all, and this
-information is extreamly useful for IO merge. Without that IO merge can't
-be done basically by blk-mq, and causes very bad sequential IO performance.
+I'm inclined to just fold this into the original commit.
+I'd update that header to make mention of the details captured in this
+header.
 
-This patch makes use of blk_mq_try_issue_directly() to dispatch rq to
-underlying queue and provides disptch result to dm-rq and blk-mq, and
-improves the above situations very much.
+Would you be OK with that?
 
-With this patch, seqential IO is improved by 3X ~ 5X in my test over
-mpath/virtio-scsi.
-
-Signed-off-by: Ming Lei <ming.lei@redhat.com>
----
- block/blk-core.c   |  3 +--
- block/blk-mq.c     | 32 +++++++++++++++++++++++++++++---
- block/blk-mq.h     |  3 +++
- drivers/md/dm-rq.c | 19 ++++++++++++++++---
- 4 files changed, 49 insertions(+), 8 deletions(-)
-
-diff --git a/block/blk-core.c b/block/blk-core.c
-index b8881750a3ac..e5a623b45a1d 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -2488,8 +2488,7 @@ blk_status_t blk_insert_cloned_request(struct request_queue *q, struct request *
- 		 * bypass a potential scheduler on the bottom device for
- 		 * insert.
- 		 */
--		blk_mq_request_bypass_insert(rq, true);
--		return BLK_STS_OK;
-+		return blk_mq_request_direct_issue(rq);
- 	}
- 
- 	spin_lock_irqsave(q->queue_lock, flags);
-diff --git a/block/blk-mq.c b/block/blk-mq.c
-index fd4fb6316ea1..c94a8d225b63 100644
---- a/block/blk-mq.c
-+++ b/block/blk-mq.c
-@@ -1629,6 +1629,12 @@ static blk_status_t __blk_mq_try_issue_directly(struct blk_mq_hw_ctx *hctx,
- 	blk_qc_t new_cookie;
- 	blk_status_t ret = BLK_STS_OK;
- 	bool run_queue = true;
-+	/*
-+	 * This function is called from blk_insert_cloned_request() if
-+	 * 'cookie' is NULL, and for dispatching this request only.
-+	 */
-+	bool dispatch_only = !cookie;
-+	bool need_insert;
- 
- 	/* RCU or SRCU read lock is needed before checking quiesced flag */
- 	if (blk_mq_hctx_stopped(hctx) || blk_queue_quiesced(q)) {
-@@ -1636,10 +1642,19 @@ static blk_status_t __blk_mq_try_issue_directly(struct blk_mq_hw_ctx *hctx,
- 		goto insert;
- 	}
- 
--	if (q->elevator)
-+	if (q->elevator && !dispatch_only)
- 		goto insert;
- 
--	if (__blk_mq_issue_req(hctx, rq, &new_cookie, &ret))
-+	need_insert = __blk_mq_issue_req(hctx, rq, &new_cookie, &ret);
-+	if (dispatch_only) {
-+		if (need_insert)
-+			return BLK_STS_RESOURCE;
-+		if (ret == BLK_STS_RESOURCE)
-+			__blk_mq_requeue_request(rq);
-+		return ret;
-+	}
-+
-+	if (need_insert)
- 		goto insert;
- 
- 	/*
-@@ -1661,7 +1676,10 @@ static blk_status_t __blk_mq_try_issue_directly(struct blk_mq_hw_ctx *hctx,
- 	}
- 
- insert:
--	blk_mq_sched_insert_request(rq, false, run_queue, false, may_sleep);
-+	if (!dispatch_only)
-+		blk_mq_sched_insert_request(rq, false, run_queue, false, may_sleep);
-+	else
-+		blk_mq_request_bypass_insert(rq, run_queue);
- 	return ret;
- }
- 
-@@ -1688,6 +1706,14 @@ static blk_status_t blk_mq_try_issue_directly(struct blk_mq_hw_ctx *hctx,
- 	return ret;
- }
- 
-+blk_status_t blk_mq_request_direct_issue(struct request *rq)
-+{
-+	struct blk_mq_ctx *ctx = rq->mq_ctx;
-+	struct blk_mq_hw_ctx *hctx = blk_mq_map_queue(rq->q, ctx->cpu);
-+
-+	return blk_mq_try_issue_directly(hctx, rq, NULL);
-+}
-+
- static blk_qc_t blk_mq_make_request(struct request_queue *q, struct bio *bio)
- {
- 	const int is_sync = op_is_sync(bio->bi_opf);
-diff --git a/block/blk-mq.h b/block/blk-mq.h
-index 6c7c3ff5bf62..81df35fbce77 100644
---- a/block/blk-mq.h
-+++ b/block/blk-mq.h
-@@ -60,6 +60,9 @@ void blk_mq_request_bypass_insert(struct request *rq, bool run_queue);
- void blk_mq_insert_requests(struct blk_mq_hw_ctx *hctx, struct blk_mq_ctx *ctx,
- 				struct list_head *list);
- 
-+/* Used by DM for issuing req directly */
-+blk_status_t blk_mq_request_direct_issue(struct request *rq);
-+
- /*
-  * CPU -> queue mappings
-  */
-diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
-index cbe8a06ef8b0..b96aa208e5cc 100644
---- a/drivers/md/dm-rq.c
-+++ b/drivers/md/dm-rq.c
-@@ -395,7 +395,7 @@ static void end_clone_request(struct request *clone, blk_status_t error)
- 	dm_complete_request(tio->orig, error);
- }
- 
--static void dm_dispatch_clone_request(struct request *clone, struct request *rq)
-+static blk_status_t dm_dispatch_clone_request(struct request *clone, struct request *rq)
- {
- 	blk_status_t r;
- 
-@@ -404,9 +404,10 @@ static void dm_dispatch_clone_request(struct request *clone, struct request *rq)
- 
- 	clone->start_time = jiffies;
- 	r = blk_insert_cloned_request(clone->q, clone);
--	if (r)
-+	if (r != BLK_STS_OK && r != BLK_STS_RESOURCE)
- 		/* must complete clone in terms of original request */
- 		dm_complete_request(rq, r);
-+	return r;
- }
- 
- static int dm_rq_bio_constructor(struct bio *bio, struct bio *bio_orig,
-@@ -476,8 +477,10 @@ static int map_request(struct dm_rq_target_io *tio)
- 	struct mapped_device *md = tio->md;
- 	struct request *rq = tio->orig;
- 	struct request *clone = NULL;
-+	blk_status_t ret;
- 
- 	r = ti->type->clone_and_map_rq(ti, rq, &tio->info, &clone);
-+ check_again:
- 	switch (r) {
- 	case DM_MAPIO_SUBMITTED:
- 		/* The target has taken the I/O to submit by itself later */
-@@ -492,7 +495,17 @@ static int map_request(struct dm_rq_target_io *tio)
- 		/* The target has remapped the I/O so dispatch it */
- 		trace_block_rq_remap(clone->q, clone, disk_devt(dm_disk(md)),
- 				     blk_rq_pos(rq));
--		dm_dispatch_clone_request(clone, rq);
-+		ret = dm_dispatch_clone_request(clone, rq);
-+		if (ret == BLK_STS_RESOURCE) {
-+			blk_rq_unprep_clone(clone);
-+			tio->ti->type->release_clone_rq(clone);
-+			tio->clone = NULL;
-+			if (!rq->q->mq_ops)
-+				r = DM_MAPIO_DELAY_REQUEUE;
-+			else
-+				r = DM_MAPIO_REQUEUE;
-+			goto check_again;
-+		}
- 		break;
- 	case DM_MAPIO_REQUEUE:
- 		/* The target wants to requeue the I/O */
--- 
-2.9.5
+Mike
