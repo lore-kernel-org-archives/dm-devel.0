@@ -1,38 +1,49 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [dm-devel] [PATCH 3/4] dm: convert dm_dev_internal.count from
- atomic_t to refcount_t
-Date: Sat, 25 Nov 2017 00:56:32 -0500
-Message-ID: <CAMM=eLfrnQqBH06pPnNKfmeF=AjScAxjR1WD7Ur9NAEY=4Sxog@mail.gmail.com>
-References: <1508485059-21881-1-git-send-email-elena.reshetova@intel.com>
- <1508485059-21881-4-git-send-email-elena.reshetova@intel.com>
- <20171123154941.GA15790@agk-dp.fab.redhat.com> <2236FBA76BA1254E88B949DDB74E612B802C1F07@IRSMSX102.ger.corp.intel.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <2236FBA76BA1254E88B949DDB74E612B802C1F07@IRSMSX102.ger.corp.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Reshetova, Elena" <elena.reshetova@intel.com>
-Cc: Alasdair G Kergon <agk@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "keescook@chromium.org" <keescook@chromium.org>, "peterz@infradead.org" <peterz@infradead.org>, "shli@kernel.org" <shli@kernel.org>, "koverstreet@google.com" <koverstreet@google.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>, "linux-bcache@vger.kernel.org" <linux-bcache@vger.kernel.org>, "ejt@redhat.comg" <ejt@redhat.comg>, "kent.overstreet@gmail.com" <kent.overstreet@gmail.com>, Zdenek Kabelac <zkabelac@redhat.com>
+From: Ming Lei <ming.lei@redhat.com>
+Subject: [PATCH V2 0/5] dm-rq: improve sequential I/O performance
+Date: Mon, 27 Nov 2017 13:07:16 +0800
+Message-ID: <20171127050721.5884-1-ming.lei@redhat.com>
+Return-path: <linux-block-owner@vger.kernel.org>
+Sender: linux-block-owner@vger.kernel.org
+To: Jens Axboe <axboe@fb.com>, linux-block@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
+Cc: Christoph Hellwig <hch@infradead.org>, Bart Van Assche <bart.vanassche@sandisk.com>, linux-kernel@vger.kernel.org, Hannes Reinecke <hare@suse.com>, Omar Sandoval <osandov@fb.com>, Ming Lei <ming.lei@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Nov 24, 2017 at 2:36 AM, Reshetova, Elena
-<elena.reshetova@intel.com> wrote:
->> On Fri, Oct 20, 2017 at 10:37:38AM +0300, Elena Reshetova wrote:
->> >     } else if (dd->dm_dev->mode != (mode | dd->dm_dev->mode)) {
->> >             r = upgrade_mode(dd, mode, t->md);
->> >             if (r)
->> >                     return r;
->> > +           refcount_inc(&dd->count);
->> >     }
->>
->> Missing here:
->>
->>         else
->>               refcount_inc(&dd->count);
->>
->> ?
->
-> Oh, yes, thanks for catching this! I think this got unnoticed so far and patch was merged, so I am going to send a followup patch now.
+Hi Guys,
 
-I pushed this fix and will send to Linus next week:
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.15&id=d908af82d06cc420f9581c97c6db941cb87e4434
+The 1st patch removes the workaround of blk_mq_delay_run_hw_queue() in
+case of requeue, this way isn't necessary, and more worse, it makes
+BLK_MQ_S_SCHED_RESTART not working, and degarde I/O performance.
+
+The 2nd patch return DM_MAPIO_REQUEUE to dm-rq if underlying request
+allocation fails, then we can return BLK_STS_RESOURCE from dm-rq to
+blk-mq, so that blk-mq can hold the requests to be dequeued.
+
+The other 3 paches changes the blk-mq part of blk_insert_cloned_request(),
+in which we switch to blk_mq_try_issue_directly(), so that both dm-rq
+and blk-mq can get the dispatch result of underlying queue, and with
+this information, blk-mq can handle IO merge much better, then
+sequential I/O performance is improved much. In my dm-mpath over
+virtio-scsi test, this improvement can be 3X ~ 5X.
+
+V2:
+	- drop 'dm-mpath: cache ti->clone during requeue', which is a bit
+	too complicated, and not see obvious performance improvement.
+	- make change on blk-mq part cleaner
+
+Ming Lei (5):
+  dm-mpath: don't call blk_mq_delay_run_hw_queue() in case of
+    BLK_STS_RESOURCE
+  dm-mpath: return DM_MAPIO_REQUEUE in case of rq allocation failure
+  blk-mq: move actual issue into one helper
+  blk-mq: return dispatch result to caller in blk_mq_try_issue_directly
+  blk-mq: issue request directly for blk_insert_cloned_request
+
+ block/blk-core.c      |  3 +-
+ block/blk-mq.c        | 88 +++++++++++++++++++++++++++++++++++++++------------
+ block/blk-mq.h        |  3 ++
+ drivers/md/dm-mpath.c | 18 ++++++++---
+ drivers/md/dm-rq.c    | 20 +++++++++---
+ 5 files changed, 102 insertions(+), 30 deletions(-)
+
+-- 
+2.9.5
