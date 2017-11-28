@@ -1,141 +1,103 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: Re: [PATCH 2/2] dm-writecache
-Date: Mon, 27 Nov 2017 20:56:49 -0800
-Message-ID: <CAPcyv4jTuSLDiO1TZhCrJGxMWiWK-KNXKPf-DZH1xDeXVAaUgQ@mail.gmail.com>
-References: <alpine.LRH.2.02.1711222135371.2330@file01.intranet.prod.int.rdu2.redhat.com>
-	<CAA9_cmcRe8KXO+jWy8knqg4EMCgBYF1JAdgR=A2qHkVES+i9ZA@mail.gmail.com>
-	<alpine.LRH.2.02.1711272238130.9280@file01.intranet.prod.int.rdu2.redhat.com>
+From: "Reshetova, Elena" <elena.reshetova@intel.com>
+Subject: RE: [dm-devel] [PATCH 3/4] dm: convert dm_dev_internal.count from
+ atomic_t to refcount_t
+Date: Tue, 28 Nov 2017 10:07:08 +0000
+Message-ID: <2236FBA76BA1254E88B949DDB74E612B802C3EDA@IRSMSX102.ger.corp.intel.com>
+References: <1508485059-21881-1-git-send-email-elena.reshetova@intel.com>
+ <1508485059-21881-4-git-send-email-elena.reshetova@intel.com>
+ <20171123154941.GA15790@agk-dp.fab.redhat.com>
+ <2236FBA76BA1254E88B949DDB74E612B802C1F07@IRSMSX102.ger.corp.intel.com>
+ <CAMM=eLfrnQqBH06pPnNKfmeF=AjScAxjR1WD7Ur9NAEY=4Sxog@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.1711272238130.9280@file01.intranet.prod.int.rdu2.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <msnitzer@redhat.com>
+Content-Type: multipart/mixed;
+        boundary="_002_2236FBA76BA1254E88B949DDB74E612B802C3EDAIRSMSX102gercor_"
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <CAMM=eLfrnQqBH06pPnNKfmeF=AjScAxjR1WD7Ur9NAEY=4Sxog@mail.gmail.com>
+Content-Language: en-US
+Sender: linux-raid-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Alasdair G Kergon <agk@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "keescook@chromium.org" <keescook@chromium.org>, "peterz@infradead.org" <peterz@infradead.org>, "shli@kernel.org" <shli@kernel.org>, "koverstreet@google.com" <koverstreet@google.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>, "linux-bcache@vger.kernel.org" <linux-bcache@vger.kernel.org>, "ejt@redhat.comg" <ejt@redhat.comg>, "kent.overstreet@gmail.com" <kent.overstreet@gmail.com>, Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Nov 27, 2017 at 8:01 PM, Mikulas Patocka <mpatocka@redhat.com> wrote:
->
->
->
-> On Fri, 24 Nov 2017, Dan Williams wrote:
->
-> > On Wed, Nov 22, 2017 at 6:36 PM, Mikulas Patocka <mpatocka@redhat.com> wrote:
-> > > Hi
-> > >
-> > > Here I'm sending slighly update dm-writecache target.
-> > >
-> >
-> > I would expect some theory of operation documentation in the changelog
-> > or in Documentation/ for a new driver.
->
-> It caches writes for a block device in persistent memory. It doesn't cache
-> reads because reads are supposed to be cached in normal ram.
+--_002_2236FBA76BA1254E88B949DDB74E612B802C3EDAIRSMSX102gercor_
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 
-Is it a cache or more of a write-buffer? How aggressively does it
-write back data? Are there any recommendations about cache size vs
-backing device size? Does it also buffer sequential writes? For
-example bcache tries to avoid caching sequential traffic.
+DQo+IE9uIEZyaSwgTm92IDI0LCAyMDE3IGF0IDI6MzYgQU0sIFJlc2hldG92YSwgRWxlbmENCj4g
+PGVsZW5hLnJlc2hldG92YUBpbnRlbC5jb20+IHdyb3RlOg0KPiA+PiBPbiBGcmksIE9jdCAyMCwg
+MjAxNyBhdCAxMDozNzozOEFNICswMzAwLCBFbGVuYSBSZXNoZXRvdmEgd3JvdGU6DQo+ID4+ID4g
+ICAgIH0gZWxzZSBpZiAoZGQtPmRtX2Rldi0+bW9kZSAhPSAobW9kZSB8IGRkLT5kbV9kZXYtPm1v
+ZGUpKSB7DQo+ID4+ID4gICAgICAgICAgICAgciA9IHVwZ3JhZGVfbW9kZShkZCwgbW9kZSwgdC0+
+bWQpOw0KPiA+PiA+ICAgICAgICAgICAgIGlmIChyKQ0KPiA+PiA+ICAgICAgICAgICAgICAgICAg
+ICAgcmV0dXJuIHI7DQo+ID4+ID4gKyAgICAgICAgICAgcmVmY291bnRfaW5jKCZkZC0+Y291bnQp
+Ow0KPiA+PiA+ICAgICB9DQo+ID4+DQo+ID4+IE1pc3NpbmcgaGVyZToNCj4gPj4NCj4gPj4gICAg
+ICAgICBlbHNlDQo+ID4+ICAgICAgICAgICAgICAgcmVmY291bnRfaW5jKCZkZC0+Y291bnQpOw0K
+PiA+Pg0KPiA+PiA/DQo+ID4NCj4gPiBPaCwgeWVzLCB0aGFua3MgZm9yIGNhdGNoaW5nIHRoaXMh
+IEkgdGhpbmsgdGhpcyBnb3QgdW5ub3RpY2VkIHNvIGZhciBhbmQgcGF0Y2ggd2FzDQo+IG1lcmdl
+ZCwgc28gSSBhbSBnb2luZyB0byBzZW5kIGEgZm9sbG93dXAgcGF0Y2ggbm93Lg0KPiANCj4gSSBw
+dXNoZWQgdGhpcyBmaXggYW5kIHdpbGwgc2VuZCB0byBMaW51cyBuZXh0IHdlZWs6DQo+IGh0dHBz
+Oi8vZ2l0Lmtlcm5lbC5vcmcvcHViL3NjbS9saW51eC9rZXJuZWwvZ2l0L2RldmljZS1tYXBwZXIv
+bGludXgtDQo+IGRtLmdpdC9jb21taXQvP2g9ZG0tNC4xNSZpZD1kOTA4YWY4MmQwNmNjNDIwZjk1
+ODFjOTdjNmRiOTQxY2I4N2U0NDM0DQoNCg0KSSBndWVzcyB5b3UgbWVhbiB0aGlzIGNvbW1pdDoN
+Cmh0dHBzOi8vZ2l0Lmtlcm5lbC5vcmcvcHViL3NjbS9saW51eC9rZXJuZWwvZ2l0L2RldmljZS1t
+YXBwZXIvbGludXgtZG0uZ2l0L2NvbW1pdC8/aD1mb3ItbmV4dCZpZD1jMjMxOGQwN2VhZDg3MWYw
+NThkZGE2MmU5NDJlZDdiNmIxYzFjZmNmDQoNClVuZm9ydHVuYXRlbHkgaXQgaXMgbm90IGNvcnJl
+Y3Q6DQoNCmRpZmYgLS1naXQgYS9kcml2ZXJzL21kL2RtLXRhYmxlLmMgYi9kcml2ZXJzL21kL2Rt
+LXRhYmxlLmMNCmluZGV4IDg4MTMwYjUuLmY2ZDMyZWUgMTAwNjQ0DQotLS0gYS9kcml2ZXJzL21k
+L2RtLXRhYmxlLmMNCisrKyBiL2RyaXZlcnMvbWQvZG0tdGFibGUuYw0KQEAgLTQ1MSwxNSArNDUx
+LDE1IEBAIGludCBkbV9nZXRfZGV2aWNlKHN0cnVjdCBkbV90YXJnZXQgKnRpLCBjb25zdCBjaGFy
+ICpwYXRoLCBmbW9kZV90IG1vZGUsDQogCQkJcmV0dXJuIHI7DQogCQl9DQogDQotCQlyZWZjb3Vu
+dF9zZXQoJmRkLT5jb3VudCwgMSk7DQorCQlyZWZjb3VudF9zZXQoJmRkLT5jb3VudCwgMCk7DQog
+CQlsaXN0X2FkZCgmZGQtPmxpc3QsICZ0LT5kZXZpY2VzKTsNCiANCiAJfSBlbHNlIGlmIChkZC0+
+ZG1fZGV2LT5tb2RlICE9IChtb2RlIHwgZGQtPmRtX2Rldi0+bW9kZSkpIHsNCiAJCXIgPSB1cGdy
+YWRlX21vZGUoZGQsIG1vZGUsIHQtPm1kKTsNCiAJCWlmIChyKQ0KIAkJCXJldHVybiByOw0KLQkJ
+cmVmY291bnRfaW5jKCZkZC0+Y291bnQpOw0KIAl9DQorCXJlZmNvdW50X2luYygmZGQtPmNvdW50
+KTsNCiANClByb2JsZW0gd2lsbCBiZSBoZXJlIGlmIHlvdSBoaXQgdGhpcyByZWZjb3VudF9pbmMo
+KSBhZnRlciB0aGUgcmVmY291bnRfc2V0KCZkZC0+Y291bnQsIDApIGVhcmxpZXIuIA0KcmVmY291
+bnRfaW5jKCkgZG9lcyBub3QgaW5jcmVtZW50IG9uIHplcm8gdmFsdWUgKmV2ZXIqIGZvciBzZWN1
+cml0eSByZWFzb25zIGFuZCBpbnN0ZWFkIHBlb3BsZQ0Kc2hvdWxkIGluaXRpYWxpemUgcmVmY291
+bnRlcnMgdG8gMSBhbHdheXMgYW5kIGRvIGluY3JlbWVudHMgZnJvbSB0aGVyZSBpZiBuZWVkZWQu
+IA0KVGhpcyB3YXMgdGhlIHJlYXNvbiBmb3IgdGhlIGluaXRpYWwgY2hhbmdlIEkgZGlkLCBteSBt
+aXN0YWtlIHdhcyBqdXN0IHRvIGZvcmdldCB0byBpbmNyZW1lbnQgaXQgYWxzbw0KaW4gY2FzZSBj
+b25kaXRpb24gKGRkLT5kbV9kZXYtPm1vZGUgIT0gKG1vZGUgfCBkZC0+ZG1fZGV2LT5tb2RlKSkg
+ZmFpbHMuIA0KDQpJIGhhdmUgaXNzdWVzIHdpdGggbXkgaW50ZWwgc21wdCBzZXJ2ZXIgZm9yIHNl
+bmRpbmcgcGF0Y2hlcyAoSSB3aWxsIGdldCBpdCBmaXhlZCB0b21vcnJvdyBmcm9tIGludGVybmFs
+IG5ldHdvcmspLA0Kc28gSSBhbSBhdHRhY2hpbmcgdGhlIHBhdGNoIEkgZGlkIGVuZCBvZiBsYXN0
+IHdlZWsgdG8gdGhpcyB0aHJlYWQgaW5zdGVhZCAob3IgYWx0ZXJuYXRpdmVseSBjYW4gcHJvcGVy
+bHkgc2VuZCBpdCB0b21vcnJvdyBhZnRlciBmaXgpLiANClNvcnJ5IGZvciB0aGUgZGVsYXkhDQoN
+CkJlc3QgUmVnYXJkcywNCkVsZW5hLg0KDQo=
 
->
-> > > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> > >
-> > [..]
-> > > +/*
-> > > + * The clflushopt instruction is very slow on Broadwell, so we use non-temporal
-> > > + * stores instead.
-> > > + */
-> >
-> > The clflushopt instruction's first instantiation in a cpu was after
-> > Broadwell. Also, the performance of clflushopt does not much matter
-> > when running on a system without ADR (asynchronous DRAM refresh) where
-> > flushing the cpu cache can just leave the writes stranded on their way
-> > to the DIMM. ADR is not available on general purpose servers until
-> > ACPI 6.x NFIT-defined persistent memory platforms.
->
-> There used to be pcommit instruction, but intel abandoned it - see
-> https://software.intel.com/en-us/blogs/2016/09/12/deprecate-pcommit-instruction
+--_002_2236FBA76BA1254E88B949DDB74E612B802C3EDAIRSMSX102gercor_
+Content-Type: application/octet-stream;
+	name="0001-dm-fix-the-missing-increment-for-dm_dev_internal.cou.patch"
+Content-Description: 0001-dm-fix-the-missing-increment-for-dm_dev_internal.cou.patch
+Content-Disposition: attachment;
+	filename="0001-dm-fix-the-missing-increment-for-dm_dev_internal.cou.patch";
+	size=1210; creation-date="Tue, 28 Nov 2017 10:05:02 GMT";
+	modification-date="Tue, 28 Nov 2017 10:05:02 GMT"
+Content-Transfer-Encoding: base64
 
-Yes, I am familiar with that document, I wrote the pcommit removal
-patch and referenced ADR in the commit message:
+RnJvbSA3MTU5NzdhYzAwOTBjZjNlZThkZGMzMzljMjkyNDM0ZTIwYTljOTNkIE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiBFbGVuYSBSZXNoZXRvdmEgPGVsZW5hLnJlc2hldG92YUBpbnRl
+bC5jb20+CkRhdGU6IEZyaSwgMjQgTm92IDIwMTcgMTA6MDI6NDggKzAyMDAKU3ViamVjdDogW1BB
+VENIXSBkbTogZml4IHRoZSBtaXNzaW5nIGluY3JlbWVudCBmb3IgZG1fZGV2X2ludGVybmFsLmNv
+dW50CgpUaGUgY29tbWl0IDJhMGI0NjgyZTA5ZDc2NDY2ZjdiOGY1ZTM0N2FlMmZmMDJmMDMzYWYK
+bWlzdGFrZW5seSBmb3Jnb3R0ZW4gb25lIGNhc2Ugd2hlcmUgcmVmY291bnQgbXVzdCBiZQppbmNy
+ZW1lbnRlZC4gRml4IHRoaXMuCgpSZXBvcnRlZC1ieTogQWxhc2RhaXIgRyBLZXJnb24gPGFna0By
+ZWRoYXQuY29tPgpTaWduZWQtb2ZmLWJ5OiBFbGVuYSBSZXNoZXRvdmEgPGVsZW5hLnJlc2hldG92
+YUBpbnRlbC5jb20+Ci0tLQogZHJpdmVycy9tZC9kbS10YWJsZS5jIHwgOSArKysrKysrLS0KIDEg
+ZmlsZSBjaGFuZ2VkLCA3IGluc2VydGlvbnMoKyksIDIgZGVsZXRpb25zKC0pCgpkaWZmIC0tZ2l0
+IGEvZHJpdmVycy9tZC9kbS10YWJsZS5jIGIvZHJpdmVycy9tZC9kbS10YWJsZS5jCmluZGV4IDg4
+MTMwYjUuLmViMGJhMmEgMTAwNjQ0Ci0tLSBhL2RyaXZlcnMvbWQvZG0tdGFibGUuYworKysgYi9k
+cml2ZXJzL21kL2RtLXRhYmxlLmMKQEAgLTQ1MywxNCArNDUzLDE5IEBAIGludCBkbV9nZXRfZGV2
+aWNlKHN0cnVjdCBkbV90YXJnZXQgKnRpLCBjb25zdCBjaGFyICpwYXRoLCBmbW9kZV90IG1vZGUs
+CiAKIAkJcmVmY291bnRfc2V0KCZkZC0+Y291bnQsIDEpOwogCQlsaXN0X2FkZCgmZGQtPmxpc3Qs
+ICZ0LT5kZXZpY2VzKTsKKwkJKnJlc3VsdCA9IGRkLT5kbV9kZXY7CisJCXJldHVybiAwOworCisJ
+fQogCi0JfSBlbHNlIGlmIChkZC0+ZG1fZGV2LT5tb2RlICE9IChtb2RlIHwgZGQtPmRtX2Rldi0+
+bW9kZSkpIHsKKwlpZiAoZGQtPmRtX2Rldi0+bW9kZSAhPSAobW9kZSB8IGRkLT5kbV9kZXYtPm1v
+ZGUpKSB7CiAJCXIgPSB1cGdyYWRlX21vZGUoZGQsIG1vZGUsIHQtPm1kKTsKIAkJaWYgKHIpCiAJ
+CQlyZXR1cm4gcjsKLQkJcmVmY291bnRfaW5jKCZkZC0+Y291bnQpOwogCX0KIAorCXJlZmNvdW50
+X2luYygmZGQtPmNvdW50KTsKKwogCSpyZXN1bHQgPSBkZC0+ZG1fZGV2OwogCXJldHVybiAwOwog
+fQotLSAKMi43LjQKCg==
 
-    fd1d961dd681 x86/insn: remove pcommit
-
-> So, according to the document, flushing the cache should be enough for
-> writes to reach persistent memory.
-
-The document assumes ADR is present.
-
-> > > +#ifdef CONFIG_X86_64
-> >
-> > In general something is broken if we end up with per-arch ifdefs like
-> > this in drivers to handle persistent memory. This should be using the
-> > pmem api or extensions of it, and we need to settle on a mechanism for
-> > upper-level drivers to ask if pmem is driving platform protected
-> > persistent memory.
-> >
-> > > +#define NT_STORE(dest, src)    asm ("movnti %1, %0" : "=m"(dest) : "r"(src))
-> > > +#define FLUSH_RANGE(dax, ptr, size)  do { } while (0)
-> > > +#define COMMIT_FLUSHED()       wmb()
-> > > +#else
-> > > +#define NT_STORE(dest, src)    ACCESS_ONCE(dest) = (src)
-> > > +#define FLUSH_RANGE            dax_flush
-> > > +#define COMMIT_FLUSHED()       do { } while (0)
-> >
-> > Is this just for test purposes? How does the user discover that they
-> > are running in a degraded mode as far as persistence guarantees? I
-> > think we should be falling back DM_WRITECACHE_ONLY_SSD mode if we're
-> > not on a pmem platform.
->
-> What degraded mode do you mean?
-
-Fall back to treating pmem like an SSD / block-device.
-
-> According to that document, flushing cache
-> should be enough. If it is not enough, what else do I need to do to flush
-> cache?
-
-...ensure that you are on a platform where flushing the cpu cache is enough.
-
-> The above code is not for test purposes. It is for performance purposes.
->
-> On dual-socket Broadwell server with persistent memory
-
-What platform is this... does it have ADR, does the BIOS produce an NFIT?
-
-> when we write to
-> persistent memory using cached write instructions and use dax_flush
-> afterwards to flush cache for the affected range, the performance is about
-> 350MB/s. It is practically unusable - worse than low-end SSDs.
->
-> On the other hand, the movnti instruction can sustain performance of one
-> 8-byte write per clock cycle. We don't have to flush cache afterwards, the
-> only thing that must be done is to flush the write-combining buffer with
-> the sfence instruction. Movnti has much better throughput than dax_flush.
-
-What about memcpy_flushcache?
-
-> You argue that I should use the pmem api, but there is no pmem api
-> providing the movnti intruction. I have no choice, but coding the
-> instruction directly in assembler.
-
-You have not convinced me that memcpy_flushcache is insufficient, or
-that the driver is mistakenly assuming guarantees about persistence
-when it is not running on a persistent memory enabled platform.
-
-> If you want to create API, take that "NT_STORE" definition and move it to
-> some x86-specific include file.
-
-I'm asking you to not solve global problems in your local driver. If
-the pmem api is deficient for your use case then let's work on
-improving it, but as of now I'm still trying to baseline your
-assumptions.
+--_002_2236FBA76BA1254E88B949DDB74E612B802C3EDAIRSMSX102gercor_--
