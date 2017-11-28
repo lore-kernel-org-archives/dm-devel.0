@@ -1,81 +1,86 @@
-From: Amir Goldstein <amir73il@gmail.com>
-Subject: Re: [PATCH] dm-log-writes: invalidate the bdev's for both of our devices
-Date: Tue, 28 Nov 2017 23:22:24 +0200
-Message-ID: <CAOQ4uxjP1t20srDGovKrVNwpvap7tevwK5sFC9frH=nuCmdCMQ@mail.gmail.com>
-References: <1511890225-16601-1-git-send-email-josef@toxicpanda.com>
- <CAOQ4uxi2fqO4-gQVtRmQ6QP0VqXFVMpbYSdh-mrKuivWiOwECQ@mail.gmail.com>
- <CAOQ4uxjpYPEALg1wHcgjP3Q=vQR6oBmnAsrrvkHtj1HznfCRSQ@mail.gmail.com> <20171128210554.hyqw27egx5kjsv3q@destiny>
+From: NeilBrown <neilb@suse.com>
+Subject: Re: [dm-devel] dm: use cloned bio as head, not remainder, in __split_and_process_bio()
+Date: Wed, 29 Nov 2017 09:18:23 +1100
+Message-ID: <87fu8yxd1s.fsf@notabene.neil.brown.name>
+References: <20171121013533.GA14520@redhat.com> <20171121121049.GA17014@redhat.com> <20171121124311.GA17243@redhat.com> <20171121194709.GA18903@redhat.com> <alpine.LRH.2.02.1711211613000.10766@file01.intranet.prod.int.rdu2.redhat.com> <20171121225119.GA19630@redhat.com> <alpine.LRH.2.02.1711212009040.28456@file01.intranet.prod.int.rdu2.redhat.com> <87bmjv0xos.fsf@notabene.neil.brown.name> <alpine.LRH.2.02.1711221250090.21196@file01.intranet.prod.int.rdu2.redhat.com> <878tewzjz3.fsf@notabene.neil.brown.name> <20171127142344.GA25881@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20171128210554.hyqw27egx5kjsv3q@destiny>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Josef Bacik <josef@toxicpanda.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Josef Bacik <jbacik@fb.com>
+Content-Type: multipart/signed; boundary="=-=-=";
+        micalg=pgp-sha256; protocol="application/pgp-signature"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20171127142344.GA25881@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-block@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Nov 28, 2017 at 11:05 PM, Josef Bacik <josef@toxicpanda.com> wrote:
-> On Tue, Nov 28, 2017 at 10:40:24PM +0200, Amir Goldstein wrote:
->> On Tue, Nov 28, 2017 at 9:29 PM, Amir Goldstein <amir73il@gmail.com> wrote:
->> > On Tue, Nov 28, 2017 at 7:30 PM, Josef Bacik <josef@toxicpanda.com> wrote:
->> >> From: Josef Bacik <jbacik@fb.com>
->> >>
->> >> Amir noticed that sometimes the xfstests using dm-log-writes would fail
->> >> randomly but would work fine after trying again manually.  This is
->> >> because dm-log-writes writes directly to the device, but the log replay
->> >> tools read and write via the block device page cache.  Sometimes this
->> >> resulted in stale data being in the block device's page cache which
->> >> would result in random failures.  To handle this simply invalidate the
->> >> block device page cache on destruction so any replay of the log device
->> >> that follows will be forced to read the new real contents.
->> >>
->> >> Reported-and-tested-by: Amir Goldstein <amir73il@gmail.com>
->> >
->> > I'm fine with the Reported-by, but let's wait a while with this patch so
->> > I have more time to torture it.
->> > The incidents I got even before the patch did not happen more than
->> > a handful of times after running for a few days, so I need some more
->> > days to validate the fix.
->> > I had already sent you some weird output. Let's see what else comes
->> > along.
->> >
->>
->> Sorry, no cigar.
->> Another run just completed with Malformed log and corrupted fs
->>
->> The _check_scratch_fs that fails is the one right after _log_writes_remove
->> just like the report that I sent before this patch
->> and the LOGWRITES_DEV itself has malformed entry before the "end" mark
->> or even the last fsync mark:
->>
->> ./src/log-writes/replay-log -v --log $LOGWRITES_DEV --find --end-mark
->> testfile1.mark17
->> Malformed entry @112134
->>
->> For what its worth, I am testing on spinning disks, 100G scratch dev.
->> Right now, I zoomed in on the following fsx seeds that managed to fail the test
->> a few times already, but in different ways, so I'm not sure the seeds are more
->> than voodoo:
->> seeds=(4597 4598 4599 4600)
->>
->> I'll start running the same test but with fsx running on test partition, just
->> to get the feel for running the same fsx threads on bare xfs.
->>
->> Any other ideas?
->>
->
-> Is there anything special about your devices?  Are they 4k drives?  The corrupt
-> log is not awesome, was it still corrupt after the test bailed out?  Thanks,
->
+--=-=-=
+Content-Type: text/plain
+Content-Transfer-Encoding: quoted-printable
 
-No nothing special. boring 4TB WD drive.
-just reported on the xfstest thread that problem was reproduced with
-xfs on scratch
-partition, where dm-log-writes in not in the picture, so for now,
-dm-log-writes is off the
-hook.
-Still need to explain the malformed log, but will follow the xfs
-corruption lead first.
+On Mon, Nov 27 2017, Mike Snitzer wrote:
 
-Thanks,
-Amir.
+> On Thu, Nov 23 2017 at  5:52pm -0500,
+> NeilBrown <neilb@suse.com> wrote:
+>
+>>=20
+>> When we use bio_clone_bioset() to split off the front part of a bio
+>> and chain the two together and submit the remainder to
+>> generic_make_request(), it is important that the newly allocated
+>> bio is used as the head to be processed immediately, and the original
+>> bio gets "bio_advance()"d and sent to generic_make_request() as the
+>> remainder.
+>>=20
+>> If the newly allocated bio is used as the remainder, and if it then
+>> needs to be split again, then the next bio_clone_bioset() call will
+>> be made while holding a reference a bio (result of the first clone)
+>> from the same bioset.  This can potentially exhaust the bioset mempool
+>> and result in a memory allocation deadlock.
+>>=20
+>> So the result of the bio_clone_bioset() must be attached to the new
+>> dm_io struct, and the original must be resubmitted.  The current code
+>> is backwards.
+>>=20
+>> Note that there is no race caused by reassigning cio.io->bio after alrea=
+dy
+>> calling __map_bio().  This bio will only be dereferenced again after
+>> dec_pending() has found io->io_count to be zero, and this cannot happen
+>> before the dec_pending() call at the end of __split_and_process_bio().
+>>=20
+>> Reported-by: Mikulas Patocka <mpatocka@redhat.com>
+>> Signed-off-by: NeilBrown <neilb@suse.com>
+>> ---
+>>=20
+>> Hi,
+>>  I think this should resolve the problem Mikulas noticed that the
+>>  bios form a deep chain instead of a wide tree.
+>
+> I'm inclined to just fold this into the original commit.
+> I'd update that header to make mention of the details captured in this
+> header.
+>
+> Would you be OK with that?
+
+Perfectly OK with that.  Thanks for asking.
+
+NeilBrown
+
+--=-=-=
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCAAdFiEEG8Yp69OQ2HB7X0l6Oeye3VZigbkFAlod4LAACgkQOeye3VZi
+gbneKRAAgXVUcPT+apK6tA6PTsinSjWRyXYx31ecX3cAa96/oABJl6RsTMTXLqEq
+00OjYTaYxFn/hc2AnEDlRErrFi1VGkFljo9XTAabf6Hy3c3rJOEbVj9l7mvJx0cW
+3CaiXu92L2Cco2qwGeDOK2MIis2Oqzdz+PRaEe+66H0pRPEQAjw0xUU/B540/qeK
+8qwoIQ6Imwpcn52gI3r7qw1oGsSByvyW1ddLwgexQhRIE718KGLb+W7o+NgKGY8i
+neIClEPJcRVmIedOaqBqONQ5bRhknXP4PhAiNm5zrC9N6MsUFnFeQr3NgKXxkSle
+96h3fhslAozpY87V/8uCO4mNs0uv2B5rc0D7KkSoeHIXPXaCb3ewFDczPuq6wDNf
+dZF8jhPKCKGYAh7Yhvh0soWGdccXo/ydIe+xZk2v9kdseDIMegZbIC8eeKxfYLsq
++5nUFCcbdCXCqTpWEjOL0QzMjPWEoCvc2hC8D+xhXyIckU6c66RgWeGOBJDBQGeT
+LEMtn5I/Hw3WJVvfUh/8HHOUexzNnvbp1lLdfcxW87WLcj2nruPS4T2nb6xO7J9F
+f/NgrTD9KzCLrNJa5AXic9wg1AvWo1eXYXEAlzMdaM+NmRTgX7lg7xtsUoOSJ6Cs
+4kc5Vh8/WcESaQ3xxjrjCqfesJooiAGHa/0AVV6cUcPWgQXDask=
+=hRw5
+-----END PGP SIGNATURE-----
+--=-=-=--
