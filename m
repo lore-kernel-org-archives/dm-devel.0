@@ -1,57 +1,107 @@
-From: Bart Van Assche <Bart.VanAssche@wdc.com>
-Subject: Re: [PATCH V2 1/5] dm-mpath: don't call blk_mq_delay_run_hw_queue()
- in case of BLK_STS_RESOURCE
-Date: Mon, 27 Nov 2017 17:14:46 +0000
-Message-ID: <1511802882.2993.4.camel@wdc.com>
-References: <20171127050721.5884-1-ming.lei@redhat.com>
-         <20171127050721.5884-2-ming.lei@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH 2/2] dm-writecache
+Date: Mon, 27 Nov 2017 23:01:43 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1711272238130.9280@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1711222135371.2330@file01.intranet.prod.int.rdu2.redhat.com>
+	<CAA9_cmcRe8KXO+jWy8knqg4EMCgBYF1JAdgR=A2qHkVES+i9ZA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20171127050721.5884-2-ming.lei@redhat.com>
-Content-Language: en-US
-Content-ID: <221160CB3AE1554BB81F5CDFA9FCDC8C@namprd04.prod.outlook.com>
-Sender: linux-block-owner@vger.kernel.org
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "axboe@fb.com" <axboe@fb.com>, "ming.lei@redhat.com" <ming.lei@redhat.com>, "snitzer@redhat.com" <snitzer@redhat.com>
-Cc: "hch@infradead.org" <hch@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "hare@suse.com" <hare@suse.com>, "osandov@fb.com" <osandov@fb.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CAA9_cmcRe8KXO+jWy8knqg4EMCgBYF1JAdgR=A2qHkVES+i9ZA@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Dan Williams <dan.j.williams@intel.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <msnitzer@redhat.com>
 List-Id: dm-devel.ids
 
-T24gTW9uLCAyMDE3LTExLTI3IGF0IDEzOjA3ICswODAwLCBNaW5nIExlaSB3cm90ZToNCj4gSWYg
-LnF1ZXVlX3JxKCkgcmV0dXJucyBCTEtfU1RTX1JFU09VUkNFLCBibGstbXEgd2lsbCByZXJ1biB0
-aGUgcXVldWUgaW4NCj4gdGhlIHRocmVlIHNpdHVhdGlvbnM6DQo+IA0KPiAxKSBpZiBCTEtfTVFf
-U19TQ0hFRF9SRVNUQVJUIGlzIHNldA0KPiAtIHF1ZXVlIGlzIHJlcnVuIGFmdGVyIG9uZSBycSBp
-cyBjb21wbGV0ZWQsIHNlZSBibGtfbXFfc2NoZWRfcmVzdGFydCgpDQo+IHdoaWNoIGlzIHJ1biBm
-cm9tIGJsa19tcV9mcmVlX3JlcXVlc3QoKQ0KPiANCj4gMikgcnVuIG91dCBvZiBkcml2ZXIgdGFn
-DQo+IC0gcXVldWUgaXMgcmVydW4gYWZ0ZXIgb25lIHRhZyBpcyBmcmVlZA0KPiANCj4gMykgb3Ro
-ZXJ3aXNlDQo+IC0gcXVldWUgaXMgcnVuIGltbWVkaWF0ZWx5IGluIGJsa19tcV9kaXNwYXRjaF9y
-cV9saXN0KCkNCj4gDQo+IFRoaXMgcmFuZG9tIGRlYWx5IG9mIHJ1bm5pbmcgaHcgcXVldWUgaXMg
-aW50cm9kdWNlZCBieSBjb21taXQgNjA3N2MyZDcwNjA5N2MwDQo+IChkbSBycTogQXZvaWQgdGhh
-dCByZXF1ZXN0IHByb2Nlc3Npbmcgc3RhbGxzIHNwb3JhZGljYWxseSksIHdoaWNoIGNsYWltZWQN
-Cj4gb25lIHJlcXVlc3QgcHJvY2Vzc2luZyBzdGFsbGluZyBpcyBmaXhlZCwgYnV0IG5ldmVyIGV4
-cGxhaW5lZCB0aGUgYmVoaW5kDQo+IGlkZWEsIGFuZCBpdCBpcyBhIHdvcmthb3VuZCBhdCBtb3N0
-LiBFdmVuIHRoZSBxdWVzdGlvbiBpc24ndCBleHBsYWluZWQgYnkNCj4gYW55b25lIGluIHJlY2Vu
-dCBkaXNjdXNzaW9uLg0KPiANCj4gQWxzbyBjYWxsaW5nIGJsa19tcV9kZWxheV9ydW5faHdfcXVl
-dWUoKSBpbnNpZGUgLnF1ZXVlX3JxKCkgaXMgYSBob3JyaWJsZQ0KPiBoYWNrIGJlY2F1c2UgaXQg
-bWFrZXMgQkxLX01RX1NfU0NIRURfUkVTVEFSVCBub3Qgd29ya2luZywgYW5kIGRlZ3JhZGVzIEkv
-Tw0KPiBwZWZvcm1hbmNlIGEgbG90Lg0KPiANCj4gRmluYWxseSB0aGlzIHBhdGNoIG1ha2VzIHN1
-cmUgdGhhdCBkbS1ycSByZXR1cm5zIEJMS19TVFNfUkVTT1VSQ0UgdG8gYmxrLW1xDQo+IG9ubHkg
-d2hlbiB1bmRlcmx5aW5nIHF1ZXVlIGlzIG91dCBvZiByZXNvdXJjZSwgc28gd2Ugc3dpdGNoIHRv
-IHJldHVybg0KPiBETV9NQVBJT19ERUxBWV9SRVFVRVUgaWYgZWl0aGVyIE1QQVRIRl9RVUVVRV9J
-TyBvciBNUEFUSEZfUEdfSU5JVF9SRVFVSVJFRA0KPiBpcyBzZXQgaW4gbXVsdGlwYXRoX2Nsb25l
-X2FuZF9tYXAoKS4NCg0KU29ycnkgYnV0IGluIG15IG9waW5pb24gdGhlIGFib3ZlIGRlc2NyaXB0
-aW9uIHNob3dzIHRoYXQgeW91IGRvbid0IHVuZGVyc3RhbmQNCnRoZSBkbS1tcGF0aCBkcml2ZXIg
-Y29tcGxldGVseS4NCg0KPiBkaWZmIC0tZ2l0IGEvZHJpdmVycy9tZC9kbS1tcGF0aC5jIGIvZHJp
-dmVycy9tZC9kbS1tcGF0aC5jDQo+IGluZGV4IGM4ZmFhMmI4NTg0Mi4uOGZlM2Y0NTQwN2NlIDEw
-MDY0NA0KPiAtLS0gYS9kcml2ZXJzL21kL2RtLW1wYXRoLmMNCj4gKysrIGIvZHJpdmVycy9tZC9k
-bS1tcGF0aC5jDQo+IEBAIC00ODQsOSArNDg0LDcgQEAgc3RhdGljIGludCBtdWx0aXBhdGhfY2xv
-bmVfYW5kX21hcChzdHJ1Y3QgZG1fdGFyZ2V0ICp0aSwgc3RydWN0IHJlcXVlc3QgKnJxLA0KPiAg
-CQlyZXR1cm4gRE1fTUFQSU9fS0lMTDsNCj4gIAl9IGVsc2UgaWYgKHRlc3RfYml0KE1QQVRIRl9R
-VUVVRV9JTywgJm0tPmZsYWdzKSB8fA0KPiAgCQkgICB0ZXN0X2JpdChNUEFUSEZfUEdfSU5JVF9S
-RVFVSVJFRCwgJm0tPmZsYWdzKSkgew0KPiAtCQlpZiAocGdfaW5pdF9hbGxfcGF0aHMobSkpDQo+
-IC0JCQlyZXR1cm4gRE1fTUFQSU9fREVMQVlfUkVRVUVVRTsNCj4gLQkJcmV0dXJuIERNX01BUElP
-X1JFUVVFVUU7DQo+ICsJCXJldHVybiBETV9NQVBJT19ERUxBWV9SRVFVRVVFOw0KPiAgCX0NCg0K
-VGhpcyBwYXRjaCByZW1vdmVzIGEgcGdfaW5pdF9hbGxfcGF0aHMoKSBjYWxsIGJ1dCB5b3UgZG9u
-J3QgZXhwbGFpbiB3aHkgeW91DQp0aGluayBpdCBpcyBhbGxvd2VkIHRvIHJlbW92ZSB0aGF0IGNh
-bGwuIERpZCB5b3UgcGVyaGFwcyByZW1vdmUgdGhhdCBjYWxsIGJ5DQptaXN0YWtlPw0KDQpCYXJ0
-Lg==
+
+
+On Fri, 24 Nov 2017, Dan Williams wrote:
+
+> On Wed, Nov 22, 2017 at 6:36 PM, Mikulas Patocka <mpatocka@redhat.com> wrote:
+> > Hi
+> >
+> > Here I'm sending slighly update dm-writecache target.
+> >
+> 
+> I would expect some theory of operation documentation in the changelog
+> or in Documentation/ for a new driver.
+
+It caches writes for a block device in persistent memory. It doesn't cache 
+reads because reads are supposed to be cached in normal ram.
+
+> > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> >
+> [..]
+> > +/*
+> > + * The clflushopt instruction is very slow on Broadwell, so we use non-temporal
+> > + * stores instead.
+> > + */
+> 
+> The clflushopt instruction's first instantiation in a cpu was after
+> Broadwell. Also, the performance of clflushopt does not much matter
+> when running on a system without ADR (asynchronous DRAM refresh) where
+> flushing the cpu cache can just leave the writes stranded on their way
+> to the DIMM. ADR is not available on general purpose servers until
+> ACPI 6.x NFIT-defined persistent memory platforms.
+
+There used to be pcommit instruction, but intel abandoned it - see 
+https://software.intel.com/en-us/blogs/2016/09/12/deprecate-pcommit-instruction
+
+So, according to the document, flushing the cache should be enough for 
+writes to reach persistent memory.
+
+> > +#ifdef CONFIG_X86_64
+> 
+> In general something is broken if we end up with per-arch ifdefs like
+> this in drivers to handle persistent memory. This should be using the
+> pmem api or extensions of it, and we need to settle on a mechanism for
+> upper-level drivers to ask if pmem is driving platform protected
+> persistent memory.
+> 
+> > +#define NT_STORE(dest, src)    asm ("movnti %1, %0" : "=m"(dest) : "r"(src))
+> > +#define FLUSH_RANGE(dax, ptr, size)  do { } while (0)
+> > +#define COMMIT_FLUSHED()       wmb()
+> > +#else
+> > +#define NT_STORE(dest, src)    ACCESS_ONCE(dest) = (src)
+> > +#define FLUSH_RANGE            dax_flush
+> > +#define COMMIT_FLUSHED()       do { } while (0)
+> 
+> Is this just for test purposes? How does the user discover that they
+> are running in a degraded mode as far as persistence guarantees? I
+> think we should be falling back DM_WRITECACHE_ONLY_SSD mode if we're
+> not on a pmem platform.
+
+What degraded mode do you mean? According to that document, flushing cache 
+should be enough. If it is not enough, what else do I need to do to flush 
+cache?
+
+
+The above code is not for test purposes. It is for performance purposes.
+
+On dual-socket Broadwell server with persistent memory, when we write to 
+persistent memory using cached write instructions and use dax_flush 
+afterwards to flush cache for the affected range, the performance is about 
+350MB/s. It is practically unusable - worse than low-end SSDs.
+
+On the other hand, the movnti instruction can sustain performance of one 
+8-byte write per clock cycle. We don't have to flush cache afterwards, the 
+only thing that must be done is to flush the write-combining buffer with 
+the sfence instruction. Movnti has much better throughput than dax_flush.
+
+You argue that I should use the pmem api, but there is no pmem api 
+providing the movnti intruction. I have no choice, but coding the 
+instruction directly in assembler.
+
+If you want to create API, take that "NT_STORE" definition and move it to 
+some x86-specific include file.
+
+Mikulas
