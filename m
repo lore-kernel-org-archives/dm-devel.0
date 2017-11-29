@@ -1,148 +1,87 @@
-From: "Reshetova, Elena" <elena.reshetova@intel.com>
-Subject: RE: [PATCH 3/4] dm: convert dm_dev_internal.count from atomic_t to
- refcount_t
-Date: Wed, 29 Nov 2017 08:05:17 +0000
-Message-ID: <2236FBA76BA1254E88B949DDB74E612B802C4743@IRSMSX102.ger.corp.intel.com>
-References: <1508485059-21881-1-git-send-email-elena.reshetova@intel.com>
- <1508485059-21881-4-git-send-email-elena.reshetova@intel.com>
- <20171123154941.GA15790@agk-dp.fab.redhat.com>
- <2236FBA76BA1254E88B949DDB74E612B802C1F07@IRSMSX102.ger.corp.intel.com>
- <CAMM=eLfrnQqBH06pPnNKfmeF=AjScAxjR1WD7Ur9NAEY=4Sxog@mail.gmail.com>
- <2236FBA76BA1254E88B949DDB74E612B802C3EDA@IRSMSX102.ger.corp.intel.com>
- <20171128190225.GA32559@redhat.com>
+From: Wuchongyun <wu.chongyun@h3c.com>
+Subject: multipath-tools: release uxsocket and resource when
+	cancel thread
+Date: Wed, 29 Nov 2017 09:35:44 +0000
+Message-ID: <CEB9978CF3252343BE3C67AC9F0086A3414FA363@H3CMLB14-EX.srv.huawei-3com.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20171128190225.GA32559@redhat.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Alasdair G Kergon <agk@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "keescook@chromium.org" <keescook@chromium.org>, "peterz@infradead.org" <peterz@infradead.org>, "shli@kernel.org" <shli@kernel.org>, "koverstreet@google.com" <koverstreet@google.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>, "linux-bcache@vger.kernel.org" <linux-bcache@vger.kernel.org>, "ejt@redhat.com" <ejt@redhat.com>, "kent.overstreet@gmail.com" <kent.overstreet@gmail.com>, Zdenek Kabelac <zkabelac@redhat.com>
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: zh-CN
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Cc: Guozhonghua <guozhonghua@h3c.com>, Changwei Ge <ge.changwei@h3c.com>
 List-Id: dm-devel.ids
 
-> On Tue, Nov 28 2017 at  5:07am -0500,
-> Reshetova, Elena <elena.reshetova@intel.com> wrote:
-> 
-> >
-> > > On Fri, Nov 24, 2017 at 2:36 AM, Reshetova, Elena
-> > > <elena.reshetova@intel.com> wrote:
-> > > >> On Fri, Oct 20, 2017 at 10:37:38AM +0300, Elena Reshetova wrote:
-> > > >> >     } else if (dd->dm_dev->mode != (mode | dd->dm_dev->mode)) {
-> > > >> >             r = upgrade_mode(dd, mode, t->md);
-> > > >> >             if (r)
-> > > >> >                     return r;
-> > > >> > +           refcount_inc(&dd->count);
-> > > >> >     }
-> > > >>
-> > > >> Missing here:
-> > > >>
-> > > >>         else
-> > > >>               refcount_inc(&dd->count);
-> > > >>
-> > > >> ?
-> > > >
-> > > > Oh, yes, thanks for catching this! I think this got unnoticed so far and patch
-> was
-> > > merged, so I am going to send a followup patch now.
-> > >
-> > > I pushed this fix and will send to Linus next week:
-> > > https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-
-> > > dm.git/commit/?h=dm-
-> 4.15&id=d908af82d06cc420f9581c97c6db941cb87e4434
-> >
-> >
-> > I guess you mean this commit:
-> > https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-
-> dm.git/commit/?h=for-next&id=c2318d07ead871f058dda62e942ed7b6b1c1cfcf
-> >
-> > Unfortunately it is not correct:
-> >
-> > diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-> > index 88130b5..f6d32ee 100644
-> > --- a/drivers/md/dm-table.c
-> > +++ b/drivers/md/dm-table.c
-> > @@ -451,15 +451,15 @@ int dm_get_device(struct dm_target *ti, const char
-> *path, fmode_t mode,
-> >  			return r;
-> >  		}
-> >
-> > -		refcount_set(&dd->count, 1);
-> > +		refcount_set(&dd->count, 0);
-> >  		list_add(&dd->list, &t->devices);
-> >
-> >  	} else if (dd->dm_dev->mode != (mode | dd->dm_dev->mode)) {
-> >  		r = upgrade_mode(dd, mode, t->md);
-> >  		if (r)
-> >  			return r;
-> > -		refcount_inc(&dd->count);
-> >  	}
-> > +	refcount_inc(&dd->count);
-> >
-> > Problem will be here if you hit this refcount_inc() after the refcount_set(&dd-
-> >count, 0) earlier.
-> > refcount_inc() does not increment on zero value *ever* for security reasons
-> and instead people
-> > should initialize refcounters to 1 always and do increments from there if
-> needed.
-> 
-> include/linux/refcount.h:refcount_inc() definitely doesn't avoid
-> incrementing zero value.
+Hi ,
 
-Ok, to be fully precise there are 3 different cases (depending on config options):
+Issue description: 
+when multipathd initilaze and call uxsock_listen to create unix domain socket, but return -1 and the errno is 98 
+and then the uxsock_listen return null. After multipathd startup we can't receive any multipathd commands to 
+finish the new multipath creation anymore!
 
-1) refcount_t = atomic_t and in this case yes, nothing prevents increment, but no
- protection is given, so we hope such cases are disabled for any distros that care about
-security
+We found that uxlsnr thread's cleanup function not close the sockets and also not release the clients when 
+cancel thread, the domain socket will be release by the system. In any special environment like themachine's 
+load is very heavy, the system may not close the old domain socket when we try to create and bind the domain
+socket may return 98 (Address already in use).
 
-2) CONFIG_FULL_REFCOUNT is on and refcount_t uses arch. independent implementation
-In lib/refcount.c. In this case refcount_inc() won't increment from zero. It is really more
-than just a WARN(), increment fails inside refcount_inc_not_zero() used underneath. 
+And also we make some experiments:
+In uxsock_cleanup if we close the ux_sock first and then immdediately call ux_socket_listen to create new ux_sock
+and initialization will be OK; If we don't close the ux_sock and call ux_socket_listen will return -1 and errno = 98.
 
-3) arch. dependent implementation is used for refcount_t. Here different options are
-possible based on how arch. decides to implement this. Currently we only have x86
-one (arch/x86/include/asm/refcount.h) and it is indeed allows increments from zero to happen. 
+So we believe that close uxsocket and release clients when cancel thread might making new starting multipathd 
+thread can create uxsocket successfully, and might receiving multipathd commands properly.
+And also this path can fix clients' memory leak.
 
-So, what I described above was the worst case, but since we need the code to work reliably
-in each case, we have to take it into account. 
+Thanks,
+Chongyun
 
+Signed-off-by: wu chongyun <wu.chongyun@h3c.com>
+---
+multipathd/uxlsnr.c |   16 +++++++++++++++-
+1 file changed, 15 insertions(+), 1 deletion(-)
 
-> 
-> Neither does lib/refcount.c:refcount_inc() but it does spew a WARN_ON by
-> assuming a zero value means use-after-free.
+diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
+index 98ac25a..de6950b 100644
+--- a/multipathd/uxlsnr.c
++++ b/multipathd/uxlsnr.c
+@@ -139,6 +139,20 @@ void check_timeout(struct timespec start_time, char *inbuf,
 
-No, it does not increment really, it is not just a WARN(). 
-https://elixir.free-electrons.com/linux/latest/source/lib/refcount.c#L151
-It uses refcount_inc_not_zero() underneath. 
+ void uxsock_cleanup(void *arg)
+{
++       struct client *client_loop;
++       struct client *client_tmp;
++       int ux_sock = (int)arg;
++
++       /*
++       * no need to protect clients, 
++       * because all operations to clients are only from one thread(uxlsnr)
++       */
++       list_for_each_entry_safe(client_loop, client_tmp, &clients, node) {
++                dead_client(client_loop);
++       }
++
++       close(ux_sock);
++
+       cli_exit();
+       free_polls();
+}
+@@ -162,7 +176,7 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
+                return NULL;
+       }
 
+-        pthread_cleanup_push(uxsock_cleanup, NULL);
++       pthread_cleanup_push(uxsock_cleanup, (void*)ux_sock);
 
-> 
-> > This was the reason for the initial change I did, my mistake was just to forget to
-> increment it also
-> > in case condition (dd->dm_dev->mode != (mode | dd->dm_dev->mode)) fails.
-> >
-> > I have issues with my intel smpt server for sending patches (I will get it fixed
-> tomorrow from internal network),
-> > so I am attaching the patch I did end of last week to this thread instead (or
-> alternatively can properly send it tomorrow after fix).
-> > Sorry for the delay!
-> 
-> I was tempted to revert your original commits that switch DM code to
-> using refcount_t.  Already proved more trouble than it is worth.
-> 
-> But I'll drop my commit and take your fix.
-
-Thank you very much and sorry for the troubles!
-Unfortunately none of us is free of mistakes, good that this one was caught so fast!
-
-When it comes to value, it does provide security value for your code and makes
-sure that your reference counters would not be a new target of many similar CVEs
-we had in past around this. Overall each conversion matters since there is less and less
-potential holes attackers can try to squeeze themselves!
-
-Best Regards,
-Elena.
-
-
-> 
-> Mike
+        condlog(3, "uxsock: startup listener");
+       polls = (struct pollfd *)MALLOC((MIN_POLLS + 1) * sizeof(struct pollfd));
+-- 
+1.7.9.5
