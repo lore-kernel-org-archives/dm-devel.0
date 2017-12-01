@@ -1,7 +1,7 @@
 From: heinzm@redhat.com
-Subject: [PATCH 00/10] dm raid: fix deadlocks and sync ratio races
-Date: Fri,  1 Dec 2017 01:02:18 +0100
-Message-ID: <20171201000228.32677-1-heinzm@redhat.com>
+Subject: [PATCH 02/10] dm raid: correct resizing state in ctr
+Date: Fri,  1 Dec 2017 01:02:20 +0100
+Message-ID: <20171201000228.32677-3-heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -21,70 +21,48 @@ List-Id: dm-devel.ids
 
 From: Heinz Mauelshagen <heinzm@redhat.com>
 
-This patch series addresses issues causing deadlocks
-under load and sync ratio races.  The first 6 patches are
-critical, the last 4 are cleanup and an enhancement
-to constructor checks.
+Pay attention to existing reshape space
+to define if a raid set needs resizing.
+---
+ drivers/md/dm-raid.c | 10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
 
-Patch 1+2:
-be prepared for MD raid personalities to adjust
-rdev sectors after finishing a reshape conversion
-(MD upstream commit c6563a8c38fde3c1c7fc925a10bde3ca20799301)
-
-Patch 3:
-fix reshape conversion deadlock under io load
-by moving md_stop_writes() to post suspend thus
-allowing the MD resync thread to work until after
-the raid set got quiesced.
-
-Patch 4:
-fix raid set size revalidation for disk adding reshape
-and related deadlock:  do it before starting the reshape
-when shrinking and after when growing (i.e. remove/add stripes).
-
-Patch 5:
-fix reshape staying frozen on multiple table reloads.
-Only the last table reload may unfreeze the raid set
-so that the proper reshape position can be retrieved
-from the superblocks read in the constructor.
-
-Patch 6:
-Fix rs_get_progress to avoid bogus sync ratios.
-
-Patch 7:
-cleanup grouping the definition of raid set rw
-and in_sync with mddev_suspend
-
-Patch 8+9:
-cleanup removing an unused struct member and fix comments
-
-Patch 10:
-enhance adding a data component device size check to the constructor
-(i.e. reject on small component data devices)
-
-Resolves: rhbz1372101
-Related:  rhbz1388632
-Resolves: rhbz1507729
-Resolves: rhbz1508070
-Related:  rhbz1514215
-Resolves: rhbz1514500
-
-
-Heinz Mauelshagen (10):
-  dm raid: correct sizes and check of component devices
-  dm raid: correct resizing state in ctr
-  dm raid: fix deadlock caused by stopped writes
-  dm raid: correct raid set size revalidation
-  dm raid: enhance resume() frozen checks
-  dm raid: clear out rs_get_progress()
-  dm raid: group rw and in_sync definitions with mddev_resume()
-  dm raid: remove unused "struct raid_set" member
-  dm raid: comments
-  dm raid: add component device size check
-
- Documentation/device-mapper/dm-raid.txt |   3 +-
- drivers/md/dm-raid.c                    | 261 +++++++++++++++++++++-----------
- 2 files changed, 178 insertions(+), 86 deletions(-)
-
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index 76452bde072e..3dcaceb13811 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -2969,10 +2969,10 @@ static void configure_discard_support(struct raid_set *rs)
+ static int raid_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ {
+ 	int r;
+-	bool resize;
++	bool resize = false;
+ 	struct raid_type *rt;
+ 	unsigned int num_raid_params, num_raid_devs;
+-	sector_t calculated_dev_sectors, rdev_sectors;
++	sector_t calculated_dev_sectors, rdev_sectors, reshape_sectors;
+ 	struct raid_set *rs = NULL;
+ 	const char *arg;
+ 	struct rs_layout rs_layout;
+@@ -3055,7 +3055,10 @@ static int raid_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 		goto bad;
+ 	}
+ 
+-	resize = calculated_dev_sectors != rdev_sectors;
++
++	reshape_sectors = _get_reshape_sectors(rs);
++	if (calculated_dev_sectors != rdev_sectors)
++		resize = calculated_dev_sectors != (reshape_sectors ? rdev_sectors - reshape_sectors : rdev_sectors);
+ 
+ 	INIT_WORK(&rs->md.event_work, do_table_event);
+ 	ti->private = rs;
+@@ -3178,7 +3181,6 @@ static int raid_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	mddev_lock_nointr(&rs->md);
+ 	r = md_run(&rs->md);
+ 	rs->md.in_sync = 0; /* Assume already marked dirty */
+-
+ 	if (r) {
+ 		ti->error = "Failed to run raid array";
+ 		mddev_unlock(&rs->md);
 -- 
 2.13.6
