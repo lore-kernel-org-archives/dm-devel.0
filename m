@@ -1,7 +1,8 @@
 From: heinzm@redhat.com
-Subject: [PATCH 02/10] dm raid: correct resizing state in ctr
-Date: Fri,  1 Dec 2017 01:02:20 +0100
-Message-ID: <20171201000228.32677-3-heinzm@redhat.com>
+Subject: [PATCH 01/10] dm raid: correct sizes and check of
+	component devices
+Date: Fri,  1 Dec 2017 01:02:19 +0100
+Message-ID: <20171201000228.32677-2-heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -21,48 +22,87 @@ List-Id: dm-devel.ids
 
 From: Heinz Mauelshagen <heinzm@redhat.com>
 
-Pay attention to existing reshape space
-to define if a raid set needs resizing.
+The md raid personalities call md_finish_reshape() at the end
+of a reshape conversion which adjusts rdev->sectors.
+
+Correct/check rdev->sectors before initiating a reshape
+and raise the recovery pointer accordingly.
 ---
- drivers/md/dm-raid.c | 10 ++++++----
- 1 file changed, 6 insertions(+), 4 deletions(-)
+ drivers/md/dm-raid.c | 36 +++++++++++++++++++++++++++++++++++-
+ 1 file changed, 35 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 76452bde072e..3dcaceb13811 100644
+index 6319d846e0ad..76452bde072e 100644
 --- a/drivers/md/dm-raid.c
 +++ b/drivers/md/dm-raid.c
-@@ -2969,10 +2969,10 @@ static void configure_discard_support(struct raid_set *rs)
- static int raid_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+@@ -2640,12 +2640,19 @@ static int rs_adjust_data_offsets(struct raid_set *rs)
+ 	 * Make sure we got a minimum amount of free sectors per device
+ 	 */
+ 	if (rs->data_offset &&
+-	    to_sector(i_size_read(rdev->bdev->bd_inode)) - rdev->sectors < MIN_FREE_RESHAPE_SPACE) {
++	    to_sector(i_size_read(rdev->bdev->bd_inode)) - rs->md.dev_sectors < MIN_FREE_RESHAPE_SPACE) {
+ 		rs->ti->error = data_offset ? "No space for forward reshape" :
+ 					      "No space for backward reshape";
+ 		return -ENOSPC;
+ 	}
+ out:
++	/*
++	 * Raise recovery_cp in case data_offset != 0 to
++	 * avoid false recovery positives in the constructor.
++	 */
++	if (rs->md.recovery_cp < rs->md.dev_sectors)
++		rs->md.recovery_cp += rs->dev[0].rdev.data_offset;
++
+ 	/* Adjust data offsets on all rdevs but on any raid4/5/6 journal device */
+ 	rdev_for_each(rdev, &rs->md) {
+ 		if (!test_bit(Journal, &rdev->flags)) {
+@@ -2777,6 +2784,23 @@ static int rs_prepare_reshape(struct raid_set *rs)
+ 	return 0;
+ }
+ 
++/* Get reshape sectors from data_offsets or raid set */
++static sector_t _get_reshape_sectors(struct raid_set *rs)
++{
++	struct md_rdev *rdev;
++	sector_t reshape_sectors = 0;
++
++	rdev_for_each(rdev, &rs->md)
++		if (!test_bit(Journal, &rdev->flags)) {
++			reshape_sectors = (rdev->data_offset > rdev->new_data_offset) ?
++					rdev->data_offset - rdev->new_data_offset :
++					rdev->new_data_offset - rdev->data_offset;
++			break;
++		}
++
++	return max(reshape_sectors, (sector_t) rs->data_offset);
++}
++
+ /*
+  *
+  * - change raid layout
+@@ -2788,6 +2812,7 @@ static int rs_setup_reshape(struct raid_set *rs)
  {
- 	int r;
--	bool resize;
-+	bool resize = false;
- 	struct raid_type *rt;
- 	unsigned int num_raid_params, num_raid_devs;
--	sector_t calculated_dev_sectors, rdev_sectors;
-+	sector_t calculated_dev_sectors, rdev_sectors, reshape_sectors;
- 	struct raid_set *rs = NULL;
- 	const char *arg;
- 	struct rs_layout rs_layout;
-@@ -3055,7 +3055,10 @@ static int raid_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 		goto bad;
+ 	int r = 0;
+ 	unsigned int cur_raid_devs, d;
++	sector_t reshape_sectors = _get_reshape_sectors(rs);
+ 	struct mddev *mddev = &rs->md;
+ 	struct md_rdev *rdev;
+ 
+@@ -2874,6 +2899,15 @@ static int rs_setup_reshape(struct raid_set *rs)
+ 		mddev->reshape_backwards = rs->dev[0].rdev.data_offset ? 0 : 1;
  	}
  
--	resize = calculated_dev_sectors != rdev_sectors;
++	/*
++	 * Adjust device size for forward reshape
++	 * because md_finish_reshape() reduces it.
++	 */
++	if (!mddev->reshape_backwards)
++		rdev_for_each(rdev, &rs->md)
++			if (!test_bit(Journal, &rdev->flags))
++				rdev->sectors += reshape_sectors;
 +
-+	reshape_sectors = _get_reshape_sectors(rs);
-+	if (calculated_dev_sectors != rdev_sectors)
-+		resize = calculated_dev_sectors != (reshape_sectors ? rdev_sectors - reshape_sectors : rdev_sectors);
+ 	return r;
+ }
  
- 	INIT_WORK(&rs->md.event_work, do_table_event);
- 	ti->private = rs;
-@@ -3178,7 +3181,6 @@ static int raid_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	mddev_lock_nointr(&rs->md);
- 	r = md_run(&rs->md);
- 	rs->md.in_sync = 0; /* Assume already marked dirty */
--
- 	if (r) {
- 		ti->error = "Failed to run raid array";
- 		mddev_unlock(&rs->md);
 -- 
 2.13.6
