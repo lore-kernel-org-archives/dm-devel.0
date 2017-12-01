@@ -1,8 +1,8 @@
 From: heinzm@redhat.com
-Subject: [PATCH 01/10] dm raid: correct sizes and check of
-	component devices
-Date: Fri,  1 Dec 2017 01:02:19 +0100
-Message-ID: <20171201000228.32677-2-heinzm@redhat.com>
+Subject: [PATCH 03/10] dm raid: fix deadlock caused by stopped
+	writes
+Date: Fri,  1 Dec 2017 01:02:21 +0100
+Message-ID: <20171201000228.32677-4-heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -22,87 +22,87 @@ List-Id: dm-devel.ids
 
 From: Heinz Mauelshagen <heinzm@redhat.com>
 
-The md raid personalities call md_finish_reshape() at the end
-of a reshape conversion which adjusts rdev->sectors.
+md_stop_writes() is called in presuspend causing deadlocks on
+bios submitted afterwards which happens on loaded raid sets
+with conversion requests.
 
-Correct/check rdev->sectors before initiating a reshape
-and raise the recovery pointer accordingly.
+Fix by moving md_stop_writes to postsuspend.
+Hence the raid set is quiesced remove superfluous
+readonly setting too.
+
+Adjust target version to be able to recognize the fix.
+
+Related: rhbz1448116
 ---
- drivers/md/dm-raid.c | 36 +++++++++++++++++++++++++++++++++++-
- 1 file changed, 35 insertions(+), 1 deletion(-)
+ Documentation/device-mapper/dm-raid.txt |  3 ++-
+ drivers/md/dm-raid.c                    | 20 +++++++++-----------
+ 2 files changed, 11 insertions(+), 12 deletions(-)
 
+diff --git a/Documentation/device-mapper/dm-raid.txt b/Documentation/device-mapper/dm-raid.txt
+index 32df07e29f68..4d260fedcd8b 100644
+--- a/Documentation/device-mapper/dm-raid.txt
++++ b/Documentation/device-mapper/dm-raid.txt
+@@ -343,5 +343,6 @@ Version History
+ 1.11.0  Fix table line argument order
+ 	(wrong raid10_copies/raid10_format sequence)
+ 1.11.1  Add raid4/5/6 journal write-back support via journal_mode option
+-1.12.1  fix for MD deadlock between mddev_suspend() and md_write_start() available
++1.12.1  Fix for MD deadlock between mddev_suspend() and md_write_start() available
+ 1.13.0  Fix dev_health status at end of "recover" (was 'a', now 'A')
++1.13.1  Fix deadlock caused by early md_stop_writes()
 diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 6319d846e0ad..76452bde072e 100644
+index 3dcaceb13811..ec28a6cf1bf8 100644
 --- a/drivers/md/dm-raid.c
 +++ b/drivers/md/dm-raid.c
-@@ -2640,12 +2640,19 @@ static int rs_adjust_data_offsets(struct raid_set *rs)
- 	 * Make sure we got a minimum amount of free sectors per device
- 	 */
- 	if (rs->data_offset &&
--	    to_sector(i_size_read(rdev->bdev->bd_inode)) - rdev->sectors < MIN_FREE_RESHAPE_SPACE) {
-+	    to_sector(i_size_read(rdev->bdev->bd_inode)) - rs->md.dev_sectors < MIN_FREE_RESHAPE_SPACE) {
- 		rs->ti->error = data_offset ? "No space for forward reshape" :
- 					      "No space for backward reshape";
- 		return -ENOSPC;
- 	}
- out:
-+	/*
-+	 * Raise recovery_cp in case data_offset != 0 to
-+	 * avoid false recovery positives in the constructor.
-+	 */
-+	if (rs->md.recovery_cp < rs->md.dev_sectors)
-+		rs->md.recovery_cp += rs->dev[0].rdev.data_offset;
-+
- 	/* Adjust data offsets on all rdevs but on any raid4/5/6 journal device */
- 	rdev_for_each(rdev, &rs->md) {
- 		if (!test_bit(Journal, &rdev->flags)) {
-@@ -2777,6 +2784,23 @@ static int rs_prepare_reshape(struct raid_set *rs)
- 	return 0;
+@@ -3649,24 +3649,23 @@ static void raid_io_hints(struct dm_target *ti, struct queue_limits *limits)
+ 	blk_limits_io_opt(limits, chunk_size * mddev_data_stripes(rs));
  }
  
-+/* Get reshape sectors from data_offsets or raid set */
-+static sector_t _get_reshape_sectors(struct raid_set *rs)
-+{
-+	struct md_rdev *rdev;
-+	sector_t reshape_sectors = 0;
-+
-+	rdev_for_each(rdev, &rs->md)
-+		if (!test_bit(Journal, &rdev->flags)) {
-+			reshape_sectors = (rdev->data_offset > rdev->new_data_offset) ?
-+					rdev->data_offset - rdev->new_data_offset :
-+					rdev->new_data_offset - rdev->data_offset;
-+			break;
-+		}
-+
-+	return max(reshape_sectors, (sector_t) rs->data_offset);
-+}
-+
- /*
-  *
-  * - change raid layout
-@@ -2788,6 +2812,7 @@ static int rs_setup_reshape(struct raid_set *rs)
+-static void raid_presuspend(struct dm_target *ti)
+-{
+-	struct raid_set *rs = ti->private;
+-
+-	md_stop_writes(&rs->md);
+-}
+-
+ static void raid_postsuspend(struct dm_target *ti)
  {
- 	int r = 0;
- 	unsigned int cur_raid_devs, d;
-+	sector_t reshape_sectors = _get_reshape_sectors(rs);
- 	struct mddev *mddev = &rs->md;
- 	struct md_rdev *rdev;
+ 	struct raid_set *rs = ti->private;
  
-@@ -2874,6 +2899,15 @@ static int rs_setup_reshape(struct raid_set *rs)
- 		mddev->reshape_backwards = rs->dev[0].rdev.data_offset ? 0 : 1;
- 	}
- 
-+	/*
-+	 * Adjust device size for forward reshape
-+	 * because md_finish_reshape() reduces it.
-+	 */
-+	if (!mddev->reshape_backwards)
-+		rdev_for_each(rdev, &rs->md)
-+			if (!test_bit(Journal, &rdev->flags))
-+				rdev->sectors += reshape_sectors;
+ 	if (!test_and_set_bit(RT_FLAG_RS_SUSPENDED, &rs->runtime_flags)) {
++		/*
++		 * Writes have to be stopped before suspending to avoid deadlocks.
++		 *
++		 * https://bugzilla.redhat.com/show_bug.cgi?id=1514539
++		 */
++		if (!test_bit(MD_RECOVERY_FROZEN, &rs->md.recovery))
++			md_stop_writes(&rs->md);
 +
- 	return r;
+ 		mddev_lock_nointr(&rs->md);
+ 		mddev_suspend(&rs->md);
+ 		mddev_unlock(&rs->md);
+ 	}
+-
+-	rs->md.ro = 1;
  }
  
+ static void attempt_restore_of_faulty_devices(struct raid_set *rs)
+@@ -3930,7 +3929,7 @@ static void raid_resume(struct dm_target *ti)
+ 
+ static struct target_type raid_target = {
+ 	.name = "raid",
+-	.version = {1, 13, 0},
++	.version = {1, 13, 1},
+ 	.module = THIS_MODULE,
+ 	.ctr = raid_ctr,
+ 	.dtr = raid_dtr,
+@@ -3939,7 +3938,6 @@ static struct target_type raid_target = {
+ 	.message = raid_message,
+ 	.iterate_devices = raid_iterate_devices,
+ 	.io_hints = raid_io_hints,
+-	.presuspend = raid_presuspend,
+ 	.postsuspend = raid_postsuspend,
+ 	.preresume = raid_preresume,
+ 	.resume = raid_resume,
 -- 
 2.13.6
