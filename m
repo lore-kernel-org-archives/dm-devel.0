@@ -1,8 +1,7 @@
 From: heinzm@redhat.com
-Subject: [PATCH 08/10] dm raid: remove unused "struct raid_set"
-	member
-Date: Fri,  1 Dec 2017 01:02:26 +0100
-Message-ID: <20171201000228.32677-9-heinzm@redhat.com>
+Subject: [PATCH 09/10] dm raid: comments
+Date: Fri,  1 Dec 2017 01:02:27 +0100
+Message-ID: <20171201000228.32677-10-heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -23,20 +22,37 @@ List-Id: dm-devel.ids
 From: Heinz Mauelshagen <heinzm@redhat.com>
 
 ---
- drivers/md/dm-raid.c | 1 -
- 1 file changed, 1 deletion(-)
+ drivers/md/dm-raid.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 1c06417944d7..8e63888fe670 100644
+index 8e63888fe670..5c08729ccc22 100644
 --- a/drivers/md/dm-raid.c
 +++ b/drivers/md/dm-raid.c
-@@ -227,7 +227,6 @@ struct rs_layout {
- struct raid_set {
- 	struct dm_target *ti;
+@@ -2837,13 +2837,13 @@ static int rs_setup_reshape(struct raid_set *rs)
+ 	/*
+ 	 * Adjust array size:
+ 	 *
+-	 * - in case of adding disks, array size has
++	 * - in case of adding disk(s), array size has
+ 	 *   to grow after the disk adding reshape,
+ 	 *   which'll hapen in the event handler;
+ 	 *   reshape will happen forward, so space has to
+ 	 *   be available at the beginning of each disk
+ 	 *
+-	 * - in case of removing disks, array size
++	 * - in case of removing disk(s), array size
+ 	 *   has to shrink before starting the reshape,
+ 	 *   which'll happen here;
+ 	 *   reshape will happen backward, so space has to
+@@ -2874,7 +2874,7 @@ static int rs_setup_reshape(struct raid_set *rs)
+ 			rdev->recovery_offset = rs_is_raid1(rs) ? 0 : MaxSector;
+ 		}
  
--	uint32_t bitmap_loaded;
- 	uint32_t stripe_cache_entries;
- 	unsigned long ctr_flags;
- 	unsigned long runtime_flags;
+-		mddev->reshape_backwards = 0; /* adding disks -> forward reshape */
++		mddev->reshape_backwards = 0; /* adding disk(s) -> forward reshape */
+ 
+ 	/* Remove disk(s) */
+ 	} else if (rs->delta_disks < 0) {
 -- 
 2.13.6
