@@ -1,8 +1,7 @@
-From: Thomas Deutschmann <whissi@gentoo.org>
-Subject: [PATCH] multipath-tools: Makefile: Respect standard
-	toolchain related envvars
-Date: Thu, 30 Nov 2017 00:23:11 +0100
-Message-ID: <20171129232311.95483-1-whissi@gentoo.org>
+From: heinzm@redhat.com
+Subject: [PATCH 00/10] dm raid: fix deadlocks and sync ratio races
+Date: Fri,  1 Dec 2017 01:02:18 +0100
+Message-ID: <20171201000228.32677-1-heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -17,34 +16,75 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: heinzm@redhat.com, snitzer@redhat.com
 List-Id: dm-devel.ids
 
-The Makefile overrides standard envvars that control the toolchain flags.
-This patch should set things right without reducing default behavior.
+From: Heinz Mauelshagen <heinzm@redhat.com>
 
-Signed-off-by: Thomas Deutschmann <whissi@gentoo.org>
----
- Makefile.inc | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+This patch series addresses issues causing deadlocks
+under load and sync ratio races.  The first 6 patches are
+critical, the last 4 are cleanup and an enhancement
+to constructor checks.
 
-diff --git a/Makefile.inc b/Makefile.inc
-index 29c290a2..951d58fc 100644
---- a/Makefile.inc
-+++ b/Makefile.inc
-@@ -90,11 +90,12 @@ OPTFLAGS	= -O2 -g -pipe -Wall -Wextra -Wformat=2 -Werror=implicit-int \
- 		  -Wp,-D_FORTIFY_SOURCE=2 $(STACKPROT) \
- 		  --param=ssp-buffer-size=4
- 
--CFLAGS		= $(OPTFLAGS) -DLIB_STRING=\"${LIB}\" -DRUN_DIR=\"${RUN}\"
-+CFLAGS		?= $(OPTFLAGS)
-+CFLAGS		+= -DLIB_STRING=\"${LIB}\" -DRUN_DIR=\"${RUN}\"
- BIN_CFLAGS	= -fPIE -DPIE
- LIB_CFLAGS	= -fPIC
- SHARED_FLAGS	= -shared
--LDFLAGS		= -Wl,-z,relro -Wl,-z,now
-+LDFLAGS		+= -Wl,-z,relro -Wl,-z,now
- BIN_LDFLAGS	= -pie
- 
- # Check whether a function with name $1 has been declared in header file $2.
+Patch 1+2:
+be prepared for MD raid personalities to adjust
+rdev sectors after finishing a reshape conversion
+(MD upstream commit c6563a8c38fde3c1c7fc925a10bde3ca20799301)
+
+Patch 3:
+fix reshape conversion deadlock under io load
+by moving md_stop_writes() to post suspend thus
+allowing the MD resync thread to work until after
+the raid set got quiesced.
+
+Patch 4:
+fix raid set size revalidation for disk adding reshape
+and related deadlock:  do it before starting the reshape
+when shrinking and after when growing (i.e. remove/add stripes).
+
+Patch 5:
+fix reshape staying frozen on multiple table reloads.
+Only the last table reload may unfreeze the raid set
+so that the proper reshape position can be retrieved
+from the superblocks read in the constructor.
+
+Patch 6:
+Fix rs_get_progress to avoid bogus sync ratios.
+
+Patch 7:
+cleanup grouping the definition of raid set rw
+and in_sync with mddev_suspend
+
+Patch 8+9:
+cleanup removing an unused struct member and fix comments
+
+Patch 10:
+enhance adding a data component device size check to the constructor
+(i.e. reject on small component data devices)
+
+Resolves: rhbz1372101
+Related:  rhbz1388632
+Resolves: rhbz1507729
+Resolves: rhbz1508070
+Related:  rhbz1514215
+Resolves: rhbz1514500
+
+
+Heinz Mauelshagen (10):
+  dm raid: correct sizes and check of component devices
+  dm raid: correct resizing state in ctr
+  dm raid: fix deadlock caused by stopped writes
+  dm raid: correct raid set size revalidation
+  dm raid: enhance resume() frozen checks
+  dm raid: clear out rs_get_progress()
+  dm raid: group rw and in_sync definitions with mddev_resume()
+  dm raid: remove unused "struct raid_set" member
+  dm raid: comments
+  dm raid: add component device size check
+
+ Documentation/device-mapper/dm-raid.txt |   3 +-
+ drivers/md/dm-raid.c                    | 261 +++++++++++++++++++++-----------
+ 2 files changed, 178 insertions(+), 86 deletions(-)
+
 -- 
-2.15.1
+2.13.6
