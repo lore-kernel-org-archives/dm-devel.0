@@ -1,8 +1,8 @@
 From: heinzm@redhat.com
-Subject: [PATCH 07/10] dm raid: group rw and in_sync definitions
-	with mddev_resume()
-Date: Fri,  1 Dec 2017 01:02:25 +0100
-Message-ID: <20171201000228.32677-8-heinzm@redhat.com>
+Subject: [PATCH 08/10] dm raid: remove unused "struct raid_set"
+	member
+Date: Fri,  1 Dec 2017 01:02:26 +0100
+Message-ID: <20171201000228.32677-9-heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -23,31 +23,20 @@ List-Id: dm-devel.ids
 From: Heinz Mauelshagen <heinzm@redhat.com>
 
 ---
- drivers/md/dm-raid.c | 5 ++---
- 1 file changed, 2 insertions(+), 3 deletions(-)
+ drivers/md/dm-raid.c | 1 -
+ 1 file changed, 1 deletion(-)
 
 diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 7fbb31ed9147..1c06417944d7 100644
+index 1c06417944d7..8e63888fe670 100644
 --- a/drivers/md/dm-raid.c
 +++ b/drivers/md/dm-raid.c
-@@ -3937,9 +3937,6 @@ static void raid_resume(struct dm_target *ti)
- 		attempt_restore_of_faulty_devices(rs);
- 	}
+@@ -227,7 +227,6 @@ struct rs_layout {
+ struct raid_set {
+ 	struct dm_target *ti;
  
--	mddev->ro = 0;
--	mddev->in_sync = 0;
--
- 	/* Only reduce raid set size before running a disk removing reshape. */
- 	if (mddev->delta_disks < 0)
- 		rs_set_capacity(rs);
-@@ -3963,6 +3960,8 @@ static void raid_resume(struct dm_target *ti)
- 
- 	if (test_and_clear_bit(RT_FLAG_RS_SUSPENDED, &rs->runtime_flags)) {
- 		mddev_lock_nointr(mddev);
-+		mddev->ro = 0;
-+		mddev->in_sync = 0;
- 		mddev_resume(mddev);
- 		mddev_unlock(mddev);
- 	}
+-	uint32_t bitmap_loaded;
+ 	uint32_t stripe_cache_entries;
+ 	unsigned long ctr_flags;
+ 	unsigned long runtime_flags;
 -- 
 2.13.6
