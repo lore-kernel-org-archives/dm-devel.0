@@ -1,84 +1,110 @@
-From: Ming Lei <ming.lei@redhat.com>
-Subject: Re: [PATCH V2 1/5] dm-mpath: don't call blk_mq_delay_run_hw_queue()
- in case of BLK_STS_RESOURCE
-Date: Fri, 1 Dec 2017 10:01:03 +0800
-Message-ID: <20171201020058.GA30132@ming.t460p>
-References: <20171127050721.5884-1-ming.lei@redhat.com>
- <20171127050721.5884-2-ming.lei@redhat.com>
- <1511802882.2993.4.camel@wdc.com>
+From: Heinz Mauelshagen <heinzm@redhat.com>
+Subject: [PATCH V2 02/12] dm raid: correct sizes and check of
+	component devices
+Date: Sat,  2 Dec 2017 01:03:49 +0100
+Message-ID: <05c0cd9485f606ad74d4a392456dcc80c54e62e1.1512171097.git.heinzm@redhat.com>
+References: <cover.1512171097.git.heinzm@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1511802882.2993.4.camel@wdc.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Bart Van Assche <Bart.VanAssche@wdc.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "axboe@fb.com" <axboe@fb.com>, "snitzer@redhat.com" <snitzer@redhat.com>, "hch@infradead.org" <hch@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "hare@suse.com" <hare@suse.com>, "osandov@fb.com" <osandov@fb.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <cover.1512171097.git.heinzm@redhat.com>
+In-Reply-To: <cover.1512171097.git.heinzm@redhat.com>
+References: <cover.1512171097.git.heinzm@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: snitzer@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Nov 27, 2017 at 05:14:46PM +0000, Bart Van Assche wrote:
-> On Mon, 2017-11-27 at 13:07 +0800, Ming Lei wrote:
-> > If .queue_rq() returns BLK_STS_RESOURCE, blk-mq will rerun the queue in
-> > the three situations:
-> > 
-> > 1) if BLK_MQ_S_SCHED_RESTART is set
-> > - queue is rerun after one rq is completed, see blk_mq_sched_restart()
-> > which is run from blk_mq_free_request()
-> > 
-> > 2) run out of driver tag
-> > - queue is rerun after one tag is freed
-> > 
-> > 3) otherwise
-> > - queue is run immediately in blk_mq_dispatch_rq_list()
-> > 
-> > This random dealy of running hw queue is introduced by commit 6077c2d706097c0
-> > (dm rq: Avoid that request processing stalls sporadically), which claimed
-> > one request processing stalling is fixed, but never explained the behind
-> > idea, and it is a workaound at most. Even the question isn't explained by
-> > anyone in recent discussion.
-> > 
-> > Also calling blk_mq_delay_run_hw_queue() inside .queue_rq() is a horrible
-> > hack because it makes BLK_MQ_S_SCHED_RESTART not working, and degrades I/O
-> > peformance a lot.
-> > 
-> > Finally this patch makes sure that dm-rq returns BLK_STS_RESOURCE to blk-mq
-> > only when underlying queue is out of resource, so we switch to return
-> > DM_MAPIO_DELAY_REQUEU if either MPATHF_QUEUE_IO or MPATHF_PG_INIT_REQUIRED
-> > is set in multipath_clone_and_map().
-> 
-> Sorry but in my opinion the above description shows that you don't understand
-> the dm-mpath driver completely.
+The md raid personalities call md_finish_reshape() at the end
+of a reshape conversion which adjusts rdev->sectors.
 
-I have to treat your above comment as a noop since you never provide a explanation.
+Correct/check rdev->sectors before initiating a reshape
+and raise the recovery pointer accordingly.
+---
+ drivers/md/dm-raid.c | 36 +++++++++++++++++++++++++++++++++++-
+ 1 file changed, 35 insertions(+), 1 deletion(-)
 
-Also I don't think it is wrong to deal with MPATHF_QUEUE_IO/MPATHF_PG_INIT_REQUIRED
-via DM_MAPIO_DELAY_REQUEUE, since both can seldom happen, and the delay
-won't cause performance issue.
-
-The idea behind this change is that this patchset switches to return BLK_STS_RESOURCE
-to blk-mq only when we run out of resource, but the above two(MPATHF_QUEUE_IO and
-MPATHF_PG_INIT_REQUIRED) don't belong to 'run out of resource'.
-
-> 
-> > diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-> > index c8faa2b85842..8fe3f45407ce 100644
-> > --- a/drivers/md/dm-mpath.c
-> > +++ b/drivers/md/dm-mpath.c
-> > @@ -484,9 +484,7 @@ static int multipath_clone_and_map(struct dm_target *ti, struct request *rq,
-> >  		return DM_MAPIO_KILL;
-> >  	} else if (test_bit(MPATHF_QUEUE_IO, &m->flags) ||
-> >  		   test_bit(MPATHF_PG_INIT_REQUIRED, &m->flags)) {
-> > -		if (pg_init_all_paths(m))
-> > -			return DM_MAPIO_DELAY_REQUEUE;
-> > -		return DM_MAPIO_REQUEUE;
-> > +		return DM_MAPIO_DELAY_REQUEUE;
-> >  	}
-> 
-> This patch removes a pg_init_all_paths() call but you don't explain why you
-> think it is allowed to remove that call. Did you perhaps remove that call by
-> mistake?
-
-OK, that is a problem, will fix it in V2.
-
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index 536666facbf1..5f099d1f7ccc 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -2640,12 +2640,19 @@ static int rs_adjust_data_offsets(struct raid_set *rs)
+ 	 * Make sure we got a minimum amount of free sectors per device
+ 	 */
+ 	if (rs->data_offset &&
+-	    to_sector(i_size_read(rdev->bdev->bd_inode)) - rdev->sectors < MIN_FREE_RESHAPE_SPACE) {
++	    to_sector(i_size_read(rdev->bdev->bd_inode)) - rs->md.dev_sectors < MIN_FREE_RESHAPE_SPACE) {
+ 		rs->ti->error = data_offset ? "No space for forward reshape" :
+ 					      "No space for backward reshape";
+ 		return -ENOSPC;
+ 	}
+ out:
++	/*
++	 * Raise recovery_cp in case data_offset != 0 to
++	 * avoid false recovery positives in the constructor.
++	 */
++	if (rs->md.recovery_cp < rs->md.dev_sectors)
++		rs->md.recovery_cp += rs->dev[0].rdev.data_offset;
++
+ 	/* Adjust data offsets on all rdevs but on any raid4/5/6 journal device */
+ 	rdev_for_each(rdev, &rs->md) {
+ 		if (!test_bit(Journal, &rdev->flags)) {
+@@ -2777,6 +2784,23 @@ static int rs_prepare_reshape(struct raid_set *rs)
+ 	return 0;
+ }
+ 
++/* Get reshape sectors from data_offsets or raid set */
++static sector_t _get_reshape_sectors(struct raid_set *rs)
++{
++	struct md_rdev *rdev;
++	sector_t reshape_sectors = 0;
++
++	rdev_for_each(rdev, &rs->md)
++		if (!test_bit(Journal, &rdev->flags)) {
++			reshape_sectors = (rdev->data_offset > rdev->new_data_offset) ?
++					rdev->data_offset - rdev->new_data_offset :
++					rdev->new_data_offset - rdev->data_offset;
++			break;
++		}
++
++	return max(reshape_sectors, (sector_t) rs->data_offset);
++}
++
+ /*
+  *
+  * - change raid layout
+@@ -2788,6 +2812,7 @@ static int rs_setup_reshape(struct raid_set *rs)
+ {
+ 	int r = 0;
+ 	unsigned int cur_raid_devs, d;
++	sector_t reshape_sectors = _get_reshape_sectors(rs);
+ 	struct mddev *mddev = &rs->md;
+ 	struct md_rdev *rdev;
+ 
+@@ -2874,6 +2899,15 @@ static int rs_setup_reshape(struct raid_set *rs)
+ 		mddev->reshape_backwards = rs->dev[0].rdev.data_offset ? 0 : 1;
+ 	}
+ 
++	/*
++	 * Adjust device size for forward reshape
++	 * because md_finish_reshape() reduces it.
++	 */
++	if (!mddev->reshape_backwards)
++		rdev_for_each(rdev, &rs->md)
++			if (!test_bit(Journal, &rdev->flags))
++				rdev->sectors += reshape_sectors;
++
+ 	return r;
+ }
+ 
 -- 
-Ming
+2.13.6
