@@ -1,12 +1,16 @@
 From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: [PATCH V2 00/12] dm raid: fix deadlocks and sync ratio
-	races
-Date: Sat,  2 Dec 2017 01:03:47 +0100
-Message-ID: <cover.1512171097.git.heinzm@redhat.com>
+Subject: [PATCH V2 08/12] dm raid: fix rs_get_progress()
+	synchronization state/ratio
+Date: Sat,  2 Dec 2017 01:03:55 +0100
+Message-ID: <7c0ccbda3348c8d66f62f569d0d7a53c80d3cf54.1512171097.git.heinzm@redhat.com>
+References: <cover.1512171097.git.heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <cover.1512171097.git.heinzm@redhat.com>
+In-Reply-To: <cover.1512171097.git.heinzm@redhat.com>
+References: <cover.1512171097.git.heinzm@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,92 +24,191 @@ To: dm-devel@redhat.com
 Cc: snitzer@redhat.com
 List-Id: dm-devel.ids
 
-This is version 2 of the patch series addressing issues
-causing deadlocks under load and sync ratio/action and
-health char races.  I reordered patches and split a
-large one further up.
-
-Patches 1-8 are critical with 6-8 to be applied in
-order and 9-11 providing cleanups and 12 adding
-an additional constructor check.
-
-Patch 1:
-fix reshape conversion deadlock under io load
-by moving md_stop_writes() to post suspend thus
-allowing the MD resync thread to work until after
-the raid set got quiesced.
-
-Patch 2:
-be prepared for MD raid personalities to adjust
-rdev sectors after finishing a reshape conversion
-(MD upstream commit c6563a8c38fde3c1c7fc925a10bde3ca20799301)
-
-Patch 3:
-avoid bogus resize assumption when reshsaping.
-Needed becaue of patch 2.
-
-Patch 4:
-fix raid set size revalidation for disk adding reshape
-and related deadlock:  do it before starting the reshape
-when shrinking and after when growing (i.e. remove/add stripes).
-Avoids random deadlocks.
-
-Patch 5:
-fix reshape staying frozen on multiple table reloads.
-Only the last table reload may unfreeze the raid set
-so that the proper reshape position can be retrieved
-from the superblocks read in the constructor.
-
-Patch 6:
-close an recovery flag race in raid_status() and its
-callees by taking a copy and passing it on.
-
-Patch 7:
-avoid the array_in_sync variale in preparation
-for more state to pass between raid_status()
-and its callees.
-
-Patch 8:
-fix various sync state issues causing racy/bogus sync ratio,
+Fix various sync state issues causing racy/bogus sync ratio,
 sync_action ad health chars in dm_status() info output.
 
-Patch 9:
-cleanup grouping the definition of raid set rw
-and in_sync with mddev_suspend
+Sync ratio could be N/N (i.e. 100%) shortly after raid set
+creation, i.e. creating a new RaidLV or upconverting a linear LV to raid1 thus
+  "0 2097152 raid raid1 2 Aa 2097162/2097152 recover 0 0 -"
+  instead of
+  "0 2097152 raid raid1 2 Aa 0/2097152 idle 0 0 -"
 
-Patch 10+11:
-cleanup removing an unused struct member and fix comments
+Sync action could be non-idle, when the MD thread
+was done with io.
 
-Patch 12:
-enhance adding a data component device size check to the constructor
-(i.e. reject on small component data devices)
+Health chars could be 'A' when they should be 'a'
+for a short time before a resynchonization started.
 
-Resolves: rhbz1210637
-Resolves: rhbz1372101
-Related:  rhbz1388632
-Resolves: rhbz1507729
-Resolves: rhbz1508070
-Related:  rhbz1514215
-Resolves: rhbz1514500
+This is the followup patch adding a runtime flag to pass
+array 'resync' state around.
+---
+ drivers/md/dm-raid.c | 90 +++++++++++++++++++++++++++++++++++-----------------
+ 1 file changed, 61 insertions(+), 29 deletions(-)
 
-
-Heinz Mauelshagen (12):
-  dm raid: fix deadlock caused by stopped writes
-  dm raid: correct sizes and check of component devices
-  dm raid: correct resizing state in ctr
-  dm raid: correct raid set size revalidation
-  dm raid: enhance resume() frozen checks
-  dm raid: close MD recovery flags race window
-  dm raid: avoid array_in_sync variable
-  dm raid: fix rs_get_progress() synchronization state/ratio
-  dm raid: group rw and in_sync definitions with mddev_resume()
-  dm raid: remove unused "struct raid_set" member
-  dm raid: comments
-  dm raid: add component device size check
-
- Documentation/device-mapper/dm-raid.txt |   3 +-
- drivers/md/dm-raid.c                    | 274 ++++++++++++++++++++++----------
- 2 files changed, 191 insertions(+), 86 deletions(-)
-
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index 7be73d4e439a..1a652772224a 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -210,6 +210,7 @@ struct raid_dev {
+ #define RT_FLAG_RESHAPE_RS		4
+ #define RT_FLAG_RS_SUSPENDED		5
+ #define RT_FLAG_RS_IN_SYNC		6
++#define RT_FLAG_RS_RESYNCING		7
+ 
+ /* Array elements of 64 bit needed for rebuild/failed disk bits */
+ #define DISKS_ARRAY_ELEMS ((MAX_RAID_DEVICES + (sizeof(uint64_t) * 8 - 1)) / sizeof(uint64_t) / 8)
+@@ -3288,6 +3289,7 @@ static const char *decipher_sync_action(struct mddev *mddev, unsigned long recov
+ 	if (test_bit(MD_RECOVERY_FROZEN, &recovery))
+ 		return "frozen";
+ 
++	/* The MD sync thread can be done with io but still be running */
+ 	if (!test_bit(MD_RECOVERY_DONE, &recovery) &&
+ 	    (test_bit(MD_RECOVERY_RUNNING, &recovery) ||
+ 	     (!mddev->ro && test_bit(MD_RECOVERY_NEEDED, &recovery)))) {
+@@ -3327,8 +3329,9 @@ static const char *__raid_dev_status(struct raid_set *rs, struct md_rdev *rdev)
+ 		return "D";
+ 	else if (test_bit(Journal, &rdev->flags))
+ 		return (rs->journal_dev.mode == R5C_JOURNAL_MODE_WRITE_THROUGH) ? "A" : "a";
+-	else if (!test_bit(RT_FLAG_RS_IN_SYNC, &rs->runtime_flags) &&
+-		 !test_bit(In_sync, &rdev->flags))
++	else if (test_bit(RT_FLAG_RS_RESYNCING, &rs->runtime_flags) ||
++		 (!test_bit(RT_FLAG_RS_IN_SYNC, &rs->runtime_flags) &&
++		  !test_bit(In_sync, &rdev->flags)))
+ 		return "a";
+ 	else
+ 		return "A";
+@@ -3338,49 +3341,70 @@ static const char *__raid_dev_status(struct raid_set *rs, struct md_rdev *rdev)
+ static sector_t rs_get_progress(struct raid_set *rs, unsigned long recovery,
+ 				sector_t resync_max_sectors)
+ {
+-	sector_t r, curr_resync_completed;
++	sector_t r;
+ 	struct mddev *mddev = &rs->md;
+ 
+ 	clear_bit(RT_FLAG_RS_IN_SYNC, &rs->runtime_flags);
+-
+-	curr_resync_completed = mddev->curr_resync_completed ?: mddev->recovery_cp;
++	clear_bit(RT_FLAG_RS_RESYNCING, &rs->runtime_flags);
+ 
+ 	if (rs_is_raid0(rs)) {
+ 		r = resync_max_sectors;
+ 		set_bit(RT_FLAG_RS_IN_SYNC, &rs->runtime_flags);
+ 
+ 	} else {
+-		r = mddev->reshape_position;
+-
+ 		/* Reshape is relative to the array size */
+-		if (test_bit(MD_RECOVERY_RESHAPE, &recovery) ||
+-		    r != MaxSector) {
+-			if (r == MaxSector) {
+-				set_bit(RT_FLAG_RS_IN_SYNC, &rs->runtime_flags);
+-				r = resync_max_sectors;
+-			} else {
++		if (test_bit(MD_RECOVERY_RESHAPE, &recovery)) {
++			r = mddev->reshape_position;
++			if (r != MaxSector) {
+ 				/* Got to reverse on backward reshape */
+ 				if (mddev->reshape_backwards)
+ 					r = mddev->array_sectors - r;
+ 
+-				/* Devide by # of data stripes */
+-				sector_div(r, mddev_data_stripes(rs));
++				/* Divide by # of data stripes unless raid1 */
++				if (!rs_is_raid1(rs))
++					sector_div(r, mddev_data_stripes(rs));
+ 			}
+ 
+-		/* Sync is relative to the component device size */
+-		} else if (test_bit(MD_RECOVERY_RUNNING, &recovery))
+-			r = curr_resync_completed;
++		/*
++		 * Sync/recover is relative to the component device size.
++		 *
++		 * MD_RECOVERY_NEEDED for https://bugzilla.redhat.com/show_bug.cgi?id=1508070
++		 */
++		} else if (test_bit(MD_RECOVERY_NEEDED, &recovery) ||
++			   test_bit(MD_RECOVERY_RUNNING, &recovery))
++			r = mddev->curr_resync_completed;
++
+ 		else
+ 			r = mddev->recovery_cp;
+ 
+-		if ((r == MaxSector) ||
+-		    (test_bit(MD_RECOVERY_DONE, &recovery) &&
+-		     (mddev->curr_resync_completed == resync_max_sectors))) {
++		if (r >= resync_max_sectors &&
++		    (!test_bit(MD_RECOVERY_REQUESTED, &recovery) ||
++		     (!test_bit(MD_RECOVERY_FROZEN, &recovery) &&
++		      !test_bit(MD_RECOVERY_NEEDED, &recovery) &&
++		      !test_bit(MD_RECOVERY_RUNNING, &recovery)))) {
+ 			/*
+ 			 * Sync complete.
+ 			 */
+-			set_bit(RT_FLAG_RS_IN_SYNC, &rs->runtime_flags);
+-			r = resync_max_sectors;
++			/* In case we have finished recovering, the array is in sync. */
++			if (test_bit(MD_RECOVERY_RECOVER, &recovery))
++				set_bit(RT_FLAG_RS_IN_SYNC, &rs->runtime_flags);
++
++		} else if (test_bit(MD_RECOVERY_RECOVER, &recovery)) {
++			/*
++			 * In case we are recovering, the array is not in sync
++			 * and health chars should show the recovering legs.
++			 */
++			;
++
++		} else if (test_bit(MD_RECOVERY_SYNC, &recovery) &&
++			   !test_bit(MD_RECOVERY_REQUESTED, &recovery)) {
++			/*
++			 * If "resync" is occurring, the raid set
++			 * is or may be out of sync hence the health
++			 * characters shall be 'a'.
++			 */
++			set_bit(RT_FLAG_RS_RESYNCING, &rs->runtime_flags);
++
+ 		} else if (test_bit(MD_RECOVERY_REQUESTED, &recovery)) {
+ 			/*
+ 			 * If "check" or "repair" is occurring, the raid set has
+@@ -3388,26 +3412,34 @@ static sector_t rs_get_progress(struct raid_set *rs, unsigned long recovery,
+ 			 * should not be 'a' anymore.
+ 			 */
+ 			set_bit(RT_FLAG_RS_IN_SYNC, &rs->runtime_flags);
++
+ 		} else {
+ 			struct md_rdev *rdev;
+ 
+ 			/*
++			 * We are idle and recovery is needed, prevent 'A' chars race
++			 * caused by components still set to in-sync by constrcuctor.
++			 */
++			if (test_bit(MD_RECOVERY_NEEDED, &recovery))
++				set_bit(RT_FLAG_RS_RESYNCING, &rs->runtime_flags);
++
++			/*
+ 			 * The raid set may be doing an initial sync, or it may
+ 			 * be rebuilding individual components.	 If all the
+ 			 * devices are In_sync, then it is the raid set that is
+ 			 * being initialized.
+ 			 */
++			set_bit(RT_FLAG_RS_IN_SYNC, &rs->runtime_flags);
+ 			rdev_for_each(rdev, mddev)
+ 				if (!test_bit(Journal, &rdev->flags) &&
+-				    !test_bit(In_sync, &rdev->flags))
+-					set_bit(RT_FLAG_RS_IN_SYNC, &rs->runtime_flags);
+-#if 0
+-			r = 0; /* HM FIXME: TESTME: https://bugzilla.redhat.com/show_bug.cgi?id=1210637 ? */
+-#endif
++				    !test_bit(In_sync, &rdev->flags)) {
++					clear_bit(RT_FLAG_RS_IN_SYNC, &rs->runtime_flags);
++					break;
++				}
+ 		}
+ 	}
+ 
+-	return r;
++	return min(r, resync_max_sectors);
+ }
+ 
+ /* Helper to return @dev name or "-" if !@dev */
 -- 
 2.13.6
