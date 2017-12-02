@@ -1,7 +1,8 @@
 From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: [PATCH V2 12/12] dm raid: add component device size check
-Date: Sat,  2 Dec 2017 01:03:59 +0100
-Message-ID: <8993b91a108b24e41e28988c676a191c135d20a1.1512171097.git.heinzm@redhat.com>
+Subject: [PATCH V2 01/12] dm raid: fix deadlock caused by stopped
+	writes
+Date: Sat,  2 Dec 2017 01:03:48 +0100
+Message-ID: <d38fafbc2d201fd5770df5db139f7303c1d06217.1512171097.git.heinzm@redhat.com>
 References: <cover.1512171097.git.heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,49 +24,85 @@ To: dm-devel@redhat.com
 Cc: snitzer@redhat.com
 List-Id: dm-devel.ids
 
-Check all component data device sizes versus calculated size.
-Reject in case device(s) are too small.
----
- drivers/md/dm-raid.c | 20 +++++++++++++++++++-
- 1 file changed, 19 insertions(+), 1 deletion(-)
+md_stop_writes() is called in presuspend causing deadlocks on
+bios submitted afterwards which happens on loaded raid sets
+with conversion requests.
 
+Fix by moving md_stop_writes to postsuspend.
+Hence the raid set is quiesced remove superfluous
+readonly setting too.
+
+Adjust target version to be able to recognize the fix.
+---
+ Documentation/device-mapper/dm-raid.txt |  3 ++-
+ drivers/md/dm-raid.c                    | 20 +++++++++-----------
+ 2 files changed, 11 insertions(+), 12 deletions(-)
+
+diff --git a/Documentation/device-mapper/dm-raid.txt b/Documentation/device-mapper/dm-raid.txt
+index 32df07e29f68..4d260fedcd8b 100644
+--- a/Documentation/device-mapper/dm-raid.txt
++++ b/Documentation/device-mapper/dm-raid.txt
+@@ -343,5 +343,6 @@ Version History
+ 1.11.0  Fix table line argument order
+ 	(wrong raid10_copies/raid10_format sequence)
+ 1.11.1  Add raid4/5/6 journal write-back support via journal_mode option
+-1.12.1  fix for MD deadlock between mddev_suspend() and md_write_start() available
++1.12.1  Fix for MD deadlock between mddev_suspend() and md_write_start() available
+ 1.13.0  Fix dev_health status at end of "recover" (was 'a', now 'A')
++1.13.1  Fix deadlock caused by early md_stop_writes()
 diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 89c05302c765..dfbc2bd787c1 100644
+index 6319d846e0ad..536666facbf1 100644
 --- a/drivers/md/dm-raid.c
 +++ b/drivers/md/dm-raid.c
-@@ -1581,6 +1581,24 @@ static sector_t __rdev_sectors(struct raid_set *rs)
- 	return 0;
+@@ -3613,24 +3613,23 @@ static void raid_io_hints(struct dm_target *ti, struct queue_limits *limits)
+ 	blk_limits_io_opt(limits, chunk_size * mddev_data_stripes(rs));
  }
  
-+/* Check that calculated dev_sectors fits all component devices. */
-+static int _check_data_dev_sectors(struct raid_set *rs)
-+{
-+	sector_t ds = ~0;
-+	struct md_rdev *rdev;
-+
-+	rdev_for_each(rdev, &rs->md)
-+		if (!test_bit(Journal, &rdev->flags) && rdev->bdev) {
-+			ds = min(ds, to_sector(i_size_read(rdev->bdev->bd_inode)));
-+			if (ds < rs->md.dev_sectors) {
-+				rs->ti->error = "Component device(s) too small";
-+				return -EINVAL;
-+			}
-+		}
-+
-+	return 0;
-+}
-+
- /* Calculate the sectors per device and per array used for @rs */
- static int rs_set_dev_and_array_sectors(struct raid_set *rs, bool use_mddev)
+-static void raid_presuspend(struct dm_target *ti)
+-{
+-	struct raid_set *rs = ti->private;
+-
+-	md_stop_writes(&rs->md);
+-}
+-
+ static void raid_postsuspend(struct dm_target *ti)
  {
-@@ -1630,7 +1648,7 @@ static int rs_set_dev_and_array_sectors(struct raid_set *rs, bool use_mddev)
- 	mddev->array_sectors = array_sectors;
- 	mddev->dev_sectors = dev_sectors;
+ 	struct raid_set *rs = ti->private;
  
--	return 0;
-+	return _check_data_dev_sectors(rs);
- bad:
- 	rs->ti->error = "Target length not divisible by number of data devices";
- 	return -EINVAL;
+ 	if (!test_and_set_bit(RT_FLAG_RS_SUSPENDED, &rs->runtime_flags)) {
++		/*
++		 * Writes have to be stopped before suspending to avoid deadlocks.
++		 *
++		 * https://bugzilla.redhat.com/show_bug.cgi?id=1514539
++		 */
++		if (!test_bit(MD_RECOVERY_FROZEN, &rs->md.recovery))
++			md_stop_writes(&rs->md);
++
+ 		mddev_lock_nointr(&rs->md);
+ 		mddev_suspend(&rs->md);
+ 		mddev_unlock(&rs->md);
+ 	}
+-
+-	rs->md.ro = 1;
+ }
+ 
+ static void attempt_restore_of_faulty_devices(struct raid_set *rs)
+@@ -3894,7 +3893,7 @@ static void raid_resume(struct dm_target *ti)
+ 
+ static struct target_type raid_target = {
+ 	.name = "raid",
+-	.version = {1, 13, 0},
++	.version = {1, 13, 1},
+ 	.module = THIS_MODULE,
+ 	.ctr = raid_ctr,
+ 	.dtr = raid_dtr,
+@@ -3903,7 +3902,6 @@ static struct target_type raid_target = {
+ 	.message = raid_message,
+ 	.iterate_devices = raid_iterate_devices,
+ 	.io_hints = raid_io_hints,
+-	.presuspend = raid_presuspend,
+ 	.postsuspend = raid_postsuspend,
+ 	.preresume = raid_preresume,
+ 	.resume = raid_resume,
 -- 
 2.13.6
