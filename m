@@ -1,8 +1,7 @@
 From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: [PATCH V2 02/12] dm raid: correct sizes and check of
-	component devices
-Date: Sat,  2 Dec 2017 01:03:49 +0100
-Message-ID: <05c0cd9485f606ad74d4a392456dcc80c54e62e1.1512171097.git.heinzm@redhat.com>
+Subject: [PATCH V2 05/12] dm raid: enhance resume() frozen checks
+Date: Sat,  2 Dec 2017 01:03:52 +0100
+Message-ID: <1b6628ea47d120598fedd2852c12ddb1cb85db22.1512171097.git.heinzm@redhat.com>
 References: <cover.1512171097.git.heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,87 +23,46 @@ To: dm-devel@redhat.com
 Cc: snitzer@redhat.com
 List-Id: dm-devel.ids
 
-The md raid personalities call md_finish_reshape() at the end
-of a reshape conversion which adjusts rdev->sectors.
-
-Correct/check rdev->sectors before initiating a reshape
-and raise the recovery pointer accordingly.
+In case userspace reloads multiple times thus reading
+the superblocks, the raid set needs to stay frozen in
+case of a reshape request until all config changes
+(chunk size, layout data_offset, delta_disks) have
+been stored in the superblocks and respective
+flags cleared.
 ---
- drivers/md/dm-raid.c | 36 +++++++++++++++++++++++++++++++++++-
- 1 file changed, 35 insertions(+), 1 deletion(-)
+ drivers/md/dm-raid.c | 13 ++++++++++---
+ 1 file changed, 10 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 536666facbf1..5f099d1f7ccc 100644
+index 3b0964c7da17..e37ee5f8ed3d 100644
 --- a/drivers/md/dm-raid.c
 +++ b/drivers/md/dm-raid.c
-@@ -2640,12 +2640,19 @@ static int rs_adjust_data_offsets(struct raid_set *rs)
- 	 * Make sure we got a minimum amount of free sectors per device
+@@ -3885,7 +3885,7 @@ static int raid_preresume(struct dm_target *ti)
+ 	}
+ 
+ 	/* Check for any reshape request unless new raid set */
+-	if (test_and_clear_bit(RT_FLAG_RESHAPE_RS, &rs->runtime_flags)) {
++	if (test_bit(RT_FLAG_RESHAPE_RS, &rs->runtime_flags)) {
+ 		/* Initiate a reshape. */
+ 		rs_set_rdev_sectors(rs);
+ 		mddev_lock_nointr(mddev);
+@@ -3927,8 +3927,15 @@ static void raid_resume(struct dm_target *ti)
+ 	 * This ensures that the constructor for the inactive table
+ 	 * retrieves an up-to-date reshape_position.
  	 */
- 	if (rs->data_offset &&
--	    to_sector(i_size_read(rdev->bdev->bd_inode)) - rdev->sectors < MIN_FREE_RESHAPE_SPACE) {
-+	    to_sector(i_size_read(rdev->bdev->bd_inode)) - rs->md.dev_sectors < MIN_FREE_RESHAPE_SPACE) {
- 		rs->ti->error = data_offset ? "No space for forward reshape" :
- 					      "No space for backward reshape";
- 		return -ENOSPC;
- 	}
- out:
-+	/*
-+	 * Raise recovery_cp in case data_offset != 0 to
-+	 * avoid false recovery positives in the constructor.
-+	 */
-+	if (rs->md.recovery_cp < rs->md.dev_sectors)
-+		rs->md.recovery_cp += rs->dev[0].rdev.data_offset;
-+
- 	/* Adjust data offsets on all rdevs but on any raid4/5/6 journal device */
- 	rdev_for_each(rdev, &rs->md) {
- 		if (!test_bit(Journal, &rdev->flags)) {
-@@ -2777,6 +2784,23 @@ static int rs_prepare_reshape(struct raid_set *rs)
- 	return 0;
- }
+-	if (!(rs->ctr_flags & RESUME_STAY_FROZEN_FLAGS))
+-		clear_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
++	if (!test_and_clear_bit(RT_FLAG_RESHAPE_RS, &rs->runtime_flags) &&
++	    !(rs->ctr_flags & RESUME_STAY_FROZEN_FLAGS)) {
++		if (rs_is_reshapable(rs)) {
++			if (!rs_is_reshaping(rs) ||
++			    _get_reshape_sectors(rs))
++				clear_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
++		} else
++			clear_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
++	}
  
-+/* Get reshape sectors from data_offsets or raid set */
-+static sector_t _get_reshape_sectors(struct raid_set *rs)
-+{
-+	struct md_rdev *rdev;
-+	sector_t reshape_sectors = 0;
-+
-+	rdev_for_each(rdev, &rs->md)
-+		if (!test_bit(Journal, &rdev->flags)) {
-+			reshape_sectors = (rdev->data_offset > rdev->new_data_offset) ?
-+					rdev->data_offset - rdev->new_data_offset :
-+					rdev->new_data_offset - rdev->data_offset;
-+			break;
-+		}
-+
-+	return max(reshape_sectors, (sector_t) rs->data_offset);
-+}
-+
- /*
-  *
-  * - change raid layout
-@@ -2788,6 +2812,7 @@ static int rs_setup_reshape(struct raid_set *rs)
- {
- 	int r = 0;
- 	unsigned int cur_raid_devs, d;
-+	sector_t reshape_sectors = _get_reshape_sectors(rs);
- 	struct mddev *mddev = &rs->md;
- 	struct md_rdev *rdev;
- 
-@@ -2874,6 +2899,15 @@ static int rs_setup_reshape(struct raid_set *rs)
- 		mddev->reshape_backwards = rs->dev[0].rdev.data_offset ? 0 : 1;
- 	}
- 
-+	/*
-+	 * Adjust device size for forward reshape
-+	 * because md_finish_reshape() reduces it.
-+	 */
-+	if (!mddev->reshape_backwards)
-+		rdev_for_each(rdev, &rs->md)
-+			if (!test_bit(Journal, &rdev->flags))
-+				rdev->sectors += reshape_sectors;
-+
- 	return r;
- }
- 
+ 	if (test_and_clear_bit(RT_FLAG_RS_SUSPENDED, &rs->runtime_flags)) {
+ 		mddev_lock_nointr(mddev);
 -- 
 2.13.6
