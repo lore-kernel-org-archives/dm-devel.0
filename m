@@ -1,12 +1,14 @@
-From: Guan Junxiong <guanjunxiong@huawei.com>
-Subject: [PATCH] multipath-tools: check null path before handle
-	path-failed event
-Date: Mon, 4 Dec 2017 21:15:50 +0800
-Message-ID: <1512393350-2956-1-git-send-email-guanjunxiong@huawei.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 0/4] path latency prio fixes
+Date: Mon, 04 Dec 2017 16:11:19 +0100
+Message-ID: <1512400279.7217.43.camel@suse.com>
+References: <06F84A57D601574CAA706EE1A6270A5F01039517@DGGEMM505-MBX.china.huawei.com>
+	<ec755f37-cecf-ef5c-d9ee-fa63ff39ec99@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <ec755f37-cecf-ef5c-d9ee-fa63ff39ec99@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,53 +18,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, christophe.varoqui@opensvc.com
-Cc: guanjunxiong@huawei.com, niuhaoxin@huawei.com, shenhong09@huawei.com
+To: Guan Junxiong <guanjunxiong@huawei.com>
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, "Shenhong (C)" <shenhong09@huawei.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, niuhaoxin <niuhaoxin@huawei.com>
 List-Id: dm-devel.ids
 
-In the hot-plug storage OS, if we tear down the target storage,
-there is a race between the path removing from the path list and
-handling the path-failed udev event. Therefore, we need to check
-null path before handle path-failed event.
-
-Signed-off-by: Guan Junxiong <guanjunxiong@huawei.com>
----
- multipathd/main.c | 10 ++++++----
- 1 file changed, 6 insertions(+), 4 deletions(-)
-
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 31ce923..84bb2c5 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1073,7 +1073,7 @@ uev_pathfail_check(struct uevent *uev, struct vectors *vecs)
- {
- 	char *action = NULL, *devt = NULL;
- 	struct path *pp;
--	int r;
-+	int r = 1;
- 
- 	action = uevent_get_dm_action(uev);
- 	if (!action)
-@@ -1090,15 +1090,17 @@ uev_pathfail_check(struct uevent *uev, struct vectors *vecs)
- 	lock(&vecs->lock);
- 	pthread_testcancel();
- 	pp = find_path_by_devt(vecs->pathvec, devt);
-+    if (!pp)
-+        goto out_lock;
- 	r = io_err_stat_handle_pathfail(pp);
--	lock_cleanup_pop(vecs->lock);
--
- 	if (r)
- 		condlog(3, "io_err_stat: %s: cannot handle pathfail uevent",
- 				pp->dev);
-+out_lock:
-+	lock_cleanup_pop(vecs->lock);
- 	FREE(devt);
- 	FREE(action);
--	return 0;
-+	return r;
- out:
- 	FREE(action);
- 	return 1;
--- 
-2.6.4.windows.1
+T24gTW9uLCAyMDE3LTEyLTA0IGF0IDIyOjIzICswODAwLCBHdWFuIEp1bnhpb25nIHdyb3RlOgo+
+IAo+ID4gQW4gb3BlbiBxdWVzdGlvbiBpcyB3aGF0IG11bHRpcGF0aGQgc2hvdWxkIGRvIHdydCBw
+YXRoIGdyb3VwaW5nIGlmCj4gPiBpdAo+ID4gb25seSBoYXMgcHJlbGltaW5hcnkgcHJpbyB2YWx1
+ZXMsIGluIHBhcnRpY3VsYXIgd2l0aCBncm91cF9ieV9wcmlvLgo+IAo+IEZvciB0aGUgb3BlbiBx
+dWVzdGlvbiwgaW4gdGhpcyBzaXR1YXRpb24sIElNTyAgaXQncyByZWFzb25hYmxlIHRvCj4gb3Zl
+cndyaXRpbmcKPiB0aGUgcHJlbGltaW5hcnkgcHJpbyB2YWx1ZXMgaWYgd2UgbGV0IHRoZSB1c2Vy
+L2FkbWluIGtub3cgOiAidGhpcyBpcwo+IGFuCj4gYXN5bmNocm9ub3VzIHByaW9yaXR5IGNoZWNr
+ZXJzIGFuZCBpdCBoYXMgaGlnaCBwcmlvcml0eSB0byB0aGUgb3RoZXIKPiBzeW5jaHJvbm91cwo+
+IHByaW9yaXRpemVyLgoKVGhpcyBpcyBub3Qgd2hhdCBJIG1lYW50LiBPbmNlIHdlIGhhdmUgdGhl
+IGZpbmFsIHByaW8gdmFsdWVzLCBpdCdzIG9mCmNvdXJzZSB0aGUgcmlnaHQgdGhpbmcgdG8gb3Zl
+cndyaXRlIGFueXRoaW5nIHByZWxpbWluYXJ5LiAKClRoZSAib3BlbiBxdWVzdGlvbiIgYXJpc2Vz
+IGF0IHRoZSB0aW1lIHdoZW4gd2Ugb25seSBoYXZlIHRoZQpwcmVsaW1pbmFyeSB2YWx1ZXM6IFdl
+IG1heSBncm91cCBwYXRocyB3cm9uZ2x5LiBSZWFsbHkgYmFkIGV4YW1wbGU6IHdlCm1pZ2h0IGJl
+IHB1dHRpbmcgYWN0aXZlIGFuZCBwYXNzaXZlIHBhdGhzIG9mIGEgc3RvcmFnZSBzeXN0ZW0gaW50
+byB0aGUKc2FtZSBwYXRoIGdyb3VwLCBjYXVzaW5nIGVuZGxlc3MgdHJlc3Bhc3NpbmcuLi4gd2Ug
+c2hvdWxkIHByb2JhYmx5IHVzZQoiZmFpbG92ZXIiIHBvbGljeSBpZiAiZ3JvdXBfYnlfcHJpbyIg
+aXMgc2VsZWN0ZWQgYnV0IG5vIHJlbGlhYmxlCnByaW9yaXRpZXMgYXJlIGF2YWlsYWJsZS4KCk1h
+cnRpbgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLiArNDkgKDAp
+OTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBK
+YW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0K
+ZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVk
+aGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
