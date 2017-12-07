@@ -1,16 +1,16 @@
-From: Guan Junxiong <guanjunxiong@huawei.com>
+From: Martin Wilck <mwilck@suse.com>
 Subject: Re: [PATCH 3/4] libmultipath: path latency: simplify
 	getprio()
-Date: Thu, 7 Dec 2017 12:26:15 +0800
-Message-ID: <19c4c292-3297-b602-36c4-0dde2c61e266@huawei.com>
+Date: Thu, 07 Dec 2017 16:56:41 +0100
+Message-ID: <1512662201.3207.25.camel@suse.com>
 References: <20171118001134.26622-1-mwilck@suse.com>
 	<20171118001134.26622-4-mwilck@suse.com>
+	<19c4c292-3297-b602-36c4-0dde2c61e266@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20171118001134.26622-4-mwilck@suse.com>
-Content-Language: en-US
+In-Reply-To: <19c4c292-3297-b602-36c4-0dde2c61e266@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,53 +20,47 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: guanjunxiong@huawei.com, dm-devel@redhat.com, niuhaoxin <niuhaoxin@huawei.com>, "Shenhong (C)" <shenhong09@huawei.com>
+To: Guan Junxiong <guanjunxiong@huawei.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: dm-devel@redhat.com, niuhaoxin <niuhaoxin@huawei.com>, "Shenhong (C)" <shenhong09@huawei.com>
 List-Id: dm-devel.ids
 
-Hi Martin,
-
-I have tested this patch and found something needed to be correct. My comments inline.
-
-
-On 2017/11/18 8:11, Martin Wilck wrote:
-> The log standard deviation can be calculated much more simply
-> by realizing
-> 
->    sum_n (x_i - avg(x))^2 == sum_n x_i^2 - n * avg(x)^2
-> 
-
-
-> @@ -340,8 +323,14 @@ int getprio(struct path *pp, char *args, unsigned int timeout)
->  			  ".It is recommend to be set larger",
->  			  pp->dev, base_num);
->  
-> +	standard_deviation = sqrt((sum_squares - lg_toldelay * lg_toldelay)
-> +				  / (io_num -1));
->  
-This assignment is wrong. It gets a "NAN" for standard_deviation.
-It should be the following equation according to sum_n (x_i - avg(x))^2 == sum_n x_i^2 - n * avg(x)^2
-
-standard_deviation = sqrt((sum_squares - io_num* lg_avglatency* lg_avglatency)/ (io_num -1));
-                   = sqrt((sum_squares -  lg_toldelay* lg_avglatency)/ (io_num -1));
-
-
->  	rc = calcPrio(lg_avglatency, lg_maxavglatency, lg_minavglatency);
->  
-> +	pp_pl_log(3, "%s: latency avg=%.2e uncertainty=%.1f prio=%d\n",
-> +		  pp->dev, exp(lg_avglatency * lg_base),
-> +		  exp(standard_deviation * lg_base), rc);
-> +
-
-I still have the doubt about the computation of the "uncertainty" item.
-Because I have observed that the uncertainty is in the range of 1.3 ~ 1.6 whenever
-the base_num varies from 1.1 to 10.
-
-Do you mean the uncertainty as the "Error function" of (log) normal distribution?
-Here is the definition of https://en.wikipedia.org/wiki/Error_function
-
-I prefer to using  "Error function" that describes accumulated probability of  how  prio
-locates in the (-inf, prio-1) and (prio+1, +inf).
-
-Thanks
-Guan
+T24gVGh1LCAyMDE3LTEyLTA3IGF0IDEyOjI2ICswODAwLCBHdWFuIEp1bnhpb25nIHdyb3RlOgo+
+IEhpIE1hcnRpbiwKPiAKPiBJIGhhdmUgdGVzdGVkIHRoaXMgcGF0Y2ggYW5kIGZvdW5kIHNvbWV0
+aGluZyBuZWVkZWQgdG8gYmUgY29ycmVjdC4gTXkKPiBjb21tZW50cyBpbmxpbmUuCj4gCj4gCj4g
+PiBAQCAtMzQwLDggKzMyMywxNCBAQCBpbnQgZ2V0cHJpbyhzdHJ1Y3QgcGF0aCAqcHAsIGNoYXIg
+KmFyZ3MsCj4gPiB1bnNpZ25lZCBpbnQgdGltZW91dCkKPiA+ICAJCQkgICIuSXQgaXMgcmVjb21t
+ZW5kIHRvIGJlIHNldCBsYXJnZXIiLAo+ID4gIAkJCSAgcHAtPmRldiwgYmFzZV9udW0pOwo+ID4g
+IAo+ID4gKwlzdGFuZGFyZF9kZXZpYXRpb24gPSBzcXJ0KChzdW1fc3F1YXJlcyAtIGxnX3RvbGRl
+bGF5ICoKPiA+IGxnX3RvbGRlbGF5KQo+ID4gKwkJCQkgIC8gKGlvX251bSAtMSkpOwo+ID4gIAo+
+IAo+IFRoaXMgYXNzaWdubWVudCBpcyB3cm9uZy4gSXQgZ2V0cyBhICJOQU4iIGZvciBzdGFuZGFy
+ZF9kZXZpYXRpb24uCj4gSXQgc2hvdWxkIGJlIHRoZSBmb2xsb3dpbmcgZXF1YXRpb24gYWNjb3Jk
+aW5nIHRvIHN1bV9uICh4X2kgLQo+IGF2Zyh4KSleMiA9PSBzdW1fbiB4X2leMiAtIG4gKiBhdmco
+eCleMgo+IHN0YW5kYXJkX2RldmlhdGlvbiA9IHNxcnQoKHN1bV9zcXVhcmVzIC0gaW9fbnVtKiBs
+Z19hdmdsYXRlbmN5Kgo+IGxnX2F2Z2xhdGVuY3kpLyAoaW9fbnVtIC0xKSk7Cj4gICAgICAgICAg
+ICAgICAgICAgID0gc3FydCgoc3VtX3NxdWFyZXMgLSAgbGdfdG9sZGVsYXkqCj4gbGdfYXZnbGF0
+ZW5jeSkvIChpb19udW0gLTEpKTsKClRoYXQncyBvZiBjb3Vyc2UgY29ycmVjdC4gSSdsbCBzdWJt
+aXQgYW4gdXBkYXRlIGFzYXAuCgo+IEkgc3RpbGwgaGF2ZSB0aGUgZG91YnQgYWJvdXQgdGhlIGNv
+bXB1dGF0aW9uIG9mIHRoZSAidW5jZXJ0YWludHkiCj4gaXRlbS4KPiBCZWNhdXNlIEkgaGF2ZSBv
+YnNlcnZlZCB0aGF0IHRoZSB1bmNlcnRhaW50eSBpcyBpbiB0aGUgcmFuZ2Ugb2YgMS4zIH4KPiAx
+LjYgd2hlbmV2ZXIKPiB0aGUgYmFzZV9udW0gdmFyaWVzIGZyb20gMS4xIHRvIDEwLgoKPiBEbyB5
+b3UgbWVhbiB0aGUgdW5jZXJ0YWludHkgYXMgdGhlICJFcnJvciBmdW5jdGlvbiIgb2YgKGxvZykg
+bm9ybWFsCj4gZGlzdHJpYnV0aW9uPwoKPiBIZXJlIGlzIHRoZSBkZWZpbml0aW9uIG9mCj4gaHR0
+cHM6Ly9lbi53aWtpcGVkaWEub3JnL3dpa2kvRXJyb3JfZnVuY3Rpb24KPiAKPiBJIHByZWZlciB0
+byB1c2luZyAgIkVycm9yIGZ1bmN0aW9uIiB0aGF0IGRlc2NyaWJlcyBhY2N1bXVsYXRlZAo+IHBy
+b2JhYmlsaXR5IG9mICBob3cgIHByaW8KPiBsb2NhdGVzIGluIHRoZSAoLWluZiwgcHJpby0xKSBh
+bmQgKHByaW8rMSwgK2luZikuCgpUaGVyZSdzIGEgbWlzdW5kZXJzdGFuZGluZyBoZXJlLgoKTXkg
+InVuY2VydGFpbnR5IGZhY3RvciIgZGVzY3JpYmVzIHRoZSB3aWR0aCBvZiB0aGUgZGlzdHJpYnV0
+aW9uIG9mIHRoZQoqbWVhc3VyZWQqIGxhdGVuY2llcy4gSXQgcm91Z2hseSByZXByZXNlbnRzIHRo
+ZSBhY2N1cmFjeSBvZiB0aGUKbWVhc3VyZW1lbnQgKGluZGljYXRpbmcgdGhhdCA2OCUsIG9yIGVy
+cm9yX2Z1bmN0aW9uIChzcXJ0KDEvMikpLCBvZiB0aGUKbWVhc3VyZWQgdmFsdWVzIGxpZSBpbiB0
+aGUgaW50ZXJ2YWwgW2F2Zy9GLCBhdmcqRl0pLiBJT1csIGl0IHRlbGxzIHlvdQpob3cgc3RhYmxl
+IHlvdXIgbGF0ZW5jaWVzIGZvciBhIGNlcnRhaW4gcGF0aCBhcmUuCgpJdCBoYXMgbm90aGluZyB0
+byBkbyB3aXRoIHRoZSBhcnRpZmljaWFsIHByaW8gImJpbnMiIHRoYXQgdGhlIGxhdGVuY3kKcHJp
+b3JpdGl6ZXIgc2V0cyB1cC4gVGhlcmVmb3JlIGl0ICpoYXMgdG8gYmUgaW5kZXBlbmRlbnQqIG9m
+IGJhc2VfbnVtLgpJdCBqdXN0IGdpdmVzIGFuIGluZGljYXRpb24gaG93IGxhcmdlIGJhc2VfbnVt
+IHNob3VsZCBiZS4gCgpJIGhvcGUgdGhpcyBtYWtlcyBpdCBjbGVhci4KCk1hcnRpbgoKLS0gCkRy
+LiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAy
+MTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFy
+ZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1h
+aWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFp
+bG1hbi9saXN0aW5mby9kbS1kZXZlbA==
