@@ -1,8 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 04/12] libmultipath: cleanup features handling
-	code
-Date: Thu,  7 Dec 2017 12:48:58 -0600
-Message-ID: <1512672546-12785-5-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 06/12] multipathd: fix device creation issues
+Date: Thu,  7 Dec 2017 12:49:00 -0600
+Message-ID: <1512672546-12785-7-git-send-email-bmarzins@redhat.com>
 References: <1512672546-12785-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,193 +21,262 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Right now multipath does some extra work to set the values for
-no_path_retry and retain_hwhandler on existing maps it reads in from the
-kernel.  This is so that select_action() can use these values to see if
-it needs to reload the devices. However, the way it works, the
-queue_if_no_path feature isn't always set correctly, and multipath has
-to go back afterwards and reset the value anyways.
+Right now, devices created by multipath and added to multipthd via
+ev_add_map() are setup up incorrectly until the first time they get
+reloaded.  setup_map() is not run on these devices, which means that all
+of the multipath variables set up there don't get initialized until a
+later reload.  Also, adopt_paths is run to pull in any paths that the
+device is missing, but the device is never reloaded afterwards, so these
+paths aren't used.
 
-It's simpler for select_action to just look at the values in the
-features line it read in from the kernel and the features line it would
-like the new map to have.  By comparing these, it also avoids the
-problem where the no_path_retry values match, so it doesn't reload, but
-the actual queue_if_no_path feature value is incorrect, so it has to go
-back and reset it. It can also skip calling setup_feature() entirely.
+Now, add_map_without_path() sets up the basic multipath device variables
+and then calls update_map() to finish the setup and reload the device.
+This patch also moves the code in __setup_multipath(), that only existed
+to handle adding devices via ev_add_map(), to where it belongs.
 
-To do this, assemble_map() needs to update mp->features. This would
-otherwise partially happen when it had to reset the queue_if_no_path
-value.  retain_attached_hw_handler was never getting updated before, so
-the output when you created a map was incorrect.
+However, it is possible to create a device with no paths, which means
+the device cannot know which hwentry to use for its device
+configuration.  __setup_multipath() used to help with this via
+extract_hwe_from_path(), which grabbed the hwentry from a path if the
+multipath device didn't already have it set. This is now done both when
+paths are added or the map is updated, which means that
+extract_hwe_from_path() runs before the device is configured in
+setup_map() instead of after the table has already been loaded. This is
+a good thing. But because of this, it can't check the dmstate or the
+pathgroup state.  I don't believe it's necessary to care what state the
+path is in, especially now that we use libudev. The vendor and product
+information gets cached by libudev when the path device is first added,
+and should remain the same regardless of whether or not the device is
+currently up.  My version does try to take the hwe information from a
+path in the PATH_UP state first, but this is mostly to satisfy the
+paranoia of the old version.
+
+Also, map_discovery(), which creates multipath devices during multipathd
+startup and reconfiguration, that only exist to see if multipathd needs
+to reload the device table, called __setup_multipath() as well. Even
+after removing the unnecessary code from __setup_multpiath, that still
+does pointless work for these devices, which will be removed before the
+end of configure(). Now, map_discovery() just gets the necessary kernel
+information to make the correct call in select_action().
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/configure.c | 21 ++++-----------------
- libmultipath/dmparser.c  | 35 ++++++-----------------------------
- libmultipath/structs.c   | 17 -----------------
- libmultipath/structs.h   |  1 -
- 4 files changed, 10 insertions(+), 64 deletions(-)
+ libmultipath/structs_vec.c | 101 ++++++++++++++++-----------------------------
+ libmultipath/structs_vec.h |   4 ++
+ multipathd/main.c          |   6 ++-
+ 3 files changed, 45 insertions(+), 66 deletions(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 0dfa250..7ca84b8 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -557,7 +557,8 @@ select_action (struct multipath * mpp, vector curmp, int force_reload)
- 	}
- 
- 	if (mpp->no_path_retry != NO_PATH_RETRY_UNDEF &&
--	    mpp->no_path_retry != cmpp->no_path_retry) {
-+	    !!strstr(mpp->features, "queue_if_no_path") !=
-+	    !!strstr(cmpp->features, "queue_if_no_path")) {
- 		mpp->action =  ACT_RELOAD;
- 		condlog(3, "%s: set ACT_RELOAD (no_path_retry change)",
- 			mpp->alias);
-@@ -575,7 +576,8 @@ select_action (struct multipath * mpp, vector curmp, int force_reload)
- 	}
- 
- 	if (mpp->retain_hwhandler != RETAIN_HWHANDLER_UNDEF &&
--	    mpp->retain_hwhandler != cmpp->retain_hwhandler &&
-+	    !!strstr(mpp->features, "retain_attached_hw_handler") !=
-+	    !!strstr(cmpp->features, "retain_attached_hw_handler") &&
- 	    get_linux_version_code() < KERNEL_VERSION(4, 3, 0)) {
- 		mpp->action = ACT_RELOAD;
- 		condlog(3, "%s: set ACT_RELOAD (retain_hwhandler change)",
-@@ -1060,21 +1062,6 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
- 				remove_feature(&mpp->features,
- 					       "queue_if_no_path");
- 		}
--		else if (mpp->no_path_retry != NO_PATH_RETRY_UNDEF) {
--			if (mpp->no_path_retry == NO_PATH_RETRY_FAIL) {
--				condlog(3, "%s: unset queue_if_no_path feature",
--					mpp->alias);
--				if (!dm_queue_if_no_path(mpp->alias, 0))
--					remove_feature(&mpp->features,
--						       "queue_if_no_path");
--			} else {
--				condlog(3, "%s: set queue_if_no_path feature",
--					mpp->alias);
--				if (!dm_queue_if_no_path(mpp->alias, 1))
--					add_feature(&mpp->features,
--						    "queue_if_no_path");
--			}
--		}
- 
- 		if (!is_daemon && mpp->action != ACT_NOTHING) {
- 			conf = get_multipath_config();
-diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
-index b647c25..642f44f 100644
---- a/libmultipath/dmparser.c
-+++ b/libmultipath/dmparser.c
-@@ -83,23 +83,15 @@ assemble_map (struct multipath * mp, char * params, int len)
- 	nr_priority_groups = VECTOR_SIZE(mp->pg);
- 	initial_pg_nr = (nr_priority_groups ? mp->bestpg : 0);
- 
--	f = STRDUP(mp->features);
--
--	/*
--	 * We have to set 'queue_if_no_path' here even
--	 * to avoid path failures during map reload.
--	 */
--	if (mp->no_path_retry == NO_PATH_RETRY_FAIL) {
--		/* remove queue_if_no_path settings */
--		condlog(3, "%s: remove queue_if_no_path from '%s'",
--			mp->alias, mp->features);
--		remove_feature(&f, no_path_retry);
--	} else if (mp->no_path_retry != NO_PATH_RETRY_UNDEF) {
--		add_feature(&f, no_path_retry);
-+	if (mp->no_path_retry != NO_PATH_RETRY_UNDEF  &&
-+	    mp->no_path_retry != NO_PATH_RETRY_FAIL) {
-+		add_feature(&mp->features, no_path_retry);
- 	}
- 	if (mp->retain_hwhandler == RETAIN_HWHANDLER_ON &&
- 	    get_linux_version_code() < KERNEL_VERSION(4, 3, 0))
--		add_feature(&f, retain_hwhandler);
-+		add_feature(&mp->features, retain_hwhandler);
-+
-+	f = STRDUP(mp->features);
- 
- 	APPEND(p, end, "%s %s %i %i", f, mp->hwhandler, nr_priority_groups,
- 	       initial_pg_nr);
-@@ -148,7 +140,6 @@ int disassemble_map(vector pathvec, char *params, struct multipath *mpp,
- 	int num_paths = 0;
- 	int num_paths_args = 0;
- 	int def_minio = 0;
--	int no_path_retry = NO_PATH_RETRY_UNDEF;
- 	struct path * pp;
- 	struct pathgroup * pgp;
- 
-@@ -165,8 +156,6 @@ int disassemble_map(vector pathvec, char *params, struct multipath *mpp,
- 		return 1;
- 
- 	num_features = atoi(mpp->features);
--	no_path_retry = mpp->no_path_retry;
--	mpp->no_path_retry = NO_PATH_RETRY_UNDEF;
- 
- 	for (i = 0; i < num_features; i++) {
- 		p += get_word(p, &word);
-@@ -178,23 +167,11 @@ int disassemble_map(vector pathvec, char *params, struct multipath *mpp,
- 			FREE(word);
- 			return 1;
- 		}
--		setup_feature(mpp, word);
- 
- 		FREE(word);
- 	}
- 
- 	/*
--	 * Reset no_path_retry.
--	 * - if not set from features
--	 * - if queue_if_no_path is set from features but
--	 *   no_path_retry > 0 is selected.
--	 */
--	if ((mpp->no_path_retry == NO_PATH_RETRY_UNDEF ||
--	     mpp->no_path_retry == NO_PATH_RETRY_QUEUE) &&
--	    mpp->no_path_retry != no_path_retry)
--		mpp->no_path_retry = no_path_retry;
--
--	/*
- 	 * hwhandler
- 	 */
- 	p += get_word(p, &mpp->hwhandler);
-diff --git a/libmultipath/structs.c b/libmultipath/structs.c
-index 3e057f5..c42d765 100644
---- a/libmultipath/structs.c
-+++ b/libmultipath/structs.c
-@@ -497,23 +497,6 @@ first_path (struct multipath * mpp)
- 	return pgp?VECTOR_SLOT(pgp->paths, 0):NULL;
+diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
+index eddeeaf..32a4d9e 100644
+--- a/libmultipath/structs_vec.c
++++ b/libmultipath/structs_vec.c
+@@ -188,66 +188,36 @@ void remove_maps_and_stop_waiters(struct vectors *vecs)
+ 	_remove_maps(vecs, STOP_WAITER);
  }
  
--void setup_feature(struct multipath *mpp, char *feature)
--{
--	if (!strncmp(feature, "queue_if_no_path", 16)) {
--		if (mpp->no_path_retry <= NO_PATH_RETRY_UNDEF)
--			mpp->no_path_retry = NO_PATH_RETRY_QUEUE;
--		else
--			condlog(1, "%s: ignoring feature queue_if_no_path because no_path_retry = %d",
--				mpp->alias, mpp->no_path_retry);
--	} else if (!strcmp(feature, "retain_attached_hw_handler")) {
--		if (mpp->retain_hwhandler != RETAIN_HWHANDLER_OFF)
--			mpp->retain_hwhandler = RETAIN_HWHANDLER_ON;
--		else
--			condlog(1, "%s: ignoring feature 'retain_attached_hw_handler'",
--				mpp->alias);
--	}
--}
--
- int add_feature(char **f, const char *n)
+-static struct hwentry *
++void
+ extract_hwe_from_path(struct multipath * mpp)
  {
- 	int c = 0, d, l;
-diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-index 4d738d2..effa52f 100644
---- a/libmultipath/structs.h
-+++ b/libmultipath/structs.h
-@@ -386,7 +386,6 @@ struct path * first_path (struct multipath * mpp);
- int pathcountgr (struct pathgroup *, int);
- int pathcount (struct multipath *, int);
- int pathcmp (struct pathgroup *, struct pathgroup *);
--void setup_feature(struct multipath *, char *);
- int add_feature (char **, const char *);
- int remove_feature (char **, const char *);
+ 	struct path * pp = NULL;
+-	int pg_num = -1, p_num = -1, i;
+-	struct pathgroup * pgp = NULL;
+-
+-	condlog(3, "%s: searching paths for valid hwe", mpp->alias);
++	int i;
  
+-	if (mpp && mpp->pg) {
+-		vector_foreach_slot(mpp->pg, pgp, i) {
+-			if (pgp->status == PGSTATE_ACTIVE ||
+-			    pgp->status == PGSTATE_ENABLED) {
+-				pg_num = i;
+-				break;
+-			}
+-		}
+-		if (pg_num >= 0)
+-			pgp = VECTOR_SLOT(mpp->pg, pg_num);
+-	}
++	if (mpp->hwe || !mpp->paths)
++		return;
+ 
+-	if (pgp && pgp->paths) {
+-		vector_foreach_slot(pgp->paths, pp, i) {
+-			if (pp->dmstate == PSTATE_FAILED)
+-				continue;
+-			if (strlen(pp->vendor_id) > 0 &&
+-			    strlen(pp->product_id) > 0 &&
+-			    strlen(pp->rev) > 0) {
+-				p_num = i;
+-				break;
+-			}
++	condlog(3, "%s: searching paths for valid hwe", mpp->alias);
++	/* doing this in two passes seems like paranoia to me */
++	vector_foreach_slot(mpp->paths, pp, i) {
++		if (pp->state != PATH_UP)
++			continue;
++		if (pp->hwe) {
++			mpp->hwe = pp->hwe;
++			return;
+ 		}
+-		if (p_num >= 0)
+-			pp = VECTOR_SLOT(pgp->paths, i);
+ 	}
+-
+-	if (pp) {
+-		if (!strlen(pp->vendor_id) ||
+-		    !strlen(pp->product_id) ||
+-		    !strlen(pp->rev)) {
+-			condlog(3, "%s: no device details available", pp->dev);
+-			return NULL;
+-		}
+-		condlog(3, "%s: vendor = %s", pp->dev, pp->vendor_id);
+-		condlog(3, "%s: product = %s", pp->dev, pp->product_id);
+-		condlog(3, "%s: rev = %s", pp->dev, pp->rev);
+-		if (!pp->hwe) {
+-			struct config *conf = get_multipath_config();
+-
+-			condlog(3, "searching hwtable");
+-			pp->hwe = find_hwe(conf->hwtable, pp->vendor_id,
+-					   pp->product_id, pp->rev);
+-			put_multipath_config(conf);
++	vector_foreach_slot(mpp->paths, pp, i) {
++		if (pp->state == PATH_UP)
++			continue;
++		if (pp->hwe) {
++			mpp->hwe = pp->hwe;
++			return;
+ 		}
+ 	}
+-
+-	return pp?pp->hwe:NULL;
+ }
+ 
+-static int
++int
+ update_multipath_table (struct multipath *mpp, vector pathvec, int is_daemon)
+ {
+ 	char params[PARAMS_SIZE] = {0};
+@@ -268,7 +238,7 @@ update_multipath_table (struct multipath *mpp, vector pathvec, int is_daemon)
+ 	return 0;
+ }
+ 
+-static int
++int
+ update_multipath_status (struct multipath *mpp)
+ {
+ 	char status[PARAMS_SIZE] = {0};
+@@ -388,18 +358,6 @@ int __setup_multipath(struct vectors *vecs, struct multipath *mpp,
+ 		goto out;
+ 	}
+ 
+-	set_multipath_wwid(mpp);
+-	conf = get_multipath_config();
+-	mpp->mpe = find_mpe(conf->mptable, mpp->wwid);
+-	put_multipath_config(conf);
+-	condlog(3, "%s: discover", mpp->alias);
+-
+-	if (!mpp->hwe)
+-		mpp->hwe = extract_hwe_from_path(mpp);
+-	if (!mpp->hwe) {
+-		condlog(3, "%s: no hardware entry found, using defaults",
+-			mpp->alias);
+-	}
+ 	if (reset) {
+ 		conf = get_multipath_config();
+ 		select_rr_weight(conf, mpp);
+@@ -466,6 +424,7 @@ retry:
+ 	mpp->flush_on_last_del = FLUSH_UNDEF;
+ 	mpp->action = ACT_RELOAD;
+ 
++	extract_hwe_from_path(mpp);
+ 	if (setup_map(mpp, params, PARAMS_SIZE)) {
+ 		condlog(0, "%s: failed to setup new map in update", mpp->alias);
+ 		retries = -1;
+@@ -492,6 +451,7 @@ fail:
+ struct multipath *add_map_without_path (struct vectors *vecs, char *alias)
+ {
+ 	struct multipath * mpp = alloc_multipath();
++	struct config *conf;
+ 
+ 	if (!mpp)
+ 		return NULL;
+@@ -502,10 +462,18 @@ struct multipath *add_map_without_path (struct vectors *vecs, char *alias)
+ 
+ 	mpp->alias = STRDUP(alias);
+ 
+-	if (setup_multipath(vecs, mpp))
+-		return NULL; /* mpp freed in setup_multipath */
++	if (dm_get_info(mpp->alias, &mpp->dmi)) {
++		condlog(3, "%s: cannot access table", mpp->alias);
++		goto out;
++	}
++	set_multipath_wwid(mpp);
++	conf = get_multipath_config();
++	mpp->mpe = find_mpe(conf->mptable, mpp->wwid);
++	put_multipath_config(conf);
+ 
+-	if (adopt_paths(vecs->pathvec, mpp))
++	if (update_multipath_table(mpp, vecs->pathvec, 1))
++		goto out;
++	if (update_multipath_status(mpp))
+ 		goto out;
+ 
+ 	if (!vector_alloc_slot(vecs->mpvec))
+@@ -513,6 +481,9 @@ struct multipath *add_map_without_path (struct vectors *vecs, char *alias)
+ 
+ 	vector_set_slot(vecs->mpvec, mpp);
+ 
++	if (update_map(mpp, vecs) != 0) /* map removed */
++		return NULL;
++
+ 	if (start_waiter_thread(mpp, vecs))
+ 		goto out;
+ 
+diff --git a/libmultipath/structs_vec.h b/libmultipath/structs_vec.h
+index 54444e0..54865d7 100644
+--- a/libmultipath/structs_vec.h
++++ b/libmultipath/structs_vec.h
+@@ -24,6 +24,7 @@ int __setup_multipath (struct vectors * vecs, struct multipath * mpp,
+ #define setup_multipath(vecs, mpp) __setup_multipath(vecs, mpp, 1, 1)
+ int update_multipath_strings (struct multipath *mpp, vector pathvec,
+ 			      int is_daemon);
++void extract_hwe_from_path(struct multipath * mpp);
+ 
+ void remove_map (struct multipath * mpp, struct vectors * vecs, int purge_vec);
+ void remove_map_and_stop_waiter (struct multipath * mpp, struct vectors * vecs, int purge_vec);
+@@ -38,5 +39,8 @@ struct multipath * add_map_with_path (struct vectors * vecs,
+ int update_multipath (struct vectors *vecs, char *mapname, int reset);
+ void update_queue_mode_del_path(struct multipath *mpp);
+ void update_queue_mode_add_path(struct multipath *mpp);
++int update_multipath_table (struct multipath *mpp, vector pathvec,
++			    int is_daemon);
++int update_multipath_status (struct multipath *mpp);
+ 
+ #endif /* _STRUCTS_VEC_H */
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 93506ea..39fedc4 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -699,6 +699,7 @@ rescan:
+ 		verify_paths(mpp, vecs);
+ 		mpp->flush_on_last_del = FLUSH_UNDEF;
+ 		mpp->action = ACT_RELOAD;
++		extract_hwe_from_path(mpp);
+ 	} else {
+ 		if (!should_multipath(pp, vecs->pathvec)) {
+ 			orphan_path(pp, "only one path");
+@@ -1045,8 +1046,11 @@ map_discovery (struct vectors * vecs)
+ 		return 1;
+ 
+ 	vector_foreach_slot (vecs->mpvec, mpp, i)
+-		if (setup_multipath(vecs, mpp))
++		if (update_multipath_table(mpp, vecs->pathvec, 1) ||
++		    update_multipath_status(mpp)) {
++			remove_map(mpp, vecs, 1);
+ 			i--;
++		}
+ 
+ 	return 0;
+ }
 -- 
 2.7.4
