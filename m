@@ -1,16 +1,14 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 3/4] libmultipath: path latency: simplify
-	getprio()
-Date: Thu, 07 Dec 2017 16:56:41 +0100
-Message-ID: <1512662201.3207.25.camel@suse.com>
-References: <20171118001134.26622-1-mwilck@suse.com>
-	<20171118001134.26622-4-mwilck@suse.com>
-	<19c4c292-3297-b602-36c4-0dde2c61e266@huawei.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: [PATCH 02/12] kpartx: don't delete partitions from
+	partitions
+Date: Thu,  7 Dec 2017 12:48:56 -0600
+Message-ID: <1512672546-12785-3-git-send-email-bmarzins@redhat.com>
+References: <1512672546-12785-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <19c4c292-3297-b602-36c4-0dde2c61e266@huawei.com>
+In-Reply-To: <1512672546-12785-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,47 +18,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Guan Junxiong <guanjunxiong@huawei.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: dm-devel@redhat.com, niuhaoxin <niuhaoxin@huawei.com>, "Shenhong (C)" <shenhong09@huawei.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-T24gVGh1LCAyMDE3LTEyLTA3IGF0IDEyOjI2ICswODAwLCBHdWFuIEp1bnhpb25nIHdyb3RlOgo+
-IEhpIE1hcnRpbiwKPiAKPiBJIGhhdmUgdGVzdGVkIHRoaXMgcGF0Y2ggYW5kIGZvdW5kIHNvbWV0
-aGluZyBuZWVkZWQgdG8gYmUgY29ycmVjdC4gTXkKPiBjb21tZW50cyBpbmxpbmUuCj4gCj4gCj4g
-PiBAQCAtMzQwLDggKzMyMywxNCBAQCBpbnQgZ2V0cHJpbyhzdHJ1Y3QgcGF0aCAqcHAsIGNoYXIg
-KmFyZ3MsCj4gPiB1bnNpZ25lZCBpbnQgdGltZW91dCkKPiA+ICAJCQkgICIuSXQgaXMgcmVjb21t
-ZW5kIHRvIGJlIHNldCBsYXJnZXIiLAo+ID4gIAkJCSAgcHAtPmRldiwgYmFzZV9udW0pOwo+ID4g
-IAo+ID4gKwlzdGFuZGFyZF9kZXZpYXRpb24gPSBzcXJ0KChzdW1fc3F1YXJlcyAtIGxnX3RvbGRl
-bGF5ICoKPiA+IGxnX3RvbGRlbGF5KQo+ID4gKwkJCQkgIC8gKGlvX251bSAtMSkpOwo+ID4gIAo+
-IAo+IFRoaXMgYXNzaWdubWVudCBpcyB3cm9uZy4gSXQgZ2V0cyBhICJOQU4iIGZvciBzdGFuZGFy
-ZF9kZXZpYXRpb24uCj4gSXQgc2hvdWxkIGJlIHRoZSBmb2xsb3dpbmcgZXF1YXRpb24gYWNjb3Jk
-aW5nIHRvIHN1bV9uICh4X2kgLQo+IGF2Zyh4KSleMiA9PSBzdW1fbiB4X2leMiAtIG4gKiBhdmco
-eCleMgo+IHN0YW5kYXJkX2RldmlhdGlvbiA9IHNxcnQoKHN1bV9zcXVhcmVzIC0gaW9fbnVtKiBs
-Z19hdmdsYXRlbmN5Kgo+IGxnX2F2Z2xhdGVuY3kpLyAoaW9fbnVtIC0xKSk7Cj4gICAgICAgICAg
-ICAgICAgICAgID0gc3FydCgoc3VtX3NxdWFyZXMgLSAgbGdfdG9sZGVsYXkqCj4gbGdfYXZnbGF0
-ZW5jeSkvIChpb19udW0gLTEpKTsKClRoYXQncyBvZiBjb3Vyc2UgY29ycmVjdC4gSSdsbCBzdWJt
-aXQgYW4gdXBkYXRlIGFzYXAuCgo+IEkgc3RpbGwgaGF2ZSB0aGUgZG91YnQgYWJvdXQgdGhlIGNv
-bXB1dGF0aW9uIG9mIHRoZSAidW5jZXJ0YWludHkiCj4gaXRlbS4KPiBCZWNhdXNlIEkgaGF2ZSBv
-YnNlcnZlZCB0aGF0IHRoZSB1bmNlcnRhaW50eSBpcyBpbiB0aGUgcmFuZ2Ugb2YgMS4zIH4KPiAx
-LjYgd2hlbmV2ZXIKPiB0aGUgYmFzZV9udW0gdmFyaWVzIGZyb20gMS4xIHRvIDEwLgoKPiBEbyB5
-b3UgbWVhbiB0aGUgdW5jZXJ0YWludHkgYXMgdGhlICJFcnJvciBmdW5jdGlvbiIgb2YgKGxvZykg
-bm9ybWFsCj4gZGlzdHJpYnV0aW9uPwoKPiBIZXJlIGlzIHRoZSBkZWZpbml0aW9uIG9mCj4gaHR0
-cHM6Ly9lbi53aWtpcGVkaWEub3JnL3dpa2kvRXJyb3JfZnVuY3Rpb24KPiAKPiBJIHByZWZlciB0
-byB1c2luZyAgIkVycm9yIGZ1bmN0aW9uIiB0aGF0IGRlc2NyaWJlcyBhY2N1bXVsYXRlZAo+IHBy
-b2JhYmlsaXR5IG9mICBob3cgIHByaW8KPiBsb2NhdGVzIGluIHRoZSAoLWluZiwgcHJpby0xKSBh
-bmQgKHByaW8rMSwgK2luZikuCgpUaGVyZSdzIGEgbWlzdW5kZXJzdGFuZGluZyBoZXJlLgoKTXkg
-InVuY2VydGFpbnR5IGZhY3RvciIgZGVzY3JpYmVzIHRoZSB3aWR0aCBvZiB0aGUgZGlzdHJpYnV0
-aW9uIG9mIHRoZQoqbWVhc3VyZWQqIGxhdGVuY2llcy4gSXQgcm91Z2hseSByZXByZXNlbnRzIHRo
-ZSBhY2N1cmFjeSBvZiB0aGUKbWVhc3VyZW1lbnQgKGluZGljYXRpbmcgdGhhdCA2OCUsIG9yIGVy
-cm9yX2Z1bmN0aW9uIChzcXJ0KDEvMikpLCBvZiB0aGUKbWVhc3VyZWQgdmFsdWVzIGxpZSBpbiB0
-aGUgaW50ZXJ2YWwgW2F2Zy9GLCBhdmcqRl0pLiBJT1csIGl0IHRlbGxzIHlvdQpob3cgc3RhYmxl
-IHlvdXIgbGF0ZW5jaWVzIGZvciBhIGNlcnRhaW4gcGF0aCBhcmUuCgpJdCBoYXMgbm90aGluZyB0
-byBkbyB3aXRoIHRoZSBhcnRpZmljaWFsIHByaW8gImJpbnMiIHRoYXQgdGhlIGxhdGVuY3kKcHJp
-b3JpdGl6ZXIgc2V0cyB1cC4gVGhlcmVmb3JlIGl0ICpoYXMgdG8gYmUgaW5kZXBlbmRlbnQqIG9m
-IGJhc2VfbnVtLgpJdCBqdXN0IGdpdmVzIGFuIGluZGljYXRpb24gaG93IGxhcmdlIGJhc2VfbnVt
-IHNob3VsZCBiZS4gCgpJIGhvcGUgdGhpcyBtYWtlcyBpdCBjbGVhci4KCk1hcnRpbgoKLS0gCkRy
-LiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAy
-MTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFy
-ZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1h
-aWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFp
-bG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+The current del-part-nodes rules try to run partx on the partitions
+themselves, which will ofen fail with an error in the log, because the
+partitions will have been deleted before partx can run on them.
+
+Cc: Martin Wilck <mwilck@suse.com>
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ kpartx/del-part-nodes.rules | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/kpartx/del-part-nodes.rules b/kpartx/del-part-nodes.rules
+index cee945d..17bc505 100644
+--- a/kpartx/del-part-nodes.rules
++++ b/kpartx/del-part-nodes.rules
+@@ -12,6 +12,7 @@
+ SUBSYSTEM!="block", GOTO="end_del_part_nodes"
+ KERNEL!="sd*|dasd*|rbd*", GOTO="end_del_part_nodes"
+ ACTION!="add|change", GOTO="end_del_part_nodes"
++ENV{DEVTYPE}=="partition", GOTO="end_del_part_nodes"
+ 
+ IMPORT{cmdline}="dont_del_part_nodes"
+ ENV{dont_del_part_nodes}=="1", GOTO="end_del_part_nodes"
+-- 
+2.7.4
