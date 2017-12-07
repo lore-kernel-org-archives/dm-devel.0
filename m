@@ -1,76 +1,72 @@
-From: Suren Baghdasaryan <surenb@google.com>
-Subject: [PATCH] dm bufio: fix shrinker scans when (nr_to_scan < retain_target)
-Date: Wed,  6 Dec 2017 09:27:30 -0800
-Message-ID: <20171206172730.3095-1-surenb@google.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org
-Cc: tkjos@google.com, timmurray@google.com, Suren Baghdasaryan <surenb@google.com>
+From: Guan Junxiong <guanjunxiong@huawei.com>
+Subject: Re: [PATCH 3/4] libmultipath: path latency: simplify
+	getprio()
+Date: Thu, 7 Dec 2017 12:26:15 +0800
+Message-ID: <19c4c292-3297-b602-36c4-0dde2c61e266@huawei.com>
+References: <20171118001134.26622-1-mwilck@suse.com>
+	<20171118001134.26622-4-mwilck@suse.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20171118001134.26622-4-mwilck@suse.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: guanjunxiong@huawei.com, dm-devel@redhat.com, niuhaoxin <niuhaoxin@huawei.com>, "Shenhong (C)" <shenhong09@huawei.com>
 List-Id: dm-devel.ids
 
-When system is under memory pressure it is observed that dm bufio
-shrinker often reclaims only one buffer per scan. This change fixes
-the following two issues in dm bufio shrinker that cause this behavior:
+Hi Martin,
 
-1. ((nr_to_scan - freed) <= retain_target) condition is used to
-terminate slab scan process. This assumes that nr_to_scan is equal
-to the LRU size, which might not be correct because do_shrink_slab()
-in vmscan.c calculates nr_to_scan using multiple inputs.
-As a result when nr_to_scan is less than retain_target (64) the scan
-will terminate after the first iteration, effectively reclaiming one
-buffer per scan and making scans very inefficient. This hurts vmscan
-performance especially because mutex is acquired/released every time
-dm_bufio_shrink_scan() is called.
-New implementation uses ((LRU size - freed) <= retain_target)
-condition for scan termination. LRU size can be safely determined
-inside __scan() because this function is called after dm_bufio_lock().
+I have tested this patch and found something needed to be correct. My comments inline.
 
-2. do_shrink_slab() uses value returned by dm_bufio_shrink_count() to
-determine number of freeable objects in the slab. However dm_bufio
-always retains retain_target buffers in its LRU and will terminate
-a scan when this mark is reached. Therefore returning the entire LRU size
-from dm_bufio_shrink_count() is misleading because that does not
-represent the number of freeable objects that slab will reclaim during
-a scan. Returning (LRU size - retain_target) better represents the
-number of freeable objects in the slab. This way do_shrink_slab()
-returns 0 when (LRU size < retain_target) and vmscan will not try to
-scan this shrinker avoiding scans that will not reclaim any memory.
 
-Test: tested using Android device running
-<AOSP>/system/extras/alloc-stress that generates memory pressure
-and causes intensive shrinker scans
+On 2017/11/18 8:11, Martin Wilck wrote:
+> The log standard deviation can be calculated much more simply
+> by realizing
+> 
+>    sum_n (x_i - avg(x))^2 == sum_n x_i^2 - n * avg(x)^2
+> 
 
-Signed-off-by: Suren Baghdasaryan <surenb@google.com>
----
- drivers/md/dm-bufio.c | 8 ++++++--
- 1 file changed, 6 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
-index b8ac591aaaa7..c546b567f3b5 100644
---- a/drivers/md/dm-bufio.c
-+++ b/drivers/md/dm-bufio.c
-@@ -1611,7 +1611,8 @@ static unsigned long __scan(struct dm_bufio_client *c, unsigned long nr_to_scan,
- 	int l;
- 	struct dm_buffer *b, *tmp;
- 	unsigned long freed = 0;
--	unsigned long count = nr_to_scan;
-+	unsigned long count = c->n_buffers[LIST_CLEAN] +
-+			      c->n_buffers[LIST_DIRTY];
- 	unsigned long retain_target = get_retain_buffers(c);
- 
- 	for (l = 0; l < LIST_SIZE; l++) {
-@@ -1647,8 +1648,11 @@ static unsigned long
- dm_bufio_shrink_count(struct shrinker *shrink, struct shrink_control *sc)
- {
- 	struct dm_bufio_client *c = container_of(shrink, struct dm_bufio_client, shrinker);
-+	unsigned long count = READ_ONCE(c->n_buffers[LIST_CLEAN]) +
-+			      READ_ONCE(c->n_buffers[LIST_DIRTY]);
-+	unsigned long retain_target = get_retain_buffers(c);
- 
--	return READ_ONCE(c->n_buffers[LIST_CLEAN]) + READ_ONCE(c->n_buffers[LIST_DIRTY]);
-+	return (count < retain_target) ? 0 : (count - retain_target);
- }
- 
- /*
--- 
-2.15.0.531.g2ccb3012c9-goog
+> @@ -340,8 +323,14 @@ int getprio(struct path *pp, char *args, unsigned int timeout)
+>  			  ".It is recommend to be set larger",
+>  			  pp->dev, base_num);
+>  
+> +	standard_deviation = sqrt((sum_squares - lg_toldelay * lg_toldelay)
+> +				  / (io_num -1));
+>  
+This assignment is wrong. It gets a "NAN" for standard_deviation.
+It should be the following equation according to sum_n (x_i - avg(x))^2 == sum_n x_i^2 - n * avg(x)^2
+
+standard_deviation = sqrt((sum_squares - io_num* lg_avglatency* lg_avglatency)/ (io_num -1));
+                   = sqrt((sum_squares -  lg_toldelay* lg_avglatency)/ (io_num -1));
+
+
+>  	rc = calcPrio(lg_avglatency, lg_maxavglatency, lg_minavglatency);
+>  
+> +	pp_pl_log(3, "%s: latency avg=%.2e uncertainty=%.1f prio=%d\n",
+> +		  pp->dev, exp(lg_avglatency * lg_base),
+> +		  exp(standard_deviation * lg_base), rc);
+> +
+
+I still have the doubt about the computation of the "uncertainty" item.
+Because I have observed that the uncertainty is in the range of 1.3 ~ 1.6 whenever
+the base_num varies from 1.1 to 10.
+
+Do you mean the uncertainty as the "Error function" of (log) normal distribution?
+Here is the definition of https://en.wikipedia.org/wiki/Error_function
+
+I prefer to using  "Error function" that describes accumulated probability of  how  prio
+locates in the (-inf, prio-1) and (prio+1, +inf).
+
+Thanks
+Guan
