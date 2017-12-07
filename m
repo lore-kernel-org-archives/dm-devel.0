@@ -1,8 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 08/12] libmultipath: __setup_multipath param
-	cleanup
-Date: Thu,  7 Dec 2017 12:49:02 -0600
-Message-ID: <1512672546-12785-9-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 05/12] multipathd: move helper functions to
+	libmultipath
+Date: Thu,  7 Dec 2017 12:48:59 -0600
+Message-ID: <1512672546-12785-6-git-send-email-bmarzins@redhat.com>
 References: <1512672546-12785-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,60 +22,224 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-setup multipath is only called by the daemon, so there is no point in
-the is_daemon parameter.
+This commit simply moves sync_map_state() and update_map() from
+multipathd/main.c to libmultipath/structs_vec.c, to enable future
+changes.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/structs_vec.c | 6 +++---
- libmultipath/structs_vec.h | 4 ++--
- 2 files changed, 5 insertions(+), 5 deletions(-)
+ libmultipath/structs_vec.c | 74 ++++++++++++++++++++++++++++++++++++++++++++++
+ libmultipath/structs_vec.h |  2 ++
+ multipathd/main.c          | 72 --------------------------------------------
+ multipathd/main.h          |  1 -
+ 4 files changed, 76 insertions(+), 73 deletions(-)
 
 diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index 70fb005..814a4b9 100644
+index 22be8e0..eddeeaf 100644
 --- a/libmultipath/structs_vec.c
 +++ b/libmultipath/structs_vec.c
-@@ -336,7 +336,7 @@ void set_no_path_retry(struct config *conf, struct multipath *mpp)
+@@ -16,6 +16,8 @@
+ #include "propsel.h"
+ #include "discovery.h"
+ #include "prio.h"
++#include "configure.h"
++#include "libdevmapper.h"
+ 
+ /*
+  * creates or updates mpp->paths reading mpp->pg
+@@ -415,6 +417,78 @@ out:
+ 	return 1;
  }
  
- int __setup_multipath(struct vectors *vecs, struct multipath *mpp,
--		      int reset, int is_daemon)
-+		      int reset)
++void
++sync_map_state(struct multipath *mpp)
++{
++	struct pathgroup *pgp;
++	struct path *pp;
++	unsigned int i, j;
++
++	if (!mpp->pg)
++		return;
++
++	vector_foreach_slot (mpp->pg, pgp, i){
++		vector_foreach_slot (pgp->paths, pp, j){
++			if (pp->state == PATH_UNCHECKED ||
++			    pp->state == PATH_WILD ||
++			    pp->state == PATH_DELAYED)
++				continue;
++			if (mpp->ghost_delay_tick > 0)
++				continue;
++			if ((pp->dmstate == PSTATE_FAILED ||
++			     pp->dmstate == PSTATE_UNDEF) &&
++			    (pp->state == PATH_UP || pp->state == PATH_GHOST))
++				dm_reinstate_path(mpp->alias, pp->dev_t);
++			else if ((pp->dmstate == PSTATE_ACTIVE ||
++				  pp->dmstate == PSTATE_UNDEF) &&
++				 (pp->state == PATH_DOWN ||
++				  pp->state == PATH_SHAKY))
++				dm_fail_path(mpp->alias, pp->dev_t);
++		}
++	}
++}
++
++int
++update_map (struct multipath *mpp, struct vectors *vecs)
++{
++	int retries = 3;
++	char params[PARAMS_SIZE] = {0};
++
++retry:
++	condlog(4, "%s: updating new map", mpp->alias);
++	if (adopt_paths(vecs->pathvec, mpp)) {
++		condlog(0, "%s: failed to adopt paths for new map update",
++			mpp->alias);
++		retries = -1;
++		goto fail;
++	}
++	verify_paths(mpp, vecs);
++	mpp->flush_on_last_del = FLUSH_UNDEF;
++	mpp->action = ACT_RELOAD;
++
++	if (setup_map(mpp, params, PARAMS_SIZE)) {
++		condlog(0, "%s: failed to setup new map in update", mpp->alias);
++		retries = -1;
++		goto fail;
++	}
++	if (domap(mpp, params, 1) <= 0 && retries-- > 0) {
++		condlog(0, "%s: map_udate sleep", mpp->alias);
++		sleep(1);
++		goto retry;
++	}
++	dm_lib_release();
++
++fail:
++	if (setup_multipath(vecs, mpp))
++		return 1;
++
++	sync_map_state(mpp);
++
++	if (retries < 0)
++		condlog(0, "%s: failed reload in new map update", mpp->alias);
++	return 0;
++}
++
+ struct multipath *add_map_without_path (struct vectors *vecs, char *alias)
  {
- 	struct config *conf;
- 
-@@ -352,7 +352,7 @@ int __setup_multipath(struct vectors *vecs, struct multipath *mpp,
- 		goto out;
- 	}
- 
--	if (update_multipath_strings(mpp, vecs->pathvec, is_daemon)) {
-+	if (update_multipath_strings(mpp, vecs->pathvec, 1)) {
- 		condlog(0, "%s: failed to setup multipath", mpp->alias);
- 		goto out;
- 	}
-@@ -594,7 +594,7 @@ int update_multipath (struct vectors *vecs, char *mapname, int reset)
- 		return 2;
- 	}
- 
--	if (__setup_multipath(vecs, mpp, reset, 1))
-+	if (__setup_multipath(vecs, mpp, reset))
- 		return 1; /* mpp freed in setup_multipath */
- 
- 	/*
+ 	struct multipath * mpp = alloc_multipath();
 diff --git a/libmultipath/structs_vec.h b/libmultipath/structs_vec.h
-index 54865d7..04fa0dd 100644
+index 46f30af..54444e0 100644
 --- a/libmultipath/structs_vec.h
 +++ b/libmultipath/structs_vec.h
-@@ -20,8 +20,8 @@ void orphan_path (struct path * pp, const char *reason);
- int verify_paths(struct multipath * mpp, struct vectors * vecs);
- int update_mpp_paths(struct multipath * mpp, vector pathvec);
- int __setup_multipath (struct vectors * vecs, struct multipath * mpp,
--		       int reset, int is_daemon);
--#define setup_multipath(vecs, mpp) __setup_multipath(vecs, mpp, 1, 1)
-+		       int reset);
-+#define setup_multipath(vecs, mpp) __setup_multipath(vecs, mpp, 1)
- int update_multipath_strings (struct multipath *mpp, vector pathvec,
- 			      int is_daemon);
- void extract_hwe_from_path(struct multipath * mpp);
+@@ -30,6 +30,8 @@ void remove_map_and_stop_waiter (struct multipath * mpp, struct vectors * vecs,
+ void remove_maps (struct vectors * vecs);
+ void remove_maps_and_stop_waiters (struct vectors * vecs);
+ 
++void sync_map_state (struct multipath *);
++int update_map (struct multipath *mpp, struct vectors *vecs);
+ struct multipath * add_map_without_path (struct vectors * vecs, char * alias);
+ struct multipath * add_map_with_path (struct vectors * vecs,
+ 				struct path * pp, int add_vec);
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 25f1f52..93506ea 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -338,37 +338,6 @@ coalesce_maps(struct vectors *vecs, vector nmpv)
+ 	return 0;
+ }
+ 
+-void
+-sync_map_state(struct multipath *mpp)
+-{
+-	struct pathgroup *pgp;
+-	struct path *pp;
+-	unsigned int i, j;
+-
+-	if (!mpp->pg)
+-		return;
+-
+-	vector_foreach_slot (mpp->pg, pgp, i){
+-		vector_foreach_slot (pgp->paths, pp, j){
+-			if (pp->state == PATH_UNCHECKED ||
+-			    pp->state == PATH_WILD ||
+-			    pp->state == PATH_DELAYED)
+-				continue;
+-			if (mpp->ghost_delay_tick > 0)
+-				continue;
+-			if ((pp->dmstate == PSTATE_FAILED ||
+-			     pp->dmstate == PSTATE_UNDEF) &&
+-			    (pp->state == PATH_UP || pp->state == PATH_GHOST))
+-				dm_reinstate_path(mpp->alias, pp->dev_t);
+-			else if ((pp->dmstate == PSTATE_ACTIVE ||
+-				  pp->dmstate == PSTATE_UNDEF) &&
+-				 (pp->state == PATH_DOWN ||
+-				  pp->state == PATH_SHAKY))
+-				dm_fail_path(mpp->alias, pp->dev_t);
+-		}
+-	}
+-}
+-
+ static void
+ sync_maps_state(vector mpvec)
+ {
+@@ -416,47 +385,6 @@ flush_map(struct multipath * mpp, struct vectors * vecs, int nopaths)
+ 	return 0;
+ }
+ 
+-int
+-update_map (struct multipath *mpp, struct vectors *vecs)
+-{
+-	int retries = 3;
+-	char params[PARAMS_SIZE] = {0};
+-
+-retry:
+-	condlog(4, "%s: updating new map", mpp->alias);
+-	if (adopt_paths(vecs->pathvec, mpp)) {
+-		condlog(0, "%s: failed to adopt paths for new map update",
+-			mpp->alias);
+-		retries = -1;
+-		goto fail;
+-	}
+-	verify_paths(mpp, vecs);
+-	mpp->flush_on_last_del = FLUSH_UNDEF;
+-	mpp->action = ACT_RELOAD;
+-
+-	if (setup_map(mpp, params, PARAMS_SIZE)) {
+-		condlog(0, "%s: failed to setup new map in update", mpp->alias);
+-		retries = -1;
+-		goto fail;
+-	}
+-	if (domap(mpp, params, 1) <= 0 && retries-- > 0) {
+-		condlog(0, "%s: map_udate sleep", mpp->alias);
+-		sleep(1);
+-		goto retry;
+-	}
+-	dm_lib_release();
+-
+-fail:
+-	if (setup_multipath(vecs, mpp))
+-		return 1;
+-
+-	sync_map_state(mpp);
+-
+-	if (retries < 0)
+-		condlog(0, "%s: failed reload in new map update", mpp->alias);
+-	return 0;
+-}
+-
+ static int
+ uev_add_map (struct uevent * uev, struct vectors * vecs)
+ {
+diff --git a/multipathd/main.h b/multipathd/main.h
+index 094b04f..ededdab 100644
+--- a/multipathd/main.h
++++ b/multipathd/main.h
+@@ -26,7 +26,6 @@ int ev_add_path (struct path *, struct vectors *, int);
+ int ev_remove_path (struct path *, struct vectors *, int);
+ int ev_add_map (char *, char *, struct vectors *);
+ int ev_remove_map (char *, char *, int, struct vectors *);
+-void sync_map_state (struct multipath *);
+ int set_config_state(enum daemon_status);
+ void * mpath_alloc_prin_response(int prin_sa);
+ int prin_do_scsi_ioctl(char *, int rq_servact, struct prin_resp * resp,
 -- 
 2.7.4
