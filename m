@@ -1,15 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 09/12] multipathd: move recovery mode code to
-	function
-Date: Thu, 07 Dec 2017 23:13:28 +0100
-Message-ID: <1512684808.22250.7.camel@suse.com>
+Subject: Re: [PATCH 10/12] multipathd: clean up set_no_path_retry
+Date: Thu, 07 Dec 2017 23:14:10 +0100
+Message-ID: <1512684850.22250.8.camel@suse.com>
 References: <1512672546-12785-1-git-send-email-bmarzins@redhat.com>
-	<1512672546-12785-10-git-send-email-bmarzins@redhat.com>
+	<1512672546-12785-11-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1512672546-12785-10-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1512672546-12785-11-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,13 +22,25 @@ To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-deve
 List-Id: dm-devel.ids
 
 T24gVGh1LCAyMDE3LTEyLTA3IGF0IDEyOjQ5IC0wNjAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gSW5zdGVhZCBvZiBoYXZpbmcgbXVsdGlwbGUgZnVuY3Rpb25zIGFsbCBydW5uaW5nIHNs
-aWdodGx5IGRpZmZlcmVudAo+IGNvZGUgdG8gbW92ZSBhIG11bHRpcGF0aCBkZXZpY2UgdG8gcmVj
-b3ZlcnkgbW9kZSwgdGhlcmUgaXMgbm93Cj4gYW4gZW50ZXJfcmVjb3ZlcnlfbW9kZSgpIGZ1bmN0
-aW9uIHRoYXQgYWxsIG9mIHRoZW0gY2FsbC4KPiAKPiBTaWduZWQtb2ZmLWJ5OiBCZW5qYW1pbiBN
-YXJ6aW5za2kgPGJtYXJ6aW5zQHJlZGhhdC5jb20+Cj4gLS0tCgpSZXZpZXdlZC1ieTogTWFydGlu
-IFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+CgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1
-c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjog
-RmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4
-NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhh
-dC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+dGU6Cj4gc2V0X25vX3BhdGhfcmV0cnkoKSB3YXMgYWx3YXlzIHVwZGF0aW5nIHRoZSBxdWV1ZV9p
+Zl9ub19wYXRoIHNldHRpbmcsCj4gZXZlbiBpZiBpdCB3YXMgdW5uZWNlc3NhcnkuICBUaGlzIGNh
+dXNlZCBwcm9ibGVtcyB3aGVuIG5vX3BhdGhfcmV0cnkKPiB3YXMKPiBzZXQgdG8gYSBudW1iZXIs
+IHdoZXJlIGFueSB0aW1lIF9fc2V0dXBfbXVsdGlwYXRoKCkgd2FzIGNhbGxlZCB3aXRoCj4gcmVz
+ZXQsIHF1ZXVpbmcgYXV0b21hdGljYWxseSByZXN0YXJ0ZWQsIGV2ZW4gaWYgdGhlcmUgd2VyZSBu
+byB1c2FibGUKPiBwYXRocy4KPiAKPiBJbnN0ZWFkLCBzZXRfbm9fcGF0aF9yZXRyeSgpIHNob3Vs
+ZCBqdXN0IGZpeCB0aGUgcXVldWVpbmcgaWYgaXQgaXMKPiBzZXQKPiB0byBhbiBpbmNvcnJlY3Qg
+dmFsdWUuICBUaGlzIGlzIHNpbXBsZSB0byBkZXRlY3QgaWYgbm9fcGF0aF9yZXRyeSBpcwo+IHNl
+dAo+IHRvICJxdWV1ZSIgb3IgImZhaWwiLiAgV2hlbiBpdCBpcyBzZXQgdG8gYSBudW1iZXIsIG11
+bHRpcGF0aGQgbmVlZHMKPiB0bwo+IHNlZSBpZiB0aGVyZSBhcmUgdXNhYmxlIHBhdGhzLiBJZiBz
+bywgcXVldWVpbmcgc2hvdWxkIGJlIGVuYWJsZWQuICBJZgo+IG5vdCwgcXVldWVpbmcgbWF5IGJl
+IGVpdGhlciBlbmFibGVkIG9yIGRpc2FibGVkLCBidXQgaWYgaXQgaXMgZW5hYmxlZAo+IGFuZCB0
+aGUgZGV2aWNlIGlzbid0IGFscmVhZHkgaW4gcmVjb3ZlcnkgbW9kZSwgaXQgc2hvdWxkIGJlLgo+
+IAo+IEFsc28sIGNhbGxpbmcgZG1fbWFwX3ByZXNlbnQoKSBpcyBwb2ludGxlc3MgaW4gX19zZXR1
+cF9tdWx0aXBhdGgoKSwKPiBzaW5jZSB0aGUgZXhpc3RlbmNlIG9mIHRoZSBtYXAgd2FzIGp1c3Qg
+Y2hlY2tlZCBpbiBkbV9nZXRfaW5mbygpLgo+IAo+IFNpZ25lZC1vZmYtYnk6IEJlbmphbWluIE1h
+cnppbnNraSA8Ym1hcnppbnNAcmVkaGF0LmNvbT4KPiAtLS0KClJldmlld2VkLWJ5OiBNYXJ0aW4g
+V2lsY2sgPG13aWxja0BzdXNlLmNvbT4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3Vz
+ZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBG
+ZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0
+IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0
+LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
