@@ -1,7 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 10/12] multipathd: clean up set_no_path_retry
-Date: Thu,  7 Dec 2017 12:49:04 -0600
-Message-ID: <1512672546-12785-11-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 12/12] multipathd: marginal path code fixes
+Date: Thu,  7 Dec 2017 12:49:06 -0600
+Message-ID: <1512672546-12785-13-git-send-email-bmarzins@redhat.com>
 References: <1512672546-12785-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -18,79 +18,124 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: Martin Wilck <mwilck@suse.com>
+Cc: Guan Junxiong <guanjunxiong@huawei.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-set_no_path_retry() was always updating the queue_if_no_path setting,
-even if it was unnecessary.  This caused problems when no_path_retry was
-set to a number, where any time __setup_multipath() was called with
-reset, queuing automatically restarted, even if there were no usable
-paths.
+There are a couple of issues I noticed with the marginal paths code.
 
-Instead, set_no_path_retry() should just fix the queueing if it is set
-to an incorrect value.  This is simple to detect if no_path_retry is set
-to "queue" or "fail".  When it is set to a number, multipathd needs to
-see if there are usable paths. If so, queueing should be enabled.  If
-not, queueing may be either enabled or disabled, but if it is enabled
-and the device isn't already in recovery mode, it should be.
+In hit_io_err_recheck_time() there are some problems with the initial
+checks. We should always recover the path if there are no other usable
+paths to the device, so this check should be first. Also, we just
+checked that io_err_disable_reinstate isn't zero before calling this
+function, so we don't need to check again here (and it doesn't make any
+sense to continue disabling the path if io_err_disable_reinstate is set
+to zero).  Finally, the only kind of errors we can get while calling
+clock_gettime() are going to happen on every call. So, if we can't get
+the time, assume that the timeout has passed.
 
-Also, calling dm_map_present() is pointless in __setup_multipath(),
-since the existence of the map was just checked in dm_get_info().
+The multipath.conf.5 description of marginal_path_err_sample_time,
+states that sampling is stopped for marginal_path_err_rate_threshold
+seconds, when it should be marginal_path_err_recheck_gap_time
+seconds.
 
+Lastly, there is a race that can cause multipathd to access freed memory
+on shutdown. io_err_stat_thr is started as a detached thread. This means
+that stop_io_err_stat_thread() can't know when it has actually stopped,
+after pthread_cancel() and pthread_kill() are called. To be safe, it
+should not start the thread in a deteched state, and call join to verify
+that it has stopped before freeing the memory it uses.  But more
+importantly, stop_io_err_stat_thread() was being called before the
+checker and uevent threads were being canceled. Both of these threads
+access data that is freed in stop_io_err_stat_thread(). To avoid the
+chance of these threads accessing freed memory, child() should wait
+until these threads are stopped before calling
+stop_io_err_stat_thread().
+
+Cc: Guan Junxiong <guanjunxiong@huawei.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/structs_vec.c | 22 +++++++++++-----------
- 1 file changed, 11 insertions(+), 11 deletions(-)
+ libmultipath/io_err_stat.c | 12 +++++-------
+ multipath/multipath.conf.5 |  2 +-
+ multipathd/main.c          |  6 +++---
+ 3 files changed, 9 insertions(+), 11 deletions(-)
 
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index 2f1f277..fbab61f 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -325,21 +325,27 @@ void enter_recovery_mode(struct multipath *mpp)
+diff --git a/libmultipath/io_err_stat.c b/libmultipath/io_err_stat.c
+index 75a6df6..5b10f03 100644
+--- a/libmultipath/io_err_stat.c
++++ b/libmultipath/io_err_stat.c
+@@ -379,17 +379,14 @@ int hit_io_err_recheck_time(struct path *pp)
+ 	struct timespec curr_time;
+ 	int r;
  
- static void set_no_path_retry(struct multipath *mpp)
+-	if (pp->io_err_disable_reinstate == 0)
+-		return 1;
+-	if (clock_gettime(CLOCK_MONOTONIC, &curr_time) != 0)
+-		return 1;
+-	if (pp->io_err_pathfail_cnt != PATH_IO_ERR_IN_POLLING_RECHECK)
+-		return 1;
+ 	if (pp->mpp->nr_active <= 0) {
+ 		io_err_stat_log(2, "%s: recover path early", pp->dev);
+ 		goto recover;
+ 	}
+-	if ((curr_time.tv_sec - pp->io_err_dis_reinstate_time) >
++	if (pp->io_err_pathfail_cnt != PATH_IO_ERR_IN_POLLING_RECHECK)
++		return 1;
++	if (clock_gettime(CLOCK_MONOTONIC, &curr_time) != 0 ||
++	    (curr_time.tv_sec - pp->io_err_dis_reinstate_time) >
+ 			pp->mpp->marginal_path_err_recheck_gap_time) {
+ 		io_err_stat_log(4, "%s: reschedule checking after %d seconds",
+ 				pp->dev,
+@@ -738,6 +735,7 @@ void stop_io_err_stat_thread(void)
  {
--	mpp->retry_tick = 0;
-+	char is_queueing = 0;
-+
- 	mpp->nr_active = pathcount(mpp, PATH_UP) + pathcount(mpp, PATH_GHOST);
-+	if (mpp->features && strstr(mpp->features, "queue_if_no_path"))
-+		is_queueing = 1;
+ 	pthread_cancel(io_err_stat_thr);
+ 	pthread_kill(io_err_stat_thr, SIGUSR2);
++	pthread_join(io_err_stat_thr, NULL);
+ 	free_io_err_pathvec(paths);
+ 	io_destroy(ioctx);
+ }
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index ba5d3bc..ab151e7 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -867,7 +867,7 @@ accounting process for the path will last for
+ \fImarginal_path_err_sample_time\fR.
+ If the rate of IO error on a particular path is greater than the
+ \fImarginal_path_err_rate_threshold\fR, then the path will not reinstate for
+-\fImarginal_path_err_rate_threshold\fR seconds unless there is only one
++\fImarginal_path_err_recheck_gap_time\fR seconds unless there is only one
+ active path. After \fImarginal_path_err_recheck_gap_time\fR expires, the path
+ will be requeueed for rechecking. If checking result is good enough, the
+ path will be reinstated.
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 16e4fdf..0703ca0 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -2332,7 +2332,7 @@ child (void * param)
+ 	setup_thread_attr(&misc_attr, 64 * 1024, 0);
+ 	setup_thread_attr(&uevent_attr, DEFAULT_UEVENT_STACKSIZE * 1024, 0);
+ 	setup_thread_attr(&waiter_attr, 32 * 1024, 1);
+-	setup_thread_attr(&io_err_stat_attr, 32 * 1024, 1);
++	setup_thread_attr(&io_err_stat_attr, 32 * 1024, 0);
  
- 	switch (mpp->no_path_retry) {
- 	case NO_PATH_RETRY_UNDEF:
- 		break;
- 	case NO_PATH_RETRY_FAIL:
--		dm_queue_if_no_path(mpp->alias, 0);
-+		if (is_queueing)
-+			dm_queue_if_no_path(mpp->alias, 0);
- 		break;
- 	case NO_PATH_RETRY_QUEUE:
--		dm_queue_if_no_path(mpp->alias, 1);
-+		if (!is_queueing)
-+			dm_queue_if_no_path(mpp->alias, 1);
- 		break;
- 	default:
--		dm_queue_if_no_path(mpp->alias, 1);
--		if (mpp->nr_active == 0)
-+		if (mpp->nr_active > 0)
-+			dm_queue_if_no_path(mpp->alias, 1);
-+		else if (is_queueing && mpp->retry_tick == 0)
- 			enter_recovery_mode(mpp);
- 		break;
- 	}
-@@ -354,12 +360,6 @@ int __setup_multipath(struct vectors *vecs, struct multipath *mpp,
- 		goto out;
- 	}
+ 	if (logsink == 1) {
+ 		setup_thread_attr(&log_attr, 64 * 1024, 0);
+@@ -2508,8 +2508,6 @@ child (void * param)
+ 	remove_maps_and_stop_waiters(vecs);
+ 	unlock(&vecs->lock);
  
--	if (!dm_map_present(mpp->alias)) {
--		/* Table has been removed */
--		condlog(3, "%s: table does not exist", mpp->alias);
--		goto out;
--	}
+-	stop_io_err_stat_thread();
 -
- 	if (update_multipath_strings(mpp, vecs->pathvec, 1)) {
- 		condlog(0, "%s: failed to setup multipath", mpp->alias);
- 		goto out;
+ 	pthread_cancel(check_thr);
+ 	pthread_cancel(uevent_thr);
+ 	pthread_cancel(uxlsnr_thr);
+@@ -2520,6 +2518,8 @@ child (void * param)
+ 	pthread_join(uxlsnr_thr, NULL);
+ 	pthread_join(uevq_thr, NULL);
+ 
++	stop_io_err_stat_thread();
++
+ 	lock(&vecs->lock);
+ 	free_pathvec(vecs->pathvec, FREE_PATHS);
+ 	vecs->pathvec = NULL;
 -- 
 2.7.4
