@@ -1,28 +1,54 @@
-From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: Re: [PATCH] scsi_dh: add new rdac devices
-Date: Thu, 07 Dec 2017 21:34:34 -0500
-Message-ID: <yq1bmjauev9.fsf@oracle.com>
-References: <20171117210513.9667-1-xose.vazquez@gmail.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 04/12] libmultipath: cleanup features
+	handling code
+Date: Fri, 08 Dec 2017 16:24:52 +0100
+Message-ID: <1512746692.11972.67.camel@suse.com>
+References: <1512672546-12785-1-git-send-email-bmarzins@redhat.com>
+	<1512672546-12785-5-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20171117210513.9667-1-xose.vazquez@gmail.com> (Xose Vazquez
-        Perez's message of "Fri, 17 Nov 2017 22:05:13 +0100")
-Sender: linux-scsi-owner@vger.kernel.org
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>, Hannes Reinecke <hare@suse.de>, Christophe Varoqui <christophe.varoqui@opensvc.com>, "Martin K . Petersen" <martin.petersen@oracle.com>, "James E . J . Bottomley" <jejb@linux.vnet.ibm.com>, SCSI ML <linux-scsi@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1512672546-12785-5-git-send-email-bmarzins@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-
-Xose,
-
-> Add IBM 3542 and 3552, arrays: FAStT200 and FAStT500.
-> Add full STK OPENstorage family, arrays: 9176, D173, D178, D210, D220, D240 and D280.
-> Add STK BladeCtlr family, arrays: B210, B220, B240 and B280.
->
-> These changes were done in multipath-tools time ago.
-
-Applied to 4.16/scsi-queue.
-
--- 
-Martin K. Petersen	Oracle Linux Engineering
+T24gVGh1LCAyMDE3LTEyLTA3IGF0IDEyOjQ4IC0wNjAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cgo+IHJldGFpbl9hdHRhY2hlZF9od19oYW5kbGVyIHdhcyBuZXZlciBnZXR0aW5nIHVwZGF0
+ZWQgYmVmb3JlLCBzbwo+IHRoZSBvdXRwdXQgd2hlbiB5b3UgY3JlYXRlZCBhIG1hcCB3YXMgaW5j
+b3JyZWN0LgoKV2hpbGUgSSd2ZSBhbHJlYWR5IEFDS2VkIHlvdXIgcGF0Y2gsIEkgZG9uJ3QgdW5k
+ZXJzdGFuZCB3aGF0IHlvdSBtZWFuCmhlcmUuIEJlZm9yZSB5b3VyIHBhdGNoLCAicmV0YWluX2F0
+dGFjaGVkX2h3X2hhbmRsZXIiIHdhcyBzZXQgZnJvbQpjb25maWcgb3B0aW9ucyBhbmQgY29ycmVj
+dGx5IGNvcGllZCB0byB0aGUgZmVhdHVyZXMgc3RyaW5nIGluCmFzc2VtYmxlX21hcCwgbm8/Cgo+
+IGRpZmYgLS1naXQgYS9saWJtdWx0aXBhdGgvY29uZmlndXJlLmMgYi9saWJtdWx0aXBhdGgvY29u
+ZmlndXJlLmMKPiBpbmRleCAwZGZhMjUwLi43Y2E4NGI4IDEwMDY0NAo+IC0tLSBhL2xpYm11bHRp
+cGF0aC9jb25maWd1cmUuYwo+ICsrKyBiL2xpYm11bHRpcGF0aC9jb25maWd1cmUuYwo+IEBAIC0x
+MDYwLDIxICsxMDYyLDYgQEAgaW50IGNvYWxlc2NlX3BhdGhzIChzdHJ1Y3QgdmVjdG9ycyAqIHZl
+Y3MsCj4gdmVjdG9yIG5ld21wLCBjaGFyICogcmVmd3dpZCwKPiAgCQkJCXJlbW92ZV9mZWF0dXJl
+KCZtcHAtPmZlYXR1cmVzLAo+ICAJCQkJCSAgICAgICAicXVldWVfaWZfbm9fcGF0aCIpOwo+ICAJ
+CX0KPiAtCQllbHNlIGlmIChtcHAtPm5vX3BhdGhfcmV0cnkgIT0gTk9fUEFUSF9SRVRSWV9VTkRF
+RikKPiB7Cj4gLQkJCWlmIChtcHAtPm5vX3BhdGhfcmV0cnkgPT0KPiBOT19QQVRIX1JFVFJZX0ZB
+SUwpIHsKPiAtCQkJCWNvbmRsb2coMywgIiVzOiB1bnNldAo+IHF1ZXVlX2lmX25vX3BhdGggZmVh
+dHVyZSIsCj4gLQkJCQkJbXBwLT5hbGlhcyk7Cj4gLQkJCQlpZiAoIWRtX3F1ZXVlX2lmX25vX3Bh
+dGgobXBwLT5hbGlhcywgCj4gMCkpCj4gLQkJCQkJcmVtb3ZlX2ZlYXR1cmUoJm1wcC0KPiA+ZmVh
+dHVyZXMsCj4gLQkJCQkJCSAgICAgICAicXVldWVfaWZfbm9fCj4gcGF0aCIpOwo+IC0JCQl9IGVs
+c2Ugewo+IC0JCQkJY29uZGxvZygzLCAiJXM6IHNldCBxdWV1ZV9pZl9ub19wYXRoCj4gZmVhdHVy
+ZSIsCj4gLQkJCQkJbXBwLT5hbGlhcyk7Cj4gLQkJCQlpZiAoIWRtX3F1ZXVlX2lmX25vX3BhdGgo
+bXBwLT5hbGlhcywgCj4gMSkpCj4gLQkJCQkJYWRkX2ZlYXR1cmUoJm1wcC0+ZmVhdHVyZXMsCj4g
+LQkJCQkJCSAgICAicXVldWVfaWZfbm9fcGF0Cj4gaCIpOwo+IC0JCQl9Cj4gLQkJfQoKQUZBSUNT
+IHdlIGNvdWxkIGFsc28gZ2V0IHJpZCBvZiB0aGUgY2FsbHMgdG8gZG1fcXVldWVfaWZfbm9fcGF0
+aCgpIGluIApyZWxvYWRfbWFwKCksIHJpZ2h0PwoKTWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxj
+ayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51
+eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9y
+dG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRt
+LWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZv
+L2RtLWRldmVs
