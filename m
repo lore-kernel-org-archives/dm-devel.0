@@ -1,63 +1,28 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 12/12] multipathd: marginal path code fixes
-Date: Thu, 07 Dec 2017 23:15:16 +0100
-Message-ID: <1512684916.22250.10.camel@suse.com>
-References: <1512672546-12785-1-git-send-email-bmarzins@redhat.com>
-	<1512672546-12785-13-git-send-email-bmarzins@redhat.com>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Re: [PATCH] scsi_dh: add new rdac devices
+Date: Thu, 07 Dec 2017 21:34:34 -0500
+Message-ID: <yq1bmjauev9.fsf@oracle.com>
+References: <20171117210513.9667-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1512672546-12785-13-git-send-email-bmarzins@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>
-Cc: Guan Junxiong <guanjunxiong@huawei.com>
+Content-Type: text/plain
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <20171117210513.9667-1-xose.vazquez@gmail.com> (Xose Vazquez
+        Perez's message of "Fri, 17 Nov 2017 22:05:13 +0100")
+Sender: linux-scsi-owner@vger.kernel.org
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>, Hannes Reinecke <hare@suse.de>, Christophe Varoqui <christophe.varoqui@opensvc.com>, "Martin K . Petersen" <martin.petersen@oracle.com>, "James E . J . Bottomley" <jejb@linux.vnet.ibm.com>, SCSI ML <linux-scsi@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gVGh1LCAyMDE3LTEyLTA3IGF0IDEyOjQ5IC0wNjAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gVGhlcmUgYXJlIGEgY291cGxlIG9mIGlzc3VlcyBJIG5vdGljZWQgd2l0aCB0aGUgbWFy
-Z2luYWwgcGF0aHMgY29kZS4KPiAKPiBJbiBoaXRfaW9fZXJyX3JlY2hlY2tfdGltZSgpIHRoZXJl
-IGFyZSBzb21lIHByb2JsZW1zIHdpdGggdGhlIGluaXRpYWwKPiBjaGVja3MuIFdlIHNob3VsZCBh
-bHdheXMgcmVjb3ZlciB0aGUgcGF0aCBpZiB0aGVyZSBhcmUgbm8gb3RoZXIKPiB1c2FibGUKPiBw
-YXRocyB0byB0aGUgZGV2aWNlLCBzbyB0aGlzIGNoZWNrIHNob3VsZCBiZSBmaXJzdC4gQWxzbywg
-d2UganVzdAo+IGNoZWNrZWQgdGhhdCBpb19lcnJfZGlzYWJsZV9yZWluc3RhdGUgaXNuJ3QgemVy
-byBiZWZvcmUgY2FsbGluZyB0aGlzCj4gZnVuY3Rpb24sIHNvIHdlIGRvbid0IG5lZWQgdG8gY2hl
-Y2sgYWdhaW4gaGVyZSAoYW5kIGl0IGRvZXNuJ3QgbWFrZQo+IGFueQo+IHNlbnNlIHRvIGNvbnRp
-bnVlIGRpc2FibGluZyB0aGUgcGF0aCBpZiBpb19lcnJfZGlzYWJsZV9yZWluc3RhdGUgaXMKPiBz
-ZXQKPiB0byB6ZXJvKS4gIEZpbmFsbHksIHRoZSBvbmx5IGtpbmQgb2YgZXJyb3JzIHdlIGNhbiBn
-ZXQgd2hpbGUgY2FsbGluZwo+IGNsb2NrX2dldHRpbWUoKSBhcmUgZ29pbmcgdG8gaGFwcGVuIG9u
-IGV2ZXJ5IGNhbGwuIFNvLCBpZiB3ZSBjYW4ndAo+IGdldAo+IHRoZSB0aW1lLCBhc3N1bWUgdGhh
-dCB0aGUgdGltZW91dCBoYXMgcGFzc2VkLgo+IAo+IFRoZSBtdWx0aXBhdGguY29uZi41IGRlc2Ny
-aXB0aW9uIG9mIG1hcmdpbmFsX3BhdGhfZXJyX3NhbXBsZV90aW1lLAo+IHN0YXRlcyB0aGF0IHNh
-bXBsaW5nIGlzIHN0b3BwZWQgZm9yIG1hcmdpbmFsX3BhdGhfZXJyX3JhdGVfdGhyZXNob2xkCj4g
-c2Vjb25kcywgd2hlbiBpdCBzaG91bGQgYmUgbWFyZ2luYWxfcGF0aF9lcnJfcmVjaGVja19nYXBf
-dGltZQo+IHNlY29uZHMuCj4gCj4gTGFzdGx5LCB0aGVyZSBpcyBhIHJhY2UgdGhhdCBjYW4gY2F1
-c2UgbXVsdGlwYXRoZCB0byBhY2Nlc3MgZnJlZWQKPiBtZW1vcnkKPiBvbiBzaHV0ZG93bi4gaW9f
-ZXJyX3N0YXRfdGhyIGlzIHN0YXJ0ZWQgYXMgYSBkZXRhY2hlZCB0aHJlYWQuIFRoaXMKPiBtZWFu
-cwo+IHRoYXQgc3RvcF9pb19lcnJfc3RhdF90aHJlYWQoKSBjYW4ndCBrbm93IHdoZW4gaXQgaGFz
-IGFjdHVhbGx5Cj4gc3RvcHBlZCwKPiBhZnRlciBwdGhyZWFkX2NhbmNlbCgpIGFuZCBwdGhyZWFk
-X2tpbGwoKSBhcmUgY2FsbGVkLiBUbyBiZSBzYWZlLCBpdAo+IHNob3VsZCBub3Qgc3RhcnQgdGhl
-IHRocmVhZCBpbiBhIGRldGVjaGVkIHN0YXRlLCBhbmQgY2FsbCBqb2luIHRvCj4gdmVyaWZ5Cj4g
-dGhhdCBpdCBoYXMgc3RvcHBlZCBiZWZvcmUgZnJlZWluZyB0aGUgbWVtb3J5IGl0IHVzZXMuICBC
-dXQgbW9yZQo+IGltcG9ydGFudGx5LCBzdG9wX2lvX2Vycl9zdGF0X3RocmVhZCgpIHdhcyBiZWlu
-ZyBjYWxsZWQgYmVmb3JlIHRoZQo+IGNoZWNrZXIgYW5kIHVldmVudCB0aHJlYWRzIHdlcmUgYmVp
-bmcgY2FuY2VsZWQuIEJvdGggb2YgdGhlc2UgdGhyZWFkcwo+IGFjY2VzcyBkYXRhIHRoYXQgaXMg
-ZnJlZWQgaW4gc3RvcF9pb19lcnJfc3RhdF90aHJlYWQoKS4gVG8gYXZvaWQgdGhlCj4gY2hhbmNl
-IG9mIHRoZXNlIHRocmVhZHMgYWNjZXNzaW5nIGZyZWVkIG1lbW9yeSwgY2hpbGQoKSBzaG91bGQg
-d2FpdAo+IHVudGlsIHRoZXNlIHRocmVhZHMgYXJlIHN0b3BwZWQgYmVmb3JlIGNhbGxpbmcKPiBz
-dG9wX2lvX2Vycl9zdGF0X3RocmVhZCgpLgo+IAo+IENjOiBHdWFuIEp1bnhpb25nIDxndWFuanVu
-eGlvbmdAaHVhd2VpLmNvbT4KPiBTaWduZWQtb2ZmLWJ5OiBCZW5qYW1pbiBNYXJ6aW5za2kgPGJt
-YXJ6aW5zQHJlZGhhdC5jb20+Cj4gLS0tCgpSZXZpZXdlZC1ieTogTWFydGluIFdpbGNrIDxtd2ls
-Y2tAc3VzZS5jb20+CgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVs
-LiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTD
-tnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5i
-ZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6
-Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+
+Xose,
+
+> Add IBM 3542 and 3552, arrays: FAStT200 and FAStT500.
+> Add full STK OPENstorage family, arrays: 9176, D173, D178, D210, D220, D240 and D280.
+> Add STK BladeCtlr family, arrays: B210, B220, B240 and B280.
+>
+> These changes were done in multipath-tools time ago.
+
+Applied to 4.16/scsi-queue.
+
+-- 
+Martin K. Petersen	Oracle Linux Engineering
