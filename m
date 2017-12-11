@@ -1,12 +1,14 @@
-From: Guan Junxiong <guanjunxiong@huawei.com>
-Subject: [Consult] multipath-tools: will the community accept a
- new vendor specific path group prioritizer in libmultipath/prioritizers
-Date: Mon, 11 Dec 2017 20:50:57 +0800
-Message-ID: <059786fc-8f63-766f-bab7-ed1c064565e9@huawei.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [Consult] multipath-tools: will the community accept
+ a new vendor specific path group prioritizer in libmultipath/prioritizers
+Date: Mon, 11 Dec 2017 14:10:29 +0100
+Message-ID: <edee0c32-a6eb-ecbc-8e53-a9b7483f141e@suse.de>
+References: <059786fc-8f63-766f-bab7-ed1c064565e9@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <059786fc-8f63-766f-bab7-ed1c064565e9@huawei.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -17,22 +19,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@suse.de>, Martin Wilck <mwilck@suse.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: guanjunxiong@huawei.com, "dm-devel@redhat.com" <dm-devel@redhat.com>, niuhaoxin <niuhaoxin@huawei.com>, "Shenhong (C)" <shenhong09@huawei.com>
+To: Guan Junxiong <guanjunxiong@huawei.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Martin Wilck <mwilck@suse.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, Benjamin Marzinski <bmarzins@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, niuhaoxin <niuhaoxin@huawei.com>, "Shenhong (C)" <shenhong09@huawei.com>
 List-Id: dm-devel.ids
 
-Hi Christophe, Hannes, Martin, Xose and Benjamin,
-
-It is beneficial for our customers if we integrate a new path group prioritizer into the multipath-tools.
-But this prioritizer is vendor-specific and it only works for Huawei storage system. Will the community
-accept such new vendor specific path group prioritizer in libmultipath/prioritizers?
-
-I know that the multipath-tools accepted some vendor specific prioritizer such as emc.c , hp_sw.c, ontap.c and
-so on in the libmultipath/prioritizer in 2008~2010 and there were no newer vendor specific prioritizer.
-Before I get down to writing a new Huawei prioritizer, I want to hear your thoughts.
-
-If it is convenient for some of you , please let me know your ideas. Thanks.
-
-Best wishes.
-
-Guan Junxiong
+T24gMTIvMTEvMjAxNyAwMTo1MCBQTSwgR3VhbiBKdW54aW9uZyB3cm90ZToKPiBIaSBDaHJpc3Rv
+cGhlLCBIYW5uZXMsIE1hcnRpbiwgWG9zZSBhbmQgQmVuamFtaW4sCj4gCj4gSXQgaXMgYmVuZWZp
+Y2lhbCBmb3Igb3VyIGN1c3RvbWVycyBpZiB3ZSBpbnRlZ3JhdGUgYSBuZXcgcGF0aCBncm91cCBw
+cmlvcml0aXplciBpbnRvIHRoZSBtdWx0aXBhdGgtdG9vbHMuCj4gQnV0IHRoaXMgcHJpb3JpdGl6
+ZXIgaXMgdmVuZG9yLXNwZWNpZmljIGFuZCBpdCBvbmx5IHdvcmtzIGZvciBIdWF3ZWkgc3RvcmFn
+ZSBzeXN0ZW0uIFdpbGwgdGhlIGNvbW11bml0eQo+IGFjY2VwdCBzdWNoIG5ldyB2ZW5kb3Igc3Bl
+Y2lmaWMgcGF0aCBncm91cCBwcmlvcml0aXplciBpbiBsaWJtdWx0aXBhdGgvcHJpb3JpdGl6ZXJz
+Pwo+IAo+IEkga25vdyB0aGF0IHRoZSBtdWx0aXBhdGgtdG9vbHMgYWNjZXB0ZWQgc29tZSB2ZW5k
+b3Igc3BlY2lmaWMgcHJpb3JpdGl6ZXIgc3VjaCBhcyBlbWMuYyAsIGhwX3N3LmMsIG9udGFwLmMg
+YW5kCj4gc28gb24gaW4gdGhlIGxpYm11bHRpcGF0aC9wcmlvcml0aXplciBpbiAyMDA4fjIwMTAg
+YW5kIHRoZXJlIHdlcmUgbm8gbmV3ZXIgdmVuZG9yIHNwZWNpZmljIHByaW9yaXRpemVyLgo+IEJl
+Zm9yZSBJIGdldCBkb3duIHRvIHdyaXRpbmcgYSBuZXcgSHVhd2VpIHByaW9yaXRpemVyLCBJIHdh
+bnQgdG8gaGVhciB5b3VyIHRob3VnaHRzLgo+IAo+IElmIGl0IGlzIGNvbnZlbmllbnQgZm9yIHNv
+bWUgb2YgeW91ICwgcGxlYXNlIGxldCBtZSBrbm93IHlvdXIgaWRlYXMuIFRoYW5rcy4KPiAKVGhl
+IG92ZXJhbGwgaWRlYSBiYWNrIHRoZW4gd2FzIHRoYXQgZXZlcnkgbmV3IGFycmF5IHdvdWxkIGJl
+IHVzaW5nIEFMVUEKdG8gbWFuYWdpbmcgcHJpb3JpdGllcywgYW5kIHRoYXQgbm8gbmV3IHZlbmRv
+ci1zcGVjaWZpYyBwcmlvcml0aXplcgp3b3VsZCBiZSBuZWVkZWQuCgpXZSBrbm93IHdlIGhhdmUg
+YSBkZWZpY2llbmN5IGlmIGFuIGFycmF5IGlzIGNvbm5lY3RlZCB2aWEgdHdvIGRpc3RpbmN0CnRy
+YW5zcG9ydHMgKGllIG9uIHBhdGggb24gRkMgYW5kIG9uIHBhdGggb24gaVNDU0kpLCBhcyB0aGlz
+IHNob3VsZAphZmZlY3QgcHJpb3JpdGllcy4gQnV0IHRoYXQgc2hvdWxkIHJhdGhlciBiZSBoYW5k
+bGVkIGluIGEgZ2VuZXJpYyBsZXZlbAphbmQgbm90IGluIGEgdmVuZG9yLXNwZWNpZmljIG1hbm5l
+ci4KClNvIHdoeSBkbyB5b3UgdGhpbmsgYSB2ZW5kb3Itc3BlY2lmaWMgcHJpb3JpdGl6ZXIgaXMg
+cmVxdWlyZWQ/CkRvZXMgdGhlIEh1YXdlaSBhcnJheSBub3Qgc3VwcG9ydCBBTFVBPwoKQ2hlZXJz
+LAoKSGFubmVzCi0tIApEci4gSGFubmVzIFJlaW5lY2tlCQkgICBUZWFtbGVhZCBTdG9yYWdlICYg
+TmV0d29ya2luZwpoYXJlQHN1c2UuZGUJCQkgICAgICAgICAgICAgICArNDkgOTExIDc0MDUzIDY4
+OApTVVNFIExJTlVYIEdtYkgsIE1heGZlbGRzdHIuIDUsIDkwNDA5IE7DvHJuYmVyZwpHRjogRi4g
+SW1lbmTDtnJmZmVyLCBKLiBTbWl0aGFyZCwgSi4gR3VpbGQsIEQuIFVwbWFueXUsIEcuIE5vcnRv
+bgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1k
+ZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9k
+bS1kZXZlbA==
