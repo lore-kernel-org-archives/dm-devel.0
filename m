@@ -1,46 +1,38 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH] dm: fix uninitialized variable reference
-Date: Mon, 11 Dec 2017 12:33:45 +0100
-Message-ID: <20171211113358.3599287-1-arnd@arndb.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
-Cc: Arnd Bergmann <arnd@arndb.de>, Jens Axboe <axboe@kernel.dk>, Hannes Reinecke <hare@suse.com>, Bart Van Assche <bart.vanassche@wdc.com>, NeilBrown <neilb@suse.com>, Mikulas Patocka <mpatocka@redhat.com>, Dan Williams <dan.j.williams@intel.com>, Damien Le Moal <damien.lemoal@wdc.com>, linux-kernel@vger.kernel.org
+From: Guan Junxiong <guanjunxiong@huawei.com>
+Subject: [Consult] multipath-tools: will the community accept a
+ new vendor specific path group prioritizer in libmultipath/prioritizers
+Date: Mon, 11 Dec 2017 20:50:57 +0800
+Message-ID: <059786fc-8f63-766f-bab7-ed1c064565e9@huawei.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@suse.de>, Martin Wilck <mwilck@suse.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, Benjamin Marzinski <bmarzins@redhat.com>
+Cc: guanjunxiong@huawei.com, "dm-devel@redhat.com" <dm-devel@redhat.com>, niuhaoxin <niuhaoxin@huawei.com>, "Shenhong (C)" <shenhong09@huawei.com>
 List-Id: dm-devel.ids
 
-The last bugfix apparently introduced another problem, as shown
-by this gcc warning:
+Hi Christophe, Hannes, Martin, Xose and Benjamin,
 
-drivers/md/dm.c: In function '__send_changing_extent_only':
-drivers/md/dm.c:1365:28: error: 'ti' is used uninitialized in this function [-Werror=uninitialized]
+It is beneficial for our customers if we integrate a new path group prioritizer into the multipath-tools.
+But this prioritizer is vendor-specific and it only works for Huawei storage system. Will the community
+accept such new vendor specific path group prioritizer in libmultipath/prioritizers?
 
-This restores the intialization of the 'ti' variable.
+I know that the multipath-tools accepted some vendor specific prioritizer such as emc.c , hp_sw.c, ontap.c and
+so on in the libmultipath/prioritizer in 2008~2010 and there were no newer vendor specific prioritizer.
+Before I get down to writing a new Huawei prioritizer, I want to hear your thoughts.
 
-Fixes: aecefd4919de ("dm: fix __send_changing_extent_only() to send first bio and chain remainder")
-Signed-off-by: Arnd Bergmann <arnd@arndb.de>
----
-I did not test this or give the patch much thought, this just seemed
-to be the most likely fix I could come up with in a short time, so
-please review carefully, and ignore if the solution is something
-else.
----
- drivers/md/dm.c | 4 ++++
- 1 file changed, 4 insertions(+)
+If it is convenient for some of you , please let me know your ideas. Thanks.
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 05aa9c094352..f19e9787076e 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1356,6 +1356,10 @@ static int __send_changing_extent_only(struct clone_info *ci,
- 	unsigned len;
- 	unsigned num_bios;
- 
-+	ti = dm_table_find_target(ci->map, ci->sector);
-+	if (!dm_target_is_valid(ti))
-+		return -EIO;
-+
- 	/*
- 	 * Even though the device advertised support for this type of
- 	 * request, that does not mean every target supports it, and
--- 
-2.9.0
+Best wishes.
+
+Guan Junxiong
