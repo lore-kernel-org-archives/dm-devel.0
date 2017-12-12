@@ -1,27 +1,61 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH v2 2/2] dm unstripe: Add documentation for unstripe
-        target
-Date: Tue, 12 Dec 2017 14:56:05 +0000
-Message-ID: <20171212145605.GA18169@agk-dp.fab.redhat.com>
-References: <20171211160019.20518-1-scott.bauer@intel.com> <20171211160019.20518-3-scott.bauer@intel.com> <00fdc58c-d8e9-6b42-727d-ab70d5ce1b0a@gmail.com> <20171212144556.GF11218@localhost.localdomain>
+From: Bart Van Assche <Bart.VanAssche@wdc.com>
+Subject: Re: [PATCH] multipath-tools: Makefile: Respect standard
+ toolchain related envvars
+Date: Tue, 12 Dec 2017 15:28:14 +0000
+Message-ID: <1513092491.3704.2.camel@wdc.com>
+References: <20171129232311.95483-1-whissi@gentoo.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20171212144556.GF11218@localhost.localdomain>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Keith Busch <keith.busch@intel.com>, Nikolay Borisov <n.borisov.lkml@gmail.com>, Scott Bauer <scott.bauer@intel.com>, dm-devel@redhat.com, snitzer@redhat.com, agk@redhat.com, linux-kernel@vger.kernel.org, jonathan.derrick@intel.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20171129232311.95483-1-whissi@gentoo.org>
+Content-Language: en-US
+Content-ID: <7EFFD70DEC61EA4C9FB85FAB9A14C2D8@namprd04.prod.outlook.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>, "whissi@gentoo.org" <whissi@gentoo.org>
 List-Id: dm-devel.ids
 
-On Tue, Dec 12, 2017 at 07:45:56AM -0700, Keith Busch wrote:
-> Ah, this device's makers call the "stripe" size what should be called
-> "chunk".
+On Thu, 2017-11-30 at 00:23 +0100, Thomas Deutschmann wrote:
+> The Makefile overrides standard envvars that control the toolchain flags.
+> This patch should set things right without reducing default behavior.
+> 
+> Signed-off-by: Thomas Deutschmann <whissi@gentoo.org>
+> ---
+>  Makefile.inc | 5 +++--
+>  1 file changed, 3 insertions(+), 2 deletions(-)
+> 
+> diff --git a/Makefile.inc b/Makefile.inc
+> index 29c290a2..951d58fc 100644
+> --- a/Makefile.inc
+> +++ b/Makefile.inc
+> @@ -90,11 +90,12 @@ OPTFLAGS	= -O2 -g -pipe -Wall -Wextra -Wformat=2 -Werror=implicit-int \
+>  		  -Wp,-D_FORTIFY_SOURCE=2 $(STACKPROT) \
+>  		  --param=ssp-buffer-size=4
+>  
+> -CFLAGS		= $(OPTFLAGS) -DLIB_STRING=\"${LIB}\" -DRUN_DIR=\"${RUN}\"
+> +CFLAGS		?= $(OPTFLAGS)
+> +CFLAGS		+= -DLIB_STRING=\"${LIB}\" -DRUN_DIR=\"${RUN}\"
+>  BIN_CFLAGS	= -fPIE -DPIE
+>  LIB_CFLAGS	= -fPIC
+>  SHARED_FLAGS	= -shared
+> -LDFLAGS		= -Wl,-z,relro -Wl,-z,now
+> +LDFLAGS		+= -Wl,-z,relro -Wl,-z,now
+>  BIN_LDFLAGS	= -pie
+>  
+>  # Check whether a function with name $1 has been declared in header file $2.
 
-If this target is to go anywhere, let's try to define it as 'undoing'
-the existing dm-stripe target using primary terminology, field names
-etc. as close as possible to our existing target.  We can still mention
-any alternative terminology encountered in the documentation.  The
-first (simplest) documented example could be a dm-stripe target being
-'unstriped'.
+Hello Thomas,
 
-Alasdair
+I agree that we need a way to specify additional compilation flags. However, is
+OPTFLAGS really a standard? Aren't most developers used to set CFLAGS to specify
+additional compilation flags?
+
+Bart.
