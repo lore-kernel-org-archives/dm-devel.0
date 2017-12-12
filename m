@@ -1,7 +1,8 @@
 From: Bart Van Assche <bart.vanassche@wdc.com>
-Subject: [PATCH 3/3] multipathd/cli.h: Add a header file guard
-Date: Mon, 11 Dec 2017 16:45:03 -0800
-Message-ID: <20171212004503.12823-4-bart.vanassche@wdc.com>
+Subject: [PATCH 1/3] Makefile.inc: Allow additional CFLAGS to be
+	specified on the command line
+Date: Mon, 11 Dec 2017 16:45:01 -0800
+Message-ID: <20171212004503.12823-2-bart.vanassche@wdc.com>
 References: <20171212004503.12823-1-bart.vanassche@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,30 +22,28 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: Bart Van Assche <bart.vanassche@wdc.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This patch avoids that compilation breaks if the multipathd/cli.h
-header file is included multiple times from the same compilation unit.
+Compiling the multipath-tools source code with e.g. sparse requires
+to specify additional compiler flags on the command line. Modify the
+Makefile such that this becomes possible.
 
 Signed-off-by: Bart Van Assche <bart.vanassche@wdc.com>
 ---
- multipathd/cli.h | 5 +++++
- 1 file changed, 5 insertions(+)
+ Makefile.inc | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/multipathd/cli.h b/multipathd/cli.h
-index d289167e20ff..021f25b7085a 100644
---- a/multipathd/cli.h
-+++ b/multipathd/cli.h
-@@ -1,3 +1,6 @@
-+#ifndef _CLI_H_
-+#define _CLI_H_
-+
- #include <stdint.h>
+diff --git a/Makefile.inc b/Makefile.inc
+index 29c290a22e8f..d953f5ef34e6 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -90,7 +90,8 @@ OPTFLAGS	= -O2 -g -pipe -Wall -Wextra -Wformat=2 -Werror=implicit-int \
+ 		  -Wp,-D_FORTIFY_SOURCE=2 $(STACKPROT) \
+ 		  --param=ssp-buffer-size=4
  
- enum {
-@@ -126,3 +129,5 @@ void free_handlers (void);
- int cli_init (void);
- void cli_exit(void);
- char * key_generator (const char * str, int state);
-+
-+#endif /* _CLI_H_ */
+-CFLAGS		= $(OPTFLAGS) -DLIB_STRING=\"${LIB}\" -DRUN_DIR=\"${RUN}\"
++CFLAGS		:= $(OPTFLAGS) -DLIB_STRING=\"${LIB}\" -DRUN_DIR=\"${RUN}\" \
++		   $(CFLAGS)
+ BIN_CFLAGS	= -fPIE -DPIE
+ LIB_CFLAGS	= -fPIC
+ SHARED_FLAGS	= -shared
 -- 
 2.15.1
