@@ -1,18 +1,11 @@
-From: Bart Van Assche <Bart.VanAssche@wdc.com>
-Subject: Re: [PATCH] multipath-tools: Makefile: Respect standard
- toolchain related envvars
-Date: Tue, 12 Dec 2017 16:30:00 +0000
-Message-ID: <1513096198.2999.4.camel@wdc.com>
-References: <20171129232311.95483-1-whissi@gentoo.org>
-	<1513092491.3704.2.camel@wdc.com>
-	<b6780fff-ecc4-2b7a-bfcb-51bbf6b654a1@gentoo.org>
+From: James Bottomley <James.Bottomley@hansenpartnership.com>
+Subject: Patch added to scsi:  scsi: dh: add new rdac devices
+Date: Tue, 12 Dec 2017 08:22:39 -0800 (PST)
+Message-ID: <20171212162239.1DB568EE3F7@bedivere.hansenpartnership.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <b6780fff-ecc4-2b7a-bfcb-51bbf6b654a1@gentoo.org>
-Content-Language: en-US
-Content-ID: <E1A475EF09BCEE47944A3E0FBEB98F72@namprd04.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,44 +15,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>, "whissi@gentoo.org" <whissi@gentoo.org>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, SCSI ML <linux-scsi@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, "James E.J. Bottomley" <jejb@linux.vnet.ibm.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>martin.petersen@oracle.com, Hannes Reinecke <hare@suse.de>, James.Bottomley@hansenpartnership.com
 List-Id: dm-devel.ids
 
-On Tue, 2017-12-12 at 17:09 +0100, Thomas Deutschmann wrote:
-> On 2017-12-12 16:28, Bart Van Assche wrote:
-> > I agree that we need a way to specify additional compilation flags. However, is
-> > OPTFLAGS really a standard? Aren't most developers used to set CFLAGS to specify
-> > additional compilation flags?
-> 
-> When I created the patch I searched in the source code of other projects
-> after "OPTFLAGS" usage and came to the conclusion that this isn't a
-> standard.
-> 
-> However, my patch shouldn't break any existing use cases.
-> 
-> So my understanding was that "OPTFLAGS" is used like the default set of
-> flags in case the user hasn't set any flags on its own. However, the
-> project may still need to add a special flag which should be set everywhere.
-> 
-> That's why I created the patch the way I did:
-> 
-> 1) User can provide own CFLAGS in which case the default set of flags
-> (OPTFLAGS) aren't used.
-> 
-> 2) We now extend set CFLAGS by adding our additional flags (-DRUN_DIR..)
-> we want to be set everywhere.
-> 
-> Your patch will do the same but require downstream to unset/negate
-> default flags. I don't really care if we pick your patch or my patch.
+Your commit:
 
-Hello Thomas,
+    scsi: dh: add new rdac devices
+    
+    Add IBM 3542 and 3552, arrays: FAStT200 and FAStT500.
+    
+    Add full STK OPENstorage family, arrays: 9176, D173, D178, D210, D220,
+    D240 and D280.
+    
+    Add STK BladeCtlr family, arrays: B210, B220, B240 and B280.
+    
+    These changes were done in multipath-tools time ago.
+    
+    Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>
+    Cc: Hannes Reinecke <hare@suse.de>
+    Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+    Cc: Martin K. Petersen <martin.petersen@oracle.com>
+    Cc: James E.J. Bottomley <jejb@linux.vnet.ibm.com>
+    Cc: SCSI ML <linux-scsi@vger.kernel.org>
+    Cc: device-mapper development <dm-devel@redhat.com>
+    Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+    Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
 
-I'm fine with dropping my patch and proceeding with your patch. However, I think
-that any CFLAGS specified on the make command line or in the environment should
-be appended at the end of the CFLAGS/OPTFLAGS specified by the Makefile. Otherwise
-it's not possible to override e.g. the -W... flags specified in the Makefile from
-the command line.
+has been added to the upstream scsi tree
+On branch "misc"
+You can find it here:
 
-Thanks,
+http://git.kernel.org/?p=linux/kernel/git/jejb/scsi.git;a=commit;h=4b3aec2bbbce1c35f50e7475a9fd78d24b9ea4ea
 
-Bart.
+This patch is scheduled to be pushed when the merge window opens for 4.16
+
+James Bottomley
+
+P.S. If you find this email unwanted, set up a procmail rule junking on
+the header:
+
+X-Git-Tree: SCSI
