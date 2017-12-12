@@ -1,8 +1,7 @@
 From: Bart Van Assche <bart.vanassche@wdc.com>
-Subject: [PATCH 2/3] Allow the compiler to verify the consistency
-	of the uxsock_timeout definition and declaration
-Date: Mon, 11 Dec 2017 16:45:02 -0800
-Message-ID: <20171212004503.12823-3-bart.vanassche@wdc.com>
+Subject: [PATCH 3/3] multipathd/cli.h: Add a header file guard
+Date: Mon, 11 Dec 2017 16:45:03 -0800
+Message-ID: <20171212004503.12823-4-bart.vanassche@wdc.com>
 References: <20171212004503.12823-1-bart.vanassche@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,35 +21,30 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: Bart Van Assche <bart.vanassche@wdc.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Global variables should be defined after the header file with
-their declaration has been included. Hence move the declaration
-of usock_timeout further down.
+This patch avoids that compilation breaks if the multipathd/cli.h
+header file is included multiple times from the same compilation unit.
 
 Signed-off-by: Bart Van Assche <bart.vanassche@wdc.com>
 ---
- multipathd/main.c | 3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
+ multipathd/cli.h | 5 +++++
+ 1 file changed, 5 insertions(+)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 31ce923385a7..d611597a4ef8 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -39,8 +39,6 @@
- static int use_watchdog;
- #endif
+diff --git a/multipathd/cli.h b/multipathd/cli.h
+index d289167e20ff..021f25b7085a 100644
+--- a/multipathd/cli.h
++++ b/multipathd/cli.h
+@@ -1,3 +1,6 @@
++#ifndef _CLI_H_
++#define _CLI_H_
++
+ #include <stdint.h>
  
--int uxsock_timeout;
--
- /*
-  * libmultipath
-  */
-@@ -106,6 +104,7 @@ struct mpath_event_param
- };
- 
- int logsink;
-+int uxsock_timeout;
- int verbosity;
- int bindings_read_only;
- int ignore_new_devs;
+ enum {
+@@ -126,3 +129,5 @@ void free_handlers (void);
+ int cli_init (void);
+ void cli_exit(void);
+ char * key_generator (const char * str, int state);
++
++#endif /* _CLI_H_ */
 -- 
 2.15.1
