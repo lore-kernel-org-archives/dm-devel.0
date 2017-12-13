@@ -1,50 +1,58 @@
-From: Scott Bauer <scott.bauer@intel.com>
-Subject: Re: [PATCH v2 2/2] dm unstripe: Add documentation for unstripe target
-Date: Tue, 12 Dec 2017 12:02:51 -0700
-Message-ID: <20171212190250.y2wxdyfcb2kgr32d@sbauer-Z170X-UD5>
-References: <20171211160019.20518-1-scott.bauer@intel.com>
- <20171211160019.20518-3-scott.bauer@intel.com>
- <20171212181012.GA31127@redhat.com>
+From: Heinz Mauelshagen <heinzm@redhat.com>
+Subject: [PATCH 0/5] dm raid: fix redundancy check and avoid
+	frozen raid recovery
+Date: Wed, 13 Dec 2017 03:02:33 +0100
+Message-ID: <cover.1513125666.git.heinzm@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20171212181012.GA31127@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, agk@redhat.com, linux-kernel@vger.kernel.org, keith.busch@intel.com, jonathan.derrick@intel.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: heinzm@redhat.com, dm-devel@redhat.com
+Cc: snitzer@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Dec 12, 2017 at 01:10:13PM -0500, Mike Snitzer wrote:
-> On Mon, Dec 11 2017 at 11:00am -0500,
-> Scott Bauer <scott.bauer@intel.com> wrote:
-> 
-> OK, but I'm left wondering: why doesn't the user avoid striping across
-> the cores?
-> 
-> Do the Intel NVMe drives not provide the ability to present 1 device per
-> NVMe core?
-> 
-> This DM target seems like a pretty nasty workaround for what should be
-> fixed in the NVMe drive's firmware.
-> 
-> Mainly because there is no opportunity to use both striped and unstriped
-> access to the same NVMe drive.  So why impose striped on the user in the
-> first place?
-> 
-> Mike
 
-Unfortunately, the NVMe drives do not currently support exposing each core
-as seperate drives or namespaces. While it would be preferable if the
-controllers did expose such features, firmware development informed us there
-are sufficient reasons why it isn't possible for the existing generation of
-drives.
+Patch 1 fixes validate_raid_redundancy() to check the
+current raid set level as stored in the superblock rather than
+the constructor requested one. In case of a raid0 to raid10
+conversion, the related flaw caused a raid10 check on the
+given raid0 raid set leading to a divide error.
 
-The NVMe working group just finalized a standard that presents isolated storage
-sets for users who wish to use them. As the standard was just recently finalized
-the use case was created well after the targeted drives were created. The Intel
-drives just so happen to have independent back-ends that align with the isolated
-storage sets use case. We would like to provide a way to exploit the independent
-back-ends to expose isolated storage in a way that is generic across all the Intel
-NVMe drive familes. The implementation is generic enough that it can be applied
-to  any storage that has physical seperation at known block boundaries.
+Patch 2 hardens raid resync/recover/reshape by
+retrieving any current related offsets from the active,
+uspended mapping thus avoiding frozen raid recovery
+across reloads altogether.
+
+Patch 3 ensures 'a' chars during reshaping.
+
+Patch 4 + 5 add simplification and cleanup without functional change.
+
+This series presumes
+https://www.redhat.com/archives/dm-devel/2017-December/msg00012.html
+or
+linux-dm.git, revision-range fbc7c07ec23c..b84cf26924cf
+respectively.
+
+
+Heinz Mauelshagen (5):
+  dm raid: validate current raid sets redundancy
+  dm raid: avoid keeping raid set frozen altogether
+  dm raid: ensure 'a' chars during reshape
+  dm raid: simplify rs_get_progress()
+  dm raid: use rs_is_raid*() / comment
+
+ Documentation/device-mapper/dm-raid.txt |   1 +
+ drivers/md/dm-raid.c                    | 168 ++++++++++++++++++--------------
+ 2 files changed, 98 insertions(+), 71 deletions(-)
+
+-- 
+2.13.6
