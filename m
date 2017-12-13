@@ -1,53 +1,74 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 2/2] libmultipath: don't update path queueing on
-	reload
-Date: Wed, 13 Dec 2017 12:08:07 -0600
-Message-ID: <1513188487-31852-2-git-send-email-bmarzins@redhat.com>
-References: <1513188487-31852-1-git-send-email-bmarzins@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1513188487-31852-1-git-send-email-bmarzins@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Martin Wilck <mwilck@suse.com>
+From: Bart Van Assche <bart.vanassche@wdc.com>
+Subject: [PATCH] dm: Fix a recently introduced reference counting bug
+Date: Wed, 13 Dec 2017 13:46:18 -0800
+Message-ID: <20171213214618.21767-1-bart.vanassche@wdc.com>
+Return-path: <stable-owner@vger.kernel.org>
+Sender: stable-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, Bart Van Assche <bart.vanassche@wdc.com>, Elena Reshetova <elena.reshetova@intel.com>, Kees Cook <keescook@chromium.org>, David Windsor <dwindsor@gmail.com>, Hans Liljestrand <ishkamiel@gmail.com>, Hannes Reinecke <hare@suse.com>, stable@vger.kernel.org
 List-Id: dm-devel.ids
 
-With the fix to the features handling code, the multipath device should
-already be reloaded with the correct value for queue_if_no_path, so
-there's no need to go reset it immediately afterwards.
+This patch avoids that the following message occurs sporadically
+in the system log (revealing that pgpath->path.dev->name became
+a dangling pointer):
 
-Cc: Martin Wilck <mwilck@suse.com>
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+device-mapper: table: 254:2: device kkkkkkkkkkkkkkkkkkk?????????x0?a?????E??????????????E??????F?????2?????pF??????PF?????9[F??????]F???????#???????#??????'f????? not in table devices list
+
+This patch also fixes the following kernel crash:
+
+general protection fault: 0000 [#1] PREEMPT SMP
+RIP: 0010:multipath_busy+0x77/0xd0 [dm_multipath]
+Call Trace:
+ dm_mq_queue_rq+0x44/0x110 [dm_mod]
+ blk_mq_dispatch_rq_list+0x73/0x440
+ blk_mq_do_dispatch_sched+0x60/0xe0
+ blk_mq_sched_dispatch_requests+0x11a/0x1a0
+ __blk_mq_run_hw_queue+0x11f/0x1c0
+ __blk_mq_delay_run_hw_queue+0x95/0xe0
+ blk_mq_run_hw_queue+0x25/0x80
+ blk_mq_flush_plug_list+0x197/0x420
+ blk_flush_plug_list+0xe4/0x270
+ blk_finish_plug+0x27/0x40
+ __do_page_cache_readahead+0x2b4/0x370
+ force_page_cache_readahead+0xb4/0x110
+ generic_file_read_iter+0x755/0x970
+ __vfs_read+0xd2/0x140
+ vfs_read+0x9b/0x140
+ SyS_read+0x45/0xa0
+ do_syscall_64+0x56/0x1a0
+ entry_SYSCALL64_slow_path+0x25/0x25
+
+From the disassembly of multipath_busy (0x77 = 119):
+
+./include/linux/blkdev.h:
+992             return bdev->bd_disk->queue;    /* this is never NULL */
+   0x00000000000006b4 <+116>:   mov    (%rax),%rax
+   0x00000000000006b7 <+119>:   mov    0xe0(%rax),%rax
+
+Fixes: commit 2a0b4682e09d ("dm: convert dm_dev_internal.count from atomic_t to refcount_t")
+Signed-off-by: Bart Van Assche <bart.vanassche@wdc.com>
+Cc: Elena Reshetova <elena.reshetova@intel.com>
+Cc: Kees Cook <keescook@chromium.org>
+Cc: David Windsor <dwindsor@gmail.com>
+Cc: Hans Liljestrand <ishkamiel@gmail.com>
+Cc: Hannes Reinecke <hare@suse.com>
+Cc: stable@vger.kernel.org # v4.15
 ---
- libmultipath/configure.c | 6 ------
- 1 file changed, 6 deletions(-)
+ drivers/md/dm-table.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index bfa5048..6f28f45 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -1351,12 +1351,6 @@ int reload_map(struct vectors *vecs, struct multipath *mpp, int refresh,
- 			"for reload map", mpp->alias, r);
- 		return 1;
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 88130b5d95f9..ee5c389e7256 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -459,6 +459,8 @@ int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
+ 		if (r)
+ 			return r;
+ 		refcount_inc(&dd->count);
++	} else {
++		refcount_inc(&dd->count);
  	}
--	if (mpp->no_path_retry != NO_PATH_RETRY_UNDEF) {
--		if (mpp->no_path_retry == NO_PATH_RETRY_FAIL)
--			dm_queue_if_no_path(mpp->alias, 0);
--		else
--			dm_queue_if_no_path(mpp->alias, 1);
--	}
  
- 	return 0;
- }
+ 	*result = dd->dm_dev;
 -- 
-2.7.4
+2.15.1
