@@ -1,12 +1,16 @@
 From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: [PATCH 0/5] dm raid: fix redundancy check and avoid
-	frozen raid recovery
-Date: Wed, 13 Dec 2017 03:02:33 +0100
-Message-ID: <cover.1513125666.git.heinzm@redhat.com>
+Subject: [PATCH 1/5] dm raid: validate current raid sets
+	redundancy
+Date: Wed, 13 Dec 2017 03:02:34 +0100
+Message-ID: <23b69f60931a9dae4bb97661e96ce6ccb648733f.1513125666.git.heinzm@redhat.com>
+References: <cover.1513125666.git.heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <cover.1513125666.git.heinzm@redhat.com>
+In-Reply-To: <cover.1513125666.git.heinzm@redhat.com>
+References: <cover.1513125666.git.heinzm@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,39 +24,44 @@ To: heinzm@redhat.com, dm-devel@redhat.com
 Cc: snitzer@redhat.com
 List-Id: dm-devel.ids
 
+Verifying the current raid sets redundancy based on retrieved
+superblock content has to use the raid level as of superblock
+content (e.g. raid0), not the constructor requested one (e.g. raid10).
 
-Patch 1 fixes validate_raid_redundancy() to check the
-current raid set level as stored in the superblock rather than
-the constructor requested one. In case of a raid0 to raid10
-conversion, the related flaw caused a raid10 check on the
-given raid0 raid set leading to a divide error.
+Using the requested raid level of raid10 lead to a "divide error"
+on raid0 which defines data copies divided by to be zero.
 
-Patch 2 hardens raid resync/recover/reshape by
-retrieving any current related offsets from the active,
-uspended mapping thus avoiding frozen raid recovery
-across reloads altogether.
+Also check for bogus data copies.
 
-Patch 3 ensures 'a' chars during reshaping.
+Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
+---
+ drivers/md/dm-raid.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
 
-Patch 4 + 5 add simplification and cleanup without functional change.
-
-This series presumes
-https://www.redhat.com/archives/dm-devel/2017-December/msg00012.html
-or
-linux-dm.git, revision-range fbc7c07ec23c..b84cf26924cf
-respectively.
-
-
-Heinz Mauelshagen (5):
-  dm raid: validate current raid sets redundancy
-  dm raid: avoid keeping raid set frozen altogether
-  dm raid: ensure 'a' chars during reshape
-  dm raid: simplify rs_get_progress()
-  dm raid: use rs_is_raid*() / comment
-
- Documentation/device-mapper/dm-raid.txt |   1 +
- drivers/md/dm-raid.c                    | 168 ++++++++++++++++++--------------
- 2 files changed, 98 insertions(+), 71 deletions(-)
-
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index dfbc2bd787c1..c9287666ee5a 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -1007,7 +1007,7 @@ static int validate_raid_redundancy(struct raid_set *rs)
+ 		    !rs->dev[i].rdev.sb_page)
+ 			rebuild_cnt++;
+ 
+-	switch (rs->raid_type->level) {
++	switch (rs->md.level) {
+ 	case 0:
+ 		break;
+ 	case 1:
+@@ -1022,6 +1022,11 @@ static int validate_raid_redundancy(struct raid_set *rs)
+ 		break;
+ 	case 10:
+ 		copies = raid10_md_layout_to_copies(rs->md.new_layout);
++		if (copies < 2) {
++			DMERR("Bogus raid10 data copies < 2!");
++			return -EINVAL;
++		}
++
+ 		if (rebuild_cnt < copies)
+ 			break;
+ 
 -- 
 2.13.6
