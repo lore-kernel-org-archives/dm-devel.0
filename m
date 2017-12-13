@@ -1,74 +1,159 @@
-From: Bart Van Assche <bart.vanassche@wdc.com>
-Subject: [PATCH] dm: Fix a recently introduced reference counting bug
-Date: Wed, 13 Dec 2017 13:46:18 -0800
-Message-ID: <20171213214618.21767-1-bart.vanassche@wdc.com>
-Return-path: <stable-owner@vger.kernel.org>
-Sender: stable-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, Bart Van Assche <bart.vanassche@wdc.com>, Elena Reshetova <elena.reshetova@intel.com>, Kees Cook <keescook@chromium.org>, David Windsor <dwindsor@gmail.com>, Hans Liljestrand <ishkamiel@gmail.com>, Hannes Reinecke <hare@suse.com>, stable@vger.kernel.org
+From: Scott Bauer <scott.bauer@intel.com>
+Subject: [PATCH v3 2/2] dm unstripe: Add documentation for unstripe target
+Date: Wed, 13 Dec 2017 14:33:32 -0700
+Message-ID: <20171213213332.2914-3-scott.bauer@intel.com>
+References: <20171213213332.2914-1-scott.bauer@intel.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20171213213332.2914-1-scott.bauer@intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: dm-devel@redhat.com
+Cc: snitzer@redhat.com, agk@redhat.com, linux-kernel@vger.kernel.org, keith.busch@intel.com, jonathan.derrick@intel.com, Scott Bauer <scott.bauer@intel.com>
 List-Id: dm-devel.ids
 
-This patch avoids that the following message occurs sporadically
-in the system log (revealing that pgpath->path.dev->name became
-a dangling pointer):
-
-device-mapper: table: 254:2: device kkkkkkkkkkkkkkkkkkk?????????x0?a?????E??????????????E??????F?????2?????pF??????PF?????9[F??????]F???????#???????#??????'f????? not in table devices list
-
-This patch also fixes the following kernel crash:
-
-general protection fault: 0000 [#1] PREEMPT SMP
-RIP: 0010:multipath_busy+0x77/0xd0 [dm_multipath]
-Call Trace:
- dm_mq_queue_rq+0x44/0x110 [dm_mod]
- blk_mq_dispatch_rq_list+0x73/0x440
- blk_mq_do_dispatch_sched+0x60/0xe0
- blk_mq_sched_dispatch_requests+0x11a/0x1a0
- __blk_mq_run_hw_queue+0x11f/0x1c0
- __blk_mq_delay_run_hw_queue+0x95/0xe0
- blk_mq_run_hw_queue+0x25/0x80
- blk_mq_flush_plug_list+0x197/0x420
- blk_flush_plug_list+0xe4/0x270
- blk_finish_plug+0x27/0x40
- __do_page_cache_readahead+0x2b4/0x370
- force_page_cache_readahead+0xb4/0x110
- generic_file_read_iter+0x755/0x970
- __vfs_read+0xd2/0x140
- vfs_read+0x9b/0x140
- SyS_read+0x45/0xa0
- do_syscall_64+0x56/0x1a0
- entry_SYSCALL64_slow_path+0x25/0x25
-
-From the disassembly of multipath_busy (0x77 = 119):
-
-./include/linux/blkdev.h:
-992             return bdev->bd_disk->queue;    /* this is never NULL */
-   0x00000000000006b4 <+116>:   mov    (%rax),%rax
-   0x00000000000006b7 <+119>:   mov    0xe0(%rax),%rax
-
-Fixes: commit 2a0b4682e09d ("dm: convert dm_dev_internal.count from atomic_t to refcount_t")
-Signed-off-by: Bart Van Assche <bart.vanassche@wdc.com>
-Cc: Elena Reshetova <elena.reshetova@intel.com>
-Cc: Kees Cook <keescook@chromium.org>
-Cc: David Windsor <dwindsor@gmail.com>
-Cc: Hans Liljestrand <ishkamiel@gmail.com>
-Cc: Hannes Reinecke <hare@suse.com>
-Cc: stable@vger.kernel.org # v4.15
+Signed-off-by: Scott Bauer <scott.bauer@intel.com>
 ---
- drivers/md/dm-table.c | 2 ++
- 1 file changed, 2 insertions(+)
+ Documentation/device-mapper/dm-unstripe.txt | 130 ++++++++++++++++++++++++++++
+ 1 file changed, 130 insertions(+)
+ create mode 100644 Documentation/device-mapper/dm-unstripe.txt
 
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 88130b5d95f9..ee5c389e7256 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -459,6 +459,8 @@ int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
- 		if (r)
- 			return r;
- 		refcount_inc(&dd->count);
-+	} else {
-+		refcount_inc(&dd->count);
- 	}
- 
- 	*result = dd->dm_dev;
+diff --git a/Documentation/device-mapper/dm-unstripe.txt b/Documentation/device-mapper/dm-unstripe.txt
+new file mode 100644
+index 000000000000..01d7194b9075
+--- /dev/null
++++ b/Documentation/device-mapper/dm-unstripe.txt
+@@ -0,0 +1,130 @@
++Device-Mapper Unstripe
++=====================
++
++The device-mapper unstripe (dm-unstripe) target provides a transparent
++mechanism to unstripe a device-mapper "striped" target to access the
++underlying disks without having to touch the true backing block-device.
++It can also be used to unstripe a hardware RAID-0 to access backing disks
++as well.
++
++
++Parameters:
++<drive (ex: /dev/nvme0n1)> <drive #> <# of drives> <chunk sectors>
++
++
++<drive>
++	The block device you wish to unstripe.
++
++<drive #>
++        The physical drive you wish to expose via this "virtual" device
++	mapper target. This must be 0 indexed.
++
++<# of drives>
++        The number of drives in the RAID 0.
++
++<chunk sectors>
++	The amount of 512B sectors in the chunk striping, or zero, if you
++	wish you use max_hw_sector_size.
++
++
++Why use this module?
++=====================
++
++    An example of undoing an existing dm-stripe:
++
++    This small bash script will setup 4 loop devices and use the existing
++    dm-stripe target to combine the 4 devices into one. It then will use
++    the unstripe target on the new combined stripe device to access the
++    individual backing loop devices. We write data to the newly exposed
++    unstriped devices and verify the data written matches the correct
++    underlying device on the striped array.
++
++    #!/bin/bash
++
++    MEMBER_SIZE=$((128 * 1024 * 1024))
++    NUM=4
++    SEQ_END=$((${NUM}-1))
++    CHUNK=256
++    BS=4096
++
++    RAID_SIZE=$((${MEMBER_SIZE}*${NUM}/512))
++    DM_PARMS="0 ${RAID_SIZE} striped ${NUM} ${CHUNK}"
++    COUNT=$((${MEMBER_SIZE} / ${BS}))
++
++    for i in $(seq 0 ${SEQ_END}); do
++      dd if=/dev/zero of=member-${i} bs=${MEMBER_SIZE} count=1 oflag=direct
++      losetup /dev/loop${i} member-${i}
++      DM_PARMS+=" /dev/loop${i} 0"
++    done
++
++    echo $DM_PARMS | dmsetup create raid0
++    for i in $(seq 0 ${SEQ_END}); do
++      echo "0 1 unstripe /dev/mapper/raid0 ${i} ${NUM} ${CHUNK}" | dmsetup create set-${i}
++    done;
++
++    for i in $(seq 0 ${SEQ_END}); do
++      dd if=/dev/urandom of=/dev/mapper/set-${i} bs=${BS} count=${COUNT} oflag=direct
++      diff /dev/mapper/set-${i} member-${i}
++    done;
++
++    for i in $(seq 0 ${SEQ_END}); do
++      dmsetup remove set-${i}
++    done
++
++    dmsetup remove raid0
++
++    for i in $(seq 0 ${SEQ_END}); do
++      losetup -d /dev/loop${i}
++      rm -f member-${i}
++    done
++
++==============
++
++
++    Another example:
++
++    Intel NVMe drives contain two cores on the physical device.
++    Each core of the drive has segregated access to its LBA range.
++    The current LBA model has a RAID 0 128k chunk on each core, resulting
++    in a 256k stripe across the two cores:
++
++       Core 0:                Core 1:
++      __________            __________
++      | LBA 512|            | LBA 768|
++      | LBA 0  |            | LBA 256|
++      ⎻⎻⎻⎻⎻⎻⎻⎻⎻⎻            ⎻⎻⎻⎻⎻⎻⎻⎻⎻⎻
++
++    The purpose of this unstriping is to provide better QoS in noisy
++    neighbor environments. When two partitions are created on the
++    aggregate drive without this unstriping, reads on one partition
++    can affect writes on another partition. This is because the partitions
++    are striped across the two cores. When we unstripe this hardware RAID 0
++    and make partitions on each new exposed device the two partitions are now
++    physically separated.
++
++    With the module we were able to segregate a fio script that has read and
++    write jobs that are independent of each other. Compared to when we run
++    the test on a combined drive with partitions, we were able to get a 92%
++    reduction in five-9ths read latency using this device mapper target.
++
++
++====================
++Example scripts:
++
++
++dmsetup create nvmset1 --table '0 1 unstripe /dev/nvme0n1 1 2 0'
++dmsetup create nvmset0 --table '0 1 unstripe /dev/nvme0n1 0 2 0'
++
++There will now be two mappers:
++/dev/mapper/nvmset1
++/dev/mapper/nvmset0
++
++that will expose core 0 and core 1.
++
++
++# In a dm-stripe with 4 drives of chunk size 128K:
++dmsetup create raid_disk0 --table '0 1 unstripe /dev/mapper/striped 0 4 256'
++dmsetup create raid_disk1 --table '0 1 unstripe /dev/mapper/striped 1 4 256'
++dmsetup create raid_disk2 --table '0 1 unstripe /dev/mapper/striped 2 4 256'
++dmsetup create raid_disk3 --table '0 1 unstripe /dev/mapper/striped 3 4 256'
++
 -- 
-2.15.1
+2.11.0
