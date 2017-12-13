@@ -1,7 +1,7 @@
 From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: [PATCH 3/5] dm raid: ensure 'a' chars during reshape
-Date: Wed, 13 Dec 2017 03:02:36 +0100
-Message-ID: <9aa9139fe73e9fe87ca452b4fb33f00093b98ef9.1513125666.git.heinzm@redhat.com>
+Subject: [PATCH 4/5] dm raid: simplify rs_get_progress()
+Date: Wed, 13 Dec 2017 03:02:37 +0100
+Message-ID: <e66e04f17e907da14f73d09c7959a27c74b44c17.1513125666.git.heinzm@redhat.com>
 References: <cover.1513125666.git.heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,32 +23,47 @@ To: heinzm@redhat.com, dm-devel@redhat.com
 Cc: snitzer@redhat.com
 List-Id: dm-devel.ids
 
-During reshape, 'A' chars were reported in status rather than 'a'.
+No need to calculate the reshaping progress because
+mddev->curr_resync_completed holds it.
 
 Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
 ---
- drivers/md/dm-raid.c | 9 +++++++++
- 1 file changed, 9 insertions(+)
+ drivers/md/dm-raid.c | 23 +++--------------------
+ 1 file changed, 3 insertions(+), 20 deletions(-)
 
 diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 0e1a296cd08d..f5db4ce69d6b 100644
+index f5db4ce69d6b..41a411526b27 100644
 --- a/drivers/md/dm-raid.c
 +++ b/drivers/md/dm-raid.c
-@@ -3451,6 +3451,15 @@ static sector_t rs_get_progress(struct raid_set *rs, unsigned long recovery,
- 			 */
- 			set_bit(RT_FLAG_RS_RESYNCING, &rs->runtime_flags);
+@@ -3399,26 +3399,9 @@ static sector_t rs_get_progress(struct raid_set *rs, unsigned long recovery,
+ 		set_bit(RT_FLAG_RS_IN_SYNC, &rs->runtime_flags);
  
-+		} else if (test_bit(MD_RECOVERY_RESHAPE, &recovery) &&
-+			   !test_bit(MD_RECOVERY_REQUESTED, &recovery)) {
-+			/*
-+			 * If "reshape" is occurring, the raid set
-+			 * is or may be out of sync hence the health
-+			 * characters shall be 'a'.
-+			 */
-+			set_bit(RT_FLAG_RS_RESYNCING, &rs->runtime_flags);
-+
- 		} else if (test_bit(MD_RECOVERY_REQUESTED, &recovery)) {
- 			/*
- 			 * If "check" or "repair" is occurring, the raid set has
+ 	} else {
+-		/* Reshape is relative to the array size */
+-		if (test_bit(MD_RECOVERY_RESHAPE, &recovery)) {
+-			r = mddev->reshape_position;
+-			if (r != MaxSector) {
+-				/* Got to reverse on backward reshape */
+-				if (mddev->reshape_backwards)
+-					r = mddev->array_sectors - r;
+-
+-				/* Divide by # of data stripes unless raid1 */
+-				if (!rs_is_raid1(rs))
+-					sector_div(r, mddev_data_stripes(rs));
+-			}
+-
+-		/*
+-		 * Sync/recover is relative to the component device size.
+-		 *
+-		 * MD_RECOVERY_NEEDED for https://bugzilla.redhat.com/show_bug.cgi?id=1508070
+-		 */
+-		} else if (test_bit(MD_RECOVERY_NEEDED, &recovery) ||
+-			   test_bit(MD_RECOVERY_RUNNING, &recovery))
++		if (test_bit(MD_RECOVERY_NEEDED, &recovery) ||
++		    test_bit(MD_RECOVERY_RESHAPE, &recovery) ||
++		    test_bit(MD_RECOVERY_RUNNING, &recovery))
+ 			r = mddev->curr_resync_completed;
+ 		else
+ 			r = mddev->recovery_cp;
 -- 
 2.13.6
