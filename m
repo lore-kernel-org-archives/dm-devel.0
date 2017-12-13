@@ -1,8 +1,7 @@
 From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: [PATCH 1/5] dm raid: validate current raid sets
-	redundancy
-Date: Wed, 13 Dec 2017 03:02:34 +0100
-Message-ID: <23b69f60931a9dae4bb97661e96ce6ccb648733f.1513125666.git.heinzm@redhat.com>
+Subject: [PATCH 3/5] dm raid: ensure 'a' chars during reshape
+Date: Wed, 13 Dec 2017 03:02:36 +0100
+Message-ID: <9aa9139fe73e9fe87ca452b4fb33f00093b98ef9.1513125666.git.heinzm@redhat.com>
 References: <cover.1513125666.git.heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,44 +23,32 @@ To: heinzm@redhat.com, dm-devel@redhat.com
 Cc: snitzer@redhat.com
 List-Id: dm-devel.ids
 
-Verifying the current raid sets redundancy based on retrieved
-superblock content has to use the raid level as of superblock
-content (e.g. raid0), not the constructor requested one (e.g. raid10).
-
-Using the requested raid level of raid10 lead to a "divide error"
-on raid0 which defines data copies divided by to be zero.
-
-Also check for bogus data copies.
+During reshape, 'A' chars were reported in status rather than 'a'.
 
 Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
 ---
- drivers/md/dm-raid.c | 7 ++++++-
- 1 file changed, 6 insertions(+), 1 deletion(-)
+ drivers/md/dm-raid.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
 
 diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index dfbc2bd787c1..c9287666ee5a 100644
+index 0e1a296cd08d..f5db4ce69d6b 100644
 --- a/drivers/md/dm-raid.c
 +++ b/drivers/md/dm-raid.c
-@@ -1007,7 +1007,7 @@ static int validate_raid_redundancy(struct raid_set *rs)
- 		    !rs->dev[i].rdev.sb_page)
- 			rebuild_cnt++;
+@@ -3451,6 +3451,15 @@ static sector_t rs_get_progress(struct raid_set *rs, unsigned long recovery,
+ 			 */
+ 			set_bit(RT_FLAG_RS_RESYNCING, &rs->runtime_flags);
  
--	switch (rs->raid_type->level) {
-+	switch (rs->md.level) {
- 	case 0:
- 		break;
- 	case 1:
-@@ -1022,6 +1022,11 @@ static int validate_raid_redundancy(struct raid_set *rs)
- 		break;
- 	case 10:
- 		copies = raid10_md_layout_to_copies(rs->md.new_layout);
-+		if (copies < 2) {
-+			DMERR("Bogus raid10 data copies < 2!");
-+			return -EINVAL;
-+		}
++		} else if (test_bit(MD_RECOVERY_RESHAPE, &recovery) &&
++			   !test_bit(MD_RECOVERY_REQUESTED, &recovery)) {
++			/*
++			 * If "reshape" is occurring, the raid set
++			 * is or may be out of sync hence the health
++			 * characters shall be 'a'.
++			 */
++			set_bit(RT_FLAG_RS_RESYNCING, &rs->runtime_flags);
 +
- 		if (rebuild_cnt < copies)
- 			break;
- 
+ 		} else if (test_bit(MD_RECOVERY_REQUESTED, &recovery)) {
+ 			/*
+ 			 * If "check" or "repair" is occurring, the raid set has
 -- 
 2.13.6
