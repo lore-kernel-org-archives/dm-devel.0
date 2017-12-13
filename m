@@ -1,275 +1,93 @@
-From: Scott Bauer <scott.bauer@intel.com>
-Subject: [PATCH v3 1/2] dm-unstripe: unstripe RAID 0/dm-striped device
-Date: Wed, 13 Dec 2017 14:33:31 -0700
-Message-ID: <20171213213332.2914-2-scott.bauer@intel.com>
-References: <20171213213332.2914-1-scott.bauer@intel.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm: Fix a recently introduced reference counting bug
+Date: Wed, 13 Dec 2017 17:57:08 -0500
+Message-ID: <20171213225708.GA6507@redhat.com>
+References: <20171213214618.21767-1-bart.vanassche@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20171213213332.2914-1-scott.bauer@intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: dm-devel@redhat.com
-Cc: snitzer@redhat.com, agk@redhat.com, linux-kernel@vger.kernel.org, keith.busch@intel.com, jonathan.derrick@intel.com, Scott Bauer <scott.bauer@intel.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <stable-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20171213214618.21767-1-bart.vanassche@wdc.com>
+Sender: stable-owner@vger.kernel.org
+To: Bart Van Assche <bart.vanassche@wdc.com>
+Cc: dm-devel@redhat.com, Elena Reshetova <elena.reshetova@intel.com>, Kees Cook <keescook@chromium.org>, David Windsor <dwindsor@gmail.com>, Hans Liljestrand <ishkamiel@gmail.com>, Hannes Reinecke <hare@suse.com>, stable@vger.kernel.org
 List-Id: dm-devel.ids
 
-This device mapper module remaps and unstripes IO so it lands
-solely on a single drive in a RAID 0/dm-stripe target.
-In a 4 drive RAID 0 the mapper exposes 1/4th of the LBA range
-as a virtual drive. Each IO to that virtual drive will land on
-only one of the 4 drives, selected by the user.
+On Wed, Dec 13 2017 at  4:46pm -0500,
+Bart Van Assche <bart.vanassche@wdc.com> wrote:
 
-Signed-off-by: Scott Bauer <scott.bauer@intel.com>
-Acked-by: Keith Busch <keith.busch@intel.com>
----
- drivers/md/Kconfig       |  10 +++
- drivers/md/Makefile      |   1 +
- drivers/md/dm-unstripe.c | 204 +++++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 215 insertions(+)
- create mode 100644 drivers/md/dm-unstripe.c
+> This patch avoids that the following message occurs sporadically
+> in the system log (revealing that pgpath->path.dev->name became
+> a dangling pointer):
+> 
+> device-mapper: table: 254:2: device kkkkkkkkkkkkkkkkkkk?????????x0?a?????E??????????????E??????F?????2?????pF??????PF?????9[F??????]F???????#???????#??????'f????? not in table devices list
+> 
+> This patch also fixes the following kernel crash:
+> 
+> general protection fault: 0000 [#1] PREEMPT SMP
+> RIP: 0010:multipath_busy+0x77/0xd0 [dm_multipath]
+> Call Trace:
+>  dm_mq_queue_rq+0x44/0x110 [dm_mod]
+>  blk_mq_dispatch_rq_list+0x73/0x440
+>  blk_mq_do_dispatch_sched+0x60/0xe0
+>  blk_mq_sched_dispatch_requests+0x11a/0x1a0
+>  __blk_mq_run_hw_queue+0x11f/0x1c0
+>  __blk_mq_delay_run_hw_queue+0x95/0xe0
+>  blk_mq_run_hw_queue+0x25/0x80
+>  blk_mq_flush_plug_list+0x197/0x420
+>  blk_flush_plug_list+0xe4/0x270
+>  blk_finish_plug+0x27/0x40
+>  __do_page_cache_readahead+0x2b4/0x370
+>  force_page_cache_readahead+0xb4/0x110
+>  generic_file_read_iter+0x755/0x970
+>  __vfs_read+0xd2/0x140
+>  vfs_read+0x9b/0x140
+>  SyS_read+0x45/0xa0
+>  do_syscall_64+0x56/0x1a0
+>  entry_SYSCALL64_slow_path+0x25/0x25
+> 
+> From the disassembly of multipath_busy (0x77 = 119):
+> 
+> ./include/linux/blkdev.h:
+> 992             return bdev->bd_disk->queue;    /* this is never NULL */
+>    0x00000000000006b4 <+116>:   mov    (%rax),%rax
+>    0x00000000000006b7 <+119>:   mov    0xe0(%rax),%rax
+> 
+> Fixes: commit 2a0b4682e09d ("dm: convert dm_dev_internal.count from atomic_t to refcount_t")
+> Signed-off-by: Bart Van Assche <bart.vanassche@wdc.com>
+> Cc: Elena Reshetova <elena.reshetova@intel.com>
+> Cc: Kees Cook <keescook@chromium.org>
+> Cc: David Windsor <dwindsor@gmail.com>
+> Cc: Hans Liljestrand <ishkamiel@gmail.com>
+> Cc: Hannes Reinecke <hare@suse.com>
+> Cc: stable@vger.kernel.org # v4.15
+> ---
+>  drivers/md/dm-table.c | 2 ++
+>  1 file changed, 2 insertions(+)
+> 
+> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+> index 88130b5d95f9..ee5c389e7256 100644
+> --- a/drivers/md/dm-table.c
+> +++ b/drivers/md/dm-table.c
+> @@ -459,6 +459,8 @@ int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
+>  		if (r)
+>  			return r;
+>  		refcount_inc(&dd->count);
+> +	} else {
+> +		refcount_inc(&dd->count);
+>  	}
+>  
+>  	*result = dd->dm_dev;
+> -- 
+> 2.15.1
+> 
 
-diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
-index 83b9362be09c..948874fcc67c 100644
---- a/drivers/md/Kconfig
-+++ b/drivers/md/Kconfig
-@@ -269,6 +269,16 @@ config DM_BIO_PRISON
- 
- source "drivers/md/persistent-data/Kconfig"
- 
-+config DM_UN_STRIPE
-+       tristate "Transpose IO to individual drives on a raid device"
-+       depends on BLK_DEV_DM
-+       ---help---
-+         Enable this feature if you with to unstripe I/O on a RAID 0
-+	 device to the respective drive. If your hardware has physical
-+	 RAID 0 this module can unstripe the I/O to respective sides.
-+
-+	 If unsure say N.
-+
- config DM_CRYPT
- 	tristate "Crypt target support"
- 	depends on BLK_DEV_DM
-diff --git a/drivers/md/Makefile b/drivers/md/Makefile
-index f701bb211783..2cc380b71319 100644
---- a/drivers/md/Makefile
-+++ b/drivers/md/Makefile
-@@ -43,6 +43,7 @@ obj-$(CONFIG_BCACHE)		+= bcache/
- obj-$(CONFIG_BLK_DEV_MD)	+= md-mod.o
- obj-$(CONFIG_BLK_DEV_DM)	+= dm-mod.o
- obj-$(CONFIG_BLK_DEV_DM_BUILTIN) += dm-builtin.o
-+obj-$(CONFIG_DM_UN_STRIPE)   += dm-unstripe.o
- obj-$(CONFIG_DM_BUFIO)		+= dm-bufio.o
- obj-$(CONFIG_DM_BIO_PRISON)	+= dm-bio-prison.o
- obj-$(CONFIG_DM_CRYPT)		+= dm-crypt.o
-diff --git a/drivers/md/dm-unstripe.c b/drivers/md/dm-unstripe.c
-new file mode 100644
-index 000000000000..d1105e92bb3f
---- /dev/null
-+++ b/drivers/md/dm-unstripe.c
-@@ -0,0 +1,204 @@
-+/*
-+ * Copyright © 2017 Intel Corporation
-+ *
-+ * Authors:
-+ *    Scott  Bauer      <scott.bauer@intel.com>
-+ *
-+ * This program is free software; you can redistribute it and/or modify it
-+ * under the terms and conditions of the GNU General Public License,
-+ * version 2, as published by the Free Software Foundation.
-+ *
-+ * This program is distributed in the hope it will be useful, but WITHOUT
-+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
-+ * more details.
-+ */
-+
-+#include "dm.h"
-+#include <linux/module.h>
-+#include <linux/init.h>
-+#include <linux/blkdev.h>
-+#include <linux/bio.h>
-+#include <linux/slab.h>
-+#include <linux/bitops.h>
-+#include <linux/device-mapper.h>
-+
-+
-+struct unstripe {
-+	struct dm_dev *ddisk;
-+	sector_t chunk_sectors;
-+	sector_t stripe_sectors;
-+	u8 chunk_shift;
-+	u8 cur_drive;
-+};
-+
-+
-+#define DM_MSG_PREFIX "dm-unstripe"
-+static const char *parse_err = "Please provide the necessary information:"
-+	"<drive> <device (0 indexed)> <total_devices>"
-+	" <chunk size in 512B sectors || 0 to use max hw sector size>";
-+
-+/*
-+ * Argument layout:
-+ * <drive> <stripe/drive to extract (0 indexed)>
-+ *         <total_devices> <chunk size in 512B sect>
-+ */
-+static int set_ctr(struct dm_target *ti, unsigned int argc, char **argv)
-+{
-+	struct block_device *bbdev;
-+	struct unstripe *target;
-+	unsigned int chunk_size;
-+	u64 tot_sec, mod;
-+	u8 cur_drive, tot_drives;
-+	char dummy;
-+	int ret;
-+
-+	if (argc != 4) {
-+		DMERR("%s", parse_err);
-+		return -EINVAL;
-+	}
-+
-+	if (sscanf(argv[1], "%hhu%c", &cur_drive, &dummy) != 1 ||
-+	    sscanf(argv[2], "%hhu%c", &tot_drives, &dummy) != 1 ||
-+	    sscanf(argv[3], "%u%c", &chunk_size, &dummy) != 1) {
-+		DMERR("%s", parse_err);
-+		return -EINVAL;
-+	}
-+
-+	if (tot_drives == 0 || (cur_drive > tot_drives && tot_drives > 1)) {
-+		DMERR("Please provide a drive between [0,%hhu)", tot_drives);
-+		return -EINVAL;
-+	}
-+
-+	target = kzalloc(sizeof(*target), GFP_KERNEL);
-+
-+	if (!target) {
-+		DMERR("Failed to allocate space for DM unstripe!");
-+		return -ENOMEM;
-+	}
-+
-+	ret = dm_get_device(ti, argv[0], dm_table_get_mode(ti->table),
-+			    &target->ddisk);
-+	if (ret) {
-+		kfree(target);
-+		DMERR("dm-unstripe dev lookup failure! for drive %s", argv[0]);
-+		return ret;
-+	}
-+
-+	bbdev = target->ddisk->bdev;
-+
-+	target->cur_drive = cur_drive;
-+	if (chunk_size)
-+		target->chunk_sectors = chunk_size;
-+	else
-+		target->chunk_sectors =
-+			queue_max_hw_sectors(bdev_get_queue(bbdev));
-+
-+	target->stripe_sectors = (tot_drives - 1) * target->chunk_sectors;
-+	target->chunk_shift = fls(target->chunk_sectors) - 1;
-+
-+	ret = dm_set_target_max_io_len(ti, target->chunk_sectors);
-+	if (ret) {
-+		dm_put_device(ti, target->ddisk);
-+		kfree(target);
-+		DMERR("Failed to set max io len!");
-+		return ret;
-+	}
-+	ti->private = target;
-+
-+	tot_sec = i_size_read(bbdev->bd_inode) >> SECTOR_SHIFT;
-+	mod = tot_sec % target->chunk_sectors;
-+
-+	if (ti->len == 1)
-+		ti->len = (tot_sec / tot_drives) - mod;
-+	ti->begin = 0;
-+	return 0;
-+}
-+
-+static void set_dtr(struct dm_target *ti)
-+{
-+	struct unstripe *target = ti->private;
-+
-+	dm_put_device(ti, target->ddisk);
-+	kfree(target);
-+}
-+
-+
-+static sector_t map_to_core(struct dm_target *ti, struct bio *bio)
-+{
-+	struct unstripe *target = ti->private;
-+	unsigned long long sec = bio->bi_iter.bi_sector;
-+	unsigned long long group;
-+
-+	group = (sec >> target->chunk_shift);
-+	/* Account for what drive we're operating on */
-+	sec += (target->cur_drive * target->chunk_sectors);
-+	/* Shift us up to the right "row" on the drive*/
-+	sec += target->stripe_sectors * group;
-+	return sec;
-+}
-+
-+static int set_map_bio(struct dm_target *ti, struct bio *bio)
-+{
-+	struct unstripe *target = ti->private;
-+
-+	if (bio_sectors(bio))
-+		bio->bi_iter.bi_sector = map_to_core(ti, bio);
-+
-+	bio_set_dev(bio, target->ddisk->bdev);
-+	submit_bio(bio);
-+	return DM_MAPIO_SUBMITTED;
-+}
-+
-+static void set_iohints(struct dm_target *ti,
-+			struct queue_limits *limits)
-+{
-+	struct unstripe *target = ti->private;
-+	struct queue_limits *lim = &bdev_get_queue(target->ddisk->bdev)->limits;
-+
-+	blk_limits_io_min(limits, lim->io_min);
-+	blk_limits_io_opt(limits, lim->io_opt);
-+	limits->chunk_sectors = target->chunk_sectors;
-+}
-+
-+static int set_iterate(struct dm_target *ti, iterate_devices_callout_fn fn,
-+		       void *data)
-+{
-+	struct unstripe *target = ti->private;
-+
-+	return fn(ti, target->ddisk, 0, ti->len, data);
-+}
-+
-+static struct target_type iset_target = {
-+	.name = "unstripe",
-+	.version = {1, 0, 0},
-+	.module = THIS_MODULE,
-+	.ctr = set_ctr,
-+	.dtr = set_dtr,
-+	.map = set_map_bio,
-+	.iterate_devices = set_iterate,
-+	.io_hints = set_iohints,
-+};
-+
-+static int __init dm_unstripe_init(void)
-+{
-+	int r = dm_register_target(&iset_target);
-+
-+	if (r < 0)
-+		DMERR("register failed %d", r);
-+
-+	return r;
-+}
-+
-+static void __exit dm_unstripe_exit(void)
-+{
-+	dm_unregister_target(&iset_target);
-+}
-+
-+module_init(dm_unstripe_init);
-+module_exit(dm_unstripe_exit);
-+
-+MODULE_DESCRIPTION(DM_NAME " DM unstripe");
-+MODULE_ALIAS("dm-unstripe");
-+MODULE_AUTHOR("Scott Bauer <scott.bauer@intel.com>");
-+MODULE_LICENSE("GPL");
--- 
-2.11.0
+I've had a fix for this staged in linux-next for a while.  Will be
+sending it to Linus tomorrow, see:
+
+https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.15&id=afc567a4977b2d798e05153dd131a3c8d4758c0c
+
+BTW, there was no need to cc: stable given that it'll get fixed in 4.15
+(issue was introduced during the 4.15 merge).
+
+Mike
