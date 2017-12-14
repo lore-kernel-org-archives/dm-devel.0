@@ -1,41 +1,58 @@
-From: Scott Bauer <scott.bauer@intel.com>
-Subject: Re: [PATCH v3 2/2] dm unstripe: Add documentation for unstripe target
-Date: Wed, 13 Dec 2017 16:58:30 -0700
-Message-ID: <20171213235829.tr62tyc3u2v77yp6@sbauer-Z170X-UD5>
-References: <20171213213332.2914-1-scott.bauer@intel.com>
- <20171213213332.2914-3-scott.bauer@intel.com>
- <808cd141-3c0a-d0ae-5b9d-efc19ab9f0fb@infradead.org>
+From: <yael.chemla@foss.arm.com>
+Subject: Re: md: dm-verity: aggregate crypto API calls
+Date: Thu, 14 Dec 2017 09:54:24 +0200
+Message-ID: <008101d374b0$c4b5ef00$4e21cd00$@foss.arm.com>
+References: <1508921899-24801-1-git-send-email-yael.chemla@foss.arm.com>
+	<20171025151916.GA28274@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <808cd141-3c0a-d0ae-5b9d-efc19ab9f0fb@infradead.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Randy Dunlap <rdunlap@infradead.org>
-Cc: dm-devel@redhat.com, snitzer@redhat.com, agk@redhat.com, linux-kernel@vger.kernel.org, keith.busch@intel.com, jonathan.derrick@intel.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20171025151916.GA28274@redhat.com>
+Content-Language: en-il
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: 'Mike Snitzer' <snitzer@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Dec 13, 2017 at 04:18:06PM -0800, Randy Dunlap wrote:
-> Use ASCII characters ___ or ---,  not whatever those bottom block characters are.
+we are trying to be able to parallalize the handling of blocks, this patch is a precursor to that effort.
+currently this patch does not change CPU utiliztion but we wanted to veritfy there is no objection to the direction first, hence sending the patch.
 
-Argh, sorry, I removed those for an internal review but forgot to remove them here.
+Thanks,
+ Yael
 
+-----Original Message-----
+From: Mike Snitzer [mailto:snitzer@redhat.com] 
+Sent: Wednesday, 25 October 2017 18:19
+To: Yael Chemla <yael.chemla@foss.arm.com>
+Cc: dm-devel@redhat.com
+Subject: Re: md: dm-verity: aggregate crypto API calls
+
+On Wed, Oct 25 2017 at  4:58am -0400,
+Yael Chemla <yael.chemla@foss.arm.com> wrote:
+
+> Current implementation makes multiple crypto API calls for a single 
+> block, forcing underlying crypto tfm implementation to "stop & go", 
+> leading to under utilization of CPU (e.g. SIMD state saves) or HW 
+> engines. To fix it unify calls to crypto init/update/final into a 
+> digest call with a single sg which contains multiple buffers.
 > 
-> > +
-> > +    The purpose of this unstriping is to provide better QoS in noisy
-> > +    neighbor environments. When two partitions are created on the
-> > +    aggregate drive without this unstriping, reads on one partition
-> > +    can affect writes on another partition. This is because the partitions
-> > +    are striped across the two cores. When we unstripe this hardware RAID 0
-> > +    and make partitions on each new exposed device the two partitions are now
-> > +    physically separated.
-> > +
-> > +    With the module we were able to segregate a fio script that has read and
-> > +    write jobs that are independent of each other. Compared to when we run
-> > +    the test on a combined drive with partitions, we were able to get a 92%
-> > +    reduction in five-9ths read latency using this device mapper target.
+> This also opens the way later on to parallelizing the work on 
+> different blocks.
 > 
-> 	            5/9ths
-> although I can't quite parse that sentence.
+> Tested on physical Arm 32 and x86_64 and virtual ARM 64.
+> 
+> Performance numbers were not changed.
 
-I'll reword it, thanks.
+OK, but what about CPU utilization?  Was it reduced?
+
+Thanks,
+Mike
