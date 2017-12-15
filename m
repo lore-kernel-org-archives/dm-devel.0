@@ -1,40 +1,38 @@
-From: Scott Bauer <scott.bauer@intel.com>
-Subject: Re: [PATCH v3 1/2] dm-unstripe: unstripe RAID 0/dm-striped device
-Date: Fri, 15 Dec 2017 08:27:11 -0700
-Message-ID: <20171215152710.djma3jau7dbdrnjr@sbauer-Z170X-UD5>
-References: <20171213213332.2914-1-scott.bauer@intel.com>
- <20171213213332.2914-2-scott.bauer@intel.com>
- <4540fbf0-81e3-57b4-91e6-e33d5b5c578b@infradead.org>
+From: Stefan Ring <stefanrin@gmail.com>
+Subject: Re: Significantly dropped dm-cache performance in 4.13
+	compared to 4.11
+Date: Fri, 15 Dec 2017 17:03:28 +0100
+Message-ID: <CAAxjCEzF_Kpiw4hPzH8OFWA5SRshrtmLUOzJ2YXo8M8FnQbfhg@mail.gmail.com>
+References: <CAAxjCExHqssZ8vuCC19_NP1io=StFAYk48nqDfudhjD-PyLZCg@mail.gmail.com>
+	<20171107144157.6yng4owvmmcm33qj@reti>
+	<CAAxjCEy5yc7G1iBznLFCwEVWgkijSUD29oZwHsD5b2+zyA94ig@mail.gmail.com>
+	<CAAxjCEwaGHCG1qEKfUJrHkhvL9HU9qs362tmy2O-ib3wSY-0bg@mail.gmail.com>
+	<20171113190111.GE32510@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <4540fbf0-81e3-57b4-91e6-e33d5b5c578b@infradead.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Randy Dunlap <rdunlap@infradead.org>
-Cc: dm-devel@redhat.com, snitzer@redhat.com, agk@redhat.com, linux-kernel@vger.kernel.org, keith.busch@intel.com, jonathan.derrick@intel.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20171113190111.GE32510@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, ejt@redhat.com
 List-Id: dm-devel.ids
 
-[snip]
-On Wed, Dec 13, 2017 at 04:11:44PM -0800, Randy Dunlap wrote:
-> 
-> 	                                  >=
+On Mon, Nov 13, 2017 at 8:01 PM, Mike Snitzer <snitzer@redhat.com> wrote:
 >
+> But feel free to remove the cache for now.  Should be as simple as:
+> lvconvert --uncache VG/CacheLV
 
-Thanks, good catch.
-
-
-> > +	tot_sec = i_size_read(bbdev->bd_inode) >> SECTOR_SHIFT;
-> > +	mod = tot_sec % target->chunk_sectors;
-> 
-> Did you build this on 32-bit also?  Is that '%' OK on 32-bit?
-
-I've looked at this a bit and still can't figure out why this
-modulo operation would operate differently on a 32 versus a 64
-bit platform? I know sector_t is config dependent but the
-sector_t should be promoted to 64 bit width during the modulo
-operation.
-
-Are you wondering whether sector_t is the right type for any of
-the math in this file? Perhaps we should be safe and only use
-u64s?
+I did a --splitcache yesterday and ran a scrub again, which completed
+in 3h. More than the ~2h of the cached version in 4.11, but
+significantly less than the ~4.5h of the 4.13 cached variant. The data
+on this volume has not changed much since last month, so the scrub
+times should be very comparable, give or take a few minutes.
