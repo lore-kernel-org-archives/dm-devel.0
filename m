@@ -1,52 +1,41 @@
-From: Randy Dunlap <rdunlap@infradead.org>
-Subject: Re: [PATCH v3 1/2] dm-unstripe: unstripe RAID 0/dm-striped device
-Date: Fri, 15 Dec 2017 11:55:26 -0800
-Message-ID: <bcb46f56-fd24-5352-8006-8e30c8e2ad72@infradead.org>
-References: <20171213213332.2914-1-scott.bauer@intel.com>
- <20171213213332.2914-2-scott.bauer@intel.com>
- <4540fbf0-81e3-57b4-91e6-e33d5b5c578b@infradead.org>
- <20171215152710.djma3jau7dbdrnjr@sbauer-Z170X-UD5>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: md: dm-verity: aggregate crypto API calls
+Date: Fri, 15 Dec 2017 20:58:21 -0500
+Message-ID: <20171216015820.GA20853@redhat.com>
+References: <1508921899-24801-1-git-send-email-yael.chemla@foss.arm.com>
+	<20171025151916.GA28274@redhat.com>
+	<008101d374b0$c4b5ef00$4e21cd00$@foss.arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20171215152710.djma3jau7dbdrnjr@sbauer-Z170X-UD5>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Scott Bauer <scott.bauer@intel.com>
-Cc: dm-devel@redhat.com, snitzer@redhat.com, agk@redhat.com, linux-kernel@vger.kernel.org, keith.busch@intel.com, jonathan.derrick@intel.com
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <008101d374b0$c4b5ef00$4e21cd00$@foss.arm.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: yael.chemla@foss.arm.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 12/15/2017 07:27 AM, Scott Bauer wrote:
-> [snip]
-> On Wed, Dec 13, 2017 at 04:11:44PM -0800, Randy Dunlap wrote:
->>
->> 	                                  >=
->>
-> 
-> Thanks, good catch.
-> 
-> 
->>> +	tot_sec = i_size_read(bbdev->bd_inode) >> SECTOR_SHIFT;
->>> +	mod = tot_sec % target->chunk_sectors;
->>
->> Did you build this on 32-bit also?  Is that '%' OK on 32-bit?
-> 
-> I've looked at this a bit and still can't figure out why this
-> modulo operation would operate differently on a 32 versus a 64
-> bit platform? I know sector_t is config dependent but the
-> sector_t should be promoted to 64 bit width during the modulo
-> operation.
-> 
-> Are you wondering whether sector_t is the right type for any of
-> the math in this file? Perhaps we should be safe and only use
-> u64s?
+On Thu, Dec 14 2017 at  2:54am -0500,
+yael.chemla@foss.arm.com <yael.chemla@foss.arm.com> wrote:
 
-Just wondering if it causes a call to some glibc __mod() function
-and if so, the code should be using sector_div() -- oops, that's
-a divide and you want a modulus.  Oh well, we can address it if
-it becomes a problem.
+> we are trying to be able to parallalize the handling of blocks, this
+> patch is a precursor to that effort. 
+> currently this patch does not change CPU utiliztion but we wanted to
+> veritfy there is no objection to the direction first, hence sending
+> the patch.
 
+If it doesn't improve cpu utilization then it doesn't need to go in
+now.  But I'll revisit once the dust settles on some other work I'm
+focused on.
 
--- 
-~Randy
+Thanks,
+Mike
