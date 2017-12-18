@@ -1,11 +1,15 @@
 From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: [PATCH v4 0/2] dm unstriped: add new target
-Date: Mon, 18 Dec 2017 19:08:50 +0100
-Message-ID: <cover.1513618685.git.heinzm@redhat.com>
+Subject: [PATCH v4 2/2] dm unstriped: add documentation for target
+Date: Mon, 18 Dec 2017 19:08:52 +0100
+Message-ID: <7d733f1d46b1e6bbba79e7460d3c15199b064c4a.1513618685.git.heinzm@redhat.com>
+References: <cover.1513618685.git.heinzm@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <cover.1513618685.git.heinzm@redhat.com>
+In-Reply-To: <cover.1513618685.git.heinzm@redhat.com>
+References: <cover.1513618685.git.heinzm@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,53 +23,89 @@ To: heinzm@redhat.com, dm-devel@redhat.com
 Cc: scott.bauer@intel.com
 List-Id: dm-devel.ids
 
-This is a quick rework of the new "unstripe" target
-(undoes a striped/raid0 mapping) v3 patch series
-authored by Scott Bauer addressing some points
-discussed here and more.
-
-Addressed:
-- rename target to "unstriped"
-- enhance constructor header
-- add more consistency checks to constructor imposing
-  divisibility of device and drive length by chunk size;
-  device length has to be divisible by total number of drives
-- use destructor in constructor error pathes
-- move a few local variables to 'struct unstripe'
-- add missing unstripe_status() function using
-  new variables in ^ struct to address requirement
-  for dm targets
-- tweaked config variable name Kconfig text
-
-Not addressed:
-- documentation (kept as is in this series for completeness) 
-
-Example of 'dmsetup table' output:
-# dmsetup table nvm-s s1 s2
-nvm-s: 0 262144 raid raid0 1 8 2 - 254:2 - 254:3
-s1: 0 131072 unstriped 254:4 0 2 8
-s2: 0 131072 unstriped 254:4 1 2 8
-
-
-Scott,
-please check, test and tell, if the additonal constraints
-on length divisibility are too restrictive and how to go
-about the 2 FIXMEs.
-
-
-Tested-by: Heinz Mauelshagen <heinzm@redhat.com>
-
-Heinz Mauelshagen (2):
-  dm unstriped: new "unstriped" raid0/striped device
-  dm unstriped: add documentation for unstriped target
-
- Documentation/device-mapper/dm-unstripe.txt | 130 ++++++++++++++++
- drivers/md/Kconfig                          |  11 ++
- drivers/md/Makefile                         |   1 +
- drivers/md/dm-unstripe.c                    | 233 ++++++++++++++++++++++++++++
- 4 files changed, 375 insertions(+)
- create mode 100644 Documentation/device-mapper/dm-unstripe.txt
- create mode 100644 drivers/md/dm-unstripe.c
-
--- 
-2.14.3
+LS0tCiBEb2N1bWVudGF0aW9uL2RldmljZS1tYXBwZXIvZG0tdW5zdHJpcGUudHh0IHwgMTMwICsr
+KysrKysrKysrKysrKysrKysrKysrKysrKysKIDEgZmlsZSBjaGFuZ2VkLCAxMzAgaW5zZXJ0aW9u
+cygrKQogY3JlYXRlIG1vZGUgMTAwNjQ0IERvY3VtZW50YXRpb24vZGV2aWNlLW1hcHBlci9kbS11
+bnN0cmlwZS50eHQKCmRpZmYgLS1naXQgYS9Eb2N1bWVudGF0aW9uL2RldmljZS1tYXBwZXIvZG0t
+dW5zdHJpcGUudHh0IGIvRG9jdW1lbnRhdGlvbi9kZXZpY2UtbWFwcGVyL2RtLXVuc3RyaXBlLnR4
+dApuZXcgZmlsZSBtb2RlIDEwMDY0NAppbmRleCAwMDAwMDAwMDAwMDAuLjAxZDcxOTRiOTA3NQot
+LS0gL2Rldi9udWxsCisrKyBiL0RvY3VtZW50YXRpb24vZGV2aWNlLW1hcHBlci9kbS11bnN0cmlw
+ZS50eHQKQEAgLTAsMCArMSwxMzAgQEAKK0RldmljZS1NYXBwZXIgVW5zdHJpcGUKKz09PT09PT09
+PT09PT09PT09PT09PQorCitUaGUgZGV2aWNlLW1hcHBlciB1bnN0cmlwZSAoZG0tdW5zdHJpcGUp
+IHRhcmdldCBwcm92aWRlcyBhIHRyYW5zcGFyZW50CittZWNoYW5pc20gdG8gdW5zdHJpcGUgYSBk
+ZXZpY2UtbWFwcGVyICJzdHJpcGVkIiB0YXJnZXQgdG8gYWNjZXNzIHRoZQordW5kZXJseWluZyBk
+aXNrcyB3aXRob3V0IGhhdmluZyB0byB0b3VjaCB0aGUgdHJ1ZSBiYWNraW5nIGJsb2NrLWRldmlj
+ZS4KK0l0IGNhbiBhbHNvIGJlIHVzZWQgdG8gdW5zdHJpcGUgYSBoYXJkd2FyZSBSQUlELTAgdG8g
+YWNjZXNzIGJhY2tpbmcgZGlza3MKK2FzIHdlbGwuCisKKworUGFyYW1ldGVyczoKKzxkcml2ZSAo
+ZXg6IC9kZXYvbnZtZTBuMSk+IDxkcml2ZSAjPiA8IyBvZiBkcml2ZXM+IDxjaHVuayBzZWN0b3Jz
+PgorCisKKzxkcml2ZT4KKwlUaGUgYmxvY2sgZGV2aWNlIHlvdSB3aXNoIHRvIHVuc3RyaXBlLgor
+Cis8ZHJpdmUgIz4KKyAgICAgICAgVGhlIHBoeXNpY2FsIGRyaXZlIHlvdSB3aXNoIHRvIGV4cG9z
+ZSB2aWEgdGhpcyAidmlydHVhbCIgZGV2aWNlCisJbWFwcGVyIHRhcmdldC4gVGhpcyBtdXN0IGJl
+IDAgaW5kZXhlZC4KKworPCMgb2YgZHJpdmVzPgorICAgICAgICBUaGUgbnVtYmVyIG9mIGRyaXZl
+cyBpbiB0aGUgUkFJRCAwLgorCis8Y2h1bmsgc2VjdG9ycz4KKwlUaGUgYW1vdW50IG9mIDUxMkIg
+c2VjdG9ycyBpbiB0aGUgY2h1bmsgc3RyaXBpbmcsIG9yIHplcm8sIGlmIHlvdQorCXdpc2ggeW91
+IHVzZSBtYXhfaHdfc2VjdG9yX3NpemUuCisKKworV2h5IHVzZSB0aGlzIG1vZHVsZT8KKz09PT09
+PT09PT09PT09PT09PT09PQorCisgICAgQW4gZXhhbXBsZSBvZiB1bmRvaW5nIGFuIGV4aXN0aW5n
+IGRtLXN0cmlwZToKKworICAgIFRoaXMgc21hbGwgYmFzaCBzY3JpcHQgd2lsbCBzZXR1cCA0IGxv
+b3AgZGV2aWNlcyBhbmQgdXNlIHRoZSBleGlzdGluZworICAgIGRtLXN0cmlwZSB0YXJnZXQgdG8g
+Y29tYmluZSB0aGUgNCBkZXZpY2VzIGludG8gb25lLiBJdCB0aGVuIHdpbGwgdXNlCisgICAgdGhl
+IHVuc3RyaXBlIHRhcmdldCBvbiB0aGUgbmV3IGNvbWJpbmVkIHN0cmlwZSBkZXZpY2UgdG8gYWNj
+ZXNzIHRoZQorICAgIGluZGl2aWR1YWwgYmFja2luZyBsb29wIGRldmljZXMuIFdlIHdyaXRlIGRh
+dGEgdG8gdGhlIG5ld2x5IGV4cG9zZWQKKyAgICB1bnN0cmlwZWQgZGV2aWNlcyBhbmQgdmVyaWZ5
+IHRoZSBkYXRhIHdyaXR0ZW4gbWF0Y2hlcyB0aGUgY29ycmVjdAorICAgIHVuZGVybHlpbmcgZGV2
+aWNlIG9uIHRoZSBzdHJpcGVkIGFycmF5LgorCisgICAgIyEvYmluL2Jhc2gKKworICAgIE1FTUJF
+Ul9TSVpFPSQoKDEyOCAqIDEwMjQgKiAxMDI0KSkKKyAgICBOVU09NAorICAgIFNFUV9FTkQ9JCgo
+JHtOVU19LTEpKQorICAgIENIVU5LPTI1NgorICAgIEJTPTQwOTYKKworICAgIFJBSURfU0laRT0k
+KCgke01FTUJFUl9TSVpFfSoke05VTX0vNTEyKSkKKyAgICBETV9QQVJNUz0iMCAke1JBSURfU0la
+RX0gc3RyaXBlZCAke05VTX0gJHtDSFVOS30iCisgICAgQ09VTlQ9JCgoJHtNRU1CRVJfU0laRX0g
+LyAke0JTfSkpCisKKyAgICBmb3IgaSBpbiAkKHNlcSAwICR7U0VRX0VORH0pOyBkbworICAgICAg
+ZGQgaWY9L2Rldi96ZXJvIG9mPW1lbWJlci0ke2l9IGJzPSR7TUVNQkVSX1NJWkV9IGNvdW50PTEg
+b2ZsYWc9ZGlyZWN0CisgICAgICBsb3NldHVwIC9kZXYvbG9vcCR7aX0gbWVtYmVyLSR7aX0KKyAg
+ICAgIERNX1BBUk1TKz0iIC9kZXYvbG9vcCR7aX0gMCIKKyAgICBkb25lCisKKyAgICBlY2hvICRE
+TV9QQVJNUyB8IGRtc2V0dXAgY3JlYXRlIHJhaWQwCisgICAgZm9yIGkgaW4gJChzZXEgMCAke1NF
+UV9FTkR9KTsgZG8KKyAgICAgIGVjaG8gIjAgMSB1bnN0cmlwZSAvZGV2L21hcHBlci9yYWlkMCAk
+e2l9ICR7TlVNfSAke0NIVU5LfSIgfCBkbXNldHVwIGNyZWF0ZSBzZXQtJHtpfQorICAgIGRvbmU7
+CisKKyAgICBmb3IgaSBpbiAkKHNlcSAwICR7U0VRX0VORH0pOyBkbworICAgICAgZGQgaWY9L2Rl
+di91cmFuZG9tIG9mPS9kZXYvbWFwcGVyL3NldC0ke2l9IGJzPSR7QlN9IGNvdW50PSR7Q09VTlR9
+IG9mbGFnPWRpcmVjdAorICAgICAgZGlmZiAvZGV2L21hcHBlci9zZXQtJHtpfSBtZW1iZXItJHtp
+fQorICAgIGRvbmU7CisKKyAgICBmb3IgaSBpbiAkKHNlcSAwICR7U0VRX0VORH0pOyBkbworICAg
+ICAgZG1zZXR1cCByZW1vdmUgc2V0LSR7aX0KKyAgICBkb25lCisKKyAgICBkbXNldHVwIHJlbW92
+ZSByYWlkMAorCisgICAgZm9yIGkgaW4gJChzZXEgMCAke1NFUV9FTkR9KTsgZG8KKyAgICAgIGxv
+c2V0dXAgLWQgL2Rldi9sb29wJHtpfQorICAgICAgcm0gLWYgbWVtYmVyLSR7aX0KKyAgICBkb25l
+CisKKz09PT09PT09PT09PT09CisKKworICAgIEFub3RoZXIgZXhhbXBsZToKKworICAgIEludGVs
+IE5WTWUgZHJpdmVzIGNvbnRhaW4gdHdvIGNvcmVzIG9uIHRoZSBwaHlzaWNhbCBkZXZpY2UuCisg
+ICAgRWFjaCBjb3JlIG9mIHRoZSBkcml2ZSBoYXMgc2VncmVnYXRlZCBhY2Nlc3MgdG8gaXRzIExC
+QSByYW5nZS4KKyAgICBUaGUgY3VycmVudCBMQkEgbW9kZWwgaGFzIGEgUkFJRCAwIDEyOGsgY2h1
+bmsgb24gZWFjaCBjb3JlLCByZXN1bHRpbmcKKyAgICBpbiBhIDI1Nmsgc3RyaXBlIGFjcm9zcyB0
+aGUgdHdvIGNvcmVzOgorCisgICAgICAgQ29yZSAwOiAgICAgICAgICAgICAgICBDb3JlIDE6Cisg
+ICAgICBfX19fX19fX19fICAgICAgICAgICAgX19fX19fX19fXworICAgICAgfCBMQkEgNTEyfCAg
+ICAgICAgICAgIHwgTEJBIDc2OHwKKyAgICAgIHwgTEJBIDAgIHwgICAgICAgICAgICB8IExCQSAy
+NTZ8CisgICAgICDijrvijrvijrvijrvijrvijrvijrvijrvijrvijrsgICAgICAgICAgICDijrvi
+jrvijrvijrvijrvijrvijrvijrvijrvijrsKKworICAgIFRoZSBwdXJwb3NlIG9mIHRoaXMgdW5z
+dHJpcGluZyBpcyB0byBwcm92aWRlIGJldHRlciBRb1MgaW4gbm9pc3kKKyAgICBuZWlnaGJvciBl
+bnZpcm9ubWVudHMuIFdoZW4gdHdvIHBhcnRpdGlvbnMgYXJlIGNyZWF0ZWQgb24gdGhlCisgICAg
+YWdncmVnYXRlIGRyaXZlIHdpdGhvdXQgdGhpcyB1bnN0cmlwaW5nLCByZWFkcyBvbiBvbmUgcGFy
+dGl0aW9uCisgICAgY2FuIGFmZmVjdCB3cml0ZXMgb24gYW5vdGhlciBwYXJ0aXRpb24uIFRoaXMg
+aXMgYmVjYXVzZSB0aGUgcGFydGl0aW9ucworICAgIGFyZSBzdHJpcGVkIGFjcm9zcyB0aGUgdHdv
+IGNvcmVzLiBXaGVuIHdlIHVuc3RyaXBlIHRoaXMgaGFyZHdhcmUgUkFJRCAwCisgICAgYW5kIG1h
+a2UgcGFydGl0aW9ucyBvbiBlYWNoIG5ldyBleHBvc2VkIGRldmljZSB0aGUgdHdvIHBhcnRpdGlv
+bnMgYXJlIG5vdworICAgIHBoeXNpY2FsbHkgc2VwYXJhdGVkLgorCisgICAgV2l0aCB0aGUgbW9k
+dWxlIHdlIHdlcmUgYWJsZSB0byBzZWdyZWdhdGUgYSBmaW8gc2NyaXB0IHRoYXQgaGFzIHJlYWQg
+YW5kCisgICAgd3JpdGUgam9icyB0aGF0IGFyZSBpbmRlcGVuZGVudCBvZiBlYWNoIG90aGVyLiBD
+b21wYXJlZCB0byB3aGVuIHdlIHJ1bgorICAgIHRoZSB0ZXN0IG9uIGEgY29tYmluZWQgZHJpdmUg
+d2l0aCBwYXJ0aXRpb25zLCB3ZSB3ZXJlIGFibGUgdG8gZ2V0IGEgOTIlCisgICAgcmVkdWN0aW9u
+IGluIGZpdmUtOXRocyByZWFkIGxhdGVuY3kgdXNpbmcgdGhpcyBkZXZpY2UgbWFwcGVyIHRhcmdl
+dC4KKworCis9PT09PT09PT09PT09PT09PT09PQorRXhhbXBsZSBzY3JpcHRzOgorCisKK2Rtc2V0
+dXAgY3JlYXRlIG52bXNldDEgLS10YWJsZSAnMCAxIHVuc3RyaXBlIC9kZXYvbnZtZTBuMSAxIDIg
+MCcKK2Rtc2V0dXAgY3JlYXRlIG52bXNldDAgLS10YWJsZSAnMCAxIHVuc3RyaXBlIC9kZXYvbnZt
+ZTBuMSAwIDIgMCcKKworVGhlcmUgd2lsbCBub3cgYmUgdHdvIG1hcHBlcnM6CisvZGV2L21hcHBl
+ci9udm1zZXQxCisvZGV2L21hcHBlci9udm1zZXQwCisKK3RoYXQgd2lsbCBleHBvc2UgY29yZSAw
+IGFuZCBjb3JlIDEuCisKKworIyBJbiBhIGRtLXN0cmlwZSB3aXRoIDQgZHJpdmVzIG9mIGNodW5r
+IHNpemUgMTI4SzoKK2Rtc2V0dXAgY3JlYXRlIHJhaWRfZGlzazAgLS10YWJsZSAnMCAxIHVuc3Ry
+aXBlIC9kZXYvbWFwcGVyL3N0cmlwZWQgMCA0IDI1NicKK2Rtc2V0dXAgY3JlYXRlIHJhaWRfZGlz
+azEgLS10YWJsZSAnMCAxIHVuc3RyaXBlIC9kZXYvbWFwcGVyL3N0cmlwZWQgMSA0IDI1NicKK2Rt
+c2V0dXAgY3JlYXRlIHJhaWRfZGlzazIgLS10YWJsZSAnMCAxIHVuc3RyaXBlIC9kZXYvbWFwcGVy
+L3N0cmlwZWQgMiA0IDI1NicKK2Rtc2V0dXAgY3JlYXRlIHJhaWRfZGlzazMgLS10YWJsZSAnMCAx
+IHVuc3RyaXBlIC9kZXYvbWFwcGVyL3N0cmlwZWQgMyA0IDI1NicKKwotLSAKMi4xNC4zCgotLQpk
+bS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRo
+YXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
