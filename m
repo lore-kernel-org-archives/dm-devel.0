@@ -1,275 +1,166 @@
-From: Scott Bauer <scott.bauer@intel.com>
-Subject: [PATCH v4 1/2] dm-unstripe: unstripe RAID 0/dm-striped device
-Date: Mon, 18 Dec 2017 10:28:08 -0700
-Message-ID: <20171218172809.5826-2-scott.bauer@intel.com>
-References: <20171218172809.5826-1-scott.bauer@intel.com>
+From: Heinz Mauelshagen <heinzm@redhat.com>
+Subject: [PATCH v4 1/2] dm unstriped: the target
+Date: Mon, 18 Dec 2017 19:08:51 +0100
+Message-ID: <02ebee64c38f09a0709f66aa2489adc78ba547a7.1513618685.git.heinzm@redhat.com>
+References: <cover.1513618685.git.heinzm@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20171218172809.5826-1-scott.bauer@intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: dm-devel@redhat.com
-Cc: snitzer@redhat.com, agk@redhat.com, linux-kernel@vger.kernel.org, keith.busch@intel.com, jonathan.derrick@intel.com, Scott Bauer <scott.bauer@intel.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <cover.1513618685.git.heinzm@redhat.com>
+In-Reply-To: <cover.1513618685.git.heinzm@redhat.com>
+References: <cover.1513618685.git.heinzm@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: heinzm@redhat.com, dm-devel@redhat.com
+Cc: scott.bauer@intel.com
 List-Id: dm-devel.ids
 
-This device mapper module remaps and unstripes IO so it lands
-solely on a single drive in a RAID 0/dm-stripe target.
-In a 4 drive RAID 0 the mapper exposes 1/4th of the LBA range
-as a virtual drive. Each IO to that virtual drive will land on
-only one of the 4 drives, selected by the user.
-
-Signed-off-by: Scott Bauer <scott.bauer@intel.com>
-Acked-by: Keith Busch <keith.busch@intel.com>
----
- drivers/md/Kconfig       |  10 +++
- drivers/md/Makefile      |   1 +
- drivers/md/dm-unstripe.c | 204 +++++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 215 insertions(+)
- create mode 100644 drivers/md/dm-unstripe.c
-
-diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
-index 83b9362be09c..e1c48a7f98f1 100644
---- a/drivers/md/Kconfig
-+++ b/drivers/md/Kconfig
-@@ -269,6 +269,16 @@ config DM_BIO_PRISON
- 
- source "drivers/md/persistent-data/Kconfig"
- 
-+config DM_UN_STRIPE
-+       tristate "Transpose IO to individual drives on a raid device"
-+       depends on BLK_DEV_DM
-+       ---help---
-+	  Enable this feature if you with to unstripe I/O on a RAID 0
-+	  device to the respective drive. If your hardware has physical
-+	  RAID 0 this module can unstripe the I/O to respective sides.
-+
-+	  If unsure say N.
-+
- config DM_CRYPT
- 	tristate "Crypt target support"
- 	depends on BLK_DEV_DM
-diff --git a/drivers/md/Makefile b/drivers/md/Makefile
-index f701bb211783..2cc380b71319 100644
---- a/drivers/md/Makefile
-+++ b/drivers/md/Makefile
-@@ -43,6 +43,7 @@ obj-$(CONFIG_BCACHE)		+= bcache/
- obj-$(CONFIG_BLK_DEV_MD)	+= md-mod.o
- obj-$(CONFIG_BLK_DEV_DM)	+= dm-mod.o
- obj-$(CONFIG_BLK_DEV_DM_BUILTIN) += dm-builtin.o
-+obj-$(CONFIG_DM_UN_STRIPE)   += dm-unstripe.o
- obj-$(CONFIG_DM_BUFIO)		+= dm-bufio.o
- obj-$(CONFIG_DM_BIO_PRISON)	+= dm-bio-prison.o
- obj-$(CONFIG_DM_CRYPT)		+= dm-crypt.o
-diff --git a/drivers/md/dm-unstripe.c b/drivers/md/dm-unstripe.c
-new file mode 100644
-index 000000000000..086689fb11e3
---- /dev/null
-+++ b/drivers/md/dm-unstripe.c
-@@ -0,0 +1,204 @@
-+/*
-+ * Copyright © 2017 Intel Corporation
-+ *
-+ * Authors:
-+ *    Scott  Bauer      <scott.bauer@intel.com>
-+ *
-+ * This program is free software; you can redistribute it and/or modify it
-+ * under the terms and conditions of the GNU General Public License,
-+ * version 2, as published by the Free Software Foundation.
-+ *
-+ * This program is distributed in the hope it will be useful, but WITHOUT
-+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
-+ * more details.
-+ */
-+
-+#include "dm.h"
-+#include <linux/module.h>
-+#include <linux/init.h>
-+#include <linux/blkdev.h>
-+#include <linux/bio.h>
-+#include <linux/slab.h>
-+#include <linux/bitops.h>
-+#include <linux/device-mapper.h>
-+
-+
-+struct unstripe {
-+	struct dm_dev *ddisk;
-+	sector_t chunk_sectors;
-+	sector_t stripe_sectors;
-+	u8 chunk_shift;
-+	u8 cur_drive;
-+};
-+
-+
-+#define DM_MSG_PREFIX "dm-unstripe"
-+static const char *parse_err = "Please provide the necessary information:"
-+	"<drive> <device (0 indexed)> <total_devices>"
-+	" <chunk size in 512B sectors || 0 to use max hw sector size>";
-+
-+/*
-+ * Argument layout:
-+ * <drive> <stripe/drive to extract (0 indexed)>
-+ *         <total_devices> <chunk size in 512B sect>
-+ */
-+static int set_ctr(struct dm_target *ti, unsigned int argc, char **argv)
-+{
-+	struct block_device *bbdev;
-+	struct unstripe *target;
-+	unsigned int chunk_size;
-+	u64 tot_sec, mod;
-+	u8 cur_drive, tot_drives;
-+	char dummy;
-+	int ret;
-+
-+	if (argc != 4) {
-+		DMERR("%s", parse_err);
-+		return -EINVAL;
-+	}
-+
-+	if (sscanf(argv[1], "%hhu%c", &cur_drive, &dummy) != 1 ||
-+	    sscanf(argv[2], "%hhu%c", &tot_drives, &dummy) != 1 ||
-+	    sscanf(argv[3], "%u%c", &chunk_size, &dummy) != 1) {
-+		DMERR("%s", parse_err);
-+		return -EINVAL;
-+	}
-+
-+	if (tot_drives == 0 || (cur_drive >= tot_drives && tot_drives > 1)) {
-+		DMERR("Please provide a drive between [0,%hhu)", tot_drives);
-+		return -EINVAL;
-+	}
-+
-+	target = kzalloc(sizeof(*target), GFP_KERNEL);
-+
-+	if (!target) {
-+		DMERR("Failed to allocate space for DM unstripe!");
-+		return -ENOMEM;
-+	}
-+
-+	ret = dm_get_device(ti, argv[0], dm_table_get_mode(ti->table),
-+			    &target->ddisk);
-+	if (ret) {
-+		kfree(target);
-+		DMERR("dm-unstripe dev lookup failure! for drive %s", argv[0]);
-+		return ret;
-+	}
-+
-+	bbdev = target->ddisk->bdev;
-+
-+	target->cur_drive = cur_drive;
-+	if (chunk_size)
-+		target->chunk_sectors = chunk_size;
-+	else
-+		target->chunk_sectors =
-+			queue_max_hw_sectors(bdev_get_queue(bbdev));
-+
-+	target->stripe_sectors = (tot_drives - 1) * target->chunk_sectors;
-+	target->chunk_shift = fls(target->chunk_sectors) - 1;
-+
-+	ret = dm_set_target_max_io_len(ti, target->chunk_sectors);
-+	if (ret) {
-+		dm_put_device(ti, target->ddisk);
-+		kfree(target);
-+		DMERR("Failed to set max io len!");
-+		return ret;
-+	}
-+	ti->private = target;
-+
-+	tot_sec = i_size_read(bbdev->bd_inode) >> SECTOR_SHIFT;
-+	mod = tot_sec % target->chunk_sectors;
-+
-+	if (ti->len == 1)
-+		ti->len = (tot_sec / tot_drives) - mod;
-+	ti->begin = 0;
-+	return 0;
-+}
-+
-+static void set_dtr(struct dm_target *ti)
-+{
-+	struct unstripe *target = ti->private;
-+
-+	dm_put_device(ti, target->ddisk);
-+	kfree(target);
-+}
-+
-+
-+static sector_t map_to_core(struct dm_target *ti, struct bio *bio)
-+{
-+	struct unstripe *target = ti->private;
-+	unsigned long long sec = bio->bi_iter.bi_sector;
-+	unsigned long long group;
-+
-+	group = (sec >> target->chunk_shift);
-+	/* Account for what drive we're operating on */
-+	sec += (target->cur_drive * target->chunk_sectors);
-+	/* Shift us up to the right "row" on the drive*/
-+	sec += target->stripe_sectors * group;
-+	return sec;
-+}
-+
-+static int set_map_bio(struct dm_target *ti, struct bio *bio)
-+{
-+	struct unstripe *target = ti->private;
-+
-+	if (bio_sectors(bio))
-+		bio->bi_iter.bi_sector = map_to_core(ti, bio);
-+
-+	bio_set_dev(bio, target->ddisk->bdev);
-+	submit_bio(bio);
-+	return DM_MAPIO_SUBMITTED;
-+}
-+
-+static void set_iohints(struct dm_target *ti,
-+			struct queue_limits *limits)
-+{
-+	struct unstripe *target = ti->private;
-+	struct queue_limits *lim = &bdev_get_queue(target->ddisk->bdev)->limits;
-+
-+	blk_limits_io_min(limits, lim->io_min);
-+	blk_limits_io_opt(limits, lim->io_opt);
-+	limits->chunk_sectors = target->chunk_sectors;
-+}
-+
-+static int set_iterate(struct dm_target *ti, iterate_devices_callout_fn fn,
-+		       void *data)
-+{
-+	struct unstripe *target = ti->private;
-+
-+	return fn(ti, target->ddisk, 0, ti->len, data);
-+}
-+
-+static struct target_type iset_target = {
-+	.name = "unstripe",
-+	.version = {1, 0, 0},
-+	.module = THIS_MODULE,
-+	.ctr = set_ctr,
-+	.dtr = set_dtr,
-+	.map = set_map_bio,
-+	.iterate_devices = set_iterate,
-+	.io_hints = set_iohints,
-+};
-+
-+static int __init dm_unstripe_init(void)
-+{
-+	int r = dm_register_target(&iset_target);
-+
-+	if (r < 0)
-+		DMERR("register failed %d", r);
-+
-+	return r;
-+}
-+
-+static void __exit dm_unstripe_exit(void)
-+{
-+	dm_unregister_target(&iset_target);
-+}
-+
-+module_init(dm_unstripe_init);
-+module_exit(dm_unstripe_exit);
-+
-+MODULE_DESCRIPTION(DM_NAME " DM unstripe");
-+MODULE_ALIAS("dm-unstripe");
-+MODULE_AUTHOR("Scott Bauer <scott.bauer@intel.com>");
-+MODULE_LICENSE("GPL");
--- 
-2.11.0
+U2lnbmVkLW9mZi1ieTogSGVpbnogTWF1ZWxzaGFnZW4gPGhlaW56bUByZWRoYXQuY29tPgotLS0K
+IGRyaXZlcnMvbWQvS2NvbmZpZyAgICAgICB8ICAxMSArKysKIGRyaXZlcnMvbWQvTWFrZWZpbGUg
+ICAgICB8ICAgMSArCiBkcml2ZXJzL21kL2RtLXVuc3RyaXBlLmMgfCAyMzMgKysrKysrKysrKysr
+KysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysKIDMgZmlsZXMgY2hhbmdlZCwgMjQ1
+IGluc2VydGlvbnMoKykKIGNyZWF0ZSBtb2RlIDEwMDY0NCBkcml2ZXJzL21kL2RtLXVuc3RyaXBl
+LmMKCmRpZmYgLS1naXQgYS9kcml2ZXJzL21kL0tjb25maWcgYi9kcml2ZXJzL21kL0tjb25maWcK
+aW5kZXggODNiOTM2MmJlMDljLi43ZjgwOTlmNTNhZDYgMTAwNjQ0Ci0tLSBhL2RyaXZlcnMvbWQv
+S2NvbmZpZworKysgYi9kcml2ZXJzL21kL0tjb25maWcKQEAgLTI2OSw2ICsyNjksMTcgQEAgY29u
+ZmlnIERNX0JJT19QUklTT04KIAogc291cmNlICJkcml2ZXJzL21kL3BlcnNpc3RlbnQtZGF0YS9L
+Y29uZmlnIgogCitjb25maWcgRE1fVU5TVFJJUEVECisgICAgICAgdHJpc3RhdGUgIlRyYW5zcG9z
+ZSBJTyB0byBpbmRpdmlkdWFsIGRyaXZlcyBvbiBhIHJhaWQgZGV2aWNlIgorICAgICAgIGRlcGVu
+ZHMgb24gQkxLX0RFVl9ETQorICAgICAgIC0tLWhlbHAtLS0KKyAgICAgICAgIEVuYWJsZSB0aGlz
+IGZlYXR1cmUgaWYgeW91IHdpdGggdG8gdW5zdHJpcGUgSS9PIG9uIGEgUkFJRCAwCisJIGRldmlj
+ZSB0byB0aGUgcmVzcGVjdGl2ZSBkcml2ZS4gSWYgeW91ciBoYXJkd2FyZSBoYXMgcGh5c2ljYWwK
+KwkgUkFJRCAwIHRoaXMgbW9kdWxlIGNhbiB1bnN0cmlwZSB0aGUgSS9PIHRvIHJlc3BlY3RpdmUg
+Y29udHJvbGxlcnMKKwkgb24gdGhlIHN0cmlwZXMuCisKKwkgSWYgdW5zdXJlIHNheSBOLgorCiBj
+b25maWcgRE1fQ1JZUFQKIAl0cmlzdGF0ZSAiQ3J5cHQgdGFyZ2V0IHN1cHBvcnQiCiAJZGVwZW5k
+cyBvbiBCTEtfREVWX0RNCmRpZmYgLS1naXQgYS9kcml2ZXJzL21kL01ha2VmaWxlIGIvZHJpdmVy
+cy9tZC9NYWtlZmlsZQppbmRleCBmNzAxYmIyMTE3ODMuLjYzMjU1ZjNlYmQ5NyAxMDA2NDQKLS0t
+IGEvZHJpdmVycy9tZC9NYWtlZmlsZQorKysgYi9kcml2ZXJzL21kL01ha2VmaWxlCkBAIC00Myw2
+ICs0Myw3IEBAIG9iai0kKENPTkZJR19CQ0FDSEUpCQkrPSBiY2FjaGUvCiBvYmotJChDT05GSUdf
+QkxLX0RFVl9NRCkJKz0gbWQtbW9kLm8KIG9iai0kKENPTkZJR19CTEtfREVWX0RNKQkrPSBkbS1t
+b2Qubwogb2JqLSQoQ09ORklHX0JMS19ERVZfRE1fQlVJTFRJTikgKz0gZG0tYnVpbHRpbi5vCitv
+YmotJChDT05GSUdfRE1fVU5TVFJJUEVEKQkrPSBkbS11bnN0cmlwZS5vCiBvYmotJChDT05GSUdf
+RE1fQlVGSU8pCQkrPSBkbS1idWZpby5vCiBvYmotJChDT05GSUdfRE1fQklPX1BSSVNPTikJKz0g
+ZG0tYmlvLXByaXNvbi5vCiBvYmotJChDT05GSUdfRE1fQ1JZUFQpCQkrPSBkbS1jcnlwdC5vCmRp
+ZmYgLS1naXQgYS9kcml2ZXJzL21kL2RtLXVuc3RyaXBlLmMgYi9kcml2ZXJzL21kL2RtLXVuc3Ry
+aXBlLmMKbmV3IGZpbGUgbW9kZSAxMDA2NDQKaW5kZXggMDAwMDAwMDAwMDAwLi5hNTkwZTE1NDRk
+Y2YKLS0tIC9kZXYvbnVsbAorKysgYi9kcml2ZXJzL21kL2RtLXVuc3RyaXBlLmMKQEAgLTAsMCAr
+MSwyMzMgQEAKKy8qCisgKiBDb3B5cmlnaHQgwqkgMjAxNyBJbnRlbCBDb3Jwb3JhdGlvbgorICoK
+KyAqIEF1dGhvcnM6CisgKiAgICBTY290dCAgQmF1ZXIgICAgICA8c2NvdHQuYmF1ZXJAaW50ZWwu
+Y29tPgorICoKKyAqIFRoaXMgcHJvZ3JhbSBpcyBmcmVlIHNvZnR3YXJlOyB5b3UgY2FuIHJlZGlz
+dHJpYnV0ZSBpdCBhbmQvb3IgbW9kaWZ5IGl0CisgKiB1bmRlciB0aGUgdGVybXMgYW5kIGNvbmRp
+dGlvbnMgb2YgdGhlIEdOVSBHZW5lcmFsIFB1YmxpYyBMaWNlbnNlLAorICogdmVyc2lvbiAyLCBh
+cyBwdWJsaXNoZWQgYnkgdGhlIEZyZWUgU29mdHdhcmUgRm91bmRhdGlvbi4KKyAqCisgKiBUaGlz
+IHByb2dyYW0gaXMgZGlzdHJpYnV0ZWQgaW4gdGhlIGhvcGUgaXQgd2lsbCBiZSB1c2VmdWwsIGJ1
+dCBXSVRIT1VUCisgKiBBTlkgV0FSUkFOVFk7IHdpdGhvdXQgZXZlbiB0aGUgaW1wbGllZCB3YXJy
+YW50eSBvZiBNRVJDSEFOVEFCSUxJVFkgb3IKKyAqIEZJVE5FU1MgRk9SIEEgUEFSVElDVUxBUiBQ
+VVJQT1NFLiAgU2VlIHRoZSBHTlUgR2VuZXJhbCBQdWJsaWMgTGljZW5zZSBmb3IKKyAqIG1vcmUg
+ZGV0YWlscy4KKyAqLworCisjaW5jbHVkZSAiZG0uaCIKKyNpbmNsdWRlIDxsaW51eC9tb2R1bGUu
+aD4KKyNpbmNsdWRlIDxsaW51eC9pbml0Lmg+CisjaW5jbHVkZSA8bGludXgvYmxrZGV2Lmg+Cisj
+aW5jbHVkZSA8bGludXgvYmlvLmg+CisjaW5jbHVkZSA8bGludXgvc2xhYi5oPgorI2luY2x1ZGUg
+PGxpbnV4L2JpdG9wcy5oPgorI2luY2x1ZGUgPGxpbnV4L2RldmljZS1tYXBwZXIuaD4KKworc3Ry
+dWN0IHVuc3RyaXBlIHsKKwlzdHJ1Y3QgZG1fZGV2ICpkZGlzazsKKwlzZWN0b3JfdCBjaHVua19z
+ZWN0b3JzOworCXNlY3Rvcl90IHN0cmlwZV9zZWN0b3JzOworCXNlY3Rvcl90IGN1cl9kcml2ZV9j
+aHVua19zZWN0b3JzOworCXVuc2lnbmVkIGludCBjaHVua19zaXplOworCXU4IGNodW5rX3NoaWZ0
+OworCXU4IGN1cl9kcml2ZTsKKwl1OCB0b3RhbF9kcml2ZXM7Cit9OworCisjZGVmaW5lIERNX01T
+R19QUkVGSVggImRtLXVuc3RyaXBlZCIKKworc3RhdGljIHZvaWQgdW5zdHJpcGVfZHRyKHN0cnVj
+dCBkbV90YXJnZXQgKnRpKQoreworCXN0cnVjdCB1bnN0cmlwZSAqdXQgPSB0aS0+cHJpdmF0ZTsK
+KworCWlmICh1dC0+ZGRpc2spCisJCWRtX3B1dF9kZXZpY2UodGksIHV0LT5kZGlzayk7CisJa2Zy
+ZWUodXQpOworfQorCisvKgorICogQ29uc3RydWN0IGFuICJ1bnN0cmlwZWQiIG1hcHBpbmc6Cisg
+KgorICogQXJnczoKKyAqCTx1bnN0cmlwZWRfZGV2PiA8ZXh0cmFjdF9kZXYjPiA8I3RvdGFsX2Rl
+dnM+IDxjaHVua19zaXplPgorICoKKyAqIDx1bnN0cmlwZWRfZGV2PiBkZXZpY2UgcGF0aCBvZiB0
+aGUgcmFpZDAgZGV2aWNlIHRvIHVuc3RyaXBlIChlLmcuIC9kZXYvbnZtZTApCisgKiA8ZXh0cmFj
+dF9kZXYjPiAgaW5kZXggc3RhcnRpbmcgYXQgMCBvZiBkZXZpY2UgdG8gZXh0cmFjdAorICogPCN0
+b3RhbF9kZXZzPiAgIG51bWJlciBvZiB0b3RhbCwgZXh0cmFjdGFibGUgZGV2aWNlcworICovCitz
+dGF0aWMgaW50IHVuc3RyaXBlX2N0cihzdHJ1Y3QgZG1fdGFyZ2V0ICp0aSwgdW5zaWduZWQgaW50
+IGFyZ2MsIGNoYXIgKiphcmd2KQoreworCWludCByID0gLUVJTlZBTDsKKwlzZWN0b3JfdCBzZWN0
+b3JzOworCXN0cnVjdCB1bnN0cmlwZSAqdXQ7CisKKwlpZiAoYXJnYyAhPSA0KSB7CisJCXRpLT5l
+cnJvciA9ICJJbnZhbGlkIG51bXZlciBvZiBhcmd1bWVudHMhIjsKKwkJcmV0dXJuIC1FSU5WQUw7
+CisJfQorCisJLyogRklYTUU6IGludGVyZXN0aW5nIHRvIGFsbG93IG11bHRpLXNlZ21lbnQgbWFw
+cGluZ3MgZm9yIHNvbWUgdGVzdGluZz8gKi8KKwlpZiAodGktPmJlZ2luKSB7CisJCXRpLT5lcnJv
+ciA9ICJOb24temVybyB0YXJnZXQgYmVnaW4hIjsKKwkJcmV0dXJuIC1FSU5WQUw7CisJfQorCisJ
+dXQgPSBremFsbG9jKHNpemVvZigqdXQpLCBHRlBfS0VSTkVMKTsKKwlpZiAoIXV0KSB7CisJCXRp
+LT5lcnJvciA9ICJGYWlsZWQgdG8gYWxsb2NhdGUgc3BhY2UgZm9yIHRhcmdldCEiOworCQlyZXR1
+cm4gLUVOT01FTTsKKwl9CisKKwlpZiAoc3NjYW5mKGFyZ3ZbMV0sICIlaGh1IiwgJnV0LT5jdXJf
+ZHJpdmUpICE9IDEgfHwKKwkgICAgc3NjYW5mKGFyZ3ZbMl0sICIlaGh1IiwgJnV0LT50b3RhbF9k
+cml2ZXMpICE9IDEgfHwKKwkgICAgc3NjYW5mKGFyZ3ZbM10sICIldSIsICZ1dC0+Y2h1bmtfc2l6
+ZSkgIT0gMSkgeworCQl0aS0+ZXJyb3IgPSAiRXJyb3IgcGFyc2luZyBkcml2ZS9jaHVuayBhcmd1
+bWVudHMhIjsKKwkJZ290byBlcnI7CisJfQorCisJaWYgKCF1dC0+dG90YWxfZHJpdmVzIHx8ICh1
+dC0+Y3VyX2RyaXZlID4gdXQtPnRvdGFsX2RyaXZlcyAmJiB1dC0+dG90YWxfZHJpdmVzID4gMSkp
+IHsKKwkJdGktPmVycm9yID0gIlBsZWFzZSBwcm92aWRlIGRyaXZlIGJldHdlZW4gWzAsdG90YWxf
+ZGV2aWNlc10iOworCQlnb3RvIGVycjsKKwl9CisKKwlpZiAodXQtPmNodW5rX3NpemUgJiYgIWlz
+X3Bvd2VyX29mXzIodXQtPmNodW5rX3NpemUpKSB7CisJCXRpLT5lcnJvciA9ICJOb24gcG93ZXIg
+b2YgMiBjaHVuayBzaXplISI7CisJCWdvdG8gZXJyOworCX0KKworCXIgPSBkbV9nZXRfZGV2aWNl
+KHRpLCBhcmd2WzBdLCBkbV90YWJsZV9nZXRfbW9kZSh0aS0+dGFibGUpLCAmdXQtPmRkaXNrKTsK
+KwlpZiAocikgeworCQl0aS0+ZXJyb3IgPSAiZG0tdW5zdHJpcGUgZGV2IGxvb2t1cCBmYWlsdXJl
+ISI7CisJCWdvdG8gZXJyOworCX0KKworCS8qIEZJWE1FOiB1c3BhY2Ugc2hvdWxkIHByb3ZpZGUg
+cHJvcGVyIGNodW5rIHNpemUhICovCisJLyogR2l2ZW4gY2h1bmsgc2VjdG9ycyBvciBtYXggaHcg
+c2VjdG9ycyBpZiAwICovCisJdXQtPmNodW5rX3NlY3RvcnMgPSB1dC0+Y2h1bmtfc2l6ZSA/OiBx
+dWV1ZV9tYXhfaHdfc2VjdG9ycyhiZGV2X2dldF9xdWV1ZSh1dC0+ZGRpc2stPmJkZXYpKTsKKwl1
+dC0+Y3VyX2RyaXZlX2NodW5rX3NlY3RvcnMgPSB1dC0+Y3VyX2RyaXZlICogdXQtPmNodW5rX3Nl
+Y3RvcnM7CisJdXQtPnN0cmlwZV9zZWN0b3JzID0gKHV0LT50b3RhbF9kcml2ZXMgLSAxKSAqIHV0
+LT5jaHVua19zZWN0b3JzOworCXV0LT5jaHVua19zaGlmdCA9IGZscyh1dC0+Y2h1bmtfc2VjdG9y
+cykgLSAxOworCisJLyogQ2hlY2sgdXNwYWNlIHByb3ZpZGVkIHByb3BlciBkZXZpY2UgbGVuZ3Ro
+IGRpdmlzaWJsZSBieSB0b3RhbCBkcml2ZXMgKi8KKwlzZWN0b3JzID0gaV9zaXplX3JlYWQodXQt
+PmRkaXNrLT5iZGV2LT5iZF9pbm9kZSkgPj4gU0VDVE9SX1NISUZUOworCWlmIChkb19kaXYoc2Vj
+dG9ycywgdXQtPnRvdGFsX2RyaXZlcykpIHsKKwkJdGktPmVycm9yID0gIkRldmljZSBsZW5ndGgg
+bm90IGRpdmlzaWJsZSBieSB0b3RhbCBudW1iZXIgb2YgZHJpdmVzISI7CisJCWdvdG8gZXJyOwor
+CX0KKworCS8qIENoZWNrIHVzcGFjZSBwcm92aWRlZCBwcm9wZXIgdGFyZ2V0IGxlbmd0aCEgKi8K
+KwlpZiAoc2VjdG9ycyAhPSB0aS0+bGVuKSB7CisJCXRpLT5lcnJvciA9ICJEcml2ZSBsZW5ndGgg
+bm90IGVxdWFsIHRvIHRhcmdldCBsZW5ndGghIjsKKwkJZ290byBlcnI7CisJfQorCisJLyogQ2hl
+Y2sgdXNwYWNlIHByb3ZpZGVkIHByb3BlciBkcml2ZSBsZW5ndGggZGl2aXNpYmxlIGJ5IGNodW5r
+IHNpemUgKi8KKwlpZiAoZG9fZGl2KHNlY3RvcnMsIHV0LT5jaHVua19zZWN0b3JzKSkgeworCQl0
+aS0+ZXJyb3IgPSAiRHJpdmUgbGVuZ3RoIG5vdCBkaXZpc2libGUgYnkgY2h1bmsgc2l6ZSI7CisJ
+CWdvdG8gZXJyOworCX0KKworCXIgPSBkbV9zZXRfdGFyZ2V0X21heF9pb19sZW4odGksIHV0LT5j
+aHVua19zZWN0b3JzKTsKKwlpZiAocikgeworCQl0aS0+ZXJyb3IgPSAiRmFpbGVkIHRvIHNldCBt
+YXggaW8gbGVuISI7CisJCWdvdG8gZXJyOworCX0KKworCXRpLT5wcml2YXRlID0gdXQ7CisJcmV0
+dXJuIDA7CitlcnI6CisJdW5zdHJpcGVfZHRyKHRpKTsKKwlyZXR1cm4gcjsKK30KKworc3RhdGlj
+IHNlY3Rvcl90IG1hcF90b19jb3JlKHN0cnVjdCBkbV90YXJnZXQgKnRpLCBzdHJ1Y3QgYmlvICpi
+aW8pCit7CisJc3RydWN0IHVuc3RyaXBlICp1dCA9IHRpLT5wcml2YXRlOworCXNlY3Rvcl90IHNl
+YyA9IGJpby0+YmlfaXRlci5iaV9zZWN0b3I7CisKKwkvKiBBY2NvdW50IGZvciB3aGF0IGRyaXZl
+IHdlJ3JlIG9wZXJhdGluZyBvbiAqLworCXNlYyArPSB1dC0+Y3VyX2RyaXZlX2NodW5rX3NlY3Rv
+cnM7CisKKwkvKiBTaGlmdCB1cyB1cCB0byB0aGUgcmlnaHQgInJvdyIgb24gdGhlIGRyaXZlKi8K
+KwlzZWMgKz0gdXQtPnN0cmlwZV9zZWN0b3JzICogKHNlYyA+PiB1dC0+Y2h1bmtfc2hpZnQpOwor
+CXJldHVybiBzZWM7Cit9CisKK3N0YXRpYyBpbnQgdW5zdHJpcGVfbWFwKHN0cnVjdCBkbV90YXJn
+ZXQgKnRpLCBzdHJ1Y3QgYmlvICpiaW8pCit7CisJc3RydWN0IHVuc3RyaXBlICp1dCA9IHRpLT5w
+cml2YXRlOworCisJYmlvX3NldF9kZXYoYmlvLCB1dC0+ZGRpc2stPmJkZXYpOworCWJpby0+Ymlf
+aXRlci5iaV9zZWN0b3IgPSBtYXBfdG9fY29yZSh0aSwgYmlvKTsKKwlyZXR1cm4gRE1fTUFQSU9f
+UkVNQVBQRUQ7Cit9CisKK3N0YXRpYyB2b2lkIHVuc3RyaXBlX3N0YXR1cyhzdHJ1Y3QgZG1fdGFy
+Z2V0ICp0aSwgc3RhdHVzX3R5cGVfdCB0eXBlLAorCQkJICAgIHVuc2lnbmVkIGludCBzdGF0dXNf
+ZmxhZ3MsIGNoYXIgKnJlc3VsdCwgdW5zaWduZWQgaW50IG1heGxlbikKK3sKKwlzdHJ1Y3QgdW5z
+dHJpcGUgKnV0ID0gdGktPnByaXZhdGU7CisJdW5zaWduZWQgaW50IHN6ID0gMDsKKworCXN3aXRj
+aCAodHlwZSkgeworCWNhc2UgU1RBVFVTVFlQRV9JTkZPOgorCQlicmVhazsKKworCWNhc2UgU1RB
+VFVTVFlQRV9UQUJMRToKKwkJRE1FTUlUKCIlcyAlaGh1ICVoaHUgJXUiLAorCQkgICAgICAgdXQt
+PmRkaXNrLT5uYW1lLCB1dC0+Y3VyX2RyaXZlLCB1dC0+dG90YWxfZHJpdmVzLCB1dC0+Y2h1bmtf
+c2l6ZSk7CisJfQorfQorCitzdGF0aWMgdm9pZCB1bnN0cmlwZV9pb2hpbnRzKHN0cnVjdCBkbV90
+YXJnZXQgKnRpLAorCQkJc3RydWN0IHF1ZXVlX2xpbWl0cyAqbGltaXRzKQoreworCXN0cnVjdCB1
+bnN0cmlwZSAqdXQgPSB0aS0+cHJpdmF0ZTsKKwlzdHJ1Y3QgcXVldWVfbGltaXRzICpsaW0gPSAm
+YmRldl9nZXRfcXVldWUodXQtPmRkaXNrLT5iZGV2KS0+bGltaXRzOworCisJYmxrX2xpbWl0c19p
+b19taW4obGltaXRzLCBsaW0tPmlvX21pbik7CisJYmxrX2xpbWl0c19pb19vcHQobGltaXRzLCBs
+aW0tPmlvX29wdCk7CisJbGltaXRzLT5jaHVua19zZWN0b3JzID0gdXQtPmNodW5rX3NlY3RvcnM7
+Cit9CisKK3N0YXRpYyBpbnQgdW5zdHJpcGVfaXRlcmF0ZShzdHJ1Y3QgZG1fdGFyZ2V0ICp0aSwg
+aXRlcmF0ZV9kZXZpY2VzX2NhbGxvdXRfZm4gZm4sCisJCSAgICAgICB2b2lkICpkYXRhKQorewor
+CXN0cnVjdCB1bnN0cmlwZSAqdXQgPSB0aS0+cHJpdmF0ZTsKKworCXJldHVybiBmbih0aSwgdXQt
+PmRkaXNrLCAwLCB0aS0+bGVuLCBkYXRhKTsKK30KKworc3RhdGljIHN0cnVjdCB0YXJnZXRfdHlw
+ZSB1bnN0cmlwZV90YXJnZXQgPSB7CisJLm5hbWUgPSAidW5zdHJpcGVkIiwKKwkudmVyc2lvbiA9
+IHsxLCAwLCAwfSwKKwkubW9kdWxlID0gVEhJU19NT0RVTEUsCisJLmN0ciA9IHVuc3RyaXBlX2N0
+ciwKKwkuZHRyID0gdW5zdHJpcGVfZHRyLAorCS5tYXAgPSB1bnN0cmlwZV9tYXAsCisJLnN0YXR1
+cyA9IHVuc3RyaXBlX3N0YXR1cywKKwkuaXRlcmF0ZV9kZXZpY2VzID0gdW5zdHJpcGVfaXRlcmF0
+ZSwKKwkuaW9faGludHMgPSB1bnN0cmlwZV9pb2hpbnRzLAorfTsKKworc3RhdGljIGludCBfX2lu
+aXQgZG1fdW5zdHJpcGVfaW5pdCh2b2lkKQoreworCWludCByID0gZG1fcmVnaXN0ZXJfdGFyZ2V0
+KCZ1bnN0cmlwZV90YXJnZXQpOworCisJaWYgKHIgPCAwKQorCQlETUVSUigicmVnaXN0ZXIgZmFp
+bGVkICVkIiwgcik7CisKKwlyZXR1cm4gcjsKK30KKworc3RhdGljIHZvaWQgX19leGl0IGRtX3Vu
+c3RyaXBlX2V4aXQodm9pZCkKK3sKKwlkbV91bnJlZ2lzdGVyX3RhcmdldCgmdW5zdHJpcGVfdGFy
+Z2V0KTsKK30KKworbW9kdWxlX2luaXQoZG1fdW5zdHJpcGVfaW5pdCk7Cittb2R1bGVfZXhpdChk
+bV91bnN0cmlwZV9leGl0KTsKKworTU9EVUxFX0RFU0NSSVBUSU9OKERNX05BTUUgIiBETSB1bnN0
+cmlwZSIpOworTU9EVUxFX0FMSUFTKCJkbS11bnN0cmlwZSIpOworTU9EVUxFX0FVVEhPUigiU2Nv
+dHQgQmF1ZXIgPHNjb3R0LmJhdWVyQGludGVsLmNvbT4iKTsKK01PRFVMRV9MSUNFTlNFKCJHUEwi
+KTsKLS0gCjIuMTQuMwoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5j
+b20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
