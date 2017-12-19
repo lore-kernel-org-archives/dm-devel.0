@@ -1,13 +1,17 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v5] dm: add unstriped target
-Date: Mon, 18 Dec 2017 18:22:33 -0500
-Message-ID: <1513639353-7231-1-git-send-email-snitzer@redhat.com>
-References: <cover.1513618685.git.heinzm@redhat.com>
+From: monty <monty_pavel@sina.com>
+Subject: Re: [PATCH] persistent-data: fix bug about btree of
+ updating internal node's minima key in btree_split_beneath.
+Date: Tue, 19 Dec 2017 08:48:23 -0500
+Message-ID: <31081.7389436581$1513664918@news.gmane.org>
+References: <20171218212758.GA12360@yyp.>
+	<20171218171307.obyq62v3jt4lgqwg@reti>
+	<20171218173409.px65ncx2kp7d6p2v@reti>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <cover.1513618685.git.heinzm@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20171218173409.px65ncx2kp7d6p2v@reti>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,433 +21,99 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Keith Busch <keith.busch@intel.com>, Heinz Mauelshagen <heinzm@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Scott Bauer <scott.bauer@intel.com>
+To: Joe Thornber <thornber@redhat.com>
+Cc: dm-devel@redhat.com, ejt@redhat.com
 List-Id: dm-devel.ids
 
-From: Scott Bauer <scott.bauer@intel.com>
 
-[Preamble: I started with v3 and then folded in v4 and then refactored.
-I've only compile tested... ran out of time to test today.  Please
-review and let me know what you think, if you're OK with this I'll get
-it staged for 4.16. Thanks!]
+Look forward to your test result. The scene I found with problem as follows:
+note:
+	1. key size: 8;
+	2. value size: 8;
+	3. max_entries=252;
+	4. one level btree's root is A.
+operations:
+1. A's info:
+	nr_entries=252
+	keys:127-378
+2. insert 379 to btree
+		A'(127,253)
+			|
+	-------- ---------
+	|				  |
+	B(127-252)        C(253-379)
+3. insert 1-126 to btree
+		A'(127,253)
+			|
+	-------- ----------
+	|				  |
+	B(1-252)        C(253-379)
+3. insert 0 to btree
+		A'(127,127,253)
+			|
+	-------- -----------------
+	|				  |      |
+	B(0-126)    B'(127-252)   C(253-379)
+4.lookup(key=127), we can not find 127 in btree.
 
-This device mapper unstriped remaps and unstripes IO so it lands
-solely on a single drive in a HW RAID 0 or dm-striped target.
-
-In a 4 drive HW RAID 0 the striped target exposes 1/4th of the LBA range
-as a virtual drive.  Each IO to that virtual drive will only be issued
-to the 1 drive that was selected of the 4 drives in the HW RAID 0.
-
-This unstriped target is most useful for Intel NVMe drives that have
-multiple cores but that do not have firmware control to pin separate LBA
-ranges to each discrete cpu core.
-
-Signed-off-by: Scott Bauer <scott.bauer@intel.com>
-Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
-Acked-by: Keith Busch <keith.busch@intel.com>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- Documentation/device-mapper/unstriped.txt | 124 ++++++++++++++++
- drivers/md/Kconfig                        |   7 +
- drivers/md/Makefile                       |   1 +
- drivers/md/dm-unstripe.c                  | 227 ++++++++++++++++++++++++++++++
- 4 files changed, 359 insertions(+)
- create mode 100644 Documentation/device-mapper/unstriped.txt
- create mode 100644 drivers/md/dm-unstripe.c
-
-diff --git a/Documentation/device-mapper/unstriped.txt b/Documentation/device-mapper/unstriped.txt
-new file mode 100644
-index 000000000000..0b2a306c54ee
---- /dev/null
-+++ b/Documentation/device-mapper/unstriped.txt
-@@ -0,0 +1,124 @@
-+Introduction
-+============
-+
-+The device-mapper "unstriped" target provides a transparent mechanism to
-+unstripe a device-mapper "striped" target to access the underlying disks
-+without having to touch the true backing block-device.  It can also be
-+used to unstripe a hardware RAID-0 to access backing disks.
-+
-+Parameters:
-+<number of stripes> <chunk size> <stripe #> <dev_path> <offset>
-+
-+<number of stripes>
-+        The number of stripes in the RAID 0.
-+
-+<chunk size>
-+	The amount of 512B sectors in the chunk striping.
-+
-+<dev_path>
-+	The block device you wish to unstripe.
-+
-+<stripe #>
-+        The stripe number within the device that corresponds to physical
-+        drive you wish to unstripe.  This must be 0 indexed.
-+
-+
-+Why use this module?
-+====================
-+
-+An example of undoing an existing dm-stripe
-+-------------------------------------------
-+
-+This small bash script will setup 4 loop devices and use the existing
-+striped target to combine the 4 devices into one.  It then will use
-+the unstriped target ontop of the striped device to access the
-+individual backing loop devices.  We write data to the newly exposed
-+unstriped devices and verify the data written matches the correct
-+underlying device on the striped array.
-+
-+#!/bin/bash
-+
-+MEMBER_SIZE=$((128 * 1024 * 1024))
-+NUM=4
-+SEQ_END=$((${NUM}-1))
-+CHUNK=256
-+BS=4096
-+
-+RAID_SIZE=$((${MEMBER_SIZE}*${NUM}/512))
-+DM_PARMS="0 ${RAID_SIZE} striped ${NUM} ${CHUNK}"
-+COUNT=$((${MEMBER_SIZE} / ${BS}))
-+
-+for i in $(seq 0 ${SEQ_END}); do
-+  dd if=/dev/zero of=member-${i} bs=${MEMBER_SIZE} count=1 oflag=direct
-+  losetup /dev/loop${i} member-${i}
-+  DM_PARMS+=" /dev/loop${i} 0"
-+done
-+
-+echo $DM_PARMS | dmsetup create raid0
-+for i in $(seq 0 ${SEQ_END}); do
-+  echo "0 1 unstriped ${NUM} ${CHUNK} ${i} /dev/mapper/raid0 0" | dmsetup create set-${i}
-+done;
-+
-+for i in $(seq 0 ${SEQ_END}); do
-+  dd if=/dev/urandom of=/dev/mapper/set-${i} bs=${BS} count=${COUNT} oflag=direct
-+  diff /dev/mapper/set-${i} member-${i}
-+done;
-+
-+for i in $(seq 0 ${SEQ_END}); do
-+  dmsetup remove set-${i}
-+done
-+
-+dmsetup remove raid0
-+
-+for i in $(seq 0 ${SEQ_END}); do
-+  losetup -d /dev/loop${i}
-+  rm -f member-${i}
-+done
-+
-+Another example
-+---------------
-+
-+Intel NVMe drives contain two cores on the physical device.
-+Each core of the drive has segregated access to its LBA range.
-+The current LBA model has a RAID 0 128k chunk on each core, resulting
-+in a 256k stripe across the two cores:
-+
-+   Core 0:       Core 1:
-+  __________    __________
-+  | LBA 512|    | LBA 768|
-+  | LBA 0  |    | LBA 256|
-+  ----------    ----------
-+
-+The purpose of this unstriping is to provide better QoS in noisy
-+neighbor environments. When two partitions are created on the
-+aggregate drive without this unstriping, reads on one partition
-+can affect writes on another partition.  This is because the partitions
-+are striped across the two cores.  When we unstripe this hardware RAID 0
-+and make partitions on each new exposed device the two partitions are now
-+physically separated.
-+
-+With the dm-unstriped target we're able to segregate an fio script that
-+has read and write jobs that are independent of each other.  Compared to
-+when we run the test on a combined drive with partitions, we were able
-+to get a 92% reduction in read latency using this device mapper target.
-+
-+
-+Example dmsetup usage
-+=====================
-+
-+unstriped ontop of Intel NVMe device that has 2 cores
-+-----------------------------------------------------
-+dmsetup create nvmset0 --table '0 512 unstriped 2 256 0 /dev/nvme0n1 0'
-+dmsetup create nvmset1 --table '0 512 unstriped 2 256 1 /dev/nvme0n1 0'
-+
-+There will now be two devices that expose Intel NVMe core 0 and 1
-+respectively:
-+/dev/mapper/nvmset0
-+/dev/mapper/nvmset1
-+
-+unstriped ontop of striped with 4 drives using 128K chunk size
-+--------------------------------------------------------------
-+dmsetup create raid_disk0 --table '0 512 unstriped 4 256 0 /dev/mapper/striped 0'
-+dmsetup create raid_disk1 --table '0 512 unstriped 4 256 1 /dev/mapper/striped 0'
-+dmsetup create raid_disk2 --table '0 512 unstriped 4 256 2 /dev/mapper/striped 0'
-+dmsetup create raid_disk3 --table '0 512 unstriped 4 256 3 /dev/mapper/striped 0'
-diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
-index 83b9362be09c..7843cf86f74a 100644
---- a/drivers/md/Kconfig
-+++ b/drivers/md/Kconfig
-@@ -269,6 +269,13 @@ config DM_BIO_PRISON
- 
- source "drivers/md/persistent-data/Kconfig"
- 
-+config DM_UNSTRIPED
-+       tristate "Unstriped target"
-+       depends on BLK_DEV_DM
-+       ---help---
-+	  Issue I/O to individual drives of a striped RAID device.
-+	  Provides direct access to 1/N of an N-way RAID 0 device.
-+
- config DM_CRYPT
- 	tristate "Crypt target support"
- 	depends on BLK_DEV_DM
-diff --git a/drivers/md/Makefile b/drivers/md/Makefile
-index f701bb211783..63255f3ebd97 100644
---- a/drivers/md/Makefile
-+++ b/drivers/md/Makefile
-@@ -43,6 +43,7 @@ obj-$(CONFIG_BCACHE)		+= bcache/
- obj-$(CONFIG_BLK_DEV_MD)	+= md-mod.o
- obj-$(CONFIG_BLK_DEV_DM)	+= dm-mod.o
- obj-$(CONFIG_BLK_DEV_DM_BUILTIN) += dm-builtin.o
-+obj-$(CONFIG_DM_UNSTRIPED)	+= dm-unstripe.o
- obj-$(CONFIG_DM_BUFIO)		+= dm-bufio.o
- obj-$(CONFIG_DM_BIO_PRISON)	+= dm-bio-prison.o
- obj-$(CONFIG_DM_CRYPT)		+= dm-crypt.o
-diff --git a/drivers/md/dm-unstripe.c b/drivers/md/dm-unstripe.c
-new file mode 100644
-index 000000000000..b6f641dcbdee
---- /dev/null
-+++ b/drivers/md/dm-unstripe.c
-@@ -0,0 +1,227 @@
-+/*
-+ * Copyright (C) 2017 Intel Corporation.
-+ *
-+ * This file is released under the GPL.
-+ */
-+
-+#include "dm.h"
-+
-+#include <linux/module.h>
-+#include <linux/init.h>
-+#include <linux/blkdev.h>
-+#include <linux/bio.h>
-+#include <linux/slab.h>
-+#include <linux/bitops.h>
-+#include <linux/device-mapper.h>
-+
-+struct unstripe_c {
-+	struct dm_dev *dev;
-+	sector_t physical_start;
-+
-+	uint32_t stripes;
-+
-+	uint32_t unstripe;
-+	sector_t unstripe_width;
-+	sector_t unstripe_offset;
-+
-+	uint32_t chunk_size;
-+	u8 chunk_shift;
-+};
-+
-+#define DM_MSG_PREFIX "unstriped"
-+
-+void cleanup_unstripe(struct unstripe_c *uc, struct dm_target *ti)
-+{
-+	if (uc->dev)
-+		dm_put_device(ti, uc->dev);
-+	kfree(uc);
-+}
-+
-+/*
-+ * Contruct an unstriped mapping.
-+ * <number of stripes> <chunk size> <stripe #> <dev_path> <offset>
-+ */
-+static int unstripe_ctr(struct dm_target *ti, unsigned int argc, char **argv)
-+{
-+	struct unstripe_c *uc;
-+	sector_t width, tmp_len;
-+	unsigned long long start;
-+	char dummy;
-+	int r = -EINVAL;
-+
-+	if (argc != 5) {
-+		ti->error = "Invalid number of arguments";
-+		return -EINVAL;
-+	}
-+
-+	uc = kzalloc(sizeof(*uc), GFP_KERNEL);
-+	if (!uc) {
-+		ti->error = "Memory allocation for unstriped context failed";
-+		return -ENOMEM;
-+	}
-+
-+	if (kstrtouint(argv[0], 10, &uc->stripes) || !uc->stripes) {
-+		ti->error = "Invalid stripe count";
-+		goto err;
-+	}
-+
-+	if (kstrtouint(argv[1], 10, &uc->chunk_size) || !uc->chunk_size) {
-+		ti->error = "Invalid chunk_size";
-+		goto err;
-+	}
-+
-+	// FIXME: must support non power of 2 chunk_size, dm-stripe.c does
-+	if (!is_power_of_2(uc->chunk_size)) {
-+		ti->error = "Non power of 2 chunk_size is not supported yet";
-+		goto err;
-+	}
-+
-+	if (kstrtouint(argv[2], 10, &uc->unstripe)) {
-+		ti->error = "Invalid stripe number";
-+		goto err;
-+	}
-+
-+	if (uc->unstripe > uc->stripes && uc->stripes > 1) {
-+		ti->error = "Please provide stripe between [0, # of stripes]";
-+		goto err;
-+	}
-+
-+	r = dm_get_device(ti, argv[3], dm_table_get_mode(ti->table), &uc->dev);
-+	if (r) {
-+		ti->error = "Couldn't get striped device";
-+		goto err;
-+	}
-+
-+	if (sscanf(argv[1], "%llu%c", &start, &dummy) != 1) {
-+		ti->error = "Invalid striped device offset";
-+		goto err;
-+	}
-+	uc->physical_start = start;
-+
-+	uc->unstripe_offset = uc->unstripe * uc->chunk_size;
-+	uc->unstripe_width = (uc->stripes - 1) * uc->chunk_size;
-+	uc->chunk_shift = fls(uc->chunk_size) - 1;
-+
-+	width = ti->len;
-+	if (sector_div(width, uc->stripes)) {
-+		ti->error = "Target length not divisible by number of stripes";
-+		goto err;
-+	}
-+
-+	tmp_len = width;
-+	if (sector_div(tmp_len, uc->chunk_size)) {
-+		ti->error = "Target length not divisible by chunk size";
-+		goto err;
-+	}
-+
-+	r = dm_set_target_max_io_len(ti, uc->chunk_size);
-+	if (r) {
-+		ti->error = "Failed to set max io len";
-+		goto err;
-+	}
-+
-+	ti->private = uc;
-+	return 0;
-+err:
-+	cleanup_unstripe(uc, ti);
-+	return r;
-+}
-+
-+static void unstripe_dtr(struct dm_target *ti)
-+{
-+	struct unstripe_c *uc = ti->private;
-+
-+	cleanup_unstripe(uc, ti);
-+}
-+
-+static sector_t map_to_core(struct dm_target *ti, struct bio *bio)
-+{
-+	struct unstripe_c *uc = ti->private;
-+	sector_t sector = bio->bi_iter.bi_sector;
-+
-+	/* Account for what stripe we're operating on */
-+	sector += uc->unstripe_offset;
-+
-+	/* Shift us up to the right "row" on the stripe */
-+	sector += uc->unstripe_width * (sector >> uc->chunk_shift);
-+	return sector;
-+}
-+
-+static int unstripe_map(struct dm_target *ti, struct bio *bio)
-+{
-+	struct unstripe_c *uc = ti->private;
-+
-+	bio_set_dev(bio, uc->dev->bdev);
-+	bio->bi_iter.bi_sector = map_to_core(ti, bio) + uc->physical_start;
-+
-+	return DM_MAPIO_REMAPPED;
-+}
-+
-+static void unstripe_status(struct dm_target *ti, status_type_t type,
-+			    unsigned int status_flags, char *result, unsigned int maxlen)
-+{
-+	struct unstripe_c *uc = ti->private;
-+	unsigned int sz = 0;
-+
-+	switch (type) {
-+	case STATUSTYPE_INFO:
-+		break;
-+
-+	case STATUSTYPE_TABLE:
-+		DMEMIT("%d %llu %d %s %llu",
-+		       uc->stripes, (unsigned long long)uc->chunk_size, uc->unstripe,
-+		       uc->dev->name, (unsigned long long)uc->physical_start);
-+		break;
-+	}
-+}
-+
-+static int unstripe_iterate_devices(struct dm_target *ti,
-+				    iterate_devices_callout_fn fn, void *data)
-+{
-+	struct unstripe_c *uc = ti->private;
-+
-+	return fn(ti, uc->dev, uc->physical_start, ti->len, data);
-+}
-+
-+static void unstripe_io_hints(struct dm_target *ti,
-+			       struct queue_limits *limits)
-+{
-+	struct unstripe_c *uc = ti->private;
-+
-+	limits->chunk_sectors = uc->chunk_size;
-+}
-+
-+static struct target_type unstripe_target = {
-+	.name = "unstriped",
-+	.version = {1, 0, 0},
-+	.module = THIS_MODULE,
-+	.ctr = unstripe_ctr,
-+	.dtr = unstripe_dtr,
-+	.map = unstripe_map,
-+	.status = unstripe_status,
-+	.iterate_devices = unstripe_iterate_devices,
-+	.io_hints = unstripe_io_hints,
-+};
-+
-+static int __init dm_unstripe_init(void)
-+{
-+	int r;
-+
-+	r = dm_register_target(&unstripe_target);
-+	if (r < 0)
-+		DMERR("target registration failed");
-+
-+	return r;
-+}
-+
-+static void __exit dm_unstripe_exit(void)
-+{
-+	dm_unregister_target(&unstripe_target);
-+}
-+
-+module_init(dm_unstripe_init);
-+module_exit(dm_unstripe_exit);
-+
-+MODULE_DESCRIPTION(DM_NAME " unstriped target");
-+MODULE_AUTHOR("Scott Bauer <scott.bauer@intel.com>");
-+MODULE_LICENSE("GPL");
--- 
-2.15.0
+On Mon, Dec 18, 2017 at 05:34:09PM +0000, Joe Thornber wrote:
+> 
+> On Mon, Dec 18, 2017 at 05:13:08PM +0000, Joe Thornber wrote:
+> > Hi Monty,
+> > 
+> > On Mon, Dec 18, 2017 at 04:27:58PM -0500, monty wrote:
+> > > Subject: [PATCH] persistent-data: fix bug about btree of updating internal node's minima
+> > >  key in btree_split_beneath.
+> > > 
+> > >  fix bug about btree_split_beneath func, this bug may cause a key had
+> > >  been inserted to btree, but dm_btree_lookup can not find the key in
+> > >  btree later.
+> > 
+> > I think you've spotted a real issue, but I don't like where you've
+> > fixed up the btree_split_beneath() function.  I'll post a patch in a
+> > bit.
+> 
+> Patch below.  This is completely untested.  I'll test tomorrow and update.
+> 
+> Instead of fiddling with the spine we unlock both the new children and
+> let the current spine entry (which now has just two entries) continue.
+> That way the bounds on the lowest key is adjusted within the main loop
+> of btree_insert_raw().
+> 
+> - Joe
+> 
+> 
+> 
+> diff --git a/drivers/md/persistent-data/dm-btree.c b/drivers/md/persistent-data/dm-btree.c
+> index 416060c2570..ee2c01685f5 100644
+> --- a/drivers/md/persistent-data/dm-btree.c
+> +++ b/drivers/md/persistent-data/dm-btree.c
+> @@ -572,23 +572,8 @@ static int btree_split_beneath(struct shadow_spine *s, uint64_t key)
+>         pn->keys[1] = rn->keys[0];
+> 	        memcpy_disk(value_ptr(pn, 1), &val, sizeof(__le64));
+> 
+> -       /*
+> -        * rejig the spine.  This is ugly, since it knows too
+> -        * much about the spine
+> -        */
+> -       if (s->nodes[0] != new_parent) {
+> -               unlock_block(s->info, s->nodes[0]);
+> -               s->nodes[0] = new_parent;
+> -       }
+> -       if (key < le64_to_cpu(rn->keys[0])) {
+> -               unlock_block(s->info, right);
+> -               s->nodes[1] = left;
+> -       } else {
+> -               unlock_block(s->info, left);
+> -               s->nodes[1] = right;
+> -       }
+> -       s->count = 2;
+> -
+> +       unlock_block(s->info, left);
+> +       unlock_block(s->info, right);
+>         return 0;
+> }
+> 
+> 
+> 
+> 
