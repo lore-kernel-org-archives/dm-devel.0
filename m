@@ -1,7 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [for-4.16 PATCH 4/5] dm mpath: use NVMe error handling to know when an error is retryable
-Date: Tue, 19 Dec 2017 16:05:45 -0500
-Message-ID: <20171219210546.65928-5-snitzer@redhat.com>
+Subject: [for-4.16 PATCH 3/5] nvme: move nvme_req_needs_failover() from multipath to core
+Date: Tue, 19 Dec 2017 16:05:44 -0500
+Message-ID: <20171219210546.65928-4-snitzer@redhat.com>
 References: <20171219210546.65928-1-snitzer@redhat.com>
 Return-path: <linux-block-owner@vger.kernel.org>
 In-Reply-To: <20171219210546.65928-1-snitzer@redhat.com>
@@ -10,121 +10,155 @@ To: axboe@kernel.dk, hch@lst.de, emilne@redhat.com, james.smart@broadcom.com
 Cc: hare@suse.de, Bart.VanAssche@wdc.com, linux-block@vger.kernel.org, linux-nvme@lists.infradead.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Like NVMe's native multipath support, DM multipath's NVMe bio-based
-support now allows NVMe core's error handling to requeue an NVMe blk-mq
-request's bios onto DM multipath's queued_bios list for resubmission
-once fail_path() occurs.  multipath_failover_rq() serves as a
-replacement for the traditional multipath_end_io_bio().
+nvme_req_needs_failover() could be usable regardless of whether
+CONFIG_NVME_MULTIPATH is set.
 
-DM multipath's bio submission to NVMe must be done in terms that allow
-the reuse of NVMe core's error handling.  The following care is taken to
-realize this reuse:
-
-- NVMe core won't attempt to retry an IO if it has
-  REQ_FAILFAST_TRANSPORT set; so only set it in __map_bio().
-
-- Setup bio's bi_failover_rq hook, to use multipath_failover_rq, so that
-  NVMe blk-mq requests inherit it for use as the failover_rq callback
-  if/when NVMe core determines a request must be retried.
+DM multipath will also make use of it.
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-mpath.c | 52 ++++++++++++++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 51 insertions(+), 1 deletion(-)
+ drivers/nvme/host/core.c      | 46 ++++++++++++++++++++++++++++++++++++++++++
+ drivers/nvme/host/multipath.c | 47 -------------------------------------------
+ drivers/nvme/host/nvme.h      |  5 -----
+ 3 files changed, 46 insertions(+), 52 deletions(-)
 
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 3198093006e4..0ed407e150f5 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -584,9 +584,13 @@ static struct pgpath *__map_bio(struct multipath *m, struct bio *bio)
- 		return ERR_PTR(-EAGAIN);
- 	}
- 
-+	bio->bi_opf |= REQ_FAILFAST_TRANSPORT;
-+
- 	return pgpath;
+diff --git a/drivers/nvme/host/core.c b/drivers/nvme/host/core.c
+index 0c0a52fa78e4..63691e251f8c 100644
+--- a/drivers/nvme/host/core.c
++++ b/drivers/nvme/host/core.c
+@@ -188,6 +188,52 @@ static inline bool nvme_req_needs_retry(struct request *req)
+ 	return true;
  }
  
-+static void multipath_failover_rq(struct request *rq);
-+
- static struct pgpath *__map_bio_nvme(struct multipath *m, struct bio *bio)
- {
- 	struct pgpath *pgpath;
-@@ -614,6 +618,8 @@ static struct pgpath *__map_bio_nvme(struct multipath *m, struct bio *bio)
- 		return NULL;
- 	}
- 
-+	bio->bi_failover_rq = multipath_failover_rq;
-+
- 	return pgpath;
- }
- 
-@@ -641,7 +647,6 @@ static int __multipath_map_bio(struct multipath *m, struct bio *bio,
- 
- 	bio->bi_status = 0;
- 	bio_set_dev(bio, pgpath->path.dev->bdev);
--	bio->bi_opf |= REQ_FAILFAST_TRANSPORT;
- 
- 	if (pgpath->pg->ps.type->start_io)
- 		pgpath->pg->ps.type->start_io(&pgpath->pg->ps,
-@@ -1610,6 +1615,14 @@ static int multipath_end_io_bio(struct dm_target *ti, struct bio *clone,
- 	unsigned long flags;
- 	int r = DM_ENDIO_DONE;
- 
-+	/*
-+	 * NVMe bio-based only needs to update path selector (on
-+	 * success or errors that NVMe deemed non-retryable)
-+	 * - retryable errors are handled by multipath_failover_rq
-+	 */
-+	if (clone->bi_failover_rq)
-+		goto done;
-+
- 	if (!*error || !retry_error(*error))
- 		goto done;
- 
-@@ -1645,6 +1658,43 @@ static int multipath_end_io_bio(struct dm_target *ti, struct bio *clone,
- 	return r;
- }
- 
-+/*
-+ * multipath_failover_rq serves as a replacement for multipath_end_io_bio
-+ * for all bios in a request with a retryable error.
-+ */
-+static void multipath_failover_rq(struct request *rq)
++static bool nvme_req_needs_failover(struct request *req)
 +{
-+	struct dm_target *ti = dm_bio_get_target(rq->bio);
-+	struct multipath *m = ti->private;
-+	struct dm_mpath_io *mpio = get_mpio_from_bio(rq->bio);
-+	struct pgpath *pgpath = mpio->pgpath;
-+	unsigned long flags;
++	/* Caller verifies req->failover_rq is set */
 +
-+	if (pgpath) {
-+		struct path_selector *ps = &pgpath->pg->ps;
++	switch (nvme_req(req)->status & 0x7ff) {
++	/*
++	 * Generic command status:
++	 */
++	case NVME_SC_INVALID_OPCODE:
++	case NVME_SC_INVALID_FIELD:
++	case NVME_SC_INVALID_NS:
++	case NVME_SC_LBA_RANGE:
++	case NVME_SC_CAP_EXCEEDED:
++	case NVME_SC_RESERVATION_CONFLICT:
++		return false;
 +
-+		if (ps->type->end_io)
-+			ps->type->end_io(ps, &pgpath->path, blk_rq_bytes(rq));
++	/*
++	 * I/O command set specific error.  Unfortunately these values are
++	 * reused for fabrics commands, but those should never get here.
++	 */
++	case NVME_SC_BAD_ATTRIBUTES:
++	case NVME_SC_INVALID_PI:
++	case NVME_SC_READ_ONLY:
++	case NVME_SC_ONCS_NOT_SUPPORTED:
++		WARN_ON_ONCE(nvme_req(req)->cmd->common.opcode ==
++			nvme_fabrics_command);
++		return false;
 +
-+		fail_path(pgpath);
++	/*
++	 * Media and Data Integrity Errors:
++	 */
++	case NVME_SC_WRITE_FAULT:
++	case NVME_SC_READ_ERROR:
++	case NVME_SC_GUARD_CHECK:
++	case NVME_SC_APPTAG_CHECK:
++	case NVME_SC_REFTAG_CHECK:
++	case NVME_SC_COMPARE_FAILED:
++	case NVME_SC_ACCESS_DENIED:
++	case NVME_SC_UNWRITTEN_BLOCK:
++		return false;
 +	}
 +
-+	if (atomic_read(&m->nr_valid_paths) == 0 &&
-+	    !test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags) &&
-+	    !must_push_back_bio(m)) {
-+		dm_report_EIO(m);
-+		blk_mq_end_request(rq, BLK_STS_IOERR);
-+		return;
-+	}
-+
-+	spin_lock_irqsave(&m->lock, flags);
-+	blk_steal_bios(&m->queued_bios, rq);
-+	spin_unlock_irqrestore(&m->lock, flags);
-+	queue_work(kmultipathd, &m->process_queued_bios);
-+
-+	blk_mq_end_request(rq, 0);
++	/* Everything else could be a path failure, so should be retried */
++	return true;
 +}
 +
- /*
-  * Suspend can't complete until all the I/O is processed so if
-  * the last path fails we must error any remaining I/O.
+ void nvme_complete_rq(struct request *req)
+ {
+ 	if (unlikely(nvme_req(req)->status && nvme_req_needs_retry(req))) {
+diff --git a/drivers/nvme/host/multipath.c b/drivers/nvme/host/multipath.c
+index 0ab51c184df9..8df01a8d6c02 100644
+--- a/drivers/nvme/host/multipath.c
++++ b/drivers/nvme/host/multipath.c
+@@ -33,53 +33,6 @@ static void nvme_failover_req(struct request *req)
+ 	kblockd_schedule_work(&ns->head->requeue_work);
+ }
+ 
+-bool nvme_req_needs_failover(struct request *req)
+-{
+-	if (!req->failover_rq)
+-		return false;
+-
+-	switch (nvme_req(req)->status & 0x7ff) {
+-	/*
+-	 * Generic command status:
+-	 */
+-	case NVME_SC_INVALID_OPCODE:
+-	case NVME_SC_INVALID_FIELD:
+-	case NVME_SC_INVALID_NS:
+-	case NVME_SC_LBA_RANGE:
+-	case NVME_SC_CAP_EXCEEDED:
+-	case NVME_SC_RESERVATION_CONFLICT:
+-		return false;
+-
+-	/*
+-	 * I/O command set specific error.  Unfortunately these values are
+-	 * reused for fabrics commands, but those should never get here.
+-	 */
+-	case NVME_SC_BAD_ATTRIBUTES:
+-	case NVME_SC_INVALID_PI:
+-	case NVME_SC_READ_ONLY:
+-	case NVME_SC_ONCS_NOT_SUPPORTED:
+-		WARN_ON_ONCE(nvme_req(req)->cmd->common.opcode ==
+-			nvme_fabrics_command);
+-		return false;
+-
+-	/*
+-	 * Media and Data Integrity Errors:
+-	 */
+-	case NVME_SC_WRITE_FAULT:
+-	case NVME_SC_READ_ERROR:
+-	case NVME_SC_GUARD_CHECK:
+-	case NVME_SC_APPTAG_CHECK:
+-	case NVME_SC_REFTAG_CHECK:
+-	case NVME_SC_COMPARE_FAILED:
+-	case NVME_SC_ACCESS_DENIED:
+-	case NVME_SC_UNWRITTEN_BLOCK:
+-		return false;
+-	}
+-
+-	/* Everything else could be a path failure, so should be retried */
+-	return true;
+-}
+-
+ void nvme_kick_requeue_lists(struct nvme_ctrl *ctrl)
+ {
+ 	struct nvme_ns *ns;
+diff --git a/drivers/nvme/host/nvme.h b/drivers/nvme/host/nvme.h
+index 5195b4850eb0..130eed526e1f 100644
+--- a/drivers/nvme/host/nvme.h
++++ b/drivers/nvme/host/nvme.h
+@@ -395,7 +395,6 @@ extern const struct attribute_group nvme_ns_id_attr_group;
+ extern const struct block_device_operations nvme_ns_head_ops;
+ 
+ #ifdef CONFIG_NVME_MULTIPATH
+-bool nvme_req_needs_failover(struct request *req);
+ void nvme_kick_requeue_lists(struct nvme_ctrl *ctrl);
+ int nvme_mpath_alloc_disk(struct nvme_ctrl *ctrl,struct nvme_ns_head *head);
+ void nvme_mpath_add_disk(struct nvme_ns_head *head);
+@@ -412,10 +411,6 @@ static inline void nvme_mpath_clear_current_path(struct nvme_ns *ns)
+ }
+ struct nvme_ns *nvme_find_path(struct nvme_ns_head *head);
+ #else
+-static inline bool nvme_req_needs_failover(struct request *req)
+-{
+-	return false;
+-}
+ static inline void nvme_kick_requeue_lists(struct nvme_ctrl *ctrl)
+ {
+ }
 -- 
 2.15.0
