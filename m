@@ -1,17 +1,16 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: [PATCH] persistent-data: fix bug about btree of
- updating internal node's minima key in btree_split_beneath.
-Date: Tue, 19 Dec 2017 19:05:58 +0000
-Message-ID: <20171219190557.aif7othfwkotybl7@reti>
-References: <20171218212758.GA12360@yyp.>
-	<20171218171307.obyq62v3jt4lgqwg@reti>
-	<20171218173409.px65ncx2kp7d6p2v@reti>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v5] dm: add unstriped target
+Date: Tue, 19 Dec 2017 15:03:53 -0500
+Message-ID: <20171219200353.GA65364@redhat.com>
+References: <cover.1513618685.git.heinzm@redhat.com>
+	<1513639353-7231-1-git-send-email-snitzer@redhat.com>
+	<20171219183511.wdbr3kmz5fw2f4lr@sbauer-Z170X-UD5>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20171218173409.px65ncx2kp7d6p2v@reti>
+In-Reply-To: <20171219183511.wdbr3kmz5fw2f4lr@sbauer-Z170X-UD5>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,16 +20,74 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: monty_pavel@sina.com, dm-devel@redhat.com, ejt@redhat.com
+To: Scott Bauer <scott.bauer@intel.com>
+Cc: Keith Busch <keith.busch@intel.com>, Heinz Mauelshagen <heinzm@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Dec 18, 2017 at 05:34:09PM +0000, Joe Thornber wrote:
-> Patch below.  This is completely untested.  I'll test tomorrow and update.
+On Tue, Dec 19 2017 at  1:35P -0500,
+Scott Bauer <scott.bauer@intel.com> wrote:
 
-The patch appears to work.  I'm using this test to reproduce the problem:
+> On Mon, Dec 18, 2017 at 06:22:33PM -0500, Mike Snitzer wrote:
+> 
+> > +	if (sscanf(argv[1], "%llu%c", &start, &dummy) != 1) {
+>                         ^ should be argv[4]
+> > +		ti->error = "Invalid striped device offset";
+> > +		goto err;
+> > +	}
+> > +	uc->physical_start = start;
+> 
+> Hi Mike,
+> Sorry for the bombardment of emails. I think I've fixed the last
+> problem. Above is the last issue.
+> 
+> Below is a patch you can apply that will fix up the sector switch, I
+> had mentioned in the previous mail, as well as the wrong argv usage
+> from above.
+> 
+> I still have not solved the NULL pointer issue, i'll continue to
+> investigate that. Unless you have an idea of why that is occuring.
 
-   https://github.com/jthornber/thin-provisioning-tools/blob/master/functional-tests/device-mapper/dm-tests.scm#L593
+See below for incremental patch that should fix the NULL pointer, please
+test and I'll fold it in, along with your incremental.
 
-I need to do some more regression testing before I send it upstream.
+Thanks!
 
-- Joe
+> You can trigger it without having to create/remove/create. Just a
+> creation with a bad (odd length) target length will do it.
+> 
+> If you don't want this patch but want me to do a v6 I can do that as
+> well.
+
+I'll take it, no worries on sending out v6.
+
+diff --git a/drivers/md/dm-unstripe.c b/drivers/md/dm-unstripe.c
+index b6f641dcbdee..27a8400a96f2 100644
+--- a/drivers/md/dm-unstripe.c
++++ b/drivers/md/dm-unstripe.c
+@@ -47,7 +47,6 @@ static int unstripe_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	sector_t width, tmp_len;
+ 	unsigned long long start;
+ 	char dummy;
+-	int r = -EINVAL;
+ 
+ 	if (argc != 5) {
+ 		ti->error = "Invalid number of arguments";
+@@ -86,8 +85,7 @@ static int unstripe_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 		goto err;
+ 	}
+ 
+-	r = dm_get_device(ti, argv[3], dm_table_get_mode(ti->table), &uc->dev);
+-	if (r) {
++	if (dm_get_device(ti, argv[3], dm_table_get_mode(ti->table), &uc->dev))
+ 		ti->error = "Couldn't get striped device";
+ 		goto err;
+ 	}
+@@ -124,7 +122,7 @@ static int unstripe_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	return 0;
+ err:
+ 	cleanup_unstripe(uc, ti);
+-	return r;
++	return -EINVAL;
+ }
+ 
+ static void unstripe_dtr(struct dm_target *ti)
