@@ -1,79 +1,96 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [for-4.16 PATCH 0/5] block, nvme, dm: allow DM multipath to use NVMe's error handler
-Date: Tue, 19 Dec 2017 16:05:41 -0500
-Message-ID: <20171219210546.65928-1-snitzer@redhat.com>
+Subject: [for-4.16 PATCH 1/5] block: establish request failover callback infrastructure
+Date: Tue, 19 Dec 2017 16:05:42 -0500
+Message-ID: <20171219210546.65928-2-snitzer@redhat.com>
+References: <20171219210546.65928-1-snitzer@redhat.com>
 Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20171219210546.65928-1-snitzer@redhat.com>
 Sender: linux-block-owner@vger.kernel.org
 To: axboe@kernel.dk, hch@lst.de, emilne@redhat.com, james.smart@broadcom.com
 Cc: hare@suse.de, Bart.VanAssche@wdc.com, linux-block@vger.kernel.org, linux-nvme@lists.infradead.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-These patches enable DM multipath to work well on NVMe over Fabrics
-devices.  Currently that implies CONFIG_NVME_MULTIPATH is _not_ set.
+If bio sets 'bi_failover_rq' callback it'll get transfered to the
+appropriate request's 'failover_rq' using blk_init_request_from_bio().
 
-But follow-on work will be to make it so that native NVMe multipath
-and DM multipath can be made to co-exist (e.g. blacklisting certain
-NVMe devices from being consumed by native NVMe multipath?)
+This callback is expected to use the blk_steal_bios() interface to
+transfer a request's bios back to a bio-based request_queue.
 
-Patch 1 updates block core to formalize a recent construct that
-Christoph embeedded into NVMe core (and native NVMe multipath):
-callback into a bio-based driver from the blk-mq driver's .complete
-hook to blk_steal_bios() a request's bios.
+This will be used by both NVMe multipath and DM multipath.  Without it
+DM multipath cannot get access to NVMe-specific error handling that NVMe
+core provides in nvme_complete_rq().
 
-Patch 2 switches NVMe over to using the block infrastructure
-established by Patch 1.
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ block/blk-core.c          | 2 ++
+ block/blk-mq.c            | 1 +
+ include/linux/blk_types.h | 4 ++++
+ include/linux/blkdev.h    | 6 ++++++
+ 4 files changed, 13 insertions(+)
 
-Patch 3 moves the nvme_req_needs_failover() from NVMe multipath to
-core.  Which allow sstacked devices (like DM multipath) to make use of
-NVMe's enhanced error handling.
-
-Patch 4 updates DM multipath to also make use of the block
-infrastructure established by Patch 1.
-
-Patch 5 can be largely ignored.. but it illustrates that Patch 1 - 4
-enable DM multipath to avoid extra DM endio callbacks.
-
-These patches have been developed ontop of numerous DM changes I've
-staged for 4.16, see:
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-4.16
-(which happens to include these 5 patches at the end, purely for
-interim linux-next coverage purposes as these changes land in the
-appropriate maintainer tree).
-
-I've updated the "mptest" DM multipath testsuite to provide NVMe test
-coverage (using NVMe fcloop), see: https://github.com/snitm/mptest
-
-The tree I've been testing includes all of 'dm-4.16' and all but one
-of the commits from 'nvme-4.16', see:
-https://git.kernel.org/pub/scm/linux/kernel/git/snitzer/linux.git/log/?h=dm-4.16_nvme-4.16
-(I've let James Smart know that commit a0b69cc8 causes "nvme connect"
-to not work on my fcloop testbed).
-
-Jens, provided review is favorable, I'd very much appreciate it you'd
-pick up patches 1 - 3 for 4.16.
-
-Thanks,
-Mike
-
-Mike Snitzer (5):
-  block: establish request failover callback infrastructure
-  nvme: use request's failover callback for multipath failover
-  nvme: move nvme_req_needs_failover() from multipath to core
-  dm mpath: use NVMe error handling to know when an error is retryable
-  dm mpath: skip calls to end_io_bio if using NVMe bio-based and round-robin
-
- block/blk-core.c              |  2 ++
- block/blk-mq.c                |  1 +
- drivers/md/dm-mpath.c         | 68 ++++++++++++++++++++++++++++++++++++++++++-
- drivers/md/dm-rq.c            |  8 ++---
- drivers/md/dm.c               |  7 +++--
- drivers/nvme/host/core.c      | 50 +++++++++++++++++++++++++++++--
- drivers/nvme/host/multipath.c | 52 ++-------------------------------
- drivers/nvme/host/nvme.h      | 14 ---------
- include/linux/blk_types.h     |  4 +++
- include/linux/blkdev.h        |  6 ++++
- include/linux/device-mapper.h |  6 ++++
- 11 files changed, 145 insertions(+), 73 deletions(-)
-
+diff --git a/block/blk-core.c b/block/blk-core.c
+index b8881750a3ac..95bdc4f2b11d 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -1872,6 +1872,8 @@ void blk_init_request_from_bio(struct request *req, struct bio *bio)
+ 	else
+ 		req->ioprio = IOPRIO_PRIO_VALUE(IOPRIO_CLASS_NONE, 0);
+ 	req->write_hint = bio->bi_write_hint;
++	if (bio->bi_failover_rq)
++		req->failover_rq = bio->bi_failover_rq;
+ 	blk_rq_bio_prep(req->q, req, bio);
+ }
+ EXPORT_SYMBOL_GPL(blk_init_request_from_bio);
+diff --git a/block/blk-mq.c b/block/blk-mq.c
+index 11097477eeab..bb52f8283f07 100644
+--- a/block/blk-mq.c
++++ b/block/blk-mq.c
+@@ -320,6 +320,7 @@ static struct request *blk_mq_rq_ctx_init(struct blk_mq_alloc_data *data,
+ 
+ 	rq->end_io = NULL;
+ 	rq->end_io_data = NULL;
++	rq->failover_rq = NULL;
+ 	rq->next_rq = NULL;
+ 
+ 	data->ctx->rq_dispatched[op_is_sync(op)]++;
+diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+index a1e628e032da..c3a952991814 100644
+--- a/include/linux/blk_types.h
++++ b/include/linux/blk_types.h
+@@ -18,6 +18,9 @@ struct io_context;
+ struct cgroup_subsys_state;
+ typedef void (bio_end_io_t) (struct bio *);
+ 
++struct request;
++typedef void (rq_failover_fn)(struct request *);
++
+ /*
+  * Block error status values.  See block/blk-core:blk_errors for the details.
+  */
+@@ -77,6 +80,7 @@ struct bio {
+ 	atomic_t		__bi_remaining;
+ 
+ 	bio_end_io_t		*bi_end_io;
++	rq_failover_fn		*bi_failover_rq;
+ 
+ 	void			*bi_private;
+ #ifdef CONFIG_BLK_CGROUP
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 8089ca17db9a..46bcd782debe 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -237,6 +237,12 @@ struct request {
+ 	rq_end_io_fn *end_io;
+ 	void *end_io_data;
+ 
++	/*
++	 * callback to failover request's bios back to upper layer
++	 * bio-based queue using blk_steal_bios().
++	 */
++	rq_failover_fn *failover_rq;
++
+ 	/* for bidi */
+ 	struct request *next_rq;
+ };
 -- 
 2.15.0
