@@ -1,105 +1,160 @@
-From: Christian Borntraeger <borntraeger@de.ibm.com>
-Subject: regression 4.15-rc: kernel oops in dm-multipath
-Date: Fri, 22 Dec 2017 10:53:21 +0100
-Message-ID: <7dc463af-554f-1778-7e24-757de143d6b7@de.ibm.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Language: en-US
-Sender: linux-block-owner@vger.kernel.org
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>
+From: Dongsu Park <dongsu@kinvolk.io>
+Subject: [PATCH 01/11] block_dev: Support checking inode permissions in lookup_bdev()
+Date: Fri, 22 Dec 2017 15:32:25 +0100
+Message-ID: <ef5e609602df6d7e2b4aa07b92600f04b6851902.1512041070.git.dongsu@kinvolk.io>
+References: <cover.1512741134.git.dongsu@kinvolk.io>
+Return-path: <linux-bcache-owner@vger.kernel.org>
+In-Reply-To: <cover.1512741134.git.dongsu@kinvolk.io>
+Sender: linux-bcache-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: containers@lists.linux-foundation.org, Alban Crequy <alban@kinvolk.io>, "Eric W . Biederman" <ebiederm@xmission.com>, Miklos Szeredi <mszeredi@redhat.com>, Seth Forshee <seth.forshee@canonical.com>, Sargun Dhillon <sargun@sargun.me>, Dongsu Park <dongsu@kinvolk.io>, dm-devel@redhat.com, linux-bcache@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mtd@lists.infradead.org, Alexander Viro <viro@zeniv.linux.org.uk>, Jan Kara <jack@suse.com>, Serge Hallyn <serge@hallyn.com>
 List-Id: dm-devel.ids
 
-Since 4.15-rc1 I get the following during boot relatively often (but not 100% reproducable)
+From: Seth Forshee <seth.forshee@canonical.com>
 
+When looking up a block device by path no permission check is
+done to verify that the user has access to the block device inode
+at the specified path. In some cases it may be necessary to
+check permissions towards the inode, such as allowing
+unprivileged users to mount block devices in user namespaces.
 
-Seems to be 2 oopses...
+Add an argument to lookup_bdev() to optionally perform this
+permission check. A value of 0 skips the permission check and
+behaves the same as before. A non-zero value specifies the mask
+of access rights required towards the inode at the specified
+path. The check is always skipped if the user has CAP_SYS_ADMIN.
 
+All callers of lookup_bdev() currently pass a mask of 0, so this
+patch results in no functional change. Subsequent patches will
+add permission checks where appropriate.
 
-"[    5.851954] device-mapper: multipath service-time: version 0.3.0 loaded
-"[    5.902244] Unable to handle kernel pointer dereference in virtual kernel address space
-"[    5.902272] Failing address: 000003ff82196000 TEID: 000003ff82196803
-"[    5.902275] Fault in home space mode while using kernel ASCE.
-"[    5.902283] AS:000000000135c007 R3:00000002105e0007 S:0000000000000020 
-"[    5.902390] Oops: 0010 ilc:3 [#1] SMP 
-"[    5.902437] Modules linked in: dm_service_time mlx4_ib mlx4_en ptp ib_core pp
-"s_core ghash_s390 prng aes_s390 des_s390 des_generic sha512_s390 sha256_s390 sha
-"1_s390 sha_common mlx4_core eadm_sch dm_multipath dm_mod zcrypt_cex4 zcrypt rng_
-"core
-"[    5.902818] Unable to handle kernel pointer dereference in virtual kernel address space
-"[    5.902829] Failing address: 000003ff8218e000 TEID: 000003ff8218e803
-"[    5.902840] Fault in home space mode while using 
-"[    5.902867]  vhost_net sch_fq_codel tun
-"[    5.902899] kernel 
-"[    5.902917]  vhost tap ip_tables
-"[    5.902940] ASCE.
-"[    5.902955] AS:000000000135c007 R3:00000002105e0007 
-"[    5.902972]  x_tables autofs4
-"[    5.902987] S:0000000000000020 
-"[    5.903012] CPU: 0 PID: 742 Comm: systemd-udevd Not tainted 4.15.0-rc3+ #11
-"[    5.903024] Hardware name: IBM 2964 NC9 704 (LPAR)
-"[    5.903035] Krnl PSW : 0000000047407382 00000000702c2011 (multipath_busy+0x9a
-"/0x128 [dm_multipath])
-"[    5.903085]            R:0 T:1 IO:0 EX:0 Key:0 M:1 W:0 P:0 AS:3 CC:3 PM:0 RI: 0 EA:3
-"[    5.903112] Krnl GPRS: 0000000000000001 000003ff82195a72 0000000000000000 ffffffff00000000
-"[    5.903133]            000003ff800cff9c 0000000000000000 0000000000000800 00000001fa508730
-"[    5.903154]            00000001f1f48000 000003e000000000 00000001f808c030 00000001e76afb00
-"[    5.903173]            00000001f1f48000 00000001f89efc58 00000001f89efa08 00000001f89ef9c8
-"[    5.903191] Krnl Code: 000003ff800f4e30: e310b0200004        lg      %r1,32(%r11)
-"[    5.903191]            000003ff800f4e36: e31010000004        lg      %r1,0(%r1)
-"[    5.903191]           #000003ff800f4e3c: e31011100004        lg      %r1,272(%r1)
-"[    5.903191]           >000003ff800f4e42: e32016980004        lg      %r2,1688(%r1)
-"[    5.903191]            000003ff800f4e48: c0e5fffff972        brasl   %r14,3ff800f412c
-"[    5.903191]            000003ff800f4e4e: ec28000d007e        cij     %r2,0,8,3ff800f4e68
-"[    5.903191]            000003ff800f4e54: a7180001            lhi     %r1,1
-"[    5.903191]            000003ff800f4e58: e3b0b0000004        lg      %r11,0(%r11)
-"[    5.903308] Call Trace:
-"[    5.903319] ([<00000001f89ef9c0>] 0x1f89ef9c0)
-"[    5.903342]  [<000003ff800cff3e>] dm_old_request_fn+0x56/0x1d0 [dm_mod] 
-"[    5.903367]  [<0000000000734f66>] __blk_run_queue+0x86/0x108 
-"[    5.903385]  [<0000000000736132>] queue_unplugged+0x8a/0x200 
-"[    5.903404]  [<000000000073ca0c>] blk_flush_plug_list+0x284/0x2f0 
-"[    5.903417]  [<000000000073d234>] blk_finish_plug+0x3c/0x60 
-"[    5.903426]  [<0000000000313dd8>] __do_page_cache_readahead+0x2e8/0x3d0 
-"[    5.903441]  [<0000000000314512>] force_page_cache_readahead+0xb2/0x150 
-"[    5.903454]  [<00000000002ff1f0>] generic_file_read_iter+0x6b0/0xa28 
-"[    5.903477]  [<00000000003b7e98>] __vfs_read+0x100/0x178 
-"[    5.903490]  [<00000000003b7f9a>] vfs_read+0x8a/0x148 
-"[    5.903506]  [<00000000003b864e>] SyS_read+0x66/0xd8 
-"[    5.903520]  [<0000000000ae9144>] system_call+0x290/0x2b0 
-"[    5.903523] INFO: lockdep is turned off.
-"[    5.903527] Last Breaking-Event-Address:
-"[    5.903541]  [<000003ff800f4e18>] multipath_busy+0x70/0x128 [dm_multipath]
-"[    5.903552]  
-"[    5.903562] Oops: 0010 ilc:3 [#2] 
-"[    5.903566] Kernel panic - not syncing: Fatal exception: panic_on_oops
+Patch v4 is available: https://patchwork.kernel.org/patch/8943601/
 
+Cc: dm-devel@redhat.com
+Cc: linux-bcache@vger.kernel.org
+Cc: linux-fsdevel@vger.kernel.org
+Cc: linux-mtd@lists.infradead.org
+Cc: linux-kernel@vger.kernel.org
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>
+Cc: Jan Kara <jack@suse.com>
+Cc: Serge Hallyn <serge@hallyn.com>
+Signed-off-by: Seth Forshee <seth.forshee@canonical.com>
+Signed-off-by: Dongsu Park <dongsu@kinvolk.io>
+---
+ drivers/md/bcache/super.c |  2 +-
+ drivers/md/dm-table.c     |  2 +-
+ drivers/mtd/mtdsuper.c    |  2 +-
+ fs/block_dev.c            | 13 ++++++++++---
+ fs/quota/quota.c          |  2 +-
+ include/linux/fs.h        |  2 +-
+ 6 files changed, 15 insertions(+), 8 deletions(-)
 
-
-The faulting code seems to be
-
-        list_for_each_entry(pgpath, &pg->pgpaths, list) {
-     854:       e3 b0 b0 00 00 04       lg      %r11,0(%r11)
-     85a:       ec ba 00 21 80 64       cgrje   %r11,%r10,89c <multipath_busy+0xbc>
-                if (pgpath->is_active) {
-     860:       91 80 b0 f8             tm      248(%r11),128
-     864:       a7 84 ff f8             je      854 <multipath_busy+0x74>
-        struct request_queue *q = bdev_get_queue(pgpath->path.dev->bdev);
-     868:       e3 10 b0 20 00 04       lg      %r1,32(%r11)
-
-bool blk_poll(struct request_queue *q, blk_qc_t cookie);
-
-static inline struct request_queue *bdev_get_queue(struct block_device *bdev)
-{
-        return bdev->bd_disk->queue;    /* this is never NULL */
-     86e:       e3 10 10 00 00 04       lg      %r1,0(%r1)
-     874:       e3 10 11 10 00 04       lg      %r1,272(%r1) 
-        return blk_lld_busy(q);
-     87a:       e3 20 16 98 00 04       lg      %r2,1688(%r1)
-     880:       c0 e5 00 00 00 00       brasl   %r14,880 <multipath_busy+0xa0>
-
-
-
-
-any quick ideas?
+diff --git a/drivers/md/bcache/super.c b/drivers/md/bcache/super.c
+index b4d28928..acc9d56c 100644
+--- a/drivers/md/bcache/super.c
++++ b/drivers/md/bcache/super.c
+@@ -1967,7 +1967,7 @@ static ssize_t register_bcache(struct kobject *k, struct kobj_attribute *attr,
+ 				  sb);
+ 	if (IS_ERR(bdev)) {
+ 		if (bdev == ERR_PTR(-EBUSY)) {
+-			bdev = lookup_bdev(strim(path));
++			bdev = lookup_bdev(strim(path), 0);
+ 			mutex_lock(&bch_register_lock);
+ 			if (!IS_ERR(bdev) && bch_is_open(bdev))
+ 				err = "device already registered";
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 88130b5d..bca5eaf4 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -410,7 +410,7 @@ dev_t dm_get_dev_t(const char *path)
+ 	dev_t dev;
+ 	struct block_device *bdev;
+ 
+-	bdev = lookup_bdev(path);
++	bdev = lookup_bdev(path, 0);
+ 	if (IS_ERR(bdev))
+ 		dev = name_to_dev_t(path);
+ 	else {
+diff --git a/drivers/mtd/mtdsuper.c b/drivers/mtd/mtdsuper.c
+index e43fea89..4a4d40c0 100644
+--- a/drivers/mtd/mtdsuper.c
++++ b/drivers/mtd/mtdsuper.c
+@@ -180,7 +180,7 @@ struct dentry *mount_mtd(struct file_system_type *fs_type, int flags,
+ 	/* try the old way - the hack where we allowed users to mount
+ 	 * /dev/mtdblock$(n) but didn't actually _use_ the blockdev
+ 	 */
+-	bdev = lookup_bdev(dev_name);
++	bdev = lookup_bdev(dev_name, 0);
+ 	if (IS_ERR(bdev)) {
+ 		ret = PTR_ERR(bdev);
+ 		pr_debug("MTDSB: lookup_bdev() returned %d\n", ret);
+diff --git a/fs/block_dev.c b/fs/block_dev.c
+index 4a181fcb..5ca06095 100644
+--- a/fs/block_dev.c
++++ b/fs/block_dev.c
+@@ -1662,7 +1662,7 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode,
+ 	struct block_device *bdev;
+ 	int err;
+ 
+-	bdev = lookup_bdev(path);
++	bdev = lookup_bdev(path, 0);
+ 	if (IS_ERR(bdev))
+ 		return bdev;
+ 
+@@ -2052,12 +2052,14 @@ EXPORT_SYMBOL(ioctl_by_bdev);
+ /**
+  * lookup_bdev  - lookup a struct block_device by name
+  * @pathname:	special file representing the block device
++ * @mask:	rights to check for (%MAY_READ, %MAY_WRITE, %MAY_EXEC)
+  *
+  * Get a reference to the blockdevice at @pathname in the current
+  * namespace if possible and return it.  Return ERR_PTR(error)
+- * otherwise.
++ * otherwise.  If @mask is non-zero, check for access rights to the
++ * inode at @pathname.
+  */
+-struct block_device *lookup_bdev(const char *pathname)
++struct block_device *lookup_bdev(const char *pathname, int mask)
+ {
+ 	struct block_device *bdev;
+ 	struct inode *inode;
+@@ -2072,6 +2074,11 @@ struct block_device *lookup_bdev(const char *pathname)
+ 		return ERR_PTR(error);
+ 
+ 	inode = d_backing_inode(path.dentry);
++	if (mask != 0 && !capable(CAP_SYS_ADMIN)) {
++		error = __inode_permission(inode, mask);
++		if (error)
++			goto fail;
++	}
+ 	error = -ENOTBLK;
+ 	if (!S_ISBLK(inode->i_mode))
+ 		goto fail;
+diff --git a/fs/quota/quota.c b/fs/quota/quota.c
+index 43612e2a..e5d47955 100644
+--- a/fs/quota/quota.c
++++ b/fs/quota/quota.c
+@@ -807,7 +807,7 @@ static struct super_block *quotactl_block(const char __user *special, int cmd)
+ 
+ 	if (IS_ERR(tmp))
+ 		return ERR_CAST(tmp);
+-	bdev = lookup_bdev(tmp->name);
++	bdev = lookup_bdev(tmp->name, 0);
+ 	putname(tmp);
+ 	if (IS_ERR(bdev))
+ 		return ERR_CAST(bdev);
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 2995a271..fce19c49 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -2551,7 +2551,7 @@ static inline void unregister_chrdev(unsigned int major, const char *name)
+ #define BLKDEV_MAJOR_MAX	512
+ extern const char *__bdevname(dev_t, char *buffer);
+ extern const char *bdevname(struct block_device *bdev, char *buffer);
+-extern struct block_device *lookup_bdev(const char *);
++extern struct block_device *lookup_bdev(const char *, int mask);
+ extern void blkdev_show(struct seq_file *,off_t);
+ 
+ #else
+-- 
+2.13.6
