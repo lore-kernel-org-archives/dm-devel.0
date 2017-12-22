@@ -1,69 +1,89 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [for-4.16 PATCH 0/5] block, nvme, dm: allow DM multipath to use
- NVMe's error handler
-Date: Fri, 22 Dec 2017 13:02:37 -0500
-Message-ID: <20171222180237.GB31792@redhat.com>
-References: <20171219210546.65928-1-snitzer@redhat.com>
+From: Coly Li <i@coly.li>
+Subject: Re: [PATCH 01/11] block_dev: Support checking inode permissions in
+ lookup_bdev()
+Date: Sat, 23 Dec 2017 02:59:55 +0800
+Message-ID: <17fbec10-68b1-2d2b-d417-2cdfee22b0fa@coly.li>
+References: <cover.1512741134.git.dongsu@kinvolk.io>
+ <ef5e609602df6d7e2b4aa07b92600f04b6851902.1512041070.git.dongsu@kinvolk.io>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20171219210546.65928-1-snitzer@redhat.com>
-Sender: linux-block-owner@vger.kernel.org
-To: hch@lst.de, axboe@kernel.dk
-Cc: emilne@redhat.com, james.smart@broadcom.com, Bart.VanAssche@wdc.com, linux-block@vger.kernel.org, dm-devel@redhat.com, hare@suse.de, linux-nvme@lists.infradead.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-bcache-owner@vger.kernel.org>
+In-Reply-To: <ef5e609602df6d7e2b4aa07b92600f04b6851902.1512041070.git.dongsu@kinvolk.io>
+Content-Language: en-US
+Sender: linux-bcache-owner@vger.kernel.org
+To: Dongsu Park <dongsu@kinvolk.io>, linux-kernel@vger.kernel.org
+Cc: containers@lists.linux-foundation.org, Alban Crequy <alban@kinvolk.io>, "Eric W . Biederman" <ebiederm@xmission.com>, Miklos Szeredi <mszeredi@redhat.com>, Seth Forshee <seth.forshee@canonical.com>, Sargun Dhillon <sargun@sargun.me>, dm-devel@redhat.com, linux-bcache@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mtd@lists.infradead.org, Alexander Viro <viro@zeniv.linux.org.uk>, Jan Kara <jack@suse.com>, Serge Hallyn <serge@hallyn.com>
 List-Id: dm-devel.ids
 
-On Tue, Dec 19 2017 at  4:05pm -0500,
-Mike Snitzer <snitzer@redhat.com> wrote:
+On 22/12/2017 10:32 PM, Dongsu Park wrote:
+> From: Seth Forshee <seth.forshee@canonical.com>
+> 
+> When looking up a block device by path no permission check is
+> done to verify that the user has access to the block device inode
+> at the specified path. In some cases it may be necessary to
+> check permissions towards the inode, such as allowing
+> unprivileged users to mount block devices in user namespaces.
+> 
+> Add an argument to lookup_bdev() to optionally perform this
+> permission check. A value of 0 skips the permission check and
+> behaves the same as before. A non-zero value specifies the mask
+> of access rights required towards the inode at the specified
+> path. The check is always skipped if the user has CAP_SYS_ADMIN.
+> 
+> All callers of lookup_bdev() currently pass a mask of 0, so this
+> patch results in no functional change. Subsequent patches will
+> add permission checks where appropriate.
+> 
+> Patch v4 is available: https://patchwork.kernel.org/patch/8943601/
+> 
+> Cc: dm-devel@redhat.com
+> Cc: linux-bcache@vger.kernel.org
+> Cc: linux-fsdevel@vger.kernel.org
+> Cc: linux-mtd@lists.infradead.org
+> Cc: linux-kernel@vger.kernel.org
+> Cc: Alexander Viro <viro@zeniv.linux.org.uk>
+> Cc: Jan Kara <jack@suse.com>
+> Cc: Serge Hallyn <serge@hallyn.com>
+> Signed-off-by: Seth Forshee <seth.forshee@canonical.com>
+> Signed-off-by: Dongsu Park <dongsu@kinvolk.io>
 
-> These patches enable DM multipath to work well on NVMe over Fabrics
-> devices.  Currently that implies CONFIG_NVME_MULTIPATH is _not_ set.
-> 
-> But follow-on work will be to make it so that native NVMe multipath
-> and DM multipath can be made to co-exist (e.g. blacklisting certain
-> NVMe devices from being consumed by native NVMe multipath?)
-> 
-> Patch 1 updates block core to formalize a recent construct that
-> Christoph embeedded into NVMe core (and native NVMe multipath):
-> callback into a bio-based driver from the blk-mq driver's .complete
-> hook to blk_steal_bios() a request's bios.
-> 
-> Patch 2 switches NVMe over to using the block infrastructure
-> established by Patch 1.
-> 
-> Patch 3 moves the nvme_req_needs_failover() from NVMe multipath to
-> core.  Which allow sstacked devices (like DM multipath) to make use of
-> NVMe's enhanced error handling.
-> 
-> Patch 4 updates DM multipath to also make use of the block
-> infrastructure established by Patch 1.
-> 
-> Patch 5 can be largely ignored.. but it illustrates that Patch 1 - 4
-> enable DM multipath to avoid extra DM endio callbacks.
-> 
-> These patches have been developed ontop of numerous DM changes I've
-> staged for 4.16, see:
-> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-4.16
-> (which happens to include these 5 patches at the end, purely for
-> interim linux-next coverage purposes as these changes land in the
-> appropriate maintainer tree).
-> 
-> I've updated the "mptest" DM multipath testsuite to provide NVMe test
-> coverage (using NVMe fcloop), see: https://github.com/snitm/mptest
-> 
-> The tree I've been testing includes all of 'dm-4.16' and all but one
-> of the commits from 'nvme-4.16', see:
-> https://git.kernel.org/pub/scm/linux/kernel/git/snitzer/linux.git/log/?h=dm-4.16_nvme-4.16
-> (I've let James Smart know that commit a0b69cc8 causes "nvme connect"
-> to not work on my fcloop testbed).
-> 
-> Jens, provided review is favorable, I'd very much appreciate it you'd
-> pick up patches 1 - 3 for 4.16.
+Hi Dongsu,
 
-BTW, Christoph if you're open to picking up patches 1 - 3 into
-'nvme-4.16' that works too.  I just figured since there is a block core
-dependency Jens would want to take them direct.
+Could you please use a macro like NO_PERMISSION_CHECK to replace hard
+coded 0 ? At least for me, I don't need to check what does 0 mean in the
+new lookup_bdev().
 
-Thanks,
-Mike
+Thanks.
+
+Coly Li
+
+> ---
+>  drivers/md/bcache/super.c |  2 +-
+>  drivers/md/dm-table.c     |  2 +-
+>  drivers/mtd/mtdsuper.c    |  2 +-
+>  fs/block_dev.c            | 13 ++++++++++---
+>  fs/quota/quota.c          |  2 +-
+>  include/linux/fs.h        |  2 +-
+>  6 files changed, 15 insertions(+), 8 deletions(-)
+> 
+> diff --git a/drivers/md/bcache/super.c b/drivers/md/bcache/super.c
+> index b4d28928..acc9d56c 100644
+> --- a/drivers/md/bcache/super.c
+> +++ b/drivers/md/bcache/super.c
+> @@ -1967,7 +1967,7 @@ static ssize_t register_bcache(struct kobject *k, struct kobj_attribute *attr,
+>  				  sb);
+>  	if (IS_ERR(bdev)) {
+>  		if (bdev == ERR_PTR(-EBUSY)) {
+> -			bdev = lookup_bdev(strim(path));
+> +			bdev = lookup_bdev(strim(path), 0);
+>  			mutex_lock(&bch_register_lock);
+>  			if (!IS_ERR(bdev) && bch_is_open(bdev))
+>  				err = "device already registered";
+> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+> index 88130b5d..bca5eaf4 100644
+[snip]
+
+
+-- 
+Coly Li
