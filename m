@@ -1,144 +1,169 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: Re: [PATCH 2/2] dm-writecache
-Date: Fri, 22 Dec 2017 14:24:25 -0800
-Message-ID: <CAPcyv4iA0DtsQpJkaLCZtOaq3fLwyzXVu-j+vTSOsmAmKbuQzg@mail.gmail.com>
-References: <alpine.LRH.2.02.1711222135371.2330@file01.intranet.prod.int.rdu2.redhat.com>
-	<CAA9_cmcRe8KXO+jWy8knqg4EMCgBYF1JAdgR=A2qHkVES+i9ZA@mail.gmail.com>
-	<alpine.LRH.2.02.1711272238130.9280@file01.intranet.prod.int.rdu2.redhat.com>
-	<CAPcyv4jTuSLDiO1TZhCrJGxMWiWK-KNXKPf-DZH1xDeXVAaUgQ@mail.gmail.com>
-	<alpine.LRH.2.02.1712050003070.13380@file01.intranet.prod.int.rdu2.redhat.com>
-	<CAPcyv4i=XfG-pQYHKLKvwP_SeMxc+PaWOJYSGQ0rsbJ=9GC6iQ@mail.gmail.com>
-	<alpine.LRH.2.02.1712221531320.26891@file01.intranet.prod.int.rdu2.redhat.com>
+From: "Serge E. Hallyn" <serge@hallyn.com>
+Subject: Re: [PATCH 01/11] block_dev: Support checking inode permissions in
+ lookup_bdev()
+Date: Fri, 22 Dec 2017 21:03:11 -0600
+Message-ID: <20171223030311.GA6837@mail.hallyn.com>
+References: <cover.1512741134.git.dongsu@kinvolk.io>
+ <ef5e609602df6d7e2b4aa07b92600f04b6851902.1512041070.git.dongsu@kinvolk.io>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.1712221531320.26891@file01.intranet.prod.int.rdu2.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <msnitzer@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-bcache-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <ef5e609602df6d7e2b4aa07b92600f04b6851902.1512041070.git.dongsu@kinvolk.io>
+Sender: linux-bcache-owner@vger.kernel.org
+To: Dongsu Park <dongsu@kinvolk.io>
+Cc: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, Alban Crequy <alban@kinvolk.io>, "Eric W . Biederman" <ebiederm@xmission.com>, Miklos Szeredi <mszeredi@redhat.com>, Seth Forshee <seth.forshee@canonical.com>, Sargun Dhillon <sargun@sargun.me>, dm-devel@redhat.com, linux-bcache@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mtd@lists.infradead.org, Alexander Viro <viro@zeniv.linux.org.uk>, Jan Kara <jack@suse.com>, Serge Hallyn <serge@hallyn.com>
 List-Id: dm-devel.ids
 
-On Fri, Dec 22, 2017 at 12:56 PM, Mikulas Patocka <mpatocka@redhat.com> wrote:
->
->
-> On Fri, 8 Dec 2017, Dan Williams wrote:
->
->> > > What about memcpy_flushcache?
->> >
->> > but
->> >
->> > - using memcpy_flushcache is overkill if we need just one or two 8-byte
->> > writes to the metadata area. Why not use movnti directly?
->> >
->>
->> The driver performs so many 8-byte moves that the cost of the
->> memcpy_flushcache() function call significantly eats into your
->> performance?
->>
->> > - on some architctures, memcpy_flushcache is just an alias for memcpy, so
->> > there will still be some arch-specific ifdefs
->>
->> ...but those should all be hidden by arch code, not in drivers.
->>
->> > - there is no architecture-neutral way how to guarantee ordering between
->> > multiple memcpy_flushcache calls. On x86, we need wmb(), on Power we
->> > don't, on ARM64 I don't know (arch_wb_cache_pmem calls dmb(osh),
->> > memcpy_flushcache doesn't - I don't know what are the implications of this
->> > difference) on other architectures, wmb() is insufficient to guarantee
->> > ordering between multiple memcpy_flushcache calls.
->>
->> wmb() should always be sufficient to order stores on all architectures.
->
-> No, it isn't. See this example:
->
-> uint64_t var_a, var_b;
->
-> void fn(void)
-> {
->         uint64_t val = 3;
->         memcpy_flushcache(&var_a, &val, 8);
->         wmb();
->         val = 5;
->         memcpy_flushcache(&var_b, &val, 8);;
-> }
->
-> On x86-64, memcpy_flushcache is implemented using the movnti instruction
-> (that writes the value to the write-combining buffer) and wmb() is
-> compiled into the sfence instruction (that flushes the write-combining
-> buffer) - so it's OK - it is guaranteed that the variable var_a is written
-> to persistent memory before the variable var_b;
->
-> However, on i686 (and most other architectures), memcpy_flushcache is just
-> an alias for memcpy - see this code in include/linux/string.h:
-> #ifndef __HAVE_ARCH_MEMCPY_FLUSHCACHE
-> static inline void memcpy_flushcache(void *dst, const void *src, size_t
-> cnt)
-> {
->         memcpy(dst, src, cnt);
-> }
-> #endif
->
-> So, memcpy_flushcache writes the variable var_a to the cache, wmb()
-> flushes the pipeline, but otherwise does nothing (because on i686 all
-> writes to the cache are already ordered) and then memcpy_flushcache writes
-> the variable var_b to the cache - however, both writes end up in cache and
-> wmb() doesn't flush the cache. So wmb() doesn't provide any sort of
-> guarantee that var_a is written to persistent memory before var_b. If the
-> cache sector containing the variable var_b is more contended than the
-> cache sector containg the variable var_a, the CPU will flush cache line
-> containing var_b before var_a.
+On Fri, Dec 22, 2017 at 03:32:25PM +0100, Dongsu Park wrote:
+> From: Seth Forshee <seth.forshee@canonical.com>
+> 
+> When looking up a block device by path no permission check is
+> done to verify that the user has access to the block device inode
+> at the specified path. In some cases it may be necessary to
+> check permissions towards the inode, such as allowing
+> unprivileged users to mount block devices in user namespaces.
+> 
+> Add an argument to lookup_bdev() to optionally perform this
+> permission check. A value of 0 skips the permission check and
+> behaves the same as before. A non-zero value specifies the mask
+> of access rights required towards the inode at the specified
+> path. The check is always skipped if the user has CAP_SYS_ADMIN.
+> 
+> All callers of lookup_bdev() currently pass a mask of 0, so this
+> patch results in no functional change. Subsequent patches will
+> add permission checks where appropriate.
+> 
+> Patch v4 is available: https://patchwork.kernel.org/patch/8943601/
+> 
+> Cc: dm-devel@redhat.com
+> Cc: linux-bcache@vger.kernel.org
+> Cc: linux-fsdevel@vger.kernel.org
+> Cc: linux-mtd@lists.infradead.org
+> Cc: linux-kernel@vger.kernel.org
+> Cc: Alexander Viro <viro@zeniv.linux.org.uk>
+> Cc: Jan Kara <jack@suse.com>
+> Cc: Serge Hallyn <serge@hallyn.com>
 
-You're overlooking the fact that there is no persistent memory support
-for i686. The pmem driver will warn you of this fact:
+Acked-by: Serge Hallyn <serge@hallyn.com>
 
-    dev_warn(dev, "unable to guarantee persistence of writes\n");
-
-The reason persistent memory is not supported on i686 is due to the
-fact that older cpus do not guarantee that non-temporal stores always
-bypass the cache.
-
-> We have the dax_flush() function that (unlike wmb) guarantees that the
-> specified range is flushed from the cache and written to persistent
-> memory. But dax_flush is very slow on x86-64.
-
-dax_flush() does not make that guarantee on i686, and it's only slow
-on architectures that were not built for persistent memory support
-i.e. architectures prior to the arrival of the clwb and clflushopt
-instructions.
-
-> So, we have a situation where wmb() is fast, but it only guarantees
-> ordering on x86-64 and dax_flush() that guarantees ordering on all
-> architectures, but it is slow on x86-64.
->
-> So, my driver uses wmb() on x86-64 and dax_flush() on all the others.
-
-...and I'm saying you're hard coding for a cpu that was not built to
-support persistent memory efficiently in the first place.
-
-> You argue that the driver shouldn't use any per-architecture #ifdefs, but
-> there is no other way how to do it - using dax_flush() on x86-64 kills
-> performance and using wmb() on all architectures is unreliable because
-> wmb() doesn't guarantee cache flushing at all.
->
->> > At least for Broadwell, the write-back memory type on persistent memory
->> > has so horrible performance that it not really usable.
->>
->> ...and my concern is that you're designing a pmem driver mechanism for
->> Broadwell that predates the clwb instruction for efficient pmem
->> access.
->
-> That's what we have for testing. If I get access to some Skylake server, I
-> can test if using write combining is faster than cache flushing.
-
-I'm still missing where memcpy_flushcache is unsuitable for your use
-case given that i686 does not support reliable peristent memory
-access.
+> Signed-off-by: Seth Forshee <seth.forshee@canonical.com>
+> Signed-off-by: Dongsu Park <dongsu@kinvolk.io>
+> ---
+>  drivers/md/bcache/super.c |  2 +-
+>  drivers/md/dm-table.c     |  2 +-
+>  drivers/mtd/mtdsuper.c    |  2 +-
+>  fs/block_dev.c            | 13 ++++++++++---
+>  fs/quota/quota.c          |  2 +-
+>  include/linux/fs.h        |  2 +-
+>  6 files changed, 15 insertions(+), 8 deletions(-)
+> 
+> diff --git a/drivers/md/bcache/super.c b/drivers/md/bcache/super.c
+> index b4d28928..acc9d56c 100644
+> --- a/drivers/md/bcache/super.c
+> +++ b/drivers/md/bcache/super.c
+> @@ -1967,7 +1967,7 @@ static ssize_t register_bcache(struct kobject *k, struct kobj_attribute *attr,
+>  				  sb);
+>  	if (IS_ERR(bdev)) {
+>  		if (bdev == ERR_PTR(-EBUSY)) {
+> -			bdev = lookup_bdev(strim(path));
+> +			bdev = lookup_bdev(strim(path), 0);
+>  			mutex_lock(&bch_register_lock);
+>  			if (!IS_ERR(bdev) && bch_is_open(bdev))
+>  				err = "device already registered";
+> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+> index 88130b5d..bca5eaf4 100644
+> --- a/drivers/md/dm-table.c
+> +++ b/drivers/md/dm-table.c
+> @@ -410,7 +410,7 @@ dev_t dm_get_dev_t(const char *path)
+>  	dev_t dev;
+>  	struct block_device *bdev;
+>  
+> -	bdev = lookup_bdev(path);
+> +	bdev = lookup_bdev(path, 0);
+>  	if (IS_ERR(bdev))
+>  		dev = name_to_dev_t(path);
+>  	else {
+> diff --git a/drivers/mtd/mtdsuper.c b/drivers/mtd/mtdsuper.c
+> index e43fea89..4a4d40c0 100644
+> --- a/drivers/mtd/mtdsuper.c
+> +++ b/drivers/mtd/mtdsuper.c
+> @@ -180,7 +180,7 @@ struct dentry *mount_mtd(struct file_system_type *fs_type, int flags,
+>  	/* try the old way - the hack where we allowed users to mount
+>  	 * /dev/mtdblock$(n) but didn't actually _use_ the blockdev
+>  	 */
+> -	bdev = lookup_bdev(dev_name);
+> +	bdev = lookup_bdev(dev_name, 0);
+>  	if (IS_ERR(bdev)) {
+>  		ret = PTR_ERR(bdev);
+>  		pr_debug("MTDSB: lookup_bdev() returned %d\n", ret);
+> diff --git a/fs/block_dev.c b/fs/block_dev.c
+> index 4a181fcb..5ca06095 100644
+> --- a/fs/block_dev.c
+> +++ b/fs/block_dev.c
+> @@ -1662,7 +1662,7 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode,
+>  	struct block_device *bdev;
+>  	int err;
+>  
+> -	bdev = lookup_bdev(path);
+> +	bdev = lookup_bdev(path, 0);
+>  	if (IS_ERR(bdev))
+>  		return bdev;
+>  
+> @@ -2052,12 +2052,14 @@ EXPORT_SYMBOL(ioctl_by_bdev);
+>  /**
+>   * lookup_bdev  - lookup a struct block_device by name
+>   * @pathname:	special file representing the block device
+> + * @mask:	rights to check for (%MAY_READ, %MAY_WRITE, %MAY_EXEC)
+>   *
+>   * Get a reference to the blockdevice at @pathname in the current
+>   * namespace if possible and return it.  Return ERR_PTR(error)
+> - * otherwise.
+> + * otherwise.  If @mask is non-zero, check for access rights to the
+> + * inode at @pathname.
+>   */
+> -struct block_device *lookup_bdev(const char *pathname)
+> +struct block_device *lookup_bdev(const char *pathname, int mask)
+>  {
+>  	struct block_device *bdev;
+>  	struct inode *inode;
+> @@ -2072,6 +2074,11 @@ struct block_device *lookup_bdev(const char *pathname)
+>  		return ERR_PTR(error);
+>  
+>  	inode = d_backing_inode(path.dentry);
+> +	if (mask != 0 && !capable(CAP_SYS_ADMIN)) {
+> +		error = __inode_permission(inode, mask);
+> +		if (error)
+> +			goto fail;
+> +	}
+>  	error = -ENOTBLK;
+>  	if (!S_ISBLK(inode->i_mode))
+>  		goto fail;
+> diff --git a/fs/quota/quota.c b/fs/quota/quota.c
+> index 43612e2a..e5d47955 100644
+> --- a/fs/quota/quota.c
+> +++ b/fs/quota/quota.c
+> @@ -807,7 +807,7 @@ static struct super_block *quotactl_block(const char __user *special, int cmd)
+>  
+>  	if (IS_ERR(tmp))
+>  		return ERR_CAST(tmp);
+> -	bdev = lookup_bdev(tmp->name);
+> +	bdev = lookup_bdev(tmp->name, 0);
+>  	putname(tmp);
+>  	if (IS_ERR(bdev))
+>  		return ERR_CAST(bdev);
+> diff --git a/include/linux/fs.h b/include/linux/fs.h
+> index 2995a271..fce19c49 100644
+> --- a/include/linux/fs.h
+> +++ b/include/linux/fs.h
+> @@ -2551,7 +2551,7 @@ static inline void unregister_chrdev(unsigned int major, const char *name)
+>  #define BLKDEV_MAJOR_MAX	512
+>  extern const char *__bdevname(dev_t, char *buffer);
+>  extern const char *bdevname(struct block_device *bdev, char *buffer);
+> -extern struct block_device *lookup_bdev(const char *);
+> +extern struct block_device *lookup_bdev(const char *, int mask);
+>  extern void blkdev_show(struct seq_file *,off_t);
+>  
+>  #else
+> -- 
+> 2.13.6
