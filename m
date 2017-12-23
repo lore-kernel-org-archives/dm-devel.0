@@ -1,49 +1,63 @@
-From: Scott Bauer <scott.bauer@intel.com>
-Subject: Re: [PATCH v5] dm: add unstriped target
-Date: Tue, 19 Dec 2017 11:13:30 -0700
-Message-ID: <20171219181329.u3oupyamx7nwscfy@sbauer-Z170X-UD5>
-References: <cover.1513618685.git.heinzm@redhat.com>
-	<1513639353-7231-1-git-send-email-snitzer@redhat.com>
+From: Dongsu Park <dongsu@kinvolk.io>
+Subject: Re: [PATCH 01/11] block_dev: Support checking inode permissions in lookup_bdev()
+Date: Sat, 23 Dec 2017 13:00:56 +0100
+Message-ID: <CANxcAMuqpWaMOSOjo812uqvTyfKogc7=uA+tgwhzetQU1Ynm4w@mail.gmail.com>
+References: <cover.1512741134.git.dongsu@kinvolk.io> <ef5e609602df6d7e2b4aa07b92600f04b6851902.1512041070.git.dongsu@kinvolk.io>
+ <17fbec10-68b1-2d2b-d417-2cdfee22b0fa@coly.li>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1513639353-7231-1-git-send-email-snitzer@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Keith Busch <keith.busch@intel.com>, Heinz Mauelshagen <heinzm@redhat.com>, dm-devel@redhat.com
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-bcache-owner@vger.kernel.org>
+In-Reply-To: <17fbec10-68b1-2d2b-d417-2cdfee22b0fa@coly.li>
+Sender: linux-bcache-owner@vger.kernel.org
+To: Coly Li <i@coly.li>
+Cc: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, Alban Crequy <alban@kinvolk.io>, "Eric W . Biederman" <ebiederm@xmission.com>, Miklos Szeredi <mszeredi@redhat.com>, Seth Forshee <seth.forshee@canonical.com>, Sargun Dhillon <sargun@sargun.me>, dm-devel@redhat.com, linux-bcache@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mtd@lists.infradead.org, Alexander Viro <viro@zeniv.linux.org.uk>, Jan Kara <jack@suse.com>, Serge Hallyn <serge@hallyn.com>
 List-Id: dm-devel.ids
 
-> +static sector_t map_to_core(struct dm_target *ti, struct bio *bio)
-> +{
-> +	struct unstripe_c *uc = ti->private;
-> +	sector_t sector = bio->bi_iter.bi_sector;
-> +
-> +	/* Account for what stripe we're operating on */
-> +	sector += uc->unstripe_offset;
-> +
-> +	/* Shift us up to the right "row" on the stripe */
-> +	sector += uc->unstripe_width * (sector >> uc->chunk_shift);
-> +	return sector;
-> +}
+Hi,
 
-This doesn't work anymore, previously we had a "group" local variable,
-but removed it out. Now we're calculating the group based *after* we
-switch up the stripe.
+On Fri, Dec 22, 2017 at 7:59 PM, Coly Li <i@coly.li> wrote:
+> On 22/12/2017 10:32 PM, Dongsu Park wrote:
+> Hi Dongsu,
+>
+> Could you please use a macro like NO_PERMISSION_CHECK to replace hard
+> coded 0 ? At least for me, I don't need to check what does 0 mean in the
+> new lookup_bdev().
 
-we need to swap the two sector +=  then it will work:
+I see. I'll do that.
 
-     /* Shift us up to the right "row" on the stripe */
-     sector += uc->unstripe_width * (sector >> uc->chunk_shift);
+Thanks,
+Dongsu
 
-     /* Account for what stripe we're operating on */
-     sector += uc->unstripe_offset;
+> Thanks.
+>
+> Coly Li
+>
+>> ---
+>>  drivers/md/bcache/super.c |  2 +-
+>>  drivers/md/dm-table.c     |  2 +-
+>>  drivers/mtd/mtdsuper.c    |  2 +-
+>>  fs/block_dev.c            | 13 ++++++++++---
+>>  fs/quota/quota.c          |  2 +-
+>>  include/linux/fs.h        |  2 +-
+>>  6 files changed, 15 insertions(+), 8 deletions(-)
+>>
+>> diff --git a/drivers/md/bcache/super.c b/drivers/md/bcache/super.c
+>> index b4d28928..acc9d56c 100644
+>> --- a/drivers/md/bcache/super.c
+>> +++ b/drivers/md/bcache/super.c
+>> @@ -1967,7 +1967,7 @@ static ssize_t register_bcache(struct kobject *k, struct kobj_attribute *attr,
+>>                                 sb);
+>>       if (IS_ERR(bdev)) {
+>>               if (bdev == ERR_PTR(-EBUSY)) {
+>> -                     bdev = lookup_bdev(strim(path));
+>> +                     bdev = lookup_bdev(strim(path), 0);
+>>                       mutex_lock(&bch_register_lock);
+>>                       if (!IS_ERR(bdev) && bch_is_open(bdev))
+>>                               err = "device already registered";
+>> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+>> index 88130b5d..bca5eaf4 100644
+> [snip]
+>
+>
+> --
+> Coly Li
