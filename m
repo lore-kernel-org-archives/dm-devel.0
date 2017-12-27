@@ -1,7 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [for-4.16 PATCH v2 4/5] dm mpath: use NVMe error handling to know when an error is retryable
-Date: Tue, 26 Dec 2017 22:22:56 -0500
-Message-ID: <20171227032257.8182-5-snitzer@redhat.com>
+Subject: [for-4.16 PATCH v2 5/5] dm mpath: skip calls to end_io_bio if using NVMe bio-based and round-robin
+Date: Tue, 26 Dec 2017 22:22:57 -0500
+Message-ID: <20171227032257.8182-6-snitzer@redhat.com>
 References: <20171227032257.8182-1-snitzer@redhat.com>
 Return-path: <linux-block-owner@vger.kernel.org>
 In-Reply-To: <20171227032257.8182-1-snitzer@redhat.com>
@@ -10,202 +10,127 @@ To: axboe@kernel.dk, hch@lst.de, keith.busch@intel.com
 Cc: emilne@redhat.com, james.smart@broadcom.com, hare@suse.de, Bart.VanAssche@wdc.com, linux-block@vger.kernel.org, linux-nvme@lists.infradead.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Like NVMe's native multipath support, DM multipath's NVMe bio-based
-support now allows NVMe core's error handling to requeue an NVMe blk-mq
-request's bios onto DM multipath's queued_bios list for resubmission
-once fail_path() occurs.  multipath_failover_rq() serves as a
-replacement for the traditional multipath_end_io_bio().
+Add a 'skip_endio_hook' flag member to 'struct dm_target' that if set
+instructs calls to .end_io (or .rq_end_io) to be skipped.
 
-DM multipath's bio submission to NVMe must be done in terms that allow
-the reuse of NVMe core's error handling.  The following care is taken to
-realize this reuse:
-
-- NVMe core won't attempt to retry an IO if it has
-  REQ_FAILFAST_TRANSPORT set; so only set it in __map_bio().
-
-- Setup underlying request_queue's 'failover_rq_fn' callback, to use
-  multipath_failover_rq, so that NVMe blk-mq requests use it
-  if/when NVMe core determines a request must be retried.
-  (a new target_type 'cleanup_device' hook is established to properly
-   reset each underlying requests_queue's 'failover_rq_fn' on final
-   teardown of the multipath device)
+NVMe bio-based doesn't use multipath_end_io_bio() for anything other
+than updating the path-selector.  So it can be avoided completely if the
+round-robin path selector is used (because round-robin doesn't have an
+end_io hook).
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-mpath.c         | 71 +++++++++++++++++++++++++++++++++++++++++--
- drivers/md/dm-table.c         |  2 ++
- include/linux/device-mapper.h |  3 ++
- 3 files changed, 73 insertions(+), 3 deletions(-)
+ drivers/md/dm-mpath.c         | 24 ++++++++++++++++++++----
+ drivers/md/dm-rq.c            |  8 ++++----
+ drivers/md/dm.c               |  7 ++++---
+ include/linux/device-mapper.h |  6 ++++++
+ 4 files changed, 34 insertions(+), 11 deletions(-)
 
 diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 3198093006e4..875df8ad6efe 100644
+index 875df8ad6efe..fc0f1940b107 100644
 --- a/drivers/md/dm-mpath.c
 +++ b/drivers/md/dm-mpath.c
-@@ -584,6 +584,8 @@ static struct pgpath *__map_bio(struct multipath *m, struct bio *bio)
- 		return ERR_PTR(-EAGAIN);
- 	}
- 
-+	bio->bi_opf |= REQ_FAILFAST_TRANSPORT;
-+
- 	return pgpath;
- }
- 
-@@ -641,7 +643,6 @@ static int __multipath_map_bio(struct multipath *m, struct bio *bio,
- 
- 	bio->bi_status = 0;
- 	bio_set_dev(bio, pgpath->path.dev->bdev);
--	bio->bi_opf |= REQ_FAILFAST_TRANSPORT;
- 
- 	if (pgpath->pg->ps.type->start_io)
- 		pgpath->pg->ps.type->start_io(&pgpath->pg->ps,
-@@ -855,6 +856,8 @@ static int setup_scsi_dh(struct block_device *bdev, struct multipath *m, char **
- 	return 0;
- }
- 
-+static void multipath_failover_rq(struct request *rq);
-+
- static struct pgpath *parse_path(struct dm_arg_set *as, struct path_selector *ps,
- 				 struct dm_target *ti)
- {
-@@ -879,7 +882,10 @@ static struct pgpath *parse_path(struct dm_arg_set *as, struct path_selector *ps
+@@ -1187,6 +1187,21 @@ static int multipath_ctr(struct dm_target *ti, unsigned argc, char **argv)
  		goto bad;
  	}
  
--	if (m->queue_mode != DM_TYPE_NVME_BIO_BASED) {
-+	if (m->queue_mode == DM_TYPE_NVME_BIO_BASED) {
-+		struct request_queue *q = bdev_get_queue(p->path.dev->bdev);
-+		q->failover_rq_fn = multipath_failover_rq;
-+	} else {
- 		INIT_DELAYED_WORK(&p->activate_path, activate_path_work);
- 		if (setup_scsi_dh(p->path.dev->bdev, m, &ti->error)) {
- 			dm_put_device(ti, p->path.dev);
-@@ -1610,6 +1616,14 @@ static int multipath_end_io_bio(struct dm_target *ti, struct bio *clone,
- 	unsigned long flags;
- 	int r = DM_ENDIO_DONE;
- 
 +	/*
-+	 * NVMe bio-based only needs to update path selector (on
-+	 * success or errors that NVMe deemed non-retryable)
-+	 * - retryable errors are handled by multipath_failover_rq
++	 * If NVMe bio-based and all path selectors don't provide .end_io hook:
++	 * inform DM core that there is no need to call this target's end_io hook.
 +	 */
-+	if (m->queue_mode == DM_TYPE_NVME_BIO_BASED)
-+		goto done;
-+
- 	if (!*error || !retry_error(*error))
- 		goto done;
- 
-@@ -1645,6 +1659,43 @@ static int multipath_end_io_bio(struct dm_target *ti, struct bio *clone,
- 	return r;
- }
- 
-+/*
-+ * multipath_failover_rq serves as a replacement for multipath_end_io_bio
-+ * for all bios in a request with a retryable error.
-+ */
-+static void multipath_failover_rq(struct request *rq)
-+{
-+	struct dm_target *ti = dm_bio_get_target(rq->bio);
-+	struct multipath *m = ti->private;
-+	struct dm_mpath_io *mpio = get_mpio_from_bio(rq->bio);
-+	struct pgpath *pgpath = mpio->pgpath;
-+	unsigned long flags;
-+
-+	if (pgpath) {
-+		struct path_selector *ps = &pgpath->pg->ps;
-+
-+		if (ps->type->end_io)
-+			ps->type->end_io(ps, &pgpath->path, blk_rq_bytes(rq));
-+
-+		fail_path(pgpath);
++	if (m->queue_mode == DM_TYPE_NVME_BIO_BASED) {
++		struct priority_group *pg;
++		if (!m->nr_priority_groups)
++			goto finish;
++		list_for_each_entry(pg, &m->priority_groups, list) {
++			if (pg->ps.type->end_io)
++				goto finish;
++		}
++		ti->skip_end_io_hook = true;
 +	}
-+
-+	if (atomic_read(&m->nr_valid_paths) == 0 &&
-+	    !test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags) &&
-+	    !must_push_back_bio(m)) {
-+		dm_report_EIO(m);
-+		blk_mq_end_request(rq, BLK_STS_IOERR);
-+		return;
-+	}
-+
-+	spin_lock_irqsave(&m->lock, flags);
-+	blk_steal_bios(&m->queued_bios, rq);
-+	spin_unlock_irqrestore(&m->lock, flags);
-+	queue_work(kmultipathd, &m->process_queued_bios);
-+
-+	blk_mq_end_request(rq, 0);
-+}
-+
- /*
-  * Suspend can't complete until all the I/O is processed so if
-  * the last path fails we must error any remaining I/O.
-@@ -2029,12 +2080,25 @@ static int multipath_busy(struct dm_target *ti)
- 	return busy;
- }
++finish:
+ 	ti->num_flush_bios = 1;
+ 	ti->num_discard_bios = 1;
+ 	ti->num_write_same_bios = 1;
+@@ -1672,11 +1687,12 @@ static void multipath_failover_rq(struct request *rq)
+ 	unsigned long flags;
  
-+static void multipath_cleanup_device(struct dm_target *ti, struct dm_dev *dev)
-+{
-+	struct multipath *m = ti->private;
-+	struct request_queue *q;
-+
-+	if (m->queue_mode != DM_TYPE_NVME_BIO_BASED)
-+		return;
-+
-+	q = bdev_get_queue(dev->bdev);
-+	if (q)
-+		q->failover_rq_fn = NULL;
-+}
-+
- /*-----------------------------------------------------------------
-  * Module setup
-  *---------------------------------------------------------------*/
- static struct target_type multipath_target = {
- 	.name = "multipath",
--	.version = {1, 12, 0},
-+	.version = {1, 13, 0},
- 	.features = DM_TARGET_SINGLETON | DM_TARGET_IMMUTABLE,
- 	.module = THIS_MODULE,
- 	.ctr = multipath_ctr,
-@@ -2052,6 +2116,7 @@ static struct target_type multipath_target = {
- 	.prepare_ioctl = multipath_prepare_ioctl,
- 	.iterate_devices = multipath_iterate_devices,
- 	.busy = multipath_busy,
-+	.cleanup_device = multipath_cleanup_device,
- };
+ 	if (pgpath) {
+-		struct path_selector *ps = &pgpath->pg->ps;
+-
+-		if (ps->type->end_io)
+-			ps->type->end_io(ps, &pgpath->path, blk_rq_bytes(rq));
++		if (!ti->skip_end_io_hook) {
++			struct path_selector *ps = &pgpath->pg->ps;
  
- static int __init dm_multipath_init(void)
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index ad4ac294dd57..86d7530384c3 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -517,6 +517,8 @@ void dm_put_device(struct dm_target *ti, struct dm_dev *d)
- 		return;
++			if (ps->type->end_io)
++				ps->type->end_io(ps, &pgpath->path, blk_rq_bytes(rq));
++		}
+ 		fail_path(pgpath);
  	}
- 	if (refcount_dec_and_test(&dd->count)) {
-+		if (ti->type->cleanup_device)
-+			ti->type->cleanup_device(ti, d);
- 		dm_put_table_device(ti->table->md, d);
- 		list_del(&dd->list);
- 		kfree(dd);
+ 
+diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+index 9d32f25489c2..64206743da8f 100644
+--- a/drivers/md/dm-rq.c
++++ b/drivers/md/dm-rq.c
+@@ -285,12 +285,12 @@ static void dm_done(struct request *clone, blk_status_t error, bool mapped)
+ {
+ 	int r = DM_ENDIO_DONE;
+ 	struct dm_rq_target_io *tio = clone->end_io_data;
+-	dm_request_endio_fn rq_end_io = NULL;
++	struct dm_target *ti = tio->ti;
+ 
+-	if (tio->ti) {
+-		rq_end_io = tio->ti->type->rq_end_io;
++	if (ti) {
++		dm_request_endio_fn rq_end_io = ti->type->rq_end_io;
+ 
+-		if (mapped && rq_end_io)
++		if (mapped && rq_end_io && !ti->skip_end_io_hook)
+ 			r = rq_end_io(tio->ti, clone, error, &tio->info);
+ 	}
+ 
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 9f4c4a7fd40d..5c83d9dcbfe8 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -937,7 +937,8 @@ static void clone_endio(struct bio *bio)
+ 	struct dm_target_io *tio = container_of(bio, struct dm_target_io, clone);
+ 	struct dm_io *io = tio->io;
+ 	struct mapped_device *md = tio->io->md;
+-	dm_endio_fn endio = tio->ti->type->end_io;
++	struct dm_target *ti = tio->ti;
++	dm_endio_fn endio = ti->type->end_io;
+ 
+ 	if (unlikely(error == BLK_STS_TARGET) && md->type != DM_TYPE_NVME_BIO_BASED) {
+ 		if (bio_op(bio) == REQ_OP_WRITE_SAME &&
+@@ -948,8 +949,8 @@ static void clone_endio(struct bio *bio)
+ 			disable_write_zeroes(md);
+ 	}
+ 
+-	if (endio) {
+-		int r = endio(tio->ti, bio, &error);
++	if (endio && !ti->skip_end_io_hook) {
++		int r = endio(ti, bio, &error);
+ 		switch (r) {
+ 		case DM_ENDIO_REQUEUE:
+ 			error = BLK_STS_DM_REQUEUE;
 diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index e46ad2ada674..758feae899f9 100644
+index 758feae899f9..f3c4bd29083f 100644
 --- a/include/linux/device-mapper.h
 +++ b/include/linux/device-mapper.h
-@@ -92,6 +92,8 @@ typedef int (*dm_message_fn) (struct dm_target *ti, unsigned argc, char **argv);
- typedef int (*dm_prepare_ioctl_fn) (struct dm_target *ti,
- 			    struct block_device **bdev, fmode_t *mode);
- 
-+typedef void (*dm_cleanup_device_fn) (struct dm_target *ti, struct dm_dev *dev);
+@@ -310,6 +310,12 @@ struct dm_target {
+ 	 * on max_io_len boundary.
+ 	 */
+ 	bool split_discard_bios:1;
 +
- /*
-  * These iteration functions are typically used to check (and combine)
-  * properties of underlying devices.
-@@ -181,6 +183,7 @@ struct target_type {
- 	dm_message_fn message;
- 	dm_prepare_ioctl_fn prepare_ioctl;
- 	dm_busy_fn busy;
-+	dm_cleanup_device_fn cleanup_device;
- 	dm_iterate_devices_fn iterate_devices;
- 	dm_io_hints_fn io_hints;
- 	dm_dax_direct_access_fn direct_access;
++	/*
++	 * Set if there is no need to call this target's end_io hook
++	 * (be it .end_io or .end_io_rq).
++	 */
++	bool skip_end_io_hook:1;
+ };
+ 
+ /* Each target can link one of these into the table */
 -- 
 2.15.0
