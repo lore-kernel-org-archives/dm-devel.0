@@ -1,60 +1,79 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [for-4.16 PATCH 0/5] block, nvme, dm: allow DM multipath to use
- NVMe's error handler
-Date: Tue, 26 Dec 2017 21:42:44 -0500
-Message-ID: <20171227024244.GA24011@redhat.com>
-References: <20171219210546.65928-1-snitzer@redhat.com>
- <20171226205109.GB13188@localhost.localdomain>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Subject: [for-4.16 PATCH v2 0/5] block, nvme, dm: allow DM multipath to use NVMe's error handler
+Date: Tue, 26 Dec 2017 22:22:52 -0500
+Message-ID: <20171227032257.8182-1-snitzer@redhat.com>
 Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20171226205109.GB13188@localhost.localdomain>
 Sender: linux-block-owner@vger.kernel.org
-To: Keith Busch <keith.busch@intel.com>
-Cc: axboe@kernel.dk, hch@lst.de, emilne@redhat.com, james.smart@broadcom.com, hare@suse.de, Bart.VanAssche@wdc.com, linux-block@vger.kernel.org, linux-nvme@lists.infradead.org, dm-devel@redhat.com
+To: axboe@kernel.dk, hch@lst.de, keith.busch@intel.com
+Cc: emilne@redhat.com, james.smart@broadcom.com, hare@suse.de, Bart.VanAssche@wdc.com, linux-block@vger.kernel.org, linux-nvme@lists.infradead.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Dec 26 2017 at  3:51pm -0500,
-Keith Busch <keith.busch@intel.com> wrote:
+This v2 follows Keith's suggestion to only add a 'failover_rq_fn' to
+the request_queue (rather than both the bio and request structs).
 
-> On Tue, Dec 19, 2017 at 04:05:41PM -0500, Mike Snitzer wrote:
-> > These patches enable DM multipath to work well on NVMe over Fabrics
-> > devices.  Currently that implies CONFIG_NVME_MULTIPATH is _not_ set.
-> > 
-> > But follow-on work will be to make it so that native NVMe multipath
-> > and DM multipath can be made to co-exist (e.g. blacklisting certain
-> > NVMe devices from being consumed by native NVMe multipath?)
-> 
-> Hi Mike,
-> 
-> I've reviewed the series and I support with the goal. I'm not a big fan,
-> though, of having yet-another-field to set in bio and req on each IO.
+Jens or Christoph, provided review is favorable, I'd very much
+appreciate it you'd pick up patches 1 - 3 for 4.16.
 
-Yeah, I knew they'd be the primary sticking point for this patchset.
-I'm not loving the need to carry the function pointer around either.
+These patches enable DM multipath to work well on NVMe over Fabrics
+devices.  Currently that implies CONFIG_NVME_MULTIPATH is _not_ set.
 
-> Unless I'm missing something, I think we can make this simpler if you add
-> the new 'failover_req_fn' as an attribute of the struct request_queue
-> instead of threading it through bio and request. Native nvme multipath
-> can set the field directly in the nvme driver, and dm-mpath can set it
-> in each path when not using the nvme mpath. What do you think?
+But follow-on work will be to make it so that native NVMe multipath
+and DM multipath can be made to co-exist (e.g. blacklisting certain
+NVMe devices from being consumed by native NVMe multipath?)
 
-I initially didn't like the gotchas associated [1], but I worked through
-them.
+Patch 1 updates block core to formalize a recent construct that
+Christoph embeedded into NVMe core (and native NVMe multipath):
+callback into a bio-based driver from the blk-mq driver's .complete
+hook to blk_steal_bios() a request's bios.
 
-I'll post v2 after some testing.
+Patch 2 switches NVMe over to using the request_queue's
+'failover_rq_fn' established by Patch 1.
+
+Patch 3 moves the nvme_req_needs_failover() from NVMe multipath to
+core.  Which allows stacked devices (like DM multipath) to make use of
+NVMe's enhanced error handling.
+
+Patch 4 updates DM multipath to also make use of the request_queue's
+'failover_rq_fn' established by Patch 1.
+
+Patch 5 can be largely ignored.. but it illustrates that Patch 1 - 4
+enable DM multipath to avoid extra DM endio callbacks.
+
+These patches have been developed ontop of numerous DM changes I've
+staged for 4.16, see:
+https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-4.16
+(which happens to include these 5 patches at the end, purely for
+interim linux-next coverage purposes as these changes land in the
+appropriate maintainer tree).
+
+I've updated the "mptest" DM multipath testsuite to provide NVMe test
+coverage (using NVMe fcloop), see: https://github.com/snitm/mptest
+
+The tree I've been testing includes all of 'dm-4.16' and all but one
+of the commits from 'nvme-4.16', see:
+https://git.kernel.org/pub/scm/linux/kernel/git/snitzer/linux.git/log/?h=dm-4.16_nvme-4.16
+(James Smart has since sent a fix for commit a0b69cc8)
 
 Thanks,
 Mike
 
-[1]:
-With DM multipath, it is easy to reliably establish the function
-pointer.  But clearing it on teardown is awkward.. because another DM
-multipath table may have already taken a reference on the device (as
-could happen when reloading the multipath table associated with the DM
-multipath device).  You are left with a scenario where a new table load 
-would set it, but teardown wouldn't easily know if it should be cleared.
-And not clearing it could easily lead to dereferencing stale memory
-(if/when DM multipath driver were unloaded yet NVMe request_queue
-outliving it).
+Mike Snitzer (5):
+  block: establish request failover callback
+  nvme: use request_queue's failover_rq_fn callback for multipath failover
+  nvme: move nvme_req_needs_failover() from multipath to core
+  dm mpath: use NVMe error handling to know when an error is retryable
+  dm mpath: skip calls to end_io_bio if using NVMe bio-based and round-robin
+
+ drivers/md/dm-mpath.c         | 87 +++++++++++++++++++++++++++++++++++++++++--
+ drivers/md/dm-rq.c            |  8 ++--
+ drivers/md/dm-table.c         |  2 +
+ drivers/md/dm.c               |  7 ++--
+ drivers/nvme/host/core.c      | 51 ++++++++++++++++++++++++-
+ drivers/nvme/host/multipath.c | 48 ------------------------
+ drivers/nvme/host/nvme.h      | 10 -----
+ include/linux/blkdev.h        |  6 +++
+ include/linux/device-mapper.h |  9 +++++
+ 9 files changed, 158 insertions(+), 70 deletions(-)
+
+-- 
+2.15.0
