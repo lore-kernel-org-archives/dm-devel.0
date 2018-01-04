@@ -1,55 +1,87 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v6 0/2] dax,
-	dm: stop requiring dax for device-mapper
-Date: Thu, 4 Jan 2018 13:12:03 -0500
-Message-ID: <20180104181202.GA14491@redhat.com>
-References: <151198199487.7051.7083189934624068090.stgit@dwillia2-desk3.amr.corp.intel.com>
+From: Suren Baghdasaryan <surenb@google.com>
+Subject: Re: [PATCH] dm bufio: fix shrinker scans when (nr_to_scan < retain_target)
+Date: Thu, 4 Jan 2018 11:04:42 -0800
+Message-ID: <CAJuCfpGPLvF0Z7La4Gq2zjSHS1+CDnXBgn6X60pjEQ_pCkqoYg@mail.gmail.com>
+References: <20171206172730.3095-1-surenb@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <151198199487.7051.7083189934624068090.stgit@dwillia2-desk3.amr.corp.intel.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Dan Williams <dan.j.williams@intel.com>
-Cc: kbuild test robot <lkp@intel.com>, linux-nvdimm@lists.01.org, Michael Ellerman <mpe@ellerman.id.au>, Heiko Carstens <heiko.carstens@de.ibm.com>, Martin Schwidefsky <schwidefsky@de.ibm.com>, dm-devel@redhat.com, Paul Mackerras <paulus@samba.org>, Alasdair Kergon <agk@redhat.com>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Bart Van Assche <Bart.VanAssche@wdc.com>, Gerald Schaefer <gerald.schaefer@de.ibm.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20171206172730.3095-1-surenb@google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+Cc: Todd Kjos <tkjos@google.com>, Tim Murray <timmurray@google.com>, Suren Baghdasaryan <surenb@google.com>
 List-Id: dm-devel.ids
 
-On Wed, Nov 29 2017 at  1:59pm -0500,
-Dan Williams <dan.j.williams@intel.com> wrote:
+Dear kernel maintainers. I know it was close to holiday season when I
+send this patch last month, so delay was expected. Could you please
+take a look at it and provide your feedback?
+Thanks!
 
-> Changes since v5 [1]:
-> * Make DAX_DRIVER select DAX to simplify the Kconfig dependencies
->   (Michael)
-> * Rebase on 4.15-rc1 and add new IS_ENABLED(CONFIG_DAX_DRIVER) checks in
->   drivers/md/dm-log-writes.c.
-> 
-> [1]: https://lists.01.org/pipermail/linux-nvdimm/2017-September/012569.html
-> 
+On Wed, Dec 6, 2017 at 9:27 AM, Suren Baghdasaryan <surenb@google.com> wrote:
+> When system is under memory pressure it is observed that dm bufio
+> shrinker often reclaims only one buffer per scan. This change fixes
+> the following two issues in dm bufio shrinker that cause this behavior:
+>
+> 1. ((nr_to_scan - freed) <= retain_target) condition is used to
+> terminate slab scan process. This assumes that nr_to_scan is equal
+> to the LRU size, which might not be correct because do_shrink_slab()
+> in vmscan.c calculates nr_to_scan using multiple inputs.
+> As a result when nr_to_scan is less than retain_target (64) the scan
+> will terminate after the first iteration, effectively reclaiming one
+> buffer per scan and making scans very inefficient. This hurts vmscan
+> performance especially because mutex is acquired/released every time
+> dm_bufio_shrink_scan() is called.
+> New implementation uses ((LRU size - freed) <= retain_target)
+> condition for scan termination. LRU size can be safely determined
+> inside __scan() because this function is called after dm_bufio_lock().
+>
+> 2. do_shrink_slab() uses value returned by dm_bufio_shrink_count() to
+> determine number of freeable objects in the slab. However dm_bufio
+> always retains retain_target buffers in its LRU and will terminate
+> a scan when this mark is reached. Therefore returning the entire LRU size
+> from dm_bufio_shrink_count() is misleading because that does not
+> represent the number of freeable objects that slab will reclaim during
+> a scan. Returning (LRU size - retain_target) better represents the
+> number of freeable objects in the slab. This way do_shrink_slab()
+> returns 0 when (LRU size < retain_target) and vmscan will not try to
+> scan this shrinker avoiding scans that will not reclaim any memory.
+>
+> Test: tested using Android device running
+> <AOSP>/system/extras/alloc-stress that generates memory pressure
+> and causes intensive shrinker scans
+>
+> Signed-off-by: Suren Baghdasaryan <surenb@google.com>
 > ---
-> 
-> Hi Mike,
-> 
-> Bart points out that the DAX core is unconditionally enabled if
-> device-mapper is enabled. Add some config machinery and some
-> stub/static-inline routines to allow dax infrastructure to be deleted
-> from device-mapper at compile time.
-
-Hey Dan,
-
-Did you want me to pick this up for 4.16 or were you thinking of sending
-the changes through a different tree?
-
-I'm fine with picking these up so long as you don't expect the dax.h and
-Kconfig changes to become a source of conflict come merge time.
-
-Let me know, thanks!
-Mike
+>  drivers/md/dm-bufio.c | 8 ++++++--
+>  1 file changed, 6 insertions(+), 2 deletions(-)
+>
+> diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+> index b8ac591aaaa7..c546b567f3b5 100644
+> --- a/drivers/md/dm-bufio.c
+> +++ b/drivers/md/dm-bufio.c
+> @@ -1611,7 +1611,8 @@ static unsigned long __scan(struct dm_bufio_client *c, unsigned long nr_to_scan,
+>         int l;
+>         struct dm_buffer *b, *tmp;
+>         unsigned long freed = 0;
+> -       unsigned long count = nr_to_scan;
+> +       unsigned long count = c->n_buffers[LIST_CLEAN] +
+> +                             c->n_buffers[LIST_DIRTY];
+>         unsigned long retain_target = get_retain_buffers(c);
+>
+>         for (l = 0; l < LIST_SIZE; l++) {
+> @@ -1647,8 +1648,11 @@ static unsigned long
+>  dm_bufio_shrink_count(struct shrinker *shrink, struct shrink_control *sc)
+>  {
+>         struct dm_bufio_client *c = container_of(shrink, struct dm_bufio_client, shrinker);
+> +       unsigned long count = READ_ONCE(c->n_buffers[LIST_CLEAN]) +
+> +                             READ_ONCE(c->n_buffers[LIST_DIRTY]);
+> +       unsigned long retain_target = get_retain_buffers(c);
+>
+> -       return READ_ONCE(c->n_buffers[LIST_CLEAN]) + READ_ONCE(c->n_buffers[LIST_DIRTY]);
+> +       return (count < retain_target) ? 0 : (count - retain_target);
+>  }
+>
+>  /*
+> --
+> 2.15.0.531.g2ccb3012c9-goog
+>
