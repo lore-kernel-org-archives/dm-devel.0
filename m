@@ -1,7 +1,7 @@
 From: Keith Busch <keith.busch@intel.com>
-Subject: [PATCH 5/5] dm mpath: Use blk_retryable
-Date: Thu,  4 Jan 2018 15:46:23 -0700
-Message-ID: <20180104224623.8944-6-keith.busch@intel.com>
+Subject: [PATCH 4/5] nvme/multipath: Use blk_retryable
+Date: Thu,  4 Jan 2018 15:46:22 -0700
+Message-ID: <20180104224623.8944-5-keith.busch@intel.com>
 References: <20180104224623.8944-1-keith.busch@intel.com>
 Return-path: <linux-block-owner@vger.kernel.org>
 In-Reply-To: <20180104224623.8944-1-keith.busch@intel.com>
@@ -15,52 +15,33 @@ alternate path.
 
 Signed-off-by: Keith Busch <keith.busch@intel.com>
 ---
- drivers/md/dm-mpath.c | 19 ++-----------------
- 1 file changed, 2 insertions(+), 17 deletions(-)
+ drivers/nvme/host/multipath.c | 14 +-------------
+ 1 file changed, 1 insertion(+), 13 deletions(-)
 
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index f7810cc869ac..3eb9500db1b3 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -1475,21 +1475,6 @@ static void activate_path_work(struct work_struct *work)
- 	activate_or_offline_path(pgpath);
- }
- 
--static int noretry_error(blk_status_t error)
--{
+diff --git a/drivers/nvme/host/multipath.c b/drivers/nvme/host/multipath.c
+index ae9abb600c0f..93bb72b6efb6 100644
+--- a/drivers/nvme/host/multipath.c
++++ b/drivers/nvme/host/multipath.c
+@@ -37,19 +37,7 @@ bool nvme_req_needs_failover(struct request *req, blk_status_t error)
+ {
+ 	if (!(req->cmd_flags & REQ_NVME_MPATH))
+ 		return false;
+-
 -	switch (error) {
 -	case BLK_STS_NOTSUPP:
 -	case BLK_STS_NOSPC:
 -	case BLK_STS_TARGET:
 -	case BLK_STS_NEXUS:
 -	case BLK_STS_MEDIUM:
--		return 1;
+-	case BLK_STS_PROTECTION:
+-		return false;
 -	}
 -
--	/* Anything else could be a path failure, so should be retried */
--	return 0;
--}
--
- static int multipath_end_io(struct dm_target *ti, struct request *clone,
- 			    blk_status_t error, union map_info *map_context)
- {
-@@ -1508,7 +1493,7 @@ static int multipath_end_io(struct dm_target *ti, struct request *clone,
- 	 * request into dm core, which will remake a clone request and
- 	 * clone bios for it and resubmit it later.
- 	 */
--	if (error && !noretry_error(error)) {
-+	if (error && blk_retryable(error)) {
- 		struct multipath *m = ti->private;
+-	/* Everything else could be a path failure, so should be retried */
+-	return true;
++	return blk_retryable(error);
+ }
  
- 		r = DM_ENDIO_REQUEUE;
-@@ -1544,7 +1529,7 @@ static int multipath_end_io_bio(struct dm_target *ti, struct bio *clone,
- 	unsigned long flags;
- 	int r = DM_ENDIO_DONE;
- 
--	if (!*error || noretry_error(*error))
-+	if (!*error || !blk_retryable(*error))
- 		goto done;
- 
- 	if (pgpath)
+ void nvme_kick_requeue_lists(struct nvme_ctrl *ctrl)
 -- 
 2.13.6
