@@ -1,36 +1,60 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 0/5] Failover criteria unification
-Date: Thu, 4 Jan 2018 19:07:44 -0500
-Message-ID: <20180105000744.GG16051@redhat.com>
-References: <20180104224623.8944-1-keith.busch@intel.com>
- <20180104233627.GA16051@redhat.com>
- <20180104234727.GA15654@localhost.localdomain>
+From: Xiongwei Song <sxwjean@gmail.com>
+Subject: Re: dm bufio: fix missed destroy of mutex c->lock
+Date: Fri, 5 Jan 2018 06:50:29 +0800
+Message-ID: <CAEVVKH-bnFuH+NmVzVoBh_Q2RZVnmxryJN1JeLZ-PvN-tB1Mcw@mail.gmail.com>
+References: <20180104140811.20182-1-sxwjean@gmail.com>
+	<20180104174619.GA14374@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180104234727.GA15654@localhost.localdomain>
-Sender: linux-block-owner@vger.kernel.org
-To: Keith Busch <keith.busch@intel.com>
-Cc: Linux Block <linux-block@vger.kernel.org>, Linux NVMe <linux-nvme@lists.infradead.org>, Device Mapper <dm-devel@redhat.com>, Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>, Bart VanAssche <bart.vanassche@wdc.com>, James Smart <james.smart@broadcom.com>, "Martin K . Petersen" <martin.petersen@oracle.com>, Hannes Reinecke <hare@suse.com>, Sagi Grimberg <sagi@grimberg.me>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20180104174619.GA14374@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Jan 04 2018 at  6:47pm -0500,
-Keith Busch <keith.busch@intel.com> wrote:
+2018-01-05 1:46 GMT+08:00 Mike Snitzer <snitzer@redhat.com>:
+> I already staged a similar fix, see:
+> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.16&id=cfb0bd8b25eb90faa7cbbad9a52ad2c33102123e
 
-> On Thu, Jan 04, 2018 at 06:36:27PM -0500, Mike Snitzer wrote:
-> > Right, I dropped that patch since it'd have only resulted in conflicts
-> > come merge time.  As such, this series can easily go through the nvme
-> > tree to Jens.
-> 
-> It looks like you can also touch up dm to allow it to multipath nvme
-> even if CONFIG_NVME_MULTIPATH is set. It may be useful since native NVMe
-> doesn't multipath namespaces across subsystems, and some crack smoking
-> people want to create something that requires that.
+Apologies for the noise.
 
-I had a "CONFIG_NVME_MULITIPATH=Y" typo in the dm-mpath.c commit that
-added the CONFIG_NVME_MULTIPATH mutual exclussion in dm-4.16; so I
-just dropped it via rebase.
+Yours sincerely,
+Xiongwei
 
-So now the underlying nvme devices (already multipath'd by NVMe) should
-be discoverable by multipathd.  Who am I to judge crack smokers?
+> On Thu, Jan 04 2018 at  9:08am -0500,
+> Xiongwei Song <sxwjean@gmail.com> wrote:
+>
+>> The mutex c->lock is initialized in dm_bufio_client_create, however,
+>> it is not destroyed before free the structure of dm_bufio_client in
+>> dm_bufio_client_destroy.
+>>
+>> Signed-off-by: Xiongwei Song <sxwjean@gmail.com>
+>> ---
+>>  drivers/md/dm-bufio.c | 1 +
+>>  1 file changed, 1 insertion(+)
+>>
+>> diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+>> index c546b567f3b5..53c0d5d2039a 100644
+>> --- a/drivers/md/dm-bufio.c
+>> +++ b/drivers/md/dm-bufio.c
+>> @@ -1811,6 +1811,7 @@ void dm_bufio_client_destroy(struct dm_bufio_client *c)
+>>               BUG_ON(c->n_buffers[i]);
+>>
+>>       dm_io_client_destroy(c->dm_io);
+>> +     mutex_destroy(&c->lock);
+>>       kfree(c);
+>>  }
+>>  EXPORT_SYMBOL_GPL(dm_bufio_client_destroy);
+>> --
+>> 2.15.1
+>>
