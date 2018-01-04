@@ -1,25 +1,25 @@
-From: Keith Busch <keith.busch@intel.com>
-Subject: Re: [PATCH 0/5] Failover criteria unification
-Date: Thu, 4 Jan 2018 16:47:27 -0700
-Message-ID: <20180104234727.GA15654@localhost.localdomain>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 4/5] nvme/multipath: Use blk_retryable
+Date: Thu, 4 Jan 2018 18:44:37 -0500
+Message-ID: <20180104234436.GE16051@redhat.com>
 References: <20180104224623.8944-1-keith.busch@intel.com>
- <20180104233627.GA16051@redhat.com>
+ <20180104224623.8944-5-keith.busch@intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-block-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20180104233627.GA16051@redhat.com>
+In-Reply-To: <20180104224623.8944-5-keith.busch@intel.com>
 Sender: linux-block-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
+To: Keith Busch <keith.busch@intel.com>
 Cc: Linux Block <linux-block@vger.kernel.org>, Linux NVMe <linux-nvme@lists.infradead.org>, Device Mapper <dm-devel@redhat.com>, Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>, Bart VanAssche <bart.vanassche@wdc.com>, James Smart <james.smart@broadcom.com>, "Martin K . Petersen" <martin.petersen@oracle.com>, Hannes Reinecke <hare@suse.com>, Sagi Grimberg <sagi@grimberg.me>
 List-Id: dm-devel.ids
 
-On Thu, Jan 04, 2018 at 06:36:27PM -0500, Mike Snitzer wrote:
-> Right, I dropped that patch since it'd have only resulted in conflicts
-> come merge time.  As such, this series can easily go through the nvme
-> tree to Jens.
+On Thu, Jan 04 2018 at  5:46pm -0500,
+Keith Busch <keith.busch@intel.com> wrote:
 
-It looks like you can also touch up dm to allow it to multipath nvme
-even if CONFIG_NVME_MULTIPATH is set. It may be useful since native NVMe
-doesn't multipath namespaces across subsystems, and some crack smoking
-people want to create something that requires that.
+> Uses common code for determining if an error should be retried on
+> alternate path.
+> 
+> Signed-off-by: Keith Busch <keith.busch@intel.com>
+
+Acked-by: Mike Snitzer <snitzer@redhat.com>
