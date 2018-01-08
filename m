@@ -1,56 +1,46 @@
-From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v6 0/2] dax, dm: stop requiring dax for device-mapper
-Date: Sun, 7 Jan 2018 12:31:59 -0800
-Message-ID: <CAA9_cmd8ywgxwfy6ZDkc1ERfD56L4HbTo7NkS5T1N9m-ZcjgzA@mail.gmail.com>
-References: <151198199487.7051.7083189934624068090.stgit@dwillia2-desk3.amr.corp.intel.com>
- <20180104181202.GA14491@redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [for-4.16 PATCH v2 0/5] block, nvme, dm: allow DM multipath to
+ use NVMe's error handler
+Date: Mon, 8 Jan 2018 07:52:46 +0100
+Message-ID: <31d7df8b-1197-c7aa-3c05-d8e7b5a63854@suse.de>
+References: <20171227032257.8182-1-snitzer@redhat.com>
+ <20180102232943.GC26533@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <20180104181202.GA14491-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: kbuild test robot <lkp-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Bart Van Assche <Bart.VanAssche-Sjgp3cTcYWE@public.gmane.org>, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Gerald Schaefer <gerald.schaefer-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Martin Schwidefsky <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20180102232943.GC26533@localhost.localdomain>
+Content-Language: en-US
+Sender: linux-block-owner@vger.kernel.org
+To: Keith Busch <keith.busch@intel.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: axboe@kernel.dk, hch@lst.de, emilne@redhat.com, james.smart@broadcom.com, Bart.VanAssche@wdc.com, linux-block@vger.kernel.org, linux-nvme@lists.infradead.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Jan 4, 2018 at 10:12 AM, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> On Wed, Nov 29 2017 at  1:59pm -0500,
-> Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
->
->> Changes since v5 [1]:
->> * Make DAX_DRIVER select DAX to simplify the Kconfig dependencies
->>   (Michael)
->> * Rebase on 4.15-rc1 and add new IS_ENABLED(CONFIG_DAX_DRIVER) checks in
->>   drivers/md/dm-log-writes.c.
->>
->> [1]: https://lists.01.org/pipermail/linux-nvdimm/2017-September/012569.html
->>
->> ---
->>
->> Hi Mike,
->>
->> Bart points out that the DAX core is unconditionally enabled if
->> device-mapper is enabled. Add some config machinery and some
->> stub/static-inline routines to allow dax infrastructure to be deleted
->> from device-mapper at compile time.
->
-> Hey Dan,
->
-> Did you want me to pick this up for 4.16 or were you thinking of sending
-> the changes through a different tree?
->
-> I'm fine with picking these up so long as you don't expect the dax.h and
-> Kconfig changes to become a source of conflict come merge time.
+On 01/03/2018 12:29 AM, Keith Busch wrote:
+> Instead of hiding NVMe path related errors, the NVMe driver needs to
+> code an appropriate generic block status from an NVMe status.
+> 
+> We already do this translation whether or not CONFIG_NVME_MULTIPATHING is
+> set, so I think it's silly NVMe native multipathing has a second status
+> decoder. This just doubles the work if we need to handle any new NVMe
+> status codes in the future.
+> 
+> I have a counter-proposal below that unifies NVMe-to-block status
+> translations, and combines common code for determining if an error is a
+> path failure. This should work for both NVMe and DM, and DM won't need
+> NVMe specifics.
+> 
+> I can split this into a series if there's indication this is ok and
+> satisfies the need.
+> 
+I'm all for it. Go.
 
-There might be some more collisions as we are going to kill the DAX
-support in axonram and dcssblk. If I get your reviewed-by on these
-I'll take them through the nvdimm tree.
+Cheers,
+
+Hannes
+-- 
+Dr. Hannes Reinecke		   Teamlead Storage & Networking
+hare@suse.de			               +49 911 74053 688
+SUSE LINUX GmbH, Maxfeldstr. 5, 90409 Nürnberg
+GF: F. Imendörffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
+HRB 21284 (AG Nürnberg)
