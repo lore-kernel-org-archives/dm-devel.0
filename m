@@ -1,15 +1,14 @@
 From: Hannes Reinecke <hare@suse.com>
-Subject: Re: [PATCH 3/5] block: Provide blk_status_t decoding for retryable
- errors
-Date: Mon, 8 Jan 2018 09:58:05 +0100
-Message-ID: <a6ff3178-7166-1d6b-d77a-d8fc3eb2071b@suse.com>
+Subject: Re: [PATCH 4/5] nvme/multipath: Use blk_retryable
+Date: Mon, 8 Jan 2018 09:58:30 +0100
+Message-ID: <724fb25f-ad34-d4f1-4351-90289efca7fb@suse.com>
 References: <20180104224623.8944-1-keith.busch@intel.com>
- <20180104224623.8944-4-keith.busch@intel.com>
+ <20180104224623.8944-5-keith.busch@intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20180104224623.8944-4-keith.busch@intel.com>
+In-Reply-To: <20180104224623.8944-5-keith.busch@intel.com>
 Content-Language: en-US
 Sender: linux-block-owner@vger.kernel.org
 To: Keith Busch <keith.busch@intel.com>, Linux Block <linux-block@vger.kernel.org>, Linux NVMe <linux-nvme@lists.infradead.org>, Device Mapper <dm-devel@redhat.com>, Christoph Hellwig <hch@lst.de>, Mike Snitzer <snitzer@redhat.com>, Jens Axboe <axboe@kernel.dk>
@@ -17,42 +16,39 @@ Cc: Bart VanAssche <bart.vanassche@wdc.com>, James Smart <james.smart@broadcom.c
 List-Id: dm-devel.ids
 
 On 01/04/2018 11:46 PM, Keith Busch wrote:
-> This patch provides a common decoder for block status that may be retried
-> so various entities wishing to consult this do not have to duplicate
-> this decision.
+> Uses common code for determining if an error should be retried on
+> alternate path.
 > 
 > Signed-off-by: Keith Busch <keith.busch@intel.com>
 > ---
->  include/linux/blk_types.h | 16 ++++++++++++++++
->  1 file changed, 16 insertions(+)
+>  drivers/nvme/host/multipath.c | 14 +-------------
+>  1 file changed, 1 insertion(+), 13 deletions(-)
 > 
-> diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-> index a1e628e032da..b6a8723b493c 100644
-> --- a/include/linux/blk_types.h
-> +++ b/include/linux/blk_types.h
-> @@ -39,6 +39,22 @@ typedef u8 __bitwise blk_status_t;
+> diff --git a/drivers/nvme/host/multipath.c b/drivers/nvme/host/multipath.c
+> index ae9abb600c0f..93bb72b6efb6 100644
+> --- a/drivers/nvme/host/multipath.c
+> +++ b/drivers/nvme/host/multipath.c
+> @@ -37,19 +37,7 @@ bool nvme_req_needs_failover(struct request *req, blk_status_t error)
+>  {
+>  	if (!(req->cmd_flags & REQ_NVME_MPATH))
+>  		return false;
+> -
+> -	switch (error) {
+> -	case BLK_STS_NOTSUPP:
+> -	case BLK_STS_NOSPC:
+> -	case BLK_STS_TARGET:
+> -	case BLK_STS_NEXUS:
+> -	case BLK_STS_MEDIUM:
+> -	case BLK_STS_PROTECTION:
+> -		return false;
+> -	}
+> -
+> -	/* Everything else could be a path failure, so should be retried */
+> -	return true;
+> +	return blk_retryable(error);
+>  }
 >  
->  #define BLK_STS_AGAIN		((__force blk_status_t)12)
->  
-> +static inline bool blk_retryable(blk_status_t error)
-> +{
-> +	switch (error) {
-> +	case BLK_STS_NOTSUPP:
-> +	case BLK_STS_NOSPC:
-> +	case BLK_STS_TARGET:
-> +	case BLK_STS_NEXUS:
-> +	case BLK_STS_MEDIUM:
-> +	case BLK_STS_PROTECTION:
-> +		return false;
-> +	}
-> +
-> +	/* Anything else could be a path failure, so should be retried */
-> +	return true;
-> +}
-> +
->  struct blk_issue_stat {
->  	u64 stat;
->  };
+>  void nvme_kick_requeue_lists(struct nvme_ctrl *ctrl)
 > 
 Reviewed-by: Hannes Reinecke <hare@suse.com>
 
