@@ -1,26 +1,65 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH 1/5] nvme: Add more command status translation
-Date: Mon, 8 Jan 2018 16:34:36 +0100
-Message-ID: <20180108153436.GA11632@lst.de>
-References: <20180104224623.8944-1-keith.busch@intel.com> <20180104224623.8944-2-keith.busch@intel.com> <20180108095512.GC4673@lst.de> <2beb72a9-8502-fec8-8892-208cbb0967ac@suse.com> <20180108101937.GA5423@lst.de> <20180108152933.GA9920@redhat.com>
+From: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v6 0/2] dax, dm: stop requiring dax for device-mapper
+Date: Mon, 8 Jan 2018 11:06:58 -0500
+Message-ID: <20180108160658.GA10224@redhat.com>
+References: <151198199487.7051.7083189934624068090.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <20180104181202.GA14491@redhat.com>
+ <CAA9_cmd8ywgxwfy6ZDkc1ERfD56L4HbTo7NkS5T1N9m-ZcjgzA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20180108152933.GA9920@redhat.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Christoph Hellwig <hch@lst.de>, Hannes Reinecke <hare@suse.com>, Keith Busch <keith.busch@intel.com>, Linux Block <linux-block@vger.kernel.org>, Linux NVMe <linux-nvme@lists.infradead.org>, Device Mapper <dm-devel@redhat.com>, Jens Axboe <axboe@kernel.dk>, Bart VanAssche <bart.vanassche@wdc.com>, James Smart <james.smart@broadcom.com>, "Martin K . Petersen" <martin.petersen@oracle.com>, Sagi Grimberg <sagi@grimberg.me>
+In-Reply-To: <CAA9_cmd8ywgxwfy6ZDkc1ERfD56L4HbTo7NkS5T1N9m-ZcjgzA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: kbuild test robot <lkp-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Heiko Carstens <heiko.carstens-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Bart Van Assche <Bart.VanAssche-Sjgp3cTcYWE@public.gmane.org>, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Gerald Schaefer <gerald.schaefer-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Martin Schwidefsky <schwidefsky-tA70FqPdS9bQT0dZR+AlfA@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-On Mon, Jan 08, 2018 at 10:29:33AM -0500, Mike Snitzer wrote:
-> No argument needed.  Definitely needs fixing.  Too many upper layers
-> consider BLK_STS_NOSPC retryable (XFS, ext4, dm-thinp, etc).  Which
-> NVME_SC_LBA_RANGE absolutely isn't.
-> 
-> When I backfilled NVME_SC_LBA_RANGE handling I categorized it as
-> BLK_STS_TARGET.  Do you have a better suggestion for how
-> NVME_SC_LBA_RANGE should be categorized?
+On Sun, Jan 07 2018 at  3:31pm -0500,
+Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
 
-It's basically a kernel bug as it tries to access lbas that do not
-exist.  BLK_STS_TARGET should be fine.
+> On Thu, Jan 4, 2018 at 10:12 AM, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+> > On Wed, Nov 29 2017 at  1:59pm -0500,
+> > Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
+> >
+> >> Changes since v5 [1]:
+> >> * Make DAX_DRIVER select DAX to simplify the Kconfig dependencies
+> >>   (Michael)
+> >> * Rebase on 4.15-rc1 and add new IS_ENABLED(CONFIG_DAX_DRIVER) checks in
+> >>   drivers/md/dm-log-writes.c.
+> >>
+> >> [1]: https://lists.01.org/pipermail/linux-nvdimm/2017-September/012569.html
+> >>
+> >> ---
+> >>
+> >> Hi Mike,
+> >>
+> >> Bart points out that the DAX core is unconditionally enabled if
+> >> device-mapper is enabled. Add some config machinery and some
+> >> stub/static-inline routines to allow dax infrastructure to be deleted
+> >> from device-mapper at compile time.
+> >
+> > Hey Dan,
+> >
+> > Did you want me to pick this up for 4.16 or were you thinking of sending
+> > the changes through a different tree?
+> >
+> > I'm fine with picking these up so long as you don't expect the dax.h and
+> > Kconfig changes to become a source of conflict come merge time.
+> 
+> There might be some more collisions as we are going to kill the DAX
+> support in axonram and dcssblk. If I get your reviewed-by on these
+> I'll take them through the nvdimm tree.
+
+OK, I've dropped these and will respond with my Reviewed-by:s.
+
+Thanks.
