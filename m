@@ -1,36 +1,60 @@
-From: Bart Van Assche <Bart.VanAssche@wdc.com>
+From: Mike Snitzer <snitzer@redhat.com>
 Subject: Re: [for-4.16 PATCH 1/2] block: cope with gendisk's 'queue' being
  added later
-Date: Tue, 9 Jan 2018 23:04:25 +0000
-Message-ID: <1515539064.2721.34.camel@wdc.com>
+Date: Tue, 9 Jan 2018 18:41:33 -0500
+Message-ID: <20180109234133.GA18842@redhat.com>
 References: <20180109221039.33282-1-snitzer@redhat.com>
-         <20180109221039.33282-2-snitzer@redhat.com>
+ <20180109221039.33282-2-snitzer@redhat.com>
+ <1515539064.2721.34.camel@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20180109221039.33282-2-snitzer@redhat.com>
-Content-Language: en-US
-Content-ID: <E31BA77474557841BF71C8A6B6B11D42@namprd04.prod.outlook.com>
+Content-Disposition: inline
+In-Reply-To: <1515539064.2721.34.camel@wdc.com>
 Sender: linux-block-owner@vger.kernel.org
-To: "snitzer@redhat.com" <snitzer@redhat.com>, "axboe@kernel.dk" <axboe@kernel.dk>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>
+To: Bart Van Assche <Bart.VanAssche@wdc.com>
+Cc: "axboe@kernel.dk" <axboe@kernel.dk>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>
 List-Id: dm-devel.ids
 
-T24gVHVlLCAyMDE4LTAxLTA5IGF0IDE3OjEwIC0wNTAwLCBNaWtlIFNuaXR6ZXIgd3JvdGU6DQo+
-IGRpZmYgLS1naXQgYS9ibG9jay9ibGstc3lzZnMuYyBiL2Jsb2NrL2Jsay1zeXNmcy5jDQo+IGlu
-ZGV4IDg3MDQ4NGVhZWQxZi4uMGIwZGRhOGUyNDIwIDEwMDY0NA0KPiAtLS0gYS9ibG9jay9ibGst
-c3lzZnMuYw0KPiArKysgYi9ibG9jay9ibGstc3lzZnMuYw0KPiBAQCAtOTE5LDggKzkxOSwyMCBA
-QCBpbnQgYmxrX3JlZ2lzdGVyX3F1ZXVlKHN0cnVjdCBnZW5kaXNrICpkaXNrKQ0KPiAgCXJldCA9
-IDA7DQo+ICB1bmxvY2s6DQo+ICAJbXV0ZXhfdW5sb2NrKCZxLT5zeXNmc19sb2NrKTsNCj4gKw0K
-PiArCS8qDQo+ICsJICogVGFrZSBhbiBleHRyYSByZWYgb24gcXVldWUgd2hpY2ggd2lsbCBiZSBw
-dXQgb24gZGlza19yZWxlYXNlKCkNCj4gKwkgKiBzbyB0aGF0IGl0IHN0aWNrcyBhcm91bmQgYXMg
-bG9uZyBhcyBAZGlzayBpcyB0aGVyZS4NCj4gKwkgKi8NCj4gKwlXQVJOX09OX09OQ0UoIWJsa19n
-ZXRfcXVldWUocSkpOw0KPiArDQo+ICsJV0FSTl9PTihzeXNmc19jcmVhdGVfbGluaygmZGV2LT5r
-b2JqLA0KPiArCQkJCSAgJnEtPmJhY2tpbmdfZGV2X2luZm8tPmRldi0+a29iaiwNCj4gKwkJCQkg
-ICJiZGkiKSk7DQo+ICsNCj4gIAlyZXR1cm4gcmV0Ow0KPiAgfQ0KPiArRVhQT1JUX1NZTUJPTF9H
-UEwoYmxrX3JlZ2lzdGVyX3F1ZXVlKTsNCg0KSGVsbG8gTWlrZSwNCg0KU28gdGhlIHN5c2ZzX2Ny
-ZWF0ZV9saW5rKCkgY2FsbCBpcyBtb3ZlZCBmcm9tIHJlZ2lzdGVyX2Rpc2soKSBpbnRvDQpibGtf
-cmVnaXN0ZXJfcXVldWUoKSBidXQgdGhlIHN5c2ZzX3JlbW92ZV9saW5rKCkgY2FsbCBzdGF5cyBp
-biBkZWxfZ2VuZGlzaygpPw0KQXJlIHlvdSBzdXJlIHRoYXQgeW91IHdhbnQgdGhpcyBhc3ltbWV0
-cnk/DQoNClRoYW5rcywNCg0KQmFydC4=
+On Tue, Jan 09 2018 at  6:04pm -0500,
+Bart Van Assche <Bart.VanAssche@wdc.com> wrote:
+
+> On Tue, 2018-01-09 at 17:10 -0500, Mike Snitzer wrote:
+> > diff --git a/block/blk-sysfs.c b/block/blk-sysfs.c
+> > index 870484eaed1f..0b0dda8e2420 100644
+> > --- a/block/blk-sysfs.c
+> > +++ b/block/blk-sysfs.c
+> > @@ -919,8 +919,20 @@ int blk_register_queue(struct gendisk *disk)
+> >  	ret = 0;
+> >  unlock:
+> >  	mutex_unlock(&q->sysfs_lock);
+> > +
+> > +	/*
+> > +	 * Take an extra ref on queue which will be put on disk_release()
+> > +	 * so that it sticks around as long as @disk is there.
+> > +	 */
+> > +	WARN_ON_ONCE(!blk_get_queue(q));
+> > +
+> > +	WARN_ON(sysfs_create_link(&dev->kobj,
+> > +				  &q->backing_dev_info->dev->kobj,
+> > +				  "bdi"));
+> > +
+> >  	return ret;
+> >  }
+> > +EXPORT_SYMBOL_GPL(blk_register_queue);
+> 
+> Hello Mike,
+> 
+> So the sysfs_create_link() call is moved from register_disk() into
+> blk_register_queue() but the sysfs_remove_link() call stays in del_gendisk()?
+> Are you sure that you want this asymmetry?
+
+My focus was on the add_disk() side of things, due to disk->queue
+possibly being NULL on add.  But on remove all was basically left
+unmodified (aside from removing the WARN_ON).
+
+I dont think the asymmetry is a big deal but I can fix it.  I'll wait
+for more feedback before sending out a v2 though.
+
+Thanks,
+Mike
