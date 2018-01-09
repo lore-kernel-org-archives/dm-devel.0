@@ -1,38 +1,155 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [for-4.16 PATCH 0/2] block: cope with gendisk's 'queue' being added later
-Date: Tue,  9 Jan 2018 17:10:37 -0500
-Message-ID: <20180109221039.33282-1-snitzer@redhat.com>
+Subject: [for-4.16 PATCH 1/2] block: cope with gendisk's 'queue' being added later
+Date: Tue,  9 Jan 2018 17:10:38 -0500
+Message-ID: <20180109221039.33282-2-snitzer@redhat.com>
+References: <20180109221039.33282-1-snitzer@redhat.com>
 Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20180109221039.33282-1-snitzer@redhat.com>
 Sender: linux-block-owner@vger.kernel.org
 To: axboe@kernel.dk
 Cc: dm-devel@redhat.com, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hi Jens,
+Since I can remember DM has forced the block layer to allow the
+allocation and initialization of the request_queue to be distinct
+operations.  Reason for this was block/genhd.c:add_disk() has required
+that the request_queue (and associated bdi) be tied to the gendisk
+before add_disk() is called -- because add_disk() also deals with
+exposing the request_queue via blk_register_queue().
 
-Please consider PATCH 1/2 for 4.16 inclusion.  I've included PATCH 2/2
-to show the DM changes needed in order to make use of the block
-changes.
+DM's dynamic creation of arbitrary device types (and associated
+request_queue types) requires the DM device's gendisk be available so
+that DM table loads can establish a master/slave relationship with
+subordinate devices that are referenced by loaded DM tables -- using
+bd_link_disk_holder().  But until these DM tables, and their associated
+subordinate devices, are known DM cannot know what type of request_queue
+it needs -- nor what its queue_limits should be.
 
-I think, all things considered, this moves DM's interface with block
-core in a better direction for the long-term but I obviously welcome
-any critical feedback.
+This chicken and egg scenario has created all manner of problems for DM
+and, at times, the block layer.
 
-Thanks!
-Mike
+Summary of changes:
 
-Mike Snitzer (2):
-  block: cope with gendisk's 'queue' being added later
-  dm: fix awkward request_queue initialization
+- Adjust device_add_disk() so that that it can cope with the gendisk _not_
+  having its 'queue' established yet.
 
- block/blk-sysfs.c     | 12 ++++++++++
- block/genhd.c         | 28 +++++++---------------
- drivers/md/dm-core.h  |  2 --
- drivers/md/dm-ioctl.c |  7 ++----
- drivers/md/dm-rq.c    | 13 +---------
- drivers/md/dm-table.c |  2 +-
- drivers/md/dm.c       | 66 +++++++++++++++++++++++++++++++--------------------
- 7 files changed, 64 insertions(+), 66 deletions(-)
+- Remove del_gendisk()'s WARN_ON() if disk->queue is NULL
 
+- Move "bdi" symlink creation from register_disk() to the end of
+  blk_register_queue() -- it is more logical in that the bdi is part of
+  the request_queue.
+
+- Move extra request_queue reference count (on behalf of gendisk) from
+  device_add_disk() to end of blk_register_queue().
+
+- Make device_add_disk()'s calls to bdi_register_owner() and
+  blk_register_queue() conditional on disk->queue not being NULL.
+
+- Export blk_register_queue()
+
+These changes allow DM to use device_add_disk() to anchor its gendisk as
+the "master" for master/slave relationships DM must establish with
+subordinate devices referenced in DM tables that get loaded.  Once all
+"slave" devices for a DM device are known a request_queue can be
+properly initialized and then advertised via sysfs -- important
+improvement being that no request_queue resource initialization is
+missed.
+
+These changes have been tested to work without any IO races because the
+request_queue and associated bdi don't even exist at the time that the
+gendisk's "struct device"s are established by device_add_disk().  I've
+been mindful of historic bugs, and haven't experienced them with DM,
+e.g.: https://bugzilla.kernel.org/show_bug.cgi?id=16312 (fixed by commit
+01ea5063 "block: Fix race during disk initialization")
+
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ block/blk-sysfs.c | 12 ++++++++++++
+ block/genhd.c     | 28 ++++++++--------------------
+ 2 files changed, 20 insertions(+), 20 deletions(-)
+
+diff --git a/block/blk-sysfs.c b/block/blk-sysfs.c
+index 870484eaed1f..0b0dda8e2420 100644
+--- a/block/blk-sysfs.c
++++ b/block/blk-sysfs.c
+@@ -919,8 +919,20 @@ int blk_register_queue(struct gendisk *disk)
+ 	ret = 0;
+ unlock:
+ 	mutex_unlock(&q->sysfs_lock);
++
++	/*
++	 * Take an extra ref on queue which will be put on disk_release()
++	 * so that it sticks around as long as @disk is there.
++	 */
++	WARN_ON_ONCE(!blk_get_queue(q));
++
++	WARN_ON(sysfs_create_link(&dev->kobj,
++				  &q->backing_dev_info->dev->kobj,
++				  "bdi"));
++
+ 	return ret;
+ }
++EXPORT_SYMBOL_GPL(blk_register_queue);
+ 
+ void blk_unregister_queue(struct gendisk *disk)
+ {
+diff --git a/block/genhd.c b/block/genhd.c
+index 96a66f671720..13aa80319b3b 100644
+--- a/block/genhd.c
++++ b/block/genhd.c
+@@ -621,11 +621,6 @@ static void register_disk(struct device *parent, struct gendisk *disk)
+ 	while ((part = disk_part_iter_next(&piter)))
+ 		kobject_uevent(&part_to_dev(part)->kobj, KOBJ_ADD);
+ 	disk_part_iter_exit(&piter);
+-
+-	err = sysfs_create_link(&ddev->kobj,
+-				&disk->queue->backing_dev_info->dev->kobj,
+-				"bdi");
+-	WARN_ON(err);
+ }
+ 
+ /**
+@@ -671,24 +666,19 @@ void device_add_disk(struct device *parent, struct gendisk *disk)
+ 		disk->flags |= GENHD_FL_SUPPRESS_PARTITION_INFO;
+ 		disk->flags |= GENHD_FL_NO_PART_SCAN;
+ 	} else {
+-		int ret;
+-
+-		/* Register BDI before referencing it from bdev */
+ 		disk_to_dev(disk)->devt = devt;
+-		ret = bdi_register_owner(disk->queue->backing_dev_info,
+-						disk_to_dev(disk));
+-		WARN_ON(ret);
++		/* Register BDI before referencing it from bdev */
++		if (disk->queue) {
++			retval = bdi_register_owner(disk->queue->backing_dev_info,
++						    disk_to_dev(disk));
++			WARN_ON(retval);
++		}
+ 		blk_register_region(disk_devt(disk), disk->minors, NULL,
+ 				    exact_match, exact_lock, disk);
+ 	}
+ 	register_disk(parent, disk);
+-	blk_register_queue(disk);
+-
+-	/*
+-	 * Take an extra ref on queue which will be put on disk_release()
+-	 * so that it sticks around as long as @disk is there.
+-	 */
+-	WARN_ON_ONCE(!blk_get_queue(disk->queue));
++	if (disk->queue)
++		blk_register_queue(disk);
+ 
+ 	disk_add_events(disk);
+ 	blk_integrity_add(disk);
+@@ -727,8 +717,6 @@ void del_gendisk(struct gendisk *disk)
+ 		 */
+ 		bdi_unregister(disk->queue->backing_dev_info);
+ 		blk_unregister_queue(disk);
+-	} else {
+-		WARN_ON(1);
+ 	}
+ 
+ 	if (!(disk->flags & GENHD_FL_HIDDEN))
 -- 
 2.15.0
