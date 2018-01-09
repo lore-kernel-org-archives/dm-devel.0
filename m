@@ -1,32 +1,49 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH 2/5] nvme/multipath: Consult blk_status_t for failover
-Date: Tue, 9 Jan 2018 18:40:33 +0100
-Message-ID: <20180109174033.GA13171@lst.de>
-References: <20180104224623.8944-1-keith.busch@intel.com> <20180104224623.8944-3-keith.busch@intel.com> <20180108095707.GD4673@lst.de> <20180109173857.GF15154@localhost.localdomain>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: Keith Busch <keith.busch@intel.com>
+Subject: [PATCHv2 1/5] nvme: Add more command status translation
+Date: Tue,  9 Jan 2018 12:04:14 -0700
+Message-ID: <20180109190418.7123-2-keith.busch@intel.com>
+References: <20180109190418.7123-1-keith.busch@intel.com>
 Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180109173857.GF15154@localhost.localdomain>
+In-Reply-To: <20180109190418.7123-1-keith.busch@intel.com>
 Sender: linux-block-owner@vger.kernel.org
-To: Keith Busch <keith.busch@intel.com>
-Cc: Christoph Hellwig <hch@lst.de>, Linux Block <linux-block@vger.kernel.org>, Linux NVMe <linux-nvme@lists.infradead.org>, Device Mapper <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Jens Axboe <axboe@kernel.dk>, Bart VanAssche <bart.vanassche@wdc.com>, James Smart <james.smart@broadcom.com>, "Martin K . Petersen" <martin.petersen@oracle.com>, Hannes Reinecke <hare@suse.com>, Sagi Grimberg <sagi@grimberg.me>
+To: Linux Block <linux-block@vger.kernel.org>, Linux NVMe <linux-nvme@lists.infradead.org>, Device Mapper <dm-devel@redhat.com>, Christoph Hellwig <hch@lst.de>, Mike Snitzer <snitzer@redhat.com>, Jens Axboe <axboe@kernel.dk>
+Cc: Bart VanAssche <bart.vanassche@wdc.com>, James Smart <james.smart@broadcom.com>, "Martin K . Petersen" <martin.petersen@oracle.com>, Hannes Reinecke <hare@suse.com>, Sagi Grimberg <sagi@grimberg.me>, Keith Busch <keith.busch@intel.com>
 List-Id: dm-devel.ids
 
-On Tue, Jan 09, 2018 at 10:38:58AM -0700, Keith Busch wrote:
-> On Mon, Jan 08, 2018 at 01:57:07AM -0800, Christoph Hellwig wrote:
-> > > -	if (unlikely(nvme_req(req)->status && nvme_req_needs_retry(req))) {
-> > > -		if (nvme_req_needs_failover(req)) {
-> > > +	blk_status_t status = nvme_error_status(req);
-> > > +
-> > > +	if (unlikely(status != BLK_STS_OK && nvme_req_needs_retry(req))) {
-> > > +		if (nvme_req_needs_failover(req, status)) {
-> > 
-> > We don't really need to call nvme_error_status if nvme_req(req)->status
-> > is zero.
-> 
-> We are already calling nvme_error_status unconditionally for
-> blk_mq_end_request, so we currently read nvme_req(req)->status multiple
-> times in the completion path. I think we'd prefer to read it just once.
+This adds more NVMe status code translations to blk_status_t values,
+and captures all the current status codes NVMe multipath uses.
 
-Indeed.  Objection retracted.
+Acked-by: Mike Snitzer <snitzer@redhat.com>
+Reviewed-by: Hannes Reinecke <hare@suse.com>
+Signed-off-by: Keith Busch <keith.busch@intel.com>
+---
+ drivers/nvme/host/core.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/drivers/nvme/host/core.c b/drivers/nvme/host/core.c
+index 2a69d735efbc..499f3141e365 100644
+--- a/drivers/nvme/host/core.c
++++ b/drivers/nvme/host/core.c
+@@ -157,13 +157,20 @@ static blk_status_t nvme_error_status(struct request *req)
+ 		return BLK_STS_OK;
+ 	case NVME_SC_CAP_EXCEEDED:
+ 		return BLK_STS_NOSPC;
++	case NVME_SC_LBA_RANGE:
++		return BLK_STS_TARGET;
++	case NVME_SC_BAD_ATTRIBUTES:
+ 	case NVME_SC_ONCS_NOT_SUPPORTED:
++	case NVME_SC_INVALID_OPCODE:
++	case NVME_SC_INVALID_FIELD:
++	case NVME_SC_INVALID_NS:
+ 		return BLK_STS_NOTSUPP;
+ 	case NVME_SC_WRITE_FAULT:
+ 	case NVME_SC_READ_ERROR:
+ 	case NVME_SC_UNWRITTEN_BLOCK:
+ 	case NVME_SC_ACCESS_DENIED:
+ 	case NVME_SC_READ_ONLY:
++	case NVME_SC_COMPARE_FAILED:
+ 		return BLK_STS_MEDIUM;
+ 	case NVME_SC_GUARD_CHECK:
+ 	case NVME_SC_APPTAG_CHECK:
+-- 
+2.13.6
