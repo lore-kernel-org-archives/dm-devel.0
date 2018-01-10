@@ -1,16 +1,16 @@
 From: Johannes Thumshirn <jthumshirn@suse.de>
-Subject: Re: [dm-devel] [PATCHv2 1/5] nvme: Add more command status
- translation
-Date: Wed, 10 Jan 2018 08:58:35 +0100
-Message-ID: <20180110075835.pmxvsddlnjfm6yex@linux-x5ow.site>
+Subject: Re: [dm-devel] [PATCHv2 2/5] nvme/multipath: Consult blk_status_t
+ for failover
+Date: Wed, 10 Jan 2018 09:02:24 +0100
+Message-ID: <20180110080224.pvtrd7dybxksvbsj@linux-x5ow.site>
 References: <20180109190418.7123-1-keith.busch@intel.com>
- <20180109190418.7123-2-keith.busch@intel.com>
+ <20180109190418.7123-3-keith.busch@intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=iso-8859-1
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-block-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20180109190418.7123-2-keith.busch@intel.com>
+In-Reply-To: <20180109190418.7123-3-keith.busch@intel.com>
 Sender: linux-block-owner@vger.kernel.org
 To: Keith Busch <keith.busch@intel.com>
 Cc: Linux Block <linux-block@vger.kernel.org>, Linux NVMe <linux-nvme@lists.infradead.org>, Device Mapper <dm-devel@redhat.com>, Christoph Hellwig <hch@lst.de>, Mike Snitzer <snitzer@redhat.com>, Jens Axboe <axboe@kernel.dk>, Hannes Reinecke <hare@suse.com>, Sagi Grimberg <sagi@grimberg.me>, "Martin K . Petersen" <martin.petersen@oracle.com>, James Smart <james.smart@broadcom.com>, Bart VanAssche <bart.vanassche@wdc.com>
