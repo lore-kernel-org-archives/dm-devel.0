@@ -1,49 +1,29 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCHv2] Fill NVMe specific path info
-Date: Wed, 10 Jan 2018 17:07:07 +0100
-Message-ID: <0455c3f8-423e-a639-da1f-8492cd3843fb@gmail.com>
-References: <1487715151-1179-1-git-send-email-keith.busch@intel.com>
+From: Jens Axboe <axboe@kernel.dk>
+Subject: Re: [PATCHv2 0/5] nvme/dm failover unification
+Date: Wed, 10 Jan 2018 10:52:57 -0700
+Message-ID: <599f627a-cb0d-de65-f20b-61fed9c6cd22@kernel.dk>
+References: <20180109190418.7123-1-keith.busch@intel.com>
+ <20180110082835.GA10185@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1487715151-1179-1-git-send-email-keith.busch@intel.com>
-Content-Language: en-GB
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Keith Busch <keith.busch@intel.com>, dm-devel@redhat.com
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20180110082835.GA10185@lst.de>
+Content-Language: en-US
+Sender: linux-block-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>, Keith Busch <keith.busch@intel.com>
+Cc: Linux Block <linux-block@vger.kernel.org>, Linux NVMe <linux-nvme@lists.infradead.org>, Device Mapper <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Bart VanAssche <bart.vanassche@wdc.com>, James Smart <james.smart@broadcom.com>, "Martin K . Petersen" <martin.petersen@oracle.com>, Hannes Reinecke <hare@suse.com>, Sagi Grimberg <sagi@grimberg.me>
 List-Id: dm-devel.ids
 
-On 02/21/2017 11:12 PM, Keith Busch wrote:
+On 1/10/18 1:28 AM, Christoph Hellwig wrote:
+> The whole series looks fine to me:
+> 
+> Reviewed-by: Christoph Hellwig <hch@lst.de>
+> 
+> Jens, do you want me to apply this to the nvme tree, or pick it up
+> directly?
 
-> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-> index f5a5f7b..8409261 100644
-> --- a/libmultipath/hwtable.c
-> +++ b/libmultipath/hwtable.c
-> @@ -1073,6 +1073,16 @@ static struct hwentry default_hw[] = {
->  		.prio_name     = PRIO_ALUA,
->  		.no_path_retry = 30,
->  	},
-> +	/*
-> +	 * Generic NVMe devices
-> +	 */
-> +	{
-> +		.vendor	       = "NVME",
-> +		.product       = ".*",
-> +		.uid_attribute = "ID_WWN",
-> +		.checker_name  = DIRECTIO,
-> +		.retain_hwhandler = RETAIN_HWHANDLER_OFF,
-> +	},
+I queued it up, thanks.
 
-Try #2.
-
-"NVME" is a too generic regex, could it be replaced by "^NVME" and a "product name"?
-
-Thanks.
+-- 
+Jens Axboe
