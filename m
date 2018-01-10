@@ -1,48 +1,49 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-integrity: don't store cipher request on the stack (was:
- [QUESTION] hash import and request initialization)
-Date: Wed, 10 Jan 2018 10:13:53 -0500
-Message-ID: <20180110151353.GA23626@redhat.com>
-References: <CAOtvUMdsqEpUSSBZXxHPzuO-84B3VKxRLLN=y1cxfNbt+5qpSQ@mail.gmail.com>
- <20171226030751.GA11758@gondor.apana.org.au>
- <CAOtvUMfkGgyhCTUpfpegfmR3DNYhvfRN4oHL1tY9RMRh5sfCfQ@mail.gmail.com>
- <20171226104010.GA28275@gondor.apana.org.au>
- <CAOtvUMeEw88mYVjb7bDLwGb67aXi2p5e-uRXn0XrDe0uddyT6g@mail.gmail.com>
- <20171227033500.GA32764@gondor.apana.org.au>
- <alpine.LRH.2.02.1801100931240.7460@file01.intranet.prod.int.rdu2.redhat.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: [PATCHv2] Fill NVMe specific path info
+Date: Wed, 10 Jan 2018 17:07:07 +0100
+Message-ID: <0455c3f8-423e-a639-da1f-8492cd3843fb@gmail.com>
+References: <1487715151-1179-1-git-send-email-keith.busch@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-crypto-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1801100931240.7460@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>, Gilad Ben-Yossef <gilad@benyossef.com>, dm-devel@redhat.com, Linux Crypto Mailing List <linux-crypto@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1487715151-1179-1-git-send-email-keith.busch@intel.com>
+Content-Language: en-GB
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Keith Busch <keith.busch@intel.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Jan 10 2018 at  9:32am -0500,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
+On 02/21/2017 11:12 PM, Keith Busch wrote:
 
-> 
-> 
-> On Wed, 27 Dec 2017, Herbert Xu wrote:
-> 
-> > On Tue, Dec 26, 2017 at 02:21:53PM +0200, Gilad Ben-Yossef wrote:
-> > > 
-> > > See how SKCIPHER_REQUEST_ON_STACK is being used with an asymmetric skcipher
-> > > in drivers/md/dm-integrity.c
-> > 
-> > That's just broken.  SKCIPHER_REQUEST_ON_STACK is only meant for
-> > sync algorithms and this code needs to be changed to either do the
-> > proper request allocation or switch over to allocating sync
-> > algorithms.
-> > 
-> > Cheers,
-> 
-> Hi
-> 
-> Here I send a patch that moves those allocations to the heap.
+> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+> index f5a5f7b..8409261 100644
+> --- a/libmultipath/hwtable.c
+> +++ b/libmultipath/hwtable.c
+> @@ -1073,6 +1073,16 @@ static struct hwentry default_hw[] = {
+>  		.prio_name     = PRIO_ALUA,
+>  		.no_path_retry = 30,
+>  	},
+> +	/*
+> +	 * Generic NVMe devices
+> +	 */
+> +	{
+> +		.vendor	       = "NVME",
+> +		.product       = ".*",
+> +		.uid_attribute = "ID_WWN",
+> +		.checker_name  = DIRECTIO,
+> +		.retain_hwhandler = RETAIN_HWHANDLER_OFF,
+> +	},
 
-Thanks, I'll review and hope to stage for 4.16 today.
+Try #2.
 
-Mike
+"NVME" is a too generic regex, could it be replaced by "^NVME" and a "product name"?
+
+Thanks.
