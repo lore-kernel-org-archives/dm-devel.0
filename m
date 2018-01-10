@@ -1,89 +1,163 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [for-4.16 PATCH v2 2/3] block: cope with gendisk's 'queue' being
- added later
-Date: Wed, 10 Jan 2018 09:20:19 -0500
-Message-ID: <20180110142019.GB23410@redhat.com>
-References: <20180110024104.34885-1-snitzer@redhat.com>
- <20180110024104.34885-3-snitzer@redhat.com>
- <CACVXFVPWEsfv+xEWiAL5nT1p9FazgMcH1U7h7zCA_CSQqrEMiw@mail.gmail.com>
- <20180110042113.GA20494@redhat.com>
- <CACVXFVPGesRgLCShzLkXYw+fbefPMLEEqc05Xa_w3qiXqrDFvA@mail.gmail.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm-integrity: don't store cipher request on the stack (was:
+ [QUESTION] hash import and request initialization)
+Date: Wed, 10 Jan 2018 09:32:47 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1801100931240.7460@file01.intranet.prod.int.rdu2.redhat.com>
+References: <CAOtvUMdsqEpUSSBZXxHPzuO-84B3VKxRLLN=y1cxfNbt+5qpSQ@mail.gmail.com> <20171226030751.GA11758@gondor.apana.org.au> <CAOtvUMfkGgyhCTUpfpegfmR3DNYhvfRN4oHL1tY9RMRh5sfCfQ@mail.gmail.com> <20171226104010.GA28275@gondor.apana.org.au>
+ <CAOtvUMeEw88mYVjb7bDLwGb67aXi2p5e-uRXn0XrDe0uddyT6g@mail.gmail.com> <20171227033500.GA32764@gondor.apana.org.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CACVXFVPGesRgLCShzLkXYw+fbefPMLEEqc05Xa_w3qiXqrDFvA@mail.gmail.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Ming Lei <tom.leiming@gmail.com>
-Cc: Jens Axboe <axboe@kernel.dk>, Bart Van Assche <Bart.VanAssche@wdc.com>, linux-block <linux-block@vger.kernel.org>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, Christoph Hellwig <hch@lst.de>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <20171227033500.GA32764@gondor.apana.org.au>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Herbert Xu <herbert@gondor.apana.org.au>, Mike Snitzer <msnitzer@redhat.com>
+Cc: Gilad Ben-Yossef <gilad@benyossef.com>, dm-devel@redhat.com, Linux Crypto Mailing List <linux-crypto@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Wed, Jan 10 2018 at  2:55am -0500,
-Ming Lei <tom.leiming@gmail.com> wrote:
 
-> On Wed, Jan 10, 2018 at 12:21 PM, Mike Snitzer <snitzer@redhat.com> wrote:
-> > On Tue, Jan 09 2018 at 10:46pm -0500,
-> > Ming Lei <tom.leiming@gmail.com> wrote:
-> >
-> >> Another related issue is that blk-mq debugfs can't work yet for dm-mpath.
-> >
-> > Not sure how that is a related issue to this thread.
-> > But can you expand on that?  I'm not familiar with "blk-mq debugfs".
-> > Any pointer to code that activates it?  Could be that my changes make it
-> > work now...
-> 
-> Hi,
-> 
-> blk_mq_debugfs_register() is called in blk_register_queue() from add_disk(),
-> and blk_mq_debugfs_register() need queue's information to setup mq debugfs
-> stuff.
-> 
-> But your patch does fix this issue, cool!
 
-Great, thought it might.
+On Wed, 27 Dec 2017, Herbert Xu wrote:
+
+> On Tue, Dec 26, 2017 at 02:21:53PM +0200, Gilad Ben-Yossef wrote:
+> > 
+> > See how SKCIPHER_REQUEST_ON_STACK is being used with an asymmetric skcipher
+> > in drivers/md/dm-integrity.c
+> 
+> That's just broken.  SKCIPHER_REQUEST_ON_STACK is only meant for
+> sync algorithms and this code needs to be changed to either do the
+> proper request allocation or switch over to allocating sync
+> algorithms.
+> 
+> Cheers,
+
+Hi
+
+Here I send a patch that moves those allocations to the heap.
+
+Mikulas
+
+
+
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm-integrity: don't store cipher request on the stack
+
+dm-integrity: don't store cipher request on the stack
+
+Some asynchronous cipher implementations may use DMA. The stack may be
+mapped in the vmalloc area that doesn't support DMA. Therefore, the cipher
+request and initialization vector shouldn't be on the stack.
+
+This patch allocates the request and iv with kmalloc.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org	$ v4.12+
+
+Index: linux-2.6/drivers/md/dm-integrity.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-integrity.c
++++ linux-2.6/drivers/md/dm-integrity.c
+@@ -2559,7 +2559,8 @@ static int create_journal(struct dm_inte
+ 	int r = 0;
+ 	unsigned i;
+ 	__u64 journal_pages, journal_desc_size, journal_tree_size;
+-	unsigned char *crypt_data = NULL;
++	unsigned char *crypt_data = NULL, *crypt_iv = NULL;
++	struct skcipher_request *req = NULL;
  
-> >> So I am just wondering if it is possible to follow the usual way to add disk
-> >> after setting up queue for DM? If it is possible, it may avoid lots of trouble
-> >> for us.
-> >
-> > As I explained in the header (quoted above actually) it is _not_
-> > possible.  It is the gendisk that enables the device stack to be
-> > constructed (at least how DM's stacking is currently implemented with
-> > bd_link_disk_holder() and taking references on devices found in a DM
-> > device's table).  And from that gendisk I can then walk the devices to
-> > establish the request_queue as needed, its stacked limits, etc.
-> >
-> > The approach I've taken in these patches is the closest I've gotten to
-> > make DM _much_ more sane about how its request_queue is established.
-> > But its still off the beaten path due to needing "block: cope with
-> > gendisk's 'queue' being added later".
-> 
-> OK, thanks for your explanation.
-> 
-> After taking close look at your patches, I think this approach is clean.
-> But there are still corner cases which need to be addressed:
-> 
-> 1) in the following disk attributes, queue is referenced, so we have
-> to add check in their show/store operations since the attributes
-> are shown up just after disk is added.
-> 
->      disk_alignment_offset_show
->      disk_discard_alignment_show
->      part_timeout_show/part_timeout_store
-> 
-> 2) same issue on /proc/diskstats: see diskstats_show()
-> 
-> 3) in IO path, looks we already checked disk->queue in
-> generic_make_request_checks(), so it should be fine, and you set
-> disk->queue after the queue is fully initialized in the 3rd patch.
-
-I'll work through these and see what I can do.
-
-Will likely deal with each independent of the 2/3 patch (otherwise
-if I just keep folding changes in to the original patch review will get
-too hard).
-
-So hopefully I'll have a v3 to share later today.
-
-Thanks,
-Mike
+ 	ic->commit_ids[0] = cpu_to_le64(0x1111111111111111ULL);
+ 	ic->commit_ids[1] = cpu_to_le64(0x2222222222222222ULL);
+@@ -2617,9 +2618,20 @@ static int create_journal(struct dm_inte
+ 
+ 		if (blocksize == 1) {
+ 			struct scatterlist *sg;
+-			SKCIPHER_REQUEST_ON_STACK(req, ic->journal_crypt);
+-			unsigned char iv[ivsize];
+-			skcipher_request_set_tfm(req, ic->journal_crypt);
++
++			req = skcipher_request_alloc(ic->journal_crypt, GFP_KERNEL);
++			if (!req) {
++				*error = "Could not allocate crypt request";
++				r = -ENOMEM;
++				goto bad;
++			}
++
++			crypt_iv = kmalloc(ivsize, GFP_KERNEL);
++			if (!crypt_iv) {
++				*error = "Could not allocate iv";
++				r = -ENOMEM;
++				goto bad;
++			}
+ 
+ 			ic->journal_xor = dm_integrity_alloc_page_list(ic);
+ 			if (!ic->journal_xor) {
+@@ -2641,9 +2653,9 @@ static int create_journal(struct dm_inte
+ 				sg_set_buf(&sg[i], va, PAGE_SIZE);
+ 			}
+ 			sg_set_buf(&sg[i], &ic->commit_ids, sizeof ic->commit_ids);
+-			memset(iv, 0x00, ivsize);
++			memset(crypt_iv, 0x00, ivsize);
+ 
+-			skcipher_request_set_crypt(req, sg, sg, PAGE_SIZE * ic->journal_pages + sizeof ic->commit_ids, iv);
++			skcipher_request_set_crypt(req, sg, sg, PAGE_SIZE * ic->journal_pages + sizeof ic->commit_ids, crypt_iv);
+ 			init_completion(&comp.comp);
+ 			comp.in_flight = (atomic_t)ATOMIC_INIT(1);
+ 			if (do_crypt(true, req, &comp))
+@@ -2659,10 +2671,22 @@ static int create_journal(struct dm_inte
+ 			crypto_free_skcipher(ic->journal_crypt);
+ 			ic->journal_crypt = NULL;
+ 		} else {
+-			SKCIPHER_REQUEST_ON_STACK(req, ic->journal_crypt);
+-			unsigned char iv[ivsize];
+ 			unsigned crypt_len = roundup(ivsize, blocksize);
+ 
++			req = skcipher_request_alloc(ic->journal_crypt, GFP_KERNEL);
++			if (!req) {
++				*error = "Could not allocate crypt request";
++				r = -ENOMEM;
++				goto bad;
++			}
++
++			crypt_iv = kmalloc(ivsize, GFP_KERNEL);
++			if (!crypt_iv) {
++				*error = "Could not allocate iv";
++				r = -ENOMEM;
++				goto bad;
++			}
++
+ 			crypt_data = kmalloc(crypt_len, GFP_KERNEL);
+ 			if (!crypt_data) {
+ 				*error = "Unable to allocate crypt data";
+@@ -2670,8 +2694,6 @@ static int create_journal(struct dm_inte
+ 				goto bad;
+ 			}
+ 
+-			skcipher_request_set_tfm(req, ic->journal_crypt);
+-
+ 			ic->journal_scatterlist = dm_integrity_alloc_journal_scatterlist(ic, ic->journal);
+ 			if (!ic->journal_scatterlist) {
+ 				*error = "Unable to allocate sg list";
+@@ -2695,12 +2717,12 @@ static int create_journal(struct dm_inte
+ 				struct skcipher_request *section_req;
+ 				__u32 section_le = cpu_to_le32(i);
+ 
+-				memset(iv, 0x00, ivsize);
++				memset(crypt_iv, 0x00, ivsize);
+ 				memset(crypt_data, 0x00, crypt_len);
+ 				memcpy(crypt_data, &section_le, min((size_t)crypt_len, sizeof(section_le)));
+ 
+ 				sg_init_one(&sg, crypt_data, crypt_len);
+-				skcipher_request_set_crypt(req, &sg, &sg, crypt_len, iv);
++				skcipher_request_set_crypt(req, &sg, &sg, crypt_len, crypt_iv);
+ 				init_completion(&comp.comp);
+ 				comp.in_flight = (atomic_t)ATOMIC_INIT(1);
+ 				if (do_crypt(true, req, &comp))
+@@ -2758,6 +2780,9 @@ retest_commit_id:
+ 	}
+ bad:
+ 	kfree(crypt_data);
++	kfree(crypt_iv);
++	skcipher_request_free(req);
++
+ 	return r;
+ }
+ 
