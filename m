@@ -1,21 +1,18 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCHv2 0/5] nvme/dm failover unification
-Date: Wed, 10 Jan 2018 09:28:35 +0100
-Message-ID: <20180110082835.GA10185@lst.de>
-References: <20180109190418.7123-1-keith.busch@intel.com>
+Subject: Re: [for-4.16 PATCH v2 1/3] block: only bdi_unregister() in
+        del_gendisk() if !GENHD_FL_HIDDEN
+Date: Wed, 10 Jan 2018 09:31:17 +0100
+Message-ID: <20180110083117.GB10185@lst.de>
+References: <20180110024104.34885-1-snitzer@redhat.com> <20180110024104.34885-2-snitzer@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-block-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20180109190418.7123-1-keith.busch@intel.com>
+In-Reply-To: <20180110024104.34885-2-snitzer@redhat.com>
 Sender: linux-block-owner@vger.kernel.org
-To: Keith Busch <keith.busch@intel.com>
-Cc: Linux Block <linux-block@vger.kernel.org>, Linux NVMe <linux-nvme@lists.infradead.org>, Device Mapper <dm-devel@redhat.com>, Christoph Hellwig <hch@lst.de>, Mike Snitzer <snitzer@redhat.com>, Jens Axboe <axboe@kernel.dk>, Bart VanAssche <bart.vanassche@wdc.com>, James Smart <james.smart@broadcom.com>, "Martin K . Petersen" <martin.petersen@oracle.com>, Hannes Reinecke <hare@suse.com>, Sagi Grimberg <sagi@grimberg.me>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: axboe@kernel.dk, hch@lst.de, Bart.VanAssche@wdc.com, dm-devel@redhat.com, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-The whole series looks fine to me:
-
-Reviewed-by: Christoph Hellwig <hch@lst.de>
-
-Jens, do you want me to apply this to the nvme tree, or pick it up
-directly?
+It's in fact completely harmless :)  But not even calling it
+obviously is just as fine.
