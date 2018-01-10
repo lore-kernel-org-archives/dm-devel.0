@@ -1,43 +1,89 @@
-From: Hannes Reinecke <hare@suse.de>
+From: Mike Snitzer <snitzer@redhat.com>
 Subject: Re: [for-4.16 PATCH v2 2/3] block: cope with gendisk's 'queue' being
  added later
-Date: Wed, 10 Jan 2018 13:01:51 +0100
-Message-ID: <f55e6226-ec66-2df9-c66e-9cb19a2c83b4@suse.de>
+Date: Wed, 10 Jan 2018 09:20:19 -0500
+Message-ID: <20180110142019.GB23410@redhat.com>
 References: <20180110024104.34885-1-snitzer@redhat.com>
- <20180110024104.34885-3-snitzer@redhat.com> <20180110083231.GC10185@lst.de>
+ <20180110024104.34885-3-snitzer@redhat.com>
+ <CACVXFVPWEsfv+xEWiAL5nT1p9FazgMcH1U7h7zCA_CSQqrEMiw@mail.gmail.com>
+ <20180110042113.GA20494@redhat.com>
+ <CACVXFVPGesRgLCShzLkXYw+fbefPMLEEqc05Xa_w3qiXqrDFvA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20180110083231.GC10185@lst.de>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <CACVXFVPGesRgLCShzLkXYw+fbefPMLEEqc05Xa_w3qiXqrDFvA@mail.gmail.com>
 Sender: linux-block-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>, Mike Snitzer <snitzer@redhat.com>
-Cc: axboe@kernel.dk, Bart.VanAssche@wdc.com, dm-devel@redhat.com, linux-block@vger.kernel.org
+To: Ming Lei <tom.leiming@gmail.com>
+Cc: Jens Axboe <axboe@kernel.dk>, Bart Van Assche <Bart.VanAssche@wdc.com>, linux-block <linux-block@vger.kernel.org>, "open list:DEVICE-MAPPER (LVM)" <dm-devel@redhat.com>, Christoph Hellwig <hch@lst.de>
 List-Id: dm-devel.ids
 
-On 01/10/2018 09:32 AM, Christoph Hellwig wrote:
-> On Tue, Jan 09, 2018 at 09:41:03PM -0500, Mike Snitzer wrote:
->> Since I can remember DM has forced the block layer to allow the
->> allocation and initialization of the request_queue to be distinct
->> operations.  Reason for this was block/genhd.c:add_disk() has required
->> that the request_queue (and associated bdi) be tied to the gendisk
->> before add_disk() is called -- because add_disk() also deals with
->> exposing the request_queue via blk_register_queue().
-> 
-> Hmm.  I don't even know how that could be safe given that the disk
-> is live and visible to userspace once added..
-> 
-We're getting an additional 'change' event once the tables are loaded
-and setup properly. That's not a problem, and in fact the DASD driver
-has the very same issue/feature/design.
+On Wed, Jan 10 2018 at  2:55am -0500,
+Ming Lei <tom.leiming@gmail.com> wrote:
 
-Cheers,
+> On Wed, Jan 10, 2018 at 12:21 PM, Mike Snitzer <snitzer@redhat.com> wrote:
+> > On Tue, Jan 09 2018 at 10:46pm -0500,
+> > Ming Lei <tom.leiming@gmail.com> wrote:
+> >
+> >> Another related issue is that blk-mq debugfs can't work yet for dm-mpath.
+> >
+> > Not sure how that is a related issue to this thread.
+> > But can you expand on that?  I'm not familiar with "blk-mq debugfs".
+> > Any pointer to code that activates it?  Could be that my changes make it
+> > work now...
+> 
+> Hi,
+> 
+> blk_mq_debugfs_register() is called in blk_register_queue() from add_disk(),
+> and blk_mq_debugfs_register() need queue's information to setup mq debugfs
+> stuff.
+> 
+> But your patch does fix this issue, cool!
 
-Hannes
--- 
-Dr. Hannes Reinecke		   Teamlead Storage & Networking
-hare@suse.de			               +49 911 74053 688
-SUSE LINUX GmbH, Maxfeldstr. 5, 90409 Nürnberg
-GF: F. Imendörffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
-HRB 21284 (AG Nürnberg)
+Great, thought it might.
+ 
+> >> So I am just wondering if it is possible to follow the usual way to add disk
+> >> after setting up queue for DM? If it is possible, it may avoid lots of trouble
+> >> for us.
+> >
+> > As I explained in the header (quoted above actually) it is _not_
+> > possible.  It is the gendisk that enables the device stack to be
+> > constructed (at least how DM's stacking is currently implemented with
+> > bd_link_disk_holder() and taking references on devices found in a DM
+> > device's table).  And from that gendisk I can then walk the devices to
+> > establish the request_queue as needed, its stacked limits, etc.
+> >
+> > The approach I've taken in these patches is the closest I've gotten to
+> > make DM _much_ more sane about how its request_queue is established.
+> > But its still off the beaten path due to needing "block: cope with
+> > gendisk's 'queue' being added later".
+> 
+> OK, thanks for your explanation.
+> 
+> After taking close look at your patches, I think this approach is clean.
+> But there are still corner cases which need to be addressed:
+> 
+> 1) in the following disk attributes, queue is referenced, so we have
+> to add check in their show/store operations since the attributes
+> are shown up just after disk is added.
+> 
+>      disk_alignment_offset_show
+>      disk_discard_alignment_show
+>      part_timeout_show/part_timeout_store
+> 
+> 2) same issue on /proc/diskstats: see diskstats_show()
+> 
+> 3) in IO path, looks we already checked disk->queue in
+> generic_make_request_checks(), so it should be fine, and you set
+> disk->queue after the queue is fully initialized in the 3rd patch.
+
+I'll work through these and see what I can do.
+
+Will likely deal with each independent of the 2/3 patch (otherwise
+if I just keep folding changes in to the original patch review will get
+too hard).
+
+So hopefully I'll have a v3 to share later today.
+
+Thanks,
+Mike
