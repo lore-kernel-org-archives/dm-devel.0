@@ -1,27 +1,57 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH V3 4/5] blk-mq: return dispatch result to caller in
- blk_mq_try_issue_directly
-Date: Thu, 11 Jan 2018 17:10:08 -0500
-Message-ID: <20180111221007.GC31944@redhat.com>
-References: <20180111060159.12991-1-ming.lei@redhat.com>
- <20180111060159.12991-5-ming.lei@redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH] multipath-tools: Makefile: Respect standard
+ toolchain related envvars
+Date: Thu, 11 Jan 2018 23:24:25 +0100
+Message-ID: <1515709465.18410.6.camel@suse.com>
+References: <20171129232311.95483-1-whissi@gentoo.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180111060159.12991-5-ming.lei@redhat.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Ming Lei <ming.lei@redhat.com>
-Cc: Jens Axboe <axboe@fb.com>, linux-block@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, Bart Van Assche <bart.vanassche@sandisk.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20171129232311.95483-1-whissi@gentoo.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Thomas Deutschmann <whissi@gentoo.org>, dm-devel@redhat.com
+Cc: Bart Van Assche <Bart.VanAssche@wdc.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-On Thu, Jan 11 2018 at  1:01am -0500,
-Ming Lei <ming.lei@redhat.com> wrote:
-
-> In the following patch, we will use blk_mq_try_issue_directly() for DM
-> to return the dispatch result, and DM need this informatin to improve
-> IO merge.
-> 
-> Signed-off-by: Ming Lei <ming.lei@redhat.com>
-
-Reviewed-by: Mike Snitzer <snitzer@redhat.com>
+T24gVGh1LCAyMDE3LTExLTMwIGF0IDAwOjIzICswMTAwLCBUaG9tYXMgRGV1dHNjaG1hbm4gd3Jv
+dGU6Cj4gVGhlIE1ha2VmaWxlIG92ZXJyaWRlcyBzdGFuZGFyZCBlbnZ2YXJzIHRoYXQgY29udHJv
+bCB0aGUgdG9vbGNoYWluCj4gZmxhZ3MuCj4gVGhpcyBwYXRjaCBzaG91bGQgc2V0IHRoaW5ncyBy
+aWdodCB3aXRob3V0IHJlZHVjaW5nIGRlZmF1bHQgYmVoYXZpb3IuCgpJIGFwb2xvZ2l6ZSBmb3Ig
+dGhlIHZlcnkgbGF0ZSByZXBseS4gCgpJJ20gbm90IHN1cmUgd2hhdCB5b3UgbWVhbiB3aXRoICJz
+dGFuZGFyZCBlbnZ2YXJzIiBoZXJlLiBJcyBpdCAiQ0ZMQUdTIgphbmQgIkxERkxBR1MiPyBJZiB0
+aGF0J3Mgd2hhdCB5b3UgbWVhbiwgSSBkaXNhZ3JlZS4gCgpDRkxBR1MgaGFuZGxpbmcgaXMgY29y
+cmVjdCB0aGlzIHdheSAtIENGTEFHUyBzaG91bGQgcmVwcmVzZW50IHRoZSBmaW5hbApsaXN0IG9m
+IG9wdGlvbnMgcGFzc2VkIHRvIHRoZSBjb21waWxlci4gVHlwaWNhbGx5IHRoZSBNYWtlZmlsZQph
+c3NlbWJsZXMgdGhpcyBsaXN0IGZyb20gaW50ZXJuYWwgcHJvamVjdCBzZXR0aW5ncyBhbmQgdXNl
+ciBpbnB1dC4KCkN1cnJlbnRseSwgc2V0dGluZyBPUFRGTEFHUyBpcyB0aGUgcHJlZmVycmVkIHdh
+eSB0byBjdXN0b21pemUKbXVsdGlwYXRoLXRvb2xzIGJ1aWxkLgoKSWYgY2hhbmdlcyBhcmUgbmVl
+ZGVkLCBJJ2QgcHJlZmVyIEJhcnQncyBzdWdnZXN0aW9uLgoKTWFydGluCgoKPiAKPiBTaWduZWQt
+b2ZmLWJ5OiBUaG9tYXMgRGV1dHNjaG1hbm4gPHdoaXNzaUBnZW50b28ub3JnPgo+IC0tLQo+ICBN
+YWtlZmlsZS5pbmMgfCA1ICsrKy0tCj4gIDEgZmlsZSBjaGFuZ2VkLCAzIGluc2VydGlvbnMoKyks
+IDIgZGVsZXRpb25zKC0pCj4gCj4gZGlmZiAtLWdpdCBhL01ha2VmaWxlLmluYyBiL01ha2VmaWxl
+LmluYwo+IGluZGV4IDI5YzI5MGEyLi45NTFkNThmYyAxMDA2NDQKPiAtLS0gYS9NYWtlZmlsZS5p
+bmMKPiArKysgYi9NYWtlZmlsZS5pbmMKPiBAQCAtOTAsMTEgKzkwLDEyIEBAIE9QVEZMQUdTCT0g
+LU8yIC1nIC1waXBlIC1XYWxsIC1XZXh0cmEKPiAtV2Zvcm1hdD0yIC1XZXJyb3I9aW1wbGljaXQt
+aW50IFwKPiAgCQkgIC1XcCwtRF9GT1JUSUZZX1NPVVJDRT0yICQoU1RBQ0tQUk9UKSBcCj4gIAkJ
+ICAtLXBhcmFtPXNzcC1idWZmZXItc2l6ZT00Cj4gIAo+IC1DRkxBR1MJCT0gJChPUFRGTEFHUykg
+LURMSUJfU1RSSU5HPVwiJHtMSUJ9XCIKPiAtRFJVTl9ESVI9XCIke1JVTn1cIgo+ICtDRkxBR1MJ
+CT89ICQoT1BURkxBR1MpCj4gK0NGTEFHUwkJKz0gLURMSUJfU1RSSU5HPVwiJHtMSUJ9XCIKPiAt
+RFJVTl9ESVI9XCIke1JVTn1cIgo+ICBCSU5fQ0ZMQUdTCT0gLWZQSUUgLURQSUUKPiAgTElCX0NG
+TEFHUwk9IC1mUElDCj4gIFNIQVJFRF9GTEFHUwk9IC1zaGFyZWQKPiAtTERGTEFHUwkJPSAtV2ws
+LXoscmVscm8gLVdsLC16LG5vdwo+ICtMREZMQUdTCQkrPSAtV2wsLXoscmVscm8gLVdsLC16LG5v
+dwo+ICBCSU5fTERGTEFHUwk9IC1waWUKPiAgCj4gICMgQ2hlY2sgd2hldGhlciBhIGZ1bmN0aW9u
+IHdpdGggbmFtZSAkMSBoYXMgYmVlbiBkZWNsYXJlZCBpbiBoZWFkZXIKPiBmaWxlICQyLgoKLS0g
+CkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1
+MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0
+aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVs
+IG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20v
+bWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
