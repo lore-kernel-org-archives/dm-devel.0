@@ -1,192 +1,59 @@
-From: Ming Lei <ming.lei@redhat.com>
-Subject: [PATCH V3 5/5] blk-mq: issue request directly for blk_insert_cloned_request
-Date: Thu, 11 Jan 2018 14:01:59 +0800
-Message-ID: <20180111060159.12991-6-ming.lei@redhat.com>
-References: <20180111060159.12991-1-ming.lei@redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [for-4.16 PATCH v3 1/3] block: only bdi_unregister() in
+ del_gendisk() if !GENHD_FL_HIDDEN
+Date: Thu, 11 Jan 2018 08:40:25 +0100
+Message-ID: <c8a687ce-f269-983a-a292-51d4fb88f770@suse.de>
+References: <20180111021256.37490-1-snitzer@redhat.com>
+ <20180111021256.37490-2-snitzer@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20180111060159.12991-1-ming.lei@redhat.com>
+In-Reply-To: <20180111021256.37490-2-snitzer@redhat.com>
+Content-Language: en-US
 Sender: linux-block-owner@vger.kernel.org
-To: Jens Axboe <axboe@fb.com>, linux-block@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
-Cc: Bart Van Assche <bart.vanassche@sandisk.com>, Ming Lei <ming.lei@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>, axboe@kernel.dk
+Cc: Ming Lei <tom.leiming@gmail.com>, hch@lst.de, Bart.VanAssche@wdc.com, dm-devel@redhat.com, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-blk_insert_cloned_request() is called in fast path of dm-rq driver, and
-in this function we append request to hctx->dispatch_list of the underlying
-queue directly.
+On 01/11/2018 03:12 AM, Mike Snitzer wrote:
+> device_add_disk() will only call bdi_register_owner() if
+> !GENHD_FL_HIDDEN, so it follows that del_gendisk() should only call
+> bdi_unregister() if !GENHD_FL_HIDDEN.
+> 
+> Found with code inspection.  bdi_unregister() won't do any harm if
+> bdi_register_owner() wasn't used but best to avoid the unnecessary
+> call to bdi_unregister().
+> 
+> Fixes: 8ddcd65325 ("block: introduce GENHD_FL_HIDDEN")
+> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> ---
+>  block/genhd.c | 3 ++-
+>  1 file changed, 2 insertions(+), 1 deletion(-)
+> 
+> diff --git a/block/genhd.c b/block/genhd.c
+> index 96a66f671720..00620e01e043 100644
+> --- a/block/genhd.c
+> +++ b/block/genhd.c
+> @@ -725,7 +725,8 @@ void del_gendisk(struct gendisk *disk)
+>  		 * Unregister bdi before releasing device numbers (as they can
+>  		 * get reused and we'd get clashes in sysfs).
+>  		 */
+> -		bdi_unregister(disk->queue->backing_dev_info);
+> +		if (!(disk->flags & GENHD_FL_HIDDEN))
+> +			bdi_unregister(disk->queue->backing_dev_info);
+>  		blk_unregister_queue(disk);
+>  	} else {
+>  		WARN_ON(1);
+> 
+Reviewed-by: Hannes Reinecke <hare@suse.com>
 
-1) This way isn't efficient enough because hctx lock is always required
+Cheers,
 
-2) With blk_insert_cloned_request(), we bypass underlying queue's IO scheduler
-totally, and depend on DM rq driver to do IO schedule completely. But DM
-rq driver can't get underlying queue's dispatch feedback at all, and this
-information is extreamly useful for IO merge. Without that IO merge can't
-be done basically by blk-mq, and causes very bad sequential IO performance.
-
-This patch makes use of blk_mq_try_issue_directly() to dispatch rq to
-underlying queue and provides disptch result to dm-rq and blk-mq, and
-improves the above situations very much.
-
-With this patch, seqential IO is improved by 3X in my test over
-mpath/virtio-scsi.
-
-Signed-off-by: Ming Lei <ming.lei@redhat.com>
----
- block/blk-core.c   |  3 +--
- block/blk-mq.c     | 34 ++++++++++++++++++++++++++++++----
- block/blk-mq.h     |  3 +++
- drivers/md/dm-rq.c | 19 ++++++++++++++++---
- 4 files changed, 50 insertions(+), 9 deletions(-)
-
-diff --git a/block/blk-core.c b/block/blk-core.c
-index f843ae4f858d..30759fcc93e5 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -2500,8 +2500,7 @@ blk_status_t blk_insert_cloned_request(struct request_queue *q, struct request *
- 		 * bypass a potential scheduler on the bottom device for
- 		 * insert.
- 		 */
--		blk_mq_request_bypass_insert(rq, true);
--		return BLK_STS_OK;
-+		return blk_mq_request_direct_issue(rq);
- 	}
- 
- 	spin_lock_irqsave(q->queue_lock, flags);
-diff --git a/block/blk-mq.c b/block/blk-mq.c
-index 444a4bf9705f..9bfca039d526 100644
---- a/block/blk-mq.c
-+++ b/block/blk-mq.c
-@@ -1719,6 +1719,12 @@ static blk_status_t __blk_mq_try_issue_directly(struct blk_mq_hw_ctx *hctx,
- 	blk_qc_t new_cookie;
- 	blk_status_t ret = BLK_STS_OK;
- 	bool run_queue = true;
-+	/*
-+	 * This function is called from blk_insert_cloned_request() if
-+	 * 'cookie' is NULL, and for dispatching this request only.
-+	 */
-+	bool dispatch_only = !cookie;
-+	bool need_insert;
- 
- 	/* RCU or SRCU read lock is needed before checking quiesced flag */
- 	if (blk_mq_hctx_stopped(hctx) || blk_queue_quiesced(q)) {
-@@ -1726,10 +1732,19 @@ static blk_status_t __blk_mq_try_issue_directly(struct blk_mq_hw_ctx *hctx,
- 		goto insert;
- 	}
- 
--	if (q->elevator)
-+	if (q->elevator && !dispatch_only)
- 		goto insert;
- 
--	if (__blk_mq_issue_req(hctx, rq, &new_cookie, &ret))
-+	need_insert = __blk_mq_issue_req(hctx, rq, &new_cookie, &ret);
-+	if (dispatch_only) {
-+		if (need_insert)
-+			return BLK_STS_RESOURCE;
-+		if (ret == BLK_STS_RESOURCE)
-+			__blk_mq_requeue_request(rq);
-+		return ret;
-+	}
-+
-+	if (need_insert)
- 		goto insert;
- 
- 	/*
-@@ -1751,8 +1766,11 @@ static blk_status_t __blk_mq_try_issue_directly(struct blk_mq_hw_ctx *hctx,
- 	}
- 
- insert:
--	blk_mq_sched_insert_request(rq, false, run_queue, false,
--					hctx->flags & BLK_MQ_F_BLOCKING);
-+	if (!dispatch_only)
-+		blk_mq_sched_insert_request(rq, false, run_queue, false,
-+				hctx->flags & BLK_MQ_F_BLOCKING);
-+	else
-+		blk_mq_request_bypass_insert(rq, run_queue);
- 	return ret;
- }
- 
-@@ -1772,6 +1790,14 @@ static blk_status_t blk_mq_try_issue_directly(struct blk_mq_hw_ctx *hctx,
- 	return ret;
- }
- 
-+blk_status_t blk_mq_request_direct_issue(struct request *rq)
-+{
-+	struct blk_mq_ctx *ctx = rq->mq_ctx;
-+	struct blk_mq_hw_ctx *hctx = blk_mq_map_queue(rq->q, ctx->cpu);
-+
-+	return blk_mq_try_issue_directly(hctx, rq, NULL);
-+}
-+
- static blk_qc_t blk_mq_make_request(struct request_queue *q, struct bio *bio)
- {
- 	const int is_sync = op_is_sync(bio->bi_opf);
-diff --git a/block/blk-mq.h b/block/blk-mq.h
-index 8591a54d989b..bd98864d8e38 100644
---- a/block/blk-mq.h
-+++ b/block/blk-mq.h
-@@ -74,6 +74,9 @@ void blk_mq_request_bypass_insert(struct request *rq, bool run_queue);
- void blk_mq_insert_requests(struct blk_mq_hw_ctx *hctx, struct blk_mq_ctx *ctx,
- 				struct list_head *list);
- 
-+/* Used by DM for issuing req directly */
-+blk_status_t blk_mq_request_direct_issue(struct request *rq);
-+
- /*
-  * CPU -> queue mappings
-  */
-diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
-index 4d157b14d302..6b01298fba06 100644
---- a/drivers/md/dm-rq.c
-+++ b/drivers/md/dm-rq.c
-@@ -395,7 +395,7 @@ static void end_clone_request(struct request *clone, blk_status_t error)
- 	dm_complete_request(tio->orig, error);
- }
- 
--static void dm_dispatch_clone_request(struct request *clone, struct request *rq)
-+static blk_status_t dm_dispatch_clone_request(struct request *clone, struct request *rq)
- {
- 	blk_status_t r;
- 
-@@ -404,9 +404,10 @@ static void dm_dispatch_clone_request(struct request *clone, struct request *rq)
- 
- 	clone->start_time = jiffies;
- 	r = blk_insert_cloned_request(clone->q, clone);
--	if (r)
-+	if (r != BLK_STS_OK && r != BLK_STS_RESOURCE)
- 		/* must complete clone in terms of original request */
- 		dm_complete_request(rq, r);
-+	return r;
- }
- 
- static int dm_rq_bio_constructor(struct bio *bio, struct bio *bio_orig,
-@@ -476,8 +477,10 @@ static int map_request(struct dm_rq_target_io *tio)
- 	struct mapped_device *md = tio->md;
- 	struct request *rq = tio->orig;
- 	struct request *clone = NULL;
-+	blk_status_t ret;
- 
- 	r = ti->type->clone_and_map_rq(ti, rq, &tio->info, &clone);
-+ check_again:
- 	switch (r) {
- 	case DM_MAPIO_SUBMITTED:
- 		/* The target has taken the I/O to submit by itself later */
-@@ -492,7 +495,17 @@ static int map_request(struct dm_rq_target_io *tio)
- 		/* The target has remapped the I/O so dispatch it */
- 		trace_block_rq_remap(clone->q, clone, disk_devt(dm_disk(md)),
- 				     blk_rq_pos(rq));
--		dm_dispatch_clone_request(clone, rq);
-+		ret = dm_dispatch_clone_request(clone, rq);
-+		if (ret == BLK_STS_RESOURCE) {
-+			blk_rq_unprep_clone(clone);
-+			tio->ti->type->release_clone_rq(clone);
-+			tio->clone = NULL;
-+			if (!rq->q->mq_ops)
-+				r = DM_MAPIO_DELAY_REQUEUE;
-+			else
-+				r = DM_MAPIO_REQUEUE;
-+			goto check_again;
-+		}
- 		break;
- 	case DM_MAPIO_REQUEUE:
- 		/* The target wants to requeue the I/O */
+Hannes
 -- 
-2.9.5
+Dr. Hannes Reinecke		   Teamlead Storage & Networking
+hare@suse.de			               +49 911 74053 688
+SUSE LINUX GmbH, Maxfeldstr. 5, 90409 Nürnberg
+GF: F. Imendörffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
+HRB 21284 (AG Nürnberg)
