@@ -1,40 +1,44 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [for-4.16 PATCH v4 0/4] block/dm: allow DM to defer blk_register_queue() until ready
-Date: Thu, 11 Jan 2018 15:14:13 -0500
-Message-ID: <20180111201417.2042-1-snitzer@redhat.com>
+Subject: [for-4.16 PATCH v4 1/4] block: only bdi_unregister() in del_gendisk() if !GENHD_FL_HIDDEN
+Date: Thu, 11 Jan 2018 15:14:14 -0500
+Message-ID: <20180111201417.2042-2-snitzer@redhat.com>
+References: <20180111201417.2042-1-snitzer@redhat.com>
 Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20180111201417.2042-1-snitzer@redhat.com>
 Sender: linux-block-owner@vger.kernel.org
 To: axboe@kernel.dk
 Cc: Ming Lei <tom.leiming@gmail.com>, hare@suse.de, Bart.VanAssche@wdc.com, dm-devel@redhat.com, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hi Jens,
+device_add_disk() will only call bdi_register_owner() if
+!GENHD_FL_HIDDEN, so it follows that del_gendisk() should only call
+bdi_unregister() if !GENHD_FL_HIDDEN.
 
-I think this set is now ready for you to pick up for 4.16.
+Found with code inspection.  bdi_unregister() won't do any harm if
+bdi_register_owner() wasn't used but best to avoid the unnecessary
+call to bdi_unregister().
 
-Hannes, I ran with your review feedback and think the result is
-cleaner (avoids frivolously using another QUEUE_FLAG).
+Fixes: 8ddcd65325 ("block: introduce GENHD_FL_HIDDEN")
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Reviewed-by: Ming Lei <ming.lei@redhat.com>
+Reviewed-by: Hannes Reinecke <hare@suse.com>
+---
+ block/genhd.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-Ming, I didn't add your Reviewed-by to "block: allow gendisk's
-request_queue registration to be deferred" because it changed enough,
-albeit for the better, that it is best for you to review again.
-
-Thanks,
-Mike
-
-Mike Snitzer (4):
-  block: only bdi_unregister() in del_gendisk() if !GENHD_FL_HIDDEN
-  block: use queue_lock when clearing QUEUE_FLAG_REGISTERED in blk_unregister_queue
-  block: allow gendisk's request_queue registration to be deferred
-  dm: fix awkward and incomplete request_queue initialization
-
- block/blk-sysfs.c     | 12 ++++++++----
- block/genhd.c         | 23 +++++++++++++++++++----
- drivers/md/dm-core.h  |  2 --
- drivers/md/dm-rq.c    | 11 -----------
- drivers/md/dm.c       | 41 ++++++++++++++++++++++-------------------
- include/linux/genhd.h |  5 +++++
- 6 files changed, 54 insertions(+), 40 deletions(-)
-
+diff --git a/block/genhd.c b/block/genhd.c
+index 96a66f671720..00620e01e043 100644
+--- a/block/genhd.c
++++ b/block/genhd.c
+@@ -725,7 +725,8 @@ void del_gendisk(struct gendisk *disk)
+ 		 * Unregister bdi before releasing device numbers (as they can
+ 		 * get reused and we'd get clashes in sysfs).
+ 		 */
+-		bdi_unregister(disk->queue->backing_dev_info);
++		if (!(disk->flags & GENHD_FL_HIDDEN))
++			bdi_unregister(disk->queue->backing_dev_info);
+ 		blk_unregister_queue(disk);
+ 	} else {
+ 		WARN_ON(1);
 -- 
 2.15.0
