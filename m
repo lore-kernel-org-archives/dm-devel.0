@@ -1,15 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 2/3] Allow the compiler to verify the
- consistency of the uxsock_timeout definition and declaration
-Date: Thu, 11 Jan 2018 23:28:52 +0100
-Message-ID: <1515709732.18410.11.camel@suse.com>
+Subject: Re: [PATCH 3/3] multipathd/cli.h: Add a header file guard
+Date: Thu, 11 Jan 2018 23:29:31 +0100
+Message-ID: <1515709771.18410.13.camel@suse.com>
 References: <20171212004503.12823-1-bart.vanassche@wdc.com>
-	<20171212004503.12823-3-bart.vanassche@wdc.com>
+	<20171212004503.12823-4-bart.vanassche@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20171212004503.12823-3-bart.vanassche@wdc.com>
+In-Reply-To: <20171212004503.12823-4-bart.vanassche@wdc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,14 +23,14 @@ Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 T24gTW9uLCAyMDE3LTEyLTExIGF0IDE2OjQ1IC0wODAwLCBCYXJ0IFZhbiBBc3NjaGUgd3JvdGU6
-Cj4gR2xvYmFsIHZhcmlhYmxlcyBzaG91bGQgYmUgZGVmaW5lZCBhZnRlciB0aGUgaGVhZGVyIGZp
-bGUgd2l0aAo+IHRoZWlyIGRlY2xhcmF0aW9uIGhhcyBiZWVuIGluY2x1ZGVkLiBIZW5jZSBtb3Zl
-IHRoZSBkZWNsYXJhdGlvbgo+IG9mIHVzb2NrX3RpbWVvdXQgZnVydGhlciBkb3duLgo+IAo+IFNp
-Z25lZC1vZmYtYnk6IEJhcnQgVmFuIEFzc2NoZSA8YmFydC52YW5hc3NjaGVAd2RjLmNvbT4KPiAt
-LS0KPiAgbXVsdGlwYXRoZC9tYWluLmMgfCAzICstLQo+ICAxIGZpbGUgY2hhbmdlZCwgMSBpbnNl
-cnRpb24oKyksIDIgZGVsZXRpb25zKC0pCj4gCgpSZXZpZXdlZC1ieTogTWFydGluIFdpbGNrIDxt
-d2lsY2tAc3VzZS5jb20+CgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwg
-VGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1l
-bmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8
-cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0
-cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+Cj4gVGhpcyBwYXRjaCBhdm9pZHMgdGhhdCBjb21waWxhdGlvbiBicmVha3MgaWYgdGhlIG11bHRp
+cGF0aGQvY2xpLmgKPiBoZWFkZXIgZmlsZSBpcyBpbmNsdWRlZCBtdWx0aXBsZSB0aW1lcyBmcm9t
+IHRoZSBzYW1lIGNvbXBpbGF0aW9uCj4gdW5pdC4KPiAKPiBTaWduZWQtb2ZmLWJ5OiBCYXJ0IFZh
+biBBc3NjaGUgPGJhcnQudmFuYXNzY2hlQHdkYy5jb20+Cj4gLS0tCj4gIG11bHRpcGF0aGQvY2xp
+LmggfCA1ICsrKysrCj4gIDEgZmlsZSBjaGFuZ2VkLCA1IGluc2VydGlvbnMoKykKClJldmlld2Vk
+LWJ5OiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4KCi0tIApEci4gTWFydGluIFdpbGNr
+IDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4
+IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0
+b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0t
+ZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8v
+ZG0tZGV2ZWw=
