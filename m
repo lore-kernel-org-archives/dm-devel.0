@@ -1,15 +1,15 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 1/3] Makefile.inc: Allow additional CFLAGS to
- be specified on the command line
-Date: Thu, 11 Jan 2018 23:26:25 +0100
-Message-ID: <1515709585.18410.8.camel@suse.com>
+Subject: Re: [PATCH 2/3] Allow the compiler to verify the
+ consistency of the uxsock_timeout definition and declaration
+Date: Thu, 11 Jan 2018 23:28:52 +0100
+Message-ID: <1515709732.18410.11.camel@suse.com>
 References: <20171212004503.12823-1-bart.vanassche@wdc.com>
-	<20171212004503.12823-2-bart.vanassche@wdc.com>
+	<20171212004503.12823-3-bart.vanassche@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20171212004503.12823-2-bart.vanassche@wdc.com>
+In-Reply-To: <20171212004503.12823-3-bart.vanassche@wdc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,27 +23,15 @@ To: Bart Van Assche <bart.vanassche@wdc.com>, Christophe Varoqui <christophe.var
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-SGkgQmFydCwKCk9uIE1vbiwgMjAxNy0xMi0xMSBhdCAxNjo0NSAtMDgwMCwgQmFydCBWYW4gQXNz
-Y2hlIHdyb3RlOgo+IENvbXBpbGluZyB0aGUgbXVsdGlwYXRoLXRvb2xzIHNvdXJjZSBjb2RlIHdp
-dGggZS5nLiBzcGFyc2UgcmVxdWlyZXMKPiB0byBzcGVjaWZ5IGFkZGl0aW9uYWwgY29tcGlsZXIg
-ZmxhZ3Mgb24gdGhlIGNvbW1hbmQgbGluZS4gTW9kaWZ5IHRoZQo+IE1ha2VmaWxlIHN1Y2ggdGhh
-dCB0aGlzIGJlY29tZXMgcG9zc2libGUuCj4gCj4gU2lnbmVkLW9mZi1ieTogQmFydCBWYW4gQXNz
-Y2hlIDxiYXJ0LnZhbmFzc2NoZUB3ZGMuY29tPgo+IC0tLQo+ICBNYWtlZmlsZS5pbmMgfCAzICsr
-LQo+ICAxIGZpbGUgY2hhbmdlZCwgMiBpbnNlcnRpb25zKCspLCAxIGRlbGV0aW9uKC0pCj4gCj4g
-ZGlmZiAtLWdpdCBhL01ha2VmaWxlLmluYyBiL01ha2VmaWxlLmluYwo+IGluZGV4IDI5YzI5MGEy
-MmU4Zi4uZDk1M2Y1ZWYzNGU2IDEwMDY0NAo+IC0tLSBhL01ha2VmaWxlLmluYwo+ICsrKyBiL01h
-a2VmaWxlLmluYwo+IEBAIC05MCw3ICs5MCw4IEBAIE9QVEZMQUdTCT0gLU8yIC1nIC1waXBlIC1X
-YWxsIC1XZXh0cmEKPiAtV2Zvcm1hdD0yIC1XZXJyb3I9aW1wbGljaXQtaW50IFwKPiAgCQkgIC1X
-cCwtRF9GT1JUSUZZX1NPVVJDRT0yICQoU1RBQ0tQUk9UKSBcCj4gIAkJICAtLXBhcmFtPXNzcC1i
-dWZmZXItc2l6ZT00Cj4gIAo+IC1DRkxBR1MJCT0gJChPUFRGTEFHUykgLURMSUJfU1RSSU5HPVwi
-JHtMSUJ9XCIKPiAtRFJVTl9ESVI9XCIke1JVTn1cIgo+ICtDRkxBR1MJCTo9ICQoT1BURkxBR1Mp
-IC1ETElCX1NUUklORz1cIiR7TElCfVwiCj4gLURSVU5fRElSPVwiJHtSVU59XCIgXAo+ICsJCSAg
-ICQoQ0ZMQUdTKQoKSSdkIHByZWZlciB0aGUgdmFyaWFibGUgcGFzc2VkIGZyb20gdXNlciBzcGFj
-ZSBub3QgdG8gYmUgY2FsbGVkIENGTEFHUwpidXQgZS5nLiBFWFRSQV9DRkxBR1MuIE90aGVyd2lz
-ZSwgYWNrLgoKTWFydGluCgo+ICBCSU5fQ0ZMQUdTCT0gLWZQSUUgLURQSUUKPiAgTElCX0NGTEFH
-Uwk9IC1mUElDCj4gIFNIQVJFRF9GTEFHUwk9IC1zaGFyZWQKCi0tIApEci4gTWFydGluIFdpbGNr
-IDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4
-IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0
-b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0t
-ZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8v
-ZG0tZGV2ZWw=
+T24gTW9uLCAyMDE3LTEyLTExIGF0IDE2OjQ1IC0wODAwLCBCYXJ0IFZhbiBBc3NjaGUgd3JvdGU6
+Cj4gR2xvYmFsIHZhcmlhYmxlcyBzaG91bGQgYmUgZGVmaW5lZCBhZnRlciB0aGUgaGVhZGVyIGZp
+bGUgd2l0aAo+IHRoZWlyIGRlY2xhcmF0aW9uIGhhcyBiZWVuIGluY2x1ZGVkLiBIZW5jZSBtb3Zl
+IHRoZSBkZWNsYXJhdGlvbgo+IG9mIHVzb2NrX3RpbWVvdXQgZnVydGhlciBkb3duLgo+IAo+IFNp
+Z25lZC1vZmYtYnk6IEJhcnQgVmFuIEFzc2NoZSA8YmFydC52YW5hc3NjaGVAd2RjLmNvbT4KPiAt
+LS0KPiAgbXVsdGlwYXRoZC9tYWluLmMgfCAzICstLQo+ICAxIGZpbGUgY2hhbmdlZCwgMSBpbnNl
+cnRpb24oKyksIDIgZGVsZXRpb25zKC0pCj4gCgpSZXZpZXdlZC1ieTogTWFydGluIFdpbGNrIDxt
+d2lsY2tAc3VzZS5jb20+CgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwg
+VGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1l
+bmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8
+cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0
+cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
