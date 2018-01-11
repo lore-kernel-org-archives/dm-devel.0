@@ -1,14 +1,13 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 3/3] multipathd/cli.h: Add a header file guard
-Date: Thu, 11 Jan 2018 23:29:31 +0100
-Message-ID: <1515709771.18410.13.camel@suse.com>
-References: <20171212004503.12823-1-bart.vanassche@wdc.com>
-	<20171212004503.12823-4-bart.vanassche@wdc.com>
+Subject: Re: DM Multipath limits
+Date: Thu, 11 Jan 2018 23:31:58 +0100
+Message-ID: <1515709918.18410.15.camel@suse.com>
+References: <3cbeed05-179d-bbd9-ac5a-3357a28eabac@mtifilm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20171212004503.12823-4-bart.vanassche@wdc.com>
+In-Reply-To: <3cbeed05-179d-bbd9-ac5a-3357a28eabac@mtifilm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,19 +17,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <bart.vanassche@wdc.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gTW9uLCAyMDE3LTEyLTExIGF0IDE2OjQ1IC0wODAwLCBCYXJ0IFZhbiBBc3NjaGUgd3JvdGU6
-Cj4gVGhpcyBwYXRjaCBhdm9pZHMgdGhhdCBjb21waWxhdGlvbiBicmVha3MgaWYgdGhlIG11bHRp
-cGF0aGQvY2xpLmgKPiBoZWFkZXIgZmlsZSBpcyBpbmNsdWRlZCBtdWx0aXBsZSB0aW1lcyBmcm9t
-IHRoZSBzYW1lIGNvbXBpbGF0aW9uCj4gdW5pdC4KPiAKPiBTaWduZWQtb2ZmLWJ5OiBCYXJ0IFZh
-biBBc3NjaGUgPGJhcnQudmFuYXNzY2hlQHdkYy5jb20+Cj4gLS0tCj4gIG11bHRpcGF0aGQvY2xp
-LmggfCA1ICsrKysrCj4gIDEgZmlsZSBjaGFuZ2VkLCA1IGluc2VydGlvbnMoKykKClJldmlld2Vk
-LWJ5OiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4KCi0tIApEci4gTWFydGluIFdpbGNr
-IDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4
-IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0
-b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0t
-ZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8v
-ZG0tZGV2ZWw=
+SGkgTGFuY2UsCgoKPiBXZSByYW4gaW50byBhIHNpdHVhdGlvbiB5ZXN0ZXJkYXksIHdoZXJlIGl0
+IGFwcGVhcnMgdGhlcmUgaXMgYSBsaW1pdAo+IG9uIAo+IHRoZSBudW1iZXIgb2YgdGFyZ2V0cyB0
+aGF0IERNIE11bHRpcGF0aCBjYW4gdXNlLiBXZSBhcmUgc3dpdGNoaW5nIHRvCj4gYSAKPiBzd2l0
+Y2gvem9uaW5nIGNvbmZpZ3VyYXRpb24gYXQgb3VyIG9mZmljZSB3aGljaCBtYXkgcHJlc2VudCBh
+cyBtYW55Cj4gYXMgCj4gMjUwMCB0YXJnZXRzIHRvIHRoZSBzeXN0ZW0uIFllc3RlcmRheSwgd2Ug
+d2VyZSB0ZXN0aW5nIGEgc21hbGxlcgo+IGNvbmZpZywgCj4gYW5kIHRoZSBsaW1pdCBvbiB0aGUg
+bnVtYmVyIG9mIHRhcmdldHMgYXBwZWFycyB0byBiZSA2NDAuIFdoZW4gd2UKPiBleGNlZWQgCj4g
+NjQwLCB0aGUgc3lzdGVtIGxvY2tzIHVwLiBXaGVuIHdlIHRyeSA2NTYgdGFyZ2V0cywgaXQgbG9j
+a3MgdXAsIHRoZW4KPiBpZiAKPiB3ZSBiYWNrIG91dCB0aGUgbGFzdCAxNiB0YXJnZXRzIGFuZCBy
+ZXBsYWNlIHRoZW0gd2l0aCAxNiBkaWZmZXJlbnQKPiBvbmVzLCAKPiBpdCBzdGlsbCBsb2NrcyB1
+cC4gV2UgYmFja2VkIG9mZiB0aGUgem9uaW5nIGZvciB0aGUgbWVhbnRpbWUgKHdoaWNoIAo+IGNy
+aXBwbGVzIHRoZSBjb25uZWN0aW9uL2JhbmR3aWR0aCkgdG8gYWJvdXQgMjgwIHRhcmdldHMsIGJ1
+dCBldmVyeSAKPiBmaWxlc3lzdGVtIG11bHRpcGF0aHMgcHJvcGVybHkuCj4gCj4gRG8geW91IGtu
+b3cgd2hhdCBpcyBnb2luZyBvbiwgYW5kIGlzIHRoZXJlIHNvbWUgd2F5IHRvIGluY3JlYXNlIHRo
+aXMKPiBsaW1pdD8KCkNvdWxkIHlvdSB0ZWxsIHdoYXQgaXMgbG9ja2luZyB1cCwgdGhlIGtlcm5l
+bCBvciBtdWx0aXBhdGhkPyBJbgpnZW5lcmFsLCBib3RoIHRoZSBrZXJuZWwgZG0tbXVsdGlwYXRo
+IGRyaXZlciBhbmQgbXVsdGlwYXRoLXRvb2xzIGNhbgpoYW5kbGUgdGhvdXNhbmRzIG9mIHBhdGhz
+LiBZb3UnbGwgbmVlZCB0byBwcm92aWRlIG11Y2ggbW9yZSBkZXRhaWxlZAptYXRlcmlhbCAobG9n
+IGZpbGVzIGV0YykuCgpSZWdhcmRzLApNYXJ0aW4KCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdp
+bGNrQHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJI
+LCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhS
+QiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVs
+QHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRl
+dmVs
