@@ -1,46 +1,42 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: DM Multipath limits
-Date: Thu, 11 Jan 2018 23:31:58 +0100
-Message-ID: <1515709918.18410.15.camel@suse.com>
-References: <3cbeed05-179d-bbd9-ac5a-3357a28eabac@mtifilm.com>
+From: Bart Van Assche <Bart.VanAssche@wdc.com>
+Subject: Re: [PATCH V3 0/5]  dm-rq: improve sequential I/O performance
+Date: Thu, 11 Jan 2018 22:37:37 +0000
+Message-ID: <1515710256.2752.72.camel@sandisk.com>
+References: <20180111060159.12991-1-ming.lei@redhat.com>
+         <20180111220742.GA31944@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <3cbeed05-179d-bbd9-ac5a-3357a28eabac@mtifilm.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20180111220742.GA31944@redhat.com>
+Content-Language: en-US
+Content-ID: <9944B800DE673F44976DFFD199AC6B16@namprd04.prod.outlook.com>
+Sender: linux-block-owner@vger.kernel.org
+To: "axboe@kernel.dk" <axboe@kernel.dk>, "snitzer@redhat.com" <snitzer@redhat.com>, "ming.lei@redhat.com" <ming.lei@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "hch@infradead.org" <hch@infradead.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "axboe@fb.com" <axboe@fb.com>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>
 List-Id: dm-devel.ids
 
-SGkgTGFuY2UsCgoKPiBXZSByYW4gaW50byBhIHNpdHVhdGlvbiB5ZXN0ZXJkYXksIHdoZXJlIGl0
-IGFwcGVhcnMgdGhlcmUgaXMgYSBsaW1pdAo+IG9uIAo+IHRoZSBudW1iZXIgb2YgdGFyZ2V0cyB0
-aGF0IERNIE11bHRpcGF0aCBjYW4gdXNlLiBXZSBhcmUgc3dpdGNoaW5nIHRvCj4gYSAKPiBzd2l0
-Y2gvem9uaW5nIGNvbmZpZ3VyYXRpb24gYXQgb3VyIG9mZmljZSB3aGljaCBtYXkgcHJlc2VudCBh
-cyBtYW55Cj4gYXMgCj4gMjUwMCB0YXJnZXRzIHRvIHRoZSBzeXN0ZW0uIFllc3RlcmRheSwgd2Ug
-d2VyZSB0ZXN0aW5nIGEgc21hbGxlcgo+IGNvbmZpZywgCj4gYW5kIHRoZSBsaW1pdCBvbiB0aGUg
-bnVtYmVyIG9mIHRhcmdldHMgYXBwZWFycyB0byBiZSA2NDAuIFdoZW4gd2UKPiBleGNlZWQgCj4g
-NjQwLCB0aGUgc3lzdGVtIGxvY2tzIHVwLiBXaGVuIHdlIHRyeSA2NTYgdGFyZ2V0cywgaXQgbG9j
-a3MgdXAsIHRoZW4KPiBpZiAKPiB3ZSBiYWNrIG91dCB0aGUgbGFzdCAxNiB0YXJnZXRzIGFuZCBy
-ZXBsYWNlIHRoZW0gd2l0aCAxNiBkaWZmZXJlbnQKPiBvbmVzLCAKPiBpdCBzdGlsbCBsb2NrcyB1
-cC4gV2UgYmFja2VkIG9mZiB0aGUgem9uaW5nIGZvciB0aGUgbWVhbnRpbWUgKHdoaWNoIAo+IGNy
-aXBwbGVzIHRoZSBjb25uZWN0aW9uL2JhbmR3aWR0aCkgdG8gYWJvdXQgMjgwIHRhcmdldHMsIGJ1
-dCBldmVyeSAKPiBmaWxlc3lzdGVtIG11bHRpcGF0aHMgcHJvcGVybHkuCj4gCj4gRG8geW91IGtu
-b3cgd2hhdCBpcyBnb2luZyBvbiwgYW5kIGlzIHRoZXJlIHNvbWUgd2F5IHRvIGluY3JlYXNlIHRo
-aXMKPiBsaW1pdD8KCkNvdWxkIHlvdSB0ZWxsIHdoYXQgaXMgbG9ja2luZyB1cCwgdGhlIGtlcm5l
-bCBvciBtdWx0aXBhdGhkPyBJbgpnZW5lcmFsLCBib3RoIHRoZSBrZXJuZWwgZG0tbXVsdGlwYXRo
-IGRyaXZlciBhbmQgbXVsdGlwYXRoLXRvb2xzIGNhbgpoYW5kbGUgdGhvdXNhbmRzIG9mIHBhdGhz
-LiBZb3UnbGwgbmVlZCB0byBwcm92aWRlIG11Y2ggbW9yZSBkZXRhaWxlZAptYXRlcmlhbCAobG9n
-IGZpbGVzIGV0YykuCgpSZWdhcmRzLApNYXJ0aW4KCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdp
-bGNrQHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJI
-LCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhS
-QiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVs
-QHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRl
-dmVs
+T24gVGh1LCAyMDE4LTAxLTExIGF0IDE3OjA3IC0wNTAwLCBNaWtlIFNuaXR6ZXIgd3JvdGU6DQo+
+IEJhcnQsIGlmIGZvciBzb21lIHJlYXNvbiB3ZSByZWdyZXNzIGZvciBzb21lIHdvcmtsb2FkIHlv
+dSdyZSBhYmxlIHRvDQo+IG1vcmUgcmVhZGlseSB0ZXN0IHdlIGNhbiBkZWFsIHdpdGggaXQuICBC
+dXQgSSdtIHRvbyBlbmNvdXJhZ2VkIGJ5IE1pbmcncw0KPiBwZXJmb3JtYW5jZSBpbXByb3ZlbWVu
+dHMgdG8gaG9sZCB0aGVzZSBjaGFuZ2VzIGJhY2sgYW55IGZ1cnRoZXIuDQoNClNvcnJ5IE1pa2Ug
+YnV0IEkgdGhpbmsgTWluZydzIG1lYXN1cmVtZW50IHJlc3VsdHMgYXJlIG5vdCBzdWZmaWNpZW50
+IHRvDQptb3RpdmF0ZSB1cHN0cmVhbWluZyBvZiB0aGVzZSBwYXRjaGVzLiBXaGF0IEkgcmVtZW1i
+ZXIgZnJvbSBwcmV2aW91cyB2ZXJzaW9ucw0Kb2YgdGhpcyBwYXRjaCBzZXJpZXMgaXMgdGhhdCBN
+aW5nIG1lYXN1cmVkIHRoZSBwZXJmb3JtYW5jZSBpbXBhY3Qgb2YgdGhpcw0KcGF0Y2ggc2VyaWVz
+IG9ubHkgZm9yIHRoZSBFbXVsZXggRkMgZHJpdmVyIChscGZjKS4gVGhhdCBkcml2ZXIgbGltaXRz
+IHF1ZXVlDQpkZXB0aCB0byAzLiBJbnN0ZWFkIG9mIG1vZGlmeWluZyB0aGUgZG0gY29kZSwgdGhh
+dCBkcml2ZXIgbmVlZHMgdG8gYmUgZml4ZWQNCnN1Y2ggdGhhdCBpdCBhbGxvd3MgbGFyZ2VyIHF1
+ZXVlIGRlcHRocy4NCg0KQWRkaXRpb25hbGx5LCBzb21lIHRpbWUgYWdvIEkgaGFkIGV4cGxhaW5l
+ZCBpbiBkZXRhaWwgd2h5IEkgdGhpbmsgdGhhdCBwYXRjaA0KMi81IGluIHRoaXMgc2VyaWVzIGlz
+IHdyb25nIGFuZCB3aHkgaXQgd2lsbCBpbnRyb2R1Y2UgZmFpcm5lc3MgcmVncmVzc2lvbnMNCmlu
+IG11bHRpLUxVTiB3b3JrbG9hZHMuIEkgdGhpbmsgd2UgbmVlZCBwZXJmb3JtYW5jZSBtZWFzdXJl
+bWVudHMgZm9yIHRoaXMNCnBhdGNoIHNlcmllcyBmb3IgYXQgbGVhc3QgdGhlIGZvbGxvd2luZyB0
+d28gY29uZmlndXJhdGlvbnMgYmVmb3JlIHRoaXMgcGF0Y2gNCnNlcmllcyBjYW4gYmUgY29uc2lk
+ZXJlZCBmb3IgdXBzdHJlYW0gaW5jbHVzaW9uOg0KKiBUaGUgcGVyZm9ybWFuY2UgaW1wYWN0IG9m
+IHRoaXMgcGF0Y2ggc2VyaWVzIGZvciBTQ1NJIGRldmljZXMgd2l0aCBhDQogIHJlYWxpc3RpYyBx
+dWV1ZSBkZXB0aCAoZS5nLiA2NCBvciAxMjgpLg0KKiBUaGUgcGVyZm9ybWFuY2UgaW1wYWN0IGZv
+ciB0aGlzIHBhdGNoIHNlcmllcyBmb3IgYSBTQ1NJIGhvc3Qgd2l0aCB3aGljaA0KICBtdWx0aXBs
+ZSBMVU5zIGFyZSBhc3NvY2lhdGVkIGFuZCBmb3Igd2hpY2ggdGhlIHRhcmdldCBzeXN0ZW0gb2Z0
+ZW4gcmVwbGllcw0KICB3aXRoIHRoZSBTQ1NJICJCVVNZIiBzdGF0dXMuDQoNCkJhcnQu
