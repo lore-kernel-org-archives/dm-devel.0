@@ -1,8 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
 Subject: Re: [for-4.16 PATCH v3 2/3] block: allow gendisk's request_queue
  registration to be deferred
-Date: Thu, 11 Jan 2018 08:46:35 +0100
-Message-ID: <804df5df-2598-df69-757d-85df18185d4c@suse.de>
+Date: Thu, 11 Jan 2018 08:56:06 +0100
+Message-ID: <62b01560-8d92-ca03-6b21-0e00052772eb@suse.de>
 References: <20180111021256.37490-1-snitzer@redhat.com>
  <20180111021256.37490-3-snitzer@redhat.com>
 Mime-Version: 1.0
@@ -87,9 +87,6 @@ On 01/11/2018 03:12 AM, Mike Snitzer wrote:
 >  	mutex_lock(&q->sysfs_lock);
 >  	queue_flag_clear_unlocked(QUEUE_FLAG_REGISTERED, q);
 >  	mutex_unlock(&q->sysfs_lock);
-Why can't we use test_and_clear_bit() here?
-Shouldn't that relieve the need for the mutex_lock() here, too?
-
 > diff --git a/block/genhd.c b/block/genhd.c
 > index 00620e01e043..3912a82ecc4f 100644
 > --- a/block/genhd.c
@@ -125,7 +122,20 @@ Shouldn't that relieve the need for the mutex_lock() here, too?
 >  #define QUEUE_FLAG_DEFAULT	((1 << QUEUE_FLAG_IO_STAT) |		\
 >  				 (1 << QUEUE_FLAG_SAME_COMP)	|	\
 > 
-Where is this flag used?
+Thinking of this a bit more, wouldn't it be better to modify add_disk()
+(or, rather, device_add_disk()) to handle this case?
+You already moved the call to 'blk_register_queue()' to the end of
+device_add_disk(), so it would be trivial to make device_add_disk() a
+wrapper function like
+
+void device_add_disk(struct device *parent, struct gendisk *disk) {
+  blk_add_disk(parent, disk);
+  blk_register_queue(disk);
+}
+
+and then call blk_add_disk() from the dm-core.
+That would save us the magic 'you have to set this flag before
+registering' dance in dm.c...
 
 Cheers,
 
