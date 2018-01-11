@@ -1,42 +1,43 @@
-From: Bart Van Assche <Bart.VanAssche@wdc.com>
-Subject: Re: [PATCH V3 0/5]  dm-rq: improve sequential I/O performance
-Date: Thu, 11 Jan 2018 22:37:37 +0000
-Message-ID: <1515710256.2752.72.camel@sandisk.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH V3 5/5] blk-mq: issue request directly for
+ blk_insert_cloned_request
+Date: Thu, 11 Jan 2018 17:42:49 -0500
+Message-ID: <20180111224249.GD31944@redhat.com>
 References: <20180111060159.12991-1-ming.lei@redhat.com>
-         <20180111220742.GA31944@redhat.com>
+ <20180111060159.12991-6-ming.lei@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20180111220742.GA31944@redhat.com>
-Content-Language: en-US
-Content-ID: <9944B800DE673F44976DFFD199AC6B16@namprd04.prod.outlook.com>
+Content-Disposition: inline
+In-Reply-To: <20180111060159.12991-6-ming.lei@redhat.com>
 Sender: linux-block-owner@vger.kernel.org
-To: "axboe@kernel.dk" <axboe@kernel.dk>, "snitzer@redhat.com" <snitzer@redhat.com>, "ming.lei@redhat.com" <ming.lei@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "hch@infradead.org" <hch@infradead.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "axboe@fb.com" <axboe@fb.com>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>
+To: Ming Lei <ming.lei@redhat.com>
+Cc: Jens Axboe <axboe@fb.com>, linux-block@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, Bart Van Assche <bart.vanassche@sandisk.com>
 List-Id: dm-devel.ids
 
-T24gVGh1LCAyMDE4LTAxLTExIGF0IDE3OjA3IC0wNTAwLCBNaWtlIFNuaXR6ZXIgd3JvdGU6DQo+
-IEJhcnQsIGlmIGZvciBzb21lIHJlYXNvbiB3ZSByZWdyZXNzIGZvciBzb21lIHdvcmtsb2FkIHlv
-dSdyZSBhYmxlIHRvDQo+IG1vcmUgcmVhZGlseSB0ZXN0IHdlIGNhbiBkZWFsIHdpdGggaXQuICBC
-dXQgSSdtIHRvbyBlbmNvdXJhZ2VkIGJ5IE1pbmcncw0KPiBwZXJmb3JtYW5jZSBpbXByb3ZlbWVu
-dHMgdG8gaG9sZCB0aGVzZSBjaGFuZ2VzIGJhY2sgYW55IGZ1cnRoZXIuDQoNClNvcnJ5IE1pa2Ug
-YnV0IEkgdGhpbmsgTWluZydzIG1lYXN1cmVtZW50IHJlc3VsdHMgYXJlIG5vdCBzdWZmaWNpZW50
-IHRvDQptb3RpdmF0ZSB1cHN0cmVhbWluZyBvZiB0aGVzZSBwYXRjaGVzLiBXaGF0IEkgcmVtZW1i
-ZXIgZnJvbSBwcmV2aW91cyB2ZXJzaW9ucw0Kb2YgdGhpcyBwYXRjaCBzZXJpZXMgaXMgdGhhdCBN
-aW5nIG1lYXN1cmVkIHRoZSBwZXJmb3JtYW5jZSBpbXBhY3Qgb2YgdGhpcw0KcGF0Y2ggc2VyaWVz
-IG9ubHkgZm9yIHRoZSBFbXVsZXggRkMgZHJpdmVyIChscGZjKS4gVGhhdCBkcml2ZXIgbGltaXRz
-IHF1ZXVlDQpkZXB0aCB0byAzLiBJbnN0ZWFkIG9mIG1vZGlmeWluZyB0aGUgZG0gY29kZSwgdGhh
-dCBkcml2ZXIgbmVlZHMgdG8gYmUgZml4ZWQNCnN1Y2ggdGhhdCBpdCBhbGxvd3MgbGFyZ2VyIHF1
-ZXVlIGRlcHRocy4NCg0KQWRkaXRpb25hbGx5LCBzb21lIHRpbWUgYWdvIEkgaGFkIGV4cGxhaW5l
-ZCBpbiBkZXRhaWwgd2h5IEkgdGhpbmsgdGhhdCBwYXRjaA0KMi81IGluIHRoaXMgc2VyaWVzIGlz
-IHdyb25nIGFuZCB3aHkgaXQgd2lsbCBpbnRyb2R1Y2UgZmFpcm5lc3MgcmVncmVzc2lvbnMNCmlu
-IG11bHRpLUxVTiB3b3JrbG9hZHMuIEkgdGhpbmsgd2UgbmVlZCBwZXJmb3JtYW5jZSBtZWFzdXJl
-bWVudHMgZm9yIHRoaXMNCnBhdGNoIHNlcmllcyBmb3IgYXQgbGVhc3QgdGhlIGZvbGxvd2luZyB0
-d28gY29uZmlndXJhdGlvbnMgYmVmb3JlIHRoaXMgcGF0Y2gNCnNlcmllcyBjYW4gYmUgY29uc2lk
-ZXJlZCBmb3IgdXBzdHJlYW0gaW5jbHVzaW9uOg0KKiBUaGUgcGVyZm9ybWFuY2UgaW1wYWN0IG9m
-IHRoaXMgcGF0Y2ggc2VyaWVzIGZvciBTQ1NJIGRldmljZXMgd2l0aCBhDQogIHJlYWxpc3RpYyBx
-dWV1ZSBkZXB0aCAoZS5nLiA2NCBvciAxMjgpLg0KKiBUaGUgcGVyZm9ybWFuY2UgaW1wYWN0IGZv
-ciB0aGlzIHBhdGNoIHNlcmllcyBmb3IgYSBTQ1NJIGhvc3Qgd2l0aCB3aGljaA0KICBtdWx0aXBs
-ZSBMVU5zIGFyZSBhc3NvY2lhdGVkIGFuZCBmb3Igd2hpY2ggdGhlIHRhcmdldCBzeXN0ZW0gb2Z0
-ZW4gcmVwbGllcw0KICB3aXRoIHRoZSBTQ1NJICJCVVNZIiBzdGF0dXMuDQoNCkJhcnQu
+On Thu, Jan 11 2018 at  1:01am -0500,
+Ming Lei <ming.lei@redhat.com> wrote:
+
+> blk_insert_cloned_request() is called in fast path of dm-rq driver, and
+> in this function we append request to hctx->dispatch_list of the underlying
+> queue directly.
+> 
+> 1) This way isn't efficient enough because hctx lock is always required
+> 
+> 2) With blk_insert_cloned_request(), we bypass underlying queue's IO scheduler
+> totally, and depend on DM rq driver to do IO schedule completely. But DM
+> rq driver can't get underlying queue's dispatch feedback at all, and this
+> information is extreamly useful for IO merge. Without that IO merge can't
+> be done basically by blk-mq, and causes very bad sequential IO performance.
+> 
+> This patch makes use of blk_mq_try_issue_directly() to dispatch rq to
+> underlying queue and provides disptch result to dm-rq and blk-mq, and
+> improves the above situations very much.
+> 
+> With this patch, seqential IO is improved by 3X in my test over
+> mpath/virtio-scsi.
+> 
+> Signed-off-by: Ming Lei <ming.lei@redhat.com>
+
+Tested-by: Mike Snitzer <snitzer@redhat.com>
+Reviewed-by: Mike Snitzer <snitzer@redhat.com>
