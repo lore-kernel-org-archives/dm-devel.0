@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 14/14] multipathd.service: drop
-	Before=lvm2-lvmetad.service
-Date: Fri, 12 Jan 2018 23:07:43 +0100
-Message-ID: <20180112220743.11513-15-mwilck@suse.com>
+Subject: [PATCH 13/14] multipathd.socket: add
+	WantedBy=sockets.target
+Date: Fri, 12 Jan 2018 23:07:42 +0100
+Message-ID: <20180112220743.11513-14-mwilck@suse.com>
 References: <20180112220743.11513-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,27 +22,24 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-lvm2-lvmetad does not depend on multipathd. On the contrary,
-when multipathd sets up a map that contains LVM PVs, it's good
-if lvm2-lvmetad is already running.
+Without this, "systemctl enable multipathd.service" spits out
+an error message.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/multipathd.service | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ multipathd/multipathd.socket | 3 +++
+ 1 file changed, 3 insertions(+)
 
-diff --git a/multipathd/multipathd.service b/multipathd/multipathd.service
-index fd66cf62af17..0cf99b2f2df5 100644
---- a/multipathd/multipathd.service
-+++ b/multipathd/multipathd.service
-@@ -1,7 +1,7 @@
- [Unit]
- Description=Device-Mapper Multipath Device Controller
- Wants=systemd-udev-trigger.service systemd-udev-settle.service
--Before=iscsi.service iscsid.service lvm2-lvmetad.service lvm2-activation-early.service
-+Before=iscsi.service iscsid.service lvm2-activation-early.service
- Before=local-fs-pre.target blk-availability.service
- After=multipathd.socket systemd-udev-trigger.service systemd-udev-settle.service
- DefaultDependencies=no
+diff --git a/multipathd/multipathd.socket b/multipathd/multipathd.socket
+index 921706d5d333..0ed4a1f7958b 100644
+--- a/multipathd/multipathd.socket
++++ b/multipathd/multipathd.socket
+@@ -5,3 +5,6 @@ Before=sockets.target
+ 
+ [Socket]
+ ListenStream=@/org/kernel/linux/storage/multipathd
++
++[Install]
++WantedBy=sockets.target
 -- 
 2.15.1
