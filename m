@@ -1,7 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
 Subject: Re: [PATCH V3 0/5]  dm-rq: improve sequential I/O performance
-Date: Fri, 12 Jan 2018 17:31:17 -0500
-Message-ID: <20180112223117.GA6332@redhat.com>
+Date: Fri, 12 Jan 2018 18:17:08 -0500
+Message-ID: <20180112231708.GA6722@redhat.com>
 References: <1515710256.2752.72.camel@sandisk.com>
  <20180112014232.GB25090@ming.t460p>
  <20180112015721.GB32298@redhat.com>
@@ -24,77 +24,73 @@ List-Id: dm-devel.ids
 
 On Fri, Jan 12 2018 at  1:54pm -0500,
 Bart Van Assche <Bart.VanAssche@wdc.com> wrote:
-
-> On Fri, 2018-01-12 at 13:06 -0500, Mike Snitzer wrote:
-> > OK, you have the stage: please give me a pointer to your best
-> > explaination of the several.
-> 
-> Since the previous discussion about this topic occurred more than a month
-> ago it could take more time to look up an explanation than to explain it
-> again. Anyway, here we go. As you know a block layer request queue needs to
-> be rerun if one or more requests are waiting and a previous condition that
-> prevented the request to be executed has been cleared. For the dm-mpath
-> driver, examples of such conditions are no tags available, a path that is
-> busy (see also pgpath_busy()), path initialization that is in progress
-> (pg_init_in_progress) or a request completes with status, e.g. if the
-> SCSI core calls __blk_mq_end_request(req, error) with error != 0. For some
-> of these conditions, e.g. path initialization completes, a callback
-> function in the dm-mpath driver is called and it is possible to explicitly
-> rerun the queue. I agree that for such scenario's a delayed queue run should
-> not be triggered. For other scenario's, e.g. if a SCSI initiator submits a
-> SCSI request over a fabric and the SCSI target replies with "BUSY" then the
-> SCSI core will end the I/O request with status BLK_STS_RESOURCE after the
-> maximum number of retries has been reached (see also scsi_io_completion()).
-> In that last case, if a SCSI target sends a "BUSY" reply over the wire back
-> to the initiator, there is no other approach for the SCSI initiator to
-> figure out whether it can queue another request than to resubmit the
-> request. The worst possible strategy is to resubmit a request immediately
-> because that will cause a significant fraction of the fabric bandwidth to
-> be used just for replying "BUSY" to requests that can't be processed
-> immediately.
-
-The thing is, the 2 scenarios you are most concerned about have
-_nothing_ to do with dm_mq_queue_rq() at all.  They occur as an error in
-the IO path _after_ the request is successfully retrieved with
-blk_get_request() and then submitted.
  
 > The intention of commit 6077c2d706097c0 was to address the last mentioned
-> case.
+> case. It may be possible to move the delayed queue rerun from the
+> dm_queue_rq() into dm_requeue_original_request(). But I think it would be
+> wrong to rerun the queue immediately in case a SCSI target system returns
+> "BUSY".
 
-So it really makes me question why you think commit 6077c2d706097c0
-addresses the issue you think it does.  And gives me more conviction to
-remove 6077c2d706097c0.
+This is my 3rd reply to this email.. 3rd time's the charm? ;)
 
-It may help just by virtue of blindly kicking the queue if
-blk_get_request() fails (regardless of the target is responding with
-BUSY or not).  Very unsatisfying to say the least.
+Here is a patch that will kick the hw queues via blk_mq_requeue_work(),
+indirectly from dm-rq.c:__dm_mq_kick_requeue_list(), after a delay if
+BLK_STS_RESOURCE is returned from the target.
 
-I think it'd be much more beneficial for dm-mpath.c:multipath_end_io()
-to be trained to be respond more intelligently to BLK_STS_RESOURCE.
+Your thoughts on this patch as an alternative to commit 6077c2d7060 ?
 
-E.g. set BLK_MQ_S_SCHED_RESTART if requests are known to be outstanding
-on the path.  This is one case where Ming said the queue would be
-re-run, as detailed in this header:
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.16&id=5b18cff4baedde77e0d69bd62a13ae78f9488d89
-
-And Jens has reinforced to me that BLK_MQ_S_SCHED_RESTART is a means to
-kicking the queue more efficiently.  _BUT_ I'm not seeing any external
-blk-mq interface that exposes this capability to a blk-mq driver.  As is
-BLK_MQ_S_SCHED_RESTART gets set very much in the bowels of blk-mq
-(blk_mq_sched_mark_restart_hctx).
-
-SO I have to do more homework here...
-
-Ming or Jens: might you be able to shed some light on how dm-mpath
-would/could set BLK_MQ_S_SCHED_RESTART?  A new function added that can
-be called from q->softirq_done_fn in response to BLK_STS_RESOURCE?  Or
-is this level of control (and blk-mq detail) something that a blk-mq
-driver should need to care about?
-
-Anyway, we may need to get to that level of blk-mq driver controlled
-retry optimization.
-
-But Bart: again this is a vastly different feedback loop than the
-stabbing in the dark your commit 6077c2d706097c0 is doing.  
-
+Thanks,
 Mike
+
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index d8c7259..ab2cfdc 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -1570,7 +1570,10 @@ static int multipath_end_io(struct dm_target *ti, struct request *clone,
+ 	if (error && blk_path_error(error)) {
+ 		struct multipath *m = ti->private;
+ 
+-		r = DM_ENDIO_REQUEUE;
++		if (r == BLK_STS_RESOURCE)
++			r = DM_ENDIO_DELAY_REQUEUE;
++		else
++			r = DM_ENDIO_REQUEUE;
+ 
+ 		if (pgpath)
+ 			fail_path(pgpath);
+diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+index 6b01298..ab0ed2d 100644
+--- a/drivers/md/dm-rq.c
++++ b/drivers/md/dm-rq.c
+@@ -315,6 +315,10 @@ static void dm_done(struct request *clone, blk_status_t error, bool mapped)
+ 		/* The target wants to requeue the I/O */
+ 		dm_requeue_original_request(tio, false);
+ 		break;
++	case DM_ENDIO_DELAY_REQUEUE:
++		/* The target wants to requeue the I/O after a delay */
++		dm_requeue_original_request(tio, true);
++		break;
+ 	default:
+ 		DMWARN("unimplemented target endio return value: %d", r);
+ 		BUG();
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index 9ba8453..da83f64 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -550,6 +550,7 @@ struct dm_table *dm_swap_table(struct mapped_device *md,
+ #define DM_ENDIO_DONE		0
+ #define DM_ENDIO_INCOMPLETE	1
+ #define DM_ENDIO_REQUEUE	2
++#define DM_ENDIO_DELAY_REQUEUE	3
+ 
+ /*
+  * Definitions of return values from target map function.
+@@ -557,7 +558,7 @@ struct dm_table *dm_swap_table(struct mapped_device *md,
+ #define DM_MAPIO_SUBMITTED	0
+ #define DM_MAPIO_REMAPPED	1
+ #define DM_MAPIO_REQUEUE	DM_ENDIO_REQUEUE
+-#define DM_MAPIO_DELAY_REQUEUE	3
++#define DM_MAPIO_DELAY_REQUEUE	DM_ENDIO_DELAY_REQUEUE
+ #define DM_MAPIO_KILL		4
+ 
+ #define dm_sector_div64(x, y)( \
