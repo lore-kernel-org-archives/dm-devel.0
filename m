@@ -1,7 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 04/14] libmultipath: condlog: log to stderr
-Date: Fri, 12 Jan 2018 23:07:33 +0100
-Message-ID: <20180112220743.11513-5-mwilck@suse.com>
+Subject: [PATCH 09/14] libmultipath: select ALUA prioritizer for
+	RDAC arrays only
+Date: Fri, 12 Jan 2018 23:07:38 +0100
+Message-ID: <20180112220743.11513-10-mwilck@suse.com>
 References: <20180112220743.11513-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,31 +22,29 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Calling 'multipath' might result in various error messages, all
-of which should be directed to stderr.
-Having them intermixed with the actual output on stdout makes
-parsing really hard.
+Since commit 7e2f46d3, multipathd with "detect_prio" setting (=default)
+chooses ALUA prioritizer rather than sysfs prioritizer for arrays with
+implicit TPGS. But the intention of that patch was to choose ALUA for
+NetApp E-Series (RDAC) storage arrays *only*, not for every array
+with implicit TPGS.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/debug.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ libmultipath/propsel.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/debug.c b/libmultipath/debug.c
-index f89b26443ea5..f95a3e5f97f5 100644
---- a/libmultipath/debug.c
-+++ b/libmultipath/debug.c
-@@ -37,9 +37,9 @@ void dlog (int sink, int prio, const char * fmt, ...)
- 					 "%b %d %H:%M:%S", tb);
- 				buff[sizeof(buff)-1] = '\0';
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index d08954ac8464..4dba4c50beb9 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -497,7 +497,7 @@ detect_prio(struct config *conf, struct path * pp)
  
--				fprintf(stdout, "%s | ", buff);
-+				fprintf(stderr, "%s | ", buff);
- 			}
--			vfprintf(stdout, fmt, ap);
-+			vfprintf(stderr, fmt, ap);
- 		}
- 		else
- 			log_safe(prio + 3, fmt, ap);
+ 	if (pp->tpgs <= 0)
+ 		return;
+-	if (pp->tpgs == 2 && !check_rdac(pp)) {
++	if (pp->tpgs == 2 || !check_rdac(pp)) {
+ 		if (sysfs_get_asymmetric_access_state(pp, buff, 512) >= 0)
+ 			default_prio = PRIO_SYSFS;
+ 	}
 -- 
 2.15.1
