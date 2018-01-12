@@ -1,8 +1,7 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 06/14] libmultipath: fix return code of
-	sgio_get_vpd()
-Date: Fri, 12 Jan 2018 23:07:35 +0100
-Message-ID: <20180112220743.11513-7-mwilck@suse.com>
+Subject: [PATCH 04/14] libmultipath: condlog: log to stderr
+Date: Fri, 12 Jan 2018 23:07:33 +0100
+Message-ID: <20180112220743.11513-5-mwilck@suse.com>
 References: <20180112220743.11513-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,26 +21,31 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-This function must return the length of data received in success
-case.
+Calling 'multipath' might result in various error messages, all
+of which should be directed to stderr.
+Having them intermixed with the actual output on stdout makes
+parsing really hard.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/debug.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 3ae934261b65..da7bf5652a53 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -852,7 +852,7 @@ retry:
- 			return len;
- 		if (len > DEFAULT_SGIO_LEN)
- 			goto retry;
--		return 0;
-+		return len;
- 	}
- 	return -1;
- }
+diff --git a/libmultipath/debug.c b/libmultipath/debug.c
+index f89b26443ea5..f95a3e5f97f5 100644
+--- a/libmultipath/debug.c
++++ b/libmultipath/debug.c
+@@ -37,9 +37,9 @@ void dlog (int sink, int prio, const char * fmt, ...)
+ 					 "%b %d %H:%M:%S", tb);
+ 				buff[sizeof(buff)-1] = '\0';
+ 
+-				fprintf(stdout, "%s | ", buff);
++				fprintf(stderr, "%s | ", buff);
+ 			}
+-			vfprintf(stdout, fmt, ap);
++			vfprintf(stderr, fmt, ap);
+ 		}
+ 		else
+ 			log_safe(prio + 3, fmt, ap);
 -- 
 2.15.1
