@@ -1,112 +1,52 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [for-4.16 PATCH v6 2/4] block: properly protect the 'queue' kobj in
- blk_unregister_queue
-Date: Fri, 12 Jan 2018 11:03:52 -0500
-Message-ID: <20180112160352.GA6270@redhat.com>
+Subject: Re: [for-4.16 PATCH v5 0/4] block/dm: allow DM to defer
+ blk_register_queue() until ready
+Date: Fri, 12 Jan 2018 11:13:48 -0500
+Message-ID: <20180112161348.GA4782@redhat.com>
 References: <20180112150606.6037-1-snitzer@redhat.com>
- <20180112150606.6037-3-snitzer@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-block-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20180112150606.6037-3-snitzer@redhat.com>
+In-Reply-To: <20180112150606.6037-1-snitzer@redhat.com>
 Sender: linux-block-owner@vger.kernel.org
 To: axboe@kernel.dk
 Cc: David Jeffery <djeffery@redhat.com>, Ming Lei <tom.leiming@gmail.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, Bart.VanAssche@wdc.com
 List-Id: dm-devel.ids
 
-The original commit e9a823fb34a8b (block: fix warning when I/O elevator
-is changed as request_queue is being removed) is pretty conflated.
-"conflated" because the resource being protected by q->sysfs_lock isn't
-the queue_flags (it is the 'queue' kobj).
+On Fri, Jan 12 2018 at 10:06am -0500,
+Mike Snitzer <snitzer@redhat.com> wrote:
 
-q->sysfs_lock serializes __elevator_change() (via elv_iosched_store)
-from racing with blk_unregister_queue():
-1) By holding q->sysfs_lock first, __elevator_change() can complete
-before a racing blk_unregister_queue().
-2) Conversely, __elevator_change() is testing for QUEUE_FLAG_REGISTERED
-in case elv_iosched_store() loses the race with blk_unregister_queue(),
-it needs a way to know the 'queue' kobj isn't there.
+> Hi Jens,
+> 
+> I'm submitting this v5 with more feeling now ;)
 
-Expand the scope of blk_unregister_queue()'s q->sysfs_lock use so it is
-held until after the 'queue' kobj is removed.
+Of course PATCH 02/04 needed a v6.
 
-To do so blk_mq_unregister_dev() must not also take q->sysfs_lock.  So
-rename __blk_mq_unregister_dev() to blk_mq_unregister_dev().
+> I've distilled the changes down to be quite minimal.  Hopefully this
+> will help you and others review.
 
-Also, blk_unregister_queue() should use q->queue_lock to protect against
-any concurrent writes to q->queue_flags -- even though chances are the
-queue is being cleaned up so no concurrent writes are likely.
+I could make it even simpler by dropping 02/04 entirely.  But I do think
+it worthwhile to try to get 02/04 in at this time too.
 
-Fixes: e9a823fb34a8b ("block: fix warning when I/O elevator is changed as request_queue is being removed")
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- block/blk-mq-sysfs.c |  9 +--------
- block/blk-sysfs.c    | 13 ++++++++++---
- 2 files changed, 11 insertions(+), 11 deletions(-)
+> I've also done a dry-run of applying 4.16 block changes and then
+> merging dm-4.16; no merge conflicts:
+> https://git.kernel.org/pub/scm/linux/kernel/git/snitzer/linux.git/log/?h=block-4.16
+> https://git.kernel.org/pub/scm/linux/kernel/git/snitzer/linux.git/log/?h=dm-4.16
+> https://git.kernel.org/pub/scm/linux/kernel/git/snitzer/linux.git/log/?h=block-4.16_dm-4.16
+> 
+> And all tests very well for me.
+> 
+> Please consider for 4.16, thanks!
 
-v6: blk_mq_unregister_dev now requires q->sysfs_lock be held, Ming: I am
-not seeing any lockdep complaints with this.  I've tested bio-based,
-blk-mq and old .request_fn request-based.
+Anyway, I've genuinely tested with blk-mq now.  Sorry for all the
+iterations on this patchset in such rapid succession.  Obviously I know
+it doesn't instill confidence...
 
-diff --git a/block/blk-mq-sysfs.c b/block/blk-mq-sysfs.c
-index 79969c3c234f..a54b4b070f1c 100644
---- a/block/blk-mq-sysfs.c
-+++ b/block/blk-mq-sysfs.c
-@@ -248,7 +248,7 @@ static int blk_mq_register_hctx(struct blk_mq_hw_ctx *hctx)
- 	return ret;
- }
- 
--static void __blk_mq_unregister_dev(struct device *dev, struct request_queue *q)
-+void blk_mq_unregister_dev(struct device *dev, struct request_queue *q)
- {
- 	struct blk_mq_hw_ctx *hctx;
- 	int i;
-@@ -265,13 +265,6 @@ static void __blk_mq_unregister_dev(struct device *dev, struct request_queue *q)
- 	q->mq_sysfs_init_done = false;
- }
- 
--void blk_mq_unregister_dev(struct device *dev, struct request_queue *q)
--{
--	mutex_lock(&q->sysfs_lock);
--	__blk_mq_unregister_dev(dev, q);
--	mutex_unlock(&q->sysfs_lock);
--}
--
- void blk_mq_hctx_kobj_init(struct blk_mq_hw_ctx *hctx)
- {
- 	kobject_init(&hctx->kobj, &blk_mq_hw_ktype);
-diff --git a/block/blk-sysfs.c b/block/blk-sysfs.c
-index 870484eaed1f..9272452ff456 100644
---- a/block/blk-sysfs.c
-+++ b/block/blk-sysfs.c
-@@ -929,12 +929,17 @@ void blk_unregister_queue(struct gendisk *disk)
- 	if (WARN_ON(!q))
- 		return;
- 
-+	/*
-+	 * Protect against the 'queue' kobj being accessed
-+	 * while/after it is removed.
-+	 */
- 	mutex_lock(&q->sysfs_lock);
--	queue_flag_clear_unlocked(QUEUE_FLAG_REGISTERED, q);
--	mutex_unlock(&q->sysfs_lock);
- 
--	wbt_exit(q);
-+	spin_lock_irq(q->queue_lock);
-+	queue_flag_clear(QUEUE_FLAG_REGISTERED, q);
-+	spin_unlock_irq(q->queue_lock);
- 
-+	wbt_exit(q);
- 
- 	if (q->mq_ops)
- 		blk_mq_unregister_dev(disk_to_dev(disk), q);
-@@ -946,4 +951,6 @@ void blk_unregister_queue(struct gendisk *disk)
- 	kobject_del(&q->kobj);
- 	blk_trace_remove_sysfs(disk_to_dev(disk));
- 	kobject_put(&disk_to_dev(disk)->kobj);
-+
-+	mutex_unlock(&q->sysfs_lock);
- }
--- 
-2.15.0
+But I really would appreciate you giving this patchset serious
+consideration.
+
+DM is long overdue for this fix.
+
+Thanks,
+Mike
