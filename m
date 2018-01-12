@@ -1,17 +1,18 @@
-From: Julian Andres Klode <julian.klode@canonical.com>
-Subject: Re: multipath-tools 0.7.4 failure to remove device
-Date: Fri, 12 Jan 2018 23:26:36 +0100
-Message-ID: <20180112222636.ndvpaax7g2h5wmne@jak-x230>
-References: <20180112083833.apsybil4ux4d2y32@jak-x230>
-	<1515789339.3409.33.camel@suse.com>
-	<20180112214700.ljxlypo5nar6oh3m@jak-x230>
-	<1515795481.9139.8.camel@suse.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH] multipath-tools: Makefile: Respect standard
+ toolchain related envvars
+Date: Fri, 12 Jan 2018 23:27:43 +0100
+Message-ID: <1515796063.9139.11.camel@suse.com>
+References: <20171129232311.95483-1-whissi@gentoo.org>
+	<1515709465.18410.6.camel@suse.com>
+	<bb9b8db3-5a40-99f6-258b-1d0b81a25da7@gentoo.org>
+	<1515751362.3409.3.camel@suse.com>
+	<f1e426e3-9d78-e08d-1e1c-ea1c4277d264@gentoo.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1515795481.9139.8.camel@suse.com>
+In-Reply-To: <f1e426e3-9d78-e08d-1e1c-ea1c4277d264@gentoo.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,48 +22,24 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: Device-mapper development mailing list <dm-devel@redhat.com>, Guan Junxiong <guanjunxiong@huawei.com>
+To: Thomas Deutschmann <whissi@gentoo.org>, dm-devel@redhat.com
+Cc: Bart Van Assche <Bart.VanAssche@wdc.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-On Fri, Jan 12, 2018 at 11:18:01PM +0100, Martin Wilck wrote:
-> On Fri, 2018-01-12 at 22:47 +0100, Julian Andres Klode wrote:
-> > 
-> > I don't know actually, I'm just updating the package :) 
-> 
-> The feature needs to be enabled explicitly, so indeed you weren't using
-> it.
-> 
-> > >I can say that
-> > the tests were run with default configuration, normally we run with
-> > DEFAULT_FIND_MULTIPATHS but that does not work yet with 0.7.4 - no
-> > dm-0 device seems to get created in this test case (some systems
-> > without
-> > multipath were broken 2.5 years ago just by installing it because it
-> > took over non-multipath devices, hence the option was enabled; might
-> > not even be needed anymore).
-> 
-> That's still the default behavior if find_multipaths is off. And
-> actually, I don't know what's wrong with that. If you don't like it,
-> blacklist your root device. All you need to make sure is that multipath
-> settings in the initrd and in the booted system are the same.
-> 
-> "find_multipaths" is not a silver bullet to kill off multipath-related
-> boot problems. It has advantages and disadvantages, depending on the
-> use case. Anyway, I'm not aware of general problems with it in the
-> later multipath versions.
-
-I'll try to give it a bisect since the test works in 0.6.4 and not in
-0.7.4. It's going to be painful :)
-
-> 
-> Btw, one thing you should be aware of is that udev rule files and
-> systemd service files have changed. That requires also dracut changes
-> that are not in upstream dracut yet.
-
-We don't use dracut, we use initramfs-tools, but yes, I have to update
-the hooks for that too.
-
--- 
-debian developer - deb.li/jak | jak-linux.org - free software dev
-ubuntu core developer                              i speak de, en
+T24gRnJpLCAyMDE4LTAxLTEyIGF0IDE2OjQ2ICswMTAwLCBUaG9tYXMgRGV1dHNjaG1hbm4gd3Jv
+dGU6Cj4gCj4gUmVnYXJkaW5nIEJhcnQncyBwYXRjaDogU3RpbGwgbm90IHN1cmUgaG93IGltcG9y
+dGFudCB0aGluZ3MgbGlrZQo+IAo+ICAgLURfRk9SVElGWV9TT1VSQ0U9MiAkKFNUQUNLUFJPVCkg
+LS1wYXJhbT1zc3AtYnVmZmVyLXNpemU9NAo+IAo+IGFyZS4KCk1vc3Qgb2YgdGhpcyBjYW1lIGNh
+bWUgZnJvbSBSZWQgSGF0OgoKY29tbWl0IDFmY2U2NjkxMWY0YzE1ZTNhOWMwOTk0OGY0YzE0NmQ4
+NTliYzE4MzQKQXV0aG9yOiBCZW5qYW1pbiBNYXJ6aW5za2kgPGJtYXJ6aW5zQHJlZGhhdC5jb20+
+CkRhdGU6ICAgVGh1IE1heSAyNCAyMzo1Nzo0MiAyMDEyIC0wNTAwCgogICAgbXVsdGlwYXRoOiBC
+dWlsZCB3aXRoIHN0YW5kYXJkIHJwbSBjZmxhZ3MKICAgIAogICAgVGhpcyBwYXRjaCBtYWtlcyBt
+dWx0aXBhdGggYnVpbGQgd2l0aCB0aGUgc3RhbmRhcmQgcmVkaGF0IHJwbQpjZmxhZ3MsIHdoaWNo
+CiAgICBjYW4gaGVscCBjYXRjaCBzb21lIGNvZGUgZXJyb3JzLgogICAgCgpJIGhhdmVuJ3QgcXVl
+c3Rpb25lZCB0aGVzZSBzbyBmYXIuIEkgZG9uJ3QgdGhpbmsgdGhleSBoYXZlIG5lZ2F0aXZlCmlt
+cGFjdCwgYW5kIG1pZ2h0IGhlbHAgY2F0Y2hpbmcgZXJyb3JzLgoKTWFydGluCgotLSAKRHIuIE1h
+cnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcK
+U1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBH
+cmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGlu
+ZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFu
+L2xpc3RpbmZvL2RtLWRldmVs
