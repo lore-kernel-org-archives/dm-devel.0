@@ -1,7 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [for-4.16 PATCH v5 3/4] block: allow gendisk's request_queue registration to be deferred
-Date: Fri, 12 Jan 2018 10:06:05 -0500
-Message-ID: <20180112150606.6037-4-snitzer@redhat.com>
+Subject: [for-4.16 PATCH v5 4/4] dm: fix incomplete request_queue initialization
+Date: Fri, 12 Jan 2018 10:06:06 -0500
+Message-ID: <20180112150606.6037-5-snitzer@redhat.com>
 References: <20180112150606.6037-1-snitzer@redhat.com>
 Return-path: <linux-block-owner@vger.kernel.org>
 In-Reply-To: <20180112150606.6037-1-snitzer@redhat.com>
@@ -10,144 +10,108 @@ To: axboe@kernel.dk
 Cc: Ming Lei <tom.leiming@gmail.com>, hare@suse.de, Bart.VanAssche@wdc.com, David Jeffery <djeffery@redhat.com>, dm-devel@redhat.com, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-Since I can remember DM has forced the block layer to allow the
-allocation and initialization of the request_queue to be distinct
-operations.  Reason for this is block/genhd.c:add_disk() has requires
-that the request_queue (and associated bdi) be tied to the gendisk
-before add_disk() is called -- because add_disk() also deals with
-exposing the request_queue via blk_register_queue().
-
-DM's dynamic creation of arbitrary device types (and associated
-request_queue types) requires the DM device's gendisk be available so
-that DM table loads can establish a master/slave relationship with
-subordinate devices that are referenced by loaded DM tables -- using
-bd_link_disk_holder().  But until these DM tables, and their associated
-subordinate devices, are known DM cannot know what type of request_queue
-it needs -- nor what its queue_limits should be.
-
-This chicken and egg scenario has created all manner of problems for DM
-and, at times, the block layer.
+DM is no longer prone to having its request_queue be improperly
+initialized.
 
 Summary of changes:
 
-- Add device_add_disk_no_queue_reg() and add_disk_no_queue_reg() variant
-  that drivers may use to add a disk without also calling
-  blk_register_queue().  Driver must call blk_register_queue() once its
-  request_queue is fully initialized.
+- defer DM's blk_register_queue() from add_disk()-time until
+  dm_setup_md_queue() by using add_disk_no_queue_reg() in alloc_dev().
 
-- Return early from blk_unregister_queue() if QUEUE_FLAG_REGISTERED
-  is not set.  It won't be set if driver used add_disk_no_queue_reg()
-  but driver encounters an error and must del_gendisk() before calling
-  blk_register_queue().
+- dm_setup_md_queue() is updated to fully initialize DM's request_queue
+  (_after_ all table loads have occurred and the request_queue's type,
+  features and limits are known).
 
-- Export blk_register_queue().
+A very welcome side-effect of these changes is DM no longer needs to:
+1) backfill the "mq" sysfs entry (because historically DM didn't
+initialize the request_queue to use blk-mq until _after_
+blk_register_queue() was called via add_disk()).
+2) call elv_register_queue() to get .request_fn request-based DM
+device's "iosched" exposed in syfs.
 
-These changes allow DM to use add_disk_no_queue_reg() to anchor its
-gendisk as the "master" for master/slave relationships DM must establish
-with subordinate devices referenced in DM tables that get loaded.  Once
-all "slave" devices for a DM device are known its request_queue can be
-properly initialized and then advertised via sysfs -- important
-improvement being that no request_queue resource initialization
-performed by blk_register_queue() is missed for DM devices anymore.
+In addition, blk-mq debugfs support is now made available because
+request-based DM's blk-mq request_queue is now properly initialized
+before dm_setup_md_queue() calls blk_register_queue().
+
+These changes also stave off the need to introduce new DM-specific
+workarounds in block core, e.g. this proposal:
+https://patchwork.kernel.org/patch/10067961/
+
+In the end DM devices should be less unicorn in nature (relative to
+initialization and availability of block core infrastructure provided by
+the request_queue).
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-Reviewed-by: Ming Lei <ming.lei@redhat.com>
+Tested-by: Ming Lei <ming.lei@redhat.com>
 ---
- block/blk-sysfs.c     |  5 +++++
- block/genhd.c         | 20 +++++++++++++++++---
- include/linux/genhd.h |  5 +++++
- 3 files changed, 27 insertions(+), 3 deletions(-)
+ drivers/md/dm-rq.c |  9 ---------
+ drivers/md/dm.c    | 11 ++++++++++-
+ 2 files changed, 10 insertions(+), 10 deletions(-)
 
-diff --git a/block/blk-sysfs.c b/block/blk-sysfs.c
-index 9272452ff456..4a6a40ffd78e 100644
---- a/block/blk-sysfs.c
-+++ b/block/blk-sysfs.c
-@@ -921,6 +921,7 @@ int blk_register_queue(struct gendisk *disk)
- 	mutex_unlock(&q->sysfs_lock);
- 	return ret;
- }
-+EXPORT_SYMBOL_GPL(blk_register_queue);
- 
- void blk_unregister_queue(struct gendisk *disk)
- {
-@@ -929,6 +930,10 @@ void blk_unregister_queue(struct gendisk *disk)
- 	if (WARN_ON(!q))
- 		return;
- 
-+	/* Return early if disk->queue was never registered. */
-+	if (!test_bit(QUEUE_FLAG_REGISTERED, &q->queue_flags))
-+		return;
-+
- 	/*
- 	 * Protect against the 'queue' kobj being accessed
- 	 * while/after it is removed.
-diff --git a/block/genhd.c b/block/genhd.c
-index 00620e01e043..d4aaf0cae9ad 100644
---- a/block/genhd.c
-+++ b/block/genhd.c
-@@ -629,7 +629,7 @@ static void register_disk(struct device *parent, struct gendisk *disk)
- }
- 
- /**
-- * device_add_disk - add partitioning information to kernel list
-+ * device_add_disk_no_queue_reg - add partitioning information to kernel list
-  * @parent: parent device for the disk
-  * @disk: per-device partitioning information
-  *
-@@ -638,7 +638,7 @@ static void register_disk(struct device *parent, struct gendisk *disk)
-  *
-  * FIXME: error handling
-  */
--void device_add_disk(struct device *parent, struct gendisk *disk)
-+void device_add_disk_no_queue_reg(struct device *parent, struct gendisk *disk)
- {
- 	dev_t devt;
- 	int retval;
-@@ -682,7 +682,6 @@ void device_add_disk(struct device *parent, struct gendisk *disk)
- 				    exact_match, exact_lock, disk);
+diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+index 9d32f25489c2..c28357f5cb0e 100644
+--- a/drivers/md/dm-rq.c
++++ b/drivers/md/dm-rq.c
+@@ -713,8 +713,6 @@ int dm_old_init_request_queue(struct mapped_device *md, struct dm_table *t)
+ 		return error;
  	}
- 	register_disk(parent, disk);
--	blk_register_queue(disk);
  
- 	/*
- 	 * Take an extra ref on queue which will be put on disk_release()
-@@ -693,6 +692,21 @@ void device_add_disk(struct device *parent, struct gendisk *disk)
- 	disk_add_events(disk);
- 	blk_integrity_add(disk);
+-	elv_register_queue(md->queue);
+-
+ 	return 0;
  }
-+EXPORT_SYMBOL(device_add_disk_no_queue_reg);
-+
-+/**
-+ * device_add_disk - add disk information to kernel list
-+ * @parent: parent device for the disk
-+ * @disk: per-device disk information
-+ *
-+ * Adds partitioning information and also registers the
-+ * associated request_queue to @disk.
-+ */
-+void device_add_disk(struct device *parent, struct gendisk *disk)
-+{
-+	device_add_disk_no_queue_reg(parent, disk);
-+	blk_register_queue(disk);
-+}
- EXPORT_SYMBOL(device_add_disk);
  
- void del_gendisk(struct gendisk *disk)
-diff --git a/include/linux/genhd.h b/include/linux/genhd.h
-index 5144ebe046c9..5e3531027b51 100644
---- a/include/linux/genhd.h
-+++ b/include/linux/genhd.h
-@@ -395,6 +395,11 @@ static inline void add_disk(struct gendisk *disk)
+@@ -812,15 +810,8 @@ int dm_mq_init_request_queue(struct mapped_device *md, struct dm_table *t)
+ 	}
+ 	dm_init_md_queue(md);
+ 
+-	/* backfill 'mq' sysfs registration normally done in blk_register_queue */
+-	err = blk_mq_register_dev(disk_to_dev(md->disk), q);
+-	if (err)
+-		goto out_cleanup_queue;
+-
+ 	return 0;
+ 
+-out_cleanup_queue:
+-	blk_cleanup_queue(q);
+ out_tag_set:
+ 	blk_mq_free_tag_set(md->tag_set);
+ out_kfree_tag_set:
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 7475739fee49..8c26bfc35335 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1761,7 +1761,7 @@ static struct mapped_device *alloc_dev(int minor)
+ 		goto bad;
+ 	md->dax_dev = dax_dev;
+ 
+-	add_disk(md->disk);
++	add_disk_no_queue_reg(md->disk);
+ 	format_dev_t(md->name, MKDEV(_major, minor));
+ 
+ 	md->wq = alloc_workqueue("kdmflush", WQ_MEM_RECLAIM, 0);
+@@ -2021,6 +2021,7 @@ EXPORT_SYMBOL_GPL(dm_get_queue_limits);
+ int dm_setup_md_queue(struct mapped_device *md, struct dm_table *t)
  {
- 	device_add_disk(NULL, disk);
- }
-+extern void device_add_disk_no_queue_reg(struct device *parent, struct gendisk *disk);
-+static inline void add_disk_no_queue_reg(struct gendisk *disk)
-+{
-+	device_add_disk_no_queue_reg(NULL, disk);
-+}
+ 	int r;
++	struct queue_limits limits;
+ 	enum dm_queue_mode type = dm_get_md_type(md);
  
- extern void del_gendisk(struct gendisk *gp);
- extern struct gendisk *get_gendisk(dev_t dev, int *partno);
+ 	switch (type) {
+@@ -2057,6 +2058,14 @@ int dm_setup_md_queue(struct mapped_device *md, struct dm_table *t)
+ 		break;
+ 	}
+ 
++	r = dm_calculate_queue_limits(t, &limits);
++	if (r) {
++		DMERR("Cannot calculate initial queue limits");
++		return r;
++	}
++	dm_table_set_restrictions(t, md->queue, &limits);
++	blk_register_queue(md->disk);
++
+ 	return 0;
+ }
+ 
 -- 
 2.15.0
