@@ -1,45 +1,100 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH] multipath-tools: Makefile: Respect standard
- toolchain related envvars
-Date: Fri, 12 Jan 2018 23:27:43 +0100
-Message-ID: <1515796063.9139.11.camel@suse.com>
-References: <20171129232311.95483-1-whissi@gentoo.org>
-	<1515709465.18410.6.camel@suse.com>
-	<bb9b8db3-5a40-99f6-258b-1d0b81a25da7@gentoo.org>
-	<1515751362.3409.3.camel@suse.com>
-	<f1e426e3-9d78-e08d-1e1c-ea1c4277d264@gentoo.org>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH V3 0/5]  dm-rq: improve sequential I/O performance
+Date: Fri, 12 Jan 2018 17:31:17 -0500
+Message-ID: <20180112223117.GA6332@redhat.com>
+References: <1515710256.2752.72.camel@sandisk.com>
+ <20180112014232.GB25090@ming.t460p>
+ <20180112015721.GB32298@redhat.com>
+ <20180112033308.GC25090@ming.t460p>
+ <20180112171840.GA4541@redhat.com>
+ <1515778013.2396.3.camel@wdc.com>
+ <20180112174000.GB5134@redhat.com>
+ <1515779211.2396.11.camel@wdc.com>
+ <20180112180635.GD5134@redhat.com>
+ <1515783288.2396.37.camel@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <f1e426e3-9d78-e08d-1e1c-ea1c4277d264@gentoo.org>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Thomas Deutschmann <whissi@gentoo.org>, dm-devel@redhat.com
-Cc: Bart Van Assche <Bart.VanAssche@wdc.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1515783288.2396.37.camel@wdc.com>
+Sender: linux-block-owner@vger.kernel.org
+To: Bart Van Assche <Bart.VanAssche@wdc.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "hch@infradead.org" <hch@infradead.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "axboe@kernel.dk" <axboe@kernel.dk>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "axboe@fb.com" <axboe@fb.com>, "ming.lei@redhat.com" <ming.lei@redhat.com>
 List-Id: dm-devel.ids
 
-T24gRnJpLCAyMDE4LTAxLTEyIGF0IDE2OjQ2ICswMTAwLCBUaG9tYXMgRGV1dHNjaG1hbm4gd3Jv
-dGU6Cj4gCj4gUmVnYXJkaW5nIEJhcnQncyBwYXRjaDogU3RpbGwgbm90IHN1cmUgaG93IGltcG9y
-dGFudCB0aGluZ3MgbGlrZQo+IAo+ICAgLURfRk9SVElGWV9TT1VSQ0U9MiAkKFNUQUNLUFJPVCkg
-LS1wYXJhbT1zc3AtYnVmZmVyLXNpemU9NAo+IAo+IGFyZS4KCk1vc3Qgb2YgdGhpcyBjYW1lIGNh
-bWUgZnJvbSBSZWQgSGF0OgoKY29tbWl0IDFmY2U2NjkxMWY0YzE1ZTNhOWMwOTk0OGY0YzE0NmQ4
-NTliYzE4MzQKQXV0aG9yOiBCZW5qYW1pbiBNYXJ6aW5za2kgPGJtYXJ6aW5zQHJlZGhhdC5jb20+
-CkRhdGU6ICAgVGh1IE1heSAyNCAyMzo1Nzo0MiAyMDEyIC0wNTAwCgogICAgbXVsdGlwYXRoOiBC
-dWlsZCB3aXRoIHN0YW5kYXJkIHJwbSBjZmxhZ3MKICAgIAogICAgVGhpcyBwYXRjaCBtYWtlcyBt
-dWx0aXBhdGggYnVpbGQgd2l0aCB0aGUgc3RhbmRhcmQgcmVkaGF0IHJwbQpjZmxhZ3MsIHdoaWNo
-CiAgICBjYW4gaGVscCBjYXRjaCBzb21lIGNvZGUgZXJyb3JzLgogICAgCgpJIGhhdmVuJ3QgcXVl
-c3Rpb25lZCB0aGVzZSBzbyBmYXIuIEkgZG9uJ3QgdGhpbmsgdGhleSBoYXZlIG5lZ2F0aXZlCmlt
-cGFjdCwgYW5kIG1pZ2h0IGhlbHAgY2F0Y2hpbmcgZXJyb3JzLgoKTWFydGluCgotLSAKRHIuIE1h
-cnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcK
-U1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBH
-cmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGlu
-ZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFu
-L2xpc3RpbmZvL2RtLWRldmVs
+On Fri, Jan 12 2018 at  1:54pm -0500,
+Bart Van Assche <Bart.VanAssche@wdc.com> wrote:
+
+> On Fri, 2018-01-12 at 13:06 -0500, Mike Snitzer wrote:
+> > OK, you have the stage: please give me a pointer to your best
+> > explaination of the several.
+> 
+> Since the previous discussion about this topic occurred more than a month
+> ago it could take more time to look up an explanation than to explain it
+> again. Anyway, here we go. As you know a block layer request queue needs to
+> be rerun if one or more requests are waiting and a previous condition that
+> prevented the request to be executed has been cleared. For the dm-mpath
+> driver, examples of such conditions are no tags available, a path that is
+> busy (see also pgpath_busy()), path initialization that is in progress
+> (pg_init_in_progress) or a request completes with status, e.g. if the
+> SCSI core calls __blk_mq_end_request(req, error) with error != 0. For some
+> of these conditions, e.g. path initialization completes, a callback
+> function in the dm-mpath driver is called and it is possible to explicitly
+> rerun the queue. I agree that for such scenario's a delayed queue run should
+> not be triggered. For other scenario's, e.g. if a SCSI initiator submits a
+> SCSI request over a fabric and the SCSI target replies with "BUSY" then the
+> SCSI core will end the I/O request with status BLK_STS_RESOURCE after the
+> maximum number of retries has been reached (see also scsi_io_completion()).
+> In that last case, if a SCSI target sends a "BUSY" reply over the wire back
+> to the initiator, there is no other approach for the SCSI initiator to
+> figure out whether it can queue another request than to resubmit the
+> request. The worst possible strategy is to resubmit a request immediately
+> because that will cause a significant fraction of the fabric bandwidth to
+> be used just for replying "BUSY" to requests that can't be processed
+> immediately.
+
+The thing is, the 2 scenarios you are most concerned about have
+_nothing_ to do with dm_mq_queue_rq() at all.  They occur as an error in
+the IO path _after_ the request is successfully retrieved with
+blk_get_request() and then submitted.
+ 
+> The intention of commit 6077c2d706097c0 was to address the last mentioned
+> case.
+
+So it really makes me question why you think commit 6077c2d706097c0
+addresses the issue you think it does.  And gives me more conviction to
+remove 6077c2d706097c0.
+
+It may help just by virtue of blindly kicking the queue if
+blk_get_request() fails (regardless of the target is responding with
+BUSY or not).  Very unsatisfying to say the least.
+
+I think it'd be much more beneficial for dm-mpath.c:multipath_end_io()
+to be trained to be respond more intelligently to BLK_STS_RESOURCE.
+
+E.g. set BLK_MQ_S_SCHED_RESTART if requests are known to be outstanding
+on the path.  This is one case where Ming said the queue would be
+re-run, as detailed in this header:
+https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.16&id=5b18cff4baedde77e0d69bd62a13ae78f9488d89
+
+And Jens has reinforced to me that BLK_MQ_S_SCHED_RESTART is a means to
+kicking the queue more efficiently.  _BUT_ I'm not seeing any external
+blk-mq interface that exposes this capability to a blk-mq driver.  As is
+BLK_MQ_S_SCHED_RESTART gets set very much in the bowels of blk-mq
+(blk_mq_sched_mark_restart_hctx).
+
+SO I have to do more homework here...
+
+Ming or Jens: might you be able to shed some light on how dm-mpath
+would/could set BLK_MQ_S_SCHED_RESTART?  A new function added that can
+be called from q->softirq_done_fn in response to BLK_STS_RESOURCE?  Or
+is this level of control (and blk-mq detail) something that a blk-mq
+driver should need to care about?
+
+Anyway, we may need to get to that level of blk-mq driver controlled
+retry optimization.
+
+But Bart: again this is a vastly different feedback loop than the
+stabbing in the dark your commit 6077c2d706097c0 is doing.  
+
+Mike
