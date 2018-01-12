@@ -1,73 +1,56 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH V3 0/5]  dm-rq: improve sequential I/O performance
-Date: Thu, 11 Jan 2018 20:57:21 -0500
-Message-ID: <20180112015721.GB32298@redhat.com>
-References: <20180111060159.12991-1-ming.lei@redhat.com>
- <20180111220742.GA31944@redhat.com>
- <1515710256.2752.72.camel@sandisk.com>
- <20180112014232.GB25090@ming.t460p>
+Subject: Re: [for-4.16 PATCH v4 3/4] block: allow gendisk's request_queue
+ registration to be deferred
+Date: Thu, 11 Jan 2018 21:03:20 -0500
+Message-ID: <20180112020319.GC32298@redhat.com>
+References: <20180111201417.2042-1-snitzer@redhat.com>
+ <20180111201417.2042-4-snitzer@redhat.com>
+ <1515717455.2752.82.camel@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-block-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20180112014232.GB25090@ming.t460p>
+In-Reply-To: <1515717455.2752.82.camel@wdc.com>
 Sender: linux-block-owner@vger.kernel.org
-To: Ming Lei <ming.lei@redhat.com>
-Cc: Bart Van Assche <Bart.VanAssche@wdc.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "hch@infradead.org" <hch@infradead.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "axboe@fb.com" <axboe@fb.com>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>
+To: Bart Van Assche <Bart.VanAssche@wdc.com>
+Cc: "axboe@kernel.dk" <axboe@kernel.dk>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "hare@suse.de" <hare@suse.de>, "tom.leiming@gmail.com" <tom.leiming@gmail.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Thu, Jan 11 2018 at  8:42pm -0500,
-Ming Lei <ming.lei@redhat.com> wrote:
+On Thu, Jan 11 2018 at  7:37pm -0500,
+Bart Van Assche <Bart.VanAssche@wdc.com> wrote:
 
-> On Thu, Jan 11, 2018 at 10:37:37PM +0000, Bart Van Assche wrote:
-> > On Thu, 2018-01-11 at 17:07 -0500, Mike Snitzer wrote:
-> > > Bart, if for some reason we regress for some workload you're able to
-> > > more readily test we can deal with it.  But I'm too encouraged by Ming's
-> > > performance improvements to hold these changes back any further.
-> > 
-> > Sorry Mike but I think Ming's measurement results are not sufficient to
-> > motivate upstreaming of these patches. What I remember from previous versions
-> > of this patch series is that Ming measured the performance impact of this
-> > patch series only for the Emulex FC driver (lpfc). That driver limits queue
-> > depth to 3. Instead of modifying the dm code, that driver needs to be fixed
-> > such that it allows larger queue depths.
-> > 
-> > Additionally, some time ago I had explained in detail why I think that patch
-> > 2/5 in this series is wrong and why it will introduce fairness regressions
-> > in multi-LUN workloads. I think we need performance measurements for this
-> > patch series for at least the following two configurations before this patch
-> > series can be considered for upstream inclusion:
-> > * The performance impact of this patch series for SCSI devices with a
-> >   realistic queue depth (e.g. 64 or 128).
+> On Thu, 2018-01-11 at 15:14 -0500, Mike Snitzer wrote:
+> > -void device_add_disk(struct device *parent, struct gendisk *disk)
+> > +void device_add_disk_no_queue_reg(struct device *parent, struct gendisk *disk)
+> >  {
+> >  	dev_t devt;
+> >  	int retval;
+> > @@ -682,7 +682,6 @@ void device_add_disk(struct device *parent, struct gendisk *disk)
+> >  				    exact_match, exact_lock, disk);
+> >  	}
+> >  	register_disk(parent, disk);
+> > -	blk_register_queue(disk);
+> >  
+> >  	/*
+> >  	 * Take an extra ref on queue which will be put on disk_release()
+> > @@ -693,6 +692,21 @@ void device_add_disk(struct device *parent, struct gendisk *disk)
+> >  	disk_add_events(disk);
+> >  	blk_integrity_add(disk);
+> >  }
+> > +EXPORT_SYMBOL(device_add_disk_no_queue_reg);
 > 
-> Please look at the cover letter or patch 5's commit log, it mentions that
-> dm-mpath over virtio-scsi is tested, and the default queue depth of virito-scsi
-> is 128.
+> Hello Mike,
 > 
-> > * The performance impact for this patch series for a SCSI host with which
-> >   multiple LUNs are associated and for which the target system often replies
-> >   with the SCSI "BUSY" status.
-> 
-> I don't think this patch is related with this case, this patch just provides the
-> BUSY feedback from underlying queue to blk-mq via dm-rq.
+> This change can increase the time between the generation of the disk uevent
+> and the registration of the request queue sysfs attributes. Can this cause
+> any udev rules to fail?
 
-Hi Ming,
+Certainly not for DM (DM has very sophisticated udev rules that wait for
+the final dm generated "CHANGE" event before considering a device to be
+"ready").
 
-Please see https://www.redhat.com/archives/dm-devel/2017-April/msg00190.html
+But are you asking about non-DM devices?  I cannot see, what amounts to,
+moving blk_register_queue() to the end of device_add_disk() as reason for
+concern.  If it were there technically would already be that race.
 
-Specifically:
-"That patch [commit 6077c2d706] can be considered as a first step that
-can be refined further, namely by modifying the dm-rq code further such
-that dm-rq queues are only rerun after the busy condition has been
-cleared. The patch at the start of this thread is easier to review and
-easier to test than any patch that would only rerun dm-rq queues after
-the busy condition has been cleared."
-
-Do you have time to reason through Bart's previous proposal for how to
-better address the specific issue that was documented to be fixed in the
-header for commit 6077c2d706 ?
-
-Otherwise I fear we'll just keep hitting a wall with Bart...
-
-Thanks,
 Mike
