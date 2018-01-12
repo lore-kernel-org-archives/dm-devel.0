@@ -1,7 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [for-4.16 PATCH v5 1/4] block: only bdi_unregister() in del_gendisk() if !GENHD_FL_HIDDEN
-Date: Fri, 12 Jan 2018 10:06:03 -0500
-Message-ID: <20180112150606.6037-2-snitzer@redhat.com>
+Subject: [for-4.16 PATCH v5 2/4] block: properly protect the 'queue' kobj in blk_unregister_queue
+Date: Fri, 12 Jan 2018 10:06:04 -0500
+Message-ID: <20180112150606.6037-3-snitzer@redhat.com>
 References: <20180112150606.6037-1-snitzer@redhat.com>
 Return-path: <linux-block-owner@vger.kernel.org>
 In-Reply-To: <20180112150606.6037-1-snitzer@redhat.com>
@@ -10,35 +10,63 @@ To: axboe@kernel.dk
 Cc: Ming Lei <tom.leiming@gmail.com>, hare@suse.de, Bart.VanAssche@wdc.com, David Jeffery <djeffery@redhat.com>, dm-devel@redhat.com, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-device_add_disk() will only call bdi_register_owner() if
-!GENHD_FL_HIDDEN, so it follows that del_gendisk() should only call
-bdi_unregister() if !GENHD_FL_HIDDEN.
+The original commit e9a823fb34a8b (block: fix warning when I/O elevator
+is changed as request_queue is being removed) is pretty conflated.
+"conflated" because the resource being protected by q->sysfs_lock isn't
+the queue_flags (it is the 'queue' kobj).
 
-Found with code inspection.  bdi_unregister() won't do any harm if
-bdi_register_owner() wasn't used but best to avoid the unnecessary
-call to bdi_unregister().
+q->sysfs_lock serializes __elevator_change() (via elv_iosched_store)
+from racing with blk_unregister_queue():
+1) By holding q->sysfs_lock first, __elevator_change() can complete
+before a racing blk_unregister_queue().
+2) Conversely, __elevator_change() is testing for QUEUE_FLAG_REGISTERED
+in case elv_iosched_store() loses the race with blk_unregister_queue(),
+it needs a way to know the 'queue' kobj isn't there.
 
-Fixes: 8ddcd65325 ("block: introduce GENHD_FL_HIDDEN")
+Expand the scope of blk_unregister_queue()'s q->sysfs_lock use so it is
+held until after the 'queue' kobj is removed.
+
+Also, blk_unregister_queue() should use q->queue_lock to protect against
+any concurrent writes to q->queue_flags -- even though chances are the
+queue is being cleaned up so no concurrent writes are likely.
+
+Fixes: e9a823fb34a8b ("block: fix warning when I/O elevator is changed as request_queue is being removed")
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-Reviewed-by: Ming Lei <ming.lei@redhat.com>
-Reviewed-by: Hannes Reinecke <hare@suse.com>
 ---
- block/genhd.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ block/blk-sysfs.c | 13 ++++++++++---
+ 1 file changed, 10 insertions(+), 3 deletions(-)
 
-diff --git a/block/genhd.c b/block/genhd.c
-index 96a66f671720..00620e01e043 100644
---- a/block/genhd.c
-+++ b/block/genhd.c
-@@ -725,7 +725,8 @@ void del_gendisk(struct gendisk *disk)
- 		 * Unregister bdi before releasing device numbers (as they can
- 		 * get reused and we'd get clashes in sysfs).
- 		 */
--		bdi_unregister(disk->queue->backing_dev_info);
-+		if (!(disk->flags & GENHD_FL_HIDDEN))
-+			bdi_unregister(disk->queue->backing_dev_info);
- 		blk_unregister_queue(disk);
- 	} else {
- 		WARN_ON(1);
+diff --git a/block/blk-sysfs.c b/block/blk-sysfs.c
+index 870484eaed1f..9272452ff456 100644
+--- a/block/blk-sysfs.c
++++ b/block/blk-sysfs.c
+@@ -929,12 +929,17 @@ void blk_unregister_queue(struct gendisk *disk)
+ 	if (WARN_ON(!q))
+ 		return;
+ 
++	/*
++	 * Protect against the 'queue' kobj being accessed
++	 * while/after it is removed.
++	 */
+ 	mutex_lock(&q->sysfs_lock);
+-	queue_flag_clear_unlocked(QUEUE_FLAG_REGISTERED, q);
+-	mutex_unlock(&q->sysfs_lock);
+ 
+-	wbt_exit(q);
++	spin_lock_irq(q->queue_lock);
++	queue_flag_clear(QUEUE_FLAG_REGISTERED, q);
++	spin_unlock_irq(q->queue_lock);
+ 
++	wbt_exit(q);
+ 
+ 	if (q->mq_ops)
+ 		blk_mq_unregister_dev(disk_to_dev(disk), q);
+@@ -946,4 +951,6 @@ void blk_unregister_queue(struct gendisk *disk)
+ 	kobject_del(&q->kobj);
+ 	blk_trace_remove_sysfs(disk_to_dev(disk));
+ 	kobject_put(&disk_to_dev(disk)->kobj);
++
++	mutex_unlock(&q->sysfs_lock);
+ }
 -- 
 2.15.0
