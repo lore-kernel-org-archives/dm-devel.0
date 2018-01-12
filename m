@@ -1,44 +1,44 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [for-4.16 PATCH v5 0/4] block/dm: allow DM to defer blk_register_queue() until ready
-Date: Fri, 12 Jan 2018 10:06:02 -0500
-Message-ID: <20180112150606.6037-1-snitzer@redhat.com>
+Subject: [for-4.16 PATCH v5 1/4] block: only bdi_unregister() in del_gendisk() if !GENHD_FL_HIDDEN
+Date: Fri, 12 Jan 2018 10:06:03 -0500
+Message-ID: <20180112150606.6037-2-snitzer@redhat.com>
+References: <20180112150606.6037-1-snitzer@redhat.com>
 Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20180112150606.6037-1-snitzer@redhat.com>
 Sender: linux-block-owner@vger.kernel.org
 To: axboe@kernel.dk
 Cc: Ming Lei <tom.leiming@gmail.com>, hare@suse.de, Bart.VanAssche@wdc.com, David Jeffery <djeffery@redhat.com>, dm-devel@redhat.com, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hi Jens,
+device_add_disk() will only call bdi_register_owner() if
+!GENHD_FL_HIDDEN, so it follows that del_gendisk() should only call
+bdi_unregister() if !GENHD_FL_HIDDEN.
 
-I'm submitting this v5 with more feeling now ;)
+Found with code inspection.  bdi_unregister() won't do any harm if
+bdi_register_owner() wasn't used but best to avoid the unnecessary
+call to bdi_unregister().
 
-I've distilled the changes down to be quite minimal.  Hopefully this
-will help you and others review.
+Fixes: 8ddcd65325 ("block: introduce GENHD_FL_HIDDEN")
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Reviewed-by: Ming Lei <ming.lei@redhat.com>
+Reviewed-by: Hannes Reinecke <hare@suse.com>
+---
+ block/genhd.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-I've also done a dry-run of applying 4.16 block changes and then
-merging dm-4.16; no merge conflicts:
-https://git.kernel.org/pub/scm/linux/kernel/git/snitzer/linux.git/log/?h=block-4.16
-https://git.kernel.org/pub/scm/linux/kernel/git/snitzer/linux.git/log/?h=dm-4.16
-https://git.kernel.org/pub/scm/linux/kernel/git/snitzer/linux.git/log/?h=block-4.16_dm-4.16
-
-And all tests very well for me.
-
-Please consider for 4.16, thanks!
-
-Mike
-
-Mike Snitzer (4):
-  block: only bdi_unregister() in del_gendisk() if !GENHD_FL_HIDDEN
-  block: properly protect the 'queue' kobj in blk_unregister_queue
-  block: allow gendisk's request_queue registration to be deferred
-  dm: fix incomplete request_queue initialization
-
- block/blk-sysfs.c     | 18 +++++++++++++++---
- block/genhd.c         | 23 +++++++++++++++++++----
- drivers/md/dm-rq.c    |  9 ---------
- drivers/md/dm.c       | 11 ++++++++++-
- include/linux/genhd.h |  5 +++++
- 5 files changed, 49 insertions(+), 17 deletions(-)
-
+diff --git a/block/genhd.c b/block/genhd.c
+index 96a66f671720..00620e01e043 100644
+--- a/block/genhd.c
++++ b/block/genhd.c
+@@ -725,7 +725,8 @@ void del_gendisk(struct gendisk *disk)
+ 		 * Unregister bdi before releasing device numbers (as they can
+ 		 * get reused and we'd get clashes in sysfs).
+ 		 */
+-		bdi_unregister(disk->queue->backing_dev_info);
++		if (!(disk->flags & GENHD_FL_HIDDEN))
++			bdi_unregister(disk->queue->backing_dev_info);
+ 		blk_unregister_queue(disk);
+ 	} else {
+ 		WARN_ON(1);
 -- 
 2.15.0
