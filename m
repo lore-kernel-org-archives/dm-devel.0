@@ -1,29 +1,43 @@
 From: Bart Van Assche <Bart.VanAssche@wdc.com>
-Subject: Re: [PATCH V3 0/5]  dm-rq: improve sequential I/O performance
-Date: Thu, 11 Jan 2018 23:27:14 +0000
-Message-ID: <1515713233.2752.76.camel@wdc.com>
-References: <20180111060159.12991-1-ming.lei@redhat.com>
-         <20180111220742.GA31944@redhat.com> <1515710256.2752.72.camel@sandisk.com>
-         <20180111225830.GE31944@redhat.com>
+Subject: Re: [for-4.16 PATCH v4 2/4] block: use queue_lock when clearing
+ QUEUE_FLAG_REGISTERED in blk_unregister_queue
+Date: Fri, 12 Jan 2018 00:28:41 +0000
+Message-ID: <1515716920.2752.79.camel@wdc.com>
+References: <20180111201417.2042-1-snitzer@redhat.com>
+         <20180111201417.2042-3-snitzer@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: base64
 Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20180111225830.GE31944@redhat.com>
+In-Reply-To: <20180111201417.2042-3-snitzer@redhat.com>
 Content-Language: en-US
-Content-ID: <9A879B315250A6479D1B424975748FF0@namprd04.prod.outlook.com>
+Content-ID: <DF35F9A7EF615B42B021EDB63B4C1369@namprd04.prod.outlook.com>
 Sender: linux-block-owner@vger.kernel.org
-To: "snitzer@redhat.com" <snitzer@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "hch@infradead.org" <hch@infradead.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "axboe@fb.com" <axboe@fb.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "ming.lei@redhat.com" <ming.lei@redhat.com>
+To: "snitzer@redhat.com" <snitzer@redhat.com>, "axboe@kernel.dk" <axboe@kernel.dk>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "hare@suse.de" <hare@suse.de>, "tom.leiming@gmail.com" <tom.leiming@gmail.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>
 List-Id: dm-devel.ids
 
-T24gVGh1LCAyMDE4LTAxLTExIGF0IDE3OjU4IC0wNTAwLCBNaWtlIFNuaXR6ZXIgd3JvdGU6DQo+
-IFRoZSBjaGFuZ2VzIGFyZSBwcmV0dHkgZWFzeSB0byByZXZpZXcuICBUaGlzIG5vdGlvbiB0aGF0
-IHRoZXNlIGNoYW5nZXMNCj4gYXJlIHByb2JsZW1hdGljIHJpbmdzIHZlcnkgaG9sbG93IGdpdmVu
-IHlvdXIgbGFjayBvZiBhY3R1YWwgbnVtYmVycyAob3INCj4gc29tZSBvdGhlciBjb25jZXJuaW5n
-IG9ic2VydmF0aW9uIHJvb3RlZCBpbiB0ZXN0aW5nIGZhY3QpIHRvIGJhY2sgdXANCj4geW91ciBw
-b3NpdGlvbi4NCg0KSXQncyBub3QgbXkgam9iIHRvIHJ1biB0aGUgbXVsdGktTFVOIHRlc3QuIFRo
-YXQncyB0aGUgam9iIG9mIHRoZSBwZW9wbGUgd2hvDQp3YW50IHRoZXNlIHBhdGNoZXMgdXBzdHJl
-YW0uIFNpbmNlIEkgYXNrZWQgZm9yIHRoZXNlIHRlc3QgcmVzdWx0cyBmb3IgdGhlIGZpcnN0DQp0
-aW1lIHNldmVyYWwgbW9udGhzIGFnbyBJJ20gc3VycHJpc2VkIHRoYXQgbm9ib2R5IGhhcyBydW4g
-dGhlc2UgdGVzdHMgeWV0Lg0KDQpCYXJ0Lg==
+T24gVGh1LCAyMDE4LTAxLTExIGF0IDE1OjE0IC0wNTAwLCBNaWtlIFNuaXR6ZXIgd3JvdGU6DQo+
+IGJsa191bnJlZ2lzdGVyX3F1ZXVlKCkgbXVzdCBwcm90ZWN0IGFnYWluc3QgYW55IG1vZGlmaWNh
+dGlvbnMgb2YNCj4gcS0+cXVldWVfZmxhZ3MgKG5vdCBqdXN0IHRob3NlIHBlcmZvcm1lZCBpbiBi
+bGstc3lzZnMuYykuICBUaGVyZWZvcmUNCj4gcS0+cXVldWVfbG9jayBuZWVkcyB0byBiZSB1c2Vk
+IHJhdGhlciB0aGFuIHEtPnN5c2ZzX2xvY2suDQo+IA0KPiBGaXhlczogZTlhODIzZmIzNGE4YiAo
+ImJsb2NrOiBmaXggd2FybmluZyB3aGVuIEkvTyBlbGV2YXRvciBpcyBjaGFuZ2VkIGFzIHJlcXVl
+c3RfcXVldWUgaXMgYmVpbmcgcmVtb3ZlZCIpDQo+IENjOiBzdGFibGVAdmdlci5rZXJuZWwub3Jn
+ICMgNC4xNCsNCj4gUmVwb3J0ZWQtYnk6IEJhcnQgVmFuIEFzc2NoZSA8QmFydC5WYW5Bc3NjaGVA
+d2RjLmNvbT4NCj4gU2lnbmVkLW9mZi1ieTogTWlrZSBTbml0emVyIDxzbml0emVyQHJlZGhhdC5j
+b20+DQo+IC0tLQ0KPiAgYmxvY2svYmxrLXN5c2ZzLmMgfCA0ICsrLS0NCj4gIDEgZmlsZSBjaGFu
+Z2VkLCAyIGluc2VydGlvbnMoKyksIDIgZGVsZXRpb25zKC0pDQo+IA0KPiBkaWZmIC0tZ2l0IGEv
+YmxvY2svYmxrLXN5c2ZzLmMgYi9ibG9jay9ibGstc3lzZnMuYw0KPiBpbmRleCA4NzA0ODRlYWVk
+MWYuLjUyZjU3NTM5ZjFjNyAxMDA2NDQNCj4gLS0tIGEvYmxvY2svYmxrLXN5c2ZzLmMNCj4gKysr
+IGIvYmxvY2svYmxrLXN5c2ZzLmMNCj4gQEAgLTkyOSw5ICs5MjksOSBAQCB2b2lkIGJsa191bnJl
+Z2lzdGVyX3F1ZXVlKHN0cnVjdCBnZW5kaXNrICpkaXNrKQ0KPiAgCWlmIChXQVJOX09OKCFxKSkN
+Cj4gIAkJcmV0dXJuOw0KPiAgDQo+IC0JbXV0ZXhfbG9jaygmcS0+c3lzZnNfbG9jayk7DQo+ICsJ
+c3Bpbl9sb2NrX2lycShxLT5xdWV1ZV9sb2NrKTsNCj4gIAlxdWV1ZV9mbGFnX2NsZWFyX3VubG9j
+a2VkKFFVRVVFX0ZMQUdfUkVHSVNURVJFRCwgcSk7DQo+IC0JbXV0ZXhfdW5sb2NrKCZxLT5zeXNm
+c19sb2NrKTsNCj4gKwlzcGluX3VubG9ja19pcnEocS0+cXVldWVfbG9jayk7DQoNCkhlbGxvIE1p
+a2UsDQoNClRoZSBmdW5jdGlvbiBuYW1lIHF1ZXVlX2ZsYWdfY2xlYXJfdW5sb2NrZWQoKSBtZWFu
+cyAiY2xlYXIgYSBxdWV1ZSBmbGFnDQp3aXRob3V0IGhvbGRpbmcgdGhlIHF1ZXVlIGxvY2siLiBT
+byBhdCBsZWFzdCB0byBtZSB0aGUgYWJvdmUgY29kZSBpcyBjb25mdXNpbmcuDQpQbGVhc2UgY29u
+c2lkZXIgdG8gY2hhbmdlIHF1ZXVlX2ZsYWdfY2xlYXJfdW5sb2NrZWQoKSBpbnRvIHF1ZXVlX2Zs
+YWdfY2xlYXIoKS4NCg0KVGhhbmtzLA0KDQpCYXJ0Lg==
