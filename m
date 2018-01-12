@@ -1,47 +1,78 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH] multipath-tools: Makefile: Respect standard
- toolchain related envvars
-Date: Fri, 12 Jan 2018 11:02:42 +0100
-Message-ID: <1515751362.3409.3.camel@suse.com>
-References: <20171129232311.95483-1-whissi@gentoo.org>
-	<1515709465.18410.6.camel@suse.com>
-	<bb9b8db3-5a40-99f6-258b-1d0b81a25da7@gentoo.org>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [for-4.16 PATCH v4 2/4] block: use queue_lock when clearing
+ QUEUE_FLAG_REGISTERED in blk_unregister_queue
+Date: Fri, 12 Jan 2018 07:53:40 -0500
+Message-ID: <20180112125340.GA1824@redhat.com>
+References: <20180111201417.2042-1-snitzer@redhat.com>
+ <20180111201417.2042-3-snitzer@redhat.com>
+ <20180112070936.GB31164@ming.t460p>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <bb9b8db3-5a40-99f6-258b-1d0b81a25da7@gentoo.org>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Thomas Deutschmann <whissi@gentoo.org>, dm-devel@redhat.com
-Cc: Bart Van Assche <Bart.VanAssche@wdc.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20180112070936.GB31164@ming.t460p>
+Sender: linux-block-owner@vger.kernel.org
+To: Ming Lei <ming.lei@redhat.com>
+Cc: axboe@kernel.dk, Ming Lei <tom.leiming@gmail.com>, hare@suse.de, Bart.VanAssche@wdc.com, dm-devel@redhat.com, linux-block@vger.kernel.org, David Jeffery <djeffery@redhat.com>
 List-Id: dm-devel.ids
 
-T24gRnJpLCAyMDE4LTAxLTEyIGF0IDAwOjI2ICswMTAwLCBUaG9tYXMgRGV1dHNjaG1hbm4gd3Jv
-dGU6Cj4gT24gMjAxOC0wMS0xMSAyMzoyNCwgTWFydGluIFdpbGNrIHdyb3RlOgo+ID4gCj4gPiBD
-dXJyZW50bHksIHNldHRpbmcgT1BURkxBR1MgaXMgdGhlIHByZWZlcnJlZCB3YXkgdG8gY3VzdG9t
-aXplCj4gPiBtdWx0aXBhdGgtdG9vbHMgYnVpbGQuCj4gCj4gQW5kIHRoaXMgd29ya3MgZm9yIHlv
-dSB3aXRoIHRoZSBjdXJyZW50IG11bHRpcGF0aC10b29scyBwYWNrYWdlPwo+IFNvcnJ5LAo+IG1h
-eWJlIEkgYW0gbWlzc2luZyBzb21ldGhpbmcgYnV0IGZyb20gbXkgdW5kZXJzdGFuZGluZyB0aGUg
-TWFrZWZpbGUKPiBpcwo+IGN1cnJlbnRseSBzZXR0aW5nIE9QVEZMQUdTIHZpYQo+IAo+ICAgT1BU
-RkxBR1MgPSAtTzIgLWcgLi4uLgoKWWVzIGl0IHdvcmtzLiBZb3VyIGNhbiBkbyBlLmcuCgptYWtl
-IE9QVEZMQUdTPSItZyAtTzMgLWZzYW5pdGl6ZT1hZGRyZXNzIgoKPiBTbyBhbnkgT1BURkxBR1Mg
-dmFsdWUgeW91IGFyZSBjdXJyZW50bHkgcGFzc2luZyBzaG91bGQgYmUgaWdub3JlZCBhdAo+IHRo
-ZQo+IG1vbWVudC4gVGhhdCdzIHdoeSBCYXJ0IGFuZCBJIGluZGVwZW5kZW50bHkgZnJvbSBlYWNo
-IG90aGVyIGNyZWF0ZWQKPiB0aGlzCj4gcGF0Y2guCgpPUFRGTEFHUyBmcm9tIHRoZSBlbnZpcm9u
-bWVudCBpcyBpZ25vcmVkLCBidXQgT1BURkxBR1MgZnJvbSB0aGUgY29tbWFuZApsaW5lIGlzIGhv
-bm9yZWQuCgpodHRwczovL3d3dy5nbnUub3JnL3NvZnR3YXJlL21ha2UvbWFudWFsL21ha2UuaHRt
-bCNFbnZpcm9ubWVudApodHRwczovL3d3dy5nbnUub3JnL3NvZnR3YXJlL21ha2UvbWFudWFsL21h
-a2UuaHRtbCNPdmVycmlkaW5nCgpSZWdhcmRzLApNYXJ0aW4KCgotLSAKRHIuIE1hcnRpbiBXaWxj
-ayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51
-eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9y
-dG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRt
-LWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZv
-L2RtLWRldmVs
+On Fri, Jan 12 2018 at  2:09am -0500,
+Ming Lei <ming.lei@redhat.com> wrote:
+
+> On Thu, Jan 11, 2018 at 03:14:15PM -0500, Mike Snitzer wrote:
+> > blk_unregister_queue() must protect against any modifications of
+> > q->queue_flags (not just those performed in blk-sysfs.c).  Therefore
+> > q->queue_lock needs to be used rather than q->sysfs_lock.
+> > 
+> > Fixes: e9a823fb34a8b ("block: fix warning when I/O elevator is changed as request_queue is being removed")
+> > Cc: stable@vger.kernel.org # 4.14+
+> > Reported-by: Bart Van Assche <Bart.VanAssche@wdc.com>
+> > Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> > ---
+> >  block/blk-sysfs.c | 4 ++--
+> >  1 file changed, 2 insertions(+), 2 deletions(-)
+> > 
+> > diff --git a/block/blk-sysfs.c b/block/blk-sysfs.c
+> > index 870484eaed1f..52f57539f1c7 100644
+> > --- a/block/blk-sysfs.c
+> > +++ b/block/blk-sysfs.c
+> > @@ -929,9 +929,9 @@ void blk_unregister_queue(struct gendisk *disk)
+> >  	if (WARN_ON(!q))
+> >  		return;
+> >  
+> > -	mutex_lock(&q->sysfs_lock);
+> > +	spin_lock_irq(q->queue_lock);
+> >  	queue_flag_clear_unlocked(QUEUE_FLAG_REGISTERED, q);
+> > -	mutex_unlock(&q->sysfs_lock);
+> > +	spin_unlock_irq(q->queue_lock);
+> >  
+> >  	wbt_exit(q);
+> 
+> Hi Mike,
+> 
+> This change may not be correct, since at least e9a823fb34a8b depends
+> on q->sysfs_lock to sync between testing the flag in __elevator_change()
+> and clearing it here.
+
+The header for commit e9a823fb34a8b says:
+    To fix this warning, we can check the QUEUE_FLAG_REGISTERED flag when
+    changing the elevator and use the request_queue's sysfs_lock to
+    serialize between clearing the flag and the elevator testing the flag.
+
+The reality is sysfs_lock isn't needed to serialize between
+blk_unregister_queue() clearing the flag and __elevator_change() testing
+the flag.
+
+The original commit e9a823fb34a8b is pretty conflated.  "conflated" because
+the resource being protected isn't the queue_flags (it is the 'queue'
+kobj).
+
+I'll respin v5 of this patchset to fix this up first, and then apply the
+changes I _really_ need to land (DM queue initialization fix).
+
+And then I'm going to slowly step away from block core and _not_ allow
+myself to be tripped up, or baited, by historic block core issues for a
+while... ;)
+
+Thanks,
+Mike
