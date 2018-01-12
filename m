@@ -1,96 +1,48 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: Bart Van Assche <Bart.VanAssche@wdc.com>
 Subject: Re: [PATCH V3 0/5]  dm-rq: improve sequential I/O performance
-Date: Fri, 12 Jan 2018 18:17:08 -0500
-Message-ID: <20180112231708.GA6722@redhat.com>
+Date: Fri, 12 Jan 2018 23:42:25 +0000
+Message-ID: <1515800544.2396.89.camel@wdc.com>
 References: <1515710256.2752.72.camel@sandisk.com>
- <20180112014232.GB25090@ming.t460p>
- <20180112015721.GB32298@redhat.com>
- <20180112033308.GC25090@ming.t460p>
- <20180112171840.GA4541@redhat.com>
- <1515778013.2396.3.camel@wdc.com>
- <20180112174000.GB5134@redhat.com>
- <1515779211.2396.11.camel@wdc.com>
- <20180112180635.GD5134@redhat.com>
- <1515783288.2396.37.camel@wdc.com>
+         <20180112014232.GB25090@ming.t460p> <20180112015721.GB32298@redhat.com>
+         <20180112033308.GC25090@ming.t460p> <20180112171840.GA4541@redhat.com>
+         <1515778013.2396.3.camel@wdc.com> <20180112174000.GB5134@redhat.com>
+         <1515779211.2396.11.camel@wdc.com> <20180112180635.GD5134@redhat.com>
+         <1515783288.2396.37.camel@wdc.com> <20180112231708.GA6722@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1515783288.2396.37.camel@wdc.com>
+In-Reply-To: <20180112231708.GA6722@redhat.com>
+Content-Language: en-US
+Content-ID: <012C175E64E37A45B45B71E059AB1B3C@namprd04.prod.outlook.com>
 Sender: linux-block-owner@vger.kernel.org
-To: Bart Van Assche <Bart.VanAssche@wdc.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "hch@infradead.org" <hch@infradead.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "axboe@kernel.dk" <axboe@kernel.dk>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "axboe@fb.com" <axboe@fb.com>, "ming.lei@redhat.com" <ming.lei@redhat.com>
+To: "snitzer@redhat.com" <snitzer@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "hch@infradead.org" <hch@infradead.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "ming.lei@redhat.com" <ming.lei@redhat.com>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "axboe@fb.com" <axboe@fb.com>
 List-Id: dm-devel.ids
 
-On Fri, Jan 12 2018 at  1:54pm -0500,
-Bart Van Assche <Bart.VanAssche@wdc.com> wrote:
- 
-> The intention of commit 6077c2d706097c0 was to address the last mentioned
-> case. It may be possible to move the delayed queue rerun from the
-> dm_queue_rq() into dm_requeue_original_request(). But I think it would be
-> wrong to rerun the queue immediately in case a SCSI target system returns
-> "BUSY".
-
-This is my 3rd reply to this email.. 3rd time's the charm? ;)
-
-Here is a patch that will kick the hw queues via blk_mq_requeue_work(),
-indirectly from dm-rq.c:__dm_mq_kick_requeue_list(), after a delay if
-BLK_STS_RESOURCE is returned from the target.
-
-Your thoughts on this patch as an alternative to commit 6077c2d7060 ?
-
-Thanks,
-Mike
-
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index d8c7259..ab2cfdc 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -1570,7 +1570,10 @@ static int multipath_end_io(struct dm_target *ti, struct request *clone,
- 	if (error && blk_path_error(error)) {
- 		struct multipath *m = ti->private;
- 
--		r = DM_ENDIO_REQUEUE;
-+		if (r == BLK_STS_RESOURCE)
-+			r = DM_ENDIO_DELAY_REQUEUE;
-+		else
-+			r = DM_ENDIO_REQUEUE;
- 
- 		if (pgpath)
- 			fail_path(pgpath);
-diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
-index 6b01298..ab0ed2d 100644
---- a/drivers/md/dm-rq.c
-+++ b/drivers/md/dm-rq.c
-@@ -315,6 +315,10 @@ static void dm_done(struct request *clone, blk_status_t error, bool mapped)
- 		/* The target wants to requeue the I/O */
- 		dm_requeue_original_request(tio, false);
- 		break;
-+	case DM_ENDIO_DELAY_REQUEUE:
-+		/* The target wants to requeue the I/O after a delay */
-+		dm_requeue_original_request(tio, true);
-+		break;
- 	default:
- 		DMWARN("unimplemented target endio return value: %d", r);
- 		BUG();
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index 9ba8453..da83f64 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -550,6 +550,7 @@ struct dm_table *dm_swap_table(struct mapped_device *md,
- #define DM_ENDIO_DONE		0
- #define DM_ENDIO_INCOMPLETE	1
- #define DM_ENDIO_REQUEUE	2
-+#define DM_ENDIO_DELAY_REQUEUE	3
- 
- /*
-  * Definitions of return values from target map function.
-@@ -557,7 +558,7 @@ struct dm_table *dm_swap_table(struct mapped_device *md,
- #define DM_MAPIO_SUBMITTED	0
- #define DM_MAPIO_REMAPPED	1
- #define DM_MAPIO_REQUEUE	DM_ENDIO_REQUEUE
--#define DM_MAPIO_DELAY_REQUEUE	3
-+#define DM_MAPIO_DELAY_REQUEUE	DM_ENDIO_DELAY_REQUEUE
- #define DM_MAPIO_KILL		4
- 
- #define dm_sector_div64(x, y)( \
+T24gRnJpLCAyMDE4LTAxLTEyIGF0IDE4OjE3IC0wNTAwLCBNaWtlIFNuaXR6ZXIgd3JvdGU6DQo+
+IEBAIC0xNTcwLDcgKzE1NzAsMTAgQEAgc3RhdGljIGludCBtdWx0aXBhdGhfZW5kX2lvKHN0cnVj
+dCBkbV90YXJnZXQgKnRpLCBzdHJ1Y3QgcmVxdWVzdCAqY2xvbmUsDQo+ICAJaWYgKGVycm9yICYm
+IGJsa19wYXRoX2Vycm9yKGVycm9yKSkgew0KPiAgCQlzdHJ1Y3QgbXVsdGlwYXRoICptID0gdGkt
+PnByaXZhdGU7DQo+ICANCj4gLQkJciA9IERNX0VORElPX1JFUVVFVUU7DQo+ICsJCWlmIChyID09
+IEJMS19TVFNfUkVTT1VSQ0UpDQo+ICsJCQlyID0gRE1fRU5ESU9fREVMQVlfUkVRVUVVRTsNCj4g
+KwkJZWxzZQ0KPiArCQkJciA9IERNX0VORElPX1JFUVVFVUU7DQoNCkRpZCB5b3UgcGVyaGFwcyBp
+bnRlbmQgImVycm9yID09IEJMS19TVFNfUkVTT1VSQ0UiPw0KDQo+IGRpZmYgLS1naXQgYS9pbmNs
+dWRlL2xpbnV4L2RldmljZS1tYXBwZXIuaCBiL2luY2x1ZGUvbGludXgvZGV2aWNlLW1hcHBlci5o
+DQo+IGluZGV4IDliYTg0NTMuLmRhODNmNjQgMTAwNjQ0DQo+IC0tLSBhL2luY2x1ZGUvbGludXgv
+ZGV2aWNlLW1hcHBlci5oDQo+ICsrKyBiL2luY2x1ZGUvbGludXgvZGV2aWNlLW1hcHBlci5oDQo+
+IEBAIC01NTAsNiArNTUwLDcgQEAgc3RydWN0IGRtX3RhYmxlICpkbV9zd2FwX3RhYmxlKHN0cnVj
+dCBtYXBwZWRfZGV2aWNlICptZCwNCj4gICNkZWZpbmUgRE1fRU5ESU9fRE9ORQkJMA0KPiAgI2Rl
+ZmluZSBETV9FTkRJT19JTkNPTVBMRVRFCTENCj4gICNkZWZpbmUgRE1fRU5ESU9fUkVRVUVVRQky
+DQo+ICsjZGVmaW5lIERNX0VORElPX0RFTEFZX1JFUVVFVUUJMw0KPiAgDQo+ICAvKg0KPiAgICog
+RGVmaW5pdGlvbnMgb2YgcmV0dXJuIHZhbHVlcyBmcm9tIHRhcmdldCBtYXAgZnVuY3Rpb24uDQo+
+IEBAIC01NTcsNyArNTU4LDcgQEAgc3RydWN0IGRtX3RhYmxlICpkbV9zd2FwX3RhYmxlKHN0cnVj
+dCBtYXBwZWRfZGV2aWNlICptZCwNCj4gICNkZWZpbmUgRE1fTUFQSU9fU1VCTUlUVEVECTANCj4g
+ICNkZWZpbmUgRE1fTUFQSU9fUkVNQVBQRUQJMQ0KPiAgI2RlZmluZSBETV9NQVBJT19SRVFVRVVF
+CURNX0VORElPX1JFUVVFVUUNCj4gLSNkZWZpbmUgRE1fTUFQSU9fREVMQVlfUkVRVUVVRQkzDQo+
+ICsjZGVmaW5lIERNX01BUElPX0RFTEFZX1JFUVVFVUUJRE1fRU5ESU9fREVMQVlfUkVRVUVVRQ0K
+PiAgI2RlZmluZSBETV9NQVBJT19LSUxMCQk0DQo+ICANCj4gICNkZWZpbmUgZG1fc2VjdG9yX2Rp
+djY0KHgsIHkpKCBcDQoNClBsZWFzZSBjb25zaWRlciB0byBpbnRyb2R1Y2UgZW51bWVyYXRpb24g
+dHlwZXMgZm9yIHRoZSBETV9FTkRJT18qIGFuZCB0aGUNCkRNX01BUElPXyogY29uc3RhbnRzIHN1
+Y2ggdGhhdCB0aGUgY29tcGlsZXIgY2FuIGNhdGNoIHdoYXQgSSByZXBvcnRlZCBhYm92ZS4NCk90
+aGVyd2lzZSB0aGlzIHBhdGNoIGxvb2tzIGZpbmUgdG8gbWUuDQoNClRoYW5rcywNCg0KQmFydC4=
