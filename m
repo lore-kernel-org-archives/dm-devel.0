@@ -1,36 +1,51 @@
-From: Bart Van Assche <Bart.VanAssche@wdc.com>
-Subject: Re: [for-4.16 PATCH v4 3/4] block: allow gendisk's request_queue
- registration to be deferred
-Date: Fri, 12 Jan 2018 00:37:37 +0000
-Message-ID: <1515717455.2752.82.camel@wdc.com>
-References: <20180111201417.2042-1-snitzer@redhat.com>
-         <20180111201417.2042-4-snitzer@redhat.com>
+From: Ming Lei <ming.lei@redhat.com>
+Subject: Re: [PATCH V3 0/5]  dm-rq: improve sequential I/O performance
+Date: Fri, 12 Jan 2018 09:42:37 +0800
+Message-ID: <20180112014232.GB25090@ming.t460p>
+References: <20180111060159.12991-1-ming.lei@redhat.com>
+ <20180111220742.GA31944@redhat.com>
+ <1515710256.2752.72.camel@sandisk.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20180111201417.2042-4-snitzer@redhat.com>
-Content-Language: en-US
-Content-ID: <09E8DA5D9394AB409BF2A33B55340C9C@namprd04.prod.outlook.com>
+Content-Disposition: inline
+In-Reply-To: <1515710256.2752.72.camel@sandisk.com>
 Sender: linux-block-owner@vger.kernel.org
-To: "snitzer@redhat.com" <snitzer@redhat.com>, "axboe@kernel.dk" <axboe@kernel.dk>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "hare@suse.de" <hare@suse.de>, "tom.leiming@gmail.com" <tom.leiming@gmail.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>
+To: Bart Van Assche <Bart.VanAssche@wdc.com>
+Cc: "axboe@kernel.dk" <axboe@kernel.dk>, "snitzer@redhat.com" <snitzer@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "hch@infradead.org" <hch@infradead.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "axboe@fb.com" <axboe@fb.com>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>
 List-Id: dm-devel.ids
 
-T24gVGh1LCAyMDE4LTAxLTExIGF0IDE1OjE0IC0wNTAwLCBNaWtlIFNuaXR6ZXIgd3JvdGU6DQo+
-IC12b2lkIGRldmljZV9hZGRfZGlzayhzdHJ1Y3QgZGV2aWNlICpwYXJlbnQsIHN0cnVjdCBnZW5k
-aXNrICpkaXNrKQ0KPiArdm9pZCBkZXZpY2VfYWRkX2Rpc2tfbm9fcXVldWVfcmVnKHN0cnVjdCBk
-ZXZpY2UgKnBhcmVudCwgc3RydWN0IGdlbmRpc2sgKmRpc2spDQo+ICB7DQo+ICAJZGV2X3QgZGV2
-dDsNCj4gIAlpbnQgcmV0dmFsOw0KPiBAQCAtNjgyLDcgKzY4Miw2IEBAIHZvaWQgZGV2aWNlX2Fk
-ZF9kaXNrKHN0cnVjdCBkZXZpY2UgKnBhcmVudCwgc3RydWN0IGdlbmRpc2sgKmRpc2spDQo+ICAJ
-CQkJICAgIGV4YWN0X21hdGNoLCBleGFjdF9sb2NrLCBkaXNrKTsNCj4gIAl9DQo+ICAJcmVnaXN0
-ZXJfZGlzayhwYXJlbnQsIGRpc2spOw0KPiAtCWJsa19yZWdpc3Rlcl9xdWV1ZShkaXNrKTsNCj4g
-IA0KPiAgCS8qDQo+ICAJICogVGFrZSBhbiBleHRyYSByZWYgb24gcXVldWUgd2hpY2ggd2lsbCBi
-ZSBwdXQgb24gZGlza19yZWxlYXNlKCkNCj4gQEAgLTY5Myw2ICs2OTIsMjEgQEAgdm9pZCBkZXZp
-Y2VfYWRkX2Rpc2soc3RydWN0IGRldmljZSAqcGFyZW50LCBzdHJ1Y3QgZ2VuZGlzayAqZGlzaykN
-Cj4gIAlkaXNrX2FkZF9ldmVudHMoZGlzayk7DQo+ICAJYmxrX2ludGVncml0eV9hZGQoZGlzayk7
-DQo+ICB9DQo+ICtFWFBPUlRfU1lNQk9MKGRldmljZV9hZGRfZGlza19ub19xdWV1ZV9yZWcpOw0K
-DQpIZWxsbyBNaWtlLA0KDQpUaGlzIGNoYW5nZSBjYW4gaW5jcmVhc2UgdGhlIHRpbWUgYmV0d2Vl
-biB0aGUgZ2VuZXJhdGlvbiBvZiB0aGUgZGlzayB1ZXZlbnQNCmFuZCB0aGUgcmVnaXN0cmF0aW9u
-IG9mIHRoZSByZXF1ZXN0IHF1ZXVlIHN5c2ZzIGF0dHJpYnV0ZXMuIENhbiB0aGlzIGNhdXNlDQph
-bnkgdWRldiBydWxlcyB0byBmYWlsPw0KDQpUaGFua3MsDQoNCkJhcnQu
+On Thu, Jan 11, 2018 at 10:37:37PM +0000, Bart Van Assche wrote:
+> On Thu, 2018-01-11 at 17:07 -0500, Mike Snitzer wrote:
+> > Bart, if for some reason we regress for some workload you're able to
+> > more readily test we can deal with it.  But I'm too encouraged by Ming's
+> > performance improvements to hold these changes back any further.
+> 
+> Sorry Mike but I think Ming's measurement results are not sufficient to
+> motivate upstreaming of these patches. What I remember from previous versions
+> of this patch series is that Ming measured the performance impact of this
+> patch series only for the Emulex FC driver (lpfc). That driver limits queue
+> depth to 3. Instead of modifying the dm code, that driver needs to be fixed
+> such that it allows larger queue depths.
+> 
+> Additionally, some time ago I had explained in detail why I think that patch
+> 2/5 in this series is wrong and why it will introduce fairness regressions
+> in multi-LUN workloads. I think we need performance measurements for this
+> patch series for at least the following two configurations before this patch
+> series can be considered for upstream inclusion:
+> * The performance impact of this patch series for SCSI devices with a
+>   realistic queue depth (e.g. 64 or 128).
+
+Please look at the cover letter or patch 5's commit log, it mentions that
+dm-mpath over virtio-scsi is tested, and the default queue depth of virito-scsi
+is 128.
+
+> * The performance impact for this patch series for a SCSI host with which
+>   multiple LUNs are associated and for which the target system often replies
+>   with the SCSI "BUSY" status.
+
+I don't think this patch is related with this case, this patch just provides the
+BUSY feedback from underlying queue to blk-mq via dm-rq.
+
+Thanks,
+Ming
