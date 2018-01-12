@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 09/14] libmultipath: select ALUA prioritizer for
-	RDAC arrays only
-Date: Fri, 12 Jan 2018 23:07:38 +0100
-Message-ID: <20180112220743.11513-10-mwilck@suse.com>
+Subject: [PATCH 01/14] multipathd daemon: Fix incorrect use of
+	CLOCK_MONOTONIC in pthread
+Date: Fri, 12 Jan 2018 23:07:30 +0100
+Message-ID: <20180112220743.11513-2-mwilck@suse.com>
 References: <20180112220743.11513-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,32 +19,40 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com
-Cc: Martin Wilck <mwilck@suse.com>
+Cc: Gris Ge <fge@redhat.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Since commit 7e2f46d3, multipathd with "detect_prio" setting (=default)
-chooses ALUA prioritizer rather than sysfs prioritizer for arrays with
-implicit TPGS. But the intention of that patch was to choose ALUA for
-NetApp E-Series (RDAC) storage arrays *only*, not for every array
-with implicit TPGS.
+From: Gris Ge <fge@redhat.com>
 
+Issue:
+    When multipathd is starting up, it will reply "timeout\n" immediatly
+    when got any IPC command from socket. The expected way is to wait
+    uxsock_timeout/1000 seconds.
+
+Root cause:
+    pthread_mutex_timedlock() is expecting a CLOCK_REALTIME time.
+
+Fix:
+    Use CLOCK_REALTIME for pthread_mutex_timedlock().
+
+Signed-off-by: Gris Ge <fge@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/propsel.c | 2 +-
+ multipathd/cli.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index d08954ac8464..4dba4c50beb9 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -497,7 +497,7 @@ detect_prio(struct config *conf, struct path * pp)
- 
- 	if (pp->tpgs <= 0)
- 		return;
--	if (pp->tpgs == 2 && !check_rdac(pp)) {
-+	if (pp->tpgs == 2 || !check_rdac(pp)) {
- 		if (sysfs_get_asymmetric_access_state(pp, buff, 512) >= 0)
- 			default_prio = PRIO_SYSFS;
- 	}
+diff --git a/multipathd/cli.c b/multipathd/cli.c
+index deb72cbe6430..f10f862cd14f 100644
+--- a/multipathd/cli.c
++++ b/multipathd/cli.c
+@@ -480,7 +480,7 @@ parse_cmd (char * cmd, char ** reply, int * len, void * data, int timeout )
+ 	/*
+ 	 * execute handler
+ 	 */
+-	if (clock_gettime(CLOCK_MONOTONIC, &tmo) == 0) {
++	if (clock_gettime(CLOCK_REALTIME, &tmo) == 0) {
+ 		tmo.tv_sec += timeout;
+ 	} else {
+ 		tmo.tv_sec = 0;
 -- 
 2.15.1
