@@ -1,14 +1,15 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 10/14] libmultipath: hwtable: multibus for NetApp
-	NVMe-FC
-Date: Fri, 12 Jan 2018 23:07:39 +0100
-Message-ID: <20180112220743.11513-11-mwilck@suse.com>
-References: <20180112220743.11513-1-mwilck@suse.com>
+Subject: Re: multipath-tools 0.7.4 failure to remove device
+Date: Fri, 12 Jan 2018 23:18:01 +0100
+Message-ID: <1515795481.9139.8.camel@suse.com>
+References: <20180112083833.apsybil4ux4d2y32@jak-x230>
+	<1515789339.3409.33.camel@suse.com>
+	<20180112214700.ljxlypo5nar6oh3m@jak-x230>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180112220743.11513-1-mwilck@suse.com>
+In-Reply-To: <20180112214700.ljxlypo5nar6oh3m@jak-x230>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,40 +19,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com
-Cc: Martin Wilck <mwilck@suse.com>
+To: Julian Andres Klode <julian.klode@canonical.com>
+Cc: Guan Junxiong <guanjunxiong@huawei.com>, development mailing list <dm-devel@redhat.com>, Device-mapper
 List-Id: dm-devel.ids
 
-Use multibus policy for NetApp NVMe-FC namespace controllers.
-
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- libmultipath/hwtable.c | 13 +++++++++++++
- 1 file changed, 13 insertions(+)
-
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 40c4724fcd1b..bae280c835e6 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -1142,6 +1142,19 @@ static struct hwentry default_hw[] = {
- 		.checker_name  = NONE,
- 		.retain_hwhandler = RETAIN_HWHANDLER_OFF,
- 	},
-+	/*
-+	 * NetApp NVMe-FC namespace devices: MULTIBUS preferred
-+	 *
-+	 * The table is searched backwards, so place this after generic NVMe
-+	 */
-+	{
-+		.vendor	       = "NVME",
-+		.product       = "(NetApp |)ONTAP Controller)",
-+		.uid_attribute = "ID_WWN",
-+		.checker_name  = NONE,
-+		.pgpolicy      = MULTIBUS,
-+		.retain_hwhandler = RETAIN_HWHANDLER_OFF,
-+	},
- 	/*
- 	 * Dot Hill Systems - Seagate Technology
- 	 */
--- 
-2.15.1
+T24gRnJpLCAyMDE4LTAxLTEyIGF0IDIyOjQ3ICswMTAwLCBKdWxpYW4gQW5kcmVzIEtsb2RlIHdy
+b3RlOgo+IAo+IEkgZG9uJ3Qga25vdyBhY3R1YWxseSwgSSdtIGp1c3QgdXBkYXRpbmcgdGhlIHBh
+Y2thZ2UgOikgCgpUaGUgZmVhdHVyZSBuZWVkcyB0byBiZSBlbmFibGVkIGV4cGxpY2l0bHksIHNv
+IGluZGVlZCB5b3Ugd2VyZW4ndCB1c2luZwppdC4KCj4gPkkgY2FuIHNheSB0aGF0Cj4gdGhlIHRl
+c3RzIHdlcmUgcnVuIHdpdGggZGVmYXVsdCBjb25maWd1cmF0aW9uLCBub3JtYWxseSB3ZSBydW4g
+d2l0aAo+IERFRkFVTFRfRklORF9NVUxUSVBBVEhTIGJ1dCB0aGF0IGRvZXMgbm90IHdvcmsgeWV0
+IHdpdGggMC43LjQgLSBubwo+IGRtLTAgZGV2aWNlIHNlZW1zIHRvIGdldCBjcmVhdGVkIGluIHRo
+aXMgdGVzdCBjYXNlIChzb21lIHN5c3RlbXMKPiB3aXRob3V0Cj4gbXVsdGlwYXRoIHdlcmUgYnJv
+a2VuIDIuNSB5ZWFycyBhZ28ganVzdCBieSBpbnN0YWxsaW5nIGl0IGJlY2F1c2UgaXQKPiB0b29r
+IG92ZXIgbm9uLW11bHRpcGF0aCBkZXZpY2VzLCBoZW5jZSB0aGUgb3B0aW9uIHdhcyBlbmFibGVk
+OyBtaWdodAo+IG5vdCBldmVuIGJlIG5lZWRlZCBhbnltb3JlKS4KClRoYXQncyBzdGlsbCB0aGUg
+ZGVmYXVsdCBiZWhhdmlvciBpZiBmaW5kX211bHRpcGF0aHMgaXMgb2ZmLiBBbmQKYWN0dWFsbHks
+IEkgZG9uJ3Qga25vdyB3aGF0J3Mgd3Jvbmcgd2l0aCB0aGF0LiBJZiB5b3UgZG9uJ3QgbGlrZSBp
+dCwKYmxhY2tsaXN0IHlvdXIgcm9vdCBkZXZpY2UuIEFsbCB5b3UgbmVlZCB0byBtYWtlIHN1cmUg
+aXMgdGhhdCBtdWx0aXBhdGgKc2V0dGluZ3MgaW4gdGhlIGluaXRyZCBhbmQgaW4gdGhlIGJvb3Rl
+ZCBzeXN0ZW0gYXJlIHRoZSBzYW1lLgoKImZpbmRfbXVsdGlwYXRocyIgaXMgbm90IGEgc2lsdmVy
+IGJ1bGxldCB0byBraWxsIG9mZiBtdWx0aXBhdGgtcmVsYXRlZApib290IHByb2JsZW1zLiBJdCBo
+YXMgYWR2YW50YWdlcyBhbmQgZGlzYWR2YW50YWdlcywgZGVwZW5kaW5nIG9uIHRoZQp1c2UgY2Fz
+ZS4gQW55d2F5LCBJJ20gbm90IGF3YXJlIG9mIGdlbmVyYWwgcHJvYmxlbXMgd2l0aCBpdCBpbiB0
+aGUKbGF0ZXIgbXVsdGlwYXRoIHZlcnNpb25zLgoKQnR3LCBvbmUgdGhpbmcgeW91IHNob3VsZCBi
+ZSBhd2FyZSBvZiBpcyB0aGF0IHVkZXYgcnVsZSBmaWxlcyBhbmQKc3lzdGVtZCBzZXJ2aWNlIGZp
+bGVzIGhhdmUgY2hhbmdlZC4gVGhhdCByZXF1aXJlcyBhbHNvIGRyYWN1dCBjaGFuZ2VzCnRoYXQg
+YXJlIG5vdCBpbiB1cHN0cmVhbSBkcmFjdXQgeWV0LgoKUmVnYXJkcywKTWFydGluCgotLSAKRHIu
+IE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIx
+MDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJk
+LCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFp
+bGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWls
+bWFuL2xpc3RpbmZvL2RtLWRldmVs
