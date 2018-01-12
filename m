@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 13/14] multipathd.socket: add
-	WantedBy=sockets.target
-Date: Fri, 12 Jan 2018 23:07:42 +0100
-Message-ID: <20180112220743.11513-14-mwilck@suse.com>
+Subject: [PATCH 08/14] libmultipath: get_vpd_sgio: support VPD
+	0xc9
+Date: Fri, 12 Jan 2018 23:07:37 +0100
+Message-ID: <20180112220743.11513-9-mwilck@suse.com>
 References: <20180112220743.11513-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,24 +22,29 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Without this, "systemctl enable multipathd.service" spits out
-an error message.
+This VPD is needed to check for NetApp E-Series RDAC support.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/multipathd.socket | 3 +++
- 1 file changed, 3 insertions(+)
+ libmultipath/discovery.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
 
-diff --git a/multipathd/multipathd.socket b/multipathd/multipathd.socket
-index 921706d5d333..0ed4a1f7958b 100644
---- a/multipathd/multipathd.socket
-+++ b/multipathd/multipathd.socket
-@@ -5,3 +5,6 @@ Before=sockets.target
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index cb7fbb54883e..80ffab58d67f 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1118,7 +1118,11 @@ get_vpd_sgio (int fd, int pg, char * str, int maxlen)
+ 		len = parse_vpd_pg80(buff, str, maxlen);
+ 	else if (pg == 0x83)
+ 		len = parse_vpd_pg83(buff, buff_len, str, maxlen);
+-	else
++	else if (pg == 0xc9 && maxlen >= 8) {
++		len = buff_len < 8 ? -ENODATA :
++			(buff_len <= maxlen ? buff_len : maxlen);
++		memcpy (str, buff, len);
++	} else
+ 		len = -ENOSYS;
  
- [Socket]
- ListenStream=@/org/kernel/linux/storage/multipathd
-+
-+[Install]
-+WantedBy=sockets.target
+ 	return len;
 -- 
 2.15.1
