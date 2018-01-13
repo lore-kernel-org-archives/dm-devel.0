@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 12/20] multipathd.socket: add
-	WantedBy=sockets.target
-Date: Sat, 13 Jan 2018 22:19:30 +0100
-Message-ID: <20180113211938.31552-13-mwilck@suse.com>
+Subject: [PATCH v2 01/20] libmultipath: don't try to set
+	hwhandler if it is retained
+Date: Sat, 13 Jan 2018 22:19:19 +0100
+Message-ID: <20180113211938.31552-2-mwilck@suse.com>
 References: <20180113211938.31552-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,22 +22,101 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com, Xo
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Without this, "systemctl enable multipathd.service" spits out
-an error message.
----
- multipathd/multipathd.socket | 3 +++
- 1 file changed, 3 insertions(+)
+Setting a device handler only works if retain_attached_hw_handler
+is 'no', or if the kernel didn't auto-assign a handler. If this
+is not the case, don't even attempt to set a different handler.
 
-diff --git a/multipathd/multipathd.socket b/multipathd/multipathd.socket
-index 921706d5d333..0ed4a1f7958b 100644
---- a/multipathd/multipathd.socket
-+++ b/multipathd/multipathd.socket
-@@ -5,3 +5,6 @@ Before=sockets.target
+This requires reading the sysfs "dh_state" path attribute.
+---
+ libmultipath/configure.c |  8 +++++++-
+ libmultipath/propsel.c   | 35 +++++++++++++++++++++++++++++++++++
+ 2 files changed, 42 insertions(+), 1 deletion(-)
+
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 22c11a26c284..13e14cc25fff 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -277,15 +277,21 @@ int setup_map(struct multipath *mpp, char *params, int params_size)
  
- [Socket]
- ListenStream=@/org/kernel/linux/storage/multipathd
+ 	/*
+ 	 * properties selectors
++	 *
++	 * Ordering matters for some properties:
++	 * - features after no_path_retry and retain_hwhandler
++	 * - hwhandler after retain_hwhandler
++	 * No guarantee that this list is complete, check code in
++	 * propsel.c if in doubt.
+ 	 */
+ 	conf = get_multipath_config();
+ 	select_pgfailback(conf, mpp);
+ 	select_pgpolicy(conf, mpp);
+ 	select_selector(conf, mpp);
+-	select_hwhandler(conf, mpp);
+ 	select_no_path_retry(conf, mpp);
+ 	select_retain_hwhandler(conf, mpp);
+ 	select_features(conf, mpp);
++	select_hwhandler(conf, mpp);
+ 	select_rr_weight(conf, mpp);
+ 	select_minio(conf, mpp);
+ 	select_mode(conf, mpp);
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index be371fcc35bc..4db0913a95a8 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -19,9 +19,11 @@
+ #include "discovery.h"
+ #include "dict.h"
+ #include "util.h"
++#include "sysfs.h"
+ #include "prioritizers/alua_rtpg.h"
+ #include "prkey.h"
+ #include <inttypes.h>
++#include <libudev.h>
+ 
+ pgpolicyfn *pgpolicies[] = {
+ 	NULL,
+@@ -353,9 +355,42 @@ out:
+ 	return 0;
+ }
+ 
++static int get_dh_state(struct path *pp, char *value, size_t value_len)
++{
++	struct udev_device *ud;
 +
-+[Install]
-+WantedBy=sockets.target
++	if (pp->udev == NULL)
++		return -1;
++
++	ud = udev_device_get_parent_with_subsystem_devtype(
++		pp->udev, "scsi", "scsi_device");
++	if (ud == NULL)
++		return -1;
++
++	return sysfs_attr_get_value(ud, "dh_state", value, value_len);
++}
++
+ int select_hwhandler(struct config *conf, struct multipath *mp)
+ {
+ 	char *origin;
++	struct path *pp;
++	/* dh_state is no longer than "detached" */
++	char handler[12];
++	char *dh_state;
++	int i;
++
++	dh_state = &handler[2];
++	if (mp->retain_hwhandler != RETAIN_HWHANDLER_OFF) {
++		vector_foreach_slot(mp->paths, pp, i) {
++			if (get_dh_state(pp, dh_state, sizeof(handler) - 2) > 0
++			    && strcmp(dh_state, "detached")) {
++				memcpy(handler, "1 ", 2);
++				mp->hwhandler = handler;
++				origin = "(setting: retained by kernel driver)";
++				goto out;
++			}
++		}
++	}
+ 
+ 	mp_set_hwe(hwhandler);
+ 	mp_set_conf(hwhandler);
 -- 
 2.15.1
