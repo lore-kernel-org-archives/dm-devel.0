@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 17/20] libmultipath: path latency: fix default
-	base num
-Date: Sat, 13 Jan 2018 22:19:35 +0100
-Message-ID: <20180113211938.31552-18-mwilck@suse.com>
+Subject: [PATCH v2 07/20] libmultipath: get_vpd_sgio: support VPD
+	0xc9
+Date: Sat, 13 Jan 2018 22:19:25 +0100
+Message-ID: <20180113211938.31552-8-mwilck@suse.com>
 References: <20180113211938.31552-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,28 +22,27 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com, Xo
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-I don't think anyone can measure latency to 1% accuracy. It's
-better to not even pretend to be able to. 10% should be fine
-even for the most latency-critical environments.
+This VPD is needed to check for NetApp E-Series RDAC support.
 ---
- libmultipath/prioritizers/path_latency.c | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+ libmultipath/discovery.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/prioritizers/path_latency.c b/libmultipath/prioritizers/path_latency.c
-index 9d5397ec1b3a..b8c5bc7c50a4 100644
---- a/libmultipath/prioritizers/path_latency.c
-+++ b/libmultipath/prioritizers/path_latency.c
-@@ -42,8 +42,9 @@
- #define DEF_IO_NUM		100
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 43631c46f21e..8ae170ee3a27 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1118,7 +1118,11 @@ get_vpd_sgio (int fd, int pg, char * str, int maxlen)
+ 		len = parse_vpd_pg80(buff, str, maxlen);
+ 	else if (pg == 0x83)
+ 		len = parse_vpd_pg83(buff, buff_len, str, maxlen);
+-	else
++	else if (pg == 0xc9 && maxlen >= 8) {
++		len = buff_len < 8 ? -ENODATA :
++			(buff_len <= maxlen ? buff_len : maxlen);
++		memcpy (str, buff, len);
++	} else
+ 		len = -ENOSYS;
  
- #define MAX_BASE_NUM		10
--#define MIN_BASE_NUM		1.01
--#define DEF_BASE_NUM		1.5
-+#define MIN_BASE_NUM		1.1
-+// This is 10**(1/4). 4 prio steps correspond to a factor of 10.
-+#define DEF_BASE_NUM		1.77827941004
- 
- #define MAX_AVG_LATENCY		100000000.	/* Unit: us */
- #define MIN_AVG_LATENCY		1.		/* Unit: us */
+ 	return len;
 -- 
 2.15.1
