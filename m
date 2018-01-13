@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 13/20] multipathd.service: drop
-	Before=lvm2-lvmetad.service
-Date: Sat, 13 Jan 2018 22:19:31 +0100
-Message-ID: <20180113211938.31552-14-mwilck@suse.com>
+Subject: [PATCH v2 18/20] libmultipath: path latency: log
+	threshold with p2
+Date: Sat, 13 Jan 2018 22:19:36 +0100
+Message-ID: <20180113211938.31552-19-mwilck@suse.com>
 References: <20180113211938.31552-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,25 +22,24 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com, Xo
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-lvm2-lvmetad does not depend on multipathd. On the contrary,
-when multipathd sets up a map that contains LVM PVs, it's good
-if lvm2-lvmetad is already running.
+This is not a critical error. It just means that the path in
+question will have low priority (rightly so, if it has >100s latency).
 ---
- multipathd/multipathd.service | 2 +-
+ libmultipath/prioritizers/path_latency.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/multipathd/multipathd.service b/multipathd/multipathd.service
-index fd66cf62af17..0cf99b2f2df5 100644
---- a/multipathd/multipathd.service
-+++ b/multipathd/multipathd.service
-@@ -1,7 +1,7 @@
- [Unit]
- Description=Device-Mapper Multipath Device Controller
- Wants=systemd-udev-trigger.service systemd-udev-settle.service
--Before=iscsi.service iscsid.service lvm2-lvmetad.service lvm2-activation-early.service
-+Before=iscsi.service iscsid.service lvm2-activation-early.service
- Before=local-fs-pre.target blk-availability.service
- After=multipathd.socket systemd-udev-trigger.service systemd-udev-settle.service
- DefaultDependencies=no
+diff --git a/libmultipath/prioritizers/path_latency.c b/libmultipath/prioritizers/path_latency.c
+index b8c5bc7c50a4..ce5c95dd7075 100644
+--- a/libmultipath/prioritizers/path_latency.c
++++ b/libmultipath/prioritizers/path_latency.c
+@@ -299,7 +299,7 @@ int getprio(struct path *pp, char *args, unsigned int timeout)
+ 			(long long)pow(base_num, lg_avglatency));
+ 
+ 	if (lg_avglatency > lg_maxavglatency) {
+-		pp_pl_log(0,
++		pp_pl_log(2,
+ 			  "%s: average latency (%lld us) is outside the thresold (%lld us)",
+ 			  pp->dev, (long long)pow(base_num, lg_avglatency),
+ 			  (long long)MAX_AVG_LATENCY);
 -- 
 2.15.1
