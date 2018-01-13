@@ -1,14 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: multipath-tools: release uxsocket and resource when
- cancel thread
-Date: Sat, 13 Jan 2018 20:50:24 +0100
-Message-ID: <1515873024.9823.18.camel@suse.com>
-References: <CEB9978CF3252343BE3C67AC9F0086A3414FA363@H3CMLB14-EX.srv.huawei-3com.com>
+Subject: [PATCH v2 04/20] libmultipath: fix return code of
+	sysfs_get_timeout
+Date: Sat, 13 Jan 2018 22:19:22 +0100
+Message-ID: <20180113211938.31552-5-mwilck@suse.com>
+References: <20180113211938.31552-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CEB9978CF3252343BE3C67AC9F0086A3414FA363@H3CMLB14-EX.srv.huawei-3com.com>
+In-Reply-To: <20180113211938.31552-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,60 +18,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Wuchongyun <wu.chongyun@h3c.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
-Cc: Guozhonghua <guozhonghua@h3c.com>, Changwei Ge <ge.changwei@h3c.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-T24gV2VkLCAyMDE3LTExLTI5IGF0IDA5OjM1ICswMDAwLCBXdWNob25neXVuIHdyb3RlOgo+IEhp
-ICwKPiAKPiBJc3N1ZSBkZXNjcmlwdGlvbjogCj4gd2hlbiBtdWx0aXBhdGhkIGluaXRpbGF6ZSBh
-bmQgY2FsbCB1eHNvY2tfbGlzdGVuIHRvIGNyZWF0ZSB1bml4Cj4gZG9tYWluIHNvY2tldCwgYnV0
-IHJldHVybiAtMSBhbmQgdGhlIGVycm5vIGlzIDk4IAo+IGFuZCB0aGVuIHRoZSB1eHNvY2tfbGlz
-dGVuIHJldHVybiBudWxsLiBBZnRlciBtdWx0aXBhdGhkIHN0YXJ0dXAgd2UKPiBjYW4ndCByZWNl
-aXZlIGFueSBtdWx0aXBhdGhkIGNvbW1hbmRzIHRvIAo+IGZpbmlzaCB0aGUgbmV3IG11bHRpcGF0
-aCBjcmVhdGlvbiBhbnltb3JlIQo+IAo+IFdlIGZvdW5kIHRoYXQgdXhsc25yIHRocmVhZCdzIGNs
-ZWFudXAgZnVuY3Rpb24gbm90IGNsb3NlIHRoZSBzb2NrZXRzCj4gYW5kIGFsc28gbm90IHJlbGVh
-c2UgdGhlIGNsaWVudHMgd2hlbiAKPiBjYW5jZWwgdGhyZWFkLCB0aGUgZG9tYWluIHNvY2tldCB3
-aWxsIGJlIHJlbGVhc2UgYnkgdGhlIHN5c3RlbS4gSW4KPiBhbnkgc3BlY2lhbCBlbnZpcm9ubWVu
-dCBsaWtlIHRoZW1hY2hpbmUncyAKPiBsb2FkIGlzIHZlcnkgaGVhdnksIHRoZSBzeXN0ZW0gbWF5
-IG5vdCBjbG9zZSB0aGUgb2xkIGRvbWFpbiBzb2NrZXQKPiB3aGVuIHdlIHRyeSB0byBjcmVhdGUg
-YW5kIGJpbmQgdGhlIGRvbWFpbgo+IHNvY2tldCBtYXkgcmV0dXJuIDk4IChBZGRyZXNzIGFscmVh
-ZHkgaW4gdXNlKS4KPiAKPiBBbmQgYWxzbyB3ZSBtYWtlIHNvbWUgZXhwZXJpbWVudHM6Cj4gSW4g
-dXhzb2NrX2NsZWFudXAgaWYgd2UgY2xvc2UgdGhlIHV4X3NvY2sgZmlyc3QgYW5kIHRoZW4gaW1t
-ZGVkaWF0ZWx5Cj4gY2FsbCB1eF9zb2NrZXRfbGlzdGVuIHRvIGNyZWF0ZSBuZXcgdXhfc29jawo+
-IGFuZCBpbml0aWFsaXphdGlvbiB3aWxsIGJlIE9LOyBJZiB3ZSBkb24ndCBjbG9zZSB0aGUgdXhf
-c29jayBhbmQgY2FsbAo+IHV4X3NvY2tldF9saXN0ZW4gd2lsbCByZXR1cm4gLTEgYW5kIGVycm5v
-ID0gOTguCj4gCj4gU28gd2UgYmVsaWV2ZSB0aGF0IGNsb3NlIHV4c29ja2V0IGFuZCByZWxlYXNl
-IGNsaWVudHMgd2hlbiBjYW5jZWwKPiB0aHJlYWQgbWlnaHQgbWFraW5nIG5ldyBzdGFydGluZyBt
-dWx0aXBhdGhkIAo+IHRocmVhZCBjYW4gY3JlYXRlIHV4c29ja2V0IHN1Y2Nlc3NmdWxseSwgYW5k
-IG1pZ2h0IHJlY2VpdmluZwo+IG11bHRpcGF0aGQgY29tbWFuZHMgcHJvcGVybHkuCj4gQW5kIGFs
-c28gdGhpcyBwYXRoIGNhbiBmaXggY2xpZW50cycgbWVtb3J5IGxlYWsuCgpJIHRoaW5rIHRoaXMg
-aXMgY29ycmVjdC4gQnV0IEkgaGF2ZSBzb21lIHJlbWFya3MsIHNlZSBiZWxvdy4KCj4gCj4gVGhh
-bmtzLAo+IENob25neXVuCj4gCj4gU2lnbmVkLW9mZi1ieTogd3UgY2hvbmd5dW4gPHd1LmNob25n
-eXVuQGgzYy5jb20+Cj4gLS0tCj4gbXVsdGlwYXRoZC91eGxzbnIuYyB8ICAgMTYgKysrKysrKysr
-KysrKysrLQo+IDEgZmlsZSBjaGFuZ2VkLCAxNSBpbnNlcnRpb25zKCspLCAxIGRlbGV0aW9uKC0p
-Cj4gCj4gZGlmZiAtLWdpdCBhL211bHRpcGF0aGQvdXhsc25yLmMgYi9tdWx0aXBhdGhkL3V4bHNu
-ci5jCj4gaW5kZXggOThhYzI1YS4uZGU2OTUwYiAxMDA2NDQKPiAtLS0gYS9tdWx0aXBhdGhkL3V4
-bHNuci5jCj4gKysrIGIvbXVsdGlwYXRoZC91eGxzbnIuYwo+IEBAIC0xMzksNiArMTM5LDIwIEBA
-IHZvaWQgY2hlY2tfdGltZW91dChzdHJ1Y3QgdGltZXNwZWMgc3RhcnRfdGltZSwKPiBjaGFyICpp
-bmJ1ZiwKPiAKPiAgdm9pZCB1eHNvY2tfY2xlYW51cCh2b2lkICphcmcpCj4gewo+ICsgICAgICAg
-c3RydWN0IGNsaWVudCAqY2xpZW50X2xvb3A7Cj4gKyAgICAgICBzdHJ1Y3QgY2xpZW50ICpjbGll
-bnRfdG1wOwo+ICsgICAgICAgaW50IHV4X3NvY2sgPSAoaW50KWFyZzsKPiArCj4gKyAgICAgICAv
-Kgo+ICsgICAgICAgKiBubyBuZWVkIHRvIHByb3RlY3QgY2xpZW50cywgCj4gKyAgICAgICAqIGJl
-Y2F1c2UgYWxsIG9wZXJhdGlvbnMgdG8gY2xpZW50cyBhcmUgb25seSBmcm9tIG9uZQo+IHRocmVh
-ZCh1eGxzbnIpCj4gKyAgICAgICAqLwo+ICsgICAgICAgbGlzdF9mb3JfZWFjaF9lbnRyeV9zYWZl
-KGNsaWVudF9sb29wLCBjbGllbnRfdG1wLCAmY2xpZW50cywKPiBub2RlKSB7Cj4gKyAgICAgICAg
-ICAgICAgICBkZWFkX2NsaWVudChjbGllbnRfbG9vcCk7CgpUaGlzIHRha2VzIGFuZCByZWxlYXNl
-cyB0aGUgY2xpZW50X2xvY2sgaW4gZXZlcnkgbG9vcCBpdGVyYXRpb24uCkknZCByYXRoZXIgdGFr
-ZSB0aGUgbG9jaywgbG9vcCBvdmVyIGFsbCBjbGllbnRzIGZyZWVpbmcgdGhlIHJlc291cmNlcywK
-YW5kIHJlbGFzZS4KCj4gKyAgICAgICB9Cj4gKwo+ICsgICAgICAgY2xvc2UodXhfc29jayk7Cj4g
-Kwo+ICAgICAgICBjbGlfZXhpdCgpOwo+ICAgICAgICBmcmVlX3BvbGxzKCk7Cj4gfQo+IEBAIC0x
-NjIsNyArMTc2LDcgQEAgdm9pZCAqIHV4c29ja19saXN0ZW4odXhzb2NrX3RyaWdnZXJfZm4KPiB1
-eHNvY2tfdHJpZ2dlciwgdm9pZCAqIHRyaWdnZXJfZGF0YSkKPiAgICAgICAgICAgICAgICAgcmV0
-dXJuIE5VTEw7Cj4gICAgICAgIH0KPiAKPiAtICAgICAgICBwdGhyZWFkX2NsZWFudXBfcHVzaCh1
-eHNvY2tfY2xlYW51cCwgTlVMTCk7Cj4gKyAgICAgICBwdGhyZWFkX2NsZWFudXBfcHVzaCh1eHNv
-Y2tfY2xlYW51cCwgKHZvaWQqKXV4X3NvY2spOwoKVGhpcyBwYXRjaCBoYXMgd2hpdGVzcGFjZSBp
-c3N1ZXMuCgpSZWdhcmRzLApNYXJ0aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3Vz
-ZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBG
-ZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0
-IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0
-LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+This function should return 1 on success, as the other sysfs_get_XXX
+functions. The callers actually expect this - therefore timeout values
+from sysfs are never used.
+---
+ libmultipath/discovery.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 4b31ddef23f0..ab7794d8d2e1 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -276,7 +276,7 @@ sysfs_get_timeout(struct path *pp, unsigned int *timeout)
+ 	}
+ 	*timeout = t;
+ 
+-	return 0;
++	return 1;
+ }
+ 
+ int
+-- 
+2.15.1
