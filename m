@@ -1,7 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 10/20] multipath -C: decrease log level
-Date: Sat, 13 Jan 2018 22:19:28 +0100
-Message-ID: <20180113211938.31552-11-mwilck@suse.com>
+Subject: [PATCH v2 14/20] multipathd: fix compiler warning for
+	uev_pathfail_check
+Date: Sat, 13 Jan 2018 22:19:32 +0100
+Message-ID: <20180113211938.31552-15-mwilck@suse.com>
 References: <20180113211938.31552-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,25 +22,27 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com, Xo
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Avoid that the positive case ("usable paths found") spams the
-syslog on systems with many LUNs.
----
- multipath/main.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+gcc7 spits out an indentation warning for this function.
 
-diff --git a/multipath/main.c b/multipath/main.c
-index 25162a0e9a7c..52bf1658bbca 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -325,7 +325,8 @@ static int check_usable_paths(struct config *conf,
- 		}
- 	}
- found:
--	condlog(2, "%s:%s usable paths found", devpath, r == 0 ? "" : " no");
-+	condlog(r == 0 ? 3 : 2, "%s:%s usable paths found",
-+		devpath, r == 0 ? "" : " no");
- free:
- 	FREE(mapname);
- 	free_multipath(mpp, FREE_PATHS);
+Fixes: 8392431 "multipath-tools: check null path before handle path-failed event"
+---
+ multipathd/main.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 27cf234623d0..ccbb0ad13d32 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1020,8 +1020,8 @@ uev_pathfail_check(struct uevent *uev, struct vectors *vecs)
+ 	lock(&vecs->lock);
+ 	pthread_testcancel();
+ 	pp = find_path_by_devt(vecs->pathvec, devt);
+-    if (!pp)
+-        goto out_lock;
++	if (!pp)
++		goto out_lock;
+ 	r = io_err_stat_handle_pathfail(pp);
+ 	if (r)
+ 		condlog(3, "io_err_stat: %s: cannot handle pathfail uevent",
 -- 
 2.15.1
