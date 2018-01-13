@@ -1,251 +1,45 @@
-From: Eric Wheeler <drbd-dev@lists.ewheeler.net>
-Subject: Re: [Drbd-dev] [PATCH 23/27] drbd: make intelligent use of
- blkdev_issue_zeroout
-Date: Sat, 13 Jan 2018 00:46:40 +0000 (UTC)
-Message-ID: <alpine.LRH.2.11.1801130035010.13147@mail.ewheeler.net>
-References: <20170405172125.22600-1-hch@lst.de> <20170405172125.22600-24-hch@lst.de>
+From: Bart Van Assche <Bart.VanAssche@wdc.com>
+Subject: Re: [PATCH V3 0/5]  dm-rq: improve sequential I/O performance
+Date: Sat, 13 Jan 2018 01:00:57 +0000
+Message-ID: <1515805255.2396.94.camel@wdc.com>
+References: <20180112014232.GB25090@ming.t460p>
+         <20180112015721.GB32298@redhat.com> <20180112033308.GC25090@ming.t460p>
+         <20180112171840.GA4541@redhat.com> <1515778013.2396.3.camel@wdc.com>
+         <20180112174000.GB5134@redhat.com> <1515779211.2396.11.camel@wdc.com>
+         <20180112180635.GD5134@redhat.com> <1515783288.2396.37.camel@wdc.com>
+         <AT5PR8401MB0387801D9DC1686503921AE5AB170@AT5PR8401MB0387.NAMPRD84.PROD.OUTLOOK.COM>
+         <20180113005213.GB7207@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20170405172125.22600-24-hch@lst.de>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: axboe@kernel.dk, martin.petersen@oracle.com, agk@redhat.com, snitzer@redhat.com, shli@kernel.org, philipp.reisner@linbit.com, lars.ellenberg@linbit.com, linux-block@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-scsi@vger.kernel.org, drbd-dev@lists.linbit.com
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20180113005213.GB7207@redhat.com>
+Content-Language: en-US
+Content-ID: <0F71D6578632B54086DB3C2A00361EC9@namprd04.prod.outlook.com>
+Sender: linux-block-owner@vger.kernel.org
+To: "snitzer@redhat.com" <snitzer@redhat.com>, "elliott@hpe.com" <elliott@hpe.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "hch@infradead.org" <hch@infradead.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "ming.lei@redhat.com" <ming.lei@redhat.com>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "axboe@fb.com" <axboe@fb.com>
 List-Id: dm-devel.ids
 
-Hello All,
-
-We just noticed that discards to DRBD devices backed by dm-thin devices 
-are fully allocating the thin blocks.
-
-This behavior does not exist before 
-ee472d83 block: add a flags argument to (__)blkdev_issue_zeroout
-
-The problem exists somewhere between
-[working] c20cfc27 block: stop using blkdev_issue_write_same for zeroing
-  and
-[broken]  45c21793 drbd: implement REQ_OP_WRITE_ZEROES
-
-Note that c20cfc27 works as expected, but 45c21793 discards blocks 
-being zeroed on the dm-thin backing device. All commits between those two 
-produce the following error:
-
-blkdiscard: /dev/drbd/by-res/test: BLKDISCARD ioctl failed: Input/output error
-
-Also note that issuing a blkdiscard to the backing device directly 
-discards as you would expect. This is just a problem when sending discards 
-through DRBD.
-
-Is there an easy way to solve this in the short term, even if the ultimate 
-fix is more involved?
-
-Thank you for your help!
-
--Eric
-
---
-Eric Wheeler
-
-On Wed, 5 Apr 2017, Christoph Hellwig wrote:
-
-> drbd always wants its discard wire operations to zero the blocks, so
-> use blkdev_issue_zeroout with the BLKDEV_ZERO_UNMAP flag instead of
-> reinventing it poorly.
-> 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-> Reviewed-by: Hannes Reinecke <hare@suse.com>
-> ---
->  drivers/block/drbd/drbd_debugfs.c  |   3 --
->  drivers/block/drbd/drbd_int.h      |   6 ---
->  drivers/block/drbd/drbd_receiver.c | 102 ++-----------------------------------
->  drivers/block/drbd/drbd_req.c      |   6 +--
->  4 files changed, 7 insertions(+), 110 deletions(-)
-> 
-> diff --git a/drivers/block/drbd/drbd_debugfs.c b/drivers/block/drbd/drbd_debugfs.c
-> index de5c3ee8a790..494837e59f23 100644
-> --- a/drivers/block/drbd/drbd_debugfs.c
-> +++ b/drivers/block/drbd/drbd_debugfs.c
-> @@ -236,9 +236,6 @@ static void seq_print_peer_request_flags(struct seq_file *m, struct drbd_peer_re
->  	seq_print_rq_state_bit(m, f & EE_CALL_AL_COMPLETE_IO, &sep, "in-AL");
->  	seq_print_rq_state_bit(m, f & EE_SEND_WRITE_ACK, &sep, "C");
->  	seq_print_rq_state_bit(m, f & EE_MAY_SET_IN_SYNC, &sep, "set-in-sync");
-> -
-> -	if (f & EE_IS_TRIM)
-> -		__seq_print_rq_state_bit(m, f & EE_IS_TRIM_USE_ZEROOUT, &sep, "zero-out", "trim");
->  	seq_print_rq_state_bit(m, f & EE_WRITE_SAME, &sep, "write-same");
->  	seq_putc(m, '\n');
->  }
-> diff --git a/drivers/block/drbd/drbd_int.h b/drivers/block/drbd/drbd_int.h
-> index 724d1c50fc52..d5da45bb03a6 100644
-> --- a/drivers/block/drbd/drbd_int.h
-> +++ b/drivers/block/drbd/drbd_int.h
-> @@ -437,9 +437,6 @@ enum {
->  
->  	/* is this a TRIM aka REQ_DISCARD? */
->  	__EE_IS_TRIM,
-> -	/* our lower level cannot handle trim,
-> -	 * and we want to fall back to zeroout instead */
-> -	__EE_IS_TRIM_USE_ZEROOUT,
->  
->  	/* In case a barrier failed,
->  	 * we need to resubmit without the barrier flag. */
-> @@ -482,7 +479,6 @@ enum {
->  #define EE_CALL_AL_COMPLETE_IO (1<<__EE_CALL_AL_COMPLETE_IO)
->  #define EE_MAY_SET_IN_SYNC     (1<<__EE_MAY_SET_IN_SYNC)
->  #define EE_IS_TRIM             (1<<__EE_IS_TRIM)
-> -#define EE_IS_TRIM_USE_ZEROOUT (1<<__EE_IS_TRIM_USE_ZEROOUT)
->  #define EE_RESUBMITTED         (1<<__EE_RESUBMITTED)
->  #define EE_WAS_ERROR           (1<<__EE_WAS_ERROR)
->  #define EE_HAS_DIGEST          (1<<__EE_HAS_DIGEST)
-> @@ -1561,8 +1557,6 @@ extern void start_resync_timer_fn(unsigned long data);
->  extern void drbd_endio_write_sec_final(struct drbd_peer_request *peer_req);
->  
->  /* drbd_receiver.c */
-> -extern int drbd_issue_discard_or_zero_out(struct drbd_device *device,
-> -		sector_t start, unsigned int nr_sectors, bool discard);
->  extern int drbd_receiver(struct drbd_thread *thi);
->  extern int drbd_ack_receiver(struct drbd_thread *thi);
->  extern void drbd_send_ping_wf(struct work_struct *ws);
-> diff --git a/drivers/block/drbd/drbd_receiver.c b/drivers/block/drbd/drbd_receiver.c
-> index dc9a6dcd431c..bc1d296581f9 100644
-> --- a/drivers/block/drbd/drbd_receiver.c
-> +++ b/drivers/block/drbd/drbd_receiver.c
-> @@ -1448,108 +1448,14 @@ void drbd_bump_write_ordering(struct drbd_resource *resource, struct drbd_backin
->  		drbd_info(resource, "Method to ensure write ordering: %s\n", write_ordering_str[resource->write_ordering]);
->  }
->  
-> -/*
-> - * We *may* ignore the discard-zeroes-data setting, if so configured.
-> - *
-> - * Assumption is that it "discard_zeroes_data=0" is only because the backend
-> - * may ignore partial unaligned discards.
-> - *
-> - * LVM/DM thin as of at least
-> - *   LVM version:     2.02.115(2)-RHEL7 (2015-01-28)
-> - *   Library version: 1.02.93-RHEL7 (2015-01-28)
-> - *   Driver version:  4.29.0
-> - * still behaves this way.
-> - *
-> - * For unaligned (wrt. alignment and granularity) or too small discards,
-> - * we zero-out the initial (and/or) trailing unaligned partial chunks,
-> - * but discard all the aligned full chunks.
-> - *
-> - * At least for LVM/DM thin, the result is effectively "discard_zeroes_data=1".
-> - */
-> -int drbd_issue_discard_or_zero_out(struct drbd_device *device, sector_t start, unsigned int nr_sectors, bool discard)
-> -{
-> -	struct block_device *bdev = device->ldev->backing_bdev;
-> -	struct request_queue *q = bdev_get_queue(bdev);
-> -	sector_t tmp, nr;
-> -	unsigned int max_discard_sectors, granularity;
-> -	int alignment;
-> -	int err = 0;
-> -
-> -	if (!discard)
-> -		goto zero_out;
-> -
-> -	/* Zero-sector (unknown) and one-sector granularities are the same.  */
-> -	granularity = max(q->limits.discard_granularity >> 9, 1U);
-> -	alignment = (bdev_discard_alignment(bdev) >> 9) % granularity;
-> -
-> -	max_discard_sectors = min(q->limits.max_discard_sectors, (1U << 22));
-> -	max_discard_sectors -= max_discard_sectors % granularity;
-> -	if (unlikely(!max_discard_sectors))
-> -		goto zero_out;
-> -
-> -	if (nr_sectors < granularity)
-> -		goto zero_out;
-> -
-> -	tmp = start;
-> -	if (sector_div(tmp, granularity) != alignment) {
-> -		if (nr_sectors < 2*granularity)
-> -			goto zero_out;
-> -		/* start + gran - (start + gran - align) % gran */
-> -		tmp = start + granularity - alignment;
-> -		tmp = start + granularity - sector_div(tmp, granularity);
-> -
-> -		nr = tmp - start;
-> -		err |= blkdev_issue_zeroout(bdev, start, nr, GFP_NOIO,
-> -				BLKDEV_ZERO_NOUNMAP);
-> -		nr_sectors -= nr;
-> -		start = tmp;
-> -	}
-> -	while (nr_sectors >= granularity) {
-> -		nr = min_t(sector_t, nr_sectors, max_discard_sectors);
-> -		err |= blkdev_issue_discard(bdev, start, nr, GFP_NOIO,
-> -				BLKDEV_ZERO_NOUNMAP);
-> -		nr_sectors -= nr;
-> -		start += nr;
-> -	}
-> - zero_out:
-> -	if (nr_sectors) {
-> -		err |= blkdev_issue_zeroout(bdev, start, nr_sectors, GFP_NOIO,
-> -				BLKDEV_ZERO_NOUNMAP);
-> -	}
-> -	return err != 0;
-> -}
-> -
-> -static bool can_do_reliable_discards(struct drbd_device *device)
-> -{
-> -	struct request_queue *q = bdev_get_queue(device->ldev->backing_bdev);
-> -	struct disk_conf *dc;
-> -	bool can_do;
-> -
-> -	if (!blk_queue_discard(q))
-> -		return false;
-> -
-> -	if (q->limits.discard_zeroes_data)
-> -		return true;
-> -
-> -	rcu_read_lock();
-> -	dc = rcu_dereference(device->ldev->disk_conf);
-> -	can_do = dc->discard_zeroes_if_aligned;
-> -	rcu_read_unlock();
-> -	return can_do;
-> -}
-> -
->  static void drbd_issue_peer_discard(struct drbd_device *device, struct drbd_peer_request *peer_req)
->  {
-> -	/* If the backend cannot discard, or does not guarantee
-> -	 * read-back zeroes in discarded ranges, we fall back to
-> -	 * zero-out.  Unless configuration specifically requested
-> -	 * otherwise. */
-> -	if (!can_do_reliable_discards(device))
-> -		peer_req->flags |= EE_IS_TRIM_USE_ZEROOUT;
-> +	struct block_device *bdev = device->ldev->backing_bdev;
->  
-> -	if (drbd_issue_discard_or_zero_out(device, peer_req->i.sector,
-> -	    peer_req->i.size >> 9, !(peer_req->flags & EE_IS_TRIM_USE_ZEROOUT)))
-> +	if (blkdev_issue_zeroout(bdev, peer_req->i.sector, peer_req->i.size >> 9,
-> +			GFP_NOIO, 0))
->  		peer_req->flags |= EE_WAS_ERROR;
-> +
->  	drbd_endio_write_sec_final(peer_req);
->  }
->  
-> diff --git a/drivers/block/drbd/drbd_req.c b/drivers/block/drbd/drbd_req.c
-> index 652114ae1a8a..6da9ea8c48b6 100644
-> --- a/drivers/block/drbd/drbd_req.c
-> +++ b/drivers/block/drbd/drbd_req.c
-> @@ -1148,10 +1148,10 @@ static int drbd_process_write_request(struct drbd_request *req)
->  
->  static void drbd_process_discard_req(struct drbd_request *req)
->  {
-> -	int err = drbd_issue_discard_or_zero_out(req->device,
-> -				req->i.sector, req->i.size >> 9, true);
-> +	struct block_device *bdev = req->device->ldev->backing_bdev;
->  
-> -	if (err)
-> +	if (blkdev_issue_zeroout(bdev, req->i.sector, req->i.size >> 9,
-> +			GFP_NOIO, 0))
->  		req->private_bio->bi_error = -EIO;
->  	bio_endio(req->private_bio);
->  }
-> -- 
-> 2.11.0
-> 
-> _______________________________________________
-> drbd-dev mailing list
-> drbd-dev@lists.linbit.com
-> http://lists.linbit.com/mailman/listinfo/drbd-dev
-> 
+T24gRnJpLCAyMDE4LTAxLTEyIGF0IDE5OjUyIC0wNTAwLCBNaWtlIFNuaXR6ZXIgd3JvdGU6DQo+
+IEl0IHdhcyA1MCBtcyBiZWZvcmUgaXQgd2FzIDEwMCBtcy4gIE5vIHJlYWwgZXhwbGFpbmF0aW9u
+IGZvciB0aGVzZQ0KPiB2YWx1ZXMgb3RoZXIgdGhhbiB0aGV5IHNlZW0gdG8gbWFrZSBCYXJ0J3Mg
+SUIgU1JQIHRlc3RiZWQgaGFwcHk/DQoNCkJ1dCB0aGF0IGNvbnN0YW50IHdhcyBub3QgaW50cm9k
+dWNlZCBieSBtZSBpbiB0aGUgZG0gY29kZS4gU2VlIGUuZy4gdGhlDQpmb2xsb3dpbmcgY29tbWl0
+czoNCg0KY29tbWl0IGQ1NDhiMzRiMDYyYjYwYjRmNGRmMjk1YTBiNDgyM2RmZGExZjFmYzQNCkF1
+dGhvcjogTWlrZSBTbml0emVyIDxzbml0emVyQHJlZGhhdC5jb20+DQpEYXRlOiAgIFRodSBNYXIg
+NSAyMjoyMToxMCAyMDE1IC0wNTAwDQoNCiAgICBkbTogcmVkdWNlIHRoZSBxdWV1ZSBkZWxheSB1
+c2VkIGluIGRtX3JlcXVlc3RfZm4gZnJvbSAxMDBtcyB0byAxMG1zDQogICAgIA0KICAgIENvbW1p
+dCA3ZWFjZWFjY2FiICgiYmxvY2s6IHJlbW92ZSBwZXItcXVldWUgcGx1Z2dpbmciKSBkaWRuJ3Qg
+anVzdGlmeQ0KICAgIERNJ3MgdXNlIG9mIGEgMTAwbXMgZGVsYXk7IHN1Y2ggYW4gZXh0ZW5kZWQg
+ZGVsYXkgaXMgYSBsaWFiaWxpdHkgd2hlbg0KICAgIHRoZXJlIGlzIHJlYXNvbiB0byByZS1raWNr
+IHRoZSBxdWV1ZS4NCiAgICAgDQogICAgU2lnbmVkLW9mZi1ieTogTWlrZSBTbml0emVyIDxzbml0
+emVyQHJlZGhhdC5jb20+DQoNCmNvbW1pdCA3ZWFjZWFjY2FiNWY0MGJiZmRhMDQ0NjI5YTYyOTg2
+MTZhZWFlZDUwDQpBdXRob3I6IEplbnMgQXhib2UgPGpheGJvZUBmdXNpb25pby5jb20+DQpEYXRl
+OiAgIFRodSBNYXIgMTAgMDg6NTI6MDcgMjAxMSArMDEwMA0KDQogICAgYmxvY2s6IHJlbW92ZSBw
+ZXItcXVldWUgcGx1Z2dpbmcNCiAgICAgDQogICAgQ29kZSBoYXMgYmVlbiBjb252ZXJ0ZWQgb3Zl
+ciB0byB0aGUgbmV3IGV4cGxpY2l0IG9uLXN0YWNrIHBsdWdnaW5nLA0KICAgIGFuZCBkZWxheSB1
+c2VycyBoYXZlIGJlZW4gY29udmVydGVkIHRvIHVzZSB0aGUgbmV3IEFQSSBmb3IgdGhhdC4NCiAg
+ICBTbyBsZXRzIGtpbGwgb2ZmIHRoZSBvbGQgcGx1Z2dpbmcgYWxvbmcgd2l0aCBhb3BzLT5zeW5j
+X3BhZ2UoKS4NCiAgICAgDQogICAgU2lnbmVkLW9mZi1ieTogSmVucyBBeGJvZSA8amF4Ym9lQGZ1
+c2lvbmlvLmNvbT4NCg0KQmFydC4g
