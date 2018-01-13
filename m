@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 05/20] libmultipath: fix return code of
-	sgio_get_vpd()
-Date: Sat, 13 Jan 2018 22:19:23 +0100
-Message-ID: <20180113211938.31552-6-mwilck@suse.com>
+Subject: [PATCH v2 12/20] multipathd.socket: add
+	WantedBy=sockets.target
+Date: Sat, 13 Jan 2018 22:19:30 +0100
+Message-ID: <20180113211938.31552-13-mwilck@suse.com>
 References: <20180113211938.31552-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,24 +22,22 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com, Xo
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-This function must return the length of data received in success
-case.
+Without this, "systemctl enable multipathd.service" spits out
+an error message.
 ---
- libmultipath/discovery.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ multipathd/multipathd.socket | 3 +++
+ 1 file changed, 3 insertions(+)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index ab7794d8d2e1..c53d3aab897f 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -852,7 +852,7 @@ retry:
- 			return len;
- 		if (len > DEFAULT_SGIO_LEN)
- 			goto retry;
--		return 0;
-+		return len;
- 	}
- 	return -1;
- }
+diff --git a/multipathd/multipathd.socket b/multipathd/multipathd.socket
+index 921706d5d333..0ed4a1f7958b 100644
+--- a/multipathd/multipathd.socket
++++ b/multipathd/multipathd.socket
+@@ -5,3 +5,6 @@ Before=sockets.target
+ 
+ [Socket]
+ ListenStream=@/org/kernel/linux/storage/multipathd
++
++[Install]
++WantedBy=sockets.target
 -- 
 2.15.1
