@@ -1,13 +1,15 @@
 From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH] multipath-tools: check null path before
- handle path-failed event
-Date: Sat, 13 Jan 2018 10:11:04 +0100
-Message-ID: <CABr-Gnd97schLrwtA_1C6jNp6nKPQstj49krLn=Q7mj0uwhaaA@mail.gmail.com>
-References: <1512393350-2956-1-git-send-email-guanjunxiong@huawei.com>
+Subject: Re: [PATCH 2/2] libmultipath: don't update path queueing
+	on reload
+Date: Sat, 13 Jan 2018 10:18:42 +0100
+Message-ID: <CABr-Gnfnp3tiuBE4hAN7ciC9+x_sLrYV1kK_CZyXhS8R9OQ3Bg@mail.gmail.com>
+References: <1513188487-31852-1-git-send-email-bmarzins@redhat.com>
+	<1513188487-31852-2-git-send-email-bmarzins@redhat.com>
+	<1513604950.22953.24.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============6002535035612902386=="
+Content-Type: multipart/mixed; boundary="===============3922785515317552485=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1512393350-2956-1-git-send-email-guanjunxiong@huawei.com>
+In-Reply-To: <1513604950.22953.24.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,149 +19,129 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Guan Junxiong <guanjunxiong@huawei.com>
-Cc: device-mapper development <dm-devel@redhat.com>, niuhaoxin@huawei.com, shenhong09@huawei.com
+To: Martin Wilck <mwilck@suse.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============6002535035612902386==
-Content-Type: multipart/alternative; boundary="001a1143877ac4a2e20562a4c270"
+--===============3922785515317552485==
+Content-Type: multipart/alternative; boundary="001a1147bba01280c10562a4de7e"
 
---001a1143877ac4a2e20562a4c270
+--001a1147bba01280c10562a4de7e
 Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-Merged.
-Thanks.
+Applied.
+Thanks
 
-On Mon, Dec 4, 2017 at 2:15 PM, Guan Junxiong <guanjunxiong@huawei.com>
-wrote:
+On Mon, Dec 18, 2017 at 2:49 PM, Martin Wilck <mwilck@suse.com> wrote:
 
-> In the hot-plug storage OS, if we tear down the target storage,
-> there is a race between the path removing from the path list and
-> handling the path-failed udev event. Therefore, we need to check
-> null path before handle path-failed event.
+> On Wed, 2017-12-13 at 12:08 -0600, Benjamin Marzinski wrote:
+> > With the fix to the features handling code, the multipath device
+> > should
+> > already be reloaded with the correct value for queue_if_no_path, so
+> > there's no need to go reset it immediately afterwards.
+> >
+> > Cc: Martin Wilck <mwilck@suse.com>
+> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> > ---
+> >  libmultipath/configure.c | 6 ------
+> >  1 file changed, 6 deletions(-)
+> >
+> > diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+> > index bfa5048..6f28f45 100644
+> > --- a/libmultipath/configure.c
+> > +++ b/libmultipath/configure.c
+> > @@ -1351,12 +1351,6 @@ int reload_map(struct vectors *vecs, struct
+> > multipath *mpp, int refresh,
+> >                       "for reload map", mpp->alias, r);
+> >               return 1;
+> >       }
+> > -     if (mpp->no_path_retry !=3D NO_PATH_RETRY_UNDEF) {
+> > -             if (mpp->no_path_retry =3D=3D NO_PATH_RETRY_FAIL)
+> > -                     dm_queue_if_no_path(mpp->alias, 0);
+> > -             else
+> > -                     dm_queue_if_no_path(mpp->alias, 1);
+> > -     }
+> >
+> >       return 0;
+> >  }
+> ACK
 >
-> Signed-off-by: Guan Junxiong <guanjunxiong@huawei.com>
-> ---
->  multipathd/main.c | 10 ++++++----
->  1 file changed, 6 insertions(+), 4 deletions(-)
->
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index 31ce923..84bb2c5 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -1073,7 +1073,7 @@ uev_pathfail_check(struct uevent *uev, struct
-> vectors *vecs)
->  {
->         char *action = NULL, *devt = NULL;
->         struct path *pp;
-> -       int r;
-> +       int r = 1;
->
->         action = uevent_get_dm_action(uev);
->         if (!action)
-> @@ -1090,15 +1090,17 @@ uev_pathfail_check(struct uevent *uev, struct
-> vectors *vecs)
->         lock(&vecs->lock);
->         pthread_testcancel();
->         pp = find_path_by_devt(vecs->pathvec, devt);
-> +    if (!pp)
-> +        goto out_lock;
->         r = io_err_stat_handle_pathfail(pp);
-> -       lock_cleanup_pop(vecs->lock);
-> -
->         if (r)
->                 condlog(3, "io_err_stat: %s: cannot handle pathfail
-> uevent",
->                                 pp->dev);
-> +out_lock:
-> +       lock_cleanup_pop(vecs->lock);
->         FREE(devt);
->         FREE(action);
-> -       return 0;
-> +       return r;
->  out:
->         FREE(action);
->         return 1;
 > --
-> 2.6.4.windows.1
->
+> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+> SUSE Linux GmbH, GF: Felix Imend=C3=B6rffer, Jane Smithard, Graham Norton
+> HRB 21284 (AG N=C3=BCrnberg)
 >
 >
 
---001a1143877ac4a2e20562a4c270
+--001a1147bba01280c10562a4de7e
 Content-Type: text/html; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-<div dir=3D"ltr">Merged.<div>Thanks.</div></div><div class=3D"gmail_extra">=
-<br><div class=3D"gmail_quote">On Mon, Dec 4, 2017 at 2:15 PM, Guan Junxion=
-g <span dir=3D"ltr">&lt;<a href=3D"mailto:guanjunxiong@huawei.com" target=
-=3D"_blank">guanjunxiong@huawei.com</a>&gt;</span> wrote:<br><blockquote cl=
-ass=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;p=
-adding-left:1ex">In the hot-plug storage OS, if we tear down the target sto=
-rage,<br>
-there is a race between the path removing from the path list and<br>
-handling the path-failed udev event. Therefore, we need to check<br>
-null path before handle path-failed event.<br>
-<br>
-Signed-off-by: Guan Junxiong &lt;<a href=3D"mailto:guanjunxiong@huawei.com"=
->guanjunxiong@huawei.com</a>&gt;<br>
----<br>
-=C2=A0multipathd/main.c | 10 ++++++----<br>
-=C2=A01 file changed, 6 insertions(+), 4 deletions(-)<br>
-<br>
-diff --git a/multipathd/main.c b/multipathd/main.c<br>
-index 31ce923..84bb2c5 100644<br>
---- a/multipathd/main.c<br>
-+++ b/multipathd/main.c<br>
-@@ -1073,7 +1073,7 @@ uev_pathfail_check(struct uevent *uev, struct vectors=
- *vecs)<br>
-=C2=A0{<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 char *action =3D NULL, *devt =3D NULL;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 struct path *pp;<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0int r;<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0int r =3D 1;<br>
-<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 action =3D uevent_get_dm_action(uev);<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (!action)<br>
-@@ -1090,15 +1090,17 @@ uev_pathfail_check(struct uevent *uev, struct vecto=
-rs *vecs)<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 lock(&amp;vecs-&gt;lock);<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 pthread_testcancel();<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 pp =3D find_path_by_devt(vecs-&gt;<wbr>pathvec,=
- devt);<br>
-+=C2=A0 =C2=A0 if (!pp)<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0 goto out_lock;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 r =3D io_err_stat_handle_pathfail(<wbr>pp);<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0lock_cleanup_pop(vecs-&gt;lock);<br>
--<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 if (r)<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 condlog(3, &quot;io=
-_err_stat: %s: cannot handle pathfail uevent&quot;,<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 pp-&gt;dev);<br>
-+out_lock:<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0lock_cleanup_pop(vecs-&gt;lock);<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 FREE(devt);<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 FREE(action);<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0return 0;<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0return r;<br>
-=C2=A0out:<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 FREE(action);<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 return 1;<br>
-<span class=3D"HOEnZb"><font color=3D"#888888">--<br>
-2.6.4.windows.1<br>
-<br>
+<div dir=3D"ltr">Applied.<div>Thanks</div></div><div class=3D"gmail_extra">=
+<br><div class=3D"gmail_quote">On Mon, Dec 18, 2017 at 2:49 PM, Martin Wilc=
+k <span dir=3D"ltr">&lt;<a href=3D"mailto:mwilck@suse.com" target=3D"_blank=
+">mwilck@suse.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote=
+" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><=
+div class=3D"HOEnZb"><div class=3D"h5">On Wed, 2017-12-13 at 12:08 -0600, B=
+enjamin Marzinski wrote:<br>
+&gt; With the fix to the features handling code, the multipath device<br>
+&gt; should<br>
+&gt; already be reloaded with the correct value for queue_if_no_path, so<br=
+>
+&gt; there&#39;s no need to go reset it immediately afterwards.<br>
+&gt;<br>
+&gt; Cc: Martin Wilck &lt;<a href=3D"mailto:mwilck@suse.com">mwilck@suse.co=
+m</a>&gt;<br>
+&gt; Signed-off-by: Benjamin Marzinski &lt;<a href=3D"mailto:bmarzins@redha=
+t.com">bmarzins@redhat.com</a>&gt;<br>
+&gt; ---<br>
+&gt;=C2=A0 libmultipath/configure.c | 6 ------<br>
+&gt;=C2=A0 1 file changed, 6 deletions(-)<br>
+&gt;<br>
+&gt; diff --git a/libmultipath/configure.c b/libmultipath/configure.c<br>
+&gt; index bfa5048..6f28f45 100644<br>
+&gt; --- a/libmultipath/configure.c<br>
+&gt; +++ b/libmultipath/configure.c<br>
+&gt; @@ -1351,12 +1351,6 @@ int reload_map(struct vectors *vecs, struct<br>
+&gt; multipath *mpp, int refresh,<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0&quot;for reload map&quot;, mpp-&gt;alias, r);<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0return 1;<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0}<br>
+&gt; -=C2=A0 =C2=A0 =C2=A0if (mpp-&gt;no_path_retry !=3D NO_PATH_RETRY_UNDE=
+F) {<br>
+&gt; -=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0if (mpp-&gt;no_path_r=
+etry =3D=3D NO_PATH_RETRY_FAIL)<br>
+&gt; -=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0dm_queue_if_no_path(mpp-&gt;<wbr>alias, 0);<br>
+&gt; -=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0else<br>
+&gt; -=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0dm_queue_if_no_path(mpp-&gt;<wbr>alias, 1);<br>
+&gt; -=C2=A0 =C2=A0 =C2=A0}<br>
+&gt;<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0return 0;<br>
+&gt;=C2=A0 }<br>
+</div></div>ACK<br>
+<span class=3D"HOEnZb"><font color=3D"#888888"><br>
+--<br>
+Dr. Martin Wilck &lt;<a href=3D"mailto:mwilck@suse.com">mwilck@suse.com</a>=
+&gt;, Tel. <a href=3D"tel:%2B49%20%280%29911%2074053%202107" value=3D"+4991=
+1740532107">+49 (0)911 74053 2107</a><br>
+SUSE Linux GmbH, GF: Felix Imend=C3=B6rffer, Jane Smithard, Graham Norton<b=
+r>
+HRB 21284 (AG N=C3=BCrnberg)<br>
 <br>
 </font></span></blockquote></div><br></div>
 
---001a1143877ac4a2e20562a4c270--
+--001a1147bba01280c10562a4de7e--
 
 
---===============6002535035612902386==
+--===============3922785515317552485==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============6002535035612902386==--
+--===============3922785515317552485==--
