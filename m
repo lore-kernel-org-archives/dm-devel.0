@@ -1,117 +1,78 @@
-From: Ming Lei <ming.lei@redhat.com>
-Subject: Re: [for-4.16 PATCH v6 2/4] block: properly protect the 'queue' kobj
- in blk_unregister_queue
-Date: Sat, 13 Jan 2018 20:57:59 +0800
-Message-ID: <20180113125758.GB10021@ming.t460p>
-References: <20180112150606.6037-1-snitzer@redhat.com>
- <20180112150606.6037-3-snitzer@redhat.com>
- <20180112160352.GA6270@redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 10/14] libmultipath: hwtable: multibus for
+ NetApp NVMe-FC
+Date: Sat, 13 Jan 2018 14:03:49 +0100
+Message-ID: <1515848629.9823.10.camel@suse.com>
+References: <20180112220743.11513-1-mwilck@suse.com>
+	<20180112220743.11513-11-mwilck@suse.com>
+	<0e9bf2af-d2ff-7f02-321c-665258c9f00f@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180112160352.GA6270@redhat.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: axboe@kernel.dk, David Jeffery <djeffery@redhat.com>, Ming Lei <tom.leiming@gmail.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, Bart.VanAssche@wdc.com
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <0e9bf2af-d2ff-7f02-321c-665258c9f00f@gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Jan 12, 2018 at 11:03:52AM -0500, Mike Snitzer wrote:
-> The original commit e9a823fb34a8b (block: fix warning when I/O elevator
-> is changed as request_queue is being removed) is pretty conflated.
-> "conflated" because the resource being protected by q->sysfs_lock isn't
-> the queue_flags (it is the 'queue' kobj).
-> 
-> q->sysfs_lock serializes __elevator_change() (via elv_iosched_store)
-> from racing with blk_unregister_queue():
-> 1) By holding q->sysfs_lock first, __elevator_change() can complete
-> before a racing blk_unregister_queue().
-> 2) Conversely, __elevator_change() is testing for QUEUE_FLAG_REGISTERED
-> in case elv_iosched_store() loses the race with blk_unregister_queue(),
-> it needs a way to know the 'queue' kobj isn't there.
-> 
-> Expand the scope of blk_unregister_queue()'s q->sysfs_lock use so it is
-> held until after the 'queue' kobj is removed.
-> 
-> To do so blk_mq_unregister_dev() must not also take q->sysfs_lock.  So
-> rename __blk_mq_unregister_dev() to blk_mq_unregister_dev().
-> 
-> Also, blk_unregister_queue() should use q->queue_lock to protect against
-> any concurrent writes to q->queue_flags -- even though chances are the
-> queue is being cleaned up so no concurrent writes are likely.
-> 
-> Fixes: e9a823fb34a8b ("block: fix warning when I/O elevator is changed as request_queue is being removed")
-> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-> ---
->  block/blk-mq-sysfs.c |  9 +--------
->  block/blk-sysfs.c    | 13 ++++++++++---
->  2 files changed, 11 insertions(+), 11 deletions(-)
-> 
-> v6: blk_mq_unregister_dev now requires q->sysfs_lock be held, Ming: I am
-> not seeing any lockdep complaints with this.  I've tested bio-based,
-> blk-mq and old .request_fn request-based.
-> 
-> diff --git a/block/blk-mq-sysfs.c b/block/blk-mq-sysfs.c
-> index 79969c3c234f..a54b4b070f1c 100644
-> --- a/block/blk-mq-sysfs.c
-> +++ b/block/blk-mq-sysfs.c
-> @@ -248,7 +248,7 @@ static int blk_mq_register_hctx(struct blk_mq_hw_ctx *hctx)
->  	return ret;
->  }
->  
-> -static void __blk_mq_unregister_dev(struct device *dev, struct request_queue *q)
-> +void blk_mq_unregister_dev(struct device *dev, struct request_queue *q)
->  {
->  	struct blk_mq_hw_ctx *hctx;
->  	int i;
-> @@ -265,13 +265,6 @@ static void __blk_mq_unregister_dev(struct device *dev, struct request_queue *q)
->  	q->mq_sysfs_init_done = false;
->  }
->  
-> -void blk_mq_unregister_dev(struct device *dev, struct request_queue *q)
-> -{
-> -	mutex_lock(&q->sysfs_lock);
-> -	__blk_mq_unregister_dev(dev, q);
-> -	mutex_unlock(&q->sysfs_lock);
-> -}
-> -
->  void blk_mq_hctx_kobj_init(struct blk_mq_hw_ctx *hctx)
->  {
->  	kobject_init(&hctx->kobj, &blk_mq_hw_ktype);
-> diff --git a/block/blk-sysfs.c b/block/blk-sysfs.c
-> index 870484eaed1f..9272452ff456 100644
-> --- a/block/blk-sysfs.c
-> +++ b/block/blk-sysfs.c
-> @@ -929,12 +929,17 @@ void blk_unregister_queue(struct gendisk *disk)
->  	if (WARN_ON(!q))
->  		return;
->  
-> +	/*
-> +	 * Protect against the 'queue' kobj being accessed
-> +	 * while/after it is removed.
-> +	 */
->  	mutex_lock(&q->sysfs_lock);
-> -	queue_flag_clear_unlocked(QUEUE_FLAG_REGISTERED, q);
-> -	mutex_unlock(&q->sysfs_lock);
->  
-> -	wbt_exit(q);
-> +	spin_lock_irq(q->queue_lock);
-> +	queue_flag_clear(QUEUE_FLAG_REGISTERED, q);
-> +	spin_unlock_irq(q->queue_lock);
->  
-> +	wbt_exit(q);
->  
->  	if (q->mq_ops)
->  		blk_mq_unregister_dev(disk_to_dev(disk), q);
-> @@ -946,4 +951,6 @@ void blk_unregister_queue(struct gendisk *disk)
->  	kobject_del(&q->kobj);
->  	blk_trace_remove_sysfs(disk_to_dev(disk));
->  	kobject_put(&disk_to_dev(disk)->kobj);
-> +
-> +	mutex_unlock(&q->sysfs_lock);
->  }
-
-Reviewed-by: Ming Lei <ming.lei@redhat.com>
-
--- 
-Ming
+T24gU2F0LCAyMDE4LTAxLTEzIGF0IDAwOjQyICswMTAwLCBYb3NlIFZhenF1ZXogUGVyZXogd3Jv
+dGU6Cj4gT24gMDEvMTIvMjAxOCAxMTowNyBQTSwgTWFydGluIFdpbGNrIHdyb3RlOgo+IAo+ID4g
+VXNlIG11bHRpYnVzIHBvbGljeSBmb3IgTmV0QXBwIE5WTWUtRkMgbmFtZXNwYWNlIGNvbnRyb2xs
+ZXJzLgo+ID4gCj4gPiBTaWduZWQtb2ZmLWJ5OiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNv
+bT4KPiA+IC0tLQo+ID4gIGxpYm11bHRpcGF0aC9od3RhYmxlLmMgfCAxMyArKysrKysrKysrKysr
+Cj4gPiAgMSBmaWxlIGNoYW5nZWQsIDEzIGluc2VydGlvbnMoKykKPiA+IAo+ID4gZGlmZiAtLWdp
+dCBhL2xpYm11bHRpcGF0aC9od3RhYmxlLmMgYi9saWJtdWx0aXBhdGgvaHd0YWJsZS5jCj4gPiBp
+bmRleCA0MGM0NzI0ZmNkMWIuLmJhZTI4MGM4MzVlNiAxMDA2NDQKPiA+IC0tLSBhL2xpYm11bHRp
+cGF0aC9od3RhYmxlLmMKPiA+ICsrKyBiL2xpYm11bHRpcGF0aC9od3RhYmxlLmMKPiA+IEBAIC0x
+MTQyLDYgKzExNDIsMTkgQEAgc3RhdGljIHN0cnVjdCBod2VudHJ5IGRlZmF1bHRfaHdbXSA9IHsK
+PiA+ICAJCS5jaGVja2VyX25hbWUgID0gTk9ORSwKPiA+ICAJCS5yZXRhaW5faHdoYW5kbGVyID0g
+UkVUQUlOX0hXSEFORExFUl9PRkYsCj4gPiAgCX0sCj4gPiArCS8qCj4gPiArCSAqIE5ldEFwcCBO
+Vk1lLUZDIG5hbWVzcGFjZSBkZXZpY2VzOiBNVUxUSUJVUyBwcmVmZXJyZWQKPiA+ICsJICoKPiA+
+ICsJICogVGhlIHRhYmxlIGlzIHNlYXJjaGVkIGJhY2t3YXJkcywgc28gcGxhY2UgdGhpcyBhZnRl
+cgo+ID4gZ2VuZXJpYyBOVk1lCj4gCj4gVG9vIHRyaWNreS4KClNvcnJ5PyBUaGlzIGlzIGp1c3Qg
+dXRpbGl6aW5nIHRoZSBsb2dpYyB3ZSd2ZSBpbXBsZW1lbnRlZCBpbiBmaW5kX2h3ZSgpCnRvIGxl
+dCB1c2VyLXNwZWNpZmllZCBlbnRyaWVzIG92ZXJyaWRlIGJ1aWx0LWluIG9uZXMuIE5vdGhpbmcg
+InRyaWNreSIKYWJvdXQgaXQuIFBsZWFzZSByZWFkIHRoZSBjb2RlLiBJIGp1c3QgYWRkZWQgdGhh
+dCBjb21tZW50IHRoZXJlIGJlY2F1c2UKdGhlIHdheSBsaWJtdWx0aXBhdGggaGFuZGxlcyB0aGlz
+IChnZW5lcmljIGVudHJpZXMgZmlyc3QsIHNwZWNpZmljCmxhdGVyKSBpcyBhIGJpdCB1bnVzdWFs
+IC0gY2FzdWFsIHJlYWRlcnMgbWlnaHQgdGhpbmsgdGhlIG9yZGVyaW5nIGlzCndyb25nLCB3aGlj
+aCBpdCBpcyBub3QuCgo+IAo+ID4gKwkgKi8KPiA+ICsJewo+ID4gKwkJLnZlbmRvcgkgICAgICAg
+PSAiTlZNRSIsCj4gPiArCQkucHJvZHVjdCAgICAgICA9ICIoTmV0QXBwIHwpT05UQVAgQ29udHJv
+bGxlcikiLAo+IAo+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIF5e
+IElzIHRoaXMgY29ycmVjdD8KCldoYXQgZG8geW91IG1lYW4/IEl0J3MgY29ycmVjdCBwb3NpeCBy
+ZWdleHAgc3ludGF4LiBBbmQgQUZBSUsgaXQncyBhbHNvCnRoZSBjb3JyZWN0IGV4cHJlc3Npb24g
+dG8gaWRlbnRpZnkgdGhlIGNvbnRyb2xsZXJzIGluIHF1ZXN0aW9uLgoKPiA+ICsJCS51aWRfYXR0
+cmlidXRlID0gIklEX1dXTiIsCj4gPiArCQkuY2hlY2tlcl9uYW1lICA9IE5PTkUsCj4gPiArCQku
+cGdwb2xpY3kgICAgICA9IE1VTFRJQlVTLAo+ID4gKwkJLnJldGFpbl9od2hhbmRsZXIgPSBSRVRB
+SU5fSFdIQU5ETEVSX09GRiwKPiA+ICsJfSwKPiAKPiBQbGFjZSBpdCBpbnNpZGUgTmV0QXBwIHZl
+bmRvciBlbnRyeSwgYW5kIHJlbW92ZToKPiAgICAgICAgIC8qCj4gICAgICAgICAgKiBHZW5lcmlj
+IE5WTWUgZGV2aWNlcwo+ICAgICAgICAgICovCj4gICAgICAgICB7Cj4gICAgICAgICAgICAgICAg
+IC52ZW5kb3IgICAgICAgID0gIk5WTUUiLAo+ICAgICAgICAgICAgICAgICAucHJvZHVjdCAgICAg
+ICA9ICIuKiIsCj4gICAgICAgICAgICAgICAgIC51aWRfYXR0cmlidXRlID0gIklEX1dXTiIsCj4g
+ICAgICAgICAgICAgICAgIC5jaGVja2VyX25hbWUgID0gTk9ORSwKPiAgICAgICAgICAgICAgICAg
+LnJldGFpbl9od2hhbmRsZXIgPSBSRVRBSU5fSFdIQU5ETEVSX09GRiwKPiAgICAgICAgIH0sCgpU
+aGF0IHdvbid0IHdvcmsuIFRoZSBOZXRBcHAgdmVuZG9yIGVudHJ5IHVzZXMgJy52ZW5kb3IgPSAi
+TkVUQVBQIicsCndoaWxlIHRoaXMgZGV2aWNlIGhhcyAnLnZlbmRvciA9ICJOVk1FIicuIAoKQW5k
+IHNvcnJ5IGFnYWluLCB0aGUgZ2VuZXJpYyBlbnRyeSBuZWVkcyB0byBzdGF5IGluIHBsYWNlLiBB
+bGwgTlZNZQpjb250cm9sbGVycyB3ZSBrbm93IGV4cGVjdCB0byBiZSBjb25maWd1cmVkIHdpdGgg
+dGhlIGRlZmF1bHQgImZhaWxvdmVyIgpwb2xpY3kuIFRoZSAiT05UQVAgY29udHJvbGxlciIgaXMg
+dGhlIGZpcnN0IGV4Y2VwdGlvbiB0byB0aGlzIHJ1bGUuCk1vcmUgbWF5IGJlIGFkZGVkIGxhdGVy
+LiBBcyBleHBsYWluZWQgZWFybGllciwgYmVjYXVzZSBvZiB0aGUgYmFja3dhcmQtCnNlYXJjaCBs
+b2dpYyBpbiBmaW5kX2h3ZSgpLCBzcGVjaWZpYyBlbnRyaWVzIG5lZWQgdG8gYmUgbGlzdGVkICph
+ZnRlcioKZ2VuZXJpYyBlbnRyaWVzLgoKSWYgaXQncyBpbXBvcnRhbnQgZm9yIHlvdSB0byBoYXZl
+IHRoaXMgTmV0YXBwIHNwZWNpZmljIGVudHJ5IGluIHRoZQpzZWN0aW9uIGNvbW1lbnRlZCAiTmV0
+QXBwIjogdGhhdCBjYW4gYmUgZG9uZSwgaWYgd2UgbW92ZSB0aGUgZ2VuZXJpYwpOVk1lIGVudHJ5
+IHRvIHRoZSB0b3Agb2YgaHd0YWJsZS5jLiBJIHBlcnNvbmFsbHkgZG9uJ3QgY2FyZS4gSSAKCk1h
+cnRpbgoKCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAo
+MCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIs
+IEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgot
+LQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5y
+ZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
