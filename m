@@ -1,8 +1,7 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 18/20] libmultipath: path latency: log
-	threshold with p2
-Date: Sat, 13 Jan 2018 22:19:36 +0100
-Message-ID: <20180113211938.31552-19-mwilck@suse.com>
+Subject: [PATCH v2 10/20] multipath -C: decrease log level
+Date: Sat, 13 Jan 2018 22:19:28 +0100
+Message-ID: <20180113211938.31552-11-mwilck@suse.com>
 References: <20180113211938.31552-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,24 +21,25 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com, Xo
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-This is not a critical error. It just means that the path in
-question will have low priority (rightly so, if it has >100s latency).
+Avoid that the positive case ("usable paths found") spams the
+syslog on systems with many LUNs.
 ---
- libmultipath/prioritizers/path_latency.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ multipath/main.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/prioritizers/path_latency.c b/libmultipath/prioritizers/path_latency.c
-index b8c5bc7c50a4..ce5c95dd7075 100644
---- a/libmultipath/prioritizers/path_latency.c
-+++ b/libmultipath/prioritizers/path_latency.c
-@@ -299,7 +299,7 @@ int getprio(struct path *pp, char *args, unsigned int timeout)
- 			(long long)pow(base_num, lg_avglatency));
- 
- 	if (lg_avglatency > lg_maxavglatency) {
--		pp_pl_log(0,
-+		pp_pl_log(2,
- 			  "%s: average latency (%lld us) is outside the thresold (%lld us)",
- 			  pp->dev, (long long)pow(base_num, lg_avglatency),
- 			  (long long)MAX_AVG_LATENCY);
+diff --git a/multipath/main.c b/multipath/main.c
+index 25162a0e9a7c..52bf1658bbca 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -325,7 +325,8 @@ static int check_usable_paths(struct config *conf,
+ 		}
+ 	}
+ found:
+-	condlog(2, "%s:%s usable paths found", devpath, r == 0 ? "" : " no");
++	condlog(r == 0 ? 3 : 2, "%s:%s usable paths found",
++		devpath, r == 0 ? "" : " no");
+ free:
+ 	FREE(mapname);
+ 	free_multipath(mpp, FREE_PATHS);
 -- 
 2.15.1
