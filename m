@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 09/20] libmultipath: hwtable: multibus for
-	NetApp NVMe-FC
-Date: Sat, 13 Jan 2018 22:19:27 +0100
-Message-ID: <20180113211938.31552-10-mwilck@suse.com>
+Subject: [PATCH v2 11/20] kpartx.rules: fix by-id/scsi-* for
+	user_friendly_names
+Date: Sat, 13 Jan 2018 22:19:29 +0100
+Message-ID: <20180113211938.31552-12-mwilck@suse.com>
 References: <20180113211938.31552-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,78 +22,84 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com, Xo
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Use multibus policy for NetApp NVMe-FC namespace controllers.
-The search logic in find_hwe() looks for vendor/product matches backwards, and
-quits if a match is found. Therefore specific sub-entries of a generic entry
-have to be listed below the generic ones. Therefore, pull the generic NVME
-entry with ".*" product name match on top. The NetApp-specific one is put
-into the NetApp section. This way, more vendor-specific exceptions for NVME
-may be added later.
+With user_friendly names (or generally, with aliases), the udev
+rules create /dev/disk/by-id/scsi-${ALIAS} rather than
+/dev/disk/by-id/scsi-${ID_SERIAL}. Fix that.
 ---
- libmultipath/hwtable.c | 37 +++++++++++++++++++++++++++----------
- 1 file changed, 27 insertions(+), 10 deletions(-)
+ kpartx/dm-parts.rules       | 4 ++--
+ kpartx/kpartx_id            | 8 +++++++-
+ multipath/11-dm-mpath.rules | 3 ++-
+ 3 files changed, 11 insertions(+), 4 deletions(-)
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 448effe3c859..1cde60a6a41d 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -77,6 +77,20 @@
- #endif
+diff --git a/kpartx/dm-parts.rules b/kpartx/dm-parts.rules
+index 235642fd9ae3..b48b67c809d5 100644
+--- a/kpartx/dm-parts.rules
++++ b/kpartx/dm-parts.rules
+@@ -31,8 +31,8 @@ ENV{DM_UDEV_LOW_PRIORITY_FLAG}!="1", OPTIONS+="link_priority=50"
+ IMPORT{program}=="kpartx_id %M %m $env{DM_UUID}"
  
- static struct hwentry default_hw[] = {
-+       /*
-+	* Generic NVMe devices
-+	*
-+	* Due to the parsing logic in find_hwe(), generic entries
-+	* have to be put on top of this list, and more specific ones
-+	* below.
-+	*/
-+	{
-+		.vendor        = "NVME",
-+		.product       = ".*",
-+		.uid_attribute = "ID_WWN",
-+		.checker_name  = NONE,
-+		.retain_hwhandler = RETAIN_HWHANDLER_OFF,
-+	},
- 	/*
- 	 * Apple
- 	 *
-@@ -666,6 +680,19 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = MULTIBUS,
- 		.no_path_retry = 24,
- 	},
-+	/*
-+	 * NetApp NVMe-FC namespace devices: MULTIBUS preferred
-+	 *
-+	 * The table is searched backwards, so place this after generic NVMe
-+	 */
-+	{
-+		.vendor	       = "NVME",
-+		.product       = "(NetApp |)ONTAP Controller)",
-+		.uid_attribute = "ID_WWN",
-+		.checker_name  = NONE,
-+		.pgpolicy      = MULTIBUS,
-+		.retain_hwhandler = RETAIN_HWHANDLER_OFF,
-+	},
- 	/*
- 	 * Nexenta
- 	 *
-@@ -1133,16 +1160,6 @@ static struct hwentry default_hw[] = {
- 		.prio_name     = PRIO_ALUA,
- 		.no_path_retry = 30,
- 	},
--	/*
--	 * Generic NVMe devices
--	 */
--	{
--		.vendor        = "NVME",
--		.product       = ".*",
--		.uid_attribute = "ID_WWN",
--		.checker_name  = NONE,
--		.retain_hwhandler = RETAIN_HWHANDLER_OFF,
--	},
- 	/*
- 	 * Dot Hill Systems - Seagate Technology
- 	 */
+ # DM_TYPE only has a reasonable value for partitions on multipath.
+-ENV{DM_UUID}=="*-mpath-*", ENV{DM_TYPE}=="?*" \
+-	SYMLINK+="disk/by-id/$env{DM_TYPE}-$env{DM_NAME}"
++ENV{DM_UUID}=="*-mpath-*", ENV{DM_TYPE}=="?*", ENV{DM_SERIAL}=="?*" \
++	SYMLINK+="disk/by-id/$env{DM_TYPE}-$env{DM_SERIAL}-part$env{DM_PART}"
+ ENV{DM_WWN}=="?*", ENV{DM_PART}=="?*", \
+ 	SYMLINK+="disk/by-id/wwn-$env{DM_WWN}-part$env{DM_PART}"
+ 
+diff --git a/kpartx/kpartx_id b/kpartx/kpartx_id
+index b7f802d9b455..c45db2f80489 100755
+--- a/kpartx/kpartx_id
++++ b/kpartx/kpartx_id
+@@ -42,6 +42,7 @@ fi
+ dmuuid=${UUID#*-}
+ dmtbl=${UUID%%-*}
+ dmpart=${dmtbl#part}
++dmserial=
+ # kpartx types are 'part<num>'
+ if [ "$dmpart" = "$dmtbl" ] ; then
+     dmpart=
+@@ -59,10 +60,12 @@ if [ "$dmtbl" = "part" ] ; then
+     case "$dmuuid" in
+ 	mpath-*)
+ 	    dmdeps=$($DMSETUP deps -u $dmuuid)
++	    dmserial=${dmuuid#mpath-}
+ 	    ;;
+     esac
+ elif [ "$dmtbl" = "mpath" ] ; then
+     dmname="$dmuuid"
++    dmserial="$dmuuid"
+     # We need the dependencies of the table to figure out the type
+     dmdeps=$($DMSETUP deps -u $UUID)
+ fi
+@@ -84,11 +87,14 @@ if [ -n "$dmdeps" ] ; then
+ 	    ;;
+ 	*)
+ 	    echo "DM_TYPE=scsi"
+-	    echo "DM_WWN=0x${dmname#?}"
++	    echo "DM_WWN=0x${dmserial#?}"
+ 	    ;;
+     esac
+ else
+     echo "DM_TYPE=raid"
+ fi
++if [[ $dmserial ]]; then
++    echo "DM_SERIAL=$dmserial"
++fi
+ 
+ exit 0
+diff --git a/multipath/11-dm-mpath.rules b/multipath/11-dm-mpath.rules
+index 91d805877f0c..03ac5da22957 100644
+--- a/multipath/11-dm-mpath.rules
++++ b/multipath/11-dm-mpath.rules
+@@ -100,7 +100,8 @@ ENV{DM_UDEV_LOW_PRIORITY_FLAG}!="1", OPTIONS+="link_priority=50"
+ TEST=="/usr/lib/udev/kpartx_id", \
+ 	IMPORT{program}=="kpartx_id %M %m $env{DM_UUID}"
+ 
+-ENV{DM_TYPE}=="?*", SYMLINK+="disk/by-id/$env{DM_TYPE}-$env{DM_NAME}"
++ENV{DM_TYPE}=="?*", ENV{DM_SERIAL}=="?*", \
++	SYMLINK+="disk/by-id/$env{DM_TYPE}-$env{DM_SERIAL}"
+ ENV{DM_WWN}=="?*", SYMLINK+="disk/by-id/wwn-$env{DM_WWN}"
+ 
+ LABEL="mpath_end"
 -- 
 2.15.1
