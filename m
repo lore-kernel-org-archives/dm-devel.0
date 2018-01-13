@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 01/20] libmultipath: don't try to set
-	hwhandler if it is retained
-Date: Sat, 13 Jan 2018 22:19:19 +0100
-Message-ID: <20180113211938.31552-2-mwilck@suse.com>
+Subject: [PATCH v2 06/20] libmultipath: sgio_get_vpd: add page
+	argument
+Date: Sat, 13 Jan 2018 22:19:24 +0100
+Message-ID: <20180113211938.31552-7-mwilck@suse.com>
 References: <20180113211938.31552-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,101 +22,42 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com, Xo
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Setting a device handler only works if retain_attached_hw_handler
-is 'no', or if the kernel didn't auto-assign a handler. If this
-is not the case, don't even attempt to set a different handler.
-
-This requires reading the sysfs "dh_state" path attribute.
+get_vpd_sgio() assumes to be able to send different VPD inquires.
+This requires passing the pg argument to sgio_get_vpd().
 ---
- libmultipath/configure.c |  8 +++++++-
- libmultipath/propsel.c   | 35 +++++++++++++++++++++++++++++++++++
- 2 files changed, 42 insertions(+), 1 deletion(-)
+ libmultipath/discovery.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 22c11a26c284..13e14cc25fff 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -277,15 +277,21 @@ int setup_map(struct multipath *mpp, char *params, int params_size)
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index c53d3aab897f..43631c46f21e 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -837,7 +837,7 @@ detect_alua(struct path * pp, struct config *conf)
+ #define DEFAULT_SGIO_LEN 254
  
- 	/*
- 	 * properties selectors
-+	 *
-+	 * Ordering matters for some properties:
-+	 * - features after no_path_retry and retain_hwhandler
-+	 * - hwhandler after retain_hwhandler
-+	 * No guarantee that this list is complete, check code in
-+	 * propsel.c if in doubt.
- 	 */
- 	conf = get_multipath_config();
- 	select_pgfailback(conf, mpp);
- 	select_pgpolicy(conf, mpp);
- 	select_selector(conf, mpp);
--	select_hwhandler(conf, mpp);
- 	select_no_path_retry(conf, mpp);
- 	select_retain_hwhandler(conf, mpp);
- 	select_features(conf, mpp);
-+	select_hwhandler(conf, mpp);
- 	select_rr_weight(conf, mpp);
- 	select_minio(conf, mpp);
- 	select_mode(conf, mpp);
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index be371fcc35bc..4db0913a95a8 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -19,9 +19,11 @@
- #include "discovery.h"
- #include "dict.h"
- #include "util.h"
-+#include "sysfs.h"
- #include "prioritizers/alua_rtpg.h"
- #include "prkey.h"
- #include <inttypes.h>
-+#include <libudev.h>
- 
- pgpolicyfn *pgpolicies[] = {
- 	NULL,
-@@ -353,9 +355,42 @@ out:
- 	return 0;
- }
- 
-+static int get_dh_state(struct path *pp, char *value, size_t value_len)
-+{
-+	struct udev_device *ud;
-+
-+	if (pp->udev == NULL)
-+		return -1;
-+
-+	ud = udev_device_get_parent_with_subsystem_devtype(
-+		pp->udev, "scsi", "scsi_device");
-+	if (ud == NULL)
-+		return -1;
-+
-+	return sysfs_attr_get_value(ud, "dh_state", value, value_len);
-+}
-+
- int select_hwhandler(struct config *conf, struct multipath *mp)
+ static int
+-sgio_get_vpd (unsigned char * buff, int maxlen, int fd)
++sgio_get_vpd (unsigned char * buff, int maxlen, int fd, int pg)
  {
- 	char *origin;
-+	struct path *pp;
-+	/* dh_state is no longer than "detached" */
-+	char handler[12];
-+	char *dh_state;
-+	int i;
-+
-+	dh_state = &handler[2];
-+	if (mp->retain_hwhandler != RETAIN_HWHANDLER_OFF) {
-+		vector_foreach_slot(mp->paths, pp, i) {
-+			if (get_dh_state(pp, dh_state, sizeof(handler) - 2) > 0
-+			    && strcmp(dh_state, "detached")) {
-+				memcpy(handler, "1 ", 2);
-+				mp->hwhandler = handler;
-+				origin = "(setting: retained by kernel driver)";
-+				goto out;
-+			}
-+		}
-+	}
+ 	int len = DEFAULT_SGIO_LEN;
  
- 	mp_set_hwe(hwhandler);
- 	mp_set_conf(hwhandler);
+@@ -846,7 +846,7 @@ sgio_get_vpd (unsigned char * buff, int maxlen, int fd)
+ 		return -1;
+ 	}
+ retry:
+-	if (0 == do_inq(fd, 0, 1, 0x83, buff, len)) {
++	if (0 == do_inq(fd, 0, 1, pg, buff, len)) {
+ 		len = buff[3] + (buff[2] << 8);
+ 		if (len >= maxlen)
+ 			return len;
+@@ -1099,7 +1099,7 @@ get_vpd_sgio (int fd, int pg, char * str, int maxlen)
+ 	unsigned char buff[4096];
+ 
+ 	memset(buff, 0x0, 4096);
+-	if (sgio_get_vpd(buff, 4096, fd) <= 0) {
++	if (sgio_get_vpd(buff, 4096, fd, pg) <= 0) {
+ 		condlog(3, "failed to issue vpd inquiry for pg%02x",
+ 			pg);
+ 		return -errno;
 -- 
 2.15.1
