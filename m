@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 15/20] test-kpartx: add test for mapping
-	without UUID
-Date: Sat, 13 Jan 2018 22:19:33 +0100
-Message-ID: <20180113211938.31552-16-mwilck@suse.com>
+Subject: [PATCH v2 17/20] libmultipath: path latency: fix default
+	base num
+Date: Sat, 13 Jan 2018 22:19:35 +0100
+Message-ID: <20180113211938.31552-18-mwilck@suse.com>
 References: <20180113211938.31552-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,49 +22,28 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com, Xo
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-kpartx shouldn't remove these mappings.
+I don't think anyone can measure latency to 1% accuracy. It's
+better to not even pretend to be able to. 10% should be fine
+even for the most latency-critical environments.
 ---
- kpartx/test-kpartx | 11 ++++++++++-
- 1 file changed, 10 insertions(+), 1 deletion(-)
+ libmultipath/prioritizers/path_latency.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
-diff --git a/kpartx/test-kpartx b/kpartx/test-kpartx
-index 60b3eb231de2..09d15a9458ea 100755
---- a/kpartx/test-kpartx
-+++ b/kpartx/test-kpartx
-@@ -131,7 +131,7 @@ step "create DM devices (spans)"
- # They also serve as DM devices to test partition removal on those.
+diff --git a/libmultipath/prioritizers/path_latency.c b/libmultipath/prioritizers/path_latency.c
+index 9d5397ec1b3a..b8c5bc7c50a4 100644
+--- a/libmultipath/prioritizers/path_latency.c
++++ b/libmultipath/prioritizers/path_latency.c
+@@ -42,8 +42,9 @@
+ #define DEF_IO_NUM		100
  
- TABLE="\
--0 $((SIZE/SECTSIZ-OFFS)) linear $DEV1 $OFFS
-+0 $((SIZE/SECTSIZ-OFFS)) linear $DEV1 $OFFS 
- $((SIZE/SECTSIZ-OFFS)) $((SIZE/SECTSIZ-OFFS)) linear $DEV2 $OFFS"
+ #define MAX_BASE_NUM		10
+-#define MIN_BASE_NUM		1.01
+-#define DEF_BASE_NUM		1.5
++#define MIN_BASE_NUM		1.1
++// This is 10**(1/4). 4 prio steps correspond to a factor of 10.
++#define DEF_BASE_NUM		1.77827941004
  
- SPAN1=kpt
-@@ -142,9 +142,17 @@ push_cleanup 'dmsetup remove -f $SPAN1'
- dmsetup create $SPAN2 <<<"$TABLE"
- push_cleanup 'dmsetup remove -f $SPAN2'
- 
-+# This is a non-kpartx pseudo "partition" mapping
-+USER1=user1
-+push_cleanup 'dmsetup remove -f $USER1'
-+dmsetup create $USER1 <<EOF
-+0 $((SIZE/SECTSIZ-OFFS)) linear $DEV1 $OFFS
-+EOF
-+
- usleep $WAIT_US
- [[ -b /dev/mapper/$SPAN1 ]]
- [[ -b /dev/mapper/$SPAN2 ]]
-+[[ -b /dev/mapper/$USER1 ]]
- 
- step "create vg on $LO3"
- # On the 3rd loop device, we create a VG and an LV
-@@ -290,6 +298,7 @@ pop_cleanup
- # spans should not have been removed
- [[ -b /dev/mapper/$SPAN1 ]]
- [[ -b /dev/mapper/$SPAN2 ]]
-+[[ -b /dev/mapper/$USER1 ]]
- # LVs neither
- [[ -b /dev/mapper/$VG-$LV ]]
- 
+ #define MAX_AVG_LATENCY		100000000.	/* Unit: us */
+ #define MIN_AVG_LATENCY		1.		/* Unit: us */
 -- 
 2.15.1
