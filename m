@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 11/20] kpartx.rules: fix by-id/scsi-* for
-	user_friendly_names
-Date: Sat, 13 Jan 2018 22:19:29 +0100
-Message-ID: <20180113211938.31552-12-mwilck@suse.com>
+Subject: [PATCH v2 16/20] multipathd.service: set
+	TasksMax=infinity
+Date: Sat, 13 Jan 2018 22:19:34 +0100
+Message-ID: <20180113211938.31552-17-mwilck@suse.com>
 References: <20180113211938.31552-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,84 +22,25 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com, Xo
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-With user_friendly names (or generally, with aliases), the udev
-rules create /dev/disk/by-id/scsi-${ALIAS} rather than
-/dev/disk/by-id/scsi-${ID_SERIAL}. Fix that.
+Systemd 228 introduced a global task limit of 512 for system services.
+System 231 changed this to 15% of pid_max, or 4915.
+In particular the one of systemd 228 is too low for multipathd with
+many LUNs. Use TasksMax=infinity to overcome this limitation.
 ---
- kpartx/dm-parts.rules       | 4 ++--
- kpartx/kpartx_id            | 8 +++++++-
- multipath/11-dm-mpath.rules | 3 ++-
- 3 files changed, 11 insertions(+), 4 deletions(-)
+ multipathd/multipathd.service | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/kpartx/dm-parts.rules b/kpartx/dm-parts.rules
-index 235642fd9ae3..b48b67c809d5 100644
---- a/kpartx/dm-parts.rules
-+++ b/kpartx/dm-parts.rules
-@@ -31,8 +31,8 @@ ENV{DM_UDEV_LOW_PRIORITY_FLAG}!="1", OPTIONS+="link_priority=50"
- IMPORT{program}=="kpartx_id %M %m $env{DM_UUID}"
+diff --git a/multipathd/multipathd.service b/multipathd/multipathd.service
+index 0cf99b2f2df5..ba24983ef291 100644
+--- a/multipathd/multipathd.service
++++ b/multipathd/multipathd.service
+@@ -16,6 +16,7 @@ LimitCORE=infinity
+ ExecStartPre=-/sbin/modprobe -a scsi_dh_alua scsi_dh_emc scsi_dh_rdac dm-multipath
+ ExecStart=/sbin/multipathd -d -s
+ ExecReload=/sbin/multipathd reconfigure
++TasksMax=infinity
  
- # DM_TYPE only has a reasonable value for partitions on multipath.
--ENV{DM_UUID}=="*-mpath-*", ENV{DM_TYPE}=="?*" \
--	SYMLINK+="disk/by-id/$env{DM_TYPE}-$env{DM_NAME}"
-+ENV{DM_UUID}=="*-mpath-*", ENV{DM_TYPE}=="?*", ENV{DM_SERIAL}=="?*" \
-+	SYMLINK+="disk/by-id/$env{DM_TYPE}-$env{DM_SERIAL}-part$env{DM_PART}"
- ENV{DM_WWN}=="?*", ENV{DM_PART}=="?*", \
- 	SYMLINK+="disk/by-id/wwn-$env{DM_WWN}-part$env{DM_PART}"
- 
-diff --git a/kpartx/kpartx_id b/kpartx/kpartx_id
-index b7f802d9b455..c45db2f80489 100755
---- a/kpartx/kpartx_id
-+++ b/kpartx/kpartx_id
-@@ -42,6 +42,7 @@ fi
- dmuuid=${UUID#*-}
- dmtbl=${UUID%%-*}
- dmpart=${dmtbl#part}
-+dmserial=
- # kpartx types are 'part<num>'
- if [ "$dmpart" = "$dmtbl" ] ; then
-     dmpart=
-@@ -59,10 +60,12 @@ if [ "$dmtbl" = "part" ] ; then
-     case "$dmuuid" in
- 	mpath-*)
- 	    dmdeps=$($DMSETUP deps -u $dmuuid)
-+	    dmserial=${dmuuid#mpath-}
- 	    ;;
-     esac
- elif [ "$dmtbl" = "mpath" ] ; then
-     dmname="$dmuuid"
-+    dmserial="$dmuuid"
-     # We need the dependencies of the table to figure out the type
-     dmdeps=$($DMSETUP deps -u $UUID)
- fi
-@@ -84,11 +87,14 @@ if [ -n "$dmdeps" ] ; then
- 	    ;;
- 	*)
- 	    echo "DM_TYPE=scsi"
--	    echo "DM_WWN=0x${dmname#?}"
-+	    echo "DM_WWN=0x${dmserial#?}"
- 	    ;;
-     esac
- else
-     echo "DM_TYPE=raid"
- fi
-+if [[ $dmserial ]]; then
-+    echo "DM_SERIAL=$dmserial"
-+fi
- 
- exit 0
-diff --git a/multipath/11-dm-mpath.rules b/multipath/11-dm-mpath.rules
-index 91d805877f0c..03ac5da22957 100644
---- a/multipath/11-dm-mpath.rules
-+++ b/multipath/11-dm-mpath.rules
-@@ -100,7 +100,8 @@ ENV{DM_UDEV_LOW_PRIORITY_FLAG}!="1", OPTIONS+="link_priority=50"
- TEST=="/usr/lib/udev/kpartx_id", \
- 	IMPORT{program}=="kpartx_id %M %m $env{DM_UUID}"
- 
--ENV{DM_TYPE}=="?*", SYMLINK+="disk/by-id/$env{DM_TYPE}-$env{DM_NAME}"
-+ENV{DM_TYPE}=="?*", ENV{DM_SERIAL}=="?*", \
-+	SYMLINK+="disk/by-id/$env{DM_TYPE}-$env{DM_SERIAL}"
- ENV{DM_WWN}=="?*", SYMLINK+="disk/by-id/wwn-$env{DM_WWN}"
- 
- LABEL="mpath_end"
+ [Install]
+ WantedBy=sysinit.target
 -- 
 2.15.1
