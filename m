@@ -1,8 +1,7 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 04/20] libmultipath: fix return code of
-	sysfs_get_timeout
-Date: Sat, 13 Jan 2018 22:19:22 +0100
-Message-ID: <20180113211938.31552-5-mwilck@suse.com>
+Subject: [PATCH v2 03/20] libmultipath: condlog: log to stderr
+Date: Sat, 13 Jan 2018 22:19:21 +0100
+Message-ID: <20180113211938.31552-4-mwilck@suse.com>
 References: <20180113211938.31552-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,25 +21,31 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com, Xo
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-This function should return 1 on success, as the other sysfs_get_XXX
-functions. The callers actually expect this - therefore timeout values
-from sysfs are never used.
----
- libmultipath/discovery.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+Calling 'multipath' might result in various error messages, all
+of which should be directed to stderr.
+Having them intermixed with the actual output on stdout makes
+parsing really hard.
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 4b31ddef23f0..ab7794d8d2e1 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -276,7 +276,7 @@ sysfs_get_timeout(struct path *pp, unsigned int *timeout)
- 	}
- 	*timeout = t;
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ libmultipath/debug.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/libmultipath/debug.c b/libmultipath/debug.c
+index f89b26443ea5..f95a3e5f97f5 100644
+--- a/libmultipath/debug.c
++++ b/libmultipath/debug.c
+@@ -37,9 +37,9 @@ void dlog (int sink, int prio, const char * fmt, ...)
+ 					 "%b %d %H:%M:%S", tb);
+ 				buff[sizeof(buff)-1] = '\0';
  
--	return 0;
-+	return 1;
- }
- 
- int
+-				fprintf(stdout, "%s | ", buff);
++				fprintf(stderr, "%s | ", buff);
+ 			}
+-			vfprintf(stdout, fmt, ap);
++			vfprintf(stderr, fmt, ap);
+ 		}
+ 		else
+ 			log_safe(prio + 3, fmt, ap);
 -- 
 2.15.1
