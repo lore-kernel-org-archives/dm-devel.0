@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 16/20] multipathd.service: set
-	TasksMax=infinity
-Date: Sat, 13 Jan 2018 22:19:34 +0100
-Message-ID: <20180113211938.31552-17-mwilck@suse.com>
+Subject: [PATCH v2 05/20] libmultipath: fix return code of
+	sgio_get_vpd()
+Date: Sat, 13 Jan 2018 22:19:23 +0100
+Message-ID: <20180113211938.31552-6-mwilck@suse.com>
 References: <20180113211938.31552-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,25 +22,24 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com, Xo
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Systemd 228 introduced a global task limit of 512 for system services.
-System 231 changed this to 15% of pid_max, or 4915.
-In particular the one of systemd 228 is too low for multipathd with
-many LUNs. Use TasksMax=infinity to overcome this limitation.
+This function must return the length of data received in success
+case.
 ---
- multipathd/multipathd.service | 1 +
- 1 file changed, 1 insertion(+)
+ libmultipath/discovery.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/multipathd/multipathd.service b/multipathd/multipathd.service
-index 0cf99b2f2df5..ba24983ef291 100644
---- a/multipathd/multipathd.service
-+++ b/multipathd/multipathd.service
-@@ -16,6 +16,7 @@ LimitCORE=infinity
- ExecStartPre=-/sbin/modprobe -a scsi_dh_alua scsi_dh_emc scsi_dh_rdac dm-multipath
- ExecStart=/sbin/multipathd -d -s
- ExecReload=/sbin/multipathd reconfigure
-+TasksMax=infinity
- 
- [Install]
- WantedBy=sysinit.target
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index ab7794d8d2e1..c53d3aab897f 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -852,7 +852,7 @@ retry:
+ 			return len;
+ 		if (len > DEFAULT_SGIO_LEN)
+ 			goto retry;
+-		return 0;
++		return len;
+ 	}
+ 	return -1;
+ }
 -- 
 2.15.1
