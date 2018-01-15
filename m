@@ -1,16 +1,14 @@
-From: Milan Broz <gmazyland@gmail.com>
-Subject: Re: [PATCH] dm crypt: wipe kernel key copy after IV
-	initialization
-Date: Mon, 15 Jan 2018 10:58:12 +0100
-Message-ID: <c8e14ad2-138a-f31e-2d90-cf83e368cc7a@gmail.com>
-References: <1515771032-26247-1-git-send-email-okozina@redhat.com>
-	<1515771032-26247-2-git-send-email-okozina@redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH v2] multipathd: release uxsocket and resource
+ when cancel thread
+Date: Mon, 15 Jan 2018 11:59:13 +0100
+Message-ID: <1516013953.5699.28.camel@suse.com>
+References: <CEB9978CF3252343BE3C67AC9F0086A342957B64@H3CMLB14-EX.srv.huawei-3com.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1515771032-26247-2-git-send-email-okozina@redhat.com>
-Content-Language: en-US
+In-Reply-To: <CEB9978CF3252343BE3C67AC9F0086A342957B64@H3CMLB14-EX.srv.huawei-3com.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,88 +18,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
-Cc: Ondrej Kozina <okozina@redhat.com>, mpatocka@redhat.com
+To: Wuchongyun <wu.chongyun@h3c.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+Cc: Guozhonghua <guozhonghua@h3c.com>, Changwei Ge <ge.changwei@h3c.com>
 List-Id: dm-devel.ids
 
-On 01/12/2018 04:30 PM, Ondrej Kozina wrote:
-> Loading key via kernel keyring service we erase internal
-> key copy immediately after we pass it in crypto layer. This is
-> wrong because IV is initialised later and we use wrong key
-> for the initialization (instead of real key there's just zeroed
-> block).
-> 
-> The bug may cause data corruption if key is loaded via kernel keyring
-> service first and later same crypt device is reactivated using exactly
-> same key in hexbyte representation, or vice versa. The bug (and fix)
-> affects only ciphers using following IVs: essiv, lmk and tcw.
-> 
-> Fixes: c538f6ec9f56 ("dm crypt: add ability to use keys from the kernel
-> key retention service")
-> Signed-off-by: Ondrej Kozina <okozina@redhat.com>
-
-Reviewed-by: Milan Broz <gmazyland@gmail.com>
-
-Mike, this patch should go into 4.15 final.
-
-Actually I think this is the second most serious data corruption fix for dm-crypt
-in the last years (the first one was wonderful RAID readahead bug we fixed "by mistake"
-just by reordering code :-)
-
-Once it is in mainline, we can release cryptsetup2 that disables using of keyring
-for older kernels.
-
-Thanks,
-Milan
-
-
-
-> ---
->  drivers/md/dm-crypt.c | 12 ++++++++----
->  1 file changed, 8 insertions(+), 4 deletions(-)
-> 
-> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-> index 9fc12f5..334b0a3 100644
-> --- a/drivers/md/dm-crypt.c
-> +++ b/drivers/md/dm-crypt.c
-> @@ -2053,9 +2053,6 @@ static int crypt_set_keyring_key(struct crypt_config *cc, const char *key_string
->  
->  	ret = crypt_setkey(cc);
->  
-> -	/* wipe the kernel key payload copy in each case */
-> -	memset(cc->key, 0, cc->key_size * sizeof(u8));
-> -
->  	if (!ret) {
->  		set_bit(DM_CRYPT_KEY_VALID, &cc->flags);
->  		kzfree(cc->key_string);
-> @@ -2523,6 +2520,10 @@ static int crypt_ctr_cipher(struct dm_target *ti, char *cipher_in, char *key)
->  		}
->  	}
->  
-> +	/* wipe the kernel key payload copy */
-> +	if (cc->key_string)
-> +		memset(cc->key, 0, cc->key_size * sizeof(u8));
-> +
->  	return ret;
->  }
->  
-> @@ -2961,6 +2962,9 @@ static int crypt_message(struct dm_target *ti, unsigned argc, char **argv)
->  				return ret;
->  			if (cc->iv_gen_ops && cc->iv_gen_ops->init)
->  				ret = cc->iv_gen_ops->init(cc);
-> +			/* wipe the kernel key payload copy */
-> +			if (cc->key_string)
-> +				memset(cc->key, 0, cc->key_size * sizeof(u8));
->  			return ret;
->  		}
->  		if (argc == 2 && !strcasecmp(argv[1], "wipe")) {
-> @@ -3007,7 +3011,7 @@ static void crypt_io_hints(struct dm_target *ti, struct queue_limits *limits)
->  
->  static struct target_type crypt_target = {
->  	.name   = "crypt",
-> -	.version = {1, 18, 0},
-> +	.version = {1, 18, 1},
->  	.module = THIS_MODULE,
->  	.ctr    = crypt_ctr,
->  	.dtr    = crypt_dtr,
-> 
+T24gTW9uLCAyMDE4LTAxLTE1IGF0IDA5OjI1ICswMDAwLCBXdWNob25neXVuIHdyb3RlOgo+IEhp
+IE1hcnRpbiwgCj4gVGhhbmsgeW91IGZvciB5b3VyIHJlcGx5ISAgQmVsb3cgaXMgdGhlIG5ldyBw
+YXRjaCBhY2NvcmRpbmcgdG8geW91cgo+IGNvbW1lbnRzLCBwbGVhc2UgaGVscCB0byByZXZpZXcg
+dGhpcyBwYXRjaCwgdGhhbmtzLgoKQWxtb3N0IHRoZXJlIDotKQoKKwo+ICsJcHRocmVhZF9tdXRl
+eF9sb2NrKCZjbGllbnRfbG9jayk7Cj4gKwlsaXN0X2Zvcl9lYWNoX2VudHJ5X3NhZmUoY2xpZW50
+X2xvb3AsIGNsaWVudF90bXAsICZjbGllbnRzLAo+IG5vZGUpIHsKPiArCQlsaXN0X2RlbF9pbml0
+KCZjbGllbnRfbG9vcC0+bm9kZSk7Cj4gKwkJY2xvc2UoY2xpZW50X2xvb3AtPmZkKTsKPiArCQlj
+bGllbnRfbG9vcC0+ZmQgPSAtMTsKPiArCQlGUkVFKGNsaWVudF9sb29wKTsKPiArCX0KPiArCXB0
+aHJlYWRfbXV0ZXhfdW5sb2NrKCZjbGllbnRfbG9jayk7Cj4gCgpGb3IgdGhlIHNha2Ugb2YgZnV0
+dXJlIGNvZGUgcmV3b3JrIGFuZCBhdm9pZGluZyBjb2RlIGR1cGxpY2F0aW9uLCBjb3VsZAp5b3Ug
+cGxlYXNlIHB1dCB0aGUgY29udGVudCBpbiAgYSBmdW5jdGlvbiBjYWxsZWQgX19kZWFkX2NsaWVu
+dCgpIChvcgpzaW1pbGFyKSwgcGxhY2UgdGhhdCBmdW5jdGlvbiByaWdodCBiZWZvcmUgZGVhZF9j
+bGllbnQoKSwgY2hhbmdlCmRlYWRfY2xpZW50KCkgdG8gY2FsbCBpdCwgYW5kIHRoZW4gY2FsbCBp
+dCBmcm9tIGhlcmUgYXMgd2VsbD8KClNvcnJ5LCBJIHNob3VsZCBoYXZlIHN1Z2dlc3RlZCB0aGF0
+IGluIG15IGZpcnN0IHJldmlldyBhbHJlYWR5LgoKTWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxj
+ayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51
+eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9y
+dG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRt
+LWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZv
+L2RtLWRldmVs
