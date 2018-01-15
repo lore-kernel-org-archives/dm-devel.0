@@ -1,45 +1,51 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [GIT PULL] block changes to improve device mapper for 4.16
-Date: Mon, 15 Jan 2018 08:54:25 -0700
-Message-ID: <3ac9e975-f1ec-7215-1b53-03b4daa9576e@kernel.dk>
-References: <20180115025913.GA20727@redhat.com>
- <36b17d56-bd2b-220a-08c1-8bd44d33f854@kernel.dk>
- <20180115155220.GA16814@redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: multipath-tools 0.7.4 failure to remove device
+Date: Mon, 15 Jan 2018 17:12:10 +0100
+Message-ID: <1516032730.5699.38.camel@suse.com>
+References: <20180112083833.apsybil4ux4d2y32@jak-x230>
+	<1515789339.3409.33.camel@suse.com>
+	<20180112214700.ljxlypo5nar6oh3m@jak-x230>
+	<1515795481.9139.8.camel@suse.com>
+	<20180115154424.fcjuudt7phxrks6q@jak-x230>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20180115155220.GA16814@redhat.com>
-Content-Language: en-US
-Sender: linux-block-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Ming Lei <ming.lei@redhat.com>, Bart Van Assche <bart.vanassche@wdc.com>, dm-devel@redhat.com, linux-block@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20180115154424.fcjuudt7phxrks6q@jak-x230>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Julian Andres Klode <julian.klode@canonical.com>
+Cc: Guan Junxiong <guanjunxiong@huawei.com>, development mailing list <dm-devel@redhat.com>, Device-mapper
 List-Id: dm-devel.ids
 
-On 1/15/18 8:52 AM, Mike Snitzer wrote:
-> On Mon, Jan 15 2018 at 10:33am -0500,
-> Jens Axboe <axboe@kernel.dk> wrote:
-> 
->> On 1/14/18 7:59 PM, Mike Snitzer wrote:
-> ...
->>> Ming Lei (3):
->>>       blk-mq: move actual issue into __blk_mq_issue_req helper
->>
->> I don't like this patch at all - it's a 10 line function (if that)
->> that ends up with three outputs, two of them hidden in passed
->> in pointers. On top of that, a function that is named
->> __blk_mq_issue_req() and returns bool, you would logically expect
->> a 'true' return to mean that it succeeded. This is the opposite.
->>
->> Not strongly opposed to the rest.
-> 
-> OK, I'll have a closer look at how to clean it up (and also get with
-> Ming).
-> 
-> In the meantime, you can either cherry-pick my first 4 patches or feel
-> free to use this to pull them in:
-
-I took 1-3 initially, added 4 now as well.
-
--- 
-Jens Axboe
+T24gTW9uLCAyMDE4LTAxLTE1IGF0IDE2OjQ0ICswMTAwLCBKdWxpYW4gQW5kcmVzIEtsb2RlIHdy
+b3RlOgo+IAo+IEl0IHdhcyB5b3VyIGNvbW1pdCB0aGF0IG1hZGUgaXQgaW1wbHkgLW4gdGhhdCBj
+YXVzZWQgdGhlIHRlc3QgZmFpbHVyZQo+IDopCj4gSSB1bmRlcnN0YW5kIHlvdXIgcG9zaXRpb24g
+b24gdGhhdCwgYnV0IHJldmVydGVkIGl0IGZvciBVYnVudHUsCj4gYmVjYXVzZSwKPiB3aGlsZSBp
+dCBtaWdodCBiZSBzb21ld2hhdCBicm9rZW4sIGl0J3MgYXQgbGVhc3QgdGhlIHNhbWUgbGV2ZWwg
+b2YKPiBicm9rZW4KPiBhcyBiZWZvcmUuCgpJJ2QgbGlrZSB0byB1bmRlcnN0YW5kIHRoYXQgYmV0
+dGVyLiBXaHkgd291bGQgdGhpcyBicmVhayBib290PwoKSWYgdGhlIHJvb3QgZGV2aWNlIHdhcyBh
+bHJlYWR5IGluIHRoZSAid3dpZHMiIGZpbGUsIGl0IHdvdWxkbid0IGJlCiJuZXciLCBhbmQgdGh1
+cyAiLW4iIHNob3VsZCBoYXZlIG5vIGVmZmVjdC4gCgpJZiB0aGUgcm9vdCBkZXZpY2UgaXMgYSAi
+cmVhbCIgbXVsdGlwYXRoIGRldmljZSB3aXRoID49MiBwYXRocywgdGhlcmUncwpvZiBjb3Vyc2Ug
+YSBkaWZmZXJlbmNlIHdpdGggYW5kIHdpdGhvdXQgIi1uIi4gQnV0IGluIHRoYXQgY2FzZSwgSSdk
+CmV4cGVjdCB0aGUgZGV2aWNlIHRvIGJlIGxpc3RlZCBpbiAid3dpZHMiLCBiZWNhdXNlIGl0IHNo
+b3VsZCBoYXZlIGJlZW4KZGV0ZWN0ZWQgYXMgbXVsdGlwYXRoIGRldmljZSBkdXJpbmcgaW5zdGFs
+bGF0aW9uIGFscmVhZHkuCgpGaW5hbGx5LCBpZiB0aGUgcm9vdCBkZXZpY2UgaXMgbm90IGEgcmVh
+bCBtdWx0aXBhdGggZGV2aWNlICgxIHBhdGgKb25seSksIGFuZCBpcyBub3QgaW4gInd3aWRzIiwg
+bXkgcGF0Y2ggd291bGQgY2F1c2UgaXQgbm90IHRvIGJlCm11bHRpcGF0aGVkLCB3aGljaCBpcyB0
+aGUgUmlnaHQgVGhpbmcgdG9kbyBBRkFJQ1MuCgpUaGUgc2FtZSByZWFzb25pbmcgYXBwbGllcyB0
+byBvdGhlciBkZXZpY2VzIHJlcXVpcmVkIGZvciBib290aW5nCmJlc2lkZXMgdGhlIHJvb3QgRlMg
+KHN3YXAgb3Igd2hhdGV2ZXIpLgoKV2hhdCBhbSBJIG1pc3NpbmcgaGVyZT8KCk1hcnRpbgoKLS0g
+CkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1
+MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0
+aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVs
+IG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20v
+bWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
