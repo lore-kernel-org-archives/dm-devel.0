@@ -1,41 +1,77 @@
-From: Julian Andres Klode <julian.klode@canonical.com>
-Subject: Re: multipath-tools 0.7.4 failure to remove device
-Date: Mon, 15 Jan 2018 16:44:24 +0100
-Message-ID: <20180115154424.fcjuudt7phxrks6q@jak-x230>
-References: <20180112083833.apsybil4ux4d2y32@jak-x230>
-	<1515789339.3409.33.camel@suse.com>
-	<20180112214700.ljxlypo5nar6oh3m@jak-x230>
-	<1515795481.9139.8.camel@suse.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [GIT PULL] block changes to improve device mapper for 4.16
+Date: Mon, 15 Jan 2018 10:52:21 -0500
+Message-ID: <20180115155220.GA16814@redhat.com>
+References: <20180115025913.GA20727@redhat.com>
+ <36b17d56-bd2b-220a-08c1-8bd44d33f854@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1515795481.9139.8.camel@suse.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: Device-mapper development mailing list <dm-devel@redhat.com>, Guan Junxiong <guanjunxiong@huawei.com>
+In-Reply-To: <36b17d56-bd2b-220a-08c1-8bd44d33f854@kernel.dk>
+Sender: linux-block-owner@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Ming Lei <ming.lei@redhat.com>, Bart Van Assche <bart.vanassche@wdc.com>, dm-devel@redhat.com, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Fri, Jan 12, 2018 at 11:18:01PM +0100, Martin Wilck wrote:
-> "find_multipaths" is not a silver bullet to kill off multipath-related
-> boot problems. It has advantages and disadvantages, depending on the
-> use case. Anyway, I'm not aware of general problems with it in the
-> later multipath versions.
+On Mon, Jan 15 2018 at 10:33am -0500,
+Jens Axboe <axboe@kernel.dk> wrote:
 
-It was your commit that made it imply -n that caused the test failure :)
-I understand your position on that, but reverted it for Ubuntu, because,
-while it might be somewhat broken, it's at least the same level of broken
-as before.
+> On 1/14/18 7:59 PM, Mike Snitzer wrote:
+...
+> > Ming Lei (3):
+> >       blk-mq: move actual issue into __blk_mq_issue_req helper
+> 
+> I don't like this patch at all - it's a 10 line function (if that)
+> that ends up with three outputs, two of them hidden in passed
+> in pointers. On top of that, a function that is named
+> __blk_mq_issue_req() and returns bool, you would logically expect
+> a 'true' return to mean that it succeeded. This is the opposite.
+> 
+> Not strongly opposed to the rest.
 
--- 
-debian developer - deb.li/jak | jak-linux.org - free software dev
-ubuntu core developer                              i speak de, en
+OK, I'll have a closer look at how to clean it up (and also get with
+Ming).
+
+In the meantime, you can either cherry-pick my first 4 patches or feel
+free to use this to pull them in:
+
+The following changes since commit bf9ae8c5325c0070d0ec81a849bba8d156f65993:
+
+  blk-mq: fix bad clear of RQF_MQ_INFLIGHT in blk_mq_ct_ctx_init() (2018-01-14 10:46:24 -0700)
+
+are available in the Git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-block-4.16/dm-changes-1
+
+for you to fetch changes up to d0cc27da2b04351b3cb52afeb99ceca7b9f91f3b:
+
+  dm: fix incomplete request_queue initialization (2018-01-14 12:59:59 -0500)
+
+----------------------------------------------------------------
+- Small correctness fix in del_gendisk() if GENHD_FL_HIDDEN is used.
+
+- Cleanup blk_unregister_queue() to more precisely protect against
+  concurrent sysfs changes, blk_mq_unregister_dev() now requires caller
+  to hold q->sysfslock (blk_unregister_queue is only caller).
+
+- Introduce add_disk() variant, add_disk_no_queue_reg(), that allows the
+  gendisk to be registered but the associated disk->queue's
+  blk_register_queue() is left for the driver to do once its
+  request_queue is fully initialized.  Fixes long-standing DM
+  request_queue initialization issues.
+
+----------------------------------------------------------------
+Mike Snitzer (4):
+      block: only bdi_unregister() in del_gendisk() if !GENHD_FL_HIDDEN
+      block: properly protect the 'queue' kobj in blk_unregister_queue
+      block: allow gendisk's request_queue registration to be deferred
+      dm: fix incomplete request_queue initialization
+
+ block/blk-mq-sysfs.c  |  9 +--------
+ block/blk-sysfs.c     | 18 +++++++++++++++---
+ block/genhd.c         | 23 +++++++++++++++++++----
+ drivers/md/dm-rq.c    |  9 ---------
+ drivers/md/dm.c       | 11 ++++++++++-
+ include/linux/genhd.h |  5 +++++
+ 6 files changed, 50 insertions(+), 25 deletions(-)
