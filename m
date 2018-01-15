@@ -1,86 +1,49 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [GIT PULL] block changes to improve device mapper for 4.16
-Date: Sun, 14 Jan 2018 21:59:13 -0500
-Message-ID: <20180115025913.GA20727@redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH v2 00/20] Various multipath-tools fixes
+Date: Mon, 15 Jan 2018 09:05:23 +0100
+Message-ID: <a27197db-1940-e752-8645-7e4dedeb935e@suse.de>
+References: <20180113211938.31552-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-Sender: linux-block-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>
-Cc: Ming Lei <ming.lei@redhat.com>, Bart Van Assche <bart.vanassche@wdc.com>, dm-devel@redhat.com, linux-block@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20180113211938.31552-1-mwilck@suse.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-Hi Jens,
-
-I prepared this pull request in the hope that it may help you review and
-stage these changes for 4.16.
-
-I went over Ming's changes again to refine the headers and code comments
-for clarity to help ease review and inclussion.
-
-I've done extensive testing of the changes in this pull request in
-combination with all the dm-4.16 changes I'll be sending to Linus, using
-this tree (which gets pulled into linux-next, I wanted some coverage):
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/log/?h=for-next
-I'll obviously drop these changes from dm's linux-next once you pick
-them up.
-
-FYI, this dm-4.16 commit addresses the concerns Bart raised last week
-against Ming's dm-mpath changes:
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.16&id=7a9d12664a183c4a1e2fa86b0a9206006b95138e
-
-The following changes since commit bf9ae8c5325c0070d0ec81a849bba8d156f65993:
-
-  blk-mq: fix bad clear of RQF_MQ_INFLIGHT in blk_mq_ct_ctx_init() (2018-01-14 10:46:24 -0700)
-
-are available in the Git repository at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-block-4.16/dm
-
-for you to fetch changes up to 0e94dfab56071a7afd0a9de9b8f6a0535148fb36:
-
-  blk-mq: issue request directly for blk_insert_cloned_request (2018-01-14 13:00:02 -0500)
-
-Please pull, thanks!
-Mike
-
-----------------------------------------------------------------
-- Small correctness fix in del_gendisk() if GENHD_FL_HIDDEN is used.
-
-- Cleanup blk_unregister_queue() to more precisely protect against
-  concurrent sysfs changes, blk_mq_unregister_dev() now requires caller
-  to hold q->sysfslock (blk_unregister_queue is only caller).
-
-- Introduce add_disk() variant, add_disk_no_queue_reg(), that allows the
-  gendisk to be registered but the associated disk->queue's
-  blk_register_queue() is left for the driver to do once its
-  request_queue is fully initialized.  Fixes long-standing DM
-  request_queue initialization issues.
-
-- Ming's blk-mq improvements to blk_insert_cloned_request(), which is
-  used exclusively by request-based DM's blk-mq mode, that enable
-  substantial dm-mpath sequential IO performance improvements.
-
-----------------------------------------------------------------
-Mike Snitzer (4):
-      block: only bdi_unregister() in del_gendisk() if !GENHD_FL_HIDDEN
-      block: properly protect the 'queue' kobj in blk_unregister_queue
-      block: allow gendisk's request_queue registration to be deferred
-      dm: fix incomplete request_queue initialization
-
-Ming Lei (3):
-      blk-mq: move actual issue into __blk_mq_issue_req helper
-      blk-mq: return dispatch result from blk_mq_try_issue_directly
-      blk-mq: issue request directly for blk_insert_cloned_request
-
- block/blk-core.c      |  3 +-
- block/blk-mq-sysfs.c  |  9 +-----
- block/blk-mq.c        | 86 +++++++++++++++++++++++++++++++++++++++------------
- block/blk-mq.h        |  3 ++
- block/blk-sysfs.c     | 18 +++++++++--
- block/genhd.c         | 23 +++++++++++---
- drivers/md/dm-rq.c    | 28 ++++++++++-------
- drivers/md/dm.c       | 11 ++++++-
- include/linux/genhd.h |  5 +++
- 9 files changed, 136 insertions(+), 50 deletions(-)
+T24gMDEvMTMvMjAxOCAxMDoxOSBQTSwgTWFydGluIFdpbGNrIHdyb3RlOgo+IEhpIENocmlzdG9w
+aGUsCj4gCj4gaGVyZSBpcyB2MiBvZiBteSBsYXN0IHNlcmllcywgcmViYXNlZCBvbnRvIHlvdXIg
+bGF0ZXN0IG1lcmdlcy4KPiAKPiBDaGFuZ2VzIHdydCB2MToKPiAKPiAgIC0gZHJvcHBlZCBhbHJl
+YWR5IG1lcmdlZCBDTE9DS19NT05PVE9OSUMgcGF0Y2gKPiAgIC0gYWRkZWQgYSBjb21waWxlciB3
+YXJuaW5nIGZpeAo+ICAgLSBpbXByb3ZlZCBwbGFjZW1lbnQgb2YgTmV0QXBwIGVudHJ5IGluIGh3
+dGFibGUgKFhvc2UgVmF6cXVleiBQZXJleiwgMDkvMjApCj4gICAtIGFkZGVkIHR3byBTVVNFIHBh
+dGNoZXMgdGhhdCB3ZXJlIG1pc3NpbmcgaW4gdGhlIHByZXZpb3VzIHNlcmllcwo+ICAgICAoMTUv
+MjAsIDE2LzIwOyBYb3NlIFZhenF1ZXogUGVyZXopCj4gICAtIGFkZGVkIHRoZSByZS1zdWJtaXNz
+aW9uIG9mIG15IHBhdGggbGF0ZW5jeSBwcmlvIGZpeGVzIGZyb20gTm92ZW1iZXIgKDE3LTIwLzIw
+KQo+ICAgLSBmaXhlZCB3cm9uZyBjYWxjdWxhdGlvbiBvZiBzdGFuZGFyZCBkZXZpYXRpb24gKEd1
+YW4gSnVueGlvbmcsIDE5LzIwKQo+IAo+IEkgYWRkZWQgMTYvMjAgYXQgWG9zZSdzIHJlcXVlc3Qs
+IGtub3dpbmcgdGhhdCBpdCBtYXkgYmUgYSBiaXQgbW9yZQo+IGNvbnRyb3ZlcnNpYWwgdGhhbiB0
+aGUgcmVzdC4gQXQgU1VTRSB3ZSd2ZSBjdXJyZW50bHkgYWRkZWQgaXQgb25seSBmb3IKPiBTTEUt
+MTIgU1AyLCBiZWNhdXNlIFNMRVMxMi1TUDIgR0EgaGFkIERlZmF1bHRUYXNrTWF4PTUxMiwgd2hp
+Y2ggaXMgbXVjaAo+IHRvbyBsb3cgZm9yIG11bHRpcGF0aGQuIEN1cnJlbnQgc3lzdGVtZCB2ZXJz
+aW9ucyBoYXZlIGluY3JlYXNlZCB0aGlzIHRvCj4gNDkxNSwgd2hpY2ggd291bGQgYmUgc3VmZmlj
+aWVudCBmb3IgbW9zdCBidXQgbm90IGFsbCBtdWx0aXBhdGgKPiBkZXBsb3ltZW50cyAoaHR0cHM6
+Ly9naXRodWIuY29tL3N5c3RlbWQvc3lzdGVtZC9pc3N1ZXMvMzIxMSkuCj4gCj4gUmVnYXJkcywK
+PiBNYXJ0aW4KPiAKUGF0Y2hlcyBsb29rIGdvb2QuCkZvciB0aGlzIHNlcmllczoKClJldmlld2Vk
+LWJ5OiBIYW5uZXMgUmVpbmVja2UgPGhhcmVAc3VzZS5jb20+CgpDaGVlcnMsCgpIYW5uZXMKLS0g
+CkRyLiBIYW5uZXMgUmVpbmVja2UJCSAgIFRlYW1sZWFkIFN0b3JhZ2UgJiBOZXR3b3JraW5nCmhh
+cmVAc3VzZS5kZQkJCSAgICAgICAgICAgICAgICs0OSA5MTEgNzQwNTMgNjg4ClNVU0UgTElOVVgg
+R21iSCwgTWF4ZmVsZHN0ci4gNSwgOTA0MDkgTsO8cm5iZXJnCkdGOiBGLiBJbWVuZMO2cmZmZXIs
+IEouIFNtaXRoYXJkLCBKLiBHdWlsZCwgRC4gVXBtYW55dSwgRy4gTm9ydG9uCkhSQiAyMTI4NCAo
+QUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5j
+b20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
