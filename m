@@ -1,13 +1,16 @@
-From: Wuchongyun <wu.chongyun@h3c.com>
-Subject: [PATCH v2] multipathd: release uxsocket and resource
- when cancel thread
-Date: Mon, 15 Jan 2018 09:25:39 +0000
-Message-ID: <CEB9978CF3252343BE3C67AC9F0086A342957B64@H3CMLB14-EX.srv.huawei-3com.com>
+From: Milan Broz <gmazyland@gmail.com>
+Subject: Re: [PATCH] dm crypt: wipe kernel key copy after IV
+	initialization
+Date: Mon, 15 Jan 2018 10:58:12 +0100
+Message-ID: <c8e14ad2-138a-f31e-2d90-cf83e368cc7a@gmail.com>
+References: <1515771032-26247-1-git-send-email-okozina@redhat.com>
+	<1515771032-26247-2-git-send-email-okozina@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: zh-CN
+In-Reply-To: <1515771032-26247-2-git-send-email-okozina@redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,112 +20,88 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
-Cc: Guozhonghua <guozhonghua@h3c.com>, Changwei Ge <ge.changwei@h3c.com>
+To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+Cc: Ondrej Kozina <okozina@redhat.com>, mpatocka@redhat.com
 List-Id: dm-devel.ids
 
-SGkgTWFydGluLCAKVGhhbmsgeW91IGZvciB5b3VyIHJlcGx5ISAgQmVsb3cgaXMgdGhlIG5ldyBw
-YXRjaCBhY2NvcmRpbmcgdG8geW91ciBjb21tZW50cywgcGxlYXNlIGhlbHAgdG8gcmV2aWV3IHRo
-aXMgcGF0Y2gsIHRoYW5rcy4KCklzc3VlIGRlc2NyaXB0aW9uOiB3ZSBtZWV0IHRoaXMgaXNzdWU6
-IHdoZW4gbXVsdGlwYXRoZCBpbml0aWxhemUgYW5kIGNhbGwgdXhzb2NrX2xpc3RlbiB0byBjcmVh
-dGUgdW5peCBkb21haW4gc29ja2V0LCBidXQgcmV0dXJuIC0xIGFuZCB0aGUgZXJybm8gaXMgOTgg
-YW5kIHRoZW4gdGhlIHV4c29ja19saXN0ZW4gcmV0dXJuIG51bGwuIEFmdGVyIG11bHRpcGF0aGQg
-c3RhcnR1cCB3ZSBjYW4ndCByZWNlaXZlIGFueSB1c2VyJ3MgbXVsdGlwYXRoZCBjb21tYW5kcyB0
-byBmaW5pc2ggdGhlIG5ldyBtdWx0aXBhdGggY3JlYXRpb24gb3IgYW55IG9wZXJhdGlvbnMgYW55
-IG1vcmUhCgpXZSBmb3VuZCB0aGF0IHV4bHNuciB0aHJlYWQncyBjbGVhbnVwIGZ1bmN0aW9uIG5v
-dCBjbG9zZSB0aGUgc29ja2V0cyBhbHNvIG5vdCByZWxlYXNlIHRoZSBjbGllbnRzIHdoZW4gY2Fu
-Y2VsIHRocmVhZCwgdGhlIGRvbWFpbiBzb2NrZXQgd2lsbCBiZSByZWxlYXNlIGJ5IHRoZSBzeXN0
-ZW0uIEluIGFueSBzcGVjaWFsIGVudmlyb25tZW50IGxpa2UgdGhlIG1hY2hpbmUncyBsb2FkIGlz
-IHZlcnkgaGVhdnkgb3IgYW55IHNpdHVhdGlvbnMsIHRoZSBzeXN0ZW0gbWF5IG5vdCBjbG9zZSB0
-aGUgb2xkIGRvbWFpbiBzb2NrZXQgd2hlbiB3ZSB0cnkgdG8gY3JlYXRlIGFuZCBiaW5kIHRoZSBu
-ZXcgZG9tYWluIHNvY2tldCBtYXkgcmV0dXJuIGVycm5vOjk4KEFkZHJlc3MgYWxyZWFkeSBpbiB1
-c2UpLgoKQW5kIGFsc28gd2UgbWFrZSBzb21lIGV4cGVyaW1lbnRzOgppbiB1eHNvY2tfY2xlYW51
-cCBpZiB3ZSBjbG9zZSB0aGUgdXhfc29jayBmaXJzdCBhbmQgdGhlbiBpbW1kZWRpYXRlbHkgY2Fs
-bCB1eF9zb2NrZXRfbGlzdGVuIHRvIGNyZWF0ZSBuZXcgdXhfc29jayBhbmQgaW5pdGlhbGl6YXRp
-b24gd2lsbCBiZSBPSzsgaWYgd2UgZG9uJ3QgY2xvc2UgdGhlIHV4X3NvY2sgYW5kIGNhbGwgdXhf
-c29ja2V0X2xpc3RlbiB3aWxsIHJldHVybgotMSBhbmQgZXJybm8gPSA5OC4KClNvIHdlIGJlbGll
-dmUgdGhhdCBjbG9zZSB1eHNvY2tldCBhbmQgcmVsZWFzZSBjbGllbnRzICB3aGVuIGNhbmNlbCB0
-aHJlYWQgY2FuIG1ha2Ugc3VyZSBvZiB0aGF0IG5ldyBzdGFydGluZyBtdWx0aXBhdGhkIHRocmVh
-ZCBjYW4gY3JlYXRlIG5ldyB1eHNvY2tldCBzdWNjZXNzZnVsbHksIGFsc28gY2FuIHJlY2VpdmUg
-bXVsdGlwYXRoZCBjb21tYW5kcyBwcm9wZXJseS4gQW5kIHRoaXMgcGF0aCBjYW4gZml4IGNsaWVu
-dHMnIG1lbW9yeSBsZWFrIHRvby4KClNpZ25lZC1vZmYtYnk6IENob25neXVuIFd1IDx3dS5jaG9u
-Z3l1bkBoM2MuY29tPgotLS0KIG11bHRpcGF0aGQvdXhsc25yLmMgfCAgIDE3ICsrKysrKysrKysr
-KysrKystCiAxIGZpbGUgY2hhbmdlZCwgMTYgaW5zZXJ0aW9ucygrKSwgMSBkZWxldGlvbigtKQoK
-ZGlmZiAtLWdpdCBhL211bHRpcGF0aGQvdXhsc25yLmMgYi9tdWx0aXBhdGhkL3V4bHNuci5jIGlu
-ZGV4IDk4YWMyNWEuLmNhNmJmNWIgMTAwNjQ0Ci0tLSBhL211bHRpcGF0aGQvdXhsc25yLmMKKysr
-IGIvbXVsdGlwYXRoZC91eGxzbnIuYwpAQCAtMTM5LDYgKzEzOSwyMSBAQCB2b2lkIGNoZWNrX3Rp
-bWVvdXQoc3RydWN0IHRpbWVzcGVjIHN0YXJ0X3RpbWUsIGNoYXIgKmluYnVmLAogCiB2b2lkIHV4
-c29ja19jbGVhbnVwKHZvaWQgKmFyZykKIHsKKwlzdHJ1Y3QgY2xpZW50ICpjbGllbnRfbG9vcDsK
-KwlzdHJ1Y3QgY2xpZW50ICpjbGllbnRfdG1wOworCWludCB1eF9zb2NrID0gKGludClhcmc7CisK
-KwlwdGhyZWFkX211dGV4X2xvY2soJmNsaWVudF9sb2NrKTsKKwlsaXN0X2Zvcl9lYWNoX2VudHJ5
-X3NhZmUoY2xpZW50X2xvb3AsIGNsaWVudF90bXAsICZjbGllbnRzLCBub2RlKSB7CisJCWxpc3Rf
-ZGVsX2luaXQoJmNsaWVudF9sb29wLT5ub2RlKTsKKwkJY2xvc2UoY2xpZW50X2xvb3AtPmZkKTsK
-KwkJY2xpZW50X2xvb3AtPmZkID0gLTE7CisJCUZSRUUoY2xpZW50X2xvb3ApOworCX0KKwlwdGhy
-ZWFkX211dGV4X3VubG9jaygmY2xpZW50X2xvY2spOworCisJY2xvc2UodXhfc29jayk7CisKIAlj
-bGlfZXhpdCgpOwogCWZyZWVfcG9sbHMoKTsKIH0KQEAgLTE2Miw3ICsxNzcsNyBAQCB2b2lkICog
-dXhzb2NrX2xpc3Rlbih1eHNvY2tfdHJpZ2dlcl9mbiB1eHNvY2tfdHJpZ2dlciwgdm9pZCAqIHRy
-aWdnZXJfZGF0YSkKIAkJcmV0dXJuIE5VTEw7CiAJfQogCi0JcHRocmVhZF9jbGVhbnVwX3B1c2go
-dXhzb2NrX2NsZWFudXAsIE5VTEwpOworCXB0aHJlYWRfY2xlYW51cF9wdXNoKHV4c29ja19jbGVh
-bnVwLCAodm9pZCAqKXV4X3NvY2spOwogCiAJY29uZGxvZygzLCAidXhzb2NrOiBzdGFydHVwIGxp
-c3RlbmVyIik7CiAJcG9sbHMgPSAoc3RydWN0IHBvbGxmZCAqKU1BTExPQygoTUlOX1BPTExTICsg
-MSkgKiBzaXplb2Yoc3RydWN0IHBvbGxmZCkpOwotLQoxLjcuOS41CgpUaGFua3MsCkNob25neXVu
-IFd1CgoKLS0tLS1vcmlnaW5hbC0tLS0tCnNlbmRlcjogTWFydGluIFdpbGNrIFttYWlsdG86bXdp
-bGNrQHN1c2UuY29tXSA6IDIwMTgtMS0xNCBhdCAzOjUwCnJlY2VpdmVyOiB3dWNob25neXVuIChD
-bG91ZCkgPHd1LmNob25neXVuQGgzYy5jb20+OyBkbS1kZXZlbEByZWRoYXQuY29tCmNjOiBndW96
-aG9uZ2h1YSAoQ2xvdWQpIDxndW96aG9uZ2h1YUBoM2MuY29tPjsgZ2VjaGFuZ3dlaSAoQ2xvdWQp
-IDxnZS5jaGFuZ3dlaUBoM2MuY29tPgpzdWJqZWN0OiBSZTogW2RtLWRldmVsXSBtdWx0aXBhdGgt
-dG9vbHM6IHJlbGVhc2UgdXhzb2NrZXQgYW5kIHJlc291cmNlIHdoZW4gY2FuY2VsIHRocmVhZAoK
-T24gV2VkLCAyMDE3LTExLTI5IGF0IDA5OjM1ICswMDAwLCBXdWNob25neXVuIHdyb3RlOgo+IEhp
-ICwKPiAKPiBJc3N1ZSBkZXNjcmlwdGlvbjogCj4gd2hlbiBtdWx0aXBhdGhkIGluaXRpbGF6ZSBh
-bmQgY2FsbCB1eHNvY2tfbGlzdGVuIHRvIGNyZWF0ZSB1bml4IGRvbWFpbiAKPiBzb2NrZXQsIGJ1
-dCByZXR1cm4gLTEgYW5kIHRoZSBlcnJubyBpcyA5OCBhbmQgdGhlbiB0aGUgdXhzb2NrX2xpc3Rl
-biAKPiByZXR1cm4gbnVsbC4gQWZ0ZXIgbXVsdGlwYXRoZCBzdGFydHVwIHdlIGNhbid0IHJlY2Vp
-dmUgYW55IG11bHRpcGF0aGQgCj4gY29tbWFuZHMgdG8gZmluaXNoIHRoZSBuZXcgbXVsdGlwYXRo
-IGNyZWF0aW9uIGFueW1vcmUhCj4gCj4gV2UgZm91bmQgdGhhdCB1eGxzbnIgdGhyZWFkJ3MgY2xl
-YW51cCBmdW5jdGlvbiBub3QgY2xvc2UgdGhlIHNvY2tldHMgCj4gYW5kIGFsc28gbm90IHJlbGVh
-c2UgdGhlIGNsaWVudHMgd2hlbiBjYW5jZWwgdGhyZWFkLCB0aGUgZG9tYWluIHNvY2tldCAKPiB3
-aWxsIGJlIHJlbGVhc2UgYnkgdGhlIHN5c3RlbS4gSW4gYW55IHNwZWNpYWwgZW52aXJvbm1lbnQg
-bGlrZSAKPiB0aGVtYWNoaW5lJ3MgbG9hZCBpcyB2ZXJ5IGhlYXZ5LCB0aGUgc3lzdGVtIG1heSBu
-b3QgY2xvc2UgdGhlIG9sZCAKPiBkb21haW4gc29ja2V0IHdoZW4gd2UgdHJ5IHRvIGNyZWF0ZSBh
-bmQgYmluZCB0aGUgZG9tYWluIHNvY2tldCBtYXkgCj4gcmV0dXJuIDk4IChBZGRyZXNzIGFscmVh
-ZHkgaW4gdXNlKS4KPiAKPiBBbmQgYWxzbyB3ZSBtYWtlIHNvbWUgZXhwZXJpbWVudHM6Cj4gSW4g
-dXhzb2NrX2NsZWFudXAgaWYgd2UgY2xvc2UgdGhlIHV4X3NvY2sgZmlyc3QgYW5kIHRoZW4gaW1t
-ZGVkaWF0ZWx5IAo+IGNhbGwgdXhfc29ja2V0X2xpc3RlbiB0byBjcmVhdGUgbmV3IHV4X3NvY2sg
-YW5kIGluaXRpYWxpemF0aW9uIHdpbGwgYmUgCj4gT0s7IElmIHdlIGRvbid0IGNsb3NlIHRoZSB1
-eF9zb2NrIGFuZCBjYWxsIHV4X3NvY2tldF9saXN0ZW4gd2lsbCAKPiByZXR1cm4gLTEgYW5kIGVy
-cm5vID0gOTguCj4gCj4gU28gd2UgYmVsaWV2ZSB0aGF0IGNsb3NlIHV4c29ja2V0IGFuZCByZWxl
-YXNlIGNsaWVudHMgd2hlbiBjYW5jZWwgCj4gdGhyZWFkIG1pZ2h0IG1ha2luZyBuZXcgc3RhcnRp
-bmcgbXVsdGlwYXRoZCB0aHJlYWQgY2FuIGNyZWF0ZSB1eHNvY2tldCAKPiBzdWNjZXNzZnVsbHks
-IGFuZCBtaWdodCByZWNlaXZpbmcgbXVsdGlwYXRoZCBjb21tYW5kcyBwcm9wZXJseS4KPiBBbmQg
-YWxzbyB0aGlzIHBhdGggY2FuIGZpeCBjbGllbnRzJyBtZW1vcnkgbGVhay4KCkkgdGhpbmsgdGhp
-cyBpcyBjb3JyZWN0LiBCdXQgSSBoYXZlIHNvbWUgcmVtYXJrcywgc2VlIGJlbG93LgoKPiAKPiBU
-aGFua3MsCj4gQ2hvbmd5dW4KPiAKPiBTaWduZWQtb2ZmLWJ5OiB3dSBjaG9uZ3l1biA8d3UuY2hv
-bmd5dW5AaDNjLmNvbT4KPiAtLS0KPiBtdWx0aXBhdGhkL3V4bHNuci5jIHwgICAxNiArKysrKysr
-KysrKysrKystCj4gMSBmaWxlIGNoYW5nZWQsIDE1IGluc2VydGlvbnMoKyksIDEgZGVsZXRpb24o
-LSkKPiAKPiBkaWZmIC0tZ2l0IGEvbXVsdGlwYXRoZC91eGxzbnIuYyBiL211bHRpcGF0aGQvdXhs
-c25yLmMgaW5kZXggCj4gOThhYzI1YS4uZGU2OTUwYiAxMDA2NDQKPiAtLS0gYS9tdWx0aXBhdGhk
-L3V4bHNuci5jCj4gKysrIGIvbXVsdGlwYXRoZC91eGxzbnIuYwo+IEBAIC0xMzksNiArMTM5LDIw
-IEBAIHZvaWQgY2hlY2tfdGltZW91dChzdHJ1Y3QgdGltZXNwZWMgc3RhcnRfdGltZSwgCj4gY2hh
-ciAqaW5idWYsCj4gCj4gIHZvaWQgdXhzb2NrX2NsZWFudXAodm9pZCAqYXJnKQo+IHsKPiArICAg
-ICAgIHN0cnVjdCBjbGllbnQgKmNsaWVudF9sb29wOwo+ICsgICAgICAgc3RydWN0IGNsaWVudCAq
-Y2xpZW50X3RtcDsKPiArICAgICAgIGludCB1eF9zb2NrID0gKGludClhcmc7Cj4gKwo+ICsgICAg
-ICAgLyoKPiArICAgICAgICogbm8gbmVlZCB0byBwcm90ZWN0IGNsaWVudHMsIAo+ICsgICAgICAg
-KiBiZWNhdXNlIGFsbCBvcGVyYXRpb25zIHRvIGNsaWVudHMgYXJlIG9ubHkgZnJvbSBvbmUKPiB0
-aHJlYWQodXhsc25yKQo+ICsgICAgICAgKi8KPiArICAgICAgIGxpc3RfZm9yX2VhY2hfZW50cnlf
-c2FmZShjbGllbnRfbG9vcCwgY2xpZW50X3RtcCwgJmNsaWVudHMsCj4gbm9kZSkgewo+ICsgICAg
-ICAgICAgICAgICAgZGVhZF9jbGllbnQoY2xpZW50X2xvb3ApOwoKVGhpcyB0YWtlcyBhbmQgcmVs
-ZWFzZXMgdGhlIGNsaWVudF9sb2NrIGluIGV2ZXJ5IGxvb3AgaXRlcmF0aW9uLgpJJ2QgcmF0aGVy
-IHRha2UgdGhlIGxvY2ssIGxvb3Agb3ZlciBhbGwgY2xpZW50cyBmcmVlaW5nIHRoZSByZXNvdXJj
-ZXMsIGFuZCByZWxhc2UuCgo+ICsgICAgICAgfQo+ICsKPiArICAgICAgIGNsb3NlKHV4X3NvY2sp
-Owo+ICsKPiAgICAgICAgY2xpX2V4aXQoKTsKPiAgICAgICAgZnJlZV9wb2xscygpOwo+IH0KPiBA
-QCAtMTYyLDcgKzE3Niw3IEBAIHZvaWQgKiB1eHNvY2tfbGlzdGVuKHV4c29ja190cmlnZ2VyX2Zu
-IAo+IHV4c29ja190cmlnZ2VyLCB2b2lkICogdHJpZ2dlcl9kYXRhKQo+ICAgICAgICAgICAgICAg
-ICByZXR1cm4gTlVMTDsKPiAgICAgICAgfQo+IAo+IC0gICAgICAgIHB0aHJlYWRfY2xlYW51cF9w
-dXNoKHV4c29ja19jbGVhbnVwLCBOVUxMKTsKPiArICAgICAgIHB0aHJlYWRfY2xlYW51cF9wdXNo
-KHV4c29ja19jbGVhbnVwLCAodm9pZCopdXhfc29jayk7CgpUaGlzIHBhdGNoIGhhcyB3aGl0ZXNw
-YWNlIGlzc3Vlcy4KClJlZ2FyZHMsCk1hcnRpbgoKLS0KRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNr
-QHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcgU1VTRSBMaW51eCBHbWJILCBH
-RjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uIEhSQiAy
-MTI4NCAoQUcgTsO8cm5iZXJnKQoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEBy
-ZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZl
-bA==
+On 01/12/2018 04:30 PM, Ondrej Kozina wrote:
+> Loading key via kernel keyring service we erase internal
+> key copy immediately after we pass it in crypto layer. This is
+> wrong because IV is initialised later and we use wrong key
+> for the initialization (instead of real key there's just zeroed
+> block).
+> 
+> The bug may cause data corruption if key is loaded via kernel keyring
+> service first and later same crypt device is reactivated using exactly
+> same key in hexbyte representation, or vice versa. The bug (and fix)
+> affects only ciphers using following IVs: essiv, lmk and tcw.
+> 
+> Fixes: c538f6ec9f56 ("dm crypt: add ability to use keys from the kernel
+> key retention service")
+> Signed-off-by: Ondrej Kozina <okozina@redhat.com>
+
+Reviewed-by: Milan Broz <gmazyland@gmail.com>
+
+Mike, this patch should go into 4.15 final.
+
+Actually I think this is the second most serious data corruption fix for dm-crypt
+in the last years (the first one was wonderful RAID readahead bug we fixed "by mistake"
+just by reordering code :-)
+
+Once it is in mainline, we can release cryptsetup2 that disables using of keyring
+for older kernels.
+
+Thanks,
+Milan
+
+
+
+> ---
+>  drivers/md/dm-crypt.c | 12 ++++++++----
+>  1 file changed, 8 insertions(+), 4 deletions(-)
+> 
+> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+> index 9fc12f5..334b0a3 100644
+> --- a/drivers/md/dm-crypt.c
+> +++ b/drivers/md/dm-crypt.c
+> @@ -2053,9 +2053,6 @@ static int crypt_set_keyring_key(struct crypt_config *cc, const char *key_string
+>  
+>  	ret = crypt_setkey(cc);
+>  
+> -	/* wipe the kernel key payload copy in each case */
+> -	memset(cc->key, 0, cc->key_size * sizeof(u8));
+> -
+>  	if (!ret) {
+>  		set_bit(DM_CRYPT_KEY_VALID, &cc->flags);
+>  		kzfree(cc->key_string);
+> @@ -2523,6 +2520,10 @@ static int crypt_ctr_cipher(struct dm_target *ti, char *cipher_in, char *key)
+>  		}
+>  	}
+>  
+> +	/* wipe the kernel key payload copy */
+> +	if (cc->key_string)
+> +		memset(cc->key, 0, cc->key_size * sizeof(u8));
+> +
+>  	return ret;
+>  }
+>  
+> @@ -2961,6 +2962,9 @@ static int crypt_message(struct dm_target *ti, unsigned argc, char **argv)
+>  				return ret;
+>  			if (cc->iv_gen_ops && cc->iv_gen_ops->init)
+>  				ret = cc->iv_gen_ops->init(cc);
+> +			/* wipe the kernel key payload copy */
+> +			if (cc->key_string)
+> +				memset(cc->key, 0, cc->key_size * sizeof(u8));
+>  			return ret;
+>  		}
+>  		if (argc == 2 && !strcasecmp(argv[1], "wipe")) {
+> @@ -3007,7 +3011,7 @@ static void crypt_io_hints(struct dm_target *ti, struct queue_limits *limits)
+>  
+>  static struct target_type crypt_target = {
+>  	.name   = "crypt",
+> -	.version = {1, 18, 0},
+> +	.version = {1, 18, 1},
+>  	.module = THIS_MODULE,
+>  	.ctr    = crypt_ctr,
+>  	.dtr    = crypt_dtr,
+> 
