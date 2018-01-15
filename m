@@ -1,19 +1,19 @@
-From: Julian Andres Klode <julian.klode@canonical.com>
+From: Martin Wilck <mwilck@suse.com>
 Subject: Re: multipath-tools 0.7.4 failure to remove device
-Date: Mon, 15 Jan 2018 17:26:58 +0100
-Message-ID: <20180115162658.wlccxhlaq56byykg@jak-x230>
+Date: Mon, 15 Jan 2018 17:46:24 +0100
+Message-ID: <1516034784.5699.44.camel@suse.com>
 References: <20180112083833.apsybil4ux4d2y32@jak-x230>
 	<1515789339.3409.33.camel@suse.com>
 	<20180112214700.ljxlypo5nar6oh3m@jak-x230>
 	<1515795481.9139.8.camel@suse.com>
 	<20180115154424.fcjuudt7phxrks6q@jak-x230>
 	<1516032730.5699.38.camel@suse.com>
+	<20180115162658.wlccxhlaq56byykg@jak-x230>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1516032730.5699.38.camel@suse.com>
+In-Reply-To: <20180115162658.wlccxhlaq56byykg@jak-x230>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,34 +23,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: Device-mapper development mailing list <dm-devel@redhat.com>, Guan Junxiong <guanjunxiong@huawei.com>
+To: Julian Andres Klode <julian.klode@canonical.com>
+Cc: Guan Junxiong <guanjunxiong@huawei.com>, development mailing list <dm-devel@redhat.com>, Device-mapper
 List-Id: dm-devel.ids
 
-On Mon, Jan 15, 2018 at 05:12:10PM +0100, Martin Wilck wrote:
-> On Mon, 2018-01-15 at 16:44 +0100, Julian Andres Klode wrote:
-> > 
-> > It was your commit that made it imply -n that caused the test failure
-> > :)
-> > I understand your position on that, but reverted it for Ubuntu,
-> > because,
-> > while it might be somewhat broken, it's at least the same level of
-> > broken
-> > as before.
-> 
-> I'd like to understand that better. Why would this break boot?
-
-Ah sorry for the confusion. It did not break boot. Having finding
-disabled would have "broken" boot. The problem I was talking about
-was that with finding enabled, no dm devices were generated, which
-it turned out, was not entirely true - you had to run multipath
-manually (due to your find implies -n commit). 
-
-It seems to me that this would cause more issues in practice than
-just keeping the slightly race-y combination enabled. It's something
-to revisit after the ubuntu lts when then people have some time to
-adjust to that change.
-
--- 
-debian developer - deb.li/jak | jak-linux.org - free software dev
-ubuntu core developer                              i speak de, en
+T24gTW9uLCAyMDE4LTAxLTE1IGF0IDE3OjI2ICswMTAwLCBKdWxpYW4gQW5kcmVzIEtsb2RlIHdy
+b3RlOgo+IE9uIE1vbiwgSmFuIDE1LCAyMDE4IGF0IDA1OjEyOjEwUE0gKzAxMDAsIE1hcnRpbiBX
+aWxjayB3cm90ZToKPiA+IE9uIE1vbiwgMjAxOC0wMS0xNSBhdCAxNjo0NCArMDEwMCwgSnVsaWFu
+IEFuZHJlcyBLbG9kZSB3cm90ZToKPiA+ID4gCj4gPiA+IEl0IHdhcyB5b3VyIGNvbW1pdCB0aGF0
+IG1hZGUgaXQgaW1wbHkgLW4gdGhhdCBjYXVzZWQgdGhlIHRlc3QKPiA+ID4gZmFpbHVyZQo+ID4g
+PiA6KQo+ID4gPiBJIHVuZGVyc3RhbmQgeW91ciBwb3NpdGlvbiBvbiB0aGF0LCBidXQgcmV2ZXJ0
+ZWQgaXQgZm9yIFVidW50dSwKPiA+ID4gYmVjYXVzZSwKPiA+ID4gd2hpbGUgaXQgbWlnaHQgYmUg
+c29tZXdoYXQgYnJva2VuLCBpdCdzIGF0IGxlYXN0IHRoZSBzYW1lIGxldmVsCj4gPiA+IG9mCj4g
+PiA+IGJyb2tlbgo+ID4gPiBhcyBiZWZvcmUuCj4gPiAKPiA+IEknZCBsaWtlIHRvIHVuZGVyc3Rh
+bmQgdGhhdCBiZXR0ZXIuIFdoeSB3b3VsZCB0aGlzIGJyZWFrIGJvb3Q/Cj4gCj4gQWggc29ycnkg
+Zm9yIHRoZSBjb25mdXNpb24uIEl0IGRpZCBub3QgYnJlYWsgYm9vdC4gSGF2aW5nIGZpbmRpbmcK
+PiBkaXNhYmxlZCB3b3VsZCBoYXZlICJicm9rZW4iIGJvb3QuIFRoZSBwcm9ibGVtIEkgd2FzIHRh
+bGtpbmcgYWJvdXQKPiB3YXMgdGhhdCB3aXRoIGZpbmRpbmcgZW5hYmxlZCwgbm8gZG0gZGV2aWNl
+cyB3ZXJlIGdlbmVyYXRlZCwgd2hpY2gKPiBpdCB0dXJuZWQgb3V0LCB3YXMgbm90IGVudGlyZWx5
+IHRydWUgLSB5b3UgaGFkIHRvIHJ1biBtdWx0aXBhdGgKPiBtYW51YWxseSAoZHVlIHRvIHlvdXIg
+ZmluZCBpbXBsaWVzIC1uIGNvbW1pdCkuIAo+IAo+IEl0IHNlZW1zIHRvIG1lIHRoYXQgdGhpcyB3
+b3VsZCBjYXVzZSBtb3JlIGlzc3VlcyBpbiBwcmFjdGljZSB0aGFuCj4ganVzdCBrZWVwaW5nIHRo
+ZSBzbGlnaHRseSByYWNlLXkgY29tYmluYXRpb24gZW5hYmxlZC4gSXQncyBzb21ldGhpbmcKPiB0
+byByZXZpc2l0IGFmdGVyIHRoZSB1YnVudHUgbHRzIHdoZW4gdGhlbiBwZW9wbGUgaGF2ZSBzb21l
+IHRpbWUgdG8KPiBhZGp1c3QgdG8gdGhhdCBjaGFuZ2UuCgpJIHdvdWxkbid0IGNhbGwgaXQgInNs
+aWdodGx5IHJhY2UteSIuIFdpdGggZmluZF9tdWx0aXBhdGhzICJvbiIgYW5kCiJpZ25vcmVfd3dp
+ZHMiICJvZmYiLCAibXVsdGlwYXRoIC11IiBjbGFzc2lmaWVzIGV2ZXJ5IGRldmljZSBhcyBhCm11
+bHRpcGF0aCBkZXZpY2UuIFNvIFNZU1RFTURfUkVBRFk9MCB3aWxsIGJlIHNldCBvbiBlYWNoIGRl
+dmljZS4gQnV0Cm11bHRpcGF0aGQsIHdoaWNoIGlzIHJlc3BvbnNpYmxlIGZvciBhY3R1YWxseSBz
+ZXR0aW5nIHVwIHRoZSBtYXAsIHdpbGwKaG9ub3IgImZpbmRfbXVsdGlwYXRocyIsIGFuZCB3aWxs
+IG5vdCBzZXQgdXAgYSBtYXAgZm9yIGEgZGV2aWNlIGl0CmZpbmRzIG9ubHkgYSBzaW5nbGUgcGF0
+aCBmb3IuIFNvIHRoZSBkZXZpY2UgbmV2ZXIgYXBwZWFycyBpbiBhIHN0YXRlIGluCndoaWNoIHN5
+c3RlbWQgd291bGQgYmUgYWJsZSB0byB1c2UgaXQuIFVubGVzcyB5b3UndmUgcHV0IGluIHNvbWUg
+b3RoZXIKbWFnaWMsIHRoaXMgaXMgYWxtb3N0IGd1YXJhbnRlZWQgdG8gbWFrZSB5b3VyIHN5c3Rl
+bSB1bmJvb3RhYmxlIGluIHRoZQpxdWl0ZSBjb21tb24gY2FzZSB3aGVyZSBwZW9wbGUgdXNpbmcg
+bXVsdGlwYXRoIGFyZSBydW5uaW5nIG9mZiBhIG5vbi0KbXVsdGlwYXRoZWQgbG9jYWwgcm9vdCBk
+aXNrLgoKTWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVs
+LiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTD
+tnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5i
+ZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6
+Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
