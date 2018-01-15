@@ -1,106 +1,46 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: Bart Van Assche <Bart.VanAssche@wdc.com>
 Subject: Re: [for-4.16 PATCH v5 0/4] block/dm: allow DM to defer
  blk_register_queue() until ready
-Date: Mon, 15 Jan 2018 17:15:11 -0500
-Message-ID: <20180115221511.GA25858@redhat.com>
+Date: Mon, 15 Jan 2018 22:51:39 +0000
+Message-ID: <1516056697.3951.30.camel@wdc.com>
 References: <20180112150606.6037-1-snitzer@redhat.com>
- <1516036612.10386.2.camel@wdc.com>
+         <1516036612.10386.2.camel@wdc.com> <20180115221511.GA25858@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1516036612.10386.2.camel@wdc.com>
+In-Reply-To: <20180115221511.GA25858@redhat.com>
+Content-Language: en-US
+Content-ID: <56ADA94C3354FA4BAB86A9D38B1DC186@namprd04.prod.outlook.com>
 Sender: linux-block-owner@vger.kernel.org
-To: Bart Van Assche <Bart.VanAssche@wdc.com>
-Cc: "axboe@kernel.dk" <axboe@kernel.dk>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "hare@suse.de" <hare@suse.de>, "tom.leiming@gmail.com" <tom.leiming@gmail.com>, "djeffery@redhat.com" <djeffery@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>
+To: "snitzer@redhat.com" <snitzer@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "hare@suse.de" <hare@suse.de>, "tom.leiming@gmail.com" <tom.leiming@gmail.com>, "djeffery@redhat.com" <djeffery@redhat.com>, "axboe@kernel.dk" <axboe@kernel.dk>
 List-Id: dm-devel.ids
 
-On Mon, Jan 15 2018 at 12:16pm -0500,
-Bart Van Assche <Bart.VanAssche@wdc.com> wrote:
-
-> On Fri, 2018-01-12 at 10:06 -0500, Mike Snitzer wrote:
-> > I'm submitting this v5 with more feeling now ;)
-> 
-> Hello Mike,
-> 
-> Have these patches been tested with lockdep enabled? The following appeared in
-> the kernel log when after I started testing Jens' for-next tree of this morning:
-> 
-> ======================================================
-> WARNING: possible circular locking dependency detected
-> 4.15.0-rc7-dbg+ #1 Not tainted
-> ------------------------------------------------------
-> 02-mq/1211 is trying to acquire lock:
->  (&q->sysfs_lock){+.+.}, at: [<000000008b65bdad>] queue_attr_store+0x35/0x80
-> 
-> but task is already holding lock:
->  (kn->count#213){++++}, at: [<000000007a18ad18>] kernfs_fop_write+0xe5/0x190
-> 
-> which lock already depends on the new lock.
-> 
-> 
-> the existing dependency chain (in reverse order) is:
-> 
-> -> #1 (kn->count#213){++++}:
->        kernfs_remove+0x1a/0x30
->        kobject_del.part.3+0xe/0x40
->        blk_unregister_queue+0xa7/0xe0
->        del_gendisk+0x12f/0x260
->        sd_remove+0x58/0xc0 [sd_mod]
->        device_release_driver_internal+0x15a/0x220
->        bus_remove_device+0xf4/0x170
->        device_del+0x12f/0x330
->        __scsi_remove_device+0xef/0x120 [scsi_mod]
->        scsi_forget_host+0x1b/0x60 [scsi_mod]
->        scsi_remove_host+0x6f/0x110 [scsi_mod]
->        0xffffffffc09ed6e4
->        process_one_work+0x21c/0x6d0
->        worker_thread+0x35/0x380
->        kthread+0x117/0x130
->        ret_from_fork+0x24/0x30
-> 
-> -> #0 (&q->sysfs_lock){+.+.}:
->        __mutex_lock+0x6c/0x9e0
->        queue_attr_store+0x35/0x80
->        kernfs_fop_write+0x109/0x190
->        __vfs_write+0x1e/0x130
->        vfs_write+0xb9/0x1b0
->        SyS_write+0x40/0xa0
->        entry_SYSCALL_64_fastpath+0x23/0x9a
-> 
-> other info that might help us debug this:
-> 
->  Possible unsafe locking scenario:
-> 
->        CPU0                    CPU1
->        ----                    ----
->   lock(kn->count#213);
->                                lock(&q->sysfs_lock);
->                                lock(kn->count#213);
->   lock(&q->sysfs_lock);
-> 
->  *** DEADLOCK ***
-> 
-> 3 locks held by 02-mq/1211:
->  #0:  (sb_writers#6){.+.+}, at: [<00000000afdb61d3>] vfs_write+0x17f/0x1b0
->  #1:  (&of->mutex){+.+.}, at: [<00000000b291cabb>] kernfs_fop_write+0xdd/0x190
->  #2:  (kn->count#213){++++}, at: [<000000007a18ad18>] kernfs_fop_write+0xe5/0x190
-
-sysfs write op calls kernfs_fop_write which takes:
-of->mutex then kn->count#213 (no idea what that is)
-then q->sysfs_lock (via queue_attr_store)
-
-vs 
-
-blk_unregister_queue takes:
-q->sysfs_lock then
-kernfs_mutex (via kernfs_remove)
-seems lockdep thinks "kernfs_mutex" is "kn->count#213"?
-
-Feels like lockdep code in fs/kernfs/file.c and fs/kernfs/dir.c is
-triggering false positives.. because these seem like different kernfs
-locks yet they are reported as "kn->count#213".
-
-Certainly feeling out of my depth with kernfs's locking though.
-
-Mike
+T24gTW9uLCAyMDE4LTAxLTE1IGF0IDE3OjE1IC0wNTAwLCBNaWtlIFNuaXR6ZXIgd3JvdGU6DQo+
+IHN5c2ZzIHdyaXRlIG9wIGNhbGxzIGtlcm5mc19mb3Bfd3JpdGUgd2hpY2ggdGFrZXM6DQo+IG9m
+LT5tdXRleCB0aGVuIGtuLT5jb3VudCMyMTMgKG5vIGlkZWEgd2hhdCB0aGF0IGlzKQ0KPiB0aGVu
+IHEtPnN5c2ZzX2xvY2sgKHZpYSBxdWV1ZV9hdHRyX3N0b3JlKQ0KPiANCj4gdnMgDQo+IA0KPiBi
+bGtfdW5yZWdpc3Rlcl9xdWV1ZSB0YWtlczoNCj4gcS0+c3lzZnNfbG9jayB0aGVuDQo+IGtlcm5m
+c19tdXRleCAodmlhIGtlcm5mc19yZW1vdmUpDQo+IHNlZW1zIGxvY2tkZXAgdGhpbmtzICJrZXJu
+ZnNfbXV0ZXgiIGlzICJrbi0+Y291bnQjMjEzIj8NCj4gDQo+IEZlZWxzIGxpa2UgbG9ja2RlcCBj
+b2RlIGluIGZzL2tlcm5mcy9maWxlLmMgYW5kIGZzL2tlcm5mcy9kaXIuYyBpcw0KPiB0cmlnZ2Vy
+aW5nIGZhbHNlIHBvc2l0aXZlcy4uIGJlY2F1c2UgdGhlc2Ugc2VlbSBsaWtlIGRpZmZlcmVudCBr
+ZXJuZnMNCj4gbG9ja3MgeWV0IHRoZXkgYXJlIHJlcG9ydGVkIGFzICJrbi0+Y291bnQjMjEzIi4N
+Cj4gDQo+IENlcnRhaW5seSBmZWVsaW5nIG91dCBvZiBteSBkZXB0aCB3aXRoIGtlcm5mcydzIGxv
+Y2tpbmcgdGhvdWdoLg0KDQpIZWxsbyBNaWtlLA0KDQpJIGRvbid0IHRoaW5rIHRoYXQgdGhpcyBp
+cyBhIGZhbHNlIHBvc2l0aXZlIGJ1dCByYXRoZXIgdGhlIGZvbGxvd2luZyB0cmFkaXRpb25hbA0K
+cGF0dGVybiBvZiBhIHBvdGVudGlhbCBkZWFkbG9jayBpbnZvbHZpbmcgc3lzZnMgYXR0cmlidXRl
+czoNCiogT25lIGNvbnRleHQgb2J0YWlucyBhIG11dGV4IGZyb20gaW5zaWRlIGEgc3lzZnMgYXR0
+cmlidXRlIG1ldGhvZDoNCiAgcXVldWVfYXR0cl9zdG9yZSgpIG9idGFpbnMgcS0+c3lzZnNfbG9j
+ay4NCiogQW5vdGhlciBjb250ZXh0IHJlbW92ZXMgYSBzeXNmcyBhdHRyaWJ1dGUgd2hpbGUgaG9s
+ZGluZyBhIG11dGV4Og0KICBibGtfdW5yZWdpc3Rlcl9xdWV1ZSgpIHJlbW92ZXMgdGhlIHF1ZXVl
+IHN5c2ZzIGF0dHJpYnV0ZXMgd2hpbGUgaG9sZGluZw0KICBxLT5zeXNmc19sb2NrLg0KDQpUaGlz
+IGNhbiByZXN1bHQgaW4gYSByZWFsIGRlYWRsb2NrIGJlY2F1c2UgdGhlIGNvZGUgdGhhdCByZW1v
+dmVzIHN5c2ZzIG9iamVjdHMNCndhaXRzIHVudGlsIGFsbCBvbmdvaW5nIGF0dHJpYnV0ZSBjYWxs
+YmFja3MgaGF2ZSBmaW5pc2hlZC4NCg0KU2luY2UgY29tbWl0IDY2NzI1N2U4YjI5OCAoImJsb2Nr
+OiBwcm9wZXJseSBwcm90ZWN0IHRoZSAncXVldWUnIGtvYmogaW4NCmJsa191bnJlZ2lzdGVyX3F1
+ZXVlIikgbW9kaWZpZWQgYmxrX3VucmVnaXN0ZXJfcXVldWUoKSBzdWNoIHRoYXQgcS0+c3lzZnNf
+bG9jaw0KaXMgaGVsZCBhcm91bmQgdGhlIGtvYmplY3RfZGVsKCZxLT5rb2JqKSBjYWxsIEkgdGhp
+bmsgdGhpcyBpcyBhIHJlZ3Jlc3Npb24NCmludHJvZHVjZWQgYnkgdGhhdCBjb21taXQuDQoNCkJh
+cnQu
