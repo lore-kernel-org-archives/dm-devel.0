@@ -1,13 +1,17 @@
-From: Wuchongyun <wu.chongyun@h3c.com>
-Subject: [PATCH V3] multipathd: release uxsocket and resource
- when cancel thread
-Date: Mon, 15 Jan 2018 12:09:35 +0000
-Message-ID: <CEB9978CF3252343BE3C67AC9F0086A342957B99@H3CMLB14-EX.srv.huawei-3com.com>
+From: Lars Ellenberg <lars.ellenberg@linbit.com>
+Subject: Re: [Drbd-dev] [PATCH 23/27] drbd: make intelligent use
+ of blkdev_issue_zeroout
+Date: Mon, 15 Jan 2018 13:46:35 +0100
+Message-ID: <20180115124635.GA4107@soda.linbit>
+References: <20170405172125.22600-1-hch@lst.de>
+	<20170405172125.22600-24-hch@lst.de>
+	<alpine.LRH.2.11.1801130035010.13147@mail.ewheeler.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: zh-CN
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.11.1801130035010.13147@mail.ewheeler.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,98 +21,140 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
-Cc: Guozhonghua <guozhonghua@h3c.com>, Changwei Ge <ge.changwei@h3c.com>
+To: Eric Wheeler <drbd-dev@lists.ewheeler.net>
+Cc: axboe@kernel.dk, linux-raid@vger.kernel.org, martin.petersen@oracle.com, snitzer@redhat.com, philipp.reisner@linbit.com, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-scsi@vger.kernel.org, shli@kernel.org, Christoph Hellwig <hch@lst.de>, agk@redhat.com, drbd-dev@lists.linbit.com
 List-Id: dm-devel.ids
 
-Hi Martin,
-Thank you for reply so quickly.  Below is the new patch according to your comments, please help to review this patch, thanks a lot~
+On Sat, Jan 13, 2018 at 12:46:40AM +0000, Eric Wheeler wrote:
+> Hello All,
+> =
 
-Issue description: we meet this issue: when multipathd initilaze and
-call uxsock_listen to create unix domain socket, but return -1 and
-the errno is 98 and then the uxsock_listen return null. After multipathd
-startup we can't receive any user's multipathd commands to finish the
-new multipath creation or any operations any more!
+> We just noticed that discards to DRBD devices backed by dm-thin devices =
 
-We found that uxlsnr thread's cleanup function not close the sockets
-also not release the clients when cancel thread, the domain socket
-will be release by the system. In any special environment like the
-machine's load is very heavy or any situations, the system may not close
-the old domain socket when we try to create and bind the new domain
-socket may return errno:98(Address already in use).
+> are fully allocating the thin blocks.
+> =
 
-And also we make some experiments:
-in uxsock_cleanup if we close the ux_sock first and then immdediately
-call ux_socket_listen to create new ux_sock and initialization will be
-OK; if we don't close the ux_sock and call ux_socket_listen will return
--1 and errno = 98.
+> This behavior does not exist before =
 
-So we believe that close uxsocket and release clients  when cancel
-thread can make sure of that new starting multipathd thread can
-create new uxsocket successfully, also can receive multipathd commands
-properly. And this path can fix clients' memory leak too.
+> ee472d83 block: add a flags argument to (__)blkdev_issue_zeroout
+> =
 
-Signed-off-by: Chongyun Wu <wu.chongyun@h3c.com>
----
- multipathd/uxlsnr.c |   25 +++++++++++++++++++++----
- 1 file changed, 21 insertions(+), 4 deletions(-)
+> The problem exists somewhere between
+> [working] c20cfc27 block: stop using blkdev_issue_write_same for zeroing
+>   and
+> [broken]  45c21793 drbd: implement REQ_OP_WRITE_ZEROES
+> =
 
-diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
-index 98ac25a..f0041c8 100644
---- a/multipathd/uxlsnr.c
-+++ b/multipathd/uxlsnr.c
-@@ -102,16 +102,21 @@ static void new_client(int ux_sock)
- /*
-  * kill off a dead client
-  */
--static void dead_client(struct client *c)
-+static void _dead_client(struct client *c)
- {
--	pthread_mutex_lock(&client_lock);
- 	list_del_init(&c->node);
--	pthread_mutex_unlock(&client_lock);
- 	close(c->fd);
- 	c->fd = -1;
- 	FREE(c);
- }
- 
-+static void dead_client(struct client *c)
-+{
-+	pthread_mutex_lock(&client_lock);
-+	_dead_client(c);
-+	pthread_mutex_unlock(&client_lock);
-+}
-+
- void free_polls (void)
- {
- 	if (polls)
-@@ -139,6 +144,18 @@ void check_timeout(struct timespec start_time, char *inbuf,
- 
- void uxsock_cleanup(void *arg)
- {
-+	struct client *client_loop;
-+	struct client *client_tmp;
-+	int ux_sock = (int)arg;
-+
-+	pthread_mutex_lock(&client_lock);
-+	list_for_each_entry_safe(client_loop, client_tmp, &clients, node) {
-+		_dead_client(client_loop);
-+	}
-+	pthread_mutex_unlock(&client_lock);
-+
-+	close(ux_sock);
-+
- 	cli_exit();
- 	free_polls();
- }
-@@ -162,7 +179,7 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
- 		return NULL;
- 	}
- 
--	pthread_cleanup_push(uxsock_cleanup, NULL);
-+	pthread_cleanup_push(uxsock_cleanup, (void *)ux_sock);
- 
- 	condlog(3, "uxsock: startup listener");
- 	polls = (struct pollfd *)MALLOC((MIN_POLLS + 1) * sizeof(struct pollfd));
--- 
-1.7.9.5
+> Note that c20cfc27 works as expected, but 45c21793 discards blocks =
+
+> being zeroed on the dm-thin backing device. All commits between those two =
+
+> produce the following error:
+> =
+
+> blkdiscard: /dev/drbd/by-res/test: BLKDISCARD ioctl failed: Input/output =
+error
+> =
+
+> Also note that issuing a blkdiscard to the backing device directly =
+
+> discards as you would expect. This is just a problem when sending discard=
+s =
+
+> through DRBD.
+> =
+
+> Is there an easy way to solve this in the short term, even if the ultimat=
+e =
+
+> fix is more involved?
+
+> On Wed, 5 Apr 2017, Christoph Hellwig wrote:
+> =
+
+
+commit 0dbed96a3cc9786bc4814dab98a7218753bde934
+Author: Christoph Hellwig <hch@lst.de>
+Date:   Wed Apr 5 19:21:21 2017 +0200
+
+    drbd: make intelligent use of blkdev_issue_zeroout
+
+> > drbd always wants its discard wire operations to zero the blocks, so
+> > use blkdev_issue_zeroout with the BLKDEV_ZERO_UNMAP flag instead of
+> > reinventing it poorly.
+
+> > -/*
+> > - * We *may* ignore the discard-zeroes-data setting, if so configured.
+> > - *
+> > - * Assumption is that it "discard_zeroes_data=3D0" is only because the=
+ backend
+> > - * may ignore partial unaligned discards.
+> > - *
+> > - * LVM/DM thin as of at least
+> > - *   LVM version:     2.02.115(2)-RHEL7 (2015-01-28)
+> > - *   Library version: 1.02.93-RHEL7 (2015-01-28)
+> > - *   Driver version:  4.29.0
+> > - * still behaves this way.
+> > - *
+> > - * For unaligned (wrt. alignment and granularity) or too small discard=
+s,
+> > - * we zero-out the initial (and/or) trailing unaligned partial chunks,
+> > - * but discard all the aligned full chunks.
+> > - *
+> > - * At least for LVM/DM thin, the result is effectively "discard_zeroes=
+_data=3D1".
+> > - */
+> > -int drbd_issue_discard_or_zero_out(struct drbd_device *device, sector_=
+t start, unsigned int nr_sectors, bool discard)
+
+
+As I understood it,
+blkdev_issue_zeroout() was supposed to "always try to unmap",
+deprovision, the relevant region, and zero-out any unaligned
+head or tail, just like my work around above was doing.
+
+And that device mapper thin was "about to" learn this, "soon",
+or maybe block core would do the equivalent of my workaround
+described above.
+
+But it then did not.
+
+See also:
+https://www.redhat.com/archives/dm-devel/2017-March/msg00213.html
+https://www.redhat.com/archives/dm-devel/2017-March/msg00226.html
+
+I then did not follow this closely enough anymore,
+and I missed that with recent enough kernel,
+discard on DRBD on dm-thin would fully allocate.
+
+In our out-of-tree module, we had to keep the older code for
+compat reasons, anyways. I will just re-enable our zeroout
+workaround there again.
+
+In tree, either dm-thin learns to do REQ_OP_WRITE_ZEROES "properly",
+so the result in this scenario is what we expect:
+
+  _: unprovisioned, not allocated, returns zero on read anyways
+  *: provisioned, some arbitrary data
+  0: explicitly zeroed:
+
+  |gran|ular|ity |    |    |    |
+  |****|****|____|****|
+     to|-be-|zero|ed
+  |**00|____|____|00**|
+
+(leave unallocated blocks alone,
+ de-allocate full blocks just like with discard,
+ explicitly zero unaligned head and tail)
+
+Or DRBD will have to resurrect that reinvented zeroout again,
+with exactly those semantics. I did reinvent it for a reason ;)
+
+-- =
+
+: Lars Ellenberg
+: LINBIT | Keeping the Digital World Running
+: DRBD -- Heartbeat -- Corosync -- Pacemaker
+: R&D, Integration, Ops, Consulting, Support
+
+DRBD=AE and LINBIT=AE are registered trademarks of LINBIT
