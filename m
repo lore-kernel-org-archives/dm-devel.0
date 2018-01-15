@@ -1,46 +1,67 @@
-From: Bart Van Assche <Bart.VanAssche@wdc.com>
+From: Mike Snitzer <snitzer@redhat.com>
 Subject: Re: [for-4.16 PATCH v5 0/4] block/dm: allow DM to defer
  blk_register_queue() until ready
-Date: Mon, 15 Jan 2018 22:51:39 +0000
-Message-ID: <1516056697.3951.30.camel@wdc.com>
+Date: Mon, 15 Jan 2018 18:10:11 -0500
+Message-ID: <20180115231010.GA26447@redhat.com>
 References: <20180112150606.6037-1-snitzer@redhat.com>
-         <1516036612.10386.2.camel@wdc.com> <20180115221511.GA25858@redhat.com>
+ <1516036612.10386.2.camel@wdc.com>
+ <20180115221511.GA25858@redhat.com>
+ <1516056697.3951.30.camel@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20180115221511.GA25858@redhat.com>
-Content-Language: en-US
-Content-ID: <56ADA94C3354FA4BAB86A9D38B1DC186@namprd04.prod.outlook.com>
+Content-Disposition: inline
+In-Reply-To: <1516056697.3951.30.camel@wdc.com>
 Sender: linux-block-owner@vger.kernel.org
-To: "snitzer@redhat.com" <snitzer@redhat.com>
+To: Bart Van Assche <Bart.VanAssche@wdc.com>
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "hare@suse.de" <hare@suse.de>, "tom.leiming@gmail.com" <tom.leiming@gmail.com>, "djeffery@redhat.com" <djeffery@redhat.com>, "axboe@kernel.dk" <axboe@kernel.dk>
 List-Id: dm-devel.ids
 
-T24gTW9uLCAyMDE4LTAxLTE1IGF0IDE3OjE1IC0wNTAwLCBNaWtlIFNuaXR6ZXIgd3JvdGU6DQo+
-IHN5c2ZzIHdyaXRlIG9wIGNhbGxzIGtlcm5mc19mb3Bfd3JpdGUgd2hpY2ggdGFrZXM6DQo+IG9m
-LT5tdXRleCB0aGVuIGtuLT5jb3VudCMyMTMgKG5vIGlkZWEgd2hhdCB0aGF0IGlzKQ0KPiB0aGVu
-IHEtPnN5c2ZzX2xvY2sgKHZpYSBxdWV1ZV9hdHRyX3N0b3JlKQ0KPiANCj4gdnMgDQo+IA0KPiBi
-bGtfdW5yZWdpc3Rlcl9xdWV1ZSB0YWtlczoNCj4gcS0+c3lzZnNfbG9jayB0aGVuDQo+IGtlcm5m
-c19tdXRleCAodmlhIGtlcm5mc19yZW1vdmUpDQo+IHNlZW1zIGxvY2tkZXAgdGhpbmtzICJrZXJu
-ZnNfbXV0ZXgiIGlzICJrbi0+Y291bnQjMjEzIj8NCj4gDQo+IEZlZWxzIGxpa2UgbG9ja2RlcCBj
-b2RlIGluIGZzL2tlcm5mcy9maWxlLmMgYW5kIGZzL2tlcm5mcy9kaXIuYyBpcw0KPiB0cmlnZ2Vy
-aW5nIGZhbHNlIHBvc2l0aXZlcy4uIGJlY2F1c2UgdGhlc2Ugc2VlbSBsaWtlIGRpZmZlcmVudCBr
-ZXJuZnMNCj4gbG9ja3MgeWV0IHRoZXkgYXJlIHJlcG9ydGVkIGFzICJrbi0+Y291bnQjMjEzIi4N
-Cj4gDQo+IENlcnRhaW5seSBmZWVsaW5nIG91dCBvZiBteSBkZXB0aCB3aXRoIGtlcm5mcydzIGxv
-Y2tpbmcgdGhvdWdoLg0KDQpIZWxsbyBNaWtlLA0KDQpJIGRvbid0IHRoaW5rIHRoYXQgdGhpcyBp
-cyBhIGZhbHNlIHBvc2l0aXZlIGJ1dCByYXRoZXIgdGhlIGZvbGxvd2luZyB0cmFkaXRpb25hbA0K
-cGF0dGVybiBvZiBhIHBvdGVudGlhbCBkZWFkbG9jayBpbnZvbHZpbmcgc3lzZnMgYXR0cmlidXRl
-czoNCiogT25lIGNvbnRleHQgb2J0YWlucyBhIG11dGV4IGZyb20gaW5zaWRlIGEgc3lzZnMgYXR0
-cmlidXRlIG1ldGhvZDoNCiAgcXVldWVfYXR0cl9zdG9yZSgpIG9idGFpbnMgcS0+c3lzZnNfbG9j
-ay4NCiogQW5vdGhlciBjb250ZXh0IHJlbW92ZXMgYSBzeXNmcyBhdHRyaWJ1dGUgd2hpbGUgaG9s
-ZGluZyBhIG11dGV4Og0KICBibGtfdW5yZWdpc3Rlcl9xdWV1ZSgpIHJlbW92ZXMgdGhlIHF1ZXVl
-IHN5c2ZzIGF0dHJpYnV0ZXMgd2hpbGUgaG9sZGluZw0KICBxLT5zeXNmc19sb2NrLg0KDQpUaGlz
-IGNhbiByZXN1bHQgaW4gYSByZWFsIGRlYWRsb2NrIGJlY2F1c2UgdGhlIGNvZGUgdGhhdCByZW1v
-dmVzIHN5c2ZzIG9iamVjdHMNCndhaXRzIHVudGlsIGFsbCBvbmdvaW5nIGF0dHJpYnV0ZSBjYWxs
-YmFja3MgaGF2ZSBmaW5pc2hlZC4NCg0KU2luY2UgY29tbWl0IDY2NzI1N2U4YjI5OCAoImJsb2Nr
-OiBwcm9wZXJseSBwcm90ZWN0IHRoZSAncXVldWUnIGtvYmogaW4NCmJsa191bnJlZ2lzdGVyX3F1
-ZXVlIikgbW9kaWZpZWQgYmxrX3VucmVnaXN0ZXJfcXVldWUoKSBzdWNoIHRoYXQgcS0+c3lzZnNf
-bG9jaw0KaXMgaGVsZCBhcm91bmQgdGhlIGtvYmplY3RfZGVsKCZxLT5rb2JqKSBjYWxsIEkgdGhp
-bmsgdGhpcyBpcyBhIHJlZ3Jlc3Npb24NCmludHJvZHVjZWQgYnkgdGhhdCBjb21taXQuDQoNCkJh
-cnQu
+On Mon, Jan 15 2018 at  5:51pm -0500,
+Bart Van Assche <Bart.VanAssche@wdc.com> wrote:
+
+> On Mon, 2018-01-15 at 17:15 -0500, Mike Snitzer wrote:
+> > sysfs write op calls kernfs_fop_write which takes:
+> > of->mutex then kn->count#213 (no idea what that is)
+> > then q->sysfs_lock (via queue_attr_store)
+> > 
+> > vs 
+> > 
+> > blk_unregister_queue takes:
+> > q->sysfs_lock then
+> > kernfs_mutex (via kernfs_remove)
+> > seems lockdep thinks "kernfs_mutex" is "kn->count#213"?
+> > 
+> > Feels like lockdep code in fs/kernfs/file.c and fs/kernfs/dir.c is
+> > triggering false positives.. because these seem like different kernfs
+> > locks yet they are reported as "kn->count#213".
+> > 
+> > Certainly feeling out of my depth with kernfs's locking though.
+> 
+> Hello Mike,
+> 
+> I don't think that this is a false positive but rather the following traditional
+> pattern of a potential deadlock involving sysfs attributes:
+> * One context obtains a mutex from inside a sysfs attribute method:
+>   queue_attr_store() obtains q->sysfs_lock.
+> * Another context removes a sysfs attribute while holding a mutex:
+>   blk_unregister_queue() removes the queue sysfs attributes while holding
+>   q->sysfs_lock.
+> 
+> This can result in a real deadlock because the code that removes sysfs objects
+> waits until all ongoing attribute callbacks have finished.
+> 
+> Since commit 667257e8b298 ("block: properly protect the 'queue' kobj in
+> blk_unregister_queue") modified blk_unregister_queue() such that q->sysfs_lock
+> is held around the kobject_del(&q->kobj) call I think this is a regression
+> introduced by that commit.
+
+Sure, of course it is a regression.
+
+Aside from moving the mutex_unlock(&q->sysfs_lock) above the
+kobject_del(&q->kobj) I don't know how to fix it.
+
+Though, realistically that'd be an adequate fix (given the way the code
+was before).
+
+Mike
