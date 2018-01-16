@@ -1,106 +1,95 @@
-From: Lars Ellenberg <lars.ellenberg@linbit.com>
-Subject: Re: [Drbd-dev] [PATCH 23/27] drbd: make intelligent use of
- blkdev_issue_zeroout
-Date: Tue, 16 Jan 2018 09:55:45 +0100
-Message-ID: <20180116085545.GB4107@soda.linbit>
-References: <20170405172125.22600-1-hch@lst.de>
- <20170405172125.22600-24-hch@lst.de>
- <alpine.LRH.2.11.1801130035010.13147@mail.ewheeler.net>
- <20180115124635.GA4107@soda.linbit>
- <20180115150738.GA20967@redhat.com>
+From: Mauro Condarelli <ziobyte@gmail.com>
+Subject: Limiting in-flight requests
+Date: Tue, 16 Jan 2018 10:36:06 +0100
+Message-ID: <CABDgG8-Ka8er6-14W5uUv0NyiNe3o=Nt3JcYFvpEoxc5kvE7ow@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180115150738.GA20967@redhat.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Eric Wheeler <drbd-dev@lists.ewheeler.net>, Christoph Hellwig <hch@lst.de>, axboe@kernel.dk, martin.petersen@oracle.com, agk@redhat.com, shli@kernel.org, philipp.reisner@linbit.com, linux-block@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-scsi@vger.kernel.org, drbd-dev@lists.linbit.com, ejt@redhat.com
+Content-Type: multipart/mixed; boundary="===============1154113764904661337=="
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Jan 15, 2018 at 10:07:38AM -0500, Mike Snitzer wrote:
-> > See also:
-> > https://www.redhat.com/archives/dm-devel/2017-March/msg00213.html
-> > https://www.redhat.com/archives/dm-devel/2017-March/msg00226.html
-> 
-> Right, now that you mention it it is starting to ring a bell (especially
-> after I read your 2nd dm-devel archive url above).
+--===============1154113764904661337==
+Content-Type: multipart/alternative; boundary="001a1141234cc3634b0562e17548"
 
-> > In tree, either dm-thin learns to do REQ_OP_WRITE_ZEROES "properly",
-> > so the result in this scenario is what we expect:
-> > 
-> >   _: unprovisioned, not allocated, returns zero on read anyways
-> >   *: provisioned, some arbitrary data
-> >   0: explicitly zeroed:
-> > 
-> >   |gran|ular|ity |    |    |    |
-> >   |****|****|____|****|
-> >      to|-be-|zero|ed
-> >   |**00|____|____|00**|
-> > 
-> > (leave unallocated blocks alone,
-> >  de-allocate full blocks just like with discard,
-> >  explicitly zero unaligned head and tail)
-> 
-> "de-allocate full blocks just like with discard" is an interesting take
-> what it means for dm-thin to handle REQ_OP_WRITE_ZEROES "properly".
-> 
-> > Or DRBD will have to resurrect that reinvented zeroout again,
-> > with exactly those semantics. I did reinvent it for a reason ;)
-> 
-> Yeah, I now recall dropping that line of development because it
-> became "hard" (or at least harder than originally thought).
-> 
-> Don't people use REQ_OP_WRITE_ZEROES to initialize a portion of the
-> disk?  E.g. zeroing superblocks, metadata areas, or whatever?
-> 
-> If we just discarded the logical extent and then a user did a partial
-> write to the block, areas that a user might expect to be zeroed wouldn't
-> be (at least in the case of dm-thinp if "skip_block_zeroing" is
-> enabled).
+--001a1141234cc3634b0562e17548
+Content-Type: text/plain; charset="UTF-8"
 
+Hi,
+this is my first post here, so feel free to redirect me if I'm trespassing
+in some way.
 
-Oh-kay.
-So "immediately after" such an operation
-("zero-out head and tail and de-alloc full blocks")
-a read to that area would return all zeros, as expected.
+I'm trying to build a custom dm target to be used as filter for normal
+filesystem operations.
 
-But once you do a partial write of something to one of those
-de-allocated blocks (and skip_block_zeroing is enabled,
-which it likely is due to "performance"),
-"magically" arbitrary old garbage data springs into existence
-on the LBAs that just before read as zeros.
+I managed to build a working prototype, but field-testing it I found that,
+in certain conditions (e.g.: untarring a large tar full of many small
+files) the number of in-flight requests rapidly rises to several thousands.
 
-lvmthin lvm.conf
-Would that not break a lot of other things
-(any read-modify-write of "upper layers")?
-Would that not even be a serious "information leak"
-(old garbage of other completely unrelated LVs leaking into this one)?
+This is a problem since I allocate some pages for each remapping (I
+essentially double the allocation for the time request is fully handled by
+underlying device); this leads to memory starvation and, possibly, even to
+kernel panics.
 
-But thank you for that, I start to see the problem ;-)
+I tried limiting the number/size of in-flight requests by returning
+DM_MAPIO_REQUEUE when resource consumption exceeded a certain threshold;
+This doesn't seem to work because the error is not trapped at dm-stage, but
+it is reported directly to filesystem and, from there, to application (tar
+or mkfs.ext4).
 
-> No, dm-thinp doesn't have an easy way to mark an allocated block as
-> containing zeroes (without actually zeroing).  I toyed with adding that
-> but then realized that even if we had it it'd still require block
-> zeroing be enabled.  But block zeroing is done at allocation time.  So
-> we'd need to interpret the "this block is zeroes" flag to mean "on first
-> write or read to this block it needs to first zero it".  Fugly to say
-> the least...
+What is the correct way to tell dm to stop sending more requests, for a
+short while (i.e.: till some old requests are completed)?
+
+Note: I'm using kernel v4.4.9 so I don't have DM_MAPIO_DELAY_REQUEUE
+
+Note2: in my target.map I re-allocate the scatterlist, save the original
+one and substitute; I do the reverse in .end_io.
+
+Thanks in advance
+Mauro
+
+--001a1141234cc3634b0562e17548
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div><div><div><div><div><div><div><div><div><div>Hi,<br><=
+/div>this is my first post here, so feel free to redirect me if I&#39;m tre=
+spassing in some way.<br><br></div>I&#39;m trying to build a custom dm targ=
+et to be used as filter for normal filesystem operations.<br><br></div>I ma=
+naged to build a working prototype, but field-testing it I found that, in c=
+ertain conditions (e.g.: untarring a large tar full of many small files) th=
+e number of in-flight requests rapidly rises to several thousands.<br><br><=
+/div>This is a problem since I allocate some pages for each remapping (I es=
+sentially double the allocation for the time request is fully handled by un=
+derlying device); this leads to memory starvation and, possibly, even to ke=
+rnel panics.<br><br></div>I tried limiting the number/size of in-flight req=
+uests by returning DM_MAPIO_REQUEUE when resource consumption exceeded a ce=
+rtain threshold; This doesn&#39;t seem to work because the error is not tra=
+pped at dm-stage, but it is reported directly to filesystem and, from there=
+, to application (tar or mkfs.ext4).<br><br></div>What is the correct way t=
+o tell dm to stop sending more requests, for a short while (i.e.: till some=
+ old requests are completed)?<br><br></div>Note: I&#39;m using kernel v4.4.=
+9 so I don&#39;t have DM_MAPIO_DELAY_REQUEUE<br><br></div>Note2: in my targ=
+et.map I re-allocate the scatterlist, save the original one and substitute;=
+ I do the reverse in .end_io.<br><br></div>Thanks in advance<br></div>Mauro=
+<br></div>
+
+--001a1141234cc3634b0562e17548--
 
 
-Maybe have a "known zeroed block" pool, allocate only from there,
-and "lazy zero" unallocated blocks, add to the known-zero pool?
-Fallback to zero-on-alloc if that known-zero-pool is depleted.
+--===============1154113764904661337==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-Easier said than done, I know.
 
-> But sadly, in general, this is a low priority for me, so you might do
-> well to reintroduce your drbd workaround.. sorry about that :(
-
-No problem.
-I'll put that back in, and document that we strongly recommend to
-NOT skip_block_zeroing in those setups.
-
-Thanks,
-
-    Lars
+--===============1154113764904661337==--
