@@ -1,77 +1,192 @@
-From: Bart Van Assche <Bart.VanAssche@wdc.com>
-Subject: Re: [for-4.16 PATCH v5 0/4] block/dm: allow DM to defer
- blk_register_queue() until ready
-Date: Tue, 16 Jan 2018 18:19:32 +0000
-Message-ID: <1516126771.2844.17.camel@wdc.com>
-References: <20180112150606.6037-1-snitzer@redhat.com>
-         <1516036612.10386.2.camel@wdc.com> <20180115221511.GA25858@redhat.com>
-         <1516056697.3951.30.camel@wdc.com> <20180115231010.GA26447@redhat.com>
-         <20180115231331.GA18564@redhat.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: multipath-tools 0.7.4 failure to remove device
+Date: Tue, 16 Jan 2018 14:30:46 -0600
+Message-ID: <20180116202946.GO5638@octiron.msp.redhat.com>
+References: <20180112083833.apsybil4ux4d2y32@jak-x230>
+	<1515789339.3409.33.camel@suse.com>
+	<20180112214700.ljxlypo5nar6oh3m@jak-x230>
+	<1515795481.9139.8.camel@suse.com>
+	<20180115154424.fcjuudt7phxrks6q@jak-x230>
+	<1516032730.5699.38.camel@suse.com>
+	<20180115162658.wlccxhlaq56byykg@jak-x230>
+	<1516034784.5699.44.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20180115231331.GA18564@redhat.com>
-Content-Language: en-US
-Content-ID: <BA06C3D499437548A2A4821899C986E9@namprd04.prod.outlook.com>
-Sender: linux-block-owner@vger.kernel.org
-To: "snitzer@redhat.com" <snitzer@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "hare@suse.de" <hare@suse.de>, "tom.leiming@gmail.com" <tom.leiming@gmail.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "djeffery@redhat.com" <djeffery@redhat.com>
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1516034784.5699.44.camel@suse.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Martin Wilck <mwilck@suse.com>
+Cc: Julian Andres Klode <julian.klode@canonical.com>, Guan Junxiong <guanjunxiong@huawei.com>, development mailing list <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gTW9uLCAyMDE4LTAxLTE1IGF0IDE4OjEzIC0wNTAwLCBNaWtlIFNuaXR6ZXIgd3JvdGU6DQo+
-IE9uIE1vbiwgSmFuIDE1IDIwMTggYXQgIDY6MTBQIC0wNTAwLA0KPiBNaWtlIFNuaXR6ZXIgPHNu
-aXR6ZXJAcmVkaGF0LmNvbT4gd3JvdGU6DQo+IA0KPiA+IE9uIE1vbiwgSmFuIDE1IDIwMTggYXQg
-IDU6NTFwbSAtMDUwMCwNCj4gPiBCYXJ0IFZhbiBBc3NjaGUgPEJhcnQuVmFuQXNzY2hlQHdkYy5j
-b20+IHdyb3RlOg0KPiA+IA0KPiA+ID4gT24gTW9uLCAyMDE4LTAxLTE1IGF0IDE3OjE1IC0wNTAw
-LCBNaWtlIFNuaXR6ZXIgd3JvdGU6DQo+ID4gPiA+IHN5c2ZzIHdyaXRlIG9wIGNhbGxzIGtlcm5m
-c19mb3Bfd3JpdGUgd2hpY2ggdGFrZXM6DQo+ID4gPiA+IG9mLT5tdXRleCB0aGVuIGtuLT5jb3Vu
-dCMyMTMgKG5vIGlkZWEgd2hhdCB0aGF0IGlzKQ0KPiA+ID4gPiB0aGVuIHEtPnN5c2ZzX2xvY2sg
-KHZpYSBxdWV1ZV9hdHRyX3N0b3JlKQ0KPiA+ID4gPiANCj4gPiA+ID4gdnMgDQo+ID4gPiA+IA0K
-PiA+ID4gPiBibGtfdW5yZWdpc3Rlcl9xdWV1ZSB0YWtlczoNCj4gPiA+ID4gcS0+c3lzZnNfbG9j
-ayB0aGVuDQo+ID4gPiA+IGtlcm5mc19tdXRleCAodmlhIGtlcm5mc19yZW1vdmUpDQo+ID4gPiA+
-IHNlZW1zIGxvY2tkZXAgdGhpbmtzICJrZXJuZnNfbXV0ZXgiIGlzICJrbi0+Y291bnQjMjEzIj8N
-Cj4gPiA+ID4gDQo+ID4gPiA+IEZlZWxzIGxpa2UgbG9ja2RlcCBjb2RlIGluIGZzL2tlcm5mcy9m
-aWxlLmMgYW5kIGZzL2tlcm5mcy9kaXIuYyBpcw0KPiA+ID4gPiB0cmlnZ2VyaW5nIGZhbHNlIHBv
-c2l0aXZlcy4uIGJlY2F1c2UgdGhlc2Ugc2VlbSBsaWtlIGRpZmZlcmVudCBrZXJuZnMNCj4gPiA+
-ID4gbG9ja3MgeWV0IHRoZXkgYXJlIHJlcG9ydGVkIGFzICJrbi0+Y291bnQjMjEzIi4NCj4gPiA+
-ID4gDQo+ID4gPiA+IENlcnRhaW5seSBmZWVsaW5nIG91dCBvZiBteSBkZXB0aCB3aXRoIGtlcm5m
-cydzIGxvY2tpbmcgdGhvdWdoLg0KPiA+ID4gDQo+ID4gPiBIZWxsbyBNaWtlLA0KPiA+ID4gDQo+
-ID4gPiBJIGRvbid0IHRoaW5rIHRoYXQgdGhpcyBpcyBhIGZhbHNlIHBvc2l0aXZlIGJ1dCByYXRo
-ZXIgdGhlIGZvbGxvd2luZyB0cmFkaXRpb25hbA0KPiA+ID4gcGF0dGVybiBvZiBhIHBvdGVudGlh
-bCBkZWFkbG9jayBpbnZvbHZpbmcgc3lzZnMgYXR0cmlidXRlczoNCj4gPiA+ICogT25lIGNvbnRl
-eHQgb2J0YWlucyBhIG11dGV4IGZyb20gaW5zaWRlIGEgc3lzZnMgYXR0cmlidXRlIG1ldGhvZDoN
-Cj4gPiA+ICAgcXVldWVfYXR0cl9zdG9yZSgpIG9idGFpbnMgcS0+c3lzZnNfbG9jay4NCj4gPiA+
-ICogQW5vdGhlciBjb250ZXh0IHJlbW92ZXMgYSBzeXNmcyBhdHRyaWJ1dGUgd2hpbGUgaG9sZGlu
-ZyBhIG11dGV4Og0KPiA+ID4gICBibGtfdW5yZWdpc3Rlcl9xdWV1ZSgpIHJlbW92ZXMgdGhlIHF1
-ZXVlIHN5c2ZzIGF0dHJpYnV0ZXMgd2hpbGUgaG9sZGluZw0KPiA+ID4gICBxLT5zeXNmc19sb2Nr
-Lg0KPiA+ID4gDQo+ID4gPiBUaGlzIGNhbiByZXN1bHQgaW4gYSByZWFsIGRlYWRsb2NrIGJlY2F1
-c2UgdGhlIGNvZGUgdGhhdCByZW1vdmVzIHN5c2ZzIG9iamVjdHMNCj4gPiA+IHdhaXRzIHVudGls
-IGFsbCBvbmdvaW5nIGF0dHJpYnV0ZSBjYWxsYmFja3MgaGF2ZSBmaW5pc2hlZC4NCj4gPiA+IA0K
-PiA+ID4gU2luY2UgY29tbWl0IDY2NzI1N2U4YjI5OCAoImJsb2NrOiBwcm9wZXJseSBwcm90ZWN0
-IHRoZSAncXVldWUnIGtvYmogaW4NCj4gPiA+IGJsa191bnJlZ2lzdGVyX3F1ZXVlIikgbW9kaWZp
-ZWQgYmxrX3VucmVnaXN0ZXJfcXVldWUoKSBzdWNoIHRoYXQgcS0+c3lzZnNfbG9jaw0KPiA+ID4g
-aXMgaGVsZCBhcm91bmQgdGhlIGtvYmplY3RfZGVsKCZxLT5rb2JqKSBjYWxsIEkgdGhpbmsgdGhp
-cyBpcyBhIHJlZ3Jlc3Npb24NCj4gPiA+IGludHJvZHVjZWQgYnkgdGhhdCBjb21taXQuDQo+ID4g
-DQo+ID4gU3VyZSwgb2YgY291cnNlIGl0IGlzIGEgcmVncmVzc2lvbi4NCj4gPiANCj4gPiBBc2lk
-ZSBmcm9tIG1vdmluZyB0aGUgbXV0ZXhfdW5sb2NrKCZxLT5zeXNmc19sb2NrKSBhYm92ZSB0aGUN
-Cj4gPiBrb2JqZWN0X2RlbCgmcS0+a29iaikgSSBkb24ndCBrbm93IGhvdyB0byBmaXggaXQuDQo+
-ID4gDQo+ID4gVGhvdWdoLCByZWFsaXN0aWNhbGx5IHRoYXQnZCBiZSBhbiBhZGVxdWF0ZSBmaXgg
-KGdpdmVuIHRoZSB3YXkgdGhlIGNvZGUNCj4gPiB3YXMgYmVmb3JlKS4NCj4gDQo+IEFueSBjaGFu
-Y2UgeW91IGFwcGx5IHRoaXMgYW5kIHJlLXJ1biB5b3VyIHNycF90ZXN0IHRoYXQgdHJpZ2dlcmVk
-IHRoZQ0KPiBsb2NrZGVwIHNwbGF0Pw0KPiANCj4gZGlmZiAtLWdpdCBhL2Jsb2NrL2Jsay1zeXNm
-cy5jIGIvYmxvY2svYmxrLXN5c2ZzLmMNCj4gaW5kZXggNGE2YTQwZmZkNzhlLi5jNTBlMDhlOWJm
-MTcgMTAwNjQ0DQo+IC0tLSBhL2Jsb2NrL2Jsay1zeXNmcy5jDQo+ICsrKyBiL2Jsb2NrL2Jsay1z
-eXNmcy5jDQo+IEBAIC05NTIsMTAgKzk1MiwxMCBAQCB2b2lkIGJsa191bnJlZ2lzdGVyX3F1ZXVl
-KHN0cnVjdCBnZW5kaXNrICpkaXNrKQ0KPiAgCWlmIChxLT5yZXF1ZXN0X2ZuIHx8IChxLT5tcV9v
-cHMgJiYgcS0+ZWxldmF0b3IpKQ0KPiAgCQllbHZfdW5yZWdpc3Rlcl9xdWV1ZShxKTsNCj4gIA0K
-PiArCW11dGV4X3VubG9jaygmcS0+c3lzZnNfbG9jayk7DQo+ICsNCj4gIAlrb2JqZWN0X3VldmVu
-dCgmcS0+a29iaiwgS09CSl9SRU1PVkUpOw0KPiAgCWtvYmplY3RfZGVsKCZxLT5rb2JqKTsNCj4g
-IAlibGtfdHJhY2VfcmVtb3ZlX3N5c2ZzKGRpc2tfdG9fZGV2KGRpc2spKTsNCj4gIAlrb2JqZWN0
-X3B1dCgmZGlza190b19kZXYoZGlzayktPmtvYmopOw0KPiAtDQo+IC0JbXV0ZXhfdW5sb2NrKCZx
-LT5zeXNmc19sb2NrKTsNCj4gIH0NCg0KSGVsbG8gTWlrZSwNCg0KVG9kYXkgc3lzZnNfbG9jayBw
-cm90ZWN0cyBhIHdob2xlIGJ1bmNoIG9mIHN0YXRlIGluZm9ybWF0aW9uLiBJIHRoaW5rIGZvciB0
-aGUNCmxvbmdlciB0ZXJtIHdlIHNob3VsZCBzcGxpdCBpdCBpbnRvIG11bHRpcGxlIG11dGV4ZXMu
-IEZvciB0aGUgc2hvcnQgdGVybSwgcGxlYXNlDQpoYXZlIGEgbG9vayBhdCB0aGUgcGF0Y2ggc2Vy
-aWVzIEkganVzdCBwb3N0ZWQgb24gdGhlIGxpbnV4LWJsb2NrIG1haWxpbmcgbGlzdC4NCg0KVGhh
-bmtzLA0KDQpCYXJ0Lg==
+On Mon, Jan 15, 2018 at 05:46:24PM +0100, Martin Wilck wrote:
+> On Mon, 2018-01-15 at 17:26 +0100, Julian Andres Klode wrote:
+> > On Mon, Jan 15, 2018 at 05:12:10PM +0100, Martin Wilck wrote:
+> > > On Mon, 2018-01-15 at 16:44 +0100, Julian Andres Klode wrote:
+> > > > =
+
+> > > > It was your commit that made it imply -n that caused the test
+> > > > failure
+> > > > :)
+> > > > I understand your position on that, but reverted it for Ubuntu,
+> > > > because,
+> > > > while it might be somewhat broken, it's at least the same level
+> > > > of
+> > > > broken
+> > > > as before.
+> > > =
+
+> > > I'd like to understand that better. Why would this break boot?
+> > =
+
+> > Ah sorry for the confusion. It did not break boot. Having finding
+> > disabled would have "broken" boot. The problem I was talking about
+> > was that with finding enabled, no dm devices were generated, which
+> > it turned out, was not entirely true - you had to run multipath
+> > manually (due to your find implies -n commit). =
+
+> > =
+
+> > It seems to me that this would cause more issues in practice than
+> > just keeping the slightly race-y combination enabled. It's something
+> > to revisit after the ubuntu lts when then people have some time to
+> > adjust to that change.
+> =
+
+> I wouldn't call it "slightly race-y". With find_multipaths "on" and
+> "ignore_wwids" "off", "multipath -u" classifies every device as a
+> multipath device. So SYSTEMD_READY=3D0 will be set on each device. But
+> multipathd, which is responsible for actually setting up the map, will
+> honor "find_multipaths", and will not set up a map for a device it
+> finds only a single path for. So the device never appears in a state in
+> which systemd would be able to use it. Unless you've put in some other
+> magic, this is almost guaranteed to make your system unbootable in the
+> quite common case where people using multipath are running off a non-
+> multipathed local root disk.
+
+RedHat also removes your patches to force ignore_wwids off and imply -n
+
+64e27ec066a001012f44550f095c93443e91d845
+ffbb886a8a16cb063d669cd76a1e656fd3ec8c4b
+
+I don't see any why that this could claim all the devices and render a
+system unbootable. First off, I assume you mean that there is a problem
+with find_multipaths "on" and ignore_wwids "on", since your patch forces
+ignore_wwids "off", and with that setting, mutipath will obviously only
+claim devices in the wwids file.
+
+But with find_multipaths "on" and ignore_wwids "on", you don't classify
+every device as a multipath device. Here's the code
+
+        if (get_dm_mpvec(cmd, curmp, pathvec, refwwid))
+                goto out;
+
+        filter_pathvec(pathvec, refwwid);
+
+
+        if (cmd =3D=3D CMD_VALID_PATH) {
+                /* This only happens if find_multipaths and
+                 * ignore_wwids is set.
+                 * If there is currently a multipath device matching
+                 * the refwwid, or there is more than one path matching
+                 * the refwwid, then the path is valid */
+                if (VECTOR_SIZE(curmp) !=3D 0 || VECTOR_SIZE(pathvec) > 1)
+                        r =3D 0;
+                printf("%s %s a valid multipath device path\n",
+                       devpath, r =3D=3D 0 ? "is" : "is not");
+                goto out;
+        }
+
+So you only classify a device as a multipath device, if either:
+
+1. you find multiple devices with the same WWID. That's what the
+   (VECTOR_SIZE(pathvec) > 1) check after the filter_pathvec() call
+   does.
+
+2. You find that the device is already part of a multipath device.
+   That's what the (VECTOR_SIZE(curmp) !=3D 0) after the get_dm_mpvec()
+   call does.
+
+This code is actually more stingy with allowing devices to be claimed as
+multipath devices than it could safely be.  Even though ignore_wwids is
+set, it should probably also allow devices that are in the wwids file,
+since they are multipath-able. The idea of ignore_wwids is to be more
+generous in accepting devices, but by disallowing devices even if they
+are in the wwids file, it is being less generous in some cases. =
+
+
+As for implying -n with find_multipaths, my personal opinion is that it
+breaks the main point of find_multipaths, which is to make stuff "just
+work". Since RedHat has been running with find_multipaths as the default
+for years now, I am well aware of the race-y issue. But in practice
+it's not very bad.
+
+Here is how I see it. The first time a multipathable device appears, the
+udev rules will not claim the first path of it. Multipathd will also not
+immediately create a multipath device on top of it.  This means that
+something else could auto set-up on it.  The most likely way this can
+happen is if you are adding new storage that already has LVM/MD metadata
+on it.  lvm will auto-activate on that new path, making multipath unable
+to create the multipath device.
+
+If you think that sounds like a big problem, you should consider that if
+you use the default multipath udev rules, the exact same problem happens
+if you don't use find_multipaths as well. That's because when we check
+if multipath can claim a device, we don't call multipath -u with -i.
+This actually can save thoughtless users some headaches.  If they aren't
+using find_multipaths, and they don't setup their blacklisting
+correctly, multipath still won't claim devices that are already in use
+when it starts up, because it will never create a multipath device on
+them, so it will never add their wwid to the wwids file.
+
+So in short, the problem (which currently effects multipath regardless
+of whether find_multipaths is set) is that when new storage is added, if
+that new storage already has metadata on it that the system will use to
+autoassemble something else on top of the device (in practice this means
+lvm/md metadata), you may autoassemble the wrong thing on the device.
+It's a race, and yes, find-multipaths is more likely to lose the race
+because it can't start assembling until the second path appears.
+The solution is to simply remove the lvm/dm device, and run multipath,
+and from then on, you will never see the problem again.
+
+The only bug I have ever received about this issue was because anaconda
+(the redhat system installer) knew that multipath was supposed to be
+running on a device, but couldn't disassemble the lvm device that got
+automatically created, because of the old meta-data. The solution is to
+make anaconda smarter.
+
+As a side note, RedHat also adds code to automatically fire off a change
+uevent on all the path devices on the first time a multipath device is
+created, so that all the path devices get correctly claimed by multipath
+after the fact, on the first create. It's currently part of the same
+patch that reverts the two commits listed above, but I have no problem
+with posting it as a seperate patch. I obviously have no problem with
+reverting those two commits upstream either. But I don't feel horribly
+burdened with carrying them as RedHat patches.
+
+-Ben
+
+> Martin
+> =
+
+> -- =
+
+> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+> SUSE Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
+> HRB 21284 (AG N=FCrnberg)
+> =
+
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
