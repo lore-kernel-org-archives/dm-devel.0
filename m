@@ -1,7 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [for-4.16 PATCH v5 2/3] blk-mq: improve DM's blk-mq IO merging performance
-Date: Tue, 16 Jan 2018 23:33:36 -0500
-Message-ID: <20180117043338.25839-3-snitzer@redhat.com>
+Subject: [for-4.16 PATCH v5 2/3] blk-mq: improve DM's blk-mq IO merging via blk_insert_cloned_request feedback
+Date: Tue, 16 Jan 2018 23:33:37 -0500
+Message-ID: <20180117043338.25839-4-snitzer@redhat.com>
 References: <20180117043338.25839-1-snitzer@redhat.com>
 Return-path: <linux-block-owner@vger.kernel.org>
 In-Reply-To: <20180117043338.25839-1-snitzer@redhat.com>
@@ -42,8 +42,8 @@ With this, request-based DM's blk-mq sequential IO performance is vastly
 improved (as much as 3X in mpath/virtio-scsi testing).
 
 Signed-off-by: Ming Lei <ming.lei@redhat.com>
-[based _heavily_ on Ming Lei's initial solution, but blk-mq.c changes
-were refactored to make them less fragile and easier to read/review]
+[blk-mq.c changes heavily influenced by Ming Lei's initial solution, but
+they were refactored to make them less fragile and easier to read/review]
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
  block/blk-core.c   |  3 +--
@@ -67,7 +67,7 @@ index 7ba607527487..55f338020254 100644
  
  	spin_lock_irqsave(q->queue_lock, flags);
 diff --git a/block/blk-mq.c b/block/blk-mq.c
-index f30e34a22a6c..81ee3f9124dc 100644
+index c117c2baf2c9..0b64f7210a89 100644
 --- a/block/blk-mq.c
 +++ b/block/blk-mq.c
 @@ -1706,7 +1706,8 @@ static blk_status_t __blk_mq_issue_directly(struct blk_mq_hw_ctx *hctx,
@@ -134,8 +134,8 @@ index f30e34a22a6c..81ee3f9124dc 100644
  
  	return __blk_mq_issue_directly(hctx, rq, cookie);
  insert:
--	__blk_mq_fallback_to_insert(hctx. rq, run_queue);
-+	__blk_mq_fallback_to_insert(hctx. rq, run_queue, bypass_insert);
+-	__blk_mq_fallback_to_insert(hctx, rq, run_queue);
++	__blk_mq_fallback_to_insert(hctx, rq, run_queue, bypass_insert);
 +	if (bypass_insert)
 +		return BLK_STS_RESOURCE;
  
@@ -148,8 +148,8 @@ index f30e34a22a6c..81ee3f9124dc 100644
 -	ret = __blk_mq_try_issue_directly(hctx, rq, cookie);
 +	ret = __blk_mq_try_issue_directly(hctx, rq, cookie, false);
  	if (ret == BLK_STS_RESOURCE)
--		__blk_mq_fallback_to_insert(hctx. rq, true);
-+		__blk_mq_fallback_to_insert(hctx. rq, true, false);
+-		__blk_mq_fallback_to_insert(hctx, rq, true);
++		__blk_mq_fallback_to_insert(hctx, rq, true, false);
  	else if (ret != BLK_STS_OK)
  		blk_mq_end_request(rq, ret);
  
