@@ -1,16 +1,13 @@
-From: Martin Wilck <mwilck@suse.com>
+From: Wuchongyun <wu.chongyun@h3c.com>
 Subject: Re: [PATCH V3] multipathd: release uxsocket and resource
  when cancel thread
-Date: Wed, 17 Jan 2018 01:55:29 +0100
-Message-ID: <1516150529.23203.77.camel@suse.com>
-References: <CEB9978CF3252343BE3C67AC9F0086A342957D1C@H3CMLB14-EX.srv.huawei-3com.com>
-	<1516108760.23203.3.camel@suse.com>
-	<20180116223909.GP5638@octiron.msp.redhat.com>
+Date: Wed, 17 Jan 2018 02:04:19 +0000
+Message-ID: <CEB9978CF3252343BE3C67AC9F0086A342957FEF@H3CMLB14-EX.srv.huawei-3com.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180116223909.GP5638@octiron.msp.redhat.com>
+Content-Language: zh-CN
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,42 +17,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, Wuchongyun <wu.chongyun@h3c.com>
-Cc: Guozhonghua <guozhonghua@h3c.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Changwei Ge <ge.changwei@h3c.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, Martin Wilck <mwilck@suse.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Changlimin <changlimin@h3c.com>, Changwei Ge <ge.changwei@h3c.com>, Guozhonghua <guozhonghua@h3c.com>
 List-Id: dm-devel.ids
 
-T24gVHVlLCAyMDE4LTAxLTE2IGF0IDE2OjM5IC0wNjAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gT24gVHVlLCBKYW4gMTYsIDIwMTggYXQgMDI6MTk6MjBQTSArMDEwMCwgTWFydGluIFdp
-bGNrIHdyb3RlOgo+ID4gT24gVHVlLCAyMDE4LTAxLTE2IGF0IDExOjQ4ICswMDAwLCBXdWNob25n
-eXVuIHdyb3RlOgo+ID4gPiBIaSBNYXJ0aW4sCj4gPiA+IFNvcnJ5IHRvIGZvcmdldCB0aGF0LCBh
-Y3R1YWxseSBJIGZvdW5kIHRoYXQgZGVhZF9jbGllbnQoKSB3aWxsCj4gPiA+IG5vdCBiZQo+ID4g
-PiBpbnRlcnJ1cHQgYnkgdGhyZWFkIGNhbmNsZSwgYmVjYXVzZSBhZnRlciBhbGwgZGVhZF9jbGll
-bnQoKQo+ID4gPiBjYWxsaW5nCj4gPiA+IHBvaW50IGJlIGRvbmUgdGhlbiBoYW5kbGVfc2lnbmFs
-cygpIGhhdmUgY2hhbmNlIHRvIGJlIGNhbGxlZCBieQo+ID4gPiB1eHNvY2tfbGlzdGVuKCkgd2hp
-Y2ggd2lsbCBjYWxsIGV4aXRfZGFlbW9uKCkgYW5kIHNlbmQgCj4gPiA+IGNhbmNlbCB0aHJlYWRz
-IHNpZ25hbCB0byBhbGwgY2hpbGQgcHJvY2VzcyBpbmNsdWRlIHV4bHNuci4KPiA+IAo+ID4gRmFp
-ciBlbm91Z2guCj4gPiAKPiA+ID4gQnV0IHlvdXIgY29tbWVudHMgaXMgZ29vZCBjYW4gbWFrZSBj
-b2RlIG1vcmUgc2FmZXIuIEJlbG93IGlzIHRoZQo+ID4gPiBuZXcKPiA+ID4gcGF0Y2gsIHBsZWFz
-ZSBoYXZlIGEgbG9vaywgdGhhbmtzLgo+ID4gCj4gPiBJIHRoaW5rIGl0J3MgcmVhbGx5IHNhZmVy
-IHdoaXMgd2F5LCBzaG91bGQgYW55b25lIHNlZSB0aGUgbmVlZCB0bwo+ID4gY2FuY2VsIHRoZSBs
-aXN0ZW5lciB0aHJlYWQgZnJvbSBhbm90aGVyIHBvaW50IGluIHRoZSBjb2RlLgo+IAo+IEknbSBj
-b25mdXNlZCB3aHkgdGhpcyBpcyBzYWZlLiBBZnRlciB1eHNvY2tfbGlzdGVuKCkgY2FsbHMKPiBl
-eGl0X2RhZW1vbigpCj4gZnJvbSBoYW5kbGVfc2lnbmFscygpLCBpdCBkb2Vzbid0IGV4aXQuIEl0
-IGxvb3BzIGFyb3VuZCBhbmQgcG9sbHMKPiBhZ2FpbiwKPiBhbmQgY291bGQgaW4gdGhlb3J5IGZp
-bmQgYSBjbGllbnQgdGhhdCBoYXMgZGllZC4gIEluIGZhY3QgaWYgdGhlCj4gY2xpZW50Cj4gaXMg
-a2lsbGluZyBtdWx0aXBhdGhkIHZpYQo+IAo+ICMgbXVsdGlwYXRoZCBzaHV0ZG93bgo+IAo+IGlu
-c3RlYWQgb2YgYSBzaWduYWwsIHdvbid0IGl0IGJlIHZlcnkgbGlrZWx5IHRoYXQgaXQgd2lsbCBm
-aW5kIGEgZGVhZAo+IGNsaWVudCB3aGVuIGl0IGxvb3BzIHJpZ2h0IGFmdGVyIGNhbGxpbmcgZXhp
-dF9kYWVtb24oKSBpbgo+IGNsaV9zaHV0ZG93bigpPyBUaGlzIGNvdWxkIGhpdCB0aGUgZGVhZGxv
-Y2sgdGhhdCB5b3Ugbm90aWNlZCwgd2hlcmUKPiB1eHNvY2tfY2xlYW51cCgpIGNhbid0IHJ1biBi
-ZWNhdXNlIGRlYWRfY2xpZW50KCkgYWxyZWFkeSBob2xkaW5nIHRoZQo+IG11dGV4Lgo+IAo+IE9y
-IGFtIEkgbWlzc2luZyBzb21ldGhpbmcgaGVyZT8KCldpdGggInNhZmVyIiwgSSB3YXMgb25seSBy
-ZWZlcnJpbmcgdG8gdGhlIGZhY3QgdGhhdCBXdWNob25neXVuIHJlcGxhY2VkCnB0aHJlYWRfbXV0
-ZXhfdW5sb2NrKCkgd2l0aCBwdGhyZWFkX2NsZWFudXBfcHVzaChjbGVhbnVwX2xvY2ssCiZjbGll
-bnRfbG9jaykgLi4uIHB0aHJlYWRfY2xlYW51cF9wb3AoKS4gVGhlIG9yaWdpbmFsIGRlYWRsb2Nr
-IGlzCmF2b2lkZWQgZWl0aGVyIHdheSwgQUZBSUNTLgoKTWFydGluCgotLSAKRHIuIE1hcnRpbiBX
-aWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBM
-aW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0g
-Tm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0
-CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3Rp
-bmZvL2RtLWRldmVs
+On Tue, Jan 17, 2018 at 06:39:20PM +0100, Benjamin Marzinski wrote:
+> On Tue, Jan 16, 2018 at 02:19:20PM +0100, Martin Wilck wrote:
+> > On Tue, 2018-01-16 at 11:48 +0000, Wuchongyun wrote:
+> > > Hi Martin,
+> > > Sorry to forget that, actually I found that dead_client() will not 
+> > > be interrupt by thread cancle, because after all dead_client() 
+> > > calling point be done then handle_signals() have chance to be called 
+> > > by
+> > > uxsock_listen() which will call exit_daemon() and send cancel 
+> > > threads signal to all child process include uxlsnr.
+> > 
+> > Fair enough.
+> > 
+> > > But your comments is good can make code more safer. Below is the new 
+> > > patch, please have a look, thanks.
+> > 
+> > I think it's really safer whis way, should anyone see the need to 
+>>  cancel the listener thread from another point in the code.
+
+> I'm confused why this is safe. After uxsock_listen() calls exit_daemon() from handle_signals(), it doesn't exit. It loops around and polls again, and could in theory find a client that has died.  In fact if the client is killing multipathd via
+> # multipathd shutdown
+> instead of a signal, won't it be very likely that it will find a dead client when it loops right after calling exit_daemon() in cli_shutdown()? This could hit the deadlock that you noticed, where
+> uxsock_cleanup() can't run because dead_client() already holding the mutex.
+> Or am I missing something here?
+
+Hi Benjiamin,
+Thanks for your comments below are my rely, thanks.
+
+You really found the scenario which need to add pthread_cleanup_push(cleanup_lock, &client_lock) before get lock in dead_client to avoid the dead lock:
+If the client is killing multipathd via multipathd shutdown and it find a dead client when it loops right after calling exit_daemon() in cli_shutdown(), This will not hit deadlock because in dead_client before get lock we call pthread_cleanup_push(cleanup_lock, &client_lock) first, then thread cancelation happened, thread cleanup functions been pop up by reverse order: cleanup_lock() first, then uxsock_cleanup(), which make sure client_lock been release before calling uxsock_cleanup(). So it's safer in this way.
+
+And your next comment is right I will make another patch for this.
+>Since you are now closing ux_sock in uxsock_cleanup(), you should remove the close(ux_sock) at the end of uxsock_listen(). pthread_cleanup_pop() will already take care of that.
+
+Regards
+Chongyun
