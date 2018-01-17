@@ -1,14 +1,17 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 0/2] dm: add new loop and ram targets
-Date: Wed, 17 Jan 2018 16:29:36 -0500
-Message-ID: <20180117212936.GA6756@redhat.com>
-References: <cover.1516124587.git.heinzm@redhat.com>
+Subject: Re: dm-rq queue stalls
+Date: Wed, 17 Jan 2018 16:37:36 -0500
+Message-ID: <20180117213736.GB6756@redhat.com>
+References: <a096db4d-1c32-4682-844d-4a7fc02d47da@email.android.com>
+	<1516218304.2820.51.camel@wdc.com>
+	<20180117201417.GA6455@redhat.com>
+	<1516224450.2820.59.camel@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <cover.1516124587.git.heinzm@redhat.com>
+In-Reply-To: <1516224450.2820.59.camel@wdc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,117 +21,65 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Heinz Mauelshagen <heinzm@redhat.com>
-Cc: dm-devel@redhat.com
+To: Bart Van Assche <Bart.VanAssche@wdc.com>
+Cc: "axboe@kernel.dk" <axboe@kernel.dk>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "loberman@redhat.com" <loberman@redhat.com>, "ming.lei@redhat.com" <ming.lei@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Jan 17 2018 at  2:33pm -0500,
-Heinz Mauelshagen <heinzm@redhat.com> wrote:
+On Wed, Jan 17 2018 at  4:27pm -0500,
+Bart Van Assche <Bart.VanAssche@wdc.com> wrote:
 
-> Enhancing IO performance compared to the kernels existing
-> loop driver thus better suiting respective requirements in
-> test setups, this patch series adds new "loop" and "ram" targets.
+> On Wed, 2018-01-17 at 15:14 -0500, Mike Snitzer wrote:
+> > BUT my broader point stands: you aren't testing the dm-4.16 changes.  By
+> > just reverting that commit you're creating a self-fulfilling prophecy
+> > (that you'll see hangs without it).
+> > 
+> > Fact is you should pull all of dm-4.16 in, see:
+> > https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-4.16
+> > 
+> > But these dm-4.16 changes are particularly important:
+> > 050af08ffb1b dm mpath: return DM_MAPIO_REQUEUE on blk-mq rq allocation failure
+> > 459b54019cfe dm mpath: return DM_MAPIO_DELAY_REQUEUE if QUEUE_IO or PG_INIT_REQUIRED
+> > ec3eaf9a6731 dm mpath: don't call blk_mq_delay_run_hw_queue() in case of BLK_STS_RESOURCE
+> > 4dd6edd23e7e dm mpath: delay the retry of a request if the target responded as busy
+> > 
+> > This last one is the commit that _should_ serve as a proper replacement
+> > for the change you manually reverted in your branch.
+> > 
+> > Please re-test after pulling in dm-4.16 and let us know how things fair.
 > 
-> For measures see test results below.
+> Hello Mike,
 > 
-> 
-> The "loop" target maps segments to backing files.
-> Mapping table example:
-> 0 4192256 loop /tmp/mapper_loop1
-> 4192256 2097152 loop /dev/nvm/mapper_loop0
-> 
-> 
-> The "ram" target accesses RAM directly rather than through
-> tmpfs additionally enhancing performance compared to "loop"
-> thus avoding filesystem overhead.
-> Mapping table example:
-> 0 8388608 ram
-> 
-> "ram" is a singleton target.
-> 
-> 
-> Performance test results for 4K and 32K IOPS comparing the loop driver
-> with dm-loop backed by tmpfs and dm-ram (all 2GiB backing size):
-> 
-> <TESTSCRIPT>
-> #!/bin/sh
-> for f in /tmp/loop0 /tmp/mapper_loop0
-> do
-> 	dd if=/dev/zero of=$f bs=256M count=8 iflag=fullblock
-> done
-> 
-> losetup /dev/loop0 /tmp/loop0
-> sectors=`du -s /tmp/mapper_loop0|cut -f1`
-> dmsetup create loop0 --table "0 $sectors loop /tmp/mapper_loop0"
-> dmsetup create ram --table "0 $sectors ram"
-> 
-> for bs in 4K 32K
-> do
-> 	for d in /dev/loop0 /dev/mapper/loop0 /dev/mapper/ram
-> 	do
-> 		echo 3 > /proc/sys/vm/drop_caches
-> 		fio --bs=$bs --rw=randrw --numjobs=99 --group_reporting --iodepth=12 --runtime=3 --ioengine=libaio \
-> 		    --loops=1 --direct=1 --exitall --name dc --filename=$d | egrep "read|write"
-> 	done
-> done
-> </TESTSCRIPT>
-> 
-> <4K_RESULTS>
-> loop driver:
->    read: IOPS=226k, BW=881MiB/s (924MB/s)(2645MiB/3003msec)
->   write: IOPS=225k, BW=880MiB/s (923MB/s)(2643MiB/3003msec)
-> dm-loop target:
->    read: IOPS=425k, BW=1661MiB/s (1742MB/s)(4990MiB/3004msec)
->   write: IOPS=425k, BW=1662MiB/s (1743MB/s)(4992MiB/3004msec)
-> dm-ram target:
->    read: IOPS=636k, BW=2484MiB/s (2605MB/s)(7464MiB/3005msec)
->   write: IOPS=636k, BW=2484MiB/s (2605MB/s)(7464MiB/3005msec)
-> </4K_RESULTS>
-> 
-> <32K_RESULTS>
-> loop driver:
->   read: IOPS=55.5k, BW=1733MiB/s (1817MB/s)(5215MiB/3009msec)
->   write: IOPS=55.2k, BW=1726MiB/s (1810MB/s)(5195MiB/3009msec)
-> dm-loop target:
->    read: IOPS=110k, BW=3452MiB/s (3620MB/s)(10.1GiB/3006msec)
->   write: IOPS=110k, BW=3448MiB/s (3615MB/s)(10.1GiB/3006msec)
-> dm-ram target:
->    read: IOPS=355k, BW=10.8GiB/s (11.6GB/s)(32.6GiB/3008msec)
->   write: IOPS=355k, BW=10.8GiB/s (11.6GB/s)(32.6GiB/3008msec)
-> </32K_RESULTS>
-> 
-> 
-> Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
-> 
-> Heinz Mauelshagen (2):
->   dm loop: new target redirecting io to backing file(s)
->   dm ram: new target redirecting io to RAM
-> 
->  Documentation/device-mapper/loop.txt |  20 ++
->  Documentation/device-mapper/ram.txt  |  15 ++
->  drivers/md/Kconfig                   |  14 ++
->  drivers/md/Makefile                  |   2 +
->  drivers/md/dm-loop.c                 | 352 +++++++++++++++++++++++++++++++++++
->  drivers/md/dm-ram.c                  | 101 ++++++++++
->  6 files changed, 504 insertions(+)
->  create mode 100644 Documentation/device-mapper/loop.txt
->  create mode 100644 Documentation/device-mapper/ram.txt
->  create mode 100644 drivers/md/dm-loop.c
->  create mode 100644 drivers/md/dm-ram.c
+> If I replace the patch I referred to in my previous e-mail with your dm-4.16
+> branch then I see the following:
+> * Without I/O scheduler: dm path removal at the end of the test fails. This
+>   succeeded reliably in the past so I think this is a regression:
+>   # srp-test/run_tests -c -d -r 10 -q 1 -t 02-mq
+>   [ ... ]
+>   Unmounting /root/mnt1 from /dev/mapper/mpathb
+>   SRP LUN /sys/class/scsi_device/4:0:0:0 / sdc: removing /dev/dm-1: done
+>   SRP LUN /sys/class/scsi_device/4:0:0:1 / sde: removing /dev/dm-2: done
+>   SRP LUN /sys/class/scsi_device/4:0:0:2 / sdd: removing /dev/dm-0: dm=$(dev_to_mpath "/dev/dm-0"): failed
+>   [ ... ]
 
-My initial thought for dm-ram was: why?  (considering we have brd and
-pmem and null_blk).  But for 100 lines of code if nothing else it could
-serve as yet another example DM target for those interested in learning
-more about how to implement a DM target.  Would be good to compare its
-performance with brd, null_blk and pmem though.
+So no IO hangs?  Just removal of a dm device fails at the end?  Anything
+in the kernel log that might give a hint as to why?  I'll need to
+appreciate what the test is doing.
 
-As for dm-loop, doubling the performance of the loopback driver is quite
-nice (especially with only 1/7 the number of lines of code as
-drives/block/loop.c).
+Like why is a single SRP scsi device being used to create a dm device?
+What type of DM device?
 
-I'll review both of these closer in the coming days but it is getting
-_really_ close to the 4.16 merge window (likley opens Sunday)  So they
-may have to wait until 4.17.  We'll see.
+> * With the Kyber I/O scheduler: I/O hangs.
+>   # srp-test/run_tests -c -d -r 10 -q 1 -t 02-mq -e kyber
+>   [ ... ]
+>   Using /dev/disk/by-id/dm-uuid-mpath-3600140572616d6469736b31000000000 -> ../../dm-0
+>   (hangs)
+
+Again this says little to me.  But hopefully I'll find time to dig in
+further and in parallel Laurence will be able to reproduce on his
+testbed.
+
+How critical is it to have the latest SCSI changes that are queued for
+4.16?
 
 Thanks,
 Mike
