@@ -1,11 +1,15 @@
 From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: [PATCH 0/2] dm: add new loop and ram targets
-Date: Wed, 17 Jan 2018 20:33:59 +0100
-Message-ID: <cover.1516124587.git.heinzm@redhat.com>
+Subject: [PATCH 2/2] dm ram: new target redirecting io to RAM
+Date: Wed, 17 Jan 2018 20:34:01 +0100
+Message-ID: <8d7b30f652368c4f6a7994b87d602a8da041e6b1.1516124587.git.heinzm@redhat.com>
+References: <cover.1516124587.git.heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <cover.1516124587.git.heinzm@redhat.com>
+In-Reply-To: <cover.1516124587.git.heinzm@redhat.com>
+References: <cover.1516124587.git.heinzm@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,96 +22,173 @@ Errors-To: dm-devel-bounces@redhat.com
 To: heinzm@redhat.com, dm-devel@redhat.com, snitzer@redhat.com
 List-Id: dm-devel.ids
 
-Enhancing IO performance compared to the kernels existing
-loop driver thus better suiting respective requirements in
-test setups, this patch series adds new "loop" and "ram" targets.
-
-For measures see test results below.
-
-
-The "loop" target maps segments to backing files.
-Mapping table example:
-0 4192256 loop /tmp/mapper_loop1
-4192256 2097152 loop /dev/nvm/mapper_loop0
-
-
-The "ram" target accesses RAM directly rather than through
-tmpfs additionally enhancing performance compared to "loop"
-thus avoding filesystem overhead.
-Mapping table example:
-0 8388608 ram
-
-"ram" is a singleton target.
-
-
-Performance test results for 4K and 32K IOPS comparing the loop driver
-with dm-loop backed by tmpfs and dm-ram (all 2GiB backing size):
-
-<TESTSCRIPT>
-#!/bin/sh
-for f in /tmp/loop0 /tmp/mapper_loop0
-do
-	dd if=/dev/zero of=$f bs=256M count=8 iflag=fullblock
-done
-
-losetup /dev/loop0 /tmp/loop0
-sectors=`du -s /tmp/mapper_loop0|cut -f1`
-dmsetup create loop0 --table "0 $sectors loop /tmp/mapper_loop0"
-dmsetup create ram --table "0 $sectors ram"
-
-for bs in 4K 32K
-do
-	for d in /dev/loop0 /dev/mapper/loop0 /dev/mapper/ram
-	do
-		echo 3 > /proc/sys/vm/drop_caches
-		fio --bs=$bs --rw=randrw --numjobs=99 --group_reporting --iodepth=12 --runtime=3 --ioengine=libaio \
-		    --loops=1 --direct=1 --exitall --name dc --filename=$d | egrep "read|write"
-	done
-done
-</TESTSCRIPT>
-
-<4K_RESULTS>
-loop driver:
-   read: IOPS=226k, BW=881MiB/s (924MB/s)(2645MiB/3003msec)
-  write: IOPS=225k, BW=880MiB/s (923MB/s)(2643MiB/3003msec)
-dm-loop target:
-   read: IOPS=425k, BW=1661MiB/s (1742MB/s)(4990MiB/3004msec)
-  write: IOPS=425k, BW=1662MiB/s (1743MB/s)(4992MiB/3004msec)
-dm-ram target:
-   read: IOPS=636k, BW=2484MiB/s (2605MB/s)(7464MiB/3005msec)
-  write: IOPS=636k, BW=2484MiB/s (2605MB/s)(7464MiB/3005msec)
-</4K_RESULTS>
-
-<32K_RESULTS>
-loop driver:
-  read: IOPS=55.5k, BW=1733MiB/s (1817MB/s)(5215MiB/3009msec)
-  write: IOPS=55.2k, BW=1726MiB/s (1810MB/s)(5195MiB/3009msec)
-dm-loop target:
-   read: IOPS=110k, BW=3452MiB/s (3620MB/s)(10.1GiB/3006msec)
-  write: IOPS=110k, BW=3448MiB/s (3615MB/s)(10.1GiB/3006msec)
-dm-ram target:
-   read: IOPS=355k, BW=10.8GiB/s (11.6GB/s)(32.6GiB/3008msec)
-  write: IOPS=355k, BW=10.8GiB/s (11.6GB/s)(32.6GiB/3008msec)
-</32K_RESULTS>
-
-
 Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
-
-Heinz Mauelshagen (2):
-  dm loop: new target redirecting io to backing file(s)
-  dm ram: new target redirecting io to RAM
-
- Documentation/device-mapper/loop.txt |  20 ++
- Documentation/device-mapper/ram.txt  |  15 ++
- drivers/md/Kconfig                   |  14 ++
- drivers/md/Makefile                  |   2 +
- drivers/md/dm-loop.c                 | 352 +++++++++++++++++++++++++++++++++++
- drivers/md/dm-ram.c                  | 101 ++++++++++
- 6 files changed, 504 insertions(+)
- create mode 100644 Documentation/device-mapper/loop.txt
+---
+ Documentation/device-mapper/ram.txt |  15 ++++++
+ drivers/md/Kconfig                  |   7 +++
+ drivers/md/Makefile                 |   1 +
+ drivers/md/dm-ram.c                 | 101 ++++++++++++++++++++++++++++++++++++
+ 4 files changed, 124 insertions(+)
  create mode 100644 Documentation/device-mapper/ram.txt
- create mode 100644 drivers/md/dm-loop.c
  create mode 100644 drivers/md/dm-ram.c
 
+diff --git a/Documentation/device-mapper/ram.txt b/Documentation/device-mapper/ram.txt
+new file mode 100644
+index 000000000000..4358fbf57cae
+--- /dev/null
++++ b/Documentation/device-mapper/ram.txt
+@@ -0,0 +1,15 @@
++dm-ram
++======
++
++Device-Mapper's "ram" target provides a mapping to RAM.
++This is comparible to a loop device mapped to a tmpfs
++file but has less overhead, hence higher IOPS and bandwidth.
++
++dm-ram has no target-specific parameters.
++
++Example:
++
++dmsetup create ramdisk --table "0 $((2048*1024*2)) ram"
++
++This will create a 2GiB ramdisk /dev/mapper/ramdisk and
++will suceed presuming more than 2GiB free RAM are available.
+diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
+index 1d80783b9ee8..abea7b8771f4 100644
+--- a/drivers/md/Kconfig
++++ b/drivers/md/Kconfig
+@@ -397,6 +397,13 @@ config DM_LOOP
+ 	  A target that redirects IOs to a backing file.
+ 	  E.g. useful in testing.
+ 
++config DM_RAM
++	tristate "RAM disk target (EXPERIMENTAL)"
++	depends on BLK_DEV_DM
++	---help---
++	  A target that redirects IO to RAM.
++	  E.g. useful in testing.
++
+ config DM_MULTIPATH
+ 	tristate "Multipath target"
+ 	depends on BLK_DEV_DM
+diff --git a/drivers/md/Makefile b/drivers/md/Makefile
+index 68baf79c5536..f404223629ab 100644
+--- a/drivers/md/Makefile
++++ b/drivers/md/Makefile
+@@ -58,6 +58,7 @@ obj-$(CONFIG_DM_MIRROR)		+= dm-mirror.o dm-log.o dm-region-hash.o
+ obj-$(CONFIG_DM_LOG_USERSPACE)	+= dm-log-userspace.o
+ obj-$(CONFIG_DM_ZERO)		+= dm-zero.o
+ obj-$(CONFIG_DM_LOOP)		+= dm-loop.o
++obj-$(CONFIG_DM_RAM)		+= dm-ram.o
+ obj-$(CONFIG_DM_RAID)	+= dm-raid.o
+ obj-$(CONFIG_DM_THIN_PROVISIONING)	+= dm-thin-pool.o
+ obj-$(CONFIG_DM_VERITY)		+= dm-verity.o
+diff --git a/drivers/md/dm-ram.c b/drivers/md/dm-ram.c
+new file mode 100644
+index 000000000000..9ef1a8516e1a
+--- /dev/null
++++ b/drivers/md/dm-ram.c
+@@ -0,0 +1,101 @@
++/*
++ * Copyright (C) 2018 Red Hat GmbH
++ *
++ * Ram disk target.
++ *
++ * This file is released under the GPL.
++ */
++
++#include <linux/device-mapper.h>
++#include <linux/module.h>
++
++static int ram_ctr(struct dm_target *ti, unsigned int argc, char **argv)
++{
++	int r;
++
++	if (argc) {
++		ti->error = "No arguments required";
++		return -EINVAL;
++	}
++
++	/* Allocation will fail anyway for the time being, but... */
++	if (ti->len != to_sector(to_bytes(ti->len))) {
++		ti->error = "Invalid target length";
++		return -EINVAL;
++	}
++
++	r = dm_set_target_max_io_len(ti, min(ti->len, (sector_t) UINT_MAX));
++	if (r)
++		return r;
++
++	ti->private = vmalloc(to_bytes(ti->len));
++	if (!ti->private) {
++		ti->error = "Cannot allocate ram disk";
++		return -ENOMEM;
++	}
++
++	ti->num_discard_bios = 1;
++	ti->discards_supported = true;
++
++	return 0;
++}
++
++static void ram_dtr(struct dm_target *ti)
++{
++	vfree(ti->private);
++}
++
++static int ram_map(struct dm_target *ti, struct bio *bio)
++{
++	struct bio_vec bvec;
++
++	switch (bio_op(bio)) {
++	case REQ_OP_READ:
++		bio_for_each_segment(bvec, bio, bio->bi_iter)
++			memcpy(page_address(bvec.bv_page) + bvec.bv_offset,
++			       ti->private + to_bytes(bio->bi_iter.bi_sector), bvec.bv_len);
++		break;
++	case REQ_OP_WRITE:
++		bio_for_each_segment(bvec, bio, bio->bi_iter)
++			memcpy(ti->private + to_bytes(bio->bi_iter.bi_sector),
++			       page_address(bvec.bv_page) + bvec.bv_offset, bvec.bv_len);
++		break;
++	case REQ_OP_DISCARD:
++		memset(ti->private + to_bytes(bio->bi_iter.bi_sector), 0, bio_cur_bytes(bio));
++		break;
++	default:
++		return DM_MAPIO_KILL;
++	}
++
++	bio_endio(bio);
++
++	return DM_MAPIO_SUBMITTED;
++}
++
++static struct target_type ram_target = {
++	.name	     = "ram",
++	.version     = {1, 0, 0},
++	.features    = DM_TARGET_SINGLETON | DM_TARGET_ALWAYS_WRITEABLE,
++	.module      = THIS_MODULE,
++	.ctr	     = ram_ctr,
++	.dtr	     = ram_dtr,
++	.map	     = ram_map
++};
++
++static int __init dm_ram_init(void)
++{
++	return dm_register_target(&ram_target);
++}
++
++static void __exit dm_ram_exit(void)
++{
++	dm_unregister_target(&ram_target);
++}
++
++/* Module hooks */
++module_init(dm_ram_init);
++module_exit(dm_ram_exit);
++
++MODULE_DESCRIPTION(DM_NAME " ram disk target");
++MODULE_AUTHOR("Heinz Mauelshagen <dm-devel@redhat.com>");
++MODULE_LICENSE("GPL");
 -- 
 2.14.3
