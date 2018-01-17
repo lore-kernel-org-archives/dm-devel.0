@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 7/7] multipathd: ignore uevents for non-mpath
-	devices
-Date: Wed, 17 Jan 2018 08:49:39 +0100
-Message-ID: <20180117074939.7795-8-mwilck@suse.com>
+Subject: [PATCH 1/7] assemble_map: no newline at end of params
+	string
+Date: Wed, 17 Jan 2018 08:49:33 +0100
+Message-ID: <20180117074939.7795-2-mwilck@suse.com>
 References: <20180117074939.7795-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,29 +22,25 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com
 Cc: Ritika Srivastava <ritika.srivastava@oracle.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-multipathd can't deal with other devices anyway. Proceeding further
-with events for other devices just generates log noise.
-
-Based on an idea from Ritika Srivastava <ritika.srivastava@oracle.com>.
-("multipath-tools: Skip CHANGE uevent for non-mpath devices").
+This newline is superfluous for device-mapper, and causes ugly
+debug output.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/dmparser.c | 1 -
+ 1 file changed, 1 deletion(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index ff3ecb640487..26632291657f 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1121,7 +1121,7 @@ uev_trigger (struct uevent * uev, void * trigger_data)
- 	 * Add events are ignored here as the tables
- 	 * are not fully initialised then.
- 	 */
--	if (!strncmp(uev->kernel, "dm-", 3)) {
-+	if (!strncmp(uev->kernel, "dm-", 3) && uevent_is_mpath(uev)) {
- 		if (!strncmp(uev->action, "change", 6)) {
- 			r = uev_add_map(uev, vecs);
+diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
+index 642f44fb0439..027ae989781e 100644
+--- a/libmultipath/dmparser.c
++++ b/libmultipath/dmparser.c
+@@ -114,7 +114,6 @@ assemble_map (struct multipath * mp, char * params, int len)
+ 			APPEND(p, end, " %s %d", pp->dev_t, tmp_minio);
+ 		}
+ 	}
+-	APPEND(p, end, "\n");
  
+ 	FREE(f);
+ 	condlog(3, "%s: assembled map [%s]", mp->alias, params);
 -- 
 2.15.1
