@@ -1,36 +1,32 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH V4] multipathd: release uxsocket and resource
- when cancel thread
-Date: Wed, 17 Jan 2018 11:30:03 +0100
-Message-ID: <1516185003.9784.0.camel@suse.com>
-References: <CEB9978CF3252343BE3C67AC9F0086A3429580E5@H3CMLB14-EX.srv.huawei-3com.com>
+From: Wei Yongjun <weiyongjun1@huawei.com>
+Subject: [PATCH -next] dm crypt: fix error return code in crypt_ctr()
+Date: Wed, 17 Jan 2018 11:24:26 +0000
+Message-ID: <1516188266-143804-1-git-send-email-weiyongjun1@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CEB9978CF3252343BE3C67AC9F0086A3429580E5@H3CMLB14-EX.srv.huawei-3com.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Wuchongyun <wu.chongyun@h3c.com>, Benjamin Marzinski <bmarzins@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
-Cc: Guozhonghua <guozhonghua@h3c.com>, Changwei Ge <ge.changwei@h3c.com>, Changlimin <changlimin@h3c.com>
+Content-Type: text/plain; charset="ISO-8859-1"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: Wei Yongjun <weiyongjun1@huawei.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-T24gV2VkLCAyMDE4LTAxLTE3IGF0IDA4OjE1ICswMDAwLCBXdWNob25neXVuIHdyb3RlOgo+IEhp
-IE1hdGluLAo+IEkgdGhpbmsgaXQncyBhIGdvb2QgaWRlYSB0byBtb3ZlIHRoZSBjbG9zZSh1eF9z
-b2NrKSBjYWxsIGZ1cnRoZXIgdXAKPiB0byBhdm9pZCBuZXcgY2xpZW50cyB0cnlpbmcgdG8gY29u
-bmVjdCwgQmVsb3cgaXMgdGhlIG5ldyBwYXRjaCBmb3IKPiB5b3VyIGNvbW1lbnQuIFBsZWFzZSBo
-ZWxwIHRvIHJldmlldy4gVGhhbmtzLiAKCklNTyB0aGUgcGF0Y2ggaXMgZmluZSBub3cuIExldCdz
-IHNlZSBpZiBCZW4gb3Igc29tZW9uZSBlbHNlIGhhcyBmdXJ0aGVyCnJlbWFya3MuCgpSZXZpZXdl
-ZC1ieTogTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+CgotLSAKRHIuIE1hcnRpbiBXaWxj
-ayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51
-eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9y
-dG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRt
-LWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZv
-L2RtLWRldmVs
+Fix to return error code -ENOMEM from the mempool_create_kmalloc_pool()
+error handling case instead of 0, as done elsewhere in this function.
+
+Signed-off-by: Wei Yongjun <weiyongjun1@huawei.com>
+---
+ drivers/md/dm-crypt.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 9fc12f5..45f3acf 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -2740,6 +2740,7 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 			cc->tag_pool_max_sectors * cc->on_disk_tag_size);
+ 		if (!cc->tag_pool) {
+ 			ti->error = "Cannot allocate integrity tags mempool";
++			ret = -ENOMEM;
+ 			goto bad;
+ 		}
