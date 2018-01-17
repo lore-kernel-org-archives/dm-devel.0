@@ -1,14 +1,13 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH V4] multipathd: release uxsocket and resource
- when cancel thread
-Date: Wed, 17 Jan 2018 08:39:27 +0100
-Message-ID: <1516174767.3303.4.camel@suse.com>
-References: <CEB9978CF3252343BE3C67AC9F0086A342958024@H3CMLB14-EX.srv.huawei-3com.com>
+Subject: [PATCH 5/7] libmultipath: move UUID_PREFIX to devmapper.h
+Date: Wed, 17 Jan 2018 08:49:37 +0100
+Message-ID: <20180117074939.7795-6-mwilck@suse.com>
+References: <20180117074939.7795-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CEB9978CF3252343BE3C67AC9F0086A342958024@H3CMLB14-EX.srv.huawei-3com.com>
+In-Reply-To: <20180117074939.7795-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,22 +17,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Wuchongyun <wu.chongyun@h3c.com>, Benjamin Marzinski <bmarzins@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
-Cc: Guozhonghua <guozhonghua@h3c.com>, Changwei Ge <ge.changwei@h3c.com>, Changlimin <changlimin@h3c.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com
+Cc: Ritika Srivastava <ritika.srivastava@oracle.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-SGkgV3VjaG9uZ3l1biwKCmFub3RoZXIgdGhpbmcgb2NjdXJlZCB0byBtZToKCk9uIFdlZCwgMjAx
-OC0wMS0xNyBhdCAwMjozMyArMDAwMCwgV3VjaG9uZ3l1biB3cm90ZToKPiAgCj4gIHZvaWQgdXhz
-b2NrX2NsZWFudXAodm9pZCAqYXJnKQo+ICB7Cj4gKwlzdHJ1Y3QgY2xpZW50ICpjbGllbnRfbG9v
-cDsKPiArCXN0cnVjdCBjbGllbnQgKmNsaWVudF90bXA7Cj4gKwlpbnQgdXhfc29jayA9IChpbnQp
-YXJnOwo+ICsKPiArCXB0aHJlYWRfbXV0ZXhfbG9jaygmY2xpZW50X2xvY2spOwo+ICsJbGlzdF9m
-b3JfZWFjaF9lbnRyeV9zYWZlKGNsaWVudF9sb29wLCBjbGllbnRfdG1wLCAmY2xpZW50cywKPiBu
-b2RlKSB7Cj4gKwkJX2RlYWRfY2xpZW50KGNsaWVudF9sb29wKTsKPiArCX0KPiArCXB0aHJlYWRf
-bXV0ZXhfdW5sb2NrKCZjbGllbnRfbG9jayk7Cj4gKwo+ICsJY2xvc2UodXhfc29jayk7Cj4gKwoK
-V291bGQgaXQgbWFrZSBzZW5zZSB0byBtb3ZlIHRoZSBjbG9zZSh1eF9zb2NrKSBjYWxsIGZ1cnRo
-ZXIgdXAKdG8gYXZvaWQgbmV3IGNsaWVudHMgdHJ5aW5nIHRvIGNvbm5lY3Q/CgpNYXJ0aW4KCi0t
-IApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQw
-NTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21p
-dGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZl
-bCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29t
-L21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+This constant is useful elsewhere, too.
+
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ libmultipath/devmapper.c | 3 ---
+ libmultipath/devmapper.h | 3 +++
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index 573fc75cfa54..f112e1cb0e66 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -30,9 +30,6 @@
+ #define MAX_WAIT 5
+ #define LOOPS_PER_SEC 5
+ 
+-#define UUID_PREFIX "mpath-"
+-#define UUID_PREFIX_LEN 6
+-
+ static int dm_conf_verbosity;
+ 
+ #ifdef LIBDM_API_DEFERRED
+diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
+index 62e14d1c0b97..558e6914074f 100644
+--- a/libmultipath/devmapper.h
++++ b/libmultipath/devmapper.h
+@@ -24,6 +24,9 @@
+ #define MPATH_UDEV_NO_PATHS_FLAG 0
+ #endif
+ 
++#define UUID_PREFIX "mpath-"
++#define UUID_PREFIX_LEN (sizeof(UUID_PREFIX) - 1)
++
+ void dm_init(int verbosity);
+ void libmp_dm_init(void);
+ void libmp_udev_set_sync_support(int on);
+-- 
+2.15.1
