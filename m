@@ -1,14 +1,12 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 1/7] assemble_map: no newline at end of params
-	string
-Date: Wed, 17 Jan 2018 08:49:33 +0100
-Message-ID: <20180117074939.7795-2-mwilck@suse.com>
-References: <20180117074939.7795-1-mwilck@suse.com>
+Subject: [PATCH 0/7] multipath-tools: uevent processing fixes and
+	unit tests
+Date: Wed, 17 Jan 2018 08:49:32 +0100
+Message-ID: <20180117074939.7795-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180117074939.7795-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,25 +20,59 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com
 Cc: Ritika Srivastava <ritika.srivastava@oracle.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-This newline is superfluous for device-mapper, and causes ugly
-debug output.
+Hi Christophe,
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- libmultipath/dmparser.c | 1 -
- 1 file changed, 1 deletion(-)
+The incentive for creating this series was Ritika's patch "multipath-tools:
+Skip CHANGE uevent for non-mpath devices" from October 2017, plus the
+observation that uevent.c contains a lot of code repetition.
+I've refactored and simplified the uevent_get_XXX code, and started to use
+"const" qualifiers in the part of the code which I touched in the process.
 
-diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
-index 642f44fb0439..027ae989781e 100644
---- a/libmultipath/dmparser.c
-+++ b/libmultipath/dmparser.c
-@@ -114,7 +114,6 @@ assemble_map (struct multipath * mp, char * params, int len)
- 			APPEND(p, end, " %s %d", pp->dev_t, tmp_minio);
- 		}
- 	}
--	APPEND(p, end, "\n");
- 
- 	FREE(f);
- 	condlog(3, "%s: assembled map [%s]", mp->alias, params);
+In order to avoid regressions in the process, I took this as a starting point
+for implementing a simple unit test framework. For now, it covers only the
+stuff that I changed in this series.
+
+The series is based on my previous patch series ("Various 
+multipath-tools fixes"), v2. The first patch doesn't belong in the series
+logically, but I thought it may help you track the ordering if I include it
+here rather then posting separately or spamming the list with the big series
+again.
+
+Regards,
+Martin
+
+Martin Wilck (7):
+  assemble_map: no newline at end of params string
+  tests: cmocka-based unit test for uevent_get_XXX
+  libmultipath: refactor uevent_get_XXX
+  libmultipath: const qualifier for wwid and alias
+  libmultipath: move UUID_PREFIX to devmapper.h
+  libmultipath: add uevent_is_mpath
+  multipathd: ignore uevents for non-mpath devices
+
+ .gitignore                 |   3 +
+ Makefile                   |   4 +
+ libmultipath/devmapper.c   |   3 -
+ libmultipath/devmapper.h   |   3 +
+ libmultipath/discovery.c   |   2 +-
+ libmultipath/discovery.h   |   2 +-
+ libmultipath/dmparser.c    |   1 -
+ libmultipath/memory.h      |   2 +-
+ libmultipath/structs.c     |   4 +-
+ libmultipath/structs.h     |   4 +-
+ libmultipath/structs_vec.c |   2 +-
+ libmultipath/structs_vec.h |   2 +-
+ libmultipath/uevent.c      | 183 +++++++++++++--------------
+ libmultipath/uevent.h      |  15 +--
+ multipathd/main.c          |  10 +-
+ multipathd/main.h          |   2 +-
+ tests/Makefile             |  23 ++++
+ tests/globals.c            |  17 +++
+ tests/uevent.c             | 304 +++++++++++++++++++++++++++++++++++++++++++++
+ 19 files changed, 462 insertions(+), 124 deletions(-)
+ create mode 100644 tests/Makefile
+ create mode 100644 tests/globals.c
+ create mode 100644 tests/uevent.c
+
 -- 
 2.15.1
