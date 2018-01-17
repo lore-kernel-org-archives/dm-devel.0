@@ -1,23 +1,15 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: multipath-tools 0.7.4 failure to remove device
-Date: Wed, 17 Jan 2018 12:45:30 -0600
-Message-ID: <20180117184530.GS5638@octiron.msp.redhat.com>
-References: <20180112083833.apsybil4ux4d2y32@jak-x230>
-	<1515789339.3409.33.camel@suse.com>
-	<20180112214700.ljxlypo5nar6oh3m@jak-x230>
-	<1515795481.9139.8.camel@suse.com>
-	<20180115154424.fcjuudt7phxrks6q@jak-x230>
-	<1516032730.5699.38.camel@suse.com>
-	<20180115162658.wlccxhlaq56byykg@jak-x230>
-	<1516034784.5699.44.camel@suse.com>
-	<20180116202946.GO5638@octiron.msp.redhat.com>
-	<20180117093842.ywogyfsztihwaie7@jak-x230>
+Subject: Re: [PATCH V3] multipathd: release uxsocket and resource
+ when cancel thread
+Date: Wed, 17 Jan 2018 12:59:41 -0600
+Message-ID: <20180117185941.GT5638@octiron.msp.redhat.com>
+References: <CEB9978CF3252343BE3C67AC9F0086A342957FEF@H3CMLB14-EX.srv.huawei-3com.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20180117093842.ywogyfsztihwaie7@jak-x230>
+In-Reply-To: <CEB9978CF3252343BE3C67AC9F0086A342957FEF@H3CMLB14-EX.srv.huawei-3com.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,50 +19,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Julian Andres Klode <julian.klode@canonical.com>
-Cc: Guan Junxiong <guanjunxiong@huawei.com>, Martin Wilck <mwilck@suse.com>, development mailing list <dm-devel@redhat.com>
+To: Wuchongyun <wu.chongyun@h3c.com>
+Cc: Guozhonghua <guozhonghua@h3c.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Changwei Ge <ge.changwei@h3c.com>, Changlimin <changlimin@h3c.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-On Wed, Jan 17, 2018 at 10:38:42AM +0100, Julian Andres Klode wrote:
-> On Tue, Jan 16, 2018 at 02:30:46PM -0600, Benjamin Marzinski wrote:
-> > 
-> > RedHat also removes your patches to force ignore_wwids off and imply -n
-> > 
-> > 64e27ec066a001012f44550f095c93443e91d845
-> > ffbb886a8a16cb063d669cd76a1e656fd3ec8c4b
+On Wed, Jan 17, 2018 at 02:04:19AM +0000, Wuchongyun wrote:
+> On Tue, Jan 17, 2018 at 06:39:20PM +0100, Benjamin Marzinski wrote:
+> > On Tue, Jan 16, 2018 at 02:19:20PM +0100, Martin Wilck wrote:
+> > > On Tue, 2018-01-16 at 11:48 +0000, Wuchongyun wrote:
+> > > > Hi Martin,
+> > > > Sorry to forget that, actually I found that dead_client() will not 
+> > > > be interrupt by thread cancle, because after all dead_client() 
+> > > > calling point be done then handle_signals() have chance to be called 
+> > > > by
+> > > > uxsock_listen() which will call exit_daemon() and send cancel 
+> > > > threads signal to all child process include uxlsnr.
+> > > 
+> > > Fair enough.
+> > > 
+> > > > But your comments is good can make code more safer. Below is the new 
+> > > > patch, please have a look, thanks.
+> > > 
+> > > I think it's really safer whis way, should anyone see the need to 
+> >>  cancel the listener thread from another point in the code.
 > 
-> I only see you reverting the former, in  
+> > I'm confused why this is safe. After uxsock_listen() calls exit_daemon() from handle_signals(), it doesn't exit. It loops around and polls again, and could in theory find a client that has died.  In fact if the client is killing multipathd via
+> > # multipathd shutdown
+> > instead of a signal, won't it be very likely that it will find a dead client when it loops right after calling exit_daemon() in cli_shutdown()? This could hit the deadlock that you noticed, where
+> > uxsock_cleanup() can't run because dead_client() already holding the mutex.
+> > Or am I missing something here?
 > 
->   0013-RH-trigger-change-uevent-on-new-device-creation.patch
+> Hi Benjiamin,
+> Thanks for your comments below are my rely, thanks.
 > 
+> You really found the scenario which need to add pthread_cleanup_push(cleanup_lock, &client_lock) before get lock in dead_client to avoid the dead lock:
+> If the client is killing multipathd via multipathd shutdown and it find a dead client when it loops right after calling exit_daemon() in cli_shutdown(), This will not hit deadlock because in dead_client before get lock we call pthread_cleanup_push(cleanup_lock, &client_lock) first, then thread cancelation happened, thread cleanup functions been pop up by reverse order: cleanup_lock() first, then uxsock_cleanup(), which make sure client_lock been release before calling uxsock_cleanup(). So it's safer in this way.
 
-Oops. It appears that the other patch got lost in the shuffle of
-converting over to the new git repo, and rebasing, and since nothing
-uses -i anymore, its absence was never noticed.
+I thought Martin was asking you to not add the pthread_cleanup_push/pop
+in dead_client, and I was trying to argue that they were necessary. But
+I think I just made the conversation more muddled.
 
-I suppose that sort of undercuts my argument that we need to keep -i
-working the way I orginally envisioned.
+So yes, please add the pthread_cleanup_push/pop in dead_client. It does
+make the program safer. Sorry if I'm just restating what everyone had
+already agreed to.
 
-Thanks for noticing.
-
-> 
-> > As a side note, RedHat also adds code to automatically fire off a change
-> > uevent on all the path devices on the first time a multipath device is
-> > created, so that all the path devices get correctly claimed by multipath
-> > after the fact, on the first create. It's currently part of the same
-> > patch that reverts the two commits listed above, but I have no problem
-> > with posting it as a seperate patch. I obviously have no problem with
-> > reverting those two commits upstream either. But I don't feel horribly
-> > burdened with carrying them as RedHat patches.
-> 
-> I like that patch, that sounds like a good idea.
-
-I'll post this as an RFC, and we can sort it out along with the other
-patches.
-
+Thanks.
 -Ben
 
 > 
-> -- 
-> debian developer - deb.li/jak | jak-linux.org - free software dev
-> ubuntu core developer                              i speak de, en
+> And your next comment is right I will make another patch for this.
+> >Since you are now closing ux_sock in uxsock_cleanup(), you should remove the close(ux_sock) at the end of uxsock_listen(). pthread_cleanup_pop() will already take care of that.
+> 
+> Regards
+> Chongyun
