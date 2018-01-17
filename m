@@ -1,16 +1,15 @@
-From: Laurence Oberman <loberman@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
 Subject: Re: dm-rq queue stalls
-Date: Wed, 17 Jan 2018 14:46:31 -0500
-Message-ID: <1516218391.3805.0.camel@redhat.com>
-References: <1516212342.2820.26.camel@wdc.com>
-	<20180117181852.GA5798@redhat.com>
-	<1516213796.31083.2.camel@redhat.com>
-	<1516217368.2820.39.camel@wdc.com>
+Date: Wed, 17 Jan 2018 15:14:17 -0500
+Message-ID: <20180117201417.GA6455@redhat.com>
+References: <a096db4d-1c32-4682-844d-4a7fc02d47da@email.android.com>
+	<1516218304.2820.51.camel@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1516217368.2820.39.camel@wdc.com>
+Content-Disposition: inline
+In-Reply-To: <1516218304.2820.51.camel@wdc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,33 +19,65 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <Bart.VanAssche@wdc.com>, "snitzer@redhat.com" <snitzer@redhat.com>
-Cc: "axboe@kernel.dk" <axboe@kernel.dk>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "ming.lei@redhat.com" <ming.lei@redhat.com>
+To: Bart Van Assche <Bart.VanAssche@wdc.com>
+Cc: "axboe@kernel.dk" <axboe@kernel.dk>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "loberman@redhat.com" <loberman@redhat.com>, "ming.lei@redhat.com" <ming.lei@redhat.com>
 List-Id: dm-devel.ids
 
-T24gV2VkLCAyMDE4LTAxLTE3IGF0IDE5OjI5ICswMDAwLCBCYXJ0IFZhbiBBc3NjaGUgd3JvdGU6
-Cj4gT24gV2VkLCAyMDE4LTAxLTE3IGF0IDEzOjI5IC0wNTAwLCBMYXVyZW5jZSBPYmVybWFuIHdy
-b3RlOgo+ID4gSWYgeW91IGNhbiBzaGFyZSB5b3VyIGV4YWN0IGZpbyBydW4gc2NyaXB0cGFyYW1l
-dGVycyBJIGNhbiB0cnkgdGhpcwo+ID4gb24KPiA+IG15IG1seDUgdGVzdCBiZWQgdXNpbmcgdGhl
-IHNhbWUga2VybmVsIHlvdSBhcmUgdXNpbmcuCj4gPiBNaW5nIGhhcyBhY2Nlc3MgdG8gdGhlIHNh
-bWUgdGVzdCBiZWQgYXMgd2VsbC4KPiA+IElzIHRoaXMgZGlyZWN0IHRvIGRldmljZXMsIG9yIG9u
-IGEgZmlsZSBzeXN0ZW0gZXRjLiBldGMuCj4gPiAKPiA+IEFyZSB0aGVzZSBmcm9tIHRoZSB0ZXN0
-cyBkaXJlY3RvcnkgaW4gdGhlIHNycCB0ZXN0IGtpdCBvZiB5b3Vycy4KPiAKPiBIZWxsbyBMYXVy
-ZW5jZSwKPiAKPiBUaGlzIGlzc3VlIGNhbiBiZSByZXByb2R1Y2VkIGFzIGZvbGxvd3M6Cj4gKiBD
-bG9uZSB0aGUgYmxvY2stc2NzaS1mb3ItbmV4dCBicmFuY2ggZnJvbSBodHRwczovL2dpdGh1Yi5j
-b20vYnZhbmFzCj4gc2NoZS9saW51eAo+IMKgIChjb21taXQgY2QwYjZiOWY4Nzc5KS4KPiAqIENs
-b25lIHRoZSBzcnAtdGVzdCBwcm9qZWN0IGZyb20gaHR0cHM6Ly9naXRodWIuY29tL2J2YW5hc3Nj
-aGUvc3JwLXQKPiBlc3QuCj4gKiBNb2RpZnkgL2V0Yy9tdWx0aXBhdGguY29uZiBhcyBpbmRpY2F0
-ZWQgaW4gdGhlIFJFQURNRS5tZCBmaWxlIG9mCj4gdGhlIHNycC10ZXN0Cj4gwqAgcHJvamVjdCBh
-bmQgcmVzdGFydCBtdWx0aXBhdGhkLgo+IAo+IElmIHlvdSBwcmVmZXIgdGhlIHJkbWFfcnhlIGRy
-aXZlciwgcnVuIHRoZSBmb2xsb3dpbmcgY29tbWFuZDoKPiAKPiBzcnAtdGVzdC9ydW5fdGVzdHMg
-LWMgLWQgLXIgMTAgLXEgMSAtdCAwMi1tcSAtZSBreWJlcgo+IAo+IE9yIGlmIHlvdSBwcmVmZXIg
-dG8gcnVuIHRoZSB0ZXN0IGFnYWluc3QgYW4gSUIgZHJpdmVyIChtbHg0LCBtbHg1LAo+IC4uKSBv
-biBhbiBJQgo+IHN5c3RlbSwgcnVuIHRoZSBmb2xsb3dpbmcgY29tbWFuZDoKPiAKPiBzcnAtdGVz
-dC9ydW5fdGVzdHMgLWQgLXIgMTAgLXEgMSAtdCAwMi1tcQo+IAo+IElmIHJ1bm5pbmcgb25lIG9m
-IHRoZSBhYm92ZSBjb21tYW5kcyBvbmNlIHdvdWxkIG5vdCBiZSBzdWZmaWNpZW50IHRvCj4gdHJp
-Z2dlciB0aGUKPiBsb2NrdXAsIHJlcnVuIHRoZSBjb21tYW5kIGEgZmV3IHRpbWVzLgo+IAo+IEJh
-cnQuCgpUaGFua3MKQmFydApJIHdpbGwgdGFrZSBjYXJlIG9mIHRoaXMgdGVzdCBhbmQgY29tZSBi
-YWNrIHRvIHlvdS4KRmlyc3QgZ29pbmcgdG8gdGVzdCB0aGUgc2NhdHRlci9nYXRoZXIgZml4LgpS
-ZWdhcmRzCkxhdXJlbmNlCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0
-LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On Wed, Jan 17 2018 at  2:45pm -0500,
+Bart Van Assche <Bart.VanAssche@wdc.com> wrote:
+
+> On Wed, 2018-01-17 at 14:36 -0500, Mike Snitzer wrote:
+> > That tree doesn't have the revert you think it does (because it doesn't have _any_ of the dm-4.16 changes).
+> > 
+> > So there is some other reason for your hang.
+> 
+> Hello Mike,
+> 
+> Please have another look, namely at the following commit:
+> https://github.com/bvanassche/linux/commit/cd0b6b9f8779a0b692b1ef1d1f5ba6cb2fd981c5
+> 
+> That contents of that commit is as follows:
+> 
+> Subject: [PATCH] Revert "dm rq: Avoid that request processing stalls sporadically"
+> 
+> This reverts commit 6077c2d706097c00d8f2fed57d3f3c45cd228ee8.
+> ---
+>  drivers/md/dm-rq.c | 1 -
+>  1 file changed, 1 deletion(-)
+> 
+> diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+> index 85d80b8ccc33..a9e0f6ec62b6 100644
+> --- a/drivers/md/dm-rq.c
+> +++ b/drivers/md/dm-rq.c
+> @@ -773,7 +773,6 @@ static blk_status_t dm_mq_queue_rq(struct blk_mq_hw_ctx *hctx,
+>  		/* Undo dm_start_request() before requeuing */
+>  		rq_end_stats(md, rq);
+>  		rq_completed(md, rq_data_dir(rq), false);
+> -		blk_mq_delay_run_hw_queue(hctx, 100/*ms*/);
+>  		return BLK_STS_RESOURCE;
+>  	}
+>  
+
+Fine, the chrome browser on my phone displayed "master" rather than your
+other branch.
+
+BUT my broader point stands: you aren't testing the dm-4.16 changes.  By
+just reverting that commit you're creating a self-fulfilling prophecy
+(that you'll see hangs without it).
+
+Fact is you should pull all of dm-4.16 in, see:
+https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-4.16
+
+But these dm-4.16 changes are particularly important:
+050af08ffb1b dm mpath: return DM_MAPIO_REQUEUE on blk-mq rq allocation failure
+459b54019cfe dm mpath: return DM_MAPIO_DELAY_REQUEUE if QUEUE_IO or PG_INIT_REQUIRED
+ec3eaf9a6731 dm mpath: don't call blk_mq_delay_run_hw_queue() in case of BLK_STS_RESOURCE
+4dd6edd23e7e dm mpath: delay the retry of a request if the target responded as busy
+
+This last one is the commit that _should_ serve as a proper replacement
+for the change you manually reverted in your branch.
+
+Please re-test after pulling in dm-4.16 and let us know how things fair.
+
+Thanks!
+Mike
