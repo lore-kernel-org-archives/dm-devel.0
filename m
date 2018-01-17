@@ -1,105 +1,86 @@
-From: Laurence Oberman <loberman@redhat.com>
+From: Bart Van Assche <Bart.VanAssche@wdc.com>
 Subject: Re: [for-4.16 PATCH v6 0/3] blk-mq: improve DM's blk-mq IO merging
  via blk_insert_cloned_request feedback
-Date: Wed, 17 Jan 2018 18:43:09 -0500
-Message-ID: <1516232589.3805.2.camel@redhat.com>
+Date: Wed, 17 Jan 2018 23:53:27 +0000
+Message-ID: <1516233206.2820.103.camel@wdc.com>
 References: <20180117162558.28553-1-snitzer@redhat.com>
          <45f70a28-aeea-8278-0b8e-9601ea043595@kernel.dk>
          <20180117165832.GA5573@redhat.com> <1516231868.2820.84.camel@wdc.com>
+         <1516232589.3805.2.camel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <1516231868.2820.84.camel@wdc.com>
+In-Reply-To: <1516232589.3805.2.camel@redhat.com>
+Content-Language: en-US
+Content-ID: <403826B08480584F98CB587E797B4832@namprd04.prod.outlook.com>
 Sender: linux-block-owner@vger.kernel.org
-To: Bart Van Assche <Bart.VanAssche@wdc.com>, "snitzer@redhat.com" <snitzer@redhat.com>, "axboe@kernel.dk" <axboe@kernel.dk>
+To: "axboe@kernel.dk" <axboe@kernel.dk>, "loberman@redhat.com" <loberman@redhat.com>, "snitzer@redhat.com" <snitzer@redhat.com>
 Cc: "hch@lst.de" <hch@lst.de>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "tom.leiming@gmail.com" <tom.leiming@gmail.com>
 List-Id: dm-devel.ids
 
-On Wed, 2018-01-17 at 23:31 +0000, Bart Van Assche wrote:
-> On Wed, 2018-01-17 at 11:58 -0500, Mike Snitzer wrote:
-> > On Wed, Jan 17 2018 at 11:50am -0500,
-> > Jens Axboe <axboe@kernel.dk> wrote:
-> > 
-> > > On 1/17/18 9:25 AM, Mike Snitzer wrote:
-> > > > Hi Jens,
-> > > > 
-> > > > Think this finally takes care of it! ;)
-> > > > 
-> > > > Thanks,
-> > > > Mike
-> > > > 
-> > > > Mike Snitzer (2):
-> > > >   blk-mq: factor out a few helpers from
-> > > > __blk_mq_try_issue_directly
-> > > >   blk-mq-sched: remove unused 'can_block' arg from
-> > > > blk_mq_sched_insert_request
-> > > > 
-> > > > Ming Lei (1):
-> > > >   blk-mq: improve DM's blk-mq IO merging via
-> > > > blk_insert_cloned_request feedback
-> > > 
-> > > Applied - added actual commit message to patch 3.
-> > 
-> > Great, thanks.
-> 
-> Hello Mike,
-> 
-> Laurence hit the following while retesting the SRP initiator code:
-> 
-> [ 2223.797129] list_add corruption. prev->next should be next
-> (00000000e0ddd5dd), but was 000000003defe5cd.
-> (prev=000000003defe5cd).
-> [ 2223.862168] WARNING: CPU: 14 PID: 577 at lib/list_debug.c:28
-> __list_add_valid+0x6a/0x70
-> [ 2224.481151] CPU: 14 PID: 577 Comm: kworker/14:1H Tainted:
-> G          I      4.15.0-rc8.bart3+ #1
-> [ 2224.531193] Hardware name: HP ProLiant DL380 G7, BIOS P67
-> 08/16/2015
-> [ 2224.567150] Workqueue: kblockd blk_mq_run_work_fn
-> [ 2224.593182] RIP: 0010:__list_add_valid+0x6a/0x70
-> [ 2224.967002] Call Trace:
-> [ 2224.980941]  blk_mq_request_bypass_insert+0x57/0xa0
-> [ 2225.009044]  __blk_mq_try_issue_directly+0x56/0x1e0
-> [ 2225.037007]  blk_mq_request_direct_issue+0x5d/0xc0
-> [ 2225.090608]  map_request+0x142/0x260 [dm_mod]
-> [ 2225.114756]  dm_mq_queue_rq+0xa4/0x120 [dm_mod]
-> [ 2225.140812]  blk_mq_dispatch_rq_list+0x90/0x5b0
-> [ 2225.211769]  blk_mq_sched_dispatch_requests+0x107/0x1a0
-> [ 2225.240825]  __blk_mq_run_hw_queue+0x5f/0xf0
-> [ 2225.264852]  process_one_work+0x141/0x340
-> [ 2225.287872]  worker_thread+0x47/0x3e0
-> [ 2225.308354]  kthread+0xf5/0x130
-> [ 2225.396405]  ret_from_fork+0x32/0x40
-> 
-> That call trace did not show up before this patch series was added to
-> Jens'
-> tree. This is a regression. Could this have been introduced by this
-> patch
-> series?
-> 
-> Thanks,
-> 
-> Bart.
-
-Hi Bart
-One thing to note.
-
-I tested Mike's combined tree on the weekend fully dm4.16-block4.16 and
-did not see this.
-This was with Mike combined tree and SRPT running 4.13-rc2.
-
-I also tested your tree Monday with the revert of the scatter/gather
-patches with both SRP and SRPT running your tree and it was fine.
-
-So its a combination of what you provided me before and that has been
-added to your tree.
-
-Mike combined tree seemed to be fine, I can revisit that if needed. I
-still have that kernel in place.
-
-I was not running latest SRPT when I tested Mike's tree
-
-
-Regards
-Laurence
+T24gV2VkLCAyMDE4LTAxLTE3IGF0IDE4OjQzIC0wNTAwLCBMYXVyZW5jZSBPYmVybWFuIHdyb3Rl
+Og0KPiBPbiBXZWQsIDIwMTgtMDEtMTcgYXQgMjM6MzEgKzAwMDAsIEJhcnQgVmFuIEFzc2NoZSB3
+cm90ZToNCj4gPiBPbiBXZWQsIDIwMTgtMDEtMTcgYXQgMTE6NTggLTA1MDAsIE1pa2UgU25pdHpl
+ciB3cm90ZToNCj4gPiA+IE9uIFdlZCwgSmFuIDE3IDIwMTggYXQgMTE6NTBhbSAtMDUwMCwNCj4g
+PiA+IEplbnMgQXhib2UgPGF4Ym9lQGtlcm5lbC5kaz4gd3JvdGU6DQo+ID4gPiANCj4gPiA+ID4g
+T24gMS8xNy8xOCA5OjI1IEFNLCBNaWtlIFNuaXR6ZXIgd3JvdGU6DQo+ID4gPiA+ID4gSGkgSmVu
+cywNCj4gPiA+ID4gPiANCj4gPiA+ID4gPiBUaGluayB0aGlzIGZpbmFsbHkgdGFrZXMgY2FyZSBv
+ZiBpdCEgOykNCj4gPiA+ID4gPiANCj4gPiA+ID4gPiBUaGFua3MsDQo+ID4gPiA+ID4gTWlrZQ0K
+PiA+ID4gPiA+IA0KPiA+ID4gPiA+IE1pa2UgU25pdHplciAoMik6DQo+ID4gPiA+ID4gICBibGst
+bXE6IGZhY3RvciBvdXQgYSBmZXcgaGVscGVycyBmcm9tDQo+ID4gPiA+ID4gX19ibGtfbXFfdHJ5
+X2lzc3VlX2RpcmVjdGx5DQo+ID4gPiA+ID4gICBibGstbXEtc2NoZWQ6IHJlbW92ZSB1bnVzZWQg
+J2Nhbl9ibG9jaycgYXJnIGZyb20NCj4gPiA+ID4gPiBibGtfbXFfc2NoZWRfaW5zZXJ0X3JlcXVl
+c3QNCj4gPiA+ID4gPiANCj4gPiA+ID4gPiBNaW5nIExlaSAoMSk6DQo+ID4gPiA+ID4gICBibGst
+bXE6IGltcHJvdmUgRE0ncyBibGstbXEgSU8gbWVyZ2luZyB2aWENCj4gPiA+ID4gPiBibGtfaW5z
+ZXJ0X2Nsb25lZF9yZXF1ZXN0IGZlZWRiYWNrDQo+ID4gPiA+IA0KPiA+ID4gPiBBcHBsaWVkIC0g
+YWRkZWQgYWN0dWFsIGNvbW1pdCBtZXNzYWdlIHRvIHBhdGNoIDMuDQo+ID4gPiANCj4gPiA+IEdy
+ZWF0LCB0aGFua3MuDQo+ID4gDQo+ID4gSGVsbG8gTWlrZSwNCj4gPiANCj4gPiBMYXVyZW5jZSBo
+aXQgdGhlIGZvbGxvd2luZyB3aGlsZSByZXRlc3RpbmcgdGhlIFNSUCBpbml0aWF0b3IgY29kZToN
+Cj4gPiANCj4gPiBbIDIyMjMuNzk3MTI5XSBsaXN0X2FkZCBjb3JydXB0aW9uLiBwcmV2LT5uZXh0
+IHNob3VsZCBiZSBuZXh0DQo+ID4gKDAwMDAwMDAwZTBkZGQ1ZGQpLCBidXQgd2FzIDAwMDAwMDAw
+M2RlZmU1Y2QuDQo+ID4gKHByZXY9MDAwMDAwMDAzZGVmZTVjZCkuDQo+ID4gWyAyMjIzLjg2MjE2
+OF0gV0FSTklORzogQ1BVOiAxNCBQSUQ6IDU3NyBhdCBsaWIvbGlzdF9kZWJ1Zy5jOjI4DQo+ID4g
+X19saXN0X2FkZF92YWxpZCsweDZhLzB4NzANCj4gPiBbIDIyMjQuNDgxMTUxXSBDUFU6IDE0IFBJ
+RDogNTc3IENvbW06IGt3b3JrZXIvMTQ6MUggVGFpbnRlZDoNCj4gPiBHICAgICAgICAgIEkgICAg
+ICA0LjE1LjAtcmM4LmJhcnQzKyAjMQ0KPiA+IFsgMjIyNC41MzExOTNdIEhhcmR3YXJlIG5hbWU6
+IEhQIFByb0xpYW50IERMMzgwIEc3LCBCSU9TIFA2Nw0KPiA+IDA4LzE2LzIwMTUNCj4gPiBbIDIy
+MjQuNTY3MTUwXSBXb3JrcXVldWU6IGtibG9ja2QgYmxrX21xX3J1bl93b3JrX2ZuDQo+ID4gWyAy
+MjI0LjU5MzE4Ml0gUklQOiAwMDEwOl9fbGlzdF9hZGRfdmFsaWQrMHg2YS8weDcwDQo+ID4gWyAy
+MjI0Ljk2NzAwMl0gQ2FsbCBUcmFjZToNCj4gPiBbIDIyMjQuOTgwOTQxXSAgYmxrX21xX3JlcXVl
+c3RfYnlwYXNzX2luc2VydCsweDU3LzB4YTANCj4gPiBbIDIyMjUuMDA5MDQ0XSAgX19ibGtfbXFf
+dHJ5X2lzc3VlX2RpcmVjdGx5KzB4NTYvMHgxZTANCj4gPiBbIDIyMjUuMDM3MDA3XSAgYmxrX21x
+X3JlcXVlc3RfZGlyZWN0X2lzc3VlKzB4NWQvMHhjMA0KPiA+IFsgMjIyNS4wOTA2MDhdICBtYXBf
+cmVxdWVzdCsweDE0Mi8weDI2MCBbZG1fbW9kXQ0KPiA+IFsgMjIyNS4xMTQ3NTZdICBkbV9tcV9x
+dWV1ZV9ycSsweGE0LzB4MTIwIFtkbV9tb2RdDQo+ID4gWyAyMjI1LjE0MDgxMl0gIGJsa19tcV9k
+aXNwYXRjaF9ycV9saXN0KzB4OTAvMHg1YjANCj4gPiBbIDIyMjUuMjExNzY5XSAgYmxrX21xX3Nj
+aGVkX2Rpc3BhdGNoX3JlcXVlc3RzKzB4MTA3LzB4MWEwDQo+ID4gWyAyMjI1LjI0MDgyNV0gIF9f
+YmxrX21xX3J1bl9od19xdWV1ZSsweDVmLzB4ZjANCj4gPiBbIDIyMjUuMjY0ODUyXSAgcHJvY2Vz
+c19vbmVfd29yaysweDE0MS8weDM0MA0KPiA+IFsgMjIyNS4yODc4NzJdICB3b3JrZXJfdGhyZWFk
+KzB4NDcvMHgzZTANCj4gPiBbIDIyMjUuMzA4MzU0XSAga3RocmVhZCsweGY1LzB4MTMwDQo+ID4g
+WyAyMjI1LjM5NjQwNV0gIHJldF9mcm9tX2ZvcmsrMHgzMi8weDQwDQo+ID4gDQo+ID4gVGhhdCBj
+YWxsIHRyYWNlIGRpZCBub3Qgc2hvdyB1cCBiZWZvcmUgdGhpcyBwYXRjaCBzZXJpZXMgd2FzIGFk
+ZGVkIHRvDQo+ID4gSmVucycNCj4gPiB0cmVlLiBUaGlzIGlzIGEgcmVncmVzc2lvbi4gQ291bGQg
+dGhpcyBoYXZlIGJlZW4gaW50cm9kdWNlZCBieSB0aGlzDQo+ID4gcGF0Y2gNCj4gPiBzZXJpZXM/
+DQo+ID4gDQo+ID4gVGhhbmtzLA0KPiA+IA0KPiA+IEJhcnQuDQo+IA0KPiBIaSBCYXJ0DQo+IE9u
+ZSB0aGluZyB0byBub3RlLg0KPiANCj4gSSB0ZXN0ZWQgTWlrZSdzIGNvbWJpbmVkIHRyZWUgb24g
+dGhlIHdlZWtlbmQgZnVsbHkgZG00LjE2LWJsb2NrNC4xNiBhbmQNCj4gZGlkIG5vdCBzZWUgdGhp
+cy4NCj4gVGhpcyB3YXMgd2l0aCBNaWtlIGNvbWJpbmVkIHRyZWUgYW5kIFNSUFQgcnVubmluZyA0
+LjEzLXJjMi4NCj4gDQo+IEkgYWxzbyB0ZXN0ZWQgeW91ciB0cmVlIE1vbmRheSB3aXRoIHRoZSBy
+ZXZlcnQgb2YgdGhlIHNjYXR0ZXIvZ2F0aGVyDQo+IHBhdGNoZXMgd2l0aCBib3RoIFNSUCBhbmQg
+U1JQVCBydW5uaW5nIHlvdXIgdHJlZSBhbmQgaXQgd2FzIGZpbmUuDQo+IA0KPiBTbyBpdHMgYSBj
+b21iaW5hdGlvbiBvZiB3aGF0IHlvdSBwcm92aWRlZCBtZSBiZWZvcmUgYW5kIHRoYXQgaGFzIGJl
+ZW4NCj4gYWRkZWQgdG8geW91ciB0cmVlLg0KPiANCj4gTWlrZSBjb21iaW5lZCB0cmVlIHNlZW1l
+ZCB0byBiZSBmaW5lLCBJIGNhbiByZXZpc2l0IHRoYXQgaWYgbmVlZGVkLiBJDQo+IHN0aWxsIGhh
+dmUgdGhhdCBrZXJuZWwgaW4gcGxhY2UuDQo+IA0KPiBJIHdhcyBub3QgcnVubmluZyBsYXRlc3Qg
+U1JQVCB3aGVuIEkgdGVzdGVkIE1pa2UncyB0cmVlDQoNCkhlbGxvIExhdXJlbmNlLA0KDQpUaGUg
+dHJlZSBJIHNlbnQgeW91IHRoaXMgbW9ybmluZyBkaWQgbm90IG9ubHkgaW5jbHVkZSBNaWtlJ3Mg
+bGF0ZXN0IGRtIGNvZGUNCmJ1dCBhbHNvIEplbnMnIGxhdGVzdCBmb3ItbmV4dCBicmFuY2guIFNv
+IHdoYXQgeW91IHdyb3RlIGFib3ZlIGRvZXMgbm90DQpjb250cmFkaWN0IHdoYXQgSSB3cm90ZSBp
+biBteSBlLW1haWwsIG5hbWVseSB0aGF0IEkgc3VzcGVjdCB0aGF0IGEgcmVncmVzc2lvbg0Kd2Fz
+IGludHJvZHVjZWQgYnkgdGhlIHBhdGNoZXMgaW4gdGhlIHNlcmllcyAiYmxrLW1xOiBpbXByb3Zl
+IERNJ3MgYmxrLW1xIElPDQptZXJnaW5nIHZpYSBibGtfaW5zZXJ0X2Nsb25lZF9yZXF1ZXN0IGZl
+ZWRiYWNrIi4gVGhlc2UgY2hhbmdlcyBuYW1lbHkgd2VudCBpbg0KdGhyb3VnaCB0aGUgYmxvY2sg
+dHJlZSBhbmQgbm90IHRocm91Z2ggdGhlIGRtIHRyZWUuIEFkZGl0aW9uYWxseSwgdGhlc2UNCmNo
+YW5nZXMgd2VyZSBub3QgcHJlc2VudCBpbiB0aGUgYmxvY2stc2NzaS1mb3ItbmV4dCBicmFuY2gg
+SSBzZW50IHlvdSBvbg0KTW9uZGF5Lg0KDQpCYXJ0Lg==
