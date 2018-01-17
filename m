@@ -1,7 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [for-4.16 PATCH v6 2/3] blk-mq: improve DM's blk-mq IO merging via blk_insert_cloned_request feedback
-Date: Wed, 17 Jan 2018 11:25:57 -0500
-Message-ID: <20180117162558.28553-3-snitzer@redhat.com>
+Subject: [for-4.16 PATCH v6 3/3] blk-mq-sched: remove unused 'can_block' arg from blk_mq_sched_insert_request
+Date: Wed, 17 Jan 2018 11:25:58 -0500
+Message-ID: <20180117162558.28553-4-snitzer@redhat.com>
 References: <20180117162558.28553-1-snitzer@redhat.com>
 Return-path: <linux-block-owner@vger.kernel.org>
 In-Reply-To: <20180117162558.28553-1-snitzer@redhat.com>
@@ -10,211 +10,115 @@ To: axboe@kernel.dk
 Cc: Ming Lei <tom.leiming@gmail.com>, hch@lst.de, dm-devel@redhat.com, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-From: Ming Lei <ming.lei@redhat.com>
-
-blk_insert_cloned_request() is called in the fast path of a dm-rq driver
-(e.g. blk-mq request-based DM mpath).  blk_insert_cloned_request() uses
-blk_mq_request_bypass_insert() to directly append the request to the
-blk-mq hctx->dispatch_list of the underlying queue.
-
-1) This way isn't efficient enough because the hctx spinlock is always
-used.
-
-2) With blk_insert_cloned_request(), we completely bypass underlying
-queue's elevator and depend on the upper-level dm-rq driver's elevator
-to schedule IO.  But dm-rq currently can't get the underlying queue's
-dispatch feedback at all.  Without knowing whether a request was issued
-or not (e.g. due to underlying queue being busy) the dm-rq elevator will
-not be able to provide effective IO merging (as a side-effect of dm-rq
-currently blindly destaging a request from its elevator only to requeue
-it after a delay, which kills any opportunity for merging).  This
-obviously causes very bad sequential IO performance.
-
-Fix this by updating blk_insert_cloned_request() to use
-blk_mq_request_direct_issue().  blk_mq_request_direct_issue() allows a
-request to be issued directly to the underlying queue and returns the
-dispatch feedback (blk_status_t).  If blk_mq_request_direct_issue()
-returns BLK_SYS_RESOURCE the dm-rq driver will now use DM_MAPIO_REQUEUE
-to _not_ destage the request.  Whereby preserving the opportunity to
-merge IO.
-
-With this, request-based DM's blk-mq sequential IO performance is vastly
-improved (as much as 3X in mpath/virtio-scsi testing).
-
-Signed-off-by: Ming Lei <ming.lei@redhat.com>
-[blk-mq.c changes heavily influenced by Ming Lei's initial solution, but
-they were refactored to make them less fragile and easier to read/review]
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- block/blk-core.c   |  3 +--
- block/blk-mq.c     | 37 +++++++++++++++++++++++++++++--------
- block/blk-mq.h     |  3 +++
- drivers/md/dm-rq.c | 19 ++++++++++++++++---
- 4 files changed, 49 insertions(+), 13 deletions(-)
+ block/blk-exec.c     |  2 +-
+ block/blk-mq-sched.c |  2 +-
+ block/blk-mq-sched.h |  2 +-
+ block/blk-mq.c       | 16 +++++++---------
+ 4 files changed, 10 insertions(+), 12 deletions(-)
 
-diff --git a/block/blk-core.c b/block/blk-core.c
-index 7ba607527487..55f338020254 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -2500,8 +2500,7 @@ blk_status_t blk_insert_cloned_request(struct request_queue *q, struct request *
- 		 * bypass a potential scheduler on the bottom device for
- 		 * insert.
- 		 */
--		blk_mq_request_bypass_insert(rq, true);
--		return BLK_STS_OK;
-+		return blk_mq_request_direct_issue(rq);
+diff --git a/block/blk-exec.c b/block/blk-exec.c
+index 5c0f3dc446dc..f7b292f12449 100644
+--- a/block/blk-exec.c
++++ b/block/blk-exec.c
+@@ -61,7 +61,7 @@ void blk_execute_rq_nowait(struct request_queue *q, struct gendisk *bd_disk,
+ 	 * be reused after dying flag is set
+ 	 */
+ 	if (q->mq_ops) {
+-		blk_mq_sched_insert_request(rq, at_head, true, false, false);
++		blk_mq_sched_insert_request(rq, at_head, true, false);
+ 		return;
  	}
  
- 	spin_lock_irqsave(q->queue_lock, flags);
-diff --git a/block/blk-mq.c b/block/blk-mq.c
-index c117c2baf2c9..f5f0d8456713 100644
---- a/block/blk-mq.c
-+++ b/block/blk-mq.c
-@@ -1731,15 +1731,19 @@ static blk_status_t __blk_mq_issue_directly(struct blk_mq_hw_ctx *hctx,
- 
- static void __blk_mq_fallback_to_insert(struct blk_mq_hw_ctx *hctx,
- 					struct request *rq,
--					bool run_queue)
-+					bool run_queue, bool bypass_insert)
- {
--	blk_mq_sched_insert_request(rq, false, run_queue, false,
--					hctx->flags & BLK_MQ_F_BLOCKING);
-+	if (!bypass_insert)
-+		blk_mq_sched_insert_request(rq, false, run_queue, false,
-+					    hctx->flags & BLK_MQ_F_BLOCKING);
-+	else
-+		blk_mq_request_bypass_insert(rq, run_queue);
+diff --git a/block/blk-mq-sched.c b/block/blk-mq-sched.c
+index 2ff7cf0cbf73..55c0a745b427 100644
+--- a/block/blk-mq-sched.c
++++ b/block/blk-mq-sched.c
+@@ -427,7 +427,7 @@ void blk_mq_sched_restart(struct blk_mq_hw_ctx *const hctx)
  }
  
- static blk_status_t __blk_mq_try_issue_directly(struct blk_mq_hw_ctx *hctx,
- 						struct request *rq,
--						blk_qc_t *cookie)
-+						blk_qc_t *cookie,
-+						bool bypass_insert)
+ void blk_mq_sched_insert_request(struct request *rq, bool at_head,
+-				 bool run_queue, bool async, bool can_block)
++				 bool run_queue, bool async)
  {
  	struct request_queue *q = rq->q;
- 	bool run_queue = true;
-@@ -1750,7 +1754,7 @@ static blk_status_t __blk_mq_try_issue_directly(struct blk_mq_hw_ctx *hctx,
- 		goto insert;
+ 	struct elevator_queue *e = q->elevator;
+diff --git a/block/blk-mq-sched.h b/block/blk-mq-sched.h
+index ba1d1418a96d..1e9c9018ace1 100644
+--- a/block/blk-mq-sched.h
++++ b/block/blk-mq-sched.h
+@@ -18,7 +18,7 @@ bool blk_mq_sched_try_insert_merge(struct request_queue *q, struct request *rq);
+ void blk_mq_sched_restart(struct blk_mq_hw_ctx *hctx);
+ 
+ void blk_mq_sched_insert_request(struct request *rq, bool at_head,
+-				 bool run_queue, bool async, bool can_block);
++				 bool run_queue, bool async);
+ void blk_mq_sched_insert_requests(struct request_queue *q,
+ 				  struct blk_mq_ctx *ctx,
+ 				  struct list_head *list, bool run_queue_async);
+diff --git a/block/blk-mq.c b/block/blk-mq.c
+index f5f0d8456713..02ae1d7b94af 100644
+--- a/block/blk-mq.c
++++ b/block/blk-mq.c
+@@ -745,13 +745,13 @@ static void blk_mq_requeue_work(struct work_struct *work)
+ 
+ 		rq->rq_flags &= ~RQF_SOFTBARRIER;
+ 		list_del_init(&rq->queuelist);
+-		blk_mq_sched_insert_request(rq, true, false, false, true);
++		blk_mq_sched_insert_request(rq, true, false, false);
  	}
  
--	if (q->elevator)
-+	if (q->elevator && !bypass_insert)
- 		goto insert;
+ 	while (!list_empty(&rq_list)) {
+ 		rq = list_entry(rq_list.next, struct request, queuelist);
+ 		list_del_init(&rq->queuelist);
+-		blk_mq_sched_insert_request(rq, false, false, false, true);
++		blk_mq_sched_insert_request(rq, false, false, false);
+ 	}
  
- 	if (!blk_mq_get_driver_tag(rq, NULL, false))
-@@ -1763,7 +1767,9 @@ static blk_status_t __blk_mq_try_issue_directly(struct blk_mq_hw_ctx *hctx,
+ 	blk_mq_run_hw_queues(q, false);
+@@ -1729,13 +1729,11 @@ static blk_status_t __blk_mq_issue_directly(struct blk_mq_hw_ctx *hctx,
+ 	return ret;
+ }
+ 
+-static void __blk_mq_fallback_to_insert(struct blk_mq_hw_ctx *hctx,
+-					struct request *rq,
++static void __blk_mq_fallback_to_insert(struct request *rq,
+ 					bool run_queue, bool bypass_insert)
+ {
+ 	if (!bypass_insert)
+-		blk_mq_sched_insert_request(rq, false, run_queue, false,
+-					    hctx->flags & BLK_MQ_F_BLOCKING);
++		blk_mq_sched_insert_request(rq, false, run_queue, false);
+ 	else
+ 		blk_mq_request_bypass_insert(rq, run_queue);
+ }
+@@ -1767,7 +1765,7 @@ static blk_status_t __blk_mq_try_issue_directly(struct blk_mq_hw_ctx *hctx,
  
  	return __blk_mq_issue_directly(hctx, rq, cookie);
  insert:
--	__blk_mq_fallback_to_insert(hctx, rq, run_queue);
-+	__blk_mq_fallback_to_insert(hctx, rq, run_queue, bypass_insert);
-+	if (bypass_insert)
-+		return BLK_STS_RESOURCE;
+-	__blk_mq_fallback_to_insert(hctx, rq, run_queue, bypass_insert);
++	__blk_mq_fallback_to_insert(rq, run_queue, bypass_insert);
+ 	if (bypass_insert)
+ 		return BLK_STS_RESOURCE;
  
- 	return BLK_STS_OK;
- }
-@@ -1778,15 +1784,30 @@ static void blk_mq_try_issue_directly(struct blk_mq_hw_ctx *hctx,
+@@ -1786,7 +1784,7 @@ static void blk_mq_try_issue_directly(struct blk_mq_hw_ctx *hctx,
  
- 	hctx_lock(hctx, &srcu_idx);
- 
--	ret = __blk_mq_try_issue_directly(hctx, rq, cookie);
-+	ret = __blk_mq_try_issue_directly(hctx, rq, cookie, false);
+ 	ret = __blk_mq_try_issue_directly(hctx, rq, cookie, false);
  	if (ret == BLK_STS_RESOURCE)
--		__blk_mq_fallback_to_insert(hctx, rq, true);
-+		__blk_mq_fallback_to_insert(hctx, rq, true, false);
+-		__blk_mq_fallback_to_insert(hctx, rq, true, false);
++		__blk_mq_fallback_to_insert(rq, true, false);
  	else if (ret != BLK_STS_OK)
  		blk_mq_end_request(rq, ret);
  
- 	hctx_unlock(hctx, srcu_idx);
- }
- 
-+blk_status_t blk_mq_request_direct_issue(struct request *rq)
-+{
-+	blk_status_t ret;
-+	int srcu_idx;
-+	blk_qc_t unused_cookie;
-+	struct blk_mq_ctx *ctx = rq->mq_ctx;
-+	struct blk_mq_hw_ctx *hctx = blk_mq_map_queue(rq->q, ctx->cpu);
-+
-+	hctx_lock(hctx, &srcu_idx);
-+	ret = __blk_mq_try_issue_directly(hctx, rq, &unused_cookie, true);
-+	hctx_unlock(hctx, srcu_idx);
-+
-+	return ret;
-+}
-+
- static blk_qc_t blk_mq_make_request(struct request_queue *q, struct bio *bio)
- {
- 	const int is_sync = op_is_sync(bio->bi_opf);
-diff --git a/block/blk-mq.h b/block/blk-mq.h
-index 8591a54d989b..e3ebc93646ca 100644
---- a/block/blk-mq.h
-+++ b/block/blk-mq.h
-@@ -74,6 +74,9 @@ void blk_mq_request_bypass_insert(struct request *rq, bool run_queue);
- void blk_mq_insert_requests(struct blk_mq_hw_ctx *hctx, struct blk_mq_ctx *ctx,
- 				struct list_head *list);
- 
-+/* Used by blk_insert_cloned_request() to issue request directly */
-+blk_status_t blk_mq_request_direct_issue(struct request *rq);
-+
- /*
-  * CPU -> queue mappings
-  */
-diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
-index c28357f5cb0e..b7d175e94a02 100644
---- a/drivers/md/dm-rq.c
-+++ b/drivers/md/dm-rq.c
-@@ -395,7 +395,7 @@ static void end_clone_request(struct request *clone, blk_status_t error)
- 	dm_complete_request(tio->orig, error);
- }
- 
--static void dm_dispatch_clone_request(struct request *clone, struct request *rq)
-+static blk_status_t dm_dispatch_clone_request(struct request *clone, struct request *rq)
- {
- 	blk_status_t r;
- 
-@@ -404,9 +404,10 @@ static void dm_dispatch_clone_request(struct request *clone, struct request *rq)
- 
- 	clone->start_time = jiffies;
- 	r = blk_insert_cloned_request(clone->q, clone);
--	if (r)
-+	if (r != BLK_STS_OK && r != BLK_STS_RESOURCE)
- 		/* must complete clone in terms of original request */
- 		dm_complete_request(rq, r);
-+	return r;
- }
- 
- static int dm_rq_bio_constructor(struct bio *bio, struct bio *bio_orig,
-@@ -476,8 +477,10 @@ static int map_request(struct dm_rq_target_io *tio)
- 	struct mapped_device *md = tio->md;
- 	struct request *rq = tio->orig;
- 	struct request *clone = NULL;
-+	blk_status_t ret;
- 
- 	r = ti->type->clone_and_map_rq(ti, rq, &tio->info, &clone);
-+check_again:
- 	switch (r) {
- 	case DM_MAPIO_SUBMITTED:
- 		/* The target has taken the I/O to submit by itself later */
-@@ -492,7 +495,17 @@ static int map_request(struct dm_rq_target_io *tio)
- 		/* The target has remapped the I/O so dispatch it */
- 		trace_block_rq_remap(clone->q, clone, disk_devt(dm_disk(md)),
- 				     blk_rq_pos(rq));
--		dm_dispatch_clone_request(clone, rq);
-+		ret = dm_dispatch_clone_request(clone, rq);
-+		if (ret == BLK_STS_RESOURCE) {
-+			blk_rq_unprep_clone(clone);
-+			tio->ti->type->release_clone_rq(clone);
-+			tio->clone = NULL;
-+			if (!rq->q->mq_ops)
-+				r = DM_MAPIO_DELAY_REQUEUE;
-+			else
-+				r = DM_MAPIO_REQUEUE;
-+			goto check_again;
-+		}
- 		break;
- 	case DM_MAPIO_REQUEUE:
- 		/* The target wants to requeue the I/O */
+@@ -1916,7 +1914,7 @@ static blk_qc_t blk_mq_make_request(struct request_queue *q, struct bio *bio)
+ 	} else if (q->elevator) {
+ 		blk_mq_put_ctx(data.ctx);
+ 		blk_mq_bio_to_request(rq, bio);
+-		blk_mq_sched_insert_request(rq, false, true, true, true);
++		blk_mq_sched_insert_request(rq, false, true, true);
+ 	} else {
+ 		blk_mq_put_ctx(data.ctx);
+ 		blk_mq_bio_to_request(rq, bio);
 -- 
 2.15.0
