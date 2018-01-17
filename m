@@ -1,13 +1,13 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 6/7] libmultipath: add uevent_is_mpath
-Date: Wed, 17 Jan 2018 08:49:38 +0100
-Message-ID: <20180117074939.7795-7-mwilck@suse.com>
-References: <20180117074939.7795-1-mwilck@suse.com>
+From: Wuchongyun <wu.chongyun@h3c.com>
+Subject: Re: [PATCH V4] multipathd: release uxsocket and resource
+ when cancel thread
+Date: Wed, 17 Jan 2018 08:15:05 +0000
+Message-ID: <CEB9978CF3252343BE3C67AC9F0086A3429580E5@H3CMLB14-EX.srv.huawei-3com.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180117074939.7795-1-mwilck@suse.com>
+Content-Language: zh-CN
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,145 +17,106 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com
-Cc: Ritika Srivastava <ritika.srivastava@oracle.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
+To: Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+Cc: Guozhonghua <guozhonghua@h3c.com>, Changwei Ge <ge.changwei@h3c.com>, Changlimin <changlimin@h3c.com>
 List-Id: dm-devel.ids
 
-This function can be used to test if an uevent belongs to valid
-multipath device. Unit tests are also added.
+Hi Matin,
+I think it's a good idea to move the close(ux_sock) call further up to avoid new clients trying to connect, Below is the new patch for your comment. Please help to review. Thanks. 
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
+Issue description: we meet this issue: when multipathd initilaze and
+call uxsock_listen to create unix domain socket, but return -1 and
+the errno is 98 and then the uxsock_listen return null. After multipathd
+startup we can't receive any user's multipathd commands to finish the
+new multipath creation or any operations any more!
+
+We found that uxlsnr thread's cleanup function not close the sockets
+also not release the clients when cancel thread, the domain socket
+will be release by the system. In any special environment like the
+machine's load is very heavy or any situations, the system may not close
+the old domain socket when we try to create and bind the new domain
+socket may return errno:98(Address already in use).
+
+And also we make some experiments:
+in uxsock_cleanup if we close the ux_sock first and then immdediately
+call ux_socket_listen to create new ux_sock and initialization will be
+OK; if we don't close the ux_sock and call ux_socket_listen will return
+-1 and errno = 98.
+
+So we believe that close uxsocket and release clients  when cancel
+thread can make sure of that new starting multipathd thread can
+create new uxsocket successfully, also can receive multipathd commands
+properly. And this path can fix clients' memory leak too.
+
+Signed-off-by: Chongyun Wu <wu.chongyun@h3c.com>
 ---
- libmultipath/uevent.c | 12 ++++++++++
- libmultipath/uevent.h |  1 +
- tests/uevent.c        | 63 +++++++++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 76 insertions(+)
+ multipathd/uxlsnr.c |   30 ++++++++++++++++++++++++------
+ 1 file changed, 24 insertions(+), 6 deletions(-)
 
-diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
-index 3d32e31c5c49..8f4129ca7fd0 100644
---- a/libmultipath/uevent.c
-+++ b/libmultipath/uevent.c
-@@ -52,6 +52,7 @@
- #include "util.h"
- #include "config.h"
- #include "blacklist.h"
-+#include "devmapper.h"
- 
- #define MAX_ACCUMULATION_COUNT 2048
- #define MAX_ACCUMULATION_TIME 30*1000
-@@ -929,3 +930,14 @@ const char *uevent_get_dm_action(const struct uevent *uev)
- {
- 	return uevent_get_dm_str(uev, "DM_ACTION");
- }
-+
-+bool uevent_is_mpath(const struct uevent *uev)
-+{
-+	const char *uuid = uevent_get_env_var(uev, "DM_UUID");
-+
-+	if (uuid == NULL)
-+		return false;
-+	if (strncmp(uuid, UUID_PREFIX, UUID_PREFIX_LEN))
-+		return false;
-+	return uuid[UUID_PREFIX_LEN] != '\0';
-+}
-diff --git a/libmultipath/uevent.h b/libmultipath/uevent.h
-index bf7017090b1c..cb5347e45c2b 100644
---- a/libmultipath/uevent.h
-+++ b/libmultipath/uevent.h
-@@ -39,5 +39,6 @@ int uevent_get_disk_ro(const struct uevent *uev);
- const char *uevent_get_dm_name(const struct uevent *uev);
- const char *uevent_get_dm_path(const struct uevent *uev);
- const char *uevent_get_dm_action(const struct uevent *uev);
-+bool uevent_is_mpath(const struct uevent *uev);
- 
- #endif /* _UEVENT_H */
-diff --git a/tests/uevent.c b/tests/uevent.c
-index a8edd710f653..b7d6458710f4 100644
---- a/tests/uevent.c
-+++ b/tests/uevent.c
-@@ -16,6 +16,7 @@
-  *
+diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
+index 98ac25a..8aa0f83 100644
+--- a/multipathd/uxlsnr.c
++++ b/multipathd/uxlsnr.c
+@@ -102,14 +102,21 @@ static void new_client(int ux_sock)
+ /*
+  * kill off a dead client
   */
- 
-+#include <stdbool.h>
- #include <stdarg.h>
- #include <stddef.h>
- #include <setjmp.h>
-@@ -208,6 +209,61 @@ static void test_dm_name_good_1(void **state)
- 	free((void*)name);
+-static void dead_client(struct client *c)
++static void _dead_client(struct client *c)
+ {
+-	pthread_mutex_lock(&client_lock);
++	int fd = c->fd;
+ 	list_del_init(&c->node);
+-	pthread_mutex_unlock(&client_lock);
+-	close(c->fd);
+ 	c->fd = -1;
+ 	FREE(c);
++	close(fd);
++}
++
++static void dead_client(struct client *c)
++{
++	pthread_cleanup_push(cleanup_lock, &client_lock);
++	pthread_mutex_lock(&client_lock);
++	_dead_client(c);
++	pthread_cleanup_pop(1);
  }
  
-+static void test_dm_uuid_false_0(void **state)
-+{
-+	struct uevent *uev = *state;
-+
-+	assert_false(uevent_is_mpath(uev));
-+}
-+
-+static void test_dm_uuid_true_0(void **state)
-+{
-+	struct uevent *uev = *state;
-+
-+	uev->envp[3] = "DM_UUID=mpath-foo";
-+	assert_true(uevent_is_mpath(uev));
-+}
-+
-+static void test_dm_uuid_false_1(void **state)
-+{
-+	struct uevent *uev = *state;
-+
-+	uev->envp[3] = "DM_UUID.mpath-foo";
-+	assert_false(uevent_is_mpath(uev));
-+}
-+
-+static void test_dm_uuid_false_2(void **state)
-+{
-+	struct uevent *uev = *state;
-+
-+	uev->envp[3] = "DM_UUID=mpath-";
-+	assert_false(uevent_is_mpath(uev));
-+}
-+
-+static void test_dm_uuid_false_3(void **state)
-+{
-+	struct uevent *uev = *state;
-+
-+	uev->envp[3] = "DM_UU=mpath-foo";
-+	assert_false(uevent_is_mpath(uev));
-+}
-+
-+static void test_dm_uuid_false_4(void **state)
-+{
-+	struct uevent *uev = *state;
-+
-+	uev->envp[3] = "DM_UUID=mpathfoo";
-+	assert_false(uevent_is_mpath(uev));
-+}
-+
-+static void test_dm_uuid_false_5(void **state)
-+{
-+	struct uevent *uev = *state;
-+
-+	uev->envp[3] = "DM_UUID=";
-+	assert_false(uevent_is_mpath(uev));
-+}
-+
- int test_uevent_get_XXX(void)
+ void free_polls (void)
+@@ -139,6 +146,18 @@ void check_timeout(struct timespec start_time, char *inbuf,
+ 
+ void uxsock_cleanup(void *arg)
  {
- 	const struct CMUnitTest tests[] = {
-@@ -228,6 +284,13 @@ int test_uevent_get_XXX(void)
- 		cmocka_unit_test(test_dm_name_bad_0),
- 		cmocka_unit_test(test_dm_name_bad_1),
- 		cmocka_unit_test(test_dm_name_good_1),
-+		cmocka_unit_test(test_dm_uuid_false_0),
-+		cmocka_unit_test(test_dm_uuid_true_0),
-+		cmocka_unit_test(test_dm_uuid_false_1),
-+		cmocka_unit_test(test_dm_uuid_false_2),
-+		cmocka_unit_test(test_dm_uuid_false_3),
-+		cmocka_unit_test(test_dm_uuid_false_4),
-+		cmocka_unit_test(test_dm_uuid_false_5),
- 	};
- 	return cmocka_run_group_tests(tests, setup_uev, teardown);
++	struct client *client_loop;
++	struct client *client_tmp;
++	int ux_sock = (int)arg;
++
++	close(ux_sock);
++
++	pthread_mutex_lock(&client_lock);
++	list_for_each_entry_safe(client_loop, client_tmp, &clients, node) {
++		_dead_client(client_loop);
++	}
++	pthread_mutex_unlock(&client_lock);
++
+ 	cli_exit();
+ 	free_polls();
+ }
+@@ -162,7 +181,7 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
+ 		return NULL;
+ 	}
+ 
+-	pthread_cleanup_push(uxsock_cleanup, NULL);
++	pthread_cleanup_push(uxsock_cleanup, (void *)ux_sock);
+ 
+ 	condlog(3, "uxsock: startup listener");
+ 	polls = (struct pollfd *)MALLOC((MIN_POLLS + 1) * sizeof(struct pollfd));
+@@ -300,6 +319,5 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
+ 	}
+ 
+ 	pthread_cleanup_pop(1);
+-	close(ux_sock);
+ 	return NULL;
  }
 -- 
-2.15.1
+1.7.9.5
