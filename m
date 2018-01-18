@@ -1,68 +1,94 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm rq: Avoid that request processing stalls sporadically
-Date: Thu, 18 Jan 2018 11:50:51 -0500
-Message-ID: <20180118165050.GA19734@redhat.com>
-References: <20180118163707.11825-1-bart.vanassche@wdc.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH v2 00/20] Various multipath-tools fixes
+Date: Thu, 18 Jan 2018 11:02:40 -0600
+Message-ID: <20180118170240.GY5638@octiron.msp.redhat.com>
+References: <20180113211938.31552-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20180118163707.11825-1-bart.vanassche@wdc.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Bart Van Assche <bart.vanassche@wdc.com>
-Cc: dm-devel@redhat.com, linux-block@vger.kernel.org, Ming Lei <ming.lei@redhat.com>
+In-Reply-To: <20180113211938.31552-1-mwilck@suse.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-On Thu, Jan 18 2018 at 11:37am -0500,
-Bart Van Assche <bart.vanassche@wdc.com> wrote:
+On Sat, Jan 13, 2018 at 10:19:18PM +0100, Martin Wilck wrote:
+> Hi Christophe,
+> 
+> here is v2 of my last series, rebased onto your latest merges.
+> 
+> Changes wrt v1:
+> 
+>   - dropped already merged CLOCK_MONOTONIC patch
+>   - added a compiler warning fix
+>   - improved placement of NetApp entry in hwtable (Xose Vazquez Perez, 09/20)
+>   - added two SUSE patches that were missing in the previous series
+>     (15/20, 16/20; Xose Vazquez Perez)
+>   - added the re-submission of my path latency prio fixes from November (17-20/20)
+>   - fixed wrong calculation of standard deviation (Guan Junxiong, 19/20)
+> 
+> I added 16/20 at Xose's request, knowing that it may be a bit more
+> controversial than the rest. At SUSE we've currently added it only for
+> SLE-12 SP2, because SLES12-SP2 GA had DefaultTaskMax=512, which is much
+> too low for multipathd. Current systemd versions have increased this to
+> 4915, which would be sufficient for most but not all multipath
+> deployments (https://github.com/systemd/systemd/issues/3211).
 
-> If the .queue_rq() implementation of a block driver returns
-> BLK_STS_RESOURCE then that block driver is responsible for
-> rerunning the queue once the condition that caused it to return
-> BLK_STS_RESOURCE has been cleared. The dm-mpath driver tells the
-> dm core to requeue a request if e.g. not enough memory is
-> available for cloning a request or if the underlying path is
-> busy. Since the dm-mpath driver does not receive any kind of
-> notification if the condition that caused it to return "requeue"
-> is cleared, the only solution to avoid that dm-mpath request
-> processing stalls is to call blk_mq_delay_run_hw_queue(). Hence
-> this patch.
+These all look fine.
+
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+ 
+> Regards,
+> Martin
 > 
-> Fixes: ec3eaf9a6731 ("dm mpath: don't call blk_mq_delay_run_hw_queue() in case of BLK_STS_RESOURCE")
-> Signed-off-by: Bart Van Assche <bart.vanassche@wdc.com>
-> Cc: Ming Lei <ming.lei@redhat.com>
-> ---
->  drivers/md/dm-rq.c | 1 +
->  1 file changed, 1 insertion(+)
+> Martin Wilck (20):
+>   libmultipath: don't try to set hwhandler if it is retained
+>   multipath: delegate dangerous commands to multipathd
+>   libmultipath: condlog: log to stderr
+>   libmultipath: fix return code of sysfs_get_timeout
+>   libmultipath: fix return code of sgio_get_vpd()
+>   libmultipath: sgio_get_vpd: add page argument
+>   libmultipath: get_vpd_sgio: support VPD 0xc9
+>   libmultipath: select ALUA prioritizer for RDAC arrays only
+>   libmultipath: hwtable: multibus for NetApp NVMe-FC
+>   multipath -C: decrease log level
+>   kpartx.rules: fix by-id/scsi-* for user_friendly_names
+>   multipathd.socket: add WantedBy=sockets.target
+>   multipathd.service: drop Before=lvm2-lvmetad.service
+>   multipathd: fix compiler warning for uev_pathfail_check
+>   test-kpartx: add test for mapping without UUID
+>   multipathd.service: set TasksMax=infinity
+>   libmultipath: path latency: fix default base num
+>   libmultipath: path latency: log threshold with p2
+>   libmultipath: path latency: simplify getprio()
+>   libmultipath: path latency: remove warnings
 > 
-> diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
-> index f16096af879a..c59c59cfd2a5 100644
-> --- a/drivers/md/dm-rq.c
-> +++ b/drivers/md/dm-rq.c
-> @@ -761,6 +761,7 @@ static blk_status_t dm_mq_queue_rq(struct blk_mq_hw_ctx *hctx,
->  		/* Undo dm_start_request() before requeuing */
->  		rq_end_stats(md, rq);
->  		rq_completed(md, rq_data_dir(rq), false);
-> +		blk_mq_delay_run_hw_queue(hctx, 100/*ms*/);
->  		return BLK_STS_RESOURCE;
->  	}
->  
+>  Makefile.inc                             |   2 +-
+>  kpartx/dm-parts.rules                    |   4 +-
+>  kpartx/kpartx_id                         |   8 ++-
+>  kpartx/test-kpartx                       |  11 ++-
+>  libmultipath/configure.c                 |   8 ++-
+>  libmultipath/debug.c                     |   4 +-
+>  libmultipath/discovery.c                 |  16 +++--
+>  libmultipath/hwtable.c                   |  37 +++++++---
+>  libmultipath/prioritizers/path_latency.c | 112 ++++++++++---------------------
+>  libmultipath/propsel.c                   |  37 +++++++++-
+>  multipath/11-dm-mpath.rules              |   3 +-
+>  multipath/main.c                         |  66 +++++++++++++++++-
+>  multipathd/main.c                        |   4 +-
+>  multipathd/multipathd.service            |   3 +-
+>  multipathd/multipathd.socket             |   3 +
+>  15 files changed, 210 insertions(+), 108 deletions(-)
+> 
 > -- 
 > 2.15.1
-> 
-
-Sorry but we need to understand why you still need this.
-
-The issue you say it was originally intended to fix _should_ be
-addressed with this change:
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.16&id=4dd6edd23e7ea971efddc303f9e67eb79e95808e
-
-So if you still feel you need to blindly kick the queue then it is very
-likely a bug in blk-mq (either its RESTART hueristics or whatever
-internal implementation is lacking)
-
-Did you try Ming's RFC patch to "fixup RESTART" before resorting to the
-above again?, see: https://patchwork.kernel.org/patch/10172315/
-
-Thanks,
-Mike
