@@ -1,68 +1,68 @@
-From: Bart Van Assche <bart.vanassche@wdc.com>
-Subject: Re: [RFC PATCH] blk-mq: fixup RESTART when queue becomes idle
-Date: Thu, 18 Jan 2018 08:50:43 -0800
-Message-ID: <b2e5b7e6-ce4b-6053-adae-63cc44d773af@wdc.com>
-References: <20180118024124.8079-1-ming.lei@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm rq: Avoid that request processing stalls sporadically
+Date: Thu, 18 Jan 2018 11:50:51 -0500
+Message-ID: <20180118165050.GA19734@redhat.com>
+References: <20180118163707.11825-1-bart.vanassche@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20180118024124.8079-1-ming.lei@redhat.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <20180118163707.11825-1-bart.vanassche@wdc.com>
 Sender: linux-block-owner@vger.kernel.org
-To: Ming Lei <ming.lei@redhat.com>, Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
-Cc: Christoph Hellwig <hch@infradead.org>, Bart Van Assche <bart.vanassche@sandisk.com>, linux-kernel@vger.kernel.org, Omar Sandoval <osandov@fb.com>
+To: Bart Van Assche <bart.vanassche@wdc.com>
+Cc: dm-devel@redhat.com, linux-block@vger.kernel.org, Ming Lei <ming.lei@redhat.com>
 List-Id: dm-devel.ids
 
-On 01/17/18 18:41, Ming Lei wrote:
-> BLK_STS_RESOURCE can be returned from driver when any resource
-> is running out of. And the resource may not be related with tags,
-> such as kmalloc(GFP_ATOMIC), when queue is idle under this kind of
-> BLK_STS_RESOURCE, restart can't work any more, then IO hang may
-> be caused.
+On Thu, Jan 18 2018 at 11:37am -0500,
+Bart Van Assche <bart.vanassche@wdc.com> wrote:
+
+> If the .queue_rq() implementation of a block driver returns
+> BLK_STS_RESOURCE then that block driver is responsible for
+> rerunning the queue once the condition that caused it to return
+> BLK_STS_RESOURCE has been cleared. The dm-mpath driver tells the
+> dm core to requeue a request if e.g. not enough memory is
+> available for cloning a request or if the underlying path is
+> busy. Since the dm-mpath driver does not receive any kind of
+> notification if the condition that caused it to return "requeue"
+> is cleared, the only solution to avoid that dm-mpath request
+> processing stalls is to call blk_mq_delay_run_hw_queue(). Hence
+> this patch.
 > 
-> Most of drivers may call kmalloc(GFP_ATOMIC) in IO path, and almost
-> all returns BLK_STS_RESOURCE under this situation. But for dm-mpath,
-> it may be triggered a bit easier since the request pool of underlying
-> queue may be consumed up much easier. But in reality, it is still not
-> easy to trigger it. I run all kinds of test on dm-mpath/scsi-debug
-> with all kinds of scsi_debug parameters, can't trigger this issue
-> at all. But finally it is triggered in Bart's SRP test, which seems
-> made by genius, :-)
+> Fixes: ec3eaf9a6731 ("dm mpath: don't call blk_mq_delay_run_hw_queue() in case of BLK_STS_RESOURCE")
+> Signed-off-by: Bart Van Assche <bart.vanassche@wdc.com>
+> Cc: Ming Lei <ming.lei@redhat.com>
+> ---
+>  drivers/md/dm-rq.c | 1 +
+>  1 file changed, 1 insertion(+)
 > 
-> [ ... ]
- >
->   static void blk_mq_timeout_work(struct work_struct *work)
->   {
->   	struct request_queue *q =
-> @@ -966,8 +1045,10 @@ static void blk_mq_timeout_work(struct work_struct *work)
->   		 */
->   		queue_for_each_hw_ctx(q, hctx, i) {
->   			/* the hctx may be unmapped, so check it here */
-> -			if (blk_mq_hw_queue_mapped(hctx))
-> +			if (blk_mq_hw_queue_mapped(hctx)) {
->   				blk_mq_tag_idle(hctx);
-> +				blk_mq_fixup_restart(hctx);
-> +			}
->   		}
->   	}
->   	blk_queue_exit(q);
+> diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+> index f16096af879a..c59c59cfd2a5 100644
+> --- a/drivers/md/dm-rq.c
+> +++ b/drivers/md/dm-rq.c
+> @@ -761,6 +761,7 @@ static blk_status_t dm_mq_queue_rq(struct blk_mq_hw_ctx *hctx,
+>  		/* Undo dm_start_request() before requeuing */
+>  		rq_end_stats(md, rq);
+>  		rq_completed(md, rq_data_dir(rq), false);
+> +		blk_mq_delay_run_hw_queue(hctx, 100/*ms*/);
+>  		return BLK_STS_RESOURCE;
+>  	}
+>  
+> -- 
+> 2.15.1
+> 
 
-Hello Ming,
+Sorry but we need to understand why you still need this.
 
-My comments about the above are as follows:
-- It can take up to q->rq_timeout jiffies after a .queue_rq()
-   implementation returned BLK_STS_RESOURCE before blk_mq_timeout_work()
-   gets called. However, it can happen that only a few milliseconds after
-   .queue_rq() returned BLK_STS_RESOURCE that the condition that caused
-   it to return BLK_STS_RESOURCE gets cleared. So the above approach can
-   result in long delays during which it will seem like the queue got
-   stuck. Additionally, I think that the block driver should decide how
-   long it takes before a queue is rerun and not the block layer core.
-- The lockup that I reported only occurs with the dm driver but not any
-   other block driver. So why to modify the block layer core since this
-   can be fixed by modifying the dm driver?
-- A much simpler fix and a fix that is known to work exists, namely
-   inserting a blk_mq_delay_run_hw_queue() call in the dm driver.
+The issue you say it was originally intended to fix _should_ be
+addressed with this change:
+https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.16&id=4dd6edd23e7ea971efddc303f9e67eb79e95808e
 
-Bart.
+So if you still feel you need to blindly kick the queue then it is very
+likely a bug in blk-mq (either its RESTART hueristics or whatever
+internal implementation is lacking)
+
+Did you try Ming's RFC patch to "fixup RESTART" before resorting to the
+above again?, see: https://patchwork.kernel.org/patch/10172315/
+
+Thanks,
+Mike
