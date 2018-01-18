@@ -1,63 +1,62 @@
-From: Bart Van Assche <Bart.VanAssche@wdc.com>
-Subject: Re: [RFC PATCH] blk-mq: fixup RESTART when queue becomes idle
-Date: Thu, 18 Jan 2018 17:20:57 +0000
-Message-ID: <1516296056.2676.23.camel@wdc.com>
-References: <20180118024124.8079-1-ming.lei@redhat.com>
-         <b2e5b7e6-ce4b-6053-adae-63cc44d773af@wdc.com>
-         <20180118170353.GB19734@redhat.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH 1/2] remove delay_(watch|wait)_checks
+Date: Thu, 18 Jan 2018 11:29:46 -0600
+Message-ID: <20180118172946.GA5638@octiron.msp.redhat.com>
+References: <1513188487-31852-1-git-send-email-bmarzins@redhat.com>
+	<1515791340.3409.35.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180118170353.GB19734@redhat.com>
-Content-Language: en-US
-Content-ID: <2B12C166E6858A4BB4E6A3473F5F72B8@namprd04.prod.outlook.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "snitzer@redhat.com" <snitzer@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "hch@infradead.org" <hch@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "osandov@fb.com" <osandov@fb.com>, "ming.lei@redhat.com" <ming.lei@redhat.com>, "axboe@kernel.dk" <axboe@kernel.dk>
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1515791340.3409.35.camel@suse.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Martin Wilck <mwilck@suse.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Guan Junxiong <guanjunxiong@huawei.com>
 List-Id: dm-devel.ids
 
-T24gVGh1LCAyMDE4LTAxLTE4IGF0IDEyOjAzIC0wNTAwLCBNaWtlIFNuaXR6ZXIgd3JvdGU6DQo+
-IE9uIFRodSwgSmFuIDE4IDIwMTggYXQgMTE6NTBhbSAtMDUwMCwNCj4gQmFydCBWYW4gQXNzY2hl
-IDxiYXJ0LnZhbmFzc2NoZUB3ZGMuY29tPiB3cm90ZToNCj4gPiBNeSBjb21tZW50cyBhYm91dCB0
-aGUgYWJvdmUgYXJlIGFzIGZvbGxvd3M6DQo+ID4gLSBJdCBjYW4gdGFrZSB1cCB0byBxLT5ycV90
-aW1lb3V0IGppZmZpZXMgYWZ0ZXIgYSAucXVldWVfcnEoKQ0KPiA+ICAgaW1wbGVtZW50YXRpb24g
-cmV0dXJuZWQgQkxLX1NUU19SRVNPVVJDRSBiZWZvcmUgYmxrX21xX3RpbWVvdXRfd29yaygpDQo+
-ID4gICBnZXRzIGNhbGxlZC4gSG93ZXZlciwgaXQgY2FuIGhhcHBlbiB0aGF0IG9ubHkgYSBmZXcg
-bWlsbGlzZWNvbmRzIGFmdGVyDQo+ID4gICAucXVldWVfcnEoKSByZXR1cm5lZCBCTEtfU1RTX1JF
-U09VUkNFIHRoYXQgdGhlIGNvbmRpdGlvbiB0aGF0IGNhdXNlZA0KPiA+ICAgaXQgdG8gcmV0dXJu
-IEJMS19TVFNfUkVTT1VSQ0UgZ2V0cyBjbGVhcmVkLiBTbyB0aGUgYWJvdmUgYXBwcm9hY2ggY2Fu
-DQo+ID4gICByZXN1bHQgaW4gbG9uZyBkZWxheXMgZHVyaW5nIHdoaWNoIGl0IHdpbGwgc2VlbSBs
-aWtlIHRoZSBxdWV1ZSBnb3QNCj4gPiAgIHN0dWNrLiBBZGRpdGlvbmFsbHksIEkgdGhpbmsgdGhh
-dCB0aGUgYmxvY2sgZHJpdmVyIHNob3VsZCBkZWNpZGUgaG93DQo+ID4gICBsb25nIGl0IHRha2Vz
-IGJlZm9yZSBhIHF1ZXVlIGlzIHJlcnVuIGFuZCBub3QgdGhlIGJsb2NrIGxheWVyIGNvcmUuDQo+
-IA0KPiBTbyBjb25maWd1cmUgcS0+cnFfdGltZW91dCB0byBiZSBzaG9ydGVyPyAgV2hpY2ggaXMg
-Y29uZmlndXJhYmxlIHRob3VnaA0KPiBibGtfbXFfdGFnX3NldCdzICd0aW1lb3V0JyBtZW1iZXIu
-ICBJdCBhcHBhcmVudGx5IGRlZmF1bHRzIHRvIDMwICogSFouDQo+IA0KPiBUaGF0IGlzIHRoZSBw
-cm9ibGVtIHdpdGggdGltZW91dHMsIHRoZXJlIGlzIGdlbmVyYWxseSBubyBvbmUgc2l6ZSBmaXRz
-DQo+IGFsbC4NCg0KU29ycnkgYnV0IEkgdGhpbmsgdGhhdCB3b3VsZCBiZSB3cm9uZy4gVGhlIGRl
-bGF5IGFmdGVyIHdoaWNoIGEgcXVldWUgaXMgcmVydW4NCnNob3VsZCBub3QgYmUgY291cGxlZCB0
-byB0aGUgcmVxdWVzdCB0aW1lb3V0LiBUaGVzZSB0d28gc2hvdWxkIGJlIGluZGVwZW5kZW50Lg0K
-DQo+ID4gLSBUaGUgbG9ja3VwIHRoYXQgSSByZXBvcnRlZCBvbmx5IG9jY3VycyB3aXRoIHRoZSBk
-bSBkcml2ZXIgYnV0IG5vdCBhbnkNCj4gPiAgIG90aGVyIGJsb2NrIGRyaXZlci4gU28gd2h5IHRv
-IG1vZGlmeSB0aGUgYmxvY2sgbGF5ZXIgY29yZSBzaW5jZSB0aGlzDQo+ID4gICBjYW4gYmUgZml4
-ZWQgYnkgbW9kaWZ5aW5nIHRoZSBkbSBkcml2ZXI/DQo+IA0KPiBIYXJkIHRvIGtub3cgaXQgaXMg
-b25seSBETSdzIGJsay1tcSB0aGF0IGlzIGltcGFjdGVkLiAgVGhhdCBpcyB0aGUgb25seQ0KPiBi
-bGstbXEgZHJpdmVyIHRoYXQgeW91J3JlIHRlc3RpbmcgbGlrZSB0aGlzICh0aGF0IGlzIGFsc28g
-YWJsZSB0byBoYW5kbGUNCj4gZmF1bHRzLCBldGMpLg0KDQpUaGF0J3Mgbm90IGNvcnJlY3QuIEkn
-bSBhbHNvIHRlc3RpbmcgdGhlIFNDU0kgY29yZSwgd2hpY2ggaXMgb25lIG9mIHRoZSBtb3N0DQpj
-b21wbGljYXRlZCBibG9jayBkcml2ZXJzLg0KDQo+ID4gLSBBIG11Y2ggc2ltcGxlciBmaXggYW5k
-IGEgZml4IHRoYXQgaXMga25vd24gdG8gd29yayBleGlzdHMsIG5hbWVseQ0KPiA+ICAgaW5zZXJ0
-aW5nIGEgYmxrX21xX2RlbGF5X3J1bl9od19xdWV1ZSgpIGNhbGwgaW4gdGhlIGRtIGRyaXZlci4N
-Cj4gDQo+IEJlY2F1c2UgeW91ciAibXVjaCBzaW1wbGVyIiBmaXggYWN0aXZlbHkgaHVydHMgcGVy
-Zm9ybWFuY2UsIGFzIGlzDQo+IGRldGFpbGVkIGluIHRoaXMgaGVhZGVyOg0KPiBodHRwczovL2dp
-dC5rZXJuZWwub3JnL3B1Yi9zY20vbGludXgva2VybmVsL2dpdC9kZXZpY2UtbWFwcGVyL2xpbnV4
-LWRtLmdpdC9jb21taXQvP2g9ZG0tNC4xNiZpZD1lYzNlYWY5YTY3MzEwNmY2NjYwNjg5NmFlZDZk
-ZGQyMDE4MGIwMmVjDQoNCldlIGFyZSBjbG9zZSB0byB0aGUgc3RhcnQgb2YgdGhlIG1lcmdlIHdp
-bmRvdyBzbyBJIHRoaW5rIGl0J3MgYmV0dGVyIHRvIGZhbGwNCmJhY2sgdG8gYW4gb2xkIGFwcHJv
-YWNoIHRoYXQgaXMga25vd24gdG8gd29yayB0aGFuIHRvIGtlZXAgYSBuZXcgYXBwcm9hY2gNCnRo
-YXQgaXMga25vd24gbm90IHRvIHdvcmsuIEFkZGl0aW9uYWxseSwgdGhlIHBlcmZvcm1hbmNlIGlz
-c3VlIHlvdSByZWZlcnJlZA0KdG8gb25seSBhZmZlY3RzIElPUFMgYW5kIGJhbmR3aWR0aCBtb3Jl
-IHRoYW4gMSUgd2l0aCB0aGUgbHBmYyBkcml2ZXIgYW5kIHRoYXQNCmlzIGJlY2F1c2UgdGhlIHF1
-ZXVlIGRlcHRoIGl0IHN1cHBvcnRzIGlzIG11Y2ggbG93ZXIgdGhhbiBmb3Igb3RoZXIgU0NTSSBI
-QkFzLA0KbmFtZWx5IDMgaW5zdGVhZCBvZiA2NC4NCg0KVGhhbmtzLA0KDQpCYXJ0Lg==
+On Fri, Jan 12, 2018 at 10:09:00PM +0100, Martin Wilck wrote:
+> Hi Ben,
+> =
+
+> On Wed, 2017-12-13 at 12:08 -0600, Benjamin Marzinski wrote:
+> > These configuration options do essentially the same thing as the
+> > marginal paths options do, but since they don't do the increased IO
+> > testing, they are less likely to find the marginal paths. Guan, if
+> > you
+> > left these in for a reason (such as to deal with devices that don't
+> > do
+> > well with IO testing, such as passive paths) I'm open to keeping
+> > them.
+> > But it seems like the marginal paths options options do a better job
+> > than they do, and if there are cases that they doesn't handle well,
+> > they
+> > should be expanded to do so.
+> =
+
+> I think we should wait a bit more before removing this stuff. The
+> marginal paths code hasn't seen much testing yet AFAICS.
+
+That's fine. There's no rush to remove them.
+
+-Ben
+
+> =
+
+> Regards
+> Martin
+> =
+
+> -- =
+
+> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+> SUSE Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
+> HRB 21284 (AG N=FCrnberg)
