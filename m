@@ -1,69 +1,43 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: multipath-tools 0.7.4 failure to remove device
-Date: Thu, 18 Jan 2018 17:32:28 +0100
-Message-ID: <1516293148.6919.18.camel@suse.com>
-References: <1515795481.9139.8.camel@suse.com>
-	<20180115154424.fcjuudt7phxrks6q@jak-x230>
-	<1516032730.5699.38.camel@suse.com>
-	<20180115162658.wlccxhlaq56byykg@jak-x230>
-	<1516034784.5699.44.camel@suse.com>
-	<20180116202946.GO5638@octiron.msp.redhat.com>
-	<1516149827.23203.68.camel@suse.com>
-	<20180117183858.GR5638@octiron.msp.redhat.com>
-	<20180118035003.GV5638@octiron.msp.redhat.com>
-	<1516263062.4861.4.camel@suse.com>
-	<20180118152203.GW5638@octiron.msp.redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180118152203.GW5638@octiron.msp.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Julian Andres Klode <julian.klode@canonical.com>, Guan Junxiong <guanjunxiong@huawei.com>, development mailing list <dm-devel@redhat.com>
+From: Bart Van Assche <bart.vanassche@wdc.com>
+Subject: [PATCH] dm rq: Avoid that request processing stalls sporadically
+Date: Thu, 18 Jan 2018 08:37:07 -0800
+Message-ID: <20180118163707.11825-1-bart.vanassche@wdc.com>
+Return-path: <linux-block-owner@vger.kernel.org>
+Sender: linux-block-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, linux-block@vger.kernel.org, Bart Van Assche <bart.vanassche@wdc.com>, Ming Lei <ming.lei@redhat.com>
 List-Id: dm-devel.ids
 
-T24gVGh1LCAyMDE4LTAxLTE4IGF0IDA5OjIyIC0wNjAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gT24gVGh1LCBKYW4gMTgsIDIwMTggYXQgMDk6MTE6MDJBTSArMDEwMCwgTWFydGluIFdp
-bGNrIHdyb3RlOgo+ID4gT24gV2VkLCAyMDE4LTAxLTE3IGF0IDIxOjUwIC0wNjAwLCBCZW5qYW1p
-biBNYXJ6aW5za2kgd3JvdGU6Cj4gPiAKPiA+ID4gTm93LCBJIGRvbid0IHNlZSBob3cgdGhpcyBj
-b3VsZCBjYXVzZSBhIGJvb3QgdG8gZmFpbCBzaW5jZSB0aGlzCj4gPiA+IGlzIGEKPiA+ID4gbmV3
-Cj4gPiA+IGRldmljZSB0aGF0IGlzbid0IGdldHRpbmcgc2V0IHVwLCBidXQgSSByZWFsbHkgbmV2
-ZXIgdGVzdCB0aGlzLAo+ID4gPiBiZWNhdXNlCj4gPiA+IHdoZW4gd2UgY3JlYXRlIHRoZSBpbml0
-cmFtZnMgaW4gUmVkSGF0IGJhc2VkIGRpc3Ryb3MsIHdlIGVkaXQgdGhlCj4gPiA+IG11bHRpcGF0
-aC5jb25mIGZpbGUgaW4gaXQgdG8gYmxhY2tsaXN0IGFsbCBkZXZpY2VzIGV4Y2VwdCB0aG9zZQo+
-ID4gPiBuZWVkZWQKPiA+ID4gYnkgdGhlIGluaXRyYW1mcy4KPiA+IAo+ID4gSSdtIGEgYml0IHB1
-enpsZWQuIEl0J3MgYWdhaW5zdCBteSBwZXJzb25jYWwgY29udmljdGlvbiB0aGF0IHRoZQo+ID4g
-YmxhY2tsaXN0IG11c3QgYmUgdGhlIHNhbWUgYmV0d2VlbiBpbml0cmQgYW5kIHJvb3QgRlMuIEhv
-dyBkbyB5b3UKPiA+IHByZXZlbnQgTFZNIG9yIG90aGVyIGxheWVycyBncmFiYmluZyBibGFja2xp
-c3RlZCBkZXZpY2VzIGR1cmluZwo+ID4gaW5pdHJhbWZzIHByb2Nlc3NpbmcsIHNvIHRoYXQgdGhl
-eSBjYW4ndCBiZSBtdWx0aXBhdGhlZCBhbnkgbW9yZQo+ID4gbGF0ZXI/Cj4gCj4gbHZtIG9ubHkg
-YXNzZW1ibGVzIG9uIHRoZSBkZXZpY2VzIG5lY2Vzc2FyeSB0byBib290IGluIHRoZSBpbml0cmFt
-ZnMKPiBhbHNvLgoKQW5kIE1EPyBBbmQgb3RoZXIgbGF5ZXJzIHN1Y2ggYXMgZG0tY3J5cHQ/IEkg
-aGF2ZW4ndCB0aG91Z2h0IGl0IGFsbAp0aHJvdWdoLCBidXQgSSBmZWVsIHRoZXJlJ3MgYSBsb3Qg
-bW9yZSBzdHVmZiB0aGF0IG1pZ2h0IGdyYWIgYSBibG9jawpkZXZpY2Ugb25jZSBpdCBhcHBlYXJz
-LiBCdXQgaGV5LCBpZiB0aGF0J3Mgbm90IHRoZSBjYXNlLCB0aGF0J3MgZ29vZApuZXdzLiBUaGUg
-c2V0IG9mIGRyYWN1dCBtb2R1bGVzIGlzIGZpbml0ZSwgc28gSSBndWVzcyBpdCBjYW4gYWN0dWFs
-bHkKYmUgcmV2aWV3ZWQsIGF0IGxlYXN0IGluIGEgZ2l2ZW4gZGlzdHJpYnV0aW9uIGZyYW1ld29y
-ay4KCklJVUMgdGhpcyByZXF1aXJlcyBoYXJkY29kaW5nIHRoZSBXV0lEcyB0byBiZSBhY3RpdmF0
-ZWQgaW4gdGhlIGluaXRyZCwKd2hpY2ggYWxzbyBoYXMgc29tZSBkaXNhZHZhbnRhZ2VzLgoKQW55
-d2F5LCBtYWtpbmcgdGhlIGluaXRyYW1mcyBhbmQgYm9vdGVkIHN5c3RlbSBwbGF5IHRvZ2V0aGVy
-IG5pY2VseSBpcwpub3QgYW4gdXBzdHJlYW0gaXNzdWUgZm9yIG11bHRpcGF0aC10b29scy4gSSBn
-dWVzcyB0aGlzIHdpbGwgcmVtYWluIGFuCmFyZWEgd2hlcmUgZGlzdHJpYnV0aW9ucyBkaWZmZXJl
-bnRpYXRlLgoKQnR3LCBJJ3ZlIGJlZW4gY29uc2lkZXJpbmcgd2hldGhlciB0aGUgZHJhY3V0IG11
-bHRpcGF0aCBtb2R1bGUgc2hvdWxkCnJhdGhlciBiZSBtYWludGFpbmVkIGluIG11bHRpcGF0aC10
-b29scyB0aGFuIGluIGRyYWN1dC4gSXQgd291bGQgbWFrZQpjZXJ0YWluIGNoYW5nZXMgZWFzaWVy
-LiBPcGluaW9ucyB3ZWxjb21lLgoKUmVnYXJkcywKTWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxj
-ayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51
-eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9y
-dG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRt
-LWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZv
-L2RtLWRldmVs
+If the .queue_rq() implementation of a block driver returns
+BLK_STS_RESOURCE then that block driver is responsible for
+rerunning the queue once the condition that caused it to return
+BLK_STS_RESOURCE has been cleared. The dm-mpath driver tells the
+dm core to requeue a request if e.g. not enough memory is
+available for cloning a request or if the underlying path is
+busy. Since the dm-mpath driver does not receive any kind of
+notification if the condition that caused it to return "requeue"
+is cleared, the only solution to avoid that dm-mpath request
+processing stalls is to call blk_mq_delay_run_hw_queue(). Hence
+this patch.
+
+Fixes: ec3eaf9a6731 ("dm mpath: don't call blk_mq_delay_run_hw_queue() in case of BLK_STS_RESOURCE")
+Signed-off-by: Bart Van Assche <bart.vanassche@wdc.com>
+Cc: Ming Lei <ming.lei@redhat.com>
+---
+ drivers/md/dm-rq.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+index f16096af879a..c59c59cfd2a5 100644
+--- a/drivers/md/dm-rq.c
++++ b/drivers/md/dm-rq.c
+@@ -761,6 +761,7 @@ static blk_status_t dm_mq_queue_rq(struct blk_mq_hw_ctx *hctx,
+ 		/* Undo dm_start_request() before requeuing */
+ 		rq_end_stats(md, rq);
+ 		rq_completed(md, rq_data_dir(rq), false);
++		blk_mq_delay_run_hw_queue(hctx, 100/*ms*/);
+ 		return BLK_STS_RESOURCE;
+ 	}
+ 
+-- 
+2.15.1
