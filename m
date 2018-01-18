@@ -1,87 +1,83 @@
-From: Jens Axboe <axboe@kernel.dk>
+From: Bart Van Assche <Bart.VanAssche@wdc.com>
 Subject: Re: [RFC PATCH] blk-mq: fixup RESTART when queue becomes idle
-Date: Thu, 18 Jan 2018 15:39:09 -0700
-Message-ID: <fef86285-f944-4404-f2be-33889f1e21d3@kernel.dk>
+Date: Thu, 18 Jan 2018 22:55:03 +0000
+Message-ID: <1516316102.2676.97.camel@wdc.com>
 References: <b2e5b7e6-ce4b-6053-adae-63cc44d773af@wdc.com>
- <20180118170353.GB19734@redhat.com> <1516296056.2676.23.camel@wdc.com>
- <20180118183039.GA20121@redhat.com> <1516301278.2676.35.camel@wdc.com>
- <deeb2b2e-6d0e-a144-843d-d08626de8aea@kernel.dk>
- <20180118204856.GA31679@redhat.com> <1516309128.2676.38.camel@wdc.com>
- <20180118212327.GB31679@redhat.com> <1516311554.2676.50.camel@wdc.com>
- <20180118220132.GA20860@redhat.com> <1516313920.24506.4.camel@redhat.com>
- <1516314239.2676.79.camel@wdc.com> <1516314954.24506.6.camel@redhat.com>
+         <20180118170353.GB19734@redhat.com> <1516296056.2676.23.camel@wdc.com>
+         <20180118183039.GA20121@redhat.com> <1516301278.2676.35.camel@wdc.com>
+         <deeb2b2e-6d0e-a144-843d-d08626de8aea@kernel.dk>
+         <20180118204856.GA31679@redhat.com> <1516309128.2676.38.camel@wdc.com>
+         <20180118212327.GB31679@redhat.com> <1516311554.2676.50.camel@wdc.com>
+         <20180118220132.GA20860@redhat.com> <1516313920.24506.4.camel@redhat.com>
+         <1516314239.2676.79.camel@wdc.com> <1516314954.24506.6.camel@redhat.com>
+         <fef86285-f944-4404-f2be-33889f1e21d3@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <1516314954.24506.6.camel@redhat.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <fef86285-f944-4404-f2be-33889f1e21d3@kernel.dk>
 Content-Language: en-US
-Sender: linux-block-owner@vger.kernel.org
-To: Laurence Oberman <loberman@redhat.com>, Bart Van Assche <Bart.VanAssche@wdc.com>, "snitzer@redhat.com" <snitzer@redhat.com>
+Content-ID: <5EBDAE80C4F8E049AC4112F30A50ACA7@namprd04.prod.outlook.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "snitzer@redhat.com" <snitzer@redhat.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "loberman@redhat.com" <loberman@redhat.com>
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "hch@infradead.org" <hch@infradead.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "osandov@fb.com" <osandov@fb.com>, "ming.lei@redhat.com" <ming.lei@redhat.com>
 List-Id: dm-devel.ids
 
-On 1/18/18 3:35 PM, Laurence Oberman wrote:
-> On Thu, 2018-01-18 at 22:24 +0000, Bart Van Assche wrote:
->> On Thu, 2018-01-18 at 17:18 -0500, Laurence Oberman wrote:
->>> OK, I ran 5 at once of 5 separate mount points.
->>> I am using 4k block sizes
->>> Its solid consistent for me. No stalls no gaps.
->>
->> Hi Laurence,
->>
->> That's great news and thank you for having shared this information
->> but I think
->> it should be mentioned that you have been running my tree in which
->> some recent
->> block and dm patches were reverted
->> (https://github.com/bvanassche/linux/tree/block-scsi-for-next)
->>
->>>
->>> [global]
->>> name=02-mq
->>> filename=fio-output-02-mq.txt
->>> rw=randwrite
->>> verify=md5
->>> ;rwmixread=60
->>> ;rwmixwrite=40
->>> bs=4K
->>> ;direct=1
->>> ;numjobs=4
->>> ;time_based=1
->>> runtime=120
->>>
->>> [file1]
->>> size=3G
->>> ioengine=libaio
->>> iodepth=16
->>>
->>> I watch I/O and I see it ramp up but fio still runs and it kind of
->>> shuts down.
->>
->> In test "file1" I see an I/O size of 3G. Does that mean that the
->> patch that
->> should fix the sgl_alloc() issue is working?
->>
->> Thanks,
->>
->> Bart.
-> 
-> Hello Bart Thank you.
-> 
-> OK, so booting into Mike tree now and then hopefully I get the lockups.
-> Can you give me some idea of what to look for.
-> I assume I/O just stops.
-> 
-> I want to get this happening in-house so we have an avenue to fix this.
-> Following getting the stall I will attend to the slg patch test for the
-> SRPT side.
-> 
-> Please note I am not running latest SRPT right now as you know.
-
-When you do have a solid test case, please please submit a blktests
-test case for it! This needs to be something we can regularly in
-testing.
-
--- 
-Jens Axboe
+T24gVGh1LCAyMDE4LTAxLTE4IGF0IDE1OjM5IC0wNzAwLCBKZW5zIEF4Ym9lIHdyb3RlOg0KPiBX
+aGVuIHlvdSBkbyBoYXZlIGEgc29saWQgdGVzdCBjYXNlLCBwbGVhc2UgcGxlYXNlIHN1Ym1pdCBh
+IGJsa3Rlc3RzDQo+IHRlc3QgY2FzZSBmb3IgaXQhIFRoaXMgbmVlZHMgdG8gYmUgc29tZXRoaW5n
+IHdlIGNhbiByZWd1bGFybHkgaW4NCj4gdGVzdGluZy4NCg0KSGVsbG8gSmVucywNCg0KVGhhdCBz
+b3VuZHMgbGlrZSBhIGdvb2QgaWRlYSB0byBtZS4gQlRXLCBJIHRoaW5rIHRoZSByZWFzb24gd2h5
+IHNvIGZhciBJDQpjYW4gcmVwcm9kdWNlIHRoZXNlIHF1ZXVlIHN0YWxscyBlYXNpZXIgdGhhbiBv
+dGhlcnMgaXMgYmVjYXVzZSBJIG1vZGlmaWVkIHRoZQ0KU1JQIGluaXRpYXRvciB0byBtYWtlIGl0
+IGVhc3kgdG8gY2F1c2UgdGhlIC5nZXRfYnVkZ2V0KCkgY2FsbCB0byBzdWNjZWVkIGFuZA0KdGhl
+IHNjc2lfcXVldWVfcnEoKSB0byByZXR1cm4gQkxLX1NUU19CVVNZLiBBIHBvc3NpYmxlIG5leHQg
+c3RlcCBpcyB0byBhcHBseQ0KYSBzaW1pbGFyIGNoYW5nZSB0byB0aGUgc2NzaV9kZWJ1ZyBkcml2
+ZXIuIFRoZSBjaGFuZ2UgSSBtYWRlIGlzIGFzIGZvbGxvd3M6DQoNCmRpZmYgLS1naXQgYS9kcml2
+ZXJzL2luZmluaWJhbmQvdWxwL3NycC9pYl9zcnAuYyBiL2RyaXZlcnMvaW5maW5pYmFuZC91bHAv
+c3JwL2liX3NycC5jDQppbmRleCAwYzg4N2ViZmJjNjQuLjdmM2M0YTE5NzQyNSAxMDA2NDQNCi0t
+LSBhL2RyaXZlcnMvaW5maW5pYmFuZC91bHAvc3JwL2liX3NycC5jDQorKysgYi9kcml2ZXJzL2lu
+ZmluaWJhbmQvdWxwL3NycC9pYl9zcnAuYw0KQEAgLTMxMzUsNiArMzEzNSwxNiBAQCBzdGF0aWMg
+aW50IHNycF9yZXNldF9ob3N0KHN0cnVjdCBzY3NpX2NtbmQgKnNjbW5kKQ0KIAlyZXR1cm4gc3Jw
+X3JlY29ubmVjdF9ycG9ydCh0YXJnZXQtPnJwb3J0KSA9PSAwID8gU1VDQ0VTUyA6IEZBSUxFRDsN
+CiB9DQogDQorc3RhdGljIGludCBzcnBfdGFyZ2V0X2FsbG9jKHN0cnVjdCBzY3NpX3RhcmdldCAq
+c3RhcmdldCkNCit7DQorCXN0cnVjdCBTY3NpX0hvc3QgKnNob3N0ID0gZGV2X3RvX3Nob3N0KHN0
+YXJnZXQtPmRldi5wYXJlbnQpOw0KKwlzdHJ1Y3Qgc3JwX3RhcmdldF9wb3J0ICp0YXJnZXQgPSBo
+b3N0X3RvX3RhcmdldChzaG9zdCk7DQorDQorCWlmICh0YXJnZXQtPnRhcmdldF9jYW5fcXVldWUp
+DQorCQlzdGFyZ2V0LT5jYW5fcXVldWUgPSB0YXJnZXQtPnRhcmdldF9jYW5fcXVldWU7DQorCXJl
+dHVybiAwOw0KK30NCisNCiBzdGF0aWMgaW50IHNycF9zbGF2ZV9hbGxvYyhzdHJ1Y3Qgc2NzaV9k
+ZXZpY2UgKnNkZXYpDQogew0KIAlzdHJ1Y3QgU2NzaV9Ib3N0ICpzaG9zdCA9IHNkZXYtPmhvc3Q7
+DQpAQCAtMzM0OCw2ICszMzU4LDcgQEAgc3RhdGljIHN0cnVjdCBzY3NpX2hvc3RfdGVtcGxhdGUg
+c3JwX3RlbXBsYXRlID0gew0KIAkubW9kdWxlCQkJCT0gVEhJU19NT0RVTEUsDQogCS5uYW1lCQkJ
+CT0gIkluZmluaUJhbmQgU1JQIGluaXRpYXRvciIsDQogCS5wcm9jX25hbWUJCQk9IERSVl9OQU1F
+LA0KKwkudGFyZ2V0X2FsbG9jCQkJPSBzcnBfdGFyZ2V0X2FsbG9jLA0KIAkuc2xhdmVfYWxsb2MJ
+CQk9IHNycF9zbGF2ZV9hbGxvYywNCiAJLnNsYXZlX2NvbmZpZ3VyZQkJPSBzcnBfc2xhdmVfY29u
+ZmlndXJlLA0KIAkuaW5mbwkJCQk9IHNycF90YXJnZXRfaW5mbywNCkBAIC0zNTE1LDYgKzM1MjYs
+NyBAQCBlbnVtIHsNCiAJU1JQX09QVF9RVUVVRV9TSVpFCT0gMSA8PCAxNCwNCiAJU1JQX09QVF9J
+UF9TUkMJCT0gMSA8PCAxNSwNCiAJU1JQX09QVF9JUF9ERVNUCQk9IDEgPDwgMTYsDQorCVNSUF9P
+UFRfVEFSR0VUX0NBTl9RVUVVRT0gMSA8PCAxNywNCiB9Ow0KIA0KIHN0YXRpYyB1bnNpZ25lZCBp
+bnQgc3JwX29wdF9tYW5kYXRvcnlbXSA9IHsNCkBAIC0zNTM2LDYgKzM1NDgsNyBAQCBzdGF0aWMg
+Y29uc3QgbWF0Y2hfdGFibGVfdCBzcnBfb3B0X3Rva2VucyA9IHsNCiAJeyBTUlBfT1BUX1NFUlZJ
+Q0VfSUQsCQkic2VydmljZV9pZD0lcyIJCX0sDQogCXsgU1JQX09QVF9NQVhfU0VDVCwJCSJtYXhf
+c2VjdD0lZCIgCQl9LA0KIAl7IFNSUF9PUFRfTUFYX0NNRF9QRVJfTFVOLAkibWF4X2NtZF9wZXJf
+bHVuPSVkIiAJfSwNCisJeyBTUlBfT1BUX1RBUkdFVF9DQU5fUVVFVUUsCSJ0YXJnZXRfY2FuX3F1
+ZXVlPSVkIgl9LA0KIAl7IFNSUF9PUFRfSU9fQ0xBU1MsCQkiaW9fY2xhc3M9JXgiCQl9LA0KIAl7
+IFNSUF9PUFRfSU5JVElBVE9SX0VYVCwJImluaXRpYXRvcl9leHQ9JXMiCX0sDQogCXsgU1JQX09Q
+VF9DTURfU0dfRU5UUklFUywJImNtZF9zZ19lbnRyaWVzPSV1Igl9LA0KQEAgLTM3MjQsNiArMzcz
+NywxNSBAQCBzdGF0aWMgaW50IHNycF9wYXJzZV9vcHRpb25zKHN0cnVjdCBuZXQgKm5ldCwgY29u
+c3QgY2hhciAqYnVmLA0KIAkJCXRhcmdldC0+c2NzaV9ob3N0LT5jbWRfcGVyX2x1biA9IHRva2Vu
+Ow0KIAkJCWJyZWFrOw0KIA0KKwkJY2FzZSBTUlBfT1BUX1RBUkdFVF9DQU5fUVVFVUU6DQorCQkJ
+aWYgKG1hdGNoX2ludChhcmdzLCAmdG9rZW4pIHx8IHRva2VuIDwgMSkgew0KKwkJCQlwcl93YXJu
+KCJiYWQgbWF4IHRhcmdldF9jYW5fcXVldWUgcGFyYW1ldGVyICclcydcbiIsDQorCQkJCQlwKTsN
+CisJCQkJZ290byBvdXQ7DQorCQkJfQ0KKwkJCXRhcmdldC0+dGFyZ2V0X2Nhbl9xdWV1ZSA9IHRv
+a2VuOw0KKwkJCWJyZWFrOw0KKw0KIAkJY2FzZSBTUlBfT1BUX0lPX0NMQVNTOg0KIAkJCWlmICht
+YXRjaF9oZXgoYXJncywgJnRva2VuKSkgew0KIAkJCQlwcl93YXJuKCJiYWQgSU8gY2xhc3MgcGFy
+YW1ldGVyICclcydcbiIsIHApOw0KZGlmZiAtLWdpdCBhL2RyaXZlcnMvaW5maW5pYmFuZC91bHAv
+c3JwL2liX3NycC5oIGIvZHJpdmVycy9pbmZpbmliYW5kL3VscC9zcnAvaWJfc3JwLmgNCmluZGV4
+IGQ2NmM5MDU3ZDVlYS4uNzAzMzRmYTNkZThlIDEwMDY0NA0KLS0tIGEvZHJpdmVycy9pbmZpbmli
+YW5kL3VscC9zcnAvaWJfc3JwLmgNCisrKyBiL2RyaXZlcnMvaW5maW5pYmFuZC91bHAvc3JwL2li
+X3NycC5oDQpAQCAtMjE2LDYgKzIxNiw3IEBAIHN0cnVjdCBzcnBfdGFyZ2V0X3BvcnQgew0KIAlj
+aGFyCQkJdGFyZ2V0X25hbWVbMzJdOw0KIAl1bnNpZ25lZCBpbnQJCXNjc2lfaWQ7DQogCXVuc2ln
+bmVkIGludAkJc2dfdGFibGVzaXplOw0KKwl1bnNpZ25lZCBpbnQJCXRhcmdldF9jYW5fcXVldWU7
+DQogCWludAkJCW1yX3Bvb2xfc2l6ZTsNCiAJaW50CQkJbXJfcGVyX2NtZDsNCiAJaW50CQkJcXVl
+dWVfc2l6ZTsNCg0KQmFydC4=
