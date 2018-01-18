@@ -1,104 +1,67 @@
-From: Ming Lei <ming.lei@redhat.com>
-Subject: Re: [for-4.16 PATCH v6 2/3] blk-mq: improve DM's blk-mq IO merging
- via blk_insert_cloned_request feedback
-Date: Thu, 18 Jan 2018 11:44:47 +0800
-Message-ID: <20180118034446.GD11167@ming.t460p>
-References: <20180117162558.28553-1-snitzer@redhat.com>
- <20180117162558.28553-3-snitzer@redhat.com>
- <20180118032509.GB11167@ming.t460p>
- <20180118033723.GA8475@redhat.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: multipath-tools 0.7.4 failure to remove device
+Date: Wed, 17 Jan 2018 21:50:03 -0600
+Message-ID: <20180118035003.GV5638@octiron.msp.redhat.com>
+References: <1515789339.3409.33.camel@suse.com>
+	<20180112214700.ljxlypo5nar6oh3m@jak-x230>
+	<1515795481.9139.8.camel@suse.com>
+	<20180115154424.fcjuudt7phxrks6q@jak-x230>
+	<1516032730.5699.38.camel@suse.com>
+	<20180115162658.wlccxhlaq56byykg@jak-x230>
+	<1516034784.5699.44.camel@suse.com>
+	<20180116202946.GO5638@octiron.msp.redhat.com>
+	<1516149827.23203.68.camel@suse.com>
+	<20180117183858.GR5638@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20180118033723.GA8475@redhat.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: axboe@kernel.dk, Ming Lei <tom.leiming@gmail.com>, hch@lst.de, dm-devel@redhat.com, linux-block@vger.kernel.org
+In-Reply-To: <20180117183858.GR5638@octiron.msp.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Martin Wilck <mwilck@suse.com>
+Cc: Julian Andres Klode <julian.klode@canonical.com>, Guan Junxiong <guanjunxiong@huawei.com>, development mailing list <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Jan 17, 2018 at 10:37:23PM -0500, Mike Snitzer wrote:
-> On Wed, Jan 17 2018 at 10:25pm -0500,
-> Ming Lei <ming.lei@redhat.com> wrote:
-> 
-> > Hi Mike,
-> > 
-> > On Wed, Jan 17, 2018 at 11:25:57AM -0500, Mike Snitzer wrote:
-> > > From: Ming Lei <ming.lei@redhat.com>
-> > > 
-> > > blk_insert_cloned_request() is called in the fast path of a dm-rq driver
-> > > (e.g. blk-mq request-based DM mpath).  blk_insert_cloned_request() uses
-> > > blk_mq_request_bypass_insert() to directly append the request to the
-> > > blk-mq hctx->dispatch_list of the underlying queue.
-> > > 
-> > > 1) This way isn't efficient enough because the hctx spinlock is always
-> > > used.
-> > > 
-> > > 2) With blk_insert_cloned_request(), we completely bypass underlying
-> > > queue's elevator and depend on the upper-level dm-rq driver's elevator
-> > > to schedule IO.  But dm-rq currently can't get the underlying queue's
-> > > dispatch feedback at all.  Without knowing whether a request was issued
-> > > or not (e.g. due to underlying queue being busy) the dm-rq elevator will
-> > > not be able to provide effective IO merging (as a side-effect of dm-rq
-> > > currently blindly destaging a request from its elevator only to requeue
-> > > it after a delay, which kills any opportunity for merging).  This
-> > > obviously causes very bad sequential IO performance.
-> > > 
-> > > Fix this by updating blk_insert_cloned_request() to use
-> > > blk_mq_request_direct_issue().  blk_mq_request_direct_issue() allows a
-> > > request to be issued directly to the underlying queue and returns the
-> > > dispatch feedback (blk_status_t).  If blk_mq_request_direct_issue()
-> > > returns BLK_SYS_RESOURCE the dm-rq driver will now use DM_MAPIO_REQUEUE
-> > > to _not_ destage the request.  Whereby preserving the opportunity to
-> > > merge IO.
-> > > 
-> > > With this, request-based DM's blk-mq sequential IO performance is vastly
-> > > improved (as much as 3X in mpath/virtio-scsi testing).
-> > > 
-> > > Signed-off-by: Ming Lei <ming.lei@redhat.com>
-> > > [blk-mq.c changes heavily influenced by Ming Lei's initial solution, but
-> > > they were refactored to make them less fragile and easier to read/review]
-> > > Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-> ...
-> > > diff --git a/block/blk-mq.c b/block/blk-mq.c
-> > > index c117c2baf2c9..f5f0d8456713 100644
-> > > --- a/block/blk-mq.c
-> > > +++ b/block/blk-mq.c
-> > > @@ -1731,15 +1731,19 @@ static blk_status_t __blk_mq_issue_directly(struct blk_mq_hw_ctx *hctx,
-> > >  
-> > >  static void __blk_mq_fallback_to_insert(struct blk_mq_hw_ctx *hctx,
-> > >  					struct request *rq,
-> > > -					bool run_queue)
-> > > +					bool run_queue, bool bypass_insert)
-> > >  {
-> > > -	blk_mq_sched_insert_request(rq, false, run_queue, false,
-> > > -					hctx->flags & BLK_MQ_F_BLOCKING);
-> > > +	if (!bypass_insert)
-> > > +		blk_mq_sched_insert_request(rq, false, run_queue, false,
-> > > +					    hctx->flags & BLK_MQ_F_BLOCKING);
-> > > +	else
-> > > +		blk_mq_request_bypass_insert(rq, run_queue);
-> > >  }
-> > 
-> > If 'bypass_insert' is true, we don't need to insert the request into
-> > hctx->dispatch_list for dm-rq, then it causes the issue(use after free)
-> > reported by Bart and Laurence.
-> > 
-> > Also this way is the exact opposite of the idea of the improvement,
-> > we do not want to dispatch request if underlying queue is busy.
-> 
-> Yeap, please see the patch I just posted to fix it.
+Just a bit more information about how RedHat works with multipath
+claiming devices in a find_multipaths setup.
 
-Looks your patch is a bit complicated, then __blk_mq_fallback_to_insert()
-can be removed.
+Clearly, if you have a multipathed root device, it should be in the
+wwids file from the time of installation. So, multipath will
+automatically claim it right away when "-i" isn't used. This should
+always work fine. But like I mentioned, there is a race when new storage
+is added. If that new storage is discovered in the initramfs, the race
+can happen there during boot.
 
-> 
-> But your v4 does fallback to using blk_mq_request_bypass_insert() as
-> well, just in a much narrower case -- specifically:
->        if (blk_mq_hctx_stopped(hctx) || blk_queue_quiesced(q))
+When -i isn't used in udev this race isn't as bad.  Usually multipathd
+will lose the race to autoassemble on the device, since it can't start
+until the second path has been discovered, and lvm/md can start right
+away. This means that the wwid will never get in the wwids file, so
+multipath will never claim any of the paths, and lvm/md will get
+assembled on one path. However if multipathd wins the race and it's
+close to a tie, there's a chance that lvm/md will be trying to
+autoassemble on the device, and will fail because mutipath just did (or
+possibly because the partition devices were removed out from under it).
 
-Yeah, I just found it, and you can add 'bypass_insert = false' under
-condition.
+Now, I don't see how this could cause a boot to fail since this is a new
+device that isn't getting set up, but I really never test this, because
+when we create the initramfs in RedHat based distros, we edit the
+multipath.conf file in it to blacklist all devices except those needed
+by the initramfs. This means that we never discover new devices in the
+initramfs. In fact, we don't multipath any devices unnecessary for
+booting in the initramfs. So, while I can't see a way for this new
+device race to cause boot to fail when -i isn't used in udev, I must
+admit that we just exclude that from ever happening, so I can't say for
+certain that it would always work. Of course it's simple to avoid the
+possibility of this race in the initramfs, even without editting
+multipath.conf. You just start multipathd with -n in the initramfs.
 
--- 
-Ming
+-Ben
