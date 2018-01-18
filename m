@@ -1,7 +1,8 @@
-From: Laurence Oberman <loberman@redhat.com>
-Subject: Re: [RFC PATCH] blk-mq: fixup RESTART when queue becomes idle
-Date: Thu, 18 Jan 2018 16:37:45 -0500
-Message-ID: <1516311465.24506.2.camel@redhat.com>
+From: Bart Van Assche <Bart.VanAssche@wdc.com>
+Subject: Re: [dm-devel] [RFC PATCH] blk-mq: fixup RESTART when queue becomes
+ idle
+Date: Thu, 18 Jan 2018 21:39:15 +0000
+Message-ID: <1516311554.2676.50.camel@wdc.com>
 References: <20180118024124.8079-1-ming.lei@redhat.com>
          <b2e5b7e6-ce4b-6053-adae-63cc44d773af@wdc.com>
          <20180118170353.GB19734@redhat.com> <1516296056.2676.23.camel@wdc.com>
@@ -10,77 +11,53 @@ References: <20180118024124.8079-1-ming.lei@redhat.com>
          <20180118204856.GA31679@redhat.com> <1516309128.2676.38.camel@wdc.com>
          <20180118212327.GB31679@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <linux-block-owner@vger.kernel.org>
 In-Reply-To: <20180118212327.GB31679@redhat.com>
+Content-Language: en-US
+Content-ID: <9D6E01B496C4BC42A21CA6B2CDC36BA1@namprd04.prod.outlook.com>
 Sender: linux-block-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>, Bart Van Assche <Bart.VanAssche@wdc.com>
-Cc: "axboe@kernel.dk" <axboe@kernel.dk>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "hch@infradead.org" <hch@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "osandov@fb.com" <osandov@fb.com>, "ming.lei@redhat.com" <ming.lei@redhat.com>
+To: "snitzer@redhat.com" <snitzer@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "hch@infradead.org" <hch@infradead.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "osandov@fb.com" <osandov@fb.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "ming.lei@redhat.com" <ming.lei@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, 2018-01-18 at 16:23 -0500, Mike Snitzer wrote:
-> On Thu, Jan 18 2018 at  3:58P -0500,
-> Bart Van Assche <Bart.VanAssche@wdc.com> wrote:
-> 
-> > On Thu, 2018-01-18 at 15:48 -0500, Mike Snitzer wrote:
-> > > For Bart's test the underlying scsi-mq driver is what is
-> > > regularly
-> > > hitting this case in __blk_mq_try_issue_directly():
-> > > 
-> > >         if (blk_mq_hctx_stopped(hctx) || blk_queue_quiesced(q))
-> > 
-> > Hello Mike,
-> > 
-> > That code path is not the code path that triggered the lockups that
-> > I reported
-> > during the past days.
-> 
-> If you're hitting blk_mq_sched_insert_request() then you most
-> certainly
-> are hitting that code path.
-> 
-> If you aren't then what was your earlier email going on about?
-> https://www.redhat.com/archives/dm-devel/2018-January/msg00372.html
-> 
-> If you were just focusing on that as one possible reason, that isn't
-> very helpful.  By this point you really should _know_ what is
-> triggering
-> the stall based on the code paths taken.  Please use ftrace's
-> function_graph tracer if need be.
-> 
-> > These lockups were all triggered by incorrect handling of
-> > .queue_rq() returning BLK_STS_RESOURCE.
-> 
-> Please be precise, dm_mq_queue_rq()'s return of BLK_STS_RESOURCE?
-> "Incorrect" because it no longer runs blk_mq_delay_run_hw_queue()?
-> 
-> Please try to do more work analyzing the test case that only you can
-> easily run (due to srp_test being a PITA).  And less time lobbying
-> for
-> a change that you don't understand to _really_ be correct.
-> 
-> We have time to get this right, please stop hyperventilating about
-> "regressions".
-> 
-> Thanks,
-> Mike
-
-Hello Bart
-I have run a good few loops of 02-mq and its stable for me on your
-tree.
-I am not running the entire disconnect re-connect loops and un-mounts
-etc. for good reason.
-I have 35 LUNS so its very impact-full to lose them and have them come
-back all the time.
-
-Anyway
-I am very happy to try reproduce this in-house so Mike and Ming can
-focus on it but I need to know if all I need to do is loop over 02-mq
-over and over.
-
-Also please let me know whats debugfs and sysfs to capture and I am
-happy to try help move this along.
-
-Regards
-Laurence
+T24gVGh1LCAyMDE4LTAxLTE4IGF0IDE2OjIzIC0wNTAwLCBNaWtlIFNuaXR6ZXIgd3JvdGU6DQo+
+IE9uIFRodSwgSmFuIDE4IDIwMTggYXQgIDM6NThQIC0wNTAwLA0KPiBCYXJ0IFZhbiBBc3NjaGUg
+PEJhcnQuVmFuQXNzY2hlQHdkYy5jb20+IHdyb3RlOg0KPiANCj4gPiBPbiBUaHUsIDIwMTgtMDEt
+MTggYXQgMTU6NDggLTA1MDAsIE1pa2UgU25pdHplciB3cm90ZToNCj4gPiA+IEZvciBCYXJ0J3Mg
+dGVzdCB0aGUgdW5kZXJseWluZyBzY3NpLW1xIGRyaXZlciBpcyB3aGF0IGlzIHJlZ3VsYXJseQ0K
+PiA+ID4gaGl0dGluZyB0aGlzIGNhc2UgaW4gX19ibGtfbXFfdHJ5X2lzc3VlX2RpcmVjdGx5KCk6
+DQo+ID4gPiANCj4gPiA+ICAgICAgICAgaWYgKGJsa19tcV9oY3R4X3N0b3BwZWQoaGN0eCkgfHwg
+YmxrX3F1ZXVlX3F1aWVzY2VkKHEpKQ0KPiA+DQo+ID4gVGhlc2UgbG9ja3VwcyB3ZXJlIGFsbCB0
+cmlnZ2VyZWQgYnkgaW5jb3JyZWN0IGhhbmRsaW5nIG9mDQo+ID4gLnF1ZXVlX3JxKCkgcmV0dXJu
+aW5nIEJMS19TVFNfUkVTT1VSQ0UuDQo+IA0KPiBQbGVhc2UgYmUgcHJlY2lzZSwgZG1fbXFfcXVl
+dWVfcnEoKSdzIHJldHVybiBvZiBCTEtfU1RTX1JFU09VUkNFPw0KPiAiSW5jb3JyZWN0IiBiZWNh
+dXNlIGl0IG5vIGxvbmdlciBydW5zIGJsa19tcV9kZWxheV9ydW5faHdfcXVldWUoKT8NCg0KSW4g
+d2hhdCBJIHdyb3RlIEkgd2FzIHJlZmVycmluZyB0byBib3RoIGRtX21xX3F1ZXVlX3JxKCkgYW5k
+IHNjc2lfcXVldWVfcnEoKS4NCldpdGggImluY29ycmVjdCIgSSBtZWFudCB0aGF0IHF1ZXVlIGxv
+Y2t1cHMgYXJlIGludHJvZHVjZWQgdGhhdCBtYWtlIHVzZXINCnNwYWNlIHByb2Nlc3NlcyB1bmtp
+bGxhYmxlLiBUaGF0J3MgYSBzZXZlcmUgYnVnLg0KDQo+IFBsZWFzZSB0cnkgdG8gZG8gbW9yZSB3
+b3JrIGFuYWx5emluZyB0aGUgdGVzdCBjYXNlIHRoYXQgb25seSB5b3UgY2FuDQo+IGVhc2lseSBy
+dW4gKGR1ZSB0byBzcnBfdGVzdCBiZWluZyBhIFBJVEEpLg0KDQpJdCBpcyBub3QgY29ycmVjdCB0
+aGF0IEknbSB0aGUgb25seSBvbmUgd2hvIGlzIGFibGUgdG8gcnVuIHRoYXQgc29mdHdhcmUuDQpB
+bnlvbmUgd2hvIGlzIHdpbGxpbmcgdG8gbWVyZ2UgdGhlIGxhdGVzdCBTUlAgaW5pdGlhdG9yIGFu
+ZCB0YXJnZXQgZHJpdmVyDQpwYXRjaGVzIGluIGhpcyBvciBoZXIgdHJlZSBjYW4gcnVuIHRoYXQg
+c29mdHdhcmUgaW4NCmFueSBWTS4gSSdtIHdvcmtpbmcgaGFyZA0Kb24gZ2V0dGluZyB0aGUgcGF0
+Y2hlcyB1cHN0cmVhbSB0aGF0IG1ha2UgaXQgcG9zc2libGUgdG8gcnVuIHRoZSBzcnAtdGVzdA0K
+c29mdHdhcmUgb24gYSBzZXR1cCB0aGF0IGlzIG5vdCBlcXVpcHBlZCB3aXRoIEluZmluaUJhbmQg
+aGFyZHdhcmUuDQoNCj4gV2UgaGF2ZSB0aW1lIHRvIGdldCB0aGlzIHJpZ2h0LCBwbGVhc2Ugc3Rv
+cCBoeXBlcnZlbnRpbGF0aW5nIGFib3V0DQo+ICJyZWdyZXNzaW9ucyIuDQoNClNvcnJ5IE1pa2Ug
+YnV0IHRoYXQncyBzb21ldGhpbmcgSSBjb25zaWRlciBhcyBhbiB1bmZhaXIgY29tbWVudC4gSWYg
+TWluZyBhbmQNCnlvdSB3b3JrIG9uIHBhdGNoZXMgdG9nZXRoZXIsIGl0J3MgeW91ciBqb2IgdG8g
+bWFrZSBzdXJlIHRoYXQgbm8gcmVncmVzc2lvbnMNCmFyZSBpbnRyb2R1Y2VkLiBJbnN0ZWFkIG9m
+IGJsYW1pbmcgbWUgYmVjYXVzZSBJIHJlcG9ydCB0aGVzZSByZWdyZXNzaW9ucyB5b3UNCnNob3Vs
+ZCBiZSBncmF0ZWZ1bCB0aGF0IEkgdGFrZSB0aGUgdGltZSBhbmQgZWZmb3J0IHRvIHJlcG9ydCB0
+aGVzZSByZWdyZXNzaW9ucw0KZWFybHkuIEFuZCBzaW5jZSB5b3UgYXJlIGVtcGxveWVkIGJ5IGEg
+bGFyZ2Ugb3JnYW5pemF0aW9uIHRoYXQgc2VsbHMgTGludXgNCnN1cHBvcnQgc2VydmljZXMsIHlv
+dXIgZW1wbG95ZXIgc2hvdWxkIGludmVzdCBpbiBkZXZlbG9waW5nIHRlc3QgY2FzZXMgdGhhdA0K
+cmVhY2ggYSBoaWdoZXIgY292ZXJhZ2Ugb2YgdGhlIGRtLCBTQ1NJIGFuZCBibG9jayBsYXllciBj
+b2RlLiBJIGRvbid0IHRoaW5rDQp0aGF0IGl0J3Mgbm9ybWFsIHRoYXQgbXkgdGVzdHMgZGlzY292
+ZXJlZCBzZXZlcmFsIGlzc3VlcyB0aGF0IHdlcmUgbm90DQpkaXNjb3ZlcmVkIGJ5IFJlZCBIYXQn
+cyBpbnRlcm5hbCB0ZXN0IHN1aXRlLiBUaGF0J3Mgc29tZXRoaW5nIFJlZCBIYXQgaGFzIHRvDQph
+ZGRyZXNzLg0KDQpCYXJ0Lg==
