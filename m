@@ -1,17 +1,23 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 0/2] dm: add new loop and ram targets
-Date: Thu, 18 Jan 2018 07:06:19 -0500
-Message-ID: <20180118120619.GB10787@redhat.com>
-References: <cover.1516124587.git.heinzm@redhat.com>
-	<20180117212936.GA6756@redhat.com>
-	<20180118114231.GG8694@localhost.localdomain>
-	<20180118115649.GA10787@redhat.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: multipath-tools 0.7.4 failure to remove device
+Date: Thu, 18 Jan 2018 09:22:03 -0600
+Message-ID: <20180118152203.GW5638@octiron.msp.redhat.com>
+References: <1515795481.9139.8.camel@suse.com>
+	<20180115154424.fcjuudt7phxrks6q@jak-x230>
+	<1516032730.5699.38.camel@suse.com>
+	<20180115162658.wlccxhlaq56byykg@jak-x230>
+	<1516034784.5699.44.camel@suse.com>
+	<20180116202946.GO5638@octiron.msp.redhat.com>
+	<1516149827.23203.68.camel@suse.com>
+	<20180117183858.GR5638@octiron.msp.redhat.com>
+	<20180118035003.GV5638@octiron.msp.redhat.com>
+	<1516263062.4861.4.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20180118115649.GA10787@redhat.com>
+In-Reply-To: <1516263062.4861.4.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,41 +27,41 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Bryn M. Reeves" <bmr@redhat.com>
-Cc: Heinz Mauelshagen <heinzm@redhat.com>, dm-devel@redhat.com
+To: Martin Wilck <mwilck@suse.com>
+Cc: Julian Andres Klode <julian.klode@canonical.com>, Guan Junxiong <guanjunxiong@huawei.com>, development mailing list <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Jan 18 2018 at  6:56am -0500,
-Mike Snitzer <snitzer@redhat.com> wrote:
+On Thu, Jan 18, 2018 at 09:11:02AM +0100, Martin Wilck wrote:
+> On Wed, 2018-01-17 at 21:50 -0600, Benjamin Marzinski wrote:
+> =
 
-> On Thu, Jan 18 2018 at  6:42am -0500,
-> Bryn M. Reeves <bmr@redhat.com> wrote:
-> 
-> > On Wed, Jan 17, 2018 at 04:29:36PM -0500, Mike Snitzer wrote:
-> > > On Wed, Jan 17 2018 at  2:33pm -0500,
-> > > As for dm-loop, doubling the performance of the loopback driver is quite
-> > > nice (especially with only 1/7 the number of lines of code as
-> > > drives/block/loop.c).
-> > 
-> > Isn't this going to raise the same objection that akpm had years ago,
-> > with the original dm-loop (block mapping) target?
-> > 
-> > We had an even bigger performance boost with that but it was rejected
-> > on the grounds that a second loop back block device implementation was
-> > not welcome unless the two could share code.
-> 
-> Could.  But I wasn't around for that particular spat.  It seems quite
-> misplaced to swoop in with an aire of design purity to defeat a DM
-> target that shows such clear wins.
-> 
-> This idea that our poor Linux users will lose their heads because they
-> have multiple options is also idiotic.
-> 
-> But we'll cross that bridge as needed (before burning it down?) ;)
+> > Now, I don't see how this could cause a boot to fail since this is a
+> > new
+> > device that isn't getting set up, but I really never test this,
+> > because
+> > when we create the initramfs in RedHat based distros, we edit the
+> > multipath.conf file in it to blacklist all devices except those
+> > needed
+> > by the initramfs.
+> =
 
-Reflecting on getting spun up about the potential for a fight made me
-feel like this guy wanting to use the phone in "Dumb and Dumber":
-https://youtu.be/Gue2LvHibpg?t=25
+> I'm a bit puzzled. It's against my personcal conviction that the
+> blacklist must be the same between initrd and root FS. How do you
+> prevent LVM or other layers grabbing blacklisted devices during
+> initramfs processing, so that they can't be multipathed any more later?
 
-Could easily be in the end someone like akpm or Jens will just
-effectively punch me in the face from inside their phone booth ;)
+lvm only assembles on the devices necessary to boot in the initramfs
+also.
+
+-Ben
+
+> =
+
+> Martin
+> =
+
+> -- =
+
+> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+> SUSE Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
+> HRB 21284 (AG N=FCrnberg)
