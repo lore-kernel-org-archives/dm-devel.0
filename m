@@ -1,34 +1,54 @@
-From: Bart Van Assche <Bart.VanAssche@wdc.com>
+From: Jens Axboe <axboe@kernel.dk>
 Subject: Re: [RFC PATCH] blk-mq: fixup RESTART when queue becomes idle
-Date: Thu, 18 Jan 2018 18:47:59 +0000
-Message-ID: <1516301278.2676.35.camel@wdc.com>
+Date: Thu, 18 Jan 2018 13:11:01 -0700
+Message-ID: <deeb2b2e-6d0e-a144-843d-d08626de8aea@kernel.dk>
 References: <20180118024124.8079-1-ming.lei@redhat.com>
-         <b2e5b7e6-ce4b-6053-adae-63cc44d773af@wdc.com>
-         <20180118170353.GB19734@redhat.com> <1516296056.2676.23.camel@wdc.com>
-         <20180118183039.GA20121@redhat.com>
+ <b2e5b7e6-ce4b-6053-adae-63cc44d773af@wdc.com>
+ <20180118170353.GB19734@redhat.com> <1516296056.2676.23.camel@wdc.com>
+ <20180118183039.GA20121@redhat.com> <1516301278.2676.35.camel@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20180118183039.GA20121@redhat.com>
+In-Reply-To: <1516301278.2676.35.camel@wdc.com>
 Content-Language: en-US
-Content-ID: <9FFA71298A9AC544B659D8EB772D06B8@namprd04.prod.outlook.com>
 Sender: linux-block-owner@vger.kernel.org
-To: "snitzer@redhat.com" <snitzer@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "hch@infradead.org" <hch@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "osandov@fb.com" <osandov@fb.com>, "ming.lei@redhat.com" <ming.lei@redhat.com>, "axboe@kernel.dk" <axboe@kernel.dk>
+To: Bart Van Assche <Bart.VanAssche@wdc.com>, "snitzer@redhat.com" <snitzer@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "hch@infradead.org" <hch@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "osandov@fb.com" <osandov@fb.com>, "ming.lei@redhat.com" <ming.lei@redhat.com>
 List-Id: dm-devel.ids
 
-T24gVGh1LCAyMDE4LTAxLTE4IGF0IDEzOjMwIC0wNTAwLCBNaWtlIFNuaXR6ZXIgd3JvdGU6DQo+
-IDElIT8gIFdoZXJlIGFyZSB5b3UgZ2V0dGluZyB0aGF0IG51bWJlcj8gIE1pbmcgaGFzIGRldGFp
-bGVkIG1vcmUNCj4gc2lnbmlmaWNhbnQgcGVyZm9ybWFuY2UgZ2FpbnMgdGhhbiAxJS4uIGFuZCBu
-b3QganVzdCBvbiBscGZjICh0aG91Z2ggeW91DQo+IGtlZXAgc2VpemluZyBvbiBscGZjIGJlY2F1
-c2Ugb2YgdGhlIGxvdyBxdWV1ZV9kZXB0aCBvZiAzKS4NCg0KVGhhdCdzIHdoYXQgSSBkZXJpdmVk
-IGZyb20gdGhlIG51bWJlcnMgeW91IHBvc3RlZCBmb3IgbnVsbF9ibGsuIElmIE1pbmcgaGFzDQpw
-b3N0ZWQgcGVyZm9ybWFuY2UgcmVzdWx0cyBmb3Igb3RoZXIgZHJpdmVycyB0aGFuIGxwZmMsIHBs
-ZWFzZSBsZXQgbWUga25vdw0Kd2hlcmUgSSBjYW4gZmluZCB0aGVzZS4gSSBoYXZlIG5vdCB5ZXQg
-c2VlbiB0aGVzZSBudW1iZXJzLg0KDQo+IFRoaXMgaXMgYWxsIHZlcnkgdGlyZXNvbWUuDQoNClll
-cywgdGhpcyBpcyB0aXJlc29tZS4gSXQgaXMgdmVyeSBhbm5veWluZyB0byBtZSB0aGF0IG90aGVy
-cyBrZWVwIGludHJvZHVjaW5nDQpzbyBtYW55IHJlZ3Jlc3Npb25zIGluIHN1Y2ggaW1wb3J0YW50
-IHBhcnRzIG9mIHRoZSBrZXJuZWwuIEl0IGlzIGFsc28gYW5ub3lpbmcNCnRvIG1lIHRoYXQgSSBn
-ZXQgYmxhbWVkIGlmIEkgcmVwb3J0IGEgcmVncmVzc2lvbiBpbnN0ZWFkIG9mIHNlZWluZyB0aGF0
-IHRoZQ0KcmVncmVzc2lvbiBnZXRzIGZpeGVkLg0KDQpCYXJ0Lg==
+On 1/18/18 11:47 AM, Bart Van Assche wrote:
+>> This is all very tiresome.
+> 
+> Yes, this is tiresome. It is very annoying to me that others keep
+> introducing so many regressions in such important parts of the kernel.
+> It is also annoying to me that I get blamed if I report a regression
+> instead of seeing that the regression gets fixed.
+
+I agree, it sucks that any change there introduces the regression. I'm
+fine with doing the delay insert again until a new patch is proven to be
+better.
+
+From the original topic of this email, we have conditions that can cause
+the driver to not be able to submit an IO. A set of those conditions can
+only happen if IO is in flight, and those cases we have covered just
+fine. Another set can potentially trigger without IO being in flight.
+These are cases where a non-device resource is unavailable at the time
+of submission. This might be iommu running out of space, for instance,
+or it might be a memory allocation of some sort. For these cases, we
+don't get any notification when the shortage clears. All we can do is
+ensure that we restart operations at some point in the future. We're SOL
+at that point, but we have to ensure that we make forward progress.
+
+That last set of conditions better not be a a common occurence, since
+performance is down the toilet at that point. I don't want to introduce
+hot path code to rectify it. Have the driver return if that happens in a
+way that is DIFFERENT from needing a normal restart. The driver knows if
+this is a resource that will become available when IO completes on this
+device or not. If we get that return, we have a generic run-again delay.
+
+This basically becomes the same as doing the delay queue thing from DM,
+but just in a generic fashion.
+
+-- 
+Jens Axboe
