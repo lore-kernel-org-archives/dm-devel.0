@@ -1,51 +1,24 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: [RFC PATCH 04/16] libmultipath: should_multipath: keep
-	existing maps
-Date: Fri, 19 Jan 2018 01:29:04 +0100
-Message-ID: <20180119002916.10323-5-mwilck@suse.com>
-References: <20180119002916.10323-1-mwilck@suse.com>
+From: Bart Van Assche <Bart.VanAssche@wdc.com>
+Subject: Re: dm rq: Avoid that request processing stalls sporadically
+Date: Fri, 19 Jan 2018 00:33:17 +0000
+Message-ID: <1516321996.2676.113.camel@wdc.com>
+References: <20180118163707.11825-1-bart.vanassche@wdc.com>
+         <20180118165050.GA19734@redhat.com> <1516295632.2676.16.camel@wdc.com>
+         <20180119002616.GC4712@ming.t460p>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180119002916.10323-1-mwilck@suse.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20180119002616.GC4712@ming.t460p>
+Content-Language: en-US
+Content-ID: <8AAD8A2EA73DF14A83395A0DA13FAE56@namprd04.prod.outlook.com>
+Sender: linux-block-owner@vger.kernel.org
+To: "ming.lei@redhat.com" <ming.lei@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "snitzer@redhat.com" <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-If with find_multipaths and !ignore_new_devs, if a path is already
-multipathed, keep it. The same logic is applied in multipath -u
-with ignore_wwids.
----
- libmultipath/wwids.c | 7 +++++++
- 1 file changed, 7 insertions(+)
-
-diff --git a/libmultipath/wwids.c b/libmultipath/wwids.c
-index fcbf5281b491..828a3de5b5cb 100644
---- a/libmultipath/wwids.c
-+++ b/libmultipath/wwids.c
-@@ -287,6 +287,13 @@ should_multipath(struct path *pp1, vector pathvec, vector mpvec)
- 
- 	condlog(4, "checking if %s should be multipathed", pp1->dev);
- 	if (!ignore_new_devs) {
-+		struct multipath *mp = find_mp_by_wwid(mpvec, pp1->wwid);
-+
-+		if (mp != NULL && first_path(mp) != NULL) {
-+			condlog(3, "wwid %s is already multipathed, keeping it",
-+				pp1->wwid);
-+			return 1;
-+		}
- 		vector_foreach_slot(pathvec, pp2, i) {
- 			if (pp1->dev == pp2->dev)
- 				continue;
--- 
-2.15.1
+T24gRnJpLCAyMDE4LTAxLTE5IGF0IDA4OjI2ICswODAwLCBNaW5nIExlaSB3cm90ZToNCj4gTm8s
+IHRoaXMgY2FzZSB3b24ndCByZXR1cm4gQkxLX1NUU19SRVNPVVJDRS4NCg0KSXQncyBwb3NzaWJs
+ZSB0aGF0IG15IGF0dGVtcHQgdG8gcmV2ZXJzZSBlbmdpbmVlciB0aGUgbGF0ZXN0IGJsay1tcSBj
+aGFuZ2VzDQp3YXMgd3JvbmcuIEJ1dCB0aGUgcXVldWUgc3RhbGwgaXMgcmVhbCBhbmQgbmVlZHMg
+dG8gYmUgZml4ZWQuDQoNCkJhcnQu
