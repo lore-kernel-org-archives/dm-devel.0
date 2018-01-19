@@ -1,78 +1,61 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: Bart Van Assche <Bart.VanAssche@wdc.com>
 Subject: Re: [RFC PATCH] blk-mq: fixup RESTART when queue becomes idle
-Date: Fri, 19 Jan 2018 13:33:33 -0500
-Message-ID: <20180119183333.GA29937@redhat.com>
-References: <20180119072623.GB25369@ming.t460p>
- <047f68ec-f51b-190f-2f89-f413325c2540@kernel.dk>
- <20180119154047.GB14827@ming.t460p>
- <540e1239-c415-766b-d4ff-bb0b7f3517a7@kernel.dk>
- <20180119160518.GC14827@ming.t460p>
- <4a5c049f-0fab-bbaf-bfe2-eb5bca73f2c8@kernel.dk>
- <20180119162618.GD14827@ming.t460p>
- <1f072086-533e-4b75-d0e3-9e621b2120d8@kernel.dk>
- <20180119163736.GE14827@ming.t460p>
- <e17362b4-dfee-be8d-ea8d-b07f6d9768e8@kernel.dk>
+Date: Fri, 19 Jan 2018 19:47:42 +0000
+Message-ID: <1516391260.2968.27.camel@wdc.com>
+References: <20180118024124.8079-1-ming.lei@redhat.com>
+         <b2e5b7e6-ce4b-6053-adae-63cc44d773af@wdc.com>
+         <20180118170353.GB19734@redhat.com> <1516296056.2676.23.camel@wdc.com>
+         <20180118183039.GA20121@redhat.com> <1516301278.2676.35.camel@wdc.com>
+         <deeb2b2e-6d0e-a144-843d-d08626de8aea@kernel.dk>
+         <20180119023212.GA25413@ming.t460p> <1516338585.4077.1.camel@wdc.com>
+         <20180119073423.GC25369@ming.t460p>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <e17362b4-dfee-be8d-ea8d-b07f6d9768e8@kernel.dk>
+In-Reply-To: <20180119073423.GC25369@ming.t460p>
+Content-Language: en-US
+Content-ID: <45B7B73428ED1F44BF70190FC576D038@namprd04.prod.outlook.com>
 Sender: linux-block-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>
-Cc: Ming Lei <ming.lei@redhat.com>, Bart Van Assche <Bart.VanAssche@wdc.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "hch@infradead.org" <hch@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "osandov@fb.com" <osandov@fb.com>
+To: "ming.lei@redhat.com" <ming.lei@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "hch@infradead.org" <hch@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "osandov@fb.com" <osandov@fb.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "snitzer@redhat.com" <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Jan 19 2018 at 12:38pm -0500,
-Jens Axboe <axboe@kernel.dk> wrote:
-
-> On 1/19/18 9:37 AM, Ming Lei wrote:
-> > On Fri, Jan 19, 2018 at 09:27:46AM -0700, Jens Axboe wrote:
-> >>
-> >> There are no pending requests for this case, nothing to restart the
-> >> queue. When you fail that blk_get_request(), you are idle, nothing
-> >> is pending.
-> > 
-> > I think we needn't worry about that, once a device is attached to
-> > dm-rq, it can't be mounted any more, and usually user don't use the device
-> > directly and by dm-mpath at the same time.
-> 
-> Here's an example of that, using my current block tree (merged into
-> master).  The setup is dm-mpath on top of null_blk, the latter having
-> just a single request. Both are mq devices.
-> 
-> Fio direct 4k random reads on dm_mq: ~250K iops
-> 
-> Start dd on underlying device (or partition on same device), just doing
-> sequential reads.
-> 
-> Fio direct 4k random reads on dm_mq with dd running: 9 iops
-> 
-> No schedulers involved.
-> 
-> https://i.imgur.com/WTDnnwE.gif
-
-FYI, your tree doesn't have these dm-4.16 changes (which are needed to
-make Ming's blk-mq chnages that are in your tree, commit 396eaf21e et
-al, have Ming's desired effect on DM):
-
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.16&id=050af08ffb1b62af69196d61c22a0755f9a3cdbd
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.16&id=459b54019cfeb7330ed4863ad40f78489e0ff23d
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.16&id=ec3eaf9a673106f66606896aed6ddd20180b02ec
-
-Fact that you're seeing such shit results without dm-4.16 commit
-ec3eaf9a67 (that reverts older commit 6077c2d706) means: yeap, this
-is really awful, let's fix it!  But it is a different flavor of awful
-because the dm-rq.c:map_request() will handle the DM_MAPIO_DELAY_REQUEUE
-result from the null_blk's blk_get_request() failure using
-dm_mq_delay_requeue_request() against the dm-mq mpath device:
-
-        blk_mq_requeue_request(rq, false);
-        __dm_mq_kick_requeue_list(rq->q, msecs);
-
-So begs the question: why are we stalling _exactly_?  (you may have it
-all figured out, as your gif implies.. but I'm not there yet).
-
-Might be interesting to see how your same test behaves without all of
-the churn we've staged for 4.16, e.g. against v4.15-rc8
-
-Mike
+T24gRnJpLCAyMDE4LTAxLTE5IGF0IDE1OjM0ICswODAwLCBNaW5nIExlaSB3cm90ZToNCj4gQ291
+bGQgeW91IGV4cGxhaW4gYSBiaXQgd2hlbiBTQ1NJIHRhcmdldCByZXBsaWVzIHdpdGggQlVTWSB2
+ZXJ5IG9mdGVuPw0KPiANCj4gSW5zaWRlIGluaXRpYXRvciwgd2UgaGF2ZSBsaW1pdGVkIHRoZSBt
+YXggcGVyLUxVTiByZXF1ZXN0cyBhbmQgcGVyLWhvc3QNCj4gcmVxdWVzdHMgYWxyZWFkeSBiZWZv
+cmUgY2FsbGluZyAucXVldWVfcnEoKS4NCg0KVGhhdCdzIGNvcnJlY3QuIEhvd2V2ZXIsIHdoZW4g
+YSBTQ1NJIGluaXRpYXRvciBhbmQgdGFyZ2V0IHN5c3RlbSBhcmUNCmNvbW11bmljYXRpbmcgd2l0
+aCBlYWNoIG90aGVyIHRoZXJlIGlzIG5vIGd1YXJhbnRlZSB0aGF0IGluaXRpYXRvciBhbmQgdGFy
+Z2V0DQpxdWV1ZSBkZXB0aCBoYXZlIGJlZW4gdHVuZWQgcHJvcGVybHkuIElmIHRoZSBpbml0aWF0
+b3IgcXVldWUgZGVwdGggYW5kIHRoZQ0KbnVtYmVyIG9mIHJlcXVlc3RzIHRoYXQgY2FuIGJlIGlu
+IGZsaWdodCBhY2NvcmRpbmcgdG8gdGhlIG5ldHdvcmsgcHJvdG9jb2wNCmFyZSBib3RoIGxhcmdl
+ciB0aGFuIHRoZSB0YXJnZXQgcXVldWUgZGVwdGggYW5kIGlmIHRoZSB0YXJnZXQgc3lzdGVtIHVz
+ZXMNCnJlbGF0aXZlbHkgc2xvdyBzdG9yYWdlIChlLmcuIGhhcmRkaXNrcykgdGhlbiBpdCBjYW4g
+aGFwcGVuIHRoYXQgdGhlIHRhcmdldA0KcmVwbGllcyB3aXRoIEJVU1kgb2Z0ZW4uDQoNClRoZSBM
+aW51eCBpU0NTSSBpbml0aWF0b3IgbGltaXRzIE1heE91dHN0YW5kaW5nUjJUICh0aGUgbnVtYmVy
+IG9mIHJlcXVlc3RzDQphbiBpbml0aWF0b3IgbWF5IHNlbnQgd2l0aG91dCBoYXZpbmcgcmVjZWl2
+ZWQgYW4gYW5zd2VyIGZyb20gdGhlIHRhcmdldCkgdG8NCm9uZSBzbyBJIGRvbid0IHRoaW5rIHRo
+aXMgY2FuIGhhcHBlbiB3aGVuIHVzaW5nIGlTQ1NJL1RDUC4NCg0KV2l0aCB0aGUgU1JQIGluaXRp
+YXRvciBob3dldmVyIHRoZSBtYXhpbXVtIHJlcXVlc3RzIHRoYXQgY2FuIGJlIGluIGZsaWdodA0K
+YmV0d2VlbiBpbml0aWF0b3IgYW5kIHRhcmdldCBkZXBlbmRzIG9uIHRoZSBudW1iZXIgb2YgY3Jl
+ZGl0cyB0aGF0IHdlcmUNCm5lZ290aWF0ZWQgZHVyaW5nIGxvZ2luIGJldHdlZW4gaW5pdGlhdG9y
+IGFuZCB0YXJnZXQuIFNvbWUgdGltZSBhZ28gSSBtb2RpZmllZA0KdGhlIFNSUCBpbml0aWF0b3Ig
+c3VjaCB0aGF0IGl0IGxpbWl0cyB0aGUgaW5pdGlhdG9yIHF1ZXVlIGRlcHRoIHRvIHRoZSBudW1i
+ZXINCm9mIFNSUCBjcmVkaXRzIG1pbnVzIG9uZSAoZm9yIHRhc2sgbWFuYWdlbWVudCkuIFRoYXQg
+cmVzdWx0ZWQgaW4gYSBwZXJmb3JtYW5jZQ0KaW1wcm92ZW1lbnQgZHVlIHRvIGZld2VyIEJVU1kg
+Y29uZGl0aW9ucyBhdCB0aGUgaW5pdGlhdG9yIHNpZGUgKHNlZSBhbHNvIGNvbW1pdA0KN2FkZTQw
+MGFiYTlhICgiSUIvc3JwOiBSZWR1Y2UgbnVtYmVyIG9mIEJVU1kgY29uZGl0aW9ucyIpKS4gQW5v
+dGhlciBwYXRjaCBmb3INCnRoZSBTQ1NUIFNSUCB0YXJnZXQgZHJpdmVyIGxpbWl0ZWQgdGhlIG51
+bWJlciBvZiBTUlAgY3JlZGl0cyB0byB0aGUgcXVldWUgZGVwdGgNCm9mIHRoZSBibG9jayBkZXZp
+Y2UgYXQgdGhlIHRhcmdldCBzaWRlLiBJJ20gcmVmZXJyaW5nIHRvIHRoZSBmb2xsb3dpbmcgY29k
+ZToNCmNoLT5ycV9zaXplID0gbWluKE1BWF9TUlBUX1JRX1NJWkUsIHNjc3RfZ2V0X21heF9sdW5f
+Y29tbWFuZHMoTlVMTCwgMCkpIChJIGhhdmUNCm5vdCB5ZXQgaGFkIHRoZSB0aW1lIHRvIHBvcnQg
+dGhpcyBjaGFuZ2UgdG8gTElPKS4NCg0KV2l0aG91dCBzdWNoIHR1bmluZyBhY3Jvc3MgaW5pdGlh
+dG9yIGFuZCB0YXJnZXQgaXQgY2FuIGhhcHBlbiBvZnRlbiB0aGF0IHRoZQ0KdGFyZ2V0IHN5c3Rl
+bSBzZW5kcyB0aGUgcmVwbHkgIkJVU1kiIGJhY2sgdG8gdGhlIGluaXRpYXRvci4gSSB0aGluayB0
+aGF0J3Mgd2h5DQp0aGVyZSBpcyBjb2RlIGluIHRoZSBTQ1NJIGNvcmUgdG8gYXV0b21hdGljYWxs
+eSBhZGp1c3QgdGhlIGluaXRpYXRvciBxdWV1ZQ0KZGVwdGggaWYgdGhlICJCVVNZIiBjb25kaXRp
+b24gaXMgZW5jb3VudGVyZWQgZnJlcXVlbnRseS4gU2VlIGFsc28NCnNjc2lfdHJhY2tfcXVldWVf
+ZnVsbCgpLg0KDQpCYXJ0Lg==
