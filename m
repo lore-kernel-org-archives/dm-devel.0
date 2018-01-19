@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [RFC PATCH 08/16] multipath.conf.5: document
-	"ignore_wwids"
-Date: Fri, 19 Jan 2018 01:29:08 +0100
-Message-ID: <20180119002916.10323-9-mwilck@suse.com>
+Subject: [RFC PATCH 06/16] libmultipath: let ignore_wwids be set
+	in config file
+Date: Fri, 19 Jan 2018 01:29:06 +0100
+Message-ID: <20180119002916.10323-7-mwilck@suse.com>
 References: <20180119002916.10323-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,57 +22,59 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com, Be
 Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
+This allows to generalize this option, use it for multipathd as well,
+and make sure to use the same logic in both tools.
 ---
- multipath/multipath.conf.5 | 31 +++++++++++++++++++++++++++++++
- 1 file changed, 31 insertions(+)
+ libmultipath/config.c   | 1 +
+ libmultipath/defaults.h | 1 +
+ libmultipath/dict.c     | 4 ++++
+ 3 files changed, 6 insertions(+)
 
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index ab151e720d75..33ad775139c4 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -954,12 +954,43 @@ device again, as soon as it sees a path with that WWID. This should allow most
- users to have multipath automatically choose the correct paths to make into
- multipath devices, without having to edit the blacklist.
- .RS
-+.PP
-+If \fBignore_wwids\fR is set to
-+.I no
-+, only method
-+.I 2
-+above (manual creation by the user) will be used for creating new maps.
-+.RE
-+.RS
- .TP
- The default is: \fBno\fR
- .RE
- .
- .
- .TP
-+.B ignore_wwids
-+If set to
-+.I no
-+, multipath and multipathd only consider paths matching a WWID listed in
-+the \fBwwids_file\fR as valid multipath devices. Automatic multipath map
-+creation is disabled.
-+.
-+If set to
-+.I yes
-+, and \fBfind_multipaths\fR is
-+.I no
-+, every device which is not blacklisted
-+will be treated as a potential multipath member. See above for
-+the logic if  \fBfind_multipaths\fR is set to
-+.I yes.
-+.
-+.RS
-+.TP
-+The default is: \fBoff\fR
-+.RE
-+.
-+.
-+.TP
- .B uxsock_timeout
- CLI receive timeout in milliseconds. For larger systems CLI commands
- might timeout before the multipathd lock is released and the CLI command
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index 3d6a24c94fab..436179a87494 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -615,6 +615,7 @@ load_config (char * file)
+ 	conf->partition_delim = DEFAULT_PARTITION_DELIM;
+ 	conf->processed_main_config = 0;
+ 	conf->find_multipaths = DEFAULT_FIND_MULTIPATHS;
++	conf->ignore_wwids = DEFAULT_IGNORE_WWIDS;
+ 	conf->uxsock_timeout = DEFAULT_REPLY_TIMEOUT;
+ 	conf->retrigger_tries = DEFAULT_RETRIGGER_TRIES;
+ 	conf->retrigger_delay = DEFAULT_RETRIGGER_DELAY;
+diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
+index c9e3411aa579..a6a526a10ac3 100644
+--- a/libmultipath/defaults.h
++++ b/libmultipath/defaults.h
+@@ -18,6 +18,7 @@
+ #define DEFAULT_VERBOSITY	2
+ #define DEFAULT_REASSIGN_MAPS	0
+ #define DEFAULT_FIND_MULTIPATHS	0
++#define DEFAULT_IGNORE_WWIDS	1
+ #define DEFAULT_FAST_IO_FAIL	5
+ #define DEFAULT_DEV_LOSS_TMO	600
+ #define DEFAULT_RETAIN_HWHANDLER RETAIN_HWHANDLER_ON
+diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+index e52f1f798f7a..feab547ad9fc 100644
+--- a/libmultipath/dict.c
++++ b/libmultipath/dict.c
+@@ -241,6 +241,9 @@ declare_def_snprint(partition_delim, print_str)
+ declare_def_handler(find_multipaths, set_yes_no)
+ declare_def_snprint(find_multipaths, print_yes_no)
+ 
++declare_def_handler(ignore_wwids, set_yes_no)
++declare_def_snprint(ignore_wwids, print_yes_no)
++
+ declare_def_handler(selector, set_str)
+ declare_def_snprint_defstr(selector, print_str, DEFAULT_SELECTOR)
+ declare_hw_handler(selector, set_str)
+@@ -1469,6 +1472,7 @@ init_keywords(vector keywords)
+ 	install_keyword("marginal_path_double_failed_time", &def_marginal_path_double_failed_time_handler, &snprint_def_marginal_path_double_failed_time);
+ 
+ 	install_keyword("find_multipaths", &def_find_multipaths_handler, &snprint_def_find_multipaths);
++	install_keyword("ignore_wwids", &def_ignore_wwids_handler, &snprint_def_ignore_wwids);
+ 	install_keyword("uxsock_timeout", &def_uxsock_timeout_handler, &snprint_def_uxsock_timeout);
+ 	install_keyword("retrigger_tries", &def_retrigger_tries_handler, &snprint_def_retrigger_tries);
+ 	install_keyword("retrigger_delay", &def_retrigger_delay_handler, &snprint_def_retrigger_delay);
 -- 
 2.15.1
