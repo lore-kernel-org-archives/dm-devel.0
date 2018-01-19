@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [RFC PATCH 07/16] multipathd: replace -n with
-	!ignore_wwids
-Date: Fri, 19 Jan 2018 01:29:07 +0100
-Message-ID: <20180119002916.10323-8-mwilck@suse.com>
+Subject: [RFC PATCH 05/16] multipath -u -i: change logic for
+	find_multipaths
+Date: Fri, 19 Jan 2018 01:29:05 +0100
+Message-ID: <20180119002916.10323-6-mwilck@suse.com>
 References: <20180119002916.10323-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,81 +22,48 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com, Be
 Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Ignore the -n option (ignore_new_devs), at use !ignore_wwids instead.
-'-n' mean that multipathd should only create maps from WWIDs that
-are listed in the WWIDs file. This is exactly the meaning of
-"ignore_wwids = off". The difference is that the setting is now
-made in the config file and honoured by multipath, too (unless
-it's called with '-i').
----
- libmultipath/config.h | 1 -
- libmultipath/wwids.c  | 2 +-
- multipathd/main.c     | 7 +------
- 3 files changed, 2 insertions(+), 8 deletions(-)
+Previously, if find_multipaths was set, files listed in the wwids file
+weren't set to be multipathed by "multipath -u -i" unless they also
+met the "find_multpaths" criteria (at least two paths, or existing map with
+this WWID). Now we classify all paths in the WWIDs file as multipath members.
 
-diff --git a/libmultipath/config.h b/libmultipath/config.h
-index a20ac2aac296..7366974644bf 100644
---- a/libmultipath/config.h
-+++ b/libmultipath/config.h
-@@ -168,7 +168,6 @@ struct config {
- 	int strict_timing;
- 	int retrigger_tries;
- 	int retrigger_delay;
--	int ignore_new_devs;
- 	int delayed_reconfig;
- 	int uev_wait_timeout;
- 	int skip_kpartx;
-diff --git a/libmultipath/wwids.c b/libmultipath/wwids.c
-index 828a3de5b5cb..655ccbe2c94a 100644
---- a/libmultipath/wwids.c
-+++ b/libmultipath/wwids.c
-@@ -278,7 +278,7 @@ should_multipath(struct path *pp1, vector pathvec, vector mpvec)
- 	struct config *conf;
+The rationale for this patch is to match the logic that multipathd applies
+when "-n" is not given.
+---
+ multipath/main.c | 19 +++++++++++--------
+ 1 file changed, 11 insertions(+), 8 deletions(-)
+
+diff --git a/multipath/main.c b/multipath/main.c
+index 21cc45145dbb..b7e5cf46fe0f 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -423,16 +423,19 @@ configure (struct config *conf, enum mpath_cmds cmd,
+ 		 * set, you need to actually check if there are two available
+ 		 * paths to determine if this path should be multipathed. To
+ 		 * do this, we put off the check until after discovering all
+-		 * the paths */
+-		if (cmd == CMD_VALID_PATH &&
+-		    (!conf->find_multipaths || !conf->ignore_wwids)) {
+-			if (conf->ignore_wwids ||
++		 * the paths.
++		 * Paths listed in the wwids file are always considered valid.
++		 */
++		if (cmd == CMD_VALID_PATH) {
++			if ((!conf->find_multipaths && conf->ignore_wwids) ||
+ 			    check_wwids_file(refwwid, 0) == 0)
+ 				r = 0;
+-
+-			printf("%s %s a valid multipath device path\n",
+-			       devpath, r == 0 ? "is" : "is not");
+-			goto out;
++			if (r == 0 ||
++			    !conf->find_multipaths || !conf->ignore_wwids) {
++				printf("%s %s a valid multipath device path\n",
++				       devpath, r == 0 ? "is" : "is not");
++				goto out;
++			}
+ 		}
+ 	}
  
- 	conf = get_multipath_config();
--	ignore_new_devs = conf->ignore_new_devs;
-+	ignore_new_devs = !conf->ignore_wwids;
- 	if (!conf->find_multipaths && !ignore_new_devs) {
- 		put_multipath_config(conf);
- 		return 1;
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 98ce16ee020b..6f612f6d3d2f 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -107,7 +107,6 @@ int logsink;
- int uxsock_timeout;
- int verbosity;
- int bindings_read_only;
--int ignore_new_devs;
- enum daemon_status running_state = DAEMON_INIT;
- pid_t daemon_pid;
- pthread_mutex_t config_lock = PTHREAD_MUTEX_INITIALIZER;
-@@ -2131,8 +2130,6 @@ reconfigure (struct vectors * vecs)
- 		conf->verbosity = verbosity;
- 	if (bindings_read_only)
- 		conf->bindings_read_only = bindings_read_only;
--	if (ignore_new_devs)
--		conf->ignore_new_devs = ignore_new_devs;
- 	uxsock_timeout = conf->uxsock_timeout;
- 
- 	old = rcu_dereference(multipath_conf);
-@@ -2357,8 +2354,6 @@ child (void * param)
- 		conf->verbosity = verbosity;
- 	if (bindings_read_only)
- 		conf->bindings_read_only = bindings_read_only;
--	if (ignore_new_devs)
--		conf->ignore_new_devs = ignore_new_devs;
- 	uxsock_timeout = conf->uxsock_timeout;
- 	rcu_assign_pointer(multipath_conf, conf);
- 	if (init_checkers(conf->multipath_dir)) {
-@@ -2691,7 +2686,7 @@ main (int argc, char *argv[])
- 			bindings_read_only = 1;
- 			break;
- 		case 'n':
--			ignore_new_devs = 1;
-+			condlog(0, "WARNING: ignoring deprecated option -n, use 'ignore_wwids = no' instead");
- 			break;
- 		default:
- 			fprintf(stderr, "Invalid argument '-%c'\n",
 -- 
 2.15.1
