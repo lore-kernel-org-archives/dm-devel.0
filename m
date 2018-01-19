@@ -1,71 +1,84 @@
-From: Ming Lei <ming.lei@redhat.com>
-Subject: Re: [RFC PATCH] blk-mq: fixup RESTART when queue becomes idle
-Date: Sat, 20 Jan 2018 00:05:19 +0800
-Message-ID: <20180119160518.GC14827@ming.t460p>
-References: <1516296056.2676.23.camel@wdc.com>
- <20180118183039.GA20121@redhat.com>
- <1516301278.2676.35.camel@wdc.com>
- <deeb2b2e-6d0e-a144-843d-d08626de8aea@kernel.dk>
- <20180119023212.GA25413@ming.t460p>
- <eba1191e-4d59-a763-03b2-acd2d2812ea3@kernel.dk>
- <20180119072623.GB25369@ming.t460p>
- <047f68ec-f51b-190f-2f89-f413325c2540@kernel.dk>
- <20180119154047.GB14827@ming.t460p>
- <540e1239-c415-766b-d4ff-bb0b7f3517a7@kernel.dk>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [RFC PATCH 04/16] libmultipath: should_multipath:
+ keep existing maps
+Date: Fri, 19 Jan 2018 10:06:51 -0600
+Message-ID: <20180119160651.GC5638@octiron.msp.redhat.com>
+References: <20180119002916.10323-1-mwilck@suse.com>
+	<20180119002916.10323-5-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <540e1239-c415-766b-d4ff-bb0b7f3517a7@kernel.dk>
-Sender: linux-block-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>
-Cc: Bart Van Assche <Bart.VanAssche@wdc.com>, "snitzer@redhat.com" <snitzer@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "hch@infradead.org" <hch@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "osandov@fb.com" <osandov@fb.com>
+In-Reply-To: <20180119002916.10323-5-mwilck@suse.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-On Fri, Jan 19, 2018 at 08:48:55AM -0700, Jens Axboe wrote:
-> On 1/19/18 8:40 AM, Ming Lei wrote:
-> >>>> Where does the dm STS_RESOURCE error usually come from - what's exact
-> >>>> resource are we running out of?
-> >>>
-> >>> It is from blk_get_request(underlying queue), see
-> >>> multipath_clone_and_map().
-> >>
-> >> That's what I thought. So for a low queue depth underlying queue, it's
-> >> quite possible that this situation can happen. Two potential solutions
-> >> I see:
-> >>
-> >> 1) As described earlier in this thread, having a mechanism for being
-> >>    notified when the scarce resource becomes available. It would not
-> >>    be hard to tap into the existing sbitmap wait queue for that.
-> >>
-> >> 2) Have dm set BLK_MQ_F_BLOCKING and just sleep on the resource
-> >>    allocation. I haven't read the dm code to know if this is a
-> >>    possibility or not.
-> >>
-> >> I'd probably prefer #1. It's a classic case of trying to get the
-> >> request, and if it fails, add ourselves to the sbitmap tag wait
-> >> queue head, retry, and bail if that also fails. Connecting the
-> >> scarce resource and the consumer is the only way to really fix
-> >> this, without bogus arbitrary delays.
-> > 
-> > Right, as I have replied to Bart, using mod_delayed_work_on() with
-> > returning BLK_STS_NO_DEV_RESOURCE(or sort of name) for the scarce
-> > resource should fix this issue.
-> 
-> It'll fix the forever stall, but it won't really fix it, as we'll slow
-> down the dm device by some random amount.
-> 
-> A simple test case would be to have a null_blk device with a queue depth
-> of one, and dm on top of that. Start a fio job that runs two jobs: one
-> that does IO to the underlying device, and one that does IO to the dm
-> device. If the job on the dm device runs substantially slower than the
-> one to the underlying device, then the problem isn't really fixed.
+On Fri, Jan 19, 2018 at 01:29:04AM +0100, Martin Wilck wrote:
+> If with find_multipaths and !ignore_new_devs, if a path is already
+> multipathed, keep it. The same logic is applied in multipath -u
+> with ignore_wwids.
 
-I remembered that I tried this test on scsi-debug & dm-mpath over scsi-debug,
-seems not observed this issue, could you explain a bit why IO over dm-mpath
-may be slower? Because both two IO contexts call same get_request(), and
-in theory dm-mpath should be a bit quicker since it uses direct issue for
-underlying queue, without io scheduler involved.
+One question, why the requirement that (first_path(mp) != NULL)?
+It seems possible that we have a multipath device that is in use and
+loses all of it's path devices.  When the first path is rediscovered,
+we want to add it back immediately.  Obviously, the wwid check should
+take care of this. But if we think we need this check as a backup, then
+I don't see why we wouldn't want to accept the first path?
 
--- 
-Ming
+Also, I have one small worry, but I'm pretty convinced that I'm just
+being paranoid. There is a case where this will be more lenient in
+accepting devices than our existing code, and possibly too lenient.
+Right now, we only add a wwid to the wwids file after a multipath device
+has been successfully created.  But we add the multipath device to the
+mpvec before we try to create it.  I can't think of a case where we
+would add a device the the mpvec where we shouldn't be accepting paths
+to that device as multipathable, but the ordering difference seems a
+little worrying.
+
+Both of these could be avoided, albeit a little slower, by actually
+getting a listing multipath devices from dm, and checking against their
+wwids. This is what the multipath command is doing, so we would be using
+the exact same logic in both places.  I really wish you could get a list
+of dm devices by wwid as easily as you can by name.
+
+Another option is, as I mentioned before, to trust that any multipath
+device will have it's wwid in the wwids file. Have you seen a case where
+this doesn't happen?
+
+-Ben
+
+> ---
+>  libmultipath/wwids.c | 7 +++++++
+>  1 file changed, 7 insertions(+)
+> 
+> diff --git a/libmultipath/wwids.c b/libmultipath/wwids.c
+> index fcbf5281b491..828a3de5b5cb 100644
+> --- a/libmultipath/wwids.c
+> +++ b/libmultipath/wwids.c
+> @@ -287,6 +287,13 @@ should_multipath(struct path *pp1, vector pathvec, vector mpvec)
+>  
+>  	condlog(4, "checking if %s should be multipathed", pp1->dev);
+>  	if (!ignore_new_devs) {
+> +		struct multipath *mp = find_mp_by_wwid(mpvec, pp1->wwid);
+> +
+> +		if (mp != NULL && first_path(mp) != NULL) {
+> +			condlog(3, "wwid %s is already multipathed, keeping it",
+> +				pp1->wwid);
+> +			return 1;
+> +		}
+>  		vector_foreach_slot(pathvec, pp2, i) {
+>  			if (pp1->dev == pp2->dev)
+>  				continue;
+> -- 
+> 2.15.1
