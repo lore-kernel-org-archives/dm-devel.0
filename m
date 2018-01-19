@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [RFC PATCH 16/16] libmultipath: trigger path uevent only
-	when necessary
-Date: Fri, 19 Jan 2018 01:29:16 +0100
-Message-ID: <20180119002916.10323-17-mwilck@suse.com>
+Subject: [RFC PATCH 09/16] multipath.8: adapt documentation of
+	'-i'
+Date: Fri, 19 Jan 2018 01:29:09 +0100
+Message-ID: <20180119002916.10323-10-mwilck@suse.com>
 References: <20180119002916.10323-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,45 +22,23 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com, Be
 Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Paths that are already classified as DM_MULTIPATH_DEVICE_PATH don't
-need to be retriggered. As an exception, trigger events for paths in
-"maybe" state that are waiting to be updated.
 ---
- libmultipath/configure.c | 20 ++++++++++++++++++++
- 1 file changed, 20 insertions(+)
+ multipath/multipath.8 | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index c08ea5b8decc..f8d1fa452014 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -447,8 +447,28 @@ trigger_paths_udev_change(const struct multipath *mpp)
- 		if (!pgp->paths)
- 			continue;
- 		vector_foreach_slot(pgp->paths, pp, j) {
-+			const char *env;
-+
- 			if (!pp->udev)
- 				continue;
-+			/*
-+			 * Paths that are already classified as multipath
-+			 * members don't need another uevent.
-+			 */
-+			env = udev_device_get_property_value(
-+				pp->udev, "DM_MULTIPATH_DEVICE_PATH");
-+			if (env != NULL && !strcmp(env, "1")) {
-+				/*
-+				 * Nonempty DM_MULTIPATH_SAVED_FS_TYPE means
-+				 * path is in "maybe" state and timer is running
-+				 * Send uevent now (see multipath.rules).
-+				 */
-+				env = udev_device_get_property_value(
-+					pp->udev, "DM_MULTIPATH_SAVED_FS_TYPE");
-+				if (env == NULL)
-+					continue;
-+			}
-+			condlog(4, "triggering change uevent for %s", pp->dev);
- 			sysfs_attr_set_value(pp->udev, "uevent", "change",
- 					     strlen("change"));
- 		}
+diff --git a/multipath/multipath.8 b/multipath/multipath.8
+index 56f870351ee2..ee5aecd06bf1 100644
+--- a/multipath/multipath.8
++++ b/multipath/multipath.8
+@@ -94,7 +94,8 @@ Force devmap reload.
+ .
+ .TP
+ .B \-i
+-Ignore WWIDs file when processing devices.
++Ignore WWIDs file when processing devices. This option overrides the config
++file setting \fBignore_wwids\fR.
+ .
+ .TP
+ .B \-B
 -- 
 2.15.1
