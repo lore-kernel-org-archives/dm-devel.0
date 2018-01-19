@@ -1,11 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 1/3] multipath.rules: handle NVME devices
-Date: Fri, 19 Jan 2018 01:19:42 +0100
-Message-ID: <20180119001944.9565-1-mwilck@suse.com>
+Subject: [PATCH 2/3] libmultipath: ignore natively multipathed
+	NVME devices
+Date: Fri, 19 Jan 2018 01:19:43 +0100
+Message-ID: <20180119001944.9565-2-mwilck@suse.com>
+References: <20180119001944.9565-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20180119001944.9565-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,31 +22,47 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com
 Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Note: ID_WWN is set in 60-persistent-storage.rules in current systemd.
-That won't work well together with us installing multipath.rules as
-56-multipath.rules -  multipath -u won't see ID_WWN.
-
-However, we have strong reasons to run before blkid is invoked.
-ID_WWN determination for NVMe should be moved to an earlier udev rule.
-See systemd pull request #7594 on github.
+Such devices have a parent with SUBSYSTEM="nvme-subsystem", not "nvme".
+Furthermore, avoid a possible segfaults NULL checks.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipath/multipath.rules | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/discovery.c | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
 
-diff --git a/multipath/multipath.rules b/multipath/multipath.rules
-index bc1a8529638f..6f8ee2be0a58 100644
---- a/multipath/multipath.rules
-+++ b/multipath/multipath.rules
-@@ -1,7 +1,7 @@
- # Set DM_MULTIPATH_DEVICE_PATH if the device should be handled by multipath
- SUBSYSTEM!="block", GOTO="end_mpath"
- ACTION!="add|change", GOTO="end_mpath"
--KERNEL!="sd*|dasd*", GOTO="end_mpath"
-+KERNEL!="sd*|dasd*|nvme*", GOTO="end_mpath"
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 9b22bd94e491..88fc8d732258 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1200,6 +1200,7 @@ nvme_sysfs_pathinfo (struct path * pp, vector hwtable)
+ {
+ 	struct udev_device *parent;
+ 	const char *attr_path = NULL;
++	const char *attr;
  
- IMPORT{cmdline}="nompath"
- ENV{nompath}=="?*", GOTO="end_mpath"
+ 	attr_path = udev_device_get_sysname(pp->udev);
+ 	if (!attr_path)
+@@ -1209,14 +1210,17 @@ nvme_sysfs_pathinfo (struct path * pp, vector hwtable)
+ 		   &pp->sg_id.host_no,
+ 		   &pp->sg_id.scsi_id) != 2)
+ 		return 1;
+-	pp->sg_id.channel = 0;
+-	pp->sg_id.lun = atoi(udev_device_get_sysattr_value(pp->udev, "nsid"));
+ 
+-	parent = udev_device_get_parent(pp->udev);
++	parent = udev_device_get_parent_with_subsystem_devtype(pp->udev,
++							       "nvme", NULL);
+ 	if (!parent)
+ 		return 1;
+ 
+-	pp->sg_id.channel = atoi(udev_device_get_sysattr_value(parent, "cntlid"));
++	attr = udev_device_get_sysattr_value(pp->udev, "nsid");
++	pp->sg_id.lun = attr ? atoi(attr) : 0;
++
++	attr = udev_device_get_sysattr_value(parent, "cntlid");
++	pp->sg_id.channel = attr ? atoi(attr) : 0;
+ 
+ 	snprintf(pp->vendor_id, SCSI_VENDOR_SIZE, "NVME");
+ 	snprintf(pp->product_id, SCSI_PRODUCT_SIZE, "%s",
 -- 
 2.15.1
