@@ -1,48 +1,71 @@
-From: Bart Van Assche <Bart.VanAssche@wdc.com>
+From: Ming Lei <ming.lei@redhat.com>
 Subject: Re: [RFC PATCH] blk-mq: fixup RESTART when queue becomes idle
-Date: Fri, 19 Jan 2018 16:06:01 +0000
-Message-ID: <1516377960.2646.4.camel@wdc.com>
-References: <b2e5b7e6-ce4b-6053-adae-63cc44d773af@wdc.com>
-         <20180118170353.GB19734@redhat.com> <1516296056.2676.23.camel@wdc.com>
-         <20180118183039.GA20121@redhat.com> <1516301278.2676.35.camel@wdc.com>
-         <deeb2b2e-6d0e-a144-843d-d08626de8aea@kernel.dk>
-         <20180119023212.GA25413@ming.t460p>
-         <eba1191e-4d59-a763-03b2-acd2d2812ea3@kernel.dk>
-         <20180119072623.GB25369@ming.t460p> <1516375212.3190.4.camel@wdc.com>
-         <20180119153333.GA14827@ming.t460p>
+Date: Sat, 20 Jan 2018 00:05:19 +0800
+Message-ID: <20180119160518.GC14827@ming.t460p>
+References: <1516296056.2676.23.camel@wdc.com>
+ <20180118183039.GA20121@redhat.com>
+ <1516301278.2676.35.camel@wdc.com>
+ <deeb2b2e-6d0e-a144-843d-d08626de8aea@kernel.dk>
+ <20180119023212.GA25413@ming.t460p>
+ <eba1191e-4d59-a763-03b2-acd2d2812ea3@kernel.dk>
+ <20180119072623.GB25369@ming.t460p>
+ <047f68ec-f51b-190f-2f89-f413325c2540@kernel.dk>
+ <20180119154047.GB14827@ming.t460p>
+ <540e1239-c415-766b-d4ff-bb0b7f3517a7@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20180119153333.GA14827@ming.t460p>
-Content-Language: en-US
-Content-ID: <14F7CA88D8DA77499DEB1FF018078665@namprd04.prod.outlook.com>
+Content-Disposition: inline
+In-Reply-To: <540e1239-c415-766b-d4ff-bb0b7f3517a7@kernel.dk>
 Sender: linux-block-owner@vger.kernel.org
-To: "ming.lei@redhat.com" <ming.lei@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "hch@infradead.org" <hch@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "osandov@fb.com" <osandov@fb.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "snitzer@redhat.com" <snitzer@redhat.com>
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Bart Van Assche <Bart.VanAssche@wdc.com>, "snitzer@redhat.com" <snitzer@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "hch@infradead.org" <hch@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "osandov@fb.com" <osandov@fb.com>
 List-Id: dm-devel.ids
 
-T24gRnJpLCAyMDE4LTAxLTE5IGF0IDIzOjMzICswODAwLCBNaW5nIExlaSB3cm90ZToNCj4gT24g
-RnJpLCBKYW4gMTksIDIwMTggYXQgMDM6MjA6MTNQTSArMDAwMCwgQmFydCBWYW4gQXNzY2hlIHdy
-b3RlOg0KPiA+IE9uIEZyaSwgMjAxOC0wMS0xOSBhdCAxNToyNiArMDgwMCwgTWluZyBMZWkgd3Jv
-dGU6DQo+ID4gPiBQbGVhc2Ugc2VlIHF1ZXVlX2RlbGF5ZWRfd29ya19vbigpLCBoY3R4LT5ydW5f
-d29yayBpcyBzaGFyZWQgYnkgYWxsDQo+ID4gPiBzY2hlZHVsaW5nLCBvbmNlIGJsa19tcV9kZWxh
-eV9ydW5faHdfcXVldWUoMTAwbXMpIHJldHVybnMsIG5vIG5ldw0KPiA+ID4gc2NoZWR1bGluZyBj
-YW4gbWFrZSBwcm9ncmVzcyBkdXJpbmcgdGhlIDEwMG1zLg0KPiA+IA0KPiA+IEhvdyBhYm91dCBh
-ZGRyZXNzaW5nIHRoYXQgYXMgZm9sbG93czoNCj4gPiANCj4gPiBkaWZmIC0tZ2l0IGEvYmxvY2sv
-YmxrLW1xLmMgYi9ibG9jay9ibGstbXEuYw0KPiA+IGluZGV4IGY3NTE1ZGQ5NWEzNi4uNTdmODM3
-OWE0NzZkIDEwMDY0NA0KPiA+IC0tLSBhL2Jsb2NrL2Jsay1tcS5jDQo+ID4gKysrIGIvYmxvY2sv
-YmxrLW1xLmMNCj4gPiBAQCAtMTQwMyw5ICsxNDAzLDkgQEAgc3RhdGljIHZvaWQgX19ibGtfbXFf
-ZGVsYXlfcnVuX2h3X3F1ZXVlKHN0cnVjdCBibGtfbXFfaHdfY3R4ICpoY3R4LCBib29sIGFzeW5j
-LA0KPiA+ICAJCXB1dF9jcHUoKTsNCj4gPiAgCX0NCj4gPiAgDQo+ID4gLQlrYmxvY2tkX3NjaGVk
-dWxlX2RlbGF5ZWRfd29ya19vbihibGtfbXFfaGN0eF9uZXh0X2NwdShoY3R4KSwNCj4gPiAtCQkJ
-CQkgJmhjdHgtPnJ1bl93b3JrLA0KPiA+IC0JCQkJCSBtc2Vjc190b19qaWZmaWVzKG1zZWNzKSk7
-DQo+ID4gKwlrYmxvY2tkX21vZF9kZWxheWVkX3dvcmtfb24oYmxrX21xX2hjdHhfbmV4dF9jcHUo
-aGN0eCksDQo+ID4gKwkJCQkgICAgJmhjdHgtPnJ1bl93b3JrLA0KPiA+ICsJCQkJICAgIG1zZWNz
-X3RvX2ppZmZpZXMobXNlY3MpKTsNCj4gPiAgfQ0KPiA+ICANCj4gPiAgdm9pZCBibGtfbXFfZGVs
-YXlfcnVuX2h3X3F1ZXVlKHN0cnVjdCBibGtfbXFfaHdfY3R4ICpoY3R4LCB1bnNpZ25lZCBsb25n
-IG1zZWNzKQ0KPiA+IA0KPiA+IEJhcnQuDQo+IA0KPiBZZXMsIHRoaXMgb25lIHRvZ2V0aGVyIHdp
-dGggSmVuJ3Mgc3VnZ2VzdGlvbiB3aXRoIHJldHVybmluZw0KPiBCTEtfU1RTX05PX0RFVl9SRVNP
-VVJDRSBzaG91bGQgZml4IHRoaXMgaXNzdWUuDQo+IA0KPiBDb3VsZCB5b3UgY29vayBhIGZpeCBm
-b3IgdGhpcyBpc3N1ZT8gT3RoZXJ3aXNlIEkgYW0gaGFwcHkgdG8gZG8NCj4gdGhhdC4NCg0KSGVs
-bG8gTWluZywNCg0KSSB3aWxsIGxvb2sgZnVydGhlciBpbnRvIHRoaXMuDQoNCkJhcnQu
+On Fri, Jan 19, 2018 at 08:48:55AM -0700, Jens Axboe wrote:
+> On 1/19/18 8:40 AM, Ming Lei wrote:
+> >>>> Where does the dm STS_RESOURCE error usually come from - what's exact
+> >>>> resource are we running out of?
+> >>>
+> >>> It is from blk_get_request(underlying queue), see
+> >>> multipath_clone_and_map().
+> >>
+> >> That's what I thought. So for a low queue depth underlying queue, it's
+> >> quite possible that this situation can happen. Two potential solutions
+> >> I see:
+> >>
+> >> 1) As described earlier in this thread, having a mechanism for being
+> >>    notified when the scarce resource becomes available. It would not
+> >>    be hard to tap into the existing sbitmap wait queue for that.
+> >>
+> >> 2) Have dm set BLK_MQ_F_BLOCKING and just sleep on the resource
+> >>    allocation. I haven't read the dm code to know if this is a
+> >>    possibility or not.
+> >>
+> >> I'd probably prefer #1. It's a classic case of trying to get the
+> >> request, and if it fails, add ourselves to the sbitmap tag wait
+> >> queue head, retry, and bail if that also fails. Connecting the
+> >> scarce resource and the consumer is the only way to really fix
+> >> this, without bogus arbitrary delays.
+> > 
+> > Right, as I have replied to Bart, using mod_delayed_work_on() with
+> > returning BLK_STS_NO_DEV_RESOURCE(or sort of name) for the scarce
+> > resource should fix this issue.
+> 
+> It'll fix the forever stall, but it won't really fix it, as we'll slow
+> down the dm device by some random amount.
+> 
+> A simple test case would be to have a null_blk device with a queue depth
+> of one, and dm on top of that. Start a fio job that runs two jobs: one
+> that does IO to the underlying device, and one that does IO to the dm
+> device. If the job on the dm device runs substantially slower than the
+> one to the underlying device, then the problem isn't really fixed.
+
+I remembered that I tried this test on scsi-debug & dm-mpath over scsi-debug,
+seems not observed this issue, could you explain a bit why IO over dm-mpath
+may be slower? Because both two IO contexts call same get_request(), and
+in theory dm-mpath should be a bit quicker since it uses direct issue for
+underlying queue, without io scheduler involved.
+
+-- 
+Ming
