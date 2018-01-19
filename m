@@ -1,116 +1,73 @@
 From: Ming Lei <ming.lei@redhat.com>
 Subject: Re: [RFC PATCH] blk-mq: fixup RESTART when queue becomes idle
-Date: Sat, 20 Jan 2018 07:52:48 +0800
-Message-ID: <20180119235247.GA17195@ming.t460p>
-References: <20180119072623.GB25369@ming.t460p>
+Date: Sat, 20 Jan 2018 07:57:06 +0800
+Message-ID: <20180119235705.GB17195@ming.t460p>
+References: <1516301278.2676.35.camel@wdc.com>
+ <deeb2b2e-6d0e-a144-843d-d08626de8aea@kernel.dk>
+ <20180119023212.GA25413@ming.t460p>
+ <eba1191e-4d59-a763-03b2-acd2d2812ea3@kernel.dk>
+ <20180119072623.GB25369@ming.t460p>
  <047f68ec-f51b-190f-2f89-f413325c2540@kernel.dk>
  <20180119154047.GB14827@ming.t460p>
  <540e1239-c415-766b-d4ff-bb0b7f3517a7@kernel.dk>
- <20180119160518.GC14827@ming.t460p>
- <4a5c049f-0fab-bbaf-bfe2-eb5bca73f2c8@kernel.dk>
- <20180119162618.GD14827@ming.t460p>
- <1f072086-533e-4b75-d0e3-9e621b2120d8@kernel.dk>
- <20180119163736.GE14827@ming.t460p>
- <e17362b4-dfee-be8d-ea8d-b07f6d9768e8@kernel.dk>
+ <20180119161336.GA22600@redhat.com>
+ <65a40164-275c-824b-64fc-b9e4cf781861@kernel.dk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-block-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <e17362b4-dfee-be8d-ea8d-b07f6d9768e8@kernel.dk>
+In-Reply-To: <65a40164-275c-824b-64fc-b9e4cf781861@kernel.dk>
 Sender: linux-block-owner@vger.kernel.org
 To: Jens Axboe <axboe@kernel.dk>
-Cc: Bart Van Assche <Bart.VanAssche@wdc.com>, "snitzer@redhat.com" <snitzer@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "hch@infradead.org" <hch@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "osandov@fb.com" <osandov@fb.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, Bart Van Assche <Bart.VanAssche@wdc.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "hch@infradead.org" <hch@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "osandov@fb.com" <osandov@fb.com>
 List-Id: dm-devel.ids
 
-On Fri, Jan 19, 2018 at 10:38:41AM -0700, Jens Axboe wrote:
-> On 1/19/18 9:37 AM, Ming Lei wrote:
-> > On Fri, Jan 19, 2018 at 09:27:46AM -0700, Jens Axboe wrote:
-> >> On 1/19/18 9:26 AM, Ming Lei wrote:
-> >>> On Fri, Jan 19, 2018 at 09:19:24AM -0700, Jens Axboe wrote:
-> >>>> On 1/19/18 9:05 AM, Ming Lei wrote:
-> >>>>> On Fri, Jan 19, 2018 at 08:48:55AM -0700, Jens Axboe wrote:
-> >>>>>> On 1/19/18 8:40 AM, Ming Lei wrote:
-> >>>>>>>>>> Where does the dm STS_RESOURCE error usually come from - what's exact
-> >>>>>>>>>> resource are we running out of?
-> >>>>>>>>>
-> >>>>>>>>> It is from blk_get_request(underlying queue), see
-> >>>>>>>>> multipath_clone_and_map().
-> >>>>>>>>
-> >>>>>>>> That's what I thought. So for a low queue depth underlying queue, it's
-> >>>>>>>> quite possible that this situation can happen. Two potential solutions
-> >>>>>>>> I see:
-> >>>>>>>>
-> >>>>>>>> 1) As described earlier in this thread, having a mechanism for being
-> >>>>>>>>    notified when the scarce resource becomes available. It would not
-> >>>>>>>>    be hard to tap into the existing sbitmap wait queue for that.
-> >>>>>>>>
-> >>>>>>>> 2) Have dm set BLK_MQ_F_BLOCKING and just sleep on the resource
-> >>>>>>>>    allocation. I haven't read the dm code to know if this is a
-> >>>>>>>>    possibility or not.
-> >>>>>>>>
-> >>>>>>>> I'd probably prefer #1. It's a classic case of trying to get the
-> >>>>>>>> request, and if it fails, add ourselves to the sbitmap tag wait
-> >>>>>>>> queue head, retry, and bail if that also fails. Connecting the
-> >>>>>>>> scarce resource and the consumer is the only way to really fix
-> >>>>>>>> this, without bogus arbitrary delays.
-> >>>>>>>
-> >>>>>>> Right, as I have replied to Bart, using mod_delayed_work_on() with
-> >>>>>>> returning BLK_STS_NO_DEV_RESOURCE(or sort of name) for the scarce
-> >>>>>>> resource should fix this issue.
-> >>>>>>
-> >>>>>> It'll fix the forever stall, but it won't really fix it, as we'll slow
-> >>>>>> down the dm device by some random amount.
-> >>>>>>
-> >>>>>> A simple test case would be to have a null_blk device with a queue depth
-> >>>>>> of one, and dm on top of that. Start a fio job that runs two jobs: one
-> >>>>>> that does IO to the underlying device, and one that does IO to the dm
-> >>>>>> device. If the job on the dm device runs substantially slower than the
-> >>>>>> one to the underlying device, then the problem isn't really fixed.
-> >>>>>
-> >>>>> I remembered that I tried this test on scsi-debug & dm-mpath over scsi-debug,
-> >>>>> seems not observed this issue, could you explain a bit why IO over dm-mpath
-> >>>>> may be slower? Because both two IO contexts call same get_request(), and
-> >>>>> in theory dm-mpath should be a bit quicker since it uses direct issue for
-> >>>>> underlying queue, without io scheduler involved.
-> >>>>
-> >>>> Because if you lose the race for getting the request, you'll have some
-> >>>> arbitrary delay before trying again, potentially. Compared to the direct
-> >>>
-> >>> But the restart still works, one request is completed, then the queue
-> >>> is return immediately because we use mod_delayed_work_on(0), so looks
-> >>> no such issue.
-> >>
-> >> There are no pending requests for this case, nothing to restart the
-> >> queue. When you fail that blk_get_request(), you are idle, nothing
-> >> is pending.
+On Fri, Jan 19, 2018 at 09:23:35AM -0700, Jens Axboe wrote:
+> On 1/19/18 9:13 AM, Mike Snitzer wrote:
+> > On Fri, Jan 19 2018 at 10:48am -0500,
+> > Jens Axboe <axboe@kernel.dk> wrote:
 > > 
-> > I think we needn't worry about that, once a device is attached to
-> > dm-rq, it can't be mounted any more, and usually user don't use the device
-> > directly and by dm-mpath at the same time.
+> >> On 1/19/18 8:40 AM, Ming Lei wrote:
+> >>>>>> Where does the dm STS_RESOURCE error usually come from - what's exact
+> >>>>>> resource are we running out of?
+> >>>>>
+> >>>>> It is from blk_get_request(underlying queue), see
+> >>>>> multipath_clone_and_map().
+> >>>>
+> >>>> That's what I thought. So for a low queue depth underlying queue, it's
+> >>>> quite possible that this situation can happen. Two potential solutions
+> >>>> I see:
+> >>>>
+> >>>> 1) As described earlier in this thread, having a mechanism for being
+> >>>>    notified when the scarce resource becomes available. It would not
+> >>>>    be hard to tap into the existing sbitmap wait queue for that.
+> >>>>
+> >>>> 2) Have dm set BLK_MQ_F_BLOCKING and just sleep on the resource
+> >>>>    allocation. I haven't read the dm code to know if this is a
+> >>>>    possibility or not.
+> > 
+> > Right, #2 is _not_ the way forward.  Historically request-based DM used
+> > its own mempool for requests, this was to be able to have some measure
+> > of control and resiliency in the face of low memory conditions that
+> > might be affecting the broader system.
+> > 
+> > Then Christoph switched over to adding per-request-data; which ushered
+> > in the use of blk_get_request using ATOMIC allocations.  I like the
+> > result of that line of development.  But taking the next step of setting
+> > BLK_MQ_F_BLOCKING is highly unfortunate (especially in that this
+> > dm-mpath.c code is common to old .request_fn and blk-mq, at least the
+> > call to blk_get_request is).  Ultimately dm-mpath like to avoid blocking
+> > for a request because for this dm-mpath device we have multiple queues
+> > to allocate from if need be (provided we have an active-active storage
+> > network topology).
 > 
-> Here's an example of that, using my current block tree (merged into
-> master).  The setup is dm-mpath on top of null_blk, the latter having
-> just a single request. Both are mq devices.
-> 
-> Fio direct 4k random reads on dm_mq: ~250K iops
-> 
-> Start dd on underlying device (or partition on same device), just doing
-> sequential reads.
-> 
-> Fio direct 4k random reads on dm_mq with dd running: 9 iops
-> 
-> No schedulers involved.
-> 
-> https://i.imgur.com/WTDnnwE.gif
+> If you can go to multiple devices, obviously it should not block on a
+> single device. That's only true for the case where you can only go to
+> one device, blocking at that point would probably be fine. Or if all
+> your paths are busy, then blocking would also be OK.
 
-If null_blk's timer mode is used with a bit delay introduced, I guess
-the effect from direct access to underlying queue shouldn't be so
-serious. But it still won't be good as direct access.
-
-Another way may be to introduce a variants blk_get_request(), such as
-blk_get_request_with_notify(), then pass the current dm-rq's hctx to
-it, and use the tag's waitqueue to handle that. But the change can be
-a bit big.
+Introducing one extra block point will hurt AIO performance, in which
+there is usually much less jobs/processes to submit IO.
 
 -- 
 Ming
