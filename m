@@ -1,83 +1,60 @@
-From: Bart Van Assche <Bart.VanAssche@wdc.com>
-Subject: Re: [RFC PATCH] blk-mq: fixup RESTART when queue becomes idle
-Date: Thu, 18 Jan 2018 22:55:03 +0000
-Message-ID: <1516316102.2676.97.camel@wdc.com>
-References: <b2e5b7e6-ce4b-6053-adae-63cc44d773af@wdc.com>
-         <20180118170353.GB19734@redhat.com> <1516296056.2676.23.camel@wdc.com>
-         <20180118183039.GA20121@redhat.com> <1516301278.2676.35.camel@wdc.com>
-         <deeb2b2e-6d0e-a144-843d-d08626de8aea@kernel.dk>
-         <20180118204856.GA31679@redhat.com> <1516309128.2676.38.camel@wdc.com>
-         <20180118212327.GB31679@redhat.com> <1516311554.2676.50.camel@wdc.com>
-         <20180118220132.GA20860@redhat.com> <1516313920.24506.4.camel@redhat.com>
-         <1516314239.2676.79.camel@wdc.com> <1516314954.24506.6.camel@redhat.com>
-         <fef86285-f944-4404-f2be-33889f1e21d3@kernel.dk>
+From: Ming Lei <ming.lei@redhat.com>
+Subject: Re: [PATCH] dm rq: Avoid that request processing stalls sporadically
+Date: Fri, 19 Jan 2018 08:11:37 +0800
+Message-ID: <20180119001136.GA4712@ming.t460p>
+References: <20180118163707.11825-1-bart.vanassche@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <fef86285-f944-4404-f2be-33889f1e21d3@kernel.dk>
-Content-Language: en-US
-Content-ID: <5EBDAE80C4F8E049AC4112F30A50ACA7@namprd04.prod.outlook.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "snitzer@redhat.com" <snitzer@redhat.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "loberman@redhat.com" <loberman@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "hch@infradead.org" <hch@infradead.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "osandov@fb.com" <osandov@fb.com>, "ming.lei@redhat.com" <ming.lei@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20180118163707.11825-1-bart.vanassche@wdc.com>
+Sender: linux-block-owner@vger.kernel.org
+To: Bart Van Assche <bart.vanassche@wdc.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-T24gVGh1LCAyMDE4LTAxLTE4IGF0IDE1OjM5IC0wNzAwLCBKZW5zIEF4Ym9lIHdyb3RlOg0KPiBX
-aGVuIHlvdSBkbyBoYXZlIGEgc29saWQgdGVzdCBjYXNlLCBwbGVhc2UgcGxlYXNlIHN1Ym1pdCBh
-IGJsa3Rlc3RzDQo+IHRlc3QgY2FzZSBmb3IgaXQhIFRoaXMgbmVlZHMgdG8gYmUgc29tZXRoaW5n
-IHdlIGNhbiByZWd1bGFybHkgaW4NCj4gdGVzdGluZy4NCg0KSGVsbG8gSmVucywNCg0KVGhhdCBz
-b3VuZHMgbGlrZSBhIGdvb2QgaWRlYSB0byBtZS4gQlRXLCBJIHRoaW5rIHRoZSByZWFzb24gd2h5
-IHNvIGZhciBJDQpjYW4gcmVwcm9kdWNlIHRoZXNlIHF1ZXVlIHN0YWxscyBlYXNpZXIgdGhhbiBv
-dGhlcnMgaXMgYmVjYXVzZSBJIG1vZGlmaWVkIHRoZQ0KU1JQIGluaXRpYXRvciB0byBtYWtlIGl0
-IGVhc3kgdG8gY2F1c2UgdGhlIC5nZXRfYnVkZ2V0KCkgY2FsbCB0byBzdWNjZWVkIGFuZA0KdGhl
-IHNjc2lfcXVldWVfcnEoKSB0byByZXR1cm4gQkxLX1NUU19CVVNZLiBBIHBvc3NpYmxlIG5leHQg
-c3RlcCBpcyB0byBhcHBseQ0KYSBzaW1pbGFyIGNoYW5nZSB0byB0aGUgc2NzaV9kZWJ1ZyBkcml2
-ZXIuIFRoZSBjaGFuZ2UgSSBtYWRlIGlzIGFzIGZvbGxvd3M6DQoNCmRpZmYgLS1naXQgYS9kcml2
-ZXJzL2luZmluaWJhbmQvdWxwL3NycC9pYl9zcnAuYyBiL2RyaXZlcnMvaW5maW5pYmFuZC91bHAv
-c3JwL2liX3NycC5jDQppbmRleCAwYzg4N2ViZmJjNjQuLjdmM2M0YTE5NzQyNSAxMDA2NDQNCi0t
-LSBhL2RyaXZlcnMvaW5maW5pYmFuZC91bHAvc3JwL2liX3NycC5jDQorKysgYi9kcml2ZXJzL2lu
-ZmluaWJhbmQvdWxwL3NycC9pYl9zcnAuYw0KQEAgLTMxMzUsNiArMzEzNSwxNiBAQCBzdGF0aWMg
-aW50IHNycF9yZXNldF9ob3N0KHN0cnVjdCBzY3NpX2NtbmQgKnNjbW5kKQ0KIAlyZXR1cm4gc3Jw
-X3JlY29ubmVjdF9ycG9ydCh0YXJnZXQtPnJwb3J0KSA9PSAwID8gU1VDQ0VTUyA6IEZBSUxFRDsN
-CiB9DQogDQorc3RhdGljIGludCBzcnBfdGFyZ2V0X2FsbG9jKHN0cnVjdCBzY3NpX3RhcmdldCAq
-c3RhcmdldCkNCit7DQorCXN0cnVjdCBTY3NpX0hvc3QgKnNob3N0ID0gZGV2X3RvX3Nob3N0KHN0
-YXJnZXQtPmRldi5wYXJlbnQpOw0KKwlzdHJ1Y3Qgc3JwX3RhcmdldF9wb3J0ICp0YXJnZXQgPSBo
-b3N0X3RvX3RhcmdldChzaG9zdCk7DQorDQorCWlmICh0YXJnZXQtPnRhcmdldF9jYW5fcXVldWUp
-DQorCQlzdGFyZ2V0LT5jYW5fcXVldWUgPSB0YXJnZXQtPnRhcmdldF9jYW5fcXVldWU7DQorCXJl
-dHVybiAwOw0KK30NCisNCiBzdGF0aWMgaW50IHNycF9zbGF2ZV9hbGxvYyhzdHJ1Y3Qgc2NzaV9k
-ZXZpY2UgKnNkZXYpDQogew0KIAlzdHJ1Y3QgU2NzaV9Ib3N0ICpzaG9zdCA9IHNkZXYtPmhvc3Q7
-DQpAQCAtMzM0OCw2ICszMzU4LDcgQEAgc3RhdGljIHN0cnVjdCBzY3NpX2hvc3RfdGVtcGxhdGUg
-c3JwX3RlbXBsYXRlID0gew0KIAkubW9kdWxlCQkJCT0gVEhJU19NT0RVTEUsDQogCS5uYW1lCQkJ
-CT0gIkluZmluaUJhbmQgU1JQIGluaXRpYXRvciIsDQogCS5wcm9jX25hbWUJCQk9IERSVl9OQU1F
-LA0KKwkudGFyZ2V0X2FsbG9jCQkJPSBzcnBfdGFyZ2V0X2FsbG9jLA0KIAkuc2xhdmVfYWxsb2MJ
-CQk9IHNycF9zbGF2ZV9hbGxvYywNCiAJLnNsYXZlX2NvbmZpZ3VyZQkJPSBzcnBfc2xhdmVfY29u
-ZmlndXJlLA0KIAkuaW5mbwkJCQk9IHNycF90YXJnZXRfaW5mbywNCkBAIC0zNTE1LDYgKzM1MjYs
-NyBAQCBlbnVtIHsNCiAJU1JQX09QVF9RVUVVRV9TSVpFCT0gMSA8PCAxNCwNCiAJU1JQX09QVF9J
-UF9TUkMJCT0gMSA8PCAxNSwNCiAJU1JQX09QVF9JUF9ERVNUCQk9IDEgPDwgMTYsDQorCVNSUF9P
-UFRfVEFSR0VUX0NBTl9RVUVVRT0gMSA8PCAxNywNCiB9Ow0KIA0KIHN0YXRpYyB1bnNpZ25lZCBp
-bnQgc3JwX29wdF9tYW5kYXRvcnlbXSA9IHsNCkBAIC0zNTM2LDYgKzM1NDgsNyBAQCBzdGF0aWMg
-Y29uc3QgbWF0Y2hfdGFibGVfdCBzcnBfb3B0X3Rva2VucyA9IHsNCiAJeyBTUlBfT1BUX1NFUlZJ
-Q0VfSUQsCQkic2VydmljZV9pZD0lcyIJCX0sDQogCXsgU1JQX09QVF9NQVhfU0VDVCwJCSJtYXhf
-c2VjdD0lZCIgCQl9LA0KIAl7IFNSUF9PUFRfTUFYX0NNRF9QRVJfTFVOLAkibWF4X2NtZF9wZXJf
-bHVuPSVkIiAJfSwNCisJeyBTUlBfT1BUX1RBUkdFVF9DQU5fUVVFVUUsCSJ0YXJnZXRfY2FuX3F1
-ZXVlPSVkIgl9LA0KIAl7IFNSUF9PUFRfSU9fQ0xBU1MsCQkiaW9fY2xhc3M9JXgiCQl9LA0KIAl7
-IFNSUF9PUFRfSU5JVElBVE9SX0VYVCwJImluaXRpYXRvcl9leHQ9JXMiCX0sDQogCXsgU1JQX09Q
-VF9DTURfU0dfRU5UUklFUywJImNtZF9zZ19lbnRyaWVzPSV1Igl9LA0KQEAgLTM3MjQsNiArMzcz
-NywxNSBAQCBzdGF0aWMgaW50IHNycF9wYXJzZV9vcHRpb25zKHN0cnVjdCBuZXQgKm5ldCwgY29u
-c3QgY2hhciAqYnVmLA0KIAkJCXRhcmdldC0+c2NzaV9ob3N0LT5jbWRfcGVyX2x1biA9IHRva2Vu
-Ow0KIAkJCWJyZWFrOw0KIA0KKwkJY2FzZSBTUlBfT1BUX1RBUkdFVF9DQU5fUVVFVUU6DQorCQkJ
-aWYgKG1hdGNoX2ludChhcmdzLCAmdG9rZW4pIHx8IHRva2VuIDwgMSkgew0KKwkJCQlwcl93YXJu
-KCJiYWQgbWF4IHRhcmdldF9jYW5fcXVldWUgcGFyYW1ldGVyICclcydcbiIsDQorCQkJCQlwKTsN
-CisJCQkJZ290byBvdXQ7DQorCQkJfQ0KKwkJCXRhcmdldC0+dGFyZ2V0X2Nhbl9xdWV1ZSA9IHRv
-a2VuOw0KKwkJCWJyZWFrOw0KKw0KIAkJY2FzZSBTUlBfT1BUX0lPX0NMQVNTOg0KIAkJCWlmICht
-YXRjaF9oZXgoYXJncywgJnRva2VuKSkgew0KIAkJCQlwcl93YXJuKCJiYWQgSU8gY2xhc3MgcGFy
-YW1ldGVyICclcydcbiIsIHApOw0KZGlmZiAtLWdpdCBhL2RyaXZlcnMvaW5maW5pYmFuZC91bHAv
-c3JwL2liX3NycC5oIGIvZHJpdmVycy9pbmZpbmliYW5kL3VscC9zcnAvaWJfc3JwLmgNCmluZGV4
-IGQ2NmM5MDU3ZDVlYS4uNzAzMzRmYTNkZThlIDEwMDY0NA0KLS0tIGEvZHJpdmVycy9pbmZpbmli
-YW5kL3VscC9zcnAvaWJfc3JwLmgNCisrKyBiL2RyaXZlcnMvaW5maW5pYmFuZC91bHAvc3JwL2li
-X3NycC5oDQpAQCAtMjE2LDYgKzIxNiw3IEBAIHN0cnVjdCBzcnBfdGFyZ2V0X3BvcnQgew0KIAlj
-aGFyCQkJdGFyZ2V0X25hbWVbMzJdOw0KIAl1bnNpZ25lZCBpbnQJCXNjc2lfaWQ7DQogCXVuc2ln
-bmVkIGludAkJc2dfdGFibGVzaXplOw0KKwl1bnNpZ25lZCBpbnQJCXRhcmdldF9jYW5fcXVldWU7
-DQogCWludAkJCW1yX3Bvb2xfc2l6ZTsNCiAJaW50CQkJbXJfcGVyX2NtZDsNCiAJaW50CQkJcXVl
-dWVfc2l6ZTsNCg0KQmFydC4=
+On Thu, Jan 18, 2018 at 08:37:07AM -0800, Bart Van Assche wrote:
+> If the .queue_rq() implementation of a block driver returns
+> BLK_STS_RESOURCE then that block driver is responsible for
+> rerunning the queue once the condition that caused it to return
+> BLK_STS_RESOURCE has been cleared. The dm-mpath driver tells the
+> dm core to requeue a request if e.g. not enough memory is
+> available for cloning a request or if the underlying path is
+> busy. Since the dm-mpath driver does not receive any kind of
+> notification if the condition that caused it to return "requeue"
+> is cleared, the only solution to avoid that dm-mpath request
+> processing stalls is to call blk_mq_delay_run_hw_queue(). Hence
+> this patch.
+> 
+> Fixes: ec3eaf9a6731 ("dm mpath: don't call blk_mq_delay_run_hw_queue() in case of BLK_STS_RESOURCE")
+> Signed-off-by: Bart Van Assche <bart.vanassche@wdc.com>
+> Cc: Ming Lei <ming.lei@redhat.com>
+> ---
+>  drivers/md/dm-rq.c | 1 +
+>  1 file changed, 1 insertion(+)
+> 
+> diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+> index f16096af879a..c59c59cfd2a5 100644
+> --- a/drivers/md/dm-rq.c
+> +++ b/drivers/md/dm-rq.c
+> @@ -761,6 +761,7 @@ static blk_status_t dm_mq_queue_rq(struct blk_mq_hw_ctx *hctx,
+>  		/* Undo dm_start_request() before requeuing */
+>  		rq_end_stats(md, rq);
+>  		rq_completed(md, rq_data_dir(rq), false);
+> +		blk_mq_delay_run_hw_queue(hctx, 100/*ms*/);
+>  		return BLK_STS_RESOURCE;
+>  	}
+>  
+
+Nak.
+
+It still takes a bit time to add this request to hctx->dispatch_list
+from here, so suppose the time is longer than 100ms because of interrupt
+, preemption or whatever, this request can't be observed in the scheduled
+run queue(__blk_mq_run_hw_queue).
+
+Not mention it is just a ugly workaround, which degrades performance
+a lot.
+
+-- 
+Ming
