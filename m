@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [RFC PATCH 06/16] libmultipath: let ignore_wwids be set
-	in config file
-Date: Fri, 19 Jan 2018 01:29:06 +0100
-Message-ID: <20180119002916.10323-7-mwilck@suse.com>
+Subject: [RFC PATCH 03/16] libmultipath: add mpvec param to
+	should_multipath()
+Date: Fri, 19 Jan 2018 01:29:03 +0100
+Message-ID: <20180119002916.10323-4-mwilck@suse.com>
 References: <20180119002916.10323-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,59 +22,65 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com, Be
 Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-This allows to generalize this option, use it for multipathd as well,
-and make sure to use the same logic in both tools.
+This will be used in a follow-up patch.
 ---
- libmultipath/config.c   | 1 +
- libmultipath/defaults.h | 1 +
- libmultipath/dict.c     | 4 ++++
- 3 files changed, 6 insertions(+)
+ libmultipath/configure.c | 2 +-
+ libmultipath/wwids.c     | 2 +-
+ libmultipath/wwids.h     | 2 +-
+ multipathd/main.c        | 2 +-
+ 4 files changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index 3d6a24c94fab..436179a87494 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -615,6 +615,7 @@ load_config (char * file)
- 	conf->partition_delim = DEFAULT_PARTITION_DELIM;
- 	conf->processed_main_config = 0;
- 	conf->find_multipaths = DEFAULT_FIND_MULTIPATHS;
-+	conf->ignore_wwids = DEFAULT_IGNORE_WWIDS;
- 	conf->uxsock_timeout = DEFAULT_REPLY_TIMEOUT;
- 	conf->retrigger_tries = DEFAULT_RETRIGGER_TRIES;
- 	conf->retrigger_delay = DEFAULT_RETRIGGER_DELAY;
-diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
-index c9e3411aa579..a6a526a10ac3 100644
---- a/libmultipath/defaults.h
-+++ b/libmultipath/defaults.h
-@@ -18,6 +18,7 @@
- #define DEFAULT_VERBOSITY	2
- #define DEFAULT_REASSIGN_MAPS	0
- #define DEFAULT_FIND_MULTIPATHS	0
-+#define DEFAULT_IGNORE_WWIDS	1
- #define DEFAULT_FAST_IO_FAIL	5
- #define DEFAULT_DEV_LOSS_TMO	600
- #define DEFAULT_RETAIN_HWHANDLER RETAIN_HWHANDLER_ON
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index e52f1f798f7a..feab547ad9fc 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -241,6 +241,9 @@ declare_def_snprint(partition_delim, print_str)
- declare_def_handler(find_multipaths, set_yes_no)
- declare_def_snprint(find_multipaths, print_yes_no)
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 13e14cc25fff..325018a78b95 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -970,7 +970,7 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
+ 			continue;
  
-+declare_def_handler(ignore_wwids, set_yes_no)
-+declare_def_snprint(ignore_wwids, print_yes_no)
-+
- declare_def_handler(selector, set_str)
- declare_def_snprint_defstr(selector, print_str, DEFAULT_SELECTOR)
- declare_hw_handler(selector, set_str)
-@@ -1469,6 +1472,7 @@ init_keywords(vector keywords)
- 	install_keyword("marginal_path_double_failed_time", &def_marginal_path_double_failed_time_handler, &snprint_def_marginal_path_double_failed_time);
+ 		/* If find_multipaths was selected check if the path is valid */
+-		if (!refwwid && !should_multipath(pp1, pathvec)) {
++		if (!refwwid && !should_multipath(pp1, pathvec, curmp)) {
+ 			orphan_path(pp1, "only one path");
+ 			continue;
+ 		}
+diff --git a/libmultipath/wwids.c b/libmultipath/wwids.c
+index bc70a27409d3..fcbf5281b491 100644
+--- a/libmultipath/wwids.c
++++ b/libmultipath/wwids.c
+@@ -271,7 +271,7 @@ out:
+ }
  
- 	install_keyword("find_multipaths", &def_find_multipaths_handler, &snprint_def_find_multipaths);
-+	install_keyword("ignore_wwids", &def_ignore_wwids_handler, &snprint_def_ignore_wwids);
- 	install_keyword("uxsock_timeout", &def_uxsock_timeout_handler, &snprint_def_uxsock_timeout);
- 	install_keyword("retrigger_tries", &def_retrigger_tries_handler, &snprint_def_retrigger_tries);
- 	install_keyword("retrigger_delay", &def_retrigger_delay_handler, &snprint_def_retrigger_delay);
+ int
+-should_multipath(struct path *pp1, vector pathvec)
++should_multipath(struct path *pp1, vector pathvec, vector mpvec)
+ {
+ 	int i, ignore_new_devs;
+ 	struct path *pp2;
+diff --git a/libmultipath/wwids.h b/libmultipath/wwids.h
+index 95270129daa0..d9a78b38ccf8 100644
+--- a/libmultipath/wwids.h
++++ b/libmultipath/wwids.h
+@@ -12,7 +12,7 @@
+ "#\n" \
+ "# Valid WWIDs:\n"
+ 
+-int should_multipath(struct path *pp, vector pathvec);
++int should_multipath(struct path *pp, vector pathvec, vector mpvec);
+ int remember_wwid(char *wwid);
+ int check_wwids_file(char *wwid, int write_wwid);
+ int remove_wwid(char *wwid);
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 255d1d860b2a..98ce16ee020b 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -699,7 +699,7 @@ rescan:
+ 		mpp->action = ACT_RELOAD;
+ 		extract_hwe_from_path(mpp);
+ 	} else {
+-		if (!should_multipath(pp, vecs->pathvec)) {
++		if (!should_multipath(pp, vecs->pathvec, vecs->mpvec)) {
+ 			orphan_path(pp, "only one path");
+ 			return 0;
+ 		}
 -- 
 2.15.1
