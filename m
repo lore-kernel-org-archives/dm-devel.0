@@ -1,42 +1,40 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH] FIX "libmultipath: hwtable: multibus for
-	NetApp NVMe-FC"
-Date: Fri, 19 Jan 2018 16:12:48 +0100
-Message-ID: <1516374768.3534.1.camel@suse.com>
-References: <20180113211938.31552-10-mwilck@suse.com>
-	<20180119115223.4625-1-mwilck@suse.com>
-	<2ae5f020-e508-5cdd-0ada-d944ccba47f7@gmail.com>
+From: Bart Van Assche <Bart.VanAssche@wdc.com>
+Subject: Re: [RFC PATCH] blk-mq: fixup RESTART when queue becomes idle
+Date: Fri, 19 Jan 2018 15:20:13 +0000
+Message-ID: <1516375212.3190.4.camel@wdc.com>
+References: <20180118024124.8079-1-ming.lei@redhat.com>
+         <b2e5b7e6-ce4b-6053-adae-63cc44d773af@wdc.com>
+         <20180118170353.GB19734@redhat.com> <1516296056.2676.23.camel@wdc.com>
+         <20180118183039.GA20121@redhat.com> <1516301278.2676.35.camel@wdc.com>
+         <deeb2b2e-6d0e-a144-843d-d08626de8aea@kernel.dk>
+         <20180119023212.GA25413@ming.t460p>
+         <eba1191e-4d59-a763-03b2-acd2d2812ea3@kernel.dk>
+         <20180119072623.GB25369@ming.t460p>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <2ae5f020-e508-5cdd-0ada-d944ccba47f7@gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: dm-devel@redhat.com
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20180119072623.GB25369@ming.t460p>
+Content-Language: en-US
+Content-ID: <EC07D5ADB2C027459C9C88933F8C59E3@namprd04.prod.outlook.com>
+Sender: linux-block-owner@vger.kernel.org
+To: "ming.lei@redhat.com" <ming.lei@redhat.com>, "axboe@kernel.dk" <axboe@kernel.dk>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "hch@infradead.org" <hch@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "osandov@fb.com" <osandov@fb.com>, "snitzer@redhat.com" <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-T24gRnJpLCAyMDE4LTAxLTE5IGF0IDE1OjQ0ICswMTAwLCBYb3NlIFZhenF1ZXogUGVyZXogd3Jv
-dGU6Cj4gT24gMDEvMTkvMjAxOCAxMjo1MiBQTSwgTWFydGluIFdpbGNrIHdyb3RlOgo+ID4gVGhl
-cmUgd2FzIGFuIGV4dHJhIHBhcmVudGhlc2lzIGluIHRoZSBwYXRjaCBJIHN1Ym1pdHRlZAo+ID4g
-cHJldmlvdXNseS4KPiA+ICAJCS52ZW5kb3IJICAgICAgID0gIk5WTUUiLAo+ID4gLQkJLnByb2R1
-Y3QgICAgICAgPSAiKE5ldEFwcCB8KU9OVEFQIENvbnRyb2xsZXIpIiwKPiA+ICsJCS5wcm9kdWN0
-ICAgICAgID0gIihOZXRBcHAgfClPTlRBUCBDb250cm9sbGVyIiwKPiAKPiBPdXQgb2YgY3VyaW9z
-aXR5LCB3aGF0IGFyZSB0aGUgY29tcGxldGUgcHJvZHVjdCBhbmQgdmVuZG9yIGlkCj4gc3RyaW5n
-cz8KPiAKCkFsbCBOVk1lIGRldmljZXMgdXNlICJOVk1FIiBhcyB2ZW5kb3Igc3RyaW5nLgoKVGhl
-IGRldmljZSBpbiBxdWVzdGlvbiB1c2VzICJOZXRBcHAgT05UQVAgQ29udHJvbGxlciIgZm9yIHRo
-ZSBwcm9kdWN0CigtPiAibW9kZWwiIGluIE5WTWUgdGVybXMpLiBJSVVDIHRoZXJlJ3Mgb2xkZXIg
-RlcgYXJvdW5kIHRoYXQgdXNlcwoiT05UQVAgQ29udHJvbGxlciIgb25seS4KClJlZ2FyZHMsCk1h
-cnRpbgoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgw
-KTkxMSA3NDA1MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwg
-SmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0t
-CmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJl
-ZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+T24gRnJpLCAyMDE4LTAxLTE5IGF0IDE1OjI2ICswODAwLCBNaW5nIExlaSB3cm90ZToNCj4gUGxl
+YXNlIHNlZSBxdWV1ZV9kZWxheWVkX3dvcmtfb24oKSwgaGN0eC0+cnVuX3dvcmsgaXMgc2hhcmVk
+IGJ5IGFsbA0KPiBzY2hlZHVsaW5nLCBvbmNlIGJsa19tcV9kZWxheV9ydW5faHdfcXVldWUoMTAw
+bXMpIHJldHVybnMsIG5vIG5ldw0KPiBzY2hlZHVsaW5nIGNhbiBtYWtlIHByb2dyZXNzIGR1cmlu
+ZyB0aGUgMTAwbXMuDQoNCkhvdyBhYm91dCBhZGRyZXNzaW5nIHRoYXQgYXMgZm9sbG93czoNCg0K
+ZGlmZiAtLWdpdCBhL2Jsb2NrL2Jsay1tcS5jIGIvYmxvY2svYmxrLW1xLmMNCmluZGV4IGY3NTE1
+ZGQ5NWEzNi4uNTdmODM3OWE0NzZkIDEwMDY0NA0KLS0tIGEvYmxvY2svYmxrLW1xLmMNCisrKyBi
+L2Jsb2NrL2Jsay1tcS5jDQpAQCAtMTQwMyw5ICsxNDAzLDkgQEAgc3RhdGljIHZvaWQgX19ibGtf
+bXFfZGVsYXlfcnVuX2h3X3F1ZXVlKHN0cnVjdCBibGtfbXFfaHdfY3R4ICpoY3R4LCBib29sIGFz
+eW5jLA0KIAkJcHV0X2NwdSgpOw0KIAl9DQogDQotCWtibG9ja2Rfc2NoZWR1bGVfZGVsYXllZF93
+b3JrX29uKGJsa19tcV9oY3R4X25leHRfY3B1KGhjdHgpLA0KLQkJCQkJICZoY3R4LT5ydW5fd29y
+aywNCi0JCQkJCSBtc2Vjc190b19qaWZmaWVzKG1zZWNzKSk7DQorCWtibG9ja2RfbW9kX2RlbGF5
+ZWRfd29ya19vbihibGtfbXFfaGN0eF9uZXh0X2NwdShoY3R4KSwNCisJCQkJICAgICZoY3R4LT5y
+dW5fd29yaywNCisJCQkJICAgIG1zZWNzX3RvX2ppZmZpZXMobXNlY3MpKTsNCiB9DQogDQogdm9p
+ZCBibGtfbXFfZGVsYXlfcnVuX2h3X3F1ZXVlKHN0cnVjdCBibGtfbXFfaHdfY3R4ICpoY3R4LCB1
+bnNpZ25lZCBsb25nIG1zZWNzKQ0KDQpCYXJ0Lg==
