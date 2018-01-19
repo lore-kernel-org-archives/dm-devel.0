@@ -1,95 +1,121 @@
 From: Ming Lei <ming.lei@redhat.com>
-Subject: Re: [PATCH] dm rq: Avoid that request processing stalls sporadically
-Date: Fri, 19 Jan 2018 14:36:48 +0800
-Message-ID: <20180119063647.GA25369@ming.t460p>
-References: <20180118163707.11825-1-bart.vanassche@wdc.com>
- <20180119001136.GA4712@ming.t460p>
- <1516320863.2676.104.camel@wdc.com>
- <20180119001834.GB4712@ming.t460p>
- <040c195c-732e-70e8-3a54-89c5939e815c@kernel.dk>
- <20180119003516.GD4712@ming.t460p>
- <91af852d-cb1b-f306-d899-d72de4023d8d@kernel.dk>
+Subject: Re: [RFC PATCH] blk-mq: fixup RESTART when queue becomes idle
+Date: Fri, 19 Jan 2018 15:26:24 +0800
+Message-ID: <20180119072623.GB25369@ming.t460p>
+References: <20180118024124.8079-1-ming.lei@redhat.com>
+ <b2e5b7e6-ce4b-6053-adae-63cc44d773af@wdc.com>
+ <20180118170353.GB19734@redhat.com>
+ <1516296056.2676.23.camel@wdc.com>
+ <20180118183039.GA20121@redhat.com>
+ <1516301278.2676.35.camel@wdc.com>
+ <deeb2b2e-6d0e-a144-843d-d08626de8aea@kernel.dk>
+ <20180119023212.GA25413@ming.t460p>
+ <eba1191e-4d59-a763-03b2-acd2d2812ea3@kernel.dk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-block-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <91af852d-cb1b-f306-d899-d72de4023d8d@kernel.dk>
+In-Reply-To: <eba1191e-4d59-a763-03b2-acd2d2812ea3@kernel.dk>
 Sender: linux-block-owner@vger.kernel.org
 To: Jens Axboe <axboe@kernel.dk>
-Cc: Bart Van Assche <Bart.VanAssche@wdc.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "snitzer@redhat.com" <snitzer@redhat.com>
+Cc: Bart Van Assche <Bart.VanAssche@wdc.com>, "snitzer@redhat.com" <snitzer@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "hch@infradead.org" <hch@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "osandov@fb.com" <osandov@fb.com>
 List-Id: dm-devel.ids
 
-On Thu, Jan 18, 2018 at 05:49:10PM -0700, Jens Axboe wrote:
-> On 1/18/18 5:35 PM, Ming Lei wrote:
-> > On Thu, Jan 18, 2018 at 05:24:29PM -0700, Jens Axboe wrote:
-> >> On 1/18/18 5:18 PM, Ming Lei wrote:
-> >>> On Fri, Jan 19, 2018 at 12:14:24AM +0000, Bart Van Assche wrote:
-> >>>> On Fri, 2018-01-19 at 08:11 +0800, Ming Lei wrote:
-> >>>>> On Thu, Jan 18, 2018 at 08:37:07AM -0800, Bart Van Assche wrote:
-> >>>>>> diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
-> >>>>>> index f16096af879a..c59c59cfd2a5 100644
-> >>>>>> --- a/drivers/md/dm-rq.c
-> >>>>>> +++ b/drivers/md/dm-rq.c
-> >>>>>> @@ -761,6 +761,7 @@ static blk_status_t dm_mq_queue_rq(struct blk_mq_hw_ctx *hctx,
-> >>>>>>  		/* Undo dm_start_request() before requeuing */
-> >>>>>>  		rq_end_stats(md, rq);
-> >>>>>>  		rq_completed(md, rq_data_dir(rq), false);
-> >>>>>> +		blk_mq_delay_run_hw_queue(hctx, 100/*ms*/);
-> >>>>>>  		return BLK_STS_RESOURCE;
-> >>>>>>  	}
-> >>>>>>  
-> >>>>>
-> >>>>> Nak.
-> >>>>
-> >>>> This patch fixes a regression that was introduced by you. You should know
-> >>>> that regressions are not acceptable. If you don't agree with this patch,
-> >>>> please fix the root cause.
+On Thu, Jan 18, 2018 at 09:02:45PM -0700, Jens Axboe wrote:
+> On 1/18/18 7:32 PM, Ming Lei wrote:
+> > On Thu, Jan 18, 2018 at 01:11:01PM -0700, Jens Axboe wrote:
+> >> On 1/18/18 11:47 AM, Bart Van Assche wrote:
+> >>>> This is all very tiresome.
 > >>>
-> >>> Yesterday I sent a patch, did you test that?
+> >>> Yes, this is tiresome. It is very annoying to me that others keep
+> >>> introducing so many regressions in such important parts of the kernel.
+> >>> It is also annoying to me that I get blamed if I report a regression
+> >>> instead of seeing that the regression gets fixed.
 > >>
-> >> That patch isn't going to be of much help. It might prevent you from
-> >> completely stalling, but it might take you tens of seconds to get there.
+> >> I agree, it sucks that any change there introduces the regression. I'm
+> >> fine with doing the delay insert again until a new patch is proven to be
+> >> better.
 > > 
-> > Yeah, that is true, and why I marked it as RFC, but the case is so rare to
-> > happen.
+> > That way is still buggy as I explained, since rerun queue before adding
+> > request to hctx->dispatch_list isn't correct. Who can make sure the request
+> > is visible when __blk_mq_run_hw_queue() is called?
 > 
-> You don't know that. If the resource is very limited, or someone else
-> is gobbling up all of it, then it may trigger quite often. Granted,
-> in that case, you need some way of signaling the freeing of those
-> resources to make it efficient.
+> That race basically doesn't exist for a 10ms gap.
 > 
-> >> On top of that, it's a rolling timer that gets added when IO is queued,
-> >> and re-added if IO is pending when it fires. If the latter case is not
-> >> true, then it won't get armed again. So if IO fails to queue without
-> >> any other IO pending, you're pretty much in the same situation as if
+> > Not mention this way will cause performance regression again.
+> 
+> How so? It's _exactly_ the same as what you are proposing, except mine
+> will potentially run the queue when it need not do so. But given that
+> these are random 10ms queue kicks because we are screwed, it should not
+> matter. The key point is that it only should be if we have NO better
+> options. If it's a frequently occurring event that we have to return
+> BLK_STS_RESOURCE, then we need to get a way to register an event for
+> when that condition clears. That event will then kick the necessary
+> queue(s).
+
+Please see queue_delayed_work_on(), hctx->run_work is shared by all
+scheduling, once blk_mq_delay_run_hw_queue(100ms) returns, no new
+scheduling can make progress during the 100ms.
+
+> 
+> >> From the original topic of this email, we have conditions that can cause
+> >> the driver to not be able to submit an IO. A set of those conditions can
+> >> only happen if IO is in flight, and those cases we have covered just
+> >> fine. Another set can potentially trigger without IO being in flight.
+> >> These are cases where a non-device resource is unavailable at the time
+> >> of submission. This might be iommu running out of space, for instance,
+> >> or it might be a memory allocation of some sort. For these cases, we
+> >> don't get any notification when the shortage clears. All we can do is
+> >> ensure that we restart operations at some point in the future. We're SOL
+> >> at that point, but we have to ensure that we make forward progress.
 > > 
-> > No IO pending detection may take a bit time, we can do it after
-> > BLK_STS_RESOURCE is returned and SCHED_RESTART is set. I have done
-> > this way in the following patch, what do you think of it?
-> > 
-> > https://github.com/ming1/linux/commit/f866ce0b97b0ae22d033881da7eb07706fd458b4
+> > Right, it is a generic issue, not DM-specific one, almost all drivers
+> > call kmalloc(GFP_ATOMIC) in IO path.
 > 
-> I think it's overly complicated. As I wrote in a lengthier email earlier
-> today, just ensure that we have a unique return code from the driver for
-> when it aborts queuing an IO due to a resource shortage that isn't tied
-> to it's own consumption of it. When we get that return, do a delayed
-> queue run after X amount of time to ensure we always try again. If you
-> want to get fancy (later on), you could track the frequency of such
-> returns and complain if it's too high.
+> GFP_ATOMIC basically never fails, unless we are out of memory. The
 
-Suppose the new introduced return code is BLK_STS_NO_DEV_RESOURCE.
+I guess GFP_KERNEL may never fail, but GFP_ATOMIC failure might be
+possible, and it is mentioned[1] there is such code in mm allocation
+path, also OOM can happen too.
 
-This way may degrade performance, for example, DM-MPATH returns
-BLK_STS_NO_DEV_RESOURCE when blk_get_request() returns NULL, blk-mq
-handles it by blk_mq_delay_run_hw_queue(10ms). Then blk_mq_sched_restart()
-is just triggered when one DM-MPATH request is completed, that means one
-request of underlying queue is completed too, but blk_mq_sched_restart()
-still can't make progress during the 10ms.
+  if (some randomly generated condition) && (request is atomic)
+      return NULL;
 
-That means we should only run blk_mq_delay_run_hw_queue(10ms/100ms) when
-the queue is idle.
+[1] https://lwn.net/Articles/276731/
 
-I will post out the patch in github for discussion.
+> exception is higher order allocations. If a driver has a higher order
+> atomic allocation in its IO path, the device driver writer needs to be
+> taken out behind the barn and shot. Simple as that. It will NEVER work
+> well in a production environment. Witness the disaster that so many NIC
+> driver writers have learned.
+> 
+> This is NOT the case we care about here. It's resources that are more
+> readily depleted because other devices are using them. If it's a high
+> frequency or generally occurring event, then we simply must have a
+> callback to restart the queue from that. The condition then becomes
+> identical to device private starvation, the only difference being from
+> where we restart the queue.
+> 
+> > IMO, there is enough time for figuring out a generic solution before
+> > 4.16 release.
+> 
+> I would hope so, but the proposed solutions have not filled me with
+> a lot of confidence in the end result so far.
+> 
+> >> That last set of conditions better not be a a common occurence, since
+> >> performance is down the toilet at that point. I don't want to introduce
+> >> hot path code to rectify it. Have the driver return if that happens in a
+> >> way that is DIFFERENT from needing a normal restart. The driver knows if
+> >> this is a resource that will become available when IO completes on this
+> >> device or not. If we get that return, we have a generic run-again delay.
+> > 
+> > Now most of times both NVMe and SCSI won't return BLK_STS_RESOURCE, and
+> > it should be DM-only which returns STS_RESOURCE so often.
+> 
+> Where does the dm STS_RESOURCE error usually come from - what's exact
+> resource are we running out of?
+
+It is from blk_get_request(underlying queue), see multipath_clone_and_map().
 
 Thanks,
 Ming
