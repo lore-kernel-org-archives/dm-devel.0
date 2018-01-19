@@ -1,191 +1,116 @@
-From: Khazhismel Kumykov <khazhy@google.com>
-Subject: [PATCH] dm mpath selector: more evenly distribute ties
-Date: Fri, 19 Jan 2018 15:07:37 -0800
-Message-ID: <20180119230737.133596-1-khazhy@google.com>
-Content-Type: multipart/signed; protocol="application/pkcs7-signature"; micalg=sha-256;
-        boundary="00000000000014a77105632928ac"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com
-Cc: linux-kernel@vger.kernel.org, Khazhismel Kumykov <khazhy@google.com>
+From: Ming Lei <ming.lei@redhat.com>
+Subject: Re: [RFC PATCH] blk-mq: fixup RESTART when queue becomes idle
+Date: Sat, 20 Jan 2018 07:52:48 +0800
+Message-ID: <20180119235247.GA17195@ming.t460p>
+References: <20180119072623.GB25369@ming.t460p>
+ <047f68ec-f51b-190f-2f89-f413325c2540@kernel.dk>
+ <20180119154047.GB14827@ming.t460p>
+ <540e1239-c415-766b-d4ff-bb0b7f3517a7@kernel.dk>
+ <20180119160518.GC14827@ming.t460p>
+ <4a5c049f-0fab-bbaf-bfe2-eb5bca73f2c8@kernel.dk>
+ <20180119162618.GD14827@ming.t460p>
+ <1f072086-533e-4b75-d0e3-9e621b2120d8@kernel.dk>
+ <20180119163736.GE14827@ming.t460p>
+ <e17362b4-dfee-be8d-ea8d-b07f6d9768e8@kernel.dk>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <e17362b4-dfee-be8d-ea8d-b07f6d9768e8@kernel.dk>
+Sender: linux-block-owner@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Bart Van Assche <Bart.VanAssche@wdc.com>, "snitzer@redhat.com" <snitzer@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "hch@infradead.org" <hch@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "osandov@fb.com" <osandov@fb.com>
 List-Id: dm-devel.ids
 
---00000000000014a77105632928ac
+On Fri, Jan 19, 2018 at 10:38:41AM -0700, Jens Axboe wrote:
+> On 1/19/18 9:37 AM, Ming Lei wrote:
+> > On Fri, Jan 19, 2018 at 09:27:46AM -0700, Jens Axboe wrote:
+> >> On 1/19/18 9:26 AM, Ming Lei wrote:
+> >>> On Fri, Jan 19, 2018 at 09:19:24AM -0700, Jens Axboe wrote:
+> >>>> On 1/19/18 9:05 AM, Ming Lei wrote:
+> >>>>> On Fri, Jan 19, 2018 at 08:48:55AM -0700, Jens Axboe wrote:
+> >>>>>> On 1/19/18 8:40 AM, Ming Lei wrote:
+> >>>>>>>>>> Where does the dm STS_RESOURCE error usually come from - what's exact
+> >>>>>>>>>> resource are we running out of?
+> >>>>>>>>>
+> >>>>>>>>> It is from blk_get_request(underlying queue), see
+> >>>>>>>>> multipath_clone_and_map().
+> >>>>>>>>
+> >>>>>>>> That's what I thought. So for a low queue depth underlying queue, it's
+> >>>>>>>> quite possible that this situation can happen. Two potential solutions
+> >>>>>>>> I see:
+> >>>>>>>>
+> >>>>>>>> 1) As described earlier in this thread, having a mechanism for being
+> >>>>>>>>    notified when the scarce resource becomes available. It would not
+> >>>>>>>>    be hard to tap into the existing sbitmap wait queue for that.
+> >>>>>>>>
+> >>>>>>>> 2) Have dm set BLK_MQ_F_BLOCKING and just sleep on the resource
+> >>>>>>>>    allocation. I haven't read the dm code to know if this is a
+> >>>>>>>>    possibility or not.
+> >>>>>>>>
+> >>>>>>>> I'd probably prefer #1. It's a classic case of trying to get the
+> >>>>>>>> request, and if it fails, add ourselves to the sbitmap tag wait
+> >>>>>>>> queue head, retry, and bail if that also fails. Connecting the
+> >>>>>>>> scarce resource and the consumer is the only way to really fix
+> >>>>>>>> this, without bogus arbitrary delays.
+> >>>>>>>
+> >>>>>>> Right, as I have replied to Bart, using mod_delayed_work_on() with
+> >>>>>>> returning BLK_STS_NO_DEV_RESOURCE(or sort of name) for the scarce
+> >>>>>>> resource should fix this issue.
+> >>>>>>
+> >>>>>> It'll fix the forever stall, but it won't really fix it, as we'll slow
+> >>>>>> down the dm device by some random amount.
+> >>>>>>
+> >>>>>> A simple test case would be to have a null_blk device with a queue depth
+> >>>>>> of one, and dm on top of that. Start a fio job that runs two jobs: one
+> >>>>>> that does IO to the underlying device, and one that does IO to the dm
+> >>>>>> device. If the job on the dm device runs substantially slower than the
+> >>>>>> one to the underlying device, then the problem isn't really fixed.
+> >>>>>
+> >>>>> I remembered that I tried this test on scsi-debug & dm-mpath over scsi-debug,
+> >>>>> seems not observed this issue, could you explain a bit why IO over dm-mpath
+> >>>>> may be slower? Because both two IO contexts call same get_request(), and
+> >>>>> in theory dm-mpath should be a bit quicker since it uses direct issue for
+> >>>>> underlying queue, without io scheduler involved.
+> >>>>
+> >>>> Because if you lose the race for getting the request, you'll have some
+> >>>> arbitrary delay before trying again, potentially. Compared to the direct
+> >>>
+> >>> But the restart still works, one request is completed, then the queue
+> >>> is return immediately because we use mod_delayed_work_on(0), so looks
+> >>> no such issue.
+> >>
+> >> There are no pending requests for this case, nothing to restart the
+> >> queue. When you fail that blk_get_request(), you are idle, nothing
+> >> is pending.
+> > 
+> > I think we needn't worry about that, once a device is attached to
+> > dm-rq, it can't be mounted any more, and usually user don't use the device
+> > directly and by dm-mpath at the same time.
+> 
+> Here's an example of that, using my current block tree (merged into
+> master).  The setup is dm-mpath on top of null_blk, the latter having
+> just a single request. Both are mq devices.
+> 
+> Fio direct 4k random reads on dm_mq: ~250K iops
+> 
+> Start dd on underlying device (or partition on same device), just doing
+> sequential reads.
+> 
+> Fio direct 4k random reads on dm_mq with dd running: 9 iops
+> 
+> No schedulers involved.
+> 
+> https://i.imgur.com/WTDnnwE.gif
 
-Move the last used path to the end of the list (least preferred) so that
-ties are more evenly distributed.
+If null_blk's timer mode is used with a bit delay introduced, I guess
+the effect from direct access to underlying queue shouldn't be so
+serious. But it still won't be good as direct access.
 
-For example, in case with three paths with one that is slower than
-others, the remaining two would be unevenly used if they tie. This is
-due to the rotation not being a truely fair distribution.
+Another way may be to introduce a variants blk_get_request(), such as
+blk_get_request_with_notify(), then pass the current dm-rq's hctx to
+it, and use the tag's waitqueue to handle that. But the change can be
+a bit big.
 
-Illustrated: paths a, b, c, 'c' has 1 outstanding IO, a and b are 'tied'
-Three possible rotations:
-(a, b, c) -> best path 'a'
-(b, c, a) -> best path 'b'
-(c, a, b) -> best path 'a'
-(a, b, c) -> best path 'a'
-(b, c, a) -> best path 'b'
-(c, a, b) -> best path 'a'
-...
-
-So 'a' is used 2x more than 'b', although they should be used evenly.
-
-With this change, the most recently used path is always the least
-preferred, removing this bias resulting in even distribution.
-(a, b, c) -> best path 'a'
-(b, c, a) -> best path 'b'
-(c, a, b) -> best path 'a'
-(c, b, a) -> best path 'b'
-...
-
-Signed-off-by: Khazhismel Kumykov <khazhy@google.com>
----
- drivers/md/dm-queue-length.c | 6 +++---
- drivers/md/dm-service-time.c | 6 +++---
- 2 files changed, 6 insertions(+), 6 deletions(-)
-
-diff --git a/drivers/md/dm-queue-length.c b/drivers/md/dm-queue-length.c
-index 23f178641794..969c4f1a3633 100644
---- a/drivers/md/dm-queue-length.c
-+++ b/drivers/md/dm-queue-length.c
-@@ -195,9 +195,6 @@ static struct dm_path *ql_select_path(struct path_selector *ps, size_t nr_bytes)
- 	if (list_empty(&s->valid_paths))
- 		goto out;
- 
--	/* Change preferred (first in list) path to evenly balance. */
--	list_move_tail(s->valid_paths.next, &s->valid_paths);
--
- 	list_for_each_entry(pi, &s->valid_paths, list) {
- 		if (!best ||
- 		    (atomic_read(&pi->qlen) < atomic_read(&best->qlen)))
-@@ -210,6 +207,9 @@ static struct dm_path *ql_select_path(struct path_selector *ps, size_t nr_bytes)
- 	if (!best)
- 		goto out;
- 
-+	/* Move most recently used to least preferred to evenly balance. */
-+	list_move_tail(&best->list, &s->valid_paths);
-+
- 	ret = best->path;
- out:
- 	spin_unlock_irqrestore(&s->lock, flags);
-diff --git a/drivers/md/dm-service-time.c b/drivers/md/dm-service-time.c
-index 7b8642045c55..f006a9005593 100644
---- a/drivers/md/dm-service-time.c
-+++ b/drivers/md/dm-service-time.c
-@@ -282,9 +282,6 @@ static struct dm_path *st_select_path(struct path_selector *ps, size_t nr_bytes)
- 	if (list_empty(&s->valid_paths))
- 		goto out;
- 
--	/* Change preferred (first in list) path to evenly balance. */
--	list_move_tail(s->valid_paths.next, &s->valid_paths);
--
- 	list_for_each_entry(pi, &s->valid_paths, list)
- 		if (!best || (st_compare_load(pi, best, nr_bytes) < 0))
- 			best = pi;
-@@ -292,6 +289,9 @@ static struct dm_path *st_select_path(struct path_selector *ps, size_t nr_bytes)
- 	if (!best)
- 		goto out;
- 
-+	/* Move most recently used to least preferred to evenly balance. */
-+	list_move_tail(&best->list, &s->valid_paths);
-+
- 	ret = best->path;
- out:
- 	spin_unlock_irqrestore(&s->lock, flags);
 -- 
-2.16.0.rc1.238.g530d649a79-goog
-
-
---00000000000014a77105632928ac
-Content-Type: application/pkcs7-signature; name="smime.p7s"
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="smime.p7s"
-Content-Description: S/MIME Cryptographic Signature
-
-MIIS5wYJKoZIhvcNAQcCoIIS2DCCEtQCAQExDzANBglghkgBZQMEAgEFADALBgkqhkiG9w0BBwGg
-ghBNMIIEXDCCA0SgAwIBAgIOSBtqDm4P/739RPqw/wcwDQYJKoZIhvcNAQELBQAwZDELMAkGA1UE
-BhMCQkUxGTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYtc2ExOjA4BgNVBAMTMUdsb2JhbFNpZ24gUGVy
-c29uYWxTaWduIFBhcnRuZXJzIENBIC0gU0hBMjU2IC0gRzIwHhcNMTYwNjE1MDAwMDAwWhcNMjEw
-NjE1MDAwMDAwWjBMMQswCQYDVQQGEwJCRTEZMBcGA1UEChMQR2xvYmFsU2lnbiBudi1zYTEiMCAG
-A1UEAxMZR2xvYmFsU2lnbiBIViBTL01JTUUgQ0EgMTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCC
-AQoCggEBALR23lKtjlZW/17kthzYcMHHKFgywfc4vLIjfq42NmMWbXkNUabIgS8KX4PnIFsTlD6F
-GO2fqnsTygvYPFBSMX4OCFtJXoikP2CQlEvO7WooyE94tqmqD+w0YtyP2IB5j4KvOIeNv1Gbnnes
-BIUWLFxs1ERvYDhmk+OrvW7Vd8ZfpRJj71Rb+QQsUpkyTySaqALXnyztTDp1L5d1bABJN/bJbEU3
-Hf5FLrANmognIu+Npty6GrA6p3yKELzTsilOFmYNWg7L838NS2JbFOndl+ce89gM36CW7vyhszi6
-6LqqzJL8MsmkP53GGhf11YMP9EkmawYouMDP/PwQYhIiUO0CAwEAAaOCASIwggEeMA4GA1UdDwEB
-/wQEAwIBBjAdBgNVHSUEFjAUBggrBgEFBQcDAgYIKwYBBQUHAwQwEgYDVR0TAQH/BAgwBgEB/wIB
-ADAdBgNVHQ4EFgQUyzgSsMeZwHiSjLMhleb0JmLA4D8wHwYDVR0jBBgwFoAUJiSSix/TRK+xsBtt
-r+500ox4AAMwSwYDVR0fBEQwQjBAoD6gPIY6aHR0cDovL2NybC5nbG9iYWxzaWduLmNvbS9ncy9n
-c3BlcnNvbmFsc2lnbnB0bnJzc2hhMmcyLmNybDBMBgNVHSAERTBDMEEGCSsGAQQBoDIBKDA0MDIG
-CCsGAQUFBwIBFiZodHRwczovL3d3dy5nbG9iYWxzaWduLmNvbS9yZXBvc2l0b3J5LzANBgkqhkiG
-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
-BQUHMAKGNGh0dHA6Ly9zZWN1cmUuZ2xvYmFsc2lnbi5jb20vY2FjZXJ0L2dzaHZzbWltZWNhMS5j
-cnQwHQYDVR0OBBYEFMnO7tLwRUm/Kh/G63DTEdz9N5wmMB8GA1UdIwQYMBaAFMs4ErDHmcB4koyz
-IZXm9CZiwOA/MEwGA1UdIARFMEMwQQYJKwYBBAGgMgEoMDQwMgYIKwYBBQUHAgEWJmh0dHBzOi8v
-d3d3Lmdsb2JhbHNpZ24uY29tL3JlcG9zaXRvcnkvMDsGA1UdHwQ0MDIwMKAuoCyGKmh0dHA6Ly9j
-cmwuZ2xvYmFsc2lnbi5jb20vZ3NodnNtaW1lY2ExLmNybDAOBgNVHQ8BAf8EBAMCBaAwHQYDVR0l
-BBYwFAYIKwYBBQUHAwIGCCsGAQUFBwMEMA0GCSqGSIb3DQEBCwUAA4IBAQA5gzhiP9g5DzgYyM4K
-/OtFFFKyrluiKx9OmOb1Mx9UCxEi9vzRrG5j1rFMAwNAx+xEESoq1JVNe8fJKBimOsKpWstAhYlO
-Cg6Qm43dzb+5CcPWDC3j6XxfsUIKvektE79/IeVhdRVj+Op1gSEGaBJQP2c0/MeXPPhQKPjAPVQW
-bEOJaemCXr1UIoEHMoisd0Smdm1NjxLYLk3bK1RDgO0RTu2hNmVAT9WypS9uiquOQWeK3u9QBuUK
-BhOZjgo70YosoRVRBIKNqStZ++IpaDEWfDme3EH4H8tlOzwCvAiO8c1uF7ZX68wXWJPjq6uxu1cZ
-5lT83BZ34AElNAzFvsLhMYICXjCCAloCAQEwXDBMMQswCQYDVQQGEwJCRTEZMBcGA1UEChMQR2xv
-YmFsU2lnbiBudi1zYTEiMCAGA1UEAxMZR2xvYmFsU2lnbiBIViBTL01JTUUgQ0EgMQIMPycjokgk
-Gdp8HTY2MA0GCWCGSAFlAwQCAQUAoIHUMC8GCSqGSIb3DQEJBDEiBCBsDKZEwDwmbW/A2GyBKc/o
-K3RzPWJHjrKvYhXWUGMQADAYBgkqhkiG9w0BCQMxCwYJKoZIhvcNAQcBMBwGCSqGSIb3DQEJBTEP
-Fw0xODAxMTkyMzA4MjBaMGkGCSqGSIb3DQEJDzFcMFowCwYJYIZIAWUDBAEqMAsGCWCGSAFlAwQB
-FjALBglghkgBZQMEAQIwCgYIKoZIhvcNAwcwCwYJKoZIhvcNAQEKMAsGCSqGSIb3DQEBBzALBglg
-hkgBZQMEAgEwDQYJKoZIhvcNAQEBBQAEggEADsTTlFnASl0Fo5ya6nnHXk5RnU3syhmk4cPcoNTE
-hG7KpTYppQjyO0y4+xVbUjH7S6pNZciH4tanVO/Tae3Deq1yGWlLJR68oTyTso9VEzx3nK4fkN5e
-XDqfgMw/TQCoui+5qLHkj4zIESZcbcsLmD6MTJZr6uiFJNE5hg7ma+EkoL7iVlJBTeSW0Poe4CNu
-S8Zbay5sgZR2XfDoEYO+jN2icgz4jrRKgklcu3uNB+wZrCdxvojcMd3LR16Z8N/vsl4ljLkdibSe
-RJvnVDXIg+631yMR6xLkh0qYmNFHK93tJE12WVEgW41redb4BmCD4iMT2dU+hhWAOCNuFlOQMg==
---00000000000014a77105632928ac--
+Ming
