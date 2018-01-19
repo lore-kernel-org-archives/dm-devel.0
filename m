@@ -1,61 +1,79 @@
-From: Bart Van Assche <Bart.VanAssche@wdc.com>
-Subject: Re: [RFC PATCH] blk-mq: fixup RESTART when queue becomes idle
-Date: Fri, 19 Jan 2018 19:47:42 +0000
-Message-ID: <1516391260.2968.27.camel@wdc.com>
-References: <20180118024124.8079-1-ming.lei@redhat.com>
-         <b2e5b7e6-ce4b-6053-adae-63cc44d773af@wdc.com>
-         <20180118170353.GB19734@redhat.com> <1516296056.2676.23.camel@wdc.com>
-         <20180118183039.GA20121@redhat.com> <1516301278.2676.35.camel@wdc.com>
-         <deeb2b2e-6d0e-a144-843d-d08626de8aea@kernel.dk>
-         <20180119023212.GA25413@ming.t460p> <1516338585.4077.1.camel@wdc.com>
-         <20180119073423.GC25369@ming.t460p>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [git pull] device mapper fixes for 4.15 final
+Date: Fri, 19 Jan 2018 17:03:16 -0500
+Message-ID: <20180119220315.GA30994@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20180119073423.GC25369@ming.t460p>
-Content-Language: en-US
-Content-ID: <45B7B73428ED1F44BF70190FC576D038@namprd04.prod.outlook.com>
-Sender: linux-block-owner@vger.kernel.org
-To: "ming.lei@redhat.com" <ming.lei@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "hch@infradead.org" <hch@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "osandov@fb.com" <osandov@fb.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "snitzer@redhat.com" <snitzer@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Joe Thornber <thornber@redhat.com>, Dennis Yang <dennisyang@qnap.com>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Ondrej Kozina <okozina@redhat.com>, Wei Yongjun <weiyongjun1@huawei.com>, Milan Broz <gmazyland@gmail.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-T24gRnJpLCAyMDE4LTAxLTE5IGF0IDE1OjM0ICswODAwLCBNaW5nIExlaSB3cm90ZToNCj4gQ291
-bGQgeW91IGV4cGxhaW4gYSBiaXQgd2hlbiBTQ1NJIHRhcmdldCByZXBsaWVzIHdpdGggQlVTWSB2
-ZXJ5IG9mdGVuPw0KPiANCj4gSW5zaWRlIGluaXRpYXRvciwgd2UgaGF2ZSBsaW1pdGVkIHRoZSBt
-YXggcGVyLUxVTiByZXF1ZXN0cyBhbmQgcGVyLWhvc3QNCj4gcmVxdWVzdHMgYWxyZWFkeSBiZWZv
-cmUgY2FsbGluZyAucXVldWVfcnEoKS4NCg0KVGhhdCdzIGNvcnJlY3QuIEhvd2V2ZXIsIHdoZW4g
-YSBTQ1NJIGluaXRpYXRvciBhbmQgdGFyZ2V0IHN5c3RlbSBhcmUNCmNvbW11bmljYXRpbmcgd2l0
-aCBlYWNoIG90aGVyIHRoZXJlIGlzIG5vIGd1YXJhbnRlZSB0aGF0IGluaXRpYXRvciBhbmQgdGFy
-Z2V0DQpxdWV1ZSBkZXB0aCBoYXZlIGJlZW4gdHVuZWQgcHJvcGVybHkuIElmIHRoZSBpbml0aWF0
-b3IgcXVldWUgZGVwdGggYW5kIHRoZQ0KbnVtYmVyIG9mIHJlcXVlc3RzIHRoYXQgY2FuIGJlIGlu
-IGZsaWdodCBhY2NvcmRpbmcgdG8gdGhlIG5ldHdvcmsgcHJvdG9jb2wNCmFyZSBib3RoIGxhcmdl
-ciB0aGFuIHRoZSB0YXJnZXQgcXVldWUgZGVwdGggYW5kIGlmIHRoZSB0YXJnZXQgc3lzdGVtIHVz
-ZXMNCnJlbGF0aXZlbHkgc2xvdyBzdG9yYWdlIChlLmcuIGhhcmRkaXNrcykgdGhlbiBpdCBjYW4g
-aGFwcGVuIHRoYXQgdGhlIHRhcmdldA0KcmVwbGllcyB3aXRoIEJVU1kgb2Z0ZW4uDQoNClRoZSBM
-aW51eCBpU0NTSSBpbml0aWF0b3IgbGltaXRzIE1heE91dHN0YW5kaW5nUjJUICh0aGUgbnVtYmVy
-IG9mIHJlcXVlc3RzDQphbiBpbml0aWF0b3IgbWF5IHNlbnQgd2l0aG91dCBoYXZpbmcgcmVjZWl2
-ZWQgYW4gYW5zd2VyIGZyb20gdGhlIHRhcmdldCkgdG8NCm9uZSBzbyBJIGRvbid0IHRoaW5rIHRo
-aXMgY2FuIGhhcHBlbiB3aGVuIHVzaW5nIGlTQ1NJL1RDUC4NCg0KV2l0aCB0aGUgU1JQIGluaXRp
-YXRvciBob3dldmVyIHRoZSBtYXhpbXVtIHJlcXVlc3RzIHRoYXQgY2FuIGJlIGluIGZsaWdodA0K
-YmV0d2VlbiBpbml0aWF0b3IgYW5kIHRhcmdldCBkZXBlbmRzIG9uIHRoZSBudW1iZXIgb2YgY3Jl
-ZGl0cyB0aGF0IHdlcmUNCm5lZ290aWF0ZWQgZHVyaW5nIGxvZ2luIGJldHdlZW4gaW5pdGlhdG9y
-IGFuZCB0YXJnZXQuIFNvbWUgdGltZSBhZ28gSSBtb2RpZmllZA0KdGhlIFNSUCBpbml0aWF0b3Ig
-c3VjaCB0aGF0IGl0IGxpbWl0cyB0aGUgaW5pdGlhdG9yIHF1ZXVlIGRlcHRoIHRvIHRoZSBudW1i
-ZXINCm9mIFNSUCBjcmVkaXRzIG1pbnVzIG9uZSAoZm9yIHRhc2sgbWFuYWdlbWVudCkuIFRoYXQg
-cmVzdWx0ZWQgaW4gYSBwZXJmb3JtYW5jZQ0KaW1wcm92ZW1lbnQgZHVlIHRvIGZld2VyIEJVU1kg
-Y29uZGl0aW9ucyBhdCB0aGUgaW5pdGlhdG9yIHNpZGUgKHNlZSBhbHNvIGNvbW1pdA0KN2FkZTQw
-MGFiYTlhICgiSUIvc3JwOiBSZWR1Y2UgbnVtYmVyIG9mIEJVU1kgY29uZGl0aW9ucyIpKS4gQW5v
-dGhlciBwYXRjaCBmb3INCnRoZSBTQ1NUIFNSUCB0YXJnZXQgZHJpdmVyIGxpbWl0ZWQgdGhlIG51
-bWJlciBvZiBTUlAgY3JlZGl0cyB0byB0aGUgcXVldWUgZGVwdGgNCm9mIHRoZSBibG9jayBkZXZp
-Y2UgYXQgdGhlIHRhcmdldCBzaWRlLiBJJ20gcmVmZXJyaW5nIHRvIHRoZSBmb2xsb3dpbmcgY29k
-ZToNCmNoLT5ycV9zaXplID0gbWluKE1BWF9TUlBUX1JRX1NJWkUsIHNjc3RfZ2V0X21heF9sdW5f
-Y29tbWFuZHMoTlVMTCwgMCkpIChJIGhhdmUNCm5vdCB5ZXQgaGFkIHRoZSB0aW1lIHRvIHBvcnQg
-dGhpcyBjaGFuZ2UgdG8gTElPKS4NCg0KV2l0aG91dCBzdWNoIHR1bmluZyBhY3Jvc3MgaW5pdGlh
-dG9yIGFuZCB0YXJnZXQgaXQgY2FuIGhhcHBlbiBvZnRlbiB0aGF0IHRoZQ0KdGFyZ2V0IHN5c3Rl
-bSBzZW5kcyB0aGUgcmVwbHkgIkJVU1kiIGJhY2sgdG8gdGhlIGluaXRpYXRvci4gSSB0aGluayB0
-aGF0J3Mgd2h5DQp0aGVyZSBpcyBjb2RlIGluIHRoZSBTQ1NJIGNvcmUgdG8gYXV0b21hdGljYWxs
-eSBhZGp1c3QgdGhlIGluaXRpYXRvciBxdWV1ZQ0KZGVwdGggaWYgdGhlICJCVVNZIiBjb25kaXRp
-b24gaXMgZW5jb3VudGVyZWQgZnJlcXVlbnRseS4gU2VlIGFsc28NCnNjc2lfdHJhY2tfcXVldWVf
-ZnVsbCgpLg0KDQpCYXJ0Lg==
+Hi Linus,
+
+The following changes since commit 1291a0d5049dbc06baaaf66a9ff3f53db493b19b:
+
+  Linux 4.15-rc4 (2017-12-17 18:59:59 -0800)
+
+are available in the Git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-4.15/dm-fixes-2
+
+for you to fetch changes up to 3cc2e57c4beabcbbaa46e1ac6d77ca8276a4a42d:
+
+  dm crypt: fix error return code in crypt_ctr() (2018-01-17 09:10:55 -0500)
+
+Please pull, thanks!
+Mike
+
+----------------------------------------------------------------
+All stable@ fixes:
+
+- Fix DM thinp btree corruption seen when inserting a new key/value pair
+  into a full root node.
+
+- Fix DM thinp btree removal deadlock due to artificially low number of
+  allowed concurrent locks allowed.
+
+- Fix possible DM crypt corruption if kernel keyring service is used.
+  Only affects ciphers using following IVs: essiv, lmk and tcw.
+
+- Two DM crypt device initialization error checking fixes.
+
+- Fix DM integrity to allow use of async ciphers that require DMA.
+
+----------------------------------------------------------------
+Dennis Yang (1):
+      dm thin metadata: THIN_MAX_CONCURRENT_LOCKS should be 6
+
+Joe Thornber (1):
+      dm btree: fix serious bug in btree_split_beneath()
+
+Mikulas Patocka (1):
+      dm integrity: don't store cipher request on the stack
+
+Milan Broz (1):
+      dm crypt: fix crash by adding missing check for auth key size
+
+Ondrej Kozina (1):
+      dm crypt: wipe kernel key copy after IV initialization
+
+Wei Yongjun (1):
+      dm crypt: fix error return code in crypt_ctr()
+
+ drivers/md/dm-crypt.c                 | 20 ++++++++++----
+ drivers/md/dm-integrity.c             | 49 ++++++++++++++++++++++++++---------
+ drivers/md/dm-thin-metadata.c         |  6 ++++-
+ drivers/md/persistent-data/dm-btree.c | 19 ++------------
+ 4 files changed, 59 insertions(+), 35 deletions(-)
