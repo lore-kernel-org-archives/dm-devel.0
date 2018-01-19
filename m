@@ -1,94 +1,32 @@
-From: Ming Lei <ming.lei@redhat.com>
-Subject: Re: [RFC PATCH] blk-mq: fixup RESTART when queue becomes
-	idle
-Date: Sat, 20 Jan 2018 02:24:03 +0800
-Message-ID: <20180119182402.GC15610@ming.t460p>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [RFC PATCH] blk-mq: fixup RESTART when queue becomes idle
+Date: Fri, 19 Jan 2018 13:33:33 -0500
+Message-ID: <20180119183333.GA29937@redhat.com>
 References: <20180119072623.GB25369@ming.t460p>
-	<047f68ec-f51b-190f-2f89-f413325c2540@kernel.dk>
-	<20180119154047.GB14827@ming.t460p>
-	<540e1239-c415-766b-d4ff-bb0b7f3517a7@kernel.dk>
-	<20180119160518.GC14827@ming.t460p>
-	<4a5c049f-0fab-bbaf-bfe2-eb5bca73f2c8@kernel.dk>
-	<20180119162618.GD14827@ming.t460p>
-	<1f072086-533e-4b75-d0e3-9e621b2120d8@kernel.dk>
-	<20180119163736.GE14827@ming.t460p>
-	<e17362b4-dfee-be8d-ea8d-b07f6d9768e8@kernel.dk>
+ <047f68ec-f51b-190f-2f89-f413325c2540@kernel.dk>
+ <20180119154047.GB14827@ming.t460p>
+ <540e1239-c415-766b-d4ff-bb0b7f3517a7@kernel.dk>
+ <20180119160518.GC14827@ming.t460p>
+ <4a5c049f-0fab-bbaf-bfe2-eb5bca73f2c8@kernel.dk>
+ <20180119162618.GD14827@ming.t460p>
+ <1f072086-533e-4b75-d0e3-9e621b2120d8@kernel.dk>
+ <20180119163736.GE14827@ming.t460p>
+ <e17362b4-dfee-be8d-ea8d-b07f6d9768e8@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
 Content-Disposition: inline
 In-Reply-To: <e17362b4-dfee-be8d-ea8d-b07f6d9768e8@kernel.dk>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Sender: linux-block-owner@vger.kernel.org
 To: Jens Axboe <axboe@kernel.dk>
-Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "snitzer@redhat.com" <snitzer@redhat.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "hch@infradead.org" <hch@infradead.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Bart Van Assche <Bart.VanAssche@wdc.com>, "osandov@fb.com" <osandov@fb.com>
+Cc: Ming Lei <ming.lei@redhat.com>, Bart Van Assche <Bart.VanAssche@wdc.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "hch@infradead.org" <hch@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "osandov@fb.com" <osandov@fb.com>
 List-Id: dm-devel.ids
 
-On Fri, Jan 19, 2018 at 10:38:41AM -0700, Jens Axboe wrote:
+On Fri, Jan 19 2018 at 12:38pm -0500,
+Jens Axboe <axboe@kernel.dk> wrote:
+
 > On 1/19/18 9:37 AM, Ming Lei wrote:
 > > On Fri, Jan 19, 2018 at 09:27:46AM -0700, Jens Axboe wrote:
-> >> On 1/19/18 9:26 AM, Ming Lei wrote:
-> >>> On Fri, Jan 19, 2018 at 09:19:24AM -0700, Jens Axboe wrote:
-> >>>> On 1/19/18 9:05 AM, Ming Lei wrote:
-> >>>>> On Fri, Jan 19, 2018 at 08:48:55AM -0700, Jens Axboe wrote:
-> >>>>>> On 1/19/18 8:40 AM, Ming Lei wrote:
-> >>>>>>>>>> Where does the dm STS_RESOURCE error usually come from - what's exact
-> >>>>>>>>>> resource are we running out of?
-> >>>>>>>>>
-> >>>>>>>>> It is from blk_get_request(underlying queue), see
-> >>>>>>>>> multipath_clone_and_map().
-> >>>>>>>>
-> >>>>>>>> That's what I thought. So for a low queue depth underlying queue, it's
-> >>>>>>>> quite possible that this situation can happen. Two potential solutions
-> >>>>>>>> I see:
-> >>>>>>>>
-> >>>>>>>> 1) As described earlier in this thread, having a mechanism for being
-> >>>>>>>>    notified when the scarce resource becomes available. It would not
-> >>>>>>>>    be hard to tap into the existing sbitmap wait queue for that.
-> >>>>>>>>
-> >>>>>>>> 2) Have dm set BLK_MQ_F_BLOCKING and just sleep on the resource
-> >>>>>>>>    allocation. I haven't read the dm code to know if this is a
-> >>>>>>>>    possibility or not.
-> >>>>>>>>
-> >>>>>>>> I'd probably prefer #1. It's a classic case of trying to get the
-> >>>>>>>> request, and if it fails, add ourselves to the sbitmap tag wait
-> >>>>>>>> queue head, retry, and bail if that also fails. Connecting the
-> >>>>>>>> scarce resource and the consumer is the only way to really fix
-> >>>>>>>> this, without bogus arbitrary delays.
-> >>>>>>>
-> >>>>>>> Right, as I have replied to Bart, using mod_delayed_work_on() with
-> >>>>>>> returning BLK_STS_NO_DEV_RESOURCE(or sort of name) for the scarce
-> >>>>>>> resource should fix this issue.
-> >>>>>>
-> >>>>>> It'll fix the forever stall, but it won't really fix it, as we'll slow
-> >>>>>> down the dm device by some random amount.
-> >>>>>>
-> >>>>>> A simple test case would be to have a null_blk device with a queue depth
-> >>>>>> of one, and dm on top of that. Start a fio job that runs two jobs: one
-> >>>>>> that does IO to the underlying device, and one that does IO to the dm
-> >>>>>> device. If the job on the dm device runs substantially slower than the
-> >>>>>> one to the underlying device, then the problem isn't really fixed.
-> >>>>>
-> >>>>> I remembered that I tried this test on scsi-debug & dm-mpath over scsi-debug,
-> >>>>> seems not observed this issue, could you explain a bit why IO over dm-mpath
-> >>>>> may be slower? Because both two IO contexts call same get_request(), and
-> >>>>> in theory dm-mpath should be a bit quicker since it uses direct issue for
-> >>>>> underlying queue, without io scheduler involved.
-> >>>>
-> >>>> Because if you lose the race for getting the request, you'll have some
-> >>>> arbitrary delay before trying again, potentially. Compared to the direct
-> >>>
-> >>> But the restart still works, one request is completed, then the queue
-> >>> is return immediately because we use mod_delayed_work_on(0), so looks
-> >>> no such issue.
 > >>
 > >> There are no pending requests for this case, nothing to restart the
 > >> queue. When you fail that blk_get_request(), you are idle, nothing
@@ -113,10 +51,28 @@ On Fri, Jan 19, 2018 at 10:38:41AM -0700, Jens Axboe wrote:
 > 
 > https://i.imgur.com/WTDnnwE.gif
 
-This DM specific issue might be addressed by applying notifier_chain
-(or similar mechanism)between the two queues, will think about the
-details tomorrow.
+FYI, your tree doesn't have these dm-4.16 changes (which are needed to
+make Ming's blk-mq chnages that are in your tree, commit 396eaf21e et
+al, have Ming's desired effect on DM):
 
+https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.16&id=050af08ffb1b62af69196d61c22a0755f9a3cdbd
+https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.16&id=459b54019cfeb7330ed4863ad40f78489e0ff23d
+https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.16&id=ec3eaf9a673106f66606896aed6ddd20180b02ec
 
--- 
-Ming
+Fact that you're seeing such shit results without dm-4.16 commit
+ec3eaf9a67 (that reverts older commit 6077c2d706) means: yeap, this
+is really awful, let's fix it!  But it is a different flavor of awful
+because the dm-rq.c:map_request() will handle the DM_MAPIO_DELAY_REQUEUE
+result from the null_blk's blk_get_request() failure using
+dm_mq_delay_requeue_request() against the dm-mq mpath device:
+
+        blk_mq_requeue_request(rq, false);
+        __dm_mq_kick_requeue_list(rq->q, msecs);
+
+So begs the question: why are we stalling _exactly_?  (you may have it
+all figured out, as your gif implies.. but I'm not there yet).
+
+Might be interesting to see how your same test behaves without all of
+the churn we've staged for 4.16, e.g. against v4.15-rc8
+
+Mike
