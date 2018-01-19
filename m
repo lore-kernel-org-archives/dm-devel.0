@@ -1,11 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [RFC PATCH 00/16] multipath path classification
-Date: Fri, 19 Jan 2018 01:29:00 +0100
-Message-ID: <20180119002916.10323-1-mwilck@suse.com>
+Subject: [RFC PATCH 08/16] multipath.conf.5: document
+	"ignore_wwids"
+Date: Fri, 19 Jan 2018 01:29:08 +0100
+Message-ID: <20180119002916.10323-9-mwilck@suse.com>
+References: <20180119002916.10323-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20180119002916.10323-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,49 +22,57 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com, Be
 Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-This patch series implements the recommendation in my recent posting
-"Multipath path classification revisited". My testing has been surprisingly
-successful so far; more testing is of course needed.
-Anyway, I think it's in a shape that I can ask for review.
+---
+ multipath/multipath.conf.5 | 31 +++++++++++++++++++++++++++++++
+ 1 file changed, 31 insertions(+)
 
-I've seen Ben's detailed reply to my posting, but his comments haven't been
-taken into account in this series yet.
-
-Benjamin Marzinski (1):
-  libmultipath: trigger change uevent on new device creation
-
-Martin Wilck (15):
-  Revert "multipath: ignore -i if find_multipaths is set"
-  Revert "multipathd: imply -n if find_multipaths is set"
-  libmultipath: add mpvec param to should_multipath()
-  libmultipath: should_multipath: keep existing maps
-  multipath -u -i: change logic for find_multipaths
-  libmultipath: let ignore_wwids be set in config file
-  multipathd: replace -n with !ignore_wwids
-  multipath.conf.5: document "ignore_wwids"
-  multipath.8: adapt documentation of '-i'
-  multipathd.8: document that '-n' is now ignored
-  multipath: common code path for CMD_VALID_PATH
-  multipath -u/-c: change output to environment/key format
-  multipath -u/-c: add "$DEV is maybe a valid path"
-  multipath.rules: find_multipaths+ignore_wwids logic
-  libmultipath: trigger path uevent only when necessary
-
- libmultipath/config.c      |  1 +
- libmultipath/config.h      |  1 -
- libmultipath/configure.c   | 48 ++++++++++++++++++++++++++++++++---
- libmultipath/configure.h   |  1 +
- libmultipath/defaults.h    |  1 +
- libmultipath/dict.c        |  4 +++
- libmultipath/wwids.c       | 13 +++++++---
- libmultipath/wwids.h       |  2 +-
- multipath/main.c           | 58 ++++++++++++++++++++++--------------------
- multipath/multipath.8      |  3 ++-
- multipath/multipath.conf.5 | 31 +++++++++++++++++++++++
- multipath/multipath.rules  | 63 +++++++++++++++++++++++++++++++++++++++++++---
- multipathd/main.c          | 16 +++---------
- multipathd/multipathd.8    |  5 ++--
- 14 files changed, 192 insertions(+), 55 deletions(-)
-
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index ab151e720d75..33ad775139c4 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -954,12 +954,43 @@ device again, as soon as it sees a path with that WWID. This should allow most
+ users to have multipath automatically choose the correct paths to make into
+ multipath devices, without having to edit the blacklist.
+ .RS
++.PP
++If \fBignore_wwids\fR is set to
++.I no
++, only method
++.I 2
++above (manual creation by the user) will be used for creating new maps.
++.RE
++.RS
+ .TP
+ The default is: \fBno\fR
+ .RE
+ .
+ .
+ .TP
++.B ignore_wwids
++If set to
++.I no
++, multipath and multipathd only consider paths matching a WWID listed in
++the \fBwwids_file\fR as valid multipath devices. Automatic multipath map
++creation is disabled.
++.
++If set to
++.I yes
++, and \fBfind_multipaths\fR is
++.I no
++, every device which is not blacklisted
++will be treated as a potential multipath member. See above for
++the logic if  \fBfind_multipaths\fR is set to
++.I yes.
++.
++.RS
++.TP
++The default is: \fBoff\fR
++.RE
++.
++.
++.TP
+ .B uxsock_timeout
+ CLI receive timeout in milliseconds. For larger systems CLI commands
+ might timeout before the multipathd lock is released and the CLI command
 -- 
 2.15.1
