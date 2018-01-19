@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [RFC PATCH 11/16] multipath: common code path for
-	CMD_VALID_PATH
-Date: Fri, 19 Jan 2018 01:29:11 +0100
-Message-ID: <20180119002916.10323-12-mwilck@suse.com>
+Subject: [RFC PATCH 01/16] Revert "multipath: ignore -i if
+	find_multipaths is set"
+Date: Fri, 19 Jan 2018 01:29:01 +0100
+Message-ID: <20180119002916.10323-2-mwilck@suse.com>
 References: <20180119002916.10323-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,87 +22,31 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com, Be
 Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Print the result message in one place only. This simplifies
-future changes.
+This reverts commit ffbb886a8a16cb063d669cd76a1e656fd3ec8c4b.
 ---
- multipath/main.c | 30 +++++++++++++++++++-----------
- 1 file changed, 19 insertions(+), 11 deletions(-)
+ multipath/main.c | 10 ----------
+ 1 file changed, 10 deletions(-)
 
 diff --git a/multipath/main.c b/multipath/main.c
-index b7e5cf46fe0f..4b3d3a94b282 100644
+index 52bf1658bbca..21cc45145dbb 100644
 --- a/multipath/main.c
 +++ b/multipath/main.c
-@@ -336,6 +336,17 @@ out:
- 	return r;
- }
- 
-+static void print_cmd_valid(const char *devpath, int k)
-+{
-+	const char *msg[] = { "is", "is not" };
-+
-+	if (k < 0 || k >= sizeof(msg))
-+		return;
-+
-+	printf("%s %s a valid multipath device path\n",
-+	       devpath, msg[k]);
-+}
-+
- /*
-  * Return value:
-  *  -1: Retry
-@@ -377,10 +388,7 @@ configure (struct config *conf, enum mpath_cmds cmd,
- 	    cmd != CMD_REMOVE_WWID &&
- 	    (filter_devnode(conf->blist_devnode,
- 			    conf->elist_devnode, dev) > 0)) {
--		if (cmd == CMD_VALID_PATH)
--			printf("%s is not a valid multipath device path\n",
--			       devpath);
--		goto out;
-+		goto print_valid;
- 	}
- 
- 	/*
-@@ -393,7 +401,7 @@ configure (struct config *conf, enum mpath_cmds cmd,
- 		if (!refwwid) {
- 			condlog(4, "%s: failed to get wwid", devpath);
- 			if (failed == 2 && cmd == CMD_VALID_PATH)
--				printf("%s is not a valid multipath device path\n", devpath);
-+				goto print_valid;
- 			else
- 				condlog(3, "scope is null");
- 			goto out;
-@@ -432,9 +440,7 @@ configure (struct config *conf, enum mpath_cmds cmd,
- 				r = 0;
- 			if (r == 0 ||
- 			    !conf->find_multipaths || !conf->ignore_wwids) {
--				printf("%s %s a valid multipath device path\n",
--				       devpath, r == 0 ? "is" : "is not");
--				goto out;
-+				goto print_valid;
- 			}
+@@ -761,16 +761,6 @@ main (int argc, char *argv[])
  		}
  	}
-@@ -477,9 +483,7 @@ configure (struct config *conf, enum mpath_cmds cmd,
- 		 * the refwwid, then the path is valid */
- 		if (VECTOR_SIZE(curmp) != 0 || VECTOR_SIZE(pathvec) > 1)
- 			r = 0;
--		printf("%s %s a valid multipath device path\n",
--		       devpath, r == 0 ? "is" : "is not");
--		goto out;
-+		goto print_valid;
- 	}
  
- 	if (cmd != CMD_CREATE && cmd != CMD_DRY_RUN) {
-@@ -493,6 +497,10 @@ configure (struct config *conf, enum mpath_cmds cmd,
- 	r = coalesce_paths(&vecs, NULL, refwwid,
- 			   conf->force_reload, cmd);
- 
-+print_valid:
-+	if (cmd == CMD_VALID_PATH)
-+		print_cmd_valid(devpath, r);
-+
- out:
- 	if (refwwid)
- 		FREE(refwwid);
+-	/*
+-	 * FIXME: new device detection with find_multipaths currently
+-	 * doesn't work reliably.
+-	 */
+-	if (cmd ==  CMD_VALID_PATH &&
+-	    conf->find_multipaths && conf->ignore_wwids) {
+-		condlog(2, "ignoring -i flag because find_multipath is set in multipath.conf");
+-		conf->ignore_wwids = 0;
+-	}
+-
+ 	if (getuid() != 0) {
+ 		fprintf(stderr, "need to be root\n");
+ 		exit(1);
 -- 
 2.15.1
