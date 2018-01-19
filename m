@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [RFC PATCH 10/16] multipathd.8: document that '-n' is
-	now ignored
-Date: Fri, 19 Jan 2018 01:29:10 +0100
-Message-ID: <20180119002916.10323-11-mwilck@suse.com>
+Subject: [RFC PATCH 16/16] libmultipath: trigger path uevent only
+	when necessary
+Date: Fri, 19 Jan 2018 01:29:16 +0100
+Message-ID: <20180119002916.10323-17-mwilck@suse.com>
 References: <20180119002916.10323-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,32 +22,45 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com, Be
 Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
+Paths that are already classified as DM_MULTIPATH_DEVICE_PATH don't
+need to be retriggered. As an exception, trigger events for paths in
+"maybe" state that are waiting to be updated.
 ---
- multipathd/multipathd.8 | 5 ++---
- 1 file changed, 2 insertions(+), 3 deletions(-)
+ libmultipath/configure.c | 20 ++++++++++++++++++++
+ 1 file changed, 20 insertions(+)
 
-diff --git a/multipathd/multipathd.8 b/multipathd/multipathd.8
-index 5c96680c0514..ccf23606c0ff 100644
---- a/multipathd/multipathd.8
-+++ b/multipathd/multipathd.8
-@@ -25,7 +25,6 @@ multipathd \- Multipath daemon.
- .RB [\| \-v\ \c
- .IR verbosity \|]
- .RB [\| \-B \|]
--.RB [\| \-n \|]
- .
- .
- .\" ----------------------------------------------------------------------------
-@@ -73,8 +72,8 @@ be viewed by entering '\fIhelp\fR'. When you are finished entering commands, pre
- .
- .TP
- .B \-n
--Ignore new devices. multipathd will not create a multipath device unless the
--WWID for the device is already listed in the WWIDs file.
-+\fBDEPRECATED\fR. This parameter is ignored. Use the config file parameter
-+\fB"ignore_wwids = no"\fR to obtain the effect this option used to have.
- .
- .
- .\" ----------------------------------------------------------------------------
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index c08ea5b8decc..f8d1fa452014 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -447,8 +447,28 @@ trigger_paths_udev_change(const struct multipath *mpp)
+ 		if (!pgp->paths)
+ 			continue;
+ 		vector_foreach_slot(pgp->paths, pp, j) {
++			const char *env;
++
+ 			if (!pp->udev)
+ 				continue;
++			/*
++			 * Paths that are already classified as multipath
++			 * members don't need another uevent.
++			 */
++			env = udev_device_get_property_value(
++				pp->udev, "DM_MULTIPATH_DEVICE_PATH");
++			if (env != NULL && !strcmp(env, "1")) {
++				/*
++				 * Nonempty DM_MULTIPATH_SAVED_FS_TYPE means
++				 * path is in "maybe" state and timer is running
++				 * Send uevent now (see multipath.rules).
++				 */
++				env = udev_device_get_property_value(
++					pp->udev, "DM_MULTIPATH_SAVED_FS_TYPE");
++				if (env == NULL)
++					continue;
++			}
++			condlog(4, "triggering change uevent for %s", pp->dev);
+ 			sysfs_attr_set_value(pp->udev, "uevent", "change",
+ 					     strlen("change"));
+ 		}
 -- 
 2.15.1
