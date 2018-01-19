@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [RFC PATCH 03/16] libmultipath: add mpvec param to
-	should_multipath()
-Date: Fri, 19 Jan 2018 01:29:03 +0100
-Message-ID: <20180119002916.10323-4-mwilck@suse.com>
+Subject: [RFC PATCH 12/16] multipath -u/-c: change output to
+	environment/key format
+Date: Fri, 19 Jan 2018 01:29:12 +0100
+Message-ID: <20180119002916.10323-13-mwilck@suse.com>
 References: <20180119002916.10323-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,65 +22,63 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com, Be
 Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-This will be used in a follow-up patch.
+... instead of free format. This provides more flexibility
+for udev rule processing for the future. Adapt code in multipath.rules.
+The exit status remains as usual.
 ---
- libmultipath/configure.c | 2 +-
- libmultipath/wwids.c     | 2 +-
- libmultipath/wwids.h     | 2 +-
- multipathd/main.c        | 2 +-
- 4 files changed, 4 insertions(+), 4 deletions(-)
+ multipath/main.c          | 11 +++++------
+ multipath/multipath.rules |  6 +++---
+ 2 files changed, 8 insertions(+), 9 deletions(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 13e14cc25fff..325018a78b95 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -970,7 +970,7 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
- 			continue;
- 
- 		/* If find_multipaths was selected check if the path is valid */
--		if (!refwwid && !should_multipath(pp1, pathvec)) {
-+		if (!refwwid && !should_multipath(pp1, pathvec, curmp)) {
- 			orphan_path(pp1, "only one path");
- 			continue;
- 		}
-diff --git a/libmultipath/wwids.c b/libmultipath/wwids.c
-index bc70a27409d3..fcbf5281b491 100644
---- a/libmultipath/wwids.c
-+++ b/libmultipath/wwids.c
-@@ -271,7 +271,7 @@ out:
+diff --git a/multipath/main.c b/multipath/main.c
+index 4b3d3a94b282..2127daebcb8f 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -336,15 +336,14 @@ out:
+ 	return r;
  }
  
- int
--should_multipath(struct path *pp1, vector pathvec)
-+should_multipath(struct path *pp1, vector pathvec, vector mpvec)
+-static void print_cmd_valid(const char *devpath, int k)
++static void print_cmd_valid(int k)
  {
- 	int i, ignore_new_devs;
- 	struct path *pp2;
-diff --git a/libmultipath/wwids.h b/libmultipath/wwids.h
-index 95270129daa0..d9a78b38ccf8 100644
---- a/libmultipath/wwids.h
-+++ b/libmultipath/wwids.h
-@@ -12,7 +12,7 @@
- "#\n" \
- "# Valid WWIDs:\n"
+-	const char *msg[] = { "is", "is not" };
++	int vals[] = { 1, 0 };
  
--int should_multipath(struct path *pp, vector pathvec);
-+int should_multipath(struct path *pp, vector pathvec, vector mpvec);
- int remember_wwid(char *wwid);
- int check_wwids_file(char *wwid, int write_wwid);
- int remove_wwid(char *wwid);
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 255d1d860b2a..98ce16ee020b 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -699,7 +699,7 @@ rescan:
- 		mpp->action = ACT_RELOAD;
- 		extract_hwe_from_path(mpp);
- 	} else {
--		if (!should_multipath(pp, vecs->pathvec)) {
-+		if (!should_multipath(pp, vecs->pathvec, vecs->mpvec)) {
- 			orphan_path(pp, "only one path");
- 			return 0;
- 		}
+-	if (k < 0 || k >= sizeof(msg))
++	if (k < 0 || k >= sizeof(vals))
+ 		return;
+ 
+-	printf("%s %s a valid multipath device path\n",
+-	       devpath, msg[k]);
++	printf("DM_MULTIPATH_DEVICE_PATH=\"%d\"\n", vals[k]);
+ }
+ 
+ /*
+@@ -499,7 +498,7 @@ configure (struct config *conf, enum mpath_cmds cmd,
+ 
+ print_valid:
+ 	if (cmd == CMD_VALID_PATH)
+-		print_cmd_valid(devpath, r);
++		print_cmd_valid(r);
+ 
+ out:
+ 	if (refwwid)
+diff --git a/multipath/multipath.rules b/multipath/multipath.rules
+index 6f8ee2be0a58..5b3c3c9c1135 100644
+--- a/multipath/multipath.rules
++++ b/multipath/multipath.rules
+@@ -19,9 +19,9 @@ LABEL="test_dev"
+ ENV{MPATH_SBIN_PATH}="/sbin"
+ TEST!="$env{MPATH_SBIN_PATH}/multipath", ENV{MPATH_SBIN_PATH}="/usr/sbin"
+ 
+-ENV{DM_MULTIPATH_DEVICE_PATH}!="1", \
+-	PROGRAM=="$env{MPATH_SBIN_PATH}/multipath -u %k", \
+-	ENV{DM_MULTIPATH_DEVICE_PATH}="1", ENV{ID_FS_TYPE}="mpath_member", \
++# multipath -u sets DM_MULTIPATH_DEVICE_PATH
++ENV{DM_MULTIPATH_DEVICE_PATH}!="1", IMPORT="$env{MPATH_SBIN_PATH}/multipath -u %k"
++ENV{DM_MULTIPATH_DEVICE_PATH}=="1", ENV{ID_FS_TYPE}="mpath_member", \
+ 	ENV{SYSTEMD_READY}="0"
+ 
+ LABEL="end_mpath"
 -- 
 2.15.1
