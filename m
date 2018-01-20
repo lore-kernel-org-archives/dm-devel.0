@@ -1,73 +1,61 @@
-From: Ming Lei <ming.lei@redhat.com>
-Subject: Re: [RFC PATCH] blk-mq: fixup RESTART when queue becomes idle
-Date: Sat, 20 Jan 2018 07:57:06 +0800
-Message-ID: <20180119235705.GB17195@ming.t460p>
-References: <1516301278.2676.35.camel@wdc.com>
- <deeb2b2e-6d0e-a144-843d-d08626de8aea@kernel.dk>
- <20180119023212.GA25413@ming.t460p>
- <eba1191e-4d59-a763-03b2-acd2d2812ea3@kernel.dk>
- <20180119072623.GB25369@ming.t460p>
- <047f68ec-f51b-190f-2f89-f413325c2540@kernel.dk>
- <20180119154047.GB14827@ming.t460p>
- <540e1239-c415-766b-d4ff-bb0b7f3517a7@kernel.dk>
- <20180119161336.GA22600@redhat.com>
- <65a40164-275c-824b-64fc-b9e4cf781861@kernel.dk>
+From: Martin Wilck <mwilck@suse.com>
+Subject: [FIX for 14/16] multipath.rules: set job properties for
+	systemd-run correctly
+Date: Sat, 20 Jan 2018 01:27:23 +0100
+Message-ID: <20180120002723.10653-1-mwilck@suse.com>
+References: <20180119002916.10323-15-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <65a40164-275c-824b-64fc-b9e4cf781861@kernel.dk>
-Sender: linux-block-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>
-Cc: Mike Snitzer <snitzer@redhat.com>, Bart Van Assche <Bart.VanAssche@wdc.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "hch@infradead.org" <hch@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "osandov@fb.com" <osandov@fb.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20180119002916.10323-15-mwilck@suse.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@redhat.com
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-On Fri, Jan 19, 2018 at 09:23:35AM -0700, Jens Axboe wrote:
-> On 1/19/18 9:13 AM, Mike Snitzer wrote:
-> > On Fri, Jan 19 2018 at 10:48am -0500,
-> > Jens Axboe <axboe@kernel.dk> wrote:
-> > 
-> >> On 1/19/18 8:40 AM, Ming Lei wrote:
-> >>>>>> Where does the dm STS_RESOURCE error usually come from - what's exact
-> >>>>>> resource are we running out of?
-> >>>>>
-> >>>>> It is from blk_get_request(underlying queue), see
-> >>>>> multipath_clone_and_map().
-> >>>>
-> >>>> That's what I thought. So for a low queue depth underlying queue, it's
-> >>>> quite possible that this situation can happen. Two potential solutions
-> >>>> I see:
-> >>>>
-> >>>> 1) As described earlier in this thread, having a mechanism for being
-> >>>>    notified when the scarce resource becomes available. It would not
-> >>>>    be hard to tap into the existing sbitmap wait queue for that.
-> >>>>
-> >>>> 2) Have dm set BLK_MQ_F_BLOCKING and just sleep on the resource
-> >>>>    allocation. I haven't read the dm code to know if this is a
-> >>>>    possibility or not.
-> > 
-> > Right, #2 is _not_ the way forward.  Historically request-based DM used
-> > its own mempool for requests, this was to be able to have some measure
-> > of control and resiliency in the face of low memory conditions that
-> > might be affecting the broader system.
-> > 
-> > Then Christoph switched over to adding per-request-data; which ushered
-> > in the use of blk_get_request using ATOMIC allocations.  I like the
-> > result of that line of development.  But taking the next step of setting
-> > BLK_MQ_F_BLOCKING is highly unfortunate (especially in that this
-> > dm-mpath.c code is common to old .request_fn and blk-mq, at least the
-> > call to blk_get_request is).  Ultimately dm-mpath like to avoid blocking
-> > for a request because for this dm-mpath device we have multiple queues
-> > to allocate from if need be (provided we have an active-active storage
-> > network topology).
-> 
-> If you can go to multiple devices, obviously it should not block on a
-> single device. That's only true for the case where you can only go to
-> one device, blocking at that point would probably be fine. Or if all
-> your paths are busy, then blocking would also be OK.
+The default dependencies must be turned off for both the timer and
+the service unit, otherwise systemd-run will wait for sysinit.target.
 
-Introducing one extra block point will hurt AIO performance, in which
-there is usually much less jobs/processes to submit IO.
+Moreover, fix these bugs:
+ - never run the logic if DM_MULTIPATH_DEVICE_PATH!=2
+ - reset DM_MULTIPATH_DEVICE_PATH to "" on timer expiry
 
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ multipath/multipath.rules | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/multipath/multipath.rules b/multipath/multipath.rules
+index 6b4a418d0009..659aa586d46e 100644
+--- a/multipath/multipath.rules
++++ b/multipath/multipath.rules
+@@ -62,8 +62,9 @@ ENV{DM_MULTIPATH_DEVICE_PATH}=="1", ENV{ID_FS_TYPE}="mpath_member", \
+ # DM_MULTIPATH_WAIT_DONE ensures that this happens only once.
+ # (But see "special case" exception above).
+ 
+-ENV{DM_MULTIPATH_WAIT_DONE}=="1", GOTO="end_mpath"
+ ENV{DM_MULTIPATH_DEVICE_PATH}!="2", GOTO="end_mpath"
++ENV{DM_MULTIPATH_WAIT_DONE}=="1", ENV{DM_MULTIPATH_DEVICE_PATH}="", \
++	GOTO="end_mpath"
+ 
+ # Default timeout values for the timer. Use early udev rules files to customize.
+ # Timeouts are in seconds after system boot, and seconds after first path
+@@ -77,6 +78,6 @@ ENV{DM_MULTIPATH_SAVED_FS_TYPE}=="", ENV{DM_MULTIPATH_SAVED_FS_TYPE}="dm_multipa
+ ENV{ID_FS_TYPE}="maybe_mpath_member"
+ ENV{DM_MULTIPATH_DEVICE_PATH}="1"
+ ENV{SYSTEMD_READY}="0"
+-RUN+="/usr/bin/systemd-run --action change --on-boot $env{FIND_MULTIPATHS_BOOT_TMO} --on-active $env{FIND_MULTIPATHS_PATH_TMO} /usr/bin/udevadm trigger $sys$devpath"
++RUN+="/usr/bin/systemd-run --no-block --timer-property DefaultDependencies=no --property DefaultDependencies=no --on-boot $env{FIND_MULTIPATHS_BOOT_TMO} --on-active $env{FIND_MULTIPATHS_PATH_TMO} /usr/bin/udevadm --action change trigger $sys$devpath"
+ 
+ LABEL="end_mpath"
 -- 
-Ming
+2.15.1
