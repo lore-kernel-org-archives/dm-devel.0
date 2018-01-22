@@ -1,60 +1,120 @@
-From: Bart Van Assche <Bart.VanAssche@wdc.com>
-Subject: Re: [PATCH 4/5] blk-mq: introduce blk_get_request_notify
-Date: Mon, 22 Jan 2018 17:13:03 +0000
-Message-ID: <1516641182.2545.26.camel@sandisk.com>
-References: <20180122033550.27855-1-ming.lei@redhat.com>
-         <20180122033550.27855-5-ming.lei@redhat.com>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [dm-devel] [PATCH 0/2] dm: add new loop and ram targets
+Date: Mon, 22 Jan 2018 12:19:44 -0800
+Message-ID: <20180122201944.GA7080@infradead.org>
+References: <cover.1516124587.git.heinzm@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20180122033550.27855-5-ming.lei@redhat.com>
-Content-Language: en-US
-Content-ID: <53A2A85FD6AB3E4AB17DE7A55E63247D@namprd04.prod.outlook.com>
+Content-Disposition: inline
+In-Reply-To: <cover.1516124587.git.heinzm@redhat.com>
 Sender: linux-block-owner@vger.kernel.org
-To: "hch@infradead.org" <hch@infradead.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "snitzer@redhat.com" <snitzer@redhat.com>, "ming.lei@redhat.com" <ming.lei@redhat.com>, "axboe@kernel.dk" <axboe@kernel.dk>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "loberman@redhat.com" <loberman@redhat.com>
+To: Heinz Mauelshagen <heinzm@redhat.com>
+Cc: dm-devel@redhat.com, snitzer@redhat.com, Ming Lei <ming.lei@redhat.com>, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-T24gTW9uLCAyMDE4LTAxLTIyIGF0IDExOjM1ICswODAwLCBNaW5nIExlaSB3cm90ZToNCj4gRE0t
-TVBBVEggbmVlZCB0byBhbGxvY2F0ZSByZXF1ZXN0IGZyb20gdW5kZXJseWluZyBxdWV1ZSwgYnV0
-IHdoZW4gdGhlDQo+IGFsbG9jYXRpb24gZmFpbHMsIHRoZXJlIGlzIG5vIHdheSB0byBtYWtlIHVu
-ZGVybHlpbmcgcXVldWUncyBSRVNUQVJUDQo+IHRvIHJlc3RhcnQgRE0ncyBxdWV1ZS4NCj4gDQo+
-IFRoaXMgcGF0Y2ggaW50cm9kdWNlcyBibGtfZ2V0X3JlcXVlc3Rfbm90aWZ5KCkgZm9yIHRoaXMg
-cHVycG9zZSwgYW5kDQo+IGNhbGxlciBuZWVkIHRvIHBhc3MgJ3dhaXRfcXVldWVfZW50cnlfdCcg
-dG8gdGhpcyBmdW5jdGlvbiwgYW5kIG1ha2UNCj4gc3VyZSBpdCBpcyBpbml0aWFsaXplZCB3ZWxs
-LCBzbyBhZnRlciB0aGUgY3VycmVudCBhbGxvY2F0aW9uIGZhaWxzLA0KPiBETSB3aWxsIGdldCBu
-b3RpZmllZCB3aGVuIHRoZXJlIGlzIHJlcXVlc3QgYXZhaWxhYmxlIGZyb20gdW5kZXJseWluZw0K
-PiBxdWV1ZS4NCg0KUGxlYXNlIG1lbnRpb24gdGhhdCB0aGlzIGlzIG9ubHkgYSBwYXJ0aWFsIHNv
-bHV0aW9uIGJlY2F1c2UgdGhlIGNhc2Ugd2hlbg0KZS5nLiBibGtfaW5zZXJ0X2Nsb25lZF9yZXF1
-ZXN0KCkgcmV0dXJucyBCTEtfU1RTX1JFU09VUkNFIGlzIG5vdCBoYW5kbGVkLg0KVGhpcyBjb3Vs
-ZCBoZWxwIGZvciBkcml2ZXJzIHRoYXQgc3VwcG9ydCBhIHZlcnkgbG93IHF1ZXVlIGRlcHRoIChs
-cGZjKSBidXQNCnByb2JhYmx5IHdvbid0IGJlIHRoYXQgdXNlZnVsIGZvciBvdGhlciBkcml2ZXJz
-Lg0KDQo+ICsJLyoNCj4gKwkgKiBJZiBjYWxsZXIgcmVxdWlyZXMgbm90aWZpY2F0aW9uIHdoZW4g
-dGFnIGlzIGF2YWlsYWJsZSwgYWRkDQo+ICsJICogd2FpdCBlbnRyeSBvZiAnZGF0YS0+bm90aWZp
-ZXInIHRvIHRoZSB3YWl0IHF1ZXVlLg0KPiArCSAqLw0KPiArCWlmIChkYXRhLT5mbGFncyAmIEJM
-S19NUV9SRVFfTk9XQUlUKSB7DQo+ICsJCWJvb2wgYWRkZWQgPSBmYWxzZTsNCj4gKw0KPiArCQlz
-cGluX2xvY2tfaXJxKCZ3cy0+d2FpdC5sb2NrKTsNCj4gKwkJaWYgKGxpc3RfZW1wdHkoJmRhdGEt
-Pm5vdGlmaWVyLT5lbnRyeSkpDQo+ICsJCQlfX2FkZF93YWl0X3F1ZXVlKCZ3cy0+d2FpdCwgZGF0
-YS0+bm90aWZpZXIpOw0KPiArCQllbHNlDQo+ICsJCQlhZGRlZCA9IHRydWU7DQo+ICsJCXNwaW5f
-dW5sb2NrX2lycSgmd3MtPndhaXQubG9jayk7DQo+ICsNCj4gKwkJaWYgKGFkZGVkKQ0KPiArCQkJ
-cmV0dXJuIEJMS19NUV9UQUdfRkFJTDsNCj4gKw0KPiArCQl0YWcgPSBfX2Jsa19tcV9nZXRfdGFn
-KGRhdGEsIGJ0KTsNCj4gKwkJaWYgKHRhZyAhPSAtMSkNCj4gKwkJCWdvdG8gZm91bmRfdGFnOw0K
-PiArCQlyZXR1cm4gQkxLX01RX1RBR19GQUlMOw0KPiArCX0NCg0KU29ycnkgYnV0IEkgZG9uJ3Qg
-bGlrZSB0aGlzIGFwcHJvYWNoLiBBZGRpbmcgImRhdGEtPm5vdGlmaWVyIiB0byB0aGUgd2FpdA0K
-cXVldWUgY3JlYXRlcyBhIGxpbmsgYmV0d2VlbiB0d28gcmVxdWVzdCBxdWV1ZXMsIGUuZy4gYSBk
-bS1tcGF0aCBxdWV1ZSBhbmQNCm9uZSBvZiB0aGUgcGF0aHMgdGhhdCBpcyBhIG1lbWJlciBvZiB0
-aGF0IGRtLW1wYXRoIHF1ZXVlLiBUaGlzIGNyZWF0ZXMgdGhlDQpwb3RlbnRpYWwgZm9yIHVnbHkg
-cmFjZXMgYmV0d2VlbiBlLmcuICJkYXRhLT5ub3RpZmllciIgYmVpbmcgdHJpZ2dlcmVkIGFuZA0K
-cmVtb3ZhbCBvZiB0aGUgZG0tbXBhdGggcXVldWUuDQoNCj4gZGlmZiAtLWdpdCBhL2Jsb2NrL2Js
-ay1tcS5oIGIvYmxvY2svYmxrLW1xLmgNCj4gaW5kZXggODhjNTU4ZjcxODE5Li5iZWMyZjY3NWY4
-ZjEgMTAwNjQ0DQo+IC0tLSBhL2Jsb2NrL2Jsay1tcS5oDQo+ICsrKyBiL2Jsb2NrL2Jsay1tcS5o
-DQo+IEBAIC0xNjAsNiArMTYwLDcgQEAgc3RydWN0IGJsa19tcV9hbGxvY19kYXRhIHsNCj4gIAlz
-dHJ1Y3QgcmVxdWVzdF9xdWV1ZSAqcTsNCj4gIAlibGtfbXFfcmVxX2ZsYWdzX3QgZmxhZ3M7DQo+
-ICAJdW5zaWduZWQgaW50IHNoYWxsb3dfZGVwdGg7DQo+ICsJd2FpdF9xdWV1ZV9lbnRyeV90ICpu
-b3RpZmllcjsNCg0KSWYgb3RoZXJzIHdvdWxkIGFncmVlIHdpdGggdGhlIGFwcHJvYWNoIG9mIHRo
-aXMgcGF0Y2ggcGxlYXNlIHVzZSBhbm90aGVyIG5hbWUNCnRoYW4gIm5vdGlmaWVyIi4gSW4gdGhl
-IGNvbnRleHQgb2YgdGhlIExpbnV4IGtlcm5lbCBhIG5vdGlmaWVyIGlzIGFuIGluc3RhbmNlDQpv
-ZiBzdHJ1Y3Qgbm90aWZpZXJfYmxvY2suIFRoZSBhYm92ZSAibm90aWZpZXIiIG1lbWJlciBpcyBu
-b3QgYSBub3RpZmllciBidXQgYQ0Kd2FpdCBxdWV1ZSBlbnRyeS4NCg0KVGhhbmtzLA0KDQpCYXJ0
-Lg==
+On Wed, Jan 17, 2018 at 08:33:59PM +0100, Heinz Mauelshagen wrote:
+> Enhancing IO performance compared to the kernels existing
+> loop driver thus better suiting respective requirements in
+> test setups, this patch series adds new "loop" and "ram" targets.
+
+For a fair comparism vs loop you'll need to compare it to the
+direct I/O mode.  If it is faster than that we have a very serious
+bug somewhere.
+
+> 
+> For measures see test results below.
+> 
+> 
+> The "loop" target maps segments to backing files.
+> Mapping table example:
+> 0 4192256 loop /tmp/mapper_loop1
+> 4192256 2097152 loop /dev/nvm/mapper_loop0
+> 
+> 
+> The "ram" target accesses RAM directly rather than through
+> tmpfs additionally enhancing performance compared to "loop"
+> thus avoding filesystem overhead.
+> Mapping table example:
+> 0 8388608 ram
+> 
+> "ram" is a singleton target.
+> 
+> 
+> Performance test results for 4K and 32K IOPS comparing the loop driver
+> with dm-loop backed by tmpfs and dm-ram (all 2GiB backing size):
+> 
+> <TESTSCRIPT>
+> #!/bin/sh
+> for f in /tmp/loop0 /tmp/mapper_loop0
+> do
+> 	dd if=/dev/zero of=$f bs=256M count=8 iflag=fullblock
+> done
+> 
+> losetup /dev/loop0 /tmp/loop0
+> sectors=`du -s /tmp/mapper_loop0|cut -f1`
+> dmsetup create loop0 --table "0 $sectors loop /tmp/mapper_loop0"
+> dmsetup create ram --table "0 $sectors ram"
+> 
+> for bs in 4K 32K
+> do
+> 	for d in /dev/loop0 /dev/mapper/loop0 /dev/mapper/ram
+> 	do
+> 		echo 3 > /proc/sys/vm/drop_caches
+> 		fio --bs=$bs --rw=randrw --numjobs=99 --group_reporting --iodepth=12 --runtime=3 --ioengine=libaio \
+> 		    --loops=1 --direct=1 --exitall --name dc --filename=$d | egrep "read|write"
+> 	done
+> done
+> </TESTSCRIPT>
+> 
+> <4K_RESULTS>
+> loop driver:
+>    read: IOPS=226k, BW=881MiB/s (924MB/s)(2645MiB/3003msec)
+>   write: IOPS=225k, BW=880MiB/s (923MB/s)(2643MiB/3003msec)
+> dm-loop target:
+>    read: IOPS=425k, BW=1661MiB/s (1742MB/s)(4990MiB/3004msec)
+>   write: IOPS=425k, BW=1662MiB/s (1743MB/s)(4992MiB/3004msec)
+> dm-ram target:
+>    read: IOPS=636k, BW=2484MiB/s (2605MB/s)(7464MiB/3005msec)
+>   write: IOPS=636k, BW=2484MiB/s (2605MB/s)(7464MiB/3005msec)
+> </4K_RESULTS>
+> 
+> <32K_RESULTS>
+> loop driver:
+>   read: IOPS=55.5k, BW=1733MiB/s (1817MB/s)(5215MiB/3009msec)
+>   write: IOPS=55.2k, BW=1726MiB/s (1810MB/s)(5195MiB/3009msec)
+> dm-loop target:
+>    read: IOPS=110k, BW=3452MiB/s (3620MB/s)(10.1GiB/3006msec)
+>   write: IOPS=110k, BW=3448MiB/s (3615MB/s)(10.1GiB/3006msec)
+> dm-ram target:
+>    read: IOPS=355k, BW=10.8GiB/s (11.6GB/s)(32.6GiB/3008msec)
+>   write: IOPS=355k, BW=10.8GiB/s (11.6GB/s)(32.6GiB/3008msec)
+> </32K_RESULTS>
+> 
+> 
+> Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
+> 
+> Heinz Mauelshagen (2):
+>   dm loop: new target redirecting io to backing file(s)
+>   dm ram: new target redirecting io to RAM
+> 
+>  Documentation/device-mapper/loop.txt |  20 ++
+>  Documentation/device-mapper/ram.txt  |  15 ++
+>  drivers/md/Kconfig                   |  14 ++
+>  drivers/md/Makefile                  |   2 +
+>  drivers/md/dm-loop.c                 | 352 +++++++++++++++++++++++++++++++++++
+>  drivers/md/dm-ram.c                  | 101 ++++++++++
+>  6 files changed, 504 insertions(+)
+>  create mode 100644 Documentation/device-mapper/loop.txt
+>  create mode 100644 Documentation/device-mapper/ram.txt
+>  create mode 100644 drivers/md/dm-loop.c
+>  create mode 100644 drivers/md/dm-ram.c
+> 
+> -- 
+> 2.14.3
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+---end quoted text---
