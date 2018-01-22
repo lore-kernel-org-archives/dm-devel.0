@@ -1,7 +1,7 @@
 From: Ming Lei <ming.lei@redhat.com>
-Subject: [PATCH 4/5] blk-mq: introduce blk_get_request_notify
-Date: Mon, 22 Jan 2018 11:35:49 +0800
-Message-ID: <20180122033550.27855-5-ming.lei@redhat.com>
+Subject: [PATCH 5/5] dm-mpath: use blk_mq_alloc_request_notify for allocating blk-mq req
+Date: Mon, 22 Jan 2018 11:35:50 +0800
+Message-ID: <20180122033550.27855-6-ming.lei@redhat.com>
 References: <20180122033550.27855-1-ming.lei@redhat.com>
 Return-path: <linux-block-owner@vger.kernel.org>
 In-Reply-To: <20180122033550.27855-1-ming.lei@redhat.com>
@@ -10,15 +10,21 @@ To: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, Christoph Hellwig
 Cc: dm-devel@redhat.com, Ming Lei <ming.lei@redhat.com>, Laurence Oberman <loberman@redhat.com>, Bart Van Assche <bart.vanassche@sandisk.com>
 List-Id: dm-devel.ids
 
-DM-MPATH need to allocate request from underlying queue, but when the
-allocation fails, there is no way to make underlying queue's RESTART
-to restart DM's queue.
+When blk_get_request() fails to allocate one request, there is no way
+to make underlying queue's RESTART to restart DM's queue, this patch
+applies the new introduced blk_mq_alloc_request_notify() to deal with
+this issue.
 
-This patch introduces blk_get_request_notify() for this purpose, and
-caller need to pass 'wait_queue_entry_t' to this function, and make
-sure it is initialized well, so after the current allocation fails,
-DM will get notified when there is request available from underlying
-queue.
+The following issues can be addressed:
+
+1) When the blk_get_request() fails, finaly dm-rq will return
+BLK_STS_RESOURCE to blk-mq, then blk-mq will run queue after 10ms, this
+delay may degrade dm-rq performance a lot when any underlying device
+attached to the same host is accessed directly.
+
+2) there can't be a way to figure out a perfect delay for running queue
+in the situation 1), and if the delay is too small, request can be dequeued
+from DM queue too quick, then sequential IO performance gets hurt.
 
 This approach is suggested by Jens, and has been used in blk-mq dispatch
 patch for a while, see blk_mq_mark_tag_wait().
@@ -29,129 +35,131 @@ Cc: Laurence Oberman <loberman@redhat.com>
 Cc: Bart Van Assche <bart.vanassche@sandisk.com>
 Signed-off-by: Ming Lei <ming.lei@redhat.com>
 ---
- block/blk-mq-tag.c     | 27 ++++++++++++++++++++++++++-
- block/blk-mq.c         | 24 +++++++++++++++++++++---
- block/blk-mq.h         |  1 +
- include/linux/blk-mq.h |  5 +++++
- 4 files changed, 53 insertions(+), 4 deletions(-)
+ drivers/md/dm-mpath.c | 50 +++++++++++++++++++++++++++++++++++++++++++++++++-
+ drivers/md/dm.c       |  1 +
+ 2 files changed, 50 insertions(+), 1 deletion(-)
 
-diff --git a/block/blk-mq-tag.c b/block/blk-mq-tag.c
-index 336dde07b230..911fc9bd1bab 100644
---- a/block/blk-mq-tag.c
-+++ b/block/blk-mq-tag.c
-@@ -128,10 +128,35 @@ unsigned int blk_mq_get_tag(struct blk_mq_alloc_data *data)
- 	if (tag != -1)
- 		goto found_tag;
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index 7d3e572072f5..f7753a2e9229 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -11,6 +11,7 @@
+ #include "dm-bio-record.h"
+ #include "dm-path-selector.h"
+ #include "dm-uevent.h"
++#include "dm.h"
  
--	if (data->flags & BLK_MQ_REQ_NOWAIT)
-+	if ((data->flags & BLK_MQ_REQ_NOWAIT) && !(data->notifier &&
-+			(data->flags & BLK_MQ_REQ_ALLOC_NOTIFY)))
- 		return BLK_MQ_TAG_FAIL;
+ #include <linux/blkdev.h>
+ #include <linux/ctype.h>
+@@ -30,6 +31,15 @@
+ #define DM_PG_INIT_DELAY_MSECS 2000
+ #define DM_PG_INIT_DELAY_DEFAULT ((unsigned) -1)
  
- 	ws = bt_wait_ptr(bt, data->hctx);
++/*
++ * When running out of request from underlying request, use this
++ * structure to get notified from blk-mq
++ */
++struct underlying_notifier {
++	struct request_queue *q;
++	wait_queue_entry_t wait;
++};
 +
-+	/*
-+	 * If caller requires notification when tag is available, add
-+	 * wait entry of 'data->notifier' to the wait queue.
-+	 */
-+	if (data->flags & BLK_MQ_REQ_NOWAIT) {
-+		bool added = false;
-+
-+		spin_lock_irq(&ws->wait.lock);
-+		if (list_empty(&data->notifier->entry))
-+			__add_wait_queue(&ws->wait, data->notifier);
-+		else
-+			added = true;
-+		spin_unlock_irq(&ws->wait.lock);
-+
-+		if (added)
-+			return BLK_MQ_TAG_FAIL;
-+
-+		tag = __blk_mq_get_tag(data, bt);
-+		if (tag != -1)
-+			goto found_tag;
-+		return BLK_MQ_TAG_FAIL;
-+	}
-+
- 	drop_ctx = data->ctx == NULL;
- 	do {
- 		/*
-diff --git a/block/blk-mq.c b/block/blk-mq.c
-index e91d688792a9..a71e44f17e7f 100644
---- a/block/blk-mq.c
-+++ b/block/blk-mq.c
-@@ -384,10 +384,14 @@ static struct request *blk_mq_get_request(struct request_queue *q,
- 	return rq;
- }
+ /* Path properties */
+ struct pgpath {
+ 	struct list_head list;
+@@ -40,6 +50,7 @@ struct pgpath {
+ 	struct dm_path path;
+ 	struct delayed_work activate_path;
  
--struct request *blk_mq_alloc_request(struct request_queue *q, unsigned int op,
--		blk_mq_req_flags_t flags)
-+static struct request *__blk_mq_alloc_request(struct request_queue *q,
-+		unsigned int op, blk_mq_req_flags_t flags,
-+		wait_queue_entry_t *notifier)
- {
--	struct blk_mq_alloc_data alloc_data = { .flags = flags };
-+	struct blk_mq_alloc_data alloc_data = {
-+		.flags = flags,
-+		.notifier = notifier,
-+	};
- 	struct request *rq;
- 	int ret;
- 
-@@ -408,8 +412,22 @@ struct request *blk_mq_alloc_request(struct request_queue *q, unsigned int op,
- 	rq->bio = rq->biotail = NULL;
- 	return rq;
- }
-+
-+struct request *blk_mq_alloc_request(struct request_queue *q, unsigned int op,
-+		blk_mq_req_flags_t flags)
-+{
-+	return __blk_mq_alloc_request(q, op, flags, NULL);
-+}
- EXPORT_SYMBOL(blk_mq_alloc_request);
- 
-+struct request *blk_mq_alloc_request_notify(struct request_queue *q,
-+		unsigned int op, blk_mq_req_flags_t flags,
-+		wait_queue_entry_t *notifier)
-+{
-+	return __blk_mq_alloc_request(q, op, flags, notifier);
-+}
-+EXPORT_SYMBOL(blk_mq_alloc_request_notify);
-+
- struct request *blk_mq_alloc_request_hctx(struct request_queue *q,
- 	unsigned int op, blk_mq_req_flags_t flags, unsigned int hctx_idx)
- {
-diff --git a/block/blk-mq.h b/block/blk-mq.h
-index 88c558f71819..bec2f675f8f1 100644
---- a/block/blk-mq.h
-+++ b/block/blk-mq.h
-@@ -160,6 +160,7 @@ struct blk_mq_alloc_data {
- 	struct request_queue *q;
- 	blk_mq_req_flags_t flags;
- 	unsigned int shallow_depth;
-+	wait_queue_entry_t *notifier;
- 
- 	/* input & output parameter */
- 	struct blk_mq_ctx *ctx;
-diff --git a/include/linux/blk-mq.h b/include/linux/blk-mq.h
-index 8efcf49796a3..335c7dace5a7 100644
---- a/include/linux/blk-mq.h
-+++ b/include/linux/blk-mq.h
-@@ -219,10 +219,15 @@ enum {
- 	BLK_MQ_REQ_INTERNAL	= (__force blk_mq_req_flags_t)(1 << 2),
- 	/* set RQF_PREEMPT */
- 	BLK_MQ_REQ_PREEMPT	= (__force blk_mq_req_flags_t)(1 << 3),
-+	/* notify when new rq is available */
-+	BLK_MQ_REQ_ALLOC_NOTIFY	= (__force blk_mq_req_flags_t)(1 << 4),
++	struct underlying_notifier notifier;
+ 	bool is_active:1;		/* Path status */
  };
  
- struct request *blk_mq_alloc_request(struct request_queue *q, unsigned int op,
- 		blk_mq_req_flags_t flags);
-+struct request *blk_mq_alloc_request_notify(struct request_queue *q,
-+		unsigned int op, blk_mq_req_flags_t flags,
-+		wait_queue_entry_t *notifier);
- struct request *blk_mq_alloc_request_hctx(struct request_queue *q,
- 		unsigned int op, blk_mq_req_flags_t flags,
- 		unsigned int hctx_idx);
+@@ -125,6 +136,17 @@ static void process_queued_bios(struct work_struct *work);
+  * Allocation routines
+  *-----------------------------------------------*/
+ 
++static int req_notify(wait_queue_entry_t *wait, unsigned mode, int flags,
++		void *key)
++{
++	struct underlying_notifier *notifier;
++
++	notifier = container_of(wait, struct underlying_notifier, wait);
++	list_del_init(&notifier->wait.entry);
++	blk_mq_run_hw_queues(notifier->q, true);
++	return 1;
++}
++
+ static struct pgpath *alloc_pgpath(void)
+ {
+ 	struct pgpath *pgpath = kzalloc(sizeof(*pgpath), GFP_KERNEL);
+@@ -490,6 +512,27 @@ static bool must_push_back_bio(struct multipath *m)
+ 	return __must_push_back(m, flags);
+ }
+ 
++static struct request *
++multipath_get_req(struct pgpath *pgpath, struct request_queue *q,
++		  struct request *rq)
++{
++	if (!q->mq_ops)
++		return blk_get_request(q, rq->cmd_flags | REQ_NOMERGE,
++				GFP_ATOMIC);
++
++	/*
++	 * Even BLK_MQ_REQ_ALLOC_NOTIFY is passed, we can't return
++	 * BLK_STS_DEV_RESOUCE to blk-mq if this allocation fails because
++	 * the notification can come before adding dm's request to
++	 * dispatch list, so still need to return BLK_STS_RESOUCE to
++	 * blk-mq, and the notification will run queue and cancel the
++	 * delay caused by BLK_STS_RESOUCE immediately.
++	 */
++	return blk_mq_alloc_request_notify(q, rq->cmd_flags | REQ_NOMERGE,
++                                BLK_MQ_REQ_NOWAIT | BLK_MQ_REQ_ALLOC_NOTIFY,
++				&pgpath->notifier.wait);
++}
++
+ /*
+  * Map cloned requests (request-based multipath)
+  */
+@@ -526,7 +569,7 @@ static int multipath_clone_and_map(struct dm_target *ti, struct request *rq,
+ 
+ 	bdev = pgpath->path.dev->bdev;
+ 	q = bdev_get_queue(bdev);
+-	clone = blk_get_request(q, rq->cmd_flags | REQ_NOMERGE, GFP_ATOMIC);
++	clone = multipath_get_req(pgpath, q, rq);
+ 	if (IS_ERR(clone)) {
+ 		/* EBUSY, ENODEV or EWOULDBLOCK: requeue */
+ 		if (blk_queue_dying(q)) {
+@@ -873,6 +916,7 @@ static struct pgpath *parse_path(struct dm_arg_set *as, struct path_selector *ps
+ 	int r;
+ 	struct pgpath *p;
+ 	struct multipath *m = ti->private;
++	struct mapped_device *md = dm_table_get_md((m)->ti->table);
+ 
+ 	/* we need at least a path arg */
+ 	if (as->argc < 1) {
+@@ -906,6 +950,10 @@ static struct pgpath *parse_path(struct dm_arg_set *as, struct path_selector *ps
+ 		goto bad;
+ 	}
+ 
++	p->notifier.q = dm_get_md_queue(md);
++	init_waitqueue_func_entry(&p->notifier.wait, req_notify);
++	INIT_LIST_HEAD(&p->notifier.wait.entry);
++
+ 	return p;
+  bad:
+ 	free_pgpath(p);
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index d6de00f367ef..ff06efcaf36e 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -445,6 +445,7 @@ struct request_queue *dm_get_md_queue(struct mapped_device *md)
+ {
+ 	return md->queue;
+ }
++EXPORT_SYMBOL_GPL(dm_get_md_queue);
+ 
+ struct dm_stats *dm_get_stats(struct mapped_device *md)
+ {
 -- 
 2.9.5
