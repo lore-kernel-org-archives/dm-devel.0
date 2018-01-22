@@ -1,76 +1,63 @@
-From: Ming Lei <ming.lei@redhat.com>
-Subject: Re: [PATCH 4/5] blk-mq: introduce blk_get_request_notify
-Date: Mon, 22 Jan 2018 18:19:03 +0800
-Message-ID: <20180122101902.GD1570@ming.t460p>
-References: <20180122033550.27855-1-ming.lei@redhat.com>
- <20180122033550.27855-5-ming.lei@redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH] multipathd: update path's udev in
+ uev_update_path
+Date: Mon, 22 Jan 2018 11:34:15 +0100
+Message-ID: <1516617255.30796.40.camel@suse.com>
+References: <CEB9978CF3252343BE3C67AC9F0086A3429585CA@H3CMLB14-EX.srv.huawei-3com.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180122033550.27855-5-ming.lei@redhat.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, Laurence Oberman <loberman@redhat.com>, Bart Van Assche <bart.vanassche@sandisk.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CEB9978CF3252343BE3C67AC9F0086A3429585CA@H3CMLB14-EX.srv.huawei-3com.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Wuchongyun <wu.chongyun@h3c.com>, Benjamin Marzinski <bmarzins@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+Cc: Guozhonghua <guozhonghua@h3c.com>, Changwei Ge <ge.changwei@h3c.com>, Changlimin <changlimin@h3c.com>
 List-Id: dm-devel.ids
 
-On Mon, Jan 22, 2018 at 11:35:49AM +0800, Ming Lei wrote:
-> DM-MPATH need to allocate request from underlying queue, but when the
-> allocation fails, there is no way to make underlying queue's RESTART
-> to restart DM's queue.
-> 
-> This patch introduces blk_get_request_notify() for this purpose, and
-> caller need to pass 'wait_queue_entry_t' to this function, and make
-> sure it is initialized well, so after the current allocation fails,
-> DM will get notified when there is request available from underlying
-> queue.
-> 
-> This approach is suggested by Jens, and has been used in blk-mq dispatch
-> patch for a while, see blk_mq_mark_tag_wait().
-> 
-> Suggested-by: Jens Axboe <axboe@kernel.dk>
-> Cc: Mike Snitzer <snitzer@redhat.com>
-> Cc: Laurence Oberman <loberman@redhat.com>
-> Cc: Bart Van Assche <bart.vanassche@sandisk.com>
-> Signed-off-by: Ming Lei <ming.lei@redhat.com>
-> ---
->  block/blk-mq-tag.c     | 27 ++++++++++++++++++++++++++-
->  block/blk-mq.c         | 24 +++++++++++++++++++++---
->  block/blk-mq.h         |  1 +
->  include/linux/blk-mq.h |  5 +++++
->  4 files changed, 53 insertions(+), 4 deletions(-)
-> 
-> diff --git a/block/blk-mq-tag.c b/block/blk-mq-tag.c
-> index 336dde07b230..911fc9bd1bab 100644
-> --- a/block/blk-mq-tag.c
-> +++ b/block/blk-mq-tag.c
-> @@ -128,10 +128,35 @@ unsigned int blk_mq_get_tag(struct blk_mq_alloc_data *data)
->  	if (tag != -1)
->  		goto found_tag;
->  
-> -	if (data->flags & BLK_MQ_REQ_NOWAIT)
-> +	if ((data->flags & BLK_MQ_REQ_NOWAIT) && !(data->notifier &&
-> +			(data->flags & BLK_MQ_REQ_ALLOC_NOTIFY)))
->  		return BLK_MQ_TAG_FAIL;
->  
->  	ws = bt_wait_ptr(bt, data->hctx);
-> +
-> +	/*
-> +	 * If caller requires notification when tag is available, add
-> +	 * wait entry of 'data->notifier' to the wait queue.
-> +	 */
-> +	if (data->flags & BLK_MQ_REQ_NOWAIT) {
-> +		bool added = false;
-> +
-> +		spin_lock_irq(&ws->wait.lock);
-> +		if (list_empty(&data->notifier->entry))
-> +			__add_wait_queue(&ws->wait, data->notifier);
-> +		else
-> +			added = true;
-> +		spin_unlock_irq(&ws->wait.lock);
-
-The above need a per-notifier lock too, since the same notifier may
-be added to different wait queues at the same time.
-
--- 
-Ming
+T24gU2F0LCAyMDE4LTAxLTIwIGF0IDAyOjMwICswMDAwLCBXdWNob25neXVuIHdyb3RlOgo+IEhp
+IE1hcnRpbiBhbmQgQmVuLAo+IENvdWxkIHlvdSBoZWxwIHRvIHJldmlldyB0aGlzIHBhdGNoLCB0
+aGFua3MuCj4gCj4gV2hlbiByZWNlaXZpbmcgYSBjaGFuZ2UgdWV2ZW50IGFuZCBjYWxsaW5nIHVl
+dl91cGRhdGVfcGF0aCwgY3VycmVudAo+IGNvZGUKPiBub3QgdXBkYXRlIHRoZSBwYXRoJ3MgdWRl
+diwgaWYgdXNlIHBwLT51ZGV2IHRvIHF1ZXJ5IHRoZSB1ZGV2Cj4gZGF0YWJhc2UKPiBpbmZvIHdp
+bGwgZ2V0IHRoZSBvbGQgZGF0YS4gU28gaXQgc2hvdWxkIHVwZGF0ZSB0aGUgcGF0aCdzIHVkZXYg
+d2l0aAo+IHRoZQo+IG5ldyB1ZGV2IGZyb20gdGhlIG5ldyB1ZXZlbnQgaW4gdWV2X3VwZGF0ZV9w
+YXRoIGFsc28uCj4gCj4gU2lnbmVkLW9mZi1ieTogQ2hvbmd5dW4gV3UgPHd1LmNob25neXVuQGgz
+Yy5jb20+Cj4gLS0tCj4gIG11bHRpcGF0aGQvbWFpbi5jIHwgICAgMyArKysKPiAgMSBmaWxlIGNo
+YW5nZWQsIDMgaW5zZXJ0aW9ucygrKQo+IAo+IGRpZmYgLS1naXQgYS9tdWx0aXBhdGhkL21haW4u
+YyBiL211bHRpcGF0aGQvbWFpbi5jCj4gaW5kZXggMjdjZjIzNC4uZTdhNGY0YiAxMDA2NDQKPiAt
+LS0gYS9tdWx0aXBhdGhkL21haW4uYwo+ICsrKyBiL211bHRpcGF0aGQvbWFpbi5jCj4gQEAgLTkz
+Nyw2ICs5MzcsOSBAQCB1ZXZfdXBkYXRlX3BhdGggKHN0cnVjdCB1ZXZlbnQgKnVldiwgc3RydWN0
+Cj4gdmVjdG9ycyAqIHZlY3MpCj4gIAlpZiAocHApIHsKPiAgCQlzdHJ1Y3QgbXVsdGlwYXRoICpt
+cHAgPSBwcC0+bXBwOwo+ICAKPiArCQl1ZGV2X2RldmljZV91bnJlZihwcC0+dWRldik7Cj4gKwkJ
+cHAtPnVkZXYgPSB1ZGV2X2RldmljZV9yZWYodWV2LT51ZGV2KTsKPiArCj4gIAkJaWYgKGRpc2Fi
+bGVfY2hhbmdlZF93d2lkcyAmJgo+ICAJCSAgICAoc3RybGVuKHBwLT53d2lkKSB8fCBwcC0+d3dp
+ZF9jaGFuZ2VkKSkgewo+ICAJCQljaGFyIHd3aWRbV1dJRF9TSVpFXTsKClRoZSBnZW5lcmFsIGlk
+ZWEgaXMgY29ycmVjdCwgYnV0IEkgZmVhciB3ZSBuZWVkIHRvIGRvIG1vcmUuCgpCYXNpY2FsbHks
+IGlmIHJlbGV2YW50IHVkZXYgcHJvcGVydGllcyBoYXZlIGNoYW5nZWQsIHdlIG5lZWQgdG8gY2Fs
+bApwYXRoaW5mbygpIG9uIHRoZSBjaGFuZ2VkIHBhdGguIEdldHRpbmcgdGhpcyByaWdodCBpcyBz
+dWJ0bGUsIEkgZ3Vlc3MuCldlIGNhbid0IHNpbXBseSBjaGFuZ2UgdGhlIHBhdGggcHJvcGVydGll
+cyBpbiB0aGUgcGF0aHZlYywgYmVjYXVzZQp0aGVyZSdsbCBiZSBsb2NraW5nIGlzc3VlcywgYW5k
+IGNoYW5nZWQgcGF0aCBwcm9wZXJ0aWVzIG1pZ2h0IGFmZmVjdApob3cgdGhlIHBhdGggaXMgaGFu
+ZGxlZC4gVGhlIHBhdGggbWF5IGhhdmUgZ29uZSBSL08sIG9yIGV2ZW4gaGF2ZQpjaGFuZ2VkIHd3
+aWQuIFRoZSBzYWZlc3QgY291cnNlIG9mIGFjdGlvbiBtaWdodCBiZSB0byBkZWxldGUgYW5kIHJl
+LWFkZCAKdGhlIHBhdGggaWYgYW55IGltcG9ydGFudCBwcm9wZXJ0aWVzIGhhdmUgY2hhbmdlZC4g
+QnV0IGJsaW5kbHkgZGVsZXRpbmcKYW5kIHJlLWFkZGluZyB3b3VsZCBiZSB3cm9uZyBhcyB3ZWxs
+Li4uCgpCZW4gaGFzIHJlY2VudGx5IGRvbmUgd29yayBpbiB0aGlzIGFyZWEsIHNvIEknbGwgbGVh
+dmUgdGhlIHZlcmRpY3QgdG8KaGltIGZvciBub3cuCgpAQmVuLCBBRkFJQ1MgdGhpcyBwYXRjaCBz
+aG93cyB0aGF0IGRpc2FibGVfY2hhbmdlZF93d2lkcyB3b24ndCB3b3JrCmNvcnJlY3RseSBhcyBs
+b25nIGFzIHRoZSBXV0lEIGlzIGRlcml2ZWQgZnJvbSB1ZGV2LCB3aGljaCBpcyB0aGUKZGVmYXVs
+dCBjYXNlIHRoZXNlIGRheXMuIE9yIGFtIEkgb3Zlcmxvb2tpbmcgc29tZXRoaW5nPwoKTWFydGlu
+Cgo+IC0tIAo+IDEuNy45LjUKPiAKPiBSZWdhcmRzCj4gQ2hvbmd5dW4KCi0tIApEci4gTWFydGlu
+IFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNF
+IExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhh
+bSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxp
+c3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlz
+dGluZm8vZG0tZGV2ZWw=
