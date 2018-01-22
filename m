@@ -1,134 +1,157 @@
 From: Ming Lei <ming.lei@redhat.com>
-Subject: [PATCH 3/5] dm-rq: return BLK_STS_* from map_request()
-Date: Mon, 22 Jan 2018 11:35:48 +0800
-Message-ID: <20180122033550.27855-4-ming.lei@redhat.com>
+Subject: [PATCH 4/5] blk-mq: introduce blk_get_request_notify
+Date: Mon, 22 Jan 2018 11:35:49 +0800
+Message-ID: <20180122033550.27855-5-ming.lei@redhat.com>
 References: <20180122033550.27855-1-ming.lei@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Return-path: <linux-block-owner@vger.kernel.org>
 In-Reply-To: <20180122033550.27855-1-ming.lei@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Sender: linux-block-owner@vger.kernel.org
 To: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, Mike Snitzer <snitzer@redhat.com>
-Cc: Bart Van Assche <bart.vanassche@sandisk.com>, dm-devel@redhat.com, Laurence Oberman <loberman@redhat.com>, Ming Lei <ming.lei@redhat.com>
+Cc: dm-devel@redhat.com, Ming Lei <ming.lei@redhat.com>, Laurence Oberman <loberman@redhat.com>, Bart Van Assche <bart.vanassche@sandisk.com>
 List-Id: dm-devel.ids
 
-Except for DM_MAPIO_REQUEUE, map_request() handles other dispatch exception
-already, so return BLK_STS_* from map_request() directly.
+DM-MPATH need to allocate request from underlying queue, but when the
+allocation fails, there is no way to make underlying queue's RESTART
+to restart DM's queue.
 
-Another change is that if dm_dispatch_clone_request() returns
-BLK_STS_DEV_RESOURCE from underlying queue, this status is returned
-to blk-mq too, since underlying queue's RESTART can handle dm-rq's
-RESTART in this case.
+This patch introduces blk_get_request_notify() for this purpose, and
+caller need to pass 'wait_queue_entry_t' to this function, and make
+sure it is initialized well, so after the current allocation fails,
+DM will get notified when there is request available from underlying
+queue.
 
+This approach is suggested by Jens, and has been used in blk-mq dispatch
+patch for a while, see blk_mq_mark_tag_wait().
+
+Suggested-by: Jens Axboe <axboe@kernel.dk>
 Cc: Mike Snitzer <snitzer@redhat.com>
 Cc: Laurence Oberman <loberman@redhat.com>
 Cc: Bart Van Assche <bart.vanassche@sandisk.com>
 Signed-off-by: Ming Lei <ming.lei@redhat.com>
 ---
- drivers/md/dm-rq.c | 30 +++++++++++++++++-------------
- 1 file changed, 17 insertions(+), 13 deletions(-)
+ block/blk-mq-tag.c     | 27 ++++++++++++++++++++++++++-
+ block/blk-mq.c         | 24 +++++++++++++++++++++---
+ block/blk-mq.h         |  1 +
+ include/linux/blk-mq.h |  5 +++++
+ 4 files changed, 53 insertions(+), 4 deletions(-)
 
-diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
-index 1408e6664c16..830e1ccfbb44 100644
---- a/drivers/md/dm-rq.c
-+++ b/drivers/md/dm-rq.c
-@@ -482,9 +482,10 @@ static void init_tio(struct dm_rq_target_io *tio, struct request *rq,
+diff --git a/block/blk-mq-tag.c b/block/blk-mq-tag.c
+index 336dde07b230..911fc9bd1bab 100644
+--- a/block/blk-mq-tag.c
++++ b/block/blk-mq-tag.c
+@@ -128,10 +128,35 @@ unsigned int blk_mq_get_tag(struct blk_mq_alloc_data *data)
+ 	if (tag != -1)
+ 		goto found_tag;
  
- /*
-  * Returns:
-- * DM_MAPIO_*       : the request has been processed as indicated
-- * DM_MAPIO_REQUEUE : the original request needs to be immediately requeued
-- * < 0              : the request was completed due to failure
-+ * BLK_STS_OK       : the request has been processed aready, no need to
-+ * 		ask block layer to handle it any more
-+ * BLK_STS_RESOURCE : the original request needs to be immediately requeued
-+ * BLK_STS_DEV_RESOURCE : same with BLK_STS_RESOURCE, but blk-mq need this info
-  */
- static int map_request(struct dm_rq_target_io *tio)
+-	if (data->flags & BLK_MQ_REQ_NOWAIT)
++	if ((data->flags & BLK_MQ_REQ_NOWAIT) && !(data->notifier &&
++			(data->flags & BLK_MQ_REQ_ALLOC_NOTIFY)))
+ 		return BLK_MQ_TAG_FAIL;
+ 
+ 	ws = bt_wait_ptr(bt, data->hctx);
++
++	/*
++	 * If caller requires notification when tag is available, add
++	 * wait entry of 'data->notifier' to the wait queue.
++	 */
++	if (data->flags & BLK_MQ_REQ_NOWAIT) {
++		bool added = false;
++
++		spin_lock_irq(&ws->wait.lock);
++		if (list_empty(&data->notifier->entry))
++			__add_wait_queue(&ws->wait, data->notifier);
++		else
++			added = true;
++		spin_unlock_irq(&ws->wait.lock);
++
++		if (added)
++			return BLK_MQ_TAG_FAIL;
++
++		tag = __blk_mq_get_tag(data, bt);
++		if (tag != -1)
++			goto found_tag;
++		return BLK_MQ_TAG_FAIL;
++	}
++
+ 	drop_ctx = data->ctx == NULL;
+ 	do {
+ 		/*
+diff --git a/block/blk-mq.c b/block/blk-mq.c
+index e91d688792a9..a71e44f17e7f 100644
+--- a/block/blk-mq.c
++++ b/block/blk-mq.c
+@@ -384,10 +384,14 @@ static struct request *blk_mq_get_request(struct request_queue *q,
+ 	return rq;
+ }
+ 
+-struct request *blk_mq_alloc_request(struct request_queue *q, unsigned int op,
+-		blk_mq_req_flags_t flags)
++static struct request *__blk_mq_alloc_request(struct request_queue *q,
++		unsigned int op, blk_mq_req_flags_t flags,
++		wait_queue_entry_t *notifier)
  {
-@@ -493,7 +494,7 @@ static int map_request(struct dm_rq_target_io *tio)
- 	struct mapped_device *md = tio->md;
- 	struct request *rq = tio->orig;
- 	struct request *clone = NULL;
--	blk_status_t ret;
-+	blk_status_t ret, result = BLK_STS_OK;
+-	struct blk_mq_alloc_data alloc_data = { .flags = flags };
++	struct blk_mq_alloc_data alloc_data = {
++		.flags = flags,
++		.notifier = notifier,
++	};
+ 	struct request *rq;
+ 	int ret;
  
- 	r = ti->type->clone_and_map_rq(ti, rq, &tio->info, &clone);
- check_again:
-@@ -513,15 +514,16 @@ static int map_request(struct dm_rq_target_io *tio)
- 				     blk_rq_pos(rq));
- 		ret = dm_dispatch_clone_request(tio, clone, rq);
- 		if (dispatch_busy(ret)) {
--			if (!rq->q->mq_ops)
-+			if (!rq->q->mq_ops) {
- 				r = DM_MAPIO_DELAY_REQUEUE;
--			else
--				r = DM_MAPIO_REQUEUE;
--			goto check_again;
-+				goto check_again;
-+			}
-+			result = ret;
- 		}
- 		break;
- 	case DM_MAPIO_REQUEUE:
- 		/* The target wants to requeue the I/O */
-+		result = BLK_STS_RESOURCE;
- 		break;
- 	case DM_MAPIO_DELAY_REQUEUE:
- 		/* The target wants to requeue the I/O after a delay */
-@@ -536,7 +538,7 @@ static int map_request(struct dm_rq_target_io *tio)
- 		BUG();
- 	}
- 
--	return r;
-+	return result;
+@@ -408,8 +412,22 @@ struct request *blk_mq_alloc_request(struct request_queue *q, unsigned int op,
+ 	rq->bio = rq->biotail = NULL;
+ 	return rq;
  }
++
++struct request *blk_mq_alloc_request(struct request_queue *q, unsigned int op,
++		blk_mq_req_flags_t flags)
++{
++	return __blk_mq_alloc_request(q, op, flags, NULL);
++}
+ EXPORT_SYMBOL(blk_mq_alloc_request);
  
- static void dm_start_request(struct mapped_device *md, struct request *orig)
-@@ -599,7 +601,7 @@ static void map_tio_request(struct kthread_work *work)
++struct request *blk_mq_alloc_request_notify(struct request_queue *q,
++		unsigned int op, blk_mq_req_flags_t flags,
++		wait_queue_entry_t *notifier)
++{
++	return __blk_mq_alloc_request(q, op, flags, notifier);
++}
++EXPORT_SYMBOL(blk_mq_alloc_request_notify);
++
+ struct request *blk_mq_alloc_request_hctx(struct request_queue *q,
+ 	unsigned int op, blk_mq_req_flags_t flags, unsigned int hctx_idx)
  {
- 	struct dm_rq_target_io *tio = container_of(work, struct dm_rq_target_io, work);
+diff --git a/block/blk-mq.h b/block/blk-mq.h
+index 88c558f71819..bec2f675f8f1 100644
+--- a/block/blk-mq.h
++++ b/block/blk-mq.h
+@@ -160,6 +160,7 @@ struct blk_mq_alloc_data {
+ 	struct request_queue *q;
+ 	blk_mq_req_flags_t flags;
+ 	unsigned int shallow_depth;
++	wait_queue_entry_t *notifier;
  
--	if (map_request(tio) == DM_MAPIO_REQUEUE)
-+	if (dispatch_busy(map_request(tio)))
- 		dm_requeue_original_request(tio, false);
- }
+ 	/* input & output parameter */
+ 	struct blk_mq_ctx *ctx;
+diff --git a/include/linux/blk-mq.h b/include/linux/blk-mq.h
+index 8efcf49796a3..335c7dace5a7 100644
+--- a/include/linux/blk-mq.h
++++ b/include/linux/blk-mq.h
+@@ -219,10 +219,15 @@ enum {
+ 	BLK_MQ_REQ_INTERNAL	= (__force blk_mq_req_flags_t)(1 << 2),
+ 	/* set RQF_PREEMPT */
+ 	BLK_MQ_REQ_PREEMPT	= (__force blk_mq_req_flags_t)(1 << 3),
++	/* notify when new rq is available */
++	BLK_MQ_REQ_ALLOC_NOTIFY	= (__force blk_mq_req_flags_t)(1 << 4),
+ };
  
-@@ -754,6 +756,7 @@ static blk_status_t dm_mq_queue_rq(struct blk_mq_hw_ctx *hctx,
- 	struct dm_rq_target_io *tio = blk_mq_rq_to_pdu(rq);
- 	struct mapped_device *md = tio->md;
- 	struct dm_target *ti = md->immutable_target;
-+	blk_status_t ret;
- 
- 	if (unlikely(!ti)) {
- 		int srcu_idx;
-@@ -777,14 +780,15 @@ static blk_status_t dm_mq_queue_rq(struct blk_mq_hw_ctx *hctx,
- 	tio->ti = ti;
- 
- 	/* Direct call is fine since .queue_rq allows allocations */
--	if (map_request(tio) == DM_MAPIO_REQUEUE) {
-+	ret = map_request(tio);
-+	if (dispatch_busy(ret)) {
- 		/* Undo dm_start_request() before requeuing */
- 		rq_end_stats(md, rq);
- 		rq_completed(md, rq_data_dir(rq), false);
--		return BLK_STS_RESOURCE;
-+		return ret;
- 	}
- 
--	return BLK_STS_OK;
-+	return ret;
- }
- 
- static const struct blk_mq_ops dm_mq_ops = {
+ struct request *blk_mq_alloc_request(struct request_queue *q, unsigned int op,
+ 		blk_mq_req_flags_t flags);
++struct request *blk_mq_alloc_request_notify(struct request_queue *q,
++		unsigned int op, blk_mq_req_flags_t flags,
++		wait_queue_entry_t *notifier);
+ struct request *blk_mq_alloc_request_hctx(struct request_queue *q,
+ 		unsigned int op, blk_mq_req_flags_t flags,
+ 		unsigned int hctx_idx);
 -- 
 2.9.5
