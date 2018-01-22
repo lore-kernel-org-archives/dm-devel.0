@@ -1,52 +1,36 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: multipath-tools: add INSPUR/MCS to hardware table
-Date: Mon, 22 Jan 2018 15:44:37 +0100
-Message-ID: <9a1b0968-22f5-819a-6740-48fb52d9e765@gmail.com>
-References: <6FA0216CBF61AE4AA9DA6744243E7853DB5C42F2@jtjnmailbox06.home.langchao.com>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [PATCH 1/5] blk-mq: introduce BLK_STS_DEV_RESOURCE
+Date: Mon, 22 Jan 2018 08:32:42 -0800
+Message-ID: <20180122163242.GB23984@infradead.org>
+References: <20180122033550.27855-1-ming.lei@redhat.com>
+ <20180122033550.27855-2-ming.lei@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <6FA0216CBF61AE4AA9DA6744243E7853DB5C42F2@jtjnmailbox06.home.langchao.com>
-Content-Language: en-GB
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: =?UTF-8?B?VG9tIEdlbmco6IC/6Iqz5b+gKQ==?= <gengfangzhong@inspur.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20180122033550.27855-2-ming.lei@redhat.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Ming Lei <ming.lei@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Laurence Oberman <loberman@redhat.com>, Bart Van Assche <bart.vanassche@sandisk.com>, "James E . J . Bottomley" <jejb@linux.vnet.ibm.com>, "Martin K . Petersen" <martin.petersen@oracle.com>, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-T24gMDEvMjIvMjAxOCAxMTo1NSBBTSwgVG9tIEdlbmco6IC/6Iqz5b+gKSB3cm90ZToKCj4gSSBh
-ZGRlZCBhIG5ldyBkZXZpY2Ugc3VwcG9ydCwgdGhlIGhpc3RvcnkgYW5kIGNvZGUgZGlmZiBpcyBh
-cyBiZWxvdywgd2lsbCB0aGUgbWFpbnRhaW5lcnMgaGVscCB0byByZXZpZXcgYW5kIHN1Ym1pdD8K
-ClRoaXMgcGF0Y2ggaXMgcmVtb3ZpbmcgdGhlIGRldmljZS4KCj4gJCBnaXQgZGlmZiBmN2JlYzVl
-Li4wN2U3YmQ1CgpnaXQgZGlmZiAwN2U3YmQ1Li5mN2JlYzVlID8/PyBvciAiZ2l0IGZvcm1hdC1w
-YXRjaCAtMSA8Y29tbWl0X2lkPiIKCj4gKmRpZmYgLS1naXQgYS9saWJtdWx0aXBhdGgvaHd0YWJs
-ZS5jIGIvbGlibXVsdGlwYXRoL2h3dGFibGUuYyoKPiAKPiAqaW5kZXggYzhhY2YzYWYuLjQ0OGVm
-ZmUzIDEwMDY0NCoKPiAKPiAqLS0tIGEvbGlibXVsdGlwYXRoL2h3dGFibGUuYyoKPiAKPiAqKysr
-IGIvbGlibXVsdGlwYXRoL2h3dGFibGUuYyoKPiAKPiBAQCAtMTE4MSwyMSArMTE4MSw2IEBAc3Rh
-dGljIHN0cnVjdCBod2VudHJ5IGRlZmF1bHRfaHdbXSA9IHsKPiAKPiDCoMKgwqDCoMKgwqDCoMKg
-wqDCoMKgwqDCoMKgwqAgLnBncG9saWN5wqDCoMKgwqDCoCA9IE1VTFRJQlVTLAo+IAo+IMKgwqDC
-oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCAubm9fcGF0aF9yZXRyeSA9IDMwLAo+IAo+IMKgwqDC
-oMKgwqDCoMKgIH0sCj4gCj4gLcKgwqDCoMKgwqDCoCAvKgo+IAo+IC3CoMKgwqDCoMKgwqDCoCAq
-IElOU1BVUgo+IAo+IC3CoMKgwqDCoMKgwqDCoCAqCj4gCj4gLcKgwqDCoMKgwqDCoMKgICogTWFp
-bnRhaW5lcjogVG9tIEdlbmcKPiAKPiAtwqDCoMKgwqDCoMKgwqAgKiBNYWlsOiBnZW5nZmFuZ3po
-b25nQGluc3B1ci5jb20KPiAKPiAtwqDCoMKgwqDCoMKgwqAgKi8KPiAKPiAtwqDCoMKgwqDCoMKg
-IHsKPiAKPiAtwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCAvKiBBUzUzMDAvQVM1NTAwIEcy
-ICovCj4gCj4gLcKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgLnZlbmRvcsKgwqDCoMKgwqDC
-oMKgID0gIklOU1BVUiIsCj4gCj4gLcKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgLnByb2R1
-Y3TCoMKgwqDCoMKgwqAgPSAiTUNTIiwKPiAKPiAtwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
-oCAucGdwb2xpY3nCoMKgwqDCoMKgID0gR1JPVVBfQllfUFJJTywKPiAKPiAtwqDCoMKgwqDCoMKg
-wqDCoMKgwqDCoMKgwqDCoCAuc2VsZWN0b3LCoMKgwqDCoMKgID0gInJvdW5kLXJvYmluIDAiLAoK
-UmVwbGFjZSBpdCB3aXRoIHNlcnZpY2UtdGltZSwgaXQncyBzbWFydGVyLgoKPiAKPiAtwqDCoMKg
-wqDCoMKgwqDCoMKgwqDCoMKgwqDCoCAucGdmYWlsYmFja8KgwqDCoCA9IC1GQUlMQkFDS19JTU1F
-RElBVEUsCj4gCj4gLcKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgLnByaW9fbmFtZcKgwqDC
-oMKgID0gUFJJT19BTFVBLAo+IApQbGVhc2UsIHNlbmQgaXQgd2l0aCAiZ2l0IHNlbmQtZW1haWwi
-IG9yIHBsYWluIHRleHQuCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0
-LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+> -		if (ret == BLK_STS_RESOURCE) {
+> +		if ((ret == BLK_STS_RESOURCE) || (ret == BLK_STS_DEV_RESOURCE)) {
+
+No need for the inner braces here.
+
+> +	if ((ret == BLK_STS_RESOURCE) || (ret == BLK_STS_DEV_RESOURCE))
+
+Same here.
+
+> +/*
+> + * This status is returned from driver to block layer if device related
+> + * resource is run out of, but driver can guarantee that IO dispatch is
+> + * triggered in future when the resource is available.
+> + */
+> +#define BLK_STS_DEV_RESOURCE	((__force blk_status_t)13)
+
+We'll need some good explanation on BLK_STS_RESOURCE vs
+BLK_STS_DEV_RESOURCE I think.
+
+Except for these nitpicks this looks fine to me.
