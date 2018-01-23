@@ -1,119 +1,103 @@
 From: Ming Lei <ming.lei@redhat.com>
-Subject: Re: [PATCH 1/5] blk-mq: introduce BLK_STS_DEV_RESOURCE
-Date: Tue, 23 Jan 2018 08:57:34 +0800
-Message-ID: <20180123005728.GB4411@ming.t460p>
+Subject: Re: [PATCH 4/5] blk-mq: introduce blk_get_request_notify
+Date: Tue, 23 Jan 2018 09:29:11 +0800
+Message-ID: <20180123012910.GC4411@ming.t460p>
 References: <20180122033550.27855-1-ming.lei@redhat.com>
- <20180122033550.27855-2-ming.lei@redhat.com>
- <1516639793.2545.14.camel@sandisk.com>
+ <20180122033550.27855-5-ming.lei@redhat.com>
+ <1516641182.2545.26.camel@sandisk.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-block-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1516639793.2545.14.camel@sandisk.com>
+In-Reply-To: <1516641182.2545.26.camel@sandisk.com>
 Sender: linux-block-owner@vger.kernel.org
 To: Bart Van Assche <Bart.VanAssche@wdc.com>
-Cc: "hch@infradead.org" <hch@infradead.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "snitzer@redhat.com" <snitzer@redhat.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "jejb@linux.vnet.ibm.com" <jejb@linux.vnet.ibm.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "loberman@redhat.com" <loberman@redhat.com>
+Cc: "hch@infradead.org" <hch@infradead.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "snitzer@redhat.com" <snitzer@redhat.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "loberman@redhat.com" <loberman@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Jan 22, 2018 at 04:49:54PM +0000, Bart Van Assche wrote:
+On Mon, Jan 22, 2018 at 05:13:03PM +0000, Bart Van Assche wrote:
 > On Mon, 2018-01-22 at 11:35 +0800, Ming Lei wrote:
-> > @@ -1280,10 +1282,18 @@ bool blk_mq_dispatch_rq_list(struct request_queue *q, struct list_head *list,
-> >  		 * - Some but not all block drivers stop a queue before
-> >  		 *   returning BLK_STS_RESOURCE. Two exceptions are scsi-mq
-> >  		 *   and dm-rq.
-> > +		 *
-> > +		 * If drivers return BLK_STS_RESOURCE and S_SCHED_RESTART
-> > +		 * bit is set, run queue after 10ms for avoiding IO hang
-> > +		 * because the queue may be idle and the RESTART mechanism
-> > +		 * can't work any more.
-> >  		 */
-> > -		if (!blk_mq_sched_needs_restart(hctx) ||
-> > +		needs_restart = blk_mq_sched_needs_restart(hctx);
-> > +		if (!needs_restart ||
-> >  		    (no_tag && list_empty_careful(&hctx->dispatch_wait.entry)))
-> >  			blk_mq_run_hw_queue(hctx, true);
-> > +		else if (needs_restart && (ret == BLK_STS_RESOURCE))
-> > +			blk_mq_delay_run_hw_queue(hctx, 10);
-> >  	}
+> > DM-MPATH need to allocate request from underlying queue, but when the
+> > allocation fails, there is no way to make underlying queue's RESTART
+> > to restart DM's queue.
+> > 
+> > This patch introduces blk_get_request_notify() for this purpose, and
+> > caller need to pass 'wait_queue_entry_t' to this function, and make
+> > sure it is initialized well, so after the current allocation fails,
+> > DM will get notified when there is request available from underlying
+> > queue.
 > 
-> In my opinion there are two problems with the above changes:
-> * Only the block driver author can know what a good choice is for the time
+> Please mention that this is only a partial solution because the case when
+> e.g. blk_insert_cloned_request() returns BLK_STS_RESOURCE is not handled.
 
-The reality is that no one knew that before, if you look at the fact, most of
-BLK_STS_RESOURCE need that, but no one dealt with it at all. Both Jens and I
-concluded that it is a generic issue, which need generic solution.
+I don't think it is necessary to mention that in comment log, because
+one patch won't deal with all things.
 
-On the contrary, it is much easier to evaluate if one STS_RESOURCE can be
-converted to STS_DEV_RESOURCE, as you saw, there isn't many, because now we
-call .queue_rq() after getting budget and driver tag.
+But definitely there will be one patch which deals with that in V2,
+otherwise the performance issue can't be solved completely.
 
->   after which to rerun the queue. So I think moving the rerun delay (10 ms)
->   constant from block drivers into the core is a step backwards instead of a
->   step forwards.
+> This could help for drivers that support a very low queue depth (lpfc) but
+> probably won't be that useful for other drivers.
 
-As I mentioned before, if running out of resource inside .queue_rq(),
-this request is still out of control of blk-mq, and if run queue is
-scheduled inside .queue_rq(), it isn't correct, because when __blk_mq_run_hw_queue()
-is run, the request may not be visible for dispatch.
-
-Even though RCU lock is held during dispatch, preemption or interrupt
-can happen too, so it is simply wrong to depend on the timing to make
-sure __blk_mq_run_hw_queue() can see the request in this situation.
-
-Or driver reinserts the request into scheduler queue, but that way
-involves much big change if we do this in driver, and introduce
-unnecessary cost meantime.
-
-> * The purpose of the BLK_MQ_S_SCHED_RESTART flag is to detect whether or not
->   any of the queue runs triggered by freeing a tag happened concurrently. I
->   don't think that there is any relationship between queue runs happening all
->   or not concurrently and the chance that driver resources become available.
->   So deciding whether or not a queue should be rerun based on the value of
->   the BLK_MQ_S_SCHED_RESTART flag seems wrong to me.
-
-The fact is simple, that once BLK_MQ_S_SCHED_RESTART is set,
-blk_mq_dispatch_rq_list() won't call blk_mq_run_hw_queue() any more, and depends
-on request completion to rerun the queue. If driver can't make sure the queue will be
-restarted in future by returning STS_RESOURCE, we have to call
-blk_mq_delay_run_hw_queue(hctx, 10) for avoiding IO hang.
+Up to now, it is one dm-mpath specific performance issue under one
+specific situation: IO is submitted to dm-mpath device and the
+underlying queue at the same time, and the underlying queue depth is
+very low, such as 1.
 
 > 
-> > diff --git a/drivers/scsi/scsi_lib.c b/drivers/scsi/scsi_lib.c
-> > index d9ca1dfab154..55be2550c555 100644
-> > --- a/drivers/scsi/scsi_lib.c
-> > +++ b/drivers/scsi/scsi_lib.c
-> > @@ -2030,9 +2030,9 @@ static blk_status_t scsi_queue_rq(struct blk_mq_hw_ctx *hctx,
-> >  	case BLK_STS_OK:
-> >  		break;
-> >  	case BLK_STS_RESOURCE:
-> > -		if (atomic_read(&sdev->device_busy) == 0 &&
-> > -		    !scsi_device_blocked(sdev))
-> > -			blk_mq_delay_run_hw_queue(hctx, SCSI_QUEUE_DELAY);
-> > +		if (atomic_read(&sdev->device_busy) ||
-> > +		    scsi_device_blocked(sdev))
-> > +			ret = BLK_STS_DEV_RESOURCE;
-> >  		break;
-> >  	default:
-> >  		/*
+> > +	/*
+> > +	 * If caller requires notification when tag is available, add
+> > +	 * wait entry of 'data->notifier' to the wait queue.
+> > +	 */
+> > +	if (data->flags & BLK_MQ_REQ_NOWAIT) {
+> > +		bool added = false;
+> > +
+> > +		spin_lock_irq(&ws->wait.lock);
+> > +		if (list_empty(&data->notifier->entry))
+> > +			__add_wait_queue(&ws->wait, data->notifier);
+> > +		else
+> > +			added = true;
+> > +		spin_unlock_irq(&ws->wait.lock);
+> > +
+> > +		if (added)
+> > +			return BLK_MQ_TAG_FAIL;
+> > +
+> > +		tag = __blk_mq_get_tag(data, bt);
+> > +		if (tag != -1)
+> > +			goto found_tag;
+> > +		return BLK_MQ_TAG_FAIL;
+> > +	}
 > 
-> The above introduces two changes that have not been mentioned in the
-> description of this patch:
-> - The queue rerunning delay is changed from 3 ms into 10 ms. Where is the
->   explanation of this change? Does this change have a positive or negative
->   performance impact?
+> Sorry but I don't like this approach. Adding "data->notifier" to the wait
+> queue creates a link between two request queues, e.g. a dm-mpath queue and
+> one of the paths that is a member of that dm-mpath queue. This creates the
+> potential for ugly races between e.g. "data->notifier" being triggered and
+> removal of the dm-mpath queue.
 
-How can that be a issue for SCSI? The rerunning delay is only triggered
-when there isn't any in-flight requests in SCSI queue.
+I thought no such race because the dm request is still in dispatch list before
+the 'notifier' is handled. And now looks this isn't true, but this issue can be
+dealt easily by call blk_queue_enter_live() before the allocation, and
+release them all once the notifier is triggered.
 
-> - The above modifies a guaranteed queue rerun into a queue rerun that
->   may or may not happen, depending on whether or not multiple tags get freed
->   concurrently (return BLK_STS_DEV_RESOURCE). Sorry but I think that's wrong.
+Anyway this interface need to be well documented.
 
-This patch only moves the rerunning delay from SCSI .queue_rq into
-blk-mq, I don't know what you mean above, please explained a bit.
+> 
+> > diff --git a/block/blk-mq.h b/block/blk-mq.h
+> > index 88c558f71819..bec2f675f8f1 100644
+> > --- a/block/blk-mq.h
+> > +++ b/block/blk-mq.h
+> > @@ -160,6 +160,7 @@ struct blk_mq_alloc_data {
+> >  	struct request_queue *q;
+> >  	blk_mq_req_flags_t flags;
+> >  	unsigned int shallow_depth;
+> > +	wait_queue_entry_t *notifier;
+> 
+> If others would agree with the approach of this patch please use another name
+> than "notifier". In the context of the Linux kernel a notifier is an instance
+> of struct notifier_block. The above "notifier" member is not a notifier but a
+> wait queue entry.
 
-I know there is a race here in SCSI, but nothing to do with this patch.
-
+OK, I will change to 'wait', similar with 'dispatch_wait'.
 
 -- 
 Ming
