@@ -1,23 +1,14 @@
-From: Ming Lei <ming.lei@redhat.com>
-Subject: Re: [PATCH 1/5] blk-mq: introduce BLK_STS_DEV_RESOURCE
-Date: Wed, 24 Jan 2018 00:59:15 +0800
-Message-ID: <20180123165914.GH13277@ming.t460p>
-References: <20180122033550.27855-2-ming.lei@redhat.com>
-	<1516639793.2545.14.camel@sandisk.com>
-	<20180123005728.GB4411@ming.t460p>
-	<54f0c19c-38aa-e788-f476-492e5a5734c9@wdc.com>
-	<20180123162605.GD13277@ming.t460p>
-	<4cdb2b42-0097-c64a-d9c0-b7a1727c80de@wdc.com>
-	<20180123164109.GF13277@ming.t460p>
-	<1516726030.3339.14.camel@wdc.com>
-	<20180123164951.GG13277@ming.t460p>
-	<1516726441.3339.16.camel@wdc.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: [FIX PATCH v2 09/20] libmultipath: hwtable:
+	no_path_retry="queue" for NetApp NVMe
+Date: Tue, 23 Jan 2018 18:07:04 +0100
+Message-ID: <20180123170704.15037-1-mwilck@suse.com>
+References: <20180113211938.31552-10-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1516726441.3339.16.camel@wdc.com>
+In-Reply-To: <20180113211938.31552-10-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,46 +18,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <Bart.VanAssche@wdc.com>
-Cc: "axboe@kernel.dk" <axboe@kernel.dk>, "hch@infradead.org" <hch@infradead.org>, "jejb@linux.vnet.ibm.com" <jejb@linux.vnet.ibm.com>, "snitzer@redhat.com" <snitzer@redhat.com>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "loberman@redhat.com" <loberman@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, dm-devel@redhat.com
+Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-On Tue, Jan 23, 2018 at 04:54:02PM +0000, Bart Van Assche wrote:
-> On Wed, 2018-01-24 at 00:49 +0800, Ming Lei wrote:
-> > On Tue, Jan 23, 2018 at 04:47:11PM +0000, Bart Van Assche wrote:
-> > > On Wed, 2018-01-24 at 00:41 +0800, Ming Lei wrote:
-> > > > Could you explain where to call call_rcu()?  call_rcu() can't be used in
-> > > > IO path at all.
-> > > 
-> > > Can you explain what makes you think that call_rcu() can't be used in the
-> > > I/O path? As you know call_rcu() invokes a function asynchronously. From
-> > > Documentation/RCU/Design/Requirements/Requirements.html:
-> > > 
-> > >   The <tt>call_rcu()</tt> function may be used in a number of
-> > >   situations where neither <tt>synchronize_rcu()</tt> nor
-> > >   <tt>synchronize_rcu_expedited()</tt> would be legal,
-> > >   including within preempt-disable code, <tt>local_bh_disable()</tt> code,
-> > >   interrupt-disable code, and interrupt handlers.
-> > 
-> > OK, suppose it is true, do you want to change most of STS_RESOURCE in
-> > all drivers to this way? Why can't we use the generic and simple approach
-> > in this patch?
-> 
-> Please reread my proposal. I did not propose to change any block drivers.
-> What I proposed is to change the blk_mq_delay_run_hw_queue() implementation
-> such that it uses call_rcu() instead of kblockd_mod_delayed_work_on().
-> That's a generic and simple approach.
+Netapp requested this default setting for NetApp E-Series NVMe in addition to "multibus".
+Also, finalize the product ID regex after consulting with NetApp (the FW reporting just
+"ONTAP Controller" was beta only).
 
-How is that enough to fix the IO hang when driver returns STS_RESOURCE
-and the queue is idle? If you want to follow previous dm-rq's way of
-call blk_mq_delay_run_hw_queue() in .queue_rq(), the same trick need
-to be applied to other drivers too, right?
+This obsoletes my previous "FIX" patch
+'FIX "libmultipath: hwtable: multibus for NetApp NVMe-FC'
 
-Unfortunately most of STS_RESOURCE don't use this trick, but they need
-to be handled.
+Fixes: "libmultipath: hwtable: multibus for NetApp NVMe-FC"
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ libmultipath/hwtable.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
-The patch of 'blk-mq: introduce BLK_STS_DEV_RESOURCE' can fix all these
-cases.
-
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index 1cde60a6a41d..0915ea4dfa56 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -681,16 +681,17 @@ static struct hwentry default_hw[] = {
+ 		.no_path_retry = 24,
+ 	},
+ 	/*
+-	 * NetApp NVMe-FC namespace devices: MULTIBUS preferred
++	 * NetApp NVMe-FC namespace devices: MULTIBUS, queueing preferred
+ 	 *
+ 	 * The table is searched backwards, so place this after generic NVMe
+ 	 */
+ 	{
+ 		.vendor	       = "NVME",
+-		.product       = "(NetApp |)ONTAP Controller)",
++		.product       = "^NetApp ONTAP Controller",
+ 		.uid_attribute = "ID_WWN",
+ 		.checker_name  = NONE,
+ 		.pgpolicy      = MULTIBUS,
++		.no_path_retry = NO_PATH_RETRY_QUEUE,
+ 		.retain_hwhandler = RETAIN_HWHANDLER_OFF,
+ 	},
+ 	/*
 -- 
-Ming
+2.15.1
