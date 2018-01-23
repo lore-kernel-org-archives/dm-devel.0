@@ -1,211 +1,168 @@
-From: =?gb2312?B?VG9tIEdlbmcouaK3vNbSKQ==?= <gengfangzhong@inspur.com>
-Subject: Re: multipath-tools: add INSPUR/MCS to hardware table
-Date: Tue, 23 Jan 2018 11:01:50 +0000
-Message-ID: <6FA0216CBF61AE4AA9DA6744243E7853DB5C43CF@jtjnmailbox06.home.langchao.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: block: neutralize blk_insert_cloned_request IO stall regression
+ (was: Re: [RFC PATCH] blk-mq: fixup RESTART when queue becomes idle)
+Date: Tue, 23 Jan 2018 07:15:20 -0500
+Message-ID: <20180123121519.GA24681@redhat.com>
+References: <1516301278.2676.35.camel@wdc.com>
+ <deeb2b2e-6d0e-a144-843d-d08626de8aea@kernel.dk>
+ <20180118204856.GA31679@redhat.com>
+ <1516309128.2676.38.camel@wdc.com>
+ <20180118212327.GB31679@redhat.com>
+ <1516311554.2676.50.camel@wdc.com>
+ <20180118220132.GA20860@redhat.com>
+ <1516314012.2676.76.camel@wdc.com>
+ <20180123092204.GA39002@redhat.com>
+ <20180123105357.GA3344@ming.t460p>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============7831707946652424835=="
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: zh-CN
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20180123105357.GA3344@ming.t460p>
+Sender: linux-block-owner@vger.kernel.org
+To: Ming Lei <ming.lei@redhat.com>
+Cc: Bart Van Assche <Bart.VanAssche@wdc.com>, axboe@kernel.dk, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "hch@infradead.org" <hch@infradead.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "osandov@fb.com" <osandov@fb.com>
 List-Id: dm-devel.ids
 
---===============7831707946652424835==
-Content-Language: zh-CN
-Content-Type: multipart/signed; protocol="application/x-pkcs7-signature";
-	micalg=SHA1; boundary="----=_NextPart_000_0110_01D3947C.9E5DCF80"
+On Tue, Jan 23 2018 at  5:53am -0500,
+Ming Lei <ming.lei@redhat.com> wrote:
 
-------=_NextPart_000_0110_01D3947C.9E5DCF80
-Content-Type: multipart/mixed;
-	boundary="----=_NextPart_001_0111_01D3947C.9E5DCF80"
+> Hi Mike,
+> 
+> On Tue, Jan 23, 2018 at 10:22:04AM +0100, Mike Snitzer wrote:
+> > On Thu, Jan 18 2018 at  5:20pm -0500,
+> > Bart Van Assche <Bart.VanAssche@wdc.com> wrote:
+> > 
+> > > On Thu, 2018-01-18 at 17:01 -0500, Mike Snitzer wrote:
+> > > > And yet Laurence cannot reproduce any such lockups with your test...
+> > > 
+> > > Hmm ... maybe I misunderstood Laurence but I don't think that Laurence has
+> > > already succeeded at running an unmodified version of my tests. In one of the
+> > > e-mails Laurence sent me this morning I read that he modified these scripts
+> > > to get past a kernel module unload failure that was reported while starting
+> > > these tests. So the next step is to check which changes were made to the test
+> > > scripts and also whether the test results are still valid.
+> > > 
+> > > > Are you absolutely certain this patch doesn't help you?
+> > > > https://patchwork.kernel.org/patch/10174037/
+> > > > 
+> > > > If it doesn't then that is actually very useful to know.
+> > > 
+> > > The first I tried this morning is to run the srp-test software against a merge
+> > > of Jens' for-next branch and your dm-4.16 branch. Since I noticed that the dm
+> > > queue locked up I reinserted a blk_mq_delay_run_hw_queue() call in the dm code.
+> > > Since even that was not sufficient I tried to kick the queues via debugfs (for
+> > > s in /sys/kernel/debug/block/*/state; do echo kick >$s; done). Since that was
+> > > not sufficient to resolve the queue stall I reverted the following tree patches
+> > > that are in Jens' tree:
+> > > * "blk-mq: improve DM's blk-mq IO merging via blk_insert_cloned_request feedback"
+> > > * "blk-mq-sched: remove unused 'can_block' arg from blk_mq_sched_insert_request"
+> > > * "blk-mq: don't dispatch request in blk_mq_request_direct_issue if queue is busy"
+> > > 
+> > > Only after I had done this the srp-test software ran again without triggering
+> > > dm queue lockups.
+> > 
+> > Given that Ming's notifier-based patchset needs more development time I
+> > think we're unfortunately past the point where we can comfortably wait
+> > for that to be ready.
+> > 
+> > So we need to explore alternatives to fixing this IO stall regression.
+> 
+> The fix for IO stall doesn't need the notifier-based patchset, and only
+> the 1st patch is enough for fixing the IO stall. And it is a generic
+> issue, which need generic solution, that is the conclusion made by
+> Jens and me.
+> 
+> 	https://marc.info/?l=linux-kernel&m=151638176727612&w=2
 
+That's fine if Bart verifies it.
 
-------=_NextPart_001_0111_01D3947C.9E5DCF80
-Content-Type: text/plain;
-	charset="gb2312"
-Content-Transfer-Encoding: 7bit
+> And the notifier-based patchset is for solving the performance issue
+> reported by Jens:
+> 
+> 	- run IO on dm-mpath
+> 	- run background IO on low depth underlying queue
+> 	- then IO performance on dm-mpath is extremely slow
+> 
+> I will send out the 1st patch of 'blk-mq: introduce BLK_STS_DEV_RESOURCE'
+> soon, but the notifier-based patchset shouldn't be very urgent, since
+> the above test case isn't usual in reality.
+> 
+> > Rather than attempt the above block reverts (which is an incomplete
+> > listing given newer changes): might we develop a more targeted code
+> > change to neutralize commit 396eaf21ee ("blk-mq: improve DM's blk-mq IO
+> > merging via blk_insert_cloned_request feedback")? -- which, given Bart's
+> > findings above, seems to be the most problematic block commit.
+> 
+> The stall isn't related with commit 396eaf21ee too.
+> 
+> > 
+> > To that end, assuming I drop this commit from dm-4.16:
+> > https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.16&id=316a795ad388e0c3ca613454851a28079d917a92
+> > 
+> > Here is my proposal for putting this regression behind us for 4.16
+> > (Ming's line of development would continue and hopefully be included in
+> > 4.17):
+> 
+> Actually notifier based approach is ready, even cache for clone is ready
+> too, but the test result isn't good enough on random IO on Jens's above
+> case, and sequential IO is much better with both cache clone and
+> notifier based allocation(much better than non-mq). And follows the tree
+> if anyone is interested:
+> 
+> https://github.com/ming1/linux/commits/v4.15-rc-block-dm-mpath
+> 
+> Now looks there is still one issue: the notifier can come early, just
+> before the request is added to hctx->dispatch_list, and performance
+> still gets hurt, especially on random IO in Jens's case. But queue
+> won't stall, :-)
+> 
+> > 
+> > From: Mike Snitzer <snitzer@redhat.com>
+> > Date: Tue, 23 Jan 2018 09:40:22 +0100
+> > Subject: [PATCH] block: neutralize blk_insert_cloned_request IO stall regression
+> > 
+> > The series of blk-mq changes intended to improve sequential IO
+> > performace (through improved merging with dm-mapth blk-mq stacked on
+> > underlying blk-mq device).  Unfortunately these changes have caused
+> > dm-mpath blk-mq IO stalls when blk_mq_request_issue_directly()'s call to
+> > q->mq_ops->queue_rq() fails (due to device-specific resource
+> > unavailability).
+> > 
+> > Fix this by reverting back to how blk_insert_cloned_request() functioned
+> > prior to commit 396eaf21ee -- by using blk_mq_request_bypass_insert()
+> > instead of blk_mq_request_issue_directly().
+> > 
+> > In the future, this commit should be reverted as the first change in a
+> > followup series of changes that implements a comprehensive solution to
+> > allowing an underlying blk-mq queue's resource limitation to trigger the
+> > upper blk-mq queue to run once that underlying limited resource is
+> > replenished.
+> > 
+> > Fixes: 396eaf21ee ("blk-mq: improve DM's blk-mq IO merging via blk_insert_cloned_request feedback")
+> > Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> > ---
+> >  block/blk-core.c | 3 ++-
+> >  1 file changed, 2 insertions(+), 1 deletion(-)
+> > 
+> > diff --git a/block/blk-core.c b/block/blk-core.c
+> > index cdae69be68e9..a224f282b4a6 100644
+> > --- a/block/blk-core.c
+> > +++ b/block/blk-core.c
+> > @@ -2520,7 +2520,8 @@ blk_status_t blk_insert_cloned_request(struct request_queue *q, struct request *
+> >  		 * bypass a potential scheduler on the bottom device for
+> >  		 * insert.
+> >  		 */
+> > -		return blk_mq_request_issue_directly(rq);
+> > +		blk_mq_request_bypass_insert(rq, true);
+> > +		return BLK_STS_OK;
+> >  	}
+> 
+> If this patch is for fixing IO stall on DM, it isn't needed, and actually
+> it can't fix the IO stall issue.
 
-Hi, Xose,
-Thank you for your review work and suggestions. Attachment is the patch file
-generated by git format-patch, and pasted below. Please help to submit,
-thank you.
+It should "fix it" in conjunction with this:
 
+https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.16&id=87b7e73546b55f4a3a37d4726daedd9a17a20509
 
-From 091bae5fec22c61f0c3e6f9ab848fecae5203122 Mon Sep 17 00:00:00 2001
-From: Tom Geng <gengfangzhong@inspur.com>
-Date: Tue, 23 Jan 2018 15:33:09 +0800
-Subject: [PATCH] multipath-tools: add INSPUR/MCS to hardware table
-
----
- libmultipath/hwtable.c | 11 +++++++++++
- 1 file changed, 11 insertions(+)
-
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 448effe3..93d67df0 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -1181,6 +1181,17 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = MULTIBUS,
- 		.no_path_retry = 30,
- 	},
-+	/*
-+	 * INSPUR
-+	 */
-+	{
-+		/* AS5300/AS5500 G2 */
-+		.vendor        = "INSPUR",
-+		.product       = "MCS",
-+		.pgpolicy      = GROUP_BY_PRIO,
-+		.pgfailback    = -FAILBACK_IMMEDIATE,
-+		.prio_name     = PRIO_ALUA,
-+	},
- 	/*
- 	 * EOL
- 	 */
--- 
-2.15.1.windows.2
-
-
-
-------=_NextPart_001_0111_01D3947C.9E5DCF80
-Content-Type: application/octet-stream;
-	name="0001-multipath-tools-add-INSPUR-MCS-to-hardware-table.patch"
-Content-Transfer-Encoding: quoted-printable
-Content-Disposition: attachment;
-	filename="0001-multipath-tools-add-INSPUR-MCS-to-hardware-table.patch"
-
-From 091bae5fec22c61f0c3e6f9ab848fecae5203122 Mon Sep 17 00:00:00 2001=0A=
-From: Tom Geng <gengfangzhong@inspur.com>=0A=
-Date: Tue, 23 Jan 2018 15:33:09 +0800=0A=
-Subject: [PATCH] multipath-tools: add INSPUR/MCS to hardware table=0A=
-=0A=
----=0A=
- libmultipath/hwtable.c | 11 +++++++++++=0A=
- 1 file changed, 11 insertions(+)=0A=
-=0A=
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c=0A=
-index 448effe3..93d67df0 100644=0A=
---- a/libmultipath/hwtable.c=0A=
-+++ b/libmultipath/hwtable.c=0A=
-@@ -1181,6 +1181,17 @@ static struct hwentry default_hw[] =3D {=0A=
- 		.pgpolicy      =3D MULTIBUS,=0A=
- 		.no_path_retry =3D 30,=0A=
- 	},=0A=
-+	/*=0A=
-+	 * INSPUR=0A=
-+	 */=0A=
-+	{=0A=
-+		/* AS5300/AS5500 G2 */=0A=
-+		.vendor        =3D "INSPUR",=0A=
-+		.product       =3D "MCS",=0A=
-+		.pgpolicy      =3D GROUP_BY_PRIO,=0A=
-+		.pgfailback    =3D -FAILBACK_IMMEDIATE,=0A=
-+		.prio_name     =3D PRIO_ALUA,=0A=
-+	},=0A=
- 	/*=0A=
- 	 * EOL=0A=
- 	 */=0A=
--- =0A=
-2.15.1.windows.2=0A=
-=0A=
-
-------=_NextPart_001_0111_01D3947C.9E5DCF80--
-
-------=_NextPart_000_0110_01D3947C.9E5DCF80
-Content-Type: application/pkcs7-signature; name="smime.p7s"
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="smime.p7s"
-
-MIAGCSqGSIb3DQEHAqCAMIACAQExCzAJBgUrDgMCGgUAMIAGCSqGSIb3DQEHAQAAoIIMUTCCBOgw
-ggPQoAMCAQICEHJZ3dAghQm7TR3WtIciZWowDQYJKoZIhvcNAQEFBQAwWzETMBEGCgmSJomT8ixk
-ARkWA2NvbTEYMBYGCgmSJomT8ixkARkWCGxhbmdjaGFvMRQwEgYKCZImiZPyLGQBGRYEaG9tZTEU
-MBIGA1UEAxMLTGFuZ0NoYW8tQ0EwHhcNMDUwMTEyMDcyNTIyWhcNMjQxMTA3MTcyNjM4WjBbMRMw
-EQYKCZImiZPyLGQBGRYDY29tMRgwFgYKCZImiZPyLGQBGRYIbGFuZ2NoYW8xFDASBgoJkiaJk/Is
-ZAEZFgRob21lMRQwEgYDVQQDEwtMYW5nQ2hhby1DQTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCC
-AQoCggEBAMvRSQUPw6jL6C6jqLQaQW3/yXkiew6X5DFftp11ymCmwpOEKEAHQEsOqiha/Lkj8ORt
-6KjfEHc1Z4AYgzXz9YJx0lJGoM27U/o07gu73XKTYTLEbs+MCb9Juq52ptSsRsZHBb0n4AfBjFON
-8gzgDmTg9TRyM2yNXDHoA1pSrHYvNT37urklW4XorW5DeMGohxlpOApkhsqlGpS2w7C2ZAR82NCp
-+80yCDXraDZ5cCOhQAyZ6qHcWJIloyi8+gwzJi1MqWB91JjE4wicxof9SCyNtdbx2XwKxSL5U0zM
-sZQJ+201lvmaqCrPSMcoUdZxWWKM2yYtro7oEiwB/4jpaHsCAwEAAaOCAaYwggGiMBMGCSsGAQQB
-gjcUAgQGHgQAQwBBMAsGA1UdDwQEAwIBhjAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBTGbsOi
-E24avQY6XrcvNNjg05z7IzCCARUGA1UdHwSCAQwwggEIMIIBBKCCAQCggf2GgbxsZGFwOi8vL0NO
-PUxhbmdDaGFvLUNBLENOPWp0am5jYTAxLENOPUNEUCxDTj1QdWJsaWMlMjBLZXklMjBTZXJ2aWNl
-cyxDTj1TZXJ2aWNlcyxDTj1Db25maWd1cmF0aW9uLERDPWhvbWUsREM9bGFuZ2NoYW8sREM9Y29t
-P2NlcnRpZmljYXRlUmV2b2NhdGlvbkxpc3Q/YmFzZT9vYmplY3RDbGFzcz1jUkxEaXN0cmlidXRp
-b25Qb2ludIY8aHR0cDovL2p0am5jYTAxLmhvbWUubGFuZ2NoYW8uY29tL0NlcnRFbnJvbGwvTGFu
-Z0NoYW8tQ0EuY3JsMBAGCSsGAQQBgjcVAQQDAgEBMCMGCSsGAQQBgjcVAgQWBBRYQgrth4/MB0pS
-3hx7TTpz3BidCDANBgkqhkiG9w0BAQUFAAOCAQEAWjsuzhyiArAxdntQqbkoOaDt/caM2xEA3hWn
-gjl4yJeKxxuU0U5KLs7wcaVYantJjeL7jb9r29Aeb5lRzcUHodJgk2xvNYAI0s7ZkmahMSbPIMha
-w6sKSiq2bI08u7cyPoW5HxVJz3pEM4IkuLaWmMm/I3BUUQE3rxUdXy7iq2CE7KPNKIf+wDuouDgm
-bWItUuIev5toOR37MxpPS02Ci1H2KxOGkMDFAWJawNgzseRaRqEJdgMelpS46KnBaT3uFI/wqG+0
-1pMVfldgzOBA9Jaj4AC/AWU+v8Ks6+yX8/14Se7bkRltLqmXI6EGHo6KBiIAP2uGHg7lGzCmR/Ja
-dTCCB2EwggZJoAMCAQICChBNNNUAAQACdUkwDQYJKoZIhvcNAQEFBQAwWzETMBEGCgmSJomT8ixk
-ARkWA2NvbTEYMBYGCgmSJomT8ixkARkWCGxhbmdjaGFvMRQwEgYKCZImiZPyLGQBGRYEaG9tZTEU
-MBIGA1UEAxMLTGFuZ0NoYW8tQ0EwHhcNMTcwNjIyMDgzMDMyWhcNMjIwNjIxMDgzMDMyWjCBqjET
-MBEGCgmSJomT8ixkARkWA2NvbTEYMBYGCgmSJomT8ixkARkWCGxhbmdjaGFvMRQwEgYKCZImiZPy
-LGQBGRYEaG9tZTEVMBMGA1UECwwM5rWq5r2u5L+h5oGvMQ8wDQYDVQQLDAbnlKjmiLcxEjAQBgNV
-BAMMCeiAv+iKs+W/oDEnMCUGCSqGSIb3DQEJARYYZ2VuZ2Zhbmd6aG9uZ0BpbnNwdXIuY29tMIIB
-IjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA5QJoej3RSHiDlu7XjHI2tF+YlCUeBItIMzw5
-RvGVP5kJUV0zhp0sZhSBCUA81BenIzONGwuOUak0J0+hzQNAs8NHDaRhJrRMmGju3sY+nxMskOw2
-rZx50ea24h6TJYvbf6AFVc+knvNzPzvua4GClF3kh+zfg/UwEBfgpHbUWDNzHFiGPHbvEdgrDF5y
-rxllUtRP6its4Wm+4DGrG+bG6hXIEQ1Y9AvM/+p3rPEvGtoOu+UfLjZihccyACuxKjJwRzY/nwzR
-/PuRsXg0iFenrFOBkE+anAJ91ETPTEUN40omAXIp/LnGM/ZYAmCNK+8hqa/XZOJ6h78oaVPK8sF6
-QwIDAQABo4ID1TCCA9EwCwYDVR0PBAQDAgWgMD4GCSsGAQQBgjcVBwQxMC8GJysGAQQBgjcVCILy
-qR+Egdd6hqmRPYaA9xWD2I9cgUqGoq0dhteULAIBZAIBGTBEBgkqhkiG9w0BCQ8ENzA1MA4GCCqG
-SIb3DQMCAgIAgDAOBggqhkiG9w0DBAICAIAwBwYFKw4DAgcwCgYIKoZIhvcNAwcwHQYDVR0OBBYE
-FF3jIZwxg36oDTvJUiQNwy75rtbEMB8GA1UdIwQYMBaAFMZuw6ITbhq9Bjpety802ODTnPsjMIIB
-FQYDVR0fBIIBDDCCAQgwggEEoIIBAKCB/YaBvGxkYXA6Ly8vQ049TGFuZ0NoYW8tQ0EsQ049anRq
-bmNhMDEsQ049Q0RQLENOPVB1YmxpYyUyMEtleSUyMFNlcnZpY2VzLENOPVNlcnZpY2VzLENOPUNv
-bmZpZ3VyYXRpb24sREM9aG9tZSxEQz1sYW5nY2hhbyxEQz1jb20/Y2VydGlmaWNhdGVSZXZvY2F0
-aW9uTGlzdD9iYXNlP29iamVjdENsYXNzPWNSTERpc3RyaWJ1dGlvblBvaW50hjxodHRwOi8vanRq
-bmNhMDEuaG9tZS5sYW5nY2hhby5jb20vQ2VydEVucm9sbC9MYW5nQ2hhby1DQS5jcmwwggEwBggr
-BgEFBQcBAQSCASIwggEeMIGzBggrBgEFBQcwAoaBpmxkYXA6Ly8vQ049TGFuZ0NoYW8tQ0EsQ049
-QUlBLENOPVB1YmxpYyUyMEtleSUyMFNlcnZpY2VzLENOPVNlcnZpY2VzLENOPUNvbmZpZ3VyYXRp
-b24sREM9aG9tZSxEQz1sYW5nY2hhbyxEQz1jb20/Y0FDZXJ0aWZpY2F0ZT9iYXNlP29iamVjdENs
-YXNzPWNlcnRpZmljYXRpb25BdXRob3JpdHkwZgYIKwYBBQUHMAKGWmh0dHA6Ly9qdGpuY2EwMS5o
-b21lLmxhbmdjaGFvLmNvbS9DZXJ0RW5yb2xsL2p0am5jYTAxLmhvbWUubGFuZ2NoYW8uY29tX0xh
-bmdDaGFvLUNBKDEpLmNydDApBgNVHSUEIjAgBggrBgEFBQcDAgYIKwYBBQUHAwQGCisGAQQBgjcK
-AwQwNQYJKwYBBAGCNxUKBCgwJjAKBggrBgEFBQcDAjAKBggrBgEFBQcDBDAMBgorBgEEAYI3CgME
-ME0GA1UdEQRGMESgKAYKKwYBBAGCNxQCA6AaDBhnZW5nZmFuZ3pob25nQGluc3B1ci5jb22BGGdl
-bmdmYW5nemhvbmdAaW5zcHVyLmNvbTANBgkqhkiG9w0BAQUFAAOCAQEAWE4veiN2R5QIPFRiYcVu
-uy13sYJERwDO7uFGwYZlWo/H+VnTg4HVbBOW6oVYspPrL9T019Z0+E8mSnPepQrVQcCuy1PT7PZr
-RkcdLbOo7U/tx60g+9lamhB8U+phCKSwWuzw3bH2YASugWx92hI2ZJb/d+4MvtpKUPEgCwV+5oM9
-V0oRiej2nlRhZKYjfMiOjdEhEaRRa6j4/NzPOssioIn/eu1tC6ee4gHuHw9lV3yMLfBG69ObVYci
-UgInzWyUUjh1+rkSRM1Xg0L7y1RE0of2643atPS95LlNO7TDBccoNuzWwURh9ZN/MFQmCKhRsZhg
-Di4cLpUtyxyRgxnoeTGCA30wggN5AgEBMGkwWzETMBEGCgmSJomT8ixkARkWA2NvbTEYMBYGCgmS
-JomT8ixkARkWCGxhbmdjaGFvMRQwEgYKCZImiZPyLGQBGRYEaG9tZTEUMBIGA1UEAxMLTGFuZ0No
-YW8tQ0ECChBNNNUAAQACdUkwCQYFKw4DAhoFAKCCAekwGAYJKoZIhvcNAQkDMQsGCSqGSIb3DQEH
-ATAcBgkqhkiG9w0BCQUxDxcNMTgwMTIzMTEwMTQ3WjAjBgkqhkiG9w0BCQQxFgQUuOj7AoGTsO25
-QAYC/EZYPbJXVN8weAYJKwYBBAGCNxAEMWswaTBbMRMwEQYKCZImiZPyLGQBGRYDY29tMRgwFgYK
-CZImiZPyLGQBGRYIbGFuZ2NoYW8xFDASBgoJkiaJk/IsZAEZFgRob21lMRQwEgYDVQQDEwtMYW5n
-Q2hhby1DQQIKEE001QABAAJ1STB6BgsqhkiG9w0BCRACCzFroGkwWzETMBEGCgmSJomT8ixkARkW
-A2NvbTEYMBYGCgmSJomT8ixkARkWCGxhbmdjaGFvMRQwEgYKCZImiZPyLGQBGRYEaG9tZTEUMBIG
-A1UEAxMLTGFuZ0NoYW8tQ0ECChBNNNUAAQACdUkwgZMGCSqGSIb3DQEJDzGBhTCBgjALBglghkgB
-ZQMEASowCwYJYIZIAWUDBAEWMAoGCCqGSIb3DQMHMAsGCWCGSAFlAwQBAjAOBggqhkiG9w0DAgIC
-AIAwDQYIKoZIhvcNAwICAUAwBwYFKw4DAhowCwYJYIZIAWUDBAIDMAsGCWCGSAFlAwQCAjALBglg
-hkgBZQMEAgEwDQYJKoZIhvcNAQEBBQAEggEAct4kGyNOKN4JnCnRYOF2v1lfICBGhkmJeUkTDwT1
-fiIwiRNvX6sl0z19Nn2QAVTPTvVVRskgVjrO+a3hvcgYW3BetbK+dWVj+zzHLEkuAJQPFkCAzh8p
-2thzXFymFRbX5XZ9ZzBB8FyKEdG7g1h5VPrymhEPqOOzeB4M3dmxFhV8DLx8Q01Mg0w57DI3cmew
-oIoJH7Ys9nI1ntc9zgxu9tGFQHgAeuAvwyqzFNZpkrRaHNnVgNHNuwcUM7fTuvHrnRVnXtt7cfeA
-Da4ri1QhKoBywvEcVEsY8VVHK8XY8wNWvnEqqRLQ1fUzEHoJXOjUbj1mD1lD58oDftIxJK7U7QAA
-AAAAAA==
-
-------=_NextPart_000_0110_01D3947C.9E5DCF80--
-
-
---===============7831707946652424835==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============7831707946652424835==--
+(Bart already said as much, I just effectively enabled the equivalent of
+his reverts)
