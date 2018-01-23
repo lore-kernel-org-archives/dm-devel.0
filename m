@@ -1,13 +1,15 @@
-From: Wuchongyun <wu.chongyun@h3c.com>
-Subject: [PATCH] multipath-tools:fix unexport/export LUN access
- permission multipath can't restore
-Date: Tue, 23 Jan 2018 09:25:05 +0000
-Message-ID: <CEB9978CF3252343BE3C67AC9F0086A342958842@H3CMLB14-EX.srv.huawei-3com.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH] multipath-tools:fix unexport/export LUN
+ access permission multipath can't restore
+Date: Tue, 23 Jan 2018 10:52:35 +0100
+Message-ID: <b2698d61-3719-a71a-89fe-e3db1df1c5bd@suse.de>
+References: <CEB9978CF3252343BE3C67AC9F0086A342958842@H3CMLB14-EX.srv.huawei-3com.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: zh-CN
+In-Reply-To: <CEB9978CF3252343BE3C67AC9F0086A342958842@H3CMLB14-EX.srv.huawei-3com.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,143 +19,113 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@suse.de>, Martin Wilck <mwilck@suse.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, Benjamin Marzinski <bmarzins@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Wuchongyun <wu.chongyun@h3c.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Martin Wilck <mwilck@suse.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, Benjamin Marzinski <bmarzins@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 Cc: Guozhonghua <guozhonghua@h3c.com>, Changwei Ge <ge.changwei@h3c.com>, Changlimin <changlimin@h3c.com>
 List-Id: dm-devel.ids
 
-Hi Christophe, Hannes, Martin, Xose and Benjamin,
-
-We meet below issue when doing the unexport/export LUN's access permission test, this patch is a method to fix this issue.
-If it is convenient for some of you, please help to review this patch, thanks.
-
-fix unexport/export LUN access permission multipath can't restore
-
-Issue:
-(1)Export LUN1 to host1,Create multipath, LUN1 have two paths: sda and
-sdb;
-(2)Unexport LUN1 to host1, host1 can't access LUN1.Kernel produce change
-uevent for sda and sdb, then uev_update_path been called, which will
-found the path's wwid have changed and set flag pp->wwid_changed
-, checker thread's check_path() found this flag will set those paths
-failed and report to DM, and then this multipath failed.
-(3)export LUN1 to host1 again. Kernel produce the change uevents, but
-those uevents are not belong to LUN1(not sda and sdb).
-So LUN1's related devices' status(wwid) not been updated by uevent when
-regain this LUN's permission and this multipath will not restore anymore.
-
-Through some experiments we found that:
-unexport/export LUN to host, kernel may not produce the change uevent
-for the right devices. It may be other devices, and the result may
-different.
-Get wwid by "/lib/udev/scsi_id --whitelisted --device=/dev/%n"will always
-get the latest wwid: when no access permission return a invalid wwid,
-when access restore return the origial right wwid.
-
-If we meet this situation above issue will happen:
-when unexporting LUN we get the right change uevent and refresh this
-path's wwid to a valid value(HP 3PAR is 30000000000000000);
-When exporting LUN to the host again we get the other devices' change
-uevents, then we have no chance to refresh the changed paths'wwid, and
-this multipath will not restore even it's LUN access permissions have
-been restored.
-
-This patch can fix this issue by:
-In check_path() if found flag pp->wwid_changed is set, compare the wwid
-gotten by scsi_id and the wwid gotten by udev(current get_uid). If the
-value is not equal, it most likely we got the access permissions or device
-valid again, scsi_id's wwid may restored, we should produce a change uevent
-to fresh this device's status.
-
-Signed-off-by: Chongyun Wu <wu.chongyun@h3c.com>
----
- libmultipath/defaults.h |    1 +
- multipathd/main.c       |   51 +++++++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 52 insertions(+)
-
-diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
-index c9e3411..895d3a1 100644
---- a/libmultipath/defaults.h
-+++ b/libmultipath/defaults.h
-@@ -3,6 +3,7 @@
-  * and the TEMPLATE in libmultipath/hwtable.c
-  */
- #define DEFAULT_UID_ATTRIBUTE	"ID_SERIAL"
-+#define DEFAULT_GETUID		"/lib/udev/scsi_id --whitelisted --device=/dev/%n"
- #define DEFAULT_UDEVDIR		"/dev"
- #define DEFAULT_MULTIPATHDIR	"/" LIB_STRING "/multipath"
- #define DEFAULT_SELECTOR	"service-time 0"
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 27cf234..dedc7d2 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -937,6 +937,9 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
- 	if (pp) {
- 		struct multipath *mpp = pp->mpp;
- 
-+		udev_device_unref(pp->udev);
-+		pp->udev = udev_device_ref(uev->udev);
-+
- 		if (disable_changed_wwids &&
- 		    (strlen(pp->wwid) || pp->wwid_changed)) {
- 			char wwid[WWID_SIZE];
-@@ -1578,6 +1581,54 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
- 		condlog(2, "%s: path wwid has changed. Refusing to use",
- 			pp->dev);
- 		newstate = PATH_DOWN;
-+
-+		/*
-+		 * compare the wwid gotten form scsi_id with the wwid which
-+		 * gotten form udev. maybe the path wwid have been restored
-+		 * by LUN been exported to the host again or another
-+		 * operations making the wwid different form udev database.
-+		 * If so, should trigger change uevent to refresh this
-+		 * path's udev datebase.
-+		*/
-+		char wwid_old[WWID_SIZE];
-+		char wwid_form_scsi_id[WWID_SIZE];
-+		char wwid_form_udev[WWID_SIZE];
-+		char buff[CALLOUT_MAX_SIZE];
-+		char *getuid_old = NULL;
-+
-+		memset(wwid_form_scsi_id, 0, WWID_SIZE);
-+		memset(wwid_form_udev, 0, WWID_SIZE);
-+
-+		/* save this path's  wwid and getuid*/
-+		strcpy(wwid_old, pp->wwid);
-+		if (pp->getuid) {
-+			getuid_old = buff;
-+			strcpy(getuid_old, pp->getuid);
-+		}
-+
-+		/* using /lib/udev/scsi_id to get wwid */
-+		pp->getuid = DEFAULT_GETUID;
-+		get_uid(pp, PATH_UP, pp->udev);
-+		strcpy(wwid_form_scsi_id, pp->wwid);
-+		/* using udev to get wwid */
-+		pp->getuid = NULL;
-+		get_uid(pp, PATH_UP, pp->udev);
-+		strcpy(wwid_form_udev, pp->wwid);
-+
-+		if (0 != strcmp(wwid_form_scsi_id, wwid_form_udev)) {
-+			sysfs_attr_set_value(pp->udev, "uevent", "change",
-+				strlen("change"));
-+			condlog(2, "%s: wwid inconsistent triggering change "
-+				"event to refresh udev database", pp->dev);
-+		}
-+
-+		/* change this path's wwid and getuid back*/
-+		strcpy(pp->wwid, wwid_old);
-+		if (getuid_old) {
-+			strcpy(pp->getuid, getuid_old);
-+		} else {
-+			pp->getuid = getuid_old;
-+		}
- 	}
- 
- 	if (newstate == PATH_WILD || newstate == PATH_UNCHECKED) {
--- 
-1.7.9.5
-
-
-
- 
+T24gMDEvMjMvMjAxOCAxMDoyNSBBTSwgV3VjaG9uZ3l1biB3cm90ZToKPiBIaSBDaHJpc3RvcGhl
+LCBIYW5uZXMsIE1hcnRpbiwgWG9zZSBhbmQgQmVuamFtaW4sCj4gCj4gV2UgbWVldCBiZWxvdyBp
+c3N1ZSB3aGVuIGRvaW5nIHRoZSB1bmV4cG9ydC9leHBvcnQgTFVOJ3MgYWNjZXNzIHBlcm1pc3Np
+b24gdGVzdCwgdGhpcyBwYXRjaCBpcyBhIG1ldGhvZCB0byBmaXggdGhpcyBpc3N1ZS4KPiBJZiBp
+dCBpcyBjb252ZW5pZW50IGZvciBzb21lIG9mIHlvdSwgcGxlYXNlIGhlbHAgdG8gcmV2aWV3IHRo
+aXMgcGF0Y2gsIHRoYW5rcy4KPiAKPiBmaXggdW5leHBvcnQvZXhwb3J0IExVTiBhY2Nlc3MgcGVy
+bWlzc2lvbiBtdWx0aXBhdGggY2FuJ3QgcmVzdG9yZQo+IAo+IElzc3VlOgo+ICgxKUV4cG9ydCBM
+VU4xIHRvIGhvc3QxLENyZWF0ZSBtdWx0aXBhdGgsIExVTjEgaGF2ZSB0d28gcGF0aHM6IHNkYSBh
+bmQKPiBzZGI7Cj4gKDIpVW5leHBvcnQgTFVOMSB0byBob3N0MSwgaG9zdDEgY2FuJ3QgYWNjZXNz
+IExVTjEuS2VybmVsIHByb2R1Y2UgY2hhbmdlCj4gdWV2ZW50IGZvciBzZGEgYW5kIHNkYiwgdGhl
+biB1ZXZfdXBkYXRlX3BhdGggYmVlbiBjYWxsZWQsIHdoaWNoIHdpbGwKPiBmb3VuZCB0aGUgcGF0
+aCdzIHd3aWQgaGF2ZSBjaGFuZ2VkIGFuZCBzZXQgZmxhZyBwcC0+d3dpZF9jaGFuZ2VkCj4gLCBj
+aGVja2VyIHRocmVhZCdzIGNoZWNrX3BhdGgoKSBmb3VuZCB0aGlzIGZsYWcgd2lsbCBzZXQgdGhv
+c2UgcGF0aHMKPiBmYWlsZWQgYW5kIHJlcG9ydCB0byBETSwgYW5kIHRoZW4gdGhpcyBtdWx0aXBh
+dGggZmFpbGVkLgo+ICgzKWV4cG9ydCBMVU4xIHRvIGhvc3QxIGFnYWluLiBLZXJuZWwgcHJvZHVj
+ZSB0aGUgY2hhbmdlIHVldmVudHMsIGJ1dAo+IHRob3NlIHVldmVudHMgYXJlIG5vdCBiZWxvbmcg
+dG8gTFVOMShub3Qgc2RhIGFuZCBzZGIpLgo+IFNvIExVTjEncyByZWxhdGVkIGRldmljZXMnIHN0
+YXR1cyh3d2lkKSBub3QgYmVlbiB1cGRhdGVkIGJ5IHVldmVudCB3aGVuCj4gcmVnYWluIHRoaXMg
+TFVOJ3MgcGVybWlzc2lvbiBhbmQgdGhpcyBtdWx0aXBhdGggd2lsbCBub3QgcmVzdG9yZSBhbnlt
+b3JlLgo+IAo+IFRocm91Z2ggc29tZSBleHBlcmltZW50cyB3ZSBmb3VuZCB0aGF0Ogo+IHVuZXhw
+b3J0L2V4cG9ydCBMVU4gdG8gaG9zdCwga2VybmVsIG1heSBub3QgcHJvZHVjZSB0aGUgY2hhbmdl
+IHVldmVudAo+IGZvciB0aGUgcmlnaHQgZGV2aWNlcy4gSXQgbWF5IGJlIG90aGVyIGRldmljZXMs
+IGFuZCB0aGUgcmVzdWx0IG1heQo+IGRpZmZlcmVudC4KPiBHZXQgd3dpZCBieSAiL2xpYi91ZGV2
+L3Njc2lfaWQgLS13aGl0ZWxpc3RlZCAtLWRldmljZT0vZGV2LyVuIndpbGwgYWx3YXlzCj4gZ2V0
+IHRoZSBsYXRlc3Qgd3dpZDogd2hlbiBubyBhY2Nlc3MgcGVybWlzc2lvbiByZXR1cm4gYSBpbnZh
+bGlkIHd3aWQsCj4gd2hlbiBhY2Nlc3MgcmVzdG9yZSByZXR1cm4gdGhlIG9yaWdpYWwgcmlnaHQg
+d3dpZC4KPiAKPiBJZiB3ZSBtZWV0IHRoaXMgc2l0dWF0aW9uIGFib3ZlIGlzc3VlIHdpbGwgaGFw
+cGVuOgo+IHdoZW4gdW5leHBvcnRpbmcgTFVOIHdlIGdldCB0aGUgcmlnaHQgY2hhbmdlIHVldmVu
+dCBhbmQgcmVmcmVzaCB0aGlzCj4gcGF0aCdzIHd3aWQgdG8gYSB2YWxpZCB2YWx1ZShIUCAzUEFS
+IGlzIDMwMDAwMDAwMDAwMDAwMDAwKTsKPiBXaGVuIGV4cG9ydGluZyBMVU4gdG8gdGhlIGhvc3Qg
+YWdhaW4gd2UgZ2V0IHRoZSBvdGhlciBkZXZpY2VzJyBjaGFuZ2UKPiB1ZXZlbnRzLCB0aGVuIHdl
+IGhhdmUgbm8gY2hhbmNlIHRvIHJlZnJlc2ggdGhlIGNoYW5nZWQgcGF0aHMnd3dpZCwgYW5kCj4g
+dGhpcyBtdWx0aXBhdGggd2lsbCBub3QgcmVzdG9yZSBldmVuIGl0J3MgTFVOIGFjY2VzcyBwZXJt
+aXNzaW9ucyBoYXZlCj4gYmVlbiByZXN0b3JlZC4KPiAKPiBUaGlzIHBhdGNoIGNhbiBmaXggdGhp
+cyBpc3N1ZSBieToKPiBJbiBjaGVja19wYXRoKCkgaWYgZm91bmQgZmxhZyBwcC0+d3dpZF9jaGFu
+Z2VkIGlzIHNldCwgY29tcGFyZSB0aGUgd3dpZAo+IGdvdHRlbiBieSBzY3NpX2lkIGFuZCB0aGUg
+d3dpZCBnb3R0ZW4gYnkgdWRldihjdXJyZW50IGdldF91aWQpLiBJZiB0aGUKPiB2YWx1ZSBpcyBu
+b3QgZXF1YWwsIGl0IG1vc3QgbGlrZWx5IHdlIGdvdCB0aGUgYWNjZXNzIHBlcm1pc3Npb25zIG9y
+IGRldmljZQo+IHZhbGlkIGFnYWluLCBzY3NpX2lkJ3Mgd3dpZCBtYXkgcmVzdG9yZWQsIHdlIHNo
+b3VsZCBwcm9kdWNlIGEgY2hhbmdlIHVldmVudAo+IHRvIGZyZXNoIHRoaXMgZGV2aWNlJ3Mgc3Rh
+dHVzLgo+IAo+IFNpZ25lZC1vZmYtYnk6IENob25neXVuIFd1IDx3dS5jaG9uZ3l1bkBoM2MuY29t
+Pgo+IC0tLQo+ICBsaWJtdWx0aXBhdGgvZGVmYXVsdHMuaCB8ICAgIDEgKwo+ICBtdWx0aXBhdGhk
+L21haW4uYyAgICAgICB8ICAgNTEgKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysr
+KysrKysrKysrKysKPiAgMiBmaWxlcyBjaGFuZ2VkLCA1MiBpbnNlcnRpb25zKCspCj4gCj4gZGlm
+ZiAtLWdpdCBhL2xpYm11bHRpcGF0aC9kZWZhdWx0cy5oIGIvbGlibXVsdGlwYXRoL2RlZmF1bHRz
+LmgKPiBpbmRleCBjOWUzNDExLi44OTVkM2ExIDEwMDY0NAo+IC0tLSBhL2xpYm11bHRpcGF0aC9k
+ZWZhdWx0cy5oCj4gKysrIGIvbGlibXVsdGlwYXRoL2RlZmF1bHRzLmgKPiBAQCAtMyw2ICszLDcg
+QEAKPiAgICogYW5kIHRoZSBURU1QTEFURSBpbiBsaWJtdWx0aXBhdGgvaHd0YWJsZS5jCj4gICAq
+Lwo+ICAjZGVmaW5lIERFRkFVTFRfVUlEX0FUVFJJQlVURQkiSURfU0VSSUFMIgo+ICsjZGVmaW5l
+IERFRkFVTFRfR0VUVUlECQkiL2xpYi91ZGV2L3Njc2lfaWQgLS13aGl0ZWxpc3RlZCAtLWRldmlj
+ZT0vZGV2LyVuIgo+ICAjZGVmaW5lIERFRkFVTFRfVURFVkRJUgkJIi9kZXYiCj4gICNkZWZpbmUg
+REVGQVVMVF9NVUxUSVBBVEhESVIJIi8iIExJQl9TVFJJTkcgIi9tdWx0aXBhdGgiCj4gICNkZWZp
+bmUgREVGQVVMVF9TRUxFQ1RPUgkic2VydmljZS10aW1lIDAiCj4gZGlmZiAtLWdpdCBhL211bHRp
+cGF0aGQvbWFpbi5jIGIvbXVsdGlwYXRoZC9tYWluLmMKPiBpbmRleCAyN2NmMjM0Li5kZWRjN2Qy
+IDEwMDY0NAo+IC0tLSBhL211bHRpcGF0aGQvbWFpbi5jCj4gKysrIGIvbXVsdGlwYXRoZC9tYWlu
+LmMKPiBAQCAtOTM3LDYgKzkzNyw5IEBAIHVldl91cGRhdGVfcGF0aCAoc3RydWN0IHVldmVudCAq
+dWV2LCBzdHJ1Y3QgdmVjdG9ycyAqIHZlY3MpCj4gIAlpZiAocHApIHsKPiAgCQlzdHJ1Y3QgbXVs
+dGlwYXRoICptcHAgPSBwcC0+bXBwOwo+ICAKPiArCQl1ZGV2X2RldmljZV91bnJlZihwcC0+dWRl
+dik7Cj4gKwkJcHAtPnVkZXYgPSB1ZGV2X2RldmljZV9yZWYodWV2LT51ZGV2KTsKPiArCj4gIAkJ
+aWYgKGRpc2FibGVfY2hhbmdlZF93d2lkcyAmJgo+ICAJCSAgICAoc3RybGVuKHBwLT53d2lkKSB8
+fCBwcC0+d3dpZF9jaGFuZ2VkKSkgewo+ICAJCQljaGFyIHd3aWRbV1dJRF9TSVpFXTsKPiBAQCAt
+MTU3OCw2ICsxNTgxLDU0IEBAIGNoZWNrX3BhdGggKHN0cnVjdCB2ZWN0b3JzICogdmVjcywgc3Ry
+dWN0IHBhdGggKiBwcCwgaW50IHRpY2tzKQo+ICAJCWNvbmRsb2coMiwgIiVzOiBwYXRoIHd3aWQg
+aGFzIGNoYW5nZWQuIFJlZnVzaW5nIHRvIHVzZSIsCj4gIAkJCXBwLT5kZXYpOwo+ICAJCW5ld3N0
+YXRlID0gUEFUSF9ET1dOOwo+ICsKPiArCQkvKgo+ICsJCSAqIGNvbXBhcmUgdGhlIHd3aWQgZ290
+dGVuIGZvcm0gc2NzaV9pZCB3aXRoIHRoZSB3d2lkIHdoaWNoCj4gKwkJICogZ290dGVuIGZvcm0g
+dWRldi4gbWF5YmUgdGhlIHBhdGggd3dpZCBoYXZlIGJlZW4gcmVzdG9yZWQKPiArCQkgKiBieSBM
+VU4gYmVlbiBleHBvcnRlZCB0byB0aGUgaG9zdCBhZ2FpbiBvciBhbm90aGVyCj4gKwkJICogb3Bl
+cmF0aW9ucyBtYWtpbmcgdGhlIHd3aWQgZGlmZmVyZW50IGZvcm0gdWRldiBkYXRhYmFzZS4KPiAr
+CQkgKiBJZiBzbywgc2hvdWxkIHRyaWdnZXIgY2hhbmdlIHVldmVudCB0byByZWZyZXNoIHRoaXMK
+PiArCQkgKiBwYXRoJ3MgdWRldiBkYXRlYmFzZS4KPiArCQkqLwo+ICsJCWNoYXIgd3dpZF9vbGRb
+V1dJRF9TSVpFXTsKPiArCQljaGFyIHd3aWRfZm9ybV9zY3NpX2lkW1dXSURfU0laRV07Cj4gKwkJ
+Y2hhciB3d2lkX2Zvcm1fdWRldltXV0lEX1NJWkVdOwo+ICsJCWNoYXIgYnVmZltDQUxMT1VUX01B
+WF9TSVpFXTsKPiArCQljaGFyICpnZXR1aWRfb2xkID0gTlVMTDsKPiArCj4gKwkJbWVtc2V0KHd3
+aWRfZm9ybV9zY3NpX2lkLCAwLCBXV0lEX1NJWkUpOwo+ICsJCW1lbXNldCh3d2lkX2Zvcm1fdWRl
+diwgMCwgV1dJRF9TSVpFKTsKPiArCj4gKwkJLyogc2F2ZSB0aGlzIHBhdGgncyAgd3dpZCBhbmQg
+Z2V0dWlkKi8KPiArCQlzdHJjcHkod3dpZF9vbGQsIHBwLT53d2lkKTsKPiArCQlpZiAocHAtPmdl
+dHVpZCkgewo+ICsJCQlnZXR1aWRfb2xkID0gYnVmZjsKPiArCQkJc3RyY3B5KGdldHVpZF9vbGQs
+IHBwLT5nZXR1aWQpOwo+ICsJCX0KPiArCj4gKwkJLyogdXNpbmcgL2xpYi91ZGV2L3Njc2lfaWQg
+dG8gZ2V0IHd3aWQgKi8KPiArCQlwcC0+Z2V0dWlkID0gREVGQVVMVF9HRVRVSUQ7Cj4gKwkJZ2V0
+X3VpZChwcCwgUEFUSF9VUCwgcHAtPnVkZXYpOwo+ICsJCXN0cmNweSh3d2lkX2Zvcm1fc2NzaV9p
+ZCwgcHAtPnd3aWQpOwo+ICsJCS8qIHVzaW5nIHVkZXYgdG8gZ2V0IHd3aWQgKi8KPiArCQlwcC0+
+Z2V0dWlkID0gTlVMTDsKPiArCQlnZXRfdWlkKHBwLCBQQVRIX1VQLCBwcC0+dWRldik7Cj4gKwkJ
+c3RyY3B5KHd3aWRfZm9ybV91ZGV2LCBwcC0+d3dpZCk7Cj4gKwo+ICsJCWlmICgwICE9IHN0cmNt
+cCh3d2lkX2Zvcm1fc2NzaV9pZCwgd3dpZF9mb3JtX3VkZXYpKSB7Cj4gKwkJCXN5c2ZzX2F0dHJf
+c2V0X3ZhbHVlKHBwLT51ZGV2LCAidWV2ZW50IiwgImNoYW5nZSIsCj4gKwkJCQlzdHJsZW4oImNo
+YW5nZSIpKTsKPiArCQkJY29uZGxvZygyLCAiJXM6IHd3aWQgaW5jb25zaXN0ZW50IHRyaWdnZXJp
+bmcgY2hhbmdlICIKPiArCQkJCSJldmVudCB0byByZWZyZXNoIHVkZXYgZGF0YWJhc2UiLCBwcC0+
+ZGV2KTsKPiArCQl9Cj4gKwo+ICsJCS8qIGNoYW5nZSB0aGlzIHBhdGgncyB3d2lkIGFuZCBnZXR1
+aWQgYmFjayovCj4gKwkJc3RyY3B5KHBwLT53d2lkLCB3d2lkX29sZCk7Cj4gKwkJaWYgKGdldHVp
+ZF9vbGQpIHsKPiArCQkJc3RyY3B5KHBwLT5nZXR1aWQsIGdldHVpZF9vbGQpOwo+ICsJCX0gZWxz
+ZSB7Cj4gKwkJCXBwLT5nZXR1aWQgPSBnZXR1aWRfb2xkOwo+ICsJCX0KPiAgCX0KPiAgCj4gIAlp
+ZiAobmV3c3RhdGUgPT0gUEFUSF9XSUxEIHx8IG5ld3N0YXRlID09IFBBVEhfVU5DSEVDS0VEKSB7
+Cj4gCk5BSy4KCldlIGN1cnJlbnRseSBkb24ndCBoYW5kbGUgV1dJRCBjaGFuZ2UgLyBMVU4gbWFw
+cGluZyBjaGFuZ2VzIGNvcnJlY3RseQpmcm9tIHRoZSBsaW51eCBrZXJuZWw7IHRoZSBvbmx5IHdh
+eSB0byBjb3JyZWN0bHkgaW5zdGFudGlhdGUgdGhpcyBpcyB0bwpyZW1vdmUgdGhlIGRldmljZSBm
+cm9tIHN5c2ZzIGFuZCByZXNjYW4gdGhlIGhvc3QuCkV2ZXJ5dGhpbmcgZWxzZSB3aWxsIHJlc3Vs
+dCBpbiBwYXJ0aWFsbHkgc3RhbGUgdmFsdWVzIGZvciB0aGUgZGV2aWNlLAphbmQgYW4gaW5jb3Jy
+ZWN0IG9wZXJhdGlvbi4KVGhpcyBpcyBub3Qgc29tZXRoaW5nIHlvdSBjYW4gJ2ZpeCcgb24gdGhl
+IG11bHRpcGF0aCBsZXZlbC4KCkNoZWVycywKCkhhbm5lcwotLSAKRHIuIEhhbm5lcyBSZWluZWNr
+ZQkJICAgVGVhbWxlYWQgU3RvcmFnZSAmIE5ldHdvcmtpbmcKaGFyZUBzdXNlLmRlCQkJICAgICAg
+ICAgICAgICAgKzQ5IDkxMSA3NDA1MyA2ODgKU1VTRSBMSU5VWCBHbWJILCBNYXhmZWxkc3RyLiA1
+LCA5MDQwOSBOw7xybmJlcmcKR0Y6IEYuIEltZW5kw7ZyZmZlciwgSi4gU21pdGhhcmQsIEouIEd1
+aWxkLCBELiBVcG1hbnl1LCBHLiBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpk
+bS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRo
+YXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
