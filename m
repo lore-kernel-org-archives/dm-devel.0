@@ -1,71 +1,35 @@
 From: Bart Van Assche <Bart.VanAssche@wdc.com>
-Subject: Re: [PATCH] block: neutralize blk_insert_cloned_request IO stall
- regression (was: Re: [RFC PATCH] blk-mq: fixup RESTART when queue becomes
- idle)
-Date: Tue, 23 Jan 2018 16:43:42 +0000
-Message-ID: <1516725821.3339.11.camel@wdc.com>
-References: <1516296056.2676.23.camel@wdc.com>
-         <20180118183039.GA20121@redhat.com> <1516301278.2676.35.camel@wdc.com>
-         <deeb2b2e-6d0e-a144-843d-d08626de8aea@kernel.dk>
-         <20180118204856.GA31679@redhat.com> <1516309128.2676.38.camel@wdc.com>
-         <20180118212327.GB31679@redhat.com> <1516311554.2676.50.camel@wdc.com>
-         <20180118220132.GA20860@redhat.com> <1516314012.2676.76.camel@wdc.com>
-         <20180123092204.GA39002@redhat.com>
+Subject: Re: [PATCH 1/5] blk-mq: introduce BLK_STS_DEV_RESOURCE
+Date: Tue, 23 Jan 2018 16:47:11 +0000
+Message-ID: <1516726030.3339.14.camel@wdc.com>
+References: <20180122033550.27855-1-ming.lei@redhat.com>
+         <20180122033550.27855-2-ming.lei@redhat.com>
+         <1516639793.2545.14.camel@sandisk.com> <20180123005728.GB4411@ming.t460p>
+         <54f0c19c-38aa-e788-f476-492e5a5734c9@wdc.com>
+         <20180123162605.GD13277@ming.t460p>
+         <4cdb2b42-0097-c64a-d9c0-b7a1727c80de@wdc.com>
+         <20180123164109.GF13277@ming.t460p>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: base64
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180123092204.GA39002@redhat.com>
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20180123164109.GF13277@ming.t460p>
 Content-Language: en-US
-Content-ID: <52311D48A419A544AD4B1A0A76FC9B4B@namprd04.prod.outlook.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "ming.lei@redhat.com" <ming.lei@redhat.com>, "snitzer@redhat.com" <snitzer@redhat.com>, "axboe@kernel.dk" <axboe@kernel.dk>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "hch@infradead.org" <hch@infradead.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "osandov@fb.com" <osandov@fb.com>
+Content-ID: <4C8D576619ABEB4399D5CDA4EA2B2E7F@namprd04.prod.outlook.com>
+Sender: linux-block-owner@vger.kernel.org
+To: "ming.lei@redhat.com" <ming.lei@redhat.com>
+Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "hch@infradead.org" <hch@infradead.org>, "snitzer@redhat.com" <snitzer@redhat.com>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "jejb@linux.vnet.ibm.com" <jejb@linux.vnet.ibm.com>, "loberman@redhat.com" <loberman@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gVHVlLCAyMDE4LTAxLTIzIGF0IDEwOjIyICswMTAwLCBNaWtlIFNuaXR6ZXIgd3JvdGU6DQo+
-IE9uIFRodSwgSmFuIDE4IDIwMTggYXQgIDU6MjBwbSAtMDUwMCwNCj4gQmFydCBWYW4gQXNzY2hl
-IDxCYXJ0LlZhbkFzc2NoZUB3ZGMuY29tPiB3cm90ZToNCj4gDQo+ID4gT24gVGh1LCAyMDE4LTAx
-LTE4IGF0IDE3OjAxIC0wNTAwLCBNaWtlIFNuaXR6ZXIgd3JvdGU6DQo+ID4gPiBBbmQgeWV0IExh
-dXJlbmNlIGNhbm5vdCByZXByb2R1Y2UgYW55IHN1Y2ggbG9ja3VwcyB3aXRoIHlvdXIgdGVzdC4u
-Lg0KPiA+IA0KPiA+IEhtbSAuLi4gbWF5YmUgSSBtaXN1bmRlcnN0b29kIExhdXJlbmNlIGJ1dCBJ
-IGRvbid0IHRoaW5rIHRoYXQgTGF1cmVuY2UgaGFzDQo+ID4gYWxyZWFkeSBzdWNjZWVkZWQgYXQg
-cnVubmluZyBhbiB1bm1vZGlmaWVkIHZlcnNpb24gb2YgbXkgdGVzdHMuIEluIG9uZSBvZiB0aGUN
-Cj4gPiBlLW1haWxzIExhdXJlbmNlIHNlbnQgbWUgdGhpcyBtb3JuaW5nIEkgcmVhZCB0aGF0IGhl
-IG1vZGlmaWVkIHRoZXNlIHNjcmlwdHMNCj4gPiB0byBnZXQgcGFzdCBhIGtlcm5lbCBtb2R1bGUg
-dW5sb2FkIGZhaWx1cmUgdGhhdCB3YXMgcmVwb3J0ZWQgd2hpbGUgc3RhcnRpbmcNCj4gPiB0aGVz
-ZSB0ZXN0cy4gU28gdGhlIG5leHQgc3RlcCBpcyB0byBjaGVjayB3aGljaCBjaGFuZ2VzIHdlcmUg
-bWFkZSB0byB0aGUgdGVzdA0KPiA+IHNjcmlwdHMgYW5kIGFsc28gd2hldGhlciB0aGUgdGVzdCBy
-ZXN1bHRzIGFyZSBzdGlsbCB2YWxpZC4NCj4gPiANCj4gPiA+IEFyZSB5b3UgYWJzb2x1dGVseSBj
-ZXJ0YWluIHRoaXMgcGF0Y2ggZG9lc24ndCBoZWxwIHlvdT8NCj4gPiA+IGh0dHBzOi8vcGF0Y2h3
-b3JrLmtlcm5lbC5vcmcvcGF0Y2gvMTAxNzQwMzcvDQo+ID4gPiANCj4gPiA+IElmIGl0IGRvZXNu
-J3QgdGhlbiB0aGF0IGlzIGFjdHVhbGx5IHZlcnkgdXNlZnVsIHRvIGtub3cuDQo+ID4gDQo+ID4g
-VGhlIGZpcnN0IEkgdHJpZWQgdGhpcyBtb3JuaW5nIGlzIHRvIHJ1biB0aGUgc3JwLXRlc3Qgc29m
-dHdhcmUgYWdhaW5zdCBhIG1lcmdlDQo+ID4gb2YgSmVucycgZm9yLW5leHQgYnJhbmNoIGFuZCB5
-b3VyIGRtLTQuMTYgYnJhbmNoLiBTaW5jZSBJIG5vdGljZWQgdGhhdCB0aGUgZG0NCj4gPiBxdWV1
-ZSBsb2NrZWQgdXAgSSByZWluc2VydGVkIGEgYmxrX21xX2RlbGF5X3J1bl9od19xdWV1ZSgpIGNh
-bGwgaW4gdGhlIGRtIGNvZGUuDQo+ID4gU2luY2UgZXZlbiB0aGF0IHdhcyBub3Qgc3VmZmljaWVu
-dCBJIHRyaWVkIHRvIGtpY2sgdGhlIHF1ZXVlcyB2aWEgZGVidWdmcyAoZm9yDQo+ID4gcyBpbiAv
-c3lzL2tlcm5lbC9kZWJ1Zy9ibG9jay8qL3N0YXRlOyBkbyBlY2hvIGtpY2sgPiRzOyBkb25lKS4g
-U2luY2UgdGhhdCB3YXMNCj4gPiBub3Qgc3VmZmljaWVudCB0byByZXNvbHZlIHRoZSBxdWV1ZSBz
-dGFsbCBJIHJldmVydGVkIHRoZSBmb2xsb3dpbmcgdHJlZSBwYXRjaGVzDQo+ID4gdGhhdCBhcmUg
-aW4gSmVucycgdHJlZToNCj4gPiAqICJibGstbXE6IGltcHJvdmUgRE0ncyBibGstbXEgSU8gbWVy
-Z2luZyB2aWEgYmxrX2luc2VydF9jbG9uZWRfcmVxdWVzdCBmZWVkYmFjayINCj4gPiAqICJibGst
-bXEtc2NoZWQ6IHJlbW92ZSB1bnVzZWQgJ2Nhbl9ibG9jaycgYXJnIGZyb20gYmxrX21xX3NjaGVk
-X2luc2VydF9yZXF1ZXN0Ig0KPiA+ICogImJsay1tcTogZG9uJ3QgZGlzcGF0Y2ggcmVxdWVzdCBp
-biBibGtfbXFfcmVxdWVzdF9kaXJlY3RfaXNzdWUgaWYgcXVldWUgaXMgYnVzeSINCj4gPiANCj4g
-PiBPbmx5IGFmdGVyIEkgaGFkIGRvbmUgdGhpcyB0aGUgc3JwLXRlc3Qgc29mdHdhcmUgcmFuIGFn
-YWluIHdpdGhvdXQgdHJpZ2dlcmluZw0KPiA+IGRtIHF1ZXVlIGxvY2t1cHMuDQoNCkhlbGxvIE1p
-a2UsDQoNCkkgd2FudCB0byB0YWtlIGJhY2sgd2hhdCBJIHdyb3RlIGFib3V0IHRoZSByZXZlcnRz
-LiBJIGhhdmUgbm90IHlldCB0cmllZCB0bw0KYW5hbHl6ZSBleGFjdGx5IHdoaWNoIGNoYW5nZSBt
-YWRlIGJsa19pbnNlcnRfY2xvbmVkX3JlcXVlc3QoKSB3b3JrIHJlbGlhYmx5DQpmb3IgbWUgYnV0
-IHdpdGggSmVucycgbGF0ZXN0IGZvci1uZXh0IGJyYW5jaCBhbmQgeW91ciBmb3ItNC4xNiBicmFu
-Y2ggbWVyZ2VkDQphbGwgSSBuZWVkIHRvIGF2b2lkIHF1ZXVlIHN0YWxscyBpcyB0aGUgZm9sbG93
-aW5nOg0KDQpkaWZmIC0tZ2l0IGEvZHJpdmVycy9tZC9kbS1ycS5jIGIvZHJpdmVycy9tZC9kbS1y
-cS5jDQppbmRleCBmMTYwOTZhZjg3OWEuLmM1OWM1OWNmZDJhNSAxMDA2NDQNCi0tLSBhL2RyaXZl
-cnMvbWQvZG0tcnEuYw0KKysrIGIvZHJpdmVycy9tZC9kbS1ycS5jDQpAQCAtNzYxLDYgKzc2MSw3
-IEBAIHN0YXRpYyBibGtfc3RhdHVzX3QgZG1fbXFfcXVldWVfcnEoc3RydWN0IGJsa19tcV9od19j
-dHggKmhjdHgsDQogCQkvKiBVbmRvIGRtX3N0YXJ0X3JlcXVlc3QoKSBiZWZvcmUgcmVxdWV1aW5n
-ICovDQogCQlycV9lbmRfc3RhdHMobWQsIHJxKTsNCiAJCXJxX2NvbXBsZXRlZChtZCwgcnFfZGF0
-YV9kaXIocnEpLCBmYWxzZSk7DQorCQlibGtfbXFfZGVsYXlfcnVuX2h3X3F1ZXVlKGhjdHgsIDEw
-MC8qbXMqLyk7DQogCQlyZXR1cm4gQkxLX1NUU19SRVNPVVJDRTsNCiAJfQ0KIA0KQmFydC4=
+T24gV2VkLCAyMDE4LTAxLTI0IGF0IDAwOjQxICswODAwLCBNaW5nIExlaSB3cm90ZToNCj4gQ291
+bGQgeW91IGV4cGxhaW4gd2hlcmUgdG8gY2FsbCBjYWxsX3JjdSgpPyAgY2FsbF9yY3UoKSBjYW4n
+dCBiZSB1c2VkIGluDQo+IElPIHBhdGggYXQgYWxsLg0KDQpDYW4geW91IGV4cGxhaW4gd2hhdCBt
+YWtlcyB5b3UgdGhpbmsgdGhhdCBjYWxsX3JjdSgpIGNhbid0IGJlIHVzZWQgaW4gdGhlDQpJL08g
+cGF0aD8gQXMgeW91IGtub3cgY2FsbF9yY3UoKSBpbnZva2VzIGEgZnVuY3Rpb24gYXN5bmNocm9u
+b3VzbHkuIEZyb20NCkRvY3VtZW50YXRpb24vUkNVL0Rlc2lnbi9SZXF1aXJlbWVudHMvUmVxdWly
+ZW1lbnRzLmh0bWw6DQoNCiAgVGhlIDx0dD5jYWxsX3JjdSgpPC90dD4gZnVuY3Rpb24gbWF5IGJl
+IHVzZWQgaW4gYSBudW1iZXIgb2YNCiAgc2l0dWF0aW9ucyB3aGVyZSBuZWl0aGVyIDx0dD5zeW5j
+aHJvbml6ZV9yY3UoKTwvdHQ+IG5vcg0KICA8dHQ+c3luY2hyb25pemVfcmN1X2V4cGVkaXRlZCgp
+PC90dD4gd291bGQgYmUgbGVnYWwsDQogIGluY2x1ZGluZyB3aXRoaW4gcHJlZW1wdC1kaXNhYmxl
+IGNvZGUsIDx0dD5sb2NhbF9iaF9kaXNhYmxlKCk8L3R0PiBjb2RlLA0KICBpbnRlcnJ1cHQtZGlz
+YWJsZSBjb2RlLCBhbmQgaW50ZXJydXB0IGhhbmRsZXJzLg0KDQpCYXJ0Lg==
