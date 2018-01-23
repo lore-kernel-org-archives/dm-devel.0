@@ -1,131 +1,160 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH] multipath-tools:fix unexport/export LUN
- access permission multipath can't restore
-Date: Tue, 23 Jan 2018 10:52:35 +0100
-Message-ID: <b2698d61-3719-a71a-89fe-e3db1df1c5bd@suse.de>
-References: <CEB9978CF3252343BE3C67AC9F0086A342958842@H3CMLB14-EX.srv.huawei-3com.com>
+From: Ming Lei <ming.lei@redhat.com>
+Subject: Re: [PATCH] block: neutralize blk_insert_cloned_request IO stall
+ regression (was: Re: [RFC PATCH] blk-mq: fixup RESTART when queue becomes
+ idle)
+Date: Tue, 23 Jan 2018 18:53:58 +0800
+Message-ID: <20180123105357.GA3344@ming.t460p>
+References: <20180118183039.GA20121@redhat.com>
+ <1516301278.2676.35.camel@wdc.com>
+ <deeb2b2e-6d0e-a144-843d-d08626de8aea@kernel.dk>
+ <20180118204856.GA31679@redhat.com>
+ <1516309128.2676.38.camel@wdc.com>
+ <20180118212327.GB31679@redhat.com>
+ <1516311554.2676.50.camel@wdc.com>
+ <20180118220132.GA20860@redhat.com>
+ <1516314012.2676.76.camel@wdc.com>
+ <20180123092204.GA39002@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CEB9978CF3252343BE3C67AC9F0086A342958842@H3CMLB14-EX.srv.huawei-3com.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Wuchongyun <wu.chongyun@h3c.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Martin Wilck <mwilck@suse.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, Benjamin Marzinski <bmarzins@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
-Cc: Guozhonghua <guozhonghua@h3c.com>, Changwei Ge <ge.changwei@h3c.com>, Changlimin <changlimin@h3c.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20180123092204.GA39002@redhat.com>
+Sender: linux-block-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Bart Van Assche <Bart.VanAssche@wdc.com>, axboe@kernel.dk, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "hch@infradead.org" <hch@infradead.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "osandov@fb.com" <osandov@fb.com>
 List-Id: dm-devel.ids
 
-T24gMDEvMjMvMjAxOCAxMDoyNSBBTSwgV3VjaG9uZ3l1biB3cm90ZToKPiBIaSBDaHJpc3RvcGhl
-LCBIYW5uZXMsIE1hcnRpbiwgWG9zZSBhbmQgQmVuamFtaW4sCj4gCj4gV2UgbWVldCBiZWxvdyBp
-c3N1ZSB3aGVuIGRvaW5nIHRoZSB1bmV4cG9ydC9leHBvcnQgTFVOJ3MgYWNjZXNzIHBlcm1pc3Np
-b24gdGVzdCwgdGhpcyBwYXRjaCBpcyBhIG1ldGhvZCB0byBmaXggdGhpcyBpc3N1ZS4KPiBJZiBp
-dCBpcyBjb252ZW5pZW50IGZvciBzb21lIG9mIHlvdSwgcGxlYXNlIGhlbHAgdG8gcmV2aWV3IHRo
-aXMgcGF0Y2gsIHRoYW5rcy4KPiAKPiBmaXggdW5leHBvcnQvZXhwb3J0IExVTiBhY2Nlc3MgcGVy
-bWlzc2lvbiBtdWx0aXBhdGggY2FuJ3QgcmVzdG9yZQo+IAo+IElzc3VlOgo+ICgxKUV4cG9ydCBM
-VU4xIHRvIGhvc3QxLENyZWF0ZSBtdWx0aXBhdGgsIExVTjEgaGF2ZSB0d28gcGF0aHM6IHNkYSBh
-bmQKPiBzZGI7Cj4gKDIpVW5leHBvcnQgTFVOMSB0byBob3N0MSwgaG9zdDEgY2FuJ3QgYWNjZXNz
-IExVTjEuS2VybmVsIHByb2R1Y2UgY2hhbmdlCj4gdWV2ZW50IGZvciBzZGEgYW5kIHNkYiwgdGhl
-biB1ZXZfdXBkYXRlX3BhdGggYmVlbiBjYWxsZWQsIHdoaWNoIHdpbGwKPiBmb3VuZCB0aGUgcGF0
-aCdzIHd3aWQgaGF2ZSBjaGFuZ2VkIGFuZCBzZXQgZmxhZyBwcC0+d3dpZF9jaGFuZ2VkCj4gLCBj
-aGVja2VyIHRocmVhZCdzIGNoZWNrX3BhdGgoKSBmb3VuZCB0aGlzIGZsYWcgd2lsbCBzZXQgdGhv
-c2UgcGF0aHMKPiBmYWlsZWQgYW5kIHJlcG9ydCB0byBETSwgYW5kIHRoZW4gdGhpcyBtdWx0aXBh
-dGggZmFpbGVkLgo+ICgzKWV4cG9ydCBMVU4xIHRvIGhvc3QxIGFnYWluLiBLZXJuZWwgcHJvZHVj
-ZSB0aGUgY2hhbmdlIHVldmVudHMsIGJ1dAo+IHRob3NlIHVldmVudHMgYXJlIG5vdCBiZWxvbmcg
-dG8gTFVOMShub3Qgc2RhIGFuZCBzZGIpLgo+IFNvIExVTjEncyByZWxhdGVkIGRldmljZXMnIHN0
-YXR1cyh3d2lkKSBub3QgYmVlbiB1cGRhdGVkIGJ5IHVldmVudCB3aGVuCj4gcmVnYWluIHRoaXMg
-TFVOJ3MgcGVybWlzc2lvbiBhbmQgdGhpcyBtdWx0aXBhdGggd2lsbCBub3QgcmVzdG9yZSBhbnlt
-b3JlLgo+IAo+IFRocm91Z2ggc29tZSBleHBlcmltZW50cyB3ZSBmb3VuZCB0aGF0Ogo+IHVuZXhw
-b3J0L2V4cG9ydCBMVU4gdG8gaG9zdCwga2VybmVsIG1heSBub3QgcHJvZHVjZSB0aGUgY2hhbmdl
-IHVldmVudAo+IGZvciB0aGUgcmlnaHQgZGV2aWNlcy4gSXQgbWF5IGJlIG90aGVyIGRldmljZXMs
-IGFuZCB0aGUgcmVzdWx0IG1heQo+IGRpZmZlcmVudC4KPiBHZXQgd3dpZCBieSAiL2xpYi91ZGV2
-L3Njc2lfaWQgLS13aGl0ZWxpc3RlZCAtLWRldmljZT0vZGV2LyVuIndpbGwgYWx3YXlzCj4gZ2V0
-IHRoZSBsYXRlc3Qgd3dpZDogd2hlbiBubyBhY2Nlc3MgcGVybWlzc2lvbiByZXR1cm4gYSBpbnZh
-bGlkIHd3aWQsCj4gd2hlbiBhY2Nlc3MgcmVzdG9yZSByZXR1cm4gdGhlIG9yaWdpYWwgcmlnaHQg
-d3dpZC4KPiAKPiBJZiB3ZSBtZWV0IHRoaXMgc2l0dWF0aW9uIGFib3ZlIGlzc3VlIHdpbGwgaGFw
-cGVuOgo+IHdoZW4gdW5leHBvcnRpbmcgTFVOIHdlIGdldCB0aGUgcmlnaHQgY2hhbmdlIHVldmVu
-dCBhbmQgcmVmcmVzaCB0aGlzCj4gcGF0aCdzIHd3aWQgdG8gYSB2YWxpZCB2YWx1ZShIUCAzUEFS
-IGlzIDMwMDAwMDAwMDAwMDAwMDAwKTsKPiBXaGVuIGV4cG9ydGluZyBMVU4gdG8gdGhlIGhvc3Qg
-YWdhaW4gd2UgZ2V0IHRoZSBvdGhlciBkZXZpY2VzJyBjaGFuZ2UKPiB1ZXZlbnRzLCB0aGVuIHdl
-IGhhdmUgbm8gY2hhbmNlIHRvIHJlZnJlc2ggdGhlIGNoYW5nZWQgcGF0aHMnd3dpZCwgYW5kCj4g
-dGhpcyBtdWx0aXBhdGggd2lsbCBub3QgcmVzdG9yZSBldmVuIGl0J3MgTFVOIGFjY2VzcyBwZXJt
-aXNzaW9ucyBoYXZlCj4gYmVlbiByZXN0b3JlZC4KPiAKPiBUaGlzIHBhdGNoIGNhbiBmaXggdGhp
-cyBpc3N1ZSBieToKPiBJbiBjaGVja19wYXRoKCkgaWYgZm91bmQgZmxhZyBwcC0+d3dpZF9jaGFu
-Z2VkIGlzIHNldCwgY29tcGFyZSB0aGUgd3dpZAo+IGdvdHRlbiBieSBzY3NpX2lkIGFuZCB0aGUg
-d3dpZCBnb3R0ZW4gYnkgdWRldihjdXJyZW50IGdldF91aWQpLiBJZiB0aGUKPiB2YWx1ZSBpcyBu
-b3QgZXF1YWwsIGl0IG1vc3QgbGlrZWx5IHdlIGdvdCB0aGUgYWNjZXNzIHBlcm1pc3Npb25zIG9y
-IGRldmljZQo+IHZhbGlkIGFnYWluLCBzY3NpX2lkJ3Mgd3dpZCBtYXkgcmVzdG9yZWQsIHdlIHNo
-b3VsZCBwcm9kdWNlIGEgY2hhbmdlIHVldmVudAo+IHRvIGZyZXNoIHRoaXMgZGV2aWNlJ3Mgc3Rh
-dHVzLgo+IAo+IFNpZ25lZC1vZmYtYnk6IENob25neXVuIFd1IDx3dS5jaG9uZ3l1bkBoM2MuY29t
-Pgo+IC0tLQo+ICBsaWJtdWx0aXBhdGgvZGVmYXVsdHMuaCB8ICAgIDEgKwo+ICBtdWx0aXBhdGhk
-L21haW4uYyAgICAgICB8ICAgNTEgKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysr
-KysrKysrKysrKysKPiAgMiBmaWxlcyBjaGFuZ2VkLCA1MiBpbnNlcnRpb25zKCspCj4gCj4gZGlm
-ZiAtLWdpdCBhL2xpYm11bHRpcGF0aC9kZWZhdWx0cy5oIGIvbGlibXVsdGlwYXRoL2RlZmF1bHRz
-LmgKPiBpbmRleCBjOWUzNDExLi44OTVkM2ExIDEwMDY0NAo+IC0tLSBhL2xpYm11bHRpcGF0aC9k
-ZWZhdWx0cy5oCj4gKysrIGIvbGlibXVsdGlwYXRoL2RlZmF1bHRzLmgKPiBAQCAtMyw2ICszLDcg
-QEAKPiAgICogYW5kIHRoZSBURU1QTEFURSBpbiBsaWJtdWx0aXBhdGgvaHd0YWJsZS5jCj4gICAq
-Lwo+ICAjZGVmaW5lIERFRkFVTFRfVUlEX0FUVFJJQlVURQkiSURfU0VSSUFMIgo+ICsjZGVmaW5l
-IERFRkFVTFRfR0VUVUlECQkiL2xpYi91ZGV2L3Njc2lfaWQgLS13aGl0ZWxpc3RlZCAtLWRldmlj
-ZT0vZGV2LyVuIgo+ICAjZGVmaW5lIERFRkFVTFRfVURFVkRJUgkJIi9kZXYiCj4gICNkZWZpbmUg
-REVGQVVMVF9NVUxUSVBBVEhESVIJIi8iIExJQl9TVFJJTkcgIi9tdWx0aXBhdGgiCj4gICNkZWZp
-bmUgREVGQVVMVF9TRUxFQ1RPUgkic2VydmljZS10aW1lIDAiCj4gZGlmZiAtLWdpdCBhL211bHRp
-cGF0aGQvbWFpbi5jIGIvbXVsdGlwYXRoZC9tYWluLmMKPiBpbmRleCAyN2NmMjM0Li5kZWRjN2Qy
-IDEwMDY0NAo+IC0tLSBhL211bHRpcGF0aGQvbWFpbi5jCj4gKysrIGIvbXVsdGlwYXRoZC9tYWlu
-LmMKPiBAQCAtOTM3LDYgKzkzNyw5IEBAIHVldl91cGRhdGVfcGF0aCAoc3RydWN0IHVldmVudCAq
-dWV2LCBzdHJ1Y3QgdmVjdG9ycyAqIHZlY3MpCj4gIAlpZiAocHApIHsKPiAgCQlzdHJ1Y3QgbXVs
-dGlwYXRoICptcHAgPSBwcC0+bXBwOwo+ICAKPiArCQl1ZGV2X2RldmljZV91bnJlZihwcC0+dWRl
-dik7Cj4gKwkJcHAtPnVkZXYgPSB1ZGV2X2RldmljZV9yZWYodWV2LT51ZGV2KTsKPiArCj4gIAkJ
-aWYgKGRpc2FibGVfY2hhbmdlZF93d2lkcyAmJgo+ICAJCSAgICAoc3RybGVuKHBwLT53d2lkKSB8
-fCBwcC0+d3dpZF9jaGFuZ2VkKSkgewo+ICAJCQljaGFyIHd3aWRbV1dJRF9TSVpFXTsKPiBAQCAt
-MTU3OCw2ICsxNTgxLDU0IEBAIGNoZWNrX3BhdGggKHN0cnVjdCB2ZWN0b3JzICogdmVjcywgc3Ry
-dWN0IHBhdGggKiBwcCwgaW50IHRpY2tzKQo+ICAJCWNvbmRsb2coMiwgIiVzOiBwYXRoIHd3aWQg
-aGFzIGNoYW5nZWQuIFJlZnVzaW5nIHRvIHVzZSIsCj4gIAkJCXBwLT5kZXYpOwo+ICAJCW5ld3N0
-YXRlID0gUEFUSF9ET1dOOwo+ICsKPiArCQkvKgo+ICsJCSAqIGNvbXBhcmUgdGhlIHd3aWQgZ290
-dGVuIGZvcm0gc2NzaV9pZCB3aXRoIHRoZSB3d2lkIHdoaWNoCj4gKwkJICogZ290dGVuIGZvcm0g
-dWRldi4gbWF5YmUgdGhlIHBhdGggd3dpZCBoYXZlIGJlZW4gcmVzdG9yZWQKPiArCQkgKiBieSBM
-VU4gYmVlbiBleHBvcnRlZCB0byB0aGUgaG9zdCBhZ2FpbiBvciBhbm90aGVyCj4gKwkJICogb3Bl
-cmF0aW9ucyBtYWtpbmcgdGhlIHd3aWQgZGlmZmVyZW50IGZvcm0gdWRldiBkYXRhYmFzZS4KPiAr
-CQkgKiBJZiBzbywgc2hvdWxkIHRyaWdnZXIgY2hhbmdlIHVldmVudCB0byByZWZyZXNoIHRoaXMK
-PiArCQkgKiBwYXRoJ3MgdWRldiBkYXRlYmFzZS4KPiArCQkqLwo+ICsJCWNoYXIgd3dpZF9vbGRb
-V1dJRF9TSVpFXTsKPiArCQljaGFyIHd3aWRfZm9ybV9zY3NpX2lkW1dXSURfU0laRV07Cj4gKwkJ
-Y2hhciB3d2lkX2Zvcm1fdWRldltXV0lEX1NJWkVdOwo+ICsJCWNoYXIgYnVmZltDQUxMT1VUX01B
-WF9TSVpFXTsKPiArCQljaGFyICpnZXR1aWRfb2xkID0gTlVMTDsKPiArCj4gKwkJbWVtc2V0KHd3
-aWRfZm9ybV9zY3NpX2lkLCAwLCBXV0lEX1NJWkUpOwo+ICsJCW1lbXNldCh3d2lkX2Zvcm1fdWRl
-diwgMCwgV1dJRF9TSVpFKTsKPiArCj4gKwkJLyogc2F2ZSB0aGlzIHBhdGgncyAgd3dpZCBhbmQg
-Z2V0dWlkKi8KPiArCQlzdHJjcHkod3dpZF9vbGQsIHBwLT53d2lkKTsKPiArCQlpZiAocHAtPmdl
-dHVpZCkgewo+ICsJCQlnZXR1aWRfb2xkID0gYnVmZjsKPiArCQkJc3RyY3B5KGdldHVpZF9vbGQs
-IHBwLT5nZXR1aWQpOwo+ICsJCX0KPiArCj4gKwkJLyogdXNpbmcgL2xpYi91ZGV2L3Njc2lfaWQg
-dG8gZ2V0IHd3aWQgKi8KPiArCQlwcC0+Z2V0dWlkID0gREVGQVVMVF9HRVRVSUQ7Cj4gKwkJZ2V0
-X3VpZChwcCwgUEFUSF9VUCwgcHAtPnVkZXYpOwo+ICsJCXN0cmNweSh3d2lkX2Zvcm1fc2NzaV9p
-ZCwgcHAtPnd3aWQpOwo+ICsJCS8qIHVzaW5nIHVkZXYgdG8gZ2V0IHd3aWQgKi8KPiArCQlwcC0+
-Z2V0dWlkID0gTlVMTDsKPiArCQlnZXRfdWlkKHBwLCBQQVRIX1VQLCBwcC0+dWRldik7Cj4gKwkJ
-c3RyY3B5KHd3aWRfZm9ybV91ZGV2LCBwcC0+d3dpZCk7Cj4gKwo+ICsJCWlmICgwICE9IHN0cmNt
-cCh3d2lkX2Zvcm1fc2NzaV9pZCwgd3dpZF9mb3JtX3VkZXYpKSB7Cj4gKwkJCXN5c2ZzX2F0dHJf
-c2V0X3ZhbHVlKHBwLT51ZGV2LCAidWV2ZW50IiwgImNoYW5nZSIsCj4gKwkJCQlzdHJsZW4oImNo
-YW5nZSIpKTsKPiArCQkJY29uZGxvZygyLCAiJXM6IHd3aWQgaW5jb25zaXN0ZW50IHRyaWdnZXJp
-bmcgY2hhbmdlICIKPiArCQkJCSJldmVudCB0byByZWZyZXNoIHVkZXYgZGF0YWJhc2UiLCBwcC0+
-ZGV2KTsKPiArCQl9Cj4gKwo+ICsJCS8qIGNoYW5nZSB0aGlzIHBhdGgncyB3d2lkIGFuZCBnZXR1
-aWQgYmFjayovCj4gKwkJc3RyY3B5KHBwLT53d2lkLCB3d2lkX29sZCk7Cj4gKwkJaWYgKGdldHVp
-ZF9vbGQpIHsKPiArCQkJc3RyY3B5KHBwLT5nZXR1aWQsIGdldHVpZF9vbGQpOwo+ICsJCX0gZWxz
-ZSB7Cj4gKwkJCXBwLT5nZXR1aWQgPSBnZXR1aWRfb2xkOwo+ICsJCX0KPiAgCX0KPiAgCj4gIAlp
-ZiAobmV3c3RhdGUgPT0gUEFUSF9XSUxEIHx8IG5ld3N0YXRlID09IFBBVEhfVU5DSEVDS0VEKSB7
-Cj4gCk5BSy4KCldlIGN1cnJlbnRseSBkb24ndCBoYW5kbGUgV1dJRCBjaGFuZ2UgLyBMVU4gbWFw
-cGluZyBjaGFuZ2VzIGNvcnJlY3RseQpmcm9tIHRoZSBsaW51eCBrZXJuZWw7IHRoZSBvbmx5IHdh
-eSB0byBjb3JyZWN0bHkgaW5zdGFudGlhdGUgdGhpcyBpcyB0bwpyZW1vdmUgdGhlIGRldmljZSBm
-cm9tIHN5c2ZzIGFuZCByZXNjYW4gdGhlIGhvc3QuCkV2ZXJ5dGhpbmcgZWxzZSB3aWxsIHJlc3Vs
-dCBpbiBwYXJ0aWFsbHkgc3RhbGUgdmFsdWVzIGZvciB0aGUgZGV2aWNlLAphbmQgYW4gaW5jb3Jy
-ZWN0IG9wZXJhdGlvbi4KVGhpcyBpcyBub3Qgc29tZXRoaW5nIHlvdSBjYW4gJ2ZpeCcgb24gdGhl
-IG11bHRpcGF0aCBsZXZlbC4KCkNoZWVycywKCkhhbm5lcwotLSAKRHIuIEhhbm5lcyBSZWluZWNr
-ZQkJICAgVGVhbWxlYWQgU3RvcmFnZSAmIE5ldHdvcmtpbmcKaGFyZUBzdXNlLmRlCQkJICAgICAg
-ICAgICAgICAgKzQ5IDkxMSA3NDA1MyA2ODgKU1VTRSBMSU5VWCBHbWJILCBNYXhmZWxkc3RyLiA1
-LCA5MDQwOSBOw7xybmJlcmcKR0Y6IEYuIEltZW5kw7ZyZmZlciwgSi4gU21pdGhhcmQsIEouIEd1
-aWxkLCBELiBVcG1hbnl1LCBHLiBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpk
-bS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRo
-YXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+Hi Mike,
+
+On Tue, Jan 23, 2018 at 10:22:04AM +0100, Mike Snitzer wrote:
+> On Thu, Jan 18 2018 at  5:20pm -0500,
+> Bart Van Assche <Bart.VanAssche@wdc.com> wrote:
+> 
+> > On Thu, 2018-01-18 at 17:01 -0500, Mike Snitzer wrote:
+> > > And yet Laurence cannot reproduce any such lockups with your test...
+> > 
+> > Hmm ... maybe I misunderstood Laurence but I don't think that Laurence has
+> > already succeeded at running an unmodified version of my tests. In one of the
+> > e-mails Laurence sent me this morning I read that he modified these scripts
+> > to get past a kernel module unload failure that was reported while starting
+> > these tests. So the next step is to check which changes were made to the test
+> > scripts and also whether the test results are still valid.
+> > 
+> > > Are you absolutely certain this patch doesn't help you?
+> > > https://patchwork.kernel.org/patch/10174037/
+> > > 
+> > > If it doesn't then that is actually very useful to know.
+> > 
+> > The first I tried this morning is to run the srp-test software against a merge
+> > of Jens' for-next branch and your dm-4.16 branch. Since I noticed that the dm
+> > queue locked up I reinserted a blk_mq_delay_run_hw_queue() call in the dm code.
+> > Since even that was not sufficient I tried to kick the queues via debugfs (for
+> > s in /sys/kernel/debug/block/*/state; do echo kick >$s; done). Since that was
+> > not sufficient to resolve the queue stall I reverted the following tree patches
+> > that are in Jens' tree:
+> > * "blk-mq: improve DM's blk-mq IO merging via blk_insert_cloned_request feedback"
+> > * "blk-mq-sched: remove unused 'can_block' arg from blk_mq_sched_insert_request"
+> > * "blk-mq: don't dispatch request in blk_mq_request_direct_issue if queue is busy"
+> > 
+> > Only after I had done this the srp-test software ran again without triggering
+> > dm queue lockups.
+> 
+> Given that Ming's notifier-based patchset needs more development time I
+> think we're unfortunately past the point where we can comfortably wait
+> for that to be ready.
+> 
+> So we need to explore alternatives to fixing this IO stall regression.
+
+The fix for IO stall doesn't need the notifier-based patchset, and only
+the 1st patch is enough for fixing the IO stall. And it is a generic
+issue, which need generic solution, that is the conclusion made by
+Jens and me.
+
+	https://marc.info/?l=linux-kernel&m=151638176727612&w=2
+
+And the notifier-based patchset is for solving the performance issue
+reported by Jens:
+
+	- run IO on dm-mpath
+	- run background IO on low depth underlying queue
+	- then IO performance on dm-mpath is extremely slow
+
+I will send out the 1st patch of 'blk-mq: introduce BLK_STS_DEV_RESOURCE'
+soon, but the notifier-based patchset shouldn't be very urgent, since
+the above test case isn't usual in reality.
+
+> Rather than attempt the above block reverts (which is an incomplete
+> listing given newer changes): might we develop a more targeted code
+> change to neutralize commit 396eaf21ee ("blk-mq: improve DM's blk-mq IO
+> merging via blk_insert_cloned_request feedback")? -- which, given Bart's
+> findings above, seems to be the most problematic block commit.
+
+The stall isn't related with commit 396eaf21ee too.
+
+> 
+> To that end, assuming I drop this commit from dm-4.16:
+> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.16&id=316a795ad388e0c3ca613454851a28079d917a92
+> 
+> Here is my proposal for putting this regression behind us for 4.16
+> (Ming's line of development would continue and hopefully be included in
+> 4.17):
+
+Actually notifier based approach is ready, even cache for clone is ready
+too, but the test result isn't good enough on random IO on Jens's above
+case, and sequential IO is much better with both cache clone and
+notifier based allocation(much better than non-mq). And follows the tree
+if anyone is interested:
+
+https://github.com/ming1/linux/commits/v4.15-rc-block-dm-mpath
+
+Now looks there is still one issue: the notifier can come early, just
+before the request is added to hctx->dispatch_list, and performance
+still gets hurt, especially on random IO in Jens's case. But queue
+won't stall, :-)
+
+> 
+> From: Mike Snitzer <snitzer@redhat.com>
+> Date: Tue, 23 Jan 2018 09:40:22 +0100
+> Subject: [PATCH] block: neutralize blk_insert_cloned_request IO stall regression
+> 
+> The series of blk-mq changes intended to improve sequential IO
+> performace (through improved merging with dm-mapth blk-mq stacked on
+> underlying blk-mq device).  Unfortunately these changes have caused
+> dm-mpath blk-mq IO stalls when blk_mq_request_issue_directly()'s call to
+> q->mq_ops->queue_rq() fails (due to device-specific resource
+> unavailability).
+> 
+> Fix this by reverting back to how blk_insert_cloned_request() functioned
+> prior to commit 396eaf21ee -- by using blk_mq_request_bypass_insert()
+> instead of blk_mq_request_issue_directly().
+> 
+> In the future, this commit should be reverted as the first change in a
+> followup series of changes that implements a comprehensive solution to
+> allowing an underlying blk-mq queue's resource limitation to trigger the
+> upper blk-mq queue to run once that underlying limited resource is
+> replenished.
+> 
+> Fixes: 396eaf21ee ("blk-mq: improve DM's blk-mq IO merging via blk_insert_cloned_request feedback")
+> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> ---
+>  block/blk-core.c | 3 ++-
+>  1 file changed, 2 insertions(+), 1 deletion(-)
+> 
+> diff --git a/block/blk-core.c b/block/blk-core.c
+> index cdae69be68e9..a224f282b4a6 100644
+> --- a/block/blk-core.c
+> +++ b/block/blk-core.c
+> @@ -2520,7 +2520,8 @@ blk_status_t blk_insert_cloned_request(struct request_queue *q, struct request *
+>  		 * bypass a potential scheduler on the bottom device for
+>  		 * insert.
+>  		 */
+> -		return blk_mq_request_issue_directly(rq);
+> +		blk_mq_request_bypass_insert(rq, true);
+> +		return BLK_STS_OK;
+>  	}
+
+If this patch is for fixing IO stall on DM, it isn't needed, and actually
+it can't fix the IO stall issue.
+
+-- 
+Ming
