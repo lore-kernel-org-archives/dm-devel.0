@@ -1,119 +1,159 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] block: neutralize blk_insert_cloned_request IO stall
- regression (was: Re: [RFC PATCH] blk-mq: fixup RESTART when queue becomes
- idle)
-Date: Tue, 23 Jan 2018 10:22:04 +0100
-Message-ID: <20180123092204.GA39002@redhat.com>
-References: <1516296056.2676.23.camel@wdc.com>
- <20180118183039.GA20121@redhat.com>
- <1516301278.2676.35.camel@wdc.com>
- <deeb2b2e-6d0e-a144-843d-d08626de8aea@kernel.dk>
- <20180118204856.GA31679@redhat.com>
- <1516309128.2676.38.camel@wdc.com>
- <20180118212327.GB31679@redhat.com>
- <1516311554.2676.50.camel@wdc.com>
- <20180118220132.GA20860@redhat.com>
- <1516314012.2676.76.camel@wdc.com>
+From: Wuchongyun <wu.chongyun@h3c.com>
+Subject: [PATCH] multipath-tools:fix unexport/export LUN access
+ permission multipath can't restore
+Date: Tue, 23 Jan 2018 09:25:05 +0000
+Message-ID: <CEB9978CF3252343BE3C67AC9F0086A342958842@H3CMLB14-EX.srv.huawei-3com.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1516314012.2676.76.camel@wdc.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Bart Van Assche <Bart.VanAssche@wdc.com>, axboe@kernel.dk, ming.lei@redhat.com
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "hch@infradead.org" <hch@infradead.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "osandov@fb.com" <osandov@fb.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: zh-CN
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@suse.de>, Martin Wilck <mwilck@suse.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, Benjamin Marzinski <bmarzins@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+Cc: Guozhonghua <guozhonghua@h3c.com>, Changwei Ge <ge.changwei@h3c.com>, Changlimin <changlimin@h3c.com>
 List-Id: dm-devel.ids
 
-On Thu, Jan 18 2018 at  5:20pm -0500,
-Bart Van Assche <Bart.VanAssche@wdc.com> wrote:
+Hi Christophe, Hannes, Martin, Xose and Benjamin,
 
-> On Thu, 2018-01-18 at 17:01 -0500, Mike Snitzer wrote:
-> > And yet Laurence cannot reproduce any such lockups with your test...
-> 
-> Hmm ... maybe I misunderstood Laurence but I don't think that Laurence has
-> already succeeded at running an unmodified version of my tests. In one of the
-> e-mails Laurence sent me this morning I read that he modified these scripts
-> to get past a kernel module unload failure that was reported while starting
-> these tests. So the next step is to check which changes were made to the test
-> scripts and also whether the test results are still valid.
-> 
-> > Are you absolutely certain this patch doesn't help you?
-> > https://patchwork.kernel.org/patch/10174037/
-> > 
-> > If it doesn't then that is actually very useful to know.
-> 
-> The first I tried this morning is to run the srp-test software against a merge
-> of Jens' for-next branch and your dm-4.16 branch. Since I noticed that the dm
-> queue locked up I reinserted a blk_mq_delay_run_hw_queue() call in the dm code.
-> Since even that was not sufficient I tried to kick the queues via debugfs (for
-> s in /sys/kernel/debug/block/*/state; do echo kick >$s; done). Since that was
-> not sufficient to resolve the queue stall I reverted the following tree patches
-> that are in Jens' tree:
-> * "blk-mq: improve DM's blk-mq IO merging via blk_insert_cloned_request feedback"
-> * "blk-mq-sched: remove unused 'can_block' arg from blk_mq_sched_insert_request"
-> * "blk-mq: don't dispatch request in blk_mq_request_direct_issue if queue is busy"
-> 
-> Only after I had done this the srp-test software ran again without triggering
-> dm queue lockups.
+We meet below issue when doing the unexport/export LUN's access permission test, this patch is a method to fix this issue.
+If it is convenient for some of you, please help to review this patch, thanks.
 
-Given that Ming's notifier-based patchset needs more development time I
-think we're unfortunately past the point where we can comfortably wait
-for that to be ready.
+fix unexport/export LUN access permission multipath can't restore
 
-So we need to explore alternatives to fixing this IO stall regression.
-Rather than attempt the above block reverts (which is an incomplete
-listing given newer changes): might we develop a more targeted code
-change to neutralize commit 396eaf21ee ("blk-mq: improve DM's blk-mq IO
-merging via blk_insert_cloned_request feedback")? -- which, given Bart's
-findings above, seems to be the most problematic block commit.
+Issue:
+(1)Export LUN1 to host1,Create multipath, LUN1 have two paths: sda and
+sdb;
+(2)Unexport LUN1 to host1, host1 can't access LUN1.Kernel produce change
+uevent for sda and sdb, then uev_update_path been called, which will
+found the path's wwid have changed and set flag pp->wwid_changed
+, checker thread's check_path() found this flag will set those paths
+failed and report to DM, and then this multipath failed.
+(3)export LUN1 to host1 again. Kernel produce the change uevents, but
+those uevents are not belong to LUN1(not sda and sdb).
+So LUN1's related devices' status(wwid) not been updated by uevent when
+regain this LUN's permission and this multipath will not restore anymore.
 
-To that end, assuming I drop this commit from dm-4.16:
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.16&id=316a795ad388e0c3ca613454851a28079d917a92
+Through some experiments we found that:
+unexport/export LUN to host, kernel may not produce the change uevent
+for the right devices. It may be other devices, and the result may
+different.
+Get wwid by "/lib/udev/scsi_id --whitelisted --device=/dev/%n"will always
+get the latest wwid: when no access permission return a invalid wwid,
+when access restore return the origial right wwid.
 
-Here is my proposal for putting this regression behind us for 4.16
-(Ming's line of development would continue and hopefully be included in
-4.17):
+If we meet this situation above issue will happen:
+when unexporting LUN we get the right change uevent and refresh this
+path's wwid to a valid value(HP 3PAR is 30000000000000000);
+When exporting LUN to the host again we get the other devices' change
+uevents, then we have no chance to refresh the changed paths'wwid, and
+this multipath will not restore even it's LUN access permissions have
+been restored.
 
-From: Mike Snitzer <snitzer@redhat.com>
-Date: Tue, 23 Jan 2018 09:40:22 +0100
-Subject: [PATCH] block: neutralize blk_insert_cloned_request IO stall regression
+This patch can fix this issue by:
+In check_path() if found flag pp->wwid_changed is set, compare the wwid
+gotten by scsi_id and the wwid gotten by udev(current get_uid). If the
+value is not equal, it most likely we got the access permissions or device
+valid again, scsi_id's wwid may restored, we should produce a change uevent
+to fresh this device's status.
 
-The series of blk-mq changes intended to improve sequential IO
-performace (through improved merging with dm-mapth blk-mq stacked on
-underlying blk-mq device).  Unfortunately these changes have caused
-dm-mpath blk-mq IO stalls when blk_mq_request_issue_directly()'s call to
-q->mq_ops->queue_rq() fails (due to device-specific resource
-unavailability).
-
-Fix this by reverting back to how blk_insert_cloned_request() functioned
-prior to commit 396eaf21ee -- by using blk_mq_request_bypass_insert()
-instead of blk_mq_request_issue_directly().
-
-In the future, this commit should be reverted as the first change in a
-followup series of changes that implements a comprehensive solution to
-allowing an underlying blk-mq queue's resource limitation to trigger the
-upper blk-mq queue to run once that underlying limited resource is
-replenished.
-
-Fixes: 396eaf21ee ("blk-mq: improve DM's blk-mq IO merging via blk_insert_cloned_request feedback")
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Signed-off-by: Chongyun Wu <wu.chongyun@h3c.com>
 ---
- block/blk-core.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ libmultipath/defaults.h |    1 +
+ multipathd/main.c       |   51 +++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 52 insertions(+)
 
-diff --git a/block/blk-core.c b/block/blk-core.c
-index cdae69be68e9..a224f282b4a6 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -2520,7 +2520,8 @@ blk_status_t blk_insert_cloned_request(struct request_queue *q, struct request *
- 		 * bypass a potential scheduler on the bottom device for
- 		 * insert.
- 		 */
--		return blk_mq_request_issue_directly(rq);
-+		blk_mq_request_bypass_insert(rq, true);
-+		return BLK_STS_OK;
+diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
+index c9e3411..895d3a1 100644
+--- a/libmultipath/defaults.h
++++ b/libmultipath/defaults.h
+@@ -3,6 +3,7 @@
+  * and the TEMPLATE in libmultipath/hwtable.c
+  */
+ #define DEFAULT_UID_ATTRIBUTE	"ID_SERIAL"
++#define DEFAULT_GETUID		"/lib/udev/scsi_id --whitelisted --device=/dev/%n"
+ #define DEFAULT_UDEVDIR		"/dev"
+ #define DEFAULT_MULTIPATHDIR	"/" LIB_STRING "/multipath"
+ #define DEFAULT_SELECTOR	"service-time 0"
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 27cf234..dedc7d2 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -937,6 +937,9 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
+ 	if (pp) {
+ 		struct multipath *mpp = pp->mpp;
+ 
++		udev_device_unref(pp->udev);
++		pp->udev = udev_device_ref(uev->udev);
++
+ 		if (disable_changed_wwids &&
+ 		    (strlen(pp->wwid) || pp->wwid_changed)) {
+ 			char wwid[WWID_SIZE];
+@@ -1578,6 +1581,54 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+ 		condlog(2, "%s: path wwid has changed. Refusing to use",
+ 			pp->dev);
+ 		newstate = PATH_DOWN;
++
++		/*
++		 * compare the wwid gotten form scsi_id with the wwid which
++		 * gotten form udev. maybe the path wwid have been restored
++		 * by LUN been exported to the host again or another
++		 * operations making the wwid different form udev database.
++		 * If so, should trigger change uevent to refresh this
++		 * path's udev datebase.
++		*/
++		char wwid_old[WWID_SIZE];
++		char wwid_form_scsi_id[WWID_SIZE];
++		char wwid_form_udev[WWID_SIZE];
++		char buff[CALLOUT_MAX_SIZE];
++		char *getuid_old = NULL;
++
++		memset(wwid_form_scsi_id, 0, WWID_SIZE);
++		memset(wwid_form_udev, 0, WWID_SIZE);
++
++		/* save this path's  wwid and getuid*/
++		strcpy(wwid_old, pp->wwid);
++		if (pp->getuid) {
++			getuid_old = buff;
++			strcpy(getuid_old, pp->getuid);
++		}
++
++		/* using /lib/udev/scsi_id to get wwid */
++		pp->getuid = DEFAULT_GETUID;
++		get_uid(pp, PATH_UP, pp->udev);
++		strcpy(wwid_form_scsi_id, pp->wwid);
++		/* using udev to get wwid */
++		pp->getuid = NULL;
++		get_uid(pp, PATH_UP, pp->udev);
++		strcpy(wwid_form_udev, pp->wwid);
++
++		if (0 != strcmp(wwid_form_scsi_id, wwid_form_udev)) {
++			sysfs_attr_set_value(pp->udev, "uevent", "change",
++				strlen("change"));
++			condlog(2, "%s: wwid inconsistent triggering change "
++				"event to refresh udev database", pp->dev);
++		}
++
++		/* change this path's wwid and getuid back*/
++		strcpy(pp->wwid, wwid_old);
++		if (getuid_old) {
++			strcpy(pp->getuid, getuid_old);
++		} else {
++			pp->getuid = getuid_old;
++		}
  	}
  
- 	spin_lock_irqsave(q->queue_lock, flags);
+ 	if (newstate == PATH_WILD || newstate == PATH_UNCHECKED) {
 -- 
-2.15.0
+1.7.9.5
+
+
+
+ 
