@@ -1,87 +1,63 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH] multipathd: update path's udev in
- uev_update_path
-Date: Tue, 23 Jan 2018 16:27:54 +0100
-Message-ID: <1516721274.18847.7.camel@suse.com>
-References: <CEB9978CF3252343BE3C67AC9F0086A3429585CA@H3CMLB14-EX.srv.huawei-3com.com>
-	<1516617255.30796.40.camel@suse.com>
-	<20180123123917.GB14513@octiron.msp.redhat.com>
+From: Bart Van Assche <bart.vanassche@wdc.com>
+Subject: Re: [PATCH 1/5] blk-mq: introduce BLK_STS_DEV_RESOURCE
+Date: Tue, 23 Jan 2018 08:17:02 -0800
+Message-ID: <54f0c19c-38aa-e788-f476-492e5a5734c9@wdc.com>
+References: <20180122033550.27855-1-ming.lei@redhat.com>
+ <20180122033550.27855-2-ming.lei@redhat.com>
+ <1516639793.2545.14.camel@sandisk.com> <20180123005728.GB4411@ming.t460p>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180123123917.GB14513@octiron.msp.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Wuchongyun <wu.chongyun@h3c.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Changlimin <changlimin@h3c.com>, Changwei Ge <ge.changwei@h3c.com>, Guozhonghua <guozhonghua@h3c.com>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <20180123005728.GB4411@ming.t460p>
+Content-Language: en-US
+Sender: linux-scsi-owner@vger.kernel.org
+To: Ming Lei <ming.lei@redhat.com>
+Cc: "hch@infradead.org" <hch@infradead.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "snitzer@redhat.com" <snitzer@redhat.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "jejb@linux.vnet.ibm.com" <jejb@linux.vnet.ibm.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "loberman@redhat.com" <loberman@redhat.com>
 List-Id: dm-devel.ids
 
-T24gVHVlLCAyMDE4LTAxLTIzIGF0IDA2OjM5IC0wNjAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gT24gTW9uLCBKYW4gMjIsIDIwMTggYXQgMTE6MzQ6MTVBTSArMDEwMCwgTWFydGluIFdp
-bGNrIHdyb3RlOgo+ID4gT24gU2F0LCAyMDE4LTAxLTIwIGF0IDAyOjMwICswMDAwLCBXdWNob25n
-eXVuIHdyb3RlOgo+ID4gPiBIaSBNYXJ0aW4gYW5kIEJlbiwKPiA+ID4gQ291bGQgeW91IGhlbHAg
-dG8gcmV2aWV3IHRoaXMgcGF0Y2gsIHRoYW5rcy4KPiA+ID4gCj4gPiA+IFdoZW4gcmVjZWl2aW5n
-IGEgY2hhbmdlIHVldmVudCBhbmQgY2FsbGluZyB1ZXZfdXBkYXRlX3BhdGgsCj4gPiA+IGN1cnJl
-bnQKPiA+ID4gY29kZQo+ID4gPiBub3QgdXBkYXRlIHRoZSBwYXRoJ3MgdWRldiwgaWYgdXNlIHBw
-LT51ZGV2IHRvIHF1ZXJ5IHRoZSB1ZGV2Cj4gPiA+IGRhdGFiYXNlCj4gPiA+IGluZm8gd2lsbCBn
-ZXQgdGhlIG9sZCBkYXRhLiBTbyBpdCBzaG91bGQgdXBkYXRlIHRoZSBwYXRoJ3MgdWRldgo+ID4g
-PiB3aXRoCj4gPiA+IHRoZQo+ID4gPiBuZXcgdWRldiBmcm9tIHRoZSBuZXcgdWV2ZW50IGluIHVl
-dl91cGRhdGVfcGF0aCBhbHNvLgo+ID4gPiAKPiA+ID4gU2lnbmVkLW9mZi1ieTogQ2hvbmd5dW4g
-V3UgPHd1LmNob25neXVuQGgzYy5jb20+Cj4gPiA+IC0tLQo+ID4gPiAgbXVsdGlwYXRoZC9tYWlu
-LmMgfCAgICAzICsrKwo+ID4gPiAgMSBmaWxlIGNoYW5nZWQsIDMgaW5zZXJ0aW9ucygrKQo+ID4g
-PiAKPiA+ID4gZGlmZiAtLWdpdCBhL211bHRpcGF0aGQvbWFpbi5jIGIvbXVsdGlwYXRoZC9tYWlu
-LmMKPiA+ID4gaW5kZXggMjdjZjIzNC4uZTdhNGY0YiAxMDA2NDQKPiA+ID4gLS0tIGEvbXVsdGlw
-YXRoZC9tYWluLmMKPiA+ID4gKysrIGIvbXVsdGlwYXRoZC9tYWluLmMKPiA+ID4gQEAgLTkzNyw2
-ICs5MzcsOSBAQCB1ZXZfdXBkYXRlX3BhdGggKHN0cnVjdCB1ZXZlbnQgKnVldiwgc3RydWN0Cj4g
-PiA+IHZlY3RvcnMgKiB2ZWNzKQo+ID4gPiAgCWlmIChwcCkgewo+ID4gPiAgCQlzdHJ1Y3QgbXVs
-dGlwYXRoICptcHAgPSBwcC0+bXBwOwo+ID4gPiAgCj4gPiA+ICsJCXVkZXZfZGV2aWNlX3VucmVm
-KHBwLT51ZGV2KTsKPiA+ID4gKwkJcHAtPnVkZXYgPSB1ZGV2X2RldmljZV9yZWYodWV2LT51ZGV2
-KTsKPiA+ID4gKwo+ID4gPiAgCQlpZiAoZGlzYWJsZV9jaGFuZ2VkX3d3aWRzICYmCj4gPiA+ICAJ
-CSAgICAoc3RybGVuKHBwLT53d2lkKSB8fCBwcC0+d3dpZF9jaGFuZ2VkKSkgewo+ID4gPiAgCQkJ
-Y2hhciB3d2lkW1dXSURfU0laRV07Cj4gPiAKPiA+IFRoZSBnZW5lcmFsIGlkZWEgaXMgY29ycmVj
-dCwgYnV0IEkgZmVhciB3ZSBuZWVkIHRvIGRvIG1vcmUuCj4gPiAKPiA+IEJhc2ljYWxseSwgaWYg
-cmVsZXZhbnQgdWRldiBwcm9wZXJ0aWVzIGhhdmUgY2hhbmdlZCwgd2UgbmVlZCB0bwo+ID4gY2Fs
-bAo+ID4gcGF0aGluZm8oKSBvbiB0aGUgY2hhbmdlZCBwYXRoLiBHZXR0aW5nIHRoaXMgcmlnaHQg
-aXMgc3VidGxlLCBJCj4gPiBndWVzcy4KPiA+IFdlIGNhbid0IHNpbXBseSBjaGFuZ2UgdGhlIHBh
-dGggcHJvcGVydGllcyBpbiB0aGUgcGF0aHZlYywgYmVjYXVzZQo+ID4gdGhlcmUnbGwgYmUgbG9j
-a2luZyBpc3N1ZXMsIGFuZCBjaGFuZ2VkIHBhdGggcHJvcGVydGllcyBtaWdodAo+ID4gYWZmZWN0
-c3NtdXRleAo+ID4gaG93IHRoZSBwYXRoIGlzIGhhbmRsZWQuCj4gCj4gV2UgZG8gY2FsbCBwYXRo
-aW5mbyB0byB1cGRhdGUgcGF0aHMgaW4gYSBudW1iZXIgb2YgcGxhY2VzLCBhbmQgYXMKPiBsb25n
-Cj4gYXMgd2UgZG8gaXQgd2hpbGUgaG9sZGluZyB0aGUgdmVjcyBsb2NrLCBJIHRob3VnaHQgdGhh
-dCB3YXMgc2FmZS4gQW0KPiBJCj4gbWlzc2luZyBzb21ldGhpbmcgaGVyZT8gIAoKQUZBSUNUIHZl
-Y3MtPmxvZyBwcm90ZWN0cyB0aGUgdmVjdG9ycyB0aGVtc2VsdmVzLCBub3QgdGhlIHByb3BlcnRp
-ZXMgb2YKZXZlcnkgbWVtYmVyLiBCdXQgcHJvYmFibHkgaXQncyBtZSB3aG8ncyBtaXNzaW5nIHNv
-bWV0aGluZy4KIAo+ID4gQEJlbiwgQUZBSUNTIHRoaXMgcGF0Y2ggc2hvd3MgdGhhdCBkaXNhYmxl
-X2NoYW5nZWRfd3dpZHMgd29uJ3Qgd29yawo+ID4gY29ycmVjdGx5IGFzIGxvbmcgYXMgdGhlIFdX
-SUQgaXMgZGVyaXZlZCBmcm9tIHVkZXYsIHdoaWNoIGlzIHRoZQo+ID4gZGVmYXVsdCBjYXNlIHRo
-ZXNlIGRheXMuIE9yIGFtIEkgb3Zlcmxvb2tpbmcgc29tZXRoaW5nPwo+IAo+IFdlIGJ1aWxkIHRo
-ZSAic3RydWN0IHVldmVudCAqdWV2IiB1cCBmcm9tIHRoZSBzcGVjaWZpYyB1ZXZlbnQgYW5kIHdl
-Cj4gY2hlY2sgdGhlIFIvTyB2YWx1ZSBmcm9tIHRoYXQsIHNvIGl0IHdpbGwgYmUgY29ycmVjdCBi
-YXNlZCBvbiB0aGUKPiBhY3R1YWwKPiBldmVudC4gIFdlIGFsc28gY2hlY2sgdGhlIHd3aWQgZnJv
-bSB0aGUgdWRldiBkZXZpY2UgbGlua2VkIGZyb20gdGhlCj4gdWV2LAoKVGhhdCd0IGl0LCB5ZXMu
-Cgo+IHNvIHRoYXQgaXMgYWxzbyBmcm9tIHRoZSBhY3R1YWwgY3VycmVudCBkZXZpY2Ugc3RhdGUu
-ICBJIGRvbid0Cj4gcmVtZW1iZXIKPiBvZmZoYW5kIHdoeSBJIGRpZG4ndCBqdXN0IHVwZGF0ZSB0
-aGUgdWRldiBkZXZpY2UgZm9yIHRoZSBwYXRoIGluCj4gdWV2X3VwZGF0ZV9wYXRoIChvciBldmVu
-IGlmIEkgaGFkIGEgZ29vZCByZWFzb24gZm9yIG5vdCBkb2luZyBzby4gSSdtCj4gdmVyeSBqZXRs
-YWdnZWQgcmlnaHQgbm93KS4gSG93ZXZlciwgZG9lcyB5b3VyIHVwZGF0ZSB0bwo+IHRyaWdnZXJf
-cGF0aHNfdWRldl9jaGFuZ2UoKSB3b3JrIGNvcnJlY3RseSBpbiB0aGlzIGNhc2U/IAoKSSBoYXZl
-IHRvIGFkbWl0IEkgaGF2ZW4ndCB0aG91Z2h0IGFib3V0IHRoYXQuIEkgZ3Vlc3MgaXQgd291bGQg
-aWYgd2UnZAptYWtlIHN1cmUgdGhhdCBwcC0+dWRldiBhbmQgZGVyaXZlZCBwYXRoIHByb3BlcnRp
-ZXMgYXJlIHVwZGF0ZWQgaW4KdWV2X3VwZGF0ZV9wYXRoLi4uCgpBbnl3eSwgaWYgd2UgY2FuIHRy
-dXN0IGNhY2hlZCB1ZGV2IHByb3BlcnRpZXMgYXQgYWxsLCB3ZSBzaG91bGQgYmUgYWJsZQp0byBk
-byBzbyBpbiB0cmlnZ2VyX3BhdGhzX3VkZXZfY2hhbmdlKCksIHRvby4gQnV0IGluIG9yZGVyIHRv
-IGJlIGFibGUKdG8gdHJ1c3QgY2FjaGVkIHByb3BlcnRpZXMsIHdlIHNob3VsZCBtYWtlIHN1cmUg
-dGhleSdyZSB1cGRhdGVkIHdoZW4KZXZlbnRzIGFycml2ZS4KCk1hcnRpbgoKLS0gCkRyLiBNYXJ0
-aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNV
-U0VMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCAgR3Jh
-aGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcg
-bGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9s
-aXN0aW5mby9kbS1kZXZlbA==
+
+
+On 01/22/18 16:57, Ming Lei wrote:
+> Even though RCU lock is held during dispatch, preemption or interrupt
+> can happen too, so it is simply wrong to depend on the timing to make
+> sure __blk_mq_run_hw_queue() can see the request in this situation.
+
+It is very unlikely that this race will ever be hit because that race 
+exists for less than one microsecond and the smallest timeout that can 
+be specified for delayed queue rerunning is one millisecond. Let's 
+address this race if anyone ever finds a way to hit it.
+
+>>> diff --git a/drivers/scsi/scsi_lib.c b/drivers/scsi/scsi_lib.c
+>>> index d9ca1dfab154..55be2550c555 100644
+>>> --- a/drivers/scsi/scsi_lib.c
+>>> +++ b/drivers/scsi/scsi_lib.c
+>>> @@ -2030,9 +2030,9 @@ static blk_status_t scsi_queue_rq(struct blk_mq_hw_ctx *hctx,
+>>>   	case BLK_STS_OK:
+>>>   		break;
+>>>   	case BLK_STS_RESOURCE:
+>>> -		if (atomic_read(&sdev->device_busy) == 0 &&
+>>> -		    !scsi_device_blocked(sdev))
+>>> -			blk_mq_delay_run_hw_queue(hctx, SCSI_QUEUE_DELAY);
+>>> +		if (atomic_read(&sdev->device_busy) ||
+>>> +		    scsi_device_blocked(sdev))
+>>> +			ret = BLK_STS_DEV_RESOURCE;
+>>>   		break;
+>>>   	default:
+>>>   		/*
+>>
+>> The above introduces two changes that have not been mentioned in the
+>> description of this patch:
+>> - The queue rerunning delay is changed from 3 ms into 10 ms. Where is the
+>>    explanation of this change? Does this change have a positive or negative
+>>    performance impact?
+> 
+> How can that be a issue for SCSI? The rerunning delay is only triggered
+> when there isn't any in-flight requests in SCSI queue.
+
+That change will result in more scsi_queue_rq() calls and hence in 
+higher CPU usage. By how much the CPU usage is increased will depend on 
+the CPU time required by the LLD .queuecommand() callback if that 
+function gets invoked.
+
+Bart.
