@@ -1,160 +1,236 @@
 From: Ming Lei <ming.lei@redhat.com>
-Subject: Re: [PATCH] block: neutralize blk_insert_cloned_request IO stall
- regression (was: Re: [RFC PATCH] blk-mq: fixup RESTART when queue becomes
- idle)
-Date: Tue, 23 Jan 2018 18:53:58 +0800
-Message-ID: <20180123105357.GA3344@ming.t460p>
-References: <20180118183039.GA20121@redhat.com>
- <1516301278.2676.35.camel@wdc.com>
- <deeb2b2e-6d0e-a144-843d-d08626de8aea@kernel.dk>
- <20180118204856.GA31679@redhat.com>
- <1516309128.2676.38.camel@wdc.com>
- <20180118212327.GB31679@redhat.com>
- <1516311554.2676.50.camel@wdc.com>
- <20180118220132.GA20860@redhat.com>
- <1516314012.2676.76.camel@wdc.com>
- <20180123092204.GA39002@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Subject: [PATCH V2] blk-mq: introduce BLK_STS_DEV_RESOURCE
+Date: Tue, 23 Jan 2018 18:56:11 +0800
+Message-ID: <20180123105611.7389-1-ming.lei@redhat.com>
 Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180123092204.GA39002@redhat.com>
 Sender: linux-block-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Bart Van Assche <Bart.VanAssche@wdc.com>, axboe@kernel.dk, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "hch@infradead.org" <hch@infradead.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "osandov@fb.com" <osandov@fb.com>
+To: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, Ming Lei <ming.lei@redhat.com>, Laurence Oberman <loberman@redhat.com>, Bart Van Assche <bart.vanassche@sandisk.com>
 List-Id: dm-devel.ids
 
-Hi Mike,
+This status is returned from driver to block layer if device related
+resource is run out of, but driver can guarantee that IO dispatch will
+be triggered in future when the resource is available.
 
-On Tue, Jan 23, 2018 at 10:22:04AM +0100, Mike Snitzer wrote:
-> On Thu, Jan 18 2018 at  5:20pm -0500,
-> Bart Van Assche <Bart.VanAssche@wdc.com> wrote:
-> 
-> > On Thu, 2018-01-18 at 17:01 -0500, Mike Snitzer wrote:
-> > > And yet Laurence cannot reproduce any such lockups with your test...
-> > 
-> > Hmm ... maybe I misunderstood Laurence but I don't think that Laurence has
-> > already succeeded at running an unmodified version of my tests. In one of the
-> > e-mails Laurence sent me this morning I read that he modified these scripts
-> > to get past a kernel module unload failure that was reported while starting
-> > these tests. So the next step is to check which changes were made to the test
-> > scripts and also whether the test results are still valid.
-> > 
-> > > Are you absolutely certain this patch doesn't help you?
-> > > https://patchwork.kernel.org/patch/10174037/
-> > > 
-> > > If it doesn't then that is actually very useful to know.
-> > 
-> > The first I tried this morning is to run the srp-test software against a merge
-> > of Jens' for-next branch and your dm-4.16 branch. Since I noticed that the dm
-> > queue locked up I reinserted a blk_mq_delay_run_hw_queue() call in the dm code.
-> > Since even that was not sufficient I tried to kick the queues via debugfs (for
-> > s in /sys/kernel/debug/block/*/state; do echo kick >$s; done). Since that was
-> > not sufficient to resolve the queue stall I reverted the following tree patches
-> > that are in Jens' tree:
-> > * "blk-mq: improve DM's blk-mq IO merging via blk_insert_cloned_request feedback"
-> > * "blk-mq-sched: remove unused 'can_block' arg from blk_mq_sched_insert_request"
-> > * "blk-mq: don't dispatch request in blk_mq_request_direct_issue if queue is busy"
-> > 
-> > Only after I had done this the srp-test software ran again without triggering
-> > dm queue lockups.
-> 
-> Given that Ming's notifier-based patchset needs more development time I
-> think we're unfortunately past the point where we can comfortably wait
-> for that to be ready.
-> 
-> So we need to explore alternatives to fixing this IO stall regression.
+This patch converts some drivers to use this return value. Meantime
+if driver returns BLK_STS_RESOURCE and S_SCHED_RESTART is marked, run
+queue after 10ms for avoiding IO hang.
 
-The fix for IO stall doesn't need the notifier-based patchset, and only
-the 1st patch is enough for fixing the IO stall. And it is a generic
-issue, which need generic solution, that is the conclusion made by
-Jens and me.
+Suggested-by: Jens Axboe <axboe@kernel.dk>
+Cc: Christoph Hellwig <hch@infradead.org>
+Cc: Mike Snitzer <snitzer@redhat.com>
+Cc: Laurence Oberman <loberman@redhat.com>
+Cc: Bart Van Assche <bart.vanassche@sandisk.com>
+Signed-off-by: Ming Lei <ming.lei@redhat.com>
+---
+V2:
+	- add comments on the new introduced status
+	- patch style fix
+	- both are suggested by Chritoph
 
-	https://marc.info/?l=linux-kernel&m=151638176727612&w=2
 
-And the notifier-based patchset is for solving the performance issue
-reported by Jens:
+ block/blk-core.c             |  1 +
+ block/blk-mq.c               | 19 +++++++++++++++----
+ drivers/block/null_blk.c     |  2 +-
+ drivers/block/virtio_blk.c   |  2 +-
+ drivers/block/xen-blkfront.c |  2 +-
+ drivers/md/dm-rq.c           |  4 ++--
+ drivers/scsi/scsi_lib.c      |  6 +++---
+ include/linux/blk_types.h    | 17 +++++++++++++++++
+ 8 files changed, 41 insertions(+), 12 deletions(-)
 
-	- run IO on dm-mpath
-	- run background IO on low depth underlying queue
-	- then IO performance on dm-mpath is extremely slow
-
-I will send out the 1st patch of 'blk-mq: introduce BLK_STS_DEV_RESOURCE'
-soon, but the notifier-based patchset shouldn't be very urgent, since
-the above test case isn't usual in reality.
-
-> Rather than attempt the above block reverts (which is an incomplete
-> listing given newer changes): might we develop a more targeted code
-> change to neutralize commit 396eaf21ee ("blk-mq: improve DM's blk-mq IO
-> merging via blk_insert_cloned_request feedback")? -- which, given Bart's
-> findings above, seems to be the most problematic block commit.
-
-The stall isn't related with commit 396eaf21ee too.
-
-> 
-> To that end, assuming I drop this commit from dm-4.16:
-> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.16&id=316a795ad388e0c3ca613454851a28079d917a92
-> 
-> Here is my proposal for putting this regression behind us for 4.16
-> (Ming's line of development would continue and hopefully be included in
-> 4.17):
-
-Actually notifier based approach is ready, even cache for clone is ready
-too, but the test result isn't good enough on random IO on Jens's above
-case, and sequential IO is much better with both cache clone and
-notifier based allocation(much better than non-mq). And follows the tree
-if anyone is interested:
-
-https://github.com/ming1/linux/commits/v4.15-rc-block-dm-mpath
-
-Now looks there is still one issue: the notifier can come early, just
-before the request is added to hctx->dispatch_list, and performance
-still gets hurt, especially on random IO in Jens's case. But queue
-won't stall, :-)
-
-> 
-> From: Mike Snitzer <snitzer@redhat.com>
-> Date: Tue, 23 Jan 2018 09:40:22 +0100
-> Subject: [PATCH] block: neutralize blk_insert_cloned_request IO stall regression
-> 
-> The series of blk-mq changes intended to improve sequential IO
-> performace (through improved merging with dm-mapth blk-mq stacked on
-> underlying blk-mq device).  Unfortunately these changes have caused
-> dm-mpath blk-mq IO stalls when blk_mq_request_issue_directly()'s call to
-> q->mq_ops->queue_rq() fails (due to device-specific resource
-> unavailability).
-> 
-> Fix this by reverting back to how blk_insert_cloned_request() functioned
-> prior to commit 396eaf21ee -- by using blk_mq_request_bypass_insert()
-> instead of blk_mq_request_issue_directly().
-> 
-> In the future, this commit should be reverted as the first change in a
-> followup series of changes that implements a comprehensive solution to
-> allowing an underlying blk-mq queue's resource limitation to trigger the
-> upper blk-mq queue to run once that underlying limited resource is
-> replenished.
-> 
-> Fixes: 396eaf21ee ("blk-mq: improve DM's blk-mq IO merging via blk_insert_cloned_request feedback")
-> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-> ---
->  block/blk-core.c | 3 ++-
->  1 file changed, 2 insertions(+), 1 deletion(-)
-> 
-> diff --git a/block/blk-core.c b/block/blk-core.c
-> index cdae69be68e9..a224f282b4a6 100644
-> --- a/block/blk-core.c
-> +++ b/block/blk-core.c
-> @@ -2520,7 +2520,8 @@ blk_status_t blk_insert_cloned_request(struct request_queue *q, struct request *
->  		 * bypass a potential scheduler on the bottom device for
->  		 * insert.
->  		 */
-> -		return blk_mq_request_issue_directly(rq);
-> +		blk_mq_request_bypass_insert(rq, true);
-> +		return BLK_STS_OK;
->  	}
-
-If this patch is for fixing IO stall on DM, it isn't needed, and actually
-it can't fix the IO stall issue.
-
+diff --git a/block/blk-core.c b/block/blk-core.c
+index a2005a485335..ac4789c5e329 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -145,6 +145,7 @@ static const struct {
+ 	[BLK_STS_MEDIUM]	= { -ENODATA,	"critical medium" },
+ 	[BLK_STS_PROTECTION]	= { -EILSEQ,	"protection" },
+ 	[BLK_STS_RESOURCE]	= { -ENOMEM,	"kernel resource" },
++	[BLK_STS_DEV_RESOURCE]	= { -ENOMEM,	"device resource" },
+ 	[BLK_STS_AGAIN]		= { -EAGAIN,	"nonblocking retry" },
+ 
+ 	/* device mapper special case, should not leak out: */
+diff --git a/block/blk-mq.c b/block/blk-mq.c
+index 01f271d40825..55c52b9a0f30 100644
+--- a/block/blk-mq.c
++++ b/block/blk-mq.c
+@@ -1169,6 +1169,7 @@ bool blk_mq_dispatch_rq_list(struct request_queue *q, struct list_head *list,
+ 	struct request *rq, *nxt;
+ 	bool no_tag = false;
+ 	int errors, queued;
++	blk_status_t ret = BLK_STS_OK;
+ 
+ 	if (list_empty(list))
+ 		return false;
+@@ -1181,7 +1182,6 @@ bool blk_mq_dispatch_rq_list(struct request_queue *q, struct list_head *list,
+ 	errors = queued = 0;
+ 	do {
+ 		struct blk_mq_queue_data bd;
+-		blk_status_t ret;
+ 
+ 		rq = list_first_entry(list, struct request, queuelist);
+ 		if (!blk_mq_get_driver_tag(rq, &hctx, false)) {
+@@ -1226,7 +1226,7 @@ bool blk_mq_dispatch_rq_list(struct request_queue *q, struct list_head *list,
+ 		}
+ 
+ 		ret = q->mq_ops->queue_rq(hctx, &bd);
+-		if (ret == BLK_STS_RESOURCE) {
++		if (ret == BLK_STS_RESOURCE || ret == BLK_STS_DEV_RESOURCE) {
+ 			/*
+ 			 * If an I/O scheduler has been configured and we got a
+ 			 * driver tag for the next request already, free it
+@@ -1257,6 +1257,8 @@ bool blk_mq_dispatch_rq_list(struct request_queue *q, struct list_head *list,
+ 	 * that is where we will continue on next queue run.
+ 	 */
+ 	if (!list_empty(list)) {
++		bool needs_restart;
++
+ 		spin_lock(&hctx->lock);
+ 		list_splice_init(list, &hctx->dispatch);
+ 		spin_unlock(&hctx->lock);
+@@ -1280,10 +1282,18 @@ bool blk_mq_dispatch_rq_list(struct request_queue *q, struct list_head *list,
+ 		 * - Some but not all block drivers stop a queue before
+ 		 *   returning BLK_STS_RESOURCE. Two exceptions are scsi-mq
+ 		 *   and dm-rq.
++		 *
++		 * If drivers return BLK_STS_RESOURCE and S_SCHED_RESTART
++		 * bit is set, run queue after 10ms for avoiding IO hang
++		 * because the queue may be idle and the RESTART mechanism
++		 * can't work any more.
+ 		 */
+-		if (!blk_mq_sched_needs_restart(hctx) ||
++		needs_restart = blk_mq_sched_needs_restart(hctx);
++		if (!needs_restart ||
+ 		    (no_tag && list_empty_careful(&hctx->dispatch_wait.entry)))
+ 			blk_mq_run_hw_queue(hctx, true);
++		else if (needs_restart && (ret == BLK_STS_RESOURCE))
++			blk_mq_delay_run_hw_queue(hctx, 10);
+ 	}
+ 
+ 	return (queued + errors) != 0;
+@@ -1764,6 +1774,7 @@ static blk_status_t __blk_mq_issue_directly(struct blk_mq_hw_ctx *hctx,
+ 		*cookie = new_cookie;
+ 		break;
+ 	case BLK_STS_RESOURCE:
++	case BLK_STS_DEV_RESOURCE:
+ 		__blk_mq_requeue_request(rq);
+ 		break;
+ 	default:
+@@ -1826,7 +1837,7 @@ static void blk_mq_try_issue_directly(struct blk_mq_hw_ctx *hctx,
+ 	hctx_lock(hctx, &srcu_idx);
+ 
+ 	ret = __blk_mq_try_issue_directly(hctx, rq, cookie, false);
+-	if (ret == BLK_STS_RESOURCE)
++	if (ret == BLK_STS_RESOURCE || ret == BLK_STS_DEV_RESOURCE)
+ 		blk_mq_sched_insert_request(rq, false, true, false);
+ 	else if (ret != BLK_STS_OK)
+ 		blk_mq_end_request(rq, ret);
+diff --git a/drivers/block/null_blk.c b/drivers/block/null_blk.c
+index 6655893a3a7a..287a09611c0f 100644
+--- a/drivers/block/null_blk.c
++++ b/drivers/block/null_blk.c
+@@ -1230,7 +1230,7 @@ static blk_status_t null_handle_cmd(struct nullb_cmd *cmd)
+ 				return BLK_STS_OK;
+ 			} else
+ 				/* requeue request */
+-				return BLK_STS_RESOURCE;
++				return BLK_STS_DEV_RESOURCE;
+ 		}
+ 	}
+ 
+diff --git a/drivers/block/virtio_blk.c b/drivers/block/virtio_blk.c
+index 68846897d213..79908e6ddbf2 100644
+--- a/drivers/block/virtio_blk.c
++++ b/drivers/block/virtio_blk.c
+@@ -276,7 +276,7 @@ static blk_status_t virtio_queue_rq(struct blk_mq_hw_ctx *hctx,
+ 		/* Out of mem doesn't actually happen, since we fall back
+ 		 * to direct descriptors */
+ 		if (err == -ENOMEM || err == -ENOSPC)
+-			return BLK_STS_RESOURCE;
++			return BLK_STS_DEV_RESOURCE;
+ 		return BLK_STS_IOERR;
+ 	}
+ 
+diff --git a/drivers/block/xen-blkfront.c b/drivers/block/xen-blkfront.c
+index 891265acb10e..e126e4cac2ca 100644
+--- a/drivers/block/xen-blkfront.c
++++ b/drivers/block/xen-blkfront.c
+@@ -911,7 +911,7 @@ static blk_status_t blkif_queue_rq(struct blk_mq_hw_ctx *hctx,
+ out_busy:
+ 	blk_mq_stop_hw_queue(hctx);
+ 	spin_unlock_irqrestore(&rinfo->ring_lock, flags);
+-	return BLK_STS_RESOURCE;
++	return BLK_STS_DEV_RESOURCE;
+ }
+ 
+ static void blkif_complete_rq(struct request *rq)
+diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+index d8519ddd7e1a..bf0b840645cc 100644
+--- a/drivers/md/dm-rq.c
++++ b/drivers/md/dm-rq.c
+@@ -408,7 +408,7 @@ static blk_status_t dm_dispatch_clone_request(struct request *clone, struct requ
+ 
+ 	clone->start_time = jiffies;
+ 	r = blk_insert_cloned_request(clone->q, clone);
+-	if (r != BLK_STS_OK && r != BLK_STS_RESOURCE)
++	if (r != BLK_STS_OK && r != BLK_STS_RESOURCE && r != BLK_STS_DEV_RESOURCE)
+ 		/* must complete clone in terms of original request */
+ 		dm_complete_request(rq, r);
+ 	return r;
+@@ -500,7 +500,7 @@ static int map_request(struct dm_rq_target_io *tio)
+ 		trace_block_rq_remap(clone->q, clone, disk_devt(dm_disk(md)),
+ 				     blk_rq_pos(rq));
+ 		ret = dm_dispatch_clone_request(clone, rq);
+-		if (ret == BLK_STS_RESOURCE) {
++		if (ret == BLK_STS_RESOURCE || ret == BLK_STS_DEV_RESOURCE) {
+ 			blk_rq_unprep_clone(clone);
+ 			tio->ti->type->release_clone_rq(clone);
+ 			tio->clone = NULL;
+diff --git a/drivers/scsi/scsi_lib.c b/drivers/scsi/scsi_lib.c
+index d9ca1dfab154..55be2550c555 100644
+--- a/drivers/scsi/scsi_lib.c
++++ b/drivers/scsi/scsi_lib.c
+@@ -2030,9 +2030,9 @@ static blk_status_t scsi_queue_rq(struct blk_mq_hw_ctx *hctx,
+ 	case BLK_STS_OK:
+ 		break;
+ 	case BLK_STS_RESOURCE:
+-		if (atomic_read(&sdev->device_busy) == 0 &&
+-		    !scsi_device_blocked(sdev))
+-			blk_mq_delay_run_hw_queue(hctx, SCSI_QUEUE_DELAY);
++		if (atomic_read(&sdev->device_busy) ||
++		    scsi_device_blocked(sdev))
++			ret = BLK_STS_DEV_RESOURCE;
+ 		break;
+ 	default:
+ 		/*
+diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+index c5d3db0d83f8..4b81821a792a 100644
+--- a/include/linux/blk_types.h
++++ b/include/linux/blk_types.h
+@@ -39,6 +39,23 @@ typedef u8 __bitwise blk_status_t;
+ 
+ #define BLK_STS_AGAIN		((__force blk_status_t)12)
+ 
++/*
++ * Block layer and block driver specific status, which is ususally returnd
++ * from driver to block layer in IO path.
++ *
++ * This status is returned from driver to block layer if device related
++ * resource is run out of, but driver can guarantee that IO dispatch will
++ * be triggered in future for handling the current request when the
++ * resource is available.
++ *
++ * If driver isn't sure if the queue can be run again for dealing with the
++ * current request after this kind of resource is available, please return
++ * BLK_STS_SOURCE, for example, when memory allocation, DMA Mapping or other
++ * system resource allocation fails and IO can't be submitted to device,
++ * BLK_STS_RESOURCE should be returned to block layer.
++ */
++#define BLK_STS_DEV_RESOURCE	((__force blk_status_t)13)
++
+ /**
+  * blk_path_error - returns true if error may be path related
+  * @error: status the request was completed with
 -- 
-Ming
+2.9.5
