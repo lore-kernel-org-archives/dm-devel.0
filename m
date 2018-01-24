@@ -1,93 +1,70 @@
-From: Wuchongyun <wu.chongyun@h3c.com>
-Subject: Re: [PATCH] multipathd: update path's udev in
- uev_update_path
-Date: Wed, 24 Jan 2018 01:43:01 +0000
-Message-ID: <CEB9978CF3252343BE3C67AC9F0086A342958939@H3CMLB14-EX.srv.huawei-3com.com>
+From: Ming Lei <ming.lei@redhat.com>
+Subject: Re: [PATCH 1/5] blk-mq: introduce BLK_STS_DEV_RESOURCE
+Date: Wed, 24 Jan 2018 10:31:05 +0800
+Message-ID: <20180124023104.GB15056@ming.t460p>
+References: <20180123005728.GB4411@ming.t460p>
+ <54f0c19c-38aa-e788-f476-492e5a5734c9@wdc.com>
+ <20180123162605.GD13277@ming.t460p>
+ <4cdb2b42-0097-c64a-d9c0-b7a1727c80de@wdc.com>
+ <20180123164109.GF13277@ming.t460p>
+ <1516726030.3339.14.camel@wdc.com>
+ <20180123164951.GG13277@ming.t460p>
+ <1516726441.3339.16.camel@wdc.com>
+ <20180123165914.GH13277@ming.t460p>
+ <1516744896.3339.41.camel@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: zh-CN
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, Martin Wilck <mwilck@suse.com>
-Cc: Guozhonghua <guozhonghua@h3c.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Changlimin <changlimin@h3c.com>, Changwei Ge <ge.changwei@h3c.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1516744896.3339.41.camel@wdc.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Bart Van Assche <Bart.VanAssche@wdc.com>
+Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "hch@infradead.org" <hch@infradead.org>, "snitzer@redhat.com" <snitzer@redhat.com>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "jejb@linux.vnet.ibm.com" <jejb@linux.vnet.ibm.com>, "loberman@redhat.com" <loberman@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-SGkgQmVuLApUaGFua3MgZm9yIHlvdXIgcmVwbHkuIApUaGUgcHVycG9zZSB0byB1cGRhdGUgdGhl
-IHBhdGgncyB1ZGV2IGlzIHRoYXQgaWYgd2Ugd2FudCB0byBjYWxsIGludGVyZmFjZSBzeXNmc19h
-dHRyX3NldF92YWx1ZSgpIHRvIHRyaWdnZXIgdWV2ZW50IGZvciB0aGlzIGRldmljZSBtaWdodCB1
-c2UgdGhlIG9sZCB1ZGV2X2RldmljZQpJZiB0aGlzIGRldmljZSBhbHJlYWR5IHJlY2VpdmVkIGEg
-Y2hlbmcgdWV2ZW50IGFuZCB1cGRhdGVkLiBJZiB3ZSB1c2UgdGhlIG5vdCB1cGRhdGUgcHAtPnVk
-ZXYgaW4gdWV2X3VwZGF0ZV9wYXRoIG1heSBnZXQgdWRldiBkYXRhYmFzZSdzIG9sZCB2YWx1ZSBv
-ciBzdGF0dXMuIApMaWtlIHdlIHdhbnQgdG8gZ2V0IHRoZSBuZXdlc3Qgd3dpZCBnZXQgZnJvbSB1
-ZGV2LgoKT24gSmFudWFyeSAyMywgMjAxOCAyMDozOVBNLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Ck9uIE1vbiwgSmFuIDIyLCAyMDE4IGF0IDExOjM0OjE1QU0gKzAxMDAsIE1hcnRpbiBXaWxj
-ayB3cm90ZToKPiA+IE9uIFNhdCwgMjAxOC0wMS0yMCBhdCAwMjozMCArMDAwMCwgV3VjaG9uZ3l1
-biB3cm90ZToKPiA+ID4gSGkgTWFydGluIGFuZCBCZW4sCj4+ID4gQ291bGQgeW91IGhlbHAgdG8g
-cmV2aWV3IHRoaXMgcGF0Y2gsIHRoYW5rcy4KPiA+ID4KPiA+ID4gV2hlbiByZWNlaXZpbmcgYSBj
-aGFuZ2UgdWV2ZW50IGFuZCBjYWxsaW5nIHVldl91cGRhdGVfcGF0aCwgY3VycmVudCAKPiA+ID4g
-Y29kZSBub3QgdXBkYXRlIHRoZSBwYXRoJ3MgdWRldiwgaWYgdXNlIHBwLT51ZGV2IHRvIHF1ZXJ5
-IHRoZSB1ZGV2IAo+ID4gPiBkYXRhYmFzZSBpbmZvIHdpbGwgZ2V0IHRoZSBvbGQgZGF0YS4gU28g
-aXQgc2hvdWxkIHVwZGF0ZSB0aGUgcGF0aCdzIAo+ID4gPiB1ZGV2IHdpdGggdGhlIG5ldyB1ZGV2
-IGZyb20gdGhlIG5ldyB1ZXZlbnQgaW4gdWV2X3VwZGF0ZV9wYXRoIGFsc28uCj4gPiA+IAo+ID4g
-PiBTaWduZWQtb2ZmLWJ5OiBDaG9uZ3l1biBXdSA8d3UuY2hvbmd5dW5AaDNjLmNvbT4KPj4gPiAt
-LS0KPiA+ID4gIG11bHRpcGF0aGQvbWFpbi5jIHwgICAgMyArKysKPiA+ID4gIDEgZmlsZSBjaGFu
-Z2VkLCAzIGluc2VydGlvbnMoKykKPiA+ID4gCj4gPiA+IGRpZmYgLS1naXQgYS9tdWx0aXBhdGhk
-L21haW4uYyBiL211bHRpcGF0aGQvbWFpbi5jIGluZGV4IAo+ID4gPiAyN2NmMjM0Li5lN2E0ZjRi
-IDEwMDY0NAo+ID4gPiAtLS0gYS9tdWx0aXBhdGhkL21haW4uYwo+ID4gPiArKysgYi9tdWx0aXBh
-dGhkL21haW4uYwo+ID4gPiBAQCAtOTM3LDYgKzkzNyw5IEBAIHVldl91cGRhdGVfcGF0aCAoc3Ry
-dWN0IHVldmVudCAqdWV2LCBzdHJ1Y3QgCj4gPiA+IHZlY3RvcnMgKiB2ZWNzKQo+ID4gPiAgCWlm
-IChwcCkgewo+ID4gPiAgCQlzdHJ1Y3QgbXVsdGlwYXRoICptcHAgPSBwcC0+bXBwOwo+PiAgPiAg
-Cj4gPiA+ICsJCXVkZXZfZGV2aWNlX3VucmVmKHBwLT51ZGV2KTsKPiA+ID4gKwkJcHAtPnVkZXYg
-PSB1ZGV2X2RldmljZV9yZWYodWV2LT51ZGV2KTsKPiA+ID4gKwo+ID4gPiAgCQlpZiAoZGlzYWJs
-ZV9jaGFuZ2VkX3d3aWRzICYmCj4gPiA+ICAJCSAgICAoc3RybGVuKHBwLT53d2lkKSB8fCBwcC0+
-d3dpZF9jaGFuZ2VkKSkgewo+ID4gPiAgCQkJY2hhciB3d2lkW1dXSURfU0laRV07Cj4gPgo+PiAg
-VGhlIGdlbmVyYWwgaWRlYSBpcyBjb3JyZWN0LCBidXQgSSBmZWFyIHdlIG5lZWQgdG8gZG8gbW9y
-ZS4KPj4gIAo+PiBCYXNpY2FsbHksIGlmIHJlbGV2YW50IHVkZXYgcHJvcGVydGllcyBoYXZlIGNo
-YW5nZWQsIHdlIG5lZWQgdG8gY2FsbAo+ID4gcGF0aGluZm8oKSBvbiB0aGUgY2hhbmdlZCBwYXRo
-LiBHZXR0aW5nIHRoaXMgcmlnaHQgaXMgc3VidGxlLCBJIGd1ZXNzLgo+ID4gV2UgY2FuJ3Qgc2lt
-cGx5IGNoYW5nZSB0aGUgcGF0aCBwcm9wZXJ0aWVzIGluIHRoZSBwYXRodmVjLCBiZWNhdXNlIAo+
-ID4gdGhlcmUnbGwgYmUgbG9ja2luZyBpc3N1ZXMsIGFuZCBjaGFuZ2VkIHBhdGggcHJvcGVydGll
-cyBtaWdodCBhZmZlY3QgCj4gPiBob3cgdGhlIHBhdGggaXMgaGFuZGxlZC4KCj4gV2UgZG8gY2Fs
-bCBwYXRoaW5mbyB0byB1cGRhdGUgcGF0aHMgaW4gYSBudW1iZXIgb2YgcGxhY2VzLCBhbmQgYXMg
-bG9uZyBhcyB3ZSBkbyBpdCB3aGlsZSBob2xkaW5nIHRoZSB2ZWNzIGxvY2ssIEkgdGhvdWdodCB0
-aGF0IHdhcyBzYWZlLiBBbSBJIG1pc3Npbmcgc29tZXRoaW5nIGhlcmU/Cgo+ID4gVGhlIHBhdGgg
-bWF5IGhhdmUgZ29uZSBSL08sIG9yIGV2ZW4gaGF2ZSBjaGFuZ2VkIHd3aWQuIFRoZSBzYWZlc3Qg
-Cj4gPiBjb3Vyc2Ugb2YgYWN0aW9uIG1pZ2h0IGJlIHRvIGRlbGV0ZSBhbmQgcmUtYWRkIHRoZSBw
-YXRoIGlmIGFueSAKPiA+IGltcG9ydGFudCBwcm9wZXJ0aWVzIGhhdmUgY2hhbmdlZC4gQnV0IGJs
-aW5kbHkgZGVsZXRpbmcgYW5kIHJlLWFkZGluZyAKPiA+IHdvdWxkIGJlIHdyb25nIGFzIHdlbGwu
-Li4KPiA+IAo+ID4gQmVuIGhhcyByZWNlbnRseSBkb25lIHdvcmsgaW4gdGhpcyBhcmVhLCBzbyBJ
-J2xsIGxlYXZlIHRoZSB2ZXJkaWN0IHRvIAo+ID4gaGltIGZvciBub3cuCj4gPiAKPiA+IEBCZW4s
-IEFGQUlDUyB0aGlzIHBhdGNoIHNob3dzIHRoYXQgZGlzYWJsZV9jaGFuZ2VkX3d3aWRzIHdvbid0
-IHdvcmsgCj4gPiBjb3JyZWN0bHkgYXMgbG9uZyBhcyB0aGUgV1dJRCBpcyBkZXJpdmVkIGZyb20g
-dWRldiwgd2hpY2ggaXMgdGhlIAo+ID4gZGVmYXVsdCBjYXNlIHRoZXNlIGRheXMuIE9yIGFtIEkg
-b3Zlcmxvb2tpbmcgc29tZXRoaW5nPwoKPiBXZSBidWlsZCB0aGUgInN0cnVjdCB1ZXZlbnQgKnVl
-diIgdXAgZnJvbSB0aGUgc3BlY2lmaWMgdWV2ZW50IGFuZCB3ZSBjaGVjayB0aGUgUi9PIHZhbHVl
-IGZyb20gdGhhdCwgc28gaXQgd2lsbCBiZSBjb3JyZWN0IGJhc2VkIG9uIHRoZSBhY3R1YWwgZXZl
-bnQuICBXZSBhbHNvIGNoZWNrIHRoZSB3d2lkIGZyb20gdGhlIHVkZXYgZGV2aWNlIGxpbmtlZCBm
-cm9tIHRoZSB1ZXYsIHNvIAo+dGhhdCBpcyBhbHNvIGZyb20gdGhlIGFjdHVhbCBjdXJyZW50IGRl
-dmljZSBzdGF0ZS4gIEkgZG9uJ3QgcmVtZW1iZXIgb2ZmaGFuZCB3aHkgSSBkaWRuJ3QganVzdCB1
-cGRhdGUgdGhlIHVkZXYgZGV2aWNlIGZvciB0aGUgcGF0aCBpbiB1ZXZfdXBkYXRlX3BhdGggKG9y
-IGV2ZW4gaWYgSSBoYWQgYSBnb29kIHJlYXNvbiBmb3Igbm90IGRvaW5nIHNvLiBJJ20gdmVyeSBq
-ZXRsYWdnZWQKPnJpZ2h0IG5vdykuIEhvd2V2ZXIsIGRvZXMgeW91ciB1cGRhdGUgdG8gdHJpZ2dl
-cl9wYXRoc191ZGV2X2NoYW5nZSgpIHdvcmsgY29ycmVjdGx5IGluIHRoaXMgY2FzZT8gSXQgZG9l
-c24ndCB1c2UgdGhlIHVldmVudCdzIHVkZXYgZGV2aWNlLiBJdCB1c2VzIHRoZSBwYXRoIGRldmlj
-ZSdzIHVkZXYgZGV2aWNlLiBEb2VzIGl0IGp1c3QgcmVseSBvbiB0aGlzIGJlaW5nIHRoZSBmaXJz
-dCB0aW1lCj55b3UgYWNjZXNzIERNX01VTFRJUEFUSF9ERVZJQ0VfUEFUSCwgc28gaXQncyBub3Qg
-Y2FjaGluZyB0aGUgb2xkIHZhbHVlPwoKQUZBSUNTLCB0aGlzIGNoYW5nZSB3b24ndCBodXJ0IGFu
-eXRoaW5nLiBCdXQgSSB3ZSBzaG91bGQgcHJvYmFibHkgdXBkYXRlIG90aGVyIHZhbHVlcyB0aGF0
-IGFyZSBiYXNlZCBvbiB0aGVzZSBhdHRyaWJ1dGVzLgoKLUJlbgoKPiAKPiBNYXJ0aW4KPiAKPiA+
-IC0tCj4gPiAxLjcuOS41Cj4gPiAKPiA+IFJlZ2FyZHMKPiA+IENob25neXVuCj4gCj4gLS0KPiBE
-ci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMg
-MjEwNyBTVVNFIAo+IExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21p
-dGhhcmQsIEdyYWhhbSBOb3J0b24gSFJCIAo+IDIxMjg0IChBRyBOw7xybmJlcmcpCgoKLS0KZG0t
-ZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0
-LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+On Tue, Jan 23, 2018 at 10:01:37PM +0000, Bart Van Assche wrote:
+> On Wed, 2018-01-24 at 00:59 +0800, Ming Lei wrote:
+> > How is that enough to fix the IO hang when driver returns STS_RESOURCE
+> > and the queue is idle? If you want to follow previous dm-rq's way of
+> > call blk_mq_delay_run_hw_queue() in .queue_rq(), the same trick need
+> > to be applied to other drivers too, right?
+> > 
+> > Unfortunately most of STS_RESOURCE don't use this trick, but they need
+> > to be handled.
+> > 
+> > The patch of 'blk-mq: introduce BLK_STS_DEV_RESOURCE' can fix all these
+> > cases.
+> 
+> The goal of my proposal was to address the race between running the queue and
+> adding requests back to the dispatch queue only. Regarding the I/O hangs that
+> can occur if a block driver returns BLK_STS_RESOURCE: since all of these can
+> be addressed by inserting blk_mq_delay_run_hw_queue() calls in the affected
+> block drivers I prefer to modify the block drivers instead of making the
+> blk-mq core even more complicated.
+
+IMO, this change doesn't make blk-mq code more complicated, also it is
+well documented, see the change in block layer:
+
+ block/blk-core.c             |  1 +
+ block/blk-mq.c               | 19 +++++++++++++++----
+ include/linux/blk_types.h    | 18 ++++++++++++++++++
+
+Also 21 lines of them are comment, so only 17 lines code change needed
+in block layer.
+
+If inserting blk_mq_delay_run_hw_queue() to driver, the change can be
+a bit complicated, since call_rcu has to be used, you need to figure out
+one way to provide callback and the parameter. Even you have to document
+the change in each driver.
+
+[ming@ming linux]$ git grep -n BLK_STS_RESOURCE drivers/ | wc -l
+42
+
+There are at least 42 uses of BLK_STS_RESOURCE in drivers, in theory
+you should insert call_rcu(blk_mq_delay_run_hw_queue) in every BLK_STS_RESOURCE
+of drivers.
+
+I leave the decisions to Jens and drivers maintainers.
+
+Thanks,
+Ming
