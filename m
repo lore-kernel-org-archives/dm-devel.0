@@ -1,13 +1,20 @@
-From: Wuchongyun <wu.chongyun@h3c.com>
-Subject: Re: [PATCH] multipathd: update path's udev in
- uev_update_path
-Date: Fri, 26 Jan 2018 01:52:56 +0000
-Message-ID: <CEB9978CF3252343BE3C67AC9F0086A342958B50@H3CMLB14-EX.srv.huawei-3com.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [RFC PATCH 14/16] multipath.rules:
+ find_multipaths+ignore_wwids logic
+Date: Fri, 26 Jan 2018 18:29:04 +0100
+Message-ID: <1516987744.2758.90.camel@suse.com>
+References: <20180119002916.10323-1-mwilck@suse.com>
+	<20180119002916.10323-15-mwilck@suse.com>
+	<20180119181219.GD5638@octiron.msp.redhat.com>
+	<1516411258.4005.49.camel@suse.com>
+	<20180121032153.GA14513@octiron.msp.redhat.com>
+	<1516658179.30796.146.camel@suse.com>
+	<20180125134024.GD14513@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: zh-CN
+In-Reply-To: <20180125134024.GD14513@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,172 +24,240 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Guozhonghua <guozhonghua@h3c.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Changlimin <changlimin@h3c.com>, Martin Wilck <mwilck@suse.com>, Changwei Ge <ge.changwei@h3c.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Ben,
-Thank you for your reply.  Your opinion is reasonable and our code seems to=
- be have no place to use pp->udev right now.
-
------original----
-sender: Benjamin Marzinski [mailto:bmarzins@redhat.com] =
-
-send time: January 25, 2018, 22:22
-receiver: wuchongyun (Cloud) <wu.chongyun@h3c.com>
-cc: Martin Wilck <mwilck@suse.com>; dm-devel@redhat.com; changlimin (Cloud)=
- <changlimin@h3c.com>; guozhonghua (Cloud) <guozhonghua@h3c.com>; gechangwe=
-i (Cloud) <ge.changwei@h3c.com>
-subject: Re: [dm-devel] [PATCH] multipathd: update path's udev in uev_updat=
-e_path
-
-On Wed, Jan 24, 2018 at 01:43:01AM +0000, Wuchongyun wrote:
-> Hi Ben,
-> Thanks for your reply. =
-
-> The purpose to update the path's udev is that if we want to call =
-
-> interface sysfs_attr_set_value() to trigger uevent for this device might =
-use the old udev_device If this device already received a cheng uevent and =
-updated. If we use the not update pp->udev in uev_update_path may get udev =
-database's old value or status.
-> Like we want to get the newest wwid get from udev.
-
-In general, we don't rely on udev to give us the current value for any sysf=
-s attribute whose value can change, since it can change without causing a u=
-event.  Instead, we call sysfs_attr_get_value() to get these values directl=
-y from sysfs.
-
-More importantly however, if the wwid of a device changes, then it is no lo=
-nger the same device.  Linux doesn't support changing the backing LUN on a =
-device that is in-use.  It can cause issues in all sorts of places, not jus=
-t in multipath.  Multipath already has an option to check if the wwid chang=
-es, which uses the wwid from the latest uevent.  But we only use this to di=
-sable access to the mutlipath device, until the wwid switches back.
-
--Ben
-
-> =
-
-> On January 23, 2018 20:39PM, Benjamin Marzinski wrote:
-> On Mon, Jan 22, 2018 at 11:34:15AM +0100, Martin Wilck wrote:
-> > > On Sat, 2018-01-20 at 02:30 +0000, Wuchongyun wrote:
-> > > > Hi Martin and Ben,
-> >> > Could you help to review this patch, thanks.
-> > > >
-> > > > When receiving a change uevent and calling uev_update_path, =
-
-> > > > current code not update the path's udev, if use pp->udev to =
-
-> > > > query the udev database info will get the old data. So it should =
-
-> > > > update the path's udev with the new udev from the new uevent in uev=
-_update_path also.
-> > > > =
-
-> > > > Signed-off-by: Chongyun Wu <wu.chongyun@h3c.com>
-> >> > ---
-> > > >  multipathd/main.c |    3 +++
-> > > >  1 file changed, 3 insertions(+)
-> > > > =
-
-> > > > diff --git a/multipathd/main.c b/multipathd/main.c index =
-
-> > > > 27cf234..e7a4f4b 100644
-> > > > --- a/multipathd/main.c
-> > > > +++ b/multipathd/main.c
-> > > > @@ -937,6 +937,9 @@ uev_update_path (struct uevent *uev, struct =
-
-> > > > vectors * vecs)
-> > > >  	if (pp) {
-> > > >  		struct multipath *mpp =3D pp->mpp;
-> >>  >
-> > > > +		udev_device_unref(pp->udev);
-> > > > +		pp->udev =3D udev_device_ref(uev->udev);
-> > > > +
-> > > >  		if (disable_changed_wwids &&
-> > > >  		    (strlen(pp->wwid) || pp->wwid_changed)) {
-> > > >  			char wwid[WWID_SIZE];
-> > >
-> >>  The general idea is correct, but I fear we need to do more.
-> >>  =
-
-> >> Basically, if relevant udev properties have changed, we need to =
-
-> >> call
-> > > pathinfo() on the changed path. Getting this right is subtle, I guess.
-> > > We can't simply change the path properties in the pathvec, because =
-
-> > > there'll be locking issues, and changed path properties might =
-
-> > > affect how the path is handled.
-> =
-
-> > We do call pathinfo to update paths in a number of places, and as long =
-as we do it while holding the vecs lock, I thought that was safe. Am I miss=
-ing something here?
-> =
-
-> > > The path may have gone R/O, or even have changed wwid. The safest =
-
-> > > course of action might be to delete and re-add the path if any =
-
-> > > important properties have changed. But blindly deleting and =
-
-> > > re-adding would be wrong as well...
-> > > =
-
-> > > Ben has recently done work in this area, so I'll leave the verdict =
-
-> > > to him for now.
-> > > =
-
-> > > @Ben, AFAICS this patch shows that disable_changed_wwids won't =
-
-> > > work correctly as long as the WWID is derived from udev, which is =
-
-> > > the default case these days. Or am I overlooking something?
-> =
-
-> > We build the "struct uevent *uev" up from the specific uevent and we =
-
-> >check the R/O value from that, so it will be correct based on the =
-
-> >actual event.  We also check the wwid from the udev device linked =
-
-> >from the uev, so that is also from the actual current device state.  I d=
-on't remember offhand why I didn't just update the udev device for the path=
- in uev_update_path (or even if I had a good reason for not doing so. I'm v=
-ery jetlagged right now). However, does your update to trigger_paths_udev_c=
-hange() work correctly in this case? It doesn't use the uevent's udev devic=
-e. It uses the path device's udev device. Does it just rely on this being t=
-he first time you access DM_MULTIPATH_DEVICE_PATH, so it's not caching the =
-old value?
-> =
-
-> AFAICS, this change won't hurt anything. But I we should probably update =
-other values that are based on these attributes.
-> =
-
-> -Ben
-> =
-
-> > =
-
-> > Martin
-> > =
-
-> > > --
-> > > 1.7.9.5
-> > > =
-
-> > > Regards
-> > > Chongyun
-> > =
-
-> > --
-> > Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107 SUSE =
-
-> > Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton HRB
-> > 21284 (AG N=FCrnberg)
-> =
+T24gVGh1LCAyMDE4LTAxLTI1IGF0IDA3OjQwIC0wNjAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cj4gT24gTW9uLCBKYW4gMjIsIDIwMTggYXQgMTA6NTY6MTlQTSArMDEwMCwgTWFydGluIFdp
+bGNrIHdyb3RlOgoKPiA+IEknZCBsaWtlIHRvICpzaW1wbGlmeSB0aGUgY29uZmlndXJhdGlvbios
+IGFuZCBleGNsdWRlCj4gPiBjb25maWd1cmF0aW9ucwo+ID4gdGhhdCBtYWtlIG5vIHNlbnNlLiBC
+ZWZvcmUgbXkgY29tbWl0cyA2NGUyN2UgYW5kIGZmYmI4OCBsYXN0IHllYXIsCj4gPiB0aGVyZSB3
+ZXJlIDMgc2V0dGluZ3MgcmVsYXRlZCB0byBwYXRoIGRldGVjdGlvbjogZmluZF9tdWx0aXBhdGhz
+LAo+ID4gLWkKPiA+IGZvciBtdWx0aXBhdGggKGlnbm9yZV93d2lkcyksIGFuZCAtbiBmb3IgbXVs
+dGlwYXRoZAo+ID4gKGlnbm9yZV9uZXdfZGV2cykuCj4gPiBUaGlzIGFkZHMgdXAgdG8gOCBjb21i
+aW5hdGlvbnMsIHdoaWNoIEkgZGVub3RlICJmaW4iLCAiRmlOIiwgZXRjLgo+ID4gaW4KPiA+IHRo
+ZSBmb2xsb3dpbmcsIHVzaW5nIHVwcGVyIGNhc2UgZm9yICJvbiIgYW5kIGxvd2VyIGNhc2UgZm9y
+ICJvZmYiLgo+ID4gCj4gPiBUaGUgU1VTRSBkZWZhdWx0IHNldHVwIGlzICJmSW4iLCBhbmQgdGhl
+IFJlZCBIYXQgLyBVYnVudHUgb25lIGlzCj4gPiAiRmluIi4KPiA+IEluIGluaXRyYW1mcywgUmVk
+IGhhdCBpcyBlZmZlY3RpdmVseSB1c2luZyAiRmlOIiAoIm11bHRpcGF0aGQgLW4iCj4gPiBpc24n
+dAo+ID4gdXNlZCwgYnV0IHN0cmljdCBibGFja2xpc3RpbmcgaXMgdXNlZCB0byB0aGUgc2FtZSBl
+ZmZlY3QpLgo+ID4gCj4gPiBNeSBwYXRjaCBlcyA2NGUyN2UgYW5kIGZmYmI4OCBmb3JjZWQgRj0+
+TiBhbmQgRj0+aSwgdGh1cyAiRmlOIgo+ID4gYmVjYW1lCj4gPiB0aGUgb25seSBjb21iaW5hdGlv
+biB3aXRoIGZpbmRfbXVsdGlwYXRocywgbGVhdmluZyA1IHZhbGlkCj4gPiBjb21iaW5hdGlvbnMu
+IE15IHJlY2VudCBSRkMgc2VyaWVzIGFsbG93cyBvbmx5ICJ4aU4iIGFuZCAieEluIgo+ID4gY29t
+YmluYXRpb25zIGZvciBjb25zaXN0ZW5jeSByZWFzb25zLiBCdXQgSSBjYW4gc2VlIHRoaXMgZG9l
+c24ndAo+ID4gZml0Cj4gPiB0aGUgd2F5IFJlZCBIYXQgYW5kIG90aGVycyBhcmUgc2V0dGluZyB1
+cCBtdWx0aXBhdGgsIHRodXMgd2UgbmVlZAo+ID4gc29tZXRoaW5nIGRpZmZlcmVudC4KPiA+IAo+
+ID4gSSB3b25kZXIgaWYgd2UgY2FuIGFncmVlIHRoYXQgdGhlIGNvbWJpbmF0aW9ucyAiZklOIiwg
+IkZJTiIsIGFuZAo+ID4gImZpbiIKPiA+IGFyZSB1c2VsZXNzLiAiSU4iIGNvbWJpbmF0aW9ucyBh
+cmUgcmVhbGx5IGRhbmdlcm91cyBhbmQgY2FuIGxlYWQgdG8KPiA+IHRoZQo+ID4gZmF0YWwgb3V0
+Y29tZXMgNEEuMiwgNEIuMiwgNEMuMiBmcm9tIHlvdXIgYW5hbHlzaXM7IHRoZXkgc2hvdWxkbid0
+Cj4gPiBiZQo+ID4gYWxsb3dlZC4gImZpbiIgaXMgc2ltaWxhciB0byAiRmluIiBhdCBmaXJzdCBz
+aWdodCwgYnV0IHdpdGhvdXQgdGhlCj4gPiBwcm90ZWN0aW9uIG9mICJmaW5kX211bHRpcGF0aHMi
+LCBpdCBiZWNvbWVzIG11Y2ggbW9yZSBsaWtlbHkgdGhhdCBhCj4gPiBkZXZpY2UgdGhhdCBtdWx0
+aXBhdGggaGFzbid0IGNsYWltZWQgaXMgY2xhaW1lZCBieSBtdWx0aXBhdGhkCj4gPiBsYXRlciwg
+SQo+ID4gdGhpbmsgd2Ugc2hvdWxkIGRpc2FsbG93IGl0IGFzIHdlbGwsIGFsdGhvdWdoIGl0J3Mg
+dGhlIGN1cnJlbnQKPiA+IHVwc3RyZWFtCj4gPiBkZWZhdWx0LiBNb3Jlb3ZlciwgImZpTiIgYW5k
+ICJGaU4iIGFyZSBlcXVpdmFsZW50OiBpZiBuZXcgZGV2aWNlcwo+ID4gYXJlCj4gPiBjb21wbGV0
+ZWx5IGlnbm9yZWQsICJmaW5kX211bHRpcGF0aHMgeWVzIiBoYXMgbm8gZWZmZWN0Lgo+IAo+IEkn
+ZCBiZSBvLmsgd2l0aCByZW1vdmluZyAiZmluIiBmcm9tIHVwc3RyZWFtIGluIGZhdm9yIG9mICJm
+SW4iLiBNeQo+IGFuYWx5c2lzIGluZ25vcmVzIGNsYXNzIDMgZGV2aWNlcywgb24gdGhlIGFzc3Vt
+cHRpb24gdGhhdCAiZkluIiBpcwo+IGNvcnJlY3QuIElmIHdlIGRvIHRoaXMsIEkgd2lsbCBjaGFu
+Z2UgImZJbiIgdG8gImZpbiIgaW4gcmVkaGF0J3MKPiBsb2NhbAo+IHBhdGNoZXMuIEhlcmUncyB3
+aHkuIE91dGNvbWUgMiBpcyByZWFsbHkgYmFkLiBJbWFnaW5lIGEKPiBub24tZmluZC1tdXRpcGF0
+aHMgZXF1aXZhbGVudCBvZiA0QyBPdXRjb21lIDIgKDNDIE91dGNvbWUgMj8pLiBUaGUKPiAiSSIK
+PiBtYWtlcyBzdXJlIHRoYXQgbXVsdGlwYXRoIGNsYWltcyB0aGUgZGV2aWNlIHdoZW4gaXQgZmly
+c3QgYXBwZWFycywKPiBidXQKPiBmb3Igc29tZSByZWFzb24gbXVsdGlwYXRoZCBzaW1wbHkgY2Fu
+J3QgY3JlYXRlIGEgZGV2aWNlIG9uIGl0LiAgVGhpcwo+IGNhbgo+IGhhcHBlbiBpZiBtdWx0aXBh
+dGggaXMgbm90IHJ1bm5pbmcgaW4geW91ciBpbml0cmFtZnMsIGFuZCBzb21ldGhpbmcKPiBlbHNl
+Cj4gc2V0cyBpdHNlbGYgdXAgb24gYSBwYXRoIGRldmljZS4gIFdoZW4geW91IHN3aXRjaC1yb290
+LCBtdWx0aXBhdGgKPiB3aWxsCj4gY2xhaW0gdGhlIGRldmljZSwgYW5kIG1lc3MgZXZlcnl0aGlu
+ZyB1cC4gQnV0IGJhc2ljYWxseSwgdGhpcyBjYW4KPiBoYXBwZW4KPiBhbnkgdGltZSB0aGF0IG11
+bHRpcGF0aGQgZmFpbHMgdG8gYmUgYWJsZSB0byBzZXQgdXAgb24gYSBkZXZpY2UgaXQKPiBoYXMK
+PiBjbGFpbWVkLiAgT25lIHdheSB5b3UgY2FuIGRlYWwgd2l0aCBtb3N0IG9mIHRoZXNlIHBvc3Np
+YmlsaXRlcyBpcyB0bwo+IHJlcXVpcmUgdGhhdCBtdWx0aXBhdGhkIGhhcyB0byBzZXQgaXRzZWxm
+IHVwIG9uIHBhdGggYXQgbGVhc3Qgb25jZQo+IGJlZm9yZSB3ZSBjbGFpbSBpdC4gVGhhdCdzIGV4
+YWN0bHkgd2hhdCAiaSIgZ2l2ZXMgdXMuCgpJIGFncmVlIHRoYXQgdGhpcyBtYWtlcyBwZXJmZWN0
+IHNlbnNlIGluIHRoZSAiRmluIiBjYXNlLCBidXQgZm9yICJmaW4iLAppZiBmaW5kX211bHRpcGF0
+aHMgaXMgb2ZmLCBpdCBzZWVtcyBvZGQuICJmWG4iIG1lYW5zIHRoYXQgbXVsdGlwYXRoZApjbGFp
+bXMgZXZlcnl0aGluZyBpdCBjb21lcyBieSwgd2hpY2ggcGFpcnMgYmV0dGVyIHdpdGggIkkiIHRo
+YW4gImkiLgoKPiBQb3NzaWJseSBhbm90aGVyIG9wdGlvbiBpcyB0byBjaGVjayBpZiBzb21ldGhp
+bmcgZWxzZSBpcyB1c2luZyB0aGUKPiBkZXZpY2UKPiBhbmQgdG8gbm90IGNsYWltIHRoZSBkZXZp
+Y2UgaW4gdGhpcyBjYXNlLiBUaGF0IHdpbGwgc29sdmUgdGhlCj4gaW5pdHJhbWZzCj4gY2FzZSwg
+d2l0aCBpcyB0aGUgcmVhbGx5IGJhZCBvbmUuCgpJIGFncmVlIGl0J3MgYmFkLCBidXQgQUZBSUNT
+ICJpIiBvbmx5IGVsaW1pbmF0ZXMgYSBwYXJ0IG9mIHRoZSBwcm9ibGVtLgoKPiBJdCB3aWxsIHN0
+aWxsIGxlYXZlIHRoZSBjYXNlIHdoZXJlCj4gbXVsdGlwYXRoIHdpbGwgbmV2ZXIgYmUgYWJsZSB0
+byBjcmVhdGUgdGhlIGRldmljZSBmb3Igc29tZSBvdGhlcgo+IHJlYXNvbiwKPiBidXQgdGhhdCBp
+cyBhbG1vc3QgYWx3YXlzIGEgY29uZmlndXJhdGlvbiBpc3N1ZXMsIHdoZXJlIGZvciBpbnN0YW5j
+ZQo+IG11bHRpcGF0aCBzaG91bGQgYmUgYmxhY2tsaXN0aW5nIGEgd2hvbGUgY2xhc3Mgb2YgZGV2
+aWNlcyB0aGF0IGl0Cj4gaXNuJ3QuCgpIYW5uZXMgYW5kIEkgaGF2ZSByZWNlbnRseSBkaXNjdXNz
+ZWQgYW4gaWRlYSBob3cgdG8gZGVhbCB3aXRoIHRoaXMKc2l0dWF0aW9uLiBJdCdzIHF1aXRlIGhp
+Z2ggb24gbXkgdG9kbyBsaXN0LiBUaGUgYmFzaWMgaWRlYSBpcyB0byB0aGF0CmlmIG11bHRpcGF0
+aGQgZmFpbHMgdG8gc2V0IHVwIGEgZGV2aWNlLCBpdCBsZWF2ZXMgYSBmbGFnIHNvbWV3aGVyZSBh
+bmQKcmV0cmlnZ2VyIGFuIHVldmVudC4gV2hlbiBtdWx0aXBhdGggc2VlcyB0aGUgZmxhZywgaXQg
+ZG9lc24ndCBjbGFpbSB0aGUKZGV2aWNlIG5leHQgdGltZS4KCj4gCj4gSWYgd2UgYWdyZWUgb24g
+dGhhdCwgSSdkIGxpa2UgdG8gcHJvcG9zZSBhIG5ldyBjb25maWd1cmF0aW9uIHNjaGVtZS4KPiBB
+cwo+ID4gaW4gbXkgUkZDIHNlcmllcywgSSdkIGxpa2UgdG8gcmVwbGFjZSB0aGUgY29tbWFuZCBs
+aW5lIG9wdGlvbnMgd2l0aAo+ID4gY29uZmlnIGZpbGUgb3B0aW9ucyAoKiopLiBGb3IgYmFja3dh
+cmQgY29tcGF0aWJpbGl0eSByZWFzb25zLCBJCj4gPiBwcm9wb3NlCj4gPiB0byB1c2UgdGhlICJm
+aW5kX211bHRpcGF0aHMiIG9wdGlvbiwgYnV0IHdpdGggNCByYXRoZXIgdGhhbiAyCj4gPiBwb3Nz
+aWJsZQo+ID4gdmFsdWVzOgo+ID4gCj4gPiAgLSBmaW5kX211bHRpcGF0aHMgIm5vIjogZkluLCBj
+dXJyZW50IFNVU0UgZGVmYXVsdAo+ID4gIC0gZmluZF9tdWx0aXBhdGhzICJ5ZXMiOiBGaW4sIGN1
+cnJlbnQgUmVkIEhhdCAvIFVidW50dSBkZWZhdWx0Cj4gPiAgLSBmaW5kX211bHRpcGF0aHMgInN0
+cmljdCI6IGZpTi9GaU4sIHVzZSBvbmx5IGtub3duIFdXSURzIAo+ID4gIC0gZmluZF9tdWx0aXBh
+dGhzICJhdXRvIjogRkluLCB0cnkgdG8gYmUgc21hcnQ7IHRoaXMgaXMgd2hhdCB3ZSd2ZQo+ID4g
+YmVlbiBkaXNjdXNzaW5nLgo+IAo+IEkgd291bGQgc3RpbGwgbGlrZSB0byBwdXQgZm9yd2FyZCB0
+aGUgY29kZSBmb3IgbXkgaWRlYSwgYnV0IGlmIHdlCj4gZG9uJ3QKPiBmaW5kIGFncmVlbWVudCBv
+biBhbnl0aGluZyBlbHNlLCBJIHdvdWxkIGRlZmluaXRlbHkgYWNjZXB0IHRoaXMgYXMKPiB0aGUg
+dXBzdHJlYW0gdmVyc2lvbiAod2l0aCB0aGUgY2F2ZWF0IHRoYXQgSSByZWFsbHkgZG9uJ3QgbGlr
+ZSBlbmRpbmcKPiB1cAo+IGluIE91dGNvbWUgMiwgYW5kIHdpbGwgbWFrZSAibm8iIGJlICJmaW4i
+IG9uIFJlZEhhdCBpZiBJIGNhbid0Cj4gY29udmluY2UKPiB5b3UgdG8gZG8gdGhhdCB1cHN0cmVh
+bSkuCgpJZiB5b3UgaW5zaXN0LCB3ZSdsbCBqdXN0IGxldCAiZmluIiBzdXJ2aXZlIGFzLCBzYXks
+ICdmaW5kX211bHRpcGF0aHMKImNvbnNlcnZhdGl2ZSInLiBPciB3ZSBjYWxsICJmSW4iICJncmVl
+ZHkiIGFuZCAiZmluIiAibm8iLgoKPiA+IEEgY29tbW9uIGNhc2UgaXMgdGhhdCB1c2VycyBpbnN0
+YWxsIHdpdGhvdXQgbXVsdGlwYXRoLCBhbmQgY29udmVydAo+ID4gdGhlCj4gPiBzeXN0ZW0gdG8g
+dXNpbmcgbXVsdGlwYXRoIGxhdGVyLiBUaGF0IG1lYW5zIGRyYWN1dCBpcyBydW4gaW4gYSBub24t
+Cj4gPiBtdWx0aXBhdGhlZCBzeXN0ZW0sIHdoZXJlIHRoZSB3d2lkcyBmaWxlIGRvZXNuJ3QgY29u
+dGFpbiB0aGUKPiA+IGVudHJpZXMKPiA+IGZvciB0aGUgcm9vdCBGUyB5ZXQuIFRoYXQncyBhIGNh
+c2Ugd2hpY2ggbWF5IGxlYWQgdG8gYSBmYXRhbAo+ID4gdmFyaWFudCBvZgo+ID4gNEMuMyBsYXRl
+ciBvbi4gCj4gCj4gSG93PyBUaGlzIG91dGNvbWUgb25seSBoYXBwZW5zIGluIGEgIkZpbiIgb3Ig
+IkZpTiIgc2V0dXAuIFlvdSBuZXZlcgo+IGNsYWltIHRoZSBkZXZpY2UsIGJlY2F1c2UgeW91IG5l
+dmVyIG11bHRpcGF0aCB0aGUgZGV2aWNlLiBJbiB0aGlzCj4gc2l0dXRpb24sIG11bHRpcGF0aCBu
+ZXZlciBjaGFuZ2VzIHRoZSBwYXRoIGRldmljZSBhdCBhbGwuIElmIGRyYWN1dAo+IGlzCj4gcnVu
+IHdpdGhvdXQgbXVsdGlwYXRoIHJ1bm5pbmcsIGl0IHdpbGwgY3JlYXRlIGFuIGluaXRyYW1mcyB3
+aGVyZQo+IG11bHRpcGF0aGQgd29uJ3QgZ3JhYiB0aGUgZGV2aWNlcyAod2hpY2ggSSBhZ3JlZSBp
+cyB3aGF0IE91dGNvbWUgMSBpcwo+IGFsbCBhYm91dCkuICBUaGlzIHdpbGwgbWVhbiB0aGF0IHRo
+ZSBvdGhlciB1c2VycyBncmFiIHRoZSBkZXZpY2VzLAo+IHdoaWNoCj4gbWVhbnMgdGhhdCBPdXRj
+b21lIDMgaXMgcHJldHR5IGltcG9zc2libGUsIGJlY2F1c2UgdGhlIGRldmljZSBpcwo+IGFscmVh
+ZHkKPiBpbiB1c2UgYnkgc29tZXRoaW5nIGVsc2UuIAoKV2UgaGFkIGEgY2FzZSB3aGVyZSB0aGUg
+Y3VzdG9tZXIgcmFuICJkcmFjdXQgLS1hZGQgbXVsdGlwYXRoIiwgYnV0CmZvcmdvdCB0byBydW4g
+InN5c3RlbWN0bCBlbmFibGUgbXVsdGlwYXRoLnNlcnZpY2UiLiBCZWNhdXNlIHdlIHVzZQoiZklu
+IiwgbXVsdGlwYXRoZCBncmFiYmVkIHRoZSBkZXZpY2UgaW4gdGhlIGluaXRyZCwgYW5kIGFmdGVy
+d2FyZHMgdGhlCnJvb3QgZGV2aWNlJ3Mgc3Vidm9sdW1lcyBjb3VsZG4ndCBiZSBtb3VudGVkLCBi
+ZWNhdXNlIHN5c3RlbWQgd291bGQgdHJ5CnRvIG1vdW50IHRoZSBtZW1iZXJzLCB3aGljaCB3ZXJl
+IGxvY2tlZCBieSB0aGUgbXVsdGlwYXRoIGRldmljZS4KCj4gIFRoZSBvbmx5IHRoaW5nIHRoYXQg
+Y2FuIGdyYWIgYSBwYXRoIGRldmljZQo+IGRldmljZSBhbmQgaGF2ZSBtdWx0aXBhdGggZ3JhYiBp
+dCBsYXRlciBpcyBMVk0gb24gYSB3aG9sZSBkZXZpY2UuCj4gVGhpcwo+IGlzIHRoZSBzcGVjaWZp
+YyBjYXNlIHRoYXQgcmVhc3NpZ25fbWFwcyBpcyBkZXNpZ25lZCB0byBoYW5kbGUuIEV2ZW4KPiB3
+aXRob3V0IGl0LCBpZiBtdWx0aXBhdGhkIGNyZWF0ZWQgYSBkZXZpY2Ugb24gdG9wIG9mIChhbmQg
+bGF0ZXIKPiBjbGFpbWVkKQo+IHRoZSBzYW1lIHBhdGhzIHRoYXQgYSBMVk0gZGV2aWNlIGlzIHVz
+aW5nLCBpdCB3b3VsZCBzZXQgdGhlIHBhdGgKPiBkZXZpY2VzCj4gdG8gbm90IHJlYWR5LCBub3Qg
+dGhlIExWTSBkZXZpY2UuCj4gCj4gPiBBbG9uZyBzaW1pbGFyIGxpbmVzLCBpdCdzIGVzc2VudGlh
+bCBmb3IgdGhlIFJlZCBIYXQgIm11bHRpcGF0aC0KPiA+IGhvc3Rvbmx5IiBhcHByb2FjaCB0aGF0
+IGluZGVlZCBubyBzZXJ2aWNlIGluIHRoZSBpbml0cmQgZ3JhYnMKPiA+IGRldmljZXMKPiA+IHdo
+aWNoIG1pZ2h0IGJlIG11bHRpcGF0aGVkIGxhdGVyLiBJZiB0aGF0IGhhcHBlbnMsIGEgZmF0YWwg
+Zm9ybSBvZgo+ID4gNEMuMwo+ID4gY2FuIG9jY3VyLiBXZSBzZWUgdGhpcyBvZnRlbiB3aXRoIEJU
+UkZTICsgc3Vidm9sdW1lcy4KPiAKPiBBZ2FpbiwgSSBkb24ndCB1bmRlcnN0YW5kIGhvdyB0aGUg
+Y2FzZSBoZXJlIHdvcmtzLiAgSWYgc29tZXRoaW5nIGluCj4gdGhlCj4gaW5pdHJkIGdyYWJzIHRo
+ZSBkZXZpY2UsIHRoYXQgd2lsbCBrZWVwIG11bHRpcGF0aGQgZnJvbSBhc3NlbWJsaW5nIG9uCj4g
+aXQuCgpFeGFjdGx5LiBCdXQgaWYgdGhlbiBhZnRlciBzd2l0Y2ggcm9vdCwgbXVsdGlwYXRoIGNs
+YWltcyB0aGUgZGV2aWNlLAphbmQgbXVsdGlwYXRoZCBmYWlscyB0byBncmFiIGl0LCB3ZSdyZSBo
+b3NlZC4gVGhlIHJvb3QgZGV2aWNlIGlzCmFjY2Vzc2libGUgYnV0IG90aGVyIGZpbGUgc3lzdGVt
+cyBvbiB0aGUgc2FtZSBkZXZpY2UgKGUuZy4gc3Vidm9sdW1lcykKY2FuJ3QgYmUgbW91bnRlZC4g
+QWN0dWFsbHkgdGhpcyByYXRoZXIgNEMuMiwgc29ycnkgZm9yIG1peGluZyBpdCB1cC4KCj4gIElm
+IExWTSBpcyBhbHJlYWR5IGFzc2VtYmxlZCwgaXQgc2hvdWxkbid0IGJlIGhhcmQgdG8gbWFrZSBt
+dWx0aXBhdGgKPiBub3RpY2UgdGhpcyBhbmQgbm90IGFzc2VtYmxlIGV2ZW4gaWYgTFZNIGlzIG9u
+IHRoZSB3aG9sZSBkZXZpY2UuCgpNYXliZSBub3QgaGFyZCwgYnV0IGN1cnJlbnRseSB1bmltcGxl
+bWVudGVkIDotLwoKPiAgQXMgYW4KPiBhc2lkZSwgSSBhbSBwZXJzb25hbGx5IHZlcnkgd2FyeSBh
+Ym91dCByZWFzc2lnbl9tYXBzLiBNdWx0aXBhdGgKPiBkb2Vzbid0Cj4gb3duIHRoZSBvdGhlciBk
+ZXZpY2VzIGl0IGlzIHJlbG9hZGluZy4gVGhlcmUgaXMgbm90aGluZyB0byBndWFyYW50ZWUKPiB0
+aGF0IHNvbWVvbmUgZWxzZSBpc24ndCB0cnlpbmcgdG8gbW9kaWZ5IHRoZSBMVk0gZGV2aWNlIGF0
+IHRoZSBzYW1lCj4gdGltZS4gSSBkb24ndCBrbm93IG9mIGEgc3BlY2lmaWMgYnVnIHdpdGggdGhp
+cyAod2UgbmV2ZXIgdHVybiBpdCBvbiksCj4gYnV0IGl0IHNlZW1zIHZlcnkgcmlza3kgdG8gc3Rh
+cnQgY2hhbmdpbmcgZGV2aWNlcyB3ZSBkb24ndCBvd24gd2l0aAo+IG5vCj4gY29vcmRpbmF0aW9u
+LgoKSSd2ZSBubyBleHBlcmllbmNlIHdpdGggcmVhc3NpZ25fbWFwcy4gSXQncyB0ZW1wdGluZyB0
+byB0aGluayB0aGF0IGl0CmNvdWxkIHNvbHZlIGFsbCB0aGVzZSBuYXN0eSBpc3N1ZXMsIGJ1dCBt
+eSBndXQgZmVlbGluZywgbGlrZSB5b3VycywKc2F5cyB0aGF0IGl0IG1pZ2h0IGJlIGRhbmdlcm91
+cy4gV2UgZG9uJ3QgdHVybiBpdCBvbiwgZWl0aGVyLgoKPiBJZiBJIGhhZCB0byBtYWtlIGEgZ3Vl
+c3MsIEkgY2FuIGRlZmluaXRlbHkgc2VlIGhvdyB5b3UgY291bGQgZ2V0IGludG8KPiBhCj4gcHJv
+YmxlbSB3aXRoIHRoZSBTVVNFIHBvbGljeSBvZiAiZkluIi4gIEluIHRoaXMgY2FzZSwgbXVsdGlw
+YXRoZAo+IGRvZXNuJ3QKPiBjbGFpbSBvciBncmFiIHRoZSBkZXZpY2UgaW4gdGhlIGluaXRyZCwg
+c28gc29tZXRoaW5nIGVsc2UgZG9lcy4gVGhlbgo+IGFmdGVyIHRoZSBzd2l0Y2gtcm9vdCwgbXVs
+dGlwYXRoIHdpbGwgY2xhaW0gdGhlIGRldmljZSBhbmQgbXVsdGlwYXRoZAo+IHdvbid0IGJlIGFi
+bGUgdG8gYXNzZW1ibGUgb24gaXQuICBUaGlzIGlzIHRoZSBkcmVhZGVkIE91dGNvbWUgMiwgYW5k
+Cj4gdGhpcyBpcyB0aGUgcmVhc29uIEkgbmV2ZXIgdXNlICJJIiwgZXZlbiB3aGVuIGZpbmRfbXVs
+dGlwYXRocyBpcyBub3QKPiBzZXQuCgpBaCwgcmlnaHQgdGhlIHNpdHVhdGlvbiB0aGF0IEkgZGVz
+Y3JpYmVkIGFib3ZlLiBJIHRoaW5rIHdlJ3JlIG1vc3RseSBvbgp0aGUgc2FtZSBib2F0IGhlcmUg
+bm93LgoKPiBbLi4uXQo+ID4gCj4gPiBGaW5hbGx5LCBhcyB5b3Ugc2FpZCB5b3Vyc2VsZiwgbXVs
+dGlwYXRoZCBpcyBsaWtlbHkgdG8gImxvb3NlIHRoZQo+ID4gcmFjZSIKPiA+IGFueXdheS4gV2l0
+aCB5b3VyIHBhdGNoIHlvdSBqdXN0IG1ha2UgaXRzIGNoYW5jZSBldmVuIHNtYWxsZXIuIEluIGEK
+PiA+IHdheSwgZDcxODhmYyAibXVsdGlwYXRoZDogc3RhcnQgZGFlbW9uIGFmdGVyIHVkZXYgdHJp
+Z2dlciIgYWxyZWFkeQo+ID4gaW1wbGVtZW50cyB5b3VyIGlkZWEsIGJlY2F1c2UgYnkgdGhlIHRp
+bWUgbXVsdGlwYXRoZCBzdGFydHMsCj4gPiBlc3NlbnRpYWwKPiA+IGRldmljZSBkZXRlY3Rpb24g
+d2lsbCBiZSBmaW5pc2hlZCAod2l0aCB0aGUgZXhjZXB0aW9uIG9mIGV4dHJlbWVseQo+ID4gc2xv
+dwo+ID4gZGV2aWNlIGRldGVjdGlvbiB3aGVyZSB0aGUgdWRldiBxdWV1ZSBydW5zIGVtcHR5KS4K
+PiAKPiBJIGRvbid0IHdvcnJ5IGFib3V0IDRDLjMgaGFwcGVuaW5nIGluIG91ciBjdXJyZW50IFJl
+ZEhhdCBzZXR1cC4gVGhlcmUKPiBpc24ndCBhIGhhcmQgYmFycmllciB0aGF0IGlzIGtlZXBpbmcg
+dGhpcyBmcm9tIGhhcHBlbmluZywgYnV0IHRoZQo+IHRpbWluZwo+IG1ha2VzIGl0IHZlcnkgdW5s
+aWtlbHkuICBJZiB3ZSBhc3N1bWUgdGhhdCBpdCB3b24ndCBoYXBwZW4sIHRoZW4KPiBSZWRIYXQn
+cyBjdXJyZW50IGltcGxlbWVudGF0aW9uIGd1YXJhbnRlZXMgNEEuMSwgNEIuMywgYW5kIDRDLjEu
+ICBJJ20KPiBmaW5lIHdpdGggdGhvc2UgZ3VhcmFudGVlcy4KCkkgYWdyZWUgeW91ciBhcHByb2Fj
+aCBjYW4ndCBodXJ0LCBhbHRob3VnaCBJIHN0aWxsIHRoaW5rIGl0IHdpbGwganVzdAptYWtlIGEg
+dmVyeSB1bmxpa2VseSBvdXRjb21lIGV2ZW4gbW9yZSB1bmxpa2VseSAodGhlIDRDLjMgY2FzZQpk
+ZXNjcmliZWQgYWJvdmUgaXMgb2J2aW91c2x5IHZlcnkgc3BlY2lhbCwgYW5kIHlvdXIgcGF0Y2gg
+d291bGRuJ3QKYXZvaWQgaXQpLiBJIGhvcGUgdGhhdCBvdXIgbXV0dWFsIGlkZWFzIGNhbiBnbyB0
+b2dldGhlci4KCj4gCj4gICBQcm9ibGVtcyBsaWtlIHlvdSBtZW50aW9uIGFib3ZlLCB3aGljaCBj
+YW4KPiBjYXVzZSA0Qy4yIGlmIHlvdSB1c2UgIkkiLCBldmVuIGluIHRoZSBub24tZmluZC1tdWx0
+aXBhdGhzIGNhc2UsIG1ha2UKPiBtZQo+IGxlYXJ5IGFib3V0IHVzaW5nICJJIiBpbiBhbnkgc2V0
+dXAuIEJ1dCBJJ20gd2lsbGluZyB0byBzd2l0Y2ggdGhlCj4gbm9uLWZpbmQtbXVsdGlwYXRocyBj
+YXNlIHRvICJpIiBpbiBhIFJlZEhhdCBwYXRjaCwgaWYgSSBhbSBhbG9uZSBpbgo+IHRoaXMKPiBj
+b25jZXJuLgoKVGhhdCB3b24ndCBiZSBuZWNlc3NhcnksIHNlZSBhYm92ZS4KCj4gPiA+IFRoZSBh
+ZHZhbnRhZ2Ugb2YgeW91ciBtZXRob2QgaXMgdGhhdCwgYXMgbG9uZyBhcyB0aGUgdGltZW91dCBp
+cwo+ID4gPiBsb25nCj4gPiA+IGVub3VnaCwgeW91IGFsd2F5cyBkbyB0aGUgY29ycmVjdCB0aGlu
+ZyB3aXRoIG11bHRpcGF0aCBkZXZpY2VzLgo+ID4gPiBUaGUKPiA+ID4gZGlzYWR2YW50YWdlIGlz
+IHRoYXQgdGhlIHRpbWVvdXQgc2xvd3MgZG93biB0aGUgY29tbW9uIGNhc2UsIHRvCj4gPiA+IG1h
+a2UKPiA+ID4gdGhlCj4gPiA+IHJhcmUgY2FzZSBjb3JyZWN0Lgo+ID4gCj4gPiBXb3VsZCB0aGUg
+aWRlYSB3aXRoIHZhcmlhYmxlIHRpbWVvdXRzIGltcHJvdmUgbXkgYXBwcm9hY2ggaW4geW91cgo+
+ID4gZXllcz8KPiAKPiBZZXMuIEl0IHN0aWxsIHdpbGwgY2F1c2Ugc2xvd2Rvd25zIG9uIHNpbmds
+ZS1wYXRoZWQgU0FOIHN0b3JhZ2UsIGJ1dAo+IGl0Cj4gc2hvdWxkIGZpeCB0aGUgbW9zdCBjb21t
+b24gY2FzZS4KCkdyZWF0LgoKPiBJZiBub2JvZHkgaXMgd29ycmllZCBhYm91dCBtdWx0aXBhdGhk
+IHdpbm5pbmcgdGhlIHJhY2UgYWdhaW5zdCBvdGhlcgo+IGRldmljZSB1c2VycywgdGhlbiA0Qy4z
+IGlzIGJhc2ljYWxseSBhbiBpbXBvc3NpYmxlIHN0YXRlLCBhbmQgdGhlcmUKPiBpcwo+IG5vIHBv
+aW50IGluIGFkZGluZyBhbiBhZGRpdGlvbmFsIHRpbWVvdXQgdG8gbWFrZSBhbiBpbXBvc3NpYmxl
+IHN0YXRlCj4gbGVzcyBsaWtlbHkuIEluIHRoaXMgY2FzZSwgdGhlcmUgaXMgbm8gcG9pbnQgaW4g
+bXkgc29sdXRpb24uIEFzIGZhcgo+IGFzCj4gbGltaXRpbmcgdGhlIG51bWJlciBvZiBwb3NzaWJs
+ZSBjb25maWd1cmF0aW9ucy4gSWYgd2UgY291bGQgYWdyZWUKPiB0aGF0Cj4gIkkiIGlzbid0IHNh
+ZmUgd2hlbiBjaGVja2luZyBpZiBtdWx0aXBhdGggc2hvdWxkIGNsYWltIGEgZGV2aWNlIGluCj4g
+dWRldiwKPiB0aGVuIHRoZXJlIHdvdWxkIGJlIG9ubHkgMyBjYXNlczogZmluLCBGaW4sIGFuZCBG
+aU4vZmlOLiAgTGlrZSBJCj4gc2FpZCwKPiB0aGVyZSB0d28gY2xhc3NlcyBvZiBwcm9ibGVtIHdo
+ZXJlICJJIiBjYXVzZXMgcHJvYmxlbXM6IGlmIHRoZSBkZXZpY2UKPiBpcwo+IGFscmVhZHkgaW4g
+dXNlLCBhbmQgaWYgbXVsdGlwYXRoZCBzaW1wbHkgY2FuJ3Qgc2V0IGl0c2VsZiB1cCBvbiB0aGUK
+PiBkZXZpY2UuICBJZiB3ZSBjaGVjayB0aGUgcGF0aCBkZXZpY2UgaXMgbm90IGJlaW5nIHVzZWQg
+YmVmb3JlCj4gY2xhaW1pbmcKPiBpdCwgdGhlbiBGSW4gd2l0aCBiZWluZyBzbWFydCBpcyBhbHNv
+IGEgc2FmZSBjYXNlIHNpbmNlIGl0IHdpbGwgc29sdmUKPiBib3RoIG9mIHRoZXNlLiBmSW4gd2l0
+aCBiZWluZyBzbWFydCBpcyBhbHNvIHNhZmUuIEkgc2ltcGx5IGRvbid0Cj4gYmVsaWV2ZQo+IHRo
+YXQgZkluIGlzIHNhZmUgd2l0aG91dCBkb2luZyB0aGVzZSBleHRyYSBzdGVwcyB0byBwcm90ZWN0
+IGFnYWluc3QKPiBjbGFpbWluZyBkZXZpY2VzIHRoYXQgd2Ugc2hvdWxkbid0LgoKWW91IGRvbid0
+IGhhdmUgdG8gdXNlIGl0LCBidXQgcGxlYXNlIGxldCdzIGtlZXAgdGhlICJmSW4iIG9wdGlvbgph
+cm91bmQuIE91ciBjdXN0b21lcnMgYXJlIHVzZWQgdG8gdGhpcyBiZWhhdmlvci4gSSBkb24ndCBk
+ZW55IHRoYXQgaXQKaGFzIGNhdXNlZCBzb21lIHByb2JsZW1zICh1c3VhbGx5IHJlbGF0ZWQgdG8g
+bWlzaGFuZGxpbmcgb25lIHdheSBvciB0aGUKb3RoZXIpLCBidXQgd2UncmUgbm90IHJlYWR5IHRv
+IGdpdmUgaXQgdXAuIFdlJ2xsIGJlIHdvcmtpbmcgb24KaW1wcm92aW5nIGl0LiBEcm9wcGluZyBp
+dCB1cHN0cmVhbSB3b3VsZCBodXJ0IHVzLgoKPiAKPiBUaGlzIHdvdWxkIHN0aWxsIGFsbG93IDUg
+c3RhdGVzLCB0aGF0IHdvdWxkIHByb2JhYmx5IG5lZWQgMyBjb25maWcKPiBwYXJhbWV0ZXJzCj4g
+Cj4gLSAoZilpbmRfbXVsdGlwYXRocwo+IC0gKGkpZ25vcmVfd3dpZHMgKG9yICJzbWFydCIgb3Ig
+c29tZXRoaW5nIGVsc2UuIEkgb3JnaW5hbGx5IGNhbGxlZAo+IHRoaXMKPiAgIG1vZGUgImdyZWVk
+eSIpCj4gLSAobilvX25ld19kZXZzCgpJJ2QgcmVhbGx5IGxpa2UgdG8gcHVyc3VlIHRoZSBpZGVh
+IHRvIGhpZGUgYWxsIG9mIHRoaXMgaW4gYSBzaW5nbGUKb3B0aW9uIHdpdGggbXVsdGlwbGUgcG9z
+c2libGUgdmFsdWVzLCByYXRoZXIgdGhhbiBwcm92aWRpbmcgc2V2ZXJhbApvcHRpb25zIGJ1dCBk
+aXNhbGxvd2luZyBjZXJ0YWluIGNvbWJpbmF0aW9ucyB0aGVyZW9mLiBUaGF0IHdhcyB0aGUgbWFp
+bgpwb2ludCBJIHdhcyB0cnlpbmcgdG8gbWFrZSBpbiBteSBwcmV2aW91cyBlbWFpbC4KCj4gCj4g
+SW4gdGhpcyBjYXNlLCBOIHdvdWxkIGlnbm9yZSBmL0YgYW5kIGkvSS4gQmVjYXVzZSB3ZSBhcmUg
+cHJvdGVjdGluZwo+IGFnYWluc3QgcHJvYmxlbXMgd2l0aCAiSSIsIGFueSBvZiB0aGUgb3RoZXIg
+Zm91ciBzdGF0ZXMgYXJlIHZhbGlkLgo+IAo+ID4gQnR3LCBpdCBqdXN0IG9jY3VyZWQgdG8gbWUg
+dGhhdCB5b3VyIGFwcHJvYWNoIGNvdWxkIGJlIGltcGxlbWVudGVkCj4gPiBpbgo+ID4gZXhhY3Rs
+eSB0aGUgd2F5IGFzIG1pbmUuIEJhc2ljYWxseSwgYWxsIHdlIG5lZWQgdG8gY2hhbmdlIGlzIHdo
+YXQKPiA+IHVkZXYKPiA+IHByb3BlcnRpZXMgZ2V0IHNldCBvbiB0aGUgIm1heWJlIiB1ZXZlbnRz
+LiBUYWtlIG15IGNvZGUsIGJ1dCBkb24ndAo+ID4gc2V0Cj4gPiBTWVNURU1EX1JFQURZPTAgYW5k
+IERNX01VTFRJUEFUSF9ERVZJQ0VfUEFUSD0xIGluIHRoZSAibWF5YmUiCj4gPiBjYXNlLi4uCj4g
+PiBTaG91bGQgd29yaywgbm8/IAo+IAo+IE5vLiBUaGlzIHdvdWxkIGxldCBub2JvZHkgdXNlIHRo
+ZSBkZXZpY2UuIGx2bSB3b24ndCBzY2FuIGRldmljZXMgaW4KPiBTWVNURU1EX1JFQURZPTAgc3Rh
+dGUsIGFuZCB0aGV5IGNhbid0IGJlIG1vdW50ZWQuICBUaGVzZSBhcmUgZXhhY3RseQo+IHRoZSB0
+aGluZ3MgSSBhbSB0cnlpbmcgdG8gYWxsb3cuCgpUaGF0J3Mgd2h5IEkgc2FpZCAqZG9uJ3QqIHNl
+dCBTWVNURU1EX1JFQURZPTAgOi0pIC4uLiBidXQgbmV2ZXIgbWluZCwKeW91IHdlcmUgdGhpbmtp
+bmcgb2YgYSBkaWZmZXJlbnQgc29sdXRpb24gYW55d2F5LgoKUmVnYXJkcywKTWFydGluCgoKLS0g
+CkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1
+MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0
+aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVs
+IG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20v
+bWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
