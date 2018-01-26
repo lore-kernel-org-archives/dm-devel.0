@@ -1,15 +1,13 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
+From: Wuchongyun <wu.chongyun@h3c.com>
 Subject: Re: [PATCH] multipathd: update path's udev in
  uev_update_path
-Date: Thu, 25 Jan 2018 08:22:19 -0600
-Message-ID: <20180125142219.GE14513@octiron.msp.redhat.com>
-References: <CEB9978CF3252343BE3C67AC9F0086A342958939@H3CMLB14-EX.srv.huawei-3com.com>
+Date: Fri, 26 Jan 2018 01:52:56 +0000
+Message-ID: <CEB9978CF3252343BE3C67AC9F0086A342958B50@H3CMLB14-EX.srv.huawei-3com.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <CEB9978CF3252343BE3C67AC9F0086A342958939@H3CMLB14-EX.srv.huawei-3com.com>
+Content-Language: zh-CN
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,35 +17,48 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Wuchongyun <wu.chongyun@h3c.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: Guozhonghua <guozhonghua@h3c.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Changlimin <changlimin@h3c.com>, Martin Wilck <mwilck@suse.com>, Changwei Ge <ge.changwei@h3c.com>
 List-Id: dm-devel.ids
+
+Hi Ben,
+Thank you for your reply.  Your opinion is reasonable and our code seems to=
+ be have no place to use pp->udev right now.
+
+-----original----
+sender: Benjamin Marzinski [mailto:bmarzins@redhat.com] =
+
+send time: January 25, 2018, 22:22
+receiver: wuchongyun (Cloud) <wu.chongyun@h3c.com>
+cc: Martin Wilck <mwilck@suse.com>; dm-devel@redhat.com; changlimin (Cloud)=
+ <changlimin@h3c.com>; guozhonghua (Cloud) <guozhonghua@h3c.com>; gechangwe=
+i (Cloud) <ge.changwei@h3c.com>
+subject: Re: [dm-devel] [PATCH] multipathd: update path's udev in uev_updat=
+e_path
 
 On Wed, Jan 24, 2018 at 01:43:01AM +0000, Wuchongyun wrote:
 > Hi Ben,
 > Thanks for your reply. =
 
-> The purpose to update the path's udev is that if we want to call interfac=
-e sysfs_attr_set_value() to trigger uevent for this device might use the ol=
-d udev_device
-> If this device already received a cheng uevent and updated. If we use the=
- not update pp->udev in uev_update_path may get udev database's old value o=
-r status. =
+> The purpose to update the path's udev is that if we want to call =
 
+> interface sysfs_attr_set_value() to trigger uevent for this device might =
+use the old udev_device If this device already received a cheng uevent and =
+updated. If we use the not update pp->udev in uev_update_path may get udev =
+database's old value or status.
 > Like we want to get the newest wwid get from udev.
 
-In general, we don't rely on udev to give us the current value for any
-sysfs attribute whose value can change, since it can change without
-causing a uevent.  Instead, we call sysfs_attr_get_value() to get these
-values directly from sysfs.
+In general, we don't rely on udev to give us the current value for any sysf=
+s attribute whose value can change, since it can change without causing a u=
+event.  Instead, we call sysfs_attr_get_value() to get these values directl=
+y from sysfs.
 
-More importantly however, if the wwid of a device changes, then it is no
-longer the same device.  Linux doesn't support changing the backing LUN
-on a device that is in-use.  It can cause issues in all sorts of places,
-not just in multipath.  Multipath already has an option to check if the
-wwid changes, which uses the wwid from the latest uevent.  But we only
-use this to disable access to the mutlipath device, until the wwid
-switches back.
+More importantly however, if the wwid of a device changes, then it is no lo=
+nger the same device.  Linux doesn't support changing the backing LUN on a =
+device that is in-use.  It can cause issues in all sorts of places, not jus=
+t in multipath.  Multipath already has an option to check if the wwid chang=
+es, which uses the wwid from the latest uevent.  But we only use this to di=
+sable access to the mutlipath device, until the wwid switches back.
 
 -Ben
 
@@ -59,13 +70,14 @@ switches back.
 > > > > Hi Martin and Ben,
 > >> > Could you help to review this patch, thanks.
 > > > >
-> > > > When receiving a change uevent and calling uev_update_path, current =
+> > > > When receiving a change uevent and calling uev_update_path, =
 
-> > > > code not update the path's udev, if use pp->udev to query the udev =
+> > > > current code not update the path's udev, if use pp->udev to =
 
-> > > > database info will get the old data. So it should update the path's =
+> > > > query the udev database info will get the old data. So it should =
 
-> > > > udev with the new udev from the new uevent in uev_update_path also.
+> > > > update the path's udev with the new udev from the new uevent in uev=
+_update_path also.
 > > > > =
 
 > > > > Signed-off-by: Chongyun Wu <wu.chongyun@h3c.com>
@@ -84,8 +96,7 @@ switches back.
 > > > > vectors * vecs)
 > > > >  	if (pp) {
 > > > >  		struct multipath *mpp =3D pp->mpp;
-> >>  >  =
-
+> >>  >
 > > > > +		udev_device_unref(pp->udev);
 > > > > +		pp->udev =3D udev_device_ref(uev->udev);
 > > > > +
@@ -96,13 +107,15 @@ switches back.
 > >>  The general idea is correct, but I fear we need to do more.
 > >>  =
 
-> >> Basically, if relevant udev properties have changed, we need to call
+> >> Basically, if relevant udev properties have changed, we need to =
+
+> >> call
 > > > pathinfo() on the changed path. Getting this right is subtle, I guess.
 > > > We can't simply change the path properties in the pathvec, because =
 
-> > > there'll be locking issues, and changed path properties might affect =
+> > > there'll be locking issues, and changed path properties might =
 
-> > > how the path is handled.
+> > > affect how the path is handled.
 > =
 
 > > We do call pathinfo to update paths in a number of places, and as long =
@@ -114,35 +127,37 @@ ing something here?
 
 > > > course of action might be to delete and re-add the path if any =
 
-> > > important properties have changed. But blindly deleting and re-adding =
+> > > important properties have changed. But blindly deleting and =
 
-> > > would be wrong as well...
+> > > re-adding would be wrong as well...
 > > > =
 
-> > > Ben has recently done work in this area, so I'll leave the verdict to =
+> > > Ben has recently done work in this area, so I'll leave the verdict =
 
-> > > him for now.
+> > > to him for now.
 > > > =
 
-> > > @Ben, AFAICS this patch shows that disable_changed_wwids won't work =
+> > > @Ben, AFAICS this patch shows that disable_changed_wwids won't =
 
-> > > correctly as long as the WWID is derived from udev, which is the =
+> > > work correctly as long as the WWID is derived from udev, which is =
 
-> > > default case these days. Or am I overlooking something?
+> > > the default case these days. Or am I overlooking something?
 > =
 
-> > We build the "struct uevent *uev" up from the specific uevent and we ch=
-eck the R/O value from that, so it will be correct based on the actual even=
-t.  We also check the wwid from the udev device linked from the uev, so =
+> > We build the "struct uevent *uev" up from the specific uevent and we =
 
-> >that is also from the actual current device state.  I don't remember off=
-hand why I didn't just update the udev device for the path in uev_update_pa=
-th (or even if I had a good reason for not doing so. I'm very jetlagged
-> >right now). However, does your update to trigger_paths_udev_change() wor=
-k correctly in this case? It doesn't use the uevent's udev device. It uses =
-the path device's udev device. Does it just rely on this being the first ti=
-me
-> >you access DM_MULTIPATH_DEVICE_PATH, so it's not caching the old value?
+> >check the R/O value from that, so it will be correct based on the =
+
+> >actual event.  We also check the wwid from the udev device linked =
+
+> >from the uev, so that is also from the actual current device state.  I d=
+on't remember offhand why I didn't just update the udev device for the path=
+ in uev_update_path (or even if I had a good reason for not doing so. I'm v=
+ery jetlagged right now). However, does your update to trigger_paths_udev_c=
+hange() work correctly in this case? It doesn't use the uevent's udev devic=
+e. It uses the path device's udev device. Does it just rely on this being t=
+he first time you access DM_MULTIPATH_DEVICE_PATH, so it's not caching the =
+old value?
 > =
 
 > AFAICS, this change won't hurt anything. But I we should probably update =
@@ -168,7 +183,6 @@ other values that are based on these attributes.
 > > --
 > > Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107 SUSE =
 
-> > Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton HRB =
-
+> > Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton HRB
 > > 21284 (AG N=FCrnberg)
 > =
