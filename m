@@ -1,45 +1,74 @@
-From: Bart Van Assche <Bart.VanAssche@wdc.com>
+From: Ming Lei <ming.lei@redhat.com>
 Subject: Re: [PATCH V3] blk-mq: introduce BLK_STS_DEV_RESOURCE
-Date: Sat, 27 Jan 2018 22:12:43 +0000
-Message-ID: <1517091161.3055.7.camel@wdc.com>
+Date: Sun, 28 Jan 2018 07:41:57 +0800
+Message-ID: <20180127234151.GA21710@ming.t460p>
 References: <20180123161613.14214-1-ming.lei@redhat.com>
-         <1516724659.3339.7.camel@sandisk.com> <20180123163717.GE13277@ming.t460p>
-         <1516726653.3339.20.camel@wdc.com> <20180124033109.GA15945@ming.t460p>
-         <20180127190920.GA24759@redhat.com>
+ <1516724659.3339.7.camel@sandisk.com>
+ <20180123163717.GE13277@ming.t460p>
+ <1516726653.3339.20.camel@wdc.com>
+ <20180124033109.GA15945@ming.t460p>
+ <20180127190920.GA24759@redhat.com>
+ <1517091161.3055.7.camel@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20180127190920.GA24759@redhat.com>
-Content-Language: en-US
-Content-ID: <D8C1497F310CDE4EA2B1B10D99FB3AFC@namprd04.prod.outlook.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: "ming.lei@redhat.com" <ming.lei@redhat.com>, "snitzer@redhat.com" <snitzer@redhat.com>, "axboe@kernel.dk" <axboe@kernel.dk>
-Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "hch@infradead.org" <hch@infradead.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "jejb@linux.vnet.ibm.com" <jejb@linux.vnet.ibm.com>, "loberman@redhat.com" <loberman@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1517091161.3055.7.camel@wdc.com>
+Sender: linux-block-owner@vger.kernel.org
+To: Bart Van Assche <Bart.VanAssche@wdc.com>
+Cc: "snitzer@redhat.com" <snitzer@redhat.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "hch@infradead.org" <hch@infradead.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "jejb@linux.vnet.ibm.com" <jejb@linux.vnet.ibm.com>, "loberman@redhat.com" <loberman@redhat.com>
 List-Id: dm-devel.ids
 
-T24gU2F0LCAyMDE4LTAxLTI3IGF0IDE0OjA5IC0wNTAwLCBNaWtlIFNuaXR6ZXIgd3JvdGU6DQo+
-IE1pbmcgbGV0IG1lIGtub3cgdGhhdCBoZSBzdWNjZXNzZnVsbHkgdGVzdGVkIHRoaXMgVjMgcGF0
-Y2ggdXNpbmcgYm90aA0KPiB5b3VyIHRlc3QgKGZpbyB0byBib3RoIG1wYXRoIGFuZCB1bmRlcmx5
-aW5nIHBhdGgpIGFuZCBCYXJ0J3MgKDAyLW1xIHdpdGgNCj4gY2FuX3F1ZXVlIGluIGd1ZXN0KS4N
-Cj4gDQo+IFdvdWxkIGJlIGdyZWF0IGlmIHlvdSdkIHJldmlldyBhbmQgdmVyaWZ5IHRoaXMgZml4
-IHdvcmtzIGZvciB5b3UgdG9vLg0KPiANCj4gSWRlYWxseSB3ZSdkIGdldCBhIGZpeCBmb3IgdGhp
-cyByZWdyZXNzaW9uIHN0YWdlZCBmb3IgNC4xNiBpbmNsdXNpb24uDQo+IFRoaXMgVjMgcGF0Y2gg
-c2VlbXMgbGlrZSB0aGUgYmVzdCBvcHRpb24gd2UgaGF2ZSBhdCB0aGlzIHBvaW50Lg0KDQpIZWxs
-byBNaWtlLA0KDQpUaGVyZSBhcmUgc2V2ZXJhbCBpc3N1ZXMgd2l0aCB0aGUgcGF0Y2ggYXQgdGhl
-IHN0YXJ0IG9mIHRoaXMgdGhyZWFkOg0KLSBJdCBpcyBhbiB1bm5lY2Vzc2FyeSBjaGFuZ2Ugb2Yg
-dGhlIGJsb2NrIGxheWVyIEFQSS4gUXVldWUgc3RhbGxzIGNhbg0KICBhbHJlYWR5IGJlIGFkZHJl
-c3NlZCB3aXRoIHRoZSBjdXJyZW50IGJsb2NrIGxheWVyIEFQSSwgbmFtZWx5IGJ5IGluc2VydGlu
-Zw0KICBhIGJsa19tcV9kZWxheV9ydW5faHdfcXVldWUoKSBjYWxsIGJlZm9yZSByZXR1cm5pbmcg
-QkxLX1NUU19SRVNPVVJDRS4NCi0gVGhlIHBhdGNoIGF0IHRoZSBzdGFydCBvZiB0aGlzIHRocmVh
-ZCBjb21wbGljYXRlcyBjb2RlIGZ1cnRoZXIgdGhhdCBpcw0KICBhbHJlYWR5IHRvbyBjb21wbGlj
-YXRlZCwgbmFtZWx5IHRoZSBibGstbXEgY29yZS4NCi0gVGhlIHBhdGNoIGF0IHRoZSBzdGFydCBv
-ZiB0aGlzIHRocmVhZCBpbnRyb2R1Y2VzIGEgcmVncmVzc2lvbiBpbiB0aGUNCiAgU0NTSSBjb3Jl
-LCBuYW1lbHkgYSBxdWV1ZSBzdGFsbCBpZiBhIHJlcXVlc3QgY29tcGxldGlvbiBvY2N1cnMgY29u
-Y3VycmVudGx5DQogIHdpdGggdGhlIG5ld2x5IGFkZGVkIEJMS19NUV9TX1NDSEVEX1JFU1RBUlQg
-dGVzdCBpbiB0aGUgYmxrLW1xIGNvcmUuDQoNCkFzIGEga2VybmVsIG1haW50YWluZXIgb25lIG9m
-IHlvdXIgcmVzcG9uc2liaWxpdGllcyBpcyB0byBoZWxwIGtlZXBpbmcgdGhlDQpxdWFsaXR5IG9m
-IHRoZSBrZXJuZWwgY29kZSBoaWdoLiBTbyBJIHRoaW5rIHRoYXQgeW91LCBhcyBhIGtlcm5lbCBt
-YWludGFpbmVyLA0Kc2hvdWxkIHRlbGwgTWluZyB0byBkaXNjYXJkIHRoaXMgcGF0Y2ggaW5zdGVh
-ZCBvZg0KYXNraW5nIHRvIG1lcmdlIGl0IHVwc3RyZWFtDQpnaXZlbiBhbGwgdGhlIGRpc2FkdmFu
-dGFnZXMgb2YgdGhpcyBwYXRjaC4NCg0KQmFydC4=
+On Sat, Jan 27, 2018 at 10:12:43PM +0000, Bart Van Assche wrote:
+> On Sat, 2018-01-27 at 14:09 -0500, Mike Snitzer wrote:
+> > Ming let me know that he successfully tested this V3 patch using both
+> > your test (fio to both mpath and underlying path) and Bart's (02-mq with
+> > can_queue in guest).
+> > 
+> > Would be great if you'd review and verify this fix works for you too.
+> > 
+> > Ideally we'd get a fix for this regression staged for 4.16 inclusion.
+> > This V3 patch seems like the best option we have at this point.
+> 
+> Hello Mike,
+> 
+> There are several issues with the patch at the start of this thread:
+> - It is an unnecessary change of the block layer API. Queue stalls can
+>   already be addressed with the current block layer API, namely by inserting
+>   a blk_mq_delay_run_hw_queue() call before returning BLK_STS_RESOURCE.
+
+Again, both Jens and I concluded that it is a generic issue, which need
+generic solution.
+
+	https://marc.info/?l=linux-kernel&m=151638176727612&w=2
+
+Otherwise, it needs to change the handling on every BLK_STS_RESOURCE in
+drivers, do we really want to do that?
+
+Not mention, the request isn't added to dispatch list yet in .queue_rq(),
+strictly speaking, it is not correct to call blk_mq_delay_run_hw_queue() in
+.queue_rq(), so the current block layer API can't handle it well enough.
+
+> - The patch at the start of this thread complicates code further that is
+>   already too complicated, namely the blk-mq core.
+
+That is just your opinion, I don't agree.
+
+> - The patch at the start of this thread introduces a regression in the
+>   SCSI core, namely a queue stall if a request completion occurs concurrently
+>   with the newly added BLK_MQ_S_SCHED_RESTART test in the blk-mq core.
+
+This patch only moves the blk_mq_delay_run_hw_queue() from scsi_queue_rq()
+to blk-mq, again, please explain it in detail how this patch V3 introduces this
+regression on SCSI.
+
+Actually this patch should fix a race on SCSI-MQ, because when scsi_queue_rq()
+call blk_mq_delay_run_hw_queue(), the request isn't in dispatch list yet, so in
+theory this request may not be visible when __blk_mq_run_hw_queue() is run. Don't
+expect the 3ms delay will cover that, it is absolutely fragile to depend on timing
+to deal with the race.
+
+Maybe it can be one LSF/MM topic proposal...
+
+thanks,
+Ming
