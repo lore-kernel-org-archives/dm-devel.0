@@ -1,31 +1,38 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [LSF/MM TOPIC] block, dm: restack queue_limits
-Date: Mon, 29 Jan 2018 16:08:37 -0500
-Message-ID: <20180129210836.GA5744@redhat.com>
+Subject: [LSF/MM TOPIC] update NVMe multipath to conditionally
+ claim controllers
+Date: Mon, 29 Jan 2018 16:17:23 -0500
+Message-ID: <20180129211722.GB5744@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-Sender: linux-block-owner@vger.kernel.org
-To: linux-block@vger.kernel.org, dm-devel@redhat.com
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: linux-nvme@lists.infradead.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-We currently don't restack the queue_limits if the lowest, or
-intermediate, layer of an IO stack changes.
+I'd like to have the same Linux kernel be able to use either NVMe's
+native multipath or DM multipath.
 
-This is particularly unfortunate in the case of FLUSH/FUA which may
-change if/when a HW controller's BBU fails; whereby requiring the device
-advertise that it has a volatile write cache (WCE=1).
+Should be relatively simple to filter which controllers can/cannot be
+claimed by NVMe multipathing (without having to resort to the big hammer
+of CONFIG_NVME_MULTIPATH).
 
-But in the context of DM, really it'd be best if the entire stack of
-devices had their limits restacked if any underlying layer's limits
-change.
-
-In the past, Martin and I discussed that we should "just do it" but
-never did.  Not sure we need a lengthy discussion but figured I'd put it
-out there.
-
-Maybe I'll find time, between now and April, to try implementing it.
+I'd like to understand what is the preferred disposition of the filter
+list (black or white)?  I assume having a blacklist would be more
+inkeeping with Christoph's desire for NVMe to be the default for NVMe
+multipathing.  But that disposition aside, not sure if there are other
+issues that should influence implementing more flexible use of NVMe
+resources.
 
 Thanks,
 Mike
