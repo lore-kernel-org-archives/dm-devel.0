@@ -1,14 +1,12 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 7/7] multipathd: ignore uevents for non-mpath
- devices
-Date: Tue, 30 Jan 2018 00:44:05 +0100
-Message-ID: <1517269445.12805.29.camel@suse.com>
-References: <20180117074939.7795-1-mwilck@suse.com>
-	<20180117074939.7795-8-mwilck@suse.com>
-	<0f6c9e29-b4a7-74b9-4ce0-b776214d9466@oracle.com>
+Subject: [PATCH v2] multipathd: ignore uevents for non-mpath
+	devices
+Date: Tue, 30 Jan 2018 00:57:50 +0100
+Message-ID: <20180129235750.28425-1-mwilck@suse.com>
+References: <0f6c9e29-b4a7-74b9-4ce0-b776214d9466@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <0f6c9e29-b4a7-74b9-4ce0-b776214d9466@oracle.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -20,41 +18,49 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Ritika Srivastava <ritika.srivastava@oracle.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, ritika.srivastava@oracle.com, dm-devel@redhat.com
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-T24gTW9uLCAyMDE4LTAxLTI5IGF0IDE0OjI1IC0wODAwLCBSaXRpa2EgU3JpdmFzdGF2YSB3cm90
-ZToKPiBPbiAwMS8xNi8yMDE4IDExOjQ5IFBNLCBNYXJ0aW4gV2lsY2sgd3JvdGU6Cj4gPiBtdWx0
-aXBhdGhkIGNhbid0IGRlYWwgd2l0aCBvdGhlciBkZXZpY2VzIGFueXdheS4gUHJvY2VlZGluZyBm
-dXJ0aGVyCj4gPiB3aXRoIGV2ZW50cyBmb3Igb3RoZXIgZGV2aWNlcyBqdXN0IGdlbmVyYXRlcyBs
-b2cgbm9pc2UuCj4gPiAKPiA+IEJhc2VkIG9uIGFuIGlkZWEgZnJvbSBSaXRpa2EgU3JpdmFzdGF2
-YSA8cml0aWthLnNyaXZhc3RhdmFAb3JhY2xlLmMKPiA+IG9tPi4KPiA+ICgibXVsdGlwYXRoLXRv
-b2xzOiBTa2lwIENIQU5HRSB1ZXZlbnQgZm9yIG5vbi1tcGF0aCBkZXZpY2VzIikuCj4gPiAKPiA+
-IFNpZ25lZC1vZmYtYnk6IE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPgo+ID4gLS0tCj4g
-PiAgIG11bHRpcGF0aGQvbWFpbi5jIHwgMiArLQo+ID4gICAxIGZpbGUgY2hhbmdlZCwgMSBpbnNl
-cnRpb24oKyksIDEgZGVsZXRpb24oLSkKPiA+IAo+ID4gZGlmZiAtLWdpdCBhL211bHRpcGF0aGQv
-bWFpbi5jIGIvbXVsdGlwYXRoZC9tYWluLmMKPiA+IGluZGV4IGZmM2VjYjY0MDQ4Ny4uMjY2MzIy
-OTE2NTdmIDEwMDY0NAo+ID4gLS0tIGEvbXVsdGlwYXRoZC9tYWluLmMKPiA+ICsrKyBiL211bHRp
-cGF0aGQvbWFpbi5jCj4gPiBAQCAtMTEyMSw3ICsxMTIxLDcgQEAgdWV2X3RyaWdnZXIgKHN0cnVj
-dCB1ZXZlbnQgKiB1ZXYsIHZvaWQgKgo+ID4gdHJpZ2dlcl9kYXRhKQo+ID4gICAJICogQWRkIGV2
-ZW50cyBhcmUgaWdub3JlZCBoZXJlIGFzIHRoZSB0YWJsZXMKPiA+ICAgCSAqIGFyZSBub3QgZnVs
-bHkgaW5pdGlhbGlzZWQgdGhlbi4KPiA+ICAgCSAqLwo+ID4gLQlpZiAoIXN0cm5jbXAodWV2LT5r
-ZXJuZWwsICJkbS0iLCAzKSkgewo+ID4gKwlpZiAoIXN0cm5jbXAodWV2LT5rZXJuZWwsICJkbS0i
-LCAzKSAmJgo+ID4gdWV2ZW50X2lzX21wYXRoKHVldikpIHsKPiA+ICAgCQlpZiAoIXN0cm5jbXAo
-dWV2LT5hY3Rpb24sICJjaGFuZ2UiLCA2KSkgewo+ID4gICAJCQlyID0gdWV2X2FkZF9tYXAodWV2
-LCB2ZWNzKTsKPiA+ICAgCj4gCj4gSGkgTWFydGluLAo+IFRoYW5rIHlvdSBmb3IgdGhlIHVwZGF0
-ZWQgcGF0Y2guCj4gV2l0aCB0aGlzIHBhdGNoLCB0aGUgZXJyb3IgInVldmVudCB0cmlnZ2VyIGVy
-cm9yIiB3b3VsZCBub3QgYmUgCj4gZW5jb3VudGVyZWQgd2hlbiByZW1vdmluZyBsdm0gc25hcHNo
-b3RzLgo+IAo+IEhvd2V2ZXIsIHdoZW4gdGhlIHVldmVudCBpcyBmb3IgYSAnZG0nIGRldmljZSBi
-dXQgbm90IGZvciBhCj4gbXVsdGlwYXRoIAo+IGRldmljZSwgdGhlbiBzaG91bGQgd2UganVzdCBy
-ZXR1cm4gZnJvbSB0aGlzIGNoZWNrIGluIHVldl90cmlnZ2VyKCk/Cj4gV2l0aCB0aGlzIHBhdGNo
-LCB1ZXZfdXBkYXRlX3BhdGgoKS91ZXZfcmVtb3ZlX3BhdGgoKSB3b3VsZCBzdGlsbCBiZSAKPiBj
-YWxsZWQgd2hpY2ggd291bGQgZ2VuZXJhdGUgZnVydGhlciBsb2cuCj4gU2hvdWxkIHdlIGF2b2lk
-IHRoZXNlIGZ1bmN0aW9uIGNhbGxzIHRvbz8KCllvdSBhcmUgcmlnaHQsIHRoYW5rcyBmb3IgcG9p
-bnRpbmcgdGhhdCBvdXQuIEknbGwgcG9zdCBhbiB1cGRhdGUuCgpNYXJ0aW4KCgotLSAKRHIuIE1h
-cnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcK
-U1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBH
-cmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGlu
-ZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFu
-L2xpc3RpbmZvL2RtLWRldmVs
+multipathd can't deal with other devices anyway. Proceeding further
+with events for other devices just generates log noise.
+
+Based on an idea from Ritika Srivastava <ritika.srivastava@oracle.com>.
+("multipath-tools: Skip CHANGE uevent for non-mpath devices").
+
+Changes in v2: always return immediately for non-mpath case
+  (Ritika Srivastava)
+
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ multipathd/main.c | 7 +++----
+ 1 file changed, 3 insertions(+), 4 deletions(-)
+
+diff --git a/multipathd/main.c b/multipathd/main.c
+index ff3ecb640487..a8a0c302e8fe 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1122,6 +1122,8 @@ uev_trigger (struct uevent * uev, void * trigger_data)
+ 	 * are not fully initialised then.
+ 	 */
+ 	if (!strncmp(uev->kernel, "dm-", 3)) {
++		if (!uevent_is_mpath(uev))
++			goto out;
+ 		if (!strncmp(uev->action, "change", 6)) {
+ 			r = uev_add_map(uev, vecs);
+ 
+@@ -1132,11 +1134,8 @@ uev_trigger (struct uevent * uev, void * trigger_data)
+ 			 * cess.
+ 			 */
+ 			uev_pathfail_check(uev, vecs);
+-			goto out;
+-		}
+-		if (!strncmp(uev->action, "remove", 6)) {
++		} else if (!strncmp(uev->action, "remove", 6)) {
+ 			r = uev_remove_map(uev, vecs);
+-			goto out;
+ 		}
+ 		goto out;
+ 	}
+-- 
+2.16.1
