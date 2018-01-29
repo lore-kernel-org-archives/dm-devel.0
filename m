@@ -1,50 +1,47 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: multipath-tools: add INSPUR/MCS to hardware table
-Date: Mon, 29 Jan 2018 14:37:32 +0100
-Message-ID: <1517233052.12805.27.camel@suse.com>
-References: <6FA0216CBF61AE4AA9DA6744243E7853DB5C4578@jtjnmailbox06.home.langchao.com>
+From: Bart Van Assche <Bart.VanAssche@wdc.com>
+Subject: Re: [PATCH V3] blk-mq: introduce BLK_STS_DEV_RESOURCE
+Date: Mon, 29 Jan 2018 16:48:31 +0000
+Message-ID: <1517244510.2687.10.camel@wdc.com>
+References: <20180123161613.14214-1-ming.lei@redhat.com>
+         <1516724659.3339.7.camel@sandisk.com> <20180123163717.GE13277@ming.t460p>
+         <1516726653.3339.20.camel@wdc.com> <20180124033109.GA15945@ming.t460p>
+         <20180127190920.GA24759@redhat.com> <1517091161.3055.7.camel@wdc.com>
+         <20180127234151.GA21710@ming.t460p>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <6FA0216CBF61AE4AA9DA6744243E7853DB5C4578@jtjnmailbox06.home.langchao.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Tom =?UTF-8?Q?Geng=28=E8=80=BF=E8=8A=B3=E5=BF=A0=29?= <gengfangzhong@inspur.com>, "xose.vazquez@gmail.com" <xose.vazquez@gmail.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20180127234151.GA21710@ming.t460p>
+Content-Language: en-US
+Content-ID: <66A0D95C41D46E4F9596D6D0D6244574@namprd04.prod.outlook.com>
+Sender: linux-block-owner@vger.kernel.org
+To: "ming.lei@redhat.com" <ming.lei@redhat.com>
+Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "hch@infradead.org" <hch@infradead.org>, "snitzer@redhat.com" <snitzer@redhat.com>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "jejb@linux.vnet.ibm.com" <jejb@linux.vnet.ibm.com>, "loberman@redhat.com" <loberman@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gTW9uLCAyMDE4LTAxLTI5IGF0IDA2OjA0ICswMDAwLCBUb20gR2VuZyjogL/oirPlv6ApIHdy
-b3RlOgo+IEhpLCBYb3NlLAo+IEkgc2VudCB0aGUgcGF0Y2ggdG8gZG0tZGV2ZWwgbGFzdCB3ZWVr
-LCBidXQgZm9yZ290IHRvIENDIHlvdS4gUGxlYXNlCj4gaGVscCB0byAKPiByZXZpZXcgYW5kIGhh
-dmUgY2hhbmNlIHRvIHN1Ym1pdCB0byB0aGUgbWFpbmxpbmUuCj4gVGhhbmsgeW91IGEgbG90Lgo+
-IAo+IAo+ID4gRnJvbSAwOTFiYWU1ZmVjMjJjNjFmMGMzZTZmOWFiODQ4ZmVjYWU1MjAzMTIyIE1v
-biBTZXAgMTcgMDA6MDA6MDAKPiA+IDIwMDEKPiAKPiBGcm9tOiBUb20gR2VuZyA8Z2VuZ2Zhbmd6
-aG9uZ0BpbnNwdXIuY29tPgo+IERhdGU6IFR1ZSwgMjMgSmFuIDIwMTggMTU6MzM6MDkgKzA4MDAK
-PiBTdWJqZWN0OiBbUEFUQ0hdIG11bHRpcGF0aC10b29sczogYWRkIElOU1BVUi9NQ1MgdG8gaGFy
-ZHdhcmUgdGFibGUKPiAKPiAtLS0KPiAgbGlibXVsdGlwYXRoL2h3dGFibGUuYyB8IDExICsrKysr
-KysrKysrCj4gIDEgZmlsZSBjaGFuZ2VkLCAxMSBpbnNlcnRpb25zKCspCj4gCj4gZGlmZiAtLWdp
-dCBhL2xpYm11bHRpcGF0aC9od3RhYmxlLmMgYi9saWJtdWx0aXBhdGgvaHd0YWJsZS5jCj4gaW5k
-ZXggNDQ4ZWZmZTMuLjkzZDY3ZGYwIDEwMDY0NAo+IC0tLSBhL2xpYm11bHRpcGF0aC9od3RhYmxl
-LmMKPiArKysgYi9saWJtdWx0aXBhdGgvaHd0YWJsZS5jCj4gQEAgLTExODEsNiArMTE4MSwxNyBA
-QCBzdGF0aWMgc3RydWN0IGh3ZW50cnkgZGVmYXVsdF9od1tdID0gewo+ICAJCS5wZ3BvbGljeSAg
-ICAgID0gTVVMVElCVVMsCj4gIAkJLm5vX3BhdGhfcmV0cnkgPSAzMCwKPiAgCX0sCj4gKwkvKgo+
-ICsJICogSU5TUFVSCj4gKwkgKi8KPiArCXsKPiArCQkvKiBBUzUzMDAvQVM1NTAwIEcyICovCj4g
-KwkJLnZlbmRvciAgICAgICAgPSAiSU5TUFVSIiwKPiArCQkucHJvZHVjdCAgICAgICA9ICJNQ1Mi
-LAo+ICsJCS5wZ3BvbGljeSAgICAgID0gR1JPVVBfQllfUFJJTywKPiArCQkucGdmYWlsYmFjayAg
-ICA9IC1GQUlMQkFDS19JTU1FRElBVEUsCj4gKwkJLnByaW9fbmFtZSAgICAgPSBQUklPX0FMVUEs
-Cj4gKwl9LAo+ICAJLyoKPiAgCSAqIEVPTAo+ICAJICovCgptdWx0aXBhdGgtdG9vbHMgZGVmYXVs
-dCB0byAucGdwb2xpY3kgPSBmYWlsb3Zlci4gUGxlYXNlIGNvbmZpcm0gdGhhdAp0aGlzIGlzIHJl
-YWxseSB5b3VyIGludGVudGlvbi4KCk1hcnRpbgoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxj
-a0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGludXggR21iSCwg
-R0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIg
-MjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEBy
-ZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZl
-bA==
+T24gU3VuLCAyMDE4LTAxLTI4IGF0IDA3OjQxICswODAwLCBNaW5nIExlaSB3cm90ZToNCj4gTm90
+IG1lbnRpb24sIHRoZSByZXF1ZXN0IGlzbid0IGFkZGVkIHRvIGRpc3BhdGNoIGxpc3QgeWV0IGlu
+IC5xdWV1ZV9ycSgpLA0KPiBzdHJpY3RseSBzcGVha2luZywgaXQgaXMgbm90IGNvcnJlY3QgdG8g
+Y2FsbCBibGtfbXFfZGVsYXlfcnVuX2h3X3F1ZXVlKCkgaW4NCj4gLnF1ZXVlX3JxKCksIHNvIHRo
+ZSBjdXJyZW50IGJsb2NrIGxheWVyIEFQSSBjYW4ndCBoYW5kbGUgaXQgd2VsbCBlbm91Z2guDQoN
+CkkgZGlzYWdyZWUgdGhhdCBpdCBpcyBub3QgY29ycmVjdCB0byBjYWxsIGJsa19tcV9kZWxheV9y
+dW5faHdfcXVldWUoKSBmcm9tDQppbnNpZGUgLnF1ZXVlX3JxKCkuIEFkZGl0aW9uYWxseSwgSSBo
+YXZlIGFscmVhZHkgZXhwbGFpbmVkIHRvIHlvdSBpbg0KcHJldmlvdXMgZS1tYWlscyB3aHkgaXQn
+cyBmaW5lIHRvIGNhbGwgdGhhdCBmdW5jdGlvbiBmcm9tIGluc2lkZSAucXVldWVfcnEoKToNCi0g
+Tm9ib2R5IGhhcyBldmVyIG9ic2VydmVkIHRoZSByYWNlIHlvdSBkZXNjcmliZWQgYmVjYXVzZSB0
+aGUgdGltZSBhZnRlcg0KICB3aGljaCBhIHF1ZXVlIGlzIHJlcnVuIGJ5IGJsa19tcV9kZWxheV9y
+dW5faHdfcXVldWUoKSBpcyBtdWNoIGxhcmdlciB0aGFuDQogIHRoZSB0aW1lIGR1cmluZyB3aGlj
+aCB0aGF0IHJhY2UgZXhpc3RzLg0KLSBJdCBpcyBlYXN5IHRvIGZpeCB0aGlzIHJhY2UgaW5zaWRl
+IHRoZSBibG9jayBsYXllciwgbmFtZWx5IGJ5IHVzaW5nDQogIGNhbGxfcmN1KCkgaW5zaWRlIHRo
+ZSBibGtfbXFfZGVsYXlfcnVuX2h3X3F1ZXVlKCkgaW1wbGVtZW50YXRpb24gdG8NCiAgcG9zdHBv
+bmUgdGhlIHF1ZXVlIHJlcnVubmluZyB1bnRpbCBhZnRlciB0aGUgcmVxdWVzdCBoYXMgYmVlbiBh
+ZGRlZCBiYWNrIHRvDQogIHRoZSBkaXNwYXRjaCBsaXN0Lg0KDQo+ID4gLSBUaGUgcGF0Y2ggYXQg
+dGhlIHN0YXJ0IG9mIHRoaXMgdGhyZWFkIGludHJvZHVjZXMgYSByZWdyZXNzaW9uIGluIHRoZQ0K
+PiA+ICAgU0NTSSBjb3JlLCBuYW1lbHkgYSBxdWV1ZSBzdGFsbCBpZiBhIHJlcXVlc3QgY29tcGxl
+dGlvbiBvY2N1cnMgY29uY3VycmVudGx5DQo+ID4gICB3aXRoIHRoZSBuZXdseSBhZGRlZCBCTEtf
+TVFfU19TQ0hFRF9SRVNUQVJUIHRlc3QgaW4gdGhlIGJsay1tcSBjb3JlLg0KPiANCj4gVGhpcyBw
+YXRjaCBvbmx5IG1vdmVzIHRoZSBibGtfbXFfZGVsYXlfcnVuX2h3X3F1ZXVlKCkgZnJvbSBzY3Np
+X3F1ZXVlX3JxKCkNCj4gdG8gYmxrLW1xLCBhZ2FpbiwgcGxlYXNlIGV4cGxhaW4gaXQgaW4gZGV0
+YWlsIGhvdyB0aGlzIHBhdGNoIFYzIGludHJvZHVjZXMgdGhpcw0KPiByZWdyZXNzaW9uIG9uIFND
+U0kuDQoNClBsZWFzZSByZXJlYWQgdGhlIGZvbGxvd2luZyBtZXNzYWdlOiBodHRwczovL21hcmMu
+aW5mby8/bD1kbS1kZXZlbCZtPTE1MTY3MjQ4MDEwNzU2MC4NCg0KVGhhbmtzLA0KDQpCYXJ0Lg==
