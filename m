@@ -1,63 +1,60 @@
-From: Bart Van Assche <bart.vanassche@wdc.com>
-Subject: Re: [RFC PATCH] blk-mq: fixup RESTART when queue becomes idle
-Date: Mon, 29 Jan 2018 14:37:00 -0800
-Message-ID: <bb221027-3fcf-fbf8-7535-05569fb850ca@wdc.com>
-References: <20180118024124.8079-1-ming.lei@redhat.com>
- <b2e5b7e6-ce4b-6053-adae-63cc44d773af@wdc.com>
- <20180118170353.GB19734@redhat.com> <1516296056.2676.23.camel@wdc.com>
- <20180118183039.GA20121@redhat.com> <1516301278.2676.35.camel@wdc.com>
- <deeb2b2e-6d0e-a144-843d-d08626de8aea@kernel.dk>
- <20180119023212.GA25413@ming.t460p>
- <eba1191e-4d59-a763-03b2-acd2d2812ea3@kernel.dk>
- <20180119072623.GB25369@ming.t460p>
- <047f68ec-f51b-190f-2f89-f413325c2540@kernel.dk>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 7/7] multipathd: ignore uevents for non-mpath
+ devices
+Date: Tue, 30 Jan 2018 00:44:05 +0100
+Message-ID: <1517269445.12805.29.camel@suse.com>
+References: <20180117074939.7795-1-mwilck@suse.com>
+	<20180117074939.7795-8-mwilck@suse.com>
+	<0f6c9e29-b4a7-74b9-4ce0-b776214d9466@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <047f68ec-f51b-190f-2f89-f413325c2540@kernel.dk>
-Content-Language: en-US
-Sender: linux-block-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>, Ming Lei <ming.lei@redhat.com>
-Cc: "snitzer@redhat.com" <snitzer@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "hch@infradead.org" <hch@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "osandov@fb.com" <osandov@fb.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <0f6c9e29-b4a7-74b9-4ce0-b776214d9466@oracle.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Ritika Srivastava <ritika.srivastava@oracle.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-On 01/19/18 07:24, Jens Axboe wrote:
-> That's what I thought. So for a low queue depth underlying queue, it's
-> quite possible that this situation can happen. Two potential solutions
-> I see:
-> 
-> 1) As described earlier in this thread, having a mechanism for being
->     notified when the scarce resource becomes available. It would not
->     be hard to tap into the existing sbitmap wait queue for that.
-> 
-> 2) Have dm set BLK_MQ_F_BLOCKING and just sleep on the resource
->     allocation. I haven't read the dm code to know if this is a
->     possibility or not.
-> 
-> I'd probably prefer #1. It's a classic case of trying to get the
-> request, and if it fails, add ourselves to the sbitmap tag wait
-> queue head, retry, and bail if that also fails. Connecting the
-> scarce resource and the consumer is the only way to really fix
-> this, without bogus arbitrary delays.
-
-(replying to an e-mail from ten days ago)
-
-Implementing a notification mechanism for all cases in which 
-blk_insert_cloned_request() returns BLK_STS_RESOURCE today would require 
-a lot of work. If e.g. a SCSI LLD returns one of the SCSI_MLQUEUE_*_BUSY 
-return codes from its .queuecommand() implementation then the SCSI core 
-will translate that return code into BLK_STS_RESOURCE. From scsi_queue_rq():
-
-	reason = scsi_dispatch_cmd(cmd);
-	if (reason) {
-		scsi_set_blocked(cmd, reason);
-		ret = BLK_STS_RESOURCE;
-		goto out_dec_host_busy;
-	}
-
-In other words, implementing a notification mechanism for all cases in 
-which blk_insert_cloned_request() can return BLK_STS_RESOURCE would 
-require to modify all SCSI LLDs.
-
-Bart.
+T24gTW9uLCAyMDE4LTAxLTI5IGF0IDE0OjI1IC0wODAwLCBSaXRpa2EgU3JpdmFzdGF2YSB3cm90
+ZToKPiBPbiAwMS8xNi8yMDE4IDExOjQ5IFBNLCBNYXJ0aW4gV2lsY2sgd3JvdGU6Cj4gPiBtdWx0
+aXBhdGhkIGNhbid0IGRlYWwgd2l0aCBvdGhlciBkZXZpY2VzIGFueXdheS4gUHJvY2VlZGluZyBm
+dXJ0aGVyCj4gPiB3aXRoIGV2ZW50cyBmb3Igb3RoZXIgZGV2aWNlcyBqdXN0IGdlbmVyYXRlcyBs
+b2cgbm9pc2UuCj4gPiAKPiA+IEJhc2VkIG9uIGFuIGlkZWEgZnJvbSBSaXRpa2EgU3JpdmFzdGF2
+YSA8cml0aWthLnNyaXZhc3RhdmFAb3JhY2xlLmMKPiA+IG9tPi4KPiA+ICgibXVsdGlwYXRoLXRv
+b2xzOiBTa2lwIENIQU5HRSB1ZXZlbnQgZm9yIG5vbi1tcGF0aCBkZXZpY2VzIikuCj4gPiAKPiA+
+IFNpZ25lZC1vZmYtYnk6IE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPgo+ID4gLS0tCj4g
+PiAgIG11bHRpcGF0aGQvbWFpbi5jIHwgMiArLQo+ID4gICAxIGZpbGUgY2hhbmdlZCwgMSBpbnNl
+cnRpb24oKyksIDEgZGVsZXRpb24oLSkKPiA+IAo+ID4gZGlmZiAtLWdpdCBhL211bHRpcGF0aGQv
+bWFpbi5jIGIvbXVsdGlwYXRoZC9tYWluLmMKPiA+IGluZGV4IGZmM2VjYjY0MDQ4Ny4uMjY2MzIy
+OTE2NTdmIDEwMDY0NAo+ID4gLS0tIGEvbXVsdGlwYXRoZC9tYWluLmMKPiA+ICsrKyBiL211bHRp
+cGF0aGQvbWFpbi5jCj4gPiBAQCAtMTEyMSw3ICsxMTIxLDcgQEAgdWV2X3RyaWdnZXIgKHN0cnVj
+dCB1ZXZlbnQgKiB1ZXYsIHZvaWQgKgo+ID4gdHJpZ2dlcl9kYXRhKQo+ID4gICAJICogQWRkIGV2
+ZW50cyBhcmUgaWdub3JlZCBoZXJlIGFzIHRoZSB0YWJsZXMKPiA+ICAgCSAqIGFyZSBub3QgZnVs
+bHkgaW5pdGlhbGlzZWQgdGhlbi4KPiA+ICAgCSAqLwo+ID4gLQlpZiAoIXN0cm5jbXAodWV2LT5r
+ZXJuZWwsICJkbS0iLCAzKSkgewo+ID4gKwlpZiAoIXN0cm5jbXAodWV2LT5rZXJuZWwsICJkbS0i
+LCAzKSAmJgo+ID4gdWV2ZW50X2lzX21wYXRoKHVldikpIHsKPiA+ICAgCQlpZiAoIXN0cm5jbXAo
+dWV2LT5hY3Rpb24sICJjaGFuZ2UiLCA2KSkgewo+ID4gICAJCQlyID0gdWV2X2FkZF9tYXAodWV2
+LCB2ZWNzKTsKPiA+ICAgCj4gCj4gSGkgTWFydGluLAo+IFRoYW5rIHlvdSBmb3IgdGhlIHVwZGF0
+ZWQgcGF0Y2guCj4gV2l0aCB0aGlzIHBhdGNoLCB0aGUgZXJyb3IgInVldmVudCB0cmlnZ2VyIGVy
+cm9yIiB3b3VsZCBub3QgYmUgCj4gZW5jb3VudGVyZWQgd2hlbiByZW1vdmluZyBsdm0gc25hcHNo
+b3RzLgo+IAo+IEhvd2V2ZXIsIHdoZW4gdGhlIHVldmVudCBpcyBmb3IgYSAnZG0nIGRldmljZSBi
+dXQgbm90IGZvciBhCj4gbXVsdGlwYXRoIAo+IGRldmljZSwgdGhlbiBzaG91bGQgd2UganVzdCBy
+ZXR1cm4gZnJvbSB0aGlzIGNoZWNrIGluIHVldl90cmlnZ2VyKCk/Cj4gV2l0aCB0aGlzIHBhdGNo
+LCB1ZXZfdXBkYXRlX3BhdGgoKS91ZXZfcmVtb3ZlX3BhdGgoKSB3b3VsZCBzdGlsbCBiZSAKPiBj
+YWxsZWQgd2hpY2ggd291bGQgZ2VuZXJhdGUgZnVydGhlciBsb2cuCj4gU2hvdWxkIHdlIGF2b2lk
+IHRoZXNlIGZ1bmN0aW9uIGNhbGxzIHRvbz8KCllvdSBhcmUgcmlnaHQsIHRoYW5rcyBmb3IgcG9p
+bnRpbmcgdGhhdCBvdXQuIEknbGwgcG9zdCBhbiB1cGRhdGUuCgpNYXJ0aW4KCgotLSAKRHIuIE1h
+cnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcK
+U1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBH
+cmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGlu
+ZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFu
+L2xpc3RpbmZvL2RtLWRldmVs
