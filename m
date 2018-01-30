@@ -1,13 +1,15 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH] multipath-tools: handle exit signal immediately
-Date: Tue, 30 Jan 2018 14:47:08 +0100
-Message-ID: <20180130134708.25659-1-mwilck@suse.com>
-References: <CEB9978CF3252343BE3C67AC9F0086A342959378@H3CMLB14-EX.srv.huawei-3com.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: multipath-tools: add INSPUR/MCS to hardware table
+Date: Tue, 30 Jan 2018 14:58:24 +0100
+Message-ID: <304d593e-b9ba-3c19-fae0-084caa0e1a97@gmail.com>
+References: <6FA0216CBF61AE4AA9DA6744243E7853DB5C4578@jtjnmailbox06.home.langchao.com>
+	<1517233052.12805.27.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CEB9978CF3252343BE3C67AC9F0086A342959378@H3CMLB14-EX.srv.huawei-3com.com>
+In-Reply-To: <1517233052.12805.27.camel@suse.com>
+Content-Language: en-GB
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,86 +19,19 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Chongyun Wu <wu.chongyun@h3c.com>
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, Guozhonghua <guozhonghua@h3c.com>, dm-devel@redhat.com, Changwei Ge <ge.changwei@h3c.com>, Changlimin <changlimin@h3c.com>, Martin Wilck <mwilck@suse.com>
+To: Martin Wilck <mwilck@suse.com>, =?UTF-8?B?VG9tIEdlbmco6IC/6Iqz5b+gKQ==?= <gengfangzhong@inspur.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-multipathd shouldn't try to service any more client connections
-when it receives an exit signal. Based on an analysis by Chongyun Wu.
-
-Reported-by: Chongyun Wu <wu.chongyun@h3c.com>
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- multipathd/main.c   | 6 ++++--
- multipathd/main.h   | 2 +-
- multipathd/uxlsnr.c | 5 +++--
- 3 files changed, 8 insertions(+), 5 deletions(-)
-
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 27cf234623d0..8e96f5dd2d7f 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -2184,12 +2184,15 @@ signal_set(int signo, void (*func) (int))
- }
- 
- void
--handle_signals(void)
-+handle_signals(bool nonfatal)
- {
- 	if (exit_sig) {
- 		condlog(2, "exit (signal)");
-+		exit_sig = 0;
- 		exit_daemon();
- 	}
-+	if (!nonfatal)
-+		return;
- 	if (reconfig_sig) {
- 		condlog(2, "reconfigure (signal)");
- 		set_config_state(DAEMON_CONFIGURE);
-@@ -2200,7 +2203,6 @@ handle_signals(void)
- 		log_reset("multipathd");
- 		pthread_mutex_unlock(&logq_lock);
- 	}
--	exit_sig = 0;
- 	reconfig_sig = 0;
- 	log_reset_sig = 0;
- }
-diff --git a/multipathd/main.h b/multipathd/main.h
-index ededdaba32fe..e8140feaf291 100644
---- a/multipathd/main.h
-+++ b/multipathd/main.h
-@@ -38,6 +38,6 @@ int mpath_pr_event_handle(struct path *pp);
- void * mpath_pr_event_handler_fn (void * );
- int update_map_pr(struct multipath *mpp);
- void * mpath_pr_event_handler_fn (void * pathp );
--void handle_signals(void);
-+void handle_signals(bool);
- 
- #endif /* MAIN_H */
-diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
-index 98ac25a68c43..330685efa27d 100644
---- a/multipathd/uxlsnr.c
-+++ b/multipathd/uxlsnr.c
-@@ -221,9 +221,10 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
- 		/* most of our life is spent in this call */
- 		poll_count = ppoll(polls, i, &sleep_time, &mask);
- 
-+		handle_signals(false);
- 		if (poll_count == -1) {
- 			if (errno == EINTR) {
--				handle_signals();
-+				handle_signals(true);
- 				continue;
- 			}
- 
-@@ -233,7 +234,7 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
- 		}
- 
- 		if (poll_count == 0) {
--			handle_signals();
-+			handle_signals(true);
- 			continue;
- 		}
- 
--- 
-2.16.1
+T24gMDEvMjkvMjAxOCAwMjozNyBQTSwgTWFydGluIFdpbGNrIHdyb3RlOgoKPiBPbiBNb24sIDIw
+MTgtMDEtMjkgYXQgMDY6MDQgKzAwMDAsIFRvbSBHZW5nKOiAv+iKs+W/oCkgd3JvdGU6Cgo+PiAr
+CS8qCj4+ICsJICogSU5TUFVSCj4+ICsJICovCj4+ICsJewo+PiArCQkvKiBBUzUzMDAvQVM1NTAw
+IEcyICovCj4+ICsJCS52ZW5kb3IgICAgICAgID0gIklOU1BVUiIsCj4+ICsJCS5wcm9kdWN0ICAg
+ICAgID0gIk1DUyIsCj4+ICsJCS5wZ3BvbGljeSAgICAgID0gR1JPVVBfQllfUFJJTywKICAgICAg
+ICAgICAgICAgICBeXl5eXl5eXiAgICAgICAgXl5eXl5eXl5eXl5eXgoKPj4gKwkJLnBnZmFpbGJh
+Y2sgICAgPSAtRkFJTEJBQ0tfSU1NRURJQVRFLAo+PiArCQkucHJpb19uYW1lICAgICA9IFBSSU9f
+QUxVQSwKPj4gKwl9LAoKPiBtdWx0aXBhdGgtdG9vbHMgZGVmYXVsdCB0byAucGdwb2xpY3kgPSBm
+YWlsb3Zlci4gUGxlYXNlIGNvbmZpcm0gdGhhdAo+IHRoaXMgaXMgcmVhbGx5IHlvdXIgaW50ZW50
+aW9uLgoKSXQgd2FzIHNldCBhcyBHUk9VUF9CWV9QUklPLCB3aXRoIFBSSU9fQUxVQSBhcyBwcmlv
+LgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93
+d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
