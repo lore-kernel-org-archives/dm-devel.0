@@ -1,23 +1,16 @@
-From: Ming Lei <ming.lei@redhat.com>
-Subject: Re: [PATCH V3] blk-mq: introduce BLK_STS_DEV_RESOURCE
-Date: Tue, 30 Jan 2018 11:42:13 +0800
-Message-ID: <20180130034212.GG17176@ming.t460p>
-References: <1516726653.3339.20.camel@wdc.com>
-	<20180124033109.GA15945@ming.t460p>
-	<20180127190920.GA24759@redhat.com>
-	<1517091161.3055.7.camel@wdc.com>
-	<20180127234151.GA21710@ming.t460p>
-	<1517244510.2687.10.camel@wdc.com>
-	<20180130010701.GC17176@ming.t460p>
-	<1517274681.2687.68.camel@wdc.com>
-	<20180130033118.GF17176@ming.t460p>
-	<1517283456.12842.2.camel@wdc.com>
+From: Ming Lei <tom.leiming@gmail.com>
+Subject: Re: [PATCH V4] blk-mq: introduce BLK_STS_DEV_RESOURCE
+Date: Tue, 30 Jan 2018 13:55:23 +0800
+Message-ID: <CACVXFVOWXmNa1q9jG1b_tv-afc3a6SBCAO_tWavVUR9KqQUJfw@mail.gmail.com>
+References: <20180129203300.50595-1-snitzer@redhat.com>
+	<1517260932.2687.42.camel@wdc.com>
+	<20180129214446.GD5744@redhat.com> <1517262713.2687.56.camel@wdc.com>
+	<20180129221436.GA6115@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1517283456.12842.2.camel@wdc.com>
+In-Reply-To: <20180129221436.GA6115@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,28 +20,64 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <Bart.VanAssche@wdc.com>
-Cc: "axboe@kernel.dk" <axboe@kernel.dk>, "hch@infradead.org" <hch@infradead.org>, "jejb@linux.vnet.ibm.com" <jejb@linux.vnet.ibm.com>, "snitzer@redhat.com" <snitzer@redhat.com>, "martin.petersen@oracle.com" <martin.petersen@oracle.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "loberman@redhat.com" <loberman@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: "axboe@kernel.dk" <axboe@kernel.dk>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Bart Van Assche <Bart.VanAssche@wdc.com>
 List-Id: dm-devel.ids
 
-On Tue, Jan 30, 2018 at 03:37:38AM +0000, Bart Van Assche wrote:
-> On Tue, 2018-01-30 at 11:31 +0800, Ming Lei wrote:
-> > Please take a look at drivers, when BLK_STS_RESOURCE is returned, who
-> > will call blk_mq_delay_run_hw_queue() for drivers?
-> 
-> As you know the SCSI and dm drivers in kernel v4.15 already call that function
-> whenever necessary.
+On Tue, Jan 30, 2018 at 6:14 AM, Mike Snitzer <snitzer@redhat.com> wrote:
+> On Mon, Jan 29 2018 at  4:51pm -0500,
+> Bart Van Assche <Bart.VanAssche@wdc.com> wrote:
+>
+>> On Mon, 2018-01-29 at 16:44 -0500, Mike Snitzer wrote:
+>> > But regardless of which wins the race, the queue will have been run.
+>> > Which is all we care about right?
+>>
+>> Running the queue is not sufficient. With this patch applied it can happen
+>> that the block driver returns BLK_STS_DEV_RESOURCE, that the two or more
+>> concurrent queue runs finish before sufficient device resources are available
+>> to execute the request and that blk_mq_delay_run_hw_queue() does not get
+>> called at all. If no other activity triggers a queue run, e.g. request
+>> completion, this will result in a queue stall.
+>
+> If BLK_STS_DEV_RESOURCE is returned then the driver doesn't need to rely
+> on a future queue run.  IIUC, that is the entire premise of
+> BLK_STS_DEV_RESOURCE.  If the driver had doubt about whether the
+> resource were going to be available in the future it should return
+> BLK_STS_RESOURCE.
+>
+> That may seem like putting a lot on a driver developer (to decide
+> between the 2) but I'll again defer to Jens here.  This was the approach
+> he was advocating be pursued.
 
-We have concluded that it is generic issue which need generic solution[1].
+Thinking of further, maybe you can add the following description in V5,
+and it should be much easier for driver developer to follow:
 
-[1] https://marc.info/?l=linux-kernel&m=151638176727612&w=2
+When any resource allocation fails, if driver can make sure that there is
+any in-flight IO, it is safe to return BLK_STS_DEV_RESOURCE to blk-mq,
+that is exactly what scsi_queue_rq() is doing.
 
-[ming@ming linux]$ git grep -n BLK_STS_RESOURCE ./drivers/ | wc -l
-43
+Follows the theory:
 
-Almost every driver need this kind of change if BLK_STS_RESOURCE is returned
-from IO path. And the failure can be caused by kmalloc(GFP_ATOMIC), DMA Mapping,
-or what ever.
+1) driver returns BLK_STS_DEV_RESOURCE if driver figures out
+there is any in-flight IO, in case of any resource allocation failure
+
+2) If all these in-flight IOs complete before examining SCHED_RESTART in
+blk_mq_dispatch_rq_list(), SCHED_RESTART must be cleared, so queue
+is run immediately in this case by blk_mq_dispatch_rq_list();
+
+3) if there is any in-flight IO after/when examining SCHED_RESTART in
+blk_mq_dispatch_rq_list():
+- if SCHED_RESTART isn't set, queue is run immediately as handled in 2)
+- otherwise, this request will be dispatched after any in-flight IO is
+completed via
+blk_mq_sched_restart() since this request is added to hctx->dispatch already
+
+And there are two invariants when driver returns BLK_STS_DEV_RESOURCE
+iff there is any in-flight IOs:
+
+1) SCHED_RESTART must be zero if no in-flight IOs
+2) there has to be any IO in-flight if SCHED_RESTART is read as 1
+
 
 Thanks,
 Ming
