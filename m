@@ -1,16 +1,15 @@
-From: Ming Lei <tom.leiming@gmail.com>
-Subject: Re: [PATCH V4] blk-mq: introduce BLK_STS_DEV_RESOURCE
-Date: Tue, 30 Jan 2018 13:55:23 +0800
-Message-ID: <CACVXFVOWXmNa1q9jG1b_tv-afc3a6SBCAO_tWavVUR9KqQUJfw@mail.gmail.com>
-References: <20180129203300.50595-1-snitzer@redhat.com>
-	<1517260932.2687.42.camel@wdc.com>
-	<20180129214446.GD5744@redhat.com> <1517262713.2687.56.camel@wdc.com>
-	<20180129221436.GA6115@redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: multipath-tools: add INSPUR/MCS to hardware table
+Date: Tue, 30 Jan 2018 08:33:10 +0100
+Message-ID: <1517297590.4072.2.camel@suse.com>
+References: <fc914b9de97f5c50029b2d2bae22d9d5@sslemail.net>
+	<1517233052.12805.27.camel@suse.com>
+	<6FA0216CBF61AE4AA9DA6744243E7853DB5C4677@jtjnmailbox06.home.langchao.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180129221436.GA6115@redhat.com>
+In-Reply-To: <6FA0216CBF61AE4AA9DA6744243E7853DB5C4677@jtjnmailbox06.home.langchao.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,64 +19,54 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: "axboe@kernel.dk" <axboe@kernel.dk>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Bart Van Assche <Bart.VanAssche@wdc.com>
+To: Tom =?UTF-8?Q?Geng=28=E8=80=BF=E8=8A=B3=E5=BF=A0=29?= <gengfangzhong@inspur.com>, "xose.vazquez@gmail.com" <xose.vazquez@gmail.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Jan 30, 2018 at 6:14 AM, Mike Snitzer <snitzer@redhat.com> wrote:
-> On Mon, Jan 29 2018 at  4:51pm -0500,
-> Bart Van Assche <Bart.VanAssche@wdc.com> wrote:
->
->> On Mon, 2018-01-29 at 16:44 -0500, Mike Snitzer wrote:
->> > But regardless of which wins the race, the queue will have been run.
->> > Which is all we care about right?
->>
->> Running the queue is not sufficient. With this patch applied it can happen
->> that the block driver returns BLK_STS_DEV_RESOURCE, that the two or more
->> concurrent queue runs finish before sufficient device resources are available
->> to execute the request and that blk_mq_delay_run_hw_queue() does not get
->> called at all. If no other activity triggers a queue run, e.g. request
->> completion, this will result in a queue stall.
->
-> If BLK_STS_DEV_RESOURCE is returned then the driver doesn't need to rely
-> on a future queue run.  IIUC, that is the entire premise of
-> BLK_STS_DEV_RESOURCE.  If the driver had doubt about whether the
-> resource were going to be available in the future it should return
-> BLK_STS_RESOURCE.
->
-> That may seem like putting a lot on a driver developer (to decide
-> between the 2) but I'll again defer to Jens here.  This was the approach
-> he was advocating be pursued.
-
-Thinking of further, maybe you can add the following description in V5,
-and it should be much easier for driver developer to follow:
-
-When any resource allocation fails, if driver can make sure that there is
-any in-flight IO, it is safe to return BLK_STS_DEV_RESOURCE to blk-mq,
-that is exactly what scsi_queue_rq() is doing.
-
-Follows the theory:
-
-1) driver returns BLK_STS_DEV_RESOURCE if driver figures out
-there is any in-flight IO, in case of any resource allocation failure
-
-2) If all these in-flight IOs complete before examining SCHED_RESTART in
-blk_mq_dispatch_rq_list(), SCHED_RESTART must be cleared, so queue
-is run immediately in this case by blk_mq_dispatch_rq_list();
-
-3) if there is any in-flight IO after/when examining SCHED_RESTART in
-blk_mq_dispatch_rq_list():
-- if SCHED_RESTART isn't set, queue is run immediately as handled in 2)
-- otherwise, this request will be dispatched after any in-flight IO is
-completed via
-blk_mq_sched_restart() since this request is added to hctx->dispatch already
-
-And there are two invariants when driver returns BLK_STS_DEV_RESOURCE
-iff there is any in-flight IOs:
-
-1) SCHED_RESTART must be zero if no in-flight IOs
-2) there has to be any IO in-flight if SCHED_RESTART is read as 1
-
-
-Thanks,
-Ming
+T24gVHVlLCAyMDE4LTAxLTMwIGF0IDAxOjU0ICswMDAwLCBUb20gR2VuZyjogL/oirPlv6ApIHdy
+b3RlOgo+IEhpLCBNYXJ0aW4sCj4gLnBnZmFpbGJhY2sgICAgPSAtRkFJTEJBQ0tfSU1NRURJQVRF
+ICBpcyBPSyBmb3IgSU5TUFVSL01DUyBpbiBBTFVBCj4gbW9kZS4gV2UgaGF2ZSB0ZXN0ZWQgZmFp
+bGJhY2sgZnVuY3Rpb24sIHRoZSBkZXZpY2UgY29udHJvbGxlciB3b3Jrcwo+IHdlbGwuIAo+IFRo
+YW5rIHlvdSBhIGxvdC4KClRoYXQncyBub3Qgd2hhdCBJIG1lYW50LiAiLnBnZmFpbGJhY2siIGNv
+bnRyb2xzIHdoYXQgaGFwcGVucyBpZiBhIG9uY2UKbG9zdCBwYXRoIGNvbWVzIGJhY2sgb25saW5l
+LiAiLnBncG9saWN5IiBjb250cm9scyBob3cgdGhlIGxvYWQgaXMKZGlzdHJpYnV0ZWQgb3ZlciBo
+ZWFsdGh5IHBhdGhzLiBUaGUgZGVmYXVsdCAucGdwb2xpY3kgPSBmYWlsb3ZlciBtZWFucwp0aGF0
+IHlvdSdsbCBvbmx5IGV2ZXIgaGF2ZSBvbmUgInJ1bm5pbmciIHBhdGggYXQgYW55IHRpbWUgKGlv
+dywgbm8gbG9hZApiYWxhbmNpbmcpLiBJIGFza2VkIHlvdSB0byBjb25maXJtIHRoYXQgdGhhdCdz
+IHdoYXQgeW91IG5lZWQuCgpNYXJ0aW4KCj4gCj4gCj4gCj4gLS0tLS1PcmlnaW5hbCBNZXNzYWdl
+LS0tLS0KPiBGcm9tOiBNYXJ0aW4gV2lsY2sgW21haWx0bzptd2lsY2tAc3VzZS5jb21dIAo+IFNl
+bnQ6IE1vbmRheSwgSmFudWFyeSAyOSwgMjAxOCA5OjM4IFBNCj4gVG86IFRvbSBHZW5nKOiAv+iK
+s+W/oCkgPGdlbmdmYW5nemhvbmdAaW5zcHVyLmNvbT47IHhvc2UudmF6cXVlekBnbWFpbC5jb20K
+PiBDYzogZG0tZGV2ZWxAcmVkaGF0LmNvbQo+IFN1YmplY3Q6IFJlOiBbZG0tZGV2ZWxdIG11bHRp
+cGF0aC10b29sczogYWRkIElOU1BVUi9NQ1MgdG8gaGFyZHdhcmUKPiB0YWJsZQo+IAo+IE9uIE1v
+biwgMjAxOC0wMS0yOSBhdCAwNjowNCArMDAwMCwgVG9tIEdlbmco6IC/6Iqz5b+gKSB3cm90ZToK
+PiA+IEhpLCBYb3NlLAo+ID4gSSBzZW50IHRoZSBwYXRjaCB0byBkbS1kZXZlbCBsYXN0IHdlZWss
+IGJ1dCBmb3Jnb3QgdG8gQ0MgeW91Lgo+ID4gUGxlYXNlIAo+ID4gaGVscCB0byByZXZpZXcgYW5k
+IGhhdmUgY2hhbmNlIHRvIHN1Ym1pdCB0byB0aGUgbWFpbmxpbmUuCj4gPiBUaGFuayB5b3UgYSBs
+b3QuCj4gPiAKPiA+IAo+ID4gPiBGcm9tIDA5MWJhZTVmZWMyMmM2MWYwYzNlNmY5YWI4NDhmZWNh
+ZTUyMDMxMjIgTW9uIFNlcCAxNyAwMDowMDowMAo+ID4gPiAyMDAxCj4gPiAKPiA+IEZyb206IFRv
+bSBHZW5nIDxnZW5nZmFuZ3pob25nQGluc3B1ci5jb20+Cj4gPiBEYXRlOiBUdWUsIDIzIEphbiAy
+MDE4IDE1OjMzOjA5ICswODAwCj4gPiBTdWJqZWN0OiBbUEFUQ0hdIG11bHRpcGF0aC10b29sczog
+YWRkIElOU1BVUi9NQ1MgdG8gaGFyZHdhcmUgdGFibGUKPiA+IAo+ID4gLS0tCj4gPiAgbGlibXVs
+dGlwYXRoL2h3dGFibGUuYyB8IDExICsrKysrKysrKysrCj4gPiAgMSBmaWxlIGNoYW5nZWQsIDEx
+IGluc2VydGlvbnMoKykKPiA+IAo+ID4gZGlmZiAtLWdpdCBhL2xpYm11bHRpcGF0aC9od3RhYmxl
+LmMgYi9saWJtdWx0aXBhdGgvaHd0YWJsZS5jIGluZGV4IAo+ID4gNDQ4ZWZmZTMuLjkzZDY3ZGYw
+IDEwMDY0NAo+ID4gLS0tIGEvbGlibXVsdGlwYXRoL2h3dGFibGUuYwo+ID4gKysrIGIvbGlibXVs
+dGlwYXRoL2h3dGFibGUuYwo+ID4gQEAgLTExODEsNiArMTE4MSwxNyBAQCBzdGF0aWMgc3RydWN0
+IGh3ZW50cnkgZGVmYXVsdF9od1tdID0gewo+ID4gIAkJLnBncG9saWN5ICAgICAgPSBNVUxUSUJV
+UywKPiA+ICAJCS5ub19wYXRoX3JldHJ5ID0gMzAsCj4gPiAgCX0sCj4gPiArCS8qCj4gPiArCSAq
+IElOU1BVUgo+ID4gKwkgKi8KPiA+ICsJewo+ID4gKwkJLyogQVM1MzAwL0FTNTUwMCBHMiAqLwo+
+ID4gKwkJLnZlbmRvciAgICAgICAgPSAiSU5TUFVSIiwKPiA+ICsJCS5wcm9kdWN0ICAgICAgID0g
+Ik1DUyIsCj4gPiArCQkucGdwb2xpY3kgICAgICA9IEdST1VQX0JZX1BSSU8sCj4gPiArCQkucGdm
+YWlsYmFjayAgICA9IC1GQUlMQkFDS19JTU1FRElBVEUsCj4gPiArCQkucHJpb19uYW1lICAgICA9
+IFBSSU9fQUxVQSwKPiA+ICsJfSwKPiA+ICAJLyoKPiA+ICAJICogRU9MCj4gPiAgCSAqLwo+IAo+
+IG11bHRpcGF0aC10b29scyBkZWZhdWx0IHRvIC5wZ3BvbGljeSA9IGZhaWxvdmVyLiBQbGVhc2Ug
+Y29uZmlybSB0aGF0Cj4gdGhpcyBpcyByZWFsbHkgeW91ciBpbnRlbnRpb24uCj4gCj4gTWFydGlu
+Cj4gCj4gLS0KPiBEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAo
+MCk5MTEgNzQwNTMgMjEwNyBTVVNFCj4gTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZl
+ciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRvbiBIUkIKPiAyMTI4NCAoQUcgTsO8cm5iZXJn
+KQo+IAoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgw
+KTkxMSA3NDA1MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwg
+SmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0t
+CmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJl
+ZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
