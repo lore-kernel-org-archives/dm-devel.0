@@ -1,55 +1,39 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [LSF/MM TOPIC] block: extend generic biosets to allow per-device
- frontpad
-Date: Fri, 2 Feb 2018 17:55:21 -0500
-Message-ID: <20180202225521.GA10068@redhat.com>
-References: <20180129213300.GC5744@redhat.com>
- <87zi4r29sa.fsf@notabene.neil.brown.name>
- <20180202160834.GA8192@redhat.com>
+From: liuchaowei110@gmail.com
+Subject: Can anyone help me review my patch?
+Date: Tue, 30 Jan 2018 14:44:27 +0800
+Message-ID: <5a701495.852e240a.9be86.9790@mx.google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180202160834.GA8192@redhat.com>
-Sender: linux-block-owner@vger.kernel.org
-To: NeilBrown <neilb@suse.com>
-Cc: linux-block@vger.kernel.org, dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Feb 02 2018 at 11:08am -0500,
-Mike Snitzer <snitzer@redhat.com> wrote:
-> 
-> But if the bioset enhancements are implemented properly then the kernels
-> N biosets shouldn't need to be in doubt.  They'll all just adapt to have
-> N backing mempools (N being for N conflicting front_pad requirements).
+Hello, everyone:
+    I'm very glad and excited to send this email because this is my 
+first time to send a email in linux-raid email list, and recently I 
+have a new driver code about dm-stripe/raid0 want to upload. I've 
+been uploaded to the mail list this ahead of month, but only one guy 
+give me an advice. But after then no one give any feedback, I feel 
+frustrated. So can anyone help me review or check my patch? 
+Follow is the patch:
 
-This should've read:
+https://marc.info/?l=linux-raid&m=151455106025351&w=2
+https://marc.info/?l=linux-raid&m=151455110725361&w=2
+https://marc.info/?l=linux-raid&m=151455110625360&w=2
 
-"But if the bioset enhancements are implemented properly then the kernels
-N biosets ability to provide adequate front_pad shouldn't need to be in
-doubt.  They'll all just adapt to have M backing mempools (for M
-conflicting front_pad requirements)."
+This patch is about dm-stripe/raid0, it will help enhance io performance
+if you want to combine storage device between slow and fast devices.
 
-What this implies is there would need to be a way for the bioset
-code to maintain a global graph of all biosets in the system.  And when
-a device comes along with a unique bioset front_pad requirement, that
-isn't already met by existing mempool, the device's driver (DM in
-my case) would call into a bioset interface that would add a new backing
-mempool, that accounts for the front_pad increase, to each bioset in the
-system.
+I'm looking forward to receiving anyone's suggestion.
 
-Not liking that (DM) device creation would potentially spawn a new
-mempool within each existing bioset.  It could/would easily result in
-many of those mempools going completely unused.
-
-In addition: how would a bio_alloc_bioset() call _know_ the bio was for
-use on a specific block device?  The entire beauty of the existing
-bio_set code, especially for upper layers like filesystems, is it _is_
-device agnostic.
-
-So all this could be the worst idea ever.. not sure.  I've deferred
-judging it one way or the other because the details are shakey at best.
-
-And I still need to look closer at all the existing code.
-
-Mike
+Best Regards
