@@ -1,52 +1,66 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 06/12] multipathd: fix device creation issues
-Date: Tue, 30 Jan 2018 17:51:03 +0100
-Message-ID: <1517331063.4072.57.camel@suse.com>
-References: <1512672546-12785-1-git-send-email-bmarzins@redhat.com>
-	<1512672546-12785-7-git-send-email-bmarzins@redhat.com>
+From: Bart Van Assche <bart.vanassche@wdc.com>
+Subject: Re: [dm-devel] [PATCH v5] blk-mq: introduce BLK_STS_DEV_RESOURCE
+Date: Tue, 30 Jan 2018 09:52:31 -0800
+Message-ID: <43ac2314-c98d-bb76-0dfb-171d15cc5fd8@wdc.com>
+References: <20180130142459.52668-1-snitzer@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1512672546-12785-7-git-send-email-bmarzins@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20180130142459.52668-1-snitzer@redhat.com>
+Content-Language: en-US
+Sender: linux-block-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>, axboe@kernel.dk
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-T24gVGh1LCAyMDE3LTEyLTA3IGF0IDEyOjQ5IC0wNjAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cgo+IEhvd2V2ZXIsIGl0IGlzIHBvc3NpYmxlIHRvIGNyZWF0ZSBhIGRldmljZSB3aXRoIG5v
-IHBhdGhzLCB3aGljaCBtZWFucwo+IHRoZSBkZXZpY2UgY2Fubm90IGtub3cgd2hpY2ggaHdlbnRy
-eSB0byB1c2UgZm9yIGl0cyBkZXZpY2UKPiBjb25maWd1cmF0aW9uLiAgX19zZXR1cF9tdWx0aXBh
-dGgoKSB1c2VkIHRvIGhlbHAgd2l0aCB0aGlzIHZpYQo+IGV4dHJhY3RfaHdlX2Zyb21fcGF0aCgp
-LCB3aGljaCBncmFiYmVkIHRoZSBod2VudHJ5IGZyb20gYSBwYXRoIGlmIHRoZQo+IG11bHRpcGF0
-aCBkZXZpY2UgZGlkbid0IGFscmVhZHkgaGF2ZSBpdCBzZXQuIFRoaXMgaXMgbm93IGRvbmUgYm90
-aAo+IHdoZW4KPiBwYXRocyBhcmUgYWRkZWQgb3IgdGhlIG1hcCBpcyB1cGRhdGVkLCB3aGljaCBt
-ZWFucyB0aGF0Cj4gZXh0cmFjdF9od2VfZnJvbV9wYXRoKCkgcnVucyBiZWZvcmUgdGhlIGRldmlj
-ZSBpcyBjb25maWd1cmVkIGluCj4gc2V0dXBfbWFwKCkgaW5zdGVhZCBvZiBhZnRlciB0aGUgdGFi
-bGUgaGFzIGFscmVhZHkgYmVlbiBsb2FkZWQuIFRoaXMKPiBpcwo+IGEgZ29vZCB0aGluZy4gQnV0
-IGJlY2F1c2Ugb2YgdGhpcywgaXQgY2FuJ3QgY2hlY2sgdGhlIGRtc3RhdGUgb3IgdGhlCj4gcGF0
-aGdyb3VwIHN0YXRlLiAgSSBkb24ndCBiZWxpZXZlIGl0J3MgbmVjZXNzYXJ5IHRvIGNhcmUgd2hh
-dCBzdGF0ZQo+IHRoZQo+IHBhdGggaXMgaW4sIGVzcGVjaWFsbHkgbm93IHRoYXQgd2UgdXNlIGxp
-YnVkZXYuIFRoZSB2ZW5kb3IgYW5kCj4gcHJvZHVjdAo+IGluZm9ybWF0aW9uIGdldHMgY2FjaGVk
-IGJ5IGxpYnVkZXYgd2hlbiB0aGUgcGF0aCBkZXZpY2UgaXMgZmlyc3QKPiBhZGRlZCwKPiBhbmQg
-c2hvdWxkIHJlbWFpbiB0aGUgc2FtZSByZWdhcmRsZXNzIG9mIHdoZXRoZXIgb3Igbm90IHRoZSBk
-ZXZpY2UgaXMKPiBjdXJyZW50bHkgdXAuICBNeSB2ZXJzaW9uIGRvZXMgdHJ5IHRvIHRha2UgdGhl
-IGh3ZSBpbmZvcm1hdGlvbiBmcm9tIGEKPiBwYXRoIGluIHRoZSBQQVRIX1VQIHN0YXRlIGZpcnN0
-LCBidXQgdGhpcyBpcyBtb3N0bHkgdG8gc2F0aXNmeSB0aGUKPiBwYXJhbm9pYSBvZiB0aGUgb2xk
-IHZlcnNpb24uCgpJdCBqdXN0IG9jY3VyZWQgdG8gbWUgd2hpbGUgcmV2aWV3aW5nIHRoaXMgcGF0
-Y2ggb25jZSBtb3JlIHRoYXQgdGhpcwptaWdodCBjYXVzZSBwcm9ibGVtcyBpZiB0aGUgcGF0aCBX
-V0lEIGNoYW5nZXMsIGFzIHJlY2VudGx5CmRpc2N1c3NlZC5QZXJoYXBzIHlvdSBzaG91bGQgYXQg
-bGVhc3Qgc2tpcCBwYXRocyB3aXRoIHRoZQoid3dpZF9jaGFuZ2VkIiBhdHRyaWJ1dGU/CgoKUmVn
-YXJkcywKTWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVs
-LiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTD
-tnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5i
-ZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6
-Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+On 01/30/18 06:24, Mike Snitzer wrote:
+> +		 *
+> +		 * If driver returns BLK_STS_RESOURCE and SCHED_RESTART
+> +		 * bit is set, run queue after a delay to avoid IO stalls
+> +		 * that could otherwise occur if the queue is idle.
+>   		 */
+> -		if (!blk_mq_sched_needs_restart(hctx) ||
+> +		needs_restart = blk_mq_sched_needs_restart(hctx);
+> +		if (!needs_restart ||
+>   		    (no_tag && list_empty_careful(&hctx->dispatch_wait.entry)))
+>   			blk_mq_run_hw_queue(hctx, true);
+> +		else if (needs_restart && (ret == BLK_STS_RESOURCE))
+> +			blk_mq_delay_run_hw_queue(hctx, BLK_MQ_QUEUE_DELAY);
+>   	}
+
+If a request completes concurrently with execution of the above code 
+then the request completion will trigger a call of 
+blk_mq_sched_restart_hctx() and that call will clear the 
+BLK_MQ_S_SCHED_RESTART bit. If that bit is cleared before the above code 
+tests it then the above code will schedule an asynchronous call of 
+__blk_mq_run_hw_queue(). If the .queue_rq() call triggered by the new 
+queue run returns again BLK_STS_RESOURCE then the above code will be 
+executed again. In other words, a loop occurs. That loop will repeat as 
+long as the described race occurs. The current (kernel v4.15) block 
+layer behavior is simpler: only block drivers call 
+blk_mq_delay_run_hw_queue() and the block layer core never calls that 
+function. Hence that loop cannot occur with the v4.15 block layer core 
+and block drivers. A motivation of why that loop is preferred compared 
+to the current behavior (no loop) is missing. Does this mean that that 
+loop is a needless complication of the block layer core?
+
+Sorry but I still prefer the v4.15 block layer approach because this 
+patch has in my view the following disadvantages:
+- It involves a blk-mq API change. API changes are always risky and need
+   some time to stabilize.
+- The delay after which to rerun the queue is moved from block layer
+   drivers into the block layer core. I think that's wrong because only
+   the block driver authors can make a good choice for this constant.
+- This patch makes block drivers harder to understand. Anyone who sees
+   return BLK_STS_RESOURCE / return BLK_STS_DEV_RESOURCE for the first
+   time will have to look up the meaning of these constants. An explicit
+   blk_mq_delay_run_hw_queue() call is easier to understand.
+- This patch makes the blk-mq core harder to understand because of the
+   loop mentioned above.
+- This patch does not fix any bugs nor makes block drivers easier to
+   read or to implement. So why is this patch considered useful?
+
+Thanks,
+
+Bart.
