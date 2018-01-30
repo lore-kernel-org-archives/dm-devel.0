@@ -1,48 +1,55 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [LSF/MM TOPIC] update NVMe multipath to
- conditionally claim controllers
-Date: Tue, 30 Jan 2018 16:04:01 +0100
-Message-ID: <8fd6e799-361b-01f2-2226-b5fe6fae0a5b@suse.de>
-References: <20180129211722.GB5744@redhat.com>
+Subject: Re: [dm-devel] [LSF/MM TOPIC] block, dm: restack queue_limits
+Date: Tue, 30 Jan 2018 16:07:30 +0100
+Message-ID: <cb9f601d-4848-1255-f00b-6b3079ab8c40@suse.de>
+References: <20180129210836.GA5744@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180129211722.GB5744@redhat.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <20180129210836.GA5744@redhat.com>
 Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>, linux-nvme@lists.infradead.org, dm-devel@redhat.com
+Sender: linux-scsi-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, "linux-scsi@vger.kernel.org" <Linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-T24gMDEvMjkvMjAxOCAxMDoxNyBQTSwgTWlrZSBTbml0emVyIHdyb3RlOgo+IEknZCBsaWtlIHRv
-IGhhdmUgdGhlIHNhbWUgTGludXgga2VybmVsIGJlIGFibGUgdG8gdXNlIGVpdGhlciBOVk1lJ3MK
-PiBuYXRpdmUgbXVsdGlwYXRoIG9yIERNIG11bHRpcGF0aC4KPiAKPiBTaG91bGQgYmUgcmVsYXRp
-dmVseSBzaW1wbGUgdG8gZmlsdGVyIHdoaWNoIGNvbnRyb2xsZXJzIGNhbi9jYW5ub3QgYmUKPiBj
-bGFpbWVkIGJ5IE5WTWUgbXVsdGlwYXRoaW5nICh3aXRob3V0IGhhdmluZyB0byByZXNvcnQgdG8g
-dGhlIGJpZyBoYW1tZXIKPiBvZiBDT05GSUdfTlZNRV9NVUxUSVBBVEgpLgo+IAo+IEknZCBsaWtl
-IHRvIHVuZGVyc3RhbmQgd2hhdCBpcyB0aGUgcHJlZmVycmVkIGRpc3Bvc2l0aW9uIG9mIHRoZSBm
-aWx0ZXIKPiBsaXN0IChibGFjayBvciB3aGl0ZSk/ICBJIGFzc3VtZSBoYXZpbmcgYSBibGFja2xp
-c3Qgd291bGQgYmUgbW9yZQo+IGlua2VlcGluZyB3aXRoIENocmlzdG9waCdzIGRlc2lyZSBmb3Ig
-TlZNZSB0byBiZSB0aGUgZGVmYXVsdCBmb3IgTlZNZQo+IG11bHRpcGF0aGluZy4gIEJ1dCB0aGF0
-IGRpc3Bvc2l0aW9uIGFzaWRlLCBub3Qgc3VyZSBpZiB0aGVyZSBhcmUgb3RoZXIKPiBpc3N1ZXMg
-dGhhdCBzaG91bGQgaW5mbHVlbmNlIGltcGxlbWVudGluZyBtb3JlIGZsZXhpYmxlIHVzZSBvZiBO
-Vk1lCj4gcmVzb3VyY2VzLgo+IAorMQoKVGhlIGRpc2N1c3Npb24gaGVyZSBpcyBub3Qgc28gbXVj
-aCBhYm91dCB0aGUgdGVjaG5pY2FsIG1lcml0cyBidXQgcmF0aGVyCmFib3V0IHRoZSBjdXN0b21l
-ci9hZG1pbiBleHBlY3RhdGlvbnMuClNvbWUgY3VzdG9tZXJzIGhhdmUgcXVpdGUgc29tZSBlbGFi
-b3JhdGUgdG9vbGluZyBhcm91bmQgcHJvdmlzaW9uaW5nCmV0Yywgc28gdGhleSB3aWxsIGJlIHB1
-dHRpbmcgdXAgc3VwcG9ydCBjYWxscyB3aXRoIHVzIGlmIHRob3NlIGZhaWwgdG8Kd29yayB3aXRo
-IE5WTWUuCgpDaGVlcnMsCgpIYW5uZXMKLS0gCkRyLiBIYW5uZXMgUmVpbmVja2UJCSAgIFRlYW1s
-ZWFkIFN0b3JhZ2UgJiBOZXR3b3JraW5nCmhhcmVAc3VzZS5kZQkJCSAgICAgICAgICAgICAgICs0
-OSA5MTEgNzQwNTMgNjg4ClNVU0UgTElOVVggR21iSCwgTWF4ZmVsZHN0ci4gNSwgOTA0MDkgTsO8
-cm5iZXJnCkdGOiBGLiBJbWVuZMO2cmZmZXIsIEouIFNtaXRoYXJkLCBKLiBHdWlsZCwgRC4gVXBt
-YW55dSwgRy4gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFp
-bGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWls
-bWFuL2xpc3RpbmZvL2RtLWRldmVs
+On 01/29/2018 10:08 PM, Mike Snitzer wrote:
+> We currently don't restack the queue_limits if the lowest, or
+> intermediate, layer of an IO stack changes.
+> 
+> This is particularly unfortunate in the case of FLUSH/FUA which may
+> change if/when a HW controller's BBU fails; whereby requiring the device
+> advertise that it has a volatile write cache (WCE=1).
+> 
+Uh-oh. Device rescan.
+Would be a valid topic on its own...
+
+> But in the context of DM, really it'd be best if the entire stack of
+> devices had their limits restacked if any underlying layer's limits
+> change.
+> 
+> In the past, Martin and I discussed that we should "just do it" but
+> never did.  Not sure we need a lengthy discussion but figured I'd put it
+> out there.
+> 
+> Maybe I'll find time, between now and April, to try implementing it.
+> 
+For SCSI the device capabilities are pretty much set in stone after the
+initial scan; there are hooks for rescanning, but they will only work
+half of the time.
+Plus we can't really change the device type on the fly (eg if the SCSI
+device type changes; if it moves away from '0' we would need to unbind
+the sd driver, and if it moves to '0' we'll need to rescan the sd
+device. None of this is happening right now.)
+
+So I'd be glad to have a discussion around this.
+
+Cheers,
+
+Hannes
+-- 
+Dr. Hannes Reinecke		   Teamlead Storage & Networking
+hare@suse.de			               +49 911 74053 688
+SUSE LINUX GmbH, Maxfeldstr. 5, 90409 Nürnberg
+GF: F. Imendörffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
+HRB 21284 (AG Nürnberg)
