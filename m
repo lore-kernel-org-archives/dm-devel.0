@@ -1,83 +1,105 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 06/12] multipathd: fix device creation issues
-Date: Tue, 30 Jan 2018 12:34:34 -0600
-Message-ID: <20180130183434.GK14513@octiron.msp.redhat.com>
-References: <1512672546-12785-1-git-send-email-bmarzins@redhat.com>
-	<1512672546-12785-7-git-send-email-bmarzins@redhat.com>
-	<1517331063.4072.57.camel@suse.com>
+From: Laurence Oberman <loberman@redhat.com>
+Subject: Re: [dm-devel] [PATCH v5] blk-mq: introduce BLK_STS_DEV_RESOURCE
+Date: Tue, 30 Jan 2018 13:38:44 -0500
+Message-ID: <1517337524.15224.0.camel@redhat.com>
+References: <20180130142459.52668-1-snitzer@redhat.com>
+         <43ac2314-c98d-bb76-0dfb-171d15cc5fd8@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1517331063.4072.57.camel@suse.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <43ac2314-c98d-bb76-0dfb-171d15cc5fd8@wdc.com>
+Sender: linux-block-owner@vger.kernel.org
+To: Bart Van Assche <bart.vanassche@wdc.com>, Mike Snitzer <snitzer@redhat.com>, axboe@kernel.dk
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Tue, Jan 30, 2018 at 05:51:03PM +0100, Martin Wilck wrote:
-> On Thu, 2017-12-07 at 12:49 -0600, Benjamin Marzinski wrote:
-> =
+On Tue, 2018-01-30 at 09:52 -0800, Bart Van Assche wrote:
+> On 01/30/18 06:24, Mike Snitzer wrote:
+> > +		 *
+> > +		 * If driver returns BLK_STS_RESOURCE and
+> > SCHED_RESTART
+> > +		 * bit is set, run queue after a delay to avoid IO
+> > stalls
+> > +		 * that could otherwise occur if the queue is
+> > idle.
+> >   		 */
+> > -		if (!blk_mq_sched_needs_restart(hctx) ||
+> > +		needs_restart = blk_mq_sched_needs_restart(hctx);
+> > +		if (!needs_restart ||
+> >   		    (no_tag && list_empty_careful(&hctx-
+> > >dispatch_wait.entry)))
+> >   			blk_mq_run_hw_queue(hctx, true);
+> > +		else if (needs_restart && (ret ==
+> > BLK_STS_RESOURCE))
+> > +			blk_mq_delay_run_hw_queue(hctx,
+> > BLK_MQ_QUEUE_DELAY);
+> >   	}
+> 
+> If a request completes concurrently with execution of the above code 
+> then the request completion will trigger a call of 
+> blk_mq_sched_restart_hctx() and that call will clear the 
+> BLK_MQ_S_SCHED_RESTART bit. If that bit is cleared before the above
+> code 
+> tests it then the above code will schedule an asynchronous call of 
+> __blk_mq_run_hw_queue(). If the .queue_rq() call triggered by the
+> new 
+> queue run returns again BLK_STS_RESOURCE then the above code will be 
+> executed again. In other words, a loop occurs. That loop will repeat
+> as 
+> long as the described race occurs. The current (kernel v4.15) block 
+> layer behavior is simpler: only block drivers call 
+> blk_mq_delay_run_hw_queue() and the block layer core never calls
+> that 
+> function. Hence that loop cannot occur with the v4.15 block layer
+> core 
+> and block drivers. A motivation of why that loop is preferred
+> compared 
+> to the current behavior (no loop) is missing. Does this mean that
+> that 
+> loop is a needless complication of the block layer core?
+> 
+> Sorry but I still prefer the v4.15 block layer approach because this 
+> patch has in my view the following disadvantages:
+> - It involves a blk-mq API change. API changes are always risky and
+> need
+>    some time to stabilize.
+> - The delay after which to rerun the queue is moved from block layer
+>    drivers into the block layer core. I think that's wrong because
+> only
+>    the block driver authors can make a good choice for this constant.
+> - This patch makes block drivers harder to understand. Anyone who
+> sees
+>    return BLK_STS_RESOURCE / return BLK_STS_DEV_RESOURCE for the
+> first
+>    time will have to look up the meaning of these constants. An
+> explicit
+>    blk_mq_delay_run_hw_queue() call is easier to understand.
+> - This patch makes the blk-mq core harder to understand because of
+> the
+>    loop mentioned above.
+> - This patch does not fix any bugs nor makes block drivers easier to
+>    read or to implement. So why is this patch considered useful?
+> 
+> Thanks,
+> 
+> Bart.
 
-> > However, it is possible to create a device with no paths, which means
-> > the device cannot know which hwentry to use for its device
-> > configuration.  __setup_multipath() used to help with this via
-> > extract_hwe_from_path(), which grabbed the hwentry from a path if the
-> > multipath device didn't already have it set. This is now done both
-> > when
-> > paths are added or the map is updated, which means that
-> > extract_hwe_from_path() runs before the device is configured in
-> > setup_map() instead of after the table has already been loaded. This
-> > is
-> > a good thing. But because of this, it can't check the dmstate or the
-> > pathgroup state.  I don't believe it's necessary to care what state
-> > the
-> > path is in, especially now that we use libudev. The vendor and
-> > product
-> > information gets cached by libudev when the path device is first
-> > added,
-> > and should remain the same regardless of whether or not the device is
-> > currently up.  My version does try to take the hwe information from a
-> > path in the PATH_UP state first, but this is mostly to satisfy the
-> > paranoia of the old version.
-> =
+Hello Bart
 
-> It just occured to me while reviewing this patch once more that this
-> might cause problems if the path WWID changes, as recently
-> discussed.Perhaps you should at least skip paths with the
-> "wwid_changed" attribute?
+What is the performance implication of your method versus this patch
+above.
+Is there more of a delay in your approach or in Ming's approach from
+your own testing.
+I guess it seems we will never get consensus on this so is it time to
+take a vote. 
 
-I thought that we agreed that updating pp->udev was a bad idea if the
-wwid changed.  I'm still not sure that we need to update the udev device
-at all.  For things that might reasonably change, we should grab them
-from sysfs or from the current uevent (without necessarily updating the
-one attached to the path). For things that aren't supposed to change, we
-can get them through libudev, and then they'll be cached for the future.
+I respect and trust your inputs, you know that, but are you perhaps
+prepared to accept the approach above and agree to it and if it turns
+out to expose more issues it can be addressed later.
 
-But at any rate, as long as we don't update pp->udev when the new udev
-device has a different wwid, this shouldn't be a problem. right?
+Is that not a better way to progress this because to me it looks like
+you and Ming will continue to disagree on which is the better approach.
 
--Ben
-
-> =
-
-> =
-
-> Regards,
-> Martin
-> =
-
-> -- =
-
-> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-> SUSE Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
-> HRB 21284 (AG N=FCrnberg)
+With much respect
+Laurence
