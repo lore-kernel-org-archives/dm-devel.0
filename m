@@ -1,55 +1,53 @@
-From: "Ewan D. Milne" <emilne@redhat.com>
-Subject: Re: [dm-devel] [LSF/MM TOPIC] block, dm: restack queue_limits
-Date: Tue, 30 Jan 2018 13:49:33 -0500
-Message-ID: <1517338173.30292.76.camel@localhost.localdomain>
-References: <20180129210836.GA5744@redhat.com>
-         <cb9f601d-4848-1255-f00b-6b3079ab8c40@suse.de>
-Reply-To: emilne@redhat.com
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 06/12] multipathd: fix device creation issues
+Date: Tue, 30 Jan 2018 20:02:53 +0100
+Message-ID: <1517338973.4072.64.camel@suse.com>
+References: <1512672546-12785-1-git-send-email-bmarzins@redhat.com>
+	<1512672546-12785-7-git-send-email-bmarzins@redhat.com>
+	<1517331063.4072.57.camel@suse.com>
+	<20180130183434.GK14513@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <cb9f601d-4848-1255-f00b-6b3079ab8c40@suse.de>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Hannes Reinecke <hare@suse.de>
-Cc: Mike Snitzer <snitzer@redhat.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, "linux-scsi@vger.kernel.org" <Linux-scsi@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20180130183434.GK14513@octiron.msp.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, 2018-01-30 at 16:07 +0100, Hannes Reinecke wrote:
-> On 01/29/2018 10:08 PM, Mike Snitzer wrote:
-> > We currently don't restack the queue_limits if the lowest, or
-> > intermediate, layer of an IO stack changes.
-> > 
-> > This is particularly unfortunate in the case of FLUSH/FUA which may
-> > change if/when a HW controller's BBU fails; whereby requiring the device
-> > advertise that it has a volatile write cache (WCE=1).
-> > 
-> Uh-oh. Device rescan.
-> Would be a valid topic on its own...
-> 
-> > But in the context of DM, really it'd be best if the entire stack of
-> > devices had their limits restacked if any underlying layer's limits
-> > change.
-> > 
-> > In the past, Martin and I discussed that we should "just do it" but
-> > never did.  Not sure we need a lengthy discussion but figured I'd put it
-> > out there.
-> > 
-> > Maybe I'll find time, between now and April, to try implementing it.
-> > 
-> For SCSI the device capabilities are pretty much set in stone after the
-> initial scan; there are hooks for rescanning, but they will only work
-> half of the time.
-> Plus we can't really change the device type on the fly (eg if the SCSI
-> device type changes; if it moves away from '0' we would need to unbind
-> the sd driver, and if it moves to '0' we'll need to rescan the sd
-> device. None of this is happening right now.)
-> 
-> So I'd be glad to have a discussion around this.
-
-At least array vendor has also desired the ability to change various
-attributes of the device after the initial scan, such as the model name.
-Not sure what would break if we did this, since who knows what userspace
-software might be caching this info, but...
-
--Ewan
+T24gVHVlLCAyMDE4LTAxLTMwIGF0IDEyOjM0IC0wNjAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cj4gT24gVHVlLCBKYW4gMzAsIDIwMTggYXQgMDU6NTE6MDNQTSArMDEwMCwgTWFydGluIFdp
+bGNrIHdyb3RlOgo+ID4gCj4gPiBJdCBqdXN0IG9jY3VyZWQgdG8gbWUgd2hpbGUgcmV2aWV3aW5n
+IHRoaXMgcGF0Y2ggb25jZSBtb3JlIHRoYXQKPiA+IHRoaXMKPiA+IG1pZ2h0IGNhdXNlIHByb2Js
+ZW1zIGlmIHRoZSBwYXRoIFdXSUQgY2hhbmdlcywgYXMgcmVjZW50bHkKPiA+IGRpc2N1c3NlZC5Q
+ZXJoYXBzIHlvdSBzaG91bGQgYXQgbGVhc3Qgc2tpcCBwYXRocyB3aXRoIHRoZQo+ID4gInd3aWRf
+Y2hhbmdlZCIgYXR0cmlidXRlPwo+IAo+IEkgdGhvdWdodCB0aGF0IHdlIGFncmVlZCB0aGF0IHVw
+ZGF0aW5nIHBwLT51ZGV2IHdhcyBhIGJhZCBpZGVhIGlmIHRoZQo+IHd3aWQgY2hhbmdlZC4gIEkn
+bSBzdGlsbCBub3Qgc3VyZSB0aGF0IHdlIG5lZWQgdG8gdXBkYXRlIHRoZSB1ZGV2Cj4gZGV2aWNl
+Cj4gYXQgYWxsLiAgRm9yIHRoaW5ncyB0aGF0IG1pZ2h0IHJlYXNvbmFibHkgY2hhbmdlLCB3ZSBz
+aG91bGQgZ3JhYiB0aGVtCj4gZnJvbSBzeXNmcyBvciBmcm9tIHRoZSBjdXJyZW50IHVldmVudCAo
+d2l0aG91dCBuZWNlc3NhcmlseSB1cGRhdGluZwo+IHRoZQo+IG9uZSBhdHRhY2hlZCB0byB0aGUg
+cGF0aCkuIEZvciB0aGluZ3MgdGhhdCBhcmVuJ3Qgc3VwcG9zZWQgdG8gY2hhbmdlLAo+IHdlCj4g
+Y2FuIGdldCB0aGVtIHRocm91Z2ggbGlidWRldiwgYW5kIHRoZW4gdGhleSdsbCBiZSBjYWNoZWQg
+Zm9yIHRoZQo+IGZ1dHVyZS4KPiAKPiBCdXQgYXQgYW55IHJhdGUsIGFzIGxvbmcgYXMgd2UgZG9u
+J3QgdXBkYXRlIHBwLT51ZGV2IHdoZW4gdGhlIG5ldwo+IHVkZXYKPiBkZXZpY2UgaGFzIGEgZGlm
+ZmVyZW50IHd3aWQsIHRoaXMgc2hvdWxkbid0IGJlIGEgcHJvYmxlbS4gcmlnaHQ/CgpBbGxyaWdo
+dCwgdGhlIG9ubHkgdGhpbmcgdGhhdCBtYXR0ZXJzIGhlcmUgaXMgcHAtPmh3ZS4gU28geWVzLCB3
+ZSBtYXkKYmUgb2suIEkgaGF2ZSBhIHJhdGhlciBiYWQgZmVlbGluZyBhYm91dCB0aGVzZSAiem9t
+YmllIiBwYXRocyBiZWluZwpjYXJyaWVkIGFyb3VuZCBpbiBtdWx0aXBhdGhkLCBhbmQgcGFydHMg
+b2YgdGhlIGNvZGUgcmVseWluZyBvbiB0aGF0CmJlaW5nIHRoZSBjYXNlLCBidXQgSSBndWVzcyBJ
+IGNhbid0IG9mZmVyIGEgYmV0dGVyIHNvbHV0aW9uLgoKVGhhbmtzLApNYXJ0aW4KCi0tIApEci4g
+TWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEw
+NwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQs
+IEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWls
+aW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxt
+YW4vbGlzdGluZm8vZG0tZGV2ZWw=
