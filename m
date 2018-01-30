@@ -1,66 +1,47 @@
-From: Bart Van Assche <bart.vanassche@wdc.com>
-Subject: Re: [dm-devel] [PATCH v5] blk-mq: introduce BLK_STS_DEV_RESOURCE
-Date: Tue, 30 Jan 2018 09:52:31 -0800
-Message-ID: <43ac2314-c98d-bb76-0dfb-171d15cc5fd8@wdc.com>
-References: <20180130142459.52668-1-snitzer@redhat.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: multipath-tools: add INSPUR/MCS to hardware table
+Date: Tue, 30 Jan 2018 19:13:45 +0100
+Message-ID: <d0bdc0d0-51d0-a0f3-52c4-c8667189ef2e@gmail.com>
+References: <6FA0216CBF61AE4AA9DA6744243E7853DB5C4578@jtjnmailbox06.home.langchao.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20180130142459.52668-1-snitzer@redhat.com>
-Content-Language: en-US
-Sender: linux-block-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>, axboe@kernel.dk
-Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <6FA0216CBF61AE4AA9DA6744243E7853DB5C4578@jtjnmailbox06.home.langchao.com>
+Content-Language: en-GB
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: =?UTF-8?B?VG9tIEdlbmco6IC/6Iqz5b+gKQ==?= <gengfangzhong@inspur.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 01/30/18 06:24, Mike Snitzer wrote:
-> +		 *
-> +		 * If driver returns BLK_STS_RESOURCE and SCHED_RESTART
-> +		 * bit is set, run queue after a delay to avoid IO stalls
-> +		 * that could otherwise occur if the queue is idle.
->   		 */
-> -		if (!blk_mq_sched_needs_restart(hctx) ||
-> +		needs_restart = blk_mq_sched_needs_restart(hctx);
-> +		if (!needs_restart ||
->   		    (no_tag && list_empty_careful(&hctx->dispatch_wait.entry)))
->   			blk_mq_run_hw_queue(hctx, true);
-> +		else if (needs_restart && (ret == BLK_STS_RESOURCE))
-> +			blk_mq_delay_run_hw_queue(hctx, BLK_MQ_QUEUE_DELAY);
->   	}
-
-If a request completes concurrently with execution of the above code 
-then the request completion will trigger a call of 
-blk_mq_sched_restart_hctx() and that call will clear the 
-BLK_MQ_S_SCHED_RESTART bit. If that bit is cleared before the above code 
-tests it then the above code will schedule an asynchronous call of 
-__blk_mq_run_hw_queue(). If the .queue_rq() call triggered by the new 
-queue run returns again BLK_STS_RESOURCE then the above code will be 
-executed again. In other words, a loop occurs. That loop will repeat as 
-long as the described race occurs. The current (kernel v4.15) block 
-layer behavior is simpler: only block drivers call 
-blk_mq_delay_run_hw_queue() and the block layer core never calls that 
-function. Hence that loop cannot occur with the v4.15 block layer core 
-and block drivers. A motivation of why that loop is preferred compared 
-to the current behavior (no loop) is missing. Does this mean that that 
-loop is a needless complication of the block layer core?
-
-Sorry but I still prefer the v4.15 block layer approach because this 
-patch has in my view the following disadvantages:
-- It involves a blk-mq API change. API changes are always risky and need
-   some time to stabilize.
-- The delay after which to rerun the queue is moved from block layer
-   drivers into the block layer core. I think that's wrong because only
-   the block driver authors can make a good choice for this constant.
-- This patch makes block drivers harder to understand. Anyone who sees
-   return BLK_STS_RESOURCE / return BLK_STS_DEV_RESOURCE for the first
-   time will have to look up the meaning of these constants. An explicit
-   blk_mq_delay_run_hw_queue() call is easier to understand.
-- This patch makes the blk-mq core harder to understand because of the
-   loop mentioned above.
-- This patch does not fix any bugs nor makes block drivers easier to
-   read or to implement. So why is this patch considered useful?
-
-Thanks,
-
-Bart.
+T24gMDEvMjkvMjAxOCAwNzowNCBBTSwgVG9tIEdlbmco6IC/6Iqz5b+gKSB3cm90ZToKCj4gSSBz
+ZW50IHRoZSBwYXRjaCB0byBkbS1kZXZlbCBsYXN0IHdlZWssIGJ1dCBmb3Jnb3QgdG8gQ0MgeW91
+LiBQbGVhc2UgaGVscCB0byAKPiByZXZpZXcgYW5kIGhhdmUgY2hhbmNlIHRvIHN1Ym1pdCB0byB0
+aGUgbWFpbmxpbmUuCgpJbiB0aGUgb3JpZ2luYWwgcGF0Y2ggYSBtYWludGFpbmVyIHdhcyBpbmNs
+dWRlZCwgb3RoZXIgdGhhbiB0aGF0OgpSZXZpZXdlZC1ieTogWG9zZSBWYXpxdWV6IFBlcmV6IDx4
+b3NlLnZhenF1ZXpAZ21haWwuY29tPgoKPj5Gcm9tIDA5MWJhZTVmZWMyMmM2MWYwYzNlNmY5YWI4
+NDhmZWNhZTUyMDMxMjIgTW9uIFNlcCAxNyAwMDowMDowMCAyMDAxCj4gRnJvbTogVG9tIEdlbmcg
+PGdlbmdmYW5nemhvbmdAaW5zcHVyLmNvbT4KPiBEYXRlOiBUdWUsIDIzIEphbiAyMDE4IDE1OjMz
+OjA5ICswODAwCj4gU3ViamVjdDogW1BBVENIXSBtdWx0aXBhdGgtdG9vbHM6IGFkZCBJTlNQVVIv
+TUNTIHRvIGhhcmR3YXJlIHRhYmxlCj4gCj4gLS0tCj4gIGxpYm11bHRpcGF0aC9od3RhYmxlLmMg
+fCAxMSArKysrKysrKysrKwo+ICAxIGZpbGUgY2hhbmdlZCwgMTEgaW5zZXJ0aW9ucygrKQo+IAo+
+IGRpZmYgLS1naXQgYS9saWJtdWx0aXBhdGgvaHd0YWJsZS5jIGIvbGlibXVsdGlwYXRoL2h3dGFi
+bGUuYwo+IGluZGV4IDQ0OGVmZmUzLi45M2Q2N2RmMCAxMDA2NDQKPiAtLS0gYS9saWJtdWx0aXBh
+dGgvaHd0YWJsZS5jCj4gKysrIGIvbGlibXVsdGlwYXRoL2h3dGFibGUuYwo+IEBAIC0xMTgxLDYg
+KzExODEsMTcgQEAgc3RhdGljIHN0cnVjdCBod2VudHJ5IGRlZmF1bHRfaHdbXSA9IHsKPiAgCQku
+cGdwb2xpY3kgICAgICA9IE1VTFRJQlVTLAo+ICAJCS5ub19wYXRoX3JldHJ5ID0gMzAsCj4gIAl9
+LAo+ICsJLyoKPiArCSAqIElOU1BVUgo+ICsJICovCj4gKwl7Cj4gKwkJLyogQVM1MzAwL0FTNTUw
+MCBHMiAqLwo+ICsJCS52ZW5kb3IgICAgICAgID0gIklOU1BVUiIsCj4gKwkJLnByb2R1Y3QgICAg
+ICAgPSAiTUNTIiwKPiArCQkucGdwb2xpY3kgICAgICA9IEdST1VQX0JZX1BSSU8sCj4gKwkJLnBn
+ZmFpbGJhY2sgICAgPSAtRkFJTEJBQ0tfSU1NRURJQVRFLAo+ICsJCS5wcmlvX25hbWUgICAgID0g
+UFJJT19BTFVBLAo+ICsJfSwKPiAgCS8qCj4gIAkgKiBFT0wKPiAgCSAqLwo+IAoKLS0KZG0tZGV2
+ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNv
+bS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
