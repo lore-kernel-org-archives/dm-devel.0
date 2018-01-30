@@ -1,15 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: multipath-tools: add INSPUR/MCS to hardware table
-Date: Tue, 30 Jan 2018 15:05:52 +0100
-Message-ID: <1517321152.4072.46.camel@suse.com>
-References: <6FA0216CBF61AE4AA9DA6744243E7853DB5C4578@jtjnmailbox06.home.langchao.com>
-	<1517233052.12805.27.camel@suse.com>
-	<304d593e-b9ba-3c19-fae0-084caa0e1a97@gmail.com>
+Subject: [PATCH v2] multipath-tools: handle exit signal
+	immediately
+Date: Tue, 30 Jan 2018 15:16:24 +0100
+Message-ID: <20180130141624.27439-1-mwilck@suse.com>
+References: <CEB9978CF3252343BE3C67AC9F0086A342959378@H3CMLB14-EX.srv.huawei-3com.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <304d593e-b9ba-3c19-fae0-084caa0e1a97@gmail.com>
+In-Reply-To: <CEB9978CF3252343BE3C67AC9F0086A342959378@H3CMLB14-EX.srv.huawei-3com.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,25 +18,99 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>, Tom =?UTF-8?Q?Geng=28=E8=80=BF=E8=8A=B3=E5=BF=A0=29?= <gengfangzhong@inspur.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Chongyun Wu <wu.chongyun@h3c.com>
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, Guozhonghua <guozhonghua@h3c.com>, dm-devel@redhat.com, Changwei Ge <ge.changwei@h3c.com>, Changlimin <changlimin@h3c.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-T24gVHVlLCAyMDE4LTAxLTMwIGF0IDE0OjU4ICswMTAwLCBYb3NlIFZhenF1ZXogUGVyZXogd3Jv
-dGU6Cj4gT24gMDEvMjkvMjAxOCAwMjozNyBQTSwgTWFydGluIFdpbGNrIHdyb3RlOgo+IAo+ID4g
-T24gTW9uLCAyMDE4LTAxLTI5IGF0IDA2OjA0ICswMDAwLCBUb20gR2VuZyjogL/oirPlv6ApIHdy
-b3RlOgo+ID4gPiArCS8qCj4gPiA+ICsJICogSU5TUFVSCj4gPiA+ICsJICovCj4gPiA+ICsJewo+
-ID4gPiArCQkvKiBBUzUzMDAvQVM1NTAwIEcyICovCj4gPiA+ICsJCS52ZW5kb3IgICAgICAgID0g
-IklOU1BVUiIsCj4gPiA+ICsJCS5wcm9kdWN0ICAgICAgID0gIk1DUyIsCj4gPiA+ICsJCS5wZ3Bv
-bGljeSAgICAgID0gR1JPVVBfQllfUFJJTywKPiAKPiAgICAgICAgICAgICAgICAgIF5eXl5eXl5e
-ICAgICAgICBeXl5eXl5eXl5eXl5eCj4gCj4gPiA+ICsJCS5wZ2ZhaWxiYWNrICAgID0gLUZBSUxC
-QUNLX0lNTUVESUFURSwKPiA+ID4gKwkJLnByaW9fbmFtZSAgICAgPSBQUklPX0FMVUEsCj4gPiA+
-ICsJfSwKPiA+IG11bHRpcGF0aC10b29scyBkZWZhdWx0IHRvIC5wZ3BvbGljeSA9IGZhaWxvdmVy
-LiBQbGVhc2UgY29uZmlybQo+ID4gdGhhdAo+ID4gdGhpcyBpcyByZWFsbHkgeW91ciBpbnRlbnRp
-b24uCj4gCj4gSXQgd2FzIHNldCBhcyBHUk9VUF9CWV9QUklPLCB3aXRoIFBSSU9fQUxVQSBhcyBw
-cmlvLgoKQXJnaC4gT2J2aW91cyBjYXNlIG9mIGJyYWluIG1hbGZ1bmN0aW9uIG9uIG15IHBhcnQu
-IFNvcnJ5LCBldmVyeW9uZS4KCk1hcnRpbgoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0Bz
-dXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6
-IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEy
-ODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRo
-YXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+multipathd shouldn't try to service any more client connections
+when it receives an exit signal. Moreover, ppoll() can return
+success even if signals occured. So check for reconfigure or
+log_reset signals after handling pending client requests.
+
+Based on an analysis by Chongyun Wu.
+
+Reported-by: Chongyun Wu <wu.chongyun@h3c.com>
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ multipathd/main.c   | 6 ++++--
+ multipathd/main.h   | 2 +-
+ multipathd/uxlsnr.c | 7 +++++--
+ 3 files changed, 10 insertions(+), 5 deletions(-)
+
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 27cf234623d0..8e96f5dd2d7f 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -2184,12 +2184,15 @@ signal_set(int signo, void (*func) (int))
+ }
+ 
+ void
+-handle_signals(void)
++handle_signals(bool nonfatal)
+ {
+ 	if (exit_sig) {
+ 		condlog(2, "exit (signal)");
++		exit_sig = 0;
+ 		exit_daemon();
+ 	}
++	if (!nonfatal)
++		return;
+ 	if (reconfig_sig) {
+ 		condlog(2, "reconfigure (signal)");
+ 		set_config_state(DAEMON_CONFIGURE);
+@@ -2200,7 +2203,6 @@ handle_signals(void)
+ 		log_reset("multipathd");
+ 		pthread_mutex_unlock(&logq_lock);
+ 	}
+-	exit_sig = 0;
+ 	reconfig_sig = 0;
+ 	log_reset_sig = 0;
+ }
+diff --git a/multipathd/main.h b/multipathd/main.h
+index ededdaba32fe..e8140feaf291 100644
+--- a/multipathd/main.h
++++ b/multipathd/main.h
+@@ -38,6 +38,6 @@ int mpath_pr_event_handle(struct path *pp);
+ void * mpath_pr_event_handler_fn (void * );
+ int update_map_pr(struct multipath *mpp);
+ void * mpath_pr_event_handler_fn (void * pathp );
+-void handle_signals(void);
++void handle_signals(bool);
+ 
+ #endif /* MAIN_H */
+diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
+index 98ac25a68c43..dc116cf2515b 100644
+--- a/multipathd/uxlsnr.c
++++ b/multipathd/uxlsnr.c
+@@ -221,9 +221,10 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
+ 		/* most of our life is spent in this call */
+ 		poll_count = ppoll(polls, i, &sleep_time, &mask);
+ 
++		handle_signals(false);
+ 		if (poll_count == -1) {
+ 			if (errno == EINTR) {
+-				handle_signals();
++				handle_signals(true);
+ 				continue;
+ 			}
+ 
+@@ -233,7 +234,7 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
+ 		}
+ 
+ 		if (poll_count == 0) {
+-			handle_signals();
++			handle_signals(true);
+ 			continue;
+ 		}
+ 
+@@ -292,6 +293,8 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
+ 				FREE(inbuf);
+ 			}
+ 		}
++		/* see if we got a non-fatal signal */
++		handle_signals(true);
+ 
+ 		/* see if we got a new client */
+ 		if (polls[0].revents & POLLIN) {
+-- 
+2.16.1
