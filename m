@@ -1,16 +1,17 @@
-From: Martin Wilck <mwilck@suse.com>
+From: Chongyun Wu <wu.chongyun@h3c.com>
 Subject: Re: [PATCH v2] multipath-tools: handle exit signal
 	immediately
-Date: Wed, 31 Jan 2018 10:40:04 +0100
-Message-ID: <1517391604.5981.34.camel@suse.com>
+Date: Wed, 31 Jan 2018 11:59:25 +0000
+Message-ID: <CEB9978CF3252343BE3C67AC9F0086A342959627@H3CMLB14-EX.srv.huawei-3com.com>
 References: <CEB9978CF3252343BE3C67AC9F0086A342959378@H3CMLB14-EX.srv.huawei-3com.com>
 	<20180130141624.27439-1-mwilck@suse.com>
 	<CEB9978CF3252343BE3C67AC9F0086A342959540@H3CMLB14-EX.srv.huawei-3com.com>
+	<1517391604.5981.34.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CEB9978CF3252343BE3C67AC9F0086A342959540@H3CMLB14-EX.srv.huawei-3com.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,124 +21,191 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Chongyun Wu <wu.chongyun@h3c.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
+To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, Guozhonghua <guozhonghua@h3c.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Changwei Ge <ge.changwei@h3c.com>, Changlimin <changlimin@h3c.com>
 List-Id: dm-devel.ids
 
-T24gV2VkLCAyMDE4LTAxLTMxIGF0IDA3OjQzICswMDAwLCBDaG9uZ3l1biBXdSB3cm90ZToKPiBI
-aSBNYXJ0aW4sCj4gCj4gTXkgcGF0Y2ggaGF2ZSB0ZXN0ZWQgYnV0IHlvdXIgcGF0Y2ggc2VlbXMg
-dG8gYmUgbW9yZSBncmFjZWZ1bGx5LiBNYXkKPiBiZSAKPiB0aGVyZSBhcmUgc29tZSBzbWFsbCBp
-c3N1ZXMgaWYgSSBhbSBub3Qgd3JvbmcuVGhhbmtzLgo+IAo+IE9uIDIwMTgvMS8zMCAyMjoxOCwg
-TWFydGluIFdpbGNrIHdyb3RlOgo+ID4gbXVsdGlwYXRoZCBzaG91bGRuJ3QgdHJ5IHRvIHNlcnZp
-Y2UgYW55IG1vcmUgY2xpZW50IGNvbm5lY3Rpb25zCj4gPiB3aGVuIGl0IHJlY2VpdmVzIGFuIGV4
-aXQgc2lnbmFsLiBNb3Jlb3ZlciwgcHBvbGwoKSBjYW4gcmV0dXJuCj4gPiBzdWNjZXNzIGV2ZW4g
-aWYgc2lnbmFscyBvY2N1cmVkLiBTbyBjaGVjayBmb3IgcmVjb25maWd1cmUgb3IKPiA+IGxvZ19y
-ZXNldCBzaWduYWxzIGFmdGVyIGhhbmRsaW5nIHBlbmRpbmcgY2xpZW50IHJlcXVlc3RzLgo+ID4g
-Cj4gPiBCYXNlZCBvbiBhbiBhbmFseXNpcyBieSBDaG9uZ3l1biBXdS4KPiA+IAo+ID4gUmVwb3J0
-ZWQtYnk6IENob25neXVuIFd1IDx3dS5jaG9uZ3l1bkBoM2MuY29tPgo+ID4gU2lnbmVkLW9mZi1i
-eTogTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+Cj4gPiAtLS0KPiA+ICAgbXVsdGlwYXRo
-ZC9tYWluLmMgICB8IDYgKysrKy0tCj4gPiAgIG11bHRpcGF0aGQvbWFpbi5oICAgfCAyICstCj4g
-PiAgIG11bHRpcGF0aGQvdXhsc25yLmMgfCA3ICsrKysrLS0KPiA+ICAgMyBmaWxlcyBjaGFuZ2Vk
-LCAxMCBpbnNlcnRpb25zKCspLCA1IGRlbGV0aW9ucygtKQo+ID4gCj4gPiBkaWZmIC0tZ2l0IGEv
-bXVsdGlwYXRoZC9tYWluLmMgYi9tdWx0aXBhdGhkL21haW4uYwo+ID4gaW5kZXggMjdjZjIzNDYy
-M2QwLi44ZTk2ZjVkZDJkN2YgMTAwNjQ0Cj4gPiAtLS0gYS9tdWx0aXBhdGhkL21haW4uYwo+ID4g
-KysrIGIvbXVsdGlwYXRoZC9tYWluLmMKPiA+IEBAIC0yMTg0LDEyICsyMTg0LDE1IEBAIHNpZ25h
-bF9zZXQoaW50IHNpZ25vLCB2b2lkICgqZnVuYykgKGludCkpCj4gPiAgIH0KPiA+ICAgCj4gPiAg
-IHZvaWQKPiA+IC1oYW5kbGVfc2lnbmFscyh2b2lkKQo+ID4gK2hhbmRsZV9zaWduYWxzKGJvb2wg
-bm9uZmF0YWwpCj4gPiAgIHsKPiA+ICAgCWlmIChleGl0X3NpZykgewo+ID4gICAJCWNvbmRsb2co
-MiwgImV4aXQgKHNpZ25hbCkiKTsKPiA+ICsJCWV4aXRfc2lnID0gMDsKPiAKPiBJZiB3ZSByZWNl
-aXZlZCBhIGV4aXQgc2lnbmFsIHNob3VsZCB3ZSBqdXN0IGVzY2FwZSBhbGwgYmVsb3cKPiBjb21t
-YW5kcyAKPiBwcm9jZXNzIHRvIGF2b2lkIHRoZSByYWNlIGNvbmRpdGlvbiBiZXR3ZWVuIHRocmVh
-ZCBjYW5jZWxsYXRpb24gYW5kIAo+IGNvbW1hbmRzIHByb2Nlc3Npbmc/IHNvIG1heWJlIGZsYWcg
-ZXhpdF9zaWcga2VlcCB0byAxIGhlcmU/CgpXaGF0IHdvdWxkIHRoYXQgYmUgZ29vZCBmb3I/IFdl
-IGNhbGwgZXhpdF9kYWVtb24oKSwgc2lnbmFsbGluZyB0aGUgbWFpbgpwcm9jZXNzIHRvIHNodXQg
-ZG93bi4gSWYgd2UgZG9uJ3QgcmVzZXQgZXhpdF9zaWcsIHdlJ2xsIGNhbGwKZXhpdF9kYWVtb24o
-KSBhZ2FpbiBpZiBoYW5kbGVfc2lnbmFscyBpcyBldmVyIHJ1biBhZ2Fpbi4gVGhhdCdzIG5vdApu
-ZWNlc3NhcnkgYW5kIG1pZ2h0IGFjdHVhbGx5IGNvbmZ1c2UgbWF0dGVycy4KCk9yIGFtIEkgb3Zl
-cmxvb2tpbmcgc29tZXRoaW5nPwoKPiAKPiA+ICAgCQlleGl0X2RhZW1vbigpOwo+ID4gICAJfQo+
-ID4gKwlpZiAoIW5vbmZhdGFsKQo+ID4gKwkJcmV0dXJuOwo+ID4gICAJaWYgKHJlY29uZmlnX3Np
-Zykgewo+ID4gICAJCWNvbmRsb2coMiwgInJlY29uZmlndXJlIChzaWduYWwpIik7Cj4gPiAgIAkJ
-c2V0X2NvbmZpZ19zdGF0ZShEQUVNT05fQ09ORklHVVJFKTsKPiA+IEBAIC0yMjAwLDcgKzIyMDMs
-NiBAQCBoYW5kbGVfc2lnbmFscyh2b2lkKQo+ID4gICAJCWxvZ19yZXNldCgibXVsdGlwYXRoZCIp
-Owo+ID4gICAJCXB0aHJlYWRfbXV0ZXhfdW5sb2NrKCZsb2dxX2xvY2spOwo+ID4gICAJfQo+ID4g
-LQlleGl0X3NpZyA9IDA7Cj4gPiAgIAlyZWNvbmZpZ19zaWcgPSAwOwo+ID4gICAJbG9nX3Jlc2V0
-X3NpZyA9IDA7Cj4gPiAgIH0KPiA+IGRpZmYgLS1naXQgYS9tdWx0aXBhdGhkL21haW4uaCBiL211
-bHRpcGF0aGQvbWFpbi5oCj4gPiBpbmRleCBlZGVkZGFiYTMyZmUuLmU4MTQwZmVhZjI5MSAxMDA2
-NDQKPiA+IC0tLSBhL211bHRpcGF0aGQvbWFpbi5oCj4gPiArKysgYi9tdWx0aXBhdGhkL21haW4u
-aAo+ID4gQEAgLTM4LDYgKzM4LDYgQEAgaW50IG1wYXRoX3ByX2V2ZW50X2hhbmRsZShzdHJ1Y3Qg
-cGF0aCAqcHApOwo+ID4gICB2b2lkICogbXBhdGhfcHJfZXZlbnRfaGFuZGxlcl9mbiAodm9pZCAq
-ICk7Cj4gPiAgIGludCB1cGRhdGVfbWFwX3ByKHN0cnVjdCBtdWx0aXBhdGggKm1wcCk7Cj4gPiAg
-IHZvaWQgKiBtcGF0aF9wcl9ldmVudF9oYW5kbGVyX2ZuICh2b2lkICogcGF0aHAgKTsKPiA+IC12
-b2lkIGhhbmRsZV9zaWduYWxzKHZvaWQpOwo+ID4gK3ZvaWQgaGFuZGxlX3NpZ25hbHMoYm9vbCk7
-Cj4gPiAgIAo+ID4gICAjZW5kaWYgLyogTUFJTl9IICovCj4gPiBkaWZmIC0tZ2l0IGEvbXVsdGlw
-YXRoZC91eGxzbnIuYyBiL211bHRpcGF0aGQvdXhsc25yLmMKPiA+IGluZGV4IDk4YWMyNWE2OGM0
-My4uZGMxMTZjZjI1MTViIDEwMDY0NAo+ID4gLS0tIGEvbXVsdGlwYXRoZC91eGxzbnIuYwo+ID4g
-KysrIGIvbXVsdGlwYXRoZC91eGxzbnIuYwo+ID4gQEAgLTIyMSw5ICsyMjEsMTAgQEAgdm9pZCAq
-IHV4c29ja19saXN0ZW4odXhzb2NrX3RyaWdnZXJfZm4KPiA+IHV4c29ja190cmlnZ2VyLCB2b2lk
-ICogdHJpZ2dlcl9kYXRhKQo+ID4gICAJCS8qIG1vc3Qgb2Ygb3VyIGxpZmUgaXMgc3BlbnQgaW4g
-dGhpcyBjYWxsICovCj4gPiAgIAkJcG9sbF9jb3VudCA9IHBwb2xsKHBvbGxzLCBpLCAmc2xlZXBf
-dGltZSwgJm1hc2spOwo+ID4gICAKPiA+ICsJCWhhbmRsZV9zaWduYWxzKGZhbHNlKTsKPiAKPiBJ
-cyBpdCBiZXR0ZXIgdG8gYWRkIGFuZCBjaGVjayB0aGUgcmV0dXJuIHZhbHVlIGZyb20gaGFuZGxl
-X3NpZ25hbHMoKT8KPiBJZiAKPiByZXR1cm4gdHJ1ZSBtZWFucyB0aGlzIGEgZXhpdCBzaWduYWwg
-c2hvdWxkIHJ1biBjb250aW51ZSB0byBlc2NhcGUKPiBhbGwgCj4gYmVsb3cgcHJvY2Vzc2luZy4K
-PiBJZiBub3QgZG9pbmcgdGhhdCwgd2UgbWF5IG5lZWQgdG8gYWRkCj4gcHRocmVhZF9jbGVhbnVw
-X3B1c2goY2xlYW51cF9sb2NrLCAKPiAmY2xpZW50X2xvY2spIGJlZm9yZSBwdGhyZWFkX211dGV4
-X2xvY2soJmNsaWVudF9sb2NrKSBpbiBiZWxvdwo+IGNvbW1hbmQgCj4gcHJvY2Vzc2luZyB0byBh
-dmlkIGRlYWQgbG9jayB3aGljaCBoYXBwZW4gd2hlbiBjb21tYW5kcyBwcm9jZXNzaW5nCj4gY29k
-ZSAKPiBqdXN0IGhhdmUgdGhlIGxvY2sgYW5kIGNhbmNlbGxhdGlvbiB3b3JrcyB0byBjYWxsIHV4
-c29ja19jbGVhbnVwIGhvb2sKPiB0byAKPiBnZXQgdGhlIGxvY2sgYW5kIHRoZSBjb21tYW5kcyBw
-cm9jZXNzaW5nIGNvZGUgaGF2ZSBubyBjaGFuY2UgdG8KPiByZWxlYXNlIAo+IHRoZSBsb2NrLgoK
-QUZBSUNTIGl0IGlzbid0IG5lY2Vzc2FyeSwgYmVjYXVzZSB0aGUgdHdvIGNvZGUgcGFydHMgd2hl
-cmUgdGhlIGxvY2sgaXMKdGFrZW4gaW4gdGhlIHV4c29ja19saXN0ZW4oKSBkb24ndCBjb250YWlu
-IGNhbmNlbGxhdGlvbiBwb2ludHMuIElmIEknbQpvdmVybG9va2luZyBzb21ldGhpbmcgaGVyZSBh
-bmQgcHRocmVhZF9jbGVhbnVwX3B1c2goJmNsaWVudF9sb2NrKSBoYXMKdG8gYmUgdXNlZCBpbiB0
-aGUgbGlzdGVuZXIgdGhyZWFkLCB0aGF0IHdvdWxkIGJlIGFuIGluZGVwZW5kZW50IGZpeC4KICAK
-PiA+IEBAIC0yOTIsNiArMjkzLDggQEAgdm9pZCAqIHV4c29ja19saXN0ZW4odXhzb2NrX3RyaWdn
-ZXJfZm4KPiA+IHV4c29ja190cmlnZ2VyLCB2b2lkICogdHJpZ2dlcl9kYXRhKQo+ID4gICAJCQkJ
-RlJFRShpbmJ1Zik7Cj4gPiAgIAkJCX0KPiA+ICAgCQl9Cj4gPiArCQkvKiBzZWUgaWYgd2UgZ290
-IGEgbm9uLWZhdGFsIHNpZ25hbCAqLwo+ID4gKwkJaGFuZGxlX3NpZ25hbHModHJ1ZSk7Cj4gCj4g
-YWJvdmUgY29kZSBtYXliZSBub3QgbmVlZGVkLiBCZWNhdXNlIGl0J3Mgc2FmZSB0byBtYWtlIHN1
-cmUgbm8KPiBjb21tYW5kcyAKPiBiZSBwcm9jZXNzZWQgdGhlbiB0byBoYW5kbGUgbm9uZWZhdGFs
-IHNpZ25hbCwgbGlrZSBjb2RlCj4gImlmKHBvbGxfY291bnQgCj4gPT0wKXsuLi59IiBkby4gSWYg
-aGVyZSB0byBjYWxsIGhhbmxlX3NpZ25hbHModHJ1ZSkgYWdhaW4sIG1heSBmYWNpbmcgCj4gcmFj
-ZSBjb25kaXRpb24gYmV0d2VlbiBzaWduYWxzIHByb2Nlc3NpbmcgYW5kIGNvbW1hbmQgcHJvY2Vz
-c2luZy4gCgpEbyB5b3Ugc2VlIGFuIGFjdHVhbCByYWNlIGNvbmRpdGlvbiBvciBqdXN0IHRoZSBw
-b3RlbnRpYWwgdG8gY29uZnVzZQpjb25uZWN0ZWQgY2xpZW50cz8KCj4gVGhhdCAKPiBtYXliZSBu
-b3Qgc28gc2FmZS4gQW5kIHRoZSBoYW5kbGVfc2lnbmFscyBoYXZlIGJlZW4gY2FsbGVkIGFib3Zl
-LiBJcyAKPiB0aGVyZSBhIHNwZWNpYWwgcmVhc29uIGZvciB0aGlzIHdoaWNoIEkgbWlzc2VkPwoK
-T2YgdGhlIGhhbmRsZV9zaWduYWxzKCkgY2FsbHMgYWJvdmUsIHRoZSBmaXJzdCBvbmUgaGFuZGxl
-cyBvbmx5IGZhdGFsCnNpZ25hbHMsIGFuZCB0aGUgb3RoZXJzIGFyZSBvbmx5IGNhbGxlZCBpZiBw
-cG9sbCgpIHJldHVybnMgLTEgb3IgMC4KCldlIGhhdmUgdHdvIG5vbi1mYXRhbCBzaWduYWxzLCAi
-bG9nX3Jlc2V0IiBhbmQgInJlY29uZmlndXJlIi4KImxvZ19yZXNldCIgY2FuIGJlIHNhZmVseSBp
-Z25vcmVkIGZvciB0aGlzIGRpc2N1c3Npb24uICJyZWNvbmZpZ3VyZSIKbWF5IGFkbWl0dGVkbHkg
-Y29uZnVzZSBjb25uZWN0ZWQgY2xpZW50cyBpZiBpdCdzIGNhbGxlZCB3aGlsZSBhIHNlc3Npb24K
-aXMgYWN0aXZlLgoKVGhlIGxvb3Agb3ZlciB0aGUgY2xpZW50cyBtYWtlcyBzdXJlIHRoYXQgY29t
-bWFuZHMgZnJvbSBjbGllbnRzIHRoYXQKYXJlIHNlZW4gYmVmb3JlIHRoZSBzaWduYWwgYXJlIHJl
-Y2VpdmVkIGFuZCBwcm9jZXNzZWQgYmVmb3JlIHRoZQpoYW5kbGVfc2lnbmFscygpIGNhbGwuCgpU
-aGUgcXVlc3Rpb24gaXMgd2hhdCB0byBkbyB3aXRoIGNsaWVudCBzZXNzaW9ucyB0aGF0IHJlbWFp
-biBvcGVuIGFmdGVyCnRoZSBsb29wIGhhcyBmaW5pc2hlZCAoaS5lLiB0aGUgY3VycmVudCBjb21t
-YW5kIGhhcyBiZWVuIGhhbmRsZWQpLiBJTU8KdGhhdCdzIG5vdCB0aGUgY29tbW9uIGNhc2UsIG1v
-cmUgb2Z0ZW4gdGhhbiBub3QgY2xpZW50IGNvbm5lY3Rpb25zIGp1c3QKc2VuZCBhIHNpbmdsZSBj
-b21tYW5kLiBCdXQgb2YgY291cnNlLCBpdCBjYW4ndCBiZSBleGNsdWRlZCBlaXRoZXIuCgpJZiB3
-ZSBkb24ndCBjYWxsIGhhbmRsZV9zaWduYWxzKCkgYXQgdGhpcyBwb2ludCwgYW5kIGNsaWVudHMg
-Y29udGludWUKc2VuZGluZyBjb21tYW5kcywgcHBvbGwoKSB3b24ndCByZXR1cm4gLTEgb3IgMCwg
-YW5kIHRoZSAicmVjb25maWd1cmUiCnNpZ25hbCBtaWdodCBub3QgYmUgcHJvY2Vzc2VkIGluIGEg
-bG9uZyB0aW1lLCB3aGljaCBzZWVtcyB3cm9uZyB0byBtZS4KQWZ0ZXIgYWxsLCBzaWduYWxzIGFy
-ZSBtZWFudCB0byBiZSBwcm9jZXNzZWQgYXN5bmNocm9ub3VzbHkuIE5vdGUgdGhhdAppZiBvbmUg
-b2YgdGhlIGNsaWVudHMgc2VuZHMgYSAicmVjb25maWd1cmUiIGNvbW1hbmQsIGl0IHdpbGwgYmUg
-aGFuZGxlZAppbW1lZGlhdGVseSwgcG9zc2libHkgY29uZnVzaW5nIG90aGVyIGNsaWVudHMgY29u
-bmVjdGVkIGF0IHRoZSBzYW1lCnRpbWUuIFRoZXJlZm9yZSBJIHRoaW5rIGl0J3MgY29ycmVjdCB0
-byBoYW5kbGUgYSBwb3NzaWJseSByZWNlaXZlZAoicmVjb25maWd1cmUiIHNpZ25hbCBhdCB0aGlz
-IHBvaW50IGluIHRoZSBjb2RlLCB0b28uCgpJdCBtaWdodCBnZW5lcmFsbGx5IG1ha2Ugc2Vuc2Ug
-Zm9yIHRoZSB1eGxzbnIgdGhyZWFkIHRvIHBhdXNlIHNlcnZpY2luZwpjb21tYW5kcyB3aGlsZSB0
-aGUgZGFlbW9uIGlzIG5vdCBpbiBEQUVNT05fUlVOTklORyBvciBEQUVNT05fSURMRQpzdGF0ZS4g
-QnV0IHRoYXQncyBpbmRlcGVuZGVudCBvZiB0aGUgY3VycmVudCBkaXNjdXNzaW9uLgoKU3VtbWFy
-aXppbmcsIHVubGVzcyB5b3Ugb3Igc29tZW9uZSBlbHNlIHBvaW50cyBvdXQgYW4gYWN0dWFsIHJh
-Y2UKY29uZGl0aW9uIChpbiB0aGUgc2Vuc2UgdGhhdCBpbnRlcm5hbCBtdWx0aXBhdGhkIGRhdGEg
-c3RydWN0dXJlcyBtaWdodApiZSBjb3JydXB0ZWQpLCB3aGljaCBpcyBpbnRyb2R1Y2VkIGJ5IHRo
-aXMgcGFydGljdWxhciBoYW5kbGVfc2lnbmFscygpCmNhbGwsIEknZCBwcmVmZXIgYWRkaW5nIGl0
-LgoKTWFydGluCgoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4g
-KzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7Zy
-ZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVy
-ZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8v
-d3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+On 2018/1/31 17:40, Martin Wilck wrote:
+> On Wed, 2018-01-31 at 07:43 +0000, Chongyun Wu wrote:
+>> Hi Martin,
+>>
+>> My patch have tested but your patch seems to be more gracefully. May
+>> be
+>> there are some small issues if I am not wrong.Thanks.
+>>
+>> On 2018/1/30 22:18, Martin Wilck wrote:
+>>> multipathd shouldn't try to service any more client connections
+>>> when it receives an exit signal. Moreover, ppoll() can return
+>>> success even if signals occured. So check for reconfigure or
+>>> log_reset signals after handling pending client requests.
+>>>
+>>> Based on an analysis by Chongyun Wu.
+>>>
+>>> Reported-by: Chongyun Wu <wu.chongyun@h3c.com>
+>>> Signed-off-by: Martin Wilck <mwilck@suse.com>
+>>> ---
+>>>    multipathd/main.c   | 6 ++++--
+>>>    multipathd/main.h   | 2 +-
+>>>    multipathd/uxlsnr.c | 7 +++++--
+>>>    3 files changed, 10 insertions(+), 5 deletions(-)
+>>>
+>>> diff --git a/multipathd/main.c b/multipathd/main.c
+>>> index 27cf234623d0..8e96f5dd2d7f 100644
+>>> --- a/multipathd/main.c
+>>> +++ b/multipathd/main.c
+>>> @@ -2184,12 +2184,15 @@ signal_set(int signo, void (*func) (int))
+>>>    }
+>>>    
+>>>    void
+>>> -handle_signals(void)
+>>> +handle_signals(bool nonfatal)
+>>>    {
+>>>    	if (exit_sig) {
+>>>    		condlog(2, "exit (signal)");
+>>> +		exit_sig = 0;
+>>
+>> If we received a exit signal should we just escape all below
+>> commands
+>> process to avoid the race condition between thread cancellation and
+>> commands processing? so maybe flag exit_sig keep to 1 here?
+> 
+> What would that be good for? We call exit_daemon(), signalling the main
+> process to shut down. If we don't reset exit_sig, we'll call
+> exit_daemon() again if handle_signals is ever run again. That's not
+> necessary and might actually confuse matters.
+> 
+> Or am I overlooking something?
+
+You are right. I just want to escape below code process to make logic 
+simple but as you see really have problem in this way.
+
+> 
+>>
+>>>    		exit_daemon();
+>>>    	}
+>>> +	if (!nonfatal)
+>>> +		return;
+>>>    	if (reconfig_sig) {
+>>>    		condlog(2, "reconfigure (signal)");
+>>>    		set_config_state(DAEMON_CONFIGURE);
+>>> @@ -2200,7 +2203,6 @@ handle_signals(void)
+>>>    		log_reset("multipathd");
+>>>    		pthread_mutex_unlock(&logq_lock);
+>>>    	}
+>>> -	exit_sig = 0;
+>>>    	reconfig_sig = 0;
+>>>    	log_reset_sig = 0;
+>>>    }
+>>> diff --git a/multipathd/main.h b/multipathd/main.h
+>>> index ededdaba32fe..e8140feaf291 100644
+>>> --- a/multipathd/main.h
+>>> +++ b/multipathd/main.h
+>>> @@ -38,6 +38,6 @@ int mpath_pr_event_handle(struct path *pp);
+>>>    void * mpath_pr_event_handler_fn (void * );
+>>>    int update_map_pr(struct multipath *mpp);
+>>>    void * mpath_pr_event_handler_fn (void * pathp );
+>>> -void handle_signals(void);
+>>> +void handle_signals(bool);
+>>>    
+>>>    #endif /* MAIN_H */
+>>> diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
+>>> index 98ac25a68c43..dc116cf2515b 100644
+>>> --- a/multipathd/uxlsnr.c
+>>> +++ b/multipathd/uxlsnr.c
+>>> @@ -221,9 +221,10 @@ void * uxsock_listen(uxsock_trigger_fn
+>>> uxsock_trigger, void * trigger_data)
+>>>    		/* most of our life is spent in this call */
+>>>    		poll_count = ppoll(polls, i, &sleep_time, &mask);
+>>>    
+>>> +		handle_signals(false);
+>>
+>> Is it better to add and check the return value from handle_signals()?
+>> If
+>> return true means this a exit signal should run continue to escape
+>> all
+>> below processing.
+>> If not doing that, we may need to add
+>> pthread_cleanup_push(cleanup_lock,
+>> &client_lock) before pthread_mutex_lock(&client_lock) in below
+>> command
+>> processing to avid dead lock which happen when commands processing
+>> code
+>> just have the lock and cancellation works to call uxsock_cleanup hook
+>> to
+>> get the lock and the commands processing code have no chance to
+>> release
+>> the lock.
+> 
+> AFAICS it isn't necessary, because the two code parts where the lock is
+> taken in the uxsock_listen() don't contain cancellation points. If I'm
+> overlooking something here and pthread_cleanup_push(&client_lock) has
+> to be used in the listener thread, that would be an independent fix.
+>    
+>>> @@ -292,6 +293,8 @@ void * uxsock_listen(uxsock_trigger_fn
+>>> uxsock_trigger, void * trigger_data)
+>>>    				FREE(inbuf);
+>>>    			}
+>>>    		}
+>>> +		/* see if we got a non-fatal signal */
+>>> +		handle_signals(true);
+>>
+>> above code maybe not needed. Because it's safe to make sure no
+>> commands
+>> be processed then to handle nonefatal signal, like code
+>> "if(poll_count
+>> ==0){...}" do. If here to call hanle_signals(true) again, may facing
+>> race condition between signals processing and command processing.
+> 
+> Do you see an actual race condition or just the potential to confuse
+> connected clients?
+> 
+>> That
+>> maybe not so safe. And the handle_signals have been called above. Is
+>> there a special reason for this which I missed?
+> 
+> Of the handle_signals() calls above, the first one handles only fatal
+> signals, and the others are only called if ppoll() returns -1 or 0.
+> 
+> We have two non-fatal signals, "log_reset" and "reconfigure".
+> "log_reset" can be safely ignored for this discussion. "reconfigure"
+> may admittedly confuse connected clients if it's called while a session
+> is active.
+> 
+> The loop over the clients makes sure that commands from clients that
+> are seen before the signal are received and processed before the
+> handle_signals() call.
+> 
+> The question is what to do with client sessions that remain open after
+> the loop has finished (i.e. the current command has been handled). IMO
+> that's not the common case, more often than not client connections just
+> send a single command. But of course, it can't be excluded either.
+> 
+> If we don't call handle_signals() at this point, and clients continue
+> sending commands, ppoll() won't return -1 or 0, and the "reconfigure"
+> signal might not be processed in a long time, which seems wrong to me.
+> After all, signals are meant to be processed asynchronously. Note that
+> if one of the clients sends a "reconfigure" command, it will be handled
+> immediately, possibly confusing other clients connected at the same
+> time. Therefore I think it's correct to handle a possibly received
+> "reconfigure" signal at this point in the code, too.
+Your consideration sounds reasonable.
+
+> 
+> It might generallly make sense for the uxlsnr thread to pause servicing
+> commands while the daemon is not in DAEMON_RUNNING or DAEMON_IDLE
+> state. But that's independent of the current discussion.
+> 
+> Summarizing, unless you or someone else points out an actual race
+> condition (in the sense that internal multipathd data structures might
+> be corrupted), which is introduced by this particular handle_signals()
+> call, I'd prefer adding it.
+Yes, I haven't found any actual race condition just afraid of that. I 
+think the patch might be safe after your explanation.
+
+> 
+> Martin
+> 
+> 
+
+Thanks
+Chongyun Wu
