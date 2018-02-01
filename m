@@ -1,13 +1,12 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Regression introduced with commit 2a0b4682e09d76 ("dm:
- convert dm_dev_internal.count from atomic_t to refcount_t)
-Date: Thu, 1 Feb 2018 15:54:23 +0100
-Message-ID: <00c5e0f4-fe95-a7b4-bdc8-cd1bec442834@suse.de>
+Subject: [PATCH] dm-table.c: Always increase refcount in
+	dm_get_device()
+Date: Thu,  1 Feb 2018 16:06:57 +0100
+Message-ID: <20180201150657.74411-1-hare@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,28 +16,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>, device-mapper development <dm-devel@redhat.com>
+To: snitzer@suse.de
+Cc: dm-devel@redhat.com, Elena Reshetova <elena.reshetova@intel.com>, Hannes Reinecke <hare@suse.com>
 List-Id: dm-devel.ids
 
-SGkgTWlrZSwKCnlldCBhbm90aGVyIHJlZmNvdW50X3QgcmVncmVzc2lvbjoKCi0tLSBhL2RyaXZl
-cnMvbWQvZG0tdGFibGUuYworKysgYi9kcml2ZXJzL21kL2RtLXRhYmxlLmMKQEAgLTQ1MSwxNSAr
-NDUxLDE1IEBAIGludCBkbV9nZXRfZGV2aWNlKHN0cnVjdCBkbV90YXJnZXQgKnRpLCBjb25zdCBj
-aGFyCipwYXRoLCBmbW9kZV90IG1vZGUsCiAgICAgICAgICAgICAgICAgICAgICAgIHJldHVybiBy
-OwogICAgICAgICAgICAgICAgfQoKLSAgICAgICAgICAgICAgIGF0b21pY19zZXQoJmRkLT5jb3Vu
-dCwgMCk7CisgICAgICAgICAgICAgICByZWZjb3VudF9zZXQoJmRkLT5jb3VudCwgMSk7CiAgICAg
-ICAgICAgICAgICBsaXN0X2FkZCgmZGQtPmxpc3QsICZ0LT5kZXZpY2VzKTsKCiAgICAgICAgfSBl
-bHNlIGlmIChkZC0+ZG1fZGV2LT5tb2RlICE9IChtb2RlIHwgZGQtPmRtX2Rldi0+bW9kZSkpIHsK
-ICAgICAgICAgICAgICAgIHIgPSB1cGdyYWRlX21vZGUoZGQsIG1vZGUsIHQtPm1kKTsKICAgICAg
-ICAgICAgICAgIGlmIChyKQogICAgICAgICAgICAgICAgICAgICAgICByZXR1cm4gcjsKKyAgICAg
-ICAgICAgICAgIHJlZmNvdW50X2luYygmZGQtPmNvdW50KTsKICAgICAgICB9Ci0gICAgICAgYXRv
-bWljX2luYygmZGQtPmNvdW50KTsKCiAgICAgICAgKnJlc3VsdCA9IGRkLT5kbV9kZXY7CiAgICAg
-ICAgcmV0dXJuIDA7CgppcyBfTk9UXyBhbiBlcXVpdmFsZW50IG1vZGlmaWNhdGlvbi4KSWYgdGhl
-IHNlY29uZCAnaWYnIGNsYXVzIGlzIG5vdCB0YWtlbiwgdGhlIHJlZmVyZW5jZSBjb3VudCBpcyBu
-ZXZlcgppbmNyZWFzZWQgYW5kIHRoZSBzeXN0ZW0gZ29lcyAnYm9vbScuCgpXaWxsIGJlIHNlbmRp
-bmcgYSBwYXRjaCBzaG9ydGx5LgoKQ2hlZXJzLAoKSGFubmVzCi0tIApEci4gSGFubmVzIFJlaW5l
-Y2tlCQkgICBUZWFtbGVhZCBTdG9yYWdlICYgTmV0d29ya2luZwpoYXJlQHN1c2UuZGUJCQkgICAg
-ICAgICAgICAgICArNDkgOTExIDc0MDUzIDY4OApTVVNFIExJTlVYIEdtYkgsIE1heGZlbGRzdHIu
-IDUsIDkwNDA5IE7DvHJuYmVyZwpHRjogRi4gSW1lbmTDtnJmZmVyLCBKLiBTbWl0aGFyZCwgSi4g
-R3VpbGQsIEQuIFVwbWFueXUsIEcuIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0t
-CmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJl
-ZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+dm_get_device() is paired with dm_put_device(), and needs to
+always increase the refcount. Otherwise the device will be released
+and we get a nice use-after-free kernel oops.
+
+Fixes: 2a0b4682e09d ("dm: convert dm_dev_internal.count from atomic_t to refcount_t)
+Cc: Elena Reshetova <elena.reshetova@intel.com>
+Signed-off-by: Hannes Reinecke <hare@suse.com>
+---
+ drivers/md/dm-table.c | 11 ++++++-----
+ 1 file changed, 6 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 88130b5d95f9..1f5d6922a1fc 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -450,14 +450,15 @@ int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
+ 			kfree(dd);
+ 			return r;
+ 		}
+-
+ 		refcount_set(&dd->count, 1);
+ 		list_add(&dd->list, &t->devices);
+ 
+-	} else if (dd->dm_dev->mode != (mode | dd->dm_dev->mode)) {
+-		r = upgrade_mode(dd, mode, t->md);
+-		if (r)
+-			return r;
++	} else {
++		if (dd->dm_dev->mode != (mode | dd->dm_dev->mode)) {
++			r = upgrade_mode(dd, mode, t->md);
++			if (r)
++				return r;
++		}
+ 		refcount_inc(&dd->count);
+ 	}
+ 
+-- 
+2.12.3
