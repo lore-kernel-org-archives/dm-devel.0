@@ -1,17 +1,12 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: Regression introduced with commit 2a0b4682e09d76
- ("dm: convert dm_dev_internal.count from atomic_t to refcount_t)
-Date: Thu, 1 Feb 2018 18:54:46 +0100
-Message-ID: <81cf1309-b3c5-1170-9a06-02e0288eb223@suse.de>
-References: <ac8161a5-22b7-4e3a-ad19-a300f1a0ee74@email.android.com>
-	<efb3fff2-f777-fe96-bfda-d67b39b578c2@suse.de>
-	<20180201164002.GA30734@redhat.com>
+From: Heinz Mauelshagen <heinzm@redhat.com>
+Subject: [PATCH 0/4] dm unstriped: support non power of 2 chunk
+	size...
+Date: Thu,  1 Feb 2018 19:06:08 +0100
+Message-ID: <cover.1517504857.git.heinzm@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180201164002.GA30734@redhat.com>
-Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,24 +16,81 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: heinzm@redhat.com, dm-devel@redhat.com, snitzer@redhat.com
 List-Id: dm-devel.ids
 
-T24gMDIvMDEvMjAxOCAwNTo0MCBQTSwgTWlrZSBTbml0emVyIHdyb3RlOgo+IE9uIFRodSwgRmVi
-IDAxIDIwMTggYXQgMTE6MTZhbSAtMDUwMCwKPiBIYW5uZXMgUmVpbmVja2UgPGhhcmVAc3VzZS5k
-ZT4gd3JvdGU6Cj4gCj4+IE9uIDAyLzAxLzIwMTggMDQ6MDMgUE0sIE1pa2UgU25pdHplciB3cm90
-ZToKPj4+IFByZXR0eSBzdXJlIHRoYXQgcmVncmVzc2lvbiB3YXMgYWxyZWFkeSBmaXhlZC4KPj4+
-Cj4+PiBXaGljaCBjb2RlIGFyZSB5b3UgbG9va2luZyBhdD8KPj4+Cj4+IFRoaXMgaXMgYWN0dWFs
-bHkgY29taW5nIGZyb20gbWtwIDQuMTYvc2NzaS1maXhlcyB0cmVlOyBtaWdodCBiZSB0aGF0Cj4+
-IHlvdSd2ZSBmaXhlZCBpdCB1cCBpbiB0aGUgbWVhbnRpbWUuCj4gCj4gUGxlYXNlIHNlZToKPiBo
-dHRwOi8vZ2l0Lmtlcm5lbC5vcmcvbGludXMvYWZjNTY3YTQ5NzdiMmQ3OThlMDUxNTNkZDEzMWEz
-YzhkNDc1OGMwYwo+IApBaC4gVEhYLgoKTWF5YmUgSSBzaG91bGQgdGFsayB0byBta3AgdG8gdXBk
-YXRlIHRoZSB0cmVlLgoKQW55d2F5LCB0aGFua3MgZm9yIHRoZSBwb2ludGVyLgoKQ2hlZXJzLAoK
-SGFubmVzCi0tIApEci4gSGFubmVzIFJlaW5lY2tlCQkgICBUZWFtbGVhZCBTdG9yYWdlICYgTmV0
-d29ya2luZwpoYXJlQHN1c2UuZGUJCQkgICAgICAgICAgICAgICArNDkgOTExIDc0MDUzIDY4OApT
-VVNFIExJTlVYIEdtYkgsIE1heGZlbGRzdHIuIDUsIDkwNDA5IE7DvHJuYmVyZwpHRjogRi4gSW1l
-bmTDtnJmZmVyLCBKLiBTbWl0aGFyZCwgSi4gR3VpbGQsIEQuIFVwbWFueXUsIEcuIE5vcnRvbgpI
-UkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZl
-bEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1k
-ZXZlbA==
+Patch series adds support for non power of 2 chunk size to
+the "unstriped" target to better suit the striped target
+in patch 1.
+
+Patches 2-4 remove the module init error path message,
+rename symbols to conform to the target name and avoid
+unnecessary headers.
+
+
+Test script:
+------------
+#!/bin/sh
+#
+# Test "unstriped" target non power of 2 chunk size support.
+#
+# Requires precreated "striped" logical volume as backing device.
+# Device will be overwritten!
+#
+po2=0 # adjust to 1 = power of2, 0 = non-po2
+dev=/dev/$vg/$lv # "striped" backing device; adjust to exisiting "striped" LV
+
+table=`dmsetup table $dev`
+size=`echo "$table"|awk '{print $2}'`
+stripes=`echo "$table"|awk '{print $4}'`
+stripesize=`echo "$table"|awk '{print $5}'`
+bdstripesize=$stripesize
+
+[ $po2 -eq 0 ] && stripesize=$(($stripesize - 9))
+len=$(($size / $stripes / $stripesize * $stripesize))
+
+if [ $po2 -eq 0 ]
+then
+	dmsetup table $dev | sed "s/$size/$(($len * $stripes))/;s/$bdstripesize/$stripesize/" | dmsetup load $dev
+	dmsetup suspend $dev ; dmsetup resume $dev
+fi
+
+echo y | mkfs -t ext4 $dev
+fsck -fn $dev
+
+devs=""
+for i in `seq 0 $(($stripes - 1))`
+do
+	echo "0 $len unstriped $stripes $stripesize $i $dev 0" | dmsetup create s-$i
+	devs="$devs /dev/mapper/s-$i 0"
+done
+
+dmsetup create `basename $dev` --table "0 $(($len * $stripes)) striped $stripes $stripesize $devs"
+fsck -fn /dev/mapper/`basename $dev`
+
+
+Example mapping tables resulting from script:
+---------------------------------------------
+# dmsetup table|egrep "^(nvm-s|s)"
+s: 0 270249 striped 3 119 254:7 0 254:8 0 254:9 0
+s-2: 0 90083 unstriped 3 119 2 254:6 0
+s-1: 0 90083 unstriped 3 119 1 254:6 0
+s-0: 0 90083 unstriped 3 119 0 254:6 0
+nvm-s: 0 270249 striped 3 119 66:96 13854720 66:64 2048 66:48 2048
+
+
+
+Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
+
+Heinz Mauelshagen (4):
+  dm unstriped: support non power of 2 chunk size
+  dm unstriped: remove superfluous module init error path message
+  dm unstriped: rename symbols to conform to target name
+  dm unstriped: remove unnecessary header includes
+
+ Documentation/device-mapper/unstriped.txt |   5 ++
+ drivers/md/dm-unstripe.c                  | 109 +++++++++++++-----------------
+ 2 files changed, 53 insertions(+), 61 deletions(-)
+
+-- 
+2.14.3
