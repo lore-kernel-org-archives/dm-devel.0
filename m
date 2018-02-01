@@ -1,56 +1,44 @@
-From: Geert Uytterhoeven <geert@linux-m68k.org>
-Subject: Re: [PATCH] dm raid: don't use 'const' in function return
-Date: Thu, 1 Feb 2018 10:24:22 +0100
-Message-ID: <CAMuHMdVPrdNESrqoXEwrbwqJ-OBQOGkMDWm_sSzaH2e7c884ow@mail.gmail.com>
-References: <20160616090359.984712-1-arnd@arndb.de>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Regression introduced with commit 2a0b4682e09d76 ("dm:
+ convert dm_dev_internal.count from atomic_t to refcount_t)
+Date: Thu, 1 Feb 2018 15:54:23 +0100
+Message-ID: <00c5e0f4-fe95-a7b4-bdc8-cd1bec442834@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160616090359.984712-1-arnd@arndb.de>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, Heinz Mauelshagen <heinzm@redhat.com>, linux-raid@vger.kernel.org, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Jun 16, 2016 at 11:03 AM, Arnd Bergmann <arnd@arndb.de> wrote:
-> A newly introduced function has 'const int' as the return type,
-> but as "make W=1" reports, that has no meaning:
->
-> drivers/md/dm-raid.c:510:18: error: type qualifiers ignored on function return type [-Werror=ignored-qualifiers]
->
-> This changes the return type to plain 'int'.
->
-> Signed-off-by: Arnd Bergmann <arnd@arndb.de>
-> Fixes: 33e53f06850f ("dm raid: introduce extended superblock and new raid types to support takeover/reshaping")
-
-Acked-by: Geert Uytterhoeven <geert@linux-m68k.org>
-
-The same issue has been reintroduced.
-So please reapply commit 68c1c4d5eafc65dd ("dm raid: don't use 'const' in
-function return") with
-
-Fixes: 552aa679f2657431 ("dm raid: use rs_is_raid*()")
-
-> index 96bcff7a0b94..55d25ac87bda 100644
-> --- a/drivers/md/dm-raid.c
-> +++ b/drivers/md/dm-raid.c
-> @@ -507,7 +507,7 @@ static const char *raid10_md_layout_to_format(int layout)
->  }
->
->  /* Return md raid10 algorithm for @name */
-> -static const int raid10_name_to_format(const char *name)
-> +static int raid10_name_to_format(const char *name)
->  {
->         if (!strcasecmp(name, "near"))
->                 return ALGORITHM_RAID10_NEAR;
-
-Gr{oetje,eeting}s,
-
-                        Geert
-
---
-Geert Uytterhoeven -- There's lots of Linux beyond ia32 -- geert@linux-m68k.org
-
-In personal conversations with technical people, I call myself a hacker. But
-when I'm talking to journalists I just say "programmer" or something like that.
-                                -- Linus Torvalds
+SGkgTWlrZSwKCnlldCBhbm90aGVyIHJlZmNvdW50X3QgcmVncmVzc2lvbjoKCi0tLSBhL2RyaXZl
+cnMvbWQvZG0tdGFibGUuYworKysgYi9kcml2ZXJzL21kL2RtLXRhYmxlLmMKQEAgLTQ1MSwxNSAr
+NDUxLDE1IEBAIGludCBkbV9nZXRfZGV2aWNlKHN0cnVjdCBkbV90YXJnZXQgKnRpLCBjb25zdCBj
+aGFyCipwYXRoLCBmbW9kZV90IG1vZGUsCiAgICAgICAgICAgICAgICAgICAgICAgIHJldHVybiBy
+OwogICAgICAgICAgICAgICAgfQoKLSAgICAgICAgICAgICAgIGF0b21pY19zZXQoJmRkLT5jb3Vu
+dCwgMCk7CisgICAgICAgICAgICAgICByZWZjb3VudF9zZXQoJmRkLT5jb3VudCwgMSk7CiAgICAg
+ICAgICAgICAgICBsaXN0X2FkZCgmZGQtPmxpc3QsICZ0LT5kZXZpY2VzKTsKCiAgICAgICAgfSBl
+bHNlIGlmIChkZC0+ZG1fZGV2LT5tb2RlICE9IChtb2RlIHwgZGQtPmRtX2Rldi0+bW9kZSkpIHsK
+ICAgICAgICAgICAgICAgIHIgPSB1cGdyYWRlX21vZGUoZGQsIG1vZGUsIHQtPm1kKTsKICAgICAg
+ICAgICAgICAgIGlmIChyKQogICAgICAgICAgICAgICAgICAgICAgICByZXR1cm4gcjsKKyAgICAg
+ICAgICAgICAgIHJlZmNvdW50X2luYygmZGQtPmNvdW50KTsKICAgICAgICB9Ci0gICAgICAgYXRv
+bWljX2luYygmZGQtPmNvdW50KTsKCiAgICAgICAgKnJlc3VsdCA9IGRkLT5kbV9kZXY7CiAgICAg
+ICAgcmV0dXJuIDA7CgppcyBfTk9UXyBhbiBlcXVpdmFsZW50IG1vZGlmaWNhdGlvbi4KSWYgdGhl
+IHNlY29uZCAnaWYnIGNsYXVzIGlzIG5vdCB0YWtlbiwgdGhlIHJlZmVyZW5jZSBjb3VudCBpcyBu
+ZXZlcgppbmNyZWFzZWQgYW5kIHRoZSBzeXN0ZW0gZ29lcyAnYm9vbScuCgpXaWxsIGJlIHNlbmRp
+bmcgYSBwYXRjaCBzaG9ydGx5LgoKQ2hlZXJzLAoKSGFubmVzCi0tIApEci4gSGFubmVzIFJlaW5l
+Y2tlCQkgICBUZWFtbGVhZCBTdG9yYWdlICYgTmV0d29ya2luZwpoYXJlQHN1c2UuZGUJCQkgICAg
+ICAgICAgICAgICArNDkgOTExIDc0MDUzIDY4OApTVVNFIExJTlVYIEdtYkgsIE1heGZlbGRzdHIu
+IDUsIDkwNDA5IE7DvHJuYmVyZwpHRjogRi4gSW1lbmTDtnJmZmVyLCBKLiBTbWl0aGFyZCwgSi4g
+R3VpbGQsIEQuIFVwbWFueXUsIEcuIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0t
+CmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJl
+ZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
