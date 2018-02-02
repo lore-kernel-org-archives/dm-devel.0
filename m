@@ -1,103 +1,55 @@
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: [PATCH] md: fix md_write_start() deadlock w/o metadata
-	devices
-Date: Fri,  2 Feb 2018 23:13:19 +0100
-Message-ID: <054eff295e0cd2df2b11a3f9ba3b3d66e89beb47.1517609290.git.heinzm@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [LSF/MM TOPIC] block: extend generic biosets to allow per-device
+ frontpad
+Date: Fri, 2 Feb 2018 17:55:21 -0500
+Message-ID: <20180202225521.GA10068@redhat.com>
+References: <20180129213300.GC5744@redhat.com>
+ <87zi4r29sa.fsf@notabene.neil.brown.name>
+ <20180202160834.GA8192@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: heinzm@redhat.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, shli@kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20180202160834.GA8192@redhat.com>
+Sender: linux-block-owner@vger.kernel.org
+To: NeilBrown <neilb@suse.com>
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-If no metadata devices are configured on raid1/4/5/6/10
-(e.g. via dm-raid), md_write_start() unconditionally waits
-for superblocks to be written thus deadlocking.
+On Fri, Feb 02 2018 at 11:08am -0500,
+Mike Snitzer <snitzer@redhat.com> wrote:
+> 
+> But if the bioset enhancements are implemented properly then the kernels
+> N biosets shouldn't need to be in doubt.  They'll all just adapt to have
+> N backing mempools (N being for N conflicting front_pad requirements).
 
-Fix introduces mddev->has_superblocks bool, defines it in md_run()
-and checks for it in md_write_start() to conditionally avoid waiting.
+This should've read:
 
-Once on it, check for non-existing superblocks in md_super_write().
+"But if the bioset enhancements are implemented properly then the kernels
+N biosets ability to provide adequate front_pad shouldn't need to be in
+doubt.  They'll all just adapt to have M backing mempools (for M
+conflicting front_pad requirements)."
 
-Link: https://bugzilla.kernel.org/show_bug.cgi?id=198647
-Fixes: cc27b0c78c796 ("md: fix deadlock between mddev_suspend() and md_write_start()")
+What this implies is there would need to be a way for the bioset
+code to maintain a global graph of all biosets in the system.  And when
+a device comes along with a unique bioset front_pad requirement, that
+isn't already met by existing mempool, the device's driver (DM in
+my case) would call into a bioset interface that would add a new backing
+mempool, that accounts for the front_pad increase, to each bioset in the
+system.
 
-Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
----
- drivers/md/md.c | 10 ++++++++++
- drivers/md/md.h |  2 ++
- 2 files changed, 12 insertions(+)
+Not liking that (DM) device creation would potentially spawn a new
+mempool within each existing bioset.  It could/would easily result in
+many of those mempools going completely unused.
 
-diff --git a/drivers/md/md.c b/drivers/md/md.c
-index 0081ace39a64..8a7e7034962c 100644
---- a/drivers/md/md.c
-+++ b/drivers/md/md.c
-@@ -801,6 +801,9 @@ void md_super_write(struct mddev *mddev, struct md_rdev *rdev,
- 	struct bio *bio;
- 	int ff = 0;
- 
-+	if (!page)
-+		return;
-+
- 	if (test_bit(Faulty, &rdev->flags))
- 		return;
- 
-@@ -5452,6 +5455,7 @@ int md_run(struct mddev *mddev)
- 	 * the only valid external interface is through the md
- 	 * device.
- 	 */
-+	mddev->has_superblocks = false;
- 	rdev_for_each(rdev, mddev) {
- 		if (test_bit(Faulty, &rdev->flags))
- 			continue;
-@@ -5465,6 +5469,9 @@ int md_run(struct mddev *mddev)
- 				set_disk_ro(mddev->gendisk, 1);
- 		}
- 
-+		if (rdev->sb_page)
-+			mddev->has_superblocks = true;
-+
- 		/* perform some consistency tests on the device.
- 		 * We don't want the data to overlap the metadata,
- 		 * Internal Bitmap issues have been handled elsewhere.
-@@ -8049,6 +8056,7 @@ EXPORT_SYMBOL(md_done_sync);
- bool md_write_start(struct mddev *mddev, struct bio *bi)
- {
- 	int did_change = 0;
-+
- 	if (bio_data_dir(bi) != WRITE)
- 		return true;
- 
-@@ -8081,6 +8089,8 @@ bool md_write_start(struct mddev *mddev, struct bio *bi)
- 	rcu_read_unlock();
- 	if (did_change)
- 		sysfs_notify_dirent_safe(mddev->sysfs_state);
-+	if (!mddev->has_superblocks)
-+		return true;
- 	wait_event(mddev->sb_wait,
- 		   !test_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags) ||
- 		   mddev->suspended);
-diff --git a/drivers/md/md.h b/drivers/md/md.h
-index 58cd20a5e85e..fbc925cce810 100644
---- a/drivers/md/md.h
-+++ b/drivers/md/md.h
-@@ -468,6 +468,8 @@ struct mddev {
- 	void (*sync_super)(struct mddev *mddev, struct md_rdev *rdev);
- 	struct md_cluster_info		*cluster_info;
- 	unsigned int			good_device_nr;	/* good device num within cluster raid */
-+
-+	bool	has_superblocks:1;
- };
- 
- enum recovery_flags {
--- 
-2.14.3
+In addition: how would a bio_alloc_bioset() call _know_ the bio was for
+use on a specific block device?  The entire beauty of the existing
+bio_set code, especially for upper layers like filesystems, is it _is_
+device agnostic.
+
+So all this could be the worst idea ever.. not sure.  I've deferred
+judging it one way or the other because the details are shakey at best.
+
+And I still need to look closer at all the existing code.
+
+Mike
