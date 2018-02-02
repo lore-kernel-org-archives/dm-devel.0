@@ -1,13 +1,13 @@
 From: NeilBrown <neilb@suse.com>
-Subject: Re: [dm-devel] [LSF/MM TOPIC] block, dm: restack queue_limits
-Date: Fri, 02 Feb 2018 16:59:55 +1100
-Message-ID: <87607g2ap0.fsf@notabene.neil.brown.name>
-References: <20180129210836.GA5744@redhat.com>
+Subject: Re: [dm-devel] [LSF/MM TOPIC] block: extend generic biosets to allow per-device frontpad
+Date: Fri, 02 Feb 2018 17:19:33 +1100
+Message-ID: <87zi4r29sa.fsf@notabene.neil.brown.name>
+References: <20180129213300.GC5744@redhat.com>
 Mime-Version: 1.0
 Content-Type: multipart/signed; boundary="=-=-=";
         micalg=pgp-sha256; protocol="application/pgp-signature"
 Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20180129210836.GA5744@redhat.com>
+In-Reply-To: <20180129213300.GC5744@redhat.com>
 Sender: linux-block-owner@vger.kernel.org
 To: Mike Snitzer <snitzer@redhat.com>, linux-block@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
@@ -17,65 +17,64 @@ Content-Type: text/plain
 
 On Mon, Jan 29 2018, Mike Snitzer wrote:
 
-> We currently don't restack the queue_limits if the lowest, or
-> intermediate, layer of an IO stack changes.
+> I'd like to enable bio-based DM to _not_ need to clone bios.  But to do
+> so each bio-based DM target's required per-bio-data would need to be
+> provided by upper layer biosets (as opposed to the bioset DM currently
+> creates).
 >
-> This is particularly unfortunate in the case of FLUSH/FUA which may
-> change if/when a HW controller's BBU fails; whereby requiring the device
-> advertise that it has a volatile write cache (WCE=1).
+> So my thinking is that all system-level biosets (e.g. fs_bio_set,
+> blkdev_dio_pool) would redirect to a device specific variant bioset IFF
+> the underlying device advertises the need for a specific per-bio-data
+> payload to be provided.
 >
-> But in the context of DM, really it'd be best if the entire stack of
-> devices had their limits restacked if any underlying layer's limits
-> change.
+> I know this _could_ become a rathole but I'd like to avoid reverting DM
+> back to the days of having to worry about managing mempools for the
+> purpose of per-io allocations.  I've grown spoiled by the performance
+> and elegance that comes with having the bio and per-bio-data allocated
+> from the same bioset.
 >
-> In the past, Martin and I discussed that we should "just do it" but
-> never did.  Not sure we need a lengthy discussion but figured I'd put it
-> out there.
+> Thoughts?
 
-So much "yes"!!
-Just a notifier chain would probably do.
+md/raid0 remaps each bio and passes it directly down to one of several
+devices.
+I think your scheme would mean that it would need to clone each bio to
+make sure it is from the correctly sized pool.
 
-I would like the notification to support changing the size of the device
-too.
-I see this as being two-stage.
-1/ I'm going to change the device size to X - are you all OK with that?
-2/ Device size is now X.
+I suspect it could be made to work though.
 
-That allows md and dm to check that filesystems aren't going to get mad
-when devices are made smaller, and can adjust (if they want to) when
-devices get bigger.
+1/ have a way for the driver receiving a bio to discover how much
+   frontpad was allocated.
+2/ require drivers to accept bios with any size of frontpad, but a
+   fast-path is taken if it is already big enough.
+3/ allow a block device to advertise it's preferred frontpad.
+4/ make sure your config-change-notification mechanism can communicate
+   changes to this number.
+5/ gather statistics on what percentage of bios have a too-small
+   frontpad.
 
-Thanks,
+Then start modifying places that allocate bios to use the hint,
+and when benchmarks show the percentage is high - use it to encourage
+other people to allocate better bios.
+
 NeilBrown
-
->
-> Maybe I'll find time, between now and April, to try implementing it.
->
-> Thanks,
-> Mike
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
 
 --=-=-=
 Content-Type: application/pgp-signature; name="signature.asc"
 
 -----BEGIN PGP SIGNATURE-----
 
-iQIzBAEBCAAdFiEEG8Yp69OQ2HB7X0l6Oeye3VZigbkFAlpz/lsACgkQOeye3VZi
-gbn4QhAAwrK92tzJOSGQBiXNSHoZWcWZRwTl0AxKj1ZYzCjeifxig8XVdYUky8YK
-zGZzNttyc7S2tQ/+jbhyyWhAQ5vnNw0OI7UtU3nhcK6eSdAoiwKn1Hpy0fS/ybEJ
-5HaP/25TshhvgM0o1M2xCfGJ/GIRKbmGtUfqRGWkB55o0O6DCqSxMTiTwLEobBlq
-qONisCYfiStrFyfJKEOc1nCOVpqXhYW1zbWX8lWbHin/5RLMlCLbluF8kGH3TNCV
-Rce2rWbd/vcVpITyCo7Mmq3nlvGQREf/GFMlMG0amKzrNi6KUXWNRQDYNw3vyAf8
-t22HburtmneedDQQEVM/XxzASC/s/bv14y8WH5Xh/q+9Ny+45FqSgEK8lY8xjK8n
-2ul3h2QbC3m6GIXTLyzT/PkpH3qBI6F5hVqDKgYkTJrLwd6mED2CNsPLOkM68f0G
-HuQc17JbEKqoyj5hUDlNqenUi2ffyzlf+nicdg12GhiPw2bW5gYo2x8+5Rnb8sTf
-PutNEFKyJJS7YxFE8wZ3v4EmMgA4xIoc0gKq5mbafzyS0HcGz7J4+t2Lyjfn2KRF
-6aBKw1klui4dhFb+pcbpkDujYS1EJ/UJG/MnmLedda3FlzgP1I050W8nhCQ0ZSXK
-NcmZEo2BPNxzSnkyPr7mWwlV3hT0yz0cpnHlf1pVao8sGefWca8=
-=aSpN
+iQIzBAEBCAAdFiEEG8Yp69OQ2HB7X0l6Oeye3VZigbkFAlp0AvUACgkQOeye3VZi
+gblURBAAjE+opJaOYrWK32UPF2U6QAH3mwOd6zpqv4cCsnCkjtgywdJ2fD8pSsYa
+8YlzNNvrKTT8KWrZ1RyNNTSOUhlJgjq3aIQ98kSANgBYVhCzWhYjNSwktEQGT7YJ
+UXUqecflKftpokV/D3ISdGhiz64ZVKOmPQTizsLNVzFUilEVP3CvKu0fqzw+CcZW
+pxR9dFS/drBHNVckTBzj/9chc4+3vm88ybR73at81Gr27BwPWaqjnu5tS2WlVNzX
+xno8STBbtOOfbtjkSAwesDwWbcqQyj8YAi3iQabKMHRf9NEWZtsa56iJg23YPuSH
+8D617hU86PZWw302rzibB8AkZenp4pqgOXJCH6xresV9ZYFvSyaJi/oaVe9+a0vO
+mdna+6e9/dWjai22mRpp0/xmpWcdRxH9cK+fy0sPq9QmU5nnHfnrNo9K8G2fK/bE
+rk6tSh51rqNa+GEZHRXYtgQOhpUUQtwwYbE8xebD0WG25U16/BnowLQb0jDrhqdF
+I/OaxAiEOC95tvqGE2Br1YdmHnvvJF7eAEiXh/0OTNyW1S/nqWnHQ5PTlG35iaLG
+ltL4g5iTu6dWswb092x5+By5NeFJBcMI0n0ejc3Sqw9/xcs5QRKVvGN4/1EoSdp/
+JIOQVgNhc+iSUmLU3ucoWKYfOq+GG+kIMdNlwFMhkDuK/ZhFFEA=
+=weO7
 -----END PGP SIGNATURE-----
 --=-=-=--
