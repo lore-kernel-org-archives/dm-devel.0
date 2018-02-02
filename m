@@ -1,115 +1,103 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [LSF/MM TOPIC] block: extend generic biosets to allow per-device
- frontpad
-Date: Fri, 2 Feb 2018 11:08:34 -0500
-Message-ID: <20180202160834.GA8192@redhat.com>
-References: <20180129213300.GC5744@redhat.com>
- <87zi4r29sa.fsf@notabene.neil.brown.name>
+From: Heinz Mauelshagen <heinzm@redhat.com>
+Subject: [PATCH] md: fix md_write_start() deadlock w/o metadata
+	devices
+Date: Fri,  2 Feb 2018 23:13:19 +0100
+Message-ID: <054eff295e0cd2df2b11a3f9ba3b3d66e89beb47.1517609290.git.heinzm@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <87zi4r29sa.fsf@notabene.neil.brown.name>
-Sender: linux-block-owner@vger.kernel.org
-To: NeilBrown <neilb@suse.com>
-Cc: linux-block@vger.kernel.org, dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: heinzm@redhat.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, shli@kernel.org
 List-Id: dm-devel.ids
 
-On Fri, Feb 02 2018 at  1:19am -0500,
-NeilBrown <neilb@suse.com> wrote:
+If no metadata devices are configured on raid1/4/5/6/10
+(e.g. via dm-raid), md_write_start() unconditionally waits
+for superblocks to be written thus deadlocking.
 
-> On Mon, Jan 29 2018, Mike Snitzer wrote:
-> 
-> > I'd like to enable bio-based DM to _not_ need to clone bios.  But to do
-> > so each bio-based DM target's required per-bio-data would need to be
-> > provided by upper layer biosets (as opposed to the bioset DM currently
-> > creates).
-> >
-> > So my thinking is that all system-level biosets (e.g. fs_bio_set,
-> > blkdev_dio_pool) would redirect to a device specific variant bioset IFF
-> > the underlying device advertises the need for a specific per-bio-data
-> > payload to be provided.
-> >
-> > I know this _could_ become a rathole but I'd like to avoid reverting DM
-> > back to the days of having to worry about managing mempools for the
-> > purpose of per-io allocations.  I've grown spoiled by the performance
-> > and elegance that comes with having the bio and per-bio-data allocated
-> > from the same bioset.
-> >
-> > Thoughts?
-> 
-> md/raid0 remaps each bio and passes it directly down to one of several
-> devices.
-> I think your scheme would mean that it would need to clone each bio to
-> make sure it is from the correctly sized pool.
+Fix introduces mddev->has_superblocks bool, defines it in md_run()
+and checks for it in md_write_start() to conditionally avoid waiting.
 
-Not sure why the md/raid0 device would need to do anything (not unless
-it wanted to take advantage of this).
+Once on it, check for non-existing superblocks in md_super_write().
 
-The model, in my head, would be that this is _not_ intended for an
-arbitrary stacked MD or DM device.  So the underlying device(s) for
-a DM or MD device, that wants to leverage upper layer bio_set provided
-front_pad, would be a real device (e.g. NVMe, SCSI, whatever).
+Link: https://bugzilla.kernel.org/show_bug.cgi?id=198647
+Fixes: cc27b0c78c796 ("md: fix deadlock between mddev_suspend() and md_write_start()")
 
-But if a mix of underlying drivers were used (each with unique
-per-bio-data, aka front_pad, requirements) then the blk_stack_limits()
-interface _could_ build that information up.  And while that pretty much
-gets us all we'd need to support md/raid0 on arbitrary stacked DM or MD
-volumes that isn't what I'm interested in.  But supporting an arbitrary
-stacked device could be done as follow-on work.
+Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
+---
+ drivers/md/md.c | 10 ++++++++++
+ drivers/md/md.h |  2 ++
+ 2 files changed, 12 insertions(+)
 
-I'm specifically looking to optimize DM's new DM_TYPE_NVME_BIO_BASED
-device (see commits 22c11858e, 978e51ba3, cd02538445, etc) so that bios
-are just remapped to the underlying NVMe device without cloning.  DM
-core now takes care to validate that a DM_TYPE_NVME_BIO_BASED DM device
-(e.g. a DM multipath device -- via "queue_mode nvme") is _only_ stacked
-directly ontop of native NVMe devices.
-
-> I suspect it could be made to work though.
-> 
-> 1/ have a way for the driver receiving a bio to discover how much
->    frontpad was allocated.
-
-Yes
-
-> 2/ require drivers to accept bios with any size of frontpad, but a
->    fast-path is taken if it is already big enough.
-
-Yes and no, the driver really should be able to trust that the block
-layer is sending it bios with adeuqate front_pad (if the device
-registered its front_pad requirements).
-
-That said, making it optional (via "hint") is likely safer from the
-standpoint that it is less cut-throat given we'd be depending on the
-various biosets to respect our wishes.  I just worry that having the
-code for falling back to cloning, if the front_pad isn't adequate, will
-defeat much of the benefit of optimizing what is intended to be a faster
-fast path.
-
-But if the bioset enhancements are implemented properly then the kernels
-N biosets shouldn't need to be in doubt.  They'll all just adapt to have
-N backing mempools (N being for N conflicting front_pad requirements).
-
-> 3/ allow a block device to advertise it's preferred frontpad.
-
-s/preferred/required/ in my mental model.
-
-> 4/ make sure your config-change-notification mechanism can communicate
->    changes to this number.
-
-You're referring to he notifier chain idea about restacking
-queue_limits?  Yes, that'd be needed once that exists.
-
-> 5/ gather statistics on what percentage of bios have a too-small
->    frontpad.
->
-> Then start modifying places that allocate bios to use the hint,
-> and when benchmarks show the percentage is high - use it to encourage
-> other people to allocate better bios.
-
-This shouldn't be needed if we were to go the route where bio_sets
-dynamically select the appropriate mempool based on the front_pad
-requirements advertised by the underlying device ("3/" above).
-
-Thanks,
-Mike
+diff --git a/drivers/md/md.c b/drivers/md/md.c
+index 0081ace39a64..8a7e7034962c 100644
+--- a/drivers/md/md.c
++++ b/drivers/md/md.c
+@@ -801,6 +801,9 @@ void md_super_write(struct mddev *mddev, struct md_rdev *rdev,
+ 	struct bio *bio;
+ 	int ff = 0;
+ 
++	if (!page)
++		return;
++
+ 	if (test_bit(Faulty, &rdev->flags))
+ 		return;
+ 
+@@ -5452,6 +5455,7 @@ int md_run(struct mddev *mddev)
+ 	 * the only valid external interface is through the md
+ 	 * device.
+ 	 */
++	mddev->has_superblocks = false;
+ 	rdev_for_each(rdev, mddev) {
+ 		if (test_bit(Faulty, &rdev->flags))
+ 			continue;
+@@ -5465,6 +5469,9 @@ int md_run(struct mddev *mddev)
+ 				set_disk_ro(mddev->gendisk, 1);
+ 		}
+ 
++		if (rdev->sb_page)
++			mddev->has_superblocks = true;
++
+ 		/* perform some consistency tests on the device.
+ 		 * We don't want the data to overlap the metadata,
+ 		 * Internal Bitmap issues have been handled elsewhere.
+@@ -8049,6 +8056,7 @@ EXPORT_SYMBOL(md_done_sync);
+ bool md_write_start(struct mddev *mddev, struct bio *bi)
+ {
+ 	int did_change = 0;
++
+ 	if (bio_data_dir(bi) != WRITE)
+ 		return true;
+ 
+@@ -8081,6 +8089,8 @@ bool md_write_start(struct mddev *mddev, struct bio *bi)
+ 	rcu_read_unlock();
+ 	if (did_change)
+ 		sysfs_notify_dirent_safe(mddev->sysfs_state);
++	if (!mddev->has_superblocks)
++		return true;
+ 	wait_event(mddev->sb_wait,
+ 		   !test_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags) ||
+ 		   mddev->suspended);
+diff --git a/drivers/md/md.h b/drivers/md/md.h
+index 58cd20a5e85e..fbc925cce810 100644
+--- a/drivers/md/md.h
++++ b/drivers/md/md.h
+@@ -468,6 +468,8 @@ struct mddev {
+ 	void (*sync_super)(struct mddev *mddev, struct md_rdev *rdev);
+ 	struct md_cluster_info		*cluster_info;
+ 	unsigned int			good_device_nr;	/* good device num within cluster raid */
++
++	bool	has_superblocks:1;
+ };
+ 
+ enum recovery_flags {
+-- 
+2.14.3
