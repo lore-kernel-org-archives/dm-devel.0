@@ -1,39 +1,81 @@
-From: Bart Van Assche <Bart.VanAssche@wdc.com>
-Subject: Re: [dm-devel] [PATCH V4] blk-mq: introduce BLK_STS_DEV_RESOURCE
-Date: Fri, 2 Feb 2018 00:53:51 +0000
-Message-ID: <1517532830.2746.43.camel@wdc.com>
-References: <20180129203300.50595-1-snitzer@redhat.com>
-         <1517260932.2687.42.camel@wdc.com> <20180129214446.GD5744@redhat.com>
-         <1517262713.2687.56.camel@wdc.com>
-         <23155.45114.317289.396546@quad.stoffel.home>
+From: NeilBrown <neilb@suse.com>
+Subject: Re: [dm-devel] [LSF/MM TOPIC] block, dm: restack queue_limits
+Date: Fri, 02 Feb 2018 16:59:55 +1100
+Message-ID: <87607g2ap0.fsf@notabene.neil.brown.name>
+References: <20180129210836.GA5744@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <23155.45114.317289.396546@quad.stoffel.home>
-Content-Language: en-US
-Content-ID: <8C660C0FD4E81840BCBE4EC4CDE7EF08@namprd04.prod.outlook.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: "john@stoffel.org" <john@stoffel.org>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, "snitzer@redhat.com" <snitzer@redhat.com>, "axboe@kernel.dk" <axboe@kernel.dk>
+Content-Type: multipart/signed; boundary="=-=-=";
+        micalg=pgp-sha256; protocol="application/pgp-signature"
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20180129210836.GA5744@redhat.com>
+Sender: linux-block-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>, linux-block@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gVGh1LCAyMDE4LTAyLTAxIGF0IDE5OjI2IC0wNTAwLCBKb2huIFN0b2ZmZWwgd3JvdGU6DQo+
-IERvZXNuJ3QgdGhpcyBhcmd1ZSB0aGF0IHlvdSByZWFsbHkgd2FudCBzb21lIHNvcnQgb2YgY29t
-cGxldGlvbnMgdG8gYmUNCj4gcnVuIGluIHRoaXMgY2FzZSBpbnN0ZWFkPyAgSW5zdGVhZCBvZiBi
-dXN5IGxvb3Bpbmcgb3Igd2FpdGluZyBmb3IgYQ0KPiBzZXQgYW1vdW50IG9mIHRpbWUsIGp1c3Qg
-ZmlyZSBvZmYgYSBjYWxsYmFjayB0byBydW4gb25jZSB5b3UgaGF2ZSB0aGUNCj4gcmVzb3VyY2Vz
-IGF2YWlsYWJsZSwgbm8/DQoNCkhlbGxvIEpvaG4sDQoNClJlcnVubmluZyB0aGUgcXVldWUgd2hl
-biB0aGUgcmVzb3VyY2Ugd2UgcmFuIG91dCBvZiBpcyBhdmFpbGFibGUgYWdhaW4gd291bGQNCmJl
-IGlkZWFsLiBIb3dldmVyLCBJJ20gbm90IHN1cmUgaXQgaXMgcG9zc2libGUgdG8gaW1wbGVtZW50
-IHRoaXMuIElmIGEgZHJpdmVyDQpwZXJmb3JtcyBtZW1vcnkgYWxsb2NhdGlvbiB3aGlsZSBleGVj
-dXRpbmcgYSByZXF1ZXN0IGFuZCBrbWFsbG9jKCkgcmV0dXJucw0KLUVOT01FTSB0aGVuIEkgZG9u
-J3Qga25vdyB3aGljaCBtZWNoYW5pc20gc2hvdWxkIGJlIHVzZWQgdG8gdHJpZ2dlciBhIHF1ZXVl
-DQpyZXJ1biB3aGVuIHN1ZmZpY2llbnQgbWVtb3J5IGlzIGF2YWlsYWJsZSBhZ2Fpbi4NCg0KQW5v
-dGhlciBleGFtcGxlIGlzIHRoZSBTQ1NJIHN1YnN5c3RlbS4gSWYgYSB0aGUgLnF1ZXVlY29tbWFu
-ZCgpIGltcGxlbWVudGF0aW9uDQpvZiBhIFNDU0kgTExEIHJldHVybnMgU0NTSV9NTFFVRVVFXypf
-QlVTWSBiZWNhdXNlIGEgY2VydGFpbiBIQkEgY29uZGl0aW9uDQpvY2N1cnJlZCBhbmQgdGhlIEhC
-QSBkb2VzIG5vdCB0cmlnZ2VyIGFuIGludGVycnVwdCB3aGVuIHRoYXQgY29uZGl0aW9uIGlzDQpj
-bGVhcmVkLCBob3cgdG8gZmlndXJlIG91dCB3aGV0aGVyIG9yIG5vdCBhIHJlcXVlc3QgY2FuIGJl
-IGV4ZWN1dGVkIG90aGVyIHRoYW4NCmJ5IHJldHJ5aW5nLCB3aGljaCBtZWFucyByZXJ1bm5pbmcg
-dGhlIHF1ZXVlPw0KDQpUaGFua3MsDQoNCkJhcnQu
+--=-=-=
+Content-Type: text/plain
+
+On Mon, Jan 29 2018, Mike Snitzer wrote:
+
+> We currently don't restack the queue_limits if the lowest, or
+> intermediate, layer of an IO stack changes.
+>
+> This is particularly unfortunate in the case of FLUSH/FUA which may
+> change if/when a HW controller's BBU fails; whereby requiring the device
+> advertise that it has a volatile write cache (WCE=1).
+>
+> But in the context of DM, really it'd be best if the entire stack of
+> devices had their limits restacked if any underlying layer's limits
+> change.
+>
+> In the past, Martin and I discussed that we should "just do it" but
+> never did.  Not sure we need a lengthy discussion but figured I'd put it
+> out there.
+
+So much "yes"!!
+Just a notifier chain would probably do.
+
+I would like the notification to support changing the size of the device
+too.
+I see this as being two-stage.
+1/ I'm going to change the device size to X - are you all OK with that?
+2/ Device size is now X.
+
+That allows md and dm to check that filesystems aren't going to get mad
+when devices are made smaller, and can adjust (if they want to) when
+devices get bigger.
+
+Thanks,
+NeilBrown
+
+>
+> Maybe I'll find time, between now and April, to try implementing it.
+>
+> Thanks,
+> Mike
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+
+--=-=-=
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCAAdFiEEG8Yp69OQ2HB7X0l6Oeye3VZigbkFAlpz/lsACgkQOeye3VZi
+gbn4QhAAwrK92tzJOSGQBiXNSHoZWcWZRwTl0AxKj1ZYzCjeifxig8XVdYUky8YK
+zGZzNttyc7S2tQ/+jbhyyWhAQ5vnNw0OI7UtU3nhcK6eSdAoiwKn1Hpy0fS/ybEJ
+5HaP/25TshhvgM0o1M2xCfGJ/GIRKbmGtUfqRGWkB55o0O6DCqSxMTiTwLEobBlq
+qONisCYfiStrFyfJKEOc1nCOVpqXhYW1zbWX8lWbHin/5RLMlCLbluF8kGH3TNCV
+Rce2rWbd/vcVpITyCo7Mmq3nlvGQREf/GFMlMG0amKzrNi6KUXWNRQDYNw3vyAf8
+t22HburtmneedDQQEVM/XxzASC/s/bv14y8WH5Xh/q+9Ny+45FqSgEK8lY8xjK8n
+2ul3h2QbC3m6GIXTLyzT/PkpH3qBI6F5hVqDKgYkTJrLwd6mED2CNsPLOkM68f0G
+HuQc17JbEKqoyj5hUDlNqenUi2ffyzlf+nicdg12GhiPw2bW5gYo2x8+5Rnb8sTf
+PutNEFKyJJS7YxFE8wZ3v4EmMgA4xIoc0gKq5mbafzyS0HcGz7J4+t2Lyjfn2KRF
+6aBKw1klui4dhFb+pcbpkDujYS1EJ/UJG/MnmLedda3FlzgP1I050W8nhCQ0ZSXK
+NcmZEo2BPNxzSnkyPr7mWwlV3hT0yz0cpnHlf1pVao8sGefWca8=
+=aSpN
+-----END PGP SIGNATURE-----
+--=-=-=--
