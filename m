@@ -1,18 +1,20 @@
-From: Martin Wilck <mwilck@suse.com>
+From: Julian Andres Klode <julian.klode@canonical.com>
 Subject: Re: [PATCH] kpartx: Improve finding loopback device by
  file
-Date: Mon, 05 Feb 2018 16:12:00 +0100
-Message-ID: <1517843520.14196.45.camel@suse.com>
+Date: Mon, 5 Feb 2018 16:46:22 +0100
+Message-ID: <20180205154622.axv3cv5wxot3hmbx@jak-x230>
 References: <20180205085831.23923-1-julian.klode@canonical.com>
 	<1517826733.14196.3.camel@suse.com>
 	<20180205104500.n5rrw6nqzamwijvl@jak-x230>
 	<1517838787.14196.10.camel@suse.com>
 	<20180205144121.27ruwyewpkm3a4kd@jak-x230>
+	<1517843520.14196.45.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180205144121.27ruwyewpkm3a4kd@jak-x230>
+Content-Disposition: inline
+In-Reply-To: <1517843520.14196.45.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,56 +24,121 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Julian Andres Klode <julian.klode@canonical.com>
+To: Martin Wilck <mwilck@suse.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gTW9uLCAyMDE4LTAyLTA1IGF0IDE1OjQxICswMTAwLCBKdWxpYW4gQW5kcmVzIEtsb2RlIHdy
-b3RlOgo+IE9uIE1vbiwgRmViIDA1LCAyMDE4IGF0IDAyOjUzOjA3UE0gKzAxMDAsIE1hcnRpbiBX
-aWxjayB3cm90ZToKPiA+IE9uIE1vbiwgMjAxOC0wMi0wNSBhdCAxMTo0NSArMDEwMCwgSnVsaWFu
-IEFuZHJlcyBLbG9kZSB3cm90ZToKPiA+ID4gT24gTW9uLCBGZWIgMDUsIDIwMTggYXQgMTE6MzI6
-MTNBTSArMDEwMCwgTWFydGluIFdpbGNrIHdyb3RlOgo+ID4gPiA+IE9uIE1vbiwgMjAxOC0wMi0w
-NSBhdCAwOTo1OCArMDEwMCwgSnVsaWFuIEFuZHJlcyBLbG9kZSB3cm90ZToKPiA+ID4gPiA+IEMK
-PiA+ID4gPiA+ICAJCWNsb3NlIChmZCk7Cj4gPiA+ID4gPiAgCj4gPiA+ID4gPiAtCQlpZiAoMCA9
-PSBzdHJjbXAoZmlsZW5hbWUsIGxvb3BpbmZvLmxvX25hbWUpKQo+ID4gPiA+ID4gewo+ID4gPiA+
-ID4gKwkJaWYgKDAgPT0gc3RyY21wKGZpbGVuYW1lLCBsb29waW5mby5sb19uYW1lKQo+ID4gPiA+
-ID4gfHwKPiA+ID4gPiA+ICsJCSAgICAwID09IHN0cmNtcChyZmlsZW5hbWUsIGxvb3BpbmZvLmxv
-X25hbWUpCj4gPiA+ID4gPiB8fAo+ID4gPiA+ID4gKwkJICAgIChyZWFscGF0aChsb29waW5mby5s
-b19uYW1lLAo+ID4gPiA+ID4gcmxvb3BmaWxlbmFtZSkKPiA+ID4gPiA+ICYmCj4gPiA+ID4gPiAr
-CQkgICAgIDAgPT0gc3RyY21wKHJmaWxlbmFtZSwgcmxvb3BmaWxlbmFtZSkpKQo+ID4gPiA+ID4g
-ewo+ID4gPiA+ID4gIAkJCWZvdW5kID0gcmVhbHBhdGgocGF0aCwgTlVMTCk7Cj4gPiA+ID4gPiAg
-CQkJYnJlYWs7Cj4gPiA+ID4gPiAgCQl9Cj4gPiA+ID4gCj4gPiA+ID4gVGhhdCAiaWYgeCBtYXRj
-aGVzIHkgb3IgeCBtYXRjaGVzIHknIG9yIHgnIG1hdGNoZXMgeSIgZmVlbHMKPiA+ID4gPiBsaWtl
-Cj4gPiA+ID4gZ3Vlc3N3b3JrLiBDYW4ndCB3ZSBzaW1wbHkgY2FsbCByZWFscGF0aCgpIG9uIGJv
-dGgKPiA+ID4gPiBsb29waW5mby5sb19uYW1lCj4gPiA+ID4gYW5kCj4gPiA+ID4gZmlsZW5hbWUs
-IGFuZCBjb21wYXJlIHRoZSB0d28/IAo+ID4gPiAKPiA+ID4gUHJvYmFibHkgeWVzLiBUaGF0IHNh
-aWQgdGhlcmUgbWlnaHQgYmUgc29tZSBjb3JuZXIgY2FzZXM6Cj4gPiA+IAo+ID4gPiAoMSkgV2hh
-dCBoYXBwZW5zIGlmIHRoZSBiYWNraW5nIGZpbGUgb2YgYSBsb29wYmFjayBpcyBkZWxldGVkIC0K
-PiA+ID4gcmVhbHBhdGgKPiA+ID4gICAgIGNhbiBmYWlsIHdpdGggRU5PRU5ULgo+ID4gPiAoMikg
-QSBwYXRoIGNvdWxkIGJlIGxvbmdlciB0aGFuIFBBVEhfTUFYIGFuZCBpdCB3b3VsZCBmYWlsIHdp
-dGgKPiA+ID4gRU5BTUVUT09MT05HCj4gPiA+ICAgICAtIHRoaXMgaXMgYSAicHJvYmxlbSIgd2l0
-aCB0aGUgaW5pdGlhbCByZWFscGF0aCBhcyB3ZWxsLCBidXQKPiA+ID4gbGVzcwo+ID4gPiBzbywg
-YmVjYXVzZQo+ID4gPiAgICAgdGhlIHVzZXIgY2FuIGNvbnRyb2wgdGhhdC4KPiA+IAo+ID4gQm90
-aCBhcmUgc2NlbmFyaW9zIGluIHdoaWNoIGtwYXJ0eCB3b3VsZCBoYXZlIGdvb2QgcmVhc29uIHRv
-IGZhaWwKPiA+ICh3aXRoCj4gPiBhIG1lYW5pbmdmdWwgZXJyb3IgbWVzc2FnZSkuIFRoYXQncyBi
-ZXR0ZXIgdGhhbiBndWVzc2luZywgSU1PLgo+IAo+ICgxKSBEZWZpbml0ZWx5IG5vdC4gSnVzdCBi
-ZWNhdXNlIG9uZSBvZiB5b3VyIChwb3RlbnRpYWxseSBvdGhlcikKPiBsb29wYmFjayBkZXZpY2Vz
-Cj4gaGFzIGEgZGVsZXRlZCBmaWxlIHlvdSBzaG91bGQgbm90IGZhaWwuCgpTb3JyeSBmb3IgYmVp
-bmcgaW1wcmVjaXNlLiBZb3UncmUgcmlnaHQsIGFib3J0aW5nIGhlcmUgd2hpbGUgc2Nhbm5pbmcK
-Zm9yIGEgbWF0Y2hpbmcgZGV2aWNlIHdvdWxkIG9mIGNvdXJzZSBiZSB3cm9uZy4gQW5kIGRlbGV0
-aW5nIHN1Y2ggYQpicm9rZW4gbG9vcCBkZXZpY2UgY2FuJ3QgYmUgYSBiaWcgbWlzdGFrZS4KCj4g
-ICgyKSBJIGRvbid0IHJlYWxseSBrbm93Lgo+IAo+IEJ1dCB0aGUgcHJvYmxlbSBoZXJlIGlzIHRo
-YXQgeW91IGFyZSBsb29raW5nIGF0IGxvb3BiYWNrIGRldmljZXMKPiBjcmVhdGVkIGJ5Cj4gc3R1
-ZmYgb3RoZXIgdGhhbiBrcGFydHgsIGFuZCB0aGV5IG1pZ2h0IG5vdCBiZSBpbiBhICJnb29kIiBz
-dGF0ZS4gQnV0Cj4geW91Cj4gZG9uJ3Qgd2FudCB0byBhYm9ydCBqdXN0IGJlY2F1c2Ugc29tZSBf
-b3RoZXJfIGxvb3BiYWNrIGRldmljZSBpcwo+IGJyb2tlbi4KCkNhbiB3ZSBhZ3JlZSBvbiB0aGUg
-Zm9sbG93aW5nOgoKIDEgaWYgcmVhbHBhdGggKGZpbGVuYW1lKSByZXN1bHRzIGluIGVycm9yLCBh
-Ym9ydAogMiBpZiByZWFscGF0aChsb19uYW1lKSByZXN1bHRzIGluIEVOT0RFViBhbmQgZmlsZW5h
-bWUgbWF0Y2hlcyBsb19uYW1lLApyZW1vdmUgbG9vcCBkZXZpY2UKIDMgaWYgcmVhbHBhdGgobG9f
-bmFtZSkgcmVzdWx0cyBpbiBhbm90aGVyIGVycm9yIGNvZGUsIHNraXAgaXQKIDQgcmVtb3ZlIGlm
-IHJlYWxwYXRoKGZpbGVuYW1lKSBtYXRjaGVzIHJlYWxwYXRoKGxvX25hbWUpCgo/Pz8KCk1hcnRp
-bgoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkx
-MSA3NDA1MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFu
-ZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRt
-LWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhh
-dC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+On Mon, Feb 05, 2018 at 04:12:00PM +0100, Martin Wilck wrote:
+> On Mon, 2018-02-05 at 15:41 +0100, Julian Andres Klode wrote:
+> > On Mon, Feb 05, 2018 at 02:53:07PM +0100, Martin Wilck wrote:
+> > > On Mon, 2018-02-05 at 11:45 +0100, Julian Andres Klode wrote:
+> > > > On Mon, Feb 05, 2018 at 11:32:13AM +0100, Martin Wilck wrote:
+> > > > > On Mon, 2018-02-05 at 09:58 +0100, Julian Andres Klode wrote:
+> > > > > > C
+> > > > > >  		close (fd);
+> > > > > >  
+> > > > > > -		if (0 == strcmp(filename, loopinfo.lo_name))
+> > > > > > {
+> > > > > > +		if (0 == strcmp(filename, loopinfo.lo_name)
+> > > > > > ||
+> > > > > > +		    0 == strcmp(rfilename, loopinfo.lo_name)
+> > > > > > ||
+> > > > > > +		    (realpath(loopinfo.lo_name,
+> > > > > > rloopfilename)
+> > > > > > &&
+> > > > > > +		     0 == strcmp(rfilename, rloopfilename)))
+> > > > > > {
+> > > > > >  			found = realpath(path, NULL);
+> > > > > >  			break;
+> > > > > >  		}
+> > > > > 
+> > > > > That "if x matches y or x matches y' or x' matches y" feels
+> > > > > like
+> > > > > guesswork. Can't we simply call realpath() on both
+> > > > > loopinfo.lo_name
+> > > > > and
+> > > > > filename, and compare the two? 
+> > > > 
+> > > > Probably yes. That said there might be some corner cases:
+> > > > 
+> > > > (1) What happens if the backing file of a loopback is deleted -
+> > > > realpath
+> > > >     can fail with ENOENT.
+> > > > (2) A path could be longer than PATH_MAX and it would fail with
+> > > > ENAMETOOLONG
+> > > >     - this is a "problem" with the initial realpath as well, but
+> > > > less
+> > > > so, because
+> > > >     the user can control that.
+> > > 
+> > > Both are scenarios in which kpartx would have good reason to fail
+> > > (with
+> > > a meaningful error message). That's better than guessing, IMO.
+> > 
+> > (1) Definitely not. Just because one of your (potentially other)
+> > loopback devices
+> > has a deleted file you should not fail.
+> 
+> Sorry for being imprecise. You're right, aborting here while scanning
+> for a matching device would of course be wrong. And deleting such a
+> broken loop device can't be a big mistake.
+> 
+> >  (2) I don't really know.
+> > 
+> > But the problem here is that you are looking at loopback devices
+> > created by
+> > stuff other than kpartx, and they might not be in a "good" state. But
+> > you
+> > don't want to abort just because some _other_ loopback device is
+> > broken.
+> 
+> Can we agree on the following:
+> 
+>  1 if realpath (filename) results in error, abort
+
+OK
+
+
+>  2 if realpath(lo_name) results in ENODEV and filename matches lo_name,
+> remove loop device
+>  3 if realpath(lo_name) results in another error code, skip it
+>  4 remove if realpath(filename) matches realpath(lo_name)
+
+
+This seems like a lot of ifs. It might be easier to just path if
+realpath(path) fails (as realpath(1) does), something like:
+
+		
+		char *loopname = loopinfo.lo_name;
+		if (realpath(loopinfo.lo_name, rloopfilename) != NULL)
+			loopname = rloopfilename;
+
+		if (0 == strcmp(filename, loopinfo.lo_name) ||
+		    0 == strcmp(rfilename, loopname))) {
+			found = realpath(path, NULL);
+			break;
+		}
+
+
+That should solve all problems and produce useful results with not
+a lot of logic.
+
+
+We could also abstract that away into:
+
+  const char *safe_realpath(const char *path, char *resolved_path)
+  {
+    char *real = realpath(path, resolved_path);
+
+    return real != NULL ? real : path;
+  }
+
+
+(this has strange behavior compared to realpath, because it does not
+ always return resolved_path; I guess, you could strncpy it there, but
+ ugh, seems complicated).
+
+
+-- 
+debian developer - deb.li/jak | jak-linux.org - free software dev
+ubuntu core developer                              i speak de, en
