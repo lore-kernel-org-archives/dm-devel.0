@@ -1,12 +1,16 @@
 From: Julian Andres Klode <julian.klode@canonical.com>
-Subject: [PATCH] kpartx: print "loop deleted" to stdout,
-	not stderr
-Date: Mon,  5 Feb 2018 11:36:45 +0100
-Message-ID: <20180205103645.19121-1-julian.klode@canonical.com>
+Subject: Re: [PATCH] kpartx: Improve finding loopback device by
+ file
+Date: Mon, 5 Feb 2018 11:45:00 +0100
+Message-ID: <20180205104500.n5rrw6nqzamwijvl@jak-x230>
+References: <20180205085831.23923-1-julian.klode@canonical.com>
+	<1517826733.14196.3.camel@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1517826733.14196.3.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,32 +20,101 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Device-mapper development mailing list <dm-devel@redhat.com>
+To: Martin Wilck <mwilck@suse.com>
+Cc: Device-mapper development mailing list <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Commit fa643f5d2590028a59c671b81ab41383806fd258 moved some
-code around and changed the print for loop deleted from stdout
-to stderr - but this is not an error message, and also printed
-to stdout in another place, so let's just use printf() again
-here.
+On Mon, Feb 05, 2018 at 11:32:13AM +0100, Martin Wilck wrote:
+> On Mon, 2018-02-05 at 09:58 +0100, Julian Andres Klode wrote:
+> > Commit 9bdfa3eb8e24b668e6c2bb882cddb0ccfe23ed5b changed kpartx
+> > to lookup files by absolute path, using realpath(). This introduced
+> > a regression when part of the filename where symbolic links. While
+> > the kernel stores the absolute path to the backing file, it does not
+> > resolve symbolic links, and hence kpartx would fail to find the
+> > loopback
+> > device because it resolves symbolic links when deleting.
+> > 
+> > This introduces two workarounds in find_loop_by_file()
+> > 
+> > (1) We match against the specified file name as is as well
+> > (2) We canonicalize the loopinfo.lo_name and match the canonicalized
+> > filename
+> >     against that.
+> > 
+> > Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/+source/multipath-tools
+> > /+bug/1747044
+> > Signed-off-by: Julian Andres Klode <julian.klode@canonical.com>
+> > ---
+> >  kpartx/kpartx.c |  8 +-------
+> >  kpartx/lopart.c | 12 +++++++++++-
+> >  2 files changed, 12 insertions(+), 8 deletions(-)
+> > 
+> > diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+> > index 442b6bd9..c1af1c5e 100644
+> > --- a/kpartx/kpartx.c
+> > +++ b/kpartx/kpartx.c
+> > @@ -327,13 +327,7 @@ main(int argc, char **argv){
+> >  
+> >  	if (S_ISREG (buf.st_mode)) {
+> >  		/* already looped file ? */
+> > -		char rpath[PATH_MAX];
+> > -		if (realpath(device, rpath) == NULL) {
+> > -			fprintf(stderr, "Error: %s: %s\n", device,
+> > -				strerror(errno));
+> > -			exit (1);
+> > -		}
+> > -		loopdev = find_loop_by_file(rpath);
+> > +		loopdev = find_loop_by_file(device);
+> >  
+> >  		if (!loopdev && what == DELETE)
+> >  			exit (0);
+> > diff --git a/kpartx/lopart.c b/kpartx/lopart.c
+> > index 02b29e8c..26b2678c 100644
+> > --- a/kpartx/lopart.c
+> > +++ b/kpartx/lopart.c
+> > @@ -69,6 +69,13 @@ char *find_loop_by_file(const char *filename)
+> >  	struct loop_info loopinfo;
+> >  	const char VIRT_BLOCK[] = "/sys/devices/virtual/block";
+> >  	char path[PATH_MAX];
+> > +	char rfilename[PATH_MAX];
+> > +	char rloopfilename[PATH_MAX];
+> > +	if (realpath(filename, rfilename) == NULL) {
+> > +		fprintf(stderr, "Error: %s: %s\n", filename,
+> > +				strerror(errno));
+> > +		exit (1);
+> > +	}
+> >  
+> >  	dir = opendir(VIRT_BLOCK);
+> >  	if (!dir)
+> > @@ -117,7 +124,10 @@ char *find_loop_by_file(const char *filename)
+> >  
+> >  		close (fd);
+> >  
+> > -		if (0 == strcmp(filename, loopinfo.lo_name)) {
+> > +		if (0 == strcmp(filename, loopinfo.lo_name) ||
+> > +		    0 == strcmp(rfilename, loopinfo.lo_name) ||
+> > +		    (realpath(loopinfo.lo_name, rloopfilename) &&
+> > +		     0 == strcmp(rfilename, rloopfilename))) {
+> >  			found = realpath(path, NULL);
+> >  			break;
+> >  		}
+> 
+> That "if x matches y or x matches y' or x' matches y" feels like
+> guesswork. Can't we simply call realpath() on both loopinfo.lo_name and
+> filename, and compare the two? 
 
-Signed-off-by: Julian Andres Klode <julian.klode@canonical.com>
----
- kpartx/kpartx.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+Probably yes. That said there might be some corner cases:
 
-diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
-index c1af1c5e..2e882721 100644
---- a/kpartx/kpartx.c
-+++ b/kpartx/kpartx.c
-@@ -399,7 +399,7 @@ main(int argc, char **argv){
- 					       loopdev);
- 				r = 1;
- 			} else
--				fprintf(stderr, "loop deleted : %s\n", loopdev);
-+				printf("loop deleted : %s\n", loopdev);
- 		}
- 		goto end;
- 	}
+(1) What happens if the backing file of a loopback is deleted - realpath
+    can fail with ENOENT.
+(2) A path could be longer than PATH_MAX and it would fail with ENAMETOOLONG
+    - this is a "problem" with the initial realpath as well, but less so, because
+    the user can control that.
+
+I guess the 0 == strcmp(rfilename, loopinfo.lo_name) is not likely to happen, but
+in the end, I did not want to think that much about it and go with something that
+definitely works as best as possible.
+
 -- 
-2.15.1
+debian developer - deb.li/jak | jak-linux.org - free software dev
+ubuntu core developer                              i speak de, en
