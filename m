@@ -1,18 +1,17 @@
-From: Julian Andres Klode <julian.klode@canonical.com>
-Subject: Re: [PATCH] kpartx: Improve finding loopback device by
- file
-Date: Mon, 5 Feb 2018 15:41:21 +0100
-Message-ID: <20180205144121.27ruwyewpkm3a4kd@jak-x230>
-References: <20180205085831.23923-1-julian.klode@canonical.com>
-	<1517826733.14196.3.camel@suse.com>
-	<20180205104500.n5rrw6nqzamwijvl@jak-x230>
-	<1517838787.14196.10.camel@suse.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH] kpartx: print "loop deleted" to stdout,
+ not stderr
+Date: Mon, 05 Feb 2018 16:02:46 +0100
+Message-ID: <1517842966.14196.39.camel@suse.com>
+References: <20180205103645.19121-1-julian.klode@canonical.com>
+	<1517839126.14196.14.camel@suse.com>
+	<20180205141233.6k4pjxxf6oijmkqn@jak-x230>
+	<20180205141720.fdktrzne5x2cdsbo@jak-x230>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1517838787.14196.10.camel@suse.com>
+In-Reply-To: <20180205141720.fdktrzne5x2cdsbo@jak-x230>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,53 +21,78 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: dm-devel@redhat.com
+To: Julian Andres Klode <julian.klode@canonical.com>
+Cc: development mailing list <dm-devel@redhat.com>, Device-mapper
 List-Id: dm-devel.ids
 
-On Mon, Feb 05, 2018 at 02:53:07PM +0100, Martin Wilck wrote:
-> On Mon, 2018-02-05 at 11:45 +0100, Julian Andres Klode wrote:
-> > On Mon, Feb 05, 2018 at 11:32:13AM +0100, Martin Wilck wrote:
-> > > On Mon, 2018-02-05 at 09:58 +0100, Julian Andres Klode wrote:
-> > > > C
-> > > >  		close (fd);
-> > > >  
-> > > > -		if (0 == strcmp(filename, loopinfo.lo_name)) {
-> > > > +		if (0 == strcmp(filename, loopinfo.lo_name) ||
-> > > > +		    0 == strcmp(rfilename, loopinfo.lo_name) ||
-> > > > +		    (realpath(loopinfo.lo_name, rloopfilename)
-> > > > &&
-> > > > +		     0 == strcmp(rfilename, rloopfilename))) {
-> > > >  			found = realpath(path, NULL);
-> > > >  			break;
-> > > >  		}
-> > > 
-> > > That "if x matches y or x matches y' or x' matches y" feels like
-> > > guesswork. Can't we simply call realpath() on both loopinfo.lo_name
-> > > and
-> > > filename, and compare the two? 
-> > 
-> > Probably yes. That said there might be some corner cases:
-> > 
-> > (1) What happens if the backing file of a loopback is deleted -
-> > realpath
-> >     can fail with ENOENT.
-> > (2) A path could be longer than PATH_MAX and it would fail with
-> > ENAMETOOLONG
-> >     - this is a "problem" with the initial realpath as well, but less
-> > so, because
-> >     the user can control that.
-> 
-> Both are scenarios in which kpartx would have good reason to fail (with
-> a meaningful error message). That's better than guessing, IMO.
-
-(1) Definitely not. Just because one of your (potentially other) loopback devices
-has a deleted file you should not fail. (2) I don't really know.
-
-But the problem here is that you are looking at loopback devices created by
-stuff other than kpartx, and they might not be in a "good" state. But you
-don't want to abort just because some _other_ loopback device is broken.
-
--- 
-debian developer - deb.li/jak | jak-linux.org - free software dev
-ubuntu core developer                              i speak de, en
+T24gTW9uLCAyMDE4LTAyLTA1IGF0IDE1OjE3ICswMTAwLCBKdWxpYW4gQW5kcmVzIEtsb2RlIHdy
+b3RlOgo+IE9uIE1vbiwgRmViIDA1LCAyMDE4IGF0IDAzOjEyOjMzUE0gKzAxMDAsIEp1bGlhbiBB
+bmRyZXMgS2xvZGUgd3JvdGU6Cj4gPiBPbiBNb24sIEZlYiAwNSwgMjAxOCBhdCAwMjo1ODo0NlBN
+ICswMTAwLCBNYXJ0aW4gV2lsY2sgd3JvdGU6Cj4gPiA+IE9uIE1vbiwgMjAxOC0wMi0wNSBhdCAx
+MTozNiArMDEwMCwgSnVsaWFuIEFuZHJlcyBLbG9kZSB3cm90ZToKPiA+ID4gPiBDb21taXQgZmE2
+NDNmNWQyNTkwMDI4YTU5YzY3MWI4MWFiNDEzODM4MDZmZDI1OCBtb3ZlZCBzb21lCj4gPiA+ID4g
+Y29kZSBhcm91bmQgYW5kIGNoYW5nZWQgdGhlIHByaW50IGZvciBsb29wIGRlbGV0ZWQgZnJvbSBz
+dGRvdXQKPiA+ID4gPiB0byBzdGRlcnIgLSBidXQgdGhpcyBpcyBub3QgYW4gZXJyb3IgbWVzc2Fn
+ZSwgYW5kIGFsc28gcHJpbnRlZAo+ID4gPiA+IHRvIHN0ZG91dCBpbiBhbm90aGVyIHBsYWNlLCBz
+byBsZXQncyBqdXN0IHVzZSBwcmludGYoKSBhZ2Fpbgo+ID4gPiA+IGhlcmUuCj4gPiA+ID4gCj4g
+PiA+ID4gU2lnbmVkLW9mZi1ieTogSnVsaWFuIEFuZHJlcyBLbG9kZSA8anVsaWFuLmtsb2RlQGNh
+bm9uaWNhbC5jb20+Cj4gPiA+ID4gLS0tCj4gPiA+ID4gIGtwYXJ0eC9rcGFydHguYyB8IDIgKy0K
+PiA+ID4gPiAgMSBmaWxlIGNoYW5nZWQsIDEgaW5zZXJ0aW9uKCspLCAxIGRlbGV0aW9uKC0pCj4g
+PiA+ID4gCj4gPiA+ID4gZGlmZiAtLWdpdCBhL2twYXJ0eC9rcGFydHguYyBiL2twYXJ0eC9rcGFy
+dHguYwo+ID4gPiA+IGluZGV4IGMxYWYxYzVlLi4yZTg4MjcyMSAxMDA2NDQKPiA+ID4gPiAtLS0g
+YS9rcGFydHgva3BhcnR4LmMKPiA+ID4gPiArKysgYi9rcGFydHgva3BhcnR4LmMKPiA+ID4gPiBA
+QCAtMzk5LDcgKzM5OSw3IEBAIG1haW4oaW50IGFyZ2MsIGNoYXIgKiphcmd2KXsKPiA+ID4gPiAg
+CQkJCQkgICAgICAgbG9vcGRldik7Cj4gPiA+ID4gIAkJCQlyID0gMTsKPiA+ID4gPiAgCQkJfSBl
+bHNlCj4gPiA+ID4gLQkJCQlmcHJpbnRmKHN0ZGVyciwgImxvb3AgZGVsZXRlZAo+ID4gPiA+IDoK
+PiA+ID4gPiAlc1xuIiwgbG9vcGRldik7Cj4gPiA+ID4gKwkJCQlwcmludGYoImxvb3AgZGVsZXRl
+ZCA6ICVzXG4iLAo+ID4gPiA+IGxvb3BkZXYpOwo+ID4gPiA+ICAJCX0KPiA+ID4gPiAgCQlnb3Rv
+IGVuZDsKPiA+ID4gPiAgCX0KPiA+ID4gCj4gPiA+IAo+ID4gPiBIbS4gVGhpcyBpcyBhIGxvZyBt
+ZXNzYWdlLCBhbmQgYXMgc3VjaCwgc2hvdWxkIGdvIHRvIHN0ZGVyci4KPiA+ID4ga3BhcnR4LCBh
+cwo+ID4gPiBhIHByb2dyYW0gcHJpbWFyaWx5IGludGVuZGVkIHRvIHJ1biBpbiB1ZGV2IHJ1bGVz
+LCBzaG91bGRuJ3QKPiA+ID4gcHJpbnQgbG9nCj4gPiA+IG1lc3NhZ2VzIHRvIHN0ZG91dCB1bmxl
+c3Mgd2UgaGF2ZSBjb21wZWxsaW5nIHJlYXNvbnMgZm9yIGl0IHRvIGRvCj4gPiA+IHNvLgo+ID4g
+PiAKPiA+ID4gSSdtIGF3YXJlIHRoYXQgdGhpcyBpc24ndCBkb25lIGNvbnNpc3RlbnRseSBpbiBr
+cGFydHggYXQgdGhlCj4gPiA+IG1vbWVudCwKPiA+ID4gYnV0IElNTyB5b3VyIHBhdGNoIGdvZXMg
+aW4gdGhlIHdyb25nIGRpcmVjdGlvbi4KPiA+IAo+ID4gSXQgc2VlbXMgdmVyeSBjb25zaXN0ZW50
+IGZvciBtZTogc3RkZXJyIGlzIHVzZWQgZm9yIGVycm9ycyBhbmQKPiA+IHdhcm5pbmdzLAo+ID4g
+YW5kIHByaW50ZigpIGZvciB0aGUgcmVzdC4gVGhlcmUgYXJlIHR3byBleGNlcHRpb25zOiBUaGlz
+IG9uZSwgYW5kCj4gPiAKPiA+IGtwYXJ0eC9kZXZtYXBwZXIuYzogICAgICAgICAgICAgZnByaW50
+ZihzdGRlcnIsICJmb3VuZCBtYXAgJXMgZm9yCj4gPiB1dWlkICVzLCByZW5hbWluZyB0byAlc1xu
+IiwKPiA+IAo+ID4gQnV0IHRoYXQgb25lIHJlYWxseSBpcyB3aGF0IEknZCBjb25zaWRlciBhIGxv
+ZyBtZXNzYWdlLiBTdHVmZiBsaWtlCj4gPiAiZGVsIGRldm1hcCIgYW5kICJsb29wIGRlbGV0ZWQi
+IHNlZW0gc29tZWhvdyBkaWZmZXJlbnQgLSB5b3UgdGVsbAo+ID4gaXQgdG8gZGVsZXRlIGEgbWFw
+cGluZywgYW5kIHRvIGJlIHZlcmJvc2UsIGFuZCB0aGVuIGl0IHNob3VsZCB0ZWxsCj4gPiB5b3Ug
+d2hhdCBpdCBkZWxldGVkLCBvbiBzdGRvdXQuIE1heWJlIHBlb3BsZSBhcmUgcGFyc2luZyB0aGlz
+LCB3aG8KPiA+IGtub3dzPyBJdCBkZWZpbml0ZWx5IGJyb2tlIG91ciB0ZXN0cyBiZWNhdXNlIHVu
+ZXhwZWN0ZWQgc3RkZXJyCj4gPiBvdXRwdXQKPiA+IGFwcGVhcmVkLgo+ID4gCj4gCj4gSW4gZmFj
+dCwgaWYgeW91IGxvb2sgYXQgdGhlIGJ1ZyBtZW50aW9uZWQgaW4gdGhlIHByZXZpb3VzIHBhdGNo
+LAo+IAo+IGh0dHBzOi8vYnVncy5sYXVuY2hwYWQubmV0L3VidW50dS8rc291cmNlL211bHRpcGF0
+aC10b29scy8rYnVnLzE3NDcwNAo+IDQKPiAKPiB5b3UnbGwgc2VlIHRoYXQgd2UgZXhwbGljaXRs
+eSBjaGVjayB0aGUgb3V0cHV0IG9mIGtwYXJ0eCAtdiAtZCBmb3IKPiAibG9vcCBkZWxldGVkIiBh
+cHBhcmVudGx5IGJlY2F1c2Uga3BhcnR4IHdhcyAob3IgaXM/KSBmbGFreSBhbmQKPiByZXR1cm5l
+ZAo+IGFuIGVycm9yIGV2ZW4gd2hlbiBpdCBzdWNjZXNzZnVsbHkgZGVsZXRlZCB0aGUgbG9vcCBk
+ZXZpY2UsIGFzIHNlZW4KPiBpbgo+IAo+IGh0dHBzOi8vYnVncy5kZWJpYW4ub3JnL2NnaS1iaW4v
+YnVncmVwb3J0LmNnaT9idWc9ODYwODk0CgpUaGF0J3MgYSB2ZXJ5IGRpZmZlcmVudCBpc3N1ZS4g
+V2l0aG91dCBkaWdnaW5nIG11Y2ggZGVlcGVyIGludG8gaXQsIEknZApsaWtlIHRvIHJlcGVhdCB0
+aGF0IGtwYXJ0eCcgam9iIGlzIHRvIGRlbGV0ZSBfcGFydGl0aW9uIG1hcHBpbmdzXywgbm90Cmxv
+b3AgZGV2aWNlcy4gVGhlIGFiaWxpdHkgdG8gZGVsZXRlIHRoZSBsb29wIGRldmljZSBhcyB3ZWxs
+IGlzdCBqdXN0IGEKY29udmVuaWVuY2UsIHNhdmluZyB1c2VycyBhbm90aGVyIGNhbGwgdG8gImxv
+c2V0dXAgLWQiLiBTbyBpdCdzIG5vdApuZWNlc3NhcmlseSAiZmxha3kiIGZvciBrcGFydHggdG8g
+cmV0dXJuIGEgbm9uLXplcm8gZXJyb3IgY29kZSBpZgplcnJvcnMgd2VyZSBlbmNvdW50ZXJlZCBk
+dXJpbmcgaXQncyBjb3JlIHRhc2sgKHJlbW92aW5nIHRoZQpwYXJ0aXRpb25zKSwgZXZlbiBpZiBy
+ZW1vdmluZyB0aGUgbG9vcCBkZXZpY2Ugd2FzIHN1Y2Nlc3NmdWwgbGF0ZXIuICgqKQo+IAo+IEl0
+IHNlZW1zIHJlYXNvbmFibGUgdGhhdCBEZWJpYW4gYW5kIFVidW50dSBhcmUgbm90IHRoZSBvbmx5
+IG9uZXMKPiByZWx5aW5nIG9uIHRoYXQgb3V0cHV0LgoKVGhlIGZhY3QgdGhhdCB0aGV5IHJlbHkg
+b24gcGFyc2luZyB0aGlzIHRoaXMgbWVzc2FnZSBvbiBzdGRvdXQgaXMKc3VmZmljaWVudCBqdXN0
+aWZpY2F0aW9uIGZvciBtZSB0byBrZWVwIGl0IHRoZXJlLCBldmVuIHRob3VnaCBJJ20gbm90CmJ1
+eWluZyB5b3VyICJlcnJvcnMgdG8gc3RkZXJyLCB0aGUgcmVzdCB0byBzdGRvdXQiIGFyZ3VtZW50
+IGluIGdlbmVyYWwuCgpQbGVhc2Ugc3VibWl0IGFnYWluLCBhZGRpbmcgYSBjb21tZW50IHRoYXQg
+VWJ1bnR1L0RlYmlhbiByZWx5IG9uIHRoZQpwcmVzZW5jZSBvZiB0aGlzIG91dHB1dCwgbGVzdCBp
+dCBiZSBjaGFuZ2VkIGFnYWluIGluIHRoZSBmdXR1cmUuCgpSZWdhcmRzCk1hcnRpbgoKKCopIE9u
+ZSBtaWdodCBhcmd1ZSB3aGV0aGVyIHRoZSBsb29wIGRldmljZSBzaG91bGRuJ3QgaGF2ZSBiZWVu
+IGRlbGV0ZWQKaW4gdGhhdCBlcnJvciBjYXNlLCBidXQgdGhhdCdzIHlldCBhbm90aGVyIGlzc3Vl
+LgoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkx
+MSA3NDA1MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFu
+ZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRt
+LWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhh
+dC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
