@@ -1,14 +1,16 @@
-From: Martin Wilck <mwilck@suse.com>
+From: Julian Andres Klode <julian.klode@canonical.com>
 Subject: Re: [PATCH] kpartx: print "loop deleted" to stdout,
  not stderr
-Date: Mon, 05 Feb 2018 14:58:46 +0100
-Message-ID: <1517839126.14196.14.camel@suse.com>
+Date: Mon, 5 Feb 2018 15:12:33 +0100
+Message-ID: <20180205141233.6k4pjxxf6oijmkqn@jak-x230>
 References: <20180205103645.19121-1-julian.klode@canonical.com>
+	<1517839126.14196.14.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180205103645.19121-1-julian.klode@canonical.com>
+Content-Disposition: inline
+In-Reply-To: <1517839126.14196.14.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,32 +20,59 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Julian Andres Klode <julian.klode@canonical.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Device-mapper development mailing list <dm-devel@redhat.com>
+To: Martin Wilck <mwilck@suse.com>
+Cc: Device-mapper development mailing list <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gTW9uLCAyMDE4LTAyLTA1IGF0IDExOjM2ICswMTAwLCBKdWxpYW4gQW5kcmVzIEtsb2RlIHdy
-b3RlOgo+IENvbW1pdCBmYTY0M2Y1ZDI1OTAwMjhhNTljNjcxYjgxYWI0MTM4MzgwNmZkMjU4IG1v
-dmVkIHNvbWUKPiBjb2RlIGFyb3VuZCBhbmQgY2hhbmdlZCB0aGUgcHJpbnQgZm9yIGxvb3AgZGVs
-ZXRlZCBmcm9tIHN0ZG91dAo+IHRvIHN0ZGVyciAtIGJ1dCB0aGlzIGlzIG5vdCBhbiBlcnJvciBt
-ZXNzYWdlLCBhbmQgYWxzbyBwcmludGVkCj4gdG8gc3Rkb3V0IGluIGFub3RoZXIgcGxhY2UsIHNv
-IGxldCdzIGp1c3QgdXNlIHByaW50ZigpIGFnYWluCj4gaGVyZS4KPiAKPiBTaWduZWQtb2ZmLWJ5
-OiBKdWxpYW4gQW5kcmVzIEtsb2RlIDxqdWxpYW4ua2xvZGVAY2Fub25pY2FsLmNvbT4KPiAtLS0K
-PiAga3BhcnR4L2twYXJ0eC5jIHwgMiArLQo+ICAxIGZpbGUgY2hhbmdlZCwgMSBpbnNlcnRpb24o
-KyksIDEgZGVsZXRpb24oLSkKPiAKPiBkaWZmIC0tZ2l0IGEva3BhcnR4L2twYXJ0eC5jIGIva3Bh
-cnR4L2twYXJ0eC5jCj4gaW5kZXggYzFhZjFjNWUuLjJlODgyNzIxIDEwMDY0NAo+IC0tLSBhL2tw
-YXJ0eC9rcGFydHguYwo+ICsrKyBiL2twYXJ0eC9rcGFydHguYwo+IEBAIC0zOTksNyArMzk5LDcg
-QEAgbWFpbihpbnQgYXJnYywgY2hhciAqKmFyZ3Ypewo+ICAJCQkJCSAgICAgICBsb29wZGV2KTsK
-PiAgCQkJCXIgPSAxOwo+ICAJCQl9IGVsc2UKPiAtCQkJCWZwcmludGYoc3RkZXJyLCAibG9vcCBk
-ZWxldGVkIDoKPiAlc1xuIiwgbG9vcGRldik7Cj4gKwkJCQlwcmludGYoImxvb3AgZGVsZXRlZCA6
-ICVzXG4iLAo+IGxvb3BkZXYpOwo+ICAJCX0KPiAgCQlnb3RvIGVuZDsKPiAgCX0KCgpIbS4gVGhp
-cyBpcyBhIGxvZyBtZXNzYWdlLCBhbmQgYXMgc3VjaCwgc2hvdWxkIGdvIHRvIHN0ZGVyci4ga3Bh
-cnR4LCBhcwphIHByb2dyYW0gcHJpbWFyaWx5IGludGVuZGVkIHRvIHJ1biBpbiB1ZGV2IHJ1bGVz
-LCBzaG91bGRuJ3QgcHJpbnQgbG9nCm1lc3NhZ2VzIHRvIHN0ZG91dCB1bmxlc3Mgd2UgaGF2ZSBj
-b21wZWxsaW5nIHJlYXNvbnMgZm9yIGl0IHRvIGRvIHNvLgoKSSdtIGF3YXJlIHRoYXQgdGhpcyBp
-c24ndCBkb25lIGNvbnNpc3RlbnRseSBpbiBrcGFydHggYXQgdGhlIG1vbWVudCwKYnV0IElNTyB5
-b3VyIHBhdGNoIGdvZXMgaW4gdGhlIHdyb25nIGRpcmVjdGlvbi4KClJlZ2FyZHMKTWFydGluCgot
-LSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0
-MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNt
-aXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2
-ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNv
-bS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+On Mon, Feb 05, 2018 at 02:58:46PM +0100, Martin Wilck wrote:
+> On Mon, 2018-02-05 at 11:36 +0100, Julian Andres Klode wrote:
+> > Commit fa643f5d2590028a59c671b81ab41383806fd258 moved some
+> > code around and changed the print for loop deleted from stdout
+> > to stderr - but this is not an error message, and also printed
+> > to stdout in another place, so let's just use printf() again
+> > here.
+> > 
+> > Signed-off-by: Julian Andres Klode <julian.klode@canonical.com>
+> > ---
+> >  kpartx/kpartx.c | 2 +-
+> >  1 file changed, 1 insertion(+), 1 deletion(-)
+> > 
+> > diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+> > index c1af1c5e..2e882721 100644
+> > --- a/kpartx/kpartx.c
+> > +++ b/kpartx/kpartx.c
+> > @@ -399,7 +399,7 @@ main(int argc, char **argv){
+> >  					       loopdev);
+> >  				r = 1;
+> >  			} else
+> > -				fprintf(stderr, "loop deleted :
+> > %s\n", loopdev);
+> > +				printf("loop deleted : %s\n",
+> > loopdev);
+> >  		}
+> >  		goto end;
+> >  	}
+> 
+> 
+> Hm. This is a log message, and as such, should go to stderr. kpartx, as
+> a program primarily intended to run in udev rules, shouldn't print log
+> messages to stdout unless we have compelling reasons for it to do so.
+> 
+> I'm aware that this isn't done consistently in kpartx at the moment,
+> but IMO your patch goes in the wrong direction.
+
+It seems very consistent for me: stderr is used for errors and warnings,
+and printf() for the rest. There are two exceptions: This one, and
+
+kpartx/devmapper.c:             fprintf(stderr, "found map %s for uuid %s, renaming to %s\n",
+
+But that one really is what I'd consider a log message. Stuff like
+"del devmap" and "loop deleted" seem somehow different - you tell
+it to delete a mapping, and to be verbose, and then it should tell
+you what it deleted, on stdout. Maybe people are parsing this, who
+knows? It definitely broke our tests because unexpected stderr output
+appeared.
+
+-- 
+debian developer - deb.li/jak | jak-linux.org - free software dev
+ubuntu core developer                              i speak de, en
