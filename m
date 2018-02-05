@@ -1,77 +1,57 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH] kpartx: Improve finding loopback device by
- file
-Date: Mon, 05 Feb 2018 18:07:13 +0100
-Message-ID: <1517850433.14196.63.camel@suse.com>
-References: <20180205085831.23923-1-julian.klode@canonical.com>
-	<1517826733.14196.3.camel@suse.com>
-	<20180205104500.n5rrw6nqzamwijvl@jak-x230>
-	<1517838787.14196.10.camel@suse.com>
-	<20180205144121.27ruwyewpkm3a4kd@jak-x230>
-	<1517843520.14196.45.camel@suse.com>
-	<20180205154622.axv3cv5wxot3hmbx@jak-x230>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] wbt: fix incorrect throttling due to flush latency
+Date: Mon, 5 Feb 2018 14:11:55 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1802051406190.15867@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180205154622.axv3cv5wxot3hmbx@jak-x230>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Julian Andres Klode <julian.klode@canonical.com>
-Cc: dm-devel@redhat.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-block-owner@vger.kernel.org>
+Sender: linux-block-owner@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gTW9uLCAyMDE4LTAyLTA1IGF0IDE2OjQ2ICswMTAwLCBKdWxpYW4gQW5kcmVzIEtsb2RlIHdy
-b3RlOgo+IE9uIE1vbiwgRmViIDA1LCAyMDE4IGF0IDA0OjEyOjAwUE0gKzAxMDAsIE1hcnRpbiBX
-aWxjayB3cm90ZToKPiA+IAo+ID4gQ2FuIHdlIGFncmVlIG9uIHRoZSBmb2xsb3dpbmc6Cj4gPiAK
-PiA+ICAxIGlmIHJlYWxwYXRoIChmaWxlbmFtZSkgcmVzdWx0cyBpbiBlcnJvciwgYWJvcnQKPiAK
-PiBPSwo+IAo+IAo+ID4gIDIgaWYgcmVhbHBhdGgobG9fbmFtZSkgcmVzdWx0cyBpbiBFTk9ERVYg
-YW5kIGZpbGVuYW1lIG1hdGNoZXMKPiA+IGxvX25hbWUsCj4gPiByZW1vdmUgbG9vcCBkZXZpY2UK
-PiA+ICAzIGlmIHJlYWxwYXRoKGxvX25hbWUpIHJlc3VsdHMgaW4gYW5vdGhlciBlcnJvciBjb2Rl
-LCBza2lwIGl0Cj4gPiAgNCByZW1vdmUgaWYgcmVhbHBhdGgoZmlsZW5hbWUpIG1hdGNoZXMgcmVh
-bHBhdGgobG9fbmFtZSkKPiAKPiAKPiBUaGlzIHNlZW1zIGxpa2UgYSBsb3Qgb2YgaWZzLiBJdCBt
-aWdodCBiZSBlYXNpZXIgdG8ganVzdCBwYXRoIGlmCj4gcmVhbHBhdGgocGF0aCkgZmFpbHMgKGFz
-IHJlYWxwYXRoKDEpIGRvZXMpLCBzb21ldGhpbmcgbGlrZToKPiAKPiAJCQo+IAkJY2hhciAqbG9v
-cG5hbWUgPSBsb29waW5mby5sb19uYW1lOwo+IAkJaWYgKHJlYWxwYXRoKGxvb3BpbmZvLmxvX25h
-bWUsIHJsb29wZmlsZW5hbWUpICE9IE5VTEwpCj4gCQkJbG9vcG5hbWUgPSBybG9vcGZpbGVuYW1l
-Owo+IAo+IAkJaWYgKDAgPT0gc3RyY21wKGZpbGVuYW1lLCBsb29waW5mby5sb19uYW1lKSB8fG15
-CgkJICAgIDAgPT0gc3RyY21wKHJmaWxlbmFtZSwgbG9vcG5hbWUpKSkgewo+IAkJCWZvdW5kID0g
-cmVhbHBhdGgocGF0aCwgTlVMTCk7Cj4gCQkJYnJlYWs7Cj4gCQl9Cj4gCj4gCj4gVGhhdCBzaG91
-bGQgc29sdmUgYWxsIHByb2JsZW1zIGFuZCBwcm9kdWNlIHVzZWZ1bCByZXN1bHRzIHdpdGggbm90
-Cj4gYSBsb3Qgb2YgbG9naWMuCgpJJ3ZlIHJlcHJvZHVjZWQgeW91ciBpc3N1ZS4gSSBjYW4gc2Vl
-IHRoYXQgdGhlIGN1cnJlbnQgYmVoYXZpb3IgaXMKd3JvbmcuIAoKVGhpcyBtYXkgYmUgcGFyYW5v
-aWQsIGJ1dCBJIHJlYWxseSB3YW50IHRvIGF2b2lkIGZhbHNlIHBvc2l0aXZlcyAtCmtwYXJ0eCBy
-ZW1vdmluZyBtYXBwaW5ncyBpdCBpc24ndCBzdXBwb3NlZCB0byByZW1vdmUuIFRoZXJlZm9yZSBJ
-J2QKbGlrZSB0byBhdm9pZCBjb21wYXJlIGJ5ICJmaWxlbmFtZSIgYW5kICJsb29wbmFtZSIuIEkg
-dGhpbmsgaXQncwpwb3NzaWJsZS4KCklNTyBpdCB3b3VsZCBiZSBiZXR0ZXIgdG8gaGF2ZSBrcGFy
-dHggdXNlIHRoZSByZWFscGF0aCB3aGlsZSAqY3JlYXRpbmcqCnRoZSBwYXJ0aXRpb24gbWFwcGlu
-ZyBhbHJlYWR5OgoKLS0tIGEva3BhcnR4L2twYXJ0eC5jCisrKyBiL2twYXJ0eC9rcGFydHguYwpA
-QCAtMzQxLDcgKzM0MSw3IEBAIG1haW4oaW50IGFyZ2MsIGNoYXIgKiphcmd2KXsKICAgICAgICAg
-ICAgICAgIGlmICghbG9vcGRldikgewogICAgICAgICAgICAgICAgICAgICAgICBsb29wZGV2ID0g
-ZmluZF91bnVzZWRfbG9vcF9kZXZpY2UoKTsKIAotICAgICAgICAgICAgICAgICAgICAgICBpZiAo
-c2V0X2xvb3AobG9vcGRldiwgZGV2aWNlLCAwLCAmcm8pKSB7CisgICAgICAgICAgICAgICAgICAg
-ICAgIGlmIChzZXRfbG9vcChsb29wZGV2LCBycGF0aCwgMCwgJnJvKSkgewogICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgIGZwcmludGYoc3RkZXJyLCAiY2FuJ3Qgc2V0IHVwIGxvb3BcbiIp
-OwogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGV4aXQgKDEpOwogICAgICAgICAgICAg
-ICAgICAgICAgICB9CgoKVGhhdCB3b3VsZCBtYWtlIHN1cmUgdGhhdCBrcGFydHggY2FuIGRlbGV0
-ZSBsb29wIGRldmljZXMgY3JlYXRlZCBieQppdHNlbGYsIHdoaWNoIGlzIHdoYXQgd2Ugd2FudC4g
-SU1PIGl0J3Mgc3VmZmljaWVudCB0byBzb2x2ZSB5b3VyIGlzc3VlLgoKVGhlIC1FTk9ERVYgY2Fz
-ZSBpcyBtb3JlIHRyaWNreSwgeW91ciBwYXRjaCBkb2Vzbid0IHNvbHZlIGl0LiBJZiB5b3UgZG8K
-CmtwYXJ0eCAtYSAvc29tZS9pbWFnZQpybSAtZiAvc29tZS9pbWFnZQprcGFydHggLWQgL3NvbWUv
-aW1hZ2UKCmtwYXJ0eCAtZCBmYWlscywgYW5kIHRoYXQncyB1bnJlbGF0ZWQgdG8gdGhlIHJlYWxw
-YXRoIGNvZGUgKGl0IGZhaWxzIGluCnN0YXQoZGV2aWNlKSBhbHJlYWR5KS4gSG9uZXN0bHksIEkg
-ZG9uJ3QgdGhpbmsgd2UgbmVlZCB0byBzdXBwb3J0IHRoaXMKc2NlbmFyaW8uIFNldHRpbmcgdXAg
-YSBsb29wIGRldmljZSBhbmQgdGhlbiBkZWxldGluZyB0aGUgYmFja2luZyBmaWxlCmlzIHNob290
-aW5nIG9uZXNlbGYgaW4gdGhlIGZvb3QuCgpNYXJ0aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxt
-d2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdt
-YkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24K
-SFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2
-ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0t
-ZGV2ZWw=
+I have a workload where one process sends many asynchronous write bios
+(without waiting for them) and another process sends synchronous flush
+bios. During this workload, writeback throttling throttles down to one
+outstanding bio, and this incorrect throttling causes performance
+degradation (all write bios sleep in __wbt_wait and they couldn't be sent
+in parallel).
+
+The reason for this throttling is that wbt_data_dir counts flush requests
+in the read bucket. The flush requests (that take quite a long time)
+trigger this condition repeatedly:
+	if (stat[READ].min > rwb->min_lat_nsec)
+and that condition causes scale down to one outstanding request, despite
+the fact that there are no read bios at all.
+
+A similar problem could also show up with REQ_OP_ZONE_REPORT and
+REQ_OP_ZONE_RESET - they are also counted in the read bucket.
+
+This patch fixes the function wbt_data_dir, so that only REQ_OP_READ 
+requests are counted in the read bucket. The patch improves SATA 
+write+flush throughput from 130MB/s to 350MB/s.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org	# v4.12+
+
+---
+ block/blk-wbt.c |    6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+Index: linux-stable/block/blk-wbt.c
+===================================================================
+--- linux-stable.orig/block/blk-wbt.c	2018-02-05 12:30:09.606063908 -0500
++++ linux-stable/block/blk-wbt.c	2018-02-05 13:50:02.784213501 -0500
+@@ -697,7 +697,11 @@ u64 wbt_default_latency_nsec(struct requ
+ 
+ static int wbt_data_dir(const struct request *rq)
+ {
+-	return rq_data_dir(rq);
++	/*
++	 * Flushes must be counted in the write bucket, so that high flush
++	 * latencies don't cause scale down.
++	 */
++	return req_op(rq) == REQ_OP_READ ? READ : WRITE;
+ }
+ 
+ int wbt_init(struct request_queue *q)
