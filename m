@@ -1,20 +1,20 @@
-From: Julian Andres Klode <julian.klode@canonical.com>
+From: Martin Wilck <mwilck@suse.com>
 Subject: Re: [PATCH] kpartx: Improve finding loopback device by
  file
-Date: Mon, 5 Feb 2018 16:46:22 +0100
-Message-ID: <20180205154622.axv3cv5wxot3hmbx@jak-x230>
+Date: Mon, 05 Feb 2018 18:07:13 +0100
+Message-ID: <1517850433.14196.63.camel@suse.com>
 References: <20180205085831.23923-1-julian.klode@canonical.com>
 	<1517826733.14196.3.camel@suse.com>
 	<20180205104500.n5rrw6nqzamwijvl@jak-x230>
 	<1517838787.14196.10.camel@suse.com>
 	<20180205144121.27ruwyewpkm3a4kd@jak-x230>
 	<1517843520.14196.45.camel@suse.com>
+	<20180205154622.axv3cv5wxot3hmbx@jak-x230>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1517843520.14196.45.camel@suse.com>
+In-Reply-To: <20180205154622.axv3cv5wxot3hmbx@jak-x230>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,121 +24,54 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
+To: Julian Andres Klode <julian.klode@canonical.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Feb 05, 2018 at 04:12:00PM +0100, Martin Wilck wrote:
-> On Mon, 2018-02-05 at 15:41 +0100, Julian Andres Klode wrote:
-> > On Mon, Feb 05, 2018 at 02:53:07PM +0100, Martin Wilck wrote:
-> > > On Mon, 2018-02-05 at 11:45 +0100, Julian Andres Klode wrote:
-> > > > On Mon, Feb 05, 2018 at 11:32:13AM +0100, Martin Wilck wrote:
-> > > > > On Mon, 2018-02-05 at 09:58 +0100, Julian Andres Klode wrote:
-> > > > > > C
-> > > > > >  		close (fd);
-> > > > > >  
-> > > > > > -		if (0 == strcmp(filename, loopinfo.lo_name))
-> > > > > > {
-> > > > > > +		if (0 == strcmp(filename, loopinfo.lo_name)
-> > > > > > ||
-> > > > > > +		    0 == strcmp(rfilename, loopinfo.lo_name)
-> > > > > > ||
-> > > > > > +		    (realpath(loopinfo.lo_name,
-> > > > > > rloopfilename)
-> > > > > > &&
-> > > > > > +		     0 == strcmp(rfilename, rloopfilename)))
-> > > > > > {
-> > > > > >  			found = realpath(path, NULL);
-> > > > > >  			break;
-> > > > > >  		}
-> > > > > 
-> > > > > That "if x matches y or x matches y' or x' matches y" feels
-> > > > > like
-> > > > > guesswork. Can't we simply call realpath() on both
-> > > > > loopinfo.lo_name
-> > > > > and
-> > > > > filename, and compare the two? 
-> > > > 
-> > > > Probably yes. That said there might be some corner cases:
-> > > > 
-> > > > (1) What happens if the backing file of a loopback is deleted -
-> > > > realpath
-> > > >     can fail with ENOENT.
-> > > > (2) A path could be longer than PATH_MAX and it would fail with
-> > > > ENAMETOOLONG
-> > > >     - this is a "problem" with the initial realpath as well, but
-> > > > less
-> > > > so, because
-> > > >     the user can control that.
-> > > 
-> > > Both are scenarios in which kpartx would have good reason to fail
-> > > (with
-> > > a meaningful error message). That's better than guessing, IMO.
-> > 
-> > (1) Definitely not. Just because one of your (potentially other)
-> > loopback devices
-> > has a deleted file you should not fail.
-> 
-> Sorry for being imprecise. You're right, aborting here while scanning
-> for a matching device would of course be wrong. And deleting such a
-> broken loop device can't be a big mistake.
-> 
-> >  (2) I don't really know.
-> > 
-> > But the problem here is that you are looking at loopback devices
-> > created by
-> > stuff other than kpartx, and they might not be in a "good" state. But
-> > you
-> > don't want to abort just because some _other_ loopback device is
-> > broken.
-> 
-> Can we agree on the following:
-> 
->  1 if realpath (filename) results in error, abort
-
-OK
-
-
->  2 if realpath(lo_name) results in ENODEV and filename matches lo_name,
-> remove loop device
->  3 if realpath(lo_name) results in another error code, skip it
->  4 remove if realpath(filename) matches realpath(lo_name)
-
-
-This seems like a lot of ifs. It might be easier to just path if
-realpath(path) fails (as realpath(1) does), something like:
-
-		
-		char *loopname = loopinfo.lo_name;
-		if (realpath(loopinfo.lo_name, rloopfilename) != NULL)
-			loopname = rloopfilename;
-
-		if (0 == strcmp(filename, loopinfo.lo_name) ||
-		    0 == strcmp(rfilename, loopname))) {
-			found = realpath(path, NULL);
-			break;
-		}
-
-
-That should solve all problems and produce useful results with not
-a lot of logic.
-
-
-We could also abstract that away into:
-
-  const char *safe_realpath(const char *path, char *resolved_path)
-  {
-    char *real = realpath(path, resolved_path);
-
-    return real != NULL ? real : path;
-  }
-
-
-(this has strange behavior compared to realpath, because it does not
- always return resolved_path; I guess, you could strncpy it there, but
- ugh, seems complicated).
-
-
--- 
-debian developer - deb.li/jak | jak-linux.org - free software dev
-ubuntu core developer                              i speak de, en
+T24gTW9uLCAyMDE4LTAyLTA1IGF0IDE2OjQ2ICswMTAwLCBKdWxpYW4gQW5kcmVzIEtsb2RlIHdy
+b3RlOgo+IE9uIE1vbiwgRmViIDA1LCAyMDE4IGF0IDA0OjEyOjAwUE0gKzAxMDAsIE1hcnRpbiBX
+aWxjayB3cm90ZToKPiA+IAo+ID4gQ2FuIHdlIGFncmVlIG9uIHRoZSBmb2xsb3dpbmc6Cj4gPiAK
+PiA+ICAxIGlmIHJlYWxwYXRoIChmaWxlbmFtZSkgcmVzdWx0cyBpbiBlcnJvciwgYWJvcnQKPiAK
+PiBPSwo+IAo+IAo+ID4gIDIgaWYgcmVhbHBhdGgobG9fbmFtZSkgcmVzdWx0cyBpbiBFTk9ERVYg
+YW5kIGZpbGVuYW1lIG1hdGNoZXMKPiA+IGxvX25hbWUsCj4gPiByZW1vdmUgbG9vcCBkZXZpY2UK
+PiA+ICAzIGlmIHJlYWxwYXRoKGxvX25hbWUpIHJlc3VsdHMgaW4gYW5vdGhlciBlcnJvciBjb2Rl
+LCBza2lwIGl0Cj4gPiAgNCByZW1vdmUgaWYgcmVhbHBhdGgoZmlsZW5hbWUpIG1hdGNoZXMgcmVh
+bHBhdGgobG9fbmFtZSkKPiAKPiAKPiBUaGlzIHNlZW1zIGxpa2UgYSBsb3Qgb2YgaWZzLiBJdCBt
+aWdodCBiZSBlYXNpZXIgdG8ganVzdCBwYXRoIGlmCj4gcmVhbHBhdGgocGF0aCkgZmFpbHMgKGFz
+IHJlYWxwYXRoKDEpIGRvZXMpLCBzb21ldGhpbmcgbGlrZToKPiAKPiAJCQo+IAkJY2hhciAqbG9v
+cG5hbWUgPSBsb29waW5mby5sb19uYW1lOwo+IAkJaWYgKHJlYWxwYXRoKGxvb3BpbmZvLmxvX25h
+bWUsIHJsb29wZmlsZW5hbWUpICE9IE5VTEwpCj4gCQkJbG9vcG5hbWUgPSBybG9vcGZpbGVuYW1l
+Owo+IAo+IAkJaWYgKDAgPT0gc3RyY21wKGZpbGVuYW1lLCBsb29waW5mby5sb19uYW1lKSB8fG15
+CgkJICAgIDAgPT0gc3RyY21wKHJmaWxlbmFtZSwgbG9vcG5hbWUpKSkgewo+IAkJCWZvdW5kID0g
+cmVhbHBhdGgocGF0aCwgTlVMTCk7Cj4gCQkJYnJlYWs7Cj4gCQl9Cj4gCj4gCj4gVGhhdCBzaG91
+bGQgc29sdmUgYWxsIHByb2JsZW1zIGFuZCBwcm9kdWNlIHVzZWZ1bCByZXN1bHRzIHdpdGggbm90
+Cj4gYSBsb3Qgb2YgbG9naWMuCgpJJ3ZlIHJlcHJvZHVjZWQgeW91ciBpc3N1ZS4gSSBjYW4gc2Vl
+IHRoYXQgdGhlIGN1cnJlbnQgYmVoYXZpb3IgaXMKd3JvbmcuIAoKVGhpcyBtYXkgYmUgcGFyYW5v
+aWQsIGJ1dCBJIHJlYWxseSB3YW50IHRvIGF2b2lkIGZhbHNlIHBvc2l0aXZlcyAtCmtwYXJ0eCBy
+ZW1vdmluZyBtYXBwaW5ncyBpdCBpc24ndCBzdXBwb3NlZCB0byByZW1vdmUuIFRoZXJlZm9yZSBJ
+J2QKbGlrZSB0byBhdm9pZCBjb21wYXJlIGJ5ICJmaWxlbmFtZSIgYW5kICJsb29wbmFtZSIuIEkg
+dGhpbmsgaXQncwpwb3NzaWJsZS4KCklNTyBpdCB3b3VsZCBiZSBiZXR0ZXIgdG8gaGF2ZSBrcGFy
+dHggdXNlIHRoZSByZWFscGF0aCB3aGlsZSAqY3JlYXRpbmcqCnRoZSBwYXJ0aXRpb24gbWFwcGlu
+ZyBhbHJlYWR5OgoKLS0tIGEva3BhcnR4L2twYXJ0eC5jCisrKyBiL2twYXJ0eC9rcGFydHguYwpA
+QCAtMzQxLDcgKzM0MSw3IEBAIG1haW4oaW50IGFyZ2MsIGNoYXIgKiphcmd2KXsKICAgICAgICAg
+ICAgICAgIGlmICghbG9vcGRldikgewogICAgICAgICAgICAgICAgICAgICAgICBsb29wZGV2ID0g
+ZmluZF91bnVzZWRfbG9vcF9kZXZpY2UoKTsKIAotICAgICAgICAgICAgICAgICAgICAgICBpZiAo
+c2V0X2xvb3AobG9vcGRldiwgZGV2aWNlLCAwLCAmcm8pKSB7CisgICAgICAgICAgICAgICAgICAg
+ICAgIGlmIChzZXRfbG9vcChsb29wZGV2LCBycGF0aCwgMCwgJnJvKSkgewogICAgICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgIGZwcmludGYoc3RkZXJyLCAiY2FuJ3Qgc2V0IHVwIGxvb3BcbiIp
+OwogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGV4aXQgKDEpOwogICAgICAgICAgICAg
+ICAgICAgICAgICB9CgoKVGhhdCB3b3VsZCBtYWtlIHN1cmUgdGhhdCBrcGFydHggY2FuIGRlbGV0
+ZSBsb29wIGRldmljZXMgY3JlYXRlZCBieQppdHNlbGYsIHdoaWNoIGlzIHdoYXQgd2Ugd2FudC4g
+SU1PIGl0J3Mgc3VmZmljaWVudCB0byBzb2x2ZSB5b3VyIGlzc3VlLgoKVGhlIC1FTk9ERVYgY2Fz
+ZSBpcyBtb3JlIHRyaWNreSwgeW91ciBwYXRjaCBkb2Vzbid0IHNvbHZlIGl0LiBJZiB5b3UgZG8K
+CmtwYXJ0eCAtYSAvc29tZS9pbWFnZQpybSAtZiAvc29tZS9pbWFnZQprcGFydHggLWQgL3NvbWUv
+aW1hZ2UKCmtwYXJ0eCAtZCBmYWlscywgYW5kIHRoYXQncyB1bnJlbGF0ZWQgdG8gdGhlIHJlYWxw
+YXRoIGNvZGUgKGl0IGZhaWxzIGluCnN0YXQoZGV2aWNlKSBhbHJlYWR5KS4gSG9uZXN0bHksIEkg
+ZG9uJ3QgdGhpbmsgd2UgbmVlZCB0byBzdXBwb3J0IHRoaXMKc2NlbmFyaW8uIFNldHRpbmcgdXAg
+YSBsb29wIGRldmljZSBhbmQgdGhlbiBkZWxldGluZyB0aGUgYmFja2luZyBmaWxlCmlzIHNob290
+aW5nIG9uZXNlbGYgaW4gdGhlIGZvb3QuCgpNYXJ0aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxt
+d2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdt
+YkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24K
+SFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2
+ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0t
+ZGV2ZWw=
