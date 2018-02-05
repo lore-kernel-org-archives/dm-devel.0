@@ -1,11 +1,14 @@
-From: Julian Andres Klode <julian.klode@canonical.com>
-Subject: [PATCH] kpartx: Improve finding loopback device by file
-Date: Mon,  5 Feb 2018 09:58:31 +0100
-Message-ID: <20180205085831.23923-1-julian.klode@canonical.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH] kpartx: Improve finding loopback device by
+ file
+Date: Mon, 05 Feb 2018 11:32:13 +0100
+Message-ID: <1517826733.14196.3.camel@suse.com>
+References: <20180205085831.23923-1-julian.klode@canonical.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20180205085831.23923-1-julian.klode@canonical.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,78 +18,59 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Device-mapper development mailing list <dm-devel@redhat.com>
-Cc: Julian Andres Klode <julian.klode@canonical.com>
+To: Julian Andres Klode <julian.klode@canonical.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Device-mapper development mailing list <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Commit 9bdfa3eb8e24b668e6c2bb882cddb0ccfe23ed5b changed kpartx
-to lookup files by absolute path, using realpath(). This introduced
-a regression when part of the filename where symbolic links. While
-the kernel stores the absolute path to the backing file, it does not
-resolve symbolic links, and hence kpartx would fail to find the loopback
-device because it resolves symbolic links when deleting.
-
-This introduces two workarounds in find_loop_by_file()
-
-(1) We match against the specified file name as is as well
-(2) We canonicalize the loopinfo.lo_name and match the canonicalized filename
-    against that.
-
-Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/+source/multipath-tools/+bug/1747044
-Signed-off-by: Julian Andres Klode <julian.klode@canonical.com>
----
- kpartx/kpartx.c |  8 +-------
- kpartx/lopart.c | 12 +++++++++++-
- 2 files changed, 12 insertions(+), 8 deletions(-)
-
-diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
-index 442b6bd9..c1af1c5e 100644
---- a/kpartx/kpartx.c
-+++ b/kpartx/kpartx.c
-@@ -327,13 +327,7 @@ main(int argc, char **argv){
- 
- 	if (S_ISREG (buf.st_mode)) {
- 		/* already looped file ? */
--		char rpath[PATH_MAX];
--		if (realpath(device, rpath) == NULL) {
--			fprintf(stderr, "Error: %s: %s\n", device,
--				strerror(errno));
--			exit (1);
--		}
--		loopdev = find_loop_by_file(rpath);
-+		loopdev = find_loop_by_file(device);
- 
- 		if (!loopdev && what == DELETE)
- 			exit (0);
-diff --git a/kpartx/lopart.c b/kpartx/lopart.c
-index 02b29e8c..26b2678c 100644
---- a/kpartx/lopart.c
-+++ b/kpartx/lopart.c
-@@ -69,6 +69,13 @@ char *find_loop_by_file(const char *filename)
- 	struct loop_info loopinfo;
- 	const char VIRT_BLOCK[] = "/sys/devices/virtual/block";
- 	char path[PATH_MAX];
-+	char rfilename[PATH_MAX];
-+	char rloopfilename[PATH_MAX];
-+	if (realpath(filename, rfilename) == NULL) {
-+		fprintf(stderr, "Error: %s: %s\n", filename,
-+				strerror(errno));
-+		exit (1);
-+	}
- 
- 	dir = opendir(VIRT_BLOCK);
- 	if (!dir)
-@@ -117,7 +124,10 @@ char *find_loop_by_file(const char *filename)
- 
- 		close (fd);
- 
--		if (0 == strcmp(filename, loopinfo.lo_name)) {
-+		if (0 == strcmp(filename, loopinfo.lo_name) ||
-+		    0 == strcmp(rfilename, loopinfo.lo_name) ||
-+		    (realpath(loopinfo.lo_name, rloopfilename) &&
-+		     0 == strcmp(rfilename, rloopfilename))) {
- 			found = realpath(path, NULL);
- 			break;
- 		}
--- 
-2.15.1
+T24gTW9uLCAyMDE4LTAyLTA1IGF0IDA5OjU4ICswMTAwLCBKdWxpYW4gQW5kcmVzIEtsb2RlIHdy
+b3RlOgo+IENvbW1pdCA5YmRmYTNlYjhlMjRiNjY4ZTZjMmJiODgyY2RkYjBjY2ZlMjNlZDViIGNo
+YW5nZWQga3BhcnR4Cj4gdG8gbG9va3VwIGZpbGVzIGJ5IGFic29sdXRlIHBhdGgsIHVzaW5nIHJl
+YWxwYXRoKCkuIFRoaXMgaW50cm9kdWNlZAo+IGEgcmVncmVzc2lvbiB3aGVuIHBhcnQgb2YgdGhl
+IGZpbGVuYW1lIHdoZXJlIHN5bWJvbGljIGxpbmtzLiBXaGlsZQo+IHRoZSBrZXJuZWwgc3RvcmVz
+IHRoZSBhYnNvbHV0ZSBwYXRoIHRvIHRoZSBiYWNraW5nIGZpbGUsIGl0IGRvZXMgbm90Cj4gcmVz
+b2x2ZSBzeW1ib2xpYyBsaW5rcywgYW5kIGhlbmNlIGtwYXJ0eCB3b3VsZCBmYWlsIHRvIGZpbmQg
+dGhlCj4gbG9vcGJhY2sKPiBkZXZpY2UgYmVjYXVzZSBpdCByZXNvbHZlcyBzeW1ib2xpYyBsaW5r
+cyB3aGVuIGRlbGV0aW5nLgo+IAo+IFRoaXMgaW50cm9kdWNlcyB0d28gd29ya2Fyb3VuZHMgaW4g
+ZmluZF9sb29wX2J5X2ZpbGUoKQo+IAo+ICgxKSBXZSBtYXRjaCBhZ2FpbnN0IHRoZSBzcGVjaWZp
+ZWQgZmlsZSBuYW1lIGFzIGlzIGFzIHdlbGwKPiAoMikgV2UgY2Fub25pY2FsaXplIHRoZSBsb29w
+aW5mby5sb19uYW1lIGFuZCBtYXRjaCB0aGUgY2Fub25pY2FsaXplZAo+IGZpbGVuYW1lCj4gICAg
+IGFnYWluc3QgdGhhdC4KPiAKPiBCdWctVWJ1bnR1OiBodHRwczovL2J1Z3MubGF1bmNocGFkLm5l
+dC91YnVudHUvK3NvdXJjZS9tdWx0aXBhdGgtdG9vbHMKPiAvK2J1Zy8xNzQ3MDQ0Cj4gU2lnbmVk
+LW9mZi1ieTogSnVsaWFuIEFuZHJlcyBLbG9kZSA8anVsaWFuLmtsb2RlQGNhbm9uaWNhbC5jb20+
+Cj4gLS0tCj4gIGtwYXJ0eC9rcGFydHguYyB8ICA4ICstLS0tLS0tCj4gIGtwYXJ0eC9sb3BhcnQu
+YyB8IDEyICsrKysrKysrKysrLQo+ICAyIGZpbGVzIGNoYW5nZWQsIDEyIGluc2VydGlvbnMoKyks
+IDggZGVsZXRpb25zKC0pCj4gCj4gZGlmZiAtLWdpdCBhL2twYXJ0eC9rcGFydHguYyBiL2twYXJ0
+eC9rcGFydHguYwo+IGluZGV4IDQ0MmI2YmQ5Li5jMWFmMWM1ZSAxMDA2NDQKPiAtLS0gYS9rcGFy
+dHgva3BhcnR4LmMKPiArKysgYi9rcGFydHgva3BhcnR4LmMKPiBAQCAtMzI3LDEzICszMjcsNyBA
+QCBtYWluKGludCBhcmdjLCBjaGFyICoqYXJndil7Cj4gIAo+ICAJaWYgKFNfSVNSRUcgKGJ1Zi5z
+dF9tb2RlKSkgewo+ICAJCS8qIGFscmVhZHkgbG9vcGVkIGZpbGUgPyAqLwo+IC0JCWNoYXIgcnBh
+dGhbUEFUSF9NQVhdOwo+IC0JCWlmIChyZWFscGF0aChkZXZpY2UsIHJwYXRoKSA9PSBOVUxMKSB7
+Cj4gLQkJCWZwcmludGYoc3RkZXJyLCAiRXJyb3I6ICVzOiAlc1xuIiwgZGV2aWNlLAo+IC0JCQkJ
+c3RyZXJyb3IoZXJybm8pKTsKPiAtCQkJZXhpdCAoMSk7Cj4gLQkJfQo+IC0JCWxvb3BkZXYgPSBm
+aW5kX2xvb3BfYnlfZmlsZShycGF0aCk7Cj4gKwkJbG9vcGRldiA9IGZpbmRfbG9vcF9ieV9maWxl
+KGRldmljZSk7Cj4gIAo+ICAJCWlmICghbG9vcGRldiAmJiB3aGF0ID09IERFTEVURSkKPiAgCQkJ
+ZXhpdCAoMCk7Cj4gZGlmZiAtLWdpdCBhL2twYXJ0eC9sb3BhcnQuYyBiL2twYXJ0eC9sb3BhcnQu
+Ywo+IGluZGV4IDAyYjI5ZThjLi4yNmIyNjc4YyAxMDA2NDQKPiAtLS0gYS9rcGFydHgvbG9wYXJ0
+LmMKPiArKysgYi9rcGFydHgvbG9wYXJ0LmMKPiBAQCAtNjksNiArNjksMTMgQEAgY2hhciAqZmlu
+ZF9sb29wX2J5X2ZpbGUoY29uc3QgY2hhciAqZmlsZW5hbWUpCj4gIAlzdHJ1Y3QgbG9vcF9pbmZv
+IGxvb3BpbmZvOwo+ICAJY29uc3QgY2hhciBWSVJUX0JMT0NLW10gPSAiL3N5cy9kZXZpY2VzL3Zp
+cnR1YWwvYmxvY2siOwo+ICAJY2hhciBwYXRoW1BBVEhfTUFYXTsKPiArCWNoYXIgcmZpbGVuYW1l
+W1BBVEhfTUFYXTsKPiArCWNoYXIgcmxvb3BmaWxlbmFtZVtQQVRIX01BWF07Cj4gKwlpZiAocmVh
+bHBhdGgoZmlsZW5hbWUsIHJmaWxlbmFtZSkgPT0gTlVMTCkgewo+ICsJCWZwcmludGYoc3RkZXJy
+LCAiRXJyb3I6ICVzOiAlc1xuIiwgZmlsZW5hbWUsCj4gKwkJCQlzdHJlcnJvcihlcnJubykpOwo+
+ICsJCWV4aXQgKDEpOwo+ICsJfQo+ICAKPiAgCWRpciA9IG9wZW5kaXIoVklSVF9CTE9DSyk7Cj4g
+IAlpZiAoIWRpcikKPiBAQCAtMTE3LDcgKzEyNCwxMCBAQCBjaGFyICpmaW5kX2xvb3BfYnlfZmls
+ZShjb25zdCBjaGFyICpmaWxlbmFtZSkKPiAgCj4gIAkJY2xvc2UgKGZkKTsKPiAgCj4gLQkJaWYg
+KDAgPT0gc3RyY21wKGZpbGVuYW1lLCBsb29waW5mby5sb19uYW1lKSkgewo+ICsJCWlmICgwID09
+IHN0cmNtcChmaWxlbmFtZSwgbG9vcGluZm8ubG9fbmFtZSkgfHwKPiArCQkgICAgMCA9PSBzdHJj
+bXAocmZpbGVuYW1lLCBsb29waW5mby5sb19uYW1lKSB8fAo+ICsJCSAgICAocmVhbHBhdGgobG9v
+cGluZm8ubG9fbmFtZSwgcmxvb3BmaWxlbmFtZSkgJiYKPiArCQkgICAgIDAgPT0gc3RyY21wKHJm
+aWxlbmFtZSwgcmxvb3BmaWxlbmFtZSkpKSB7Cj4gIAkJCWZvdW5kID0gcmVhbHBhdGgocGF0aCwg
+TlVMTCk7Cj4gIAkJCWJyZWFrOwo+ICAJCX0KClRoYXQgImlmIHggbWF0Y2hlcyB5IG9yIHggbWF0
+Y2hlcyB5JyBvciB4JyBtYXRjaGVzIHkiIGZlZWxzIGxpa2UKZ3Vlc3N3b3JrLiBDYW4ndCB3ZSBz
+aW1wbHkgY2FsbCByZWFscGF0aCgpIG9uIGJvdGggbG9vcGluZm8ubG9fbmFtZSBhbmQKZmlsZW5h
+bWUsIGFuZCBjb21wYXJlIHRoZSB0d28/IAoKTWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8
+bXdpbGNrQHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBH
+bWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9u
+CkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRl
+dmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2Rt
+LWRldmVs
