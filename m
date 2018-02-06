@@ -1,8 +1,8 @@
-From: Julian Andres Klode <julian.klode@canonical.com>
+From: Martin Wilck <mwilck@suse.com>
 Subject: Re: [PATCH] kpartx: Improve finding loopback device by
  file
-Date: Tue, 6 Feb 2018 12:19:43 +0100
-Message-ID: <20180206111943.zy534jgeqaveveic@jak-x230>
+Date: Tue, 06 Feb 2018 13:53:44 +0100
+Message-ID: <1517921624.17197.11.camel@suse.com>
 References: <20180205085831.23923-1-julian.klode@canonical.com>
 	<1517826733.14196.3.camel@suse.com>
 	<20180205104500.n5rrw6nqzamwijvl@jak-x230>
@@ -11,12 +11,12 @@ References: <20180205085831.23923-1-julian.klode@canonical.com>
 	<1517843520.14196.45.camel@suse.com>
 	<20180205154622.axv3cv5wxot3hmbx@jak-x230>
 	<1517850433.14196.63.camel@suse.com>
+	<20180206111943.zy534jgeqaveveic@jak-x230>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1517850433.14196.63.camel@suse.com>
+In-Reply-To: <20180206111943.zy534jgeqaveveic@jak-x230>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,77 +26,67 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
+To: Julian Andres Klode <julian.klode@canonical.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Feb 05, 2018 at 06:07:13PM +0100, Martin Wilck wrote:
-> On Mon, 2018-02-05 at 16:46 +0100, Julian Andres Klode wrote:
-> > On Mon, Feb 05, 2018 at 04:12:00PM +0100, Martin Wilck wrote:
-> > > 
-> > > Can we agree on the following:
-> > > 
-> > >  1 if realpath (filename) results in error, abort
-> > 
-> > OK
-> > 
-> > 
-> > >  2 if realpath(lo_name) results in ENODEV and filename matches
-> > > lo_name,
-> > > remove loop device
-> > >  3 if realpath(lo_name) results in another error code, skip it
-> > >  4 remove if realpath(filename) matches realpath(lo_name)
-> > 
-> > 
-> > This seems like a lot of ifs. It might be easier to just path if
-> > realpath(path) fails (as realpath(1) does), something like:
-> > 
-> > 		
-> > 		char *loopname = loopinfo.lo_name;
-> > 		if (realpath(loopinfo.lo_name, rloopfilename) != NULL)
-> > 			loopname = rloopfilename;
-> > 
-> > 		if (0 == strcmp(filename, loopinfo.lo_name) ||my
-> 		    0 == strcmp(rfilename, loopname))) {
-> > 			found = realpath(path, NULL);
-> > 			break;
-> > 		}
-> > 
-> > 
-> > That should solve all problems and produce useful results with not
-> > a lot of logic.
-> 
-> I've reproduced your issue. I can see that the current behavior is
-> wrong. 
-> 
-> This may be paranoid, but I really want to avoid false positives -
-> kpartx removing mappings it isn't supposed to remove. Therefore I'd
-> like to avoid compare by "filename" and "loopname". I think it's
-> possible.
-> 
-> IMO it would be better to have kpartx use the realpath while *creating*
-> the partition mapping already:
-> 
-> --- a/kpartx/kpartx.c
-> +++ b/kpartx/kpartx.c
-> @@ -341,7 +341,7 @@ main(int argc, char **argv){
->                 if (!loopdev) {
->                         loopdev = find_unused_loop_device();
->  
-> -                       if (set_loop(loopdev, device, 0, &ro)) {
-> +                       if (set_loop(loopdev, rpath, 0, &ro)) {
->                                 fprintf(stderr, "can't set up loop\n");
->                                 exit (1);
->                         }
-> 
-> 
-> That would make sure that kpartx can delete loop devices created by
-> itself, which is what we want. IMO it's sufficient to solve your issue.
-
-I was about to suggest that, but did not do it, as it's kind of weird. You
-add /a/b/c.img (pointing to /x/y/z.img) and losetup then shows you /x/y/z.img
-- I fear this might break some stuff that checks whether the binding was
-actually created (or checks which loop device it was created at).
--- 
-debian developer - deb.li/jak | jak-linux.org - free software dev
-ubuntu core developer                              i speak de, en
+T24gVHVlLCAyMDE4LTAyLTA2IGF0IDEyOjE5ICswMTAwLCBKdWxpYW4gQW5kcmVzIEtsb2RlIHdy
+b3RlOgo+IE9uIE1vbiwgRmViIDA1LCAyMDE4IGF0IDA2OjA3OjEzUE0gKzAxMDAsIE1hcnRpbiBX
+aWxjayB3cm90ZToKPiA+IE9uIE1vbiwgMjAxOC0wMi0wNSBhdCAxNjo0NiArMDEwMCwgSnVsaWFu
+IEFuZHJlcyBLbG9kZSB3cm90ZToKPiA+ID4gT24gTW9uLCBGZWIgMDUsIDIwMTggYXQgMDQ6MTI6
+MDBQTSArMDEwMCwgTWFydGluIFdpbGNrIHdyb3RlOgo+ID4gPiA+IAo+ID4gPiA+IENhbiB3ZSBh
+Z3JlZSBvbiB0aGUgZm9sbG93aW5nOgo+ID4gPiA+IAo+ID4gPiA+ICAxIGlmIHJlYWxwYXRoIChm
+aWxlbmFtZSkgcmVzdWx0cyBpbiBlcnJvciwgYWJvcnQKPiA+ID4gCj4gPiA+IE9LCj4gPiA+IAo+
+ID4gPiAKPiA+ID4gPiAgMiBpZiByZWFscGF0aChsb19uYW1lKSByZXN1bHRzIGluIEVOT0RFViBh
+bmQgZmlsZW5hbWUgbWF0Y2hlcwo+ID4gPiA+IGxvX25hbWUsCj4gPiA+ID4gcmVtb3ZlIGxvb3Ag
+ZGV2aWNlCj4gPiA+ID4gIDMgaWYgcmVhbHBhdGgobG9fbmFtZSkgcmVzdWx0cyBpbiBhbm90aGVy
+IGVycm9yIGNvZGUsIHNraXAgaXQKPiA+ID4gPiAgNCByZW1vdmUgaWYgcmVhbHBhdGgoZmlsZW5h
+bWUpIG1hdGNoZXMgcmVhbHBhdGgobG9fbmFtZSkKPiA+ID4gCj4gPiA+IAo+ID4gPiBUaGlzIHNl
+ZW1zIGxpa2UgYSBsb3Qgb2YgaWZzLiBJdCBtaWdodCBiZSBlYXNpZXIgdG8ganVzdCBwYXRoIGlm
+Cj4gPiA+IHJlYWxwYXRoKHBhdGgpIGZhaWxzIChhcyByZWFscGF0aCgxKSBkb2VzKSwgc29tZXRo
+aW5nIGxpa2U6Cj4gPiA+IAo+ID4gPiAJCQo+ID4gPiAJCWNoYXIgKmxvb3BuYW1lID0gbG9vcGlu
+Zm8ubG9fbmFtZTsKPiA+ID4gCQlpZiAocmVhbHBhdGgobG9vcGluZm8ubG9fbmFtZSwgcmxvb3Bm
+aWxlbmFtZSkgIT0gTlVMTCkKPiA+ID4gCQkJbG9vcG5hbWUgPSBybG9vcGZpbGVuYW1lOwo+ID4g
+PiAKPiA+ID4gCQlpZiAoMCA9PSBzdHJjbXAoZmlsZW5hbWUsIGxvb3BpbmZvLmxvX25hbWUpIHx8
+bXkKPiA+IAo+ID4gCQkgICAgMCA9PSBzdHJjbXAocmZpbGVuYW1lLCBsb29wbmFtZSkpKSB7Cj4g
+PiA+IAkJCWZvdW5kID0gcmVhbHBhdGgocGF0aCwgTlVMTCk7Cj4gPiA+IAkJCWJyZWFrOwo+ID4g
+PiAJCX0KPiA+ID4gCj4gPiA+IAo+ID4gPiBUaGF0IHNob3VsZCBzb2x2ZSBhbGwgcHJvYmxlbXMg
+YW5kIHByb2R1Y2UgdXNlZnVsIHJlc3VsdHMgd2l0aAo+ID4gPiBub3QKPiA+ID4gYSBsb3Qgb2Yg
+bG9naWMuCj4gPiAKPiA+IEkndmUgcmVwcm9kdWNlZCB5b3VyIGlzc3VlLiBJIGNhbiBzZWUgdGhh
+dCB0aGUgY3VycmVudCBiZWhhdmlvciBpcwo+ID4gd3JvbmcuIAo+ID4gCj4gPiBUaGlzIG1heSBi
+ZSBwYXJhbm9pZCwgYnV0IEkgcmVhbGx5IHdhbnQgdG8gYXZvaWQgZmFsc2UgcG9zaXRpdmVzIC0K
+PiA+IGtwYXJ0eCByZW1vdmluZyBtYXBwaW5ncyBpdCBpc24ndCBzdXBwb3NlZCB0byByZW1vdmUu
+IFRoZXJlZm9yZSBJJ2QKPiA+IGxpa2UgdG8gYXZvaWQgY29tcGFyZSBieSAiZmlsZW5hbWUiIGFu
+ZCAibG9vcG5hbWUiLiBJIHRoaW5rIGl0J3MKPiA+IHBvc3NpYmxlLgo+ID4gCj4gPiBJTU8gaXQg
+d291bGQgYmUgYmV0dGVyIHRvIGhhdmUga3BhcnR4IHVzZSB0aGUgcmVhbHBhdGggd2hpbGUKPiA+
+ICpjcmVhdGluZyoKPiA+IHRoZSBwYXJ0aXRpb24gbWFwcGluZyBhbHJlYWR5Ogo+ID4gCj4gPiAt
+LS0gYS9rcGFydHgva3BhcnR4LmMKPiA+ICsrKyBiL2twYXJ0eC9rcGFydHguYwo+ID4gQEAgLTM0
+MSw3ICszNDEsNyBAQCBtYWluKGludCBhcmdjLCBjaGFyICoqYXJndil7Cj4gPiAgICAgICAgICAg
+ICAgICAgaWYgKCFsb29wZGV2KSB7Cj4gPiAgICAgICAgICAgICAgICAgICAgICAgICBsb29wZGV2
+ID0gZmluZF91bnVzZWRfbG9vcF9kZXZpY2UoKTsKPiA+ICAKPiA+IC0gICAgICAgICAgICAgICAg
+ICAgICAgIGlmIChzZXRfbG9vcChsb29wZGV2LCBkZXZpY2UsIDAsICZybykpIHsKPiA+ICsgICAg
+ICAgICAgICAgICAgICAgICAgIGlmIChzZXRfbG9vcChsb29wZGV2LCBycGF0aCwgMCwgJnJvKSkg
+ewo+ID4gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBmcHJpbnRmKHN0ZGVyciwgImNh
+bid0IHNldCB1cAo+ID4gbG9vcFxuIik7Cj4gPiAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgIGV4aXQgKDEpOwo+ID4gICAgICAgICAgICAgICAgICAgICAgICAgfQo+ID4gCj4gPiAKPiA+
+IFRoYXQgd291bGQgbWFrZSBzdXJlIHRoYXQga3BhcnR4IGNhbiBkZWxldGUgbG9vcCBkZXZpY2Vz
+IGNyZWF0ZWQgYnkKPiA+IGl0c2VsZiwgd2hpY2ggaXMgd2hhdCB3ZSB3YW50LiBJTU8gaXQncyBz
+dWZmaWNpZW50IHRvIHNvbHZlIHlvdXIKPiA+IGlzc3VlLgo+IAo+IEkgd2FzIGFib3V0IHRvIHN1
+Z2dlc3QgdGhhdCwgYnV0IGRpZCBub3QgZG8gaXQsIGFzIGl0J3Mga2luZCBvZgo+IHdlaXJkLiBZ
+b3UKPiBhZGQgL2EvYi9jLmltZyAocG9pbnRpbmcgdG8gL3gveS96LmltZykgYW5kIGxvc2V0dXAg
+dGhlbiBzaG93cyB5b3UKPiAveC95L3ouaW1nCj4gLSBJIGZlYXIgdGhpcyBtaWdodCBicmVhayBz
+b21lIHN0dWZmIHRoYXQgY2hlY2tzIHdoZXRoZXIgdGhlIGJpbmRpbmcKPiB3YXMKPiBhY3R1YWxs
+eSBjcmVhdGVkIChvciBjaGVja3Mgd2hpY2ggbG9vcCBkZXZpY2UgaXQgd2FzIGNyZWF0ZWQgYXQp
+LgoKSU1PIHRoaXMgaXMgZXhhY3RseSB0aGUgcmlnaHQgdGhpbmcgdG8gZG8uIEluIG9yZGVyIHRv
+IGlkZW50aWZ5IGxvb3AKbWFwcGluZ3MsIHlvdSBzaG91bGRuJ3QgcmVseSBvbiBzb21ldGhpbmcg
+YXMgdm9sYXRpbGUgYXMgYXJiaXRyYXJ5CnN5bWxpbmtzLiBJJ20gYXdhcmUgdGhhdCB0aGUgInJl
+YWwgcGF0aCIgaXNuJ3QgY2FydmVkIGluIHN0b25lIGVpdGhlciwgCmJ1dCBhdCBsZWFzdCBpdCB1
+bmlxdWVseSBpZGVudGlmaWVzIGEgZmlsZSBhdCBhIGdpdmVuIHBvaW50IGluIHRpbWUuCkludGVy
+bmFsbHksIHRoZSBsb29wIGRyaXZlciByZWZlcnMgdG8gdGhlIGlub2RlIGFueXdheS4KClRoZSBz
+Y3JpcHRzIHlvdSBtZW50aW9uLCBpZiB0aGV5IGFjdHVhbGx5IGV4aXN0LCB3b3VsZCBiZW5lZml0
+IGlmIHRoZXkKd2VyZSBmaXhlZCB0byB3b3JrIHdpdGggcmVhbCBwYXRocywgdG9vLgoKUmVnYXJk
+cwpNYXJ0aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0
+OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZm
+ZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcp
+CgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3
+dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
