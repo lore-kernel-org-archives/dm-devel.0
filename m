@@ -1,103 +1,102 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH] wbt: fix incorrect throttling due to flush latency
-Date: Mon, 5 Feb 2018 13:16:39 -0700
-Message-ID: <95c737cc-07d0-c0a5-1d97-1e58df005802@kernel.dk>
-References: <alpine.LRH.2.02.1802051406190.15867@file01.intranet.prod.int.rdu2.redhat.com>
- <33d2d1ab-d57e-8a3f-94df-e79704b5d863@kernel.dk>
- <6bf3dd42-eb4a-8408-eb09-3b6c4dd18354@kernel.dk>
- <alpine.LRH.2.02.1802051456570.24305@file01.intranet.prod.int.rdu2.redhat.com>
+From: Julian Andres Klode <julian.klode@canonical.com>
+Subject: Re: [PATCH] kpartx: Improve finding loopback device by
+ file
+Date: Tue, 6 Feb 2018 12:19:43 +0100
+Message-ID: <20180206111943.zy534jgeqaveveic@jak-x230>
+References: <20180205085831.23923-1-julian.klode@canonical.com>
+	<1517826733.14196.3.camel@suse.com>
+	<20180205104500.n5rrw6nqzamwijvl@jak-x230>
+	<1517838787.14196.10.camel@suse.com>
+	<20180205144121.27ruwyewpkm3a4kd@jak-x230>
+	<1517843520.14196.45.camel@suse.com>
+	<20180205154622.axv3cv5wxot3hmbx@jak-x230>
+	<1517850433.14196.63.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.02.1802051456570.24305@file01.intranet.prod.int.rdu2.redhat.com>
-Content-Language: en-US
-Sender: linux-block-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: linux-block@vger.kernel.org, dm-devel@redhat.com
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1517850433.14196.63.camel@suse.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 2/5/18 1:00 PM, Mikulas Patocka wrote:
+On Mon, Feb 05, 2018 at 06:07:13PM +0100, Martin Wilck wrote:
+> On Mon, 2018-02-05 at 16:46 +0100, Julian Andres Klode wrote:
+> > On Mon, Feb 05, 2018 at 04:12:00PM +0100, Martin Wilck wrote:
+> > > 
+> > > Can we agree on the following:
+> > > 
+> > >  1 if realpath (filename) results in error, abort
+> > 
+> > OK
+> > 
+> > 
+> > >  2 if realpath(lo_name) results in ENODEV and filename matches
+> > > lo_name,
+> > > remove loop device
+> > >  3 if realpath(lo_name) results in another error code, skip it
+> > >  4 remove if realpath(filename) matches realpath(lo_name)
+> > 
+> > 
+> > This seems like a lot of ifs. It might be easier to just path if
+> > realpath(path) fails (as realpath(1) does), something like:
+> > 
+> > 		
+> > 		char *loopname = loopinfo.lo_name;
+> > 		if (realpath(loopinfo.lo_name, rloopfilename) != NULL)
+> > 			loopname = rloopfilename;
+> > 
+> > 		if (0 == strcmp(filename, loopinfo.lo_name) ||my
+> 		    0 == strcmp(rfilename, loopname))) {
+> > 			found = realpath(path, NULL);
+> > 			break;
+> > 		}
+> > 
+> > 
+> > That should solve all problems and produce useful results with not
+> > a lot of logic.
+> 
+> I've reproduced your issue. I can see that the current behavior is
+> wrong. 
+> 
+> This may be paranoid, but I really want to avoid false positives -
+> kpartx removing mappings it isn't supposed to remove. Therefore I'd
+> like to avoid compare by "filename" and "loopname". I think it's
+> possible.
+> 
+> IMO it would be better to have kpartx use the realpath while *creating*
+> the partition mapping already:
+> 
+> --- a/kpartx/kpartx.c
+> +++ b/kpartx/kpartx.c
+> @@ -341,7 +341,7 @@ main(int argc, char **argv){
+>                 if (!loopdev) {
+>                         loopdev = find_unused_loop_device();
+>  
+> -                       if (set_loop(loopdev, device, 0, &ro)) {
+> +                       if (set_loop(loopdev, rpath, 0, &ro)) {
+>                                 fprintf(stderr, "can't set up loop\n");
+>                                 exit (1);
+>                         }
 > 
 > 
-> On Mon, 5 Feb 2018, Jens Axboe wrote:
-> 
->> On 2/5/18 12:22 PM, Jens Axboe wrote:
->>> On 2/5/18 12:11 PM, Mikulas Patocka wrote:
->>>> I have a workload where one process sends many asynchronous write bios
->>>> (without waiting for them) and another process sends synchronous flush
->>>> bios. During this workload, writeback throttling throttles down to one
->>>> outstanding bio, and this incorrect throttling causes performance
->>>> degradation (all write bios sleep in __wbt_wait and they couldn't be sent
->>>> in parallel).
->>>>
->>>> The reason for this throttling is that wbt_data_dir counts flush requests
->>>> in the read bucket. The flush requests (that take quite a long time)
->>>> trigger this condition repeatedly:
->>>> 	if (stat[READ].min > rwb->min_lat_nsec)
->>>> and that condition causes scale down to one outstanding request, despite
->>>> the fact that there are no read bios at all.
->>>>
->>>> A similar problem could also show up with REQ_OP_ZONE_REPORT and
->>>> REQ_OP_ZONE_RESET - they are also counted in the read bucket.
->>>>
->>>> This patch fixes the function wbt_data_dir, so that only REQ_OP_READ 
->>>> requests are counted in the read bucket. The patch improves SATA 
->>>> write+flush throughput from 130MB/s to 350MB/s.
->>>
->>> Good catch. But I do wonder if we should account them at all. It
->>> might make sense to account flushes as writes, but we really
->>> should not account anything that isn't regular read/write IO 
->>> related.
->>>
->>> Something like the below? Potentially including REQ_OP_FLUSH in the
->>> write latencies as well.
->>
->> Thinking about it, flush should just be counted as writes, and the
->> rest disregarded. Ala below.
->>
->>
->> diff --git a/block/blk-wbt.c b/block/blk-wbt.c
->> index ae8de9780085..f92fc84b5e2c 100644
->> --- a/block/blk-wbt.c
->> +++ b/block/blk-wbt.c
->> @@ -697,7 +697,15 @@ u64 wbt_default_latency_nsec(struct request_queue *q)
->>  
->>  static int wbt_data_dir(const struct request *rq)
->>  {
->> -	return rq_data_dir(rq);
->> +	const int op = req_op(rq);
->> +
->> +	if (op == REQ_OP_READ)
->> +		return READ;
->> +	else if (op == REQ_OP_WRITE || op == REQ_OP_FLUSH)
->> +		return WRITE;
->> +
->> +	/* don't account */
->> +	return -1;
->>  }
->>  
->>  int wbt_init(struct request_queue *q)
->>
->> -- 
->> Jens Axboe
-> 
-> Yes, this works.
+> That would make sure that kpartx can delete loop devices created by
+> itself, which is what we want. IMO it's sufficient to solve your issue.
 
-OK good, I'll queue that up then.
-
-> BTW. write throttling still causes some performance degradation (350MB/s 
-> vs. 500MB/s without throttling) - should there be some logic that disables 
-> write throttling if no sync requests are received?
-> 
-> Something like - if there's sync read, enable write throttling - if there 
-> were no sync reads in the last 5 seconds, disable write throttling?
-
-blk-wbt maintains a baseline that isn't too deep into writes, or you run
-into problems exactly when a sync or read request does come in after 5
-seconds, or whatever heuristic you choose. So that's very much by
-design. It does allow steps to go negative if no reads have been seen,
-but only so much so, and it bounces back immediately when one is seen.
-
+I was about to suggest that, but did not do it, as it's kind of weird. You
+add /a/b/c.img (pointing to /x/y/z.img) and losetup then shows you /x/y/z.img
+- I fear this might break some stuff that checks whether the binding was
+actually created (or checks which loop device it was created at).
 -- 
-Jens Axboe
+debian developer - deb.li/jak | jak-linux.org - free software dev
+ubuntu core developer                              i speak de, en
