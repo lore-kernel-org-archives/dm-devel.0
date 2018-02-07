@@ -1,15 +1,14 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 0/7] multipath-tools: uevent processing fixes
- and unit tests
-Date: Wed, 7 Feb 2018 12:35:43 -0600
-Message-ID: <20180207183543.GN14513@octiron.msp.redhat.com>
-References: <20180117074939.7795-1-mwilck@suse.com>
+Subject: Re: [PATCH 1/3] multipath.rules: handle NVME devices
+Date: Wed, 7 Feb 2018 12:37:10 -0600
+Message-ID: <20180207183710.GO14513@octiron.msp.redhat.com>
+References: <20180119001944.9565-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20180117074939.7795-1-mwilck@suse.com>
+In-Reply-To: <20180119001944.9565-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,68 +19,39 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Martin Wilck <mwilck@suse.com>
-Cc: dm-devel@redhat.com, Ritika Srivastava <ritika.srivastava@oracle.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-On Wed, Jan 17, 2018 at 08:49:32AM +0100, Martin Wilck wrote:
-> Hi Christophe,
+On Fri, Jan 19, 2018 at 01:19:42AM +0100, Martin Wilck wrote:
+> Note: ID_WWN is set in 60-persistent-storage.rules in current systemd.
+> That won't work well together with us installing multipath.rules as
+> 56-multipath.rules -  multipath -u won't see ID_WWN.
 > 
-> The incentive for creating this series was Ritika's patch "multipath-tools:
-> Skip CHANGE uevent for non-mpath devices" from October 2017, plus the
-> observation that uevent.c contains a lot of code repetition.
-> I've refactored and simplified the uevent_get_XXX code, and started to use
-> "const" qualifiers in the part of the code which I touched in the process.
+> However, we have strong reasons to run before blkid is invoked.
+> ID_WWN determination for NVMe should be moved to an earlier udev rule.
+> See systemd pull request #7594 on github.
 > 
-> In order to avoid regressions in the process, I took this as a starting point
-> for implementing a simple unit test framework. For now, it covers only the
-> stuff that I changed in this series.
-> 
-> The series is based on my previous patch series ("Various 
-> multipath-tools fixes"), v2. The first patch doesn't belong in the series
-> logically, but I thought it may help you track the ordering if I include it
-> here rather then posting separately or spamming the list with the big series
-> again.
-> 
-> Regards,
-> Martin
 
-Looks good.
-
+ACK for all three.
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  multipath/multipath.rules | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
 > 
-> Martin Wilck (7):
->   assemble_map: no newline at end of params string
->   tests: cmocka-based unit test for uevent_get_XXX
->   libmultipath: refactor uevent_get_XXX
->   libmultipath: const qualifier for wwid and alias
->   libmultipath: move UUID_PREFIX to devmapper.h
->   libmultipath: add uevent_is_mpath
->   multipathd: ignore uevents for non-mpath devices
-> 
->  .gitignore                 |   3 +
->  Makefile                   |   4 +
->  libmultipath/devmapper.c   |   3 -
->  libmultipath/devmapper.h   |   3 +
->  libmultipath/discovery.c   |   2 +-
->  libmultipath/discovery.h   |   2 +-
->  libmultipath/dmparser.c    |   1 -
->  libmultipath/memory.h      |   2 +-
->  libmultipath/structs.c     |   4 +-
->  libmultipath/structs.h     |   4 +-
->  libmultipath/structs_vec.c |   2 +-
->  libmultipath/structs_vec.h |   2 +-
->  libmultipath/uevent.c      | 183 +++++++++++++--------------
->  libmultipath/uevent.h      |  15 +--
->  multipathd/main.c          |  10 +-
->  multipathd/main.h          |   2 +-
->  tests/Makefile             |  23 ++++
->  tests/globals.c            |  17 +++
->  tests/uevent.c             | 304 +++++++++++++++++++++++++++++++++++++++++++++
->  19 files changed, 462 insertions(+), 124 deletions(-)
->  create mode 100644 tests/Makefile
->  create mode 100644 tests/globals.c
->  create mode 100644 tests/uevent.c
-> 
+> diff --git a/multipath/multipath.rules b/multipath/multipath.rules
+> index bc1a8529638f..6f8ee2be0a58 100644
+> --- a/multipath/multipath.rules
+> +++ b/multipath/multipath.rules
+> @@ -1,7 +1,7 @@
+>  # Set DM_MULTIPATH_DEVICE_PATH if the device should be handled by multipath
+>  SUBSYSTEM!="block", GOTO="end_mpath"
+>  ACTION!="add|change", GOTO="end_mpath"
+> -KERNEL!="sd*|dasd*", GOTO="end_mpath"
+> +KERNEL!="sd*|dasd*|nvme*", GOTO="end_mpath"
+>  
+>  IMPORT{cmdline}="nompath"
+>  ENV{nompath}=="?*", GOTO="end_mpath"
 > -- 
 > 2.15.1
