@@ -1,13 +1,11 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v2 5/7] Fix set_no_path_retry() regression
-Date: Thu,  8 Feb 2018 17:56:05 -0600
-Message-ID: <1518134167-15938-6-git-send-email-bmarzins@redhat.com>
-References: <1518134167-15938-1-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 0/7] multipath: miscellaneous bug fixes
+Date: Thu,  8 Feb 2018 17:56:00 -0600
+Message-ID: <1518134167-15938-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1518134167-15938-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,82 +16,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-commit 0f850db7fceb6b2bf4968f3831efd250c17c6138 "multipathd: clean up
-set_no_path_retry" has a bug in it. It made set_no_path_retry
-never reset mpp->retry_ticks, even if the device was in recovery mode,
-and there were valid paths. This meant that adding new paths didn't
-remove a device from recovery mode, and queueing could get disabled,
-even while there were valid paths. This patch fixes that.
+This is just a set of fixes for bugs I've run into.
 
-This patch also fixes a bug in cli_restore_queueing() and
-cli_restore_all_queueing(), where a device that had no_path_retry
-set to "queue" would enter recovery mode (although queueing would
-never actually get disabled).
+V2:
+	-rework tur locking fix to use atomic variables as Martin
+	 suggested. If this version doesn't make people happy, I'll
+	 just move the condlog() and be done with it.
 
-Cc: Martin Wilck <mwilck@suse.com>
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmultipath/structs_vec.c |  5 +++--
- multipathd/cli_handlers.c  | 20 ++++++++++++--------
- 2 files changed, 15 insertions(+), 10 deletions(-)
+	-add comments and fix messages for ev_add_map
 
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index fbab61f..0de2221 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -343,9 +343,10 @@ static void set_no_path_retry(struct multipath *mpp)
- 			dm_queue_if_no_path(mpp->alias, 1);
- 		break;
- 	default:
--		if (mpp->nr_active > 0)
-+		if (mpp->nr_active > 0) {
-+			mpp->retry_tick = 0;
- 			dm_queue_if_no_path(mpp->alias, 1);
--		else if (is_queueing && mpp->retry_tick == 0)
-+		} else if (is_queueing && mpp->retry_tick == 0)
- 			enter_recovery_mode(mpp);
- 		break;
- 	}
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index 7f13bc9..80519b1 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -995,10 +995,12 @@ cli_restore_queueing(void *v, char **reply, int *len, void *data)
- 	if (mpp->no_path_retry != NO_PATH_RETRY_UNDEF &&
- 			mpp->no_path_retry != NO_PATH_RETRY_FAIL) {
- 		dm_queue_if_no_path(mpp->alias, 1);
--		if (mpp->nr_active > 0)
--			mpp->retry_tick = 0;
--		else
--			enter_recovery_mode(mpp);
-+		if (mpp->no_path_retry > 0) {
-+			if (mpp->nr_active > 0)
-+				mpp->retry_tick = 0;
-+			else
-+				enter_recovery_mode(mpp);
-+		}
- 	}
- 	return 0;
- }
-@@ -1019,10 +1021,12 @@ cli_restore_all_queueing(void *v, char **reply, int *len, void *data)
- 		if (mpp->no_path_retry != NO_PATH_RETRY_UNDEF &&
- 		    mpp->no_path_retry != NO_PATH_RETRY_FAIL) {
- 			dm_queue_if_no_path(mpp->alias, 1);
--			if (mpp->nr_active > 0)
--				mpp->retry_tick = 0;
--			else
--				enter_recovery_mode(mpp);
-+			if (mpp->no_path_retry > 0) {
-+				if (mpp->nr_active > 0)
-+					mpp->retry_tick = 0;
-+				else
-+					enter_recovery_mode(mpp);
-+			}
- 		}
- 	}
- 	return 0;
+	-fix bugs in cli_restore_queueing() and
+	 cli_restore_all_queueing()
+
+	-check if paths exist in sysfs in fast listing mode
+
+Benjamin Marzinski (7):
+  libmultipath: fix tur checker locking
+  multipath: fix DEF_TIMEOUT use
+  multipathd: remove coalesce_paths from ev_add_map
+  multipathd: remove unused configure parameter
+  Fix set_no_path_retry() regression
+  multipathd: change spurious uevent msg priority
+  multipath: print sysfs state in fast list mode
+
+ libmultipath/checkers/tur.c | 98 ++++++++++++++++++---------------------------
+ libmultipath/discovery.c    |  2 +-
+ libmultipath/structs_vec.c  |  5 ++-
+ multipath/main.c            | 10 +++--
+ multipathd/cli_handlers.c   | 20 +++++----
+ multipathd/main.c           | 60 +++++++++------------------
+ 6 files changed, 83 insertions(+), 112 deletions(-)
+
 -- 
 2.7.4
