@@ -1,14 +1,14 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 6/7] multipathd: change spurious uevent msg
-	priority
-Date: Wed,  7 Feb 2018 16:49:46 -0600
-Message-ID: <1518043787-7066-7-git-send-email-bmarzins@redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 2/7] multipath: fix DEF_TIMEOUT use
+Date: Thu, 08 Feb 2018 09:52:16 +0100
+Message-ID: <1518079936.15245.40.camel@suse.com>
 References: <1518043787-7066-1-git-send-email-bmarzins@redhat.com>
+	<1518043787-7066-3-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1518043787-7066-1-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1518043787-7066-3-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,30 +18,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Martin Wilck <mwilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-The "spurious uevent, path already in pathvec" is not anything to worry
-about, so it should not have the error priority.
-
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- multipathd/main.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 233d09f..cfd0363 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -557,7 +557,7 @@ uev_add_path (struct uevent *uev, struct vectors * vecs, int need_do_map)
- 	if (pp) {
- 		int r;
- 
--		condlog(0, "%s: spurious uevent, path already in pathvec",
-+		condlog(2, "%s: spurious uevent, path already in pathvec",
- 			uev->kernel);
- 		if (!pp->mpp && !strlen(pp->wwid)) {
- 			condlog(3, "%s: reinitialize path", uev->kernel);
--- 
-2.7.4
+T24gV2VkLCAyMDE4LTAyLTA3IGF0IDE2OjQ5IC0wNjAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cj4gREVGX1RJTUVPVVQgaXMgc3BlY2lmaWVkIGluIHNlY29uZHMuIFRoZSBpb19oZHIgdGlt
+ZW91dCBpcyBzcGVjaWZpZWQKPiBpbgo+IG1pbGxpc2Vjb25kcywgc28gd2UgbmVlZCB0byBjb252
+ZXJ0IGl0LiBNdWx0aXBhdGggc2hvdWxkIGJlIHdhaXRpbmcKPiBsb25nZXIgdGhhbiAzMCBtaWxs
+aXNlY29uZHMgaGVyZS4gSWYgdGhlcmUgYXJlIGNvbmNlcm5zIHRoYXQgMzAKPiBzZWNvbmRzCj4g
+bWF5IGJlIHRvbyBsb25nLCB3ZSBjb3VsZCBhbHdheXMgbWFrZSB0aGlzIGNvbmZpZ3VyYWJsZSwg
+dXNpbmcKPiBjb25mLT5jaGVja2VyX3RpbWVvdXQgaWYgc2V0Lgo+IAo+IFNpZ25lZC1vZmYtYnk6
+IEJlbmphbWluIE1hcnppbnNraSA8Ym1hcnppbnNAcmVkaGF0LmNvbT4KPiAtLS0KPiAgbGlibXVs
+dGlwYXRoL2Rpc2NvdmVyeS5jIHwgMiArLQo+ICAxIGZpbGUgY2hhbmdlZCwgMSBpbnNlcnRpb24o
+KyksIDEgZGVsZXRpb24oLSkKClJldmlld2VkLWJ5OiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNl
+LmNvbT4KCj4gCj4gZGlmZiAtLWdpdCBhL2xpYm11bHRpcGF0aC9kaXNjb3ZlcnkuYyBiL2xpYm11
+bHRpcGF0aC9kaXNjb3ZlcnkuYwo+IGluZGV4IDRiMzFkZGUuLmYxMTg4MDAgMTAwNjQ0Cj4gLS0t
+IGEvbGlibXVsdGlwYXRoL2Rpc2NvdmVyeS5jCj4gKysrIGIvbGlibXVsdGlwYXRoL2Rpc2NvdmVy
+eS5jCj4gQEAgLTc2Niw3ICs3NjYsNyBAQCBkb19pbnEoaW50IHNnX2ZkLCBpbnQgY21kZHQsIGlu
+dCBldnBkLCB1bnNpZ25lZAo+IGludCBwZ19vcCwKPiAgCWlvX2hkci5keGZlcnAgPSByZXNwOwo+
+ICAJaW9faGRyLmNtZHAgPSBpbnFDbWRCbGs7Cj4gIAlpb19oZHIuc2JwID0gc2Vuc2VfYjsKPiAt
+CWlvX2hkci50aW1lb3V0ID0gREVGX1RJTUVPVVQ7Cj4gKwlpb19oZHIudGltZW91dCA9IERFRl9U
+SU1FT1VUICogMTAwMDsKPiAgCj4gIAlpZiAoaW9jdGwoc2dfZmQsIFNHX0lPLCAmaW9faGRyKSA8
+IDApCj4gIAkJcmV0dXJuIC0xOwoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNv
+bT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4
+IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFH
+IE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29t
+Cmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
