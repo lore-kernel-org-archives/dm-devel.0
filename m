@@ -1,15 +1,16 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 7/7] multipath: print sysfs state in fast
-	list mode
-Date: Thu, 08 Feb 2018 10:32:06 +0100
-Message-ID: <1518082326.15245.54.camel@suse.com>
-References: <1518043787-7066-1-git-send-email-bmarzins@redhat.com>
-	<1518043787-7066-8-git-send-email-bmarzins@redhat.com>
+From: Guan Junxiong <guanjunxiong@huawei.com>
+Subject: Re: [PATCH v2 19/20] libmultipath: path latency:
+ simplify getprio()
+Date: Thu, 8 Feb 2018 20:05:26 +0800
+Message-ID: <1efc5e59-28e6-c6d4-ccdf-d20360e2790c@huawei.com>
+References: <20180113211938.31552-1-mwilck@suse.com>
+	<20180113211938.31552-20-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1518043787-7066-8-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <20180113211938.31552-20-mwilck@suse.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,37 +20,176 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>
+To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, niuhaoxin <niuhaoxin@huawei.com>, "Shenhong (C)" <shenhong09@huawei.com>
 List-Id: dm-devel.ids
 
-SGkgQmVuLAoKT24gV2VkLCAyMDE4LTAyLTA3IGF0IDE2OjQ5IC0wNjAwLCBCZW5qYW1pbiBNYXJ6
-aW5za2kgd3JvdGU6Cj4gY29tbWl0IGIxMjNlNzExZWEyYTRiNDcxYTk4ZmY1ZTI2ODE1ZGYzNzcz
-NjM2YjUgImxpYm11bHRpcGF0aDoKPiBjbGVhbnVwCj4gb3JwaGFuIGRldmljZSBzdGF0ZXMiIHN0
-b3BwZWQgbXVsdGlwYXRoZCBmcm9tIHNob3dpbmcgb2xkIHN0YXRlIGZvcgo+IG9ycGhhbiBwYXRo
-cyBieSBjaGVja2luZyBpZiBwcC0+bXBwIHdhcyBzZXQsIGFuZCBvbmx5IHByaW50aW5nIHRoZQo+
-IHN0YXRlCj4gaWYgaXQgd2FzLiAgIFVuZm9ydHVuYXRlbHksIHdoZW4gIm11bHRpcGF0aCAtbCIg
-aXMgcnVuLCBwcC0+bXBwIGlzbid0Cj4gc2V0LiBXaGlsZSB0aGUgY2hlY2tlciBzdGF0ZSBpc24n
-dCBjaGVja2VkIGFuZCBzaG91bGRuJ3QgYmUgcHJpbnRlZAo+IHdpdGgKPiAiLWwiLCB0aGUgc3lz
-ZnMgc3RhdGUgY2FuIGJlLCBhbmQgd2FzIGJlZm9yZSBiMTIzZTcxMS4gVGhpcyBwYXRjaAo+IHNl
-dHMKPiBwcC0+bXBwIGluIGZhc3QgbGlzdCBtb2RlLCBzbyB0aGF0IHRoZSBzeXNmcyBzdGF0ZSBn
-ZXRzIHByaW50ZWQuCj4gCj4gU2lnbmVkLW9mZi1ieTogQmVuamFtaW4gTWFyemluc2tpIDxibWFy
-emluc0ByZWRoYXQuY29tPgo+IC0tLQo+ICBtdWx0aXBhdGgvbWFpbi5jIHwgOSArKysrKystLS0K
-PiAgMSBmaWxlIGNoYW5nZWQsIDYgaW5zZXJ0aW9ucygrKSwgMyBkZWxldGlvbnMoLSkKPiAKPiBk
-aWZmIC0tZ2l0IGEvbXVsdGlwYXRoL21haW4uYyBiL211bHRpcGF0aC9tYWluLmMKPiBpbmRleCBi
-ZmZlMDY1Li4xNzk5ZmQ1IDEwMDY0NAo+IC0tLSBhL211bHRpcGF0aC9tYWluLmMKPiArKysgYi9t
-dWx0aXBhdGgvbWFpbi5jCj4gQEAgLTE0OSw3ICsxNDksNyBAQCB1c2FnZSAoY2hhciAqIHByb2du
-YW1lKQo+ICB9Cj4gIAo+ICBzdGF0aWMgaW50Cj4gLXVwZGF0ZV9wYXRocyAoc3RydWN0IG11bHRp
-cGF0aCAqIG1wcCkKPiArdXBkYXRlX3BhdGhzIChzdHJ1Y3QgbXVsdGlwYXRoICogbXBwLCBpbnQg
-cXVpY2spCj4gIHsKPiAgCWludCBpLCBqOwo+ICAJc3RydWN0IHBhdGhncm91cCAqIHBncDsKPiBA
-QCAtMTY0LDYgKzE2NCwxMCBAQCB1cGRhdGVfcGF0aHMgKHN0cnVjdCBtdWx0aXBhdGggKiBtcHAp
-Cj4gIAkJCWNvbnRpbnVlOwo+ICAKPiAgCQl2ZWN0b3JfZm9yZWFjaF9zbG90IChwZ3AtPnBhdGhz
-LCBwcCwgaikgewo+ICsJCQlpZiAocXVpY2spIHsKPiArCQkJCXBwLT5tcHAgPSBtcHA7Cj4gKwkJ
-CQljb250aW51ZTsKPiArCQkJfQo+ICAJCQlpZiAoIXN0cmxlbihwcC0+ZGV2KSkgewo+ICAJCQkJ
-aWYgKGRldnQyZGV2bmFtZShwcC0+ZGV2LCAKClNob3VsZG4ndCB5b3UgY2hlY2sgd2hldGhlciB0
-aGUgcGF0aHMgYXJlIHN0aWxsIHByZXNlbnQgaW4gc3lzZnMsIGxpa2UKdGhlIGNvZGUgZm9yIHRo
-ZSBnZW5lcmFsIGNhc2UgKHF1aWNrID09IGZhbHNlKSBkb2VzPwoKUmVnYXJkcwpNYXJ0aW4KCi0t
-IApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQw
-NTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21p
-dGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZl
-bCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29t
-L21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+Looks Good.
+
+Reviewed-by Guan Junxiong <guanjunxiong@huawei.com>
+
+On 2018/1/14 5:19, Martin Wilck wrote:
+> The log standard deviation can be calculated much more simply
+> by realizing
+> 
+>    sum_n (x_i - avg(x))^2 == sum_n x_i^2 - n * avg(x)^2
+> 
+> Also, use timespecsub rather than the custom timeval_to_usec,
+> and avoid taking log(0).
+> ---
+>  libmultipath/prioritizers/path_latency.c | 71 ++++++++++++++------------------
+>  1 file changed, 30 insertions(+), 41 deletions(-)
+> 
+> diff --git a/libmultipath/prioritizers/path_latency.c b/libmultipath/prioritizers/path_latency.c
+> index ce5c95dd7075..e764f1dd8a21 100644
+> --- a/libmultipath/prioritizers/path_latency.c
+> +++ b/libmultipath/prioritizers/path_latency.c
+> @@ -34,6 +34,7 @@
+>  #include "prio.h"
+>  #include "structs.h"
+>  #include "util.h"
+> +#include "time-util.h"
+>  
+>  #define pp_pl_log(prio, fmt, args...) condlog(prio, "path_latency prio: " fmt, ##args)
+>  
+> @@ -56,14 +57,6 @@
+>  
+>  #define DEF_BLK_SIZE		4096
+>  
+> -static double lg_path_latency[MAX_IO_NUM];
+> -
+> -static inline long long timeval_to_us(const struct timespec *tv)
+> -{
+> -	return ((long long)tv->tv_sec * USEC_PER_SEC) +
+> -	    (tv->tv_nsec / NSEC_PER_USEC);
+> -}
+> -
+>  static int prepare_directio_read(int fd, int *blksz, char **pbuf,
+>  		int *restore_flags)
+>  {
+> @@ -199,22 +192,6 @@ out:
+>  	return 0;
+>  }
+>  
+> -double calc_standard_deviation(double *lg_path_latency, int size,
+> -				  double lg_avglatency)
+> -{
+> -	int index;
+> -	double sum = 0;
+> -
+> -	for (index = 0; index < size; index++) {
+> -		sum += (lg_path_latency[index] - lg_avglatency) *
+> -			(lg_path_latency[index] - lg_avglatency);
+> -	}
+> -
+> -	sum /= (size - 1);
+> -
+> -	return sqrt(sum);
+> -}
+> -
+>  /*
+>   * Do not scale the prioriy in a certain range such as [0, 1024]
+>   * because scaling will eliminate the effect of base_num.
+> @@ -234,20 +211,16 @@ int calcPrio(double lg_avglatency, double lg_maxavglatency,
+>  int getprio(struct path *pp, char *args, unsigned int timeout)
+>  {
+>  	int rc, temp;
+> -	int index = 0;
+>  	int io_num = 0;
+>  	double base_num = 0;
+>  	double lg_avglatency, lg_maxavglatency, lg_minavglatency;
+>  	double standard_deviation;
+>  	double lg_toldelay = 0;
+> -	long long before, after;
+> -	struct timespec tv;
+>  	int blksize;
+>  	char *buf;
+>  	int restore_flags = 0;
+>  	double lg_base;
+> -	long long sum_latency = 0;
+> -	long long arith_mean_lat;
+> +	double sum_squares = 0;
+>  
+>  	if (pp->fd < 0)
+>  		return -1;
+> @@ -260,7 +233,6 @@ int getprio(struct path *pp, char *args, unsigned int timeout)
+>  				pp->dev, io_num, base_num);
+>  	}
+>  
+> -	memset(lg_path_latency, 0, sizeof(lg_path_latency));
+>  	lg_base = log(base_num);
+>  	lg_maxavglatency = log(MAX_AVG_LATENCY) / lg_base;
+>  	lg_minavglatency = log(MIN_AVG_LATENCY) / lg_base;
+> @@ -269,8 +241,10 @@ int getprio(struct path *pp, char *args, unsigned int timeout)
+>  
+>  	temp = io_num;
+>  	while (temp-- > 0) {
+> -		(void)clock_gettime(CLOCK_MONOTONIC, &tv);
+> -		before = timeval_to_us(&tv);
+> +		struct timespec tv_before, tv_after, tv_diff;
+> +		double diff, reldiff;
+> +
+> +		(void)clock_gettime(CLOCK_MONOTONIC, &tv_before);
+>  
+>  		if (do_directio_read(pp->fd, timeout, buf, blksize)) {
+>  			pp_pl_log(0, "%s: path down", pp->dev);
+> @@ -278,25 +252,34 @@ int getprio(struct path *pp, char *args, unsigned int timeout)
+>  			return -1;
+>  		}
+>  
+> -		(void)clock_gettime(CLOCK_MONOTONIC, &tv);
+> -		after = timeval_to_us(&tv);
+> +		(void)clock_gettime(CLOCK_MONOTONIC, &tv_after);
+> +
+> +		timespecsub(&tv_after, &tv_before, &tv_diff);
+> +		diff = tv_diff.tv_sec * 1000 * 1000 + tv_diff.tv_nsec / 1000;
+> +
+> +		if (diff == 0)
+> +			/*
+> +			 * Avoid taking log(0).
+> +			 * This unlikely case is treated as minimum -
+> +			 * the sums don't increase
+> +			 */
+> +			continue;
+> +
+> +		/* we scale by lg_base here */
+> +		reldiff = log(diff) / lg_base;
+> +
+>  		/*
+>  		 * We assume that the latency complies with Log-normal
+>  		 * distribution. The logarithm of latency is in normal
+>  		 * distribution.
+>  		 */
+> -		lg_path_latency[index] = log(after - before) / lg_base;
+> -		lg_toldelay += lg_path_latency[index++];
+> -		sum_latency += after - before;
+> +		lg_toldelay += reldiff;
+> +		sum_squares += reldiff * reldiff;
+>  	}
+>  
+>  	cleanup_directio_read(pp->fd, buf, restore_flags);
+>  
+>  	lg_avglatency = lg_toldelay / (long long)io_num;
+> -	arith_mean_lat = sum_latency / (long long)io_num;
+> -	pp_pl_log(4, "%s: arithmetic mean latency is (%lld us), geometric mean latency is (%lld us)",
+> -			pp->dev, arith_mean_lat,
+> -			(long long)pow(base_num, lg_avglatency));
+>  
+>  	if (lg_avglatency > lg_maxavglatency) {
+>  		pp_pl_log(2,
+> @@ -340,8 +323,14 @@ int getprio(struct path *pp, char *args, unsigned int timeout)
+>  			  ".It is recommend to be set larger",
+>  			  pp->dev, base_num);
+>  
+> +	standard_deviation = sqrt((sum_squares - lg_toldelay * lg_avglatency)
+> +				  / (io_num - 1));
+>  
+>  	rc = calcPrio(lg_avglatency, lg_maxavglatency, lg_minavglatency);
+>  
+> +	pp_pl_log(3, "%s: latency avg=%.2e uncertainty=%.1f prio=%d\n",
+> +		  pp->dev, exp(lg_avglatency * lg_base),
+> +		  exp(standard_deviation * lg_base), rc);
+> +
+>  	return rc;
+>  }
+> 
