@@ -1,18 +1,14 @@
-From: Bart Van Assche <Bart.VanAssche@wdc.com>
-Subject: Re: [PATCH 1/7] multipath: fix tur checker locking
-Date: Thu, 8 Feb 2018 19:34:44 +0000
-Message-ID: <1518118483.3611.66.camel@wdc.com>
-References: <1518043787-7066-1-git-send-email-bmarzins@redhat.com>
-	<1518043787-7066-2-git-send-email-bmarzins@redhat.com>
-	<1518113970.3611.58.camel@wdc.com>
-	<20180208192741.GU14513@octiron.msp.redhat.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: [PATCH v2 6/7] multipathd: change spurious uevent msg
+	priority
+Date: Thu,  8 Feb 2018 17:56:06 -0600
+Message-ID: <1518134167-15938-7-git-send-email-bmarzins@redhat.com>
+References: <1518134167-15938-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180208192741.GU14513@octiron.msp.redhat.com>
-Content-Language: en-US
-Content-ID: <E5899055686F744A95BF76F8CA0A3D77@namprd04.prod.outlook.com>
+In-Reply-To: <1518134167-15938-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,60 +18,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "bmarzins@redhat.com" <bmarzins@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "mwilck@suse.com" <mwilck@suse.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, 2018-02-08 at 13:27 -0600, Benjamin Marzinski wrote:
-> On Thu, Feb 08, 2018 at 06:19:32PM +0000, Bart Van Assche wrote:
-> > On Wed, 2018-02-07 at 16:49 -0600, Benjamin Marzinski wrote:
-> > > Commit 6e2423fd fixed a bug where the tur checker could cancel a
-> > > detached thread after it had exitted. However in fixing this, the new
-> > > code grabbed a mutex (to call condlog) while holding a spin_lock. To
-> > > deal with that, and to try to keep with the maixim "lock data, not
-> > > code", I've changed how the tur checker synchronizes with its thread.
-> > > 
-> > > Now, the tur checker creates joinable threads, and detaches them when
-> > > the thread is finished or has timed out. To track the state of the
-> > > threads, I've added a new variable to the checker context, ct->attached.
-> > > When a thread starts, attached is set to 1. When the thread finishes, it
-> > > saves the value of attached, and then zeros it out, while locked. If
-> > > attached was set, it detaches itself.
-> > > 
-> > > When the tur checker gives up on a thread, it also saves and decrements
-> > > ct->attached, while locked. At the same time it saves the value of
-> > > ct->thread.  If attached was set, it cancels the thread, and then
-> > > detaches it.
-> > > 
-> > > So the values that are protected by the spin lock are now ct->holders,
-> > > ct->thread, and ct->attached. There are cases where the tur checker just
-> > > wants to know if the thread is running. If so, its safe to simply read
-> > > ct->thread without locking.  Also, if it knows that the thread isn't
-> > > running, it can freely access all of these variables. I've left the
-> > > locking in-place in these cases to make the static analyzers happy.
-> > > However I have added comments stating when the locking isn't actually
-> > > necessary.
-> > 
-> > Hello Ben,
-> > 
-> > Have you considered to move the condlog() statements out of the spinlock
-> > section? I think that would lead to a much smaller and less contrived change
-> > than the patch you posted.
-> 
-> Yes. I thought it was better to keep the amount of code locked under a
-> spin_lock as small as possible. But it seems that I am alone in thinking
-> my trade-off was worth it.  If both you and Martin object, I'm fine with
-> redoing the patch to simply move the condlog(), since I don't believe
-> that either tur_check_async_timeout() or pthread_cancel() can block.
+The "spurious uevent, path already in pathvec" is not anything to worry
+about, so it should not have the error priority.
 
-Hello Ben,
+Reviewed-by: Martin Wilck <mwilck@suse.com>
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ multipathd/main.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Have you considered to convert the hldr_lock spinlock into a mutex? I think
-that the hldr_lock spinlock got introduced by commit 892f7b333a03 ("multipath:
-fix scsi async tur checker corruption"). However, I have not found an
-explanation in the description of that commit why hldr_lock is a spinlock
-and not any other type of synchronization primitive.
-
-Thanks,
-
-Bart.
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 51e0f5e..7ac59d9 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -562,7 +562,7 @@ uev_add_path (struct uevent *uev, struct vectors * vecs, int need_do_map)
+ 	if (pp) {
+ 		int r;
+ 
+-		condlog(0, "%s: spurious uevent, path already in pathvec",
++		condlog(2, "%s: spurious uevent, path already in pathvec",
+ 			uev->kernel);
+ 		if (!pp->mpp && !strlen(pp->wwid)) {
+ 			condlog(3, "%s: reinitialize path", uev->kernel);
+-- 
+2.7.4
