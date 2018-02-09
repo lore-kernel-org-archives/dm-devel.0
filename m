@@ -1,14 +1,16 @@
-From: Martin Wilck <mwilck@suse.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
 Subject: Re: [PATCH v2 1/7] libmultipath: fix tur checker locking
-Date: Fri, 09 Feb 2018 21:30:56 +0100
-Message-ID: <1518208256.2937.16.camel@suse.com>
+Date: Fri, 9 Feb 2018 17:04:49 -0600
+Message-ID: <20180209230449.GW14513@octiron.msp.redhat.com>
 References: <1518134167-15938-1-git-send-email-bmarzins@redhat.com>
 	<1518134167-15938-2-git-send-email-bmarzins@redhat.com>
+	<1518208256.2937.16.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1518134167-15938-2-git-send-email-bmarzins@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1518208256.2937.16.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,33 +20,68 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>
-Cc: Bart Van Assche <Bart.VanAssche@wdc.com>
+To: Martin Wilck <mwilck@suse.com>
+Cc: Bart Van Assche <Bart.VanAssche@wdc.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gVGh1LCAyMDE4LTAyLTA4IGF0IDE3OjU2IC0wNjAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gY3QtPnJ1bm5pbmcgaXMgbm93IGFuIGF0b21pYyB2YXJpYWJsZS4gIFdoZW4gdGhlIHRo
-cmVhZCBpcyBzdGFydGVkCj4gaXQgaXMgc2V0IHRvIDEuIFdoZW4gdGhlIGNoZWNrZXIgd2FudHMg
-dG8ga2lsbCBhIHRocmVhZCwgaXQKPiBhdG9taWNhbGx5Cj4gc2V0cyB0aGUgdmFsdWUgdG8gMCBh
-bmQgcmVhZHMgdGhlIHByZXZpb3VzIHZhbHVlLiAgSWYgaXQgd2FzIDEsCj4gdGhlIGNoZWNrZXIg
-Y2FuY2VscyB0aGUgdGhyZWFkLiBJZiBpdCB3YXMgMCwgdGhlIG5vdGhpbmcgbmVlZHMgdG8gYmUK
-PiBkb25lLiAgQWZ0ZXIgdGhlIGNoZWNrZXIgaGFzIGRlYWx0IHdpdGggdGhlIHRocmVhZCwgaXQg
-c2V0cyBjdC0KPiA+dGhyZWFkCj4gdG8gTlVMTC4KPiAKPiBXaGVuIHRoZSB0aHJlYWQgaXMgZG9u
-ZSwgaXQgYXRvbWljYWxsbHlzIHNldHMgdGhlIHZhbHVlIG9mIGN0LQo+ID5ydW5uaW5nCj4gdG8g
-MCBhbmQgcmVhZHMgdGhlIHByZXZpb3VzIHZhbHVlLiBJZiBpdCB3YXMgMSwgdGhlIHRocmVhZCBq
-dXN0Cj4gZXhpdHMuCj4gSWYgaXQgd2FzIDAsIHRoZW4gdGhlIGNoZWNrZXIgaXMgdHJ5aW5nIHRv
-IGNhbmNlbCB0aGUgdGhyZWFkLCBhbmQgc28KPiB0aGUgdGhyZWFkIGNhbGxzIHBhdXNlKCksIHdo
-aWNoIGlzIGEgY2FuY2VsbGF0aW9uIHBvaW50Lgo+IAoKSSdtIG1pc3Npbmcgb25lIHRoaW5nIGhl
-cmUuIE15IHBvb3IgYnJhaW4gaXMgYWNoaW5nLgoKY2xlYW51cF9mdW5jKCkgY2FuIGJlIGVudGVy
-ZWQgaW4gdHdvIHdheXM6IGEpIGlmIHRoZSB0aHJlYWQgaGFzIGJlZW4KY2FuY2VsbGVkIGFuZCBw
-YXNzZWQgYSBjYW5jZWxsYXRpb24gcG9pbnQgYWxyZWFkeSwgb3IgYikgaWYgaXQgZXhpdHMKbm9y
-bWFsbHkgYW5kIGNhbGxzIHB0aHJlYWRfY2xlYW51cF9wb3AoKS4gCkluIGNhc2UgYiksIHdhaXRp
-bmcgZm9yIHRoZSBjYW5jZWxsYXRpb24gcmVxdWVzdCBieSBjYWxsaW5nIHBhdXNlKCkKbWFrZXMg
-c2Vuc2UgdG8gbWUuIEJ1dCBpbiBjYXNlIGEpLCB0aGUgdGhyZWFkIGhhcyBhbHJlYWR5IHNlZW4g
-dGhlCmNhbmNlbGxhdGlvbiByZXF1ZXN0IC0gd291bGRuJ3QgY2FsbGluZyBwYXVzZSgpIGNhdXNl
-IGl0IHRvIHNsZWVwCmZvcmV2ZXI/CgpNYXJ0aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2ls
-Y2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgs
-IEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJC
-IDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxA
-cmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2
-ZWw=
+On Fri, Feb 09, 2018 at 09:30:56PM +0100, Martin Wilck wrote:
+> On Thu, 2018-02-08 at 17:56 -0600, Benjamin Marzinski wrote:
+> > ct->running is now an atomic variable.  When the thread is started
+> > it is set to 1. When the checker wants to kill a thread, it
+> > atomically
+> > sets the value to 0 and reads the previous value.  If it was 1,
+> > the checker cancels the thread. If it was 0, the nothing needs to be
+> > done.  After the checker has dealt with the thread, it sets ct-
+> > >thread
+> > to NULL.
+> > =
+
+> > When the thread is done, it atomicalllys sets the value of ct-
+> > >running
+> > to 0 and reads the previous value. If it was 1, the thread just
+> > exits.
+> > If it was 0, then the checker is trying to cancel the thread, and so
+> > the thread calls pause(), which is a cancellation point.
+> > =
+
+> =
+
+> I'm missing one thing here. My poor brain is aching.
+> =
+
+> cleanup_func() can be entered in two ways: a) if the thread has been
+> cancelled and passed a cancellation point already, or b) if it exits
+> normally and calls pthread_cleanup_pop(). =
+
+> In case b), waiting for the cancellation request by calling pause()
+> makes sense to me. But in case a), the thread has already seen the
+> cancellation request - wouldn't calling pause() cause it to sleep
+> forever?
+
+Urgh. You're right. If it is in the cleanup helper because it already
+has been cancelled, then the pause isn't going get cancelled. So much
+for my quick rewrite.
+
+That leaves three options.
+
+1. have either the thread or the checker detach the thread (depending
+   on which one exits first)
+2. make the checker always cancel and detach the thread. This simplifies
+   the code, but there will zombie threads hanging around between calls
+   to the checker.
+3. just move the condlog
+
+I really don't care which one we pick anymore.
+
+-Ben
+
+> =
+
+> Martin
+> =
+
+> -- =
+
+> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+> SUSE Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
+> HRB 21284 (AG N=FCrnberg)
