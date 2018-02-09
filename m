@@ -1,18 +1,14 @@
-From: Bart Van Assche <Bart.VanAssche@wdc.com>
+From: Martin Wilck <mwilck@suse.com>
 Subject: Re: [PATCH v2 1/7] libmultipath: fix tur checker locking
-Date: Fri, 9 Feb 2018 17:42:14 +0000
-Message-ID: <1518198133.2871.26.camel@wdc.com>
+Date: Fri, 09 Feb 2018 21:30:56 +0100
+Message-ID: <1518208256.2937.16.camel@suse.com>
 References: <1518134167-15938-1-git-send-email-bmarzins@redhat.com>
 	<1518134167-15938-2-git-send-email-bmarzins@redhat.com>
-	<1518192932.2871.11.camel@wdc.com>
-	<20180209172607.GV14513@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180209172607.GV14513@octiron.msp.redhat.com>
-Content-Language: en-US
-Content-ID: <408AF581158E3A468F12F58D88E9383D@namprd04.prod.outlook.com>
+In-Reply-To: <1518134167-15938-2-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,56 +18,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "bmarzins@redhat.com" <bmarzins@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "mwilck@suse.com" <mwilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>
+Cc: Bart Van Assche <Bart.VanAssche@wdc.com>
 List-Id: dm-devel.ids
 
-On Fri, 2018-02-09 at 11:26 -0600, Benjamin Marzinski wrote:
-> On Fri, Feb 09, 2018 at 04:15:34PM +0000, Bart Van Assche wrote:
-> > On Thu, 2018-02-08 at 17:56 -0600, Benjamin Marzinski wrote:
-> > >  static void cleanup_func(void *data)
-> > >  {
-> > > -	int holders;
-> > > +	int running, holders;
-> > >  	struct tur_checker_context *ct = data;
-> > > -	pthread_spin_lock(&ct->hldr_lock);
-> > > -	ct->holders--;
-> > > -	holders = ct->holders;
-> > > -	ct->thread = 0;
-> > > -	pthread_spin_unlock(&ct->hldr_lock);
-> > > +
-> > > +	running = uatomic_xchg(&ct->running, 0);
-> > > +	holders = uatomic_sub_return(&ct->holders, 1);
-> > >  	if (!holders)
-> > >  		cleanup_context(ct);
-> > > +	if (!running)
-> > > +		pause();
-> > >  }
-> > 
-> > Hello Ben,
-> > 
-> > Why has the pause() call been added? I think it is safe to call pthread_cancel()
-> > for a non-detached thread that has finished so I don't think that pause() call
-> > is necessary.
-> 
-> Martin objected to having the threads getting detached as part of
-> cancelling them (I think. I'm a little fuzzy on what he didn't like).
-> But he definitely said he preferred the thread to start detached, so in
-> this version, it does.  That's why we need the pause().  If he's fine with
-> the threads getting detached later, I will happily replace the pause()
-> with
-> 
-> if (running)
-> 	pthread_detach(pthread_self());
-> 
-> and add pthread_detach(ct->thread) after the calls to
-> pthread_cancel(ct->thread). Otherwise we need the pause() to solve your
-> original bug.
-
-Ah, thanks, I had overlooked that the tur checker detaches the checker thread. Have
-you considered to add a comment above the pause() call that explains the purpose of
-that call?
-
-Thanks,
-
-Bart.
+T24gVGh1LCAyMDE4LTAyLTA4IGF0IDE3OjU2IC0wNjAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cj4gY3QtPnJ1bm5pbmcgaXMgbm93IGFuIGF0b21pYyB2YXJpYWJsZS4gIFdoZW4gdGhlIHRo
+cmVhZCBpcyBzdGFydGVkCj4gaXQgaXMgc2V0IHRvIDEuIFdoZW4gdGhlIGNoZWNrZXIgd2FudHMg
+dG8ga2lsbCBhIHRocmVhZCwgaXQKPiBhdG9taWNhbGx5Cj4gc2V0cyB0aGUgdmFsdWUgdG8gMCBh
+bmQgcmVhZHMgdGhlIHByZXZpb3VzIHZhbHVlLiAgSWYgaXQgd2FzIDEsCj4gdGhlIGNoZWNrZXIg
+Y2FuY2VscyB0aGUgdGhyZWFkLiBJZiBpdCB3YXMgMCwgdGhlIG5vdGhpbmcgbmVlZHMgdG8gYmUK
+PiBkb25lLiAgQWZ0ZXIgdGhlIGNoZWNrZXIgaGFzIGRlYWx0IHdpdGggdGhlIHRocmVhZCwgaXQg
+c2V0cyBjdC0KPiA+dGhyZWFkCj4gdG8gTlVMTC4KPiAKPiBXaGVuIHRoZSB0aHJlYWQgaXMgZG9u
+ZSwgaXQgYXRvbWljYWxsbHlzIHNldHMgdGhlIHZhbHVlIG9mIGN0LQo+ID5ydW5uaW5nCj4gdG8g
+MCBhbmQgcmVhZHMgdGhlIHByZXZpb3VzIHZhbHVlLiBJZiBpdCB3YXMgMSwgdGhlIHRocmVhZCBq
+dXN0Cj4gZXhpdHMuCj4gSWYgaXQgd2FzIDAsIHRoZW4gdGhlIGNoZWNrZXIgaXMgdHJ5aW5nIHRv
+IGNhbmNlbCB0aGUgdGhyZWFkLCBhbmQgc28KPiB0aGUgdGhyZWFkIGNhbGxzIHBhdXNlKCksIHdo
+aWNoIGlzIGEgY2FuY2VsbGF0aW9uIHBvaW50Lgo+IAoKSSdtIG1pc3Npbmcgb25lIHRoaW5nIGhl
+cmUuIE15IHBvb3IgYnJhaW4gaXMgYWNoaW5nLgoKY2xlYW51cF9mdW5jKCkgY2FuIGJlIGVudGVy
+ZWQgaW4gdHdvIHdheXM6IGEpIGlmIHRoZSB0aHJlYWQgaGFzIGJlZW4KY2FuY2VsbGVkIGFuZCBw
+YXNzZWQgYSBjYW5jZWxsYXRpb24gcG9pbnQgYWxyZWFkeSwgb3IgYikgaWYgaXQgZXhpdHMKbm9y
+bWFsbHkgYW5kIGNhbGxzIHB0aHJlYWRfY2xlYW51cF9wb3AoKS4gCkluIGNhc2UgYiksIHdhaXRp
+bmcgZm9yIHRoZSBjYW5jZWxsYXRpb24gcmVxdWVzdCBieSBjYWxsaW5nIHBhdXNlKCkKbWFrZXMg
+c2Vuc2UgdG8gbWUuIEJ1dCBpbiBjYXNlIGEpLCB0aGUgdGhyZWFkIGhhcyBhbHJlYWR5IHNlZW4g
+dGhlCmNhbmNlbGxhdGlvbiByZXF1ZXN0IC0gd291bGRuJ3QgY2FsbGluZyBwYXVzZSgpIGNhdXNl
+IGl0IHRvIHNsZWVwCmZvcmV2ZXI/CgpNYXJ0aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2ls
+Y2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgs
+IEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJC
+IDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxA
+cmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2
+ZWw=
