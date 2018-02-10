@@ -1,19 +1,14 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH v2 1/7] libmultipath: fix tur checker locking
-Date: Fri, 9 Feb 2018 18:36:38 -0600
-Message-ID: <20180210003638.GY14513@octiron.msp.redhat.com>
-References: <1518134167-15938-1-git-send-email-bmarzins@redhat.com>
-	<1518134167-15938-2-git-send-email-bmarzins@redhat.com>
-	<1518208256.2937.16.camel@suse.com>
-	<20180209230449.GW14513@octiron.msp.redhat.com>
-	<1518218931.2937.20.camel@suse.com>
-	<1518219365.2937.22.camel@suse.com>
+Subject: [RFC PATCH 1/5] libmultipath: move remove_map waiter
+	code to multipathd
+Date: Fri,  9 Feb 2018 23:07:27 -0600
+Message-ID: <1518239251-29392-2-git-send-email-bmarzins@redhat.com>
+References: <1518239251-29392-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1518219365.2937.22.camel@suse.com>
+In-Reply-To: <1518239251-29392-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,141 +18,149 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: Bart Van Assche <Bart.VanAssche@wdc.com>, device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-On Sat, Feb 10, 2018 at 12:36:05AM +0100, Martin Wilck wrote:
-> On Sat, 2018-02-10 at 00:28 +0100, Martin Wilck wrote:
-> > Maybe it's easier than we thought. Attached is a patch on top of
-> > yours that I think might work, please have a look. =
+Only multipathd needs to worry about the multipath waiter code. There is
+no point in having remove_map_and_stop_waiter() or
+remove_maps_and_stop_waiters() in libmultipath, since they should never
+be use outside of multipathd.
 
-> > =
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/structs_vec.c | 40 +++++-----------------------------------
+ libmultipath/structs_vec.h |  2 --
+ multipathd/main.c          | 23 +++++++++++++++++++++++
+ 3 files changed, 28 insertions(+), 37 deletions(-)
 
-> =
-
-> That one didn't even compile. This one is better.
-> =
-
-> Martin
-
-How about this one instead. The idea is that once we are in the cleanup
-handler, we just cleanup and exit. But before we enter it, we atomically
-exchange running, and if running was 0, we pause(), since the checker is
-either about to cancel us, or already has.
-
-diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
-index 894ad41..3774a17 100644
---- a/libmultipath/checkers/tur.c
-+++ b/libmultipath/checkers/tur.c
-@@ -214,15 +214,12 @@ retry:
- =
-
- static void cleanup_func(void *data)
- {
--	int running, holders;
-+	int holders;
- 	struct tur_checker_context *ct =3D data;
- =
-
--	running =3D uatomic_xchg(&ct->running, 0);
- 	holders =3D uatomic_sub_return(&ct->holders, 1);
- 	if (!holders)
- 		cleanup_context(ct);
--	if (!running)
--		pause();
+diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
+index 0de2221..abf5327 100644
+--- a/libmultipath/structs_vec.c
++++ b/libmultipath/structs_vec.c
+@@ -116,25 +116,16 @@ set_multipath_wwid (struct multipath * mpp)
+ 	dm_get_uuid(mpp->alias, mpp->wwid);
  }
- =
-
- static int tur_running(struct tur_checker_context *ct)
-@@ -242,7 +239,7 @@ static void copy_msg_to_tcc(void *ct_p, const char *msg)
- static void *tur_thread(void *ctx)
+ 
+-#define KEEP_WAITER 0
+-#define STOP_WAITER 1
+ #define PURGE_VEC 1
+ 
+-static void
+-_remove_map (struct multipath * mpp, struct vectors * vecs,
+-	    int stop_waiter, int purge_vec)
++void
++remove_map(struct multipath * mpp, struct vectors * vecs, int purge_vec)
  {
- 	struct tur_checker_context *ct =3D ctx;
--	int state;
-+	int state, running;
- 	char devt[32];
- =
-
- 	condlog(3, "%s: tur checker starting up",
-@@ -268,6 +265,11 @@ static void *tur_thread(void *ctx)
- =
-
- 	condlog(3, "%s: tur checker finished, state %s",
- 		tur_devt(devt, sizeof(devt), ct), checker_state_name(state));
+ 	int i;
+ 
+ 	condlog(4, "%s: remove multipath map", mpp->alias);
+ 
+ 	/*
+-	 * stop the DM event waiter thread
+-	 */
+-	if (stop_waiter)
+-		stop_waiter_thread(mpp, vecs);
+-
+-	/*
+ 	 * clear references to this map
+ 	 */
+ 	orphan_paths(vecs->pathvec, mpp);
+@@ -149,19 +140,8 @@ _remove_map (struct multipath * mpp, struct vectors * vecs,
+ 	free_multipath(mpp, KEEP_PATHS);
+ }
+ 
+-void remove_map(struct multipath *mpp, struct vectors *vecs, int purge_vec)
+-{
+-	_remove_map(mpp, vecs, KEEP_WAITER, purge_vec);
+-}
+-
+-void remove_map_and_stop_waiter(struct multipath *mpp, struct vectors *vecs,
+-				int purge_vec)
+-{
+-	_remove_map(mpp, vecs, STOP_WAITER, purge_vec);
+-}
+-
+-static void
+-_remove_maps (struct vectors * vecs, int stop_waiter)
++void
++remove_maps(struct vectors * vecs)
+ {
+ 	int i;
+ 	struct multipath * mpp;
+@@ -170,7 +150,7 @@ _remove_maps (struct vectors * vecs, int stop_waiter)
+ 		return;
+ 
+ 	vector_foreach_slot (vecs->mpvec, mpp, i) {
+-		_remove_map(mpp, vecs, stop_waiter, 1);
++		remove_map(mpp, vecs, 1);
+ 		i--;
+ 	}
+ 
+@@ -178,16 +158,6 @@ _remove_maps (struct vectors * vecs, int stop_waiter)
+ 	vecs->mpvec = NULL;
+ }
+ 
+-void remove_maps(struct vectors *vecs)
+-{
+-	_remove_maps(vecs, KEEP_WAITER);
+-}
+-
+-void remove_maps_and_stop_waiters(struct vectors *vecs)
+-{
+-	_remove_maps(vecs, STOP_WAITER);
+-}
+-
+ void
+ extract_hwe_from_path(struct multipath * mpp)
+ {
+diff --git a/libmultipath/structs_vec.h b/libmultipath/structs_vec.h
+index b81413b..d6e17bb 100644
+--- a/libmultipath/structs_vec.h
++++ b/libmultipath/structs_vec.h
+@@ -27,9 +27,7 @@ int update_multipath_strings (struct multipath *mpp, vector pathvec,
+ void extract_hwe_from_path(struct multipath * mpp);
+ 
+ void remove_map (struct multipath * mpp, struct vectors * vecs, int purge_vec);
+-void remove_map_and_stop_waiter (struct multipath * mpp, struct vectors * vecs, int purge_vec);
+ void remove_maps (struct vectors * vecs);
+-void remove_maps_and_stop_waiters (struct vectors * vecs);
+ 
+ void sync_map_state (struct multipath *);
+ int update_map (struct multipath *mpp, struct vectors *vecs);
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 7ac59d9..72c3c2f 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -288,6 +288,29 @@ switch_pathgroup (struct multipath * mpp)
+ 		 mpp->alias, mpp->bestpg);
+ }
+ 
++static void
++remove_map_and_stop_waiter(struct multipath *mpp, struct vectors *vecs,
++			   int purge_vec)
++{
++	stop_waiter_thread(mpp, vecs);
++	remove_map(mpp, vecs, purge_vec);
++}
 +
-+	running =3D uatomic_xchg(&ct->running, 0);
-+	if (!running)
-+		pause();
++static void
++remove_maps_and_stop_waiters(struct vectors *vecs)
++{
++	int i;
++	struct multipath * mpp;
 +
- 	tur_thread_cleanup_pop(ct);
- =
-
- 	return ((void *)0);
-
-
-> =
-
-> -- =
-
-> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-> SUSE Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
-> HRB 21284 (AG N=FCrnberg)
-
-> From afb9c7de3658d49c4f28f6b9ee618a87b806ecdd Mon Sep 17 00:00:00 2001
-> From: Martin Wilck <mwilck@suse.com>
-> Date: Sat, 10 Feb 2018 00:22:17 +0100
-> Subject: [PATCH] tur checker: make sure pthread_cancel isn't called for e=
-xited
->  thread
-> =
-
-> If we enter the cleanup function as the result of a pthread_cancel by ano=
-ther
-> thread, we don't need to wait for a cancellation any more. If we exit
-> regularly, just tell the other thread not to try to cancel us.
-> ---
->  libmultipath/checkers/tur.c | 9 +++++----
->  1 file changed, 5 insertions(+), 4 deletions(-)
-> =
-
-> diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
-> index 894ad41c89c3..5d2b36bfa883 100644
-> --- a/libmultipath/checkers/tur.c
-> +++ b/libmultipath/checkers/tur.c
-> @@ -214,15 +214,13 @@ retry:
->  =
-
->  static void cleanup_func(void *data)
->  {
-> -	int running, holders;
-> +	int holders;
->  	struct tur_checker_context *ct =3D data;
->  =
-
-> -	running =3D uatomic_xchg(&ct->running, 0);
-> +	uatomic_set(&ct->running, 0);
->  	holders =3D uatomic_sub_return(&ct->holders, 1);
->  	if (!holders)
->  		cleanup_context(ct);
-> -	if (!running)
-> -		pause();
->  }
->  =
-
->  static int tur_running(struct tur_checker_context *ct)
-> @@ -266,6 +264,9 @@ static void *tur_thread(void *ctx)
->  	pthread_cond_signal(&ct->active);
->  	pthread_mutex_unlock(&ct->lock);
->  =
-
-> +	/* Tell main checker thread not to cancel us, as we exit anyway */
-> +	uatomic_set(&ct->running, 0);
-> +
->  	condlog(3, "%s: tur checker finished, state %s",
->  		tur_devt(devt, sizeof(devt), ct), checker_state_name(state));
->  	tur_thread_cleanup_pop(ct);
-> -- =
-
-> 2.16.1
-> =
++	if (!vecs)
++		return;
++
++	vector_foreach_slot(vecs->mpvec, mpp, i)
++		stop_waiter_thread(mpp, vecs);
++
++	remove_maps(vecs);
++}
++
+ static int
+ coalesce_maps(struct vectors *vecs, vector nmpv)
+ {
+-- 
+2.7.4
