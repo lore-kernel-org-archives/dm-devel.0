@@ -1,7 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
 Subject: Re: [PATCH v2 1/7] libmultipath: fix tur checker locking
-Date: Fri, 9 Feb 2018 18:17:06 -0600
-Message-ID: <20180210001706.GX14513@octiron.msp.redhat.com>
+Date: Fri, 9 Feb 2018 18:36:38 -0600
+Message-ID: <20180210003638.GY14513@octiron.msp.redhat.com>
 References: <1518134167-15938-1-git-send-email-bmarzins@redhat.com>
 	<1518134167-15938-2-git-send-email-bmarzins@redhat.com>
 	<1518208256.2937.16.camel@suse.com>
@@ -41,19 +41,60 @@ On Sat, Feb 10, 2018 at 12:36:05AM +0100, Martin Wilck wrote:
 
 > Martin
 
-So if we have this ordering
+How about this one instead. The idea is that once we are in the cleanup
+handler, we just cleanup and exit. But before we enter it, we atomically
+exchange running, and if running was 0, we pause(), since the checker is
+either about to cancel us, or already has.
 
-- checker calls uatomic_xchg() which returns 1 and then gets scheduled
-- thread calls uatomic_set() and then runs till it terminates
-- checker calls pthread_cancel()
+diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
+index 894ad41..3774a17 100644
+--- a/libmultipath/checkers/tur.c
++++ b/libmultipath/checkers/tur.c
+@@ -214,15 +214,12 @@ retry:
+ =
 
-You will get Bart's original bug.  I realize that having the condlog()
-after the uatomic_set() in the thread makes this unlikely, but I don't
-races like this. I would be happier with simply taking the original code
-and moving the condlog(), if neither of my other two options are
-acceptable.
+ static void cleanup_func(void *data)
+ {
+-	int running, holders;
++	int holders;
+ 	struct tur_checker_context *ct =3D data;
+ =
 
--Ben
+-	running =3D uatomic_xchg(&ct->running, 0);
+ 	holders =3D uatomic_sub_return(&ct->holders, 1);
+ 	if (!holders)
+ 		cleanup_context(ct);
+-	if (!running)
+-		pause();
+ }
+ =
+
+ static int tur_running(struct tur_checker_context *ct)
+@@ -242,7 +239,7 @@ static void copy_msg_to_tcc(void *ct_p, const char *msg)
+ static void *tur_thread(void *ctx)
+ {
+ 	struct tur_checker_context *ct =3D ctx;
+-	int state;
++	int state, running;
+ 	char devt[32];
+ =
+
+ 	condlog(3, "%s: tur checker starting up",
+@@ -268,6 +265,11 @@ static void *tur_thread(void *ctx)
+ =
+
+ 	condlog(3, "%s: tur checker finished, state %s",
+ 		tur_devt(devt, sizeof(devt), ct), checker_state_name(state));
++
++	running =3D uatomic_xchg(&ct->running, 0);
++	if (!running)
++		pause();
++
+ 	tur_thread_cleanup_pop(ct);
+ =
+
+ 	return ((void *)0);
+
 
 > =
 
