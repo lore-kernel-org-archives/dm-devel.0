@@ -1,13 +1,18 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [RFC PATCH 4/5] libmultipath: add helper functions
-Date: Fri,  9 Feb 2018 23:07:30 -0600
-Message-ID: <1518239251-29392-5-git-send-email-bmarzins@redhat.com>
-References: <1518239251-29392-1-git-send-email-bmarzins@redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH v2 1/7] libmultipath: fix tur checker locking
+Date: Sat, 10 Feb 2018 17:03:15 +0100
+Message-ID: <1518278595.2937.24.camel@suse.com>
+References: <1518134167-15938-1-git-send-email-bmarzins@redhat.com>
+	<1518134167-15938-2-git-send-email-bmarzins@redhat.com>
+	<1518208256.2937.16.camel@suse.com>
+	<20180209230449.GW14513@octiron.msp.redhat.com>
+	<1518218931.2937.20.camel@suse.com> <1518219365.2937.22.camel@suse.com>
+	<20180210001706.GX14513@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1518239251-29392-1-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <20180210001706.GX14513@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,156 +22,64 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Martin Wilck <mwilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Bart Van Assche <Bart.VanAssche@wdc.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Add the ability to reset a vector without completely freeing it, and to
-check the version of the device-mapper module.  The existing version
-checking code checks the version of a specific device mapper target, and
-has been renamed for clarity's sake. These functions will be used in a
-later patch.
-
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmultipath/devmapper.c | 28 ++++++++++++++++++++++++----
- libmultipath/devmapper.h |  3 ++-
- libmultipath/vector.c    | 16 ++++++++++++----
- libmultipath/vector.h    |  1 +
- multipathd/main.c        |  2 +-
- 5 files changed, 40 insertions(+), 10 deletions(-)
-
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index 573fc75..2960bf5 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -132,7 +132,27 @@ dm_lib_prereq (void)
- }
- 
- int
--dm_drv_version (unsigned int * version, char * str)
-+dm_drv_version(unsigned int *v)
-+{
-+	char buff[64];
-+
-+	v[0] = 0;
-+	v[1] = 0;
-+	v[2] = 0;
-+
-+	if (!dm_driver_version(buff, sizeof(buff))) {
-+		condlog(0, "cannot get kernel dm version");
-+		return 1;
-+	}
-+	if (sscanf(buff, "%u.%u.%u ", &v[0], &v[1], &v[2]) != 3) {
-+		condlog(0, "invalid kernel dm version '%s'", buff);
-+		return 1;
-+	}
-+	return 0;
-+}
-+
-+int
-+dm_tgt_version (unsigned int * version, char * str)
- {
- 	int r = 2;
- 	struct dm_task *dmt;
-@@ -179,13 +199,13 @@ out:
- }
- 
- static int
--dm_drv_prereq (unsigned int *ver)
-+dm_tgt_prereq (unsigned int *ver)
- {
- 	unsigned int minv[3] = {1, 0, 3};
- 	unsigned int version[3] = {0, 0, 0};
- 	unsigned int * v = version;
- 
--	if (dm_drv_version(v, TGT_MPATH)) {
-+	if (dm_tgt_version(v, TGT_MPATH)) {
- 		/* in doubt return not capable */
- 		return 1;
- 	}
-@@ -210,7 +230,7 @@ static int dm_prereq(unsigned int *v)
- {
- 	if (dm_lib_prereq())
- 		return 1;
--	return dm_drv_prereq(v);
-+	return dm_tgt_prereq(v);
- }
- 
- static int libmp_dm_udev_sync = 0;
-diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
-index 62e14d1..52d4af8 100644
---- a/libmultipath/devmapper.h
-+++ b/libmultipath/devmapper.h
-@@ -28,7 +28,8 @@ void dm_init(int verbosity);
- void libmp_dm_init(void);
- void libmp_udev_set_sync_support(int on);
- struct dm_task *libmp_dm_task_create(int task);
--int dm_drv_version (unsigned int * version, char * str);
-+int dm_drv_version (unsigned int * version);
-+int dm_tgt_version (unsigned int * version, char * str);
- int dm_simplecmd_flush (int, const char *, uint16_t);
- int dm_simplecmd_noflush (int, const char *, uint16_t);
- int dm_addmap_create (struct multipath *mpp, char *params);
-diff --git a/libmultipath/vector.c b/libmultipath/vector.c
-index 6266e0a..f741ae0 100644
---- a/libmultipath/vector.c
-+++ b/libmultipath/vector.c
-@@ -145,18 +145,26 @@ vector_repack(vector v)
- 			vector_del_slot(v, i--);
- }
- 
--/* Free memory vector allocation */
--void
--vector_free(vector v)
-+vector
-+vector_reset(vector v)
- {
- 	if (!v)
--		return;
-+		return NULL;
- 
- 	if (v->slot)
- 		FREE(v->slot);
- 
- 	v->allocated = 0;
- 	v->slot = NULL;
-+	return v;
-+}
-+
-+/* Free memory vector allocation */
-+void
-+vector_free(vector v)
-+{
-+	if (!vector_reset(v))
-+		return;
- 	FREE(v);
- }
- 
-diff --git a/libmultipath/vector.h b/libmultipath/vector.h
-index 5cfd4d0..d69cd0b 100644
---- a/libmultipath/vector.h
-+++ b/libmultipath/vector.h
-@@ -45,6 +45,7 @@ typedef struct _vector *vector;
- /* Prototypes */
- extern vector vector_alloc(void);
- extern void *vector_alloc_slot(vector v);
-+vector vector_reset(vector v);
- extern void vector_free(vector v);
- extern void free_strvec(vector strvec);
- extern void vector_set_slot(vector v, void *value);
-diff --git a/multipathd/main.c b/multipathd/main.c
-index efc39d7..2963bde 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -2228,7 +2228,7 @@ reconfigure (struct vectors * vecs)
- 	/* Re-read any timezone changes */
- 	tzset();
- 
--	dm_drv_version(conf->version, TGT_MPATH);
-+	dm_tgt_version(conf->version, TGT_MPATH);
- 	if (verbosity)
- 		conf->verbosity = verbosity;
- 	if (bindings_read_only)
--- 
-2.7.4
+T24gRnJpLCAyMDE4LTAyLTA5IGF0IDE4OjE3IC0wNjAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cj4gT24gU2F0LCBGZWIgMTAsIDIwMTggYXQgMTI6MzY6MDVBTSArMDEwMCwgTWFydGluIFdp
+bGNrIHdyb3RlOgo+ID4gT24gU2F0LCAyMDE4LTAyLTEwIGF0IDAwOjI4ICswMTAwLCBNYXJ0aW4g
+V2lsY2sgd3JvdGU6Cj4gPiA+IE1heWJlIGl0J3MgZWFzaWVyIHRoYW4gd2UgdGhvdWdodC4gQXR0
+YWNoZWQgaXMgYSBwYXRjaCBvbiB0b3Agb2YKPiA+ID4geW91cnMgdGhhdCBJIHRoaW5rIG1pZ2h0
+IHdvcmssIHBsZWFzZSBoYXZlIGEgbG9vay4gCj4gPiA+IAo+ID4gCj4gPiBUaGF0IG9uZSBkaWRu
+J3QgZXZlbiBjb21waWxlLiBUaGlzIG9uZSBpcyBiZXR0ZXIuCj4gPiAKPiA+IE1hcnRpbgo+IAo+
+IFNvIGlmIHdlIGhhdmUgdGhpcyBvcmRlcmluZwo+IAo+IC0gY2hlY2tlciBjYWxscyB1YXRvbWlj
+X3hjaGcoKSB3aGljaCByZXR1cm5zIDEgYW5kIHRoZW4gZ2V0cwo+IHNjaGVkdWxlZAo+IC0gdGhy
+ZWFkIGNhbGxzIHVhdG9taWNfc2V0KCkgYW5kIHRoZW4gcnVucyB0aWxsIGl0IHRlcm1pbmF0ZXMK
+PiAtIGNoZWNrZXIgY2FsbHMgcHRocmVhZF9jYW5jZWwoKQo+IAo+IFlvdSB3aWxsIGdldCBCYXJ0
+J3Mgb3JpZ2luYWwgYnVnLiAKClllcywgSSByZWFsaXplZCB0aGF0IG92ZXJuaWdodCA6LSggSSBz
+aG91bGRuJ3QgcG9zdCBzdHVmZiBsaWtlIHRoaXMKYXJvdW5kIG1pZG5pZ2h0LiBCdXQgSSBoYXZl
+IGFub3RoZXIgaWRlYSBpbiBteSBtaW5kLgoKTWFydGluCgo+ICBJIHJlYWxpemUgdGhhdCBoYXZp
+bmcgdGhlIGNvbmRsb2coKQo+IGFmdGVyIHRoZSB1YXRvbWljX3NldCgpIGluIHRoZSB0aHJlYWQg
+bWFrZXMgdGhpcyB1bmxpa2VseSwgYnV0IEkKPiBkb24ndAo+IHJhY2VzIGxpa2UgdGhpcy4gSSB3
+b3VsZCBiZSBoYXBwaWVyIHdpdGggc2ltcGx5IHRha2luZyB0aGUgb3JpZ2luYWwKPiBjb2RlCj4g
+YW5kIG1vdmluZyB0aGUgY29uZGxvZygpLCBpZiBuZWl0aGVyIG9mIG15IG90aGVyIHR3byBvcHRp
+b25zIGFyZQo+IGFjY2VwdGFibGUuCj4gCj4gLUJlbgo+IAo+ID4gCj4gPiAtLSAKPiA+IERyLiBN
+YXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3
+Cj4gPiBTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhh
+cmQsIEdyYWhhbQo+ID4gTm9ydG9uCj4gPiBIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKPiA+IEZy
+b20gYWZiOWM3ZGUzNjU4ZDQ5YzRmMjhmNmI5ZWU2MThhODdiODA2ZWNkZCBNb24gU2VwIDE3IDAw
+OjAwOjAwCj4gPiAyMDAxCj4gPiBGcm9tOiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4K
+PiA+IERhdGU6IFNhdCwgMTAgRmViIDIwMTggMDA6MjI6MTcgKzAxMDAKPiA+IFN1YmplY3Q6IFtQ
+QVRDSF0gdHVyIGNoZWNrZXI6IG1ha2Ugc3VyZSBwdGhyZWFkX2NhbmNlbCBpc24ndCBjYWxsZWQK
+PiA+IGZvciBleGl0ZWQKPiA+ICB0aHJlYWQKPiA+IAo+ID4gSWYgd2UgZW50ZXIgdGhlIGNsZWFu
+dXAgZnVuY3Rpb24gYXMgdGhlIHJlc3VsdCBvZiBhIHB0aHJlYWRfY2FuY2VsCj4gPiBieSBhbm90
+aGVyCj4gPiB0aHJlYWQsIHdlIGRvbid0IG5lZWQgdG8gd2FpdCBmb3IgYSBjYW5jZWxsYXRpb24g
+YW55IG1vcmUuIElmIHdlCj4gPiBleGl0Cj4gPiByZWd1bGFybHksIGp1c3QgdGVsbCB0aGUgb3Ro
+ZXIgdGhyZWFkIG5vdCB0byB0cnkgdG8gY2FuY2VsIHVzLgo+ID4gLS0tCj4gPiAgbGlibXVsdGlw
+YXRoL2NoZWNrZXJzL3R1ci5jIHwgOSArKysrKy0tLS0KPiA+ICAxIGZpbGUgY2hhbmdlZCwgNSBp
+bnNlcnRpb25zKCspLCA0IGRlbGV0aW9ucygtKQo+ID4gCj4gPiBkaWZmIC0tZ2l0IGEvbGlibXVs
+dGlwYXRoL2NoZWNrZXJzL3R1ci5jCj4gPiBiL2xpYm11bHRpcGF0aC9jaGVja2Vycy90dXIuYwo+
+ID4gaW5kZXggODk0YWQ0MWM4OWMzLi41ZDJiMzZiZmE4ODMgMTAwNjQ0Cj4gPiAtLS0gYS9saWJt
+dWx0aXBhdGgvY2hlY2tlcnMvdHVyLmMKPiA+ICsrKyBiL2xpYm11bHRpcGF0aC9jaGVja2Vycy90
+dXIuYwo+ID4gQEAgLTIxNCwxNSArMjE0LDEzIEBAIHJldHJ5Ogo+ID4gIAo+ID4gIHN0YXRpYyB2
+b2lkIGNsZWFudXBfZnVuYyh2b2lkICpkYXRhKQo+ID4gIHsKPiA+IC0JaW50IHJ1bm5pbmcsIGhv
+bGRlcnM7Cj4gPiArCWludCBob2xkZXJzOwo+ID4gIAlzdHJ1Y3QgdHVyX2NoZWNrZXJfY29udGV4
+dCAqY3QgPSBkYXRhOwo+ID4gIAo+ID4gLQlydW5uaW5nID0gdWF0b21pY194Y2hnKCZjdC0+cnVu
+bmluZywgMCk7Cj4gPiArCXVhdG9taWNfc2V0KCZjdC0+cnVubmluZywgMCk7Cj4gPiAgCWhvbGRl
+cnMgPSB1YXRvbWljX3N1Yl9yZXR1cm4oJmN0LT5ob2xkZXJzLCAxKTsKPiA+ICAJaWYgKCFob2xk
+ZXJzKQo+ID4gIAkJY2xlYW51cF9jb250ZXh0KGN0KTsKPiA+IC0JaWYgKCFydW5uaW5nKQo+ID4g
+LQkJcGF1c2UoKTsKPiA+ICB9Cj4gPiAgCj4gPiAgc3RhdGljIGludCB0dXJfcnVubmluZyhzdHJ1
+Y3QgdHVyX2NoZWNrZXJfY29udGV4dCAqY3QpCj4gPiBAQCAtMjY2LDYgKzI2NCw5IEBAIHN0YXRp
+YyB2b2lkICp0dXJfdGhyZWFkKHZvaWQgKmN0eCkKPiA+ICAJcHRocmVhZF9jb25kX3NpZ25hbCgm
+Y3QtPmFjdGl2ZSk7Cj4gPiAgCXB0aHJlYWRfbXV0ZXhfdW5sb2NrKCZjdC0+bG9jayk7Cj4gPiAg
+Cj4gPiArCS8qIFRlbGwgbWFpbiBjaGVja2VyIHRocmVhZCBub3QgdG8gY2FuY2VsIHVzLCBhcyB3
+ZSBleGl0Cj4gPiBhbnl3YXkgKi8KPiA+ICsJdWF0b21pY19zZXQoJmN0LT5ydW5uaW5nLCAwKTsK
+PiA+ICsKPiA+ICAJY29uZGxvZygzLCAiJXM6IHR1ciBjaGVja2VyIGZpbmlzaGVkLCBzdGF0ZSAl
+cyIsCj4gPiAgCQl0dXJfZGV2dChkZXZ0LCBzaXplb2YoZGV2dCksIGN0KSwKPiA+IGNoZWNrZXJf
+c3RhdGVfbmFtZShzdGF0ZSkpOwo+ID4gIAl0dXJfdGhyZWFkX2NsZWFudXBfcG9wKGN0KTsKPiA+
+IC0tIAo+ID4gMi4xNi4xCj4gPiAKPiAKPiAKCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tA
+c3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdG
+OiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIx
+Mjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVk
+aGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
