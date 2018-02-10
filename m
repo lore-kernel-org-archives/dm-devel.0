@@ -1,15 +1,19 @@
-From: Martin Wilck <mwilck@suse.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
 Subject: Re: [PATCH v2 1/7] libmultipath: fix tur checker locking
-Date: Sat, 10 Feb 2018 00:28:51 +0100
-Message-ID: <1518218931.2937.20.camel@suse.com>
+Date: Fri, 9 Feb 2018 18:17:06 -0600
+Message-ID: <20180210001706.GX14513@octiron.msp.redhat.com>
 References: <1518134167-15938-1-git-send-email-bmarzins@redhat.com>
 	<1518134167-15938-2-git-send-email-bmarzins@redhat.com>
 	<1518208256.2937.16.camel@suse.com>
 	<20180209230449.GW14513@octiron.msp.redhat.com>
+	<1518218931.2937.20.camel@suse.com>
+	<1518219365.2937.22.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="=-WpDUIQGiPjFVya/PcLN4"
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180209230449.GW14513@octiron.msp.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1518219365.2937.22.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,137 +23,100 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <mwilck@suse.com>
 Cc: Bart Van Assche <Bart.VanAssche@wdc.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+On Sat, Feb 10, 2018 at 12:36:05AM +0100, Martin Wilck wrote:
+> On Sat, 2018-02-10 at 00:28 +0100, Martin Wilck wrote:
+> > Maybe it's easier than we thought. Attached is a patch on top of
+> > yours that I think might work, please have a look. =
 
---=-WpDUIQGiPjFVya/PcLN4
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8bit
+> > =
 
-On Fri, 2018-02-09 at 17:04 -0600, Benjamin Marzinski wrote:
-> On Fri, Feb 09, 2018 at 09:30:56PM +0100, Martin Wilck wrote:
-> > On Thu, 2018-02-08 at 17:56 -0600, Benjamin Marzinski wrote:
-> > > ct->running is now an atomic variable.  When the thread is
-> > > started
-> > > it is set to 1. When the checker wants to kill a thread, it
-> > > atomically
-> > > sets the value to 0 and reads the previous value.  If it was 1,
-> > > the checker cancels the thread. If it was 0, the nothing needs to
-> > > be
-> > > done.  After the checker has dealt with the thread, it sets ct-
-> > > > thread
-> > > 
-> > > to NULL.
-> > > 
-> > > When the thread is done, it atomicalllys sets the value of ct-
-> > > > running
-> > > 
-> > > to 0 and reads the previous value. If it was 1, the thread just
-> > > exits.
-> > > If it was 0, then the checker is trying to cancel the thread, and
-> > > so
-> > > the thread calls pause(), which is a cancellation point.
-> > > 
-> > 
-> > I'm missing one thing here. My poor brain is aching.
-> > 
-> > cleanup_func() can be entered in two ways: a) if the thread has
-> > been
-> > cancelled and passed a cancellation point already, or b) if it
-> > exits
-> > normally and calls pthread_cleanup_pop(). 
-> > In case b), waiting for the cancellation request by calling pause()
-> > makes sense to me. But in case a), the thread has already seen the
-> > cancellation request - wouldn't calling pause() cause it to sleep
-> > forever?
-> 
-> Urgh. You're right. If it is in the cleanup helper because it already
-> has been cancelled, then the pause isn't going get cancelled. So much
-> for my quick rewrite.
+> =
 
-Maybe it's easier than we thought. Attached is a patch on top of yours
-that I think might work, please have a look. 
+> That one didn't even compile. This one is better.
+> =
 
-It's quite late here, so I'll need to ponder your alternatives below
-the other day.
+> Martin
 
-Cheers
-Martin
+So if we have this ordering
 
-> 
-> That leaves three options.
-> 
-> 1. have either the thread or the checker detach the thread (depending
->    on which one exits first)
-> 2. make the checker always cancel and detach the thread. This
-> simplifies
->    the code, but there will zombie threads hanging around between
-> calls
->    to the checker.
-> 3. just move the condlog
-> 
-> I really don't care which one we pick anymore.
-> 
-> -Ben
-> 
-> > 
-> > Martin
-> > 
-> > -- 
-> > Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-> > SUSE Linux GmbH, GF: Felix Imendörffer, Jane Smithard, Graham
-> > Norton
-> > HRB 21284 (AG Nürnberg)
-> 
-> 
+- checker calls uatomic_xchg() which returns 1 and then gets scheduled
+- thread calls uatomic_set() and then runs till it terminates
+- checker calls pthread_cancel()
 
--- 
-Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-SUSE Linux GmbH, GF: Felix Imendörffer, Jane Smithard, Graham Norton
-HRB 21284 (AG Nürnberg)
+You will get Bart's original bug.  I realize that having the condlog()
+after the uatomic_set() in the thread makes this unlikely, but I don't
+races like this. I would be happier with simply taking the original code
+and moving the condlog(), if neither of my other two options are
+acceptable.
 
---=-WpDUIQGiPjFVya/PcLN4
-Content-Disposition: attachment;
-	filename*0=0001-tur-checker-make-sure-pthread_cancel-isn-t-called-fo.pat;
-	filename*1=ch
-Content-Type: text/x-patch;
-	name="0001-tur-checker-make-sure-pthread_cancel-isn-t-called-fo.patch";
-	charset="UTF-8"
-Content-Transfer-Encoding: base64
+-Ben
 
-RnJvbSA4MzFlZjI3YjQxODU4ZmEyNDgyMDFiNzRmMmRkOGVhNWI3YzRhZWNlIE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4KRGF0ZTog
-U2F0LCAxMCBGZWIgMjAxOCAwMDoyMjoxNyArMDEwMApTdWJqZWN0OiBbUEFUQ0hdIHR1ciBjaGVj
-a2VyOiBtYWtlIHN1cmUgcHRocmVhZF9jYW5jZWwgaXNuJ3QgY2FsbGVkIGZvciBleGl0ZWQKIHRo
-cmVhZAoKSWYgd2UgZW50ZXIgdGhlIGNsZWFudXAgZnVuY3Rpb24gYXMgdGhlIHJlc3VsdCBvZiBh
-IHB0aHJlYWRfY2FuY2VsIGJ5IGFub3RoZXIKdGhyZWFkLCB3ZSBkb24ndCBuZWVkIHRvIHdhaXQg
-Zm9yIGEgY2FuY2VsbGF0aW9uIGFueSBtb3JlLiBJZiB3ZSBleGl0CnJlZ3VsYXJseSwganVzdCB0
-ZWxsIHRoZSBvdGhlciB0aHJlYWQgbm90IHRvIHRyeSB0byBjYW5jZWwgdXMuCi0tLQogbGlibXVs
-dGlwYXRoL2NoZWNrZXJzL3R1ci5jIHwgNSArKystLQogMSBmaWxlIGNoYW5nZWQsIDMgaW5zZXJ0
-aW9ucygrKSwgMiBkZWxldGlvbnMoLSkKCmRpZmYgLS1naXQgYS9saWJtdWx0aXBhdGgvY2hlY2tl
-cnMvdHVyLmMgYi9saWJtdWx0aXBhdGgvY2hlY2tlcnMvdHVyLmMKaW5kZXggODk0YWQ0MWM4OWMz
-Li4zMWE4N2QyYjVjZjIgMTAwNjQ0Ci0tLSBhL2xpYm11bHRpcGF0aC9jaGVja2Vycy90dXIuYwor
-KysgYi9saWJtdWx0aXBhdGgvY2hlY2tlcnMvdHVyLmMKQEAgLTIyMSw4ICsyMjEsNiBAQCBzdGF0
-aWMgdm9pZCBjbGVhbnVwX2Z1bmModm9pZCAqZGF0YSkKIAlob2xkZXJzID0gdWF0b21pY19zdWJf
-cmV0dXJuKCZjdC0+aG9sZGVycywgMSk7CiAJaWYgKCFob2xkZXJzKQogCQljbGVhbnVwX2NvbnRl
-eHQoY3QpOwotCWlmICghcnVubmluZykKLQkJcGF1c2UoKTsKIH0KIAogc3RhdGljIGludCB0dXJf
-cnVubmluZyhzdHJ1Y3QgdHVyX2NoZWNrZXJfY29udGV4dCAqY3QpCkBAIC0yNjYsNiArMjY0LDkg
-QEAgc3RhdGljIHZvaWQgKnR1cl90aHJlYWQodm9pZCAqY3R4KQogCXB0aHJlYWRfY29uZF9zaWdu
-YWwoJmN0LT5hY3RpdmUpOwogCXB0aHJlYWRfbXV0ZXhfdW5sb2NrKCZjdC0+bG9jayk7CiAKKwkv
-KiBUZWxsIG1haW4gY2hlY2tlciB0aHJlYWQgbm90IHRvIGNhbmNlbCB1cywgYXMgd2UgZXhpdCBh
-bnl3YXkgKi8KKwlydW5uaW5nID0gdWF0b21pY194Y2hnKCZjdC0+cnVubmluZywgMCk7CisKIAlj
-b25kbG9nKDMsICIlczogdHVyIGNoZWNrZXIgZmluaXNoZWQsIHN0YXRlICVzIiwKIAkJdHVyX2Rl
-dnQoZGV2dCwgc2l6ZW9mKGRldnQpLCBjdCksIGNoZWNrZXJfc3RhdGVfbmFtZShzdGF0ZSkpOwog
-CXR1cl90aHJlYWRfY2xlYW51cF9wb3AoY3QpOwotLSAKMi4xNi4xCgo=
+> =
 
+> -- =
 
---=-WpDUIQGiPjFVya/PcLN4
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+> SUSE Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
+> HRB 21284 (AG N=FCrnberg)
 
+> From afb9c7de3658d49c4f28f6b9ee618a87b806ecdd Mon Sep 17 00:00:00 2001
+> From: Martin Wilck <mwilck@suse.com>
+> Date: Sat, 10 Feb 2018 00:22:17 +0100
+> Subject: [PATCH] tur checker: make sure pthread_cancel isn't called for e=
+xited
+>  thread
+> =
 
---=-WpDUIQGiPjFVya/PcLN4--
+> If we enter the cleanup function as the result of a pthread_cancel by ano=
+ther
+> thread, we don't need to wait for a cancellation any more. If we exit
+> regularly, just tell the other thread not to try to cancel us.
+> ---
+>  libmultipath/checkers/tur.c | 9 +++++----
+>  1 file changed, 5 insertions(+), 4 deletions(-)
+> =
+
+> diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
+> index 894ad41c89c3..5d2b36bfa883 100644
+> --- a/libmultipath/checkers/tur.c
+> +++ b/libmultipath/checkers/tur.c
+> @@ -214,15 +214,13 @@ retry:
+>  =
+
+>  static void cleanup_func(void *data)
+>  {
+> -	int running, holders;
+> +	int holders;
+>  	struct tur_checker_context *ct =3D data;
+>  =
+
+> -	running =3D uatomic_xchg(&ct->running, 0);
+> +	uatomic_set(&ct->running, 0);
+>  	holders =3D uatomic_sub_return(&ct->holders, 1);
+>  	if (!holders)
+>  		cleanup_context(ct);
+> -	if (!running)
+> -		pause();
+>  }
+>  =
+
+>  static int tur_running(struct tur_checker_context *ct)
+> @@ -266,6 +264,9 @@ static void *tur_thread(void *ctx)
+>  	pthread_cond_signal(&ct->active);
+>  	pthread_mutex_unlock(&ct->lock);
+>  =
+
+> +	/* Tell main checker thread not to cancel us, as we exit anyway */
+> +	uatomic_set(&ct->running, 0);
+> +
+>  	condlog(3, "%s: tur checker finished, state %s",
+>  		tur_devt(devt, sizeof(devt), ct), checker_state_name(state));
+>  	tur_thread_cleanup_pop(ct);
+> -- =
+
+> 2.16.1
+> =
