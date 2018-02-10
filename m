@@ -1,8 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [RFC PATCH 5/5] multipathd: RFC add new polling dmevents
-	waiter thread
-Date: Fri,  9 Feb 2018 23:07:31 -0600
-Message-ID: <1518239251-29392-6-git-send-email-bmarzins@redhat.com>
+Subject: [RFC PATCH 2/5] move waiter code from libmultipath to
+	multipathd
+Date: Fri,  9 Feb 2018 23:07:28 -0600
+Message-ID: <1518239251-29392-3-git-send-email-bmarzins@redhat.com>
 References: <1518239251-29392-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,387 +22,680 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-The current method of waiting for dmevents on multipath devices involves
-creating a seperate thread for each device. This can become very
-wasteful when there are large numbers of multipath devices. Also, since
-multipathd needs to grab the vecs lock to update the devices, the
-additional threads don't actually provide much parallelism.
-
-The patch adds a new method of updating multipath devices on dmevents,
-which uses the new device-mapper event polling interface. This means
-that there is only one dmevent waiting thread which will wait for events
-on all of the multipath devices.  Currently the code to get the event
-number from the list of device names and to re-arm the polling interface
-is not in libdevmapper, so the patch does that work. Obviously, these
-bits need to go into libdevmapper, so that multipathd can use a standard
-interface.
-
-I haven't touched any of the existing event waiting code, since event
-polling was only added to device-mapper in version 4.37.0.  multipathd
-checks this version, and defaults to using the polling code if
-device-mapper supports it. This can be overridden by running multipathd
-with "-w", to force it to use the old event waiting code.
+Only multipathd uses the code in waiter.[ch] and the functions that call
+it directly, so they should all live in the multipathd directory.  This
+patch is simply moving the waiter.[ch] files and the functions in
+structs_vec that use them. None of the moved code has been changed.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/Makefile   |   3 +-
- multipathd/dmevents.c | 396 ++++++++++++++++++++++++++++++++++++++++++++++++++
- multipathd/dmevents.h |  13 ++
- multipathd/main.c     |  58 +++++++-
- 4 files changed, 461 insertions(+), 9 deletions(-)
- create mode 100644 multipathd/dmevents.c
- create mode 100644 multipathd/dmevents.h
+ libmultipath/Makefile      |   2 +-
+ libmultipath/structs_vec.c |  98 ---------------------
+ libmultipath/structs_vec.h |   4 +-
+ libmultipath/waiter.c      | 215 ---------------------------------------------
+ libmultipath/waiter.h      |  17 ----
+ multipathd/Makefile        |   2 +-
+ multipathd/main.c          |  96 ++++++++++++++++++++
+ multipathd/waiter.c        | 215 +++++++++++++++++++++++++++++++++++++++++++++
+ multipathd/waiter.h        |  17 ++++
+ 9 files changed, 332 insertions(+), 334 deletions(-)
+ delete mode 100644 libmultipath/waiter.c
+ delete mode 100644 libmultipath/waiter.h
+ create mode 100644 multipathd/waiter.c
+ create mode 100644 multipathd/waiter.h
 
+diff --git a/libmultipath/Makefile b/libmultipath/Makefile
+index 6447d8d..a1005b2 100644
+--- a/libmultipath/Makefile
++++ b/libmultipath/Makefile
+@@ -42,7 +42,7 @@ OBJS = memory.o parser.o vector.o devmapper.o callout.o \
+ 	pgpolicies.o debug.o defaults.o uevent.o time-util.o \
+ 	switchgroup.o uxsock.o print.o alias.o log_pthread.o \
+ 	log.o configure.o structs_vec.o sysfs.o prio.o checkers.o \
+-	lock.o waiter.o file.o wwids.o prioritizers/alua_rtpg.o prkey.o \
++	lock.o file.o wwids.o prioritizers/alua_rtpg.o prkey.o \
+ 	io_err_stat.o
+ 
+ all: $(LIBS)
+diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
+index abf5327..77b045b 100644
+--- a/libmultipath/structs_vec.c
++++ b/libmultipath/structs_vec.c
+@@ -10,7 +10,6 @@
+ #include "structs.h"
+ #include "structs_vec.h"
+ #include "sysfs.h"
+-#include "waiter.h"
+ #include "devmapper.h"
+ #include "dmparser.h"
+ #include "propsel.h"
+@@ -107,17 +106,6 @@ void orphan_paths(vector pathvec, struct multipath *mpp)
+ 	}
+ }
+ 
+-static void
+-set_multipath_wwid (struct multipath * mpp)
+-{
+-	if (strlen(mpp->wwid))
+-		return;
+-
+-	dm_get_uuid(mpp->alias, mpp->wwid);
+-}
+-
+-#define PURGE_VEC 1
+-
+ void
+ remove_map(struct multipath * mpp, struct vectors * vecs, int purge_vec)
+ {
+@@ -379,92 +367,6 @@ sync_map_state(struct multipath *mpp)
+ 	}
+ }
+ 
+-int
+-update_map (struct multipath *mpp, struct vectors *vecs)
+-{
+-	int retries = 3;
+-	char params[PARAMS_SIZE] = {0};
+-
+-retry:
+-	condlog(4, "%s: updating new map", mpp->alias);
+-	if (adopt_paths(vecs->pathvec, mpp)) {
+-		condlog(0, "%s: failed to adopt paths for new map update",
+-			mpp->alias);
+-		retries = -1;
+-		goto fail;
+-	}
+-	verify_paths(mpp, vecs);
+-	mpp->action = ACT_RELOAD;
+-
+-	extract_hwe_from_path(mpp);
+-	if (setup_map(mpp, params, PARAMS_SIZE)) {
+-		condlog(0, "%s: failed to setup new map in update", mpp->alias);
+-		retries = -1;
+-		goto fail;
+-	}
+-	if (domap(mpp, params, 1) <= 0 && retries-- > 0) {
+-		condlog(0, "%s: map_udate sleep", mpp->alias);
+-		sleep(1);
+-		goto retry;
+-	}
+-	dm_lib_release();
+-
+-fail:
+-	if (setup_multipath(vecs, mpp))
+-		return 1;
+-
+-	sync_map_state(mpp);
+-
+-	if (retries < 0)
+-		condlog(0, "%s: failed reload in new map update", mpp->alias);
+-	return 0;
+-}
+-
+-struct multipath *add_map_without_path (struct vectors *vecs, char *alias)
+-{
+-	struct multipath * mpp = alloc_multipath();
+-	struct config *conf;
+-
+-	if (!mpp)
+-		return NULL;
+-	if (!alias) {
+-		FREE(mpp);
+-		return NULL;
+-	}
+-
+-	mpp->alias = STRDUP(alias);
+-
+-	if (dm_get_info(mpp->alias, &mpp->dmi)) {
+-		condlog(3, "%s: cannot access table", mpp->alias);
+-		goto out;
+-	}
+-	set_multipath_wwid(mpp);
+-	conf = get_multipath_config();
+-	mpp->mpe = find_mpe(conf->mptable, mpp->wwid);
+-	put_multipath_config(conf);
+-
+-	if (update_multipath_table(mpp, vecs->pathvec, 1))
+-		goto out;
+-	if (update_multipath_status(mpp))
+-		goto out;
+-
+-	if (!vector_alloc_slot(vecs->mpvec))
+-		goto out;
+-
+-	vector_set_slot(vecs->mpvec, mpp);
+-
+-	if (update_map(mpp, vecs) != 0) /* map removed */
+-		return NULL;
+-
+-	if (start_waiter_thread(mpp, vecs))
+-		goto out;
+-
+-	return mpp;
+-out:
+-	remove_map(mpp, vecs, PURGE_VEC);
+-	return NULL;
+-}
+-
+ static void
+ find_existing_alias (struct multipath * mpp,
+ 		     struct vectors *vecs)
+diff --git a/libmultipath/structs_vec.h b/libmultipath/structs_vec.h
+index d6e17bb..ceab6d9 100644
+--- a/libmultipath/structs_vec.h
++++ b/libmultipath/structs_vec.h
+@@ -26,12 +26,12 @@ int update_multipath_strings (struct multipath *mpp, vector pathvec,
+ 			      int is_daemon);
+ void extract_hwe_from_path(struct multipath * mpp);
+ 
++#define PURGE_VEC 1
++
+ void remove_map (struct multipath * mpp, struct vectors * vecs, int purge_vec);
+ void remove_maps (struct vectors * vecs);
+ 
+ void sync_map_state (struct multipath *);
+-int update_map (struct multipath *mpp, struct vectors *vecs);
+-struct multipath * add_map_without_path (struct vectors * vecs, char * alias);
+ struct multipath * add_map_with_path (struct vectors * vecs,
+ 				struct path * pp, int add_vec);
+ int update_multipath (struct vectors *vecs, char *mapname, int reset);
+diff --git a/libmultipath/waiter.c b/libmultipath/waiter.c
+deleted file mode 100644
+index cb9708b..0000000
+--- a/libmultipath/waiter.c
++++ /dev/null
+@@ -1,215 +0,0 @@
+-/*
+- * Copyright (c) 2004, 2005 Christophe Varoqui
+- * Copyright (c) 2005 Kiyoshi Ueda, NEC
+- * Copyright (c) 2005 Benjamin Marzinski, Redhat
+- * Copyright (c) 2005 Edward Goggin, EMC
+- */
+-#include <unistd.h>
+-#include <libdevmapper.h>
+-#include <sys/mman.h>
+-#include <pthread.h>
+-#include <signal.h>
+-#include <urcu.h>
+-
+-#include "vector.h"
+-#include "memory.h"
+-#include "checkers.h"
+-#include "config.h"
+-#include "structs.h"
+-#include "structs_vec.h"
+-#include "devmapper.h"
+-#include "debug.h"
+-#include "lock.h"
+-#include "waiter.h"
+-
+-pthread_attr_t waiter_attr;
+-
+-static struct event_thread *alloc_waiter (void)
+-{
+-
+-	struct event_thread *wp;
+-
+-	wp = (struct event_thread *)MALLOC(sizeof(struct event_thread));
+-	memset(wp, 0, sizeof(struct event_thread));
+-
+-	return wp;
+-}
+-
+-static void free_waiter (void *data)
+-{
+-	struct event_thread *wp = (struct event_thread *)data;
+-
+-	if (wp->dmt)
+-		dm_task_destroy(wp->dmt);
+-
+-	rcu_unregister_thread();
+-	FREE(wp);
+-}
+-
+-void stop_waiter_thread (struct multipath *mpp, struct vectors *vecs)
+-{
+-	pthread_t thread;
+-
+-	if (mpp->waiter == (pthread_t)0) {
+-		condlog(3, "%s: event checker thread already stopped",
+-			mpp->alias);
+-		return;
+-	}
+-	condlog(2, "%s: stop event checker thread (%lu)", mpp->alias,
+-		mpp->waiter);
+-	thread = mpp->waiter;
+-	mpp->waiter = (pthread_t)0;
+-	pthread_cancel(thread);
+-	pthread_kill(thread, SIGUSR2);
+-}
+-
+-/*
+- * returns the reschedule delay
+- * negative means *stop*
+- */
+-static int waiteventloop (struct event_thread *waiter)
+-{
+-	sigset_t set, oldset;
+-	int event_nr;
+-	int r;
+-
+-	if (!waiter->event_nr)
+-		waiter->event_nr = dm_geteventnr(waiter->mapname);
+-
+-	if (!(waiter->dmt = libmp_dm_task_create(DM_DEVICE_WAITEVENT))) {
+-		condlog(0, "%s: devmap event #%i dm_task_create error",
+-				waiter->mapname, waiter->event_nr);
+-		return 1;
+-	}
+-
+-	if (!dm_task_set_name(waiter->dmt, waiter->mapname)) {
+-		condlog(0, "%s: devmap event #%i dm_task_set_name error",
+-				waiter->mapname, waiter->event_nr);
+-		dm_task_destroy(waiter->dmt);
+-		waiter->dmt = NULL;
+-		return 1;
+-	}
+-
+-	if (waiter->event_nr && !dm_task_set_event_nr(waiter->dmt,
+-						      waiter->event_nr)) {
+-		condlog(0, "%s: devmap event #%i dm_task_set_event_nr error",
+-				waiter->mapname, waiter->event_nr);
+-		dm_task_destroy(waiter->dmt);
+-		waiter->dmt = NULL;
+-		return 1;
+-	}
+-
+-	dm_task_no_open_count(waiter->dmt);
+-
+-	/* wait */
+-	sigemptyset(&set);
+-	sigaddset(&set, SIGUSR2);
+-	pthread_sigmask(SIG_UNBLOCK, &set, &oldset);
+-
+-	pthread_testcancel();
+-	r = dm_task_run(waiter->dmt);
+-	pthread_testcancel();
+-
+-	pthread_sigmask(SIG_SETMASK, &oldset, NULL);
+-	dm_task_destroy(waiter->dmt);
+-	waiter->dmt = NULL;
+-
+-	if (!r)	/* wait interrupted by signal */
+-		return -1;
+-
+-	waiter->event_nr++;
+-
+-	/*
+-	 * upon event ...
+-	 */
+-	while (1) {
+-		condlog(3, "%s: devmap event #%i",
+-				waiter->mapname, waiter->event_nr);
+-
+-		/*
+-		 * event might be :
+-		 *
+-		 * 1) a table reload, which means our mpp structure is
+-		 *    obsolete : refresh it through update_multipath()
+-		 * 2) a path failed by DM : mark as such through
+-		 *    update_multipath()
+-		 * 3) map has gone away : stop the thread.
+-		 * 4) a path reinstate : nothing to do
+-		 * 5) a switch group : nothing to do
+-		 */
+-		pthread_cleanup_push(cleanup_lock, &waiter->vecs->lock);
+-		lock(&waiter->vecs->lock);
+-		pthread_testcancel();
+-		r = update_multipath(waiter->vecs, waiter->mapname, 1);
+-		lock_cleanup_pop(waiter->vecs->lock);
+-
+-		if (r) {
+-			condlog(2, "%s: event checker exit",
+-				waiter->mapname);
+-			return -1; /* stop the thread */
+-		}
+-
+-		event_nr = dm_geteventnr(waiter->mapname);
+-
+-		if (waiter->event_nr == event_nr)
+-			return 1; /* upon problem reschedule 1s later */
+-
+-		waiter->event_nr = event_nr;
+-	}
+-	return -1; /* never reach there */
+-}
+-
+-static void *waitevent (void *et)
+-{
+-	int r;
+-	struct event_thread *waiter;
+-
+-	mlockall(MCL_CURRENT | MCL_FUTURE);
+-
+-	waiter = (struct event_thread *)et;
+-	pthread_cleanup_push(free_waiter, et);
+-
+-	rcu_register_thread();
+-	while (1) {
+-		r = waiteventloop(waiter);
+-
+-		if (r < 0)
+-			break;
+-
+-		sleep(r);
+-	}
+-
+-	pthread_cleanup_pop(1);
+-	return NULL;
+-}
+-
+-int start_waiter_thread (struct multipath *mpp, struct vectors *vecs)
+-{
+-	struct event_thread *wp;
+-
+-	if (!mpp)
+-		return 0;
+-
+-	wp = alloc_waiter();
+-
+-	if (!wp)
+-		goto out;
+-
+-	strncpy(wp->mapname, mpp->alias, WWID_SIZE - 1);
+-	wp->vecs = vecs;
+-
+-	if (pthread_create(&wp->thread, &waiter_attr, waitevent, wp)) {
+-		condlog(0, "%s: cannot create event checker", wp->mapname);
+-		goto out1;
+-	}
+-	mpp->waiter = wp->thread;
+-	condlog(2, "%s: event checker started", wp->mapname);
+-
+-	return 0;
+-out1:
+-	free_waiter(wp);
+-	mpp->waiter = (pthread_t)0;
+-out:
+-	condlog(0, "failed to start waiter thread");
+-	return 1;
+-}
+diff --git a/libmultipath/waiter.h b/libmultipath/waiter.h
+deleted file mode 100644
+index 0cfae46..0000000
+--- a/libmultipath/waiter.h
++++ /dev/null
+@@ -1,17 +0,0 @@
+-#ifndef _WAITER_H
+-#define _WAITER_H
+-
+-extern pthread_attr_t waiter_attr;
+-
+-struct event_thread {
+-	struct dm_task *dmt;
+-	pthread_t thread;
+-	int event_nr;
+-	char mapname[WWID_SIZE];
+-	struct vectors *vecs;
+-};
+-
+-void stop_waiter_thread (struct multipath *mpp, struct vectors *vecs);
+-int start_waiter_thread (struct multipath *mpp, struct vectors *vecs);
+-
+-#endif /* _WAITER_H */
 diff --git a/multipathd/Makefile b/multipathd/Makefile
-index 85f29a7..4c438f0 100644
+index e6f140b..85f29a7 100644
 --- a/multipathd/Makefile
 +++ b/multipathd/Makefile
-@@ -22,7 +22,8 @@ ifdef SYSTEMD
+@@ -22,7 +22,7 @@ ifdef SYSTEMD
  	endif
  endif
  
--OBJS = main.o pidfile.o uxlsnr.o uxclnt.o cli.o cli_handlers.o waiter.o
-+OBJS = main.o pidfile.o uxlsnr.o uxclnt.o cli.o cli_handlers.o waiter.o \
-+       dmevents.o
+-OBJS = main.o pidfile.o uxlsnr.o uxclnt.o cli.o cli_handlers.o
++OBJS = main.o pidfile.o uxlsnr.o uxclnt.o cli.o cli_handlers.o waiter.o
  
  EXEC = multipathd
  
-diff --git a/multipathd/dmevents.c b/multipathd/dmevents.c
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 72c3c2f..94b2406 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -311,6 +311,102 @@ remove_maps_and_stop_waiters(struct vectors *vecs)
+ 	remove_maps(vecs);
+ }
+ 
++static void
++set_multipath_wwid (struct multipath * mpp)
++{
++	if (strlen(mpp->wwid))
++		return;
++
++	dm_get_uuid(mpp->alias, mpp->wwid);
++}
++
++static int
++update_map (struct multipath *mpp, struct vectors *vecs)
++{
++	int retries = 3;
++	char params[PARAMS_SIZE] = {0};
++
++retry:
++	condlog(4, "%s: updating new map", mpp->alias);
++	if (adopt_paths(vecs->pathvec, mpp)) {
++		condlog(0, "%s: failed to adopt paths for new map update",
++			mpp->alias);
++		retries = -1;
++		goto fail;
++	}
++	verify_paths(mpp, vecs);
++	mpp->action = ACT_RELOAD;
++
++	extract_hwe_from_path(mpp);
++	if (setup_map(mpp, params, PARAMS_SIZE)) {
++		condlog(0, "%s: failed to setup new map in update", mpp->alias);
++		retries = -1;
++		goto fail;
++	}
++	if (domap(mpp, params, 1) <= 0 && retries-- > 0) {
++		condlog(0, "%s: map_udate sleep", mpp->alias);
++		sleep(1);
++		goto retry;
++	}
++	dm_lib_release();
++
++fail:
++	if (setup_multipath(vecs, mpp))
++		return 1;
++
++	sync_map_state(mpp);
++
++	if (retries < 0)
++		condlog(0, "%s: failed reload in new map update", mpp->alias);
++	return 0;
++}
++
++static struct multipath *
++add_map_without_path (struct vectors *vecs, char *alias)
++{
++	struct multipath * mpp = alloc_multipath();
++	struct config *conf;
++
++	if (!mpp)
++		return NULL;
++	if (!alias) {
++		FREE(mpp);
++		return NULL;
++	}
++
++	mpp->alias = STRDUP(alias);
++
++	if (dm_get_info(mpp->alias, &mpp->dmi)) {
++		condlog(3, "%s: cannot access table", mpp->alias);
++		goto out;
++	}
++	set_multipath_wwid(mpp);
++	conf = get_multipath_config();
++	mpp->mpe = find_mpe(conf->mptable, mpp->wwid);
++	put_multipath_config(conf);
++
++	if (update_multipath_table(mpp, vecs->pathvec, 1))
++		goto out;
++	if (update_multipath_status(mpp))
++		goto out;
++
++	if (!vector_alloc_slot(vecs->mpvec))
++		goto out;
++
++	vector_set_slot(vecs->mpvec, mpp);
++
++	if (update_map(mpp, vecs) != 0) /* map removed */
++		return NULL;
++
++	if (start_waiter_thread(mpp, vecs))
++		goto out;
++
++	return mpp;
++out:
++	remove_map(mpp, vecs, PURGE_VEC);
++	return NULL;
++}
++
+ static int
+ coalesce_maps(struct vectors *vecs, vector nmpv)
+ {
+diff --git a/multipathd/waiter.c b/multipathd/waiter.c
 new file mode 100644
-index 0000000..a56c055
+index 0000000..cb9708b
 --- /dev/null
-+++ b/multipathd/dmevents.c
-@@ -0,0 +1,396 @@
++++ b/multipathd/waiter.c
+@@ -0,0 +1,215 @@
 +/*
 + * Copyright (c) 2004, 2005 Christophe Varoqui
 + * Copyright (c) 2005 Kiyoshi Ueda, NEC
++ * Copyright (c) 2005 Benjamin Marzinski, Redhat
 + * Copyright (c) 2005 Edward Goggin, EMC
-+ * Copyright (c) 2005, 2018 Benjamin Marzinski, Redhat
 + */
 +#include <unistd.h>
 +#include <libdevmapper.h>
 +#include <sys/mman.h>
 +#include <pthread.h>
++#include <signal.h>
 +#include <urcu.h>
-+#include <poll.h>
-+#include <sys/ioctl.h>
-+#include <sys/types.h>
-+#include <sys/stat.h>
-+#include <fcntl.h>
-+#include <linux/dm-ioctl.h>
-+#include <errno.h>
 +
 +#include "vector.h"
++#include "memory.h"
++#include "checkers.h"
++#include "config.h"
 +#include "structs.h"
 +#include "structs_vec.h"
 +#include "devmapper.h"
 +#include "debug.h"
-+#include "dmevents.h"
++#include "lock.h"
++#include "waiter.h"
 +
-+#ifndef DM_DEV_ARM_POLL
-+#define DM_DEV_ARM_POLL _IOWR(DM_IOCTL, DM_DEV_SET_GEOMETRY_CMD + 1, struct dm_ioctl)
-+#endif
++pthread_attr_t waiter_attr;
 +
-+enum event_actions {
-+	EVENT_NOTHING,
-+	EVENT_REMOVE,
-+	EVENT_UPDATE,
-+};
-+
-+struct dev_event {
-+	char name[WWID_SIZE];
-+	uint32_t evt_nr;
-+	enum event_actions action;
-+};
-+
-+struct dmevent_waiter {
-+	int fd;
-+	struct vectors *vecs;
-+	vector events;
-+	pthread_mutex_t events_lock;
-+};
-+
-+static struct dmevent_waiter *waiter;
-+
-+int dmevent_poll_supported(void)
++static struct event_thread *alloc_waiter (void)
 +{
-+	unsigned int minv[3] = {4, 37, 0};
-+	unsigned int v[3];
 +
-+	if (dm_drv_version(v))
-+		return 0;
++	struct event_thread *wp;
 +
-+	if (VERSION_GE(v, minv))
-+		return 1;
-+	return 0;
++	wp = (struct event_thread *)MALLOC(sizeof(struct event_thread));
++	memset(wp, 0, sizeof(struct event_thread));
++
++	return wp;
 +}
 +
-+
-+int alloc_dmevent_waiter(struct vectors *vecs)
++static void free_waiter (void *data)
 +{
-+	if (!vecs) {
-+		condlog(0, "can't create waiter structure. invalid vectors");
-+		goto fail;
-+	}
-+	waiter = (struct dmevent_waiter *)malloc(sizeof(struct dmevent_waiter));
-+	if (!waiter) {
-+		condlog(0, "failed to allocate waiter structure");
-+		goto fail;
-+	}
-+	memset(waiter, 0, sizeof(struct dmevent_waiter));
-+	waiter->events = vector_alloc();
-+	if (!waiter->events) {
-+		condlog(0, "failed to allocate waiter events vector");
-+		goto fail_waiter;
-+	}
-+	waiter->fd = open("/dev/mapper/control", O_RDWR);
-+	if (waiter->fd < 0) {
-+		condlog(0, "failed to open /dev/mapper/control for waiter");
-+		goto fail_events;
-+	}
-+	pthread_mutex_init(&waiter->events_lock, NULL);
-+	waiter->vecs = vecs;
++	struct event_thread *wp = (struct event_thread *)data;
 +
-+	return 0;
-+fail_events:
-+	vector_free(waiter->events);
-+fail_waiter:
-+	free(waiter);
-+fail:
-+	waiter = NULL;
-+	return -1;
++	if (wp->dmt)
++		dm_task_destroy(wp->dmt);
++
++	rcu_unregister_thread();
++	FREE(wp);
 +}
 +
-+void free_dmevent_waiter(void)
++void stop_waiter_thread (struct multipath *mpp, struct vectors *vecs)
 +{
-+	struct dev_event *dev_evt;
-+	int i;
++	pthread_t thread;
 +
-+	if (!waiter)
++	if (mpp->waiter == (pthread_t)0) {
++		condlog(3, "%s: event checker thread already stopped",
++			mpp->alias);
 +		return;
-+	pthread_mutex_destroy(&waiter->events_lock);
-+	close(waiter->fd);
-+	vector_foreach_slot(waiter->events, dev_evt, i)
-+		free(dev_evt);
-+	vector_free(waiter->events);
-+	free(waiter);
-+	waiter = NULL;
-+}
-+
-+static int arm_dm_event_poll(int fd)
-+{
-+	struct dm_ioctl dmi;
-+	memset(&dmi, 0, sizeof(dmi));
-+	dmi.version[0] = DM_VERSION_MAJOR;
-+	dmi.version[1] = DM_VERSION_MINOR;
-+	dmi.version[2] = DM_VERSION_PATCHLEVEL;
-+	dmi.flags = 0x4;
-+	dmi.data_start = offsetof(struct dm_ioctl, data);
-+	dmi.data_size = sizeof(dmi);
-+	return ioctl(fd, DM_DEV_ARM_POLL, &dmi);
-+}
-+
-+/*
-+ * As of version 4.37.0 device-mapper stores the event number in the
-+ * dm_names structure after the name, when DM_DEVICE_LIST is called
-+ */
-+static uint32_t dm_event_nr(struct dm_names *n)
-+{
-+	return *(uint32_t *)(((uintptr_t)(strchr(n->name, 0) + 1) + 7) & ~7);
-+}
-+
-+static int dm_get_events(void)
-+{
-+	struct dm_task *dmt;
-+	struct dm_names *names;
-+	struct dev_event *dev_evt;
-+	int i;
-+
-+	if (!(dmt = libmp_dm_task_create(DM_DEVICE_LIST)))
-+		return -1;
-+
-+	dm_task_no_open_count(dmt);
-+
-+	if (!dm_task_run(dmt))
-+		goto fail;
-+
-+	if (!(names = dm_task_get_names(dmt)))
-+		goto fail;
-+
-+	pthread_mutex_lock(&waiter->events_lock);
-+	vector_foreach_slot(waiter->events, dev_evt, i)
-+		dev_evt->action = EVENT_REMOVE;
-+	while (names->dev) {
-+		uint32_t event_nr;
-+
-+		if (!dm_is_mpath(names->name))
-+			goto next;
-+
-+		event_nr = dm_event_nr(names);
-+		vector_foreach_slot(waiter->events, dev_evt, i) {
-+			if (!strcmp(dev_evt->name, names->name)) {
-+				if (event_nr != dev_evt->evt_nr) {
-+					dev_evt->evt_nr = event_nr;
-+					dev_evt->action = EVENT_UPDATE;
-+				} else
-+					dev_evt->action = EVENT_NOTHING;
-+				break;
-+			}
-+		}
-+next:
-+		if (!names->next)
-+			break;
-+		names = (void *)names + names->next;
 +	}
-+	pthread_mutex_unlock(&waiter->events_lock);
-+	dm_task_destroy(dmt);
-+	return 0;
-+
-+fail:
-+	dm_task_destroy(dmt);
-+	return -1;
-+}
-+
-+/* You must call update_multipath() after calling this function, to
-+ * deal with any events that came in before the device was added */
-+int watch_dmevents(char *name)
-+{
-+	int event_nr;
-+	struct dev_event *dev_evt, *old_dev_evt;
-+	int i;
-+
-+	if (!dm_is_mpath(name)) {
-+		condlog(0, "%s: not a multipath device. can't watch events",
-+			name);
-+		return -1;
-+	}
-+
-+	if ((event_nr = dm_geteventnr(name)) < 0)
-+		return -1;
-+
-+	dev_evt = (struct dev_event *)malloc(sizeof(struct dev_event));
-+	if (!dev_evt) {
-+		condlog(0, "%s: can't allocate event waiter structure", name);
-+		return -1;
-+	}
-+
-+	strncpy(dev_evt->name, name, WWID_SIZE);
-+	dev_evt->name[WWID_SIZE - 1] = 0;
-+	dev_evt->evt_nr = event_nr;
-+	dev_evt->action = EVENT_NOTHING;
-+
-+	pthread_mutex_lock(&waiter->events_lock);
-+	vector_foreach_slot(waiter->events, old_dev_evt, i){
-+		if (!strcmp(dev_evt->name, old_dev_evt->name)) {
-+			/* caller will be updating this device */
-+			old_dev_evt->evt_nr = event_nr;
-+			old_dev_evt->action = EVENT_NOTHING;
-+			pthread_mutex_unlock(&waiter->events_lock);
-+			condlog(2, "%s: already waiting for events on device",
-+				name);
-+			free(dev_evt);
-+			return 0;
-+		}
-+	}
-+	if (!vector_alloc_slot(waiter->events)) {
-+		pthread_mutex_unlock(&waiter->events_lock);
-+		free(dev_evt);
-+		return -1;
-+	}
-+	vector_set_slot(waiter->events, dev_evt);
-+	pthread_mutex_unlock(&waiter->events_lock);
-+	return 0;
-+}
-+
-+void unwatch_all_dmevents(void)
-+{
-+	struct dev_event *dev_evt;
-+	int i;
-+
-+	pthread_mutex_lock(&waiter->events_lock);
-+	vector_foreach_slot(waiter->events, dev_evt, i)
-+		free(dev_evt);
-+	vector_reset(waiter->events);
-+	pthread_mutex_unlock(&waiter->events_lock);
-+}
-+
-+static void unwatch_dmevents(char *name)
-+{
-+	struct dev_event *dev_evt;
-+	int i;
-+
-+	pthread_mutex_lock(&waiter->events_lock);
-+	vector_foreach_slot(waiter->events, dev_evt, i) {
-+		if (!strcmp(dev_evt->name, name)) {
-+			vector_del_slot(waiter->events, i);
-+			free(dev_evt);
-+			break;
-+		}
-+	}
-+	pthread_mutex_unlock(&waiter->events_lock);
++	condlog(2, "%s: stop event checker thread (%lu)", mpp->alias,
++		mpp->waiter);
++	thread = mpp->waiter;
++	mpp->waiter = (pthread_t)0;
++	pthread_cancel(thread);
++	pthread_kill(thread, SIGUSR2);
 +}
 +
 +/*
 + * returns the reschedule delay
 + * negative means *stop*
 + */
-+
-+/* poll, arm, update, return */
-+static int dmevent_loop (void)
++static int waiteventloop (struct event_thread *waiter)
 +{
-+	int r, i = 0;
-+	struct pollfd pfd;
-+	struct dev_event *dev_evt;
++	sigset_t set, oldset;
++	int event_nr;
++	int r;
 +
-+	pfd.fd = waiter->fd;
-+	pfd.events = POLLIN;
-+	r = poll(&pfd, 1, -1);
-+	if (r <= 0) {
-+		condlog(0, "failed polling for dm events: %s", strerror(errno));
-+		/* sleep 1s and hope things get better */
++	if (!waiter->event_nr)
++		waiter->event_nr = dm_geteventnr(waiter->mapname);
++
++	if (!(waiter->dmt = libmp_dm_task_create(DM_DEVICE_WAITEVENT))) {
++		condlog(0, "%s: devmap event #%i dm_task_create error",
++				waiter->mapname, waiter->event_nr);
 +		return 1;
 +	}
 +
-+	if (arm_dm_event_poll(waiter->fd) != 0) {
-+		condlog(0, "Cannot re-arm event polling: %s", strerror(errno));
-+		/* sleep 1s and hope things get better */
++	if (!dm_task_set_name(waiter->dmt, waiter->mapname)) {
++		condlog(0, "%s: devmap event #%i dm_task_set_name error",
++				waiter->mapname, waiter->event_nr);
++		dm_task_destroy(waiter->dmt);
++		waiter->dmt = NULL;
 +		return 1;
 +	}
 +
-+	if (dm_get_events() != 0) {
-+		condlog(0, "failed getting dm events: %s", strerror(errno));
-+		/* sleep 1s and hope things get better */
++	if (waiter->event_nr && !dm_task_set_event_nr(waiter->dmt,
++						      waiter->event_nr)) {
++		condlog(0, "%s: devmap event #%i dm_task_set_event_nr error",
++				waiter->mapname, waiter->event_nr);
++		dm_task_destroy(waiter->dmt);
++		waiter->dmt = NULL;
 +		return 1;
 +	}
++
++	dm_task_no_open_count(waiter->dmt);
++
++	/* wait */
++	sigemptyset(&set);
++	sigaddset(&set, SIGUSR2);
++	pthread_sigmask(SIG_UNBLOCK, &set, &oldset);
++
++	pthread_testcancel();
++	r = dm_task_run(waiter->dmt);
++	pthread_testcancel();
++
++	pthread_sigmask(SIG_SETMASK, &oldset, NULL);
++	dm_task_destroy(waiter->dmt);
++	waiter->dmt = NULL;
++
++	if (!r)	/* wait interrupted by signal */
++		return -1;
++
++	waiter->event_nr++;
 +
 +	/*
 +	 * upon event ...
 +	 */
-+
 +	while (1) {
-+		int done = 1;
-+		struct dev_event curr_dev;
-+		struct multipath *mpp;
-+
-+		pthread_mutex_lock(&waiter->events_lock);
-+		vector_foreach_slot(waiter->events, dev_evt, i) {
-+			if (dev_evt->action != EVENT_NOTHING) {
-+				curr_dev = *dev_evt;
-+				if (dev_evt->action == EVENT_REMOVE) {
-+					vector_del_slot(waiter->events, i);
-+					free(dev_evt);
-+				} else
-+					dev_evt->action = EVENT_NOTHING;
-+				done = 0;
-+				break;
-+			}
-+		}
-+		pthread_mutex_unlock(&waiter->events_lock);
-+		if (done)
-+			return 1;
-+
-+		condlog(3, "%s: devmap event #%i", curr_dev.name,
-+			curr_dev.evt_nr);
++		condlog(3, "%s: devmap event #%i",
++				waiter->mapname, waiter->event_nr);
 +
 +		/*
 +		 * event might be :
@@ -418,47 +711,38 @@ index 0000000..a56c055
 +		pthread_cleanup_push(cleanup_lock, &waiter->vecs->lock);
 +		lock(&waiter->vecs->lock);
 +		pthread_testcancel();
-+		r = 0;
-+		if (curr_dev.action == EVENT_REMOVE) {
-+			mpp = find_mp_by_alias(waiter->vecs->mpvec,
-+					       curr_dev.name);
-+			if (mpp)
-+				remove_map(mpp, waiter->vecs, 1);
-+		} else
-+			r = update_multipath(waiter->vecs, curr_dev.name, 1);
-+		lock_cleanup_pop(&waiter->vecs->lock);
++		r = update_multipath(waiter->vecs, waiter->mapname, 1);
++		lock_cleanup_pop(waiter->vecs->lock);
 +
 +		if (r) {
-+			condlog(2, "%s: stopped watching dmevents",
-+				curr_dev.name);
-+			unwatch_dmevents(curr_dev.name);
++			condlog(2, "%s: event checker exit",
++				waiter->mapname);
++			return -1; /* stop the thread */
 +		}
++
++		event_nr = dm_geteventnr(waiter->mapname);
++
++		if (waiter->event_nr == event_nr)
++			return 1; /* upon problem reschedule 1s later */
++
++		waiter->event_nr = event_nr;
 +	}
-+	condlog(0, "dmevent waiter thread unexpectedly quit");
 +	return -1; /* never reach there */
 +}
 +
-+static void rcu_unregister(void *param)
-+{
-+	rcu_unregister_thread();
-+}
-+
-+void *wait_dmevents (void *unused)
++static void *waitevent (void *et)
 +{
 +	int r;
++	struct event_thread *waiter;
 +
-+
-+	if (!waiter) {
-+		condlog(0, "dmevents waiter not intialized");
-+		return NULL;
-+	}
-+
-+	pthread_cleanup_push(rcu_unregister, NULL);
-+	rcu_register_thread();
 +	mlockall(MCL_CURRENT | MCL_FUTURE);
 +
++	waiter = (struct event_thread *)et;
++	pthread_cleanup_push(free_waiter, et);
++
++	rcu_register_thread();
 +	while (1) {
-+		r = dmevent_loop();
++		r = waiteventloop(waiter);
 +
 +		if (r < 0)
 +			break;
@@ -469,193 +753,59 @@ index 0000000..a56c055
 +	pthread_cleanup_pop(1);
 +	return NULL;
 +}
-diff --git a/multipathd/dmevents.h b/multipathd/dmevents.h
-new file mode 100644
-index 0000000..569e855
---- /dev/null
-+++ b/multipathd/dmevents.h
-@@ -0,0 +1,13 @@
-+#ifndef _DMEVENTS_H
-+#define _DMEVENTS_H
 +
-+#include "structs_vec.h"
-+
-+int dmevent_poll_supported(void);
-+int alloc_dmevent_waiter(struct vectors *vecs);
-+void free_dmevent_waiter(void);
-+int watch_dmevents(char *name);
-+void unwatch_all_dmevents(void);
-+void *wait_dmevents (void *unused);
-+
-+#endif /* _DMEVENTS_H */
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 2963bde..6dabf2c 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -82,6 +82,7 @@ static int use_watchdog;
- #include "cli_handlers.h"
- #include "lock.h"
- #include "waiter.h"
-+#include "dmevents.h"
- #include "io_err_stat.h"
- #include "wwids.h"
- #include "../third-party/valgrind/drd.h"
-@@ -108,6 +109,7 @@ int uxsock_timeout;
- int verbosity;
- int bindings_read_only;
- int ignore_new_devs;
-+int poll_dmevents = 1;
- enum daemon_status running_state = DAEMON_INIT;
- pid_t daemon_pid;
- pthread_mutex_t config_lock = PTHREAD_MUTEX_INITIALIZER;
-@@ -288,11 +290,23 @@ switch_pathgroup (struct multipath * mpp)
- 		 mpp->alias, mpp->bestpg);
- }
- 
-+static int
-+wait_for_events(struct multipath *mpp, struct vectors *vecs)
++int start_waiter_thread (struct multipath *mpp, struct vectors *vecs)
 +{
-+	if (poll_dmevents)
-+		return watch_dmevents(mpp->alias);
-+	else
-+		return start_waiter_thread(mpp, vecs);
++	struct event_thread *wp;
++
++	if (!mpp)
++		return 0;
++
++	wp = alloc_waiter();
++
++	if (!wp)
++		goto out;
++
++	strncpy(wp->mapname, mpp->alias, WWID_SIZE - 1);
++	wp->vecs = vecs;
++
++	if (pthread_create(&wp->thread, &waiter_attr, waitevent, wp)) {
++		condlog(0, "%s: cannot create event checker", wp->mapname);
++		goto out1;
++	}
++	mpp->waiter = wp->thread;
++	condlog(2, "%s: event checker started", wp->mapname);
++
++	return 0;
++out1:
++	free_waiter(wp);
++	mpp->waiter = (pthread_t)0;
++out:
++	condlog(0, "failed to start waiter thread");
++	return 1;
 +}
+diff --git a/multipathd/waiter.h b/multipathd/waiter.h
+new file mode 100644
+index 0000000..0cfae46
+--- /dev/null
++++ b/multipathd/waiter.h
+@@ -0,0 +1,17 @@
++#ifndef _WAITER_H
++#define _WAITER_H
 +
- static void
- remove_map_and_stop_waiter(struct multipath *mpp, struct vectors *vecs,
- 			   int purge_vec)
- {
--	stop_waiter_thread(mpp, vecs);
-+	/* devices are automatically removed by the dmevent polling code,
-+	 * so they don't need to be manually removed here */
-+	if (!poll_dmevents)
-+		stop_waiter_thread(mpp, vecs);
- 	remove_map(mpp, vecs, purge_vec);
- }
- 
-@@ -305,8 +319,12 @@ remove_maps_and_stop_waiters(struct vectors *vecs)
- 	if (!vecs)
- 		return;
- 
--	vector_foreach_slot(vecs->mpvec, mpp, i)
--		stop_waiter_thread(mpp, vecs);
-+	if (!poll_dmevents) {
-+		vector_foreach_slot(vecs->mpvec, mpp, i)
-+			stop_waiter_thread(mpp, vecs);
-+	}
-+	else
-+		unwatch_all_dmevents();
- 
- 	remove_maps(vecs);
- }
-@@ -351,7 +369,7 @@ retry:
- 	dm_lib_release();
- 
- fail:
--	if (new_map && (retries < 0 || start_waiter_thread(mpp, vecs))) {
-+	if (new_map && (retries < 0 || wait_for_events(mpp, vecs))) {
- 		condlog(0, "%s: failed to create new map", mpp->alias);
- 		remove_map(mpp, vecs, 1);
- 		return 1;
-@@ -870,7 +888,7 @@ retry:
- 
- 	if ((mpp->action == ACT_CREATE ||
- 	     (mpp->action == ACT_NOTHING && start_waiter && !mpp->waiter)) &&
--	    start_waiter_thread(mpp, vecs))
-+	    wait_for_events(mpp, vecs))
- 			goto fail_map;
- 
- 	/*
-@@ -2173,7 +2191,7 @@ configure (struct vectors * vecs)
- 	 * start dm event waiter threads for these new maps
- 	 */
- 	vector_foreach_slot(vecs->mpvec, mpp, i) {
--		if (start_waiter_thread(mpp, vecs)) {
-+		if (wait_for_events(mpp, vecs)) {
- 			remove_map(mpp, vecs, 1);
- 			i--;
- 			continue;
-@@ -2414,7 +2432,7 @@ set_oom_adj (void)
- static int
- child (void * param)
- {
--	pthread_t check_thr, uevent_thr, uxlsnr_thr, uevq_thr;
-+	pthread_t check_thr, uevent_thr, uxlsnr_thr, uevq_thr, dmevent_thr;
- 	pthread_attr_t log_attr, misc_attr, uevent_attr;
- 	struct vectors * vecs;
- 	struct multipath * mpp;
-@@ -2476,6 +2494,8 @@ child (void * param)
- 		goto failed;
- 	}
- 
-+	if (poll_dmevents)
-+		poll_dmevents = dmevent_poll_supported();
- 	setlogmask(LOG_UPTO(conf->verbosity + 3));
- 
- 	envp = getenv("LimitNOFILE");
-@@ -2542,6 +2562,19 @@ child (void * param)
- 
- 	init_path_check_interval(vecs);
- 
-+	if (poll_dmevents) {
-+		if (alloc_dmevent_waiter(vecs)) {
-+			condlog(0, "failed to allocate dmevents waiter info");
-+			goto failed;
-+		}
-+		if ((rc = pthread_create(&dmevent_thr, &misc_attr,
-+					 wait_dmevents, NULL))) {
-+			condlog(0, "failed to create dmevent waiter thread: %d",
-+				rc);
-+			goto failed;
-+		}
-+	}
++extern pthread_attr_t waiter_attr;
 +
- 	/*
- 	 * Start uevent listener early to catch events
- 	 */
-@@ -2615,11 +2648,15 @@ child (void * param)
- 	pthread_cancel(uevent_thr);
- 	pthread_cancel(uxlsnr_thr);
- 	pthread_cancel(uevq_thr);
-+	if (poll_dmevents)
-+		pthread_cancel(dmevent_thr);
- 
- 	pthread_join(check_thr, NULL);
- 	pthread_join(uevent_thr, NULL);
- 	pthread_join(uxlsnr_thr, NULL);
- 	pthread_join(uevq_thr, NULL);
-+	if (poll_dmevents)
-+		pthread_join(dmevent_thr, NULL);
- 
- 	stop_io_err_stat_thread();
- 
-@@ -2634,6 +2671,8 @@ child (void * param)
- 
- 	cleanup_checkers();
- 	cleanup_prio();
-+	if (poll_dmevents)
-+		free_dmevent_waiter();
- 
- 	dm_lib_release();
- 	dm_lib_exit();
-@@ -2765,7 +2804,7 @@ main (int argc, char *argv[])
- 	udev = udev_new();
- 	libmp_udev_set_sync_support(0);
- 
--	while ((arg = getopt(argc, argv, ":dsv:k::Bn")) != EOF ) {
-+	while ((arg = getopt(argc, argv, ":dsv:k::Bniw")) != EOF ) {
- 		switch(arg) {
- 		case 'd':
- 			foreground = 1;
-@@ -2799,6 +2838,9 @@ main (int argc, char *argv[])
- 		case 'n':
- 			ignore_new_devs = 1;
- 			break;
-+		case 'w':
-+			poll_dmevents = 0;
-+			break;
- 		default:
- 			fprintf(stderr, "Invalid argument '-%c'\n",
- 				optopt);
++struct event_thread {
++	struct dm_task *dmt;
++	pthread_t thread;
++	int event_nr;
++	char mapname[WWID_SIZE];
++	struct vectors *vecs;
++};
++
++void stop_waiter_thread (struct multipath *mpp, struct vectors *vecs);
++int start_waiter_thread (struct multipath *mpp, struct vectors *vecs);
++
++#endif /* _WAITER_H */
 -- 
 2.7.4
