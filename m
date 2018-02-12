@@ -1,22 +1,20 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
+From: Martin Wilck <mwilck@suse.com>
 Subject: Re: [PATCH v2 1/7] libmultipath: fix tur checker locking
-Date: Mon, 12 Feb 2018 12:44:50 -0600
-Message-ID: <20180212184450.GZ14513@octiron.msp.redhat.com>
+Date: Mon, 12 Feb 2018 20:16:26 +0100
+Message-ID: <1518462986.2761.61.camel@suse.com>
 References: <1518134167-15938-1-git-send-email-bmarzins@redhat.com>
 	<1518134167-15938-2-git-send-email-bmarzins@redhat.com>
 	<1518208256.2937.16.camel@suse.com>
 	<20180209230449.GW14513@octiron.msp.redhat.com>
-	<1518218931.2937.20.camel@suse.com>
-	<1518219365.2937.22.camel@suse.com>
+	<1518218931.2937.20.camel@suse.com> <1518219365.2937.22.camel@suse.com>
 	<20180210003638.GY14513@octiron.msp.redhat.com>
-	<1518279095.2937.25.camel@suse.com>
-	<1518291751.2937.41.camel@suse.com>
+	<1518279095.2937.25.camel@suse.com> <1518291751.2937.41.camel@suse.com>
+	<20180212184450.GZ14513@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1518291751.2937.41.camel@suse.com>
+In-Reply-To: <20180212184450.GZ14513@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,72 +24,50 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: Bart Van Assche <Bart.VanAssche@wdc.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Sat, Feb 10, 2018 at 08:42:31PM +0100, Martin Wilck wrote:
-> On Sat, 2018-02-10 at 17:11 +0100, Martin Wilck wrote:
-> > On Fri, 2018-02-09 at 18:36 -0600, Benjamin Marzinski wrote:
-> > > On Sat, Feb 10, 2018 at 12:36:05AM +0100, Martin Wilck wrote:
-> > > > On Sat, 2018-02-10 at 00:28 +0100, Martin Wilck wrote:
-> > > > > Maybe it's easier than we thought. Attached is a patch on top
-> > > > > of
-> > > > > yours that I think might work, please have a look. =
-
-> > > > > =
-
-> > > > =
-
-> > > > That one didn't even compile. This one is better.
-> > > > =
-
-> > > > Martin
-> > > =
-
-> > > How about this one instead. The idea is that once we are in the
-> > > cleanup
-> > > handler, we just cleanup and exit. But before we enter it, we
-> > > atomically
-> > > exchange running, and if running was 0, we pause(), since the
-> > > checker
-> > > is
-> > > either about to cancel us, or already has.
-> > > =
-
-> > =
-
-> > Yes, that should work. Nice.
-> =
-
-> ... but I just realized that we don't rcu_register_thread() the TUR
-> thread. Maybe we should if we use RCU primitives?
-
-Looking online, I see this.
-
-"void rcu_register_thread(void): For all RCU flavors other than
-bullet-proof RCU, each thread must invoke this function before its first
-call to rcu_read_lock() or call_rcu(). If a given thread never invokes
-any RCU read-side functions, it need not invoke
-rcu_register_thread(void)."
-
-That makes it sound like this is unnecessary for using the atomic
-operations. Did you see something that makes you think differently? I
-probably won't hurt to add it anyway. But, if it's fuzzy how to
-correctly use the rcu operations, we could just go back to wrapping
-normal operations in a spin_lock, now that we have a method that's not
-excessively complicated, and would only require holding the lock for
-simple variable manipulations.
-
-Ben
-
-> =
-
-> Martin
-> =
-
-> -- =
-
-> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-> SUSE Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
-> HRB 21284 (AG N=FCrnberg)
+T24gTW9uLCAyMDE4LTAyLTEyIGF0IDEyOjQ0IC0wNjAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cj4gT24gU2F0LCBGZWIgMTAsIDIwMTggYXQgMDg6NDI6MzFQTSArMDEwMCwgTWFydGluIFdp
+bGNrIHdyb3RlOgo+ID4gT24gU2F0LCAyMDE4LTAyLTEwIGF0IDE3OjExICswMTAwLCBNYXJ0aW4g
+V2lsY2sgd3JvdGU6Cj4gPiA+IE9uIEZyaSwgMjAxOC0wMi0wOSBhdCAxODozNiAtMDYwMCwgQmVu
+amFtaW4gTWFyemluc2tpIHdyb3RlOgo+ID4gPiA+IE9uIFNhdCwgRmViIDEwLCAyMDE4IGF0IDEy
+OjM2OjA1QU0gKzAxMDAsIE1hcnRpbiBXaWxjayB3cm90ZToKPiA+ID4gPiA+IE9uIFNhdCwgMjAx
+OC0wMi0xMCBhdCAwMDoyOCArMDEwMCwgTWFydGluIFdpbGNrIHdyb3RlOgo+ID4gPiA+ID4gPiBN
+YXliZSBpdCdzIGVhc2llciB0aGFuIHdlIHRob3VnaHQuIEF0dGFjaGVkIGlzIGEgcGF0Y2ggb24K
+PiA+ID4gPiA+ID4gdG9wCj4gPiA+ID4gPiA+IG9mCj4gPiA+ID4gPiA+IHlvdXJzIHRoYXQgSSB0
+aGluayBtaWdodCB3b3JrLCBwbGVhc2UgaGF2ZSBhIGxvb2suIAo+ID4gPiA+ID4gPiAKPiA+ID4g
+PiA+IAo+ID4gPiA+ID4gVGhhdCBvbmUgZGlkbid0IGV2ZW4gY29tcGlsZS4gVGhpcyBvbmUgaXMg
+YmV0dGVyLgo+ID4gPiA+ID4gCj4gPiA+ID4gPiBNYXJ0aW4KPiA+ID4gPiAKPiA+ID4gPiBIb3cg
+YWJvdXQgdGhpcyBvbmUgaW5zdGVhZC4gVGhlIGlkZWEgaXMgdGhhdCBvbmNlIHdlIGFyZSBpbiB0
+aGUKPiA+ID4gPiBjbGVhbnVwCj4gPiA+ID4gaGFuZGxlciwgd2UganVzdCBjbGVhbnVwIGFuZCBl
+eGl0LiBCdXQgYmVmb3JlIHdlIGVudGVyIGl0LCB3ZQo+ID4gPiA+IGF0b21pY2FsbHkKPiA+ID4g
+PiBleGNoYW5nZSBydW5uaW5nLCBhbmQgaWYgcnVubmluZyB3YXMgMCwgd2UgcGF1c2UoKSwgc2lu
+Y2UgdGhlCj4gPiA+ID4gY2hlY2tlcgo+ID4gPiA+IGlzCj4gPiA+ID4gZWl0aGVyIGFib3V0IHRv
+IGNhbmNlbCB1cywgb3IgYWxyZWFkeSBoYXMuCj4gPiA+ID4gCj4gPiA+IAo+ID4gPiBZZXMsIHRo
+YXQgc2hvdWxkIHdvcmsuIE5pY2UuCj4gPiAKPiA+IC4uLiBidXQgSSBqdXN0IHJlYWxpemVkIHRo
+YXQgd2UgZG9uJ3QgcmN1X3JlZ2lzdGVyX3RocmVhZCgpIHRoZSBUVVIKPiA+IHRocmVhZC4gTWF5
+YmUgd2Ugc2hvdWxkIGlmIHdlIHVzZSBSQ1UgcHJpbWl0aXZlcz8KPiAKPiBMb29raW5nIG9ubGlu
+ZSwgSSBzZWUgdGhpcy4KPiAKPiAidm9pZCByY3VfcmVnaXN0ZXJfdGhyZWFkKHZvaWQpOiBGb3Ig
+YWxsIFJDVSBmbGF2b3JzIG90aGVyIHRoYW4KPiBidWxsZXQtcHJvb2YgUkNVLCBlYWNoIHRocmVh
+ZCBtdXN0IGludm9rZSB0aGlzIGZ1bmN0aW9uIGJlZm9yZSBpdHMKPiBmaXJzdAo+IGNhbGwgdG8g
+cmN1X3JlYWRfbG9jaygpIG9yIGNhbGxfcmN1KCkuIElmIGEgZ2l2ZW4gdGhyZWFkIG5ldmVyCj4g
+aW52b2tlcwo+IGFueSBSQ1UgcmVhZC1zaWRlIGZ1bmN0aW9ucywgaXQgbmVlZCBub3QgaW52b2tl
+Cj4gcmN1X3JlZ2lzdGVyX3RocmVhZCh2b2lkKS4iCj4gCj4gVGhhdCBtYWtlcyBpdCBzb3VuZCBs
+aWtlIHRoaXMgaXMgdW5uZWNlc3NhcnkgZm9yIHVzaW5nIHRoZSBhdG9taWMKPiBvcGVyYXRpb25z
+LiBEaWQgeW91IHNlZSBzb21ldGhpbmcgdGhhdCBtYWtlcyB5b3UgdGhpbmsgZGlmZmVyZW50bHk/
+IEkKPiBwcm9iYWJseSB3b24ndCBodXJ0IHRvIGFkZCBpdCBhbnl3YXkuIEJ1dCwgaWYgaXQncyBm
+dXp6eSBob3cgdG8KPiBjb3JyZWN0bHkgdXNlIHRoZSByY3Ugb3BlcmF0aW9ucywgd2UgY291bGQg
+anVzdCBnbyBiYWNrIHRvIHdyYXBwaW5nCj4gbm9ybWFsIG9wZXJhdGlvbnMgaW4gYSBzcGluX2xv
+Y2ssIG5vdyB0aGF0IHdlIGhhdmUgYSBtZXRob2QgdGhhdCdzCj4gbm90Cj4gZXhjZXNzaXZlbHkg
+Y29tcGxpY2F0ZWQsIGFuZCB3b3VsZCBvbmx5IHJlcXVpcmUgaG9sZGluZyB0aGUgbG9jayBmb3IK
+PiBzaW1wbGUgdmFyaWFibGUgbWFuaXB1bGF0aW9ucy4KCk9LLCBpdCdzIG5vdCBzdHJpY3RseSBu
+ZWNlc3NhcnkgdGhlbi4gVGhhbmtzIGZvciBjaGVja2luZy4KSSB3b3VsZG4ndCBwcmVmZXIgZ29p
+bmcgYmFjayB0byBzcGlubG9ja3MuIEkgdGhpbmsgdGhlIGF0b21pYwpvcGVyYXRpb25zIGFyZSBh
+IHN0ZXAgaW4gdGhlIHJpZ2h0IGRpcmVjdGlvbi4KCk1hcnRpbgoKLS0gCkRyLiBNYXJ0aW4gV2ls
+Y2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGlu
+dXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5v
+cnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApk
+bS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5m
+by9kbS1kZXZlbA==
