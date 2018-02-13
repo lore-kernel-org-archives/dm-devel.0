@@ -1,19 +1,16 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [RFC PATCH 5/5] multipathd: RFC add new polling
- dmevents waiter thread
-Date: Tue, 13 Feb 2018 20:55:33 +0100
-Message-ID: <1518551733.8040.60.camel@suse.com>
-References: <1518239251-29392-1-git-send-email-bmarzins@redhat.com>
-	<1518239251-29392-6-git-send-email-bmarzins@redhat.com>
-	<1518292553.2937.44.camel@suse.com>
-	<20180212231802.GA14513@octiron.msp.redhat.com>
-	<1518511819.8040.8.camel@suse.com>
-	<20180213164926.GB14513@octiron.msp.redhat.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH v3 1/7] libmultipath: fix tur checker locking
+Date: Tue, 13 Feb 2018 14:41:19 -0600
+Message-ID: <20180213204119.GC14513@octiron.msp.redhat.com>
+References: <1518493334-18170-1-git-send-email-bmarzins@redhat.com>
+	<1518493334-18170-2-git-send-email-bmarzins@redhat.com>
+	<09963d9d-033c-222d-2302-8481de41d7c4@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180213164926.GB14513@octiron.msp.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <09963d9d-033c-222d-2302-8481de41d7c4@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,36 +20,51 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Hannes Reinecke <hare@suse.de>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gVHVlLCAyMDE4LTAyLTEzIGF0IDEwOjQ5IC0wNjAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gT24gVHVlLCBGZWIgMTMsIDIwMTggYXQgMDk6NTA6MTlBTSArMDEwMCwgTWFydGluIFdp
-bGNrIHdyb3RlOgo+ID4gSGkgQmVuLAo+ID4gCj4gPiBBbSBJIHVuZGVyc3RhbmRpbmcgY29ycmVj
-dGx5IHRoYXQgeW91IGFyZSB3b3JraW5nIG9uIGxpYmRldm1hcHBlcgo+ID4gaW4KPiA+IHBhcmFs
-bGVsPyBJZiB5ZXMsIHdvdWxkIGl0IG1ha2Ugc2Vuc2UgdG8gaGF2ZSBsaWJtdWx0aXBhdGggdXNl
-IHRoZQo+ID4gbmV3bHkgZGV2ZWxvcGVkIGxpYmRldm1hcHBlciBBUEkgcmlnaHQgYXdheSwgcmF0
-aGVyIHRoYW4gdXNpbmcgYQo+ID4gY3VzdG9tLW1hZGUgaW9jdGwgaW50ZXJmYWNlIHVudGlsIGxp
-YmRldm1hcHBlciBpcyByZWFkeT8KPiAKPiBJIGhhdmVuJ3QgYmVlbiB3b3JraW5nIG9uIGFkZGlu
-ZyB0aGUgcmUtYXJtaW5nIHN1cHBvcnQgdG8KPiBsaWJkZXZtYXBwZXIuCj4gSSBqdXN0IHN0YXJ0
-ZWQgbG9va2luZyBpbnRvIHRoYXQgbm93IHRoYXQgSSBoYXZlIGFsbCBvZiB0aGVzZQo+IG11bHRp
-cGF0aAo+IHBhdGNoZXMgcG9zdGVkLgo+IAo+IEknbSBub3Qgc3VyZSBJIHVuZGVyc3RhbmQgeW91
-IHN1Z2dlc3Rpb24uIFRoZXJlJ3MgYSBsYXJnZSBhbW91bnQgb2YKPiBjb2RlCj4gdGhhdCBjYW4g
-Z2V0IGV4ZWN1dGVkIHdoZW4geW91IGNhbGwgZG1fdGFza19ydW4oKS4gQnV0IHRoZSBjb3JlIGJp
-dAo+IG9mCj4gY29kZSB0aGF0IGl0IHdvdWxkIGV4ZWN1dGUgZm9yIHRoZSBETV9ERVZfQVJNX1BP
-TEwgY29tbWFuZCBpcyB0aGF0Cj4gaW9jdGwuIEFsc28sIHRoZSBjYWxjdWxhdGlvbiB0byBmaW5k
-IHRoZSBvZmZzZXQgb2YgdGhlIGV2ZW50IG51bWJlcgo+IGluCj4gdGhlIGRtX25hbWVzIHN0cnVj
-dHVyZSB3aWxsIGJlIHRoZSBzYW1lIHdoZW4gbGliZGV2bWFwcGVyIGRvZXMgdGhlbS4KPiBJCj4g
-aGF2ZSBubyBwcm9ibGVtIHdpdGggbW92aW5nIHRoZSBmdW5jdGlvbnMgSSB3cm90ZSAoYXJtX2Rl
-dl9ldmVudF9wb2xsCj4gYW5kIGRtX2V2ZW50X25yKSB0byBsaWJtdWx0aXBhdGgvZGV2bWFwcGVy
-LmMsIHdoZXJlIHRoZXkgd2lsbAo+IGV2ZW50dWFsbHkKPiB1c2UgbGliZGV2bWFwcGVyIHRvIGRv
-IHRoZWlyIHdvcmssIGJ1dCB0aGUgYWN0dWFsIGNvZGUgdGhleSB3aWxsCj4gZXhlY3V0ZQo+IGFz
-IHBhcnQgb2YgbGliZGV2bWFwcGVyIHdpbGwgYmUgZnVuY3Rpb25hbGx5IHRoZSBzYW1lLgoKT0su
-IEkgdGhpbmsgSSBtaXN1bmRlcnN0b29kIHlvdXIgcmVtYXJrIGFib3V0IGxpYmRldm1hcHBlciBz
-dXBwb3J0LiAKSnVzdCBnbyBhaGVhZCBhY2NvcmRpbmcgdG8geW91ciBpbml0aWFsIHBsYW4sIGZp
-bmUgd2l0aCBtZS4KClJlZ2FyZHMKTWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNr
-QHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBH
-RjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAy
-MTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJl
-ZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+On Tue, Feb 13, 2018 at 11:20:39AM +0100, Hannes Reinecke wrote:
+> On 02/13/2018 04:42 AM, Benjamin Marzinski wrote:
+
+> I would rather set 'ct->running' from within the thread; otherwise there
+> is a chance that pthread_create() returns without error, but the thread
+> itself hasn't been run yet.
+
+That worry is why I put ct->running where I did. If pthread_create
+returns without an error, but ct->running isn't set yet because the
+thread sets it, and it hasn't run yet, then it can appear to the checker
+as if the thread has already completed.  This can cause it to return the
+results of the thread before it actually has completed, and potentially
+even start up a new thread, which would really mess with the value of
+ct->running.
+
+On the other hand, if you set running before starting the thread, the
+checker won't do anything until the it hits the timeout, at which point
+it will cancel the thread.  We are guaranteed that if pthread_create
+returns successfully, we have the correct Thread ID to cancel the thread
+with, so there's no problem with cancelling a thread that hasn't run.
+
+Am I missing something here?
+
+-Ben
+
+> =
+
+> Cheers,
+> =
+
+> Hannes
+> -- =
+
+> Dr. Hannes Reinecke		   Teamlead Storage & Networking
+> hare@suse.de			               +49 911 74053 688
+> SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+> GF: F. Imend=F6rffer, J. Smithard, J. Guild, D. Upmanyu, G. Norton
+> HRB 21284 (AG N=FCrnberg)
+> =
+
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
