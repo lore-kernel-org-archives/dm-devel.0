@@ -1,8 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v3 4/7] multipathd: remove unused configure
-	parameter
-Date: Mon, 12 Feb 2018 21:42:11 -0600
-Message-ID: <1518493334-18170-5-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v3 5/7] Fix set_no_path_retry() regression
+Date: Mon, 12 Feb 2018 21:42:12 -0600
+Message-ID: <1518493334-18170-6-git-send-email-bmarzins@redhat.com>
 References: <1518493334-18170-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,51 +20,79 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-configure() is always called with start_waiters=1, so there is no point
-in having the parameter. Remove it.
+commit 0f850db7fceb6b2bf4968f3831efd250c17c6138 "multipathd: clean up
+set_no_path_retry" has a bug in it. It made set_no_path_retry
+never reset mpp->retry_ticks, even if the device was in recovery mode,
+and there were valid paths. This meant that adding new paths didn't
+remove a device from recovery mode, and queueing could get disabled,
+even while there were valid paths. This patch fixes that.
+
+This patch also fixes a bug in cli_restore_queueing() and
+cli_restore_all_queueing(), where a device that had no_path_retry
+set to "queue" would enter recovery mode (although queueing would
+never actually get disabled).
 
 Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/main.c | 12 +++++-------
- 1 file changed, 5 insertions(+), 7 deletions(-)
+ libmultipath/structs_vec.c |  5 +++--
+ multipathd/cli_handlers.c  | 20 ++++++++++++--------
+ 2 files changed, 15 insertions(+), 10 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index dbf9890..51e0f5e 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1955,7 +1955,7 @@ checkerloop (void *ap)
- }
- 
- int
--configure (struct vectors * vecs, int start_waiters)
-+configure (struct vectors * vecs)
- {
- 	struct multipath * mpp;
- 	struct path * pp;
-@@ -2054,11 +2054,9 @@ configure (struct vectors * vecs, int start_waiters)
- 			i--;
- 			continue;
- 		}
--		if (start_waiters) {
--			if (start_waiter_thread(mpp, vecs)) {
--				remove_map(mpp, vecs, 1);
--				i--;
--			}
-+		if (start_waiter_thread(mpp, vecs)) {
-+			remove_map(mpp, vecs, 1);
-+			i--;
- 		}
+diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
+index fbab61f..0de2221 100644
+--- a/libmultipath/structs_vec.c
++++ b/libmultipath/structs_vec.c
+@@ -343,9 +343,10 @@ static void set_no_path_retry(struct multipath *mpp)
+ 			dm_queue_if_no_path(mpp->alias, 1);
+ 		break;
+ 	default:
+-		if (mpp->nr_active > 0)
++		if (mpp->nr_active > 0) {
++			mpp->retry_tick = 0;
+ 			dm_queue_if_no_path(mpp->alias, 1);
+-		else if (is_queueing && mpp->retry_tick == 0)
++		} else if (is_queueing && mpp->retry_tick == 0)
+ 			enter_recovery_mode(mpp);
+ 		break;
+ 	}
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index 7f13bc9..80519b1 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -995,10 +995,12 @@ cli_restore_queueing(void *v, char **reply, int *len, void *data)
+ 	if (mpp->no_path_retry != NO_PATH_RETRY_UNDEF &&
+ 			mpp->no_path_retry != NO_PATH_RETRY_FAIL) {
+ 		dm_queue_if_no_path(mpp->alias, 1);
+-		if (mpp->nr_active > 0)
+-			mpp->retry_tick = 0;
+-		else
+-			enter_recovery_mode(mpp);
++		if (mpp->no_path_retry > 0) {
++			if (mpp->nr_active > 0)
++				mpp->retry_tick = 0;
++			else
++				enter_recovery_mode(mpp);
++		}
  	}
  	return 0;
-@@ -2125,7 +2123,7 @@ reconfigure (struct vectors * vecs)
- 	rcu_assign_pointer(multipath_conf, conf);
- 	call_rcu(&old->rcu, rcu_free_config);
- 
--	configure(vecs, 1);
-+	configure(vecs);
- 
- 
+ }
+@@ -1019,10 +1021,12 @@ cli_restore_all_queueing(void *v, char **reply, int *len, void *data)
+ 		if (mpp->no_path_retry != NO_PATH_RETRY_UNDEF &&
+ 		    mpp->no_path_retry != NO_PATH_RETRY_FAIL) {
+ 			dm_queue_if_no_path(mpp->alias, 1);
+-			if (mpp->nr_active > 0)
+-				mpp->retry_tick = 0;
+-			else
+-				enter_recovery_mode(mpp);
++			if (mpp->no_path_retry > 0) {
++				if (mpp->nr_active > 0)
++					mpp->retry_tick = 0;
++				else
++					enter_recovery_mode(mpp);
++			}
+ 		}
+ 	}
  	return 0;
 -- 
 2.7.4
