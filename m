@@ -1,15 +1,12 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH v3 1/7] libmultipath: fix tur checker locking
-Date: Tue, 13 Feb 2018 11:20:39 +0100
-Message-ID: <09963d9d-033c-222d-2302-8481de41d7c4@suse.de>
-References: <1518493334-18170-1-git-send-email-bmarzins@redhat.com>
-	<1518493334-18170-2-git-send-email-bmarzins@redhat.com>
+From: Milan Broz <gmazyland@gmail.com>
+Subject: [PATCH] dm-integrity: Fail early if required HMAC key is
+	not available.
+Date: Tue, 13 Feb 2018 14:50:50 +0100
+Message-ID: <20180213135050.21039-1-gmazyland@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1518493334-18170-2-git-send-email-bmarzins@redhat.com>
-Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,68 +17,39 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: Milan Broz <gmazyland@gmail.com>
 List-Id: dm-devel.ids
 
-T24gMDIvMTMvMjAxOCAwNDo0MiBBTSwgQmVuamFtaW4gTWFyemluc2tpIHdyb3RlOgo+IENvbW1p
-dCA2ZTI0MjNmZCBmaXhlZCBhIGJ1ZyB3aGVyZSB0aGUgdHVyIGNoZWNrZXIgY291bGQgY2FuY2Vs
-IGEKPiBkZXRhY2hlZCB0aHJlYWQgYWZ0ZXIgaXQgaGFkIGV4aXR0ZWQuIEhvd2V2ZXIgaW4gZml4
-aW5nIHRoaXMsIHRoZSBuZXcKPiBjb2RlIGdyYWJiZWQgYSBtdXRleCAodG8gY2FsbCBjb25kbG9n
-KSB3aGlsZSBob2xkaW5nIGEgc3Bpbl9sb2NrLiAgVG8KPiBkZWFsIHdpdGggdGhpcywgSSd2ZSBk
-b25lIGF3YXkgd2l0aCB0aGUgaG9sZGVyIHNwaW5fbG9jayBjb21wbGV0ZWx5LCBhbmQKPiByZXBs
-YWNlZCBpdCB3aXRoIHR3byBhdG9taWMgdmFyaWFibGVzLCBiYXNlZCBvbiBhIHN1Z2dlc3Rpb24g
-YnkgTWFydGluCj4gV2lsY2suCj4gCj4gVGhlIGhvbGRlciB2YXJpYWJsZSB3b3JrcyBleGFjdGx5
-IGxpa2UgYmVmb3JlLiAgV2hlbiB0aGUgY2hlY2tlciBpcwo+IGluaXRpYWxpemVkLCBpdCBpcyBz
-ZXQgdG8gMS4gV2hlbiBhIHRocmVhZCBpcyBjcmVhdGVkIGl0IGlzIGluY3JlbWVudGVkLgo+IFdo
-ZW4gZWl0aGVyIHRoZSB0aHJlYWQgb3IgdGhlIGNoZWNrZXIgYXJlIGRvbmUgd2l0aCB0aGUgY29u
-dGV4dCwgdGhleQo+IGF0b21pY2FsbHkgZGVjcmVtZW50IHRoZSBob2xkZXIgdmFyaWFibGUgYW5k
-IGNoZWNrIGl0cyB2YWx1ZS4gSWYgaXQKPiBpcyAwLCB0aGV5IGZyZWUgdGhlIGNvbnRleHQuIElm
-IGl0IGlzIDEsIHRoZXkgbmV2ZXIgdG91Y2ggdGhlIGNvbnRleHQKPiBhZ2Fpbi4KPiAKPiBUaGUg
-b3RoZXIgdmFyaWFibGUgaGFzIGNoYW5nZWQuIEZpcnN0LCBjdC0+cnVubmluZyBhbmQgY3QtPnRo
-cmVhZCBoYXZlCj4gc3dpdGNoZWQgdXNlcy4gY3QtPnRocmVhZCBpcyBub3cgb25seSBldmVyIGFj
-Y2Vzc2VkIGJ5IHRoZSBjaGVja2VyLAo+IG5ldmVyIHRoZSB0aHJlYWQuICBJZiBpdCBpcyBub24t
-TlVMTCwgYSB0aHJlYWQgaGFzIHN0YXJ0ZWQgdXAsIGJ1dAo+IGhhc24ndCBiZWVuIGRlYWx0IHdp
-dGggYnkgdGhlIGNoZWNrZXIgeWV0LiBJdCBpcyBhbHNvIG9idmlvdXNseSB1c2VkCj4gYnkgdGhl
-IGNoZWNrZXIgdG8gY2FuY2VsIHRoZSB0aHJlYWQuCj4gCj4gY3QtPnJ1bm5pbmcgaXMgbm93IGFu
-IGF0b21pYyB2YXJpYWJsZS4gIFdoZW4gdGhlIHRocmVhZCBpcyBzdGFydGVkCj4gaXQgaXMgc2V0
-IHRvIDEuIFdoZW4gdGhlIGNoZWNrZXIgd2FudHMgdG8ga2lsbCBhIHRocmVhZCwgaXQgYXRvbWlj
-YWxseQo+IHNldHMgdGhlIHZhbHVlIHRvIDAgYW5kIHJlYWRzIHRoZSBwcmV2aW91cyB2YWx1ZS4g
-IElmIGl0IHdhcyAxLAo+IHRoZSBjaGVja2VyIGNhbmNlbHMgdGhlIHRocmVhZC4gSWYgaXQgd2Fz
-IDAsIHRoZSBub3RoaW5nIG5lZWRzIHRvIGJlCj4gZG9uZS4gIEFmdGVyIHRoZSBjaGVja2VyIGhh
-cyBkZWFsdCB3aXRoIHRoZSB0aHJlYWQsIGl0IHNldHMgY3QtPnRocmVhZAo+IHRvIE5VTEwuCj4g
-Cj4gUmlnaHQgYmVmb3JlIHRoZSB0aHJlYWQgZmluaXNoZXMgYW5kIHBvcHMgdGhlIGNsZWFudXAg
-aGFuZGxlciwgaXQKPiBhdG9taWNhbGx5IHNldHMgdGhlIHZhbHVlIG9mIGN0LT5ydW5uaW5nIHRv
-IDAgYW5kIHJlYWRzIHRoZSBwcmV2aW91cwo+IHZhbHVlLiBJZiBpdCB3YXMgMSwgdGhlIHRocmVh
-ZCBqdXN0IHBvcHMgdGhlIGNsZWFudXAgaGFuZGxlciBhbmQgZXhpdHMuCj4gSWYgaXQgd2FzIDAs
-IHRoZW4gdGhlIGNoZWNrZXIgaXMgdHJ5aW5nIHRvIGNhbmNlbCB0aGUgdGhyZWFkLCBhbmQgc28g
-dGhlCj4gdGhyZWFkIGNhbGxzIHBhdXNlKCksIHdoaWNoIGlzIGEgY2FuY2VsbGF0aW9uIHBvaW50
-Lgo+IAo+IENjOiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4KPiBDYzogQmFydCBWYW4g
-QXNzY2hlIDxCYXJ0LlZhbkFzc2NoZUB3ZGMuY29tPgo+IFNpZ25lZC1vZmYtYnk6IEJlbmphbWlu
-IE1hcnppbnNraSA8Ym1hcnppbnNAcmVkaGF0LmNvbT4KPiAtLS0KPiAgbGlibXVsdGlwYXRoL2No
-ZWNrZXJzL3R1ci5jIHwgMTA3ICsrKysrKysrKysrKysrKysrKy0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tCj4gIDEgZmlsZSBjaGFuZ2VkLCA0MyBpbnNlcnRpb25zKCspLCA2NCBkZWxldGlvbnMo
-LSkKPiAKWyAuLiBdCj4gQEAgLTM5MSwxOSArMzY4LDE3IEBAIGludCBsaWJjaGVja19jaGVjayhz
-dHJ1Y3QgY2hlY2tlciAqIGMpCj4gIAkJY3QtPnN0YXRlID0gUEFUSF9VTkNIRUNLRUQ7Cj4gIAkJ
-Y3QtPmZkID0gYy0+ZmQ7Cj4gIAkJY3QtPnRpbWVvdXQgPSBjLT50aW1lb3V0Owo+IC0JCXB0aHJl
-YWRfc3Bpbl9sb2NrKCZjdC0+aGxkcl9sb2NrKTsKPiAtCQljdC0+aG9sZGVycysrOwo+IC0JCXB0
-aHJlYWRfc3Bpbl91bmxvY2soJmN0LT5obGRyX2xvY2spOwo+ICsJCXVhdG9taWNfYWRkKCZjdC0+
-aG9sZGVycywgMSk7Cj4gKwkJdWF0b21pY19zZXQoJmN0LT5ydW5uaW5nLCAxKTsKPiAgCQl0dXJf
-c2V0X2FzeW5jX3RpbWVvdXQoYyk7Cj4gIAkJc2V0dXBfdGhyZWFkX2F0dHIoJmF0dHIsIDMyICog
-MTAyNCwgMSk7Cj4gIAkJciA9IHB0aHJlYWRfY3JlYXRlKCZjdC0+dGhyZWFkLCAmYXR0ciwgdHVy
-X3RocmVhZCwgY3QpOwo+ICAJCXB0aHJlYWRfYXR0cl9kZXN0cm95KCZhdHRyKTsKPiAgCQlpZiAo
-cikgewo+IC0JCQlwdGhyZWFkX3NwaW5fbG9jaygmY3QtPmhsZHJfbG9jayk7Cj4gLQkJCWN0LT5o
-b2xkZXJzLS07Cj4gLQkJCXB0aHJlYWRfc3Bpbl91bmxvY2soJmN0LT5obGRyX2xvY2spOwo+IC0J
-CQlwdGhyZWFkX211dGV4X3VubG9jaygmY3QtPmxvY2spOwo+ICsJCQl1YXRvbWljX3N1YigmY3Qt
-PmhvbGRlcnMsIDEpOwo+ICsJCQl1YXRvbWljX3NldCgmY3QtPnJ1bm5pbmcsIDApOwo+ICAJCQlj
-dC0+dGhyZWFkID0gMDsKPiArCQkJcHRocmVhZF9tdXRleF91bmxvY2soJmN0LT5sb2NrKTsKPiAg
-CQkJY29uZGxvZygzLCAiJXM6IGZhaWxlZCB0byBzdGFydCB0dXIgdGhyZWFkLCB1c2luZyIKPiAg
-CQkJCSIgc3luYyBtb2RlIiwgdHVyX2RldnQoZGV2dCwgc2l6ZW9mKGRldnQpLCBjdCkpOwo+ICAJ
-CQlyZXR1cm4gdHVyX2NoZWNrKGMtPmZkLCBjLT50aW1lb3V0LApJIHdvdWxkIHJhdGhlciBzZXQg
-J2N0LT5ydW5uaW5nJyBmcm9tIHdpdGhpbiB0aGUgdGhyZWFkOyBvdGhlcndpc2UgdGhlcmUKaXMg
-YSBjaGFuY2UgdGhhdCBwdGhyZWFkX2NyZWF0ZSgpIHJldHVybnMgd2l0aG91dCBlcnJvciwgYnV0
-IHRoZSB0aHJlYWQKaXRzZWxmIGhhc24ndCBiZWVuIHJ1biB5ZXQuCgpDaGVlcnMsCgpIYW5uZXMK
-LS0gCkRyLiBIYW5uZXMgUmVpbmVja2UJCSAgIFRlYW1sZWFkIFN0b3JhZ2UgJiBOZXR3b3JraW5n
-CmhhcmVAc3VzZS5kZQkJCSAgICAgICAgICAgICAgICs0OSA5MTEgNzQwNTMgNjg4ClNVU0UgTElO
-VVggR21iSCwgTWF4ZmVsZHN0ci4gNSwgOTA0MDkgTsO8cm5iZXJnCkdGOiBGLiBJbWVuZMO2cmZm
-ZXIsIEouIFNtaXRoYXJkLCBKLiBHdWlsZCwgRC4gVXBtYW55dSwgRy4gTm9ydG9uCkhSQiAyMTI4
-NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhh
-dC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+With crypto API
+  commit 9fa68f620041be04720d0cbfb1bd3ddfc6310b24
+  crypto: hash - prevent using keyed hashes without setting key
+
+dm-integrity cannot use keyed algorithms without setting key.
+
+The dm-integrity recognizes this too late (during use of HMAC),
+so it allows creation and formatting of superblock, but the device
+is in fact unusable.
+
+Fix it by detecting key requirement in integrity table constructor.
+
+Signed-off-by: Milan Broz <gmazyland@gmail.com>
+---
+ drivers/md/dm-integrity.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
+index 46d7c8749222..6c81b11d0521 100644
+--- a/drivers/md/dm-integrity.c
++++ b/drivers/md/dm-integrity.c
+@@ -2548,6 +2548,9 @@ static int get_mac(struct crypto_shash **hash, struct alg_spec *a, char **error,
+ 				*error = error_key;
+ 				return r;
+ 			}
++		} else if (crypto_shash_get_flags(*hash) & CRYPTO_TFM_NEED_KEY) {
++			*error = error_key;
++			return -ENOKEY;
+ 		}
+ 	}
+ 
+-- 
+2.16.1
