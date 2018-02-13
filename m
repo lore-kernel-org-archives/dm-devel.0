@@ -1,13 +1,17 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH v3 2/7] multipath: fix DEF_TIMEOUT use
-Date: Mon, 12 Feb 2018 21:42:09 -0600
-Message-ID: <1518493334-18170-3-git-send-email-bmarzins@redhat.com>
-References: <1518493334-18170-1-git-send-email-bmarzins@redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [RFC PATCH 5/5] multipathd: RFC add new polling
+ dmevents waiter thread
+Date: Tue, 13 Feb 2018 09:50:19 +0100
+Message-ID: <1518511819.8040.8.camel@suse.com>
+References: <1518239251-29392-1-git-send-email-bmarzins@redhat.com>
+	<1518239251-29392-6-git-send-email-bmarzins@redhat.com>
+	<1518292553.2937.44.camel@suse.com>
+	<20180212231802.GA14513@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1518493334-18170-1-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <20180212231802.GA14513@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,33 +21,79 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-DEF_TIMEOUT is specified in seconds. The io_hdr timeout is specified in
-milliseconds, so we need to convert it. Multipath should be waiting
-longer than 30 milliseconds here. If there are concerns that 30 seconds
-may be too long, we could always make this configurable, using
-conf->checker_timeout if set.
-
-Reviewed-by: Martin Wilck <mwilck@suse.com>
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmultipath/discovery.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 4b31dde..f118800 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -766,7 +766,7 @@ do_inq(int sg_fd, int cmddt, int evpd, unsigned int pg_op,
- 	io_hdr.dxferp = resp;
- 	io_hdr.cmdp = inqCmdBlk;
- 	io_hdr.sbp = sense_b;
--	io_hdr.timeout = DEF_TIMEOUT;
-+	io_hdr.timeout = DEF_TIMEOUT * 1000;
- 
- 	if (ioctl(sg_fd, SG_IO, &io_hdr) < 0)
- 		return -1;
--- 
-2.7.4
+SGkgQmVuLAoKT24gTW9uLCAyMDE4LTAyLTEyIGF0IDE3OjE4IC0wNjAwLCBCZW5qYW1pbiBNYXJ6
+aW5za2kgd3JvdGU6Cj4gT24gU2F0LCBGZWIgMTAsIDIwMTggYXQgMDg6NTU6NTNQTSArMDEwMCwg
+TWFydGluIFdpbGNrIHdyb3RlOgo+ID4gSGkgQmVuLAo+ID4gCj4gPiB0aGFua3MgYSBsb3QgZm9y
+IHRoaXMuIEkgaGF2ZSBvbmx5IGEgZmV3IG1pbm9yIG5pdHBpY2tzIChzZWUKPiA+IGJlbG93KS4K
+PiA+IEkgc3VwcG9zZSB5b3UndmUgdGVzdGVkIHRoaXMgYWxyZWFkeT8KPiAKPiBZZXMuIEkgZG8g
+cGxhbiBvbiBkb2luZyBzb21lIG1vcmUgdGVzdGluZyBhZnRlciBJIGxvb2sgaW50byBtYWtpbmcK
+PiBsaWJkZXZtYXBwZXIgc3VwcG9ydCByZS1hcm1pbmcgdGhlIHBvbGxpbmcgaW50ZXJmYWNlIGFu
+ZCBncmFiYmluZyB0aGUKPiBldmVudCBudW1iZXIgZnJvbSB0aGUgbmFtZXMgbGlzdGluZywgYmVm
+b3JlIEkgcmVwb3N0IHRoaXMgd2l0aG91dCB0aGUKPiBSRkMgdGFnLiBJIHdhcyBhbHNvIHRoaW5r
+aW5nIG9mIHRyeWluZyBvdXQgY21vY2thIGJ5IG1vY2tpbmcgdXAgYQo+IGRldmljZS1tYXBwZXIg
+aW50ZXJmYWNlIHRoYXQgbGV0IG1lIHRlc3QgdGhpcyBjb2RlIGluIGlzb2xhdGlvbi4KCkdyZWF0
+IGlkZWEuCgpBbSBJIHVuZGVyc3RhbmRpbmcgY29ycmVjdGx5IHRoYXQgeW91IGFyZSB3b3JraW5n
+IG9uIGxpYmRldm1hcHBlciBpbgpwYXJhbGxlbD8gSWYgeWVzLCB3b3VsZCBpdCBtYWtlIHNlbnNl
+IHRvIGhhdmUgbGlibXVsdGlwYXRoIHVzZSB0aGUKbmV3bHkgZGV2ZWxvcGVkIGxpYmRldm1hcHBl
+ciBBUEkgcmlnaHQgYXdheSwgcmF0aGVyIHRoYW4gdXNpbmcgYQpjdXN0b20tbWFkZSBpb2N0bCBp
+bnRlcmZhY2UgdW50aWwgbGliZGV2bWFwcGVyIGlzIHJlYWR5PwoKPiA+ID4gSSBoYXZlbid0IHRv
+dWNoZWQgYW55IG9mIHRoZSBleGlzdGluZyBldmVudCB3YWl0aW5nIGNvZGUsIHNpbmNlCj4gPiA+
+IGV2ZW50Cj4gPiA+IHBvbGxpbmcgd2FzIG9ubHkgYWRkZWQgdG8gZGV2aWNlLW1hcHBlciBpbiB2
+ZXJzaW9uCj4gPiA+IDQuMzcuMC4gIG11bHRpcGF0aGQKPiA+ID4gY2hlY2tzIHRoaXMgdmVyc2lv
+biwgYW5kIGRlZmF1bHRzIHRvIHVzaW5nIHRoZSBwb2xsaW5nIGNvZGUgaWYKPiA+ID4gZGV2aWNl
+LW1hcHBlciBzdXBwb3J0cyBpdC4gVGhpcyBjYW4gYmUgb3ZlcnJpZGRlbiBieSBydW5uaW5nCj4g
+PiA+IG11bHRpcGF0aGQKPiA+ID4gd2l0aCAiLXciLCB0byBmb3JjZSBpdCB0byB1c2UgdGhlIG9s
+ZCBldmVudCB3YWl0aW5nIGNvZGUuCj4gPiAKPiA+IFdoeSB1c2UgYSBjb21tYW5kIGxpbmUgb3B0
+aW9uIGhlcmUgcmF0aGVyIHRoYW4gYSBjb25maWcgZmlsZQo+ID4gb3B0aW9uPwo+IAo+IE1vc3Rs
+eSBiZWNhdXNlIGl0IHdhcyBmYXN0ZXIsIGFuZCBJIHdhbnRlZCB0byBnZXQgdG8gdGVzdGluZyBp
+dC4gVGhlCj4gb3RoZXIgcmVhc29uIGlzIHRoYXQgSSBkb24ndCBzZWUgYW55IGJlbmVmaXQgZm9y
+IHRoZSB3b3JrIGludm9sdmVkIGluCj4gbWFraW5nIHRoaXMgYmUgY2hhbmdlYWJsZSBpbgo+IAo+
+ICMgbXVsdGlwYXRoZCByZWNvbmZpZ3VyZQo+IAo+IEhvd2V2ZXIsIHdlIGFscmVhZHkgaGF2ZSBj
+b25maWd1cmF0aW9uIHNldHRpbmdzIHRoYXQgY2FuJ3QgZ2V0Cj4gY2hhbmdlZAo+IG9uIHJlY29u
+ZmlndXJlLCBzbyBtYWtpbmcgdGhpcyBhbm90aGVyIG9uZSBpcyBub3QgYSBiaWcgZGVhbC4gSSBh
+Z3JlZQo+IHRoYXQgaXQgaXMgZWFzaWVyIGZvciB1c2VycyB0byBjaGFuZ2UgaWYgaXQgaXMgYSBj
+b25maWd1cmF0aW9uCj4gc2V0dGluZywKPiBidXQgSSdtIGhvcGluZyB0aGF0IHRoaXMgY2hhbmdl
+IHdpbGwgYmUgaW52aXNpYmxlIHRvIHVzZXJzLiBJZiB5b3UKPiB3b3VsZAo+IHByZWZlciBpdCBh
+cyBhIGNvbmZpZ3VyYXRpb24gc2V0dGluZywgSSBoYXZlIG5vIHByb2JsZW0gd2l0aCBjaGFuZ2lu
+Zwo+IHRoYXQKPiAuCgpSaWdodC4gSXQgZG9lc24ndCBuZWVkIHRvIGJlIHVzZXItY29uZmlndXJh
+YmxlLiBXZSBtYXkgd2FudCB0byBsZWF2ZSBhCmNvbXBpbGUtdGltZSBvcHRpb24gdG8gZGlzYWJs
+ZSBpdCBmb3IgdGhlIHRpbWUgYmVpbmcuCgo+ID4gPiAKPiA+ID4gU2lnbmVkLW9mZi1ieTogQmVu
+amFtaW4gTWFyemluc2tpIDxibWFyemluc0ByZWRoYXQuY29tPgo+ID4gPiAtLS0KPiA+ID4gIG11
+bHRpcGF0aGQvTWFrZWZpbGUgICB8ICAgMyArLQo+ID4gPiAgbXVsdGlwYXRoZC9kbWV2ZW50cy5j
+IHwgMzk2Cj4gPiA+ICsrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysr
+KysrKysrCj4gPiA+ICBtdWx0aXBhdGhkL2RtZXZlbnRzLmggfCAgMTMgKysKPiA+ID4gIG11bHRp
+cGF0aGQvbWFpbi5jICAgICB8ICA1OCArKysrKysrLQo+ID4gPiAgNCBmaWxlcyBjaGFuZ2VkLCA0
+NjEgaW5zZXJ0aW9ucygrKSwgOSBkZWxldGlvbnMoLSkKPiA+ID4gIGNyZWF0ZSBtb2RlIDEwMDY0
+NCBtdWx0aXBhdGhkL2RtZXZlbnRzLmMKPiA+ID4gIGNyZWF0ZSBtb2RlIDEwMDY0NCBtdWx0aXBh
+dGhkL2RtZXZlbnRzLmgKPiA+ID4gCj4gPiA+IGRpZmYgLS1naXQgYS9tdWx0aXBhdGhkL01ha2Vm
+aWxlIGIvbXVsdGlwYXRoZC9NYWtlZmlsZQo+ID4gPiBpbmRleCA4NWYyOWE3Li40YzQzOGYwIDEw
+MDY0NAo+ID4gPiAtLS0gYS9tdWx0aXBhdGhkL01ha2VmaWxlCj4gPiA+ICsrKyBiL211bHRpcGF0
+aGQvTWFrZWZpbGUKPiA+ID4gQEAgLTIyLDcgKzIyLDggQEAgaWZkZWYgU1lTVEVNRAo+ID4gPiAg
+CWVuZGlmCj4gPiA+ICBlbmRpZgo+ID4gPiAgCj4gPiA+IC1PQkpTID0gbWFpbi5vIHBpZGZpbGUu
+byB1eGxzbnIubyB1eGNsbnQubyBjbGkubyBjbGlfaGFuZGxlcnMubwo+ID4gPiB3YWl0ZXIubwo+
+ID4gPiArT0JKUyA9IG1haW4ubyBwaWRmaWxlLm8gdXhsc25yLm8gdXhjbG50Lm8gY2xpLm8gY2xp
+X2hhbmRsZXJzLm8KPiA+ID4gd2FpdGVyLm8gXAo+ID4gPiArICAgICAgIGRtZXZlbnRzLm8KPiA+
+ID4gIAo+ID4gPiAgRVhFQyA9IG11bHRpcGF0aGQKPiA+ID4gIAo+ID4gPiBkaWZmIC0tZ2l0IGEv
+bXVsdGlwYXRoZC9kbWV2ZW50cy5jIGIvbXVsdGlwYXRoZC9kbWV2ZW50cy5jCj4gPiA+IG5ldyBm
+aWxlIG1vZGUgMTAwNjQ0Cj4gPiA+IGluZGV4IDAwMDAwMDAuLmE1NmMwNTUKPiA+ID4gLS0tIC9k
+ZXYvbnVsbAo+ID4gPiArKysgYi9tdWx0aXBhdGhkL2RtZXZlbnRzLmMKPiA+ID4gCgo+ID4gPiAr
+Cj4gPiA+ICsKPiA+ID4gK2ludCBhbGxvY19kbWV2ZW50X3dhaXRlcihzdHJ1Y3QgdmVjdG9ycyAq
+dmVjcykKPiA+ID4gK3sKPiA+ID4gKwlpZiAoIXZlY3MpIHsKPiA+ID4gCj4gPiBOaXRwaWNrOiBj
+b252ZW50aW9uYWxseSwgYW4gImFsbG9jIi10eXBlIGZ1bmN0aW9uIHdvdWxkIHJldHVybiB0aGUK
+PiA+IHBvaW50ZXIsIGFuZCBOVUxMIG9uIGZhaWx1cmUuCj4gCj4gSXMgdGhpcyBhIG5hbWluZyBj
+b21wbGFpbnQsIG9yIGFuIGludGVyZmFjZSBjb21wbGFpbnQ/ICBJJ20gZmluZSB3aXRoCj4gY2hh
+bmdpbmcgdGhlIG5hbWVzIHNvIHRoZXkgZm9sbG93IHRoZSBsZWFkIG9mIGNoZWNrZXJzIGFuZCBw
+cmlvLCBpLmUuCj4gaW5pdF9kbWV2ZW50c193YWl0ZXIoKSBhbmQgY2xlYW51cF9kbWV2ZW50c193
+YWl0ZXIoKS4gVGhlIGluaXQgYW5kCj4gY2xlYW51cCBmdW5jdGlvbnMgZm9yIGNoZWNrZXJzIGFu
+ZCBwcmlvIGhhdmUgdGhlIHNhbWUgcmV0dXJucyBhcyB0aGUKPiBkbWV2ZW50IGZ1bmN0aW9ucyAo
+d2VsbCB0aGUgaW5pdCBmdW5jdGlvbnMgcmV0dXJuIDEgZm9yIGZhaWx1cmUsIGFuZAo+IEkKPiBj
+YW4gZG8gdGhhdCBhcyB3ZWxsKQoKSSdtIGZpbmUgd2l0aCBzaW1wbHkgY2hhbmdpbmcgdGhlIG5h
+bWVzLgoKUmVnYXJkcwpNYXJ0aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5j
+b20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxp
+eCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChB
+RyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNv
+bQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
