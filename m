@@ -1,88 +1,96 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: Re: [PATCH 2/2] dm-writecache
-Date: Tue, 13 Feb 2018 17:36:07 -0800
-Message-ID: <CAPcyv4guenhCDkpNg5LQjh7AHrcT3Vgv+O4wT7ajFmxLj6upzg@mail.gmail.com>
-References: <alpine.LRH.2.02.1711222135371.2330@file01.intranet.prod.int.rdu2.redhat.com>
-	<CAA9_cmcRe8KXO+jWy8knqg4EMCgBYF1JAdgR=A2qHkVES+i9ZA@mail.gmail.com>
-	<alpine.LRH.2.02.1711272238130.9280@file01.intranet.prod.int.rdu2.redhat.com>
-	<CAPcyv4jTuSLDiO1TZhCrJGxMWiWK-KNXKPf-DZH1xDeXVAaUgQ@mail.gmail.com>
-	<alpine.LRH.2.02.1712050003070.13380@file01.intranet.prod.int.rdu2.redhat.com>
-	<CAPcyv4i=XfG-pQYHKLKvwP_SeMxc+PaWOJYSGQ0rsbJ=9GC6iQ@mail.gmail.com>
-	<alpine.LRH.2.02.1802131648030.31130@file01.intranet.prod.int.rdu2.redhat.com>
-	<CAPcyv4hD6cTzaMoZ4p9O+GhcmD4se7vTAaYFjRzU1Aicopaziw@mail.gmail.com>
-	<alpine.LRH.2.02.1802132023450.6481@file01.intranet.prod.int.rdu2.redhat.com>
+From: Milan Broz <gmazyland@gmail.com>
+Subject: DM Regression in 4.16-rc1 - read() returns data when it shouldn't
+Date: Wed, 14 Feb 2018 14:02:46 +0100
+Message-ID: <70cda2a3-f246-d45b-f600-1f9d15ba22ff@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.1802132023450.6481@file01.intranet.prod.int.rdu2.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <msnitzer@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: NeilBrown <neilb@suse.com>, Mike Snitzer <snitzer@redhat.com>, device-mapper development <dm-devel@redhat.com>
+Cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Tue, Feb 13, 2018 at 5:24 PM, Mikulas Patocka <mpatocka@redhat.com> wrote:
->
->
-> On Tue, 13 Feb 2018, Dan Williams wrote:
->
->> On Tue, Feb 13, 2018 at 2:00 PM, Mikulas Patocka <mpatocka@redhat.com> wrote:
->> >
->> >
->> > On Fri, 8 Dec 2017, Dan Williams wrote:
->> >
->> >> > > > when we write to
->> >> > > > persistent memory using cached write instructions and use dax_flush
->> >> > > > afterwards to flush cache for the affected range, the performance is about
->> >> > > > 350MB/s. It is practically unusable - worse than low-end SSDs.
->> >> > > >
->> >> > > > On the other hand, the movnti instruction can sustain performance of one
->> >> > > > 8-byte write per clock cycle. We don't have to flush cache afterwards, the
->> >> > > > only thing that must be done is to flush the write-combining buffer with
->> >> > > > the sfence instruction. Movnti has much better throughput than dax_flush.
->> >> > >
->> >> > > What about memcpy_flushcache?
->> >> >
->> >> > but
->> >> >
->> >> > - using memcpy_flushcache is overkill if we need just one or two 8-byte
->> >> > writes to the metadata area. Why not use movnti directly?
->> >> >
->> >>
->> >> The driver performs so many 8-byte moves that the cost of the
->> >> memcpy_flushcache() function call significantly eats into your
->> >> performance?
->> >
->> > I've measured it on Skylake i7-6700 - and the dm-writecache driver has 2%
->> > lower throughput when it uses memcpy_flushcache() to update it metadata
->> > instead of explicitly coded "movnti" instructions.
->> >
->> > I've created this patch - it doesn't change API in any way, but it
->> > optimizes memcpy_flushcache for 4, 8 and 16-byte writes (that is what my
->> > driver mostly uses). With this patch, I can remove the explicit "asm"
->> > statements from my driver. Would you consider commiting this patch to the
->> > kernel?
->> >
->> > Mikulas
->> >
->> >
->>
->> Yes, this looks good to me. You can send it to the x86 folks with my:
->>
->> Reviewed-by: Dan Williams <dan.j.williams@intel.com>
->>
->> ...or let me know and I can chase it through the -tip tree. Either way
->> works for me.
->
-> If you have access to some tree that will be merged, you can commit the
-> patch there.
+Hi,
 
-Sure, no worries, I'll take it from here.
+the commit (found by bisect)
+
+  commit 18a25da84354c6bb655320de6072c00eda6eb602
+  Author: NeilBrown <neilb@suse.com>
+  Date:   Wed Sep 6 09:43:28 2017 +1000
+
+    dm: ensure bio submission follows a depth-first tree walk
+
+cause serious regression while reading from DM device.
+
+The reproducer is below, basically it tries to simulate failure we see in cryptsetup
+regression test: we have DM device with error and zero target and try to read
+"passphrase" from it (it is test for 64 bit offset error path):
+
+Test device:
+# dmsetup table test
+0 10000000 error 
+10000000 1000000 zero 
+
+We try to run this operation:
+  lseek64(fd, 5119999988, SEEK_CUR); // this should seek to error target sector
+  read(fd, buf, 13); // this should fail, if we seek to error part of the device
+
+While on 4.15 the read properly fails:
+  Seek returned 5119999988.
+  Read returned -1.
+
+for 4.16 it actually succeeds returning some random data
+(perhaps kernel memory, so this bug is even more dangerous):
+  Seek returned 5119999988.
+  Read returned 13.
+
+Full reproducer below:
+
+#define _GNU_SOURCE
+#define _LARGEFILE64_SOURCE
+#include <stdio.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <inttypes.h>
+
+int main (int argc, char *argv[])
+{
+        char buf[13];
+        int fd;
+        //uint64_t offset64 = 5119999999;
+        uint64_t offset64 =   5119999988;
+        off64_t r;
+        ssize_t bytes;
+
+        system("echo -e \'0 10000000 error\'\\\\n\'10000000 1000000 zero\' | dmsetup create test");
+
+        fd = open("/dev/mapper/test", O_RDONLY);
+        if (fd == -1) {
+                printf("open fail\n");
+                return 1;
+        }
+
+        r = lseek64(fd, offset64, SEEK_CUR);
+        printf("Seek returned %" PRIu64 ".\n", r);
+        if (r < 0) {
+                printf("seek fail\n");
+                close(fd);
+                return 2;
+        }
+
+        bytes = read(fd, buf, 13);
+        printf("Read returned %d.\n", (int)bytes);
+
+        close(fd);
+        return 0;
+}
+
+
+Please let me know if you need more info to reproduce it.
+
+Milan
