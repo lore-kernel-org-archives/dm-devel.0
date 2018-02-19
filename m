@@ -1,15 +1,15 @@
-From: Shaohua Li <shli@kernel.org>
-Subject: Re: [PATCH] md: fix md_write_start() deadlock w/o
-	metadata devices
-Date: Sun, 18 Feb 2018 10:12:21 -0800
-Message-ID: <20180218181221.a5l5nzgav7s6smor@kernel.org>
-References: <054eff295e0cd2df2b11a3f9ba3b3d66e89beb47.1517609290.git.heinzm@redhat.com>
+From: Thorsten Leemhuis <regressions@leemhuis.info>
+Subject: Re: DM Regression in 4.16-rc1 - read() returns data when
+	it shouldn't
+Date: Mon, 19 Feb 2018 14:44:23 +0100
+Message-ID: <5fca4e3f-536c-9c52-31bb-927e8ab5b6c8@leemhuis.info>
+References: <70cda2a3-f246-d45b-f600-1f9d15ba22ff@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <054eff295e0cd2df2b11a3f9ba3b3d66e89beb47.1517609290.git.heinzm@redhat.com>
+In-Reply-To: <70cda2a3-f246-d45b-f600-1f9d15ba22ff@gmail.com>
+Content-Language: en-MW
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,92 +19,109 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Heinz Mauelshagen <heinzm@redhat.com>
-Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+To: Milan Broz <gmazyland@gmail.com>, NeilBrown <neilb@suse.com>, Mike Snitzer <snitzer@redhat.com>, device-mapper development <dm-devel@redhat.com>
+Cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Fri, Feb 02, 2018 at 11:13:19PM +0100, Heinz Mauelshagen wrote:
-> If no metadata devices are configured on raid1/4/5/6/10
-> (e.g. via dm-raid), md_write_start() unconditionally waits
-> for superblocks to be written thus deadlocking.
-> 
-> Fix introduces mddev->has_superblocks bool, defines it in md_run()
-> and checks for it in md_write_start() to conditionally avoid waiting.
-> 
-> Once on it, check for non-existing superblocks in md_super_write().
-> 
-> Link: https://bugzilla.kernel.org/show_bug.cgi?id=198647
-> Fixes: cc27b0c78c796 ("md: fix deadlock between mddev_suspend() and md_write_start()")
+JFYI: This issues is tracked in the regression reports for Linux 4.16
+(http://bit.ly/lnxregrep416 ) with this id:
 
-Applied, thanks! 
-> Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
-> ---
->  drivers/md/md.c | 10 ++++++++++
->  drivers/md/md.h |  2 ++
->  2 files changed, 12 insertions(+)
+Linux-Regression-ID: lr#9e195f
+
+Please include this line in the comment section of patches that are
+supposed to fix the issue. Please also mention the string once in other
+mailinglist threads or different bug tracking entries if you or someone
+else start to discuss the issue there. By including that string you make
+it a whole lot easier to track where an issue gets discussed and how far
+patches to fix it have made it. For more details on this please see
+here: http://bit.ly/lnxregtrackid
+
+Thx for your help. Ciao, Thorsten
+
+On 14.02.2018 14:02, Milan Broz wrote:
+> Hi,
 > 
-> diff --git a/drivers/md/md.c b/drivers/md/md.c
-> index 0081ace39a64..8a7e7034962c 100644
-> --- a/drivers/md/md.c
-> +++ b/drivers/md/md.c
-> @@ -801,6 +801,9 @@ void md_super_write(struct mddev *mddev, struct md_rdev *rdev,
->  	struct bio *bio;
->  	int ff = 0;
->  
-> +	if (!page)
-> +		return;
-> +
->  	if (test_bit(Faulty, &rdev->flags))
->  		return;
->  
-> @@ -5452,6 +5455,7 @@ int md_run(struct mddev *mddev)
->  	 * the only valid external interface is through the md
->  	 * device.
->  	 */
-> +	mddev->has_superblocks = false;
->  	rdev_for_each(rdev, mddev) {
->  		if (test_bit(Faulty, &rdev->flags))
->  			continue;
-> @@ -5465,6 +5469,9 @@ int md_run(struct mddev *mddev)
->  				set_disk_ro(mddev->gendisk, 1);
->  		}
->  
-> +		if (rdev->sb_page)
-> +			mddev->has_superblocks = true;
-> +
->  		/* perform some consistency tests on the device.
->  		 * We don't want the data to overlap the metadata,
->  		 * Internal Bitmap issues have been handled elsewhere.
-> @@ -8049,6 +8056,7 @@ EXPORT_SYMBOL(md_done_sync);
->  bool md_write_start(struct mddev *mddev, struct bio *bi)
->  {
->  	int did_change = 0;
-> +
->  	if (bio_data_dir(bi) != WRITE)
->  		return true;
->  
-> @@ -8081,6 +8089,8 @@ bool md_write_start(struct mddev *mddev, struct bio *bi)
->  	rcu_read_unlock();
->  	if (did_change)
->  		sysfs_notify_dirent_safe(mddev->sysfs_state);
-> +	if (!mddev->has_superblocks)
-> +		return true;
->  	wait_event(mddev->sb_wait,
->  		   !test_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags) ||
->  		   mddev->suspended);
-> diff --git a/drivers/md/md.h b/drivers/md/md.h
-> index 58cd20a5e85e..fbc925cce810 100644
-> --- a/drivers/md/md.h
-> +++ b/drivers/md/md.h
-> @@ -468,6 +468,8 @@ struct mddev {
->  	void (*sync_super)(struct mddev *mddev, struct md_rdev *rdev);
->  	struct md_cluster_info		*cluster_info;
->  	unsigned int			good_device_nr;	/* good device num within cluster raid */
-> +
-> +	bool	has_superblocks:1;
->  };
->  
->  enum recovery_flags {
-> -- 
-> 2.14.3
+> the commit (found by bisect)
+> 
+>   commit 18a25da84354c6bb655320de6072c00eda6eb602
+>   Author: NeilBrown <neilb@suse.com>
+>   Date:   Wed Sep 6 09:43:28 2017 +1000
+> 
+>     dm: ensure bio submission follows a depth-first tree walk
+> 
+> cause serious regression while reading from DM device.
+> 
+> The reproducer is below, basically it tries to simulate failure we see in cryptsetup
+> regression test: we have DM device with error and zero target and try to read
+> "passphrase" from it (it is test for 64 bit offset error path):
+> 
+> Test device:
+> # dmsetup table test
+> 0 10000000 error 
+> 10000000 1000000 zero 
+> 
+> We try to run this operation:
+>   lseek64(fd, 5119999988, SEEK_CUR); // this should seek to error target sector
+>   read(fd, buf, 13); // this should fail, if we seek to error part of the device
+> 
+> While on 4.15 the read properly fails:
+>   Seek returned 5119999988.
+>   Read returned -1.
+> 
+> for 4.16 it actually succeeds returning some random data
+> (perhaps kernel memory, so this bug is even more dangerous):
+>   Seek returned 5119999988.
+>   Read returned 13.
+> 
+> Full reproducer below:
+> 
+> #define _GNU_SOURCE
+> #define _LARGEFILE64_SOURCE
+> #include <stdio.h>
+> #include <stddef.h>
+> #include <stdint.h>
+> #include <stdlib.h>
+> #include <unistd.h>
+> #include <fcntl.h>
+> #include <inttypes.h>
+> 
+> int main (int argc, char *argv[])
+> {
+>         char buf[13];
+>         int fd;
+>         //uint64_t offset64 = 5119999999;
+>         uint64_t offset64 =   5119999988;
+>         off64_t r;
+>         ssize_t bytes;
+> 
+>         system("echo -e \'0 10000000 error\'\\\\n\'10000000 1000000 zero\' | dmsetup create test");
+> 
+>         fd = open("/dev/mapper/test", O_RDONLY);
+>         if (fd == -1) {
+>                 printf("open fail\n");
+>                 return 1;
+>         }
+> 
+>         r = lseek64(fd, offset64, SEEK_CUR);
+>         printf("Seek returned %" PRIu64 ".\n", r);
+>         if (r < 0) {
+>                 printf("seek fail\n");
+>                 close(fd);
+>                 return 2;
+>         }
+> 
+>         bytes = read(fd, buf, 13);
+>         printf("Read returned %d.\n", (int)bytes);
+> 
+>         close(fd);
+>         return 0;
+> }
+> 
+> 
+> Please let me know if you need more info to reproduce it.
+> 
+> Milan
+> 
+> http://news.gmane.org/find-root.php?message_id=70cda2a3-f246-d45b-f600-1f9d15ba22ff%40gmail.com 
+> http://mid.gmane.org/70cda2a3-f246-d45b-f600-1f9d15ba22ff%40gmail.com
 > 
