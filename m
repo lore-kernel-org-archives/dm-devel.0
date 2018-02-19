@@ -1,15 +1,11 @@
-From: Josef Bacik <josef@toxicpanda.com>
-Subject: Re: [PATCH 1/2] log-writes: Add support to output human
- readable flags
-Date: Wed, 28 Feb 2018 10:09:07 -0500
-Message-ID: <20180228150906.6vwf5iezghqv4s4f@destiny>
-References: <20180228073326.30106-1-wqu@suse.com>
+From: Drew Hastings <dhastings@crucialwebhost.com>
+Subject: Device mapper for temporarily buffering writes on fast
+ device before pushing to slower device
+Date: Mon, 19 Feb 2018 13:47:48 -0700
+Message-ID: <CAN-y+EJLroxotABwM=5BqFH1byDmLExi7n0o0FTv9KNWFVAzaQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============8825054310159636702=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20180228073326.30106-1-wqu@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,117 +15,68 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Qu Wenruo <wqu@suse.com>
-Cc: jbacik@fb.com, dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-I merged the pull request for these, but you should maybe send them up for the
-xfstests version of log-writes.  Thanks,
+--===============8825054310159636702==
+Content-Type: multipart/alternative; boundary="001a113cd620929176056596cea7"
 
-Josef
+--001a113cd620929176056596cea7
+Content-Type: text/plain; charset="UTF-8"
 
-On Wed, Feb 28, 2018 at 03:33:25PM +0800, Qu Wenruo wrote:
-> Signed-off-by: Qu Wenruo <wqu@suse.com>
-> ---
->  log-writes.c | 60 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++---
->  1 file changed, 57 insertions(+), 3 deletions(-)
-> 
-> diff --git a/log-writes.c b/log-writes.c
-> index fa4f3f3b42d6..5ef328656c89 100644
-> --- a/log-writes.c
-> +++ b/log-writes.c
-> @@ -117,6 +117,58 @@ int log_discard(struct log *log, struct log_write_entry *entry)
->  	return 0;
->  }
->  
-> +#define DEFINE_LOG_FLAGS_STR_ENTRY(x)	\
-> +	{LOG_##x##_FLAG, #x}
-> +
-> +struct flags_to_str_entry {
-> +	u64 flags;
-> +	const char *str;
-> +} log_flags_table[] = {
-> +	DEFINE_LOG_FLAGS_STR_ENTRY(FLUSH),
-> +	DEFINE_LOG_FLAGS_STR_ENTRY(FUA),
-> +	DEFINE_LOG_FLAGS_STR_ENTRY(DISCARD),
-> +	DEFINE_LOG_FLAGS_STR_ENTRY(MARK)
-> +};
-> +
-> +#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
-> +#define LOG_FLAGS_BUF_SIZE	128
-> +/*
-> + * Convert numeric flags to human readable flags.
-> + * @flags:	numeric flags
-> + * @buf:	output buffer for human readable string.
-> + * 		must have enough space (LOG_FLAGS_BUF_SIZE) to contain all
-> + * 		the string
-> + */
-> +static void entry_flags_to_str(u64 flags, char *buf)
-> +{
-> +	int empty = 1;
-> +	int left_len;
-> +	int i;
-> +
-> +	buf[0] = '\0';
-> +	for (i = 0; i < ARRAY_SIZE(log_flags_table); i++) {
-> +		if (flags & log_flags_table[i].flags) {
-> +			if (!empty)
-> +				strncat(buf, "|", LOG_FLAGS_BUF_SIZE);
-> +			empty = 0;
-> +			strncat(buf, log_flags_table[i].str, LOG_FLAGS_BUF_SIZE);
-> +			flags &= ~log_flags_table[i].flags;
-> +		}
-> +	}
-> +	if (flags) {
-> +		if (!empty)
-> +			strncat(buf, "|", LOG_FLAGS_BUF_SIZE);
-> +		empty = 0;
-> +		left_len = LOG_FLAGS_BUF_SIZE - strnlen(buf,
-> +						        LOG_FLAGS_BUF_SIZE);
-> +		if (left_len > 0)
-> +			snprintf(buf + strnlen(buf, LOG_FLAGS_BUF_SIZE),
-> +				 left_len, "UNKNOWN.%llu", flags);
-> +	}
-> +	if (empty)
-> +		strncpy(buf, "NONE", LOG_FLAGS_BUF_SIZE);
-> +}
-> +
->  /*
->   * @log: the log we are replaying.
->   * @entry: where we put the entry.
-> @@ -135,6 +187,7 @@ int log_replay_next_entry(struct log *log, struct log_write_entry *entry,
->  	size_t read_size = read_data ? log->sectorsize :
->  		sizeof(struct log_write_entry);
->  	char *buf;
-> +	char flags_buf[LOG_FLAGS_BUF_SIZE];
->  	ssize_t ret;
->  	off_t offset;
->  
-> @@ -158,16 +211,17 @@ int log_replay_next_entry(struct log *log, struct log_write_entry *entry,
->  		}
->  	}
->  
-> +	flags = le64_to_cpu(entry->flags);
-> +	entry_flags_to_str(flags, flags_buf);
->  	if (log_writes_verbose)
-> -		printf("replaying %d: sector %llu, size %llu, flags %llu\n",
-> +		printf("replaying %d: sector %llu, size %llu, flags %llu(%s)\n",
->  		       (int)log->cur_entry - 1,
->  		       (unsigned long long)le64_to_cpu(entry->sector),
->  		       (unsigned long long)size,
-> -		       (unsigned long long)le64_to_cpu(entry->flags));
-> +		       (unsigned long long)flags, flags_buf);
->  	if (!size)
->  		return 0;
->  
-> -	flags = le64_to_cpu(entry->flags);
->  	if (flags & LOG_DISCARD_FLAG)
->  		return log_discard(log, entry);
->  
-> -- 
-> 2.16.2
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+I found stochastic multi-queue and writeboost to be insufficient for this
+purpose. I'm wondering if anything exists that fits this description:
+
+Device mapper creates a "cache" device on a fast device (SSD/NVME, etc)...
+and writes to the device *always* hit the fast device. Writes are later
+flushed to the slower device as fast as the slow device can handle them.
+
+The problem with the caching solutions I have found with device mapper is
+that they require the block to be identified as "hot" first, even when the
+cache itself is not 100% utilized. Read performance is largely irrelevant.
+
+Is there a device mapper implementation that works in this fashion; where
+100% of writes happen to the fast device? I was thinking COW effectively
+does this, but the problem is it does not automatically/periodically flush
+writes, you have to do them all at once.
+
+I had seen some conversations about trying to get the multiqueue (mq, not
+smq) policy to do this with zero values for thresholds, but it did not seem
+like any were successful in ensuring the first write would hit the fast
+device.
+
+Thanks!
+
+--001a113cd620929176056596cea7
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">I found stochastic multi-queue and writeboost to be insuff=
+icient for this purpose. I&#39;m wondering if anything exists that fits thi=
+s description:<div><br></div><div>Device mapper creates a &quot;cache&quot;=
+ device on a fast device (SSD/NVME, etc)... and writes to the device *alway=
+s* hit the fast device. Writes are later flushed to the slower device as fa=
+st as the slow device can handle them.</div><div><br></div><div>The problem=
+ with the caching solutions I have found with device mapper is that they re=
+quire the block to be identified as &quot;hot&quot; first, even when the ca=
+che itself is not 100% utilized. Read performance is largely irrelevant.</d=
+iv><div><br></div><div>Is there a device mapper implementation that works i=
+n this fashion; where 100% of writes happen to the fast device? I was think=
+ing COW effectively does this, but the problem is it does not automatically=
+/periodically flush writes, you have to do them all at once.</div><div><br>=
+</div><div>I had seen some conversations about trying to get the=C2=A0multi=
+queue (mq, not smq) policy to do this with zero values for thresholds, but =
+it did not seem like any were successful in ensuring the first write would =
+hit the fast device.</div><div><br></div><div>Thanks!</div></div>
+
+--001a113cd620929176056596cea7--
+
+
+--===============8825054310159636702==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============8825054310159636702==--
