@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [RFC PATCH 14/20] libmultipath: print: use generic API
-	for get_x_layout()
-Date: Tue, 20 Feb 2018 14:26:52 +0100
-Message-ID: <20180220132658.22295-15-mwilck@suse.com>
+Subject: [RFC PATCH 05/20] libmultipath: don't update path groups
+	when printing
+Date: Tue, 20 Feb 2018 14:26:43 +0100
+Message-ID: <20180220132658.22295-6-mwilck@suse.com>
 References: <20180220132658.22295-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,144 +22,40 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@s
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Introduce new functions _get_path_layout and _get_multipath_layout
-using the new "generic" API to determine field widths, and map the
-old API to them.
+Updating the prio values for printing makes no sense. The user wants to see
+the prio values multipath is actually using for path group selection, and
+updating the values here means actually lying to the user if the prio values
+have changed, but multipathd hasn't updated them internally.
 
-Furthermore, replace the boolean "header" by an enum with 3 possible
-values. The new value LAYOUT_RESET_NOT allows calling the get_x_layout
-function several times and determine the overall field width.
+If we really don't update the pathgroup prios when we need to, this should be
+fixed elsewhere. The current wrong output would just hide that if it occured.
+
+Moreover, correctness forbids changing properties so deeply in a code path
+that's supposed to print them only. Finally, this piece of code prevents the
+print.c code to be converted to proper "const" usage.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/print.c | 73 ++++++++++++++++++++++++++++++++++++++++------------
- libmultipath/print.h |  8 ++++++
- 2 files changed, 65 insertions(+), 16 deletions(-)
+ libmultipath/print.c | 7 -------
+ 1 file changed, 7 deletions(-)
 
 diff --git a/libmultipath/print.c b/libmultipath/print.c
-index 8846765066ef..9a5a6a2f4ad6 100644
+index 8fb5c5058965..b5c00bfe69a5 100644
 --- a/libmultipath/print.c
 +++ b/libmultipath/print.c
-@@ -698,20 +698,48 @@ snprint_wildcards (char * buff, int len)
- }
- 
- void
--get_path_layout (vector pathvec, int header)
-+get_path_layout(vector pathvec, int header)
-+{
-+	vector gpvec = vector_convert(NULL, pathvec, struct path,
-+				      dm_path_to_gen);
-+	_get_path_layout(gpvec,
-+			 header ? LAYOUT_RESET_HEADER : LAYOUT_RESET_ZERO);
-+	vector_free(gpvec);
-+}
-+
-+static void
-+reset_width(int *width, enum layout_reset reset, const char *header)
-+{
-+	switch (reset) {
-+	case LAYOUT_RESET_HEADER:
-+		*width = strlen(header);
-+		break;
-+	case LAYOUT_RESET_ZERO:
-+		*width = 0;
-+		break;
-+	default:
-+		/* don't reset */
-+		break;
-+	}
-+}
-+
-+void
-+_get_path_layout (const struct _vector *gpvec, enum layout_reset reset)
+@@ -484,13 +484,6 @@ snprint_pg_selector (char * buff, size_t len, struct pathgroup * pgp)
+ static int
+ snprint_pg_pri (char * buff, size_t len, struct pathgroup * pgp)
  {
- 	int i, j;
- 	char buff[MAX_FIELD_LEN];
--	struct path * pp;
-+	const struct gen_path *gp;
- 
- 	for (j = 0; pd[j].header; j++) {
--		if (header)
--			pd[j].width = strlen(pd[j].header);
--		else
--			pd[j].width = 0;
- 
--		vector_foreach_slot (pathvec, pp, i) {
--			pd[j].snprint(buff, MAX_FIELD_LEN, pp);
-+		reset_width(&pd[j].width, reset, pd[j].header);
-+
-+		if (gpvec == NULL)
-+			continue;
-+
-+		vector_foreach_slot (gpvec, gp, i) {
-+			gp->ops->snprint(gp, buff, MAX_FIELD_LEN,
-+					 pd[j].wildcard);
- 			pd[j].width = MAX(pd[j].width, strlen(buff));
- 		}
- 	}
-@@ -727,22 +755,35 @@ reset_multipath_layout (void)
+-	/*
+-	 * path group priority is not updated for every path prio change,
+-	 * but only on switch group code path.
+-	 *
+-	 * Printing is another reason to update.
+-	 */
+-	path_group_prio_update(pgp);
+ 	return snprint_int(buff, len, pgp->priority);
  }
  
- void
--get_multipath_layout (vector mpvec, int header)
-+get_multipath_layout (vector mpvec, int header) {
-+	vector gmvec = vector_convert(NULL, mpvec, struct multipath,
-+				      dm_multipath_to_gen);
-+	_get_multipath_layout(gmvec,
-+			 header ? LAYOUT_RESET_HEADER : LAYOUT_RESET_ZERO);
-+	vector_free(gmvec);
-+}
-+
-+void
-+_get_multipath_layout (const struct _vector *gmvec,
-+			    enum layout_reset reset)
- {
- 	int i, j;
- 	char buff[MAX_FIELD_LEN];
--	struct multipath * mpp;
-+	const struct gen_multipath * gm;
- 
- 	for (j = 0; mpd[j].header; j++) {
--		if (header)
--			mpd[j].width = strlen(mpd[j].header);
--		else
--			mpd[j].width = 0;
- 
--		vector_foreach_slot (mpvec, mpp, i) {
--			mpd[j].snprint(buff, MAX_FIELD_LEN, mpp);
-+		reset_width(&mpd[j].width, reset, mpd[j].header);
-+
-+		if (gmvec == NULL)
-+			continue;
-+
-+		vector_foreach_slot (gmvec, gm, i) {
-+			gm->ops->snprint(gm, buff, MAX_FIELD_LEN,
-+					 mpd[j].wildcard);
- 			mpd[j].width = MAX(mpd[j].width, strlen(buff));
- 		}
-+		condlog(4, "%s: width %d", mpd[j].header, mpd[j].width);
- 	}
- }
- 
-diff --git a/libmultipath/print.h b/libmultipath/print.h
-index e71f87722315..1ba364ac19ac 100644
---- a/libmultipath/print.h
-+++ b/libmultipath/print.h
-@@ -93,7 +93,15 @@ struct pathgroup_data {
- 	int (*snprint)(char * buff, size_t len, const struct pathgroup * pgp);
- };
- 
-+enum layout_reset {
-+	LAYOUT_RESET_NOT,
-+	LAYOUT_RESET_ZERO,
-+	LAYOUT_RESET_HEADER,
-+};
-+
-+void _get_path_layout (const struct _vector *gpvec, enum layout_reset);
- void get_path_layout (vector pathvec, int header);
-+void _get_multipath_layout (const struct _vector *gmvec, enum layout_reset);
- void get_multipath_layout (vector mpvec, int header);
- int snprint_path_header (char *, int, const char *);
- int snprint_multipath_header (char *, int, const char *);
 -- 
 2.16.1
