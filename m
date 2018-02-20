@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [RFC PATCH 04/20] libmultipath: parser: use
-	call-by-value for "snprint" methods
-Date: Tue, 20 Feb 2018 14:26:42 +0100
-Message-ID: <20180220132658.22295-5-mwilck@suse.com>
+Subject: [RFC PATCH 15/20] libmultipath: API for foreign
+	multipath handling
+Date: Tue, 20 Feb 2018 14:26:53 +0100
+Message-ID: <20180220132658.22295-16-mwilck@suse.com>
 References: <20180220132658.22295-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,561 +22,852 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@s
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Convert the snprint methods for all keywords to call-by-value,
-and use "const" qualifier for the "data" argument. This makes sure
-that "snprint" type functions don't modify the data they're print,
-helps compile-time correctness checking, and allows more proper
-"const" cleanups in the future.
+Add an API for "foreign" multipaths. Foreign libraries are loaded
+from ${multipath_dir}/libforeign-*.so, as we do for checkers.
+
+Refer to "foreign.h" for details about the API itself. Like we do for
+checkers, high-level multipath code isn't supposed to call the API directly,
+but rather the wrapper functions declared in "foreign.h".
+
+This API is used only for displaying information and for logging. An extension to
+other functionality (such as monitoring or administration) might be feasible,
+but is not planned.
+
+Foreign libraries communicate with libmultipath through the API defined in
+"foreign.h". The foreign library can implement multipath maps, pathgroups,
+and paths as it likes, they just need to provide the simple interfaces
+defined in "generic.h" to libmultipath. These interfaces are used in libmultipath's
+"print" implementation to convey various bits of information to users. By
+using the same interfaces for printing that libmultipath uses internally,
+foreign library implementations can focus on the technical side without
+worrying about output formatting compatibility.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/dict.c   | 206 ++++++++++++++++++++++++--------------------------
- libmultipath/parser.c |   9 ++-
- libmultipath/parser.h |  12 ++-
- 3 files changed, 112 insertions(+), 115 deletions(-)
+ libmultipath/Makefile  |   2 +-
+ libmultipath/foreign.c | 471 +++++++++++++++++++++++++++++++++++++++++++++++++
+ libmultipath/foreign.h | 322 +++++++++++++++++++++++++++++++++
+ 3 files changed, 794 insertions(+), 1 deletion(-)
+ create mode 100644 libmultipath/foreign.c
+ create mode 100644 libmultipath/foreign.h
 
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index e52f1f798f7a..47dc2a38f1ac 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -92,46 +92,35 @@ set_yes_no_undef(vector strvec, void *ptr)
- }
+diff --git a/libmultipath/Makefile b/libmultipath/Makefile
+index 0099d9d6cc39..806aaa24f84e 100644
+--- a/libmultipath/Makefile
++++ b/libmultipath/Makefile
+@@ -43,7 +43,7 @@ OBJS = memory.o parser.o vector.o devmapper.o callout.o \
+ 	switchgroup.o uxsock.o print.o alias.o log_pthread.o \
+ 	log.o configure.o structs_vec.o sysfs.o prio.o checkers.o \
+ 	lock.o waiter.o file.o wwids.o prioritizers/alua_rtpg.o prkey.o \
+-	io_err_stat.o dm-generic.o generic.o
++	io_err_stat.o dm-generic.o generic.o foreign.o
  
- static int
--print_int (char *buff, int len, void *ptr)
-+print_int (char *buff, int len, long v)
- {
--	int *int_ptr = (int *)ptr;
--	return snprintf(buff, len, "%i", *int_ptr);
-+	return snprintf(buff, len, "%li", v);
- }
+ all: $(LIBS)
  
- static int
--print_nonzero (char *buff, int len, void *ptr)
-+print_nonzero (char *buff, int len, long v)
- {
--	int *int_ptr = (int *)ptr;
--	if (!*int_ptr)
--		return 0;
--	return snprintf(buff, len, "%i", *int_ptr);
-+	return snprintf(buff, len, "%li", v);
- }
- 
- static int
--print_str (char *buff, int len, void *ptr)
-+print_str (char *buff, int len, const char *ptr)
- {
--	char **str_ptr = (char **)ptr;
--	if (!*str_ptr)
--		return 0;
--	return snprintf(buff, len, "\"%s\"", *str_ptr);
-+	return snprintf(buff, len, "\"%s\"", ptr);
- }
- 
- static int
--print_yes_no (char *buff, int len, void *ptr)
-+print_yes_no (char *buff, int len, long v)
- {
--	int *int_ptr = (int *)ptr;
- 	return snprintf(buff, len, "\"%s\"",
--			(*int_ptr == YN_NO)? "no" : "yes");
-+			(v == YN_NO)? "no" : "yes");
- }
- 
- static int
--print_yes_no_undef (char *buff, int len, void *ptr)
-+print_yes_no_undef (char *buff, int len, long v)
- {
--	int *int_ptr = (int *)ptr;
--	if (!*int_ptr)
--		return 0;
- 	return snprintf(buff, len, "\"%s\"",
--			(*int_ptr == YNU_NO)? "no" : "yes");
-+			(v == YNU_NO)? "no" : "yes");
- }
- 
- #define declare_def_handler(option, function)				\
-@@ -143,29 +132,32 @@ def_ ## option ## _handler (struct config *conf, vector strvec)		\
- 
- #define declare_def_snprint(option, function)				\
- static int								\
--snprint_def_ ## option (struct config *conf, char * buff, int len, void * data) \
-+snprint_def_ ## option (struct config *conf, char * buff, int len,	\
-+			const void * data)				\
- {									\
--	return function (buff, len, &conf->option);			\
-+	return function (buff, len, conf->option);			\
- }
- 
- #define declare_def_snprint_defint(option, function, value)		\
- static int								\
--snprint_def_ ## option (struct config *conf, char * buff, int len, void * data) \
-+snprint_def_ ## option (struct config *conf, char * buff, int len,	\
-+			const void * data)				\
- {									\
- 	int i = value;							\
- 	if (!conf->option)						\
--		return function (buff, len, &i);			\
--	return function (buff, len, &conf->option);			\
-+		return function (buff, len, i);				\
-+	return function (buff, len, conf->option);			\
- }
- 
- #define declare_def_snprint_defstr(option, function, value)		\
- static int								\
--snprint_def_ ## option (struct config *conf, char * buff, int len, void * data) \
-+snprint_def_ ## option (struct config *conf, char * buff, int len,	\
-+			const void * data)				\
- {									\
--	char *s = value;						\
-+	static const char *s = value;					\
- 	if (!conf->option)						\
--		return function (buff, len, &s);			\
--	return function (buff, len, &conf->option);			\
-+		return function (buff, len, s);				\
-+	return function (buff, len, conf->option);			\
- }
- 
- #define declare_hw_handler(option, function)				\
-@@ -180,10 +172,11 @@ hw_ ## option ## _handler (struct config *conf, vector strvec)		\
- 
- #define declare_hw_snprint(option, function)				\
- static int								\
--snprint_hw_ ## option (struct config *conf, char * buff, int len, void * data) \
-+snprint_hw_ ## option (struct config *conf, char * buff, int len,	\
-+		       const void * data)				\
- {									\
--	struct hwentry * hwe = (struct hwentry *)data;			\
--	return function (buff, len, &hwe->option);			\
-+	const struct hwentry * hwe = (const struct hwentry *)data;	\
-+	return function (buff, len, hwe->option);			\
- }
- 
- #define declare_ovr_handler(option, function)				\
-@@ -197,9 +190,10 @@ ovr_ ## option ## _handler (struct config *conf, vector strvec)		\
- 
- #define declare_ovr_snprint(option, function)				\
- static int								\
--snprint_ovr_ ## option (struct config *conf, char * buff, int len, void * data) \
-+snprint_ovr_ ## option (struct config *conf, char * buff, int len,	\
-+			const void * data)				\
- {									\
--	return function (buff, len, &conf->overrides->option);		\
-+	return function (buff, len, conf->overrides->option);		\
- }
- 
- #define declare_mp_handler(option, function)				\
-@@ -214,10 +208,11 @@ mp_ ## option ## _handler (struct config *conf, vector strvec)		\
- 
- #define declare_mp_snprint(option, function)				\
- static int								\
--snprint_mp_ ## option (struct config *conf, char * buff, int len, void * data) \
-+snprint_mp_ ## option (struct config *conf, char * buff, int len,	\
-+		       const void * data)				\
- {									\
--	struct mpentry * mpe = (struct mpentry *)data;			\
--	return function (buff, len, &mpe->option);			\
-+	const struct mpentry * mpe = (const struct mpentry *)data;	\
-+	return function (buff, len, mpe->option);			\
- }
- 
- declare_def_handler(checkint, set_int)
-@@ -328,7 +323,7 @@ declare_mp_snprint(minio_rq, print_nonzero)
- declare_def_handler(queue_without_daemon, set_yes_no)
- static int
- snprint_def_queue_without_daemon (struct config *conf,
--				  char * buff, int len, void * data)
-+				  char * buff, int len, const void * data)
- {
- 	switch (conf->queue_without_daemon) {
- 	case QUE_NO_DAEMON_OFF:
-@@ -459,10 +454,11 @@ def_ ## option ## _handler (struct config *conf, vector strvec)		\
- 
- #define declare_def_attr_snprint(option, function)			\
- static int								\
--snprint_def_ ## option (struct config *conf, char * buff, int len, void * data) \
-+snprint_def_ ## option (struct config *conf, char * buff, int len,	\
-+			const void * data)				\
- {									\
--	return function (buff, len, &conf->option,			\
--			 &conf->attribute_flags);			\
-+	return function (buff, len, conf->option,			\
-+			 conf->attribute_flags);			\
- }
- 
- #define declare_mp_attr_handler(option, function)			\
-@@ -477,11 +473,12 @@ mp_ ## option ## _handler (struct config *conf, vector strvec)		\
- 
- #define declare_mp_attr_snprint(option, function)			\
- static int								\
--snprint_mp_ ## option (struct config *conf, char * buff, int len, void * data) \
-+snprint_mp_ ## option (struct config *conf, char * buff, int len,	\
-+		       const void * data)				\
- {									\
--	struct mpentry * mpe = (struct mpentry *)data;			\
--	return function (buff, len, &mpe->option,			\
--			 &mpe->attribute_flags);			\
-+	const struct mpentry * mpe = (const struct mpentry *)data;	\
-+	return function (buff, len, mpe->option,			\
-+			 mpe->attribute_flags);				\
- }
- 
- static int
-@@ -556,30 +553,30 @@ set_gid(vector strvec, void *ptr, int *flags)
- }
- 
- static int
--print_mode(char * buff, int len, void *ptr, int *flags)
-+print_mode(char * buff, int len, long v, int flags)
- {
--	mode_t *mode_ptr = (mode_t *)ptr;
--	if ((*flags & (1 << ATTR_MODE)) == 0)
-+	mode_t mode = (mode_t)v;
-+	if ((flags & (1 << ATTR_MODE)) == 0)
- 		return 0;
--	return snprintf(buff, len, "0%o", *mode_ptr);
-+	return snprintf(buff, len, "0%o", mode);
- }
- 
- static int
--print_uid(char * buff, int len, void *ptr, int *flags)
-+print_uid(char * buff, int len, long v, int flags)
- {
--	uid_t *uid_ptr = (uid_t *)ptr;
--	if ((*flags & (1 << ATTR_UID)) == 0)
-+	uid_t uid = (uid_t)v;
-+	if ((flags & (1 << ATTR_UID)) == 0)
- 		return 0;
--	return snprintf(buff, len, "0%o", *uid_ptr);
-+	return snprintf(buff, len, "0%o", uid);
- }
- 
- static int
--print_gid(char * buff, int len, void *ptr, int *flags)
-+print_gid(char * buff, int len, long v, int flags)
- {
--	gid_t *gid_ptr = (gid_t *)ptr;
--	if ((*flags & (1 << ATTR_GID)) == 0)
-+	gid_t gid = (gid_t)v;
-+	if ((flags & (1 << ATTR_GID)) == 0)
- 		return 0;
--	return snprintf(buff, len, "0%o", *gid_ptr);
-+	return snprintf(buff, len, "0%o", gid);
- }
- 
- declare_def_attr_handler(mode, set_mode)
-@@ -620,17 +617,15 @@ set_fast_io_fail(vector strvec, void *ptr)
- }
- 
- int
--print_fast_io_fail(char * buff, int len, void *ptr)
-+print_fast_io_fail(char * buff, int len, long v)
- {
--	int *int_ptr = (int *)ptr;
--
--	if (*int_ptr == MP_FAST_IO_FAIL_UNSET)
-+	if (v == MP_FAST_IO_FAIL_UNSET)
- 		return 0;
--	if (*int_ptr == MP_FAST_IO_FAIL_OFF)
-+	if (v == MP_FAST_IO_FAIL_OFF)
- 		return snprintf(buff, len, "\"off\"");
--	if (*int_ptr == MP_FAST_IO_FAIL_ZERO)
-+	if (v == MP_FAST_IO_FAIL_ZERO)
- 		return snprintf(buff, len, "0");
--	return snprintf(buff, len, "%d", *int_ptr);
-+	return snprintf(buff, len, "%ld", v);
- }
- 
- declare_def_handler(fast_io_fail, set_fast_io_fail)
-@@ -660,15 +655,11 @@ set_dev_loss(vector strvec, void *ptr)
- }
- 
- int
--print_dev_loss(char * buff, int len, void *ptr)
-+print_dev_loss(char * buff, int len, unsigned long v)
- {
--	unsigned int *uint_ptr = (unsigned int *)ptr;
--
--	if (!*uint_ptr)
--		return 0;
--	if (*uint_ptr >= MAX_DEV_LOSS_TMO)
-+	if (v >= MAX_DEV_LOSS_TMO)
- 		return snprintf(buff, len, "\"infinity\"");
--	return snprintf(buff, len, "%u", *uint_ptr);
-+	return snprintf(buff, len, "%lu", v);
- }
- 
- declare_def_handler(dev_loss, set_dev_loss)
-@@ -695,10 +686,9 @@ set_pgpolicy(vector strvec, void *ptr)
- }
- 
- int
--print_pgpolicy(char * buff, int len, void *ptr)
-+print_pgpolicy(char * buff, int len, long pgpolicy)
- {
- 	char str[POLICY_NAME_SIZE];
--	int pgpolicy = *(int *)ptr;
- 
- 	if (!pgpolicy)
- 		return 0;
-@@ -776,7 +766,7 @@ max_fds_handler(struct config *conf, vector strvec)
- }
- 
- static int
--snprint_max_fds (struct config *conf, char * buff, int len, void * data)
-+snprint_max_fds (struct config *conf, char * buff, int len, const void * data)
- {
- 	int r = 0, max_fds;
- 
-@@ -813,15 +803,13 @@ set_rr_weight(vector strvec, void *ptr)
- }
- 
- int
--print_rr_weight (char * buff, int len, void *ptr)
-+print_rr_weight (char * buff, int len, long v)
- {
--	int *int_ptr = (int *)ptr;
--
--	if (!*int_ptr)
-+	if (!v)
- 		return 0;
--	if (*int_ptr == RR_WEIGHT_PRIO)
-+	if (v == RR_WEIGHT_PRIO)
- 		return snprintf(buff, len, "\"priorities\"");
--	if (*int_ptr == RR_WEIGHT_NONE)
-+	if (v == RR_WEIGHT_NONE)
- 		return snprintf(buff, len, "\"uniform\"");
- 
- 	return 0;
-@@ -861,11 +849,9 @@ set_pgfailback(vector strvec, void *ptr)
- }
- 
- int
--print_pgfailback (char * buff, int len, void *ptr)
-+print_pgfailback (char * buff, int len, long v)
- {
--	int *int_ptr = (int *)ptr;
--
--	switch(*int_ptr) {
-+	switch(v) {
- 	case  FAILBACK_UNDEF:
- 		return 0;
- 	case -FAILBACK_MANUAL:
-@@ -875,7 +861,7 @@ print_pgfailback (char * buff, int len, void *ptr)
- 	case -FAILBACK_FOLLOWOVER:
- 		return snprintf(buff, len, "\"followover\"");
- 	default:
--		return snprintf(buff, len, "%i", *int_ptr);
-+		return snprintf(buff, len, "%li", v);
- 	}
- }
- 
-@@ -910,11 +896,9 @@ set_no_path_retry(vector strvec, void *ptr)
- }
- 
- int
--print_no_path_retry(char * buff, int len, void *ptr)
-+print_no_path_retry(char * buff, int len, long v)
- {
--	int *int_ptr = (int *)ptr;
--
--	switch(*int_ptr) {
-+	switch(v) {
- 	case NO_PATH_RETRY_UNDEF:
- 		return 0;
- 	case NO_PATH_RETRY_FAIL:
-@@ -922,7 +906,7 @@ print_no_path_retry(char * buff, int len, void *ptr)
- 	case NO_PATH_RETRY_QUEUE:
- 		return snprintf(buff, len, "\"queue\"");
- 	default:
--		return snprintf(buff, len, "%i", *int_ptr);
-+		return snprintf(buff, len, "%li", v);
- 	}
- }
- 
-@@ -955,7 +939,8 @@ def_log_checker_err_handler(struct config *conf, vector strvec)
- }
- 
- static int
--snprint_def_log_checker_err (struct config *conf, char * buff, int len, void * data)
-+snprint_def_log_checker_err (struct config *conf, char * buff, int len,
-+			     const void * data)
- {
- 	if (conf->log_checker_err == LOG_CHKR_ERR_ONCE)
- 		return snprintf(buff, len, "once");
-@@ -1008,7 +993,7 @@ def_reservation_key_handler(struct config *conf, vector strvec)
- 
- static int
- snprint_def_reservation_key (struct config *conf, char * buff, int len,
--			     void * data)
-+			     const void * data)
- {
- 	return print_reservation_key(buff, len, conf->reservation_key,
- 				     conf->prkey_source);
-@@ -1026,9 +1011,9 @@ mp_reservation_key_handler(struct config *conf, vector strvec)
- 
- static int
- snprint_mp_reservation_key (struct config *conf, char * buff, int len,
--			     void * data)
-+			    const void * data)
- {
--	struct mpentry * mpe = (struct mpentry *)data;
-+	const struct mpentry * mpe = (const struct mpentry *)data;
- 	return print_reservation_key(buff, len, mpe->reservation_key,
- 				     mpe->prkey_source);
- }
-@@ -1053,17 +1038,15 @@ set_off_int_undef(vector strvec, void *ptr)
- }
- 
- int
--print_off_int_undef(char * buff, int len, void *ptr)
-+print_off_int_undef(char * buff, int len, long v)
- {
--	int *int_ptr = (int *)ptr;
--
--	switch(*int_ptr) {
-+	switch(v) {
- 	case NU_UNDEF:
- 		return 0;
- 	case NU_NO:
- 		return snprintf(buff, len, "\"no\"");
- 	default:
--		return snprintf(buff, len, "%i", *int_ptr);
-+		return snprintf(buff, len, "%li", v);
- 	}
- }
- 
-@@ -1231,15 +1214,17 @@ declare_ble_handler(blist_property)
- declare_ble_handler(elist_property)
- 
- static int
--snprint_def_uxsock_timeout(struct config *conf, char * buff, int len, void * data)
-+snprint_def_uxsock_timeout(struct config *conf, char * buff, int len,
-+			   const void * data)
- {
- 	return snprintf(buff, len, "%u", conf->uxsock_timeout);
- }
- 
- static int
--snprint_ble_simple (struct config *conf, char * buff, int len, void * data)
-+snprint_ble_simple (struct config *conf, char * buff, int len,
-+		    const void * data)
- {
--	struct blentry * ble = (struct blentry *)data;
-+	const struct blentry * ble = (const struct blentry *)data;
- 
- 	return snprintf(buff, len, "\"%s\"", ble->str);
- }
-@@ -1262,17 +1247,21 @@ declare_ble_device_handler(product, blist_device, NULL, buff)
- declare_ble_device_handler(product, elist_device, NULL, buff)
- 
- static int
--snprint_bled_vendor (struct config *conf, char * buff, int len, void * data)
-+snprint_bled_vendor (struct config *conf, char * buff, int len,
-+		     const void * data)
- {
--	struct blentry_device * bled = (struct blentry_device *)data;
-+	const struct blentry_device * bled =
-+		(const struct blentry_device *)data;
- 
- 	return snprintf(buff, len, "\"%s\"", bled->vendor);
- }
- 
- static int
--snprint_bled_product (struct config *conf, char * buff, int len, void * data)
-+snprint_bled_product (struct config *conf, char * buff, int len,
-+		      const void * data)
- {
--	struct blentry_device * bled = (struct blentry_device *)data;
-+	const struct blentry_device * bled =
-+		(const struct blentry_device *)data;
- 
- 	return snprintf(buff, len, "\"%s\"", bled->product);
- }
-@@ -1402,7 +1391,8 @@ deprecated_handler(struct config *conf, vector strvec)
- }
- 
- static int
--snprint_deprecated (struct config *conf, char * buff, int len, void * data)
-+snprint_deprecated (struct config *conf, char * buff, int len,
-+		    const void * data)
- {
- 	return 0;
- }
-diff --git a/libmultipath/parser.c b/libmultipath/parser.c
-index c47d891ec369..5caa2019a1a4 100644
---- a/libmultipath/parser.c
-+++ b/libmultipath/parser.c
-@@ -33,7 +33,8 @@ static int line_nr;
- int
- keyword_alloc(vector keywords, char *string,
- 	      int (*handler) (struct config *, vector),
--	      int (*print) (struct config *, char *, int, void *), int unique)
-+	      int (*print) (struct config *, char *, int, const void*),
-+	      int unique)
- {
- 	struct keyword *keyword;
- 
-@@ -71,7 +72,8 @@ install_sublevel_end(void)
- int
- _install_keyword(vector keywords, char *string,
- 		 int (*handler) (struct config *, vector),
--		 int (*print) (struct config *, char *, int, void *), int unique)
-+		 int (*print) (struct config *, char *, int, const void*),
-+		 int unique)
- {
- 	int i = 0;
- 	struct keyword *keyword;
-@@ -143,7 +145,8 @@ find_keyword(vector keywords, vector v, char * name)
- }
- 
- int
--snprint_keyword(char *buff, int len, char *fmt, struct keyword *kw, void *data)
-+snprint_keyword(char *buff, int len, char *fmt, struct keyword *kw,
-+		const void *data)
- {
- 	int r;
- 	int fwd = 0;
-diff --git a/libmultipath/parser.h b/libmultipath/parser.h
-index 519b805d4149..0a747507d7be 100644
---- a/libmultipath/parser.h
-+++ b/libmultipath/parser.h
-@@ -43,7 +43,7 @@
- struct keyword {
- 	char *string;
- 	int (*handler) (struct config *, vector);
--	int (*print) (struct config *, char *, int, void *);
-+	int (*print) (struct config *, char *, int, const void *);
- 	vector sub;
- 	int unique;
- };
-@@ -60,13 +60,17 @@ struct keyword {
- /* Prototypes */
- extern int keyword_alloc(vector keywords, char *string,
- 			 int (*handler) (struct config *, vector),
--			 int (*print) (struct config *, char *, int, void *), int unique);
-+			 int (*print) (struct config *, char *, int,
-+				       const void *),
-+			 int unique);
- #define install_keyword_root(str, h) keyword_alloc(keywords, str, h, NULL, 1)
- extern void install_sublevel(void);
- extern void install_sublevel_end(void);
- extern int _install_keyword(vector keywords, char *string,
- 			    int (*handler) (struct config *, vector),
--			    int (*print) (struct config *, char *, int, void *), int unique);
-+			    int (*print) (struct config *, char *, int,
-+					  const void *),
-+			    int unique);
- #define install_keyword(str, vec, pri) _install_keyword(keywords, str, vec, pri, 1)
- #define install_keyword_multi(str, vec, pri) _install_keyword(keywords, str, vec, pri, 0)
- extern void dump_keywords(vector keydump, int level);
-@@ -76,6 +80,6 @@ extern void *set_value(vector strvec);
- extern int process_file(struct config *conf, char *conf_file);
- extern struct keyword * find_keyword(vector keywords, vector v, char * name);
- int snprint_keyword(char *buff, int len, char *fmt, struct keyword *kw,
--		    void *data);
-+		    const void *data);
- 
- #endif
+diff --git a/libmultipath/foreign.c b/libmultipath/foreign.c
+new file mode 100644
+index 000000000000..f429e2759df3
+--- /dev/null
++++ b/libmultipath/foreign.c
+@@ -0,0 +1,471 @@
++/*
++  Copyright (c) 2018 Martin Wilck, SUSE Linux GmbH
++
++  This program is free software; you can redistribute it and/or
++  modify it under the terms of the GNU General Public License
++  as published by the Free Software Foundation; either version 2
++  of the License, or (at your option) any later version.
++
++  This program is distributed in the hope that it will be useful,
++  but WITHOUT ANY WARRANTY; without even the implied warranty of
++  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++  GNU General Public License for more details.
++
++  You should have received a copy of the GNU General Public License
++  along with this program; if not, write to the Free Software
++  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
++  USA.
++*/
++
++#include <sys/sysmacros.h>
++#include <stdio.h>
++#include <string.h>
++#include <stdlib.h>
++#include <errno.h>
++#include <limits.h>
++#include <glob.h>
++#include <dlfcn.h>
++#include <libudev.h>
++#include "vector.h"
++#include "debug.h"
++#include "util.h"
++#include "foreign.h"
++#include "structs.h"
++#include "structs_vec.h"
++#include "print.h"
++
++static vector foreigns;
++
++#define get_dlsym(foreign, sym, lbl)					\
++	do {								\
++		foreign->sym =	dlsym(foreign->handle, #sym);		\
++		if (foreign->sym == NULL) {				\
++			condlog(0, "%s: symbol \"%s\" not found in \"%s\"", \
++				__func__, #sym, foreign->name);		\
++			goto lbl;					\
++		}							\
++	} while(0)
++
++static void free_foreign(struct foreign **fgn)
++{
++	if (fgn == NULL || *fgn == NULL)
++		return;
++	if ((*fgn)->context != NULL)
++		(*fgn)->cleanup((*fgn)->context);
++	if ((*fgn)->handle != NULL)
++		dlclose((*fgn)->handle);
++	free(*fgn);
++}
++
++void cleanup_foreign(void)
++{
++	struct foreign *fgn;
++	int i;
++
++	vector_foreach_slot(foreigns, fgn, i)
++		free_foreign(&fgn);
++	vector_free(foreigns);
++	foreigns = NULL;
++}
++
++int init_foreign(const char *multipath_dir)
++{
++	char pathbuf[PATH_MAX];
++	static const char base[] = "libforeign-";
++	static const char suffix[] = ".so";
++	glob_t globbuf;
++	int ret = -EINVAL, r, i;
++
++	if (foreigns != NULL) {
++		condlog(0, "%s: already initialized", __func__);
++		return -EEXIST;
++	}
++	foreigns = vector_alloc();
++
++	if (snprintf(pathbuf, sizeof(pathbuf), "%s/%s*%s",
++		     multipath_dir, base, suffix) >= sizeof(pathbuf)) {
++		condlog(1, "%s: path length overflow", __func__);
++		goto err;
++	}
++
++	condlog(4, "%s: looking for %s\n", __func__, pathbuf);
++	memset(&globbuf, 0, sizeof(globbuf));
++	r = glob(pathbuf, 0, NULL, &globbuf);
++
++	if (r == GLOB_NOMATCH) {
++		condlog(3, "%s: no foreign multipath libraries found",
++			__func__);
++		globfree(&globbuf);
++		return 0;
++	} else if (r != 0) {
++		char *msg;
++
++		if (errno != 0) {
++			ret = -errno;
++			msg = strerror(errno);
++		} else {
++			ret = -1;
++			msg = (r == GLOB_ABORTED ? "read error" :
++			       "out of memory");
++		}
++		condlog(0, "%s: search for foreign libraries failed: %d (%s)",
++			__func__, r, msg);
++		globfree(&globbuf);
++		goto err;
++	}
++
++	for (i = 0; i < globbuf.gl_pathc; i++) {
++		char *msg, *fn;
++		struct foreign *fgn;
++		int len, namesz;
++
++		fn = strrchr(globbuf.gl_pathv[i], '/');
++		if (fn == NULL)
++			fn = globbuf.gl_pathv[i];
++		else
++			fn++;
++
++		len = strlen(fn);
++		if (len <= sizeof(base) + sizeof(suffix) - 2) {
++			condlog(0, "%s: internal error: filename too short: %s",
++				__func__, globbuf.gl_pathv[i]);
++			continue;
++		}
++
++		condlog(4, "%s: found %s", __func__, fn);
++
++		namesz = len + 3 - sizeof(base) - sizeof(suffix);
++		fgn = malloc(sizeof(*fgn) + namesz);
++		if (fgn == NULL)
++			continue;
++		memset(fgn, 0, sizeof(*fgn));
++
++		strlcpy((char*)fgn + sizeof(*fgn), fn + sizeof(base) - 1,
++			namesz);
++		fgn->name = (const char*)fgn + sizeof(*fgn);
++
++		fgn->handle = dlopen(globbuf.gl_pathv[i], RTLD_NOW|RTLD_LOCAL);
++		msg = dlerror();
++		if (fgn->handle == NULL) {
++			condlog(1, "%s: failed to open %s: %s", __func__,
++				fn, msg);
++			free_foreign(&fgn);
++			continue;
++		}
++
++		get_dlsym(fgn, init, dl_err);
++		get_dlsym(fgn, cleanup, dl_err);
++		get_dlsym(fgn, add, dl_err);
++		get_dlsym(fgn, change, dl_err);
++		get_dlsym(fgn, delete, dl_err);
++		get_dlsym(fgn, delete_all, dl_err);
++		get_dlsym(fgn, check, dl_err);
++		get_dlsym(fgn, lock, dl_err);
++		get_dlsym(fgn, unlock, dl_err);
++		get_dlsym(fgn, get_multipaths, dl_err);
++		get_dlsym(fgn, release_multipaths, dl_err);
++		get_dlsym(fgn, get_paths, dl_err);
++		get_dlsym(fgn, release_paths, dl_err);
++
++		fgn->context = fgn->init(LIBMP_FOREIGN_API, fgn->name);
++		if (fgn->context == NULL) {
++			condlog(0, "%s: init() failed for %s", __func__, fn);
++			free_foreign(&fgn);
++			continue;
++		}
++
++		if (vector_alloc_slot(foreigns) == NULL) {
++			free_foreign(&fgn);
++			continue;
++		}
++		vector_set_slot(foreigns, fgn);
++		condlog(3, "foreign library \"%s\" loaded successfully", fgn->name);
++
++		continue;
++
++	dl_err:
++		free_foreign(&fgn);
++	}
++	globfree(&globbuf);
++
++	return 0;
++err:
++	cleanup_foreign();
++	return ret;
++}
++
++int add_foreign(struct udev_device *udev)
++{
++	struct foreign *fgn;
++	dev_t dt;
++	int j;
++
++	if (udev == NULL) {
++		condlog(1, "%s called with NULL udev", __func__);
++		return FOREIGN_ERR;
++	}
++	dt = udev_device_get_devnum(udev);
++	vector_foreach_slot(foreigns, fgn, j) {
++		int r = fgn->add(fgn->context, udev);
++
++		if (r == FOREIGN_CLAIMED) {
++			condlog(3, "%s: foreign \"%s\" claims device %d:%d",
++				__func__, fgn->name, major(dt), minor(dt));
++			return r;
++		} else if (r == FOREIGN_OK) {
++			condlog(4, "%s: foreign \"%s\" owns device %d:%d",
++				__func__, fgn->name, major(dt), minor(dt));
++			return r;
++		} else if (r != FOREIGN_IGNORED) {
++			condlog(1, "%s: unexpected return value %d from \"%s\"",
++				__func__, r, fgn->name);
++		}
++	}
++	return FOREIGN_IGNORED;
++}
++
++int change_foreign(struct udev_device *udev)
++{
++	struct foreign *fgn;
++	int j;
++	dev_t dt;
++
++	if (udev == NULL) {
++		condlog(1, "%s called with NULL udev", __func__);
++		return FOREIGN_ERR;
++	}
++	dt = udev_device_get_devnum(udev);
++	vector_foreach_slot(foreigns, fgn, j) {
++		int r = fgn->change(fgn->context, udev);
++
++		if (r == FOREIGN_OK) {
++			condlog(4, "%s: foreign \"%s\" completed %d:%d",
++				__func__, fgn->name, major(dt), minor(dt));
++			return r;
++		} else if (r != FOREIGN_IGNORED) {
++			condlog(1, "%s: unexpected return value %d from \"%s\"",
++				__func__, r, fgn->name);
++		}
++	}
++	return FOREIGN_IGNORED;
++}
++
++int delete_foreign(struct udev_device *udev)
++{
++	struct foreign *fgn;
++	int j;
++	dev_t dt;
++
++	if (udev == NULL) {
++		condlog(1, "%s called with NULL udev", __func__);
++		return FOREIGN_ERR;
++	}
++	dt = udev_device_get_devnum(udev);
++	vector_foreach_slot(foreigns, fgn, j) {
++		int r = fgn->delete(fgn->context, udev);
++
++		if (r == FOREIGN_OK) {
++			condlog(3, "%s: foreign \"%s\" deleted device %d:%d",
++				__func__, fgn->name, major(dt), minor(dt));
++			return r;
++		} else if (r != FOREIGN_IGNORED) {
++			condlog(1, "%s: unexpected return value %d from \"%s\"",
++				__func__, r, fgn->name);
++		}
++	}
++	return FOREIGN_IGNORED;
++}
++
++int delete_all_foreign(void)
++{
++	struct foreign *fgn;
++	int j;
++
++	vector_foreach_slot(foreigns, fgn, j) {
++		int r;
++
++		r = fgn->delete_all(fgn->context);
++		if (r != FOREIGN_IGNORED && r != FOREIGN_OK) {
++			condlog(1, "%s: unexpected return value %d from \"%s\"",
++				__func__, r, fgn->name);
++		}
++	}
++	return FOREIGN_OK;
++}
++
++void check_foreign(void)
++{
++	struct foreign *fgn;
++	int j;
++
++	vector_foreach_slot(foreigns, fgn, j) {
++		fgn->check(fgn->context);
++	}
++}
++
++/* Call this after get_path_layout */
++void foreign_path_layout(void)
++{
++	struct foreign *fgn;
++	int i;
++
++	vector_foreach_slot(foreigns, fgn, i) {
++		const struct _vector *vec;
++
++		fgn->lock(fgn->context);
++		vec = fgn->get_paths(fgn->context);
++		if (vec != NULL) {
++			_get_path_layout(vec, LAYOUT_RESET_NOT);
++		}
++		fgn->release_paths(fgn->context, vec);
++		fgn->unlock(fgn->context);
++	}
++}
++
++/* Call this after get_multipath_layout */
++void foreign_multipath_layout(void)
++{
++	struct foreign *fgn;
++	int i;
++
++	vector_foreach_slot(foreigns, fgn, i) {
++		const struct _vector *vec;
++
++		fgn->lock(fgn->context);
++		pthread_cleanup_push(fgn->unlock, fgn->context);
++		vec = fgn->get_multipaths(fgn->context);
++		if (vec != NULL) {
++			_get_multipath_layout(vec, LAYOUT_RESET_NOT);
++		}
++		fgn->release_multipaths(fgn->context, vec);
++		pthread_cleanup_pop(1);
++	}
++}
++
++int snprint_foreign_topology(char *buf, int len, int verbosity)
++{
++	struct foreign *fgn;
++	int i;
++	char *c = buf;
++
++	vector_foreach_slot(foreigns, fgn, i) {
++		const struct _vector *vec;
++		const struct gen_multipath *gm;
++		int j;
++
++		fgn->lock(fgn->context);
++		pthread_cleanup_push(fgn->unlock, fgn->context);
++
++		vec = fgn->get_multipaths(fgn->context);
++		if (vec != NULL) {
++			vector_foreach_slot(vec, gm, j) {
++
++				c += _snprint_multipath_topology(gm, c,
++								 buf + len - c,
++								 verbosity);
++				if (c >= buf + len - 1)
++					break;
++			}
++			if (c >= buf + len - 1)
++				break;
++		}
++		fgn->release_multipaths(fgn->context, vec);
++		pthread_cleanup_pop(1);
++	}
++
++	return c - buf;
++}
++
++void print_foreign_topology(int verbosity)
++{
++	int buflen = MAX_LINE_LEN * MAX_LINES;
++	char *buf = NULL, *tmp = NULL;
++
++	buf = malloc(buflen);
++	buf[0] = '\0';
++	while (buf != NULL) {
++		char *c = buf;
++
++		c += snprint_foreign_topology(buf, buflen,
++						   verbosity);
++		if (c < buf + buflen - 1)
++			break;
++
++		buflen *= 2;
++		tmp = buf;
++		buf = realloc(buf, buflen);
++	}
++
++	if (buf == NULL && tmp != NULL)
++		buf = tmp;
++
++	if (buf != NULL) {
++		printf("%s", buf);
++		free(buf);
++	}
++}
++
++int snprint_foreign_paths(char *buf, int len, const char *style, int pretty)
++{
++	struct foreign *fgn;
++	int i;
++	char *c = buf;
++
++	vector_foreach_slot(foreigns, fgn, i) {
++		const struct _vector *vec;
++		const struct gen_path *gp;
++		int j;
++
++		fgn->lock(fgn->context);
++		pthread_cleanup_push(fgn->unlock, fgn->context);
++
++		vec = fgn->get_paths(fgn->context);
++		if (vec != NULL) {
++			vector_foreach_slot(vec, gp, j) {
++				c += _snprint_path(gp, c, buf + len - c,
++						   style, pretty);
++				if (c >= buf + len - 1)
++					break;
++			}
++			if (c >= buf + len - 1)
++				break;
++		}
++		fgn->release_paths(fgn->context, vec);
++		pthread_cleanup_pop(1);
++	}
++
++	return c - buf;
++}
++
++int snprint_foreign_multipaths(char *buf, int len,
++			       const char *style, int pretty)
++{
++	struct foreign *fgn;
++	int i;
++	char *c = buf;
++
++	vector_foreach_slot(foreigns, fgn, i) {
++		const struct _vector *vec;
++		const struct gen_multipath *gm;
++		int j;
++
++		fgn->lock(fgn->context);
++		pthread_cleanup_push(fgn->unlock, fgn->context);
++
++		vec = fgn->get_multipaths(fgn->context);
++		if (vec != NULL) {
++			vector_foreach_slot(vec, gm, j) {
++				c += _snprint_multipath(gm, c, buf + len - c,
++							style, pretty);
++				if (c >= buf + len - 1)
++					break;
++			}
++			if (c >= buf + len - 1)
++				break;
++		}
++		fgn->release_multipaths(fgn->context, vec);
++		pthread_cleanup_pop(1);
++	}
++
++	return c - buf;
++}
+diff --git a/libmultipath/foreign.h b/libmultipath/foreign.h
+new file mode 100644
+index 000000000000..4e96ff812ebf
+--- /dev/null
++++ b/libmultipath/foreign.h
+@@ -0,0 +1,322 @@
++/*
++  Copyright (c) 2018 Martin Wilck, SUSE Linux GmbH
++
++  This program is free software; you can redistribute it and/or
++  modify it under the terms of the GNU General Public License
++  as published by the Free Software Foundation; either version 2
++  of the License, or (at your option) any later version.
++
++  This program is distributed in the hope that it will be useful,
++  but WITHOUT ANY WARRANTY; without even the implied warranty of
++  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++  GNU General Public License for more details.
++
++  You should have received a copy of the GNU General Public License
++  along with this program; if not, write to the Free Software
++  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
++  USA.
++*/
++#ifndef _FOREIGN_H
++#define _FOREIGN_H
++#include <stdbool.h>
++#include <libudev.h>
++
++#define LIBMP_FOREIGN_API ((1 << 8) | 0)
++
++struct context;
++
++/* return codes of functions below returning "int" */
++enum foreign_retcode {
++	FOREIGN_OK,
++	FOREIGN_CLAIMED,
++	FOREIGN_IGNORED,
++	FOREIGN_UNCLAIMED,
++	FOREIGN_NODEV,
++	FOREIGN_ERR,
++	__LAST_FOREIGN_RETCODE,
++};
++
++/**
++ * Foreign multipath library API
++ * Foreign libraries must implement the following methods.
++ */
++struct foreign {
++	/**
++	 * method: init(api, name)
++	 * Initialize foreign library, and check API compatibility
++	 * return pointer to opaque internal data strucure if successful,
++	 * NULL otherwise.
++	 *
++	 * @param[in] api: API version
++	 * @param[in] name: name to use for references to self in log messages,
++	 *     doesn't need to be strdup'd
++	 * @returns context pointer to use in future method calls.
++	 */
++	struct context* (*init)(unsigned int api, const char *name);
++
++	/**
++	 * method: cleanup(context)
++	 * Free data structures used by foreign library, including
++	 * context itself.
++	 *
++	 * @param[in] context foreign library context. This shouldn't be
++	 * referenced any more after calling cleanup().
++	 */
++	void (*cleanup)(struct context *);
++
++	/**
++	 * method: add(context, udev)
++	 * This is called during path detection, and for udev ADD events.
++	 *
++	 * @param[in] context foreign library context
++	 * @param[in] udev udev device to add
++	 * @returns status code
++	 * @retval FOREIGN_CLAIMED: device newly claimed
++	 * @retval FOREIGN_OK: device already registered, no action taken
++	 * @retval FOREIGN_IGNORED: device is ignored, no action taken
++	 * @retval FOREIGN_ERR: an error occured (e.g. out-of-memory)
++	 */
++	int (*add)(struct context *, struct udev_device *);
++
++	/**
++	 * method: change
++	 * This is called on udev CHANGE events.
++	 *
++	 * @param[in] context foreign library context
++	 * @param[in] udev udev device that has generated the event
++	 * @returns status code
++	 * @retval FOREIGN_OK: event processed
++	 * @retval FOREIGN_IGNORED: the device is ignored
++	 * @retval FOREIGN_ERR: an error occured (e.g. out-of-memory)
++	 *
++	 * Note: theoretically it can happen that the status of a foreign device
++	 * (claimed vs. not claimed) changes in a change event.
++	 * Supporting this correctly would require big efforts. For now, we
++	 * don't support it. "multipathd reconfigure" starts foreign device
++	 * detection from scratch and should be able to handle this situation.
++	 */
++	int (*change)(struct context *, struct udev_device *);
++
++	/**
++	 * method: delete
++	 * This is called on udev DELETE events.
++	 *
++	 * @param[in] context foreign library context
++	 * @param[in] udev udev device that has generated the event and
++	 *	should be deleted
++	 * @returns status code
++	 * @retval FOREIGN_OK: processed correctly (device deleted)
++	 * @retval FOREIGN_IGNORED: device wasn't registered internally
++	 * @retval FOREIGN_ERR: error occured.
++	 */
++	int (*delete)(struct context *, struct udev_device *);
++
++	/**
++	 * method: delete_all
++	 * This is called if multipathd reconfigures itself.
++	 * Deletes all registered devices (maps and paths)
++	 *
++	 * @param[in] context foreign library context
++	 * @returns status code
++	 * @retval FOREIGN_OK: processed correctly
++	 * @retval FOREIGN_IGNORED: nothing to delete
++	 * @retval FOREIGN_ERR: error occured
++	 */
++	int (*delete_all)(struct context*);
++
++	/**
++	 * method: check
++	 * This is called from multipathd's checker loop.
++	 *
++	 * Check status of managed devices, update internal status, and print
++	 * log messages if appropriate.
++	 * @param[in] context foreign library context
++	 */
++	void (*check)(struct context *);
++
++	/**
++	 * lock internal data stuctures.
++	 * @param[in] ctx: foreign context
++	 */
++	void (*lock)(struct context *ctx);
++
++	/**
++	 * unlock internal data stuctures.
++	 * @param[in] ctx: foreign context (void* in order to use the function
++	 *	as argument to pthread_cleanup_push())
++	 */
++	void (*unlock)(void *ctx);
++
++	/**
++	 * method: get_multipaths(context)
++	 * Returned vector must be freed by calling release_multipaths().
++	 * Lock must be held until release_multipaths() is called.
++	 *
++	 * @param[in] context foreign library context
++	 * @returns a vector of "struct gen_multipath*" with the map devices
++	 * belonging to this library (see generic.h).
++	 */
++	const struct _vector* (*get_multipaths)(const struct context *);
++
++	/**
++	 * method: release_multipaths(context, mpvec)
++	 * release data structures obtained with get_multipaths (if any)
++	 *
++	 * @param[in] ctx the foreign context
++	 * @param[in] mpvec the vector allocated with get_multipaths()
++	 */
++	void (*release_multipaths)(const struct context *ctx,
++				   const struct _vector* mpvec);
++
++	/**
++	 * method: get_paths
++	 * Returned vector must be freed by calling release_paths().
++	 * Lock must be held until release_paths() is called.
++	 *
++	 * @param[in] context foreign library context
++	 * @returns a vector of "struct gen_path*" with the path devices
++	 * belonging to this library (see generic.h)
++	 */
++	const struct _vector* (*get_paths)(const struct context *);
++
++	/**
++	 * release data structures obtained with get_multipaths (if any)
++	 *
++	 * @param[in] ctx the foreign context
++	 * @param[in] ppvec the vector allocated with get_paths()
++	 */
++	void (*release_paths)(const struct context *ctx,
++			      const struct _vector* ppvec);
++
++	const char *name;
++	void *handle;
++	struct context *context;
++};
++
++/**
++ * init_foreign(dir)
++ * load and initialize foreign multipath libraries in dir (libforeign-*.so).
++ * @param dir: directory to search
++ * @returns: 0 on success, negative value on failure.
++ */
++int init_foreign(const char *multipath_dir);
++
++/**
++ * cleanup_foreign(dir)
++ * cleanup and free all data structures owned by foreign libraries
++ */
++void cleanup_foreign(void);
++
++/**
++ * add_foreign(udev)
++ * check if a device belongs to any foreign library.
++ * calls add() for all known foreign libs, in the order registered,
++ * until the first one returns FOREIGN_CLAIMED or FOREIGN_OK.
++ * @param udev: udev device to check
++ * @returns: status code
++ * @retval FOREIGN_CLAIMED: newly claimed by a foreign lib
++ * @retval FOREIGN_OK: already claimed by a foreign lib
++ * @retval FOREIGN_IGNORED: ignored by all foreign libs
++ * @retval FOREIGN_ERR: an error occured
++ */
++int add_foreign(struct udev_device *);
++
++/**
++ * change_foreign(udev)
++ * Notify foreign libraries of an udev CHANGE event
++ * @param udev: udev device to check
++ * @returns: status code (see change() method above).
++ */
++int change_foreign(struct udev_device *);
++
++/**
++ * delete_foreign(udev)
++ * @param udev: udev device being removed
++ * @returns: status code (see remove() above)
++ */
++int delete_foreign(struct udev_device *);
++
++/**
++ * delete_all_foreign()
++ * call delete_all() for all foreign libraries
++ * @returns: status code (see delete_all() above)
++ */
++int delete_all_foreign(void);
++
++/**
++ * check_foreign()
++ * call check() (see above) for all foreign libraries
++ */
++void check_foreign(void);
++
++/**
++ * foreign_path_layout()
++ * call this before printing paths, after get_path_layout(), to determine
++ * output field width.
++ */
++void foreign_path_layout(void);
++
++/**
++ * foreign_multipath_layout()
++ * call this before printing maps, after get_multipath_layout(), to determine
++ * output field width.
++ */
++void foreign_multipath_layout(void);
++
++/**
++ * snprint_foreign_topology(buf, len, verbosity);
++ * prints topology information from foreign libraries into buffer,
++ * '\0' - terminated.
++ * @param buf: output buffer
++ * @param len: size of output buffer
++ * @param verbosity: verbosity level
++ * @returns: number of printed characters excluding trailing '\0'.
++ */
++int snprint_foreign_topology(char *buf, int len, int verbosity);
++
++/**
++ * snprint_foreign_paths(buf, len, style, pad);
++ * prints formatted path information from foreign libraries into buffer,
++ * '\0' - terminated.
++ * @param buf: output buffer
++ * @param len: size of output buffer
++ * @param style: format string
++ * @param pad: whether to pad field width
++ * @returns: number of printed characters excluding trailing '\0'.
++ */
++int snprint_foreign_paths(char *buf, int len, const char *style, int pad);
++
++/**
++ * snprint_foreign_multipaths(buf, len, style, pad);
++ * prints formatted map information from foreign libraries into buffer,
++ * '\0' - terminated.
++ * @param buf: output buffer
++ * @param len: size of output buffer
++ * @param style: format string
++ * @param pad: whether to pad field width
++ * @returns: number of printed characters excluding trailing '\0'.
++ */
++int snprint_foreign_multipaths(char *buf, int len,
++			       const char *style, int pretty);
++
++/**
++ * print_foreign_topology(v)
++ * print foreign topology to stdout
++ * @param verbosity: verbosity level
++ */
++void print_foreign_topology(int verbosity);
++
++/**
++ * is_claimed_by_foreign(ud)
++ * @param udev: udev device
++ * @returns: true iff device is (newly or already) claimed by a foreign lib
++ */
++static inline bool
++is_claimed_by_foreign(struct udev_device *ud)
++{
++	int rc = add_foreign(ud);
++
++	return (rc == FOREIGN_CLAIMED || rc == FOREIGN_OK);
++}
++
++#endif /*  _FOREIGN_H */
 -- 
 2.16.1
