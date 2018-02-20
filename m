@@ -1,8 +1,7 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [RFC PATCH 03/20] libmultipath: get rid of selector
-	"hack" in print.c
-Date: Tue, 20 Feb 2018 14:26:41 +0100
-Message-ID: <20180220132658.22295-4-mwilck@suse.com>
+Subject: [RFC PATCH 18/20] multipath: use foreign API
+Date: Tue, 20 Feb 2018 14:26:56 +0100
+Message-ID: <20180220132658.22295-19-mwilck@suse.com>
 References: <20180220132658.22295-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,154 +21,65 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@s
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-By properly linking the path groups with their parent multipath,
-we don't need this "hack" any more.
+Use the "foreign" code to print information about multipath maps
+owned by foreign libraries in print mode (multipath -ll, -l).
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/dmparser.c   |  2 +-
- libmultipath/pgpolicies.c | 11 ++++++-----
- libmultipath/print.c      |  6 +++---
- libmultipath/structs.c    | 10 ++++++++++
- libmultipath/structs.h    |  3 ++-
- 5 files changed, 22 insertions(+), 10 deletions(-)
+ multipath/main.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
 
-diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
-index 027ae989781e..783c934f1154 100644
---- a/libmultipath/dmparser.c
-+++ b/libmultipath/dmparser.c
-@@ -267,7 +267,7 @@ int disassemble_map(vector pathvec, char *params, struct multipath *mpp,
- 		if (!pgp)
- 			goto out;
+diff --git a/multipath/main.c b/multipath/main.c
+index a0c750e6f623..4fae49ee4325 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -59,6 +59,7 @@
+ #include "wwids.h"
+ #include "uxsock.h"
+ #include "mpath_cmd.h"
++#include "foreign.h"
  
--		if (store_pathgroup(mpp->pg, pgp))
-+		if (add_pathgroup(mpp, pgp))
- 			goto out;
- 
- 		p += get_word(p, &word);
-diff --git a/libmultipath/pgpolicies.c b/libmultipath/pgpolicies.c
-index 4ae4afbccdb7..ac2596ada442 100644
---- a/libmultipath/pgpolicies.c
-+++ b/libmultipath/pgpolicies.c
-@@ -120,7 +120,7 @@ int group_by_node_name(struct multipath * mp)
- 		if (!pgp)
- 			goto out1;
- 
--		if (store_pathgroup(mp->pg, pgp))
-+		if (add_pathgroup(mp, pgp))
- 			goto out2;
- 
- 		/* feed the first path */
-@@ -196,7 +196,7 @@ int group_by_serial(struct multipath * mp)
- 		if (!pgp)
- 			goto out1;
- 
--		if (store_pathgroup(mp->pg, pgp))
-+		if (add_pathgroup(mp, pgp))
- 			goto out2;
- 
- 		/* feed the first path */
-@@ -254,7 +254,7 @@ int one_path_per_group(struct multipath *mp)
- 		if (!pgp)
- 			goto out;
- 
--		if (store_pathgroup(mp->pg, pgp))
-+		if (add_pathgroup(mp, pgp))
- 			goto out1;
- 
- 		if (store_path(pgp->paths, pp))
-@@ -293,7 +293,7 @@ int one_group(struct multipath *mp)	/* aka multibus */
- 
- 		vector_free(pgp->paths);
- 
--		if (store_pathgroup(mp->pg, pgp))
-+		if (add_pathgroup(mp, pgp))
- 			goto out1;
- 
- 		pgp->paths = mp->paths;
-@@ -367,8 +367,9 @@ int group_by_prio(struct multipath *mp)
- 		if (i < VECTOR_SIZE(mp->pg)) {
- 			if (!vector_insert_slot(mp->pg, i, pgp))
- 				goto out2;
-+			pgp->mpp = mp;
- 		} else {
--			if (store_pathgroup(mp->pg, pgp))
-+			if (add_pathgroup(mp, pgp))
- 				goto out2;
- 		}
- 
-diff --git a/libmultipath/print.c b/libmultipath/print.c
-index 27636c35e5ff..8fb5c5058965 100644
---- a/libmultipath/print.c
-+++ b/libmultipath/print.c
-@@ -476,7 +476,9 @@ snprint_pri (char * buff, size_t len, struct path * pp)
- static int
- snprint_pg_selector (char * buff, size_t len, struct pathgroup * pgp)
- {
--	return snprint_str(buff, len, pgp->selector);
-+	const char *s = pgp->mpp->selector;
+ int logsink;
+ struct udev *udev;
+@@ -257,6 +258,14 @@ get_dm_mpvec (enum mpath_cmds cmd, vector curmp, vector pathvec, char * refwwid)
+ 		if (cmd == CMD_CREATE)
+ 			reinstate_paths(mpp);
+ 	}
 +
-+	return snprint_str(buff, len, s ? s : "");
- }
- 
- static int
-@@ -1030,7 +1032,6 @@ int snprint_multipath_topology(char *buff, int len, struct multipath *mpp,
- 
- 	vector_foreach_slot (mpp->pg, pgp, j) {
- 		f=fmt;
--		pgp->selector = mpp->selector; /* hack */
- 		if (j + 1 < VECTOR_SIZE(mpp->pg)) {
- 			strcpy(f, "|-+- " PRINT_PG_INDENT);
- 		} else
-@@ -1122,7 +1123,6 @@ snprint_multipath_fields_json (char * buff, int len,
- 
- 	vector_foreach_slot (mpp->pg, pgp, i) {
- 
--		pgp->selector = mpp->selector;
- 		fwd += snprint_pathgroup(buff + fwd, len - fwd, PRINT_JSON_GROUP, pgp);
- 		if (fwd >= len)
- 			return fwd;
-diff --git a/libmultipath/structs.c b/libmultipath/structs.c
-index 4caad2a40302..1ade1a6705ad 100644
---- a/libmultipath/structs.c
-+++ b/libmultipath/structs.c
-@@ -318,6 +318,16 @@ store_pathgroup (vector pgvec, struct pathgroup * pgp)
++	if (cmd == CMD_LIST_SHORT || cmd == CMD_LIST_LONG) {
++		struct config *conf = get_multipath_config();
++
++		print_foreign_topology(conf->verbosity);
++		put_multipath_config(conf);
++	}
++
  	return 0;
  }
  
-+int add_pathgroup(struct multipath *mpp, struct pathgroup *pgp)
-+{
-+	int ret = store_pathgroup(mpp->pg, pgp);
-+
-+	if (ret)
-+		return ret;
-+	pgp->mpp = mpp;
-+	return 0;
-+}
-+
- int
- store_hostgroup(vector hostgroupvec, struct host_group * hgp)
- {
-diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-index b951c7b0e157..71b37cc20674 100644
---- a/libmultipath/structs.h
-+++ b/libmultipath/structs.h
-@@ -340,7 +340,7 @@ struct pathgroup {
- 	int priority;
- 	int enabled_paths;
- 	vector paths;
--	char * selector;
-+	struct multipath *mpp;
- };
+@@ -460,6 +469,7 @@ configure (struct config *conf, enum mpath_cmds cmd,
+ 		print_all_paths(pathvec, 1);
  
- struct adapter_group {
-@@ -379,6 +379,7 @@ int store_hostgroup(vector hostgroupvec, struct host_group *hgp);
+ 	get_path_layout(pathvec, 0);
++	foreign_path_layout();
  
- int store_path (vector pathvec, struct path * pp);
- int store_pathgroup (vector pgvec, struct pathgroup * pgp);
-+int add_pathgroup(struct multipath*, struct pathgroup *);
+ 	if (get_dm_mpvec(cmd, curmp, pathvec, refwwid))
+ 		goto out;
+@@ -817,6 +827,8 @@ main (int argc, char *argv[])
+ 		condlog(0, "failed to initialize prioritizers");
+ 		goto out;
+ 	}
++	/* Failing here is non-fatal */
++	init_foreign(conf->multipath_dir);
+ 	if (cmd == CMD_USABLE_PATHS) {
+ 		r = check_usable_paths(conf, dev, dev_type);
+ 		goto out;
+@@ -892,6 +904,7 @@ out:
+ 	dm_lib_release();
+ 	dm_lib_exit();
  
- struct multipath * find_mp_by_alias (vector mp, const char * alias);
- struct multipath * find_mp_by_wwid (vector mp, char * wwid);
++	cleanup_foreign();
+ 	cleanup_prio();
+ 	cleanup_checkers();
+ 
 -- 
 2.16.1
