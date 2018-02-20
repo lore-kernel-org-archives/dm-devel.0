@@ -1,7 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [RFC PATCH 19/20] multipathd: use foreign API
-Date: Tue, 20 Feb 2018 14:26:57 +0100
-Message-ID: <20180220132658.22295-20-mwilck@suse.com>
+Subject: [RFC PATCH 13/20] libmultipath: print: convert API to
+	generic data type
+Date: Tue, 20 Feb 2018 14:26:51 +0100
+Message-ID: <20180220132658.22295-14-mwilck@suse.com>
 References: <20180220132658.22295-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,290 +22,360 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@s
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Call into the foreign library code when paths are discovered, uevents
-are received, and in the checker loop. Furthermore, use the foreign
-code to print information in the "multipathd show paths", "multipathd
-show maps", and "multipathd show topology" client commands.
+Convert higher level API (snprint_multipath_topology() etc) to
+using the generic multipath API. This will allow "foreign"
+multipath objects that implement the generic API to be printed
+exactly like native multipathd objects.
 
-We don't support foreign data in the individual "show map" and "show path"
-commands, and neither in the "json" commands. The former is a deliberate
-decision, the latter could be added if desired.
+The previous API (using "struct multipath*" and "struct path" remains
+in place through macros mapping to the new functions. By doing this
+and testing in regular setups, it's easily verified that the new
+API works and produces the same results.
+
+Moreover, abstract out the code to determine the output format from multipath
+properties into snprint_multipath_style(), to be able to use it as generic
+->style() method.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c  |  4 +++-
- multipathd/cli_handlers.c | 39 ++++++++++++++++++++++++++++++++++-----
- multipathd/main.c         | 43 ++++++++++++++++++++++++++++++++++++++++---
- 3 files changed, 77 insertions(+), 9 deletions(-)
+ libmultipath/configure.c  |   1 +
+ libmultipath/dm-generic.c |   2 +-
+ libmultipath/print.c      | 116 +++++++++++++++++++++++++++++-----------------
+ libmultipath/print.h      |  28 ++++++++---
+ multipath/main.c          |   1 +
+ multipathd/cli_handlers.c |   1 +
+ 6 files changed, 100 insertions(+), 49 deletions(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 645224c1029c..45a4d8378893 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -31,6 +31,7 @@
- #include "prio.h"
- #include "defaults.h"
- #include "prioritizers/alua_rtpg.h"
-+#include "foreign.h"
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 13e14cc25fff..42b7c896ee65 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -30,6 +30,7 @@
+ #include "discovery.h"
+ #include "debug.h"
+ #include "switchgroup.h"
++#include "dm-generic.h"
+ #include "print.h"
+ #include "configure.h"
+ #include "pgpolicies.h"
+diff --git a/libmultipath/dm-generic.c b/libmultipath/dm-generic.c
+index 42a26085d087..bdc9ca0a488b 100644
+--- a/libmultipath/dm-generic.c
++++ b/libmultipath/dm-generic.c
+@@ -56,7 +56,7 @@ const struct gen_multipath_ops dm_gen_multipath_ops = {
+ 	.get_pathgroups = dm_mp_get_pgs,
+ 	.rel_pathgroups = dm_mp_rel_pgs,
+ 	.snprint = snprint_multipath_attr,
+-	/* .style = snprint_multipath_style, TBD */
++	.style = snprint_multipath_style,
+ };
+ 
+ const struct gen_pathgroup_ops dm_gen_pathgroup_ops = {
+diff --git a/libmultipath/print.c b/libmultipath/print.c
+index e6f56381791f..8846765066ef 100644
+--- a/libmultipath/print.c
++++ b/libmultipath/print.c
+@@ -31,7 +31,8 @@
+ #include "discovery.h"
+ #include "dm-generic.h"
+ 
+-#define MAX(x,y) (x > y) ? x : y
++#define MAX(x,y) (((x) > (y)) ? (x) : (y))
++#define MIN(x,y) (((x) > (y)) ? (y) : (x))
+ #define TAIL     (line + len - 1 - c)
+ #define NOPAD    s = c
+ #define PAD(x) \
+@@ -846,8 +847,8 @@ snprint_multipath_header (char * line, int len, const char * format)
+ }
  
  int
- alloc_path_with_pathinfo (struct config *conf, struct udev_device *udevice,
-@@ -1909,7 +1910,8 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
- 	 * limited by DI_BLACKLIST and occurs before this debug
- 	 * message with the mask value.
- 	 */
--	if (pp->udev && filter_property(conf, pp->udev) > 0)
-+	if (pp->udev && (is_claimed_by_foreign(pp->udev) ||
-+			 filter_property(conf, pp->udev) > 0))
- 		return PATHINFO_SKIPPED;
- 
- 	if (filter_devnode(conf->blist_devnode,
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index 78f2a12bc2f8..c0ae54aae841 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -27,6 +27,7 @@
- #include "main.h"
- #include "cli.h"
- #include "uevent.h"
-+#include "foreign.h"
- 
- int
- show_paths (char ** r, int * len, struct vectors * vecs, char * style,
-@@ -35,11 +36,13 @@ show_paths (char ** r, int * len, struct vectors * vecs, char * style,
- 	int i;
- 	struct path * pp;
- 	char * c;
--	char * reply;
-+	char * reply, * header;
- 	unsigned int maxlen = INITIAL_REPLY_LEN;
- 	int again = 1;
- 
- 	get_path_layout(vecs->pathvec, 1);
-+	foreign_path_layout();
-+
- 	reply = MALLOC(maxlen);
- 
- 	while (again) {
-@@ -48,18 +51,29 @@ show_paths (char ** r, int * len, struct vectors * vecs, char * style,
- 
- 		c = reply;
- 
--		if (pretty && VECTOR_SIZE(vecs->pathvec) > 0)
-+		if (pretty)
- 			c += snprint_path_header(c, reply + maxlen - c,
- 						 style);
-+		header = c;
- 
- 		vector_foreach_slot(vecs->pathvec, pp, i)
- 			c += snprint_path(c, reply + maxlen - c,
- 					  style, pp, pretty);
- 
-+		c += snprint_foreign_paths(c, reply + maxlen - c,
-+					   style, pretty);
-+
- 		again = ((c - reply) == (maxlen - 1));
- 
- 		REALLOC_REPLY(reply, again, maxlen);
- 	}
-+
-+	if (pretty && c == header) {
-+		/* No output - clear header */
-+		*reply = '\0';
-+		c = reply;
-+	}
-+
- 	*r = reply;
- 	*len = (int)(c - reply + 1);
- 	return 0;
-@@ -134,6 +148,8 @@ show_maps_topology (char ** r, int * len, struct vectors * vecs)
- 	int again = 1;
- 
- 	get_path_layout(vecs->pathvec, 0);
-+	foreign_path_layout();
-+
- 	reply = MALLOC(maxlen);
- 
- 	while (again) {
-@@ -150,11 +166,13 @@ show_maps_topology (char ** r, int * len, struct vectors * vecs)
- 			c += snprint_multipath_topology(c, reply + maxlen - c,
- 							mpp, 2);
- 		}
-+		c += snprint_foreign_topology(c, reply + maxlen - c, 2);
- 
- 		again = ((c - reply) == (maxlen - 1));
- 
- 		REALLOC_REPLY(reply, again, maxlen);
- 	}
-+
- 	*r = reply;
- 	*len = (int)(c - reply + 1);
- 	return 0;
-@@ -499,12 +517,14 @@ show_maps (char ** r, int *len, struct vectors * vecs, char * style,
+-snprint_multipath (char * line, int len, const char * format,
+-	     const struct multipath * mpp, int pad)
++_snprint_multipath (const struct gen_multipath * gmp,
++		    char * line, int len, const char * format, int pad)
  {
- 	int i;
- 	struct multipath * mpp;
--	char * c;
-+	char * c, *header;
- 	char * reply;
- 	unsigned int maxlen = INITIAL_REPLY_LEN;
- 	int again = 1;
+ 	char * c = line;   /* line cursor */
+ 	char * s = line;   /* for padding */
+@@ -870,7 +871,7 @@ snprint_multipath (char * line, int len, const char * format,
+ 		if (!(data = mpd_lookup(*f)))
+ 			continue;
  
- 	get_multipath_layout(vecs->mpvec, 1);
-+	foreign_multipath_layout();
+-		data->snprint(buff, MAX_FIELD_LEN, mpp);
++		gmp->ops->snprint(gmp, buff, MAX_FIELD_LEN, *f);
+ 		PRINT(c, TAIL, "%s", buff);
+ 		if (pad)
+ 			PAD(data->width);
+@@ -913,8 +914,8 @@ snprint_path_header (char * line, int len, const char * format)
+ }
+ 
+ int
+-snprint_path (char * line, int len, const char * format,
+-	     const struct path * pp, int pad)
++_snprint_path (const struct gen_path * gp, char * line, int len,
++	       const char * format, int pad)
+ {
+ 	char * c = line;   /* line cursor */
+ 	char * s = line;   /* for padding */
+@@ -937,7 +938,7 @@ snprint_path (char * line, int len, const char * format,
+ 		if (!(data = pd_lookup(*f)))
+ 			continue;
+ 
+-		data->snprint(buff, MAX_FIELD_LEN, pp);
++		gp->ops->snprint(gp, buff, MAX_FIELD_LEN, *f);
+ 		PRINT(c, TAIL, "%s", buff);
+ 		if (pad)
+ 			PAD(data->width);
+@@ -948,8 +949,8 @@ snprint_path (char * line, int len, const char * format,
+ }
+ 
+ int
+-snprint_pathgroup (char * line, int len, char * format,
+-		   const struct pathgroup * pgp)
++_snprint_pathgroup (const struct gen_pathgroup * ggp, char * line, int len,
++		    char * format)
+ {
+ 	char * c = line;   /* line cursor */
+ 	char * s = line;   /* for padding */
+@@ -972,7 +973,7 @@ snprint_pathgroup (char * line, int len, char * format,
+ 		if (!(data = pgd_lookup(*f)))
+ 			continue;
+ 
+-		data->snprint(buff, MAX_FIELD_LEN, pgp);
++		ggp->ops->snprint(ggp, buff, MAX_FIELD_LEN, *f);
+ 		PRINT(c, TAIL, "%s", buff);
+ 		PAD(data->width);
+ 	} while (*f++);
+@@ -980,8 +981,10 @@ snprint_pathgroup (char * line, int len, char * format,
+ 	__endline(line, len, c);
+ 	return (c - line);
+ }
++#define snprint_pathgroup(line, len, fmt, pgp) \
++	_snprint_pathgroup(dm_pathgroup_to_gen(pgp), line, len, fmt)
+ 
+-void print_multipath_topology(struct multipath *mpp, int verbosity)
++void _print_multipath_topology(const struct gen_multipath *gmp, int verbosity)
+ {
+ 	int resize;
+ 	char *buff = NULL;
+@@ -998,7 +1001,7 @@ void print_multipath_topology(struct multipath *mpp, int verbosity)
+ 			return;
+ 		}
+ 
+-		len = snprint_multipath_topology(buff, maxlen, mpp, verbosity);
++		len = _snprint_multipath_topology(gmp, buff, maxlen, verbosity);
+ 		resize = (len == maxlen - 1);
+ 
+ 		if (resize) {
+@@ -1011,12 +1014,30 @@ void print_multipath_topology(struct multipath *mpp, int verbosity)
+ 	FREE(buff);
+ }
+ 
+-int snprint_multipath_topology(char *buff, int len, const struct multipath *mpp,
+-			       int verbosity)
++int
++snprint_multipath_style(const struct gen_multipath *gmp, char *style, int len,
++			int verbosity)
++{
++	int n;
++	const struct multipath *mpp = gen_multipath_to_dm(gmp);
++	bool need_action = (verbosity > 1 &&
++			    mpp->action != ACT_NOTHING &&
++			    mpp->action != ACT_UNDEF &&
++			    mpp->action != ACT_IMPOSSIBLE);
++	bool need_wwid = (strncmp(mpp->alias, mpp->wwid, WWID_SIZE));
 +
- 	reply = MALLOC(maxlen);
- 
- 	while (again) {
-@@ -512,9 +532,10 @@ show_maps (char ** r, int *len, struct vectors * vecs, char * style,
- 			return 1;
- 
- 		c = reply;
--		if (pretty && VECTOR_SIZE(vecs->mpvec) > 0)
-+		if (pretty)
- 			c += snprint_multipath_header(c, reply + maxlen - c,
- 						      style);
-+		header = c;
- 
- 		vector_foreach_slot(vecs->mpvec, mpp, i) {
- 			if (update_multipath(vecs, mpp->alias, 0)) {
-@@ -523,12 +544,20 @@ show_maps (char ** r, int *len, struct vectors * vecs, char * style,
- 			}
- 			c += snprint_multipath(c, reply + maxlen - c,
- 					       style, mpp, pretty);
--		}
- 
-+		}
-+		c += snprint_foreign_multipaths(c, reply + maxlen - c,
-+						style, pretty);
- 		again = ((c - reply) == (maxlen - 1));
- 
- 		REALLOC_REPLY(reply, again, maxlen);
- 	}
++	n = snprintf(style, len, "%s%s%s%s",
++		     need_action ? "%A: " : "", "%n",
++		     need_wwid ? " (%w)" : "", " %d %s");
++	return MIN(n, len - 1);
++}
 +
-+	if (pretty && c == header) {
-+		/* No output - clear header */
-+		*reply = '\0';
-+		c = reply;
-+	}
- 	*r = reply;
- 	*len = (int)(c - reply + 1);
- 	return 0;
-diff --git a/multipathd/main.c b/multipathd/main.c
-index b900bb3ec2e3..e1d98861a841 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -84,6 +84,7 @@ static int use_watchdog;
- #include "waiter.h"
- #include "io_err_stat.h"
- #include "wwids.h"
-+#include "foreign.h"
- #include "../third-party/valgrind/drd.h"
++int _snprint_multipath_topology(const struct gen_multipath *gmp,
++				char *buff, int len, int verbosity)
+ {
+ 	int j, i, fwd = 0;
+-	struct path * pp = NULL;
+-	struct pathgroup * pgp = NULL;
++	const struct _vector *pgvec;
++	const struct gen_pathgroup *gpg;
+ 	char style[64];
+ 	char * c = style;
+ 	char fmt[64];
+@@ -1028,60 +1049,71 @@ int snprint_multipath_topology(char *buff, int len, const struct multipath *mpp,
+ 	reset_multipath_layout();
  
- #define FILE_NAME_SIZE 256
-@@ -699,6 +700,15 @@ rescan:
- 		mpp->action = ACT_RELOAD;
- 		extract_hwe_from_path(mpp);
- 	} else {
-+		switch (add_foreign(pp->udev)) {
-+		case FOREIGN_CLAIMED:
-+		case FOREIGN_OK:
-+			orphan_path(pp, "claimed by foreign library");
-+			return 0;
-+		default:
+ 	if (verbosity == 1)
+-		return snprint_multipath(buff, len, "%n", mpp, 1);
++		return _snprint_multipath(gmp, buff, len, "%n", 1);
+ 
+ 	if(isatty(1))
+ 		c += sprintf(c, "%c[%dm", 0x1B, 1); /* bold on */
+ 
+-	if (verbosity > 1 &&
+-	    mpp->action != ACT_NOTHING &&
+-	    mpp->action != ACT_UNDEF && mpp->action != ACT_IMPOSSIBLE)
+-			c += sprintf(c, "%%A: ");
+-
+-	c += sprintf(c, "%%n");
+-
+-	if (strncmp(mpp->alias, mpp->wwid, WWID_SIZE))
+-		c += sprintf(c, " (%%w)");
+-
+-	c += sprintf(c, " %%d %%s");
++	c += gmp->ops->style(gmp, c, sizeof(style) - (c - style),
++			     verbosity);
++	c += snprintf(c, sizeof(style) - (c - style), " %%d %%s");
+ 	if(isatty(1))
+ 		c += sprintf(c, "%c[%dm", 0x1B, 0); /* bold off */
+ 
+-	fwd += snprint_multipath(buff + fwd, len - fwd, style, mpp, 1);
++	fwd += _snprint_multipath(gmp, buff + fwd, len - fwd, style, 1);
+ 	if (fwd >= len)
+ 		return len;
+-	fwd += snprint_multipath(buff + fwd, len - fwd, PRINT_MAP_PROPS, mpp,
+-				 1);
++	fwd += _snprint_multipath(gmp, buff + fwd, len - fwd,
++				  PRINT_MAP_PROPS, 1);
+ 	if (fwd >= len)
+ 		return len;
+ 
+-	if (!mpp->pg)
++	pgvec = gmp->ops->get_pathgroups(gmp);
++	if (pgvec == NULL)
+ 		return fwd;
+ 
+-	vector_foreach_slot (mpp->pg, pgp, j) {
++	vector_foreach_slot (pgvec, gpg, j) {
++		const struct _vector *pathvec;
++		struct gen_path *gp;
++
+ 		f=fmt;
+-		if (j + 1 < VECTOR_SIZE(mpp->pg)) {
++
++		if (j + 1 < VECTOR_SIZE(pgvec)) {
+ 			strcpy(f, "|-+- " PRINT_PG_INDENT);
+ 		} else
+ 			strcpy(f, "`-+- " PRINT_PG_INDENT);
+-		fwd += snprint_pathgroup(buff + fwd, len - fwd, fmt, pgp);
+-		if (fwd >= len)
+-			return len;
++		fwd += _snprint_pathgroup(gpg, buff + fwd, len - fwd, fmt);
+ 
+-		vector_foreach_slot (pgp->paths, pp, i) {
++		if (fwd >= len) {
++			fwd = len;
 +			break;
 +		}
 +
- 		if (!should_multipath(pp, vecs->pathvec)) {
- 			orphan_path(pp, "only one path");
- 			return 0;
-@@ -798,6 +808,8 @@ uev_remove_path (struct uevent *uev, struct vectors * vecs, int need_do_map)
- 	int ret;
- 
- 	condlog(2, "%s: remove path (uevent)", uev->kernel);
-+	delete_foreign(uev->udev);
++		pathvec = gpg->ops->get_paths(gpg);
++		if (pathvec == NULL)
++			continue;
 +
- 	pthread_cleanup_push(cleanup_lock, &vecs->lock);
- 	lock(&vecs->lock);
- 	pthread_testcancel();
-@@ -917,12 +929,27 @@ fail:
- static int
- uev_update_path (struct uevent *uev, struct vectors * vecs)
- {
--	int ro, retval = 0;
-+	int ro, retval = 0, rc;
- 	struct path * pp;
- 	struct config *conf;
- 	int disable_changed_wwids;
- 	int needs_reinit = 0;
- 
-+	switch ((rc = change_foreign(uev->udev))) {
-+	case FOREIGN_OK:
-+		/* known foreign path, ignore event */
-+		return 0;
-+	case FOREIGN_IGNORED:
-+		break;
-+	case FOREIGN_ERR:
-+		condlog(3, "%s: error in change_foreign", __func__);
-+		break;
-+	default:
-+		condlog(1, "%s: return code %d of change_forein is unsupported",
-+			__func__, rc);
-+		break;
-+	}
-+
- 	conf = get_multipath_config();
- 	disable_changed_wwids = conf->disable_changed_wwids;
- 	put_multipath_config(conf);
-@@ -1122,8 +1149,13 @@ uev_trigger (struct uevent * uev, void * trigger_data)
- 	 * are not fully initialised then.
- 	 */
- 	if (!strncmp(uev->kernel, "dm-", 3)) {
--		if (!uevent_is_mpath(uev))
-+		if (!uevent_is_mpath(uev)) {
-+			if (!strncmp(uev->action, "change", 6))
-+				(void)add_foreign(uev->udev);
-+			else if (!strncmp(uev->action, "remove", 6))
-+				(void)delete_foreign(uev->udev);
- 			goto out;
-+		}
- 		if (!strncmp(uev->action, "change", 6)) {
- 			r = uev_add_map(uev, vecs);
- 
-@@ -1932,7 +1964,7 @@ checkerloop (void *ap)
- 						diff_time.tv_sec);
- 			}
++		vector_foreach_slot (pathvec, gp, i) {
+ 			f=fmt;
+ 			if (*f != '|')
+ 				*f=' ';
+ 			f++;
+-			if (i + 1 < VECTOR_SIZE(pgp->paths))
++			if (i + 1 < VECTOR_SIZE(pathvec))
+ 				strcpy(f, " |- " PRINT_PATH_INDENT);
+ 			else
+ 				strcpy(f, " `- " PRINT_PATH_INDENT);
+-			fwd += snprint_path(buff + fwd, len - fwd, fmt, pp, 1);
+-			if (fwd >= len)
+-				return len;
++			fwd += _snprint_path(gp, buff + fwd, len - fwd, fmt, 1);
++			if (fwd >= len) {
++				fwd = len;
++				break;
++			}
  		}
--
-+		check_foreign();
- 		post_config_state(DAEMON_IDLE);
- 		conf = get_multipath_config();
- 		strict_timing = conf->strict_timing;
-@@ -2121,6 +2153,7 @@ reconfigure (struct vectors * vecs)
- 
- 	free_pathvec(vecs->pathvec, FREE_PATHS);
- 	vecs->pathvec = NULL;
-+	delete_all_foreign();
- 
- 	/* Re-read any timezone changes */
- 	tzset();
-@@ -2372,6 +2405,9 @@ child (void * param)
- 		condlog(0, "failed to initialize prioritizers");
- 		goto failed;
- 	}
-+	/* Failing this is non-fatal */
++		gpg->ops->rel_paths(gpg, pathvec);
 +
-+	init_foreign(conf->multipath_dir);
++		if (fwd == len)
++			break;
+ 	}
++	gmp->ops->rel_pathgroups(gmp, pgvec);
+ 	return fwd;
+ }
  
- 	setlogmask(LOG_UPTO(conf->verbosity + 3));
+diff --git a/libmultipath/print.h b/libmultipath/print.h
+index c624d2bfe8d4..e71f87722315 100644
+--- a/libmultipath/print.h
++++ b/libmultipath/print.h
+@@ -1,3 +1,6 @@
++#ifndef _PRINT_H
++#define _PRINT_H
++
+ #define PRINT_PATH_LONG      "%w %i %d %D %p %t %T %s %o"
+ #define PRINT_PATH_INDENT    "%i %d %D %t %T %o"
+ #define PRINT_PATH_CHECKER   "%i %d %D %p %t %T %o %C"
+@@ -94,11 +97,17 @@ void get_path_layout (vector pathvec, int header);
+ void get_multipath_layout (vector mpvec, int header);
+ int snprint_path_header (char *, int, const char *);
+ int snprint_multipath_header (char *, int, const char *);
+-int snprint_path (char *, int, const char *, const struct path *, int);
+-int snprint_multipath (char *, int, const char *,
+-		       const struct multipath *, int);
+-int snprint_multipath_topology (char *, int, const struct multipath * mpp,
+-				int verbosity);
++int _snprint_path (const struct gen_path *, char *, int, const char *, int);
++#define snprint_path(buf, len, fmt, pp, v) \
++	_snprint_path(dm_path_to_gen(pp), buf, len, fmt,  v)
++int _snprint_multipath (const struct gen_multipath *, char *, int,
++			const char *, int);
++#define snprint_multipath(buf, len, fmt, mp, v)				\
++	_snprint_multipath(dm_multipath_to_gen(mp), buf, len, fmt,  v)
++int _snprint_multipath_topology (const struct gen_multipath *, char *, int, 
++				 int verbosity);
++#define snprint_multipath_topology(buf, len, mpp, v) \
++	_snprint_multipath_topology (dm_multipath_to_gen(mpp), buf, len, v)
+ int snprint_multipath_topology_json (char * buff, int len,
+ 				const struct vectors * vecs);
+ int snprint_multipath_map_json (char * buff, int len,
+@@ -119,7 +128,11 @@ int snprint_host_wwpn (char *, size_t, const struct path *);
+ int snprint_tgt_wwnn (char *, size_t, const struct path *);
+ int snprint_tgt_wwpn (char *, size_t, const struct path *);
  
-@@ -2529,6 +2565,7 @@ child (void * param)
- 	FREE(vecs);
- 	vecs = NULL;
+-void print_multipath_topology (struct multipath * mpp, int verbosity);
++void _print_multipath_topology (const struct gen_multipath * gmp,
++				int verbosity);
++#define print_multipath_topology(mpp, v) \
++	_print_multipath_topology(dm_multipath_to_gen(mpp), v)
++
+ void print_all_paths (vector pathvec, int banner);
+ void print_all_paths_custo (vector pathvec, int banner, char *fmt);
  
-+	cleanup_foreign();
- 	cleanup_checkers();
- 	cleanup_prio();
- 
+@@ -129,3 +142,6 @@ int snprint_pathgroup_attr(const struct gen_pathgroup* gpg,
+ 			   char *buf, int len, char wildcard);
+ int snprint_multipath_attr(const struct gen_multipath* gm,
+ 			   char *buf, int len, char wildcard);
++int snprint_multipath_style(const struct gen_multipath *gmp,
++			    char *style, int len, int verbosity);
++#endif /* _PRINT_H */
+diff --git a/multipath/main.c b/multipath/main.c
+index 52bf1658bbca..a0c750e6f623 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -47,6 +47,7 @@
+ #include "discovery.h"
+ #include "debug.h"
+ #include "switchgroup.h"
++#include "dm-generic.h"
+ #include "print.h"
+ #include "alias.h"
+ #include "configure.h"
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index 7f13bc9d6f32..78f2a12bc2f8 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -16,6 +16,7 @@
+ #include "configure.h"
+ #include "blacklist.h"
+ #include "debug.h"
++#include "dm-generic.h"
+ #include "print.h"
+ #include "sysfs.h"
+ #include <errno.h>
 -- 
 2.16.1
