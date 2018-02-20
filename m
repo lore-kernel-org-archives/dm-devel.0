@@ -1,8 +1,7 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [RFC PATCH 20/20] libmultipath: foreign/nvme: implement
-	path display
-Date: Tue, 20 Feb 2018 14:26:58 +0100
-Message-ID: <20180220132658.22295-21-mwilck@suse.com>
+Subject: [RFC PATCH 19/20] multipathd: use foreign API
+Date: Tue, 20 Feb 2018 14:26:57 +0100
+Message-ID: <20180220132658.22295-20-mwilck@suse.com>
 References: <20180220132658.22295-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,524 +21,290 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@s
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-implement display of path information for NVMe foreign paths and maps.
-With this patch, I get output like this for Linux NVMe soft targets:
+Call into the foreign library code when paths are discovered, uevents
+are received, and in the checker loop. Furthermore, use the foreign
+code to print information in the "multipathd show paths", "multipathd
+show maps", and "multipathd show topology" client commands.
 
-multipathd show topology
-sys0:NQN:subsysname (uuid.96926ba3-b207-437c-902c-4a4df6538c3f) [nvme] nvme0n1 NVMe,Linux,4.15.0-r
-size=2097152 features='n/a' hwhandler='n/a' wp=rw
-`-+- policy='n/a' prio=n/a status=n/a
-  |- 0:1:1 nvme0c1n1 0:0 n/a n/a live
-  |- 0:2:1 nvme0c2n1 0:0 n/a n/a live
-  |- 0:3:1 nvme0c3n1 0:0 n/a n/a live
-  `- 0:4:1 nvme0c4n1 0:0 n/a n/a live
-
-multipathd show paths format '%G %d %i %o %z %m %N'
-foreign dev       hcil  dev_st serial           multipath host WWNN
-[nvme]  nvme0c1n1 0:1:1 live   1c2c86659503a02f nvme0n1   rdma:traddr=192.168.201.101,trsvcid=4420
-[nvme]  nvme0c2n1 0:2:1 live   1c2c86659503a02f nvme0n1   rdma:traddr=192.168.202.101,trsvcid=4420
-[nvme]  nvme0c3n1 0:3:1 live   1c2c86659503a02f nvme0n1   rdma:traddr=192.168.203.101,trsvcid=4420
-[nvme]  nvme0c4n1 0:4:1 live   1c2c86659503a02f nvme0n1   rdma:traddr=192.168.204.101,trsvcid=4420
-
-(admittedly, I abused the 'WWNN' wildcard here a bit to display information
-which is helpful for NVMe over RDMA).
+We don't support foreign data in the individual "show map" and "show path"
+commands, and neither in the "json" commands. The former is a deliberate
+decision, the latter could be added if desired.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/foreign/nvme.c | 342 ++++++++++++++++++++++++++++++++++++++++++--
- 1 file changed, 327 insertions(+), 15 deletions(-)
+ libmultipath/discovery.c  |  4 +++-
+ multipathd/cli_handlers.c | 39 ++++++++++++++++++++++++++++++++++-----
+ multipathd/main.c         | 43 ++++++++++++++++++++++++++++++++++++++++---
+ 3 files changed, 77 insertions(+), 9 deletions(-)
 
-diff --git a/libmultipath/foreign/nvme.c b/libmultipath/foreign/nvme.c
-index 4e9c3a52d03c..5546a8eb178a 100644
---- a/libmultipath/foreign/nvme.c
-+++ b/libmultipath/foreign/nvme.c
-@@ -25,42 +25,97 @@
- #include <stdbool.h>
- #include <libudev.h>
- #include <pthread.h>
-+#include <limits.h>
-+#include <glob.h>
- #include "vector.h"
- #include "generic.h"
- #include "foreign.h"
- #include "debug.h"
-+#include "structs.h"
-+#include "sysfs.h"
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 645224c1029c..45a4d8378893 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -31,6 +31,7 @@
+ #include "prio.h"
+ #include "defaults.h"
+ #include "prioritizers/alua_rtpg.h"
++#include "foreign.h"
  
-+static const char nvme_vendor[] = "NVMe";
-+static const char N_A[] = "n/a";
- const char *THIS;
+ int
+ alloc_path_with_pathinfo (struct config *conf, struct udev_device *udevice,
+@@ -1909,7 +1910,8 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
+ 	 * limited by DI_BLACKLIST and occurs before this debug
+ 	 * message with the mask value.
+ 	 */
+-	if (pp->udev && filter_property(conf, pp->udev) > 0)
++	if (pp->udev && (is_claimed_by_foreign(pp->udev) ||
++			 filter_property(conf, pp->udev) > 0))
+ 		return PATHINFO_SKIPPED;
  
-+struct nvme_map;
-+struct nvme_path {
-+	struct gen_path gen;
-+	struct udev_device *udev;
-+	struct udev_device *ctl;
-+	struct nvme_map *map;
-+	bool seen;
-+};
+ 	if (filter_devnode(conf->blist_devnode,
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index 78f2a12bc2f8..c0ae54aae841 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -27,6 +27,7 @@
+ #include "main.h"
+ #include "cli.h"
+ #include "uevent.h"
++#include "foreign.h"
+ 
+ int
+ show_paths (char ** r, int * len, struct vectors * vecs, char * style,
+@@ -35,11 +36,13 @@ show_paths (char ** r, int * len, struct vectors * vecs, char * style,
+ 	int i;
+ 	struct path * pp;
+ 	char * c;
+-	char * reply;
++	char * reply, * header;
+ 	unsigned int maxlen = INITIAL_REPLY_LEN;
+ 	int again = 1;
+ 
+ 	get_path_layout(vecs->pathvec, 1);
++	foreign_path_layout();
 +
-+struct nvme_pathgroup {
-+	struct gen_pathgroup gen;
-+	vector pathvec;
-+};
+ 	reply = MALLOC(maxlen);
+ 
+ 	while (again) {
+@@ -48,18 +51,29 @@ show_paths (char ** r, int * len, struct vectors * vecs, char * style,
+ 
+ 		c = reply;
+ 
+-		if (pretty && VECTOR_SIZE(vecs->pathvec) > 0)
++		if (pretty)
+ 			c += snprint_path_header(c, reply + maxlen - c,
+ 						 style);
++		header = c;
+ 
+ 		vector_foreach_slot(vecs->pathvec, pp, i)
+ 			c += snprint_path(c, reply + maxlen - c,
+ 					  style, pp, pretty);
+ 
++		c += snprint_foreign_paths(c, reply + maxlen - c,
++					   style, pretty);
 +
- struct nvme_map {
- 	struct gen_multipath gen;
- 	struct udev_device *udev;
- 	struct udev_device *subsys;
- 	dev_t devt;
-+	/* Just one static pathgroup for NVMe for now */
-+	struct nvme_pathgroup pg;
-+	struct gen_pathgroup *gpg;
-+	struct _vector pgvec;
-+	vector pathvec;
-+	int nr_live;
- };
+ 		again = ((c - reply) == (maxlen - 1));
  
--#define NAME_LEN 64 /* buffer length temp model name */
-+#define NAME_LEN 64 /* buffer length for temp attributes */
- #define const_gen_mp_to_nvme(g) ((const struct nvme_map*)(g))
- #define gen_mp_to_nvme(g) ((struct nvme_map*)(g))
- #define nvme_mp_to_gen(n) &((n)->gen)
-+#define const_gen_pg_to_nvme(g) ((const struct nvme_pathgroup*)(g))
-+#define gen_pg_to_nvme(g) ((struct nvme_pathgroup*)(g))
-+#define nvme_pg_to_gen(n) &((n)->gen)
-+#define const_gen_path_to_nvme(g) ((const struct nvme_path*)(g))
-+#define gen_path_to_nvme(g) ((struct nvme_path*)(g))
-+#define nvme_path_to_gen(n) &((n)->gen)
-+
-+static void cleanup_nvme_path(struct nvme_path *path)
-+{
-+	condlog(5, "%s: %p %p", __func__, path, path->udev);
-+	if (path->udev)
-+		udev_device_unref(path->udev);
-+	/* ctl is implicitly referenced by udev, no need to unref */
-+	free(path);
-+}
- 
- static void cleanup_nvme_map(struct nvme_map *map)
- {
-+	if (map->pathvec) {
-+		struct nvme_path *path;
-+		int i;
-+
-+		vector_foreach_slot_backwards(map->pathvec, path, i) {
-+			condlog(5, "%s: %d %p", __func__, i, path);
-+			cleanup_nvme_path(path);
-+			vector_del_slot(map->pathvec, i);
-+		}
-+	}
-+	vector_free(map->pathvec);
- 	if (map->udev)
- 		udev_device_unref(map->udev);
--	if (map->subsys)
--		udev_device_unref(map->subsys);
-+	/* subsys is implicitly referenced by udev, no need to unref */
- 	free(map);
- }
- 
- static const struct _vector*
- nvme_mp_get_pgs(const struct gen_multipath *gmp) {
--	return NULL;
-+	const struct nvme_map *nvme = const_gen_mp_to_nvme(gmp);
-+
-+	/* This is all used under the lock, no need to copy */
-+	return &nvme->pgvec;
- }
- 
- static void
- nvme_mp_rel_pgs(const struct gen_multipath *gmp, const struct _vector *v)
- {
-+	/* empty */
- }
- 
- static void rstrip(char *str)
-@@ -75,7 +130,6 @@ static int snprint_nvme_map(const struct gen_multipath *gmp,
- 			    char *buff, int len, char wildcard)
- {
- 	const struct nvme_map *nvm = const_gen_mp_to_nvme(gmp);
--	static const char nvme_vendor[] = "NVMe";
- 	char fld[NAME_LEN];
- 	const char *val;
- 
-@@ -92,6 +146,8 @@ static int snprint_nvme_map(const struct gen_multipath *gmp,
- 		return snprintf(buff, len, "%s",
- 				udev_device_get_sysattr_value(nvm->udev,
- 							      "wwid"));
-+	case 'N':
-+		return snprintf(buff, len, "%u", nvm->nr_live);
- 	case 'S':
- 		return snprintf(buff, len, "%s",
- 				udev_device_get_sysattr_value(nvm->udev,
-@@ -122,7 +178,7 @@ static int snprint_nvme_map(const struct gen_multipath *gmp,
- 	case 'G':
- 		return snprintf(buff, len, "%s", THIS);
- 	default:
--		return snprintf(buff, len, "N/A");
-+		return snprintf(buff, len, N_A);
- 		break;
+ 		REALLOC_REPLY(reply, again, maxlen);
  	}
++
++	if (pretty && c == header) {
++		/* No output - clear header */
++		*reply = '\0';
++		c = reply;
++	}
++
+ 	*r = reply;
+ 	*len = (int)(c - reply + 1);
  	return 0;
-@@ -130,27 +186,101 @@ static int snprint_nvme_map(const struct gen_multipath *gmp,
+@@ -134,6 +148,8 @@ show_maps_topology (char ** r, int * len, struct vectors * vecs)
+ 	int again = 1;
  
- static const struct _vector*
- nvme_pg_get_paths(const struct gen_pathgroup *gpg) {
--	return NULL;
-+	const struct nvme_pathgroup *gp = const_gen_pg_to_nvme(gpg);
+ 	get_path_layout(vecs->pathvec, 0);
++	foreign_path_layout();
 +
-+	/* This is all used under the lock, no need to copy */
-+	return gp->pathvec;
- }
+ 	reply = MALLOC(maxlen);
  
- static void
- nvme_pg_rel_paths(const struct gen_pathgroup *gpg, const struct _vector *v)
- {
-+	/* empty */
- }
+ 	while (again) {
+@@ -150,11 +166,13 @@ show_maps_topology (char ** r, int * len, struct vectors * vecs)
+ 			c += snprint_multipath_topology(c, reply + maxlen - c,
+ 							mpp, 2);
+ 		}
++		c += snprint_foreign_topology(c, reply + maxlen - c, 2);
  
- static int snprint_nvme_pg(const struct gen_pathgroup *gmp,
- 			   char *buff, int len, char wildcard)
- {
--	return 0;
-+	return snprintf(buff, len, N_A);
- }
+ 		again = ((c - reply) == (maxlen - 1));
  
--static int snprint_nvme_path(const struct gen_path *gmp,
-+static int snprint_hcil(const struct nvme_path *np, char *buf, int len)
-+{
-+	unsigned int nvmeid, ctlid, nsid;
-+	int rc;
-+	const char *sysname = udev_device_get_sysname(np->udev);
-+
-+	rc = sscanf(sysname, "nvme%uc%un%u", &nvmeid, &ctlid, &nsid);
-+	if (rc != 3) {
-+		condlog(1, "%s: failed to scan %s", __func__, sysname);
-+		rc = snprintf(buf, len, "(ERR:%s)", sysname);
-+	} else
-+		rc = snprintf(buf, len, "%u:%u:%u", nvmeid, ctlid, nsid);
-+	return (rc < len ? rc : len);
-+}
-+
-+static int snprint_nvme_path(const struct gen_path *gp,
- 			     char *buff, int len, char wildcard)
- {
-+	const struct nvme_path *np = const_gen_path_to_nvme(gp);
-+	dev_t devt;
-+	char fld[NAME_LEN];
-+	struct udev_device *pci;
-+
- 	switch (wildcard) {
-+	case 'w':
-+		return snprintf(buff, len, "%s",
-+				udev_device_get_sysattr_value(np->udev,
-+							      "wwid"));
-+	case 'd':
-+		return snprintf(buff, len, "%s",
-+				udev_device_get_sysname(np->udev));
-+	case 'i':
-+		return snprint_hcil(np, buff, len);
-+	case 'D':
-+		devt = udev_device_get_devnum(np->udev);
-+		return snprintf(buff, len, "%u:%u", major(devt), minor(devt));
-+	case 'o':
-+		sysfs_attr_get_value(np->ctl, "state", fld, sizeof(fld));
-+		return snprintf(buff, len, "%s", fld);
-+	case 's':
-+		snprintf(fld, sizeof(fld), "%s",
-+			 udev_device_get_sysattr_value(np->ctl,
-+						      "model"));
-+		rstrip(fld);
-+		return snprintf(buff, len, "%s,%s,%s", nvme_vendor, fld,
-+				udev_device_get_sysattr_value(np->ctl,
-+							      "firmware_rev"));
-+	case 'S':
-+		return snprintf(buff, len, "%s",
-+			udev_device_get_sysattr_value(np->udev,
-+						      "size"));
-+	case 'z':
-+		return snprintf(buff, len, "%s",
-+				udev_device_get_sysattr_value(np->ctl,
-+							      "serial"));
-+	case 'm':
-+		return snprintf(buff, len, "%s",
-+				udev_device_get_sysname(np->map->udev));
-+	case 'N':
- 	case 'R':
--		return snprintf(buff, len, "[foreign: %s]", THIS);
-+		return snprintf(buff, len, "%s:%s",
-+			udev_device_get_sysattr_value(np->ctl,
-+						      "transport"),
-+			udev_device_get_sysattr_value(np->ctl,
-+						      "address"));
-+	case 'G':
-+		return snprintf(buff, len, "[%s]", THIS);
-+	case 'a':
-+		pci = udev_device_get_parent_with_subsystem_devtype(np->ctl,
-+								    "pci",
-+								    NULL);
-+		if (pci != NULL)
-+			return snprintf(buff, len, "PCI:%s",
-+					udev_device_get_sysname(pci));
-+		__attribute__ ((fallthrough));
- 	default:
-+		return snprintf(buff, len, "%s", N_A);
- 		break;
+ 		REALLOC_REPLY(reply, again, maxlen);
  	}
++
+ 	*r = reply;
+ 	*len = (int)(c - reply + 1);
  	return 0;
-@@ -176,6 +306,7 @@ static const struct gen_path_ops nvme_path_ops __attribute__((unused)) = {
- struct context {
- 	pthread_mutex_t mutex;
- 	vector mpvec;
-+	struct udev *udev;
- };
- 
- void lock(struct context *ctx)
-@@ -228,7 +359,10 @@ void cleanup(struct context *ctx)
- 
- 	lock(ctx);
- 	pthread_cleanup_push(unlock, ctx);
--	vector_free(ctx->mpvec);
-+	if (ctx->udev)
-+		udev_unref(ctx->udev);
-+	if (ctx->mpvec)
-+		vector_free(ctx->mpvec);
- 	pthread_cleanup_pop(1);
- 	pthread_mutex_destroy(&ctx->mutex);
- 
-@@ -250,6 +384,10 @@ struct context *init(unsigned int api, const char *name)
- 
- 	pthread_mutex_init(&ctx->mutex, NULL);
- 
-+	ctx->udev = udev_new();
-+	if (ctx->udev == NULL)
-+		goto err;
-+
- 	ctx->mpvec = vector_alloc();
- 	if (ctx->mpvec == NULL)
- 		goto err;
-@@ -278,6 +416,142 @@ static struct nvme_map *_find_nvme_map_by_devt(const struct context *ctx,
- 	return NULL;
- }
- 
-+static struct nvme_path *
-+_find_path_by_syspath(struct nvme_map *map, const char *syspath)
-+{
-+	struct nvme_path *path;
-+	char real[PATH_MAX];
-+	const char *ppath;
-+	int i;
-+
-+	ppath = realpath(syspath, real);
-+	if (ppath == NULL) {
-+		condlog(1, "%s: %s: error in realpath", __func__, THIS);
-+		ppath = syspath;
-+	}
-+
-+	vector_foreach_slot(map->pathvec, path, i) {
-+		if (!strcmp(ppath,
-+			    udev_device_get_syspath(path->udev)))
-+			return path;
-+	}
-+	condlog(4, "%s: %s: %s not found", __func__, THIS, ppath);
-+	return NULL;
-+}
-+
-+static void _find_slaves(struct context *ctx, struct nvme_map *map)
-+{
-+	char pathbuf[PATH_MAX];
-+	glob_t globbuf;
-+	struct nvme_path *path;
-+	int r, i;
-+
-+	if (map == NULL || map->udev == NULL)
-+		return;
-+
-+	vector_foreach_slot(map->pathvec, path, i)
-+		path->seen = false;
-+
-+	memset(&globbuf, 0, sizeof(globbuf));
-+	snprintf(pathbuf, sizeof(pathbuf),
-+		"%s/slaves/*",
-+		udev_device_get_syspath(map->udev));
-+
-+	r = glob(pathbuf, 0, NULL, &globbuf);
-+
-+	if (r == GLOB_NOMATCH) {
-+		condlog(3, "%s: %s: no paths for %s", __func__, THIS,
-+			udev_device_get_sysname(map->udev));
-+		globfree(&globbuf);
-+		return;
-+	} else if (r != 0) {
-+		condlog(1, "%s: %s: error %d searching paths for %d:%d", __func__,
-+			THIS, r, major(map->devt), minor(map->devt));
-+		globfree(&globbuf);
-+		return;
-+	}
-+	for (i = 0; i < globbuf.gl_pathc; i++) {
-+		char *fn;
-+		struct udev_device *udev;
-+
-+		fn = strrchr(globbuf.gl_pathv[i], '/');
-+		if (fn == NULL)
-+			fn = globbuf.gl_pathv[i];
-+		else
-+			fn++;
-+
-+		if (snprintf(pathbuf, sizeof(pathbuf),
-+			     "%s/slaves/%s",
-+			     udev_device_get_syspath(map->udev), fn)
-+		    >= sizeof(pathbuf))
-+			continue;
-+
-+		path = _find_path_by_syspath(map, pathbuf);
-+		if (path != NULL) {
-+			path->seen = true;
-+			condlog(4, "%s: %s already known", __func__, fn);
-+			continue;
-+		}
-+
-+		udev = udev_device_new_from_syspath(ctx->udev, pathbuf);
-+		if (udev == NULL) {
-+			condlog(1, "%s: %s: failed to get udev device for %s",
-+				__func__, THIS, fn);
-+			continue;
-+		}
-+
-+		path = calloc(1, sizeof(*path));
-+		if (path == NULL)
-+			continue;
-+
-+		path->gen.ops = &nvme_path_ops;
-+		path->udev = udev;
-+		path->seen = true;
-+		path->map = map;
-+		path->ctl =
-+			udev_device_get_parent_with_subsystem_devtype(udev,
-+								      "nvme",
-+								      NULL);
-+		if (path->ctl == NULL) {
-+			condlog(1, "%s: %s; failed to get controller for %s",
-+				__func__, THIS, fn);
-+			cleanup_nvme_path(path);
-+			continue;
-+		}
-+
-+		if (vector_alloc_slot(map->pathvec) == NULL) {
-+			cleanup_nvme_path(path);
-+			continue;
-+		}
-+		condlog(3, "%s: %s: new path %s added to %s",
-+			__func__, THIS, udev_device_get_sysname(udev),
-+			udev_device_get_sysname(map->udev));
-+		vector_set_slot(map->pathvec, path);
-+	}
-+	globfree(&globbuf);
-+
-+	map->nr_live = 0;
-+	vector_foreach_slot_backwards(map->pathvec, path, i) {
-+		if (!path->seen) {
-+			condlog(1, "path %d not found in %s any more",
-+				i, udev_device_get_sysname(map->udev));
-+			vector_del_slot(map->pathvec, i);
-+			cleanup_nvme_path(path);
-+		} else {
-+			static const char live_state[] = "live";
-+			char state[16];
-+
-+			if ((sysfs_attr_get_value(path->ctl, "state", state,
-+						  sizeof(state)) > 0) &&
-+			    !strncmp(state, live_state, sizeof(live_state) - 1))
-+				map->nr_live++;
-+		}
-+	}
-+	condlog(3, "%s: %s: map %s has %d/%d live paths", __func__, THIS,
-+		udev_device_get_sysname(map->udev), map->nr_live,
-+		VECTOR_SIZE(map->pathvec));
-+}
-+
- static int _add_map(struct context *ctx, struct udev_device *ud,
- 		    struct udev_device *subsys)
+@@ -499,12 +517,14 @@ show_maps (char ** r, int *len, struct vectors * vecs, char * style,
  {
-@@ -296,12 +570,25 @@ static int _add_map(struct context *ctx, struct udev_device *ud,
- 	map->subsys = udev_device_ref(subsys);
- 	map->gen.ops = &nvme_map_ops;
+ 	int i;
+ 	struct multipath * mpp;
+-	char * c;
++	char * c, *header;
+ 	char * reply;
+ 	unsigned int maxlen = INITIAL_REPLY_LEN;
+ 	int again = 1;
  
--	if (vector_alloc_slot(ctx->mpvec) == NULL) {
-+	map->pathvec = vector_alloc();
-+	if (map->pathvec == NULL) {
- 		cleanup_nvme_map(map);
- 		return FOREIGN_ERR;
+ 	get_multipath_layout(vecs->mpvec, 1);
++	foreign_multipath_layout();
++
+ 	reply = MALLOC(maxlen);
+ 
+ 	while (again) {
+@@ -512,9 +532,10 @@ show_maps (char ** r, int *len, struct vectors * vecs, char * style,
+ 			return 1;
+ 
+ 		c = reply;
+-		if (pretty && VECTOR_SIZE(vecs->mpvec) > 0)
++		if (pretty)
+ 			c += snprint_multipath_header(c, reply + maxlen - c,
+ 						      style);
++		header = c;
+ 
+ 		vector_foreach_slot(vecs->mpvec, mpp, i) {
+ 			if (update_multipath(vecs, mpp->alias, 0)) {
+@@ -523,12 +544,20 @@ show_maps (char ** r, int *len, struct vectors * vecs, char * style,
+ 			}
+ 			c += snprint_multipath(c, reply + maxlen - c,
+ 					       style, mpp, pretty);
+-		}
+ 
++		}
++		c += snprint_foreign_multipaths(c, reply + maxlen - c,
++						style, pretty);
+ 		again = ((c - reply) == (maxlen - 1));
+ 
+ 		REALLOC_REPLY(reply, again, maxlen);
  	}
- 
-+	map->pg.gen.ops = &nvme_pg_ops;
-+	map->pg.pathvec = map->pathvec;
-+	map->gpg = nvme_pg_to_gen(&map->pg);
 +
-+	map->pgvec.allocated = 1;
-+	map->pgvec.slot = (void**)&map->gpg;
-+
-+	if (vector_alloc_slot(ctx->mpvec) == NULL) {
-+		cleanup_nvme_map(map);
-+		return FOREIGN_ERR;
++	if (pretty && c == header) {
++		/* No output - clear header */
++		*reply = '\0';
++		c = reply;
 +	}
- 	vector_set_slot(ctx->mpvec, map);
-+	_find_slaves(ctx, map);
+ 	*r = reply;
+ 	*len = (int)(c - reply + 1);
+ 	return 0;
+diff --git a/multipathd/main.c b/multipathd/main.c
+index b900bb3ec2e3..e1d98861a841 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -84,6 +84,7 @@ static int use_watchdog;
+ #include "waiter.h"
+ #include "io_err_stat.h"
+ #include "wwids.h"
++#include "foreign.h"
+ #include "../third-party/valgrind/drd.h"
  
- 	return FOREIGN_CLAIMED;
- }
-@@ -390,9 +677,25 @@ int delete(struct context *ctx, struct udev_device *ud)
- 	return rc;
- }
+ #define FILE_NAME_SIZE 256
+@@ -699,6 +700,15 @@ rescan:
+ 		mpp->action = ACT_RELOAD;
+ 		extract_hwe_from_path(mpp);
+ 	} else {
++		switch (add_foreign(pp->udev)) {
++		case FOREIGN_CLAIMED:
++		case FOREIGN_OK:
++			orphan_path(pp, "claimed by foreign library");
++			return 0;
++		default:
++			break;
++		}
++
+ 		if (!should_multipath(pp, vecs->pathvec)) {
+ 			orphan_path(pp, "only one path");
+ 			return 0;
+@@ -798,6 +808,8 @@ uev_remove_path (struct uevent *uev, struct vectors * vecs, int need_do_map)
+ 	int ret;
  
-+void _check(struct context *ctx)
-+{
-+	struct gen_multipath *gm;
-+	int i;
+ 	condlog(2, "%s: remove path (uevent)", uev->kernel);
++	delete_foreign(uev->udev);
 +
-+	vector_foreach_slot(ctx->mpvec, gm, i) {
-+		struct nvme_map *map = gen_mp_to_nvme(gm);
-+
-+		_find_slaves(ctx, map);
+ 	pthread_cleanup_push(cleanup_lock, &vecs->lock);
+ 	lock(&vecs->lock);
+ 	pthread_testcancel();
+@@ -917,12 +929,27 @@ fail:
+ static int
+ uev_update_path (struct uevent *uev, struct vectors * vecs)
+ {
+-	int ro, retval = 0;
++	int ro, retval = 0, rc;
+ 	struct path * pp;
+ 	struct config *conf;
+ 	int disable_changed_wwids;
+ 	int needs_reinit = 0;
+ 
++	switch ((rc = change_foreign(uev->udev))) {
++	case FOREIGN_OK:
++		/* known foreign path, ignore event */
++		return 0;
++	case FOREIGN_IGNORED:
++		break;
++	case FOREIGN_ERR:
++		condlog(3, "%s: error in change_foreign", __func__);
++		break;
++	default:
++		condlog(1, "%s: return code %d of change_forein is unsupported",
++			__func__, rc);
++		break;
 +	}
-+}
 +
- void check(struct context *ctx)
- {
--	condlog(5, "%s called for \"%s\"", __func__, THIS);
-+	condlog(4, "%s called for \"%s\"", __func__, THIS);
-+	lock(ctx);
-+	pthread_cleanup_push(unlock, ctx);
-+	_check(ctx);
-+	pthread_cleanup_pop(1);
- 	return;
- }
+ 	conf = get_multipath_config();
+ 	disable_changed_wwids = conf->disable_changed_wwids;
+ 	put_multipath_config(conf);
+@@ -1122,8 +1149,13 @@ uev_trigger (struct uevent * uev, void * trigger_data)
+ 	 * are not fully initialised then.
+ 	 */
+ 	if (!strncmp(uev->kernel, "dm-", 3)) {
+-		if (!uevent_is_mpath(uev))
++		if (!uevent_is_mpath(uev)) {
++			if (!strncmp(uev->action, "change", 6))
++				(void)add_foreign(uev->udev);
++			else if (!strncmp(uev->action, "remove", 6))
++				(void)delete_foreign(uev->udev);
+ 			goto out;
++		}
+ 		if (!strncmp(uev->action, "change", 6)) {
+ 			r = uev_add_map(uev, vecs);
  
-@@ -416,14 +719,23 @@ void release_multipaths(const struct context *ctx, const struct _vector *mpvec)
-  */
- const struct _vector * get_paths(const struct context *ctx)
- {
-+	vector paths = NULL;
-+	const struct gen_multipath *gm;
-+	int i;
+@@ -1932,7 +1964,7 @@ checkerloop (void *ap)
+ 						diff_time.tv_sec);
+ 			}
+ 		}
+-
++		check_foreign();
+ 		post_config_state(DAEMON_IDLE);
+ 		conf = get_multipath_config();
+ 		strict_timing = conf->strict_timing;
+@@ -2121,6 +2153,7 @@ reconfigure (struct vectors * vecs)
+ 
+ 	free_pathvec(vecs->pathvec, FREE_PATHS);
+ 	vecs->pathvec = NULL;
++	delete_all_foreign();
+ 
+ 	/* Re-read any timezone changes */
+ 	tzset();
+@@ -2372,6 +2405,9 @@ child (void * param)
+ 		condlog(0, "failed to initialize prioritizers");
+ 		goto failed;
+ 	}
++	/* Failing this is non-fatal */
 +
- 	condlog(5, "%s called for \"%s\"", __func__, THIS);
--	return NULL;
-+	vector_foreach_slot(ctx->mpvec, gm, i) {
-+		const struct nvme_map *nm = const_gen_mp_to_nvme(gm);
-+		paths = vector_convert(paths, nm->pathvec,
-+				       struct gen_path, identity);
-+	}
-+	return paths;
- }
++	init_foreign(conf->multipath_dir);
  
- void release_paths(const struct context *ctx, const struct _vector *mpvec)
- {
- 	condlog(5, "%s called for \"%s\"", __func__, THIS);
--	/* NOP */
-+	vector_free_const(mpvec);
- }
+ 	setlogmask(LOG_UPTO(conf->verbosity + 3));
  
- /* compile-time check whether all methods are present and correctly typed */
+@@ -2529,6 +2565,7 @@ child (void * param)
+ 	FREE(vecs);
+ 	vecs = NULL;
+ 
++	cleanup_foreign();
+ 	cleanup_checkers();
+ 	cleanup_prio();
+ 
 -- 
 2.16.1
