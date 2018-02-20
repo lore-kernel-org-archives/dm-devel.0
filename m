@@ -1,7 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [RFC PATCH 10/20] libmultipath: add vector_free_const()
-Date: Tue, 20 Feb 2018 14:26:48 +0100
-Message-ID: <20180220132658.22295-11-mwilck@suse.com>
+Subject: [RFC PATCH 02/20] libmultipath: remove unused "stdout
+	helpers"
+Date: Tue, 20 Feb 2018 14:26:40 +0100
+Message-ID: <20180220132658.22295-3-mwilck@suse.com>
 References: <20180220132658.22295-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,24 +22,63 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@s
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-... to dispose of constant vectors (const struct _vector*).
-
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/vector.h | 1 +
- 1 file changed, 1 insertion(+)
+ libmultipath/print.c | 26 --------------------------
+ libmultipath/print.h |  5 -----
+ 2 files changed, 31 deletions(-)
 
-diff --git a/libmultipath/vector.h b/libmultipath/vector.h
-index 5cfd4d060412..3f6e579ae19a 100644
---- a/libmultipath/vector.h
-+++ b/libmultipath/vector.h
-@@ -46,6 +46,7 @@ typedef struct _vector *vector;
- extern vector vector_alloc(void);
- extern void *vector_alloc_slot(vector v);
- extern void vector_free(vector v);
-+#define vector_free_const(x) vector_free((vector)(long)(x))
- extern void free_strvec(vector strvec);
- extern void vector_set_slot(vector v, void *value);
- extern void vector_del_slot(vector v, int slot);
+diff --git a/libmultipath/print.c b/libmultipath/print.c
+index 65a98247a753..27636c35e5ff 100644
+--- a/libmultipath/print.c
++++ b/libmultipath/print.c
+@@ -1765,32 +1765,6 @@ void print_path(struct path *pp, char *style)
+ 	printf("%s", line);
+ }
+ 
+-void print_multipath(struct multipath *mpp, char *style)
+-{
+-	char line[MAX_LINE_LEN];
+-
+-	memset(&line[0], 0, MAX_LINE_LEN);
+-	snprint_multipath(&line[0], MAX_LINE_LEN, style, mpp, 1);
+-	printf("%s", line);
+-}
+-
+-void print_pathgroup(struct pathgroup *pgp, char *style)
+-{
+-	char line[MAX_LINE_LEN];
+-
+-	memset(&line[0], 0, MAX_LINE_LEN);
+-	snprint_pathgroup(&line[0], MAX_LINE_LEN, style, pgp);
+-	printf("%s", line);
+-}
+-
+-void print_map(struct multipath *mpp, char *params)
+-{
+-	if (mpp->size && params)
+-		printf("0 %llu %s %s\n",
+-			 mpp->size, TGT_MPATH, params);
+-	return;
+-}
+-
+ void print_all_paths(vector pathvec, int banner)
+ {
+ 	print_all_paths_custo(pathvec, banner, PRINT_PATH_LONG);
+diff --git a/libmultipath/print.h b/libmultipath/print.h
+index b8c343679e15..734f43fd4cb6 100644
+--- a/libmultipath/print.h
++++ b/libmultipath/print.h
+@@ -119,10 +119,5 @@ int snprint_tgt_wwnn (char *, size_t, struct path *);
+ int snprint_tgt_wwpn (char *, size_t, struct path *);
+ 
+ void print_multipath_topology (struct multipath * mpp, int verbosity);
+-void print_path (struct path * pp, char * style);
+-void print_multipath (struct multipath * mpp, char * style);
+-void print_pathgroup (struct pathgroup * pgp, char * style);
+-void print_map (struct multipath * mpp, char * params);
+ void print_all_paths (vector pathvec, int banner);
+ void print_all_paths_custo (vector pathvec, int banner, char *fmt);
+-void print_hwtable (vector hwtable);
 -- 
 2.16.1
