@@ -1,14 +1,12 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: [RFC PATCH 09/20] multipath-tools: Makefile.inc: use
-	-Werror=cast-qual
-Date: Tue, 20 Feb 2018 14:26:47 +0100
-Message-ID: <20180220132658.22295-10-mwilck@suse.com>
-References: <20180220132658.22295-1-mwilck@suse.com>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: [PATCH] dm-bufio: avoid false-positive
+	Wmaybe-uninitialized warning
+Date: Thu, 22 Feb 2018 16:56:16 +0100
+Message-ID: <20180222155627.1800948-1-arnd@arndb.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180220132658.22295-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,29 +16,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
+Cc: Jens Axboe <axboe@kernel.dk>, Mark Rutland <mark.rutland@arm.com>, Jan Kara <jack@suse.cz>, Arnd Bergmann <arnd@arndb.de>, Eric Biggers <ebiggers@google.com>, linux-kernel@vger.kernel.org, Aliaksei Karaliou <akaraliou.dev@gmail.com>, Mikulas Patocka <mpatocka@redhat.com>, Ingo Molnar <mingo@kernel.org>, Dan Carpenter <dan.carpenter@oracle.com>
 List-Id: dm-devel.ids
 
-Casting "const" away is often an indicator for wrong code.
-Add a compiler flag to warn about such possible breakage.
+gcc-6.3 and earlier show a new warning after a seemingly unrelated change
+to the arm64 PAGE_KERNEL definition:
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
+In file included from drivers/md/dm-bufio.c:14:0:
+drivers/md/dm-bufio.c: In function 'alloc_buffer':
+include/linux/sched/mm.h:182:56: warning: 'noio_flag' may be used uninitialized in this function [-Wmaybe-uninitialized]
+  current->flags = (current->flags & ~PF_MEMALLOC_NOIO) | flags;
+                                                        ^
+
+The same warning happened earlier on linux-3.18 for MIPS and I did a
+workaround for that, but now it's come back.
+
+gcc-7 and newer are apparently smart enough to figure this out, and
+other architectures don't show it, so the best I could come up with is
+to rework the caller slightly in a way that makes it obvious enough to
+all arm64 compilers what is happening here.
+
+Fixes: 41acec624087 ("arm64: kpti: Make use of nG dependent on arm64_kernel_unmapped_at_el0()")
+Link: https://patchwork.kernel.org/patch/9692829/
+Signed-off-by: Arnd Bergmann <arnd@arndb.de>
 ---
- Makefile.inc | 1 +
- 1 file changed, 1 insertion(+)
+ drivers/md/dm-bufio.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
 
-diff --git a/Makefile.inc b/Makefile.inc
-index eb99c36010c1..a5b9d4e3fa74 100644
---- a/Makefile.inc
-+++ b/Makefile.inc
-@@ -87,6 +87,7 @@ STACKPROT := $(call TEST_CC_OPTION,-fstack-protector-strong,-fstack-protector)
- OPTFLAGS	= -O2 -g -pipe -Wall -Wextra -Wformat=2 -Werror=implicit-int \
- 		  -Werror=implicit-function-declaration -Werror=format-security \
- 		  -Wno-sign-compare -Wno-unused-parameter -Wno-clobbered \
-+		  -Werror=cast-qual -Werror=discarded-qualifiers \
- 		  -Wp,-D_FORTIFY_SOURCE=2 $(STACKPROT) \
- 		  --param=ssp-buffer-size=4
+diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+index 414c9af54ded..e7ad6fc6a5ea 100644
+--- a/drivers/md/dm-bufio.c
++++ b/drivers/md/dm-bufio.c
+@@ -413,13 +413,13 @@ static void *alloc_buffer_data(struct dm_bufio_client *c, gfp_t gfp_mask,
+ 	 * as if GFP_NOIO was specified.
+ 	 */
  
+-	if (gfp_mask & __GFP_NORETRY)
++	if (gfp_mask & __GFP_NORETRY) {
+ 		noio_flag = memalloc_noio_save();
+-
+-	ptr = __vmalloc(c->block_size, gfp_mask, PAGE_KERNEL);
+-
+-	if (gfp_mask & __GFP_NORETRY)
++		ptr = __vmalloc(c->block_size, gfp_mask, PAGE_KERNEL);
+ 		memalloc_noio_restore(noio_flag);
++	} else {
++		ptr = __vmalloc(c->block_size, gfp_mask, PAGE_KERNEL);
++	}
+ 
+ 	return ptr;
+ }
 -- 
-2.16.1
+2.9.0
