@@ -1,15 +1,15 @@
-From: Lance Gropper <lance.gropper@mtifilm.com>
-Subject: Re: DM Multipath limits
-Date: Wed, 21 Feb 2018 13:37:30 -0800
-Message-ID: <6ecc1b52-3ea2-ba95-f433-1dbb962feb03@mtifilm.com>
-References: <3cbeed05-179d-bbd9-ac5a-3357a28eabac@mtifilm.com>
-	<28F84C7B272904439CAA1BFB4BEF4D7463ED67@MX203CL04.corp.emc.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-bufio: avoid false-positive Wmaybe-uninitialized
+	warning
+Date: Thu, 22 Feb 2018 11:04:32 -0500
+Message-ID: <20180222160432.GA16971@redhat.com>
+References: <20180222155627.1800948-1-arnd@arndb.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <28F84C7B272904439CAA1BFB4BEF4D7463ED67@MX203CL04.corp.emc.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <20180222155627.1800948-1-arnd@arndb.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,49 +19,67 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "berthiaume, wayne" <Wayne.Berthiaume@dell.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: Jens Axboe <axboe@kernel.dk>, Mark Rutland <mark.rutland@arm.com>, Jan Kara <jack@suse.cz>, Eric Biggers <ebiggers@google.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Aliaksei Karaliou <akaraliou.dev@gmail.com>, Dan Carpenter <dan.carpenter@oracle.com>, Mikulas Patocka <mpatocka@redhat.com>, Ingo Molnar <mingo@kernel.org>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Hello Wayne:
+On Thu, Feb 22 2018 at 10:56am -0500,
+Arnd Bergmann <arnd@arndb.de> wrote:
 
-I still have to test this, but it looks like exactly what I was looking 
-for. Many thanks.
+> gcc-6.3 and earlier show a new warning after a seemingly unrelated change
+> to the arm64 PAGE_KERNEL definition:
+> 
+> In file included from drivers/md/dm-bufio.c:14:0:
+> drivers/md/dm-bufio.c: In function 'alloc_buffer':
+> include/linux/sched/mm.h:182:56: warning: 'noio_flag' may be used uninitialized in this function [-Wmaybe-uninitialized]
+>   current->flags = (current->flags & ~PF_MEMALLOC_NOIO) | flags;
+>                                                         ^
+> 
+> The same warning happened earlier on linux-3.18 for MIPS and I did a
+> workaround for that, but now it's come back.
+> 
+> gcc-7 and newer are apparently smart enough to figure this out, and
+> other architectures don't show it, so the best I could come up with is
+> to rework the caller slightly in a way that makes it obvious enough to
+> all arm64 compilers what is happening here.
+> 
+> Fixes: 41acec624087 ("arm64: kpti: Make use of nG dependent on arm64_kernel_unmapped_at_el0()")
+> Link: https://patchwork.kernel.org/patch/9692829/
+> Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+> ---
+>  drivers/md/dm-bufio.c | 10 +++++-----
+>  1 file changed, 5 insertions(+), 5 deletions(-)
+> 
+> diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+> index 414c9af54ded..e7ad6fc6a5ea 100644
+> --- a/drivers/md/dm-bufio.c
+> +++ b/drivers/md/dm-bufio.c
+> @@ -413,13 +413,13 @@ static void *alloc_buffer_data(struct dm_bufio_client *c, gfp_t gfp_mask,
+>  	 * as if GFP_NOIO was specified.
+>  	 */
+>  
+> -	if (gfp_mask & __GFP_NORETRY)
+> +	if (gfp_mask & __GFP_NORETRY) {
+>  		noio_flag = memalloc_noio_save();
+> -
+> -	ptr = __vmalloc(c->block_size, gfp_mask, PAGE_KERNEL);
+> -
+> -	if (gfp_mask & __GFP_NORETRY)
+> +		ptr = __vmalloc(c->block_size, gfp_mask, PAGE_KERNEL);
+>  		memalloc_noio_restore(noio_flag);
+> +	} else {
+> +		ptr = __vmalloc(c->block_size, gfp_mask, PAGE_KERNEL);
+> +	}
+>  
+>  	return ptr;
+>  }
 
-Lance
+Mikulas already sent a fix for this:
+https://patchwork.kernel.org/patch/10211631/
 
+But I like yours a bit better, though I'll likely move the declaration
+of 'noio_flag' temporary inside the conditional.
 
-On 2/21/2018 1:22 PM, berthiaume, wayne wrote:
-> Hi Lance.
->
-> 	We've qualified 16k devices. There are changes you will need to make to achieve this. You can refer to Dell EMC's Host Connectivity Guide
-> for Linux page 19 for an example with RHEL 7.
->
-> Regards,
-> Wayne.
->
-> Wayne Berthiaume
-> Manager, E-Lab Engineering Platform Qualification Team
-> Dell EMC | Infrastructure Solutions Group | Platform and System Engineering | Infrastructure Engineering & Operations | e2e Validation Lab (E-LAB)
->   "FOLLOW" E-Lab Engineering at https://inside.emc.com/community/active/EOS2/elab
-> Confidentiality Notice: This email message, including any attachments, is for the sole use of the intended recipient(s) and may contain confidential or proprietary information. Any unauthorized review, use, disclosure or distribution is prohibited. If you are not the intended recipient, immediately contact the sender by reply e-mail and destroy all copies of the original message.
->
->
-> -----Original Message-----
-> From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com] On Behalf Of Lance Gropper
-> Sent: Wednesday, January 10, 2018 12:11 PM
-> To: christophe.varoqui@opensvc.com; dm-devel@redhat.com
-> Subject: [dm-devel] DM Multipath limits
->
-> Hello Christophe:
->
-> We ran into a situation yesterday, where it appears there is a limit on the number of targets that DM Multipath can use. We are switching to a switch/zoning configuration at our office which may present as many as
-> 2500 targets to the system. Yesterday, we were testing a smaller config, and the limit on the number of targets appears to be 640. When we exceed 640, the system locks up. When we try 656 targets, it locks up, then if we back out the last 16 targets and replace them with 16 different ones, it still locks up. We backed off the zoning for the meantime (which cripples the connection/bandwidth) to about 280 targets, but every filesystem multipaths properly.
->
-> Do you know what is going on, and is there some way to increase this limit?
->
-> Lance
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+Anyway, I'll get this fixed up shortly, thanks.
+
+Mike
