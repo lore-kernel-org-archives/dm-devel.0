@@ -1,53 +1,52 @@
-From: Thorsten Leemhuis <regressions@leemhuis.info>
-Subject: Re: DM Regression in 4.16-rc1 - read() returns data when it shouldn't
-Date: Mon, 26 Feb 2018 18:31:37 +0100
-Message-ID: <c312f639-5fe6-d47f-2395-3985c80c0fc6@leemhuis.info>
-References: <70cda2a3-f246-d45b-f600-1f9d15ba22ff@gmail.com>
- <5fca4e3f-536c-9c52-31bb-927e8ab5b6c8@leemhuis.info>
- <20180219171531.GA27498@redhat.com>
- <3fa615bf-8239-f189-8557-cb2d072181c0@leemhuis.info>
- <87606khv5z.fsf@notabene.neil.brown.name>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] fix nvme test
+Date: Mon, 26 Feb 2018 14:42:42 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1802261437140.5096@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <87606khv5z.fsf@notabene.neil.brown.name>
-Content-Language: en-MW
-Sender: linux-kernel-owner@vger.kernel.org
-To: NeilBrown <neilb@suse.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: Milan Broz <gmazyland@gmail.com>, device-mapper development <dm-devel@redhat.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: msnizer@redhat.com
+Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On 26.02.2018 12:01, NeilBrown wrote:
-> On Mon, Feb 26 2018, Thorsten Leemhuis wrote:
->> Hi Mike! On 19.02.2018 18:15, Mike Snitzer wrote:
->>> On Mon, Feb 19 2018 at  8:44am -0500,
->>> Thorsten Leemhuis <regressions@leemhuis.info> wrote:
->>>> JFYI: This issues is tracked in the regression reports for Linux 4.16
->>>> (http://bit.ly/lnxregrep416 ) with this id:
->>>> Linux-Regression-ID: lr#9e195f
->>>> Please include this line in the comment section of patches that are
->>> […]
->>> The fix was already merged by Linus on Friday, see:
->>> git.kernel.org/linus/8dd601fa8317243be887458c49f6c29c2f3d719f
->> Ohh, thx for the pointer. Could you please next time add a tag like
->> Fixes: 18a25da84354 ("dm: ensure bio submission follows a depth-first
->> tree walk")
-> 
-> The thing is... it didn't fix that commit.  That commit was fine.
-> If fixed something else much further back, which that commit just made
-> more problematic.
-> That is why I added the Cc: stable with the earliest version that needed
-> fixing.
-> 
-> Unfortunately, reality isn't always neat and tidy :-(  when it is, I do
-> use Fixes:
+Hi
 
-Ha, okay, sorry for the noise then.
+The strncmp function should compare 4 bytes.
 
-Side note:  At the same time this is might be a reason why a
-"Linux-Regression-ID" or something like that might make sense, because
-it shows that even a bisected commit sometimes isn't enough to build a
-obvious connection between a regression report and the commit with the
-fix...
- Ciao, Thorsten
+But I'm wondering what's the purpose of this test at all? bio-based 
+interface doesn't support partial completions for any device - so why do 
+we need special code path just for nvme and why can't we use it for other 
+block devices?
+
+Mikulas
+
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+---
+ drivers/md/dm-table.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+Index: linux-2.6/drivers/md/dm-table.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-table.c	2018-02-24 03:40:18.000000000 +0100
++++ linux-2.6/drivers/md/dm-table.c	2018-02-26 19:36:29.728499000 +0100
+@@ -1755,7 +1755,7 @@ static int device_no_partial_completion(
+ 	char b[BDEVNAME_SIZE];
+ 
+ 	/* For now, NVMe devices are the only devices of this class */
+-	return (strncmp(bdevname(dev->bdev, b), "nvme", 3) == 0);
++	return (strncmp(bdevname(dev->bdev, b), "nvme", 4) == 0);
+ }
+ 
+ static bool dm_table_does_not_support_partial_completion(struct dm_table *t)
