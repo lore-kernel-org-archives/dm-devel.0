@@ -1,48 +1,53 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH] multipathd: add lock protection for
- cli_list_status
-Date: Mon, 26 Feb 2018 14:52:12 +0100
-Message-ID: <1519653132.4661.45.camel@suse.com>
-References: <CEB9978CF3252343BE3C67AC9F0086A34295B3BB@H3CMLB14-EX.srv.huawei-3com.com>
+From: Thorsten Leemhuis <regressions@leemhuis.info>
+Subject: Re: DM Regression in 4.16-rc1 - read() returns data when it shouldn't
+Date: Mon, 26 Feb 2018 18:31:37 +0100
+Message-ID: <c312f639-5fe6-d47f-2395-3985c80c0fc6@leemhuis.info>
+References: <70cda2a3-f246-d45b-f600-1f9d15ba22ff@gmail.com>
+ <5fca4e3f-536c-9c52-31bb-927e8ab5b6c8@leemhuis.info>
+ <20180219171531.GA27498@redhat.com>
+ <3fa615bf-8239-f189-8557-cb2d072181c0@leemhuis.info>
+ <87606khv5z.fsf@notabene.neil.brown.name>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CEB9978CF3252343BE3C67AC9F0086A34295B3BB@H3CMLB14-EX.srv.huawei-3com.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Chongyun Wu <wu.chongyun@h3c.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
-Cc: Guozhonghua <guozhonghua@h3c.com>, Changwei Ge <ge.changwei@h3c.com>, Changlimin <changlimin@h3c.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <87606khv5z.fsf@notabene.neil.brown.name>
+Content-Language: en-MW
+Sender: linux-kernel-owner@vger.kernel.org
+To: NeilBrown <neilb@suse.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: Milan Broz <gmazyland@gmail.com>, device-mapper development <dm-devel@redhat.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-T24gRnJpLCAyMDE4LTAyLTIzIGF0IDA5OjU4ICswMDAwLCBDaG9uZ3l1biBXdSB3cm90ZToKPiBj
-bGlfbGlzdF9zdGF0dXMgd2lsbCBhY2Nlc3MgdmVjcy0+cGF0aHZlYyB3aGljaCBzaG91bGQgaGF2
-ZSBsb2NrCj4gcHJvdGVjdGlvbiwgb3RoZXJ3aXNlIG1pZ2h0IGdldCBpbmNvbnNpc3RlbnQgZGF0
-YSBvciBvdGhlcgo+IHByb2JsZW0uCj4gCj4gU2lnbmVkLW9mZi1ieTogQ2hvbmd5dW4gV3UgPHd1
-LmNob25neXVuQGgzYy5jb20+ClJldmlld2VkLWJ5OiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNl
-LmNvbT4KCj4gLS0tCj4gICBtdWx0aXBhdGhkL21haW4uYyB8ICAgIDIgKy0KPiAgIDEgZmlsZSBj
-aGFuZ2VkLCAxIGluc2VydGlvbigrKSwgMSBkZWxldGlvbigtKQo+IAo+IGRpZmYgLS1naXQgYS9t
-dWx0aXBhdGhkL21haW4uYyBiL211bHRpcGF0aGQvbWFpbi5jCj4gaW5kZXggZTc0YTQ0OC4uYjRl
-MTVlYiAxMDA2NDQKPiAtLS0gYS9tdWx0aXBhdGhkL21haW4uYwo+ICsrKyBiL211bHRpcGF0aGQv
-bWFpbi5jCj4gQEAgLTEyMDQsNyArMTIwNCw3IEBAIHV4bHNucmxvb3AgKHZvaWQgKiBhcCkKPiAg
-IAlzZXRfaGFuZGxlcl9jYWxsYmFjayhMSVNUK1BBVEhTK1JBVytGTVQsCj4gY2xpX2xpc3RfcGF0
-aHNfcmF3KTsKPiAgIAlzZXRfaGFuZGxlcl9jYWxsYmFjayhMSVNUK1BBVEgsIGNsaV9saXN0X3Bh
-dGgpOwo+ICAgCXNldF9oYW5kbGVyX2NhbGxiYWNrKExJU1QrTUFQUywgY2xpX2xpc3RfbWFwcyk7
-Cj4gLQlzZXRfdW5sb2NrZWRfaGFuZGxlcl9jYWxsYmFjayhMSVNUK1NUQVRVUywgY2xpX2xpc3Rf
-c3RhdHVzKTsKPiArCXNldF9oYW5kbGVyX2NhbGxiYWNrKExJU1QrU1RBVFVTLCBjbGlfbGlzdF9z
-dGF0dXMpOwo+ICAgCXNldF91bmxvY2tlZF9oYW5kbGVyX2NhbGxiYWNrKExJU1QrREFFTU9OLAo+
-IGNsaV9saXN0X2RhZW1vbik7Cj4gICAJc2V0X2hhbmRsZXJfY2FsbGJhY2soTElTVCtNQVBTK1NU
-QVRVUywKPiBjbGlfbGlzdF9tYXBzX3N0YXR1cyk7Cj4gICAJc2V0X2hhbmRsZXJfY2FsbGJhY2so
-TElTVCtNQVBTK1NUQVRTLCBjbGlfbGlzdF9tYXBzX3N0YXRzKTsKLS0gCkRyLiBNYXJ0aW4gV2ls
-Y2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGlu
-dXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5v
-cnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApk
-bS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5m
-by9kbS1kZXZlbA==
+On 26.02.2018 12:01, NeilBrown wrote:
+> On Mon, Feb 26 2018, Thorsten Leemhuis wrote:
+>> Hi Mike! On 19.02.2018 18:15, Mike Snitzer wrote:
+>>> On Mon, Feb 19 2018 at  8:44am -0500,
+>>> Thorsten Leemhuis <regressions@leemhuis.info> wrote:
+>>>> JFYI: This issues is tracked in the regression reports for Linux 4.16
+>>>> (http://bit.ly/lnxregrep416 ) with this id:
+>>>> Linux-Regression-ID: lr#9e195f
+>>>> Please include this line in the comment section of patches that are
+>>> […]
+>>> The fix was already merged by Linus on Friday, see:
+>>> git.kernel.org/linus/8dd601fa8317243be887458c49f6c29c2f3d719f
+>> Ohh, thx for the pointer. Could you please next time add a tag like
+>> Fixes: 18a25da84354 ("dm: ensure bio submission follows a depth-first
+>> tree walk")
+> 
+> The thing is... it didn't fix that commit.  That commit was fine.
+> If fixed something else much further back, which that commit just made
+> more problematic.
+> That is why I added the Cc: stable with the earliest version that needed
+> fixing.
+> 
+> Unfortunately, reality isn't always neat and tidy :-(  when it is, I do
+> use Fixes:
+
+Ha, okay, sorry for the noise then.
+
+Side note:  At the same time this is might be a reason why a
+"Linux-Regression-ID" or something like that might make sense, because
+it shows that even a bisected commit sometimes isn't enough to build a
+obvious connection between a regression report and the commit with the
+fix...
+ Ciao, Thorsten
