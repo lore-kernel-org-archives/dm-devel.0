@@ -1,7 +1,7 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
 Subject: [PATCH] fix nvme test
-Date: Mon, 26 Feb 2018 14:42:42 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1802261437140.5096@file01.intranet.prod.int.rdu2.redhat.com>
+Date: Mon, 26 Feb 2018 15:22:32 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1802261522141.5096@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -15,7 +15,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: msnizer@redhat.com
+To: Mike Snitzer <msnitzer@redhat.com>
 Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
