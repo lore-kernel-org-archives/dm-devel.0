@@ -1,11 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH] libmultipath: fix wrong output of "multipath -t"
-Date: Mon, 26 Feb 2018 13:55:58 +0100
-Message-ID: <20180226125558.13861-1-mwilck@suse.com>
+Subject: Re: [PATCH] multipathd: add lock protection for
+ cli_list_status
+Date: Mon, 26 Feb 2018 14:52:12 +0100
+Message-ID: <1519653132.4661.45.camel@suse.com>
+References: <CEB9978CF3252343BE3C67AC9F0086A34295B3BB@H3CMLB14-EX.srv.huawei-3com.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CEB9978CF3252343BE3C67AC9F0086A34295B3BB@H3CMLB14-EX.srv.huawei-3com.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,109 +18,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
+To: Chongyun Wu <wu.chongyun@h3c.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+Cc: Guozhonghua <guozhonghua@h3c.com>, Changwei Ge <ge.changwei@h3c.com>, Changlimin <changlimin@h3c.com>
 List-Id: dm-devel.ids
 
-The default values printed by "multipath -t" or "multipathd show config"
-for "detect_prio", "detect_checker", and "retain_attached_hw_handler"
-don't match the actual compiled-in defaults. Moreover, several other
-options would also be displayed wrongly if the defaults were changed.
-
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- libmultipath/dict.c | 25 ++++++++++++++++---------
- 1 file changed, 16 insertions(+), 9 deletions(-)
-
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index 36cccc94efb4..98dfc4b8744b 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -345,7 +345,7 @@ declare_def_handler(checker_timeout, set_int)
- declare_def_snprint(checker_timeout, print_nonzero)
- 
- declare_def_handler(flush_on_last_del, set_yes_no_undef)
--declare_def_snprint_defint(flush_on_last_del, print_yes_no_undef, YNU_NO)
-+declare_def_snprint_defint(flush_on_last_del, print_yes_no_undef, DEFAULT_FLUSH)
- declare_ovr_handler(flush_on_last_del, set_yes_no_undef)
- declare_ovr_snprint(flush_on_last_del, print_yes_no_undef)
- declare_hw_handler(flush_on_last_del, set_yes_no_undef)
-@@ -354,7 +354,8 @@ declare_mp_handler(flush_on_last_del, set_yes_no_undef)
- declare_mp_snprint(flush_on_last_del, print_yes_no_undef)
- 
- declare_def_handler(user_friendly_names, set_yes_no_undef)
--declare_def_snprint_defint(user_friendly_names, print_yes_no_undef, YNU_NO)
-+declare_def_snprint_defint(user_friendly_names, print_yes_no_undef,
-+			   DEFAULT_USER_FRIENDLY_NAMES)
- declare_ovr_handler(user_friendly_names, set_yes_no_undef)
- declare_ovr_snprint(user_friendly_names, print_yes_no_undef)
- declare_hw_handler(user_friendly_names, set_yes_no_undef)
-@@ -372,21 +373,24 @@ declare_def_handler(prkeys_file, set_str)
- declare_def_snprint(prkeys_file, print_str)
- 
- declare_def_handler(retain_hwhandler, set_yes_no_undef)
--declare_def_snprint_defint(retain_hwhandler, print_yes_no_undef, YNU_NO)
-+declare_def_snprint_defint(retain_hwhandler, print_yes_no_undef,
-+			   DEFAULT_RETAIN_HWHANDLER)
- declare_ovr_handler(retain_hwhandler, set_yes_no_undef)
- declare_ovr_snprint(retain_hwhandler, print_yes_no_undef)
- declare_hw_handler(retain_hwhandler, set_yes_no_undef)
- declare_hw_snprint(retain_hwhandler, print_yes_no_undef)
- 
- declare_def_handler(detect_prio, set_yes_no_undef)
--declare_def_snprint_defint(detect_prio, print_yes_no_undef, YNU_NO)
-+declare_def_snprint_defint(detect_prio, print_yes_no_undef,
-+			   DEFAULT_DETECT_PRIO)
- declare_ovr_handler(detect_prio, set_yes_no_undef)
- declare_ovr_snprint(detect_prio, print_yes_no_undef)
- declare_hw_handler(detect_prio, set_yes_no_undef)
- declare_hw_snprint(detect_prio, print_yes_no_undef)
- 
- declare_def_handler(detect_checker, set_yes_no_undef)
--declare_def_snprint_defint(detect_checker, print_yes_no_undef, YNU_NO)
-+declare_def_snprint_defint(detect_checker, print_yes_no_undef,
-+			   DEFAULT_DETECT_CHECKER)
- declare_ovr_handler(detect_checker, set_yes_no_undef)
- declare_ovr_snprint(detect_checker, print_yes_no_undef)
- declare_hw_handler(detect_checker, set_yes_no_undef)
-@@ -396,7 +400,8 @@ declare_def_handler(force_sync, set_yes_no)
- declare_def_snprint(force_sync, print_yes_no)
- 
- declare_def_handler(deferred_remove, set_yes_no_undef)
--declare_def_snprint_defint(deferred_remove, print_yes_no_undef, YNU_NO)
-+declare_def_snprint_defint(deferred_remove, print_yes_no_undef,
-+			   DEFAULT_DEFERRED_REMOVE)
- declare_ovr_handler(deferred_remove, set_yes_no_undef)
- declare_ovr_snprint(deferred_remove, print_yes_no_undef)
- declare_hw_handler(deferred_remove, set_yes_no_undef)
-@@ -417,7 +422,8 @@ declare_def_handler(strict_timing, set_yes_no)
- declare_def_snprint(strict_timing, print_yes_no)
- 
- declare_def_handler(skip_kpartx, set_yes_no_undef)
--declare_def_snprint_defint(skip_kpartx, print_yes_no_undef, YNU_NO)
-+declare_def_snprint_defint(skip_kpartx, print_yes_no_undef,
-+			   DEFAULT_SKIP_KPARTX)
- declare_ovr_handler(skip_kpartx, set_yes_no_undef)
- declare_ovr_snprint(skip_kpartx, print_yes_no_undef)
- declare_hw_handler(skip_kpartx, set_yes_no_undef)
-@@ -634,7 +640,8 @@ print_fast_io_fail(char * buff, int len, void *ptr)
- }
- 
- declare_def_handler(fast_io_fail, set_fast_io_fail)
--declare_def_snprint_defint(fast_io_fail, print_fast_io_fail, DEFAULT_FAST_IO_FAIL)
-+declare_def_snprint_defint(fast_io_fail, print_fast_io_fail,
-+			   DEFAULT_FAST_IO_FAIL)
- declare_ovr_handler(fast_io_fail, set_fast_io_fail)
- declare_ovr_snprint(fast_io_fail, print_fast_io_fail)
- declare_hw_handler(fast_io_fail, set_fast_io_fail)
-@@ -828,7 +835,7 @@ print_rr_weight (char * buff, int len, void *ptr)
- }
- 
- declare_def_handler(rr_weight, set_rr_weight)
--declare_def_snprint_defint(rr_weight, print_rr_weight, RR_WEIGHT_NONE)
-+declare_def_snprint_defint(rr_weight, print_rr_weight, DEFAULT_RR_WEIGHT)
- declare_ovr_handler(rr_weight, set_rr_weight)
- declare_ovr_snprint(rr_weight, print_rr_weight)
- declare_hw_handler(rr_weight, set_rr_weight)
--- 
-2.16.1
+T24gRnJpLCAyMDE4LTAyLTIzIGF0IDA5OjU4ICswMDAwLCBDaG9uZ3l1biBXdSB3cm90ZToKPiBj
+bGlfbGlzdF9zdGF0dXMgd2lsbCBhY2Nlc3MgdmVjcy0+cGF0aHZlYyB3aGljaCBzaG91bGQgaGF2
+ZSBsb2NrCj4gcHJvdGVjdGlvbiwgb3RoZXJ3aXNlIG1pZ2h0IGdldCBpbmNvbnNpc3RlbnQgZGF0
+YSBvciBvdGhlcgo+IHByb2JsZW0uCj4gCj4gU2lnbmVkLW9mZi1ieTogQ2hvbmd5dW4gV3UgPHd1
+LmNob25neXVuQGgzYy5jb20+ClJldmlld2VkLWJ5OiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNl
+LmNvbT4KCj4gLS0tCj4gICBtdWx0aXBhdGhkL21haW4uYyB8ICAgIDIgKy0KPiAgIDEgZmlsZSBj
+aGFuZ2VkLCAxIGluc2VydGlvbigrKSwgMSBkZWxldGlvbigtKQo+IAo+IGRpZmYgLS1naXQgYS9t
+dWx0aXBhdGhkL21haW4uYyBiL211bHRpcGF0aGQvbWFpbi5jCj4gaW5kZXggZTc0YTQ0OC4uYjRl
+MTVlYiAxMDA2NDQKPiAtLS0gYS9tdWx0aXBhdGhkL21haW4uYwo+ICsrKyBiL211bHRpcGF0aGQv
+bWFpbi5jCj4gQEAgLTEyMDQsNyArMTIwNCw3IEBAIHV4bHNucmxvb3AgKHZvaWQgKiBhcCkKPiAg
+IAlzZXRfaGFuZGxlcl9jYWxsYmFjayhMSVNUK1BBVEhTK1JBVytGTVQsCj4gY2xpX2xpc3RfcGF0
+aHNfcmF3KTsKPiAgIAlzZXRfaGFuZGxlcl9jYWxsYmFjayhMSVNUK1BBVEgsIGNsaV9saXN0X3Bh
+dGgpOwo+ICAgCXNldF9oYW5kbGVyX2NhbGxiYWNrKExJU1QrTUFQUywgY2xpX2xpc3RfbWFwcyk7
+Cj4gLQlzZXRfdW5sb2NrZWRfaGFuZGxlcl9jYWxsYmFjayhMSVNUK1NUQVRVUywgY2xpX2xpc3Rf
+c3RhdHVzKTsKPiArCXNldF9oYW5kbGVyX2NhbGxiYWNrKExJU1QrU1RBVFVTLCBjbGlfbGlzdF9z
+dGF0dXMpOwo+ICAgCXNldF91bmxvY2tlZF9oYW5kbGVyX2NhbGxiYWNrKExJU1QrREFFTU9OLAo+
+IGNsaV9saXN0X2RhZW1vbik7Cj4gICAJc2V0X2hhbmRsZXJfY2FsbGJhY2soTElTVCtNQVBTK1NU
+QVRVUywKPiBjbGlfbGlzdF9tYXBzX3N0YXR1cyk7Cj4gICAJc2V0X2hhbmRsZXJfY2FsbGJhY2so
+TElTVCtNQVBTK1NUQVRTLCBjbGlfbGlzdF9tYXBzX3N0YXRzKTsKLS0gCkRyLiBNYXJ0aW4gV2ls
+Y2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGlu
+dXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5v
+cnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApk
+bS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5m
+by9kbS1kZXZlbA==
