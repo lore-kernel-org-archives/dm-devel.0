@@ -1,60 +1,60 @@
-From: Eivind Sarto <eivindsarto@gmail.com>
-Subject: howto create read-only thin snapshot with lvm2app
-Date: Sun, 25 Feb 2018 15:19:10 -0800
-Message-ID: <CAB3weQ85OYN_drE40RNcSafL5g37XDprVbG9BzVQ3QOu4wFNAQ@mail.gmail.com>
+From: Thorsten Leemhuis <regressions@leemhuis.info>
+Subject: Re: DM Regression in 4.16-rc1 - read() returns data when it shouldn't
+Date: Mon, 26 Feb 2018 11:14:46 +0100
+Message-ID: <3fa615bf-8239-f189-8557-cb2d072181c0@leemhuis.info>
+References: <70cda2a3-f246-d45b-f600-1f9d15ba22ff@gmail.com>
+ <5fca4e3f-536c-9c52-31bb-927e8ab5b6c8@leemhuis.info>
+ <20180219171531.GA27498@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============6123722354323690266=="
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180219171531.GA27498@redhat.com>
+Content-Language: en-MW
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Milan Broz <gmazyland@gmail.com>, NeilBrown <neilb@suse.com>, device-mapper development <dm-devel@redhat.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
---===============6123722354323690266==
-Content-Type: multipart/alternative; boundary="f4f5e8078628f4d3d40566119ef3"
+Hi Mike! On 19.02.2018 18:15, Mike Snitzer wrote:
+> On Mon, Feb 19 2018 at  8:44am -0500,
+> Thorsten Leemhuis <regressions@leemhuis.info> wrote:
+> 
+>> JFYI: This issues is tracked in the regression reports for Linux 4.16
+>> (http://bit.ly/lnxregrep416 ) with this id:
+>> Linux-Regression-ID: lr#9e195f
+>> Please include this line in the comment section of patches that are
+> […]
+> The fix was already merged by Linus on Friday, see:
+> git.kernel.org/linus/8dd601fa8317243be887458c49f6c29c2f3d719f
 
---f4f5e8078628f4d3d40566119ef3
-Content-Type: text/plain; charset="UTF-8"
+Ohh, thx for the pointer. Could you please next time add a tag like
 
-I am using liblvm2app to create thin snapshots by doing:
-*   params = lvm_lv_params_create_snapshot(thin_lv, snapname, 0ULL);*
-*   snap_lv = lvm_lv_create(params);*
+Fixes: 18a25da84354 ("dm: ensure bio submission follows a depth-first
+tree walk")
 
-The snapshots are read-write permission by default.  But, I cannot figure
-out howto create a read-only snapshot.  l cannot seem to find the right
-API/arguments to modify the params before calling lvm_lv_create().  What do
-I need to do?
+to the commit? For details see
+Documnetation/process/submitting-patches.rst section 2 and 13:
+https://www.kernel.org/doc/html/latest/process/submitting-patches.html
 
--eivind
+That would have saved both of us this conversation. In addition I head
+that at least one big Linux distributor is using those tags when
+backporting changes to make sure all relevant fixes for a particular
+backported commit get backported as well.
 
---f4f5e8078628f4d3d40566119ef3
-Content-Type: text/html; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+> But moving forward I have no interest in sprinkling external metadata
+> references in Linux commit headers. 
+> 
+> Seems more like you're engineering something that gives you, and
+> possibly a select few others, meaning but that is make work for all
+> Linux maintainers.
 
-<div dir=3D"ltr">I am using liblvm2app to create thin snapshots by doing:<d=
-iv><b style=3D"">=C2=A0 =C2=A0params =3D lvm_lv_params_create_snapshot(thin=
-_lv, snapname, 0ULL);</b></div><div><b>=C2=A0 =C2=A0snap_lv =3D lvm_lv_crea=
-te(params);</b></div><div><br></div><div>The snapshots are read-write permi=
-ssion by default.=C2=A0 But, I cannot figure out howto create a read-only s=
-napshot.=C2=A0 l cannot seem to find the right API/arguments to modify the =
-params before calling lvm_lv_create().=C2=A0 What do I need to do?</div><di=
-v><br></div><div>-eivind</div></div>
+I just asked you to help me make regression tracking work a little bit
+easier. I'm neither planing to enforce this nor in a position to do so,
+thus feel free to not do what I asked for; that's totally fine for me.
+Especially as those tags are only a interim solution afaics (one that I
+don't like to much myself; but they sometimes help connecting the
+various dots in the phase where the commit that introduced a regression
+is not yet known).
 
---f4f5e8078628f4d3d40566119ef3--
-
-
---===============6123722354323690266==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============6123722354323690266==--
+Ciao, Thorsten
