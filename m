@@ -1,13 +1,12 @@
 From: Qu Wenruo <wqu@suse.com>
-Subject: [PATCH 2/2] log-writes: Add support for METADATA flag
-Date: Wed, 28 Feb 2018 15:33:26 +0800
-Message-ID: <20180228073326.30106-2-wqu@suse.com>
-References: <20180228073326.30106-1-wqu@suse.com>
+Subject: [PATCH 1/2] log-writes: Add support to output human
+	readable flags
+Date: Wed, 28 Feb 2018 15:33:25 +0800
+Message-ID: <20180228073326.30106-1-wqu@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180228073326.30106-1-wqu@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,43 +21,100 @@ List-Id: dm-devel.ids
 
 Signed-off-by: Qu Wenruo <wqu@suse.com>
 ---
- log-writes.c | 3 ++-
- log-writes.h | 9 +++++----
- 2 files changed, 7 insertions(+), 5 deletions(-)
+ log-writes.c | 60 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++---
+ 1 file changed, 57 insertions(+), 3 deletions(-)
 
 diff --git a/log-writes.c b/log-writes.c
-index 5ef328656c89..651db43383ba 100644
+index fa4f3f3b42d6..5ef328656c89 100644
 --- a/log-writes.c
 +++ b/log-writes.c
-@@ -127,7 +127,8 @@ struct flags_to_str_entry {
- 	DEFINE_LOG_FLAGS_STR_ENTRY(FLUSH),
- 	DEFINE_LOG_FLAGS_STR_ENTRY(FUA),
- 	DEFINE_LOG_FLAGS_STR_ENTRY(DISCARD),
--	DEFINE_LOG_FLAGS_STR_ENTRY(MARK)
-+	DEFINE_LOG_FLAGS_STR_ENTRY(MARK),
-+	DEFINE_LOG_FLAGS_STR_ENTRY(METADATA)
- };
+@@ -117,6 +117,58 @@ int log_discard(struct log *log, struct log_write_entry *entry)
+ 	return 0;
+ }
  
- #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
-diff --git a/log-writes.h b/log-writes.h
-index 13f98ffe1730..ce41262f6aaa 100644
---- a/log-writes.h
-+++ b/log-writes.h
-@@ -12,10 +12,11 @@ extern int log_writes_verbose;
- typedef __u64 u64;
- typedef __u32 u32;
++#define DEFINE_LOG_FLAGS_STR_ENTRY(x)	\
++	{LOG_##x##_FLAG, #x}
++
++struct flags_to_str_entry {
++	u64 flags;
++	const char *str;
++} log_flags_table[] = {
++	DEFINE_LOG_FLAGS_STR_ENTRY(FLUSH),
++	DEFINE_LOG_FLAGS_STR_ENTRY(FUA),
++	DEFINE_LOG_FLAGS_STR_ENTRY(DISCARD),
++	DEFINE_LOG_FLAGS_STR_ENTRY(MARK)
++};
++
++#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
++#define LOG_FLAGS_BUF_SIZE	128
++/*
++ * Convert numeric flags to human readable flags.
++ * @flags:	numeric flags
++ * @buf:	output buffer for human readable string.
++ * 		must have enough space (LOG_FLAGS_BUF_SIZE) to contain all
++ * 		the string
++ */
++static void entry_flags_to_str(u64 flags, char *buf)
++{
++	int empty = 1;
++	int left_len;
++	int i;
++
++	buf[0] = '\0';
++	for (i = 0; i < ARRAY_SIZE(log_flags_table); i++) {
++		if (flags & log_flags_table[i].flags) {
++			if (!empty)
++				strncat(buf, "|", LOG_FLAGS_BUF_SIZE);
++			empty = 0;
++			strncat(buf, log_flags_table[i].str, LOG_FLAGS_BUF_SIZE);
++			flags &= ~log_flags_table[i].flags;
++		}
++	}
++	if (flags) {
++		if (!empty)
++			strncat(buf, "|", LOG_FLAGS_BUF_SIZE);
++		empty = 0;
++		left_len = LOG_FLAGS_BUF_SIZE - strnlen(buf,
++						        LOG_FLAGS_BUF_SIZE);
++		if (left_len > 0)
++			snprintf(buf + strnlen(buf, LOG_FLAGS_BUF_SIZE),
++				 left_len, "UNKNOWN.%llu", flags);
++	}
++	if (empty)
++		strncpy(buf, "NONE", LOG_FLAGS_BUF_SIZE);
++}
++
+ /*
+  * @log: the log we are replaying.
+  * @entry: where we put the entry.
+@@ -135,6 +187,7 @@ int log_replay_next_entry(struct log *log, struct log_write_entry *entry,
+ 	size_t read_size = read_data ? log->sectorsize :
+ 		sizeof(struct log_write_entry);
+ 	char *buf;
++	char flags_buf[LOG_FLAGS_BUF_SIZE];
+ 	ssize_t ret;
+ 	off_t offset;
  
--#define LOG_FLUSH_FLAG (1 << 0)
--#define LOG_FUA_FLAG (1 << 1)
--#define LOG_DISCARD_FLAG (1 << 2)
--#define LOG_MARK_FLAG (1 << 3)
-+#define LOG_FLUSH_FLAG		(1 << 0)
-+#define LOG_FUA_FLAG		(1 << 1)
-+#define LOG_DISCARD_FLAG	(1 << 2)
-+#define LOG_MARK_FLAG		(1 << 3)
-+#define LOG_METADATA_FLAG	(1 << 4)
+@@ -158,16 +211,17 @@ int log_replay_next_entry(struct log *log, struct log_write_entry *entry,
+ 		}
+ 	}
  
- #define WRITE_LOG_VERSION 1
- #define WRITE_LOG_MAGIC 0x6a736677736872
++	flags = le64_to_cpu(entry->flags);
++	entry_flags_to_str(flags, flags_buf);
+ 	if (log_writes_verbose)
+-		printf("replaying %d: sector %llu, size %llu, flags %llu\n",
++		printf("replaying %d: sector %llu, size %llu, flags %llu(%s)\n",
+ 		       (int)log->cur_entry - 1,
+ 		       (unsigned long long)le64_to_cpu(entry->sector),
+ 		       (unsigned long long)size,
+-		       (unsigned long long)le64_to_cpu(entry->flags));
++		       (unsigned long long)flags, flags_buf);
+ 	if (!size)
+ 		return 0;
+ 
+-	flags = le64_to_cpu(entry->flags);
+ 	if (flags & LOG_DISCARD_FLAG)
+ 		return log_discard(log, entry);
+ 
 -- 
 2.16.2
