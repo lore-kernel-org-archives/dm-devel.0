@@ -1,11 +1,16 @@
-From: Drew Hastings <dhastings@crucialwebhost.com>
-Subject: Device mapper for temporarily buffering writes on fast
- device before pushing to slower device
-Date: Mon, 19 Feb 2018 13:47:48 -0700
-Message-ID: <CAN-y+EJLroxotABwM=5BqFH1byDmLExi7n0o0FTv9KNWFVAzaQ@mail.gmail.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [RFC PATCH 05/20] libmultipath: don't update path
+ groups when printing
+Date: Wed, 28 Feb 2018 17:40:16 -0600
+Message-ID: <20180228234016.GI14513@octiron.msp.redhat.com>
+References: <20180220132658.22295-1-mwilck@suse.com>
+	<20180220132658.22295-6-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============8825054310159636702=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20180220132658.22295-6-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,68 +20,72 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============8825054310159636702==
-Content-Type: multipart/alternative; boundary="001a113cd620929176056596cea7"
+On Tue, Feb 20, 2018 at 02:26:43PM +0100, Martin Wilck wrote:
+> Updating the prio values for printing makes no sense. The user wants to see
+> the prio values multipath is actually using for path group selection, and
+> updating the values here means actually lying to the user if the prio values
+> have changed, but multipathd hasn't updated them internally.
+> 
+> If we really don't update the pathgroup prios when we need to, this should be
+> fixed elsewhere. The current wrong output would just hide that if it occured.
+> 
+> Moreover, correctness forbids changing properties so deeply in a code path
+> that's supposed to print them only. Finally, this piece of code prevents the
+> print.c code to be converted to proper "const" usage.
 
---001a113cd620929176056596cea7
-Content-Type: text/plain; charset="UTF-8"
+Well, it is true that we've only been updating the path group priority
+when we've needed it, and we've only need it to be uptodate when we are
+picking a new pathgroup, or are printing it out. When failback is set to
+"manual", we rarely are picking a new pathgroup, so we rarely update the
+pathgroup prio. 
 
-I found stochastic multi-queue and writeboost to be insufficient for this
-purpose. I'm wondering if anything exists that fits this description:
+If we really want to be honest with the user, we probably want to reload
+the multipath device whenever a path group's priority changes enough to
+make their order change.  Otherwise, the kernel will still failover to
+the wrong path group.  We currently only do this for FAILBACK_IMMEDIATE,
+and we don't even do that very well. For instance, we will currently
+reorder pathgroups when their priority has gone to 0 because they have
+no valid paths. In this case, we should expect that when the paths
+return, they will most likely have the same priority as they previously
+had. Thus, we shouldn't lower that path group's priority while they are
+down, since it will just cause two pointless table reloads (one when the
+last path in the group goes down, and another when the first path comes
+back). But I digress.
 
-Device mapper creates a "cache" device on a fast device (SSD/NVME, etc)...
-and writes to the device *always* hit the fast device. Writes are later
-flushed to the slower device as fast as the slow device can handle them.
+I'd be fine with simply updating the path group priority whever we change a
+path's priority, if we aren't updating it when printing it. The bigger
+work of actually making sure that the path group order it the table
+is always uptodate needs to happen, but it doesn't need to happen in
+this patchset.
 
-The problem with the caching solutions I have found with device mapper is
-that they require the block to be identified as "hot" first, even when the
-cache itself is not 100% utilized. Read performance is largely irrelevant.
-
-Is there a device mapper implementation that works in this fashion; where
-100% of writes happen to the fast device? I was thinking COW effectively
-does this, but the problem is it does not automatically/periodically flush
-writes, you have to do them all at once.
-
-I had seen some conversations about trying to get the multiqueue (mq, not
-smq) policy to do this with zero values for thresholds, but it did not seem
-like any were successful in ensuring the first write would hit the fast
-device.
-
-Thanks!
-
---001a113cd620929176056596cea7
-Content-Type: text/html; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">I found stochastic multi-queue and writeboost to be insuff=
-icient for this purpose. I&#39;m wondering if anything exists that fits thi=
-s description:<div><br></div><div>Device mapper creates a &quot;cache&quot;=
- device on a fast device (SSD/NVME, etc)... and writes to the device *alway=
-s* hit the fast device. Writes are later flushed to the slower device as fa=
-st as the slow device can handle them.</div><div><br></div><div>The problem=
- with the caching solutions I have found with device mapper is that they re=
-quire the block to be identified as &quot;hot&quot; first, even when the ca=
-che itself is not 100% utilized. Read performance is largely irrelevant.</d=
-iv><div><br></div><div>Is there a device mapper implementation that works i=
-n this fashion; where 100% of writes happen to the fast device? I was think=
-ing COW effectively does this, but the problem is it does not automatically=
-/periodically flush writes, you have to do them all at once.</div><div><br>=
-</div><div>I had seen some conversations about trying to get the=C2=A0multi=
-queue (mq, not smq) policy to do this with zero values for thresholds, but =
-it did not seem like any were successful in ensuring the first write would =
-hit the fast device.</div><div><br></div><div>Thanks!</div></div>
-
---001a113cd620929176056596cea7--
-
-
---===============8825054310159636702==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============8825054310159636702==--
+-Ben
+> 
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  libmultipath/print.c | 7 -------
+>  1 file changed, 7 deletions(-)
+> 
+> diff --git a/libmultipath/print.c b/libmultipath/print.c
+> index 8fb5c5058965..b5c00bfe69a5 100644
+> --- a/libmultipath/print.c
+> +++ b/libmultipath/print.c
+> @@ -484,13 +484,6 @@ snprint_pg_selector (char * buff, size_t len, struct pathgroup * pgp)
+>  static int
+>  snprint_pg_pri (char * buff, size_t len, struct pathgroup * pgp)
+>  {
+> -	/*
+> -	 * path group priority is not updated for every path prio change,
+> -	 * but only on switch group code path.
+> -	 *
+> -	 * Printing is another reason to update.
+> -	 */
+> -	path_group_prio_update(pgp);
+>  	return snprint_int(buff, len, pgp->priority);
+>  }
+>  
+> -- 
+> 2.16.1
