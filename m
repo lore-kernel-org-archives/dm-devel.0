@@ -1,7 +1,8 @@
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: [PATCH] dm raid: fix degraded sync_ratio
-Date: Tue, 27 Feb 2018 21:58:59 +0100
-Message-ID: <ce8aa347b9ce44c5b854472e286a130cb8b849f2.1519764140.git.heinzm@redhat.com>
+From: Qu Wenruo <wqu@suse.com>
+Subject: [PATCH] dm: log-writes: record metadata flag for better
+	flags record
+Date: Wed, 28 Feb 2018 15:32:47 +0800
+Message-ID: <20180228073247.30020-1-wqu@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -15,43 +16,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: heinzm@redhat.com, dm-devel@redhat.com, snitzer@redhat.com
+To: dm-devel@redhat.com, jbacik@fb.com
 List-Id: dm-devel.ids
 
-Upstream commits 4102d9de6d375fc27ec70382c4068f4f9f62ce4f 
-in combination with 7c29744eccecc2c74c9b4d1ea0a60b4d95229399
-introduced a regression reporting wrong zero sync_ratio for
-degraded raid sets through the targets status interface thus
-causing lvm2 to fail to repair raid legs automatically.
+So developer could distinguish data and metadata bios easier.
 
-Fix by identifying the degraded state checking the MD_RECOVERY_INTR
-flag and returning mddev->recovery_cp in case it is set.
-
-Fix passes automatic repair tests.
-
-
-Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
+Signed-off-by: Qu Wenruo <wqu@suse.com>
 ---
- drivers/md/dm-raid.c | 7 ++++---
- 1 file changed, 4 insertions(+), 3 deletions(-)
+ drivers/md/dm-log-writes.c | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
 
-diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 7ef469e902c6..c1d1034ff7b7 100644
---- a/drivers/md/dm-raid.c
-+++ b/drivers/md/dm-raid.c
-@@ -3408,9 +3408,10 @@ static sector_t rs_get_progress(struct raid_set *rs, unsigned long recovery,
- 		set_bit(RT_FLAG_RS_IN_SYNC, &rs->runtime_flags);
+diff --git a/drivers/md/dm-log-writes.c b/drivers/md/dm-log-writes.c
+index 189badbeddaf..c7f4a592d14d 100644
+--- a/drivers/md/dm-log-writes.c
++++ b/drivers/md/dm-log-writes.c
+@@ -52,10 +52,11 @@
+  * in fact we want to do the data and the discard in the order that they
+  * completed.
+  */
+-#define LOG_FLUSH_FLAG (1 << 0)
+-#define LOG_FUA_FLAG (1 << 1)
+-#define LOG_DISCARD_FLAG (1 << 2)
+-#define LOG_MARK_FLAG (1 << 3)
++#define LOG_FLUSH_FLAG		(1 << 0)
++#define LOG_FUA_FLAG		(1 << 1)
++#define LOG_DISCARD_FLAG	(1 << 2)
++#define LOG_MARK_FLAG		(1 << 3)
++#define LOG_METADATA_FLAG	(1 << 4)
  
- 	} else {
--		if (test_bit(MD_RECOVERY_NEEDED, &recovery) ||
--		    test_bit(MD_RECOVERY_RESHAPE, &recovery) ||
--		    test_bit(MD_RECOVERY_RUNNING, &recovery))
-+		if (!test_bit(MD_RECOVERY_INTR, &recovery) &&
-+		    (test_bit(MD_RECOVERY_NEEDED, &recovery) ||
-+		     test_bit(MD_RECOVERY_RESHAPE, &recovery) ||
-+		     test_bit(MD_RECOVERY_RUNNING, &recovery)))
- 			r = mddev->curr_resync_completed;
- 		else
- 			r = mddev->recovery_cp;
+ #define WRITE_LOG_VERSION 1ULL
+ #define WRITE_LOG_MAGIC 0x6a736677736872ULL
+@@ -699,6 +700,7 @@ static int log_writes_map(struct dm_target *ti, struct bio *bio)
+ 	bool flush_bio = (bio->bi_opf & REQ_PREFLUSH);
+ 	bool fua_bio = (bio->bi_opf & REQ_FUA);
+ 	bool discard_bio = (bio_op(bio) == REQ_OP_DISCARD);
++	bool meta_bio = (bio->bi_opf & REQ_META);
+ 
+ 	pb->block = NULL;
+ 
+@@ -743,6 +745,8 @@ static int log_writes_map(struct dm_target *ti, struct bio *bio)
+ 		block->flags |= LOG_FUA_FLAG;
+ 	if (discard_bio)
+ 		block->flags |= LOG_DISCARD_FLAG;
++	if (meta_bio)
++		block->flags |= LOG_METADATA_FLAG;
+ 
+ 	block->sector = bio_to_dev_sectors(lc, bio->bi_iter.bi_sector);
+ 	block->nr_sectors = bio_to_dev_sectors(lc, bio_sectors(bio));
 -- 
-2.14.3
+2.16.2
