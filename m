@@ -1,14 +1,18 @@
-From: Bart Van Assche <bart.vanassche@wdc.com>
-Subject: [PATCH 6/6] Introduce the ibmultipath/unaligned.h header
-	file
-Date: Thu,  1 Mar 2018 11:29:35 -0800
-Message-ID: <20180301192935.14643-7-bart.vanassche@wdc.com>
-References: <20180301192935.14643-1-bart.vanassche@wdc.com>
+From: Amir Goldstein <amir73il@gmail.com>
+Subject: Re: [RFC PATCH] fstests: Check if a fs can survive
+ random (emulated) power loss
+Date: Thu, 1 Mar 2018 14:50:27 +0200
+Message-ID: <CAOQ4uxgw=MmrTW-1CG=RHWY65Ej1pb_rF6G5wRC1J6B5jLRpTw@mail.gmail.com>
+References: <20180301053821.18718-1-wqu@suse.com>
+	<CAOQ4uxgUm-YnFG=M6YaMKqAvr+CewerL3d4S2V6WSwKKu13ebA@mail.gmail.com>
+	<ed8aec54-8b90-61cd-74c2-e8a1556849f6@gmx.com>
+	<CAOQ4uxhy7iU71dB9aTFx+aeMowNoi0QMVT2GDUM81R_CTZxxsA@mail.gmail.com>
+	<0abab816-a2a4-82bf-e43e-37535f1228a8@gmx.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180301192935.14643-1-bart.vanassche@wdc.com>
+In-Reply-To: <0abab816-a2a4-82bf-e43e-37535f1228a8@gmx.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,323 +22,70 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: Bart Van Assche <bart.vanassche@wdc.com>, dm-devel@redhat.com
+To: Qu Wenruo <quwenruo.btrfs@gmx.com>
+Cc: dm-devel@redhat.com, fstests <fstests@vger.kernel.org>, Qu Wenruo <wqu@suse.com>, Josef Bacik <josef@toxicpanda.com>
 List-Id: dm-devel.ids
 
-This patch avoids that Coverity reports the following for the code
-in libmultipath/prioritizers/alua_rtpg.c:
-
-   CID 173256:  Integer handling issues  (SIGN_EXTENSION)
-    Suspicious implicit sign extension: "buf[0]" with type "unsigned char" (8 bits, unsigned) is promoted in "((buf[0] << 24) | (buf[1] << 16) | (buf[2] << 8) | buf[3]) + 4" to type "int" (32 bits, signed), then sign-extended to type "unsigned long" (64 bits, unsigned).  If "((buf[0] << 24) | (buf[1] << 16) | (buf[2] << 8) | buf[3]) + 4" is greater than 0x7FFFFFFF, the upper bits of the result will all be 1.
-
-Signed-off-by: Bart Van Assche <bart.vanassche@wdc.com>
----
- libmpathpersist/mpath_pr_ioctl.c      |  8 ++++----
- libmultipath/checkers/hp_sw.c         |  4 ++--
- libmultipath/discovery.c              |  9 +++++----
- libmultipath/prioritizers/alua_rtpg.c | 13 ++++++------
- libmultipath/prioritizers/alua_spc3.h | 35 ++------------------------------
- libmultipath/prioritizers/ontap.c     |  4 ++--
- libmultipath/unaligned.h              | 38 +++++++++++++++++++++++++++++++++++
- 7 files changed, 60 insertions(+), 51 deletions(-)
- create mode 100644 libmultipath/unaligned.h
-
-diff --git a/libmpathpersist/mpath_pr_ioctl.c b/libmpathpersist/mpath_pr_ioctl.c
-index 29df8c6f2da1..dbed4ca7fad4 100644
---- a/libmpathpersist/mpath_pr_ioctl.c
-+++ b/libmpathpersist/mpath_pr_ioctl.c
-@@ -13,6 +13,7 @@
- #include <libudev.h>
- #include "mpath_pr_ioctl.h"
- #include "mpath_persist.h"
-+#include "unaligned.h"
- 
- #include "debug.h"
- 
-@@ -243,10 +244,9 @@ void mpath_format_readfullstatus(struct prin_resp *pr_buff, int len, int noisy)
- 		memcpy(&fdesc.key, p, 8 );
- 		fdesc.flag = p[12];
- 		fdesc.scope_type =  p[13];
--		fdesc.rtpi = ((p[18] << 8) | p[19]);
-+		fdesc.rtpi = get_unaligned_be16(&p[18]);
- 
--		tid_len_len = ((p[20] << 24) | (p[21] << 16) |
--				(p[22] << 8) | p[23]);
-+		tid_len_len = get_unaligned_be32(&p[20]);
- 
- 		if (tid_len_len > 0)
- 			decode_transport_id( &fdesc, &p[24], tid_len_len);
-@@ -277,7 +277,7 @@ decode_transport_id(struct prin_fulldescr *fdesc, unsigned char * p, int length)
- 			jump = 24;
- 			break;
- 		case MPATH_PROTOCOL_ID_ISCSI:
--			num = ((p[2] << 8) | p[3]);
-+			num = get_unaligned_be16(&p[2]);
- 			memcpy(&fdesc->trnptid.iscsi_name, &p[4], num);
- 			jump = (((num + 4) < 24) ? 24 : num + 4);
- 			break;
-diff --git a/libmultipath/checkers/hp_sw.c b/libmultipath/checkers/hp_sw.c
-index 6019c9dbcd9d..cee9aab8d089 100644
---- a/libmultipath/checkers/hp_sw.c
-+++ b/libmultipath/checkers/hp_sw.c
-@@ -14,6 +14,7 @@
- #include "checkers.h"
- 
- #include "../libmultipath/sg_include.h"
-+#include "../libmultipath/unaligned.h"
- 
- #define TUR_CMD_LEN		6
- #define INQUIRY_CMDLEN		6
-@@ -63,8 +64,7 @@ do_inq(int sg_fd, int cmddt, int evpd, unsigned int pg_op,
- 	if (evpd)
- 		inqCmdBlk[1] |= 1;
- 	inqCmdBlk[2] = (unsigned char) pg_op;
--	inqCmdBlk[3] = (unsigned char)((mx_resp_len >> 8) & 0xff);
--	inqCmdBlk[4] = (unsigned char) (mx_resp_len & 0xff);
-+	put_unaligned_be16(mx_resp_len, &inqCmdBlk[3]);
- 	memset(&io_hdr, 0, sizeof (struct sg_io_hdr));
- 	memset(sense_b, 0, SENSE_BUFF_LEN);
- 	io_hdr.interface_id = 'S';
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 780feb253797..1d027927bd98 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -30,6 +30,7 @@
- #include "discovery.h"
- #include "prio.h"
- #include "defaults.h"
-+#include "unaligned.h"
- #include "prioritizers/alua_rtpg.h"
- 
- int
-@@ -848,7 +849,7 @@ sgio_get_vpd (unsigned char * buff, int maxlen, int fd, int pg)
- 	}
- retry:
- 	if (0 == do_inq(fd, 0, 1, pg, buff, len)) {
--		len = buff[3] + (buff[2] << 8) + 4;
-+		len = get_unaligned_be16(&buff[2]) + 4;
- 		if (len >= maxlen)
- 			return len;
- 		if (len > DEFAULT_SGIO_LEN)
-@@ -879,7 +880,7 @@ static int
- parse_vpd_pg80(const unsigned char *in, char *out, size_t out_len)
- {
- 	char *p = NULL;
--	int len = in[3] + (in[2] << 8);
-+	int len = get_unaligned_be16(&in[2]);
- 
- 	if (len >= out_len) {
- 		condlog(2, "vpd pg80 overflow, %d/%d bytes required",
-@@ -1079,7 +1080,7 @@ get_vpd_sysfs (struct udev_device *parent, int pg, char * str, int maxlen)
- 			pg, buff[1]);
- 		return -ENODATA;
- 	}
--	buff_len = (buff[2] << 8) + buff[3] + 4;
-+	buff_len = get_unaligned_be16(&buff[2]) + 4;
- 	if (buff_len > 4096)
- 		condlog(3, "vpd pg%02x page truncated", pg);
- 
-@@ -1111,7 +1112,7 @@ get_vpd_sgio (int fd, int pg, char * str, int maxlen)
- 			pg, buff[1]);
- 		return -ENODATA;
- 	}
--	buff_len = (buff[2] << 8) + buff[3] + 4;
-+	buff_len = get_unaligned_be16(&buff[2]) + 4;
- 	if (buff_len > 4096)
- 		condlog(3, "vpd pg%02x page truncated", pg);
- 
-diff --git a/libmultipath/prioritizers/alua_rtpg.c b/libmultipath/prioritizers/alua_rtpg.c
-index e9d83286ff16..e43150200ffc 100644
---- a/libmultipath/prioritizers/alua_rtpg.c
-+++ b/libmultipath/prioritizers/alua_rtpg.c
-@@ -26,6 +26,7 @@
- #include "../structs.h"
- #include "../prio.h"
- #include "../discovery.h"
-+#include "../unaligned.h"
- #include "alua_rtpg.h"
- 
- #define SENSE_BUFF_LEN  32
-@@ -128,7 +129,7 @@ do_inquiry(int fd, int evpd, unsigned int codepage,
- 		inquiry_command_set_evpd(&cmd);
- 		cmd.page = codepage;
- 	}
--	set_uint16(cmd.length, resplen);
-+	put_unaligned_be16(resplen, cmd.length);
- 	PRINT_HEX((unsigned char *) &cmd, sizeof(cmd));
- 
- 	memset(&hdr, 0, sizeof(hdr));
-@@ -220,7 +221,7 @@ get_target_port_group(struct path * pp, unsigned int timeout)
- 		if (rc < 0)
- 			goto out;
- 
--		scsi_buflen = (buf[2] << 8 | buf[3]) + 4;
-+		scsi_buflen = get_unaligned_be16(&buf[2]) + 4;
- 		/* Paranoia */
- 		if (scsi_buflen >= USHRT_MAX)
- 			scsi_buflen = USHRT_MAX;
-@@ -251,7 +252,7 @@ get_target_port_group(struct path * pp, unsigned int timeout)
- 				continue;
- 			}
- 			p  = (struct vpd83_tpg_dscr *)dscr->data;
--			rc = get_uint16(p->tpg);
-+			rc = get_unaligned_be16(p->tpg);
- 		}
- 	}
- 
-@@ -274,7 +275,7 @@ do_rtpg(int fd, void* resp, long resplen, unsigned int timeout)
- 	memset(&cmd, 0, sizeof(cmd));
- 	cmd.op			= OPERATION_CODE_RTPG;
- 	rtpg_command_set_service_action(&cmd);
--	set_uint32(cmd.length, resplen);
-+	put_unaligned_be32(resplen, cmd.length);
- 	PRINT_HEX((unsigned char *) &cmd, sizeof(cmd));
- 
- 	memset(&hdr, 0, sizeof(hdr));
-@@ -321,7 +322,7 @@ get_asymmetric_access_state(int fd, unsigned int tpg, unsigned int timeout)
- 	rc = do_rtpg(fd, buf, buflen, timeout);
- 	if (rc < 0)
- 		goto out;
--	scsi_buflen = (buf[0] << 24 | buf[1] << 16 | buf[2] << 8 | buf[3]) + 4;
-+	scsi_buflen = get_unaligned_be32(&buf[0]) + 4;
- 	if (scsi_buflen > UINT_MAX)
- 		scsi_buflen = UINT_MAX;
- 	if (buflen < scsi_buflen) {
-@@ -342,7 +343,7 @@ get_asymmetric_access_state(int fd, unsigned int tpg, unsigned int timeout)
- 	tpgd = (struct rtpg_data *) buf;
- 	rc   = -RTPG_TPG_NOT_FOUND;
- 	RTPG_FOR_EACH_PORT_GROUP(tpgd, dscr) {
--		if (get_uint16(dscr->tpg) == tpg) {
-+		if (get_unaligned_be16(dscr->tpg) == tpg) {
- 			if (rc != -RTPG_TPG_NOT_FOUND) {
- 				PRINT_DEBUG("get_asymmetric_access_state: "
- 					"more than one entry with same port "
-diff --git a/libmultipath/prioritizers/alua_spc3.h b/libmultipath/prioritizers/alua_spc3.h
-index 13a0924719b4..58d507a5cbc9 100644
---- a/libmultipath/prioritizers/alua_spc3.h
-+++ b/libmultipath/prioritizers/alua_spc3.h
-@@ -14,37 +14,6 @@
-  */
- #ifndef __SPC3_H__
- #define __SPC3_H__
--/*=============================================================================
-- * Some helper functions for getting and setting 16 and 32 bit values.
-- *=============================================================================
-- */
--static inline unsigned short
--get_uint16(unsigned char *p)
--{
--	return (p[0] << 8) + p[1];
--}
--
--static inline void
--set_uint16(unsigned char *p, unsigned short v)
--{
--	p[0] = (v >> 8) & 0xff;
--	p[1] = v & 0xff;
--}
--
--static inline unsigned int
--get_uint32(unsigned char *p)
--{
--	return (p[0] << 24) + (p[1] << 16) + (p[2] << 8) + p[3];
--}
--
--static inline void
--set_uint32(unsigned char *p, unsigned int v)
--{
--	p[0] = (v >> 24) & 0xff;
--	p[1] = (v >> 16) & 0xff;
--	p[2] = (v >>  8) & 0xff;
--	p[3] = v & 0xff;
--}
- 
- /*=============================================================================
-  * Definitions to support the standard inquiry command as defined in SPC-3.
-@@ -232,7 +201,7 @@ struct vpd83_data {
- 		for( \
- 			d = p->data; \
- 			(((char *) d) - ((char *) p)) < \
--			get_uint16(p->length); \
-+			get_unaligned_be16(p->length); \
- 			d = (struct vpd83_dscr *) \
- 				((char *) d + d->length + 4) \
- 		)
-@@ -315,7 +284,7 @@ struct rtpg_data {
- #define RTPG_FOR_EACH_PORT_GROUP(p, g) \
- 		for( \
- 			g = &(p->data[0]); \
--			(((char *) g) - ((char *) p)) < get_uint32(p->length); \
-+			(((char *) g) - ((char *) p)) < get_unaligned_be32(p->length); \
- 			g = (struct rtpg_tpg_dscr *) ( \
- 				((char *) g) + \
- 				sizeof(struct rtpg_tpg_dscr) + \
-diff --git a/libmultipath/prioritizers/ontap.c b/libmultipath/prioritizers/ontap.c
-index ca06d6ce3a9f..6505033f44c9 100644
---- a/libmultipath/prioritizers/ontap.c
-+++ b/libmultipath/prioritizers/ontap.c
-@@ -22,6 +22,7 @@
- #include "debug.h"
- #include "prio.h"
- #include "structs.h"
-+#include "unaligned.h"
- 
- #define INQUIRY_CMD	0x12
- #define INQUIRY_CMDLEN	6
-@@ -197,8 +198,7 @@ static int ontap_prio(const char *dev, int fd, unsigned int timeout)
- 	memset(&results, 0, sizeof (results));
- 	rc = send_gva(dev, fd, 0x41, results, &results_size, timeout);
- 	if (rc >= 0) {
--		tot_len = results[0] << 24 | results[1] << 16 |
--			  results[2] << 8 | results[3];
-+		tot_len = get_unaligned_be32(&results[0]);
- 		if (tot_len <= 8) {
- 			goto try_fcp_proxy;
- 		}
-diff --git a/libmultipath/unaligned.h b/libmultipath/unaligned.h
-new file mode 100644
-index 000000000000..14ec8b23e397
---- /dev/null
-+++ b/libmultipath/unaligned.h
-@@ -0,0 +1,38 @@
-+#ifndef _UNALIGNED_H_
-+#define _UNALIGNED_H_
-+
-+#include <stdint.h>
-+
-+static inline uint16_t get_unaligned_be16(const void *ptr)
-+{
-+	const uint8_t *p = ptr;
-+
-+	return p[0] << 8 | p[1];
-+}
-+
-+static inline uint32_t get_unaligned_be32(void *ptr)
-+{
-+	const uint8_t *p = ptr;
-+
-+	return p[0] << 24 | p[1] << 16 | p[2] << 8 | p[3];
-+}
-+
-+static inline void put_unaligned_be16(uint16_t val, void *ptr)
-+{
-+	uint8_t *p = ptr;
-+
-+	p[0] = val >> 8;
-+	p[1] = val;
-+}
-+
-+static inline void put_unaligned_be32(uint32_t val, void *ptr)
-+{
-+	uint8_t *p = ptr;
-+
-+	p[0] = val >> 24;
-+	p[1] = val >> 16;
-+	p[2] = val >> 8;
-+	p[3] = val;
-+}
-+
-+#endif /* _UNALIGNED_H_ */
--- 
-2.16.2
+T24gVGh1LCBNYXIgMSwgMjAxOCBhdCAxOjQ4IFBNLCBRdSBXZW5ydW8gPHF1d2VucnVvLmJ0cmZz
+QGdteC5jb20+IHdyb3RlOgo+Cj4KPiBPbiAyMDE45bm0MDPmnIgwMeaXpSAxOToxNSwgQW1pciBH
+b2xkc3RlaW4gd3JvdGU6Cj4+IE9uIFRodSwgTWFyIDEsIDIwMTggYXQgMTE6MjUgQU0sIFF1IFdl
+bnJ1byA8cXV3ZW5ydW8uYnRyZnNAZ214LmNvbT4gd3JvdGU6Cj4+Pgo+Pj4KPj4+IE9uIDIwMTjl
+ubQwM+aciDAx5pelIDE2OjM5LCBBbWlyIEdvbGRzdGVpbiB3cm90ZToKPj4+PiBPbiBUaHUsIE1h
+ciAxLCAyMDE4IGF0IDc6MzggQU0sIFF1IFdlbnJ1byA8d3F1QHN1c2UuY29tPiB3cm90ZToKPj4+
+Pj4gVGhpcyB0ZXN0IGNhc2UgaXMgb3JpZ2luYWxseSBkZXNpZ25lZCB0byBleHBvc2UgdW5leHBl
+Y3RlZCBjb3JydXB0aW9uCj4+Pj4+IGZvciBidHJmcywgd2hlcmUgdGhlcmUgYXJlIHNldmVyYWwg
+cmVwb3J0cyBhYm91dCBidHJmcyBzZXJpb3VzIG1ldGFkYXRhCj4+Pj4+IGNvcnJ1cHRpb24gYWZ0
+ZXIgcG93ZXIgbG9zcy4KPj4+Pj4KPj4+Pj4gVGhlIHRlc3QgY2FzZSBpdHNlbGYgd2lsbCB0cmln
+Z2VyIGhlYXZ5IGZzc3RyZXNzIGZvciB0aGUgZnMsIGFuZCB1c2UKPj4+Pj4gZG0tZmxha2V5IHRv
+IGVtdWxhdGUgcG93ZXIgbG9zcyBieSBkcm9wcGluZyBhbGwgbGF0ZXIgd3JpdGVzLgo+Pj4+Cj4+
+Pj4gU28geW91IGFyZSByZS1wb3N0aW5nIHRoZSB0ZXN0IHdpdGggZG0tZmxha2V5IG9yIGNvbnZl
+cnRpbmcgaXQgdG8KPj4+PiBkbS1sb2ctd3JpdGVzPz8KPj4+Cj4+PiBXb3JraW5nIG9uIHRoZSBz
+Y3JpcHRzIHRvIGFsbG93IHVzIHRvIGRvIC0tZmluZCBhbmQgdGhlbiByZXBsYXkuCj4+Pgo+Pj4g
+U2luY2UgZm9yIHhmcyBhbmQgZXh0NCwgdGhlaXIgZnNjayB3b3VsZCByZXBvcnQgZmFsc2UgYWxl
+cnRzIGp1c3QgZm9yCj4+PiBkaXJ0eSBqb3VybmFsLgo+Pj4KPj4+IEknbSBhZGRpbmcgbmV3IG1h
+Y3JvIHRvIGxvY2F0ZSBuZXh0IGZsdXNoIGFuZCByZXBsYXkgdG8gaXQsIHRoZW4gbW91bnQKPj4+
+IGl0IFJXIGJlZm9yZSB3ZSBjYWxsIGZzY2suCj4+Pgo+Pj4gT3IgZG8gd2UgaGF2ZSBvcHRpb25z
+IGZvciB0aG9zZSBmc2NrcyB0byBza2lwIGRpcnR5IGpvdXJuYWw/Cj4+Pgo+Pgo+PiBObywgeW91
+IGFyZSBtdWNoIGJldHRlciBvZmYgZG9pbmcgbW91bnQvdW1vdW50IGJlZm9yZSBmc2NrLgo+PiBF
+dmVuIHRob3VnaCBlMmZzY2sgY2FuIHJlcGxheSBhIGpvdXJuYWwsIGl0IGRvZXMgdGhhdCBtdWNo
+IHNsb3dlcgo+PiB0aGVuIHRoZSBrZXJuZWwgZG9lcy4KPj4KPj4gQnV0IHdoeSBkbyB5b3UgbmVl
+ZCB0byB0ZWFjaCAtLWZpbmQgdG8gZmluZCBuZXh0IGZsdXNoPwo+PiBZb3UgY291bGQgdXNlIGEg
+aGVscGVyIHNjcmlwdCB0byBydW4gZXZlcnkgZnVhIHdpdGggLS1mc2NrIC0tY2hlY2sgZnVhLgo+
+PiBHcmFudGVkLCBmb3IgZnN0ZXN0cyBjb250ZXh0LCBJIGFncmVlIHRoYXQgLS1maW5kIG5leHQg
+ZnVhIG1heSBsb29rCj4+IG5pY2VyLCBzbyBJIGhhdmUgbm8gb2JqZWN0aW9uIHRvIHRoaXMgaW1w
+bGVtZW50YXRpb24uCj4KPiBUaGUgcG9pbnQgaXMsIGluIG15IG9waW5pb24gZnVhIGlzIG5vdCB0
+aGUgd29yc3QgY2FzZSB3ZSBuZWVkIHRvIHRlc3QuCj4gT25seSBmbHVzaCBjb3VsZCBsZWFkcyB1
+cyB0byB0aGUgd29yc3QgY2FzZSB3ZSByZWFsbHkgbmVlZCB0byB0ZXN0Lgo+Cj4gSW4gYnRyZnMn
+IGNhc2UsIGlmIHdlIGZpbmlzaGVkIGZsdXNoLCBidXQgd2l0aG91dCBmdWEsIHdlIGhhdmUgYSBz
+dXBlcgo+IGJsb2NrIHBvaW50cyB0byBhbGwgb2xkIHRyZWVzLCBidXQgYWxsIG5ldyB0cmVlcyBh
+cmUgYWxyZWFkeSB3cml0dGVuIHRvCj4gZGlzay4KPgo+IEluIHRoYXQgZmx1c2ggZW50cnksIHdl
+IGNvdWxkIHJlYWNoIHRvIHRoZSB3b3JzdCBjYXNlIHNjZW5hcmlvIHRvIHZlcmlmeQo+IGFsbCBi
+dHJmcyB0cmlja3MgYXJlIHdvcmtpbmcgYWxsIHRvZ2V0aGVyIHRvIGdldCBhIGNvbXBsZXRlbHkg
+c2FuZSBidHJmcwo+IChldmVuIGFsbCBkYXRhIHNob3VsZCBiZSBjb3JyZWN0KS4KPgo+IFRoaXMg
+c2hvdWxkIGFsc28gYXBwbHkgdG8gam91cm5hbCBiYXNlZCBmaWxlc3lzdGVtcyAoaWYgSSB1bmRl
+cnN0YW5kIHRoZQo+IGpvdXJuYWwgdGhpbmcgY29ycmVjdGx5KSwgZXZlbiB3aGVuIGFsbCBqb3Vy
+bmFscyB3cml0dGVuIGJ1dCBzdXBlcmJsb2NrCj4gbm90IHVwZGF0ZWQsIHdlIHNob3VsZCBiZSBj
+b21wbGV0ZWx5IGZpbmUuCj4gKEFsdGhvdWdoIGZvciBqb3VybmFsLCB3ZSBtYXkgbmVlZCB0byBy
+ZWFjaCBmdWEgZW50cnkgaW5zdGVhZCBvZiBmbHVzaD8pCj4KPiBBbmQgdGhlIG90aGVyIHJlYXNv
+biB3aHkgd2UgbmVlZCB0byBmaW5kIG5leHQgZmx1c2gvZnVhIG1hbnVhbGx5IGlzLAo+IG1vdW50
+IHdpbGwgd3JpdGUgbmV3IGRhdGEsIGFuZCB3ZSBuZWVkIHRvIHJlcGxheSBhbGwgdGhlIHNlcXVl
+bmNlIHVudGlsCj4gbmV4dCBmbHVzaC9mdWEuCj4KCk9LLiBidXQgSm9zZWYgYWRkcmVzc2VkIHRo
+aXMgaW4gaGlzIHNjcmlwdCB1c2luZyBkbSBzbmFwc2hvdHMsIHJhdGhlcgp0aGFuIHJlcGxheWlu
+ZyBlYWNoIHRpbWUuIEkgZ3Vlc3MgdGhpcyBpcyB0aGUgcmVhc29uIHRoZSBzY3JpcHQgaXMgY2Fs
+bGVkCnJlcGxheS1pbmRpdmlkdWFsLWZhc3Rlci5zaC4gWW91IGRvbid0IGhhdmUgdG8gZG8gdGhl
+IHNhbWUsIGJ1dCBJIGV4cGVjdAp0aGUgdGVzdCB3b3VsZCBydW4gZmFzdGVyIGlmIHlvdSBsZWFy
+biBmcm9tIGV4cGVyaWVuY2Ugb2YgSm9zZWYuCgo+Cj4gQW5kIGZpbmFsbHkgdGhlIHJlYXNvbiBh
+Ym91dCB3aHkgbmVlZCBtYW51YWxseSBtb3VudCBpcywgd2UgbmVlZCB0bwo+IHdvcmthcm91bmQg
+ZTJmc2NrL3hmc19yZXBhaXIsIHNvIHRoYXQgdGhleSB3b24ndCByZXBvcnQgZGlydHkgam91cm5h
+bCBhcwo+IGVycm9yLiBJZiB3ZSBoYXZlIGV4dHJhIG9wdGlvbnMgdG8gZGlzYWJsZSBzdWNoIGJl
+aGF2aW9yLCBJJ20gY29tcGxldGVseQo+IE9LIHdpdGggY3VycmVudCAtLWNoZWNrIGZsdXNoL2Z1
+YSAtLWZzY2sgbWV0aG9kLgo+IChCVFcsIGZvciBteSBidHJmcyB0ZXN0aW5nLCAtLWNoZWNrIGZs
+dXNoIC0tZnNjayBpcyBjb21wbGV0ZWx5IGdvb2QKPiBlbm91Z2gsIHRvIGV4cG9zZWQgcG9zc2li
+bGUgZnJlZSBzcGFjZSBjYWNoZSByZWxhdGVkIHByb2JsZW1zKQo+CgpXaGF0IEkgd2FzIHN1Z2dl
+c3RpbmcgYXMgYW4gYWx0ZXJuYXRpdmUgaXMgLS1mc2NrIC4vcmVwbGF5LWZzY2std3JhcHBlci5z
+aAp3aGVyZSB0aGUgd3JhcHBlciBzY3JpcHQgZG9lcyB0aGUgbmVlZGVkIG1vdW50L3Vtb3VudCBh
+bmQgaWYgeW91CmFsc28gdXNlIGRtIHNuYXBzaG90IGZvciB0aGUgbW91bnRlZCB2b2x1bWUgeW91
+IGNhbiBjb250aW51ZSB0byByZXBsYXkKZnJvbSB0aGUgc2FtZSBwb2ludCBhbmQgZG9uJ3QgbmVl
+ZCB0byByZXBsYXkgZnJvbSB0aGUgc3RhcnQuCgpDaGVlcnMsCkFtaXIuCgotLQpkbS1kZXZlbCBt
+YWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21h
+aWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
