@@ -1,16 +1,16 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [RFC PATCH 13/20] libmultipath: print: convert API
- to generic data type
-Date: Wed, 28 Feb 2018 17:55:05 -0600
-Message-ID: <20180228235505.GK14513@octiron.msp.redhat.com>
+Subject: Re: [RFC PATCH 15/20] libmultipath: API for foreign
+ multipath handling
+Date: Wed, 28 Feb 2018 21:01:55 -0600
+Message-ID: <20180301030155.GL14513@octiron.msp.redhat.com>
 References: <20180220132658.22295-1-mwilck@suse.com>
-	<20180220132658.22295-14-mwilck@suse.com>
+	<20180220132658.22295-16-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20180220132658.22295-14-mwilck@suse.com>
+In-Reply-To: <20180220132658.22295-16-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,377 +24,329 @@ To: Martin Wilck <mwilck@suse.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Feb 20, 2018 at 02:26:51PM +0100, Martin Wilck wrote:
-> Convert higher level API (snprint_multipath_topology() etc) to
-> using the generic multipath API. This will allow "foreign"
-> multipath objects that implement the generic API to be printed
-> exactly like native multipathd objects.
+On Tue, Feb 20, 2018 at 02:26:53PM +0100, Martin Wilck wrote:
+> Add an API for "foreign" multipaths. Foreign libraries are loaded
+> from ${multipath_dir}/libforeign-*.so, as we do for checkers.
 > 
-> The previous API (using "struct multipath*" and "struct path" remains
-> in place through macros mapping to the new functions. By doing this
-> and testing in regular setups, it's easily verified that the new
-> API works and produces the same results.
+> Refer to "foreign.h" for details about the API itself. Like we do for
+> checkers, high-level multipath code isn't supposed to call the API directly,
+> but rather the wrapper functions declared in "foreign.h".
 > 
-> Moreover, abstract out the code to determine the output format from multipath
-> properties into snprint_multipath_style(), to be able to use it as generic
-> ->style() method.
+> This API is used only for displaying information and for logging. An extension to
+> other functionality (such as monitoring or administration) might be feasible,
+> but is not planned.
+> 
+> Foreign libraries communicate with libmultipath through the API defined in
+> "foreign.h". The foreign library can implement multipath maps, pathgroups,
+> and paths as it likes, they just need to provide the simple interfaces
+> defined in "generic.h" to libmultipath. These interfaces are used in libmultipath's
+> "print" implementation to convey various bits of information to users. By
+> using the same interfaces for printing that libmultipath uses internally,
+> foreign library implementations can focus on the technical side without
+> worrying about output formatting compatibility.
+
+ACK, with one minor nit
+
 > 
 > Signed-off-by: Martin Wilck <mwilck@suse.com>
 > ---
->  libmultipath/configure.c  |   1 +
->  libmultipath/dm-generic.c |   2 +-
->  libmultipath/print.c      | 116 +++++++++++++++++++++++++++++-----------------
->  libmultipath/print.h      |  28 ++++++++---
->  multipath/main.c          |   1 +
->  multipathd/cli_handlers.c |   1 +
->  6 files changed, 100 insertions(+), 49 deletions(-)
-> 
-> diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-> index 13e14cc25fff..42b7c896ee65 100644
-> --- a/libmultipath/configure.c
-> +++ b/libmultipath/configure.c
-> @@ -30,6 +30,7 @@
->  #include "discovery.h"
->  #include "debug.h"
->  #include "switchgroup.h"
-> +#include "dm-generic.h"
->  #include "print.h"
->  #include "configure.h"
->  #include "pgpolicies.h"
-> diff --git a/libmultipath/dm-generic.c b/libmultipath/dm-generic.c
-> index 42a26085d087..bdc9ca0a488b 100644
-> --- a/libmultipath/dm-generic.c
-> +++ b/libmultipath/dm-generic.c
-> @@ -56,7 +56,7 @@ const struct gen_multipath_ops dm_gen_multipath_ops = {
->  	.get_pathgroups = dm_mp_get_pgs,
->  	.rel_pathgroups = dm_mp_rel_pgs,
->  	.snprint = snprint_multipath_attr,
-> -	/* .style = snprint_multipath_style, TBD */
-> +	.style = snprint_multipath_style,
->  };
->  
->  const struct gen_pathgroup_ops dm_gen_pathgroup_ops = {
-> diff --git a/libmultipath/print.c b/libmultipath/print.c
-> index e6f56381791f..8846765066ef 100644
-> --- a/libmultipath/print.c
-> +++ b/libmultipath/print.c
-> @@ -31,7 +31,8 @@
->  #include "discovery.h"
->  #include "dm-generic.h"
->  
-> -#define MAX(x,y) (x > y) ? x : y
-> +#define MAX(x,y) (((x) > (y)) ? (x) : (y))
-> +#define MIN(x,y) (((x) > (y)) ? (y) : (x))
->  #define TAIL     (line + len - 1 - c)
->  #define NOPAD    s = c
->  #define PAD(x) \
-> @@ -846,8 +847,8 @@ snprint_multipath_header (char * line, int len, const char * format)
->  }
->  
->  int
-> -snprint_multipath (char * line, int len, const char * format,
-> -	     const struct multipath * mpp, int pad)
-> +_snprint_multipath (const struct gen_multipath * gmp,
-> +		    char * line, int len, const char * format, int pad)
->  {
->  	char * c = line;   /* line cursor */
->  	char * s = line;   /* for padding */
-> @@ -870,7 +871,7 @@ snprint_multipath (char * line, int len, const char * format,
->  		if (!(data = mpd_lookup(*f)))
->  			continue;
->  
-> -		data->snprint(buff, MAX_FIELD_LEN, mpp);
-> +		gmp->ops->snprint(gmp, buff, MAX_FIELD_LEN, *f);
->  		PRINT(c, TAIL, "%s", buff);
->  		if (pad)
->  			PAD(data->width);
-> @@ -913,8 +914,8 @@ snprint_path_header (char * line, int len, const char * format)
->  }
->  
->  int
-> -snprint_path (char * line, int len, const char * format,
-> -	     const struct path * pp, int pad)
-> +_snprint_path (const struct gen_path * gp, char * line, int len,
-> +	       const char * format, int pad)
->  {
->  	char * c = line;   /* line cursor */
->  	char * s = line;   /* for padding */
-> @@ -937,7 +938,7 @@ snprint_path (char * line, int len, const char * format,
->  		if (!(data = pd_lookup(*f)))
->  			continue;
->  
-> -		data->snprint(buff, MAX_FIELD_LEN, pp);
-> +		gp->ops->snprint(gp, buff, MAX_FIELD_LEN, *f);
->  		PRINT(c, TAIL, "%s", buff);
->  		if (pad)
->  			PAD(data->width);
-> @@ -948,8 +949,8 @@ snprint_path (char * line, int len, const char * format,
->  }
->  
->  int
-> -snprint_pathgroup (char * line, int len, char * format,
-> -		   const struct pathgroup * pgp)
-> +_snprint_pathgroup (const struct gen_pathgroup * ggp, char * line, int len,
-> +		    char * format)
->  {
->  	char * c = line;   /* line cursor */
->  	char * s = line;   /* for padding */
-> @@ -972,7 +973,7 @@ snprint_pathgroup (char * line, int len, char * format,
->  		if (!(data = pgd_lookup(*f)))
->  			continue;
->  
-> -		data->snprint(buff, MAX_FIELD_LEN, pgp);
-> +		ggp->ops->snprint(ggp, buff, MAX_FIELD_LEN, *f);
->  		PRINT(c, TAIL, "%s", buff);
->  		PAD(data->width);
->  	} while (*f++);
-> @@ -980,8 +981,10 @@ snprint_pathgroup (char * line, int len, char * format,
->  	__endline(line, len, c);
->  	return (c - line);
->  }
-> +#define snprint_pathgroup(line, len, fmt, pgp) \
-> +	_snprint_pathgroup(dm_pathgroup_to_gen(pgp), line, len, fmt)
->  
-> -void print_multipath_topology(struct multipath *mpp, int verbosity)
-> +void _print_multipath_topology(const struct gen_multipath *gmp, int verbosity)
->  {
->  	int resize;
->  	char *buff = NULL;
-> @@ -998,7 +1001,7 @@ void print_multipath_topology(struct multipath *mpp, int verbosity)
->  			return;
->  		}
->  
-> -		len = snprint_multipath_topology(buff, maxlen, mpp, verbosity);
-> +		len = _snprint_multipath_topology(gmp, buff, maxlen, verbosity);
->  		resize = (len == maxlen - 1);
->  
->  		if (resize) {
-> @@ -1011,12 +1014,30 @@ void print_multipath_topology(struct multipath *mpp, int verbosity)
->  	FREE(buff);
->  }
->  
-> -int snprint_multipath_topology(char *buff, int len, const struct multipath *mpp,
-> -			       int verbosity)
-> +int
-> +snprint_multipath_style(const struct gen_multipath *gmp, char *style, int len,
-> +			int verbosity)
-> +{
-> +	int n;
-> +	const struct multipath *mpp = gen_multipath_to_dm(gmp);
-> +	bool need_action = (verbosity > 1 &&
-> +			    mpp->action != ACT_NOTHING &&
-> +			    mpp->action != ACT_UNDEF &&
-> +			    mpp->action != ACT_IMPOSSIBLE);
-> +	bool need_wwid = (strncmp(mpp->alias, mpp->wwid, WWID_SIZE));
+>  libmultipath/Makefile  |   2 +-
+>  libmultipath/foreign.c | 471 +++++++++++++++++++++++++++++++++++++++++++++++++
+>  libmultipath/foreign.h | 322 +++++++++++++++++++++++++++++++++
+>  3 files changed, 794 insertions(+), 1 deletion(-)
+>  create mode 100644 libmultipath/foreign.c
+>  create mode 100644 libmultipath/foreign.h
+
+<snip>
+
+> +struct foreign {
+> +	/**
+> +	 * method: init(api, name)
+> +	 * Initialize foreign library, and check API compatibility
+> +	 * return pointer to opaque internal data strucure if successful,
+> +	 * NULL otherwise.
+> +	 *
+> +	 * @param[in] api: API version
+> +	 * @param[in] name: name to use for references to self in log messages,
+> +	 *     doesn't need to be strdup'd
+> +	 * @returns context pointer to use in future method calls.
+> +	 */
+> +	struct context* (*init)(unsigned int api, const char *name);
 > +
-> +	n = snprintf(style, len, "%s%s%s%s",
-> +		     need_action ? "%A: " : "", "%n",
-> +		     need_wwid ? " (%w)" : "", " %d %s");
-> +	return MIN(n, len - 1);
+> +	/**
+> +	 * method: cleanup(context)
+> +	 * Free data structures used by foreign library, including
+> +	 * context itself.
+> +	 *
+> +	 * @param[in] context foreign library context. This shouldn't be
+> +	 * referenced any more after calling cleanup().
+> +	 */
+> +	void (*cleanup)(struct context *);
+> +
+> +	/**
+> +	 * method: add(context, udev)
+> +	 * This is called during path detection, and for udev ADD events.
+> +	 *
+> +	 * @param[in] context foreign library context
+> +	 * @param[in] udev udev device to add
+> +	 * @returns status code
+> +	 * @retval FOREIGN_CLAIMED: device newly claimed
+> +	 * @retval FOREIGN_OK: device already registered, no action taken
+> +	 * @retval FOREIGN_IGNORED: device is ignored, no action taken
+> +	 * @retval FOREIGN_ERR: an error occured (e.g. out-of-memory)
+> +	 */
+> +	int (*add)(struct context *, struct udev_device *);
+> +
+> +	/**
+> +	 * method: change
+> +	 * This is called on udev CHANGE events.
+> +	 *
+> +	 * @param[in] context foreign library context
+> +	 * @param[in] udev udev device that has generated the event
+> +	 * @returns status code
+> +	 * @retval FOREIGN_OK: event processed
+> +	 * @retval FOREIGN_IGNORED: the device is ignored
+> +	 * @retval FOREIGN_ERR: an error occured (e.g. out-of-memory)
+> +	 *
+> +	 * Note: theoretically it can happen that the status of a foreign device
+> +	 * (claimed vs. not claimed) changes in a change event.
+> +	 * Supporting this correctly would require big efforts. For now, we
+> +	 * don't support it. "multipathd reconfigure" starts foreign device
+> +	 * detection from scratch and should be able to handle this situation.
+> +	 */
+> +	int (*change)(struct context *, struct udev_device *);
+> +
+> +	/**
+> +	 * method: delete
+> +	 * This is called on udev DELETE events.
+> +	 *
+> +	 * @param[in] context foreign library context
+> +	 * @param[in] udev udev device that has generated the event and
+> +	 *	should be deleted
+> +	 * @returns status code
+> +	 * @retval FOREIGN_OK: processed correctly (device deleted)
+> +	 * @retval FOREIGN_IGNORED: device wasn't registered internally
+> +	 * @retval FOREIGN_ERR: error occured.
+> +	 */
+> +	int (*delete)(struct context *, struct udev_device *);
+> +
+> +	/**
+> +	 * method: delete_all
+> +	 * This is called if multipathd reconfigures itself.
+> +	 * Deletes all registered devices (maps and paths)
+> +	 *
+> +	 * @param[in] context foreign library context
+> +	 * @returns status code
+> +	 * @retval FOREIGN_OK: processed correctly
+> +	 * @retval FOREIGN_IGNORED: nothing to delete
+> +	 * @retval FOREIGN_ERR: error occured
+> +	 */
+> +	int (*delete_all)(struct context*);
+> +
+> +	/**
+> +	 * method: check
+> +	 * This is called from multipathd's checker loop.
+> +	 *
+> +	 * Check status of managed devices, update internal status, and print
+> +	 * log messages if appropriate.
+> +	 * @param[in] context foreign library context
+> +	 */
+> +	void (*check)(struct context *);
+> +
+> +	/**
+> +	 * lock internal data stuctures.
+> +	 * @param[in] ctx: foreign context
+> +	 */
+> +	void (*lock)(struct context *ctx);
+> +
+> +	/**
+> +	 * unlock internal data stuctures.
+> +	 * @param[in] ctx: foreign context (void* in order to use the function
+> +	 *	as argument to pthread_cleanup_push())
+> +	 */
+> +	void (*unlock)(void *ctx);
+> +
+> +	/**
+> +	 * method: get_multipaths(context)
+> +	 * Returned vector must be freed by calling release_multipaths().
+> +	 * Lock must be held until release_multipaths() is called.
+> +	 *
+> +	 * @param[in] context foreign library context
+> +	 * @returns a vector of "struct gen_multipath*" with the map devices
+> +	 * belonging to this library (see generic.h).
+> +	 */
+> +	const struct _vector* (*get_multipaths)(const struct context *);
+> +
+> +	/**
+> +	 * method: release_multipaths(context, mpvec)
+> +	 * release data structures obtained with get_multipaths (if any)
+> +	 *
+> +	 * @param[in] ctx the foreign context
+> +	 * @param[in] mpvec the vector allocated with get_multipaths()
+> +	 */
+> +	void (*release_multipaths)(const struct context *ctx,
+> +				   const struct _vector* mpvec);
+> +
+> +	/**
+> +	 * method: get_paths
+> +	 * Returned vector must be freed by calling release_paths().
+> +	 * Lock must be held until release_paths() is called.
+> +	 *
+> +	 * @param[in] context foreign library context
+> +	 * @returns a vector of "struct gen_path*" with the path devices
+> +	 * belonging to this library (see generic.h)
+> +	 */
+> +	const struct _vector* (*get_paths)(const struct context *);
+> +
+> +	/**
+> +	 * release data structures obtained with get_multipaths (if any)
+> +	 *
+> +	 * @param[in] ctx the foreign context
+> +	 * @param[in] ppvec the vector allocated with get_paths()
+> +	 */
+> +	void (*release_paths)(const struct context *ctx,
+> +			      const struct _vector* ppvec);
+> +
+> +	const char *name;
+> +	void *handle;
+> +	struct context *context;
+> +};
+
+Instead of having a separate pointer "name", would you mind using
+const char name[0];
+
+at the end of the structure, like struct logmsg does? I believe this
+should work with const.
+
+-Ben
+
+> +
+> +/**
+> + * init_foreign(dir)
+> + * load and initialize foreign multipath libraries in dir (libforeign-*.so).
+> + * @param dir: directory to search
+> + * @returns: 0 on success, negative value on failure.
+> + */
+> +int init_foreign(const char *multipath_dir);
+> +
+> +/**
+> + * cleanup_foreign(dir)
+> + * cleanup and free all data structures owned by foreign libraries
+> + */
+> +void cleanup_foreign(void);
+> +
+> +/**
+> + * add_foreign(udev)
+> + * check if a device belongs to any foreign library.
+> + * calls add() for all known foreign libs, in the order registered,
+> + * until the first one returns FOREIGN_CLAIMED or FOREIGN_OK.
+> + * @param udev: udev device to check
+> + * @returns: status code
+> + * @retval FOREIGN_CLAIMED: newly claimed by a foreign lib
+> + * @retval FOREIGN_OK: already claimed by a foreign lib
+> + * @retval FOREIGN_IGNORED: ignored by all foreign libs
+> + * @retval FOREIGN_ERR: an error occured
+> + */
+> +int add_foreign(struct udev_device *);
+> +
+> +/**
+> + * change_foreign(udev)
+> + * Notify foreign libraries of an udev CHANGE event
+> + * @param udev: udev device to check
+> + * @returns: status code (see change() method above).
+> + */
+> +int change_foreign(struct udev_device *);
+> +
+> +/**
+> + * delete_foreign(udev)
+> + * @param udev: udev device being removed
+> + * @returns: status code (see remove() above)
+> + */
+> +int delete_foreign(struct udev_device *);
+> +
+> +/**
+> + * delete_all_foreign()
+> + * call delete_all() for all foreign libraries
+> + * @returns: status code (see delete_all() above)
+> + */
+> +int delete_all_foreign(void);
+> +
+> +/**
+> + * check_foreign()
+> + * call check() (see above) for all foreign libraries
+> + */
+> +void check_foreign(void);
+> +
+> +/**
+> + * foreign_path_layout()
+> + * call this before printing paths, after get_path_layout(), to determine
+> + * output field width.
+> + */
+> +void foreign_path_layout(void);
+> +
+> +/**
+> + * foreign_multipath_layout()
+> + * call this before printing maps, after get_multipath_layout(), to determine
+> + * output field width.
+> + */
+> +void foreign_multipath_layout(void);
+> +
+> +/**
+> + * snprint_foreign_topology(buf, len, verbosity);
+> + * prints topology information from foreign libraries into buffer,
+> + * '\0' - terminated.
+> + * @param buf: output buffer
+> + * @param len: size of output buffer
+> + * @param verbosity: verbosity level
+> + * @returns: number of printed characters excluding trailing '\0'.
+> + */
+> +int snprint_foreign_topology(char *buf, int len, int verbosity);
+> +
+> +/**
+> + * snprint_foreign_paths(buf, len, style, pad);
+> + * prints formatted path information from foreign libraries into buffer,
+> + * '\0' - terminated.
+> + * @param buf: output buffer
+> + * @param len: size of output buffer
+> + * @param style: format string
+> + * @param pad: whether to pad field width
+> + * @returns: number of printed characters excluding trailing '\0'.
+> + */
+> +int snprint_foreign_paths(char *buf, int len, const char *style, int pad);
+> +
+> +/**
+> + * snprint_foreign_multipaths(buf, len, style, pad);
+> + * prints formatted map information from foreign libraries into buffer,
+> + * '\0' - terminated.
+> + * @param buf: output buffer
+> + * @param len: size of output buffer
+> + * @param style: format string
+> + * @param pad: whether to pad field width
+> + * @returns: number of printed characters excluding trailing '\0'.
+> + */
+> +int snprint_foreign_multipaths(char *buf, int len,
+> +			       const char *style, int pretty);
+> +
+> +/**
+> + * print_foreign_topology(v)
+> + * print foreign topology to stdout
+> + * @param verbosity: verbosity level
+> + */
+> +void print_foreign_topology(int verbosity);
+> +
+> +/**
+> + * is_claimed_by_foreign(ud)
+> + * @param udev: udev device
+> + * @returns: true iff device is (newly or already) claimed by a foreign lib
+> + */
+> +static inline bool
+> +is_claimed_by_foreign(struct udev_device *ud)
+> +{
+> +	int rc = add_foreign(ud);
+> +
+> +	return (rc == FOREIGN_CLAIMED || rc == FOREIGN_OK);
 > +}
 > +
-> +int _snprint_multipath_topology(const struct gen_multipath *gmp,
-> +				char *buff, int len, int verbosity)
->  {
->  	int j, i, fwd = 0;
-> -	struct path * pp = NULL;
-> -	struct pathgroup * pgp = NULL;
-> +	const struct _vector *pgvec;
-> +	const struct gen_pathgroup *gpg;
->  	char style[64];
->  	char * c = style;
->  	char fmt[64];
-> @@ -1028,60 +1049,71 @@ int snprint_multipath_topology(char *buff, int len, const struct multipath *mpp,
->  	reset_multipath_layout();
->  
->  	if (verbosity == 1)
-> -		return snprint_multipath(buff, len, "%n", mpp, 1);
-> +		return _snprint_multipath(gmp, buff, len, "%n", 1);
->  
->  	if(isatty(1))
->  		c += sprintf(c, "%c[%dm", 0x1B, 1); /* bold on */
->  
-> -	if (verbosity > 1 &&
-> -	    mpp->action != ACT_NOTHING &&
-> -	    mpp->action != ACT_UNDEF && mpp->action != ACT_IMPOSSIBLE)
-> -			c += sprintf(c, "%%A: ");
-> -
-> -	c += sprintf(c, "%%n");
-> -
-> -	if (strncmp(mpp->alias, mpp->wwid, WWID_SIZE))
-> -		c += sprintf(c, " (%%w)");
-> -
-> -	c += sprintf(c, " %%d %%s");
-> +	c += gmp->ops->style(gmp, c, sizeof(style) - (c - style),
-> +			     verbosity);
-> +	c += snprintf(c, sizeof(style) - (c - style), " %%d %%s");
-
-You already added %d and %s to the style line in
-snprint_multipath_style()
-
-It causes multipath to dublicate the dev and vend/prod/rev as shown
-below.
-
-# multipath -l mpathc
-mpathc (333333330000007d0) dm-5 Linux,scsi_debug dm-5 Linux,scsi_debug
-size=100M features='1 queue_if_no_path' hwhandler='1 alua' wp=rw
-|-+- policy='service-time 0' prio=0 status=active
-| `- 9:0:0:0 sde 8:64 active undef unknown
-`-+- policy='service-time 0' prio=0 status=enabled
-  `- 8:0:0:0 sdd 8:48 active undef unknown
-
-
->  	if(isatty(1))
->  		c += sprintf(c, "%c[%dm", 0x1B, 0); /* bold off */
->  
-> -	fwd += snprint_multipath(buff + fwd, len - fwd, style, mpp, 1);
-> +	fwd += _snprint_multipath(gmp, buff + fwd, len - fwd, style, 1);
->  	if (fwd >= len)
->  		return len;
-> -	fwd += snprint_multipath(buff + fwd, len - fwd, PRINT_MAP_PROPS, mpp,
-> -				 1);
-> +	fwd += _snprint_multipath(gmp, buff + fwd, len - fwd,
-> +				  PRINT_MAP_PROPS, 1);
->  	if (fwd >= len)
->  		return len;
->  
-> -	if (!mpp->pg)
-> +	pgvec = gmp->ops->get_pathgroups(gmp);
-> +	if (pgvec == NULL)
->  		return fwd;
->  
-> -	vector_foreach_slot (mpp->pg, pgp, j) {
-> +	vector_foreach_slot (pgvec, gpg, j) {
-> +		const struct _vector *pathvec;
-> +		struct gen_path *gp;
-> +
->  		f=fmt;
-> -		if (j + 1 < VECTOR_SIZE(mpp->pg)) {
-> +
-> +		if (j + 1 < VECTOR_SIZE(pgvec)) {
->  			strcpy(f, "|-+- " PRINT_PG_INDENT);
->  		} else
->  			strcpy(f, "`-+- " PRINT_PG_INDENT);
-> -		fwd += snprint_pathgroup(buff + fwd, len - fwd, fmt, pgp);
-> -		if (fwd >= len)
-> -			return len;
-> +		fwd += _snprint_pathgroup(gpg, buff + fwd, len - fwd, fmt);
->  
-> -		vector_foreach_slot (pgp->paths, pp, i) {
-> +		if (fwd >= len) {
-> +			fwd = len;
-> +			break;
-> +		}
-> +
-> +		pathvec = gpg->ops->get_paths(gpg);
-> +		if (pathvec == NULL)
-> +			continue;
-> +
-> +		vector_foreach_slot (pathvec, gp, i) {
->  			f=fmt;
->  			if (*f != '|')
->  				*f=' ';
->  			f++;
-> -			if (i + 1 < VECTOR_SIZE(pgp->paths))
-> +			if (i + 1 < VECTOR_SIZE(pathvec))
->  				strcpy(f, " |- " PRINT_PATH_INDENT);
->  			else
->  				strcpy(f, " `- " PRINT_PATH_INDENT);
-> -			fwd += snprint_path(buff + fwd, len - fwd, fmt, pp, 1);
-> -			if (fwd >= len)
-> -				return len;
-> +			fwd += _snprint_path(gp, buff + fwd, len - fwd, fmt, 1);
-> +			if (fwd >= len) {
-> +				fwd = len;
-> +				break;
-> +			}
->  		}
-> +		gpg->ops->rel_paths(gpg, pathvec);
-> +
-> +		if (fwd == len)
-> +			break;
->  	}
-> +	gmp->ops->rel_pathgroups(gmp, pgvec);
->  	return fwd;
->  }
->  
-> diff --git a/libmultipath/print.h b/libmultipath/print.h
-> index c624d2bfe8d4..e71f87722315 100644
-> --- a/libmultipath/print.h
-> +++ b/libmultipath/print.h
-> @@ -1,3 +1,6 @@
-> +#ifndef _PRINT_H
-> +#define _PRINT_H
-> +
->  #define PRINT_PATH_LONG      "%w %i %d %D %p %t %T %s %o"
->  #define PRINT_PATH_INDENT    "%i %d %D %t %T %o"
->  #define PRINT_PATH_CHECKER   "%i %d %D %p %t %T %o %C"
-> @@ -94,11 +97,17 @@ void get_path_layout (vector pathvec, int header);
->  void get_multipath_layout (vector mpvec, int header);
->  int snprint_path_header (char *, int, const char *);
->  int snprint_multipath_header (char *, int, const char *);
-> -int snprint_path (char *, int, const char *, const struct path *, int);
-> -int snprint_multipath (char *, int, const char *,
-> -		       const struct multipath *, int);
-> -int snprint_multipath_topology (char *, int, const struct multipath * mpp,
-> -				int verbosity);
-> +int _snprint_path (const struct gen_path *, char *, int, const char *, int);
-> +#define snprint_path(buf, len, fmt, pp, v) \
-> +	_snprint_path(dm_path_to_gen(pp), buf, len, fmt,  v)
-> +int _snprint_multipath (const struct gen_multipath *, char *, int,
-> +			const char *, int);
-> +#define snprint_multipath(buf, len, fmt, mp, v)				\
-> +	_snprint_multipath(dm_multipath_to_gen(mp), buf, len, fmt,  v)
-> +int _snprint_multipath_topology (const struct gen_multipath *, char *, int, 
-> +				 int verbosity);
-> +#define snprint_multipath_topology(buf, len, mpp, v) \
-> +	_snprint_multipath_topology (dm_multipath_to_gen(mpp), buf, len, v)
->  int snprint_multipath_topology_json (char * buff, int len,
->  				const struct vectors * vecs);
->  int snprint_multipath_map_json (char * buff, int len,
-> @@ -119,7 +128,11 @@ int snprint_host_wwpn (char *, size_t, const struct path *);
->  int snprint_tgt_wwnn (char *, size_t, const struct path *);
->  int snprint_tgt_wwpn (char *, size_t, const struct path *);
->  
-> -void print_multipath_topology (struct multipath * mpp, int verbosity);
-> +void _print_multipath_topology (const struct gen_multipath * gmp,
-> +				int verbosity);
-> +#define print_multipath_topology(mpp, v) \
-> +	_print_multipath_topology(dm_multipath_to_gen(mpp), v)
-> +
->  void print_all_paths (vector pathvec, int banner);
->  void print_all_paths_custo (vector pathvec, int banner, char *fmt);
->  
-> @@ -129,3 +142,6 @@ int snprint_pathgroup_attr(const struct gen_pathgroup* gpg,
->  			   char *buf, int len, char wildcard);
->  int snprint_multipath_attr(const struct gen_multipath* gm,
->  			   char *buf, int len, char wildcard);
-> +int snprint_multipath_style(const struct gen_multipath *gmp,
-> +			    char *style, int len, int verbosity);
-> +#endif /* _PRINT_H */
-> diff --git a/multipath/main.c b/multipath/main.c
-> index 52bf1658bbca..a0c750e6f623 100644
-> --- a/multipath/main.c
-> +++ b/multipath/main.c
-> @@ -47,6 +47,7 @@
->  #include "discovery.h"
->  #include "debug.h"
->  #include "switchgroup.h"
-> +#include "dm-generic.h"
->  #include "print.h"
->  #include "alias.h"
->  #include "configure.h"
-> diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-> index 7f13bc9d6f32..78f2a12bc2f8 100644
-> --- a/multipathd/cli_handlers.c
-> +++ b/multipathd/cli_handlers.c
-> @@ -16,6 +16,7 @@
->  #include "configure.h"
->  #include "blacklist.h"
->  #include "debug.h"
-> +#include "dm-generic.h"
->  #include "print.h"
->  #include "sysfs.h"
->  #include <errno.h>
+> +#endif /*  _FOREIGN_H */
 > -- 
 > 2.16.1
