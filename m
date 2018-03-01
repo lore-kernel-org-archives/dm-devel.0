@@ -1,16 +1,16 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [RFC PATCH 14/20] libmultipath: print: use generic
- API for get_x_layout()
-Date: Thu, 1 Mar 2018 00:03:51 -0600
-Message-ID: <20180301060351.GB14513@octiron.msp.redhat.com>
+Subject: Re: [RFC PATCH 16/20] libmultipath/print: add "%G -
+	foreign" wildcard
+Date: Thu, 1 Mar 2018 00:04:09 -0600
+Message-ID: <20180301060409.GC14513@octiron.msp.redhat.com>
 References: <20180220132658.22295-1-mwilck@suse.com>
-	<20180220132658.22295-15-mwilck@suse.com>
+	<20180220132658.22295-17-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20180220132658.22295-15-mwilck@suse.com>
+In-Reply-To: <20180220132658.22295-17-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,148 +24,79 @@ To: Martin Wilck <mwilck@suse.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Feb 20, 2018 at 02:26:52PM +0100, Martin Wilck wrote:
-> Introduce new functions _get_path_layout and _get_multipath_layout
-> using the new "generic" API to determine field widths, and map the
-> old API to them.
-> 
-> Furthermore, replace the boolean "header" by an enum with 3 possible
-> values. The new value LAYOUT_RESET_NOT allows calling the get_x_layout
-> function several times and determine the overall field width.
+On Tue, Feb 20, 2018 at 02:26:54PM +0100, Martin Wilck wrote:
+> This adds a format field to identify foreign maps as such, and
+> uses it in default-formatted topology output (generic_style()).
 > 
 
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 
 > Signed-off-by: Martin Wilck <mwilck@suse.com>
 > ---
->  libmultipath/print.c | 73 ++++++++++++++++++++++++++++++++++++++++------------
->  libmultipath/print.h |  8 ++++++
->  2 files changed, 65 insertions(+), 16 deletions(-)
+>  libmultipath/generic.c |  4 +++-
+>  libmultipath/print.c   | 14 ++++++++++++++
+>  2 files changed, 17 insertions(+), 1 deletion(-)
 > 
+> diff --git a/libmultipath/generic.c b/libmultipath/generic.c
+> index 61cbffb708b6..5f74427cb5b1 100644
+> --- a/libmultipath/generic.c
+> +++ b/libmultipath/generic.c
+> @@ -33,7 +33,9 @@ int generic_style(const struct gen_multipath* gm,
+>  	gm->ops->snprint(gm, wwid_buf, sizeof(wwid_buf), 'w');
+>  
+>  	if (strcmp(alias_buf, wwid_buf))
+> -		n = snprintf(buf, len, " (%%w)");
+> +		n += snprintf(buf, len, "%%n (%%w) [%%G]");
+> +	else
+> +		n += snprintf(buf, len, "%%n [%%G]");
+>  
+>  	return (n < len ? n : len - 1);
+>  }
 > diff --git a/libmultipath/print.c b/libmultipath/print.c
-> index 8846765066ef..9a5a6a2f4ad6 100644
+> index 9a5a6a2f4ad6..a6ff6b297b3f 100644
 > --- a/libmultipath/print.c
 > +++ b/libmultipath/print.c
-> @@ -698,20 +698,48 @@ snprint_wildcards (char * buff, int len)
+> @@ -342,6 +342,12 @@ snprint_multipath_rev (char * buff, size_t len, const struct multipath * mpp)
+>  	return snprintf(buff, len, "##");
 >  }
 >  
->  void
-> -get_path_layout (vector pathvec, int header)
-> +get_path_layout(vector pathvec, int header)
+> +static int
+> +snprint_multipath_foreign (char * buff, size_t len, const struct multipath * pp)
 > +{
-> +	vector gpvec = vector_convert(NULL, pathvec, struct path,
-> +				      dm_path_to_gen);
-> +	_get_path_layout(gpvec,
-> +			 header ? LAYOUT_RESET_HEADER : LAYOUT_RESET_ZERO);
-> +	vector_free(gpvec);
+> +	return snprintf(buff, len, "%s", "--");
 > +}
 > +
-> +static void
-> +reset_width(int *width, enum layout_reset reset, const char *header)
+>  static int
+>  snprint_action (char * buff, size_t len, const struct multipath * mpp)
+>  {
+> @@ -621,6 +627,12 @@ snprint_path_checker (char * buff, size_t len, const struct path * pp)
+>  	return snprint_str(buff, len, c->name);
+>  }
+>  
+> +static int
+> +snprint_path_foreign (char * buff, size_t len, const struct path * pp)
 > +{
-> +	switch (reset) {
-> +	case LAYOUT_RESET_HEADER:
-> +		*width = strlen(header);
-> +		break;
-> +	case LAYOUT_RESET_ZERO:
-> +		*width = 0;
-> +		break;
-> +	default:
-> +		/* don't reset */
-> +		break;
-> +	}
+> +	return snprintf(buff, len, "%s", "--");
 > +}
 > +
-> +void
-> +_get_path_layout (const struct _vector *gpvec, enum layout_reset reset)
->  {
->  	int i, j;
->  	char buff[MAX_FIELD_LEN];
-> -	struct path * pp;
-> +	const struct gen_path *gp;
->  
->  	for (j = 0; pd[j].header; j++) {
-> -		if (header)
-> -			pd[j].width = strlen(pd[j].header);
-> -		else
-> -			pd[j].width = 0;
->  
-> -		vector_foreach_slot (pathvec, pp, i) {
-> -			pd[j].snprint(buff, MAX_FIELD_LEN, pp);
-> +		reset_width(&pd[j].width, reset, pd[j].header);
-> +
-> +		if (gpvec == NULL)
-> +			continue;
-> +
-> +		vector_foreach_slot (gpvec, gp, i) {
-> +			gp->ops->snprint(gp, buff, MAX_FIELD_LEN,
-> +					 pd[j].wildcard);
->  			pd[j].width = MAX(pd[j].width, strlen(buff));
->  		}
->  	}
-> @@ -727,22 +755,35 @@ reset_multipath_layout (void)
->  }
->  
->  void
-> -get_multipath_layout (vector mpvec, int header)
-> +get_multipath_layout (vector mpvec, int header) {
-> +	vector gmvec = vector_convert(NULL, mpvec, struct multipath,
-> +				      dm_multipath_to_gen);
-> +	_get_multipath_layout(gmvec,
-> +			 header ? LAYOUT_RESET_HEADER : LAYOUT_RESET_ZERO);
-> +	vector_free(gmvec);
-> +}
-> +
-> +void
-> +_get_multipath_layout (const struct _vector *gmvec,
-> +			    enum layout_reset reset)
->  {
->  	int i, j;
->  	char buff[MAX_FIELD_LEN];
-> -	struct multipath * mpp;
-> +	const struct gen_multipath * gm;
->  
->  	for (j = 0; mpd[j].header; j++) {
-> -		if (header)
-> -			mpd[j].width = strlen(mpd[j].header);
-> -		else
-> -			mpd[j].width = 0;
->  
-> -		vector_foreach_slot (mpvec, mpp, i) {
-> -			mpd[j].snprint(buff, MAX_FIELD_LEN, mpp);
-> +		reset_width(&mpd[j].width, reset, mpd[j].header);
-> +
-> +		if (gmvec == NULL)
-> +			continue;
-> +
-> +		vector_foreach_slot (gmvec, gm, i) {
-> +			gm->ops->snprint(gm, buff, MAX_FIELD_LEN,
-> +					 mpd[j].wildcard);
->  			mpd[j].width = MAX(mpd[j].width, strlen(buff));
->  		}
-> +		condlog(4, "%s: width %d", mpd[j].header, mpd[j].width);
->  	}
->  }
->  
-> diff --git a/libmultipath/print.h b/libmultipath/print.h
-> index e71f87722315..1ba364ac19ac 100644
-> --- a/libmultipath/print.h
-> +++ b/libmultipath/print.h
-> @@ -93,7 +93,15 @@ struct pathgroup_data {
->  	int (*snprint)(char * buff, size_t len, const struct pathgroup * pgp);
+>  struct multipath_data mpd[] = {
+>  	{'n', "name",          0, snprint_name},
+>  	{'w', "uuid",          0, snprint_multipath_uuid},
+> @@ -644,6 +656,7 @@ struct multipath_data mpd[] = {
+>  	{'v', "vend",          0, snprint_multipath_vend},
+>  	{'p', "prod",          0, snprint_multipath_prod},
+>  	{'e', "rev",           0, snprint_multipath_rev},
+> +	{'G', "foreign",       0, snprint_multipath_foreign},
+>  	{0, NULL, 0 , NULL}
 >  };
 >  
-> +enum layout_reset {
-> +	LAYOUT_RESET_NOT,
-> +	LAYOUT_RESET_ZERO,
-> +	LAYOUT_RESET_HEADER,
-> +};
-> +
-> +void _get_path_layout (const struct _vector *gpvec, enum layout_reset);
->  void get_path_layout (vector pathvec, int header);
-> +void _get_multipath_layout (const struct _vector *gmvec, enum layout_reset);
->  void get_multipath_layout (vector mpvec, int header);
->  int snprint_path_header (char *, int, const char *);
->  int snprint_multipath_header (char *, int, const char *);
+> @@ -667,6 +680,7 @@ struct path_data pd[] = {
+>  	{'R', "host WWPN",     0, snprint_host_wwpn},
+>  	{'r', "target WWPN",   0, snprint_tgt_wwpn},
+>  	{'a', "host adapter",  0, snprint_host_adapter},
+> +	{'G', "foreign",       0, snprint_path_foreign},
+>  	{0, NULL, 0 , NULL}
+>  };
+>  
 > -- 
 > 2.16.1
