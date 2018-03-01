@@ -1,16 +1,15 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [RFC PATCH 09/20] multipath-tools: Makefile.inc: use
- -Werror=cast-qual
-Date: Wed, 28 Feb 2018 23:59:48 -0600
-Message-ID: <20180301055948.GY14513@octiron.msp.redhat.com>
+Subject: Re: [RFC PATCH 11/20] libmultipath: add vector_convert()
+Date: Thu, 1 Mar 2018 00:02:36 -0600
+Message-ID: <20180301060236.GA14513@octiron.msp.redhat.com>
 References: <20180220132658.22295-1-mwilck@suse.com>
-	<20180220132658.22295-10-mwilck@suse.com>
+	<20180220132658.22295-12-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20180220132658.22295-10-mwilck@suse.com>
+In-Reply-To: <20180220132658.22295-12-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,29 +23,60 @@ To: Martin Wilck <mwilck@suse.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Feb 20, 2018 at 02:26:47PM +0100, Martin Wilck wrote:
-> Casting "const" away is often an indicator for wrong code.
-> Add a compiler flag to warn about such possible breakage.
+On Tue, Feb 20, 2018 at 02:26:49PM +0100, Martin Wilck wrote:
+> This is a handy helper for creating one vector from another,
+> mapping each element of the origin vector to an element of
+> the target vector with a given conversion function. It can
+> also be used to "concatenate" vectors by passing in a non-NULL first
+> argument.
 > 
 
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 
 > Signed-off-by: Martin Wilck <mwilck@suse.com>
 > ---
->  Makefile.inc | 1 +
->  1 file changed, 1 insertion(+)
+>  libmultipath/vector.h | 29 +++++++++++++++++++++++++++++
+>  1 file changed, 29 insertions(+)
 > 
-> diff --git a/Makefile.inc b/Makefile.inc
-> index eb99c36010c1..a5b9d4e3fa74 100644
-> --- a/Makefile.inc
-> +++ b/Makefile.inc
-> @@ -87,6 +87,7 @@ STACKPROT := $(call TEST_CC_OPTION,-fstack-protector-strong,-fstack-protector)
->  OPTFLAGS	= -O2 -g -pipe -Wall -Wextra -Wformat=2 -Werror=implicit-int \
->  		  -Werror=implicit-function-declaration -Werror=format-security \
->  		  -Wno-sign-compare -Wno-unused-parameter -Wno-clobbered \
-> +		  -Werror=cast-qual -Werror=discarded-qualifiers \
->  		  -Wp,-D_FORTIFY_SOURCE=2 $(STACKPROT) \
->  		  --param=ssp-buffer-size=4
+> diff --git a/libmultipath/vector.h b/libmultipath/vector.h
+> index 3f6e579ae19a..6018b57525bf 100644
+> --- a/libmultipath/vector.h
+> +++ b/libmultipath/vector.h
+> @@ -42,6 +42,35 @@ typedef struct _vector *vector;
+>  #define vector_foreach_slot_backwards(v,p,i) \
+>  	for (i = VECTOR_SIZE(v); i > 0 && ((p) = (v)->slot[i-1]); i--)
 >  
+> +#define identity(x) (x)
+> +/*
+> + * Given a vector vec with elements of given type,
+> + * return a newly allocated vector with elements conv(e) for each element
+> + * e in vec. "conv" may be a macro or a function.
+> + * Use "identity" for a simple copy.
+> + */
+> +#define vector_convert(new, vec, type, conv)				\
+> +	({								\
+> +		const struct _vector *__v = (vec);			\
+> +		vector __t = (new);					\
+> +		type *__j;						\
+> +		int __i;						\
+> +									\
+> +		if (__t == NULL)					\
+> +			__t = vector_alloc();				\
+> +		if (__t != NULL) {					\
+> +			vector_foreach_slot(__v, __j, __i) {		\
+> +				if (vector_alloc_slot(__t) == NULL) {	\
+> +					vector_free(__t);		\
+> +					__t = NULL;			\
+> +					break;				\
+> +				}					\
+> +				vector_set_slot(__t, conv(__j));	\
+> +			}						\
+> +		}							\
+> +		__t;							\
+> +	})
+> +
+>  /* Prototypes */
+>  extern vector vector_alloc(void);
+>  extern void *vector_alloc_slot(vector v);
 > -- 
 > 2.16.1
