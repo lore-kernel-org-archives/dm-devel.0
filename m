@@ -1,16 +1,11 @@
-From: Amir Goldstein <amir73il@gmail.com>
-Subject: Re: [RFC PATCH] fstests: Check if a fs can survive
- random (emulated) power loss
-Date: Thu, 1 Mar 2018 13:15:24 +0200
-Message-ID: <CAOQ4uxhy7iU71dB9aTFx+aeMowNoi0QMVT2GDUM81R_CTZxxsA@mail.gmail.com>
-References: <20180301053821.18718-1-wqu@suse.com>
-	<CAOQ4uxgUm-YnFG=M6YaMKqAvr+CewerL3d4S2V6WSwKKu13ebA@mail.gmail.com>
-	<ed8aec54-8b90-61cd-74c2-e8a1556849f6@gmx.com>
+From: Bart Van Assche <bart.vanassche@wdc.com>
+Subject: [PATCH 0/6] Various multipath-tools patches
+Date: Thu,  1 Mar 2018 11:29:29 -0800
+Message-ID: <20180301192935.14643-1-bart.vanassche@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <ed8aec54-8b90-61cd-74c2-e8a1556849f6@gmx.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,33 +15,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Qu Wenruo <quwenruo.btrfs@gmx.com>
-Cc: dm-devel@redhat.com, fstests <fstests@vger.kernel.org>, Qu Wenruo <wqu@suse.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: Bart Van Assche <bart.vanassche@wdc.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gVGh1LCBNYXIgMSwgMjAxOCBhdCAxMToyNSBBTSwgUXUgV2VucnVvIDxxdXdlbnJ1by5idHJm
-c0BnbXguY29tPiB3cm90ZToKPgo+Cj4gT24gMjAxOOW5tDAz5pyIMDHml6UgMTY6MzksIEFtaXIg
-R29sZHN0ZWluIHdyb3RlOgo+PiBPbiBUaHUsIE1hciAxLCAyMDE4IGF0IDc6MzggQU0sIFF1IFdl
-bnJ1byA8d3F1QHN1c2UuY29tPiB3cm90ZToKPj4+IFRoaXMgdGVzdCBjYXNlIGlzIG9yaWdpbmFs
-bHkgZGVzaWduZWQgdG8gZXhwb3NlIHVuZXhwZWN0ZWQgY29ycnVwdGlvbgo+Pj4gZm9yIGJ0cmZz
-LCB3aGVyZSB0aGVyZSBhcmUgc2V2ZXJhbCByZXBvcnRzIGFib3V0IGJ0cmZzIHNlcmlvdXMgbWV0
-YWRhdGEKPj4+IGNvcnJ1cHRpb24gYWZ0ZXIgcG93ZXIgbG9zcy4KPj4+Cj4+PiBUaGUgdGVzdCBj
-YXNlIGl0c2VsZiB3aWxsIHRyaWdnZXIgaGVhdnkgZnNzdHJlc3MgZm9yIHRoZSBmcywgYW5kIHVz
-ZQo+Pj4gZG0tZmxha2V5IHRvIGVtdWxhdGUgcG93ZXIgbG9zcyBieSBkcm9wcGluZyBhbGwgbGF0
-ZXIgd3JpdGVzLgo+Pgo+PiBTbyB5b3UgYXJlIHJlLXBvc3RpbmcgdGhlIHRlc3Qgd2l0aCBkbS1m
-bGFrZXkgb3IgY29udmVydGluZyBpdCB0bwo+PiBkbS1sb2ctd3JpdGVzPz8KPgo+IFdvcmtpbmcg
-b24gdGhlIHNjcmlwdHMgdG8gYWxsb3cgdXMgdG8gZG8gLS1maW5kIGFuZCB0aGVuIHJlcGxheS4K
-Pgo+IFNpbmNlIGZvciB4ZnMgYW5kIGV4dDQsIHRoZWlyIGZzY2sgd291bGQgcmVwb3J0IGZhbHNl
-IGFsZXJ0cyBqdXN0IGZvcgo+IGRpcnR5IGpvdXJuYWwuCj4KPiBJJ20gYWRkaW5nIG5ldyBtYWNy
-byB0byBsb2NhdGUgbmV4dCBmbHVzaCBhbmQgcmVwbGF5IHRvIGl0LCB0aGVuIG1vdW50Cj4gaXQg
-UlcgYmVmb3JlIHdlIGNhbGwgZnNjay4KPgo+IE9yIGRvIHdlIGhhdmUgb3B0aW9ucyBmb3IgdGhv
-c2UgZnNja3MgdG8gc2tpcCBkaXJ0eSBqb3VybmFsPwo+CgpObywgeW91IGFyZSBtdWNoIGJldHRl
-ciBvZmYgZG9pbmcgbW91bnQvdW1vdW50IGJlZm9yZSBmc2NrLgpFdmVuIHRob3VnaCBlMmZzY2sg
-Y2FuIHJlcGxheSBhIGpvdXJuYWwsIGl0IGRvZXMgdGhhdCBtdWNoIHNsb3dlcgp0aGVuIHRoZSBr
-ZXJuZWwgZG9lcy4KCkJ1dCB3aHkgZG8geW91IG5lZWQgdG8gdGVhY2ggLS1maW5kIHRvIGZpbmQg
-bmV4dCBmbHVzaD8KWW91IGNvdWxkIHVzZSBhIGhlbHBlciBzY3JpcHQgdG8gcnVuIGV2ZXJ5IGZ1
-YSB3aXRoIC0tZnNjayAtLWNoZWNrIGZ1YS4KR3JhbnRlZCwgZm9yIGZzdGVzdHMgY29udGV4dCwg
-SSBhZ3JlZSB0aGF0IC0tZmluZCBuZXh0IGZ1YSBtYXkgbG9vawpuaWNlciwgc28gSSBoYXZlIG5v
-IG9iamVjdGlvbiB0byB0aGlzIGltcGxlbWVudGF0aW9uLgoKVGhhbmtzLApBbWlyLgoKLS0KZG0t
-ZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0
-LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+Hello Christophe,
+
+This series contains the following patches:
+- Four patches address Coverity complaints.
+- One patch makes a function argument const.
+- One patch addresses a bug that I discovered while inspecting the multipath
+  command line tool output.
+
+Please consider these patches for the multipath-tools project.
+
+Thanks,
+
+Bart.
+
+Bart Van Assche (6):
+  multipathd/main.c: Fix indentation
+  libmultipath, alloc_path_with_pathinfo(): Ensure that pp->wwid is
+    '\0'-terminated
+  libmultipath, alloc_path_with_pathinfo(): Declare third argument const
+  kpartx: Improve reliability of find_loop_by_file()
+  libmultipath: Fix sgio_get_vpd()
+  Introduce the ibmultipath/unaligned.h header file
+
+ kpartx/lopart.c                       |  7 ++++---
+ libmpathpersist/mpath_pr_ioctl.c      |  8 ++++----
+ libmultipath/checkers/hp_sw.c         |  4 ++--
+ libmultipath/discovery.c              | 22 +++++++++++---------
+ libmultipath/discovery.h              |  2 +-
+ libmultipath/prioritizers/alua_rtpg.c | 13 ++++++------
+ libmultipath/prioritizers/alua_spc3.h | 35 ++------------------------------
+ libmultipath/prioritizers/ontap.c     |  4 ++--
+ libmultipath/unaligned.h              | 38 +++++++++++++++++++++++++++++++++++
+ multipathd/main.c                     |  4 ++--
+ 10 files changed, 74 insertions(+), 63 deletions(-)
+ create mode 100644 libmultipath/unaligned.h
+
+-- 
+2.16.2
