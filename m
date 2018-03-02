@@ -1,15 +1,18 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [RFC PATCH 19/20] multipathd: use foreign API
-Date: Fri, 02 Mar 2018 18:04:29 +0100
-Message-ID: <1520010269.4169.80.camel@suse.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [RFC PATCH 17/20] libmultipath/foreign: nvme foreign
+	library
+Date: Fri, 2 Mar 2018 12:30:47 -0600
+Message-ID: <20180302183047.GF14513@octiron.msp.redhat.com>
 References: <20180220132658.22295-1-mwilck@suse.com>
-	<20180220132658.22295-20-mwilck@suse.com>
-	<20180301051306.GO14513@octiron.msp.redhat.com>
+	<20180220132658.22295-18-mwilck@suse.com>
+	<20180301031420.GM14513@octiron.msp.redhat.com>
+	<1520006668.4169.69.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180301051306.GO14513@octiron.msp.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1520006668.4169.69.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,84 +22,67 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <mwilck@suse.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gV2VkLCAyMDE4LTAyLTI4IGF0IDIzOjEzIC0wNjAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gT24gVHVlLCBGZWIgMjAsIDIwMTggYXQgMDI6MjY6NTdQTSArMDEwMCwgTWFydGluIFdp
-bGNrIHdyb3RlOgo+ID4gQ2FsbCBpbnRvIHRoZSBmb3JlaWduIGxpYnJhcnkgY29kZSB3aGVuIHBh
-dGhzIGFyZSBkaXNjb3ZlcmVkLAo+ID4gdWV2ZW50cwo+ID4gYXJlIHJlY2VpdmVkLCBhbmQgaW4g
-dGhlIGNoZWNrZXIgbG9vcC4gRnVydGhlcm1vcmUsIHVzZSB0aGUgZm9yZWlnbgo+ID4gY29kZSB0
-byBwcmludCBpbmZvcm1hdGlvbiBpbiB0aGUgIm11bHRpcGF0aGQgc2hvdyBwYXRocyIsCj4gPiAi
-bXVsdGlwYXRoZAo+ID4gc2hvdyBtYXBzIiwgYW5kICJtdWx0aXBhdGhkIHNob3cgdG9wb2xvZ3ki
-IGNsaWVudCBjb21tYW5kcy4KPiA+IAo+ID4gV2UgZG9uJ3Qgc3VwcG9ydCBmb3JlaWduIGRhdGEg
-aW4gdGhlIGluZGl2aWR1YWwgInNob3cgbWFwIiBhbmQKPiA+ICJzaG93IHBhdGgiCj4gPiBjb21t
-YW5kcywgYW5kIG5laXRoZXIgaW4gdGhlICJqc29uIiBjb21tYW5kcy4gVGhlIGZvcm1lciBpcyBh
-Cj4gPiBkZWxpYmVyYXRlCj4gPiBkZWNpc2lvbiwgdGhlIGxhdHRlciBjb3VsZCBiZSBhZGRlZCBp
-ZiBkZXNpcmVkLgo+ID4gCj4gPiBTaWduZWQtb2ZmLWJ5OiBNYXJ0aW4gV2lsY2sgPG13aWxja0Bz
-dXNlLmNvbT4KPiA+IC0tLQo+ID4gIGxpYm11bHRpcGF0aC9kaXNjb3ZlcnkuYyAgfCAgNCArKyst
-Cj4gPiAgbXVsdGlwYXRoZC9jbGlfaGFuZGxlcnMuYyB8IDM5ICsrKysrKysrKysrKysrKysrKysr
-KysrKysrKysrKysrKystCj4gPiAtLS0tCj4gPiAgbXVsdGlwYXRoZC9tYWluLmMgICAgICAgICB8
-IDQzCj4gPiArKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrLS0tCj4gPiAg
-MyBmaWxlcyBjaGFuZ2VkLCA3NyBpbnNlcnRpb25zKCspLCA5IGRlbGV0aW9ucygtKQo+ID4gCj4g
-PiBkaWZmIC0tZ2l0IGEvbXVsdGlwYXRoZC9tYWluLmMgYi9tdWx0aXBhdGhkL21haW4uYwo+ID4g
-aW5kZXggYjkwMGJiM2VjMmUzLi5lMWQ5ODg2MWE4NDEgMTAwNjQ0Cj4gPiAtLS0gYS9tdWx0aXBh
-dGhkL21haW4uYwo+ID4gKysrIGIvbXVsdGlwYXRoZC9tYWluLmMKPiA+IEBAIC04NCw2ICs4NCw3
-IEBAIHN0YXRpYyBpbnQgdXNlX3dhdGNoZG9nOwo+ID4gICNpbmNsdWRlICJ3YWl0ZXIuaCIKPiA+
-ICAjaW5jbHVkZSAiaW9fZXJyX3N0YXQuaCIKPiA+ICAjaW5jbHVkZSAid3dpZHMuaCIKPiA+ICsj
-aW5jbHVkZSAiZm9yZWlnbi5oIgo+ID4gICNpbmNsdWRlICIuLi90aGlyZC1wYXJ0eS92YWxncmlu
-ZC9kcmQuaCIKPiA+ICAKPiA+ICAjZGVmaW5lIEZJTEVfTkFNRV9TSVpFIDI1Ngo+ID4gQEAgLTY5
-OSw2ICs3MDAsMTUgQEAgcmVzY2FuOgo+ID4gIAkJbXBwLT5hY3Rpb24gPSBBQ1RfUkVMT0FEOwo+
-ID4gIAkJZXh0cmFjdF9od2VfZnJvbV9wYXRoKG1wcCk7Cj4gPiAgCX0gZWxzZSB7Cj4gPiArCQlz
-d2l0Y2ggKGFkZF9mb3JlaWduKHBwLT51ZGV2KSkgewo+IAo+IFRoZXJlJ3MgYSByYXRoZXIgY29u
-dm9sdXRlZCBpc3N1ZSBoZXJlLiBUaGlzIGZ1bmN0aW9uIHdpbGwgZXZlbnR1YWxseQo+IGNhbGwg
-X2ZpbmRfc2xhdmVzKCkgaW4gdGhlIG52bWUgY29kZSwgd2hpY2ggY2FsbHMgZ2xvYigpLCB3aGlj
-aCBpc24ndAo+IHN0cmljdGx5IG11bHRpdGhyZWFkaW5nIHNhZmUgZm9yIGEgbnVtYmVyIG9mIHJl
-YXNvbnMuIFRoZSBvbmx5IG9uZQo+IHRoYXQKPiBlZmZlY3RzIG11bHRpcGF0aGQgaXMgaXRzIHVz
-ZSBvZiBTSUdBTFJNLiBOb3cgYXNzdW1pbmcgc2lnbmFsCj4gcHJvY2Vzc2luZwo+IHdvcmtlZCBj
-b3JyZWN0bHkgaW4gbXVsdGlwYXRoZCAoaXQgZG9lc24ndC4gY29tbWl0IDUzNGVjNGMgYnJva2Ug
-aXQuCj4gSSdtCj4gcGxhbm5pbmcgb24gZml4aW5nIHRoYXQgc2hvcnRseSkgdGhlcmUgd291bGQg
-c3RpbGwgYmUgYSBwcm9ibGVtLAo+IGJlY2F1c2UKPiBvZiB0aGUgc3RyaWN0X3RpbWluZyBvcHRp
-b24uICBzdHJpY3RfdGltaW5nIGNhbGxzIHNldGl0aW1lcigpLCB3aGljaAo+IHNldHMgYW4gYWxh
-cm0gaW4gY2hlY2tlcmxvb3AsIHdpdGhvdXQgYW55IGxvY2tpbmcuICBzdHJpY3RfdGltaW5nCj4g
-YWxzbwo+IG1lc3NlcyB3aXRoIGFueSBjYWxsIHRvIGxvY2tfZmlsZSgpLiBsb2NrX2ZpbGUoKSBh
-bmQgX2ZpbmRfc2xhdmVzKCkKPiB3aWxsCj4gbmV2ZXIgaW50ZXJmZXJlIHdpdGggZWFjaG90aGVy
-LCBzaW5jZSBib3RoIGFyZSBvbmx5IGNhbGxlZCB3aXRoIHRoZQo+IHZlY3MKPiBsb2NrIGhlbGQg
-KEkgdGhpbmsuIFNlZSBiZWxvdykuIHN0cmljdF90aW1pbmcgcHJvYmFibHkgbmVlZHMgdG8gZ2V0
-Cj4gcmVpbXBsZW1lbnRlZCB1c2luZyBuYW5vc2xlZXAoKSBvciBzb21lIG90aGVyIG5vbi1zaWdu
-YWwgbWV0aG9kLCBzbwo+IHRoYXQKPiB0aGVyZSBhcmVuJ3QgdHdvIHRocmVhZHMgc2V0dGluZyBh
-bGFybXMgYW5kIHdhaXRpbmcgZm9yIFNJR0FSTE0gYXQKPiB0aGUKPiBzYW1lIHRpbWUuCgpUaGFu
-a3MgZm9yIHNwb3R0aW5nIHRoaXMuIEl0IHdhcyBsYXp5bmVzcyBvbiBteSBzaWRlIHRvIHVzZSBn
-bG9iKCkuIEkKd2lsbCByZWltcGxlbWVudCB0aGlzIHVzaW5nIHNhZmVyLCBtb3JlIGVsZW1lbnRh
-cnkgZnVuY3Rpb25zLiAKCj4gCj4gPiArCQljYXNlIEZPUkVJR05fQ0xBSU1FRDoKPiA+ICsJCWNh
-c2UgRk9SRUlHTl9PSzoKPiA+ICsJCQlvcnBoYW5fcGF0aChwcCwgImNsYWltZWQgYnkgZm9yZWln
-bgo+ID4gbGlicmFyeSIpOwo+ID4gKwkJCXJldHVybiAwOwo+ID4gKwkJZGVmYXVsdDoKPiA+ICsJ
-CQlicmVhazsKPiAKPiBJcyB0aGVyZSBhIHB1cnBvc2UgdG8gdGhpcyBicmVhaz8KCkkgdGhvdWdo
-dCB0aGlzIHdhcyBjb21tb24gc3R5bGUuIFlvdSBmaW5kIGl0IHRoZSBrZXJuZWwncyBDb2RpbmdT
-dHlsZQpkb2N1bWVudCwgdG9vLiBJIGhhdmUgbm8gaXNzdWVzIHdpdGggcmVtb3ZpbmcgaXQgaWYg
-eW91IGluc2lzdC4KCj4gPiAJY29uZiA9IGdldF9tdWx0aXBhdGhfY29uZmlnKCk7Cj4gPiAgCWRp
-c2FibGVfY2hhbmdlZF93d2lkcyA9IGNvbmYtPmRpc2FibGVfY2hhbmdlZF93d2lkczsKPiA+ICAJ
-cHV0X211bHRpcGF0aF9jb25maWcoY29uZik7Cj4gPiBAQCAtMTEyMiw4ICsxMTQ5LDEzIEBAIHVl
-dl90cmlnZ2VyIChzdHJ1Y3QgdWV2ZW50ICogdWV2LCB2b2lkICoKPiA+IHRyaWdnZXJfZGF0YSkK
-PiA+ICAJICogYXJlIG5vdCBmdWxseSBpbml0aWFsaXNlZCB0aGVuLgo+ID4gIAkgKi8KPiA+ICAJ
-aWYgKCFzdHJuY21wKHVldi0+a2VybmVsLCAiZG0tIiwgMykpIHsKPiA+IC0JCWlmICghdWV2ZW50
-X2lzX21wYXRoKHVldikpCj4gPiArCQlpZiAoIXVldmVudF9pc19tcGF0aCh1ZXYpKSB7Cj4gPiAr
-CQkJaWYgKCFzdHJuY21wKHVldi0+YWN0aW9uLCAiY2hhbmdlIiwgNikpCj4gPiArCQkJCSh2b2lk
-KWFkZF9mb3JlaWduKHVldi0+dWRldik7Cj4gPiArCQkJZWxzZSBpZiAoIXN0cm5jbXAodWV2LT5h
-Y3Rpb24sICJyZW1vdmUiLAo+ID4gNikpCj4gPiArCQkJCSh2b2lkKWRlbGV0ZV9mb3JlaWduKHVl
-di0+dWRldik7Cj4gPiAgCQkJZ290byBvdXQ7Cj4gPiArCQl9Cj4gCj4gSSdtIGNvbmZ1c2VkLiBT
-aG91bGQgZm9yZWlnbiBtYXBzIGV2ZXIgaGF2ZSB1ZXYtPmtlcm5lbCBzZXQgdG8gImRtLSI/CgpB
-bHRob3VnaCBJIGRvbid0IHNlZSBhIGxpa2VseSBjYW5kaWRhdGUsIEkgZGlkbid0IHdhbnQgdG8g
-ZXhjbHVkZSBpdCBpbgpnZW5lcmFsLgoKPiBJZiB0aGlzIGlzIGNvcnJlY3QsIHRoZXNlIGNhbGxz
-IHByb2JhYmx5IG5lZWQgdG8gZ2V0IGNhbGxlZCB3aXRoIHRoZQo+IHZlY3MgbG9jayBoZWxkLCBv
-dGhlcndpc2UgdGhleSBjYW4gaW50ZXJmZXJlIHdpdGggY2FsbHMgdG8KPiBsb2NrX2ZpbGUoKS4K
-ClBsZWFzZSBleHBsYWluLiBUaGVzZSBkZXZpY2VzIGFyZSBpZ25vcmVkIGJ5IG11bHRpcGF0aC10
-b29scywgYmVjYXVzZQohdWV2ZW50X2lzX21wYXRoKHVldiksIHNvIHRoZXkgd29uJ3QgYmUgcGFy
-dCBvZiBhbnkgb2YgdGhlaXIgZGF0YQpzdHJ1Y3R1cmVzLiBBbmQgbG9ja19maWxlKCkgaXMgb25s
-eSBhYm91dCBmY250bCwgd2hhdCBkb2VzIGl0IGhhdmUgdG8KZG8gd2l0aCB0aGlzIGNvZGU/IAoK
-UmVnYXJkcywKTWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwg
-VGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1l
-bmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8
-cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0
-cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+On Fri, Mar 02, 2018 at 05:04:28PM +0100, Martin Wilck wrote:
+> On Wed, 2018-02-28 at 21:14 -0600, Benjamin Marzinski wrote:
+> > On Tue, Feb 20, 2018 at 02:26:55PM +0100, Martin Wilck wrote:
+> > > +void cleanup(struct context *ctx)
+> > > +{
+> > > +	if (ctx == NULL)
+> > > +		return;
+> > > +
+> > > +	(void)delete_all(ctx);
+> > > +
+> > > +	lock(ctx);
+> > > +	pthread_cleanup_push(unlock, ctx);
+> > > +	vector_free(ctx->mpvec);
+> > > +	pthread_cleanup_pop(1);
+> > > +	pthread_mutex_destroy(&ctx->mutex);
+> > > +
+> > > +	free(ctx);
+> > > +}
+> > 
+> > Would you mind either removing the locking, or adding a comment
+> > explaining that it's not necessary here.  If you really did need to
+> > lock
+> > ctx in order guard against someone accessing ctx->mpvec in cleanup(),
+> > then not setting it to NULL after its freed, and immediately freeing
+> > ctx
+> > afterwards would clearly be broken, so seeing the locking makes it
+> > look
+> > like this function is wrong.
+> 
+> I don't understand, sorry. I need to lock because some other entity may
+> still be using ctx->mpvec when cleanup() is called, and I should wait
+> until that other entity has released the lock before I free it.
+
+Who else could be using ctx->mpvec?  You only call cleanup on code paths
+through init_foreign and cleanup_foreign.  There are no seperate threads
+running in parallel in multipath, and in multipathd, you call
+init_foreign before any other threads except the log writer thread is
+created, and call cleanup_foreign after all the main threads except for
+the log writer thread have been waited for? I admit, there could be a
+rogue checker or prio thread that has been cancelled, but still not
+returned, but those don't touch the foreign ctx code. If I'm missing
+something, or you want to make sure that this code is future-proofed,
+against possible future threads, you need some ref counting. Otherwise,
+you could get into a situation where the thread doing the cleanup locks
+the ctx->mutex and then another thread blocks on it. When the cleanup
+thread drops the mutex and frees ctx, the other thread will grab a lock
+to freed memory.
+
+> I'm
+> also pretty sure that checkers such as coverity would complain if I
+> free a structure here without locking which I access only under the
+> lock in other places.
+
+Yeah. That's why I said you could just add a comment.
+ 
+> I agree, though, that I should nullify the data and add checks in the
+> other functions. I'll also add some locking in the foreign.c file,
+> didn't occur to me before.
+
+-Ben
