@@ -1,18 +1,16 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [RFC PATCH 05/20] libmultipath: don't update path
- groups when printing
-Date: Fri, 2 Mar 2018 09:31:57 -0600
-Message-ID: <20180302153157.GD14513@octiron.msp.redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [RFC PATCH 17/20] libmultipath/foreign: nvme foreign
+	library
+Date: Fri, 02 Mar 2018 17:04:28 +0100
+Message-ID: <1520006668.4169.69.camel@suse.com>
 References: <20180220132658.22295-1-mwilck@suse.com>
-	<20180220132658.22295-6-mwilck@suse.com>
-	<20180228234016.GI14513@octiron.msp.redhat.com>
-	<1519999180.4169.60.camel@suse.com>
+	<20180220132658.22295-18-mwilck@suse.com>
+	<20180301031420.GM14513@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1519999180.4169.60.camel@suse.com>
+In-Reply-To: <20180301031420.GM14513@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,142 +20,142 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Mar 02, 2018 at 02:59:40PM +0100, Martin Wilck wrote:
-> On Wed, 2018-02-28 at 17:40 -0600, Benjamin Marzinski wrote:
-> > On Tue, Feb 20, 2018 at 02:26:43PM +0100, Martin Wilck wrote:
-> >
-> > I'd be fine with simply updating the path group priority whever we
-> > change a
-> > path's priority, if we aren't updating it when printing it. The
-> > bigger
-> > work of actually making sure that the path group order it the table
-> > is always uptodate needs to happen, but it doesn't need to happen in
-> > this patchset.
-> =
-
-> I just reviewed the code flow in check_path(), and here's what I see:
-> =
-
-> 1. calls update_prio(pp, new_path_up)
->    -> updates path's prio, or all paths' prios if the path was
->       reinstated
-> =
-
-> Now it calls either
-> =
-
-> 2a. update_path_groups() (for group_by_prio and failback immediate)
->   (-> reload_map() -> setup_map() -> select_path_group()
->   -> path_group_prio_update()), or
->   =
-
-> 2b. need_switch_pathgroup() (otherwise)
->   =
-
-> So all we need to make sure is that need_switch_pathgroup() calls =
-
-> select_path_group(). It does that already, except for the "failback
-> manual" case.
-> =
-
-> So all we need is IMO the attached patch. Tell me what you think.
-> =
-
-> [All of the above is only called if (!mpp->wait_for_udev), but if
-> wait_for_udev is set, either when the event arrives or the wait times
-> out, we'll call reconfigure() which makes sure all priorities are
-> correct].
-
-looks good.
-
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
-
-I haven't looked through the code for them, but I think there are case
-where we zero out a path's or pathgroup's priority, simply because it is
-down.  It looks weird when all the failed paths get lumped together in
-one path group, or when the high priority path group suddenly stops
-being listed as high priority.  Obviously, this gets fixed as soon as
-the paths come back online, so no harm is done, but it seems like
-multipathd is doing a bunch of busy-work, just to make the output less
-clear.
-
-I realize there isn't an obvious and simple answer here, because
-sometimes when all the paths in a pathgroup fail, and you switch
-pathgroups, you really do change the priority of paths, which gets
-updated in the still-working ones.  This means that if you leave the
-priorities of the failed paths as they were, you can still get incorrect
-groupings. But, like I said, all this has nothing to do with your
-current patchset.
- =
-
-> Best,
-> Martin
-> =
-
-> -- =
-
-> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-> SUSE Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
-> HRB 21284 (AG N=FCrnberg)
-
-> From 149f4458d138d504ee5947aaa6e38d134b21368a Mon Sep 17 00:00:00 2001
-> From: Martin Wilck <mwilck@suse.com>
-> Date: Fri, 2 Mar 2018 14:51:52 +0100
-> Subject: [PATCH] multipathd: update path group prio in check_path
-> =
-
-> The previous patch "libmultipath: don't update path groups when printing"
-> removed the call to path_group_prio_update() in the printing code path.
-> To compensate for that, recalculate path group prio also when it's not
-> strictly necessary (i.e. if failback "manual" is set).
-> =
-
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  multipathd/main.c | 8 ++++++--
->  1 file changed, 6 insertions(+), 2 deletions(-)
-> =
-
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index e1d98861a841..61739ac6ea59 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -252,8 +252,9 @@ need_switch_pathgroup (struct multipath * mpp, int re=
-fresh)
->  	struct path * pp;
->  	unsigned int i, j;
->  	struct config *conf;
-> +	int bestpg;
->  =
-
-> -	if (!mpp || mpp->pgfailback =3D=3D -FAILBACK_MANUAL)
-> +	if (!mpp)
->  		return 0;
->  =
-
->  	/*
-> @@ -272,8 +273,11 @@ need_switch_pathgroup (struct multipath * mpp, int r=
-efresh)
->  	if (!mpp->pg || VECTOR_SIZE(mpp->paths) =3D=3D 0)
->  		return 0;
->  =
-
-> -	mpp->bestpg =3D select_path_group(mpp);
-> +	bestpg =3D select_path_group(mpp);
-> +	if (mpp->pgfailback =3D=3D -FAILBACK_MANUAL)
-> +		return 0;
->  =
-
-> +	mpp->bestpg =3D bestpg;
->  	if (mpp->bestpg !=3D mpp->nextpg)
->  		return 1;
->  =
-
-> -- =
-
-> 2.16.1
-> =
+T24gV2VkLCAyMDE4LTAyLTI4IGF0IDIxOjE0IC0wNjAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cj4gT24gVHVlLCBGZWIgMjAsIDIwMTggYXQgMDI6MjY6NTVQTSArMDEwMCwgTWFydGluIFdp
+bGNrIHdyb3RlOgo+ID4gVGhpcyBzdGlsbCBjb250YWlucyBzdHVicyBmb3IgcGF0aCBoYW5kbGlu
+ZyBhbmQgY2hlY2tpbmcsIGJ1dCBpdCdzCj4gPiBmdW5jdGlvbmFsCj4gPiBmb3IgcHJpbnRpbmcg
+YWxyZWFkeS4KPiA+IAo+ID4gU2lnbmVkLW9mZi1ieTogTWFydGluIFdpbGNrIDxtd2lsY2tAc3Vz
+ZS5jb20+Cj4gPiAtLS0KPiA+ICBNYWtlZmlsZSAgICAgICAgICAgICAgICAgICAgICB8ICAgMSAr
+Cj4gPiAgbGlibXVsdGlwYXRoL2ZvcmVpZ24vTWFrZWZpbGUgfCAgMzAgKysrCj4gPiAgbGlibXVs
+dGlwYXRoL2ZvcmVpZ24vbnZtZS5jICAgfCA0NDQKPiA+ICsrKysrKysrKysrKysrKysrKysrKysr
+KysrKysrKysrKysrKysrKysrKwo+ID4gIDMgZmlsZXMgY2hhbmdlZCwgNDc1IGluc2VydGlvbnMo
+KykKPiA+ICBjcmVhdGUgbW9kZSAxMDA2NDQgbGlibXVsdGlwYXRoL2ZvcmVpZ24vTWFrZWZpbGUK
+PiA+ICBjcmVhdGUgbW9kZSAxMDA2NDQgbGlibXVsdGlwYXRoL2ZvcmVpZ24vbnZtZS5jCj4gPiAK
+PiA+IGRpZmYgLS1naXQgYS9saWJtdWx0aXBhdGgvZm9yZWlnbi9udm1lLmMKPiA+IGIvbGlibXVs
+dGlwYXRoL2ZvcmVpZ24vbnZtZS5jCj4gPiBuZXcgZmlsZSBtb2RlIDEwMDY0NAo+ID4gaW5kZXgg
+MDAwMDAwMDAwMDAwLi40ZTljM2E1MmQwM2MKPiA+IC0tLSAvZGV2L251bGwKPiA+ICsrKyBiL2xp
+Ym11bHRpcGF0aC9mb3JlaWduL252bWUuYwo+ID4gCj4gPiArc3RhdGljIHZvaWQgY2xlYW51cF9u
+dm1lX21hcChzdHJ1Y3QgbnZtZV9tYXAgKm1hcCkKPiA+ICt7Cj4gPiArCWlmIChtYXAtPnVkZXYp
+Cj4gPiArCQl1ZGV2X2RldmljZV91bnJlZihtYXAtPnVkZXYpOwo+ID4gKwlpZiAobWFwLT5zdWJz
+eXMpCj4gPiArCQl1ZGV2X2RldmljZV91bnJlZihtYXAtPnN1YnN5cyk7Cj4gCj4gQWNjb3JkaW5n
+IHRvIHRoZSBsaWJ1ZGV2IHJlZmVyZW5jZSBtYW51YWwsIHVkZXYgZGV2aWNlcyByZXR1cm5lZCBi
+eQo+IHVkZXZfZGV2aWNlX2dldF9wYXJlbnRfd2l0aF9zdWJzeXN0ZW1fZGV2dHlwZSBhcmUgYXR0
+YWNoZWQgdG8gdGhlaXIKPiBjaGlsZCBhbmQgZnJlZSBhbG9uZyB3aXRoIHRoZW0sIHNvIHRoaXMg
+dW5yZWYgc2hvdWxkbid0IGJlIG5lY2Vzc2FyeQoKSSdkIGZpZ3VyZWQgdGhhdCBteXNlbGYgYW5k
+IGZpeGVkIGl0IGluIHBhdGNoIDIwLzIwLiBJdCBtdXN0IGhhdmUKZXhjYXBlZCBteSBhdHRlbnRp
+b24gd2hlbiBJIGNsZWFuZWQgdXAuIEknbGwgZml4IHRoZSBzZXF1ZW5jZS4KCj4gKwo+ID4gK3Zv
+aWQgY2xlYW51cChzdHJ1Y3QgY29udGV4dCAqY3R4KQo+ID4gK3sKPiA+ICsJaWYgKGN0eCA9PSBO
+VUxMKQo+ID4gKwkJcmV0dXJuOwo+ID4gKwo+ID4gKwkodm9pZClkZWxldGVfYWxsKGN0eCk7Cj4g
+PiArCj4gPiArCWxvY2soY3R4KTsKPiA+ICsJcHRocmVhZF9jbGVhbnVwX3B1c2godW5sb2NrLCBj
+dHgpOwo+ID4gKwl2ZWN0b3JfZnJlZShjdHgtPm1wdmVjKTsKPiA+ICsJcHRocmVhZF9jbGVhbnVw
+X3BvcCgxKTsKPiA+ICsJcHRocmVhZF9tdXRleF9kZXN0cm95KCZjdHgtPm11dGV4KTsKPiA+ICsK
+PiA+ICsJZnJlZShjdHgpOwo+ID4gK30KPiAKPiBXb3VsZCB5b3UgbWluZCBlaXRoZXIgcmVtb3Zp
+bmcgdGhlIGxvY2tpbmcsIG9yIGFkZGluZyBhIGNvbW1lbnQKPiBleHBsYWluaW5nIHRoYXQgaXQn
+cyBub3QgbmVjZXNzYXJ5IGhlcmUuICBJZiB5b3UgcmVhbGx5IGRpZCBuZWVkIHRvCj4gbG9jawo+
+IGN0eCBpbiBvcmRlciBndWFyZCBhZ2FpbnN0IHNvbWVvbmUgYWNjZXNzaW5nIGN0eC0+bXB2ZWMg
+aW4gY2xlYW51cCgpLAo+IHRoZW4gbm90IHNldHRpbmcgaXQgdG8gTlVMTCBhZnRlciBpdHMgZnJl
+ZWQsIGFuZCBpbW1lZGlhdGVseSBmcmVlaW5nCj4gY3R4Cj4gYWZ0ZXJ3YXJkcyB3b3VsZCBjbGVh
+cmx5IGJlIGJyb2tlbiwgc28gc2VlaW5nIHRoZSBsb2NraW5nIG1ha2VzIGl0Cj4gbG9vawo+IGxp
+a2UgdGhpcyBmdW5jdGlvbiBpcyB3cm9uZy4KCkkgZG9uJ3QgdW5kZXJzdGFuZCwgc29ycnkuIEkg
+bmVlZCB0byBsb2NrIGJlY2F1c2Ugc29tZSBvdGhlciBlbnRpdHkgbWF5CnN0aWxsIGJlIHVzaW5n
+IGN0eC0+bXB2ZWMgd2hlbiBjbGVhbnVwKCkgaXMgY2FsbGVkLCBhbmQgSSBzaG91bGQgd2FpdAp1
+bnRpbCB0aGF0IG90aGVyIGVudGl0eSBoYXMgcmVsZWFzZWQgdGhlIGxvY2sgYmVmb3JlIEkgZnJl
+ZSBpdC4gSSdtCmFsc28gcHJldHR5IHN1cmUgdGhhdCBjaGVja2VycyBzdWNoIGFzIGNvdmVyaXR5
+IHdvdWxkIGNvbXBsYWluIGlmIEkKZnJlZSBhIHN0cnVjdHVyZSBoZXJlIHdpdGhvdXQgbG9ja2lu
+ZyB3aGljaCBJIGFjY2VzcyBvbmx5IHVuZGVyIHRoZQpsb2NrIGluIG90aGVyIHBsYWNlcy4KCkkg
+YWdyZWUsIHRob3VnaCwgdGhhdCBJIHNob3VsZCBudWxsaWZ5IHRoZSBkYXRhIGFuZCBhZGQgY2hl
+Y2tzIGluIHRoZQpvdGhlciBmdW5jdGlvbnMuIEknbGwgYWxzbyBhZGQgc29tZSBsb2NraW5nIGlu
+IHRoZSBmb3JlaWduLmMgZmlsZSwKZGlkbid0IG9jY3VyIHRvIG1lIGJlZm9yZS4KCj4gPiArc3Rh
+dGljIGludCBfYWRkX21hcChzdHJ1Y3QgY29udGV4dCAqY3R4LCBzdHJ1Y3QgdWRldl9kZXZpY2Ug
+KnVkLAo+ID4gKwkJICAgIHN0cnVjdCB1ZGV2X2RldmljZSAqc3Vic3lzKQo+ID4gK3sKPiA+ICsJ
+ZGV2X3QgZGV2dCA9IHVkZXZfZGV2aWNlX2dldF9kZXZudW0odWQpOwo+ID4gKwlzdHJ1Y3QgbnZt
+ZV9tYXAgKm1hcDsKPiA+ICsKPiA+ICsJaWYgKF9maW5kX252bWVfbWFwX2J5X2RldnQoY3R4LCBk
+ZXZ0KSAhPSBOVUxMKQo+ID4gKwkJcmV0dXJuIEZPUkVJR05fT0s7Cj4gPiArCj4gPiArCW1hcCA9
+IGNhbGxvYygxLCBzaXplb2YoKm1hcCkpOwo+ID4gKwlpZiAobWFwID09IE5VTEwpCj4gPiArCQly
+ZXR1cm4gRk9SRUlHTl9FUlI7Cj4gPiArCj4gPiArCW1hcC0+ZGV2dCA9IGRldnQ7Cj4gPiArCW1h
+cC0+dWRldiA9IHVkZXZfZGV2aWNlX3JlZih1ZCk7Cj4gPiArCW1hcC0+c3Vic3lzID0gdWRldl9k
+ZXZpY2VfcmVmKHN1YnN5cyk7Cj4gCj4gWW91IHNob3VsZG4ndCBuZWVkIHRvIGdldCBhIHJlZmVy
+ZW5jZSBoZXJlLCBzaW5jZSBtYXAtPnVkZXYgd2lsbCBrZWVwCj4gdGhpcyBkZXZpY2UgYXJvdW5k
+LgoKU2VlIGFib3ZlLgoKUmVnYXJkcywKTWFydGluCgo+IAo+IC1CZW4KPiAKPiA+ICsJbWFwLT5n
+ZW4ub3BzID0gJm52bWVfbWFwX29wczsKPiA+ICsKPiA+ICsJaWYgKHZlY3Rvcl9hbGxvY19zbG90
+KGN0eC0+bXB2ZWMpID09IE5VTEwpIHsKPiA+ICsJCWNsZWFudXBfbnZtZV9tYXAobWFwKTsKPiA+
+ICsJCXJldHVybiBGT1JFSUdOX0VSUjsKPiA+ICsJfQo+ID4gKwo+ID4gKwl2ZWN0b3Jfc2V0X3Ns
+b3QoY3R4LT5tcHZlYywgbWFwKTsKPiA+ICsKPiA+ICsJcmV0dXJuIEZPUkVJR05fQ0xBSU1FRDsK
+PiA+ICt9Cj4gPiArCj4gPiAraW50IGFkZChzdHJ1Y3QgY29udGV4dCAqY3R4LCBzdHJ1Y3QgdWRl
+dl9kZXZpY2UgKnVkKQo+ID4gK3sKPiA+ICsJc3RydWN0IHVkZXZfZGV2aWNlICpzdWJzeXM7Cj4g
+PiArCWludCByYzsKPiA+ICsKPiA+ICsJY29uZGxvZyg1LCAiJXMgY2FsbGVkIGZvciBcIiVzXCIi
+LCBfX2Z1bmNfXywgVEhJUyk7Cj4gPiArCj4gPiArCWlmICh1ZCA9PSBOVUxMKQo+ID4gKwkJcmV0
+dXJuIEZPUkVJR05fRVJSOwo+ID4gKwlpZiAoc3RyY21wKCJkaXNrIiwgdWRldl9kZXZpY2VfZ2V0
+X2RldnR5cGUodWQpKSkKPiA+ICsJCXJldHVybiBGT1JFSUdOX0lHTk9SRUQ7Cj4gPiArCj4gPiAr
+CXN1YnN5cyA9IHVkZXZfZGV2aWNlX2dldF9wYXJlbnRfd2l0aF9zdWJzeXN0ZW1fZGV2dHlwZSh1
+ZCwKPiA+ICsJCQkJCQkJICAgICAgICJudgo+ID4gbWUtc3Vic3lzdGVtIiwKPiA+ICsJCQkJCQkJ
+ICAgICAgIE5VTAo+ID4gTCk7Cj4gPiArCWlmIChzdWJzeXMgPT0gTlVMTCkKPiA+ICsJCXJldHVy
+biBGT1JFSUdOX0lHTk9SRUQ7Cj4gPiArCj4gPiArCWxvY2soY3R4KTsKPiA+ICsJcHRocmVhZF9j
+bGVhbnVwX3B1c2godW5sb2NrLCBjdHgpOwo+ID4gKwlyYyA9IF9hZGRfbWFwKGN0eCwgdWQsIHN1
+YnN5cyk7Cj4gPiArCXB0aHJlYWRfY2xlYW51cF9wb3AoMSk7Cj4gPiArCj4gPiArCWlmIChyYyA9
+PSBGT1JFSUdOX0NMQUlNRUQpCj4gPiArCQljb25kbG9nKDMsICIlczogJXM6IGFkZGVkIG1hcCAl
+cyIsIF9fZnVuY19fLCBUSElTLAo+ID4gKwkJCXVkZXZfZGV2aWNlX2dldF9zeXNuYW1lKHVkKSk7
+Cj4gPiArCWVsc2UgaWYgKHJjICE9IEZPUkVJR05fT0spCj4gPiArCQljb25kbG9nKDEsICIlczog
+JXM6IHJldGNvZGUgJWQgYWRkaW5nICVzIiwKPiA+ICsJCQlfX2Z1bmNfXywgVEhJUywgcmMsCj4g
+PiB1ZGV2X2RldmljZV9nZXRfc3lzbmFtZSh1ZCkpOwo+ID4gKwo+ID4gKwlyZXR1cm4gcmM7Cj4g
+PiArfQo+ID4gKwo+ID4gK2ludCBjaGFuZ2Uoc3RydWN0IGNvbnRleHQgKmN0eCwgc3RydWN0IHVk
+ZXZfZGV2aWNlICp1ZCkKPiA+ICt7Cj4gPiArCWNvbmRsb2coNSwgIiVzIGNhbGxlZCBmb3IgXCIl
+c1wiIiwgX19mdW5jX18sIFRISVMpOwo+ID4gKwlyZXR1cm4gRk9SRUlHTl9JR05PUkVEOwo+ID4g
+K30KPiA+ICsKPiA+ICtzdGF0aWMgaW50IF9kZWxldGVfbWFwKHN0cnVjdCBjb250ZXh0ICpjdHgs
+IHN0cnVjdCB1ZGV2X2RldmljZQo+ID4gKnVkKQo+ID4gK3sKPiA+ICsJaW50IGs7Cj4gPiArCXN0
+cnVjdCBudm1lX21hcCAqbWFwOwo+ID4gKwlkZXZfdCBkZXZ0ID0gdWRldl9kZXZpY2VfZ2V0X2Rl
+dm51bSh1ZCk7Cj4gPiArCj4gPiArCW1hcCA9IF9maW5kX252bWVfbWFwX2J5X2RldnQoY3R4LCBk
+ZXZ0KTsKPiA+ICsJaWYgKG1hcCA9PU5VTEwpCj4gPiArCQlyZXR1cm4gRk9SRUlHTl9JR05PUkVE
+Owo+ID4gKwo+ID4gKwlrID0gZmluZF9zbG90KGN0eC0+bXB2ZWMsIG1hcCk7Cj4gPiArCWlmIChr
+ID09IC0xKQo+ID4gKwkJcmV0dXJuIEZPUkVJR05fRVJSOwo+ID4gKwllbHNlCj4gPiArCQl2ZWN0
+b3JfZGVsX3Nsb3QoY3R4LT5tcHZlYywgayk7Cj4gPiArCj4gPiArCWNsZWFudXBfbnZtZV9tYXAo
+bWFwKTsKPiA+ICsKPiA+ICsJcmV0dXJuIEZPUkVJR05fT0s7Cj4gPiArfQo+ID4gKwo+ID4gK2lu
+dCBkZWxldGUoc3RydWN0IGNvbnRleHQgKmN0eCwgc3RydWN0IHVkZXZfZGV2aWNlICp1ZCkKPiA+
+ICt7Cj4gPiArCWludCByYzsKPiA+ICsKPiA+ICsJY29uZGxvZyg1LCAiJXMgY2FsbGVkIGZvciBc
+IiVzXCIiLCBfX2Z1bmNfXywgVEhJUyk7Cj4gPiArCj4gPiArCWlmICh1ZCA9PSBOVUxMKQo+ID4g
+KwkJcmV0dXJuIEZPUkVJR05fRVJSOwo+ID4gKwo+ID4gKwlsb2NrKGN0eCk7Cj4gPiArCXB0aHJl
+YWRfY2xlYW51cF9wdXNoKHVubG9jaywgY3R4KTsKPiA+ICsJcmMgPSBfZGVsZXRlX21hcChjdHgs
+IHVkKTsKPiA+ICsJcHRocmVhZF9jbGVhbnVwX3BvcCgxKTsKPiA+ICsKPiA+ICsJaWYgKHJjID09
+IEZPUkVJR05fT0spCj4gPiArCQljb25kbG9nKDMsICIlczogJXM6IG1hcCAlcyBkZWxldGVkIiwg
+X19mdW5jX18sCj4gPiBUSElTLAo+ID4gKwkJCXVkZXZfZGV2aWNlX2dldF9zeXNuYW1lKHVkKSk7
+Cj4gPiArCWVsc2UgaWYgKHJjICE9IEZPUkVJR05fSUdOT1JFRCkKPiA+ICsJCWNvbmRsb2coMSwg
+IiVzOiAlczogcmV0Y29kZSAlZCBkZWxldGluZyBtYXAgJXMiLAo+ID4gX19mdW5jX18sCj4gPiAr
+CQkJVEhJUywgcmMsIHVkZXZfZGV2aWNlX2dldF9zeXNuYW1lKHVkKSk7Cj4gPiArCj4gPiArCXJl
+dHVybiByYzsKPiA+ICt9Cj4gPiArCj4gPiArdm9pZCBjaGVjayhzdHJ1Y3QgY29udGV4dCAqY3R4
+KQo+ID4gK3sKPiA+ICsJY29uZGxvZyg1LCAiJXMgY2FsbGVkIGZvciBcIiVzXCIiLCBfX2Z1bmNf
+XywgVEhJUyk7Cj4gPiArCXJldHVybjsKPiA+ICt9Cj4gPiArCj4gPiArLyoKPiA+ICsgKiBJdCdz
+IHNhZmUgdG8gcGFzcyBvdXIgaW50ZXJuYWwgcG9pbnRlciwgdGhpcyBpcyBvbmx5IHVzZWQgdW5k
+ZXIKPiA+IHRoZSBsb2NrLgo+ID4gKyAqLwo+ID4gK2NvbnN0IHN0cnVjdCBfdmVjdG9yICpnZXRf
+bXVsdGlwYXRocyhjb25zdCBzdHJ1Y3QgY29udGV4dCAqY3R4KQo+ID4gK3sKPiA+ICsJY29uZGxv
+Zyg1LCAiJXMgY2FsbGVkIGZvciBcIiVzXCIiLCBfX2Z1bmNfXywgVEhJUyk7Cj4gPiArCXJldHVy
+biBjdHgtPm1wdmVjOwo+ID4gK30KPiA+ICsKPiA+ICt2b2lkIHJlbGVhc2VfbXVsdGlwYXRocyhj
+b25zdCBzdHJ1Y3QgY29udGV4dCAqY3R4LCBjb25zdCBzdHJ1Y3QKPiA+IF92ZWN0b3IgKm1wdmVj
+KQo+ID4gK3sKPiA+ICsJY29uZGxvZyg1LCAiJXMgY2FsbGVkIGZvciBcIiVzXCIiLCBfX2Z1bmNf
+XywgVEhJUyk7Cj4gPiArCS8qIE5PUCAqLwo+ID4gK30KPiA+ICsKPiA+ICsvKgo+ID4gKyAqIEl0
+J3Mgc2FmZSB0byBwYXNzIG91ciBpbnRlcm5hbCBwb2ludGVyLCB0aGlzIGlzIG9ubHkgdXNlZCB1
+bmRlcgo+ID4gdGhlIGxvY2suCj4gPiArICovCj4gPiArY29uc3Qgc3RydWN0IF92ZWN0b3IgKiBn
+ZXRfcGF0aHMoY29uc3Qgc3RydWN0IGNvbnRleHQgKmN0eCkKPiA+ICt7Cj4gPiArCWNvbmRsb2co
+NSwgIiVzIGNhbGxlZCBmb3IgXCIlc1wiIiwgX19mdW5jX18sIFRISVMpOwo+ID4gKwlyZXR1cm4g
+TlVMTDsKPiA+ICt9Cj4gPiArCj4gPiArdm9pZCByZWxlYXNlX3BhdGhzKGNvbnN0IHN0cnVjdCBj
+b250ZXh0ICpjdHgsIGNvbnN0IHN0cnVjdCBfdmVjdG9yCj4gPiAqbXB2ZWMpCj4gPiArewo+ID4g
+Kwljb25kbG9nKDUsICIlcyBjYWxsZWQgZm9yIFwiJXNcIiIsIF9fZnVuY19fLCBUSElTKTsKPiA+
+ICsJLyogTk9QICovCj4gPiArfQo+ID4gKwo+ID4gKy8qIGNvbXBpbGUtdGltZSBjaGVjayB3aGV0
+aGVyIGFsbCBtZXRob2RzIGFyZSBwcmVzZW50IGFuZAo+ID4gY29ycmVjdGx5IHR5cGVkICovCj4g
+PiArI2RlZmluZSBfTUVUSE9EX0lOSVQoeCkgLnggPSB4Cj4gPiArc3RhdGljIHN0cnVjdCBmb3Jl
+aWduIF9fbWV0aG9kcyBfX2F0dHJpYnV0ZV9fKCh1bnVzZWQpKSA9IHsKPiA+ICsJX01FVEhPRF9J
+TklUKGluaXQpLAo+ID4gKwlfTUVUSE9EX0lOSVQoY2xlYW51cCksCj4gPiArCV9NRVRIT0RfSU5J
+VChjaGFuZ2UpLAo+ID4gKwlfTUVUSE9EX0lOSVQoZGVsZXRlKSwKPiA+ICsJX01FVEhPRF9JTklU
+KGRlbGV0ZV9hbGwpLAo+ID4gKwlfTUVUSE9EX0lOSVQoY2hlY2spLAo+ID4gKwlfTUVUSE9EX0lO
+SVQobG9jayksCj4gPiArCV9NRVRIT0RfSU5JVCh1bmxvY2spLAo+ID4gKwlfTUVUSE9EX0lOSVQo
+Z2V0X211bHRpcGF0aHMpLAo+ID4gKwlfTUVUSE9EX0lOSVQocmVsZWFzZV9tdWx0aXBhdGhzKSwK
+PiA+ICsJX01FVEhPRF9JTklUKGdldF9wYXRocyksCj4gPiArCV9NRVRIT0RfSU5JVChyZWxlYXNl
+X3BhdGhzKSwKPiA+ICt9Owo+ID4gLS0gCj4gPiAyLjE2LjEKPiAKPiAKCi0tIApEci4gTWFydGlu
+IFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNF
+IExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhh
+bSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxp
+c3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlz
+dGluZm8vZG0tZGV2ZWw=
