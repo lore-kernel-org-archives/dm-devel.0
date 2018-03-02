@@ -1,16 +1,19 @@
-From: Martin Wilck <mwilck@suse.com>
+From: Bart Van Assche <Bart.VanAssche@wdc.com>
 Subject: Re: [PATCH] multipathd: fix inverted signal blocking
 	logic
-Date: Fri, 02 Mar 2018 23:15:09 +0100
-Message-ID: <1520028909.4169.87.camel@suse.com>
+Date: Fri, 2 Mar 2018 22:23:46 +0000
+Message-ID: <1520029421.2855.35.camel@wdc.com>
 References: <20180302200048.GJ14513@octiron.msp.redhat.com>
 	<20180302211807.11434-1-mwilck@suse.com>
 	<1520026513.2855.30.camel@wdc.com>
+	<1520028909.4169.87.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1520026513.2855.30.camel@wdc.com>
+In-Reply-To: <1520028909.4169.87.camel@suse.com>
+Content-Language: en-US
+Content-ID: <B61BFC7039283F478707ED8EF267E96D@namprd04.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,44 +23,22 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <Bart.VanAssche@wdc.com>, "bmarzins@redhat.com" <bmarzins@redhat.com>
+To: "bmarzins@redhat.com" <bmarzins@redhat.com>, "mwilck@suse.com" <mwilck@suse.com>
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gRnJpLCAyMDE4LTAzLTAyIGF0IDIxOjM1ICswMDAwLCBCYXJ0IFZhbiBBc3NjaGUgd3JvdGU6
-Cj4gT24gRnJpLCAyMDE4LTAzLTAyIGF0IDIyOjE4ICswMTAwLCBNYXJ0aW4gV2lsY2sgd3JvdGU6
-Cj4gPiBkaWZmIC0tZ2l0IGEvbXVsdGlwYXRoZC9tYWluLmMgYi9tdWx0aXBhdGhkL21haW4uYwo+
-ID4gaW5kZXggNjE3MzlhYzZlYTU5Li44NWVlOWI3MTNkNzUgMTAwNjQ0Cj4gPiAtLS0gYS9tdWx0
-aXBhdGhkL21haW4uYwo+ID4gKysrIGIvbXVsdGlwYXRoZC9tYWluLmMKPiA+IEBAIC0yMjcwLDEw
-ICsyMjcwLDEzIEBAIHNpZ25hbF9pbml0KHZvaWQpCj4gPiAgewo+ID4gIAlzaWdzZXRfdCBzZXQ7
-Cj4gPiAgCj4gPiAtCXNpZ2VtcHR5c2V0KCZzZXQpOwo+ID4gLQlzaWdhZGRzZXQoJnNldCwgU0lH
-VVNSMik7Cj4gPiArCS8qIGJsb2NrIGFsbCBzaWduYWxzICovCj4gPiArCXNpZ2ZpbGxzZXQoJnNl
-dCk7Cj4gPiArCS8qIFNJR1BJUEUgb2NjdXJzIGlmIGxvZ2dpbmcgZmFpbHMgKi8KPiA+ICsJc2ln
-ZGVsc2V0KCZzZXQsIFNJR1BJUEUpOwo+ID4gIAlwdGhyZWFkX3NpZ21hc2soU0lHX1NFVE1BU0ss
-ICZzZXQsIE5VTEwpOwo+IAo+IFRoZSBtb2RpZmllZCBjb2RlIHdhcyBpbnRyb2R1Y2VkIGJ5IGNv
-bW1pdCA5MGRkNDI0YWZhNjUgKCJtdWx0aXBhdGhkOgo+IGZpeCBTSUdVU1IyIGhhbmRsaW5nIiku
-IFRoaXMgY2hhbmdlIGxvb2tzIGZpbmUgdG8gbWUuCj4gCj4gPiBkaWZmIC0tZ2l0IGEvbXVsdGlw
-YXRoZC91eGxzbnIuYyBiL211bHRpcGF0aGQvdXhsc25yLmMKPiA+IGluZGV4IDk4YWMyNWE2OGM0
-My4uYTJjYTM2YmExNjUzIDEwMDY0NAo+ID4gLS0tIGEvbXVsdGlwYXRoZC91eGxzbnIuYwo+ID4g
-KysrIGIvbXVsdGlwYXRoZC91eGxzbnIuYwo+ID4gQEAgLTE3MCwxMSArMTcwLDExIEBAIHZvaWQg
-KiB1eHNvY2tfbGlzdGVuKHV4c29ja190cmlnZ2VyX2ZuCj4gPiB1eHNvY2tfdHJpZ2dlciwgdm9p
-ZCAqIHRyaWdnZXJfZGF0YSkKPiA+ICAJCWNvbmRsb2coMCwgInV4c29jazogZmFpbGVkIHRvIGFs
-bG9jYXRlIHBvbGwgZmRzIik7Cj4gPiAgCQlyZXR1cm4gTlVMTDsKPiA+ICAJfQo+ID4gLQlzaWdl
-bXB0eXNldCgmbWFzayk7Cj4gPiAtCXNpZ2FkZHNldCgmbWFzaywgU0lHSU5UKTsKPiA+IC0Jc2ln
-YWRkc2V0KCZtYXNrLCBTSUdURVJNKTsKPiA+IC0Jc2lnYWRkc2V0KCZtYXNrLCBTSUdIVVApOwo+
-ID4gLQlzaWdhZGRzZXQoJm1hc2ssIFNJR1VTUjEpOwo+ID4gKwlzaWdmaWxsc2V0KCZtYXNrKTsK
-PiA+ICsJc2lnZGVsc2V0KCZtYXNrLCBTSUdJTlQpOwo+ID4gKwlzaWdkZWxzZXQoJm1hc2ssIFNJ
-R1RFUk0pOwo+ID4gKwlzaWdkZWxzZXQoJm1hc2ssIFNJR0hVUCk7Cj4gPiArCXNpZ2RlbHNldCgm
-bWFzaywgU0lHVVNSMSk7Cj4gPiAgCXdoaWxlICgxKSB7Cj4gPiAgCQlzdHJ1Y3QgY2xpZW50ICpj
-LCAqdG1wOwo+ID4gIAkJaW50IGksIHBvbGxfY291bnQsIG51bV9jbGllbnRzOwo+IAo+IFRoaXMg
-Y2hhbmdlIGxvb2tzIG1vcmUgY29tcGxpY2F0ZWQgdG8gbWUgdGhhbiBuZWNlc3NhcnkuIEhhdmUg
-eW91Cj4gY29uc2lkZXJlZAo+IHRvIHBhc3MgYW4gZW1wdHkgc2lnbmFsIHNldCBhcyB0aGUgZm91
-cnRoIHBwb2xsKCkgYXJndW1lbnQ/CgpBbiBlbXB0eSBzZXQgd291bGQgbWVhbiB0aGF0IG5vIHNp
-Z25hbCBpcyBibG9ja2VkIGR1cmluZyBwcG9sbCgpLgpUaGVyZWZvcmUgZS5nLiBTSUdBTFJNIHdv
-dWxkIHRlcm1pbmF0ZSBtdWx0aXBhdGhkIGlmIGl0IGFycml2ZXMKZHVyaW5nIHRoZSBwcG9sbCAo
-bm8gaGFuZGxlciBzZXQsIGFuZCBkZWZhdWx0IGFjdGlvbiBpcyAiVGVybSIpLgoKUmVnYXJkcywK
-TWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLiArNDkg
-KDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVy
-LCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoK
-LS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cu
-cmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+On Fri, 2018-03-02 at 23:15 +0100, Martin Wilck wrote:
+> On Fri, 2018-03-02 at 21:35 +0000, Bart Van Assche wrote:
+> > This change looks more complicated to me than necessary. Have you
+> > considered
+> > to pass an empty signal set as the fourth ppoll() argument?
+> 
+> An empty set would mean that no signal is blocked during ppoll().
+> Therefore e.g. SIGALRM would terminate multipathd if it arrives
+> during the ppoll (no handler set, and default action is "Term").
+
+Have you considered to only block SIGALRM while ppoll() is in progress?
+
+Thanks,
+
+Bart.
