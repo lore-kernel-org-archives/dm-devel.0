@@ -1,17 +1,20 @@
-From: Martin Wilck <mwilck@suse.com>
+From: Bart Van Assche <Bart.VanAssche@wdc.com>
 Subject: Re: [PATCH] multipathd: fix inverted signal blocking
 	logic
-Date: Sat, 03 Mar 2018 00:16:48 +0100
-Message-ID: <1520032608.4169.91.camel@suse.com>
+Date: Fri, 2 Mar 2018 23:27:31 +0000
+Message-ID: <1520033250.2855.47.camel@wdc.com>
 References: <20180302200048.GJ14513@octiron.msp.redhat.com>
 	<20180302211807.11434-1-mwilck@suse.com>
 	<1520026513.2855.30.camel@wdc.com>
 	<1520028909.4169.87.camel@suse.com> <1520029421.2855.35.camel@wdc.com>
+	<1520032608.4169.91.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1520029421.2855.35.camel@wdc.com>
+In-Reply-To: <1520032608.4169.91.camel@suse.com>
+Content-Language: en-US
+Content-ID: <5C52FBF6E33AA3428DBC459668C4F5D1@namprd04.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,26 +24,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <Bart.VanAssche@wdc.com>, "bmarzins@redhat.com" <bmarzins@redhat.com>
+To: "bmarzins@redhat.com" <bmarzins@redhat.com>, "mwilck@suse.com" <mwilck@suse.com>
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gRnJpLCAyMDE4LTAzLTAyIGF0IDIyOjIzICswMDAwLCBCYXJ0IFZhbiBBc3NjaGUgd3JvdGU6
-Cj4gT24gRnJpLCAyMDE4LTAzLTAyIGF0IDIzOjE1ICswMTAwLCBNYXJ0aW4gV2lsY2sgd3JvdGU6
-Cj4gPiBPbiBGcmksIDIwMTgtMDMtMDIgYXQgMjE6MzUgKzAwMDAsIEJhcnQgVmFuIEFzc2NoZSB3
-cm90ZToKPiA+ID4gVGhpcyBjaGFuZ2UgbG9va3MgbW9yZSBjb21wbGljYXRlZCB0byBtZSB0aGFu
-IG5lY2Vzc2FyeS4gSGF2ZSB5b3UKPiA+ID4gY29uc2lkZXJlZAo+ID4gPiB0byBwYXNzIGFuIGVt
-cHR5IHNpZ25hbCBzZXQgYXMgdGhlIGZvdXJ0aCBwcG9sbCgpIGFyZ3VtZW50Pwo+ID4gCj4gPiBB
-biBlbXB0eSBzZXQgd291bGQgbWVhbiB0aGF0IG5vIHNpZ25hbCBpcyBibG9ja2VkIGR1cmluZyBw
-cG9sbCgpLgo+ID4gVGhlcmVmb3JlIGUuZy4gU0lHQUxSTSB3b3VsZCB0ZXJtaW5hdGUgbXVsdGlw
-YXRoZCBpZiBpdCBhcnJpdmVzCj4gPiBkdXJpbmcgdGhlIHBwb2xsIChubyBoYW5kbGVyIHNldCwg
-YW5kIGRlZmF1bHQgYWN0aW9uIGlzICJUZXJtIikuCj4gCj4gSGF2ZSB5b3UgY29uc2lkZXJlZCB0
-byBvbmx5IGJsb2NrIFNJR0FMUk0gd2hpbGUgcHBvbGwoKSBpcyBpbgo+IHByb2dyZXNzPwoKV2h5
-IHNob3VsZCB3ZT8gVGhlIHNhbWUgcmVhc29uaW5nIGFwcGxpZXMgdG8gb3RoZXIgc2lnbmFscyBz
-dWNoIGFzIGUuZy4KU0lHVVNSMi4gV2UgbmVlZCB0byBibG9jayBhbGwgc2lnbmFscyBleGNlcHQg
-dGhvc2UgdGhhdCB3ZSBjYW4gaGFuZGxlLgoKUmVnYXJkcywKTWFydGluCgotLSAKRHIuIE1hcnRp
-biBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VT
-RSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFo
-YW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBs
-aXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xp
-c3RpbmZvL2RtLWRldmVs
+On Sat, 2018-03-03 at 00:16 +0100, Martin Wilck wrote:
+> On Fri, 2018-03-02 at 22:23 +0000, Bart Van Assche wrote:
+> > On Fri, 2018-03-02 at 23:15 +0100, Martin Wilck wrote:
+> > > On Fri, 2018-03-02 at 21:35 +0000, Bart Van Assche wrote:
+> > > > This change looks more complicated to me than necessary. Have you
+> > > > considered
+> > > > to pass an empty signal set as the fourth ppoll() argument?
+> > > 
+> > > An empty set would mean that no signal is blocked during ppoll().
+> > > Therefore e.g. SIGALRM would terminate multipathd if it arrives
+> > > during the ppoll (no handler set, and default action is "Term").
+> > 
+> > Have you considered to only block SIGALRM while ppoll() is in
+> > progress?
+> 
+> Why should we? The same reasoning applies to other signals such as e.g.
+> SIGUSR2. We need to block all signals except those that we can handle.
+
+I see two reasons:
+- All signals that are delivered to the multipathd process except SIGALRM
+  should interrupt ppoll(). SIGPIPE is delivered to the thread that caused
+  that signal to be raised. SIGUSR2 is sent to a specific thread. Hence
+  neither SIGPIPE nor SIGUSR2 will ever be delivered to the thread that
+  calls ppoll().
+- Asking ppoll() to block all signals is weird because some signals, e.g.
+  SIGKILL and SIGSTOP, cannot be blocked.
+
+Bart.
