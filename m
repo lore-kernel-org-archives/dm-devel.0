@@ -1,18 +1,15 @@
-From: Amir Goldstein <amir73il@gmail.com>
-Subject: Re: [RFC PATCH] fstests: Check if a fs can survive
- random (emulated) power loss
-Date: Thu, 1 Mar 2018 14:50:27 +0200
-Message-ID: <CAOQ4uxgw=MmrTW-1CG=RHWY65Ej1pb_rF6G5wRC1J6B5jLRpTw@mail.gmail.com>
-References: <20180301053821.18718-1-wqu@suse.com>
-	<CAOQ4uxgUm-YnFG=M6YaMKqAvr+CewerL3d4S2V6WSwKKu13ebA@mail.gmail.com>
-	<ed8aec54-8b90-61cd-74c2-e8a1556849f6@gmx.com>
-	<CAOQ4uxhy7iU71dB9aTFx+aeMowNoi0QMVT2GDUM81R_CTZxxsA@mail.gmail.com>
-	<0abab816-a2a4-82bf-e43e-37535f1228a8@gmx.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [RFC PATCH 05/20] libmultipath: don't update path
+ groups when printing
+Date: Fri, 02 Mar 2018 14:59:40 +0100
+Message-ID: <1519999180.4169.60.camel@suse.com>
+References: <20180220132658.22295-1-mwilck@suse.com>
+	<20180220132658.22295-6-mwilck@suse.com>
+	<20180228234016.GI14513@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: multipart/mixed; boundary="=-qOVqayUCr6ICZQsHhPam"
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <0abab816-a2a4-82bf-e43e-37535f1228a8@gmx.com>
+In-Reply-To: <20180228234016.GI14513@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,70 +19,128 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Qu Wenruo <quwenruo.btrfs@gmx.com>
-Cc: dm-devel@redhat.com, fstests <fstests@vger.kernel.org>, Qu Wenruo <wqu@suse.com>, Josef Bacik <josef@toxicpanda.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gVGh1LCBNYXIgMSwgMjAxOCBhdCAxOjQ4IFBNLCBRdSBXZW5ydW8gPHF1d2VucnVvLmJ0cmZz
-QGdteC5jb20+IHdyb3RlOgo+Cj4KPiBPbiAyMDE45bm0MDPmnIgwMeaXpSAxOToxNSwgQW1pciBH
-b2xkc3RlaW4gd3JvdGU6Cj4+IE9uIFRodSwgTWFyIDEsIDIwMTggYXQgMTE6MjUgQU0sIFF1IFdl
-bnJ1byA8cXV3ZW5ydW8uYnRyZnNAZ214LmNvbT4gd3JvdGU6Cj4+Pgo+Pj4KPj4+IE9uIDIwMTjl
-ubQwM+aciDAx5pelIDE2OjM5LCBBbWlyIEdvbGRzdGVpbiB3cm90ZToKPj4+PiBPbiBUaHUsIE1h
-ciAxLCAyMDE4IGF0IDc6MzggQU0sIFF1IFdlbnJ1byA8d3F1QHN1c2UuY29tPiB3cm90ZToKPj4+
-Pj4gVGhpcyB0ZXN0IGNhc2UgaXMgb3JpZ2luYWxseSBkZXNpZ25lZCB0byBleHBvc2UgdW5leHBl
-Y3RlZCBjb3JydXB0aW9uCj4+Pj4+IGZvciBidHJmcywgd2hlcmUgdGhlcmUgYXJlIHNldmVyYWwg
-cmVwb3J0cyBhYm91dCBidHJmcyBzZXJpb3VzIG1ldGFkYXRhCj4+Pj4+IGNvcnJ1cHRpb24gYWZ0
-ZXIgcG93ZXIgbG9zcy4KPj4+Pj4KPj4+Pj4gVGhlIHRlc3QgY2FzZSBpdHNlbGYgd2lsbCB0cmln
-Z2VyIGhlYXZ5IGZzc3RyZXNzIGZvciB0aGUgZnMsIGFuZCB1c2UKPj4+Pj4gZG0tZmxha2V5IHRv
-IGVtdWxhdGUgcG93ZXIgbG9zcyBieSBkcm9wcGluZyBhbGwgbGF0ZXIgd3JpdGVzLgo+Pj4+Cj4+
-Pj4gU28geW91IGFyZSByZS1wb3N0aW5nIHRoZSB0ZXN0IHdpdGggZG0tZmxha2V5IG9yIGNvbnZl
-cnRpbmcgaXQgdG8KPj4+PiBkbS1sb2ctd3JpdGVzPz8KPj4+Cj4+PiBXb3JraW5nIG9uIHRoZSBz
-Y3JpcHRzIHRvIGFsbG93IHVzIHRvIGRvIC0tZmluZCBhbmQgdGhlbiByZXBsYXkuCj4+Pgo+Pj4g
-U2luY2UgZm9yIHhmcyBhbmQgZXh0NCwgdGhlaXIgZnNjayB3b3VsZCByZXBvcnQgZmFsc2UgYWxl
-cnRzIGp1c3QgZm9yCj4+PiBkaXJ0eSBqb3VybmFsLgo+Pj4KPj4+IEknbSBhZGRpbmcgbmV3IG1h
-Y3JvIHRvIGxvY2F0ZSBuZXh0IGZsdXNoIGFuZCByZXBsYXkgdG8gaXQsIHRoZW4gbW91bnQKPj4+
-IGl0IFJXIGJlZm9yZSB3ZSBjYWxsIGZzY2suCj4+Pgo+Pj4gT3IgZG8gd2UgaGF2ZSBvcHRpb25z
-IGZvciB0aG9zZSBmc2NrcyB0byBza2lwIGRpcnR5IGpvdXJuYWw/Cj4+Pgo+Pgo+PiBObywgeW91
-IGFyZSBtdWNoIGJldHRlciBvZmYgZG9pbmcgbW91bnQvdW1vdW50IGJlZm9yZSBmc2NrLgo+PiBF
-dmVuIHRob3VnaCBlMmZzY2sgY2FuIHJlcGxheSBhIGpvdXJuYWwsIGl0IGRvZXMgdGhhdCBtdWNo
-IHNsb3dlcgo+PiB0aGVuIHRoZSBrZXJuZWwgZG9lcy4KPj4KPj4gQnV0IHdoeSBkbyB5b3UgbmVl
-ZCB0byB0ZWFjaCAtLWZpbmQgdG8gZmluZCBuZXh0IGZsdXNoPwo+PiBZb3UgY291bGQgdXNlIGEg
-aGVscGVyIHNjcmlwdCB0byBydW4gZXZlcnkgZnVhIHdpdGggLS1mc2NrIC0tY2hlY2sgZnVhLgo+
-PiBHcmFudGVkLCBmb3IgZnN0ZXN0cyBjb250ZXh0LCBJIGFncmVlIHRoYXQgLS1maW5kIG5leHQg
-ZnVhIG1heSBsb29rCj4+IG5pY2VyLCBzbyBJIGhhdmUgbm8gb2JqZWN0aW9uIHRvIHRoaXMgaW1w
-bGVtZW50YXRpb24uCj4KPiBUaGUgcG9pbnQgaXMsIGluIG15IG9waW5pb24gZnVhIGlzIG5vdCB0
-aGUgd29yc3QgY2FzZSB3ZSBuZWVkIHRvIHRlc3QuCj4gT25seSBmbHVzaCBjb3VsZCBsZWFkcyB1
-cyB0byB0aGUgd29yc3QgY2FzZSB3ZSByZWFsbHkgbmVlZCB0byB0ZXN0Lgo+Cj4gSW4gYnRyZnMn
-IGNhc2UsIGlmIHdlIGZpbmlzaGVkIGZsdXNoLCBidXQgd2l0aG91dCBmdWEsIHdlIGhhdmUgYSBz
-dXBlcgo+IGJsb2NrIHBvaW50cyB0byBhbGwgb2xkIHRyZWVzLCBidXQgYWxsIG5ldyB0cmVlcyBh
-cmUgYWxyZWFkeSB3cml0dGVuIHRvCj4gZGlzay4KPgo+IEluIHRoYXQgZmx1c2ggZW50cnksIHdl
-IGNvdWxkIHJlYWNoIHRvIHRoZSB3b3JzdCBjYXNlIHNjZW5hcmlvIHRvIHZlcmlmeQo+IGFsbCBi
-dHJmcyB0cmlja3MgYXJlIHdvcmtpbmcgYWxsIHRvZ2V0aGVyIHRvIGdldCBhIGNvbXBsZXRlbHkg
-c2FuZSBidHJmcwo+IChldmVuIGFsbCBkYXRhIHNob3VsZCBiZSBjb3JyZWN0KS4KPgo+IFRoaXMg
-c2hvdWxkIGFsc28gYXBwbHkgdG8gam91cm5hbCBiYXNlZCBmaWxlc3lzdGVtcyAoaWYgSSB1bmRl
-cnN0YW5kIHRoZQo+IGpvdXJuYWwgdGhpbmcgY29ycmVjdGx5KSwgZXZlbiB3aGVuIGFsbCBqb3Vy
-bmFscyB3cml0dGVuIGJ1dCBzdXBlcmJsb2NrCj4gbm90IHVwZGF0ZWQsIHdlIHNob3VsZCBiZSBj
-b21wbGV0ZWx5IGZpbmUuCj4gKEFsdGhvdWdoIGZvciBqb3VybmFsLCB3ZSBtYXkgbmVlZCB0byBy
-ZWFjaCBmdWEgZW50cnkgaW5zdGVhZCBvZiBmbHVzaD8pCj4KPiBBbmQgdGhlIG90aGVyIHJlYXNv
-biB3aHkgd2UgbmVlZCB0byBmaW5kIG5leHQgZmx1c2gvZnVhIG1hbnVhbGx5IGlzLAo+IG1vdW50
-IHdpbGwgd3JpdGUgbmV3IGRhdGEsIGFuZCB3ZSBuZWVkIHRvIHJlcGxheSBhbGwgdGhlIHNlcXVl
-bmNlIHVudGlsCj4gbmV4dCBmbHVzaC9mdWEuCj4KCk9LLiBidXQgSm9zZWYgYWRkcmVzc2VkIHRo
-aXMgaW4gaGlzIHNjcmlwdCB1c2luZyBkbSBzbmFwc2hvdHMsIHJhdGhlcgp0aGFuIHJlcGxheWlu
-ZyBlYWNoIHRpbWUuIEkgZ3Vlc3MgdGhpcyBpcyB0aGUgcmVhc29uIHRoZSBzY3JpcHQgaXMgY2Fs
-bGVkCnJlcGxheS1pbmRpdmlkdWFsLWZhc3Rlci5zaC4gWW91IGRvbid0IGhhdmUgdG8gZG8gdGhl
-IHNhbWUsIGJ1dCBJIGV4cGVjdAp0aGUgdGVzdCB3b3VsZCBydW4gZmFzdGVyIGlmIHlvdSBsZWFy
-biBmcm9tIGV4cGVyaWVuY2Ugb2YgSm9zZWYuCgo+Cj4gQW5kIGZpbmFsbHkgdGhlIHJlYXNvbiBh
-Ym91dCB3aHkgbmVlZCBtYW51YWxseSBtb3VudCBpcywgd2UgbmVlZCB0bwo+IHdvcmthcm91bmQg
-ZTJmc2NrL3hmc19yZXBhaXIsIHNvIHRoYXQgdGhleSB3b24ndCByZXBvcnQgZGlydHkgam91cm5h
-bCBhcwo+IGVycm9yLiBJZiB3ZSBoYXZlIGV4dHJhIG9wdGlvbnMgdG8gZGlzYWJsZSBzdWNoIGJl
-aGF2aW9yLCBJJ20gY29tcGxldGVseQo+IE9LIHdpdGggY3VycmVudCAtLWNoZWNrIGZsdXNoL2Z1
-YSAtLWZzY2sgbWV0aG9kLgo+IChCVFcsIGZvciBteSBidHJmcyB0ZXN0aW5nLCAtLWNoZWNrIGZs
-dXNoIC0tZnNjayBpcyBjb21wbGV0ZWx5IGdvb2QKPiBlbm91Z2gsIHRvIGV4cG9zZWQgcG9zc2li
-bGUgZnJlZSBzcGFjZSBjYWNoZSByZWxhdGVkIHByb2JsZW1zKQo+CgpXaGF0IEkgd2FzIHN1Z2dl
-c3RpbmcgYXMgYW4gYWx0ZXJuYXRpdmUgaXMgLS1mc2NrIC4vcmVwbGF5LWZzY2std3JhcHBlci5z
-aAp3aGVyZSB0aGUgd3JhcHBlciBzY3JpcHQgZG9lcyB0aGUgbmVlZGVkIG1vdW50L3Vtb3VudCBh
-bmQgaWYgeW91CmFsc28gdXNlIGRtIHNuYXBzaG90IGZvciB0aGUgbW91bnRlZCB2b2x1bWUgeW91
-IGNhbiBjb250aW51ZSB0byByZXBsYXkKZnJvbSB0aGUgc2FtZSBwb2ludCBhbmQgZG9uJ3QgbmVl
-ZCB0byByZXBsYXkgZnJvbSB0aGUgc3RhcnQuCgpDaGVlcnMsCkFtaXIuCgotLQpkbS1kZXZlbCBt
-YWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21h
-aWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+
+--=-qOVqayUCr6ICZQsHhPam
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
+
+On Wed, 2018-02-28 at 17:40 -0600, Benjamin Marzinski wrote:
+> On Tue, Feb 20, 2018 at 02:26:43PM +0100, Martin Wilck wrote:
+> > Updating the prio values for printing makes no sense. The user
+> > wants to see
+> > the prio values multipath is actually using for path group
+> > selection, and
+> > updating the values here means actually lying to the user if the
+> > prio values
+> > have changed, but multipathd hasn't updated them internally.
+> > 
+> > If we really don't update the pathgroup prios when we need to, this
+> > should be
+> > fixed elsewhere. The current wrong output would just hide that if
+> > it occured.
+> > 
+> > Moreover, correctness forbids changing properties so deeply in a
+> > code path
+> > that's supposed to print them only. Finally, this piece of code
+> > prevents the
+> > print.c code to be converted to proper "const" usage.
+> 
+> Well, it is true that we've only been updating the path group
+> priority
+> when we've needed it, and we've only need it to be uptodate when we
+> are
+> picking a new pathgroup, or are printing it out. When failback is set
+> to
+> "manual", we rarely are picking a new pathgroup, so we rarely update
+> the
+> pathgroup prio. 
+> 
+> [...]
+>
+> I'd be fine with simply updating the path group priority whever we
+> change a
+> path's priority, if we aren't updating it when printing it. The
+> bigger
+> work of actually making sure that the path group order it the table
+> is always uptodate needs to happen, but it doesn't need to happen in
+> this patchset.
+
+I just reviewed the code flow in check_path(), and here's what I see:
+
+1. calls update_prio(pp, new_path_up)
+   -> updates path's prio, or all paths' prios if the path was
+      reinstated
+
+Now it calls either
+
+2a. update_path_groups() (for group_by_prio and failback immediate)
+  (-> reload_map() -> setup_map() -> select_path_group()
+  -> path_group_prio_update()), or
+  
+2b. need_switch_pathgroup() (otherwise)
+  
+So all we need to make sure is that need_switch_pathgroup() calls 
+select_path_group(). It does that already, except for the "failback
+manual" case.
+
+So all we need is IMO the attached patch. Tell me what you think.
+
+[All of the above is only called if (!mpp->wait_for_udev), but if
+wait_for_udev is set, either when the event arrives or the wait times
+out, we'll call reconfigure() which makes sure all priorities are
+correct].
+
+Best,
+Martin
+
+-- 
+Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+SUSE Linux GmbH, GF: Felix Imendörffer, Jane Smithard, Graham Norton
+HRB 21284 (AG Nürnberg)
+
+--=-qOVqayUCr6ICZQsHhPam
+Content-Disposition: attachment;
+	filename="0001-multipathd-update-path-group-prio-in-check_path.patch"
+Content-Type: text/x-patch;
+	name="0001-multipathd-update-path-group-prio-in-check_path.patch";
+	charset="UTF-8"
+Content-Transfer-Encoding: base64
+
+RnJvbSAxNDlmNDQ1OGQxMzhkNTA0ZWU1OTQ3YWFhNmUzOGQxMzRiMjEzNjhhIE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4KRGF0ZTog
+RnJpLCAyIE1hciAyMDE4IDE0OjUxOjUyICswMTAwClN1YmplY3Q6IFtQQVRDSF0gbXVsdGlwYXRo
+ZDogdXBkYXRlIHBhdGggZ3JvdXAgcHJpbyBpbiBjaGVja19wYXRoCgpUaGUgcHJldmlvdXMgcGF0
+Y2ggImxpYm11bHRpcGF0aDogZG9uJ3QgdXBkYXRlIHBhdGggZ3JvdXBzIHdoZW4gcHJpbnRpbmci
+CnJlbW92ZWQgdGhlIGNhbGwgdG8gcGF0aF9ncm91cF9wcmlvX3VwZGF0ZSgpIGluIHRoZSBwcmlu
+dGluZyBjb2RlIHBhdGguClRvIGNvbXBlbnNhdGUgZm9yIHRoYXQsIHJlY2FsY3VsYXRlIHBhdGgg
+Z3JvdXAgcHJpbyBhbHNvIHdoZW4gaXQncyBub3QKc3RyaWN0bHkgbmVjZXNzYXJ5IChpLmUuIGlm
+IGZhaWxiYWNrICJtYW51YWwiIGlzIHNldCkuCgpTaWduZWQtb2ZmLWJ5OiBNYXJ0aW4gV2lsY2sg
+PG13aWxja0BzdXNlLmNvbT4KLS0tCiBtdWx0aXBhdGhkL21haW4uYyB8IDggKysrKysrLS0KIDEg
+ZmlsZSBjaGFuZ2VkLCA2IGluc2VydGlvbnMoKyksIDIgZGVsZXRpb25zKC0pCgpkaWZmIC0tZ2l0
+IGEvbXVsdGlwYXRoZC9tYWluLmMgYi9tdWx0aXBhdGhkL21haW4uYwppbmRleCBlMWQ5ODg2MWE4
+NDEuLjYxNzM5YWM2ZWE1OSAxMDA2NDQKLS0tIGEvbXVsdGlwYXRoZC9tYWluLmMKKysrIGIvbXVs
+dGlwYXRoZC9tYWluLmMKQEAgLTI1Miw4ICsyNTIsOSBAQCBuZWVkX3N3aXRjaF9wYXRoZ3JvdXAg
+KHN0cnVjdCBtdWx0aXBhdGggKiBtcHAsIGludCByZWZyZXNoKQogCXN0cnVjdCBwYXRoICogcHA7
+CiAJdW5zaWduZWQgaW50IGksIGo7CiAJc3RydWN0IGNvbmZpZyAqY29uZjsKKwlpbnQgYmVzdHBn
+OwogCi0JaWYgKCFtcHAgfHwgbXBwLT5wZ2ZhaWxiYWNrID09IC1GQUlMQkFDS19NQU5VQUwpCisJ
+aWYgKCFtcHApCiAJCXJldHVybiAwOwogCiAJLyoKQEAgLTI3Miw4ICsyNzMsMTEgQEAgbmVlZF9z
+d2l0Y2hfcGF0aGdyb3VwIChzdHJ1Y3QgbXVsdGlwYXRoICogbXBwLCBpbnQgcmVmcmVzaCkKIAlp
+ZiAoIW1wcC0+cGcgfHwgVkVDVE9SX1NJWkUobXBwLT5wYXRocykgPT0gMCkKIAkJcmV0dXJuIDA7
+CiAKLQltcHAtPmJlc3RwZyA9IHNlbGVjdF9wYXRoX2dyb3VwKG1wcCk7CisJYmVzdHBnID0gc2Vs
+ZWN0X3BhdGhfZ3JvdXAobXBwKTsKKwlpZiAobXBwLT5wZ2ZhaWxiYWNrID09IC1GQUlMQkFDS19N
+QU5VQUwpCisJCXJldHVybiAwOwogCisJbXBwLT5iZXN0cGcgPSBiZXN0cGc7CiAJaWYgKG1wcC0+
+YmVzdHBnICE9IG1wcC0+bmV4dHBnKQogCQlyZXR1cm4gMTsKIAotLSAKMi4xNi4xCgo=
+
+
+--=-qOVqayUCr6ICZQsHhPam
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--=-qOVqayUCr6ICZQsHhPam--
