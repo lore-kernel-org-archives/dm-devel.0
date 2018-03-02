@@ -1,15 +1,17 @@
-From: Martin Wilck <mwilck@suse.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
 Subject: Re: [RFC PATCH 19/20] multipathd: use foreign API
-Date: Fri, 02 Mar 2018 20:19:39 +0100
-Message-ID: <1520018379.4169.83.camel@suse.com>
+Date: Fri, 2 Mar 2018 14:00:48 -0600
+Message-ID: <20180302200048.GJ14513@octiron.msp.redhat.com>
 References: <20180220132658.22295-1-mwilck@suse.com>
 	<20180220132658.22295-20-mwilck@suse.com>
 	<20180301051306.GO14513@octiron.msp.redhat.com>
+	<1520018379.4169.83.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180301051306.GO14513@octiron.msp.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1520018379.4169.83.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,18 +21,49 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com
+To: Martin Wilck <mwilck@suse.com>
+Cc: Bart Van Assche <Bart.VanAssche@wdc.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gV2VkLCAyMDE4LTAyLTI4IGF0IDIzOjEzIC0wNjAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gCj4gZWZmZWN0cyBtdWx0aXBhdGhkIGlzIGl0cyB1c2Ugb2YgU0lHQUxSTS4gTm93IGFz
-c3VtaW5nIHNpZ25hbAo+IHByb2Nlc3NpbmcKPiB3b3JrZWQgY29ycmVjdGx5IGluIG11bHRpcGF0
-aGQgKGl0IGRvZXNuJ3QuIGNvbW1pdCA1MzRlYzRjIGJyb2tlIGl0Lgo+IEknbQo+IHBsYW5uaW5n
-IG9uIGZpeGluZyB0aGF0IHNob3J0bHkpCgpEZXRhaWxzIGFib3V0IHRoaXMgYnJlYWthZ2UsIGFu
-ZCB5b3VyIGlkZWEgaG93IHRvIGZpeCBpdCwgd291bGQgYmUKaGlnaGx5IGFwcHJlY2lhdGVkLgoK
-TWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLiArNDkg
-KDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVy
-LCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoK
-LS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cu
-cmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+On Fri, Mar 02, 2018 at 08:19:39PM +0100, Martin Wilck wrote:
+> On Wed, 2018-02-28 at 23:13 -0600, Benjamin Marzinski wrote:
+> > =
+
+> > effects multipathd is its use of SIGALRM. Now assuming signal
+> > processing
+> > worked correctly in multipathd (it doesn't. commit 534ec4c broke it.
+> > I'm
+> > planning on fixing that shortly)
+> =
+
+> Details about this breakage, and your idea how to fix it, would be
+> highly appreciated.
+
+I plan on fixing the issue using exactly the method that commit 534ec4c
+says it is using. :) I cleaned up the signal handling years ago with
+commit 5ee9f71, which blocked all the then-used signals for all threads
+except uxlsnr, which is who calls handle_signals. Other threads
+unblocked signals only as necessary. I'm not sure what issue caused Bart
+to write 534ec4c. Perhaps an earlier commit actually broke the signal
+handling, and this was just the commit that git blame pointed to.  But
+in any case, after commit 534ec4c, we are only blocking SIGUSR2 on all
+threads, which is the only signal we don't need to block.  This means
+that, for instance, we have no idea which thread a SIGALRM is going to,
+because any of them could receive it.  It is safe to unblock SIGUSR2 on
+multiple threads at once, since (I hope) the only things that send it
+are stop_io_err_stat_thread() and stop_waiter_thread(), and both of
+those send it via pthread_kill, which will make sure it goes to the
+proper thread.
+
+-Ben
+
+> =
+
+> Martin
+> =
+
+> -- =
+
+> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+> SUSE Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
+> HRB 21284 (AG N=FCrnberg)
