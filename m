@@ -1,13 +1,13 @@
 From: Sasha Levin <Alexander.Levin@microsoft.com>
-Subject: [PATCH AUTOSEL for 4.14 60/84] scsi: dh: add new rdac devices
-Date: Sat, 3 Mar 2018 22:26:35 +0000
-Message-ID: <20180303222518.26271-60-alexander.levin@microsoft.com>
-References: <20180303222518.26271-1-alexander.levin@microsoft.com>
+Subject: [PATCH AUTOSEL for 4.15 076/102] scsi: dh: add new rdac devices
+Date: Sat, 3 Mar 2018 22:24:53 +0000
+Message-ID: <20180303222318.26006-76-alexander.levin@microsoft.com>
+References: <20180303222318.26006-1-alexander.levin@microsoft.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180303222518.26271-1-alexander.levin@microsoft.com>
+In-Reply-To: <20180303222318.26006-1-alexander.levin@microsoft.com>
 Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
 To: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "stable@vger.kernel.org" <stable@vger.kernel.org>
@@ -42,7 +42,7 @@ Signed-off-by: Sasha Levin <alexander.levin@microsoft.com>
  1 file changed, 4 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/scsi/scsi_dh.c b/drivers/scsi/scsi_dh.c
-index 84addee05be6..a5e30e9449ef 100644
+index 2b785d09d5bd..b88b5dbbc444 100644
 --- a/drivers/scsi/scsi_dh.c
 +++ b/drivers/scsi/scsi_dh.c
 @@ -56,10 +56,13 @@ static const struct scsi_dh_blist scsi_dh_blist[] =3D {
