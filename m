@@ -1,13 +1,13 @@
 From: Sasha Levin <Alexander.Levin@microsoft.com>
-Subject: [PATCH AUTOSEL for 4.9 206/219] scsi: dh: add new rdac devices
-Date: Sat, 3 Mar 2018 22:29:56 +0000
-Message-ID: <20180303222716.26640-206-alexander.levin@microsoft.com>
-References: <20180303222716.26640-1-alexander.levin@microsoft.com>
+Subject: [PATCH AUTOSEL for 4.14 60/84] scsi: dh: add new rdac devices
+Date: Sat, 3 Mar 2018 22:26:35 +0000
+Message-ID: <20180303222518.26271-60-alexander.levin@microsoft.com>
+References: <20180303222518.26271-1-alexander.levin@microsoft.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180303222716.26640-1-alexander.levin@microsoft.com>
+In-Reply-To: <20180303222518.26271-1-alexander.levin@microsoft.com>
 Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
 To: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "stable@vger.kernel.org" <stable@vger.kernel.org>
