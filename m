@@ -1,73 +1,64 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH] multipathd: fix inverted signal blocking
-	logic
-Date: Sat, 03 Mar 2018 01:31:32 +0100
-Message-ID: <1520037092.4169.103.camel@suse.com>
-References: <20180302200048.GJ14513@octiron.msp.redhat.com>
-	<20180302211807.11434-1-mwilck@suse.com>
-	<1520026513.2855.30.camel@wdc.com>
-	<1520028909.4169.87.camel@suse.com> <1520029421.2855.35.camel@wdc.com>
-	<1520032608.4169.91.camel@suse.com> <1520033250.2855.47.camel@wdc.com>
+From: Sasha Levin <Alexander.Levin@microsoft.com>
+Subject: [PATCH AUTOSEL for 4.4 105/115] scsi: dh: add new rdac devices
+Date: Sat, 3 Mar 2018 22:31:52 +0000
+Message-ID: <20180303223010.27106-105-alexander.levin@microsoft.com>
+References: <20180303223010.27106-1-alexander.levin@microsoft.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1520033250.2855.47.camel@wdc.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <Bart.VanAssche@wdc.com>, "bmarzins@redhat.com" <bmarzins@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180303223010.27106-1-alexander.levin@microsoft.com>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "stable@vger.kernel.org" <stable@vger.kernel.org>
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>, Hannes Reinecke <hare@suse.de>, Christophe Varoqui <christophe.varoqui@opensvc.com>, "Martin K . Petersen" <martin.petersen@oracle.com>, "James E . J . Bottomley" <jejb@linux.vnet.ibm.com>, SCSI ML <linux-scsi@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, Sasha Levin <Alexander.Levin@microsoft.com>
 List-Id: dm-devel.ids
 
-T24gRnJpLCAyMDE4LTAzLTAyIGF0IDIzOjI3ICswMDAwLCBCYXJ0IFZhbiBBc3NjaGUgd3JvdGU6
-Cj4gT24gU2F0LCAyMDE4LTAzLTAzIGF0IDAwOjE2ICswMTAwLCBNYXJ0aW4gV2lsY2sgd3JvdGU6
-Cj4gPiBPbiBGcmksIDIwMTgtMDMtMDIgYXQgMjI6MjMgKzAwMDAsIEJhcnQgVmFuIEFzc2NoZSB3
-cm90ZToKPiA+ID4gT24gRnJpLCAyMDE4LTAzLTAyIGF0IDIzOjE1ICswMTAwLCBNYXJ0aW4gV2ls
-Y2sgd3JvdGU6Cj4gPiA+ID4gT24gRnJpLCAyMDE4LTAzLTAyIGF0IDIxOjM1ICswMDAwLCBCYXJ0
-IFZhbiBBc3NjaGUgd3JvdGU6Cj4gPiA+ID4gPiBUaGlzIGNoYW5nZSBsb29rcyBtb3JlIGNvbXBs
-aWNhdGVkIHRvIG1lIHRoYW4gbmVjZXNzYXJ5LiBIYXZlCj4gPiA+ID4gPiB5b3UKPiA+ID4gPiA+
-IGNvbnNpZGVyZWQKPiA+ID4gPiA+IHRvIHBhc3MgYW4gZW1wdHkgc2lnbmFsIHNldCBhcyB0aGUg
-Zm91cnRoIHBwb2xsKCkgYXJndW1lbnQ/Cj4gPiA+ID4gCj4gPiA+ID4gQW4gZW1wdHkgc2V0IHdv
-dWxkIG1lYW4gdGhhdCBubyBzaWduYWwgaXMgYmxvY2tlZCBkdXJpbmcKPiA+ID4gPiBwcG9sbCgp
-Lgo+ID4gPiA+IFRoZXJlZm9yZSBlLmcuIFNJR0FMUk0gd291bGQgdGVybWluYXRlIG11bHRpcGF0
-aGQgaWYgaXQgYXJyaXZlcwo+ID4gPiA+IGR1cmluZyB0aGUgcHBvbGwgKG5vIGhhbmRsZXIgc2V0
-LCBhbmQgZGVmYXVsdCBhY3Rpb24gaXMKPiA+ID4gPiAiVGVybSIpLgo+ID4gPiAKPiA+ID4gSGF2
-ZSB5b3UgY29uc2lkZXJlZCB0byBvbmx5IGJsb2NrIFNJR0FMUk0gd2hpbGUgcHBvbGwoKSBpcyBp
-bgo+ID4gPiBwcm9ncmVzcz8KPiA+IAo+ID4gV2h5IHNob3VsZCB3ZT8gVGhlIHNhbWUgcmVhc29u
-aW5nIGFwcGxpZXMgdG8gb3RoZXIgc2lnbmFscyBzdWNoIGFzCj4gPiBlLmcuCj4gPiBTSUdVU1Iy
-LiBXZSBuZWVkIHRvIGJsb2NrIGFsbCBzaWduYWxzIGV4Y2VwdCB0aG9zZSB0aGF0IHdlIGNhbgo+
-ID4gaGFuZGxlLgo+IAo+IEkgc2VlIHR3byByZWFzb25zOgo+IC0gQWxsIHNpZ25hbHMgdGhhdCBh
-cmUgZGVsaXZlcmVkIHRvIHRoZSBtdWx0aXBhdGhkIHByb2Nlc3MgZXhjZXB0Cj4gU0lHQUxSTQo+
-ICAgc2hvdWxkIGludGVycnVwdCBwcG9sbCgpLiBTSUdQSVBFIGlzIGRlbGl2ZXJlZCB0byB0aGUg
-dGhyZWFkIHRoYXQKPiBjYXVzZWQKPiAgIHRoYXQgc2lnbmFsIHRvIGJlIHJhaXNlZC4gU0lHVVNS
-MiBpcyBzZW50IHRvIGEgc3BlY2lmaWMgdGhyZWFkLgo+IEhlbmNlCj4gICBuZWl0aGVyIFNJR1BJ
-UEUgbm9yIFNJR1VTUjIgd2lsbCBldmVyIGJlIGRlbGl2ZXJlZCB0byB0aGUgdGhyZWFkCj4gdGhh
-dAo+ICAgY2FsbHMgcHBvbGwoKS4KClNvLCB0aGVyZSdzIG5vIHJlYXNvbiBub3QgdG8gYmxvY2sg
-dGhlbSwgcmlnaHQ/IElzIGl0IGV4cGVjdGVkIGJlaGF2aW9yCnRoYXQgYSB1c2VyIHJ1bm5pbmcg
-J2tpbGwgLVVTUjIgJChwaWRvZiBtdWx0aXBhdGhkKScgdGVybWluYXRlcyB0aGUKcHJvY2Vzcz8g
-V2h5IGRvIHlvdSB0aGluayB0aGVzZSBzaWduYWxzIHNob3VsZCBpbnRlcnJ1cHQgcHBvbGwoKQph
-bHRob3VnaCB0aGUgdXhsc25yIGNhbid0IGNhbid0IGhhbmRsZSB0aGVtPyBJc24ndCBpdCBzdWZm
-aWNpZW50IHRoYXQKdGhleSdyZSBoYW5kbGVkIGJ5IHRoZSB0aHJlYWRzIHRoYXQgYXJlIG1lYW50
-IHRvIGRvIHRoYXQ/CgpJTU8gdGhlIGlkZWEgb2YgcHBvbGwoKSBpcyB0byBzcGVjaWZ5IGEgc2V0
-IG9mIHNpZ25hbHMgdGhlIGNhbGxpbmcKdGhyZWFkIGlzIGludGVyZXN0ZWQgaW4sIGFuZCB0aGF0
-J3MgcHJlY2lzZWx5IHRoZSBzZXQgb2Ygc2lnbmFscwpoYW5kbGVfc2lnbmFscygpIGNhbiBkZWFs
-IHdpdGguCgpJJ20gcmF0aGVyIG5ldXRyYWwgYWJvdXQgU0lHUElQRSwgd2UgY2FuIGFkZCBhIHNp
-Z2RlbHNldCgmc2V0LCBTSUdQSVBFKQppZiB5b3UgaW5zaXN0IChtdWx0aXBhdGhkIHdpbGwgZGll
-IGFueXdheSksIGJ1dCBjbGVhcmluZyBTSUdVU1IyIGluIHRoZQp1eGxzbnIgd291bGQgYmUgd3Jv
-bmcgSU1PLCBhcyBpdCdzIGRlZGljYXRlZCB0byB0aGUgd2FpdGVyIHRocmVhZC4KCj4gLSBBc2tp
-bmcgcHBvbGwoKSB0byBibG9jayBhbGwgc2lnbmFscyBpcyB3ZWlyZCBiZWNhdXNlIHNvbWUgc2ln
-bmFscywKPiBlLmcuCj4gICBTSUdLSUxMIGFuZCBTSUdTVE9QLCBjYW5ub3QgYmUgYmxvY2tlZC4K
-CkFuZCB0aGUga2VybmVsIG1ha2VzIHN1cmUgdGhhdCBkb2Vzbid0IGhhcHBlbi4gU28gSSBjYW4g
-YWRkCnNpZ2RlbHNldCgmc2V0LCBTSUdLSUxMKSBiaXQgaXQncyBraW5kIG9mIHBvaW50bGVzcy4K
-Ck1hcnRpbgoKPiAKPiBCYXJ0LgoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNv
-bT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4
-IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFH
-IE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29t
-Cmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+
+[ Upstream commit 4b3aec2bbbce1c35f50e7475a9fd78d24b9ea4ea ]
+
+Add IBM 3542 and 3552, arrays: FAStT200 and FAStT500.
+
+Add full STK OPENstorage family, arrays: 9176, D173, D178, D210, D220,
+D240 and D280.
+
+Add STK BladeCtlr family, arrays: B210, B220, B240 and B280.
+
+These changes were done in multipath-tools time ago.
+
+Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>
+Cc: Hannes Reinecke <hare@suse.de>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: Martin K. Petersen <martin.petersen@oracle.com>
+Cc: James E.J. Bottomley <jejb@linux.vnet.ibm.com>
+Cc: SCSI ML <linux-scsi@vger.kernel.org>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
+Signed-off-by: Sasha Levin <alexander.levin@microsoft.com>
+---
+ drivers/scsi/scsi_dh.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/scsi/scsi_dh.c b/drivers/scsi/scsi_dh.c
+index 4d655b568269..5711d58f9e81 100644
+--- a/drivers/scsi/scsi_dh.c
++++ b/drivers/scsi/scsi_dh.c
+@@ -56,10 +56,13 @@ static const struct scsi_dh_blist scsi_dh_blist[] =3D {
+ 	{"IBM", "1815",			"rdac", },
+ 	{"IBM", "1818",			"rdac", },
+ 	{"IBM", "3526",			"rdac", },
++	{"IBM", "3542",			"rdac", },
++	{"IBM", "3552",			"rdac", },
+ 	{"SGI", "TP9",			"rdac", },
+ 	{"SGI", "IS",			"rdac", },
+-	{"STK", "OPENstorage D280",	"rdac", },
++	{"STK", "OPENstorage",		"rdac", },
+ 	{"STK", "FLEXLINE 380",		"rdac", },
++	{"STK", "BladeCtlr",		"rdac", },
+ 	{"SUN", "CSM",			"rdac", },
+ 	{"SUN", "LCSM100",		"rdac", },
+ 	{"SUN", "STK6580_6780",		"rdac", },
+--=20
+2.14.1
