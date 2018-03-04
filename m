@@ -1,64 +1,45 @@
-From: Sasha Levin <Alexander.Levin@microsoft.com>
-Subject: [PATCH AUTOSEL for 4.15 076/102] scsi: dh: add new rdac devices
-Date: Sat, 3 Mar 2018 22:24:53 +0000
-Message-ID: <20180303222318.26006-76-alexander.levin@microsoft.com>
-References: <20180303222318.26006-1-alexander.levin@microsoft.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm-bufio: delete outdated comment
+Date: Sun, 4 Mar 2018 01:53:00 -0500 (EST)
+Message-ID: <alpine.LRH.2.02.1803040152260.29580@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180303222318.26006-1-alexander.levin@microsoft.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "stable@vger.kernel.org" <stable@vger.kernel.org>
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>, Hannes Reinecke <hare@suse.de>, Christophe Varoqui <christophe.varoqui@opensvc.com>, "Martin K . Petersen" <martin.petersen@oracle.com>, "James E . J . Bottomley" <jejb@linux.vnet.ibm.com>, SCSI ML <linux-scsi@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, Sasha Levin <Alexander.Levin@microsoft.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <msnitzer@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+This comment was true when dm-bufio was written, but since the kernel 4.3,
+bios can have arbitrary size and the driver splits them.
 
-[ Upstream commit 4b3aec2bbbce1c35f50e7475a9fd78d24b9ea4ea ]
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
-Add IBM 3542 and 3552, arrays: FAStT200 and FAStT500.
-
-Add full STK OPENstorage family, arrays: 9176, D173, D178, D210, D220,
-D240 and D280.
-
-Add STK BladeCtlr family, arrays: B210, B220, B240 and B280.
-
-These changes were done in multipath-tools time ago.
-
-Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>
-Cc: Hannes Reinecke <hare@suse.de>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: Martin K. Petersen <martin.petersen@oracle.com>
-Cc: James E.J. Bottomley <jejb@linux.vnet.ibm.com>
-Cc: SCSI ML <linux-scsi@vger.kernel.org>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
-Signed-off-by: Sasha Levin <alexander.levin@microsoft.com>
 ---
- drivers/scsi/scsi_dh.c | 5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+ drivers/md/dm-bufio.c |    4 ----
+ 1 file changed, 4 deletions(-)
 
-diff --git a/drivers/scsi/scsi_dh.c b/drivers/scsi/scsi_dh.c
-index 2b785d09d5bd..b88b5dbbc444 100644
---- a/drivers/scsi/scsi_dh.c
-+++ b/drivers/scsi/scsi_dh.c
-@@ -56,10 +56,13 @@ static const struct scsi_dh_blist scsi_dh_blist[] =3D {
- 	{"IBM", "1815",			"rdac", },
- 	{"IBM", "1818",			"rdac", },
- 	{"IBM", "3526",			"rdac", },
-+	{"IBM", "3542",			"rdac", },
-+	{"IBM", "3552",			"rdac", },
- 	{"SGI", "TP9",			"rdac", },
- 	{"SGI", "IS",			"rdac", },
--	{"STK", "OPENstorage D280",	"rdac", },
-+	{"STK", "OPENstorage",		"rdac", },
- 	{"STK", "FLEXLINE 380",		"rdac", },
-+	{"STK", "BladeCtlr",		"rdac", },
- 	{"SUN", "CSM",			"rdac", },
- 	{"SUN", "LCSM100",		"rdac", },
- 	{"SUN", "STK6580_6780",		"rdac", },
---=20
-2.14.1
+Index: linux-2.6/drivers/md/dm-bufio.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-bufio.c	2018-02-14 20:26:06.458255000 +0100
++++ linux-2.6/drivers/md/dm-bufio.c	2018-03-04 06:34:28.758289000 +0100
+@@ -544,10 +544,6 @@ static void __relink_lru(struct dm_buffe
+  *
+  *	the memory must be direct-mapped, not vmalloced;
+  *
+- *	the I/O driver can reject requests spuriously if it thinks that
+- *	the requests are too big for the device or if they cross a
+- *	controller-defined memory boundary.
+- *
+  * If the buffer is small enough (up to DM_BUFIO_INLINE_VECS pages) and
+  * it is not vmalloced, try using the bio interface.
+  *
