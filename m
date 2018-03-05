@@ -1,18 +1,21 @@
 From: Bart Van Assche <Bart.VanAssche@wdc.com>
-Subject: Re: [PATCH 3/6] libmultipath,
- alloc_path_with_pathinfo(): Declare third argument const
-Date: Mon, 5 Mar 2018 16:21:11 +0000
-Message-ID: <1520266870.2826.14.camel@wdc.com>
-References: <20180301192935.14643-1-bart.vanassche@wdc.com>
-	<20180301192935.14643-4-bart.vanassche@wdc.com>
-	<1520266739.7660.10.camel@suse.com>
+Subject: Re: [PATCH] multipathd: fix inverted signal blocking
+	logic
+Date: Mon, 5 Mar 2018 16:27:20 +0000
+Message-ID: <1520267239.2826.17.camel@wdc.com>
+References: <20180302200048.GJ14513@octiron.msp.redhat.com>
+	<20180302211807.11434-1-mwilck@suse.com>
+	<1520026513.2855.30.camel@wdc.com>
+	<1520028909.4169.87.camel@suse.com> <1520029421.2855.35.camel@wdc.com>
+	<1520032608.4169.91.camel@suse.com> <1520033250.2855.47.camel@wdc.com>
+	<1520037092.4169.103.camel@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1520266739.7660.10.camel@suse.com>
+In-Reply-To: <1520037092.4169.103.camel@suse.com>
 Content-Language: en-US
-Content-ID: <AE82C3DD6E613D43B9ABCF8D57673FAE@namprd04.prod.outlook.com>
+Content-ID: <51307C2D10530F409D734D38B151995A@namprd04.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,25 +25,22 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "mwilck@suse.com" <mwilck@suse.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
+To: "bmarzins@redhat.com" <bmarzins@redhat.com>, "mwilck@suse.com" <mwilck@suse.com>
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, 2018-03-05 at 17:18 +0100, Martin Wilck wrote:
-> On Thu, 2018-03-01 at 11:29 -0800, Bart Van Assche wrote:
-> > Since the third argument of this function is not modified inside that
-> > function, declare it const.
-> > 
-> > Signed-off-by: Bart Van Assche <bart.vanassche@wdc.com>
-> 
-> ACK, but this hunk is part of my previously posted patch "libmultipath:
-> const qualifier for wwid and alias", which includes some more changes
-> along similar lines and is part of a larger patch set that tries to
-> improve "const" usage in libmultipath.
+On Sat, 2018-03-03 at 01:31 +0100, Martin Wilck wrote:
+> So, there's no reason not to block them, right? Is it expected behavior
+> that a user running 'kill -USR2 $(pidof multipathd)' terminates the
+> process? Why do you think these signals should interrupt ppoll()
+> although the uxlsnr can't can't handle them? Isn't it sufficient that
+> they're handled by the threads that are meant to do that?
 
-Hello Martin,
-
-If this patch duplicates some of your work then I'm fine with dropping this
-patch.
+Blocking all signals except the ones for which we installed a handler sounds
+weird to me. I think users expect daemons to process signals instead of
+blocking all but a specific set of signals. This is a rather philosophical
+argument and not an argument of which I think that it is strong enough to
+prevent this patch of being integrated in the upstream multipath-tools
+repository.
 
 Bart.
