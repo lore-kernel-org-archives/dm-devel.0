@@ -1,11 +1,14 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-bufio: delete outdated comment
-Date: Sun, 4 Mar 2018 01:53:00 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1803040152260.29580@file01.intranet.prod.int.rdu2.redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 1/6] multipathd/main.c: Fix indentation
+Date: Mon, 05 Mar 2018 17:09:56 +0100
+Message-ID: <1520266196.7660.5.camel@suse.com>
+References: <20180301192935.14643-1-bart.vanassche@wdc.com>
+	<20180301192935.14643-2-bart.vanassche@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20180301192935.14643-2-bart.vanassche@wdc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,31 +18,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <msnitzer@redhat.com>
+To: Bart Van Assche <bart.vanassche@wdc.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This comment was true when dm-bufio was written, but since the kernel 4.3,
-bios can have arbitrary size and the driver splits them.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
----
- drivers/md/dm-bufio.c |    4 ----
- 1 file changed, 4 deletions(-)
-
-Index: linux-2.6/drivers/md/dm-bufio.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-bufio.c	2018-02-14 20:26:06.458255000 +0100
-+++ linux-2.6/drivers/md/dm-bufio.c	2018-03-04 06:34:28.758289000 +0100
-@@ -544,10 +544,6 @@ static void __relink_lru(struct dm_buffe
-  *
-  *	the memory must be direct-mapped, not vmalloced;
-  *
-- *	the I/O driver can reject requests spuriously if it thinks that
-- *	the requests are too big for the device or if they cross a
-- *	controller-defined memory boundary.
-- *
-  * If the buffer is small enough (up to DM_BUFIO_INLINE_VECS pages) and
-  * it is not vmalloced, try using the bio interface.
-  *
+T24gVGh1LCAyMDE4LTAzLTAxIGF0IDExOjI5IC0wODAwLCBCYXJ0IFZhbiBBc3NjaGUgd3JvdGU6
+Cj4gVGhpcyBwYXRjaCBhdm9pZHMgdGhhdCBnY2MgcmVwb3J0cyB0aGUgZm9sbG93aW5nOgo+IAo+
+IG1haW4uYzogSW4gZnVuY3Rpb24gJ3Vldl9wYXRoZmFpbF9jaGVjayc6Cj4gbWFpbi5jOjEwMjI6
+NTogd2FybmluZzogdGhpcyAnaWYnIGNsYXVzZSBkb2VzIG5vdCBndWFyZC4uLiBbLQo+IFdtaXNs
+ZWFkaW5nLWluZGVudGF0aW9uXQo+ICAgICAgaWYgKCFwcCkKPiAgICAgIF5+Cj4gbWFpbi5jOjEw
+MjQ6Mjogbm90ZTogLi4udGhpcyBzdGF0ZW1lbnQsIGJ1dCB0aGUgbGF0dGVyIGlzCj4gbWlzbGVh
+ZGluZ2x5IGluZGVudGVkIGFzIGlmIGl0IHdlcmUgZ3VhcmRlZCBieSB0aGUgJ2lmJwo+ICAgciA9
+IGlvX2Vycl9zdGF0X2hhbmRsZV9wYXRoZmFpbChwcCk7Cj4gICBeCj4gCj4gU2lnbmVkLW9mZi1i
+eTogQmFydCBWYW4gQXNzY2hlIDxiYXJ0LnZhbmFzc2NoZUB3ZGMuY29tPgoKUmV2aWV3ZWQtYnk6
+IE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPgoKPiAtLS0KPiAgbXVsdGlwYXRoZC9tYWlu
+LmMgfCA0ICsrLS0KPiAgMSBmaWxlIGNoYW5nZWQsIDIgaW5zZXJ0aW9ucygrKSwgMiBkZWxldGlv
+bnMoLSkKPiAKPiBkaWZmIC0tZ2l0IGEvbXVsdGlwYXRoZC9tYWluLmMgYi9tdWx0aXBhdGhkL21h
+aW4uYwo+IGluZGV4IDI3Y2YyMzQ2MjNkMC4uY2NiYjBhZDEzZDMyIDEwMDY0NAo+IC0tLSBhL211
+bHRpcGF0aGQvbWFpbi5jCj4gKysrIGIvbXVsdGlwYXRoZC9tYWluLmMKPiBAQCAtMTAyMCw4ICsx
+MDIwLDggQEAgdWV2X3BhdGhmYWlsX2NoZWNrKHN0cnVjdCB1ZXZlbnQgKnVldiwgc3RydWN0Cj4g
+dmVjdG9ycyAqdmVjcykKPiAgCWxvY2soJnZlY3MtPmxvY2spOwo+ICAJcHRocmVhZF90ZXN0Y2Fu
+Y2VsKCk7Cj4gIAlwcCA9IGZpbmRfcGF0aF9ieV9kZXZ0KHZlY3MtPnBhdGh2ZWMsIGRldnQpOwo+
+IC0gICAgaWYgKCFwcCkKPiAtICAgICAgICBnb3RvIG91dF9sb2NrOwo+ICsJaWYgKCFwcCkKPiAr
+CQlnb3RvIG91dF9sb2NrOwo+ICAJciA9IGlvX2Vycl9zdGF0X2hhbmRsZV9wYXRoZmFpbChwcCk7
+Cj4gIAlpZiAocikKPiAgCQljb25kbG9nKDMsICJpb19lcnJfc3RhdDogJXM6IGNhbm5vdCBoYW5k
+bGUgcGF0aGZhaWwKPiB1ZXZlbnQiLAoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNl
+LmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZl
+bGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQg
+KEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQu
+Y29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
