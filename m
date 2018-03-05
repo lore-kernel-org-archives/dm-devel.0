@@ -1,15 +1,18 @@
-From: Martin Wilck <mwilck@suse.com>
+From: Bart Van Assche <Bart.VanAssche@wdc.com>
 Subject: Re: [PATCH 5/6] libmultipath: Fix sgio_get_vpd()
-Date: Mon, 05 Mar 2018 20:14:43 +0100
-Message-ID: <1520277283.7660.46.camel@suse.com>
+Date: Mon, 5 Mar 2018 19:18:43 +0000
+Message-ID: <1520277522.2826.34.camel@wdc.com>
 References: <20180301192935.14643-1-bart.vanassche@wdc.com>
 	<20180301192935.14643-6-bart.vanassche@wdc.com>
 	<1520268808.7660.23.camel@suse.com> <1520269758.7660.29.camel@suse.com>
+	<1520277283.7660.46.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1520269758.7660.29.camel@suse.com>
+In-Reply-To: <1520277283.7660.46.camel@suse.com>
+Content-Language: en-US
+Content-ID: <CBB97017B4B2CC4485E2CF43E373455E@namprd04.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,41 +22,18 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <bart.vanassche@wdc.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: dm-devel@redhat.com
+To: "mwilck@suse.com" <mwilck@suse.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gTW9uLCAyMDE4LTAzLTA1IGF0IDE4OjA5ICswMTAwLCBNYXJ0aW4gV2lsY2sgd3JvdGU6Cj4g
-T24gTW9uLCAyMDE4LTAzLTA1IGF0IDE3OjUzICswMTAwLCBNYXJ0aW4gV2lsY2sgd3JvdGU6Cj4g
-PiBPbiBUaHUsIDIwMTgtMDMtMDEgYXQgMTE6MjkgLTA4MDAsIEJhcnQgVmFuIEFzc2NoZSB3cm90
-ZToKPiA+ID4gUGFzcyB0aGUgVlBEIHBhZ2UgbnVtYmVyIHRvIHNnaW9fZ2V0X3ZwZCgpIHN1Y2gg
-dGhhdCB0aGUgcGFnZQo+ID4gPiBuZWVkZWQKPiA+ID4gYnkgdGhlIGNhbGxlciBpcyBxdWVyaWVk
-IGluc3RlYWQgb2YgcGFnZSAweDgzLiBGaXggdGhlIHN0YXRlbWVudAo+ID4gPiB0aGF0Cj4gPiA+
-IGNvbXB1dGVzIHRoZSBsZW5ndGggb2YgdGhlIHBhZ2UgcmV0dXJuZWQgYnkgZG9faW5xKCkuIEZp
-eCB0aGUKPiA+ID4gcmV0dXJuCj4gPiA+IGNvZGUgY2hlY2sgaW4gdGhlIGNhbGxlciBvZiBzZ2lv
-X2dldF92cGQoKS4KPiA+ID4gCj4gPiA+IFNpZ25lZC1vZmYtYnk6IEJhcnQgVmFuIEFzc2NoZSA8
-YmFydC52YW5hc3NjaGVAd2RjLmNvbT4KPiA+ID4gLS0tCj4gPiAKPiA+IEJhcnQsIHRoYW5rcyBm
-b3IgdGhlIHBhdGNoLiBQbGVhc2UgY29uc2lkZXIgcmViYXNpbmcgeW91ciB3b3JrIG9uCj4gPiBt
-eQo+ID4gcHJldmlvdXNseSBzdWJtaXR0ZWQgcGF0Y2hlcyB3aGljaCBoYXZlIGFscmVhZHkgYmVl
-biBwb3NpdGl2ZWx5Cj4gPiByZXZpZXdlZCAoWzFdLCBbMl0pOgo+ID4gCj4gPiAgbGlibXVsdGlw
-YXRoOiBnZXRfdnBkX3NnaW86IHN1cHBvcnQgVlBEIDB4YzkKPiA+ICBsaWJtdWx0aXBhdGg6IHNn
-aW9fZ2V0X3ZwZDogYWRkIHBhZ2UgYXJndW1lbnQKPiA+ICBsaWJtdWx0aXBhdGg6IGZpeCByZXR1
-cm4gY29kZSBvZiBzZ2lvX2dldF92cGQoKQo+ID4gCj4gPiBPdGhlcndpc2UsIEFDSy4KPiAKPiBT
-b3JyeSwgSSBmb3VuZCBhIGdsaXRjaC4KPiAKPiBXaXRoIHRoZSBjaGFuZ2Ugb2YgdGhlICJsZW4i
-IGNhbGN1bGF0aW9uIGFuZCB0aGUgcmV0dXJuIHZhbHVlIGNoZWNrLAo+IHdlCj4gICBuZWVkIHRv
-IG1ha2Ugc3VyZSBzdWZmaWNpZW50IGRhdGEgaGFzIGJlZW4gcmVhZDoKClJlcGx5aW5nIHRvIHNl
-bGYgLSB0aGlzIGlzIGFjdHVhbGx5IG5vdCBuZWNlc3NhcnksIGFzIHdlJ3JlIGxvb2tpbmcgYXQK
-dGhlIHJlc3BvbnNlIGJ1ZmZlciBvZiBhIHN1Y2Nlc3NmdWwgVlBEIElOUVVJUlksIHNvIHdlIGhh
-dmUgdG8gYXNzdW1lCnRoYXQgYXQgbGVhc3QgdGhlIGhlYWRlciBoYXMgYmVlbiByZWFkIGNvcnJl
-Y3RseS4KCkFsbCB3ZSBuZWVkIHRvIGNoYW5nZSBpcyB0aGUgcmV0dXJuIGNvZGUgYW5kIHRoZSBy
-ZXNwZWN0aXZlIGNvbW1lbnQsCmJlY2F1c2UgdGhlIGZ1bmN0aW9uIGFjdHVhbGx5IHJldHVybnMg
-dGhlIG51bWJlciBvZiBJTlFVSVJZIGJ5dGVzIGlmCklOUVVJUlkgd2FzIHN1Y2Nlc3NmdWwgKGJl
-Zm9yZSBteSBwYXRjaCAibGlibXVsdGlwYXRoOiBmaXggcmV0dXJuIGNvZGUKb2Ygc2dpb19nZXRf
-dnBkKCkiLCB0aGUgZnVuY3Rpb24gYmVoYXZlZCByYXRoZXIgc3RyYW5nZSwgcmV0dXJuaW5nIC0x
-Cm9uIGZhaWx1cmUsIDAgb24gc3VjY2VzcywgYW5kIGxlbiA+IGJ1ZmZlciBsZW5ndGggb24gYnVm
-ZmVyIG92ZXJmbG93KS4KClVubGVzcyB5b3Ugb2JqZWN0LCBJJ2xsIHJlcG9zdCB5b3VyIHNlcmll
-cyByZWJhc2VkIG9uIG1pbmUuCgpNYXJ0aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tA
-c3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdG
-OiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIx
-Mjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVk
-aGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On Mon, 2018-03-05 at 20:14 +0100, Martin Wilck wrote:
+> Unless you object, I'll repost your series rebased on mine.
+
+Hello Martin,
+
+Before you start working on that: has your patch series already been posted
+on the dm-devel mailing list?
+
+Thanks,
+
+Bart.
