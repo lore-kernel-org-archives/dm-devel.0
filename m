@@ -1,7 +1,7 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 11/23] libmultipath: add vector_convert()
-Date: Tue,  6 Mar 2018 00:14:55 +0100
-Message-ID: <20180305231507.10386-12-mwilck@suse.com>
+Subject: [PATCH v2 19/23] multipath: use foreign API
+Date: Tue,  6 Mar 2018 00:15:03 +0100
+Message-ID: <20180305231507.10386-20-mwilck@suse.com>
 References: <20180305231507.10386-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,57 +21,65 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-This is a handy helper for creating one vector from another,
-mapping each element of the origin vector to an element of
-the target vector with a given conversion function. It can
-also be used to "concatenate" vectors by passing in a non-NULL first
-argument.
+Use the "foreign" code to print information about multipath maps
+owned by foreign libraries in print mode (multipath -ll, -l).
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/vector.h | 29 +++++++++++++++++++++++++++++
- 1 file changed, 29 insertions(+)
+ multipath/main.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
 
-diff --git a/libmultipath/vector.h b/libmultipath/vector.h
-index 3f6e579ae19a..6018b57525bf 100644
---- a/libmultipath/vector.h
-+++ b/libmultipath/vector.h
-@@ -42,6 +42,35 @@ typedef struct _vector *vector;
- #define vector_foreach_slot_backwards(v,p,i) \
- 	for (i = VECTOR_SIZE(v); i > 0 && ((p) = (v)->slot[i-1]); i--)
+diff --git a/multipath/main.c b/multipath/main.c
+index a0c750e6f623..4fae49ee4325 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -59,6 +59,7 @@
+ #include "wwids.h"
+ #include "uxsock.h"
+ #include "mpath_cmd.h"
++#include "foreign.h"
  
-+#define identity(x) (x)
-+/*
-+ * Given a vector vec with elements of given type,
-+ * return a newly allocated vector with elements conv(e) for each element
-+ * e in vec. "conv" may be a macro or a function.
-+ * Use "identity" for a simple copy.
-+ */
-+#define vector_convert(new, vec, type, conv)				\
-+	({								\
-+		const struct _vector *__v = (vec);			\
-+		vector __t = (new);					\
-+		type *__j;						\
-+		int __i;						\
-+									\
-+		if (__t == NULL)					\
-+			__t = vector_alloc();				\
-+		if (__t != NULL) {					\
-+			vector_foreach_slot(__v, __j, __i) {		\
-+				if (vector_alloc_slot(__t) == NULL) {	\
-+					vector_free(__t);		\
-+					__t = NULL;			\
-+					break;				\
-+				}					\
-+				vector_set_slot(__t, conv(__j));	\
-+			}						\
-+		}							\
-+		__t;							\
-+	})
+ int logsink;
+ struct udev *udev;
+@@ -257,6 +258,14 @@ get_dm_mpvec (enum mpath_cmds cmd, vector curmp, vector pathvec, char * refwwid)
+ 		if (cmd == CMD_CREATE)
+ 			reinstate_paths(mpp);
+ 	}
 +
- /* Prototypes */
- extern vector vector_alloc(void);
- extern void *vector_alloc_slot(vector v);
++	if (cmd == CMD_LIST_SHORT || cmd == CMD_LIST_LONG) {
++		struct config *conf = get_multipath_config();
++
++		print_foreign_topology(conf->verbosity);
++		put_multipath_config(conf);
++	}
++
+ 	return 0;
+ }
+ 
+@@ -460,6 +469,7 @@ configure (struct config *conf, enum mpath_cmds cmd,
+ 		print_all_paths(pathvec, 1);
+ 
+ 	get_path_layout(pathvec, 0);
++	foreign_path_layout();
+ 
+ 	if (get_dm_mpvec(cmd, curmp, pathvec, refwwid))
+ 		goto out;
+@@ -817,6 +827,8 @@ main (int argc, char *argv[])
+ 		condlog(0, "failed to initialize prioritizers");
+ 		goto out;
+ 	}
++	/* Failing here is non-fatal */
++	init_foreign(conf->multipath_dir);
+ 	if (cmd == CMD_USABLE_PATHS) {
+ 		r = check_usable_paths(conf, dev, dev_type);
+ 		goto out;
+@@ -892,6 +904,7 @@ out:
+ 	dm_lib_release();
+ 	dm_lib_exit();
+ 
++	cleanup_foreign();
+ 	cleanup_prio();
+ 	cleanup_checkers();
+ 
 -- 
 2.16.1
