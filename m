@@ -1,21 +1,14 @@
-From: Bart Van Assche <Bart.VanAssche@wdc.com>
-Subject: Re: [PATCH] multipathd: fix inverted signal blocking
-	logic
-Date: Mon, 5 Mar 2018 16:27:20 +0000
-Message-ID: <1520267239.2826.17.camel@wdc.com>
-References: <20180302200048.GJ14513@octiron.msp.redhat.com>
-	<20180302211807.11434-1-mwilck@suse.com>
-	<1520026513.2855.30.camel@wdc.com>
-	<1520028909.4169.87.camel@suse.com> <1520029421.2855.35.camel@wdc.com>
-	<1520032608.4169.91.camel@suse.com> <1520033250.2855.47.camel@wdc.com>
-	<1520037092.4169.103.camel@suse.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 5/6] libmultipath: Fix sgio_get_vpd()
+Date: Mon, 05 Mar 2018 17:53:28 +0100
+Message-ID: <1520268808.7660.23.camel@suse.com>
+References: <20180301192935.14643-1-bart.vanassche@wdc.com>
+	<20180301192935.14643-6-bart.vanassche@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1520037092.4169.103.camel@suse.com>
-Content-Language: en-US
-Content-ID: <51307C2D10530F409D734D38B151995A@namprd04.prod.outlook.com>
+In-Reply-To: <20180301192935.14643-6-bart.vanassche@wdc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,22 +18,50 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "bmarzins@redhat.com" <bmarzins@redhat.com>, "mwilck@suse.com" <mwilck@suse.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Bart Van Assche <bart.vanassche@wdc.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Sat, 2018-03-03 at 01:31 +0100, Martin Wilck wrote:
-> So, there's no reason not to block them, right? Is it expected behavior
-> that a user running 'kill -USR2 $(pidof multipathd)' terminates the
-> process? Why do you think these signals should interrupt ppoll()
-> although the uxlsnr can't can't handle them? Isn't it sufficient that
-> they're handled by the threads that are meant to do that?
-
-Blocking all signals except the ones for which we installed a handler sounds
-weird to me. I think users expect daemons to process signals instead of
-blocking all but a specific set of signals. This is a rather philosophical
-argument and not an argument of which I think that it is strong enough to
-prevent this patch of being integrated in the upstream multipath-tools
-repository.
-
-Bart.
+T24gVGh1LCAyMDE4LTAzLTAxIGF0IDExOjI5IC0wODAwLCBCYXJ0IFZhbiBBc3NjaGUgd3JvdGU6
+Cj4gUGFzcyB0aGUgVlBEIHBhZ2UgbnVtYmVyIHRvIHNnaW9fZ2V0X3ZwZCgpIHN1Y2ggdGhhdCB0
+aGUgcGFnZSBuZWVkZWQKPiBieSB0aGUgY2FsbGVyIGlzIHF1ZXJpZWQgaW5zdGVhZCBvZiBwYWdl
+IDB4ODMuIEZpeCB0aGUgc3RhdGVtZW50IHRoYXQKPiBjb21wdXRlcyB0aGUgbGVuZ3RoIG9mIHRo
+ZSBwYWdlIHJldHVybmVkIGJ5IGRvX2lucSgpLiBGaXggdGhlIHJldHVybgo+IGNvZGUgY2hlY2sg
+aW4gdGhlIGNhbGxlciBvZiBzZ2lvX2dldF92cGQoKS4KPiAKPiBTaWduZWQtb2ZmLWJ5OiBCYXJ0
+IFZhbiBBc3NjaGUgPGJhcnQudmFuYXNzY2hlQHdkYy5jb20+Cj4gLS0tCgpCYXJ0LCB0aGFua3Mg
+Zm9yIHRoZSBwYXRjaC4gUGxlYXNlIGNvbnNpZGVyIHJlYmFzaW5nIHlvdXIgd29yayBvbiBteQpw
+cmV2aW91c2x5IHN1Ym1pdHRlZCBwYXRjaGVzIHdoaWNoIGhhdmUgYWxyZWFkeSBiZWVuIHBvc2l0
+aXZlbHkKcmV2aWV3ZWQgKFsxXSwgWzJdKToKCiBsaWJtdWx0aXBhdGg6IGdldF92cGRfc2dpbzog
+c3VwcG9ydCBWUEQgMHhjOQogbGlibXVsdGlwYXRoOiBzZ2lvX2dldF92cGQ6IGFkZCBwYWdlIGFy
+Z3VtZW50CiBsaWJtdWx0aXBhdGg6IGZpeCByZXR1cm4gY29kZSBvZiBzZ2lvX2dldF92cGQoKQoK
+T3RoZXJ3aXNlLCBBQ0suCgpbMV0gaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9hcmNoaXZlcy9kbS1k
+ZXZlbC8yMDE4LUphbnVhcnkvbXNnMDAyNDEuaHRtbApbMl0gaHR0cHM6Ly93d3cucmVkaGF0LmNv
+bS9hcmNoaXZlcy9kbS1kZXZlbC8yMDE4LUphbnVhcnkvbXNnMDAzNzAuaHRtbAoKTWFydGluCgo+
+ICBsaWJtdWx0aXBhdGgvZGlzY292ZXJ5LmMgfCA5ICsrKysrLS0tLQo+ICAxIGZpbGUgY2hhbmdl
+ZCwgNSBpbnNlcnRpb25zKCspLCA0IGRlbGV0aW9ucygtKQo+IAo+IGRpZmYgLS1naXQgYS9saWJt
+dWx0aXBhdGgvZGlzY292ZXJ5LmMgYi9saWJtdWx0aXBhdGgvZGlzY292ZXJ5LmMKPiBpbmRleCBk
+ODQ3MTVlMTVkYjEuLjc4MGZlYjI1Mzc5NyAxMDA2NDQKPiAtLS0gYS9saWJtdWx0aXBhdGgvZGlz
+Y292ZXJ5LmMKPiArKysgYi9saWJtdWx0aXBhdGgvZGlzY292ZXJ5LmMKPiBAQCAtODM2LDggKzgz
+Niw5IEBAIGRldGVjdF9hbHVhKHN0cnVjdCBwYXRoICogcHAsIHN0cnVjdCBjb25maWcKPiAqY29u
+ZikKPiAgCj4gICNkZWZpbmUgREVGQVVMVF9TR0lPX0xFTiAyNTQKPiAgCj4gKy8qIFF1ZXJ5IFZQ
+RCBwYWdlIEBwZy4gUmV0dXJucyAwIHVwb24gc3VjY2VzcyBhbmQgLTEgdXBvbiBmYWlsdXJlLgo+
+ICovCj4gIHN0YXRpYyBpbnQKPiAtc2dpb19nZXRfdnBkICh1bnNpZ25lZCBjaGFyICogYnVmZiwg
+aW50IG1heGxlbiwgaW50IGZkKQo+ICtzZ2lvX2dldF92cGQgKHVuc2lnbmVkIGNoYXIgKiBidWZm
+LCBpbnQgbWF4bGVuLCBpbnQgZmQsIGludCBwZykKPiAgewo+ICAJaW50IGxlbiA9IERFRkFVTFRf
+U0dJT19MRU47Cj4gIAo+IEBAIC04NDYsOCArODQ3LDggQEAgc2dpb19nZXRfdnBkICh1bnNpZ25l
+ZCBjaGFyICogYnVmZiwgaW50IG1heGxlbiwKPiBpbnQgZmQpCj4gIAkJcmV0dXJuIC0xOwo+ICAJ
+fQo+ICByZXRyeToKPiAtCWlmICgwID09IGRvX2lucShmZCwgMCwgMSwgMHg4MywgYnVmZiwgbGVu
+KSkgewo+IC0JCWxlbiA9IGJ1ZmZbM10gKyAoYnVmZlsyXSA8PCA4KTsKPiArCWlmICgwID09IGRv
+X2lucShmZCwgMCwgMSwgcGcsIGJ1ZmYsIGxlbikpIHsKPiArCQlsZW4gPSBidWZmWzNdICsgKGJ1
+ZmZbMl0gPDwgOCkgKyA0Owo+ICAJCWlmIChsZW4gPj0gbWF4bGVuKQo+ICAJCQlyZXR1cm4gbGVu
+Owo+ICAJCWlmIChsZW4gPiBERUZBVUxUX1NHSU9fTEVOKQo+IEBAIC0xMDk5LDcgKzExMDAsNyBA
+QCBnZXRfdnBkX3NnaW8gKGludCBmZCwgaW50IHBnLCBjaGFyICogc3RyLCBpbnQKPiBtYXhsZW4p
+Cj4gIAl1bnNpZ25lZCBjaGFyIGJ1ZmZbNDA5Nl07Cj4gIAo+ICAJbWVtc2V0KGJ1ZmYsIDB4MCwg
+NDA5Nik7Cj4gLQlpZiAoc2dpb19nZXRfdnBkKGJ1ZmYsIDQwOTYsIGZkKSA8PSAwKSB7Cj4gKwlp
+ZiAoc2dpb19nZXRfdnBkKGJ1ZmYsIDQwOTYsIGZkLCBwZykgPCAwKSB7Cj4gIAkJY29uZGxvZygz
+LCAiZmFpbGVkIHRvIGlzc3VlIHZwZCBpbnF1aXJ5IGZvciBwZyUwMngiLAo+ICAJCQlwZyk7Cj4g
+IAkJcmV0dXJuIC1lcnJubzsKCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29t
+PiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXgg
+SW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcg
+TsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20K
+aHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
