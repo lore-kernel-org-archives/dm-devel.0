@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 04/23] libmultipath: parser: use call-by-value
-	for "snprint" methods
-Date: Tue,  6 Mar 2018 00:14:48 +0100
-Message-ID: <20180305231507.10386-5-mwilck@suse.com>
+Subject: [PATCH v2 21/23] libmultipath: foreign/nvme: implement
+	path display
+Date: Tue,  6 Mar 2018 00:15:05 +0100
+Message-ID: <20180305231507.10386-22-mwilck@suse.com>
 References: <20180305231507.10386-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,562 +22,509 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Convert the snprint methods for all keywords to call-by-value,
-and use "const" qualifier for the "data" argument. This makes sure
-that "snprint" type functions don't modify the data they're print,
-helps compile-time correctness checking, and allows more proper
-"const" cleanups in the future.
+implement display of path information for NVMe foreign paths and maps.
+With this patch, I get output like this for Linux NVMe soft targets:
+
+nvme-submultipathd show topology
+sys0:NQN:subsysname (uuid.96926ba3-b207-437c-902c-4a4df6538c3f) [nvme] nvme0n1 NVMe,Linux,4.15.0-r
+size=2097152 features='n/a' hwhandler='n/a' wp=rw
+`-+- policy='n/a' prio=n/a status=n/a
+  |- 0:1:1 nvme0c1n1 0:0 n/a n/a live
+  |- 0:2:1 nvme0c2n1 0:0 n/a n/a live
+  |- 0:3:1 nvme0c3n1 0:0 n/a n/a live
+  `- 0:4:1 nvme0c4n1 0:0 n/a n/a live
+
+multipathd show paths format '%G %d %i %o %z %m %N'
+foreign dev       hcil  dev_st serial           multipath host WWNN
+[nvme]  nvme0c1n1 0:1:1 live   1c2c86659503a02f nvme0n1   rdma:traddr=192.168.201.101,trsvcid=4420
+[nvme]  nvme0c2n1 0:2:1 live   1c2c86659503a02f nvme0n1   rdma:traddr=192.168.202.101,trsvcid=4420
+[nvme]  nvme0c3n1 0:3:1 live   1c2c86659503a02f nvme0n1   rdma:traddr=192.168.203.101,trsvcid=4420
+[nvme]  nvme0c4n1 0:4:1 live   1c2c86659503a02f nvme0n1   rdma:traddr=192.168.204.101,trsvcid=4420
+
+(admittedly, I abused the 'WWNN' wildcard here a bit to display information
+which is helpful for NVMe over RDMA).
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/dict.c   | 206 ++++++++++++++++++++++++--------------------------
- libmultipath/parser.c |   9 ++-
- libmultipath/parser.h |  12 ++-
- 3 files changed, 112 insertions(+), 115 deletions(-)
+ libmultipath/foreign/nvme.c | 334 ++++++++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 320 insertions(+), 14 deletions(-)
 
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index e52f1f798f7a..47dc2a38f1ac 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -92,46 +92,35 @@ set_yes_no_undef(vector strvec, void *ptr)
- }
+diff --git a/libmultipath/foreign/nvme.c b/libmultipath/foreign/nvme.c
+index 32bd5c96c44a..235f75dd2add 100644
+--- a/libmultipath/foreign/nvme.c
++++ b/libmultipath/foreign/nvme.c
+@@ -25,42 +25,98 @@
+ #include <stdbool.h>
+ #include <libudev.h>
+ #include <pthread.h>
++#include <limits.h>
++#include <dirent.h>
++#include <errno.h>
+ #include "vector.h"
+ #include "generic.h"
+ #include "foreign.h"
+ #include "debug.h"
++#include "structs.h"
++#include "sysfs.h"
  
- static int
--print_int (char *buff, int len, void *ptr)
-+print_int (char *buff, int len, long v)
- {
--	int *int_ptr = (int *)ptr;
--	return snprintf(buff, len, "%i", *int_ptr);
-+	return snprintf(buff, len, "%li", v);
- }
++static const char nvme_vendor[] = "NVMe";
++static const char N_A[] = "n/a";
+ const char *THIS;
  
- static int
--print_nonzero (char *buff, int len, void *ptr)
-+print_nonzero (char *buff, int len, long v)
- {
--	int *int_ptr = (int *)ptr;
--	if (!*int_ptr)
--		return 0;
--	return snprintf(buff, len, "%i", *int_ptr);
-+	return snprintf(buff, len, "%li", v);
- }
- 
- static int
--print_str (char *buff, int len, void *ptr)
-+print_str (char *buff, int len, const char *ptr)
- {
--	char **str_ptr = (char **)ptr;
--	if (!*str_ptr)
--		return 0;
--	return snprintf(buff, len, "\"%s\"", *str_ptr);
-+	return snprintf(buff, len, "\"%s\"", ptr);
- }
- 
- static int
--print_yes_no (char *buff, int len, void *ptr)
-+print_yes_no (char *buff, int len, long v)
- {
--	int *int_ptr = (int *)ptr;
- 	return snprintf(buff, len, "\"%s\"",
--			(*int_ptr == YN_NO)? "no" : "yes");
-+			(v == YN_NO)? "no" : "yes");
- }
- 
- static int
--print_yes_no_undef (char *buff, int len, void *ptr)
-+print_yes_no_undef (char *buff, int len, long v)
- {
--	int *int_ptr = (int *)ptr;
--	if (!*int_ptr)
--		return 0;
- 	return snprintf(buff, len, "\"%s\"",
--			(*int_ptr == YNU_NO)? "no" : "yes");
-+			(v == YNU_NO)? "no" : "yes");
- }
- 
- #define declare_def_handler(option, function)				\
-@@ -143,29 +132,32 @@ def_ ## option ## _handler (struct config *conf, vector strvec)		\
- 
- #define declare_def_snprint(option, function)				\
- static int								\
--snprint_def_ ## option (struct config *conf, char * buff, int len, void * data) \
-+snprint_def_ ## option (struct config *conf, char * buff, int len,	\
-+			const void * data)				\
- {									\
--	return function (buff, len, &conf->option);			\
-+	return function (buff, len, conf->option);			\
- }
- 
- #define declare_def_snprint_defint(option, function, value)		\
- static int								\
--snprint_def_ ## option (struct config *conf, char * buff, int len, void * data) \
-+snprint_def_ ## option (struct config *conf, char * buff, int len,	\
-+			const void * data)				\
- {									\
- 	int i = value;							\
- 	if (!conf->option)						\
--		return function (buff, len, &i);			\
--	return function (buff, len, &conf->option);			\
-+		return function (buff, len, i);				\
-+	return function (buff, len, conf->option);			\
- }
- 
- #define declare_def_snprint_defstr(option, function, value)		\
- static int								\
--snprint_def_ ## option (struct config *conf, char * buff, int len, void * data) \
-+snprint_def_ ## option (struct config *conf, char * buff, int len,	\
-+			const void * data)				\
- {									\
--	char *s = value;						\
-+	static const char *s = value;					\
- 	if (!conf->option)						\
--		return function (buff, len, &s);			\
--	return function (buff, len, &conf->option);			\
-+		return function (buff, len, s);				\
-+	return function (buff, len, conf->option);			\
- }
- 
- #define declare_hw_handler(option, function)				\
-@@ -180,10 +172,11 @@ hw_ ## option ## _handler (struct config *conf, vector strvec)		\
- 
- #define declare_hw_snprint(option, function)				\
- static int								\
--snprint_hw_ ## option (struct config *conf, char * buff, int len, void * data) \
-+snprint_hw_ ## option (struct config *conf, char * buff, int len,	\
-+		       const void * data)				\
- {									\
--	struct hwentry * hwe = (struct hwentry *)data;			\
--	return function (buff, len, &hwe->option);			\
-+	const struct hwentry * hwe = (const struct hwentry *)data;	\
-+	return function (buff, len, hwe->option);			\
- }
- 
- #define declare_ovr_handler(option, function)				\
-@@ -197,9 +190,10 @@ ovr_ ## option ## _handler (struct config *conf, vector strvec)		\
- 
- #define declare_ovr_snprint(option, function)				\
- static int								\
--snprint_ovr_ ## option (struct config *conf, char * buff, int len, void * data) \
-+snprint_ovr_ ## option (struct config *conf, char * buff, int len,	\
-+			const void * data)				\
- {									\
--	return function (buff, len, &conf->overrides->option);		\
-+	return function (buff, len, conf->overrides->option);		\
- }
- 
- #define declare_mp_handler(option, function)				\
-@@ -214,10 +208,11 @@ mp_ ## option ## _handler (struct config *conf, vector strvec)		\
- 
- #define declare_mp_snprint(option, function)				\
- static int								\
--snprint_mp_ ## option (struct config *conf, char * buff, int len, void * data) \
-+snprint_mp_ ## option (struct config *conf, char * buff, int len,	\
-+		       const void * data)				\
- {									\
--	struct mpentry * mpe = (struct mpentry *)data;			\
--	return function (buff, len, &mpe->option);			\
-+	const struct mpentry * mpe = (const struct mpentry *)data;	\
-+	return function (buff, len, mpe->option);			\
- }
- 
- declare_def_handler(checkint, set_int)
-@@ -328,7 +323,7 @@ declare_mp_snprint(minio_rq, print_nonzero)
- declare_def_handler(queue_without_daemon, set_yes_no)
- static int
- snprint_def_queue_without_daemon (struct config *conf,
--				  char * buff, int len, void * data)
-+				  char * buff, int len, const void * data)
- {
- 	switch (conf->queue_without_daemon) {
- 	case QUE_NO_DAEMON_OFF:
-@@ -459,10 +454,11 @@ def_ ## option ## _handler (struct config *conf, vector strvec)		\
- 
- #define declare_def_attr_snprint(option, function)			\
- static int								\
--snprint_def_ ## option (struct config *conf, char * buff, int len, void * data) \
-+snprint_def_ ## option (struct config *conf, char * buff, int len,	\
-+			const void * data)				\
- {									\
--	return function (buff, len, &conf->option,			\
--			 &conf->attribute_flags);			\
-+	return function (buff, len, conf->option,			\
-+			 conf->attribute_flags);			\
- }
- 
- #define declare_mp_attr_handler(option, function)			\
-@@ -477,11 +473,12 @@ mp_ ## option ## _handler (struct config *conf, vector strvec)		\
- 
- #define declare_mp_attr_snprint(option, function)			\
- static int								\
--snprint_mp_ ## option (struct config *conf, char * buff, int len, void * data) \
-+snprint_mp_ ## option (struct config *conf, char * buff, int len,	\
-+		       const void * data)				\
- {									\
--	struct mpentry * mpe = (struct mpentry *)data;			\
--	return function (buff, len, &mpe->option,			\
--			 &mpe->attribute_flags);			\
-+	const struct mpentry * mpe = (const struct mpentry *)data;	\
-+	return function (buff, len, mpe->option,			\
-+			 mpe->attribute_flags);				\
- }
- 
- static int
-@@ -556,30 +553,30 @@ set_gid(vector strvec, void *ptr, int *flags)
- }
- 
- static int
--print_mode(char * buff, int len, void *ptr, int *flags)
-+print_mode(char * buff, int len, long v, int flags)
- {
--	mode_t *mode_ptr = (mode_t *)ptr;
--	if ((*flags & (1 << ATTR_MODE)) == 0)
-+	mode_t mode = (mode_t)v;
-+	if ((flags & (1 << ATTR_MODE)) == 0)
- 		return 0;
--	return snprintf(buff, len, "0%o", *mode_ptr);
-+	return snprintf(buff, len, "0%o", mode);
- }
- 
- static int
--print_uid(char * buff, int len, void *ptr, int *flags)
-+print_uid(char * buff, int len, long v, int flags)
- {
--	uid_t *uid_ptr = (uid_t *)ptr;
--	if ((*flags & (1 << ATTR_UID)) == 0)
-+	uid_t uid = (uid_t)v;
-+	if ((flags & (1 << ATTR_UID)) == 0)
- 		return 0;
--	return snprintf(buff, len, "0%o", *uid_ptr);
-+	return snprintf(buff, len, "0%o", uid);
- }
- 
- static int
--print_gid(char * buff, int len, void *ptr, int *flags)
-+print_gid(char * buff, int len, long v, int flags)
- {
--	gid_t *gid_ptr = (gid_t *)ptr;
--	if ((*flags & (1 << ATTR_GID)) == 0)
-+	gid_t gid = (gid_t)v;
-+	if ((flags & (1 << ATTR_GID)) == 0)
- 		return 0;
--	return snprintf(buff, len, "0%o", *gid_ptr);
-+	return snprintf(buff, len, "0%o", gid);
- }
- 
- declare_def_attr_handler(mode, set_mode)
-@@ -620,17 +617,15 @@ set_fast_io_fail(vector strvec, void *ptr)
- }
- 
- int
--print_fast_io_fail(char * buff, int len, void *ptr)
-+print_fast_io_fail(char * buff, int len, long v)
- {
--	int *int_ptr = (int *)ptr;
--
--	if (*int_ptr == MP_FAST_IO_FAIL_UNSET)
-+	if (v == MP_FAST_IO_FAIL_UNSET)
- 		return 0;
--	if (*int_ptr == MP_FAST_IO_FAIL_OFF)
-+	if (v == MP_FAST_IO_FAIL_OFF)
- 		return snprintf(buff, len, "\"off\"");
--	if (*int_ptr == MP_FAST_IO_FAIL_ZERO)
-+	if (v == MP_FAST_IO_FAIL_ZERO)
- 		return snprintf(buff, len, "0");
--	return snprintf(buff, len, "%d", *int_ptr);
-+	return snprintf(buff, len, "%ld", v);
- }
- 
- declare_def_handler(fast_io_fail, set_fast_io_fail)
-@@ -660,15 +655,11 @@ set_dev_loss(vector strvec, void *ptr)
- }
- 
- int
--print_dev_loss(char * buff, int len, void *ptr)
-+print_dev_loss(char * buff, int len, unsigned long v)
- {
--	unsigned int *uint_ptr = (unsigned int *)ptr;
--
--	if (!*uint_ptr)
--		return 0;
--	if (*uint_ptr >= MAX_DEV_LOSS_TMO)
-+	if (v >= MAX_DEV_LOSS_TMO)
- 		return snprintf(buff, len, "\"infinity\"");
--	return snprintf(buff, len, "%u", *uint_ptr);
-+	return snprintf(buff, len, "%lu", v);
- }
- 
- declare_def_handler(dev_loss, set_dev_loss)
-@@ -695,10 +686,9 @@ set_pgpolicy(vector strvec, void *ptr)
- }
- 
- int
--print_pgpolicy(char * buff, int len, void *ptr)
-+print_pgpolicy(char * buff, int len, long pgpolicy)
- {
- 	char str[POLICY_NAME_SIZE];
--	int pgpolicy = *(int *)ptr;
- 
- 	if (!pgpolicy)
- 		return 0;
-@@ -776,7 +766,7 @@ max_fds_handler(struct config *conf, vector strvec)
- }
- 
- static int
--snprint_max_fds (struct config *conf, char * buff, int len, void * data)
-+snprint_max_fds (struct config *conf, char * buff, int len, const void * data)
- {
- 	int r = 0, max_fds;
- 
-@@ -813,15 +803,13 @@ set_rr_weight(vector strvec, void *ptr)
- }
- 
- int
--print_rr_weight (char * buff, int len, void *ptr)
-+print_rr_weight (char * buff, int len, long v)
- {
--	int *int_ptr = (int *)ptr;
--
--	if (!*int_ptr)
-+	if (!v)
- 		return 0;
--	if (*int_ptr == RR_WEIGHT_PRIO)
-+	if (v == RR_WEIGHT_PRIO)
- 		return snprintf(buff, len, "\"priorities\"");
--	if (*int_ptr == RR_WEIGHT_NONE)
-+	if (v == RR_WEIGHT_NONE)
- 		return snprintf(buff, len, "\"uniform\"");
- 
- 	return 0;
-@@ -861,11 +849,9 @@ set_pgfailback(vector strvec, void *ptr)
- }
- 
- int
--print_pgfailback (char * buff, int len, void *ptr)
-+print_pgfailback (char * buff, int len, long v)
- {
--	int *int_ptr = (int *)ptr;
--
--	switch(*int_ptr) {
-+	switch(v) {
- 	case  FAILBACK_UNDEF:
- 		return 0;
- 	case -FAILBACK_MANUAL:
-@@ -875,7 +861,7 @@ print_pgfailback (char * buff, int len, void *ptr)
- 	case -FAILBACK_FOLLOWOVER:
- 		return snprintf(buff, len, "\"followover\"");
- 	default:
--		return snprintf(buff, len, "%i", *int_ptr);
-+		return snprintf(buff, len, "%li", v);
- 	}
- }
- 
-@@ -910,11 +896,9 @@ set_no_path_retry(vector strvec, void *ptr)
- }
- 
- int
--print_no_path_retry(char * buff, int len, void *ptr)
-+print_no_path_retry(char * buff, int len, long v)
- {
--	int *int_ptr = (int *)ptr;
--
--	switch(*int_ptr) {
-+	switch(v) {
- 	case NO_PATH_RETRY_UNDEF:
- 		return 0;
- 	case NO_PATH_RETRY_FAIL:
-@@ -922,7 +906,7 @@ print_no_path_retry(char * buff, int len, void *ptr)
- 	case NO_PATH_RETRY_QUEUE:
- 		return snprintf(buff, len, "\"queue\"");
- 	default:
--		return snprintf(buff, len, "%i", *int_ptr);
-+		return snprintf(buff, len, "%li", v);
- 	}
- }
- 
-@@ -955,7 +939,8 @@ def_log_checker_err_handler(struct config *conf, vector strvec)
- }
- 
- static int
--snprint_def_log_checker_err (struct config *conf, char * buff, int len, void * data)
-+snprint_def_log_checker_err (struct config *conf, char * buff, int len,
-+			     const void * data)
- {
- 	if (conf->log_checker_err == LOG_CHKR_ERR_ONCE)
- 		return snprintf(buff, len, "once");
-@@ -1008,7 +993,7 @@ def_reservation_key_handler(struct config *conf, vector strvec)
- 
- static int
- snprint_def_reservation_key (struct config *conf, char * buff, int len,
--			     void * data)
-+			     const void * data)
- {
- 	return print_reservation_key(buff, len, conf->reservation_key,
- 				     conf->prkey_source);
-@@ -1026,9 +1011,9 @@ mp_reservation_key_handler(struct config *conf, vector strvec)
- 
- static int
- snprint_mp_reservation_key (struct config *conf, char * buff, int len,
--			     void * data)
-+			    const void * data)
- {
--	struct mpentry * mpe = (struct mpentry *)data;
-+	const struct mpentry * mpe = (const struct mpentry *)data;
- 	return print_reservation_key(buff, len, mpe->reservation_key,
- 				     mpe->prkey_source);
- }
-@@ -1053,17 +1038,15 @@ set_off_int_undef(vector strvec, void *ptr)
- }
- 
- int
--print_off_int_undef(char * buff, int len, void *ptr)
-+print_off_int_undef(char * buff, int len, long v)
- {
--	int *int_ptr = (int *)ptr;
--
--	switch(*int_ptr) {
-+	switch(v) {
- 	case NU_UNDEF:
- 		return 0;
- 	case NU_NO:
- 		return snprintf(buff, len, "\"no\"");
- 	default:
--		return snprintf(buff, len, "%i", *int_ptr);
-+		return snprintf(buff, len, "%li", v);
- 	}
- }
- 
-@@ -1231,15 +1214,17 @@ declare_ble_handler(blist_property)
- declare_ble_handler(elist_property)
- 
- static int
--snprint_def_uxsock_timeout(struct config *conf, char * buff, int len, void * data)
-+snprint_def_uxsock_timeout(struct config *conf, char * buff, int len,
-+			   const void * data)
- {
- 	return snprintf(buff, len, "%u", conf->uxsock_timeout);
- }
- 
- static int
--snprint_ble_simple (struct config *conf, char * buff, int len, void * data)
-+snprint_ble_simple (struct config *conf, char * buff, int len,
-+		    const void * data)
- {
--	struct blentry * ble = (struct blentry *)data;
-+	const struct blentry * ble = (const struct blentry *)data;
- 
- 	return snprintf(buff, len, "\"%s\"", ble->str);
- }
-@@ -1262,17 +1247,21 @@ declare_ble_device_handler(product, blist_device, NULL, buff)
- declare_ble_device_handler(product, elist_device, NULL, buff)
- 
- static int
--snprint_bled_vendor (struct config *conf, char * buff, int len, void * data)
-+snprint_bled_vendor (struct config *conf, char * buff, int len,
-+		     const void * data)
- {
--	struct blentry_device * bled = (struct blentry_device *)data;
-+	const struct blentry_device * bled =
-+		(const struct blentry_device *)data;
- 
- 	return snprintf(buff, len, "\"%s\"", bled->vendor);
- }
- 
- static int
--snprint_bled_product (struct config *conf, char * buff, int len, void * data)
-+snprint_bled_product (struct config *conf, char * buff, int len,
-+		      const void * data)
- {
--	struct blentry_device * bled = (struct blentry_device *)data;
-+	const struct blentry_device * bled =
-+		(const struct blentry_device *)data;
- 
- 	return snprintf(buff, len, "\"%s\"", bled->product);
- }
-@@ -1402,7 +1391,8 @@ deprecated_handler(struct config *conf, vector strvec)
- }
- 
- static int
--snprint_deprecated (struct config *conf, char * buff, int len, void * data)
-+snprint_deprecated (struct config *conf, char * buff, int len,
-+		    const void * data)
- {
- 	return 0;
- }
-diff --git a/libmultipath/parser.c b/libmultipath/parser.c
-index c47d891ec369..5caa2019a1a4 100644
---- a/libmultipath/parser.c
-+++ b/libmultipath/parser.c
-@@ -33,7 +33,8 @@ static int line_nr;
- int
- keyword_alloc(vector keywords, char *string,
- 	      int (*handler) (struct config *, vector),
--	      int (*print) (struct config *, char *, int, void *), int unique)
-+	      int (*print) (struct config *, char *, int, const void*),
-+	      int unique)
- {
- 	struct keyword *keyword;
- 
-@@ -71,7 +72,8 @@ install_sublevel_end(void)
- int
- _install_keyword(vector keywords, char *string,
- 		 int (*handler) (struct config *, vector),
--		 int (*print) (struct config *, char *, int, void *), int unique)
-+		 int (*print) (struct config *, char *, int, const void*),
-+		 int unique)
- {
- 	int i = 0;
- 	struct keyword *keyword;
-@@ -143,7 +145,8 @@ find_keyword(vector keywords, vector v, char * name)
- }
- 
- int
--snprint_keyword(char *buff, int len, char *fmt, struct keyword *kw, void *data)
-+snprint_keyword(char *buff, int len, char *fmt, struct keyword *kw,
-+		const void *data)
- {
- 	int r;
- 	int fwd = 0;
-diff --git a/libmultipath/parser.h b/libmultipath/parser.h
-index 519b805d4149..0a747507d7be 100644
---- a/libmultipath/parser.h
-+++ b/libmultipath/parser.h
-@@ -43,7 +43,7 @@
- struct keyword {
- 	char *string;
- 	int (*handler) (struct config *, vector);
--	int (*print) (struct config *, char *, int, void *);
-+	int (*print) (struct config *, char *, int, const void *);
- 	vector sub;
- 	int unique;
++struct nvme_map;
++struct nvme_path {
++	struct gen_path gen;
++	struct udev_device *udev;
++	struct udev_device *ctl;
++	struct nvme_map *map;
++	bool seen;
++};
++
++struct nvme_pathgroup {
++	struct gen_pathgroup gen;
++	vector pathvec;
++};
++
+ struct nvme_map {
+ 	struct gen_multipath gen;
+ 	struct udev_device *udev;
+ 	struct udev_device *subsys;
+ 	dev_t devt;
++	/* Just one static pathgroup for NVMe for now */
++	struct nvme_pathgroup pg;
++	struct gen_pathgroup *gpg;
++	struct _vector pgvec;
++	vector pathvec;
++	int nr_live;
  };
-@@ -60,13 +60,17 @@ struct keyword {
- /* Prototypes */
- extern int keyword_alloc(vector keywords, char *string,
- 			 int (*handler) (struct config *, vector),
--			 int (*print) (struct config *, char *, int, void *), int unique);
-+			 int (*print) (struct config *, char *, int,
-+				       const void *),
-+			 int unique);
- #define install_keyword_root(str, h) keyword_alloc(keywords, str, h, NULL, 1)
- extern void install_sublevel(void);
- extern void install_sublevel_end(void);
- extern int _install_keyword(vector keywords, char *string,
- 			    int (*handler) (struct config *, vector),
--			    int (*print) (struct config *, char *, int, void *), int unique);
-+			    int (*print) (struct config *, char *, int,
-+					  const void *),
-+			    int unique);
- #define install_keyword(str, vec, pri) _install_keyword(keywords, str, vec, pri, 1)
- #define install_keyword_multi(str, vec, pri) _install_keyword(keywords, str, vec, pri, 0)
- extern void dump_keywords(vector keydump, int level);
-@@ -76,6 +80,6 @@ extern void *set_value(vector strvec);
- extern int process_file(struct config *conf, char *conf_file);
- extern struct keyword * find_keyword(vector keywords, vector v, char * name);
- int snprint_keyword(char *buff, int len, char *fmt, struct keyword *kw,
--		    void *data);
-+		    const void *data);
  
- #endif
+-#define NAME_LEN 64 /* buffer length temp model name */
++#define NAME_LEN 64 /* buffer length for temp attributes */
+ #define const_gen_mp_to_nvme(g) ((const struct nvme_map*)(g))
+ #define gen_mp_to_nvme(g) ((struct nvme_map*)(g))
+ #define nvme_mp_to_gen(n) &((n)->gen)
++#define const_gen_pg_to_nvme(g) ((const struct nvme_pathgroup*)(g))
++#define gen_pg_to_nvme(g) ((struct nvme_pathgroup*)(g))
++#define nvme_pg_to_gen(n) &((n)->gen)
++#define const_gen_path_to_nvme(g) ((const struct nvme_path*)(g))
++#define gen_path_to_nvme(g) ((struct nvme_path*)(g))
++#define nvme_path_to_gen(n) &((n)->gen)
++
++static void cleanup_nvme_path(struct nvme_path *path)
++{
++	condlog(5, "%s: %p %p", __func__, path, path->udev);
++	if (path->udev)
++		udev_device_unref(path->udev);
++	/* ctl is implicitly referenced by udev, no need to unref */
++	free(path);
++}
+ 
+ static void cleanup_nvme_map(struct nvme_map *map)
+ {
++	if (map->pathvec) {
++		struct nvme_path *path;
++		int i;
++
++		vector_foreach_slot_backwards(map->pathvec, path, i) {
++			condlog(5, "%s: %d %p", __func__, i, path);
++			cleanup_nvme_path(path);
++			vector_del_slot(map->pathvec, i);
++		}
++	}
++	vector_free(map->pathvec);
+ 	if (map->udev)
+ 		udev_device_unref(map->udev);
+-	if (map->subsys)
+-		udev_device_unref(map->subsys);
++	/* subsys is implicitly referenced by udev, no need to unref */
+ 	free(map);
+ }
+ 
+ static const struct _vector*
+ nvme_mp_get_pgs(const struct gen_multipath *gmp) {
+-	return NULL;
++	const struct nvme_map *nvme = const_gen_mp_to_nvme(gmp);
++
++	/* This is all used under the lock, no need to copy */
++	return &nvme->pgvec;
+ }
+ 
+ static void
+ nvme_mp_rel_pgs(const struct gen_multipath *gmp, const struct _vector *v)
+ {
++	/* empty */
+ }
+ 
+ static void rstrip(char *str)
+@@ -75,7 +131,6 @@ static int snprint_nvme_map(const struct gen_multipath *gmp,
+ 			    char *buff, int len, char wildcard)
+ {
+ 	const struct nvme_map *nvm = const_gen_mp_to_nvme(gmp);
+-	static const char nvme_vendor[] = "NVMe";
+ 	char fld[NAME_LEN];
+ 	const char *val;
+ 
+@@ -92,6 +147,8 @@ static int snprint_nvme_map(const struct gen_multipath *gmp,
+ 		return snprintf(buff, len, "%s",
+ 				udev_device_get_sysattr_value(nvm->udev,
+ 							      "wwid"));
++	case 'N':
++		return snprintf(buff, len, "%u", nvm->nr_live);
+ 	case 'S':
+ 		return snprintf(buff, len, "%s",
+ 				udev_device_get_sysattr_value(nvm->udev,
+@@ -122,7 +179,7 @@ static int snprint_nvme_map(const struct gen_multipath *gmp,
+ 	case 'G':
+ 		return snprintf(buff, len, "%s", THIS);
+ 	default:
+-		return snprintf(buff, len, "N/A");
++		return snprintf(buff, len, N_A);
+ 		break;
+ 	}
+ 	return 0;
+@@ -130,27 +187,101 @@ static int snprint_nvme_map(const struct gen_multipath *gmp,
+ 
+ static const struct _vector*
+ nvme_pg_get_paths(const struct gen_pathgroup *gpg) {
+-	return NULL;
++	const struct nvme_pathgroup *gp = const_gen_pg_to_nvme(gpg);
++
++	/* This is all used under the lock, no need to copy */
++	return gp->pathvec;
+ }
+ 
+ static void
+ nvme_pg_rel_paths(const struct gen_pathgroup *gpg, const struct _vector *v)
+ {
++	/* empty */
+ }
+ 
+ static int snprint_nvme_pg(const struct gen_pathgroup *gmp,
+ 			   char *buff, int len, char wildcard)
+ {
+-	return 0;
++	return snprintf(buff, len, N_A);
+ }
+ 
+-static int snprint_nvme_path(const struct gen_path *gmp,
++static int snprint_hcil(const struct nvme_path *np, char *buf, int len)
++{
++	unsigned int nvmeid, ctlid, nsid;
++	int rc;
++	const char *sysname = udev_device_get_sysname(np->udev);
++
++	rc = sscanf(sysname, "nvme%uc%un%u", &nvmeid, &ctlid, &nsid);
++	if (rc != 3) {
++		condlog(1, "%s: failed to scan %s", __func__, sysname);
++		rc = snprintf(buf, len, "(ERR:%s)", sysname);
++	} else
++		rc = snprintf(buf, len, "%u:%u:%u", nvmeid, ctlid, nsid);
++	return (rc < len ? rc : len);
++}
++
++static int snprint_nvme_path(const struct gen_path *gp,
+ 			     char *buff, int len, char wildcard)
+ {
++	const struct nvme_path *np = const_gen_path_to_nvme(gp);
++	dev_t devt;
++	char fld[NAME_LEN];
++	struct udev_device *pci;
++
+ 	switch (wildcard) {
++	case 'w':
++		return snprintf(buff, len, "%s",
++				udev_device_get_sysattr_value(np->udev,
++							      "wwid"));
++	case 'd':
++		return snprintf(buff, len, "%s",
++				udev_device_get_sysname(np->udev));
++	case 'i':
++		return snprint_hcil(np, buff, len);
++	case 'D':
++		devt = udev_device_get_devnum(np->udev);
++		return snprintf(buff, len, "%u:%u", major(devt), minor(devt));
++	case 'o':
++		sysfs_attr_get_value(np->ctl, "state", fld, sizeof(fld));
++		return snprintf(buff, len, "%s", fld);
++	case 's':
++		snprintf(fld, sizeof(fld), "%s",
++			 udev_device_get_sysattr_value(np->ctl,
++						      "model"));
++		rstrip(fld);
++		return snprintf(buff, len, "%s,%s,%s", nvme_vendor, fld,
++				udev_device_get_sysattr_value(np->ctl,
++							      "firmware_rev"));
++	case 'S':
++		return snprintf(buff, len, "%s",
++			udev_device_get_sysattr_value(np->udev,
++						      "size"));
++	case 'z':
++		return snprintf(buff, len, "%s",
++				udev_device_get_sysattr_value(np->ctl,
++							      "serial"));
++	case 'm':
++		return snprintf(buff, len, "%s",
++				udev_device_get_sysname(np->map->udev));
++	case 'N':
+ 	case 'R':
+-		return snprintf(buff, len, "[foreign: %s]", THIS);
++		return snprintf(buff, len, "%s:%s",
++			udev_device_get_sysattr_value(np->ctl,
++						      "transport"),
++			udev_device_get_sysattr_value(np->ctl,
++						      "address"));
++	case 'G':
++		return snprintf(buff, len, "[%s]", THIS);
++	case 'a':
++		pci = udev_device_get_parent_with_subsystem_devtype(np->ctl,
++								    "pci",
++								    NULL);
++		if (pci != NULL)
++			return snprintf(buff, len, "PCI:%s",
++					udev_device_get_sysname(pci));
++		/* fall through */
+ 	default:
++		return snprintf(buff, len, "%s", N_A);
+ 		break;
+ 	}
+ 	return 0;
+@@ -176,6 +307,7 @@ static const struct gen_path_ops nvme_path_ops __attribute__((unused)) = {
+ struct context {
+ 	pthread_mutex_t mutex;
+ 	vector mpvec;
++	struct udev *udev;
+ };
+ 
+ void lock(struct context *ctx)
+@@ -257,6 +389,10 @@ struct context *init(unsigned int api, const char *name)
+ 
+ 	pthread_mutex_init(&ctx->mutex, NULL);
+ 
++	ctx->udev = udev_new();
++	if (ctx->udev == NULL)
++		goto err;
++
+ 	ctx->mpvec = vector_alloc();
+ 	if (ctx->mpvec == NULL)
+ 		goto err;
+@@ -285,6 +421,138 @@ static struct nvme_map *_find_nvme_map_by_devt(const struct context *ctx,
+ 	return NULL;
+ }
+ 
++static struct nvme_path *
++_find_path_by_syspath(struct nvme_map *map, const char *syspath)
++{
++	struct nvme_path *path;
++	char real[PATH_MAX];
++	const char *ppath;
++	int i;
++
++	ppath = realpath(syspath, real);
++	if (ppath == NULL) {
++		condlog(1, "%s: %s: error in realpath", __func__, THIS);
++		ppath = syspath;
++	}
++
++	vector_foreach_slot(map->pathvec, path, i) {
++		if (!strcmp(ppath,
++			    udev_device_get_syspath(path->udev)))
++			return path;
++	}
++	condlog(4, "%s: %s: %s not found", __func__, THIS, ppath);
++	return NULL;
++}
++
++static int no_dotfiles(const struct dirent *di)
++{
++	return di->d_name[0] != '.';
++}
++
++static void _find_slaves(struct context *ctx, struct nvme_map *map)
++{
++	char pathbuf[PATH_MAX];
++	struct dirent **di = NULL;
++	struct nvme_path *path;
++	int r, i;
++
++	if (map == NULL || map->udev == NULL)
++		return;
++
++	vector_foreach_slot(map->pathvec, path, i)
++		path->seen = false;
++
++	snprintf(pathbuf, sizeof(pathbuf),
++		"%s/slaves",
++		udev_device_get_syspath(map->udev));
++
++	r = scandir(pathbuf, &di, no_dotfiles, alphasort);
++
++	if (r == 0) {
++		condlog(3, "%s: %s: no paths for %s", __func__, THIS,
++			udev_device_get_sysname(map->udev));
++		return;
++	} else if (r < 0) {
++		condlog(1, "%s: %s: error %d scanning paths of %s", __func__,
++			THIS, errno, udev_device_get_sysname(map->udev));
++		return;
++	}
++
++	pthread_cleanup_push(free, di);
++	for (i = 0; i < r; i++) {
++		char *fn = di[i]->d_name;
++		struct udev_device *udev;
++
++		if (snprintf(pathbuf, sizeof(pathbuf), "%s/slaves/%s",
++			     udev_device_get_syspath(map->udev), fn)
++		    >= sizeof(pathbuf))
++			continue;
++
++		path = _find_path_by_syspath(map, pathbuf);
++		if (path != NULL) {
++			path->seen = true;
++			condlog(4, "%s: %s already known",
++				__func__, fn);
++			continue;
++		}
++
++		udev = udev_device_new_from_syspath(ctx->udev, pathbuf);
++		if (udev == NULL) {
++			condlog(1, "%s: %s: failed to get udev device for %s",
++				__func__, THIS, fn);
++			continue;
++		}
++
++		path = calloc(1, sizeof(*path));
++		if (path == NULL)
++			continue;
++
++		path->gen.ops = &nvme_path_ops;
++		path->udev = udev;
++		path->seen = true;
++		path->map = map;
++		path->ctl = udev_device_get_parent_with_subsystem_devtype
++			(udev, "nvme", NULL);
++		if (path->ctl == NULL) {
++			condlog(1, "%s: %s: failed to get controller for %s",
++				__func__, THIS, fn);
++			cleanup_nvme_path(path);
++			continue;
++		}
++
++		if (vector_alloc_slot(map->pathvec) == NULL) {
++			cleanup_nvme_path(path);
++			continue;
++		}
++		condlog(3, "%s: %s: new path %s added to %s",
++			__func__, THIS, udev_device_get_sysname(udev),
++			udev_device_get_sysname(map->udev));
++		vector_set_slot(map->pathvec, path);
++	}
++	pthread_cleanup_pop(1);
++
++	map->nr_live = 0;
++	vector_foreach_slot_backwards(map->pathvec, path, i) {
++		if (!path->seen) {
++			condlog(1, "path %d not found in %s any more",
++				i, udev_device_get_sysname(map->udev));
++			vector_del_slot(map->pathvec, i);
++			cleanup_nvme_path(path);
++		} else {
++			static const char live_state[] = "live";
++			char state[16];
++
++			if ((sysfs_attr_get_value(path->ctl, "state", state,
++						  sizeof(state)) > 0) &&
++			    !strncmp(state, live_state, sizeof(live_state) - 1))
++				map->nr_live++;
++		}
++	}
++	condlog(3, "%s: %s: map %s has %d/%d live paths", __func__, THIS,
++		udev_device_get_sysname(map->udev), map->nr_live,
++		VECTOR_SIZE(map->pathvec));
++}
++
+ static int _add_map(struct context *ctx, struct udev_device *ud,
+ 		    struct udev_device *subsys)
+ {
+@@ -307,12 +575,25 @@ static int _add_map(struct context *ctx, struct udev_device *ud,
+ 	map->subsys = subsys;
+ 	map->gen.ops = &nvme_map_ops;
+ 
+-	if (vector_alloc_slot(ctx->mpvec) == NULL) {
++	map->pathvec = vector_alloc();
++	if (map->pathvec == NULL) {
+ 		cleanup_nvme_map(map);
+ 		return FOREIGN_ERR;
+ 	}
+ 
++	map->pg.gen.ops = &nvme_pg_ops;
++	map->pg.pathvec = map->pathvec;
++	map->gpg = nvme_pg_to_gen(&map->pg);
++
++	map->pgvec.allocated = 1;
++	map->pgvec.slot = (void**)&map->gpg;
++
++	if (vector_alloc_slot(ctx->mpvec) == NULL) {
++		cleanup_nvme_map(map);
++		return FOREIGN_ERR;
++	}
+ 	vector_set_slot(ctx->mpvec, map);
++	_find_slaves(ctx, map);
+ 
+ 	return FOREIGN_CLAIMED;
+ }
+@@ -401,9 +682,25 @@ int delete(struct context *ctx, struct udev_device *ud)
+ 	return rc;
+ }
+ 
++void _check(struct context *ctx)
++{
++	struct gen_multipath *gm;
++	int i;
++
++	vector_foreach_slot(ctx->mpvec, gm, i) {
++		struct nvme_map *map = gen_mp_to_nvme(gm);
++
++		_find_slaves(ctx, map);
++	}
++}
++
+ void check(struct context *ctx)
+ {
+-	condlog(5, "%s called for \"%s\"", __func__, THIS);
++	condlog(4, "%s called for \"%s\"", __func__, THIS);
++	lock(ctx);
++	pthread_cleanup_push(unlock, ctx);
++	_check(ctx);
++	pthread_cleanup_pop(1);
+ 	return;
+ }
+ 
+@@ -427,14 +724,23 @@ void release_multipaths(const struct context *ctx, const struct _vector *mpvec)
+  */
+ const struct _vector * get_paths(const struct context *ctx)
+ {
++	vector paths = NULL;
++	const struct gen_multipath *gm;
++	int i;
++
+ 	condlog(5, "%s called for \"%s\"", __func__, THIS);
+-	return NULL;
++	vector_foreach_slot(ctx->mpvec, gm, i) {
++		const struct nvme_map *nm = const_gen_mp_to_nvme(gm);
++		paths = vector_convert(paths, nm->pathvec,
++				       struct gen_path, identity);
++	}
++	return paths;
+ }
+ 
+ void release_paths(const struct context *ctx, const struct _vector *mpvec)
+ {
+ 	condlog(5, "%s called for \"%s\"", __func__, THIS);
+-	/* NOP */
++	vector_free_const(mpvec);
+ }
+ 
+ /* compile-time check whether all methods are present and correctly typed */
 -- 
 2.16.1
