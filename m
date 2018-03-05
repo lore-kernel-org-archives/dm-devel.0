@@ -1,13 +1,17 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 19/23] multipath: use foreign API
-Date: Tue,  6 Mar 2018 00:15:03 +0100
-Message-ID: <20180305231507.10386-20-mwilck@suse.com>
-References: <20180305231507.10386-1-mwilck@suse.com>
+Subject: Re: [PATCH 5/6] libmultipath: Fix sgio_get_vpd()
+Date: Tue, 06 Mar 2018 00:24:03 +0100
+Message-ID: <1520292243.7660.57.camel@suse.com>
+References: <20180301192935.14643-1-bart.vanassche@wdc.com>
+	<20180301192935.14643-6-bart.vanassche@wdc.com>
+	<1520268808.7660.23.camel@suse.com> <1520269758.7660.29.camel@suse.com>
+	<1520277283.7660.46.camel@suse.com> <1520277522.2826.34.camel@wdc.com>
+	<1520282850.7660.49.camel@suse.com> <1520284430.2826.39.camel@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180305231507.10386-1-mwilck@suse.com>
+In-Reply-To: <1520284430.2826.39.camel@wdc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,69 +21,47 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+To: Bart Van Assche <Bart.VanAssche@wdc.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Use the "foreign" code to print information about multipath maps
-owned by foreign libraries in print mode (multipath -ll, -l).
-
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- multipath/main.c | 13 +++++++++++++
- 1 file changed, 13 insertions(+)
-
-diff --git a/multipath/main.c b/multipath/main.c
-index a0c750e6f623..4fae49ee4325 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -59,6 +59,7 @@
- #include "wwids.h"
- #include "uxsock.h"
- #include "mpath_cmd.h"
-+#include "foreign.h"
- 
- int logsink;
- struct udev *udev;
-@@ -257,6 +258,14 @@ get_dm_mpvec (enum mpath_cmds cmd, vector curmp, vector pathvec, char * refwwid)
- 		if (cmd == CMD_CREATE)
- 			reinstate_paths(mpp);
- 	}
-+
-+	if (cmd == CMD_LIST_SHORT || cmd == CMD_LIST_LONG) {
-+		struct config *conf = get_multipath_config();
-+
-+		print_foreign_topology(conf->verbosity);
-+		put_multipath_config(conf);
-+	}
-+
- 	return 0;
- }
- 
-@@ -460,6 +469,7 @@ configure (struct config *conf, enum mpath_cmds cmd,
- 		print_all_paths(pathvec, 1);
- 
- 	get_path_layout(pathvec, 0);
-+	foreign_path_layout();
- 
- 	if (get_dm_mpvec(cmd, curmp, pathvec, refwwid))
- 		goto out;
-@@ -817,6 +827,8 @@ main (int argc, char *argv[])
- 		condlog(0, "failed to initialize prioritizers");
- 		goto out;
- 	}
-+	/* Failing here is non-fatal */
-+	init_foreign(conf->multipath_dir);
- 	if (cmd == CMD_USABLE_PATHS) {
- 		r = check_usable_paths(conf, dev, dev_type);
- 		goto out;
-@@ -892,6 +904,7 @@ out:
- 	dm_lib_release();
- 	dm_lib_exit();
- 
-+	cleanup_foreign();
- 	cleanup_prio();
- 	cleanup_checkers();
- 
--- 
-2.16.1
+T24gTW9uLCAyMDE4LTAzLTA1IGF0IDIxOjEzICswMDAwLCBCYXJ0IFZhbiBBc3NjaGUgd3JvdGU6
+Cj4gT24gTW9uLCAyMDE4LTAzLTA1IGF0IDIxOjQ3ICswMTAwLCBNYXJ0aW4gV2lsY2sgd3JvdGU6
+Cj4gPiBPbiBNb24sIDIwMTgtMDMtMDUgYXQgMTk6MTggKzAwMDAsIEJhcnQgVmFuIEFzc2NoZSB3
+cm90ZToKPiA+ID4gT24gTW9uLCAyMDE4LTAzLTA1IGF0IDIwOjE0ICswMTAwLCBNYXJ0aW4gV2ls
+Y2sgd3JvdGU6Cj4gPiA+ID4gVW5sZXNzIHlvdSBvYmplY3QsIEknbGwgcmVwb3N0IHlvdXIgc2Vy
+aWVzIHJlYmFzZWQgb24gbWluZS4KPiA+ID4gCj4gPiA+IEhlbGxvIE1hcnRpbiwKPiA+ID4gCj4g
+PiA+IEJlZm9yZSB5b3Ugc3RhcnQgd29ya2luZyBvbiB0aGF0OiBoYXMgeW91ciBwYXRjaCBzZXJp
+ZXMgYWxyZWFkeQo+ID4gPiBiZWVuCj4gPiA+IHBvc3RlZAo+ID4gPiBvbiB0aGUgZG0tZGV2ZWwg
+bWFpbGluZyBsaXN0Pwo+ID4gCj4gPiBZZXMuICJQQVRDSCB2MiAwMC8yMF0gVmFyaW91cyBtdWx0
+aXBhdGgtdG9vbHMgZml4ZXMiIGZmLgo+ID4gaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9hcmNoaXZl
+cy9kbS1kZXZlbC8yMDE4LUphbnVhcnkvbXNnMDAyMTkuaHRtbAo+IAo+IEFoLCB0aGFua3MsIGJ1
+dCB1bmZvcnR1bmF0ZWx5IHRoZXNlIHBhdGNoZXMgYXJlIG5vIGxvbmdlciBpbiBteQo+IG1haWxi
+b3guIEkKPiBwdWxsZWQgdGhlc2UgZnJvbSBodHRwczovL2dpdGh1Yi5jb20vb3BlblNVU0UvbXVs
+dGlwYXRoLXRvb2xzLiBJJ20KPiBmaW5lIHdpdGgKPiBteSBwYXRjaGVzIGJlaW5nIHJlYmFzZWQg
+b24gdG9wIG9mIHlvdXIgc2VyaWVzLCB3aGV0aGVyIG9yIG5vdCB0aGUKPiBmb2xsb3dpbmcKPiBp
+c3N1ZXMgZ2V0IGFkZHJlc3NlZDoKPiAqIFNldmVyYWwgcGF0Y2hlcyB0aGF0IGFyZSBvbiB0aGUg
+dXBzdHJlYW0tcXVldWUgYnJhbmNoIGludHJvZHVjZQo+IHRyYWlsaW5nCj4gICB3aGl0ZXNwYWNl
+Lgo+ICogVGhlIG1hY3JvIEZSRUVfQ09OU1QoKSBzaG91bGQgbmV2ZXIgaGF2ZSBiZWVuIGludHJv
+ZHVjZWQuCj4gSW50cm9kdWNpbmcgc3VjaAo+ICAgYSBtYWNybyBuYW1lbHkgaW50cm9kdWNlcyB0
+aGUgcmlzayBvZiBjYWxsaW5nIGZyZWUoKSBmb3IgYSBzdHJpbmcKPiBjb25zdGFudCwKPiAgIHNv
+bWV0aGluZyB0aGF0IHNob3VsZCBuZXZlciBoYXBwZW4uIEhhdmUgeW91IGNvbnNpZGVyZWQgdG8g
+ZGVjbGFyZQo+ICAgZHluYW1pY2FsbHkgYWxsb2NhdGVkIHN0cmluZ3MsIGUuZy4gdGhlIHJlc3Vs
+dCBvZiBzdHJkdXAoKSwgYXMgY2hhcgo+ICoKPiAgIGluc3RlYWQgb2YgY29uc3QgY2hhciAqID8g
+SSB0aGluayB3aXRoIHRoYXQgY2hhbmdlIHRoZSBGUkVFX0NPTlNUKCkKPiBtYWNybwo+ICAgZGVm
+aW5pdGlvbnMgY2FuIGJlIHJlbW92ZWQgYWdhaW4uCgpBbm90aGVyIHBoaWxvc29waGljYWwgaXNz
+dWUgOi0pIEkgZGlzYWdyZWUgd2l0aCB5b3UgaGVyZS4gVGhlIG5hbWUKRlJFRV9DT05TVCBpcyBv
+YnZpb3VzIGVub3VnaCB0aGF0IHBlb3BsZSBzaG91bGQgdGhpbmsgdHdpY2UgYmVmb3JlCnVzaW5n
+IGl0LiBJIGhhdmUgaW5kZWVkIGNvbnNpZGVyZWQgd2hhdCB5b3UgcHJvcHNlLCBidXQgSSBsaWtl
+IGJlaW5nCmFibGUgdG8gdXNlICJjb25zdCBjaGFyKiIgd2hlbiBJIHdvcmsgd2l0aCBzdHJpbmdz
+IHRoYXQgc2hvdWxkbid0IGJlCmNoYW5nZWQuIEFuIGFjY2lkZW50YWwgd3JpdGUgdG8gYSBjb25z
+dCBsb2NhdGlvbiBpcyBtdWNoIGVhc2llciB0bwpvdmVybG9vayB0aGFuIGEgRlJFRV9DT05TVCgp
+LiBGcmVlaW5nIGEgImNvbnN0IGNoYXIqIiBpc24ndCBhbHdheXMKd3JvbmcsIGp1c3QgaWYgdGhl
+IHBvaW50ZXIgd2FzIHBhc3NlZCBpbiBmcm9tIGVsc2V3aGVyZS4KClRoaXMgaXNzdWUgaXMgcGhp
+bG9zb3BoaWNhbCBidXQgbm90IHJlbGlnaW91cyB0byBtZSwgc28gaWYgeW91IGFuZAptYXliZSBv
+dGhlcnMgYXJlIG9mZmVuZGVkIHNvIG11Y2ggYnkgRlJFRV9DT05TVCwgSSBtYXkgZGl0Y2ggaXQg
+YWdhaW4uCgpSZWdhcmRzLApNYXJ0aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3Vz
+ZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBG
+ZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0
+IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0
+LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
