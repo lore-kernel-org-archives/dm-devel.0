@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 13/23] libmultipath: print: convert API to
-	generic data type
-Date: Tue,  6 Mar 2018 00:14:57 +0100
-Message-ID: <20180305231507.10386-14-mwilck@suse.com>
+Subject: [PATCH v2 17/23] libmultipath/foreign: nvme foreign
+	library
+Date: Tue,  6 Mar 2018 00:15:01 +0100
+Message-ID: <20180305231507.10386-18-mwilck@suse.com>
 References: <20180305231507.10386-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,352 +22,526 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Convert higher level API (snprint_multipath_topology() etc) to
-using the generic multipath API. This will allow "foreign"
-multipath objects that implement the generic API to be printed
-exactly like native multipathd objects.
-
-The previous API (using "struct multipath*" and "struct path" remains
-in place through macros mapping to the new functions. By doing this
-and testing in regular setups, it's easily verified that the new
-API works and produces the same results.
-
-Moreover, abstract out the code to determine the output format from multipath
-properties into snprint_multipath_style(), to be able to use it as generic
-->style() method.
+This still contains stubs for path handling and checking, but it's functional
+for printing already.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/configure.c  |   1 +
- libmultipath/dm-generic.c |   2 +-
- libmultipath/print.c      | 115 +++++++++++++++++++++++++++++-----------------
- libmultipath/print.h      |  24 +++++++---
- multipath/main.c          |   1 +
- multipathd/cli_handlers.c |   1 +
- 6 files changed, 95 insertions(+), 49 deletions(-)
+ Makefile                      |   1 +
+ libmultipath/foreign/Makefile |  30 +++
+ libmultipath/foreign/nvme.c   | 455 ++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 486 insertions(+)
+ create mode 100644 libmultipath/foreign/Makefile
+ create mode 100644 libmultipath/foreign/nvme.c
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 13e14cc25fff..42b7c896ee65 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -30,6 +30,7 @@
- #include "discovery.h"
- #include "debug.h"
- #include "switchgroup.h"
-+#include "dm-generic.h"
- #include "print.h"
- #include "configure.h"
- #include "pgpolicies.h"
-diff --git a/libmultipath/dm-generic.c b/libmultipath/dm-generic.c
-index 42a26085d087..bdc9ca0a488b 100644
---- a/libmultipath/dm-generic.c
-+++ b/libmultipath/dm-generic.c
-@@ -56,7 +56,7 @@ const struct gen_multipath_ops dm_gen_multipath_ops = {
- 	.get_pathgroups = dm_mp_get_pgs,
- 	.rel_pathgroups = dm_mp_rel_pgs,
- 	.snprint = snprint_multipath_attr,
--	/* .style = snprint_multipath_style, TBD */
-+	.style = snprint_multipath_style,
- };
- 
- const struct gen_pathgroup_ops dm_gen_pathgroup_ops = {
-diff --git a/libmultipath/print.c b/libmultipath/print.c
-index e9b8fdd6e581..8701a3584859 100644
---- a/libmultipath/print.c
-+++ b/libmultipath/print.c
-@@ -30,7 +30,8 @@
- #include "debug.h"
- #include "discovery.h"
- 
--#define MAX(x,y) (x > y) ? x : y
-+#define MAX(x,y) (((x) > (y)) ? (x) : (y))
-+#define MIN(x,y) (((x) > (y)) ? (y) : (x))
- #define TAIL     (line + len - 1 - c)
- #define NOPAD    s = c
- #define PAD(x) \
-@@ -845,8 +846,8 @@ snprint_multipath_header (char * line, int len, const char * format)
- }
- 
- int
--snprint_multipath (char * line, int len, const char * format,
--	     const struct multipath * mpp, int pad)
-+_snprint_multipath (const struct gen_multipath * gmp,
-+		    char * line, int len, const char * format, int pad)
- {
- 	char * c = line;   /* line cursor */
- 	char * s = line;   /* for padding */
-@@ -869,7 +870,7 @@ snprint_multipath (char * line, int len, const char * format,
- 		if (!(data = mpd_lookup(*f)))
- 			continue;
- 
--		data->snprint(buff, MAX_FIELD_LEN, mpp);
-+		gmp->ops->snprint(gmp, buff, MAX_FIELD_LEN, *f);
- 		PRINT(c, TAIL, "%s", buff);
- 		if (pad)
- 			PAD(data->width);
-@@ -912,8 +913,8 @@ snprint_path_header (char * line, int len, const char * format)
- }
- 
- int
--snprint_path (char * line, int len, const char * format,
--	     const struct path * pp, int pad)
-+_snprint_path (const struct gen_path * gp, char * line, int len,
-+	       const char * format, int pad)
- {
- 	char * c = line;   /* line cursor */
- 	char * s = line;   /* for padding */
-@@ -936,7 +937,7 @@ snprint_path (char * line, int len, const char * format,
- 		if (!(data = pd_lookup(*f)))
- 			continue;
- 
--		data->snprint(buff, MAX_FIELD_LEN, pp);
-+		gp->ops->snprint(gp, buff, MAX_FIELD_LEN, *f);
- 		PRINT(c, TAIL, "%s", buff);
- 		if (pad)
- 			PAD(data->width);
-@@ -947,8 +948,8 @@ snprint_path (char * line, int len, const char * format,
- }
- 
- int
--snprint_pathgroup (char * line, int len, char * format,
--		   const struct pathgroup * pgp)
-+_snprint_pathgroup (const struct gen_pathgroup * ggp, char * line, int len,
-+		    char * format)
- {
- 	char * c = line;   /* line cursor */
- 	char * s = line;   /* for padding */
-@@ -971,7 +972,7 @@ snprint_pathgroup (char * line, int len, char * format,
- 		if (!(data = pgd_lookup(*f)))
- 			continue;
- 
--		data->snprint(buff, MAX_FIELD_LEN, pgp);
-+		ggp->ops->snprint(ggp, buff, MAX_FIELD_LEN, *f);
- 		PRINT(c, TAIL, "%s", buff);
- 		PAD(data->width);
- 	} while (*f++);
-@@ -979,8 +980,10 @@ snprint_pathgroup (char * line, int len, char * format,
- 	__endline(line, len, c);
- 	return (c - line);
- }
-+#define snprint_pathgroup(line, len, fmt, pgp) \
-+	_snprint_pathgroup(dm_pathgroup_to_gen(pgp), line, len, fmt)
- 
--void print_multipath_topology(struct multipath *mpp, int verbosity)
-+void _print_multipath_topology(const struct gen_multipath *gmp, int verbosity)
- {
- 	int resize;
- 	char *buff = NULL;
-@@ -997,7 +1000,7 @@ void print_multipath_topology(struct multipath *mpp, int verbosity)
- 			return;
- 		}
- 
--		len = snprint_multipath_topology(buff, maxlen, mpp, verbosity);
-+		len = _snprint_multipath_topology(gmp, buff, maxlen, verbosity);
- 		resize = (len == maxlen - 1);
- 
- 		if (resize) {
-@@ -1010,12 +1013,30 @@ void print_multipath_topology(struct multipath *mpp, int verbosity)
- 	FREE(buff);
- }
- 
--int snprint_multipath_topology(char *buff, int len, const struct multipath *mpp,
--			       int verbosity)
-+int
-+snprint_multipath_style(const struct gen_multipath *gmp, char *style, int len,
-+			int verbosity)
-+{
-+	int n;
-+	const struct multipath *mpp = gen_multipath_to_dm(gmp);
-+	bool need_action = (verbosity > 1 &&
-+			    mpp->action != ACT_NOTHING &&
-+			    mpp->action != ACT_UNDEF &&
-+			    mpp->action != ACT_IMPOSSIBLE);
-+	bool need_wwid = (strncmp(mpp->alias, mpp->wwid, WWID_SIZE));
+diff --git a/Makefile b/Makefile
+index 11c46eb4dbc9..4b145c593605 100644
+--- a/Makefile
++++ b/Makefile
+@@ -7,6 +7,7 @@ BUILDDIRS = \
+ 	libmultipath \
+ 	libmultipath/prioritizers \
+ 	libmultipath/checkers \
++	libmultipath/foreign \
+ 	libmpathpersist \
+ 	multipath \
+ 	multipathd \
+diff --git a/libmultipath/foreign/Makefile b/libmultipath/foreign/Makefile
+new file mode 100644
+index 000000000000..dfba11e86d76
+--- /dev/null
++++ b/libmultipath/foreign/Makefile
+@@ -0,0 +1,30 @@
++#
++# Copyright (C) 2003 Christophe Varoqui, <christophe.varoqui@opensvc.com>
++#
++include ../../Makefile.inc
 +
-+	n = snprintf(style, len, "%s%s%s%s",
-+		     need_action ? "%A: " : "", "%n",
-+		     need_wwid ? " (%w)" : "", " %d %s");
-+	return MIN(n, len - 1);
++CFLAGS += $(LIB_CFLAGS) -I..
++
++# If you add or remove a checker also update multipath/multipath.conf.5
++LIBS= \
++	libforeign-nvme.so
++
++all: $(LIBS)
++
++libforeign-%.so: %.o
++	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^
++
++install:
++	$(INSTALL_PROGRAM) -m 755 $(LIBS) $(DESTDIR)$(libdir)
++
++uninstall:
++	for file in $(LIBS); do $(RM) $(DESTDIR)$(libdir)/$$file; done
++
++clean: dep_clean
++	$(RM) core *.a *.o *.gz *.so
++
++OBJS := $(LIBS:libforeign-%.so=%.o)
++include $(wildcard $(OBJS:.o=.d))
++
++dep_clean:
++	$(RM) $(OBJS:.o=.d)
+diff --git a/libmultipath/foreign/nvme.c b/libmultipath/foreign/nvme.c
+new file mode 100644
+index 000000000000..32bd5c96c44a
+--- /dev/null
++++ b/libmultipath/foreign/nvme.c
+@@ -0,0 +1,455 @@
++/*
++  Copyright (c) 2018 Martin Wilck, SUSE Linux GmbH
++
++  This program is free software; you can redistribute it and/or
++  modify it under the terms of the GNU General Public License
++  as published by the Free Software Foundation; either version 2
++  of the License, or (at your option) any later version.
++
++  This program is distributed in the hope that it will be useful,
++  but WITHOUT ANY WARRANTY; without even the implied warranty of
++  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++  GNU General Public License for more details.
++
++  You should have received a copy of the GNU General Public License
++  along with this program; if not, write to the Free Software
++  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
++  USA.
++*/
++
++#include <sys/sysmacros.h>
++#include <libudev.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <stdbool.h>
++#include <libudev.h>
++#include <pthread.h>
++#include "vector.h"
++#include "generic.h"
++#include "foreign.h"
++#include "debug.h"
++
++const char *THIS;
++
++struct nvme_map {
++	struct gen_multipath gen;
++	struct udev_device *udev;
++	struct udev_device *subsys;
++	dev_t devt;
++};
++
++#define NAME_LEN 64 /* buffer length temp model name */
++#define const_gen_mp_to_nvme(g) ((const struct nvme_map*)(g))
++#define gen_mp_to_nvme(g) ((struct nvme_map*)(g))
++#define nvme_mp_to_gen(n) &((n)->gen)
++
++static void cleanup_nvme_map(struct nvme_map *map)
++{
++	if (map->udev)
++		udev_device_unref(map->udev);
++	if (map->subsys)
++		udev_device_unref(map->subsys);
++	free(map);
 +}
 +
-+int _snprint_multipath_topology(const struct gen_multipath *gmp,
-+				char *buff, int len, int verbosity)
- {
- 	int j, i, fwd = 0;
--	struct path * pp = NULL;
--	struct pathgroup * pgp = NULL;
-+	const struct _vector *pgvec;
-+	const struct gen_pathgroup *gpg;
- 	char style[64];
- 	char * c = style;
- 	char fmt[64];
-@@ -1027,60 +1048,70 @@ int snprint_multipath_topology(char *buff, int len, const struct multipath *mpp,
- 	reset_multipath_layout();
- 
- 	if (verbosity == 1)
--		return snprint_multipath(buff, len, "%n", mpp, 1);
-+		return _snprint_multipath(gmp, buff, len, "%n", 1);
- 
- 	if(isatty(1))
- 		c += sprintf(c, "%c[%dm", 0x1B, 1); /* bold on */
- 
--	if (verbosity > 1 &&
--	    mpp->action != ACT_NOTHING &&
--	    mpp->action != ACT_UNDEF && mpp->action != ACT_IMPOSSIBLE)
--			c += sprintf(c, "%%A: ");
--
--	c += sprintf(c, "%%n");
--
--	if (strncmp(mpp->alias, mpp->wwid, WWID_SIZE))
--		c += sprintf(c, " (%%w)");
--
--	c += sprintf(c, " %%d %%s");
-+	c += gmp->ops->style(gmp, c, sizeof(style) - (c - style),
-+			     verbosity);
- 	if(isatty(1))
- 		c += sprintf(c, "%c[%dm", 0x1B, 0); /* bold off */
- 
--	fwd += snprint_multipath(buff + fwd, len - fwd, style, mpp, 1);
-+	fwd += _snprint_multipath(gmp, buff + fwd, len - fwd, style, 1);
- 	if (fwd >= len)
- 		return len;
--	fwd += snprint_multipath(buff + fwd, len - fwd, PRINT_MAP_PROPS, mpp,
--				 1);
-+	fwd += _snprint_multipath(gmp, buff + fwd, len - fwd,
-+				  PRINT_MAP_PROPS, 1);
- 	if (fwd >= len)
- 		return len;
- 
--	if (!mpp->pg)
-+	pgvec = gmp->ops->get_pathgroups(gmp);
-+	if (pgvec == NULL)
- 		return fwd;
- 
--	vector_foreach_slot (mpp->pg, pgp, j) {
-+	vector_foreach_slot (pgvec, gpg, j) {
-+		const struct _vector *pathvec;
-+		struct gen_path *gp;
++static const struct _vector*
++nvme_mp_get_pgs(const struct gen_multipath *gmp) {
++	return NULL;
++}
 +
- 		f=fmt;
--		if (j + 1 < VECTOR_SIZE(mpp->pg)) {
++static void
++nvme_mp_rel_pgs(const struct gen_multipath *gmp, const struct _vector *v)
++{
++}
 +
-+		if (j + 1 < VECTOR_SIZE(pgvec)) {
- 			strcpy(f, "|-+- " PRINT_PG_INDENT);
- 		} else
- 			strcpy(f, "`-+- " PRINT_PG_INDENT);
--		fwd += snprint_pathgroup(buff + fwd, len - fwd, fmt, pgp);
--		if (fwd >= len)
--			return len;
-+		fwd += _snprint_pathgroup(gpg, buff + fwd, len - fwd, fmt);
- 
--		vector_foreach_slot (pgp->paths, pp, i) {
-+		if (fwd >= len) {
-+			fwd = len;
-+			break;
-+		}
++static void rstrip(char *str)
++{
++	int n;
 +
-+		pathvec = gpg->ops->get_paths(gpg);
-+		if (pathvec == NULL)
-+			continue;
++	for (n = strlen(str) - 1; n >= 0 && str[n] == ' '; n--);
++	str[n+1] = '\0';
++}
 +
-+		vector_foreach_slot (pathvec, gp, i) {
- 			f=fmt;
- 			if (*f != '|')
- 				*f=' ';
- 			f++;
--			if (i + 1 < VECTOR_SIZE(pgp->paths))
-+			if (i + 1 < VECTOR_SIZE(pathvec))
- 				strcpy(f, " |- " PRINT_PATH_INDENT);
- 			else
- 				strcpy(f, " `- " PRINT_PATH_INDENT);
--			fwd += snprint_path(buff + fwd, len - fwd, fmt, pp, 1);
--			if (fwd >= len)
--				return len;
-+			fwd += _snprint_path(gp, buff + fwd, len - fwd, fmt, 1);
-+			if (fwd >= len) {
-+				fwd = len;
-+				break;
-+			}
- 		}
-+		gpg->ops->rel_paths(gpg, pathvec);
++static int snprint_nvme_map(const struct gen_multipath *gmp,
++			    char *buff, int len, char wildcard)
++{
++	const struct nvme_map *nvm = const_gen_mp_to_nvme(gmp);
++	static const char nvme_vendor[] = "NVMe";
++	char fld[NAME_LEN];
++	const char *val;
 +
-+		if (fwd == len)
-+			break;
- 	}
-+	gmp->ops->rel_pathgroups(gmp, pgvec);
- 	return fwd;
- }
- 
-diff --git a/libmultipath/print.h b/libmultipath/print.h
-index 214777c1e4f8..b8b9ecbd204f 100644
---- a/libmultipath/print.h
-+++ b/libmultipath/print.h
-@@ -98,11 +98,17 @@ void get_path_layout (vector pathvec, int header);
- void get_multipath_layout (vector mpvec, int header);
- int snprint_path_header (char *, int, const char *);
- int snprint_multipath_header (char *, int, const char *);
--int snprint_path (char *, int, const char *, const struct path *, int);
--int snprint_multipath (char *, int, const char *,
--		       const struct multipath *, int);
--int snprint_multipath_topology (char *, int, const struct multipath * mpp,
--				int verbosity);
-+int _snprint_path (const struct gen_path *, char *, int, const char *, int);
-+#define snprint_path(buf, len, fmt, pp, v) \
-+	_snprint_path(dm_path_to_gen(pp), buf, len, fmt,  v)
-+int _snprint_multipath (const struct gen_multipath *, char *, int,
-+			const char *, int);
-+#define snprint_multipath(buf, len, fmt, mp, v)				\
-+	_snprint_multipath(dm_multipath_to_gen(mp), buf, len, fmt,  v)
-+int _snprint_multipath_topology (const struct gen_multipath *, char *, int, 
-+				 int verbosity);
-+#define snprint_multipath_topology(buf, len, mpp, v) \
-+	_snprint_multipath_topology (dm_multipath_to_gen(mpp), buf, len, v)
- int snprint_multipath_topology_json (char * buff, int len,
- 				const struct vectors * vecs);
- int snprint_multipath_map_json (char * buff, int len,
-@@ -123,7 +129,11 @@ int snprint_host_wwpn (char *, size_t, const struct path *);
- int snprint_tgt_wwnn (char *, size_t, const struct path *);
- int snprint_tgt_wwpn (char *, size_t, const struct path *);
- 
--void print_multipath_topology (struct multipath * mpp, int verbosity);
-+void _print_multipath_topology (const struct gen_multipath * gmp,
-+				int verbosity);
-+#define print_multipath_topology(mpp, v) \
-+	_print_multipath_topology(dm_multipath_to_gen(mpp), v)
++	switch (wildcard) {
++	case 'd':
++		return snprintf(buff, len, "%s",
++				udev_device_get_sysname(nvm->udev));
++	case 'n':
++		return snprintf(buff, len, "%s:NQN:%s",
++				udev_device_get_sysname(nvm->subsys),
++				udev_device_get_sysattr_value(nvm->subsys,
++							      "subsysnqn"));
++	case 'w':
++		return snprintf(buff, len, "%s",
++				udev_device_get_sysattr_value(nvm->udev,
++							      "wwid"));
++	case 'S':
++		return snprintf(buff, len, "%s",
++				udev_device_get_sysattr_value(nvm->udev,
++							      "size"));
++	case 'v':
++		return snprintf(buff, len, "%s", nvme_vendor);
++	case 's':
++	case 'p':
++		snprintf(fld, sizeof(fld), "%s",
++			 udev_device_get_sysattr_value(nvm->subsys,
++						      "model"));
++		rstrip(fld);
++		if (wildcard == 'p')
++			return snprintf(buff, len, "%s", fld);
++		return snprintf(buff, len, "%s,%s,%s", nvme_vendor, fld,
++				udev_device_get_sysattr_value(nvm->subsys,
++							      "firmware_rev"));
++	case 'e':
++		return snprintf(buff, len, "%s",
++				udev_device_get_sysattr_value(nvm->subsys,
++							      "firmware_rev"));
++	case 'r':
++		val = udev_device_get_sysattr_value(nvm->udev, "ro");
++		if (val[0] == 1)
++			return snprintf(buff, len, "%s", "ro");
++		else
++			return snprintf(buff, len, "%s", "rw");
++	case 'G':
++		return snprintf(buff, len, "%s", THIS);
++	default:
++		return snprintf(buff, len, "N/A");
++		break;
++	}
++	return 0;
++}
 +
- void print_all_paths (vector pathvec, int banner);
- void print_all_paths_custo (vector pathvec, int banner, char *fmt);
- 
-@@ -133,4 +143,6 @@ int snprint_pathgroup_attr(const struct gen_pathgroup* gpg,
- 			   char *buf, int len, char wildcard);
- int snprint_multipath_attr(const struct gen_multipath* gm,
- 			   char *buf, int len, char wildcard);
-+int snprint_multipath_style(const struct gen_multipath *gmp,
-+			    char *style, int len, int verbosity);
- #endif /* _PRINT_H */
-diff --git a/multipath/main.c b/multipath/main.c
-index 52bf1658bbca..a0c750e6f623 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -47,6 +47,7 @@
- #include "discovery.h"
- #include "debug.h"
- #include "switchgroup.h"
-+#include "dm-generic.h"
- #include "print.h"
- #include "alias.h"
- #include "configure.h"
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index 7f13bc9d6f32..78f2a12bc2f8 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -16,6 +16,7 @@
- #include "configure.h"
- #include "blacklist.h"
- #include "debug.h"
-+#include "dm-generic.h"
- #include "print.h"
- #include "sysfs.h"
- #include <errno.h>
++static const struct _vector*
++nvme_pg_get_paths(const struct gen_pathgroup *gpg) {
++	return NULL;
++}
++
++static void
++nvme_pg_rel_paths(const struct gen_pathgroup *gpg, const struct _vector *v)
++{
++}
++
++static int snprint_nvme_pg(const struct gen_pathgroup *gmp,
++			   char *buff, int len, char wildcard)
++{
++	return 0;
++}
++
++static int snprint_nvme_path(const struct gen_path *gmp,
++			     char *buff, int len, char wildcard)
++{
++	switch (wildcard) {
++	case 'R':
++		return snprintf(buff, len, "[foreign: %s]", THIS);
++	default:
++		break;
++	}
++	return 0;
++}
++
++static const struct gen_multipath_ops nvme_map_ops = {
++	.get_pathgroups = nvme_mp_get_pgs,
++	.rel_pathgroups = nvme_mp_rel_pgs,
++	.style = generic_style,
++	.snprint = snprint_nvme_map,
++};
++
++static const struct gen_pathgroup_ops nvme_pg_ops __attribute__((unused)) = {
++	.get_paths = nvme_pg_get_paths,
++	.rel_paths = nvme_pg_rel_paths,
++	.snprint = snprint_nvme_pg,
++};
++
++static const struct gen_path_ops nvme_path_ops __attribute__((unused)) = {
++	.snprint = snprint_nvme_path,
++};
++
++struct context {
++	pthread_mutex_t mutex;
++	vector mpvec;
++};
++
++void lock(struct context *ctx)
++{
++	pthread_mutex_lock(&ctx->mutex);
++}
++
++void unlock(void *arg)
++{
++	struct context *ctx = arg;
++
++	pthread_mutex_unlock(&ctx->mutex);
++}
++
++static int _delete_all(struct context *ctx)
++{
++	struct nvme_map *nm;
++	int n = VECTOR_SIZE(ctx->mpvec), i;
++
++	if (n == 0)
++		return FOREIGN_IGNORED;
++
++	vector_foreach_slot_backwards(ctx->mpvec, nm, i) {
++		vector_del_slot(ctx->mpvec, i);
++		cleanup_nvme_map(nm);
++	}
++	return FOREIGN_OK;
++}
++
++int delete_all(struct context *ctx)
++{
++	int rc;
++
++	condlog(5, "%s called for \"%s\"", __func__, THIS);
++
++	lock(ctx);
++	pthread_cleanup_push(unlock, ctx);
++	rc = _delete_all(ctx);
++	pthread_cleanup_pop(1);
++
++	return rc;
++}
++
++void cleanup(struct context *ctx)
++{
++	(void)delete_all(ctx);
++
++	lock(ctx);
++	/*
++	 * Locking is not strictly necessary here, locking in foreign.c
++	 * makes sure that no other code is called with this ctx any more.
++	 * But this should make static checkers feel better.
++	 */
++	pthread_cleanup_push(unlock, ctx);
++	if (ctx->udev)
++		udev_unref(ctx->udev);
++	if (ctx->mpvec)
++		vector_free(ctx->mpvec);
++	ctx->mpvec = NULL;
++	ctx->udev = NULL;
++	pthread_cleanup_pop(1);
++	pthread_mutex_destroy(&ctx->mutex);
++
++	free(ctx);
++}
++
++struct context *init(unsigned int api, const char *name)
++{
++	struct context *ctx;
++
++	if (api > LIBMP_FOREIGN_API) {
++		condlog(0, "%s: api version mismatch: %08x > %08x\n",
++			__func__, api, LIBMP_FOREIGN_API);
++		return NULL;
++	}
++
++	if ((ctx = calloc(1, sizeof(*ctx)))== NULL)
++		return NULL;
++
++	pthread_mutex_init(&ctx->mutex, NULL);
++
++	ctx->mpvec = vector_alloc();
++	if (ctx->mpvec == NULL)
++		goto err;
++
++	THIS = name;
++	return ctx;
++err:
++	cleanup(ctx);
++	return NULL;
++}
++
++static struct nvme_map *_find_nvme_map_by_devt(const struct context *ctx,
++					      dev_t devt)
++{
++	struct nvme_map *nm;
++	int i;
++
++	if (ctx->mpvec == NULL)
++		return NULL;
++
++	vector_foreach_slot(ctx->mpvec, nm, i) {
++		if (nm->devt == devt)
++			return nm;
++	}
++
++	return NULL;
++}
++
++static int _add_map(struct context *ctx, struct udev_device *ud,
++		    struct udev_device *subsys)
++{
++	dev_t devt = udev_device_get_devnum(ud);
++	struct nvme_map *map;
++
++	if (_find_nvme_map_by_devt(ctx, devt) != NULL)
++		return FOREIGN_OK;
++
++	map = calloc(1, sizeof(*map));
++	if (map == NULL)
++		return FOREIGN_ERR;
++
++	map->devt = devt;
++	map->udev = udev_device_ref(ud);
++	/*
++	 * subsys is implicitly referenced by map->udev,
++	 * no need to take a reference here.
++	 */
++	map->subsys = subsys;
++	map->gen.ops = &nvme_map_ops;
++
++	if (vector_alloc_slot(ctx->mpvec) == NULL) {
++		cleanup_nvme_map(map);
++		return FOREIGN_ERR;
++	}
++
++	vector_set_slot(ctx->mpvec, map);
++
++	return FOREIGN_CLAIMED;
++}
++
++int add(struct context *ctx, struct udev_device *ud)
++{
++	struct udev_device *subsys;
++	int rc;
++
++	condlog(5, "%s called for \"%s\"", __func__, THIS);
++
++	if (ud == NULL)
++		return FOREIGN_ERR;
++	if (strcmp("disk", udev_device_get_devtype(ud)))
++		return FOREIGN_IGNORED;
++
++	subsys = udev_device_get_parent_with_subsystem_devtype(ud,
++							       "nvme-subsystem",
++							       NULL);
++	if (subsys == NULL)
++		return FOREIGN_IGNORED;
++
++	lock(ctx);
++	pthread_cleanup_push(unlock, ctx);
++	rc = _add_map(ctx, ud, subsys);
++	pthread_cleanup_pop(1);
++
++	if (rc == FOREIGN_CLAIMED)
++		condlog(3, "%s: %s: added map %s", __func__, THIS,
++			udev_device_get_sysname(ud));
++	else if (rc != FOREIGN_OK)
++		condlog(1, "%s: %s: retcode %d adding %s",
++			__func__, THIS, rc, udev_device_get_sysname(ud));
++
++	return rc;
++}
++
++int change(struct context *ctx, struct udev_device *ud)
++{
++	condlog(5, "%s called for \"%s\"", __func__, THIS);
++	return FOREIGN_IGNORED;
++}
++
++static int _delete_map(struct context *ctx, struct udev_device *ud)
++{
++	int k;
++	struct nvme_map *map;
++	dev_t devt = udev_device_get_devnum(ud);
++
++	map = _find_nvme_map_by_devt(ctx, devt);
++	if (map ==NULL)
++		return FOREIGN_IGNORED;
++
++	k = find_slot(ctx->mpvec, map);
++	if (k == -1)
++		return FOREIGN_ERR;
++	else
++		vector_del_slot(ctx->mpvec, k);
++
++	cleanup_nvme_map(map);
++
++	return FOREIGN_OK;
++}
++
++int delete(struct context *ctx, struct udev_device *ud)
++{
++	int rc;
++
++	condlog(5, "%s called for \"%s\"", __func__, THIS);
++
++	if (ud == NULL)
++		return FOREIGN_ERR;
++
++	lock(ctx);
++	pthread_cleanup_push(unlock, ctx);
++	rc = _delete_map(ctx, ud);
++	pthread_cleanup_pop(1);
++
++	if (rc == FOREIGN_OK)
++		condlog(3, "%s: %s: map %s deleted", __func__, THIS,
++			udev_device_get_sysname(ud));
++	else if (rc != FOREIGN_IGNORED)
++		condlog(1, "%s: %s: retcode %d deleting map %s", __func__,
++			THIS, rc, udev_device_get_sysname(ud));
++
++	return rc;
++}
++
++void check(struct context *ctx)
++{
++	condlog(5, "%s called for \"%s\"", __func__, THIS);
++	return;
++}
++
++/*
++ * It's safe to pass our internal pointer, this is only used under the lock.
++ */
++const struct _vector *get_multipaths(const struct context *ctx)
++{
++	condlog(5, "%s called for \"%s\"", __func__, THIS);
++	return ctx->mpvec;
++}
++
++void release_multipaths(const struct context *ctx, const struct _vector *mpvec)
++{
++	condlog(5, "%s called for \"%s\"", __func__, THIS);
++	/* NOP */
++}
++
++/*
++ * It's safe to pass our internal pointer, this is only used under the lock.
++ */
++const struct _vector * get_paths(const struct context *ctx)
++{
++	condlog(5, "%s called for \"%s\"", __func__, THIS);
++	return NULL;
++}
++
++void release_paths(const struct context *ctx, const struct _vector *mpvec)
++{
++	condlog(5, "%s called for \"%s\"", __func__, THIS);
++	/* NOP */
++}
++
++/* compile-time check whether all methods are present and correctly typed */
++#define _METHOD_INIT(x) .x = x
++static struct foreign __methods __attribute__((unused)) = {
++	_METHOD_INIT(init),
++	_METHOD_INIT(cleanup),
++	_METHOD_INIT(change),
++	_METHOD_INIT(delete),
++	_METHOD_INIT(delete_all),
++	_METHOD_INIT(check),
++	_METHOD_INIT(lock),
++	_METHOD_INIT(unlock),
++	_METHOD_INIT(get_multipaths),
++	_METHOD_INIT(release_multipaths),
++	_METHOD_INIT(get_paths),
++	_METHOD_INIT(release_paths),
++};
 -- 
 2.16.1
