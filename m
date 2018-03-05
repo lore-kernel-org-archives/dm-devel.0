@@ -1,15 +1,18 @@
-From: Martin Wilck <mwilck@suse.com>
+From: Bart Van Assche <Bart.VanAssche@wdc.com>
 Subject: Re: [PATCH 3/6] libmultipath,
  alloc_path_with_pathinfo(): Declare third argument const
-Date: Mon, 05 Mar 2018 17:18:59 +0100
-Message-ID: <1520266739.7660.10.camel@suse.com>
+Date: Mon, 5 Mar 2018 16:21:11 +0000
+Message-ID: <1520266870.2826.14.camel@wdc.com>
 References: <20180301192935.14643-1-bart.vanassche@wdc.com>
 	<20180301192935.14643-4-bart.vanassche@wdc.com>
+	<1520266739.7660.10.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180301192935.14643-4-bart.vanassche@wdc.com>
+In-Reply-To: <1520266739.7660.10.camel@suse.com>
+Content-Language: en-US
+Content-ID: <AE82C3DD6E613D43B9ABCF8D57673FAE@namprd04.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,44 +22,25 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <bart.vanassche@wdc.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: dm-devel@redhat.com
+To: "mwilck@suse.com" <mwilck@suse.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gVGh1LCAyMDE4LTAzLTAxIGF0IDExOjI5IC0wODAwLCBCYXJ0IFZhbiBBc3NjaGUgd3JvdGU6
-Cj4gU2luY2UgdGhlIHRoaXJkIGFyZ3VtZW50IG9mIHRoaXMgZnVuY3Rpb24gaXMgbm90IG1vZGlm
-aWVkIGluc2lkZSB0aGF0Cj4gZnVuY3Rpb24sIGRlY2xhcmUgaXQgY29uc3QuCj4gCj4gU2lnbmVk
-LW9mZi1ieTogQmFydCBWYW4gQXNzY2hlIDxiYXJ0LnZhbmFzc2NoZUB3ZGMuY29tPgoKQUNLLCBi
-dXQgdGhpcyBodW5rIGlzIHBhcnQgb2YgbXkgcHJldmlvdXNseSBwb3N0ZWQgcGF0Y2ggImxpYm11
-bHRpcGF0aDoKY29uc3QgcXVhbGlmaWVyIGZvciB3d2lkIGFuZCBhbGlhcyIsIHdoaWNoIGluY2x1
-ZGVzIHNvbWUgbW9yZSBjaGFuZ2VzCmFsb25nIHNpbWlsYXIgbGluZXMgYW5kIGlzIHBhcnQgb2Yg
-YSBsYXJnZXIgcGF0Y2ggc2V0IHRoYXQgdHJpZXMgdG8KaW1wcm92ZSAiY29uc3QiIHVzYWdlIGlu
-IGxpYm11bHRpcGF0aC4KCgo+IC0tLQo+ICBsaWJtdWx0aXBhdGgvZGlzY292ZXJ5LmMgfCAyICst
-Cj4gIGxpYm11bHRpcGF0aC9kaXNjb3ZlcnkuaCB8IDIgKy0KPiAgMiBmaWxlcyBjaGFuZ2VkLCAy
-IGluc2VydGlvbnMoKyksIDIgZGVsZXRpb25zKC0pCj4gCj4gZGlmZiAtLWdpdCBhL2xpYm11bHRp
-cGF0aC9kaXNjb3ZlcnkuYyBiL2xpYm11bHRpcGF0aC9kaXNjb3ZlcnkuYwo+IGluZGV4IGZlNTBj
-ZTUwNjJlYS4uZDg0NzE1ZTE1ZGIxIDEwMDY0NAo+IC0tLSBhL2xpYm11bHRpcGF0aC9kaXNjb3Zl
-cnkuYwo+ICsrKyBiL2xpYm11bHRpcGF0aC9kaXNjb3ZlcnkuYwo+IEBAIC0zNCw3ICszNCw3IEBA
-Cj4gIAo+ICBpbnQKPiAgYWxsb2NfcGF0aF93aXRoX3BhdGhpbmZvIChzdHJ1Y3QgY29uZmlnICpj
-b25mLCBzdHJ1Y3QgdWRldl9kZXZpY2UKPiAqdWRldmljZSwKPiAtCQkJICBjaGFyICp3d2lkLCBp
-bnQgZmxhZywgc3RydWN0IHBhdGgKPiAqKnBwX3B0cikKPiArCQkJICBjb25zdCBjaGFyICp3d2lk
-LCBpbnQgZmxhZywgc3RydWN0IHBhdGgKPiAqKnBwX3B0cikKPiAgewo+ICAJaW50IGVyciA9IFBB
-VEhJTkZPX0ZBSUxFRDsKPiAgCXN0cnVjdCBwYXRoICogcHA7Cj4gZGlmZiAtLWdpdCBhL2xpYm11
-bHRpcGF0aC9kaXNjb3ZlcnkuaCBiL2xpYm11bHRpcGF0aC9kaXNjb3ZlcnkuaAo+IGluZGV4IGIx
-NTFjYzdhMzlhOC4uYmQ1ZTY2NzhhMjZkIDEwMDY0NAo+IC0tLSBhL2xpYm11bHRpcGF0aC9kaXNj
-b3ZlcnkuaAo+ICsrKyBiL2xpYm11bHRpcGF0aC9kaXNjb3ZlcnkuaAo+IEBAIC0zOCw3ICszOCw3
-IEBAIGludCBnZXRfc3RhdGUgKHN0cnVjdCBwYXRoICogcHAsIHN0cnVjdCBjb25maWcgKgo+IGNv
-bmYsIGludCBkYWVtb24sIGludCBzdGF0ZSk7Cj4gIGludCBnZXRfdnBkX3NnaW8gKGludCBmZCwg
-aW50IHBnLCBjaGFyICogc3RyLCBpbnQgbWF4bGVuKTsKPiAgaW50IHBhdGhpbmZvIChzdHJ1Y3Qg
-cGF0aCAqIHBwLCBzdHJ1Y3QgY29uZmlnICogY29uZiwgaW50IG1hc2spOwo+ICBpbnQgYWxsb2Nf
-cGF0aF93aXRoX3BhdGhpbmZvIChzdHJ1Y3QgY29uZmlnICpjb25mLCBzdHJ1Y3QKPiB1ZGV2X2Rl
-dmljZSAqdWRldmljZSwKPiAtCQkJICAgICAgY2hhciAqd3dpZCwgaW50IGZsYWcsIHN0cnVjdCBw
-YXRoCj4gKipwcF9wdHIpOwo+ICsJCQkgICAgICBjb25zdCBjaGFyICp3d2lkLCBpbnQgZmxhZywg
-c3RydWN0Cj4gcGF0aCAqKnBwX3B0cik7Cj4gIGludCBzdG9yZV9wYXRoaW5mbyAodmVjdG9yIHBh
-dGh2ZWMsIHN0cnVjdCBjb25maWcgKmNvbmYsCj4gIAkJICAgIHN0cnVjdCB1ZGV2X2RldmljZSAq
-dWRldmljZSwgaW50IGZsYWcsCj4gIAkJICAgIHN0cnVjdCBwYXRoICoqcHBfcHRyKTsKCi0tIApE
-ci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMg
-MjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhh
-cmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBt
-YWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21h
-aWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On Mon, 2018-03-05 at 17:18 +0100, Martin Wilck wrote:
+> On Thu, 2018-03-01 at 11:29 -0800, Bart Van Assche wrote:
+> > Since the third argument of this function is not modified inside that
+> > function, declare it const.
+> > 
+> > Signed-off-by: Bart Van Assche <bart.vanassche@wdc.com>
+> 
+> ACK, but this hunk is part of my previously posted patch "libmultipath:
+> const qualifier for wwid and alias", which includes some more changes
+> along similar lines and is part of a larger patch set that tries to
+> improve "const" usage in libmultipath.
+
+Hello Martin,
+
+If this patch duplicates some of your work then I'm fine with dropping this
+patch.
+
+Bart.
