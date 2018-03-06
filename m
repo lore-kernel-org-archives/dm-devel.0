@@ -1,52 +1,36 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH] multipathd: fix -Wpointer-to-int-cast warning in
-	uxlsnr
-Date: Tue,  6 Mar 2018 22:25:12 +0100
-Message-ID: <20180306212512.3178-1-mwilck@suse.com>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: dm-bufio: avoid false-positive Wmaybe-uninitialized warning
+Date: Tue, 6 Mar 2018 22:33:46 +0100
+Message-ID: <CAK8P3a1jpj0ZCs81YJu0Dx3QFSypQ+VBr348UfEaagcuvM_1gA@mail.gmail.com>
+References: <20180222155627.1800948-1-arnd@arndb.de> <20180222160432.GA16971@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Chongyun Wu <wu.chongyun@h3c.com>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180222160432.GA16971@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Ingo Molnar <mingo@kernel.org>, Aliaksei Karaliou <akaraliou.dev@gmail.com>, Jens Axboe <axboe@kernel.dk>, Jan Kara <jack@suse.cz>, Dan Carpenter <dan.carpenter@oracle.com>, Mark Rutland <mark.rutland@arm.com>, Eric Biggers <ebiggers@google.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, stable <stable@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Fixes: "multipathd: release uxsocket and resource when cancel thread"
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- multipathd/uxlsnr.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+On Thu, Feb 22, 2018 at 5:04 PM, Mike Snitzer <snitzer@redhat.com> wrote:
+> On Thu, Feb 22 2018 at 10:56am -0500,
+> Arnd Bergmann <arnd@arndb.de> wrote:
 
-diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
-index 0531061912b3..cdafd82943e7 100644
---- a/multipathd/uxlsnr.c
-+++ b/multipathd/uxlsnr.c
-@@ -148,7 +148,7 @@ void uxsock_cleanup(void *arg)
- {
- 	struct client *client_loop;
- 	struct client *client_tmp;
--	int ux_sock = (int)arg;
-+	long ux_sock = (long)arg;
- 
- 	close(ux_sock);
- 
-@@ -167,7 +167,7 @@ void uxsock_cleanup(void *arg)
-  */
- void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
- {
--	int ux_sock;
-+	long ux_sock;
- 	int rlen;
- 	char *inbuf;
- 	char *reply;
--- 
-2.16.1
+>
+> Mikulas already sent a fix for this:
+> https://patchwork.kernel.org/patch/10211631/
+>
+> But I like yours a bit better, though I'll likely move the declaration
+> of 'noio_flag' temporary inside the conditional.
+>
+> Anyway, I'll get this fixed up shortly, thanks.
+
+I see the fix made it into linux-next on the same day, but the build bots still
+report the warning for mainline kernels and now also for stable kernels
+that got a backport of the patch that introduced it on arm64.
+
+I assume you had not planned to send it for mainline, any chance you
+could change that and send it as a bugfix with a 'Cc:
+stable@vger.kernel.org' tag to restore a clean build?
+
+       Arnd
