@@ -1,7 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 1/6] tests/uevent: fix -Wcast-qual errors
-Date: Tue,  6 Mar 2018 23:56:28 +0100
-Message-ID: <20180306225633.12028-2-mwilck@suse.com>
+Subject: [PATCH 3/6] libmultipath: config parser: don't strip
+	whitepace between quotes
+Date: Tue,  6 Mar 2018 23:56:30 +0100
+Message-ID: <20180306225633.12028-4-mwilck@suse.com>
 References: <20180306225633.12028-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,53 +22,27 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-I overlooked these in my previous series of fixes.
+Between double quotes, the parser currently strips leading (but not
+trailing) whitespace. That's inconsistent and unexpected. Fix it.
 
-Fixes: "libmultipath: fix compiler warnings for -Wcast-qual"
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- tests/uevent.c | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+ libmultipath/parser.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/tests/uevent.c b/tests/uevent.c
-index b7d6458710f4..0836b08d5b50 100644
---- a/tests/uevent.c
-+++ b/tests/uevent.c
-@@ -172,7 +172,7 @@ static void test_dm_name_good(void **state)
- 	const char *name = uevent_get_dm_name(uev);
+diff --git a/libmultipath/parser.c b/libmultipath/parser.c
+index 5caa2019a1a4..3d9656f47945 100644
+--- a/libmultipath/parser.c
++++ b/libmultipath/parser.c
+@@ -262,7 +262,8 @@ alloc_strvec(char *string)
+ 		}
+ 		vector_set_slot(strvec, token);
  
- 	assert_string_equal(name, DM_NAME);
--	free((void*)name);
-+	FREE_CONST(name);
- }
- 
- static void test_dm_name_bad_0(void **state)
-@@ -183,7 +183,7 @@ static void test_dm_name_bad_0(void **state)
- 	uev->envp[3] = "DM_NAME" DM_NAME;
- 	name = uevent_get_dm_name(uev);
- 	assert_ptr_equal(name, NULL);
--	free((void*)name);
-+	FREE_CONST(name);
- }
- 
- static void test_dm_name_bad_1(void **state)
-@@ -194,7 +194,7 @@ static void test_dm_name_bad_1(void **state)
- 	uev->envp[3] = "DM_NAMES=" DM_NAME;
- 	name = uevent_get_dm_name(uev);
- 	assert_ptr_equal(name, NULL);
--	free((void*)name);
-+	FREE_CONST(name);
- }
- 
- static void test_dm_name_good_1(void **state)
-@@ -206,7 +206,7 @@ static void test_dm_name_good_1(void **state)
- 	uev->envp[2] = "DM_NAME=" DM_NAME;
- 	name = uevent_get_dm_name(uev);
- 	assert_string_equal(name, DM_NAME);
--	free((void*)name);
-+	FREE_CONST(name);
- }
- 
- static void test_dm_uuid_false_0(void **state)
+-		while ((isspace((int) *cp) || !isascii((int) *cp))
++		while ((!in_string &&
++			(isspace((int) *cp) || !isascii((int) *cp)))
+ 		       && *cp != '\0')
+ 			cp++;
+ 		if (*cp == '\0' || *cp == '!' || *cp == '#')
 -- 
 2.16.1
