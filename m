@@ -1,14 +1,13 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 3/4] libmultipath: uev_update_path: always warn
-	if WWID changed
-Date: Tue,  6 Mar 2018 23:15:49 +0100
-Message-ID: <20180306221550.10030-4-mwilck@suse.com>
-References: <20180306221550.10030-1-mwilck@suse.com>
+Subject: [PATCH 1/6] tests/uevent: fix -Wcast-qual errors
+Date: Tue,  6 Mar 2018 23:56:28 +0100
+Message-ID: <20180306225633.12028-2-mwilck@suse.com>
+References: <20180306225633.12028-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180306221550.10030-1-mwilck@suse.com>
+In-Reply-To: <20180306225633.12028-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,59 +17,57 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Chongyun Wu <wu.chongyun@h3c.com>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Print the warning about changed WWID not only if disable_changed_wwids
-is set, but always. It's actually more dangerous if that option is
-not set.
+I overlooked these in my previous series of fixes.
 
+Fixes: "libmultipath: fix compiler warnings for -Wcast-qual"
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c | 21 +++++++++++++--------
- 1 file changed, 13 insertions(+), 8 deletions(-)
+ tests/uevent.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 6d502aceb252..f7b9676ddb28 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -940,15 +940,18 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
- 	pp = find_path_by_dev(vecs->pathvec, uev->kernel);
- 	if (pp) {
- 		struct multipath *mpp = pp->mpp;
-+		char wwid[WWID_SIZE];
+diff --git a/tests/uevent.c b/tests/uevent.c
+index b7d6458710f4..0836b08d5b50 100644
+--- a/tests/uevent.c
++++ b/tests/uevent.c
+@@ -172,7 +172,7 @@ static void test_dm_name_good(void **state)
+ 	const char *name = uevent_get_dm_name(uev);
  
--		if (disable_changed_wwids &&
--		    (strlen(pp->wwid) || pp->wwid_changed)) {
--			char wwid[WWID_SIZE];
-+		strcpy(wwid, pp->wwid);
-+		get_uid(pp, pp->state, uev->udev);
+ 	assert_string_equal(name, DM_NAME);
+-	free((void*)name);
++	FREE_CONST(name);
+ }
  
--			strcpy(wwid, pp->wwid);
--			get_uid(pp, pp->state, uev->udev);
--			if (strcmp(wwid, pp->wwid) != 0) {
--				condlog(0, "%s: path wwid changed from '%s' to '%s'. disallowing", uev->kernel, wwid, pp->wwid);
-+		if (strncmp(wwid, pp->wwid, WWID_SIZE) != 0) {
-+			condlog(0, "%s: path wwid changed from '%s' to '%s'. %s",
-+				uev->kernel, wwid, pp->wwid,
-+				(disable_changed_wwids ? "disallowing" :
-+				 "continuing"));
-+			if (disable_changed_wwids &&
-+			    (strlen(wwid) || pp->wwid_changed)) {
- 				strcpy(pp->wwid, wwid);
- 				if (!pp->wwid_changed) {
- 					pp->wwid_changed = 1;
-@@ -957,7 +960,9 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
- 						dm_fail_path(pp->mpp->alias, pp->dev_t);
- 				}
- 				goto out;
--			} else
-+			} else if (!disable_changed_wwids)
-+				strcpy(pp->wwid, wwid);
-+			else
- 				pp->wwid_changed = 0;
- 		}
+ static void test_dm_name_bad_0(void **state)
+@@ -183,7 +183,7 @@ static void test_dm_name_bad_0(void **state)
+ 	uev->envp[3] = "DM_NAME" DM_NAME;
+ 	name = uevent_get_dm_name(uev);
+ 	assert_ptr_equal(name, NULL);
+-	free((void*)name);
++	FREE_CONST(name);
+ }
  
+ static void test_dm_name_bad_1(void **state)
+@@ -194,7 +194,7 @@ static void test_dm_name_bad_1(void **state)
+ 	uev->envp[3] = "DM_NAMES=" DM_NAME;
+ 	name = uevent_get_dm_name(uev);
+ 	assert_ptr_equal(name, NULL);
+-	free((void*)name);
++	FREE_CONST(name);
+ }
+ 
+ static void test_dm_name_good_1(void **state)
+@@ -206,7 +206,7 @@ static void test_dm_name_good_1(void **state)
+ 	uev->envp[2] = "DM_NAME=" DM_NAME;
+ 	name = uevent_get_dm_name(uev);
+ 	assert_string_equal(name, DM_NAME);
+-	free((void*)name);
++	FREE_CONST(name);
+ }
+ 
+ static void test_dm_uuid_false_0(void **state)
 -- 
 2.16.1
