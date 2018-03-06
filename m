@@ -1,159 +1,130 @@
-From: Patrik Torstensson <totte@google.com>
-Subject: [PATCH] Add an option to dm-verity to validate hashes at most once
-Date: Tue,  6 Mar 2018 15:14:56 -0800
-Message-ID: <20180306231456.210504-1-totte@google.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
-Cc: linux-kernel@vger.kernel.org, ebiggers@google.com, samitolvanen@google.com, gkaiser@google.com, paulcrowley@google.com, Patrik Torstensson <totte@google.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: [PATCH 5/6] libmultipath: config parser: fix corner case
+	for double quotes
+Date: Tue,  6 Mar 2018 23:56:32 +0100
+Message-ID: <20180306225633.12028-6-mwilck@suse.com>
+References: <20180306225633.12028-1-mwilck@suse.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20180306225633.12028-1-mwilck@suse.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Add an option to dm-verity to validate hashes at most once
-to allow platforms that is CPU/memory contraint to be
-protected by dm-verity against offline attacks.
+A corner case of the previous patch are strings starting with a double quote,
+such as '"prepended to itself is false" prepended to itself is false' or
+'"" is the empty string', and in particular, the string '"' ("\"" in C
+notation), which is indistinguishable from the "QUOTE" token in the parsed strvec.
 
-The option introduces a bitset that is used to check if
-a block has been validated before or not. A block can
-be validated more than once as there is no thread protection
-for the bitset.
+This patch fixes that by introducing a special token that can't occur as part
+of a normal string to indicate the beginning and end of a quoted string.
 
-This patch has been developed and tested on entry-level
-Android Go devices.
+'"' is admittedly not a very likely keyword value for multipath.conf, but
+a) this is a matter of correctness, b) we didn't think of '2.5"' before, either, and
+c) the (*str != '"') expressions would need to be patched anyway to fix the
+'string starting with "' case.
 
-Signed-off-by: Patrik Torstensson <totte@google.com>
+Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- drivers/md/dm-verity-target.c | 58 +++++++++++++++++++++++++++++++++--
- drivers/md/dm-verity.h        |  1 +
- 2 files changed, 56 insertions(+), 3 deletions(-)
+ libmultipath/parser.c | 36 +++++++++++++++++++-----------------
+ 1 file changed, 19 insertions(+), 17 deletions(-)
 
-diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-index aedb8222836b..479d0af212bf 100644
---- a/drivers/md/dm-verity-target.c
-+++ b/drivers/md/dm-verity-target.c
-@@ -32,6 +32,7 @@
- #define DM_VERITY_OPT_LOGGING		"ignore_corruption"
- #define DM_VERITY_OPT_RESTART		"restart_on_corruption"
- #define DM_VERITY_OPT_IGN_ZEROES	"ignore_zero_blocks"
-+#define DM_VERITY_OPT_AT_MOST_ONCE	"check_at_most_once"
- 
- #define DM_VERITY_OPTS_MAX		(2 + DM_VERITY_OPTS_FEC)
- 
-@@ -432,6 +433,19 @@ static int verity_bv_zero(struct dm_verity *v, struct dm_verity_io *io,
- 	return 0;
+diff --git a/libmultipath/parser.c b/libmultipath/parser.c
+index 592269a9b5b1..da8de305f680 100644
+--- a/libmultipath/parser.c
++++ b/libmultipath/parser.c
+@@ -186,6 +186,12 @@ snprint_keyword(char *buff, int len, char *fmt, struct keyword *kw,
+ 	return fwd;
  }
  
-+/*
-+ * Moves the bio iter one data block forward.
-+ */
-+static inline void verity_bv_skip_block(struct dm_verity *v,
-+					struct dm_verity_io *io,
-+					struct bvec_iter *iter)
++static const char quote_marker[] = { '\0', '"', '\0' };
++static bool is_quote(const char* token)
 +{
-+	struct bio *bio = dm_bio_from_per_bio_data(io,
-+						   v->ti->per_io_data_size);
-+
-+	bio_advance_iter(bio, iter, 1 << v->data_dev_block_bits);
++	return !memcmp(token, quote_marker, sizeof(quote_marker));
 +}
 +
- /*
-  * Verify one "dm_verity_io" structure.
-  */
-@@ -445,8 +459,15 @@ static int verity_verify_io(struct dm_verity_io *io)
- 
- 	for (b = 0; b < io->n_blocks; b++) {
- 		int r;
-+		sector_t cur_block = io->block + b;
- 		struct ahash_request *req = verity_io_hash_req(v, io);
- 
-+		if (v->validated_blocks &&
-+		    likely(test_bit(cur_block, v->validated_blocks))) {
-+			verity_bv_skip_block(v, io, &io->iter);
-+			continue;
-+		}
-+
- 		r = verity_hash_for_block(v, io, io->block + b,
- 					  verity_io_want_digest(v, io),
- 					  &is_zero);
-@@ -481,13 +502,17 @@ static int verity_verify_io(struct dm_verity_io *io)
- 			return r;
- 
- 		if (likely(memcmp(verity_io_real_digest(v, io),
--				  verity_io_want_digest(v, io), v->digest_size) == 0))
-+				  verity_io_want_digest(v, io),
-+				  v->digest_size) == 0)) {
-+			if (v->validated_blocks)
-+				set_bit(cur_block, v->validated_blocks);
- 			continue;
-+		}
- 		else if (verity_fec_decode(v, io, DM_VERITY_BLOCK_TYPE_DATA,
--					   io->block + b, NULL, &start) == 0)
-+					   cur_block, NULL, &start) == 0)
- 			continue;
- 		else if (verity_handle_err(v, DM_VERITY_BLOCK_TYPE_DATA,
--					   io->block + b))
-+					   cur_block))
- 			return -EIO;
- 	}
- 
-@@ -740,6 +765,7 @@ static void verity_dtr(struct dm_target *ti)
- 	if (v->bufio)
- 		dm_bufio_client_destroy(v->bufio);
- 
-+	kvfree(v->validated_blocks);
- 	kfree(v->salt);
- 	kfree(v->root_digest);
- 	kfree(v->zero_digest);
-@@ -760,6 +786,26 @@ static void verity_dtr(struct dm_target *ti)
- 	kfree(v);
- }
- 
-+static int verity_alloc_most_once(struct dm_verity *v)
-+{
-+	struct dm_target *ti = v->ti;
-+
-+	/* the bitset can only handle INT_MAX blocks */
-+	if (v->data_blocks > INT_MAX) {
-+		ti->error = "device too large to use check_at_most_once";
-+		return -E2BIG;
-+	}
-+
-+	v->validated_blocks = kvzalloc(BITS_TO_LONGS(v->data_blocks)
-+				     * sizeof(unsigned long), GFP_KERNEL);
-+	if (!v->validated_blocks) {
-+		ti->error = "failed to allocate bitset for check_at_most_once";
-+		return -ENOMEM;
-+	}
-+
-+	return 0;
-+}
-+
- static int verity_alloc_zero_digest(struct dm_verity *v)
+ vector
+ alloc_strvec(char *string)
  {
- 	int r = -ENOMEM;
-@@ -829,6 +875,12 @@ static int verity_parse_opt_args(struct dm_arg_set *as, struct dm_verity *v)
- 			}
- 			continue;
+@@ -225,17 +231,13 @@ alloc_strvec(char *string)
+ 		start = cp;
+ 		if (!in_string && *cp == '"') {
+ 			cp++;
+-			token = MALLOC(2);
++			token = MALLOC(sizeof(quote_marker));
  
-+		} else if (!strcasecmp(arg_name, DM_VERITY_OPT_AT_MOST_ONCE)) {
-+			r = verity_alloc_most_once(v);
-+			if (r)
-+				return r;
-+			continue;
-+
- 		} else if (verity_is_fec_opt_arg(arg_name)) {
- 			r = verity_fec_parse_opt_args(as, v, &argc, arg_name);
- 			if (r)
-diff --git a/drivers/md/dm-verity.h b/drivers/md/dm-verity.h
-index b675bc015512..ace5ec781b5f 100644
---- a/drivers/md/dm-verity.h
-+++ b/drivers/md/dm-verity.h
-@@ -63,6 +63,7 @@ struct dm_verity {
- 	sector_t hash_level_block[DM_VERITY_MAX_LEVELS];
+ 			if (!token)
+ 				goto out;
  
- 	struct dm_verity_fec *fec;	/* forward error correction */
-+	unsigned long *validated_blocks; /* bitset blocks validated */
- };
+-			*(token) = '"';
+-			*(token + 1) = '\0';
+-			if (in_string)
+-				in_string = 0;
+-			else
+-				in_string = 1;
++			memcpy(token, quote_marker, sizeof(quote_marker));
++			in_string = 1;
+ 		} else if (!in_string && (*cp == '{' || *cp == '}')) {
+ 			token = MALLOC(2);
  
- struct dm_verity_io {
+@@ -324,13 +326,13 @@ set_value(vector strvec)
+ 			(char *)VECTOR_SLOT(strvec, 0));
+ 		return NULL;
+ 	}
+-	size = strlen(str);
+-	if (size == 0) {
+-		condlog(0, "option '%s' has empty value",
+-			(char *)VECTOR_SLOT(strvec, 0));
+-		return NULL;
+-	}
+-	if (*str != '"') {
++	if (!is_quote(str)) {
++		size = strlen(str);
++		if (size == 0) {
++			condlog(0, "option '%s' has empty value",
++				(char *)VECTOR_SLOT(strvec, 0));
++			return NULL;
++		}
+ 		alloc = MALLOC(sizeof (char) * (size + 1));
+ 		if (alloc)
+ 			memcpy(alloc, str, size);
+@@ -354,7 +356,7 @@ set_value(vector strvec)
+ 				(char *)VECTOR_SLOT(strvec, 0));
+ 			return NULL;
+ 		}
+-		if (*str == '"')
++		if (is_quote(str))
+ 			break;
+ 		tmp = alloc;
+ 		/* The first +1 is for the NULL byte. The rest are for the
+@@ -460,7 +462,7 @@ validate_config_strvec(vector strvec, char *file)
+ 			(char *)VECTOR_SLOT(strvec, 0), line_nr, file);
+ 		return -1;
+ 	}
+-	if (*str != '"') {
++	if (!is_quote(str)) {
+ 		if (VECTOR_SIZE(strvec) > 2)
+ 			condlog(0, "ignoring extra data starting with '%s' on line %d of %s", (char *)VECTOR_SLOT(strvec, 2), line_nr, file);
+ 		return 0;
+@@ -472,7 +474,7 @@ validate_config_strvec(vector strvec, char *file)
+ 				line_nr, file);
+ 			return -1;
+ 		}
+-		if (*str == '"') {
++		if (is_quote(str)) {
+ 			if (VECTOR_SIZE(strvec) > i + 1)
+ 				condlog(0, "ignoring extra data starting with '%s' on line %d of %s", (char *)VECTOR_SLOT(strvec, (i + 1)), line_nr, file);
+ 			return 0;
 -- 
-2.16.2.395.g2e18187dfd-goog
+2.16.1
