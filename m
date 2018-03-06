@@ -1,13 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH] multipathd: use nanosleep for sleeping
-Date: Tue, 06 Mar 2018 21:37:13 +0100
-Message-ID: <1520368633.4131.37.camel@suse.com>
-References: <1520299256-27243-1-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 2/2] multipathd: start marginal path checker
+	thread lazily
+Date: Tue,  6 Mar 2018 22:18:42 +0100
+Message-ID: <20180306211842.2556-2-mwilck@suse.com>
+References: <20180306211842.2556-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1520299256-27243-1-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <20180306211842.2556-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,96 +18,292 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>
-Cc: Bart Van Assche <Bart.VanAssche@wdc.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Guan Junxiong <guanjunxiong@huawei.com>
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-T24gTW9uLCAyMDE4LTAzLTA1IGF0IDE5OjIwIC0wNjAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gSW4gb3JkZXIgdG8gc2FmZWx5IHVzZSBTSUdBTFJNIGluIGEgbXVsdGktdGhyZWFkZWQg
-cHJvZ3JhbSwgb25seSBvbmUKPiB0aHJlYWQgY2FuIHNjaGVkdWxlIGFuZCB3YWl0IG9uIFNJR0FM
-Uk0gYXQgYSB0aW1lLiBBbGwgb3RoZXIgdGhyZWFkcwo+IG11c3QgaGF2ZSBTSUdBTFJNIGJsb2Nr
-ZWQsIGFuZCBiZSB1bmFibGUgdG8gc2NoZWR1bGUgYW4gYWxhcm0uIFRoZQo+IHN0cmljdF90aW1p
-bmcgY29kZSBpbiBjaGVja2VybG9vcCB3YXMgdW5ibG9ja2luZyBTSUdBTFJNLCBhbmQgY2FsbGlu
-Zwo+IHNldGl0aW1lcigpLCB3aXRob3V0IGFueSBsb2NraW5nLiAgSW5zdGVhZCwgaXQgc2hvdWxk
-IHVzZSBuYW5vc2xlZXAoKQo+IHRvIHNsZWVwIGZvciB0aGUgY29ycmVjdCBsZW5ndGggb2YgdGlt
-ZSwgc2luY2UgdGhhdCBkb2Vzbid0IGRlcGVuZCBvcgo+IGludGVyZmVyZSB3aXRoIHNpZ25hbHMu
-IGlvX2Vycl9zdGF0X2xvb3AoKSB3YXMgY2FsbGluZyB1c2xlZXAoKQo+IHdpdGhvdXQKPiBhbnkg
-bG9ja2luZy4gQWNjb3JkaW5nIHRvIHRoZSBQT1NJWCBzdGFuZGFyZHMsIHRoZSByZXN1bHQgb2Yg
-YQo+IFNJR0FSTE0KPiBvY2N1cmluZyBkdXJpbmcgYSB1c2xlZXAgY2FsbCBpcyB1bmRlZmluZWQs
-IGV2ZW4gaWYgdGhlIGNhbGxpbmcKPiB0aHJlYWQKPiBibG9ja3MgdGhlIHNpZ25hbC4gV2hpbGUg
-dGhpcyBpcyB1bmxpa2VseSB0byBjYXVzZSBhIHByb2JsZW0gb24gYQo+IG1vZGVybiBsaW51eCBz
-eXN0ZW0sIG5hbm9zbGVlcCBpcyBndWFyYW50ZWVkIHRvIG5vdCBpbnRlcmFjdCB3aXRoCj4gU0lH
-QUxSTSwgYXMgbG9uZyBhcyB0aGUgc2lnbmFsIGlzIGJsb2NrZWQgYnkgdGhlIGNhbGxpbmcgdGhy
-ZWFkLgoKVGhlIGxpYmMgbWFudWFsIHNheXMgIk9uIEdOVSBzeXN0ZW1zLCBpdCBpcyBzYWZlIHRv
-IHVzZSDigJhzbGVlcOKAmSBhbmQK4oCYU0lHQUxSTeKAmSBpbiB0aGUgc2FtZSBwcm9ncmFtLCBi
-ZWNhdXNlIOKAmHNsZWVw4oCZIGRvZXMgbm90IHdvcmsgYnkgbWVhbnMKb2Yg4oCYU0lHQUxSTeKA
-mS4iIEFjdHVhbGx5LCBpZiB5b3Ugd2F0Y2ggaXQgdW5kZXIgc3RyYWNlLCB5b3UgY2FuIHNlZSB0
-aGF0CnRoZSBzbGVlcCgxKSBjYWxsIGluIGNoZWNrZXJsb29wICh3aXRob3V0IHN0cmljdCB0aW1p
-bmcpIHRyYW5zbGF0ZXMKaW50byBhIG5hbm9zbGVlcCgpIGNhbGwuIAoKSSdtIGdlbmVyYWxseSB3
-aXRoIHlvdSBoZXJlLCBpdCdzIGJldHRlciB0byBiZSBjbGVhcmx5IG9uIHRoZSBzYWZlCnNpZGUu
-IEFueXdheSwgSSdkIHJlcGxhY2VkIHRoZSAidXNsZWVwIiBjYWxsIGJ5ICJwc2VsZWN0IiBhbHJl
-YWR5LCBzZWUKYmVsb3cuCgo+IAo+IFNpZ25lZC1vZmYtYnk6IEJlbmphbWluIE1hcnppbnNraSA8
-Ym1hcnppbnNAcmVkaGF0LmNvbT4KPiAtLS0KPiAgbGlibXVsdGlwYXRoL2lvX2Vycl9zdGF0LmMg
-fCAgMyArKy0KPiAgbXVsdGlwYXRoZC9tYWluLmMgICAgICAgICAgfCAyNyArKysrKysrKystLS0t
-LS0tLS0tLS0tLS0tLS0KPiAgMiBmaWxlcyBjaGFuZ2VkLCAxMSBpbnNlcnRpb25zKCspLCAxOSBk
-ZWxldGlvbnMoLSkKPiAKPiBkaWZmIC0tZ2l0IGEvbGlibXVsdGlwYXRoL2lvX2Vycl9zdGF0LmMg
-Yi9saWJtdWx0aXBhdGgvaW9fZXJyX3N0YXQuYwo+IGluZGV4IDViMTBmMDMuLjU1NWFmNWQgMTAw
-NjQ0Cj4gLS0tIGEvbGlibXVsdGlwYXRoL2lvX2Vycl9zdGF0LmMKPiArKysgYi9saWJtdWx0aXBh
-dGgvaW9fZXJyX3N0YXQuYwo+IEBAIC02OTcsOCArNjk3LDkgQEAgc3RhdGljIHZvaWQgKmlvX2Vy
-cl9zdGF0X2xvb3Aodm9pZCAqZGF0YSkKPiAgCj4gIAltbG9ja2FsbChNQ0xfQ1VSUkVOVCB8IE1D
-TF9GVVRVUkUpOwo+ICAJd2hpbGUgKDEpIHsKPiArCQlzdHJ1Y3QgdGltZXNwZWMgZGVsYXkgPSB7
-MCwgMTAwMDAwMDAwfTsgLyogLjEgc2VjICovCj4gIAkJc2VydmljZV9wYXRocygpOwo+IC0JCXVz
-bGVlcCgxMDAwMDApOwo+ICsJCW5hbm9zbGVlcCgmZGVsYXksIE5VTEwpOwo+ICAJfQoKQXMgeW91
-IHByb2JhYmx5IG5vdGljZWQsIG15IGxhdGUgcGF0Y2ggImxpYm11bHRpcGF0aDogZml4IHR1ciBj
-aGVja2VyCmxvY2tpbmciIGhhZCByZXBsYWNlZCB0aGlzIHVzbGVlcCBjYWxsIGJ5IGEgcHNlbGVj
-dCgpIGNhbGwuIHBzZWxlY3QoKQpkb2Vzbid0IHVzZSBTSUdBTFJNLCBlaXRoZXIuCgo+ICAKPiAg
-CXB0aHJlYWRfY2xlYW51cF9wb3AoMSk7Cj4gZGlmZiAtLWdpdCBhL211bHRpcGF0aGQvbWFpbi5j
-IGIvbXVsdGlwYXRoZC9tYWluLmMKPiBpbmRleCA4ODk2NzBjLi41NWI5MmJlIDEwMDY0NAo+IC0t
-LSBhL211bHRpcGF0aGQvbWFpbi5jCj4gKysrIGIvbXVsdGlwYXRoZC9tYWluLmMKPiBAQCAtMTgz
-NCw3ICsxODM0LDYgQEAgY2hlY2tlcmxvb3AgKHZvaWQgKmFwKQo+ICAJc3RydWN0IHBhdGggKnBw
-Owo+ICAJaW50IGNvdW50ID0gMDsKPiAgCXVuc2lnbmVkIGludCBpOwo+IC0Jc3RydWN0IGl0aW1l
-cnZhbCB0aW1lcl90aWNrX2l0Owo+ICAJc3RydWN0IHRpbWVzcGVjIGxhc3RfdGltZTsKPiAgCXN0
-cnVjdCBjb25maWcgKmNvbmY7Cj4gIAo+IEBAIC0xODUyLDggKzE4NTEsNyBAQCBjaGVja2VybG9v
-cCAodm9pZCAqYXApCj4gIAo+ICAJd2hpbGUgKDEpIHsKPiAgCQlzdHJ1Y3QgdGltZXNwZWMgZGlm
-Zl90aW1lLCBzdGFydF90aW1lLCBlbmRfdGltZTsKPiAtCQlpbnQgbnVtX3BhdGhzID0gMCwgdGlj
-a3MgPSAwLCBzaWdubywgc3RyaWN0X3RpbWluZywKPiByYyA9IDA7Cj4gLQkJc2lnc2V0X3QgbWFz
-azsKPiArCQlpbnQgbnVtX3BhdGhzID0gMCwgdGlja3MgPSAwLCBzdHJpY3RfdGltaW5nLCByYyA9
-IDA7Cj4gIAo+ICAJCWlmIChjbG9ja19nZXR0aW1lKENMT0NLX01PTk9UT05JQywgJnN0YXJ0X3Rp
-bWUpICE9Cj4gMCkKPiAgCQkJc3RhcnRfdGltZS50dl9zZWMgPSAwOwo+IEBAIC0xOTQxLDI1ICsx
-OTM5LDE4IEBAIGNoZWNrZXJsb29wICh2b2lkICphcCkKPiAgCQlpZiAoIXN0cmljdF90aW1pbmcp
-Cj4gIAkJCXNsZWVwKDEpOwoKSG0sIGlmIHRoZSB1c2xlZXAoKSBpbiB0aGUgaW9fZXJyb3IgdGhy
-ZWFkIHdhcyBhIHByb2JsZW0sIHdoeSB3b3VsZG4ndAp0aGUgc2xlZXAoKSBoZXJlIGJlIG9uZSwg
-dG9vPyBXZSdyZSBub3QgaG9sZGluZyB0aGUgdmVjcyBsb2NrIGhlcmUuCkJ0dyB0aGVyZSdzIGEg
-Y291cGxlIG1vcmUgc2xlZXAoKSBhbmQgdXNsZWVwKCkgY2FsbHMgc2NhdHRlcmVkIGFyb3VuZAp0
-aGUgY29kZS4gQW55d2F5LCBpdCBzZWVtcyB0aGF0IHRoZXkgYWxsIHJlc29sdmUgdG8gbmFub3Ns
-ZWVwKCkuCgo+ICAJCWVsc2Ugewo+IC0JCQl0aW1lcl90aWNrX2l0Lml0X2ludGVydmFsLnR2X3Nl
-YyA9IDA7Cj4gLQkJCXRpbWVyX3RpY2tfaXQuaXRfaW50ZXJ2YWwudHZfdXNlYyA9IDA7Cj4gIAkJ
-CWlmIChkaWZmX3RpbWUudHZfbnNlYykgewo+IC0JCQkJdGltZXJfdGlja19pdC5pdF92YWx1ZS50
-dl9zZWMgPSAwOwo+IC0JCQkJdGltZXJfdGlja19pdC5pdF92YWx1ZS50dl91c2VjID0KPiArCQkJ
-CWRpZmZfdGltZS50dl9zZWMgPSAwOwo+ICsJCQkJZGlmZl90aW1lLnR2X25zZWMgPQo+ICAJCQkJ
-ICAgICAxMDAwVUwgKiAxMDAwICogMTAwMCAtCj4gZGlmZl90aW1lLnR2X25zZWM7Cj4gLQkJCX0g
-ZWxzZSB7Cj4gLQkJCQl0aW1lcl90aWNrX2l0Lml0X3ZhbHVlLnR2X3NlYyA9IDE7Cj4gLQkJCQl0
-aW1lcl90aWNrX2l0Lml0X3ZhbHVlLnR2X3VzZWMgPSAwOwo+IC0JCQl9Cj4gLQkJCXNldGl0aW1l
-cihJVElNRVJfUkVBTCwgJnRpbWVyX3RpY2tfaXQsCj4gTlVMTCk7Cj4gKwkJCX0gZWxzZQo+ICsJ
-CQkJZGlmZl90aW1lLnR2X3NlYyA9IDE7Cj4gIAo+IC0JCQlzaWdlbXB0eXNldCgmbWFzayk7Cj4g
-LQkJCXNpZ2FkZHNldCgmbWFzaywgU0lHQUxSTSk7Cj4gIAkJCWNvbmRsb2coMywgIndhaXRpbmcg
-Zm9yICVsdS4lMDZsdSBzZWNzIiwKPiAtCQkJCXRpbWVyX3RpY2tfaXQuaXRfdmFsdWUudHZfc2Vj
-LAo+IC0JCQkJdGltZXJfdGlja19pdC5pdF92YWx1ZS50dl91c2VjKTsKPiAtCQkJaWYgKHNpZ3dh
-aXQoJm1hc2ssICZzaWdubykgIT0gMCkgewo+IC0JCQkJY29uZGxvZygzLCAic2lnd2FpdCBmYWls
-ZWQgd2l0aAo+IGVycm9yICVkIiwKPiArCQkJCWRpZmZfdGltZS50dl9zZWMsCj4gKwkJCQlkaWZm
-X3RpbWUudHZfbnNlYyAvIDEwMDApOwo+ICsJCQlpZiAobmFub3NsZWVwKCZkaWZmX3RpbWUsIE5V
-TEwpICE9IDApIHsKPiArCQkJCWNvbmRsb2coMywgIm5hbm9zbGVlcCBmYWlsZWQgd2l0aAo+IGVy
-cm9yICVkIiwKPiAgCQkJCQllcnJubyk7Cj4gIAkJCQljb25mID0gZ2V0X211bHRpcGF0aF9jb25m
-aWcoKTsKPiAgCQkJCWNvbmYtPnN0cmljdF90aW1pbmcgPSAwOwoKSSdtIHN1cmUgdGhpcyB3b3Jr
-cywgYnV0IGhhdmUgeW91IGNvbnNpZGVyZWQgYWNoaWV2aW5nIHRoZSBzYW1lIHJlc3VsdApzaW1w
-bHkgYnkgdXNpbmcgY3JlYXRlX3RpbWVyIHdpdGggYSBkaWZmZXJlbnQgc2lnbmFsIHRoYW4gU0lH
-QUxSTT8KVGhpbmtpbmcgYWJvdXQgaXQsIEknbSBzdXJlIHRoZSBzdHJpY3RfdGltaW5nIGNvZGUg
-Y2FuIGJlIGRyYXN0aWNhbGx5CnNpbXBsaWZpZWQgYnkgdXNpbmcgYW4gaW50ZXJ2YWwgdGltZXIg
-YW5kIGEgcmVhbHRpbWUgc2lnbmFsLgoKQW5kIHdlIHN0aWxsIGhhdmUgdGhlIGNvZGUgdXNpbmcg
-U0lHQUxSTSBpbiBsb2NrX2ZpbGUoKSwgaXMgaXQgeW91cgppbnRlbnRpb24gdG8gbGVhdmUgdGhh
-dCBhcy1pcyBhbmQgY2hhbmdlIGFsbCBvdGhlciB1c2VycyBvZiBTSUdBTFJNPwoKUmVnYXJkcwpN
-YXJ0aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAo
-MCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIs
-IEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgot
-LQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5y
-ZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+I noticed that the io_error checker thread accounts for most of the
+activity of multipathd even if the marginal path checking paramters
+are not set (which is still the default in most installations I assume).
+
+Therefore, start the io_error checker thread only if there's at least
+one map with marginal error path checking configured. Also, make sure
+the thread is really up when start_io_err_stat_thread() returns.
+
+This requires adding a "vecs" argument to setup_map, because vecs
+needs to be passed to the io_error checking code.
+
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ libmultipath/configure.c   | 14 +++++++++---
+ libmultipath/configure.h   |  3 ++-
+ libmultipath/io_err_stat.c | 55 ++++++++++++++++++++++++++++++++++++++++++----
+ libmultipath/structs_vec.c |  3 ++-
+ multipathd/cli_handlers.c  |  2 +-
+ multipathd/main.c          |  8 ++-----
+ 6 files changed, 69 insertions(+), 16 deletions(-)
+
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 42b7c896ee65..fa6e21cb31af 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -41,6 +41,7 @@
+ #include "uxsock.h"
+ #include "wwids.h"
+ #include "sysfs.h"
++#include "io_err_stat.h"
+ 
+ /* group paths in pg by host adapter
+  */
+@@ -255,7 +256,8 @@ int rr_optimize_path_order(struct pathgroup *pgp)
+ 	return 0;
+ }
+ 
+-int setup_map(struct multipath *mpp, char *params, int params_size)
++int setup_map(struct multipath *mpp, char *params, int params_size,
++	      struct vectors *vecs)
+ {
+ 	struct pathgroup * pgp;
+ 	struct config *conf;
+@@ -315,6 +317,12 @@ int setup_map(struct multipath *mpp, char *params, int params_size)
+ 
+ 	sysfs_set_scsi_tmo(mpp, conf->checkint);
+ 	put_multipath_config(conf);
++
++	if (mpp->marginal_path_double_failed_time > 0 &&
++	    mpp->marginal_path_err_sample_time > 0 &&
++	    mpp->marginal_path_err_recheck_gap_time > 0 &&
++	    mpp->marginal_path_err_rate_threshold >= 0)
++		start_io_err_stat_thread(vecs);
+ 	/*
+ 	 * assign paths to path groups -- start with no groups and all paths
+ 	 * in mpp->paths
+@@ -1019,7 +1027,7 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
+ 		verify_paths(mpp, vecs);
+ 
+ 		params[0] = '\0';
+-		if (setup_map(mpp, params, PARAMS_SIZE)) {
++		if (setup_map(mpp, params, PARAMS_SIZE, vecs)) {
+ 			remove_map(mpp, vecs, 0);
+ 			continue;
+ 		}
+@@ -1348,7 +1356,7 @@ int reload_map(struct vectors *vecs, struct multipath *mpp, int refresh,
+ 			}
+ 		}
+ 	}
+-	if (setup_map(mpp, params, PARAMS_SIZE)) {
++	if (setup_map(mpp, params, PARAMS_SIZE, vecs)) {
+ 		condlog(0, "%s: failed to setup map", mpp->alias);
+ 		return 1;
+ 	}
+diff --git a/libmultipath/configure.h b/libmultipath/configure.h
+index 0f5d30a540ca..27a7e6f60a63 100644
+--- a/libmultipath/configure.h
++++ b/libmultipath/configure.h
+@@ -28,7 +28,8 @@ enum actions {
+ 
+ struct vectors;
+ 
+-int setup_map (struct multipath * mpp, char * params, int params_size );
++int setup_map (struct multipath * mpp, char * params, int params_size,
++	       struct vectors *vecs );
+ int domap (struct multipath * mpp, char * params, int is_daemon);
+ int reinstate_paths (struct multipath *mpp);
+ int coalesce_paths (struct vectors *vecs, vector curmp, char * refwwid, int force_reload, enum mpath_cmds cmd);
+diff --git a/libmultipath/io_err_stat.c b/libmultipath/io_err_stat.c
+index 536ba87968fd..ac81b4b9390d 100644
+--- a/libmultipath/io_err_stat.c
++++ b/libmultipath/io_err_stat.c
+@@ -74,6 +74,10 @@ struct io_err_stat_path {
+ pthread_t		io_err_stat_thr;
+ pthread_attr_t		io_err_stat_attr;
+ 
++static pthread_mutex_t io_err_thread_lock = PTHREAD_MUTEX_INITIALIZER;
++static pthread_cond_t io_err_thread_cond = PTHREAD_COND_INITIALIZER;
++static int io_err_thread_running = 0;
++
+ static struct io_err_stat_pathvec *paths;
+ struct vectors *vecs;
+ io_context_t	ioctx;
+@@ -316,6 +320,9 @@ int io_err_stat_handle_pathfail(struct path *path)
+ 	struct timespec curr_time;
+ 	int res;
+ 
++	if (uatomic_read(&io_err_thread_running) == 0)
++		return 1;
++
+ 	if (path->io_err_disable_reinstate) {
+ 		io_err_stat_log(3, "%s: reinstate is already disabled",
+ 				path->dev);
+@@ -380,6 +387,8 @@ int hit_io_err_recheck_time(struct path *pp)
+ 	struct timespec curr_time;
+ 	int r;
+ 
++	if (uatomic_read(&io_err_thread_running) == 0)
++		return 0;
+ 	if (pp->mpp->nr_active <= 0) {
+ 		io_err_stat_log(2, "%s: recover path early", pp->dev);
+ 		goto recover;
+@@ -690,6 +699,16 @@ static void service_paths(void)
+ 	pthread_mutex_unlock(&paths->mutex);
+ }
+ 
++static void cleanup_unlock(void *arg)
++{
++	pthread_mutex_unlock((pthread_mutex_t*) arg);
++}
++
++static void cleanup_exited(void *arg)
++{
++	uatomic_set(&io_err_thread_running, 0);
++}
++
+ static void *io_err_stat_loop(void *data)
+ {
+ 	sigset_t set;
+@@ -698,10 +717,18 @@ static void *io_err_stat_loop(void *data)
+ 	pthread_cleanup_push(rcu_unregister, NULL);
+ 	rcu_register_thread();
+ 
++	pthread_cleanup_push(cleanup_exited, NULL);
++
+ 	sigfillset(&set);
+ 	sigdelset(&set, SIGUSR2);
+ 
+ 	mlockall(MCL_CURRENT | MCL_FUTURE);
++
++	pthread_mutex_lock(&io_err_thread_lock);
++	uatomic_set(&io_err_thread_running, 1);
++	pthread_cond_broadcast(&io_err_thread_cond);
++	pthread_mutex_unlock(&io_err_thread_lock);
++
+ 	while (1) {
+ 		struct timespec ts;
+ 
+@@ -716,12 +743,18 @@ static void *io_err_stat_loop(void *data)
+ 		pselect(1, NULL, NULL, NULL, &ts, &set);
+ 	}
+ 
++	pthread_cleanup_pop(1);
+ 	pthread_cleanup_pop(1);
+ 	return NULL;
+ }
+ 
+ int start_io_err_stat_thread(void *data)
+ {
++	int ret;
++
++	if (uatomic_read(&io_err_thread_running) == 1)
++		return 0;
++
+ 	if (io_setup(CONCUR_NR_EVENT, &ioctx) != 0) {
+ 		io_err_stat_log(4, "io_setup failed");
+ 		return 1;
+@@ -730,12 +763,24 @@ int start_io_err_stat_thread(void *data)
+ 	if (!paths)
+ 		goto destroy_ctx;
+ 
+-	if (pthread_create(&io_err_stat_thr, &io_err_stat_attr,
+-				io_err_stat_loop, data)) {
++	pthread_mutex_lock(&io_err_thread_lock);
++	pthread_cleanup_push(cleanup_unlock, &io_err_thread_lock);
++
++	ret = pthread_create(&io_err_stat_thr, &io_err_stat_attr,
++			     io_err_stat_loop, data);
++
++	while (!ret && !uatomic_read(&io_err_thread_running) &&
++	       pthread_cond_wait(&io_err_thread_cond,
++				 &io_err_thread_lock) == 0);
++
++	pthread_cleanup_pop(1);
++
++	if (ret) {
+ 		io_err_stat_log(0, "cannot create io_error statistic thread");
+ 		goto out_free;
+ 	}
+-	io_err_stat_log(3, "thread started");
++
++	io_err_stat_log(2, "io_error statistic thread started");
+ 	return 0;
+ 
+ out_free:
+@@ -748,7 +793,9 @@ destroy_ctx:
+ 
+ void stop_io_err_stat_thread(void)
+ {
+-	pthread_cancel(io_err_stat_thr);
++	if (uatomic_read(&io_err_thread_running) == 1)
++		pthread_cancel(io_err_stat_thr);
++
+ 	pthread_join(io_err_stat_thr, NULL);
+ 	free_io_err_pathvec(paths);
+ 	io_destroy(ioctx);
+diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
+index 3aafee7b217b..b3b94678438a 100644
+--- a/libmultipath/structs_vec.c
++++ b/libmultipath/structs_vec.c
+@@ -18,6 +18,7 @@
+ #include "prio.h"
+ #include "configure.h"
+ #include "libdevmapper.h"
++#include "io_err_stat.h"
+ 
+ /*
+  * creates or updates mpp->paths reading mpp->pg
+@@ -426,7 +427,7 @@ retry:
+ 	mpp->action = ACT_RELOAD;
+ 
+ 	extract_hwe_from_path(mpp);
+-	if (setup_map(mpp, params, PARAMS_SIZE)) {
++	if (setup_map(mpp, params, PARAMS_SIZE, vecs)) {
+ 		condlog(0, "%s: failed to setup new map in update", mpp->alias);
+ 		retries = -1;
+ 		goto fail;
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index c0ae54aae841..7169e8d3d7ed 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -894,7 +894,7 @@ int resize_map(struct multipath *mpp, unsigned long long size,
+ 
+ 	mpp->size = size;
+ 	update_mpp_paths(mpp, vecs->pathvec);
+-	setup_map(mpp, params, PARAMS_SIZE);
++	setup_map(mpp, params, PARAMS_SIZE, vecs);
+ 	mpp->action = ACT_RESIZE;
+ 	mpp->force_udev_reload = 1;
+ 	if (domap(mpp, params, 1) <= 0) {
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 09a59292245f..ccfc41a1f680 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -734,7 +734,7 @@ rescan:
+ 	/*
+ 	 * push the map to the device-mapper
+ 	 */
+-	if (setup_map(mpp, params, PARAMS_SIZE)) {
++	if (setup_map(mpp, params, PARAMS_SIZE, vecs)) {
+ 		condlog(0, "%s: failed to setup map for addition of new "
+ 			"path %s", mpp->alias, pp->dev);
+ 		goto fail_map;
+@@ -873,7 +873,7 @@ ev_remove_path (struct path *pp, struct vectors * vecs, int need_do_map)
+ 			 */
+ 		}
+ 
+-		if (setup_map(mpp, params, PARAMS_SIZE)) {
++		if (setup_map(mpp, params, PARAMS_SIZE, vecs)) {
+ 			condlog(0, "%s: failed to setup map for"
+ 				" removal of path %s", mpp->alias, pp->dev);
+ 			goto fail;
+@@ -2489,10 +2489,6 @@ child (void * param)
+ 	/*
+ 	 * start threads
+ 	 */
+-	rc = start_io_err_stat_thread(vecs);
+-	if (rc)
+-		goto failed;
+-
+ 	if ((rc = pthread_create(&check_thr, &misc_attr, checkerloop, vecs))) {
+ 		condlog(0,"failed to create checker loop thread: %d", rc);
+ 		goto failed;
+-- 
+2.16.1
