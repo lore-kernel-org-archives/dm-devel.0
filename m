@@ -1,14 +1,13 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 0/6] Various multipath-tools patches
-Date: Tue, 6 Mar 2018 09:25:18 -0600
-Message-ID: <20180306152518.GO14513@octiron.msp.redhat.com>
-References: <20180301192935.14643-1-bart.vanassche@wdc.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH] multipathd: use nanosleep for sleeping
+Date: Tue, 06 Mar 2018 21:37:13 +0100
+Message-ID: <1520368633.4131.37.camel@suse.com>
+References: <1520299256-27243-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20180301192935.14643-1-bart.vanassche@wdc.com>
+In-Reply-To: <1520299256-27243-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,59 +17,96 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <bart.vanassche@wdc.com>
-Cc: dm-devel@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>
+Cc: Bart Van Assche <Bart.VanAssche@wdc.com>
 List-Id: dm-devel.ids
 
-On Thu, Mar 01, 2018 at 11:29:29AM -0800, Bart Van Assche wrote:
-> Hello Christophe,
-> 
-> This series contains the following patches:
-> - Four patches address Coverity complaints.
-> - One patch makes a function argument const.
-> - One patch addresses a bug that I discovered while inspecting the multipath
->   command line tool output.
-> 
-> Please consider these patches for the multipath-tools project.
-
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
-
-For the set. Buy I agree with Martin that we should fold some of these
-into his already posted patches.
-
--Ben
-
-> 
-> Thanks,
-> 
-> Bart.
-> 
-> Bart Van Assche (6):
->   multipathd/main.c: Fix indentation
->   libmultipath, alloc_path_with_pathinfo(): Ensure that pp->wwid is
->     '\0'-terminated
->   libmultipath, alloc_path_with_pathinfo(): Declare third argument const
->   kpartx: Improve reliability of find_loop_by_file()
->   libmultipath: Fix sgio_get_vpd()
->   Introduce the ibmultipath/unaligned.h header file
-> 
->  kpartx/lopart.c                       |  7 ++++---
->  libmpathpersist/mpath_pr_ioctl.c      |  8 ++++----
->  libmultipath/checkers/hp_sw.c         |  4 ++--
->  libmultipath/discovery.c              | 22 +++++++++++---------
->  libmultipath/discovery.h              |  2 +-
->  libmultipath/prioritizers/alua_rtpg.c | 13 ++++++------
->  libmultipath/prioritizers/alua_spc3.h | 35 ++------------------------------
->  libmultipath/prioritizers/ontap.c     |  4 ++--
->  libmultipath/unaligned.h              | 38 +++++++++++++++++++++++++++++++++++
->  multipathd/main.c                     |  4 ++--
->  10 files changed, 74 insertions(+), 63 deletions(-)
->  create mode 100644 libmultipath/unaligned.h
-> 
-> -- 
-> 2.16.2
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+T24gTW9uLCAyMDE4LTAzLTA1IGF0IDE5OjIwIC0wNjAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cj4gSW4gb3JkZXIgdG8gc2FmZWx5IHVzZSBTSUdBTFJNIGluIGEgbXVsdGktdGhyZWFkZWQg
+cHJvZ3JhbSwgb25seSBvbmUKPiB0aHJlYWQgY2FuIHNjaGVkdWxlIGFuZCB3YWl0IG9uIFNJR0FM
+Uk0gYXQgYSB0aW1lLiBBbGwgb3RoZXIgdGhyZWFkcwo+IG11c3QgaGF2ZSBTSUdBTFJNIGJsb2Nr
+ZWQsIGFuZCBiZSB1bmFibGUgdG8gc2NoZWR1bGUgYW4gYWxhcm0uIFRoZQo+IHN0cmljdF90aW1p
+bmcgY29kZSBpbiBjaGVja2VybG9vcCB3YXMgdW5ibG9ja2luZyBTSUdBTFJNLCBhbmQgY2FsbGlu
+Zwo+IHNldGl0aW1lcigpLCB3aXRob3V0IGFueSBsb2NraW5nLiAgSW5zdGVhZCwgaXQgc2hvdWxk
+IHVzZSBuYW5vc2xlZXAoKQo+IHRvIHNsZWVwIGZvciB0aGUgY29ycmVjdCBsZW5ndGggb2YgdGlt
+ZSwgc2luY2UgdGhhdCBkb2Vzbid0IGRlcGVuZCBvcgo+IGludGVyZmVyZSB3aXRoIHNpZ25hbHMu
+IGlvX2Vycl9zdGF0X2xvb3AoKSB3YXMgY2FsbGluZyB1c2xlZXAoKQo+IHdpdGhvdXQKPiBhbnkg
+bG9ja2luZy4gQWNjb3JkaW5nIHRvIHRoZSBQT1NJWCBzdGFuZGFyZHMsIHRoZSByZXN1bHQgb2Yg
+YQo+IFNJR0FSTE0KPiBvY2N1cmluZyBkdXJpbmcgYSB1c2xlZXAgY2FsbCBpcyB1bmRlZmluZWQs
+IGV2ZW4gaWYgdGhlIGNhbGxpbmcKPiB0aHJlYWQKPiBibG9ja3MgdGhlIHNpZ25hbC4gV2hpbGUg
+dGhpcyBpcyB1bmxpa2VseSB0byBjYXVzZSBhIHByb2JsZW0gb24gYQo+IG1vZGVybiBsaW51eCBz
+eXN0ZW0sIG5hbm9zbGVlcCBpcyBndWFyYW50ZWVkIHRvIG5vdCBpbnRlcmFjdCB3aXRoCj4gU0lH
+QUxSTSwgYXMgbG9uZyBhcyB0aGUgc2lnbmFsIGlzIGJsb2NrZWQgYnkgdGhlIGNhbGxpbmcgdGhy
+ZWFkLgoKVGhlIGxpYmMgbWFudWFsIHNheXMgIk9uIEdOVSBzeXN0ZW1zLCBpdCBpcyBzYWZlIHRv
+IHVzZSDigJhzbGVlcOKAmSBhbmQK4oCYU0lHQUxSTeKAmSBpbiB0aGUgc2FtZSBwcm9ncmFtLCBi
+ZWNhdXNlIOKAmHNsZWVw4oCZIGRvZXMgbm90IHdvcmsgYnkgbWVhbnMKb2Yg4oCYU0lHQUxSTeKA
+mS4iIEFjdHVhbGx5LCBpZiB5b3Ugd2F0Y2ggaXQgdW5kZXIgc3RyYWNlLCB5b3UgY2FuIHNlZSB0
+aGF0CnRoZSBzbGVlcCgxKSBjYWxsIGluIGNoZWNrZXJsb29wICh3aXRob3V0IHN0cmljdCB0aW1p
+bmcpIHRyYW5zbGF0ZXMKaW50byBhIG5hbm9zbGVlcCgpIGNhbGwuIAoKSSdtIGdlbmVyYWxseSB3
+aXRoIHlvdSBoZXJlLCBpdCdzIGJldHRlciB0byBiZSBjbGVhcmx5IG9uIHRoZSBzYWZlCnNpZGUu
+IEFueXdheSwgSSdkIHJlcGxhY2VkIHRoZSAidXNsZWVwIiBjYWxsIGJ5ICJwc2VsZWN0IiBhbHJl
+YWR5LCBzZWUKYmVsb3cuCgo+IAo+IFNpZ25lZC1vZmYtYnk6IEJlbmphbWluIE1hcnppbnNraSA8
+Ym1hcnppbnNAcmVkaGF0LmNvbT4KPiAtLS0KPiAgbGlibXVsdGlwYXRoL2lvX2Vycl9zdGF0LmMg
+fCAgMyArKy0KPiAgbXVsdGlwYXRoZC9tYWluLmMgICAgICAgICAgfCAyNyArKysrKysrKystLS0t
+LS0tLS0tLS0tLS0tLS0KPiAgMiBmaWxlcyBjaGFuZ2VkLCAxMSBpbnNlcnRpb25zKCspLCAxOSBk
+ZWxldGlvbnMoLSkKPiAKPiBkaWZmIC0tZ2l0IGEvbGlibXVsdGlwYXRoL2lvX2Vycl9zdGF0LmMg
+Yi9saWJtdWx0aXBhdGgvaW9fZXJyX3N0YXQuYwo+IGluZGV4IDViMTBmMDMuLjU1NWFmNWQgMTAw
+NjQ0Cj4gLS0tIGEvbGlibXVsdGlwYXRoL2lvX2Vycl9zdGF0LmMKPiArKysgYi9saWJtdWx0aXBh
+dGgvaW9fZXJyX3N0YXQuYwo+IEBAIC02OTcsOCArNjk3LDkgQEAgc3RhdGljIHZvaWQgKmlvX2Vy
+cl9zdGF0X2xvb3Aodm9pZCAqZGF0YSkKPiAgCj4gIAltbG9ja2FsbChNQ0xfQ1VSUkVOVCB8IE1D
+TF9GVVRVUkUpOwo+ICAJd2hpbGUgKDEpIHsKPiArCQlzdHJ1Y3QgdGltZXNwZWMgZGVsYXkgPSB7
+MCwgMTAwMDAwMDAwfTsgLyogLjEgc2VjICovCj4gIAkJc2VydmljZV9wYXRocygpOwo+IC0JCXVz
+bGVlcCgxMDAwMDApOwo+ICsJCW5hbm9zbGVlcCgmZGVsYXksIE5VTEwpOwo+ICAJfQoKQXMgeW91
+IHByb2JhYmx5IG5vdGljZWQsIG15IGxhdGUgcGF0Y2ggImxpYm11bHRpcGF0aDogZml4IHR1ciBj
+aGVja2VyCmxvY2tpbmciIGhhZCByZXBsYWNlZCB0aGlzIHVzbGVlcCBjYWxsIGJ5IGEgcHNlbGVj
+dCgpIGNhbGwuIHBzZWxlY3QoKQpkb2Vzbid0IHVzZSBTSUdBTFJNLCBlaXRoZXIuCgo+ICAKPiAg
+CXB0aHJlYWRfY2xlYW51cF9wb3AoMSk7Cj4gZGlmZiAtLWdpdCBhL211bHRpcGF0aGQvbWFpbi5j
+IGIvbXVsdGlwYXRoZC9tYWluLmMKPiBpbmRleCA4ODk2NzBjLi41NWI5MmJlIDEwMDY0NAo+IC0t
+LSBhL211bHRpcGF0aGQvbWFpbi5jCj4gKysrIGIvbXVsdGlwYXRoZC9tYWluLmMKPiBAQCAtMTgz
+NCw3ICsxODM0LDYgQEAgY2hlY2tlcmxvb3AgKHZvaWQgKmFwKQo+ICAJc3RydWN0IHBhdGggKnBw
+Owo+ICAJaW50IGNvdW50ID0gMDsKPiAgCXVuc2lnbmVkIGludCBpOwo+IC0Jc3RydWN0IGl0aW1l
+cnZhbCB0aW1lcl90aWNrX2l0Owo+ICAJc3RydWN0IHRpbWVzcGVjIGxhc3RfdGltZTsKPiAgCXN0
+cnVjdCBjb25maWcgKmNvbmY7Cj4gIAo+IEBAIC0xODUyLDggKzE4NTEsNyBAQCBjaGVja2VybG9v
+cCAodm9pZCAqYXApCj4gIAo+ICAJd2hpbGUgKDEpIHsKPiAgCQlzdHJ1Y3QgdGltZXNwZWMgZGlm
+Zl90aW1lLCBzdGFydF90aW1lLCBlbmRfdGltZTsKPiAtCQlpbnQgbnVtX3BhdGhzID0gMCwgdGlj
+a3MgPSAwLCBzaWdubywgc3RyaWN0X3RpbWluZywKPiByYyA9IDA7Cj4gLQkJc2lnc2V0X3QgbWFz
+azsKPiArCQlpbnQgbnVtX3BhdGhzID0gMCwgdGlja3MgPSAwLCBzdHJpY3RfdGltaW5nLCByYyA9
+IDA7Cj4gIAo+ICAJCWlmIChjbG9ja19nZXR0aW1lKENMT0NLX01PTk9UT05JQywgJnN0YXJ0X3Rp
+bWUpICE9Cj4gMCkKPiAgCQkJc3RhcnRfdGltZS50dl9zZWMgPSAwOwo+IEBAIC0xOTQxLDI1ICsx
+OTM5LDE4IEBAIGNoZWNrZXJsb29wICh2b2lkICphcCkKPiAgCQlpZiAoIXN0cmljdF90aW1pbmcp
+Cj4gIAkJCXNsZWVwKDEpOwoKSG0sIGlmIHRoZSB1c2xlZXAoKSBpbiB0aGUgaW9fZXJyb3IgdGhy
+ZWFkIHdhcyBhIHByb2JsZW0sIHdoeSB3b3VsZG4ndAp0aGUgc2xlZXAoKSBoZXJlIGJlIG9uZSwg
+dG9vPyBXZSdyZSBub3QgaG9sZGluZyB0aGUgdmVjcyBsb2NrIGhlcmUuCkJ0dyB0aGVyZSdzIGEg
+Y291cGxlIG1vcmUgc2xlZXAoKSBhbmQgdXNsZWVwKCkgY2FsbHMgc2NhdHRlcmVkIGFyb3VuZAp0
+aGUgY29kZS4gQW55d2F5LCBpdCBzZWVtcyB0aGF0IHRoZXkgYWxsIHJlc29sdmUgdG8gbmFub3Ns
+ZWVwKCkuCgo+ICAJCWVsc2Ugewo+IC0JCQl0aW1lcl90aWNrX2l0Lml0X2ludGVydmFsLnR2X3Nl
+YyA9IDA7Cj4gLQkJCXRpbWVyX3RpY2tfaXQuaXRfaW50ZXJ2YWwudHZfdXNlYyA9IDA7Cj4gIAkJ
+CWlmIChkaWZmX3RpbWUudHZfbnNlYykgewo+IC0JCQkJdGltZXJfdGlja19pdC5pdF92YWx1ZS50
+dl9zZWMgPSAwOwo+IC0JCQkJdGltZXJfdGlja19pdC5pdF92YWx1ZS50dl91c2VjID0KPiArCQkJ
+CWRpZmZfdGltZS50dl9zZWMgPSAwOwo+ICsJCQkJZGlmZl90aW1lLnR2X25zZWMgPQo+ICAJCQkJ
+ICAgICAxMDAwVUwgKiAxMDAwICogMTAwMCAtCj4gZGlmZl90aW1lLnR2X25zZWM7Cj4gLQkJCX0g
+ZWxzZSB7Cj4gLQkJCQl0aW1lcl90aWNrX2l0Lml0X3ZhbHVlLnR2X3NlYyA9IDE7Cj4gLQkJCQl0
+aW1lcl90aWNrX2l0Lml0X3ZhbHVlLnR2X3VzZWMgPSAwOwo+IC0JCQl9Cj4gLQkJCXNldGl0aW1l
+cihJVElNRVJfUkVBTCwgJnRpbWVyX3RpY2tfaXQsCj4gTlVMTCk7Cj4gKwkJCX0gZWxzZQo+ICsJ
+CQkJZGlmZl90aW1lLnR2X3NlYyA9IDE7Cj4gIAo+IC0JCQlzaWdlbXB0eXNldCgmbWFzayk7Cj4g
+LQkJCXNpZ2FkZHNldCgmbWFzaywgU0lHQUxSTSk7Cj4gIAkJCWNvbmRsb2coMywgIndhaXRpbmcg
+Zm9yICVsdS4lMDZsdSBzZWNzIiwKPiAtCQkJCXRpbWVyX3RpY2tfaXQuaXRfdmFsdWUudHZfc2Vj
+LAo+IC0JCQkJdGltZXJfdGlja19pdC5pdF92YWx1ZS50dl91c2VjKTsKPiAtCQkJaWYgKHNpZ3dh
+aXQoJm1hc2ssICZzaWdubykgIT0gMCkgewo+IC0JCQkJY29uZGxvZygzLCAic2lnd2FpdCBmYWls
+ZWQgd2l0aAo+IGVycm9yICVkIiwKPiArCQkJCWRpZmZfdGltZS50dl9zZWMsCj4gKwkJCQlkaWZm
+X3RpbWUudHZfbnNlYyAvIDEwMDApOwo+ICsJCQlpZiAobmFub3NsZWVwKCZkaWZmX3RpbWUsIE5V
+TEwpICE9IDApIHsKPiArCQkJCWNvbmRsb2coMywgIm5hbm9zbGVlcCBmYWlsZWQgd2l0aAo+IGVy
+cm9yICVkIiwKPiAgCQkJCQllcnJubyk7Cj4gIAkJCQljb25mID0gZ2V0X211bHRpcGF0aF9jb25m
+aWcoKTsKPiAgCQkJCWNvbmYtPnN0cmljdF90aW1pbmcgPSAwOwoKSSdtIHN1cmUgdGhpcyB3b3Jr
+cywgYnV0IGhhdmUgeW91IGNvbnNpZGVyZWQgYWNoaWV2aW5nIHRoZSBzYW1lIHJlc3VsdApzaW1w
+bHkgYnkgdXNpbmcgY3JlYXRlX3RpbWVyIHdpdGggYSBkaWZmZXJlbnQgc2lnbmFsIHRoYW4gU0lH
+QUxSTT8KVGhpbmtpbmcgYWJvdXQgaXQsIEknbSBzdXJlIHRoZSBzdHJpY3RfdGltaW5nIGNvZGUg
+Y2FuIGJlIGRyYXN0aWNhbGx5CnNpbXBsaWZpZWQgYnkgdXNpbmcgYW4gaW50ZXJ2YWwgdGltZXIg
+YW5kIGEgcmVhbHRpbWUgc2lnbmFsLgoKQW5kIHdlIHN0aWxsIGhhdmUgdGhlIGNvZGUgdXNpbmcg
+U0lHQUxSTSBpbiBsb2NrX2ZpbGUoKSwgaXMgaXQgeW91cgppbnRlbnRpb24gdG8gbGVhdmUgdGhh
+dCBhcy1pcyBhbmQgY2hhbmdlIGFsbCBvdGhlciB1c2VycyBvZiBTSUdBTFJNPwoKUmVnYXJkcwpN
+YXJ0aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAo
+MCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIs
+IEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgot
+LQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5y
+ZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
