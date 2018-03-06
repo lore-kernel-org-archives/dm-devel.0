@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 3/6] libmultipath: config parser: don't strip
-	whitepace between quotes
-Date: Tue,  6 Mar 2018 23:56:30 +0100
-Message-ID: <20180306225633.12028-4-mwilck@suse.com>
+Subject: [PATCH 6/6] multipath.conf(5): improve syntax
+	documentation
+Date: Tue,  6 Mar 2018 23:56:33 +0100
+Message-ID: <20180306225633.12028-7-mwilck@suse.com>
 References: <20180306225633.12028-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,27 +22,42 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Between double quotes, the parser currently strips leading (but not
-trailing) whitespace. That's inconsistent and unexpected. Fix it.
+Describe the syntax of attribute / value pairs, comments, and quoted
+strings, as well as the peculiarities of section beginnings and ends.
+Also describe the newly added '""' feature.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/parser.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ multipath/multipath.conf.5 | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
 
-diff --git a/libmultipath/parser.c b/libmultipath/parser.c
-index 5caa2019a1a4..3d9656f47945 100644
---- a/libmultipath/parser.c
-+++ b/libmultipath/parser.c
-@@ -262,7 +262,8 @@ alloc_strvec(char *string)
- 		}
- 		vector_set_slot(strvec, token);
- 
--		while ((isspace((int) *cp) || !isascii((int) *cp))
-+		while ((!in_string &&
-+			(isspace((int) *cp) || !isascii((int) *cp)))
- 		       && *cp != '\0')
- 			cp++;
- 		if (*cp == '\0' || *cp == '!' || *cp == '#')
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index ab151e720d75..c4d0789475a3 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -67,6 +67,23 @@ recognized keywords for attributes or subsections depend on the
+ section in which they occur.
+ .LP
+ .
++\fB<attribute>\fR and \fB<value>\fR must be on a single line.
++\fB<attribute>\fR is one of the keywords listed in this man page.
++\fB<value>\fR is either a simple word (containing no whitespace and none of the
++characters '\(dq', '#', and '!') or \fIone\fR string enclosed in double
++quotes ("..."). Outside a quoted string, text starting with '#', and '!' is
++regarded as a comment and ignored until the end of the line. Inside a quoted
++string, '#' and '!' are normal characters, and whitespace is preserved.
++To represent a double quote character inside a double quoted string, use two
++consecutive double quotes ('""'). Thus '2.5\(dq SSD' can be written as "2.5"" SSD".
++.LP
++.
++Opening braces ('{') must follow the (sub)section name on the same line. Closing
++braces ('}') that mark the end of a (sub)section must be the only non-whitespace
++character on the line. Whitespace is ignored except inside double quotes, thus
++the indentation shown in the above example is helpful for human readers but
++not mandatory.
++.LP
+ .
+ The following \fIsection\fP keywords are recognized:
+ .TP 17
 -- 
 2.16.1
