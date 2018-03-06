@@ -1,16 +1,11 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH v2 23/23] multipathd: fix signal blocking
-	logic
-Date: Tue, 06 Mar 2018 09:55:33 +0100
-Message-ID: <1520326533.4131.11.camel@suse.com>
-References: <20180305231507.10386-1-mwilck@suse.com>
-	<20180305231507.10386-24-mwilck@suse.com>
-	<e433c8b5-8ed0-cfec-2574-d3c289f88eed@suse.de>
+From: "=?ISO-8859-1?B?V2FuZyBTaGVuZy1IdWk=?=" <shhuiw@foxmail.com>
+Subject: confusion about multipath_prepare_ioctl
+Date: Tue, 6 Mar 2018 11:35:37 +0800
+Message-ID: <tencent_16F29DEA1877E6C6D13CB47D4E3B41358508@qq.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <e433c8b5-8ed0-cfec-2574-d3c289f88eed@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,38 +15,36 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>, Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: dm-devel@redhat.com
+To: =?ISO-8859-1?B?aGNo?= <hch@lst.de>, =?ISO-8859-1?B?c25pdHplcg==?= <snitzer@redhat.com>
+Cc: =?ISO-8859-1?B?ZG0tZGV2ZWw=?= <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gVHVlLCAyMDE4LTAzLTA2IGF0IDA4OjE2ICswMTAwLCBIYW5uZXMgUmVpbmVja2Ugd3JvdGU6
-Cj4gT24gMDMvMDYvMjAxOCAxMjoxNSBBTSwgTWFydGluIFdpbGNrIHdyb3RlOgo+ID4gbXVsdGlw
-YXRoZCBpcyBzdXBwb3NlZCB0byBibG9jayBhbGwgc2lnbmFscyBpbiBhbGwgdGhyZWFkcywgZXhj
-ZXB0Cj4gPiB0aGUgdXhsc25yIHRocmVhZCB3aGljaCBoYW5kbGVzIHRlcm1pbmF0aW9uIGFuZCBy
-ZWNvbmZpZ3VyYXRpb24KPiA+IHNpZ25hbHMgKFNJR1VTUjEpIGluIGl0cyBwcG9sbCgpIGNhbGws
-IFNJR1VTUjIgaW4gdGhlIHdhaXRlciB0aHJlYWQKPiA+IGFuZCB0aGUgbWFyZ2luYWwgcGF0aCBj
-aGVja2VyIHRocmVhZCwgYW5kIG9jY2FzaW9uYWwgU0lHQUxSTS4gVGhlCj4gPiBjdXJyZW50Cj4g
-PiBsb2dpYyBkb2VzIGV4YWN0bHkgdGhlIG9wcHNpdGUsIGl0IGJsb2NrcyB0ZXJtaW5hdGlvbiBz
-aWduYWxzIGluCj4gPiBTSUdQT0xMIGFuZAo+ID4gYWxsb3dzIG11bHRpcGF0aGQgdG8gYmUga2ls
-bGVkIGUuZy4gYnkgU0lHQUxSTS4KPiA+IAo+ID4gRml4IHRoYXQgYnkgaW52ZXJ0aW5nIHRoZSBs
-b2dpYy4gVGhlIGFyZ3VtZW50IHRvIHB0aHJlYWRfc2lnbWFzawo+ID4gYW5kCj4gPiBwcG9sbCBp
-cyB0aGUgc2V0IG9mICpibG9ja2VkKiBzaWduYWxzLCBub3QgdmljZSB2ZXJzYS4KPiA+IAo+ID4g
-VGhlIG1hcmdpbmFsIHBhdGhzIGNvZGUgbmVlZHMgdG8gdW5ibG9jayBTSUdVU1IyIG5vdyBleHBs
-aWNpdHksIGFzCj4gPiB0aGUgZG0tZXZlbnQgd2FpdGVyIGNvZGUgYWxyZWFkeSBkb2VzLiBEb2lu
-ZyB0aGlzIHdpdGggcHNlbGVjdCgpCj4gPiBhdm9pZHMgYXN5bmNocm9ub3VzIGNhbmNlbGxhdGlv
-bi4KPiA+IAo+ID4gRml4ZXM6IDgxMDA4MmUgImxpYm11bHRpcGF0aCwgbXVsdGlwYXRoZDogUmV3
-b3JrIFNJR1BJUEUgaGFuZGxpbmciCj4gPiBGaXhlczogNTM0ZWM0YyAibXVsdGlwYXRoZDogRW5z
-dXJlIHRoYXQgU0lHSU5ULCBTSUdURVJNLCBTSUdIVVAgYW5kCj4gPiBTSUdVU1IxCj4gPiBhcmUg
-ZGVsaXZlcmVkIHRvIHRoZSB1eHNvY2sgdGhyZWFkIgo+ID4gCj4gPiBTaWduZWQtb2ZmLWJ5OiBN
-YXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4KPiA+IC0tLQo+ID4gIGxpYm11bHRpcGF0aC9p
-b19lcnJfc3RhdC5jIHwgMTcgKysrKysrKysrKysrKysrKy0KPiA+ICBtdWx0aXBhdGhkL21haW4u
-YyAgICAgICAgICB8ICA3ICsrKysrLS0KPiA+ICBtdWx0aXBhdGhkL3V4bHNuci5jICAgICAgICB8
-IDEwICsrKysrLS0tLS0KPiA+ICAzIGZpbGVzIGNoYW5nZWQsIDI2IGluc2VydGlvbnMoKyksIDgg
-ZGVsZXRpb25zKC0pCj4gPiAKPiAKPiBTaWdoLgo+IFdpbGwgd2UgZXZlciBnZXQgc2lnbmFsIGhh
-bmRsaW5nIGNvcnJlY3Q/CgpJJ20gcXVpdGUgY29uZmlkZW50IHRoYXQgd2UncmUgY2xvc2Ugbm93
-LgpCdXQgdGltZSB3aWxsIHRlbGwuCgpNYXJ0aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2ls
-Y2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgs
-IEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJC
-IDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxA
-cmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2
-ZWw=
+Dear,
+
+Sorry to trouble you.
+
+I noticed some code in dm-*.c like:
+"
+static int multipath_prepare_ioctl(struct dm_target *ti,
+		struct block_device **bdev, fmode_t *mode)
+{
+...
+	/*
+	 * Only pass ioctls through if the device sizes match exactly.
+	 */
+	if (!r && ti->len != i_size_read((*bdev)->bd_inode) >> SECTOR_SHIFT)
+		return 1;
+...
+}
+"
+Here, return value 1 means 
+"ioctl is being issued against a subset of the parent bdev; require extra privileges."
+(comment in dm_blk_ioctl)
+
+I'm confused by the comment and '!=' test for multipath. 
+In which cases, the size of low level single device is not equal to the parent 
+size of multipath device?
+
+
+Regards,
+shenghui
