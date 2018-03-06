@@ -1,14 +1,12 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 4/4] libmultipath: uev_update_path: update path
-	properties
-Date: Tue,  6 Mar 2018 23:15:50 +0100
-Message-ID: <20180306221550.10030-5-mwilck@suse.com>
-References: <20180306221550.10030-1-mwilck@suse.com>
+Subject: [PATCH 0/4] fixes for path wwid detection and path
+	change uevents
+Date: Tue,  6 Mar 2018 23:15:46 +0100
+Message-ID: <20180306221550.10030-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180306221550.10030-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,32 +20,22 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Chongyun Wu <wu.chongyu
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Update pp->udev and those path attributes that can be cheaply
-updated from sysfs, i.e. without IO to the disk.
+Hi Christophe,
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- multipathd/main.c | 8 ++++++++
- 1 file changed, 8 insertions(+)
+this small series fixes some minor glitches I found in the current path
+discovery code, and attempts to implement the safe part of the functionality
+discussed in the thread "multipathd: update path's udev in uev_update_path"
+in January (based on an idea from Wu Chongyun).
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index f7b9676ddb28..90f0b29ade70 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -964,6 +964,14 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
- 				strcpy(pp->wwid, wwid);
- 			else
- 				pp->wwid_changed = 0;
-+		} else {
-+			udev_device_unref(pp->udev);
-+			pp->udev = udev_device_ref(uev->udev);
-+			conf = get_multipath_config();
-+			if (pathinfo(pp, conf, DI_SYSFS|DI_NOIO) != PATHINFO_OK)
-+				condlog(1, "%s: pathinfo failed after change uevent",
-+					uev->kernel);
-+			put_multipath_config(conf);
- 		}
- 
- 		if (pp->initialized == INIT_REQUESTED_UDEV)
+Martin Wilck (4):
+  libmultipath: get_uid: check VPD pages for SCSI only
+  libmultipath: get_uid: don't quit prematurely without udev
+  libmultipath: uev_update_path: always warn if WWID changed
+  libmultipath: uev_update_path: update path properties
+
+ libmultipath/discovery.c | 58 ++++++++++++++++++++++++++++--------------------
+ multipathd/main.c        | 29 +++++++++++++++++-------
+ 2 files changed, 55 insertions(+), 32 deletions(-)
+
 -- 
 2.16.1
