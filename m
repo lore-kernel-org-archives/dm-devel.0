@@ -1,15 +1,15 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH v2 01/23] multipath(d)/Makefile: add explicit
- dependency on libraries
-Date: Tue, 6 Mar 2018 08:04:18 +0100
-Message-ID: <3970afd1-86d2-5a1b-031c-d81d2c6fc3c9@suse.de>
+Subject: Re: [PATCH v2 02/23] libmultipath: remove unused "stdout
+	helpers"
+Date: Tue, 6 Mar 2018 08:04:49 +0100
+Message-ID: <77ecc322-1c6f-981c-e9ea-9e7b101f3997@suse.de>
 References: <20180305231507.10386-1-mwilck@suse.com>
-	<20180305231507.10386-2-mwilck@suse.com>
+	<20180305231507.10386-3-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180305231507.10386-2-mwilck@suse.com>
+In-Reply-To: <20180305231507.10386-3-mwilck@suse.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -24,12 +24,11 @@ To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opens
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gMDMvMDYvMjAxOCAxMjoxNCBBTSwgTWFydGluIFdpbGNrIHdyb3RlOgo+IE90aGVyd2lzZSB0
-aGUgYmluYXJpZXMgd29uJ3QgYmUgcmUtbGlua2VkIGlmIHRoZSBsaWJyYXJpZXMgY2hhbmdlLgo+
-IAo+IFNpZ25lZC1vZmYtYnk6IE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPgo+IFJldmll
-d2VkLWJ5OiBCZW5qYW1pbiBNYXJ6aW5za2kgPGJtYXJ6aW5zQHJlZGhhdC5jb20+Cj4gLS0tCj4g
-IG11bHRpcGF0aC9NYWtlZmlsZSAgfCAyICstCj4gIG11bHRpcGF0aGQvTWFrZWZpbGUgfCAyICst
-Cj4gIDIgZmlsZXMgY2hhbmdlZCwgMiBpbnNlcnRpb25zKCspLCAyIGRlbGV0aW9ucygtKQo+IApS
+T24gMDMvMDYvMjAxOCAxMjoxNCBBTSwgTWFydGluIFdpbGNrIHdyb3RlOgo+IFNpZ25lZC1vZmYt
+Ynk6IE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPgo+IFJldmlld2VkLWJ5OiBCZW5qYW1p
+biBNYXJ6aW5za2kgPGJtYXJ6aW5zQHJlZGhhdC5jb20+Cj4gLS0tCj4gIGxpYm11bHRpcGF0aC9w
+cmludC5jIHwgMjYgLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KPiAgbGlibXVsdGlwYXRoL3By
+aW50LmggfCAgNSAtLS0tLQo+ICAyIGZpbGVzIGNoYW5nZWQsIDMxIGRlbGV0aW9ucygtKQo+IApS
 ZXZpZXdlZC1ieTogSGFubmVzIFJlaW5lY2tlIDxoYXJlQHN1c2UuY29tPgoKQ2hlZXJzLAoKSGFu
 bmVzCi0tIApEci4gSGFubmVzIFJlaW5lY2tlCQkgICBUZWFtbGVhZCBTdG9yYWdlICYgTmV0d29y
 a2luZwpoYXJlQHN1c2UuZGUJCQkgICAgICAgICAgICAgICArNDkgOTExIDc0MDUzIDY4OApTVVNF
