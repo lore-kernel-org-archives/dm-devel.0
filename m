@@ -1,36 +1,70 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: dm-bufio: avoid false-positive Wmaybe-uninitialized warning
-Date: Tue, 6 Mar 2018 22:33:46 +0100
-Message-ID: <CAK8P3a1jpj0ZCs81YJu0Dx3QFSypQ+VBr348UfEaagcuvM_1gA@mail.gmail.com>
-References: <20180222155627.1800948-1-arnd@arndb.de> <20180222160432.GA16971@redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: [PATCH 2/4] libmultipath: get_uid: don't quit
+	prematurely without udev
+Date: Tue,  6 Mar 2018 23:15:48 +0100
+Message-ID: <20180306221550.10030-3-mwilck@suse.com>
+References: <20180306221550.10030-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180222160432.GA16971@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Ingo Molnar <mingo@kernel.org>, Aliaksei Karaliou <akaraliou.dev@gmail.com>, Jens Axboe <axboe@kernel.dk>, Jan Kara <jack@suse.cz>, Dan Carpenter <dan.carpenter@oracle.com>, Mark Rutland <mark.rutland@arm.com>, Eric Biggers <ebiggers@google.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, stable <stable@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20180306221550.10030-1-mwilck@suse.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Chongyun Wu <wu.chongyun@h3c.com>
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-On Thu, Feb 22, 2018 at 5:04 PM, Mike Snitzer <snitzer@redhat.com> wrote:
-> On Thu, Feb 22 2018 at 10:56am -0500,
-> Arnd Bergmann <arnd@arndb.de> wrote:
+Not all the implemented methods to derive the UID rely on udev
+information being present. For example getuid callout, rbd,
+and the SCSI vpd code work fine without it. It's unlikely that
+we don't get udev data, but we want to be as good as possible
+at deriving the uid.
 
->
-> Mikulas already sent a fix for this:
-> https://patchwork.kernel.org/patch/10211631/
->
-> But I like yours a bit better, though I'll likely move the declaration
-> of 'noio_flag' temporary inside the conditional.
->
-> Anyway, I'll get this fixed up shortly, thanks.
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ libmultipath/discovery.c | 8 ++------
+ 1 file changed, 2 insertions(+), 6 deletions(-)
 
-I see the fix made it into linux-next on the same day, but the build bots still
-report the warning for mainline kernels and now also for stable kernels
-that got a backport of the patch that introduced it on arm64.
-
-I assume you had not planned to send it for mainline, any chance you
-could change that and send it as a bugfix with a 'Cc:
-stable@vger.kernel.org' tag to restore a clean build?
-
-       Arnd
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 53182a85fa10..9f2a9c907914 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1853,11 +1853,6 @@ get_uid (struct path * pp, int path_state, struct udev_device *udev)
+ 		put_multipath_config(conf);
+ 	}
+ 
+-	if (!udev) {
+-		condlog(1, "%s: no udev information", pp->dev);
+-		return 1;
+-	}
+-
+ 	memset(pp->wwid, 0, WWID_SIZE);
+ 	if (pp->getuid) {
+ 		char buff[CALLOUT_MAX_SIZE];
+@@ -1881,7 +1876,7 @@ get_uid (struct path * pp, int path_state, struct udev_device *udev)
+ 		origin = "sysfs";
+ 	} else {
+ 
+-		if (pp->uid_attribute) {
++		if (udev && pp->uid_attribute) {
+ 			len = get_udev_uid(pp, pp->uid_attribute, udev);
+ 			origin = "udev";
+ 			if (len <= 0)
+@@ -1900,6 +1895,7 @@ get_uid (struct path * pp, int path_state, struct udev_device *udev)
+ 		condlog(1, "%s: failed to get %s uid: %s",
+ 			pp->dev, origin, strerror(-len));
+ 		memset(pp->wwid, 0x0, WWID_SIZE);
++		return 1;
+ 	} else {
+ 		/* Strip any trailing blanks */
+ 		c = strchr(pp->wwid, '\0');
+-- 
+2.16.1
