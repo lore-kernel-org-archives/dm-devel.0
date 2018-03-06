@@ -1,11 +1,12 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH] multipathd: use nanosleep for sleeping
-Date: Mon,  5 Mar 2018 19:20:56 -0600
-Message-ID: <1520299256-27243-1-git-send-email-bmarzins@redhat.com>
+From: Chongyun Wu <wu.chongyun@h3c.com>
+Subject: [PATCH RESEND] multipathd: check and cleanup zombie paths
+Date: Tue, 6 Mar 2018 01:26:35 +0000
+Message-ID: <CEB9978CF3252343BE3C67AC9F0086A34295C7AB@H3CMLB14-EX.srv.huawei-3com.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: zh-CN
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,99 +16,90 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Bart Van Assche <Bart.VanAssche@wdc.com>, Martin Wilck <mwilck@suse.com>
+To: Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>, 'Christophe Varoqui' <christophe.varoqui@opensvc.com>, 'Hannes Reinecke' <hare@suse.de>, 'Xose Vazquez Perez' <xose.vazquez@gmail.com>
+Cc: Guozhonghua <guozhonghua@h3c.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Changlimin <changlimin@h3c.com>, Changwei Ge <ge.changwei@h3c.com>
 List-Id: dm-devel.ids
 
-In order to safely use SIGALRM in a multi-threaded program, only one
-thread can schedule and wait on SIGALRM at a time. All other threads
-must have SIGALRM blocked, and be unable to schedule an alarm. The
-strict_timing code in checkerloop was unblocking SIGALRM, and calling
-setitimer(), without any locking.  Instead, it should use nanosleep()
-to sleep for the correct length of time, since that doesn't depend or
-interfere with signals. io_err_stat_loop() was calling usleep() without
-any locking. According to the POSIX standards, the result of a SIGARLM
-occuring during a usleep call is undefined, even if the calling thread
-blocks the signal. While this is unlikely to cause a problem on a
-modern linux system, nanosleep is guaranteed to not interact with
-SIGALRM, as long as the signal is blocked by the calling thread.
+The same LUN have been exported to the host from different lun
+number twice, each time create multipath for this lun, after
+second time the multipath might have zombie paths which devices
+doesn't actually exist.
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+Check zombie paths:
+If a failed path have the same wwid with an active path, but its
+sg_id.lun are not equal to this active path. This failed path
+might be a zombie path(a lun can't be exported from a different
+lun number to a host at the same time).
+
+cleanup zombie paths:
+delete the zombie paths' device from sysfs, which will clean up
+the zombie paths both in kernel and userspace.
+
+Signed-off-by: Chongyun Wu <wu.chongyun@h3c.com>
 ---
- libmultipath/io_err_stat.c |  3 ++-
- multipathd/main.c          | 27 +++++++++------------------
- 2 files changed, 11 insertions(+), 19 deletions(-)
+   multipathd/main.c |   42 ++++++++++++++++++++++++++++++++++++++++++
+   1 file changed, 42 insertions(+)
 
-diff --git a/libmultipath/io_err_stat.c b/libmultipath/io_err_stat.c
-index 5b10f03..555af5d 100644
---- a/libmultipath/io_err_stat.c
-+++ b/libmultipath/io_err_stat.c
-@@ -697,8 +697,9 @@ static void *io_err_stat_loop(void *data)
- 
- 	mlockall(MCL_CURRENT | MCL_FUTURE);
- 	while (1) {
-+		struct timespec delay = {0, 100000000}; /* .1 sec */
- 		service_paths();
--		usleep(100000);
-+		nanosleep(&delay, NULL);
- 	}
- 
- 	pthread_cleanup_pop(1);
 diff --git a/multipathd/main.c b/multipathd/main.c
-index 889670c..55b92be 100644
+index 27cf234..e74a448 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -1834,7 +1834,6 @@ checkerloop (void *ap)
- 	struct path *pp;
- 	int count = 0;
- 	unsigned int i;
--	struct itimerval timer_tick_it;
- 	struct timespec last_time;
- 	struct config *conf;
- 
-@@ -1852,8 +1851,7 @@ checkerloop (void *ap)
- 
- 	while (1) {
- 		struct timespec diff_time, start_time, end_time;
--		int num_paths = 0, ticks = 0, signo, strict_timing, rc = 0;
--		sigset_t mask;
-+		int num_paths = 0, ticks = 0, strict_timing, rc = 0;
- 
- 		if (clock_gettime(CLOCK_MONOTONIC, &start_time) != 0)
- 			start_time.tv_sec = 0;
-@@ -1941,25 +1939,18 @@ checkerloop (void *ap)
- 		if (!strict_timing)
- 			sleep(1);
- 		else {
--			timer_tick_it.it_interval.tv_sec = 0;
--			timer_tick_it.it_interval.tv_usec = 0;
- 			if (diff_time.tv_nsec) {
--				timer_tick_it.it_value.tv_sec = 0;
--				timer_tick_it.it_value.tv_usec =
-+				diff_time.tv_sec = 0;
-+				diff_time.tv_nsec =
- 				     1000UL * 1000 * 1000 - diff_time.tv_nsec;
--			} else {
--				timer_tick_it.it_value.tv_sec = 1;
--				timer_tick_it.it_value.tv_usec = 0;
--			}
--			setitimer(ITIMER_REAL, &timer_tick_it, NULL);
-+			} else
-+				diff_time.tv_sec = 1;
- 
--			sigemptyset(&mask);
--			sigaddset(&mask, SIGALRM);
- 			condlog(3, "waiting for %lu.%06lu secs",
--				timer_tick_it.it_value.tv_sec,
--				timer_tick_it.it_value.tv_usec);
--			if (sigwait(&mask, &signo) != 0) {
--				condlog(3, "sigwait failed with error %d",
-+				diff_time.tv_sec,
-+				diff_time.tv_nsec / 1000);
-+			if (nanosleep(&diff_time, NULL) != 0) {
-+				condlog(3, "nanosleep failed with error %d",
- 					errno);
- 				conf = get_multipath_config();
- 				conf->strict_timing = 0;
+@@ -1511,6 +1511,44 @@ void repair_path(struct path * pp)
+   	LOG_MSG(1, checker_message(&pp->checker));
+   }
+
++void try_cleanup_zombie_path(struct vectors *vecs, struct path *pp)
++{
++	struct path *pp_tmp;
++	unsigned int i;
++	struct config *conf;
++	int path_state;
++	const char delete[] = "1";
++
++	/*check if this given path is a zombie path*/
++	vector_foreach_slot(vecs->pathvec, pp_tmp, i) {
++		if ((strcmp(pp_tmp->wwid, pp->wwid) == 0) &&
++			(pp_tmp->state == PATH_UP)) {
++			/*to get the state again to avoid getting
++			 *the old state
++			 */
++			conf = get_multipath_config();
++			path_state = get_state(pp_tmp, conf, 1);
++			put_multipath_config(conf);
++
++			if ((path_state == PATH_UP) &&
++				(pp_tmp->sg_id.lun != pp->sg_id.lun)) {
++				/*
++				 * The given path is a failed path,
++				 * found a active path with the same wwid and
++				 * it's sg_id.lun isn't equal to the given path,
++				 * that means that the given is a zombie path!
++				 * Clean up zombie path then.
++				 */
++				condlog(2, "clean up zombie path %s(%s)",
++					pp->dev, pp->wwid);
++				sysfs_attr_set_value(pp->udev, "device/delete",
++						delete, strlen(delete));
++				break;
++			}
++		}
++	}
++}
++
+   /*
+    * Returns '1' if the path has been checked, '-1' if it was blacklisted
+    * and '0' otherwise
+@@ -1580,6 +1618,10 @@ check_path (struct vectors * vecs, struct path *
+pp, int ticks)
+   		newstate = PATH_DOWN;
+   	}
+
++	if (newstate == PATH_DOWN) {
++		try_cleanup_zombie_path(vecs, pp);
++	}
++
+   	if (newstate == PATH_WILD || newstate == PATH_UNCHECKED) {
+   		condlog(2, "%s: unusable path", pp->dev);
+   		conf = get_multipath_config();
 -- 
-2.7.4
+1.7.9.5
