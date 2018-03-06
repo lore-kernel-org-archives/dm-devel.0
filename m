@@ -1,14 +1,16 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: confusion about multipath_prepare_ioctl
-Date: Tue, 6 Mar 2018 00:44:22 -0500
-Message-ID: <20180306054422.GA19607@redhat.com>
-References: <tencent_16F29DEA1877E6C6D13CB47D4E3B41358508@qq.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH v2 01/23] multipath(d)/Makefile: add explicit
+ dependency on libraries
+Date: Tue, 6 Mar 2018 08:04:18 +0100
+Message-ID: <3970afd1-86d2-5a1b-031c-d81d2c6fc3c9@suse.de>
+References: <20180305231507.10386-1-mwilck@suse.com>
+	<20180305231507.10386-2-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <tencent_16F29DEA1877E6C6D13CB47D4E3B41358508@qq.com>
+In-Reply-To: <20180305231507.10386-2-mwilck@suse.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,46 +20,21 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Wang Sheng-Hui <shhuiw@foxmail.com>
-Cc: dm-devel <dm-devel@redhat.com>, hch <hch@lst.de>
+To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Mar 05 2018 at 10:35pm -0500,
-Wang Sheng-Hui <shhuiw@foxmail.com> wrote:
-
-> Dear,
-> 
-> Sorry to trouble you.
-> 
-> I noticed some code in dm-*.c like:
-> "
-> static int multipath_prepare_ioctl(struct dm_target *ti,
-> 		struct block_device **bdev, fmode_t *mode)
-> {
-> ...
-> 	/*
-> 	 * Only pass ioctls through if the device sizes match exactly.
-> 	 */
-> 	if (!r && ti->len != i_size_read((*bdev)->bd_inode) >> SECTOR_SHIFT)
-> 		return 1;
-> ...
-> }
-> "
-> Here, return value 1 means 
-> "ioctl is being issued against a subset of the parent bdev; require extra privileges."
-> (comment in dm_blk_ioctl)
-> 
-> I'm confused by the comment and '!=' test for multipath. 
-> In which cases, the size of low level single device is not equal to the parent 
-> size of multipath device?
-
-Given that ti->len is sent down from userspace, the DM multipath
-target's ti->len _could_ be smaller than the underlying path(s).  But in
-practice that doesn't occur with multipathd.. a partitioned multipath
-device is generally done, via kpartx, in terms of linear mappings ontop
-of the multipath device.
-
-The same != test is done in the dm linear target and is much more
-relevant to concerns about ioctls being sent to partition.
-
-Mike
+T24gMDMvMDYvMjAxOCAxMjoxNCBBTSwgTWFydGluIFdpbGNrIHdyb3RlOgo+IE90aGVyd2lzZSB0
+aGUgYmluYXJpZXMgd29uJ3QgYmUgcmUtbGlua2VkIGlmIHRoZSBsaWJyYXJpZXMgY2hhbmdlLgo+
+IAo+IFNpZ25lZC1vZmYtYnk6IE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPgo+IFJldmll
+d2VkLWJ5OiBCZW5qYW1pbiBNYXJ6aW5za2kgPGJtYXJ6aW5zQHJlZGhhdC5jb20+Cj4gLS0tCj4g
+IG11bHRpcGF0aC9NYWtlZmlsZSAgfCAyICstCj4gIG11bHRpcGF0aGQvTWFrZWZpbGUgfCAyICst
+Cj4gIDIgZmlsZXMgY2hhbmdlZCwgMiBpbnNlcnRpb25zKCspLCAyIGRlbGV0aW9ucygtKQo+IApS
+ZXZpZXdlZC1ieTogSGFubmVzIFJlaW5lY2tlIDxoYXJlQHN1c2UuY29tPgoKQ2hlZXJzLAoKSGFu
+bmVzCi0tIApEci4gSGFubmVzIFJlaW5lY2tlCQkgICBUZWFtbGVhZCBTdG9yYWdlICYgTmV0d29y
+a2luZwpoYXJlQHN1c2UuZGUJCQkgICAgICAgICAgICAgICArNDkgOTExIDc0MDUzIDY4OApTVVNF
+IExJTlVYIEdtYkgsIE1heGZlbGRzdHIuIDUsIDkwNDA5IE7DvHJuYmVyZwpHRjogRi4gSW1lbmTD
+tnJmZmVyLCBKLiBTbWl0aGFyZCwgSi4gR3VpbGQsIEQuIFVwbWFueXUsIEcuIE5vcnRvbgpIUkIg
+MjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEBy
+ZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZl
+bA==
