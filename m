@@ -1,13 +1,13 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: multipath-tools: broken build system + warnings
-Date: Wed, 07 Mar 2018 22:16:19 +0100
-Message-ID: <1520457379.11340.21.camel@suse.com>
-References: <fd6979aa-f288-9752-ace3-b6472f600aa4@gmail.com>
+Subject: [PATCH 5/8] libmultipath: Fix sgio_get_vpd()
+Date: Thu,  8 Mar 2018 00:15:48 +0100
+Message-ID: <20180307231551.15162-6-mwilck@suse.com>
+References: <20180307231551.15162-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <fd6979aa-f288-9752-ace3-b6472f600aa4@gmail.com>
+In-Reply-To: <20180307231551.15162-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,79 +17,53 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>, Hannes Reinecke <hare@suse.de>, Bart Van Assche <Bart.VanAssche@wdc.com>, device-mapper development <dm-devel@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: Bart Van Assche <bart.vanassche@wdc.com>, Bart Van Assche <Bart.VanAssche@sandisk.com>, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>, Chongyun Wu <wu.chongyun@h3c.com>
 List-Id: dm-devel.ids
 
-T24gV2VkLCAyMDE4LTAzLTA3IGF0IDE3OjQwICswMTAwLCBYb3NlIFZhenF1ZXogUGVyZXogd3Jv
-dGU6Cj4gSGksCj4gCj4gSXQgaGFzIHRvIHR5cGUgIm1ha2UiICp0d2ljZSogdG8gYnVpbGQgdGhl
-IGZ1bGwKPiBzb3VyY2UgY29kZS4KCkhtLCBzdHJhbmdlLiBJIG5lZWQgdG8gZG91YmxlIGNoZWNr
-LiBJdCBkb2Vzbid0IGhhcHBlbiB3aXRoIG15IHRyZWUKQUZBSUNTLgoKPiAKPiBBbmQgbmV3IHdh
-cm5pbmdzOgo+IAo+ID09PT0gMiBnY2Mgd2FybmluZ3MgPT09Cj4gbWFrZVsxXTogRW50ZXJpbmcg
-ZGlyZWN0b3J5ICcvaG9tZS94b3NlL2N1cnJlL2FycmF5cy9tdWx0aXBhdGgtCj4gdG9vbHMvbXVs
-dGlwYXRoZCcKPiAKPiBjYyAtTzIgLWcgLXBpcGUgLVdhbGwgLVdleHRyYSAtV2Zvcm1hdD0yIC1X
-ZXJyb3I9aW1wbGljaXQtaW50Cj4gLVdlcnJvcj1pbXBsaWNpdC1mdW5jdGlvbi1kZWNsYXJhdGlv
-biAtV2Vycm9yPWZvcm1hdC1zZWN1cml0eSAtV25vLQo+IHNpZ24tY29tcGFyZSAtV25vLXVudXNl
-ZC1wYXJhbWV0ZXIgLVduby1jbG9iYmVyZWQgLVdlcnJvcj1jYXN0LXF1YWwKPiAtV2Vycm9yPWRp
-c2NhcmRlZC1xdWFsaWZpZXJzIC1XcCwtRF9GT1JUSUZZX1NPVVJDRT0yIC1mc3RhY2stCj4gcHJv
-dGVjdG9yLXN0cm9uZyAtLXBhcmFtPXNzcC1idWZmZXItc2l6ZT00IC1EQklOX0RJUj1cIi9zYmlu
-XCIKPiAtRExJQl9TVFJJTkc9XCJsaWI2NFwiIC1EUlVOX0RJUj1cInJ1blwiIC1NTUQgLU1QICAt
-ZlBJRSAtRFBJRQo+IC1JLi4vbGlibXVsdGlwYXRoIC1JLi4vbGlibXBhdGhwZXJzaXN0IC1JLi4v
-bGlibXBhdGhjbWQgLUkuLi90aGlyZC0KPiBwYXJ0eSAtRFVTRV9TWVNURU1EPTIzNCAtYyAtbyB1
-eGxzbnIubyB1eGxzbnIuYwo+IHV4bHNuci5jOiBJbiBmdW5jdGlvbiDigJh1eHNvY2tfY2xlYW51
-cOKAmToKPiB1eGxzbnIuYzoxNTE6MTY6IHdhcm5pbmc6IGNhc3QgZnJvbSBwb2ludGVyIHRvIGlu
-dGVnZXIgb2YgZGlmZmVyZW50Cj4gc2l6ZSBbLVdwb2ludGVyLXRvLWludC1jYXN0XQo+ICAgaW50
-IHV4X3NvY2sgPSAoaW50KWFyZzsKClRoaXMgaXMgZml4ZWQgYnkgbXkgcmVjZW50IAoKW1BBVENI
-XSBtdWx0aXBhdGhkOiBmaXggLVdwb2ludGVyLXRvLWludC1jYXN0IHdhcm5pbmcgaW4gdXhsc25y
-Cgo+ICAgICAgICAgICAgICAgICBeCj4gSW4gZmlsZSBpbmNsdWRlZCBmcm9tIC4uL2xpYm11bHRp
-cGF0aC9kZWJ1Zy5oOjU6MCwKPiAgICAgICAgICAgICAgICAgIGZyb20gdXhsc25yLmM6Mjg6Cj4g
-dXhsc25yLmM6IEluIGZ1bmN0aW9uIOKAmHV4c29ja19saXN0ZW7igJk6Cj4gdXhsc25yLmM6MTg0
-OjM5OiB3YXJuaW5nOiBjYXN0IHRvIHBvaW50ZXIgZnJvbSBpbnRlZ2VyIG9mIGRpZmZlcmVudAo+
-IHNpemUgWy1XaW50LXRvLXBvaW50ZXItY2FzdF0KPiAgIHB0aHJlYWRfY2xlYW51cF9wdXNoKHV4
-c29ja19jbGVhbnVwLCAodm9pZCAqKXV4X3NvY2spOwo+ICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgIF4KPiA9PT09IGVuZCAyIGdjYyB3YXJuaW5ncyA9PT0KCgo+ID09PT0g
-MiBjbGFuZyB3YXJuaW5ncyA9PT0KPiBtYWtlWzFdOiBFbnRlcmluZyBkaXJlY3RvcnkgJy9ob21l
-L3hvc2UvY3VycmUvYXJyYXlzL211bHRpcGF0aC0KPiB0b29scy9tdWx0aXBhdGgnCj4gY2xhbmcg
-LU8yIC1nIC1waXBlIC1XYWxsIC1XZXh0cmEgLVdmb3JtYXQ9MiAtV2Vycm9yPWltcGxpY2l0LWlu
-dAo+IC1XZXJyb3I9aW1wbGljaXQtZnVuY3Rpb24tZGVjbGFyYXRpb24gLVdlcnJvcj1mb3JtYXQt
-c2VjdXJpdHkgLVduby0KPiBzaWduLWNvbXBhcmUgLVduby11bnVzZWQtcGFyYW1ldGVyIC1Xbm8t
-Y2xvYmJlcmVkIC1XZXJyb3I9Y2FzdC1xdWFsCj4gLVdlcnJvcj1kaXNjYXJkZWQtcXVhbGlmaWVy
-cyAtV3AsLURfRk9SVElGWV9TT1VSQ0U9MiAtZnN0YWNrLQo+IHByb3RlY3Rvci1zdHJvbmcgLS1w
-YXJhbT1zc3AtYnVmZmVyLXNpemU9NCAtREJJTl9ESVI9XCIvc2JpblwiCj4gLURMSUJfU1RSSU5H
-PVwibGliNjRcIiAtRFJVTl9ESVI9XCJydW5cIiAtTU1EIC1NUCAgLWZQSUUgLURQSUUKPiAtSS4u
-L2xpYm11bHRpcGF0aCAtSS4uL2xpYm1wYXRoY21kIC1jIC1vIG1haW4ubyBtYWluLmMKPiBtYWlu
-LmM6NjI4OjExOiB3YXJuaW5nOiB2YXJpYWJsZSAncmVwbHknIGlzIHVzZWQgdW5pbml0aWFsaXpl
-ZAo+IHdoZW5ldmVyICdpZicgY29uZGl0aW9uIGlzIHRydWUgWy1Xc29tZXRpbWVzLXVuaW5pdGlh
-bGl6ZWRdCj4gICAgICAgICBlbHNlIGlmIChwID49IGNvbW1hbmQgKyBzaXplb2YoY29tbWFuZCkp
-IHsKPiAgICAgICAgICAgICAgICAgIF5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fgo+IG1h
-aW4uYzo2NDg6Nzogbm90ZTogdW5pbml0aWFsaXplZCB1c2Ugb2NjdXJzIGhlcmUKPiAgICAgICAg
-IEZSRUUocmVwbHkpOwo+ICAgICAgICAgICAgICBefn5+fgo+IC4uL2xpYm11bHRpcGF0aC9tZW1v
-cnkuaDo1ODozMjogbm90ZTogZXhwYW5kZWQgZnJvbSBtYWNybyAnRlJFRScKPiAjZGVmaW5lIEZS
-RUUocCkgICAgICBkbyB7IGZyZWUocCk7IHAgPSBOVUxMOyB9IHdoaWxlKDApCj4gICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgIF4KPiBtYWluLmM6NjI4Ojc6IG5vdGU6IHJlbW92ZSB0aGUg
-J2lmJyBpZiBpdHMgY29uZGl0aW9uIGlzIGFsd2F5cyBmYWxzZQo+ICAgICAgICAgZWxzZSBpZiAo
-cCA+PSBjb21tYW5kICsgc2l6ZW9mKGNvbW1hbmQpKSB7Cj4gICAgICAgICAgICAgIF5+fn5+fn5+
-fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn4KPiBtYWluLmM6NjA5OjMyOiBub3RlOiBpbml0
-aWFsaXplIHRoZSB2YXJpYWJsZSAncmVwbHknIHRvIHNpbGVuY2UgdGhpcwo+IHdhcm5pbmcKPiAg
-ICAgICAgIGNoYXIgY29tbWFuZFsxMDI0XSwgKnAsICpyZXBseTsKPiAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgIF4KPiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICA9IE5VTEwKPiAKPiBjbGFuZyAtTzIgLWcgLXBpcGUgLVdhbGwgLVdleHRyYSAtV2Zv
-cm1hdD0yIC1XZXJyb3I9aW1wbGljaXQtaW50Cj4gLVdlcnJvcj1pbXBsaWNpdC1mdW5jdGlvbi1k
-ZWNsYXJhdGlvbiAtV2Vycm9yPWZvcm1hdC1zZWN1cml0eSAtV25vLQo+IHNpZ24tY29tcGFyZSAt
-V25vLXVudXNlZC1wYXJhbWV0ZXIgLVduby1jbG9iYmVyZWQgLVdlcnJvcj1jYXN0LXF1YWwKPiAt
-V2Vycm9yPWRpc2NhcmRlZC1xdWFsaWZpZXJzIC1XcCwtRF9GT1JUSUZZX1NPVVJDRT0yIC1mc3Rh
-Y2stCj4gcHJvdGVjdG9yLXN0cm9uZyAtLXBhcmFtPXNzcC1idWZmZXItc2l6ZT00IC1EQklOX0RJ
-Uj1cIi9zYmluXCIKPiAtRExJQl9TVFJJTkc9XCJsaWI2NFwiIC1EUlVOX0RJUj1cInJ1blwiIC1N
-TUQgLU1QICAtZlBJRSAtRFBJRQo+IC1JLi4vbGlibXVsdGlwYXRoIC1JLi4vbGlibXBhdGhwZXJz
-aXN0IC1JLi4vbGlibXBhdGhjbWQgLUkuLi90aGlyZC0KPiBwYXJ0eSAtRFVTRV9TWVNURU1EPTIz
-NCAtYyAtbyB1eGxzbnIubyB1eGxzbnIuYwo+IHV4bHNuci5jOjE4NDozOTogd2FybmluZzogY2Fz
-dCB0byAndm9pZCAqJyBmcm9tIHNtYWxsZXIgaW50ZWdlciB0eXBlCj4gJ2ludCcgWy1XaW50LXRv
-LXZvaWQtcG9pbnRlci1jYXN0XQo+ICAgICAgICAgcHRocmVhZF9jbGVhbnVwX3B1c2godXhzb2Nr
-X2NsZWFudXAsICh2b2lkICopdXhfc29jayk7Cj4gICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgXgo+ID09PT0gZW5kIDIgY2xhbmcgd2FybmluZ3MgPT09CgpUaGFu
-a3MgZm9yIHBvaW50aW5nIHRoaXMgb3V0LiBJJ2xsIHNlbmQgYSBmaXh1cCBwYXRjaCAoc2V0dGlu
-ZyByZXBseSA9Ck5VTEwsIGFzIGNsYW5nIGhlbHBmdWxseSBzdWdnZXN0ZWQpLgoKTWFydGluCgot
-LSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0
-MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNt
-aXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2
-ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNv
-bS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+From: Bart Van Assche <bart.vanassche@wdc.com>
+
+Pass the VPD page number to sgio_get_vpd() such that the page needed
+by the caller is queried instead of page 0x83. Fix the statement that
+computes the length of the page returned by do_inq(). Fix the return
+code check in the caller of sgio_get_vpd().
+
+Signed-off-by: Bart Van Assche <bart.vanassche@wdc.com>
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ libmultipath/discovery.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 71c75872c937..23e99f05b406 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -837,6 +837,8 @@ detect_alua(struct path * pp, struct config *conf)
+ 
+ #define DEFAULT_SGIO_LEN 254
+ 
++/* Query VPD page @pg. Returns number of INQUIRY bytes
++   upon success and -1 upon failure. */
+ static int
+ sgio_get_vpd (unsigned char * buff, int maxlen, int fd, int pg)
+ {
+@@ -848,7 +850,7 @@ sgio_get_vpd (unsigned char * buff, int maxlen, int fd, int pg)
+ 	}
+ retry:
+ 	if (0 == do_inq(fd, 0, 1, pg, buff, len)) {
+-		len = buff[3] + (buff[2] << 8);
++		len = buff[3] + (buff[2] << 8) + 4;
+ 		if (len >= maxlen)
+ 			return len;
+ 		if (len > DEFAULT_SGIO_LEN)
+@@ -1100,7 +1102,7 @@ get_vpd_sgio (int fd, int pg, char * str, int maxlen)
+ 	unsigned char buff[4096];
+ 
+ 	memset(buff, 0x0, 4096);
+-	if (sgio_get_vpd(buff, 4096, fd, pg) <= 0) {
++	if (sgio_get_vpd(buff, 4096, fd, pg) < 0) {
+ 		condlog(3, "failed to issue vpd inquiry for pg%02x",
+ 			pg);
+ 		return -errno;
+-- 
+2.16.1
