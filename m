@@ -1,15 +1,11 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH] multipath-tools: add info about how to get a
- release directly from gitweb
-Date: Wed, 7 Mar 2018 14:28:40 +0100
-Message-ID: <0250db8d-05af-903a-7e5e-b7cb7113b359@gmail.com>
-References: <20180112165641.4130-1-xose.vazquez@gmail.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: [PATCH v3 0/2] marginal path fixes
+Date: Wed,  7 Mar 2018 15:07:31 +0100
+Message-ID: <20180307140733.28709-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180112165641.4130-1-xose.vazquez@gmail.com>
-Content-Language: en-GB
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,34 +15,25 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Guan Junxiong <guanjunxiong@huawei.com>
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-On 01/12/2018 05:56 PM, Xose Vazquez Perez wrote:
+Changes wrt v2:
+ - 2/2: Fixed bug that would cause a crash if marginal path checker was off.
+        (if we don't start the thread, we'd better not kill it, either).
 
-> gitweb is able to extract and serve a release right away.
+Martin Wilck (2):
+  libmultipath: fix race in stop_io_err_stat_thread
+  multipathd: start marginal path checker thread lazily
 
-This one is missing.
+ libmultipath/configure.c   | 14 ++++++++---
+ libmultipath/configure.h   |  3 ++-
+ libmultipath/io_err_stat.c | 59 ++++++++++++++++++++++++++++++++++++++++++----
+ libmultipath/structs_vec.c |  3 ++-
+ multipathd/cli_handlers.c  |  2 +-
+ multipathd/main.c          |  8 ++-----
+ 6 files changed, 72 insertions(+), 17 deletions(-)
 
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: device-mapper development <dm-devel@redhat.com>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> ---
->  README | 3 ++-
->  1 file changed, 2 insertions(+), 1 deletion(-)
-> 
-> diff --git a/README b/README
-> index 570224d..89bab74 100644
-> --- a/README
-> +++ b/README
-> @@ -20,7 +20,8 @@ git archive --format=tar.gz --prefix=multipath-tools-X.Y.Z/ X.Y.Z > ../multipath
->  
->  Alternatively it may be obtained from gitweb, go to:
->  https://git.opensvc.com/?p=multipath-tools/.git;a=tags
-> -select a release-tag and then click on "snapshot".
-> +select a release-tag and then click on "snapshot". Or get it with
-> +wget "https://git.opensvc.com/?p=multipath-tools/.git;a=snapshot;sf=tgz;h=refs/tags/X.Y.Z" -O multipath-tools-X.Y.Z.tar.gz
->  
->  
->  Source code
-> 
+-- 
+2.16.1
