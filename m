@@ -1,11 +1,14 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: [RFC PATCH] multipathd: strict_timing without signals
-Date: Wed,  7 Mar 2018 15:17:51 +0100
-Message-ID: <20180307141751.29084-1-mwilck@suse.com>
+From: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Subject: Re: [PATCH] multipath-tools: add info about how to get a
+ release directly from gitweb
+Date: Wed, 7 Mar 2018 15:26:42 +0100
+Message-ID: <CABr-GneBYksBfgLOZ7Ce3UuL=73FDM8FTLVggPFDifooy8H3QA@mail.gmail.com>
+References: <20180112165641.4130-1-xose.vazquez@gmail.com>
+	<0250db8d-05af-903a-7e5e-b7cb7113b359@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============0258370448930597864=="
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <0250db8d-05af-903a-7e5e-b7cb7113b359@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,198 +18,114 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-The internal usage of SIGALRM by setitimer() function may cause subtle
-conflicts with other uses of SIGALRM, either by multipath-tools code itself
-(e.g. lock_file()) or libc (e.g. glob()).
+--===============0258370448930597864==
+Content-Type: multipart/alternative; boundary="94eb2c05baaa2a33750566d359f7"
 
-This patch changes the checkerloop to use an interval timer and a pthread
-condition variable. No signals are used except those used by libpthread
-behind the scenes.
+--94eb2c05baaa2a33750566d359f7
+Content-Type: text/plain; charset="UTF-8"
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- multipathd/Makefile |   2 +-
- multipathd/main.c   | 113 ++++++++++++++++++++++++++++++++++++++--------------
- 2 files changed, 85 insertions(+), 30 deletions(-)
+Thanks, applied.
 
-diff --git a/multipathd/Makefile b/multipathd/Makefile
-index 4c9d29634160..c348f02ef7f8 100644
---- a/multipathd/Makefile
-+++ b/multipathd/Makefile
-@@ -10,7 +10,7 @@ CFLAGS += $(BIN_CFLAGS) -I$(multipathdir) -I$(mpathpersistdir) \
- 	  -I$(mpathcmddir) -I$(thirdpartydir)
- LDFLAGS += $(BIN_LDFLAGS)
- LIBDEPS += -L$(multipathdir) -lmultipath -L$(mpathpersistdir) -lmpathpersist \
--	   -L$(mpathcmddir) -lmpathcmd -ludev -ldl -lurcu -lpthread \
-+	   -L$(mpathcmddir) -lmpathcmd -ludev -ldl -lurcu -lpthread -lrt \
- 	   -ldevmapper -lreadline
- 
- ifdef SYSTEMD
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 6e6c52a52783..c9c57c5baece 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1848,6 +1848,68 @@ static void init_path_check_interval(struct vectors *vecs)
- 	}
- }
- 
-+static pthread_mutex_t checker_lock = PTHREAD_MUTEX_INITIALIZER;
-+static pthread_cond_t checker_cond = PTHREAD_COND_INITIALIZER;
-+
-+static void checker_notify(union sigval sv) {
-+
-+	pthread_mutex_lock(&checker_lock);
-+	pthread_cond_broadcast(&checker_cond);
-+	pthread_mutex_unlock(&checker_lock);
-+}
-+
-+static void unlock_mutex(void *arg)
-+{
-+	pthread_mutex_unlock((pthread_mutex_t*)arg);
-+}
-+
-+void cleanup_timer(void *arg)
-+{
-+	timer_t tmr = (timer_t)arg;
-+
-+	if (tmr != 0)
-+		timer_delete(tmr);
-+}
-+
-+static timer_t setup_check_timer(void)
-+{
-+	timer_t tmr = (timer_t)0;
-+	struct sigevent se;
-+
-+	memset(&se, 0, sizeof(se));
-+	se.sigev_notify = SIGEV_THREAD;
-+	se.sigev_notify_function = checker_notify;
-+
-+	if (timer_create(CLOCK_MONOTONIC, &se, &tmr)) {
-+		condlog(2, "%s: errno %d creating monotonic timer",
-+			__func__, errno);
-+		if (timer_create(CLOCK_REALTIME, &se, &tmr))
-+			condlog(0, "%s: errno %d creating timer",
-+				__func__, errno);
-+	}
-+	return tmr;
-+}
-+
-+static int set_check_timer(timer_t tmr, bool arm)
-+{
-+	struct itimerspec is;
-+
-+	if (tmr == 0)
-+		return -1;
-+
-+	if (arm) {
-+		is.it_value.tv_sec = 1;
-+		is.it_interval.tv_sec = 1;
-+	} else {
-+		is.it_value.tv_sec = 0;
-+		is.it_interval.tv_sec = 0;
-+	}
-+	is.it_value.tv_nsec = 0;
-+	is.it_interval.tv_nsec = 0;
-+
-+	return timer_settime(tmr, 0, &is, NULL);
-+}
-+
- static void *
- checkerloop (void *ap)
- {
-@@ -1855,9 +1917,10 @@ checkerloop (void *ap)
- 	struct path *pp;
- 	int count = 0;
- 	unsigned int i;
--	struct itimerval timer_tick_it;
- 	struct timespec last_time;
- 	struct config *conf;
-+	timer_t check_timer;
-+	int old_strict_timing = 0;
- 
- 	pthread_cleanup_push(rcu_unregister, NULL);
- 	rcu_register_thread();
-@@ -1865,6 +1928,9 @@ checkerloop (void *ap)
- 	vecs = (struct vectors *)ap;
- 	condlog(2, "path checkers start up");
- 
-+	check_timer = setup_check_timer();
-+	pthread_cleanup_push(cleanup_timer, (void*)check_timer);
-+
- 	/* Tweak start time for initial path check */
- 	if (clock_gettime(CLOCK_MONOTONIC, &last_time) != 0)
- 		last_time.tv_sec = 0;
-@@ -1873,8 +1939,7 @@ checkerloop (void *ap)
- 
- 	while (1) {
- 		struct timespec diff_time, start_time, end_time;
--		int num_paths = 0, ticks = 0, signo, strict_timing, rc = 0;
--		sigset_t mask;
-+		int num_paths = 0, ticks = 0, strict_timing, rc = 0;
- 
- 		if (clock_gettime(CLOCK_MONOTONIC, &start_time) != 0)
- 			start_time.tv_sec = 0;
-@@ -1956,40 +2021,30 @@ checkerloop (void *ap)
- 		}
- 		check_foreign();
- 		post_config_state(DAEMON_IDLE);
-+
- 		conf = get_multipath_config();
- 		strict_timing = conf->strict_timing;
- 		put_multipath_config(conf);
--		if (!strict_timing)
-+
-+		if (check_timer && (old_strict_timing != strict_timing) &&
-+		    set_check_timer(check_timer, !!strict_timing) != 0) {
-+			condlog(1, "%s: errno %d %sarming interrupt timer",
-+				__func__, errno, strict_timing ? "" : "dis");
-+			strict_timing = 0;
-+		}
-+		old_strict_timing = strict_timing;
-+
-+		if (!strict_timing || !check_timer)
- 			sleep(1);
- 		else {
--			timer_tick_it.it_interval.tv_sec = 0;
--			timer_tick_it.it_interval.tv_usec = 0;
--			if (diff_time.tv_nsec) {
--				timer_tick_it.it_value.tv_sec = 0;
--				timer_tick_it.it_value.tv_usec =
--				     1000UL * 1000 * 1000 - diff_time.tv_nsec;
--			} else {
--				timer_tick_it.it_value.tv_sec = 1;
--				timer_tick_it.it_value.tv_usec = 0;
--			}
--			setitimer(ITIMER_REAL, &timer_tick_it, NULL);
--
--			sigemptyset(&mask);
--			sigaddset(&mask, SIGALRM);
--			condlog(3, "waiting for %lu.%06lu secs",
--				timer_tick_it.it_value.tv_sec,
--				timer_tick_it.it_value.tv_usec);
--			if (sigwait(&mask, &signo) != 0) {
--				condlog(3, "sigwait failed with error %d",
--					errno);
--				conf = get_multipath_config();
--				conf->strict_timing = 0;
--				put_multipath_config(conf);
--				break;
--			}
-+			pthread_mutex_lock(&checker_lock);
-+			pthread_cleanup_push(unlock_mutex, &checker_lock);
-+			pthread_cond_wait(&checker_cond, &checker_lock);
-+			pthread_cleanup_pop(1);
- 		}
- 	}
- 	pthread_cleanup_pop(1);
-+	pthread_cleanup_pop(1);
- 	return NULL;
- }
- 
--- 
-2.16.1
+On Wed, Mar 7, 2018 at 2:28 PM, Xose Vazquez Perez <xose.vazquez@gmail.com>
+wrote:
+
+> On 01/12/2018 05:56 PM, Xose Vazquez Perez wrote:
+>
+> > gitweb is able to extract and serve a release right away.
+>
+> This one is missing.
+>
+> > Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> > Cc: device-mapper development <dm-devel@redhat.com>
+> > Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+> > ---
+> >  README | 3 ++-
+> >  1 file changed, 2 insertions(+), 1 deletion(-)
+> >
+> > diff --git a/README b/README
+> > index 570224d..89bab74 100644
+> > --- a/README
+> > +++ b/README
+> > @@ -20,7 +20,8 @@ git archive --format=tar.gz
+> --prefix=multipath-tools-X.Y.Z/ X.Y.Z > ../multipath
+> >
+> >  Alternatively it may be obtained from gitweb, go to:
+> >  https://git.opensvc.com/?p=multipath-tools/.git;a=tags
+> > -select a release-tag and then click on "snapshot".
+> > +select a release-tag and then click on "snapshot". Or get it with
+> > +wget "https://git.opensvc.com/?p=multipath-tools/.git;a=
+> snapshot;sf=tgz;h=refs/tags/X.Y.Z" -O multipath-tools-X.Y.Z.tar.gz
+> >
+> >
+> >  Source code
+> >
+>
+>
+
+--94eb2c05baaa2a33750566d359f7
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Thanks, applied.</div><div class=3D"gmail_extra"><br><div =
+class=3D"gmail_quote">On Wed, Mar 7, 2018 at 2:28 PM, Xose Vazquez Perez <s=
+pan dir=3D"ltr">&lt;<a href=3D"mailto:xose.vazquez@gmail.com" target=3D"_bl=
+ank">xose.vazquez@gmail.com</a>&gt;</span> wrote:<br><blockquote class=3D"g=
+mail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-l=
+eft:1ex"><span class=3D"">On 01/12/2018 05:56 PM, Xose Vazquez Perez wrote:=
+<br>
+<br>
+&gt; gitweb is able to extract and serve a release right away.<br>
+<br>
+</span>This one is missing.<br>
+<div class=3D"HOEnZb"><div class=3D"h5"><br>
+&gt; Cc: Christophe Varoqui &lt;<a href=3D"mailto:christophe.varoqui@opensv=
+c.com">christophe.varoqui@opensvc.<wbr>com</a>&gt;<br>
+&gt; Cc: device-mapper development &lt;<a href=3D"mailto:dm-devel@redhat.co=
+m">dm-devel@redhat.com</a>&gt;<br>
+&gt; Signed-off-by: Xose Vazquez Perez &lt;<a href=3D"mailto:xose.vazquez@g=
+mail.com">xose.vazquez@gmail.com</a>&gt;<br>
+&gt; ---<br>
+&gt;=C2=A0 README | 3 ++-<br>
+&gt;=C2=A0 1 file changed, 2 insertions(+), 1 deletion(-)<br>
+&gt;<br>
+&gt; diff --git a/README b/README<br>
+&gt; index 570224d..89bab74 100644<br>
+&gt; --- a/README<br>
+&gt; +++ b/README<br>
+&gt; @@ -20,7 +20,8 @@ git archive --format=3Dtar.gz --prefix=3Dmultipath-t=
+ools-X.Y.<wbr>Z/ X.Y.Z &gt; ../multipath<br>
+&gt;<br>
+&gt;=C2=A0 Alternatively it may be obtained from gitweb, go to:<br>
+&gt;=C2=A0 <a href=3D"https://git.opensvc.com/?p=3Dmultipath-tools/.git;a=
+=3Dtags" rel=3D"noreferrer" target=3D"_blank">https://git.opensvc.com/?p=3D=
+<wbr>multipath-tools/.git;a=3Dtags</a><br>
+&gt; -select a release-tag and then click on &quot;snapshot&quot;.<br>
+&gt; +select a release-tag and then click on &quot;snapshot&quot;. Or get i=
+t with<br>
+&gt; +wget &quot;<a href=3D"https://git.opensvc.com/?p=3Dmultipath-tools/.g=
+it;a=3Dsnapshot;sf=3Dtgz;h=3Drefs/tags/X.Y.Z" rel=3D"noreferrer" target=3D"=
+_blank">https://git.opensvc.com/?p=3D<wbr>multipath-tools/.git;a=3D<wbr>sna=
+pshot;sf=3Dtgz;h=3Drefs/tags/X.<wbr>Y.Z</a>&quot; -O multipath-tools-X.Y.Z.=
+tar.gz<br>
+&gt;<br>
+&gt;<br>
+&gt;=C2=A0 Source code<br>
+&gt;<br>
+<br>
+</div></div></blockquote></div><br></div>
+
+--94eb2c05baaa2a33750566d359f7--
+
+
+--===============0258370448930597864==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0258370448930597864==--
