@@ -1,16 +1,16 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH v2 22/23] multipathd: update path group prio
-	in check_path
-Date: Wed, 7 Mar 2018 14:01:18 -0600
-Message-ID: <20180307200118.GY14513@octiron.msp.redhat.com>
+Subject: Re: [PATCH v2 23/23] multipathd: fix signal blocking
+	logic
+Date: Wed, 7 Mar 2018 14:24:39 -0600
+Message-ID: <20180307202439.GZ14513@octiron.msp.redhat.com>
 References: <20180305231507.10386-1-mwilck@suse.com>
-	<20180305231507.10386-23-mwilck@suse.com>
+	<20180305231507.10386-24-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20180305231507.10386-23-mwilck@suse.com>
+In-Reply-To: <20180305231507.10386-24-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,46 +24,117 @@ To: Martin Wilck <mwilck@suse.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Mar 06, 2018 at 12:15:06AM +0100, Martin Wilck wrote:
-> The previous patch "libmultipath: don't update path groups when printing"
-> removed the call to path_group_prio_update() in the printing code path.
-> To compensate for that, recalculate path group prio also when it's not
-> strictly necessary (i.e. if failback "manual" is set).
+On Tue, Mar 06, 2018 at 12:15:07AM +0100, Martin Wilck wrote:
+> multipathd is supposed to block all signals in all threads, except
+> the uxlsnr thread which handles termination and reconfiguration
+> signals (SIGUSR1) in its ppoll() call, SIGUSR2 in the waiter thread
+> and the marginal path checker thread, and occasional SIGALRM. The current
+> logic does exactly the oppsite, it blocks termination signals in SIGPOLL and
+> allows multipathd to be killed e.g. by SIGALRM.
+> 
+> Fix that by inverting the logic. The argument to pthread_sigmask and
+> ppoll is the set of *blocked* signals, not vice versa.
+> 
+> The marginal paths code needs to unblock SIGUSR2 now explicity, as
+> the dm-event waiter code already does. Doing this with pselect()
+> avoids asynchronous cancellation.
+> 
+> Fixes: 810082e "libmultipath, multipathd: Rework SIGPIPE handling"
+> Fixes: 534ec4c "multipathd: Ensure that SIGINT, SIGTERM, SIGHUP and SIGUSR1
+> are delivered to the uxsock thread"
 > 
 
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+
 > Signed-off-by: Martin Wilck <mwilck@suse.com>
 > ---
->  multipathd/main.c | 8 ++++++--
->  1 file changed, 6 insertions(+), 2 deletions(-)
+>  libmultipath/io_err_stat.c | 17 ++++++++++++++++-
+>  multipathd/main.c          |  7 +++++--
+>  multipathd/uxlsnr.c        | 10 +++++-----
+>  3 files changed, 26 insertions(+), 8 deletions(-)
 > 
+> diff --git a/libmultipath/io_err_stat.c b/libmultipath/io_err_stat.c
+> index 5b10f0372f9f..00bac9e0e755 100644
+> --- a/libmultipath/io_err_stat.c
+> +++ b/libmultipath/io_err_stat.c
+> @@ -21,6 +21,7 @@
+>  #include <libaio.h>
+>  #include <errno.h>
+>  #include <sys/mman.h>
+> +#include <sys/select.h>
+>  
+>  #include "vector.h"
+>  #include "memory.h"
+> @@ -691,14 +692,28 @@ static void service_paths(void)
+>  
+>  static void *io_err_stat_loop(void *data)
+>  {
+> +	sigset_t set;
+> +
+>  	vecs = (struct vectors *)data;
+>  	pthread_cleanup_push(rcu_unregister, NULL);
+>  	rcu_register_thread();
+>  
+> +	sigfillset(&set);
+> +	sigdelset(&set, SIGUSR2);
+> +
+>  	mlockall(MCL_CURRENT | MCL_FUTURE);
+>  	while (1) {
+> +		struct timespec ts;
+> +
+>  		service_paths();
+> -		usleep(100000);
+> +
+> +		ts.tv_sec = 0;
+> +		ts.tv_nsec = 100 * 1000 * 1000;
+> +		/*
+> +		 * pselect() with no fds, a timeout, and a sigmask:
+> +		 * sleep for 100ms and react on SIGUSR2.
+> +		 */
+> +		pselect(1, NULL, NULL, NULL, &ts, &set);
+>  	}
+>  
+>  	pthread_cleanup_pop(1);
 > diff --git a/multipathd/main.c b/multipathd/main.c
-> index 465a1e291226..4abdd8f071c3 100644
+> index 4abdd8f071c3..68595836d723 100644
 > --- a/multipathd/main.c
 > +++ b/multipathd/main.c
-> @@ -252,8 +252,9 @@ need_switch_pathgroup (struct multipath * mpp, int refresh)
->  	struct path * pp;
->  	unsigned int i, j;
->  	struct config *conf;
-> +	int bestpg;
+> @@ -2261,10 +2261,13 @@ signal_init(void)
+>  {
+>  	sigset_t set;
 >  
-> -	if (!mpp || mpp->pgfailback == -FAILBACK_MANUAL)
-> +	if (!mpp)
->  		return 0;
+> -	sigemptyset(&set);
+> -	sigaddset(&set, SIGUSR2);
+> +	/* block all signals */
+> +	sigfillset(&set);
+> +	/* SIGPIPE occurs if logging fails */
+> +	sigdelset(&set, SIGPIPE);
+>  	pthread_sigmask(SIG_SETMASK, &set, NULL);
 >  
->  	/*
-> @@ -272,8 +273,11 @@ need_switch_pathgroup (struct multipath * mpp, int refresh)
->  	if (!mpp->pg || VECTOR_SIZE(mpp->paths) == 0)
->  		return 0;
->  
-> -	mpp->bestpg = select_path_group(mpp);
-> +	bestpg = select_path_group(mpp);
-> +	if (mpp->pgfailback == -FAILBACK_MANUAL)
-> +		return 0;
->  
-> +	mpp->bestpg = bestpg;
->  	if (mpp->bestpg != mpp->nextpg)
->  		return 1;
->  
+> +	/* Other signals will be unblocked in the uxlsnr thread */
+>  	signal_set(SIGHUP, sighup);
+>  	signal_set(SIGUSR1, sigusr1);
+>  	signal_set(SIGUSR2, sigusr2);
+> diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
+> index 98ac25a68c43..a2ca36ba1653 100644
+> --- a/multipathd/uxlsnr.c
+> +++ b/multipathd/uxlsnr.c
+> @@ -170,11 +170,11 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
+>  		condlog(0, "uxsock: failed to allocate poll fds");
+>  		return NULL;
+>  	}
+> -	sigemptyset(&mask);
+> -	sigaddset(&mask, SIGINT);
+> -	sigaddset(&mask, SIGTERM);
+> -	sigaddset(&mask, SIGHUP);
+> -	sigaddset(&mask, SIGUSR1);
+> +	sigfillset(&mask);
+> +	sigdelset(&mask, SIGINT);
+> +	sigdelset(&mask, SIGTERM);
+> +	sigdelset(&mask, SIGHUP);
+> +	sigdelset(&mask, SIGUSR1);
+>  	while (1) {
+>  		struct client *c, *tmp;
+>  		int i, poll_count, num_clients;
 > -- 
 > 2.16.1
