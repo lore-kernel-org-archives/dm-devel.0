@@ -1,11 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 0/4] multipath-tools: important fixes for 0.7.5
-Date: Thu,  8 Mar 2018 00:08:55 +0100
-Message-ID: <20180307230859.14926-1-mwilck@suse.com>
+Subject: [PATCH 1/4] libmultipath: fix crash on shutdown if
+	io_err thread isn't running
+Date: Thu,  8 Mar 2018 00:08:56 +0100
+Message-ID: <20180307230859.14926-2-mwilck@suse.com>
+References: <20180307230859.14926-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20180307230859.14926-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,31 +22,30 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Hi Christophe,
+If we've never created the io_error checker thread, we shouldn't
+cancel it.
 
-thanks for catching up. This series fixes immediate problems with
-0.7.5. The first one corresponds to my previously posted
-"[PATCH v3 2/2] multipathd: start marginal path checker thread lazily",
-and fixes a crash. The others fix the problens reported by Xose.
+Fixes: 160da9fa4339 "multipathd: start marginal path checker thread
+lazily"
 
-Regards
-Martin
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ libmultipath/io_err_stat.c | 3 +++
+ 1 file changed, 3 insertions(+)
 
-Martin Wilck (4):
-  libmultipath: fix crash on shutdown if io_err thread isn't running
-  multipathd: fix -Wpointer-to-int-cast warning in uxlsnr
-  multipath: fix clang warning in delegate_to_multipathd
-  multipath-tools: build: prevent intermediate file deletion
-
- Makefile.inc                       | 1 +
- libmultipath/checkers/Makefile     | 2 ++
- libmultipath/foreign/Makefile      | 2 ++
- libmultipath/io_err_stat.c         | 3 +++
- libmultipath/prioritizers/Makefile | 2 ++
- multipath/main.c                   | 2 +-
- multipathd/uxlsnr.c                | 4 ++--
- tests/Makefile                     | 5 ++---
- 8 files changed, 15 insertions(+), 6 deletions(-)
-
+diff --git a/libmultipath/io_err_stat.c b/libmultipath/io_err_stat.c
+index ac81b4b9390d..02b1453ea527 100644
+--- a/libmultipath/io_err_stat.c
++++ b/libmultipath/io_err_stat.c
+@@ -793,6 +793,9 @@ destroy_ctx:
+ 
+ void stop_io_err_stat_thread(void)
+ {
++	if (io_err_stat_thr == (pthread_t)0)
++		return;
++
+ 	if (uatomic_read(&io_err_thread_running) == 1)
+ 		pthread_cancel(io_err_stat_thr);
+ 
 -- 
 2.16.1
