@@ -1,14 +1,12 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 1/4] libmultipath: fix crash on shutdown if
-	io_err thread isn't running
-Date: Thu,  8 Mar 2018 00:08:56 +0100
-Message-ID: <20180307230859.14926-2-mwilck@suse.com>
-References: <20180307230859.14926-1-mwilck@suse.com>
+Subject: [PATCH RESEND 0/4] multipath-tools: fixes for path wwid
+	detection and path change uevents
+Date: Thu,  8 Mar 2018 00:21:48 +0100
+Message-ID: <20180307232152.15538-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180307230859.14926-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,34 +16,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Chongyun Wu <wu.chongyun@h3c.com>
+Cc: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-If we've never created the io_error checker thread, we shouldn't
-cancel it.
+Hi Christophe,
 
-Fixes: 160da9fa4339 "multipathd: start marginal path checker thread
-lazily"
+this small series fixes some minor glitches I found in the current path
+discovery code, and attempts to implement the safe part of the functionality
+discussed in the thread "multipathd: update path's udev in uev_update_path"
+in January (based on an idea from Wu Chongyun).
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- libmultipath/io_err_stat.c | 3 +++
- 1 file changed, 3 insertions(+)
+Resending the series, unchanged, rebased on 0.7.5.
 
-diff --git a/libmultipath/io_err_stat.c b/libmultipath/io_err_stat.c
-index ac81b4b9390d..02b1453ea527 100644
---- a/libmultipath/io_err_stat.c
-+++ b/libmultipath/io_err_stat.c
-@@ -793,6 +793,9 @@ destroy_ctx:
- 
- void stop_io_err_stat_thread(void)
- {
-+	if (io_err_stat_thr == (pthread_t)0)
-+		return;
-+
- 	if (uatomic_read(&io_err_thread_running) == 1)
- 		pthread_cancel(io_err_stat_thr);
- 
+Regards,
+Martin
+
+Martin Wilck (4):
+  libmultipath: get_uid: check VPD pages for SCSI only
+  libmultipath: get_uid: don't quit prematurely without udev
+  libmultipath: uev_update_path: always warn if WWID changed
+  libmultipath: uev_update_path: update path properties
+
+ libmultipath/discovery.c | 58 ++++++++++++++++++++++++++++--------------------
+ multipathd/main.c        | 29 +++++++++++++++++-------
+ 2 files changed, 55 insertions(+), 32 deletions(-)
+
 -- 
 2.16.1
