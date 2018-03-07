@@ -1,14 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH RESEND 4/4] libmultipath: uev_update_path: update
-	path properties
-Date: Thu,  8 Mar 2018 00:21:52 +0100
-Message-ID: <20180307232152.15538-5-mwilck@suse.com>
-References: <20180307232152.15538-1-mwilck@suse.com>
+Subject: [PATCH 2/8] libmultipath: enable feature disable changed
+	wwid by default
+Date: Thu,  8 Mar 2018 00:15:45 +0100
+Message-ID: <20180307231551.15162-3-mwilck@suse.com>
+References: <20180307231551.15162-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180307232152.15538-1-mwilck@suse.com>
+In-Reply-To: <20180307231551.15162-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,36 +18,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Chongyun Wu <wu.chongyun@h3c.com>
-Cc: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: Bart Van Assche <Bart.VanAssche@sandisk.com>, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>, Chongyun Wu <wu.chongyun@h3c.com>
 List-Id: dm-devel.ids
 
-Update pp->udev and those path attributes that can be cheaply
-updated from sysfs, i.e. without IO to the disk.
+From: Chongyun Wu <wu.chongyun@h3c.com>
 
+enable feature disable changed wwid by default.
+
+Signed-off-by: Chongyun Wu <wu.chongyun@h3c.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c | 8 ++++++++
- 1 file changed, 8 insertions(+)
+ libmultipath/defaults.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index e9668205ce92..6e6c52a52783 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -964,6 +964,14 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
- 				strcpy(pp->wwid, wwid);
- 			else
- 				pp->wwid_changed = 0;
-+		} else {
-+			udev_device_unref(pp->udev);
-+			pp->udev = udev_device_ref(uev->udev);
-+			conf = get_multipath_config();
-+			if (pathinfo(pp, conf, DI_SYSFS|DI_NOIO) != PATHINFO_OK)
-+				condlog(1, "%s: pathinfo failed after change uevent",
-+					uev->kernel);
-+			put_multipath_config(conf);
- 		}
+diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
+index c9e3411aa579..2b270ca46f48 100644
+--- a/libmultipath/defaults.h
++++ b/libmultipath/defaults.h
+@@ -38,7 +38,7 @@
+ #define DEFAULT_FORCE_SYNC	0
+ #define DEFAULT_PARTITION_DELIM	NULL
+ #define DEFAULT_SKIP_KPARTX SKIP_KPARTX_OFF
+-#define DEFAULT_DISABLE_CHANGED_WWIDS 0
++#define DEFAULT_DISABLE_CHANGED_WWIDS 1
+ #define DEFAULT_MAX_SECTORS_KB MAX_SECTORS_KB_UNDEF
+ #define DEFAULT_GHOST_DELAY GHOST_DELAY_OFF
  
- 		if (pp->initialized == INIT_REQUESTED_UDEV)
 -- 
 2.16.1
