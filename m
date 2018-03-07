@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 7/8] libmultipath: fix wrong output of "multipath
-	-t"
-Date: Thu,  8 Mar 2018 00:15:50 +0100
-Message-ID: <20180307231551.15162-8-mwilck@suse.com>
+Subject: [PATCH 1/8] multipathd: add lock protection for
+	cli_list_status
+Date: Thu,  8 Mar 2018 00:15:44 +0100
+Message-ID: <20180307231551.15162-2-mwilck@suse.com>
 References: <20180307231551.15162-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,105 +22,30 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: Bart Van Assche <Bart.VanAssche@sandisk.com>, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>, Chongyun Wu <wu.chongyun@h3c.com>
 List-Id: dm-devel.ids
 
-The default values printed by "multipath -t" or "multipathd show config"
-for "detect_prio", "detect_checker", and "retain_attached_hw_handler"
-don't match the actual compiled-in defaults. Moreover, several other
-options would also be displayed wrongly if the defaults were changed.
+From: Chongyun Wu <wu.chongyun@h3c.com>
 
+cli_list_status will access vecs->pathvec which should have lock
+protection, otherwise might get inconsistent data or other
+problem.
+
+Signed-off-by: Chongyun Wu <wu.chongyun@h3c.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/dict.c | 25 ++++++++++++++++---------
- 1 file changed, 16 insertions(+), 9 deletions(-)
+ multipathd/main.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index 47dc2a38f1ac..ea273dd91962 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -340,7 +340,7 @@ declare_def_handler(checker_timeout, set_int)
- declare_def_snprint(checker_timeout, print_nonzero)
- 
- declare_def_handler(flush_on_last_del, set_yes_no_undef)
--declare_def_snprint_defint(flush_on_last_del, print_yes_no_undef, YNU_NO)
-+declare_def_snprint_defint(flush_on_last_del, print_yes_no_undef, DEFAULT_FLUSH)
- declare_ovr_handler(flush_on_last_del, set_yes_no_undef)
- declare_ovr_snprint(flush_on_last_del, print_yes_no_undef)
- declare_hw_handler(flush_on_last_del, set_yes_no_undef)
-@@ -349,7 +349,8 @@ declare_mp_handler(flush_on_last_del, set_yes_no_undef)
- declare_mp_snprint(flush_on_last_del, print_yes_no_undef)
- 
- declare_def_handler(user_friendly_names, set_yes_no_undef)
--declare_def_snprint_defint(user_friendly_names, print_yes_no_undef, YNU_NO)
-+declare_def_snprint_defint(user_friendly_names, print_yes_no_undef,
-+			   DEFAULT_USER_FRIENDLY_NAMES)
- declare_ovr_handler(user_friendly_names, set_yes_no_undef)
- declare_ovr_snprint(user_friendly_names, print_yes_no_undef)
- declare_hw_handler(user_friendly_names, set_yes_no_undef)
-@@ -367,21 +368,24 @@ declare_def_handler(prkeys_file, set_str)
- declare_def_snprint(prkeys_file, print_str)
- 
- declare_def_handler(retain_hwhandler, set_yes_no_undef)
--declare_def_snprint_defint(retain_hwhandler, print_yes_no_undef, YNU_NO)
-+declare_def_snprint_defint(retain_hwhandler, print_yes_no_undef,
-+			   DEFAULT_RETAIN_HWHANDLER)
- declare_ovr_handler(retain_hwhandler, set_yes_no_undef)
- declare_ovr_snprint(retain_hwhandler, print_yes_no_undef)
- declare_hw_handler(retain_hwhandler, set_yes_no_undef)
- declare_hw_snprint(retain_hwhandler, print_yes_no_undef)
- 
- declare_def_handler(detect_prio, set_yes_no_undef)
--declare_def_snprint_defint(detect_prio, print_yes_no_undef, YNU_NO)
-+declare_def_snprint_defint(detect_prio, print_yes_no_undef,
-+			   DEFAULT_DETECT_PRIO)
- declare_ovr_handler(detect_prio, set_yes_no_undef)
- declare_ovr_snprint(detect_prio, print_yes_no_undef)
- declare_hw_handler(detect_prio, set_yes_no_undef)
- declare_hw_snprint(detect_prio, print_yes_no_undef)
- 
- declare_def_handler(detect_checker, set_yes_no_undef)
--declare_def_snprint_defint(detect_checker, print_yes_no_undef, YNU_NO)
-+declare_def_snprint_defint(detect_checker, print_yes_no_undef,
-+			   DEFAULT_DETECT_CHECKER)
- declare_ovr_handler(detect_checker, set_yes_no_undef)
- declare_ovr_snprint(detect_checker, print_yes_no_undef)
- declare_hw_handler(detect_checker, set_yes_no_undef)
-@@ -391,7 +395,8 @@ declare_def_handler(force_sync, set_yes_no)
- declare_def_snprint(force_sync, print_yes_no)
- 
- declare_def_handler(deferred_remove, set_yes_no_undef)
--declare_def_snprint_defint(deferred_remove, print_yes_no_undef, YNU_NO)
-+declare_def_snprint_defint(deferred_remove, print_yes_no_undef,
-+			   DEFAULT_DEFERRED_REMOVE)
- declare_ovr_handler(deferred_remove, set_yes_no_undef)
- declare_ovr_snprint(deferred_remove, print_yes_no_undef)
- declare_hw_handler(deferred_remove, set_yes_no_undef)
-@@ -412,7 +417,8 @@ declare_def_handler(strict_timing, set_yes_no)
- declare_def_snprint(strict_timing, print_yes_no)
- 
- declare_def_handler(skip_kpartx, set_yes_no_undef)
--declare_def_snprint_defint(skip_kpartx, print_yes_no_undef, YNU_NO)
-+declare_def_snprint_defint(skip_kpartx, print_yes_no_undef,
-+			   DEFAULT_SKIP_KPARTX)
- declare_ovr_handler(skip_kpartx, set_yes_no_undef)
- declare_ovr_snprint(skip_kpartx, print_yes_no_undef)
- declare_hw_handler(skip_kpartx, set_yes_no_undef)
-@@ -629,7 +635,8 @@ print_fast_io_fail(char * buff, int len, long v)
- }
- 
- declare_def_handler(fast_io_fail, set_fast_io_fail)
--declare_def_snprint_defint(fast_io_fail, print_fast_io_fail, DEFAULT_FAST_IO_FAIL)
-+declare_def_snprint_defint(fast_io_fail, print_fast_io_fail,
-+			   DEFAULT_FAST_IO_FAIL)
- declare_ovr_handler(fast_io_fail, set_fast_io_fail)
- declare_ovr_snprint(fast_io_fail, print_fast_io_fail)
- declare_hw_handler(fast_io_fail, set_fast_io_fail)
-@@ -816,7 +823,7 @@ print_rr_weight (char * buff, int len, long v)
- }
- 
- declare_def_handler(rr_weight, set_rr_weight)
--declare_def_snprint_defint(rr_weight, print_rr_weight, RR_WEIGHT_NONE)
-+declare_def_snprint_defint(rr_weight, print_rr_weight, DEFAULT_RR_WEIGHT)
- declare_ovr_handler(rr_weight, set_rr_weight)
- declare_ovr_snprint(rr_weight, print_rr_weight)
- declare_hw_handler(rr_weight, set_rr_weight)
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 327cc191214c..6d502aceb252 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1212,7 +1212,7 @@ uxlsnrloop (void * ap)
+ 	set_handler_callback(LIST+PATHS+RAW+FMT, cli_list_paths_raw);
+ 	set_handler_callback(LIST+PATH, cli_list_path);
+ 	set_handler_callback(LIST+MAPS, cli_list_maps);
+-	set_unlocked_handler_callback(LIST+STATUS, cli_list_status);
++	set_handler_callback(LIST+STATUS, cli_list_status);
+ 	set_unlocked_handler_callback(LIST+DAEMON, cli_list_daemon);
+ 	set_handler_callback(LIST+MAPS+STATUS, cli_list_maps_status);
+ 	set_handler_callback(LIST+MAPS+STATS, cli_list_maps_stats);
 -- 
 2.16.1
