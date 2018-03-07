@@ -1,14 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH RESEND 1/4] libmultipath: get_uid: check VPD
-	pages for SCSI only
-Date: Thu,  8 Mar 2018 00:21:49 +0100
-Message-ID: <20180307232152.15538-2-mwilck@suse.com>
-References: <20180307232152.15538-1-mwilck@suse.com>
+Subject: [PATCH 3/4] multipath: fix clang warning in
+	delegate_to_multipathd
+Date: Thu,  8 Mar 2018 00:08:58 +0100
+Message-ID: <20180307230859.14926-4-mwilck@suse.com>
+References: <20180307230859.14926-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180307232152.15538-1-mwilck@suse.com>
+In-Reply-To: <20180307230859.14926-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,99 +18,36 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Chongyun Wu <wu.chongyun@h3c.com>
-Cc: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-The VPD code won't work for non-SCSI devices, anyway. For indentation
-reasons, I moved the "retrigger_tries" case to a separate function,
-which is also called only for SCSI devices.
+Fixes this warning from clang:
 
+main.c:628:11: warning: variable 'reply' is used uninitialized
+whenever 'if' condition is true [-Wsometimes-uninitialized]
+...
+main.c:609:32: note: initialize the variable 'reply' to silence this warning
+
+Fixes: 506d253b7f89 "multipath: delegate dangerous commands to multipathd"
+Reported-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/discovery.c | 50 +++++++++++++++++++++++++++++++-----------------
- 1 file changed, 32 insertions(+), 18 deletions(-)
+ multipath/main.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 3d38a2550980..53182a85fa10 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -1807,9 +1807,38 @@ get_vpd_uid(struct path * pp)
- 		parent = udev_device_get_parent(parent);
- 	}
- 
-+	if (!parent)
-+		return -EINVAL;
-+
- 	return get_vpd_sysfs(parent, 0x83, pp->wwid, WWID_SIZE);
- }
- 
-+static ssize_t scsi_uid_fallback(struct path *pp, int path_state,
-+			     const char **origin)
-+{
-+	ssize_t len = 0;
-+	int retrigger;
-+	struct config *conf;
-+
-+	conf = get_multipath_config();
-+	retrigger = conf->retrigger_tries;
-+	put_multipath_config(conf);
-+	if (pp->retriggers >= retrigger &&
-+	    !strcmp(pp->uid_attribute, DEFAULT_UID_ATTRIBUTE)) {
-+		len = get_vpd_uid(pp);
-+		*origin = "sysfs";
-+		pp->uid_attribute = NULL;
-+		if (len < 0 && path_state == PATH_UP) {
-+			condlog(1, "%s: failed to get sysfs uid: %s",
-+				pp->dev, strerror(-len));
-+			len = get_vpd_sgio(pp->fd, 0x83, pp->wwid,
-+					   WWID_SIZE);
-+			*origin = "sgio";
-+		}
-+	}
-+	return len;
-+}
-+
- int
- get_uid (struct path * pp, int path_state, struct udev_device *udev)
+diff --git a/multipath/main.c b/multipath/main.c
+index 8732cf8bd930..716203eab56c 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -606,7 +606,7 @@ int delegate_to_multipathd(enum mpath_cmds cmd, const char *dev,
+ 			   enum devtypes dev_type, const struct config *conf)
  {
-@@ -1851,7 +1880,6 @@ get_uid (struct path * pp, int path_state, struct udev_device *udev)
- 		len = get_rbd_uid(pp);
- 		origin = "sysfs";
- 	} else {
--		int retrigger;
+ 	int fd;
+-	char command[1024], *p, *reply;
++	char command[1024], *p, *reply = NULL;
+ 	int n, r = 0;
  
- 		if (pp->uid_attribute) {
- 			len = get_udev_uid(pp, pp->uid_attribute, udev);
-@@ -1861,26 +1889,12 @@ get_uid (struct path * pp, int path_state, struct udev_device *udev)
- 					"%s: failed to get udev uid: %s",
- 					pp->dev, strerror(-len));
- 
--		} else {
-+		} else if (pp->bus == SYSFS_BUS_SCSI) {
- 			len = get_vpd_uid(pp);
- 			origin = "sysfs";
- 		}
--		conf = get_multipath_config();
--		retrigger = conf->retrigger_tries;
--		put_multipath_config(conf);
--		if (len <= 0 && pp->retriggers >= retrigger &&
--		    !strcmp(pp->uid_attribute, DEFAULT_UID_ATTRIBUTE)) {
--			len = get_vpd_uid(pp);
--			origin = "sysfs";
--			pp->uid_attribute = NULL;
--			if (len < 0 && path_state == PATH_UP) {
--				condlog(1, "%s: failed to get sysfs uid: %s",
--					pp->dev, strerror(-len));
--				len = get_vpd_sgio(pp->fd, 0x83, pp->wwid,
--						   WWID_SIZE);
--				origin = "sgio";
--			}
--		}
-+		if (len <= 0 && pp->bus == SYSFS_BUS_SCSI)
-+			len = scsi_uid_fallback(pp, path_state, &origin);
- 	}
- 	if ( len < 0 ) {
- 		condlog(1, "%s: failed to get %s uid: %s",
+ 	fd = mpath_connect();
 -- 
 2.16.1
