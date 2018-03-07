@@ -1,14 +1,13 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 1/5] tests: add unit tests for config file
-	parser
-Date: Thu,  8 Mar 2018 00:26:16 +0100
-Message-ID: <20180307232620.15746-2-mwilck@suse.com>
-References: <20180307232620.15746-1-mwilck@suse.com>
+Subject: [PATCH 8/8] libmultipath: remove FREE_CONST() again
+Date: Thu,  8 Mar 2018 00:15:51 +0100
+Message-ID: <20180307231551.15162-9-mwilck@suse.com>
+References: <20180307231551.15162-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180307232620.15746-1-mwilck@suse.com>
+In-Reply-To: <20180307231551.15162-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,530 +18,278 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+Cc: Bart Van Assche <Bart.VanAssche@sandisk.com>, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>, Chongyun Wu <wu.chongyun@h3c.com>
 List-Id: dm-devel.ids
 
-Add test cases for parsing the config file.
+The FREE_CONST macro is of questionable value, as reviewers have pointed
+out. The users of this macro were mostly functions that called
+uevent_get_dm_xyz(). But these functions don't need to return const char*,
+as they allocate the strings they return. So my change of the prototype
+was wrong. This patch reverts it. The few other users of FREE_CONST can
+also be reverted to use char* instead of const char* with negligible risk.
 
-Some of these tests currently fail. The patches that follow fix them.
+Fixes: "libmultipath: fix compiler warnings for -Wcast-qual"
+Fixes: "libmultipath: const qualifier for wwid and alias"
+
+(Note: this reverts changes not committed upstream. But as these changes are
+deeply in the middle of my large-ish series of patches, it's probably easier
+to simply add this patch on top than to rebase the whole series).
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- tests/Makefile  |   2 +-
- tests/globals.c |   1 +
- tests/parser.c  | 479 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 481 insertions(+), 1 deletion(-)
- create mode 100644 tests/parser.c
+ libmultipath/devmapper.c |  7 +++----
+ libmultipath/memory.h    |  6 ------
+ libmultipath/uevent.c    | 12 ++++++------
+ libmultipath/uevent.h    |  6 +++---
+ multipathd/main.c        | 16 ++++++++--------
+ tests/uevent.c           | 16 ++++++++--------
+ 6 files changed, 28 insertions(+), 35 deletions(-)
 
-diff --git a/tests/Makefile b/tests/Makefile
-index 7ae6b9012b5a..81f5518b05d0 100644
---- a/tests/Makefile
-+++ b/tests/Makefile
-@@ -3,7 +3,7 @@ include ../Makefile.inc
- CFLAGS += $(BIN_CFLAGS) -I$(multipathdir) -I$(mpathcmddir)
- LIBDEPS += -L$(multipathdir) -lmultipath -lcmocka
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index 607aea8dc1fc..767d87c8399f 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -27,7 +27,6 @@
+ #include <sys/types.h>
+ #include <time.h>
  
--TESTS := uevent
-+TESTS := uevent parser
+-#define FREE_CONST(p) do { free((void*)(unsigned long)p); p = NULL; } while(0)
+ #define MAX_WAIT 5
+ #define LOOPS_PER_SEC 5
  
- .SILENT: $(TESTS:%=%.o)
- .PRECIOUS: $(TESTS:%=%-test)
-diff --git a/tests/globals.c b/tests/globals.c
-index 96a56515fd09..80f57bd3639a 100644
---- a/tests/globals.c
-+++ b/tests/globals.c
-@@ -6,6 +6,7 @@ struct udev *udev;
- int logsink = 0;
- struct config conf = {
- 	.uid_attrs = "sd:ID_BOGUS",
-+	.verbosity = 4,
- };
+@@ -1415,8 +1414,8 @@ out:
  
- struct config *get_multipath_config(void)
-diff --git a/tests/parser.c b/tests/parser.c
-new file mode 100644
-index 000000000000..8e73cebd878a
---- /dev/null
-+++ b/tests/parser.c
-@@ -0,0 +1,479 @@
-+/*
-+ * Copyright (c) 2018 SUSE Linux GmbH
-+ *
-+ * This program is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU General Public License
-+ * as published by the Free Software Foundation; either version 2
-+ * of the License, or (at your option) any later version.
-+ *
-+ * This program is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ * GNU General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU General Public License
-+ * along with this program; if not, write to the Free Software
-+ *
-+ */
-+
-+#include <stdbool.h>
-+#include <stdarg.h>
-+#include <stddef.h>
-+#include <setjmp.h>
-+#include <stdlib.h>
-+#include <cmocka.h>
-+// #include "list.h"
-+#include "parser.h"
-+#include "vector.h"
-+
-+#include "globals.c"
-+
-+/* Set these to 1 to get success for current broken behavior */
-+/* Strip leading whitespace between quotes */
-+#define LSTRIP_QUOTED_WSP 0
-+/* Stop parsing at 2nd quote */
-+#define TWO_QUOTES_ONLY 0
-+
-+static bool is_quote(const char *s)
-+{
-+	return *s == '"';
-+}
-+
-+static char *test_file = "test.conf";
-+
-+/* Missing declaration */
-+int validate_config_strvec(vector strvec, char *file);
-+
-+/* Stringify helpers */
-+#define _str_(x) #x
-+#define str(x) _str_(x)
-+
-+static int setup(void **state)
-+{
-+	return 0;
-+}
-+
-+static int teardown(void **state)
-+{
-+	return 0;
-+}
-+
-+static void test01(void **state)
-+{
-+	vector v = alloc_strvec("keyword value");
-+	char *val;
-+
-+	assert_int_equal(validate_config_strvec(v, test_file), 0);
-+	assert_int_equal(VECTOR_SIZE(v), 2);
-+	assert_string_equal(VECTOR_SLOT(v, 0), "keyword");
-+	assert_string_equal(VECTOR_SLOT(v, 1), "value");
-+
-+	val = set_value(v);
-+	assert_string_equal(val, "value");
-+
-+	free(val);
-+	free_strvec(v);
-+}
-+
-+static void test02(void **state)
-+{
-+	vector v = alloc_strvec("keyword \"value\"");
-+	char *val;
-+
-+	assert_int_equal(validate_config_strvec(v, test_file), 0);
-+	assert_int_equal(VECTOR_SIZE(v), 4);
-+	assert_string_equal(VECTOR_SLOT(v, 0), "keyword");
-+	assert_true(is_quote(VECTOR_SLOT(v, 1)));;
-+	assert_string_equal(VECTOR_SLOT(v, 2), "value");
-+	assert_true(is_quote(VECTOR_SLOT(v, 3)));;
-+
-+	val = set_value(v);
-+	assert_string_equal(val, "value");
-+
-+	free(val);
-+	free_strvec(v);
-+}
-+
-+static void test03(void **state)
-+{
-+	vector v = alloc_strvec("keyword value\n");
-+	char *val;
-+
-+	assert_int_equal(validate_config_strvec(v, test_file), 0);
-+	assert_int_equal(VECTOR_SIZE(v), 2);
-+	assert_string_equal(VECTOR_SLOT(v, 0), "keyword");
-+	assert_string_equal(VECTOR_SLOT(v, 1), "value");
-+
-+	val = set_value(v);
-+	assert_string_equal(val, "value");
-+
-+	free(val);
-+	free_strvec(v);
-+}
-+
-+static void test04(void **state)
-+{
-+	vector v = alloc_strvec("keyword \t   value   \t \n   ");
-+	char *val;
-+
-+	assert_int_equal(validate_config_strvec(v, test_file), 0);
-+	assert_int_equal(VECTOR_SIZE(v), 2);
-+	assert_string_equal(VECTOR_SLOT(v, 0), "keyword");
-+	assert_string_equal(VECTOR_SLOT(v, 1), "value");
-+
-+	val = set_value(v);
-+	assert_string_equal(val, "value");
-+
-+	free(val);
-+	free_strvec(v);
-+}
-+
-+static void test05(void **state)
-+{
-+	vector v = alloc_strvec("keyword \t   value   \t ! comment  ");
-+	char *val;
-+
-+	assert_int_equal(validate_config_strvec(v, test_file), 0);
-+	assert_int_equal(VECTOR_SIZE(v), 2);
-+	assert_string_equal(VECTOR_SLOT(v, 0), "keyword");
-+	assert_string_equal(VECTOR_SLOT(v, 1), "value");
-+
-+	val = set_value(v);
-+	assert_string_equal(val, "value");
-+
-+	free(val);
-+	free_strvec(v);
-+}
-+
-+static void test06(void **state)
-+{
-+	vector v = alloc_strvec("keyword \t   value   # \n comment  ");
-+	char *val;
-+
-+	assert_int_equal(validate_config_strvec(v, test_file), 0);
-+	assert_int_equal(VECTOR_SIZE(v), 2);
-+	assert_string_equal(VECTOR_SLOT(v, 0), "keyword");
-+	assert_string_equal(VECTOR_SLOT(v, 1), "value");
-+
-+	val = set_value(v);
-+	assert_string_equal(val, "value");
-+
-+	free(val);
-+	free_strvec(v);
-+}
-+
-+static void test07(void **state)
-+{
-+	vector v = alloc_strvec("keyword \t   value   more  ");
-+	char *val;
-+
-+	assert_int_equal(validate_config_strvec(v, test_file), 0);
-+	assert_int_equal(VECTOR_SIZE(v), 3);
-+	assert_string_equal(VECTOR_SLOT(v, 0), "keyword");
-+	assert_string_equal(VECTOR_SLOT(v, 1), "value");
-+	assert_string_equal(VECTOR_SLOT(v, 2), "more");
-+
-+	val = set_value(v);
-+	assert_string_equal(val, "value");
-+
-+	free(val);
-+	free_strvec(v);
-+}
-+
-+static void test08(void **state)
-+{
-+#define QUOTED08 "  value   more  "
-+#define QUOTED08B "value   more  "
-+	vector v = alloc_strvec("keyword \t \"" QUOTED08 "\"");
-+	char *val;
-+
-+	assert_int_equal(validate_config_strvec(v, test_file), 0);
-+	assert_int_equal(VECTOR_SIZE(v), 4);
-+	assert_string_equal(VECTOR_SLOT(v, 0), "keyword");
-+	assert_true(is_quote(VECTOR_SLOT(v, 1)));;
-+#if LSTRIP_QUOTED_WSP
-+	assert_string_equal(VECTOR_SLOT(v, 2), QUOTED08B);
-+#else
-+	assert_string_equal(VECTOR_SLOT(v, 2), QUOTED08);
-+#endif
-+	assert_true(is_quote(VECTOR_SLOT(v, 3)));;
-+
-+	val = set_value(v);
-+#if LSTRIP_QUOTED_WSP
-+	assert_string_equal(val, QUOTED08B);
-+#else
-+	assert_string_equal(val, QUOTED08);
-+#endif
-+	free(val);
-+	free_strvec(v);
-+}
-+
-+static void test09(void **state)
-+{
-+#define QUOTED09 "value # more"
-+	vector v = alloc_strvec("keyword \"" QUOTED09 "\"");
-+	char *val;
-+
-+	assert_int_equal(validate_config_strvec(v, test_file), 0);
-+	assert_int_equal(VECTOR_SIZE(v), 4);
-+	assert_string_equal(VECTOR_SLOT(v, 0), "keyword");
-+	assert_true(is_quote(VECTOR_SLOT(v, 1)));;
-+	assert_string_equal(VECTOR_SLOT(v, 2), QUOTED09);
-+	assert_true(is_quote(VECTOR_SLOT(v, 3)));;
-+
-+	val = set_value(v);
-+	assert_string_equal(val, QUOTED09);
-+
-+	free(val);
-+	free_strvec(v);
-+}
-+
-+static void test10(void **state)
-+{
-+#define QUOTED10 "value ! more"
-+	vector v = alloc_strvec("keyword \"" QUOTED10 "\"");
-+	char *val;
-+
-+	assert_int_equal(validate_config_strvec(v, test_file), 0);
-+	assert_int_equal(VECTOR_SIZE(v), 4);
-+	assert_string_equal(VECTOR_SLOT(v, 0), "keyword");
-+	assert_true(is_quote(VECTOR_SLOT(v, 1)));;
-+	assert_string_equal(VECTOR_SLOT(v, 2), QUOTED10);
-+	assert_true(is_quote(VECTOR_SLOT(v, 3)));;
-+
-+	val = set_value(v);
-+	assert_string_equal(val, QUOTED10);
-+
-+	free(val);
-+	free_strvec(v);
-+}
-+
-+static void test11(void **state)
-+{
-+#define QUOTED11 "value comment"
-+	vector v = alloc_strvec("keyword\"" QUOTED11 "\"");
-+	char *val;
-+
-+	assert_int_equal(validate_config_strvec(v, test_file), 0);
-+	assert_int_equal(VECTOR_SIZE(v), 4);
-+	assert_string_equal(VECTOR_SLOT(v, 0), "keyword");
-+	assert_true(is_quote(VECTOR_SLOT(v, 1)));;
-+	assert_string_equal(VECTOR_SLOT(v, 2), QUOTED11);
-+	assert_true(is_quote(VECTOR_SLOT(v, 3)));;
-+
-+	val = set_value(v);
-+	assert_string_equal(val, QUOTED11);
-+
-+	free(val);
-+	free_strvec(v);
-+}
-+
-+static void test12(void **state)
-+{
-+	vector v = alloc_strvec("key\"word\"");
-+	char *val;
-+
-+	assert_int_equal(validate_config_strvec(v, test_file), 0);
-+	assert_int_equal(VECTOR_SIZE(v), 4);
-+	assert_string_equal(VECTOR_SLOT(v, 0), "key");
-+	assert_true(is_quote(VECTOR_SLOT(v, 1)));;
-+	assert_string_equal(VECTOR_SLOT(v, 2), "word");
-+	assert_true(is_quote(VECTOR_SLOT(v, 3)));;
-+
-+	val = set_value(v);
-+	assert_string_equal(val, "word");
-+
-+	free(val);
-+	free_strvec(v);
-+}
-+
-+static void test13(void **state)
-+{
-+	vector v = alloc_strvec("keyword value \"quoted\"");
-+	char *val;
-+
-+	assert_int_equal(validate_config_strvec(v, test_file), 0);
-+	assert_int_equal(VECTOR_SIZE(v), 5);
-+	assert_string_equal(VECTOR_SLOT(v, 0), "keyword");
-+	assert_string_equal(VECTOR_SLOT(v, 1), "value");
-+	assert_true(is_quote(VECTOR_SLOT(v, 2)));;
-+	assert_string_equal(VECTOR_SLOT(v, 3), "quoted");
-+	assert_true(is_quote(VECTOR_SLOT(v, 4)));;
-+
-+	val = set_value(v);
-+	assert_string_equal(val, "value");
-+
-+	free(val);
-+	free_strvec(v);
-+}
-+
-+static void test14(void **state)
-+{
-+	vector v = alloc_strvec("keyword \"value \"  comment\"\"");
-+	char *val;
-+
-+	assert_int_equal(validate_config_strvec(v, test_file), 0);
-+	assert_int_equal(VECTOR_SIZE(v), 7);
-+	assert_string_equal(VECTOR_SLOT(v, 0), "keyword");
-+	assert_true(is_quote(VECTOR_SLOT(v, 1)));;
-+	assert_string_equal(VECTOR_SLOT(v, 2), "value ");
-+	assert_true(is_quote(VECTOR_SLOT(v, 3)));;
-+	assert_string_equal(VECTOR_SLOT(v, 4), "comment");
-+	assert_true(is_quote(VECTOR_SLOT(v, 5)));;
-+	assert_true(is_quote(VECTOR_SLOT(v, 6)));;
-+
-+	val = set_value(v);
-+	assert_string_equal(val, "value ");
-+
-+	free(val);
-+	free_strvec(v);
-+}
-+
-+static void test15(void **state)
-+{
-+#define QUOTED15 "word  value\n  comment"
-+	vector v = alloc_strvec("key\"" QUOTED15 "\"");
-+	char *val;
-+
-+	assert_int_equal(VECTOR_SIZE(v), 4);
-+	assert_string_equal(VECTOR_SLOT(v, 0), "key");
-+	assert_true(is_quote(VECTOR_SLOT(v, 1)));;
-+	assert_string_equal(VECTOR_SLOT(v, 2), QUOTED15);
-+	assert_true(is_quote(VECTOR_SLOT(v, 3)));;
-+	assert_int_equal(validate_config_strvec(v, test_file), 0);
-+
-+	val = set_value(v);
-+	assert_string_equal(val, QUOTED15);
-+
-+	free(val);
-+	free_strvec(v);
-+}
-+
-+static void test16(void **state)
-+{
-+	vector v = alloc_strvec("keyword \"2.5\"\" SSD\"");
-+	char *val;
-+
-+#if TWO_QUOTES_ONLY
-+	assert_int_equal(validate_config_strvec(v, test_file), 0);
-+	assert_int_equal(VECTOR_SIZE(v), 6);
-+	assert_string_equal(VECTOR_SLOT(v, 0), "keyword");
-+	assert_true(is_quote(VECTOR_SLOT(v, 1)));;
-+	assert_string_equal(VECTOR_SLOT(v, 2), "2.5");
-+	assert_true(is_quote(VECTOR_SLOT(v, 3)));;
-+	assert_string_equal(VECTOR_SLOT(v, 4), "SSD");
-+	assert_true(is_quote(VECTOR_SLOT(v, 5)));;
-+
-+	val = set_value(v);
-+	assert_string_equal(val, "2.5");
-+#else
-+	assert_int_equal(VECTOR_SIZE(v), 4);
-+	assert_string_equal(VECTOR_SLOT(v, 0), "keyword");
-+	assert_true(is_quote(VECTOR_SLOT(v, 1)));;
-+	assert_string_equal(VECTOR_SLOT(v, 2), "2.5\" SSD");
-+	assert_true(is_quote(VECTOR_SLOT(v, 3)));;
-+
-+	val = set_value(v);
-+	assert_string_equal(val, "2.5\" SSD");
-+#endif
-+	free(val);
-+	free_strvec(v);
-+}
-+
-+static void test17(void **state)
-+{
-+	vector v = alloc_strvec("keyword \"\"\"\"\" is empty\"");
-+ 	char *val;
-+#if TWO_QUOTES_ONLY
-+	assert_int_equal(validate_config_strvec(v, test_file), 0);
-+	assert_int_equal(VECTOR_SIZE(v), 6);
-+	assert_string_equal(VECTOR_SLOT(v, 0), "keyword");
-+	assert_true(is_quote(VECTOR_SLOT(v, 1)));;
-+	assert_true(is_quote(VECTOR_SLOT(v, 2)));;
-+	assert_true(is_quote(VECTOR_SLOT(v, 3)));;
-+#if LSTRIP_QUOTED_WSP
-+	assert_string_equal(VECTOR_SLOT(v, 4), "is empty");
-+#else
-+	assert_string_equal(VECTOR_SLOT(v, 4), " is empty");
-+#endif
-+	assert_true(is_quote(VECTOR_SLOT(v, 5)));;
-+
-+	val = set_value(v);
-+	assert_string_equal(val, "");
-+#else
-+	assert_int_equal(validate_config_strvec(v, test_file), 0);
-+	assert_int_equal(VECTOR_SIZE(v), 4);
-+	assert_string_equal(VECTOR_SLOT(v, 0), "keyword");
-+	assert_true(is_quote(VECTOR_SLOT(v, 1)));;
-+	assert_string_equal(VECTOR_SLOT(v, 2), "\"\" is empty");
-+	assert_true(is_quote(VECTOR_SLOT(v, 3)));;
-+
-+	val = set_value(v);
-+	assert_string_equal(val, "\"\" is empty");
-+#endif
-+	free(val);
-+	free_strvec(v);
-+}
-+
-+static void test18(void **state)
-+{
-+	vector v = alloc_strvec("keyword \"\"\"\"");
-+ 	char *val;
-+#if TWO_QUOTES_ONLY
-+	assert_int_equal(validate_config_strvec(v, test_file), 0);
-+	assert_int_equal(VECTOR_SIZE(v), 5);
-+	assert_string_equal(VECTOR_SLOT(v, 0), "keyword");
-+	assert_true(is_quote(VECTOR_SLOT(v, 1)));;
-+	assert_true(is_quote(VECTOR_SLOT(v, 2)));;
-+	assert_true(is_quote(VECTOR_SLOT(v, 3)));;
-+	assert_true(is_quote(VECTOR_SLOT(v, 4)));;
-+
-+	val = set_value(v);
-+	assert_string_equal(val, "");
-+#else
-+	assert_int_equal(validate_config_strvec(v, test_file), 0);
-+	assert_int_equal(VECTOR_SIZE(v), 4);
-+	assert_string_equal(VECTOR_SLOT(v, 0), "keyword");
-+	assert_true(is_quote(VECTOR_SLOT(v, 1)));;
-+	assert_string_equal(VECTOR_SLOT(v, 2), "\"");
-+	assert_true(is_quote(VECTOR_SLOT(v, 3)));;
-+
-+	val = set_value(v);
-+	assert_string_equal(val, "\"");
-+#endif
-+	free(val);
-+	free_strvec(v);
-+}
-+
-+int test_config_parser(void)
-+{
-+	const struct CMUnitTest tests[] = {
-+		cmocka_unit_test(test01),
-+		cmocka_unit_test(test02),
-+		cmocka_unit_test(test03),
-+		cmocka_unit_test(test04),
-+		cmocka_unit_test(test05),
-+		cmocka_unit_test(test06),
-+		cmocka_unit_test(test07),
-+		cmocka_unit_test(test08),
-+		cmocka_unit_test(test09),
-+		cmocka_unit_test(test10),
-+		cmocka_unit_test(test11),
-+		cmocka_unit_test(test12),
-+		cmocka_unit_test(test13),
-+		cmocka_unit_test(test14),
-+		cmocka_unit_test(test15),
-+		cmocka_unit_test(test16),
-+		cmocka_unit_test(test17),
-+		cmocka_unit_test(test18),
-+	};
-+	return cmocka_run_group_tests(tests, setup, teardown);
-+}
-+
-+int main(void)
-+{
-+	int ret = 0;
-+
-+	ret += test_config_parser();
-+	return ret;
-+}
+ void dm_reassign_deps(char *table, const char *dep, const char *newdep)
+ {
+-	char *n;
+-	const char *p, *newtable;
++	char *n, *newtable;
++	const char *p;
+ 
+ 	newtable = strdup(table);
+ 	if (!newtable)
+@@ -1427,7 +1426,7 @@ void dm_reassign_deps(char *table, const char *dep, const char *newdep)
+ 	n += strlen(newdep);
+ 	p += strlen(dep);
+ 	strcat(n, p);
+-	FREE_CONST(newtable);
++	FREE(newtable);
+ }
+ 
+ int dm_reassign_table(const char *name, char *old, char *new)
+diff --git a/libmultipath/memory.h b/libmultipath/memory.h
+index 63f59d80584c..a3c478e24bd1 100644
+--- a/libmultipath/memory.h
++++ b/libmultipath/memory.h
+@@ -43,7 +43,6 @@ int debug;
+ 		      (__FILE__), (char *)(__FUNCTION__), (__LINE__)) )
+ #define STRDUP(n)    ( dbg_strdup((n), \
+ 		      (__FILE__), (char *)(__FUNCTION__), (__LINE__)) )
+-#define FREE_CONST(p) do { FREE((void*)(unsigned long)p); } while(0)
+ 
+ /* Memory debug prototypes defs */
+ extern void *dbg_malloc(unsigned long, char *, char *, int);
+@@ -56,11 +55,6 @@ extern void dbg_free_final(char *);
+ 
+ #define MALLOC(n)    (calloc(1,(n)))
+ #define FREE(p)      do { free(p); p = NULL; } while(0)
+-/*
+- * Double cast to avoid warnings with -Wcast-qual
+- * use this for valid free() operations on const pointers
+- */
+-#define FREE_CONST(p) do { free((void*)(unsigned long)p); p = NULL; } while(0)
+ #define REALLOC(p,n) (realloc((p),(n)))
+ #define STRDUP(n)    (strdup(n))
+ 
+diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
+index 685ef3362c6d..59d4cad88ca3 100644
+--- a/libmultipath/uevent.c
++++ b/libmultipath/uevent.c
+@@ -157,7 +157,7 @@ static int uevent_get_env_positive_int(const struct uevent *uev,
+ void
+ uevent_get_wwid(struct uevent *uev)
+ {
+-	const char *uid_attribute;
++	char *uid_attribute;
+ 	const char *val;
+ 	struct config * conf;
+ 
+@@ -168,7 +168,7 @@ uevent_get_wwid(struct uevent *uev)
+ 	val = uevent_get_env_var(uev, uid_attribute);
+ 	if (val)
+ 		uev->wwid = val;
+-	FREE_CONST(uid_attribute);
++	FREE(uid_attribute);
+ }
+ 
+ bool
+@@ -907,7 +907,7 @@ int uevent_get_disk_ro(const struct uevent *uev)
+ 	return uevent_get_env_positive_int(uev, "DISK_RO");
+ }
+ 
+-static const char *uevent_get_dm_str(const struct uevent *uev, char *attr)
++static char *uevent_get_dm_str(const struct uevent *uev, char *attr)
+ {
+ 	const char *tmp = uevent_get_env_var(uev, attr);
+ 
+@@ -916,17 +916,17 @@ static const char *uevent_get_dm_str(const struct uevent *uev, char *attr)
+ 	return strdup(tmp);
+ }
+ 
+-const char *uevent_get_dm_name(const struct uevent *uev)
++char *uevent_get_dm_name(const struct uevent *uev)
+ {
+ 	return uevent_get_dm_str(uev, "DM_NAME");
+ }
+ 
+-const char *uevent_get_dm_path(const struct uevent *uev)
++char *uevent_get_dm_path(const struct uevent *uev)
+ {
+ 	return uevent_get_dm_str(uev, "DM_PATH");
+ }
+ 
+-const char *uevent_get_dm_action(const struct uevent *uev)
++char *uevent_get_dm_action(const struct uevent *uev)
+ {
+ 	return uevent_get_dm_str(uev, "DM_ACTION");
+ }
+diff --git a/libmultipath/uevent.h b/libmultipath/uevent.h
+index cb5347e45c2b..0aa867510f28 100644
+--- a/libmultipath/uevent.h
++++ b/libmultipath/uevent.h
+@@ -36,9 +36,9 @@ int uevent_dispatch(int (*store_uev)(struct uevent *, void * trigger_data),
+ int uevent_get_major(const struct uevent *uev);
+ int uevent_get_minor(const struct uevent *uev);
+ int uevent_get_disk_ro(const struct uevent *uev);
+-const char *uevent_get_dm_name(const struct uevent *uev);
+-const char *uevent_get_dm_path(const struct uevent *uev);
+-const char *uevent_get_dm_action(const struct uevent *uev);
++char *uevent_get_dm_name(const struct uevent *uev);
++char *uevent_get_dm_path(const struct uevent *uev);
++char *uevent_get_dm_action(const struct uevent *uev);
+ bool uevent_is_mpath(const struct uevent *uev);
+ 
+ #endif /* _UEVENT_H */
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 6d502aceb252..f85995810950 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -392,7 +392,7 @@ flush_map(struct multipath * mpp, struct vectors * vecs, int nopaths)
+ static int
+ uev_add_map (struct uevent * uev, struct vectors * vecs)
+ {
+-	const char *alias;
++	char *alias;
+ 	int major = -1, minor = -1, rc;
+ 
+ 	condlog(3, "%s: add map (uevent)", uev->kernel);
+@@ -413,7 +413,7 @@ uev_add_map (struct uevent * uev, struct vectors * vecs)
+ 	pthread_testcancel();
+ 	rc = ev_add_map(uev->kernel, alias, vecs);
+ 	lock_cleanup_pop(vecs->lock);
+-	FREE_CONST(alias);
++	FREE(alias);
+ 	return rc;
+ }
+ 
+@@ -487,7 +487,7 @@ ev_add_map (char * dev, const char * alias, struct vectors * vecs)
+ static int
+ uev_remove_map (struct uevent * uev, struct vectors * vecs)
+ {
+-	const char *alias;
++	char *alias;
+ 	int minor;
+ 	struct multipath *mpp;
+ 
+@@ -519,7 +519,7 @@ uev_remove_map (struct uevent * uev, struct vectors * vecs)
+ 	remove_map_and_stop_waiter(mpp, vecs, 1);
+ out:
+ 	lock_cleanup_pop(vecs->lock);
+-	FREE_CONST(alias);
++	FREE(alias);
+ 	return 0;
+ }
+ 
+@@ -1005,7 +1005,7 @@ out:
+ static int
+ uev_pathfail_check(struct uevent *uev, struct vectors *vecs)
+ {
+-	const char *action = NULL, *devt = NULL;
++	char *action = NULL, *devt = NULL;
+ 	struct path *pp;
+ 	int r = 1;
+ 
+@@ -1032,11 +1032,11 @@ uev_pathfail_check(struct uevent *uev, struct vectors *vecs)
+ 				pp->dev);
+ out_lock:
+ 	lock_cleanup_pop(vecs->lock);
+-	FREE_CONST(devt);
+-	FREE_CONST(action);
++	FREE(devt);
++	FREE(action);
+ 	return r;
+ out:
+-	FREE_CONST(action);
++	FREE(action);
+ 	return 1;
+ }
+ 
+diff --git a/tests/uevent.c b/tests/uevent.c
+index b7d6458710f4..acfcb14a5def 100644
+--- a/tests/uevent.c
++++ b/tests/uevent.c
+@@ -169,44 +169,44 @@ static void test_major_bad_8(void **state)
+ static void test_dm_name_good(void **state)
+ {
+ 	struct uevent *uev = *state;
+-	const char *name = uevent_get_dm_name(uev);
++	char *name = uevent_get_dm_name(uev);
+ 
+ 	assert_string_equal(name, DM_NAME);
+-	free((void*)name);
++	FREE(name);
+ }
+ 
+ static void test_dm_name_bad_0(void **state)
+ {
+ 	struct uevent *uev = *state;
+-	const char *name;
++	char *name;
+ 
+ 	uev->envp[3] = "DM_NAME" DM_NAME;
+ 	name = uevent_get_dm_name(uev);
+ 	assert_ptr_equal(name, NULL);
+-	free((void*)name);
++	FREE(name);
+ }
+ 
+ static void test_dm_name_bad_1(void **state)
+ {
+ 	struct uevent *uev = *state;
+-	const char *name;
++	char *name;
+ 
+ 	uev->envp[3] = "DM_NAMES=" DM_NAME;
+ 	name = uevent_get_dm_name(uev);
+ 	assert_ptr_equal(name, NULL);
+-	free((void*)name);
++	FREE(name);
+ }
+ 
+ static void test_dm_name_good_1(void **state)
+ {
+ 	struct uevent *uev = *state;
+-	const char *name;
++	char *name;
+ 
+ 	/* Note we change index 2 here */
+ 	uev->envp[2] = "DM_NAME=" DM_NAME;
+ 	name = uevent_get_dm_name(uev);
+ 	assert_string_equal(name, DM_NAME);
+-	free((void*)name);
++	FREE(name);
+ }
+ 
+ static void test_dm_uuid_false_0(void **state)
 -- 
 2.16.1
