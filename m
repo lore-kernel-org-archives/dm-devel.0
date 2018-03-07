@@ -1,16 +1,16 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH v2 15/23] libmultipath: API for foreign
-	multipath handling
-Date: Wed, 7 Mar 2018 13:08:30 -0600
-Message-ID: <20180307190830.GS14513@octiron.msp.redhat.com>
+Subject: Re: [PATCH v2 17/23] libmultipath/foreign: nvme foreign
+	library
+Date: Wed, 7 Mar 2018 13:09:23 -0600
+Message-ID: <20180307190923.GT14513@octiron.msp.redhat.com>
 References: <20180305231507.10386-1-mwilck@suse.com>
-	<20180305231507.10386-16-mwilck@suse.com>
+	<20180305231507.10386-18-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20180305231507.10386-16-mwilck@suse.com>
+In-Reply-To: <20180305231507.10386-18-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,65 +24,76 @@ To: Martin Wilck <mwilck@suse.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Mar 06, 2018 at 12:14:59AM +0100, Martin Wilck wrote:
-> Add an API for "foreign" multipaths. Foreign libraries are loaded
-> from ${multipath_dir}/libforeign-*.so, as we do for checkers.
-> 
-> Refer to "foreign.h" for details about the API itself. Like we do for
-> checkers, high-level multipath code isn't supposed to call the API directly,
-> but rather the wrapper functions declared in "foreign.h".
-> 
-> This API is used only for displaying information and for logging. An extension to
-> other functionality (such as monitoring or administration) might be feasible,
-> but is not planned.
-> 
-> Foreign libraries communicate with libmultipath through the API defined in
-> "foreign.h". The foreign library can implement multipath maps, pathgroups,
-> and paths as it likes, they just need to provide the simple interfaces
-> defined in "generic.h" to libmultipath. These interfaces are used in libmultipath's
-> "print" implementation to convey various bits of information to users. By
-> using the same interfaces for printing that libmultipath uses internally,
-> foreign library implementations can focus on the technical side without
-> worrying about output formatting compatibility.
+On Tue, Mar 06, 2018 at 12:15:01AM +0100, Martin Wilck wrote:
+> This still contains stubs for path handling and checking, but it's functional
+> for printing already.
 > 
 
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-I don't think the foreign_lock is strictly necessary, since I can't see
-any way of any for the readers to be running at the same time as the
-writers, simply because the readers all happen in threads that have
-either not been created yet, or have already been joined when the
-writers run.  But the locking code all makes sense, and I'm fine with
-it.
-
 > Signed-off-by: Martin Wilck <mwilck@suse.com>
 > ---
->  libmultipath/Makefile  |   2 +-
->  libmultipath/foreign.c | 602 +++++++++++++++++++++++++++++++++++++++++++++++++
->  libmultipath/foreign.h | 322 ++++++++++++++++++++++++++
->  3 files changed, 925 insertions(+), 1 deletion(-)
->  create mode 100644 libmultipath/foreign.c
->  create mode 100644 libmultipath/foreign.h
+>  Makefile                      |   1 +
+>  libmultipath/foreign/Makefile |  30 +++
+>  libmultipath/foreign/nvme.c   | 455 ++++++++++++++++++++++++++++++++++++++++++
+>  3 files changed, 486 insertions(+)
+>  create mode 100644 libmultipath/foreign/Makefile
+>  create mode 100644 libmultipath/foreign/nvme.c
 > 
-> diff --git a/libmultipath/Makefile b/libmultipath/Makefile
-> index 0099d9d6cc39..806aaa24f84e 100644
-> --- a/libmultipath/Makefile
-> +++ b/libmultipath/Makefile
-> @@ -43,7 +43,7 @@ OBJS = memory.o parser.o vector.o devmapper.o callout.o \
->  	switchgroup.o uxsock.o print.o alias.o log_pthread.o \
->  	log.o configure.o structs_vec.o sysfs.o prio.o checkers.o \
->  	lock.o waiter.o file.o wwids.o prioritizers/alua_rtpg.o prkey.o \
-> -	io_err_stat.o dm-generic.o generic.o
-> +	io_err_stat.o dm-generic.o generic.o foreign.o
->  
->  all: $(LIBS)
->  
-> diff --git a/libmultipath/foreign.c b/libmultipath/foreign.c
+> diff --git a/Makefile b/Makefile
+> index 11c46eb4dbc9..4b145c593605 100644
+> --- a/Makefile
+> +++ b/Makefile
+> @@ -7,6 +7,7 @@ BUILDDIRS = \
+>  	libmultipath \
+>  	libmultipath/prioritizers \
+>  	libmultipath/checkers \
+> +	libmultipath/foreign \
+>  	libmpathpersist \
+>  	multipath \
+>  	multipathd \
+> diff --git a/libmultipath/foreign/Makefile b/libmultipath/foreign/Makefile
 > new file mode 100644
-> index 000000000000..72171840e995
+> index 000000000000..dfba11e86d76
 > --- /dev/null
-> +++ b/libmultipath/foreign.c
-> @@ -0,0 +1,602 @@
+> +++ b/libmultipath/foreign/Makefile
+> @@ -0,0 +1,30 @@
+> +#
+> +# Copyright (C) 2003 Christophe Varoqui, <christophe.varoqui@opensvc.com>
+> +#
+> +include ../../Makefile.inc
+> +
+> +CFLAGS += $(LIB_CFLAGS) -I..
+> +
+> +# If you add or remove a checker also update multipath/multipath.conf.5
+> +LIBS= \
+> +	libforeign-nvme.so
+> +
+> +all: $(LIBS)
+> +
+> +libforeign-%.so: %.o
+> +	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^
+> +
+> +install:
+> +	$(INSTALL_PROGRAM) -m 755 $(LIBS) $(DESTDIR)$(libdir)
+> +
+> +uninstall:
+> +	for file in $(LIBS); do $(RM) $(DESTDIR)$(libdir)/$$file; done
+> +
+> +clean: dep_clean
+> +	$(RM) core *.a *.o *.gz *.so
+> +
+> +OBJS := $(LIBS:libforeign-%.so=%.o)
+> +include $(wildcard $(OBJS:.o=.d))
+> +
+> +dep_clean:
+> +	$(RM) $(OBJS:.o=.d)
+> diff --git a/libmultipath/foreign/nvme.c b/libmultipath/foreign/nvme.c
+> new file mode 100644
+> index 000000000000..32bd5c96c44a
+> --- /dev/null
+> +++ b/libmultipath/foreign/nvme.c
+> @@ -0,0 +1,455 @@
 > +/*
 > +  Copyright (c) 2018 Martin Wilck, SUSE Linux GmbH
 > +
@@ -103,915 +114,440 @@ it.
 > +*/
 > +
 > +#include <sys/sysmacros.h>
-> +#include <stdio.h>
-> +#include <string.h>
-> +#include <stdlib.h>
-> +#include <errno.h>
-> +#include <limits.h>
-> +#include <dirent.h>
-> +#include <fnmatch.h>
-> +#include <dlfcn.h>
 > +#include <libudev.h>
+> +#include <stdio.h>
+> +#include <stdlib.h>
+> +#include <string.h>
+> +#include <stdbool.h>
+> +#include <libudev.h>
+> +#include <pthread.h>
 > +#include "vector.h"
-> +#include "debug.h"
-> +#include "util.h"
+> +#include "generic.h"
 > +#include "foreign.h"
-> +#include "structs.h"
-> +#include "structs_vec.h"
-> +#include "print.h"
+> +#include "debug.h"
 > +
-> +static vector foreigns;
+> +const char *THIS;
 > +
-> +/* This protects vector foreigns */
-> +static pthread_rwlock_t foreign_lock = PTHREAD_RWLOCK_INITIALIZER;
+> +struct nvme_map {
+> +	struct gen_multipath gen;
+> +	struct udev_device *udev;
+> +	struct udev_device *subsys;
+> +	dev_t devt;
+> +};
 > +
-> +static void rdlock_foreigns(void)
+> +#define NAME_LEN 64 /* buffer length temp model name */
+> +#define const_gen_mp_to_nvme(g) ((const struct nvme_map*)(g))
+> +#define gen_mp_to_nvme(g) ((struct nvme_map*)(g))
+> +#define nvme_mp_to_gen(n) &((n)->gen)
+> +
+> +static void cleanup_nvme_map(struct nvme_map *map)
 > +{
-> +	pthread_rwlock_rdlock(&foreign_lock);
+> +	if (map->udev)
+> +		udev_device_unref(map->udev);
+> +	if (map->subsys)
+> +		udev_device_unref(map->subsys);
+> +	free(map);
 > +}
 > +
-> +static void wrlock_foreigns(void)
-> +{
-> +	pthread_rwlock_wrlock(&foreign_lock);
+> +static const struct _vector*
+> +nvme_mp_get_pgs(const struct gen_multipath *gmp) {
+> +	return NULL;
 > +}
 > +
-> +static void unlock_foreigns(void *unused)
+> +static void
+> +nvme_mp_rel_pgs(const struct gen_multipath *gmp, const struct _vector *v)
 > +{
-> +	pthread_rwlock_unlock(&foreign_lock);
 > +}
 > +
-> +#define get_dlsym(foreign, sym, lbl)					\
-> +	do {								\
-> +		foreign->sym =	dlsym(foreign->handle, #sym);		\
-> +		if (foreign->sym == NULL) {				\
-> +			condlog(0, "%s: symbol \"%s\" not found in \"%s\"", \
-> +				__func__, #sym, foreign->name);		\
-> +			goto lbl;					\
-> +		}							\
-> +	} while(0)
-> +
-> +static void free_foreign(struct foreign *fgn)
+> +static void rstrip(char *str)
 > +{
-> +	struct context *ctx;
+> +	int n;
 > +
-> +	if (fgn == NULL)
-> +		return;
-> +
-> +	ctx = fgn->context;
-> +	fgn->context = NULL;
-> +	if (ctx != NULL)
-> +		fgn->cleanup(ctx);
-> +
-> +	if (fgn->handle != NULL)
-> +		dlclose(fgn->handle);
-> +	free(fgn);
+> +	for (n = strlen(str) - 1; n >= 0 && str[n] == ' '; n--);
+> +	str[n+1] = '\0';
 > +}
 > +
-> +void _cleanup_foreign(void)
+> +static int snprint_nvme_map(const struct gen_multipath *gmp,
+> +			    char *buff, int len, char wildcard)
 > +{
-> +	struct foreign *fgn;
-> +	int i;
+> +	const struct nvme_map *nvm = const_gen_mp_to_nvme(gmp);
+> +	static const char nvme_vendor[] = "NVMe";
+> +	char fld[NAME_LEN];
+> +	const char *val;
 > +
-> +	if (foreigns == NULL)
-> +		return;
-> +
-> +	vector_foreach_slot_backwards(foreigns, fgn, i) {
-> +		vector_del_slot(foreigns, i);
-> +		free_foreign(fgn);
+> +	switch (wildcard) {
+> +	case 'd':
+> +		return snprintf(buff, len, "%s",
+> +				udev_device_get_sysname(nvm->udev));
+> +	case 'n':
+> +		return snprintf(buff, len, "%s:NQN:%s",
+> +				udev_device_get_sysname(nvm->subsys),
+> +				udev_device_get_sysattr_value(nvm->subsys,
+> +							      "subsysnqn"));
+> +	case 'w':
+> +		return snprintf(buff, len, "%s",
+> +				udev_device_get_sysattr_value(nvm->udev,
+> +							      "wwid"));
+> +	case 'S':
+> +		return snprintf(buff, len, "%s",
+> +				udev_device_get_sysattr_value(nvm->udev,
+> +							      "size"));
+> +	case 'v':
+> +		return snprintf(buff, len, "%s", nvme_vendor);
+> +	case 's':
+> +	case 'p':
+> +		snprintf(fld, sizeof(fld), "%s",
+> +			 udev_device_get_sysattr_value(nvm->subsys,
+> +						      "model"));
+> +		rstrip(fld);
+> +		if (wildcard == 'p')
+> +			return snprintf(buff, len, "%s", fld);
+> +		return snprintf(buff, len, "%s,%s,%s", nvme_vendor, fld,
+> +				udev_device_get_sysattr_value(nvm->subsys,
+> +							      "firmware_rev"));
+> +	case 'e':
+> +		return snprintf(buff, len, "%s",
+> +				udev_device_get_sysattr_value(nvm->subsys,
+> +							      "firmware_rev"));
+> +	case 'r':
+> +		val = udev_device_get_sysattr_value(nvm->udev, "ro");
+> +		if (val[0] == 1)
+> +			return snprintf(buff, len, "%s", "ro");
+> +		else
+> +			return snprintf(buff, len, "%s", "rw");
+> +	case 'G':
+> +		return snprintf(buff, len, "%s", THIS);
+> +	default:
+> +		return snprintf(buff, len, "N/A");
+> +		break;
 > +	}
-> +	vector_free(foreigns);
-> +	foreigns = NULL;
-> +}
-> +
-> +void cleanup_foreign(void)
-> +{
-> +	wrlock_foreigns();
-> +	_cleanup_foreign();
-> +	unlock_foreigns(NULL);
-> +}
-> +
-> +static const char foreign_pattern[] = "libforeign-*.so";
-> +
-> +static int select_foreign_libs(const struct dirent *di)
-> +{
-> +
-> +	return fnmatch(foreign_pattern, di->d_name, FNM_FILE_NAME) == 0;
-> +}
-> +
-> +static int _init_foreign(const char *multipath_dir)
-> +{
-> +	char pathbuf[PATH_MAX];
-> +	struct dirent **di;
-> +	int r, i;
-> +
-> +	foreigns = vector_alloc();
-> +	if (foreigns == NULL)
-> +		return -ENOMEM;
-> +
-> +	r = scandir(multipath_dir, &di, select_foreign_libs, alphasort);
-> +
-> +	if (r == 0) {
-> +		condlog(3, "%s: no foreign multipath libraries found",
-> +			__func__);
-> +		return 0;
-> +	} else if (r < 0) {
-> +		r = errno;
-> +		condlog(1, "%s: error %d scanning foreign multipath libraries",
-> +			__func__, r);
-> +		_cleanup_foreign();
-> +		return -r;
-> +	}
-> +
-> +	pthread_cleanup_push(free, di);
-> +	for (i = 0; i < r; i++) {
-> +		const char *msg, *fn, *c;
-> +		struct foreign *fgn;
-> +		int len, namesz;
-> +
-> +		fn = di[i]->d_name;
-> +
-> +		len = strlen(fn);
-> +		c = strchr(fn, '-');
-> +		if (len < sizeof(foreign_pattern) - 1 || c == NULL) {
-> +			condlog(0, "%s: bad file name %s, fnmatch error?",
-> +				__func__, fn);
-> +			continue;
-> +		}
-> +		c++;
-> +		condlog(4, "%s: found %s", __func__, fn);
-> +
-> +		namesz = len - sizeof(foreign_pattern) + 3;
-> +		fgn = malloc(sizeof(*fgn) + namesz);
-> +		if (fgn == NULL)
-> +			continue;
-> +		memset(fgn, 0, sizeof(*fgn));
-> +		strlcpy((char*)fgn + offsetof(struct foreign, name), c, namesz);
-> +
-> +		snprintf(pathbuf, sizeof(pathbuf), "%s/%s", multipath_dir, fn);
-> +		fgn->handle = dlopen(pathbuf, RTLD_NOW|RTLD_LOCAL);
-> +		msg = dlerror();
-> +		if (fgn->handle == NULL) {
-> +			condlog(1, "%s: failed to dlopen %s: %s", __func__,
-> +				pathbuf, msg);
-> +			goto dl_err;
-> +		}
-> +
-> +		get_dlsym(fgn, init, dl_err);
-> +		get_dlsym(fgn, cleanup, dl_err);
-> +		get_dlsym(fgn, add, dl_err);
-> +		get_dlsym(fgn, change, dl_err);
-> +		get_dlsym(fgn, delete, dl_err);
-> +		get_dlsym(fgn, delete_all, dl_err);
-> +		get_dlsym(fgn, check, dl_err);
-> +		get_dlsym(fgn, lock, dl_err);
-> +		get_dlsym(fgn, unlock, dl_err);
-> +		get_dlsym(fgn, get_multipaths, dl_err);
-> +		get_dlsym(fgn, release_multipaths, dl_err);
-> +		get_dlsym(fgn, get_paths, dl_err);
-> +		get_dlsym(fgn, release_paths, dl_err);
-> +
-> +		fgn->context = fgn->init(LIBMP_FOREIGN_API, fgn->name);
-> +		if (fgn->context == NULL) {
-> +			condlog(0, "%s: init() failed for %s", __func__, fn);
-> +			goto dl_err;
-> +		}
-> +
-> +		if (vector_alloc_slot(foreigns) == NULL) {
-> +			goto dl_err;
-> +		}
-> +
-> +		vector_set_slot(foreigns, fgn);
-> +		condlog(3, "foreign library \"%s\" loaded successfully",
-> +			fgn->name);
-> +
-> +		continue;
-> +
-> +	dl_err:
-> +		free_foreign(fgn);
-> +	}
-> +	pthread_cleanup_pop(1);
 > +	return 0;
 > +}
 > +
-> +int init_foreign(const char *multipath_dir)
-> +{
-> +	int ret;
-> +
-> +	wrlock_foreigns();
-> +
-> +	if (foreigns != NULL) {
-> +		unlock_foreigns(NULL);
-> +		condlog(0, "%s: already initialized", __func__);
-> +		return -EEXIST;
-> +	}
-> +
-> +	pthread_cleanup_push(unlock_foreigns, NULL);
-> +	ret = _init_foreign(multipath_dir);
-> +	pthread_cleanup_pop(1);
-> +
-> +	return ret;
+> +static const struct _vector*
+> +nvme_pg_get_paths(const struct gen_pathgroup *gpg) {
+> +	return NULL;
 > +}
 > +
-> +int add_foreign(struct udev_device *udev)
+> +static void
+> +nvme_pg_rel_paths(const struct gen_pathgroup *gpg, const struct _vector *v)
 > +{
-> +	struct foreign *fgn;
-> +	dev_t dt;
-> +	int j;
-> +	int r = FOREIGN_IGNORED;
-> +
-> +	if (udev == NULL) {
-> +		condlog(1, "%s called with NULL udev", __func__);
-> +		return FOREIGN_ERR;
-> +	}
-> +
-> +	rdlock_foreigns();
-> +	if (foreigns == NULL) {
-> +		unlock_foreigns(NULL);
-> +		return FOREIGN_ERR;
-> +	}
-> +	pthread_cleanup_push(unlock_foreigns, NULL);
-> +
-> +	dt = udev_device_get_devnum(udev);
-> +	vector_foreach_slot(foreigns, fgn, j) {
-> +		r = fgn->add(fgn->context, udev);
-> +
-> +		if (r == FOREIGN_CLAIMED) {
-> +			condlog(3, "%s: foreign \"%s\" claims device %d:%d",
-> +				__func__, fgn->name, major(dt), minor(dt));
-> +			break;
-> +		} else if (r == FOREIGN_OK) {
-> +			condlog(4, "%s: foreign \"%s\" owns device %d:%d",
-> +				__func__, fgn->name, major(dt), minor(dt));
-> +			break;
-> +		} else if (r != FOREIGN_IGNORED) {
-> +			condlog(1, "%s: unexpected return value %d from \"%s\"",
-> +				__func__, r, fgn->name);
-> +		}
-> +	}
-> +
-> +	pthread_cleanup_pop(1);
-> +	return r;
 > +}
 > +
-> +int change_foreign(struct udev_device *udev)
+> +static int snprint_nvme_pg(const struct gen_pathgroup *gmp,
+> +			   char *buff, int len, char wildcard)
 > +{
-> +	struct foreign *fgn;
-> +	int j;
-> +	dev_t dt;
-> +	int r = FOREIGN_IGNORED;
-> +
-> +	if (udev == NULL) {
-> +		condlog(1, "%s called with NULL udev", __func__);
-> +		return FOREIGN_ERR;
-> +	}
-> +
-> +	rdlock_foreigns();
-> +	if (foreigns == NULL) {
-> +		unlock_foreigns(NULL);
-> +		return FOREIGN_ERR;
-> +	}
-> +	pthread_cleanup_push(unlock_foreigns, NULL);
-> +
-> +	dt = udev_device_get_devnum(udev);
-> +	vector_foreach_slot(foreigns, fgn, j) {
-> +		r = fgn->change(fgn->context, udev);
-> +
-> +		if (r == FOREIGN_OK) {
-> +			condlog(4, "%s: foreign \"%s\" completed %d:%d",
-> +				__func__, fgn->name, major(dt), minor(dt));
-> +			break;
-> +		} else if (r != FOREIGN_IGNORED) {
-> +			condlog(1, "%s: unexpected return value %d from \"%s\"",
-> +				__func__, r, fgn->name);
-> +		}
-> +	}
-> +
-> +	pthread_cleanup_pop(1);
-> +	return r;
+> +	return 0;
 > +}
 > +
-> +int delete_foreign(struct udev_device *udev)
+> +static int snprint_nvme_path(const struct gen_path *gmp,
+> +			     char *buff, int len, char wildcard)
 > +{
-> +	struct foreign *fgn;
-> +	int j;
-> +	dev_t dt;
-> +	int r = FOREIGN_IGNORED;
-> +
-> +	if (udev == NULL) {
-> +		condlog(1, "%s called with NULL udev", __func__);
-> +		return FOREIGN_ERR;
+> +	switch (wildcard) {
+> +	case 'R':
+> +		return snprintf(buff, len, "[foreign: %s]", THIS);
+> +	default:
+> +		break;
 > +	}
-> +
-> +	rdlock_foreigns();
-> +	if (foreigns == NULL) {
-> +		unlock_foreigns(NULL);
-> +		return FOREIGN_ERR;
-> +	}
-> +	pthread_cleanup_push(unlock_foreigns, NULL);
-> +
-> +	dt = udev_device_get_devnum(udev);
-> +	vector_foreach_slot(foreigns, fgn, j) {
-> +		r = fgn->delete(fgn->context, udev);
-> +
-> +		if (r == FOREIGN_OK) {
-> +			condlog(3, "%s: foreign \"%s\" deleted device %d:%d",
-> +				__func__, fgn->name, major(dt), minor(dt));
-> +			break;
-> +		} else if (r != FOREIGN_IGNORED) {
-> +			condlog(1, "%s: unexpected return value %d from \"%s\"",
-> +				__func__, r, fgn->name);
-> +		}
-> +	}
-> +
-> +	pthread_cleanup_pop(1);
-> +	return r;
+> +	return 0;
 > +}
 > +
-> +int delete_all_foreign(void)
+> +static const struct gen_multipath_ops nvme_map_ops = {
+> +	.get_pathgroups = nvme_mp_get_pgs,
+> +	.rel_pathgroups = nvme_mp_rel_pgs,
+> +	.style = generic_style,
+> +	.snprint = snprint_nvme_map,
+> +};
+> +
+> +static const struct gen_pathgroup_ops nvme_pg_ops __attribute__((unused)) = {
+> +	.get_paths = nvme_pg_get_paths,
+> +	.rel_paths = nvme_pg_rel_paths,
+> +	.snprint = snprint_nvme_pg,
+> +};
+> +
+> +static const struct gen_path_ops nvme_path_ops __attribute__((unused)) = {
+> +	.snprint = snprint_nvme_path,
+> +};
+> +
+> +struct context {
+> +	pthread_mutex_t mutex;
+> +	vector mpvec;
+> +};
+> +
+> +void lock(struct context *ctx)
 > +{
-> +	struct foreign *fgn;
-> +	int j;
+> +	pthread_mutex_lock(&ctx->mutex);
+> +}
 > +
-> +	rdlock_foreigns();
-> +	if (foreigns == NULL) {
-> +		unlock_foreigns(NULL);
-> +		return FOREIGN_ERR;
+> +void unlock(void *arg)
+> +{
+> +	struct context *ctx = arg;
+> +
+> +	pthread_mutex_unlock(&ctx->mutex);
+> +}
+> +
+> +static int _delete_all(struct context *ctx)
+> +{
+> +	struct nvme_map *nm;
+> +	int n = VECTOR_SIZE(ctx->mpvec), i;
+> +
+> +	if (n == 0)
+> +		return FOREIGN_IGNORED;
+> +
+> +	vector_foreach_slot_backwards(ctx->mpvec, nm, i) {
+> +		vector_del_slot(ctx->mpvec, i);
+> +		cleanup_nvme_map(nm);
 > +	}
-> +	pthread_cleanup_push(unlock_foreigns, NULL);
-> +
-> +	vector_foreach_slot(foreigns, fgn, j) {
-> +		int r;
-> +
-> +		r = fgn->delete_all(fgn->context);
-> +		if (r != FOREIGN_IGNORED && r != FOREIGN_OK) {
-> +			condlog(1, "%s: unexpected return value %d from \"%s\"",
-> +				__func__, r, fgn->name);
-> +		}
-> +	}
-> +
-> +	pthread_cleanup_pop(1);
 > +	return FOREIGN_OK;
 > +}
 > +
-> +void check_foreign(void)
+> +int delete_all(struct context *ctx)
 > +{
-> +	struct foreign *fgn;
-> +	int j;
+> +	int rc;
 > +
-> +	rdlock_foreigns();
-> +	if (foreigns == NULL) {
-> +		unlock_foreigns(NULL);
-> +		return;
-> +	}
-> +	pthread_cleanup_push(unlock_foreigns, NULL);
+> +	condlog(5, "%s called for \"%s\"", __func__, THIS);
 > +
-> +	vector_foreach_slot(foreigns, fgn, j) {
-> +		fgn->check(fgn->context);
-> +	}
-> +
+> +	lock(ctx);
+> +	pthread_cleanup_push(unlock, ctx);
+> +	rc = _delete_all(ctx);
 > +	pthread_cleanup_pop(1);
+> +
+> +	return rc;
 > +}
 > +
-> +/* Call this after get_path_layout */
-> +void foreign_path_layout(void)
+> +void cleanup(struct context *ctx)
 > +{
-> +	struct foreign *fgn;
+> +	(void)delete_all(ctx);
+> +
+> +	lock(ctx);
+> +	/*
+> +	 * Locking is not strictly necessary here, locking in foreign.c
+> +	 * makes sure that no other code is called with this ctx any more.
+> +	 * But this should make static checkers feel better.
+> +	 */
+> +	pthread_cleanup_push(unlock, ctx);
+> +	if (ctx->udev)
+> +		udev_unref(ctx->udev);
+> +	if (ctx->mpvec)
+> +		vector_free(ctx->mpvec);
+> +	ctx->mpvec = NULL;
+> +	ctx->udev = NULL;
+> +	pthread_cleanup_pop(1);
+> +	pthread_mutex_destroy(&ctx->mutex);
+> +
+> +	free(ctx);
+> +}
+> +
+> +struct context *init(unsigned int api, const char *name)
+> +{
+> +	struct context *ctx;
+> +
+> +	if (api > LIBMP_FOREIGN_API) {
+> +		condlog(0, "%s: api version mismatch: %08x > %08x\n",
+> +			__func__, api, LIBMP_FOREIGN_API);
+> +		return NULL;
+> +	}
+> +
+> +	if ((ctx = calloc(1, sizeof(*ctx)))== NULL)
+> +		return NULL;
+> +
+> +	pthread_mutex_init(&ctx->mutex, NULL);
+> +
+> +	ctx->mpvec = vector_alloc();
+> +	if (ctx->mpvec == NULL)
+> +		goto err;
+> +
+> +	THIS = name;
+> +	return ctx;
+> +err:
+> +	cleanup(ctx);
+> +	return NULL;
+> +}
+> +
+> +static struct nvme_map *_find_nvme_map_by_devt(const struct context *ctx,
+> +					      dev_t devt)
+> +{
+> +	struct nvme_map *nm;
 > +	int i;
 > +
-> +	rdlock_foreigns();
-> +	if (foreigns == NULL) {
-> +		unlock_foreigns(NULL);
-> +		return;
-> +	}
-> +	pthread_cleanup_push(unlock_foreigns, NULL);
+> +	if (ctx->mpvec == NULL)
+> +		return NULL;
 > +
-> +	vector_foreach_slot(foreigns, fgn, i) {
-> +		const struct _vector *vec;
-> +
-> +		fgn->lock(fgn->context);
-> +		pthread_cleanup_push(fgn->unlock, fgn->context);
-> +
-> +		vec = fgn->get_paths(fgn->context);
-> +		if (vec != NULL) {
-> +			_get_path_layout(vec, LAYOUT_RESET_NOT);
-> +		}
-> +		fgn->release_paths(fgn->context, vec);
-> +
-> +		pthread_cleanup_pop(1);
+> +	vector_foreach_slot(ctx->mpvec, nm, i) {
+> +		if (nm->devt == devt)
+> +			return nm;
 > +	}
 > +
-> +	pthread_cleanup_pop(1);
+> +	return NULL;
 > +}
 > +
-> +/* Call this after get_multipath_layout */
-> +void foreign_multipath_layout(void)
+> +static int _add_map(struct context *ctx, struct udev_device *ud,
+> +		    struct udev_device *subsys)
 > +{
-> +	struct foreign *fgn;
-> +	int i;
+> +	dev_t devt = udev_device_get_devnum(ud);
+> +	struct nvme_map *map;
 > +
-> +	rdlock_foreigns();
-> +	if (foreigns == NULL) {
-> +		unlock_foreigns(NULL);
-> +		return;
+> +	if (_find_nvme_map_by_devt(ctx, devt) != NULL)
+> +		return FOREIGN_OK;
+> +
+> +	map = calloc(1, sizeof(*map));
+> +	if (map == NULL)
+> +		return FOREIGN_ERR;
+> +
+> +	map->devt = devt;
+> +	map->udev = udev_device_ref(ud);
+> +	/*
+> +	 * subsys is implicitly referenced by map->udev,
+> +	 * no need to take a reference here.
+> +	 */
+> +	map->subsys = subsys;
+> +	map->gen.ops = &nvme_map_ops;
+> +
+> +	if (vector_alloc_slot(ctx->mpvec) == NULL) {
+> +		cleanup_nvme_map(map);
+> +		return FOREIGN_ERR;
 > +	}
-> +	pthread_cleanup_push(unlock_foreigns, NULL);
 > +
-> +	vector_foreach_slot(foreigns, fgn, i) {
-> +		const struct _vector *vec;
+> +	vector_set_slot(ctx->mpvec, map);
 > +
-> +		fgn->lock(fgn->context);
-> +		pthread_cleanup_push(fgn->unlock, fgn->context);
-> +
-> +		vec = fgn->get_multipaths(fgn->context);
-> +		if (vec != NULL) {
-> +			_get_multipath_layout(vec, LAYOUT_RESET_NOT);
-> +		}
-> +		fgn->release_multipaths(fgn->context, vec);
-> +
-> +		pthread_cleanup_pop(1);
-> +	}
-> +
-> +	pthread_cleanup_pop(1);
+> +	return FOREIGN_CLAIMED;
 > +}
 > +
-> +int snprint_foreign_topology(char *buf, int len, int verbosity)
+> +int add(struct context *ctx, struct udev_device *ud)
 > +{
-> +	struct foreign *fgn;
-> +	int i;
-> +	char *c = buf;
+> +	struct udev_device *subsys;
+> +	int rc;
 > +
-> +	rdlock_foreigns();
-> +	if (foreigns == NULL) {
-> +		unlock_foreigns(NULL);
-> +		return 0;
-> +	}
-> +	pthread_cleanup_push(unlock_foreigns, NULL);
+> +	condlog(5, "%s called for \"%s\"", __func__, THIS);
 > +
-> +	vector_foreach_slot(foreigns, fgn, i) {
-> +		const struct _vector *vec;
-> +		const struct gen_multipath *gm;
-> +		int j;
+> +	if (ud == NULL)
+> +		return FOREIGN_ERR;
+> +	if (strcmp("disk", udev_device_get_devtype(ud)))
+> +		return FOREIGN_IGNORED;
 > +
-> +		fgn->lock(fgn->context);
-> +		pthread_cleanup_push(fgn->unlock, fgn->context);
+> +	subsys = udev_device_get_parent_with_subsystem_devtype(ud,
+> +							       "nvme-subsystem",
+> +							       NULL);
+> +	if (subsys == NULL)
+> +		return FOREIGN_IGNORED;
 > +
-> +		vec = fgn->get_multipaths(fgn->context);
-> +		if (vec != NULL) {
-> +			vector_foreach_slot(vec, gm, j) {
-> +
-> +				c += _snprint_multipath_topology(gm, c,
-> +								 buf + len - c,
-> +								 verbosity);
-> +				if (c >= buf + len - 1)
-> +					break;
-> +			}
-> +			if (c >= buf + len - 1)
-> +				break;
-> +		}
-> +		fgn->release_multipaths(fgn->context, vec);
-> +		pthread_cleanup_pop(1);
-> +	}
-> +
+> +	lock(ctx);
+> +	pthread_cleanup_push(unlock, ctx);
+> +	rc = _add_map(ctx, ud, subsys);
 > +	pthread_cleanup_pop(1);
-> +	return c - buf;
+> +
+> +	if (rc == FOREIGN_CLAIMED)
+> +		condlog(3, "%s: %s: added map %s", __func__, THIS,
+> +			udev_device_get_sysname(ud));
+> +	else if (rc != FOREIGN_OK)
+> +		condlog(1, "%s: %s: retcode %d adding %s",
+> +			__func__, THIS, rc, udev_device_get_sysname(ud));
+> +
+> +	return rc;
 > +}
 > +
-> +void print_foreign_topology(int verbosity)
+> +int change(struct context *ctx, struct udev_device *ud)
 > +{
-> +	int buflen = MAX_LINE_LEN * MAX_LINES;
-> +	char *buf = NULL, *tmp = NULL;
-> +
-> +	buf = malloc(buflen);
-> +	buf[0] = '\0';
-> +	while (buf != NULL) {
-> +		char *c = buf;
-> +
-> +		c += snprint_foreign_topology(buf, buflen,
-> +						   verbosity);
-> +		if (c < buf + buflen - 1)
-> +			break;
-> +
-> +		buflen *= 2;
-> +		tmp = buf;
-> +		buf = realloc(buf, buflen);
-> +	}
-> +
-> +	if (buf == NULL && tmp != NULL)
-> +		buf = tmp;
-> +
-> +	if (buf != NULL) {
-> +		printf("%s", buf);
-> +		free(buf);
-> +	}
+> +	condlog(5, "%s called for \"%s\"", __func__, THIS);
+> +	return FOREIGN_IGNORED;
 > +}
 > +
-> +int snprint_foreign_paths(char *buf, int len, const char *style, int pretty)
+> +static int _delete_map(struct context *ctx, struct udev_device *ud)
 > +{
-> +	struct foreign *fgn;
-> +	int i;
-> +	char *c = buf;
+> +	int k;
+> +	struct nvme_map *map;
+> +	dev_t devt = udev_device_get_devnum(ud);
 > +
-> +	rdlock_foreigns();
-> +	if (foreigns == NULL) {
-> +		unlock_foreigns(NULL);
-> +		return 0;
-> +	}
-> +	pthread_cleanup_push(unlock_foreigns, NULL);
+> +	map = _find_nvme_map_by_devt(ctx, devt);
+> +	if (map ==NULL)
+> +		return FOREIGN_IGNORED;
 > +
-> +	vector_foreach_slot(foreigns, fgn, i) {
-> +		const struct _vector *vec;
-> +		const struct gen_path *gp;
-> +		int j;
+> +	k = find_slot(ctx->mpvec, map);
+> +	if (k == -1)
+> +		return FOREIGN_ERR;
+> +	else
+> +		vector_del_slot(ctx->mpvec, k);
 > +
-> +		fgn->lock(fgn->context);
-> +		pthread_cleanup_push(fgn->unlock, fgn->context);
+> +	cleanup_nvme_map(map);
 > +
-> +		vec = fgn->get_paths(fgn->context);
-> +		if (vec != NULL) {
-> +			vector_foreach_slot(vec, gp, j) {
-> +				c += _snprint_path(gp, c, buf + len - c,
-> +						   style, pretty);
-> +				if (c >= buf + len - 1)
-> +					break;
-> +			}
-> +			if (c >= buf + len - 1)
-> +				break;
-> +		}
-> +		fgn->release_paths(fgn->context, vec);
-> +		pthread_cleanup_pop(1);
-> +	}
+> +	return FOREIGN_OK;
+> +}
 > +
+> +int delete(struct context *ctx, struct udev_device *ud)
+> +{
+> +	int rc;
+> +
+> +	condlog(5, "%s called for \"%s\"", __func__, THIS);
+> +
+> +	if (ud == NULL)
+> +		return FOREIGN_ERR;
+> +
+> +	lock(ctx);
+> +	pthread_cleanup_push(unlock, ctx);
+> +	rc = _delete_map(ctx, ud);
 > +	pthread_cleanup_pop(1);
-> +	return c - buf;
+> +
+> +	if (rc == FOREIGN_OK)
+> +		condlog(3, "%s: %s: map %s deleted", __func__, THIS,
+> +			udev_device_get_sysname(ud));
+> +	else if (rc != FOREIGN_IGNORED)
+> +		condlog(1, "%s: %s: retcode %d deleting map %s", __func__,
+> +			THIS, rc, udev_device_get_sysname(ud));
+> +
+> +	return rc;
 > +}
 > +
-> +int snprint_foreign_multipaths(char *buf, int len,
-> +			       const char *style, int pretty)
+> +void check(struct context *ctx)
 > +{
-> +	struct foreign *fgn;
-> +	int i;
-> +	char *c = buf;
-> +
-> +	rdlock_foreigns();
-> +	if (foreigns == NULL) {
-> +		unlock_foreigns(NULL);
-> +		return 0;
-> +	}
-> +	pthread_cleanup_push(unlock_foreigns, NULL);
-> +
-> +	vector_foreach_slot(foreigns, fgn, i) {
-> +		const struct _vector *vec;
-> +		const struct gen_multipath *gm;
-> +		int j;
-> +
-> +		fgn->lock(fgn->context);
-> +		pthread_cleanup_push(fgn->unlock, fgn->context);
-> +
-> +		vec = fgn->get_multipaths(fgn->context);
-> +		if (vec != NULL) {
-> +			vector_foreach_slot(vec, gm, j) {
-> +				c += _snprint_multipath(gm, c, buf + len - c,
-> +							style, pretty);
-> +				if (c >= buf + len - 1)
-> +					break;
-> +			}
-> +			if (c >= buf + len - 1)
-> +				break;
-> +		}
-> +		fgn->release_multipaths(fgn->context, vec);
-> +		pthread_cleanup_pop(1);
-> +	}
-> +
-> +	pthread_cleanup_pop(1);
-> +	return c - buf;
+> +	condlog(5, "%s called for \"%s\"", __func__, THIS);
+> +	return;
 > +}
-> diff --git a/libmultipath/foreign.h b/libmultipath/foreign.h
-> new file mode 100644
-> index 000000000000..0ade2d7485c4
-> --- /dev/null
-> +++ b/libmultipath/foreign.h
-> @@ -0,0 +1,322 @@
+> +
 > +/*
-> +  Copyright (c) 2018 Martin Wilck, SUSE Linux GmbH
-> +
-> +  This program is free software; you can redistribute it and/or
-> +  modify it under the terms of the GNU General Public License
-> +  as published by the Free Software Foundation; either version 2
-> +  of the License, or (at your option) any later version.
-> +
-> +  This program is distributed in the hope that it will be useful,
-> +  but WITHOUT ANY WARRANTY; without even the implied warranty of
-> +  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-> +  GNU General Public License for more details.
-> +
-> +  You should have received a copy of the GNU General Public License
-> +  along with this program; if not, write to the Free Software
-> +  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
-> +  USA.
-> +*/
-> +#ifndef _FOREIGN_H
-> +#define _FOREIGN_H
-> +#include <stdbool.h>
-> +#include <libudev.h>
-> +
-> +#define LIBMP_FOREIGN_API ((1 << 8) | 0)
-> +
-> +struct context;
-> +
-> +/* return codes of functions below returning "int" */
-> +enum foreign_retcode {
-> +	FOREIGN_OK,
-> +	FOREIGN_CLAIMED,
-> +	FOREIGN_IGNORED,
-> +	FOREIGN_UNCLAIMED,
-> +	FOREIGN_NODEV,
-> +	FOREIGN_ERR,
-> +	__LAST_FOREIGN_RETCODE,
-> +};
-> +
-> +/**
-> + * Foreign multipath library API
-> + * Foreign libraries must implement the following methods.
+> + * It's safe to pass our internal pointer, this is only used under the lock.
 > + */
-> +struct foreign {
-> +	/**
-> +	 * method: init(api, name)
-> +	 * Initialize foreign library, and check API compatibility
-> +	 * return pointer to opaque internal data strucure if successful,
-> +	 * NULL otherwise.
-> +	 *
-> +	 * @param[in] api: API version
-> +	 * @param[in] name: name to use for references to self in log messages,
-> +	 *     doesn't need to be strdup'd
-> +	 * @returns context pointer to use in future method calls.
-> +	 */
-> +	struct context* (*init)(unsigned int api, const char *name);
-> +
-> +	/**
-> +	 * method: cleanup(context)
-> +	 * Free data structures used by foreign library, including
-> +	 * context itself.
-> +	 *
-> +	 * @param[in] context foreign library context. This shouldn't be
-> +	 * referenced any more after calling cleanup().
-> +	 */
-> +	void (*cleanup)(struct context *);
-> +
-> +	/**
-> +	 * method: add(context, udev)
-> +	 * This is called during path detection, and for udev ADD events.
-> +	 *
-> +	 * @param[in] context foreign library context
-> +	 * @param[in] udev udev device to add
-> +	 * @returns status code
-> +	 * @retval FOREIGN_CLAIMED: device newly claimed
-> +	 * @retval FOREIGN_OK: device already registered, no action taken
-> +	 * @retval FOREIGN_IGNORED: device is ignored, no action taken
-> +	 * @retval FOREIGN_ERR: an error occured (e.g. out-of-memory)
-> +	 */
-> +	int (*add)(struct context *, struct udev_device *);
-> +
-> +	/**
-> +	 * method: change
-> +	 * This is called on udev CHANGE events.
-> +	 *
-> +	 * @param[in] context foreign library context
-> +	 * @param[in] udev udev device that has generated the event
-> +	 * @returns status code
-> +	 * @retval FOREIGN_OK: event processed
-> +	 * @retval FOREIGN_IGNORED: the device is ignored
-> +	 * @retval FOREIGN_ERR: an error occured (e.g. out-of-memory)
-> +	 *
-> +	 * Note: theoretically it can happen that the status of a foreign device
-> +	 * (claimed vs. not claimed) changes in a change event.
-> +	 * Supporting this correctly would require big efforts. For now, we
-> +	 * don't support it. "multipathd reconfigure" starts foreign device
-> +	 * detection from scratch and should be able to handle this situation.
-> +	 */
-> +	int (*change)(struct context *, struct udev_device *);
-> +
-> +	/**
-> +	 * method: delete
-> +	 * This is called on udev DELETE events.
-> +	 *
-> +	 * @param[in] context foreign library context
-> +	 * @param[in] udev udev device that has generated the event and
-> +	 *	should be deleted
-> +	 * @returns status code
-> +	 * @retval FOREIGN_OK: processed correctly (device deleted)
-> +	 * @retval FOREIGN_IGNORED: device wasn't registered internally
-> +	 * @retval FOREIGN_ERR: error occured.
-> +	 */
-> +	int (*delete)(struct context *, struct udev_device *);
-> +
-> +	/**
-> +	 * method: delete_all
-> +	 * This is called if multipathd reconfigures itself.
-> +	 * Deletes all registered devices (maps and paths)
-> +	 *
-> +	 * @param[in] context foreign library context
-> +	 * @returns status code
-> +	 * @retval FOREIGN_OK: processed correctly
-> +	 * @retval FOREIGN_IGNORED: nothing to delete
-> +	 * @retval FOREIGN_ERR: error occured
-> +	 */
-> +	int (*delete_all)(struct context*);
-> +
-> +	/**
-> +	 * method: check
-> +	 * This is called from multipathd's checker loop.
-> +	 *
-> +	 * Check status of managed devices, update internal status, and print
-> +	 * log messages if appropriate.
-> +	 * @param[in] context foreign library context
-> +	 */
-> +	void (*check)(struct context *);
-> +
-> +	/**
-> +	 * lock internal data stuctures.
-> +	 * @param[in] ctx: foreign context
-> +	 */
-> +	void (*lock)(struct context *ctx);
-> +
-> +	/**
-> +	 * unlock internal data stuctures.
-> +	 * @param[in] ctx: foreign context (void* in order to use the function
-> +	 *	as argument to pthread_cleanup_push())
-> +	 */
-> +	void (*unlock)(void *ctx);
-> +
-> +	/**
-> +	 * method: get_multipaths(context)
-> +	 * Returned vector must be freed by calling release_multipaths().
-> +	 * Lock must be held until release_multipaths() is called.
-> +	 *
-> +	 * @param[in] context foreign library context
-> +	 * @returns a vector of "struct gen_multipath*" with the map devices
-> +	 * belonging to this library (see generic.h).
-> +	 */
-> +	const struct _vector* (*get_multipaths)(const struct context *);
-> +
-> +	/**
-> +	 * method: release_multipaths(context, mpvec)
-> +	 * release data structures obtained with get_multipaths (if any)
-> +	 *
-> +	 * @param[in] ctx the foreign context
-> +	 * @param[in] mpvec the vector allocated with get_multipaths()
-> +	 */
-> +	void (*release_multipaths)(const struct context *ctx,
-> +				   const struct _vector* mpvec);
-> +
-> +	/**
-> +	 * method: get_paths
-> +	 * Returned vector must be freed by calling release_paths().
-> +	 * Lock must be held until release_paths() is called.
-> +	 *
-> +	 * @param[in] context foreign library context
-> +	 * @returns a vector of "struct gen_path*" with the path devices
-> +	 * belonging to this library (see generic.h)
-> +	 */
-> +	const struct _vector* (*get_paths)(const struct context *);
-> +
-> +	/**
-> +	 * release data structures obtained with get_multipaths (if any)
-> +	 *
-> +	 * @param[in] ctx the foreign context
-> +	 * @param[in] ppvec the vector allocated with get_paths()
-> +	 */
-> +	void (*release_paths)(const struct context *ctx,
-> +			      const struct _vector* ppvec);
-> +
-> +	void *handle;
-> +	struct context *context;
-> +	const char name[0];
-> +};
-> +
-> +/**
-> + * init_foreign(dir)
-> + * load and initialize foreign multipath libraries in dir (libforeign-*.so).
-> + * @param dir: directory to search
-> + * @returns: 0 on success, negative value on failure.
-> + */
-> +int init_foreign(const char *multipath_dir);
-> +
-> +/**
-> + * cleanup_foreign(dir)
-> + * cleanup and free all data structures owned by foreign libraries
-> + */
-> +void cleanup_foreign(void);
-> +
-> +/**
-> + * add_foreign(udev)
-> + * check if a device belongs to any foreign library.
-> + * calls add() for all known foreign libs, in the order registered,
-> + * until the first one returns FOREIGN_CLAIMED or FOREIGN_OK.
-> + * @param udev: udev device to check
-> + * @returns: status code
-> + * @retval FOREIGN_CLAIMED: newly claimed by a foreign lib
-> + * @retval FOREIGN_OK: already claimed by a foreign lib
-> + * @retval FOREIGN_IGNORED: ignored by all foreign libs
-> + * @retval FOREIGN_ERR: an error occured
-> + */
-> +int add_foreign(struct udev_device *);
-> +
-> +/**
-> + * change_foreign(udev)
-> + * Notify foreign libraries of an udev CHANGE event
-> + * @param udev: udev device to check
-> + * @returns: status code (see change() method above).
-> + */
-> +int change_foreign(struct udev_device *);
-> +
-> +/**
-> + * delete_foreign(udev)
-> + * @param udev: udev device being removed
-> + * @returns: status code (see remove() above)
-> + */
-> +int delete_foreign(struct udev_device *);
-> +
-> +/**
-> + * delete_all_foreign()
-> + * call delete_all() for all foreign libraries
-> + * @returns: status code (see delete_all() above)
-> + */
-> +int delete_all_foreign(void);
-> +
-> +/**
-> + * check_foreign()
-> + * call check() (see above) for all foreign libraries
-> + */
-> +void check_foreign(void);
-> +
-> +/**
-> + * foreign_path_layout()
-> + * call this before printing paths, after get_path_layout(), to determine
-> + * output field width.
-> + */
-> +void foreign_path_layout(void);
-> +
-> +/**
-> + * foreign_multipath_layout()
-> + * call this before printing maps, after get_multipath_layout(), to determine
-> + * output field width.
-> + */
-> +void foreign_multipath_layout(void);
-> +
-> +/**
-> + * snprint_foreign_topology(buf, len, verbosity);
-> + * prints topology information from foreign libraries into buffer,
-> + * '\0' - terminated.
-> + * @param buf: output buffer
-> + * @param len: size of output buffer
-> + * @param verbosity: verbosity level
-> + * @returns: number of printed characters excluding trailing '\0'.
-> + */
-> +int snprint_foreign_topology(char *buf, int len, int verbosity);
-> +
-> +/**
-> + * snprint_foreign_paths(buf, len, style, pad);
-> + * prints formatted path information from foreign libraries into buffer,
-> + * '\0' - terminated.
-> + * @param buf: output buffer
-> + * @param len: size of output buffer
-> + * @param style: format string
-> + * @param pad: whether to pad field width
-> + * @returns: number of printed characters excluding trailing '\0'.
-> + */
-> +int snprint_foreign_paths(char *buf, int len, const char *style, int pad);
-> +
-> +/**
-> + * snprint_foreign_multipaths(buf, len, style, pad);
-> + * prints formatted map information from foreign libraries into buffer,
-> + * '\0' - terminated.
-> + * @param buf: output buffer
-> + * @param len: size of output buffer
-> + * @param style: format string
-> + * @param pad: whether to pad field width
-> + * @returns: number of printed characters excluding trailing '\0'.
-> + */
-> +int snprint_foreign_multipaths(char *buf, int len,
-> +			       const char *style, int pretty);
-> +
-> +/**
-> + * print_foreign_topology(v)
-> + * print foreign topology to stdout
-> + * @param verbosity: verbosity level
-> + */
-> +void print_foreign_topology(int verbosity);
-> +
-> +/**
-> + * is_claimed_by_foreign(ud)
-> + * @param udev: udev device
-> + * @returns: true iff device is (newly or already) claimed by a foreign lib
-> + */
-> +static inline bool
-> +is_claimed_by_foreign(struct udev_device *ud)
+> +const struct _vector *get_multipaths(const struct context *ctx)
 > +{
-> +	int rc = add_foreign(ud);
-> +
-> +	return (rc == FOREIGN_CLAIMED || rc == FOREIGN_OK);
+> +	condlog(5, "%s called for \"%s\"", __func__, THIS);
+> +	return ctx->mpvec;
 > +}
 > +
-> +#endif /*  _FOREIGN_H */
+> +void release_multipaths(const struct context *ctx, const struct _vector *mpvec)
+> +{
+> +	condlog(5, "%s called for \"%s\"", __func__, THIS);
+> +	/* NOP */
+> +}
+> +
+> +/*
+> + * It's safe to pass our internal pointer, this is only used under the lock.
+> + */
+> +const struct _vector * get_paths(const struct context *ctx)
+> +{
+> +	condlog(5, "%s called for \"%s\"", __func__, THIS);
+> +	return NULL;
+> +}
+> +
+> +void release_paths(const struct context *ctx, const struct _vector *mpvec)
+> +{
+> +	condlog(5, "%s called for \"%s\"", __func__, THIS);
+> +	/* NOP */
+> +}
+> +
+> +/* compile-time check whether all methods are present and correctly typed */
+> +#define _METHOD_INIT(x) .x = x
+> +static struct foreign __methods __attribute__((unused)) = {
+> +	_METHOD_INIT(init),
+> +	_METHOD_INIT(cleanup),
+> +	_METHOD_INIT(change),
+> +	_METHOD_INIT(delete),
+> +	_METHOD_INIT(delete_all),
+> +	_METHOD_INIT(check),
+> +	_METHOD_INIT(lock),
+> +	_METHOD_INIT(unlock),
+> +	_METHOD_INIT(get_multipaths),
+> +	_METHOD_INIT(release_multipaths),
+> +	_METHOD_INIT(get_paths),
+> +	_METHOD_INIT(release_paths),
+> +};
 > -- 
 > 2.16.1
