@@ -1,14 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 2/4] multipathd: fix -Wpointer-to-int-cast
-	warning in uxlsnr
-Date: Thu,  8 Mar 2018 00:08:57 +0100
-Message-ID: <20180307230859.14926-3-mwilck@suse.com>
-References: <20180307230859.14926-1-mwilck@suse.com>
+Subject: [PATCH 7/8] libmultipath: fix wrong output of "multipath
+	-t"
+Date: Thu,  8 Mar 2018 00:15:50 +0100
+Message-ID: <20180307231551.15162-8-mwilck@suse.com>
+References: <20180307231551.15162-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180307230859.14926-1-mwilck@suse.com>
+In-Reply-To: <20180307231551.15162-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,36 +19,108 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
+Cc: Bart Van Assche <Bart.VanAssche@sandisk.com>, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>, Chongyun Wu <wu.chongyun@h3c.com>
 List-Id: dm-devel.ids
 
-Fixes: "multipathd: release uxsocket and resource when cancel thread"
+The default values printed by "multipath -t" or "multipathd show config"
+for "detect_prio", "detect_checker", and "retain_attached_hw_handler"
+don't match the actual compiled-in defaults. Moreover, several other
+options would also be displayed wrongly if the defaults were changed.
+
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/uxlsnr.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ libmultipath/dict.c | 25 ++++++++++++++++---------
+ 1 file changed, 16 insertions(+), 9 deletions(-)
 
-diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
-index 0531061912b3..cdafd82943e7 100644
---- a/multipathd/uxlsnr.c
-+++ b/multipathd/uxlsnr.c
-@@ -148,7 +148,7 @@ void uxsock_cleanup(void *arg)
- {
- 	struct client *client_loop;
- 	struct client *client_tmp;
--	int ux_sock = (int)arg;
-+	long ux_sock = (long)arg;
+diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+index 47dc2a38f1ac..ea273dd91962 100644
+--- a/libmultipath/dict.c
++++ b/libmultipath/dict.c
+@@ -340,7 +340,7 @@ declare_def_handler(checker_timeout, set_int)
+ declare_def_snprint(checker_timeout, print_nonzero)
  
- 	close(ux_sock);
+ declare_def_handler(flush_on_last_del, set_yes_no_undef)
+-declare_def_snprint_defint(flush_on_last_del, print_yes_no_undef, YNU_NO)
++declare_def_snprint_defint(flush_on_last_del, print_yes_no_undef, DEFAULT_FLUSH)
+ declare_ovr_handler(flush_on_last_del, set_yes_no_undef)
+ declare_ovr_snprint(flush_on_last_del, print_yes_no_undef)
+ declare_hw_handler(flush_on_last_del, set_yes_no_undef)
+@@ -349,7 +349,8 @@ declare_mp_handler(flush_on_last_del, set_yes_no_undef)
+ declare_mp_snprint(flush_on_last_del, print_yes_no_undef)
  
-@@ -167,7 +167,7 @@ void uxsock_cleanup(void *arg)
-  */
- void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
- {
--	int ux_sock;
-+	long ux_sock;
- 	int rlen;
- 	char *inbuf;
- 	char *reply;
+ declare_def_handler(user_friendly_names, set_yes_no_undef)
+-declare_def_snprint_defint(user_friendly_names, print_yes_no_undef, YNU_NO)
++declare_def_snprint_defint(user_friendly_names, print_yes_no_undef,
++			   DEFAULT_USER_FRIENDLY_NAMES)
+ declare_ovr_handler(user_friendly_names, set_yes_no_undef)
+ declare_ovr_snprint(user_friendly_names, print_yes_no_undef)
+ declare_hw_handler(user_friendly_names, set_yes_no_undef)
+@@ -367,21 +368,24 @@ declare_def_handler(prkeys_file, set_str)
+ declare_def_snprint(prkeys_file, print_str)
+ 
+ declare_def_handler(retain_hwhandler, set_yes_no_undef)
+-declare_def_snprint_defint(retain_hwhandler, print_yes_no_undef, YNU_NO)
++declare_def_snprint_defint(retain_hwhandler, print_yes_no_undef,
++			   DEFAULT_RETAIN_HWHANDLER)
+ declare_ovr_handler(retain_hwhandler, set_yes_no_undef)
+ declare_ovr_snprint(retain_hwhandler, print_yes_no_undef)
+ declare_hw_handler(retain_hwhandler, set_yes_no_undef)
+ declare_hw_snprint(retain_hwhandler, print_yes_no_undef)
+ 
+ declare_def_handler(detect_prio, set_yes_no_undef)
+-declare_def_snprint_defint(detect_prio, print_yes_no_undef, YNU_NO)
++declare_def_snprint_defint(detect_prio, print_yes_no_undef,
++			   DEFAULT_DETECT_PRIO)
+ declare_ovr_handler(detect_prio, set_yes_no_undef)
+ declare_ovr_snprint(detect_prio, print_yes_no_undef)
+ declare_hw_handler(detect_prio, set_yes_no_undef)
+ declare_hw_snprint(detect_prio, print_yes_no_undef)
+ 
+ declare_def_handler(detect_checker, set_yes_no_undef)
+-declare_def_snprint_defint(detect_checker, print_yes_no_undef, YNU_NO)
++declare_def_snprint_defint(detect_checker, print_yes_no_undef,
++			   DEFAULT_DETECT_CHECKER)
+ declare_ovr_handler(detect_checker, set_yes_no_undef)
+ declare_ovr_snprint(detect_checker, print_yes_no_undef)
+ declare_hw_handler(detect_checker, set_yes_no_undef)
+@@ -391,7 +395,8 @@ declare_def_handler(force_sync, set_yes_no)
+ declare_def_snprint(force_sync, print_yes_no)
+ 
+ declare_def_handler(deferred_remove, set_yes_no_undef)
+-declare_def_snprint_defint(deferred_remove, print_yes_no_undef, YNU_NO)
++declare_def_snprint_defint(deferred_remove, print_yes_no_undef,
++			   DEFAULT_DEFERRED_REMOVE)
+ declare_ovr_handler(deferred_remove, set_yes_no_undef)
+ declare_ovr_snprint(deferred_remove, print_yes_no_undef)
+ declare_hw_handler(deferred_remove, set_yes_no_undef)
+@@ -412,7 +417,8 @@ declare_def_handler(strict_timing, set_yes_no)
+ declare_def_snprint(strict_timing, print_yes_no)
+ 
+ declare_def_handler(skip_kpartx, set_yes_no_undef)
+-declare_def_snprint_defint(skip_kpartx, print_yes_no_undef, YNU_NO)
++declare_def_snprint_defint(skip_kpartx, print_yes_no_undef,
++			   DEFAULT_SKIP_KPARTX)
+ declare_ovr_handler(skip_kpartx, set_yes_no_undef)
+ declare_ovr_snprint(skip_kpartx, print_yes_no_undef)
+ declare_hw_handler(skip_kpartx, set_yes_no_undef)
+@@ -629,7 +635,8 @@ print_fast_io_fail(char * buff, int len, long v)
+ }
+ 
+ declare_def_handler(fast_io_fail, set_fast_io_fail)
+-declare_def_snprint_defint(fast_io_fail, print_fast_io_fail, DEFAULT_FAST_IO_FAIL)
++declare_def_snprint_defint(fast_io_fail, print_fast_io_fail,
++			   DEFAULT_FAST_IO_FAIL)
+ declare_ovr_handler(fast_io_fail, set_fast_io_fail)
+ declare_ovr_snprint(fast_io_fail, print_fast_io_fail)
+ declare_hw_handler(fast_io_fail, set_fast_io_fail)
+@@ -816,7 +823,7 @@ print_rr_weight (char * buff, int len, long v)
+ }
+ 
+ declare_def_handler(rr_weight, set_rr_weight)
+-declare_def_snprint_defint(rr_weight, print_rr_weight, RR_WEIGHT_NONE)
++declare_def_snprint_defint(rr_weight, print_rr_weight, DEFAULT_RR_WEIGHT)
+ declare_ovr_handler(rr_weight, set_rr_weight)
+ declare_ovr_snprint(rr_weight, print_rr_weight)
+ declare_hw_handler(rr_weight, set_rr_weight)
 -- 
 2.16.1
