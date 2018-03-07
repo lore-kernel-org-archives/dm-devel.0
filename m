@@ -1,14 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 3/5] libmultipath: config parser: Allow '"' in
-	strings
-Date: Thu,  8 Mar 2018 00:26:18 +0100
-Message-ID: <20180307232620.15746-4-mwilck@suse.com>
-References: <20180307232620.15746-1-mwilck@suse.com>
+Subject: [PATCH 4/8] kpartx: Improve reliability of
+	find_loop_by_file()
+Date: Thu,  8 Mar 2018 00:15:47 +0100
+Message-ID: <20180307231551.15162-5-mwilck@suse.com>
+References: <20180307231551.15162-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180307232620.15746-1-mwilck@suse.com>
+In-Reply-To: <20180307231551.15162-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,83 +19,53 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+Cc: Bart Van Assche <bart.vanassche@wdc.com>, Bart Van Assche <Bart.VanAssche@sandisk.com>, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>, Chongyun Wu <wu.chongyun@h3c.com>
 List-Id: dm-devel.ids
 
-We have seen model strings lile '2.5" SSD' which can't be parsed
-by the current config parser. This patch fixes this by allowing
-'""' to represent a double quote character inside a a string.
-The above model string could now be entered in the config file like this:
+From: Bart Van Assche <bart.vanassche@wdc.com>
 
-blacklist {
-	  vendor SomeCorp
-	  product "2.5"" SSD"
-}
+Avoid that the strchr() call in this function examines uninitialized
+data on the stack. This patch avoids that Coverity reports the following:
 
+    CID 173252:  Error handling issues  (CHECKED_RETURN)
+    "read(int, void *, size_t)" returns the number of bytes read, but it is ignored.
+
+Signed-off-by: Bart Van Assche <bart.vanassche@wdc.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/parser.c | 26 +++++++++++++++++++++++++-
- 1 file changed, 25 insertions(+), 1 deletion(-)
+ kpartx/lopart.c | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
 
-diff --git a/libmultipath/parser.c b/libmultipath/parser.c
-index 3d9656f47945..21151a16ad74 100644
---- a/libmultipath/parser.c
-+++ b/libmultipath/parser.c
-@@ -219,11 +219,13 @@ alloc_strvec(char *string)
+diff --git a/kpartx/lopart.c b/kpartx/lopart.c
+index 02b29e8cf91d..69c1eda1cc5c 100644
+--- a/kpartx/lopart.c
++++ b/kpartx/lopart.c
+@@ -64,7 +64,7 @@ char *find_loop_by_file(const char *filename)
+ 	DIR *dir;
+ 	struct dirent *dent;
+ 	char dev[64], *found = NULL, *p;
+-	int fd;
++	int fd, bytes_read;
+ 	struct stat statbuf;
+ 	struct loop_info loopinfo;
+ 	const char VIRT_BLOCK[] = "/sys/devices/virtual/block";
+@@ -86,14 +86,15 @@ char *find_loop_by_file(const char *filename)
+ 		if (fd < 0)
+ 			continue;
  
- 	in_string = 0;
- 	while (1) {
-+		int two_quotes = 0;
-+
- 		if (!vector_alloc_slot(strvec))
- 			goto out;
- 
- 		start = cp;
--		if (*cp == '"') {
-+		if (*cp == '"' && !(in_string && *(cp + 1) == '"')) {
- 			cp++;
- 			token = MALLOC(2);
- 
-@@ -246,11 +248,23 @@ alloc_strvec(char *string)
- 			*(token + 1) = '\0';
- 			cp++;
- 		} else {
-+
-+		move_on:
- 			while ((in_string ||
- 				(!isspace((int) *cp) && isascii((int) *cp) &&
- 				 *cp != '!' && *cp != '#' && *cp != '{' &&
- 				 *cp != '}')) && *cp != '\0' && *cp != '"')
- 				cp++;
-+
-+			/* Two consecutive double quotes - don't end string */
-+			if (in_string && *cp == '"') {
-+				if (*(cp + 1) == '"') {
-+					two_quotes = 1;
-+					cp += 2;
-+					goto move_on;
-+				}
-+			}
-+
- 			strlen = cp - start;
- 			token = MALLOC(strlen + 1);
- 
-@@ -259,6 +273,16 @@ alloc_strvec(char *string)
- 
- 			memcpy(token, start, strlen);
- 			*(token + strlen) = '\0';
-+
-+			/* Replace "" by " */
-+			if (two_quotes) {
-+				char *qq = strstr(token, "\"\"");
-+				while (qq != NULL) {
-+					memmove(qq + 1, qq + 2,
-+						strlen + 1 - (qq + 2 - token));
-+					qq = strstr(qq + 1, "\"\"");
-+				}
-+			}
+-		if (read(fd, dev, sizeof(dev)) <= 0) {
++		bytes_read = read(fd, dev, sizeof(dev) - 1);
++		if (bytes_read <= 0) {
+ 			close(fd);
+ 			continue;
  		}
- 		vector_set_slot(strvec, token);
  
+ 		close(fd);
+ 
+-		dev[sizeof(dev)-1] = '\0';
++		dev[bytes_read] = '\0';
+ 		p = strchr(dev, '\n');
+ 		if (p != NULL)
+ 			*p = '\0';
 -- 
 2.16.1
