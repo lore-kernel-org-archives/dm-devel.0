@@ -1,51 +1,49 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH v2 2/2] multipathd: start marginal path
- checker thread lazily
-Date: Wed, 7 Mar 2018 08:25:12 +0100
-Message-ID: <d7debc7f-8e2c-704f-eabf-ab9a668f3163@suse.de>
-References: <20180306211842.2556-1-mwilck@suse.com>
-	<20180306211842.2556-2-mwilck@suse.com>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: dm-bufio: avoid false-positive Wmaybe-uninitialized warning
+Date: Wed, 7 Mar 2018 09:48:05 +0100
+Message-ID: <CAK8P3a3fnHYRSZ8X5G7fd5oVORM3fm7PLcuuPytkR9VQWHJygg@mail.gmail.com>
+References: <20180222155627.1800948-1-arnd@arndb.de> <20180222160432.GA16971@redhat.com>
+ <CAK8P3a1jpj0ZCs81YJu0Dx3QFSypQ+VBr348UfEaagcuvM_1gA@mail.gmail.com> <20180307012941.GA27250@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180306211842.2556-2-mwilck@suse.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Guan Junxiong <guanjunxiong@huawei.com>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <stable-owner@vger.kernel.org>
+In-Reply-To: <20180307012941.GA27250@redhat.com>
+Sender: stable-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Ingo Molnar <mingo@kernel.org>, Aliaksei Karaliou <akaraliou.dev@gmail.com>, Jens Axboe <axboe@kernel.dk>, Jan Kara <jack@suse.cz>, Dan Carpenter <dan.carpenter@oracle.com>, Mark Rutland <mark.rutland@arm.com>, Eric Biggers <ebiggers@google.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, stable <stable@vger.kernel.org>
 List-Id: dm-devel.ids
 
-T24gMDMvMDYvMjAxOCAxMDoxOCBQTSwgTWFydGluIFdpbGNrIHdyb3RlOgo+IEkgbm90aWNlZCB0
-aGF0IHRoZSBpb19lcnJvciBjaGVja2VyIHRocmVhZCBhY2NvdW50cyBmb3IgbW9zdCBvZiB0aGUK
-PiBhY3Rpdml0eSBvZiBtdWx0aXBhdGhkIGV2ZW4gaWYgdGhlIG1hcmdpbmFsIHBhdGggY2hlY2tp
-bmcgcGFyYW10ZXJzCj4gYXJlIG5vdCBzZXQgKHdoaWNoIGlzIHN0aWxsIHRoZSBkZWZhdWx0IGlu
-IG1vc3QgaW5zdGFsbGF0aW9ucyBJIGFzc3VtZSkuCj4gCj4gVGhlcmVmb3JlLCBzdGFydCB0aGUg
-aW9fZXJyb3IgY2hlY2tlciB0aHJlYWQgb25seSBpZiB0aGVyZSdzIGF0IGxlYXN0Cj4gb25lIG1h
-cCB3aXRoIG1hcmdpbmFsIGVycm9yIHBhdGggY2hlY2tpbmcgY29uZmlndXJlZC4gQWxzbywgbWFr
-ZSBzdXJlCj4gdGhlIHRocmVhZCBpcyByZWFsbHkgdXAgd2hlbiBzdGFydF9pb19lcnJfc3RhdF90
-aHJlYWQoKSByZXR1cm5zLgo+IAo+IFRoaXMgcmVxdWlyZXMgYWRkaW5nIGEgInZlY3MiIGFyZ3Vt
-ZW50IHRvIHNldHVwX21hcCwgYmVjYXVzZSB2ZWNzCj4gbmVlZHMgdG8gYmUgcGFzc2VkIHRvIHRo
-ZSBpb19lcnJvciBjaGVja2luZyBjb2RlLgo+IAo+IFNpZ25lZC1vZmYtYnk6IE1hcnRpbiBXaWxj
-ayA8bXdpbGNrQHN1c2UuY29tPgo+IC0tLQo+ICBsaWJtdWx0aXBhdGgvY29uZmlndXJlLmMgICB8
-IDE0ICsrKysrKysrKy0tLQo+ICBsaWJtdWx0aXBhdGgvY29uZmlndXJlLmggICB8ICAzICsrLQo+
-ICBsaWJtdWx0aXBhdGgvaW9fZXJyX3N0YXQuYyB8IDU1ICsrKysrKysrKysrKysrKysrKysrKysr
-KysrKysrKysrKysrKysrKysrKy0tLS0KPiAgbGlibXVsdGlwYXRoL3N0cnVjdHNfdmVjLmMgfCAg
-MyArKy0KPiAgbXVsdGlwYXRoZC9jbGlfaGFuZGxlcnMuYyAgfCAgMiArLQo+ICBtdWx0aXBhdGhk
-L21haW4uYyAgICAgICAgICB8ICA4ICsrLS0tLS0KPiAgNiBmaWxlcyBjaGFuZ2VkLCA2OSBpbnNl
-cnRpb25zKCspLCAxNiBkZWxldGlvbnMoLSkKPiAKUmV2aWV3ZWQtYnk6IEhhbm5lcyBSZWluZWNr
-ZSA8aGFyZUBzdXNlLmNvbT4KCkNoZWVycywKCkhhbm5lcwotLSAKRHIuIEhhbm5lcyBSZWluZWNr
-ZQkJICAgVGVhbWxlYWQgU3RvcmFnZSAmIE5ldHdvcmtpbmcKaGFyZUBzdXNlLmRlCQkJICAgICAg
-ICAgICAgICAgKzQ5IDkxMSA3NDA1MyA2ODgKU1VTRSBMSU5VWCBHbWJILCBNYXhmZWxkc3RyLiA1
-LCA5MDQwOSBOw7xybmJlcmcKR0Y6IEYuIEltZW5kw7ZyZmZlciwgSi4gU21pdGhhcmQsIEouIEd1
-aWxkLCBELiBVcG1hbnl1LCBHLiBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpk
-bS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRo
-YXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On Wed, Mar 7, 2018 at 2:29 AM, Mike Snitzer <snitzer@redhat.com> wrote:
+> On Tue, Mar 06 2018 at  4:33pm -0500,
+> Arnd Bergmann <arnd@arndb.de> wrote:
+>
+>> On Thu, Feb 22, 2018 at 5:04 PM, Mike Snitzer <snitzer@redhat.com> wrote:
+>> > On Thu, Feb 22 2018 at 10:56am -0500,
+>> > Arnd Bergmann <arnd@arndb.de> wrote:
+>>
+>> >
+>> > Mikulas already sent a fix for this:
+>> > https://patchwork.kernel.org/patch/10211631/
+>> >
+>> > But I like yours a bit better, though I'll likely move the declaration
+>> > of 'noio_flag' temporary inside the conditional.
+>> >
+>> > Anyway, I'll get this fixed up shortly, thanks.
+>>
+>> I see the fix made it into linux-next on the same day, but the build bots still
+>> report the warning for mainline kernels and now also for stable kernels
+>> that got a backport of the patch that introduced it on arm64.
+>>
+>> I assume you had not planned to send it for mainline, any chance you
+>> could change that and send it as a bugfix with a 'Cc:
+>> stable@vger.kernel.org' tag to restore a clean build?
+>
+> I did/do plan to send to Linus this week.
+>
+> But I've updated the commit header to include the CC: stable like you
+> asked.
+
+Got it, thanks a lot, that brings us down to two kernelci warnings for 4.16
+and one for 4.15-stable then.
+
+      Arnd
