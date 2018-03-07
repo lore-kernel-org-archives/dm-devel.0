@@ -1,15 +1,14 @@
-From: shhuiw <shhuiw@foxmail.com>
-Subject: Re: confusion about multipath_prepare_ioctl
-Date: Wed, 7 Mar 2018 09:18:21 +0800
-Message-ID: <6535.3121994578$1520414262@news.gmane.org>
-References: <tencent_16F29DEA1877E6C6D13CB47D4E3B41358508@qq.com>
-	<20180306054422.GA19607@redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [RFC PATCH 00/16] multipath path classification
+Date: Wed, 07 Mar 2018 10:26:47 +0100
+Message-ID: <1520414807.11340.2.camel@suse.com>
+References: <20180119002916.10323-1-mwilck@suse.com>
+	<CABr-Gnfw0Trvcr06UCzUC4suQLr1EGi5o5sUnUMJrdRgk8WD2Q@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180306054422.GA19607@redhat.com>
-Content-Language: en-US
+In-Reply-To: <CABr-Gnfw0Trvcr06UCzUC4suQLr1EGi5o5sUnUMJrdRgk8WD2Q@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,33 +18,16 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel <dm-devel@redhat.com>, hch <hch@lst.de>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-CgpPbiAyMDE45bm0MDPmnIgwNuaXpSAxMzo0NCwgTWlrZSBTbml0emVyIHdyb3RlOgo+IE9uIE1v
-biwgTWFyIDA1IDIwMTggYXQgMTA6MzVwbSAtMDUwMCwKPiBXYW5nIFNoZW5nLUh1aSA8c2hodWl3
-QGZveG1haWwuY29tPiB3cm90ZToKPgo+PiBEZWFyLAo+Pgo+PiBTb3JyeSB0byB0cm91YmxlIHlv
-dS4KPj4KPj4gSSBub3RpY2VkIHNvbWUgY29kZSBpbiBkbS0qLmMgbGlrZToKPj4gIgo+PiBzdGF0
-aWMgaW50IG11bHRpcGF0aF9wcmVwYXJlX2lvY3RsKHN0cnVjdCBkbV90YXJnZXQgKnRpLAo+PiAJ
-CXN0cnVjdCBibG9ja19kZXZpY2UgKipiZGV2LCBmbW9kZV90ICptb2RlKQo+PiB7Cj4+IC4uLgo+
-PiAJLyoKPj4gCSAqIE9ubHkgcGFzcyBpb2N0bHMgdGhyb3VnaCBpZiB0aGUgZGV2aWNlIHNpemVz
-IG1hdGNoIGV4YWN0bHkuCj4+IAkgKi8KPj4gCWlmICghciAmJiB0aS0+bGVuICE9IGlfc2l6ZV9y
-ZWFkKCgqYmRldiktPmJkX2lub2RlKSA+PiBTRUNUT1JfU0hJRlQpCj4+IAkJcmV0dXJuIDE7Cj4+
-IC4uLgo+PiB9Cj4+ICIKPj4gSGVyZSwgcmV0dXJuIHZhbHVlIDEgbWVhbnMgCj4+ICJpb2N0bCBp
-cyBiZWluZyBpc3N1ZWQgYWdhaW5zdCBhIHN1YnNldCBvZiB0aGUgcGFyZW50IGJkZXY7IHJlcXVp
-cmUgZXh0cmEgcHJpdmlsZWdlcy4iCj4+IChjb21tZW50IGluIGRtX2Jsa19pb2N0bCkKPj4KPj4g
-SSdtIGNvbmZ1c2VkIGJ5IHRoZSBjb21tZW50IGFuZCAnIT0nIHRlc3QgZm9yIG11bHRpcGF0aC4g
-Cj4+IEluIHdoaWNoIGNhc2VzLCB0aGUgc2l6ZSBvZiBsb3cgbGV2ZWwgc2luZ2xlIGRldmljZSBp
-cyBub3QgZXF1YWwgdG8gdGhlIHBhcmVudCAKPj4gc2l6ZSBvZiBtdWx0aXBhdGggZGV2aWNlPwo+
-IEdpdmVuIHRoYXQgdGktPmxlbiBpcyBzZW50IGRvd24gZnJvbSB1c2Vyc3BhY2UsIHRoZSBETSBt
-dWx0aXBhdGgKPiB0YXJnZXQncyB0aS0+bGVuIF9jb3VsZF8gYmUgc21hbGxlciB0aGFuIHRoZSB1
-bmRlcmx5aW5nIHBhdGgocykuICBCdXQgaW4KPiBwcmFjdGljZSB0aGF0IGRvZXNuJ3Qgb2NjdXIg
-d2l0aCBtdWx0aXBhdGhkLi4gYSBwYXJ0aXRpb25lZCBtdWx0aXBhdGgKPiBkZXZpY2UgaXMgZ2Vu
-ZXJhbGx5IGRvbmUsIHZpYSBrcGFydHgsIGluIHRlcm1zIG9mIGxpbmVhciBtYXBwaW5ncyBvbnRv
-cAo+IG9mIHRoZSBtdWx0aXBhdGggZGV2aWNlLgo+Cj4gVGhlIHNhbWUgIT0gdGVzdCBpcyBkb25l
-IGluIHRoZSBkbSBsaW5lYXIgdGFyZ2V0IGFuZCBpcyBtdWNoIG1vcmUKPiByZWxldmFudCB0byBj
-b25jZXJucyBhYm91dCBpb2N0bHMgYmVpbmcgc2VudCB0byBwYXJ0aXRpb24uCj4KPiBNaWtlCj4K
-PgpUaGFua3MgZm9yIHlvdXIgZXhwbGFuYXRpb24sIE1pa2UhCgpSZWdhcmRzLApzaGVuZ2h1aQoK
-CgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93
-d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+CkhlbGxvIENocmlzdG9waGUsCgpPbiBXZWQsIDIwMTgtMDMtMDcgYXQgMDk6NTMgKzAxMDAsIENo
+cmlzdG9waGUgVmFyb3F1aSB3cm90ZToKPiBNYXJ0aW4sIEJlbiwKPiAKPiBjYW4geW91IHVwZGF0
+ZSBtZSBvbiB0aGUgc3RhdHVzIG9mIHRoaXMgcGF0Y2hzZXQgPwo+IElzIGl0IHJlYWR5IGZvciBp
+bmNsdXNpb24gPwoKTm8uIEkgYW0gcHJlcGFyaW5nIGFuIHVwZGF0ZWQgc2V0IHRoYXQncyBtdWNo
+IGltcHJvdmVkLgoKUmVnYXJkcwpNYXJ0aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tA
+c3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdG
+OiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIx
+Mjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVk
+aGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
