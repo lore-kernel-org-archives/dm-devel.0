@@ -1,48 +1,55 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-bufio: avoid false-positive Wmaybe-uninitialized warning
-Date: Tue, 6 Mar 2018 20:29:42 -0500
-Message-ID: <20180307012941.GA27250@redhat.com>
-References: <20180222155627.1800948-1-arnd@arndb.de>
- <20180222160432.GA16971@redhat.com>
- <CAK8P3a1jpj0ZCs81YJu0Dx3QFSypQ+VBr348UfEaagcuvM_1gA@mail.gmail.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH v2 1/2] libmultipath: fix race in
+	stop_io_err_stat_thread
+Date: Wed, 7 Mar 2018 08:23:47 +0100
+Message-ID: <2de3d65f-dea5-a8d3-9738-23ae90c79bda@suse.de>
+References: <20180306211842.2556-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <stable-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAK8P3a1jpj0ZCs81YJu0Dx3QFSypQ+VBr348UfEaagcuvM_1gA@mail.gmail.com>
-Sender: stable-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Ingo Molnar <mingo@kernel.org>, Aliaksei Karaliou <akaraliou.dev@gmail.com>, Jens Axboe <axboe@kernel.dk>, Jan Kara <jack@suse.cz>, Dan Carpenter <dan.carpenter@oracle.com>, Mark Rutland <mark.rutland@arm.com>, Eric Biggers <ebiggers@google.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, stable <stable@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20180306211842.2556-1-mwilck@suse.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Guan Junxiong <guanjunxiong@huawei.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Mar 06 2018 at  4:33pm -0500,
-Arnd Bergmann <arnd@arndb.de> wrote:
-
-> On Thu, Feb 22, 2018 at 5:04 PM, Mike Snitzer <snitzer@redhat.com> wrote:
-> > On Thu, Feb 22 2018 at 10:56am -0500,
-> > Arnd Bergmann <arnd@arndb.de> wrote:
-> 
-> >
-> > Mikulas already sent a fix for this:
-> > https://patchwork.kernel.org/patch/10211631/
-> >
-> > But I like yours a bit better, though I'll likely move the declaration
-> > of 'noio_flag' temporary inside the conditional.
-> >
-> > Anyway, I'll get this fixed up shortly, thanks.
-> 
-> I see the fix made it into linux-next on the same day, but the build bots still
-> report the warning for mainline kernels and now also for stable kernels
-> that got a backport of the patch that introduced it on arm64.
-> 
-> I assume you had not planned to send it for mainline, any chance you
-> could change that and send it as a bugfix with a 'Cc:
-> stable@vger.kernel.org' tag to restore a clean build?
-
-I did/do plan to send to Linus this week.
-
-But I've updated the commit header to include the CC: stable like you
-asked.
-
-Thanks,
-Mike
+T24gMDMvMDYvMjAxOCAxMDoxOCBQTSwgTWFydGluIFdpbGNrIHdyb3RlOgo+IEl0J3Mgd3Jvbmcs
+IGFuZCB1bm5lY2Vzc2FyeSwgdG8gY2FsbCBwdGhyZWFkX2tpbGwgYWZ0ZXIKPiBwdGhyZWFkX2Nh
+bmNlbC4gSSBoYXZlIG9ic2VydmVkIGNhc2VzIHdoZXJlIHRoZSBpb19lcnIgY2hlY2tlcgo+IHRo
+cmVhZCBodW5nIGluIGxpYnB0aHJlYWQgYWZ0ZXIgcmVjZWl2aW5nIHRoZSBVU1IyIHNpZ25hbCwg
+aW4gcGFydGljdWxhcgo+IHdoZW4gbXVsdGlwYXRoZCBpcyBydW4gdW5kZXIgc3RyYWNlLiAoSWYg
+bXVsdGlwYXRoZCBpcyBraWxsZWQgd2l0aAo+IFNJR0lOVCB1bmRlciBzdHJhY2UsIGFuZCB0aGUg
+aW9fZXJyb3IgdGhyZWFkIGlzIHJ1bm5pbmcsIGl0IGhhcHBlbnMKPiBhbG1vc3QgZXZlcnkgdGlt
+ZSkuIElmIHRoaXMgaGFwcGVucywgdGhlIGlvX2VyciB0aHJlYWQKPiB0cmllcyB0byBvYnRhaW4g
+YSBtdXRleCBpbiB0aGUgdXJjdSBjb2RlIChwcmVzdW1hYmx5IHJjdV91bnJlZ2lzdGVyX3RocmVh
+ZCgpKQo+IGFuZCB0aGUgbWFpbiB0aHJlYWQgaGFuZ3MgaW4gcHRocmVhZF9qb2luKCkuCj4gCj4g
+V2l0aCB0aGUgY2hhbmdlIGZyb20gdGhpcyBwYXRjaCwgdGhlIHRocmVhZCBpcyBzaHV0IGRvd24g
+Y2xlYW5seS4gSSBoYXZlbid0Cj4gb2JzZXJ2ZWQgdGhlIGhhbmcgdW5kZXIgc3RyYWNlIHdpdGgg
+dGhlIHBhdGNoLgo+IAo+IFNpZ25lZC1vZmYtYnk6IE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2Uu
+Y29tPgo+IC0tLQo+ICBsaWJtdWx0aXBhdGgvaW9fZXJyX3N0YXQuYyB8IDEgLQo+ICAxIGZpbGUg
+Y2hhbmdlZCwgMSBkZWxldGlvbigtKQo+IAo+IGRpZmYgLS1naXQgYS9saWJtdWx0aXBhdGgvaW9f
+ZXJyX3N0YXQuYyBiL2xpYm11bHRpcGF0aC9pb19lcnJfc3RhdC5jCj4gaW5kZXggMDBiYWM5ZTBl
+NzU1Li41MzZiYTg3OTY4ZmQgMTAwNjQ0Cj4gLS0tIGEvbGlibXVsdGlwYXRoL2lvX2Vycl9zdGF0
+LmMKPiArKysgYi9saWJtdWx0aXBhdGgvaW9fZXJyX3N0YXQuYwo+IEBAIC03NDksNyArNzQ5LDYg
+QEAgZGVzdHJveV9jdHg6Cj4gIHZvaWQgc3RvcF9pb19lcnJfc3RhdF90aHJlYWQodm9pZCkKPiAg
+ewo+ICAJcHRocmVhZF9jYW5jZWwoaW9fZXJyX3N0YXRfdGhyKTsKPiAtCXB0aHJlYWRfa2lsbChp
+b19lcnJfc3RhdF90aHIsIFNJR1VTUjIpOwo+ICAJcHRocmVhZF9qb2luKGlvX2Vycl9zdGF0X3Ro
+ciwgTlVMTCk7Cj4gIAlmcmVlX2lvX2Vycl9wYXRodmVjKHBhdGhzKTsKPiAgCWlvX2Rlc3Ryb3ko
+aW9jdHgpOwo+IApHb29kIHBvaW50LgoKUmV2aWV3ZWQtYnk6IEhhbm5lcyBSZWluZWNrZSA8aGFy
+ZUBzdXNlLmNvbT4KCkNoZWVycywKCkhhbm5lcwotLSAKRHIuIEhhbm5lcyBSZWluZWNrZQkJICAg
+VGVhbWxlYWQgU3RvcmFnZSAmIE5ldHdvcmtpbmcKaGFyZUBzdXNlLmRlCQkJICAgICAgICAgICAg
+ICAgKzQ5IDkxMSA3NDA1MyA2ODgKU1VTRSBMSU5VWCBHbWJILCBNYXhmZWxkc3RyLiA1LCA5MDQw
+OSBOw7xybmJlcmcKR0Y6IEYuIEltZW5kw7ZyZmZlciwgSi4gU21pdGhhcmQsIEouIEd1aWxkLCBE
+LiBVcG1hbnl1LCBHLiBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZl
+bCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29t
+L21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
