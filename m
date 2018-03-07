@@ -1,13 +1,11 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH 0/6] Various multipath-tools patches
-Date: Wed, 7 Mar 2018 10:56:56 +0100
-Message-ID: <CABr-GncWfMGrBcoCnFtOFBCG+8sRn1mbW2A2Bv2hSexpbKevCQ@mail.gmail.com>
-References: <20180301192935.14643-1-bart.vanassche@wdc.com>
-	<20180306152518.GO14513@octiron.msp.redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: [PATCH] libmultipath: remove FREE_CONST() again
+Date: Wed,  7 Mar 2018 11:41:31 +0100
+Message-ID: <20180307104131.18702-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============2394009518600784182=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180306152518.GO14513@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,173 +15,279 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Bart Van Assche <bart.vanassche@wdc.com>, device-mapper development <dm-devel@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Bart Van Assche <Bart.VanAssche@sandisk.com>
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
---===============2394009518600784182==
-Content-Type: multipart/alternative; boundary="001a11478b9c5d78890566cf9450"
+The FREE_CONST macro is of questionable value, as reviewers have pointed
+out. The users of this macro were mostly functions that called
+uevent_get_dm_xyz(). But these functions don't need to return const char*,
+as they allocate the strings they return. So my change of the prototype
+was wrong. This patch reverts it. The few other users of FREE_CONST can
+also be reverted to use char* instead of const char* with negligible risk.
 
---001a11478b9c5d78890566cf9450
-Content-Type: text/plain; charset="UTF-8"
+Fixes: "libmultipath: fix compiler warnings for -Wcast-qual"
+Fixes: "libmultipath: const qualifier for wwid and alias"
 
-Hi Bart,
+(Note: this reverts changes not committed upstream. But as these changes are
+deeply in the middle of my large-ish series of patches, it's probably easier
+to simply add this patch on top than to rebase the whole series).
 
-I've finally merged the queued patches, so you can rebase this patchset
-over the new head.
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ libmultipath/devmapper.c |  7 +++----
+ libmultipath/memory.h    |  6 ------
+ libmultipath/uevent.c    | 12 ++++++------
+ libmultipath/uevent.h    |  6 +++---
+ multipathd/main.c        | 16 ++++++++--------
+ tests/uevent.c           | 16 ++++++++--------
+ 6 files changed, 28 insertions(+), 35 deletions(-)
 
-Thanks.
-
-
-On Tue, Mar 6, 2018 at 4:25 PM, Benjamin Marzinski <bmarzins@redhat.com>
-wrote:
-
-> On Thu, Mar 01, 2018 at 11:29:29AM -0800, Bart Van Assche wrote:
-> > Hello Christophe,
-> >
-> > This series contains the following patches:
-> > - Four patches address Coverity complaints.
-> > - One patch makes a function argument const.
-> > - One patch addresses a bug that I discovered while inspecting the
-> multipath
-> >   command line tool output.
-> >
-> > Please consider these patches for the multipath-tools project.
->
-> Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
->
-> For the set. Buy I agree with Martin that we should fold some of these
-> into his already posted patches.
->
-> -Ben
->
-> >
-> > Thanks,
-> >
-> > Bart.
-> >
-> > Bart Van Assche (6):
-> >   multipathd/main.c: Fix indentation
-> >   libmultipath, alloc_path_with_pathinfo(): Ensure that pp->wwid is
-> >     '\0'-terminated
-> >   libmultipath, alloc_path_with_pathinfo(): Declare third argument const
-> >   kpartx: Improve reliability of find_loop_by_file()
-> >   libmultipath: Fix sgio_get_vpd()
-> >   Introduce the ibmultipath/unaligned.h header file
-> >
-> >  kpartx/lopart.c                       |  7 ++++---
-> >  libmpathpersist/mpath_pr_ioctl.c      |  8 ++++----
-> >  libmultipath/checkers/hp_sw.c         |  4 ++--
-> >  libmultipath/discovery.c              | 22 +++++++++++---------
-> >  libmultipath/discovery.h              |  2 +-
-> >  libmultipath/prioritizers/alua_rtpg.c | 13 ++++++------
-> >  libmultipath/prioritizers/alua_spc3.h | 35
-> ++------------------------------
-> >  libmultipath/prioritizers/ontap.c     |  4 ++--
-> >  libmultipath/unaligned.h              | 38
-> +++++++++++++++++++++++++++++++++++
-> >  multipathd/main.c                     |  4 ++--
-> >  10 files changed, 74 insertions(+), 63 deletions(-)
-> >  create mode 100644 libmultipath/unaligned.h
-> >
-> > --
-> > 2.16.2
-> >
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://www.redhat.com/mailman/listinfo/dm-devel
->
-
---001a11478b9c5d78890566cf9450
-Content-Type: text/html; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">Hi Bart,<div><br></div><div>I&#39;ve finally merged the qu=
-eued patches, so you can rebase this patchset over the new head.</div><div>=
-<br></div><div>Thanks.</div><div><br></div></div><div class=3D"gmail_extra"=
-><br><div class=3D"gmail_quote">On Tue, Mar 6, 2018 at 4:25 PM, Benjamin Ma=
-rzinski <span dir=3D"ltr">&lt;<a href=3D"mailto:bmarzins@redhat.com" target=
-=3D"_blank">bmarzins@redhat.com</a>&gt;</span> wrote:<br><blockquote class=
-=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padd=
-ing-left:1ex"><span class=3D"">On Thu, Mar 01, 2018 at 11:29:29AM -0800, Ba=
-rt Van Assche wrote:<br>
-&gt; Hello Christophe,<br>
-&gt;<br>
-&gt; This series contains the following patches:<br>
-&gt; - Four patches address Coverity complaints.<br>
-&gt; - One patch makes a function argument const.<br>
-&gt; - One patch addresses a bug that I discovered while inspecting the mul=
-tipath<br>
-&gt;=C2=A0 =C2=A0command line tool output.<br>
-&gt;<br>
-&gt; Please consider these patches for the multipath-tools project.<br>
-<br>
-</span>Reviewed-by: Benjamin Marzinski &lt;<a href=3D"mailto:bmarzins@redha=
-t.com">bmarzins@redhat.com</a>&gt;<br>
-<br>
-For the set. Buy I agree with Martin that we should fold some of these<br>
-into his already posted patches.<br>
-<br>
--Ben<br>
-<div class=3D"HOEnZb"><div class=3D"h5"><br>
-&gt;<br>
-&gt; Thanks,<br>
-&gt;<br>
-&gt; Bart.<br>
-&gt;<br>
-&gt; Bart Van Assche (6):<br>
-&gt;=C2=A0 =C2=A0multipathd/main.c: Fix indentation<br>
-&gt;=C2=A0 =C2=A0libmultipath, alloc_path_with_pathinfo(): Ensure that pp-&=
-gt;wwid is<br>
-&gt;=C2=A0 =C2=A0 =C2=A0&#39;\0&#39;-terminated<br>
-&gt;=C2=A0 =C2=A0libmultipath, alloc_path_with_pathinfo(): Declare third ar=
-gument const<br>
-&gt;=C2=A0 =C2=A0kpartx: Improve reliability of find_loop_by_file()<br>
-&gt;=C2=A0 =C2=A0libmultipath: Fix sgio_get_vpd()<br>
-&gt;=C2=A0 =C2=A0Introduce the ibmultipath/unaligned.h header file<br>
-&gt;<br>
-&gt;=C2=A0 kpartx/lopart.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0|=C2=A0 7 ++++---<br>
-&gt;=C2=A0 libmpathpersist/mpath_pr_<wbr>ioctl.c=C2=A0 =C2=A0 =C2=A0 |=C2=
-=A0 8 ++++----<br>
-&gt;=C2=A0 libmultipath/checkers/hp_sw.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0|=
-=C2=A0 4 ++--<br>
-&gt;=C2=A0 libmultipath/discovery.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 | 22 +++++++++++---------<br>
-&gt;=C2=A0 libmultipath/discovery.h=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 |=C2=A0 2 +-<br>
-&gt;=C2=A0 libmultipath/prioritizers/<wbr>alua_rtpg.c | 13 ++++++------<br>
-&gt;=C2=A0 libmultipath/prioritizers/<wbr>alua_spc3.h | 35 ++--------------=
---------------<wbr>--<br>
-&gt;=C2=A0 libmultipath/prioritizers/<wbr>ontap.c=C2=A0 =C2=A0 =C2=A0|=C2=
-=A0 4 ++--<br>
-&gt;=C2=A0 libmultipath/unaligned.h=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 | 38 ++++++++++++++++++++++++++++++<wbr>+++++<br>
-&gt;=C2=A0 multipathd/main.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0|=C2=A0 4 ++--<br>
-&gt;=C2=A0 10 files changed, 74 insertions(+), 63 deletions(-)<br>
-&gt;=C2=A0 create mode 100644 libmultipath/unaligned.h<br>
-&gt;<br>
-&gt; --<br>
-&gt; 2.16.2<br>
-&gt;<br>
-</div></div><span class=3D"HOEnZb"><font color=3D"#888888">&gt; --<br>
-&gt; dm-devel mailing list<br>
-&gt; <a href=3D"mailto:dm-devel@redhat.com">dm-devel@redhat.com</a><br>
-&gt; <a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" rel=3D"no=
-referrer" target=3D"_blank">https://www.redhat.com/<wbr>mailman/listinfo/dm=
--devel</a><br>
-</font></span></blockquote></div><br></div>
-
---001a11478b9c5d78890566cf9450--
-
-
---===============2394009518600784182==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============2394009518600784182==--
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index 607aea8dc1fc..767d87c8399f 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -27,7 +27,6 @@
+ #include <sys/types.h>
+ #include <time.h>
+ 
+-#define FREE_CONST(p) do { free((void*)(unsigned long)p); p = NULL; } while(0)
+ #define MAX_WAIT 5
+ #define LOOPS_PER_SEC 5
+ 
+@@ -1415,8 +1414,8 @@ out:
+ 
+ void dm_reassign_deps(char *table, const char *dep, const char *newdep)
+ {
+-	char *n;
+-	const char *p, *newtable;
++	char *n, *newtable;
++	const char *p;
+ 
+ 	newtable = strdup(table);
+ 	if (!newtable)
+@@ -1427,7 +1426,7 @@ void dm_reassign_deps(char *table, const char *dep, const char *newdep)
+ 	n += strlen(newdep);
+ 	p += strlen(dep);
+ 	strcat(n, p);
+-	FREE_CONST(newtable);
++	FREE(newtable);
+ }
+ 
+ int dm_reassign_table(const char *name, char *old, char *new)
+diff --git a/libmultipath/memory.h b/libmultipath/memory.h
+index 63f59d80584c..a3c478e24bd1 100644
+--- a/libmultipath/memory.h
++++ b/libmultipath/memory.h
+@@ -43,7 +43,6 @@ int debug;
+ 		      (__FILE__), (char *)(__FUNCTION__), (__LINE__)) )
+ #define STRDUP(n)    ( dbg_strdup((n), \
+ 		      (__FILE__), (char *)(__FUNCTION__), (__LINE__)) )
+-#define FREE_CONST(p) do { FREE((void*)(unsigned long)p); } while(0)
+ 
+ /* Memory debug prototypes defs */
+ extern void *dbg_malloc(unsigned long, char *, char *, int);
+@@ -56,11 +55,6 @@ extern void dbg_free_final(char *);
+ 
+ #define MALLOC(n)    (calloc(1,(n)))
+ #define FREE(p)      do { free(p); p = NULL; } while(0)
+-/*
+- * Double cast to avoid warnings with -Wcast-qual
+- * use this for valid free() operations on const pointers
+- */
+-#define FREE_CONST(p) do { free((void*)(unsigned long)p); p = NULL; } while(0)
+ #define REALLOC(p,n) (realloc((p),(n)))
+ #define STRDUP(n)    (strdup(n))
+ 
+diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
+index 685ef3362c6d..59d4cad88ca3 100644
+--- a/libmultipath/uevent.c
++++ b/libmultipath/uevent.c
+@@ -157,7 +157,7 @@ static int uevent_get_env_positive_int(const struct uevent *uev,
+ void
+ uevent_get_wwid(struct uevent *uev)
+ {
+-	const char *uid_attribute;
++	char *uid_attribute;
+ 	const char *val;
+ 	struct config * conf;
+ 
+@@ -168,7 +168,7 @@ uevent_get_wwid(struct uevent *uev)
+ 	val = uevent_get_env_var(uev, uid_attribute);
+ 	if (val)
+ 		uev->wwid = val;
+-	FREE_CONST(uid_attribute);
++	FREE(uid_attribute);
+ }
+ 
+ bool
+@@ -907,7 +907,7 @@ int uevent_get_disk_ro(const struct uevent *uev)
+ 	return uevent_get_env_positive_int(uev, "DISK_RO");
+ }
+ 
+-static const char *uevent_get_dm_str(const struct uevent *uev, char *attr)
++static char *uevent_get_dm_str(const struct uevent *uev, char *attr)
+ {
+ 	const char *tmp = uevent_get_env_var(uev, attr);
+ 
+@@ -916,17 +916,17 @@ static const char *uevent_get_dm_str(const struct uevent *uev, char *attr)
+ 	return strdup(tmp);
+ }
+ 
+-const char *uevent_get_dm_name(const struct uevent *uev)
++char *uevent_get_dm_name(const struct uevent *uev)
+ {
+ 	return uevent_get_dm_str(uev, "DM_NAME");
+ }
+ 
+-const char *uevent_get_dm_path(const struct uevent *uev)
++char *uevent_get_dm_path(const struct uevent *uev)
+ {
+ 	return uevent_get_dm_str(uev, "DM_PATH");
+ }
+ 
+-const char *uevent_get_dm_action(const struct uevent *uev)
++char *uevent_get_dm_action(const struct uevent *uev)
+ {
+ 	return uevent_get_dm_str(uev, "DM_ACTION");
+ }
+diff --git a/libmultipath/uevent.h b/libmultipath/uevent.h
+index cb5347e45c2b..0aa867510f28 100644
+--- a/libmultipath/uevent.h
++++ b/libmultipath/uevent.h
+@@ -36,9 +36,9 @@ int uevent_dispatch(int (*store_uev)(struct uevent *, void * trigger_data),
+ int uevent_get_major(const struct uevent *uev);
+ int uevent_get_minor(const struct uevent *uev);
+ int uevent_get_disk_ro(const struct uevent *uev);
+-const char *uevent_get_dm_name(const struct uevent *uev);
+-const char *uevent_get_dm_path(const struct uevent *uev);
+-const char *uevent_get_dm_action(const struct uevent *uev);
++char *uevent_get_dm_name(const struct uevent *uev);
++char *uevent_get_dm_path(const struct uevent *uev);
++char *uevent_get_dm_action(const struct uevent *uev);
+ bool uevent_is_mpath(const struct uevent *uev);
+ 
+ #endif /* _UEVENT_H */
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 90f0b29ade70..6e6c52a52783 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -392,7 +392,7 @@ flush_map(struct multipath * mpp, struct vectors * vecs, int nopaths)
+ static int
+ uev_add_map (struct uevent * uev, struct vectors * vecs)
+ {
+-	const char *alias;
++	char *alias;
+ 	int major = -1, minor = -1, rc;
+ 
+ 	condlog(3, "%s: add map (uevent)", uev->kernel);
+@@ -413,7 +413,7 @@ uev_add_map (struct uevent * uev, struct vectors * vecs)
+ 	pthread_testcancel();
+ 	rc = ev_add_map(uev->kernel, alias, vecs);
+ 	lock_cleanup_pop(vecs->lock);
+-	FREE_CONST(alias);
++	FREE(alias);
+ 	return rc;
+ }
+ 
+@@ -487,7 +487,7 @@ ev_add_map (char * dev, const char * alias, struct vectors * vecs)
+ static int
+ uev_remove_map (struct uevent * uev, struct vectors * vecs)
+ {
+-	const char *alias;
++	char *alias;
+ 	int minor;
+ 	struct multipath *mpp;
+ 
+@@ -519,7 +519,7 @@ uev_remove_map (struct uevent * uev, struct vectors * vecs)
+ 	remove_map_and_stop_waiter(mpp, vecs, 1);
+ out:
+ 	lock_cleanup_pop(vecs->lock);
+-	FREE_CONST(alias);
++	FREE(alias);
+ 	return 0;
+ }
+ 
+@@ -1018,7 +1018,7 @@ out:
+ static int
+ uev_pathfail_check(struct uevent *uev, struct vectors *vecs)
+ {
+-	const char *action = NULL, *devt = NULL;
++	char *action = NULL, *devt = NULL;
+ 	struct path *pp;
+ 	int r = 1;
+ 
+@@ -1045,11 +1045,11 @@ uev_pathfail_check(struct uevent *uev, struct vectors *vecs)
+ 				pp->dev);
+ out_lock:
+ 	lock_cleanup_pop(vecs->lock);
+-	FREE_CONST(devt);
+-	FREE_CONST(action);
++	FREE(devt);
++	FREE(action);
+ 	return r;
+ out:
+-	FREE_CONST(action);
++	FREE(action);
+ 	return 1;
+ }
+ 
+diff --git a/tests/uevent.c b/tests/uevent.c
+index 0836b08d5b50..acfcb14a5def 100644
+--- a/tests/uevent.c
++++ b/tests/uevent.c
+@@ -169,44 +169,44 @@ static void test_major_bad_8(void **state)
+ static void test_dm_name_good(void **state)
+ {
+ 	struct uevent *uev = *state;
+-	const char *name = uevent_get_dm_name(uev);
++	char *name = uevent_get_dm_name(uev);
+ 
+ 	assert_string_equal(name, DM_NAME);
+-	FREE_CONST(name);
++	FREE(name);
+ }
+ 
+ static void test_dm_name_bad_0(void **state)
+ {
+ 	struct uevent *uev = *state;
+-	const char *name;
++	char *name;
+ 
+ 	uev->envp[3] = "DM_NAME" DM_NAME;
+ 	name = uevent_get_dm_name(uev);
+ 	assert_ptr_equal(name, NULL);
+-	FREE_CONST(name);
++	FREE(name);
+ }
+ 
+ static void test_dm_name_bad_1(void **state)
+ {
+ 	struct uevent *uev = *state;
+-	const char *name;
++	char *name;
+ 
+ 	uev->envp[3] = "DM_NAMES=" DM_NAME;
+ 	name = uevent_get_dm_name(uev);
+ 	assert_ptr_equal(name, NULL);
+-	FREE_CONST(name);
++	FREE(name);
+ }
+ 
+ static void test_dm_name_good_1(void **state)
+ {
+ 	struct uevent *uev = *state;
+-	const char *name;
++	char *name;
+ 
+ 	/* Note we change index 2 here */
+ 	uev->envp[2] = "DM_NAME=" DM_NAME;
+ 	name = uevent_get_dm_name(uev);
+ 	assert_string_equal(name, DM_NAME);
+-	FREE_CONST(name);
++	FREE(name);
+ }
+ 
+ static void test_dm_uuid_false_0(void **state)
+-- 
+2.16.1
