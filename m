@@ -1,19 +1,14 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH] multipathd: check and cleanup zombie paths
-Date: Thu, 8 Mar 2018 16:54:22 +0100
-Message-ID: <c9dc3387-4279-b2ca-2f8b-f63972dc4a06@gmail.com>
-References: <CEB9978CF3252343BE3C67AC9F0086A34295C462@H3CMLB14-EX.srv.huawei-3com.com>
-	<1520325779.4131.4.camel@suse.com>
-	<CEB9978CF3252343BE3C67AC9F0086A34295C9D0@H3CMLB14-EX.srv.huawei-3com.com>
-	<1520349519.4131.20.camel@suse.com>
-	<CEB9978CF3252343BE3C67AC9F0086A34295CA7D@H3CMLB14-EX.srv.huawei-3com.com>
-	<1520426679.11340.5.camel@suse.com>
-	<CEB9978CF3252343BE3C67AC9F0086A34295CF62@H3CMLB14-EX.srv.huawei-3com.com>
+Subject: Re: [PATCH 0/4] multipath-tools: important fixes for
+	0.7.5
+Date: Thu, 8 Mar 2018 17:04:20 +0100
+Message-ID: <b0869201-06de-4d84-10fb-7d395adcba2b@gmail.com>
+References: <20180307230859.14926-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CEB9978CF3252343BE3C67AC9F0086A34295CF62@H3CMLB14-EX.srv.huawei-3com.com>
+In-Reply-To: <20180307230859.14926-1-mwilck@suse.com>
 Content-Language: en-GB
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -24,39 +19,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Chongyun Wu <wu.chongyun@h3c.com>, Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>, 'Christophe Varoqui' <christophe.varoqui@opensvc.com>, 'Hannes Reinecke' <hare@suse.de>
-Cc: Guozhonghua <guozhonghua@h3c.com>, Changwei Ge <ge.changwei@h3c.com>, Changlimin <changlimin@h3c.com>, device-mapper development <dm-devel@redhat.com>
+To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 03/08/2018 09:03 AM, Chongyun Wu wrote:
+On 03/08/2018 12:08 AM, Martin Wilck wrote:
+> Hi Christophe,
+> 
+> thanks for catching up. This series fixes immediate problems with
+> 0.7.5. The first one corresponds to my previously posted
+> "[PATCH v3 2/2] multipathd: start marginal path checker thread lazily",
+> and fixes a crash. The others fix the problens reported by Xose.
+> 
+> Regards
+> Martin
+> 
+> Martin Wilck (4):
+>   libmultipath: fix crash on shutdown if io_err thread isn't running
 
-[add dm-devel@redhat.com]
+These three:
 
-> 360002ac000000000000004f40001e2d7 dm-5 3PARdata,VV
-> size=13G features='1 queue_if_no_path' hwhandler='0' wp=rw
-> `-+- policy='round-robin 0' prio=1 status=active
->    |- 3:0:0:3 sdk 8:160 active ready running
->    |- 4:0:0:3 sdn 8:208 active ready running
->    |- 3:0:0:6 sdo 8:224 failed faulty running
->    `- 4:0:0:6 sdp 8:240 failed faulty running
-3PAR arrays are able to use ALUA, but with *all ports*
-*across all controllers* in *single Target Port Group* :
-
-31000000000000a000000000000001000 dm-0 3PARdata,VV
-size=50G features='2 queue_if_no_path retain_attached_hw_handler' hwhandler='1 alua' wp=rw
-`-+- policy='service-time 0' prio=50 status=active
-  |- 0:0:0:0 sda 8:0   active ready running
-  |- 0:0:1:0 sdf 8:80  active ready running
-  |- 1:0:0:0 sdk 8:160 active ready running
-  `- 1:0:1:0 sdp 8:240 active ready running
-
-And it's recommended by the manufacturer.
+>   multipathd: fix -Wpointer-to-int-cast warning in uxlsnr
+>   multipath: fix clang warning in delegate_to_multipathd
+>   multipath-tools: build: prevent intermediate file deletion
 
 
-From the StoreServ Management Console "Host:" should be changed to
-"Generic-ALUA" "Persona 2" "(UARepLun, SESLun, ALUA)".
+Tested-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 
-multipath-tools( *upstream* ) is already configured by default to use ALUA
-with 3PARdata, since c1b7f7f7: https://git.opensvc.com/gitweb.cgi?p=multipath-tools/.git;a=commitdiff;h=c1b7f7f7
 
-Run "multipath -d -v3" to see the config by lun.
+>  Makefile.inc                       | 1 +
+>  libmultipath/checkers/Makefile     | 2 ++
+>  libmultipath/foreign/Makefile      | 2 ++
+>  libmultipath/io_err_stat.c         | 3 +++
+>  libmultipath/prioritizers/Makefile | 2 ++
+>  multipath/main.c                   | 2 +-
+>  multipathd/uxlsnr.c                | 4 ++--
+>  tests/Makefile                     | 5 ++---
+>  8 files changed, 15 insertions(+), 6 deletions(-)
+> 
+
+Merge them ASAP, thanks.
