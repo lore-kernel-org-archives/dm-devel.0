@@ -1,169 +1,196 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: Remove trailing/leading
-	whitespaces and reformat code
-Date: Fri,  9 Mar 2018 23:00:53 +0100
-Message-ID: <20180309220053.3022-1-xose.vazquez@gmail.com>
+From: Patrik Torstensson <totte@google.com>
+Subject: Re: [PATCH] Add an option to dm-verity to validate hashes at most
+ once
+Date: Fri, 9 Mar 2018 14:04:01 -0800
+Message-ID: <20180309220359.GB21774@totte1.mtv.corp.google.com>
+References: <20180306231456.210504-1-totte@google.com>
+ <c7e42498-8de2-2048-f53f-6de8557aadf4@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <c7e42498-8de2-2048-f53f-6de8557aadf4@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Milan Broz <gmazyland@gmail.com>
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, ebiggers@google.com, samitolvanen@google.com, gkaiser@google.com, paulcrowley@google.com
 List-Id: dm-devel.ids
 
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- Makefile.inc           | 23 +++++++++++------------
- kpartx/mac.h           |  2 +-
- kpartx/test-kpartx     |  2 +-
- libmpathcmd/Makefile   |  2 +-
- libmultipath/hwtable.c | 14 +++++++-------
- libmultipath/print.h   |  2 +-
- multipathd/main.h      |  6 +++---
- 7 files changed, 25 insertions(+), 26 deletions(-)
+Hi Milan,
 
-diff --git a/Makefile.inc b/Makefile.inc
-index a5b9d4e..6693156 100644
---- a/Makefile.inc
-+++ b/Makefile.inc
-@@ -100,21 +100,20 @@ LDFLAGS		= -Wl,-z,relro -Wl,-z,now
- BIN_LDFLAGS	= -pie
- 
- # Check whether a function with name $1 has been declared in header file $2.
--check_func =								       \
--    $(shell								       \
-+check_func = $(shell \
- 	if grep -Eq "^[^[:blank:]]+[[:blank:]]+$1[[:blank:]]*(.*)*" "$2"; then \
--	   found=1;							       \
--	   status="yes";						       \
--	else								       \
--	   found=0;							       \
--	   status="no";							       \
--	fi;								       \
--	echo 1>&2 "Checking for $1 in $2 ... $$status";			       \
--	echo "$$found"							       \
--    )
-+		found=1; \
-+		status="yes"; \
-+	else \
-+		found=0; \
-+		status="no"; \
-+	fi; \
-+	echo 1>&2 "Checking for $1 in $2 ... $$status"; \
-+	echo "$$found" \
-+	)
- 
- # Checker whether a file with name $1 exists
--check_file = $(shell	\
-+check_file = $(shell \
- 	if [ -f "$1" ]; then \
- 		found=1; \
- 		status="yes"; \
-diff --git a/kpartx/mac.h b/kpartx/mac.h
-index a44cf38..55c3ec9 100644
---- a/kpartx/mac.h
-+++ b/kpartx/mac.h
-@@ -24,7 +24,7 @@ struct mac_driver_desc {
- 	uint16_t  signature;      /* expected to be MAC_DRIVER_MAGIC */
- 	uint16_t  block_size;
- 	uint32_t  block_count;
--    /* ... more stuff */
-+	/* ... more stuff */
- };
- 
- #endif
-diff --git a/kpartx/test-kpartx b/kpartx/test-kpartx
-index 09d15a9..9f8bb7b 100755
---- a/kpartx/test-kpartx
-+++ b/kpartx/test-kpartx
-@@ -131,7 +131,7 @@ step "create DM devices (spans)"
- # They also serve as DM devices to test partition removal on those.
- 
- TABLE="\
--0 $((SIZE/SECTSIZ-OFFS)) linear $DEV1 $OFFS 
-+0 $((SIZE/SECTSIZ-OFFS)) linear $DEV1 $OFFS
- $((SIZE/SECTSIZ-OFFS)) $((SIZE/SECTSIZ-OFFS)) linear $DEV2 $OFFS"
- 
- SPAN1=kpt
-diff --git a/libmpathcmd/Makefile b/libmpathcmd/Makefile
-index 53c0899..0f6b816 100644
---- a/libmpathcmd/Makefile
-+++ b/libmpathcmd/Makefile
-@@ -27,7 +27,7 @@ uninstall:
- 	$(RM) $(DESTDIR)$(includedir)/mpath_cmd.h
- 
- clean: dep_clean
--	$(RM) core *.a *.o *.so *.so.* *.gz 
-+	$(RM) core *.a *.o *.so *.so.* *.gz
- 
- include $(wildcard $(OBJS:.o=.d))
- 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 6ba70c8..8aac063 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -77,13 +77,13 @@
- #endif
- 
- static struct hwentry default_hw[] = {
--       /*
--	* Generic NVMe devices
--	*
--	* Due to the parsing logic in find_hwe(), generic entries
--	* have to be put on top of this list, and more specific ones
--	* below.
--	*/
-+	/*
-+	 * Generic NVMe devices
-+	 *
-+	 * Due to the parsing logic in find_hwe(), generic entries
-+	 * have to be put on top of this list, and more specific ones
-+	 * below.
-+	 */
- 	{
- 		.vendor        = "NVME",
- 		.product       = ".*",
-diff --git a/libmultipath/print.h b/libmultipath/print.h
-index 7ba6438..9b5a23a 100644
---- a/libmultipath/print.h
-+++ b/libmultipath/print.h
-@@ -113,7 +113,7 @@ int _snprint_multipath (const struct gen_multipath *, char *, int,
- 			const char *, int);
- #define snprint_multipath(buf, len, fmt, mp, v)				\
- 	_snprint_multipath(dm_multipath_to_gen(mp), buf, len, fmt,  v)
--int _snprint_multipath_topology (const struct gen_multipath *, char *, int, 
-+int _snprint_multipath_topology (const struct gen_multipath *, char *, int,
- 				 int verbosity);
- #define snprint_multipath_topology(buf, len, mpp, v) \
- 	_snprint_multipath_topology (dm_multipath_to_gen(mpp), buf, len, v)
-diff --git a/multipathd/main.h b/multipathd/main.h
-index 0e9c5e3..1c070c5 100644
---- a/multipathd/main.h
-+++ b/multipathd/main.h
-@@ -29,11 +29,11 @@ int ev_remove_map (char *, char *, int, struct vectors *);
- int set_config_state(enum daemon_status);
- void * mpath_alloc_prin_response(int prin_sa);
- int prin_do_scsi_ioctl(char *, int rq_servact, struct prin_resp * resp,
--       int noisy);
-+		       int noisy);
- void dumpHex(const char * , int len, int no_ascii);
- int prout_do_scsi_ioctl(char * , int rq_servact, int rq_scope,
--       unsigned int rq_type, struct prout_param_descriptor *param,
--       int noisy);
-+			unsigned int rq_type,
-+			struct prout_param_descriptor *param, int noisy);
- int mpath_pr_event_handle(struct path *pp);
- void * mpath_pr_event_handler_fn (void * );
- int update_map_pr(struct multipath *mpp);
--- 
-2.14.3
+Yes, that is correct that the attacks it protects against is when the underlying storage is offline. We have discussed if we should reset the bitmap at certain events but decided against it.
+
+Cheers,
+ Patrik
+
+On Thu, Mar 08, 2018 at 01:35:05PM +0100, Milan Broz wrote:
+> On 03/07/2018 12:14 AM, Patrik Torstensson wrote:
+> > Add an option to dm-verity to validate hashes at most once
+> > to allow platforms that is CPU/memory contraint to be
+> > protected by dm-verity against offline attacks.
+> > 
+> > The option introduces a bitset that is used to check if
+> > a block has been validated before or not. A block can
+> > be validated more than once as there is no thread protection
+> > for the bitset.
+> 
+> Hi,
+> 
+> what happens, if a block is read, validated, marked in bitset and 
+> 
+> 1) something changes in the underlying device (data corruption, FTL hiccup,
+> intentional remapping to different device-mapper device through table change)
+> 
+> 2) user flushes all page caches
+> 
+> 3) the same block is read again.
+> 
+> Does it read and use unverified block from the corrupted device in this case?
+> 
+> (In general, just reading the whole device means de-facto verification deactivation.)
+> 
+> If so, your thread model assumes that you cannot attack underlying storage while
+> it is in operation, is it the correct assumption?
+> 
+> Milan
+> 
+> > 
+> > This patch has been developed and tested on entry-level
+> > Android Go devices.
+> > 
+> > Signed-off-by: Patrik Torstensson <totte@google.com>
+> > ---
+> >  drivers/md/dm-verity-target.c | 58 +++++++++++++++++++++++++++++++++--
+> >  drivers/md/dm-verity.h        |  1 +
+> >  2 files changed, 56 insertions(+), 3 deletions(-)
+> > 
+> > diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
+> > index aedb8222836b..479d0af212bf 100644
+> > --- a/drivers/md/dm-verity-target.c
+> > +++ b/drivers/md/dm-verity-target.c
+> > @@ -32,6 +32,7 @@
+> >  #define DM_VERITY_OPT_LOGGING		"ignore_corruption"
+> >  #define DM_VERITY_OPT_RESTART		"restart_on_corruption"
+> >  #define DM_VERITY_OPT_IGN_ZEROES	"ignore_zero_blocks"
+> > +#define DM_VERITY_OPT_AT_MOST_ONCE	"check_at_most_once"
+> >  
+> >  #define DM_VERITY_OPTS_MAX		(2 + DM_VERITY_OPTS_FEC)
+> >  
+> > @@ -432,6 +433,19 @@ static int verity_bv_zero(struct dm_verity *v, struct dm_verity_io *io,
+> >  	return 0;
+> >  }
+> >  
+> > +/*
+> > + * Moves the bio iter one data block forward.
+> > + */
+> > +static inline void verity_bv_skip_block(struct dm_verity *v,
+> > +					struct dm_verity_io *io,
+> > +					struct bvec_iter *iter)
+> > +{
+> > +	struct bio *bio = dm_bio_from_per_bio_data(io,
+> > +						   v->ti->per_io_data_size);
+> > +
+> > +	bio_advance_iter(bio, iter, 1 << v->data_dev_block_bits);
+> > +}
+> > +
+> >  /*
+> >   * Verify one "dm_verity_io" structure.
+> >   */
+> > @@ -445,8 +459,15 @@ static int verity_verify_io(struct dm_verity_io *io)
+> >  
+> >  	for (b = 0; b < io->n_blocks; b++) {
+> >  		int r;
+> > +		sector_t cur_block = io->block + b;
+> >  		struct ahash_request *req = verity_io_hash_req(v, io);
+> >  
+> > +		if (v->validated_blocks &&
+> > +		    likely(test_bit(cur_block, v->validated_blocks))) {
+> > +			verity_bv_skip_block(v, io, &io->iter);
+> > +			continue;
+> > +		}
+> > +
+> >  		r = verity_hash_for_block(v, io, io->block + b,
+> >  					  verity_io_want_digest(v, io),
+> >  					  &is_zero);
+> > @@ -481,13 +502,17 @@ static int verity_verify_io(struct dm_verity_io *io)
+> >  			return r;
+> >  
+> >  		if (likely(memcmp(verity_io_real_digest(v, io),
+> > -				  verity_io_want_digest(v, io), v->digest_size) == 0))
+> > +				  verity_io_want_digest(v, io),
+> > +				  v->digest_size) == 0)) {
+> > +			if (v->validated_blocks)
+> > +				set_bit(cur_block, v->validated_blocks);
+> >  			continue;
+> > +		}
+> >  		else if (verity_fec_decode(v, io, DM_VERITY_BLOCK_TYPE_DATA,
+> > -					   io->block + b, NULL, &start) == 0)
+> > +					   cur_block, NULL, &start) == 0)
+> >  			continue;
+> >  		else if (verity_handle_err(v, DM_VERITY_BLOCK_TYPE_DATA,
+> > -					   io->block + b))
+> > +					   cur_block))
+> >  			return -EIO;
+> >  	}
+> >  
+> > @@ -740,6 +765,7 @@ static void verity_dtr(struct dm_target *ti)
+> >  	if (v->bufio)
+> >  		dm_bufio_client_destroy(v->bufio);
+> >  
+> > +	kvfree(v->validated_blocks);
+> >  	kfree(v->salt);
+> >  	kfree(v->root_digest);
+> >  	kfree(v->zero_digest);
+> > @@ -760,6 +786,26 @@ static void verity_dtr(struct dm_target *ti)
+> >  	kfree(v);
+> >  }
+> >  
+> > +static int verity_alloc_most_once(struct dm_verity *v)
+> > +{
+> > +	struct dm_target *ti = v->ti;
+> > +
+> > +	/* the bitset can only handle INT_MAX blocks */
+> > +	if (v->data_blocks > INT_MAX) {
+> > +		ti->error = "device too large to use check_at_most_once";
+> > +		return -E2BIG;
+> > +	}
+> > +
+> > +	v->validated_blocks = kvzalloc(BITS_TO_LONGS(v->data_blocks)
+> > +				     * sizeof(unsigned long), GFP_KERNEL);
+> > +	if (!v->validated_blocks) {
+> > +		ti->error = "failed to allocate bitset for check_at_most_once";
+> > +		return -ENOMEM;
+> > +	}
+> > +
+> > +	return 0;
+> > +}
+> > +
+> >  static int verity_alloc_zero_digest(struct dm_verity *v)
+> >  {
+> >  	int r = -ENOMEM;
+> > @@ -829,6 +875,12 @@ static int verity_parse_opt_args(struct dm_arg_set *as, struct dm_verity *v)
+> >  			}
+> >  			continue;
+> >  
+> > +		} else if (!strcasecmp(arg_name, DM_VERITY_OPT_AT_MOST_ONCE)) {
+> > +			r = verity_alloc_most_once(v);
+> > +			if (r)
+> > +				return r;
+> > +			continue;
+> > +
+> >  		} else if (verity_is_fec_opt_arg(arg_name)) {
+> >  			r = verity_fec_parse_opt_args(as, v, &argc, arg_name);
+> >  			if (r)
+> > diff --git a/drivers/md/dm-verity.h b/drivers/md/dm-verity.h
+> > index b675bc015512..ace5ec781b5f 100644
+> > --- a/drivers/md/dm-verity.h
+> > +++ b/drivers/md/dm-verity.h
+> > @@ -63,6 +63,7 @@ struct dm_verity {
+> >  	sector_t hash_level_block[DM_VERITY_MAX_LEVELS];
+> >  
+> >  	struct dm_verity_fec *fec;	/* forward error correction */
+> > +	unsigned long *validated_blocks; /* bitset blocks validated */
+> >  };
+> >  
+> >  struct dm_verity_io {
+> > 
+> 
