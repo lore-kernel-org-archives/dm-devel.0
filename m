@@ -1,22 +1,10 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH] multipathd: check and cleanup zombie paths
-Date: Fri, 9 Mar 2018 11:47:27 +0100
-Message-ID: <4d76e9a1-15bf-2bf4-c7dc-adf79b25e4a2@gmail.com>
-References: <CEB9978CF3252343BE3C67AC9F0086A34295C462@H3CMLB14-EX.srv.huawei-3com.com>
-	<1520325779.4131.4.camel@suse.com>
-	<CEB9978CF3252343BE3C67AC9F0086A34295C9D0@H3CMLB14-EX.srv.huawei-3com.com>
-	<1520349519.4131.20.camel@suse.com>
-	<CEB9978CF3252343BE3C67AC9F0086A34295CA7D@H3CMLB14-EX.srv.huawei-3com.com>
-	<1520426679.11340.5.camel@suse.com>
-	<CEB9978CF3252343BE3C67AC9F0086A34295CF62@H3CMLB14-EX.srv.huawei-3com.com>
-	<20180308154435.GB14513@octiron.msp.redhat.com>
-	<CEB9978CF3252343BE3C67AC9F0086A34295D215@H3CMLB14-EX.srv.huawei-3com.com>
+From: jitendra kumar khasdev <jkhasdev@gmail.com>
+Subject: device mapper mapping across reboot
+Date: Fri, 9 Mar 2018 15:28:31 +0530
+Message-ID: <CAN-6CVmztjkV6JL0k3N8Vh47Tr4oY_8Jj6-JL16b2YY5yNEHOA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============3844466785622891253=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CEB9978CF3252343BE3C67AC9F0086A34295D215@H3CMLB14-EX.srv.huawei-3com.com>
-Content-Language: en-GB
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,18 +14,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Chongyun Wu <wu.chongyun@h3c.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Guozhonghua <guozhonghua@h3c.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Changwei Ge <ge.changwei@h3c.com>, Changlimin <changlimin@h3c.com>, Martin Wilck <mwilck@suse.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 03/09/2018 07:47 AM, Chongyun Wu wrote:
+--===============3844466785622891253==
+Content-Type: multipart/alternative; boundary="001a11498e24b34fef0566f7d5e7"
 
-> You just mentioned *the TUR checker could return a special path state 
-> for this*, what is the special path state?  Thanks~
+--001a11498e24b34fef0566f7d5e7
+Content-Type: text/plain; charset="UTF-8"
 
-to follow with this bug, you should post:
-- distribution
-- kernel release
-- multipath-tools release
-- /etc/multipath.conf
-- and relevant system logs (multipath -v3 -d, journalctl, dmesg, messages, ...)
+Hi All,
+
+I wrote the basic target using device mapper framework. Using dmsetup
+utility I am able to create device node under /dev/mapper/my_custom_mapper.
+
+But when I do reboot the system, it lost the mapping. Is there any way by
+which I can create mapping during boot like LVM does.
+
+---
+Jitendra
+
+--001a11498e24b34fef0566f7d5e7
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi All,<div><br></div><div>I wrote the basic target using =
+device mapper framework. Using dmsetup utility I am able to create device n=
+ode under /dev/mapper/my_custom_mapper.=C2=A0</div><div><br></div><div>But =
+when I do reboot the system, it lost the mapping. Is there any way by which=
+ I can create mapping during boot like LVM does.</div><div><br></div><div>-=
+--</div><div>Jitendra</div></div>
+
+--001a11498e24b34fef0566f7d5e7--
+
+
+--===============3844466785622891253==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============3844466785622891253==--
