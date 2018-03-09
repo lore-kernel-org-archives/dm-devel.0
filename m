@@ -1,12 +1,12 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper fixes for 4.16-rc5
-Date: Fri, 9 Mar 2018 15:41:21 -0500
-Message-ID: <20180309204121.GA13907@redhat.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: Remove trailing/leading
+	whitespaces and reformat code
+Date: Fri,  9 Mar 2018 23:00:53 +0100
+Message-ID: <20180309220053.3022-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,63 +16,154 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Arnd Bergmann <arnd@arndb.de>
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-Hi Linus,
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ Makefile.inc           | 23 +++++++++++------------
+ kpartx/mac.h           |  2 +-
+ kpartx/test-kpartx     |  2 +-
+ libmpathcmd/Makefile   |  2 +-
+ libmultipath/hwtable.c | 14 +++++++-------
+ libmultipath/print.h   |  2 +-
+ multipathd/main.h      |  6 +++---
+ 7 files changed, 25 insertions(+), 26 deletions(-)
 
-The following changes since commit 661e50bc853209e41a5c14a290ca4decc43cbfd1:
-
-  Linux 4.16-rc4 (2018-03-04 14:54:11 -0800)
-
-are available in the Git repository at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-4.16/dm-fixes-2
-
-for you to fetch changes up to c934edadcc7a64e399942ae34b912939057a77a7:
-
-  dm table: allow upgrade from bio-based to specialized bio-based variant (2018-03-06 20:23:58 -0500)
-
-Please pull, thanks!
-Mike
-
-----------------------------------------------------------------
-- Fix an uninitialized variable false warning in dm bufio
-
-- Fix DM's passthrough ioctl support to be race free against an
-  underlying device being removed.
-
-- Fix corner-case of DM raid resync reporting if/when the raid becomes
-  degraded during resync; otherwise automated raid repair will fail.
-
-- A few DM multipath fixes to make non-SCSI optimizations, that were
-  introduced during the 4.16 merge, useful for all non-SCSI devices,
-  rather than narrowly define this non-SCSI mode in terms of "nvme".
-  This allows the removal of "queue_mode nvme" that really didn't need
-  to be introduced.  Instead DM core will internalize whether
-  nvme-specific IO submission optimizations are doable and DM multipath
-  will only do SCSI-specific device handler operations if SCSI is in
-  use.
-
-----------------------------------------------------------------
-Arnd Bergmann (1):
-      dm bufio: avoid false-positive Wmaybe-uninitialized warning
-
-Jonathan Brassow (1):
-      dm raid: fix incorrect sync_ratio when degraded
-
-Mike Snitzer (3):
-      dm: use blkdev_get rather than bdgrab when issuing pass-through ioctl
-      dm mpath: remove unnecessary NVMe branching in favor of scsi_dh checks
-      dm table: allow upgrade from bio-based to specialized bio-based variant
-
-Mikulas Patocka (1):
-      dm table: fix "nvme" test
-
- drivers/md/dm-bufio.c | 16 +++++--------
- drivers/md/dm-mpath.c | 66 ++++++++++++++++++++++-----------------------------
- drivers/md/dm-raid.c  |  7 +++---
- drivers/md/dm-table.c | 16 +++++--------
- drivers/md/dm.c       | 35 +++++++++++++++------------
- 5 files changed, 65 insertions(+), 75 deletions(-)
+diff --git a/Makefile.inc b/Makefile.inc
+index a5b9d4e..6693156 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -100,21 +100,20 @@ LDFLAGS		= -Wl,-z,relro -Wl,-z,now
+ BIN_LDFLAGS	= -pie
+ 
+ # Check whether a function with name $1 has been declared in header file $2.
+-check_func =								       \
+-    $(shell								       \
++check_func = $(shell \
+ 	if grep -Eq "^[^[:blank:]]+[[:blank:]]+$1[[:blank:]]*(.*)*" "$2"; then \
+-	   found=1;							       \
+-	   status="yes";						       \
+-	else								       \
+-	   found=0;							       \
+-	   status="no";							       \
+-	fi;								       \
+-	echo 1>&2 "Checking for $1 in $2 ... $$status";			       \
+-	echo "$$found"							       \
+-    )
++		found=1; \
++		status="yes"; \
++	else \
++		found=0; \
++		status="no"; \
++	fi; \
++	echo 1>&2 "Checking for $1 in $2 ... $$status"; \
++	echo "$$found" \
++	)
+ 
+ # Checker whether a file with name $1 exists
+-check_file = $(shell	\
++check_file = $(shell \
+ 	if [ -f "$1" ]; then \
+ 		found=1; \
+ 		status="yes"; \
+diff --git a/kpartx/mac.h b/kpartx/mac.h
+index a44cf38..55c3ec9 100644
+--- a/kpartx/mac.h
++++ b/kpartx/mac.h
+@@ -24,7 +24,7 @@ struct mac_driver_desc {
+ 	uint16_t  signature;      /* expected to be MAC_DRIVER_MAGIC */
+ 	uint16_t  block_size;
+ 	uint32_t  block_count;
+-    /* ... more stuff */
++	/* ... more stuff */
+ };
+ 
+ #endif
+diff --git a/kpartx/test-kpartx b/kpartx/test-kpartx
+index 09d15a9..9f8bb7b 100755
+--- a/kpartx/test-kpartx
++++ b/kpartx/test-kpartx
+@@ -131,7 +131,7 @@ step "create DM devices (spans)"
+ # They also serve as DM devices to test partition removal on those.
+ 
+ TABLE="\
+-0 $((SIZE/SECTSIZ-OFFS)) linear $DEV1 $OFFS 
++0 $((SIZE/SECTSIZ-OFFS)) linear $DEV1 $OFFS
+ $((SIZE/SECTSIZ-OFFS)) $((SIZE/SECTSIZ-OFFS)) linear $DEV2 $OFFS"
+ 
+ SPAN1=kpt
+diff --git a/libmpathcmd/Makefile b/libmpathcmd/Makefile
+index 53c0899..0f6b816 100644
+--- a/libmpathcmd/Makefile
++++ b/libmpathcmd/Makefile
+@@ -27,7 +27,7 @@ uninstall:
+ 	$(RM) $(DESTDIR)$(includedir)/mpath_cmd.h
+ 
+ clean: dep_clean
+-	$(RM) core *.a *.o *.so *.so.* *.gz 
++	$(RM) core *.a *.o *.so *.so.* *.gz
+ 
+ include $(wildcard $(OBJS:.o=.d))
+ 
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index 6ba70c8..8aac063 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -77,13 +77,13 @@
+ #endif
+ 
+ static struct hwentry default_hw[] = {
+-       /*
+-	* Generic NVMe devices
+-	*
+-	* Due to the parsing logic in find_hwe(), generic entries
+-	* have to be put on top of this list, and more specific ones
+-	* below.
+-	*/
++	/*
++	 * Generic NVMe devices
++	 *
++	 * Due to the parsing logic in find_hwe(), generic entries
++	 * have to be put on top of this list, and more specific ones
++	 * below.
++	 */
+ 	{
+ 		.vendor        = "NVME",
+ 		.product       = ".*",
+diff --git a/libmultipath/print.h b/libmultipath/print.h
+index 7ba6438..9b5a23a 100644
+--- a/libmultipath/print.h
++++ b/libmultipath/print.h
+@@ -113,7 +113,7 @@ int _snprint_multipath (const struct gen_multipath *, char *, int,
+ 			const char *, int);
+ #define snprint_multipath(buf, len, fmt, mp, v)				\
+ 	_snprint_multipath(dm_multipath_to_gen(mp), buf, len, fmt,  v)
+-int _snprint_multipath_topology (const struct gen_multipath *, char *, int, 
++int _snprint_multipath_topology (const struct gen_multipath *, char *, int,
+ 				 int verbosity);
+ #define snprint_multipath_topology(buf, len, mpp, v) \
+ 	_snprint_multipath_topology (dm_multipath_to_gen(mpp), buf, len, v)
+diff --git a/multipathd/main.h b/multipathd/main.h
+index 0e9c5e3..1c070c5 100644
+--- a/multipathd/main.h
++++ b/multipathd/main.h
+@@ -29,11 +29,11 @@ int ev_remove_map (char *, char *, int, struct vectors *);
+ int set_config_state(enum daemon_status);
+ void * mpath_alloc_prin_response(int prin_sa);
+ int prin_do_scsi_ioctl(char *, int rq_servact, struct prin_resp * resp,
+-       int noisy);
++		       int noisy);
+ void dumpHex(const char * , int len, int no_ascii);
+ int prout_do_scsi_ioctl(char * , int rq_servact, int rq_scope,
+-       unsigned int rq_type, struct prout_param_descriptor *param,
+-       int noisy);
++			unsigned int rq_type,
++			struct prout_param_descriptor *param, int noisy);
+ int mpath_pr_event_handle(struct path *pp);
+ void * mpath_pr_event_handler_fn (void * );
+ int update_map_pr(struct multipath *mpp);
+-- 
+2.14.3
