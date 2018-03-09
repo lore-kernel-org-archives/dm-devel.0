@@ -1,89 +1,56 @@
-From: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [dm-devel] [PATCH] dm-writecache
-Date: Thu, 8 Mar 2018 22:26:17 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1803082213080.2200@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1803080824210.2819@file01.intranet.prod.int.rdu2.redhat.com>
- <20180308145153.GB23262@infradead.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <20180308145153.GB23262-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: Mike Snitzer <msnitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, "Alasdair G. Kergon" <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+From: Tycho Andersen <tycho@tycho.ws>
+Subject: [PATCH] md: get rid of a VLA
+Date: Thu,  8 Mar 2018 20:35:44 -0700
+Message-ID: <20180309033544.22509-1-tycho@tycho.ws>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, kernel-hardening@lists.openwall.com, "Tobin C . Harding" <tobin@apporbit.com>, Tycho Andersen <tycho@tycho.ws>
 List-Id: dm-devel.ids
 
+Ideally, we'd like to get rid of all VLAs in the kernel and add -Wvla to
+the build args: https://lkml.org/lkml/2018/3/7/621
 
+This one is a simple case, since we don't actually need the VLA at all: we
+can just iterate over the stripes twice, once to emit their names, and the
+second time to emit status (i.e. trade memory for time). Since the number
+of stripes is probably low, this is hopefully not that expensive.
 
-On Thu, 8 Mar 2018, Christoph Hellwig wrote:
+Signed-off-by: Tycho Andersen <tycho@tycho.ws>
+CC: Alasdair Kergon <agk@redhat.com>
+CC: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm-stripe.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
 
-> > --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-> > +++ linux-2.6/drivers/md/dm-writecache.c	2018-03-08 14:23:31.059999000 +0100
-> > @@ -0,0 +1,2417 @@
-> > +#include <linux/device-mapper.h>
-> 
-> missing copyright statement, or for those new-fashioned SPDX statement.
-> 
-> > +#define WRITEBACK_FUA			true
-> 
-> no business having this around.
-
-It's the default setting of the flag wc->writeback_fua (it can be changed 
-with target parameters). The flag selects whether the target uses FUA 
-requests when doing writeback or whether it uses non-FUA requests and 
-FLUSH afterwards. For some block devices, FUA is faster, for some 
-nonFUA+FLUSH is faster.
-
-What's wrong with this? Why can't default settings be #defined at the 
-beginning of a file?
-
-> > +#ifndef bio_set_dev
-> > +#define	bio_set_dev(bio, dev)	((bio)->bi_bdev = (dev))
-> > +#endif
-> > +#ifndef timer_setup
-> > +#define timer_setup(t, c, f)	setup_timer(t, c, (unsigned long)(t))
-> > +#endif
-> 
-> no business in mainline.
-
-People removed dax support for ramdisk in 4.15.
-
-If I need to test it on non-x86 architecture, I need ramdisk as a fake dax 
-device - and that only works up to 4.14. These defines are for 4.14 
-compatibility.
-
-> > +/*
-> > + * On X86, non-temporal stores are more efficient than cache flushing.
-> > + * On ARM64, cache flushing is more efficient.
-> > + */
-> > +#if defined(CONFIG_X86_64)
-> > +#define NT_STORE(dest, src)				\
-> > +do {							\
-> > +	typeof(src) val = (src);			\
-> > +	memcpy_flushcache(&(dest), &val, sizeof(src));	\
-> > +} while (0)
-> > +#define COMMIT_FLUSHED()	wmb()
-> > +#else
-> > +#define NT_STORE(dest, src)	WRITE_ONCE(dest, src)
-> > +#define FLUSH_RANGE		dax_flush
-> > +#define COMMIT_FLUSHED()	do { } while (0)
-> > +#endif
-> 
-> Please use proper APIs for this, this has no business in a driver.
-> 
-> And that's it for now.  This is clearly not submission ready, and I
-> should got back to my backlog of other things.
-
-Why is memcpy_flushcache and dax_flush "improper"? What should I use 
-instead of them?
-
-Mikulas
+diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
+index b5e892149c54..cd209e8902a6 100644
+--- a/drivers/md/dm-stripe.c
++++ b/drivers/md/dm-stripe.c
+@@ -368,7 +368,6 @@ static void stripe_status(struct dm_target *ti, status_type_t type,
+ 			  unsigned status_flags, char *result, unsigned maxlen)
+ {
+ 	struct stripe_c *sc = (struct stripe_c *) ti->private;
+-	char buffer[sc->stripes + 1];
+ 	unsigned int sz = 0;
+ 	unsigned int i;
+ 
+@@ -377,11 +376,12 @@ static void stripe_status(struct dm_target *ti, status_type_t type,
+ 		DMEMIT("%d ", sc->stripes);
+ 		for (i = 0; i < sc->stripes; i++)  {
+ 			DMEMIT("%s ", sc->stripe[i].dev->name);
+-			buffer[i] = atomic_read(&(sc->stripe[i].error_count)) ?
+-				'D' : 'A';
+ 		}
+-		buffer[i] = '\0';
+-		DMEMIT("1 %s", buffer);
++		DMEMIT("1 ");
++		for (i = 0; i < sc->stripes; i++) {
++			DMEMIT("%c", atomic_read(&(sc->stripe[i].error_count)) ?
++			       'D' : 'A');
++		}
+ 		break;
+ 
+ 	case STATUSTYPE_TABLE:
+-- 
+2.14.1
