@@ -1,47 +1,73 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH] dm-bufio: move dm-bufio.h to include/linux/
-Date: Thu, 8 Mar 2018 22:56:18 -0500 (EST)
-Message-ID: <alpine.LRH.2.02.1803082226240.2200@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1803080421030.9508@file01.intranet.prod.int.rdu2.redhat.com>
-	<20180308144955.GA23262@infradead.org>
+From: Kees Cook <keescook@chromium.org>
+Subject: Re: [PATCH] md: get rid of a VLA
+Date: Thu, 8 Mar 2018 20:55:50 -0800
+Message-ID: <CAGXu5j+XKejfPhUcEjCeqrveaq-knTEeTiWxh5VM8wX5iQmu+A@mail.gmail.com>
+References: <20180309033544.22509-1-tycho@tycho.ws>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180308144955.GA23262@infradead.org>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christoph Hellwig <hch@infradead.org>
-Cc: Mike Snitzer <msnitzer@redhat.com>, dm-devel@redhat.com, Thomas Jaskiewicz <tomj@permabit.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180309033544.22509-1-tycho@tycho.ws>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Tycho Andersen <tycho@tycho.ws>
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, LKML <linux-kernel@vger.kernel.org>, dm-devel@redhat.com, Kernel Hardening <kernel-hardening@lists.openwall.com>, "Tobin C . Harding" <tobin@apporbit.com>
 List-Id: dm-devel.ids
 
+On Thu, Mar 8, 2018 at 7:35 PM, Tycho Andersen <tycho@tycho.ws> wrote:
+> Ideally, we'd like to get rid of all VLAs in the kernel and add -Wvla to
+> the build args: https://lkml.org/lkml/2018/3/7/621
+>
+> This one is a simple case, since we don't actually need the VLA at all: we
+> can just iterate over the stripes twice, once to emit their names, and the
+> second time to emit status (i.e. trade memory for time). Since the number
+> of stripes is probably low, this is hopefully not that expensive.
+>
+> Signed-off-by: Tycho Andersen <tycho@tycho.ws>
+> CC: Alasdair Kergon <agk@redhat.com>
+> CC: Mike Snitzer <snitzer@redhat.com>
+
+Reviewed-by: Kees Cook <keescook@chromium.org>
+
+-Kees
+
+> ---
+>  drivers/md/dm-stripe.c | 10 +++++-----
+>  1 file changed, 5 insertions(+), 5 deletions(-)
+>
+> diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
+> index b5e892149c54..cd209e8902a6 100644
+> --- a/drivers/md/dm-stripe.c
+> +++ b/drivers/md/dm-stripe.c
+> @@ -368,7 +368,6 @@ static void stripe_status(struct dm_target *ti, status_type_t type,
+>                           unsigned status_flags, char *result, unsigned maxlen)
+>  {
+>         struct stripe_c *sc = (struct stripe_c *) ti->private;
+> -       char buffer[sc->stripes + 1];
+>         unsigned int sz = 0;
+>         unsigned int i;
+>
+> @@ -377,11 +376,12 @@ static void stripe_status(struct dm_target *ti, status_type_t type,
+>                 DMEMIT("%d ", sc->stripes);
+>                 for (i = 0; i < sc->stripes; i++)  {
+>                         DMEMIT("%s ", sc->stripe[i].dev->name);
+> -                       buffer[i] = atomic_read(&(sc->stripe[i].error_count)) ?
+> -                               'D' : 'A';
+>                 }
+> -               buffer[i] = '\0';
+> -               DMEMIT("1 %s", buffer);
+> +               DMEMIT("1 ");
+> +               for (i = 0; i < sc->stripes; i++) {
+> +                       DMEMIT("%c", atomic_read(&(sc->stripe[i].error_count)) ?
+> +                              'D' : 'A');
+> +               }
+>                 break;
+>
+>         case STATUSTYPE_TABLE:
+> --
+> 2.14.1
+>
 
 
-On Thu, 8 Mar 2018, Christoph Hellwig wrote:
 
-> On Thu, Mar 08, 2018 at 04:22:01AM -0500, Mikulas Patocka wrote:
-> > This patch moves dm-bufio to include/linux/, so that external modules can
-> > use it. (it is needed for the VDO team)
-> 
-> NAK.
-
-We have include/linux/device-mapper.h, include/linux/dm-io.h, 
-include/linux/dm-kcopyd.h, include/linux/dm-region-hash.h, 
-include/linux/dm-dirty-log.h. So why not include/linux/dm-bufio.h?
-
-BTW. dm-bufio doesn't really depend on device mapper at all and it could 
-be used by non-dm drivers as well.
-
-> That code once merged should just move to drivers/md/.
-
-But that mering will take a lot of time and until it happens, it will be 
-distributed as a separate module.
-
-Mikulas
+-- 
+Kees Cook
+Pixel Security
