@@ -1,14 +1,12 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH 0/4] multipath-tools: important fixes for
-	0.7.5
-Date: Sat, 10 Mar 2018 08:43:20 +0100
-Message-ID: <CABr-GncGK5GUoiCV=u5YCGs5E7d4bH3OBE1+LXNkZFByT2NLmA@mail.gmail.com>
-References: <20180307230859.14926-1-mwilck@suse.com>
-	<b0869201-06de-4d84-10fb-7d395adcba2b@gmail.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: replace FSF address with a www
+	pointer
+Date: Sat, 10 Mar 2018 21:50:02 +0100
+Message-ID: <20180310205002.3318-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0727649548248283622=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <b0869201-06de-4d84-10fb-7d395adcba2b@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,130 +16,132 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
---===============0727649548248283622==
-Content-Type: multipart/alternative; boundary="001a114450341dc7d305670a102a"
+Less prone to future modifications, and new FSF licences
+point exactly to this url: <http://www.gnu.org/licenses/>.
 
---001a114450341dc7d305670a102a
-Content-Type: text/plain; charset="UTF-8"
+First clean up was done in 5619a39c433ac3d10a88079593cec1aa6472cbeb
 
-The fixes and missing patches series are now merged.
-The version is bumped to 0.7.6.
+Cc: Martin Wilck <mwilck@suse.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ libmultipath/dm-generic.c   | 4 +---
+ libmultipath/dm-generic.h   | 4 +---
+ libmultipath/foreign.c      | 4 +---
+ libmultipath/foreign.h      | 4 +---
+ libmultipath/foreign/nvme.c | 4 +---
+ libmultipath/generic.c      | 4 +---
+ libmultipath/generic.h      | 4 +---
+ 7 files changed, 7 insertions(+), 21 deletions(-)
 
-Thanks,
-Christophe.
-
-On Thu, Mar 8, 2018 at 5:04 PM, Xose Vazquez Perez <xose.vazquez@gmail.com>
-wrote:
-
-> On 03/08/2018 12:08 AM, Martin Wilck wrote:
-> > Hi Christophe,
-> >
-> > thanks for catching up. This series fixes immediate problems with
-> > 0.7.5. The first one corresponds to my previously posted
-> > "[PATCH v3 2/2] multipathd: start marginal path checker thread lazily",
-> > and fixes a crash. The others fix the problens reported by Xose.
-> >
-> > Regards
-> > Martin
-> >
-> > Martin Wilck (4):
-> >   libmultipath: fix crash on shutdown if io_err thread isn't running
->
-> These three:
->
-> >   multipathd: fix -Wpointer-to-int-cast warning in uxlsnr
-> >   multipath: fix clang warning in delegate_to_multipathd
-> >   multipath-tools: build: prevent intermediate file deletion
->
->
-> Tested-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
->
->
-> >  Makefile.inc                       | 1 +
-> >  libmultipath/checkers/Makefile     | 2 ++
-> >  libmultipath/foreign/Makefile      | 2 ++
-> >  libmultipath/io_err_stat.c         | 3 +++
-> >  libmultipath/prioritizers/Makefile | 2 ++
-> >  multipath/main.c                   | 2 +-
-> >  multipathd/uxlsnr.c                | 4 ++--
-> >  tests/Makefile                     | 5 ++---
-> >  8 files changed, 15 insertions(+), 6 deletions(-)
-> >
->
-> Merge them ASAP, thanks.
->
-
---001a114450341dc7d305670a102a
-Content-Type: text/html; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">The fixes and missing patches series are now merged.<div>T=
-he version is bumped to 0.7.6.</div><div><br></div><div>Thanks,</div><div>C=
-hristophe.</div></div><div class=3D"gmail_extra"><br><div class=3D"gmail_qu=
-ote">On Thu, Mar 8, 2018 at 5:04 PM, Xose Vazquez Perez <span dir=3D"ltr">&=
-lt;<a href=3D"mailto:xose.vazquez@gmail.com" target=3D"_blank">xose.vazquez=
-@gmail.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=
-=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><span cl=
-ass=3D"">On 03/08/2018 12:08 AM, Martin Wilck wrote:<br>
-&gt; Hi Christophe,<br>
-&gt;<br>
-&gt; thanks for catching up. This series fixes immediate problems with<br>
-&gt; 0.7.5. The first one corresponds to my previously posted<br>
-&gt; &quot;[PATCH v3 2/2] multipathd: start marginal path checker thread la=
-zily&quot;,<br>
-&gt; and fixes a crash. The others fix the problens reported by Xose.<br>
-&gt;<br>
-&gt; Regards<br>
-&gt; Martin<br>
-&gt;<br>
-&gt; Martin Wilck (4):<br>
-&gt;=C2=A0 =C2=A0libmultipath: fix crash on shutdown if io_err thread isn&#=
-39;t running<br>
-<br>
-</span>These three:<br>
-<span class=3D""><br>
-&gt;=C2=A0 =C2=A0multipathd: fix -Wpointer-to-int-cast warning in uxlsnr<br=
->
-&gt;=C2=A0 =C2=A0multipath: fix clang warning in delegate_to_multipathd<br>
-&gt;=C2=A0 =C2=A0multipath-tools: build: prevent intermediate file deletion=
-<br>
-<br>
-<br>
-</span>Tested-by: Xose Vazquez Perez &lt;<a href=3D"mailto:xose.vazquez@gma=
-il.com">xose.vazquez@gmail.com</a>&gt;<br>
-<span class=3D""><br>
-<br>
-&gt;=C2=A0 Makefile.inc=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0| 1 +<br>
-&gt;=C2=A0 libmultipath/checkers/Makefile=C2=A0 =C2=A0 =C2=A0| 2 ++<br>
-&gt;=C2=A0 libmultipath/foreign/Makefile=C2=A0 =C2=A0 =C2=A0 | 2 ++<br>
-&gt;=C2=A0 libmultipath/io_err_stat.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0| 3 =
-+++<br>
-&gt;=C2=A0 libmultipath/prioritizers/<wbr>Makefile | 2 ++<br>
-&gt;=C2=A0 multipath/main.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- =C2=A0 =C2=A0 =C2=A0| 2 +-<br>
-&gt;=C2=A0 multipathd/uxlsnr.c=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 | 4 ++--<br>
-&gt;=C2=A0 tests/Makefile=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0| 5 ++---<br>
-&gt;=C2=A0 8 files changed, 15 insertions(+), 6 deletions(-)<br>
-&gt;<br>
-<br>
-</span>Merge them ASAP, thanks.<br>
-</blockquote></div><br></div>
-
---001a114450341dc7d305670a102a--
-
-
---===============0727649548248283622==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============0727649548248283622==--
+diff --git a/libmultipath/dm-generic.c b/libmultipath/dm-generic.c
+index bdc9ca0..d752991 100644
+--- a/libmultipath/dm-generic.c
++++ b/libmultipath/dm-generic.c
+@@ -12,9 +12,7 @@
+   GNU General Public License for more details.
+ 
+   You should have received a copy of the GNU General Public License
+-  along with this program; if not, write to the Free Software
+-  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+-  USA.
++  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  */
+ 
+ #include <stdint.h>
+diff --git a/libmultipath/dm-generic.h b/libmultipath/dm-generic.h
+index 5d59724..986429f 100644
+--- a/libmultipath/dm-generic.h
++++ b/libmultipath/dm-generic.h
+@@ -12,9 +12,7 @@
+   GNU General Public License for more details.
+ 
+   You should have received a copy of the GNU General Public License
+-  along with this program; if not, write to the Free Software
+-  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+-  USA.
++  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  */
+ #ifndef _DM_GENERIC_H
+ #define _DM_GENERIC_H
+diff --git a/libmultipath/foreign.c b/libmultipath/foreign.c
+index 7217184..80b399b 100644
+--- a/libmultipath/foreign.c
++++ b/libmultipath/foreign.c
+@@ -12,9 +12,7 @@
+   GNU General Public License for more details.
+ 
+   You should have received a copy of the GNU General Public License
+-  along with this program; if not, write to the Free Software
+-  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+-  USA.
++  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+ 
+ #include <sys/sysmacros.h>
+diff --git a/libmultipath/foreign.h b/libmultipath/foreign.h
+index 973f368..697f12f 100644
+--- a/libmultipath/foreign.h
++++ b/libmultipath/foreign.h
+@@ -12,9 +12,7 @@
+   GNU General Public License for more details.
+ 
+   You should have received a copy of the GNU General Public License
+-  along with this program; if not, write to the Free Software
+-  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+-  USA.
++  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+ #ifndef _FOREIGN_H
+ #define _FOREIGN_H
+diff --git a/libmultipath/foreign/nvme.c b/libmultipath/foreign/nvme.c
+index 235f75d..280b6bd 100644
+--- a/libmultipath/foreign/nvme.c
++++ b/libmultipath/foreign/nvme.c
+@@ -12,9 +12,7 @@
+   GNU General Public License for more details.
+ 
+   You should have received a copy of the GNU General Public License
+-  along with this program; if not, write to the Free Software
+-  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+-  USA.
++  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+ 
+ #include <sys/sysmacros.h>
+diff --git a/libmultipath/generic.c b/libmultipath/generic.c
+index 6f7a2cd..0d1e632 100644
+--- a/libmultipath/generic.c
++++ b/libmultipath/generic.c
+@@ -12,9 +12,7 @@
+   GNU General Public License for more details.
+ 
+   You should have received a copy of the GNU General Public License
+-  along with this program; if not, write to the Free Software
+-  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+-  USA.
++  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  */
+ 
+ 
+diff --git a/libmultipath/generic.h b/libmultipath/generic.h
+index 7f7fe66..6346ffe 100644
+--- a/libmultipath/generic.h
++++ b/libmultipath/generic.h
+@@ -12,9 +12,7 @@
+   GNU General Public License for more details.
+ 
+   You should have received a copy of the GNU General Public License
+-  along with this program; if not, write to the Free Software
+-  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+-  USA.
++  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  */
+ #ifndef _GENERIC_H
+ #define _GENERIC_H
+-- 
+2.14.3
