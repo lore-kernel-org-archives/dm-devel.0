@@ -1,12 +1,11 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH v2] multipath-tools: Remove trailing/leading
-	whitespaces and reformat code
-Date: Sat, 10 Mar 2018 21:50:50 +0100
-Message-ID: <20180310205050.3447-1-xose.vazquez@gmail.com>
+From: Karan Vohra <karanvohra@outlook.com>
+Subject: Questions around multipath failover and no_path_retry
+Date: Sun, 11 Mar 2018 16:47:17 +0000
+Message-ID: <SN1PR20MB047927660CFE0409EDE91C95C9DC0@SN1PR20MB0479.namprd20.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============1428333661117937983=="
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,158 +15,131 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
-Are aligned escape backslashes in Makefile.inc preferred?
+--===============1428333661117937983==
+Content-Language: en-US
+Content-Type: multipart/alternative;
+	boundary="_000_SN1PR20MB047927660CFE0409EDE91C95C9DC0SN1PR20MB0479namp_"
 
-v2 rebase.
+--_000_SN1PR20MB047927660CFE0409EDE91C95C9DC0SN1PR20MB0479namp_
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 
- Makefile.inc           | 23 +++++++++++------------
- kpartx/mac.h           |  2 +-
- kpartx/test-kpartx     |  2 +-
- libmpathcmd/Makefile   |  2 +-
- libmultipath/hwtable.c | 14 +++++++-------
- libmultipath/print.h   |  2 +-
- multipathd/main.h      |  6 +++---
- 7 files changed, 25 insertions(+), 26 deletions(-)
+Hi Folks,
 
-diff --git a/Makefile.inc b/Makefile.inc
-index 5d6123d..05b8d4b 100644
---- a/Makefile.inc
-+++ b/Makefile.inc
-@@ -100,21 +100,20 @@ LDFLAGS		= -Wl,-z,relro -Wl,-z,now
- BIN_LDFLAGS	= -pie
- 
- # Check whether a function with name $1 has been declared in header file $2.
--check_func =								       \
--    $(shell								       \
-+check_func = $(shell \
- 	if grep -Eq "^[^[:blank:]]+[[:blank:]]+$1[[:blank:]]*(.*)*" "$2"; then \
--	   found=1;							       \
--	   status="yes";						       \
--	else								       \
--	   found=0;							       \
--	   status="no";							       \
--	fi;								       \
--	echo 1>&2 "Checking for $1 in $2 ... $$status";			       \
--	echo "$$found"							       \
--    )
-+		found=1; \
-+		status="yes"; \
-+	else \
-+		found=0; \
-+		status="no"; \
-+	fi; \
-+	echo 1>&2 "Checking for $1 in $2 ... $$status"; \
-+	echo "$$found" \
-+	)
- 
- # Checker whether a file with name $1 exists
--check_file = $(shell	\
-+check_file = $(shell \
- 	if [ -f "$1" ]; then \
- 		found=1; \
- 		status="yes"; \
-diff --git a/kpartx/mac.h b/kpartx/mac.h
-index a44cf38..55c3ec9 100644
---- a/kpartx/mac.h
-+++ b/kpartx/mac.h
-@@ -24,7 +24,7 @@ struct mac_driver_desc {
- 	uint16_t  signature;      /* expected to be MAC_DRIVER_MAGIC */
- 	uint16_t  block_size;
- 	uint32_t  block_count;
--    /* ... more stuff */
-+	/* ... more stuff */
- };
- 
- #endif
-diff --git a/kpartx/test-kpartx b/kpartx/test-kpartx
-index 9cee20f..d2001dc 100755
---- a/kpartx/test-kpartx
-+++ b/kpartx/test-kpartx
-@@ -131,7 +131,7 @@ step "create DM devices (spans)"
- # They also serve as DM devices to test partition removal on those.
- 
- TABLE="\
--0 $((SIZE/SECTSIZ-OFFS)) linear $DEV1 $OFFS 
-+0 $((SIZE/SECTSIZ-OFFS)) linear $DEV1 $OFFS
- $((SIZE/SECTSIZ-OFFS)) $((SIZE/SECTSIZ-OFFS)) linear $DEV2 $OFFS"
- 
- SPAN1=kpt
-diff --git a/libmpathcmd/Makefile b/libmpathcmd/Makefile
-index 53c0899..0f6b816 100644
---- a/libmpathcmd/Makefile
-+++ b/libmpathcmd/Makefile
-@@ -27,7 +27,7 @@ uninstall:
- 	$(RM) $(DESTDIR)$(includedir)/mpath_cmd.h
- 
- clean: dep_clean
--	$(RM) core *.a *.o *.so *.so.* *.gz 
-+	$(RM) core *.a *.o *.so *.so.* *.gz
- 
- include $(wildcard $(OBJS:.o=.d))
- 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index fe71d14..448ff52 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -77,13 +77,13 @@
- #endif
- 
- static struct hwentry default_hw[] = {
--       /*
--	* Generic NVMe
--	*
--	* Due to the parsing logic in find_hwe(), generic entries
--	* have to be put on top of this list, and more specific ones
--	* below.
--	*/
-+	/*
-+	 * Generic NVMe devices
-+	 *
-+	 * Due to the parsing logic in find_hwe(), generic entries
-+	 * have to be put on top of this list, and more specific ones
-+	 * below.
-+	 */
- 	{
- 		.vendor        = "NVME",
- 		.product       = ".*",
-diff --git a/libmultipath/print.h b/libmultipath/print.h
-index 7ba6438..9b5a23a 100644
---- a/libmultipath/print.h
-+++ b/libmultipath/print.h
-@@ -113,7 +113,7 @@ int _snprint_multipath (const struct gen_multipath *, char *, int,
- 			const char *, int);
- #define snprint_multipath(buf, len, fmt, mp, v)				\
- 	_snprint_multipath(dm_multipath_to_gen(mp), buf, len, fmt,  v)
--int _snprint_multipath_topology (const struct gen_multipath *, char *, int, 
-+int _snprint_multipath_topology (const struct gen_multipath *, char *, int,
- 				 int verbosity);
- #define snprint_multipath_topology(buf, len, mpp, v) \
- 	_snprint_multipath_topology (dm_multipath_to_gen(mpp), buf, len, v)
-diff --git a/multipathd/main.h b/multipathd/main.h
-index 0e9c5e3..1c070c5 100644
---- a/multipathd/main.h
-+++ b/multipathd/main.h
-@@ -29,11 +29,11 @@ int ev_remove_map (char *, char *, int, struct vectors *);
- int set_config_state(enum daemon_status);
- void * mpath_alloc_prin_response(int prin_sa);
- int prin_do_scsi_ioctl(char *, int rq_servact, struct prin_resp * resp,
--       int noisy);
-+		       int noisy);
- void dumpHex(const char * , int len, int no_ascii);
- int prout_do_scsi_ioctl(char * , int rq_servact, int rq_scope,
--       unsigned int rq_type, struct prout_param_descriptor *param,
--       int noisy);
-+			unsigned int rq_type,
-+			struct prout_param_descriptor *param, int noisy);
- int mpath_pr_event_handle(struct path *pp);
- void * mpath_pr_event_handler_fn (void * );
- int update_map_pr(struct multipath *mpp);
--- 
-2.14.3
+Let us assume, there are 2 paths within the path group which dm-multipath i=
+s sending the I/Os in round-robin fashion. Each of these paths are identifi=
+ed as unique block device(s) such as /dev/sdb and /dev/sdc.
+
+Let us say some I/Os are sent over to the path /dev/sdb and either the requ=
+ests time out or there is a failure on that path, what happens to those I/O=
+s? Are they sent over to the other path - /dev/sdc or does dm-multipath wai=
+ts for /dev/sdb to come back online and only sends I/O to /dev/sdb? One of =
+the reasons we are concerned about the above scenario is- let us say there =
+is a write I/O W1 which is routed to /dev/sdb and then there is a failure. =
+There was a write I/O W2 which wrote at the same block via /dev/sdc. Now if=
+ multipath sends W1 through /dev/sdc, W2 gets overwritten by W1. The expect=
+ation was that W2 happens after W1 and should overwrite W1 but the result i=
+s opposite. Situations like these can cause data inconsistency and corrupti=
+on.We were thinking of using no_path_retry configuration to be set to queue=
+ to make sure that the I/Os supposed to be going to path1 never make it to =
+path2. But the question is that would not that cause unexpected behavior in=
+ application layer? Let us say there are I/O Requests R1, R2, R3 and so on.=
+. R1 is going to Path1, R2 is going to Path2 and so on. If Path1 dies for s=
+ome reason, with the setting of no_path_retry to queue, queueing will not s=
+top until the path is fixed so does not that mean that R1, R3,R5 ... will n=
+ot make it to block device until the path is fixed? Would it not cause fail=
+ures if the issue persists for seconds? What about the size of queue? Is th=
+ere any danger of queue getting overloaded?Any pointers or references would=
+ be of great help.
+
+Thanks!
+Karan
+
+
+Get Outlook for Android<https://aka.ms/ghei36>
+
+
+--_000_SN1PR20MB047927660CFE0409EDE91C95C9DC0SN1PR20MB0479namp_
+Content-Type: text/html; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+
+<html>
+<head>
+<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dus-ascii"=
+>
+</head>
+<body>
+<div dir=3D"auto" style=3D"direction: ltr; margin: 0; padding: 0; font-fami=
+ly: sans-serif; font-size: 11pt; color: black; ">
+Hi Folks,<br>
+<br>
+</div>
+<div dir=3D"auto" style=3D"direction: ltr; margin: 0; padding: 0; font-fami=
+ly: sans-serif; font-size: 11pt; color: black; ">
+Let us assume, there are 2 paths within the path group which dm-multipath i=
+s sending the I/Os in round-robin fashion. Each of these paths are identifi=
+ed as unique block device(s) such as /dev/sdb and /dev/sdc.&nbsp;<br>
+<br>
+</div>
+<div dir=3D"auto" style=3D"direction: ltr; margin: 0; padding: 0; font-fami=
+ly: sans-serif; font-size: 11pt; color: black; ">
+Let us say some I/Os are sent over to the path /dev/sdb and either the requ=
+ests time out or there is a failure on that path, what happens to those I/O=
+s? Are they sent over to the other path - /dev/sdc or does dm-multipath wai=
+ts for /dev/sdb to come back&nbsp;online
+ and only sends I/O to /dev/sdb? One of the reasons we are concerned about =
+the above scenario is- let us say there is a write I/O W1 which is routed t=
+o /dev/sdb and then there is a failure. There was a write I/O W2 which wrot=
+e at the same block via /dev/sdc.&nbsp;Now
+ if multipath sends W1 through /dev/sdc, W2 gets overwritten by W1. The exp=
+ectation was that W2 happens after W1 and should overwrite W1 but the resul=
+t is opposite. Situations like these can cause data inconsistency and corru=
+ption.We were thinking of using
+ no_path_retry configuration to be set to queue to make sure that the I/Os =
+supposed to be going to path1 never make it to path2. But the question is t=
+hat would not that cause unexpected behavior in application layer? Let us s=
+ay&nbsp;there are I/O Requests R1, R2,
+ R3 and so on.. R1 is going to Path1, R2 is going to Path2 and so on. If Pa=
+th1 dies for some reason, with the setting of no_path_retry to queue, queue=
+ing will not stop until the path is fixed so does not that mean that R1, R3=
+,R5 ... will not make it to block
+ device until the path is fixed? Would it not cause failures if the issue p=
+ersists for seconds? What about the size of queue? Is there any danger of q=
+ueue getting overloaded?Any pointers or references would be of great help.<=
+br>
+<br>
+</div>
+<div dir=3D"auto" style=3D"direction: ltr; margin: 0; padding: 0; font-fami=
+ly: sans-serif; font-size: 11pt; color: black; ">
+Thanks!<br>
+</div>
+<div dir=3D"auto" style=3D"direction: ltr; margin: 0; padding: 0; font-fami=
+ly: sans-serif; font-size: 11pt; color: black; ">
+Karan<br>
+<br>
+<br>
+</div>
+<div dir=3D"auto" style=3D"direction: ltr; margin: 0; padding: 0; font-fami=
+ly: sans-serif; font-size: 11pt; color: black; ">
+<div dir=3D"auto" style=3D"direction: ltr; margin: 0; padding: 0; font-fami=
+ly: sans-serif; font-size: 11pt; color: black; ">
+Get <a href=3D"https://aka.ms/ghei36">Outlook for Android</a></div>
+<br>
+</div>
+</body>
+</html>
+
+--_000_SN1PR20MB047927660CFE0409EDE91C95C9DC0SN1PR20MB0479namp_--
+
+
+--===============1428333661117937983==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============1428333661117937983==--
