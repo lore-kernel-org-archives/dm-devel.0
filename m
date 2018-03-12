@@ -1,43 +1,36 @@
-From: wuzhouhui <wuzhouhui14@mails.ucas.ac.cn>
-Subject: [RFC PATCH] multipath: flush workqueue only in necessary
-Date: Mon, 12 Mar 2018 15:41:41 +0800 (GMT+08:00)
-Message-ID: <6e0de469.6172.1621928673a.Coremail.wuzhouhui14@mails.ucas.ac.cn>
+From: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [dm-devel] [PATCH] dm-writecache
+Date: Mon, 12 Mar 2018 00:48:59 -0700
+Message-ID: <20180312074859.GB30695@infradead.org>
+References: <alpine.LRH.2.02.1803080824210.2819@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180308145153.GB23262@infradead.org>
+ <CAPcyv4gBUt5NYK2Lx0dMZAnENeSgKm3KaUvY9kkqB+PNPyQu4w@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CAPcyv4gBUt5NYK2Lx0dMZAnENeSgKm3KaUvY9kkqB+PNPyQu4w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Mike Snitzer <msnitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-nvdimm <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Alasdair G. Kergon" <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-When flush works belong a specific multipath, we flush workqueue only
-in necessary.
+On Thu, Mar 08, 2018 at 09:08:32AM -0800, Dan Williams wrote:
+> I had the same feedback, and Mikulas sent this useful enhancement to
+> the memcpy_flushcache API:
+> 
+>     https://patchwork.kernel.org/patch/10217655/
+> 
+> ...it's in my queue to either push through -tip or add it to the next
+> libnvdimm pull request for 4.17-rc1.
 
-(That's my first time to send a patch, please remind me if anything
-wrong)
-
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index f7810cc..0f14732 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -1154,9 +1154,10 @@ static void flush_multipath_work(struct multipath *m)
- 	set_bit(MPATHF_PG_INIT_DISABLED, &m->flags);
- 	smp_mb__after_atomic();
- 
--	flush_workqueue(kmpath_handlerd);
-+	if (atomic_read(&m->pg_init_in_progress))
-+		flush_workqueue(kmpath_handlerd);
- 	multipath_wait_for_pg_init_completion(m);
--	flush_workqueue(kmultipathd);
-+	flush_work(&m->process_queued_bios);
- 	flush_work(&m->trigger_event);
- 
- 	clear_bit(MPATHF_PG_INIT_DISABLED, &m->flags);
+So lets rebase this submission on top of that.
