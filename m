@@ -1,136 +1,107 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: Re: device mapper mapping across reboot
-Date: Mon, 12 Mar 2018 10:49:02 +0100
-Message-ID: <c257ef68-a6f2-a458-fbbf-752b729fa169@redhat.com>
-References: <CAN-6CVmztjkV6JL0k3N8Vh47Tr4oY_8Jj6-JL16b2YY5yNEHOA@mail.gmail.com>
-	<f0e41723-159a-fe39-42f2-4a2ef1466bfa@redhat.com>
-	<20180310104747.GA1027@gmail.com>
+From: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [dm-devel] [PATCH] dm-writecache
+Date: Mon, 12 Mar 2018 08:12:26 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1803120706370.13914@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1803080824210.2819@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180308145153.GB23262@infradead.org>
+ <alpine.LRH.2.02.1803082213080.2200@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180312075029.GC30695@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-2"; Format="flowed"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180310104747.GA1027@gmail.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Jitendra <jkhasdev@gmail.com>, dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <20180312075029.GC30695-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Mike Snitzer <msnitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, "Alasdair G. Kergon" <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 List-Id: dm-devel.ids
 
-Dne 10.3.2018 v 11:47 Jitendra napsal(a):
-> =
 
-> =
 
->> lvm2 is exactly solving this problem as it maintains consistent
->> 'metadata' on every device - so upon reboot devices are discovered and
->> from their metadata dm tables are actived/restored.
-> =
+On Mon, 12 Mar 2018, Christoph Hellwig wrote:
 
-> Got it.
-> =
+> On Thu, Mar 08, 2018 at 10:26:17PM -0500, Mikulas Patocka wrote:
+> > > no business having this around.
+> > 
+> > It's the default setting of the flag wc->writeback_fua (it can be changed 
+> > with target parameters). The flag selects whether the target uses FUA 
+> > requests when doing writeback or whether it uses non-FUA requests and 
+> > FLUSH afterwards. For some block devices, FUA is faster, for some 
+> > nonFUA+FLUSH is faster.
+> 
+> So just use true as the default flag, adding a name for it in addition
+> to the field it is assigned to makes no sense at all.
 
->> So=A0 are you looking for recreation of all the lvm2 infrastructure for
->> this relatively quite complex task ?
-> Not exactly, but I want to create mapper device created before the root a=
-nd
-> other fs get mounted so that I can track I/Os in target.
-> =
+It makes sense, because all the default values are at one place on the top 
+of the file and not scattered through the codebase.
 
->> Or you just want to 'create' DM after kernel is booted ?
-> dmsetup create with my target.
-> =
+> > > > +#ifndef bio_set_dev
+> > > > +#define	bio_set_dev(bio, dev)	((bio)->bi_bdev = (dev))
+> > > > +#endif
+> > > > +#ifndef timer_setup
+> > > > +#define timer_setup(t, c, f)	setup_timer(t, c, (unsigned long)(t))
+> > > > +#endif
+> > > 
+> > > no business in mainline.
+> > 
+> > People removed dax support for ramdisk in 4.15.
+> > 
+> > If I need to test it on non-x86 architecture, I need ramdisk as a fake dax 
+> > device - and that only works up to 4.14. These defines are for 4.14 
+> > compatibility.
+> 
+> So add them when you backport, or use the existing automated backport
+> frameworks.  But do not add dead code to an upstream submission.
 
->> Or you even want to pass 'DM' table line on kernel boot option line -
->> so even your boot device is a 'DM' device ?
-> =
+I don't intend to backport this driver to stable kernel branches. But I 
+can move the file between different machines and test it - it is just 
+convenience for me, so that I don't have to patch the file when moving it 
+around. It helps me and it doesn't harm anyone else, so what's the problem 
+with it?
 
-> It is something exactly, I wanna to do.
-> =
+> > > > +#if defined(CONFIG_X86_64)
+> > > > +#define NT_STORE(dest, src)				\
+> > > > +do {							\
+> > > > +	typeof(src) val = (src);			\
+> > > > +	memcpy_flushcache(&(dest), &val, sizeof(src));	\
+> > > > +} while (0)
+> > > > +#define COMMIT_FLUSHED()	wmb()
+> > > > +#else
+> > > > +#define NT_STORE(dest, src)	WRITE_ONCE(dest, src)
+> > > > +#define FLUSH_RANGE		dax_flush
+> > > > +#define COMMIT_FLUSHED()	do { } while (0)
+> > > > +#endif
+> > > 
+> > > Please use proper APIs for this, this has no business in a driver.
+> > > 
+> > > And that's it for now.  This is clearly not submission ready, and I
+> > > should got back to my backlog of other things.
+> > 
+> > Why is memcpy_flushcache and dax_flush "improper"? What should I use 
+> > instead of them?
+> 
+> They are proper and should be used directly instead of through your
+> hacky macros.
 
-> eg. I wrote a basic target as explained here
-> http://techgmm.blogspot.in/p/writing-your-own-device-mapper-target.html
-> =
+On x86-64, memcpy_flushcache is faster than dax_flush.
+On ARM64, dax_flush is faster than memcpy_flushcache.
 
-> Now, to use this target (kernel module), I need to create mapper device as
-> echo 0 <size_of_device> basic_target /Path/to/your/device 0 | dmsetup cre=
-ate =
+So what should I do? I need to differentiate them based on architecture.
 
-> my_basic_dm_device
-> =
+Do you argue that instead of one "#if defined(CONFIG_X86_64)" at the top 
+of the file we many more "#if defined(CONFIG_X86_64)" lines all over the 
+file - just, because you don't like #defines?
 
-> After creation of device as /dev/mapper/my_basic_dm_device for /dev/sda, =
-if I =
+Currently, we can change one line of source code to switch between these 
+two functions and benchmark which one performs better on a particular 
+processor. Once these macros are deleted, the switch will not be possible.
 
-> do I/O from
-> /dev/mapper/my_basic_dm_device, then all I/O goes through basic_target be=
-fore it
-> hits to /dev/sda.
-> =
-
-> Now, if system is booted and disk is offline then it is very easy to crea=
-te
-> mapper device. But now let suppose I want to boot on
-> /dev/mapper/my_basic_dm_device instead of /dev/sda1 etc. then I have to c=
-reate
-> mapper device even before it get switch root.
-> =
-
-> This is same case for other disks as well. So there should be a way so th=
-at I
-> can use device mapper framework after reboot.
-
-Hi
-
-Well in general - that's why every distribution is using init ramdisk.
-
-This ramdisk is loaded from a small /boot partition together with kernel.
-As you can see - you simply always need something to boot from - you cannot =
-
-load your kernel from "DM" device.
-
-Once kernel is booted and 'ramdisk' is processed - you have plenty of time =
-and =
-
-lots of binaries there (typically with lvm2 built-in)  - so here you can =
-
-safely activate your root volume being on dm device (even without lvm2 just=
- by =
-
-issuing couple 'dmsetup' commands)
-
-I'm aware there is some  Android person who proposed some booting into DM =
-
-without initramfs - i.e.
-
-https://www.redhat.com/archives/linux-lvm/2017-May/msg00055.html
-
-I'm not sure in which stage this patch is - likely still not upstream thoug=
-ht, =
-
-but there was some progress around this.
-
-Still it's worth to say -  not using ramdisk is pretty much bogus idea - yo=
-u =
-
-should always use ramdisk - otherwise you are missing lots of important too=
-ls =
-
-i.e. for validation of filesystem  before it gets mounted - so whoever want=
-s =
-
-to use 'DM'  to mount  rootfs  without initramfs is doing something wrong.
-
-Anyway - since it's still unclear what is your actually work - it's really =
-
-hard to give you proper advice here.
-
-Regards
-
-Zdenek
+Mikulas
