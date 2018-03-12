@@ -1,18 +1,15 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: Re: device mapper mapping across reboot
-Date: Mon, 12 Mar 2018 15:41:48 +0100
-Message-ID: <1999d398-9689-8aa0-f4c6-c5c9833ee5d4@redhat.com>
-References: <CAN-6CVmztjkV6JL0k3N8Vh47Tr4oY_8Jj6-JL16b2YY5yNEHOA@mail.gmail.com>
-	<f0e41723-159a-fe39-42f2-4a2ef1466bfa@redhat.com>
-	<20180310104747.GA1027@gmail.com>
-	<c257ef68-a6f2-a458-fbbf-752b729fa169@redhat.com>
-	<20180312110912.GA1015@gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: ERROR: "scsi_device_from_queue"
+ [drivers/md/dm-multipath.ko] undefined!
+Date: Mon, 12 Mar 2018 11:40:16 -0400
+Message-ID: <20180312154016.GA29395@redhat.com>
+References: <201803110354.yaesL1Mi%fengguang.wu@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-2"; Format="flowed"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180312110912.GA1015@gmail.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <201803110354.yaesL1Mi%fengguang.wu@intel.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,80 +19,62 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jitendra <jkhasdev@gmail.com>, dm-devel@redhat.com
+To: hare@suse.de, "Martin K. Petersen" <martin.petersen@oracle.com>, Ewan Milne <emilne@redhat.com>, linux-scsi@vger.kernel.org
+Cc: dm-devel@redhat.com, kbuild test robot <fengguang.wu@intel.com>, kbuild-all@01.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Dne 12.3.2018 v 12:09 Jitendra napsal(a):
-> On Mon, Mar 12, 2018 at 10:49:02AM +0100, Zdenek Kabelac wrote:
->> Dne 10.3.2018 v 11:47 Jitendra napsal(a):
->>>
-> =
+On Sat, Mar 10 2018 at  2:29pm -0500,
+kbuild test robot <fengguang.wu@intel.com> wrote:
 
->> Once kernel is booted and 'ramdisk' is processed - you have plenty of
->> time and lots of binaries there (typically with lvm2 built-in)=A0 - so
->> here you can safely activate your root volume being on dm device (even
->> without lvm2 just by issuing couple 'dmsetup' commands)
-> =
+> tree:   https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git master
+> head:   3266b5bd97eaa72793df0b6e5a106c69ccc166c4
+> commit: 8d47e65948ddea4398892946d9e50778a316b397 dm mpath: remove unnecessary NVMe branching in favor of scsi_dh checks
+> date:   4 days ago
+> config: x86_64-randconfig-x004-201810 (attached as .config)
+> compiler: gcc-7 (Debian 7.3.0-1) 7.3.0
+> reproduce:
+>         git checkout 8d47e65948ddea4398892946d9e50778a316b397
+>         # save the attached .config to linux build tree
+>         make ARCH=x86_64 
+> 
+> All errors (new ones prefixed by >>):
+> 
+> >> ERROR: "scsi_device_from_queue" [drivers/md/dm-multipath.ko] undefined!
+> 
+> ---
+> 0-DAY kernel test infrastructure                Open Source Technology Center
+> https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
 
-> This is something which I have tried in following steps.
-> =
+This error is due to CONFIG_SCSI not being set.
 
-> 1. First load my target driver(eg. my_custom_target) in initramfs (RHEL 7=
-) =
+DM commit 8d47e6594 ("dm mpath: remove unnecessary NVMe branching in
+favor of scsi_dh checks") updated dm-mpath.c to call
+scsi_device_from_queue() to determine if a device is SCSI.
 
-> using dracuf.
-> 2. Now=A0 my_custom_target will be available when initramfs get loaded.
-> 3. Before the switch_root, I tried to run following command as,
-> =
+The following patch fixes the buildbot reported case when CONFIG_SCSI
+isn't set... but it is unclear if this is the best way forward.  I don't
+want to make CONFIG_DM_MULTIPATH depend on CONFIG_SCSI, as such we
+either need the following patch or the equivalent in a dm-mpath.c
+wrapper.
 
->  =A0=A0=A0=A0[root@localhost ~]# ls -l /usr/lib/systemd/system/initrd-swi=
-tch-root.service
->  =A0=A0=A0=A0-rw-r--r--. 1 root root 737 Mar 12 07:00 =
+Thoughts?
 
-> /usr/lib/systemd/system/initrd-switch-root.service
-> =
-
-
-I'm not quite sure why do you ever need to play with any systemd service s
-
-Is there lost support for some kind of /etc/rc.local ?
-
-Of course you have to use UUID on your devices - and shift filesystems on y=
-our =
-
-real /dev/sdaX  so  systemd  WAIT for devices that will appear in your syst=
-em =
-
-only via  'DM' mapping (so your rootfs on sdX needs to be prefixed with som=
-e =
-
-header).
-
-You cannot have in your system 2 'same' devices' - that will confuse your =
-
-systemd.
-
-Solving complexity of systemd world is where lvm2 is there for. So if you p=
-lan =
-
-to 'recreate' simpler lvm2 just because you don't want to use lvm2 - it's =
-
-going to be hard task...
-
-> In my target driver, I am tracking each and every I/O and looking for off=
-set and
-> length in each bio and doing some logging stuff.
-
-Btw - isn't  dmstats  good enough for that already? You can split every dev=
-ice =
-
-in your system in regions and get very detailed start about that.
-
-For using dmstats - you can directly use LVs and attach dmstats to them - s=
-o =
-
-you don't have to recreate this machinery yourself...
-
-Regards
-
-Zdenek
+diff --git a/include/scsi/scsi_device.h b/include/scsi/scsi_device.h
+index 7ae177c..d6bcc96 100644
+--- a/include/scsi/scsi_device.h
++++ b/include/scsi/scsi_device.h
+@@ -333,7 +333,14 @@ extern int scsi_add_device(struct Scsi_Host *host, uint channel,
+ extern int scsi_unregister_device_handler(struct scsi_device_handler *scsi_dh);
+ void scsi_attach_vpd(struct scsi_device *sdev);
+ 
++#ifdef CONFIG_SCSI
+ extern struct scsi_device *scsi_device_from_queue(struct request_queue *q);
++#else
++static inline struct scsi_device *scsi_device_from_queue(struct request_queue *q)
++{
++	return NULL;
++}
++#endif
+ extern int __must_check scsi_device_get(struct scsi_device *);
+ extern void scsi_device_put(struct scsi_device *);
+ extern struct scsi_device *scsi_device_lookup(struct Scsi_Host *,
