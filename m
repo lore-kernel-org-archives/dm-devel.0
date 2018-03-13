@@ -1,17 +1,12 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: Revert "dm mpath: remove unnecessary NVMe branching
- in favor of scsi_dh checks"
-Date: Mon, 12 Mar 2018 21:23:46 -0400
-Message-ID: <20180313012346.GA31673@redhat.com>
-References: <20180312202808.3556-1-bart.vanassche@wdc.com>
-	<20180312212314.GA30763@redhat.com>
-	<1520890358.3469.68.camel@wdc.com>
+From: Denis Semakin <d.semakin@omprussia.ru>
+Subject: [PATCH] Adaptation secure erase forwarding for 4.1x
+ kernels
+Date: Tue, 13 Mar 2018 13:23:45 +0400 (MSK)
+Message-ID: <1496940834.549721.1520933025411.JavaMail.zimbra@omprussia.ru>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1520890358.3469.68.camel@wdc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,41 +16,67 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <Bart.VanAssche@wdc.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: snitzer@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Mar 12 2018 at  5:32pm -0400,
-Bart Van Assche <Bart.VanAssche@wdc.com> wrote:
+Hello.
+Here is fixed patch for modern 4.1x kernels.
+The idea is to forward secure erase request within device mapper layer to
+block device driver which can support secure erase.
+Could you please review?
+Thanks.
 
-> On Mon, 2018-03-12 at 17:23 -0400, Mike Snitzer wrote:
-> > Could you provide more details on your setup?
-> > 
-> > Obviously you're using "queue_mode mq", what are your underlying paths?
-> > 
-> > Given the trace it would seem you're hitting multipath_clone_and_map()'s
-> > blk_queue_dying(q) error path that calls activate_or_offline_path().
-> 
-> Hello Mike,
-> 
-> The reported kernel crash was triggered by running the following command:
-> 
-> srp-test/run_tests -c -d -r 10 -t 02-mq
-> 
-> The srp-test software is available at https://github.com/bvanassche/srp-test.
-> All patches necessary to run that script in a virtual machine (RoCE support
-> for the SRP initiator and target drivers) will be sent to Linus during the
-> kernel v4.17 merge window. These patches are already available in linux-next
-> today. Although I have not tried this myself, I expect that if you run the
-> above command against a kernel built from the linux-next code that that will
-> allow you to reproduce what I reported.
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 7eb3e2a..d955a57 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1846,6 +1846,33 @@ static bool dm_table_supports_discards(struct dm_table *t)
+        return true;
+ }
 
-OK, that test again.  I clearly need to invest time to making it run on
-my testbed.  But that will take time (though hopefully I can cut through
-it tomorrrow).
++static int device_not_secerase_capable(struct dm_target *ti,
++                                          struct dm_dev *dev, sector_t start,
++                                          sector_t len, void *data)
++{
++       struct request_queue *q = bdev_get_queue(dev->bdev);
++
++       return q && !blk_queue_secure_erase(q);
++}
++
++static bool dm_targets_support_secure_erase(struct dm_table *t)
++{
++       unsigned int i = 0;
++       struct dm_target *ti;
++
++       while (i < dm_table_get_num_targets(t)) {
++               ti = dm_table_get_target(t, i++);
++
++               if (!ti->type->iterate_devices ||
++                   ti->type->iterate_devices(ti, device_not_secerase_capable,
++                                             NULL))
++               return false;
++       }
++
++       return true;
++
++}
++
+ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+                               struct queue_limits *limits)
+ {
+@@ -1867,6 +1894,9 @@ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+        } else
+                queue_flag_set_unlocked(QUEUE_FLAG_DISCARD, q);
 
-Anyway, I'm hopeful I fixed the issue you reported.  Please feel free to
-test the 2 topmost commits I've staged in linux-next, via dm-4.16:
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-4.16
++       if (dm_targets_support_secure_erase(t))
++               queue_flag_set_unlocked(QUEUE_FLAG_SECERASE, q);
++
+        if (dm_table_supports_flush(t, (1UL << QUEUE_FLAG_WC))) {
+                wc = true;
+                if (dm_table_supports_flush(t, (1UL << QUEUE_FLAG_FUA)))
 
-Mike
+-- 
+Best regards,
+
+Denis Semakin
