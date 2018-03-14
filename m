@@ -1,7 +1,8 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 06/12] multipathd: use nanosleep for strict timing
-Date: Wed, 14 Mar 2018 12:46:39 -0500
-Message-ID: <1521049605-22050-7-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 09/12] call start_waiter_thread() before
+	setup_multipath()
+Date: Wed, 14 Mar 2018 12:46:42 -0500
+Message-ID: <1521049605-22050-10-git-send-email-bmarzins@redhat.com>
 References: <1521049605-22050-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,74 +22,127 @@ To: dm-devel@redhat.com
 Cc: Martin Wilck <mwilck@suse.com>, christophe.varoqui@free.fr
 List-Id: dm-devel.ids
 
-In order to safely use SIGALRM in a multi-threaded program, only one
-thread can schedule and wait on SIGALRM at a time. All other threads
-must have SIGALRM blocked, and be unable to schedule an alarm. The
-strict_timing code in checkerloop was unblocking SIGALRM, and calling
-setitimer(), without any locking.  Instead, it should use nanosleep()
-to sleep for the correct length of time, since that doesn't depend or
-interfere with signals.
+If setup_multipath() is called before the waiter thread has started,
+there is a window where a dm event can occur between when
+setup_multipath() updates the device state and when the waiter thread
+starts waiting for new events, causing the new event to be missed and
+the multipath device to not get updated.
 
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/main.c | 27 +++++++++------------------
- 1 file changed, 9 insertions(+), 18 deletions(-)
+ multipathd/main.c | 37 ++++++++++++++++++++-----------------
+ 1 file changed, 20 insertions(+), 17 deletions(-)
 
 diff --git a/multipathd/main.c b/multipathd/main.c
-index 6ba6131..ce914ab 100644
+index 2924d53..f116c74 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -1855,7 +1855,6 @@ checkerloop (void *ap)
- 	struct path *pp;
- 	int count = 0;
- 	unsigned int i;
--	struct itimerval timer_tick_it;
- 	struct timespec last_time;
- 	struct config *conf;
+@@ -326,7 +326,7 @@ set_multipath_wwid (struct multipath * mpp)
+ }
  
-@@ -1873,8 +1872,7 @@ checkerloop (void *ap)
+ static int
+-update_map (struct multipath *mpp, struct vectors *vecs)
++update_map (struct multipath *mpp, struct vectors *vecs, int new_map)
+ {
+ 	int retries = 3;
+ 	char params[PARAMS_SIZE] = {0};
+@@ -356,6 +356,12 @@ retry:
+ 	dm_lib_release();
  
- 	while (1) {
- 		struct timespec diff_time, start_time, end_time;
--		int num_paths = 0, ticks = 0, signo, strict_timing, rc = 0;
--		sigset_t mask;
-+		int num_paths = 0, ticks = 0, strict_timing, rc = 0;
+ fail:
++	if (new_map && (retries < 0 || start_waiter_thread(mpp, vecs))) {
++		condlog(0, "%s: failed to create new map", mpp->alias);
++		remove_map(mpp, vecs, 1);
++		return 1;
++	}
++
+ 	if (setup_multipath(vecs, mpp))
+ 		return 1;
  
- 		if (clock_gettime(CLOCK_MONOTONIC, &start_time) != 0)
- 			start_time.tv_sec = 0;
-@@ -1962,25 +1960,18 @@ checkerloop (void *ap)
- 		if (!strict_timing)
- 			sleep(1);
- 		else {
--			timer_tick_it.it_interval.tv_sec = 0;
--			timer_tick_it.it_interval.tv_usec = 0;
- 			if (diff_time.tv_nsec) {
--				timer_tick_it.it_value.tv_sec = 0;
--				timer_tick_it.it_value.tv_usec =
-+				diff_time.tv_sec = 0;
-+				diff_time.tv_nsec =
- 				     1000UL * 1000 * 1000 - diff_time.tv_nsec;
--			} else {
--				timer_tick_it.it_value.tv_sec = 1;
--				timer_tick_it.it_value.tv_usec = 0;
--			}
--			setitimer(ITIMER_REAL, &timer_tick_it, NULL);
-+			} else
-+				diff_time.tv_sec = 1;
+@@ -400,12 +406,9 @@ add_map_without_path (struct vectors *vecs, const char *alias)
  
--			sigemptyset(&mask);
--			sigaddset(&mask, SIGALRM);
- 			condlog(3, "waiting for %lu.%06lu secs",
--				timer_tick_it.it_value.tv_sec,
--				timer_tick_it.it_value.tv_usec);
--			if (sigwait(&mask, &signo) != 0) {
--				condlog(3, "sigwait failed with error %d",
-+				diff_time.tv_sec,
-+				diff_time.tv_nsec / 1000);
-+			if (nanosleep(&diff_time, NULL) != 0) {
-+				condlog(3, "nanosleep failed with error %d",
- 					errno);
- 				conf = get_multipath_config();
- 				conf->strict_timing = 0;
+ 	vector_set_slot(vecs->mpvec, mpp);
+ 
+-	if (update_map(mpp, vecs) != 0) /* map removed */
++	if (update_map(mpp, vecs, 1) != 0) /* map removed */
+ 		return NULL;
+ 
+-	if (start_waiter_thread(mpp, vecs))
+-		goto out;
+-
+ 	return mpp;
+ out:
+ 	remove_map(mpp, vecs, PURGE_VEC);
+@@ -559,7 +562,7 @@ ev_add_map (char * dev, const char * alias, struct vectors * vecs)
+ 		if (mpp->wait_for_udev > 1) {
+ 			condlog(2, "%s: performing delayed actions",
+ 				mpp->alias);
+-			if (update_map(mpp, vecs))
++			if (update_map(mpp, vecs, 0))
+ 				/* setup multipathd removed the map */
+ 				return 1;
+ 		}
+@@ -870,6 +873,11 @@ retry:
+ 	}
+ 	dm_lib_release();
+ 
++	if ((mpp->action == ACT_CREATE ||
++	     (mpp->action == ACT_NOTHING && start_waiter && !mpp->waiter)) &&
++	    start_waiter_thread(mpp, vecs))
++			goto fail_map;
++
+ 	/*
+ 	 * update our state from kernel regardless of create or reload
+ 	 */
+@@ -878,11 +886,6 @@ retry:
+ 
+ 	sync_map_state(mpp);
+ 
+-	if ((mpp->action == ACT_CREATE ||
+-	     (mpp->action == ACT_NOTHING && start_waiter && !mpp->waiter)) &&
+-	    start_waiter_thread(mpp, vecs))
+-			goto fail_map;
+-
+ 	if (retries >= 0) {
+ 		condlog(2, "%s [%s]: path added to devmap %s",
+ 			pp->dev, pp->dev_t, mpp->alias);
+@@ -1518,7 +1521,8 @@ missing_uev_wait_tick(struct vectors *vecs)
+ 		if (mpp->wait_for_udev && --mpp->uev_wait_tick <= 0) {
+ 			timed_out = 1;
+ 			condlog(0, "%s: timeout waiting on creation uevent. enabling reloads", mpp->alias);
+-			if (mpp->wait_for_udev > 1 && update_map(mpp, vecs)) {
++			if (mpp->wait_for_udev > 1 &&
++			    update_map(mpp, vecs, 0)) {
+ 				/* update_map removed map */
+ 				i--;
+ 				continue;
+@@ -1550,7 +1554,7 @@ ghost_delay_tick(struct vectors *vecs)
+ 			condlog(0, "%s: timed out waiting for active path",
+ 				mpp->alias);
+ 			mpp->force_udev_reload = 1;
+-			if (update_map(mpp, vecs) != 0) {
++			if (update_map(mpp, vecs, 0) != 0) {
+ 				/* update_map removed map */
+ 				i--;
+ 				continue;
+@@ -2199,14 +2203,13 @@ configure (struct vectors * vecs)
+ 	 * start dm event waiter threads for these new maps
+ 	 */
+ 	vector_foreach_slot(vecs->mpvec, mpp, i) {
+-		if (setup_multipath(vecs, mpp)) {
+-			i--;
+-			continue;
+-		}
+ 		if (start_waiter_thread(mpp, vecs)) {
+ 			remove_map(mpp, vecs, 1);
+ 			i--;
++			continue;
+ 		}
++		if (setup_multipath(vecs, mpp))
++			i--;
+ 	}
+ 	return 0;
+ }
 -- 
 2.7.4
