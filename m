@@ -1,68 +1,45 @@
-From: Eric Biggers <ebiggers@google.com>
-Subject: Re: [PATCH] Add an option to dm-verity to validate hashes at most
- once
-Date: Wed, 14 Mar 2018 12:09:57 -0700
-Message-ID: <20180314190957.GB183724@google.com>
-References: <20180306231456.210504-1-totte@google.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: [PATCH 03/12] libmultipath: set dm_conf_verbosity
+Date: Wed, 14 Mar 2018 12:46:36 -0500
+Message-ID: <1521049605-22050-4-git-send-email-bmarzins@redhat.com>
+References: <1521049605-22050-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180306231456.210504-1-totte@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Patrik Torstensson <totte@google.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, samitolvanen@google.com, gkaiser@google.com, paulcrowley@google.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1521049605-22050-1-git-send-email-bmarzins@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: Martin Wilck <mwilck@suse.com>, christophe.varoqui@free.fr
 List-Id: dm-devel.ids
 
-Hi Patrik,
+dm_conf_verbosity was created to keep dm_write_log from needing
+access to the multipath config. However it never was set.
 
-On Tue, Mar 06, 2018 at 03:14:56PM -0800, Patrik Torstensson wrote:
-> Add an option to dm-verity to validate hashes at most once
-> to allow platforms that is CPU/memory contraint to be
-> protected by dm-verity against offline attacks.
-> 
-> The option introduces a bitset that is used to check if
-> a block has been validated before or not. A block can
-> be validated more than once as there is no thread protection
-> for the bitset.
-> 
-> This patch has been developed and tested on entry-level
-> Android Go devices.
-> 
-> Signed-off-by: Patrik Torstensson <totte@google.com>
-> ---
->  drivers/md/dm-verity-target.c | 58 +++++++++++++++++++++++++++++++++--
->  drivers/md/dm-verity.h        |  1 +
->  2 files changed, 56 insertions(+), 3 deletions(-)
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/devmapper.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-The new option needs to be documented in Documentation/device-mapper/verity.txt,
-including a description of what the option does as well as how it affects the
-security properties of dm-verity.  There should also be a mention of why the
-option applies to data blocks but not hash blocks, assuming that's intentional.
-
-verity_status() also needs to be updated to show the new option, otherwise it
-will not be visible via the DM_TABLE_STATUS ioctl ('dmsetup table' on the
-command line).
-
-Also the minor version number in the struct target_type needs to be incremented,
-so that userspace can determine whether the option is supported.
-
->  
->  	for (b = 0; b < io->n_blocks; b++) {
->  		int r;
-> +		sector_t cur_block = io->block + b;
->  		struct ahash_request *req = verity_io_hash_req(v, io);
->  
-> +		if (v->validated_blocks &&
-> +		    likely(test_bit(cur_block, v->validated_blocks))) {
-> +			verity_bv_skip_block(v, io, &io->iter);
-> +			continue;
-> +		}
-> +
->  		r = verity_hash_for_block(v, io, io->block + b,
-
-Can you replace 'io->block + b' with 'cur_block' here as well?
-
-Thanks,
-
-- Eric
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index 767d87c..ef1fd2b 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -95,6 +95,7 @@ dm_write_log (int level, const char *file, int line, const char *f, ...)
+ 
+ void dm_init(int v)
+ {
++	dm_conf_verbosity = v;
+ 	dm_log_init(&dm_write_log);
+ 	dm_log_init_verbose(v + 3);
+ }
+-- 
+2.7.4
