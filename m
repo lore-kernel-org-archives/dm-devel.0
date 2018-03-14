@@ -1,7 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 04/12] multipathd: log thread cleanup
-Date: Wed, 14 Mar 2018 12:46:37 -0500
-Message-ID: <1521049605-22050-5-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 01/12] Unit tests for basenamecpy
+Date: Wed, 14 Mar 2018 12:46:34 -0500
+Message-ID: <1521049605-22050-2-git-send-email-bmarzins@redhat.com>
 References: <1521049605-22050-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,126 +21,201 @@ To: dm-devel@redhat.com
 Cc: Martin Wilck <mwilck@suse.com>, christophe.varoqui@free.fr
 List-Id: dm-devel.ids
 
-The function log_thread_flush() is an exact copy of flush_lgoqueue(), so
-both clearly don't need to exist. Also, There is no reason to make all
-of the log thread variables global.  The only time any of them were
-being used outside of log_thread.c, was to reset the log.  This code
-should never be run if the log_thread isn't running, so it makes more
-sense to live inside of log_thread.c
+The current implementation of basenamecpy is broken, so some of these
+tests currently fail. Fixes to follow.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/log_pthread.c | 34 +++++++++++++++-------------------
- libmultipath/log_pthread.h | 10 +---------
- multipathd/main.c          |  5 ++---
- 3 files changed, 18 insertions(+), 31 deletions(-)
+ tests/Makefile |   2 +-
+ tests/util.c   | 167 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 168 insertions(+), 1 deletion(-)
+ create mode 100644 tests/util.c
 
-diff --git a/libmultipath/log_pthread.c b/libmultipath/log_pthread.c
-index 035ae5d..f491386 100644
---- a/libmultipath/log_pthread.c
-+++ b/libmultipath/log_pthread.c
-@@ -14,13 +14,13 @@
- #include "log.h"
- #include "lock.h"
+diff --git a/tests/Makefile b/tests/Makefile
+index 81f5518..3450b14 100644
+--- a/tests/Makefile
++++ b/tests/Makefile
+@@ -3,7 +3,7 @@ include ../Makefile.inc
+ CFLAGS += $(BIN_CFLAGS) -I$(multipathdir) -I$(mpathcmddir)
+ LIBDEPS += -L$(multipathdir) -lmultipath -lcmocka
  
--pthread_t log_thr;
-+static pthread_t log_thr;
+-TESTS := uevent parser
++TESTS := uevent parser util
  
--pthread_mutex_t logq_lock;
--pthread_mutex_t logev_lock;
--pthread_cond_t logev_cond;
-+static pthread_mutex_t logq_lock;
-+static pthread_mutex_t logev_lock;
-+static pthread_cond_t logev_cond;
- 
--int logq_running;
-+static int logq_running;
- 
- void log_safe (int prio, const char * fmt, va_list ap)
- {
-@@ -38,19 +38,6 @@ void log_safe (int prio, const char * fmt, va_list ap)
- 	pthread_mutex_unlock(&logev_lock);
- }
- 
--void log_thread_flush (void)
--{
--	int empty;
--
--	do {
--		pthread_mutex_lock(&logq_lock);
--		empty = log_dequeue(la->buff);
--		pthread_mutex_unlock(&logq_lock);
--		if (!empty)
--			log_syslog(la->buff);
--	} while (empty == 0);
--}
--
- static void flush_logqueue (void)
- {
- 	int empty;
-@@ -82,7 +69,7 @@ static void * log_thread (void * et)
- 		pthread_mutex_unlock(&logev_lock);
- 		if (!running)
- 			break;
--		log_thread_flush();
-+		flush_logqueue();
- 	}
- 	return NULL;
- }
-@@ -107,6 +94,15 @@ void log_thread_start (pthread_attr_t *attr)
- 	return;
- }
- 
-+void log_thread_reset (void)
-+{
-+	logdbg(stderr,"resetting log\n");
+ .SILENT: $(TESTS:%=%.o)
+ .PRECIOUS: $(TESTS:%=%-test)
+diff --git a/tests/util.c b/tests/util.c
+new file mode 100644
+index 0000000..e9a004f
+--- /dev/null
++++ b/tests/util.c
+@@ -0,0 +1,167 @@
++/*
++ * Copyright (c) 2018 Benjamin Marzinski, Redhat
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License
++ * as published by the Free Software Foundation; either version 2
++ * of the License, or (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ *
++ */
 +
-+	pthread_mutex_lock(&logq_lock);
-+	log_reset("multipathd");
-+	pthread_mutex_unlock(&logq_lock);
++#include <stdbool.h>
++#include <stdarg.h>
++#include <stddef.h>
++#include <setjmp.h>
++#include <stdlib.h>
++#include <cmocka.h>
++#include "util.h"
++
++#include "globals.c"
++
++static void test_basenamecpy_good0(void **state)
++{
++	char dst[10];
++
++	assert_int_equal(basenamecpy("foobar", dst, sizeof(dst)), 6);
++	assert_string_equal(dst, "foobar");
 +}
 +
- void log_thread_stop (void)
- {
- 	logdbg(stderr,"enter log_thread_stop\n");
-diff --git a/libmultipath/log_pthread.h b/libmultipath/log_pthread.h
-index e5c6499..7e138a0 100644
---- a/libmultipath/log_pthread.h
-+++ b/libmultipath/log_pthread.h
-@@ -3,17 +3,9 @@
- 
- #include <pthread.h>
- 
--extern pthread_t log_thr;
--
--extern pthread_mutex_t logq_lock;
--extern pthread_mutex_t logev_lock;
--extern pthread_cond_t logev_cond;
--
--extern int logq_running;
--
- void log_safe(int prio, const char * fmt, va_list ap);
- void log_thread_start(pthread_attr_t *attr);
-+void log_thread_reset (void);
- void log_thread_stop(void);
--void log_thread_flush(void);
- 
- #endif /* _LOG_PTHREAD_H */
-diff --git a/multipathd/main.c b/multipathd/main.c
-index a03ba20..6ba6131 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -2219,9 +2219,8 @@ handle_signals(bool nonfatal)
- 	}
- 	if (log_reset_sig) {
- 		condlog(2, "reset log (signal)");
--		pthread_mutex_lock(&logq_lock);
--		log_reset("multipathd");
--		pthread_mutex_unlock(&logq_lock);
-+		if (logsink == 1)
-+			log_thread_reset();
- 	}
- 	reconfig_sig = 0;
- 	log_reset_sig = 0;
++static void test_basenamecpy_good1(void **state)
++{
++	char dst[10];
++
++	assert_int_equal(basenamecpy("foo/bar", dst, sizeof(dst)), 3);
++	assert_string_equal(dst, "bar");
++}
++
++static void test_basenamecpy_good2(void **state)
++{
++	char dst[10];
++
++	assert_int_equal(basenamecpy("/thud/blat", dst, sizeof(dst)), 4);
++	assert_string_equal(dst, "blat");
++}
++
++static void test_basenamecpy_good3(void **state)
++{
++	char dst[4];
++
++	assert_int_equal(basenamecpy("foo/bar", dst, sizeof(dst)), 3);
++	assert_string_equal(dst, "bar");
++}
++
++static void test_basenamecpy_good4(void **state)
++{
++	char dst[10];
++
++	assert_int_equal(basenamecpy("/xyzzy", dst, sizeof(dst)), 5);
++	assert_string_equal(dst, "xyzzy");
++}
++
++static void test_basenamecpy_good5(void **state)
++{
++	char dst[4];
++
++	assert_int_equal(basenamecpy("/foo/bar\n", dst, sizeof(dst)), 3);
++	assert_string_equal(dst, "bar");
++}
++
++static void test_basenamecpy_good6(void **state)
++{
++        char dst[6];
++
++        assert_int_equal(basenamecpy("/xyzzy/plugh   ", dst, sizeof(dst)), 5);
++        assert_string_equal(dst, "plugh");
++}
++
++static void test_basenamecpy_good7(void **state)
++{
++	char src[] = "/foo/bar";
++	char dst[10];
++
++	assert_int_equal(basenamecpy(src, dst, sizeof(dst)), 3);
++
++	strcpy(src, "badbadno");
++	assert_string_equal(dst, "bar");
++}
++
++/* buffer too small */
++static void test_basenamecpy_bad0(void **state)
++{
++        char dst[3];
++
++        assert_int_equal(basenamecpy("baz", dst, sizeof(dst)), 0);
++}
++
++/* ends in slash */
++static void test_basenamecpy_bad1(void **state)
++{
++        char dst[10];
++
++        assert_int_equal(basenamecpy("foo/bar/", dst, sizeof(dst)), 0);
++}
++
++static void test_basenamecpy_bad2(void **state)
++{
++        char dst[10];
++
++        assert_int_equal(basenamecpy(NULL, dst, sizeof(dst)), 0);
++}
++
++static void test_basenamecpy_bad3(void **state)
++{
++        char dst[10];
++
++        assert_int_equal(basenamecpy("", dst, sizeof(dst)), 0);
++}
++
++static void test_basenamecpy_bad4(void **state)
++{
++        char dst[10];
++
++        assert_int_equal(basenamecpy("/", dst, sizeof(dst)), 0);
++}
++
++static void test_basenamecpy_bad5(void **state)
++{
++        char dst[10];
++
++        assert_int_equal(basenamecpy("baz/qux", NULL, sizeof(dst)), 0);
++}
++
++int test_basenamecpy(void)
++{
++	const struct CMUnitTest tests[] = {
++		cmocka_unit_test(test_basenamecpy_good0),
++		cmocka_unit_test(test_basenamecpy_good1),
++		cmocka_unit_test(test_basenamecpy_good2),
++		cmocka_unit_test(test_basenamecpy_good3),
++		cmocka_unit_test(test_basenamecpy_good4),
++		cmocka_unit_test(test_basenamecpy_good5),
++		cmocka_unit_test(test_basenamecpy_good6),
++		cmocka_unit_test(test_basenamecpy_good7),
++		cmocka_unit_test(test_basenamecpy_bad0),
++		cmocka_unit_test(test_basenamecpy_bad1),
++		cmocka_unit_test(test_basenamecpy_bad2),
++		cmocka_unit_test(test_basenamecpy_bad3),
++		cmocka_unit_test(test_basenamecpy_bad4),
++		cmocka_unit_test(test_basenamecpy_bad5),
++	};
++	return cmocka_run_group_tests(tests, NULL, NULL);
++}
++
++int main(void)
++{
++	int ret = 0;
++
++	ret += test_basenamecpy();
++	return ret;
++}
 -- 
 2.7.4
