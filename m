@@ -1,8 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 07/12] libmultipath: move remove_map waiter code
-	to multipathd
-Date: Wed, 14 Mar 2018 12:46:40 -0500
-Message-ID: <1521049605-22050-8-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 10/12] libmultipath: add helper functions
+Date: Wed, 14 Mar 2018 12:46:43 -0500
+Message-ID: <1521049605-22050-11-git-send-email-bmarzins@redhat.com>
 References: <1521049605-22050-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,146 +21,153 @@ To: dm-devel@redhat.com
 Cc: Martin Wilck <mwilck@suse.com>, christophe.varoqui@free.fr
 List-Id: dm-devel.ids
 
-Only multipathd needs to worry about the multipath waiter code. There is
-no point in having remove_map_and_stop_waiter() or
-remove_maps_and_stop_waiters() in libmultipath, since they should never
-be use outside of multipathd.
+Add the ability to reset a vector without completely freeing it, and to
+check the version of the device-mapper module.  The existing version
+checking code checks the version of a specific device mapper target, and
+has been renamed for clarity's sake. These functions will be used in a
+later patch.
 
 Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/structs_vec.c | 40 +++++-----------------------------------
- libmultipath/structs_vec.h |  2 --
- multipathd/main.c          | 23 +++++++++++++++++++++++
- 3 files changed, 28 insertions(+), 37 deletions(-)
+ libmultipath/devmapper.c | 28 ++++++++++++++++++++++++----
+ libmultipath/devmapper.h |  3 ++-
+ libmultipath/vector.c    | 16 ++++++++++++----
+ libmultipath/vector.h    |  1 +
+ multipathd/main.c        |  2 +-
+ 5 files changed, 40 insertions(+), 10 deletions(-)
 
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index f9dc8a8..41e5d88 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -117,25 +117,16 @@ set_multipath_wwid (struct multipath * mpp)
- 	dm_get_uuid(mpp->alias, mpp->wwid);
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index ef1fd2b..9bafbc6 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -130,7 +130,27 @@ dm_lib_prereq (void)
  }
  
--#define KEEP_WAITER 0
--#define STOP_WAITER 1
- #define PURGE_VEC 1
- 
--static void
--_remove_map (struct multipath * mpp, struct vectors * vecs,
--	    int stop_waiter, int purge_vec)
-+void
-+remove_map(struct multipath * mpp, struct vectors * vecs, int purge_vec)
+ int
+-dm_drv_version (unsigned int * version, char * str)
++dm_drv_version(unsigned int *v)
++{
++	char buff[64];
++
++	v[0] = 0;
++	v[1] = 0;
++	v[2] = 0;
++
++	if (!dm_driver_version(buff, sizeof(buff))) {
++		condlog(0, "cannot get kernel dm version");
++		return 1;
++	}
++	if (sscanf(buff, "%u.%u.%u ", &v[0], &v[1], &v[2]) != 3) {
++		condlog(0, "invalid kernel dm version '%s'", buff);
++		return 1;
++	}
++	return 0;
++}
++
++int
++dm_tgt_version (unsigned int * version, char * str)
  {
- 	int i;
- 
- 	condlog(4, "%s: remove multipath map", mpp->alias);
- 
- 	/*
--	 * stop the DM event waiter thread
--	 */
--	if (stop_waiter)
--		stop_waiter_thread(mpp, vecs);
--
--	/*
- 	 * clear references to this map
- 	 */
- 	orphan_paths(vecs->pathvec, mpp);
-@@ -150,19 +141,8 @@ _remove_map (struct multipath * mpp, struct vectors * vecs,
- 	free_multipath(mpp, KEEP_PATHS);
+ 	int r = 2;
+ 	struct dm_task *dmt;
+@@ -177,13 +197,13 @@ out:
  }
  
--void remove_map(struct multipath *mpp, struct vectors *vecs, int purge_vec)
--{
--	_remove_map(mpp, vecs, KEEP_WAITER, purge_vec);
--}
--
--void remove_map_and_stop_waiter(struct multipath *mpp, struct vectors *vecs,
--				int purge_vec)
--{
--	_remove_map(mpp, vecs, STOP_WAITER, purge_vec);
--}
--
--static void
--_remove_maps (struct vectors * vecs, int stop_waiter)
-+void
-+remove_maps(struct vectors * vecs)
+ static int
+-dm_drv_prereq (unsigned int *ver)
++dm_tgt_prereq (unsigned int *ver)
  {
- 	int i;
- 	struct multipath * mpp;
-@@ -171,7 +151,7 @@ _remove_maps (struct vectors * vecs, int stop_waiter)
- 		return;
+ 	unsigned int minv[3] = {1, 0, 3};
+ 	unsigned int version[3] = {0, 0, 0};
+ 	unsigned int * v = version;
  
- 	vector_foreach_slot (vecs->mpvec, mpp, i) {
--		_remove_map(mpp, vecs, stop_waiter, 1);
-+		remove_map(mpp, vecs, 1);
- 		i--;
+-	if (dm_drv_version(v, TGT_MPATH)) {
++	if (dm_tgt_version(v, TGT_MPATH)) {
+ 		/* in doubt return not capable */
+ 		return 1;
  	}
- 
-@@ -179,16 +159,6 @@ _remove_maps (struct vectors * vecs, int stop_waiter)
- 	vecs->mpvec = NULL;
+@@ -208,7 +228,7 @@ static int dm_prereq(unsigned int *v)
+ {
+ 	if (dm_lib_prereq())
+ 		return 1;
+-	return dm_drv_prereq(v);
++	return dm_tgt_prereq(v);
  }
  
--void remove_maps(struct vectors *vecs)
--{
--	_remove_maps(vecs, KEEP_WAITER);
--}
--
--void remove_maps_and_stop_waiters(struct vectors *vecs)
--{
--	_remove_maps(vecs, STOP_WAITER);
--}
--
- void
- extract_hwe_from_path(struct multipath * mpp)
+ static int libmp_dm_udev_sync = 0;
+diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
+index 8c8ea6c..db75526 100644
+--- a/libmultipath/devmapper.h
++++ b/libmultipath/devmapper.h
+@@ -31,7 +31,8 @@ void dm_init(int verbosity);
+ void libmp_dm_init(void);
+ void libmp_udev_set_sync_support(int on);
+ struct dm_task *libmp_dm_task_create(int task);
+-int dm_drv_version (unsigned int * version, char * str);
++int dm_drv_version (unsigned int * version);
++int dm_tgt_version (unsigned int * version, char * str);
+ int dm_simplecmd_flush (int, const char *, uint16_t);
+ int dm_simplecmd_noflush (int, const char *, uint16_t);
+ int dm_addmap_create (struct multipath *mpp, char *params);
+diff --git a/libmultipath/vector.c b/libmultipath/vector.c
+index 6266e0a..f741ae0 100644
+--- a/libmultipath/vector.c
++++ b/libmultipath/vector.c
+@@ -145,18 +145,26 @@ vector_repack(vector v)
+ 			vector_del_slot(v, i--);
+ }
+ 
+-/* Free memory vector allocation */
+-void
+-vector_free(vector v)
++vector
++vector_reset(vector v)
  {
-diff --git a/libmultipath/structs_vec.h b/libmultipath/structs_vec.h
-index 3749eb6..2a0be93 100644
---- a/libmultipath/structs_vec.h
-+++ b/libmultipath/structs_vec.h
-@@ -27,9 +27,7 @@ int update_multipath_strings (struct multipath *mpp, vector pathvec,
- void extract_hwe_from_path(struct multipath * mpp);
+ 	if (!v)
+-		return;
++		return NULL;
  
- void remove_map (struct multipath * mpp, struct vectors * vecs, int purge_vec);
--void remove_map_and_stop_waiter (struct multipath * mpp, struct vectors * vecs, int purge_vec);
- void remove_maps (struct vectors * vecs);
--void remove_maps_and_stop_waiters (struct vectors * vecs);
+ 	if (v->slot)
+ 		FREE(v->slot);
  
- void sync_map_state (struct multipath *);
- int update_map (struct multipath *mpp, struct vectors *vecs);
+ 	v->allocated = 0;
+ 	v->slot = NULL;
++	return v;
++}
++
++/* Free memory vector allocation */
++void
++vector_free(vector v)
++{
++	if (!vector_reset(v))
++		return;
+ 	FREE(v);
+ }
+ 
+diff --git a/libmultipath/vector.h b/libmultipath/vector.h
+index 6018b57..b9450ac 100644
+--- a/libmultipath/vector.h
++++ b/libmultipath/vector.h
+@@ -74,6 +74,7 @@ typedef struct _vector *vector;
+ /* Prototypes */
+ extern vector vector_alloc(void);
+ extern void *vector_alloc_slot(vector v);
++vector vector_reset(vector v);
+ extern void vector_free(vector v);
+ #define vector_free_const(x) vector_free((vector)(long)(x))
+ extern void free_strvec(vector strvec);
 diff --git a/multipathd/main.c b/multipathd/main.c
-index ce914ab..32cd6fe 100644
+index f116c74..aa86785 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -293,6 +293,29 @@ switch_pathgroup (struct multipath * mpp)
- 		 mpp->alias, mpp->bestpg);
- }
+@@ -2259,7 +2259,7 @@ reconfigure (struct vectors * vecs)
+ 	/* Re-read any timezone changes */
+ 	tzset();
  
-+static void
-+remove_map_and_stop_waiter(struct multipath *mpp, struct vectors *vecs,
-+			   int purge_vec)
-+{
-+	stop_waiter_thread(mpp, vecs);
-+	remove_map(mpp, vecs, purge_vec);
-+}
-+
-+static void
-+remove_maps_and_stop_waiters(struct vectors *vecs)
-+{
-+	int i;
-+	struct multipath * mpp;
-+
-+	if (!vecs)
-+		return;
-+
-+	vector_foreach_slot(vecs->mpvec, mpp, i)
-+		stop_waiter_thread(mpp, vecs);
-+
-+	remove_maps(vecs);
-+}
-+
- static int
- coalesce_maps(struct vectors *vecs, vector nmpv)
- {
+-	dm_drv_version(conf->version, TGT_MPATH);
++	dm_tgt_version(conf->version, TGT_MPATH);
+ 	if (verbosity)
+ 		conf->verbosity = verbosity;
+ 	if (bindings_read_only)
 -- 
 2.7.4
