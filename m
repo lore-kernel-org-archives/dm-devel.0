@@ -1,7 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 03/12] libmultipath: set dm_conf_verbosity
-Date: Wed, 14 Mar 2018 12:46:36 -0500
-Message-ID: <1521049605-22050-4-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 05/12] libmultipath: fix log_pthread processing
+Date: Wed, 14 Mar 2018 12:46:38 -0500
+Message-ID: <1521049605-22050-6-git-send-email-bmarzins@redhat.com>
 References: <1521049605-22050-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,25 +21,45 @@ To: dm-devel@redhat.com
 Cc: Martin Wilck <mwilck@suse.com>, christophe.varoqui@free.fr
 List-Id: dm-devel.ids
 
-dm_conf_verbosity was created to keep dm_write_log from needing
-access to the multipath config. However it never was set.
+log_pthread() was waiting for notification on logev_cond, without
+checking if it had already happened.  This means it could end up
+waiting, while there is work that it should be doing.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/devmapper.c | 1 +
- 1 file changed, 1 insertion(+)
+ libmultipath/log_pthread.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index 767d87c..ef1fd2b 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -95,6 +95,7 @@ dm_write_log (int level, const char *file, int line, const char *f, ...)
+diff --git a/libmultipath/log_pthread.c b/libmultipath/log_pthread.c
+index f491386..bb35dfc 100644
+--- a/libmultipath/log_pthread.c
++++ b/libmultipath/log_pthread.c
+@@ -21,6 +21,7 @@ static pthread_mutex_t logev_lock;
+ static pthread_cond_t logev_cond;
  
- void dm_init(int v)
+ static int logq_running;
++static int log_messages_pending;
+ 
+ void log_safe (int prio, const char * fmt, va_list ap)
  {
-+	dm_conf_verbosity = v;
- 	dm_log_init(&dm_write_log);
- 	dm_log_init_verbose(v + 3);
+@@ -34,6 +35,7 @@ void log_safe (int prio, const char * fmt, va_list ap)
+ 	pthread_mutex_unlock(&logq_lock);
+ 
+ 	pthread_mutex_lock(&logev_lock);
++	log_messages_pending = 1;
+ 	pthread_cond_signal(&logev_cond);
+ 	pthread_mutex_unlock(&logev_lock);
  }
+@@ -64,7 +66,9 @@ static void * log_thread (void * et)
+ 
+ 	while (1) {
+ 		pthread_mutex_lock(&logev_lock);
+-		pthread_cond_wait(&logev_cond, &logev_lock);
++		if (logq_running && !log_messages_pending)
++			pthread_cond_wait(&logev_cond, &logev_lock);
++		log_messages_pending = 0;
+ 		running = logq_running;
+ 		pthread_mutex_unlock(&logev_lock);
+ 		if (!running)
 -- 
 2.7.4
