@@ -1,8 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 11/12] multipathd: add new polling dmevents
-	waiter thread
-Date: Wed, 14 Mar 2018 12:46:44 -0500
-Message-ID: <1521049605-22050-12-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 12/12] multipath: add unit tests for dmevents code
+Date: Wed, 14 Mar 2018 12:46:45 -0500
+Message-ID: <1521049605-22050-13-git-send-email-bmarzins@redhat.com>
 References: <1521049605-22050-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,693 +21,901 @@ To: dm-devel@redhat.com
 Cc: Martin Wilck <mwilck@suse.com>, christophe.varoqui@free.fr
 List-Id: dm-devel.ids
 
-The current method of waiting for dmevents on multipath devices involves
-creating a seperate thread for each device. This can become very
-wasteful when there are large numbers of multipath devices. Also, since
-multipathd needs to grab the vecs lock to update the devices, the
-additional threads don't actually provide much parallelism.
-
-The patch adds a new method of updating multipath devices on dmevents,
-which uses the new device-mapper event polling interface. This means
-that there is only one dmevent waiting thread which will wait for events
-on all of the multipath devices.  Currently the code to get the event
-number from the list of device names and to re-arm the polling interface
-is not in libdevmapper, so the patch does that work. Obviously, these
-bits need to go into libdevmapper, so that multipathd can use a standard
-interface.
-
-I haven't touched any of the existing event waiting code, since event
-polling was only added to device-mapper in version 4.37.0.  multipathd
-checks this version, and defaults to using the polling code if
-device-mapper supports it. This can be overridden by running multipathd
-with "-w", to force it to use the old event waiting code.
+These unit tests do not get complete code coverage. Also, they don't
+check for memory errors. To do this through unit tests, instead of
+using valgrid, would require adding unit test specific compilation
+defines to the code, and compiling a seperate unit-test version.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- Makefile.inc               |   3 +
- libmultipath/structs_vec.c |   8 +
- libmultipath/structs_vec.h |   2 +
- multipathd/Makefile        |   6 +-
- multipathd/dmevents.c      | 392 +++++++++++++++++++++++++++++++++++++++++++++
- multipathd/dmevents.h      |  13 ++
- multipathd/main.c          |  62 ++++++-
- 7 files changed, 477 insertions(+), 9 deletions(-)
- create mode 100644 multipathd/dmevents.c
- create mode 100644 multipathd/dmevents.h
+ tests/Makefile   |   9 +-
+ tests/dmevents.c | 847 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 853 insertions(+), 3 deletions(-)
+ create mode 100644 tests/dmevents.c
 
-diff --git a/Makefile.inc b/Makefile.inc
-index 5d6123d..57a1835 100644
---- a/Makefile.inc
-+++ b/Makefile.inc
-@@ -14,6 +14,9 @@
- #
- # Uncomment to disable libdmmp support
- # ENABLE_LIBDMMP = 0
-+#
-+# Uncomment to disable dmevents polling support
-+# ENABLE_DMEVENTS_POLL = 0
+diff --git a/tests/Makefile b/tests/Makefile
+index 3450b14..1f36411 100644
+--- a/tests/Makefile
++++ b/tests/Makefile
+@@ -3,11 +3,16 @@ include ../Makefile.inc
+ CFLAGS += $(BIN_CFLAGS) -I$(multipathdir) -I$(mpathcmddir)
+ LIBDEPS += -L$(multipathdir) -lmultipath -lcmocka
  
- ifeq ($(TOPDIR),)
- 	TOPDIR	= ..
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index 9a01631..e9a0274 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -130,6 +130,14 @@ remove_map(struct multipath * mpp, struct vectors * vecs, int purge_vec)
- }
+-TESTS := uevent parser util
++TESTS := uevent parser util dmevents
  
- void
-+remove_map_by_alias(const char *alias, struct vectors * vecs, int purge_vec)
-+{
-+	struct multipath * mpp = find_mp_by_alias(vecs->mpvec, alias);
-+	if (mpp)
-+		remove_map(mpp, vecs, purge_vec);
-+}
+ .SILENT: $(TESTS:%=%.o)
+ .PRECIOUS: $(TESTS:%=%-test)
+ 
++all:	$(TESTS:%=%.out)
 +
-+void
- remove_maps(struct vectors * vecs)
- {
- 	int i;
-diff --git a/libmultipath/structs_vec.h b/libmultipath/structs_vec.h
-index ceab6d9..0adba17 100644
---- a/libmultipath/structs_vec.h
-+++ b/libmultipath/structs_vec.h
-@@ -29,6 +29,8 @@ void extract_hwe_from_path(struct multipath * mpp);
- #define PURGE_VEC 1
++dmevents-test: dmevents.o ../multipathd/dmevents.c globals.c $(multipathdir)/libmultipath.so
++	@$(CC) -o $@ $< $(LDFLAGS) $(LIBDEPS) -lpthread -ldevmapper -lurcu -Wl,--wrap=open -Wl,--wrap=close -Wl,--wrap=dm_is_mpath -Wl,--wrap=dm_geteventnr -Wl,--wrap=ioctl -Wl,--wrap=libmp_dm_task_create -Wl,--wrap=dm_task_no_open_count -Wl,--wrap=dm_task_run -Wl,--wrap=dm_task_get_names -Wl,--wrap=dm_task_destroy -Wl,--wrap=poll -Wl,--wrap=remove_map_by_alias -Wl,--wrap=update_multipath
++
+ %-test:	%.o globals.c $(multipathdir)/libmultipath.so
+ 	@$(CC) -o $@ $< $(LDFLAGS) $(LIBDEPS)
  
- void remove_map (struct multipath * mpp, struct vectors * vecs, int purge_vec);
-+void remove_map_by_alias(const char *alias, struct vectors * vecs,
-+			 int purge_vec);
- void remove_maps (struct vectors * vecs);
+@@ -15,8 +20,6 @@ TESTS := uevent parser util
+ 	@echo == running $< ==
+ 	@LD_LIBRARY_PATH=$(multipathdir):$(mpathcmddir) ./$< >$@
  
- void sync_map_state (struct multipath *);
-diff --git a/multipathd/Makefile b/multipathd/Makefile
-index 7800e47..d1a9863 100644
---- a/multipathd/Makefile
-+++ b/multipathd/Makefile
-@@ -21,8 +21,12 @@ ifdef SYSTEMD
- 		LIBDEPS += -lsystemd-daemon
- 	endif
- endif
-+ifeq ($(ENABLE_DMEVENTS_POLL),0)
-+	CFLAGS += -DNO_DMEVENTS_POLL
-+endif
+-all:	$(TESTS:%=%.out)
+-
+ clean: dep_clean
+ 	rm -f $(TESTS:%=%-test) $(TESTS:%=%.out) $(TESTS:%=%.o)
  
--OBJS = main.o pidfile.o uxlsnr.o uxclnt.o cli.o cli_handlers.o waiter.o
-+OBJS = main.o pidfile.o uxlsnr.o uxclnt.o cli.o cli_handlers.o waiter.o \
-+       dmevents.o
- 
- EXEC = multipathd
- 
-diff --git a/multipathd/dmevents.c b/multipathd/dmevents.c
+diff --git a/tests/dmevents.c b/tests/dmevents.c
 new file mode 100644
-index 0000000..1ef811e
+index 0000000..4442fc2
 --- /dev/null
-+++ b/multipathd/dmevents.c
-@@ -0,0 +1,392 @@
++++ b/tests/dmevents.c
+@@ -0,0 +1,847 @@
 +/*
-+ * Copyright (c) 2004, 2005 Christophe Varoqui
-+ * Copyright (c) 2005 Kiyoshi Ueda, NEC
-+ * Copyright (c) 2005 Edward Goggin, EMC
-+ * Copyright (c) 2005, 2018 Benjamin Marzinski, Redhat
++ * Copyright (c) 2018 Benjamin Marzinski, Redhat
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License
++ * as published by the Free Software Foundation; either version 2
++ * of the License, or (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ *
 + */
-+#include <unistd.h>
-+#include <libdevmapper.h>
-+#include <sys/mman.h>
-+#include <pthread.h>
-+#include <urcu.h>
-+#include <poll.h>
-+#include <sys/ioctl.h>
++
++#include <stdint.h>
++#include <stdbool.h>
++#include <stdarg.h>
++#include <stddef.h>
++#include <setjmp.h>
++#include <stdlib.h>
++#include <cmocka.h>
 +#include <sys/types.h>
 +#include <sys/stat.h>
 +#include <fcntl.h>
-+#include <linux/dm-ioctl.h>
-+#include <errno.h>
-+
-+#include "vector.h"
 +#include "structs.h"
 +#include "structs_vec.h"
-+#include "devmapper.h"
-+#include "debug.h"
-+#include "dmevents.h"
 +
-+#ifndef DM_DEV_ARM_POLL
-+#define DM_DEV_ARM_POLL _IOWR(DM_IOCTL, DM_DEV_SET_GEOMETRY_CMD + 1, struct dm_ioctl)
-+#endif
++#include "globals.c"
++/* I have to do this to get at the static variables */
++#include "../multipathd/dmevents.c"
 +
-+enum event_actions {
-+	EVENT_NOTHING,
-+	EVENT_REMOVE,
-+	EVENT_UPDATE,
-+};
-+
-+struct dev_event {
++struct dm_device {
 +	char name[WWID_SIZE];
++	int is_mpath;
 +	uint32_t evt_nr;
-+	enum event_actions action;
++	uint32_t update_nr;
 +};
 +
-+struct dmevent_waiter {
-+	int fd;
-+	struct vectors *vecs;
-+	vector events;
-+	pthread_mutex_t events_lock;
-+};
-+
-+static struct dmevent_waiter *waiter;
-+
-+int dmevent_poll_supported(void)
-+{
-+	unsigned int minv[3] = {4, 37, 0};
-+	unsigned int v[3];
-+
-+	if (dm_drv_version(v))
-+		return 0;
-+
-+	if (VERSION_GE(v, minv))
-+		return 1;
-+	return 0;
-+}
-+
-+
-+int init_dmevent_waiter(struct vectors *vecs)
-+{
-+	if (!vecs) {
-+		condlog(0, "can't create waiter structure. invalid vectors");
-+		goto fail;
-+	}
-+	waiter = (struct dmevent_waiter *)malloc(sizeof(struct dmevent_waiter));
-+	if (!waiter) {
-+		condlog(0, "failed to allocate waiter structure");
-+		goto fail;
-+	}
-+	memset(waiter, 0, sizeof(struct dmevent_waiter));
-+	waiter->events = vector_alloc();
-+	if (!waiter->events) {
-+		condlog(0, "failed to allocate waiter events vector");
-+		goto fail_waiter;
-+	}
-+	waiter->fd = open("/dev/mapper/control", O_RDWR);
-+	if (waiter->fd < 0) {
-+		condlog(0, "failed to open /dev/mapper/control for waiter");
-+		goto fail_events;
-+	}
-+	pthread_mutex_init(&waiter->events_lock, NULL);
-+	waiter->vecs = vecs;
-+
-+	return 0;
-+fail_events:
-+	vector_free(waiter->events);
-+fail_waiter:
-+	free(waiter);
-+fail:
-+	waiter = NULL;
-+	return -1;
-+}
-+
-+void cleanup_dmevent_waiter(void)
-+{
-+	struct dev_event *dev_evt;
-+	int i;
-+
-+	if (!waiter)
-+		return;
-+	pthread_mutex_destroy(&waiter->events_lock);
-+	close(waiter->fd);
-+	vector_foreach_slot(waiter->events, dev_evt, i)
-+		free(dev_evt);
-+	vector_free(waiter->events);
-+	free(waiter);
-+	waiter = NULL;
-+}
-+
-+static int arm_dm_event_poll(int fd)
-+{
-+	struct dm_ioctl dmi;
-+	memset(&dmi, 0, sizeof(dmi));
-+	dmi.version[0] = DM_VERSION_MAJOR;
-+	dmi.version[1] = DM_VERSION_MINOR;
-+	dmi.version[2] = DM_VERSION_PATCHLEVEL;
-+	dmi.flags = 0x4;
-+	dmi.data_start = offsetof(struct dm_ioctl, data);
-+	dmi.data_size = sizeof(dmi);
-+	return ioctl(fd, DM_DEV_ARM_POLL, &dmi);
-+}
-+
-+/*
-+ * As of version 4.37.0 device-mapper stores the event number in the
-+ * dm_names structure after the name, when DM_DEVICE_LIST is called
-+ */
-+static uint32_t dm_event_nr(struct dm_names *n)
-+{
-+	return *(uint32_t *)(((uintptr_t)(strchr(n->name, 0) + 1) + 7) & ~7);
-+}
-+
-+static int dm_get_events(void)
-+{
-+	struct dm_task *dmt;
++struct test_data {
++	struct vectors vecs;
++	vector dm_devices;
 +	struct dm_names *names;
-+	struct dev_event *dev_evt;
-+	int i;
++};
 +
-+	if (!(dmt = libmp_dm_task_create(DM_DEVICE_LIST)))
-+		return -1;
++struct test_data data;
 +
-+	dm_task_no_open_count(dmt);
-+
-+	if (!dm_task_run(dmt))
-+		goto fail;
-+
-+	if (!(names = dm_task_get_names(dmt)))
-+		goto fail;
-+
-+	pthread_mutex_lock(&waiter->events_lock);
-+	vector_foreach_slot(waiter->events, dev_evt, i)
-+		dev_evt->action = EVENT_REMOVE;
-+	while (names->dev) {
-+		uint32_t event_nr;
-+
-+		if (!dm_is_mpath(names->name))
-+			goto next;
-+
-+		event_nr = dm_event_nr(names);
-+		vector_foreach_slot(waiter->events, dev_evt, i) {
-+			if (!strcmp(dev_evt->name, names->name)) {
-+				if (event_nr != dev_evt->evt_nr) {
-+					dev_evt->evt_nr = event_nr;
-+					dev_evt->action = EVENT_UPDATE;
-+				} else
-+					dev_evt->action = EVENT_NOTHING;
-+				break;
-+			}
-+		}
-+next:
-+		if (!names->next)
-+			break;
-+		names = (void *)names + names->next;
-+	}
-+	pthread_mutex_unlock(&waiter->events_lock);
-+	dm_task_destroy(dmt);
-+	return 0;
-+
-+fail:
-+	dm_task_destroy(dmt);
-+	return -1;
-+}
-+
-+/* You must call update_multipath() after calling this function, to
-+ * deal with any events that came in before the device was added */
-+int watch_dmevents(char *name)
++int add_dm_device_event(char *name, int is_mpath, uint32_t evt_nr)
 +{
-+	int event_nr;
-+	struct dev_event *dev_evt, *old_dev_evt;
++	struct dm_device *dev;
 +	int i;
 +
-+	if (!dm_is_mpath(name)) {
-+		condlog(0, "%s: not a multipath device. can't watch events",
-+			name);
-+		return -1;
-+	}
-+
-+	if ((event_nr = dm_geteventnr(name)) < 0)
-+		return -1;
-+
-+	dev_evt = (struct dev_event *)malloc(sizeof(struct dev_event));
-+	if (!dev_evt) {
-+		condlog(0, "%s: can't allocate event waiter structure", name);
-+		return -1;
-+	}
-+
-+	strncpy(dev_evt->name, name, WWID_SIZE);
-+	dev_evt->name[WWID_SIZE - 1] = 0;
-+	dev_evt->evt_nr = event_nr;
-+	dev_evt->action = EVENT_NOTHING;
-+
-+	pthread_mutex_lock(&waiter->events_lock);
-+	vector_foreach_slot(waiter->events, old_dev_evt, i){
-+		if (!strcmp(dev_evt->name, old_dev_evt->name)) {
-+			/* caller will be updating this device */
-+			old_dev_evt->evt_nr = event_nr;
-+			old_dev_evt->action = EVENT_NOTHING;
-+			pthread_mutex_unlock(&waiter->events_lock);
-+			condlog(2, "%s: already waiting for events on device",
-+				name);
-+			free(dev_evt);
++	vector_foreach_slot(data.dm_devices, dev, i) {
++		if (strcmp(name, dev->name) == 0) {
++			dev->evt_nr = evt_nr;
 +			return 0;
 +		}
 +	}
-+	if (!vector_alloc_slot(waiter->events)) {
-+		pthread_mutex_unlock(&waiter->events_lock);
-+		free(dev_evt);
++	dev = (struct dm_device *)malloc(sizeof(struct dm_device));
++	if (!dev){
++		condlog(0, "Testing error mallocing dm_device");
 +		return -1;
 +	}
-+	vector_set_slot(waiter->events, dev_evt);
-+	pthread_mutex_unlock(&waiter->events_lock);
++	strncpy(dev->name, name, WWID_SIZE);
++	dev->name[WWID_SIZE - 1] = 0;
++	dev->is_mpath = is_mpath;
++	dev->evt_nr = evt_nr;
++	if (!vector_alloc_slot(data.dm_devices)) {
++		condlog(0, "Testing error setting dm_devices slot");
++		free(dev);
++		return -1;
++	}
++	vector_set_slot(data.dm_devices, dev);
 +	return 0;
 +}
 +
-+void unwatch_all_dmevents(void)
++struct dm_device *find_dm_device(const char *name)
 +{
-+	struct dev_event *dev_evt;
++	struct dm_device *dev;
 +	int i;
 +
-+	pthread_mutex_lock(&waiter->events_lock);
-+	vector_foreach_slot(waiter->events, dev_evt, i)
-+		free(dev_evt);
-+	vector_reset(waiter->events);
-+	pthread_mutex_unlock(&waiter->events_lock);
-+}
-+
-+static void unwatch_dmevents(char *name)
-+{
-+	struct dev_event *dev_evt;
-+	int i;
-+
-+	pthread_mutex_lock(&waiter->events_lock);
-+	vector_foreach_slot(waiter->events, dev_evt, i) {
-+		if (!strcmp(dev_evt->name, name)) {
-+			vector_del_slot(waiter->events, i);
-+			free(dev_evt);
-+			break;
-+		}
-+	}
-+	pthread_mutex_unlock(&waiter->events_lock);
-+}
-+
-+/*
-+ * returns the reschedule delay
-+ * negative means *stop*
-+ */
-+
-+/* poll, arm, update, return */
-+static int dmevent_loop (void)
-+{
-+	int r, i = 0;
-+	struct pollfd pfd;
-+	struct dev_event *dev_evt;
-+
-+	pfd.fd = waiter->fd;
-+	pfd.events = POLLIN;
-+	r = poll(&pfd, 1, -1);
-+	if (r <= 0) {
-+		condlog(0, "failed polling for dm events: %s", strerror(errno));
-+		/* sleep 1s and hope things get better */
-+		return 1;
-+	}
-+
-+	if (arm_dm_event_poll(waiter->fd) != 0) {
-+		condlog(0, "Cannot re-arm event polling: %s", strerror(errno));
-+		/* sleep 1s and hope things get better */
-+		return 1;
-+	}
-+
-+	if (dm_get_events() != 0) {
-+		condlog(0, "failed getting dm events: %s", strerror(errno));
-+		/* sleep 1s and hope things get better */
-+		return 1;
-+	}
-+
-+	/*
-+	 * upon event ...
-+	 */
-+
-+	while (1) {
-+		int done = 1;
-+		struct dev_event curr_dev;
-+
-+		pthread_mutex_lock(&waiter->events_lock);
-+		vector_foreach_slot(waiter->events, dev_evt, i) {
-+			if (dev_evt->action != EVENT_NOTHING) {
-+				curr_dev = *dev_evt;
-+				if (dev_evt->action == EVENT_REMOVE) {
-+					vector_del_slot(waiter->events, i);
-+					free(dev_evt);
-+				} else
-+					dev_evt->action = EVENT_NOTHING;
-+				done = 0;
-+				break;
-+			}
-+		}
-+		pthread_mutex_unlock(&waiter->events_lock);
-+		if (done)
-+			return 1;
-+
-+		condlog(3, "%s: devmap event #%i", curr_dev.name,
-+			curr_dev.evt_nr);
-+
-+		/*
-+		 * event might be :
-+		 *
-+		 * 1) a table reload, which means our mpp structure is
-+		 *    obsolete : refresh it through update_multipath()
-+		 * 2) a path failed by DM : mark as such through
-+		 *    update_multipath()
-+		 * 3) map has gone away : stop the thread.
-+		 * 4) a path reinstate : nothing to do
-+		 * 5) a switch group : nothing to do
-+		 */
-+		pthread_cleanup_push(cleanup_lock, &waiter->vecs->lock);
-+		lock(&waiter->vecs->lock);
-+		pthread_testcancel();
-+		r = 0;
-+		if (curr_dev.action == EVENT_REMOVE)
-+			remove_map_by_alias(curr_dev.name, waiter->vecs, 1);
-+		else
-+			r = update_multipath(waiter->vecs, curr_dev.name, 1);
-+		lock_cleanup_pop(&waiter->vecs->lock);
-+
-+		if (r) {
-+			condlog(2, "%s: stopped watching dmevents",
-+				curr_dev.name);
-+			unwatch_dmevents(curr_dev.name);
-+		}
-+	}
-+	condlog(0, "dmevent waiter thread unexpectedly quit");
-+	return -1; /* never reach there */
-+}
-+
-+static void rcu_unregister(void *param)
-+{
-+	rcu_unregister_thread();
-+}
-+
-+void *wait_dmevents (void *unused)
-+{
-+	int r;
-+
-+
-+	if (!waiter) {
-+		condlog(0, "dmevents waiter not intialized");
-+		return NULL;
-+	}
-+
-+	pthread_cleanup_push(rcu_unregister, NULL);
-+	rcu_register_thread();
-+	mlockall(MCL_CURRENT | MCL_FUTURE);
-+
-+	while (1) {
-+		r = dmevent_loop();
-+
-+		if (r < 0)
-+			break;
-+
-+		sleep(r);
-+	}
-+
-+	pthread_cleanup_pop(1);
++	vector_foreach_slot(data.dm_devices, dev, i)
++		if (strcmp(name, dev->name) == 0)
++			return dev;
 +	return NULL;
 +}
-diff --git a/multipathd/dmevents.h b/multipathd/dmevents.h
-new file mode 100644
-index 0000000..012fbad
---- /dev/null
-+++ b/multipathd/dmevents.h
-@@ -0,0 +1,13 @@
-+#ifndef _DMEVENTS_H
-+#define _DMEVENTS_H
 +
-+#include "structs_vec.h"
-+
-+int dmevent_poll_supported(void);
-+int init_dmevent_waiter(struct vectors *vecs);
-+void cleanup_dmevent_waiter(void);
-+int watch_dmevents(char *name);
-+void unwatch_all_dmevents(void);
-+void *wait_dmevents (void *unused);
-+
-+#endif /* _DMEVENTS_H */
-diff --git a/multipathd/main.c b/multipathd/main.c
-index aa86785..e35231e 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -82,6 +82,7 @@ static int use_watchdog;
- #include "cli_handlers.h"
- #include "lock.h"
- #include "waiter.h"
-+#include "dmevents.h"
- #include "io_err_stat.h"
- #include "wwids.h"
- #include "foreign.h"
-@@ -109,6 +110,11 @@ int uxsock_timeout;
- int verbosity;
- int bindings_read_only;
- int ignore_new_devs;
-+#ifdef NO_DMEVENTS_POLL
-+int poll_dmevents = 0;
-+#else
-+int poll_dmevents = 1;
-+#endif
- enum daemon_status running_state = DAEMON_INIT;
- pid_t daemon_pid;
- pthread_mutex_t config_lock = PTHREAD_MUTEX_INITIALIZER;
-@@ -293,11 +299,23 @@ switch_pathgroup (struct multipath * mpp)
- 		 mpp->alias, mpp->bestpg);
- }
- 
-+static int
-+wait_for_events(struct multipath *mpp, struct vectors *vecs)
++int remove_dm_device_event(const char *name)
 +{
-+	if (poll_dmevents)
-+		return watch_dmevents(mpp->alias);
-+	else
-+		return start_waiter_thread(mpp, vecs);
++	struct dm_device *dev;
++	int i;
++
++	vector_foreach_slot(data.dm_devices, dev, i) {
++		if (strcmp(name, dev->name) == 0) {
++			vector_del_slot(data.dm_devices, i);
++				free(dev);
++			return 0;
++		}
++	}
++	return -1;
 +}
 +
- static void
- remove_map_and_stop_waiter(struct multipath *mpp, struct vectors *vecs,
- 			   int purge_vec)
- {
--	stop_waiter_thread(mpp, vecs);
-+	/* devices are automatically removed by the dmevent polling code,
-+	 * so they don't need to be manually removed here */
-+	if (!poll_dmevents)
-+		stop_waiter_thread(mpp, vecs);
- 	remove_map(mpp, vecs, purge_vec);
- }
- 
-@@ -310,8 +328,12 @@ remove_maps_and_stop_waiters(struct vectors *vecs)
- 	if (!vecs)
- 		return;
- 
--	vector_foreach_slot(vecs->mpvec, mpp, i)
--		stop_waiter_thread(mpp, vecs);
-+	if (!poll_dmevents) {
-+		vector_foreach_slot(vecs->mpvec, mpp, i)
-+			stop_waiter_thread(mpp, vecs);
-+	}
-+	else
-+		unwatch_all_dmevents();
- 
- 	remove_maps(vecs);
- }
-@@ -356,7 +378,7 @@ retry:
- 	dm_lib_release();
- 
- fail:
--	if (new_map && (retries < 0 || start_waiter_thread(mpp, vecs))) {
-+	if (new_map && (retries < 0 || wait_for_events(mpp, vecs))) {
- 		condlog(0, "%s: failed to create new map", mpp->alias);
- 		remove_map(mpp, vecs, 1);
- 		return 1;
-@@ -875,7 +897,7 @@ retry:
- 
- 	if ((mpp->action == ACT_CREATE ||
- 	     (mpp->action == ACT_NOTHING && start_waiter && !mpp->waiter)) &&
--	    start_waiter_thread(mpp, vecs))
-+	    wait_for_events(mpp, vecs))
- 			goto fail_map;
- 
- 	/*
-@@ -2203,7 +2225,7 @@ configure (struct vectors * vecs)
- 	 * start dm event waiter threads for these new maps
- 	 */
- 	vector_foreach_slot(vecs->mpvec, mpp, i) {
--		if (start_waiter_thread(mpp, vecs)) {
-+		if (wait_for_events(mpp, vecs)) {
- 			remove_map(mpp, vecs, 1);
- 			i--;
- 			continue;
-@@ -2449,7 +2471,7 @@ set_oom_adj (void)
- static int
- child (void * param)
- {
--	pthread_t check_thr, uevent_thr, uxlsnr_thr, uevq_thr;
-+	pthread_t check_thr, uevent_thr, uxlsnr_thr, uevq_thr, dmevent_thr;
- 	pthread_attr_t log_attr, misc_attr, uevent_attr;
- 	struct vectors * vecs;
- 	struct multipath * mpp;
-@@ -2514,6 +2536,8 @@ child (void * param)
- 
- 	init_foreign(conf->multipath_dir);
- 
-+	if (poll_dmevents)
-+		poll_dmevents = dmevent_poll_supported();
- 	setlogmask(LOG_UPTO(conf->verbosity + 3));
- 
- 	envp = getenv("LimitNOFILE");
-@@ -2580,6 +2604,19 @@ child (void * param)
- 
- 	init_path_check_interval(vecs);
- 
-+	if (poll_dmevents) {
-+		if (init_dmevent_waiter(vecs)) {
-+			condlog(0, "failed to allocate dmevents waiter info");
-+			goto failed;
-+		}
-+		if ((rc = pthread_create(&dmevent_thr, &misc_attr,
-+					 wait_dmevents, NULL))) {
-+			condlog(0, "failed to create dmevent waiter thread: %d",
-+				rc);
-+			goto failed;
-+		}
-+	}
++void remove_all_dm_device_events(void)
++{
++	struct dm_device *dev;
++	int i;
 +
- 	/*
- 	 * Start uevent listener early to catch events
- 	 */
-@@ -2649,11 +2686,15 @@ child (void * param)
- 	pthread_cancel(uevent_thr);
- 	pthread_cancel(uxlsnr_thr);
- 	pthread_cancel(uevq_thr);
-+	if (poll_dmevents)
-+		pthread_cancel(dmevent_thr);
- 
- 	pthread_join(check_thr, NULL);
- 	pthread_join(uevent_thr, NULL);
- 	pthread_join(uxlsnr_thr, NULL);
- 	pthread_join(uevq_thr, NULL);
-+	if (poll_dmevents)
-+		pthread_join(dmevent_thr, NULL);
- 
- 	stop_io_err_stat_thread();
- 
-@@ -2669,6 +2710,8 @@ child (void * param)
- 	cleanup_foreign();
- 	cleanup_checkers();
- 	cleanup_prio();
-+	if (poll_dmevents)
-+		cleanup_dmevent_waiter();
- 
- 	dm_lib_release();
- 	dm_lib_exit();
-@@ -2800,7 +2843,7 @@ main (int argc, char *argv[])
- 	udev = udev_new();
- 	libmp_udev_set_sync_support(0);
- 
--	while ((arg = getopt(argc, argv, ":dsv:k::Bn")) != EOF ) {
-+	while ((arg = getopt(argc, argv, ":dsv:k::Bniw")) != EOF ) {
- 		switch(arg) {
- 		case 'd':
- 			foreground = 1;
-@@ -2834,6 +2877,9 @@ main (int argc, char *argv[])
- 		case 'n':
- 			ignore_new_devs = 1;
- 			break;
-+		case 'w':
-+			poll_dmevents = 0;
-+			break;
- 		default:
- 			fprintf(stderr, "Invalid argument '-%c'\n",
- 				optopt);
++	vector_foreach_slot(data.dm_devices, dev, i)
++		free(dev);
++	vector_reset(data.dm_devices);
++}
++
++static inline size_t align_val(size_t val)
++{
++        return (val + 7) & ~7;
++}
++static inline void *align_ptr(void *ptr)
++{
++	return (void *)align_val((size_t)ptr);
++}
++
++/* copied off of list_devices in dm-ioctl.c */
++struct dm_names *build_dm_names(void)
++{
++	struct dm_names *names, *np, *old_np = NULL;
++	uint32_t *event_nr;
++	struct dm_device *dev;
++	int i, size = 0;
++
++	if (VECTOR_SIZE(data.dm_devices) == 0) {
++		names = (struct dm_names *)malloc(sizeof(struct dm_names));
++		if (!names) {
++			condlog(0, "Testing error allocating empty dm_names");
++			return NULL;
++		}
++		names->dev = 0;
++		names->next = 0;
++		return names;
++	}
++	vector_foreach_slot(data.dm_devices, dev, i) {
++		size += align_val(offsetof(struct dm_names, name) +
++				  strlen(dev->name) + 1);
++		size += align_val(sizeof(uint32_t));
++	}
++	names = (struct dm_names *)malloc(size);
++	if (!names) {
++		condlog(0, "Testing error allocating dm_names");
++		return NULL;
++	}
++	np = names;
++	vector_foreach_slot(data.dm_devices, dev, i) {
++		if (old_np)
++			old_np->next = (uint32_t) ((uintptr_t) np -
++						   (uintptr_t) old_np);
++		np->dev = 1;
++		np->next = 0;
++		strcpy(np->name, dev->name);
++
++		old_np = np;
++		event_nr = align_ptr(np->name + strlen(dev->name) + 1);
++		*event_nr = dev->evt_nr;
++		np = align_ptr(event_nr + 1);
++	}
++	assert_int_equal((char *)np - (char *)names, size);
++	return names;
++}
++
++static int setup(void **state)
++{
++	if (dmevent_poll_supported()) {
++		data.dm_devices = vector_alloc();
++		*state = &data;
++	} else
++		*state = NULL;
++	return 0;
++}
++
++static int teardown(void **state)
++{
++	struct dm_device *dev;
++	int i;
++	struct test_data *datap = (struct test_data *)(*state);
++	if (datap == NULL)
++		return 0;
++	vector_foreach_slot(datap->dm_devices, dev, i)
++		free(dev);
++	vector_free(datap->dm_devices);
++	datap = NULL;
++	return 0;
++}
++
++int __wrap_open(const char *pathname, int flags)
++{
++	assert_ptr_equal(pathname, "/dev/mapper/control");
++	assert_int_equal(flags, O_RDWR);
++	return mock_type(int);
++}
++
++int __wrap_close(int fd)
++{
++	assert_int_equal(fd, waiter->fd);
++	return 0;
++}
++
++int __wrap_dm_is_mpath(const char *name)
++{
++	struct dm_device *dev;
++	int i;
++
++	vector_foreach_slot(data.dm_devices, dev, i)
++		if (strcmp(name, dev->name) == 0)
++			return dev->is_mpath;
++	return 0;
++}
++
++int __wrap_dm_geteventnr(const char *name)
++{
++	struct dm_device *dev;
++	int fail = mock_type(int);
++
++	if (fail)
++		return -1;
++	dev = find_dm_device(name);
++	if (dev) {
++		/* simulate updating device state after adding it */
++		dev->update_nr = dev->evt_nr;
++		return dev->evt_nr;
++	}
++	return -1;
++}
++
++int __wrap_ioctl(int fd, unsigned long request, void *argp)
++{
++	assert_int_equal(fd, waiter->fd);
++	assert_int_equal(request, DM_DEV_ARM_POLL);
++	return mock_type(int);
++}
++
++struct dm_task *__wrap_libmp_dm_task_create(int task)
++{
++	assert_int_equal(task, DM_DEVICE_LIST);
++	return mock_type(struct dm_task *);
++}
++
++int __wrap_dm_task_no_open_count(struct dm_task *dmt)
++{
++	assert_ptr_equal((struct test_data *)dmt, &data);
++	return mock_type(int);
++}
++
++int __wrap_dm_task_run(struct dm_task *dmt)
++{
++	assert_ptr_equal((struct test_data *)dmt, &data);
++	return mock_type(int);
++}
++
++struct dm_names * __wrap_dm_task_get_names(struct dm_task *dmt)
++{
++	int good = mock_type(int);
++	assert_ptr_equal((struct test_data *)dmt, &data);
++
++	if (data.names) {
++		condlog(0, "Testing error. data.names already allocated");
++		return NULL;
++	}
++	if (!good)
++		return NULL;
++	data.names = build_dm_names();
++	return data.names;
++}
++
++void __wrap_dm_task_destroy(struct dm_task *dmt)
++{
++	assert_ptr_equal((struct test_data *)dmt, &data);
++
++	if (data.names) {
++		free(data.names);
++		data.names = NULL;
++	}
++}
++
++int __wrap_poll(struct pollfd *fds, nfds_t nfds, int timeout)
++{
++	assert_int_equal(nfds, 1);
++	assert_int_equal(timeout, -1);
++	assert_int_equal(fds->fd, waiter->fd);
++	assert_int_equal(fds->events, POLLIN);
++	return mock_type(int);
++}
++
++void __wrap_remove_map_by_alias(const char *alias, struct vectors * vecs,
++				int purge_vec)
++{
++	check_expected(alias);
++	assert_ptr_equal(vecs, waiter->vecs);
++	assert_int_equal(purge_vec, 1);
++}
++
++int __wrap_update_multipath(struct vectors *vecs, char *mapname, int reset)
++{
++	int fail;
++
++	check_expected(mapname);
++	assert_ptr_equal(vecs, waiter->vecs);
++	assert_int_equal(reset, 1);
++	fail = mock_type(int);
++	if (fail) {
++		assert_int_equal(remove_dm_device_event(mapname), 0);
++		return fail;
++	} else {
++		struct dm_device *dev;
++		int i;
++
++		vector_foreach_slot(data.dm_devices, dev, i) {
++			if (strcmp(mapname, dev->name) == 0) {
++				dev->update_nr = dev->evt_nr;
++				return 0;
++			}
++		}
++		fail();
++	}
++	return fail;
++}
++
++struct dev_event *find_dmevents(const char *name)
++{
++	struct dev_event *dev_evt;
++	int i;
++
++	vector_foreach_slot(waiter->events, dev_evt, i)
++		if (!strcmp(dev_evt->name, name))
++			return dev_evt;
++	return NULL;
++}
++
++static void test_init_waiter_bad0(void **state)
++{
++	struct test_data *datap = (struct test_data *)(*state);
++	if (datap == NULL)
++		skip();
++	assert_int_equal(init_dmevent_waiter(NULL), -1);
++}
++
++static void test_init_waiter_bad1(void **state)
++{
++	struct test_data *datap = (struct test_data *)(*state);
++	if (datap == NULL)
++		skip();
++	will_return(__wrap_open, -1);
++	assert_int_equal(init_dmevent_waiter(&datap->vecs), -1);
++	assert_ptr_equal(waiter, NULL);
++}
++
++static void test_init_waiter_good0(void **state)
++{
++	struct test_data *datap = (struct test_data *)(*state);
++	if (datap == NULL)
++		skip();
++	will_return(__wrap_open, 2);
++	assert_int_equal(init_dmevent_waiter(&datap->vecs), 0);
++	assert_ptr_not_equal(waiter, NULL);
++}
++
++static void test_watch_dmevents_bad0(void **state)
++{
++	struct test_data *datap = (struct test_data *)(*state);
++	if (datap == NULL)
++		skip();
++	assert_int_equal(watch_dmevents("foo"), -1);
++	assert_ptr_equal(find_dmevents("foo"), NULL);
++}
++
++static void test_watch_dmevents_bad1(void **state)
++{
++	struct test_data *datap = (struct test_data *)(*state);
++	if (datap == NULL)
++		skip();
++
++	assert_int_equal(add_dm_device_event("foo", 0, 5), 0);
++	assert_int_equal(watch_dmevents("foo"), -1);
++	assert_ptr_equal(find_dmevents("foo"), NULL);
++}
++
++static void test_watch_dmevents_bad2(void **state)
++{
++	struct test_data *datap = (struct test_data *)(*state);
++	if (datap == NULL)
++		skip();
++
++	remove_all_dm_device_events();
++	assert_int_equal(add_dm_device_event("foo", 1, 5), 0);
++	will_return(__wrap_dm_geteventnr, -1);
++	assert_int_equal(watch_dmevents("foo"), -1);
++	assert_ptr_equal(find_dmevents("foo"), NULL);
++}
++static void test_watch_dmevents_good0(void **state)
++{
++	struct dev_event *dev_evt;
++	struct test_data *datap = (struct test_data *)(*state);
++	if (datap == NULL)
++		skip();
++
++	remove_all_dm_device_events();
++	assert_int_equal(add_dm_device_event("foo", 1, 5), 0);
++	will_return(__wrap_dm_geteventnr, 0);
++	assert_int_equal(watch_dmevents("foo"), 0);
++	dev_evt = find_dmevents("foo");
++	assert_ptr_not_equal(dev_evt, NULL);
++	assert_int_equal(dev_evt->evt_nr, 5);
++	assert_int_equal(dev_evt->action, EVENT_NOTHING);
++	assert_int_equal(VECTOR_SIZE(waiter->events), 1);
++	unwatch_dmevents("foo");
++	assert_int_equal(VECTOR_SIZE(waiter->events), 0);
++	assert_ptr_equal(find_dmevents("foo"), NULL);
++}
++
++static void test_watch_dmevents_good1(void **state)
++{
++	struct dev_event *dev_evt;
++	struct test_data *datap = (struct test_data *)(*state);
++	if (datap == NULL)
++		skip();
++
++	remove_all_dm_device_events();
++	assert_int_equal(add_dm_device_event("foo", 1, 5), 0);	
++	will_return(__wrap_dm_geteventnr, 0);
++	assert_int_equal(watch_dmevents("foo"), 0);
++	dev_evt = find_dmevents("foo");
++	assert_ptr_not_equal(dev_evt, NULL);
++	assert_int_equal(dev_evt->evt_nr, 5);
++	assert_int_equal(dev_evt->action, EVENT_NOTHING);
++	assert_int_equal(add_dm_device_event("foo", 1, 6), 0);
++	will_return(__wrap_dm_geteventnr, 0);
++	assert_int_equal(watch_dmevents("foo"), 0);
++	dev_evt = find_dmevents("foo");
++	assert_ptr_not_equal(dev_evt, NULL);
++	assert_int_equal(dev_evt->evt_nr, 6);
++	assert_int_equal(dev_evt->action, EVENT_NOTHING);
++	assert_int_equal(VECTOR_SIZE(waiter->events), 1);
++	unwatch_dmevents("foo");
++	assert_int_equal(VECTOR_SIZE(waiter->events), 0);
++	assert_ptr_equal(find_dmevents("foo"), NULL);
++}
++
++static void test_watch_dmevents_good2(void **state)
++{
++	struct dev_event *dev_evt;
++	struct test_data *datap = (struct test_data *)(*state);
++	if (datap == NULL)
++		skip();
++
++	unwatch_all_dmevents();
++	remove_all_dm_device_events();
++	assert_int_equal(add_dm_device_event("foo", 1, 5), 0);
++	assert_int_equal(add_dm_device_event("bar", 1, 7), 0);
++	will_return(__wrap_dm_geteventnr, 0);
++	assert_int_equal(watch_dmevents("foo"), 0);
++	dev_evt = find_dmevents("foo");
++	assert_ptr_not_equal(dev_evt, NULL);
++	assert_int_equal(dev_evt->evt_nr, 5);
++	assert_int_equal(dev_evt->action, EVENT_NOTHING);
++	assert_ptr_equal(find_dmevents("bar"), NULL);
++	will_return(__wrap_dm_geteventnr, 0);
++	assert_int_equal(watch_dmevents("bar"), 0);
++	dev_evt = find_dmevents("foo");
++	assert_ptr_not_equal(dev_evt, NULL);
++	assert_int_equal(dev_evt->evt_nr, 5);
++	assert_int_equal(dev_evt->action, EVENT_NOTHING);
++	dev_evt = find_dmevents("bar");
++	assert_ptr_not_equal(dev_evt, NULL);
++	assert_int_equal(dev_evt->evt_nr, 7);
++	assert_int_equal(dev_evt->action, EVENT_NOTHING);
++	assert_int_equal(VECTOR_SIZE(waiter->events), 2);
++	unwatch_all_dmevents();
++	assert_int_equal(VECTOR_SIZE(waiter->events), 0);
++	assert_ptr_equal(find_dmevents("foo"), NULL);
++	assert_ptr_equal(find_dmevents("bar"), NULL);
++}
++
++static void test_get_events_bad0(void **state)
++{
++	struct test_data *datap = (struct test_data *)(*state);
++	if (datap == NULL)
++		skip();
++
++	unwatch_all_dmevents();
++	remove_all_dm_device_events();
++
++	will_return(__wrap_libmp_dm_task_create, NULL);
++	assert_int_equal(dm_get_events(), -1);
++}
++
++static void test_get_events_bad1(void **state)
++{
++	struct test_data *datap = (struct test_data *)(*state);
++	if (datap == NULL)
++		skip();
++
++	will_return(__wrap_libmp_dm_task_create, &data);
++	will_return(__wrap_dm_task_no_open_count, 1);
++	will_return(__wrap_dm_task_run, 0);
++	assert_int_equal(dm_get_events(), -1);
++}
++
++static void test_get_events_bad2(void **state)
++{
++	struct test_data *datap = (struct test_data *)(*state);
++	if (datap == NULL)
++		skip();
++
++	will_return(__wrap_libmp_dm_task_create, &data);
++	will_return(__wrap_dm_task_no_open_count, 1);
++	will_return(__wrap_dm_task_run, 1);
++	will_return(__wrap_dm_task_get_names, 0);
++	assert_int_equal(dm_get_events(), -1);
++}
++
++static void test_get_events_good0(void **state)
++{
++	struct test_data *datap = (struct test_data *)(*state);
++	if (datap == NULL)
++		skip();
++
++	assert_int_equal(add_dm_device_event("foo", 1, 5), 0);
++	will_return(__wrap_libmp_dm_task_create, &data);
++	will_return(__wrap_dm_task_no_open_count, 1);
++	will_return(__wrap_dm_task_run, 1);
++	will_return(__wrap_dm_task_get_names, 1);
++	assert_int_equal(dm_get_events(), 0);
++	assert_ptr_equal(find_dmevents("foo"), NULL);
++	assert_int_equal(VECTOR_SIZE(waiter->events), 0);
++}
++
++static void test_get_events_good1(void **state)
++{
++	struct dev_event *dev_evt;
++	struct test_data *datap = (struct test_data *)(*state);
++	if (datap == NULL)
++		skip();
++
++	remove_all_dm_device_events();
++	assert_int_equal(add_dm_device_event("foo", 1, 5), 0);
++	assert_int_equal(add_dm_device_event("bar", 1, 7), 0);
++	assert_int_equal(add_dm_device_event("baz", 1, 12), 0);
++	assert_int_equal(add_dm_device_event("qux", 0, 4), 0);
++	assert_int_equal(add_dm_device_event("xyzzy", 1, 8), 0);
++	will_return(__wrap_dm_geteventnr, 0);
++	assert_int_equal(watch_dmevents("foo"), 0);
++	will_return(__wrap_dm_geteventnr, 0);
++	assert_int_equal(watch_dmevents("bar"), 0);
++	will_return(__wrap_dm_geteventnr, 0);
++	assert_int_equal(watch_dmevents("xyzzy"), 0);
++	assert_int_equal(add_dm_device_event("foo", 1, 6), 0);
++	assert_int_equal(remove_dm_device_event("xyzzy"), 0);
++	will_return(__wrap_libmp_dm_task_create, &data);
++	will_return(__wrap_dm_task_no_open_count, 1);
++	will_return(__wrap_dm_task_run, 1);
++	will_return(__wrap_dm_task_get_names, 1);
++	assert_int_equal(dm_get_events(), 0);
++	dev_evt = find_dmevents("foo");
++	assert_ptr_not_equal(dev_evt, NULL);
++	assert_int_equal(dev_evt->evt_nr, 6);
++	assert_int_equal(dev_evt->action, EVENT_UPDATE);
++	dev_evt = find_dmevents("bar");
++	assert_ptr_not_equal(dev_evt, NULL);
++	assert_int_equal(dev_evt->evt_nr, 7);
++	assert_int_equal(dev_evt->action, EVENT_NOTHING);
++	dev_evt = find_dmevents("xyzzy");
++	assert_ptr_not_equal(dev_evt, NULL);
++	assert_int_equal(dev_evt->evt_nr, 8);
++	assert_int_equal(dev_evt->action, EVENT_REMOVE);
++	assert_ptr_equal(find_dmevents("baz"), NULL);
++	assert_ptr_equal(find_dmevents("qux"), NULL);
++	assert_int_equal(VECTOR_SIZE(waiter->events), 3);
++}
++
++static void test_dmevent_loop_bad0(void **state)
++{
++	struct dm_device *dev;
++	struct dev_event *dev_evt;
++	struct test_data *datap = (struct test_data *)(*state);
++	if (datap == NULL)
++		skip();
++
++	remove_all_dm_device_events();
++	unwatch_all_dmevents();
++	assert_int_equal(add_dm_device_event("foo", 1, 5), 0);
++	will_return(__wrap_dm_geteventnr, 0);
++	assert_int_equal(watch_dmevents("foo"), 0);
++	assert_int_equal(add_dm_device_event("foo", 1, 6), 0);
++	will_return(__wrap_poll, 0);
++	assert_int_equal(dmevent_loop(), 1);
++	dev_evt = find_dmevents("foo");
++	assert_ptr_not_equal(dev_evt, NULL);
++	assert_int_equal(dev_evt->evt_nr, 5);
++	assert_int_equal(dev_evt->action, EVENT_NOTHING);
++	dev = find_dm_device("foo");
++	assert_ptr_not_equal(dev, NULL);
++	assert_int_equal(dev->evt_nr, 6);
++	assert_int_equal(dev->update_nr, 5);
++}
++
++static void test_dmevent_loop_bad1(void **state)
++{
++	struct dm_device *dev;
++	struct dev_event *dev_evt;
++	struct test_data *datap = (struct test_data *)(*state);
++	if (datap == NULL)
++		skip();
++
++	will_return(__wrap_poll, 1);
++	will_return(__wrap_ioctl, -1);
++	assert_int_equal(dmevent_loop(), 1);
++	dev_evt = find_dmevents("foo");
++	assert_ptr_not_equal(dev_evt, NULL);
++	assert_int_equal(dev_evt->evt_nr, 5);
++	assert_int_equal(dev_evt->action, EVENT_NOTHING);
++	dev = find_dm_device("foo");
++	assert_ptr_not_equal(dev, NULL);
++	assert_int_equal(dev->evt_nr, 6);
++	assert_int_equal(dev->update_nr, 5);
++}
++
++static void test_dmevent_loop_bad2(void **state)
++{
++	struct dm_device *dev;
++	struct dev_event *dev_evt;
++	struct test_data *datap = (struct test_data *)(*state);
++	if (datap == NULL)
++		skip();
++
++	will_return(__wrap_poll, 1);
++	will_return(__wrap_ioctl, 0);
++	will_return(__wrap_libmp_dm_task_create, NULL);
++	assert_int_equal(dmevent_loop(), 1);
++	dev_evt = find_dmevents("foo");
++	assert_ptr_not_equal(dev_evt, NULL);
++	assert_int_equal(dev_evt->evt_nr, 5);
++	assert_int_equal(dev_evt->action, EVENT_NOTHING);
++	dev = find_dm_device("foo");
++	assert_ptr_not_equal(dev, NULL);
++	assert_int_equal(dev->evt_nr, 6);
++	assert_int_equal(dev->update_nr, 5);
++}
++
++static void test_dmevent_loop_good0(void **state)
++{
++	struct test_data *datap = (struct test_data *)(*state);
++	if (datap == NULL)
++		skip();
++
++	remove_all_dm_device_events();
++	unwatch_all_dmevents();
++	will_return(__wrap_poll, 1);
++	will_return(__wrap_ioctl, 0);
++	will_return(__wrap_libmp_dm_task_create, &data);
++	will_return(__wrap_dm_task_no_open_count, 1);
++	will_return(__wrap_dm_task_run, 1);
++	will_return(__wrap_dm_task_get_names, 1);
++	assert_int_equal(dmevent_loop(), 1);
++}
++
++static void test_dmevent_loop_good1(void **state)
++{
++	struct dm_device *dev;
++	struct dev_event *dev_evt;
++	struct test_data *datap = (struct test_data *)(*state);
++	if (datap == NULL)
++		skip();
++
++	remove_all_dm_device_events();
++	unwatch_all_dmevents();
++	assert_int_equal(add_dm_device_event("foo", 1, 5), 0);
++	assert_int_equal(add_dm_device_event("bar", 1, 7), 0);
++	assert_int_equal(add_dm_device_event("baz", 1, 12), 0);
++	assert_int_equal(add_dm_device_event("xyzzy", 1, 8), 0);
++	will_return(__wrap_dm_geteventnr, 0);
++	assert_int_equal(watch_dmevents("foo"), 0);
++	will_return(__wrap_dm_geteventnr, 0);
++	assert_int_equal(watch_dmevents("bar"), 0);
++	will_return(__wrap_dm_geteventnr, 0);
++	assert_int_equal(watch_dmevents("xyzzy"), 0);
++	assert_int_equal(add_dm_device_event("foo", 1, 6), 0);
++	assert_int_equal(remove_dm_device_event("xyzzy"), 0);
++	will_return(__wrap_poll, 1);
++	will_return(__wrap_ioctl, 0);
++	will_return(__wrap_libmp_dm_task_create, &data);
++	will_return(__wrap_dm_task_no_open_count, 1);
++	will_return(__wrap_dm_task_run, 1);
++	will_return(__wrap_dm_task_get_names, 1);
++	expect_string(__wrap_update_multipath, mapname, "foo");
++	will_return(__wrap_update_multipath, 0);
++	expect_string(__wrap_remove_map_by_alias, alias, "xyzzy");
++	assert_int_equal(dmevent_loop(), 1);
++	assert_int_equal(VECTOR_SIZE(waiter->events), 2);
++	assert_int_equal(VECTOR_SIZE(data.dm_devices), 3);
++	dev_evt = find_dmevents("foo");
++	assert_ptr_not_equal(dev_evt, NULL);
++	assert_int_equal(dev_evt->evt_nr, 6);
++	assert_int_equal(dev_evt->action, EVENT_NOTHING);
++	dev = find_dm_device("foo");
++	assert_ptr_not_equal(dev, NULL);
++	assert_int_equal(dev->evt_nr, 6);
++	assert_int_equal(dev->update_nr, 6);
++	dev_evt = find_dmevents("bar");
++	assert_ptr_not_equal(dev_evt, NULL);
++	assert_int_equal(dev_evt->evt_nr, 7);
++	assert_int_equal(dev_evt->action, EVENT_NOTHING);
++	dev = find_dm_device("bar");
++	assert_ptr_not_equal(dev, NULL);
++	assert_int_equal(dev->evt_nr, 7);
++	assert_int_equal(dev->update_nr, 7);
++	assert_ptr_equal(find_dmevents("xyzzy"), NULL);
++	assert_ptr_equal(find_dm_device("xyzzy"), NULL);
++}
++
++static void test_dmevent_loop_good2(void **state)
++{
++	struct dm_device *dev;
++	struct dev_event *dev_evt;
++	struct test_data *datap = (struct test_data *)(*state);
++	if (datap == NULL)
++		skip();
++
++	assert_int_equal(add_dm_device_event("bar", 1, 9), 0);
++	will_return(__wrap_dm_geteventnr, 0);
++	assert_int_equal(watch_dmevents("baz"), 0);
++	assert_int_equal(add_dm_device_event("baz", 1, 14), 0);
++	will_return(__wrap_poll, 1);
++	will_return(__wrap_ioctl, 0);
++	will_return(__wrap_libmp_dm_task_create, &data);
++	will_return(__wrap_dm_task_no_open_count, 1);
++	will_return(__wrap_dm_task_run, 1);
++	will_return(__wrap_dm_task_get_names, 1);
++	expect_string(__wrap_update_multipath, mapname, "bar");
++	will_return(__wrap_update_multipath, 0);
++	expect_string(__wrap_update_multipath, mapname, "baz");
++	will_return(__wrap_update_multipath, 1);
++	assert_int_equal(dmevent_loop(), 1);
++	assert_int_equal(VECTOR_SIZE(waiter->events), 2);
++	assert_int_equal(VECTOR_SIZE(data.dm_devices), 2);
++	dev_evt = find_dmevents("foo");
++	assert_ptr_not_equal(dev_evt, NULL);
++	assert_int_equal(dev_evt->evt_nr, 6);
++	assert_int_equal(dev_evt->action, EVENT_NOTHING);
++	dev = find_dm_device("foo");
++	assert_ptr_not_equal(dev, NULL);
++	assert_int_equal(dev->evt_nr, 6);
++	assert_int_equal(dev->update_nr, 6);
++	dev_evt = find_dmevents("bar");
++	assert_ptr_not_equal(dev_evt, NULL);
++	assert_int_equal(dev_evt->evt_nr, 9);
++	assert_int_equal(dev_evt->action, EVENT_NOTHING);
++	dev = find_dm_device("bar");
++	assert_ptr_not_equal(dev, NULL);
++	assert_int_equal(dev->evt_nr, 9);
++	assert_int_equal(dev->update_nr, 9);
++	assert_ptr_equal(find_dmevents("baz"), NULL);
++	assert_ptr_equal(find_dm_device("baz"), NULL);
++}
++
++static void test_dmevent_loop_good3(void **state)
++{
++	struct dm_device *dev;
++	struct test_data *datap = (struct test_data *)(*state);
++	if (datap == NULL)
++		skip();
++
++	assert_int_equal(remove_dm_device_event("foo"), 0);
++	unwatch_dmevents("bar");
++	will_return(__wrap_poll, 1);
++	will_return(__wrap_ioctl, 0);
++	will_return(__wrap_libmp_dm_task_create, &data);
++	will_return(__wrap_dm_task_no_open_count, 1);
++	will_return(__wrap_dm_task_run, 1);
++	will_return(__wrap_dm_task_get_names, 1);
++	expect_string(__wrap_remove_map_by_alias, alias, "foo");
++	assert_int_equal(dmevent_loop(), 1);
++	assert_int_equal(VECTOR_SIZE(waiter->events), 0);
++	assert_int_equal(VECTOR_SIZE(data.dm_devices), 1);
++	dev = find_dm_device("bar");
++	assert_ptr_not_equal(dev, NULL);
++	assert_int_equal(dev->evt_nr, 9);
++	assert_int_equal(dev->update_nr, 9);
++	assert_ptr_equal(find_dmevents("foo"), NULL);
++	assert_ptr_equal(find_dmevents("bar"), NULL);
++	assert_ptr_equal(find_dm_device("foo"), NULL);
++}
++
++static void test_arm_poll(void **state)
++{
++	struct test_data *datap = (struct test_data *)(*state);
++	if (datap == NULL)
++		skip();
++	will_return(__wrap_ioctl, 0);
++	assert_int_equal(arm_dm_event_poll(waiter->fd), 0);
++}
++
++static void test_cleanup_waiter(void **state)
++{
++	struct test_data *datap = (struct test_data *)(*state);
++	if (datap == NULL)
++		skip();
++	cleanup_dmevent_waiter();
++	assert_ptr_equal(waiter, NULL);
++}
++
++int test_dmevents(void)
++{
++	const struct CMUnitTest tests[] = {
++		cmocka_unit_test(test_init_waiter_bad0),
++		cmocka_unit_test(test_init_waiter_bad1),
++		cmocka_unit_test(test_init_waiter_good0),
++		cmocka_unit_test(test_watch_dmevents_bad0),
++		cmocka_unit_test(test_watch_dmevents_bad1),
++		cmocka_unit_test(test_watch_dmevents_bad2),
++		cmocka_unit_test(test_watch_dmevents_good0),
++		cmocka_unit_test(test_watch_dmevents_good1),
++		cmocka_unit_test(test_watch_dmevents_good2),
++		cmocka_unit_test(test_get_events_bad0),
++		cmocka_unit_test(test_get_events_bad1),
++		cmocka_unit_test(test_get_events_bad2),
++		cmocka_unit_test(test_get_events_good0),
++		cmocka_unit_test(test_get_events_good1),
++		cmocka_unit_test(test_arm_poll),
++		cmocka_unit_test(test_dmevent_loop_bad0),
++		cmocka_unit_test(test_dmevent_loop_bad1),
++		cmocka_unit_test(test_dmevent_loop_bad2),
++		cmocka_unit_test(test_dmevent_loop_good0),
++		cmocka_unit_test(test_dmevent_loop_good1),
++		cmocka_unit_test(test_dmevent_loop_good2),
++		cmocka_unit_test(test_dmevent_loop_good3),
++		cmocka_unit_test(test_cleanup_waiter),
++	};
++	return cmocka_run_group_tests(tests, setup, teardown);
++}
++
++int main(void)
++{
++	int ret = 0;
++
++	ret += test_dmevents();
++	return ret;
++}
 -- 
 2.7.4
