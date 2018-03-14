@@ -1,7 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 02/12] libmultipath: fix basenamecpy
-Date: Wed, 14 Mar 2018 12:46:35 -0500
-Message-ID: <1521049605-22050-3-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 06/12] multipathd: use nanosleep for strict timing
+Date: Wed, 14 Mar 2018 12:46:39 -0500
+Message-ID: <1521049605-22050-7-git-send-email-bmarzins@redhat.com>
 References: <1521049605-22050-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,73 +21,74 @@ To: dm-devel@redhat.com
 Cc: Martin Wilck <mwilck@suse.com>, christophe.varoqui@free.fr
 List-Id: dm-devel.ids
 
-basenamecpy was returning the wrong answer in multiple cases, as
-shown by the unit tests for it. Now it will properly find the
-basename (as defined by GNU basename, which works well for all of
-multipath's uses) and return a copy, if the basename can fit in
-provided buffer.
+In order to safely use SIGALRM in a multi-threaded program, only one
+thread can schedule and wait on SIGALRM at a time. All other threads
+must have SIGALRM blocked, and be unable to schedule an alarm. The
+strict_timing code in checkerloop was unblocking SIGALRM, and calling
+setitimer(), without any locking.  Instead, it should use nanosleep()
+to sleep for the correct length of time, since that doesn't depend or
+interfere with signals.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/util.c | 25 ++++++++-----------------
- libmultipath/util.h |  2 +-
- 2 files changed, 9 insertions(+), 18 deletions(-)
+ multipathd/main.c | 27 +++++++++------------------
+ 1 file changed, 9 insertions(+), 18 deletions(-)
 
-diff --git a/libmultipath/util.c b/libmultipath/util.c
-index d3dd3eb..7251ad0 100644
---- a/libmultipath/util.c
-+++ b/libmultipath/util.c
-@@ -30,30 +30,21 @@ strchop(char *str)
- }
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 6ba6131..ce914ab 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1855,7 +1855,6 @@ checkerloop (void *ap)
+ 	struct path *pp;
+ 	int count = 0;
+ 	unsigned int i;
+-	struct itimerval timer_tick_it;
+ 	struct timespec last_time;
+ 	struct config *conf;
  
- int
--basenamecpy (const char * str1, char * str2, int str2len)
-+basenamecpy (const char *src, char *dst, size_t size)
- {
--	const char *p;
-+	const char *p, *e;
+@@ -1873,8 +1872,7 @@ checkerloop (void *ap)
  
--	if (!str1 || !strlen(str1))
-+	if (!src || !dst || !strlen(src))
- 		return 0;
+ 	while (1) {
+ 		struct timespec diff_time, start_time, end_time;
+-		int num_paths = 0, ticks = 0, signo, strict_timing, rc = 0;
+-		sigset_t mask;
++		int num_paths = 0, ticks = 0, strict_timing, rc = 0;
  
--	if (strlen(str1) >= str2len)
--		return 0;
-+	p = basename(src);
+ 		if (clock_gettime(CLOCK_MONOTONIC, &start_time) != 0)
+ 			start_time.tv_sec = 0;
+@@ -1962,25 +1960,18 @@ checkerloop (void *ap)
+ 		if (!strict_timing)
+ 			sleep(1);
+ 		else {
+-			timer_tick_it.it_interval.tv_sec = 0;
+-			timer_tick_it.it_interval.tv_usec = 0;
+ 			if (diff_time.tv_nsec) {
+-				timer_tick_it.it_value.tv_sec = 0;
+-				timer_tick_it.it_value.tv_usec =
++				diff_time.tv_sec = 0;
++				diff_time.tv_nsec =
+ 				     1000UL * 1000 * 1000 - diff_time.tv_nsec;
+-			} else {
+-				timer_tick_it.it_value.tv_sec = 1;
+-				timer_tick_it.it_value.tv_usec = 0;
+-			}
+-			setitimer(ITIMER_REAL, &timer_tick_it, NULL);
++			} else
++				diff_time.tv_sec = 1;
  
--	if (!str2)
-+	for (e = p + strlen(p) - 1; e >= p && isspace(*e); --e) ;
-+	if (e < p || e - p > size - 2)
- 		return 0;
- 
--	p = str1 + (strlen(str1) - 1);
--
--	while (*--p != '/' && p != str1)
--		continue;
--
--	if (p != str1)
--		p++;
--
--	strncpy(str2, p, str2len);
--	str2[str2len - 1] = '\0';
--	return strchop(str2);
-+	strlcpy(dst, p, e - p + 2);
-+	return strlen(dst);
- }
- 
- int
-diff --git a/libmultipath/util.h b/libmultipath/util.h
-index 51a6d54..a3ab894 100644
---- a/libmultipath/util.h
-+++ b/libmultipath/util.h
-@@ -5,7 +5,7 @@
- #include <inttypes.h>
- 
- size_t strchop(char *);
--int basenamecpy (const char * src, char * dst, int);
-+int basenamecpy (const char *src, char *dst, size_t size);
- int filepresent (char * run);
- char *get_next_string(char **temp, char *split_char);
- int get_word (char * sentence, char ** word);
+-			sigemptyset(&mask);
+-			sigaddset(&mask, SIGALRM);
+ 			condlog(3, "waiting for %lu.%06lu secs",
+-				timer_tick_it.it_value.tv_sec,
+-				timer_tick_it.it_value.tv_usec);
+-			if (sigwait(&mask, &signo) != 0) {
+-				condlog(3, "sigwait failed with error %d",
++				diff_time.tv_sec,
++				diff_time.tv_nsec / 1000);
++			if (nanosleep(&diff_time, NULL) != 0) {
++				condlog(3, "nanosleep failed with error %d",
+ 					errno);
+ 				conf = get_multipath_config();
+ 				conf->strict_timing = 0;
 -- 
 2.7.4
