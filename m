@@ -1,14 +1,14 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 09/12] call start_waiter_thread() before
-	setup_multipath()
-Date: Wed, 14 Mar 2018 12:46:42 -0500
-Message-ID: <1521049605-22050-10-git-send-email-bmarzins@redhat.com>
-References: <1521049605-22050-1-git-send-email-bmarzins@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm mpath: fix passing integrity data
+Date: Wed, 14 Mar 2018 15:44:01 -0400
+Message-ID: <20180314194401.GA9609@redhat.com>
+References: <20180314143306.98405-1-maier@linux.vnet.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1521049605-22050-1-git-send-email-bmarzins@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20180314143306.98405-1-maier@linux.vnet.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,131 +18,41 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Martin Wilck <mwilck@suse.com>, christophe.varoqui@free.fr
+To: Steffen Maier <maier@linux.vnet.ibm.com>
+Cc: linux-s390@vger.kernel.org, Hannes Reinecke <hare@suse.com>, "Martin K . Petersen" <martin.petersen@oracle.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Fedor Loshakov <loshakov@linux.vnet.ibm.com>, Martin Schwidefsky <schwidefsky@de.ibm.com>
 List-Id: dm-devel.ids
 
-If setup_multipath() is called before the waiter thread has started,
-there is a window where a dm event can occur between when
-setup_multipath() updates the device state and when the waiter thread
-starts waiting for new events, causing the new event to be missed and
-the multipath device to not get updated.
+On Wed, Mar 14 2018 at 10:33am -0400,
+Steffen Maier <maier@linux.vnet.ibm.com> wrote:
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- multipathd/main.c | 37 ++++++++++++++++++++-----------------
- 1 file changed, 20 insertions(+), 17 deletions(-)
+> After v4.12 commit e2460f2a4bc7 ("dm: mark targets that pass integrity
+> data"), dm-multipath, e.g. on DIF+DIX SCSI disk paths, does not support
+> block integrity any more. So add it to the whitelist.
+> 
+> This is also a pre-requisite to use block integrity with other dm layer(s)
+> on top of multipath, such as kpartx partitions (dm-linear) or LVM.
+> 
+> Signed-off-by: Steffen Maier <maier@linux.vnet.ibm.com>
+> Bisected-by: Fedor Loshakov <loshakov@linux.vnet.ibm.com>
+> Fixes: e2460f2a4bc7 ("dm: mark targets that pass integrity data")
+> Cc: <stable@vger.kernel.org> #4.12+
+> ---
+>  drivers/md/dm-mpath.c | 3 ++-
+>  1 file changed, 2 insertions(+), 1 deletion(-)
+> 
+> diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+> index 3fde9e9faddd..c174f0c53dc9 100644
+> --- a/drivers/md/dm-mpath.c
+> +++ b/drivers/md/dm-mpath.c
+> @@ -2023,7 +2023,8 @@ static int multipath_busy(struct dm_target *ti)
+>  static struct target_type multipath_target = {
+>  	.name = "multipath",
+>  	.version = {1, 12, 0},
+> -	.features = DM_TARGET_SINGLETON | DM_TARGET_IMMUTABLE,
+> +	.features = DM_TARGET_SINGLETON | DM_TARGET_IMMUTABLE |
+> +		    DM_TARGET_PASSES_INTEGRITY,
+>  	.module = THIS_MODULE,
+>  	.ctr = multipath_ctr,
+>  	.dtr = multipath_dtr,
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 2924d53..f116c74 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -326,7 +326,7 @@ set_multipath_wwid (struct multipath * mpp)
- }
- 
- static int
--update_map (struct multipath *mpp, struct vectors *vecs)
-+update_map (struct multipath *mpp, struct vectors *vecs, int new_map)
- {
- 	int retries = 3;
- 	char params[PARAMS_SIZE] = {0};
-@@ -356,6 +356,12 @@ retry:
- 	dm_lib_release();
- 
- fail:
-+	if (new_map && (retries < 0 || start_waiter_thread(mpp, vecs))) {
-+		condlog(0, "%s: failed to create new map", mpp->alias);
-+		remove_map(mpp, vecs, 1);
-+		return 1;
-+	}
-+
- 	if (setup_multipath(vecs, mpp))
- 		return 1;
- 
-@@ -400,12 +406,9 @@ add_map_without_path (struct vectors *vecs, const char *alias)
- 
- 	vector_set_slot(vecs->mpvec, mpp);
- 
--	if (update_map(mpp, vecs) != 0) /* map removed */
-+	if (update_map(mpp, vecs, 1) != 0) /* map removed */
- 		return NULL;
- 
--	if (start_waiter_thread(mpp, vecs))
--		goto out;
--
- 	return mpp;
- out:
- 	remove_map(mpp, vecs, PURGE_VEC);
-@@ -559,7 +562,7 @@ ev_add_map (char * dev, const char * alias, struct vectors * vecs)
- 		if (mpp->wait_for_udev > 1) {
- 			condlog(2, "%s: performing delayed actions",
- 				mpp->alias);
--			if (update_map(mpp, vecs))
-+			if (update_map(mpp, vecs, 0))
- 				/* setup multipathd removed the map */
- 				return 1;
- 		}
-@@ -870,6 +873,11 @@ retry:
- 	}
- 	dm_lib_release();
- 
-+	if ((mpp->action == ACT_CREATE ||
-+	     (mpp->action == ACT_NOTHING && start_waiter && !mpp->waiter)) &&
-+	    start_waiter_thread(mpp, vecs))
-+			goto fail_map;
-+
- 	/*
- 	 * update our state from kernel regardless of create or reload
- 	 */
-@@ -878,11 +886,6 @@ retry:
- 
- 	sync_map_state(mpp);
- 
--	if ((mpp->action == ACT_CREATE ||
--	     (mpp->action == ACT_NOTHING && start_waiter && !mpp->waiter)) &&
--	    start_waiter_thread(mpp, vecs))
--			goto fail_map;
--
- 	if (retries >= 0) {
- 		condlog(2, "%s [%s]: path added to devmap %s",
- 			pp->dev, pp->dev_t, mpp->alias);
-@@ -1518,7 +1521,8 @@ missing_uev_wait_tick(struct vectors *vecs)
- 		if (mpp->wait_for_udev && --mpp->uev_wait_tick <= 0) {
- 			timed_out = 1;
- 			condlog(0, "%s: timeout waiting on creation uevent. enabling reloads", mpp->alias);
--			if (mpp->wait_for_udev > 1 && update_map(mpp, vecs)) {
-+			if (mpp->wait_for_udev > 1 &&
-+			    update_map(mpp, vecs, 0)) {
- 				/* update_map removed map */
- 				i--;
- 				continue;
-@@ -1550,7 +1554,7 @@ ghost_delay_tick(struct vectors *vecs)
- 			condlog(0, "%s: timed out waiting for active path",
- 				mpp->alias);
- 			mpp->force_udev_reload = 1;
--			if (update_map(mpp, vecs) != 0) {
-+			if (update_map(mpp, vecs, 0) != 0) {
- 				/* update_map removed map */
- 				i--;
- 				continue;
-@@ -2199,14 +2203,13 @@ configure (struct vectors * vecs)
- 	 * start dm event waiter threads for these new maps
- 	 */
- 	vector_foreach_slot(vecs->mpvec, mpp, i) {
--		if (setup_multipath(vecs, mpp)) {
--			i--;
--			continue;
--		}
- 		if (start_waiter_thread(mpp, vecs)) {
- 			remove_map(mpp, vecs, 1);
- 			i--;
-+			continue;
- 		}
-+		if (setup_multipath(vecs, mpp))
-+			i--;
- 	}
- 	return 0;
- }
--- 
-2.7.4
+Thanks, I've queued this for 4.16-rc6, will send to Linus tomorrow.
