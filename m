@@ -1,14 +1,17 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH] dm mpath: fix passing integrity data
-Date: Wed, 14 Mar 2018 16:42:51 +0100
-Message-ID: <86a221de-7a22-4bcc-113f-13a96f02bfb1@suse.de>
-References: <20180314143306.98405-1-maier@linux.vnet.ibm.com>
+From: Bart Van Assche <Bart.VanAssche@wdc.com>
+Subject: Re: [PATCH v2 04/23] libmultipath: parser: use
+ call-by-value for "snprint" methods
+Date: Thu, 15 Mar 2018 14:25:28 +0000
+Message-ID: <1521123927.3336.1.camel@wdc.com>
+References: <20180305231507.10386-1-mwilck@suse.com>
+	<20180305231507.10386-5-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180314143306.98405-1-maier@linux.vnet.ibm.com>
+In-Reply-To: <20180305231507.10386-5-mwilck@suse.com>
 Content-Language: en-US
+Content-ID: <F864DDDE77338742BEEAD4E95F65A79C@namprd04.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,38 +21,96 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Steffen Maier <maier@linux.vnet.ibm.com>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: linux-s390@vger.kernel.org, Hannes Reinecke <hare@suse.com>, "Martin K . Petersen" <martin.petersen@oracle.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, linux-block@vger.kernel.org, Fedor Loshakov <loshakov@linux.vnet.ibm.com>, Martin Schwidefsky <schwidefsky@de.ibm.com>
+To: "mwilck@suse.com" <mwilck@suse.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gMDMvMTQvMjAxOCAwMzozMyBQTSwgU3RlZmZlbiBNYWllciB3cm90ZToKPiBBZnRlciB2NC4x
-MiBjb21taXQgZTI0NjBmMmE0YmM3ICgiZG06IG1hcmsgdGFyZ2V0cyB0aGF0IHBhc3MgaW50ZWdy
-aXR5Cj4gZGF0YSIpLCBkbS1tdWx0aXBhdGgsIGUuZy4gb24gRElGK0RJWCBTQ1NJIGRpc2sgcGF0
-aHMsIGRvZXMgbm90IHN1cHBvcnQKPiBibG9jayBpbnRlZ3JpdHkgYW55IG1vcmUuIFNvIGFkZCBp
-dCB0byB0aGUgd2hpdGVsaXN0Lgo+IAo+IFRoaXMgaXMgYWxzbyBhIHByZS1yZXF1aXNpdGUgdG8g
-dXNlIGJsb2NrIGludGVncml0eSB3aXRoIG90aGVyIGRtIGxheWVyKHMpCj4gb24gdG9wIG9mIG11
-bHRpcGF0aCwgc3VjaCBhcyBrcGFydHggcGFydGl0aW9ucyAoZG0tbGluZWFyKSBvciBMVk0uCj4g
-Cj4gU2lnbmVkLW9mZi1ieTogU3RlZmZlbiBNYWllciA8bWFpZXJAbGludXgudm5ldC5pYm0uY29t
-Pgo+IEJpc2VjdGVkLWJ5OiBGZWRvciBMb3NoYWtvdiA8bG9zaGFrb3ZAbGludXgudm5ldC5pYm0u
-Y29tPgo+IEZpeGVzOiBlMjQ2MGYyYTRiYzcgKCJkbTogbWFyayB0YXJnZXRzIHRoYXQgcGFzcyBp
-bnRlZ3JpdHkgZGF0YSIpCj4gQ2M6IDxzdGFibGVAdmdlci5rZXJuZWwub3JnPiAjNC4xMisKPiAt
-LS0KPiAgZHJpdmVycy9tZC9kbS1tcGF0aC5jIHwgMyArKy0KPiAgMSBmaWxlIGNoYW5nZWQsIDIg
-aW5zZXJ0aW9ucygrKSwgMSBkZWxldGlvbigtKQo+IAo+IGRpZmYgLS1naXQgYS9kcml2ZXJzL21k
-L2RtLW1wYXRoLmMgYi9kcml2ZXJzL21kL2RtLW1wYXRoLmMKPiBpbmRleCAzZmRlOWU5ZmFkZGQu
-LmMxNzRmMGM1M2RjOSAxMDA2NDQKPiAtLS0gYS9kcml2ZXJzL21kL2RtLW1wYXRoLmMKPiArKysg
-Yi9kcml2ZXJzL21kL2RtLW1wYXRoLmMKPiBAQCAtMjAyMyw3ICsyMDIzLDggQEAgc3RhdGljIGlu
-dCBtdWx0aXBhdGhfYnVzeShzdHJ1Y3QgZG1fdGFyZ2V0ICp0aSkKPiAgc3RhdGljIHN0cnVjdCB0
-YXJnZXRfdHlwZSBtdWx0aXBhdGhfdGFyZ2V0ID0gewo+ICAJLm5hbWUgPSAibXVsdGlwYXRoIiwK
-PiAgCS52ZXJzaW9uID0gezEsIDEyLCAwfSwKPiAtCS5mZWF0dXJlcyA9IERNX1RBUkdFVF9TSU5H
-TEVUT04gfCBETV9UQVJHRVRfSU1NVVRBQkxFLAo+ICsJLmZlYXR1cmVzID0gRE1fVEFSR0VUX1NJ
-TkdMRVRPTiB8IERNX1RBUkdFVF9JTU1VVEFCTEUgfAo+ICsJCSAgICBETV9UQVJHRVRfUEFTU0VT
-X0lOVEVHUklUWSwKPiAgCS5tb2R1bGUgPSBUSElTX01PRFVMRSwKPiAgCS5jdHIgPSBtdWx0aXBh
-dGhfY3RyLAo+ICAJLmR0ciA9IG11bHRpcGF0aF9kdHIsCj4gCkhvLWh1bS4KVGhhbmtzIGZvciB0
-aGlzLgoKUmV2aWV3ZWQtYnk6IEhhbm5lcyBSZWluZWNrZSA8aGFyZUBzdXNlLmNvbT4KCkNoZWVy
-cywKCkhhbm5lcwotLSAKRHIuIEhhbm5lcyBSZWluZWNrZQkJICAgVGVhbWxlYWQgU3RvcmFnZSAm
-IE5ldHdvcmtpbmcKaGFyZUBzdXNlLmRlCQkJICAgICAgICAgICAgICAgKzQ5IDkxMSA3NDA1MyA2
-ODgKU1VTRSBMSU5VWCBHbWJILCBNYXhmZWxkc3RyLiA1LCA5MDQwOSBOw7xybmJlcmcKR0Y6IEYu
-IEltZW5kw7ZyZmZlciwgSi4gU21pdGhhcmQsIEouIEd1aWxkLCBELiBVcG1hbnl1LCBHLiBOb3J0
-b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0t
-ZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8v
-ZG0tZGV2ZWw=
+On Tue, 2018-03-06 at 00:14 +0100, Martin Wilck wrote:
+> Convert the snprint methods for all keywords to call-by-value,
+> and use "const" qualifier for the "data" argument. This makes sure
+> that "snprint" type functions don't modify the data they're print,
+> helps compile-time correctness checking, and allows more proper
+> "const" cleanups in the future.
+
+Hello Martin,
+
+With this patch applied on top of Christophe's master branch:
+
+diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+index ea273dd91962..ac9216c4c5f3 100644
+--- a/libmultipath/dict.c
++++ b/libmultipath/dict.c
+@@ -23,6 +23,7 @@
+ #include <errno.h>
+ #include <inttypes.h>
+ #include "mpath_cmd.h"
++#include "dict.h"
+ 
+ static int
+ set_int(vector strvec, void *ptr)
+
+
+I see a whole bunch of warnings appear (see below). Can you have a look at
+this?
+
+Thanks,
+
+Bart.
+
+
+dict.c:627:1: error: conflicting types for 'print_fast_io_fail'
+ print_fast_io_fail(char * buff, int len, long v)
+ ^~~~~~~~~~~~~~~~~~
+In file included from dict.c:26:0:
+dict.h:16:5: note: previous declaration of 'print_fast_io_fail' was here
+ int print_fast_io_fail(char * buff, int len, void *ptr);
+     ^~~~~~~~~~~~~~~~~~
+dict.c:666:1: error: conflicting types for 'print_dev_loss'
+ print_dev_loss(char * buff, int len, unsigned long v)
+ ^~~~~~~~~~~~~~
+In file included from dict.c:26:0:
+dict.h:17:5: note: previous declaration of 'print_dev_loss' was here
+ int print_dev_loss(char * buff, int len, void *ptr);
+     ^~~~~~~~~~~~~~
+dict.c:697:1: error: conflicting types for 'print_pgpolicy'
+ print_pgpolicy(char * buff, int len, long pgpolicy)
+ ^~~~~~~~~~~~~~
+In file included from dict.c:26:0:
+dict.h:14:5: note: previous declaration of 'print_pgpolicy' was here
+ int print_pgpolicy(char * buff, int len, void *ptr);
+     ^~~~~~~~~~~~~~
+dict.c:814:1: error: conflicting types for 'print_rr_weight'
+ print_rr_weight (char * buff, int len, long v)
+ ^~~~~~~~~~~~~~~
+In file included from dict.c:26:0:
+dict.h:12:5: note: previous declaration of 'print_rr_weight' was here
+ int print_rr_weight (char * buff, int len, void *ptr);
+     ^~~~~~~~~~~~~~~
+dict.c:860:1: error: conflicting types for 'print_pgfailback'
+ print_pgfailback (char * buff, int len, long v)
+ ^~~~~~~~~~~~~~~~
+In file included from dict.c:26:0:
+dict.h:13:5: note: previous declaration of 'print_pgfailback' was here
+ int print_pgfailback (char * buff, int len, void *ptr);
+     ^~~~~~~~~~~~~~~~
+dict.c:907:1: error: conflicting types for 'print_no_path_retry'
+ print_no_path_retry(char * buff, int len, long v)
+ ^~~~~~~~~~~~~~~~~~~
+In file included from dict.c:26:0:
+dict.h:15:5: note: previous declaration of 'print_no_path_retry' was here
+ int print_no_path_retry(char * buff, int len, void *ptr);
+     ^~~~~~~~~~~~~~~~~~~
+dict.c:1049:1: error: conflicting types for 'print_off_int_undef'
+ print_off_int_undef(char * buff, int len, long v)
+ ^~~~~~~~~~~~~~~~~~~
+In file included from dict.c:26:0:
+dict.h:19:5: note: previous declaration of 'print_off_int_undef' was here
+ int print_off_int_undef(char * buff, int len, void *ptr);
+     ^~~~~~~~~~~~~~~~~~~
+make[1]: *** [../Makefile.inc:131: dict.o] Error 1
+make: *** [Makefile:25: recurse] Error 2
+install: cannot remove '/lib64/libmpathcmd.so.0': Permission denied
+make[1]: *** [Makefile:19: install] Error 1
+make: *** [Makefile:34: recurse_install] Error 2
+
+Compilation exited abnormally with code 2 at Thu Mar 15 07:23:12
