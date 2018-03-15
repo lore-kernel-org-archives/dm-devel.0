@@ -1,7 +1,7 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: remove DF arrays from HP
-Date: Thu, 15 Mar 2018 18:43:22 +0100
-Message-ID: <20180315174322.30108-1-xose.vazquez@gmail.com>
+Subject: [PATCH] scsi: devinfo: remove DF arrays from HP
+Date: Thu, 15 Mar 2018 19:01:49 +0100
+Message-ID: <20180315180149.30560-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -15,31 +15,36 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: Matthias Rudolph <Matthias.Rudolph@hitachivantara.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, device-mapper development <dm-devel@redhat.com>
+Cc: Matthias Rudolph <Matthias.Rudolph@hitachivantara.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, SCSI ML <linux-scsi@vger.kernel.org>, "Martin K . Petersen" <martin.petersen@oracle.com>, Takahiro Yasui <takahiro.yasui@hitachivantara.com>, device-mapper development <dm-devel@redhat.com>, Mike Christie <mchristi@redhat.com>, "James E . J . Bottomley" <jejb@linux.vnet.ibm.com>, Anthony Cheung <anthony.cheung@hpe.com>
 List-Id: dm-devel.ids
 
 Matthias did confirm that there are no such devices.
 
 Cc: Matthias Rudolph <Matthias.Rudolph@hitachivantara.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: Anthony Cheung <anthony.cheung@hpe.com>
+Cc: Takahiro Yasui <takahiro.yasui@hitachivantara.com>
+Cc: Mike Christie <mchristi@redhat.com>
+Cc: Martin K. Petersen <martin.petersen@oracle.com>
+Cc: James E.J. Bottomley <jejb@linux.vnet.ibm.com>
+Cc: SCSI ML <linux-scsi@vger.kernel.org>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ drivers/scsi/scsi_devinfo.c | 2 --
+ 1 file changed, 2 deletions(-)
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index fe71d14..570811e 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -404,7 +404,7 @@ static struct hwentry default_hw[] = {
- 	},
- 	{
- 		/* AMS 2000 and HUS 100 families */
--		.vendor        = "(HITACHI|HP)",
-+		.vendor        = "HITACHI",
- 		.product       = "^DF",
- 		.no_path_retry = NO_PATH_RETRY_QUEUE,
- 		.pgpolicy      = GROUP_BY_PRIO,
+diff --git a/drivers/scsi/scsi_devinfo.c b/drivers/scsi/scsi_devinfo.c
+index f3b117246d47..b119b5bfb4d3 100644
+--- a/drivers/scsi/scsi_devinfo.c
++++ b/drivers/scsi/scsi_devinfo.c
+@@ -187,8 +187,6 @@ static struct {
+ 	{"HP", "C1557A", NULL, BLIST_FORCELUN},
+ 	{"HP", "C3323-300", "4269", BLIST_NOTQ},
+ 	{"HP", "C5713A", NULL, BLIST_NOREPORTLUN},
+-	{"HP", "DF400", "*", BLIST_REPORTLUN2},
+-	{"HP", "DF500", "*", BLIST_REPORTLUN2},
+ 	{"HP", "OP-C-", "*", BLIST_SPARSELUN | BLIST_LARGELUN},
+ 	{"HP", "3380-", "*", BLIST_SPARSELUN | BLIST_LARGELUN},
+ 	{"HP", "3390-", "*", BLIST_SPARSELUN | BLIST_LARGELUN},
 -- 
 2.14.3
