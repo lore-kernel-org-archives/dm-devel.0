@@ -1,17 +1,12 @@
-From: Bart Van Assche <Bart.VanAssche@wdc.com>
-Subject: Re: [PATCH v2 04/23] libmultipath: parser: use
- call-by-value for "snprint" methods
-Date: Thu, 15 Mar 2018 14:25:28 +0000
-Message-ID: <1521123927.3336.1.camel@wdc.com>
-References: <20180305231507.10386-1-mwilck@suse.com>
-	<20180305231507.10386-5-mwilck@suse.com>
+From: Dan Carpenter <dan.carpenter@oracle.com>
+Subject: [bug report] dm: add statistics support
+Date: Thu, 15 Mar 2018 17:25:32 +0300
+Message-ID: <20180315142532.GA29284@mwanda>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180305231507.10386-5-mwilck@suse.com>
-Content-Language: en-US
-Content-ID: <F864DDDE77338742BEEAD4E95F65A79C@namprd04.prod.outlook.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,96 +16,59 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "mwilck@suse.com" <mwilck@suse.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: mpatocka@redhat.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, 2018-03-06 at 00:14 +0100, Martin Wilck wrote:
-> Convert the snprint methods for all keywords to call-by-value,
-> and use "const" qualifier for the "data" argument. This makes sure
-> that "snprint" type functions don't modify the data they're print,
-> helps compile-time correctness checking, and allows more proper
-> "const" cleanups in the future.
+[ This code is half a decade old so probably removing the dead code is
+  fine?  - dan ]
 
-Hello Martin,
+Hello Mikulas Patocka,
 
-With this patch applied on top of Christophe's master branch:
+The patch fd2ed4d25270: "dm: add statistics support" from Aug 16,
+2013, leads to the following static checker warning:
 
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index ea273dd91962..ac9216c4c5f3 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -23,6 +23,7 @@
- #include <errno.h>
- #include <inttypes.h>
- #include "mpath_cmd.h"
-+#include "dict.h"
- 
- static int
- set_int(vector strvec, void *ptr)
+	drivers/md/dm-stats.c:371 dm_stats_create()
+	warn: dead code because of 's->id == ((~0 >> 1))' and 'tmp_s->id < s->id'
 
+drivers/md/dm-stats.c
+   361          mutex_lock(&stats->mutex);
+   362          s->id = 0;
+   363          list_for_each(l, &stats->list) {
+   364                  tmp_s = container_of(l, struct dm_stat, list_entry);
+   365                  if (WARN_ON(tmp_s->id < s->id)) {
+                                    ^^^^^^^^^^^^^^^^^
+This condition means that s->id can't be INT_MAX.
 
-I see a whole bunch of warnings appear (see below). Can you have a look at
-this?
+   366                          r = -EINVAL;
+   367                          goto out_unlock_resume;
+   368                  }
+   369                  if (tmp_s->id > s->id)
+   370                          break;
+   371                  if (unlikely(s->id == INT_MAX)) {
+                                     ^^^^^^^^^^^^^^^^
+So we can probably remove this dead code?  Was something else intended?
 
-Thanks,
+   372                          r = -ENFILE;
+   373                          goto out_unlock_resume;
+   374                  }
+   375                  s->id++;
+   376          }
+   377          ret_id = s->id;
+   378          list_add_tail_rcu(&s->list_entry, l);
+   379          mutex_unlock(&stats->mutex);
+   380  
+   381          resume_callback(md);
+   382  
+   383          return ret_id;
+   384  
+   385  out_unlock_resume:
+   386          mutex_unlock(&stats->mutex);
+   387          resume_callback(md);
+   388  out:
+   389          dm_stat_free(&s->rcu_head);
+   390          return r;
+   391  }
 
-Bart.
-
-
-dict.c:627:1: error: conflicting types for 'print_fast_io_fail'
- print_fast_io_fail(char * buff, int len, long v)
- ^~~~~~~~~~~~~~~~~~
-In file included from dict.c:26:0:
-dict.h:16:5: note: previous declaration of 'print_fast_io_fail' was here
- int print_fast_io_fail(char * buff, int len, void *ptr);
-     ^~~~~~~~~~~~~~~~~~
-dict.c:666:1: error: conflicting types for 'print_dev_loss'
- print_dev_loss(char * buff, int len, unsigned long v)
- ^~~~~~~~~~~~~~
-In file included from dict.c:26:0:
-dict.h:17:5: note: previous declaration of 'print_dev_loss' was here
- int print_dev_loss(char * buff, int len, void *ptr);
-     ^~~~~~~~~~~~~~
-dict.c:697:1: error: conflicting types for 'print_pgpolicy'
- print_pgpolicy(char * buff, int len, long pgpolicy)
- ^~~~~~~~~~~~~~
-In file included from dict.c:26:0:
-dict.h:14:5: note: previous declaration of 'print_pgpolicy' was here
- int print_pgpolicy(char * buff, int len, void *ptr);
-     ^~~~~~~~~~~~~~
-dict.c:814:1: error: conflicting types for 'print_rr_weight'
- print_rr_weight (char * buff, int len, long v)
- ^~~~~~~~~~~~~~~
-In file included from dict.c:26:0:
-dict.h:12:5: note: previous declaration of 'print_rr_weight' was here
- int print_rr_weight (char * buff, int len, void *ptr);
-     ^~~~~~~~~~~~~~~
-dict.c:860:1: error: conflicting types for 'print_pgfailback'
- print_pgfailback (char * buff, int len, long v)
- ^~~~~~~~~~~~~~~~
-In file included from dict.c:26:0:
-dict.h:13:5: note: previous declaration of 'print_pgfailback' was here
- int print_pgfailback (char * buff, int len, void *ptr);
-     ^~~~~~~~~~~~~~~~
-dict.c:907:1: error: conflicting types for 'print_no_path_retry'
- print_no_path_retry(char * buff, int len, long v)
- ^~~~~~~~~~~~~~~~~~~
-In file included from dict.c:26:0:
-dict.h:15:5: note: previous declaration of 'print_no_path_retry' was here
- int print_no_path_retry(char * buff, int len, void *ptr);
-     ^~~~~~~~~~~~~~~~~~~
-dict.c:1049:1: error: conflicting types for 'print_off_int_undef'
- print_off_int_undef(char * buff, int len, long v)
- ^~~~~~~~~~~~~~~~~~~
-In file included from dict.c:26:0:
-dict.h:19:5: note: previous declaration of 'print_off_int_undef' was here
- int print_off_int_undef(char * buff, int len, void *ptr);
-     ^~~~~~~~~~~~~~~~~~~
-make[1]: *** [../Makefile.inc:131: dict.o] Error 1
-make: *** [Makefile:25: recurse] Error 2
-install: cannot remove '/lib64/libmpathcmd.so.0': Permission denied
-make[1]: *** [Makefile:19: install] Error 1
-make: *** [Makefile:34: recurse_install] Error 2
-
-Compilation exited abnormally with code 2 at Thu Mar 15 07:23:12
+regards,
+dan carpenter
