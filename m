@@ -1,13 +1,13 @@
 From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Subject: [PATCH 4.14 084/109] scsi: dh: add new rdac devices
-Date: Fri, 16 Mar 2018 16:23:53 +0100
-Message-ID: <20180316152334.514320863@linuxfoundation.org>
-References: <20180316152329.844663293@linuxfoundation.org>
+Subject: [PATCH 4.15 101/128] scsi: dh: add new rdac devices
+Date: Fri, 16 Mar 2018 16:24:02 +0100
+Message-ID: <20180316152341.584575440@linuxfoundation.org>
+References: <20180316152336.199007505@linuxfoundation.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180316152329.844663293@linuxfoundation.org>
+In-Reply-To: <20180316152336.199007505@linuxfoundation.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,7 +21,7 @@ To: linux-kernel@vger.kernel.org
 Cc: "James E.J. Bottomley" <jejb@linux.vnet.ibm.com>, SCSI ML <linux-scsi@vger.kernel.org>, "Martin K. Petersen" <martin.petersen@oracle.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Xose Vazquez Perez <xose.vazquez@gmail.com>, stable@vger.kernel.org, Sasha Levin <alexander.levin@microsoft.com>, NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-4.14-stable review patch.  If anyone has any objections, please let me know.
+4.15-stable review patch.  If anyone has any objections, please let me know.
 
 ------------------
 
