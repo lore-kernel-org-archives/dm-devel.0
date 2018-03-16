@@ -1,7 +1,7 @@
 From: <gregkh@linuxfoundation.org>
-Subject: Patch "scsi: dh: add new rdac devices" has been added to the 4.15-stable tree
-Date: Fri, 16 Mar 2018 15:16:48 +0100
-Message-ID: <15212098088957@kroah.com>
+Subject: Patch "scsi: dh: add new rdac devices" has been added to the 4.14-stable tree
+Date: Fri, 16 Mar 2018 15:46:54 +0100
+Message-ID: <15212116149662@kroah.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ANSI_X3.4-1968
 Content-Transfer-Encoding: 8bit
@@ -16,18 +16,18 @@ This is a note to let you know that I've just added the patch titled
 
     scsi: dh: add new rdac devices
 
-to the 4.15-stable tree which can be found at:
+to the 4.14-stable tree which can be found at:
     http://www.kernel.org/git/?p=linux/kernel/git/stable/stable-queue.git;a=summary
 
 The filename of the patch is:
      scsi-dh-add-new-rdac-devices.patch
-and it can be found in the queue-4.15 subdirectory.
+and it can be found in the queue-4.14 subdirectory.
 
 If you, or anyone else, feels it should not be added to the stable tree,
 please let <stable@vger.kernel.org> know about it.
 
 
-From foo@baz Fri Mar 16 15:11:08 CET 2018
+From foo@baz Fri Mar 16 15:43:17 CET 2018
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
 Date: Fri, 17 Nov 2017 22:05:13 +0100
 Subject: scsi: dh: add new rdac devices
@@ -82,5 +82,5 @@ Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 
 Patches currently in stable-queue which might be from xose.vazquez@gmail.com are
 
-queue-4.15/scsi-devinfo-apply-to-hp-xp-the-same-flags-as-hitachi-vsp.patch
-queue-4.15/scsi-dh-add-new-rdac-devices.patch
+queue-4.14/scsi-devinfo-apply-to-hp-xp-the-same-flags-as-hitachi-vsp.patch
+queue-4.14/scsi-dh-add-new-rdac-devices.patch
