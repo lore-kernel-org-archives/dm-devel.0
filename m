@@ -1,7 +1,7 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 1/3] multipathd: fix waiter thread cancelling
-Date: Fri, 16 Mar 2018 16:31:05 -0500
-Message-ID: <1521235867-29476-2-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 3/3] multipathd: stop waiter in __setup_multipath
+Date: Fri, 16 Mar 2018 16:31:07 -0500
+Message-ID: <1521235867-29476-4-git-send-email-bmarzins@redhat.com>
 References: <1521235867-29476-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,88 +21,46 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-multipathd was sending a signal to the per-device waiter thread after
-cancelling it.  Since these threads are detached, there is a window
-where a new thread could have started with the old thread id between the
-cancel and the signalling, causing the signal to be delivered to the
-wrong thread. Simply reversing the order doesn't fix the issue, since
-the waiter threads exit immediately if they receive a signal, again
-opening a window for the cancel to be delivered to the wrong thread.
-
-To fix this, multipathd does reverse the order, so that it signals the
-thread first (it needs to signal the thread, since the dm_task_run ioctl
-isn't a cancellation point) and then cancels it. However it does this
-while holding a new mutex.
-
-The waiter thread can only exit without being cancelled for two reasons.
-1. When it fails in update_multipath, which removes the device while
-   holding the vecs lock.
-2. If it receives a SIGUSR2 signal while waiting for a dm event.
-
-Case 1 can never race with another thread removing the device, since
-removing a device always happens while holding the vecs lock.  This
-means that if the device exists to be removed, then the waiter thread
-can't exit this way during the removal.
-
-Case 2 is now solved by grabbing the new mutex after failing
-dm_task_run(). With the mutex held, the thread checks if it has been
-cancelled. If it wasn't cancelled, the thread continues.
-
-The reason that this uses a new mutex, instead of the vecs lock, is that
-using the vecs lock would keep the thread from ending until the vecs
-lock was released.  Normally, this isn't a problem. But during
-reconfigure, the waiter threads for all devices are stopped, and new
-ones started, all while holding the vecs lock.  For systems with a large
-number of multipath devices, this will cause multipathd do have double
-its already large number of waiter threads during reconfigure, all locked
-into memory.
+__setup_multipath can remove a multipath device from multipathd, and it
+can be called by either by the waiter thread or another thread.
+Previously, it dealt with this by never stopping the waiter thread.  It
+simply relied on the waiter thread to notice and stop itself.  Now, when
+called by another thread, it explicitly stops the waiter thread.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/waiter.c | 16 +++++++++++++---
- 1 file changed, 13 insertions(+), 3 deletions(-)
+ multipathd/main.c   | 2 +-
+ multipathd/waiter.c | 5 +++++
+ 2 files changed, 6 insertions(+), 1 deletion(-)
 
-diff --git a/multipathd/waiter.c b/multipathd/waiter.c
-index cb9708b..e894294 100644
---- a/multipathd/waiter.c
-+++ b/multipathd/waiter.c
-@@ -23,6 +23,7 @@
- #include "waiter.h"
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 70aff5d..3ae0442 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -398,7 +398,7 @@ int __setup_multipath(struct vectors *vecs, struct multipath *mpp,
  
- pthread_attr_t waiter_attr;
-+struct mutex_lock waiter_lock = { .mutex = PTHREAD_MUTEX_INITIALIZER };
- 
- static struct event_thread *alloc_waiter (void)
- {
-@@ -59,8 +60,12 @@ void stop_waiter_thread (struct multipath *mpp, struct vectors *vecs)
- 		mpp->waiter);
- 	thread = mpp->waiter;
- 	mpp->waiter = (pthread_t)0;
--	pthread_cancel(thread);
-+	pthread_cleanup_push(cleanup_lock, &waiter_lock);
-+	lock(&waiter_lock);
-+	pthread_testcancel();
- 	pthread_kill(thread, SIGUSR2);
-+	pthread_cancel(thread);
-+	lock_cleanup_pop(&waiter_lock);
+ 	return 0;
+ out:
+-	remove_map(mpp, vecs, PURGE_VEC);
++	remove_map_and_stop_waiter(mpp, vecs, PURGE_VEC);
+ 	return 1;
  }
  
- /*
-@@ -114,8 +119,13 @@ static int waiteventloop (struct event_thread *waiter)
- 	dm_task_destroy(waiter->dmt);
- 	waiter->dmt = NULL;
- 
--	if (!r)	/* wait interrupted by signal */
--		return -1;
-+	if (!r)	{ /* wait interrupted by signal. check for cancellation */
-+		pthread_cleanup_push(cleanup_lock, &waiter_lock);
-+		lock(&waiter_lock);
-+		pthread_testcancel();
-+		lock_cleanup_pop(&waiter_lock);
-+		return 1; /* If we weren't cancelled, just reschedule */
-+	}
- 
- 	waiter->event_nr++;
- 
+diff --git a/multipathd/waiter.c b/multipathd/waiter.c
+index c70ad21..595c69a 100644
+--- a/multipathd/waiter.c
++++ b/multipathd/waiter.c
+@@ -57,6 +57,11 @@ void stop_waiter_thread (struct multipath *mpp, struct vectors *vecs)
+ 			mpp->alias);
+ 		return;
+ 	}
++	/* Don't cancel yourself. __setup_multipath is called by
++	   by the waiter thread, and may remove a multipath device */
++	if (pthread_equal(mpp->waiter, pthread_self()))
++		return;
++
+ 	condlog(2, "%s: stop event checker thread (%lu)", mpp->alias,
+ 		mpp->waiter);
+ 	thread = mpp->waiter;
 -- 
 2.7.4
