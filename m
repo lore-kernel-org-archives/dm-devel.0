@@ -1,12 +1,13 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH RFC] scsi: devinfo: remove dasd devices from the
-	scsi subsystem
-Date: Fri, 16 Mar 2018 15:57:25 +0100
-Message-ID: <20180316145725.15394-1-xose.vazquez@gmail.com>
+From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Subject: [PATCH 4.14 084/109] scsi: dh: add new rdac devices
+Date: Fri, 16 Mar 2018 16:23:53 +0100
+Message-ID: <20180316152334.514320863@linuxfoundation.org>
+References: <20180316152329.844663293@linuxfoundation.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20180316152329.844663293@linuxfoundation.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,52 +17,57 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: s390 ML <linux-s390@vger.kernel.org>, Matthias Rudolph <Matthias.Rudolph@hitachivantara.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, SCSI ML <linux-scsi@vger.kernel.org>, "Martin K . Petersen" <martin.petersen@oracle.com>, Takahiro Yasui <takahiro.yasui@hitachivantara.com>, device-mapper development <dm-devel@redhat.com>, Mike Christie <mchristi@redhat.com>, "James E . J . Bottomley" <jejb@linux.vnet.ibm.com>, Anthony Cheung <anthony.cheung@hpe.com>
+To: linux-kernel@vger.kernel.org
+Cc: "James E.J. Bottomley" <jejb@linux.vnet.ibm.com>, SCSI ML <linux-scsi@vger.kernel.org>, "Martin K. Petersen" <martin.petersen@oracle.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Xose Vazquez Perez <xose.vazquez@gmail.com>, stable@vger.kernel.org, Sasha Levin <alexander.levin@microsoft.com>, NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Only present through ccw bus.
+4.14-stable review patch.  If anyone has any objections, please let me know.
 
-Cc: Matthias Rudolph <Matthias.Rudolph@hitachivantara.com>
-Cc: Takahiro Yasui <takahiro.yasui@hitachivantara.com>
-Cc: Anthony Cheung <anthony.cheung@hpe.com>
-Cc: Mike Christie <mchristi@redhat.com>
+------------------
+
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+
+
+[ Upstream commit 4b3aec2bbbce1c35f50e7475a9fd78d24b9ea4ea ]
+
+Add IBM 3542 and 3552, arrays: FAStT200 and FAStT500.
+
+Add full STK OPENstorage family, arrays: 9176, D173, D178, D210, D220,
+D240 and D280.
+
+Add STK BladeCtlr family, arrays: B210, B220, B240 and B280.
+
+These changes were done in multipath-tools time ago.
+
+Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>
+Cc: Hannes Reinecke <hare@suse.de>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: Martin K. Petersen <martin.petersen@oracle.com>
 Cc: James E.J. Bottomley <jejb@linux.vnet.ibm.com>
-Cc: s390 ML <linux-s390@vger.kernel.org>
 Cc: SCSI ML <linux-scsi@vger.kernel.org>
 Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
+Signed-off-by: Sasha Levin <alexander.levin@microsoft.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 ---
- drivers/scsi/scsi_devinfo.c | 10 ----------
- 1 file changed, 10 deletions(-)
+ drivers/scsi/scsi_dh.c |    5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/scsi/scsi_devinfo.c b/drivers/scsi/scsi_devinfo.c
-index b119b5bfb4d3..31985dd3f4b6 100644
---- a/drivers/scsi/scsi_devinfo.c
-+++ b/drivers/scsi/scsi_devinfo.c
-@@ -175,11 +175,6 @@ static struct {
- 	{"HITACHI", "DISK-SUBSYSTEM", "*", BLIST_REPORTLUN2},
- 	{"HITACHI", "HUS1530", "*", BLIST_NO_DIF},
- 	{"HITACHI", "OPEN-", "*", BLIST_REPORTLUN2 | BLIST_TRY_VPD_PAGES},
--	{"HITACHI", "OP-C-", "*", BLIST_SPARSELUN | BLIST_LARGELUN},
--	{"HITACHI", "3380-", "*", BLIST_SPARSELUN | BLIST_LARGELUN},
--	{"HITACHI", "3390-", "*", BLIST_SPARSELUN | BLIST_LARGELUN},
--	{"HITACHI", "6586-", "*", BLIST_SPARSELUN | BLIST_LARGELUN},
--	{"HITACHI", "6588-", "*", BLIST_SPARSELUN | BLIST_LARGELUN},
- 	{"HP", "A6189A", NULL, BLIST_SPARSELUN | BLIST_LARGELUN},	/* HP VA7400 */
- 	{"HP", "OPEN-", "*", BLIST_REPORTLUN2 | BLIST_TRY_VPD_PAGES}, /* HP XP Arrays */
- 	{"HP", "NetRAID-4M", NULL, BLIST_FORCELUN},
-@@ -187,11 +182,6 @@ static struct {
- 	{"HP", "C1557A", NULL, BLIST_FORCELUN},
- 	{"HP", "C3323-300", "4269", BLIST_NOTQ},
- 	{"HP", "C5713A", NULL, BLIST_NOREPORTLUN},
--	{"HP", "OP-C-", "*", BLIST_SPARSELUN | BLIST_LARGELUN},
--	{"HP", "3380-", "*", BLIST_SPARSELUN | BLIST_LARGELUN},
--	{"HP", "3390-", "*", BLIST_SPARSELUN | BLIST_LARGELUN},
--	{"HP", "6586-", "*", BLIST_SPARSELUN | BLIST_LARGELUN},
--	{"HP", "6588-", "*", BLIST_SPARSELUN | BLIST_LARGELUN},
- 	{"IBM", "AuSaV1S2", NULL, BLIST_FORCELUN},
- 	{"IBM", "ProFibre 4000R", "*", BLIST_SPARSELUN | BLIST_LARGELUN},
- 	{"IBM", "2105", NULL, BLIST_RETRY_HWERROR},
--- 
-2.14.3
+--- a/drivers/scsi/scsi_dh.c
++++ b/drivers/scsi/scsi_dh.c
+@@ -56,10 +56,13 @@ static const struct scsi_dh_blist scsi_d
+ 	{"IBM", "1815",			"rdac", },
+ 	{"IBM", "1818",			"rdac", },
+ 	{"IBM", "3526",			"rdac", },
++	{"IBM", "3542",			"rdac", },
++	{"IBM", "3552",			"rdac", },
+ 	{"SGI", "TP9",			"rdac", },
+ 	{"SGI", "IS",			"rdac", },
+-	{"STK", "OPENstorage D280",	"rdac", },
++	{"STK", "OPENstorage",		"rdac", },
+ 	{"STK", "FLEXLINE 380",		"rdac", },
++	{"STK", "BladeCtlr",		"rdac", },
+ 	{"SUN", "CSM",			"rdac", },
+ 	{"SUN", "LCSM100",		"rdac", },
+ 	{"SUN", "STK6580_6780",		"rdac", },
