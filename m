@@ -1,48 +1,86 @@
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: [PATCH] dm raid: fix nosync status
-Date: Fri, 16 Mar 2018 23:01:59 +0100
-Message-ID: <f3f546c41f270705302b68abcb9d3aaec5c2b1fe.1521237663.git.heinzm@redhat.com>
+From: <gregkh@linuxfoundation.org>
+Subject: Patch "scsi: dh: add new rdac devices" has been added to the 4.9-stable tree
+Date: Sun, 18 Mar 2018 17:04:36 +0100
+Message-ID: <1521389076112102@kroah.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: heinzm@redhat.com, dm-devel@redhat.com
-Cc: snitzer@redhat.com
+Content-Type: text/plain; charset=ANSI_X3.4-1968
+Content-Transfer-Encoding: 8bit
+Return-path: <stable-owner@vger.kernel.org>
+Sender: stable-owner@vger.kernel.org
+To: xose.vazquez@gmail.com, alexander.levin@microsoft.com, christophe.varoqui@opensvc.com, dm-devel@redhat.com, gregkh@linuxfoundation.org, hare@suse.de, jejb@linux.vnet.ibm.com, linux-scsi@vger.kernel.org, martin.petersen@oracle.com, ng-eseries-upstream-maintainers@netapp.com
+Cc: stable@vger.kernel.org, stable-commits@vger.kernel.org
 List-Id: dm-devel.ids
 
-Fix a race for "nosync" activations providing "aa.." device
-health characters and "0/N" sync ratio rather than "AA..."
-and "N/N".  Occurs when status for the raid set is retrieved
-during resume before the MD sync thread starts and clears
-the MD_RECOVERY_NEEDED flag.
 
-Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
+This is a note to let you know that I've just added the patch titled
+
+    scsi: dh: add new rdac devices
+
+to the 4.9-stable tree which can be found at:
+    http://www.kernel.org/git/?p=linux/kernel/git/stable/stable-queue.git;a=summary
+
+The filename of the patch is:
+     scsi-dh-add-new-rdac-devices.patch
+and it can be found in the queue-4.9 subdirectory.
+
+If you, or anyone else, feels it should not be added to the stable tree,
+please let <stable@vger.kernel.org> know about it.
+
+
+From foo@baz Sun Mar 18 16:55:33 CET 2018
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Date: Fri, 17 Nov 2017 22:05:13 +0100
+Subject: scsi: dh: add new rdac devices
+
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+
+
+[ Upstream commit 4b3aec2bbbce1c35f50e7475a9fd78d24b9ea4ea ]
+
+Add IBM 3542 and 3552, arrays: FAStT200 and FAStT500.
+
+Add full STK OPENstorage family, arrays: 9176, D173, D178, D210, D220,
+D240 and D280.
+
+Add STK BladeCtlr family, arrays: B210, B220, B240 and B280.
+
+These changes were done in multipath-tools time ago.
+
+Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>
+Cc: Hannes Reinecke <hare@suse.de>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: Martin K. Petersen <martin.petersen@oracle.com>
+Cc: James E.J. Bottomley <jejb@linux.vnet.ibm.com>
+Cc: SCSI ML <linux-scsi@vger.kernel.org>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
+Signed-off-by: Sasha Levin <alexander.levin@microsoft.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 ---
- drivers/md/dm-raid.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ drivers/scsi/scsi_dh.c |    5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index c1d1034ff7b7..335ebd46a986 100644
---- a/drivers/md/dm-raid.c
-+++ b/drivers/md/dm-raid.c
-@@ -3408,7 +3408,8 @@ static sector_t rs_get_progress(struct raid_set *rs, unsigned long recovery,
- 		set_bit(RT_FLAG_RS_IN_SYNC, &rs->runtime_flags);
- 
- 	} else {
--		if (!test_bit(MD_RECOVERY_INTR, &recovery) &&
-+		if (!test_bit(__CTR_FLAG_NOSYNC, &rs->ctr_flags) &&
-+		    !test_bit(MD_RECOVERY_INTR, &recovery) &&
- 		    (test_bit(MD_RECOVERY_NEEDED, &recovery) ||
- 		     test_bit(MD_RECOVERY_RESHAPE, &recovery) ||
- 		     test_bit(MD_RECOVERY_RUNNING, &recovery)))
--- 
-2.14.3
+--- a/drivers/scsi/scsi_dh.c
++++ b/drivers/scsi/scsi_dh.c
+@@ -56,10 +56,13 @@ static const struct scsi_dh_blist scsi_d
+ 	{"IBM", "1815",			"rdac", },
+ 	{"IBM", "1818",			"rdac", },
+ 	{"IBM", "3526",			"rdac", },
++	{"IBM", "3542",			"rdac", },
++	{"IBM", "3552",			"rdac", },
+ 	{"SGI", "TP9",			"rdac", },
+ 	{"SGI", "IS",			"rdac", },
+-	{"STK", "OPENstorage D280",	"rdac", },
++	{"STK", "OPENstorage",		"rdac", },
+ 	{"STK", "FLEXLINE 380",		"rdac", },
++	{"STK", "BladeCtlr",		"rdac", },
+ 	{"SUN", "CSM",			"rdac", },
+ 	{"SUN", "LCSM100",		"rdac", },
+ 	{"SUN", "STK6580_6780",		"rdac", },
+
+
+Patches currently in stable-queue which might be from xose.vazquez@gmail.com are
+
+queue-4.9/scsi-devinfo-apply-to-hp-xp-the-same-flags-as-hitachi-vsp.patch
+queue-4.9/scsi-dh-add-new-rdac-devices.patch
