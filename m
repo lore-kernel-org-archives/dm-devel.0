@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 06/20] libmultipath: trigger path uevent only
-	when necessary
-Date: Mon, 19 Mar 2018 16:01:41 +0100
-Message-ID: <20180319150155.5363-7-mwilck@suse.com>
+Subject: [PATCH v2 01/20] Revert "multipath: ignore -i if
+	find_multipaths is set"
+Date: Mon, 19 Mar 2018 16:01:36 +0100
+Message-ID: <20180319150155.5363-2-mwilck@suse.com>
 References: <20180319150155.5363-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,38 +22,33 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Paths that are already classified as DM_MULTIPATH_DEVICE_PATH don't
-need to be retriggered.
+This reverts commit ffbb886a8a16cb063d669cd76a1e656fd3ec8c4b.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/configure.c | 12 ++++++++++++
- 1 file changed, 12 insertions(+)
+ multipath/main.c | 10 ----------
+ 1 file changed, 10 deletions(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 245bd11672cb..838d145a5aa2 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -456,8 +456,20 @@ trigger_paths_udev_change(const struct multipath *mpp)
- 		if (!pgp->paths)
- 			continue;
- 		vector_foreach_slot(pgp->paths, pp, j) {
-+			const char *env;
-+
- 			if (!pp->udev)
- 				continue;
-+			/*
-+			 * Paths that are already classified as multipath
-+			 * members don't need another uevent.
-+			 */
-+			env = udev_device_get_property_value(
-+				pp->udev, "DM_MULTIPATH_DEVICE_PATH");
-+			if (env != NULL && !strcmp(env, "1"))
-+					continue;
-+
-+			condlog(4, "triggering change uevent for %s", pp->dev);
- 			sysfs_attr_set_value(pp->udev, "uevent", "change",
- 					     strlen("change"));
+diff --git a/multipath/main.c b/multipath/main.c
+index 716203eab56c..20f46acd924a 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -776,16 +776,6 @@ main (int argc, char *argv[])
  		}
+ 	}
+ 
+-	/*
+-	 * FIXME: new device detection with find_multipaths currently
+-	 * doesn't work reliably.
+-	 */
+-	if (cmd ==  CMD_VALID_PATH &&
+-	    conf->find_multipaths && conf->ignore_wwids) {
+-		condlog(2, "ignoring -i flag because find_multipath is set in multipath.conf");
+-		conf->ignore_wwids = 0;
+-	}
+-
+ 	if (getuid() != 0) {
+ 		fprintf(stderr, "need to be root\n");
+ 		exit(1);
 -- 
 2.16.1
