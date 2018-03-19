@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 20/20] multipathd: decrease log level of
-	waiter thread start/stop msgs
-Date: Mon, 19 Mar 2018 16:01:55 +0100
-Message-ID: <20180319150155.5363-21-mwilck@suse.com>
+Subject: [PATCH v2 19/20] libmultipath: decrease log level of
+	uevent filter/merge messages
+Date: Mon, 19 Mar 2018 16:01:54 +0100
+Message-ID: <20180319150155.5363-20-mwilck@suse.com>
 References: <20180319150155.5363-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,35 +22,35 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-These rather unimportant messages account for a large portion
-of multipathd's log messages with the default verbosity level (2).
+There should be no need to log these at -v2. The messages are
+informational.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/waiter.c | 4 ++--
+ libmultipath/uevent.c | 4 ++--
  1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/multipathd/waiter.c b/multipathd/waiter.c
-index 595c69a2d5ba..6c896f7fb7db 100644
---- a/multipathd/waiter.c
-+++ b/multipathd/waiter.c
-@@ -62,7 +62,7 @@ void stop_waiter_thread (struct multipath *mpp, struct vectors *vecs)
- 	if (pthread_equal(mpp->waiter, pthread_self()))
- 		return;
+diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
+index c6a9e8b485ab..7e2e0f6761f7 100644
+--- a/libmultipath/uevent.c
++++ b/libmultipath/uevent.c
+@@ -330,7 +330,7 @@ uevent_filter(struct uevent *later, struct list_head *tmpq)
+ 		 * by the later uevent
+ 		 */
+ 		if (uevent_can_filter(earlier, later)) {
+-			condlog(2, "uevent: %s-%s has filtered by uevent: %s-%s",
++			condlog(3, "uevent: %s-%s has filtered by uevent: %s-%s",
+ 				earlier->kernel, earlier->action,
+ 				later->kernel, later->action);
  
--	condlog(2, "%s: stop event checker thread (%lu)", mpp->alias,
-+	condlog(3, "%s: stop event checker thread (%lu)", mpp->alias,
- 		mpp->waiter);
- 	thread = mpp->waiter;
- 	mpp->waiter = (pthread_t)0;
-@@ -219,7 +219,7 @@ int start_waiter_thread (struct multipath *mpp, struct vectors *vecs)
- 		goto out1;
- 	}
- 	mpp->waiter = wp->thread;
--	condlog(2, "%s: event checker started", wp->mapname);
-+	condlog(3, "%s: event checker started", wp->mapname);
+@@ -354,7 +354,7 @@ uevent_merge(struct uevent *later, struct list_head *tmpq)
+ 		 * merge earlier uevents to the later uevent
+ 		 */
+ 		if (uevent_can_merge(earlier, later)) {
+-			condlog(2, "merged uevent: %s-%s-%s with uevent: %s-%s-%s",
++			condlog(3, "merged uevent: %s-%s-%s with uevent: %s-%s-%s",
+ 				earlier->action, earlier->kernel, earlier->wwid,
+ 				later->action, later->kernel, later->wwid);
  
- 	return 0;
- out1:
 -- 
 2.16.1
