@@ -1,22 +1,15 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH] multipathd: check and cleanup zombie paths
-Date: Mon, 19 Mar 2018 22:42:06 +0100
-Message-ID: <1521495726.3798.141.camel@suse.com>
-References: <CEB9978CF3252343BE3C67AC9F0086A34295C462@H3CMLB14-EX.srv.huawei-3com.com>
-	<1520325779.4131.4.camel@suse.com>
-	<CEB9978CF3252343BE3C67AC9F0086A34295C9D0@H3CMLB14-EX.srv.huawei-3com.com>
-	<1520349519.4131.20.camel@suse.com>
-	<CEB9978CF3252343BE3C67AC9F0086A34295CA7D@H3CMLB14-EX.srv.huawei-3com.com>
-	<1520426679.11340.5.camel@suse.com>
-	<CEB9978CF3252343BE3C67AC9F0086A34295CF62@H3CMLB14-EX.srv.huawei-3com.com>
-	<20180308154435.GB14513@octiron.msp.redhat.com>
-	<CEB9978CF3252343BE3C67AC9F0086A34295D215@H3CMLB14-EX.srv.huawei-3com.com>
-	<20180309162243.GE14513@octiron.msp.redhat.com>
+From: Bart Van Assche <bart.vanassche@wdc.com>
+Subject: Re: [PATCH RESEND] multipathd: check and cleanup zombie
+ paths
+Date: Mon, 19 Mar 2018 14:48:36 -0700
+Message-ID: <5ec40e21-f756-c599-597f-75214a219402@wdc.com>
+References: <CEB9978CF3252343BE3C67AC9F0086A34295C7AB@H3CMLB14-EX.srv.huawei-3com.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180309162243.GE14513@octiron.msp.redhat.com>
+In-Reply-To: <CEB9978CF3252343BE3C67AC9F0086A34295C7AB@H3CMLB14-EX.srv.huawei-3com.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,49 +19,19 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, Chongyun Wu <wu.chongyun@h3c.com>
-Cc: 'Xose Vazquez Perez' <xose.vazquez@gmail.com>, Guozhonghua <guozhonghua@h3c.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Changwei Ge <ge.changwei@h3c.com>, Changlimin <changlimin@h3c.com>
+To: Chongyun Wu <wu.chongyun@h3c.com>, Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>, 'Christophe Varoqui' <christophe.varoqui@opensvc.com>, 'Hannes Reinecke' <hare@suse.de>, 'Xose Vazquez Perez' <xose.vazquez@gmail.com>
+Cc: Guozhonghua <guozhonghua@h3c.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Changlimin <changlimin@h3c.com>, Changwei Ge <ge.changwei@h3c.com>
 List-Id: dm-devel.ids
 
-T24gRnJpLCAyMDE4LTAzLTA5IGF0IDEwOjIyIC0wNjAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gT24gRnJpLCBNYXIgMDksIDIwMTggYXQgMDY6NDc6MzBBTSArMDAwMCwgQ2hvbmd5dW4g
-V3Ugd3JvdGU6Cj4gPiBPbiAyMDE4LzMvOCAyMzo0NSwgQmVuamFtaW4gTWFyemluc2tpIHdyb3Rl
-Ogo+ID4gPiAKPiA+ID4gSWYgdGhlcmUgYXJlIG11bHRpcGxlIHJvdXRlcyB0byB0aGUgc3RvcmFn
-ZSwgU29tZSBvZiB0aGVtIGNhbiBiZQo+ID4gPiBkb3duLAo+ID4gPiBldmVuIGlmIGV2ZXJ5dGhp
-bmcgaXMgZmluZSBvbiB0aGUgc3RvcmFnZS4gIFRoaXMgd2lsbCBjYXVzZSBzb21lCj4gPiA+IHBh
-dGhzCj4gPiA+IHRvIGJlIHVwIGFuZCBzb21lIHRvIGJlIGRvd24sIHJlZ2FyZGxlc3Mgb2YgdGhl
-IHN0YXRlIG9mIHRoZSBMVU4uCj4gPiA+IEluCj4gPiA+IGV2ZXJ5IG90aGVyIG11bHRpcGF0aCBj
-YXNlIGJ1dCB0aGlzIG9uZSwgdGhlcmUgaXMganVzdCBvbmUgTFVOLAo+ID4gPiBhbmQgbm90Cj4g
-PiA+IGFsbCB0aGUgcGF0aHMgaGF2ZSB0aGUgc2FtZSBzdGF0ZS4KPiA+ID4gCj4gPiA+IElkZWFs
-bHksIHRoZXJlIHdvdWxkIGJlIGEgd2F5IHRvIGRldGVybWluZSBpZiBhIHBhdGggaXMgYSB6b21i
-aWUsCj4gPiA+IHNpbXBseQo+ID4gPiBieSBsb29raW5nIGF0IGl0IGFsb25lLiAgVGhlIGFkZGl0
-aW9uYWwgc2Vuc2UgY29kZSAiTE9HSUNBTCBVTklUCj4gPiA+IE5PVAo+ID4gPiBTVVBQT1JURUQi
-IHRoYXQgeW91IHBvc3RlZCBlYXJsaWVyIGlzbid0IG9uZSB0aGF0IEkgcmVjYWxsIHNlZWluZwo+
-ID4gPiBmb3IKPiA+ID4gZmFpbGVkIG11bHRpcGF0aGQgcGF0aHMuICBJJ2xsIGNoZWNrIGFyb3Vu
-ZCBtb3JlLCBidXQgYSBxdWljawo+ID4gPiBsb29rIG1ha2VzCj4gPiA+IGl0IGFwcGVhciB0aGF0
-IHRoaXMgY29kZSBpcyBvbmx5IHVzZWQgd2hlbiB5b3UgYXJlIGFjY2Vzc2luZyBhCj4gPiA+IExV
-TiB0aGF0Cj4gPiA+IHJlYWxseSBpc24ndCB0aGVyZS4gSXQncyBwb3NzaWJsZSB0aGF0IHRoZSBU
-VVIgY2hlY2tlciBjb3VsZAo+ID4gPiByZXR1cm4gYQo+ID4gPiBzcGVjaWFsIHBhdGggc3RhdGUg
-Zm9yIHRoaXMsIHRoYXQgd291bGQgY2F1c2UgbXVsdGlwYXRoZCB0bwo+ID4gPiByZW1vdmUgdGhl
-Cj4gPiA+IGRldmljZS4gIEFsc28sIGV2ZW4gaWYgdGhhdCBhZGRpdGlvbmFsIHNlbnNlIGNvZGUg
-aXMgb25seQo+ID4gPiBzdXBwb3NlZCB0byBiZQo+ID4gPiB1c2VkIGZvciB0aGlzIGNvbmRpdGlv
-biwgd2Ugc2hvdWxkIHN0aWxsIHJlbW92aW5nIGEgZGV2aWNlIHRoYXQKPiA+ID4gcmV0dXJucwo+
-ID4gPiBpdCBjb25maWd1cmFibGUsIGJlY2F1c2UgSSBjYW4gYWxtb3N0IGd1YXJhbnRlZSB0aGF0
-IHRoZXJlIHdpbGwKPiA+ID4gYmUgYQo+ID4gPiBzY3NpIGRldmljZSB0aGF0IGRvZXMgZm9sbG93
-IHRoZSBzdGFuZGFyZCBmb3IgdGhpcy4KPiA+ID4gCj4gPiAKPiA+IEhpIEJlbiwKPiA+IFlvdSBq
-dXN0IG1lbnRpb25lZCAqdGhlIFRVUiBjaGVja2VyIGNvdWxkIHJldHVybiBhIHNwZWNpYWwgcGF0
-aAo+ID4gc3RhdGUgCj4gPiBmb3IgdGhpcyosIHdoYXQgaXMgdGhlIHNwZWNpYWwgcGF0aCBzdGF0
-ZT8gIFRoYW5rc34KPiA+IAo+IAo+IFdlIHdvdWxkIGhhdmUgdG8gYWRkIGEgbmV3IHN0YXRlLCBs
-aWtlIFBBVEhfTk9UX1NVUFBPUlRFRCwgdGhhdCB0aGUKPiBUVVIKPiBjaGVja2VyIGNvdWxkIHJl
-dHVybiBpbiB0aGlzIGNhc2UuICBtdWx0aXBhdGhkIGNvdWxkIGJlIGNvbmZpZ3VyZWQgdG8KPiBy
-ZW1vdmUgdGhlIHBhdGggaWYgaXQgcmV0dXJuZWQgdGhpcyBzdGF0ZS4gSWYgaXQgd2Fzbid0IGNv
-bmZpZ3VyZWQgdG8KPiBkbwo+IHNvLCBtdWx0aXBhdGhkIHdvdWxkIGp1c3QgY2hhbmdlIHRoZSBz
-dGF0ZSB0byBQQVRIX0RPV04uCgpJcyBpdCByZWFsbHkgbXVsdGlwYXRoZCdzIGpvYiB0byBkbyBy
-ZW1vdmUgZGV2aWNlcyB0aGF0IHJldHVybiAiTE9HSUNBTApVTklUIE5PVCBTVVBQT1JURUQiPyBU
-byBtZSBpdCBzb3VuZHMgbGlrZSBhIG1pc2NvbmZpZ3VyYXRpb24gb24gdGhlClNDU0kvc3RvcmFn
-ZSBsZXZlbCwgYW5kIEknbSB1bnN1cmUgaWYgdGhhdCdzIGEgdGhpbmcgbXVsdGlwYXRoZCBzaG91
-bGQKbWVzcyB3aXRoLgoKTWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2Uu
-Y29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVs
-aXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAo
-QUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5j
-b20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+On 03/05/18 17:26, Chongyun Wu wrote:
+> +				sysfs_attr_set_value(pp->udev, "device/delete",
+> +						delete, strlen(delete));
+
+Before using the "delete" sysfs attribute, please fix the kernel 
+deadlock reported in "Avoid that SCSI device removal through sysfs 
+triggers a deadlock" 
+(https://www.spinics.net/lists/linux-scsi/msg101193.html).
+
+Thanks,
+
+Bart.
