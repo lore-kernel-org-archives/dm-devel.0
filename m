@@ -1,14 +1,15 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 04/12] multipathd: log thread cleanup
-Date: Mon, 19 Mar 2018 11:20:24 +0100
-Message-ID: <1521454824.3798.14.camel@suse.com>
+Subject: Re: [PATCH 05/12] libmultipath: fix log_pthread
+ processing
+Date: Mon, 19 Mar 2018 11:22:51 +0100
+Message-ID: <1521454971.3798.15.camel@suse.com>
 References: <1521049605-22050-1-git-send-email-bmarzins@redhat.com>
-	<1521049605-22050-5-git-send-email-bmarzins@redhat.com>
+	<1521049605-22050-6-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1521049605-22050-5-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1521049605-22050-6-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,17 +24,13 @@ Cc: christophe.varoqui@free.fr
 List-Id: dm-devel.ids
 
 T24gV2VkLCAyMDE4LTAzLTE0IGF0IDEyOjQ2IC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gVGhlIGZ1bmN0aW9uIGxvZ190aHJlYWRfZmx1c2goKSBpcyBhbiBleGFjdCBjb3B5IG9m
-IGZsdXNoX2xnb3F1ZXVlKCksCj4gc28KPiBib3RoIGNsZWFybHkgZG9uJ3QgbmVlZCB0byBleGlz
-dC4gQWxzbywgVGhlcmUgaXMgbm8gcmVhc29uIHRvIG1ha2UKPiBhbGwKPiBvZiB0aGUgbG9nIHRo
-cmVhZCB2YXJpYWJsZXMgZ2xvYmFsLiAgVGhlIG9ubHkgdGltZSBhbnkgb2YgdGhlbSB3ZXJlCj4g
-YmVpbmcgdXNlZCBvdXRzaWRlIG9mIGxvZ190aHJlYWQuYywgd2FzIHRvIHJlc2V0IHRoZSBsb2cu
-ICBUaGlzIGNvZGUKPiBzaG91bGQgbmV2ZXIgYmUgcnVuIGlmIHRoZSBsb2dfdGhyZWFkIGlzbid0
-IHJ1bm5pbmcsIHNvIGl0IG1ha2VzIG1vcmUKPiBzZW5zZSB0byBsaXZlIGluc2lkZSBvZiBsb2df
-dGhyZWFkLmMKPiAKPiBTaWduZWQtb2ZmLWJ5OiBCZW5qYW1pbiBNYXJ6aW5za2kgPGJtYXJ6aW5z
-QHJlZGhhdC5jb20+Cj4gLS0tCgpSZXZpZXdlZC1ieTogTWFydGluIFdpbGNrIDxtd2lsY2tAc3Vz
-ZS5jb20+CgoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5
-ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZl
-ciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykK
-Ci0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3
-LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+dGU6Cj4gbG9nX3B0aHJlYWQoKSB3YXMgd2FpdGluZyBmb3Igbm90aWZpY2F0aW9uIG9uIGxvZ2V2
+X2NvbmQsIHdpdGhvdXQKPiBjaGVja2luZyBpZiBpdCBoYWQgYWxyZWFkeSBoYXBwZW5lZC4gIFRo
+aXMgbWVhbnMgaXQgY291bGQgZW5kIHVwCj4gd2FpdGluZywgd2hpbGUgdGhlcmUgaXMgd29yayB0
+aGF0IGl0IHNob3VsZCBiZSBkb2luZy4KPiAKPiBTaWduZWQtb2ZmLWJ5OiBCZW5qYW1pbiBNYXJ6
+aW5za2kgPGJtYXJ6aW5zQHJlZGhhdC5jb20+CgpSZXZpZXdlZC1ieTogTWFydGluIFdpbGNrIDxt
+d2lsY2tAc3VzZS5jb20+CgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwg
+VGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1l
+bmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8
+cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0
+cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
