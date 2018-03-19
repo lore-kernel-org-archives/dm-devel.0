@@ -1,24 +1,12 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH] multipathd: check and cleanup zombie paths
-Date: Tue, 20 Mar 2018 08:36:26 +0100
-Message-ID: <1521531386.3798.159.camel@suse.com>
-References: <CEB9978CF3252343BE3C67AC9F0086A34295C462@H3CMLB14-EX.srv.huawei-3com.com>
-	<1520325779.4131.4.camel@suse.com>
-	<CEB9978CF3252343BE3C67AC9F0086A34295C9D0@H3CMLB14-EX.srv.huawei-3com.com>
-	<1520349519.4131.20.camel@suse.com>
-	<CEB9978CF3252343BE3C67AC9F0086A34295CA7D@H3CMLB14-EX.srv.huawei-3com.com>
-	<1520426679.11340.5.camel@suse.com>
-	<CEB9978CF3252343BE3C67AC9F0086A34295CF62@H3CMLB14-EX.srv.huawei-3com.com>
-	<20180308154435.GB14513@octiron.msp.redhat.com>
-	<CEB9978CF3252343BE3C67AC9F0086A34295D215@H3CMLB14-EX.srv.huawei-3com.com>
-	<20180309162243.GE14513@octiron.msp.redhat.com>
-	<1521495726.3798.141.camel@suse.com>
-	<CEB9978CF3252343BE3C67AC9F0086A34295DF37@H3CMLB14-EX.srv.huawei-3com.com>
+From: Matthew Wilcox <willy@infradead.org>
+Subject: Revert "dm btree: use GFP_NOFS in dm_btree_del()"
+Date: Mon, 19 Mar 2018 12:21:35 -0700
+Message-ID: <20180319192135.GB6739@bombadil.infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CEB9978CF3252343BE3C67AC9F0086A34295DF37@H3CMLB14-EX.srv.huawei-3com.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -28,79 +16,19 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Chongyun Wu <wu.chongyun@h3c.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: 'Xose Vazquez Perez' <xose.vazquez@gmail.com>, Guozhonghua <guozhonghua@h3c.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Changwei Ge <ge.changwei@h3c.com>, Changlimin <changlimin@h3c.com>
+To: Joe Thornber <ejt@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: linux-fsdevel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gVHVlLCAyMDE4LTAzLTIwIGF0IDAzOjE5ICswMDAwLCBDaG9uZ3l1biBXdSB3cm90ZToKPiBP
-biAyMDE4LzMvMjAgNTo0MiwgTWFydGluIFdpbGNrIHdyb3RlOgo+ID4gT24gRnJpLCAyMDE4LTAz
-LTA5IGF0IDEwOjIyIC0wNjAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3JvdGU6Cj4gPiA+IE9uIEZy
-aSwgTWFyIDA5LCAyMDE4IGF0IDA2OjQ3OjMwQU0gKzAwMDAsIENob25neXVuIFd1IHdyb3RlOgo+
-ID4gPiA+IE9uIDIwMTgvMy84IDIzOjQ1LCBCZW5qYW1pbiBNYXJ6aW5za2kgd3JvdGU6Cj4gPiA+
-ID4gPiAKPiA+ID4gPiA+IElmIHRoZXJlIGFyZSBtdWx0aXBsZSByb3V0ZXMgdG8gdGhlIHN0b3Jh
-Z2UsIFNvbWUgb2YgdGhlbSBjYW4KPiA+ID4gPiA+IGJlCj4gPiA+ID4gPiBkb3duLAo+ID4gPiA+
-ID4gZXZlbiBpZiBldmVyeXRoaW5nIGlzIGZpbmUgb24gdGhlIHN0b3JhZ2UuICBUaGlzIHdpbGwg
-Y2F1c2UKPiA+ID4gPiA+IHNvbWUKPiA+ID4gPiA+IHBhdGhzCj4gPiA+ID4gPiB0byBiZSB1cCBh
-bmQgc29tZSB0byBiZSBkb3duLCByZWdhcmRsZXNzIG9mIHRoZSBzdGF0ZSBvZiB0aGUKPiA+ID4g
-PiA+IExVTi4KPiA+ID4gPiA+IEluCj4gPiA+ID4gPiBldmVyeSBvdGhlciBtdWx0aXBhdGggY2Fz
-ZSBidXQgdGhpcyBvbmUsIHRoZXJlIGlzIGp1c3Qgb25lCj4gPiA+ID4gPiBMVU4sCj4gPiA+ID4g
-PiBhbmQgbm90Cj4gPiA+ID4gPiBhbGwgdGhlIHBhdGhzIGhhdmUgdGhlIHNhbWUgc3RhdGUuCj4g
-PiA+ID4gPiAKPiA+ID4gPiA+IElkZWFsbHksIHRoZXJlIHdvdWxkIGJlIGEgd2F5IHRvIGRldGVy
-bWluZSBpZiBhIHBhdGggaXMgYQo+ID4gPiA+ID4gem9tYmllLAo+ID4gPiA+ID4gc2ltcGx5Cj4g
-PiA+ID4gPiBieSBsb29raW5nIGF0IGl0IGFsb25lLiAgVGhlIGFkZGl0aW9uYWwgc2Vuc2UgY29k
-ZSAiTE9HSUNBTAo+ID4gPiA+ID4gVU5JVAo+ID4gPiA+ID4gTk9UCj4gPiA+ID4gPiBTVVBQT1JU
-RUQiIHRoYXQgeW91IHBvc3RlZCBlYXJsaWVyIGlzbid0IG9uZSB0aGF0IEkgcmVjYWxsCj4gPiA+
-ID4gPiBzZWVpbmcKPiA+ID4gPiA+IGZvcgo+ID4gPiA+ID4gZmFpbGVkIG11bHRpcGF0aGQgcGF0
-aHMuICBJJ2xsIGNoZWNrIGFyb3VuZCBtb3JlLCBidXQgYSBxdWljawo+ID4gPiA+ID4gbG9vayBt
-YWtlcwo+ID4gPiA+ID4gaXQgYXBwZWFyIHRoYXQgdGhpcyBjb2RlIGlzIG9ubHkgdXNlZCB3aGVu
-IHlvdSBhcmUgYWNjZXNzaW5nCj4gPiA+ID4gPiBhCj4gPiA+ID4gPiBMVU4gdGhhdAo+ID4gPiA+
-ID4gcmVhbGx5IGlzbid0IHRoZXJlLiBJdCdzIHBvc3NpYmxlIHRoYXQgdGhlIFRVUiBjaGVja2Vy
-IGNvdWxkCj4gPiA+ID4gPiByZXR1cm4gYQo+ID4gPiA+ID4gc3BlY2lhbCBwYXRoIHN0YXRlIGZv
-ciB0aGlzLCB0aGF0IHdvdWxkIGNhdXNlIG11bHRpcGF0aGQgdG8KPiA+ID4gPiA+IHJlbW92ZSB0
-aGUKPiA+ID4gPiA+IGRldmljZS4gIEFsc28sIGV2ZW4gaWYgdGhhdCBhZGRpdGlvbmFsIHNlbnNl
-IGNvZGUgaXMgb25seQo+ID4gPiA+ID4gc3VwcG9zZWQgdG8gYmUKPiA+ID4gPiA+IHVzZWQgZm9y
-IHRoaXMgY29uZGl0aW9uLCB3ZSBzaG91bGQgc3RpbGwgcmVtb3ZpbmcgYSBkZXZpY2UKPiA+ID4g
-PiA+IHRoYXQKPiA+ID4gPiA+IHJldHVybnMKPiA+ID4gPiA+IGl0IGNvbmZpZ3VyYWJsZSwgYmVj
-YXVzZSBJIGNhbiBhbG1vc3QgZ3VhcmFudGVlIHRoYXQgdGhlcmUKPiA+ID4gPiA+IHdpbGwKPiA+
-ID4gPiA+IGJlIGEKPiA+ID4gPiA+IHNjc2kgZGV2aWNlIHRoYXQgZG9lcyBmb2xsb3cgdGhlIHN0
-YW5kYXJkIGZvciB0aGlzLgo+ID4gPiA+ID4gCj4gPiA+ID4gCj4gPiA+ID4gSGkgQmVuLAo+ID4g
-PiA+IFlvdSBqdXN0IG1lbnRpb25lZCAqdGhlIFRVUiBjaGVja2VyIGNvdWxkIHJldHVybiBhIHNw
-ZWNpYWwgcGF0aAo+ID4gPiA+IHN0YXRlCj4gPiA+ID4gZm9yIHRoaXMqLCB3aGF0IGlzIHRoZSBz
-cGVjaWFsIHBhdGggc3RhdGU/ICBUaGFua3N+Cj4gPiA+ID4gCj4gPiA+IAo+ID4gPiBXZSB3b3Vs
-ZCBoYXZlIHRvIGFkZCBhIG5ldyBzdGF0ZSwgbGlrZSBQQVRIX05PVF9TVVBQT1JURUQsIHRoYXQK
-PiA+ID4gdGhlCj4gPiA+IFRVUgo+ID4gPiBjaGVja2VyIGNvdWxkIHJldHVybiBpbiB0aGlzIGNh
-c2UuICBtdWx0aXBhdGhkIGNvdWxkIGJlCj4gPiA+IGNvbmZpZ3VyZWQgdG8KPiA+ID4gcmVtb3Zl
-IHRoZSBwYXRoIGlmIGl0IHJldHVybmVkIHRoaXMgc3RhdGUuIElmIGl0IHdhc24ndAo+ID4gPiBj
-b25maWd1cmVkIHRvCj4gPiA+IGRvCj4gPiA+IHNvLCBtdWx0aXBhdGhkIHdvdWxkIGp1c3QgY2hh
-bmdlIHRoZSBzdGF0ZSB0byBQQVRIX0RPV04uCj4gPiAKPiA+IElzIGl0IHJlYWxseSBtdWx0aXBh
-dGhkJ3Mgam9iIHRvIGRvIHJlbW92ZSBkZXZpY2VzIHRoYXQgcmV0dXJuCj4gPiAiTE9HSUNBTAo+
-ID4gVU5JVCBOT1QgU1VQUE9SVEVEIj8gVG8gbWUgaXQgc291bmRzIGxpa2UgYSBtaXNjb25maWd1
-cmF0aW9uIG9uIHRoZQo+ID4gU0NTSS9zdG9yYWdlIGxldmVsLCBhbmQgSSdtIHVuc3VyZSBpZiB0
-aGF0J3MgYSB0aGluZyBtdWx0aXBhdGhkCj4gPiBzaG91bGQKPiA+IG1lc3Mgd2l0aC4KPiA+IAo+
-ID4gTWFydGluCj4gPiAKPiAKPiBBY3R1YWxseSB0aGVyZSBhcmUgdHdvIHNjZW5hcmlvOgo+ICgx
-KUV4cG9ydCB0aGUgTFVOIHRvIGEgc2VydmVyIGF0IHRoZSBzYW1lIHRpbWUgdXNpbmcgZGlmZmVy
-ZW50IExVTgo+IG51Ym1lci4KPiBBcyB5b3UgbWVudGlvbmVkIHRoaXMgc2NlbmFyaW8gY2FuIGJl
-IGNvbnNpZGVyZWQgYSBtaXNjb25maWd1cmF0aW9uIAo+IHdoaWNoIHdlIG1pZ2h0IG5vdCBjYXJl
-IGFib3V0IGl0Lgo+ICgyKUV4cG9ydCB0aGUgTFVOIHRvIGEgc2VydmVyIG5vdCBhdCB0aGUgc2Ft
-ZSB0aW1lIHVzaW5nIGRpZmZlcmVudAo+IExVTiAKPiBudW1iZXIuCj4gVGhpcyBzY2VuYXJpbydz
-IG9wZXJhdGlvbiBtYXkgYmUgcmlnaHQsIHRoZSBjdXN0b21lciBqdXN0IHdhbnQgdG8gCj4gcmVh
-c3NpZ25tZW50IHRoZSBleHBvcnQgcmVsYXRpb25zIGluIHRoZSBzdG9yYWdlLgo+IEJ1dCB0aGUg
-Zm9ybWVyIGV4cG9ydCBvcGVyYXRpb24gbGVhdmUgYSByZXNpZHVhbCBkZXZpY2UgaW4gdGhlCj4g
-c3lzdGVtIAo+IHdoaWNoIHdpbGwgYmVlbiBhZG9wdGVkIGJ5IHRoZSBsYXR0ZXIgZXhwb3J0ZWQg
-ZGV2aWNlJ3MgbXVsdGlwYXRoLgo+IEFsc28gCj4gdGhlcmUgYXJlIGxvdHMgb2Ygc3lzbG9nIGZv
-ciB0aGUgZm9ybWVyIGRldmljZSB3aGljaCBhY3R1YWxseSBub3QgCj4gZXhpc3QoYXQgbGVzdCBj
-dXN0b21lciBkb24ndCB0aGluayBpdCBleGlzdHMsIHRoZSBjdXN0b21lciB3YW50IG9ubHkKPiB0
-aGUgCj4gbmV3IGV4cG9ydGVkIGRldmljZSBleGlzdCkKCkkgYWdyZWUgdGhhdCB0aGUgInJlc2lk
-dWFsIGRldmljZSIgc2hvdWxkIGJlIHJlbW92ZWQgZnJvbSB0aGUgc3lzdGVtLgpCdXQgSSBkb24n
-dCB0aGluayB0aGF0IGl0J3MgbXVsdGlwYXRoZCdzIGFzc2lnbm1lbnQgdG8gZGV0ZWN0IGFuZApy
-ZW1vdmUgc3VjaCBkZXZpY2VzLiBXZWxsLCBkZXRlY3QgYW5kIHNwaXQgb3V0IGEgbWVzc2FnZSAt
-IG1heWJlLCBidXQKcmVtb3ZlIC0gcmF0aGVyIG5vdC4gbXVsdGlwYXRoZCBpcyBmb3IgbWFuYWdp
-bmcgKGRtLSltdWx0aXBhdGggZGV2aWNlcywKIG5vdCBmb3IgdGFraW5nIGNhcmUgb2YgYXJiaXRy
-YXJ5IHByb2JsZW1zIG9uIHRoZSBzdG9yYWdlIGxheWVyLgpUaGF0IHNhaWQsIEknZCBiZSBPSyB3
-aXRoIGEgUEFUSF9OT1RfU1VQUE9SVEVEIHN0YXRlIHRoYXQgd291bGQgcmVzdWx0CmluIHRoZSBw
-YXRocyBiZWluZyB0cmVhdGVkIGxpa2Ugb3JwaGFucyBvciBibGFja2xpc3RlZCBkZXZpY2VzLgoK
-UmVnYXJkcywKTWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwg
-VGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1l
-bmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8
-cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0
-cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+Hi Mike, Joe,
+
+Please consider reverting commit 9f9ef0657d53d988dc07b096052b3dd07d6e3c46.
+The reasoning is flawed -- just because something is an ioctl does not
+mean that you should be using GFP_NOFS.  The only reason to use GFP_NOFS
+is if the filesystem is holding a lock which means that calling into
+the filesystem to free memory would deadlock.
+
+If you have a lockdep splat or some chain of reasoning that shows
+that there is a filesystem with, eg, an open transaction or holding
+an fs-wide lock, then please add some more information to the comment.
+Because the comment is wrong, I assume the entire commit is incorrect.
