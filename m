@@ -1,16 +1,11 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 1/3] multipathd: fix waiter thread cancelling
-Date: Mon, 19 Mar 2018 11:25:55 -0500
-Message-ID: <20180319162555.GK14513@octiron.msp.redhat.com>
-References: <1521235867-29476-1-git-send-email-bmarzins@redhat.com>
-	<1521235867-29476-2-git-send-email-bmarzins@redhat.com>
-	<1521464364.3798.48.camel@suse.com>
+From: Bart Van Assche <bart.vanassche@wdc.com>
+Subject: [PATCH 0/2] Fix recently introduced inconsistencies
+Date: Mon, 19 Mar 2018 09:23:49 -0700
+Message-ID: <20180319162351.28950-1-bart.vanassche@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1521464364.3798.48.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,97 +15,44 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: Bart Van Assche <bart.vanassche@wdc.com>, Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Mar 19, 2018 at 01:59:24PM +0100, Martin Wilck wrote:
-> On Fri, 2018-03-16 at 16:31 -0500, Benjamin Marzinski wrote:
-> > diff --git a/multipathd/waiter.c b/multipathd/waiter.c
-> > index cb9708b..e894294 100644
-> > --- a/multipathd/waiter.c
-> > +++ b/multipathd/waiter.c
-> > @@ -23,6 +23,7 @@
-> >  #include "waiter.h"
-> >  =
+Hello Christophe,
 
-> >  pthread_attr_t waiter_attr;
-> > +struct mutex_lock waiter_lock =3D { .mutex =3D PTHREAD_MUTEX_INITIALIZ=
-ER
-> > };
-> >  =
+Analysis of recently introduced inconsistencies learned me the following:
+- Not all .c files in the multipath-tools include the corresponding header
+  files so the compiler cannot verify consistency of declarations and
+  definitions for all declarations.
+- A recent change of call-by-reference into call-by-value was incomplete.
 
-> >  static struct event_thread *alloc_waiter (void)
-> >  {
-> > @@ -59,8 +60,12 @@ void stop_waiter_thread (struct multipath *mpp,
-> > struct vectors *vecs)
-> >  		mpp->waiter);
-> >  	thread =3D mpp->waiter;
-> >  	mpp->waiter =3D (pthread_t)0;
-> > -	pthread_cancel(thread);
-> > +	pthread_cleanup_push(cleanup_lock, &waiter_lock);
-> > +	lock(&waiter_lock);
-> > +	pthread_testcancel();
-> =
+This patch series addresses both issues. Please consider these patches for
+the official multipath-tools repository.
 
-> What's the purpose of this pthread_testcancel() call?
-> =
+Thanks,
 
+Bart.
 
-It's not necessary. I feel like in general, after you get done waiting
-on a lock, it's good form to see if you've been cancelled while you were
-waiting. However, it's really unlikely that a thread will be waiting
-here long, and this pthread_cancel isn't protecting it form accessing
-any freed data. If you think it's likely to confuse people, I have no
-problem with removing it.
+Bart Van Assche (2):
+  Allow the compiler to verify consistency of declarations and
+    definitions
+  libmultipath: Fix recently introduced inconsistencies
 
-> >  	pthread_kill(thread, SIGUSR2);
-> > +	pthread_cancel(thread);
-> > +	lock_cleanup_pop(&waiter_lock);
-> >  }
-> >  =
+ libmultipath/callout.c    |  1 +
+ libmultipath/config.c     |  4 ++--
+ libmultipath/debug.c      |  1 +
+ libmultipath/defaults.c   |  1 +
+ libmultipath/dict.c       |  1 +
+ libmultipath/dict.h       | 14 +++++++-------
+ libmultipath/dmparser.c   |  1 +
+ libmultipath/hwtable.c    |  1 +
+ libmultipath/propsel.c    | 45 +++++++++++++++++++++++----------------------
+ libmultipath/propsel.h    |  4 ++--
+ mpathpersist/main.c       |  1 +
+ multipathd/cli_handlers.c |  1 +
+ multipathd/uxclnt.c       |  1 +
+ 13 files changed, 43 insertions(+), 33 deletions(-)
 
-> >  /*
-> > @@ -114,8 +119,13 @@ static int waiteventloop (struct event_thread
-> > *waiter)
-> >  	dm_task_destroy(waiter->dmt);
-> >  	waiter->dmt =3D NULL;
-> >  =
-
-> > -	if (!r)	/* wait interrupted by signal */
-> > -		return -1;
-> > +	if (!r)	{ /* wait interrupted by signal. check for
-> > cancellation */
-> > +		pthread_cleanup_push(cleanup_lock, &waiter_lock);
-> > +		lock(&waiter_lock);
-> > +		pthread_testcancel();
-> > +		lock_cleanup_pop(&waiter_lock);
-> =
-
-> Nitpick: I'd prefer pthread_cleanup_pop(1) here.
-
-I have no problem with changing that.
-
--Ben
-
-> Regards,
-> Martin
-> =
-
-> =
-
-> > +		return 1; /* If we weren't cancelled, just
-> > reschedule */
-> > +	}
-> >  =
-
-> >  	waiter->event_nr++;
-> >  =
-
-> =
-
-> -- =
-
-> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-> SUSE Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
-> HRB 21284 (AG N=FCrnberg)
+-- 
+2.16.2
