@@ -1,13 +1,16 @@
-From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Subject: [PATCH 4.9 196/241] scsi: dh: add new rdac devices
-Date: Mon, 19 Mar 2018 19:07:41 +0100
-Message-ID: <20180319180759.278873126@linuxfoundation.org>
-References: <20180319180751.172155436@linuxfoundation.org>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 1/3] multipathd: fix waiter thread cancelling
+Date: Mon, 19 Mar 2018 21:02:33 +0100
+Message-ID: <1521489753.3798.114.camel@suse.com>
+References: <1521235867-29476-1-git-send-email-bmarzins@redhat.com>
+	<1521235867-29476-2-git-send-email-bmarzins@redhat.com>
+	<1521464364.3798.48.camel@suse.com>
+	<20180319162555.GK14513@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180319180751.172155436@linuxfoundation.org>
+In-Reply-To: <20180319162555.GK14513@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,57 +20,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: linux-kernel@vger.kernel.org
-Cc: "James E.J. Bottomley" <jejb@linux.vnet.ibm.com>, SCSI ML <linux-scsi@vger.kernel.org>, "Martin K. Petersen" <martin.petersen@oracle.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Xose Vazquez Perez <xose.vazquez@gmail.com>, stable@vger.kernel.org, Sasha Levin <alexander.levin@microsoft.com>, NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>, device-mapper development <dm-devel@redhat.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-4.9-stable review patch.  If anyone has any objections, please let me know.
-
-------------------
-
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-
-
-[ Upstream commit 4b3aec2bbbce1c35f50e7475a9fd78d24b9ea4ea ]
-
-Add IBM 3542 and 3552, arrays: FAStT200 and FAStT500.
-
-Add full STK OPENstorage family, arrays: 9176, D173, D178, D210, D220,
-D240 and D280.
-
-Add STK BladeCtlr family, arrays: B210, B220, B240 and B280.
-
-These changes were done in multipath-tools time ago.
-
-Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>
-Cc: Hannes Reinecke <hare@suse.de>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: Martin K. Petersen <martin.petersen@oracle.com>
-Cc: James E.J. Bottomley <jejb@linux.vnet.ibm.com>
-Cc: SCSI ML <linux-scsi@vger.kernel.org>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
-Signed-off-by: Sasha Levin <alexander.levin@microsoft.com>
-Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
----
- drivers/scsi/scsi_dh.c |    5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
-
---- a/drivers/scsi/scsi_dh.c
-+++ b/drivers/scsi/scsi_dh.c
-@@ -56,10 +56,13 @@ static const struct scsi_dh_blist scsi_d
- 	{"IBM", "1815",			"rdac", },
- 	{"IBM", "1818",			"rdac", },
- 	{"IBM", "3526",			"rdac", },
-+	{"IBM", "3542",			"rdac", },
-+	{"IBM", "3552",			"rdac", },
- 	{"SGI", "TP9",			"rdac", },
- 	{"SGI", "IS",			"rdac", },
--	{"STK", "OPENstorage D280",	"rdac", },
-+	{"STK", "OPENstorage",		"rdac", },
- 	{"STK", "FLEXLINE 380",		"rdac", },
-+	{"STK", "BladeCtlr",		"rdac", },
- 	{"SUN", "CSM",			"rdac", },
- 	{"SUN", "LCSM100",		"rdac", },
- 	{"SUN", "STK6580_6780",		"rdac", },
+T24gTW9uLCAyMDE4LTAzLTE5IGF0IDExOjI1IC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cj4gT24gTW9uLCBNYXIgMTksIDIwMTggYXQgMDE6NTk6MjRQTSArMDEwMCwgTWFydGluIFdp
+bGNrIHdyb3RlOgo+ID4gT24gRnJpLCAyMDE4LTAzLTE2IGF0IDE2OjMxIC0wNTAwLCBCZW5qYW1p
+biBNYXJ6aW5za2kgd3JvdGU6Cj4gPiA+IGRpZmYgLS1naXQgYS9tdWx0aXBhdGhkL3dhaXRlci5j
+IGIvbXVsdGlwYXRoZC93YWl0ZXIuYwo+ID4gPiBpbmRleCBjYjk3MDhiLi5lODk0Mjk0IDEwMDY0
+NAo+ID4gPiAtLS0gYS9tdWx0aXBhdGhkL3dhaXRlci5jCj4gPiA+ICsrKyBiL211bHRpcGF0aGQv
+d2FpdGVyLmMKPiA+ID4gQEAgLTIzLDYgKzIzLDcgQEAKPiA+ID4gICNpbmNsdWRlICJ3YWl0ZXIu
+aCIKPiA+ID4gIAo+ID4gPiAgcHRocmVhZF9hdHRyX3Qgd2FpdGVyX2F0dHI7Cj4gPiA+ICtzdHJ1
+Y3QgbXV0ZXhfbG9jayB3YWl0ZXJfbG9jayA9IHsgLm11dGV4ID0KPiA+ID4gUFRIUkVBRF9NVVRF
+WF9JTklUSUFMSVpFUgo+ID4gPiB9Owo+ID4gPiAgCj4gPiA+ICBzdGF0aWMgc3RydWN0IGV2ZW50
+X3RocmVhZCAqYWxsb2Nfd2FpdGVyICh2b2lkKQo+ID4gPiAgewo+ID4gPiBAQCAtNTksOCArNjAs
+MTIgQEAgdm9pZCBzdG9wX3dhaXRlcl90aHJlYWQgKHN0cnVjdCBtdWx0aXBhdGgKPiA+ID4gKm1w
+cCwKPiA+ID4gc3RydWN0IHZlY3RvcnMgKnZlY3MpCj4gPiA+ICAJCW1wcC0+d2FpdGVyKTsKPiA+
+ID4gIAl0aHJlYWQgPSBtcHAtPndhaXRlcjsKPiA+ID4gIAltcHAtPndhaXRlciA9IChwdGhyZWFk
+X3QpMDsKPiA+ID4gLQlwdGhyZWFkX2NhbmNlbCh0aHJlYWQpOwo+ID4gPiArCXB0aHJlYWRfY2xl
+YW51cF9wdXNoKGNsZWFudXBfbG9jaywgJndhaXRlcl9sb2NrKTsKPiA+ID4gKwlsb2NrKCZ3YWl0
+ZXJfbG9jayk7Cj4gPiA+ICsJcHRocmVhZF90ZXN0Y2FuY2VsKCk7Cj4gPiAKPiA+IFdoYXQncyB0
+aGUgcHVycG9zZSBvZiB0aGlzIHB0aHJlYWRfdGVzdGNhbmNlbCgpIGNhbGw/Cj4gPiAKPiAKPiBJ
+dCdzIG5vdCBuZWNlc3NhcnkuIEkgZmVlbCBsaWtlIGluIGdlbmVyYWwsIGFmdGVyIHlvdSBnZXQg
+ZG9uZQo+IHdhaXRpbmcKPiBvbiBhIGxvY2ssIGl0J3MgZ29vZCBmb3JtIHRvIHNlZSBpZiB5b3Un
+dmUgYmVlbiBjYW5jZWxsZWQgd2hpbGUgeW91Cj4gd2VyZQo+IHdhaXRpbmcuIEhvd2V2ZXIsIGl0
+J3MgcmVhbGx5IHVubGlrZWx5IHRoYXQgYSB0aHJlYWQgd2lsbCBiZSB3YWl0aW5nCj4gaGVyZSBs
+b25nLCBhbmQgdGhpcyBwdGhyZWFkX2NhbmNlbCBpc24ndCBwcm90ZWN0aW5nIGl0IGZvcm0gYWNj
+ZXNzaW5nCj4gYW55IGZyZWVkIGRhdGEuIElmIHlvdSB0aGluayBpdCdzIGxpa2VseSB0byBjb25m
+dXNlIHBlb3BsZSwgSSBoYXZlIG5vCj4gcHJvYmxlbSB3aXRoIHJlbW92aW5nIGl0LgoKTXkgdGhp
+bmtpbmcgd2FzOiB0aGlzIHRocmVhZCBpcyBqdXN0IGFib3V0IHRvIGNhbmNlbCBhbm90aGVyIHRo
+cmVhZC4gSWYKaXQncyBjYW5jZWxsZWQgaXRzZWxmIGp1c3QgYmVmb3JlIGRvaW5nIHRoYXQsIHRo
+ZSBvdGhlciBvbmUgd29uJ3QgYmUKY2FuY2VsbGVkLiBJIGZpbmQgaXQgaGFyZCB0byBpbWFnaW5l
+IGNvbmRpdGlvbnMgd2hlcmUgdGhhdCB3b3VsZCBiZSB0aGUKcmlnaHQgdGhpbmcuIFNvIGlmIGF0
+IGFsbCwgSSdkIGNhbGwgcHRocmVhZF90ZXN0Y2FuY2VsKCkgYWZ0ZXIKcmVsZWFzaW5nIHRoZSBs
+b2NrLiBCdXQgcHJvYmFibHkgaXQncyBiZXN0IGp1c3QgdG8gcmVtb3ZlIGl0IGhlcmUuCgpSZWdh
+cmRzLApNYXJ0aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwu
+ICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2
+cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJl
+cmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczov
+L3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
