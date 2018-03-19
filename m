@@ -1,16 +1,15 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 1/3] multipathd: fix waiter thread cancelling
-Date: Mon, 19 Mar 2018 21:02:33 +0100
-Message-ID: <1521489753.3798.114.camel@suse.com>
-References: <1521235867-29476-1-git-send-email-bmarzins@redhat.com>
-	<1521235867-29476-2-git-send-email-bmarzins@redhat.com>
-	<1521464364.3798.48.camel@suse.com>
-	<20180319162555.GK14513@octiron.msp.redhat.com>
+Subject: Re: [PATCH 1/2] Allow the compiler to verify consistency
+ of declarations and definitions
+Date: Mon, 19 Mar 2018 21:07:00 +0100
+Message-ID: <1521490020.3798.115.camel@suse.com>
+References: <20180319162351.28950-1-bart.vanassche@wdc.com>
+	<20180319162351.28950-2-bart.vanassche@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180319162555.GK14513@octiron.msp.redhat.com>
+In-Reply-To: <20180319162351.28950-2-bart.vanassche@wdc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,43 +19,19 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Bart Van Assche <bart.vanassche@wdc.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gTW9uLCAyMDE4LTAzLTE5IGF0IDExOjI1IC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gT24gTW9uLCBNYXIgMTksIDIwMTggYXQgMDE6NTk6MjRQTSArMDEwMCwgTWFydGluIFdp
-bGNrIHdyb3RlOgo+ID4gT24gRnJpLCAyMDE4LTAzLTE2IGF0IDE2OjMxIC0wNTAwLCBCZW5qYW1p
-biBNYXJ6aW5za2kgd3JvdGU6Cj4gPiA+IGRpZmYgLS1naXQgYS9tdWx0aXBhdGhkL3dhaXRlci5j
-IGIvbXVsdGlwYXRoZC93YWl0ZXIuYwo+ID4gPiBpbmRleCBjYjk3MDhiLi5lODk0Mjk0IDEwMDY0
-NAo+ID4gPiAtLS0gYS9tdWx0aXBhdGhkL3dhaXRlci5jCj4gPiA+ICsrKyBiL211bHRpcGF0aGQv
-d2FpdGVyLmMKPiA+ID4gQEAgLTIzLDYgKzIzLDcgQEAKPiA+ID4gICNpbmNsdWRlICJ3YWl0ZXIu
-aCIKPiA+ID4gIAo+ID4gPiAgcHRocmVhZF9hdHRyX3Qgd2FpdGVyX2F0dHI7Cj4gPiA+ICtzdHJ1
-Y3QgbXV0ZXhfbG9jayB3YWl0ZXJfbG9jayA9IHsgLm11dGV4ID0KPiA+ID4gUFRIUkVBRF9NVVRF
-WF9JTklUSUFMSVpFUgo+ID4gPiB9Owo+ID4gPiAgCj4gPiA+ICBzdGF0aWMgc3RydWN0IGV2ZW50
-X3RocmVhZCAqYWxsb2Nfd2FpdGVyICh2b2lkKQo+ID4gPiAgewo+ID4gPiBAQCAtNTksOCArNjAs
-MTIgQEAgdm9pZCBzdG9wX3dhaXRlcl90aHJlYWQgKHN0cnVjdCBtdWx0aXBhdGgKPiA+ID4gKm1w
-cCwKPiA+ID4gc3RydWN0IHZlY3RvcnMgKnZlY3MpCj4gPiA+ICAJCW1wcC0+d2FpdGVyKTsKPiA+
-ID4gIAl0aHJlYWQgPSBtcHAtPndhaXRlcjsKPiA+ID4gIAltcHAtPndhaXRlciA9IChwdGhyZWFk
-X3QpMDsKPiA+ID4gLQlwdGhyZWFkX2NhbmNlbCh0aHJlYWQpOwo+ID4gPiArCXB0aHJlYWRfY2xl
-YW51cF9wdXNoKGNsZWFudXBfbG9jaywgJndhaXRlcl9sb2NrKTsKPiA+ID4gKwlsb2NrKCZ3YWl0
-ZXJfbG9jayk7Cj4gPiA+ICsJcHRocmVhZF90ZXN0Y2FuY2VsKCk7Cj4gPiAKPiA+IFdoYXQncyB0
-aGUgcHVycG9zZSBvZiB0aGlzIHB0aHJlYWRfdGVzdGNhbmNlbCgpIGNhbGw/Cj4gPiAKPiAKPiBJ
-dCdzIG5vdCBuZWNlc3NhcnkuIEkgZmVlbCBsaWtlIGluIGdlbmVyYWwsIGFmdGVyIHlvdSBnZXQg
-ZG9uZQo+IHdhaXRpbmcKPiBvbiBhIGxvY2ssIGl0J3MgZ29vZCBmb3JtIHRvIHNlZSBpZiB5b3Un
-dmUgYmVlbiBjYW5jZWxsZWQgd2hpbGUgeW91Cj4gd2VyZQo+IHdhaXRpbmcuIEhvd2V2ZXIsIGl0
-J3MgcmVhbGx5IHVubGlrZWx5IHRoYXQgYSB0aHJlYWQgd2lsbCBiZSB3YWl0aW5nCj4gaGVyZSBs
-b25nLCBhbmQgdGhpcyBwdGhyZWFkX2NhbmNlbCBpc24ndCBwcm90ZWN0aW5nIGl0IGZvcm0gYWNj
-ZXNzaW5nCj4gYW55IGZyZWVkIGRhdGEuIElmIHlvdSB0aGluayBpdCdzIGxpa2VseSB0byBjb25m
-dXNlIHBlb3BsZSwgSSBoYXZlIG5vCj4gcHJvYmxlbSB3aXRoIHJlbW92aW5nIGl0LgoKTXkgdGhp
-bmtpbmcgd2FzOiB0aGlzIHRocmVhZCBpcyBqdXN0IGFib3V0IHRvIGNhbmNlbCBhbm90aGVyIHRo
-cmVhZC4gSWYKaXQncyBjYW5jZWxsZWQgaXRzZWxmIGp1c3QgYmVmb3JlIGRvaW5nIHRoYXQsIHRo
-ZSBvdGhlciBvbmUgd29uJ3QgYmUKY2FuY2VsbGVkLiBJIGZpbmQgaXQgaGFyZCB0byBpbWFnaW5l
-IGNvbmRpdGlvbnMgd2hlcmUgdGhhdCB3b3VsZCBiZSB0aGUKcmlnaHQgdGhpbmcuIFNvIGlmIGF0
-IGFsbCwgSSdkIGNhbGwgcHRocmVhZF90ZXN0Y2FuY2VsKCkgYWZ0ZXIKcmVsZWFzaW5nIHRoZSBs
-b2NrLiBCdXQgcHJvYmFibHkgaXQncyBiZXN0IGp1c3QgdG8gcmVtb3ZlIGl0IGhlcmUuCgpSZWdh
-cmRzLApNYXJ0aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwu
-ICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2
-cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJl
-cmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczov
-L3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+T24gTW9uLCAyMDE4LTAzLTE5IGF0IDA5OjIzIC0wNzAwLCBCYXJ0IFZhbiBBc3NjaGUgd3JvdGU6
+Cj4gTWFrZSBzdXJlIHRoYXQgaW4gZXZlcnkgc291cmNlIGZpbGUgdGhlIGhlYWRlciBmaWxlIGlz
+IGluY2x1ZGVkIHRoYXQKPiBkZWNsYXJlcyB0aGUgZnVuY3Rpb25zIGRlZmluZWQgaW4gdGhhdCBz
+b3VyY2UgZmlsZS4gVGhpcyBhbGxvd3MgdGhlCj4gY29tcGlsZXIgdG8gZGV0ZWN0IGluY29uc2lz
+dGVuY2llcyBiZXR3ZWVuIHNvdXJjZSBhbmQgaGVhZGVyIGZpbGVzLgo+IAo+IFNpZ25lZC1vZmYt
+Ynk6IEJhcnQgVmFuIEFzc2NoZSA8YmFydC52YW5hc3NjaGVAd2RjLmNvbT4KClJldmlld2VkLWJ5
+OiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4KCi0tIApEci4gTWFydGluIFdpbGNrIDxt
+d2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdt
+YkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24K
+SFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2
+ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0t
+ZGV2ZWw=
