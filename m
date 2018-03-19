@@ -1,12 +1,13 @@
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: [PATCH] dm raid: use __within_range() more in
-	parse_raid_params()
-Date: Mon, 19 Mar 2018 17:28:26 +0100
-Message-ID: <1468ea2ed50e3fa3194e61b6ff5057d9db323ab4.1521476841.git.heinzm@redhat.com>
+From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Subject: [PATCH 4.4 099/134] scsi: dh: add new rdac devices
+Date: Mon, 19 Mar 2018 19:06:22 +0100
+Message-ID: <20180319171903.540737197@linuxfoundation.org>
+References: <20180319171849.024066323@linuxfoundation.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20180319171849.024066323@linuxfoundation.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,56 +17,57 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: heinzm@redhat.com, dm-devel@redhat.com, snitzer@redhat.com
+To: linux-kernel@vger.kernel.org
+Cc: "James E.J. Bottomley" <jejb@linux.vnet.ibm.com>, SCSI ML <linux-scsi@vger.kernel.org>, "Martin K. Petersen" <martin.petersen@oracle.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Xose Vazquez Perez <xose.vazquez@gmail.com>, stable@vger.kernel.org, Sasha Levin <alexander.levin@microsoft.com>, NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-parse_raid_params() doesn't use __with_rnage() to check
-argument values throughout.  Add where appropriate.
+4.4-stable review patch.  If anyone has any objections, please let me know.
 
-Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
+------------------
+
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+
+
+[ Upstream commit 4b3aec2bbbce1c35f50e7475a9fd78d24b9ea4ea ]
+
+Add IBM 3542 and 3552, arrays: FAStT200 and FAStT500.
+
+Add full STK OPENstorage family, arrays: 9176, D173, D178, D210, D220,
+D240 and D280.
+
+Add STK BladeCtlr family, arrays: B210, B220, B240 and B280.
+
+These changes were done in multipath-tools time ago.
+
+Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>
+Cc: Hannes Reinecke <hare@suse.de>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: Martin K. Petersen <martin.petersen@oracle.com>
+Cc: James E.J. Bottomley <jejb@linux.vnet.ibm.com>
+Cc: SCSI ML <linux-scsi@vger.kernel.org>
+Cc: device-mapper development <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
+Signed-off-by: Sasha Levin <alexander.levin@microsoft.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 ---
- drivers/md/dm-raid.c | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+ drivers/scsi/scsi_dh.c |    5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 7ffa1839b206..38c53632dfeb 100644
---- a/drivers/md/dm-raid.c
-+++ b/drivers/md/dm-raid.c
-@@ -1371,7 +1371,7 @@ static int parse_raid_params(struct raid_set *rs, struct dm_arg_set *as,
- 			 * MD records this value in kB
- 			 */
- 			value /= 2;
--			if (value > COUNTER_MAX) {
-+			if (!__within_range(value, 1, COUNTER_MAX)) {
- 				rs->ti->error = "Max write-behind limit out of range";
- 				return -EINVAL;
- 			}
-@@ -1382,7 +1382,7 @@ static int parse_raid_params(struct raid_set *rs, struct dm_arg_set *as,
- 				rs->ti->error = "Only one daemon_sleep argument pair allowed";
- 				return -EINVAL;
- 			}
--			if (!value || (value > MAX_SCHEDULE_TIMEOUT)) {
-+			if (!__within_range(value, 1, MAX_SCHEDULE_TIMEOUT)) {
- 				rs->ti->error = "daemon sleep period out of range";
- 				return -EINVAL;
- 			}
-@@ -1430,7 +1430,7 @@ static int parse_raid_params(struct raid_set *rs, struct dm_arg_set *as,
- 				rs->ti->error = "Only one min_recovery_rate argument pair allowed";
- 				return -EINVAL;
- 			}
--			if (value > INT_MAX) {
-+			if (!__within_range(value, 1, INT_MAX)) {
- 				rs->ti->error = "min_recovery_rate out of range";
- 				return -EINVAL;
- 			}
-@@ -1440,7 +1440,7 @@ static int parse_raid_params(struct raid_set *rs, struct dm_arg_set *as,
- 				rs->ti->error = "Only one max_recovery_rate argument pair allowed";
- 				return -EINVAL;
- 			}
--			if (value > INT_MAX) {
-+			if (!__within_range(value, 1, INT_MAX)) {
- 				rs->ti->error = "max_recovery_rate out of range";
- 				return -EINVAL;
- 			}
--- 
-2.14.3
+--- a/drivers/scsi/scsi_dh.c
++++ b/drivers/scsi/scsi_dh.c
+@@ -56,10 +56,13 @@ static const struct scsi_dh_blist scsi_d
+ 	{"IBM", "1815",			"rdac", },
+ 	{"IBM", "1818",			"rdac", },
+ 	{"IBM", "3526",			"rdac", },
++	{"IBM", "3542",			"rdac", },
++	{"IBM", "3552",			"rdac", },
+ 	{"SGI", "TP9",			"rdac", },
+ 	{"SGI", "IS",			"rdac", },
+-	{"STK", "OPENstorage D280",	"rdac", },
++	{"STK", "OPENstorage",		"rdac", },
+ 	{"STK", "FLEXLINE 380",		"rdac", },
++	{"STK", "BladeCtlr",		"rdac", },
+ 	{"SUN", "CSM",			"rdac", },
+ 	{"SUN", "LCSM100",		"rdac", },
+ 	{"SUN", "STK6580_6780",		"rdac", },
