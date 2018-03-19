@@ -1,15 +1,13 @@
-From: Bart Van Assche <bart.vanassche@wdc.com>
-Subject: Re: [PATCH RESEND] multipathd: check and cleanup zombie
- paths
-Date: Mon, 19 Mar 2018 14:48:36 -0700
-Message-ID: <5ec40e21-f756-c599-597f-75214a219402@wdc.com>
-References: <CEB9978CF3252343BE3C67AC9F0086A34295C7AB@H3CMLB14-EX.srv.huawei-3com.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: Questions around multipath failover and no_path_retry
+Date: Mon, 19 Mar 2018 23:48:43 +0100
+Message-ID: <1521499723.3798.153.camel@suse.com>
+References: <SN1PR20MB047927660CFE0409EDE91C95C9DC0@SN1PR20MB0479.namprd20.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CEB9978CF3252343BE3C67AC9F0086A34295C7AB@H3CMLB14-EX.srv.huawei-3com.com>
-Content-Language: en-US
+In-Reply-To: <SN1PR20MB047927660CFE0409EDE91C95C9DC0@SN1PR20MB0479.namprd20.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,19 +17,61 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Chongyun Wu <wu.chongyun@h3c.com>, Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>, 'Christophe Varoqui' <christophe.varoqui@opensvc.com>, 'Hannes Reinecke' <hare@suse.de>, 'Xose Vazquez Perez' <xose.vazquez@gmail.com>
-Cc: Guozhonghua <guozhonghua@h3c.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Changlimin <changlimin@h3c.com>, Changwei Ge <ge.changwei@h3c.com>
+To: Karan Vohra <karanvohra@outlook.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 03/05/18 17:26, Chongyun Wu wrote:
-> +				sysfs_attr_set_value(pp->udev, "device/delete",
-> +						delete, strlen(delete));
-
-Before using the "delete" sysfs attribute, please fix the kernel 
-deadlock reported in "Avoid that SCSI device removal through sysfs 
-triggers a deadlock" 
-(https://www.spinics.net/lists/linux-scsi/msg101193.html).
-
-Thanks,
-
-Bart.
+T24gU3VuLCAyMDE4LTAzLTExIGF0IDE2OjQ3ICswMDAwLCBLYXJhbiBWb2hyYSB3cm90ZToKPiBI
+aSBGb2xrcywKPiAKPiBMZXQgdXMgYXNzdW1lLCB0aGVyZSBhcmUgMiBwYXRocyB3aXRoaW4gdGhl
+IHBhdGggZ3JvdXAgd2hpY2ggZG0tCj4gbXVsdGlwYXRoIGlzIHNlbmRpbmcgdGhlIEkvT3MgaW4g
+cm91bmQtcm9iaW4gZmFzaGlvbi4gRWFjaCBvZiB0aGVzZQo+IHBhdGhzIGFyZSBpZGVudGlmaWVk
+IGFzIHVuaXF1ZSBibG9jayBkZXZpY2Uocykgc3VjaCBhcyAvZGV2L3NkYiBhbmQKPiAvZGV2L3Nk
+Yy4gCj4gCj4gTGV0IHVzIHNheSBzb21lIEkvT3MgYXJlIHNlbnQgb3ZlciB0byB0aGUgcGF0aCAv
+ZGV2L3NkYiBhbmQgZWl0aGVyCj4gdGhlIHJlcXVlc3RzIHRpbWUgb3V0IG9yIHRoZXJlIGlzIGEg
+ZmFpbHVyZSBvbiB0aGF0IHBhdGgsIHdoYXQKPiBoYXBwZW5zIHRvIHRob3NlIEkvT3M/IEFyZSB0
+aGV5IHNlbnQgb3ZlciB0byB0aGUgb3RoZXIgcGF0aCAtCj4gL2Rldi9zZGMgb3IgZG9lcyBkbS1t
+dWx0aXBhdGggd2FpdHMgZm9yIC9kZXYvc2RiIHRvIGNvbWUgYmFjayBvbmxpbmUKPiBhbmQgb25s
+eSBzZW5kcyBJL08gdG8gL2Rldi9zZGI/CgpUaGUgSS9PIGlzIHNlbnQgdG8gb3RoZXJyIHBhdGhz
+IChzZGMgaW4geW91ciBleGFtcGxlKSB3aGVuIHRoZSBsb3dlcgpsYXllciAoZS5nLiBTQ1NJKSBp
+bmRpY2F0ZXMgcGF0aCBmYWlsdXJlIGZvciBzZGIuIFRoYXQncyB0aGUgdmVyeSBwb2ludApvZiBt
+dWx0aXBhdGhpbmcuCgo+ICBPbmUgb2YgdGhlIHJlYXNvbnMgd2UgYXJlIGNvbmNlcm5lZCBhYm91
+dCB0aGUgYWJvdmUgc2NlbmFyaW8gaXMtIGxldAo+IHVzIHNheSB0aGVyZSBpcyBhIHdyaXRlIEkv
+TyBXMSB3aGljaCBpcyByb3V0ZWQgdG8gL2Rldi9zZGIgYW5kIHRoZW4KPiB0aGVyZSBpcyBhIGZh
+aWx1cmUuIFRoZXJlIHdhcyBhIHdyaXRlIEkvTyBXMiB3aGljaCB3cm90ZSBhdCB0aGUgc2FtZQo+
+IGJsb2NrIHZpYSAvZGV2L3NkYy4gTm93IGlmIG11bHRpcGF0aCBzZW5kcyBXMSB0aHJvdWdoIC9k
+ZXYvc2RjLCBXMgo+IGdldHMgb3ZlcndyaXR0ZW4gYnkgVzEuIFRoZSBleHBlY3RhdGlvbiB3YXMg
+dGhhdCBXMiBoYXBwZW5zIGFmdGVyIFcxCj4gYW5kIHNob3VsZCBvdmVyd3JpdGUgVzEgYnV0IHRo
+ZSByZXN1bHQgaXMgb3Bwb3NpdGUuIAoKSWYgeW91IHNlbmQgdHdvIHdyaXRlIElPcyB0byB0aGUg
+c2FtZSBzZWN0b3IgYXQgdGhlIHNhbWUgdGltZSwgeW91CmNhbid0IGJlIHN1cmUgd2hpY2ggb25l
+IGFycml2ZXMgZmlyc3QuIFRoYXQncyBub3Qgc3BlY2lmaWMgdG8KbXVsdGlwYXRoLiBJZiB5b3Ug
+d2FudCB0byBndWFyYW50ZWUgb3JkZXJpbmcsIHlvdSBoYXZlIHRvIGZsdXNoIFcxIAp1c2luZyBl
+LmcuIGZkYXRhc3luYygpIGJlZm9yZSBzZW5kaW5nIFcyLiBUaGUgZmx1c2ggY29tbWFuZCB3b24n
+dApyZXR1cm4gYmVmb3JlIFcxIGlzIHdyaXR0ZW4gdG8gZGlzay4KCj4gU2l0dWF0aW9ucyBsaWtl
+IHRoZXNlIGNhbiBjYXVzZSBkYXRhIGluY29uc2lzdGVuY3kgYW5kIGNvcnJ1cHRpb24uV2UKPiB3
+ZXJlIHRoaW5raW5nIG9mIHVzaW5nIG5vX3BhdGhfcmV0cnkgY29uZmlndXJhdGlvbiB0byBiZSBz
+ZXQgdG8gcXVldWUKPiB0byBtYWtlIHN1cmUgdGhhdCB0aGUgSS9PcyBzdXBwb3NlZCB0byBiZSBn
+b2luZyB0byBwYXRoMSBuZXZlciBtYWtlCj4gaXQgdG8gcGF0aDIuCgpUaGF0IHdvbid0IHdvcmsu
+IEFzIHRoZSBuYW1lIG9mIHRoZSBvcHRpb24gc3VnZ2Vlc3RzLCAibm9fcGF0aF9yZXRyeSIKb25s
+eSBhZmZlY3RzIHRoZSBiZWhhdmlvciBpZiB0aGVyZSdzIF9ub18gaGVhbHRoeSBwYXRoIGxlZnQu
+Cgo+ICBCdXQgdGhlIHF1ZXN0aW9uIGlzIHRoYXQgd291bGQgbm90IHRoYXQgY2F1c2UgdW5leHBl
+Y3RlZCBiZWhhdmlvciBpbgo+IGFwcGxpY2F0aW9uIGxheWVyPyBMZXQgdXMgc2F5IHRoZXJlIGFy
+ZSBJL08gUmVxdWVzdHMgUjEsIFIyLCBSMyBhbmQKPiBzbyBvbi4uIFIxIGlzIGdvaW5nIHRvIFBh
+dGgxLCBSMiBpcyBnb2luZyB0byBQYXRoMiBhbmQgc28gb24uIElmCj4gUGF0aDEgZGllcyBmb3Ig
+c29tZSByZWFzb24sIHdpdGggdGhlIHNldHRpbmcgb2Ygbm9fcGF0aF9yZXRyeSB0bwo+IHF1ZXVl
+LCBxdWV1ZWluZyB3aWxsIG5vdCBzdG9wIHVudGlsIHRoZSBwYXRoIGlzIGZpeGVkIHNvIGRvZXMg
+bm90Cj4gdGhhdCBtZWFuIHRoYXQgUjEsIFIzLFI1IC4uLiB3aWxsIG5vdCBtYWtlIGl0IHRvIGJs
+b2NrIGRldmljZSB1bnRpbAo+IHRoZSBwYXRoIGlzIGZpeGVkPyBXb3VsZCBpdCBub3QgY2F1c2Ug
+ZmFpbHVyZXMgaWYgdGhlIGlzc3VlIHBlcnNpc3RzCj4gZm9yIHNlY29uZHM/IAoKQXMgSSBzYWlk
+LCB0aGF0J3Mgbm90IGhvdyBpdCB3b3Jrcy4gUjEtPlAxLCBSMi0+UDIsIC4uLiBvbmx5IGhvbGRz
+IGFzCmxvbmcgYXMgYWxsIHBhdGhzIGFyZSB1cCAoYW5kIG5vIElPIHNjaGVkdWxlciBpcyBhY3Rp
+dmUgd2hpY2ggbWlnaHQgcmUtCm9yZGVyIHlvdXIgSS9PIHJlcXVlc3RzKS4KCj4gV2hhdCBhYm91
+dCB0aGUgc2l6ZSBvZiBxdWV1ZT8gSXMgdGhlcmUgYW55IGRhbmdlciBvZiBxdWV1ZSBnZXR0aW5n
+Cj4gb3ZlcmxvYWRlZD9BbnkgcG9pbnRlcnMgb3IgcmVmZXJlbmNlcyB3b3VsZCBiZSBvZiBncmVh
+dCBoZWxwLgoKVGhlb3JldGljYWxseSwgdGhlIHF1ZXVlIGlzIG9ubHkgbGltaXRlZCBieSBtZW1v
+cnkgc2l6ZS4KCk1hcnRpbgoKPiAKPiBUaGFua3MhCj4gS2FyYW4KPiAKPiAKPiBHZXQgT3V0bG9v
+ayBmb3IgQW5kcm9pZAo+IAo+IC0tCj4gZG0tZGV2ZWwgbWFpbGluZyBsaXN0Cj4gZG0tZGV2ZWxA
+cmVkaGF0LmNvbQo+IGh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1k
+ZXZlbAoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgw
+KTkxMSA3NDA1MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwg
+SmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0t
+CmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJl
+ZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
