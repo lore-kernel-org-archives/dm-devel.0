@@ -1,86 +1,61 @@
-From: <gregkh@linuxfoundation.org>
-Subject: Patch "scsi: dh: add new rdac devices" has been added to the 4.4-stable tree
-Date: Mon, 19 Mar 2018 10:09:53 +0100
-Message-ID: <152145059314711@kroah.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 01/12] Unit tests for basenamecpy
+Date: Mon, 19 Mar 2018 10:49:21 +0100
+Message-ID: <1521452961.3798.6.camel@suse.com>
+References: <1521049605-22050-1-git-send-email-bmarzins@redhat.com>
+	<1521049605-22050-2-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ANSI_X3.4-1968
-Content-Transfer-Encoding: 8bit
-Return-path: <stable-owner@vger.kernel.org>
-Sender: stable-owner@vger.kernel.org
-To: xose.vazquez@gmail.com, alexander.levin@microsoft.com, christophe.varoqui@opensvc.com, dm-devel@redhat.com, gregkh@linuxfoundation.org, hare@suse.de, jejb@linux.vnet.ibm.com, linux-scsi@vger.kernel.org, martin.petersen@oracle.com, ng-eseries-upstream-maintainers@netapp.com
-Cc: stable@vger.kernel.org, stable-commits@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1521049605-22050-2-git-send-email-bmarzins@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@redhat.com
+Cc: christophe.varoqui@free.fr
 List-Id: dm-devel.ids
 
-
-This is a note to let you know that I've just added the patch titled
-
-    scsi: dh: add new rdac devices
-
-to the 4.4-stable tree which can be found at:
-    http://www.kernel.org/git/?p=linux/kernel/git/stable/stable-queue.git;a=summary
-
-The filename of the patch is:
-     scsi-dh-add-new-rdac-devices.patch
-and it can be found in the queue-4.4 subdirectory.
-
-If you, or anyone else, feels it should not be added to the stable tree,
-please let <stable@vger.kernel.org> know about it.
-
-
-From foo@baz Mon Mar 19 09:58:12 CET 2018
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Date: Fri, 17 Nov 2017 22:05:13 +0100
-Subject: scsi: dh: add new rdac devices
-
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-
-
-[ Upstream commit 4b3aec2bbbce1c35f50e7475a9fd78d24b9ea4ea ]
-
-Add IBM 3542 and 3552, arrays: FAStT200 and FAStT500.
-
-Add full STK OPENstorage family, arrays: 9176, D173, D178, D210, D220,
-D240 and D280.
-
-Add STK BladeCtlr family, arrays: B210, B220, B240 and B280.
-
-These changes were done in multipath-tools time ago.
-
-Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>
-Cc: Hannes Reinecke <hare@suse.de>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: Martin K. Petersen <martin.petersen@oracle.com>
-Cc: James E.J. Bottomley <jejb@linux.vnet.ibm.com>
-Cc: SCSI ML <linux-scsi@vger.kernel.org>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
-Signed-off-by: Sasha Levin <alexander.levin@microsoft.com>
-Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
----
- drivers/scsi/scsi_dh.c |    5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
-
---- a/drivers/scsi/scsi_dh.c
-+++ b/drivers/scsi/scsi_dh.c
-@@ -56,10 +56,13 @@ static const struct scsi_dh_blist scsi_d
- 	{"IBM", "1815",			"rdac", },
- 	{"IBM", "1818",			"rdac", },
- 	{"IBM", "3526",			"rdac", },
-+	{"IBM", "3542",			"rdac", },
-+	{"IBM", "3552",			"rdac", },
- 	{"SGI", "TP9",			"rdac", },
- 	{"SGI", "IS",			"rdac", },
--	{"STK", "OPENstorage D280",	"rdac", },
-+	{"STK", "OPENstorage",		"rdac", },
- 	{"STK", "FLEXLINE 380",		"rdac", },
-+	{"STK", "BladeCtlr",		"rdac", },
- 	{"SUN", "CSM",			"rdac", },
- 	{"SUN", "LCSM100",		"rdac", },
- 	{"SUN", "STK6580_6780",		"rdac", },
-
-
-Patches currently in stable-queue which might be from xose.vazquez@gmail.com are
-
-queue-4.4/scsi-devinfo-apply-to-hp-xp-the-same-flags-as-hitachi-vsp.patch
-queue-4.4/scsi-dh-add-new-rdac-devices.patch
+T24gV2VkLCAyMDE4LTAzLTE0IGF0IDEyOjQ2IC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cj4gVGhlIGN1cnJlbnQgaW1wbGVtZW50YXRpb24gb2YgYmFzZW5hbWVjcHkgaXMgYnJva2Vu
+LCBzbyBzb21lIG9mIHRoZXNlCj4gdGVzdHMgY3VycmVudGx5IGZhaWwuIEZpeGVzIHRvIGZvbGxv
+dy4KPiAKPiBTaWduZWQtb2ZmLWJ5OiBCZW5qYW1pbiBNYXJ6aW5za2kgPGJtYXJ6aW5zQHJlZGhh
+dC5jb20+Cj4gLS0tCj4gIHRlc3RzL01ha2VmaWxlIHwgICAyICstCj4gIHRlc3RzL3V0aWwuYyAg
+IHwgMTY3Cj4gKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysr
+KysrKysrKysrCj4gIDIgZmlsZXMgY2hhbmdlZCwgMTY4IGluc2VydGlvbnMoKyksIDEgZGVsZXRp
+b24oLSkKPiAgY3JlYXRlIG1vZGUgMTAwNjQ0IHRlc3RzL3V0aWwuYwo+IAoKPiArc3RhdGljIHZv
+aWQgdGVzdF9iYXNlbmFtZWNweV9nb29kNih2b2lkICoqc3RhdGUpCj4gK3sKPiArICAgICAgICBj
+aGFyIGRzdFs2XTsKPiArCj4gKyAgICAgICAgYXNzZXJ0X2ludF9lcXVhbChiYXNlbmFtZWNweSgi
+L3h5enp5L3BsdWdoICAgIiwgZHN0LAo+IHNpemVvZihkc3QpKSwgNSk7Cj4gKyAgICAgICAgYXNz
+ZXJ0X3N0cmluZ19lcXVhbChkc3QsICJwbHVnaCIpOwo+ICt9CgpUaGlzIGRlc2VydmVzIGV4cGxh
+bmF0aW9uLiAiYmFzZW5hbWUiIHdvdWxkbid0IG5vcm1hbGx5IHN0cmlwIHRyYWlsaW5nCndoaXRl
+c3BhY2UuCgo+ICsvKiBlbmRzIGluIHNsYXNoICovCj4gK3N0YXRpYyB2b2lkIHRlc3RfYmFzZW5h
+bWVjcHlfYmFkMSh2b2lkICoqc3RhdGUpCj4gK3sKPiArICAgICAgICBjaGFyIGRzdFsxMF07Cj4g
+Kwo+ICsgICAgICAgIGFzc2VydF9pbnRfZXF1YWwoYmFzZW5hbWVjcHkoImZvby9iYXIvIiwgZHN0
+LCBzaXplb2YoZHN0KSksCj4gMCk7CgpUaGlzLCB0b28sIGRldmlhdGVzIGZyb20gc3RhbmRhcmQg
+ImJhc2VuYW1lIiBiZWhhdmlvciBhbmQgc2hvdWxkIGJlCmV4cGxhaW5lZCAoImJhc2VuYW1lIC91
+c3IvIiB5aWVsZHMgInVzciIsIHNvIGRvZXMgImJhc2VuYW1lIC91c3IvLy8iKS4KCj4gK30KPiAr
+Cj4gK3N0YXRpYyB2b2lkIHRlc3RfYmFzZW5hbWVjcHlfYmFkMih2b2lkICoqc3RhdGUpCj4gK3sK
+PiArICAgICAgICBjaGFyIGRzdFsxMF07Cj4gKwo+ICsgICAgICAgIGFzc2VydF9pbnRfZXF1YWwo
+YmFzZW5hbWVjcHkoTlVMTCwgZHN0LCBzaXplb2YoZHN0KSksIDApOwo+ICt9Cj4gKwo+ICtzdGF0
+aWMgdm9pZCB0ZXN0X2Jhc2VuYW1lY3B5X2JhZDModm9pZCAqKnN0YXRlKQo+ICt7Cj4gKyAgICAg
+ICAgY2hhciBkc3RbMTBdOwo+ICsKPiArICAgICAgICBhc3NlcnRfaW50X2VxdWFsKGJhc2VuYW1l
+Y3B5KCIiLCBkc3QsIHNpemVvZihkc3QpKSwgMCk7Cj4gK30KPiArCj4gK3N0YXRpYyB2b2lkIHRl
+c3RfYmFzZW5hbWVjcHlfYmFkNCh2b2lkICoqc3RhdGUpCj4gK3sKPiArICAgICAgICBjaGFyIGRz
+dFsxMF07Cj4gKwo+ICsgICAgICAgIGFzc2VydF9pbnRfZXF1YWwoYmFzZW5hbWVjcHkoIi8iLCBk
+c3QsIHNpemVvZihkc3QpKSwgMCk7Cj4gK30KCkFub3RoZXIgb25lOiAiYmFzZW5hbWUgLyIgeWll
+bGRzICIvIiBpbiB0aGUgc2hlbGwsIHNvIGRvZXMgCiJiYXNlbmFtZSAvLy8iKS4KCkkgZG9uJ3Qg
+aW5zaXN0IHRoYXQgYmFzZW5hbWVjcHkgYmVoYXZlcyAxMDAlIGlkZW50aWNhbCBhcyAiYmFzZW5h
+bWUiLApidXQgSSByZWNrb24gaWYgZXhwZWN0YXRpb25zIGFyZSBkaWZmZXJlbnQsIHdlIHNob3Vs
+ZCBleHBsYWluIHdoeS4KClJlZ2FyZHMsCk1hcnRpbgoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13
+aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGludXggR21i
+SCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpI
+UkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZl
+bEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1k
+ZXZlbA==
