@@ -1,7 +1,7 @@
-From: Bart Van Assche <Bart.VanAssche@wdc.com>
+From: Martin Wilck <mwilck@suse.com>
 Subject: Re: [PATCH] multipathd: check and cleanup zombie paths
-Date: Tue, 20 Mar 2018 15:14:14 +0000
-Message-ID: <1521558853.3156.10.camel@wdc.com>
+Date: Tue, 20 Mar 2018 16:19:09 +0100
+Message-ID: <1521559149.3798.168.camel@suse.com>
 References: <CEB9978CF3252343BE3C67AC9F0086A34295C462@H3CMLB14-EX.srv.huawei-3com.com>
 	<1520325779.4131.4.camel@suse.com>
 	<CEB9978CF3252343BE3C67AC9F0086A34295C9D0@H3CMLB14-EX.srv.huawei-3com.com>
@@ -16,13 +16,12 @@ References: <CEB9978CF3252343BE3C67AC9F0086A34295C462@H3CMLB14-EX.srv.huawei-3co
 	<CEB9978CF3252343BE3C67AC9F0086A34295DF37@H3CMLB14-EX.srv.huawei-3com.com>
 	<1521557887.3156.5.camel@wdc.com>
 	<3537d472-27ad-53fd-7d13-229359a53849@gmail.com>
+	<1521558853.3156.10.camel@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <3537d472-27ad-53fd-7d13-229359a53849@gmail.com>
-Content-Language: en-US
-Content-ID: <88D95E8E192BFF4B8F221AE651FAD5CB@namprd04.prod.outlook.com>
+In-Reply-To: <1521558853.3156.10.camel@wdc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -32,32 +31,26 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "xose.vazquez@gmail.com" <xose.vazquez@gmail.com>, "bmarzins@redhat.com" <bmarzins@redhat.com>, "wu.chongyun@h3c.com" <wu.chongyun@h3c.com>, "mwilck@suse.com" <mwilck@suse.com>
+To: Bart Van Assche <Bart.VanAssche@wdc.com>, "xose.vazquez@gmail.com" <xose.vazquez@gmail.com>, "bmarzins@redhat.com" <bmarzins@redhat.com>, "wu.chongyun@h3c.com" <wu.chongyun@h3c.com>
 Cc: "guozhonghua@h3c.com" <guozhonghua@h3c.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "changlimin@h3c.com" <changlimin@h3c.com>, "ge.changwei@h3c.com" <ge.changwei@h3c.com>
 List-Id: dm-devel.ids
 
-On Tue, 2018-03-20 at 16:12 +0100, Xose Vazquez Perez wrote:
-> On 03/20/2018 03:58 PM, Bart Van Assche wrote:
-> 
-> > It is on purpose that the SCSI core does not remove stale SCSI device nodes.
-> > If you want that these stale SCSI device nodes get removed automatically,
-> > two possible approaches are (there might be other approaches):
-> > * Write a new user space daemon that periodically checks for stale devices
-> >   (e.g. by running grep -aH . /sys/class/scsi_device/*/*/state |
-> >    grep -v running) and that triggers a SCSI rescan if any stale devices are
-> >   found.
-> > * Write a udev rule that listens for SDEV_UA=REPORTED_LUNS_DATA_HAS_CHANGED
-> >   and that triggers a SCSI rescan if this event is triggered by the kernel.
-> 
-> There are some "remove" flags in rescan-scsi-bus.sh:
-> https://github.com/hreinecke/sg3_utils/blob/d4dbbede04db21c206e4c2acc1cf766117f003c3/scripts/rescan-scsi-bus.sh#L1080
-> 
-> -r      enables removing of devices        [default: disabled]
-> --forceremove:   Remove stale devices (DANGEROUS)
-> --forcerescan:   Remove and readd existing devices (DANGEROUS)
-
-Last time I checked the rescan-scsi-bus.sh script relied on the SCSI sysfs
-delete attribute to remove stale devices. That is the mechanism that can
-trigger a deadlock in the kernel.
-
-Bart.
+T24gVHVlLCAyMDE4LTAzLTIwIGF0IDE1OjE0ICswMDAwLCBCYXJ0IFZhbiBBc3NjaGUgd3JvdGU6
+Cj4gT24gVHVlLCAyMDE4LTAzLTIwIGF0IDE2OjEyICswMTAwLCBYb3NlIFZhenF1ZXogUGVyZXog
+d3JvdGU6Cj4gPiAKPiA+IFRoZXJlIGFyZSBzb21lICJyZW1vdmUiIGZsYWdzIGluIHJlc2Nhbi1z
+Y3NpLWJ1cy5zaDoKPiA+IGh0dHBzOi8vZ2l0aHViLmNvbS9ocmVpbmVja2Uvc2czX3V0aWxzL2Js
+b2IvZDRkYmJlZGUwNGRiMjFjMjA2ZTRjMmEKPiA+IGNjMWNmNzY2MTE3ZjAwM2MzL3NjcmlwdHMv
+cmVzY2FuLXNjc2ktYnVzLnNoI0wxMDgwCj4gPiAKPiA+IC1yICAgICAgZW5hYmxlcyByZW1vdmlu
+ZyBvZiBkZXZpY2VzICAgICAgICBbZGVmYXVsdDogZGlzYWJsZWRdCj4gPiAtLWZvcmNlcmVtb3Zl
+OiAgIFJlbW92ZSBzdGFsZSBkZXZpY2VzIChEQU5HRVJPVVMpCj4gPiAtLWZvcmNlcmVzY2FuOiAg
+IFJlbW92ZSBhbmQgcmVhZGQgZXhpc3RpbmcgZGV2aWNlcyAoREFOR0VST1VTKQo+IAo+IExhc3Qg
+dGltZSBJIGNoZWNrZWQgdGhlIHJlc2Nhbi1zY3NpLWJ1cy5zaCBzY3JpcHQgcmVsaWVkIG9uIHRo
+ZSBTQ1NJCj4gc3lzZnMKPiBkZWxldGUgYXR0cmlidXRlIHRvIHJlbW92ZSBzdGFsZSBkZXZpY2Vz
+LiBUaGF0IGlzIHRoZSBtZWNoYW5pc20gdGhhdAo+IGNhbgo+IHRyaWdnZXIgYSBkZWFkbG9jayBp
+biB0aGUga2VybmVsLgoKSXMgdGhlcmUgYW4gYWx0ZXJuYXRpdmUgdGhlIHNjcmlwdCBjb3VsZCB1
+c2U/IEknbSBub3QgYXdhcmUgb2YgYW55LgoKTWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8
+bXdpbGNrQHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBH
+bWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9u
+CkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRl
+dmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2Rt
+LWRldmVs
