@@ -1,73 +1,60 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: Add an option to dm-verity to validate hashes at most once
-Date: Tue, 20 Mar 2018 15:36:43 -0400
-Message-ID: <20180320193643.GA11080@redhat.com>
-References: <20180306231456.210504-1-totte@google.com>
- <20180314190957.GB183724@google.com>
+From: Christopher Lameter <cl@linux.com>
+Subject: Re: [PATCH] slab: introduce the flag SLAB_MINIMIZE_WASTE
+Date: Tue, 20 Mar 2018 15:42:32 -0500 (CDT)
+Message-ID: <alpine.DEB.2.20.1803201536590.28319@nuc-kabylake>
+References: <alpine.LRH.2.02.1803200954590.18995@file01.intranet.prod.int.rdu2.redhat.com>
+	<20180320173512.GA19669@bombadil.infradead.org>
+	<alpine.DEB.2.20.1803201250480.27540@nuc-kabylake>
+	<alpine.LRH.2.02.1803201510030.21066@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180314190957.GB183724@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Patrik Torstensson <totte@google.com>, Eric Biggers <ebiggers@google.com>
-Cc: gkaiser@google.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com, samitolvanen@google.com, Alasdair Kergon <agk@redhat.com>, paulcrowley@google.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <alpine.LRH.2.02.1803201510030.21066@file01.intranet.prod.int.rdu2.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Mike Snitzer <msnitzer@redhat.com>, Matthew Wilcox <willy@infradead.org>, Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: dm-devel.ids
 
-On Wed, Mar 14 2018 at  3:09pm -0400,
-Eric Biggers <ebiggers@google.com> wrote:
+On Tue, 20 Mar 2018, Mikulas Patocka wrote:
 
-> Hi Patrik,
-> 
-> On Tue, Mar 06, 2018 at 03:14:56PM -0800, Patrik Torstensson wrote:
-> > Add an option to dm-verity to validate hashes at most once
-> > to allow platforms that is CPU/memory contraint to be
-> > protected by dm-verity against offline attacks.
-> > 
-> > The option introduces a bitset that is used to check if
-> > a block has been validated before or not. A block can
-> > be validated more than once as there is no thread protection
-> > for the bitset.
-> > 
-> > This patch has been developed and tested on entry-level
-> > Android Go devices.
-> > 
-> > Signed-off-by: Patrik Torstensson <totte@google.com>
-> > ---
-> >  drivers/md/dm-verity-target.c | 58 +++++++++++++++++++++++++++++++++--
-> >  drivers/md/dm-verity.h        |  1 +
-> >  2 files changed, 56 insertions(+), 3 deletions(-)
-> 
-> The new option needs to be documented in Documentation/device-mapper/verity.txt,
-> including a description of what the option does as well as how it affects the
-> security properties of dm-verity.  There should also be a mention of why the
-> option applies to data blocks but not hash blocks, assuming that's intentional.
-> 
-> verity_status() also needs to be updated to show the new option, otherwise it
-> will not be visible via the DM_TABLE_STATUS ioctl ('dmsetup table' on the
-> command line).
-> 
-> Also the minor version number in the struct target_type needs to be incremented,
-> so that userspace can determine whether the option is supported.
-> 
-> >  
-> >  	for (b = 0; b < io->n_blocks; b++) {
-> >  		int r;
-> > +		sector_t cur_block = io->block + b;
-> >  		struct ahash_request *req = verity_io_hash_req(v, io);
-> >  
-> > +		if (v->validated_blocks &&
-> > +		    likely(test_bit(cur_block, v->validated_blocks))) {
-> > +			verity_bv_skip_block(v, io, &io->iter);
-> > +			continue;
-> > +		}
-> > +
-> >  		r = verity_hash_for_block(v, io, io->block + b,
-> 
-> Can you replace 'io->block + b' with 'cur_block' here as well?
+> > Maybe do the same thing for SLAB?
+>
+> Yes, but I need to change it for a specific cache, not for all caches.
 
-Patrik, any chance you could act on Eric's review feedback and post v2
-of this patch (assuming you still have a need for it)?
+Why only some caches?
 
-Thanks,
-Mike
+> When the order is greater than 3 (PAGE_ALLOC_COSTLY_ORDER), the allocation
+> becomes unreliable, thus it is a bad idea to increase slub_max_order
+> system-wide.
+
+Well the allocations is more likely to fail that is true but SLUB will
+fall back to a smaller order should the page allocator refuse to give us
+that larger sized page.
+
+> Another problem with slub_max_order is that it would pad all caches to
+> slub_max_order, even those that already have a power-of-two size (in that
+> case, the padding is counterproductive).
+
+No it does not. Slub will calculate the configuration with the least byte
+wastage. It is not the standard order but the maximum order to be used.
+Power of two caches below PAGE_SIZE will have order 0.
+
+There are some corner cases where extra metadata is needed per object or
+per page that will result in either object sizes that are no longer a
+power of two or in page sizes smaller than the whole page. Maybe you have
+a case like that? Can you show me a cache that has this issue?
+
+> BTW. the function "order_store" in mm/slub.c modifies the structure
+> kmem_cache without taking any locks - is it a bug?
+
+The kmem_cache structure was just allocated. Only one thread can access it
+thus no locking is necessary.
