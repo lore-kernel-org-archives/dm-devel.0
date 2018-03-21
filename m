@@ -1,12 +1,25 @@
-From: James Bottomley <James.Bottomley@hansenpartnership.com>
-Subject: Patch added to scsi: scsi: devinfo: remove dasd devices
-	from the scsi subsystem
-Date: Tue, 20 Mar 2018 15:54:12 -0700 (PDT)
-Message-ID: <20180320225412.C56548EE4F1@bedivere.hansenpartnership.com>
+From: Chongyun Wu <wu.chongyun@h3c.com>
+Subject: Re: [PATCH] multipathd: check and cleanup zombie paths
+Date: Wed, 21 Mar 2018 01:17:03 +0000
+Message-ID: <CEB9978CF3252343BE3C67AC9F0086A34295E214@H3CMLB14-EX.srv.huawei-3com.com>
+References: <CEB9978CF3252343BE3C67AC9F0086A34295C462@H3CMLB14-EX.srv.huawei-3com.com>
+	<1520325779.4131.4.camel@suse.com>
+	<CEB9978CF3252343BE3C67AC9F0086A34295C9D0@H3CMLB14-EX.srv.huawei-3com.com>
+	<1520349519.4131.20.camel@suse.com>
+	<CEB9978CF3252343BE3C67AC9F0086A34295CA7D@H3CMLB14-EX.srv.huawei-3com.com>
+	<1520426679.11340.5.camel@suse.com>
+	<CEB9978CF3252343BE3C67AC9F0086A34295CF62@H3CMLB14-EX.srv.huawei-3com.com>
+	<20180308154435.GB14513@octiron.msp.redhat.com>
+	<CEB9978CF3252343BE3C67AC9F0086A34295D215@H3CMLB14-EX.srv.huawei-3com.com>
+	<20180309162243.GE14513@octiron.msp.redhat.com>
+	<1521495726.3798.141.camel@suse.com>
+	<CEB9978CF3252343BE3C67AC9F0086A34295DF37@H3CMLB14-EX.srv.huawei-3com.com>
+	<1521557887.3156.5.camel@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,40 +29,44 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Takahiro Yasui <takahiro.yasui@hitachivantara.com>, device-mapper development <dm-devel@redhat.com>, James.Bottomley@hansenpartnership.com, Anthony Cheung <anthony.cheung@hpe.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, "James E.J. Bottomley" <jejb@linux.vnet.ibm.com>, SCSI ML <linux-scsi@vger.kernel.org>, s390 ML <linux-s390@vger.kernel.org>, Mike Christie <mchristi@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, Matthias Rudolph <Matthias.Rudolph@hitachivantara.com>martin.petersen@oracle.com
+To: Bart Van Assche <Bart.VanAssche@wdc.com>, "bmarzins@redhat.com" <bmarzins@redhat.com>, "mwilck@suse.com" <mwilck@suse.com>
+Cc: Guozhonghua <guozhonghua@h3c.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Changlimin <changlimin@h3c.com>, "xose.vazquez@gmail.com" <xose.vazquez@gmail.com>, Changwei Ge <ge.changwei@h3c.com>
 List-Id: dm-devel.ids
 
-Your commit:
+On 2018/3/20 22:58, Bart Van Assche wrote:
+> On Tue, 2018-03-20 at 03:19 +0000, Chongyun Wu wrote:
+>> Actually there are two scenario:
+>> (1)Export the LUN to a server at the same time using different LUN nubmer.
+>> As you mentioned this scenario can be considered a misconfiguration
+>> which we might not care about it.
+>> (2)Export the LUN to a server not at the same time using different LUN
+>> number.
+>> This scenario's operation may be right, the customer just want to
+>> reassignment the export relations in the storage.
+>> But the former export operation leave a residual device in the system
+>> which will been adopted by the latter exported device's multipath. Also
+>> there are lots of syslog for the former device which actually not
+>> exist(at lest customer don't think it exists, the customer want only the
+>> new exported device exist)
+> 
+> Hello Chongyun,
+> 
+> It is on purpose that the SCSI core does not remove stale SCSI device nodes.
+> If you want that these stale SCSI device nodes get removed automatically,
+> two possible approaches are (there might be other approaches):
+> * Write a new user space daemon that periodically checks for stale devices
+>    (e.g. by running grep -aH . /sys/class/scsi_device/*/*/state |
+>     grep -v running) and that triggers a SCSI rescan if any stale devices are
+>    found.
+> * Write a udev rule that listens for SDEV_UA=REPORTED_LUNS_DATA_HAS_CHANGED
+>    and that triggers a SCSI rescan if this event is triggered by the kernel.
+> 
+> Bart.
 
-    scsi: devinfo: remove dasd devices from the scsi subsystem
-    
-    Only present through ccw bus.
-    
-    [mkp: applied by hand]
-    
-    Cc: Matthias Rudolph <Matthias.Rudolph@hitachivantara.com>
-    Cc: Takahiro Yasui <takahiro.yasui@hitachivantara.com>
-    Cc: Anthony Cheung <anthony.cheung@hpe.com>
-    Cc: Mike Christie <mchristi@redhat.com>
-    Cc: Martin K. Petersen <martin.petersen@oracle.com>
-    Cc: James E.J. Bottomley <jejb@linux.vnet.ibm.com>
-    Cc: s390 ML <linux-s390@vger.kernel.org>
-    Cc: SCSI ML <linux-scsi@vger.kernel.org>
-    Cc: device-mapper development <dm-devel@redhat.com>
-    Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-    Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
+Hi Bart,
 
-has been added to the upstream scsi tree
-On branch "misc"
-You can find it here:
+Thank you very much for your advice, I think the two approaches are new 
+way for me to clean up stale devices, I will have a try.
 
-http://git.kernel.org/?p=linux/kernel/git/jejb/scsi.git;a=commit;h=b40c2025fdb62b8feeff1ab5e09a8f508d052299
-
-This patch is scheduled to be pushed when the merge window opens for 4.17
-
-James Bottomley
-
-P.S. If you find this email unwanted, set up a procmail rule junking on
-the header:
-
-X-Git-Tree: SCSI
+Regards,
+Chongyun
