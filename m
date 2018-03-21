@@ -1,22 +1,10 @@
 From: Chongyun Wu <wu.chongyun@h3c.com>
-Subject: Re: [PATCH] multipathd: check and cleanup zombie paths
-Date: Wed, 21 Mar 2018 01:54:25 +0000
-Message-ID: <CEB9978CF3252343BE3C67AC9F0086A34295E289@H3CMLB14-EX.srv.huawei-3com.com>
-References: <CEB9978CF3252343BE3C67AC9F0086A34295C462@H3CMLB14-EX.srv.huawei-3com.com>
-	<1520325779.4131.4.camel@suse.com>
-	<CEB9978CF3252343BE3C67AC9F0086A34295C9D0@H3CMLB14-EX.srv.huawei-3com.com>
-	<1520349519.4131.20.camel@suse.com>
-	<CEB9978CF3252343BE3C67AC9F0086A34295CA7D@H3CMLB14-EX.srv.huawei-3com.com>
-	<1520426679.11340.5.camel@suse.com>
-	<CEB9978CF3252343BE3C67AC9F0086A34295CF62@H3CMLB14-EX.srv.huawei-3com.com>
-	<20180308154435.GB14513@octiron.msp.redhat.com>
-	<CEB9978CF3252343BE3C67AC9F0086A34295D215@H3CMLB14-EX.srv.huawei-3com.com>
-	<20180309162243.GE14513@octiron.msp.redhat.com>
-	<1521495726.3798.141.camel@suse.com>
-	<CEB9978CF3252343BE3C67AC9F0086A34295DF37@H3CMLB14-EX.srv.huawei-3com.com>
-	<1521557887.3156.5.camel@wdc.com>
-	<3537d472-27ad-53fd-7d13-229359a53849@gmail.com>
-	<1521558853.3156.10.camel@wdc.com>
+Subject: Re: [PATCH 2/2] multipathd: handle errors in uxlsnr as
+ fatal
+Date: Wed, 21 Mar 2018 02:43:58 +0000
+Message-ID: <CEB9978CF3252343BE3C67AC9F0086A34295E2E0@H3CMLB14-EX.srv.huawei-3com.com>
+References: <20180320165010.15259-1-mwilck@suse.com>
+	<20180320165010.15259-2-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -31,44 +19,71 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <Bart.VanAssche@wdc.com>, "xose.vazquez@gmail.com" <xose.vazquez@gmail.com>, "bmarzins@redhat.com" <bmarzins@redhat.com>, "mwilck@suse.com" <mwilck@suse.com>
-Cc: Guozhonghua <guozhonghua@h3c.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Changlimin <changlimin@h3c.com>, Changwei Ge <ge.changwei@h3c.com>
+To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 2018/3/20 23:14, Bart Van Assche wrote:
-> On Tue, 2018-03-20 at 16:12 +0100, Xose Vazquez Perez wrote:
->> On 03/20/2018 03:58 PM, Bart Van Assche wrote:
->>
->>> It is on purpose that the SCSI core does not remove stale SCSI device nodes.
->>> If you want that these stale SCSI device nodes get removed automatically,
->>> two possible approaches are (there might be other approaches):
->>> * Write a new user space daemon that periodically checks for stale devices
->>>    (e.g. by running grep -aH . /sys/class/scsi_device/*/*/state |
->>>     grep -v running) and that triggers a SCSI rescan if any stale devices are
->>>    found.
->>> * Write a udev rule that listens for SDEV_UA=REPORTED_LUNS_DATA_HAS_CHANGED
->>>    and that triggers a SCSI rescan if this event is triggered by the kernel.
->>
->> There are some "remove" flags in rescan-scsi-bus.sh:
->> https://github.com/hreinecke/sg3_utils/blob/d4dbbede04db21c206e4c2acc1cf766117f003c3/scripts/rescan-scsi-bus.sh#L1080
->>
->> -r      enables removing of devices        [default: disabled]
->> --forceremove:   Remove stale devices (DANGEROUS)
->> --forcerescan:   Remove and readd existing devices (DANGEROUS)
+On 2018/3/21 0:51, Martin Wilck wrote:
+> The ppoll() calls of the uxlsnr thread are vital for proper functioning of
+> multipathd. If the uxlsnr thread can't open the socket or fails to call ppoll()
+> for other reasons, quit the daemon. If we don't do that, multipathd may
+> hang in a state where it can't be terminated any more, because the uxlsnr
+> thread is responsible for handling all signals. This happens e.g. if
+> systemd's multipathd.socket is running in and multipathd is started from
+> outside systemd.
 > 
-> Last time I checked the rescan-scsi-bus.sh script relied on the SCSI sysfs
-> delete attribute to remove stale devices. That is the mechanism that can
-> trigger a deadlock in the kernel.
+> 24f2844 "multipathd: fix signal blocking logic" has made this problem more
+> severe. Before that patch, the signals weren't actually blocked in any thread.
+> That's not to say 24f2844 was wrong. I still think it's correct, we just
+> need this one on top.
 > 
-> Bart.
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>   multipathd/uxlsnr.c | 5 +++--
+>   1 file changed, 3 insertions(+), 2 deletions(-)
 > 
+> diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
+> index cdafd82943e7..6f666663fc6f 100644
+> --- a/multipathd/uxlsnr.c
+> +++ b/multipathd/uxlsnr.c
+> @@ -178,7 +178,7 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
+>   
+>   	if (ux_sock == -1) {
+>   		condlog(1, "could not create uxsock: %d", errno);
+> -		return NULL;
+> +		exit_daemon();
+>   	}
+>   
+>   	pthread_cleanup_push(uxsock_cleanup, (void *)ux_sock);
+> @@ -187,7 +187,7 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
+>   	polls = (struct pollfd *)MALLOC((MIN_POLLS + 1) * sizeof(struct pollfd));
+>   	if (!polls) {
+>   		condlog(0, "uxsock: failed to allocate poll fds");
+> -		return NULL;
+> +		exit_daemon();
+>   	}
+>   	sigfillset(&mask);
+>   	sigdelset(&mask, SIGINT);
+> @@ -249,6 +249,7 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
+>   
+>   			/* something went badly wrong! */
+>   			condlog(0, "uxsock: poll failed with %d", errno);
+> +			exit_daemon();
+>   			break;
+>   		}
+Hi Martin,
 
-Hi Bart,
-
-Is there any special operation or conditions to reproduce the dead lock? 
-  I have use SCSI sysfs delete atrribute to remove stale devices in my 
-previous patch and test many times, but I haven't encountered any 
-deadlock problems.
+Your analysis is reasonable. It is necessary to deal with fatal error 
+not only to return, if not doing this multipathd can't exit normally and 
+multipathd commands can't work any more. I think your patch is OK, but I 
+have some ideas inspired by your patch.
+Calling exit_daemon() is to shut down the multipathd, relay on the 
+outside to pull multipathd again. Is there a function can be use to deal 
+with fatal error? Its function are close the socket(if create 
+successfully before) and create a new socket to make uxlsnr thread work 
+properly again or continue to create uxsocket? This function actually is 
+try to repair those errors.
+It just an idea, maybe not quite right.
 
 Regards,
 Chongyun
