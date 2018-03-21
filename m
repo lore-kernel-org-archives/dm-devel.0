@@ -1,15 +1,16 @@
-From: Chongyun Wu <wu.chongyun@h3c.com>
+From: Martin Wilck <mwilck@suse.com>
 Subject: Re: [PATCH 2/2] multipathd: handle errors in uxlsnr as
  fatal
-Date: Wed, 21 Mar 2018 02:43:58 +0000
-Message-ID: <CEB9978CF3252343BE3C67AC9F0086A34295E2E0@H3CMLB14-EX.srv.huawei-3com.com>
+Date: Wed, 21 Mar 2018 08:48:33 +0100
+Message-ID: <1521618513.3798.181.camel@suse.com>
 References: <20180320165010.15259-1-mwilck@suse.com>
 	<20180320165010.15259-2-mwilck@suse.com>
+	<CEB9978CF3252343BE3C67AC9F0086A34295E2E0@H3CMLB14-EX.srv.huawei-3com.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
+In-Reply-To: <CEB9978CF3252343BE3C67AC9F0086A34295E2E0@H3CMLB14-EX.srv.huawei-3com.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,71 +20,70 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
+To: Chongyun Wu <wu.chongyun@h3c.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 2018/3/21 0:51, Martin Wilck wrote:
-> The ppoll() calls of the uxlsnr thread are vital for proper functioning of
-> multipathd. If the uxlsnr thread can't open the socket or fails to call ppoll()
-> for other reasons, quit the daemon. If we don't do that, multipathd may
-> hang in a state where it can't be terminated any more, because the uxlsnr
-> thread is responsible for handling all signals. This happens e.g. if
-> systemd's multipathd.socket is running in and multipathd is started from
-> outside systemd.
-> 
-> 24f2844 "multipathd: fix signal blocking logic" has made this problem more
-> severe. Before that patch, the signals weren't actually blocked in any thread.
-> That's not to say 24f2844 was wrong. I still think it's correct, we just
-> need this one on top.
-> 
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->   multipathd/uxlsnr.c | 5 +++--
->   1 file changed, 3 insertions(+), 2 deletions(-)
-> 
-> diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
-> index cdafd82943e7..6f666663fc6f 100644
-> --- a/multipathd/uxlsnr.c
-> +++ b/multipathd/uxlsnr.c
-> @@ -178,7 +178,7 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
->   
->   	if (ux_sock == -1) {
->   		condlog(1, "could not create uxsock: %d", errno);
-> -		return NULL;
-> +		exit_daemon();
->   	}
->   
->   	pthread_cleanup_push(uxsock_cleanup, (void *)ux_sock);
-> @@ -187,7 +187,7 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
->   	polls = (struct pollfd *)MALLOC((MIN_POLLS + 1) * sizeof(struct pollfd));
->   	if (!polls) {
->   		condlog(0, "uxsock: failed to allocate poll fds");
-> -		return NULL;
-> +		exit_daemon();
->   	}
->   	sigfillset(&mask);
->   	sigdelset(&mask, SIGINT);
-> @@ -249,6 +249,7 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
->   
->   			/* something went badly wrong! */
->   			condlog(0, "uxsock: poll failed with %d", errno);
-> +			exit_daemon();
->   			break;
->   		}
-Hi Martin,
-
-Your analysis is reasonable. It is necessary to deal with fatal error 
-not only to return, if not doing this multipathd can't exit normally and 
-multipathd commands can't work any more. I think your patch is OK, but I 
-have some ideas inspired by your patch.
-Calling exit_daemon() is to shut down the multipathd, relay on the 
-outside to pull multipathd again. Is there a function can be use to deal 
-with fatal error? Its function are close the socket(if create 
-successfully before) and create a new socket to make uxlsnr thread work 
-properly again or continue to create uxsocket? This function actually is 
-try to repair those errors.
-It just an idea, maybe not quite right.
-
-Regards,
-Chongyun
+T24gV2VkLCAyMDE4LTAzLTIxIGF0IDAyOjQzICswMDAwLCBDaG9uZ3l1biBXdSB3cm90ZToKPiBP
+biAyMDE4LzMvMjEgMDo1MSwgTWFydGluIFdpbGNrIHdyb3RlOgo+ID4gVGhlIHBwb2xsKCkgY2Fs
+bHMgb2YgdGhlIHV4bHNuciB0aHJlYWQgYXJlIHZpdGFsIGZvciBwcm9wZXIKPiA+IGZ1bmN0aW9u
+aW5nIG9mCj4gPiBtdWx0aXBhdGhkLiBJZiB0aGUgdXhsc25yIHRocmVhZCBjYW4ndCBvcGVuIHRo
+ZSBzb2NrZXQgb3IgZmFpbHMgdG8KPiA+IGNhbGwgcHBvbGwoKQo+ID4gZm9yIG90aGVyIHJlYXNv
+bnMsIHF1aXQgdGhlIGRhZW1vbi4gSWYgd2UgZG9uJ3QgZG8gdGhhdCwgbXVsdGlwYXRoZAo+ID4g
+bWF5Cj4gPiBoYW5nIGluIGEgc3RhdGUgd2hlcmUgaXQgY2FuJ3QgYmUgdGVybWluYXRlZCBhbnkg
+bW9yZSwgYmVjYXVzZSB0aGUKPiA+IHV4bHNucgo+ID4gdGhyZWFkIGlzIHJlc3BvbnNpYmxlIGZv
+ciBoYW5kbGluZyBhbGwgc2lnbmFscy4gVGhpcyBoYXBwZW5zIGUuZy4KPiA+IGlmCj4gPiBzeXN0
+ZW1kJ3MgbXVsdGlwYXRoZC5zb2NrZXQgaXMgcnVubmluZyBpbiBhbmQgbXVsdGlwYXRoZCBpcyBz
+dGFydGVkCj4gPiBmcm9tCj4gPiBvdXRzaWRlIHN5c3RlbWQuCj4gPiAKPiA+IDI0ZjI4NDQgIm11
+bHRpcGF0aGQ6IGZpeCBzaWduYWwgYmxvY2tpbmcgbG9naWMiIGhhcyBtYWRlIHRoaXMKPiA+IHBy
+b2JsZW0gbW9yZQo+ID4gc2V2ZXJlLiBCZWZvcmUgdGhhdCBwYXRjaCwgdGhlIHNpZ25hbHMgd2Vy
+ZW4ndCBhY3R1YWxseSBibG9ja2VkIGluCj4gPiBhbnkgdGhyZWFkLgo+ID4gVGhhdCdzIG5vdCB0
+byBzYXkgMjRmMjg0NCB3YXMgd3JvbmcuIEkgc3RpbGwgdGhpbmsgaXQncyBjb3JyZWN0LCB3ZQo+
+ID4ganVzdAo+ID4gbmVlZCB0aGlzIG9uZSBvbiB0b3AuCj4gPiAKPiA+IFNpZ25lZC1vZmYtYnk6
+IE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPgo+ID4gLS0tCj4gPiAgIG11bHRpcGF0aGQv
+dXhsc25yLmMgfCA1ICsrKy0tCj4gPiAgIDEgZmlsZSBjaGFuZ2VkLCAzIGluc2VydGlvbnMoKyks
+IDIgZGVsZXRpb25zKC0pCj4gPiAKPiA+IGRpZmYgLS1naXQgYS9tdWx0aXBhdGhkL3V4bHNuci5j
+IGIvbXVsdGlwYXRoZC91eGxzbnIuYwo+ID4gaW5kZXggY2RhZmQ4Mjk0M2U3Li42ZjY2NjY2M2Zj
+NmYgMTAwNjQ0Cj4gPiAtLS0gYS9tdWx0aXBhdGhkL3V4bHNuci5jCj4gPiArKysgYi9tdWx0aXBh
+dGhkL3V4bHNuci5jCj4gPiBAQCAtMTc4LDcgKzE3OCw3IEBAIHZvaWQgKiB1eHNvY2tfbGlzdGVu
+KHV4c29ja190cmlnZ2VyX2ZuCj4gPiB1eHNvY2tfdHJpZ2dlciwgdm9pZCAqIHRyaWdnZXJfZGF0
+YSkKPiA+ICAgCj4gPiAgIAlpZiAodXhfc29jayA9PSAtMSkgewo+ID4gICAJCWNvbmRsb2coMSwg
+ImNvdWxkIG5vdCBjcmVhdGUgdXhzb2NrOiAlZCIsIGVycm5vKTsKPiA+IC0JCXJldHVybiBOVUxM
+Owo+ID4gKwkJZXhpdF9kYWVtb24oKTsKPiA+ICAgCX0KPiA+ICAgCj4gPiAgIAlwdGhyZWFkX2Ns
+ZWFudXBfcHVzaCh1eHNvY2tfY2xlYW51cCwgKHZvaWQgKil1eF9zb2NrKTsKPiA+IEBAIC0xODcs
+NyArMTg3LDcgQEAgdm9pZCAqIHV4c29ja19saXN0ZW4odXhzb2NrX3RyaWdnZXJfZm4KPiA+IHV4
+c29ja190cmlnZ2VyLCB2b2lkICogdHJpZ2dlcl9kYXRhKQo+ID4gICAJcG9sbHMgPSAoc3RydWN0
+IHBvbGxmZCAqKU1BTExPQygoTUlOX1BPTExTICsgMSkgKgo+ID4gc2l6ZW9mKHN0cnVjdCBwb2xs
+ZmQpKTsKPiA+ICAgCWlmICghcG9sbHMpIHsKPiA+ICAgCQljb25kbG9nKDAsICJ1eHNvY2s6IGZh
+aWxlZCB0byBhbGxvY2F0ZSBwb2xsCj4gPiBmZHMiKTsKPiA+IC0JCXJldHVybiBOVUxMOwo+ID4g
+KwkJZXhpdF9kYWVtb24oKTsKPiA+ICAgCX0KPiA+ICAgCXNpZ2ZpbGxzZXQoJm1hc2spOwo+ID4g
+ICAJc2lnZGVsc2V0KCZtYXNrLCBTSUdJTlQpOwo+ID4gQEAgLTI0OSw2ICsyNDksNyBAQCB2b2lk
+ICogdXhzb2NrX2xpc3Rlbih1eHNvY2tfdHJpZ2dlcl9mbgo+ID4gdXhzb2NrX3RyaWdnZXIsIHZv
+aWQgKiB0cmlnZ2VyX2RhdGEpCj4gPiAgIAo+ID4gICAJCQkvKiBzb21ldGhpbmcgd2VudCBiYWRs
+eSB3cm9uZyEgKi8KPiA+ICAgCQkJY29uZGxvZygwLCAidXhzb2NrOiBwb2xsIGZhaWxlZCB3aXRo
+ICVkIiwKPiA+IGVycm5vKTsKPiA+ICsJCQlleGl0X2RhZW1vbigpOwo+ID4gICAJCQlicmVhazsK
+PiA+ICAgCQl9Cj4gCj4gSGkgTWFydGluLAo+IAo+IFlvdXIgYW5hbHlzaXMgaXMgcmVhc29uYWJs
+ZS4gSXQgaXMgbmVjZXNzYXJ5IHRvIGRlYWwgd2l0aCBmYXRhbAo+IGVycm9yIAo+IG5vdCBvbmx5
+IHRvIHJldHVybiwgaWYgbm90IGRvaW5nIHRoaXMgbXVsdGlwYXRoZCBjYW4ndCBleGl0IG5vcm1h
+bGx5Cj4gYW5kIAo+IG11bHRpcGF0aGQgY29tbWFuZHMgY2FuJ3Qgd29yayBhbnkgbW9yZS4gSSB0
+aGluayB5b3VyIHBhdGNoIGlzIE9LLAo+IGJ1dCBJIAo+IGhhdmUgc29tZSBpZGVhcyBpbnNwaXJl
+ZCBieSB5b3VyIHBhdGNoLgo+IENhbGxpbmcgZXhpdF9kYWVtb24oKSBpcyB0byBzaHV0IGRvd24g
+dGhlIG11bHRpcGF0aGQsIHJlbGF5IG9uIHRoZSAKPiBvdXRzaWRlIHRvIHB1bGwgbXVsdGlwYXRo
+ZCBhZ2Fpbi4gSXMgdGhlcmUgYSBmdW5jdGlvbiBjYW4gYmUgdXNlIHRvCj4gZGVhbCAKPiB3aXRo
+IGZhdGFsIGVycm9yPwoKSSBkb24ndCB0aGluayBzbywgdGhhdCdzIHdoeSBJIGNhbGwgdGhlIGVy
+cm9yICJmYXRhbCIuIEJ1dCBmZWVsIGZyZWUgdG8KY29tZSB1cCB3aXRoIGEgbW9yZSBpbnRlbGxp
+Z2VudCBzb2x1dGlvbi4gSW4gdGhlIG9ubHkgY2FzZSB3aXRoCnByYWN0aWNhbCByZWxldmFuY2Ug
+SSd2ZSBzZWVuIHNvIGZhciAoc29ja2V0IGNhbid0IGJlIG9wZW5lZCBiZWNhdXNlCml0J3Mgb3Bl
+biBpbiBzeXN0ZW1kKSwgaXQncyBzdWZmaWNpZW50IHRoYXQgbXVsdGlwYXRoZCBpcyBzdGFydGVk
+IHZpYQpzeXN0ZW1kICh0aGlzIHNob3VsZCBiZSBkb25lIGluIHByb2R1Y3Rpb24gYW55d2F5KSwg
+b3IgdGhhdCB0aGUgYWRtaW4KcnVucyAic3lzdGVtY3RsIHN0b3AgbXVsdGlwYXRoZC5zb2NrZXQi
+IGJlZm9yZSBzdGFydGluZyB0aGUgZGFlbW9uCm1hbnVhbGx5LgoKSW4gZ2VuZXJhbCwgSSBkb24n
+dCB0aGluayBpdCBtYWtlcyBzZW5zZSB0byB0cnkgYW5kIGJlIG92ZXJseSBzbWFydC4KRXJyb3Jz
+IHRoYXQgcHJldmVudCB0aGUgdXggc29ja2V0IGZyb20gYmVpbmcgb3BlbmVkICh3aXRoIHRoZSBt
+ZW50aW9uZWQKZXhjZXB0aW9uKSBhcmUgbGlrZWx5IHRvIGJlIHNvIHNldmVyZSB0aGF0IGFueSBh
+dHRlbXB0cyB0byB3b3JrIGFyb3VuZAp0aGVtIHdpbGwgcHJvYmFibHkgZmFpbCBhcyB3ZWxsLgoK
+TWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLiArNDkg
+KDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVy
+LCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoK
+LS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cu
+cmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
