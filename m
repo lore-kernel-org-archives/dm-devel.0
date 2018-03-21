@@ -1,7 +1,7 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
+From: Christopher Lameter <cl@linux.com>
 Subject: Re: [PATCH] slab: introduce the flag SLAB_MINIMIZE_WASTE
-Date: Wed, 21 Mar 2018 14:55:21 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1803211443070.26409@file01.intranet.prod.int.rdu2.redhat.com>
+Date: Wed, 21 Mar 2018 13:57:02 -0500 (CDT)
+Message-ID: <alpine.DEB.2.20.1803211354170.13978@nuc-kabylake>
 References: <alpine.LRH.2.02.1803200954590.18995@file01.intranet.prod.int.rdu2.redhat.com>
 	<20180320173512.GA19669@bombadil.infradead.org>
 	<alpine.DEB.2.20.1803201250480.27540@nuc-kabylake>
@@ -11,15 +11,12 @@ References: <alpine.LRH.2.02.1803200954590.18995@file01.intranet.prod.int.rdu2.r
 	<alpine.DEB.2.20.1803211024220.2175@nuc-kabylake>
 	<alpine.LRH.2.02.1803211153320.16017@file01.intranet.prod.int.rdu2.redhat.com>
 	<alpine.DEB.2.20.1803211226350.3174@nuc-kabylake>
-	<alpine.DEB.2.20.1803211233290.3384@nuc-kabylake>
-	<20180321174937.GF4780@bombadil.infradead.org>
-	<alpine.LRH.2.02.1803211406180.26409@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.DEB.2.20.1803211335240.13978@nuc-kabylake>
+	<alpine.LRH.2.02.1803211425330.26409@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.DEB.2.20.1803211335240.13978@nuc-kabylake>
+In-Reply-To: <alpine.LRH.2.02.1803211425330.26409@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -29,93 +26,62 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christopher Lameter <cl@linux.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
 Cc: Mike Snitzer <msnitzer@redhat.com>, Matthew Wilcox <willy@infradead.org>, Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: dm-devel.ids
 
+On Wed, 21 Mar 2018, Mikulas Patocka wrote:
 
+> So, what would you recommend for allocating 640KB objects while minimizing
+> wasted space?
+> * alloc_pages - rounds up to the next power of two
+> * kmalloc - rounds up to the next power of two
+> * alloc_pages_exact - O(n*log n) complexity; and causes memory
+>   fragmentation if used excesivelly
+> * vmalloc - horrible performance (modifies page tables and that causes
+>   synchronization across all CPUs)
+>
+> anything else?
 
-On Wed, 21 Mar 2018, Christopher Lameter wrote:
+Need to find it but there is a way to allocate N pages in sequence
+somewhere. Otherwise mempools are something that would work.
 
-> On Wed, 21 Mar 2018, Mikulas Patocka wrote:
-> 
-> > > > F.e. you could optimize the allcations > 2x PAGE_SIZE so that they do not
-> > > > allocate powers of two pages. It would be relatively easy to make
-> > > > kmalloc_large round the allocation to the next page size and then allocate
-> > > > N consecutive pages via alloc_pages_exact() and free the remainder unused
-> > > > pages or some such thing.
+> > > > What kind of problem could be caused here?
+> > >
+> > > Unlocked accesses are generally considered bad. For example, see this
+> > > piece of code in calculate_sizes:
+> > >         s->allocflags = 0;
+> > >         if (order)
+> > >                 s->allocflags |= __GFP_COMP;
+> > >
+> > >         if (s->flags & SLAB_CACHE_DMA)
+> > >                 s->allocflags |= GFP_DMA;
+> > >
+> > >         if (s->flags & SLAB_RECLAIM_ACCOUNT)
+> > >                 s->allocflags |= __GFP_RECLAIMABLE;
+> > >
+> > > If you are running this while the cache is in use (i.e. when the user
+> > > writes /sys/kernel/slab/<cache>/order), then other processes will see
+> > > invalid s->allocflags for a short time.
 > >
-> > alloc_pages_exact() has O(n*log n) complexity with respect to the number
-> > of requested pages. It would have to be reworked and optimized if it were
-> > to be used for the dm-bufio cache. (it could be optimized down to O(log n)
-> > if it didn't split the compound page to a lot of separate pages, but split
-> > it to a power-of-two clusters instead).
-> 
-> Well then a memory pool of page allocator requests may address that issue?
-> 
-> Have a look at include/linux/mempool.h.
+> > Calculating sizes is done when the slab has only a single accessor. Thus
+> > no locking is neeed.
+>
+> The calculation is done whenever someone writes to
+> "/sys/kernel/slab/*/order"
 
-I know the mempool interface. Mempool can keep some amount reserved 
-objects if the system memory is exhausted.
+But the flags you are mentioning do not change and the size of the object
+does not change. What changes is the number of objects in the slab page.
 
-Mempool doesn't deal with object allocation at all - mempool needs to be 
-hooked to an existing object allocator (slab cache, kmalloc, alloc_pages, 
-or some custom allocator provided with the methods mempool_alloc_t and 
-mempool_free_t).
+> And you can obviously write to that file why the slab cache is in use. Try
+> it.
 
-> > > I don't know if that's a good idea.  That will contribute to fragmentation
-> > > if the allocation is held onto for a short-to-medium length of time.
-> > > If the allocation is for a very long period of time then those pages
-> > > would have been unavailable anyway, but if the user of the tail pages
-> > > holds them beyond the lifetime of the large allocation, then this is
-> > > probably a bad tradeoff to make.
-> 
-> Fragmentation is sadly a big issue. You could create a mempool on bootup
-> or early after boot to ensure that you have a sufficient number of
-> contiguous pages available.
+You cannot change flags that would impact the size of the objects. I only
+allowed changing characteristics that does not impact object size.
 
-The dm-bufio driver deals correctly with this - it preallocates several 
-buffers with vmalloc when the dm-bufio cache is created. During operation, 
-if a high-order allocation fails, the dm-bufio subsystem throws away some 
-existing buffer and reuses the already allocated chunk of memory for the 
-buffer that needs to be created.
+> I am not talking about changing the size of objects in a slab cache. I am
+> talking about changing the allocation order of a slab cache while the
+> cache is in use. This can be done with the sysfs interface.
 
-So, fragmentation is not an issue with this use case. dm-bufio can make 
-forward progress even if memory is totally exhausted.
-
-> > The problem with alloc_pages_exact() is that it exhausts all the
-> > high-order pages and leaves many free low-order pages around. So you'll
-> > end up in a system with a lot of free memory, but with all high-order
-> > pages missing. As there would be a lot of free memory, the kswapd thread
-> > would not be woken up to free some high-order pages.
-> 
-> I think that logic is properly balanced and will take into account pages
-> that have been removed from the LRU expiration logic.
-> 
-> > I think that using slab with high order is better, because it at least
-> > doesn't leave many low-order pages behind.
-> 
-> Any request to the slab via kmalloc with a size > 2x page size will simply
-> lead to a page allocator request. You have the same issue. If you want to
-> rely on the slab allocator buffering large segments for you then a mempool
-> will also solve the issue for you and you have more control over the pool.
-
-mempool solves nothing because it needs a backing allocator. And the 
-question is what this backing allocator should be.
-
-> > BTW. it could be possible to open the file
-> > "/sys/kernel/slab/<cache>/order" from the dm-bufio kernel driver and write
-> > the requested value there, but it seems very dirty. It would be better to
-> > have a kernel interface for that.
-> 
-> Hehehe you could directly write to the kmem_cache structure and increase
-> the order. AFAICT this would be dirty but work.
-> 
-> But still the increased page order will get you into trouble with
-> fragmentation when the system runs for a long time. That is the reason we
-> try to limit the allocation sizes coming from the slab allocator.
-
-It won't - see above - if the high-order allocation fails, dm-bufio just 
-reuses some existing buffer.
-
-Mikulas
+But then that is something that is allowed but does not affect the object
+size used by the slab allocators.
