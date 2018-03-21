@@ -1,23 +1,22 @@
-From: Christopher Lameter <cl@linux.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
 Subject: Re: [PATCH] slab: introduce the flag SLAB_MINIMIZE_WASTE
-Date: Wed, 21 Mar 2018 13:58:39 -0500 (CDT)
-Message-ID: <alpine.DEB.2.20.1803211357480.14119@nuc-kabylake>
-References: <alpine.LRH.2.02.1803201510030.21066@file01.intranet.prod.int.rdu2.redhat.com>
+Date: Wed, 21 Mar 2018 15:25:07 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1803211522310.26409@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1803200954590.18995@file01.intranet.prod.int.rdu2.redhat.com>
+	<20180320173512.GA19669@bombadil.infradead.org>
+	<alpine.DEB.2.20.1803201250480.27540@nuc-kabylake>
+	<alpine.LRH.2.02.1803201510030.21066@file01.intranet.prod.int.rdu2.redhat.com>
 	<alpine.DEB.2.20.1803201536590.28319@nuc-kabylake>
 	<alpine.LRH.2.02.1803201740280.21066@file01.intranet.prod.int.rdu2.redhat.com>
 	<alpine.DEB.2.20.1803211024220.2175@nuc-kabylake>
 	<alpine.LRH.2.02.1803211153320.16017@file01.intranet.prod.int.rdu2.redhat.com>
 	<alpine.DEB.2.20.1803211226350.3174@nuc-kabylake>
 	<alpine.DEB.2.20.1803211233290.3384@nuc-kabylake>
-	<20180321174937.GF4780@bombadil.infradead.org>
-	<alpine.LRH.2.02.1803211406180.26409@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.DEB.2.20.1803211335240.13978@nuc-kabylake>
-	<20180321185558.GA18494@bombadil.infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180321185558.GA18494@bombadil.infradead.org>
+In-Reply-To: <alpine.DEB.2.20.1803211233290.3384@nuc-kabylake>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,27 +26,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Matthew Wilcox <willy@infradead.org>
-Cc: Mike Snitzer <msnitzer@redhat.com>, Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Andrew Morton <akpm@linux-foundation.org>
+To: Christopher Lameter <cl@linux.com>
+Cc: Mike Snitzer <msnitzer@redhat.com>, Matthew Wilcox <willy@infradead.org>, Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: dm-devel.ids
 
-On Wed, 21 Mar 2018, Matthew Wilcox wrote:
 
-> > Have a look at include/linux/mempool.h.
->
-> That's not what mempool is for.  mempool is a cache of elements that were
-> allocated from slab in the first place.  (OK, technically, you don't have
-> to use slab as the allocator, but since there is no allocator that solves
-> this problem, mempool doesn't solve the problem either!)
 
-You can put the page allocator in there instead of a slab allocator.
+On Wed, 21 Mar 2018, Christopher Lameter wrote:
 
-> > But still the increased page order will get you into trouble with
-> > fragmentation when the system runs for a long time. That is the reason we
-> > try to limit the allocation sizes coming from the slab allocator.
->
-> Right; he has a fallback already (vmalloc).  So ... let's just add the
-> interface to allow slab caches to have their order tuned by users who
-> really know what they're doing?
+> One other thought: If you want to improve the behavior for large scale
+> objects allocated through kmalloc/kmemcache then we would certainly be
+> glad to entertain those ideas.
+> 
+> F.e. you could optimize the allcations > 2x PAGE_SIZE so that they do not
+> allocate powers of two pages. It would be relatively easy to make
+> kmalloc_large round the allocation to the next page size and then allocate
+> N consecutive pages via alloc_pages_exact() and free the remainder unused
+> pages or some such thing.
 
-Ok thats trivial.
+It may be possible, but we'd need to improve the horrible complexity of 
+alloc_pages_exact().
+
+This is a trade-of between performance and waste. A power-of-two 
+allocation can be done quicky, but it wastes a lot of space. 
+alloc_pages_exact() wastes less space, but it is slow.
+
+The question is - how many of these large-kmalloc allocations are 
+short-lived and how many are long-lived? I don't know, I haven't measured 
+it.
+
+Mikulas
