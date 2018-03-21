@@ -1,7 +1,7 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
 Subject: Re: [PATCH] slab: introduce the flag SLAB_MINIMIZE_WASTE
-Date: Wed, 21 Mar 2018 15:25:07 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1803211522310.26409@file01.intranet.prod.int.rdu2.redhat.com>
+Date: Wed, 21 Mar 2018 15:19:22 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1803211500570.26409@file01.intranet.prod.int.rdu2.redhat.com>
 References: <alpine.LRH.2.02.1803200954590.18995@file01.intranet.prod.int.rdu2.redhat.com>
 	<20180320173512.GA19669@bombadil.infradead.org>
 	<alpine.DEB.2.20.1803201250480.27540@nuc-kabylake>
@@ -11,12 +11,13 @@ References: <alpine.LRH.2.02.1803200954590.18995@file01.intranet.prod.int.rdu2.r
 	<alpine.DEB.2.20.1803211024220.2175@nuc-kabylake>
 	<alpine.LRH.2.02.1803211153320.16017@file01.intranet.prod.int.rdu2.redhat.com>
 	<alpine.DEB.2.20.1803211226350.3174@nuc-kabylake>
-	<alpine.DEB.2.20.1803211233290.3384@nuc-kabylake>
+	<alpine.LRH.2.02.1803211425330.26409@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.DEB.2.20.1803211354170.13978@nuc-kabylake>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.DEB.2.20.1803211233290.3384@nuc-kabylake>
+In-Reply-To: <alpine.DEB.2.20.1803211354170.13978@nuc-kabylake>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -34,25 +35,73 @@ List-Id: dm-devel.ids
 
 On Wed, 21 Mar 2018, Christopher Lameter wrote:
 
-> One other thought: If you want to improve the behavior for large scale
-> objects allocated through kmalloc/kmemcache then we would certainly be
-> glad to entertain those ideas.
+> On Wed, 21 Mar 2018, Mikulas Patocka wrote:
 > 
-> F.e. you could optimize the allcations > 2x PAGE_SIZE so that they do not
-> allocate powers of two pages. It would be relatively easy to make
-> kmalloc_large round the allocation to the next page size and then allocate
-> N consecutive pages via alloc_pages_exact() and free the remainder unused
-> pages or some such thing.
+> > So, what would you recommend for allocating 640KB objects while minimizing
+> > wasted space?
+> > * alloc_pages - rounds up to the next power of two
+> > * kmalloc - rounds up to the next power of two
+> > * alloc_pages_exact - O(n*log n) complexity; and causes memory
+> >   fragmentation if used excesivelly
+> > * vmalloc - horrible performance (modifies page tables and that causes
+> >   synchronization across all CPUs)
+> >
+> > anything else?
+> 
+> Need to find it but there is a way to allocate N pages in sequence
+> somewhere. Otherwise mempools are something that would work.
 
-It may be possible, but we'd need to improve the horrible complexity of 
-alloc_pages_exact().
+There's also continuous-memory-allocator, but it needs its memory to be 
+reserved at boot time. It is intended for misdesigned hardware devices 
+that need continuous memory for DMA. As it's intended for one-time 
+allocations when loading drivers, it lacks the performance and scalability 
+of the slab cache and alloc_pages.
 
-This is a trade-of between performance and waste. A power-of-two 
-allocation can be done quicky, but it wastes a lot of space. 
-alloc_pages_exact() wastes less space, but it is slow.
+> > > > > What kind of problem could be caused here?
+> > > >
+> > > > Unlocked accesses are generally considered bad. For example, see this
+> > > > piece of code in calculate_sizes:
+> > > >         s->allocflags = 0;
+> > > >         if (order)
+> > > >                 s->allocflags |= __GFP_COMP;
+> > > >
+> > > >         if (s->flags & SLAB_CACHE_DMA)
+> > > >                 s->allocflags |= GFP_DMA;
+> > > >
+> > > >         if (s->flags & SLAB_RECLAIM_ACCOUNT)
+> > > >                 s->allocflags |= __GFP_RECLAIMABLE;
+> > > >
+> > > > If you are running this while the cache is in use (i.e. when the user
+> > > > writes /sys/kernel/slab/<cache>/order), then other processes will see
+> > > > invalid s->allocflags for a short time.
+> > >
+> > > Calculating sizes is done when the slab has only a single accessor. Thus
+> > > no locking is neeed.
+> >
+> > The calculation is done whenever someone writes to
+> > "/sys/kernel/slab/*/order"
+> 
+> But the flags you are mentioning do not change and the size of the object
+> does not change. What changes is the number of objects in the slab page.
 
-The question is - how many of these large-kmalloc allocations are 
-short-lived and how many are long-lived? I don't know, I haven't measured 
-it.
+See this code again:
+> > >         s->allocflags = 0;
+> > >         if (order)
+> > >                 s->allocflags |= __GFP_COMP;
+> > >
+> > >         if (s->flags & SLAB_CACHE_DMA)
+> > >                 s->allocflags |= GFP_DMA;
+> > >
+> > >         if (s->flags & SLAB_RECLAIM_ACCOUNT)
+> > >                 s->allocflags |= __GFP_RECLAIMABLE;
+when this function is called, the value s->allocflags does change. At the 
+end, s->allocflags holds the same value as before, but it changes 
+temporarily.
+
+For example, if someone creates a slab cache with the flag SLAB_CACHE_DMA, 
+and he allocates an object from this cache and this allocation races with 
+the user writing to /sys/kernel/slab/cache/order - then the allocator can 
+for a small period of time see "s->allocflags == 0" and allocate a non-DMA 
+page. That is a bug.
 
 Mikulas
