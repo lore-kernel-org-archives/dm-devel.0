@@ -1,7 +1,7 @@
-From: Christopher Lameter <cl@linux.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
 Subject: Re: [PATCH] slab: introduce the flag SLAB_MINIMIZE_WASTE
-Date: Wed, 21 Mar 2018 13:01:13 -0500 (CDT)
-Message-ID: <alpine.DEB.2.20.1803211300450.3706@nuc-kabylake>
+Date: Wed, 21 Mar 2018 14:23:40 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1803211406180.26409@file01.intranet.prod.int.rdu2.redhat.com>
 References: <alpine.LRH.2.02.1803200954590.18995@file01.intranet.prod.int.rdu2.redhat.com>
 	<20180320173512.GA19669@bombadil.infradead.org>
 	<alpine.DEB.2.20.1803201250480.27540@nuc-kabylake>
@@ -28,10 +28,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Matthew Wilcox <willy@infradead.org>
-Cc: Mike Snitzer <msnitzer@redhat.com>, Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Andrew Morton <akpm@linux-foundation.org>
+Cc: Mike Snitzer <msnitzer@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, David Rientjes <rientjes@google.com>, Christopher Lameter <cl@linux.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>
 List-Id: dm-devel.ids
 
+
+
 On Wed, 21 Mar 2018, Matthew Wilcox wrote:
+
+> On Wed, Mar 21, 2018 at 12:39:33PM -0500, Christopher Lameter wrote:
+> > One other thought: If you want to improve the behavior for large scale
+> > objects allocated through kmalloc/kmemcache then we would certainly be
+> > glad to entertain those ideas.
+> > 
+> > F.e. you could optimize the allcations > 2x PAGE_SIZE so that they do not
+> > allocate powers of two pages. It would be relatively easy to make
+> > kmalloc_large round the allocation to the next page size and then allocate
+> > N consecutive pages via alloc_pages_exact() and free the remainder unused
+> > pages or some such thing.
+
+alloc_pages_exact() has O(n*log n) complexity with respect to the number 
+of requested pages. It would have to be reworked and optimized if it were 
+to be used for the dm-bufio cache. (it could be optimized down to O(log n) 
+if it didn't split the compound page to a lot of separate pages, but split 
+it to a power-of-two clusters instead).
 
 > I don't know if that's a good idea.  That will contribute to fragmentation
 > if the allocation is held onto for a short-to-medium length of time.
@@ -39,10 +58,27 @@ On Wed, 21 Mar 2018, Matthew Wilcox wrote:
 > would have been unavailable anyway, but if the user of the tail pages
 > holds them beyond the lifetime of the large allocation, then this is
 > probably a bad tradeoff to make.
->
+
+The problem with alloc_pages_exact() is that it exhausts all the 
+high-order pages and leaves many free low-order pages around. So you'll 
+end up in a system with a lot of free memory, but with all high-order 
+pages missing. As there would be a lot of free memory, the kswapd thread 
+would not be woken up to free some high-order pages.
+
+I think that using slab with high order is better, because it at least 
+doesn't leave many low-order pages behind.
+
 > I do see Mikulas' use case as interesting, I just don't know whether it's
 > worth changing slab/slub to support it.  At first blush, other than the
 > sheer size of the allocations, it's a good fit.
 
-Well there are numerous page pool approaches already in the kernel. Maybe
-there is a better fit with those?
+All I need is to increase the order of a specific slab cache - I think 
+it's better to implement an interface that allows doing it than to 
+duplicate the slab cache code.
+
+BTW. it could be possible to open the file 
+"/sys/kernel/slab/<cache>/order" from the dm-bufio kernel driver and write 
+the requested value there, but it seems very dirty. It would be better to 
+have a kernel interface for that.
+
+Mikulas
