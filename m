@@ -1,15 +1,30 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] dm table: add support for secure erase
- forwarding [was: Re: Adaptation secure erase forwarding for 4.1x kernels]
-Date: Thu, 22 Mar 2018 11:10:46 -0400
-Message-ID: <20180322151045.GA27598@redhat.com>
-References: <1496940834.549721.1520933025411.JavaMail.zimbra@omprussia.ru>
+From: Bart Van Assche <Bart.VanAssche@wdc.com>
+Subject: Re: [PATCH] multipathd: check and cleanup zombie paths
+Date: Thu, 22 Mar 2018 15:18:06 +0000
+Message-ID: <1521731885.2637.2.camel@wdc.com>
+References: <CEB9978CF3252343BE3C67AC9F0086A34295C462@H3CMLB14-EX.srv.huawei-3com.com>
+	<1520325779.4131.4.camel@suse.com>
+	<CEB9978CF3252343BE3C67AC9F0086A34295C9D0@H3CMLB14-EX.srv.huawei-3com.com>
+	<1520349519.4131.20.camel@suse.com>
+	<CEB9978CF3252343BE3C67AC9F0086A34295CA7D@H3CMLB14-EX.srv.huawei-3com.com>
+	<1520426679.11340.5.camel@suse.com>
+	<CEB9978CF3252343BE3C67AC9F0086A34295CF62@H3CMLB14-EX.srv.huawei-3com.com>
+	<20180308154435.GB14513@octiron.msp.redhat.com>
+	<CEB9978CF3252343BE3C67AC9F0086A34295D215@H3CMLB14-EX.srv.huawei-3com.com>
+	<20180309162243.GE14513@octiron.msp.redhat.com>
+	<1521495726.3798.141.camel@suse.com>
+	<CEB9978CF3252343BE3C67AC9F0086A34295DF37@H3CMLB14-EX.srv.huawei-3com.com>
+	<1521557887.3156.5.camel@wdc.com>
+	<3537d472-27ad-53fd-7d13-229359a53849@gmail.com>
+	<1521558853.3156.10.camel@wdc.com>
+	<CEB9978CF3252343BE3C67AC9F0086A34295E668@H3CMLB14-EX.srv.huawei-3com.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1496940834.549721.1520933025411.JavaMail.zimbra@omprussia.ru>
+In-Reply-To: <CEB9978CF3252343BE3C67AC9F0086A34295E668@H3CMLB14-EX.srv.huawei-3com.com>
+Content-Language: en-US
+Content-ID: <292B37CA3AD9E14C8E292134E0FE0C80@namprd04.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,93 +34,21 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Denis Semakin <d.semakin@omprussia.ru>
-Cc: dm-devel@redhat.com
+To: "xose.vazquez@gmail.com" <xose.vazquez@gmail.com>, "wu.chongyun@h3c.com" <wu.chongyun@h3c.com>, "bmarzins@redhat.com" <bmarzins@redhat.com>, "mwilck@suse.com" <mwilck@suse.com>
+Cc: "guozhonghua@h3c.com" <guozhonghua@h3c.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "changlimin@h3c.com" <changlimin@h3c.com>, "ge.changwei@h3c.com" <ge.changwei@h3c.com>
 List-Id: dm-devel.ids
 
-On Tue, Mar 13 2018 at  5:23am -0400,
-Denis Semakin <d.semakin@omprussia.ru> wrote:
+On Thu, 2018-03-22 at 03:40 +0000, Chongyun Wu wrote:
+> I did a test. Below command can remove the residual device:
+> *echo "scsi remove-single-device 3 0 0 3" > /proc/scsi/scsi*
+> Is it safe?
 
-> Hello.
-> Here is fixed patch for modern 4.1x kernels.
-> The idea is to forward secure erase request within device mapper layer to
-> block device driver which can support secure erase.
-> Could you please review?
+Hello Chongyun,
 
-There were various issues with your patch that I cleaned up, please see
-the following.
+Are you aware of the linux-scsi mailing list? I think this question would be
+more appropriate for that mailing list. Regarding your question, I think that
+you should be aware of the following comment above the proc write method that
+implements that functionality: "this provides a legacy mechanism to add or
+remove devices".
 
-But I'm left skeptical that this is enough.  Don't targets need to
-explicitly handle these REQ_OP_SECURE_ERASE requests?  Similar to how
-REQ_OP_DISCARD is handled?
-
-I'd feel safer about having targets opt-in with setting (a new)
-ti->num_secure_erase_bios.
-
-Which DM target(s) have you been wanting to pass REQ_OP_SECURE_ERASE
-bios?
-
-Mike
-
-
-From: Denis Semakin <d.semakin@omprussia.ru>
-Date: Tue, 13 Mar 2018 13:23:45 +0400
-Subject: [PATCH] dm table: add support for secure erase forwarding
-
-Set QUEUE_FLAG_SECERASE in DM device's queue_flags if a DM table's
-data devices support secure erase.
-
-Signed-off-by: Denis Semakin <d.semakin@omprussia.ru>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm-table.c |   28 ++++++++++++++++++++++++++++
- 1 files changed, 28 insertions(+), 0 deletions(-)
-
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 7eb3e2a..d857369 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -1846,6 +1846,31 @@ static bool dm_table_supports_discards(struct dm_table *t)
- 	return true;
- }
- 
-+static int device_not_secure_erase_capable(struct dm_target *ti,
-+					   struct dm_dev *dev, sector_t start,
-+					   sector_t len, void *data)
-+{
-+       struct request_queue *q = bdev_get_queue(dev->bdev);
-+
-+       return q && !blk_queue_secure_erase(q);
-+}
-+
-+static bool dm_table_supports_secure_erase(struct dm_table *t)
-+{
-+       struct dm_target *ti;
-+       unsigned int i;
-+
-+       for (i = 0; i < dm_table_get_num_targets(t); i++) {
-+               ti = dm_table_get_target(t, i);
-+
-+               if (!ti->type->iterate_devices ||
-+                   ti->type->iterate_devices(ti, device_not_secure_erase_capable, NULL))
-+		       return false;
-+       }
-+
-+       return true;
-+}
-+
- void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
- 			       struct queue_limits *limits)
- {
-@@ -1867,6 +1892,9 @@ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
- 	} else
- 		queue_flag_set_unlocked(QUEUE_FLAG_DISCARD, q);
- 
-+	if (dm_table_supports_secure_erase(t))
-+		queue_flag_set_unlocked(QUEUE_FLAG_SECERASE, q);
-+
- 	if (dm_table_supports_flush(t, (1UL << QUEUE_FLAG_WC))) {
- 		wc = true;
- 		if (dm_table_supports_flush(t, (1UL << QUEUE_FLAG_FUA)))
--- 
-1.7.4.4
+Bart.
