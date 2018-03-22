@@ -1,30 +1,12 @@
-From: Bart Van Assche <Bart.VanAssche@wdc.com>
-Subject: Re: [PATCH] multipathd: check and cleanup zombie paths
-Date: Thu, 22 Mar 2018 15:18:06 +0000
-Message-ID: <1521731885.2637.2.camel@wdc.com>
-References: <CEB9978CF3252343BE3C67AC9F0086A34295C462@H3CMLB14-EX.srv.huawei-3com.com>
-	<1520325779.4131.4.camel@suse.com>
-	<CEB9978CF3252343BE3C67AC9F0086A34295C9D0@H3CMLB14-EX.srv.huawei-3com.com>
-	<1520349519.4131.20.camel@suse.com>
-	<CEB9978CF3252343BE3C67AC9F0086A34295CA7D@H3CMLB14-EX.srv.huawei-3com.com>
-	<1520426679.11340.5.camel@suse.com>
-	<CEB9978CF3252343BE3C67AC9F0086A34295CF62@H3CMLB14-EX.srv.huawei-3com.com>
-	<20180308154435.GB14513@octiron.msp.redhat.com>
-	<CEB9978CF3252343BE3C67AC9F0086A34295D215@H3CMLB14-EX.srv.huawei-3com.com>
-	<20180309162243.GE14513@octiron.msp.redhat.com>
-	<1521495726.3798.141.camel@suse.com>
-	<CEB9978CF3252343BE3C67AC9F0086A34295DF37@H3CMLB14-EX.srv.huawei-3com.com>
-	<1521557887.3156.5.camel@wdc.com>
-	<3537d472-27ad-53fd-7d13-229359a53849@gmail.com>
-	<1521558853.3156.10.camel@wdc.com>
-	<CEB9978CF3252343BE3C67AC9F0086A34295E668@H3CMLB14-EX.srv.huawei-3com.com>
+From: Heinz Mauelshagen <heinzm@redhat.com>
+Subject: [PATCH v2] dm raid: fix parse_raid_params() variable
+	range issue
+Date: Thu, 22 Mar 2018 18:21:28 +0100
+Message-ID: <6386b9f02b3513bd0ba5ddccd437502313448f7d.1521738866.git.heinzm@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CEB9978CF3252343BE3C67AC9F0086A34295E668@H3CMLB14-EX.srv.huawei-3com.com>
-Content-Language: en-US
-Content-ID: <292B37CA3AD9E14C8E292134E0FE0C80@namprd04.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -34,21 +16,86 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "xose.vazquez@gmail.com" <xose.vazquez@gmail.com>, "wu.chongyun@h3c.com" <wu.chongyun@h3c.com>, "bmarzins@redhat.com" <bmarzins@redhat.com>, "mwilck@suse.com" <mwilck@suse.com>
-Cc: "guozhonghua@h3c.com" <guozhonghua@h3c.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "changlimin@h3c.com" <changlimin@h3c.com>, "ge.changwei@h3c.com" <ge.changwei@h3c.com>
+To: heinzm@redhat.com, dm-devel@redhat.com, snitzer@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, 2018-03-22 at 03:40 +0000, Chongyun Wu wrote:
-> I did a test. Below command can remove the residual device:
-> *echo "scsi remove-single-device 3 0 0 3" > /proc/scsi/scsi*
-> Is it safe?
+This v2 addresses Mikulas' point about the variable range and folds in
+"[PATCH] dm raid: use __within_range() more in parse_raid_params()":
 
-Hello Chongyun,
+parse_raid_parames() compared variable "int value" with
+INT_MAX to prevent overflow of mddev variables set.
 
-Are you aware of the linux-scsi mailing list? I think this question would be
-more appropriate for that mailing list. Regarding your question, I think that
-you should be aware of the following comment above the proc write method that
-implements that functionality: "this provides a legacy mechanism to add or
-remove devices".
+Change type to "long long value".
 
-Bart.
+Whilst on it, use __within_range() throughout and
+add a sync min/max rate check.
+
+Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
+---
+ drivers/md/dm-raid.c | 16 +++++++++++-----
+ 1 file changed, 11 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index c1d1034ff7b7..c0e3d2aa9346 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -1141,7 +1141,7 @@ static int validate_raid_redundancy(struct raid_set *rs)
+ static int parse_raid_params(struct raid_set *rs, struct dm_arg_set *as,
+ 			     unsigned int num_raid_params)
+ {
+-	int value, raid10_format = ALGORITHM_RAID10_DEFAULT;
++	long long value, raid10_format = ALGORITHM_RAID10_DEFAULT;
+ 	unsigned int raid10_copies = 2;
+ 	unsigned int i, write_mostly = 0;
+ 	unsigned int region_size = 0;
+@@ -1153,7 +1153,7 @@ static int parse_raid_params(struct raid_set *rs, struct dm_arg_set *as,
+ 	arg = dm_shift_arg(as);
+ 	num_raid_params--; /* Account for chunk_size argument */
+ 
+-	if (kstrtoint(arg, 10, &value) < 0) {
++	if (kstrtoll(arg, 10, &value) < 0) {
+ 		rs->ti->error = "Bad numerical argument given for chunk_size";
+ 		return -EINVAL;
+ 	}
+@@ -1315,7 +1315,7 @@ static int parse_raid_params(struct raid_set *rs, struct dm_arg_set *as,
+ 		/*
+ 		 * Parameters with number values from here on.
+ 		 */
+-		if (kstrtoint(arg, 10, &value) < 0) {
++		if (kstrtoll(arg, 10, &value) < 0) {
+ 			rs->ti->error = "Bad numerical argument given in raid params";
+ 			return -EINVAL;
+ 		}
+@@ -1430,7 +1430,7 @@ static int parse_raid_params(struct raid_set *rs, struct dm_arg_set *as,
+ 				rs->ti->error = "Only one min_recovery_rate argument pair allowed";
+ 				return -EINVAL;
+ 			}
+-			if (value > INT_MAX) {
++			if (!__within_range(value, 0, INT_MAX)) {
+ 				rs->ti->error = "min_recovery_rate out of range";
+ 				return -EINVAL;
+ 			}
+@@ -1440,7 +1440,7 @@ static int parse_raid_params(struct raid_set *rs, struct dm_arg_set *as,
+ 				rs->ti->error = "Only one max_recovery_rate argument pair allowed";
+ 				return -EINVAL;
+ 			}
+-			if (value > INT_MAX) {
++			if (!__within_range(value, 0, INT_MAX)) {
+ 				rs->ti->error = "max_recovery_rate out of range";
+ 				return -EINVAL;
+ 			}
+@@ -1472,6 +1472,12 @@ static int parse_raid_params(struct raid_set *rs, struct dm_arg_set *as,
+ 		}
+ 	}
+ 
++	if (rs->md.sync_speed_max &&
++	    rs->md.sync_speed_max < rs->md.sync_speed_min) {
++		rs->ti->error = "sync speed max smaller than min";
++		return -EINVAL;
++	}
++
+ 	if (test_bit(__CTR_FLAG_SYNC, &rs->ctr_flags) &&
+ 	    test_bit(__CTR_FLAG_NOSYNC, &rs->ctr_flags)) {
+ 		rs->ti->error = "sync and nosync are mutually exclusive";
+-- 
+2.14.3
