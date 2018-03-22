@@ -1,33 +1,21 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
+From: Greg KH <gregkh@linuxfoundation.org>
 Subject: Re: Patch "dm: ensure bio submission follows a depth-first tree
  walk" has been added to the 4.15-stable tree
-Date: Thu, 22 Mar 2018 09:56:22 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1803220951310.23476@file01.intranet.prod.int.rdu2.redhat.com>
-References: <152172399419061@kroah.com> <20180322134759.GA27235@redhat.com>
+Date: Thu, 22 Mar 2018 15:01:35 +0100
+Message-ID: <20180322140135.GA8987@kroah.com>
+References: <152172399419061@kroah.com>
+ <20180322134759.GA27235@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Return-path: <stable-owner@vger.kernel.org>
+Content-Disposition: inline
 In-Reply-To: <20180322134759.GA27235@redhat.com>
 Sender: stable-owner@vger.kernel.org
 To: Mike Snitzer <snitzer@redhat.com>
-Cc: gregkh@linuxfoundation.org, neilb@suse.com, alexander.levin@microsoft.com, stable@vger.kernel.org, stable-commits@vger.kernel.org, dm-devel@redhat.com
+Cc: neilb@suse.com, alexander.levin@microsoft.com, stable@vger.kernel.org, stable-commits@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-I agree.
-
-The patch "dm: ensure bio submission follows a depth-first tree walk" 
-doesn't really fix any bug (and it may introduce new bugs), so it isn't 
-applicable to the stable kernel branches.
-
-The kernel 4.15 and below have a "dm_offload" mechanism that avoids the 
-possible deadlocks in dm, there is no reason why this should be converted 
-to the "depth-first tree walk".
-
-Mikulas
-
-
-On Thu, 22 Mar 2018, Mike Snitzer wrote:
-
+On Thu, Mar 22, 2018 at 09:47:59AM -0400, Mike Snitzer wrote:
 > On Thu, Mar 22 2018 at  9:06am -0400,
 > gregkh@linuxfoundation.org <gregkh@linuxfoundation.org> wrote:
 > 
@@ -71,6 +59,8 @@ On Thu, 22 Mar 2018, Mike Snitzer wrote:
 > 
 > So NAK from me.  If others have a compelling argument I'm open to
 > considering.
-> 
-> Mike
-> 
+
+Thanks for letting me know, I've now dropped this from the 4.15.y,
+4.14.y, and 4.9.y stable patch queues.
+
+greg k-h
