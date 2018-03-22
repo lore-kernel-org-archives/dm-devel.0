@@ -1,16 +1,16 @@
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: Re: [PATCH v2] dm raid: fix parse_raid_params() variable
- range issue
-Date: Thu, 22 Mar 2018 22:13:48 +0100
-Message-ID: <ac064103-c40b-544a-ef33-e0eaba9a8070@redhat.com>
-References: <6386b9f02b3513bd0ba5ddccd437502313448f7d.1521738866.git.heinzm@redhat.com>
-	<20180322194144.GA32294@redhat.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH 2/2] multipathd: handle errors in uxlsnr as
+	fatal
+Date: Thu, 22 Mar 2018 18:31:54 -0500
+Message-ID: <20180322233154.GD3103@octiron.msp.redhat.com>
+References: <20180320165010.15259-1-mwilck@suse.com>
+	<20180320165010.15259-2-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180322194144.GA32294@redhat.com>
-Content-Language: en-MW
+Content-Disposition: inline
+In-Reply-To: <20180320165010.15259-2-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,79 +20,59 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
+To: Martin Wilck <mwilck@suse.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gMDMvMjIvMjAxOCAwODo0MSBQTSwgTWlrZSBTbml0emVyIHdyb3RlOgo+IE9uIFRodSwgTWFy
-IDIyIDIwMTggYXQgIDE6MjFwbSAtMDQwMCwKPiBIZWlueiBNYXVlbHNoYWdlbiA8aGVpbnptQHJl
-ZGhhdC5jb20+IHdyb3RlOgo+Cj4+IFRoaXMgdjIgYWRkcmVzc2VzIE1pa3VsYXMnIHBvaW50IGFi
-b3V0IHRoZSB2YXJpYWJsZSByYW5nZSBhbmQgZm9sZHMgaW4KPj4gIltQQVRDSF0gZG0gcmFpZDog
-dXNlIF9fd2l0aGluX3JhbmdlKCkgbW9yZSBpbiBwYXJzZV9yYWlkX3BhcmFtcygpIjoKPj4KPj4g
-cGFyc2VfcmFpZF9wYXJhbWVzKCkgY29tcGFyZWQgdmFyaWFibGUgImludCB2YWx1ZSIgd2l0aAo+
-PiBJTlRfTUFYIHRvIHByZXZlbnQgb3ZlcmZsb3cgb2YgbWRkZXYgdmFyaWFibGVzIHNldC4KPj4K
-Pj4gQ2hhbmdlIHR5cGUgdG8gImxvbmcgbG9uZyB2YWx1ZSIuCj4gQ2FuIHlvdSBlbGFib3JhdGUg
-b24gdGhlIHJpc2svaXNzdWUgdGhhdCBpcyBiZWluZyBmaXhlZCBoZXJlPwoKRml4IGFkZHJlc3Nl
-cyBhIGNvdmVyaXR5IGZpbmRpbmcgc3VwcG9ydGluZyB0aGUgZnVsbCwKcG9zaXRpdmUgcmFuZ2Ug
-b2YgdGhlICJzdHJ1Y3QgbWRkZXYiIGludCBtZW1iZXJzCnNldCBoZXJlLsKgIEkuZS4gdGhlICJp
-bnQiIGNhc3QgaXMgY29tcGFyZWQgd2l0aCBJTlRfTUFYLgoKPgo+IFVzZXIgc3BlY2lmeWluZyBh
-IHZhbHVlIHRoYXQgb3ZlcmZsb3dzIGFuIGludD8KCk5vLCBrc3Ryb2ludCgpIGNhdGNoZXMgdGhh
-dC4KCj4KPiAoYWxzbzogc2VlIGJlbG93IGZvciBpbmxpbmUgY29tbWVudCBhYm91dCBsYXN0IGh1
-bmspCgpTZWUgYmVsb3cuLi4KCj4+IFdoaWxzdCBvbiBpdCwgdXNlIF9fd2l0aGluX3JhbmdlKCkg
-dGhyb3VnaG91dCBhbmQKPj4gYWRkIGEgc3luYyBtaW4vbWF4IHJhdGUgY2hlY2suCj4+Cj4+IFNp
-Z25lZC1vZmYtYnk6IEhlaW56IE1hdWVsc2hhZ2VuIDxoZWluem1AcmVkaGF0LmNvbT4KPj4gLS0t
-Cj4+ICAgZHJpdmVycy9tZC9kbS1yYWlkLmMgfCAxNiArKysrKysrKysrKy0tLS0tCj4+ICAgMSBm
-aWxlIGNoYW5nZWQsIDExIGluc2VydGlvbnMoKyksIDUgZGVsZXRpb25zKC0pCj4+Cj4+IGRpZmYg
-LS1naXQgYS9kcml2ZXJzL21kL2RtLXJhaWQuYyBiL2RyaXZlcnMvbWQvZG0tcmFpZC5jCj4+IGlu
-ZGV4IGMxZDEwMzRmZjdiNy4uYzBlM2QyYWE5MzQ2IDEwMDY0NAo+PiAtLS0gYS9kcml2ZXJzL21k
-L2RtLXJhaWQuYwo+PiArKysgYi9kcml2ZXJzL21kL2RtLXJhaWQuYwo+PiBAQCAtMTE0MSw3ICsx
-MTQxLDcgQEAgc3RhdGljIGludCB2YWxpZGF0ZV9yYWlkX3JlZHVuZGFuY3koc3RydWN0IHJhaWRf
-c2V0ICpycykKPj4gICBzdGF0aWMgaW50IHBhcnNlX3JhaWRfcGFyYW1zKHN0cnVjdCByYWlkX3Nl
-dCAqcnMsIHN0cnVjdCBkbV9hcmdfc2V0ICphcywKPj4gICAJCQkgICAgIHVuc2lnbmVkIGludCBu
-dW1fcmFpZF9wYXJhbXMpCj4+ICAgewo+PiAtCWludCB2YWx1ZSwgcmFpZDEwX2Zvcm1hdCA9IEFM
-R09SSVRITV9SQUlEMTBfREVGQVVMVDsKPj4gKwlsb25nIGxvbmcgdmFsdWUsIHJhaWQxMF9mb3Jt
-YXQgPSBBTEdPUklUSE1fUkFJRDEwX0RFRkFVTFQ7Cj4+ICAgCXVuc2lnbmVkIGludCByYWlkMTBf
-Y29waWVzID0gMjsKPj4gICAJdW5zaWduZWQgaW50IGksIHdyaXRlX21vc3RseSA9IDA7Cj4+ICAg
-CXVuc2lnbmVkIGludCByZWdpb25fc2l6ZSA9IDA7Cj4+IEBAIC0xMTUzLDcgKzExNTMsNyBAQCBz
-dGF0aWMgaW50IHBhcnNlX3JhaWRfcGFyYW1zKHN0cnVjdCByYWlkX3NldCAqcnMsIHN0cnVjdCBk
-bV9hcmdfc2V0ICphcywKPj4gICAJYXJnID0gZG1fc2hpZnRfYXJnKGFzKTsKPj4gICAJbnVtX3Jh
-aWRfcGFyYW1zLS07IC8qIEFjY291bnQgZm9yIGNodW5rX3NpemUgYXJndW1lbnQgKi8KPj4gICAK
-Pj4gLQlpZiAoa3N0cnRvaW50KGFyZywgMTAsICZ2YWx1ZSkgPCAwKSB7Cj4+ICsJaWYgKGtzdHJ0
-b2xsKGFyZywgMTAsICZ2YWx1ZSkgPCAwKSB7Cj4+ICAgCQlycy0+dGktPmVycm9yID0gIkJhZCBu
-dW1lcmljYWwgYXJndW1lbnQgZ2l2ZW4gZm9yIGNodW5rX3NpemUiOwo+PiAgIAkJcmV0dXJuIC1F
-SU5WQUw7Cj4+ICAgCX0KPj4gQEAgLTEzMTUsNyArMTMxNSw3IEBAIHN0YXRpYyBpbnQgcGFyc2Vf
-cmFpZF9wYXJhbXMoc3RydWN0IHJhaWRfc2V0ICpycywgc3RydWN0IGRtX2FyZ19zZXQgKmFzLAo+
-PiAgIAkJLyoKPj4gICAJCSAqIFBhcmFtZXRlcnMgd2l0aCBudW1iZXIgdmFsdWVzIGZyb20gaGVy
-ZSBvbi4KPj4gICAJCSAqLwo+PiAtCQlpZiAoa3N0cnRvaW50KGFyZywgMTAsICZ2YWx1ZSkgPCAw
-KSB7Cj4+ICsJCWlmIChrc3RydG9sbChhcmcsIDEwLCAmdmFsdWUpIDwgMCkgewo+PiAgIAkJCXJz
-LT50aS0+ZXJyb3IgPSAiQmFkIG51bWVyaWNhbCBhcmd1bWVudCBnaXZlbiBpbiByYWlkIHBhcmFt
-cyI7Cj4+ICAgCQkJcmV0dXJuIC1FSU5WQUw7Cj4+ICAgCQl9Cj4+IEBAIC0xNDMwLDcgKzE0MzAs
-NyBAQCBzdGF0aWMgaW50IHBhcnNlX3JhaWRfcGFyYW1zKHN0cnVjdCByYWlkX3NldCAqcnMsIHN0
-cnVjdCBkbV9hcmdfc2V0ICphcywKPj4gICAJCQkJcnMtPnRpLT5lcnJvciA9ICJPbmx5IG9uZSBt
-aW5fcmVjb3ZlcnlfcmF0ZSBhcmd1bWVudCBwYWlyIGFsbG93ZWQiOwo+PiAgIAkJCQlyZXR1cm4g
-LUVJTlZBTDsKPj4gICAJCQl9Cj4+IC0JCQlpZiAodmFsdWUgPiBJTlRfTUFYKSB7Cj4+ICsJCQlp
-ZiAoIV9fd2l0aGluX3JhbmdlKHZhbHVlLCAwLCBJTlRfTUFYKSkgewo+PiAgIAkJCQlycy0+dGkt
-PmVycm9yID0gIm1pbl9yZWNvdmVyeV9yYXRlIG91dCBvZiByYW5nZSI7Cj4+ICAgCQkJCXJldHVy
-biAtRUlOVkFMOwo+PiAgIAkJCX0KPj4gQEAgLTE0NDAsNyArMTQ0MCw3IEBAIHN0YXRpYyBpbnQg
-cGFyc2VfcmFpZF9wYXJhbXMoc3RydWN0IHJhaWRfc2V0ICpycywgc3RydWN0IGRtX2FyZ19zZXQg
-KmFzLAo+PiAgIAkJCQlycy0+dGktPmVycm9yID0gIk9ubHkgb25lIG1heF9yZWNvdmVyeV9yYXRl
-IGFyZ3VtZW50IHBhaXIgYWxsb3dlZCI7Cj4+ICAgCQkJCXJldHVybiAtRUlOVkFMOwo+PiAgIAkJ
-CX0KPj4gLQkJCWlmICh2YWx1ZSA+IElOVF9NQVgpIHsKPj4gKwkJCWlmICghX193aXRoaW5fcmFu
-Z2UodmFsdWUsIDAsIElOVF9NQVgpKSB7Cj4+ICAgCQkJCXJzLT50aS0+ZXJyb3IgPSAibWF4X3Jl
-Y292ZXJ5X3JhdGUgb3V0IG9mIHJhbmdlIjsKPj4gICAJCQkJcmV0dXJuIC1FSU5WQUw7Cj4+ICAg
-CQkJfQo+PiBAQCAtMTQ3Miw2ICsxNDcyLDEyIEBAIHN0YXRpYyBpbnQgcGFyc2VfcmFpZF9wYXJh
-bXMoc3RydWN0IHJhaWRfc2V0ICpycywgc3RydWN0IGRtX2FyZ19zZXQgKmFzLAo+PiAgIAkJfQo+
-PiAgIAl9Cj4+ICAgCj4+ICsJaWYgKHJzLT5tZC5zeW5jX3NwZWVkX21heCAmJgo+PiArCSAgICBy
-cy0+bWQuc3luY19zcGVlZF9tYXggPCBycy0+bWQuc3luY19zcGVlZF9taW4pIHsKPj4gKwkJcnMt
-PnRpLT5lcnJvciA9ICJzeW5jIHNwZWVkIG1heCBzbWFsbGVyIHRoYW4gbWluIjsKPj4gKwkJcmV0
-dXJuIC1FSU5WQUw7Cj4+ICsJfQo+PiArCj4+ICAgCWlmICh0ZXN0X2JpdChfX0NUUl9GTEFHX1NZ
-TkMsICZycy0+Y3RyX2ZsYWdzKSAmJgo+PiAgIAkgICAgdGVzdF9iaXQoX19DVFJfRkxBR19OT1NZ
-TkMsICZycy0+Y3RyX2ZsYWdzKSkgewo+PiAgIAkJcnMtPnRpLT5lcnJvciA9ICJzeW5jIGFuZCBu
-b3N5bmMgYXJlIG11dHVhbGx5IGV4Y2x1c2l2ZSI7Cj4+IC0tIAo+PiAyLjE0LjMKPj4KPiBJc24n
-dCB0aGlzIGxhc3QgaHVuayB1bnJlbGF0ZWQ/CgpObywgb25jZSB1c2luZyBfX3dpdGhpbl9yYW5n
-ZSB0byBlbnN1cmUgcG9zaXRpdmUgdmFsdWVzCmZvciBzeW5jIG1pbi9tYXgsIHRoaXMgaHVuayBl
-bnN1cmVzIHRoYXQgdGhvc2UgYXJlIHNhbmUKaWYgYm90aCBhcmUgc2V0LgoKSGVpbnoKCj4KPiAt
-LQo+IGRtLWRldmVsIG1haWxpbmcgbGlzdAo+IGRtLWRldmVsQHJlZGhhdC5jb20KPiBodHRwczov
-L3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWwKCi0tCmRtLWRldmVsIG1h
-aWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFp
-bG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+On Tue, Mar 20, 2018 at 05:50:10PM +0100, Martin Wilck wrote:
+> The ppoll() calls of the uxlsnr thread are vital for proper functioning of
+> multipathd. If the uxlsnr thread can't open the socket or fails to call ppoll()
+> for other reasons, quit the daemon. If we don't do that, multipathd may
+> hang in a state where it can't be terminated any more, because the uxlsnr
+> thread is responsible for handling all signals. This happens e.g. if
+> systemd's multipathd.socket is running in and multipathd is started from
+> outside systemd.
+> 
+> 24f2844 "multipathd: fix signal blocking logic" has made this problem more
+> severe. Before that patch, the signals weren't actually blocked in any thread.
+> That's not to say 24f2844 was wrong. I still think it's correct, we just
+> need this one on top.
+> 
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  multipathd/uxlsnr.c | 5 +++--
+>  1 file changed, 3 insertions(+), 2 deletions(-)
+> 
+> diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
+> index cdafd82943e7..6f666663fc6f 100644
+> --- a/multipathd/uxlsnr.c
+> +++ b/multipathd/uxlsnr.c
+> @@ -178,7 +178,7 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
+>  
+>  	if (ux_sock == -1) {
+>  		condlog(1, "could not create uxsock: %d", errno);
+> -		return NULL;
+> +		exit_daemon();
+>  	}
+>  
+>  	pthread_cleanup_push(uxsock_cleanup, (void *)ux_sock);
+> @@ -187,7 +187,7 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
+>  	polls = (struct pollfd *)MALLOC((MIN_POLLS + 1) * sizeof(struct pollfd));
+>  	if (!polls) {
+>  		condlog(0, "uxsock: failed to allocate poll fds");
+> -		return NULL;
+> +		exit_daemon();
+>  	}
+>  	sigfillset(&mask);
+>  	sigdelset(&mask, SIGINT);
+> @@ -249,6 +249,7 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
+>  
+>  			/* something went badly wrong! */
+>  			condlog(0, "uxsock: poll failed with %d", errno);
+> +			exit_daemon();
+>  			break;
+>  		}
+>  
+> -- 
+> 2.16.1
