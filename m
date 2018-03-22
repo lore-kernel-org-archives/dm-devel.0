@@ -1,7 +1,7 @@
 From: Chongyun Wu <wu.chongyun@h3c.com>
 Subject: Re: [PATCH] multipathd: check and cleanup zombie paths
-Date: Thu, 22 Mar 2018 01:58:53 +0000
-Message-ID: <CEB9978CF3252343BE3C67AC9F0086A34295E62A@H3CMLB14-EX.srv.huawei-3com.com>
+Date: Thu, 22 Mar 2018 03:40:35 +0000
+Message-ID: <CEB9978CF3252343BE3C67AC9F0086A34295E668@H3CMLB14-EX.srv.huawei-3com.com>
 References: <CEB9978CF3252343BE3C67AC9F0086A34295C462@H3CMLB14-EX.srv.huawei-3com.com>
 	<1520325779.4131.4.camel@suse.com>
 	<CEB9978CF3252343BE3C67AC9F0086A34295C9D0@H3CMLB14-EX.srv.huawei-3com.com>
@@ -17,8 +17,6 @@ References: <CEB9978CF3252343BE3C67AC9F0086A34295C462@H3CMLB14-EX.srv.huawei-3co
 	<1521557887.3156.5.camel@wdc.com>
 	<3537d472-27ad-53fd-7d13-229359a53849@gmail.com>
 	<1521558853.3156.10.camel@wdc.com>
-	<CEB9978CF3252343BE3C67AC9F0086A34295E289@H3CMLB14-EX.srv.huawei-3com.com>
-	<1521662163.2534.13.camel@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -37,38 +35,39 @@ To: Bart Van Assche <Bart.VanAssche@wdc.com>, "xose.vazquez@gmail.com" <xose.vaz
 Cc: Guozhonghua <guozhonghua@h3c.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Changlimin <changlimin@h3c.com>, Changwei Ge <ge.changwei@h3c.com>
 List-Id: dm-devel.ids
 
-On 2018/3/22 3:56, Bart Van Assche wrote:
-> On Wed, 2018-03-21 at 01:54 +0000, Chongyun Wu wrote:
->> Is there any special operation or conditions to reproduce the dead lock?
->>    I have use SCSI sysfs delete atrribute to remove stale devices in my
->> previous patch and test many times, but I haven't encountered any
->> deadlock problems.
+On 2018/3/20 23:14, Bart Van Assche wrote:
+> On Tue, 2018-03-20 at 16:12 +0100, Xose Vazquez Perez wrote:
+>> On 03/20/2018 03:58 PM, Bart Van Assche wrote:
+>>
+>>> It is on purpose that the SCSI core does not remove stale SCSI device nodes.
+>>> If you want that these stale SCSI device nodes get removed automatically,
+>>> two possible approaches are (there might be other approaches):
+>>> * Write a new user space daemon that periodically checks for stale devices
+>>>    (e.g. by running grep -aH . /sys/class/scsi_device/*/*/state |
+>>>     grep -v running) and that triggers a SCSI rescan if any stale devices are
+>>>    found.
+>>> * Write a udev rule that listens for SDEV_UA=REPORTED_LUNS_DATA_HAS_CHANGED
+>>>    and that triggers a SCSI rescan if this event is triggered by the kernel.
+>>
+>> There are some "remove" flags in rescan-scsi-bus.sh:
+>> https://github.com/hreinecke/sg3_utils/blob/d4dbbede04db21c206e4c2acc1cf766117f003c3/scripts/rescan-scsi-bus.sh#L1080
+>>
+>> -r      enables removing of devices        [default: disabled]
+>> --forceremove:   Remove stale devices (DANGEROUS)
+>> --forcerescan:   Remove and readd existing devices (DANGEROUS)
 > 
-> Hello Chongyun,
-> 
-> In my tests I enabled the lock validator (CONFIG_LOCKDEP) in order not only
-> to obtain detailed information about the cause of actual deadlocks but also
-> to obtain information about potential deadlocks.
-> 
-> I'm not sure how to make it more likely to trigger this deadlock. But I think
-> that you should be aware that some SCSI transports remove the SCSI host if a
-> transport failure is detected and other SCSI transports don't remove the SCSI
-> host upon a transport failure. I ran my tests with the SRP protocol and the
-> SRP transport protocol removes the SCSI host if a transport failure persists
-> long enough. Maybe triggering SCSI host removal often helps to trigger that
-> deadlock.
+> Last time I checked the rescan-scsi-bus.sh script relied on the SCSI sysfs
+> delete attribute to remove stale devices. That is the mechanism that can
+> trigger a deadlock in the kernel.
 > 
 > Bart.
 > 
 > 
-> 
-Hi Bart,
+> Hi Bart,
 
-Thanks, as you mentioned maybe we have different scsi transport so we 
-haven't found deadlock so far. Hope your mentioned issue *Avoid that 
-SCSI device removal through sysfs triggers a deadlock* can be resolved 
-by root. We often encounter problems with device residual which cause 
-some issues and want to find a safe and effective method to clean up it.
+I did a test. Below command can remove the residual device:
+*echo "scsi remove-single-device 3 0 0 3" > /proc/scsi/scsi*
+Is it safe?
 
 Regards,
 Chongyun
