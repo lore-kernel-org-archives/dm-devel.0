@@ -1,16 +1,15 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 2/2] multipathd: handle errors in uxlsnr as
-	fatal
-Date: Thu, 22 Mar 2018 18:31:54 -0500
-Message-ID: <20180322233154.GD3103@octiron.msp.redhat.com>
-References: <20180320165010.15259-1-mwilck@suse.com>
-	<20180320165010.15259-2-mwilck@suse.com>
+Subject: Re: [PATCH v2 1/2] libmultipath: don't reject maps with
+ undefined prio
+Date: Thu, 22 Mar 2018 18:52:25 -0500
+Message-ID: <20180322235225.GE3103@octiron.msp.redhat.com>
+References: <20180321093419.9295-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20180320165010.15259-2-mwilck@suse.com>
+In-Reply-To: <20180321093419.9295-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,55 +23,57 @@ To: Martin Wilck <mwilck@suse.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Mar 20, 2018 at 05:50:10PM +0100, Martin Wilck wrote:
-> The ppoll() calls of the uxlsnr thread are vital for proper functioning of
-> multipathd. If the uxlsnr thread can't open the socket or fails to call ppoll()
-> for other reasons, quit the daemon. If we don't do that, multipathd may
-> hang in a state where it can't be terminated any more, because the uxlsnr
-> thread is responsible for handling all signals. This happens e.g. if
-> systemd's multipathd.socket is running in and multipathd is started from
-> outside systemd.
+On Wed, Mar 21, 2018 at 10:34:18AM +0100, Martin Wilck wrote:
+> libmultipath's prio routines can deal with pp->priority == PRIO_UNDEF
+> just fine. PRIO_UNDEF is just a very low priority. So there's
+> no reason to reject setting up a multipath map because paths have
+> undefined priority.
 > 
-> 24f2844 "multipathd: fix signal blocking logic" has made this problem more
-> severe. Before that patch, the signals weren't actually blocked in any thread.
-> That's not to say 24f2844 was wrong. I still think it's correct, we just
-> need this one on top.
-> 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+
+The problem with this is that presumably, if there is a prioritizer set,
+then the paths aren't supposed to be in the same pathgroup.  If this is
+the case and you end up setting all the paths to the same pathgroup
+because the prioritizer is wrong, you will likely have a bad experience.
+Either you will frequently be writing to a non-optimized path (which can
+auto-trespass and become an optimized one in some arrays, causing
+horrible ping-ponging), or some of your paths will just always keep
+getting restored and then failed, since they require a manual trespass
+to be actually usable, but ghost paths are treated as usable by the kernel.
+
+If you just set the priortizer for this device to const (or whatever
+make sense if the device isn't alua) and have detect_prio enabled, won't
+it correctly detect an alua prioritizer when it is supported, and
+failback to const when not?
+
+-Ben
+
 > Signed-off-by: Martin Wilck <mwilck@suse.com>
 > ---
->  multipathd/uxlsnr.c | 5 +++--
->  1 file changed, 3 insertions(+), 2 deletions(-)
+>  libmultipath/configure.c | 5 -----
+>  1 file changed, 5 deletions(-)
 > 
-> diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
-> index cdafd82943e7..6f666663fc6f 100644
-> --- a/multipathd/uxlsnr.c
-> +++ b/multipathd/uxlsnr.c
-> @@ -178,7 +178,7 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
->  
->  	if (ux_sock == -1) {
->  		condlog(1, "could not create uxsock: %d", errno);
-> -		return NULL;
-> +		exit_daemon();
->  	}
->  
->  	pthread_cleanup_push(uxsock_cleanup, (void *)ux_sock);
-> @@ -187,7 +187,7 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
->  	polls = (struct pollfd *)MALLOC((MIN_POLLS + 1) * sizeof(struct pollfd));
->  	if (!polls) {
->  		condlog(0, "uxsock: failed to allocate poll fds");
-> -		return NULL;
-> +		exit_daemon();
->  	}
->  	sigfillset(&mask);
->  	sigdelset(&mask, SIGINT);
-> @@ -249,6 +249,7 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, void * trigger_data)
->  
->  			/* something went badly wrong! */
->  			condlog(0, "uxsock: poll failed with %d", errno);
-> +			exit_daemon();
->  			break;
+> diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+> index fa6e21cb31af..bb3d8771592d 100644
+> --- a/libmultipath/configure.c
+> +++ b/libmultipath/configure.c
+> @@ -993,9 +993,6 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
+>  			continue;
 >  		}
+>  
+> -		if (pp1->priority == PRIO_UNDEF)
+> -			mpp->action = ACT_REJECT;
+> -
+>  		if (!mpp->paths) {
+>  			condlog(0, "%s: skip coalesce (no paths)", mpp->alias);
+>  			remove_map(mpp, vecs, 0);
+> @@ -1021,8 +1018,6 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
+>  					mpp->size);
+>  				mpp->action = ACT_REJECT;
+>  			}
+> -			if (pp2->priority == PRIO_UNDEF)
+> -				mpp->action = ACT_REJECT;
+>  		}
+>  		verify_paths(mpp, vecs);
 >  
 > -- 
 > 2.16.1
