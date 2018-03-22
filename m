@@ -1,15 +1,16 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: Heinz Mauelshagen <heinzm@redhat.com>
 Subject: Re: [PATCH v2] dm raid: fix parse_raid_params() variable
-	range issue
-Date: Thu, 22 Mar 2018 15:41:45 -0400
-Message-ID: <20180322194144.GA32294@redhat.com>
+ range issue
+Date: Thu, 22 Mar 2018 22:13:48 +0100
+Message-ID: <ac064103-c40b-544a-ef33-e0eaba9a8070@redhat.com>
 References: <6386b9f02b3513bd0ba5ddccd437502313448f7d.1521738866.git.heinzm@redhat.com>
+	<20180322194144.GA32294@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <6386b9f02b3513bd0ba5ddccd437502313448f7d.1521738866.git.heinzm@redhat.com>
+In-Reply-To: <20180322194144.GA32294@redhat.com>
+Content-Language: en-MW
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,99 +20,79 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Heinz Mauelshagen <heinzm@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Mar 22 2018 at  1:21pm -0400,
-Heinz Mauelshagen <heinzm@redhat.com> wrote:
-
-> This v2 addresses Mikulas' point about the variable range and folds in
-> "[PATCH] dm raid: use __within_range() more in parse_raid_params()":
-> 
-> parse_raid_parames() compared variable "int value" with
-> INT_MAX to prevent overflow of mddev variables set.
-> 
-> Change type to "long long value".
-
-Can you elaborate on the risk/issue that is being fixed here?
-
-User specifying a value that overflows an int?
-
-(also: see below for inline comment about last hunk)
-
-> Whilst on it, use __within_range() throughout and
-> add a sync min/max rate check.
-> 
-> Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
-> ---
->  drivers/md/dm-raid.c | 16 +++++++++++-----
->  1 file changed, 11 insertions(+), 5 deletions(-)
-> 
-> diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-> index c1d1034ff7b7..c0e3d2aa9346 100644
-> --- a/drivers/md/dm-raid.c
-> +++ b/drivers/md/dm-raid.c
-> @@ -1141,7 +1141,7 @@ static int validate_raid_redundancy(struct raid_set *rs)
->  static int parse_raid_params(struct raid_set *rs, struct dm_arg_set *as,
->  			     unsigned int num_raid_params)
->  {
-> -	int value, raid10_format = ALGORITHM_RAID10_DEFAULT;
-> +	long long value, raid10_format = ALGORITHM_RAID10_DEFAULT;
->  	unsigned int raid10_copies = 2;
->  	unsigned int i, write_mostly = 0;
->  	unsigned int region_size = 0;
-> @@ -1153,7 +1153,7 @@ static int parse_raid_params(struct raid_set *rs, struct dm_arg_set *as,
->  	arg = dm_shift_arg(as);
->  	num_raid_params--; /* Account for chunk_size argument */
->  
-> -	if (kstrtoint(arg, 10, &value) < 0) {
-> +	if (kstrtoll(arg, 10, &value) < 0) {
->  		rs->ti->error = "Bad numerical argument given for chunk_size";
->  		return -EINVAL;
->  	}
-> @@ -1315,7 +1315,7 @@ static int parse_raid_params(struct raid_set *rs, struct dm_arg_set *as,
->  		/*
->  		 * Parameters with number values from here on.
->  		 */
-> -		if (kstrtoint(arg, 10, &value) < 0) {
-> +		if (kstrtoll(arg, 10, &value) < 0) {
->  			rs->ti->error = "Bad numerical argument given in raid params";
->  			return -EINVAL;
->  		}
-> @@ -1430,7 +1430,7 @@ static int parse_raid_params(struct raid_set *rs, struct dm_arg_set *as,
->  				rs->ti->error = "Only one min_recovery_rate argument pair allowed";
->  				return -EINVAL;
->  			}
-> -			if (value > INT_MAX) {
-> +			if (!__within_range(value, 0, INT_MAX)) {
->  				rs->ti->error = "min_recovery_rate out of range";
->  				return -EINVAL;
->  			}
-> @@ -1440,7 +1440,7 @@ static int parse_raid_params(struct raid_set *rs, struct dm_arg_set *as,
->  				rs->ti->error = "Only one max_recovery_rate argument pair allowed";
->  				return -EINVAL;
->  			}
-> -			if (value > INT_MAX) {
-> +			if (!__within_range(value, 0, INT_MAX)) {
->  				rs->ti->error = "max_recovery_rate out of range";
->  				return -EINVAL;
->  			}
-> @@ -1472,6 +1472,12 @@ static int parse_raid_params(struct raid_set *rs, struct dm_arg_set *as,
->  		}
->  	}
->  
-> +	if (rs->md.sync_speed_max &&
-> +	    rs->md.sync_speed_max < rs->md.sync_speed_min) {
-> +		rs->ti->error = "sync speed max smaller than min";
-> +		return -EINVAL;
-> +	}
-> +
->  	if (test_bit(__CTR_FLAG_SYNC, &rs->ctr_flags) &&
->  	    test_bit(__CTR_FLAG_NOSYNC, &rs->ctr_flags)) {
->  		rs->ti->error = "sync and nosync are mutually exclusive";
-> -- 
-> 2.14.3
-> 
-
-Isn't this last hunk unrelated?
+T24gMDMvMjIvMjAxOCAwODo0MSBQTSwgTWlrZSBTbml0emVyIHdyb3RlOgo+IE9uIFRodSwgTWFy
+IDIyIDIwMTggYXQgIDE6MjFwbSAtMDQwMCwKPiBIZWlueiBNYXVlbHNoYWdlbiA8aGVpbnptQHJl
+ZGhhdC5jb20+IHdyb3RlOgo+Cj4+IFRoaXMgdjIgYWRkcmVzc2VzIE1pa3VsYXMnIHBvaW50IGFi
+b3V0IHRoZSB2YXJpYWJsZSByYW5nZSBhbmQgZm9sZHMgaW4KPj4gIltQQVRDSF0gZG0gcmFpZDog
+dXNlIF9fd2l0aGluX3JhbmdlKCkgbW9yZSBpbiBwYXJzZV9yYWlkX3BhcmFtcygpIjoKPj4KPj4g
+cGFyc2VfcmFpZF9wYXJhbWVzKCkgY29tcGFyZWQgdmFyaWFibGUgImludCB2YWx1ZSIgd2l0aAo+
+PiBJTlRfTUFYIHRvIHByZXZlbnQgb3ZlcmZsb3cgb2YgbWRkZXYgdmFyaWFibGVzIHNldC4KPj4K
+Pj4gQ2hhbmdlIHR5cGUgdG8gImxvbmcgbG9uZyB2YWx1ZSIuCj4gQ2FuIHlvdSBlbGFib3JhdGUg
+b24gdGhlIHJpc2svaXNzdWUgdGhhdCBpcyBiZWluZyBmaXhlZCBoZXJlPwoKRml4IGFkZHJlc3Nl
+cyBhIGNvdmVyaXR5IGZpbmRpbmcgc3VwcG9ydGluZyB0aGUgZnVsbCwKcG9zaXRpdmUgcmFuZ2Ug
+b2YgdGhlICJzdHJ1Y3QgbWRkZXYiIGludCBtZW1iZXJzCnNldCBoZXJlLsKgIEkuZS4gdGhlICJp
+bnQiIGNhc3QgaXMgY29tcGFyZWQgd2l0aCBJTlRfTUFYLgoKPgo+IFVzZXIgc3BlY2lmeWluZyBh
+IHZhbHVlIHRoYXQgb3ZlcmZsb3dzIGFuIGludD8KCk5vLCBrc3Ryb2ludCgpIGNhdGNoZXMgdGhh
+dC4KCj4KPiAoYWxzbzogc2VlIGJlbG93IGZvciBpbmxpbmUgY29tbWVudCBhYm91dCBsYXN0IGh1
+bmspCgpTZWUgYmVsb3cuLi4KCj4+IFdoaWxzdCBvbiBpdCwgdXNlIF9fd2l0aGluX3JhbmdlKCkg
+dGhyb3VnaG91dCBhbmQKPj4gYWRkIGEgc3luYyBtaW4vbWF4IHJhdGUgY2hlY2suCj4+Cj4+IFNp
+Z25lZC1vZmYtYnk6IEhlaW56IE1hdWVsc2hhZ2VuIDxoZWluem1AcmVkaGF0LmNvbT4KPj4gLS0t
+Cj4+ICAgZHJpdmVycy9tZC9kbS1yYWlkLmMgfCAxNiArKysrKysrKysrKy0tLS0tCj4+ICAgMSBm
+aWxlIGNoYW5nZWQsIDExIGluc2VydGlvbnMoKyksIDUgZGVsZXRpb25zKC0pCj4+Cj4+IGRpZmYg
+LS1naXQgYS9kcml2ZXJzL21kL2RtLXJhaWQuYyBiL2RyaXZlcnMvbWQvZG0tcmFpZC5jCj4+IGlu
+ZGV4IGMxZDEwMzRmZjdiNy4uYzBlM2QyYWE5MzQ2IDEwMDY0NAo+PiAtLS0gYS9kcml2ZXJzL21k
+L2RtLXJhaWQuYwo+PiArKysgYi9kcml2ZXJzL21kL2RtLXJhaWQuYwo+PiBAQCAtMTE0MSw3ICsx
+MTQxLDcgQEAgc3RhdGljIGludCB2YWxpZGF0ZV9yYWlkX3JlZHVuZGFuY3koc3RydWN0IHJhaWRf
+c2V0ICpycykKPj4gICBzdGF0aWMgaW50IHBhcnNlX3JhaWRfcGFyYW1zKHN0cnVjdCByYWlkX3Nl
+dCAqcnMsIHN0cnVjdCBkbV9hcmdfc2V0ICphcywKPj4gICAJCQkgICAgIHVuc2lnbmVkIGludCBu
+dW1fcmFpZF9wYXJhbXMpCj4+ICAgewo+PiAtCWludCB2YWx1ZSwgcmFpZDEwX2Zvcm1hdCA9IEFM
+R09SSVRITV9SQUlEMTBfREVGQVVMVDsKPj4gKwlsb25nIGxvbmcgdmFsdWUsIHJhaWQxMF9mb3Jt
+YXQgPSBBTEdPUklUSE1fUkFJRDEwX0RFRkFVTFQ7Cj4+ICAgCXVuc2lnbmVkIGludCByYWlkMTBf
+Y29waWVzID0gMjsKPj4gICAJdW5zaWduZWQgaW50IGksIHdyaXRlX21vc3RseSA9IDA7Cj4+ICAg
+CXVuc2lnbmVkIGludCByZWdpb25fc2l6ZSA9IDA7Cj4+IEBAIC0xMTUzLDcgKzExNTMsNyBAQCBz
+dGF0aWMgaW50IHBhcnNlX3JhaWRfcGFyYW1zKHN0cnVjdCByYWlkX3NldCAqcnMsIHN0cnVjdCBk
+bV9hcmdfc2V0ICphcywKPj4gICAJYXJnID0gZG1fc2hpZnRfYXJnKGFzKTsKPj4gICAJbnVtX3Jh
+aWRfcGFyYW1zLS07IC8qIEFjY291bnQgZm9yIGNodW5rX3NpemUgYXJndW1lbnQgKi8KPj4gICAK
+Pj4gLQlpZiAoa3N0cnRvaW50KGFyZywgMTAsICZ2YWx1ZSkgPCAwKSB7Cj4+ICsJaWYgKGtzdHJ0
+b2xsKGFyZywgMTAsICZ2YWx1ZSkgPCAwKSB7Cj4+ICAgCQlycy0+dGktPmVycm9yID0gIkJhZCBu
+dW1lcmljYWwgYXJndW1lbnQgZ2l2ZW4gZm9yIGNodW5rX3NpemUiOwo+PiAgIAkJcmV0dXJuIC1F
+SU5WQUw7Cj4+ICAgCX0KPj4gQEAgLTEzMTUsNyArMTMxNSw3IEBAIHN0YXRpYyBpbnQgcGFyc2Vf
+cmFpZF9wYXJhbXMoc3RydWN0IHJhaWRfc2V0ICpycywgc3RydWN0IGRtX2FyZ19zZXQgKmFzLAo+
+PiAgIAkJLyoKPj4gICAJCSAqIFBhcmFtZXRlcnMgd2l0aCBudW1iZXIgdmFsdWVzIGZyb20gaGVy
+ZSBvbi4KPj4gICAJCSAqLwo+PiAtCQlpZiAoa3N0cnRvaW50KGFyZywgMTAsICZ2YWx1ZSkgPCAw
+KSB7Cj4+ICsJCWlmIChrc3RydG9sbChhcmcsIDEwLCAmdmFsdWUpIDwgMCkgewo+PiAgIAkJCXJz
+LT50aS0+ZXJyb3IgPSAiQmFkIG51bWVyaWNhbCBhcmd1bWVudCBnaXZlbiBpbiByYWlkIHBhcmFt
+cyI7Cj4+ICAgCQkJcmV0dXJuIC1FSU5WQUw7Cj4+ICAgCQl9Cj4+IEBAIC0xNDMwLDcgKzE0MzAs
+NyBAQCBzdGF0aWMgaW50IHBhcnNlX3JhaWRfcGFyYW1zKHN0cnVjdCByYWlkX3NldCAqcnMsIHN0
+cnVjdCBkbV9hcmdfc2V0ICphcywKPj4gICAJCQkJcnMtPnRpLT5lcnJvciA9ICJPbmx5IG9uZSBt
+aW5fcmVjb3ZlcnlfcmF0ZSBhcmd1bWVudCBwYWlyIGFsbG93ZWQiOwo+PiAgIAkJCQlyZXR1cm4g
+LUVJTlZBTDsKPj4gICAJCQl9Cj4+IC0JCQlpZiAodmFsdWUgPiBJTlRfTUFYKSB7Cj4+ICsJCQlp
+ZiAoIV9fd2l0aGluX3JhbmdlKHZhbHVlLCAwLCBJTlRfTUFYKSkgewo+PiAgIAkJCQlycy0+dGkt
+PmVycm9yID0gIm1pbl9yZWNvdmVyeV9yYXRlIG91dCBvZiByYW5nZSI7Cj4+ICAgCQkJCXJldHVy
+biAtRUlOVkFMOwo+PiAgIAkJCX0KPj4gQEAgLTE0NDAsNyArMTQ0MCw3IEBAIHN0YXRpYyBpbnQg
+cGFyc2VfcmFpZF9wYXJhbXMoc3RydWN0IHJhaWRfc2V0ICpycywgc3RydWN0IGRtX2FyZ19zZXQg
+KmFzLAo+PiAgIAkJCQlycy0+dGktPmVycm9yID0gIk9ubHkgb25lIG1heF9yZWNvdmVyeV9yYXRl
+IGFyZ3VtZW50IHBhaXIgYWxsb3dlZCI7Cj4+ICAgCQkJCXJldHVybiAtRUlOVkFMOwo+PiAgIAkJ
+CX0KPj4gLQkJCWlmICh2YWx1ZSA+IElOVF9NQVgpIHsKPj4gKwkJCWlmICghX193aXRoaW5fcmFu
+Z2UodmFsdWUsIDAsIElOVF9NQVgpKSB7Cj4+ICAgCQkJCXJzLT50aS0+ZXJyb3IgPSAibWF4X3Jl
+Y292ZXJ5X3JhdGUgb3V0IG9mIHJhbmdlIjsKPj4gICAJCQkJcmV0dXJuIC1FSU5WQUw7Cj4+ICAg
+CQkJfQo+PiBAQCAtMTQ3Miw2ICsxNDcyLDEyIEBAIHN0YXRpYyBpbnQgcGFyc2VfcmFpZF9wYXJh
+bXMoc3RydWN0IHJhaWRfc2V0ICpycywgc3RydWN0IGRtX2FyZ19zZXQgKmFzLAo+PiAgIAkJfQo+
+PiAgIAl9Cj4+ICAgCj4+ICsJaWYgKHJzLT5tZC5zeW5jX3NwZWVkX21heCAmJgo+PiArCSAgICBy
+cy0+bWQuc3luY19zcGVlZF9tYXggPCBycy0+bWQuc3luY19zcGVlZF9taW4pIHsKPj4gKwkJcnMt
+PnRpLT5lcnJvciA9ICJzeW5jIHNwZWVkIG1heCBzbWFsbGVyIHRoYW4gbWluIjsKPj4gKwkJcmV0
+dXJuIC1FSU5WQUw7Cj4+ICsJfQo+PiArCj4+ICAgCWlmICh0ZXN0X2JpdChfX0NUUl9GTEFHX1NZ
+TkMsICZycy0+Y3RyX2ZsYWdzKSAmJgo+PiAgIAkgICAgdGVzdF9iaXQoX19DVFJfRkxBR19OT1NZ
+TkMsICZycy0+Y3RyX2ZsYWdzKSkgewo+PiAgIAkJcnMtPnRpLT5lcnJvciA9ICJzeW5jIGFuZCBu
+b3N5bmMgYXJlIG11dHVhbGx5IGV4Y2x1c2l2ZSI7Cj4+IC0tIAo+PiAyLjE0LjMKPj4KPiBJc24n
+dCB0aGlzIGxhc3QgaHVuayB1bnJlbGF0ZWQ/CgpObywgb25jZSB1c2luZyBfX3dpdGhpbl9yYW5n
+ZSB0byBlbnN1cmUgcG9zaXRpdmUgdmFsdWVzCmZvciBzeW5jIG1pbi9tYXgsIHRoaXMgaHVuayBl
+bnN1cmVzIHRoYXQgdGhvc2UgYXJlIHNhbmUKaWYgYm90aCBhcmUgc2V0LgoKSGVpbnoKCj4KPiAt
+LQo+IGRtLWRldmVsIG1haWxpbmcgbGlzdAo+IGRtLWRldmVsQHJlZGhhdC5jb20KPiBodHRwczov
+L3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWwKCi0tCmRtLWRldmVsIG1h
+aWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFp
+bG1hbi9saXN0aW5mby9kbS1kZXZlbA==
