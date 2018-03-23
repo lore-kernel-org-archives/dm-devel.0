@@ -1,16 +1,16 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH v2 3/5] libmultipath: config parser: Allow
- '"' in strings
-Date: Fri, 23 Mar 2018 18:40:15 +0100
-Message-ID: <1521826815.13100.67.camel@suse.com>
-References: <20180307232620.15746-1-mwilck@suse.com>
-	<20180307232620.15746-4-mwilck@suse.com>
-	<e505286a-9dbf-969a-f638-7de33262067c@gmail.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH v2 02/20] Revert "multipathd: imply -n if
+ find_multipaths is set"
+Date: Fri, 23 Mar 2018 12:51:28 -0500
+Message-ID: <20180323175128.GG3103@octiron.msp.redhat.com>
+References: <20180319150155.5363-1-mwilck@suse.com>
+	<20180319150155.5363-3-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <e505286a-9dbf-969a-f638-7de33262067c@gmail.com>
+Content-Disposition: inline
+In-Reply-To: <20180319150155.5363-3-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,44 +20,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: Martin Wilck <mwilck@suse.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gRnIsIDIwMTgtMDMtMjMgYXQgMTc6NTkgKzAxMDAsIFhvc2UgVmF6cXVleiBQZXJleiB3cm90
-ZToKPiBPbiAwMy8wOC8yMDE4IDEyOjI2IEFNLCBNYXJ0aW4gV2lsY2sgd3JvdGU6Cj4gCj4gPiBX
-ZSBoYXZlIHNlZW4gbW9kZWwgc3RyaW5ncyBsaWxlICcyLjUiIFNTRCcgd2hpY2ggY2FuJ3QgYmUg
-cGFyc2VkCj4gPiBieSB0aGUgY3VycmVudCBjb25maWcgcGFyc2VyLiBUaGlzIHBhdGNoIGZpeGVz
-IHRoaXMgYnkgYWxsb3dpbmcKPiA+ICciIicgdG8gcmVwcmVzZW50IGEgZG91YmxlIHF1b3RlIGNo
-YXJhY3RlciBpbnNpZGUgYSBhIHN0cmluZy4KPiA+IFRoZSBhYm92ZSBtb2RlbCBzdHJpbmcgY291
-bGQgbm93IGJlIGVudGVyZWQgaW4gdGhlIGNvbmZpZyBmaWxlIGxpa2UKPiA+IHRoaXM6Cj4gPiAK
-PiA+IGJsYWNrbGlzdCB7Cj4gPiAJICB2ZW5kb3IgU29tZUNvcnAKPiA+IAkgIHByb2R1Y3QgIjIu
-NSIiIFNTRCIKPiA+IH0KPiAKPiAKPiBDb3VsZCB0aGlzIHdvcmsgaW4gdGhlIGZpcnN0IHBsYWNl
-Pwo+IAo+ICAgICAgICAgICBwcm9kdWN0ICIyLjVcIiBTU0QiCgpJJ20gbm90IHN1cmUgd2hhdCB5
-b3UgbWVhbi4gRm9yIHRoZSBjdXJyZW50IGNvZGUsIHRoZSBhbnN3ZXIgaXMgIm5vIi4KVGhlIHBh
-cnNlciBkb2Vzbid0IHRyZWF0ICdcJyBzcGVjaWFsIGluIGFueSB3YXkuIEZvciB0aGUgcGFyc2Vy
-LCB0aGUKcmVzdWx0IG9mIHRoZSBhYm92ZSBpcyB0aGUgdHVwbGUgWydwcm9kdWN0JywgJzIuNVwn
-LCAnU1NEJ10uIFRoZSBjb25maWcKZmlsZSBwYXJzZXIgd291bGQgZGlzY2FyZCB0aGUgbGFzdCB0
-dXBsZSBlbGVtZW50ICh0aGUgY2xpIGNvbW1hbmQKcGFyc2VyIHRha2VzIG1vcmUgdGhhbiAyIHR1
-cGxlIGVsZW1lbnRzLCBidXQgbm90IHRoZSBjb25maWcgZmlsZQpwYXJzZXIpLiBUaGUgcmVnZXhw
-IHBhcnNlciB3b3VsZCBiYWlsIG91dCBvbiB0aGUgbG9uZSBiYWNrc2xhc2ggaW4KJzIuNVwnLgoK
-SWYgeW91IG1lYW50IHRvIHNheSB0aGF0LCBpbnN0ZWFkIG9mIHVzaW5nICciIicsIEkgY291bGQg
-aGF2ZSBjaGFuZ2VkCnRoZSBwYXJzZXIgdG8gdXNlICdcIicgdG8gcmVwcmVzZW50IGEgc2luZ2xl
-IGRvdWJsZS1xdW90ZSBjaGFyYWN0ZXIsCnllcywgdGhhdCB3b3VsZCBoYXZlIGJlZW4gcG9zc2li
-bGUsIGF0IHRoZSBjb3N0IG9mIGEgbXVjaCBiaWdnZXIgYW5kCm1vcmUgZXJyb3ItcHJvbmUgcmV3
-cml0ZSBvZiB0aGUgcGFyc2luZyBjb2RlLgoKTW9yZW92ZXIsIEkgdGhpbmsgdXNpbmcgJ1wiJyBo
-YXMgYW4gYWRkdGlvbmFsIGRpc2FkdmFudGFnZSBjb21wYXJlZCB0bwonIiInLiBBcyB5b3Uga25v
-dywgdGhlIHZhbHVlcyBmb3IgbWFueSBvcHRpb25zIGFyZSByZWd1bGFyIGV4cHJlc3Npb25zLAph
-bmQgdGhlIGJhY2tzbGFzaCBoYXMgc3BlY2lhbCBtZWFuaW5nIGluIHJlZ2V4cHMuIEZpZ3VyaW5n
-IG91dCB0aGUKY29ycmVjdCBudW1iZXIgb2YgYmFja3NsYXNoZXMgZm9yIGNvbXBsZXggcmVnZXhw
-cyBpcyBoYXJkIGFueXdheSwgYW5kCmlmIHdlIGdpdmUgJ1wnIHNwZWNpYWwgbWVhbmluZyBpbiB0
-aGUgb3B0aW9uIHBhcnNlciwgdG9vLCB3ZSdkIHRyZWF0IGl0CnNwZWNpYWxseSBvbiB0d28gc2Vw
-YXJhdGUgbGF5ZXJzLCBtYWtpbmcgaXQgZXZlbiBoYXJkZXIgZm9yIHVzZXJzLiBUaGUKZG91Ymxl
-LXF1b3RlIGNoYXJhY3RlciwgT1RPSCwgaGFzIG5vIHNwZWNpYWwgbWVhbmluZyBpbiByZWdleHBz
-LCBzbwp0aGF0IHRoZSB0d28gcXVvdGluZyBtZWNoYW5pc21zIG9uIHRoZSB0d28gbGF5ZXJzIGFy
-ZSBvcnRob2dvbmFsLgoKUmVnYXJkcwpNYXJ0aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2ls
-Y2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgs
-IEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJC
-IDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxA
-cmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2
-ZWw=
+On Mon, Mar 19, 2018 at 04:01:37PM +0100, Martin Wilck wrote:
+> This reverts commit 64e27ec066a001012f44550f095c93443e91d845.
+> 
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  multipathd/main.c | 4 ----
+>  1 file changed, 4 deletions(-)
+> 
+> diff --git a/multipathd/main.c b/multipathd/main.c
+> index 3ae04422a123..0435133fadfb 100644
+> --- a/multipathd/main.c
+> +++ b/multipathd/main.c
+> @@ -2389,10 +2389,6 @@ reconfigure (struct vectors * vecs)
+>  		conf->verbosity = verbosity;
+>  	if (bindings_read_only)
+>  		conf->bindings_read_only = bindings_read_only;
+> -	if (conf->find_multipaths) {
+> -		condlog(2, "find_multipaths is set: -n is implied");
+> -		ignore_new_devs = 1;
+> -	}
+>  	if (ignore_new_devs)
+>  		conf->ignore_new_devs = ignore_new_devs;
+>  	uxsock_timeout = conf->uxsock_timeout;
+> -- 
+> 2.16.1
