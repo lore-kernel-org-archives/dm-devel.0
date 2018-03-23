@@ -1,27 +1,17 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH] slab: introduce the flag SLAB_MINIMIZE_WASTE
-Date: Fri, 23 Mar 2018 11:31:54 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1803231113410.22626@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1803200954590.18995@file01.intranet.prod.int.rdu2.redhat.com>
-	<20180320173512.GA19669@bombadil.infradead.org>
-	<alpine.DEB.2.20.1803201250480.27540@nuc-kabylake>
-	<alpine.LRH.2.02.1803201510030.21066@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.DEB.2.20.1803201536590.28319@nuc-kabylake>
-	<alpine.LRH.2.02.1803201740280.21066@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.DEB.2.20.1803211024220.2175@nuc-kabylake>
-	<alpine.LRH.2.02.1803211153320.16017@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.DEB.2.20.1803211226350.3174@nuc-kabylake>
-	<alpine.LRH.2.02.1803211425330.26409@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.DEB.2.20.1803211354170.13978@nuc-kabylake>
-	<alpine.LRH.2.02.1803211500570.26409@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.DEB.2.20.1803211508560.17257@nuc-kabylake>
-	<alpine.LRH.2.02.1803211613010.28365@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.DEB.2.20.1803230956420.4108@nuc-kabylake>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm table: add support for secure erase forwarding
+ [was: Re: Adaptation secure erase forwarding for 4.1x kernels]
+Date: Fri, 23 Mar 2018 11:36:24 -0400
+Message-ID: <20180323153623.GA4341@redhat.com>
+References: <1496940834.549721.1520933025411.JavaMail.zimbra@omprussia.ru>
+	<20180322151045.GA27598@redhat.com>
+	<2144442487.305844.1521792860528.JavaMail.zimbra@omprussia.ru>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.DEB.2.20.1803230956420.4108@nuc-kabylake>
+Content-Disposition: inline
+In-Reply-To: <2144442487.305844.1521792860528.JavaMail.zimbra@omprussia.ru>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -31,106 +21,75 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christopher Lameter <cl@linux.com>
-Cc: Mike Snitzer <msnitzer@redhat.com>, Matthew Wilcox <willy@infradead.org>, Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Andrew Morton <akpm@linux-foundation.org>
+To: Denis Semakin <d.semakin@omprussia.ru>
+Cc: dm-devel <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+On Fri, Mar 23 2018 at  4:14am -0400,
+Denis Semakin <d.semakin@omprussia.ru> wrote:
 
+> Hi.
+> Soon or later everybody start to think about security.
+> One of the most frequently requirement is 100% reliable data deletion from
+> any device in case of compromising or loss or theft.
+> 
+> For this, drive and memory cards manufacturers provide ERASE and TRIM features
+> which can notice (inform) controller of the device to erase sectors
+> (write down only zeros or one or random data). Features can be triggered
+> by calling ioctl() requests or a mount options (like ext4 does). But this works
+> only with whole device -- /dev/sdX, /dev/mmcblk0pX...
+> But what if for some security reasons we need to secure delete a single file.
+> A file-system layer provide this functionality... one may call __blkdev_issue_discard()
+> with BLKDEV_DISCARD_SECURE flag.
+> But...
+> All this works well if there is no virtual layer (like device-mapper)
+> between file-system and block-layer, because if device driver supports
+> this feature it can set up related flag in request_queue flags.
+> 
+> I have ext4 lvm partitions on my test instance and a drive which can
+> secure erase sectors.
+> Without lvm it works, with lvm it doesn't.
+> That's the purpose if this patch - to provide the opportunity to secure erase
+> given sectors (through device-mapper layer, forward request) that were assigned for regular file.
 
-On Fri, 23 Mar 2018, Christopher Lameter wrote:
+I was aware of all that.  I understand that DM currently isn't setting
+the QUEUE_FLAG_SECERASE, etc.
 
-> On Wed, 21 Mar 2018, Mikulas Patocka wrote:
+> >But I'm left skeptical that this is enough.  Don't targets need to
+> >explicitly handle these REQ_OP_SECURE_ERASE requests?  Similar to how
+> >REQ_OP_DISCARD is handled?
 > 
-> > > +	s->allocflags = allocflags;
-> >
-> > I'd also use "WRITE_ONCE(s->allocflags, allocflags)" here and when writing
-> > s->oo and s->min to avoid some possible compiler misoptimizations.
-> 
-> It only matters that 0 etc is never written.
+> I think yes, REQ_OP_DISCARD will not secure erase the data and it can be possible
+> to get it from device.
 
-The C11 standard says that reads and writes of the same variable should't 
-race (even if you write the same value as before), and consequently, the 
-compiler can make transformations based on this assumption. For example, 
-the compiler optimization may transform the following code
+Think you misunderstood me.
 
->       allocflags = 0;
->       if (order)
->               allocflags |= __GFP_COMP;
->       if (s->flags & SLAB_CACHE_DMA)
->               allocflags |= GFP_DMA;
->       if (s->flags & SLAB_RECLAIM_ACCOUNT)
->               allocflags |= __GFP_RECLAIMABLE;
->       s->allocflags = allocflags;
+I meant that: DM must take special care to properly handle
+REQ_OP_DISCARD.  Particularly more complex targets like thinp, etc.
 
-back into:
->	s->allocflags = 0;
->	if (order)
->		s->allocflags |= __GFP_COMP;
->	if (s->flags & SLAB_CACHE_DMA)
->		s->allocflags |= GFP_DMA;
->	if (s->flags & SLAB_RECLAIM_ACCOUNT)
->		s->allocflags |= __GFP_RECLAIMABLE;
+But even more basic targets (e.g. dm-stripe.c) have code to optimize
+handling of REQ_OP_DISCARD.  We'd likely want REQ_OP_SECURE_ERASE to be
+using dm-stripe.c's REQ_OP_DISCARD optimization too.
 
-Afaik, gcc currently doesn't do this transformation, but it's better to 
-write standard-compliant code and use the macro WRITE_ONCE for variables 
-that may be concurrently read and written.
+> >I'd feel safer about having targets opt-in with setting (a new)
+> >ti->num_secure_erase_bios.
+> 
+> Well... May it make sense but I didn't see any reasons to add it in patch.
 
-> > Another problem is that it updates s->oo and later it updates s->max:
-> >         s->oo = oo_make(order, size, s->reserved);
-> >         s->min = oo_make(get_order(size), size, s->reserved);
-> >         if (oo_objects(s->oo) > oo_objects(s->max))
-> >                 s->max = s->oo;
-> > --- so, the concurrently running code could see s->oo > s->max, which
-> > could trigger some memory corruption.
-> 
-> Well s->max is only relevant for code that analyses the details of slab
-> structures for diagnostics.
-> 
-> > s->max is only used in memory allocations -
-> > kmalloc(BITS_TO_LONGS(oo_objects(s->max)) * sizeof(unsigned long)), so
-> > perhaps we could fix the bug by removing s->max at all and always
-> > allocating enough memory for the maximum possible number of objects?
-> >
-> > - kmalloc(BITS_TO_LONGS(oo_objects(s->max)) * sizeof(unsigned long), GFP_KERNEL);
-> > + kmalloc(BITS_TO_LONGS(MAX_OBJS_PER_PAGE) * sizeof(unsigned long), GFP_KERNEL);
-> 
-> MAX_OBJS_PER_PAGE is 32k. So you are looking at contiguous allocations of
-> 256kbyte. Not good.
+Thinking further, it is absolutely needed, otherwise dm-stripe.c won't
+be able to use the optimization I mentioned above.  In addition, other
+targets shouldn't be getting REQ_OP_SECURE_ERASE unless there is a real
+need.  ti->num_secure_erase_bios will allow for a much safer and
+controlled rollout of this support.
+ 
+> >Which DM target(s) have you been wanting to pass REQ_OP_SECURE_ERASE
+> >bios?
+> I think first of all a linear target of course should have this. For others I'm not sure, I need
+> to investigate.
 
-I think it's one bit per object, so the total size of the allocation is 
-4k. Allocating 4k shouldn't be a problem.
+I think "linear" and "striped" would be the ideal first targets to add
+this support to.
 
-> The simplest measure would be to disallow the changing of the order while
-> the slab contains objects.
-> 
-> 
-> Subject: slub: Disallow order changes when objects exist in a slab
-> 
-> There seems to be a couple of races that would have to be
-> addressed if the slab order would be changed during active use.
-> 
-> Lets disallow this in the same way as we also do not allow
-> other changes of slab characteristics when objects are active.
-> 
-> Signed-off-by: Christoph Lameter <cl@linux.com>
-> 
-> Index: linux/mm/slub.c
-> ===================================================================
-> --- linux.orig/mm/slub.c
-> +++ linux/mm/slub.c
-> @@ -4919,6 +4919,9 @@ static ssize_t order_store(struct kmem_c
->  	unsigned long order;
->  	int err;
-> 
-> +	if (any_slab_objects(s))
-> +		return -EBUSY;
-> +
->  	err = kstrtoul(buf, 10, &order);
->  	if (err)
->  		return err;
+I can work through adding the other changes at some point soon.
 
-This test isn't locked against anything, so it may race with concurrent 
-allocation. "any_slab_objects" may return false and a new object in the 
-slab cache may appear immediatelly after that.
-
-Mikulas
+Mike
