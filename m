@@ -1,16 +1,16 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH v2 06/20] libmultipath: trigger path uevent
- only when necessary
-Date: Fri, 23 Mar 2018 12:58:38 -0500
-Message-ID: <20180323175838.GJ3103@octiron.msp.redhat.com>
-References: <20180319150155.5363-1-mwilck@suse.com>
-	<20180319150155.5363-7-mwilck@suse.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: [PATCH] multipath-tools: replace FSF address with a
+	www pointer
+Date: Fri, 23 Mar 2018 19:28:00 +0100
+Message-ID: <1a0b44c5-c7a6-85fa-b2dd-1bd542efbb76@gmail.com>
+References: <20180310205002.3318-1-xose.vazquez@gmail.com>
+	<1521495458.3798.138.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20180319150155.5363-7-mwilck@suse.com>
+In-Reply-To: <1521495458.3798.138.camel@suse.com>
+Content-Language: en-GB
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,43 +21,54 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Martin Wilck <mwilck@suse.com>
-Cc: dm-devel@redhat.com
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Mar 19, 2018 at 04:01:41PM +0100, Martin Wilck wrote:
-> Paths that are already classified as DM_MULTIPATH_DEVICE_PATH don't
-> need to be retriggered.
-> 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  libmultipath/configure.c | 12 ++++++++++++
->  1 file changed, 12 insertions(+)
-> 
-> diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-> index 245bd11672cb..838d145a5aa2 100644
-> --- a/libmultipath/configure.c
-> +++ b/libmultipath/configure.c
-> @@ -456,8 +456,20 @@ trigger_paths_udev_change(const struct multipath *mpp)
->  		if (!pgp->paths)
->  			continue;
->  		vector_foreach_slot(pgp->paths, pp, j) {
-> +			const char *env;
-> +
->  			if (!pp->udev)
->  				continue;
-> +			/*
-> +			 * Paths that are already classified as multipath
-> +			 * members don't need another uevent.
-> +			 */
-> +			env = udev_device_get_property_value(
-> +				pp->udev, "DM_MULTIPATH_DEVICE_PATH");
-> +			if (env != NULL && !strcmp(env, "1"))
-> +					continue;
-> +
-> +			condlog(4, "triggering change uevent for %s", pp->dev);
->  			sysfs_attr_set_value(pp->udev, "uevent", "change",
->  					     strlen("change"));
->  		}
-> -- 
-> 2.16.1
+T24gMDMvMTkvMjAxOCAxMDozNyBQTSwgTWFydGluIFdpbGNrIHdyb3RlOgoKPiBPbiBTYXQsIDIw
+MTgtMDMtMTAgYXQgMjE6NTAgKzAxMDAsIFhvc2UgVmF6cXVleiBQZXJleiB3cm90ZToKPj4gTGVz
+cyBwcm9uZSB0byBmdXR1cmUgbW9kaWZpY2F0aW9ucywgYW5kIG5ldyBGU0YgbGljZW5jZXMKPj4g
+cG9pbnQgZXhhY3RseSB0byB0aGlzIHVybDogPGh0dHA6Ly93d3cuZ251Lm9yZy9saWNlbnNlcy8+
+Lgo+Pgo+PiBGaXJzdCBjbGVhbiB1cCB3YXMgZG9uZSBpbiA1NjE5YTM5YzQzM2FjM2QxMGE4ODA3
+OTU5M2NlYzFhYTY0NzJjYmViCj4+Cj4+IENjOiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNv
+bT4KPj4gQ2M6IENocmlzdG9waGUgVmFyb3F1aSA8Y2hyaXN0b3BoZS52YXJvcXVpQG9wZW5zdmMu
+Y29tPgo+PiBDYzogZGV2aWNlLW1hcHBlciBkZXZlbG9wbWVudCA8ZG0tZGV2ZWxAcmVkaGF0LmNv
+bT4KPj4gU2lnbmVkLW9mZi1ieTogWG9zZSBWYXpxdWV6IFBlcmV6IDx4b3NlLnZhenF1ZXpAZ21h
+aWwuY29tPgoKPiBJQU5BTCwgYnV0IEFGQUlDUyBtdWx0aXBhdGgtdG9vbHMgY29tZXMgdW5kZXIg
+R1BMdjIsIGFuZCB0aGUgR1BMdjIKCgpodHRwczovL2dpdC5vcGVuc3ZjLmNvbS9naXR3ZWIuY2dp
+P3A9bXVsdGlwYXRoLXRvb2xzLy5naXQ7YT1ibG9iX3BsYWluO2Y9Q09QWUlORztoYj1IRUFECgog
+ICAgICAgICAgICAgICAgICBHTlUgKkxJQlJBUlkqIEdFTkVSQUwgUFVCTElDIExJQ0VOU0UKICAg
+ICAgICAgICAgICAgICAgICAgICAgVmVyc2lvbiAyLCBKdW5lIDE5OTEKCmFrYSAiTGVzc2VyIiwg
+YnV0IHJ1bGVzIGFyZSB0aGUgc2FtZSBhcyBpbiBHUEwuCgo+IHN0aWxsIGNvbnRhaW5zIHRoZSBv
+cmlnaW5hbCBwYXJhZ3JhcGggd2l0aCB0aGUgYWRkcmVzcy4gCj4gaHR0cHM6Ly93d3cuZ251Lm9y
+Zy9saWNlbnNlcy9vbGQtbGljZW5zZXMvZ3BsLTIuMC5odG1sI2hvd3RvCgoKZnJvbSBodHRwczov
+L3d3dy5nbnUub3JnL2xpY2Vuc2VzL2dwbC1ob3d0by5odG1sIDoKIlsuLi5dCiAgICBGb29iYXIg
+aXMgZnJlZSBzb2Z0d2FyZTogeW91IGNhbiByZWRpc3RyaWJ1dGUgaXQgYW5kL29yIG1vZGlmeQog
+ICAgaXQgdW5kZXIgdGhlIHRlcm1zIG9mIHRoZSBHTlUgR2VuZXJhbCBQdWJsaWMgTGljZW5zZSBh
+cyBwdWJsaXNoZWQgYnkKICAgIHRoZSBGcmVlIFNvZnR3YXJlIEZvdW5kYXRpb24sIGVpdGhlciB2
+ZXJzaW9uIDMgb2YgdGhlIExpY2Vuc2UsIG9yCiAgICAoYXQgeW91ciBvcHRpb24pIGFueSBsYXRl
+ciB2ZXJzaW9uLgoKICAgIEZvb2JhciBpcyBkaXN0cmlidXRlZCBpbiB0aGUgaG9wZSB0aGF0IGl0
+IHdpbGwgYmUgdXNlZnVsLAogICAgYnV0IFdJVEhPVVQgQU5ZIFdBUlJBTlRZOyB3aXRob3V0IGV2
+ZW4gdGhlIGltcGxpZWQgd2FycmFudHkgb2YKICAgIE1FUkNIQU5UQUJJTElUWSBvciBGSVRORVNT
+IEZPUiBBIFBBUlRJQ1VMQVIgUFVSUE9TRS4gIFNlZSB0aGUKICAgIEdOVSBHZW5lcmFsIFB1Ymxp
+YyBMaWNlbnNlIGZvciBtb3JlIGRldGFpbHMuCgogICAgWW91IHNob3VsZCBoYXZlIHJlY2VpdmVk
+IGEgY29weSBvZiB0aGUgR05VIEdlbmVyYWwgUHVibGljIExpY2Vuc2UKICAgIGFsb25nIHdpdGgg
+Rm9vYmFyLiAgSWYgbm90LCBzZWUgPGh0dHA6Ly93d3cuZ251Lm9yZy9saWNlbnNlcy8+LgoKVG8g
+dXNlIGEgZGlmZmVyZW50IHNldCBvZiBHUEwgdmVyc2lvbnMsIHlvdSB3b3VsZCBtb2RpZnkgdGhl
+IGVuZCBvZiB0aGUgZmlyc3QKbG9uZyBwYXJhZ3JhcGguIEZvciBpbnN0YW5jZSwgdG8gbGljZW5z
+ZSB1bmRlciB2ZXJzaW9uIDIgb3IgbGF0ZXIsIHlvdSB3b3VsZApyZXBsYWNlIOKAnDPigJ0gd2l0
+aCDigJwy4oCdLgpbLi4uXSIKCkFueXdheSwgdGhhdCB0ZXh0IGlzIGEgImxpY2VuY2Ugbm90aWNl
+IiBhbmQgaXMgbm90ICJwYXJ0IG9mIHRoZSBsaWNlbmNlIjoKCj4gUmVwbGFjaW5nIHRoaXMgYnkg
+dGhlIHRleHQgZnJvbSBHUEx2MywgYW5kIHVzaW5nIHRoZSAiL2xpY2Vuc2VzLyIgbGluaywKPiB3
+aGljaCBwb2ludHMgdG8gYSBwYWdlIG1vc3RseSBkZXZvdGVkIHRvIEdQTHYzLCBtaWdodCBjYXVz
+ZSBwZW9wbGUgdG8KPiB0aGluayB3ZSdyZSB1c2luZyBHUEx2My4gSSdtIGluIGZhdm9yIG9mIGtl
+ZXBpbmcgdGhlIEdQTHYyIHdvcmRpbmcuCgoKaHR0cHM6Ly93d3cuZ251Lm9yZy9saWNlbnNlcy8g
+aXMgYSBfZ2VuZXJpY18gcGxhY2UuIFRoZXJlIGlzIGluZm8gYWJvdXQKQUxMIGxpY2VuY2VzIGFu
+ZCB2ZXJzaW9ucy4KCgpJdCB3b3VsZCBiZSBuaWNlIHRvIHN0YXJ0IHVzaW5nIFNQRFggdGFncyAo
+IGh0dHBzOi8vc3BkeC5vcmcvICksCmF0IGxlYXN0IGZvciBuZXcgZmlsZXMsIGluc3RlYWQgb2Yg
+ZnVsbCBHUEwvTEdQTCBub3RpY2VzOgpodHRwczovL3Bob3Rvcy5hcHAuZ29vLmdsL1JyaW4wTGxv
+YlRGWVljaVEyCgoKQlRXOiBMRkMxOTEgQ29tcGxpYW5jZSBCYXNpY3MgZm9yIERldmVsb3BlcnMg
+Y291cnNlIGlzIEZSRUUKICAgICBodHRwczovL3RyYWluaW5nLmxpbnV4Zm91bmRhdGlvbi5vcmcv
+bGludXgtY291cnNlcy9vcGVuLXNvdXJjZS1jb21wbGlhbmNlLWNvdXJzZXMvY29tcGxpYW5jZS1i
+YXNpY3MtZm9yLWRldmVsb3BlcnMKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEBy
+ZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZl
+bA==
