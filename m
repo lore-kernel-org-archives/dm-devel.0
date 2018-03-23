@@ -1,16 +1,16 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+From: Martin Wilck <mwilck@suse.com>
 Subject: Re: [PATCH v2 3/5] libmultipath: config parser: Allow
  '"' in strings
-Date: Fri, 23 Mar 2018 17:59:52 +0100
-Message-ID: <e505286a-9dbf-969a-f638-7de33262067c@gmail.com>
+Date: Fri, 23 Mar 2018 18:40:15 +0100
+Message-ID: <1521826815.13100.67.camel@suse.com>
 References: <20180307232620.15746-1-mwilck@suse.com>
 	<20180307232620.15746-4-mwilck@suse.com>
+	<e505286a-9dbf-969a-f638-7de33262067c@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180307232620.15746-4-mwilck@suse.com>
-Content-Language: en-GB
+In-Reply-To: <e505286a-9dbf-969a-f638-7de33262067c@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,23 +20,44 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 03/08/2018 12:26 AM, Martin Wilck wrote:
-
-> We have seen model strings lile '2.5" SSD' which can't be parsed
-> by the current config parser. This patch fixes this by allowing
-> '""' to represent a double quote character inside a a string.
-> The above model string could now be entered in the config file like this:
-> 
-> blacklist {
-> 	  vendor SomeCorp
-> 	  product "2.5"" SSD"
-> }
-
-
-Could this work in the first place?
-
-          product "2.5\" SSD"
+T24gRnIsIDIwMTgtMDMtMjMgYXQgMTc6NTkgKzAxMDAsIFhvc2UgVmF6cXVleiBQZXJleiB3cm90
+ZToKPiBPbiAwMy8wOC8yMDE4IDEyOjI2IEFNLCBNYXJ0aW4gV2lsY2sgd3JvdGU6Cj4gCj4gPiBX
+ZSBoYXZlIHNlZW4gbW9kZWwgc3RyaW5ncyBsaWxlICcyLjUiIFNTRCcgd2hpY2ggY2FuJ3QgYmUg
+cGFyc2VkCj4gPiBieSB0aGUgY3VycmVudCBjb25maWcgcGFyc2VyLiBUaGlzIHBhdGNoIGZpeGVz
+IHRoaXMgYnkgYWxsb3dpbmcKPiA+ICciIicgdG8gcmVwcmVzZW50IGEgZG91YmxlIHF1b3RlIGNo
+YXJhY3RlciBpbnNpZGUgYSBhIHN0cmluZy4KPiA+IFRoZSBhYm92ZSBtb2RlbCBzdHJpbmcgY291
+bGQgbm93IGJlIGVudGVyZWQgaW4gdGhlIGNvbmZpZyBmaWxlIGxpa2UKPiA+IHRoaXM6Cj4gPiAK
+PiA+IGJsYWNrbGlzdCB7Cj4gPiAJICB2ZW5kb3IgU29tZUNvcnAKPiA+IAkgIHByb2R1Y3QgIjIu
+NSIiIFNTRCIKPiA+IH0KPiAKPiAKPiBDb3VsZCB0aGlzIHdvcmsgaW4gdGhlIGZpcnN0IHBsYWNl
+Pwo+IAo+ICAgICAgICAgICBwcm9kdWN0ICIyLjVcIiBTU0QiCgpJJ20gbm90IHN1cmUgd2hhdCB5
+b3UgbWVhbi4gRm9yIHRoZSBjdXJyZW50IGNvZGUsIHRoZSBhbnN3ZXIgaXMgIm5vIi4KVGhlIHBh
+cnNlciBkb2Vzbid0IHRyZWF0ICdcJyBzcGVjaWFsIGluIGFueSB3YXkuIEZvciB0aGUgcGFyc2Vy
+LCB0aGUKcmVzdWx0IG9mIHRoZSBhYm92ZSBpcyB0aGUgdHVwbGUgWydwcm9kdWN0JywgJzIuNVwn
+LCAnU1NEJ10uIFRoZSBjb25maWcKZmlsZSBwYXJzZXIgd291bGQgZGlzY2FyZCB0aGUgbGFzdCB0
+dXBsZSBlbGVtZW50ICh0aGUgY2xpIGNvbW1hbmQKcGFyc2VyIHRha2VzIG1vcmUgdGhhbiAyIHR1
+cGxlIGVsZW1lbnRzLCBidXQgbm90IHRoZSBjb25maWcgZmlsZQpwYXJzZXIpLiBUaGUgcmVnZXhw
+IHBhcnNlciB3b3VsZCBiYWlsIG91dCBvbiB0aGUgbG9uZSBiYWNrc2xhc2ggaW4KJzIuNVwnLgoK
+SWYgeW91IG1lYW50IHRvIHNheSB0aGF0LCBpbnN0ZWFkIG9mIHVzaW5nICciIicsIEkgY291bGQg
+aGF2ZSBjaGFuZ2VkCnRoZSBwYXJzZXIgdG8gdXNlICdcIicgdG8gcmVwcmVzZW50IGEgc2luZ2xl
+IGRvdWJsZS1xdW90ZSBjaGFyYWN0ZXIsCnllcywgdGhhdCB3b3VsZCBoYXZlIGJlZW4gcG9zc2li
+bGUsIGF0IHRoZSBjb3N0IG9mIGEgbXVjaCBiaWdnZXIgYW5kCm1vcmUgZXJyb3ItcHJvbmUgcmV3
+cml0ZSBvZiB0aGUgcGFyc2luZyBjb2RlLgoKTW9yZW92ZXIsIEkgdGhpbmsgdXNpbmcgJ1wiJyBo
+YXMgYW4gYWRkdGlvbmFsIGRpc2FkdmFudGFnZSBjb21wYXJlZCB0bwonIiInLiBBcyB5b3Uga25v
+dywgdGhlIHZhbHVlcyBmb3IgbWFueSBvcHRpb25zIGFyZSByZWd1bGFyIGV4cHJlc3Npb25zLAph
+bmQgdGhlIGJhY2tzbGFzaCBoYXMgc3BlY2lhbCBtZWFuaW5nIGluIHJlZ2V4cHMuIEZpZ3VyaW5n
+IG91dCB0aGUKY29ycmVjdCBudW1iZXIgb2YgYmFja3NsYXNoZXMgZm9yIGNvbXBsZXggcmVnZXhw
+cyBpcyBoYXJkIGFueXdheSwgYW5kCmlmIHdlIGdpdmUgJ1wnIHNwZWNpYWwgbWVhbmluZyBpbiB0
+aGUgb3B0aW9uIHBhcnNlciwgdG9vLCB3ZSdkIHRyZWF0IGl0CnNwZWNpYWxseSBvbiB0d28gc2Vw
+YXJhdGUgbGF5ZXJzLCBtYWtpbmcgaXQgZXZlbiBoYXJkZXIgZm9yIHVzZXJzLiBUaGUKZG91Ymxl
+LXF1b3RlIGNoYXJhY3RlciwgT1RPSCwgaGFzIG5vIHNwZWNpYWwgbWVhbmluZyBpbiByZWdleHBz
+LCBzbwp0aGF0IHRoZSB0d28gcXVvdGluZyBtZWNoYW5pc21zIG9uIHRoZSB0d28gbGF5ZXJzIGFy
+ZSBvcnRob2dvbmFsLgoKUmVnYXJkcwpNYXJ0aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2ls
+Y2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgs
+IEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJC
+IDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxA
+cmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2
+ZWw=
