@@ -1,17 +1,26 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm table: add support for secure erase forwarding
- [was: Re: Adaptation secure erase forwarding for 4.1x kernels]
-Date: Fri, 23 Mar 2018 11:38:44 -0400
-Message-ID: <20180323153844.GA4914@redhat.com>
-References: <1496940834.549721.1520933025411.JavaMail.zimbra@omprussia.ru>
-	<20180322151045.GA27598@redhat.com>
-	<695931032.318989.1521816469739.JavaMail.zimbra@omprussia.ru>
+From: Christopher Lameter <cl@linux.com>
+Subject: Re: [PATCH] slab: introduce the flag SLAB_MINIMIZE_WASTE
+Date: Fri, 23 Mar 2018 10:48:46 -0500 (CDT)
+Message-ID: <alpine.DEB.2.20.1803231047290.5238@nuc-kabylake>
+References: <alpine.LRH.2.02.1803200954590.18995@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.LRH.2.02.1803201510030.21066@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.DEB.2.20.1803201536590.28319@nuc-kabylake>
+	<alpine.LRH.2.02.1803201740280.21066@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.DEB.2.20.1803211024220.2175@nuc-kabylake>
+	<alpine.LRH.2.02.1803211153320.16017@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.DEB.2.20.1803211226350.3174@nuc-kabylake>
+	<alpine.LRH.2.02.1803211425330.26409@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.DEB.2.20.1803211354170.13978@nuc-kabylake>
+	<alpine.LRH.2.02.1803211500570.26409@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.DEB.2.20.1803211508560.17257@nuc-kabylake>
+	<alpine.LRH.2.02.1803211613010.28365@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.DEB.2.20.1803230956420.4108@nuc-kabylake>
+	<alpine.LRH.2.02.1803231113410.22626@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <695931032.318989.1521816469739.JavaMail.zimbra@omprussia.ru>
+In-Reply-To: <alpine.LRH.2.02.1803231113410.22626@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,22 +30,16 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Denis Semakin <d.semakin@omprussia.ru>
-Cc: dm-devel <dm-devel@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Mike Snitzer <msnitzer@redhat.com>, Matthew Wilcox <willy@infradead.org>, Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: dm-devel.ids
 
-On Fri, Mar 23 2018 at 10:47am -0400,
-Denis Semakin <d.semakin@omprussia.ru> wrote:
+On Fri, 23 Mar 2018, Mikulas Patocka wrote:
 
-> >I'd feel safer about having targets opt-in with setting (a new)
-> >ti->num_secure_erase_bios.
-> May be add a new field "bool secure_erase_supported:1" in dm_target structure instead?
-> And set up it "true" in constructor for linear targets.
+> This test isn't locked against anything, so it may race with concurrent
+> allocation. "any_slab_objects" may return false and a new object in the
+> slab cache may appear immediatelly after that.
 
-No, that type of change is for a DM target to support a feature even if
-the underlying device doesn't.
-
-As my previous email elaborated, ti->num_secure_erase_bios is the right
-way forward.
-
-Mike
+Ok the same reasoning applies to numerous other slab configuration
+settings in /sys/kernel/slab.... So we need to disable all of that or come
+up with a sane way of synchronization.
