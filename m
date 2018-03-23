@@ -1,16 +1,16 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH v2 04/20] multipath -u -i: respect entries in
-	WWIDs file
-Date: Fri, 23 Mar 2018 12:54:57 -0500
-Message-ID: <20180323175457.GI3103@octiron.msp.redhat.com>
+Subject: Re: [PATCH v2 06/20] libmultipath: trigger path uevent
+ only when necessary
+Date: Fri, 23 Mar 2018 12:58:38 -0500
+Message-ID: <20180323175838.GJ3103@octiron.msp.redhat.com>
 References: <20180319150155.5363-1-mwilck@suse.com>
-	<20180319150155.5363-5-mwilck@suse.com>
+	<20180319150155.5363-7-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20180319150155.5363-5-mwilck@suse.com>
+In-Reply-To: <20180319150155.5363-7-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,57 +24,40 @@ To: Martin Wilck <mwilck@suse.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Mar 19, 2018 at 04:01:39PM +0100, Martin Wilck wrote:
-> Previously, if find_multipaths was set, devices listed in the WWIDs file
-> weren't classified as multipath members by "multipath -u -i" unless they also
-> met the "find_multipaths" criteria (at least two paths, or existing map with
-> this WWID). Now we classify all paths in the WWIDs file as multipath members, too.
+On Mon, Mar 19, 2018 at 04:01:41PM +0100, Martin Wilck wrote:
+> Paths that are already classified as DM_MULTIPATH_DEVICE_PATH don't
+> need to be retriggered.
 > 
-> The rationale for this patch is to match the logic that multipathd applies
-> by default (i.e. without "-n").
-> 
-
-Still calling the option ignore_wwids is a little confusing when you
-aren't actually ignoring the wwids file (you're just not requiring it),
-but at any rate...
-
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 > Signed-off-by: Martin Wilck <mwilck@suse.com>
 > ---
->  multipath/main.c | 19 +++++++++++--------
->  1 file changed, 11 insertions(+), 8 deletions(-)
+>  libmultipath/configure.c | 12 ++++++++++++
+>  1 file changed, 12 insertions(+)
 > 
-> diff --git a/multipath/main.c b/multipath/main.c
-> index 20f46acd924a..4d45df3cdb83 100644
-> --- a/multipath/main.c
-> +++ b/multipath/main.c
-> @@ -437,16 +437,19 @@ configure (struct config *conf, enum mpath_cmds cmd,
->  		 * set, you need to actually check if there are two available
->  		 * paths to determine if this path should be multipathed. To
->  		 * do this, we put off the check until after discovering all
-> -		 * the paths */
-> -		if (cmd == CMD_VALID_PATH &&
-> -		    (!conf->find_multipaths || !conf->ignore_wwids)) {
-> -			if (conf->ignore_wwids ||
-> +		 * the paths.
-> +		 * Paths listed in the wwids file are always considered valid.
-> +		 */
-> +		if (cmd == CMD_VALID_PATH) {
-> +			if ((!conf->find_multipaths && conf->ignore_wwids) ||
->  			    check_wwids_file(refwwid, 0) == 0)
->  				r = 0;
-> -
-> -			printf("%s %s a valid multipath device path\n",
-> -			       devpath, r == 0 ? "is" : "is not");
-> -			goto out;
-> +			if (r == 0 ||
-> +			    !conf->find_multipaths || !conf->ignore_wwids) {
-> +				printf("%s %s a valid multipath device path\n",
-> +				       devpath, r == 0 ? "is" : "is not");
-> +				goto out;
-> +			}
+> diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+> index 245bd11672cb..838d145a5aa2 100644
+> --- a/libmultipath/configure.c
+> +++ b/libmultipath/configure.c
+> @@ -456,8 +456,20 @@ trigger_paths_udev_change(const struct multipath *mpp)
+>  		if (!pgp->paths)
+>  			continue;
+>  		vector_foreach_slot(pgp->paths, pp, j) {
+> +			const char *env;
+> +
+>  			if (!pp->udev)
+>  				continue;
+> +			/*
+> +			 * Paths that are already classified as multipath
+> +			 * members don't need another uevent.
+> +			 */
+> +			env = udev_device_get_property_value(
+> +				pp->udev, "DM_MULTIPATH_DEVICE_PATH");
+> +			if (env != NULL && !strcmp(env, "1"))
+> +					continue;
+> +
+> +			condlog(4, "triggering change uevent for %s", pp->dev);
+>  			sysfs_attr_set_value(pp->udev, "uevent", "change",
+>  					     strlen("change"));
 >  		}
->  	}
->  
 > -- 
 > 2.16.1
