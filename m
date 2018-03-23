@@ -1,217 +1,104 @@
-From: Patrik Torstensson <totte@google.com>
-Subject: [PATCH v2] Add an option to dm-verity to validate hashes at most once
-Date: Thu, 22 Mar 2018 18:18:04 -0700
-Message-ID: <20180323011804.229924-1-totte@google.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
-Cc: linux-kernel@vger.kernel.org, ebiggers@google.com, samitolvanen@google.com, gkaiser@google.com, paulcrowley@google.com, Patrik Torstensson <totte@google.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH v2 1/2] libmultipath: don't reject maps with
+ undefined prio
+Date: Fri, 23 Mar 2018 11:30:22 +0100
+Message-ID: <1521801022.13100.41.camel@suse.com>
+References: <20180321093419.9295-1-mwilck@suse.com>
+	<20180322235225.GE3103@octiron.msp.redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20180322235225.GE3103@octiron.msp.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Add an option to dm-verity to validate hashes at most once
-to allow platforms that is CPU/memory contraint to be
-protected by dm-verity against offline attacks.
-
-The option introduces a bitset that is used to check if
-a block has been validated before or not. A block can
-be validated more than once as there is no thread protection
-for the bitset.
-
-This patch has been developed and tested on entry-level
-Android Go devices.
-
-Signed-off-by: Patrik Torstensson <totte@google.com>
----
-Changes since version 1:
-   - added documentation about the new option
-   - added the new option into DM_TABLE_STATUS ioctl
-   - replaced 'io->block + b' with 'cur_block'
-   - increase minor version
- 
- Documentation/device-mapper/verity.txt | 11 +++++
- drivers/md/dm-verity-target.c          | 66 ++++++++++++++++++++++++--
- drivers/md/dm-verity.h                 |  1 +
- 3 files changed, 73 insertions(+), 5 deletions(-)
-
-diff --git a/Documentation/device-mapper/verity.txt b/Documentation/device-mapper/verity.txt
-index 89fd8f9a259f..b3d2e4a42255 100644
---- a/Documentation/device-mapper/verity.txt
-+++ b/Documentation/device-mapper/verity.txt
-@@ -109,6 +109,17 @@ fec_start <offset>
-     This is the offset, in <data_block_size> blocks, from the start of the
-     FEC device to the beginning of the encoding data.
- 
-+check_at_most_once
-+    Verify data blocks only the first time they are read from the data device,
-+    rather than every time.  This reduces the overhead of dm-verity so that it
-+    can be used on systems that are memory and/or CPU constrained.  However, it
-+    provides a reduced level of security because only offline tampering of the
-+    data device's content will be detected, not online tampering.
-+
-+    Hash blocks are still verified each time they are read from the hash device,
-+    since verification of hash blocks is less performance critical than data
-+    blocks, and a hash block will not be verified any more after all the data
-+    blocks it covers have been verified anyway.
- 
- Theory of operation
- ===================
-diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-index aedb8222836b..195a899e7466 100644
---- a/drivers/md/dm-verity-target.c
-+++ b/drivers/md/dm-verity-target.c
-@@ -32,6 +32,7 @@
- #define DM_VERITY_OPT_LOGGING		"ignore_corruption"
- #define DM_VERITY_OPT_RESTART		"restart_on_corruption"
- #define DM_VERITY_OPT_IGN_ZEROES	"ignore_zero_blocks"
-+#define DM_VERITY_OPT_AT_MOST_ONCE	"check_at_most_once"
- 
- #define DM_VERITY_OPTS_MAX		(2 + DM_VERITY_OPTS_FEC)
- 
-@@ -432,6 +433,19 @@ static int verity_bv_zero(struct dm_verity *v, struct dm_verity_io *io,
- 	return 0;
- }
- 
-+/*
-+ * Moves the bio iter one data block forward.
-+ */
-+static inline void verity_bv_skip_block(struct dm_verity *v,
-+					struct dm_verity_io *io,
-+					struct bvec_iter *iter)
-+{
-+	struct bio *bio = dm_bio_from_per_bio_data(io,
-+						   v->ti->per_io_data_size);
-+
-+	bio_advance_iter(bio, iter, 1 << v->data_dev_block_bits);
-+}
-+
- /*
-  * Verify one "dm_verity_io" structure.
-  */
-@@ -445,9 +459,16 @@ static int verity_verify_io(struct dm_verity_io *io)
- 
- 	for (b = 0; b < io->n_blocks; b++) {
- 		int r;
-+		sector_t cur_block = io->block + b;
- 		struct ahash_request *req = verity_io_hash_req(v, io);
- 
--		r = verity_hash_for_block(v, io, io->block + b,
-+		if (v->validated_blocks &&
-+		    likely(test_bit(cur_block, v->validated_blocks))) {
-+			verity_bv_skip_block(v, io, &io->iter);
-+			continue;
-+		}
-+
-+		r = verity_hash_for_block(v, io, cur_block,
- 					  verity_io_want_digest(v, io),
- 					  &is_zero);
- 		if (unlikely(r < 0))
-@@ -481,13 +502,17 @@ static int verity_verify_io(struct dm_verity_io *io)
- 			return r;
- 
- 		if (likely(memcmp(verity_io_real_digest(v, io),
--				  verity_io_want_digest(v, io), v->digest_size) == 0))
-+				  verity_io_want_digest(v, io),
-+				  v->digest_size) == 0)) {
-+			if (v->validated_blocks)
-+				set_bit(cur_block, v->validated_blocks);
- 			continue;
-+		}
- 		else if (verity_fec_decode(v, io, DM_VERITY_BLOCK_TYPE_DATA,
--					   io->block + b, NULL, &start) == 0)
-+					   cur_block, NULL, &start) == 0)
- 			continue;
- 		else if (verity_handle_err(v, DM_VERITY_BLOCK_TYPE_DATA,
--					   io->block + b))
-+					   cur_block))
- 			return -EIO;
- 	}
- 
-@@ -673,6 +698,8 @@ static void verity_status(struct dm_target *ti, status_type_t type,
- 			args += DM_VERITY_OPTS_FEC;
- 		if (v->zero_digest)
- 			args++;
-+		if (v->validated_blocks)
-+			args++;
- 		if (!args)
- 			return;
- 		DMEMIT(" %u", args);
-@@ -691,6 +718,8 @@ static void verity_status(struct dm_target *ti, status_type_t type,
- 		}
- 		if (v->zero_digest)
- 			DMEMIT(" " DM_VERITY_OPT_IGN_ZEROES);
-+		if (v->validated_blocks)
-+			DMEMIT(" " DM_VERITY_OPT_AT_MOST_ONCE);
- 		sz = verity_fec_status_table(v, sz, result, maxlen);
- 		break;
- 	}
-@@ -740,6 +769,7 @@ static void verity_dtr(struct dm_target *ti)
- 	if (v->bufio)
- 		dm_bufio_client_destroy(v->bufio);
- 
-+	kvfree(v->validated_blocks);
- 	kfree(v->salt);
- 	kfree(v->root_digest);
- 	kfree(v->zero_digest);
-@@ -760,6 +790,26 @@ static void verity_dtr(struct dm_target *ti)
- 	kfree(v);
- }
- 
-+static int verity_alloc_most_once(struct dm_verity *v)
-+{
-+	struct dm_target *ti = v->ti;
-+
-+	/* the bitset can only handle INT_MAX blocks */
-+	if (v->data_blocks > INT_MAX) {
-+		ti->error = "device too large to use check_at_most_once";
-+		return -E2BIG;
-+	}
-+
-+	v->validated_blocks = kvzalloc(BITS_TO_LONGS(v->data_blocks)
-+				     * sizeof(unsigned long), GFP_KERNEL);
-+	if (!v->validated_blocks) {
-+		ti->error = "failed to allocate bitset for check_at_most_once";
-+		return -ENOMEM;
-+	}
-+
-+	return 0;
-+}
-+
- static int verity_alloc_zero_digest(struct dm_verity *v)
- {
- 	int r = -ENOMEM;
-@@ -829,6 +879,12 @@ static int verity_parse_opt_args(struct dm_arg_set *as, struct dm_verity *v)
- 			}
- 			continue;
- 
-+		} else if (!strcasecmp(arg_name, DM_VERITY_OPT_AT_MOST_ONCE)) {
-+			r = verity_alloc_most_once(v);
-+			if (r)
-+				return r;
-+			continue;
-+
- 		} else if (verity_is_fec_opt_arg(arg_name)) {
- 			r = verity_fec_parse_opt_args(as, v, &argc, arg_name);
- 			if (r)
-@@ -1096,7 +1152,7 @@ static int verity_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 
- static struct target_type verity_target = {
- 	.name		= "verity",
--	.version	= {1, 3, 0},
-+	.version	= {1, 4, 0},
- 	.module		= THIS_MODULE,
- 	.ctr		= verity_ctr,
- 	.dtr		= verity_dtr,
-diff --git a/drivers/md/dm-verity.h b/drivers/md/dm-verity.h
-index b675bc015512..ace5ec781b5f 100644
---- a/drivers/md/dm-verity.h
-+++ b/drivers/md/dm-verity.h
-@@ -63,6 +63,7 @@ struct dm_verity {
- 	sector_t hash_level_block[DM_VERITY_MAX_LEVELS];
- 
- 	struct dm_verity_fec *fec;	/* forward error correction */
-+	unsigned long *validated_blocks; /* bitset blocks validated */
- };
- 
- struct dm_verity_io {
--- 
-2.17.0.rc0.231.g781580f067-goog
+T24gRG8sIDIwMTgtMDMtMjIgYXQgMTg6NTIgLTA1MDAsIEJlbmphbWluIE1hcnppbnNraSB3cm90
+ZToKPiBPbiBXZWQsIE1hciAyMSwgMjAxOCBhdCAxMDozNDoxOEFNICswMTAwLCBNYXJ0aW4gV2ls
+Y2sgd3JvdGU6Cj4gPiBsaWJtdWx0aXBhdGgncyBwcmlvIHJvdXRpbmVzIGNhbiBkZWFsIHdpdGgg
+cHAtPnByaW9yaXR5ID09Cj4gPiBQUklPX1VOREVGCj4gPiBqdXN0IGZpbmUuIFBSSU9fVU5ERUYg
+aXMganVzdCBhIHZlcnkgbG93IHByaW9yaXR5LiBTbyB0aGVyZSdzCj4gPiBubyByZWFzb24gdG8g
+cmVqZWN0IHNldHRpbmcgdXAgYSBtdWx0aXBhdGggbWFwIGJlY2F1c2UgcGF0aHMgaGF2ZQo+ID4g
+dW5kZWZpbmVkIHByaW9yaXR5Lgo+ID4gCj4gCj4gVGhlIHByb2JsZW0gd2l0aCB0aGlzIGlzIHRo
+YXQgcHJlc3VtYWJseSwgaWYgdGhlcmUgaXMgYSBwcmlvcml0aXplcgo+IHNldCwKPiB0aGVuIHRo
+ZSBwYXRocyBhcmVuJ3Qgc3VwcG9zZWQgdG8gYmUgaW4gdGhlIHNhbWUgcGF0aGdyb3VwLiAgSWYg
+dGhpcwo+IGlzCj4gdGhlIGNhc2UgYW5kIHlvdSBlbmQgdXAgc2V0dGluZyBhbGwgdGhlIHBhdGhz
+IHRvIHRoZSBzYW1lIHBhdGhncm91cAo+IGJlY2F1c2UgdGhlIHByaW9yaXRpemVyIGlzIHdyb25n
+LCB5b3Ugd2lsbCBsaWtlbHkgaGF2ZSBhIGJhZAo+IGV4cGVyaWVuY2UuCgpTdXJlLiBUaGlzIGlz
+IG9idmlvdXNseSBhbiB1bmZvcnR1bmF0ZSBjb3JuZXItY2FzZS4gVGhlIGdvb2QgbmV3cyBpcwp0
+aGF0IGl0IGhhcHBlbnMgdmVyeSByYXJlbHkuIFRoZSBkZWZhdWx0IHNldHRpbmcgZm9yIHByaW8g
+aXMgImNvbnN0IiwKd2hpY2ggY2FuJ3QgZmFpbCwgc28gKGRpc3JlZ2FyZGluZyBGQUlMRUQgcGF0
+aHMpIHRoaXMgY2FuIGhhcHBlbiBvbmx5CmZvciBoYXJkd2FyZSB0aGF0IGNsYWltcyB0byBzdXBw
+b3J0IEFMVUEgKG9yIHNvbWUgb3RoZXIgYWxnb3JpdGhtKSBidXQKYWN0dWFsbHkgZG9lc24ndCAo
+b3IgZmFpbHMgQUxVQSByZXBlYXRlZGx5KS4gVGhlcmUncyBvbmUgY29uY3JldGUKZXhhbXBsZSBv
+ZiBzdWNoIGhhcmR3YXJlIChjZXJ0YWluIHZhcmlhbnRzIG9mIElCTSBJUFIpIHRoYXQgaGFzCm1v
+dGl2YXRlZCB0aGlzIHBhdGNoLgoKVGhlIHJhdGlvbmFsZSBmb3IgbXkgcGF0Y2ggaXMgdGhhdCBt
+dWx0aXBhdGgtdG9vbHMgY3VycmVudGx5IGJlaGF2ZQppbmNvbnNpc3RlbnRseS4gUHJpbyBjYWxs
+cyBhcmUgYWxsb3dlZCB0byBmYWlsLiBJZiBwcmlvIGRldGVjdGlvbiB3b3Jrcwppbml0aWFsbHks
+IGJ1dCBmYWlscyBsYXRlciBmb3Igd2hhdGV2ZXIgcmVhc29uIChlLmcuIEFMVUEgY2FsbHMKZmFp
+bGluZyksIG11bHRpcGF0aGQgaGFuZGxlcyB0aGF0ICJncmFjZWZ1bGx5IiBieSBhc3NpZ25pbmcg
+c3VjaCBwYXRocwpQUklPX1VOREVGID09IC0xLiBUaGlzICJ3b3JrcyBmaW5lIiAoeW91ciBjb25j
+ZXJucyBhcHBseSkgZXZlbiBpZiB0aGUKcHJpbyBjYWxsIGZhaWxzIGZvciBldmVyeSBwYXRoIG9m
+IHRoZSBtYXAuCgpMaWtld2lzZSwgZXZlbiBtYXBzIGZvciB3aGljaCBnZXRfcHJpbygpIGFsd2F5
+cyBmYWlscyBmb3IgZXZlcnkgcGF0aApjYW4gYmUgc2V0IHVwIG1hbnVhbGx5LCB1c2luZyAibXVs
+dGlwYXRoZCBhZGQgbWFwICRXV0lEIi4gVGhlIG9ubHkgY2FzZQp3aGVyZSBtdWx0aXBhdGgvbXVs
+dGlwYXRoZCByZWZ1c2UgdG8gc2V0IHVwIHRoaXMga2luZCBvZiBtYXAgaXMKY29hbGVzY2VfcGF0
+aHMoKSwgaS5lLiBhdXRvZGV0ZWN0aW9uLiBXZSBoYXZlIGFuIGFkZGl0aW9uYWwsCnVuZG9jdW1l
+bnRlZCAiYmxhY2tsaXN0IiBjcml0ZXJpb24gaGVyZSAtIG1hcHMgdGhhdCBmYWlsIGdldF9wcmlv
+LCBldmVuCmlmIGp1c3QgZm9yIGEgc2luZ2xlIHBhdGgsIHdvbid0IGJlIHNldCB1cCBhdXRvbWF0
+aWNhbGx5LiBUaGF0IGRvZXNuJ3QKbWFrZSBhIGxvdCBvZiBzZW5zZSB0byBtZS4KCj4gRWl0aGVy
+IHlvdSB3aWxsIGZyZXF1ZW50bHkgYmUgd3JpdGluZyB0byBhIG5vbi1vcHRpbWl6ZWQgcGF0aCAo
+d2hpY2gKPiBjYW4KPiBhdXRvLXRyZXNwYXNzIGFuZCBiZWNvbWUgYW4gb3B0aW1pemVkIG9uZSBp
+biBzb21lIGFycmF5cywgY2F1c2luZwo+IGhvcnJpYmxlIHBpbmctcG9uZ2luZyksIG9yIHNvbWUg
+b2YgeW91ciBwYXRocyB3aWxsIGp1c3QgYWx3YXlzIGtlZXAKPiBnZXR0aW5nIHJlc3RvcmVkIGFu
+ZCB0aGVuIGZhaWxlZCwgc2luY2UgdGhleSByZXF1aXJlIGEgbWFudWFsCj4gdHJlc3Bhc3MKPiB0
+byBiZSBhY3R1YWxseSB1c2FibGUsIGJ1dCBnaG9zdCBwYXRocyBhcmUgdHJlYXRlZCBhcyB1c2Fi
+bGUgYnkgdGhlCj4ga2VybmVsLgo+IAo+IElmIHlvdSBqdXN0IHNldCB0aGUgcHJpb3J0aXplciBm
+b3IgdGhpcyBkZXZpY2UgdG8gY29uc3QgKG9yIHdoYXRldmVyCj4gbWFrZSBzZW5zZSBpZiB0aGUg
+ZGV2aWNlIGlzbid0IGFsdWEpIGFuZCBoYXZlIGRldGVjdF9wcmlvIGVuYWJsZWQsCj4gd29uJ3QK
+PiBpdCBjb3JyZWN0bHkgZGV0ZWN0IGFuIGFsdWEgcHJpb3JpdGl6ZXIgd2hlbiBpdCBpcyBzdXBw
+b3J0ZWQsIGFuZAo+IGZhaWxiYWNrIHRvIGNvbnN0IHdoZW4gbm90PwoKTXkgZmlyc3QgaWRlYSB3
+YXMgc2ltaWxhciwgYnV0IG5vLCBBRkFJQ1MgdGhhdCBkb2Vzbid0IGhhcHBlbi4gT25jZSB5b3UK
+Y2hhbmdlIHBwLT5wcmlvLCBpdCByZW1haW5zICJjb25zdCIgdW50aWwgdGhlIG5leHQgcmVjb25m
+aWd1cmUoKSwgd2hpY2gKbWF5IG1lYW4gIm5ldmVyIi4gVGhlcmVmb3JlIG15IHBhdGNoICh2Mikg
+ZG9lc24ndCB0b3VjaCBwcC0+cHJpby4gSWYKdGhlIGZhaWx1cmUgaXMgdGVtcG9yYXJ5LCBwcC0+
+cHJpb3JpdHkgd2lsbCBldmVudHVhbGx5IGJlIHJlLWNhbGN1bGF0ZWQgCmNvcnJlY3RseSAobm90
+ZSB0aGF0IGdldF9wcmlvKCkgaXMgYWx3YXlzIGNhbGxlZCBieSBwYXRoaW5mbygpIGlmIApwcC0+
+cHJpb3JpdHkgPT0gUFJJT19VTkRFRikuIElmIHRoZSBmYWlsdXJlIGlzIHBlcm1hbmVudCwgcHAt
+PnByaW9yaXR5CnN0YXlzIGF0ICJjb25zdCAtMSIsIGFuZCB0aGF0J3Mgb2suCgpJdCB3b3VsZCBi
+ZSBwb3NzaWJsZSB0byBjcmVhdGUgYSBjb21wbGV4IHNvbHV0aW9uIHdpdGggbXVsdGlwbGUKcHJp
+b3JpdGl6ZXJzIGFuZCBmYWxsYmFjayBhbGdvcml0aG1zLCBidXQgSU1ITyB0aGF0IHdvdWxkIGJl
+Cm92ZXJlbmdpbmVlcmVkIGZvciBhIHJhcmUgYW5kIHJhdGhlciBwYXRob2xvZ2ljYWwgY2FzZSBs
+aWtlIHRoaXMuCgpSZWdhcmRzLApNYXJ0aW4KCj4gCj4gLUJlbgo+IAo+ID4gU2lnbmVkLW9mZi1i
+eTogTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+Cj4gPiAtLS0KPiA+ICBsaWJtdWx0aXBh
+dGgvY29uZmlndXJlLmMgfCA1IC0tLS0tCj4gPiAgMSBmaWxlIGNoYW5nZWQsIDUgZGVsZXRpb25z
+KC0pCj4gPiAKPiA+IGRpZmYgLS1naXQgYS9saWJtdWx0aXBhdGgvY29uZmlndXJlLmMgYi9saWJt
+dWx0aXBhdGgvY29uZmlndXJlLmMKPiA+IGluZGV4IGZhNmUyMWNiMzFhZi4uYmIzZDg3NzE1OTJk
+IDEwMDY0NAo+ID4gLS0tIGEvbGlibXVsdGlwYXRoL2NvbmZpZ3VyZS5jCj4gPiArKysgYi9saWJt
+dWx0aXBhdGgvY29uZmlndXJlLmMKPiA+IEBAIC05OTMsOSArOTkzLDYgQEAgaW50IGNvYWxlc2Nl
+X3BhdGhzIChzdHJ1Y3QgdmVjdG9ycyAqIHZlY3MsCj4gPiB2ZWN0b3IgbmV3bXAsIGNoYXIgKiBy
+ZWZ3d2lkLAo+ID4gIAkJCWNvbnRpbnVlOwo+ID4gIAkJfQo+ID4gIAo+ID4gLQkJaWYgKHBwMS0+
+cHJpb3JpdHkgPT0gUFJJT19VTkRFRikKPiA+IC0JCQltcHAtPmFjdGlvbiA9IEFDVF9SRUpFQ1Q7
+Cj4gPiAtCj4gPiAgCQlpZiAoIW1wcC0+cGF0aHMpIHsKPiA+ICAJCQljb25kbG9nKDAsICIlczog
+c2tpcCBjb2FsZXNjZSAobm8gcGF0aHMpIiwKPiA+IG1wcC0+YWxpYXMpOwo+ID4gIAkJCXJlbW92
+ZV9tYXAobXBwLCB2ZWNzLCAwKTsKPiA+IEBAIC0xMDIxLDggKzEwMTgsNiBAQCBpbnQgY29hbGVz
+Y2VfcGF0aHMgKHN0cnVjdCB2ZWN0b3JzICogdmVjcywKPiA+IHZlY3RvciBuZXdtcCwgY2hhciAq
+IHJlZnd3aWQsCj4gPiAgCQkJCQltcHAtPnNpemUpOwo+ID4gIAkJCQltcHAtPmFjdGlvbiA9IEFD
+VF9SRUpFQ1Q7Cj4gPiAgCQkJfQo+ID4gLQkJCWlmIChwcDItPnByaW9yaXR5ID09IFBSSU9fVU5E
+RUYpCj4gPiAtCQkJCW1wcC0+YWN0aW9uID0gQUNUX1JFSkVDVDsKPiA+ICAJCX0KPiA+ICAJCXZl
+cmlmeV9wYXRocyhtcHAsIHZlY3MpOwo+ID4gIAo+ID4gLS0gCj4gPiAyLjE2LjEKPiAKPiAKCi0t
+IApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQw
+NTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21p
+dGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZl
+bCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29t
+L21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
