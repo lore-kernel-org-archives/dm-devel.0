@@ -1,16 +1,26 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH v2 1/2] libmultipath: don't reject maps with
- undefined prio
-Date: Fri, 23 Mar 2018 14:37:16 +0100
-Message-ID: <1521812236.13100.45.camel@suse.com>
-References: <20180321093419.9295-1-mwilck@suse.com>
-	<20180322235225.GE3103@octiron.msp.redhat.com>
-	<1521801022.13100.41.camel@suse.com>
+From: Christopher Lameter <cl@linux.com>
+Subject: Re: [PATCH] slab: introduce the flag SLAB_MINIMIZE_WASTE
+Date: Fri, 23 Mar 2018 10:10:26 -0500 (CDT)
+Message-ID: <alpine.DEB.2.20.1803230956420.4108@nuc-kabylake>
+References: <alpine.LRH.2.02.1803200954590.18995@file01.intranet.prod.int.rdu2.redhat.com>
+	<20180320173512.GA19669@bombadil.infradead.org>
+	<alpine.DEB.2.20.1803201250480.27540@nuc-kabylake>
+	<alpine.LRH.2.02.1803201510030.21066@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.DEB.2.20.1803201536590.28319@nuc-kabylake>
+	<alpine.LRH.2.02.1803201740280.21066@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.DEB.2.20.1803211024220.2175@nuc-kabylake>
+	<alpine.LRH.2.02.1803211153320.16017@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.DEB.2.20.1803211226350.3174@nuc-kabylake>
+	<alpine.LRH.2.02.1803211425330.26409@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.DEB.2.20.1803211354170.13978@nuc-kabylake>
+	<alpine.LRH.2.02.1803211500570.26409@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.DEB.2.20.1803211508560.17257@nuc-kabylake>
+	<alpine.LRH.2.02.1803211613010.28365@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1521801022.13100.41.camel@suse.com>
+In-Reply-To: <alpine.LRH.2.02.1803211613010.28365@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,39 +30,66 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Mike Snitzer <msnitzer@redhat.com>, Matthew Wilcox <willy@infradead.org>, Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: dm-devel.ids
 
-T24gRnIsIDIwMTgtMDMtMjMgYXQgMTE6MzAgKzAxMDAsIE1hcnRpbiBXaWxjayB3cm90ZToKPiBP
-biBEbywgMjAxOC0wMy0yMiBhdCAxODo1MiAtMDUwMCwgQmVuamFtaW4gTWFyemluc2tpIHdyb3Rl
-Ogo+ID4gT24gV2VkLCBNYXIgMjEsIDIwMTggYXQgMTA6MzQ6MThBTSArMDEwMCwgTWFydGluIFdp
-bGNrIHdyb3RlOgo+ID4gPiBsaWJtdWx0aXBhdGgncyBwcmlvIHJvdXRpbmVzIGNhbiBkZWFsIHdp
-dGggcHAtPnByaW9yaXR5ID09Cj4gPiA+IFBSSU9fVU5ERUYKPiA+ID4ganVzdCBmaW5lLiBQUklP
-X1VOREVGIGlzIGp1c3QgYSB2ZXJ5IGxvdyBwcmlvcml0eS4gU28gdGhlcmUncwo+ID4gPiBubyBy
-ZWFzb24gdG8gcmVqZWN0IHNldHRpbmcgdXAgYSBtdWx0aXBhdGggbWFwIGJlY2F1c2UgcGF0aHMg
-aGF2ZQo+ID4gPiB1bmRlZmluZWQgcHJpb3JpdHkuCj4gPiA+IAo+ID4gCj4gPiBUaGUgcHJvYmxl
-bSB3aXRoIHRoaXMgaXMgdGhhdCBwcmVzdW1hYmx5LCBpZiB0aGVyZSBpcyBhIHByaW9yaXRpemVy
-Cj4gPiBzZXQsCj4gPiB0aGVuIHRoZSBwYXRocyBhcmVuJ3Qgc3VwcG9zZWQgdG8gYmUgaW4gdGhl
-IHNhbWUgcGF0aGdyb3VwLiAgSWYKPiA+IHRoaXMKPiA+IGlzCj4gPiB0aGUgY2FzZSBhbmQgeW91
-IGVuZCB1cCBzZXR0aW5nIGFsbCB0aGUgcGF0aHMgdG8gdGhlIHNhbWUgcGF0aGdyb3VwCj4gPiBi
-ZWNhdXNlIHRoZSBwcmlvcml0aXplciBpcyB3cm9uZywgeW91IHdpbGwgbGlrZWx5IGhhdmUgYSBi
-YWQKPiA+IGV4cGVyaWVuY2UuCj4gCj4gU3VyZS4gVGhpcyBpcyBvYnZpb3VzbHkgYW4gdW5mb3J0
-dW5hdGUgY29ybmVyLWNhc2UuIFRoZSBnb29kIG5ld3MgaXMKPiB0aGF0IGl0IGhhcHBlbnMgdmVy
-eSByYXJlbHkuIFRoZSBkZWZhdWx0IHNldHRpbmcgZm9yIHByaW8gaXMgImNvbnN0IiwKPiB3aGlj
-aCBjYW4ndCBmYWlsLCBzbyAoZGlzcmVnYXJkaW5nIEZBSUxFRCBwYXRocykgdGhpcyBjYW4gaGFw
-cGVuIG9ubHkKPiBmb3IgaGFyZHdhcmUgdGhhdCBjbGFpbXMgdG8gc3VwcG9ydCBBTFVBIChvciBz
-b21lIG90aGVyIGFsZ29yaXRobSkKPiBidXQKPiBhY3R1YWxseSBkb2Vzbid0IChvciBmYWlscyBB
-TFVBIHJlcGVhdGVkbHkpLiBUaGVyZSdzIG9uZSBjb25jcmV0ZQo+IGV4YW1wbGUgb2Ygc3VjaCBo
-YXJkd2FyZSAoY2VydGFpbiB2YXJpYW50cyBvZiBJQk0gSVBSKSB0aGF0IGhhcwo+IG1vdGl2YXRl
-ZCB0aGlzIHBhdGNoLgoKSXQgdHVybnMgb3V0IHRoYXQgdGhpcyBwYXRjaCBkaWRuJ3QgZml4IHRo
-ZSBwcm9ibGVtIHdpdGggdGhhdApwYXJ0aWN1bGFyIGNvbnRyb2xsZXIsIGJlY2F1c2UgaHdoYW5k
-bGVyICJhbHVhIiB3b3VsZCBmYWlsIGR1cmluZwpkb21hcCgpIGFuZCB0aHVzIGtlcm5lbCByZWpl
-Y3RlZCBtdWx0aXBhdGggY3JlYXRpb24gZXZlbiB0aG91Z2gKbXVsdGlwYXRoZCBkaWRuJ3QuCgpT
-bywgd2hpbGUgSSBzdGlsbCB0aGluayB0aGUgYXJndW1lbnRzIGJlbG93IGFyZSBjb3JyZWN0IGlu
-IHByaW5jaXBsZSwKdGhlIHJlYXNvbiB3aHkgSSB3YW50ZWQgdGhpcyBwYXRjaCBpcyBnb25lLgoK
-TWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLiArNDkg
-KDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVy
-LCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoK
-LS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cu
-cmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+On Wed, 21 Mar 2018, Mikulas Patocka wrote:
+
+> > +	s->allocflags = allocflags;
+>
+> I'd also use "WRITE_ONCE(s->allocflags, allocflags)" here and when writing
+> s->oo and s->min to avoid some possible compiler misoptimizations.
+
+It only matters that 0 etc is never written.
+
+> Another problem is that it updates s->oo and later it updates s->max:
+>         s->oo = oo_make(order, size, s->reserved);
+>         s->min = oo_make(get_order(size), size, s->reserved);
+>         if (oo_objects(s->oo) > oo_objects(s->max))
+>                 s->max = s->oo;
+> --- so, the concurrently running code could see s->oo > s->max, which
+> could trigger some memory corruption.
+
+Well s->max is only relevant for code that analyses the details of slab
+structures for diagnostics.
+
+> s->max is only used in memory allocations -
+> kmalloc(BITS_TO_LONGS(oo_objects(s->max)) * sizeof(unsigned long)), so
+> perhaps we could fix the bug by removing s->max at all and always
+> allocating enough memory for the maximum possible number of objects?
+>
+> - kmalloc(BITS_TO_LONGS(oo_objects(s->max)) * sizeof(unsigned long), GFP_KERNEL);
+> + kmalloc(BITS_TO_LONGS(MAX_OBJS_PER_PAGE) * sizeof(unsigned long), GFP_KERNEL);
+
+MAX_OBJS_PER_PAGE is 32k. So you are looking at contiguous allocations of
+256kbyte. Not good.
+
+The simplest measure would be to disallow the changing of the order while
+the slab contains objects.
+
+
+Subject: slub: Disallow order changes when objects exist in a slab
+
+There seems to be a couple of races that would have to be
+addressed if the slab order would be changed during active use.
+
+Lets disallow this in the same way as we also do not allow
+other changes of slab characteristics when objects are active.
+
+Signed-off-by: Christoph Lameter <cl@linux.com>
+
+Index: linux/mm/slub.c
+===================================================================
+--- linux.orig/mm/slub.c
++++ linux/mm/slub.c
+@@ -4919,6 +4919,9 @@ static ssize_t order_store(struct kmem_c
+ 	unsigned long order;
+ 	int err;
+
++	if (any_slab_objects(s))
++		return -EBUSY;
++
+ 	err = kstrtoul(buf, 10, &order);
+ 	if (err)
+ 		return err;
