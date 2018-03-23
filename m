@@ -1,16 +1,14 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH] multipath-tools: replace FSF address with a
-	www pointer
-Date: Fri, 23 Mar 2018 19:28:00 +0100
-Message-ID: <1a0b44c5-c7a6-85fa-b2dd-1bd542efbb76@gmail.com>
-References: <20180310205002.3318-1-xose.vazquez@gmail.com>
-	<1521495458.3798.138.camel@suse.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: [PATCH 1/2] multipathd: register threads that use rcu
+	calls
+Date: Fri, 23 Mar 2018 15:00:45 -0500
+Message-ID: <1521835246-29080-2-git-send-email-bmarzins@redhat.com>
+References: <1521835246-29080-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1521495458.3798.138.camel@suse.com>
-Content-Language: en-GB
+In-Reply-To: <1521835246-29080-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,55 +18,123 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-T24gMDMvMTkvMjAxOCAxMDozNyBQTSwgTWFydGluIFdpbGNrIHdyb3RlOgoKPiBPbiBTYXQsIDIw
-MTgtMDMtMTAgYXQgMjE6NTAgKzAxMDAsIFhvc2UgVmF6cXVleiBQZXJleiB3cm90ZToKPj4gTGVz
-cyBwcm9uZSB0byBmdXR1cmUgbW9kaWZpY2F0aW9ucywgYW5kIG5ldyBGU0YgbGljZW5jZXMKPj4g
-cG9pbnQgZXhhY3RseSB0byB0aGlzIHVybDogPGh0dHA6Ly93d3cuZ251Lm9yZy9saWNlbnNlcy8+
-Lgo+Pgo+PiBGaXJzdCBjbGVhbiB1cCB3YXMgZG9uZSBpbiA1NjE5YTM5YzQzM2FjM2QxMGE4ODA3
-OTU5M2NlYzFhYTY0NzJjYmViCj4+Cj4+IENjOiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNv
-bT4KPj4gQ2M6IENocmlzdG9waGUgVmFyb3F1aSA8Y2hyaXN0b3BoZS52YXJvcXVpQG9wZW5zdmMu
-Y29tPgo+PiBDYzogZGV2aWNlLW1hcHBlciBkZXZlbG9wbWVudCA8ZG0tZGV2ZWxAcmVkaGF0LmNv
-bT4KPj4gU2lnbmVkLW9mZi1ieTogWG9zZSBWYXpxdWV6IFBlcmV6IDx4b3NlLnZhenF1ZXpAZ21h
-aWwuY29tPgoKPiBJQU5BTCwgYnV0IEFGQUlDUyBtdWx0aXBhdGgtdG9vbHMgY29tZXMgdW5kZXIg
-R1BMdjIsIGFuZCB0aGUgR1BMdjIKCgpodHRwczovL2dpdC5vcGVuc3ZjLmNvbS9naXR3ZWIuY2dp
-P3A9bXVsdGlwYXRoLXRvb2xzLy5naXQ7YT1ibG9iX3BsYWluO2Y9Q09QWUlORztoYj1IRUFECgog
-ICAgICAgICAgICAgICAgICBHTlUgKkxJQlJBUlkqIEdFTkVSQUwgUFVCTElDIExJQ0VOU0UKICAg
-ICAgICAgICAgICAgICAgICAgICAgVmVyc2lvbiAyLCBKdW5lIDE5OTEKCmFrYSAiTGVzc2VyIiwg
-YnV0IHJ1bGVzIGFyZSB0aGUgc2FtZSBhcyBpbiBHUEwuCgo+IHN0aWxsIGNvbnRhaW5zIHRoZSBv
-cmlnaW5hbCBwYXJhZ3JhcGggd2l0aCB0aGUgYWRkcmVzcy4gCj4gaHR0cHM6Ly93d3cuZ251Lm9y
-Zy9saWNlbnNlcy9vbGQtbGljZW5zZXMvZ3BsLTIuMC5odG1sI2hvd3RvCgoKZnJvbSBodHRwczov
-L3d3dy5nbnUub3JnL2xpY2Vuc2VzL2dwbC1ob3d0by5odG1sIDoKIlsuLi5dCiAgICBGb29iYXIg
-aXMgZnJlZSBzb2Z0d2FyZTogeW91IGNhbiByZWRpc3RyaWJ1dGUgaXQgYW5kL29yIG1vZGlmeQog
-ICAgaXQgdW5kZXIgdGhlIHRlcm1zIG9mIHRoZSBHTlUgR2VuZXJhbCBQdWJsaWMgTGljZW5zZSBh
-cyBwdWJsaXNoZWQgYnkKICAgIHRoZSBGcmVlIFNvZnR3YXJlIEZvdW5kYXRpb24sIGVpdGhlciB2
-ZXJzaW9uIDMgb2YgdGhlIExpY2Vuc2UsIG9yCiAgICAoYXQgeW91ciBvcHRpb24pIGFueSBsYXRl
-ciB2ZXJzaW9uLgoKICAgIEZvb2JhciBpcyBkaXN0cmlidXRlZCBpbiB0aGUgaG9wZSB0aGF0IGl0
-IHdpbGwgYmUgdXNlZnVsLAogICAgYnV0IFdJVEhPVVQgQU5ZIFdBUlJBTlRZOyB3aXRob3V0IGV2
-ZW4gdGhlIGltcGxpZWQgd2FycmFudHkgb2YKICAgIE1FUkNIQU5UQUJJTElUWSBvciBGSVRORVNT
-IEZPUiBBIFBBUlRJQ1VMQVIgUFVSUE9TRS4gIFNlZSB0aGUKICAgIEdOVSBHZW5lcmFsIFB1Ymxp
-YyBMaWNlbnNlIGZvciBtb3JlIGRldGFpbHMuCgogICAgWW91IHNob3VsZCBoYXZlIHJlY2VpdmVk
-IGEgY29weSBvZiB0aGUgR05VIEdlbmVyYWwgUHVibGljIExpY2Vuc2UKICAgIGFsb25nIHdpdGgg
-Rm9vYmFyLiAgSWYgbm90LCBzZWUgPGh0dHA6Ly93d3cuZ251Lm9yZy9saWNlbnNlcy8+LgoKVG8g
-dXNlIGEgZGlmZmVyZW50IHNldCBvZiBHUEwgdmVyc2lvbnMsIHlvdSB3b3VsZCBtb2RpZnkgdGhl
-IGVuZCBvZiB0aGUgZmlyc3QKbG9uZyBwYXJhZ3JhcGguIEZvciBpbnN0YW5jZSwgdG8gbGljZW5z
-ZSB1bmRlciB2ZXJzaW9uIDIgb3IgbGF0ZXIsIHlvdSB3b3VsZApyZXBsYWNlIOKAnDPigJ0gd2l0
-aCDigJwy4oCdLgpbLi4uXSIKCkFueXdheSwgdGhhdCB0ZXh0IGlzIGEgImxpY2VuY2Ugbm90aWNl
-IiBhbmQgaXMgbm90ICJwYXJ0IG9mIHRoZSBsaWNlbmNlIjoKCj4gUmVwbGFjaW5nIHRoaXMgYnkg
-dGhlIHRleHQgZnJvbSBHUEx2MywgYW5kIHVzaW5nIHRoZSAiL2xpY2Vuc2VzLyIgbGluaywKPiB3
-aGljaCBwb2ludHMgdG8gYSBwYWdlIG1vc3RseSBkZXZvdGVkIHRvIEdQTHYzLCBtaWdodCBjYXVz
-ZSBwZW9wbGUgdG8KPiB0aGluayB3ZSdyZSB1c2luZyBHUEx2My4gSSdtIGluIGZhdm9yIG9mIGtl
-ZXBpbmcgdGhlIEdQTHYyIHdvcmRpbmcuCgoKaHR0cHM6Ly93d3cuZ251Lm9yZy9saWNlbnNlcy8g
-aXMgYSBfZ2VuZXJpY18gcGxhY2UuIFRoZXJlIGlzIGluZm8gYWJvdXQKQUxMIGxpY2VuY2VzIGFu
-ZCB2ZXJzaW9ucy4KCgpJdCB3b3VsZCBiZSBuaWNlIHRvIHN0YXJ0IHVzaW5nIFNQRFggdGFncyAo
-IGh0dHBzOi8vc3BkeC5vcmcvICksCmF0IGxlYXN0IGZvciBuZXcgZmlsZXMsIGluc3RlYWQgb2Yg
-ZnVsbCBHUEwvTEdQTCBub3RpY2VzOgpodHRwczovL3Bob3Rvcy5hcHAuZ29vLmdsL1JyaW4wTGxv
-YlRGWVljaVEyCgoKQlRXOiBMRkMxOTEgQ29tcGxpYW5jZSBCYXNpY3MgZm9yIERldmVsb3BlcnMg
-Y291cnNlIGlzIEZSRUUKICAgICBodHRwczovL3RyYWluaW5nLmxpbnV4Zm91bmRhdGlvbi5vcmcv
-bGludXgtY291cnNlcy9vcGVuLXNvdXJjZS1jb21wbGlhbmNlLWNvdXJzZXMvY29tcGxpYW5jZS1i
-YXNpY3MtZm9yLWRldmVsb3BlcnMKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEBy
-ZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZl
-bA==
+All calls to condlog() are rcu reader side calls, so any thread that
+uses condlog() must register itself. The only threads that are exempt
+are log_thread, since it never calls condlog (or any other function that
+calls get_multipath_config) and mpath_pr_event_handler_fn, which is only
+called by mpath_persist, which disables the rcu handling.
+
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/checkers/rbd.c | 7 +++++--
+ libmultipath/checkers/tur.c | 9 ++++++---
+ multipathd/main.c           | 7 +++++--
+ 3 files changed, 16 insertions(+), 7 deletions(-)
+
+diff --git a/libmultipath/checkers/rbd.c b/libmultipath/checkers/rbd.c
+index b1d99b4..4ff54f4 100644
+--- a/libmultipath/checkers/rbd.c
++++ b/libmultipath/checkers/rbd.c
+@@ -19,6 +19,7 @@
+ #include <sys/ioctl.h>
+ #include <sys/time.h>
+ #include <sys/wait.h>
++#include <urcu.h>
+ 
+ #include "rados/librados.h"
+ 
+@@ -517,6 +518,7 @@ static void cleanup_func(void *data)
+ 	pthread_spin_unlock(&ct->hldr_lock);
+ 	if (!holders)
+ 		cleanup_context(ct);
++	rcu_unregister_thread();
+ }
+ 
+ static void *rbd_thread(void *ctx)
+@@ -524,11 +526,12 @@ static void *rbd_thread(void *ctx)
+ 	struct rbd_checker_context *ct = ctx;
+ 	int state;
+ 
++	/* This thread can be canceled, so setup clean up */
++	rbd_thread_cleanup_push(ct)
++	rcu_register_thread();
+ 	condlog(3, "rbd%d: thread starting up", ct->rbd_bus_id);
+ 
+ 	ct->message[0] = '\0';
+-	/* This thread can be canceled, so setup clean up */
+-	rbd_thread_cleanup_push(ct)
+ 
+ 	/* checker start up */
+ 	pthread_mutex_lock(&ct->lock);
+diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
+index 9155960..eb3348d 100644
+--- a/libmultipath/checkers/tur.c
++++ b/libmultipath/checkers/tur.c
+@@ -15,6 +15,7 @@
+ #include <errno.h>
+ #include <sys/time.h>
+ #include <pthread.h>
++#include <urcu.h>
+ #include <urcu/uatomic.h>
+ 
+ #include "checkers.h"
+@@ -220,6 +221,7 @@ static void cleanup_func(void *data)
+ 	holders = uatomic_sub_return(&ct->holders, 1);
+ 	if (!holders)
+ 		cleanup_context(ct);
++	rcu_unregister_thread();
+ }
+ 
+ static void copy_msg_to_tcc(void *ct_p, const char *msg)
+@@ -237,11 +239,12 @@ static void *tur_thread(void *ctx)
+ 	int state, running;
+ 	char devt[32];
+ 
+-	condlog(3, "%s: tur checker starting up",
+-		tur_devt(devt, sizeof(devt), ct));
+-
+ 	/* This thread can be canceled, so setup clean up */
+ 	tur_thread_cleanup_push(ct);
++	rcu_register_thread();
++
++	condlog(3, "%s: tur checker starting up",
++		tur_devt(devt, sizeof(devt), ct));
+ 
+ 	/* TUR checker start up */
+ 	pthread_mutex_lock(&ct->lock);
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 3ae0442..eccb046 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -3041,12 +3041,13 @@ void *  mpath_pr_event_handler_fn (void * pathp )
+ 	struct prout_param_descriptor *param;
+ 	struct prin_resp *resp;
+ 
++	rcu_register_thread();
+ 	mpp = pp->mpp;
+ 
+ 	resp = mpath_alloc_prin_response(MPATH_PRIN_RKEY_SA);
+ 	if (!resp){
+ 		condlog(0,"%s Alloc failed for prin response", pp->dev);
+-		return NULL;
++		goto out;
+ 	}
+ 
+ 	ret = prin_do_scsi_ioctl(pp->dev, MPATH_PRIN_RKEY_SA, resp, 0);
+@@ -3104,7 +3105,9 @@ void *  mpath_pr_event_handler_fn (void * pathp )
+ 
+ 	free(param);
+ out:
+-	free(resp);
++	if (resp)
++		free(resp);
++	rcu_unregister_thread();
+ 	return NULL;
+ }
+ 
+-- 
+2.7.4
