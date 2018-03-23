@@ -1,16 +1,16 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH v2 08/20] libmultipath: use const char* in
-	open_file()
-Date: Fri, 23 Mar 2018 15:08:24 -0500
-Message-ID: <20180323200824.GL3103@octiron.msp.redhat.com>
-References: <20180319150155.5363-1-mwilck@suse.com>
-	<20180319150155.5363-9-mwilck@suse.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: multipath-tools licenses (was Re: [PATCH]
+ multipath-tools: replace FSF address with a www pointer)
+Date: Fri, 23 Mar 2018 21:30:17 +0100
+Message-ID: <1521837017.13100.106.camel@suse.com>
+References: <20180310205002.3318-1-xose.vazquez@gmail.com>
+	<1521495458.3798.138.camel@suse.com>
+	<1a0b44c5-c7a6-85fa-b2dd-1bd542efbb76@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20180319150155.5363-9-mwilck@suse.com>
+In-Reply-To: <1a0b44c5-c7a6-85fa-b2dd-1bd542efbb76@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,61 +20,54 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: dm-devel@redhat.com
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: fge@redhat.com, device-mapper, development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Mar 19, 2018 at 04:01:43PM +0100, Martin Wilck wrote:
-
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  libmultipath/file.c | 6 +++---
->  libmultipath/file.h | 2 +-
->  2 files changed, 4 insertions(+), 4 deletions(-)
-> 
-> diff --git a/libmultipath/file.c b/libmultipath/file.c
-> index e4951c92eb67..d5165ec6709a 100644
-> --- a/libmultipath/file.c
-> +++ b/libmultipath/file.c
-> @@ -37,7 +37,7 @@
->   */
->  
->  static int
-> -ensure_directories_exist(char *str, mode_t dir_mode)
-> +ensure_directories_exist(const char *str, mode_t dir_mode)
->  {
->  	char *pathname;
->  	char *end;
-> @@ -80,7 +80,7 @@ sigalrm(int sig)
->  }
->  
->  static int
-> -lock_file(int fd, char *file_name)
-> +lock_file(int fd, const char *file_name)
->  {
->  	struct sigaction act, oldact;
->  	sigset_t set, oldset;
-> @@ -118,7 +118,7 @@ lock_file(int fd, char *file_name)
->  }
->  
->  int
-> -open_file(char *file, int *can_write, char *header)
-> +open_file(const char *file, int *can_write, const char *header)
->  {
->  	int fd;
->  	struct stat s;
-> diff --git a/libmultipath/file.h b/libmultipath/file.h
-> index 4f96dbf55e34..70bffa5301ad 100644
-> --- a/libmultipath/file.h
-> +++ b/libmultipath/file.h
-> @@ -6,6 +6,6 @@
->  #define _FILE_H
->  
->  #define FILE_TIMEOUT 30
-> -int open_file(char *file, int *can_write, char *header);
-> +int open_file(const char *file, int *can_write, const char *header);
->  
->  #endif /* _FILE_H */
-> -- 
-> 2.16.1
+T24gRnIsIDIwMTgtMDMtMjMgYXQgMTk6MjggKzAxMDAsIFhvc2UgVmF6cXVleiBQZXJleiB3cm90
+ZToKPiAKPiBodHRwczovL2dpdC5vcGVuc3ZjLmNvbS9naXR3ZWIuY2dpP3A9bXVsdGlwYXRoLXRv
+b2xzLy5naXQ7YT1ibG9iX3BsYWkKPiBuO2Y9Q09QWUlORztoYj1IRUFECj4gCj4gICAgICAgICAg
+ICAgICAgICAgR05VICpMSUJSQVJZKiBHRU5FUkFMIFBVQkxJQyBMSUNFTlNFCj4gICAgICAgICAg
+ICAgICAgICAgICAgICAgVmVyc2lvbiAyLCBKdW5lIDE5OTEKPiAKPiBha2EgIkxlc3NlciIsIGJ1
+dCBydWxlcyBhcmUgdGhlIHNhbWUgYXMgaW4gR1BMLgoKVXBzLCB3aGF0IGFuIGVtYmFycmFzc2lu
+ZyBvdmVyc2lnaHQgb24gbXkgcGFydC4gSSBndWVzcyBteSBicmFpbiBqdXN0CmNvdWxkbid0IGJl
+bGlldmUgd2hhdCBteSBleWVzIHdlcmUgc2VlaW5nLgoKPiA+IAo+IGh0dHBzOi8vd3d3LmdudS5v
+cmcvbGljZW5zZXMvIGlzIGEgX2dlbmVyaWNfIHBsYWNlLiBUaGVyZSBpcyBpbmZvCj4gYWJvdXQK
+PiBBTEwgbGljZW5jZXMgYW5kIHZlcnNpb25zLgoKVGhhdCdzIG5vdCBvYnZpb3VzIHRvIG1lLiBJ
+biBwYXJ0aWN1bGFyIHRoZSBMUEdMIHYyLjAgaXNuJ3QgZXZlbgptZW50aW9uZWQgdGhlcmUsIG9u
+bHkgTEdQTCB2Mi4xLCBhbmQgdGhhdCdzIHF1aXRlIGF0IHRoZSBib3R0b20uCgpJdCdkIGJlIF9m
+YXJfIG1vcmUgaW1wb3J0YW50IHRvIGFncmVlIG9uIGNvbnNpc3RlbnQgbGljZW5zZXMgdGhyb3Vn
+aG91dAp0aGUgY29kZS4gWW91IHF1b3RlZCB0aGUgZmlsZSBDT1BZSU5HLCBidXQgaWYgeW91IGxv
+b2sgYXQgdGhlIGFjdHVhbApzb3VyY2UgZmlsZXMsIHRoZSBzaXR1YXRpb24gaXMgYSBiaXQgbW9y
+ZSBjb21wbGljYXRlZDoKCkxHUEx2Mi4xOgpsaWJtdWx0aXBhdGgvbXBhdGhfY21kLmgKCkdQTHYy
+OgpsaWJtdWx0aXBhdGgvc3lzZnMuYwpsaWJtdWx0aXBhdGgvdWV2ZW50LmMKbGlibXVsdGlwYXRo
+L3ByaW9yaXRpemVycy9vbnRhcC5jCgpHUEx2MiBvciBsYXRlcjoKMjUgZmlsZXMgdW5kZXIgbGli
+bXVsdGlwYXRoIGFuZCBrcGFydHggZGlyZWN0b3JpZXMuCgpHUEx2MyBvciBsYXRlcjoKbGliZG1t
+cAoKQlNEIGxpY2Vuc2U6IAouL3RoaXJkLXBhcnR5L3ZhbGdyaW5kL2RyZC5oCi4vdGhpcmQtcGFy
+dHkvdmFsZ3JpbmQvdmFsZ3JpbmQuaAoKMTM3IGZpbGVzIGRvbid0IGhhdmUgYW4gZXhwbGljaXQg
+bGljZW5zZSBoZWFkZXIgYW5kIGNhbiB0aHVzIGJlIGFzc3VtZWQKdG8gYmUgY292ZXJlZCBieSB0
+aGUgQ09QWUlORyBmaWxlIChMR1BMMi4wKS4KClRoaXMgaXMgYSB0b3RhbCBtZXNzIGZvciBwb3Rl
+bnRpYWwgdXNlcnMgb2Ygb3VyIGNvZGUuIEVmZmVjdGl2ZWx5LCB0aGUKR1BMIHBhcnRzIG9mIGxp
+Ym11bHRpcGF0aCB3b3VsZCBjYXVzZSBhbGwgb2YgbXVsdGlwYXRoLXRvb2xzIHRvIGJlCnVuZGVy
+IEdQTCByYXRoZXIgdGhhbiBMR1BMdjIueCwgYmVjYXVzZSB0aGUgbGlua2luZyBleGNlcHRpb24g
+b2YgdGhlCkxHUEwgd291bGRuJ3QgYXBwbHkgdG8gdGhlbSwgZm9yYmlkZGluZyBsaW5raW5nIG5v
+bi1HUEwgY29kZSB3aXRoCmxpYm11bHRpcGF0aC4gVGhlIEdQTHYyICJvciBsYXRlciIgZ2l2ZXMg
+eW91IHRoZSBjaG9pY2UsIHNvCmxpYm11bHRpcGF0aCBpcyBlZmZlY3RpdmVseSB1bmRlciBHUEx2
+MiBiZWNhdXNlIG9mIHN5c2ZzLmMgYW5kCnVldmVudC5jLiBGdXJ0aGVybW9yZSwgbGlibXVsdGlw
+YXRoIGFuZCBsaWJkbW1wIGhhdmUgaW5jb21wYXRpYmxlCmxpY2Vuc2VzLCBhbmQgInRoZXJlIGlz
+IG5vIGxlZ2FsIHdheSB0byBjb21iaW5lIGNvZGUgdW5kZXIgR1BMdjIgd2l0aApjb2RlIHVuZGVy
+IEdQTHYzIGluIGEgc2luZ2xlIHByb2dyYW0iIChodHRwczovL3d3dy5nbnUub3JnL2xpY2Vuc2Vz
+L3Jtcwotd2h5LWdwbHYzLmh0bWwpLgoKSSBiZWxpZXZlIHRoYXQgdmFyaW91cyBmaWxlcyBiZXNp
+ZGVzIHRoZSB0aHJlZSBhYm92ZSBjb250YWluIGNvZGUgd2hpY2gKaGFzIGJlZW4gY29waWVkIGZy
+b20ga2VybmVsIHNvdXJjZXMgYW5kIHdvdWxkIHRodXMgYmUgdW5kZXIgR1BMdjIgKHRoZQphbHVh
+IGNvZGUsIGZvciBleGFtcGxlKS4KCkFnYWluLCBJQU5BTCwgYnV0IHRoaXMgbG9va3MgbGlrZSBh
+IG1lc3MgdGhhdCByZWFsbHkgb3VnaHQgdG8gYmUKY2xlYW5lZCB1cC4gQXMgbG9uZyBhcyB3ZSBk
+b24ndCBkbyB0aGF0LCB0aGVyZSdzIG5vIHBvaW50IGluIGNoYW5naW5nCnRoZSBhZGRyZXNzIGhl
+YWRlcnMuCgpJdCB3b3VsZCBtYWtlIHNlbnNlIHRvIGdlbmVyYWxseSBhZ3JlZSBvbiBhIEdQTCB2
+ZXJzaW9uICgyLCAyIG9yIGxhdGVyLAozLCAzIG9yIGxhdGVyKSwgYW5kIGFwcGx5IExHUEwgdG8g
+KHNvbWUgb2YpIHRoZSBsaWJyYXJpZXMgYW5kIEdQTCB0bwp0aGUgdG9vbHMuCgpNYXJ0aW4KCi0t
+IApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQw
+NTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21p
+dGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZl
+bCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29t
+L21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
