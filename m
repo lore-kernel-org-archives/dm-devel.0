@@ -1,79 +1,217 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH v2 1/2] libmultipath: don't reject maps with
- undefined prio
-Date: Thu, 22 Mar 2018 18:52:25 -0500
-Message-ID: <20180322235225.GE3103@octiron.msp.redhat.com>
-References: <20180321093419.9295-1-mwilck@suse.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20180321093419.9295-1-mwilck@suse.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: dm-devel@redhat.com
+From: Patrik Torstensson <totte@google.com>
+Subject: [PATCH v2] Add an option to dm-verity to validate hashes at most once
+Date: Thu, 22 Mar 2018 18:18:04 -0700
+Message-ID: <20180323011804.229924-1-totte@google.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
+Cc: linux-kernel@vger.kernel.org, ebiggers@google.com, samitolvanen@google.com, gkaiser@google.com, paulcrowley@google.com, Patrik Torstensson <totte@google.com>
 List-Id: dm-devel.ids
 
-On Wed, Mar 21, 2018 at 10:34:18AM +0100, Martin Wilck wrote:
-> libmultipath's prio routines can deal with pp->priority == PRIO_UNDEF
-> just fine. PRIO_UNDEF is just a very low priority. So there's
-> no reason to reject setting up a multipath map because paths have
-> undefined priority.
-> 
+Add an option to dm-verity to validate hashes at most once
+to allow platforms that is CPU/memory contraint to be
+protected by dm-verity against offline attacks.
 
-The problem with this is that presumably, if there is a prioritizer set,
-then the paths aren't supposed to be in the same pathgroup.  If this is
-the case and you end up setting all the paths to the same pathgroup
-because the prioritizer is wrong, you will likely have a bad experience.
-Either you will frequently be writing to a non-optimized path (which can
-auto-trespass and become an optimized one in some arrays, causing
-horrible ping-ponging), or some of your paths will just always keep
-getting restored and then failed, since they require a manual trespass
-to be actually usable, but ghost paths are treated as usable by the kernel.
+The option introduces a bitset that is used to check if
+a block has been validated before or not. A block can
+be validated more than once as there is no thread protection
+for the bitset.
 
-If you just set the priortizer for this device to const (or whatever
-make sense if the device isn't alua) and have detect_prio enabled, won't
-it correctly detect an alua prioritizer when it is supported, and
-failback to const when not?
+This patch has been developed and tested on entry-level
+Android Go devices.
 
--Ben
+Signed-off-by: Patrik Torstensson <totte@google.com>
+---
+Changes since version 1:
+   - added documentation about the new option
+   - added the new option into DM_TABLE_STATUS ioctl
+   - replaced 'io->block + b' with 'cur_block'
+   - increase minor version
+ 
+ Documentation/device-mapper/verity.txt | 11 +++++
+ drivers/md/dm-verity-target.c          | 66 ++++++++++++++++++++++++--
+ drivers/md/dm-verity.h                 |  1 +
+ 3 files changed, 73 insertions(+), 5 deletions(-)
 
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  libmultipath/configure.c | 5 -----
->  1 file changed, 5 deletions(-)
-> 
-> diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-> index fa6e21cb31af..bb3d8771592d 100644
-> --- a/libmultipath/configure.c
-> +++ b/libmultipath/configure.c
-> @@ -993,9 +993,6 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
->  			continue;
->  		}
->  
-> -		if (pp1->priority == PRIO_UNDEF)
-> -			mpp->action = ACT_REJECT;
-> -
->  		if (!mpp->paths) {
->  			condlog(0, "%s: skip coalesce (no paths)", mpp->alias);
->  			remove_map(mpp, vecs, 0);
-> @@ -1021,8 +1018,6 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
->  					mpp->size);
->  				mpp->action = ACT_REJECT;
->  			}
-> -			if (pp2->priority == PRIO_UNDEF)
-> -				mpp->action = ACT_REJECT;
->  		}
->  		verify_paths(mpp, vecs);
->  
-> -- 
-> 2.16.1
+diff --git a/Documentation/device-mapper/verity.txt b/Documentation/device-mapper/verity.txt
+index 89fd8f9a259f..b3d2e4a42255 100644
+--- a/Documentation/device-mapper/verity.txt
++++ b/Documentation/device-mapper/verity.txt
+@@ -109,6 +109,17 @@ fec_start <offset>
+     This is the offset, in <data_block_size> blocks, from the start of the
+     FEC device to the beginning of the encoding data.
+ 
++check_at_most_once
++    Verify data blocks only the first time they are read from the data device,
++    rather than every time.  This reduces the overhead of dm-verity so that it
++    can be used on systems that are memory and/or CPU constrained.  However, it
++    provides a reduced level of security because only offline tampering of the
++    data device's content will be detected, not online tampering.
++
++    Hash blocks are still verified each time they are read from the hash device,
++    since verification of hash blocks is less performance critical than data
++    blocks, and a hash block will not be verified any more after all the data
++    blocks it covers have been verified anyway.
+ 
+ Theory of operation
+ ===================
+diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
+index aedb8222836b..195a899e7466 100644
+--- a/drivers/md/dm-verity-target.c
++++ b/drivers/md/dm-verity-target.c
+@@ -32,6 +32,7 @@
+ #define DM_VERITY_OPT_LOGGING		"ignore_corruption"
+ #define DM_VERITY_OPT_RESTART		"restart_on_corruption"
+ #define DM_VERITY_OPT_IGN_ZEROES	"ignore_zero_blocks"
++#define DM_VERITY_OPT_AT_MOST_ONCE	"check_at_most_once"
+ 
+ #define DM_VERITY_OPTS_MAX		(2 + DM_VERITY_OPTS_FEC)
+ 
+@@ -432,6 +433,19 @@ static int verity_bv_zero(struct dm_verity *v, struct dm_verity_io *io,
+ 	return 0;
+ }
+ 
++/*
++ * Moves the bio iter one data block forward.
++ */
++static inline void verity_bv_skip_block(struct dm_verity *v,
++					struct dm_verity_io *io,
++					struct bvec_iter *iter)
++{
++	struct bio *bio = dm_bio_from_per_bio_data(io,
++						   v->ti->per_io_data_size);
++
++	bio_advance_iter(bio, iter, 1 << v->data_dev_block_bits);
++}
++
+ /*
+  * Verify one "dm_verity_io" structure.
+  */
+@@ -445,9 +459,16 @@ static int verity_verify_io(struct dm_verity_io *io)
+ 
+ 	for (b = 0; b < io->n_blocks; b++) {
+ 		int r;
++		sector_t cur_block = io->block + b;
+ 		struct ahash_request *req = verity_io_hash_req(v, io);
+ 
+-		r = verity_hash_for_block(v, io, io->block + b,
++		if (v->validated_blocks &&
++		    likely(test_bit(cur_block, v->validated_blocks))) {
++			verity_bv_skip_block(v, io, &io->iter);
++			continue;
++		}
++
++		r = verity_hash_for_block(v, io, cur_block,
+ 					  verity_io_want_digest(v, io),
+ 					  &is_zero);
+ 		if (unlikely(r < 0))
+@@ -481,13 +502,17 @@ static int verity_verify_io(struct dm_verity_io *io)
+ 			return r;
+ 
+ 		if (likely(memcmp(verity_io_real_digest(v, io),
+-				  verity_io_want_digest(v, io), v->digest_size) == 0))
++				  verity_io_want_digest(v, io),
++				  v->digest_size) == 0)) {
++			if (v->validated_blocks)
++				set_bit(cur_block, v->validated_blocks);
+ 			continue;
++		}
+ 		else if (verity_fec_decode(v, io, DM_VERITY_BLOCK_TYPE_DATA,
+-					   io->block + b, NULL, &start) == 0)
++					   cur_block, NULL, &start) == 0)
+ 			continue;
+ 		else if (verity_handle_err(v, DM_VERITY_BLOCK_TYPE_DATA,
+-					   io->block + b))
++					   cur_block))
+ 			return -EIO;
+ 	}
+ 
+@@ -673,6 +698,8 @@ static void verity_status(struct dm_target *ti, status_type_t type,
+ 			args += DM_VERITY_OPTS_FEC;
+ 		if (v->zero_digest)
+ 			args++;
++		if (v->validated_blocks)
++			args++;
+ 		if (!args)
+ 			return;
+ 		DMEMIT(" %u", args);
+@@ -691,6 +718,8 @@ static void verity_status(struct dm_target *ti, status_type_t type,
+ 		}
+ 		if (v->zero_digest)
+ 			DMEMIT(" " DM_VERITY_OPT_IGN_ZEROES);
++		if (v->validated_blocks)
++			DMEMIT(" " DM_VERITY_OPT_AT_MOST_ONCE);
+ 		sz = verity_fec_status_table(v, sz, result, maxlen);
+ 		break;
+ 	}
+@@ -740,6 +769,7 @@ static void verity_dtr(struct dm_target *ti)
+ 	if (v->bufio)
+ 		dm_bufio_client_destroy(v->bufio);
+ 
++	kvfree(v->validated_blocks);
+ 	kfree(v->salt);
+ 	kfree(v->root_digest);
+ 	kfree(v->zero_digest);
+@@ -760,6 +790,26 @@ static void verity_dtr(struct dm_target *ti)
+ 	kfree(v);
+ }
+ 
++static int verity_alloc_most_once(struct dm_verity *v)
++{
++	struct dm_target *ti = v->ti;
++
++	/* the bitset can only handle INT_MAX blocks */
++	if (v->data_blocks > INT_MAX) {
++		ti->error = "device too large to use check_at_most_once";
++		return -E2BIG;
++	}
++
++	v->validated_blocks = kvzalloc(BITS_TO_LONGS(v->data_blocks)
++				     * sizeof(unsigned long), GFP_KERNEL);
++	if (!v->validated_blocks) {
++		ti->error = "failed to allocate bitset for check_at_most_once";
++		return -ENOMEM;
++	}
++
++	return 0;
++}
++
+ static int verity_alloc_zero_digest(struct dm_verity *v)
+ {
+ 	int r = -ENOMEM;
+@@ -829,6 +879,12 @@ static int verity_parse_opt_args(struct dm_arg_set *as, struct dm_verity *v)
+ 			}
+ 			continue;
+ 
++		} else if (!strcasecmp(arg_name, DM_VERITY_OPT_AT_MOST_ONCE)) {
++			r = verity_alloc_most_once(v);
++			if (r)
++				return r;
++			continue;
++
+ 		} else if (verity_is_fec_opt_arg(arg_name)) {
+ 			r = verity_fec_parse_opt_args(as, v, &argc, arg_name);
+ 			if (r)
+@@ -1096,7 +1152,7 @@ static int verity_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 
+ static struct target_type verity_target = {
+ 	.name		= "verity",
+-	.version	= {1, 3, 0},
++	.version	= {1, 4, 0},
+ 	.module		= THIS_MODULE,
+ 	.ctr		= verity_ctr,
+ 	.dtr		= verity_dtr,
+diff --git a/drivers/md/dm-verity.h b/drivers/md/dm-verity.h
+index b675bc015512..ace5ec781b5f 100644
+--- a/drivers/md/dm-verity.h
++++ b/drivers/md/dm-verity.h
+@@ -63,6 +63,7 @@ struct dm_verity {
+ 	sector_t hash_level_block[DM_VERITY_MAX_LEVELS];
+ 
+ 	struct dm_verity_fec *fec;	/* forward error correction */
++	unsigned long *validated_blocks; /* bitset blocks validated */
+ };
+ 
+ struct dm_verity_io {
+-- 
+2.17.0.rc0.231.g781580f067-goog
