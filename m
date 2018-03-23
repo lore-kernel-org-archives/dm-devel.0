@@ -1,14 +1,11 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: [PATCH 1/2] multipathd: register threads that use rcu
-	calls
-Date: Fri, 23 Mar 2018 15:00:45 -0500
-Message-ID: <1521835246-29080-2-git-send-email-bmarzins@redhat.com>
-References: <1521835246-29080-1-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 0/2] Fix RCU hang
+Date: Fri, 23 Mar 2018 15:00:44 -0500
+Message-ID: <1521835246-29080-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1521835246-29080-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,119 +19,82 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-All calls to condlog() are rcu reader side calls, so any thread that
-uses condlog() must register itself. The only threads that are exempt
-are log_thread, since it never calls condlog (or any other function that
-calls get_multipath_config) and mpath_pr_event_handler_fn, which is only
-called by mpath_persist, which disables the rcu handling.
+I have run into a RCU related hang with multipathd, when I reconfigured
+and then shutdown multipathd in quick succession.  I haven't been able
+to recreate it without manually adding a sleep() call to the code, but I
+have figured out what could have caused it.
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmultipath/checkers/rbd.c | 7 +++++--
- libmultipath/checkers/tur.c | 9 ++++++---
- multipathd/main.c           | 7 +++++--
- 3 files changed, 16 insertions(+), 7 deletions(-)
+While the rcu code is waiting for a grace period to elapse, no threads
+can register or unregister as rcu reader threads. If for some reason, a
+thread never calls put_multipath_config() to exit a read side critical
+section, then any threads trying to start or stop will hang. This can
+happen if a thread is cancelled between calls to get_multipath_config()
+and put_multipath_config(), and multipathd is reconfigured (which causes
+the rcu code to wait for a grace period).
 
-diff --git a/libmultipath/checkers/rbd.c b/libmultipath/checkers/rbd.c
-index b1d99b4..4ff54f4 100644
---- a/libmultipath/checkers/rbd.c
-+++ b/libmultipath/checkers/rbd.c
-@@ -19,6 +19,7 @@
- #include <sys/ioctl.h>
- #include <sys/time.h>
- #include <sys/wait.h>
-+#include <urcu.h>
- 
- #include "rados/librados.h"
- 
-@@ -517,6 +518,7 @@ static void cleanup_func(void *data)
- 	pthread_spin_unlock(&ct->hldr_lock);
- 	if (!holders)
- 		cleanup_context(ct);
-+	rcu_unregister_thread();
- }
- 
- static void *rbd_thread(void *ctx)
-@@ -524,11 +526,12 @@ static void *rbd_thread(void *ctx)
- 	struct rbd_checker_context *ct = ctx;
- 	int state;
- 
-+	/* This thread can be canceled, so setup clean up */
-+	rbd_thread_cleanup_push(ct)
-+	rcu_register_thread();
- 	condlog(3, "rbd%d: thread starting up", ct->rbd_bus_id);
- 
- 	ct->message[0] = '\0';
--	/* This thread can be canceled, so setup clean up */
--	rbd_thread_cleanup_push(ct)
- 
- 	/* checker start up */
- 	pthread_mutex_lock(&ct->lock);
-diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
-index 9155960..eb3348d 100644
---- a/libmultipath/checkers/tur.c
-+++ b/libmultipath/checkers/tur.c
-@@ -15,6 +15,7 @@
- #include <errno.h>
- #include <sys/time.h>
- #include <pthread.h>
-+#include <urcu.h>
- #include <urcu/uatomic.h>
- 
- #include "checkers.h"
-@@ -220,6 +221,7 @@ static void cleanup_func(void *data)
- 	holders = uatomic_sub_return(&ct->holders, 1);
- 	if (!holders)
- 		cleanup_context(ct);
-+	rcu_unregister_thread();
- }
- 
- static void copy_msg_to_tcc(void *ct_p, const char *msg)
-@@ -237,11 +239,12 @@ static void *tur_thread(void *ctx)
- 	int state, running;
- 	char devt[32];
- 
--	condlog(3, "%s: tur checker starting up",
--		tur_devt(devt, sizeof(devt), ct));
--
- 	/* This thread can be canceled, so setup clean up */
- 	tur_thread_cleanup_push(ct);
-+	rcu_register_thread();
-+
-+	condlog(3, "%s: tur checker starting up",
-+		tur_devt(devt, sizeof(devt), ct));
- 
- 	/* TUR checker start up */
- 	pthread_mutex_lock(&ct->lock);
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 3ae0442..eccb046 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -3041,12 +3041,13 @@ void *  mpath_pr_event_handler_fn (void * pathp )
- 	struct prout_param_descriptor *param;
- 	struct prin_resp *resp;
- 
-+	rcu_register_thread();
- 	mpp = pp->mpp;
- 
- 	resp = mpath_alloc_prin_response(MPATH_PRIN_RKEY_SA);
- 	if (!resp){
- 		condlog(0,"%s Alloc failed for prin response", pp->dev);
--		return NULL;
-+		goto out;
- 	}
- 
- 	ret = prin_do_scsi_ioctl(pp->dev, MPATH_PRIN_RKEY_SA, resp, 0);
-@@ -3104,7 +3105,9 @@ void *  mpath_pr_event_handler_fn (void * pathp )
- 
- 	free(param);
- out:
--	free(resp);
-+	if (resp)
-+		free(resp);
-+	rcu_unregister_thread();
- 	return NULL;
- }
- 
+The only threads that get cancelled before the end of multipathd (at
+least in the setup I was running) are the waiter threads and the tur
+checker threads. The tur checker threads never hit a cancellation point
+while in a read side critcal section (although they do have read side
+critical sections due to using condlog, so they need to register with
+the rcu code). The waiter threads can do this, but only while holding
+the vecs lock, which should protect them from being cancelled.
+
+The other threads occasionally hit cancellation points inside read side
+critical sections while not protected by the vecs lock.  What appears to
+have happened is that one of the threads was taking a long time in a
+read side critical section starting before the reconfigure call to
+call_rcu().  It remained in that section until the reconfigure ended,
+and multipathd was shutdown, cancelling the thread.  I can easily
+reproduce this by adding a sleep() into one of these sections.
+
+The second patch may be overkill. In it, I fix all the multipathd code
+to either not have a cancellation point in a read side critical section,
+or to use a pthread_cleanup_handler. I could just fix the code that is
+called without holding the vecs lock, since you can guarantee that the
+waiter threads will never be cancelled while holding the vecs lock, and
+that main threads can't hold a vecs lock while reconfigure is running,
+and reconfigure will never run after the main threads have been
+cancelled.  I did this for three reasons.
+
+1. Without digging more into the rcu code, I couldn't be sure that the
+reader thread simply needed to be in a quiescent state after call_rcu()
+to count for the grace period. Since call_rcu() uses another thread to
+wait for the grace period, it seemed possible that this rcu thread would
+start checking threads for being in a queiescent state some time after
+call_rcu() happened.  If this is the case, then holding the vecs lock
+would protect a thread from having the rcu code start to wait for a
+grace period.  This could probably be overcome be forcing the main
+threads to be cancelled while holding the vecs lock, so that they 
+could simply never be cancelled in these sections.
+
+2. It seems sloppy to have threads exit without correctly finishing
+their read side critical sections, even if we know that the rcu won't be
+waiting for a grace period again before multipathd is shut down.
+
+3. This would be adding one more surprising thing for the vecs lock to
+be be in charge of. 
+
+Benjamin Marzinski (2):
+  multipathd: register threads that use rcu calls
+  multipath: fix rcu thread cancellation hang
+
+ libmultipath/checkers/rbd.c |  7 +++-
+ libmultipath/checkers/tur.c |  9 +++--
+ libmultipath/config.h       |  2 +-
+ libmultipath/configure.c    | 90 +++++++++++++++++++++++++++------------------
+ libmultipath/devmapper.c    | 10 +++--
+ libmultipath/discovery.c    | 13 +++++--
+ libmultipath/parser.c       |  3 +-
+ libmultipath/structs_vec.c  |  9 +++--
+ libmultipath/uevent.c       | 15 +++++---
+ libmultipath/wwids.c        | 18 +++++----
+ mpathpersist/main.c         |  2 +-
+ multipath/main.c            |  2 +-
+ multipathd/cli_handlers.c   | 86 +++++++++++++++++++++++++++----------------
+ multipathd/main.c           | 64 +++++++++++++++++++++-----------
+ tests/globals.c             |  2 +-
+ 15 files changed, 209 insertions(+), 123 deletions(-)
+
 -- 
 2.7.4
