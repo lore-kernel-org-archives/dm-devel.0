@@ -1,26 +1,10 @@
-From: Christopher Lameter <cl@linux.com>
-Subject: Re: [PATCH] slab: introduce the flag SLAB_MINIMIZE_WASTE
-Date: Fri, 23 Mar 2018 10:10:26 -0500 (CDT)
-Message-ID: <alpine.DEB.2.20.1803230956420.4108@nuc-kabylake>
-References: <alpine.LRH.2.02.1803200954590.18995@file01.intranet.prod.int.rdu2.redhat.com>
-	<20180320173512.GA19669@bombadil.infradead.org>
-	<alpine.DEB.2.20.1803201250480.27540@nuc-kabylake>
-	<alpine.LRH.2.02.1803201510030.21066@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.DEB.2.20.1803201536590.28319@nuc-kabylake>
-	<alpine.LRH.2.02.1803201740280.21066@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.DEB.2.20.1803211024220.2175@nuc-kabylake>
-	<alpine.LRH.2.02.1803211153320.16017@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.DEB.2.20.1803211226350.3174@nuc-kabylake>
-	<alpine.LRH.2.02.1803211425330.26409@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.DEB.2.20.1803211354170.13978@nuc-kabylake>
-	<alpine.LRH.2.02.1803211500570.26409@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.DEB.2.20.1803211508560.17257@nuc-kabylake>
-	<alpine.LRH.2.02.1803211613010.28365@file01.intranet.prod.int.rdu2.redhat.com>
+From: Gris Ge <fge@redhat.com>
+Subject: [multipath] Should we include python API in the codebase?
+Date: Fri, 23 Mar 2018 23:26:55 +0800
+Message-ID: <20180323152655.GB2842@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============6352538849644168757=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.1803211613010.28365@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -30,66 +14,63 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Mike Snitzer <msnitzer@redhat.com>, Matthew Wilcox <willy@infradead.org>, Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Andrew Morton <akpm@linux-foundation.org>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, 21 Mar 2018, Mikulas Patocka wrote:
 
-> > +	s->allocflags = allocflags;
->
-> I'd also use "WRITE_ONCE(s->allocflags, allocflags)" here and when writing
-> s->oo and s->min to avoid some possible compiler misoptimizations.
-
-It only matters that 0 etc is never written.
-
-> Another problem is that it updates s->oo and later it updates s->max:
->         s->oo = oo_make(order, size, s->reserved);
->         s->min = oo_make(get_order(size), size, s->reserved);
->         if (oo_objects(s->oo) > oo_objects(s->max))
->                 s->max = s->oo;
-> --- so, the concurrently running code could see s->oo > s->max, which
-> could trigger some memory corruption.
-
-Well s->max is only relevant for code that analyses the details of slab
-structures for diagnostics.
-
-> s->max is only used in memory allocations -
-> kmalloc(BITS_TO_LONGS(oo_objects(s->max)) * sizeof(unsigned long)), so
-> perhaps we could fix the bug by removing s->max at all and always
-> allocating enough memory for the maximum possible number of objects?
->
-> - kmalloc(BITS_TO_LONGS(oo_objects(s->max)) * sizeof(unsigned long), GFP_KERNEL);
-> + kmalloc(BITS_TO_LONGS(MAX_OBJS_PER_PAGE) * sizeof(unsigned long), GFP_KERNEL);
-
-MAX_OBJS_PER_PAGE is 32k. So you are looking at contiguous allocations of
-256kbyte. Not good.
-
-The simplest measure would be to disallow the changing of the order while
-the slab contains objects.
+--===============6352538849644168757==
+Content-Type: multipart/signed; micalg=pgp-sha256;
+	protocol="application/pgp-signature"; boundary="24zk1gE8NUlDmwG9"
+Content-Disposition: inline
 
 
-Subject: slub: Disallow order changes when objects exist in a slab
+--24zk1gE8NUlDmwG9
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-There seems to be a couple of races that would have to be
-addressed if the slab order would be changed during active use.
+Hi Guys,
 
-Lets disallow this in the same way as we also do not allow
-other changes of slab characteristics when objects are active.
+I created a python API of multipath using the JSON output of multipathd
+like what we did C API -- libdmmp:
 
-Signed-off-by: Christoph Lameter <cl@linux.com>
+    https://github.com/cathay4t/python-dmmp
 
-Index: linux/mm/slub.c
-===================================================================
---- linux.orig/mm/slub.c
-+++ linux/mm/slub.c
-@@ -4919,6 +4919,9 @@ static ssize_t order_store(struct kmem_c
- 	unsigned long order;
- 	int err;
+Does upstream want it maintained in the codebase of multipath-tools?
 
-+	if (any_slab_objects(s))
-+		return -EBUSY;
-+
- 	err = kstrtoul(buf, 10, &order);
- 	if (err)
- 		return err;
+Thanks.
+
+--=20
+Gris Ge
+
+--24zk1gE8NUlDmwG9
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCAAdFiEE8f1XsqXpyNthgIbGbM3lj+QeKP8FAlq1HL8ACgkQbM3lj+Qe
+KP9y9xAAgLiCSjUEYa3kfCQbNIurOZdaz4EICDpmZFt1dpoiBSu5pJIXAib+Dxcx
+BxX1oVTWKPiCtDEZliXsk7OcFgs3xD02LOz9vBkOSpMzG7o73aAerd/UQ+bh5LJk
+NifynXPwGIlAt6MHQjBridz8GWI54RJKB18Yej80QGYMIJK2QPKMBAAmga9l5b0f
+ZFP/ctdsLN1pA6yWuHLZs9D5fIdAFUYNod6Kg5gPPNA9bhrfdEyxBNPAPxM59CsN
+ZuUlf3xK7KnuBEjfSUjCQ9Tgxvs+Mae+iNfEtAiKQizaiLVXT4Voh8oM0Af1Swz+
+NvmsJonXAq48Zp/pg6pAhcOorNud3Dq+TyUn+eWsgwBehWAkcD3dKSaBGoqt9icI
+/4QExrMBbbH1XhsCs5edtsGrGghnJVgeVFzGZKjj+8ckD7GnTDpWzcD/wNnZkwvm
+cz20HW3R9yibfR/Hisx94009Tl5wcyOX4uuqLWikTcncCHAx1fOwJvEOstW1lv/0
+RIkhGNzo4hsqxBJInUlvJR0dd+hqNP0CfUISuaDWeXDa6jSEoRxwwWCCuL6ujA1P
+O5B9a67kgiTvy8WZ4gEadZ5ycu3qJT+6VeOXl2qSZi1fbaJIEV4akYrADuyPQFT9
+o7E9M3uBnXu/91i6hUcu04/Y2CLi0FbFZY3qO525H8um5N256bs=
+=5fQX
+-----END PGP SIGNATURE-----
+
+--24zk1gE8NUlDmwG9--
+
+
+--===============6352538849644168757==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============6352538849644168757==--
