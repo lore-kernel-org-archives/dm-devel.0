@@ -1,45 +1,69 @@
-From: Gilad Ben-Yossef <gilad@benyossef.com>
-Subject: Re: [PATCH 2/2] md: dm-verity: allow parallel processing of bio blocks
-Date: Mon, 26 Mar 2018 09:31:50 +0300
-Message-ID: <CAOtvUMdB9qC6q6YrX0HtE4G3Gw8_FGgne8ZWNPbgRp-1=Fok5g@mail.gmail.com>
-References: <1522003290-27243-1-git-send-email-yael.chemla@foss.arm.com> <1522003290-27243-2-git-send-email-yael.chemla@foss.arm.com>
+From: Denis Semakin <d.semakin@omprussia.ru>
+Subject: Re: [PATCH] dm table: add support for secure erase
+ forwarding [was: Re: Adaptation secure erase forwarding for 4.1x kernels]
+Date: Fri, 23 Mar 2018 18:24:42 +0300 (MSK)
+Message-ID: <582342829.319960.1521818682384.JavaMail.zimbra@omprussia.ru>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1522003290-27243-2-git-send-email-yael.chemla@foss.arm.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Yael Chemla <yael.chemla@foss.arm.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, device-mapper development <dm-devel@redhat.com>, Linux kernel mailing list <linux-kernel@vger.kernel.org>, ofir.drang@gmail.com, Yael Chemla <yael.chemla@arm.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: snitzer <snitzer@redhat.com>
+Cc: dm-devel <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Sun, Mar 25, 2018 at 9:41 PM, Yael Chemla <yael.chemla@foss.arm.com> wrote:
->  Allow parallel processing of bio blocks by moving to async. completion
->  handling. This allows for better resource utilization of both HW and
->  software based hash tfm and therefore better performance in many cases,
->  depending on the specific tfm in use.
->
->  Tested on ARM32 (zynq board) and ARM64 (Juno board).
->  Time of cat command was measured on a filesystem with various file sizes.
->  12% performance improvement when HW based hash was used (ccree driver).
->  SW based hash showed less than 1% improvement.
->  CPU utilization when HW based hash was used presented 10% less context
->  switch, 4% less cycles and 7% less instructions. No difference in
->  CPU utilization noticed with SW based hash.
->
-> Signed-off-by: Yael Chemla <yael.chemla@foss.arm.com>
-> ---
->  drivers/md/dm-verity-fec.c    |  10 +-
->  drivers/md/dm-verity-fec.h    |   7 +-
->  drivers/md/dm-verity-target.c | 215 +++++++++++++++++++++++++++++++-----------
->  drivers/md/dm-verity.h        |   4 +-
->  4 files changed, 173 insertions(+), 63 deletions(-)
+Hi.
+Soon or later everybody start to think about security.
+One of the most frequently requirement is 100% reliable data deletion from
+any device in case of compromising or loss or theft.
 
-Reviewed-by: Gilad Ben-Yossef <gilad@benyossef.com>
+For this, drive and memory cards manufacturers provide ERASE and TRIM features
+which can notice (inform) controller of the device to erase sectors
+(write down only zeros or one or random data). Features can be triggered
+by calling ioctl() requests or a mount options (like ext4 does). But this works
+only with whole device -- /dev/sdX, /dev/mmcblk0pX...
+But what if for some security reasons we need to secure delete a single file.
+A file-system layer provide this functionality... one may call __blkdev_issue_discard()
+with BLKDEV_DISCARD_SECURE flag.
+But...
+All this works well if there is no virtual layer (like device-mapper)
+between file-system and block-layer, because if device driver supports
+this feature it can set up related flag in request_queue flags.
 
--- 
-Gilad Ben-Yossef
-Chief Coffee Drinker
+I have ext4 lvm partitions on my test instance and a drive which can
+secure erase sectors.
+Without lvm it works, with lvm it doesn't.
+That's the purpose if this patch - to provide the opportunity to secure erase
+given sectors (through device-mapper layer, forward request) that were assigned for regular file.
 
-"If you take a class in large-scale robotics, can you end up in a
-situation where the homework eats your dog?"
- -- Jean-Baptiste Queru
+
+
+>But I'm left skeptical that this is enough.  Don't targets need to
+>explicitly handle these REQ_OP_SECURE_ERASE requests?  Similar to how
+>REQ_OP_DISCARD is handled?
+
+I think yes, REQ_OP_DISCARD will not secure erase the data and it can be possible
+to get it from device.
+
+>I'd feel safer about having targets opt-in with setting (a new)
+>ti->num_secure_erase_bios.
+
+Well... May it make sense but I didn't see any reasons to add it in patch.
+
+>Which DM target(s) have you been wanting to pass REQ_OP_SECURE_ERASE
+>bios?
+I think first of all a linear target of course should have this. For others I'm not sure, I need
+to investigate.
+
+Hopefully, I answered to all your question.
+
+
+Denis
