@@ -1,26 +1,16 @@
-From: Christopher Lameter <cl@linux.com>
-Subject: Re: [PATCH] slab: introduce the flag SLAB_MINIMIZE_WASTE
-Date: Fri, 23 Mar 2018 10:48:46 -0500 (CDT)
-Message-ID: <alpine.DEB.2.20.1803231047290.5238@nuc-kabylake>
-References: <alpine.LRH.2.02.1803200954590.18995@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.LRH.2.02.1803201510030.21066@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.DEB.2.20.1803201536590.28319@nuc-kabylake>
-	<alpine.LRH.2.02.1803201740280.21066@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.DEB.2.20.1803211024220.2175@nuc-kabylake>
-	<alpine.LRH.2.02.1803211153320.16017@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.DEB.2.20.1803211226350.3174@nuc-kabylake>
-	<alpine.LRH.2.02.1803211425330.26409@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.DEB.2.20.1803211354170.13978@nuc-kabylake>
-	<alpine.LRH.2.02.1803211500570.26409@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.DEB.2.20.1803211508560.17257@nuc-kabylake>
-	<alpine.LRH.2.02.1803211613010.28365@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.DEB.2.20.1803230956420.4108@nuc-kabylake>
-	<alpine.LRH.2.02.1803231113410.22626@file01.intranet.prod.int.rdu2.redhat.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: [PATCH v2 3/5] libmultipath: config parser: Allow
+ '"' in strings
+Date: Fri, 23 Mar 2018 17:59:52 +0100
+Message-ID: <e505286a-9dbf-969a-f638-7de33262067c@gmail.com>
+References: <20180307232620.15746-1-mwilck@suse.com>
+	<20180307232620.15746-4-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.1803231113410.22626@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <20180307232620.15746-4-mwilck@suse.com>
+Content-Language: en-GB
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -30,16 +20,23 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Mike Snitzer <msnitzer@redhat.com>, Matthew Wilcox <willy@infradead.org>, Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Andrew Morton <akpm@linux-foundation.org>
+To: Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, 23 Mar 2018, Mikulas Patocka wrote:
+On 03/08/2018 12:26 AM, Martin Wilck wrote:
 
-> This test isn't locked against anything, so it may race with concurrent
-> allocation. "any_slab_objects" may return false and a new object in the
-> slab cache may appear immediatelly after that.
+> We have seen model strings lile '2.5" SSD' which can't be parsed
+> by the current config parser. This patch fixes this by allowing
+> '""' to represent a double quote character inside a a string.
+> The above model string could now be entered in the config file like this:
+> 
+> blacklist {
+> 	  vendor SomeCorp
+> 	  product "2.5"" SSD"
+> }
 
-Ok the same reasoning applies to numerous other slab configuration
-settings in /sys/kernel/slab.... So we need to disable all of that or come
-up with a sane way of synchronization.
+
+Could this work in the first place?
+
+          product "2.5\" SSD"
