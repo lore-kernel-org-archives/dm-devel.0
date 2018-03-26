@@ -1,15 +1,10 @@
-From: Denis Semakin <d.semakin@omprussia.ru>
-Subject: Re: [PATCH] dm table: add support for secure erase
- forwarding [was: Re: Adaptation secure erase forwarding for 4.1x kernels]
-Date: Fri, 23 Mar 2018 17:47:49 +0300 (MSK)
-Message-ID: <695931032.318989.1521816469739.JavaMail.zimbra@omprussia.ru>
-References: <1496940834.549721.1520933025411.JavaMail.zimbra@omprussia.ru>
-	<20180322151045.GA27598@redhat.com>
+From: "monty_pavel@sina.com" <monty_pavel@sina.com>
+Subject: [dm-thin] problem about __shadow_block  function
+Date: Mon, 26 Mar 2018 19:02:39 +0800
+Message-ID: <2018032619023829519519@sina.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: multipart/mixed; boundary="===============5187081004543965149=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180322151045.GA27598@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,68 +14,67 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: snitzer <snitzer@redhat.com>
-Cc: dm-devel <dm-devel@redhat.com>
+To: dm-devel <dm-devel@redhat.com>
+Cc: monty_pavel <monty_pavel@sina.com>
 List-Id: dm-devel.ids
 
-PkknZCBmZWVsIHNhZmVyIGFib3V0IGhhdmluZyB0YXJnZXRzIG9wdC1pbiB3aXRoIHNldHRpbmcg
-KGEgbmV3KQo+dGktPm51bV9zZWN1cmVfZXJhc2VfYmlvcy4KTWF5IGJlIGFkZCBhIG5ldyBmaWVs
-ZCAiYm9vbCBzZWN1cmVfZXJhc2Vfc3VwcG9ydGVkOjEiIGluIGRtX3RhcmdldCBzdHJ1Y3R1cmUg
-aW5zdGVhZD8KQW5kIHNldCB1cCBpdCAidHJ1ZSIgaW4gY29uc3RydWN0b3IgZm9yIGxpbmVhciB0
-YXJnZXRzLgoKCi0tLS0tINCY0YHRhdC+0LTQvdC+0LUg0YHQvtC+0LHRidC10L3QuNC1IC0tLS0t
-CtCe0YI6ICJzbml0emVyIiA8c25pdHplckByZWRoYXQuY29tPgrQmtC+0LzRgzogIkRlbmlzIFNl
-bWFraW4iIDxkLnNlbWFraW5Ab21wcnVzc2lhLnJ1PgrQmtC+0L/QuNGPOiAiZG0tZGV2ZWwiIDxk
-bS1kZXZlbEByZWRoYXQuY29tPgrQntGC0L/RgNCw0LLQu9C10L3QvdGL0LU6INCn0LXRgtCy0LXR
-gNCzLCAyMiDQnNCw0YDRgiAyMDE4INCzIDE4OjEwOjQ2CtCi0LXQvNCwOiBbUEFUQ0hdIGRtIHRh
-YmxlOiBhZGQgc3VwcG9ydCBmb3Igc2VjdXJlIGVyYXNlIGZvcndhcmRpbmcgW3dhczogUmU6IEFk
-YXB0YXRpb24gc2VjdXJlIGVyYXNlIGZvcndhcmRpbmcgZm9yIDQuMXgga2VybmVsc10KCk9uIFR1
-ZSwgTWFyIDEzIDIwMTggYXQgIDU6MjNhbSAtMDQwMCwKRGVuaXMgU2VtYWtpbiA8ZC5zZW1ha2lu
-QG9tcHJ1c3NpYS5ydT4gd3JvdGU6Cgo+IEhlbGxvLgo+IEhlcmUgaXMgZml4ZWQgcGF0Y2ggZm9y
-IG1vZGVybiA0LjF4IGtlcm5lbHMuCj4gVGhlIGlkZWEgaXMgdG8gZm9yd2FyZCBzZWN1cmUgZXJh
-c2UgcmVxdWVzdCB3aXRoaW4gZGV2aWNlIG1hcHBlciBsYXllciB0bwo+IGJsb2NrIGRldmljZSBk
-cml2ZXIgd2hpY2ggY2FuIHN1cHBvcnQgc2VjdXJlIGVyYXNlLgo+IENvdWxkIHlvdSBwbGVhc2Ug
-cmV2aWV3PwoKVGhlcmUgd2VyZSB2YXJpb3VzIGlzc3VlcyB3aXRoIHlvdXIgcGF0Y2ggdGhhdCBJ
-IGNsZWFuZWQgdXAsIHBsZWFzZSBzZWUKdGhlIGZvbGxvd2luZy4KCkJ1dCBJJ20gbGVmdCBza2Vw
-dGljYWwgdGhhdCB0aGlzIGlzIGVub3VnaC4gIERvbid0IHRhcmdldHMgbmVlZCB0bwpleHBsaWNp
-dGx5IGhhbmRsZSB0aGVzZSBSRVFfT1BfU0VDVVJFX0VSQVNFIHJlcXVlc3RzPyAgU2ltaWxhciB0
-byBob3cKUkVRX09QX0RJU0NBUkQgaXMgaGFuZGxlZD8KCkknZCBmZWVsIHNhZmVyIGFib3V0IGhh
-dmluZyB0YXJnZXRzIG9wdC1pbiB3aXRoIHNldHRpbmcgKGEgbmV3KQp0aS0+bnVtX3NlY3VyZV9l
-cmFzZV9iaW9zLgoKV2hpY2ggRE0gdGFyZ2V0KHMpIGhhdmUgeW91IGJlZW4gd2FudGluZyB0byBw
-YXNzIFJFUV9PUF9TRUNVUkVfRVJBU0UKYmlvcz8KCk1pa2UKCgpGcm9tOiBEZW5pcyBTZW1ha2lu
-IDxkLnNlbWFraW5Ab21wcnVzc2lhLnJ1PgpEYXRlOiBUdWUsIDEzIE1hciAyMDE4IDEzOjIzOjQ1
-ICswNDAwClN1YmplY3Q6IFtQQVRDSF0gZG0gdGFibGU6IGFkZCBzdXBwb3J0IGZvciBzZWN1cmUg
-ZXJhc2UgZm9yd2FyZGluZwoKU2V0IFFVRVVFX0ZMQUdfU0VDRVJBU0UgaW4gRE0gZGV2aWNlJ3Mg
-cXVldWVfZmxhZ3MgaWYgYSBETSB0YWJsZSdzCmRhdGEgZGV2aWNlcyBzdXBwb3J0IHNlY3VyZSBl
-cmFzZS4KClNpZ25lZC1vZmYtYnk6IERlbmlzIFNlbWFraW4gPGQuc2VtYWtpbkBvbXBydXNzaWEu
-cnU+ClNpZ25lZC1vZmYtYnk6IE1pa2UgU25pdHplciA8c25pdHplckByZWRoYXQuY29tPgotLS0K
-IGRyaXZlcnMvbWQvZG0tdGFibGUuYyB8ICAgMjggKysrKysrKysrKysrKysrKysrKysrKysrKysr
-KwogMSBmaWxlcyBjaGFuZ2VkLCAyOCBpbnNlcnRpb25zKCspLCAwIGRlbGV0aW9ucygtKQoKZGlm
-ZiAtLWdpdCBhL2RyaXZlcnMvbWQvZG0tdGFibGUuYyBiL2RyaXZlcnMvbWQvZG0tdGFibGUuYwpp
-bmRleCA3ZWIzZTJhLi5kODU3MzY5IDEwMDY0NAotLS0gYS9kcml2ZXJzL21kL2RtLXRhYmxlLmMK
-KysrIGIvZHJpdmVycy9tZC9kbS10YWJsZS5jCkBAIC0xODQ2LDYgKzE4NDYsMzEgQEAgc3RhdGlj
-IGJvb2wgZG1fdGFibGVfc3VwcG9ydHNfZGlzY2FyZHMoc3RydWN0IGRtX3RhYmxlICp0KQogCXJl
-dHVybiB0cnVlOwogfQogCitzdGF0aWMgaW50IGRldmljZV9ub3Rfc2VjdXJlX2VyYXNlX2NhcGFi
-bGUoc3RydWN0IGRtX3RhcmdldCAqdGksCisJCQkJCSAgIHN0cnVjdCBkbV9kZXYgKmRldiwgc2Vj
-dG9yX3Qgc3RhcnQsCisJCQkJCSAgIHNlY3Rvcl90IGxlbiwgdm9pZCAqZGF0YSkKK3sKKyAgICAg
-ICBzdHJ1Y3QgcmVxdWVzdF9xdWV1ZSAqcSA9IGJkZXZfZ2V0X3F1ZXVlKGRldi0+YmRldik7CisK
-KyAgICAgICByZXR1cm4gcSAmJiAhYmxrX3F1ZXVlX3NlY3VyZV9lcmFzZShxKTsKK30KKworc3Rh
-dGljIGJvb2wgZG1fdGFibGVfc3VwcG9ydHNfc2VjdXJlX2VyYXNlKHN0cnVjdCBkbV90YWJsZSAq
-dCkKK3sKKyAgICAgICBzdHJ1Y3QgZG1fdGFyZ2V0ICp0aTsKKyAgICAgICB1bnNpZ25lZCBpbnQg
-aTsKKworICAgICAgIGZvciAoaSA9IDA7IGkgPCBkbV90YWJsZV9nZXRfbnVtX3RhcmdldHModCk7
-IGkrKykgeworICAgICAgICAgICAgICAgdGkgPSBkbV90YWJsZV9nZXRfdGFyZ2V0KHQsIGkpOwor
-CisgICAgICAgICAgICAgICBpZiAoIXRpLT50eXBlLT5pdGVyYXRlX2RldmljZXMgfHwKKyAgICAg
-ICAgICAgICAgICAgICB0aS0+dHlwZS0+aXRlcmF0ZV9kZXZpY2VzKHRpLCBkZXZpY2Vfbm90X3Nl
-Y3VyZV9lcmFzZV9jYXBhYmxlLCBOVUxMKSkKKwkJICAgICAgIHJldHVybiBmYWxzZTsKKyAgICAg
-ICB9CisKKyAgICAgICByZXR1cm4gdHJ1ZTsKK30KKwogdm9pZCBkbV90YWJsZV9zZXRfcmVzdHJp
-Y3Rpb25zKHN0cnVjdCBkbV90YWJsZSAqdCwgc3RydWN0IHJlcXVlc3RfcXVldWUgKnEsCiAJCQkg
-ICAgICAgc3RydWN0IHF1ZXVlX2xpbWl0cyAqbGltaXRzKQogewpAQCAtMTg2Nyw2ICsxODkyLDkg
-QEAgdm9pZCBkbV90YWJsZV9zZXRfcmVzdHJpY3Rpb25zKHN0cnVjdCBkbV90YWJsZSAqdCwgc3Ry
-dWN0IHJlcXVlc3RfcXVldWUgKnEsCiAJfSBlbHNlCiAJCXF1ZXVlX2ZsYWdfc2V0X3VubG9ja2Vk
-KFFVRVVFX0ZMQUdfRElTQ0FSRCwgcSk7CiAKKwlpZiAoZG1fdGFibGVfc3VwcG9ydHNfc2VjdXJl
-X2VyYXNlKHQpKQorCQlxdWV1ZV9mbGFnX3NldF91bmxvY2tlZChRVUVVRV9GTEFHX1NFQ0VSQVNF
-LCBxKTsKKwogCWlmIChkbV90YWJsZV9zdXBwb3J0c19mbHVzaCh0LCAoMVVMIDw8IFFVRVVFX0ZM
-QUdfV0MpKSkgewogCQl3YyA9IHRydWU7CiAJCWlmIChkbV90YWJsZV9zdXBwb3J0c19mbHVzaCh0
-LCAoMVVMIDw8IFFVRVVFX0ZMQUdfRlVBKSkpCi0tIAoxLjcuNC40Ci0tIApCZXN0IHJlZ2FyZHMs
-CgpEZW5pcyBTZW1ha2luClNvZnR3YXJlIERldmVsb3BlcgpPcGVuIE1vYmlsZSBQbGF0Zm9ybQoK
-LS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cu
-cmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+
+This is a multi-part message in MIME format.
+
+--===============5187081004543965149==
+Content-Type: multipart/alternative;
+	boundary="----=_001_NextPart426583760386_=----"
+
+
+This is a multi-part message in MIME format.
+
+------=_001_NextPart426583760386_=----
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: base64
+
+SGkgYWxsOg0KV2hlbiBJIHJlYWQgX19zaGFkb3dfYmxvY2sgIGZ1bmN0aW9uLCBJIGZvdW5kIGEg
+cHJvYmxlbSBhcyBmb2xsb3dzOg0KQWZ0ZXIgY2FsbGVkIF9fc2hhZG93X2Jsb2NrIGZ1bmN0aW9u
+LCBpZiB0aGUgb3JpZyBibG9jayBpcyBhbGxvY2F0ZWQgdG8gYW5vdGhlciBhbmQgcmV3cml0ZW4g
+YnkgYW5vdGhlciBjb250ZXh0LCBNZWFud2hpbGUgYWN0aW9uIG1lbnRpb25lZCBhYm92ZSBhcmUg
+Y29tbWl0dGVkIGluIHRoZSBzYW1lIHRyYW5zYWN0aW9uLCBhbmQgdGhlbiBwb3dlciBsb3NzIGhh
+cHBlbnMgYmVmb3JlIHdyaXRlIHN1cGVyYmxvY2sgdG8gbWV0YWRhdGEgZGV2aWNlLiBJZiB0aGUg
+b3JpZyBibG9jayBpcyBkZXZpY2VfZGV0YWlsc19yb290IG9mIHRoaW5fZGlza19zdXBlcl9ibG9j
+aywgd2UgY2FuIG5vdCBmaW5kIGFueSBkZXZpY2UgaW4gdGhpbi1wb29sLg0KSXMgaXQgcG9zc2li
+bGU/DQpTaW5jZXJlbHkgbW9udHkNCg0KDQptb250eV9wYXZlbEBzaW5hLmNvbQ0K
+
+------=_001_NextPart426583760386_=----
+Content-Type: text/html;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+
+<html><head><meta http-equiv=3D"content-type" content=3D"text/html; charse=
+t=3Dus-ascii"><style>body { line-height: 1.5; }body { font-size: 10.5pt; f=
+ont-family: 'Segoe UI'; color: rgb(0, 0, 0); line-height: 1.5; }</style></=
+head><body>=0A<div>Hi all:</div><div>When I read&nbsp;<span style=3D"font-=
+size: 10.5pt; line-height: 1.5; background-color: window;">__shadow_block<=
+/span><span style=3D"font-size: 10.5pt; line-height: 1.5; background-color=
+: window;">&nbsp; function, I found a problem as follows:</span></div><div=
+>After called __shadow_block function, if the orig block is allocated to a=
+nother and rewriten by another context, Meanwhile action mentioned above a=
+re committed in the same transaction, and then power loss happens before w=
+rite superblock to metadata device. If the orig bl<font face=3D"\Segoe UI\=
+"><span style=3D"background-color: rgb(255, 255, 255);">ock is&nbsp;<span =
+style=3D"line-height: 1.5;">device_details_root of thin_disk_super_block, =
+we can not find any device in thin-pool.</span></span></font></div><div>Is=
+ it possible?</div><div>Sincerely monty</div><hr style=3D"width: 210px; he=
+ight: 1px;" color=3D"#b5c4df" size=3D"1" align=3D"left">=0A<div><span><div=
+ style=3D"MARGIN: 10px; FONT-FAMILY: verdana; FONT-SIZE: 10pt"><div>monty_=
+pavel@sina.com</div></div></span></div>=0A</body></html>
+------=_001_NextPart426583760386_=------
+
+
+
+--===============5187081004543965149==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============5187081004543965149==--
