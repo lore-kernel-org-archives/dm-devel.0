@@ -1,13 +1,13 @@
 From: mpatocka@redhat.com
-Subject: [patch 8/8] dm-bufio: dont embed bio in dm_buffer
-Date: Mon, 26 Mar 2018 20:29:47 +0200
-Message-ID: <20180326183101.259533288@debian.vm>
+Subject: [patch 1/8] dm-bufio: move dm-bufio.h to include/linux/
+Date: Mon, 26 Mar 2018 20:29:40 +0200
+Message-ID: <20180326183052.444458536@debian.vm>
 References: <20180326182939.169591126@debian.vm>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline; filename=dm-bufio-alloc-bio.patch
+Content-Disposition: inline; filename=dm-bufio-export.patch
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,213 +21,390 @@ To: mpatocka@redhat.com, msnitzer@redhat.com, agk@redhat.com
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The bio structure consumes a substantial part of dm_buffer. This structure
-is needed only when doing I/O on the buffer, thus we don't have to embed
-it in the buffer, we can allocate the structure only when doing I/O.
-
-We don't need to create bio set because in case of allocation failure we
-fall back to dmio (which keeps its own bio set).
+This patch moves dm-bufio to include/linux/, so that external modules can
+use it. (it is needed for the VDO team)
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm-bufio.c |  105 +++++++++++++++++++++-----------------------------
- 1 file changed, 45 insertions(+), 60 deletions(-)
+ drivers/md/dm-bufio.c                         |    2 
+ drivers/md/dm-bufio.h                         |  148 --------------------------
+ drivers/md/dm-integrity.c                     |    2 
+ drivers/md/dm-snap-persistent.c               |    2 
+ drivers/md/dm-verity.h                        |    2 
+ drivers/md/persistent-data/dm-block-manager.c |    2 
+ include/linux/dm-bufio.h                      |  148 ++++++++++++++++++++++++++
+ 7 files changed, 153 insertions(+), 153 deletions(-)
 
-Index: linux-2.6/drivers/md/dm-bufio.c
+Index: linux-2.6/drivers/md/dm-bufio.h
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-bufio.c	2018-03-26 16:44:19.369999000 +0200
-+++ linux-2.6/drivers/md/dm-bufio.c	2018-03-26 17:05:13.000000000 +0200
-@@ -51,12 +51,6 @@
- #define DM_BUFIO_DEFAULT_RETAIN_BYTES   (256 * 1024)
- 
- /*
-- * The number of bvec entries that are embedded directly in the buffer.
-- * If the chunk size is larger, dm-io is used to do the io.
+--- linux-2.6.orig/drivers/md/dm-bufio.h	2017-09-22 14:31:41.159418000 +0200
++++ /dev/null	1970-01-01 00:00:00.000000000 +0000
+@@ -1,148 +0,0 @@
+-/*
+- * Copyright (C) 2009-2011 Red Hat, Inc.
+- *
+- * Author: Mikulas Patocka <mpatocka@redhat.com>
+- *
+- * This file is released under the GPL.
 - */
--#define DM_BUFIO_INLINE_VECS		16
+-
+-#ifndef DM_BUFIO_H
+-#define DM_BUFIO_H
+-
+-#include <linux/blkdev.h>
+-#include <linux/types.h>
+-
+-/*----------------------------------------------------------------*/
+-
+-struct dm_bufio_client;
+-struct dm_buffer;
 -
 -/*
-  * Align buffer writes to this boundary.
-  * Tests show that SSDs have the highest IOPS when using 4k writes.
-  */
-@@ -153,8 +147,7 @@ struct dm_buffer {
- 	unsigned write_end;
- 	struct dm_bufio_client *c;
- 	struct list_head write_list;
--	struct bio bio;
--	struct bio_vec bio_vec[DM_BUFIO_INLINE_VECS];
-+	void (*end_io)(struct dm_buffer *, blk_status_t);
- #ifdef CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
- #define MAX_STACK 10
- 	struct stack_trace stack_trace;
-@@ -534,12 +527,11 @@ static void dmio_complete(unsigned long
- {
- 	struct dm_buffer *b = context;
- 
--	b->bio.bi_status = error ? BLK_STS_IOERR : 0;
--	b->bio.bi_end_io(&b->bio);
-+	b->end_io(b, unlikely(error != 0) ? BLK_STS_IOERR : 0);
- }
- 
- static void use_dmio(struct dm_buffer *b, int rw, sector_t sector,
--		     unsigned n_sectors, unsigned offset, bio_end_io_t *end_io)
-+		     unsigned n_sectors, unsigned offset)
- {
- 	int r;
- 	struct dm_io_request io_req = {
-@@ -563,71 +555,69 @@ static void use_dmio(struct dm_buffer *b
- 		io_req.mem.ptr.vma = (char *)b->data + offset;
- 	}
- 
--	b->bio.bi_end_io = end_io;
+- * Create a buffered IO cache on a given device
+- */
+-struct dm_bufio_client *
+-dm_bufio_client_create(struct block_device *bdev, unsigned block_size,
+-		       unsigned reserved_buffers, unsigned aux_size,
+-		       void (*alloc_callback)(struct dm_buffer *),
+-		       void (*write_callback)(struct dm_buffer *));
 -
- 	r = dm_io(&io_req, 1, &region, NULL);
--	if (r) {
--		b->bio.bi_status = errno_to_blk_status(r);
--		end_io(&b->bio);
--	}
-+	if (unlikely(r))
-+		b->end_io(b, errno_to_blk_status(r));
- }
- 
--static void inline_endio(struct bio *bio)
-+static void bio_complete(struct bio *bio)
- {
--	bio_end_io_t *end_fn = bio->bi_private;
-+	struct dm_buffer *b = bio->bi_private;
- 	blk_status_t status = bio->bi_status;
+-/*
+- * Release a buffered IO cache.
+- */
+-void dm_bufio_client_destroy(struct dm_bufio_client *c);
 -
--	/*
--	 * Reset the bio to free any attached resources
--	 * (e.g. bio integrity profiles).
--	 */
--	bio_reset(bio);
+-/*
+- * Set the sector range.
+- * When this function is called, there must be no I/O in progress on the bufio
+- * client.
+- */
+-void dm_bufio_set_sector_offset(struct dm_bufio_client *c, sector_t start);
 -
--	bio->bi_status = status;
--	end_fn(bio);
-+	bio_put(bio);
-+	b->end_io(b, status);
- }
- 
--static void use_inline_bio(struct dm_buffer *b, int rw, sector_t sector,
--			   unsigned n_sectors, unsigned offset, bio_end_io_t *end_io)
-+static void use_bio(struct dm_buffer *b, int rw, sector_t sector,
-+		    unsigned n_sectors, unsigned offset)
- {
-+	struct bio *bio;
- 	char *ptr;
--	unsigned len;
-+	unsigned vec_size, len;
- 
--	bio_init(&b->bio, b->bio_vec, DM_BUFIO_INLINE_VECS);
--	b->bio.bi_iter.bi_sector = sector;
--	bio_set_dev(&b->bio, b->c->bdev);
--	b->bio.bi_end_io = inline_endio;
--	/*
--	 * Use of .bi_private isn't a problem here because
--	 * the dm_buffer's inline bio is local to bufio.
--	 */
--	b->bio.bi_private = end_io;
--	bio_set_op_attrs(&b->bio, rw, 0);
-+	vec_size = b->c->block_size >> PAGE_SHIFT;
-+	if (unlikely(b->c->sectors_per_block_bits < PAGE_SHIFT - SECTOR_SHIFT))
-+		vec_size += 2;
+-/*
+- * WARNING: to avoid deadlocks, these conditions are observed:
+- *
+- * - At most one thread can hold at most "reserved_buffers" simultaneously.
+- * - Each other threads can hold at most one buffer.
+- * - Threads which call only dm_bufio_get can hold unlimited number of
+- *   buffers.
+- */
+-
+-/*
+- * Read a given block from disk. Returns pointer to data.  Returns a
+- * pointer to dm_buffer that can be used to release the buffer or to make
+- * it dirty.
+- */
+-void *dm_bufio_read(struct dm_bufio_client *c, sector_t block,
+-		    struct dm_buffer **bp);
+-
+-/*
+- * Like dm_bufio_read, but return buffer from cache, don't read
+- * it. If the buffer is not in the cache, return NULL.
+- */
+-void *dm_bufio_get(struct dm_bufio_client *c, sector_t block,
+-		   struct dm_buffer **bp);
+-
+-/*
+- * Like dm_bufio_read, but don't read anything from the disk.  It is
+- * expected that the caller initializes the buffer and marks it dirty.
+- */
+-void *dm_bufio_new(struct dm_bufio_client *c, sector_t block,
+-		   struct dm_buffer **bp);
+-
+-/*
+- * Prefetch the specified blocks to the cache.
+- * The function starts to read the blocks and returns without waiting for
+- * I/O to finish.
+- */
+-void dm_bufio_prefetch(struct dm_bufio_client *c,
+-		       sector_t block, unsigned n_blocks);
+-
+-/*
+- * Release a reference obtained with dm_bufio_{read,get,new}. The data
+- * pointer and dm_buffer pointer is no longer valid after this call.
+- */
+-void dm_bufio_release(struct dm_buffer *b);
+-
+-/*
+- * Mark a buffer dirty. It should be called after the buffer is modified.
+- *
+- * In case of memory pressure, the buffer may be written after
+- * dm_bufio_mark_buffer_dirty, but before dm_bufio_write_dirty_buffers.  So
+- * dm_bufio_write_dirty_buffers guarantees that the buffer is on-disk but
+- * the actual writing may occur earlier.
+- */
+-void dm_bufio_mark_buffer_dirty(struct dm_buffer *b);
+-
+-/*
+- * Mark a part of the buffer dirty.
+- *
+- * The specified part of the buffer is scheduled to be written. dm-bufio may
+- * write the specified part of the buffer or it may write a larger superset.
+- */
+-void dm_bufio_mark_partial_buffer_dirty(struct dm_buffer *b,
+-					unsigned start, unsigned end);
+-
+-/*
+- * Initiate writing of dirty buffers, without waiting for completion.
+- */
+-void dm_bufio_write_dirty_buffers_async(struct dm_bufio_client *c);
+-
+-/*
+- * Write all dirty buffers. Guarantees that all dirty buffers created prior
+- * to this call are on disk when this call exits.
+- */
+-int dm_bufio_write_dirty_buffers(struct dm_bufio_client *c);
+-
+-/*
+- * Send an empty write barrier to the device to flush hardware disk cache.
+- */
+-int dm_bufio_issue_flush(struct dm_bufio_client *c);
+-
+-/*
+- * Like dm_bufio_release but also move the buffer to the new
+- * block. dm_bufio_write_dirty_buffers is needed to commit the new block.
+- */
+-void dm_bufio_release_move(struct dm_buffer *b, sector_t new_block);
+-
+-/*
+- * Free the given buffer.
+- * This is just a hint, if the buffer is in use or dirty, this function
+- * does nothing.
+- */
+-void dm_bufio_forget(struct dm_bufio_client *c, sector_t block);
+-
+-/*
+- * Set the minimum number of buffers before cleanup happens.
+- */
+-void dm_bufio_set_minimum_buffers(struct dm_bufio_client *c, unsigned n);
+-
+-unsigned dm_bufio_get_block_size(struct dm_bufio_client *c);
+-sector_t dm_bufio_get_device_size(struct dm_bufio_client *c);
+-sector_t dm_bufio_get_block_number(struct dm_buffer *b);
+-void *dm_bufio_get_block_data(struct dm_buffer *b);
+-void *dm_bufio_get_aux_data(struct dm_buffer *b);
+-struct dm_bufio_client *dm_bufio_get_client(struct dm_buffer *b);
+-
+-/*----------------------------------------------------------------*/
+-
+-#endif
+Index: linux-2.6/include/linux/dm-bufio.h
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6/include/linux/dm-bufio.h	2018-03-08 10:13:17.599999000 +0100
+@@ -0,0 +1,148 @@
++/*
++ * Copyright (C) 2009-2011 Red Hat, Inc.
++ *
++ * Author: Mikulas Patocka <mpatocka@redhat.com>
++ *
++ * This file is released under the GPL.
++ */
 +
-+	bio = bio_kmalloc(GFP_NOWAIT | __GFP_NORETRY | __GFP_NOWARN, vec_size);
-+	if (!bio) {
-+dmio:
-+		use_dmio(b, rw, sector, n_sectors, offset);
-+		return;
-+	}
++#ifndef _LINUX_DM_BUFIO_H
++#define _LINUX_DM_BUFIO_H
 +
-+	bio->bi_iter.bi_sector = sector;
-+	bio_set_dev(bio, b->c->bdev);
-+	bio_set_op_attrs(bio, rw, 0);
-+	bio->bi_end_io = bio_complete;
-+	bio->bi_private = b;
- 
- 	ptr = (char *)b->data + offset;
- 	len = n_sectors << SECTOR_SHIFT;
- 
- 	do {
- 		unsigned this_step = min((unsigned)(PAGE_SIZE - offset_in_page(ptr)), len);
--		if (!bio_add_page(&b->bio, virt_to_page(ptr), this_step,
-+		if (!bio_add_page(bio, virt_to_page(ptr), this_step,
- 				  offset_in_page(ptr))) {
--			use_dmio(b, rw, sector, n_sectors, offset, end_io);
--			return;
-+			bio_put(bio);
-+			goto dmio;
- 		}
- 
- 		len -= this_step;
- 		ptr += this_step;
- 	} while (len > 0);
- 
--	submit_bio(&b->bio);
-+	submit_bio(bio);
- }
- 
--static void submit_io(struct dm_buffer *b, int rw, bio_end_io_t *end_io)
-+static void submit_io(struct dm_buffer *b, int rw, void (*end_io)(struct dm_buffer *, blk_status_t))
- {
- 	unsigned n_sectors;
- 	sector_t sector;
- 	unsigned offset, end;
- 
-+	b->end_io = end_io;
++#include <linux/blkdev.h>
++#include <linux/types.h>
 +
- 	if (likely(b->c->sectors_per_block_bits >= 0))
- 		sector = b->block << b->c->sectors_per_block_bits;
- 	else
-@@ -652,11 +642,10 @@ static void submit_io(struct dm_buffer *
- 		n_sectors = (end - offset) >> SECTOR_SHIFT;
- 	}
- 
--	if (n_sectors <= ((DM_BUFIO_INLINE_VECS * PAGE_SIZE) >> SECTOR_SHIFT) &&
--	    b->data_mode != DATA_MODE_VMALLOC)
--		use_inline_bio(b, rw, sector, n_sectors, offset, end_io);
-+	if (b->data_mode != DATA_MODE_VMALLOC)
-+		use_bio(b, rw, sector, n_sectors, offset);
- 	else
--		use_dmio(b, rw, sector, n_sectors, offset, end_io);
-+		use_dmio(b, rw, sector, n_sectors, offset);
- }
- 
- /*----------------------------------------------------------------
-@@ -669,16 +658,14 @@ static void submit_io(struct dm_buffer *
-  * Set the error, clear B_WRITING bit and wake anyone who was waiting on
-  * it.
++/*----------------------------------------------------------------*/
++
++struct dm_bufio_client;
++struct dm_buffer;
++
++/*
++ * Create a buffered IO cache on a given device
++ */
++struct dm_bufio_client *
++dm_bufio_client_create(struct block_device *bdev, unsigned block_size,
++		       unsigned reserved_buffers, unsigned aux_size,
++		       void (*alloc_callback)(struct dm_buffer *),
++		       void (*write_callback)(struct dm_buffer *));
++
++/*
++ * Release a buffered IO cache.
++ */
++void dm_bufio_client_destroy(struct dm_bufio_client *c);
++
++/*
++ * Set the sector range.
++ * When this function is called, there must be no I/O in progress on the bufio
++ * client.
++ */
++void dm_bufio_set_sector_offset(struct dm_bufio_client *c, sector_t start);
++
++/*
++ * WARNING: to avoid deadlocks, these conditions are observed:
++ *
++ * - At most one thread can hold at most "reserved_buffers" simultaneously.
++ * - Each other threads can hold at most one buffer.
++ * - Threads which call only dm_bufio_get can hold unlimited number of
++ *   buffers.
++ */
++
++/*
++ * Read a given block from disk. Returns pointer to data.  Returns a
++ * pointer to dm_buffer that can be used to release the buffer or to make
++ * it dirty.
++ */
++void *dm_bufio_read(struct dm_bufio_client *c, sector_t block,
++		    struct dm_buffer **bp);
++
++/*
++ * Like dm_bufio_read, but return buffer from cache, don't read
++ * it. If the buffer is not in the cache, return NULL.
++ */
++void *dm_bufio_get(struct dm_bufio_client *c, sector_t block,
++		   struct dm_buffer **bp);
++
++/*
++ * Like dm_bufio_read, but don't read anything from the disk.  It is
++ * expected that the caller initializes the buffer and marks it dirty.
++ */
++void *dm_bufio_new(struct dm_bufio_client *c, sector_t block,
++		   struct dm_buffer **bp);
++
++/*
++ * Prefetch the specified blocks to the cache.
++ * The function starts to read the blocks and returns without waiting for
++ * I/O to finish.
++ */
++void dm_bufio_prefetch(struct dm_bufio_client *c,
++		       sector_t block, unsigned n_blocks);
++
++/*
++ * Release a reference obtained with dm_bufio_{read,get,new}. The data
++ * pointer and dm_buffer pointer is no longer valid after this call.
++ */
++void dm_bufio_release(struct dm_buffer *b);
++
++/*
++ * Mark a buffer dirty. It should be called after the buffer is modified.
++ *
++ * In case of memory pressure, the buffer may be written after
++ * dm_bufio_mark_buffer_dirty, but before dm_bufio_write_dirty_buffers.  So
++ * dm_bufio_write_dirty_buffers guarantees that the buffer is on-disk but
++ * the actual writing may occur earlier.
++ */
++void dm_bufio_mark_buffer_dirty(struct dm_buffer *b);
++
++/*
++ * Mark a part of the buffer dirty.
++ *
++ * The specified part of the buffer is scheduled to be written. dm-bufio may
++ * write the specified part of the buffer or it may write a larger superset.
++ */
++void dm_bufio_mark_partial_buffer_dirty(struct dm_buffer *b,
++					unsigned start, unsigned end);
++
++/*
++ * Initiate writing of dirty buffers, without waiting for completion.
++ */
++void dm_bufio_write_dirty_buffers_async(struct dm_bufio_client *c);
++
++/*
++ * Write all dirty buffers. Guarantees that all dirty buffers created prior
++ * to this call are on disk when this call exits.
++ */
++int dm_bufio_write_dirty_buffers(struct dm_bufio_client *c);
++
++/*
++ * Send an empty write barrier to the device to flush hardware disk cache.
++ */
++int dm_bufio_issue_flush(struct dm_bufio_client *c);
++
++/*
++ * Like dm_bufio_release but also move the buffer to the new
++ * block. dm_bufio_write_dirty_buffers is needed to commit the new block.
++ */
++void dm_bufio_release_move(struct dm_buffer *b, sector_t new_block);
++
++/*
++ * Free the given buffer.
++ * This is just a hint, if the buffer is in use or dirty, this function
++ * does nothing.
++ */
++void dm_bufio_forget(struct dm_bufio_client *c, sector_t block);
++
++/*
++ * Set the minimum number of buffers before cleanup happens.
++ */
++void dm_bufio_set_minimum_buffers(struct dm_bufio_client *c, unsigned n);
++
++unsigned dm_bufio_get_block_size(struct dm_bufio_client *c);
++sector_t dm_bufio_get_device_size(struct dm_bufio_client *c);
++sector_t dm_bufio_get_block_number(struct dm_buffer *b);
++void *dm_bufio_get_block_data(struct dm_buffer *b);
++void *dm_bufio_get_aux_data(struct dm_buffer *b);
++struct dm_bufio_client *dm_bufio_get_client(struct dm_buffer *b);
++
++/*----------------------------------------------------------------*/
++
++#endif
+Index: linux-2.6/drivers/md/dm-bufio.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-bufio.c	2018-03-08 07:13:48.655471000 +0100
++++ linux-2.6/drivers/md/dm-bufio.c	2018-03-08 10:14:02.119999000 +0100
+@@ -6,7 +6,7 @@
+  * This file is released under the GPL.
   */
--static void write_endio(struct bio *bio)
-+static void write_endio(struct dm_buffer *b, blk_status_t status)
- {
--	struct dm_buffer *b = container_of(bio, struct dm_buffer, bio);
--
--	b->write_error = bio->bi_status;
--	if (unlikely(bio->bi_status)) {
-+	b->write_error = status;
-+	if (unlikely(status)) {
- 		struct dm_bufio_client *c = b->c;
  
- 		(void)cmpxchg(&c->async_write_error, 0,
--				blk_status_to_errno(bio->bi_status));
-+				blk_status_to_errno(status));
- 	}
+-#include "dm-bufio.h"
++#include <linux/dm-bufio.h>
  
- 	BUG_ON(!test_bit(B_WRITING, &b->state));
-@@ -1055,11 +1042,9 @@ found_buffer:
-  * The endio routine for reading: set the error, clear the bit and wake up
-  * anyone waiting on the buffer.
+ #include <linux/device-mapper.h>
+ #include <linux/dm-io.h>
+Index: linux-2.6/drivers/md/dm-integrity.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-integrity.c	2018-03-08 06:53:09.000000000 +0100
++++ linux-2.6/drivers/md/dm-integrity.c	2018-03-08 10:14:36.659999000 +0100
+@@ -18,7 +18,7 @@
+ #include <crypto/hash.h>
+ #include <crypto/skcipher.h>
+ #include <linux/async_tx.h>
+-#include "dm-bufio.h"
++#include <linux/dm-bufio.h>
+ 
+ #define DM_MSG_PREFIX "integrity"
+ 
+Index: linux-2.6/drivers/md/dm-snap-persistent.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-snap-persistent.c	2017-06-06 23:49:56.237523000 +0200
++++ linux-2.6/drivers/md/dm-snap-persistent.c	2018-03-08 10:14:14.219999000 +0100
+@@ -14,7 +14,7 @@
+ #include <linux/export.h>
+ #include <linux/slab.h>
+ #include <linux/dm-io.h>
+-#include "dm-bufio.h"
++#include <linux/dm-bufio.h>
+ 
+ #define DM_MSG_PREFIX "persistent snapshot"
+ #define DM_CHUNK_SIZE_DEFAULT_SECTORS 32	/* 16KB */
+Index: linux-2.6/drivers/md/dm-verity.h
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-verity.h	2017-11-24 18:01:03.878480000 +0100
++++ linux-2.6/drivers/md/dm-verity.h	2018-03-08 10:14:27.389999000 +0100
+@@ -12,7 +12,7 @@
+ #ifndef DM_VERITY_H
+ #define DM_VERITY_H
+ 
+-#include "dm-bufio.h"
++#include <linux/dm-bufio.h>
+ #include <linux/device-mapper.h>
+ #include <crypto/hash.h>
+ 
+Index: linux-2.6/drivers/md/persistent-data/dm-block-manager.c
+===================================================================
+--- linux-2.6.orig/drivers/md/persistent-data/dm-block-manager.c	2017-06-03 00:22:40.129122000 +0200
++++ linux-2.6/drivers/md/persistent-data/dm-block-manager.c	2018-03-08 10:14:52.749999000 +0100
+@@ -5,8 +5,8 @@
   */
--static void read_endio(struct bio *bio)
-+static void read_endio(struct dm_buffer *b, blk_status_t status)
- {
--	struct dm_buffer *b = container_of(bio, struct dm_buffer, bio);
--
--	b->read_error = bio->bi_status;
-+	b->read_error = status;
+ #include "dm-block-manager.h"
+ #include "dm-persistent-data-internal.h"
+-#include "../dm-bufio.h"
  
- 	BUG_ON(!test_bit(B_READING, &b->state));
- 
++#include <linux/dm-bufio.h>
+ #include <linux/crc32c.h>
+ #include <linux/module.h>
+ #include <linux/slab.h>
