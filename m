@@ -1,14 +1,16 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [patch 0/8] dm-bufio patches
-Date: Mon, 26 Mar 2018 14:57:47 -0400
-Message-ID: <20180326185746.GA22409@redhat.com>
-References: <20180326182939.169591126@debian.vm>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH v2 12/20] multipath -u: common code path for
+ result message
+Date: Mon, 26 Mar 2018 13:59:35 -0500
+Message-ID: <20180326185934.GQ3103@octiron.msp.redhat.com>
+References: <20180319150155.5363-1-mwilck@suse.com>
+	<20180319150155.5363-13-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20180326182939.169591126@debian.vm>
+In-Reply-To: <20180319150155.5363-13-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,28 +20,95 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: mpatocka@redhat.com
-Cc: dm-devel@redhat.com, agk@redhat.com
+To: Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Mar 26 2018 at  2:29pm -0400,
-mpatocka@redhat.com <mpatocka@redhat.com> wrote:
-
-> Hi
+On Mon, Mar 19, 2018 at 04:01:47PM +0100, Martin Wilck wrote:
+> Print the result message in one place only. This simplifies
+> future changes. multipath -c is also affected.
 > 
-> Here I'm sending the second version of dm-bufio patches for arbitrary
-> sector size.
+Reviewed-by: Benjamin Marzinsk <bmarzins@redhat.com>
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  multipath/main.c | 30 +++++++++++++++++++-----------
+>  1 file changed, 19 insertions(+), 11 deletions(-)
 > 
-> I dropped the patch that removes alloc_pages because it turns out that
-> alloc_pages is faster than the slab allocator.
-
-I had already staged the previous set, so I need to go back over that
-and update accordingly.
-
-> I also added a patch that removes struct bio from struct dm_buffer
-> (reducing the size of dm_buffer to 1/3) and allocates the bio only when
-> doing read or write.
-
-OK, I'll go over your new set and try to tease out any differences.
-
-Mike
+> diff --git a/multipath/main.c b/multipath/main.c
+> index 566404e56ef4..ea4a3d44493a 100644
+> --- a/multipath/main.c
+> +++ b/multipath/main.c
+> @@ -350,6 +350,17 @@ out:
+>  	return r;
+>  }
+>  
+> +static void print_cmd_valid(const char *devpath, int k)
+> +{
+> +	const char *msg[] = { "is", "is not" };
+> +
+> +	if (k < 0 || k >= sizeof(msg))
+> +		return;
+> +
+> +	printf("%s %s a valid multipath device path\n",
+> +	       devpath, msg[k]);
+> +}
+> +
+>  /*
+>   * Return value:
+>   *  -1: Retry
+> @@ -391,10 +402,7 @@ configure (struct config *conf, enum mpath_cmds cmd,
+>  	    cmd != CMD_REMOVE_WWID &&
+>  	    (filter_devnode(conf->blist_devnode,
+>  			    conf->elist_devnode, dev) > 0)) {
+> -		if (cmd == CMD_VALID_PATH)
+> -			printf("%s is not a valid multipath device path\n",
+> -			       devpath);
+> -		goto out;
+> +		goto print_valid;
+>  	}
+>  
+>  	/*
+> @@ -407,7 +415,7 @@ configure (struct config *conf, enum mpath_cmds cmd,
+>  		if (!refwwid) {
+>  			condlog(4, "%s: failed to get wwid", devpath);
+>  			if (failed == 2 && cmd == CMD_VALID_PATH)
+> -				printf("%s is not a valid multipath device path\n", devpath);
+> +				goto print_valid;
+>  			else
+>  				condlog(3, "scope is null");
+>  			goto out;
+> @@ -450,9 +458,7 @@ configure (struct config *conf, enum mpath_cmds cmd,
+>  				r = 0;
+>  			if (r == 0 ||
+>  			    !find_multipaths_on(conf) || !ignore_wwids(conf)) {
+> -				printf("%s %s a valid multipath device path\n",
+> -				       devpath, r == 0 ? "is" : "is not");
+> -				goto out;
+> +				goto print_valid;
+>  			}
+>  		}
+>  	}
+> @@ -496,9 +502,7 @@ configure (struct config *conf, enum mpath_cmds cmd,
+>  		 * the refwwid, then the path is valid */
+>  		if (VECTOR_SIZE(curmp) != 0 || VECTOR_SIZE(pathvec) > 1)
+>  			r = 0;
+> -		printf("%s %s a valid multipath device path\n",
+> -		       devpath, r == 0 ? "is" : "is not");
+> -		goto out;
+> +		goto print_valid;
+>  	}
+>  
+>  	if (cmd != CMD_CREATE && cmd != CMD_DRY_RUN) {
+> @@ -514,6 +518,10 @@ configure (struct config *conf, enum mpath_cmds cmd,
+>  	r = coalesce_paths(&vecs, NULL, refwwid,
+>  			   conf->force_reload, refwwid != NULL, cmd);
+>  
+> +print_valid:
+> +	if (cmd == CMD_VALID_PATH)
+> +		print_cmd_valid(devpath, r);
+> +
+>  out:
+>  	if (refwwid)
+>  		FREE(refwwid);
+> -- 
+> 2.16.1
