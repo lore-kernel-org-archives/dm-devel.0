@@ -1,16 +1,16 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH v2 13/20] multipath -u: change output to
- environment/key format
-Date: Mon, 26 Mar 2018 15:35:17 -0500
-Message-ID: <20180326203517.GS3103@octiron.msp.redhat.com>
+Subject: Re: [PATCH v2 14/20] multipath -u: add
+ DM_MULTIPATH_DEVICE_PATH=2 for "maybe"
+Date: Mon, 26 Mar 2018 15:41:55 -0500
+Message-ID: <20180326204155.GT3103@octiron.msp.redhat.com>
 References: <20180319150155.5363-1-mwilck@suse.com>
-	<20180319150155.5363-14-mwilck@suse.com>
+	<20180319150155.5363-15-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20180319150155.5363-14-mwilck@suse.com>
+In-Reply-To: <20180319150155.5363-15-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,87 +24,60 @@ To: Martin Wilck <mwilck@suse.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Mar 19, 2018 at 04:01:48PM +0100, Martin Wilck wrote:
-> ... instead of free format. This provides more flexibility
-> for udev rule processing for the future. Adapt code in multipath.rules.
-> The exit status remains as usual. This affects "multipath -c", too.
-
-I assume that you meant to change the following code from
-multipath/main.c: main() as well
-
-        if (cmd == CMD_VALID_PATH &&
-            dev_type == DEV_UEVENT) {
-                int fd;
-
-                fd = mpath_connect();
-                if (fd == -1) {
-                        condlog(3, "%s: daemon is not running", dev);
-                        if (!systemd_service_enabled(dev)) {
-                                printf("%s is not a valid "
-                                       "multipath device path\n", dev);
-                                goto out;
-                        }
-                } else  
-                        mpath_disconnect(fd);
-        }
-
-
-> 
+On Mon, Mar 19, 2018 at 04:01:49PM +0100, Martin Wilck wrote:
+> Use DM_MULTIPATH_DEVICE_PATH="2" to indicate that this might be a
+> valid path, but we aren't certain. This happens with find_multipaths
+> "smart", when the first path to a device (or a single-path
+> device) is encountered, and the device is neither blacklisted,
+> nor marked failed, nor whitelisted in the wwids file.
+>
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 > Signed-off-by: Martin Wilck <mwilck@suse.com>
 > ---
->  multipath/main.c          | 11 +++++------
->  multipath/multipath.rules |  6 +++---
->  2 files changed, 8 insertions(+), 9 deletions(-)
+>  multipath/main.c | 12 ++++++++----
+>  1 file changed, 8 insertions(+), 4 deletions(-)
 > 
 > diff --git a/multipath/main.c b/multipath/main.c
-> index ea4a3d44493a..f93cad2abde0 100644
+> index f93cad2abde0..9b53c13b3a78 100644
 > --- a/multipath/main.c
 > +++ b/multipath/main.c
-> @@ -350,15 +350,14 @@ out:
+> @@ -350,14 +350,15 @@ out:
 >  	return r;
 >  }
 >  
-> -static void print_cmd_valid(const char *devpath, int k)
-> +static void print_cmd_valid(int k)
+> -static void print_cmd_valid(int k)
+> +static int print_cmd_valid(int k)
 >  {
-> -	const char *msg[] = { "is", "is not" };
-> +	int vals[] = { 1, 0 };
+> -	int vals[] = { 1, 0 };
+> +	int vals[] = { 1, 0, 2 };
 >  
-> -	if (k < 0 || k >= sizeof(msg))
-> +	if (k < 0 || k >= sizeof(vals))
->  		return;
+>  	if (k < 0 || k >= sizeof(vals))
+> -		return;
+> +		return 1;
 >  
-> -	printf("%s %s a valid multipath device path\n",
-> -	       devpath, msg[k]);
-> +	printf("DM_MULTIPATH_DEVICE_PATH=\"%d\"\n", vals[k]);
+>  	printf("DM_MULTIPATH_DEVICE_PATH=\"%d\"\n", vals[k]);
+> +	return k == 1;
 >  }
 >  
 >  /*
-> @@ -520,7 +519,7 @@ configure (struct config *conf, enum mpath_cmds cmd,
+> @@ -501,6 +502,9 @@ configure (struct config *conf, enum mpath_cmds cmd,
+>  		 * the refwwid, then the path is valid */
+>  		if (VECTOR_SIZE(curmp) != 0 || VECTOR_SIZE(pathvec) > 1)
+>  			r = 0;
+> +		else
+> +			/* Use r=2 as an indication for "maybe" */
+> +			r = 2;
+>  		goto print_valid;
+>  	}
+>  
+> @@ -519,7 +523,7 @@ configure (struct config *conf, enum mpath_cmds cmd,
 >  
 >  print_valid:
 >  	if (cmd == CMD_VALID_PATH)
-> -		print_cmd_valid(devpath, r);
-> +		print_cmd_valid(r);
+> -		print_cmd_valid(r);
+> +		r = print_cmd_valid(r);
 >  
 >  out:
 >  	if (refwwid)
-> diff --git a/multipath/multipath.rules b/multipath/multipath.rules
-> index 6f8ee2be0a58..aab64dc7182c 100644
-> --- a/multipath/multipath.rules
-> +++ b/multipath/multipath.rules
-> @@ -19,9 +19,9 @@ LABEL="test_dev"
->  ENV{MPATH_SBIN_PATH}="/sbin"
->  TEST!="$env{MPATH_SBIN_PATH}/multipath", ENV{MPATH_SBIN_PATH}="/usr/sbin"
->  
-> -ENV{DM_MULTIPATH_DEVICE_PATH}!="1", \
-> -	PROGRAM=="$env{MPATH_SBIN_PATH}/multipath -u %k", \
-> -	ENV{DM_MULTIPATH_DEVICE_PATH}="1", ENV{ID_FS_TYPE}="mpath_member", \
-> +# multipath -u sets DM_MULTIPATH_DEVICE_PATH
-> +ENV{DM_MULTIPATH_DEVICE_PATH}!="1", IMPORT{program}="$env{MPATH_SBIN_PATH}/multipath -u %k"
-> +ENV{DM_MULTIPATH_DEVICE_PATH}=="1", ENV{ID_FS_TYPE}="mpath_member", \
->  	ENV{SYSTEMD_READY}="0"
->  
->  LABEL="end_mpath"
 > -- 
 > 2.16.1
