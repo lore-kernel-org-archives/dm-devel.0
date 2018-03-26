@@ -1,13 +1,13 @@
 From: mpatocka@redhat.com
-Subject: [patch 6/8] dm-bufio: use slab cache for dm_buffer
-Date: Mon, 26 Mar 2018 20:29:45 +0200
-Message-ID: <20180326183058.737381513@debian.vm>
+Subject: [patch 8/8] dm-bufio: dont embed bio in dm_buffer
+Date: Mon, 26 Mar 2018 20:29:47 +0200
+Message-ID: <20180326183101.259533288@debian.vm>
 References: <20180326182939.169591126@debian.vm>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline; filename=dm-bufio-buffer-cache.patch
+Content-Disposition: inline; filename=dm-bufio-alloc-bio.patch
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,114 +21,213 @@ To: mpatocka@redhat.com, msnitzer@redhat.com, agk@redhat.com
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Use the slab cache for the structure dm_buffer, so that the size is not
-padded up to the next power of two.
+The bio structure consumes a substantial part of dm_buffer. This structure
+is needed only when doing I/O on the buffer, thus we don't have to embed
+it in the buffer, we can allocate the structure only when doing I/O.
+
+We don't need to create bio set because in case of allocation failure we
+fall back to dmio (which keeps its own bio set).
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm-bufio.c |   27 ++++++++++++++++++---------
- 1 file changed, 18 insertions(+), 9 deletions(-)
+ drivers/md/dm-bufio.c |  105 +++++++++++++++++++++-----------------------------
+ 1 file changed, 45 insertions(+), 60 deletions(-)
 
 Index: linux-2.6/drivers/md/dm-bufio.c
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-bufio.c	2018-03-26 15:33:50.987250000 +0200
-+++ linux-2.6/drivers/md/dm-bufio.c	2018-03-26 15:34:12.907250000 +0200
-@@ -100,10 +100,10 @@ struct dm_bufio_client {
- 	unsigned block_size;
- 	unsigned char sectors_per_block_bits;
- 	unsigned char pages_per_block_bits;
--	unsigned aux_size;
- 	void (*alloc_callback)(struct dm_buffer *);
- 	void (*write_callback)(struct dm_buffer *);
- 
-+	struct kmem_cache *slab_buffer;
- 	struct kmem_cache *slab_cache;
- 	struct dm_io_client *dm_io;
- 
-@@ -435,8 +435,7 @@ static void free_buffer_data(struct dm_b
-  */
- static struct dm_buffer *alloc_buffer(struct dm_bufio_client *c, gfp_t gfp_mask)
- {
--	struct dm_buffer *b = kmalloc(sizeof(struct dm_buffer) + c->aux_size,
--				      gfp_mask);
-+	struct dm_buffer *b = kmem_cache_alloc(c->slab_buffer, gfp_mask);
- 
- 	if (!b)
- 		return NULL;
-@@ -445,7 +444,7 @@ static struct dm_buffer *alloc_buffer(st
- 
- 	b->data = alloc_buffer_data(c, gfp_mask, &b->data_mode);
- 	if (!b->data) {
--		kfree(b);
-+		kmem_cache_free(c->slab_buffer, b);
- 		return NULL;
- 	}
- 
-@@ -467,7 +466,7 @@ static void free_buffer(struct dm_buffer
- 	adjust_total_allocated(b->data_mode, -(long)c->block_size);
- 
- 	free_buffer_data(c, b->data, b->data_mode);
--	kfree(b);
-+	kmem_cache_free(c->slab_buffer, b);
- }
+--- linux-2.6.orig/drivers/md/dm-bufio.c	2018-03-26 16:44:19.369999000 +0200
++++ linux-2.6/drivers/md/dm-bufio.c	2018-03-26 17:05:13.000000000 +0200
+@@ -51,12 +51,6 @@
+ #define DM_BUFIO_DEFAULT_RETAIN_BYTES   (256 * 1024)
  
  /*
-@@ -1641,6 +1640,7 @@ struct dm_bufio_client *dm_bufio_client_
- 	int r;
+- * The number of bvec entries that are embedded directly in the buffer.
+- * If the chunk size is larger, dm-io is used to do the io.
+- */
+-#define DM_BUFIO_INLINE_VECS		16
+-
+-/*
+  * Align buffer writes to this boundary.
+  * Tests show that SSDs have the highest IOPS when using 4k writes.
+  */
+@@ -153,8 +147,7 @@ struct dm_buffer {
+ 	unsigned write_end;
  	struct dm_bufio_client *c;
- 	unsigned i;
-+	char slab_name[27];
+ 	struct list_head write_list;
+-	struct bio bio;
+-	struct bio_vec bio_vec[DM_BUFIO_INLINE_VECS];
++	void (*end_io)(struct dm_buffer *, blk_status_t);
+ #ifdef CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
+ #define MAX_STACK 10
+ 	struct stack_trace stack_trace;
+@@ -534,12 +527,11 @@ static void dmio_complete(unsigned long
+ {
+ 	struct dm_buffer *b = context;
  
- 	BUG_ON(block_size < 1 << SECTOR_SHIFT ||
- 	       (block_size & (block_size - 1)));
-@@ -1658,7 +1658,6 @@ struct dm_bufio_client *dm_bufio_client_
- 	c->pages_per_block_bits = (__ffs(block_size) >= PAGE_SHIFT) ?
- 				  __ffs(block_size) - PAGE_SHIFT : 0;
+-	b->bio.bi_status = error ? BLK_STS_IOERR : 0;
+-	b->bio.bi_end_io(&b->bio);
++	b->end_io(b, unlikely(error != 0) ? BLK_STS_IOERR : 0);
+ }
  
--	c->aux_size = aux_size;
- 	c->alloc_callback = alloc_callback;
- 	c->write_callback = write_callback;
- 
-@@ -1683,14 +1682,22 @@ struct dm_bufio_client *dm_bufio_client_
+ static void use_dmio(struct dm_buffer *b, int rw, sector_t sector,
+-		     unsigned n_sectors, unsigned offset, bio_end_io_t *end_io)
++		     unsigned n_sectors, unsigned offset)
+ {
+ 	int r;
+ 	struct dm_io_request io_req = {
+@@ -563,71 +555,69 @@ static void use_dmio(struct dm_buffer *b
+ 		io_req.mem.ptr.vma = (char *)b->data + offset;
  	}
  
- 	if (block_size < PAGE_SIZE) {
--		char name[26];
--		snprintf(name, sizeof name, "dm_bufio_cache-%u", c->block_size);
--		c->slab_cache = kmem_cache_create(name, c->block_size, ARCH_KMALLOC_MINALIGN, SLAB_RECLAIM_ACCOUNT, NULL);
-+		snprintf(slab_name, sizeof slab_name, "dm_bufio_cache-%u", c->block_size);
-+		c->slab_cache = kmem_cache_create(slab_name, c->block_size, ARCH_KMALLOC_MINALIGN, SLAB_RECLAIM_ACCOUNT, NULL);
- 		if (!c->slab_cache) {
- 			r = -ENOMEM;
- 			goto bad;
- 		}
- 	}
-+	if (aux_size)
-+		snprintf(slab_name, sizeof slab_name, "dm_bufio_buffer-%u", aux_size);
-+	else
-+		snprintf(slab_name, sizeof slab_name, "dm_bufio_buffer");
-+	c->slab_buffer = kmem_cache_create(slab_name, sizeof(struct dm_buffer) + aux_size, 0, SLAB_RECLAIM_ACCOUNT, NULL);
-+	if (!c->slab_buffer) {
-+		r = -ENOMEM;
-+		goto bad;
+-	b->bio.bi_end_io = end_io;
+-
+ 	r = dm_io(&io_req, 1, &region, NULL);
+-	if (r) {
+-		b->bio.bi_status = errno_to_blk_status(r);
+-		end_io(&b->bio);
+-	}
++	if (unlikely(r))
++		b->end_io(b, errno_to_blk_status(r));
+ }
+ 
+-static void inline_endio(struct bio *bio)
++static void bio_complete(struct bio *bio)
+ {
+-	bio_end_io_t *end_fn = bio->bi_private;
++	struct dm_buffer *b = bio->bi_private;
+ 	blk_status_t status = bio->bi_status;
+-
+-	/*
+-	 * Reset the bio to free any attached resources
+-	 * (e.g. bio integrity profiles).
+-	 */
+-	bio_reset(bio);
+-
+-	bio->bi_status = status;
+-	end_fn(bio);
++	bio_put(bio);
++	b->end_io(b, status);
+ }
+ 
+-static void use_inline_bio(struct dm_buffer *b, int rw, sector_t sector,
+-			   unsigned n_sectors, unsigned offset, bio_end_io_t *end_io)
++static void use_bio(struct dm_buffer *b, int rw, sector_t sector,
++		    unsigned n_sectors, unsigned offset)
+ {
++	struct bio *bio;
+ 	char *ptr;
+-	unsigned len;
++	unsigned vec_size, len;
+ 
+-	bio_init(&b->bio, b->bio_vec, DM_BUFIO_INLINE_VECS);
+-	b->bio.bi_iter.bi_sector = sector;
+-	bio_set_dev(&b->bio, b->c->bdev);
+-	b->bio.bi_end_io = inline_endio;
+-	/*
+-	 * Use of .bi_private isn't a problem here because
+-	 * the dm_buffer's inline bio is local to bufio.
+-	 */
+-	b->bio.bi_private = end_io;
+-	bio_set_op_attrs(&b->bio, rw, 0);
++	vec_size = b->c->block_size >> PAGE_SHIFT;
++	if (unlikely(b->c->sectors_per_block_bits < PAGE_SHIFT - SECTOR_SHIFT))
++		vec_size += 2;
++
++	bio = bio_kmalloc(GFP_NOWAIT | __GFP_NORETRY | __GFP_NOWARN, vec_size);
++	if (!bio) {
++dmio:
++		use_dmio(b, rw, sector, n_sectors, offset);
++		return;
 +	}
++
++	bio->bi_iter.bi_sector = sector;
++	bio_set_dev(bio, b->c->bdev);
++	bio_set_op_attrs(bio, rw, 0);
++	bio->bi_end_io = bio_complete;
++	bio->bi_private = b;
  
- 	while (c->need_reserved_buffers) {
- 		struct dm_buffer *b = alloc_buffer(c, GFP_KERNEL);
-@@ -1726,6 +1733,7 @@ bad:
- 		free_buffer(b);
+ 	ptr = (char *)b->data + offset;
+ 	len = n_sectors << SECTOR_SHIFT;
+ 
+ 	do {
+ 		unsigned this_step = min((unsigned)(PAGE_SIZE - offset_in_page(ptr)), len);
+-		if (!bio_add_page(&b->bio, virt_to_page(ptr), this_step,
++		if (!bio_add_page(bio, virt_to_page(ptr), this_step,
+ 				  offset_in_page(ptr))) {
+-			use_dmio(b, rw, sector, n_sectors, offset, end_io);
+-			return;
++			bio_put(bio);
++			goto dmio;
+ 		}
+ 
+ 		len -= this_step;
+ 		ptr += this_step;
+ 	} while (len > 0);
+ 
+-	submit_bio(&b->bio);
++	submit_bio(bio);
+ }
+ 
+-static void submit_io(struct dm_buffer *b, int rw, bio_end_io_t *end_io)
++static void submit_io(struct dm_buffer *b, int rw, void (*end_io)(struct dm_buffer *, blk_status_t))
+ {
+ 	unsigned n_sectors;
+ 	sector_t sector;
+ 	unsigned offset, end;
+ 
++	b->end_io = end_io;
++
+ 	if (likely(b->c->sectors_per_block_bits >= 0))
+ 		sector = b->block << b->c->sectors_per_block_bits;
+ 	else
+@@ -652,11 +642,10 @@ static void submit_io(struct dm_buffer *
+ 		n_sectors = (end - offset) >> SECTOR_SHIFT;
  	}
- 	kmem_cache_destroy(c->slab_cache);
-+	kmem_cache_destroy(c->slab_buffer);
- 	dm_io_client_destroy(c->dm_io);
- bad_dm_io:
- 	mutex_destroy(&c->lock);
-@@ -1773,6 +1781,7 @@ void dm_bufio_client_destroy(struct dm_b
- 		BUG_ON(c->n_buffers[i]);
  
- 	kmem_cache_destroy(c->slab_cache);
-+	kmem_cache_destroy(c->slab_buffer);
- 	dm_io_client_destroy(c->dm_io);
- 	mutex_destroy(&c->lock);
- 	kfree(c);
+-	if (n_sectors <= ((DM_BUFIO_INLINE_VECS * PAGE_SIZE) >> SECTOR_SHIFT) &&
+-	    b->data_mode != DATA_MODE_VMALLOC)
+-		use_inline_bio(b, rw, sector, n_sectors, offset, end_io);
++	if (b->data_mode != DATA_MODE_VMALLOC)
++		use_bio(b, rw, sector, n_sectors, offset);
+ 	else
+-		use_dmio(b, rw, sector, n_sectors, offset, end_io);
++		use_dmio(b, rw, sector, n_sectors, offset);
+ }
+ 
+ /*----------------------------------------------------------------
+@@ -669,16 +658,14 @@ static void submit_io(struct dm_buffer *
+  * Set the error, clear B_WRITING bit and wake anyone who was waiting on
+  * it.
+  */
+-static void write_endio(struct bio *bio)
++static void write_endio(struct dm_buffer *b, blk_status_t status)
+ {
+-	struct dm_buffer *b = container_of(bio, struct dm_buffer, bio);
+-
+-	b->write_error = bio->bi_status;
+-	if (unlikely(bio->bi_status)) {
++	b->write_error = status;
++	if (unlikely(status)) {
+ 		struct dm_bufio_client *c = b->c;
+ 
+ 		(void)cmpxchg(&c->async_write_error, 0,
+-				blk_status_to_errno(bio->bi_status));
++				blk_status_to_errno(status));
+ 	}
+ 
+ 	BUG_ON(!test_bit(B_WRITING, &b->state));
+@@ -1055,11 +1042,9 @@ found_buffer:
+  * The endio routine for reading: set the error, clear the bit and wake up
+  * anyone waiting on the buffer.
+  */
+-static void read_endio(struct bio *bio)
++static void read_endio(struct dm_buffer *b, blk_status_t status)
+ {
+-	struct dm_buffer *b = container_of(bio, struct dm_buffer, bio);
+-
+-	b->read_error = bio->bi_status;
++	b->read_error = status;
+ 
+ 	BUG_ON(!test_bit(B_READING, &b->state));
+ 
