@@ -1,16 +1,17 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH v2 10/20] libmultipath: indicate wwid failure
- in dm_addmap_create()
-Date: Mon, 26 Mar 2018 12:52:28 -0500
-Message-ID: <20180326175228.GO3103@octiron.msp.redhat.com>
-References: <20180319150155.5363-1-mwilck@suse.com>
-	<20180319150155.5363-11-mwilck@suse.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v2] dm raid: fix parse_raid_params() variable
+	range issue
+Date: Mon, 26 Mar 2018 14:16:51 -0400
+Message-ID: <20180326181651.GA22251@redhat.com>
+References: <6386b9f02b3513bd0ba5ddccd437502313448f7d.1521738866.git.heinzm@redhat.com>
+	<20180322194144.GA32294@redhat.com>
+	<ac064103-c40b-544a-ef33-e0eaba9a8070@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20180319150155.5363-11-mwilck@suse.com>
+In-Reply-To: <ac064103-c40b-544a-ef33-e0eaba9a8070@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,182 +21,123 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
+To: Heinz Mauelshagen <heinzm@redhat.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Mar 19, 2018 at 04:01:45PM +0100, Martin Wilck wrote:
-> dm_addmap_create() is where we actually try to set up a new
-> multipath map. Depending on the result, mark the wwid as
-> failed (or not), and re-trigger an uevent if necessary.
-> If a path changes from multipath to non-multipath, use an "add"
-> event to make sure LVM2 rules pick it up. Increase log level
-> of this event to 3.
+On Thu, Mar 22 2018 at  5:13pm -0400,
+Heinz Mauelshagen <heinzm@redhat.com> wrote:
 
-I'm not sure of a specific problem with this patch, but I am a little
-leery of sending out our own "add" events. Unless I am mistaken there is
-usually there is only one add event per device, and there is extra work
-done on add events that we might not want to do twice. I wonder if it
-would be better to make other udev rules be able to respond to change
-events from ex-multipath paths.  Have you looked into the implications
-of sending out these add events?
+> On 03/22/2018 08:41 PM, Mike Snitzer wrote:
+> >On Thu, Mar 22 2018 at  1:21pm -0400,
+> >Heinz Mauelshagen <heinzm@redhat.com> wrote:
+> >
+> >>This v2 addresses Mikulas' point about the variable range and folds in
+> >>"[PATCH] dm raid: use __within_range() more in parse_raid_params()":
+> >>
+> >>parse_raid_parames() compared variable "int value" with
+> >>INT_MAX to prevent overflow of mddev variables set.
+> >>
+> >>Change type to "long long value".
+> >Can you elaborate on the risk/issue that is being fixed here?
+> =
 
--Ben
+> Fix addresses a coverity finding supporting the full,
+> positive range of the "struct mddev" int members
+> set here.=A0 I.e. the "int" cast is compared with INT_MAX.
 
-> 
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  libmultipath/configure.c | 37 ++++++++++++++++++++++++++++---------
->  libmultipath/configure.h |  2 +-
->  libmultipath/devmapper.c |  8 +++++++-
->  libmultipath/structs.h   |  1 +
->  multipathd/main.c        |  2 +-
->  5 files changed, 38 insertions(+), 12 deletions(-)
-> 
-> diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-> index 838d145a5aa2..88e6687849f8 100644
-> --- a/libmultipath/configure.c
-> +++ b/libmultipath/configure.c
-> @@ -443,11 +443,18 @@ trigger_udev_change(const struct multipath *mpp)
->  }
->  
->  void
-> -trigger_paths_udev_change(const struct multipath *mpp)
-> +trigger_paths_udev_change(struct multipath *mpp, bool is_mpath)
->  {
->  	struct pathgroup * pgp;
->  	struct path * pp;
->  	int i, j;
-> +	/*
-> +	 * If a path changes from multipath to non-multipath, we must
-> +	 * synthesize an artificial "add" event, otherwise the LVM2 rules
-> +	 * (69-lvm2-lvmetad.rules) won't pick it up. Otherwise, we'd just
-> +	 * irritate ourselves with an "add", so use "change".
-> +	 */
-> +	const char *action = is_mpath ? "change" : "add";
->  
->  	if (!mpp || !mpp->pg)
->  		return;
-> @@ -466,14 +473,21 @@ trigger_paths_udev_change(const struct multipath *mpp)
->  			 */
->  			env = udev_device_get_property_value(
->  				pp->udev, "DM_MULTIPATH_DEVICE_PATH");
-> -			if (env != NULL && !strcmp(env, "1"))
-> -					continue;
->  
-> -			condlog(4, "triggering change uevent for %s", pp->dev);
-> -			sysfs_attr_set_value(pp->udev, "uevent", "change",
-> -					     strlen("change"));
-> +			if (is_mpath && env != NULL && !strcmp(env, "1"))
-> +				continue;
-> +			else if (!is_mpath &&
-> +				   (env == NULL || !strcmp(env, "0")))
-> +				continue;
-> +
-> +			condlog(3, "triggering %s uevent for %s (is %smultipath member)",
-> +				action, pp->dev, is_mpath ? "" : "no ");
-> +			sysfs_attr_set_value(pp->udev, "uevent",
-> +					     action, strlen(action));
->  		}
->  	}
-> +
-> +	mpp->needs_paths_uevent = 0;
->  }
->  
->  static int
-> @@ -870,8 +884,10 @@ int domap(struct multipath *mpp, char *params, int is_daemon)
->  		 * succeeded
->  		 */
->  		mpp->force_udev_reload = 0;
-> -		if (mpp->action == ACT_CREATE && remember_wwid(mpp->wwid) == 1)
-> -			trigger_paths_udev_change(mpp);
-> +		if (mpp->action == ACT_CREATE &&
-> +		    (remember_wwid(mpp->wwid) == 1 ||
-> +		     mpp->needs_paths_uevent))
-> +			trigger_paths_udev_change(mpp, true);
->  		if (!is_daemon) {
->  			/* multipath client mode */
->  			dm_switchgroup(mpp->alias, mpp->bestpg);
-> @@ -896,7 +912,10 @@ int domap(struct multipath *mpp, char *params, int is_daemon)
->  		}
->  		dm_setgeometry(mpp);
->  		return DOMAP_OK;
-> -	}
-> +	} else if (r == DOMAP_FAIL && mpp->action == ACT_CREATE &&
-> +		   mpp->needs_paths_uevent)
-> +		trigger_paths_udev_change(mpp, false);
-> +
->  	return DOMAP_FAIL;
->  }
->  
-> diff --git a/libmultipath/configure.h b/libmultipath/configure.h
-> index 545cbc209793..8b56d33a1d0b 100644
-> --- a/libmultipath/configure.h
-> +++ b/libmultipath/configure.h
-> @@ -37,4 +37,4 @@ int get_refwwid (enum mpath_cmds cmd, char * dev, enum devtypes dev_type,
->  		 vector pathvec, char **wwid);
->  int reload_map(struct vectors *vecs, struct multipath *mpp, int refresh, int is_daemon);
->  struct udev_device *get_udev_device(const char *dev, enum devtypes dev_type);
-> -void trigger_paths_udev_change(const struct multipath *mpp);
-> +void trigger_paths_udev_change(struct multipath *mpp, bool is_mpath);
-> diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-> index 9bafbc6a239a..bd595f4fa40b 100644
-> --- a/libmultipath/devmapper.c
-> +++ b/libmultipath/devmapper.c
-> @@ -22,6 +22,7 @@
->  #include "devmapper.h"
->  #include "sysfs.h"
->  #include "config.h"
-> +#include "wwids.h"
->  
->  #include "log_pthread.h"
->  #include <sys/types.h>
-> @@ -411,8 +412,11 @@ int dm_addmap_create (struct multipath *mpp, char * params)
->  		int err;
->  
->  		if (dm_addmap(DM_DEVICE_CREATE, TGT_MPATH, mpp, params, ro,
-> -			      udev_flags))
-> +			      udev_flags)) {
-> +			if (unmark_failed_wwid(mpp->wwid) == 1)
-> +				mpp->needs_paths_uevent = 1;
->  			return 1;
-> +		}
->  		/*
->  		 * DM_DEVICE_CREATE is actually DM_DEV_CREATE + DM_TABLE_LOAD.
->  		 * Failing the second part leaves an empty map. Clean it up.
-> @@ -428,6 +432,8 @@ int dm_addmap_create (struct multipath *mpp, char * params)
->  			break;
->  		}
->  	}
-> +	if (mark_failed_wwid(mpp->wwid) == 1)
-> +		mpp->needs_paths_uevent = 1;
->  	return 0;
->  }
->  
-> diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-> index d6482f84f0e6..32f4b2d0696c 100644
-> --- a/libmultipath/structs.h
-> +++ b/libmultipath/structs.h
-> @@ -322,6 +322,7 @@ struct multipath {
->  	int max_sectors_kb;
->  	int force_readonly;
->  	int force_udev_reload;
-> +	int needs_paths_uevent;
->  	int ghost_delay;
->  	int ghost_delay_tick;
->  	unsigned int dev_loss;
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index bfbe5f66b324..ea8c413f28c6 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -2310,7 +2310,7 @@ configure (struct vectors * vecs)
->  	sync_maps_state(mpvec);
->  	vector_foreach_slot(mpvec, mpp, i){
->  		if (remember_wwid(mpp->wwid) == 1)
-> -			trigger_paths_udev_change(mpp);
-> +			trigger_paths_udev_change(mpp, true);
->  		update_map_pr(mpp);
->  	}
->  
-> -- 
-> 2.16.1
+Can you cut and paste the relevant portions of the coverity report?
+
+
+> >>Whilst on it, use __within_range() throughout and
+> >>add a sync min/max rate check.
+> >>
+> >>Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
+> >>---
+> >>  drivers/md/dm-raid.c | 16 +++++++++++-----
+> >>  1 file changed, 11 insertions(+), 5 deletions(-)
+> >>
+> >>diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+> >>index c1d1034ff7b7..c0e3d2aa9346 100644
+> >>--- a/drivers/md/dm-raid.c
+> >>+++ b/drivers/md/dm-raid.c
+> >>@@ -1141,7 +1141,7 @@ static int validate_raid_redundancy(struct raid_s=
+et *rs)
+> >>  static int parse_raid_params(struct raid_set *rs, struct dm_arg_set *=
+as,
+> >>  			     unsigned int num_raid_params)
+> >>  {
+> >>-	int value, raid10_format =3D ALGORITHM_RAID10_DEFAULT;
+> >>+	long long value, raid10_format =3D ALGORITHM_RAID10_DEFAULT;
+> >>  	unsigned int raid10_copies =3D 2;
+> >>  	unsigned int i, write_mostly =3D 0;
+> >>  	unsigned int region_size =3D 0;
+> >>@@ -1153,7 +1153,7 @@ static int parse_raid_params(struct raid_set *rs,=
+ struct dm_arg_set *as,
+> >>  	arg =3D dm_shift_arg(as);
+> >>  	num_raid_params--; /* Account for chunk_size argument */
+> >>-	if (kstrtoint(arg, 10, &value) < 0) {
+> >>+	if (kstrtoll(arg, 10, &value) < 0) {
+> >>  		rs->ti->error =3D "Bad numerical argument given for chunk_size";
+> >>  		return -EINVAL;
+> >>  	}
+> >>@@ -1315,7 +1315,7 @@ static int parse_raid_params(struct raid_set *rs,=
+ struct dm_arg_set *as,
+> >>  		/*
+> >>  		 * Parameters with number values from here on.
+> >>  		 */
+> >>-		if (kstrtoint(arg, 10, &value) < 0) {
+> >>+		if (kstrtoll(arg, 10, &value) < 0) {
+> >>  			rs->ti->error =3D "Bad numerical argument given in raid params";
+> >>  			return -EINVAL;
+> >>  		}
+> >>@@ -1430,7 +1430,7 @@ static int parse_raid_params(struct raid_set *rs,=
+ struct dm_arg_set *as,
+> >>  				rs->ti->error =3D "Only one min_recovery_rate argument pair allow=
+ed";
+> >>  				return -EINVAL;
+> >>  			}
+> >>-			if (value > INT_MAX) {
+> >>+			if (!__within_range(value, 0, INT_MAX)) {
+> >>  				rs->ti->error =3D "min_recovery_rate out of range";
+> >>  				return -EINVAL;
+> >>  			}
+> >>@@ -1440,7 +1440,7 @@ static int parse_raid_params(struct raid_set *rs,=
+ struct dm_arg_set *as,
+> >>  				rs->ti->error =3D "Only one max_recovery_rate argument pair allow=
+ed";
+> >>  				return -EINVAL;
+> >>  			}
+> >>-			if (value > INT_MAX) {
+> >>+			if (!__within_range(value, 0, INT_MAX)) {
+> >>  				rs->ti->error =3D "max_recovery_rate out of range";
+> >>  				return -EINVAL;
+> >>  			}
+> >>@@ -1472,6 +1472,12 @@ static int parse_raid_params(struct raid_set *rs=
+, struct dm_arg_set *as,
+> >>  		}
+> >>  	}
+> >>+	if (rs->md.sync_speed_max &&
+> >>+	    rs->md.sync_speed_max < rs->md.sync_speed_min) {
+> >>+		rs->ti->error =3D "sync speed max smaller than min";
+> >>+		return -EINVAL;
+> >>+	}
+> >>+
+> >>  	if (test_bit(__CTR_FLAG_SYNC, &rs->ctr_flags) &&
+> >>  	    test_bit(__CTR_FLAG_NOSYNC, &rs->ctr_flags)) {
+> >>  		rs->ti->error =3D "sync and nosync are mutually exclusive";
+> >>-- =
+
+> >>2.14.3
+> >>
+> >Isn't this last hunk unrelated?
+> =
+
+> No, once using __within_range to ensure positive values
+> for sync min/max, this hunk ensures that those are sane
+> if both are set.
+
+OK, but pretty much unrelated.  I'll leave it foled in but at least
+mention it in the header.
+
+Mike
