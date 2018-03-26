@@ -1,17 +1,18 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: multipath-tools licenses (was Re: [PATCH]
- multipath-tools: replace FSF address with a www pointer)
-Date: Mon, 26 Mar 2018 13:04:47 +0200
-Message-ID: <20180326130447.3114ef2f@pentland.suse.de>
-References: <20180310205002.3318-1-xose.vazquez@gmail.com>
-	<1521495458.3798.138.camel@suse.com>
-	<1a0b44c5-c7a6-85fa-b2dd-1bd542efbb76@gmail.com>
-	<1521837017.13100.106.camel@suse.com>
+From: Denis Semakin <d.semakin@omprussia.ru>
+Subject: Re: dm table: add support for secure erase forwarding
+ [was: Re: Adaptation secure erase forwarding for 4.1x kernels]
+Date: Mon, 26 Mar 2018 12:58:42 +0300 (MSK)
+Message-ID: <1329700314.62915.1522058322861.JavaMail.zimbra@omprussia.ru>
+References: <1496940834.549721.1520933025411.JavaMail.zimbra@omprussia.ru>
+	<20180322151045.GA27598@redhat.com>
+	<695931032.318989.1521816469739.JavaMail.zimbra@omprussia.ru>
+	<20180323153844.GA4914@redhat.com>
+	<1996070847.39629.1522050333423.JavaMail.zimbra@omprussia.ru>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1521837017.13100.106.camel@suse.com>
+In-Reply-To: <1996070847.39629.1522050333423.JavaMail.zimbra@omprussia.ru>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,87 +22,89 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, fge@redhat.com
+To: snitzer <snitzer@redhat.com>
+Cc: dm-devel <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, 23 Mar 2018 21:30:17 +0100
-Martin Wilck <mwilck@suse.com> wrote:
+Hi. Here is a full patch for adding num_secure_erase_bios field in struct dm_targer for linear DMs
+and QUEUE_FLAG_SECERASE forwarding.
+Could you please review.
 
-> On Fr, 2018-03-23 at 19:28 +0100, Xose Vazquez Perez wrote:
-> > 
-> > https://git.opensvc.com/gitweb.cgi?p=multipath-tools/.git;a=blob_plai
-> > n;f=COPYING;hb=HEAD
-> > 
-> >                   GNU *LIBRARY* GENERAL PUBLIC LICENSE
-> >                         Version 2, June 1991
-> > 
-> > aka "Lesser", but rules are the same as in GPL.  
-> 
-> Ups, what an embarrassing oversight on my part. I guess my brain just
-> couldn't believe what my eyes were seeing.
-> 
-> > >   
-> > https://www.gnu.org/licenses/ is a _generic_ place. There is info
-> > about
-> > ALL licences and versions.  
-> 
-> That's not obvious to me. In particular the LPGL v2.0 isn't even
-> mentioned there, only LGPL v2.1, and that's quite at the bottom.
-> 
-> It'd be _far_ more important to agree on consistent licenses
-> throughout the code. You quoted the file COPYING, but if you look at
-> the actual source files, the situation is a bit more complicated:
-> 
-> LGPLv2.1:
-> libmultipath/mpath_cmd.h
-> 
-> GPLv2:
-> libmultipath/sysfs.c
-> libmultipath/uevent.c
-> libmultipath/prioritizers/ontap.c
-> 
-> GPLv2 or later:
-> 25 files under libmultipath and kpartx directories.
-> 
-> GPLv3 or later:
-> libdmmp
-> 
-> BSD license: 
-> ./third-party/valgrind/drd.h
-> ./third-party/valgrind/valgrind.h
-> 
-> 137 files don't have an explicit license header and can thus be
-> assumed to be covered by the COPYING file (LGPL2.0).
-> 
-> This is a total mess for potential users of our code. Effectively, the
-> GPL parts of libmultipath would cause all of multipath-tools to be
-> under GPL rather than LGPLv2.x, because the linking exception of the
-> LGPL wouldn't apply to them, forbidding linking non-GPL code with
-> libmultipath. The GPLv2 "or later" gives you the choice, so
-> libmultipath is effectively under GPLv2 because of sysfs.c and
-> uevent.c. Furthermore, libmultipath and libdmmp have incompatible
-> licenses, and "there is no legal way to combine code under GPLv2 with
-> code under GPLv3 in a single
-> program" (https://www.gnu.org/licenses/rms -why-gplv3.html).
-> 
-> I believe that various files besides the three above contain code
-> which has been copied from kernel sources and would thus be under
-> GPLv2 (the alua code, for example).
-> 
-> Again, IANAL, but this looks like a mess that really ought to be
-> cleaned up. As long as we don't do that, there's no point in changing
-> the address headers.
-> 
-> It would make sense to generally agree on a GPL version (2, 2 or
-> later, 3, 3 or later), and apply LGPL to (some of) the libraries and
-> GPL to the tools.
-> 
-Well, as I'm the one responsible for adding 'sysfs.c' and 'uevent.c' to
-multipath-tools I should allowed to change the license there, right?
+Thanks.
 
-If so I'm happy to change them to LPGL to make things easier.
+diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
+index d5f8eff..ff751b0 100644
+--- a/drivers/md/dm-linear.c
++++ b/drivers/md/dm-linear.c
+@@ -59,6 +59,7 @@ static int linear_ctr(struct dm_target *ti, unsigned int argc, char **argv)
 
-Cheers,
+        ti->num_flush_bios = 1;
+        ti->num_discard_bios = 1;
++       ti->num_secure_erase_bios = 1;
+        ti->num_write_same_bios = 1;
+        ti->num_write_zeroes_bios = 1;
+        ti->private = lc;
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 7eb3e2a..13a2c23 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1846,6 +1846,36 @@ static bool dm_table_supports_discards(struct dm_table *t)
+        return true;
+ }
 
-Hannes
++static int device_not_secerase_capable(struct dm_target *ti,
++                                          struct dm_dev *dev, sector_t start,
++                                          sector_t len, void *data)
++{
++       struct request_queue *q = bdev_get_queue(dev->bdev);
++
++       return q && !blk_queue_secure_erase(q);
++}
++
++static bool dm_targets_support_secure_erase(struct dm_table *t)
++{
++       unsigned int i = 0;
++       struct dm_target *ti;
++
++       while (i < dm_table_get_num_targets(t)) {
++               ti = dm_table_get_target(t, i++);
++
++               if (!ti->num_secure_erase_bios)
++                       return false;
++
++               if (!ti->type->iterate_devices ||
++                   ti->type->iterate_devices(ti, device_not_secerase_capable,
++                                             NULL))
++               return false;
++       }
++
++       return true;
++
++}
++
+ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+                               struct queue_limits *limits)
+ {
+@@ -1867,6 +1897,9 @@ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+        } else
+                queue_flag_set_unlocked(QUEUE_FLAG_DISCARD, q);
+
++       if (dm_targets_support_secure_erase(t))
++               queue_flag_set_unlocked(QUEUE_FLAG_SECERASE, q);
++
+        if (dm_table_supports_flush(t, (1UL << QUEUE_FLAG_WC))) {
+                wc = true;
+                if (dm_table_supports_flush(t, (1UL << QUEUE_FLAG_FUA)))
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index 1e2426c..233ac8f 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -267,6 +267,8 @@ struct dm_target {
+         */
+        unsigned num_discard_bios;
+
++       unsigned num_secure_erase_bios;
++
+        /*
+         * The number of WRITE SAME bios that will be submitted to the target.
+         * The bio number can be accessed with dm_bio_get_target_bio_nr.
