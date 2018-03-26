@@ -1,16 +1,16 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH v2 12/20] multipath -u: common code path for
- result message
-Date: Mon, 26 Mar 2018 13:59:35 -0500
-Message-ID: <20180326185934.GQ3103@octiron.msp.redhat.com>
+Subject: Re: [PATCH v2 13/20] multipath -u: change output to
+ environment/key format
+Date: Mon, 26 Mar 2018 14:33:14 -0500
+Message-ID: <20180326193314.GR3103@octiron.msp.redhat.com>
 References: <20180319150155.5363-1-mwilck@suse.com>
-	<20180319150155.5363-13-mwilck@suse.com>
+	<20180319150155.5363-14-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20180319150155.5363-13-mwilck@suse.com>
+In-Reply-To: <20180319150155.5363-14-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,91 +24,68 @@ To: Martin Wilck <mwilck@suse.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Mar 19, 2018 at 04:01:47PM +0100, Martin Wilck wrote:
-> Print the result message in one place only. This simplifies
-> future changes. multipath -c is also affected.
+On Mon, Mar 19, 2018 at 04:01:48PM +0100, Martin Wilck wrote:
+> ... instead of free format. This provides more flexibility
+> for udev rule processing for the future. Adapt code in multipath.rules.
+> The exit status remains as usual. This affects "multipath -c", too.
+
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 > 
-Reviewed-by: Benjamin Marzinsk <bmarzins@redhat.com>
 > Signed-off-by: Martin Wilck <mwilck@suse.com>
 > ---
->  multipath/main.c | 30 +++++++++++++++++++-----------
->  1 file changed, 19 insertions(+), 11 deletions(-)
+>  multipath/main.c          | 11 +++++------
+>  multipath/multipath.rules |  6 +++---
+>  2 files changed, 8 insertions(+), 9 deletions(-)
 > 
 > diff --git a/multipath/main.c b/multipath/main.c
-> index 566404e56ef4..ea4a3d44493a 100644
+> index ea4a3d44493a..f93cad2abde0 100644
 > --- a/multipath/main.c
 > +++ b/multipath/main.c
-> @@ -350,6 +350,17 @@ out:
+> @@ -350,15 +350,14 @@ out:
 >  	return r;
 >  }
 >  
-> +static void print_cmd_valid(const char *devpath, int k)
-> +{
-> +	const char *msg[] = { "is", "is not" };
-> +
-> +	if (k < 0 || k >= sizeof(msg))
-> +		return;
-> +
-> +	printf("%s %s a valid multipath device path\n",
-> +	       devpath, msg[k]);
-> +}
-> +
+> -static void print_cmd_valid(const char *devpath, int k)
+> +static void print_cmd_valid(int k)
+>  {
+> -	const char *msg[] = { "is", "is not" };
+> +	int vals[] = { 1, 0 };
+>  
+> -	if (k < 0 || k >= sizeof(msg))
+> +	if (k < 0 || k >= sizeof(vals))
+>  		return;
+>  
+> -	printf("%s %s a valid multipath device path\n",
+> -	       devpath, msg[k]);
+> +	printf("DM_MULTIPATH_DEVICE_PATH=\"%d\"\n", vals[k]);
+>  }
+>  
 >  /*
->   * Return value:
->   *  -1: Retry
-> @@ -391,10 +402,7 @@ configure (struct config *conf, enum mpath_cmds cmd,
->  	    cmd != CMD_REMOVE_WWID &&
->  	    (filter_devnode(conf->blist_devnode,
->  			    conf->elist_devnode, dev) > 0)) {
-> -		if (cmd == CMD_VALID_PATH)
-> -			printf("%s is not a valid multipath device path\n",
-> -			       devpath);
-> -		goto out;
-> +		goto print_valid;
->  	}
+> @@ -520,7 +519,7 @@ configure (struct config *conf, enum mpath_cmds cmd,
 >  
->  	/*
-> @@ -407,7 +415,7 @@ configure (struct config *conf, enum mpath_cmds cmd,
->  		if (!refwwid) {
->  			condlog(4, "%s: failed to get wwid", devpath);
->  			if (failed == 2 && cmd == CMD_VALID_PATH)
-> -				printf("%s is not a valid multipath device path\n", devpath);
-> +				goto print_valid;
->  			else
->  				condlog(3, "scope is null");
->  			goto out;
-> @@ -450,9 +458,7 @@ configure (struct config *conf, enum mpath_cmds cmd,
->  				r = 0;
->  			if (r == 0 ||
->  			    !find_multipaths_on(conf) || !ignore_wwids(conf)) {
-> -				printf("%s %s a valid multipath device path\n",
-> -				       devpath, r == 0 ? "is" : "is not");
-> -				goto out;
-> +				goto print_valid;
->  			}
->  		}
->  	}
-> @@ -496,9 +502,7 @@ configure (struct config *conf, enum mpath_cmds cmd,
->  		 * the refwwid, then the path is valid */
->  		if (VECTOR_SIZE(curmp) != 0 || VECTOR_SIZE(pathvec) > 1)
->  			r = 0;
-> -		printf("%s %s a valid multipath device path\n",
-> -		       devpath, r == 0 ? "is" : "is not");
-> -		goto out;
-> +		goto print_valid;
->  	}
+>  print_valid:
+>  	if (cmd == CMD_VALID_PATH)
+> -		print_cmd_valid(devpath, r);
+> +		print_cmd_valid(r);
 >  
->  	if (cmd != CMD_CREATE && cmd != CMD_DRY_RUN) {
-> @@ -514,6 +518,10 @@ configure (struct config *conf, enum mpath_cmds cmd,
->  	r = coalesce_paths(&vecs, NULL, refwwid,
->  			   conf->force_reload, refwwid != NULL, cmd);
->  
-> +print_valid:
-> +	if (cmd == CMD_VALID_PATH)
-> +		print_cmd_valid(devpath, r);
-> +
 >  out:
 >  	if (refwwid)
->  		FREE(refwwid);
+> diff --git a/multipath/multipath.rules b/multipath/multipath.rules
+> index 6f8ee2be0a58..aab64dc7182c 100644
+> --- a/multipath/multipath.rules
+> +++ b/multipath/multipath.rules
+> @@ -19,9 +19,9 @@ LABEL="test_dev"
+>  ENV{MPATH_SBIN_PATH}="/sbin"
+>  TEST!="$env{MPATH_SBIN_PATH}/multipath", ENV{MPATH_SBIN_PATH}="/usr/sbin"
+>  
+> -ENV{DM_MULTIPATH_DEVICE_PATH}!="1", \
+> -	PROGRAM=="$env{MPATH_SBIN_PATH}/multipath -u %k", \
+> -	ENV{DM_MULTIPATH_DEVICE_PATH}="1", ENV{ID_FS_TYPE}="mpath_member", \
+> +# multipath -u sets DM_MULTIPATH_DEVICE_PATH
+> +ENV{DM_MULTIPATH_DEVICE_PATH}!="1", IMPORT{program}="$env{MPATH_SBIN_PATH}/multipath -u %k"
+> +ENV{DM_MULTIPATH_DEVICE_PATH}=="1", ENV{ID_FS_TYPE}="mpath_member", \
+>  	ENV{SYSTEMD_READY}="0"
+>  
+>  LABEL="end_mpath"
 > -- 
 > 2.16.1
