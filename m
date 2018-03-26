@@ -1,16 +1,16 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH v2 13/20] multipath -u: change output to
- environment/key format
-Date: Mon, 26 Mar 2018 14:33:14 -0500
-Message-ID: <20180326193314.GR3103@octiron.msp.redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH v2 10/20] libmultipath: indicate wwid failure
+ in dm_addmap_create()
+Date: Mon, 26 Mar 2018 22:07:46 +0200
+Message-ID: <1522094866.19335.105.camel@suse.com>
 References: <20180319150155.5363-1-mwilck@suse.com>
-	<20180319150155.5363-14-mwilck@suse.com>
+	<20180319150155.5363-11-mwilck@suse.com>
+	<20180326175228.GO3103@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20180319150155.5363-14-mwilck@suse.com>
+In-Reply-To: <20180326175228.GO3103@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,72 +20,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Mar 19, 2018 at 04:01:48PM +0100, Martin Wilck wrote:
-> ... instead of free format. This provides more flexibility
-> for udev rule processing for the future. Adapt code in multipath.rules.
-> The exit status remains as usual. This affects "multipath -c", too.
-
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
-> 
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  multipath/main.c          | 11 +++++------
->  multipath/multipath.rules |  6 +++---
->  2 files changed, 8 insertions(+), 9 deletions(-)
-> 
-> diff --git a/multipath/main.c b/multipath/main.c
-> index ea4a3d44493a..f93cad2abde0 100644
-> --- a/multipath/main.c
-> +++ b/multipath/main.c
-> @@ -350,15 +350,14 @@ out:
->  	return r;
->  }
->  
-> -static void print_cmd_valid(const char *devpath, int k)
-> +static void print_cmd_valid(int k)
->  {
-> -	const char *msg[] = { "is", "is not" };
-> +	int vals[] = { 1, 0 };
->  
-> -	if (k < 0 || k >= sizeof(msg))
-> +	if (k < 0 || k >= sizeof(vals))
->  		return;
->  
-> -	printf("%s %s a valid multipath device path\n",
-> -	       devpath, msg[k]);
-> +	printf("DM_MULTIPATH_DEVICE_PATH=\"%d\"\n", vals[k]);
->  }
->  
->  /*
-> @@ -520,7 +519,7 @@ configure (struct config *conf, enum mpath_cmds cmd,
->  
->  print_valid:
->  	if (cmd == CMD_VALID_PATH)
-> -		print_cmd_valid(devpath, r);
-> +		print_cmd_valid(r);
->  
->  out:
->  	if (refwwid)
-> diff --git a/multipath/multipath.rules b/multipath/multipath.rules
-> index 6f8ee2be0a58..aab64dc7182c 100644
-> --- a/multipath/multipath.rules
-> +++ b/multipath/multipath.rules
-> @@ -19,9 +19,9 @@ LABEL="test_dev"
->  ENV{MPATH_SBIN_PATH}="/sbin"
->  TEST!="$env{MPATH_SBIN_PATH}/multipath", ENV{MPATH_SBIN_PATH}="/usr/sbin"
->  
-> -ENV{DM_MULTIPATH_DEVICE_PATH}!="1", \
-> -	PROGRAM=="$env{MPATH_SBIN_PATH}/multipath -u %k", \
-> -	ENV{DM_MULTIPATH_DEVICE_PATH}="1", ENV{ID_FS_TYPE}="mpath_member", \
-> +# multipath -u sets DM_MULTIPATH_DEVICE_PATH
-> +ENV{DM_MULTIPATH_DEVICE_PATH}!="1", IMPORT{program}="$env{MPATH_SBIN_PATH}/multipath -u %k"
-> +ENV{DM_MULTIPATH_DEVICE_PATH}=="1", ENV{ID_FS_TYPE}="mpath_member", \
->  	ENV{SYSTEMD_READY}="0"
->  
->  LABEL="end_mpath"
-> -- 
-> 2.16.1
+T24gTW9uLCAyMDE4LTAzLTI2IGF0IDEyOjUyIC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cj4gT24gTW9uLCBNYXIgMTksIDIwMTggYXQgMDQ6MDE6NDVQTSArMDEwMCwgTWFydGluIFdp
+bGNrIHdyb3RlOgo+ID4gZG1fYWRkbWFwX2NyZWF0ZSgpIGlzIHdoZXJlIHdlIGFjdHVhbGx5IHRy
+eSB0byBzZXQgdXAgYSBuZXcKPiA+IG11bHRpcGF0aCBtYXAuIERlcGVuZGluZyBvbiB0aGUgcmVz
+dWx0LCBtYXJrIHRoZSB3d2lkIGFzCj4gPiBmYWlsZWQgKG9yIG5vdCksIGFuZCByZS10cmlnZ2Vy
+IGFuIHVldmVudCBpZiBuZWNlc3NhcnkuCj4gPiBJZiBhIHBhdGggY2hhbmdlcyBmcm9tIG11bHRp
+cGF0aCB0byBub24tbXVsdGlwYXRoLCB1c2UgYW4gImFkZCIKPiA+IGV2ZW50IHRvIG1ha2Ugc3Vy
+ZSBMVk0yIHJ1bGVzIHBpY2sgaXQgdXAuIEluY3JlYXNlIGxvZyBsZXZlbAo+ID4gb2YgdGhpcyBl
+dmVudCB0byAzLgo+IAo+IEknbSBub3Qgc3VyZSBvZiBhIHNwZWNpZmljIHByb2JsZW0gd2l0aCB0
+aGlzIHBhdGNoLCBidXQgSSBhbSBhIGxpdHRsZQo+IGxlZXJ5IG9mIHNlbmRpbmcgb3V0IG91ciBv
+d24gImFkZCIgZXZlbnRzLiBVbmxlc3MgSSBhbSBtaXN0YWtlbiB0aGVyZQo+IGlzCj4gdXN1YWxs
+eSB0aGVyZSBpcyBvbmx5IG9uZSBhZGQgZXZlbnQgcGVyIGRldmljZSwgYW5kIHRoZXJlIGlzIGV4
+dHJhCj4gd29yawo+IGRvbmUgb24gYWRkIGV2ZW50cyB0aGF0IHdlIG1pZ2h0IG5vdCB3YW50IHRv
+IGRvIHR3aWNlLiBJIHdvbmRlciBpZiBpdAo+IHdvdWxkIGJlIGJldHRlciB0byBtYWtlIG90aGVy
+IHVkZXYgcnVsZXMgYmUgYWJsZSB0byByZXNwb25kIHRvIGNoYW5nZQo+IGV2ZW50cyBmcm9tIGV4
+LW11bHRpcGF0aCBwYXRocy4gIEhhdmUgeW91IGxvb2tlZCBpbnRvIHRoZQo+IGltcGxpY2F0aW9u
+cwo+IG9mIHNlbmRpbmcgb3V0IHRoZXNlIGFkZCBldmVudHM/CgpZZXMuIEkgcmV2aWV3ZWQgdGhl
+IHVkZXYgcnVsZXMgb24gYSBmZXcgY3VycmVudCBzeXN0ZW1zLiBUaGVyZSBhcmUgb25seQp2ZXJ5
+IGZldyBydWxlcyB0aGF0IGFjdCBvbiAiYWRkIiBvbmx5LiBGb3IgdGhvc2UgZGV2aWNlcyB0aGF0
+IG1hdHRlcgpoZXJlIChibG9jayBkZXZpY2VzLCBub24tZG0pIEkgc2VlIG9ubHkgdGhlIGZvbGxv
+d2luZyB0d286Cgo2MC1ibG9jay5ydWxlczogYSBydWxlIHRoYXQgZW5hYmxlcyBwYXJhbWV0ZXJz
+L2V2ZW50c19kZmxfcG9sbF9tc2Vjcy4KICA9PiBub3QgY3JpdGljYWwsIHdlIGp1c3QgZGlzYWJs
+ZS9lbmFibGUgdGhlIHBvbGxpbmcgb25jZQogICAgIG1vcmUuCjY5LWRtLWx2bS1tZXRhZC5ydWxl
+czpBQ1RJT04hPSJhZGQiLCBHT1RPPSJsdm1fZW5kIgogID0+ICB0aGlzIGlzIHRoZSBydWxlIHRo
+YXQgZm9yY2VkIG1lIHRvIHN5bnRoZXNpemUgYW4gImFkZCIgZXZlbnQuCgpTbyBpbmRlZWQsIEkg
+dGhpbmsgdGhhdCBhdCBsZWFzdCBmb3IgdGhlIGN1cnJlbnQgc3RhdGUgb2YgYWZmYWlycwpzZW5k
+aW5nIGFuICJhZGQiIGV2ZW50IGlzIHNhZmUuCgpXcnQgIm1ha2Ugb3RoZXIgdWRldiBydWxlcyBi
+ZSBhYmxlIHRvIHJlc3BvbmQgdG8gY2hhbmdlIGV2ZW50cyIgLSAKTFZNMiBjb21taXQgNzU2YmNh
+YiBleHBsYWlucyBpbiBkZXRhaWwgd2h5IExWTTIgc3dpdGNoZWQgdG8gc2Nhbm5pbmcgb24KImFk
+ZCIgZXZlbnRzIG9ubHkuIFRoaXMgY29kZSBpcyA+NSB5ZWFycyBvbGQuIEl0IG1pZ2h0IGJlIHBv
+c3NpYmxlIHRvCmRpc3Rpbmd1aXNoIGRpZmZlcmVudCBraW5kcyBvZiAiY2hhbmdlIiBldmVudHMg
+Zm9yIGx2bWV0YWQgKGUuZy4KcmVtZW1iZXJpbmcgIkRNX01VTFRJUEFUSF9ERVZJQ0VfUEFUSCIg
+YW5kIHJlLXNjYW5uaW5nIHdoZW4gaXQgaGFzCmNoYW5nZWQgZnJvbSAiMSIgdG8gIjAiKSBidXQg
+dG8gYmUgaG9uZXN0LCBJJ2QgcmF0aGVyIG5vdCB3YW50IHRvCmRlcGVuZCBvbiBzdWNoIGEgY2hh
+bmdlIGJlaW5nIG1lcmdlZCBpbiBsdm0yLiBJJ3ZlIHN1Ym1pdHRlZCBhIG1pbm9yLApJTU8gcmF0
+aGVyIHVuLWNvbnRyb3ZlcnNpYWwgZml4IGZvciA2OS1kbS1sdm1ldGFkLnJ1bGVzIDMgbW9udHMg
+YWdvCigiTFZNMjogZml4IGx2bWV0YWQgdWRldiBydWxlcyBmb3IgQ0hBTkdFIGV2ZW50cyIpIGFu
+ZCBzZW50IG91dAptdWx0aXBsZSByZW1pbmRlcnMsIHdpdGhvdXQgcmVjZWl2aW5nIGEgcmVhY3Rp
+b24uCgpNb3Jlb3Zlciwgd2UncmUgc2VuZGluZyBvdXQgdGhlc2UgZXZlbnRzIGZvciBkZXZpY2Vz
+IHdoaWNoIGhhdmUKRE1fTVVMVElQQVRIX0RFVklDRV9QQVRIPTEgYW5kIFNZU1RFTURfUkVBRFk9
+MCBzZXQuIEZvciBldmVyeXRoaW5nCmFib3ZlIHRoZSBtdWx0aXBhdGggbGF5ZXIsIGl0J3MgYWN0
+dWFsbHkgYXMgaWYgdGhlIGRldmljZSBoYWQganVzdCBiZWVuCiJhZGQiZWQuCgpJIHRoaW5rIHRo
+aXMgd2lsbCBlaXRoZXIgd29yayB3aXRoIHN5bnRoZXNpemVkICJhZGQiIGV2ZW50cywgb3Igbm90
+IGF0CmFsbC4gUGxlYXNlIGNvcnJlY3QgbWUgaWYgSSd2ZSBvdmVybG9va2VkIHNvbWV0aGluZy4K
+Ck1hcnRpbgoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5
+ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZl
+ciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykK
+Ci0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3
+LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
