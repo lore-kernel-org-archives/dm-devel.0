@@ -1,18 +1,18 @@
-From: Martin Wilck <mwilck@suse.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
 Subject: Re: multipath-tools licenses (was Re: [PATCH]
  multipath-tools: replace FSF address with a www pointer)
-Date: Mon, 26 Mar 2018 14:36:28 +0200
-Message-ID: <1522067788.19335.55.camel@suse.com>
+Date: Mon, 26 Mar 2018 15:02:26 +0200
+Message-ID: <69225957-fb15-d1b4-5faf-65c236c3b879@gmail.com>
 References: <20180310205002.3318-1-xose.vazquez@gmail.com>
 	<1521495458.3798.138.camel@suse.com>
 	<1a0b44c5-c7a6-85fa-b2dd-1bd542efbb76@gmail.com>
 	<1521837017.13100.106.camel@suse.com>
-	<20180326130447.3114ef2f@pentland.suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180326130447.3114ef2f@pentland.suse.de>
+In-Reply-To: <1521837017.13100.106.camel@suse.com>
+Content-Language: en-GB
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,56 +22,17 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, fge@redhat.com
+To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, device-mapper development <dm-devel@redhat.com>, Benjamin Marzinski <bmarzins@redhat.com>, Hannes Reinecke <hare@suse.de>, Gris Ge <fge@redhat.com>
 List-Id: dm-devel.ids
 
-T24gTW9uLCAyMDE4LTAzLTI2IGF0IDEzOjA0ICswMjAwLCBIYW5uZXMgUmVpbmVja2Ugd3JvdGU6
-Cj4gT24gRnJpLCAyMyBNYXIgMjAxOCAyMTozMDoxNyArMDEwMAo+IAo+ID4gSSBiZWxpZXZlIHRo
-YXQgdmFyaW91cyBmaWxlcyBiZXNpZGVzIHRoZSB0aHJlZSBhYm92ZSBjb250YWluIGNvZGUKPiA+
-IHdoaWNoIGhhcyBiZWVuIGNvcGllZCBmcm9tIGtlcm5lbCBzb3VyY2VzIGFuZCB3b3VsZCB0aHVz
-IGJlIHVuZGVyCj4gPiBHUEx2MiAodGhlIGFsdWEgY29kZSwgZm9yIGV4YW1wbGUpLgo+ID4gCj4g
-PiBBZ2FpbiwgSUFOQUwsIGJ1dCB0aGlzIGxvb2tzIGxpa2UgYSBtZXNzIHRoYXQgcmVhbGx5IG91
-Z2h0IHRvIGJlCj4gPiBjbGVhbmVkIHVwLiBBcyBsb25nIGFzIHdlIGRvbid0IGRvIHRoYXQsIHRo
-ZXJlJ3Mgbm8gcG9pbnQgaW4KPiA+IGNoYW5naW5nCj4gPiB0aGUgYWRkcmVzcyBoZWFkZXJzLgo+
-ID4gCj4gPiBJdCB3b3VsZCBtYWtlIHNlbnNlIHRvIGdlbmVyYWxseSBhZ3JlZSBvbiBhIEdQTCB2
-ZXJzaW9uICgyLCAyIG9yCj4gPiBsYXRlciwgMywgMyBvciBsYXRlciksIGFuZCBhcHBseSBMR1BM
-IHRvIChzb21lIG9mKSB0aGUgbGlicmFyaWVzCj4gPiBhbmQKPiA+IEdQTCB0byB0aGUgdG9vbHMu
-Cj4gPiAKPiAKPiBXZWxsLCBhcyBJJ20gdGhlIG9uZSByZXNwb25zaWJsZSBmb3IgYWRkaW5nICdz
-eXNmcy5jJyBhbmQgJ3VldmVudC5jJwo+IHRvCj4gbXVsdGlwYXRoLXRvb2xzIEkgc2hvdWxkIGFs
-bG93ZWQgdG8gY2hhbmdlIHRoZSBsaWNlbnNlIHRoZXJlLCByaWdodD8KCkkgZ3Vlc3Mgc28uCgo+
-IElmIHNvIEknbSBoYXBweSB0byBjaGFuZ2UgdGhlbSB0byBMUEdMIHRvIG1ha2UgdGhpbmdzIGVh
-c2llci4KClRoYXQnZCBiZSBoZWxwZnVsLCBidXQgbm90IHN1ZmZpY2llbnQsIGJlY2F1c2UgdGhl
-cmUncyBhIGNvdXBsZSBvZgpvdGhlciBmaWxlcyB1bmRlciAiR1BMdjIgb3IgbGF0ZXIiIGxlZnQs
-IGFuZCBiZWNhdXNlIHRoZSBHUEx2Mi92Mwpwcm9ibGVtIGZvciBsaWJkbXBwIHJlbWFpbnMuCgpJ
-dCdkIGJlIGEgZ29vZCBpZGVhIHRvIHVwZ3JhZGUgZ2VuZXJhbGx5IGZyb20gIkxpYnJhcnkgR1BM
-IHYyIiBhdCBsZWFzdAp0byBMR1BMdjIuMS4gVGhhdCBzaG91bGRuJ3QgYmUgYSBwcm9ibGVtLCBh
-cyB0aGUgb25seSBtYWpvcgpkaWZmZXJlcmVuY2UgYmV0d2VlbiBMR1BMdjIgYW5kIExHUEx2Mi4x
-IGlzIHRoZSBhZGRpdGlvbiBvZiDCpzZiIGluIHRoZQpsYXR0ZXIsIGFsbG93aW5nIHRoZSB1c2Ug
-b2YgImEgc3VpdGFibGUgc2hhcmVkIGxpYnJhcnkgbWVjaGFuaXNtIGZvcgpsaW5raW5nIHdpdGgg
-dGhlIGxpYnJhcnkiLgoKQWNjb3JkaW5nIHRvIGh0dHBzOi8vd3d3LmdudS5vcmcvbGljZW5zZXMv
-Z3BsLWZhcS5odG1sI0FsbENvbXBhdGliaWxpdHkKLCBMR1BMdjIuMSBpcyBjb21wYXRpYmxlIHdp
-dGggR1BMdjMsIGFsdGhvdWdoIHRoZSAiY29tYmluYXRpb24gaXMgdW5kZXIKR1BMdjMiLgoKVGhl
-IGtleSBxdWVzdGlvbiBpcyB3aGV0aGVyIHdlIG5lZWQgKkwqR1BMIGF0IGFsbC4gV2Ugb25seSBk
-byBpZiB3ZQp3YW50IHRvIGFsbG93IHByaW9wcmlldGFyeSBjb2RlIHRvIGxpbmsgd2l0aCBvdXIg
-Y29kZS4gQmVjYXVzZQpsaWJtdWx0aXBhdGggaXMgbm8gImxpYnJhcnkiIGludGVuZGVkIGZvciBn
-ZW5lcmFsIHVzZSwgcmF0aGVyIGEgc2V0IG9mCmNvbW1vbiBjb2RlIGJldHdlZW4gbXVsdGlwYXRo
-IGFuZCBtdWx0aXBhdGhkLCBJIGRvbid0IHNlZSBhIHN0cm9uZyBjYXNlCmZvciAqTCpHUEwgZm9y
-IGl0LiBUaGUgcGFydHMgb2YgdGhlIGNvZGUgdGhhdCBtaWdodCBiZSBpbnRlcmVzdGluZyBmb3IK
-ZXh0ZXJuYWwgcGFydGllcyB0byB1c2UgYXJlIGxpYm1wYXRoY21kLCBsaWJtcGF0aHBlcnNpc3Qs
-IGFuZCBsaWJkbW1wLAp3aGVyZSB0aGUgR1BMdjMgb2YgdGhlIGxhdHRlciBleHBsaWNpdHkgZm9y
-YmlkcyB1c2UgYnkgcHJvcHJpZXRhcnkKY29kZS4gbGlibXBhdGhjbWQgZG9lc24ndCBuZWVkIHRv
-IGxpbmsgbGlibXVsdGlwYXRoLCBidXQKbGlibXBhdGhwZXJzaXN0IGluIGl0cyBjdXJyZW50IGZv
-cm0gZG9lcy4KCkkgdm90ZSB0byBjaGFuZ2UgbGlibXBhdGhjbWQgYW5kIGxpYm1wYXRocGVyc2lz
-dCB0byAiTEdQTHYyLjEgb3IKbGF0ZXIiLCBhbmQgZXZlcnl0aGluZyBlbHNlIHRvICJHUEx2MiBv
-ciBsYXRlciIgKCopLiBCdXQgSSBvd24ganVzdCBhCm1hcmdpbmFsIHBvcnRpb24gb2YgdGhlIGNv
-ZGUsIHNvIHRoYXQncyBmb3Igb3RoZXJzIHRvIGRlY2lkZS4KCkNoZWVycywKTWFydGluCgooKikg
-Q2F2ZWF0OiBjb2RlIHdoaWNoIGhhcyBiZWVuIGNvcGllZCBmcm9tIGtlcm5lbCBzb3VyY2VzIChs
-aXN0Lmg/LAphbHVhIGNvZGU/LCAuLi4gPykgd291bGQgYmUgdW5kZXIgIkdQTHYyIG9ubHkiLCBh
-bmQgY2hhbmdpbmcgdGhhdCB3b3VsZApyZXF1aXJlIGNvbnNlbnQgb2YgdGhlIG9yaWdpbmFsIGNv
-cHlyaWdodCBob2xkZXJzLCB3aGljaCBtaWdodCBiZQpkaWZmaWN1bHQgdG8gb2J0YWluLgoKLS0g
-CkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1
-MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0
-aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVs
-IG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20v
-bWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+On 03/23/2018 09:30 PM, Martin Wilck wrote:
+
+> [...]
+> This is a total mess for potential users of our code. Effectively, the
+> GPL parts of libmultipath would cause all of multipath-tools to be
+> under GPL rather than LGPLv2.x, because the linking exception of the
+> LGPL wouldn't apply to them, forbidding linking non-GPL code with
+> libmultipath.
+> [...]
+
+Already discussed, but without a real conclusion: https://marc.info/?t=146961656800001
