@@ -1,14 +1,16 @@
-From: mpatocka@redhat.com
-Subject: [patch 7/8] dm-bufio: support non-power-of-two block
-	sizes
-Date: Mon, 26 Mar 2018 20:29:46 +0200
-Message-ID: <20180326183100.004252446@debian.vm>
-References: <20180326182939.169591126@debian.vm>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH v2 11/20] libmultipath: don't try to set up
+ failed wwids again
+Date: Mon, 26 Mar 2018 13:47:19 -0500
+Message-ID: <20180326184719.GP3103@octiron.msp.redhat.com>
+References: <20180319150155.5363-1-mwilck@suse.com>
+	<20180319150155.5363-12-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline; filename=dm-bufio-non-power-of-two-size.patch
+Content-Disposition: inline
+In-Reply-To: <20180319150155.5363-12-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,166 +20,270 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: mpatocka@redhat.com, msnitzer@redhat.com, agk@redhat.com
+To: Martin Wilck <mwilck@suse.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Support sector sizes that are not a power of two. Slab cache is used for
-allocations.
+On Mon, Mar 19, 2018 at 04:01:46PM +0100, Martin Wilck wrote:
+> Once setting up a map has failed, don't try to set it up again.
+> This applies to "multipathd reconfigure" and even multipathd restart,
+> too. That's deliberate - if a WWID is marked as failed, we don't wont
+> to bother with it again, unless the admin explicitly tells us so.
+> Specifically, the exceptions are:
+> 
+>  1) multipathd add map $MAP
+>  2) multipathd add path $PATH
+>  3) multipath $PATH
+> 
+> In these cases, addmap() will eventually be called again, and the failed
+> flag will be set according to it's return status. Unless the reason for
+> the previous failure has been fixed, it may well be "failed" again.
+> 
+> Inofficially, it's also possible to manually remove a failed marker under
+> /dev/shm/multipath/failed_wwids and run "multipathd reconfigure".
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+The code looks fine, but I wonder why this is necessary.  You already
+posted patches that let multipathd issue uevent to claim a path device
+after if it was not previously claimed. I admit that you don't generally
+see multipathd succeed in creating a device after failing to, but it's
+easy to imagine situations where it could.  For instance, if a path
+device appears and then disappears soon after, multipathd would fail to
+create the device because when the path device finally reappeared for
+good.
 
----
- drivers/md/dm-bufio.c |   64 ++++++++++++++++++++++++++++++--------------------
- 1 file changed, 39 insertions(+), 25 deletions(-)
+I see that this will keep multipathd from needlessly retrying in-use
+devices whenever a path comes or goes, but I don't know of any harm that
+has ever caused, and I can see this causing harm. Am I missing something
+here?
 
-Index: linux-2.6/drivers/md/dm-bufio.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-bufio.c	2018-03-26 15:34:20.577250000 +0200
-+++ linux-2.6/drivers/md/dm-bufio.c	2018-03-26 15:34:20.577250000 +0200
-@@ -57,12 +57,6 @@
- #define DM_BUFIO_INLINE_VECS		16
- 
- /*
-- * Don't try to use alloc_pages for blocks larger than this.
-- * For explanation, see alloc_buffer_data below.
-- */
--#define DM_BUFIO_BLOCK_SIZE_GFP_LIMIT	(PAGE_SIZE << (MAX_ORDER - 1))
--
--/*
-  * Align buffer writes to this boundary.
-  * Tests show that SSDs have the highest IOPS when using 4k writes.
-  */
-@@ -98,8 +92,7 @@ struct dm_bufio_client {
- 
- 	struct block_device *bdev;
- 	unsigned block_size;
--	unsigned char sectors_per_block_bits;
--	unsigned char pages_per_block_bits;
-+	s8 sectors_per_block_bits;
- 	void (*alloc_callback)(struct dm_buffer *);
- 	void (*write_callback)(struct dm_buffer *);
- 
-@@ -375,11 +368,11 @@ static void *alloc_buffer_data(struct dm
- 		return kmem_cache_alloc(c->slab_cache, gfp_mask);
- 	}
- 
--	if (c->block_size <= DM_BUFIO_BLOCK_SIZE_GFP_LIMIT &&
-+	if (c->block_size <= KMALLOC_MAX_SIZE &&
- 	    gfp_mask & __GFP_NORETRY) {
- 		*data_mode = DATA_MODE_GET_FREE_PAGES;
- 		return (void *)__get_free_pages(gfp_mask,
--						c->pages_per_block_bits);
-+						c->sectors_per_block_bits - (PAGE_SHIFT - SECTOR_SHIFT));
- 	}
- 
- 	*data_mode = DATA_MODE_VMALLOC;
-@@ -416,7 +409,8 @@ static void free_buffer_data(struct dm_b
- 		break;
- 
- 	case DATA_MODE_GET_FREE_PAGES:
--		free_pages((unsigned long)data, c->pages_per_block_bits);
-+		free_pages((unsigned long)data,
-+			   c->sectors_per_block_bits - (PAGE_SHIFT - SECTOR_SHIFT));
- 		break;
- 
- 	case DATA_MODE_VMALLOC:
-@@ -634,10 +628,14 @@ static void submit_io(struct dm_buffer *
- 	sector_t sector;
- 	unsigned offset, end;
- 
--	sector = (b->block << b->c->sectors_per_block_bits) + b->c->start;
-+	if (likely(b->c->sectors_per_block_bits >= 0))
-+		sector = b->block << b->c->sectors_per_block_bits;
-+	else
-+		sector = b->block * (b->c->block_size >> SECTOR_SHIFT);
-+	sector += b->c->start;
- 
- 	if (rw != REQ_OP_WRITE) {
--		n_sectors = 1 << b->c->sectors_per_block_bits;
-+		n_sectors = b->c->block_size >> SECTOR_SHIFT;
- 		offset = 0;
- 	} else {
- 		if (b->c->write_callback)
-@@ -941,8 +939,11 @@ static void __get_memory_limit(struct dm
- 		}
- 	}
- 
--	buffers = dm_bufio_cache_size_per_client >>
--		  (c->sectors_per_block_bits + SECTOR_SHIFT);
-+	buffers = dm_bufio_cache_size_per_client;
-+	if (likely(c->sectors_per_block_bits >= 0))
-+		buffers >>= c->sectors_per_block_bits + SECTOR_SHIFT;
-+	else
-+		buffers /= c->block_size;
- 
- 	if (buffers < c->minimum_buffers)
- 		buffers = c->minimum_buffers;
-@@ -1476,8 +1477,12 @@ EXPORT_SYMBOL_GPL(dm_bufio_get_block_siz
- 
- sector_t dm_bufio_get_device_size(struct dm_bufio_client *c)
- {
--	return i_size_read(c->bdev->bd_inode) >>
--			   (SECTOR_SHIFT + c->sectors_per_block_bits);
-+	sector_t s = i_size_read(c->bdev->bd_inode) >> SECTOR_SHIFT;
-+	if (likely(c->sectors_per_block_bits >= 0))
-+		s >>= c->sectors_per_block_bits;
-+	else
-+		sector_div(s, c->block_size >> SECTOR_SHIFT);
-+	return s;
- }
- EXPORT_SYMBOL_GPL(dm_bufio_get_device_size);
- 
-@@ -1575,8 +1580,12 @@ static bool __try_evict_buffer(struct dm
- 
- static unsigned long get_retain_buffers(struct dm_bufio_client *c)
- {
--        unsigned long retain_bytes = READ_ONCE(dm_bufio_retain_bytes);
--        return retain_bytes >> (c->sectors_per_block_bits + SECTOR_SHIFT);
-+	unsigned long retain_bytes = READ_ONCE(dm_bufio_retain_bytes);
-+	if (likely(c->sectors_per_block_bits >= 0))
-+		retain_bytes >>= c->sectors_per_block_bits + SECTOR_SHIFT;
-+	else
-+		retain_bytes /= c->block_size;
-+	return retain_bytes;
- }
- 
- static unsigned long __scan(struct dm_bufio_client *c, unsigned long nr_to_scan,
-@@ -1642,8 +1651,11 @@ struct dm_bufio_client *dm_bufio_client_
- 	unsigned i;
- 	char slab_name[27];
- 
--	BUG_ON(block_size < 1 << SECTOR_SHIFT ||
--	       (block_size & (block_size - 1)));
-+	if (!block_size || block_size & ((1 << SECTOR_SHIFT) - 1)) {
-+		WARN_ON(1);
-+		r = -EINVAL;
-+		goto bad_client;
-+	}
- 
- 	c = kzalloc(sizeof(*c), GFP_KERNEL);
- 	if (!c) {
-@@ -1654,9 +1666,10 @@ struct dm_bufio_client *dm_bufio_client_
- 
- 	c->bdev = bdev;
- 	c->block_size = block_size;
--	c->sectors_per_block_bits = __ffs(block_size) - SECTOR_SHIFT;
--	c->pages_per_block_bits = (__ffs(block_size) >= PAGE_SHIFT) ?
--				  __ffs(block_size) - PAGE_SHIFT : 0;
-+	if (is_power_of_2(block_size))
-+		c->sectors_per_block_bits = __ffs(block_size) - SECTOR_SHIFT;
-+	else
-+		c->sectors_per_block_bits = -1;
- 
- 	c->alloc_callback = alloc_callback;
- 	c->write_callback = write_callback;
-@@ -1681,7 +1694,8 @@ struct dm_bufio_client *dm_bufio_client_
- 		goto bad_dm_io;
- 	}
- 
--	if (block_size < PAGE_SIZE) {
-+	if (block_size <= KMALLOC_MAX_SIZE &&
-+	    (block_size < PAGE_SIZE || !is_power_of_2(block_size))) {
- 		snprintf(slab_name, sizeof slab_name, "dm_bufio_cache-%u", c->block_size);
- 		c->slab_cache = kmem_cache_create(slab_name, c->block_size, ARCH_KMALLOC_MINALIGN, SLAB_RECLAIM_ACCOUNT, NULL);
- 		if (!c->slab_cache) {
+-Ben
+
+> 
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  libmultipath/configure.c  |  5 +++--
+>  libmultipath/configure.h  |  3 ++-
+>  libmultipath/wwids.c      |  7 ++++++-
+>  libmultipath/wwids.h      |  3 ++-
+>  multipath/main.c          | 12 +++++++++---
+>  multipathd/cli_handlers.c |  5 +++--
+>  multipathd/main.c         | 13 +++++++------
+>  multipathd/main.h         |  8 ++++++++
+>  8 files changed, 40 insertions(+), 16 deletions(-)
+> 
+> diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+> index 88e6687849f8..98b80337d899 100644
+> --- a/libmultipath/configure.c
+> +++ b/libmultipath/configure.c
+> @@ -981,7 +981,7 @@ out:
+>   * reloaded in DM if there's a difference. This is useful during startup.
+>   */
+>  int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
+> -		    int force_reload, enum mpath_cmds cmd)
+> +		    int force_reload, bool retry_failed, enum mpath_cmds cmd)
+>  {
+>  	int r = 1;
+>  	int k, i;
+> @@ -1032,7 +1032,8 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
+>  			continue;
+>  
+>  		/* If find_multipaths was selected check if the path is valid */
+> -		if (!refwwid && !should_multipath(pp1, pathvec, curmp)) {
+> +		if (!refwwid && !should_multipath(pp1, pathvec, curmp,
+> +						  retry_failed)) {
+>  			orphan_path(pp1, "only one path");
+>  			continue;
+>  		}
+> diff --git a/libmultipath/configure.h b/libmultipath/configure.h
+> index 8b56d33a1d0b..7e175c890d25 100644
+> --- a/libmultipath/configure.h
+> +++ b/libmultipath/configure.h
+> @@ -32,7 +32,8 @@ int setup_map (struct multipath * mpp, char * params, int params_size,
+>  	       struct vectors *vecs );
+>  int domap (struct multipath * mpp, char * params, int is_daemon);
+>  int reinstate_paths (struct multipath *mpp);
+> -int coalesce_paths (struct vectors *vecs, vector curmp, char * refwwid, int force_reload, enum mpath_cmds cmd);
+> +int coalesce_paths (struct vectors *vecs, vector curmp, char * refwwid,
+> +		    int force_reload, bool retry_failed, enum mpath_cmds cmd);
+>  int get_refwwid (enum mpath_cmds cmd, char * dev, enum devtypes dev_type,
+>  		 vector pathvec, char **wwid);
+>  int reload_map(struct vectors *vecs, struct multipath *mpp, int refresh, int is_daemon);
+> diff --git a/libmultipath/wwids.c b/libmultipath/wwids.c
+> index e0fdcb34dbc6..288a9ad50c73 100644
+> --- a/libmultipath/wwids.c
+> +++ b/libmultipath/wwids.c
+> @@ -4,6 +4,7 @@
+>  #include <string.h>
+>  #include <limits.h>
+>  #include <stdio.h>
+> +#include <stdbool.h>
+>  #include <sys/types.h>
+>  #include <sys/stat.h>
+>  
+> @@ -273,12 +274,16 @@ out:
+>  }
+>  
+>  int
+> -should_multipath(struct path *pp1, vector pathvec, vector mpvec)
+> +should_multipath(struct path *pp1, vector pathvec, vector mpvec,
+> +		 bool retry_failed)
+>  {
+>  	int i, ignore_new;
+>  	struct path *pp2;
+>  	struct config *conf;
+>  
+> +	if (!retry_failed && is_failed_wwid(pp1->wwid))
+> +		return 0;
+> +
+>  	conf = get_multipath_config();
+>  	ignore_new = ignore_new_devs(conf);
+>  	if (!find_multipaths_on(conf) && !ignore_new) {
+> diff --git a/libmultipath/wwids.h b/libmultipath/wwids.h
+> index d00e1f58137c..911e8da720c5 100644
+> --- a/libmultipath/wwids.h
+> +++ b/libmultipath/wwids.h
+> @@ -12,7 +12,8 @@
+>  "#\n" \
+>  "# Valid WWIDs:\n"
+>  
+> -int should_multipath(struct path *pp, vector pathvec, vector mpvec);
+> +int should_multipath(struct path *pp, vector pathvec, vector mpvec,
+> +		     bool retry_failed);
+>  int remember_wwid(char *wwid);
+>  int check_wwids_file(char *wwid, int write_wwid);
+>  int remove_wwid(char *wwid);
+> diff --git a/multipath/main.c b/multipath/main.c
+> index 3944fd504de2..566404e56ef4 100644
+> --- a/multipath/main.c
+> +++ b/multipath/main.c
+> @@ -441,8 +441,12 @@ configure (struct config *conf, enum mpath_cmds cmd,
+>  		 * Paths listed in the wwids file are always considered valid.
+>  		 */
+>  		if (cmd == CMD_VALID_PATH) {
+> -			if ((!find_multipaths_on(conf) && ignore_wwids(conf)) ||
+> -			    check_wwids_file(refwwid, 0) == 0)
+> +			if (is_failed_wwid(refwwid)) {
+> +				r = 1;
+> +				goto print_valid;
+> +			} else if ((!find_multipaths_on(conf) &&
+> +				  ignore_wwids(conf)) ||
+> +				 check_wwids_file(refwwid, 0) == 0)
+>  				r = 0;
+>  			if (r == 0 ||
+>  			    !find_multipaths_on(conf) || !ignore_wwids(conf)) {
+> @@ -504,9 +508,11 @@ configure (struct config *conf, enum mpath_cmds cmd,
+>  
+>  	/*
+>  	 * core logic entry point
+> +	 * If refwwid != NULL, user has given a device to multipath,
+> +	 * so retry even if this ID has failed before.
+>  	 */
+>  	r = coalesce_paths(&vecs, NULL, refwwid,
+> -			   conf->force_reload, cmd);
+> +			   conf->force_reload, refwwid != NULL, cmd);
+>  
+>  out:
+>  	if (refwwid)
+> diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+> index 60ec48b9904a..202438795ee5 100644
+> --- a/multipathd/cli_handlers.c
+> +++ b/multipathd/cli_handlers.c
+> @@ -750,7 +750,7 @@ cli_add_path (void * v, char ** reply, int * len, void * data)
+>  		pp->checkint = conf->checkint;
+>  	}
+>  	put_multipath_config(conf);
+> -	return ev_add_path(pp, vecs, 1);
+> +	return ev_add_path(pp, vecs, ADD_PATH_DOMAP_FORCE);
+>  blacklisted:
+>  	*reply = strdup("blacklisted\n");
+>  	*len = strlen(*reply) + 1;
+> @@ -813,7 +813,8 @@ cli_add_map (void * v, char ** reply, int * len, void * data)
+>  					 vecs->pathvec, &refwwid);
+>  			if (refwwid) {
+>  				if (coalesce_paths(vecs, NULL, refwwid,
+> -						   FORCE_RELOAD_NONE, CMD_NONE))
+> +						   FORCE_RELOAD_NONE, true,
+> +						   CMD_NONE))
+>  					condlog(2, "%s: coalesce_paths failed",
+>  									param);
+>  				dm_lib_release();
+> diff --git a/multipathd/main.c b/multipathd/main.c
+> index ea8c413f28c6..8fd7d2b75cba 100644
+> --- a/multipathd/main.c
+> +++ b/multipathd/main.c
+> @@ -933,7 +933,8 @@ rescan:
+>  		mpp->action = ACT_RELOAD;
+>  		extract_hwe_from_path(mpp);
+>  	} else {
+> -		if (!should_multipath(pp, vecs->pathvec, vecs->mpvec)) {
+> +		if (!should_multipath(pp, vecs->pathvec, vecs->mpvec,
+> +				      need_do_map == ADD_PATH_DOMAP_FORCE)) {
+>  			orphan_path(pp, "only one path");
+>  			return 0;
+>  		}
+> @@ -953,7 +954,7 @@ rescan:
+>  	/* persistent reservation check*/
+>  	mpath_pr_event_handle(pp);
+>  
+> -	if (!need_do_map)
+> +	if (need_do_map == ADD_PATH_DOMAP_NO)
+>  		return 0;
+>  
+>  	if (!dm_map_present(mpp->alias)) {
+> @@ -1863,7 +1864,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+>  			conf = get_multipath_config();
+>  			ret = pathinfo(pp, conf, DI_ALL | DI_BLACKLIST);
+>  			if (ret == PATHINFO_OK) {
+> -				ev_add_path(pp, vecs, 1);
+> +				ev_add_path(pp, vecs, ADD_PATH_DOMAP_YES);
+>  				pp->tick = 1;
+>  			} else if (ret == PATHINFO_SKIPPED) {
+>  				put_multipath_config(conf);
+> @@ -1989,7 +1990,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+>  		}
+>  		if (!disable_reinstate && reinstate_path(pp, add_active)) {
+>  			condlog(3, "%s: reload map", pp->dev);
+> -			ev_add_path(pp, vecs, 1);
+> +			ev_add_path(pp, vecs, ADD_PATH_DOMAP_YES);
+>  			pp->tick = 1;
+>  			return 0;
+>  		}
+> @@ -2012,7 +2013,7 @@ check_path (struct vectors * vecs, struct path * pp, int ticks)
+>  			/* Clear IO errors */
+>  			if (reinstate_path(pp, 0)) {
+>  				condlog(3, "%s: reload map", pp->dev);
+> -				ev_add_path(pp, vecs, 1);
+> +				ev_add_path(pp, vecs, ADD_PATH_DOMAP_YES);
+>  				pp->tick = 1;
+>  				return 0;
+>  			}
+> @@ -2288,7 +2289,7 @@ configure (struct vectors * vecs)
+>  	 * superfluous ACT_RELOAD ioctls. Later calls are done
+>  	 * with FORCE_RELOAD_YES.
+>  	 */
+> -	ret = coalesce_paths(vecs, mpvec, NULL, force_reload, CMD_NONE);
+> +	ret = coalesce_paths(vecs, mpvec, NULL, force_reload, false, CMD_NONE);
+>  	if (force_reload == FORCE_RELOAD_WEAK)
+>  		force_reload = FORCE_RELOAD_YES;
+>  	if (ret) {
+> diff --git a/multipathd/main.h b/multipathd/main.h
+> index af395589ff93..a92650cd958b 100644
+> --- a/multipathd/main.h
+> +++ b/multipathd/main.h
+> @@ -22,6 +22,14 @@ void exit_daemon(void);
+>  const char * daemon_status(void);
+>  int need_to_delay_reconfig (struct vectors *);
+>  int reconfigure (struct vectors *);
+> +/*
+> + * 3rd argument of ev_add_path()
+> + */
+> +enum {
+> +	ADD_PATH_DOMAP_NO = 0,	  /* don't call domap */
+> +	ADD_PATH_DOMAP_YES = 1,	  /* call domap, don't retry failed */
+> +	ADD_PATH_DOMAP_FORCE = 2, /* call domap, retry previously failed */
+> +};
+>  int ev_add_path (struct path *, struct vectors *, int);
+>  int ev_remove_path (struct path *, struct vectors *, int);
+>  int ev_add_map (char *, const char *, struct vectors *);
+> -- 
+> 2.16.1
