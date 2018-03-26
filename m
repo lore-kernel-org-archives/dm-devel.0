@@ -1,17 +1,18 @@
-From: Denis Semakin <d.semakin@omprussia.ru>
-Subject: Re: dm table: add support for secure erase forwarding
- [was: Re: Adaptation secure erase forwarding for 4.1x kernels]
-Date: Mon, 26 Mar 2018 10:45:33 +0300 (MSK)
-Message-ID: <1996070847.39629.1522050333423.JavaMail.zimbra@omprussia.ru>
-References: <1496940834.549721.1520933025411.JavaMail.zimbra@omprussia.ru>
-	<20180322151045.GA27598@redhat.com>
-	<695931032.318989.1521816469739.JavaMail.zimbra@omprussia.ru>
-	<20180323153844.GA4914@redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: multipath-tools licenses (was Re: [PATCH]
+ multipath-tools: replace FSF address with a www pointer)
+Date: Mon, 26 Mar 2018 14:36:28 +0200
+Message-ID: <1522067788.19335.55.camel@suse.com>
+References: <20180310205002.3318-1-xose.vazquez@gmail.com>
+	<1521495458.3798.138.camel@suse.com>
+	<1a0b44c5-c7a6-85fa-b2dd-1bd542efbb76@gmail.com>
+	<1521837017.13100.106.camel@suse.com>
+	<20180326130447.3114ef2f@pentland.suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180323153844.GA4914@redhat.com>
+In-Reply-To: <20180326130447.3114ef2f@pentland.suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,80 +22,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: snitzer <snitzer@redhat.com>
-Cc: dm-devel <dm-devel@redhat.com>
+To: Hannes Reinecke <hare@suse.de>
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, fge@redhat.com
 List-Id: dm-devel.ids
 
-Hi, sorry for my misunderstanding.
-
-
->Thinking further, it is absolutely needed, otherwise dm-stripe.c won't
->be able to use the optimization I mentioned above.  In addition, other
->targets shouldn't be getting REQ_OP_SECURE_ERASE unless there is a real
->need.  ti->num_secure_erase_bios will allow for a much safer and
->controlled rollout of this support.
-
-Ok. I got it.
-
->As my previous email elaborated, ti->num_secure_erase_bios is the right
->way forward.
-
-Then a patch for this may look like:
-
-From 2b9dfd5af813023cdaded4d91b4c25cec8a1783d Mon Sep 17 00:00:00 2001
-From: Denis Semakin <d.semakin@omprussia.ru>
-Date: Mon, 26 Mar 2018 10:44:14 +0300
-Subject: [PATCH] Add num_secure_erase_bios field
-
-Signed-off-by: Denis Semakin <d.semakin@omprussia.ru>
----
- drivers/md/dm-linear.c        | 1 +
- drivers/md/dm-table.c         | 3 +++
- include/linux/device-mapper.h | 2 ++
- 3 files changed, 6 insertions(+)
-
-diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
-index d5f8eff..ff751b0 100644
---- a/drivers/md/dm-linear.c
-+++ b/drivers/md/dm-linear.c
-@@ -59,6 +59,7 @@ static int linear_ctr(struct dm_target *ti, unsigned int argc, char **argv)
-
-        ti->num_flush_bios = 1;
-        ti->num_discard_bios = 1;
-+       ti->num_secure_erase_bios = 1;
-        ti->num_write_same_bios = 1;
-        ti->num_write_zeroes_bios = 1;
-        ti->private = lc;
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index d857369..0acffdb 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -1863,6 +1863,9 @@ static bool dm_table_supports_secure_erase(struct dm_table *t)
-        for (i = 0; i < dm_table_get_num_targets(t); i++) {
-                ti = dm_table_get_target(t, i);
-
-+              if (!ti->num_secure_erase_bios)
-+                      return false;
-+
-                if (!ti->type->iterate_devices ||
-                    ti->type->iterate_devices(ti, device_not_secure_erase_capable, NULL))
-                       return false;
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index 1e2426c..233ac8f 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -267,6 +267,8 @@ struct dm_target {
-         */
-        unsigned num_discard_bios;
-
-+       unsigned num_secure_erase_bios;
-+
-        /*
-         * The number of WRITE SAME bios that will be submitted to the target.
-         * The bio number can be accessed with dm_bio_get_target_bio_nr.
--- 
-1.9.1
-
-What do you think?
-
-Denis.
+T24gTW9uLCAyMDE4LTAzLTI2IGF0IDEzOjA0ICswMjAwLCBIYW5uZXMgUmVpbmVja2Ugd3JvdGU6
+Cj4gT24gRnJpLCAyMyBNYXIgMjAxOCAyMTozMDoxNyArMDEwMAo+IAo+ID4gSSBiZWxpZXZlIHRo
+YXQgdmFyaW91cyBmaWxlcyBiZXNpZGVzIHRoZSB0aHJlZSBhYm92ZSBjb250YWluIGNvZGUKPiA+
+IHdoaWNoIGhhcyBiZWVuIGNvcGllZCBmcm9tIGtlcm5lbCBzb3VyY2VzIGFuZCB3b3VsZCB0aHVz
+IGJlIHVuZGVyCj4gPiBHUEx2MiAodGhlIGFsdWEgY29kZSwgZm9yIGV4YW1wbGUpLgo+ID4gCj4g
+PiBBZ2FpbiwgSUFOQUwsIGJ1dCB0aGlzIGxvb2tzIGxpa2UgYSBtZXNzIHRoYXQgcmVhbGx5IG91
+Z2h0IHRvIGJlCj4gPiBjbGVhbmVkIHVwLiBBcyBsb25nIGFzIHdlIGRvbid0IGRvIHRoYXQsIHRo
+ZXJlJ3Mgbm8gcG9pbnQgaW4KPiA+IGNoYW5naW5nCj4gPiB0aGUgYWRkcmVzcyBoZWFkZXJzLgo+
+ID4gCj4gPiBJdCB3b3VsZCBtYWtlIHNlbnNlIHRvIGdlbmVyYWxseSBhZ3JlZSBvbiBhIEdQTCB2
+ZXJzaW9uICgyLCAyIG9yCj4gPiBsYXRlciwgMywgMyBvciBsYXRlciksIGFuZCBhcHBseSBMR1BM
+IHRvIChzb21lIG9mKSB0aGUgbGlicmFyaWVzCj4gPiBhbmQKPiA+IEdQTCB0byB0aGUgdG9vbHMu
+Cj4gPiAKPiAKPiBXZWxsLCBhcyBJJ20gdGhlIG9uZSByZXNwb25zaWJsZSBmb3IgYWRkaW5nICdz
+eXNmcy5jJyBhbmQgJ3VldmVudC5jJwo+IHRvCj4gbXVsdGlwYXRoLXRvb2xzIEkgc2hvdWxkIGFs
+bG93ZWQgdG8gY2hhbmdlIHRoZSBsaWNlbnNlIHRoZXJlLCByaWdodD8KCkkgZ3Vlc3Mgc28uCgo+
+IElmIHNvIEknbSBoYXBweSB0byBjaGFuZ2UgdGhlbSB0byBMUEdMIHRvIG1ha2UgdGhpbmdzIGVh
+c2llci4KClRoYXQnZCBiZSBoZWxwZnVsLCBidXQgbm90IHN1ZmZpY2llbnQsIGJlY2F1c2UgdGhl
+cmUncyBhIGNvdXBsZSBvZgpvdGhlciBmaWxlcyB1bmRlciAiR1BMdjIgb3IgbGF0ZXIiIGxlZnQs
+IGFuZCBiZWNhdXNlIHRoZSBHUEx2Mi92Mwpwcm9ibGVtIGZvciBsaWJkbXBwIHJlbWFpbnMuCgpJ
+dCdkIGJlIGEgZ29vZCBpZGVhIHRvIHVwZ3JhZGUgZ2VuZXJhbGx5IGZyb20gIkxpYnJhcnkgR1BM
+IHYyIiBhdCBsZWFzdAp0byBMR1BMdjIuMS4gVGhhdCBzaG91bGRuJ3QgYmUgYSBwcm9ibGVtLCBh
+cyB0aGUgb25seSBtYWpvcgpkaWZmZXJlcmVuY2UgYmV0d2VlbiBMR1BMdjIgYW5kIExHUEx2Mi4x
+IGlzIHRoZSBhZGRpdGlvbiBvZiDCpzZiIGluIHRoZQpsYXR0ZXIsIGFsbG93aW5nIHRoZSB1c2Ug
+b2YgImEgc3VpdGFibGUgc2hhcmVkIGxpYnJhcnkgbWVjaGFuaXNtIGZvcgpsaW5raW5nIHdpdGgg
+dGhlIGxpYnJhcnkiLgoKQWNjb3JkaW5nIHRvIGh0dHBzOi8vd3d3LmdudS5vcmcvbGljZW5zZXMv
+Z3BsLWZhcS5odG1sI0FsbENvbXBhdGliaWxpdHkKLCBMR1BMdjIuMSBpcyBjb21wYXRpYmxlIHdp
+dGggR1BMdjMsIGFsdGhvdWdoIHRoZSAiY29tYmluYXRpb24gaXMgdW5kZXIKR1BMdjMiLgoKVGhl
+IGtleSBxdWVzdGlvbiBpcyB3aGV0aGVyIHdlIG5lZWQgKkwqR1BMIGF0IGFsbC4gV2Ugb25seSBk
+byBpZiB3ZQp3YW50IHRvIGFsbG93IHByaW9wcmlldGFyeSBjb2RlIHRvIGxpbmsgd2l0aCBvdXIg
+Y29kZS4gQmVjYXVzZQpsaWJtdWx0aXBhdGggaXMgbm8gImxpYnJhcnkiIGludGVuZGVkIGZvciBn
+ZW5lcmFsIHVzZSwgcmF0aGVyIGEgc2V0IG9mCmNvbW1vbiBjb2RlIGJldHdlZW4gbXVsdGlwYXRo
+IGFuZCBtdWx0aXBhdGhkLCBJIGRvbid0IHNlZSBhIHN0cm9uZyBjYXNlCmZvciAqTCpHUEwgZm9y
+IGl0LiBUaGUgcGFydHMgb2YgdGhlIGNvZGUgdGhhdCBtaWdodCBiZSBpbnRlcmVzdGluZyBmb3IK
+ZXh0ZXJuYWwgcGFydGllcyB0byB1c2UgYXJlIGxpYm1wYXRoY21kLCBsaWJtcGF0aHBlcnNpc3Qs
+IGFuZCBsaWJkbW1wLAp3aGVyZSB0aGUgR1BMdjMgb2YgdGhlIGxhdHRlciBleHBsaWNpdHkgZm9y
+YmlkcyB1c2UgYnkgcHJvcHJpZXRhcnkKY29kZS4gbGlibXBhdGhjbWQgZG9lc24ndCBuZWVkIHRv
+IGxpbmsgbGlibXVsdGlwYXRoLCBidXQKbGlibXBhdGhwZXJzaXN0IGluIGl0cyBjdXJyZW50IGZv
+cm0gZG9lcy4KCkkgdm90ZSB0byBjaGFuZ2UgbGlibXBhdGhjbWQgYW5kIGxpYm1wYXRocGVyc2lz
+dCB0byAiTEdQTHYyLjEgb3IKbGF0ZXIiLCBhbmQgZXZlcnl0aGluZyBlbHNlIHRvICJHUEx2MiBv
+ciBsYXRlciIgKCopLiBCdXQgSSBvd24ganVzdCBhCm1hcmdpbmFsIHBvcnRpb24gb2YgdGhlIGNv
+ZGUsIHNvIHRoYXQncyBmb3Igb3RoZXJzIHRvIGRlY2lkZS4KCkNoZWVycywKTWFydGluCgooKikg
+Q2F2ZWF0OiBjb2RlIHdoaWNoIGhhcyBiZWVuIGNvcGllZCBmcm9tIGtlcm5lbCBzb3VyY2VzIChs
+aXN0Lmg/LAphbHVhIGNvZGU/LCAuLi4gPykgd291bGQgYmUgdW5kZXIgIkdQTHYyIG9ubHkiLCBh
+bmQgY2hhbmdpbmcgdGhhdCB3b3VsZApyZXF1aXJlIGNvbnNlbnQgb2YgdGhlIG9yaWdpbmFsIGNv
+cHlyaWdodCBob2xkZXJzLCB3aGljaCBtaWdodCBiZQpkaWZmaWN1bHQgdG8gb2J0YWluLgoKLS0g
+CkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1
+MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0
+aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVs
+IG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20v
+bWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
