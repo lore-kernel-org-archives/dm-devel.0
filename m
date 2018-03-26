@@ -1,14 +1,16 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [patch 0/8] dm-bufio patches
-Date: Mon, 26 Mar 2018 16:20:41 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1803261619480.29393@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20180326182939.169591126@debian.vm>
-	<20180326185746.GA22409@redhat.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH v2 13/20] multipath -u: change output to
+ environment/key format
+Date: Mon, 26 Mar 2018 15:35:17 -0500
+Message-ID: <20180326203517.GS3103@octiron.msp.redhat.com>
+References: <20180319150155.5363-1-mwilck@suse.com>
+	<20180319150155.5363-14-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180326185746.GA22409@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20180319150155.5363-14-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,64 +20,91 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, agk@redhat.com
+To: Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+On Mon, Mar 19, 2018 at 04:01:48PM +0100, Martin Wilck wrote:
+> ... instead of free format. This provides more flexibility
+> for udev rule processing for the future. Adapt code in multipath.rules.
+> The exit status remains as usual. This affects "multipath -c", too.
+
+I assume that you meant to change the following code from
+multipath/main.c: main() as well
+
+        if (cmd == CMD_VALID_PATH &&
+            dev_type == DEV_UEVENT) {
+                int fd;
+
+                fd = mpath_connect();
+                if (fd == -1) {
+                        condlog(3, "%s: daemon is not running", dev);
+                        if (!systemd_service_enabled(dev)) {
+                                printf("%s is not a valid "
+                                       "multipath device path\n", dev);
+                                goto out;
+                        }
+                } else  
+                        mpath_disconnect(fd);
+        }
 
 
-On Mon, 26 Mar 2018, Mike Snitzer wrote:
-
-> On Mon, Mar 26 2018 at  2:29pm -0400,
-> mpatocka@redhat.com <mpatocka@redhat.com> wrote:
 > 
-> > Hi
-> > 
-> > Here I'm sending the second version of dm-bufio patches for arbitrary
-> > sector size.
-> > 
-> > I dropped the patch that removes alloc_pages because it turns out that
-> > alloc_pages is faster than the slab allocator.
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  multipath/main.c          | 11 +++++------
+>  multipath/multipath.rules |  6 +++---
+>  2 files changed, 8 insertions(+), 9 deletions(-)
 > 
-> I had already staged the previous set, so I need to go back over that
-> and update accordingly.
-> 
-> > I also added a patch that removes struct bio from struct dm_buffer
-> > (reducing the size of dm_buffer to 1/3) and allocates the bio only when
-> > doing read or write.
-> 
-> OK, I'll go over your new set and try to tease out any differences.
-> 
-> Mike
-
-One more patch that I forgot to include.
-
-
-
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-bufio: delete outdated comment
-
-This comment was true when dm-bufio was written, but since the kernel 4.3,
-bios can have arbitrary size and the driver splits them.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
----
- drivers/md/dm-bufio.c |    4 ----
- 1 file changed, 4 deletions(-)
-
-Index: linux-2.6/drivers/md/dm-bufio.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-bufio.c	2018-03-13 16:38:32.257954000 +0100
-+++ linux-2.6/drivers/md/dm-bufio.c	2018-03-13 16:38:32.247954000 +0100
-@@ -540,10 +540,6 @@ static void __relink_lru(struct dm_buffe
-  *
-  *	the memory must be direct-mapped, not vmalloced;
-  *
-- *	the I/O driver can reject requests spuriously if it thinks that
-- *	the requests are too big for the device or if they cross a
-- *	controller-defined memory boundary.
-- *
-  * If the buffer is small enough (up to DM_BUFIO_INLINE_VECS pages) and
-  * it is not vmalloced, try using the bio interface.
-  *
+> diff --git a/multipath/main.c b/multipath/main.c
+> index ea4a3d44493a..f93cad2abde0 100644
+> --- a/multipath/main.c
+> +++ b/multipath/main.c
+> @@ -350,15 +350,14 @@ out:
+>  	return r;
+>  }
+>  
+> -static void print_cmd_valid(const char *devpath, int k)
+> +static void print_cmd_valid(int k)
+>  {
+> -	const char *msg[] = { "is", "is not" };
+> +	int vals[] = { 1, 0 };
+>  
+> -	if (k < 0 || k >= sizeof(msg))
+> +	if (k < 0 || k >= sizeof(vals))
+>  		return;
+>  
+> -	printf("%s %s a valid multipath device path\n",
+> -	       devpath, msg[k]);
+> +	printf("DM_MULTIPATH_DEVICE_PATH=\"%d\"\n", vals[k]);
+>  }
+>  
+>  /*
+> @@ -520,7 +519,7 @@ configure (struct config *conf, enum mpath_cmds cmd,
+>  
+>  print_valid:
+>  	if (cmd == CMD_VALID_PATH)
+> -		print_cmd_valid(devpath, r);
+> +		print_cmd_valid(r);
+>  
+>  out:
+>  	if (refwwid)
+> diff --git a/multipath/multipath.rules b/multipath/multipath.rules
+> index 6f8ee2be0a58..aab64dc7182c 100644
+> --- a/multipath/multipath.rules
+> +++ b/multipath/multipath.rules
+> @@ -19,9 +19,9 @@ LABEL="test_dev"
+>  ENV{MPATH_SBIN_PATH}="/sbin"
+>  TEST!="$env{MPATH_SBIN_PATH}/multipath", ENV{MPATH_SBIN_PATH}="/usr/sbin"
+>  
+> -ENV{DM_MULTIPATH_DEVICE_PATH}!="1", \
+> -	PROGRAM=="$env{MPATH_SBIN_PATH}/multipath -u %k", \
+> -	ENV{DM_MULTIPATH_DEVICE_PATH}="1", ENV{ID_FS_TYPE}="mpath_member", \
+> +# multipath -u sets DM_MULTIPATH_DEVICE_PATH
+> +ENV{DM_MULTIPATH_DEVICE_PATH}!="1", IMPORT{program}="$env{MPATH_SBIN_PATH}/multipath -u %k"
+> +ENV{DM_MULTIPATH_DEVICE_PATH}=="1", ENV{ID_FS_TYPE}="mpath_member", \
+>  	ENV{SYSTEMD_READY}="0"
+>  
+>  LABEL="end_mpath"
+> -- 
+> 2.16.1
