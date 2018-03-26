@@ -1,16 +1,14 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH v2 11/20] libmultipath: don't try to set up
- failed wwids again
-Date: Mon, 26 Mar 2018 22:13:25 +0200
-Message-ID: <1522095205.19335.110.camel@suse.com>
-References: <20180319150155.5363-1-mwilck@suse.com>
-	<20180319150155.5363-12-mwilck@suse.com>
-	<20180326184719.GP3103@octiron.msp.redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [patch 0/8] dm-bufio patches
+Date: Mon, 26 Mar 2018 16:20:41 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1803261619480.29393@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20180326182939.169591126@debian.vm>
+	<20180326185746.GA22409@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180326184719.GP3103@octiron.msp.redhat.com>
+In-Reply-To: <20180326185746.GA22409@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,46 +18,64 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-T24gTW9uLCAyMDE4LTAzLTI2IGF0IDEzOjQ3IC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gT24gTW9uLCBNYXIgMTksIDIwMTggYXQgMDQ6MDE6NDZQTSArMDEwMCwgTWFydGluIFdp
-bGNrIHdyb3RlOgo+ID4gT25jZSBzZXR0aW5nIHVwIGEgbWFwIGhhcyBmYWlsZWQsIGRvbid0IHRy
-eSB0byBzZXQgaXQgdXAgYWdhaW4uCj4gPiBUaGlzIGFwcGxpZXMgdG8gIm11bHRpcGF0aGQgcmVj
-b25maWd1cmUiIGFuZCBldmVuIG11bHRpcGF0aGQKPiA+IHJlc3RhcnQsCj4gPiB0b28uIFRoYXQn
-cyBkZWxpYmVyYXRlIC0gaWYgYSBXV0lEIGlzIG1hcmtlZCBhcyBmYWlsZWQsIHdlIGRvbid0Cj4g
-PiB3b250Cj4gPiB0byBib3RoZXIgd2l0aCBpdCBhZ2FpbiwgdW5sZXNzIHRoZSBhZG1pbiBleHBs
-aWNpdGx5IHRlbGxzIHVzIHNvLgo+ID4gU3BlY2lmaWNhbGx5LCB0aGUgZXhjZXB0aW9ucyBhcmU6
-Cj4gPiAKPiA+ICAxKSBtdWx0aXBhdGhkIGFkZCBtYXAgJE1BUAo+ID4gIDIpIG11bHRpcGF0aGQg
-YWRkIHBhdGggJFBBVEgKPiA+ICAzKSBtdWx0aXBhdGggJFBBVEgKPiA+IAo+ID4gSW4gdGhlc2Ug
-Y2FzZXMsIGFkZG1hcCgpIHdpbGwgZXZlbnR1YWxseSBiZSBjYWxsZWQgYWdhaW4sIGFuZCB0aGUK
-PiA+IGZhaWxlZAo+ID4gZmxhZyB3aWxsIGJlIHNldCBhY2NvcmRpbmcgdG8gaXQncyByZXR1cm4g
-c3RhdHVzLiBVbmxlc3MgdGhlIHJlYXNvbgo+ID4gZm9yCj4gPiB0aGUgcHJldmlvdXMgZmFpbHVy
-ZSBoYXMgYmVlbiBmaXhlZCwgaXQgbWF5IHdlbGwgYmUgImZhaWxlZCIgYWdhaW4uCj4gPiAKPiA+
-IElub2ZmaWNpYWxseSwgaXQncyBhbHNvIHBvc3NpYmxlIHRvIG1hbnVhbGx5IHJlbW92ZSBhIGZh
-aWxlZCBtYXJrZXIKPiA+IHVuZGVyCj4gPiAvZGV2L3NobS9tdWx0aXBhdGgvZmFpbGVkX3d3aWRz
-IGFuZCBydW4gIm11bHRpcGF0aGQgcmVjb25maWd1cmUiLgo+IAo+IFRoZSBjb2RlIGxvb2tzIGZp
-bmUsIGJ1dCBJIHdvbmRlciB3aHkgdGhpcyBpcyBuZWNlc3NhcnkuICBZb3UgYWxyZWFkeQo+IHBv
-c3RlZCBwYXRjaGVzIHRoYXQgbGV0IG11bHRpcGF0aGQgaXNzdWUgdWV2ZW50IHRvIGNsYWltIGEg
-cGF0aAo+IGRldmljZQo+IGFmdGVyIGlmIGl0IHdhcyBub3QgcHJldmlvdXNseSBjbGFpbWVkLiBJ
-IGFkbWl0IHRoYXQgeW91IGRvbid0Cj4gZ2VuZXJhbGx5Cj4gc2VlIG11bHRpcGF0aGQgc3VjY2Vl
-ZCBpbiBjcmVhdGluZyBhIGRldmljZSBhZnRlciBmYWlsaW5nIHRvLCBidXQKPiBpdCdzCj4gZWFz
-eSB0byBpbWFnaW5lIHNpdHVhdGlvbnMgd2hlcmUgaXQgY291bGQuICBGb3IgaW5zdGFuY2UsIGlm
-IGEgcGF0aAo+IGRldmljZSBhcHBlYXJzIGFuZCB0aGVuIGRpc2FwcGVhcnMgc29vbiBhZnRlciwg
-bXVsdGlwYXRoZCB3b3VsZCBmYWlsCj4gdG8KPiBjcmVhdGUgdGhlIGRldmljZSBiZWNhdXNlIHdo
-ZW4gdGhlIHBhdGggZGV2aWNlIGZpbmFsbHkgcmVhcHBlYXJlZCBmb3IKPiBnb29kLgo+IAo+IEkg
-c2VlIHRoYXQgdGhpcyB3aWxsIGtlZXAgbXVsdGlwYXRoZCBmcm9tIG5lZWRsZXNzbHkgcmV0cnlp
-bmcgaW4tdXNlCj4gZGV2aWNlcyB3aGVuZXZlciBhIHBhdGggY29tZXMgb3IgZ29lcywgYnV0IEkg
-ZG9uJ3Qga25vdyBvZiBhbnkgaGFybQo+IHRoYXQKPiBoYXMgZXZlciBjYXVzZWQsIGFuZCBJIGNh
-biBzZWUgdGhpcyBjYXVzaW5nIGhhcm0uIEFtIEkgbWlzc2luZwo+IHNvbWV0aGluZwo+IGhlcmU/
-CgpIbS4gWW91J3ZlIGdvdCBhIHBvaW50IHRoZXJlLiBUaGUgb25seSBjb2RlIHBhdGggd2hlcmUg
-dGhlICJmYWlsZWQiCnN0YXR1cyBfbXVzdF8gcmVhbGx5IGJlIGhvbm9yZWQgaXMgIm11bHRpcGF0
-aCAtdSIgKG9idmlvdXNseSwgd2l0aG91dAp0aGF0LCB0aGUgd2hvbGUgcHVycG9zZSBvZiB0aGUg
-cGF0Y2ggc2V0IHdvdWxkIGJlIGZvcmZlaXRlZCkuIEknbGwgZ2l2ZQppdCBhIHRyeS4KCk1hcnRp
-bgoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkx
-MSA3NDA1MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFu
-ZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRt
-LWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhh
-dC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+
+
+On Mon, 26 Mar 2018, Mike Snitzer wrote:
+
+> On Mon, Mar 26 2018 at  2:29pm -0400,
+> mpatocka@redhat.com <mpatocka@redhat.com> wrote:
+> 
+> > Hi
+> > 
+> > Here I'm sending the second version of dm-bufio patches for arbitrary
+> > sector size.
+> > 
+> > I dropped the patch that removes alloc_pages because it turns out that
+> > alloc_pages is faster than the slab allocator.
+> 
+> I had already staged the previous set, so I need to go back over that
+> and update accordingly.
+> 
+> > I also added a patch that removes struct bio from struct dm_buffer
+> > (reducing the size of dm_buffer to 1/3) and allocates the bio only when
+> > doing read or write.
+> 
+> OK, I'll go over your new set and try to tease out any differences.
+> 
+> Mike
+
+One more patch that I forgot to include.
+
+
+
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm-bufio: delete outdated comment
+
+This comment was true when dm-bufio was written, but since the kernel 4.3,
+bios can have arbitrary size and the driver splits them.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+---
+ drivers/md/dm-bufio.c |    4 ----
+ 1 file changed, 4 deletions(-)
+
+Index: linux-2.6/drivers/md/dm-bufio.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-bufio.c	2018-03-13 16:38:32.257954000 +0100
++++ linux-2.6/drivers/md/dm-bufio.c	2018-03-13 16:38:32.247954000 +0100
+@@ -540,10 +540,6 @@ static void __relink_lru(struct dm_buffe
+  *
+  *	the memory must be direct-mapped, not vmalloced;
+  *
+- *	the I/O driver can reject requests spuriously if it thinks that
+- *	the requests are too big for the device or if they cross a
+- *	controller-defined memory boundary.
+- *
+  * If the buffer is small enough (up to DM_BUFIO_INLINE_VECS pages) and
+  * it is not vmalloced, try using the bio interface.
+  *
