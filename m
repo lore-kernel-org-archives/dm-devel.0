@@ -1,11 +1,20 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 0/2] multipath-tools: hwhandler autodetection
-Date: Tue, 27 Mar 2018 23:50:51 +0200
-Message-ID: <20180327215053.3631-1-mwilck@suse.com>
+Subject: Re: multipath-tools licenses (was Re: [PATCH]
+ multipath-tools: replace FSF address with a www pointer)
+Date: Tue, 27 Mar 2018 23:53:57 +0200
+Message-ID: <1522187637.13140.49.camel@suse.com>
+References: <20180310205002.3318-1-xose.vazquez@gmail.com>
+	<1521495458.3798.138.camel@suse.com>
+	<1a0b44c5-c7a6-85fa-b2dd-1bd542efbb76@gmail.com>
+	<1521837017.13100.106.camel@suse.com>
+	<20180326130447.3114ef2f@pentland.suse.de>
+	<1522067788.19335.55.camel@suse.com>
+	<32b2f869-e017-8f17-d902-64ebdd31b7ab@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <32b2f869-e017-8f17-d902-64ebdd31b7ab@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,33 +24,23 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>, Hannes Reinecke <hare@suse.de>
+Cc: development <dm-devel@redhat.com>, device-mapper, fge@redhat.com
 List-Id: dm-devel.ids
 
-This is patch set is a follow-up of the late discussion
-"Can we drop 'hardware_handler "1 alua"'?". With patch 1/2 in place,
-I think we can - multipath uses the TPGS flag to determine whether
-or not the paths support ALUA, and sets the hwhandler accordingly.
-Unlike the "detect_checker" and "detect_prio" options, I have coded this
-so that explicit "hardware_hander" settings take priority over autodetection,
-except for the case in which we determine that TPGS is unsupported.
-
-Thus I don't think an additional "detect_hwhandler" config option is
-necessary.
-
-To be actually effective to solve the problems with certain types of IBM IPR
-controllers, patch 1/2 must be combined with my previous 
-patch "libmultipath: don't reject maps with undefined prio".
-
-Patch 2/2 is just a cleanup that looked logical to do after 1/2.
-
-Martin Wilck (2):
-  libmultipath: hwhandler auto-detection for ALUA
-  libmultipath/propsel: (re)use static const vars for origin
-
- libmultipath/propsel.c | 187 ++++++++++++++++++++++++++++++-------------------
- 1 file changed, 114 insertions(+), 73 deletions(-)
-
--- 
-2.16.1
+T24gVHVlLCAyMDE4LTAzLTI3IGF0IDIzOjQyICswMjAwLCBYb3NlIFZhenF1ZXogUGVyZXogd3Jv
+dGU6Cj4gT24gMDMvMjYvMjAxOCAwMjozNiBQTSwgTWFydGluIFdpbGNrIHdyb3RlOgo+IAo+ID4g
+SXQnZCBiZSBhIGdvb2QgaWRlYSB0byB1cGdyYWRlIGdlbmVyYWxseSBmcm9tICJMaWJyYXJ5IEdQ
+TCB2MiIgYXQKPiA+IGxlYXN0Cj4gPiB0byBMR1BMdjIuMS4gVGhhdCBzaG91bGRuJ3QgYmUgYSBw
+cm9ibGVtLCBhcyB0aGUgb25seSBtYWpvcgo+ID4gZGlmZmVyZXJlbmNlIGJldHdlZW4gTEdQTHYy
+IGFuZCBMR1BMdjIuMSBpcyB0aGUgYWRkaXRpb24gb2Ygwqc2YiBpbgo+ID4gdGhlCj4gPiBsYXR0
+ZXIsIGFsbG93aW5nIHRoZSB1c2Ugb2YgImEgc3VpdGFibGUgc2hhcmVkIGxpYnJhcnkgbWVjaGFu
+aXNtCj4gPiBmb3IKPiA+IGxpbmtpbmcgd2l0aCB0aGUgbGlicmFyeSIuCj4gCj4gWWVzLCBMR1BM
+djIuMSBpcyBMR1BMdjIuMCBwbHVzIMKnNmI6CgpUaGFua3MgZm9yIGNvbmZpcm1pbmcuIEkgdXNl
+ZCAid2RpZmYiIGZvciBjb21wYXJpbmcgdGhlIHR3byB0ZXh0cywgdGhhdAptYWtlcyBpdCBldmVu
+IGVhc2llciB0byB2ZXJpZnkgdGhhdCB0aGUgZGlmZmVyZW5jZXMgYXJlIGZldy4KCk1hcnRpbgoK
+LS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3
+NDA1MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBT
+bWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRl
+dmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5j
+b20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
