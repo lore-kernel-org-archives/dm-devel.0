@@ -1,83 +1,70 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 2/2] md: dm-verity: allow parallel processing of bio
- blocks
-Date: Tue, 27 Mar 2018 09:16:37 -0400
-Message-ID: <20180327131636.GA26832@redhat.com>
-References: <1522003290-27243-1-git-send-email-yael.chemla@foss.arm.com>
- <1522003290-27243-2-git-send-email-yael.chemla@foss.arm.com>
- <20180327010633.GB23487@redhat.com>
- <001201d3c5a9$529b4a10$f7d1de30$@foss.arm.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: Can we drop 'hardware_handler "1 alua"'?
+Date: Tue, 27 Mar 2018 10:09:52 -0500
+Message-ID: <20180327150952.GW3103@octiron.msp.redhat.com>
+References: <1522140989.13140.12.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <001201d3c5a9$529b4a10$f7d1de30$@foss.arm.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: yael.chemla@foss.arm.com
-Cc: 'Alasdair Kergon' <agk@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, ofir.drang@gmail.com, 'Yael Chemla' <yael.chemla@arm.com>, 'Eric Biggers' <ebiggers3@gmail.com>
+In-Reply-To: <1522140989.13140.12.camel@suse.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Martin Wilck <mwilck@suse.com>
+Cc: dm-devel mailing list <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-On Tue, Mar 27 2018 at  4:55am -0400,
-yael.chemla@foss.arm.com <yael.chemla@foss.arm.com> wrote:
+On Tue, Mar 27, 2018 at 10:56:29AM +0200, Martin Wilck wrote:
+> hwtable.c has multiple entries that set 'hardware_handler "1 alua"'
+> explicitly. But the kernel has been auto-attaching the ALUA hwhandler
+> to devices that support it since 4.3, the only prerequisite being that
+> scsi_dh_alua is present at device probing time (kernel commits
+> d95dbff2, d6a32b98). "retain_attached_hwhandler" is also hard-wired
+> since 4.3. Thus if the above prerequisite is met, there's no point in
+> setting 'hardware_handler "1 alua"'.
+> =
 
-> Hi Mike
-> I need to rewrite these patches according to issues you and Eric Biggers mentioned.
-> please drop this v1 patch.
+> We've recently seen problems with the explicit setting of the alua
+> hwhandler in the hwtable; if we do this and the device fails ALUA for
+> whatever reason, setting up the multipath map fails entirely.
+> =
 
-They've been dropped.  BUT please do note that the patches I pushed to
-linux-dm.git were rebased ontop of the 'check_at_most_once' patch.
-
-I never did get an answer about how the sg array is free'd in certain
-error paths (see "FIXME:" in the 2nd patch).
-
-Also, I fixed some issues I saw in error paths, and lots of formatting.
-
-I'll be pretty frustrated if you submit v2 that is blind to the kinds of
-changes I made.
-
-I'll send you a private copy of the patches just so you have them for
-your reference.
-
-Thanks,
-Mike
+> Therefore we have reasons to try and remove 'hardware_handler "1 alua"'
+> from the hwtable. But it could cause regressions in some cases, e.g.
+> for distributions that don't force-load scsi_dh_alua before device
+> probing, or for kernels older than 4.3.
+> =
 
 
-> -----Original Message-----
-> From: Mike Snitzer <snitzer@redhat.com> 
-> Sent: Tuesday, 27 March 2018 4:07
-> To: Yael Chemla <yael.chemla@foss.arm.com>
-> Cc: Alasdair Kergon <agk@redhat.com>; dm-devel@redhat.com; linux-kernel@vger.kernel.org; ofir.drang@gmail.com; Yael Chemla <yael.chemla@arm.com>
-> Subject: Re: [PATCH 2/2] md: dm-verity: allow parallel processing of bio blocks
-> 
-> On Sun, Mar 25 2018 at  2:41pm -0400,
-> Yael Chemla <yael.chemla@foss.arm.com> wrote:
-> 
-> >  Allow parallel processing of bio blocks by moving to async. 
-> > completion  handling. This allows for better resource utilization of 
-> > both HW and  software based hash tfm and therefore better performance 
-> > in many cases,  depending on the specific tfm in use.
-> >  
-> >  Tested on ARM32 (zynq board) and ARM64 (Juno board).
-> >  Time of cat command was measured on a filesystem with various file sizes.
-> >  12% performance improvement when HW based hash was used (ccree driver).
-> >  SW based hash showed less than 1% improvement.
-> >  CPU utilization when HW based hash was used presented 10% less 
-> > context  switch, 4% less cycles and 7% less instructions. No 
-> > difference in  CPU utilization noticed with SW based hash.
-> >  
-> > Signed-off-by: Yael Chemla <yael.chemla@foss.arm.com>
-> 
-> This one had various issues.  I've fixed most of what I saw and staged in linux-next (purely for build test coverage purposes).  I may drop this patch if others disagree with it (or my sg deallocation in the error path question isn't answered).
-> 
-> I've staged the changes here (and in linux-next via 'for-next'):
-> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-4.17
-> 
-> I switched all the new GFP_KERNEL uses to GFP_NOIO.  The fact that you're doing allocations at all (per IO) is bad enough.  Using GFP_KERNEL is a serious liability (risk of deadlock if dm-verity were to be used for something like.. swap.. weird setup but possible).
-> 
-> But the gfp flags aside, the need for additional memory and the expectation of scalable async parallel IO is potentially at odds with changes like this (that I just staged, and had to rebase your 2 patches ontop of):
-> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.17&id=a89f6a2cfec86fba7a115642ff082cb4e9450ea6
-> 
-> So I'm particulalry interested to hear from google folks to understand if they are OK with your proposed verity async crypto API use.
-> 
-> Mike
-> 
+If the only mode of operation a device supports is alua, and something
+fails there, the device may well not be usable. If we can't send the
+alua commands that the device needs, we definitely shouldn't just be
+silently failing back to something broken. I do agree that any device
+that has multiple modes that it can be configured in (or at least
+devices that could be configured as ALUA or something else, where we
+can't tell from the vendor/product/revision) should have their default
+config set to the other mode, since multipath should autodetect if they
+are in alua mode. If autodetection isn't working for some devices, we
+should fix that.
+
+-Ben
+
+> Opinions, please.
+> =
+
+> Martin
+> =
+
+> -- =
+
+> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+> SUSE Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
+> HRB 21284 (AG N=FCrnberg)
