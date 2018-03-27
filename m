@@ -1,113 +1,83 @@
-From: <yael.chemla@foss.arm.com>
-Subject: RE: [dm-devel] [PATCH 2/2] md: dm-verity: allow parallel processing of bio blocks
-Date: Tue, 27 Mar 2018 12:09:54 +0300
-Message-ID: <001701d3c5ab$621e9fd0$265bdf70$@foss.arm.com>
-References: <1522003290-27243-1-git-send-email-yael.chemla@foss.arm.com> <1522003290-27243-2-git-send-email-yael.chemla@foss.arm.com> <20180327065519.GA745@sol.localdomain> <24539e45-a018-f1e9-feb0-ea7a315e8284@gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 2/2] md: dm-verity: allow parallel processing of bio
+ blocks
+Date: Tue, 27 Mar 2018 09:16:37 -0400
+Message-ID: <20180327131636.GA26832@redhat.com>
+References: <1522003290-27243-1-git-send-email-yael.chemla@foss.arm.com>
+ <1522003290-27243-2-git-send-email-yael.chemla@foss.arm.com>
+ <20180327010633.GB23487@redhat.com>
+ <001201d3c5a9$529b4a10$f7d1de30$@foss.arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-        charset="UTF-8"
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <24539e45-a018-f1e9-feb0-ea7a315e8284@gmail.com>
-Content-Language: en-il
+Content-Disposition: inline
+In-Reply-To: <001201d3c5a9$529b4a10$f7d1de30$@foss.arm.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: 'Milan Broz' <gmazyland@gmail.com>, 'Eric Biggers' <ebiggers3@gmail.com>, 'Mike Snitzer' <snitzer@redhat.com>
-Cc: 'Alasdair Kergon' <agk@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, ofir.drang@gmail.com, 'Yael Chemla' <yael.chemla@arm.com>, linux-crypto@vger.kernel.org, gilad@benyossef.com
+To: yael.chemla@foss.arm.com
+Cc: 'Alasdair Kergon' <agk@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, ofir.drang@gmail.com, 'Yael Chemla' <yael.chemla@arm.com>, 'Eric Biggers' <ebiggers3@gmail.com>
 List-Id: dm-devel.ids
 
-Hi Milan,
-I will run veritysetup test on next version of these patches and contact you about verity-compat-test testsuits.
-Thank you,
-Yael
+On Tue, Mar 27 2018 at  4:55am -0400,
+yael.chemla@foss.arm.com <yael.chemla@foss.arm.com> wrote:
 
------Original Message-----
-From: Milan Broz <gmazyland@gmail.com> 
-Sent: Tuesday, 27 March 2018 11:05
-To: Eric Biggers <ebiggers3@gmail.com>; Yael Chemla <yael.chemla@foss.arm.com>; Mike Snitzer <snitzer@redhat.com>
-Cc: Alasdair Kergon <agk@redhat.com>; dm-devel@redhat.com; linux-kernel@vger.kernel.org; ofir.drang@gmail.com; Yael Chemla <yael.chemla@arm.com>; linux-crypto@vger.kernel.org; gilad@benyossef.com
-Subject: Re: [dm-devel] [PATCH 2/2] md: dm-verity: allow parallel processing of bio blocks
+> Hi Mike
+> I need to rewrite these patches according to issues you and Eric Biggers mentioned.
+> please drop this v1 patch.
 
-Mike and others,
+They've been dropped.  BUT please do note that the patches I pushed to
+linux-dm.git were rebased ontop of the 'check_at_most_once' patch.
 
-did anyone even try to run veritysetup tests?
+I never did get an answer about how the sg array is free'd in certain
+error paths (see "FIXME:" in the 2nd patch).
 
-We have verity-compat-test in our testsuite, is has even basic FEC tests included.
+Also, I fixed some issues I saw in error paths, and lots of formatting.
 
-We just added userspace verification of FEC RS codes to compare if kernel behaves the same.
+I'll be pretty frustrated if you submit v2 that is blind to the kinds of
+changes I made.
 
-I tried to apply three last dm-verity patches from your tree to Linus mainline.
-
-It does even pass the *first* line of the test script and blocks the kernel forever...
-(Running on 32bit Intel VM.)
-
-*NACK* to the last two dm-verity patches.
-
-(The "validate hashes once" is ok, despite I really do not like this approach...)
-
-And comments from Eric are very valid as well, I think all this need to be fixed before it can go to mainline.
+I'll send you a private copy of the patches just so you have them for
+your reference.
 
 Thanks,
-Milan
+Mike
 
-On 03/27/2018 08:55 AM, Eric Biggers wrote:
-> [+Cc linux-crypto]
+
+> -----Original Message-----
+> From: Mike Snitzer <snitzer@redhat.com> 
+> Sent: Tuesday, 27 March 2018 4:07
+> To: Yael Chemla <yael.chemla@foss.arm.com>
+> Cc: Alasdair Kergon <agk@redhat.com>; dm-devel@redhat.com; linux-kernel@vger.kernel.org; ofir.drang@gmail.com; Yael Chemla <yael.chemla@arm.com>
+> Subject: Re: [PATCH 2/2] md: dm-verity: allow parallel processing of bio blocks
 > 
-> Hi Yael,
+> On Sun, Mar 25 2018 at  2:41pm -0400,
+> Yael Chemla <yael.chemla@foss.arm.com> wrote:
 > 
-> On Sun, Mar 25, 2018 at 07:41:30PM +0100, Yael Chemla wrote:
->>  Allow parallel processing of bio blocks by moving to async. 
->> completion  handling. This allows for better resource utilization of 
->> both HW and  software based hash tfm and therefore better performance 
->> in many cases,  depending on the specific tfm in use.
->>  
->>  Tested on ARM32 (zynq board) and ARM64 (Juno board).
->>  Time of cat command was measured on a filesystem with various file sizes.
->>  12% performance improvement when HW based hash was used (ccree driver).
->>  SW based hash showed less than 1% improvement.
->>  CPU utilization when HW based hash was used presented 10% less 
->> context  switch, 4% less cycles and 7% less instructions. No 
->> difference in  CPU utilization noticed with SW based hash.
->>  
->> Signed-off-by: Yael Chemla <yael.chemla@foss.arm.com>
+> >  Allow parallel processing of bio blocks by moving to async. 
+> > completion  handling. This allows for better resource utilization of 
+> > both HW and  software based hash tfm and therefore better performance 
+> > in many cases,  depending on the specific tfm in use.
+> >  
+> >  Tested on ARM32 (zynq board) and ARM64 (Juno board).
+> >  Time of cat command was measured on a filesystem with various file sizes.
+> >  12% performance improvement when HW based hash was used (ccree driver).
+> >  SW based hash showed less than 1% improvement.
+> >  CPU utilization when HW based hash was used presented 10% less 
+> > context  switch, 4% less cycles and 7% less instructions. No 
+> > difference in  CPU utilization noticed with SW based hash.
+> >  
+> > Signed-off-by: Yael Chemla <yael.chemla@foss.arm.com>
 > 
-> Okay, I definitely would like to see dm-verity better support hardware 
-> crypto accelerators, but these patches were painful to read.
+> This one had various issues.  I've fixed most of what I saw and staged in linux-next (purely for build test coverage purposes).  I may drop this patch if others disagree with it (or my sg deallocation in the error path question isn't answered).
 > 
-> There are lots of smaller bugs, but the high-level problem which you 
-> need to address first is that on every bio you are always allocating 
-> all the extra memory to hold a hash request and scatterlist for every 
-> data block.  This will not only hurt performance when the hashing is 
-> done in software (I'm skeptical that your performance numbers are 
-> representative of that case), but it will also fall apart under memory 
-> pressure.  We are trying to get low-end Android devices to start using 
-> dm-verity, and such devices often have only 1 GB or even only 512 MB 
-> of RAM, so memory allocations are at increased risk of failing.  In 
-> fact I'm pretty sure you didn't do any proper stress testing of these 
-> patches, since the first thing they do for every bio is try to 
-> allocate a physically contiguous array that is nearly as long as the 
-> full bio data itself (n_blocks * sizeof(struct dm_verity_req_data) = 
-> n_blocks * 3264, at least on a 64-bit platform, mostly due to the 'struct dm_verity_fec_io'), so potentially up to about 1 MB; that's going to fail a lot even on systems with gigabytes of RAM...
+> I've staged the changes here (and in linux-next via 'for-next'):
+> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-4.17
 > 
-> (You also need to verify that your new code is compatible with the 
-> forward error correction feature, with the "ignore_zero_blocks" 
-> option, and with the new "check_at_most_once" option.  From my reading 
-> of the code, all of those seemed broken; the dm_verity_fec_io 
-> structures, for example, weren't even being
-> initialized...)
+> I switched all the new GFP_KERNEL uses to GFP_NOIO.  The fact that you're doing allocations at all (per IO) is bad enough.  Using GFP_KERNEL is a serious liability (risk of deadlock if dm-verity were to be used for something like.. swap.. weird setup but possible).
 > 
-> I think you need to take a close look at how dm-crypt handles async 
-> crypto implementations, since it seems to do it properly without 
-> hurting the common case where the crypto happens synchronously.  What 
-> it does, is it reserves space in the per-bio data for a single cipher 
-> request.  Then, *only* if the cipher implementation actually processes 
-> the request asynchronously (as indicated by -EINPROGRESS being 
-> returned) is a new cipher request allocated dynamically, using a 
-> mempool (not kmalloc, which is prone to fail).  Note that unlike your 
-> patches it also properly handles the case where the hardware crypto 
-> queue is full, as indicated by the cipher implementation returning -EBUSY; in that case, dm-crypt waits to start another request until there is space in the queue.
+> But the gfp flags aside, the need for additional memory and the expectation of scalable async parallel IO is potentially at odds with changes like this (that I just staged, and had to rebase your 2 patches ontop of):
+> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.17&id=a89f6a2cfec86fba7a115642ff082cb4e9450ea6
 > 
-> I think it would be possible to adapt dm-crypt's solution to dm-verity.
+> So I'm particulalry interested to hear from google folks to understand if they are OK with your proposed verity async crypto API use.
 > 
-> Thanks,
+> Mike
 > 
-> Eric
