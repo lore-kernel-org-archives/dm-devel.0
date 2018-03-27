@@ -1,14 +1,22 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 2/2] multipath-tools: add GPLv2 as COPYING
-Date: Wed, 28 Mar 2018 00:04:52 +0200
-Message-ID: <1522188292.13140.54.camel@suse.com>
-References: <20180327182819.20163-1-xose.vazquez@gmail.com>
-	<20180327182819.20163-2-xose.vazquez@gmail.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: multipath-tools licenses (was Re: [PATCH]
+ multipath-tools: replace FSF address with a www pointer)
+Date: Wed, 28 Mar 2018 00:24:53 +0200
+Message-ID: <904fd737-b8ff-016f-e33a-5d833ef33c3a@gmail.com>
+References: <20180310205002.3318-1-xose.vazquez@gmail.com>
+	<1521495458.3798.138.camel@suse.com>
+	<1a0b44c5-c7a6-85fa-b2dd-1bd542efbb76@gmail.com>
+	<1521837017.13100.106.camel@suse.com>
+	<20180326130447.3114ef2f@pentland.suse.de>
+	<1522067788.19335.55.camel@suse.com>
+	<1522073719.19335.66.camel@suse.com>
+	<20180326160705.GM3103@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180327182819.20163-2-xose.vazquez@gmail.com>
+In-Reply-To: <20180326160705.GM3103@octiron.msp.redhat.com>
+Content-Language: en-GB
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,20 +26,20 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, Martin Wilck <mwilck@suse.com>
+Cc: device-mapper development <dm-devel@redhat.com>, fge@redhat.com
 List-Id: dm-devel.ids
 
-T24gVHVlLCAyMDE4LTAzLTI3IGF0IDIwOjI4ICswMjAwLCBYb3NlIFZhenF1ZXogUGVyZXogd3Jv
-dGU6Cj4gU291cmNlIGRpcmVjdGx5IGZyb206IGh0dHBzOi8vd3d3LmdudS5vcmcvbGljZW5zZXMv
-b2xkLWxpY2Vuc2VzL2dwbC0yCj4gLjAudHh0Cj4gCj4gQ2M6IENocmlzdG9waGUgVmFyb3F1aSA8
-Y2hyaXN0b3BoZS52YXJvcXVpQG9wZW5zdmMuY29tPgo+IENjOiBkZXZpY2UtbWFwcGVyIGRldmVs
-b3BtZW50IDxkbS1kZXZlbEByZWRoYXQuY29tPgo+IFNpZ25lZC1vZmYtYnk6IFhvc2UgVmF6cXVl
-eiBQZXJleiA8eG9zZS52YXpxdWV6QGdtYWlsLmNvbT4KCkRvIHlvdSBwbGFuIHRvIGFkZCBhIFJF
-QURNRS5DT1BZSU5HIG9yIHNpbWlsYXIgZXhwbGFpbmluZyB3aGljaCBsaWNlbnNlCmFwcGxpZXMg
-dG8gd2hhdCBwYXJ0IG9mIHRoZSBjb2RlPwoKTWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8
-bXdpbGNrQHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBH
-bWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9u
-CkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRl
-dmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2Rt
-LWRldmVs
+On 03/26/2018 06:07 PM, Benjamin Marzinski wrote:
+
+> If we can limit the project to two (or if necessary 3) licenses, we can
+> just include all the license files, and explain what applies to what
+> in the README.  I haven't really looked at how other projects that have
+> multiple licenses for parts of their code do things, so perhaps there is
+> a more standard way.
+
+Multiple licences, for modules, are accepted in the Linux kernel:
+https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/module.h#n171
+
+And the SPDX License Identifier is being used:
+https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/Documentation/process/license-rules.rst
