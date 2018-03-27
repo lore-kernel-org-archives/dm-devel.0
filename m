@@ -1,12 +1,14 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 1/2] multipath-tools: move COPYING to
-	COPYING.LESSER
-Date: Tue, 27 Mar 2018 20:28:18 +0200
-Message-ID: <20180327182819.20163-1-xose.vazquez@gmail.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: Can we drop 'hardware_handler "1 alua"'?
+Date: Tue, 27 Mar 2018 21:39:32 +0200
+Message-ID: <1522179572.13140.29.camel@suse.com>
+References: <1522140989.13140.12.camel@suse.com>
+	<9660e35b-7c25-f74d-3b26-561e387e501b@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <9660e35b-7c25-f74d-3b26-561e387e501b@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,22 +18,58 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>, Hannes Reinecke <hare@suse.de>, Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel mailing list <dm-devel@redhat.com>, Leonardo Arena <rnalrd@alpinelinux.org>, Thomas Deutschmann <whissi@gentoo.org>, Lars Wendler <polynomial-c@gentoo.org>, Ritesh Raj Sarraf <rrs@debian.org>, Vincent McIntyre <vincent.mcintyre@csiro.au>, Julian Andres Klode <juliank@ubuntu.com>, Michael Lass <bevan@bi-co.net>
 List-Id: dm-devel.ids
 
-As recommended by FSF: https://www.gnu.org/licenses/gpl-howto.html
-
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- COPYING => COPYING.LESSER | 0
- 1 file changed, 0 insertions(+), 0 deletions(-)
- rename COPYING => COPYING.LESSER (100%)
-
-diff --git a/COPYING b/COPYING.LESSER
-similarity index 100%
-rename from COPYING
-rename to COPYING.LESSER
--- 
-2.14.3
+T24gVHVlLCAyMDE4LTAzLTI3IGF0IDE3OjQ2ICswMjAwLCBYb3NlIFZhenF1ZXogUGVyZXogd3Jv
+dGU6Cj4gT24gMDMvMjcvMjAxOCAxMDo1NiBBTSwgTWFydGluIFdpbGNrIHdyb3RlOgo+IAo+ID4g
+aHd0YWJsZS5jIGhhcyBtdWx0aXBsZSBlbnRyaWVzIHRoYXQgc2V0ICdoYXJkd2FyZV9oYW5kbGVy
+ICIxIGFsdWEiJwo+ID4gZXhwbGljaXRseS4gQnV0IHRoZSBrZXJuZWwgaGFzIGJlZW4gYXV0by1h
+dHRhY2hpbmcgdGhlIEFMVUEKPiA+IGh3aGFuZGxlcgo+ID4gdG8gZGV2aWNlcyB0aGF0IHN1cHBv
+cnQgaXQgc2luY2UgNC4zLCB0aGUgb25seSBwcmVyZXF1aXNpdGUgYmVpbmcKPiA+IHRoYXQKPiA+
+IHNjc2lfZGhfYWx1YSBpcyBwcmVzZW50IGF0IGRldmljZSBwcm9iaW5nIHRpbWUgKGtlcm5lbCBj
+b21taXRzCj4gPiBkOTVkYmZmMiwgZDZhMzJiOTgpLiAicmV0YWluX2F0dGFjaGVkX2h3aGFuZGxl
+ciIgaXMgYWxzbyBoYXJkLXdpcmVkCj4gPiBzaW5jZSA0LjMuIFRodXMgaWYgdGhlIGFib3ZlIHBy
+ZXJlcXVpc2l0ZSBpcyBtZXQsIHRoZXJlJ3Mgbm8gcG9pbnQKPiA+IGluCj4gPiBzZXR0aW5nICdo
+YXJkd2FyZV9oYW5kbGVyICIxIGFsdWEiJy4KPiA+IAo+ID4gV2UndmUgcmVjZW50bHkgc2VlbiBw
+cm9ibGVtcyB3aXRoIHRoZSBleHBsaWNpdCBzZXR0aW5nIG9mIHRoZSBhbHVhCj4gPiBod2hhbmRs
+ZXIgaW4gdGhlIGh3dGFibGU7IGlmIHdlIGRvIHRoaXMgYW5kIHRoZSBkZXZpY2UgZmFpbHMgQUxV
+QQo+ID4gZm9yCj4gPiB3aGF0ZXZlciByZWFzb24sIHNldHRpbmcgdXAgdGhlIG11bHRpcGF0aCBt
+YXAgZmFpbHMgZW50aXJlbHkuCj4gPiAKPiA+IFRoZXJlZm9yZSB3ZSBoYXZlIHJlYXNvbnMgdG8g
+dHJ5IGFuZCByZW1vdmUgJ2hhcmR3YXJlX2hhbmRsZXIgIjEKPiA+IGFsdWEiJwo+ID4gZnJvbSB0
+aGUgaHd0YWJsZS4gQnV0IGl0IGNvdWxkIGNhdXNlIHJlZ3Jlc3Npb25zIGluIHNvbWUgY2FzZXMs
+Cj4gPiBlLmcuCj4gPiBmb3IgZGlzdHJpYnV0aW9ucyB0aGF0IGRvbid0IGZvcmNlLWxvYWQgc2Nz
+aV9kaF9hbHVhIGJlZm9yZSBkZXZpY2UKPiA+IHByb2JpbmcsIG9yIGZvciBrZXJuZWxzIG9sZGVy
+IHRoYW4gNC4zLgo+IAo+IFJlbW92ZSBpdCwgYW5kIGFkZCBpbmZvIHRvIFJFQURNRS5hbHVhIG9y
+IFJFQURNRS5rZXJuZWwtbG93ZXItNC40IC4uLgo+IAo+IAo+IHN5c3RlbWQgZGlzdHJpYnV0aW9u
+cyBhcmUgc2FmZSB3aXRoIHRoaXMgbGluZSBmcm9tCj4gbXVsdGlwYXRoZC9tdWx0aXBhdGhkLnNl
+cnZpY2U6Cj4gRXhlY1N0YXJ0UHJlPS0vc2Jpbi9tb2Rwcm9iZSAtYSBzY3NpX2RoX2FsdWEgc2Nz
+aV9kaF9lbWMgc2NzaV9kaF9yZGFjCj4gZG0tbXVsdGlwYXRoCgpOby4gVGhhdCdzIHN1ZmZpY2ll
+bnQgaWYgbXVsdGlwYXRoZCB1c2VzICdoYXJkd2FyZV9oYW5kbGVyICIxIGFsdWEiJywKYnV0IGl0
+IGlzbid0IG90aGVyd2lzZS4gSGVyZSBpcyB3aHk6CgpUaGUga2VybmVsIGFzc2lnbnMgYSBoYXJk
+d2FyZSBoYW5kbGVyCgogYSkgd2hlbiBhIGRldmljZSBpcyBwcm9iZWQsIGEgbWF0Y2ggaXMgZm91
+bmQgaW4gdGhlIGludGVybmFsIGh3dGFibGUKaW4gc2NzaV9kaC5jLCBhbmQgdGhlIHRoZSBtYXRj
+aGVkIHNjc2hfZGhfLi4uIGRyaXZlciBpcyBsb2FkZWQgaW50byB0aGUKa2VybmVsIGF0IHRoYXQg
+cG9pbnQgaW4gdGltZSAobm8gbW9kdWxlIGF1dG9sb2FkaW5nKSwKIGIpIHdoZW4gYSBkbV9tdWx0
+aXBhdGggZGV2aWNlIGlzIHNldCB1cCByZXF1ZXN0aW5nIGEgaHdoYW5kbGVyCmV4cGxpY2l0bHkg
+KHRoYXQgd291bGQgYmUgdGhlICdoYXJkd2FyZV9oYW5kbGVyICIxIGFsdWEiJyBjYXNlKSwKIGMp
+IHdoZW4gdGhlIHVzZXIgc2V0cyB0aGUgaGFuZGxlciBieSB3cml0aW5nIHRvIHRoZSBzeXNmcyAi
+ZGhfc3RhdGUiCmF0dHJpYnV0ZSAoZG9lc24ndCBtYXR0ZXIgaGVyZSkuCgpJbiBwYXJ0aWN1bGFy
+LCB3aGVuIGEgaHdoYW5kbGVyIG1vZHVsZSBpcyBsb2FkZWQsIHRoZSBrZXJuZWwgZG9lcyBfbm90
+Xwpsb29rIHRocm91Z2ggdGhlIGxpc3Qgb2YgYWxyZWFkeSBwcm9iZWQgU0NTSSBkZXZpY2VzIHRv
+IHNlZSBpZiBpdAptYXRjaGVzIGFueSBvZiB0aGVtLgoKVGhlIEV4ZWNTdGFydFByZT0gbGluZSBh
+Ym92ZSBpcyBleGVjdXRlZCB3aGVuIG11bHRpcGF0aGQgaXMgc3RhcnRlZCwKd2hpY2ggaXMgdXN1
+YWxseSBhZnRlciBTQ1NJIGRldmljZSBwcm9iaW5nLCBzbyBhKSBkb2Vzbid0IGFwcGx5LiBJZiB3
+ZQpkb24ndCBoYXZlICdoYXJkd2FyZV9oYW5kbGVyICIxIGFsdWEiJywgYikgZG9lc24ndCBhcHBs
+eSwgZWl0aGVyLgoKVG8gYXZvaWQgdGhpcyBwcm9ibGVtLCBkaXN0cmlidXRpb25zIHdvdWxkIG5l
+ZWQgdG8gbW9kcHJvYmUgdGhlCnNjc2lfZGhfWFhYIGRyaXZlcnMgYmVmb3JlIHRoZSBvdGhlciBT
+Q1NJIG1vZHVsZXMuCgpSZWdhcmRzCk1hcnRpbgoKPiAKPiAKPiBHZW50b28sIEFscGluZSBhbmQg
+RGViaWFuL1VidW50dSBzaG91bGQgYWRhcHQgdGhlaXIgT3BlblJDL3N5c3Zpbml0Cj4gc2NyaXB0
+cyBhbmQKPiBhbHNvIGluaXRyZCwganVzdCBpbiBjYXNlLgo+IAo+IAo+IFRoZSBsYXN0IGxvbmd0
+ZXJtLWtlcm5lbDw0LjQsIDMuMTYgd2lsbCBkaWUgaW4gIkFwciwgMjAyMCI6Cj4gaHR0cHM6Ly93
+d3cua2VybmVsLm9yZy9jYXRlZ29yeS9yZWxlYXNlcy5odG1sCj4gCgotLSAKRHIuIE1hcnRpbiBX
+aWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBM
+aW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0g
+Tm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0
+CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3Rp
+bmZvL2RtLWRldmVs
