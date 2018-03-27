@@ -1,16 +1,16 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH 0/4] multipath-tools: important fixes for
-	0.7.5
-Date: Tue, 27 Mar 2018 22:55:23 +0200
-Message-ID: <CABr-Gne3AYivUP52oBKB4LwNxUkFbNhtiwatxV_ZcS+fV65Gvg@mail.gmail.com>
-References: <20180307230859.14926-1-mwilck@suse.com>
-	<b0869201-06de-4d84-10fb-7d395adcba2b@gmail.com>
-	<CABr-GncGK5GUoiCV=u5YCGs5E7d4bH3OBE1+LXNkZFByT2NLmA@mail.gmail.com>
-	<e304732af323492c40f3c5ed03fed5c8fc4ec6dc.camel@bi-co.net>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH v2 17/20] multipath.rules: find_multipaths
+	"smart" logic
+Date: Tue, 27 Mar 2018 16:03:39 -0500
+Message-ID: <20180327210339.GX3103@octiron.msp.redhat.com>
+References: <20180319150155.5363-1-mwilck@suse.com>
+	<20180319150155.5363-18-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============2489592718826154709=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <e304732af323492c40f3c5ed03fed5c8fc4ec6dc.camel@bi-co.net>
+Content-Disposition: inline
+In-Reply-To: <20180319150155.5363-18-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,92 +20,161 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: =?UTF-8?B?TWljaGFlbCBMYcOf?= <bevan@bi-co.net>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============2489592718826154709==
-Content-Type: multipart/alternative; boundary="f403045f7370f96c5605686b1bd4"
+On Mon, Mar 19, 2018 at 04:01:52PM +0100, Martin Wilck wrote:
+> When the first path to a device appears, we don't know if more paths are going
+> to follow. find_multipath "smart" logic attempts to solve this dilemma by
+> waiting for additional paths for a configurable time before giving up
+> and releasing single paths to upper layers.
+> 
+> These rules apply only if both find_multipaths is set to "smart" in
+> multipath.conf. In this mode, multipath -u sets DM_MULTIPATH_DEVICE_PATH=2 if
+> there's no clear evidence wheteher a given device should be a multipath member
+> (not blacklisted, not listed as "failed", not in WWIDs file, not member of an
+> exisiting map, only one path seen yet).
+> 
+> In this case, pretend that the path is multipath member, disallow further
+> processing by systemd (allowing multipathd some time to grab the path),
+> and check again after some time. If the path is still not multipathed by then,
+> pass it on to systemd for further processing.
+> 
+> The timeout is controlled by the "find_multipaths_timeout" config option.
+> Note that delays caused by waiting don't "add up" during boot, because the
+> timers run concurrently.
+> 
+> Implementation note: This logic requires obtaining the current time. It's not
+> trivial to do this in udev rules in a portable way, because "/bin/date" is
+> often not available in restricted environments such as the initrd. I chose
+> the sysfs method, because /sys/class/rtc/rtc0 seems to be quite universally
+> available. I'm open for better suggestions if there are any.
 
---f403045f7370f96c5605686b1bd4
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+I have a couple of code issues, that I'll point out below, but I have an
+overall question.  If multipath exists in the initramfs, and a device is
+not claimed there, then after the pivot, multipath will not temporarily
+claim it, correct?  I'm pretty sure, but not totally certain, that udev
+database persists between the udev running in the initramfs and the
+regular system. On the other hand, if multipth isn't in the initramfs
+but it is in the regular system, then AFAICS, once the system pivots to
+the regular fs, there is nothing to warn multipath that these devices
+could already be in use, correct?  So, even if you don't need to
+multipath any devices in your initramfs, you will need multipath in your
+initramfs, or it could go setting devices to not ready. right?
 
-Done.
+> 
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  multipath/multipath.rules | 80 +++++++++++++++++++++++++++++++++++++++++++++--
+>  1 file changed, 78 insertions(+), 2 deletions(-)
+> 
+> diff --git a/multipath/multipath.rules b/multipath/multipath.rules
+> index aab64dc7182c..32d33991db3d 100644
+> --- a/multipath/multipath.rules
+> +++ b/multipath/multipath.rules
+> @@ -21,7 +21,83 @@ TEST!="$env{MPATH_SBIN_PATH}/multipath", ENV{MPATH_SBIN_PATH}="/usr/sbin"
+>  
+>  # multipath -u sets DM_MULTIPATH_DEVICE_PATH
+>  ENV{DM_MULTIPATH_DEVICE_PATH}!="1", IMPORT{program}="$env{MPATH_SBIN_PATH}/multipath -u %k"
+> -ENV{DM_MULTIPATH_DEVICE_PATH}=="1", ENV{ID_FS_TYPE}="mpath_member", \
+> -	ENV{SYSTEMD_READY}="0"
+> +
+> +# case 1: this is definitely multipath
+> +ENV{DM_MULTIPATH_DEVICE_PATH}=="1", \
+> +	ENV{ID_FS_TYPE}="mpath_member", ENV{SYSTEMD_READY}="0", \
+> +	ENV{FIND_MULTIPATHS_WAIT_UNTIL}="finished", \
+> +	GOTO="end_mpath"
+> +
+> +# case 2: this is definitely not multipath
+> +ENV{DM_MULTIPATH_DEVICE_PATH}!="2", \
+> +	ENV{FIND_MULTIPATHS_WAIT_UNTIL}="finished", \
+> +	GOTO="end_mpath"
+> +
+> +# All code below here is only run in "smart" mode.
+> +
+> +# FIND_MULTIPATHS_WAIT_UNTIL is the timeout (in seconds after the
+> +# epoch). If waiting ends for any reason, it is set to "finished".
+> +IMPORT{db}="FIND_MULTIPATHS_WAIT_UNTIL"
+> +
+> +# At this point we know DM_MULTIPATH_DEVICE_PATH==2.
+> +# (multipath -u indicates this is "maybe" multipath)
+> +
+> +# case 3: waiting has already finished. Treat as non-multipath.
+> +ENV{FIND_MULTIPATHS_WAIT_UNTIL}=="finished", \
+> +	ENV{DM_MULTIPATH_DEVICE_PATH}="", GOTO="end_mpath"
+> +
+> +# The timeout should have been set by the multipath -u call above, set a default
+> +# value it that didn't happen for whatever reason
+> +ENV{FIND_MULTIPATHS_PATH_TMO}!="?*", ENV{FIND_MULTIPATHS_PATH_TMO}="5"
+> +
 
-I also merged the most of the patchsets in the backlog after the 0.7.6 tag.
-I'll wait for the "paths classification" patchset request for inclusion
-before tagging the next release.
+This code adds three more callouts.  I know that the udev people dislike
+these, and they do eat up time that can cause udev to timeout on busy
+systems.  To avoid the overhead of these execs, as well as to make the
+rules simpler, what do you thing about moving the 
 
-Thanks.
+IMPORT{db}="FIND_MULTIPATHS_WAIT_UNTIL"
 
+line before the "multipath -u" call, and passing that as a parameter if
+present.  Then multipath could check the current time and compare it.
+It could also return an updated FIND_MULTIPATHS_WAIT_UNTIL as a udev
+environment variable, instead of returning FIND_MULTIPATHS_PATH_TMO, and
+forcing udev to calculate the new timeout. That would remove the need
+for the other PROGRAM calls.
 
-On Tue, Mar 27, 2018 at 9:39 PM, Michael La=C3=9F <bevan@bi-co.net> wrote:
+-Ben
 
-> Hi,
->
-> Am Samstag, den 10.03.2018, 08:43 +0100 schrieb Christophe Varoqui:
-> > The fixes and missing patches series are now merged.
-> > The version is bumped to 0.7.6.
->
-> could you please create a tag for 0.7.6? Or is it not officially
-> released yet?
->
-> Cheers,
-> Michael
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
-
---f403045f7370f96c5605686b1bd4
-Content-Type: text/html; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">Done.<div><br><div>I also merged the most of the patchsets=
- in the backlog after the 0.7.6 tag.<div>I&#39;ll wait for the &quot;paths =
-classification&quot; patchset request for inclusion before tagging the next=
- release.</div><div><br></div><div><span style=3D"color:rgb(34,34,34);font-=
-family:arial,sans-serif;font-size:small;font-style:normal;font-variant-liga=
-tures:normal;font-variant-caps:normal;font-weight:400;letter-spacing:normal=
-;text-align:start;text-indent:0px;text-transform:none;white-space:normal;wo=
-rd-spacing:0px;background-color:rgb(255,255,255);text-decoration-style:init=
-ial;text-decoration-color:initial;float:none;display:inline">Thanks.</span>=
-<br class=3D"gmail-Apple-interchange-newline"><br></div></div></div></div><=
-div class=3D"gmail_extra"><br><div class=3D"gmail_quote">On Tue, Mar 27, 20=
-18 at 9:39 PM, Michael La=C3=9F <span dir=3D"ltr">&lt;<a href=3D"mailto:bev=
-an@bi-co.net" target=3D"_blank">bevan@bi-co.net</a>&gt;</span> wrote:<br><b=
-lockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px =
-#ccc solid;padding-left:1ex">Hi,<br>
-<span class=3D""><br>
-Am Samstag, den 10.03.2018, 08:43 +0100 schrieb Christophe Varoqui:<br>
-&gt; The fixes and missing patches series are now merged.<br>
-&gt; The version is bumped to 0.7.6.<br>
-<br>
-</span>could you please create a tag for 0.7.6? Or is it not officially<br>
-released yet?<br>
-<br>
-Cheers,<br>
-Michael<br>
-<br>
---<br>
-dm-devel mailing list<br>
-<a href=3D"mailto:dm-devel@redhat.com">dm-devel@redhat.com</a><br>
-<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" rel=3D"norefer=
-rer" target=3D"_blank">https://www.redhat.com/<wbr>mailman/listinfo/dm-deve=
-l</a><br>
-</blockquote></div><br></div>
-
---f403045f7370f96c5605686b1bd4--
-
-
---===============2489592718826154709==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============2489592718826154709==--
+> +PROGRAM="/bin/cat $sys/class/rtc/rtc0/since_epoch", \
+> +	ENV{.TIME_NOW}="$result"
+> +ENV{.TIME_NOW}!="?*", ENV{DM_MULTIPATH_DEVICE_PATH}="", \
+> +	ENV{FIND_MULTIPATHS_WAIT_UNTIL}="error", GOTO="end_mpath"
+> +
+> +ENV{FIND_MULTIPATHS_WAIT_UNTIL}!="?*", GOTO="start_wait"
+> +
+> +# At this point, we know that FIND_MULTIPATHS_WAIT_UNTIL is a timeout value.
+> +# If it's expired, give up waiting and assume this is non-multipath.
+> +PROGRAM="/bin/sh -c '[ $env{.TIME_NOW} -ge $env{FIND_MULTIPATHS_WAIT_UNTIL} ]'", \
+> +	ENV{DM_MULTIPATH_DEVICE_PATH}="", \
+> +	ENV{FIND_MULTIPATHS_WAIT_UNTIL}="finished", \
+> +	GOTO="end_mpath"
+> +
+> +# Timer not expired yet. The current uevent has not been triggered by the
+> +# systemd timer but something else, e.g. 60-block.rules. Continue pretending.
+> +ACTION!="add", GOTO="pretend_mpath"
+> +
+> +# Special case: Another "add" event happened before the timeout expired.
+> +# This can happen during "coldplug" after switching root FS, if a
+> +# systemd timer started during initramfs processing had been cancelled.
+> +# We need to start the timer again.
+> +
+> +LABEL="start_wait"
+> +
+> +# We are seeing this path for the first time, and it's "maybe" multipath.
+> +# Pretend that it is actually multipath, and set a timer to create another
+> +# uevent at FIND_MULTIPATHS_WAIT_UNTIL seconds after the epoch.
+> +ENV{FIND_MULTIPATHS_WAIT_UNTIL}!="?*", \
+> +	PROGRAM="/bin/sh -c 'echo $(( $env{.TIME_NOW} + $env{FIND_MULTIPATHS_PATH_TMO} ))'", \
+> +	ENV{FIND_MULTIPATHS_WAIT_UNTIL}="$result"
+> +
+> +# The actual start command for the timer.
+> +#
+> +# The purpose of this command is only to make sure we will receive another
+> +# uevent eventually. *Any* uevent may cause waiting to finish if it either ends
+> +# in case 1-3 above, or if it arrives after FIND_MULTIPATHS_WAIT_UNTIL.
+> +#
+> +# Note that this will try to activate multipathd if it isn't running yet.
+> +# If that fails, the unit starts and expires nonetheless. If multipathd
+> +# startup needs to wait for other services, this wait time will add up with
+> +# the --on-active timeout.
+> +#
+> +# We must trigger an "add" event because LVM2 will only act on those.
+> +RUN+="/usr/bin/systemd-run --unit=cancel-multipath-wait-$kernel --description 'cancel waiting for multipath siblings of $kernel' --no-block --timer-property DefaultDependencies=no --timer-property Conflicts=shutdown.target --timer-property Before=shutdown.target --timer-property AccuracySec=500ms --property DefaultDependencies=no --property Conflicts=shutdown.target --property Before=shutdown.target --property Wants=multipathd.service --property After=multipathd.service --on-active=$env{FIND_MULTIPATHS_PATH_TMO} /usr/bin/udevadm trigger --action=add $sys$devpath"
+> +
+> +LABEL="pretend_mpath"
+> +ENV{DM_MULTIPATH_DEVICE_PATH}="1"
+> +ENV{SYSTEMD_READY}="0"
+>  
+>  LABEL="end_mpath"
+> -- 
+> 2.16.1
