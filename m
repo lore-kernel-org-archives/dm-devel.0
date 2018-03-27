@@ -1,20 +1,11 @@
-From: Denis Semakin <d.semakin@omprussia.ru>
-Subject: Re: dm table: add support for secure erase forwarding
- [was: Re: Adaptation secure erase forwarding for 4.1x kernels]
-Date: Tue, 27 Mar 2018 12:03:08 +0300 (MSK)
-Message-ID: <2089957341.106615.1522141388627.JavaMail.zimbra@omprussia.ru>
-References: <1496940834.549721.1520933025411.JavaMail.zimbra@omprussia.ru>
-	<20180322151045.GA27598@redhat.com>
-	<695931032.318989.1521816469739.JavaMail.zimbra@omprussia.ru>
-	<20180323153844.GA4914@redhat.com>
-	<1943462632.77431.1522073575389.JavaMail.zimbra@omprussia.ru>
-	<20180326161132.GA21310@redhat.com>
-	<1182298863.106524.1522140853093.JavaMail.zimbra@omprussia.ru>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [PATCH] dm rq: remove BUG_ON(!irqs_disabled) check
+Date: Tue, 27 Mar 2018 16:42:38 +0200
+Message-ID: <20180327144238.12529-1-bigeasy@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1182298863.106524.1522140853093.JavaMail.zimbra@omprussia.ru>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,27 +15,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: snitzer <snitzer@redhat.com>
-Cc: dm-devel <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: Keith Busch <keith.busch@intel.com>, tglx@linutronix.de, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
+In commit 052189a2ec95 ("dm: remove superfluous irq disablement in
+dm_request_fn") the spin_lock_irq() was replaced with spin_lock() + a
+check for disabled interrupts. Later the locking part was removed in
+commit 2eb6e1e3aa87 ("dm: submit stacked requests in irq enabled
+context") but the BUG_ON() check remained.
 
->> 
->> BTW, please look into your text editor's settings: seems your patches
->> are using spaces rather than tabs (and you aren't even using 8 spaces?)
-> 
+Since the original purpose for the "are-irqs-off" check is gone (the
+->queue_lock has been removed) I am removing the BUG_ON() check.
 
-> It's not blame of editor (I prefer to use git), it's email client re-formats a message.
-I prefer to use vim of course
+Cc: Keith Busch <keith.busch@intel.com>
+Cc: Mike Snitzer <snitzer@redhat.com>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ drivers/md/dm-rq.c | 1 -
+ 1 file changed, 1 deletion(-)
 
-> Next time I'll do it via git send-mail.
-
->> Mike
-> -- 
-> Best regards,
-> 
-> Denis
+diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+index bf0b840645cc..1a524f992f72 100644
+--- a/drivers/md/dm-rq.c
++++ b/drivers/md/dm-rq.c
+@@ -688,7 +688,6 @@ static void dm_old_request_fn(struct request_queue *q)
+ 		/* Establish tio->ti before queuing work (map_tio_request) */
+ 		tio->ti = ti;
+ 		kthread_queue_work(&md->kworker, &tio->work);
+-		BUG_ON(!irqs_disabled());
+ 	}
+ }
+ 
 -- 
-Best regards,
-
-Denis
+2.16.3
