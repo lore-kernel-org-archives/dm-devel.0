@@ -1,20 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: multipath-tools licenses (was Re: [PATCH]
- multipath-tools: replace FSF address with a www pointer)
-Date: Tue, 27 Mar 2018 23:53:57 +0200
-Message-ID: <1522187637.13140.49.camel@suse.com>
-References: <20180310205002.3318-1-xose.vazquez@gmail.com>
-	<1521495458.3798.138.camel@suse.com>
-	<1a0b44c5-c7a6-85fa-b2dd-1bd542efbb76@gmail.com>
-	<1521837017.13100.106.camel@suse.com>
-	<20180326130447.3114ef2f@pentland.suse.de>
-	<1522067788.19335.55.camel@suse.com>
-	<32b2f869-e017-8f17-d902-64ebdd31b7ab@gmail.com>
+Subject: Re: [PATCH 1/2] multipath-tools: move COPYING to
+ COPYING.LESSER
+Date: Wed, 28 Mar 2018 00:03:10 +0200
+Message-ID: <1522188190.13140.53.camel@suse.com>
+References: <20180327182819.20163-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <32b2f869-e017-8f17-d902-64ebdd31b7ab@gmail.com>
+In-Reply-To: <20180327182819.20163-1-xose.vazquez@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,23 +18,23 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>, Hannes Reinecke <hare@suse.de>
-Cc: development <dm-devel@redhat.com>, device-mapper, fge@redhat.com
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gVHVlLCAyMDE4LTAzLTI3IGF0IDIzOjQyICswMjAwLCBYb3NlIFZhenF1ZXogUGVyZXogd3Jv
-dGU6Cj4gT24gMDMvMjYvMjAxOCAwMjozNiBQTSwgTWFydGluIFdpbGNrIHdyb3RlOgo+IAo+ID4g
-SXQnZCBiZSBhIGdvb2QgaWRlYSB0byB1cGdyYWRlIGdlbmVyYWxseSBmcm9tICJMaWJyYXJ5IEdQ
-TCB2MiIgYXQKPiA+IGxlYXN0Cj4gPiB0byBMR1BMdjIuMS4gVGhhdCBzaG91bGRuJ3QgYmUgYSBw
-cm9ibGVtLCBhcyB0aGUgb25seSBtYWpvcgo+ID4gZGlmZmVyZXJlbmNlIGJldHdlZW4gTEdQTHYy
-IGFuZCBMR1BMdjIuMSBpcyB0aGUgYWRkaXRpb24gb2Ygwqc2YiBpbgo+ID4gdGhlCj4gPiBsYXR0
-ZXIsIGFsbG93aW5nIHRoZSB1c2Ugb2YgImEgc3VpdGFibGUgc2hhcmVkIGxpYnJhcnkgbWVjaGFu
-aXNtCj4gPiBmb3IKPiA+IGxpbmtpbmcgd2l0aCB0aGUgbGlicmFyeSIuCj4gCj4gWWVzLCBMR1BM
-djIuMSBpcyBMR1BMdjIuMCBwbHVzIMKnNmI6CgpUaGFua3MgZm9yIGNvbmZpcm1pbmcuIEkgdXNl
-ZCAid2RpZmYiIGZvciBjb21wYXJpbmcgdGhlIHR3byB0ZXh0cywgdGhhdAptYWtlcyBpdCBldmVu
-IGVhc2llciB0byB2ZXJpZnkgdGhhdCB0aGUgZGlmZmVyZW5jZXMgYXJlIGZldy4KCk1hcnRpbgoK
-LS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3
-NDA1MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBT
-bWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRl
-dmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5j
-b20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+T24gVHVlLCAyMDE4LTAzLTI3IGF0IDIwOjI4ICswMjAwLCBYb3NlIFZhenF1ZXogUGVyZXogd3Jv
+dGU6Cj4gQXMgcmVjb21tZW5kZWQgYnkgRlNGOiBodHRwczovL3d3dy5nbnUub3JnL2xpY2Vuc2Vz
+L2dwbC1ob3d0by5odG1sCj4gCj4gQ2M6IENocmlzdG9waGUgVmFyb3F1aSA8Y2hyaXN0b3BoZS52
+YXJvcXVpQG9wZW5zdmMuY29tPgo+IENjOiBkZXZpY2UtbWFwcGVyIGRldmVsb3BtZW50IDxkbS1k
+ZXZlbEByZWRoYXQuY29tPgo+IFNpZ25lZC1vZmYtYnk6IFhvc2UgVmF6cXVleiBQZXJleiA8eG9z
+ZS52YXpxdWV6QGdtYWlsLmNvbT4KPiAtLS0KPiAgQ09QWUlORyA9PiBDT1BZSU5HLkxFU1NFUiB8
+IDAKPiAgMSBmaWxlIGNoYW5nZWQsIDAgaW5zZXJ0aW9ucygrKSwgMCBkZWxldGlvbnMoLSkKPiAg
+cmVuYW1lIENPUFlJTkcgPT4gQ09QWUlORy5MRVNTRVIgKDEwMCUpCj4gCj4gZGlmZiAtLWdpdCBh
+L0NPUFlJTkcgYi9DT1BZSU5HLkxFU1NFUgo+IHNpbWlsYXJpdHkgaW5kZXggMTAwJQo+IHJlbmFt
+ZSBmcm9tIENPUFlJTkcKPiByZW5hbWUgdG8gQ09QWUlORy5MRVNTRVIKCklNTyB5b3Ugc2hvdWxk
+IG9ubHkgY2FsbCBpdCAiQ09QWUlORy5MRVNTRVIiIGlmIGl0J3MgcmVhbGx5IHRoZSBsZXNzZXIK
+R1BMIChha2EgTEdQTHYyLjEpLgoKTWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNr
+QHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBH
+RjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAy
+MTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJl
+ZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
