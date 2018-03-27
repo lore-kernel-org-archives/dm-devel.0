@@ -1,178 +1,139 @@
-From: <yael.chemla@foss.arm.com>
-Subject: RE: [PATCH 2/2] md: dm-verity: allow parallel processing of bio blocks
-Date: Wed, 28 Mar 2018 00:27:45 +0300
-Message-ID: <003001d3c612$756b3eb0$6041bc10$@foss.arm.com>
-References: <1522003290-27243-1-git-send-email-yael.chemla@foss.arm.com> <1522003290-27243-2-git-send-email-yael.chemla@foss.arm.com> <20180327010633.GB23487@redhat.com> <001201d3c5a9$529b4a10$f7d1de30$@foss.arm.com> <20180327131636.GA26832@redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH v2 17/20] multipath.rules: find_multipaths
+	"smart" logic
+Date: Tue, 27 Mar 2018 23:34:00 +0200
+Message-ID: <1522186440.13140.47.camel@suse.com>
+References: <20180319150155.5363-1-mwilck@suse.com>
+	<20180319150155.5363-18-mwilck@suse.com>
+	<20180327210339.GX3103@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-        charset="UTF-8"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180327131636.GA26832@redhat.com>
-Content-Language: en-il
-Sender: linux-kernel-owner@vger.kernel.org
-To: 'Mike Snitzer' <snitzer@redhat.com>
-Cc: 'Alasdair Kergon' <agk@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, ofir.drang@gmail.com, 'Yael Chemla' <yael.chemla@arm.com>, 'Eric Biggers' <ebiggers3@gmail.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20180327210339.GX3103@octiron.msp.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-
-
-> -----Original Message-----
-> From: Mike Snitzer <snitzer@redhat.com>
-> Sent: Tuesday, 27 March 2018 16:17
-> To: yael.chemla@foss.arm.com
-> Cc: 'Alasdair Kergon' <agk@redhat.com>; dm-devel@redhat.com; linux-
-> kernel@vger.kernel.org; ofir.drang@gmail.com; 'Yael Chemla'
-> <yael.chemla@arm.com>; 'Eric Biggers' <ebiggers3@gmail.com>
-> Subject: Re: [PATCH 2/2] md: dm-verity: allow parallel processing of bio blocks
-> 
-> On Tue, Mar 27 2018 at  4:55am -0400,
-> yael.chemla@foss.arm.com <yael.chemla@foss.arm.com> wrote:
-> 
-> > Hi Mike
-> > I need to rewrite these patches according to issues you and Eric Biggers
-> mentioned.
-> > please drop this v1 patch.
-> 
-> They've been dropped.  BUT please do note that the patches I pushed to
-> linux-dm.git were rebased ontop of the 'check_at_most_once' patch.
-
-Thank you so much for many style, formatting and other issues fixes and also for
-integration of 'check_at_most_once' patch, it saved me several review iterations.
-
-> 
-> I never did get an answer about how the sg array is free'd in certain error
-> paths (see "FIXME:" in the 2nd patch).
-> 
-
-Regarding free of sg in two error paths, you were correct.
-I fixed it by placing several error labels to differentiate each handling.
-I also noted that reqdata_arr[b].req was not released properly, this is also fixed.
-following is a diff of my fix based on your modifications.
-(I can send it in a patch format, but it doesn't include a fix for Eric Biggers comments)
-
-
-@@ -573,10 +573,9 @@ static void verity_verify_io(struct dm_verity_io *io)
-                        verity_bv_skip_block(v, io, &io->iter);
-                        continue;
-                }
--
-                reqdata_arr[b].req = ahash_request_alloc(v->tfm, GFP_NOIO);
-                if (unlikely(reqdata_arr[b].req == NULL))
--                       goto err_memfree;
-+                       goto err_mem_req;
-                ahash_request_set_tfm(reqdata_arr[b].req, v->tfm);
- 
-                /* +1 for the salt buffer */
-@@ -586,7 +585,7 @@ static void verity_verify_io(struct dm_verity_io *io)
-                                   GFP_NOIO);
-                if (!sg) {
-                        DMERR_LIMIT("%s: kmalloc_array failed", __func__);
--                       goto err_memfree;
-+                       goto err_mem_sg;
-                }
-                sg_init_table(sg, num_of_buffs);
-                // FIXME: if we 'err_memfree' (or continue;) below how does this sg get kfree()'d?
-@@ -595,7 +594,7 @@ static void verity_verify_io(struct dm_verity_io *io)
-                                          reqdata_arr[b].want_digest,
-                                          &reqdata_arr[b].fec_io, &is_zero);
-                if (unlikely(r < 0))
--                       goto err_memfree;
-+                       goto err_mem;
- 
-                if (is_zero) {
-                        /*
-@@ -605,7 +604,7 @@ static void verity_verify_io(struct dm_verity_io *io)
-                        r = verity_for_bv_block(v, io, &io->iter,
-                                                verity_bv_zero);
-                        if (unlikely(r < 0))
--                               goto err_memfree;
-+                               goto err_mem;
-                        verity_cb_complete(iodata, r);
-                        continue;
-                }
-@@ -644,7 +643,11 @@ static void verity_verify_io(struct dm_verity_io *io)
-        }
-        return;
- 
--err_memfree:
-+err_mem:
-+       kfree(sg);
-+err_mem_sg:
-+       ahash_request_free(reqdata_arr[b].req);
-+err_mem_req:
-        /*
-         * reduce expected requests by the number of unsent
-         * requests, -1 accounting for the current block
-        atomic_sub(blocks - b - 1, &iodata->expected_reqs);
-        verity_cb_complete(iodata, -EIO);
-
-> Also, I fixed some issues I saw in error paths, and lots of formatting.
-> 
-> I'll be pretty frustrated if you submit v2 that is blind to the kinds of changes I
-> made.
-> 
-
-I took your modifications and working upon it. 
-
-> I'll send you a private copy of the patches just so you have them for your
-> reference.
-> 
-> Thanks,
-> Mike
-> 
-> 
-> > -----Original Message-----
-> > From: Mike Snitzer <snitzer@redhat.com>
-> > Sent: Tuesday, 27 March 2018 4:07
-> > To: Yael Chemla <yael.chemla@foss.arm.com>
-> > Cc: Alasdair Kergon <agk@redhat.com>; dm-devel@redhat.com;
-> > linux-kernel@vger.kernel.org; ofir.drang@gmail.com; Yael Chemla
-> > <yael.chemla@arm.com>
-> > Subject: Re: [PATCH 2/2] md: dm-verity: allow parallel processing of
-> > bio blocks
-> >
-> > On Sun, Mar 25 2018 at  2:41pm -0400,
-> > Yael Chemla <yael.chemla@foss.arm.com> wrote:
-> >
-> > >  Allow parallel processing of bio blocks by moving to async.
-> > > completion  handling. This allows for better resource utilization of
-> > > both HW and  software based hash tfm and therefore better
-> > > performance in many cases,  depending on the specific tfm in use.
-> > >
-> > >  Tested on ARM32 (zynq board) and ARM64 (Juno board).
-> > >  Time of cat command was measured on a filesystem with various file sizes.
-> > >  12% performance improvement when HW based hash was used (ccree
-> driver).
-> > >  SW based hash showed less than 1% improvement.
-> > >  CPU utilization when HW based hash was used presented 10% less
-> > > context  switch, 4% less cycles and 7% less instructions. No
-> > > difference in  CPU utilization noticed with SW based hash.
-> > >
-> > > Signed-off-by: Yael Chemla <yael.chemla@foss.arm.com>
-> >
-> > This one had various issues.  I've fixed most of what I saw and staged in
-> linux-next (purely for build test coverage purposes).  I may drop this patch if
-> others disagree with it (or my sg deallocation in the error path question isn't
-> answered).
-> >
-> > I've staged the changes here (and in linux-next via 'for-next'):
-> > https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm
-> > .git/log/?h=dm-4.17
-> >
-> > I switched all the new GFP_KERNEL uses to GFP_NOIO.  The fact that you're
-> doing allocations at all (per IO) is bad enough.  Using GFP_KERNEL is a serious
-> liability (risk of deadlock if dm-verity were to be used for something like..
-> swap.. weird setup but possible).
-> >
-> > But the gfp flags aside, the need for additional memory and the expectation
-> of scalable async parallel IO is potentially at odds with changes like this (that I
-> just staged, and had to rebase your 2 patches ontop of):
-> > https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm
-> > .git/commit/?h=dm-4.17&id=a89f6a2cfec86fba7a115642ff082cb4e9450ea6
-> >
-> > So I'm particulalry interested to hear from google folks to understand if they
-> are OK with your proposed verity async crypto API use.
-> >
-> > Mike
-> >
+T24gVHVlLCAyMDE4LTAzLTI3IGF0IDE2OjAzIC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cj4gT24gTW9uLCBNYXIgMTksIDIwMTggYXQgMDQ6MDE6NTJQTSArMDEwMCwgTWFydGluIFdp
+bGNrIHdyb3RlOgo+ID4gV2hlbiB0aGUgZmlyc3QgcGF0aCB0byBhIGRldmljZSBhcHBlYXJzLCB3
+ZSBkb24ndCBrbm93IGlmIG1vcmUKPiA+IHBhdGhzIGFyZSBnb2luZwo+ID4gdG8gZm9sbG93LiBm
+aW5kX211bHRpcGF0aCAic21hcnQiIGxvZ2ljIGF0dGVtcHRzIHRvIHNvbHZlIHRoaXMKPiA+IGRp
+bGVtbWEgYnkKPiA+IHdhaXRpbmcgZm9yIGFkZGl0aW9uYWwgcGF0aHMgZm9yIGEgY29uZmlndXJh
+YmxlIHRpbWUgYmVmb3JlIGdpdmluZwo+ID4gdXAKPiA+IGFuZCByZWxlYXNpbmcgc2luZ2xlIHBh
+dGhzIHRvIHVwcGVyIGxheWVycy4KPiA+IAo+ID4gVGhlc2UgcnVsZXMgYXBwbHkgb25seSBpZiBi
+b3RoIGZpbmRfbXVsdGlwYXRocyBpcyBzZXQgdG8gInNtYXJ0IiBpbgo+ID4gbXVsdGlwYXRoLmNv
+bmYuIEluIHRoaXMgbW9kZSwgbXVsdGlwYXRoIC11IHNldHMKPiA+IERNX01VTFRJUEFUSF9ERVZJ
+Q0VfUEFUSD0yIGlmCj4gPiB0aGVyZSdzIG5vIGNsZWFyIGV2aWRlbmNlIHdoZXRlaGVyIGEgZ2l2
+ZW4gZGV2aWNlIHNob3VsZCBiZSBhCj4gPiBtdWx0aXBhdGggbWVtYmVyCj4gPiAobm90IGJsYWNr
+bGlzdGVkLCBub3QgbGlzdGVkIGFzICJmYWlsZWQiLCBub3QgaW4gV1dJRHMgZmlsZSwgbm90Cj4g
+PiBtZW1iZXIgb2YgYW4KPiA+IGV4aXNpdGluZyBtYXAsIG9ubHkgb25lIHBhdGggc2VlbiB5ZXQp
+Lgo+ID4gCj4gPiBJbiB0aGlzIGNhc2UsIHByZXRlbmQgdGhhdCB0aGUgcGF0aCBpcyBtdWx0aXBh
+dGggbWVtYmVyLCBkaXNhbGxvdwo+ID4gZnVydGhlcgo+ID4gcHJvY2Vzc2luZyBieSBzeXN0ZW1k
+IChhbGxvd2luZyBtdWx0aXBhdGhkIHNvbWUgdGltZSB0byBncmFiIHRoZQo+ID4gcGF0aCksCj4g
+PiBhbmQgY2hlY2sgYWdhaW4gYWZ0ZXIgc29tZSB0aW1lLiBJZiB0aGUgcGF0aCBpcyBzdGlsbCBu
+b3QKPiA+IG11bHRpcGF0aGVkIGJ5IHRoZW4sCj4gPiBwYXNzIGl0IG9uIHRvIHN5c3RlbWQgZm9y
+IGZ1cnRoZXIgcHJvY2Vzc2luZy4KPiA+IAo+ID4gVGhlIHRpbWVvdXQgaXMgY29udHJvbGxlZCBi
+eSB0aGUgImZpbmRfbXVsdGlwYXRoc190aW1lb3V0IiBjb25maWcKPiA+IG9wdGlvbi4KPiA+IE5v
+dGUgdGhhdCBkZWxheXMgY2F1c2VkIGJ5IHdhaXRpbmcgZG9uJ3QgImFkZCB1cCIgZHVyaW5nIGJv
+b3QsCj4gPiBiZWNhdXNlIHRoZQo+ID4gdGltZXJzIHJ1biBjb25jdXJyZW50bHkuCj4gPiAKPiA+
+IEltcGxlbWVudGF0aW9uIG5vdGU6IFRoaXMgbG9naWMgcmVxdWlyZXMgb2J0YWluaW5nIHRoZSBj
+dXJyZW50Cj4gPiB0aW1lLiBJdCdzIG5vdAo+ID4gdHJpdmlhbCB0byBkbyB0aGlzIGluIHVkZXYg
+cnVsZXMgaW4gYSBwb3J0YWJsZSB3YXksIGJlY2F1c2UKPiA+ICIvYmluL2RhdGUiIGlzCj4gPiBv
+ZnRlbiBub3QgYXZhaWxhYmxlIGluIHJlc3RyaWN0ZWQgZW52aXJvbm1lbnRzIHN1Y2ggYXMgdGhl
+IGluaXRyZC4KPiA+IEkgY2hvc2UKPiA+IHRoZSBzeXNmcyBtZXRob2QsIGJlY2F1c2UgL3N5cy9j
+bGFzcy9ydGMvcnRjMCBzZWVtcyB0byBiZSBxdWl0ZQo+ID4gdW5pdmVyc2FsbHkKPiA+IGF2YWls
+YWJsZS4gSSdtIG9wZW4gZm9yIGJldHRlciBzdWdnZXN0aW9ucyBpZiB0aGVyZSBhcmUgYW55Lgo+
+IAo+IEkgaGF2ZSBhIGNvdXBsZSBvZiBjb2RlIGlzc3VlcywgdGhhdCBJJ2xsIHBvaW50IG91dCBi
+ZWxvdywgYnV0IEkgaGF2ZQo+IGFuCj4gb3ZlcmFsbCBxdWVzdGlvbi4gIElmIG11bHRpcGF0aCBl
+eGlzdHMgaW4gdGhlIGluaXRyYW1mcywgYW5kIGEgZGV2aWNlCj4gaXMKPiBub3QgY2xhaW1lZCB0
+aGVyZSwgdGhlbiBhZnRlciB0aGUgcGl2b3QsIG11bHRpcGF0aCB3aWxsIG5vdAo+IHRlbXBvcmFy
+aWx5Cj4gY2xhaW0gaXQsIGNvcnJlY3Q/IAoKSW5jb3JyZWN0LCBpdCB3aWxsIGRvIHRoZSB0ZW1w
+b3JhcnkgY2xhaW0uCgo+ICBJJ20gcHJldHR5IHN1cmUsIGJ1dCBub3QgdG90YWxseSBjZXJ0YWlu
+LCB0aGF0IHVkZXYKPiBkYXRhYmFzZSBwZXJzaXN0cyBiZXR3ZWVuIHRoZSB1ZGV2IHJ1bm5pbmcg
+aW4gdGhlIGluaXRyYW1mcyBhbmQgdGhlCj4gcmVndWxhciBzeXN0ZW0uCgpUaGF0J3Mgb25seSB0
+cnVlIGZvciBkZXZpY2VzIHRoYXQgc2V0IE9QVElPTlMrPSJkYl9wZXJzaXN0IiwgYW5kIGRyYWN1
+dApzZXRzIHRoaXMgb25seSBmb3IgZG0gYW5kIG1kIGRldmljZXMuIEZvciBvdGhlciBkZXZpY2Vz
+LAovdXNyL2xpYi9zeXN0ZW1kL3N5c3RlbS9pbml0cmQtdWRldmFkbS1jbGVhbnVwLWRiLnNlcnZp
+Y2UgY2xlYW5zIHVwIHRoZQp1ZGV2IGRhdGEgYmFzZSwgYW5kIGRldmljZXMgYXJlIHNlZW4gYXMg
+Im5ldyIgZHVyaW5nIGNvbGRwbHVnLiBTbywgaWYKdGhlcmUncyBzdGlsbCBvbmx5IG9uZSBwYXRo
+IGFuZCBubyBvdGhlciBpbmZvcm1hdGlvbiAoZS5nLiB3d2lkcyBmaWxlKQphZnRlciBwaXZvdCwg
+d2UnbGwgd2FpdC4KCj4gIE9uIHRoZSBvdGhlciBoYW5kLCBpZiBtdWx0aXB0aCBpc24ndCBpbiB0
+aGUgaW5pdHJhbWZzCj4gYnV0IGl0IGlzIGluIHRoZSByZWd1bGFyIHN5c3RlbSwgdGhlbiBBRkFJ
+Q1MsIG9uY2UgdGhlIHN5c3RlbSBwaXZvdHMKPiB0bwo+IHRoZSByZWd1bGFyIGZzLCB0aGVyZSBp
+cyBub3RoaW5nIHRvIHdhcm4gbXVsdGlwYXRoIHRoYXQgdGhlc2UgZGV2aWNlcwo+IGNvdWxkIGFs
+cmVhZHkgYmUgaW4gdXNlLCBjb3JyZWN0PyAKCkNvcnJlY3QuCgo+ICBTbywgZXZlbiBpZiB5b3Ug
+ZG9uJ3QgbmVlZCB0bwo+IG11bHRpcGF0aCBhbnkgZGV2aWNlcyBpbiB5b3VyIGluaXRyYW1mcywg
+eW91IHdpbGwgbmVlZCBtdWx0aXBhdGggaW4KPiB5b3VyCj4gaW5pdHJhbWZzLCBvciBpdCBjb3Vs
+ZCBnbyBzZXR0aW5nIGRldmljZXMgdG8gbm90IHJlYWR5LiByaWdodD8KClRoZSBmb2xsb3dpbmcg
+aGFwcGVuczogbXVsdGlwYXRoIC11IHRlbXBvcmFyaWx5IGNsYWltcyB0aGUgZGV2aWNlLiBXaGVu
+Cm11bHRpcGF0aGQgc3RhcnRzLCBpdCBmYWlscyB0byBzZXQgdXAgdGhlIG1hcCwgc2V0cyB0aGUg
+ImZhaWxlZCIKbWFya2VyLCBhbmQgcmV0cmlnZ2VycyB1ZGV2LiBUaGUgc2Vjb25kIHRpbWUsIG11
+bHRpcGF0aCAtdSB1bmNsYWltcyB0aGUKZGV2aWNlIGJlY2F1c2UgaXQgcmVjb2duaXplcyBpdCBh
+cyBmYWlsZWQuCgpJIGFkbWl0IEkgaGF2ZW4ndCB0ZXN0ZWQgdGhlIGRlZmF1bHQgUmVkIEhhdCBz
+ZXR1cCB3aXRoIGEgdmVyeQpyZXN0cmljdGl2ZSBtdWx0aXBhdGguY29uZiBpbiB0aGUgaW5pdHJk
+LiBCdXQgSSdtIHByZXR0eSBjZXJ0YWluIHRoYXQKaW4gdGhhdCBjYXNlLCB0aGUgc2FtZSB0aGlu
+ZyBoYXBwZW5zLgpJJ2QgYmUgZ3JhdGVmdWwgaWYgeW91IGNvdWxkIGdpdmUgaXQgYSB0cnkgOi0p
+Cgo+IAo+ID4gCj4gPiBTaWduZWQtb2ZmLWJ5OiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNv
+bT4KPiA+IC0tLQo+ID4gIG11bHRpcGF0aC9tdWx0aXBhdGgucnVsZXMgfCA4MAo+ID4gKysrKysr
+KysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrLS0KPiA+ICAxIGZpbGUgY2hh
+bmdlZCwgNzggaW5zZXJ0aW9ucygrKSwgMiBkZWxldGlvbnMoLSkKPiA+IAo+ID4gZGlmZiAtLWdp
+dCBhL211bHRpcGF0aC9tdWx0aXBhdGgucnVsZXMgYi9tdWx0aXBhdGgvbXVsdGlwYXRoLnJ1bGVz
+Cj4gPiBpbmRleCBhYWI2NGRjNzE4MmMuLjMyZDMzOTkxZGIzZCAxMDA2NDQKPiA+IC0tLSBhL211
+bHRpcGF0aC9tdWx0aXBhdGgucnVsZXMKPiA+ICsrKyBiL211bHRpcGF0aC9tdWx0aXBhdGgucnVs
+ZXMKPiA+IEBAIC0yMSw3ICsyMSw4MyBAQCBURVNUIT0iJGVudntNUEFUSF9TQklOX1BBVEh9L211
+bHRpcGF0aCIsCj4gPiBFTlZ7TVBBVEhfU0JJTl9QQVRIfT0iL3Vzci9zYmluIgo+ID4gIAo+ID4g
+ICMgbXVsdGlwYXRoIC11IHNldHMgRE1fTVVMVElQQVRIX0RFVklDRV9QQVRICj4gPiAgRU5We0RN
+X01VTFRJUEFUSF9ERVZJQ0VfUEFUSH0hPSIxIiwKPiA+IElNUE9SVHtwcm9ncmFtfT0iJGVudntN
+UEFUSF9TQklOX1BBVEh9L211bHRpcGF0aCAtdSAlayIKPiA+IC1FTlZ7RE1fTVVMVElQQVRIX0RF
+VklDRV9QQVRIfT09IjEiLAo+ID4gRU5We0lEX0ZTX1RZUEV9PSJtcGF0aF9tZW1iZXIiLCBcCj4g
+PiAtCUVOVntTWVNURU1EX1JFQURZfT0iMCIKPiA+ICsKPiA+ICsjIGNhc2UgMTogdGhpcyBpcyBk
+ZWZpbml0ZWx5IG11bHRpcGF0aAo+ID4gK0VOVntETV9NVUxUSVBBVEhfREVWSUNFX1BBVEh9PT0i
+MSIsIFwKPiA+ICsJRU5We0lEX0ZTX1RZUEV9PSJtcGF0aF9tZW1iZXIiLCBFTlZ7U1lTVEVNRF9S
+RUFEWX09IjAiLCBcCj4gPiArCUVOVntGSU5EX01VTFRJUEFUSFNfV0FJVF9VTlRJTH09ImZpbmlz
+aGVkIiwgXAo+ID4gKwlHT1RPPSJlbmRfbXBhdGgiCj4gPiArCj4gPiArIyBjYXNlIDI6IHRoaXMg
+aXMgZGVmaW5pdGVseSBub3QgbXVsdGlwYXRoCj4gPiArRU5We0RNX01VTFRJUEFUSF9ERVZJQ0Vf
+UEFUSH0hPSIyIiwgXAo+ID4gKwlFTlZ7RklORF9NVUxUSVBBVEhTX1dBSVRfVU5USUx9PSJmaW5p
+c2hlZCIsIFwKPiA+ICsJR09UTz0iZW5kX21wYXRoIgo+ID4gKwo+ID4gKyMgQWxsIGNvZGUgYmVs
+b3cgaGVyZSBpcyBvbmx5IHJ1biBpbiAic21hcnQiIG1vZGUuCj4gPiArCj4gPiArIyBGSU5EX01V
+TFRJUEFUSFNfV0FJVF9VTlRJTCBpcyB0aGUgdGltZW91dCAoaW4gc2Vjb25kcyBhZnRlciB0aGUK
+PiA+ICsjIGVwb2NoKS4gSWYgd2FpdGluZyBlbmRzIGZvciBhbnkgcmVhc29uLCBpdCBpcyBzZXQg
+dG8gImZpbmlzaGVkIi4KPiA+ICtJTVBPUlR7ZGJ9PSJGSU5EX01VTFRJUEFUSFNfV0FJVF9VTlRJ
+TCIKPiA+ICsKPiA+ICsjIEF0IHRoaXMgcG9pbnQgd2Uga25vdyBETV9NVUxUSVBBVEhfREVWSUNF
+X1BBVEg9PTIuCj4gPiArIyAobXVsdGlwYXRoIC11IGluZGljYXRlcyB0aGlzIGlzICJtYXliZSIg
+bXVsdGlwYXRoKQo+ID4gKwo+ID4gKyMgY2FzZSAzOiB3YWl0aW5nIGhhcyBhbHJlYWR5IGZpbmlz
+aGVkLiBUcmVhdCBhcyBub24tbXVsdGlwYXRoLgo+ID4gK0VOVntGSU5EX01VTFRJUEFUSFNfV0FJ
+VF9VTlRJTH09PSJmaW5pc2hlZCIsIFwKPiA+ICsJRU5We0RNX01VTFRJUEFUSF9ERVZJQ0VfUEFU
+SH09IiIsIEdPVE89ImVuZF9tcGF0aCIKPiA+ICsKPiA+ICsjIFRoZSB0aW1lb3V0IHNob3VsZCBo
+YXZlIGJlZW4gc2V0IGJ5IHRoZSBtdWx0aXBhdGggLXUgY2FsbCBhYm92ZSwKPiA+IHNldCBhIGRl
+ZmF1bHQKPiA+ICsjIHZhbHVlIGl0IHRoYXQgZGlkbid0IGhhcHBlbiBmb3Igd2hhdGV2ZXIgcmVh
+c29uCj4gPiArRU5We0ZJTkRfTVVMVElQQVRIU19QQVRIX1RNT30hPSI/KiIsCj4gPiBFTlZ7RklO
+RF9NVUxUSVBBVEhTX1BBVEhfVE1PfT0iNSIKPiA+ICsKPiAKPiBUaGlzIGNvZGUgYWRkcyB0aHJl
+ZSBtb3JlIGNhbGxvdXRzLiAgSSBrbm93IHRoYXQgdGhlIHVkZXYgcGVvcGxlCj4gZGlzbGlrZQo+
+IHRoZXNlLCBhbmQgdGhleSBkbyBlYXQgdXAgdGltZSB0aGF0IGNhbiBjYXVzZSB1ZGV2IHRvIHRp
+bWVvdXQgb24gYnVzeQo+IHN5c3RlbXMuICBUbyBhdm9pZCB0aGUgb3ZlcmhlYWQgb2YgdGhlc2Ug
+ZXhlY3MsIGFzIHdlbGwgYXMgdG8gbWFrZQo+IHRoZQo+IHJ1bGVzIHNpbXBsZXIsIHdoYXQgZG8g
+eW91IHRoaW5nIGFib3V0IG1vdmluZyB0aGUgCj4gCj4gSU1QT1JUe2RifT0iRklORF9NVUxUSVBB
+VEhTX1dBSVRfVU5USUwiCj4gCj4gbGluZSBiZWZvcmUgdGhlICJtdWx0aXBhdGggLXUiIGNhbGws
+IGFuZCBwYXNzaW5nIHRoYXQgYXMgYSBwYXJhbWV0ZXIKPiBpZgo+IHByZXNlbnQuICBUaGVuIG11
+bHRpcGF0aCBjb3VsZCBjaGVjayB0aGUgY3VycmVudCB0aW1lIGFuZCBjb21wYXJlIGl0Lgo+IEl0
+IGNvdWxkIGFsc28gcmV0dXJuIGFuIHVwZGF0ZWQgRklORF9NVUxUSVBBVEhTX1dBSVRfVU5USUwg
+YXMgYSB1ZGV2Cj4gZW52aXJvbm1lbnQgdmFyaWFibGUsIGluc3RlYWQgb2YgcmV0dXJuaW5nIEZJ
+TkRfTVVMVElQQVRIU19QQVRIX1RNTywKPiBhbmQKPiBmb3JjaW5nIHVkZXYgdG8gY2FsY3VsYXRl
+IHRoZSBuZXcgdGltZW91dC4gVGhhdCB3b3VsZCByZW1vdmUgdGhlIG5lZWQKPiBmb3IgdGhlIG90
+aGVyIFBST0dSQU0gY2FsbHMuCgpUaGF0J3MgYSBuaWNlIGlkZWEuIFdoeSBkaWRuJ3QgSSBoYXZl
+IGl0PwoKTWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVs
+LiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTD
+tnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5i
+ZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6
+Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
