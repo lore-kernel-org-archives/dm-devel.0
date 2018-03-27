@@ -1,18 +1,16 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v2] dm raid: fix parse_raid_params() variable
-	range issue
-Date: Mon, 26 Mar 2018 19:23:42 -0400
-Message-ID: <20180326232342.GA23449@redhat.com>
-References: <6386b9f02b3513bd0ba5ddccd437502313448f7d.1521738866.git.heinzm@redhat.com>
-	<20180322194144.GA32294@redhat.com>
-	<ac064103-c40b-544a-ef33-e0eaba9a8070@redhat.com>
-	<20180326181651.GA22251@redhat.com>
+Subject: Re: [patch 0/8] dm-bufio patches
+Date: Mon, 26 Mar 2018 20:55:22 -0400
+Message-ID: <20180327005521.GA23487@redhat.com>
+References: <20180326182939.169591126@debian.vm>
+	<20180326185746.GA22409@redhat.com>
+	<alpine.LRH.2.02.1803261619480.29393@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20180326181651.GA22251@redhat.com>
+In-Reply-To: <alpine.LRH.2.02.1803261619480.29393@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,40 +20,53 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Heinz Mauelshagen <heinzm@redhat.com>
-Cc: dm-devel@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Mar 26 2018 at  2:16pm -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
+On Mon, Mar 26 2018 at  4:20pm -0400,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-> On Thu, Mar 22 2018 at  5:13pm -0400,
-> Heinz Mauelshagen <heinzm@redhat.com> wrote:
-> =
+> 
+> 
+> On Mon, 26 Mar 2018, Mike Snitzer wrote:
+> 
+> > On Mon, Mar 26 2018 at  2:29pm -0400,
+> > mpatocka@redhat.com <mpatocka@redhat.com> wrote:
+> > 
+> > > Hi
+> > > 
+> > > Here I'm sending the second version of dm-bufio patches for arbitrary
+> > > sector size.
+> > > 
+> > > I dropped the patch that removes alloc_pages because it turns out that
+> > > alloc_pages is faster than the slab allocator.
+> > 
+> > I had already staged the previous set, so I need to go back over that
+> > and update accordingly.
+> > 
+> > > I also added a patch that removes struct bio from struct dm_buffer
+> > > (reducing the size of dm_buffer to 1/3) and allocates the bio only when
+> > > doing read or write.
+> > 
+> > OK, I'll go over your new set and try to tease out any differences.
+> > 
+> > Mike
+> 
+> One more patch that I forgot to include.
+> 
+> 
+> 
+> From: Mikulas Patocka <mpatocka@redhat.com>
+> Subject: [PATCH] dm-bufio: delete outdated comment
+> 
+> This comment was true when dm-bufio was written, but since the kernel 4.3,
+> bios can have arbitrary size and the driver splits them.
+> 
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
-> > On 03/22/2018 08:41 PM, Mike Snitzer wrote:
-> > >On Thu, Mar 22 2018 at  1:21pm -0400,
-> > >Heinz Mauelshagen <heinzm@redhat.com> wrote:
-> > >
-> > >>This v2 addresses Mikulas' point about the variable range and folds in
-> > >>"[PATCH] dm raid: use __within_range() more in parse_raid_params()":
-> > >>
-> > >>parse_raid_parames() compared variable "int value" with
-> > >>INT_MAX to prevent overflow of mddev variables set.
-> > >>
-> > >>Change type to "long long value".
-> > >Can you elaborate on the risk/issue that is being fixed here?
-> > =
+I had already included this one back on March 4.
 
-> > Fix addresses a coverity finding supporting the full,
-> > positive range of the "struct mddev" int members
-> > set here.=A0 I.e. the "int" cast is compared with INT_MAX.
-> =
-
-> Can you cut and paste the relevant portions of the coverity report?
-
-I've dropped this patch for now.  Until I get more insight on what the
-problem is I'm not appreciating why changing to a larger data type is
-the right way forward (especially if MD is just using int anyway).
-
-Mike
+I've pushed dm-4.17 with all your bufio changes.  I tweaked headers and
+some whitespace, etc.  Please review and verify all looks fine, thanks:
+https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-4.17
