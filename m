@@ -1,20 +1,14 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: multipath-tools licenses (was Re: [PATCH]
- multipath-tools: replace FSF address with a www pointer)
-Date: Tue, 27 Mar 2018 23:42:52 +0200
-Message-ID: <32b2f869-e017-8f17-d902-64ebdd31b7ab@gmail.com>
-References: <20180310205002.3318-1-xose.vazquez@gmail.com>
-	<1521495458.3798.138.camel@suse.com>
-	<1a0b44c5-c7a6-85fa-b2dd-1bd542efbb76@gmail.com>
-	<1521837017.13100.106.camel@suse.com>
-	<20180326130447.3114ef2f@pentland.suse.de>
-	<1522067788.19335.55.camel@suse.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: [PATCH 2/2] libmultipath/propsel: (re)use static const
+	vars for origin
+Date: Tue, 27 Mar 2018 23:50:53 +0200
+Message-ID: <20180327215053.3631-3-mwilck@suse.com>
+References: <20180327215053.3631-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1522067788.19335.55.camel@suse.com>
-Content-Language: en-GB
+In-Reply-To: <20180327215053.3631-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,316 +18,507 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>, Hannes Reinecke <hare@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>, fge@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-T24gMDMvMjYvMjAxOCAwMjozNiBQTSwgTWFydGluIFdpbGNrIHdyb3RlOgoKPiBJdCdkIGJlIGEg
-Z29vZCBpZGVhIHRvIHVwZ3JhZGUgZ2VuZXJhbGx5IGZyb20gIkxpYnJhcnkgR1BMIHYyIiBhdCBs
-ZWFzdAo+IHRvIExHUEx2Mi4xLiBUaGF0IHNob3VsZG4ndCBiZSBhIHByb2JsZW0sIGFzIHRoZSBv
-bmx5IG1ham9yCj4gZGlmZmVyZXJlbmNlIGJldHdlZW4gTEdQTHYyIGFuZCBMR1BMdjIuMSBpcyB0
-aGUgYWRkaXRpb24gb2Ygwqc2YiBpbiB0aGUKPiBsYXR0ZXIsIGFsbG93aW5nIHRoZSB1c2Ugb2Yg
-ImEgc3VpdGFibGUgc2hhcmVkIGxpYnJhcnkgbWVjaGFuaXNtIGZvcgo+IGxpbmtpbmcgd2l0aCB0
-aGUgbGlicmFyeSIuCgpZZXMsIExHUEx2Mi4xIGlzIExHUEx2Mi4wIHBsdXMgwqc2YjoKLS0tY3V0
-LS0tLQogICAgYikgVXNlIGEgc3VpdGFibGUgc2hhcmVkIGxpYnJhcnkgbWVjaGFuaXNtIGZvciBs
-aW5raW5nIHdpdGggdGhlCiAgICBMaWJyYXJ5LiAgQSBzdWl0YWJsZSBtZWNoYW5pc20gaXMgb25l
-IHRoYXQgKDEpIHVzZXMgYXQgcnVuIHRpbWUgYQogICAgY29weSBvZiB0aGUgbGlicmFyeSBhbHJl
-YWR5IHByZXNlbnQgb24gdGhlIHVzZXIncyBjb21wdXRlciBzeXN0ZW0sCiAgICByYXRoZXIgdGhh
-biBjb3B5aW5nIGxpYnJhcnkgZnVuY3Rpb25zIGludG8gdGhlIGV4ZWN1dGFibGUsIGFuZCAoMikK
-ICAgIHdpbGwgb3BlcmF0ZSBwcm9wZXJseSB3aXRoIGEgbW9kaWZpZWQgdmVyc2lvbiBvZiB0aGUg
-bGlicmFyeSwgaWYKICAgIHRoZSB1c2VyIGluc3RhbGxzIG9uZSwgYXMgbG9uZyBhcyB0aGUgbW9k
-aWZpZWQgdmVyc2lvbiBpcwogICAgaW50ZXJmYWNlLWNvbXBhdGlibGUgd2l0aCB0aGUgdmVyc2lv
-biB0aGF0IHRoZSB3b3JrIHdhcyBtYWRlIHdpdGguCi0tLWVuZC0tLQoKCmh0dHBzOi8vd3d3Lmdu
-dS5vcmcvbGljZW5zZXMvb2xkLWxpY2Vuc2VzL2xncGwtMi4wLnR4dApodHRwczovL3d3dy5nbnUu
-b3JnL2xpY2Vuc2VzL29sZC1saWNlbnNlcy9sZ3BsLTIuMS50eHQKCgotLS0gbGdwbC0yLjAudHh0
-CTIwMTAtMDMtMjUgMTg6Mjk6NTUuMDAwMDAwMDAwICswMTAwCisrKyBsZ3BsLTIuMS50eHQJMjAx
-MC0wMy0yNCAwMDozNDowNS4wMDAwMDAwMDAgKzAxMDAKQEAgLTEsMTMgKzEsMTQgQEAKLSAgICAg
-ICAgICAgICAgICAgIEdOVSBMSUJSQVJZIEdFTkVSQUwgUFVCTElDIExJQ0VOU0UKLSAgICAgICAg
-ICAgICAgICAgICAgICAgVmVyc2lvbiAyLCBKdW5lIDE5OTEKKyAgICAgICAgICAgICAgICAgIEdO
-VSBMRVNTRVIgR0VORVJBTCBQVUJMSUMgTElDRU5TRQorICAgICAgICAgICAgICAgICAgICAgICBW
-ZXJzaW9uIDIuMSwgRmVicnVhcnkgMTk5OQoKLSBDb3B5cmlnaHQgKEMpIDE5OTEgRnJlZSBTb2Z0
-d2FyZSBGb3VuZGF0aW9uLCBJbmMuCisgQ29weXJpZ2h0IChDKSAxOTkxLCAxOTk5IEZyZWUgU29m
-dHdhcmUgRm91bmRhdGlvbiwgSW5jLgogIDUxIEZyYW5rbGluIFN0cmVldCwgRmlmdGggRmxvb3Is
-IEJvc3RvbiwgTUEgIDAyMTEwLTEzMDEgIFVTQQogIEV2ZXJ5b25lIGlzIHBlcm1pdHRlZCB0byBj
-b3B5IGFuZCBkaXN0cmlidXRlIHZlcmJhdGltIGNvcGllcwogIG9mIHRoaXMgbGljZW5zZSBkb2N1
-bWVudCwgYnV0IGNoYW5naW5nIGl0IGlzIG5vdCBhbGxvd2VkLgoKLVtUaGlzIGlzIHRoZSBmaXJz
-dCByZWxlYXNlZCB2ZXJzaW9uIG9mIHRoZSBsaWJyYXJ5IEdQTC4gIEl0IGlzCi0gbnVtYmVyZWQg
-MiBiZWNhdXNlIGl0IGdvZXMgd2l0aCB2ZXJzaW9uIDIgb2YgdGhlIG9yZGluYXJ5IEdQTC5dCitb
-VGhpcyBpcyB0aGUgZmlyc3QgcmVsZWFzZWQgdmVyc2lvbiBvZiB0aGUgTGVzc2VyIEdQTC4gIEl0
-IGFsc28gY291bnRzCisgYXMgdGhlIHN1Y2Nlc3NvciBvZiB0aGUgR05VIExpYnJhcnkgUHVibGlj
-IExpY2Vuc2UsIHZlcnNpb24gMiwgaGVuY2UKKyB0aGUgdmVyc2lvbiBudW1iZXIgMi4xLl0KCiAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgUHJlYW1ibGUKCkBAIC0xNiw5NyArMTcsMTA5IEBA
-IGZyZWVkb20gdG8gc2hhcmUgYW5kIGNoYW5nZSBpdC4gIEJ5IGNvbnQKIExpY2Vuc2VzIGFyZSBp
-bnRlbmRlZCB0byBndWFyYW50ZWUgeW91ciBmcmVlZG9tIHRvIHNoYXJlIGFuZCBjaGFuZ2UKIGZy
-ZWUgc29mdHdhcmUtLXRvIG1ha2Ugc3VyZSB0aGUgc29mdHdhcmUgaXMgZnJlZSBmb3IgYWxsIGl0
-cyB1c2Vycy4KCi0gIFRoaXMgbGljZW5zZSwgdGhlIExpYnJhcnkgR2VuZXJhbCBQdWJsaWMgTGlj
-ZW5zZSwgYXBwbGllcyB0byBzb21lCi1zcGVjaWFsbHkgZGVzaWduYXRlZCBGcmVlIFNvZnR3YXJl
-IEZvdW5kYXRpb24gc29mdHdhcmUsIGFuZCB0byBhbnkKLW90aGVyIGxpYnJhcmllcyB3aG9zZSBh
-dXRob3JzIGRlY2lkZSB0byB1c2UgaXQuICBZb3UgY2FuIHVzZSBpdCBmb3IKLXlvdXIgbGlicmFy
-aWVzLCB0b28uCi0KLSAgV2hlbiB3ZSBzcGVhayBvZiBmcmVlIHNvZnR3YXJlLCB3ZSBhcmUgcmVm
-ZXJyaW5nIHRvIGZyZWVkb20sIG5vdAotcHJpY2UuICBPdXIgR2VuZXJhbCBQdWJsaWMgTGljZW5z
-ZXMgYXJlIGRlc2lnbmVkIHRvIG1ha2Ugc3VyZSB0aGF0IHlvdQotaGF2ZSB0aGUgZnJlZWRvbSB0
-byBkaXN0cmlidXRlIGNvcGllcyBvZiBmcmVlIHNvZnR3YXJlIChhbmQgY2hhcmdlIGZvcgotdGhp
-cyBzZXJ2aWNlIGlmIHlvdSB3aXNoKSwgdGhhdCB5b3UgcmVjZWl2ZSBzb3VyY2UgY29kZSBvciBj
-YW4gZ2V0IGl0Ci1pZiB5b3Ugd2FudCBpdCwgdGhhdCB5b3UgY2FuIGNoYW5nZSB0aGUgc29mdHdh
-cmUgb3IgdXNlIHBpZWNlcyBvZiBpdAotaW4gbmV3IGZyZWUgcHJvZ3JhbXM7IGFuZCB0aGF0IHlv
-dSBrbm93IHlvdSBjYW4gZG8gdGhlc2UgdGhpbmdzLgorICBUaGlzIGxpY2Vuc2UsIHRoZSBMZXNz
-ZXIgR2VuZXJhbCBQdWJsaWMgTGljZW5zZSwgYXBwbGllcyB0byBzb21lCitzcGVjaWFsbHkgZGVz
-aWduYXRlZCBzb2Z0d2FyZSBwYWNrYWdlcy0tdHlwaWNhbGx5IGxpYnJhcmllcy0tb2YgdGhlCitG
-cmVlIFNvZnR3YXJlIEZvdW5kYXRpb24gYW5kIG90aGVyIGF1dGhvcnMgd2hvIGRlY2lkZSB0byB1
-c2UgaXQuICBZb3UKK2NhbiB1c2UgaXQgdG9vLCBidXQgd2Ugc3VnZ2VzdCB5b3UgZmlyc3QgdGhp
-bmsgY2FyZWZ1bGx5IGFib3V0IHdoZXRoZXIKK3RoaXMgbGljZW5zZSBvciB0aGUgb3JkaW5hcnkg
-R2VuZXJhbCBQdWJsaWMgTGljZW5zZSBpcyB0aGUgYmV0dGVyCitzdHJhdGVneSB0byB1c2UgaW4g
-YW55IHBhcnRpY3VsYXIgY2FzZSwgYmFzZWQgb24gdGhlIGV4cGxhbmF0aW9ucyBiZWxvdy4KKwor
-ICBXaGVuIHdlIHNwZWFrIG9mIGZyZWUgc29mdHdhcmUsIHdlIGFyZSByZWZlcnJpbmcgdG8gZnJl
-ZWRvbSBvZiB1c2UsCitub3QgcHJpY2UuICBPdXIgR2VuZXJhbCBQdWJsaWMgTGljZW5zZXMgYXJl
-IGRlc2lnbmVkIHRvIG1ha2Ugc3VyZSB0aGF0Cit5b3UgaGF2ZSB0aGUgZnJlZWRvbSB0byBkaXN0
-cmlidXRlIGNvcGllcyBvZiBmcmVlIHNvZnR3YXJlIChhbmQgY2hhcmdlCitmb3IgdGhpcyBzZXJ2
-aWNlIGlmIHlvdSB3aXNoKTsgdGhhdCB5b3UgcmVjZWl2ZSBzb3VyY2UgY29kZSBvciBjYW4gZ2V0
-CitpdCBpZiB5b3Ugd2FudCBpdDsgdGhhdCB5b3UgY2FuIGNoYW5nZSB0aGUgc29mdHdhcmUgYW5k
-IHVzZSBwaWVjZXMgb2YKK2l0IGluIG5ldyBmcmVlIHByb2dyYW1zOyBhbmQgdGhhdCB5b3UgYXJl
-IGluZm9ybWVkIHRoYXQgeW91IGNhbiBkbwordGhlc2UgdGhpbmdzLgoKICAgVG8gcHJvdGVjdCB5
-b3VyIHJpZ2h0cywgd2UgbmVlZCB0byBtYWtlIHJlc3RyaWN0aW9ucyB0aGF0IGZvcmJpZAotYW55
-b25lIHRvIGRlbnkgeW91IHRoZXNlIHJpZ2h0cyBvciB0byBhc2sgeW91IHRvIHN1cnJlbmRlciB0
-aGUgcmlnaHRzLgotVGhlc2UgcmVzdHJpY3Rpb25zIHRyYW5zbGF0ZSB0byBjZXJ0YWluIHJlc3Bv
-bnNpYmlsaXRpZXMgZm9yIHlvdSBpZgoteW91IGRpc3RyaWJ1dGUgY29waWVzIG9mIHRoZSBsaWJy
-YXJ5LCBvciBpZiB5b3UgbW9kaWZ5IGl0LgorZGlzdHJpYnV0b3JzIHRvIGRlbnkgeW91IHRoZXNl
-IHJpZ2h0cyBvciB0byBhc2sgeW91IHRvIHN1cnJlbmRlciB0aGVzZQorcmlnaHRzLiAgVGhlc2Ug
-cmVzdHJpY3Rpb25zIHRyYW5zbGF0ZSB0byBjZXJ0YWluIHJlc3BvbnNpYmlsaXRpZXMgZm9yCit5
-b3UgaWYgeW91IGRpc3RyaWJ1dGUgY29waWVzIG9mIHRoZSBsaWJyYXJ5IG9yIGlmIHlvdSBtb2Rp
-ZnkgaXQuCgogICBGb3IgZXhhbXBsZSwgaWYgeW91IGRpc3RyaWJ1dGUgY29waWVzIG9mIHRoZSBs
-aWJyYXJ5LCB3aGV0aGVyIGdyYXRpcwogb3IgZm9yIGEgZmVlLCB5b3UgbXVzdCBnaXZlIHRoZSBy
-ZWNpcGllbnRzIGFsbCB0aGUgcmlnaHRzIHRoYXQgd2UgZ2F2ZQogeW91LiAgWW91IG11c3QgbWFr
-ZSBzdXJlIHRoYXQgdGhleSwgdG9vLCByZWNlaXZlIG9yIGNhbiBnZXQgdGhlIHNvdXJjZQotY29k
-ZS4gIElmIHlvdSBsaW5rIGEgcHJvZ3JhbSB3aXRoIHRoZSBsaWJyYXJ5LCB5b3UgbXVzdCBwcm92
-aWRlCi1jb21wbGV0ZSBvYmplY3QgZmlsZXMgdG8gdGhlIHJlY2lwaWVudHMgc28gdGhhdCB0aGV5
-IGNhbiByZWxpbmsgdGhlbQotd2l0aCB0aGUgbGlicmFyeSwgYWZ0ZXIgbWFraW5nIGNoYW5nZXMg
-dG8gdGhlIGxpYnJhcnkgYW5kIHJlY29tcGlsaW5nCitjb2RlLiAgSWYgeW91IGxpbmsgb3RoZXIg
-Y29kZSB3aXRoIHRoZSBsaWJyYXJ5LCB5b3UgbXVzdCBwcm92aWRlCitjb21wbGV0ZSBvYmplY3Qg
-ZmlsZXMgdG8gdGhlIHJlY2lwaWVudHMsIHNvIHRoYXQgdGhleSBjYW4gcmVsaW5rIHRoZW0KK3dp
-dGggdGhlIGxpYnJhcnkgYWZ0ZXIgbWFraW5nIGNoYW5nZXMgdG8gdGhlIGxpYnJhcnkgYW5kIHJl
-Y29tcGlsaW5nCiBpdC4gIEFuZCB5b3UgbXVzdCBzaG93IHRoZW0gdGhlc2UgdGVybXMgc28gdGhl
-eSBrbm93IHRoZWlyIHJpZ2h0cy4KCi0gIE91ciBtZXRob2Qgb2YgcHJvdGVjdGluZyB5b3VyIHJp
-Z2h0cyBoYXMgdHdvIHN0ZXBzOiAoMSkgY29weXJpZ2h0Ci10aGUgbGlicmFyeSwgYW5kICgyKSBv
-ZmZlciB5b3UgdGhpcyBsaWNlbnNlIHdoaWNoIGdpdmVzIHlvdSBsZWdhbAorICBXZSBwcm90ZWN0
-IHlvdXIgcmlnaHRzIHdpdGggYSB0d28tc3RlcCBtZXRob2Q6ICgxKSB3ZSBjb3B5cmlnaHQgdGhl
-CitsaWJyYXJ5LCBhbmQgKDIpIHdlIG9mZmVyIHlvdSB0aGlzIGxpY2Vuc2UsIHdoaWNoIGdpdmVz
-IHlvdSBsZWdhbAogcGVybWlzc2lvbiB0byBjb3B5LCBkaXN0cmlidXRlIGFuZC9vciBtb2RpZnkg
-dGhlIGxpYnJhcnkuCgotICBBbHNvLCBmb3IgZWFjaCBkaXN0cmlidXRvcidzIHByb3RlY3Rpb24s
-IHdlIHdhbnQgdG8gbWFrZSBjZXJ0YWluCi10aGF0IGV2ZXJ5b25lIHVuZGVyc3RhbmRzIHRoYXQg
-dGhlcmUgaXMgbm8gd2FycmFudHkgZm9yIHRoaXMgZnJlZQotbGlicmFyeS4gIElmIHRoZSBsaWJy
-YXJ5IGlzIG1vZGlmaWVkIGJ5IHNvbWVvbmUgZWxzZSBhbmQgcGFzc2VkIG9uLCB3ZQotd2FudCBp
-dHMgcmVjaXBpZW50cyB0byBrbm93IHRoYXQgd2hhdCB0aGV5IGhhdmUgaXMgbm90IHRoZSBvcmln
-aW5hbAotdmVyc2lvbiwgc28gdGhhdCBhbnkgcHJvYmxlbXMgaW50cm9kdWNlZCBieSBvdGhlcnMg
-d2lsbCBub3QgcmVmbGVjdCBvbgotdGhlIG9yaWdpbmFsIGF1dGhvcnMnIHJlcHV0YXRpb25zLgor
-ICBUbyBwcm90ZWN0IGVhY2ggZGlzdHJpYnV0b3IsIHdlIHdhbnQgdG8gbWFrZSBpdCB2ZXJ5IGNs
-ZWFyIHRoYXQKK3RoZXJlIGlzIG5vIHdhcnJhbnR5IGZvciB0aGUgZnJlZSBsaWJyYXJ5LiAgQWxz
-bywgaWYgdGhlIGxpYnJhcnkgaXMKK21vZGlmaWVkIGJ5IHNvbWVvbmUgZWxzZSBhbmQgcGFzc2Vk
-IG9uLCB0aGUgcmVjaXBpZW50cyBzaG91bGQga25vdwordGhhdCB3aGF0IHRoZXkgaGF2ZSBpcyBu
-b3QgdGhlIG9yaWdpbmFsIHZlcnNpb24sIHNvIHRoYXQgdGhlIG9yaWdpbmFsCithdXRob3IncyBy
-ZXB1dGF0aW9uIHdpbGwgbm90IGJlIGFmZmVjdGVkIGJ5IHByb2JsZW1zIHRoYXQgbWlnaHQgYmUK
-K2ludHJvZHVjZWQgYnkgb3RoZXJzLgogDAotICBGaW5hbGx5LCBhbnkgZnJlZSBwcm9ncmFtIGlz
-IHRocmVhdGVuZWQgY29uc3RhbnRseSBieSBzb2Z0d2FyZQotcGF0ZW50cy4gIFdlIHdpc2ggdG8g
-YXZvaWQgdGhlIGRhbmdlciB0aGF0IGNvbXBhbmllcyBkaXN0cmlidXRpbmcgZnJlZQotc29mdHdh
-cmUgd2lsbCBpbmRpdmlkdWFsbHkgb2J0YWluIHBhdGVudCBsaWNlbnNlcywgdGh1cyBpbiBlZmZl
-Y3QKLXRyYW5zZm9ybWluZyB0aGUgcHJvZ3JhbSBpbnRvIHByb3ByaWV0YXJ5IHNvZnR3YXJlLiAg
-VG8gcHJldmVudCB0aGlzLAotd2UgaGF2ZSBtYWRlIGl0IGNsZWFyIHRoYXQgYW55IHBhdGVudCBt
-dXN0IGJlIGxpY2Vuc2VkIGZvciBldmVyeW9uZSdzCi1mcmVlIHVzZSBvciBub3QgbGljZW5zZWQg
-YXQgYWxsLgotCi0gIE1vc3QgR05VIHNvZnR3YXJlLCBpbmNsdWRpbmcgc29tZSBsaWJyYXJpZXMs
-IGlzIGNvdmVyZWQgYnkgdGhlIG9yZGluYXJ5Ci1HTlUgR2VuZXJhbCBQdWJsaWMgTGljZW5zZSwg
-d2hpY2ggd2FzIGRlc2lnbmVkIGZvciB1dGlsaXR5IHByb2dyYW1zLiAgVGhpcwotbGljZW5zZSwg
-dGhlIEdOVSBMaWJyYXJ5IEdlbmVyYWwgUHVibGljIExpY2Vuc2UsIGFwcGxpZXMgdG8gY2VydGFp
-bgotZGVzaWduYXRlZCBsaWJyYXJpZXMuICBUaGlzIGxpY2Vuc2UgaXMgcXVpdGUgZGlmZmVyZW50
-IGZyb20gdGhlIG9yZGluYXJ5Ci1vbmU7IGJlIHN1cmUgdG8gcmVhZCBpdCBpbiBmdWxsLCBhbmQg
-ZG9uJ3QgYXNzdW1lIHRoYXQgYW55dGhpbmcgaW4gaXQgaXMKLXRoZSBzYW1lIGFzIGluIHRoZSBv
-cmRpbmFyeSBsaWNlbnNlLgotCi0gIFRoZSByZWFzb24gd2UgaGF2ZSBhIHNlcGFyYXRlIHB1Ymxp
-YyBsaWNlbnNlIGZvciBzb21lIGxpYnJhcmllcyBpcyB0aGF0Ci10aGV5IGJsdXIgdGhlIGRpc3Rp
-bmN0aW9uIHdlIHVzdWFsbHkgbWFrZSBiZXR3ZWVuIG1vZGlmeWluZyBvciBhZGRpbmcgdG8gYQot
-cHJvZ3JhbSBhbmQgc2ltcGx5IHVzaW5nIGl0LiAgTGlua2luZyBhIHByb2dyYW0gd2l0aCBhIGxp
-YnJhcnksIHdpdGhvdXQKLWNoYW5naW5nIHRoZSBsaWJyYXJ5LCBpcyBpbiBzb21lIHNlbnNlIHNp
-bXBseSB1c2luZyB0aGUgbGlicmFyeSwgYW5kIGlzCi1hbmFsb2dvdXMgdG8gcnVubmluZyBhIHV0
-aWxpdHkgcHJvZ3JhbSBvciBhcHBsaWNhdGlvbiBwcm9ncmFtLiAgSG93ZXZlciwgaW4KLWEgdGV4
-dHVhbCBhbmQgbGVnYWwgc2Vuc2UsIHRoZSBsaW5rZWQgZXhlY3V0YWJsZSBpcyBhIGNvbWJpbmVk
-IHdvcmssIGEKLWRlcml2YXRpdmUgb2YgdGhlIG9yaWdpbmFsIGxpYnJhcnksIGFuZCB0aGUgb3Jk
-aW5hcnkgR2VuZXJhbCBQdWJsaWMgTGljZW5zZQotdHJlYXRzIGl0IGFzIHN1Y2guCi0KLSAgQmVj
-YXVzZSBvZiB0aGlzIGJsdXJyZWQgZGlzdGluY3Rpb24sIHVzaW5nIHRoZSBvcmRpbmFyeSBHZW5l
-cmFsCi1QdWJsaWMgTGljZW5zZSBmb3IgbGlicmFyaWVzIGRpZCBub3QgZWZmZWN0aXZlbHkgcHJv
-bW90ZSBzb2Z0d2FyZQotc2hhcmluZywgYmVjYXVzZSBtb3N0IGRldmVsb3BlcnMgZGlkIG5vdCB1
-c2UgdGhlIGxpYnJhcmllcy4gIFdlCi1jb25jbHVkZWQgdGhhdCB3ZWFrZXIgY29uZGl0aW9ucyBt
-aWdodCBwcm9tb3RlIHNoYXJpbmcgYmV0dGVyLgotCi0gIEhvd2V2ZXIsIHVucmVzdHJpY3RlZCBs
-aW5raW5nIG9mIG5vbi1mcmVlIHByb2dyYW1zIHdvdWxkIGRlcHJpdmUgdGhlCi11c2VycyBvZiB0
-aG9zZSBwcm9ncmFtcyBvZiBhbGwgYmVuZWZpdCBmcm9tIHRoZSBmcmVlIHN0YXR1cyBvZiB0aGUK
-LWxpYnJhcmllcyB0aGVtc2VsdmVzLiAgVGhpcyBMaWJyYXJ5IEdlbmVyYWwgUHVibGljIExpY2Vu
-c2UgaXMgaW50ZW5kZWQgdG8KLXBlcm1pdCBkZXZlbG9wZXJzIG9mIG5vbi1mcmVlIHByb2dyYW1z
-IHRvIHVzZSBmcmVlIGxpYnJhcmllcywgd2hpbGUKLXByZXNlcnZpbmcgeW91ciBmcmVlZG9tIGFz
-IGEgdXNlciBvZiBzdWNoIHByb2dyYW1zIHRvIGNoYW5nZSB0aGUgZnJlZQotbGlicmFyaWVzIHRo
-YXQgYXJlIGluY29ycG9yYXRlZCBpbiB0aGVtLiAgKFdlIGhhdmUgbm90IHNlZW4gaG93IHRvIGFj
-aGlldmUKLXRoaXMgYXMgcmVnYXJkcyBjaGFuZ2VzIGluIGhlYWRlciBmaWxlcywgYnV0IHdlIGhh
-dmUgYWNoaWV2ZWQgaXQgYXMgcmVnYXJkcwotY2hhbmdlcyBpbiB0aGUgYWN0dWFsIGZ1bmN0aW9u
-cyBvZiB0aGUgTGlicmFyeS4pICBUaGUgaG9wZSBpcyB0aGF0IHRoaXMKLXdpbGwgbGVhZCB0byBm
-YXN0ZXIgZGV2ZWxvcG1lbnQgb2YgZnJlZSBsaWJyYXJpZXMuCisgIEZpbmFsbHksIHNvZnR3YXJl
-IHBhdGVudHMgcG9zZSBhIGNvbnN0YW50IHRocmVhdCB0byB0aGUgZXhpc3RlbmNlIG9mCithbnkg
-ZnJlZSBwcm9ncmFtLiAgV2Ugd2lzaCB0byBtYWtlIHN1cmUgdGhhdCBhIGNvbXBhbnkgY2Fubm90
-CitlZmZlY3RpdmVseSByZXN0cmljdCB0aGUgdXNlcnMgb2YgYSBmcmVlIHByb2dyYW0gYnkgb2J0
-YWluaW5nIGEKK3Jlc3RyaWN0aXZlIGxpY2Vuc2UgZnJvbSBhIHBhdGVudCBob2xkZXIuICBUaGVy
-ZWZvcmUsIHdlIGluc2lzdCB0aGF0CithbnkgcGF0ZW50IGxpY2Vuc2Ugb2J0YWluZWQgZm9yIGEg
-dmVyc2lvbiBvZiB0aGUgbGlicmFyeSBtdXN0IGJlCitjb25zaXN0ZW50IHdpdGggdGhlIGZ1bGwg
-ZnJlZWRvbSBvZiB1c2Ugc3BlY2lmaWVkIGluIHRoaXMgbGljZW5zZS4KKworICBNb3N0IEdOVSBz
-b2Z0d2FyZSwgaW5jbHVkaW5nIHNvbWUgbGlicmFyaWVzLCBpcyBjb3ZlcmVkIGJ5IHRoZQorb3Jk
-aW5hcnkgR05VIEdlbmVyYWwgUHVibGljIExpY2Vuc2UuICBUaGlzIGxpY2Vuc2UsIHRoZSBHTlUg
-TGVzc2VyCitHZW5lcmFsIFB1YmxpYyBMaWNlbnNlLCBhcHBsaWVzIHRvIGNlcnRhaW4gZGVzaWdu
-YXRlZCBsaWJyYXJpZXMsIGFuZAoraXMgcXVpdGUgZGlmZmVyZW50IGZyb20gdGhlIG9yZGluYXJ5
-IEdlbmVyYWwgUHVibGljIExpY2Vuc2UuICBXZSB1c2UKK3RoaXMgbGljZW5zZSBmb3IgY2VydGFp
-biBsaWJyYXJpZXMgaW4gb3JkZXIgdG8gcGVybWl0IGxpbmtpbmcgdGhvc2UKK2xpYnJhcmllcyBp
-bnRvIG5vbi1mcmVlIHByb2dyYW1zLgorCisgIFdoZW4gYSBwcm9ncmFtIGlzIGxpbmtlZCB3aXRo
-IGEgbGlicmFyeSwgd2hldGhlciBzdGF0aWNhbGx5IG9yIHVzaW5nCithIHNoYXJlZCBsaWJyYXJ5
-LCB0aGUgY29tYmluYXRpb24gb2YgdGhlIHR3byBpcyBsZWdhbGx5IHNwZWFraW5nIGEKK2NvbWJp
-bmVkIHdvcmssIGEgZGVyaXZhdGl2ZSBvZiB0aGUgb3JpZ2luYWwgbGlicmFyeS4gIFRoZSBvcmRp
-bmFyeQorR2VuZXJhbCBQdWJsaWMgTGljZW5zZSB0aGVyZWZvcmUgcGVybWl0cyBzdWNoIGxpbmtp
-bmcgb25seSBpZiB0aGUKK2VudGlyZSBjb21iaW5hdGlvbiBmaXRzIGl0cyBjcml0ZXJpYSBvZiBm
-cmVlZG9tLiAgVGhlIExlc3NlciBHZW5lcmFsCitQdWJsaWMgTGljZW5zZSBwZXJtaXRzIG1vcmUg
-bGF4IGNyaXRlcmlhIGZvciBsaW5raW5nIG90aGVyIGNvZGUgd2l0aAordGhlIGxpYnJhcnkuCisK
-KyAgV2UgY2FsbCB0aGlzIGxpY2Vuc2UgdGhlICJMZXNzZXIiIEdlbmVyYWwgUHVibGljIExpY2Vu
-c2UgYmVjYXVzZSBpdAorZG9lcyBMZXNzIHRvIHByb3RlY3QgdGhlIHVzZXIncyBmcmVlZG9tIHRo
-YW4gdGhlIG9yZGluYXJ5IEdlbmVyYWwKK1B1YmxpYyBMaWNlbnNlLiAgSXQgYWxzbyBwcm92aWRl
-cyBvdGhlciBmcmVlIHNvZnR3YXJlIGRldmVsb3BlcnMgTGVzcworb2YgYW4gYWR2YW50YWdlIG92
-ZXIgY29tcGV0aW5nIG5vbi1mcmVlIHByb2dyYW1zLiAgVGhlc2UgZGlzYWR2YW50YWdlcworYXJl
-IHRoZSByZWFzb24gd2UgdXNlIHRoZSBvcmRpbmFyeSBHZW5lcmFsIFB1YmxpYyBMaWNlbnNlIGZv
-ciBtYW55CitsaWJyYXJpZXMuICBIb3dldmVyLCB0aGUgTGVzc2VyIGxpY2Vuc2UgcHJvdmlkZXMg
-YWR2YW50YWdlcyBpbiBjZXJ0YWluCitzcGVjaWFsIGNpcmN1bXN0YW5jZXMuCisKKyAgRm9yIGV4
-YW1wbGUsIG9uIHJhcmUgb2NjYXNpb25zLCB0aGVyZSBtYXkgYmUgYSBzcGVjaWFsIG5lZWQgdG8K
-K2VuY291cmFnZSB0aGUgd2lkZXN0IHBvc3NpYmxlIHVzZSBvZiBhIGNlcnRhaW4gbGlicmFyeSwg
-c28gdGhhdCBpdCBiZWNvbWVzCithIGRlLWZhY3RvIHN0YW5kYXJkLiAgVG8gYWNoaWV2ZSB0aGlz
-LCBub24tZnJlZSBwcm9ncmFtcyBtdXN0IGJlCithbGxvd2VkIHRvIHVzZSB0aGUgbGlicmFyeS4g
-IEEgbW9yZSBmcmVxdWVudCBjYXNlIGlzIHRoYXQgYSBmcmVlCitsaWJyYXJ5IGRvZXMgdGhlIHNh
-bWUgam9iIGFzIHdpZGVseSB1c2VkIG5vbi1mcmVlIGxpYnJhcmllcy4gIEluIHRoaXMKK2Nhc2Us
-IHRoZXJlIGlzIGxpdHRsZSB0byBnYWluIGJ5IGxpbWl0aW5nIHRoZSBmcmVlIGxpYnJhcnkgdG8g
-ZnJlZQorc29mdHdhcmUgb25seSwgc28gd2UgdXNlIHRoZSBMZXNzZXIgR2VuZXJhbCBQdWJsaWMg
-TGljZW5zZS4KKworICBJbiBvdGhlciBjYXNlcywgcGVybWlzc2lvbiB0byB1c2UgYSBwYXJ0aWN1
-bGFyIGxpYnJhcnkgaW4gbm9uLWZyZWUKK3Byb2dyYW1zIGVuYWJsZXMgYSBncmVhdGVyIG51bWJl
-ciBvZiBwZW9wbGUgdG8gdXNlIGEgbGFyZ2UgYm9keSBvZgorZnJlZSBzb2Z0d2FyZS4gIEZvciBl
-eGFtcGxlLCBwZXJtaXNzaW9uIHRvIHVzZSB0aGUgR05VIEMgTGlicmFyeSBpbgorbm9uLWZyZWUg
-cHJvZ3JhbXMgZW5hYmxlcyBtYW55IG1vcmUgcGVvcGxlIHRvIHVzZSB0aGUgd2hvbGUgR05VCitv
-cGVyYXRpbmcgc3lzdGVtLCBhcyB3ZWxsIGFzIGl0cyB2YXJpYW50LCB0aGUgR05VL0xpbnV4IG9w
-ZXJhdGluZworc3lzdGVtLgorCisgIEFsdGhvdWdoIHRoZSBMZXNzZXIgR2VuZXJhbCBQdWJsaWMg
-TGljZW5zZSBpcyBMZXNzIHByb3RlY3RpdmUgb2YgdGhlCit1c2VycycgZnJlZWRvbSwgaXQgZG9l
-cyBlbnN1cmUgdGhhdCB0aGUgdXNlciBvZiBhIHByb2dyYW0gdGhhdCBpcworbGlua2VkIHdpdGgg
-dGhlIExpYnJhcnkgaGFzIHRoZSBmcmVlZG9tIGFuZCB0aGUgd2hlcmV3aXRoYWwgdG8gcnVuCit0
-aGF0IHByb2dyYW0gdXNpbmcgYSBtb2RpZmllZCB2ZXJzaW9uIG9mIHRoZSBMaWJyYXJ5LgoKICAg
-VGhlIHByZWNpc2UgdGVybXMgYW5kIGNvbmRpdGlvbnMgZm9yIGNvcHlpbmcsIGRpc3RyaWJ1dGlv
-biBhbmQKIG1vZGlmaWNhdGlvbiBmb2xsb3cuICBQYXkgY2xvc2UgYXR0ZW50aW9uIHRvIHRoZSBk
-aWZmZXJlbmNlIGJldHdlZW4gYQogIndvcmsgYmFzZWQgb24gdGhlIGxpYnJhcnkiIGFuZCBhICJ3
-b3JrIHRoYXQgdXNlcyB0aGUgbGlicmFyeSIuICBUaGUKLWZvcm1lciBjb250YWlucyBjb2RlIGRl
-cml2ZWQgZnJvbSB0aGUgbGlicmFyeSwgd2hpbGUgdGhlIGxhdHRlciBvbmx5Ci13b3JrcyB0b2dl
-dGhlciB3aXRoIHRoZSBsaWJyYXJ5LgotCi0gIE5vdGUgdGhhdCBpdCBpcyBwb3NzaWJsZSBmb3Ig
-YSBsaWJyYXJ5IHRvIGJlIGNvdmVyZWQgYnkgdGhlIG9yZGluYXJ5Ci1HZW5lcmFsIFB1YmxpYyBM
-aWNlbnNlIHJhdGhlciB0aGFuIGJ5IHRoaXMgc3BlY2lhbCBvbmUuCitmb3JtZXIgY29udGFpbnMg
-Y29kZSBkZXJpdmVkIGZyb20gdGhlIGxpYnJhcnksIHdoZXJlYXMgdGhlIGxhdHRlciBtdXN0Citi
-ZSBjb21iaW5lZCB3aXRoIHRoZSBsaWJyYXJ5IGluIG9yZGVyIHRvIHJ1bi4KIAwKLSAgICAgICAg
-ICAgICAgICAgIEdOVSBMSUJSQVJZIEdFTkVSQUwgUFVCTElDIExJQ0VOU0UKKyAgICAgICAgICAg
-ICAgICAgIEdOVSBMRVNTRVIgR0VORVJBTCBQVUJMSUMgTElDRU5TRQogICAgVEVSTVMgQU5EIENP
-TkRJVElPTlMgRk9SIENPUFlJTkcsIERJU1RSSUJVVElPTiBBTkQgTU9ESUZJQ0FUSU9OCgotICAw
-LiBUaGlzIExpY2Vuc2UgQWdyZWVtZW50IGFwcGxpZXMgdG8gYW55IHNvZnR3YXJlIGxpYnJhcnkg
-d2hpY2gKLWNvbnRhaW5zIGEgbm90aWNlIHBsYWNlZCBieSB0aGUgY29weXJpZ2h0IGhvbGRlciBv
-ciBvdGhlciBhdXRob3JpemVkCi1wYXJ0eSBzYXlpbmcgaXQgbWF5IGJlIGRpc3RyaWJ1dGVkIHVu
-ZGVyIHRoZSB0ZXJtcyBvZiB0aGlzIExpYnJhcnkKLUdlbmVyYWwgUHVibGljIExpY2Vuc2UgKGFs
-c28gY2FsbGVkICJ0aGlzIExpY2Vuc2UiKS4gIEVhY2ggbGljZW5zZWUgaXMKLWFkZHJlc3NlZCBh
-cyAieW91Ii4KKyAgMC4gVGhpcyBMaWNlbnNlIEFncmVlbWVudCBhcHBsaWVzIHRvIGFueSBzb2Z0
-d2FyZSBsaWJyYXJ5IG9yIG90aGVyCitwcm9ncmFtIHdoaWNoIGNvbnRhaW5zIGEgbm90aWNlIHBs
-YWNlZCBieSB0aGUgY29weXJpZ2h0IGhvbGRlciBvcgorb3RoZXIgYXV0aG9yaXplZCBwYXJ0eSBz
-YXlpbmcgaXQgbWF5IGJlIGRpc3RyaWJ1dGVkIHVuZGVyIHRoZSB0ZXJtcyBvZgordGhpcyBMZXNz
-ZXIgR2VuZXJhbCBQdWJsaWMgTGljZW5zZSAoYWxzbyBjYWxsZWQgInRoaXMgTGljZW5zZSIpLgor
-RWFjaCBsaWNlbnNlZSBpcyBhZGRyZXNzZWQgYXMgInlvdSIuCgogICBBICJsaWJyYXJ5IiBtZWFu
-cyBhIGNvbGxlY3Rpb24gb2Ygc29mdHdhcmUgZnVuY3Rpb25zIGFuZC9vciBkYXRhCiBwcmVwYXJl
-ZCBzbyBhcyB0byBiZSBjb252ZW5pZW50bHkgbGlua2VkIHdpdGggYXBwbGljYXRpb24gcHJvZ3Jh
-bXMKQEAgLTEzMyw3ICsxNDYsNyBAQCBzdWNoIGEgcHJvZ3JhbSBpcyBjb3ZlcmVkIG9ubHkgaWYg
-aXRzIGNvCiBvbiB0aGUgTGlicmFyeSAoaW5kZXBlbmRlbnQgb2YgdGhlIHVzZSBvZiB0aGUgTGli
-cmFyeSBpbiBhIHRvb2wgZm9yCiB3cml0aW5nIGl0KS4gIFdoZXRoZXIgdGhhdCBpcyB0cnVlIGRl
-cGVuZHMgb24gd2hhdCB0aGUgTGlicmFyeSBkb2VzCiBhbmQgd2hhdCB0aGUgcHJvZ3JhbSB0aGF0
-IHVzZXMgdGhlIExpYnJhcnkgZG9lcy4KLQorCiAgIDEuIFlvdSBtYXkgY29weSBhbmQgZGlzdHJp
-YnV0ZSB2ZXJiYXRpbSBjb3BpZXMgb2YgdGhlIExpYnJhcnkncwogY29tcGxldGUgc291cmNlIGNv
-ZGUgYXMgeW91IHJlY2VpdmUgaXQsIGluIGFueSBtZWRpdW0sIHByb3ZpZGVkIHRoYXQKIHlvdSBj
-b25zcGljdW91c2x5IGFuZCBhcHByb3ByaWF0ZWx5IHB1Ymxpc2ggb24gZWFjaCBjb3B5IGFuCkBA
-IC0yNTUsNyArMjY4LDcgQEAgZGlzdHJpYnV0ZSB0aGUgb2JqZWN0IGNvZGUgZm9yIHRoZSB3b3Jr
-CiBBbnkgZXhlY3V0YWJsZXMgY29udGFpbmluZyB0aGF0IHdvcmsgYWxzbyBmYWxsIHVuZGVyIFNl
-Y3Rpb24gNiwKIHdoZXRoZXIgb3Igbm90IHRoZXkgYXJlIGxpbmtlZCBkaXJlY3RseSB3aXRoIHRo
-ZSBMaWJyYXJ5IGl0c2VsZi4KIAwKLSAgNi4gQXMgYW4gZXhjZXB0aW9uIHRvIHRoZSBTZWN0aW9u
-cyBhYm92ZSwgeW91IG1heSBhbHNvIGNvbXBpbGUgb3IKKyAgNi4gQXMgYW4gZXhjZXB0aW9uIHRv
-IHRoZSBTZWN0aW9ucyBhYm92ZSwgeW91IG1heSBhbHNvIGNvbWJpbmUgb3IKIGxpbmsgYSAid29y
-ayB0aGF0IHVzZXMgdGhlIExpYnJhcnkiIHdpdGggdGhlIExpYnJhcnkgdG8gcHJvZHVjZSBhCiB3
-b3JrIGNvbnRhaW5pbmcgcG9ydGlvbnMgb2YgdGhlIExpYnJhcnksIGFuZCBkaXN0cmlidXRlIHRo
-YXQgd29yawogdW5kZXIgdGVybXMgb2YgeW91ciBjaG9pY2UsIHByb3ZpZGVkIHRoYXQgdGhlIHRl
-cm1zIHBlcm1pdApAQCAtMjgyLDIzICsyOTUsMzEgQEAgb2YgdGhlc2UgdGhpbmdzOgogICAgIExp
-YnJhcnkgd2lsbCBub3QgbmVjZXNzYXJpbHkgYmUgYWJsZSB0byByZWNvbXBpbGUgdGhlIGFwcGxp
-Y2F0aW9uCiAgICAgdG8gdXNlIHRoZSBtb2RpZmllZCBkZWZpbml0aW9ucy4pCgotICAgIGIpIEFj
-Y29tcGFueSB0aGUgd29yayB3aXRoIGEgd3JpdHRlbiBvZmZlciwgdmFsaWQgZm9yIGF0CisgICAg
-YikgVXNlIGEgc3VpdGFibGUgc2hhcmVkIGxpYnJhcnkgbWVjaGFuaXNtIGZvciBsaW5raW5nIHdp
-dGggdGhlCisgICAgTGlicmFyeS4gIEEgc3VpdGFibGUgbWVjaGFuaXNtIGlzIG9uZSB0aGF0ICgx
-KSB1c2VzIGF0IHJ1biB0aW1lIGEKKyAgICBjb3B5IG9mIHRoZSBsaWJyYXJ5IGFscmVhZHkgcHJl
-c2VudCBvbiB0aGUgdXNlcidzIGNvbXB1dGVyIHN5c3RlbSwKKyAgICByYXRoZXIgdGhhbiBjb3B5
-aW5nIGxpYnJhcnkgZnVuY3Rpb25zIGludG8gdGhlIGV4ZWN1dGFibGUsIGFuZCAoMikKKyAgICB3
-aWxsIG9wZXJhdGUgcHJvcGVybHkgd2l0aCBhIG1vZGlmaWVkIHZlcnNpb24gb2YgdGhlIGxpYnJh
-cnksIGlmCisgICAgdGhlIHVzZXIgaW5zdGFsbHMgb25lLCBhcyBsb25nIGFzIHRoZSBtb2RpZmll
-ZCB2ZXJzaW9uIGlzCisgICAgaW50ZXJmYWNlLWNvbXBhdGlibGUgd2l0aCB0aGUgdmVyc2lvbiB0
-aGF0IHRoZSB3b3JrIHdhcyBtYWRlIHdpdGguCisKKyAgICBjKSBBY2NvbXBhbnkgdGhlIHdvcmsg
-d2l0aCBhIHdyaXR0ZW4gb2ZmZXIsIHZhbGlkIGZvciBhdAogICAgIGxlYXN0IHRocmVlIHllYXJz
-LCB0byBnaXZlIHRoZSBzYW1lIHVzZXIgdGhlIG1hdGVyaWFscwogICAgIHNwZWNpZmllZCBpbiBT
-dWJzZWN0aW9uIDZhLCBhYm92ZSwgZm9yIGEgY2hhcmdlIG5vIG1vcmUKICAgICB0aGFuIHRoZSBj
-b3N0IG9mIHBlcmZvcm1pbmcgdGhpcyBkaXN0cmlidXRpb24uCgotICAgIGMpIElmIGRpc3RyaWJ1
-dGlvbiBvZiB0aGUgd29yayBpcyBtYWRlIGJ5IG9mZmVyaW5nIGFjY2VzcyB0byBjb3B5CisgICAg
-ZCkgSWYgZGlzdHJpYnV0aW9uIG9mIHRoZSB3b3JrIGlzIG1hZGUgYnkgb2ZmZXJpbmcgYWNjZXNz
-IHRvIGNvcHkKICAgICBmcm9tIGEgZGVzaWduYXRlZCBwbGFjZSwgb2ZmZXIgZXF1aXZhbGVudCBh
-Y2Nlc3MgdG8gY29weSB0aGUgYWJvdmUKICAgICBzcGVjaWZpZWQgbWF0ZXJpYWxzIGZyb20gdGhl
-IHNhbWUgcGxhY2UuCgotICAgIGQpIFZlcmlmeSB0aGF0IHRoZSB1c2VyIGhhcyBhbHJlYWR5IHJl
-Y2VpdmVkIGEgY29weSBvZiB0aGVzZQorICAgIGUpIFZlcmlmeSB0aGF0IHRoZSB1c2VyIGhhcyBh
-bHJlYWR5IHJlY2VpdmVkIGEgY29weSBvZiB0aGVzZQogICAgIG1hdGVyaWFscyBvciB0aGF0IHlv
-dSBoYXZlIGFscmVhZHkgc2VudCB0aGlzIHVzZXIgYSBjb3B5LgoKICAgRm9yIGFuIGV4ZWN1dGFi
-bGUsIHRoZSByZXF1aXJlZCBmb3JtIG9mIHRoZSAid29yayB0aGF0IHVzZXMgdGhlCiBMaWJyYXJ5
-IiBtdXN0IGluY2x1ZGUgYW55IGRhdGEgYW5kIHV0aWxpdHkgcHJvZ3JhbXMgbmVlZGVkIGZvcgog
-cmVwcm9kdWNpbmcgdGhlIGV4ZWN1dGFibGUgZnJvbSBpdC4gIEhvd2V2ZXIsIGFzIGEgc3BlY2lh
-bCBleGNlcHRpb24sCi10aGUgc291cmNlIGNvZGUgZGlzdHJpYnV0ZWQgbmVlZCBub3QgaW5jbHVk
-ZSBhbnl0aGluZyB0aGF0IGlzIG5vcm1hbGx5Ci1kaXN0cmlidXRlZCAoaW4gZWl0aGVyIHNvdXJj
-ZSBvciBiaW5hcnkgZm9ybSkgd2l0aCB0aGUgbWFqb3IKK3RoZSBtYXRlcmlhbHMgdG8gYmUgZGlz
-dHJpYnV0ZWQgbmVlZCBub3QgaW5jbHVkZSBhbnl0aGluZyB0aGF0IGlzCitub3JtYWxseSBkaXN0
-cmlidXRlZCAoaW4gZWl0aGVyIHNvdXJjZSBvciBiaW5hcnkgZm9ybSkgd2l0aCB0aGUgbWFqb3IK
-IGNvbXBvbmVudHMgKGNvbXBpbGVyLCBrZXJuZWwsIGFuZCBzbyBvbikgb2YgdGhlIG9wZXJhdGlu
-ZyBzeXN0ZW0gb24KIHdoaWNoIHRoZSBleGVjdXRhYmxlIHJ1bnMsIHVubGVzcyB0aGF0IGNvbXBv
-bmVudCBpdHNlbGYgYWNjb21wYW5pZXMKIHRoZSBleGVjdXRhYmxlLgpAQCAtMzQ3LDcgKzM2OCw3
-IEBAIExpYnJhcnkpLCB0aGUgcmVjaXBpZW50IGF1dG9tYXRpY2FsbHkgcmUKIG9yaWdpbmFsIGxp
-Y2Vuc29yIHRvIGNvcHksIGRpc3RyaWJ1dGUsIGxpbmsgd2l0aCBvciBtb2RpZnkgdGhlIExpYnJh
-cnkKIHN1YmplY3QgdG8gdGhlc2UgdGVybXMgYW5kIGNvbmRpdGlvbnMuICBZb3UgbWF5IG5vdCBp
-bXBvc2UgYW55IGZ1cnRoZXIKIHJlc3RyaWN0aW9ucyBvbiB0aGUgcmVjaXBpZW50cycgZXhlcmNp
-c2Ugb2YgdGhlIHJpZ2h0cyBncmFudGVkIGhlcmVpbi4KLVlvdSBhcmUgbm90IHJlc3BvbnNpYmxl
-IGZvciBlbmZvcmNpbmcgY29tcGxpYW5jZSBieSB0aGlyZCBwYXJ0aWVzIHRvCitZb3UgYXJlIG5v
-dCByZXNwb25zaWJsZSBmb3IgZW5mb3JjaW5nIGNvbXBsaWFuY2UgYnkgdGhpcmQgcGFydGllcyB3
-aXRoCiB0aGlzIExpY2Vuc2UuCiAMCiAgIDExLiBJZiwgYXMgYSBjb25zZXF1ZW5jZSBvZiBhIGNv
-dXJ0IGp1ZGdtZW50IG9yIGFsbGVnYXRpb24gb2YgcGF0ZW50CkBAIC0zOTAsNyArNDExLDcgQEAg
-ZXhjbHVkZWQuICBJbiBzdWNoIGNhc2UsIHRoaXMgTGljZW5zZSBpbgogd3JpdHRlbiBpbiB0aGUg
-Ym9keSBvZiB0aGlzIExpY2Vuc2UuCgogICAxMy4gVGhlIEZyZWUgU29mdHdhcmUgRm91bmRhdGlv
-biBtYXkgcHVibGlzaCByZXZpc2VkIGFuZC9vciBuZXcKLXZlcnNpb25zIG9mIHRoZSBMaWJyYXJ5
-IEdlbmVyYWwgUHVibGljIExpY2Vuc2UgZnJvbSB0aW1lIHRvIHRpbWUuCit2ZXJzaW9ucyBvZiB0
-aGUgTGVzc2VyIEdlbmVyYWwgUHVibGljIExpY2Vuc2UgZnJvbSB0aW1lIHRvIHRpbWUuCiBTdWNo
-IG5ldyB2ZXJzaW9ucyB3aWxsIGJlIHNpbWlsYXIgaW4gc3Bpcml0IHRvIHRoZSBwcmVzZW50IHZl
-cnNpb24sCiBidXQgbWF5IGRpZmZlciBpbiBkZXRhaWwgdG8gYWRkcmVzcyBuZXcgcHJvYmxlbXMg
-b3IgY29uY2VybnMuCgpAQCAtNDUzLDE2ICs0NzQsMTYgQEAgY29udmV5IHRoZSBleGNsdXNpb24g
-b2Ygd2FycmFudHk7IGFuZCBlYQogICAgIENvcHlyaWdodCAoQykgPHllYXI+ICA8bmFtZSBvZiBh
-dXRob3I+CgogICAgIFRoaXMgbGlicmFyeSBpcyBmcmVlIHNvZnR3YXJlOyB5b3UgY2FuIHJlZGlz
-dHJpYnV0ZSBpdCBhbmQvb3IKLSAgICBtb2RpZnkgaXQgdW5kZXIgdGhlIHRlcm1zIG9mIHRoZSBH
-TlUgTGlicmFyeSBHZW5lcmFsIFB1YmxpYworICAgIG1vZGlmeSBpdCB1bmRlciB0aGUgdGVybXMg
-b2YgdGhlIEdOVSBMZXNzZXIgR2VuZXJhbCBQdWJsaWMKICAgICBMaWNlbnNlIGFzIHB1Ymxpc2hl
-ZCBieSB0aGUgRnJlZSBTb2Z0d2FyZSBGb3VuZGF0aW9uOyBlaXRoZXIKLSAgICB2ZXJzaW9uIDIg
-b2YgdGhlIExpY2Vuc2UsIG9yIChhdCB5b3VyIG9wdGlvbikgYW55IGxhdGVyIHZlcnNpb24uCisg
-ICAgdmVyc2lvbiAyLjEgb2YgdGhlIExpY2Vuc2UsIG9yIChhdCB5b3VyIG9wdGlvbikgYW55IGxh
-dGVyIHZlcnNpb24uCgogICAgIFRoaXMgbGlicmFyeSBpcyBkaXN0cmlidXRlZCBpbiB0aGUgaG9w
-ZSB0aGF0IGl0IHdpbGwgYmUgdXNlZnVsLAogICAgIGJ1dCBXSVRIT1VUIEFOWSBXQVJSQU5UWTsg
-d2l0aG91dCBldmVuIHRoZSBpbXBsaWVkIHdhcnJhbnR5IG9mCiAgICAgTUVSQ0hBTlRBQklMSVRZ
-IG9yIEZJVE5FU1MgRk9SIEEgUEFSVElDVUxBUiBQVVJQT1NFLiAgU2VlIHRoZSBHTlUKLSAgICBM
-aWJyYXJ5IEdlbmVyYWwgUHVibGljIExpY2Vuc2UgZm9yIG1vcmUgZGV0YWlscy4KKyAgICBMZXNz
-ZXIgR2VuZXJhbCBQdWJsaWMgTGljZW5zZSBmb3IgbW9yZSBkZXRhaWxzLgoKLSAgICBZb3Ugc2hv
-dWxkIGhhdmUgcmVjZWl2ZWQgYSBjb3B5IG9mIHRoZSBHTlUgTGlicmFyeSBHZW5lcmFsIFB1Ymxp
-YworICAgIFlvdSBzaG91bGQgaGF2ZSByZWNlaXZlZCBhIGNvcHkgb2YgdGhlIEdOVSBMZXNzZXIg
-R2VuZXJhbCBQdWJsaWMKICAgICBMaWNlbnNlIGFsb25nIHdpdGggdGhpcyBsaWJyYXJ5OyBpZiBu
-b3QsIHdyaXRlIHRvIHRoZSBGcmVlIFNvZnR3YXJlCiAgICAgRm91bmRhdGlvbiwgSW5jLiwgNTEg
-RnJhbmtsaW4gU3RyZWV0LCBGaWZ0aCBGbG9vciwgQm9zdG9uLCBNQSAgMDIxMTAtMTMwMSAgVVNB
-CgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3
-dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+Define a set of "origin" strings and reuse them throughout the code.
+That avoids duplication and makes it easier to verify that we use
+consistent messages.
+
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ libmultipath/propsel.c | 170 ++++++++++++++++++++++++++++---------------------
+ 1 file changed, 98 insertions(+), 72 deletions(-)
+
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index dc24450eb775..2d3b7adfdfe2 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -44,7 +44,19 @@ do {									\
+ 	}								\
+ } while(0)
+ 
+-static char default_origin[] = "(setting: multipath internal)";
++static const char default_origin[] = "(setting: multipath internal)";
++static const char hwe_origin[] =
++	"(setting: storage device configuration)";
++static const char multipaths_origin[] =
++	"(setting: multipath.conf multipaths section)";
++static const char conf_origin[] =
++	"(setting: multipath.conf defaults/devices section)";
++static const char overrides_origin[] =
++	"(setting: multipath.conf overrides section)";
++static const char cmdline_origin[] =
++	"(setting: multipath command line [-p] flag)";
++static const char autodetect_origin[] =
++	"(setting: storage device autodetected)";
+ 
+ #define do_default(dest, value)						\
+ do {									\
+@@ -53,24 +65,24 @@ do {									\
+ } while(0)
+ 
+ #define mp_set_mpe(var)							\
+-do_set(var, mp->mpe, mp->var, "(setting: multipath.conf multipaths section)")
++do_set(var, mp->mpe, mp->var, multipaths_origin)
+ #define mp_set_hwe(var)							\
+-do_set(var, mp->hwe, mp->var, "(setting: storage device configuration)")
++do_set(var, mp->hwe, mp->var, hwe_origin)
+ #define mp_set_ovr(var)							\
+-do_set(var, conf->overrides, mp->var, "(setting: multipath.conf overrides section)")
++do_set(var, conf->overrides, mp->var, overrides_origin)
+ #define mp_set_conf(var)						\
+-do_set(var, conf, mp->var, "(setting: multipath.conf defaults/devices section)")
++do_set(var, conf, mp->var, conf_origin)
+ #define mp_set_default(var, value)					\
+ do_default(mp->var, value)
+ 
+ #define pp_set_mpe(var)							\
+-do_set(var, mpe, pp->var, "(setting: multipath.conf multipaths section)")
++do_set(var, mpe, pp->var, multipaths_origin)
+ #define pp_set_hwe(var)							\
+-do_set(var, pp->hwe, pp->var, "(setting: storage device configuration)")
++do_set(var, pp->hwe, pp->var, hwe_origin)
+ #define pp_set_conf(var)						\
+-do_set(var, conf, pp->var, "(setting: multipath.conf defaults/devices section)")
++do_set(var, conf, pp->var, conf_origin)
+ #define pp_set_ovr(var)							\
+-do_set(var, conf->overrides, pp->var, "(setting: multipath.conf overrides section)")
++do_set(var, conf->overrides, pp->var, overrides_origin)
+ #define pp_set_default(var, value)					\
+ do_default(pp->var, value)
+ 
+@@ -101,7 +113,7 @@ do {									\
+ 
+ int select_mode(struct config *conf, struct multipath *mp)
+ {
+-	char *origin;
++	const char *origin;
+ 
+ 	set_attr_mpe(mode, ATTR_MODE);
+ 	set_attr_conf(mode, ATTR_MODE);
+@@ -114,7 +126,7 @@ out:
+ 
+ int select_uid(struct config *conf, struct multipath *mp)
+ {
+-	char *origin;
++	const char *origin;
+ 
+ 	set_attr_mpe(uid, ATTR_UID);
+ 	set_attr_conf(uid, ATTR_UID);
+@@ -127,7 +139,7 @@ out:
+ 
+ int select_gid(struct config *conf, struct multipath *mp)
+ {
+-	char *origin;
++	const char *origin;
+ 
+ 	set_attr_mpe(gid, ATTR_GID);
+ 	set_attr_conf(gid, ATTR_GID);
+@@ -145,7 +157,8 @@ out:
+  */
+ int select_rr_weight(struct config *conf, struct multipath * mp)
+ {
+-	char *origin, buff[13];
++	const char *origin;
++	char buff[13];
+ 
+ 	mp_set_mpe(rr_weight);
+ 	mp_set_ovr(rr_weight);
+@@ -160,7 +173,8 @@ out:
+ 
+ int select_pgfailback(struct config *conf, struct multipath * mp)
+ {
+-	char *origin, buff[13];
++	const char *origin;
++	char buff[13];
+ 
+ 	mp_set_mpe(pgfailback);
+ 	mp_set_ovr(pgfailback);
+@@ -175,11 +189,12 @@ out:
+ 
+ int select_pgpolicy(struct config *conf, struct multipath * mp)
+ {
+-	char *origin, buff[POLICY_NAME_SIZE];
++	const char *origin;
++	char buff[POLICY_NAME_SIZE];
+ 
+ 	if (conf->pgpolicy_flag > 0) {
+ 		mp->pgpolicy = conf->pgpolicy_flag;
+-		origin = "(setting: multipath command line [-p] flag)";
++		origin = cmdline_origin;
+ 		goto out;
+ 	}
+ 	mp_set_mpe(pgpolicy);
+@@ -196,7 +211,7 @@ out:
+ 
+ int select_selector(struct config *conf, struct multipath * mp)
+ {
+-	char *origin;
++	const char *origin;
+ 
+ 	mp_set_mpe(selector);
+ 	mp_set_ovr(selector);
+@@ -213,7 +228,7 @@ out:
+ static void
+ select_alias_prefix (struct config *conf, struct multipath * mp)
+ {
+-	char *origin;
++	const char *origin;
+ 
+ 	mp_set_ovr(alias_prefix);
+ 	mp_set_hwe(alias_prefix);
+@@ -228,17 +243,17 @@ static int
+ want_user_friendly_names(struct config *conf, struct multipath * mp)
+ {
+ 
+-	char *origin;
++	const char *origin;
+ 	int user_friendly_names;
+ 
+ 	do_set(user_friendly_names, mp->mpe, user_friendly_names,
+-	       "(setting: multipath.conf multipaths section)");
++	       multipaths_origin);
+ 	do_set(user_friendly_names, conf->overrides, user_friendly_names,
+-	       "(setting: multipath.conf overrides section)");
++	       overrides_origin);
+ 	do_set(user_friendly_names, mp->hwe, user_friendly_names,
+-	       "(setting: storage device configuration)");
++	       hwe_origin);
+ 	do_set(user_friendly_names, conf, user_friendly_names,
+-	       "(setting: multipath.conf defaults/devices section)");
++	       conf_origin);
+ 	do_default(user_friendly_names, DEFAULT_USER_FRIENDLY_NAMES);
+ out:
+ 	condlog(3, "%s: user_friendly_names = %s %s", mp->wwid,
+@@ -249,11 +264,11 @@ out:
+ 
+ int select_alias(struct config *conf, struct multipath * mp)
+ {
+-	char *origin = NULL;
++	const char *origin = NULL;
+ 
+ 	if (mp->mpe && mp->mpe->alias) {
+ 		mp->alias = STRDUP(mp->mpe->alias);
+-		origin = "(setting: multipath.conf multipaths section)";
++		origin = multipaths_origin;
+ 		goto out;
+ 	}
+ 
+@@ -342,7 +357,7 @@ void reconcile_features_with_options(const char *id, char **features, int* no_pa
+ 
+ int select_features(struct config *conf, struct multipath *mp)
+ {
+-	char *origin;
++	const char *origin;
+ 
+ 	mp_set_mpe(features);
+ 	mp_set_ovr(features);
+@@ -441,11 +456,12 @@ check_rdac(struct path * pp)
+ 
+ int select_checker(struct config *conf, struct path *pp)
+ {
+-	char *origin, *checker_name;
++	const char *origin;
++	char *checker_name;
+ 	struct checker * c = &pp->checker;
+ 
+ 	if (pp->detect_checker == DETECT_CHECKER_ON) {
+-		origin = "(setting: storage device autodetected)";
++		origin = autodetect_origin;
+ 		if (check_rdac(pp)) {
+ 			checker_name = RDAC;
+ 			goto out;
+@@ -454,32 +470,32 @@ int select_checker(struct config *conf, struct path *pp)
+ 			goto out;
+ 		}
+  	}
+-	do_set(checker_name, conf->overrides, checker_name, "(setting: multipath.conf overrides section)");
+-	do_set(checker_name, pp->hwe, checker_name, "(setting: storage device configuration)");
+-	do_set(checker_name, conf, checker_name, "(setting: multipath.conf defaults/devices section)");
++	do_set(checker_name, conf->overrides, checker_name, overrides_origin);
++	do_set(checker_name, pp->hwe, checker_name, hwe_origin);
++	do_set(checker_name, conf, checker_name, conf_origin);
+ 	do_default(checker_name, DEFAULT_CHECKER);
+ out:
+ 	checker_get(conf->multipath_dir, c, checker_name);
+ 	condlog(3, "%s: path_checker = %s %s", pp->dev, c->name, origin);
+ 	if (conf->checker_timeout) {
+ 		c->timeout = conf->checker_timeout;
+-		condlog(3, "%s: checker timeout = %u s (setting: multipath.conf defaults/devices section)",
+-				pp->dev, c->timeout);
++		condlog(3, "%s: checker timeout = %u s %s",
++			pp->dev, c->timeout, conf_origin);
+ 	}
+ 	else if (sysfs_get_timeout(pp, &c->timeout) > 0)
+ 		condlog(3, "%s: checker timeout = %u s (setting: kernel sysfs)",
+-				pp->dev, c->timeout);
++			pp->dev, c->timeout);
+ 	else {
+ 		c->timeout = DEF_TIMEOUT;
+-		condlog(3, "%s: checker timeout = %u s (setting: multipath internal)",
+-				pp->dev, c->timeout);
++		condlog(3, "%s: checker timeout = %u s %s",
++			pp->dev, c->timeout, default_origin);
+ 	}
+ 	return 0;
+ }
+ 
+ int select_getuid(struct config *conf, struct path *pp)
+ {
+-	char *origin;
++	const char *origin;
+ 
+ 	pp->uid_attribute = parse_uid_attribute_by_attrs(conf->uid_attrs, pp->dev);
+ 	if (pp->uid_attribute) {
+@@ -531,24 +547,24 @@ do {									\
+ 
+ int select_prio(struct config *conf, struct path *pp)
+ {
+-	char *origin;
++	const char *origin;
+ 	struct mpentry * mpe;
+ 	struct prio * p = &pp->prio;
+ 
+ 	if (pp->detect_prio == DETECT_PRIO_ON) {
+ 		detect_prio(conf, pp);
+ 		if (prio_selected(p)) {
+-			origin = "(setting: storage device autodetected)";
++			origin = autodetect_origin;
+ 			goto out;
+ 		}
+ 	}
+ 	mpe = find_mpe(conf->mptable, pp->wwid);
+-	set_prio(conf->multipath_dir, mpe, "(setting: multipath.conf multipaths section)");
+-	set_prio(conf->multipath_dir, conf->overrides, "(setting: multipath.conf overrides section)");
+-	set_prio(conf->multipath_dir, pp->hwe, "(setting: storage device configuration)");
+-	set_prio(conf->multipath_dir, conf, "(setting: multipath.conf defaults/devices section)");
++	set_prio(conf->multipath_dir, mpe, multipaths_origin);
++	set_prio(conf->multipath_dir, conf->overrides, overrides_origin);
++	set_prio(conf->multipath_dir, pp->hwe, hwe_origin);
++	set_prio(conf->multipath_dir, conf, conf_origin);
+ 	prio_get(conf->multipath_dir, p, DEFAULT_PRIO, DEFAULT_PRIO_ARGS);
+-	origin = "(setting: multipath internal)";
++	origin = default_origin;
+ out:
+ 	/*
+ 	 * fetch tpgs mode for alua, if its not already obtained
+@@ -568,7 +584,7 @@ out:
+ 
+ int select_no_path_retry(struct config *conf, struct multipath *mp)
+ {
+-	char *origin = NULL;
++	const char *origin = NULL;
+ 	char buff[12];
+ 
+ 	if (mp->disable_queueing) {
+@@ -586,20 +602,20 @@ out:
+ 		condlog(3, "%s: no_path_retry = %s %s", mp->alias, buff,
+ 			origin);
+ 	else
+-		condlog(3, "%s: no_path_retry = undef (setting: multipath internal)",
+-			mp->alias);
++		condlog(3, "%s: no_path_retry = undef %s",
++			mp->alias, default_origin);
+ 	return 0;
+ }
+ 
+ int
+ select_minio_rq (struct config *conf, struct multipath * mp)
+ {
+-	char *origin;
++	const char *origin;
+ 
+-	do_set(minio_rq, mp->mpe, mp->minio, "(setting: multipath.conf multipaths section)");
+-	do_set(minio_rq, conf->overrides, mp->minio, "(setting: multipath.conf overrides section)");
+-	do_set(minio_rq, mp->hwe, mp->minio, "(setting: storage device configuration)");
+-	do_set(minio_rq, conf, mp->minio, "(setting: multipath.conf defaults/devices section)");
++	do_set(minio_rq, mp->mpe, mp->minio, multipaths_origin);
++	do_set(minio_rq, conf->overrides, mp->minio, overrides_origin);
++	do_set(minio_rq, mp->hwe, mp->minio, hwe_origin);
++	do_set(minio_rq, conf, mp->minio, conf_origin);
+ 	do_default(mp->minio, DEFAULT_MINIO_RQ);
+ out:
+ 	condlog(3, "%s: minio = %i %s", mp->alias, mp->minio, origin);
+@@ -609,7 +625,7 @@ out:
+ int
+ select_minio_bio (struct config *conf, struct multipath * mp)
+ {
+-	char *origin;
++	const char *origin;
+ 
+ 	mp_set_mpe(minio);
+ 	mp_set_ovr(minio);
+@@ -633,7 +649,8 @@ int select_minio(struct config *conf, struct multipath *mp)
+ 
+ int select_fast_io_fail(struct config *conf, struct multipath *mp)
+ {
+-	char *origin, buff[12];
++	const char *origin;
++	char buff[12];
+ 
+ 	mp_set_ovr(fast_io_fail);
+ 	mp_set_hwe(fast_io_fail);
+@@ -647,7 +664,8 @@ out:
+ 
+ int select_dev_loss(struct config *conf, struct multipath *mp)
+ {
+-	char *origin, buff[12];
++	const char *origin;
++	char buff[12];
+ 
+ 	mp_set_ovr(dev_loss);
+ 	mp_set_hwe(dev_loss);
+@@ -662,7 +680,7 @@ out:
+ 
+ int select_flush_on_last_del(struct config *conf, struct multipath *mp)
+ {
+-	char *origin;
++	const char *origin;
+ 
+ 	mp_set_mpe(flush_on_last_del);
+ 	mp_set_ovr(flush_on_last_del);
+@@ -677,12 +695,13 @@ out:
+ 
+ int select_reservation_key(struct config *conf, struct multipath *mp)
+ {
+-	char *origin, buff[PRKEY_SIZE];
++	const char *origin;
++	char buff[PRKEY_SIZE];
+ 	char *from_file = "";
+ 	uint64_t prkey = 0;
+ 
+-	do_prkey_set(mp->mpe, "(setting: multipath.conf multipaths section)");
+-	do_prkey_set(conf, "(setting: multipath.conf defaults/devices section)");
++	do_prkey_set(mp->mpe, multipaths_origin);
++	do_prkey_set(conf, conf_origin);
+ 	put_be64(mp->reservation_key, 0);
+ 	mp->prkey_source = PRKEY_SOURCE_NONE;
+ 	return 0;
+@@ -703,7 +722,7 @@ out:
+ 
+ int select_retain_hwhandler(struct config *conf, struct multipath *mp)
+ {
+-	char *origin;
++	const char *origin;
+ 	unsigned int minv_dm_retain[3] = {1, 5, 0};
+ 
+ 	if (!VERSION_GE(conf->version, minv_dm_retain)) {
+@@ -729,7 +748,7 @@ out:
+ 
+ int select_detect_prio(struct config *conf, struct path *pp)
+ {
+-	char *origin;
++	const char *origin;
+ 
+ 	pp_set_ovr(detect_prio);
+ 	pp_set_hwe(detect_prio);
+@@ -743,7 +762,7 @@ out:
+ 
+ int select_detect_checker(struct config *conf, struct path *pp)
+ {
+-	char *origin;
++	const char *origin;
+ 
+ 	pp_set_ovr(detect_checker);
+ 	pp_set_hwe(detect_checker);
+@@ -758,7 +777,7 @@ out:
+ 
+ int select_deferred_remove(struct config *conf, struct multipath *mp)
+ {
+-	char *origin;
++	const char *origin;
+ 
+ #ifndef LIBDM_API_DEFERRED
+ 	mp->deferred_remove = DEFERRED_REMOVE_OFF;
+@@ -783,7 +802,8 @@ out:
+ 
+ int select_delay_watch_checks(struct config *conf, struct multipath *mp)
+ {
+-	char *origin, buff[12];
++	const char *origin;
++	char buff[12];
+ 
+ 	mp_set_mpe(delay_watch_checks);
+ 	mp_set_ovr(delay_watch_checks);
+@@ -798,7 +818,8 @@ out:
+ 
+ int select_delay_wait_checks(struct config *conf, struct multipath *mp)
+ {
+-	char *origin, buff[12];
++	const char *origin;
++	char buff[12];
+ 
+ 	mp_set_mpe(delay_wait_checks);
+ 	mp_set_ovr(delay_wait_checks);
+@@ -814,7 +835,8 @@ out:
+ 
+ int select_marginal_path_err_sample_time(struct config *conf, struct multipath *mp)
+ {
+-	char *origin, buff[12];
++	const char *origin;
++	char buff[12];
+ 
+ 	mp_set_mpe(marginal_path_err_sample_time);
+ 	mp_set_ovr(marginal_path_err_sample_time);
+@@ -830,7 +852,8 @@ out:
+ 
+ int select_marginal_path_err_rate_threshold(struct config *conf, struct multipath *mp)
+ {
+-	char *origin, buff[12];
++	const char *origin;
++	char buff[12];
+ 
+ 	mp_set_mpe(marginal_path_err_rate_threshold);
+ 	mp_set_ovr(marginal_path_err_rate_threshold);
+@@ -846,7 +869,8 @@ out:
+ 
+ int select_marginal_path_err_recheck_gap_time(struct config *conf, struct multipath *mp)
+ {
+-	char *origin, buff[12];
++	const char *origin;
++	char buff[12];
+ 
+ 	mp_set_mpe(marginal_path_err_recheck_gap_time);
+ 	mp_set_ovr(marginal_path_err_recheck_gap_time);
+@@ -862,7 +886,8 @@ out:
+ 
+ int select_marginal_path_double_failed_time(struct config *conf, struct multipath *mp)
+ {
+-	char *origin, buff[12];
++	const char *origin;
++	char buff[12];
+ 
+ 	mp_set_mpe(marginal_path_double_failed_time);
+ 	mp_set_ovr(marginal_path_double_failed_time);
+@@ -878,7 +903,7 @@ out:
+ 
+ int select_skip_kpartx (struct config *conf, struct multipath * mp)
+ {
+-	char *origin;
++	const char *origin;
+ 
+ 	mp_set_mpe(skip_kpartx);
+ 	mp_set_ovr(skip_kpartx);
+@@ -894,7 +919,7 @@ out:
+ 
+ int select_max_sectors_kb(struct config *conf, struct multipath * mp)
+ {
+-	char *origin;
++	const char *origin;
+ 
+ 	mp_set_mpe(max_sectors_kb);
+ 	mp_set_ovr(max_sectors_kb);
+@@ -915,7 +940,8 @@ out:
+ 
+ int select_ghost_delay (struct config *conf, struct multipath * mp)
+ {
+-	char *origin, buff[12];
++	const char *origin;
++	char buff[12];
+ 
+ 	mp_set_mpe(ghost_delay);
+ 	mp_set_ovr(ghost_delay);
+-- 
+2.16.1
