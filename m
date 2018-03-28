@@ -1,12 +1,22 @@
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: [PATCH v3] dm raid: fix parse_raid_params() variable
-	range issue
-Date: Wed, 28 Mar 2018 17:07:14 +0200
-Message-ID: <b780a63ecdc48d98c8262a34c7749c6739e8490c.1522245017.git.heinzm@redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: multipath-tools licenses (was Re: [PATCH]
+ multipath-tools: replace FSF address with a www pointer)
+Date: Wed, 28 Mar 2018 17:14:28 +0200
+Message-ID: <1522250068.5251.46.camel@suse.com>
+References: <20180310205002.3318-1-xose.vazquez@gmail.com>
+	<1521495458.3798.138.camel@suse.com>
+	<1a0b44c5-c7a6-85fa-b2dd-1bd542efbb76@gmail.com>
+	<1521837017.13100.106.camel@suse.com>
+	<20180326130447.3114ef2f@pentland.suse.de>
+	<1522067788.19335.55.camel@suse.com>
+	<1522073719.19335.66.camel@suse.com>
+	<20180326160705.GM3103@octiron.msp.redhat.com>
+	<904fd737-b8ff-016f-e33a-5d833ef33c3a@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <904fd737-b8ff-016f-e33a-5d833ef33c3a@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,102 +26,51 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: heinzm@redhat.com, dm-devel@redhat.com, snitzer@redhat.com
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>, Benjamin Marzinski <bmarzins@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, fge@redhat.com
 List-Id: dm-devel.ids
 
-parse_raid_params() compares variable "int value" with INT_MAX.
-
-E.g. related Coverity report excerpt:
-   CID 1364818 (#2 of 3): Operands don't affect result (CONSTANT_EXPRESSION_RESULT) [select issue]
-1433                        if (value > INT_MAX) {
-
-Fix by changing checks to avoid INT_MAX.
-
-Whilst on it, avoid unnecessary checks against constants
-and add check for sane recovery speed min/max.
-
-Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
----
- drivers/md/dm-raid.c | 27 +++++++++++++++++++--------
- 1 file changed, 19 insertions(+), 8 deletions(-)
-
-diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index c1d1034ff7b7..b73e2e791d2b 100644
---- a/drivers/md/dm-raid.c
-+++ b/drivers/md/dm-raid.c
-@@ -1370,19 +1370,18 @@ static int parse_raid_params(struct raid_set *rs, struct dm_arg_set *as,
- 			 * In device-mapper, we specify things in sectors, but
- 			 * MD records this value in kB
- 			 */
--			value /= 2;
--			if (value > COUNTER_MAX) {
-+			if (value < 0 || value / 2 > COUNTER_MAX) {
- 				rs->ti->error = "Max write-behind limit out of range";
- 				return -EINVAL;
- 			}
- 
--			rs->md.bitmap_info.max_write_behind = value;
-+			rs->md.bitmap_info.max_write_behind = value / 2;
- 		} else if (!strcasecmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_DAEMON_SLEEP))) {
- 			if (test_and_set_bit(__CTR_FLAG_DAEMON_SLEEP, &rs->ctr_flags)) {
- 				rs->ti->error = "Only one daemon_sleep argument pair allowed";
- 				return -EINVAL;
- 			}
--			if (!value || (value > MAX_SCHEDULE_TIMEOUT)) {
-+			if (value < 0) {
- 				rs->ti->error = "daemon sleep period out of range";
- 				return -EINVAL;
- 			}
-@@ -1424,27 +1423,33 @@ static int parse_raid_params(struct raid_set *rs, struct dm_arg_set *as,
- 				return -EINVAL;
- 			}
- 
-+			if (value < 0) {
-+				rs->ti->error = "Bogus stripe cache entries value";
-+				return -EINVAL;
-+			}
- 			rs->stripe_cache_entries = value;
- 		} else if (!strcasecmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_MIN_RECOVERY_RATE))) {
- 			if (test_and_set_bit(__CTR_FLAG_MIN_RECOVERY_RATE, &rs->ctr_flags)) {
- 				rs->ti->error = "Only one min_recovery_rate argument pair allowed";
- 				return -EINVAL;
- 			}
--			if (value > INT_MAX) {
-+
-+			if (value < 0) {
- 				rs->ti->error = "min_recovery_rate out of range";
- 				return -EINVAL;
- 			}
--			rs->md.sync_speed_min = (int)value;
-+			rs->md.sync_speed_min = value;
- 		} else if (!strcasecmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_MAX_RECOVERY_RATE))) {
- 			if (test_and_set_bit(__CTR_FLAG_MAX_RECOVERY_RATE, &rs->ctr_flags)) {
- 				rs->ti->error = "Only one max_recovery_rate argument pair allowed";
- 				return -EINVAL;
- 			}
--			if (value > INT_MAX) {
-+
-+			if (value < 0) {
- 				rs->ti->error = "max_recovery_rate out of range";
- 				return -EINVAL;
- 			}
--			rs->md.sync_speed_max = (int)value;
-+			rs->md.sync_speed_max = value;
- 		} else if (!strcasecmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_REGION_SIZE))) {
- 			if (test_and_set_bit(__CTR_FLAG_REGION_SIZE, &rs->ctr_flags)) {
- 				rs->ti->error = "Only one region_size argument pair allowed";
-@@ -1490,6 +1495,12 @@ static int parse_raid_params(struct raid_set *rs, struct dm_arg_set *as,
- 		return -EINVAL;
- 	}
- 
-+	if (rs->md.sync_speed_max &&
-+	    rs->md.sync_speed_min > rs->md.sync_speed_max) {
-+		rs->ti->error = "Bogus recovery rates";
-+		return -EINVAL;
-+	}
-+
- 	if (validate_region_size(rs, region_size))
- 		return -EINVAL;
- 
--- 
-2.14.3
+T24gV2VkLCAyMDE4LTAzLTI4IGF0IDAwOjI0ICswMjAwLCBYb3NlIFZhenF1ZXogUGVyZXogd3Jv
+dGU6Cj4gT24gMDMvMjYvMjAxOCAwNjowNyBQTSwgQmVuamFtaW4gTWFyemluc2tpIHdyb3RlOgo+
+IAo+ID4gSWYgd2UgY2FuIGxpbWl0IHRoZSBwcm9qZWN0IHRvIHR3byAob3IgaWYgbmVjZXNzYXJ5
+IDMpIGxpY2Vuc2VzLCB3ZQo+ID4gY2FuCj4gPiBqdXN0IGluY2x1ZGUgYWxsIHRoZSBsaWNlbnNl
+IGZpbGVzLCBhbmQgZXhwbGFpbiB3aGF0IGFwcGxpZXMgdG8KPiA+IHdoYXQKPiA+IGluIHRoZSBS
+RUFETUUuICBJIGhhdmVuJ3QgcmVhbGx5IGxvb2tlZCBhdCBob3cgb3RoZXIgcHJvamVjdHMgdGhh
+dAo+ID4gaGF2ZQo+ID4gbXVsdGlwbGUgbGljZW5zZXMgZm9yIHBhcnRzIG9mIHRoZWlyIGNvZGUg
+ZG8gdGhpbmdzLCBzbyBwZXJoYXBzCj4gPiB0aGVyZSBpcwo+ID4gYSBtb3JlIHN0YW5kYXJkIHdh
+eS4KPiAKPiBNdWx0aXBsZSBsaWNlbmNlcywgZm9yIG1vZHVsZXMsIGFyZSBhY2NlcHRlZCBpbiB0
+aGUgTGludXgga2VybmVsOgo+IGh0dHBzOi8vZ2l0Lmtlcm5lbC5vcmcvcHViL3NjbS9saW51eC9r
+ZXJuZWwvZ2l0L3RvcnZhbGRzL2xpbnV4LmdpdC90cgo+IGVlL2luY2x1ZGUvbGludXgvbW9kdWxl
+LmgjbjE3MQoKTXVsdGlwbGUgbGljZW5zZXMgYXJlIGFjY2VwdGFibGUgZm9yIG11bHRpcGF0aC10
+b29scywgdG9vLiBZZXQgd2UgbmVlZAp0byB1bmRlcnN0YW5kLCBhbmQgY2xlYXJseSBjb21tdW5p
+Y2F0ZSwgd2hpY2ggbGljZW5zZSBhcHBsaWVzIHRvIHdoaWNoCnNvdXJjZSBmaWxlLCBhbmQgd2hh
+dCB0aGF0IG1lYW5zIGZvciB0aGUgYmluYXJpZXMgYW5kIGxpYnJhcmllcyB0aGF0CmFyZSBwYXJ0
+IG9mIHRoZSBwYWNrYWdlLiBBbmQsIG5lZWRsZXNzIHRvIHNheSwgcmVkdWNpbmcgdGhlIG51bWJl
+ciBvZgpsaWNlbnNlcyBhbmQgZ2V0dGluZyByaWQgb2YgdGhlIG9ic29sZXRlIExHUEwtMi4wIHdv
+dWxkIHNpbXBsaWZ5Cm1hdHRlcnMgc2lnbmlmaWNhbnRseSwgYm90aCBmb3IgdXMgYW5kIG90aGVy
+IHBhcnRpZXMuCgo+IEFuZCB0aGUgU1BEWCBMaWNlbnNlIElkZW50aWZpZXIgaXMgYmVpbmcgdXNl
+ZDoKPiBodHRwczovL2dpdC5rZXJuZWwub3JnL3B1Yi9zY20vbGludXgva2VybmVsL2dpdC90b3J2
+YWxkcy9saW51eC5naXQvdHIKPiBlZS9Eb2N1bWVudGF0aW9uL3Byb2Nlc3MvbGljZW5zZS1ydWxl
+cy5yc3QKClllYWgsIGl0J3MgcHJvYmFibHkgYSBnb29kIGlkZWEgdG8gZG8gdGhhdC4gSSdtIG5v
+dCBzdXJlIGlmIGl0IHNob3VsZApyZXBsYWNlIHRoZSBib2lsZXJwbGF0ZSBsaWNlbnNlIGhlYWRl
+ciBvciBqdXN0IGJlIGFkZGVkIG9uIHRvcCBvZiBpdC4KRWl0aGVyIHdheSwgd2hlbiB3ZSBkbyB0
+aGlzLCB3ZSBzaG91bGQgbWFrZSBzdXJlIHRoYXQgd2UgdW5kZXJzdGFuZAp3aGljaCBsaWNlbnNl
+IGNvdmVycyB0aGUgaW5kaXZpZHVhbCBmaWxlcywgaW4gcGFydGljdWxhciB0aG9zZSB0aGF0CmN1
+cnJlbnRseSBoYXZlIG5vIGxpY2Vuc2UgaGVhZGVyLiBXZSdyZSBhc3N1bWluZyB0aGF0IHRoZXNl
+IGFyZSBjb3ZlcmVkCmJ5IENPUFlJTkcsIGJ1dCBpcyB0aGF0IGFjdHVhbGx5IHRydWUgZm9yIGFs
+bCAxMzArIGZpbGVzPwoKVGhpcyBzaG91bGRuJ3QgYmUgdGFrZW4gdG9vIGxpZ2h0bHkuIEFzc3Vt
+ZSB5b3UgYWRkIGFuICJMR1BMLTIuMSIgU1BEWApoZWFkZXIgdG8gc29tZSBmaWxlLiBDb21wYW55
+IFggbGlua3MgdG8gdGhlIGZpbGUgaW4gaXQncyBwcm9wcmlldGFyeQpwcm9kdWN0LiBMYXRlciwg
+Y29tcGFueSBZIGZpbmRzIHNvbWUgb2YgaXRzIG93biBHUEwtMi4wIGxpY2Vuc2VkIGNvZGUKaW4g
+dGhlIHNhbWUgZmlsZSBhbmQgc3VlcyBYIG92ZXIgMTAwIG1pbGxpb24gZm9yIEdQTCBicmVha2Fn
+ZS4gTm93IFgKY2xhaW1zIHRoZSBtb25leSBiYWNrIGZyb20gdGhlIHBlcnNvbiB3aG8gaW5zZXJ0
+ZWQgdGhlIG1pc2xlYWRpbmcKbGljZW5zZSBoZWFkZXIgaW4gdGhlIGZpbGUgLi4uCgpUaGF0IHNv
+dW5kcyBwYXJhbm9pZCBhbmQgZXhhZ2dlcmF0ZWQsIGJ1dCBJJ3ZlIGhlYXJkIGV4YWN0bHkgYXJn
+dW1lbnRzCmxpa2UgdGhpcyBpbiBkaXNjdXNzaW9ucyBhYm91dCBwcm9wcmlldGFyeSBzb2Z0d2Fy
+ZSB1c2luZyBGTE9TUy4gSXQncwp0aGUga2luZCBvZiB0aGluZyBCbGFjayBEdWNrIGFuZCBzaW1p
+bGFyIGNvbXBhbmllcyBtYWtlIG1vbmV5IHdpdGguCgpSZWdhcmRzCk1hcnRpbgoKLS0gCkRyLiBN
+YXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3
+ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwg
+R3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxp
+bmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1h
+bi9saXN0aW5mby9kbS1kZXZlbA==
