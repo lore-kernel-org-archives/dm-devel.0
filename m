@@ -1,15 +1,16 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH v2] multipath-tools: Remove trailing/leading
- whitespaces and reformat code
-Date: Wed, 28 Mar 2018 21:49:44 +0200
-Message-ID: <859bfb13-32f9-c43c-74ac-41d8ae86aea0@gmail.com>
-References: <20180310205050.3447-1-xose.vazquez@gmail.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 1/2] multipath-tools: move COPYING to
+ COPYING.LESSER
+Date: Wed, 28 Mar 2018 21:54:01 +0200
+Message-ID: <1522266841.5251.50.camel@suse.com>
+References: <20180327182819.20163-1-xose.vazquez@gmail.com>
+	<1522188190.13140.53.camel@suse.com>
+	<597ef512-842d-633f-b6f9-d2156b4aa931@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180310205050.3447-1-xose.vazquez@gmail.com>
-Content-Language: en-GB
+In-Reply-To: <597ef512-842d-633f-b6f9-d2156b4aa931@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,161 +20,21 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, device-mapper development <dm-devel@redhat.com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 03/10/2018 09:50 PM, Xose Vazquez Perez wrote:
-
-Any comment?, or ready to merge.
-
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: device-mapper development <dm-devel@redhat.com>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> ---
-> Are aligned escape backslashes in Makefile.inc preferred?
-> 
-> v2 rebase.
-> 
->  Makefile.inc           | 23 +++++++++++------------
->  kpartx/mac.h           |  2 +-
->  kpartx/test-kpartx     |  2 +-
->  libmpathcmd/Makefile   |  2 +-
->  libmultipath/hwtable.c | 14 +++++++-------
->  libmultipath/print.h   |  2 +-
->  multipathd/main.h      |  6 +++---
->  7 files changed, 25 insertions(+), 26 deletions(-)
-> 
-> diff --git a/Makefile.inc b/Makefile.inc
-> index 5d6123d..05b8d4b 100644
-> --- a/Makefile.inc
-> +++ b/Makefile.inc
-> @@ -100,21 +100,20 @@ LDFLAGS		= -Wl,-z,relro -Wl,-z,now
->  BIN_LDFLAGS	= -pie
->  
->  # Check whether a function with name $1 has been declared in header file $2.
-> -check_func =								       \
-> -    $(shell								       \
-> +check_func = $(shell \
->  	if grep -Eq "^[^[:blank:]]+[[:blank:]]+$1[[:blank:]]*(.*)*" "$2"; then \
-> -	   found=1;							       \
-> -	   status="yes";						       \
-> -	else								       \
-> -	   found=0;							       \
-> -	   status="no";							       \
-> -	fi;								       \
-> -	echo 1>&2 "Checking for $1 in $2 ... $$status";			       \
-> -	echo "$$found"							       \
-> -    )
-> +		found=1; \
-> +		status="yes"; \
-> +	else \
-> +		found=0; \
-> +		status="no"; \
-> +	fi; \
-> +	echo 1>&2 "Checking for $1 in $2 ... $$status"; \
-> +	echo "$$found" \
-> +	)
->  
->  # Checker whether a file with name $1 exists
-> -check_file = $(shell	\
-> +check_file = $(shell \
->  	if [ -f "$1" ]; then \
->  		found=1; \
->  		status="yes"; \
-> diff --git a/kpartx/mac.h b/kpartx/mac.h
-> index a44cf38..55c3ec9 100644
-> --- a/kpartx/mac.h
-> +++ b/kpartx/mac.h
-> @@ -24,7 +24,7 @@ struct mac_driver_desc {
->  	uint16_t  signature;      /* expected to be MAC_DRIVER_MAGIC */
->  	uint16_t  block_size;
->  	uint32_t  block_count;
-> -    /* ... more stuff */
-> +	/* ... more stuff */
->  };
->  
->  #endif
-> diff --git a/kpartx/test-kpartx b/kpartx/test-kpartx
-> index 9cee20f..d2001dc 100755
-> --- a/kpartx/test-kpartx
-> +++ b/kpartx/test-kpartx
-> @@ -131,7 +131,7 @@ step "create DM devices (spans)"
->  # They also serve as DM devices to test partition removal on those.
->  
->  TABLE="\
-> -0 $((SIZE/SECTSIZ-OFFS)) linear $DEV1 $OFFS 
-> +0 $((SIZE/SECTSIZ-OFFS)) linear $DEV1 $OFFS
->  $((SIZE/SECTSIZ-OFFS)) $((SIZE/SECTSIZ-OFFS)) linear $DEV2 $OFFS"
->  
->  SPAN1=kpt
-> diff --git a/libmpathcmd/Makefile b/libmpathcmd/Makefile
-> index 53c0899..0f6b816 100644
-> --- a/libmpathcmd/Makefile
-> +++ b/libmpathcmd/Makefile
-> @@ -27,7 +27,7 @@ uninstall:
->  	$(RM) $(DESTDIR)$(includedir)/mpath_cmd.h
->  
->  clean: dep_clean
-> -	$(RM) core *.a *.o *.so *.so.* *.gz 
-> +	$(RM) core *.a *.o *.so *.so.* *.gz
->  
->  include $(wildcard $(OBJS:.o=.d))
->  
-> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-> index fe71d14..448ff52 100644
-> --- a/libmultipath/hwtable.c
-> +++ b/libmultipath/hwtable.c
-> @@ -77,13 +77,13 @@
->  #endif
->  
->  static struct hwentry default_hw[] = {
-> -       /*
-> -	* Generic NVMe
-> -	*
-> -	* Due to the parsing logic in find_hwe(), generic entries
-> -	* have to be put on top of this list, and more specific ones
-> -	* below.
-> -	*/
-> +	/*
-> +	 * Generic NVMe devices
-> +	 *
-> +	 * Due to the parsing logic in find_hwe(), generic entries
-> +	 * have to be put on top of this list, and more specific ones
-> +	 * below.
-> +	 */
->  	{
->  		.vendor        = "NVME",
->  		.product       = ".*",
-> diff --git a/libmultipath/print.h b/libmultipath/print.h
-> index 7ba6438..9b5a23a 100644
-> --- a/libmultipath/print.h
-> +++ b/libmultipath/print.h
-> @@ -113,7 +113,7 @@ int _snprint_multipath (const struct gen_multipath *, char *, int,
->  			const char *, int);
->  #define snprint_multipath(buf, len, fmt, mp, v)				\
->  	_snprint_multipath(dm_multipath_to_gen(mp), buf, len, fmt,  v)
-> -int _snprint_multipath_topology (const struct gen_multipath *, char *, int, 
-> +int _snprint_multipath_topology (const struct gen_multipath *, char *, int,
->  				 int verbosity);
->  #define snprint_multipath_topology(buf, len, mpp, v) \
->  	_snprint_multipath_topology (dm_multipath_to_gen(mpp), buf, len, v)
-> diff --git a/multipathd/main.h b/multipathd/main.h
-> index 0e9c5e3..1c070c5 100644
-> --- a/multipathd/main.h
-> +++ b/multipathd/main.h
-> @@ -29,11 +29,11 @@ int ev_remove_map (char *, char *, int, struct vectors *);
->  int set_config_state(enum daemon_status);
->  void * mpath_alloc_prin_response(int prin_sa);
->  int prin_do_scsi_ioctl(char *, int rq_servact, struct prin_resp * resp,
-> -       int noisy);
-> +		       int noisy);
->  void dumpHex(const char * , int len, int no_ascii);
->  int prout_do_scsi_ioctl(char * , int rq_servact, int rq_scope,
-> -       unsigned int rq_type, struct prout_param_descriptor *param,
-> -       int noisy);
-> +			unsigned int rq_type,
-> +			struct prout_param_descriptor *param, int noisy);
->  int mpath_pr_event_handle(struct path *pp);
->  void * mpath_pr_event_handler_fn (void * );
->  int update_map_pr(struct multipath *mpp);
-> 
+T24gV2VkLCAyMDE4LTAzLTI4IGF0IDIxOjQwICswMjAwLCBYb3NlIFZhenF1ZXogUGVyZXogd3Jv
+dGU6Cj4gT24gMDMvMjgvMjAxOCAxMjowMyBBTSwgTWFydGluIFdpbGNrIHdyb3RlOgo+IAo+ID4g
+Cj4gPiBJTU8geW91IHNob3VsZCBvbmx5IGNhbGwgaXQgIkNPUFlJTkcuTEVTU0VSIiBpZiBpdCdz
+IHJlYWxseSB0aGUKPiA+IGxlc3Nlcgo+ID4gR1BMIChha2EgTEdQTHYyLjEpLgo+IAo+IExFU1NF
+UiBpcyBqdXN0IHRoZSBmYW1pbHkgb2YgdGhlIGxpY2VuY2UsIGEgdGFnLgoKSSBkaXNhZ3JlZS4g
+VGhlIG5hbWUgTGVzc2VyIEdQTCB3YXMgaW52ZW50ZWQgYWZ0ZXIgdGhlIGNyZWF0aW9uIG9mIHRo
+ZQpMR1BMdjIuIEl0J3MgbWlzbGVhZGluZyB0byBuYW1lIHRoZSBmaWxlIHNvLCBldmVuIGlmIHRo
+ZSBkaWZmZXJlbmNlcwpiZXR3ZWVuIExHUEx2MiBhbmQgTEdQTHYyLjEgYXJlIHNtYWxsLgoKPiBD
+T1BZSU5HLkxJQlJBUlkgaXMgcmVhbGx5IGEgdmVyeSBiYWQgbmFtZS4gCgpXaHk/IEkgdGhpbmsg
+aXQgZXhwcmVzc2VzIHF1aXRlIG5pY2VseSB3aGF0IGl0IGNvbnRhaW5zLgoKTWFydGluCgoKLS0g
+CkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1
+MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0
+aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVs
+IG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20v
+bWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
