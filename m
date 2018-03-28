@@ -1,22 +1,20 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: multipath-tools licenses (was Re: [PATCH]
- multipath-tools: replace FSF address with a www pointer)
-Date: Wed, 28 Mar 2018 17:14:28 +0200
-Message-ID: <1522250068.5251.46.camel@suse.com>
-References: <20180310205002.3318-1-xose.vazquez@gmail.com>
-	<1521495458.3798.138.camel@suse.com>
-	<1a0b44c5-c7a6-85fa-b2dd-1bd542efbb76@gmail.com>
-	<1521837017.13100.106.camel@suse.com>
-	<20180326130447.3114ef2f@pentland.suse.de>
-	<1522067788.19335.55.camel@suse.com>
-	<1522073719.19335.66.camel@suse.com>
-	<20180326160705.GM3103@octiron.msp.redhat.com>
-	<904fd737-b8ff-016f-e33a-5d833ef33c3a@gmail.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH v2 17/20] multipath.rules: find_multipaths
+	"smart" logic
+Date: Wed, 28 Mar 2018 12:12:59 -0500
+Message-ID: <20180328171259.GB3103@octiron.msp.redhat.com>
+References: <20180319150155.5363-1-mwilck@suse.com>
+	<20180319150155.5363-18-mwilck@suse.com>
+	<20180327210339.GX3103@octiron.msp.redhat.com>
+	<1522186440.13140.47.camel@suse.com>
+	<20180327230706.GY3103@octiron.msp.redhat.com>
+	<1522248672.5251.25.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <904fd737-b8ff-016f-e33a-5d833ef33c3a@gmail.com>
+Content-Disposition: inline
+In-Reply-To: <1522248672.5251.25.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,51 +24,82 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, fge@redhat.com
+To: Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gV2VkLCAyMDE4LTAzLTI4IGF0IDAwOjI0ICswMjAwLCBYb3NlIFZhenF1ZXogUGVyZXogd3Jv
-dGU6Cj4gT24gMDMvMjYvMjAxOCAwNjowNyBQTSwgQmVuamFtaW4gTWFyemluc2tpIHdyb3RlOgo+
-IAo+ID4gSWYgd2UgY2FuIGxpbWl0IHRoZSBwcm9qZWN0IHRvIHR3byAob3IgaWYgbmVjZXNzYXJ5
-IDMpIGxpY2Vuc2VzLCB3ZQo+ID4gY2FuCj4gPiBqdXN0IGluY2x1ZGUgYWxsIHRoZSBsaWNlbnNl
-IGZpbGVzLCBhbmQgZXhwbGFpbiB3aGF0IGFwcGxpZXMgdG8KPiA+IHdoYXQKPiA+IGluIHRoZSBS
-RUFETUUuICBJIGhhdmVuJ3QgcmVhbGx5IGxvb2tlZCBhdCBob3cgb3RoZXIgcHJvamVjdHMgdGhh
-dAo+ID4gaGF2ZQo+ID4gbXVsdGlwbGUgbGljZW5zZXMgZm9yIHBhcnRzIG9mIHRoZWlyIGNvZGUg
-ZG8gdGhpbmdzLCBzbyBwZXJoYXBzCj4gPiB0aGVyZSBpcwo+ID4gYSBtb3JlIHN0YW5kYXJkIHdh
-eS4KPiAKPiBNdWx0aXBsZSBsaWNlbmNlcywgZm9yIG1vZHVsZXMsIGFyZSBhY2NlcHRlZCBpbiB0
-aGUgTGludXgga2VybmVsOgo+IGh0dHBzOi8vZ2l0Lmtlcm5lbC5vcmcvcHViL3NjbS9saW51eC9r
-ZXJuZWwvZ2l0L3RvcnZhbGRzL2xpbnV4LmdpdC90cgo+IGVlL2luY2x1ZGUvbGludXgvbW9kdWxl
-LmgjbjE3MQoKTXVsdGlwbGUgbGljZW5zZXMgYXJlIGFjY2VwdGFibGUgZm9yIG11bHRpcGF0aC10
-b29scywgdG9vLiBZZXQgd2UgbmVlZAp0byB1bmRlcnN0YW5kLCBhbmQgY2xlYXJseSBjb21tdW5p
-Y2F0ZSwgd2hpY2ggbGljZW5zZSBhcHBsaWVzIHRvIHdoaWNoCnNvdXJjZSBmaWxlLCBhbmQgd2hh
-dCB0aGF0IG1lYW5zIGZvciB0aGUgYmluYXJpZXMgYW5kIGxpYnJhcmllcyB0aGF0CmFyZSBwYXJ0
-IG9mIHRoZSBwYWNrYWdlLiBBbmQsIG5lZWRsZXNzIHRvIHNheSwgcmVkdWNpbmcgdGhlIG51bWJl
-ciBvZgpsaWNlbnNlcyBhbmQgZ2V0dGluZyByaWQgb2YgdGhlIG9ic29sZXRlIExHUEwtMi4wIHdv
-dWxkIHNpbXBsaWZ5Cm1hdHRlcnMgc2lnbmlmaWNhbnRseSwgYm90aCBmb3IgdXMgYW5kIG90aGVy
-IHBhcnRpZXMuCgo+IEFuZCB0aGUgU1BEWCBMaWNlbnNlIElkZW50aWZpZXIgaXMgYmVpbmcgdXNl
-ZDoKPiBodHRwczovL2dpdC5rZXJuZWwub3JnL3B1Yi9zY20vbGludXgva2VybmVsL2dpdC90b3J2
-YWxkcy9saW51eC5naXQvdHIKPiBlZS9Eb2N1bWVudGF0aW9uL3Byb2Nlc3MvbGljZW5zZS1ydWxl
-cy5yc3QKClllYWgsIGl0J3MgcHJvYmFibHkgYSBnb29kIGlkZWEgdG8gZG8gdGhhdC4gSSdtIG5v
-dCBzdXJlIGlmIGl0IHNob3VsZApyZXBsYWNlIHRoZSBib2lsZXJwbGF0ZSBsaWNlbnNlIGhlYWRl
-ciBvciBqdXN0IGJlIGFkZGVkIG9uIHRvcCBvZiBpdC4KRWl0aGVyIHdheSwgd2hlbiB3ZSBkbyB0
-aGlzLCB3ZSBzaG91bGQgbWFrZSBzdXJlIHRoYXQgd2UgdW5kZXJzdGFuZAp3aGljaCBsaWNlbnNl
-IGNvdmVycyB0aGUgaW5kaXZpZHVhbCBmaWxlcywgaW4gcGFydGljdWxhciB0aG9zZSB0aGF0CmN1
-cnJlbnRseSBoYXZlIG5vIGxpY2Vuc2UgaGVhZGVyLiBXZSdyZSBhc3N1bWluZyB0aGF0IHRoZXNl
-IGFyZSBjb3ZlcmVkCmJ5IENPUFlJTkcsIGJ1dCBpcyB0aGF0IGFjdHVhbGx5IHRydWUgZm9yIGFs
-bCAxMzArIGZpbGVzPwoKVGhpcyBzaG91bGRuJ3QgYmUgdGFrZW4gdG9vIGxpZ2h0bHkuIEFzc3Vt
-ZSB5b3UgYWRkIGFuICJMR1BMLTIuMSIgU1BEWApoZWFkZXIgdG8gc29tZSBmaWxlLiBDb21wYW55
-IFggbGlua3MgdG8gdGhlIGZpbGUgaW4gaXQncyBwcm9wcmlldGFyeQpwcm9kdWN0LiBMYXRlciwg
-Y29tcGFueSBZIGZpbmRzIHNvbWUgb2YgaXRzIG93biBHUEwtMi4wIGxpY2Vuc2VkIGNvZGUKaW4g
-dGhlIHNhbWUgZmlsZSBhbmQgc3VlcyBYIG92ZXIgMTAwIG1pbGxpb24gZm9yIEdQTCBicmVha2Fn
-ZS4gTm93IFgKY2xhaW1zIHRoZSBtb25leSBiYWNrIGZyb20gdGhlIHBlcnNvbiB3aG8gaW5zZXJ0
-ZWQgdGhlIG1pc2xlYWRpbmcKbGljZW5zZSBoZWFkZXIgaW4gdGhlIGZpbGUgLi4uCgpUaGF0IHNv
-dW5kcyBwYXJhbm9pZCBhbmQgZXhhZ2dlcmF0ZWQsIGJ1dCBJJ3ZlIGhlYXJkIGV4YWN0bHkgYXJn
-dW1lbnRzCmxpa2UgdGhpcyBpbiBkaXNjdXNzaW9ucyBhYm91dCBwcm9wcmlldGFyeSBzb2Z0d2Fy
-ZSB1c2luZyBGTE9TUy4gSXQncwp0aGUga2luZCBvZiB0aGluZyBCbGFjayBEdWNrIGFuZCBzaW1p
-bGFyIGNvbXBhbmllcyBtYWtlIG1vbmV5IHdpdGguCgpSZWdhcmRzCk1hcnRpbgoKLS0gCkRyLiBN
-YXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3
-ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwg
-R3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxp
-bmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1h
-bi9saXN0aW5mby9kbS1kZXZlbA==
+On Wed, Mar 28, 2018 at 04:51:12PM +0200, Martin Wilck wrote:
+> On Tue, 2018-03-27 at 18:07 -0500, Benjamin Marzinski wrote:
+> > On Tue, Mar 27, 2018 at 11:34:00PM +0200, Martin Wilck wrote:
+> > > =
+
+> > > The following happens: multipath -u temporarily claims the device.
+> > > When
+> > > multipathd starts, it fails to set up the map, sets the "failed"
+> > > marker, and retriggers udev. The second time, multipath -u unclaims
+> > > the
+> > > device because it recognizes it as failed.
+> > =
+
+> > But if that device is already in use because multipath didn't claim
+> > it
+> > in the initramfs, and you suddenly mark it as ENV{SYSTEMD_READY}=3D"0",
+> > this can cause systemd to automatically unmount any filesystem on it.
+> > This isn't just a problem with Red Hat's setup.  If it's not a
+> > configured device type, there will only be a short timeout, but
+> > that's
+> > still enough to mess with devices that are already in use.  I'm
+> > pretty
+> > sure that the multipath temporary claiming is only safe the very
+> > first
+> > time a device appears. Otherwise, it's possible that something else
+> > will
+> > claim it first, and then multipath will claim it and mess with that
+> > other user.
+> > =
+
+> =
+
+> Arrgh. Thanks for pointing that out. It's even worse because even if we
+> could figure out whether we're being called for the first or second
+> time, it wouldn't be sufficient. multipath.rules may not even be
+> present in the initrd, so the device may be present in the system, and
+> used, without multipath.rules having ever been called.
+> =
+
+> The only way I see to avoid this is to try calling open(O_EXCL) on the
+> path device in "multipath -u". So far we've avoided that because it's
+> not completely race-free. But we're not talking about a race here, but
+> a situation where some entity grabbed a device before pivot-root.
+> So we could attempt open(O_EXCL) only in the "is maybe a valid path"
+> case, and only return "maybe" if that open succeeds. Otherwise we'd
+> return "no", as we already checked that the device isn't currently part
+> of a multipath map.
+> =
+
+
+Something like that should work.  I think we need to be careful to only
+ever do the exclusive open on an "add" event. In fact in probably
+wouldn't hurt to add some checks to make sure that we never start
+a temporary claim on a change event.  If we get a change event and
+FIND_MULTIPATHS_WAIT_UNTIL is unset, we should just assume that we
+missed the add event, and it should be set to "finished".
+
+What would be really nice would be to be able to tell if we are doing a
+cold-plug add after the pivot.  This is the only time where we actually
+need to check if a device is in use. Otherwise nobody else will have had
+a chance to use it yet.
+
+-Ben
+
+> Agreed?
+> =
+
+> Martin
+> =
+
+> -- =
+
+> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+> SUSE Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
+> HRB 21284 (AG N=FCrnberg)
