@@ -1,18 +1,12 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH v2 17/20] multipath.rules: find_multipaths
-	"smart" logic
-Date: Wed, 28 Mar 2018 16:51:12 +0200
-Message-ID: <1522248672.5251.25.camel@suse.com>
-References: <20180319150155.5363-1-mwilck@suse.com>
-	<20180319150155.5363-18-mwilck@suse.com>
-	<20180327210339.GX3103@octiron.msp.redhat.com>
-	<1522186440.13140.47.camel@suse.com>
-	<20180327230706.GY3103@octiron.msp.redhat.com>
+From: Heinz Mauelshagen <heinzm@redhat.com>
+Subject: [PATCH v3] dm raid: fix parse_raid_params() variable
+	range issue
+Date: Wed, 28 Mar 2018 17:07:14 +0200
+Message-ID: <b780a63ecdc48d98c8262a34c7749c6739e8490c.1522245017.git.heinzm@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180327230706.GY3103@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,46 +16,102 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com
+To: heinzm@redhat.com, dm-devel@redhat.com, snitzer@redhat.com
 List-Id: dm-devel.ids
 
-T24gVHVlLCAyMDE4LTAzLTI3IGF0IDE4OjA3IC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gT24gVHVlLCBNYXIgMjcsIDIwMTggYXQgMTE6MzQ6MDBQTSArMDIwMCwgTWFydGluIFdp
-bGNrIHdyb3RlOgo+ID4gCj4gPiBUaGUgZm9sbG93aW5nIGhhcHBlbnM6IG11bHRpcGF0aCAtdSB0
-ZW1wb3JhcmlseSBjbGFpbXMgdGhlIGRldmljZS4KPiA+IFdoZW4KPiA+IG11bHRpcGF0aGQgc3Rh
-cnRzLCBpdCBmYWlscyB0byBzZXQgdXAgdGhlIG1hcCwgc2V0cyB0aGUgImZhaWxlZCIKPiA+IG1h
-cmtlciwgYW5kIHJldHJpZ2dlcnMgdWRldi4gVGhlIHNlY29uZCB0aW1lLCBtdWx0aXBhdGggLXUg
-dW5jbGFpbXMKPiA+IHRoZQo+ID4gZGV2aWNlIGJlY2F1c2UgaXQgcmVjb2duaXplcyBpdCBhcyBm
-YWlsZWQuCj4gCj4gQnV0IGlmIHRoYXQgZGV2aWNlIGlzIGFscmVhZHkgaW4gdXNlIGJlY2F1c2Ug
-bXVsdGlwYXRoIGRpZG4ndCBjbGFpbQo+IGl0Cj4gaW4gdGhlIGluaXRyYW1mcywgYW5kIHlvdSBz
-dWRkZW5seSBtYXJrIGl0IGFzIEVOVntTWVNURU1EX1JFQURZfT0iMCIsCj4gdGhpcyBjYW4gY2F1
-c2Ugc3lzdGVtZCB0byBhdXRvbWF0aWNhbGx5IHVubW91bnQgYW55IGZpbGVzeXN0ZW0gb24gaXQu
-Cj4gVGhpcyBpc24ndCBqdXN0IGEgcHJvYmxlbSB3aXRoIFJlZCBIYXQncyBzZXR1cC4gIElmIGl0
-J3Mgbm90IGEKPiBjb25maWd1cmVkIGRldmljZSB0eXBlLCB0aGVyZSB3aWxsIG9ubHkgYmUgYSBz
-aG9ydCB0aW1lb3V0LCBidXQKPiB0aGF0J3MKPiBzdGlsbCBlbm91Z2ggdG8gbWVzcyB3aXRoIGRl
-dmljZXMgdGhhdCBhcmUgYWxyZWFkeSBpbiB1c2UuICBJJ20KPiBwcmV0dHkKPiBzdXJlIHRoYXQg
-dGhlIG11bHRpcGF0aCB0ZW1wb3JhcnkgY2xhaW1pbmcgaXMgb25seSBzYWZlIHRoZSB2ZXJ5Cj4g
-Zmlyc3QKPiB0aW1lIGEgZGV2aWNlIGFwcGVhcnMuIE90aGVyd2lzZSwgaXQncyBwb3NzaWJsZSB0
-aGF0IHNvbWV0aGluZyBlbHNlCj4gd2lsbAo+IGNsYWltIGl0IGZpcnN0LCBhbmQgdGhlbiBtdWx0
-aXBhdGggd2lsbCBjbGFpbSBpdCBhbmQgbWVzcyB3aXRoIHRoYXQKPiBvdGhlciB1c2VyLgo+IAoK
-QXJyZ2guIFRoYW5rcyBmb3IgcG9pbnRpbmcgdGhhdCBvdXQuIEl0J3MgZXZlbiB3b3JzZSBiZWNh
-dXNlIGV2ZW4gaWYgd2UKY291bGQgZmlndXJlIG91dCB3aGV0aGVyIHdlJ3JlIGJlaW5nIGNhbGxl
-ZCBmb3IgdGhlIGZpcnN0IG9yIHNlY29uZAp0aW1lLCBpdCB3b3VsZG4ndCBiZSBzdWZmaWNpZW50
-LiBtdWx0aXBhdGgucnVsZXMgbWF5IG5vdCBldmVuIGJlCnByZXNlbnQgaW4gdGhlIGluaXRyZCwg
-c28gdGhlIGRldmljZSBtYXkgYmUgcHJlc2VudCBpbiB0aGUgc3lzdGVtLCBhbmQKdXNlZCwgd2l0
-aG91dCBtdWx0aXBhdGgucnVsZXMgaGF2aW5nIGV2ZXIgYmVlbiBjYWxsZWQuCgpUaGUgb25seSB3
-YXkgSSBzZWUgdG8gYXZvaWQgdGhpcyBpcyB0byB0cnkgY2FsbGluZyBvcGVuKE9fRVhDTCkgb24g
-dGhlCnBhdGggZGV2aWNlIGluICJtdWx0aXBhdGggLXUiLiBTbyBmYXIgd2UndmUgYXZvaWRlZCB0
-aGF0IGJlY2F1c2UgaXQncwpub3QgY29tcGxldGVseSByYWNlLWZyZWUuIEJ1dCB3ZSdyZSBub3Qg
-dGFsa2luZyBhYm91dCBhIHJhY2UgaGVyZSwgYnV0CmEgc2l0dWF0aW9uIHdoZXJlIHNvbWUgZW50
-aXR5IGdyYWJiZWQgYSBkZXZpY2UgYmVmb3JlIHBpdm90LXJvb3QuClNvIHdlIGNvdWxkIGF0dGVt
-cHQgb3BlbihPX0VYQ0wpIG9ubHkgaW4gdGhlICJpcyBtYXliZSBhIHZhbGlkIHBhdGgiCmNhc2Us
-IGFuZCBvbmx5IHJldHVybiAibWF5YmUiIGlmIHRoYXQgb3BlbiBzdWNjZWVkcy4gT3RoZXJ3aXNl
-IHdlJ2QKcmV0dXJuICJubyIsIGFzIHdlIGFscmVhZHkgY2hlY2tlZCB0aGF0IHRoZSBkZXZpY2Ug
-aXNuJ3QgY3VycmVudGx5IHBhcnQKb2YgYSBtdWx0aXBhdGggbWFwLgoKQWdyZWVkPwoKTWFydGlu
-CgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTEx
-IDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5l
-IFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0t
-ZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0
-LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+parse_raid_params() compares variable "int value" with INT_MAX.
+
+E.g. related Coverity report excerpt:
+   CID 1364818 (#2 of 3): Operands don't affect result (CONSTANT_EXPRESSION_RESULT) [select issue]
+1433                        if (value > INT_MAX) {
+
+Fix by changing checks to avoid INT_MAX.
+
+Whilst on it, avoid unnecessary checks against constants
+and add check for sane recovery speed min/max.
+
+Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
+---
+ drivers/md/dm-raid.c | 27 +++++++++++++++++++--------
+ 1 file changed, 19 insertions(+), 8 deletions(-)
+
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index c1d1034ff7b7..b73e2e791d2b 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -1370,19 +1370,18 @@ static int parse_raid_params(struct raid_set *rs, struct dm_arg_set *as,
+ 			 * In device-mapper, we specify things in sectors, but
+ 			 * MD records this value in kB
+ 			 */
+-			value /= 2;
+-			if (value > COUNTER_MAX) {
++			if (value < 0 || value / 2 > COUNTER_MAX) {
+ 				rs->ti->error = "Max write-behind limit out of range";
+ 				return -EINVAL;
+ 			}
+ 
+-			rs->md.bitmap_info.max_write_behind = value;
++			rs->md.bitmap_info.max_write_behind = value / 2;
+ 		} else if (!strcasecmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_DAEMON_SLEEP))) {
+ 			if (test_and_set_bit(__CTR_FLAG_DAEMON_SLEEP, &rs->ctr_flags)) {
+ 				rs->ti->error = "Only one daemon_sleep argument pair allowed";
+ 				return -EINVAL;
+ 			}
+-			if (!value || (value > MAX_SCHEDULE_TIMEOUT)) {
++			if (value < 0) {
+ 				rs->ti->error = "daemon sleep period out of range";
+ 				return -EINVAL;
+ 			}
+@@ -1424,27 +1423,33 @@ static int parse_raid_params(struct raid_set *rs, struct dm_arg_set *as,
+ 				return -EINVAL;
+ 			}
+ 
++			if (value < 0) {
++				rs->ti->error = "Bogus stripe cache entries value";
++				return -EINVAL;
++			}
+ 			rs->stripe_cache_entries = value;
+ 		} else if (!strcasecmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_MIN_RECOVERY_RATE))) {
+ 			if (test_and_set_bit(__CTR_FLAG_MIN_RECOVERY_RATE, &rs->ctr_flags)) {
+ 				rs->ti->error = "Only one min_recovery_rate argument pair allowed";
+ 				return -EINVAL;
+ 			}
+-			if (value > INT_MAX) {
++
++			if (value < 0) {
+ 				rs->ti->error = "min_recovery_rate out of range";
+ 				return -EINVAL;
+ 			}
+-			rs->md.sync_speed_min = (int)value;
++			rs->md.sync_speed_min = value;
+ 		} else if (!strcasecmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_MAX_RECOVERY_RATE))) {
+ 			if (test_and_set_bit(__CTR_FLAG_MAX_RECOVERY_RATE, &rs->ctr_flags)) {
+ 				rs->ti->error = "Only one max_recovery_rate argument pair allowed";
+ 				return -EINVAL;
+ 			}
+-			if (value > INT_MAX) {
++
++			if (value < 0) {
+ 				rs->ti->error = "max_recovery_rate out of range";
+ 				return -EINVAL;
+ 			}
+-			rs->md.sync_speed_max = (int)value;
++			rs->md.sync_speed_max = value;
+ 		} else if (!strcasecmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_REGION_SIZE))) {
+ 			if (test_and_set_bit(__CTR_FLAG_REGION_SIZE, &rs->ctr_flags)) {
+ 				rs->ti->error = "Only one region_size argument pair allowed";
+@@ -1490,6 +1495,12 @@ static int parse_raid_params(struct raid_set *rs, struct dm_arg_set *as,
+ 		return -EINVAL;
+ 	}
+ 
++	if (rs->md.sync_speed_max &&
++	    rs->md.sync_speed_min > rs->md.sync_speed_max) {
++		rs->ti->error = "Bogus recovery rates";
++		return -EINVAL;
++	}
++
+ 	if (validate_region_size(rs, region_size))
+ 		return -EINVAL;
+ 
+-- 
+2.14.3
