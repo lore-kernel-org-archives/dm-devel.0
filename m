@@ -1,20 +1,17 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH v2 17/20] multipath.rules: find_multipaths
-	"smart" logic
-Date: Wed, 28 Mar 2018 12:12:59 -0500
-Message-ID: <20180328171259.GB3103@octiron.msp.redhat.com>
-References: <20180319150155.5363-1-mwilck@suse.com>
-	<20180319150155.5363-18-mwilck@suse.com>
-	<20180327210339.GX3103@octiron.msp.redhat.com>
-	<1522186440.13140.47.camel@suse.com>
-	<20180327230706.GY3103@octiron.msp.redhat.com>
-	<1522248672.5251.25.camel@suse.com>
+Subject: Re: [PATCH v2 1/2] libmultipath: don't reject maps with
+ undefined prio
+Date: Wed, 28 Mar 2018 14:09:27 -0500
+Message-ID: <20180328190927.GC3103@octiron.msp.redhat.com>
+References: <20180321093419.9295-1-mwilck@suse.com>
+	<20180322235225.GE3103@octiron.msp.redhat.com>
+	<1521801022.13100.41.camel@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1522248672.5251.25.camel@suse.com>
+In-Reply-To: <1521801022.13100.41.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -28,74 +25,155 @@ To: Martin Wilck <mwilck@suse.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Mar 28, 2018 at 04:51:12PM +0200, Martin Wilck wrote:
-> On Tue, 2018-03-27 at 18:07 -0500, Benjamin Marzinski wrote:
-> > On Tue, Mar 27, 2018 at 11:34:00PM +0200, Martin Wilck wrote:
+On Fri, Mar 23, 2018 at 11:30:22AM +0100, Martin Wilck wrote:
+> On Do, 2018-03-22 at 18:52 -0500, Benjamin Marzinski wrote:
+> > On Wed, Mar 21, 2018 at 10:34:18AM +0100, Martin Wilck wrote:
+> > > libmultipath's prio routines can deal with pp->priority =3D=3D
+> > > PRIO_UNDEF
+> > > just fine. PRIO_UNDEF is just a very low priority. So there's
+> > > no reason to reject setting up a multipath map because paths have
+> > > undefined priority.
 > > > =
 
-> > > The following happens: multipath -u temporarily claims the device.
-> > > When
-> > > multipathd starts, it fails to set up the map, sets the "failed"
-> > > marker, and retriggers udev. The second time, multipath -u unclaims
-> > > the
-> > > device because it recognizes it as failed.
 > > =
 
-> > But if that device is already in use because multipath didn't claim
-> > it
-> > in the initramfs, and you suddenly mark it as ENV{SYSTEMD_READY}=3D"0",
-> > this can cause systemd to automatically unmount any filesystem on it.
-> > This isn't just a problem with Red Hat's setup.  If it's not a
-> > configured device type, there will only be a short timeout, but
-> > that's
-> > still enough to mess with devices that are already in use.  I'm
-> > pretty
-> > sure that the multipath temporary claiming is only safe the very
-> > first
-> > time a device appears. Otherwise, it's possible that something else
-> > will
-> > claim it first, and then multipath will claim it and mess with that
-> > other user.
+> > The problem with this is that presumably, if there is a prioritizer
+> > set,
+> > then the paths aren't supposed to be in the same pathgroup.  If this
+> > is
+> > the case and you end up setting all the paths to the same pathgroup
+> > because the prioritizer is wrong, you will likely have a bad
+> > experience.
+> =
+
+> Sure. This is obviously an unfortunate corner-case. The good news is
+> that it happens very rarely. The default setting for prio is "const",
+> which can't fail, so (disregarding FAILED paths) this can happen only
+> for hardware that claims to support ALUA (or some other algorithm) but
+> actually doesn't (or fails ALUA repeatedly). There's one concrete
+> example of such hardware (certain variants of IBM IPR) that has
+> motivated this patch.
+> =
+
+> The rationale for my patch is that multipath-tools currently behave
+> inconsistently. Prio calls are allowed to fail. If prio detection works
+> initially, but fails later for whatever reason (e.g. ALUA calls
+> failing), multipathd handles that "gracefully" by assigning such paths
+> PRIO_UNDEF =3D=3D -1. This "works fine" (your concerns apply) even if the
+> prio call fails for every path of the map.
+> =
+
+> Likewise, even maps for which get_prio() always fails for every path
+> can be set up manually, using "multipathd add map $WWID". The only case
+> where multipath/multipathd refuse to set up this kind of map is
+> coalesce_paths(), i.e. autodetection. We have an additional,
+> undocumented "blacklist" criterion here - maps that fail get_prio, even
+> if just for a single path, won't be set up automatically. That doesn't
+> make a lot of sense to me.
+
+I suppose I can't think of a case where this would cause things to go
+badly, if everything is configured correctly. =
+
+
+> =
+
+> > Either you will frequently be writing to a non-optimized path (which
+> > can
+> > auto-trespass and become an optimized one in some arrays, causing
+> > horrible ping-ponging), or some of your paths will just always keep
+> > getting restored and then failed, since they require a manual
+> > trespass
+> > to be actually usable, but ghost paths are treated as usable by the
+> > kernel.
 > > =
 
+> > If you just set the priortizer for this device to const (or whatever
+> > make sense if the device isn't alua) and have detect_prio enabled,
+> > won't
+> > it correctly detect an alua prioritizer when it is supported, and
+> > failback to const when not?
 > =
 
-> Arrgh. Thanks for pointing that out. It's even worse because even if we
-> could figure out whether we're being called for the first or second
-> time, it wouldn't be sufficient. multipath.rules may not even be
-> present in the initrd, so the device may be present in the system, and
-> used, without multipath.rules having ever been called.
+> My first idea was similar, but no, AFAICS that doesn't happen. Once you
+> change pp->prio, it remains "const" until the next reconfigure(), which
+> may mean "never". Therefore my patch (v2) doesn't touch pp->prio. If
+> the failure is temporary, pp->priority will eventually be re-calculated =
+
+> correctly (note that get_prio() is always called by pathinfo() if =
+
+> pp->priority =3D=3D PRIO_UNDEF). If the failure is permanent, pp->priority
+> stays at "const -1", and that's ok.
+
+Maybe I'm being thick-headed here, but I still don't understand what's
+wrong with setting the prioritizer to const for this problematic array.
+If the array really does support ALUA, then it will be configured with
+ALUA, and you don't ever want it to change. If it doesn't, then the prio
+will remain const, and again, you don't want it to change.  Are you
+worried that there might be a temporary ALUA failure, setting the array
+to const, when it should be configured as ALUA.  In that case, it seems
+like we're try to deal with a pathological failure on a pathological
+array, which doesn't seem that useful.
+
+At any rate, since I don't see how this could break well behaved
+devices configured correctly.
+
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+
+> It would be possible to create a complex solution with multiple
+> prioritizers and fallback algorithms, but IMHO that would be
+> overengineered for a rare and rather pathological case like this.
 > =
 
-> The only way I see to avoid this is to try calling open(O_EXCL) on the
-> path device in "multipath -u". So far we've avoided that because it's
-> not completely race-free. But we're not talking about a race here, but
-> a situation where some entity grabbed a device before pivot-root.
-> So we could attempt open(O_EXCL) only in the "is maybe a valid path"
-> case, and only return "maybe" if that open succeeds. Otherwise we'd
-> return "no", as we already checked that the device isn't currently part
-> of a multipath map.
-> =
-
-
-Something like that should work.  I think we need to be careful to only
-ever do the exclusive open on an "add" event. In fact in probably
-wouldn't hurt to add some checks to make sure that we never start
-a temporary claim on a change event.  If we get a change event and
-FIND_MULTIPATHS_WAIT_UNTIL is unset, we should just assume that we
-missed the add event, and it should be set to "finished".
-
-What would be really nice would be to be able to tell if we are doing a
-cold-plug add after the pivot.  This is the only time where we actually
-need to check if a device is in use. Otherwise nobody else will have had
-a chance to use it yet.
-
--Ben
-
-> Agreed?
-> =
-
+> Regards,
 > Martin
+> =
+
+> > =
+
+> > -Ben
+> > =
+
+> > > Signed-off-by: Martin Wilck <mwilck@suse.com>
+> > > ---
+> > >  libmultipath/configure.c | 5 -----
+> > >  1 file changed, 5 deletions(-)
+> > > =
+
+> > > diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+> > > index fa6e21cb31af..bb3d8771592d 100644
+> > > --- a/libmultipath/configure.c
+> > > +++ b/libmultipath/configure.c
+> > > @@ -993,9 +993,6 @@ int coalesce_paths (struct vectors * vecs,
+> > > vector newmp, char * refwwid,
+> > >  			continue;
+> > >  		}
+> > >  =
+
+> > > -		if (pp1->priority =3D=3D PRIO_UNDEF)
+> > > -			mpp->action =3D ACT_REJECT;
+> > > -
+> > >  		if (!mpp->paths) {
+> > >  			condlog(0, "%s: skip coalesce (no paths)",
+> > > mpp->alias);
+> > >  			remove_map(mpp, vecs, 0);
+> > > @@ -1021,8 +1018,6 @@ int coalesce_paths (struct vectors * vecs,
+> > > vector newmp, char * refwwid,
+> > >  					mpp->size);
+> > >  				mpp->action =3D ACT_REJECT;
+> > >  			}
+> > > -			if (pp2->priority =3D=3D PRIO_UNDEF)
+> > > -				mpp->action =3D ACT_REJECT;
+> > >  		}
+> > >  		verify_paths(mpp, vecs);
+> > >  =
+
+> > > -- =
+
+> > > 2.16.1
+> > =
+
+> > =
+
 > =
 
 > -- =
