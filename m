@@ -1,51 +1,54 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [PATCH] dm rq: remove BUG_ON(!irqs_disabled) check
-Date: Tue, 27 Mar 2018 16:42:38 +0200
-Message-ID: <20180327144238.12529-1-bigeasy@linutronix.de>
+From: Wei Yongjun <weiyongjun1@huawei.com>
+Subject: [PATCH -next] dm verity: make some functions static
+Date: Wed, 28 Mar 2018 11:11:58 +0000
+Message-ID: <1522235518-20209-1-git-send-email-weiyongjun1@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="ISO-8859-1"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Keith Busch <keith.busch@intel.com>, tglx@linutronix.de, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, yaeceh01 <yael.chemla@foss.arm.com>
+Cc: Wei Yongjun <weiyongjun1@huawei.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, kernel-janitors@vger.kernel.org
 List-Id: dm-devel.ids
 
-In commit 052189a2ec95 ("dm: remove superfluous irq disablement in
-dm_request_fn") the spin_lock_irq() was replaced with spin_lock() + a
-check for disabled interrupts. Later the locking part was removed in
-commit 2eb6e1e3aa87 ("dm: submit stacked requests in irq enabled
-context") but the BUG_ON() check remained.
+Fixes the following sparse warnings:
 
-Since the original purpose for the "are-irqs-off" check is gone (the
-->queue_lock has been removed) I am removing the BUG_ON() check.
+drivers/md/dm-verity-target.c:375:6: warning:
+ symbol 'verity_for_io_block' was not declared. Should it be static?
+drivers/md/dm-verity-target.c:403:14: warning:
+ symbol 'verity_calc_buffs_for_bv' was not declared. Should it be static?
 
-Cc: Keith Busch <keith.busch@intel.com>
-Cc: Mike Snitzer <snitzer@redhat.com>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Wei Yongjun <weiyongjun1@huawei.com>
 ---
- drivers/md/dm-rq.c | 1 -
- 1 file changed, 1 deletion(-)
+ drivers/md/dm-verity-target.c | 11 ++++++-----
+ 1 file changed, 6 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
-index bf0b840645cc..1a524f992f72 100644
---- a/drivers/md/dm-rq.c
-+++ b/drivers/md/dm-rq.c
-@@ -688,7 +688,6 @@ static void dm_old_request_fn(struct request_queue *q)
- 		/* Establish tio->ti before queuing work (map_tio_request) */
- 		tio->ti = ti;
- 		kthread_queue_work(&md->kworker, &tio->work);
--		BUG_ON(!irqs_disabled());
- 	}
- }
- 
--- 
-2.16.3
+diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
+index da35f0e..e70d4d2 100644
+--- a/drivers/md/dm-verity-target.c
++++ b/drivers/md/dm-verity-target.c
+@@ -372,9 +372,9 @@ int verity_hash_for_block(struct dm_verity *v, struct dm_verity_io *io,
+ /*
+  * Calculates the digest for the given bio
+  */
+-void verity_for_io_block(struct dm_verity *v, struct dm_verity_io *io,
+-			 struct bvec_iter *iter, struct scatterlist *sg,
+-			 unsigned int *nents, unsigned int *total_len)
++static void verity_for_io_block(struct dm_verity *v, struct dm_verity_io *io,
++				struct bvec_iter *iter, struct scatterlist *sg,
++				unsigned int *nents, unsigned int *total_len)
+ {
+ 	unsigned int todo = 1 << v->data_dev_block_bits;
+ 	struct bio *bio = dm_bio_from_per_bio_data(io, v->ti->per_io_data_size);
+@@ -400,8 +400,9 @@ void verity_for_io_block(struct dm_verity *v, struct dm_verity_io *io,
+  * Calculate how many buffers are required to accommodate
+  * bio_vec starting from iter.
+  */
+-unsigned int verity_calc_buffs_for_bv(struct dm_verity *v, struct dm_verity_io *io,
+-				      struct bvec_iter *iter)
++static unsigned int verity_calc_buffs_for_bv(struct dm_verity *v,
++					     struct dm_verity_io *io,
++					     struct bvec_iter *iter)
+ {
+ 	unsigned int todo = 1 << v->data_dev_block_bits;
+ 	struct bio *bio = dm_bio_from_per_bio_data(io, v->ti->per_io_data_size);
