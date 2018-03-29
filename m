@@ -1,19 +1,20 @@
-From: Hannes Reinecke <hare@suse.de>
+From: Martin Wilck <mwilck@suse.com>
 Subject: Re: [PATCH v2 17/20] multipath.rules: find_multipaths
 	"smart" logic
-Date: Thu, 29 Mar 2018 08:04:37 +0200
-Message-ID: <20180329080437.51205fda@pentland.suse.de>
+Date: Thu, 29 Mar 2018 11:15:08 +0200
+Message-ID: <1522314908.3669.4.camel@suse.com>
 References: <20180319150155.5363-1-mwilck@suse.com>
 	<20180319150155.5363-18-mwilck@suse.com>
 	<20180327210339.GX3103@octiron.msp.redhat.com>
 	<1522186440.13140.47.camel@suse.com>
 	<20180327230706.GY3103@octiron.msp.redhat.com>
 	<1522248672.5251.25.camel@suse.com>
+	<20180329080437.51205fda@pentland.suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1522248672.5251.25.camel@suse.com>
+In-Reply-To: <20180329080437.51205fda@pentland.suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,61 +24,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
+To: Hannes Reinecke <hare@suse.de>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, 28 Mar 2018 16:51:12 +0200
-Martin Wilck <mwilck@suse.com> wrote:
-
-> On Tue, 2018-03-27 at 18:07 -0500, Benjamin Marzinski wrote:
-> > On Tue, Mar 27, 2018 at 11:34:00PM +0200, Martin Wilck wrote:  
-> > > 
-> > > The following happens: multipath -u temporarily claims the device.
-> > > When
-> > > multipathd starts, it fails to set up the map, sets the "failed"
-> > > marker, and retriggers udev. The second time, multipath -u
-> > > unclaims the
-> > > device because it recognizes it as failed.  
-> > 
-> > But if that device is already in use because multipath didn't claim
-> > it
-> > in the initramfs, and you suddenly mark it as
-> > ENV{SYSTEMD_READY}="0", this can cause systemd to automatically
-> > unmount any filesystem on it. This isn't just a problem with Red
-> > Hat's setup.  If it's not a configured device type, there will only
-> > be a short timeout, but that's
-> > still enough to mess with devices that are already in use.  I'm
-> > pretty
-> > sure that the multipath temporary claiming is only safe the very
-> > first
-> > time a device appears. Otherwise, it's possible that something else
-> > will
-> > claim it first, and then multipath will claim it and mess with that
-> > other user.
-> >   
-> 
-> Arrgh. Thanks for pointing that out. It's even worse because even if
-> we could figure out whether we're being called for the first or second
-> time, it wouldn't be sufficient. multipath.rules may not even be
-> present in the initrd, so the device may be present in the system, and
-> used, without multipath.rules having ever been called.
-> 
-> The only way I see to avoid this is to try calling open(O_EXCL) on the
-> path device in "multipath -u". So far we've avoided that because it's
-> not completely race-free. But we're not talking about a race here, but
-> a situation where some entity grabbed a device before pivot-root.
-> So we could attempt open(O_EXCL) only in the "is maybe a valid path"
-> case, and only return "maybe" if that open succeeds. Otherwise we'd
-> return "no", as we already checked that the device isn't currently
-> part of a multipath map.
-> 
-Ho-hum.
-
-Watch out when you do this; systemd will generate another event
-whenever you close this fd, and suddenly you find yourself in a middle
-of an event storm ...
-
-Cheers,
-
-Hannes
+T24gVGh1LCAyMDE4LTAzLTI5IGF0IDA4OjA0ICswMjAwLCBIYW5uZXMgUmVpbmVja2Ugd3JvdGU6
+Cj4gCj4gPiBUaGUgb25seSB3YXkgSSBzZWUgdG8gYXZvaWQgdGhpcyBpcyB0byB0cnkgY2FsbGlu
+ZyBvcGVuKE9fRVhDTCkgb24KPiA+IHRoZQo+ID4gcGF0aCBkZXZpY2UgaW4gIm11bHRpcGF0aCAt
+dSIuIFNvIGZhciB3ZSd2ZSBhdm9pZGVkIHRoYXQgYmVjYXVzZQo+ID4gaXQncwo+ID4gbm90IGNv
+bXBsZXRlbHkgcmFjZS1mcmVlLiBCdXQgd2UncmUgbm90IHRhbGtpbmcgYWJvdXQgYSByYWNlIGhl
+cmUsCj4gPiBidXQKPiA+IGEgc2l0dWF0aW9uIHdoZXJlIHNvbWUgZW50aXR5IGdyYWJiZWQgYSBk
+ZXZpY2UgYmVmb3JlIHBpdm90LXJvb3QuCj4gPiBTbyB3ZSBjb3VsZCBhdHRlbXB0IG9wZW4oT19F
+WENMKSBvbmx5IGluIHRoZSAiaXMgbWF5YmUgYSB2YWxpZAo+ID4gcGF0aCIKPiA+IGNhc2UsIGFu
+ZCBvbmx5IHJldHVybiAibWF5YmUiIGlmIHRoYXQgb3BlbiBzdWNjZWVkcy4gT3RoZXJ3aXNlIHdl
+J2QKPiA+IHJldHVybiAibm8iLCBhcyB3ZSBhbHJlYWR5IGNoZWNrZWQgdGhhdCB0aGUgZGV2aWNl
+IGlzbid0IGN1cnJlbnRseQo+ID4gcGFydCBvZiBhIG11bHRpcGF0aCBtYXAuCj4gPiAKPiAKPiBI
+by1odW0uCj4gCj4gV2F0Y2ggb3V0IHdoZW4geW91IGRvIHRoaXM7IHN5c3RlbWQgd2lsbCBnZW5l
+cmF0ZSBhbm90aGVyIGV2ZW50Cj4gd2hlbmV2ZXIgeW91IGNsb3NlIHRoaXMgZmQsIGFuZCBzdWRk
+ZW5seSB5b3UgZmluZCB5b3Vyc2VsZiBpbiBhCj4gbWlkZGxlCj4gb2YgYW4gZXZlbnQgc3Rvcm0g
+Li4uCgpUaGFua3MgZm9yIG1lbnRpb25pbmcgdGhhdC4KClVkZXYgbGlzdGVucyBmb3IgaW5vdGlm
+eSBldmVudHMgZm9yICJjbG9zZSBhZnRlciB3cml0ZSIuIFdlIHdpbGwgZG8gdGhlCnRlc3Qgd2l0
+aCBPX1JET05MWXxPX0VYQ0wsIHNvIG5vIGV2ZW50IHNob3VsZCBiZSBnZW5lcmF0ZWQuIE1vcmVv
+dmVyLApldmVudHMgc2hvdWxkIG9ubHkgb2NjdXIgaWYgdWRldiBpcyB3YXRjaGluZyB0aGUgZGV2
+aWNlLCB3aGljaApzaG91bGRuJ3QgYmUgdGhlIGNhc2Ugd2hpbGUgYW4gZXZlbnQgaXMgcHJvY2Vz
+c2VkIChidXQgSSdtIG5vdCAxMDAlCmNlcnRhaW4gYWJvdXQgdGhhdCkuIEFueXdheSwgSSdsbCB0
+ZXN0IHRoaXMuCiAKQ2hlZXJzLApNYXJ0aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tA
+c3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdG
+OiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIx
+Mjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVk
+aGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
