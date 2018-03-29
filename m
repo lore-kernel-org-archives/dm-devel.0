@@ -1,18 +1,19 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 1/2] multipath-tools: move COPYING to
- COPYING.LESSER
-Date: Wed, 28 Mar 2018 22:14:56 +0200
-Message-ID: <1522268096.5251.51.camel@suse.com>
-References: <20180327182819.20163-1-xose.vazquez@gmail.com>
-	<1522188190.13140.53.camel@suse.com>
-	<597ef512-842d-633f-b6f9-d2156b4aa931@gmail.com>
-	<1522266841.5251.50.camel@suse.com>
-	<c9d9d925-e881-223c-34d2-16fbd721de13@gmail.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH v2 17/20] multipath.rules: find_multipaths
+	"smart" logic
+Date: Thu, 29 Mar 2018 08:04:37 +0200
+Message-ID: <20180329080437.51205fda@pentland.suse.de>
+References: <20180319150155.5363-1-mwilck@suse.com>
+	<20180319150155.5363-18-mwilck@suse.com>
+	<20180327210339.GX3103@octiron.msp.redhat.com>
+	<1522186440.13140.47.camel@suse.com>
+	<20180327230706.GY3103@octiron.msp.redhat.com>
+	<1522248672.5251.25.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <c9d9d925-e881-223c-34d2-16fbd721de13@gmail.com>
+In-Reply-To: <1522248672.5251.25.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,19 +23,61 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, device-mapper development <dm-devel@redhat.com>
+To: Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gV2VkLCAyMDE4LTAzLTI4IGF0IDIyOjA1ICswMjAwLCBYb3NlIFZhenF1ZXogUGVyZXogd3Jv
-dGU6Cj4gT24gMDMvMjgvMjAxOCAwOTo1NCBQTSwgTWFydGluIFdpbGNrIHdyb3RlOgo+IAo+ID4g
-PiBDT1BZSU5HLkxJQlJBUlkgaXMgcmVhbGx5IGEgdmVyeSBiYWQgbmFtZS4gCj4gPiAKPiA+IFdo
-eT8gSSB0aGluayBpdCBleHByZXNzZXMgcXVpdGUgbmljZWx5IHdoYXQgaXQgY29udGFpbnMuCj4g
-Cj4gVG9vIGdlbmVyaWMgd29yZC4KPiBCZWNhdXNlIGl0IGNhbiBiZSBhc3N1bWVkIHRoYXQgYWxs
-ICJsaWJyYXJpZXMiIGluY2x1ZGVkIGFyZQo+IHVuZGVyIHRoYXQgbGljZW5zZS4KPiAKCldlbGws
-IENPUFlJTkcuTEdQTCwgYXMgeW91IGFscmVhZHkgc3VnZ2VzdGVkLCBtaWdodCBiZSBhIGdvb2QK
-Y29tcHJvbWlzZSB0aGVuLgoKQ2hlZXJzLApNYXJ0aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxt
-d2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdt
-YkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24K
-SFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2
-ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0t
-ZGV2ZWw=
+On Wed, 28 Mar 2018 16:51:12 +0200
+Martin Wilck <mwilck@suse.com> wrote:
+
+> On Tue, 2018-03-27 at 18:07 -0500, Benjamin Marzinski wrote:
+> > On Tue, Mar 27, 2018 at 11:34:00PM +0200, Martin Wilck wrote:  
+> > > 
+> > > The following happens: multipath -u temporarily claims the device.
+> > > When
+> > > multipathd starts, it fails to set up the map, sets the "failed"
+> > > marker, and retriggers udev. The second time, multipath -u
+> > > unclaims the
+> > > device because it recognizes it as failed.  
+> > 
+> > But if that device is already in use because multipath didn't claim
+> > it
+> > in the initramfs, and you suddenly mark it as
+> > ENV{SYSTEMD_READY}="0", this can cause systemd to automatically
+> > unmount any filesystem on it. This isn't just a problem with Red
+> > Hat's setup.  If it's not a configured device type, there will only
+> > be a short timeout, but that's
+> > still enough to mess with devices that are already in use.  I'm
+> > pretty
+> > sure that the multipath temporary claiming is only safe the very
+> > first
+> > time a device appears. Otherwise, it's possible that something else
+> > will
+> > claim it first, and then multipath will claim it and mess with that
+> > other user.
+> >   
+> 
+> Arrgh. Thanks for pointing that out. It's even worse because even if
+> we could figure out whether we're being called for the first or second
+> time, it wouldn't be sufficient. multipath.rules may not even be
+> present in the initrd, so the device may be present in the system, and
+> used, without multipath.rules having ever been called.
+> 
+> The only way I see to avoid this is to try calling open(O_EXCL) on the
+> path device in "multipath -u". So far we've avoided that because it's
+> not completely race-free. But we're not talking about a race here, but
+> a situation where some entity grabbed a device before pivot-root.
+> So we could attempt open(O_EXCL) only in the "is maybe a valid path"
+> case, and only return "maybe" if that open succeeds. Otherwise we'd
+> return "no", as we already checked that the device isn't currently
+> part of a multipath map.
+> 
+Ho-hum.
+
+Watch out when you do this; systemd will generate another event
+whenever you close this fd, and suddenly you find yourself in a middle
+of an event storm ...
+
+Cheers,
+
+Hannes
