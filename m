@@ -1,14 +1,17 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper fixes for 4.16 final
-Date: Fri, 30 Mar 2018 00:07:49 -0400
-Message-ID: <20180330040749.GA6551@redhat.com>
-References: <20180329211856.GA8119@redhat.com>
+Subject: Re: Recent kernels fail to boot on POWER8 with multipath
+	SCSI
+Date: Fri, 30 Mar 2018 07:49:27 -0400
+Message-ID: <20180330114926.GA7000@redhat.com>
+References: <20180329083909.GA15766@fergus.ozlabs.ibm.com>
+	<20180329151654.GA3839@redhat.com>
+	<87fu4iylwj.fsf@concordia.ellerman.id.au>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20180329211856.GA8119@redhat.com>
+In-Reply-To: <87fu4iylwj.fsf@concordia.ellerman.id.au>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,45 +21,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Paul Mackerras <paulus@ozlabs.org>, dm-devel@redhat.com, agk@redhat.com
+To: Michael Ellerman <michael@ellerman.id.au>
+Cc: Paul Mackerras <paulus@ozlabs.org>, dm-devel@redhat.com, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hi Linus,
+On Fri, Mar 30 2018 at  5:04P -0400,
+Michael Ellerman <michael@ellerman.id.au> wrote:
 
-I've updated the tag to include an additional fix for a 4.16-rc
-regression (my -rc fixes clearly need better regression testing!).
+> Hi Mike,
+> 
+> Paul's AFK so I tried the patch you sent.
+> 
+> Mike Snitzer <snitzer@redhat.com> writes:
+> > On Thu, Mar 29 2018 at  4:39am -0400,
+> > Paul Mackerras <paulus@ozlabs.org> wrote:
+> >> Since commit 8d47e65948dd ("dm mpath: remove unnecessary NVMe
+> >> branching in favor of scsi_dh checks", 2018-03-05), upstream kernels
+> >> fail to boot on my POWER8 box which has multipath SCSI disks.  The
+> >> host adapters are IPR and the userspace is CentOS 7.
+> ...
+> >
+> > Please try this patch, it'll likely fix your issues:
+> >
+> > diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+> > index dbddcdc5a4ec..746dd8a75b4a 100644
+> > --- a/drivers/md/dm-mpath.c
+> > +++ b/drivers/md/dm-mpath.c
+> > @@ -887,7 +887,7 @@ static struct pgpath *parse_path(struct dm_arg_set *as, struct path_selector *ps
+> >  
+> >  	q = bdev_get_queue(p->path.dev->bdev);
+> >  	attached_handler_name = scsi_dh_attached_handler_name(q, GFP_KERNEL);
+> > -	if (attached_handler_name) {
+> > +	if (attached_handler_name || m->hw_handler_name) {
+> >  		INIT_DELAYED_WORK(&p->activate_path, activate_path_work);
+> >  		r = setup_scsi_dh(p->path.dev->bdev, m, attached_handler_name, &ti->error);
+> >  		if (r) {
+> 
+> And it does indeed fix the problem. The system boots happily with no warnings.
 
-The following changes since commit 8c5c147339d2e201108169327b1f99aa6d57d2cd:
+Great, thanks for verifying.
 
-  dm mpath: fix passing integrity data (2018-03-14 15:39:33 -0400)
+> If you like here's a:
+> 
+>   Tested-by: Michael Ellerman <mpe@ellerman.id.au>
 
-are available in the Git repository at:
+Already sent to Linus and included.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-4.16/dm-fixes-4
+> Any prospect of getting that patch to Linus before the 4.16 release? Yes
+> I realise that's in ~36 hours :)
 
-for you to fetch changes up to da5dadb4f11660ca67580cd4a7420161266d6254:
+Please, see upstream commit e457edf0b21c873be827b7c2f6b8e1545485c415
 
-  dm: fix dropped return code from dm_get_bdev_for_ioctl (2018-03-29 23:31:32 -0400)
-
-Please pull, thanks!
+Thanks,
 Mike
-
-----------------------------------------------------------------
-- Fix a DM multipath regression introduced in a v4.16-rc6 commit:
-  restore support for loading, and attaching, scsi_dh modules during
-  multipath table load.  Otherwise some users may find themselves unable
-  to boot, as was reported today:
-  https://marc.info/?l=linux-scsi&m=152231276114962&w=2
-
-- Fix a DM core ioctl permission check regression introduced in a
-  v4.16-rc5 commit.
-
-----------------------------------------------------------------
-Mike Snitzer (2):
-      dm mpath: fix support for loading scsi_dh modules during table load
-      dm: fix dropped return code from dm_get_bdev_for_ioctl
-
- drivers/md/dm-mpath.c | 2 +-
- drivers/md/dm.c       | 8 +++++---
- 2 files changed, 6 insertions(+), 4 deletions(-)
