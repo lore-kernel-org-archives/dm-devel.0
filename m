@@ -1,12 +1,11 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper fix for 4.16 final
-Date: Thu, 29 Mar 2018 17:18:56 -0400
-Message-ID: <20180329211856.GA8119@redhat.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: [PATCH 0/6] multipath cleanup patches
+Date: Thu, 29 Mar 2018 22:36:57 -0500
+Message-ID: <1522381023-15262-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,37 +15,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Paul Mackerras <paulus@ozlabs.org>, dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Linus,
+The first four of these patches are minor fixes from Martin Wilck's
+review of my recently merged patchset. The fifth patch is a license
+clarification for libmpathcmd, and the sixth is is minor bugfix for
+multipathd config value printing
 
-The following changes since commit 8c5c147339d2e201108169327b1f99aa6d57d2cd:
+Benjamin Marzinski (6):
+  multipathd: remove incorrect pthread_testcancel
+  multipath: add comments
+  multipathd: minor dmevents polling code cleanups
+  multipathd: remove unneeded function parameter
+  mpathcmd: fix libmpathcmd license
+  libmultipath: don't print undefined values
 
-  dm mpath: fix passing integrity data (2018-03-14 15:39:33 -0400)
+ libmpathcmd/mpath_cmd.c | 19 +++++++++++++
+ libmpathcmd/mpath_cmd.h |  2 +-
+ libmultipath/dict.c     |  8 ++++++
+ multipathd/dmevents.c   | 10 ++++---
+ multipathd/main.c       | 15 +++++------
+ multipathd/waiter.c     |  1 -
+ tests/dmevents.c        | 72 ++++++++++++++++++++++++++++++++++++++++++++++++-
+ tests/util.c            |  2 ++
+ 8 files changed, 114 insertions(+), 15 deletions(-)
 
-are available in the Git repository at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-4.16/dm-fixes-4
-
-for you to fetch changes up to e457edf0b21c873be827b7c2f6b8e1545485c415:
-
-  dm mpath: fix support for loading scsi_dh modules during table load (2018-03-29 17:00:44 -0400)
-
-Please pull, thanks!
-Mike
-
-----------------------------------------------------------------
-- Fix a DM multipath regression introduced in a v4.16-rc6 commit:
-  restore support for loading, and attaching, scsi_dh modules during
-  multipath table load.  Otherwise some users may find themselves unable
-  to boot, as was reported today:
-  https://marc.info/?l=linux-scsi&m=152231276114962&w=2
-
-----------------------------------------------------------------
-Mike Snitzer (1):
-      dm mpath: fix support for loading scsi_dh modules during table load
-
- drivers/md/dm-mpath.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+-- 
+2.7.4
