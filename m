@@ -1,17 +1,18 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: Recent kernels fail to boot on POWER8 with multipath
-	SCSI
-Date: Fri, 30 Mar 2018 07:49:27 -0400
-Message-ID: <20180330114926.GA7000@redhat.com>
-References: <20180329083909.GA15766@fergus.ozlabs.ibm.com>
-	<20180329151654.GA3839@redhat.com>
-	<87fu4iylwj.fsf@concordia.ellerman.id.au>
+From: Bart Van Assche <Bart.VanAssche@wdc.com>
+Subject: Re: Revert "dm mpath: remove unnecessary NVMe branching
+ in favor of scsi_dh checks"
+Date: Fri, 30 Mar 2018 17:04:08 +0000
+Message-ID: <733dbda8db10738e3d374e146b0833d895564f9d.camel@wdc.com>
+References: <20180312202808.3556-1-bart.vanassche@wdc.com>
+	<20180312212314.GA30763@redhat.com> <1520890358.3469.68.camel@wdc.com>
+	<20180313152551.GA2785@redhat.com> <20180313163135.GB2785@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <87fu4iylwj.fsf@concordia.ellerman.id.au>
+In-Reply-To: <20180313163135.GB2785@redhat.com>
+Content-Language: en-US
+Content-ID: <5AB37D69795E8042BD07C6786E3D655A@namprd04.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,56 +22,22 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Michael Ellerman <michael@ellerman.id.au>
-Cc: Paul Mackerras <paulus@ozlabs.org>, dm-devel@redhat.com, linux-scsi@vger.kernel.org
+To: "snitzer@redhat.com" <snitzer@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Mar 30 2018 at  5:04P -0400,
-Michael Ellerman <michael@ellerman.id.au> wrote:
-
-> Hi Mike,
+On Tue, 2018-03-13 at 12:31 -0400, Mike Snitzer wrote:
+> But now I cannot get the test to run:
 > 
-> Paul's AFK so I tried the patch you sent.
-> 
-> Mike Snitzer <snitzer@redhat.com> writes:
-> > On Thu, Mar 29 2018 at  4:39am -0400,
-> > Paul Mackerras <paulus@ozlabs.org> wrote:
-> >> Since commit 8d47e65948dd ("dm mpath: remove unnecessary NVMe
-> >> branching in favor of scsi_dh checks", 2018-03-05), upstream kernels
-> >> fail to boot on my POWER8 box which has multipath SCSI disks.  The
-> >> host adapters are IPR and the userspace is CentOS 7.
-> ...
-> >
-> > Please try this patch, it'll likely fix your issues:
-> >
-> > diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-> > index dbddcdc5a4ec..746dd8a75b4a 100644
-> > --- a/drivers/md/dm-mpath.c
-> > +++ b/drivers/md/dm-mpath.c
-> > @@ -887,7 +887,7 @@ static struct pgpath *parse_path(struct dm_arg_set *as, struct path_selector *ps
-> >  
-> >  	q = bdev_get_queue(p->path.dev->bdev);
-> >  	attached_handler_name = scsi_dh_attached_handler_name(q, GFP_KERNEL);
-> > -	if (attached_handler_name) {
-> > +	if (attached_handler_name || m->hw_handler_name) {
-> >  		INIT_DELAYED_WORK(&p->activate_path, activate_path_work);
-> >  		r = setup_scsi_dh(p->path.dev->bdev, m, attached_handler_name, &ti->error);
-> >  		if (r) {
-> 
-> And it does indeed fix the problem. The system boots happily with no warnings.
+> # srp-test/run_tests -c -d -r 10 -t 02-mq
+> [ ... ]
+> /dev/disk/by-id/dm-uuid-mpath-3600140572616d6469736b31000000000: not found
+> Test srp-test/tests/02-mq failed
 
-Great, thanks for verifying.
+Hello Mike,
 
-> If you like here's a:
-> 
->   Tested-by: Michael Ellerman <mpe@ellerman.id.au>
+The bug that caused this failure has been fixed and is in linux-next. The
+srp-test software runs fine on my setup against linux-next. See also
+https://git.kernel.org/pub/scm/linux/kernel/git/rdma/rdma.git/commit/?h=for-next&id=b470c154c600e427592df5237596ce0f33ce7d9f
 
-Already sent to Linus and included.
-
-> Any prospect of getting that patch to Linus before the 4.16 release? Yes
-> I realise that's in ~36 hours :)
-
-Please, see upstream commit e457edf0b21c873be827b7c2f6b8e1545485c415
-
-Thanks,
-Mike
+Bart.
