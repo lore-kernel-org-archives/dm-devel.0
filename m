@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 10/20] libmultipath: indicate wwid failure in
-	dm_addmap_create()
-Date: Mon,  2 Apr 2018 21:50:41 +0200
-Message-ID: <20180402195051.26854-11-mwilck@suse.com>
+Subject: [PATCH v3 13/20] multipath -u: treat failed wwids as
+	invalid
+Date: Mon,  2 Apr 2018 21:50:44 +0200
+Message-ID: <20180402195051.26854-14-mwilck@suse.com>
 References: <20180402195051.26854-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,167 +22,33 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: Julian Andres Klode <julian.klode@canonical.com>, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-dm_addmap_create() is where we actually try to set up a new
-multipath map. Depending on the result, mark the wwid as
-failed (or not), and re-trigger an uevent if necessary.
-If a path changes from multipath to non-multipath, use an "add"
-event to make sure LVM2 rules pick it up. Increase log level
-of this event to 3.
+If a WWID has been marked as "failed", don't treat it as "valid multipath
+device path" in multipath -c/-u. This is key to achieve consistency between
+multipathd and udev rule processing.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/configure.c | 37 ++++++++++++++++++++++++++++---------
- libmultipath/configure.h |  2 +-
- libmultipath/devmapper.c |  9 ++++++++-
- libmultipath/structs.h   |  1 +
- multipathd/main.c        |  2 +-
- 5 files changed, 39 insertions(+), 12 deletions(-)
+ multipath/main.c | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 838d145..88e6687 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -443,11 +443,18 @@ trigger_udev_change(const struct multipath *mpp)
- }
- 
- void
--trigger_paths_udev_change(const struct multipath *mpp)
-+trigger_paths_udev_change(struct multipath *mpp, bool is_mpath)
- {
- 	struct pathgroup * pgp;
- 	struct path * pp;
- 	int i, j;
-+	/*
-+	 * If a path changes from multipath to non-multipath, we must
-+	 * synthesize an artificial "add" event, otherwise the LVM2 rules
-+	 * (69-lvm2-lvmetad.rules) won't pick it up. Otherwise, we'd just
-+	 * irritate ourselves with an "add", so use "change".
-+	 */
-+	const char *action = is_mpath ? "change" : "add";
- 
- 	if (!mpp || !mpp->pg)
- 		return;
-@@ -466,14 +473,21 @@ trigger_paths_udev_change(const struct multipath *mpp)
- 			 */
- 			env = udev_device_get_property_value(
- 				pp->udev, "DM_MULTIPATH_DEVICE_PATH");
--			if (env != NULL && !strcmp(env, "1"))
--					continue;
- 
--			condlog(4, "triggering change uevent for %s", pp->dev);
--			sysfs_attr_set_value(pp->udev, "uevent", "change",
--					     strlen("change"));
-+			if (is_mpath && env != NULL && !strcmp(env, "1"))
-+				continue;
-+			else if (!is_mpath &&
-+				   (env == NULL || !strcmp(env, "0")))
-+				continue;
-+
-+			condlog(3, "triggering %s uevent for %s (is %smultipath member)",
-+				action, pp->dev, is_mpath ? "" : "no ");
-+			sysfs_attr_set_value(pp->udev, "uevent",
-+					     action, strlen(action));
- 		}
- 	}
-+
-+	mpp->needs_paths_uevent = 0;
- }
- 
- static int
-@@ -870,8 +884,10 @@ int domap(struct multipath *mpp, char *params, int is_daemon)
- 		 * succeeded
+diff --git a/multipath/main.c b/multipath/main.c
+index dbe908e..88495f8 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -450,8 +450,12 @@ configure (struct config *conf, enum mpath_cmds cmd,
+ 		 * Paths listed in the wwids file are always considered valid.
  		 */
- 		mpp->force_udev_reload = 0;
--		if (mpp->action == ACT_CREATE && remember_wwid(mpp->wwid) == 1)
--			trigger_paths_udev_change(mpp);
-+		if (mpp->action == ACT_CREATE &&
-+		    (remember_wwid(mpp->wwid) == 1 ||
-+		     mpp->needs_paths_uevent))
-+			trigger_paths_udev_change(mpp, true);
- 		if (!is_daemon) {
- 			/* multipath client mode */
- 			dm_switchgroup(mpp->alias, mpp->bestpg);
-@@ -896,7 +912,10 @@ int domap(struct multipath *mpp, char *params, int is_daemon)
- 		}
- 		dm_setgeometry(mpp);
- 		return DOMAP_OK;
--	}
-+	} else if (r == DOMAP_FAIL && mpp->action == ACT_CREATE &&
-+		   mpp->needs_paths_uevent)
-+		trigger_paths_udev_change(mpp, false);
-+
- 	return DOMAP_FAIL;
- }
- 
-diff --git a/libmultipath/configure.h b/libmultipath/configure.h
-index 545cbc2..8b56d33 100644
---- a/libmultipath/configure.h
-+++ b/libmultipath/configure.h
-@@ -37,4 +37,4 @@ int get_refwwid (enum mpath_cmds cmd, char * dev, enum devtypes dev_type,
- 		 vector pathvec, char **wwid);
- int reload_map(struct vectors *vecs, struct multipath *mpp, int refresh, int is_daemon);
- struct udev_device *get_udev_device(const char *dev, enum devtypes dev_type);
--void trigger_paths_udev_change(const struct multipath *mpp);
-+void trigger_paths_udev_change(struct multipath *mpp, bool is_mpath);
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index 9bafbc6..d36e256 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -22,6 +22,7 @@
- #include "devmapper.h"
- #include "sysfs.h"
- #include "config.h"
-+#include "wwids.h"
- 
- #include "log_pthread.h"
- #include <sys/types.h>
-@@ -411,8 +412,12 @@ int dm_addmap_create (struct multipath *mpp, char * params)
- 		int err;
- 
- 		if (dm_addmap(DM_DEVICE_CREATE, TGT_MPATH, mpp, params, ro,
--			      udev_flags))
-+			      udev_flags)) {
-+			if (unmark_failed_wwid(mpp->wwid) ==
-+			    WWID_FAILED_CHANGED)
-+				mpp->needs_paths_uevent = 1;
- 			return 1;
-+		}
- 		/*
- 		 * DM_DEVICE_CREATE is actually DM_DEV_CREATE + DM_TABLE_LOAD.
- 		 * Failing the second part leaves an empty map. Clean it up.
-@@ -428,6 +433,8 @@ int dm_addmap_create (struct multipath *mpp, char * params)
- 			break;
- 		}
- 	}
-+	if (mark_failed_wwid(mpp->wwid) == WWID_FAILED_CHANGED)
-+		mpp->needs_paths_uevent = 1;
- 	return 0;
- }
- 
-diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-index d6482f8..32f4b2d 100644
---- a/libmultipath/structs.h
-+++ b/libmultipath/structs.h
-@@ -322,6 +322,7 @@ struct multipath {
- 	int max_sectors_kb;
- 	int force_readonly;
- 	int force_udev_reload;
-+	int needs_paths_uevent;
- 	int ghost_delay;
- 	int ghost_delay_tick;
- 	unsigned int dev_loss;
-diff --git a/multipathd/main.c b/multipathd/main.c
-index bfbe5f6..ea8c413 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -2310,7 +2310,7 @@ configure (struct vectors * vecs)
- 	sync_maps_state(mpvec);
- 	vector_foreach_slot(mpvec, mpp, i){
- 		if (remember_wwid(mpp->wwid) == 1)
--			trigger_paths_udev_change(mpp);
-+			trigger_paths_udev_change(mpp, true);
- 		update_map_pr(mpp);
- 	}
- 
+ 		if (cmd == CMD_VALID_PATH) {
+-			if ((!find_multipaths_on(conf) && ignore_wwids(conf)) ||
+-			    check_wwids_file(refwwid, 0) == 0)
++			if (is_failed_wwid(refwwid) == WWID_IS_FAILED) {
++				r = 1;
++				goto print_valid;
++			} else if ((!find_multipaths_on(conf) &&
++				  ignore_wwids(conf)) ||
++				 check_wwids_file(refwwid, 0) == 0)
+ 				r = 0;
+ 			if (r == 0 ||
+ 			    !find_multipaths_on(conf) || !ignore_wwids(conf)) {
 -- 
 2.16.1
