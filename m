@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 06/20] libmultipath: trigger path uevent only
-	when necessary
-Date: Mon,  2 Apr 2018 21:50:37 +0200
-Message-ID: <20180402195051.26854-7-mwilck@suse.com>
+Subject: [PATCH v3 12/20] multipath -u: change output to
+	environment/key format
+Date: Mon,  2 Apr 2018 21:50:43 +0200
+Message-ID: <20180402195051.26854-13-mwilck@suse.com>
 References: <20180402195051.26854-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,39 +22,77 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: Julian Andres Klode <julian.klode@canonical.com>, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Paths that are already classified as DM_MULTIPATH_DEVICE_PATH don't
-need to be retriggered.
+... instead of free format. This provides more flexibility
+for udev rule processing for the future. Adapt code in multipath.rules.
+The exit status remains as usual. This affects "multipath -c", too.
 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+The parameters "pathvec" and "conf" for print_cmd_valid are currently
+unused, but will be in follow-up patches.
+
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/configure.c | 12 ++++++++++++
- 1 file changed, 12 insertions(+)
+ multipath/main.c          | 14 ++++++++------
+ multipath/multipath.rules |  6 +++---
+ 2 files changed, 11 insertions(+), 9 deletions(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 245bd11..838d145 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -456,8 +456,20 @@ trigger_paths_udev_change(const struct multipath *mpp)
- 		if (!pgp->paths)
- 			continue;
- 		vector_foreach_slot(pgp->paths, pp, j) {
-+			const char *env;
+diff --git a/multipath/main.c b/multipath/main.c
+index 587111b..dbe908e 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -350,13 +350,15 @@ out:
+ 	return r;
+ }
+ 
+-static int print_cmd_valid(const char *devpath, int k)
++static int print_cmd_valid(int k, const vector pathvec,
++			   struct config *conf)
+ {
+-	if (k < 0 || k > 1)
++	static const int vals[] = { 1, 0 };
 +
- 			if (!pp->udev)
- 				continue;
-+			/*
-+			 * Paths that are already classified as multipath
-+			 * members don't need another uevent.
-+			 */
-+			env = udev_device_get_property_value(
-+				pp->udev, "DM_MULTIPATH_DEVICE_PATH");
-+			if (env != NULL && !strcmp(env, "1"))
-+					continue;
-+
-+			condlog(4, "triggering change uevent for %s", pp->dev);
- 			sysfs_attr_set_value(pp->udev, "uevent", "change",
- 					     strlen("change"));
- 		}
++	if (k < 0 || k >= sizeof(vals))
+ 		return 1;
+ 
+-	printf("%s is%s a valid multipath device path\n",
+-	       devpath, k ? "" : " not");
++	printf("DM_MULTIPATH_DEVICE_PATH=\"%d\"\n", vals[k]);
+ 	return k == 1;
+ }
+ 
+@@ -513,7 +515,7 @@ configure (struct config *conf, enum mpath_cmds cmd,
+ 
+ print_valid:
+ 	if (cmd == CMD_VALID_PATH)
+-		r = print_cmd_valid(devpath, r);
++		r = print_cmd_valid(r, pathvec, conf);
+ 
+ out:
+ 	if (refwwid)
+@@ -850,7 +852,7 @@ main (int argc, char *argv[])
+ 		if (fd == -1) {
+ 			condlog(3, "%s: daemon is not running", dev);
+ 			if (!systemd_service_enabled(dev)) {
+-				r = print_cmd_valid(dev, 1);
++				r = print_cmd_valid(1, NULL, conf);
+ 				goto out;
+ 			}
+ 		} else
+diff --git a/multipath/multipath.rules b/multipath/multipath.rules
+index 6f8ee2b..aab64dc 100644
+--- a/multipath/multipath.rules
++++ b/multipath/multipath.rules
+@@ -19,9 +19,9 @@ LABEL="test_dev"
+ ENV{MPATH_SBIN_PATH}="/sbin"
+ TEST!="$env{MPATH_SBIN_PATH}/multipath", ENV{MPATH_SBIN_PATH}="/usr/sbin"
+ 
+-ENV{DM_MULTIPATH_DEVICE_PATH}!="1", \
+-	PROGRAM=="$env{MPATH_SBIN_PATH}/multipath -u %k", \
+-	ENV{DM_MULTIPATH_DEVICE_PATH}="1", ENV{ID_FS_TYPE}="mpath_member", \
++# multipath -u sets DM_MULTIPATH_DEVICE_PATH
++ENV{DM_MULTIPATH_DEVICE_PATH}!="1", IMPORT{program}="$env{MPATH_SBIN_PATH}/multipath -u %k"
++ENV{DM_MULTIPATH_DEVICE_PATH}=="1", ENV{ID_FS_TYPE}="mpath_member", \
+ 	ENV{SYSTEMD_READY}="0"
+ 
+ LABEL="end_mpath"
 -- 
 2.16.1
