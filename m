@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 18/20] multipath -u: quick check if path is
-	multipathed
-Date: Mon,  2 Apr 2018 21:50:49 +0200
-Message-ID: <20180402195051.26854-19-mwilck@suse.com>
+Subject: [PATCH v3 19/20] libmultipath: enable find_multipaths
+	"smart"
+Date: Mon,  2 Apr 2018 21:50:50 +0200
+Message-ID: <20180402195051.26854-20-mwilck@suse.com>
 References: <20180402195051.26854-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,148 +22,92 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: Julian Andres Klode <julian.klode@canonical.com>, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-With "find_multipaths smart", we accept paths as valid if they are
-already part of a multipath map. This patch avoids doing a full path
-and device-mapper map scan for this case, speeding up "multipath -u"
-considerably.
+This activates "smart" path detection. This is similar to
+"find_multipaths yes", but doesn't generally ignore single paths
+that are not listed in the WWIDs file. Rather, such paths are
+temporarily treated like multipath members. If no additional paths
+are detected after a certain time, the paths are re-added to the
+system as non-multipath. This needs support by the udev rules, to
+be added in a follow-up patch.
+
+If a multipath map is successfully successfully created, and paths are
+in waiting state, trigger path uevents to update their status.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/sysfs.c | 66 ++++++++++++++++++++++++++++++++++++++++++++++++++++
- libmultipath/sysfs.h |  2 ++
- multipath/main.c     | 14 ++++++++++-
- 3 files changed, 81 insertions(+), 1 deletion(-)
+ libmultipath/configure.c   | 15 ++++++++++++---
+ libmultipath/dict.c        |  1 +
+ multipath/multipath.conf.5 | 13 +++++++++++++
+ 3 files changed, 26 insertions(+), 3 deletions(-)
 
-diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
-index 97e0997..589eeaf 100644
---- a/libmultipath/sysfs.c
-+++ b/libmultipath/sysfs.c
-@@ -27,6 +27,7 @@
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 88e6687..2d28ded 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -12,6 +12,7 @@
  #include <string.h>
- #include <dirent.h>
+ #include <sys/file.h>
+ #include <errno.h>
++#include <ctype.h>
+ #include <libdevmapper.h>
  #include <libudev.h>
-+#include <fnmatch.h>
+ #include "mpath_cmd.h"
+@@ -474,9 +475,17 @@ trigger_paths_udev_change(struct multipath *mpp, bool is_mpath)
+ 			env = udev_device_get_property_value(
+ 				pp->udev, "DM_MULTIPATH_DEVICE_PATH");
  
- #include "checkers.h"
- #include "vector.h"
-@@ -287,3 +288,68 @@ int sysfs_check_holders(char * check_devt, char * new_devt)
+-			if (is_mpath && env != NULL && !strcmp(env, "1"))
+-				continue;
+-			else if (!is_mpath &&
++			if (is_mpath && env != NULL && !strcmp(env, "1")) {
++				/*
++				 * If FIND_MULTIPATHS_WAIT_UNTIL is not "0",
++				 * path is in "maybe" state and timer is running
++				 * Send uevent now (see multipath.rules).
++				 */
++				env = udev_device_get_property_value(
++					pp->udev, "FIND_MULTIPATHS_WAIT_UNTIL");
++				if (env == NULL || !strcmp(env, "0"))
++					continue;
++			} else if (!is_mpath &&
+ 				   (env == NULL || !strcmp(env, "0")))
+ 				continue;
  
- 	return 0;
- }
-+
-+static int select_dm_devs(const struct dirent *di)
-+{
-+	return fnmatch("dm-*", di->d_name, FNM_FILE_NAME) == 0;
-+}
-+
-+static void close_fd(void *arg)
-+{
-+	close((long)arg);
-+}
-+
-+bool sysfs_is_multipathed(const struct path *pp)
-+{
-+	char pathbuf[PATH_MAX];
-+	struct dirent **di;
-+	int n, r, i;
-+	bool found = false;
-+
-+	n = snprintf(pathbuf, sizeof(pathbuf), "/sys/block/%s/holders",
-+		     pp->dev);
-+
-+	if (n >= sizeof(pathbuf)) {
-+		condlog(1, "%s: pathname overflow", __func__);
-+		return false;
-+	}
-+
-+	r = scandir(pathbuf, &di, select_dm_devs, alphasort);
-+	if (r == 0)
-+		return false;
-+	else if (r < 0) {
-+		condlog(1, "%s: error scanning %s", __func__, pathbuf);
-+		return false;
-+	}
-+
-+	pthread_cleanup_push(free, di);
-+	for (i = 0; i < r && !found; i++) {
-+		long fd;
-+		int nr;
-+		char uuid[6];
-+
-+		if (snprintf(pathbuf + n, sizeof(pathbuf) - n,
-+			     "/%s/dm/uuid", di[i]->d_name)
-+		    >= sizeof(pathbuf) - n)
-+			continue;
-+
-+		fd = open(pathbuf, O_RDONLY);
-+		if (fd == -1) {
-+			condlog(1, "%s: error opening %s", __func__, pathbuf);
-+			continue;
-+		}
-+
-+		pthread_cleanup_push(close_fd, (void*)fd);
-+		nr = read(fd, uuid, sizeof(uuid));
-+		if (nr == sizeof(uuid) && !memcmp(uuid, "mpath-", sizeof(uuid)))
-+			found = true;
-+		else if (nr < 0) {
-+			condlog(1, "%s: error reading from %s: %s",
-+				__func__, pathbuf, strerror(errno));
-+		}
-+		pthread_cleanup_pop(1);
-+	}
-+	pthread_cleanup_pop(1);
-+
-+	return found;
-+}
-diff --git a/libmultipath/sysfs.h b/libmultipath/sysfs.h
-index 75c0f9c..9ae30b3 100644
---- a/libmultipath/sysfs.h
-+++ b/libmultipath/sysfs.h
-@@ -4,6 +4,7 @@
+diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+index d59fdc8..1237c23 100644
+--- a/libmultipath/dict.c
++++ b/libmultipath/dict.c
+@@ -238,6 +238,7 @@ static const char *find_multipaths_optvals[] = {
+ 	[FIND_MULTIPATHS_ON] = "on",
+ 	[FIND_MULTIPATHS_STRICT] = "strict",
+ 	[FIND_MULTIPATHS_GREEDY] = "greedy",
++	[FIND_MULTIPATHS_SMART] = "smart",
+ };
  
- #ifndef _LIBMULTIPATH_SYSFS_H
- #define _LIBMULTIPATH_SYSFS_H
-+#include <stdbool.h>
- 
- ssize_t sysfs_attr_set_value(struct udev_device *dev, const char *attr_name,
- 			     const char * value, size_t value_len);
-@@ -13,4 +14,5 @@ ssize_t sysfs_bin_attr_get_value(struct udev_device *dev, const char *attr_name,
- 				 unsigned char * value, size_t value_len);
- int sysfs_get_size (struct path *pp, unsigned long long * size);
- int sysfs_check_holders(char * check_devt, char * new_devt);
-+bool sysfs_is_multipathed(const struct path *pp);
- #endif
-diff --git a/multipath/main.c b/multipath/main.c
-index 392d5f0..c21ee28 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -594,6 +594,15 @@ configure (struct config *conf, enum mpath_cmds cmd,
- 			    !find_multipaths_on(conf) || !ignore_wwids(conf)) {
- 				goto print_valid;
- 			}
-+			/*
-+			 * Shortcut for find_multipaths smart:
-+			 * Quick check if path is already multipathed.
-+			 */
-+			if (ignore_wwids(conf) &&
-+			    sysfs_is_multipathed(VECTOR_SLOT(pathvec, 0))) {
-+				r = 0;
-+				goto print_valid;
-+			}
- 		}
- 	}
- 
-@@ -666,7 +675,10 @@ configure (struct config *conf, enum mpath_cmds cmd,
- 			condlog(3, "%s: path %s is in use: %s",
- 				__func__, pp->dev,
- 				strerror(errno));
--			r = 1;
-+			/*
-+			 * Check if we raced with multipathd
-+			 */
-+			r = !sysfs_is_multipathed(VECTOR_SLOT(pathvec, 0));
- 		}
- 		goto print_valid;
- 	}
+ static int
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index 94c419a..641ba43 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -978,6 +978,19 @@ with the same WWID have been detected.
+ Both multipathd and multipath treat every non-blacklisted device as multipath
+ device path.
+ .TP
++.I smart
++This differs from \fIfind_multipaths yes\fR only in
++the way it treats new devices for which only one path has been
++detected yet. When such a device is first encounted in udev rules, it is
++treated as a multipath device. multipathd waits whether additional paths with
++the same WWID appears. If that happens, it sets up a multipath map. If it
++doesn\'t happen until a 
++timeout expires, or if setting up the map fails, a new uevent is triggered for
++the device; at second encounter in the udev rules, the device will be treated
++as non-multipath and passed on to upper layers.
++\fBNote:\fR this may cause delays during device detection if
++there are single-path devices which aren\'t blacklisted.
++.TP
+ The default is: \fBstrict\fR
+ .RE
+ .
 -- 
 2.16.1
