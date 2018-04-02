@@ -1,7 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 17/20] multipath -u: test if path is busy
-Date: Mon,  2 Apr 2018 21:50:48 +0200
-Message-ID: <20180402195051.26854-18-mwilck@suse.com>
+Subject: [PATCH v3 16/20] multipath -u : set
+	FIND_MULTIPATHS_WAIT_UNTIL from /dev/shm
+Date: Mon,  2 Apr 2018 21:50:47 +0200
+Message-ID: <20180402195051.26854-17-mwilck@suse.com>
 References: <20180402195051.26854-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,67 +22,216 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: Julian Andres Klode <julian.klode@canonical.com>, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-For "find_multipaths smart", check if a path is already in use
-before setting DM_MULTIPATH_DEVICE_PATH to 1 or 2 (and thus,
-SYSTEMD_READY=0). If we don't do this, a device which has already been
-mounted (e.g. during initrd processing) may be unmounted by systemd, causing
-havoc to the boot process.
+In "find_multipaths smart" mode, use time stamps under
+/dev/shm/multipath/find_multipaths to track waiting for multipath
+siblings. When a path is first encountered and is "maybe" multipath, create a
+file under /dev/shm, set its modification time to the expiry time of the
+timer, and set the FIND_MULTIPATHS_WAIT_UNTIL variable. On later calls, also set
+FIND_MULTIPATHS_WAIT_UNTIL to the expiry time (but don't change the time
+stamp) if it's not expired yet, or 0 if it is expired. Set
+FIND_MULTIPATHS_WAIT_UNTIL even if enough evidence becomes available to decide
+if the path needs to be multipathed - this enables the udev rules to detect
+that this is a device a timer has been started for, and stop it. By using
+/dev/shm, we share information about "smart" timers between initrd and root
+file system, and thus only calculate the timeout once.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipath/main.c | 31 ++++++++++++++++++++++++++++++-
- 1 file changed, 30 insertions(+), 1 deletion(-)
+ libmultipath/file.c |   2 +-
+ libmultipath/file.h |   1 +
+ multipath/main.c    | 133 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 135 insertions(+), 1 deletion(-)
 
+diff --git a/libmultipath/file.c b/libmultipath/file.c
+index d5165ec..8727f16 100644
+--- a/libmultipath/file.c
++++ b/libmultipath/file.c
+@@ -36,7 +36,7 @@
+  * See the file COPYING included with this distribution for more details.
+  */
+ 
+-static int
++int
+ ensure_directories_exist(const char *str, mode_t dir_mode)
+ {
+ 	char *pathname;
+diff --git a/libmultipath/file.h b/libmultipath/file.h
+index 70bffa5..29520c7 100644
+--- a/libmultipath/file.h
++++ b/libmultipath/file.h
+@@ -6,6 +6,7 @@
+ #define _FILE_H
+ 
+ #define FILE_TIMEOUT 30
++int ensure_directories_exist(const char *str, mode_t dir_mode);
+ int open_file(const char *file, int *can_write, const char *header);
+ 
+ #endif /* _FILE_H */
 diff --git a/multipath/main.c b/multipath/main.c
-index d09f117..392d5f0 100644
+index 650e2bb..d09f117 100644
 --- a/multipath/main.c
 +++ b/multipath/main.c
-@@ -629,16 +629,45 @@ configure (struct config *conf, enum mpath_cmds cmd,
+@@ -29,6 +29,7 @@
+ #include <ctype.h>
+ #include <libudev.h>
+ #include <syslog.h>
++#include <fcntl.h>
  
+ #include "checkers.h"
+ #include "prio.h"
+@@ -60,6 +61,9 @@
+ #include "uxsock.h"
+ #include "mpath_cmd.h"
+ #include "foreign.h"
++#include "propsel.h"
++#include "time-util.h"
++#include "file.h"
  
- 	if (cmd == CMD_VALID_PATH) {
-+		struct path *pp;
-+		int fd;
+ int logsink;
+ struct udev *udev;
+@@ -350,14 +354,143 @@ out:
+ 	return r;
+ }
+ 
++enum {
++	FIND_MULTIPATHS_WAIT_DONE = 0,
++	FIND_MULTIPATHS_WAITING = 1,
++	FIND_MULTIPATHS_ERROR = -1,
++	FIND_MULTIPATHS_NEVER = -2,
++};
 +
- 		/* This only happens if find_multipaths and
- 		 * ignore_wwids is set.
- 		 * If there is currently a multipath device matching
- 		 * the refwwid, or there is more than one path matching
- 		 * the refwwid, then the path is valid */
--		if (VECTOR_SIZE(curmp) != 0 || VECTOR_SIZE(pathvec) > 1)
-+		if (VECTOR_SIZE(curmp) != 0) {
-+			r = 0;
-+			goto print_valid;
-+		} else if (VECTOR_SIZE(pathvec) > 1)
- 			r = 0;
- 		else
- 			/* Use r=2 as an indication for "maybe" */
- 			r = 2;
++static const char shm_find_mp_dir[] = MULTIPATH_SHM_BASE "find_multipaths";
++static void close_fd(void* arg)
++{
++	close((long)arg);
++}
 +
++/**
++ * find_multipaths_check_timeout(wwid, tmo)
++ * Helper for "find_multipaths smart"
++ *
++ * @param[in] pp: path to check / record
++ * @param[in] tmo: configured timeout for this WWID, or value <= 0 for checking
++ * @param[out] until: timestamp until we must wait, CLOCK_REALTIME, if return
++ *             value is FIND_MULTIPATHS_WAITING
++ * @returns: FIND_MULTIPATHS_WAIT_DONE, if waiting has finished
++ * @returns: FIND_MULTIPATHS_ERROR, if internal error occured
++ * @returns: FIND_MULTIPATHS_NEVER, if tmo is 0 and we didn't wait for this
++ *           device
++ * @returns: FIND_MULTIPATHS_WAITING, if timeout hasn't expired
++ */
++static int find_multipaths_check_timeout(const struct path *pp, long tmo,
++					 struct timespec *until)
++{
++	char path[PATH_MAX];
++	struct timespec now, ftimes[2], tdiff;
++	struct stat st;
++	long fd;
++	int r, err, retries = 0;
++
++	clock_gettime(CLOCK_REALTIME, &now);
++
++	if (snprintf(path, sizeof(path), "%s/%s", shm_find_mp_dir, pp->dev_t)
++	    >= sizeof(path)) {
++		condlog(1, "%s: path name overflow", __func__);
++		return -1;
++	}
++
++	if (ensure_directories_exist(path, 0700)) {
++		condlog(1, "%s: error creating directories", __func__);
++		return FIND_MULTIPATHS_ERROR;
++	}
++
++retry:
++	fd = open(path, O_RDONLY);
++	if (fd != -1) {
++		pthread_cleanup_push(close_fd, (void*)fd);
++		r = fstat(fd, &st);
++		if (r != 0)
++			err = errno;
++		pthread_cleanup_pop(1);
++
++	} else if (tmo > 0) {
++		if (errno == ENOENT)
++			fd = open(path, O_RDWR|O_EXCL|O_CREAT, 0644);
++		if (fd == -1) {
++			if (errno == EEXIST && !retries++)
++				/* We could have raced with another process */
++				goto retry;
++			condlog(1, "%s: error opening %s: %s",
++				__func__, path, strerror(errno));
++			return FIND_MULTIPATHS_ERROR;
++		};
++
++		pthread_cleanup_push(close_fd, (void*)fd);
 +		/*
-+		 * If opening the path with O_EXCL fails, the path
-+		 * is in use (e.g. mounted during initramfs processing).
-+		 * We know that it's not used by dm-multipath.
-+		 * We may not set SYSTEMD_READY=0 on such devices, it
-+		 * might cause systemd to umount the device.
-+		 * Use O_RDONLY, because udevd would trigger another
-+		 * uevent for close-after-write.
-+		 *
-+		 * get_refwwid() above stores the path we examine in slot 0.
++		 * We just created the file. Set st_mtim to our desired
++		 * expiry time.
++		 */
++		ftimes[0].tv_sec = 0;
++		ftimes[0].tv_nsec = UTIME_OMIT;
++		ftimes[1].tv_sec = now.tv_sec + tmo;
++		ftimes[1].tv_nsec = now.tv_nsec;
++		if (futimens(fd, ftimes) != 0) {
++			condlog(1, "%s: error in futimens(%s): %s", __func__,
++				path, strerror(errno));
++		}
++		r = fstat(fd, &st);
++		if (r != 0)
++			err = errno;
++		pthread_cleanup_pop(1);
++	} else
++		return FIND_MULTIPATHS_NEVER;
++
++	if (r != 0) {
++		condlog(1, "%s: error in fstat for %s: %s", __func__,
++			path, strerror(err));
++		return FIND_MULTIPATHS_ERROR;
++	}
++
++	timespecsub(&st.st_mtim, &now, &tdiff);
++
++	if (tdiff.tv_sec <= 0)
++		return FIND_MULTIPATHS_WAIT_DONE;
++	else {
++		*until = tdiff;
++		return FIND_MULTIPATHS_WAITING;
++	}
++}
++
+ static int print_cmd_valid(int k, const vector pathvec,
+ 			   struct config *conf)
+ {
+ 	static const int vals[] = { 1, 0, 2 };
++	int wait = FIND_MULTIPATHS_NEVER;
++	struct timespec until;
++	struct path *pp;
+ 
+ 	if (k < 0 || k >= sizeof(vals))
+ 		return 1;
+ 
++	if (k == 2) {
++		/*
++		 * Caller ensures that pathvec[0] is the path to
++		 * examine.
 +		 */
 +		pp = VECTOR_SLOT(pathvec, 0);
-+		fd = open(udev_device_get_devnode(pp->udev),
-+			  O_RDONLY|O_EXCL);
-+		if (fd >= 0)
-+			close(fd);
-+		else {
-+			condlog(3, "%s: path %s is in use: %s",
-+				__func__, pp->dev,
-+				strerror(errno));
-+			r = 1;
-+		}
- 		goto print_valid;
- 	}
- 
++		select_find_multipaths_timeout(conf, pp);
++		wait = find_multipaths_check_timeout(
++			pp, pp->find_multipaths_timeout, &until);
++		if (wait != FIND_MULTIPATHS_WAITING)
++			k = 1;
++	} else if (pathvec != NULL) {
++		pp = VECTOR_SLOT(pathvec, 0);
++		wait = find_multipaths_check_timeout(pp, 0, &until);
++	}
++	if (wait == FIND_MULTIPATHS_WAITING)
++		printf("FIND_MULTIPATHS_WAIT_UNTIL=\"%ld.%06ld\"\n",
++			       until.tv_sec, until.tv_nsec/1000);
++	else if (wait == FIND_MULTIPATHS_WAIT_DONE)
++		printf("FIND_MULTIPATHS_WAIT_UNTIL=\"0\"\n");
+ 	printf("DM_MULTIPATH_DEVICE_PATH=\"%d\"\n", vals[k]);
+ 	return k == 1;
+ }
 -- 
 2.16.1
