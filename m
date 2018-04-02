@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 14/20] multipath -u: add
-	DM_MULTIPATH_DEVICE_PATH=2 for "maybe"
-Date: Mon,  2 Apr 2018 21:50:45 +0200
-Message-ID: <20180402195051.26854-15-mwilck@suse.com>
+Subject: [PATCH v3 20/20] multipath.rules: find_multipaths
+	"smart" logic
+Date: Mon,  2 Apr 2018 21:50:51 +0200
+Message-ID: <20180402195051.26854-21-mwilck@suse.com>
 References: <20180402195051.26854-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,40 +22,104 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: Julian Andres Klode <julian.klode@canonical.com>, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Use DM_MULTIPATH_DEVICE_PATH="2" to indicate that this might be a
-valid path, but we aren't certain. This happens with find_multipaths
-"smart", when the first path to a device (or a single-path
-device) is encountered, and the device is neither blacklisted,
-nor marked failed, nor whitelisted in the wwids file.
+When the first path to a device appears, we don't know if more paths are going
+to follow. find_multipath "smart" logic attempts to solve this dilemma by
+waiting for additional paths for a configurable time before giving up
+and releasing single paths to upper layers.
 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+These rules apply only if both find_multipaths is set to "smart" in
+multipath.conf. In this mode, multipath -u sets DM_MULTIPATH_DEVICE_PATH=2 if
+there's no clear evidence wheteher a given device should be a multipath member
+(not blacklisted, not listed as "failed", not in WWIDs file, not member of an
+existing map, only one path seen yet). In this case, "multipath -u" also sets the
+variable FIND_MULTIPATHS_WAIT_UNIL to a relative time stamp (we need to use
+relative "monotonic" time stamps because this may be triggered early during
+boot, before system "calendar" time is correctly initialized).
+
+In the DM_MULTIPATH_DEVICE_PATH=2 case, pretend that the path is multipath
+member, disallow further processing by systemd (allowing multipathd some time
+to grab the path), and set a systemd timer to check again after the given
+timeout. If the path is still not multipathed by then, pass it on to systemd
+for further processing.
+
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipath/main.c | 5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+ multipath/multipath.rules | 64 ++++++++++++++++++++++++++++++++++++++++++++---
+ 1 file changed, 60 insertions(+), 4 deletions(-)
 
-diff --git a/multipath/main.c b/multipath/main.c
-index 88495f8..650e2bb 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -353,7 +353,7 @@ out:
- static int print_cmd_valid(int k, const vector pathvec,
- 			   struct config *conf)
- {
--	static const int vals[] = { 1, 0 };
-+	static const int vals[] = { 1, 0, 2 };
+diff --git a/multipath/multipath.rules b/multipath/multipath.rules
+index aab64dc..77b9f16 100644
+--- a/multipath/multipath.rules
++++ b/multipath/multipath.rules
+@@ -19,9 +19,65 @@ LABEL="test_dev"
+ ENV{MPATH_SBIN_PATH}="/sbin"
+ TEST!="$env{MPATH_SBIN_PATH}/multipath", ENV{MPATH_SBIN_PATH}="/usr/sbin"
  
- 	if (k < 0 || k >= sizeof(vals))
- 		return 1;
-@@ -503,6 +503,9 @@ configure (struct config *conf, enum mpath_cmds cmd,
- 		 * the refwwid, then the path is valid */
- 		if (VECTOR_SIZE(curmp) != 0 || VECTOR_SIZE(pathvec) > 1)
- 			r = 0;
-+		else
-+			/* Use r=2 as an indication for "maybe" */
-+			r = 2;
- 		goto print_valid;
- 	}
+-# multipath -u sets DM_MULTIPATH_DEVICE_PATH
+-ENV{DM_MULTIPATH_DEVICE_PATH}!="1", IMPORT{program}="$env{MPATH_SBIN_PATH}/multipath -u %k"
+-ENV{DM_MULTIPATH_DEVICE_PATH}=="1", ENV{ID_FS_TYPE}="mpath_member", \
+-	ENV{SYSTEMD_READY}="0"
++# FIND_MULTIPATHS_WAIT_UNTIL is the timeout (in seconds after the
++# epoch).
++IMPORT{db}="FIND_MULTIPATHS_WAIT_UNTIL"
++ENV{.SAVED_FM_WAIT_UNTIL}="$env{FIND_MULTIPATHS_WAIT_UNTIL}"
++
++# multipath -u sets DM_MULTIPATH_DEVICE_PATH and,
++# if "find_multipaths smart", also FIND_MULTIPATHS_WAIT_UNTIL.
++ENV{DM_MULTIPATH_DEVICE_PATH}!="1", \
++	IMPORT{program}="$env{MPATH_SBIN_PATH}/multipath -u %k"
++
++# case 1: this is definitely multipath
++ENV{DM_MULTIPATH_DEVICE_PATH}=="1", \
++	ENV{ID_FS_TYPE}="mpath_member", ENV{SYSTEMD_READY}="0", \
++	GOTO="stop_wait"
++
++# case 2: this is definitely not multipath, or timeout has expired
++ENV{DM_MULTIPATH_DEVICE_PATH}!="2", \
++	GOTO="stop_wait"
++
++# Code below here is only run in "smart" mode.
++# multipath -u has indicated this is "maybe" multipath.
++
++# This shouldn't happen, just in case.
++ENV{FIND_MULTIPATHS_WAIT_UNTIL}!="?*", GOTO="end_mpath"
++
++# Be careful not to start the timer twice.
++ACTION!="add", GOTO="pretend_mpath"
++ENV{.SAVED_FM_WAIT_UNTIL}=="?*", GOTO="pretend_mpath"
++
++# At this point, we are seeing this path for the first time, and it's "maybe" multipath.
++
++# The actual start command for the timer.
++#
++# The purpose of this command is only to make sure we will receive another
++# uevent eventually. *Any* uevent may cause waiting to finish if it either ends
++# in case 1-3 above, or if it arrives after FIND_MULTIPATHS_WAIT_UNTIL.
++#
++# Note that this will try to activate multipathd if it isn't running yet.
++# If that fails, the unit starts and expires nonetheless. If multipathd
++# startup needs to wait for other services, this wait time will add up with
++# the --on-active timeout.
++#
++# We must trigger an "add" event because LVM2 will only act on those.
++
++RUN+="/usr/bin/systemd-run --unit=cancel-multipath-wait-$kernel --description 'cancel waiting for multipath siblings of $kernel' --no-block --timer-property DefaultDependencies=no --timer-property Conflicts=shutdown.target --timer-property Before=shutdown.target --timer-property AccuracySec=500ms --property DefaultDependencies=no --property Conflicts=shutdown.target --property Before=shutdown.target --property Wants=multipathd.service --property After=multipathd.service --on-active=$env{FIND_MULTIPATHS_WAIT_UNTIL} /usr/bin/udevadm trigger --action=add $sys$devpath"
++
++LABEL="pretend_mpath"
++ENV{DM_MULTIPATH_DEVICE_PATH}="1"
++ENV{SYSTEMD_READY}="0"
++GOTO="end_mpath"
++
++LABEL="stop_wait"
++# If timeout hasn't expired but we're not in "maybe" state any more, stop timer
++# Do this only once, and only if the timer has been started before
++IMPORT{db}="FIND_MULTIPATHS_WAIT_CANCELLED"
++ENV{FIND_MULTIPATHS_WAIT_CANCELLED}!="?*", \
++	ENV{FIND_MULTIPATHS_WAIT_UNTIL}=="?*", \
++	ENV{FIND_MULTIPATHS_WAIT_UNTIL}!="0", \
++	ENV{FIND_MULTIPATHS_WAIT_CANCELLED}="1", \
++	RUN+="/usr/bin/systemctl stop cancel-multipath-wait-$kernel.timer"
  
+ LABEL="end_mpath"
 -- 
 2.16.1
