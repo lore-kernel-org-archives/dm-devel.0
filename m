@@ -1,118 +1,65 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 1/2] libmultipath: hwhandler auto-detection
-	for ALUA
-Date: Tue, 03 Apr 2018 22:53:29 +0200
-Message-ID: <1522788809.3801.109.camel@suse.com>
-References: <20180327215053.3631-1-mwilck@suse.com>
-	<20180327215053.3631-2-mwilck@suse.com>
-	<20180403203132.GF3103@octiron.msp.redhat.com>
+From: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v9] dax, dm: introduce ->fs_{claim, release}() dax_device
+ infrastructure
+Date: Tue, 3 Apr 2018 17:13:20 -0400
+Message-ID: <20180403211320.GA7835@redhat.com>
+References: <CAPcyv4gSh29g7ZSuWnZVTdgXXS_027qvQNLgAUA+JrFwefXW+w@mail.gmail.com>
+ <152278769715.7139.9560094354006725491.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180403203132.GF3103@octiron.msp.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>, Hannes
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <152278769715.7139.9560094354006725491.stgit-p8uTFz9XbKj2zm6wflaqv1nYeNYlB/vhral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, =?iso-8859-1?B?Suly9G1l?= Glisse <jglisse-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-T24gVHVlLCAyMDE4LTA0LTAzIGF0IDE1OjMxIC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gT24gVHVlLCBNYXIgMjcsIDIwMTggYXQgMTE6NTA6NTJQTSArMDIwMCwgTWFydGluIFdp
-bGNrIHdyb3RlOgo+ID4gSWYgdGhlIGhhcmR3YXJlIGhhbmRsZXIgaXNuJ3QgZXhwbGljaXRseSBz
-ZXQsIGluZmVyIEFMVUEgc3VwcG9ydAo+ID4gZnJvbSB0aGUgcHAtPnRwZ3MgYXR0cmlidXRlLiBM
-aWtld2lzZSwgaWYgQUxVQSBpcyBzZWxlY3RlZCwgYnV0Cj4gPiBub3Qgc3VwcG9ydGVkIGJ5IHRo
-ZSBoYXJkd2FyZSwgZmFsbCBiYWNrIHRvIG5vIGhhcmR3YXJlIGhhbmRsZXIuCj4gCj4gV2VyZW4n
-dCB5b3Ugd29ycmllZCBiZWZvcmUgYWJvdXQgdGVtcG9yYXJ5IEFMVUEgZmFpbHVyZXM/IElmIHlv
-dSBoYWQKPiBhCj4gdGVtcG9yYXJ5IGZhaWx1cmUgd2hpbGUgY29uZmlndXJpbmcgYSBkZXZpY2Ug
-dGhhdCB5b3UgZXhwbGljaXRseSBzZXQKPiB0bwo+IGJlIEFMVUEsIHRoZW4gdGhpcyB3b3VsZCBj
-YXVzZSB0aGUgZGV2aWNlIHRvIGJlIG1pc2NvbmZpZ3VyZWQ/IAoKSSBiZWxpZXZlIHRoYXQgaWYg
-VEdQUyBpcyAwLCB0aGUgZGV2aWNlIHdpbGwgbmV2ZXIgYmUgYWJsZSB0byBzdXBwb3J0CkFMVUEu
-IFRoZSBrZXJuZWwgYWxzbyBsb29rcyBhdCB0aGUgVFBHUyBiaXRzIGFuZCB3b24ndCB0cnkgQUxV
-QSBpZiB0aGV5CmFyZSB1bnNldC4gT25jZSB0aGUgZGV2aWNlIGlzIGNvbmZpZ3VyZWQgYW5kIGFj
-dHVhbCBBTFVBIFJUUEcvU1RQRwpjYWxscyBhcmUgcGVyZm9ybWVkLCB0aGV5IG1heSBmYWlsIGZv
-ciBhIHZhcmlldHkgb2YgdGVtcG9yYXJ5IHJlYXNvbnMgLQpJIHdhbnRlZCB0byBhdm9pZCByZXNl
-dHRpbmcgdGhlIHByaW8gYWxnb3JpdGhtIHRvICJjb25zdCIgZm9yIHN1Y2gKY2FzZXMuIFRoYXQn
-cyBteSB1bmRlcnN0YW5kaW5nLCBjb3JyZWN0IG1lIGlmIEknbSB3cm9uZy4KCj4gSWYgdGhlCj4g
-aGFyZHdhcmUgaGFuZGxlciBpc24ndCBzZXQsIGluZmVycmluZyBBTFVBIGlzIGZpbmUuIEJ1dCB3
-aGF0IGlzIHRoZQo+IGNhc2UKPiB3aGVyZSB3ZSB3YW50IHRvIHNheSB0aGF0IGEgZGV2aWNlIHRo
-YXQgaXMgZXhwbGljaXRseSBzZXQgdG8gQUxVQQo+IHNob3VsZG4ndCBhY3R1YWxseSBiZSBBTFVB
-PyAgSXQgc2VlbSBsaWtlIGlmIHRoZXJlIGlzIHNvbWUKPiB1bmNlcnRhaW50bHksCj4gd2Ugc2hv
-dWxkIGp1c3Qgbm90IHNldCB0aGUgaGFyZHdhcmUgaGFuZGxlciwgYW5kIGFsbG93IG11bHRpcGF0
-aCB0bwo+IGluZmVyIGl0IHZpYSB0aGUgcHAtPnRwZ3MgdmFsdWUuCj4gCj4gSSdtIG5vdCBzdHJv
-bmdseSBhZ2FpbnN0IHRoaXMgcGF0Y2guIEkganVzdCBkb24ndCBzZWUgdGhlIHZhbHVlIGluCj4g
-b3ZlcnJpZGluZyBhbiBleHBsaWNpdCBjb25maWd1cmF0aW9uLCBpZiB3ZSBiZWxpZXZlIHRoYXQg
-dGVtcG9yYXJ5Cj4gZmFpbHVyZXMgYXJlIHBvc3NpYmxlLgoKVGhhdCB3b3VsZCBiZSBmaW5lIGlm
-IHdlIGRpZG4ndCBoYXZlIGFueSBleHBsaWNpdCAiaGFyZHdhcmVfaGFuZGxlcgphbHVhIiBzZXR0
-aW5ncyBpbiB0aGUgaGFyZGNvZGVkIGh3dGFibGUgYW55IG1vcmUsIG9yIGF0IGxlYXN0IGlmIHdl
-J3JlIApwb3NpdGl2ZSB0aGF0IHRob3NlIGRldmljZXMgd2hlcmUgd2UgaGF2ZSAiaGFyZHdhcmVf
-aGFuZGxlciBhbHVhIgpyZWFsbHkgc3VwcG9ydCBpdC4KCldlIGNhbiBhbHNvIGFkb3B0IHRoZSBw
-aGlsb3NvcGh5IG9mICJkZXRlY3RfcHJpbyIgYW5kICJkZXRlY3RfY2hlY2tlciIsCmFkZCBhbiBh
-ZGRpdGlvbmFsIGNvbmZpZyBmaWxlIG9wdGlvbiAiZGV0ZWN0X2h3aGFuZGxlciIsIGFuZCBsb29r
-IGF0CnRwZ3Mgb25seSBpZiB0aGUgbGF0dGVyIGl0IHNldCAod2hpY2ggd291bGQgYmUgdGhlIGRl
-ZmF1bHQpLiBMaWtlCmRldGVjdF9wcmlvLCB1c2VycyBjb3VsZCB0aGVuIGVuZm9yY2UgdGhlaXIg
-Y29uZmlnIGZpbGUgc2V0dGluZ3Mgd2l0aAoiZGV0ZWN0X2h3aGFuZGxlciBubyIuCgpJIHdhcyBo
-b3Bpbmcgd2UgY291bGQgZmluZCBhIHNpbXBsZXIgYXBwcm9hY2gsIHdpdGhvdXQgeWV0IGFub3Ro
-ZXIKcmFyZWx5LXVzZWQgY29uZmlnIG9wdGlvbi4KCkJ0dywgYXQgU1VTRSB3ZSBzb2x2ZWQgb3Vy
-IHByb2JsZW0gd2l0aCB0aGUgY29udHJvbGxlciBhdCBoYW5kIGJ5CnNpbXBseSByZW1vdmluZyAi
-aGFyZHdhcmVfaGFuZGxlciBhbHVhIiBhbmQgInByaW8gYWx1YSIgZnJvbSB0aGUgSUJNCklQUiBl
-bnRyeS4gSWYgdGhlIHNjc2lfZGhfYWx1YSBtb2R1bGUgaXMgbG9hZGVkIGVhcmx5IChkZWZhdWx0
-IG9uClNVU0UpLCB0aGlzIHJlc3VsdHMgaW4gQUxVQSBod2hhbmRsZXIgYW5kIHN5c2ZzIHByaW8g
-YmVpbmcgdXNlZCBmb3IgSVBSCmNvbnRyb2xsZXJzIHRoYXQgZG8gc3VwcG9ydCBBTFVBLCBhbmQg
-bm8gaHdoYW5kbGVyIC8gY29uc3QgcHJpbyA9ClBSSU9fVU5ERUYgZm9yIHRob3NlIHRoYXQgZG9u
-J3QuIEknbSBub3Qgc3VyZSBpZiB0aGF0IHNpbXBsZSBzb2x1dGlvbgpzdWl0cyB1cHN0cmVhbSwg
-YmVjYXVzZSB1cHN0cmVhbSBkb2Vzbid0IGVuZm9yY2UgZWFybHkgbG9hZGluZyBvZgpkZXZpY2Ug
-aGFuZGxlciBtb2R1bGVzLgoKUmVnYXJkcywKTWFydGluCgoKPiAKPiAtQmVuCj4gCj4gPiAKPiA+
-IFNpZ25lZC1vZmYtYnk6IE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPgo+ID4gLS0tCj4g
-PiAgbGlibXVsdGlwYXRoL3Byb3BzZWwuYyB8IDE5ICsrKysrKysrKysrKysrKysrLS0KPiA+ICAx
-IGZpbGUgY2hhbmdlZCwgMTcgaW5zZXJ0aW9ucygrKSwgMiBkZWxldGlvbnMoLSkKPiA+IAo+ID4g
-ZGlmZiAtLWdpdCBhL2xpYm11bHRpcGF0aC9wcm9wc2VsLmMgYi9saWJtdWx0aXBhdGgvcHJvcHNl
-bC5jCj4gPiBpbmRleCA5Mzk3NGE0ODIzMzYuLmRjMjQ0NTBlYjc3NSAxMDA2NDQKPiA+IC0tLSBh
-L2xpYm11bHRpcGF0aC9wcm9wc2VsLmMKPiA+ICsrKyBiL2xpYm11bHRpcGF0aC9wcm9wc2VsLmMK
-PiA+IEBAIC00MywxMCArNDMsMTMgQEAgZG8gewkJCQkJCQo+ID4gCQkJXAo+ID4gIAkJZ290byBv
-dXQ7CQkJCQkJCj4gPiBcCj4gPiAgCX0JCQkJCQkJCQo+ID4gXAo+ID4gIH0gd2hpbGUoMCkKPiA+
-ICsKPiA+ICtzdGF0aWMgY2hhciBkZWZhdWx0X29yaWdpbltdID0gIihzZXR0aW5nOiBtdWx0aXBh
-dGggaW50ZXJuYWwpIjsKPiA+ICsKPiA+ICAjZGVmaW5lIGRvX2RlZmF1bHQoZGVzdCwgdmFsdWUp
-CQkJCQkKPiA+IAlcCj4gPiAgZG8gewkJCQkJCQkJCj4gPiAJXAo+ID4gIAlkZXN0ID0gdmFsdWU7
-CQkJCQkJCj4gPiAJXAo+ID4gLQlvcmlnaW4gPSAiKHNldHRpbmc6IG11bHRpcGF0aCBpbnRlcm5h
-bCkiOwkJCQo+ID4gXAo+ID4gKwlvcmlnaW4gPSBkZWZhdWx0X29yaWdpbjsJCQkJCQo+ID4gXAo+
-ID4gIH0gd2hpbGUoMCkKPiA+ICAKPiA+ICAjZGVmaW5lIG1wX3NldF9tcGUodmFyKQkJCQkJCQo+
-ID4gCVwKPiA+IEBAIC0zNzMsMTYgKzM3NiwyMCBAQCBzdGF0aWMgaW50IGdldF9kaF9zdGF0ZShz
-dHJ1Y3QgcGF0aCAqcHAsIGNoYXIKPiA+ICp2YWx1ZSwgc2l6ZV90IHZhbHVlX2xlbikKPiA+ICAK
-PiA+ICBpbnQgc2VsZWN0X2h3aGFuZGxlcihzdHJ1Y3QgY29uZmlnICpjb25mLCBzdHJ1Y3QgbXVs
-dGlwYXRoICptcCkKPiA+ICB7Cj4gPiAtCWNoYXIgKm9yaWdpbjsKPiA+ICsJY29uc3QgY2hhciAq
-b3JpZ2luOwo+ID4gIAlzdHJ1Y3QgcGF0aCAqcHA7Cj4gPiAgCS8qIGRoX3N0YXRlIGlzIG5vIGxv
-bmdlciB0aGFuICJkZXRhY2hlZCIgKi8KPiA+ICAJY2hhciBoYW5kbGVyWzEyXTsKPiA+ICsJc3Rh
-dGljIGNoYXIgYWx1YV9uYW1lW10gPSAiMSBhbHVhIjsKPiA+ICsJc3RhdGljIGNvbnN0IGNoYXIg
-dHBnc19vcmlnaW5bXT0gIihzZXR0aW5nOiBhdXRvZGV0ZWN0ZWQKPiA+IGZyb20gVFBHUykiOwo+
-ID4gIAljaGFyICpkaF9zdGF0ZTsKPiA+ICAJaW50IGk7Cj4gPiArCWJvb2wgYWxsX3RwZ3MgPSB0
-cnVlOwo+ID4gIAo+ID4gIAlkaF9zdGF0ZSA9ICZoYW5kbGVyWzJdOwo+ID4gIAlpZiAobXAtPnJl
-dGFpbl9od2hhbmRsZXIgIT0gUkVUQUlOX0hXSEFORExFUl9PRkYpIHsKPiA+ICAJCXZlY3Rvcl9m
-b3JlYWNoX3Nsb3QobXAtPnBhdGhzLCBwcCwgaSkgewo+ID4gKwkJCWFsbF90cGdzID0gYWxsX3Rw
-Z3MgJiYgKHBwLT50cGdzID4gMCk7Cj4gPiAgCQkJaWYgKGdldF9kaF9zdGF0ZShwcCwgZGhfc3Rh
-dGUsCj4gPiBzaXplb2YoaGFuZGxlcikgLSAyKSA+IDAKPiA+ICAJCQkgICAgJiYgc3RyY21wKGRo
-X3N0YXRlLCAiZGV0YWNoZWQiKSkgewo+ID4gIAkJCQltZW1jcHkoaGFuZGxlciwgIjEgIiwgMik7
-Cj4gPiBAQCAtMzk3LDYgKzQwNCwxNCBAQCBpbnQgc2VsZWN0X2h3aGFuZGxlcihzdHJ1Y3QgY29u
-ZmlnICpjb25mLAo+ID4gc3RydWN0IG11bHRpcGF0aCAqbXApCj4gPiAgCW1wX3NldF9jb25mKGh3
-aGFuZGxlcik7Cj4gPiAgCW1wX3NldF9kZWZhdWx0KGh3aGFuZGxlciwgREVGQVVMVF9IV0hBTkRM
-RVIpOwo+ID4gIG91dDoKPiA+ICsJaWYgKGFsbF90cGdzICYmICFzdHJjbXAobXAtPmh3aGFuZGxl
-ciwgREVGQVVMVF9IV0hBTkRMRVIpCj4gPiAmJgo+ID4gKwkJb3JpZ2luID09IGRlZmF1bHRfb3Jp
-Z2luKSB7Cj4gPiArCQltcC0+aHdoYW5kbGVyID0gYWx1YV9uYW1lOwo+ID4gKwkJb3JpZ2luID0g
-dHBnc19vcmlnaW47Cj4gPiArCX0gZWxzZSBpZiAoIWFsbF90cGdzICYmICFzdHJjbXAobXAtPmh3
-aGFuZGxlciwgYWx1YV9uYW1lKSkKPiA+IHsKPiA+ICsJCW1wLT5od2hhbmRsZXIgPSBERUZBVUxU
-X0hXSEFORExFUjsKPiA+ICsJCW9yaWdpbiA9IHRwZ3Nfb3JpZ2luOwo+ID4gKwl9Cj4gPiAgCW1w
-LT5od2hhbmRsZXIgPSBTVFJEVVAobXAtPmh3aGFuZGxlcik7Cj4gPiAgCWNvbmRsb2coMywgIiVz
-OiBoYXJkd2FyZV9oYW5kbGVyID0gXCIlc1wiICVzIiwgbXAtPmFsaWFzLAo+ID4gbXAtPmh3aGFu
-ZGxlciwKPiA+ICAJCW9yaWdpbik7Cj4gPiAtLSAKPiA+IDIuMTYuMQo+IAo+IAoKLS0gCkRyLiBN
-YXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3
-ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwg
-R3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxp
-bmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1h
-bi9saXN0aW5mby9kbS1kZXZlbA==
+On Tue, Apr 03 2018 at  4:36pm -0400,
+Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
+
+> In preparation for allowing filesystems to augment the dev_pagemap
+> associated with a dax_device, add an ->fs_claim() callback. The
+> ->fs_claim() callback is leveraged by the device-mapper dax
+> implementation to iterate all member devices in the map and repeat the
+> claim operation across the array.
+> =
+
+> In order to resolve collisions between filesystem operations and DMA to
+> DAX mapped pages we need a callback when DMA completes. With a callback
+> we can hold off filesystem operations while DMA is in-flight and then
+> resume those operations when the last put_page() occurs on a DMA page.
+> The ->fs_claim() operation arranges for this callback to be registered,
+> although that implementation is saved for a later patch.
+> =
+
+> Cc: Alasdair Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> Cc: Matthew Wilcox <mawilcox-0li6OtcxBFHby3iVrkZq2A@public.gmane.org>
+> Cc: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+> Cc: "J=E9r=F4me Glisse" <jglisse-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+> Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+> Signed-off-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> ---
+> Changes since v8:
+> * make __fs_dax_claim and __fs_dax_release private to
+>   drivers/dax/super.c
+> =
+
+> * rename dm_dax_iterate to dm_dax_interate_devices (Mike)
+> =
+
+> * drop the return value from dm_dax_interate_devices since nothing uses
+>   it (Mike)
+
+Acked-by: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
