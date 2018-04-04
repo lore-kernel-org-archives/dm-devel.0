@@ -1,16 +1,15 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: device mapper ioctl handling
-Date: Wed, 4 Apr 2018 10:36:56 -0400
-Message-ID: <20180404143655.GC14708@redhat.com>
-References: <alpine.LRH.2.02.1804040905340.19168@file01.intranet.prod.int.rdu2.redhat.com>
-	<20180404140228.GB14708@redhat.com>
-	<alpine.LRH.2.02.1804041010480.30966@file01.intranet.prod.int.rdu2.redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 1/6] multipathd: remove incorrect
+	pthread_testcancel
+Date: Wed, 04 Apr 2018 17:33:54 +0200
+Message-ID: <1522856034.22625.13.camel@suse.com>
+References: <1522381023-15262-1-git-send-email-bmarzins@redhat.com>
+	<1522381023-15262-2-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1804041010480.30966@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <1522381023-15262-2-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,121 +19,18 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Apr 04 2018 at 10:20am -0400,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
-
-> 
-> 
-> On Wed, 4 Apr 2018, Mike Snitzer wrote:
-> 
-> > On Wed, Apr 04 2018 at  9:34am -0400,
-> > Mikulas Patocka <mpatocka@redhat.com> wrote:
-> > 
-> > > Hi
-> > > 
-> > > I was thinking about that ioctl handling - and the problem is that the 
-> > > current code is broken too. The current code does:
-> > > 
-> > > 1. dm_get_live_table
-> > > 2. call the "prepare_ioctl" method on the first target, that returns the 
-> > >    block device where the ioctl should be forwarded
-> > > 3. call bdgrab on the block device
-> > > 4. call blkdev_get on the block device
-> > > 5. call dm_put_live_table
-> > > 6. call __blkdev_driver_ioctl to forward the ioctl to the target device
-> > > 7. call blkdev_put
-> > > 
-> > > One problem: bdgrab is not paired with bdput, so it introduces a memory 
-> > > leak? Perhaps it should be deleted.
-> > 
-> > No, bdgrab() is required prior to blkdev_get().
-> > blkdev_get()'s error path will bdput().  Otherwise, blkdev_put() will
-> > bdput() via __blkdev_put().
-> > 
-> > So no, this aspect of the code is correct.  Looks funny for sure (but
-> > that is just a quirk of the block interfaces).
-> 
-> Yes. You are right.
-> 
-> > > The second problem: it may call ioctl on a device that is not part of a dm 
-> > > table. Between step 5 and step 6, the table may be reloaded with a 
-> > > different target, but it still calls the ioctl on the old device.
-> > >
-> > > So - we need to prevent table reload while the ioctl is in progress.
-> > 
-> > But it _was_ part of a DM table.  Hard to assert that this race on table
-> > unload is reason for alarm.  Even if ioctl is successful, what is the
-> > _real_ harm associated with losing that race?
-> > 
-> > I mean I agree that ideally we wouldn't issue the ioctl if the table
-> > were unload just prior.  A deeper mutual exclussion is needed.
-> 
-> It is not a reason for alarm, but it is still incorrect.
-> 
-> For example, suppose that a cloud provider maps a disk to a customer's 
-> virtual machine. Then, because of some load-balancing, he remaps the dm 
-> device to point to a different disk. There's a tiny window where a SCSI 
-> command sent by the virtual machine could hit the old disk even after it 
-> was already unmapped.
-> 
-> This could cause problems to the cloud provider (the customer would access 
-> disk to which he doesn't have access) and also to the customer (the SCSI 
-> command would be sent to a different disk, so it would appear that the 
-> command was not performed).
-> 
-> This is a small race condition, but it is still incorrect.
-
-I agree that it is a small race condition.  Not too concerned about it.
-If the ioctl was fine to issue when the original device were active, as
-part of the table, it will remain perfectly safe even immediately after
-it was removed from the table.
- 
-> > > But there is another possible problem - there is multipath flag 
-> > > MPATHF_QUEUE_IF_NO_PATH and the ioctl may take indefinite time if the flag 
-> > > is set and there is no active path. In this situation it would prevent 
-> > > reloading the upper targets above the multipath target. But I think this 
-> > > is acceptable - if the multipath device has MPATHF_QUEUE_IF_NO_PATH set, 
-> > > bios sent to the device are queued indefinitely and these queued bios 
-> > > would already prevent suspending the upper layer device mapper devices. 
-> > > So, if a stuck ioctl prevents suspending the upper layer devices, it 
-> > > doesn't make it worse.
-> > 
-> > Except that it is possible to suspend _without_ flush (and multipathd
-> > does do that to be able to reload a multipath table that has no valid
-> > paths and queue_if_no_path is configured).
-> 
-> If you suspend noflush, the bios are cleared from the target, but they are 
-> held on the md->deferred list. So, the upper device can't suspend even if 
-> the lower device suspends with the noflush flag.
-
-No, for multipath they are queued (either back to DM core for
-request-based or within the target in the case of bio-based).
-
-> > We discussed this MPATHF_QUEUE_IF_NO_PATH case yesterday in the context
-> > of holding the live DM table for the duration of the ioctl (via
-> > dm_get_live_table).  The MPATHF_QUEUE_IF_NO_PATH case is particularly
-> > problematic for this dm_get_live_table based solution:
-> > https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.17&id=7e3990b5e0a2ac6f980adeb030d230b600ecdc4d
-> > 
-> > Meaning I'll need to drop that patch.
-> 
-> No, I think that patch fixes that ioctl race. All you need to do is to 
-> drop the srcu region when sleeping here. Dropping the srcu lock would 
-> allow the user to reload the table of the multipath device (and reloading 
-> the table of upper dm devices would be impossible anyway because of stuck 
-> bios, so we don't have to care about it).
-> 
-> if (r == -ENOTCONN && !fatal_signal_pending(current)) {
-> 	msleep(10);
-> 	goto retry;
-> }
-
-Alright, I'll update the patch to drop the table and get it back after
-sleep.  I'll do some extra testing to see the impact of the sleep while
-the SRCU is held though.
-
-Mike
+T24gVGh1LCAyMDE4LTAzLTI5IGF0IDIyOjM2IC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cj4gQXMgTWFydGluIFdpbGNrIHBvaW50ZWQgb3V0LCBhIHRocmVhZCB0aGF0J3MgdHJ5aW5n
+IHRvIHN0b3AgdGhlCj4gd2FpdGVyCj4gdGhyZWFkIHNob3VsZCBub3QgY2FuY2VsIGl0c2VsZiBi
+ZWZvcmUgaXQgZ2V0cyBhIGNoYW5jZSB0byBkbyBzbwo+IAo+IENjOiBNYXJ0aW4gV2lsY2sgPG13
+aWxja0BzdXNlLmNvbT4KPiBGaXhlczogYzc2MjVmOTIgIm11bHRpcGF0aGQ6IGZpeCB3YWl0ZXIg
+dGhyZWFkIGNhbmNlbGxpbmciCj4gU2lnbmVkLW9mZi1ieTogQmVuamFtaW4gTWFyemluc2tpIDxi
+bWFyemluc0ByZWRoYXQuY29tPgoKUmV2aWV3ZWQtYnk6IE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1
+c2UuY29tPgoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5
+ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZl
+ciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykK
+Ci0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3
+LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
