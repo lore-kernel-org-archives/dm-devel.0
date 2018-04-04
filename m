@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v4 08/20] libmultipath: use const char* in
-	open_file()
-Date: Wed,  4 Apr 2018 18:16:15 +0200
-Message-ID: <20180404161627.6244-9-mwilck@suse.com>
+Subject: [PATCH v4 14/20] multipath -u: add
+	DM_MULTIPATH_DEVICE_PATH=2 for "maybe"
+Date: Wed,  4 Apr 2018 18:16:21 +0200
+Message-ID: <20180404161627.6244-15-mwilck@suse.com>
 References: <20180404161627.6244-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,55 +22,40 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: Julian Andres Klode <julian.klode@canonical.com>, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
+Use DM_MULTIPATH_DEVICE_PATH="2" to indicate that this might be a
+valid path, but we aren't certain. This happens with find_multipaths
+"smart", when the first path to a device (or a single-path
+device) is encountered, and the device is neither blacklisted,
+nor marked failed, nor whitelisted in the wwids file.
+
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/file.c | 6 +++---
- libmultipath/file.h | 2 +-
- 2 files changed, 4 insertions(+), 4 deletions(-)
+ multipath/main.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/file.c b/libmultipath/file.c
-index e4951c9..d5165ec 100644
---- a/libmultipath/file.c
-+++ b/libmultipath/file.c
-@@ -37,7 +37,7 @@
-  */
- 
- static int
--ensure_directories_exist(char *str, mode_t dir_mode)
-+ensure_directories_exist(const char *str, mode_t dir_mode)
+diff --git a/multipath/main.c b/multipath/main.c
+index 942caf4..f62e18a 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -353,7 +353,7 @@ out:
+ static int print_cmd_valid(int k, const vector pathvec,
+ 			   struct config *conf)
  {
- 	char *pathname;
- 	char *end;
-@@ -80,7 +80,7 @@ sigalrm(int sig)
- }
+-	static const int vals[] = { 1, 0 };
++	static const int vals[] = { 1, 0, 2 };
  
- static int
--lock_file(int fd, char *file_name)
-+lock_file(int fd, const char *file_name)
- {
- 	struct sigaction act, oldact;
- 	sigset_t set, oldset;
-@@ -118,7 +118,7 @@ lock_file(int fd, char *file_name)
- }
+ 	if (k < 0 || k >= sizeof(vals))
+ 		return 1;
+@@ -504,6 +504,9 @@ configure (struct config *conf, enum mpath_cmds cmd,
+ 		 * the refwwid, then the path is valid */
+ 		if (VECTOR_SIZE(curmp) != 0 || VECTOR_SIZE(pathvec) > 1)
+ 			r = 0;
++		else
++			/* Use r=2 as an indication for "maybe" */
++			r = 2;
+ 		goto print_valid;
+ 	}
  
- int
--open_file(char *file, int *can_write, char *header)
-+open_file(const char *file, int *can_write, const char *header)
- {
- 	int fd;
- 	struct stat s;
-diff --git a/libmultipath/file.h b/libmultipath/file.h
-index 4f96dbf..70bffa5 100644
---- a/libmultipath/file.h
-+++ b/libmultipath/file.h
-@@ -6,6 +6,6 @@
- #define _FILE_H
- 
- #define FILE_TIMEOUT 30
--int open_file(char *file, int *can_write, char *header);
-+int open_file(const char *file, int *can_write, const char *header);
- 
- #endif /* _FILE_H */
 -- 
 2.16.1
