@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v4 18/20] multipath -u: quick check if path is
-	multipathed
-Date: Wed,  4 Apr 2018 18:16:25 +0200
-Message-ID: <20180404161627.6244-19-mwilck@suse.com>
+Subject: [PATCH v4 03/20] libmultipath: should_multipath: keep
+	existing maps
+Date: Wed,  4 Apr 2018 18:16:10 +0200
+Message-ID: <20180404161627.6244-4-mwilck@suse.com>
 References: <20180404161627.6244-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,148 +22,96 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: Julian Andres Klode <julian.klode@canonical.com>, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-With "find_multipaths smart", we accept paths as valid if they are
-already part of a multipath map. This patch avoids doing a full path
-and device-mapper map scan for this case, speeding up "multipath -u"
-considerably.
+with find_multipaths "yes" and without the "-n" option to multipathd,
+if a path is already multipathed, keep it. The same logic is applied by
+"multipath -u -i".
 
+To do this, we need to add a "mpvec" parameter to should_multipath().
+
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/sysfs.c | 66 ++++++++++++++++++++++++++++++++++++++++++++++++++++
- libmultipath/sysfs.h |  2 ++
- multipath/main.c     | 14 ++++++++++-
- 3 files changed, 81 insertions(+), 1 deletion(-)
+ libmultipath/configure.c |  2 +-
+ libmultipath/wwids.c     | 12 +++++++++++-
+ libmultipath/wwids.h     |  2 +-
+ multipathd/main.c        |  2 +-
+ 4 files changed, 14 insertions(+), 4 deletions(-)
 
-diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
-index 97e0997..589eeaf 100644
---- a/libmultipath/sysfs.c
-+++ b/libmultipath/sysfs.c
-@@ -27,6 +27,7 @@
- #include <string.h>
- #include <dirent.h>
- #include <libudev.h>
-+#include <fnmatch.h>
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 61f68f8..6df8359 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -987,7 +987,7 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
+ 			continue;
  
- #include "checkers.h"
- #include "vector.h"
-@@ -287,3 +288,68 @@ int sysfs_check_holders(char * check_devt, char * new_devt)
+ 		/* If find_multipaths was selected check if the path is valid */
+-		if (!refwwid && !should_multipath(pp1, pathvec)) {
++		if (!refwwid && !should_multipath(pp1, pathvec, curmp)) {
+ 			orphan_path(pp1, "only one path");
+ 			continue;
+ 		}
+diff --git a/libmultipath/wwids.c b/libmultipath/wwids.c
+index 0ec9f25..b7392bf 100644
+--- a/libmultipath/wwids.c
++++ b/libmultipath/wwids.c
+@@ -15,6 +15,7 @@
+ #include "wwids.h"
+ #include "defaults.h"
+ #include "config.h"
++#include "devmapper.h"
  
- 	return 0;
+ /*
+  * Copyright (c) 2010 Benjamin Marzinski, Redhat
+@@ -274,7 +275,7 @@ out:
  }
+ 
+ int
+-should_multipath(struct path *pp1, vector pathvec)
++should_multipath(struct path *pp1, vector pathvec, vector mpvec)
+ {
+ 	int i, ignore_new_devs, find_multipaths;
+ 	struct path *pp2;
+@@ -289,6 +290,15 @@ should_multipath(struct path *pp1, vector pathvec)
+ 
+ 	condlog(4, "checking if %s should be multipathed", pp1->dev);
+ 	if (!ignore_new_devs) {
++		char tmp_wwid[WWID_SIZE];
++		struct multipath *mp = find_mp_by_wwid(mpvec, pp1->wwid);
 +
-+static int select_dm_devs(const struct dirent *di)
-+{
-+	return fnmatch("dm-*", di->d_name, FNM_FILE_NAME) == 0;
-+}
-+
-+static void close_fd(void *arg)
-+{
-+	close((long)arg);
-+}
-+
-+bool sysfs_is_multipathed(const struct path *pp)
-+{
-+	char pathbuf[PATH_MAX];
-+	struct dirent **di;
-+	int n, r, i;
-+	bool found = false;
-+
-+	n = snprintf(pathbuf, sizeof(pathbuf), "/sys/block/%s/holders",
-+		     pp->dev);
-+
-+	if (n >= sizeof(pathbuf)) {
-+		condlog(1, "%s: pathname overflow", __func__);
-+		return false;
-+	}
-+
-+	r = scandir(pathbuf, &di, select_dm_devs, alphasort);
-+	if (r == 0)
-+		return false;
-+	else if (r < 0) {
-+		condlog(1, "%s: error scanning %s", __func__, pathbuf);
-+		return false;
-+	}
-+
-+	pthread_cleanup_push(free, di);
-+	for (i = 0; i < r && !found; i++) {
-+		long fd;
-+		int nr;
-+		char uuid[6];
-+
-+		if (snprintf(pathbuf + n, sizeof(pathbuf) - n,
-+			     "/%s/dm/uuid", di[i]->d_name)
-+		    >= sizeof(pathbuf) - n)
-+			continue;
-+
-+		fd = open(pathbuf, O_RDONLY);
-+		if (fd == -1) {
-+			condlog(1, "%s: error opening %s", __func__, pathbuf);
-+			continue;
++		if (mp != NULL && dm_get_uuid(mp->alias, tmp_wwid) == 0 &&
++		    !strncmp(tmp_wwid, pp1->wwid, WWID_SIZE)) {
++			condlog(3, "wwid %s is already multipathed, keeping it",
++				pp1->wwid);
++			return 1;
 +		}
-+
-+		pthread_cleanup_push(close_fd, (void*)fd);
-+		nr = read(fd, uuid, sizeof(uuid));
-+		if (nr == sizeof(uuid) && !memcmp(uuid, "mpath-", sizeof(uuid)))
-+			found = true;
-+		else if (nr < 0) {
-+			condlog(1, "%s: error reading from %s: %s",
-+				__func__, pathbuf, strerror(errno));
-+		}
-+		pthread_cleanup_pop(1);
-+	}
-+	pthread_cleanup_pop(1);
-+
-+	return found;
-+}
-diff --git a/libmultipath/sysfs.h b/libmultipath/sysfs.h
-index 75c0f9c..9ae30b3 100644
---- a/libmultipath/sysfs.h
-+++ b/libmultipath/sysfs.h
-@@ -4,6 +4,7 @@
+ 		vector_foreach_slot(pathvec, pp2, i) {
+ 			if (pp1->dev == pp2->dev)
+ 				continue;
+diff --git a/libmultipath/wwids.h b/libmultipath/wwids.h
+index 9527012..d9a78b3 100644
+--- a/libmultipath/wwids.h
++++ b/libmultipath/wwids.h
+@@ -12,7 +12,7 @@
+ "#\n" \
+ "# Valid WWIDs:\n"
  
- #ifndef _LIBMULTIPATH_SYSFS_H
- #define _LIBMULTIPATH_SYSFS_H
-+#include <stdbool.h>
- 
- ssize_t sysfs_attr_set_value(struct udev_device *dev, const char *attr_name,
- 			     const char * value, size_t value_len);
-@@ -13,4 +14,5 @@ ssize_t sysfs_bin_attr_get_value(struct udev_device *dev, const char *attr_name,
- 				 unsigned char * value, size_t value_len);
- int sysfs_get_size (struct path *pp, unsigned long long * size);
- int sysfs_check_holders(char * check_devt, char * new_devt);
-+bool sysfs_is_multipathed(const struct path *pp);
- #endif
-diff --git a/multipath/main.c b/multipath/main.c
-index a60a5f3..ae46e5a 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -595,6 +595,15 @@ configure (struct config *conf, enum mpath_cmds cmd,
- 			    !ignore_wwids_on(conf)) {
- 				goto print_valid;
- 			}
-+			/*
-+			 * Shortcut for find_multipaths smart:
-+			 * Quick check if path is already multipathed.
-+			 */
-+			if (ignore_wwids_on(conf) &&
-+			    sysfs_is_multipathed(VECTOR_SLOT(pathvec, 0))) {
-+				r = 0;
-+				goto print_valid;
-+			}
+-int should_multipath(struct path *pp, vector pathvec);
++int should_multipath(struct path *pp, vector pathvec, vector mpvec);
+ int remember_wwid(char *wwid);
+ int check_wwids_file(char *wwid, int write_wwid);
+ int remove_wwid(char *wwid);
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 08878b1..7d3d5b1 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -941,7 +941,7 @@ rescan:
+ 		mpp->action = ACT_RELOAD;
+ 		extract_hwe_from_path(mpp);
+ 	} else {
+-		if (!should_multipath(pp, vecs->pathvec)) {
++		if (!should_multipath(pp, vecs->pathvec, vecs->mpvec)) {
+ 			orphan_path(pp, "only one path");
+ 			return 0;
  		}
- 	}
- 
-@@ -667,7 +676,10 @@ configure (struct config *conf, enum mpath_cmds cmd,
- 			condlog(3, "%s: path %s is in use: %s",
- 				__func__, pp->dev,
- 				strerror(errno));
--			r = 1;
-+			/*
-+			 * Check if we raced with multipathd
-+			 */
-+			r = !sysfs_is_multipathed(VECTOR_SLOT(pathvec, 0));
- 		}
- 		goto print_valid;
- 	}
 -- 
 2.16.1
