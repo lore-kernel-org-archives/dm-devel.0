@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v4 13/20] multipath -u: treat failed wwids as
-	invalid
-Date: Wed,  4 Apr 2018 18:16:20 +0200
-Message-ID: <20180404161627.6244-14-mwilck@suse.com>
+Subject: [PATCH v4 08/20] libmultipath: use const char* in
+	open_file()
+Date: Wed,  4 Apr 2018 18:16:15 +0200
+Message-ID: <20180404161627.6244-9-mwilck@suse.com>
 References: <20180404161627.6244-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,33 +22,55 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: Julian Andres Klode <julian.klode@canonical.com>, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-If a WWID has been marked as "failed", don't treat it as "valid multipath
-device path" in multipath -c/-u. This is key to achieve consistency between
-multipathd and udev rule processing.
-
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipath/main.c | 8 ++++++--
- 1 file changed, 6 insertions(+), 2 deletions(-)
+ libmultipath/file.c | 6 +++---
+ libmultipath/file.h | 2 +-
+ 2 files changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/multipath/main.c b/multipath/main.c
-index 59a72ed..942caf4 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -450,8 +450,12 @@ configure (struct config *conf, enum mpath_cmds cmd,
- 		 * Paths listed in the wwids file are always considered valid.
- 		 */
- 		if (cmd == CMD_VALID_PATH) {
--			if ((!find_multipaths_on(conf) && ignore_wwids_on(conf))
--			    || check_wwids_file(refwwid, 0) == 0)
-+			if (is_failed_wwid(refwwid) == WWID_IS_FAILED) {
-+				r = 1;
-+				goto print_valid;
-+			} else if ((!find_multipaths_on(conf) &&
-+				    ignore_wwids_on(conf)) ||
-+				   check_wwids_file(refwwid, 0) == 0)
- 				r = 0;
- 			if (r == 0 ||
- 			    !find_multipaths_on(conf) ||
+diff --git a/libmultipath/file.c b/libmultipath/file.c
+index e4951c9..d5165ec 100644
+--- a/libmultipath/file.c
++++ b/libmultipath/file.c
+@@ -37,7 +37,7 @@
+  */
+ 
+ static int
+-ensure_directories_exist(char *str, mode_t dir_mode)
++ensure_directories_exist(const char *str, mode_t dir_mode)
+ {
+ 	char *pathname;
+ 	char *end;
+@@ -80,7 +80,7 @@ sigalrm(int sig)
+ }
+ 
+ static int
+-lock_file(int fd, char *file_name)
++lock_file(int fd, const char *file_name)
+ {
+ 	struct sigaction act, oldact;
+ 	sigset_t set, oldset;
+@@ -118,7 +118,7 @@ lock_file(int fd, char *file_name)
+ }
+ 
+ int
+-open_file(char *file, int *can_write, char *header)
++open_file(const char *file, int *can_write, const char *header)
+ {
+ 	int fd;
+ 	struct stat s;
+diff --git a/libmultipath/file.h b/libmultipath/file.h
+index 4f96dbf..70bffa5 100644
+--- a/libmultipath/file.h
++++ b/libmultipath/file.h
+@@ -6,6 +6,6 @@
+ #define _FILE_H
+ 
+ #define FILE_TIMEOUT 30
+-int open_file(char *file, int *can_write, char *header);
++int open_file(const char *file, int *can_write, const char *header);
+ 
+ #endif /* _FILE_H */
 -- 
 2.16.1
