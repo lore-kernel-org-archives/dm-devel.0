@@ -1,14 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v4 06/20] libmultipath: trigger path uevent only
-	when necessary
-Date: Wed,  4 Apr 2018 18:16:13 +0200
-Message-ID: <20180404161627.6244-7-mwilck@suse.com>
-References: <20180404161627.6244-1-mwilck@suse.com>
+Subject: [PATCH 2/4] libmultipath: decrease log level of uevent
+	filter/merge messages
+Date: Wed,  4 Apr 2018 18:21:58 +0200
+Message-ID: <20180404162200.6518-3-mwilck@suse.com>
+References: <20180404162200.6518-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180404161627.6244-1-mwilck@suse.com>
+In-Reply-To: <20180404162200.6518-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,43 +18,39 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Julian Andres Klode <julian.klode@canonical.com>, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Paths that are already classified as DM_MULTIPATH_DEVICE_PATH don't
-need to be retriggered.
+There should be no need to log these at -v2. The messages are
+informational.
 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/configure.c | 12 ++++++++++++
- 1 file changed, 12 insertions(+)
+ libmultipath/uevent.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 088d69f..c1a50e4 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -458,8 +458,20 @@ trigger_paths_udev_change(const struct multipath *mpp)
- 		if (!pgp->paths)
- 			continue;
- 		vector_foreach_slot(pgp->paths, pp, j) {
-+			const char *env;
-+
- 			if (!pp->udev)
- 				continue;
-+			/*
-+			 * Paths that are already classified as multipath
-+			 * members don't need another uevent.
-+			 */
-+			env = udev_device_get_property_value(
-+				pp->udev, "DM_MULTIPATH_DEVICE_PATH");
-+			if (env != NULL && !strcmp(env, "1"))
-+					continue;
-+
-+			condlog(4, "triggering change uevent for %s", pp->dev);
- 			sysfs_attr_set_value(pp->udev, "uevent", "change",
- 					     strlen("change"));
- 		}
+diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
+index 3955c49..fd8ca35 100644
+--- a/libmultipath/uevent.c
++++ b/libmultipath/uevent.c
+@@ -333,7 +333,7 @@ uevent_filter(struct uevent *later, struct list_head *tmpq)
+ 		 * by the later uevent
+ 		 */
+ 		if (uevent_can_filter(earlier, later)) {
+-			condlog(2, "uevent: %s-%s has filtered by uevent: %s-%s",
++			condlog(3, "uevent: %s-%s has filtered by uevent: %s-%s",
+ 				earlier->kernel, earlier->action,
+ 				later->kernel, later->action);
+ 
+@@ -357,7 +357,7 @@ uevent_merge(struct uevent *later, struct list_head *tmpq)
+ 		 * merge earlier uevents to the later uevent
+ 		 */
+ 		if (uevent_can_merge(earlier, later)) {
+-			condlog(2, "merged uevent: %s-%s-%s with uevent: %s-%s-%s",
++			condlog(3, "merged uevent: %s-%s-%s with uevent: %s-%s-%s",
+ 				earlier->action, earlier->kernel, earlier->wwid,
+ 				later->action, later->kernel, later->wwid);
+ 
 -- 
 2.16.1
