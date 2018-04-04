@@ -1,14 +1,11 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 2/4] libmultipath: decrease log level of uevent
-	filter/merge messages
-Date: Wed,  4 Apr 2018 18:21:58 +0200
-Message-ID: <20180404162200.6518-3-mwilck@suse.com>
-References: <20180404162200.6518-1-mwilck@suse.com>
+Subject: [PATCH 0/4] multipathd: decrease log verbosity
+Date: Wed,  4 Apr 2018 18:21:56 +0200
+Message-ID: <20180404162200.6518-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180404162200.6518-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,35 +19,21 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-There should be no need to log these at -v2. The messages are
-informational.
+This patch set decreases the log level of some messages that we see often
+time and that aren't usually helpful for debugging.
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- libmultipath/uevent.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+Martin Wilck (4):
+  multipathd: decrease log level of "spurious uevent" message
+  libmultipath: decrease log level of uevent filter/merge messages
+  multipathd: decrease log level of waiter thread start/stop msgs
+  libmpathpersist: decrease log level of various messages
 
-diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
-index 3955c49..fd8ca35 100644
---- a/libmultipath/uevent.c
-+++ b/libmultipath/uevent.c
-@@ -333,7 +333,7 @@ uevent_filter(struct uevent *later, struct list_head *tmpq)
- 		 * by the later uevent
- 		 */
- 		if (uevent_can_filter(earlier, later)) {
--			condlog(2, "uevent: %s-%s has filtered by uevent: %s-%s",
-+			condlog(3, "uevent: %s-%s has filtered by uevent: %s-%s",
- 				earlier->kernel, earlier->action,
- 				later->kernel, later->action);
- 
-@@ -357,7 +357,7 @@ uevent_merge(struct uevent *later, struct list_head *tmpq)
- 		 * merge earlier uevents to the later uevent
- 		 */
- 		if (uevent_can_merge(earlier, later)) {
--			condlog(2, "merged uevent: %s-%s-%s with uevent: %s-%s-%s",
-+			condlog(3, "merged uevent: %s-%s-%s with uevent: %s-%s-%s",
- 				earlier->action, earlier->kernel, earlier->wwid,
- 				later->action, later->kernel, later->wwid);
- 
+ libmpathpersist/mpath_persist.c  |  2 +-
+ libmpathpersist/mpath_pr_ioctl.c | 32 ++++++++++++++++----------------
+ libmultipath/uevent.c            |  4 ++--
+ multipathd/main.c                |  2 +-
+ multipathd/waiter.c              |  4 ++--
+ 5 files changed, 22 insertions(+), 22 deletions(-)
+
 -- 
 2.16.1
