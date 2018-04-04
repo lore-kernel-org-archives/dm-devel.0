@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v4 19/20] libmultipath: enable find_multipaths
-	"smart"
-Date: Wed,  4 Apr 2018 18:16:26 +0200
-Message-ID: <20180404161627.6244-20-mwilck@suse.com>
+Subject: [PATCH v4 04/20] multipath -u -i: respect entries in
+	WWIDs file
+Date: Wed,  4 Apr 2018 18:16:11 +0200
+Message-ID: <20180404161627.6244-5-mwilck@suse.com>
 References: <20180404161627.6244-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,92 +22,51 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: Julian Andres Klode <julian.klode@canonical.com>, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-This activates "smart" path detection. This is similar to
-"find_multipaths yes", but doesn't generally ignore single paths
-that are not listed in the WWIDs file. Rather, such paths are
-temporarily treated like multipath members. If no additional paths
-are detected after a certain time, the paths are re-added to the
-system as non-multipath. This needs support by the udev rules, to
-be added in a follow-up patch.
+Previously, if find_multipaths was set, devices listed in the WWIDs file
+weren't classified as multipath members by "multipath -u -i" unless they also
+met the "find_multipaths" criteria (at least two paths, or existing map with
+this WWID). Now we classify all paths in the WWIDs file as multipath members, too.
 
-If a multipath map is successfully successfully created, and paths are
-in waiting state, trigger path uevents to update their status.
+The rationale for this patch is to match the logic that multipathd applies
+by default (i.e. without "-n").
 
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/configure.c   | 15 ++++++++++++---
- libmultipath/dict.c        |  1 +
- multipath/multipath.conf.5 | 13 +++++++++++++
- 3 files changed, 26 insertions(+), 3 deletions(-)
+ multipath/main.c | 19 +++++++++++--------
+ 1 file changed, 11 insertions(+), 8 deletions(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 9aa3d21..17c2fa1 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -12,6 +12,7 @@
- #include <string.h>
- #include <sys/file.h>
- #include <errno.h>
-+#include <ctype.h>
- #include <libdevmapper.h>
- #include <libudev.h>
- #include "mpath_cmd.h"
-@@ -476,9 +477,17 @@ trigger_paths_udev_change(struct multipath *mpp, bool is_mpath)
- 			env = udev_device_get_property_value(
- 				pp->udev, "DM_MULTIPATH_DEVICE_PATH");
+diff --git a/multipath/main.c b/multipath/main.c
+index d26c744..ba83771 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -437,16 +437,19 @@ configure (struct config *conf, enum mpath_cmds cmd,
+ 		 * set, you need to actually check if there are two available
+ 		 * paths to determine if this path should be multipathed. To
+ 		 * do this, we put off the check until after discovering all
+-		 * the paths */
+-		if (cmd == CMD_VALID_PATH &&
+-		    (!conf->find_multipaths || !conf->ignore_wwids)) {
+-			if (conf->ignore_wwids ||
++		 * the paths.
++		 * Paths listed in the wwids file are always considered valid.
++		 */
++		if (cmd == CMD_VALID_PATH) {
++			if ((!conf->find_multipaths && conf->ignore_wwids) ||
+ 			    check_wwids_file(refwwid, 0) == 0)
+ 				r = 0;
+-
+-			printf("%s %s a valid multipath device path\n",
+-			       devpath, r == 0 ? "is" : "is not");
+-			goto out;
++			if (r == 0 ||
++			    !conf->find_multipaths || !conf->ignore_wwids) {
++				printf("%s %s a valid multipath device path\n",
++				       devpath, r == 0 ? "is" : "is not");
++				goto out;
++			}
+ 		}
+ 	}
  
--			if (is_mpath && env != NULL && !strcmp(env, "1"))
--				continue;
--			else if (!is_mpath &&
-+			if (is_mpath && env != NULL && !strcmp(env, "1")) {
-+				/*
-+				 * If FIND_MULTIPATHS_WAIT_UNTIL is not "0",
-+				 * path is in "maybe" state and timer is running
-+				 * Send uevent now (see multipath.rules).
-+				 */
-+				env = udev_device_get_property_value(
-+					pp->udev, "FIND_MULTIPATHS_WAIT_UNTIL");
-+				if (env == NULL || !strcmp(env, "0"))
-+					continue;
-+			} else if (!is_mpath &&
- 				   (env == NULL || !strcmp(env, "0")))
- 				continue;
- 
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index 4be808d..8a18b1f 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -239,6 +239,7 @@ static const char *find_multipaths_optvals[] = {
- 	[FIND_MULTIPATHS_ON] = "on",
- 	[FIND_MULTIPATHS_STRICT] = "strict",
- 	[FIND_MULTIPATHS_GREEDY] = "greedy",
-+	[FIND_MULTIPATHS_SMART] = "smart",
- };
- 
- static int
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index 94c419a..641ba43 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -978,6 +978,19 @@ with the same WWID have been detected.
- Both multipathd and multipath treat every non-blacklisted device as multipath
- device path.
- .TP
-+.I smart
-+This differs from \fIfind_multipaths yes\fR only in
-+the way it treats new devices for which only one path has been
-+detected yet. When such a device is first encounted in udev rules, it is
-+treated as a multipath device. multipathd waits whether additional paths with
-+the same WWID appears. If that happens, it sets up a multipath map. If it
-+doesn\'t happen until a 
-+timeout expires, or if setting up the map fails, a new uevent is triggered for
-+the device; at second encounter in the udev rules, the device will be treated
-+as non-multipath and passed on to upper layers.
-+\fBNote:\fR this may cause delays during device detection if
-+there are single-path devices which aren\'t blacklisted.
-+.TP
- The default is: \fBstrict\fR
- .RE
- .
 -- 
 2.16.1
