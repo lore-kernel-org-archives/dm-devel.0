@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v4 15/20] libmultipath: implement
-	find_multipaths_timeout
-Date: Wed,  4 Apr 2018 18:16:22 +0200
-Message-ID: <20180404161627.6244-16-mwilck@suse.com>
+Subject: [PATCH v4 09/20] libmultipath: functions to indicate
+	mapping failure in /dev/shm
+Date: Wed,  4 Apr 2018 18:16:16 +0200
+Message-ID: <20180404161627.6244-10-mwilck@suse.com>
 References: <20180404161627.6244-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,163 +22,176 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: Julian Andres Klode <julian.klode@canonical.com>, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-This makes the timeout for "find_multipaths smart" configurable.
-If the timeout has a negative value (default), it's applied only
-to "known" hardware which is either in the hwtable or in a "device" section in
-multipath.conf. For typical non-multipath hardware, which is not in the
-hwtable, a short timeout of 1s is used, so that boot delays caused by
-pointlessly waiting e.g. for SATA devices will be minimal.
+Create a simple API that indicates failure to create a map for a
+certain WWID. This will allow multipathd to indicate to other tools
+(in particular, "multipath -u" during udev processing) that
+an attempt to create a map for a certain wwid failed.
 
-It's expected that a "reasonable" timeout value depends less on the storage
-hardware itself but on other properties of the data center such as network
-latencies or distances. find_multipaths_timeout is therefore just a "defaults"
-section setting.
+The indicator is simply the existence of a file under
+/dev/shm/multipath/failed_wwids.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/config.h      |  1 +
- libmultipath/defaults.h    |  2 ++
- libmultipath/dict.c        |  6 ++++++
- libmultipath/propsel.c     | 25 +++++++++++++++++++++++++
- libmultipath/propsel.h     |  1 +
- libmultipath/structs.h     |  1 +
- multipath/multipath.conf.5 | 18 ++++++++++++++++++
- 7 files changed, 54 insertions(+)
+ libmultipath/defaults.h |   1 +
+ libmultipath/wwids.c    | 110 ++++++++++++++++++++++++++++++++++++++++++++++++
+ libmultipath/wwids.h    |  11 +++++
+ 3 files changed, 122 insertions(+)
 
-diff --git a/libmultipath/config.h b/libmultipath/config.h
-index c71d972..6e69a37 100644
---- a/libmultipath/config.h
-+++ b/libmultipath/config.h
-@@ -174,6 +174,7 @@ struct config {
- 	int remove_retries;
- 	int max_sectors_kb;
- 	int ghost_delay;
-+	int find_multipaths_timeout;
- 	unsigned int version[3];
- 
- 	char * multipath_dir;
 diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
-index 19ad2bf..d7b87b4 100644
+index 690182c..19ad2bf 100644
 --- a/libmultipath/defaults.h
 +++ b/libmultipath/defaults.h
-@@ -41,6 +41,8 @@
- #define DEFAULT_DISABLE_CHANGED_WWIDS 1
- #define DEFAULT_MAX_SECTORS_KB MAX_SECTORS_KB_UNDEF
- #define DEFAULT_GHOST_DELAY GHOST_DELAY_OFF
-+#define DEFAULT_FIND_MULTIPATHS_TIMEOUT -10
-+#define DEFAULT_UNKNOWN_FIND_MULTIPATHS_TIMEOUT 1
+@@ -53,5 +53,6 @@
+ #define DEFAULT_WWIDS_FILE	"/etc/multipath/wwids"
+ #define DEFAULT_PRKEYS_FILE    "/etc/multipath/prkeys"
+ #define DEFAULT_CONFIG_DIR	"/etc/multipath/conf.d"
++#define MULTIPATH_SHM_BASE	"/dev/shm/multipath/"
  
- #define DEFAULT_CHECKINT	5
- #define MAX_CHECKINT(a)		(a << 2)
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index e695fdc..4be808d 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -485,6 +485,10 @@ declare_hw_snprint(max_sectors_kb, print_nonzero)
- declare_mp_handler(max_sectors_kb, set_int)
- declare_mp_snprint(max_sectors_kb, print_nonzero)
+ char * set_default (char * str);
+diff --git a/libmultipath/wwids.c b/libmultipath/wwids.c
+index da685be..c9f5743 100644
+--- a/libmultipath/wwids.c
++++ b/libmultipath/wwids.c
+@@ -5,6 +5,7 @@
+ #include <limits.h>
+ #include <stdio.h>
+ #include <sys/types.h>
++#include <sys/stat.h>
  
-+declare_def_handler(find_multipaths_timeout, set_int)
-+declare_def_snprint_defint(find_multipaths_timeout, print_int,
-+			   DEFAULT_FIND_MULTIPATHS_TIMEOUT)
-+
- static int
- def_config_dir_handler(struct config *conf, vector strvec)
- {
-@@ -1519,6 +1523,8 @@ init_keywords(vector keywords)
- 	install_keyword("remove_retries", &def_remove_retries_handler, &snprint_def_remove_retries);
- 	install_keyword("max_sectors_kb", &def_max_sectors_kb_handler, &snprint_def_max_sectors_kb);
- 	install_keyword("ghost_delay", &def_ghost_delay_handler, &snprint_def_ghost_delay);
-+	install_keyword("find_multipaths_timeout", &def_find_multipaths_timeout_handler,
-+			&snprint_def_find_multipaths_timeout);
- 	__deprecated install_keyword("default_selector", &def_selector_handler, NULL);
- 	__deprecated install_keyword("default_path_grouping_policy", &def_pgpolicy_handler, NULL);
- 	__deprecated install_keyword("default_uid_attribute", &def_uid_attribute_handler, NULL);
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index 93974a4..70fb997 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -912,3 +912,28 @@ out:
- 	condlog(3, "%s: ghost_delay = %s %s", mp->alias, buff, origin);
- 	return 0;
+ #include "checkers.h"
+ #include "vector.h"
+@@ -337,3 +338,112 @@ remember_wwid(char *wwid)
+ 		condlog(4, "wwid %s already in wwids file", wwid);
+ 	return ret;
  }
 +
-+int select_find_multipaths_timeout(struct config *conf, struct path *pp)
-+{
-+	char *origin;
++static const char shm_dir[] = MULTIPATH_SHM_BASE "failed_wwids";
++static const char shm_lock[] = ".lock";
++static const char shm_header[] = "multipath shm lock file, don't edit";
++static char _shm_lock_path[sizeof(shm_dir)+sizeof(shm_lock)];
++static const char *shm_lock_path = &_shm_lock_path[0];
 +
-+	pp_set_conf(find_multipaths_timeout);
-+	pp_set_default(find_multipaths_timeout,
-+		       DEFAULT_FIND_MULTIPATHS_TIMEOUT);
-+out:
-+	/*
-+	 * If configured value is negative, and this "unkown" hardware
-+	 * (no hwentry), use very small timeout to avoid delays.
-+	 */
-+	if (pp->find_multipaths_timeout < 0) {
-+		pp->find_multipaths_timeout = - pp->find_multipaths_timeout;
-+		if (!pp->hwe) {
-+			pp->find_multipaths_timeout =
-+				DEFAULT_UNKNOWN_FIND_MULTIPATHS_TIMEOUT;
-+			origin = "(default for unkown hardware)";
-+		}
-+	}
-+	condlog(3, "%s: timeout for find_multipaths \"smart\" = %ds %s",
-+		pp->dev, pp->find_multipaths_timeout, origin);
-+	return 0;
++static void init_shm_paths(void)
++{
++	snprintf(_shm_lock_path, sizeof(_shm_lock_path),
++		 "%s/%s", shm_dir, shm_lock);
 +}
-diff --git a/libmultipath/propsel.h b/libmultipath/propsel.h
-index 136f906..b6475d0 100644
---- a/libmultipath/propsel.h
-+++ b/libmultipath/propsel.h
-@@ -8,6 +8,7 @@ int select_hwhandler (struct config *conf, struct multipath * mp);
- int select_checker(struct config *conf, struct path *pp);
- int select_getuid (struct config *conf, struct path * pp);
- int select_prio (struct config *conf, struct path * pp);
-+int select_find_multipaths_timeout(struct config *conf, struct path * pp);
- int select_no_path_retry(struct config *conf, struct multipath *mp);
- int select_flush_on_last_del(struct config *conf, struct multipath *mp);
- int select_minio(struct config *conf, struct multipath *mp);
-diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-index 1d3a34f..eb6a178 100644
---- a/libmultipath/structs.h
-+++ b/libmultipath/structs.h
-@@ -281,6 +281,7 @@ struct path {
- 	int io_err_disable_reinstate;
- 	int io_err_pathfail_cnt;
- 	int io_err_pathfail_starttime;
-+	int find_multipaths_timeout;
- 	/* configlet pointers */
- 	struct hwentry * hwe;
- 	struct gen_path generic_path;
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index 6965dac..94c419a 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -983,6 +983,24 @@ The default is: \fBstrict\fR
- .
- .
- .TP
-+.B find_multipaths_timeout
-+Timeout, in seconds, to wait for additional paths after detecting the first
-+one, if \fIfind_multipaths
-+"smart"\fR (see above) is set. If the value is \fBpositive\fR, this timeout is used for all
-+unkown, non-blacklisted devices encountered. If the value is \fBnegative\fR
-+(recommended), it's only
-+applied to "known" devices that have an entry in multipath's hardware table,
-+either in the built-in table or in a \fIdevice\fR section; other ("unknown") devices will
-+use a timeout of only 1 second to avoid booting delays. The value 0 means
-+"use the built-in default". If \fIfind_multipath\fR has a value
-+other than \fIsmart\fR, this option has no effect. 
-+.RS
-+.TP
-+The default is: \fB-10\fR (10s for known and 1s for unknown hardware)
-+.RE
-+.
-+.
-+.TP
- .B uxsock_timeout
- CLI receive timeout in milliseconds. For larger systems CLI commands
- might timeout before the multipathd lock is released and the CLI command
++
++static pthread_once_t shm_path_once = PTHREAD_ONCE_INIT;
++
++static int multipath_shm_open(bool rw)
++{
++	int fd;
++	int can_write;
++
++	pthread_once(&shm_path_once, init_shm_paths);
++	fd = open_file(shm_lock_path, &can_write, shm_header);
++
++	if (fd >= 0 && rw && !can_write) {
++		close(fd);
++		condlog(1, "failed to open %s for writing", shm_dir);
++		return -1;
++	}
++
++	return fd;
++}
++
++static void multipath_shm_close(void *arg)
++{
++	long fd = (long)arg;
++
++	close(fd);
++	unlink(shm_lock_path);
++}
++
++static int _failed_wwid_op(const char *wwid, bool rw,
++			   int(*func)(const char*), const char *msg)
++{
++	char path[PATH_MAX];
++	long lockfd;
++	int r = -1;
++
++	if (snprintf(path, sizeof(path), "%s/%s", shm_dir, wwid)
++	    >= sizeof(path)) {
++		condlog(1, "%s: path name overflow", __func__);
++		return -1;
++	}
++
++	lockfd = multipath_shm_open(rw);
++	if (lockfd == -1)
++		return -1;
++
++	pthread_cleanup_push(multipath_shm_close, (void*)lockfd);
++	r = func(path);
++	pthread_cleanup_pop(1);
++
++	if (r == WWID_FAILED_ERROR)
++		condlog(1, "%s: %s: %s", msg, wwid, strerror(errno));
++	else if (r == WWID_FAILED_CHANGED)
++		condlog(3, "%s: %s", msg, wwid);
++	else if (!rw)
++		condlog(4, "%s: %s is %s", msg, wwid,
++			r == WWID_IS_FAILED ? "failed" : "good");
++
++	return r;
++}
++
++static int _is_failed(const char *path)
++{
++	struct stat st;
++
++	if (lstat(path, &st) == 0)
++		return WWID_IS_FAILED;
++	else if (errno == ENOENT)
++		return WWID_IS_NOT_FAILED;
++	else
++		return WWID_FAILED_ERROR;
++}
++
++static int _mark_failed(const char *path)
++{
++	/* Called from _failed_wwid_op: we know that shm_lock_path exists */
++	if (_is_failed(path) == WWID_IS_FAILED)
++		return WWID_FAILED_UNCHANGED;
++	return (link(shm_lock_path, path) == 0 ? WWID_FAILED_CHANGED :
++		WWID_FAILED_ERROR);
++}
++
++static int _unmark_failed(const char *path)
++{
++	if (_is_failed(path) == WWID_IS_NOT_FAILED)
++		return WWID_FAILED_UNCHANGED;
++	return (unlink(path) == 0 ? WWID_FAILED_CHANGED : WWID_FAILED_ERROR);
++}
++
++#define declare_failed_wwid_op(op, rw) \
++int op ## _wwid(const char *wwid) \
++{ \
++	return _failed_wwid_op(wwid, (rw), _ ## op, #op); \
++}
++
++declare_failed_wwid_op(is_failed, false)
++declare_failed_wwid_op(mark_failed, true)
++declare_failed_wwid_op(unmark_failed, true)
+diff --git a/libmultipath/wwids.h b/libmultipath/wwids.h
+index d9a78b3..0c6ee54 100644
+--- a/libmultipath/wwids.h
++++ b/libmultipath/wwids.h
+@@ -18,4 +18,15 @@ int check_wwids_file(char *wwid, int write_wwid);
+ int remove_wwid(char *wwid);
+ int replace_wwids(vector mp);
+ 
++enum {
++	WWID_IS_NOT_FAILED = 0,
++	WWID_IS_FAILED,
++	WWID_FAILED_UNCHANGED,
++	WWID_FAILED_CHANGED,
++	WWID_FAILED_ERROR = -1,
++};
++
++int is_failed_wwid(const char *wwid);
++int mark_failed_wwid(const char *wwid);
++int unmark_failed_wwid(const char *wwid);
+ #endif /* _WWIDS_H */
 -- 
 2.16.1
