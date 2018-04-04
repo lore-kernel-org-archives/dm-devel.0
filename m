@@ -1,11 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 0/4] multipathd: decrease log verbosity
-Date: Wed,  4 Apr 2018 18:21:56 +0200
-Message-ID: <20180404162200.6518-1-mwilck@suse.com>
+Subject: [PATCH 1/4] multipathd: decrease log level of "spurious
+	uevent" message
+Date: Wed,  4 Apr 2018 18:21:57 +0200
+Message-ID: <20180404162200.6518-2-mwilck@suse.com>
+References: <20180404162200.6518-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20180404162200.6518-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,21 +22,26 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-This patch set decreases the log level of some messages that we see often
-time and that aren't usually helpful for debugging.
+We trigger such events under various conditions, there's no point
+logging them at -v2.
 
-Martin Wilck (4):
-  multipathd: decrease log level of "spurious uevent" message
-  libmultipath: decrease log level of uevent filter/merge messages
-  multipathd: decrease log level of waiter thread start/stop msgs
-  libmpathpersist: decrease log level of various messages
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ multipathd/main.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
- libmpathpersist/mpath_persist.c  |  2 +-
- libmpathpersist/mpath_pr_ioctl.c | 32 ++++++++++++++++----------------
- libmultipath/uevent.c            |  4 ++--
- multipathd/main.c                |  2 +-
- multipathd/waiter.c              |  4 ++--
- 5 files changed, 22 insertions(+), 22 deletions(-)
-
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 7eeb743..7886c76 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -820,7 +820,7 @@ uev_add_path (struct uevent *uev, struct vectors * vecs, int need_do_map)
+ 	if (pp) {
+ 		int r;
+ 
+-		condlog(2, "%s: spurious uevent, path already in pathvec",
++		condlog(3, "%s: spurious uevent, path already in pathvec",
+ 			uev->kernel);
+ 		if (!pp->mpp && !strlen(pp->wwid)) {
+ 			condlog(3, "%s: reinitialize path", uev->kernel);
 -- 
 2.16.1
