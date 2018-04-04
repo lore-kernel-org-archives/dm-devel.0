@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v4 14/20] multipath -u: add
-	DM_MULTIPATH_DEVICE_PATH=2 for "maybe"
-Date: Wed,  4 Apr 2018 18:16:21 +0200
-Message-ID: <20180404161627.6244-15-mwilck@suse.com>
+Subject: [PATCH v4 11/20] multipath -u: common code path for
+	result message
+Date: Wed,  4 Apr 2018 18:16:18 +0200
+Message-ID: <20180404161627.6244-12-mwilck@suse.com>
 References: <20180404161627.6244-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,40 +22,98 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: Julian Andres Klode <julian.klode@canonical.com>, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Use DM_MULTIPATH_DEVICE_PATH="2" to indicate that this might be a
-valid path, but we aren't certain. This happens with find_multipaths
-"smart", when the first path to a device (or a single-path
-device) is encountered, and the device is neither blacklisted,
-nor marked failed, nor whitelisted in the wwids file.
+Print the result message in one place only. This simplifies
+future changes. multipath -c is also affected.
 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipath/main.c | 5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+ multipath/main.c | 32 +++++++++++++++++++-------------
+ 1 file changed, 19 insertions(+), 13 deletions(-)
 
 diff --git a/multipath/main.c b/multipath/main.c
-index 942caf4..f62e18a 100644
+index 2be9b9c..bf28735 100644
 --- a/multipath/main.c
 +++ b/multipath/main.c
-@@ -353,7 +353,7 @@ out:
- static int print_cmd_valid(int k, const vector pathvec,
- 			   struct config *conf)
- {
--	static const int vals[] = { 1, 0 };
-+	static const int vals[] = { 1, 0, 2 };
+@@ -350,6 +350,16 @@ out:
+ 	return r;
+ }
  
- 	if (k < 0 || k >= sizeof(vals))
- 		return 1;
-@@ -504,6 +504,9 @@ configure (struct config *conf, enum mpath_cmds cmd,
++static int print_cmd_valid(const char *devpath, int k)
++{
++	if (k < 0 || k > 1)
++		return 1;
++
++	printf("%s is%s a valid multipath device path\n",
++	       devpath, k ? "" : " not");
++	return k == 1;
++}
++
+ /*
+  * Return value:
+  *  -1: Retry
+@@ -391,10 +401,7 @@ configure (struct config *conf, enum mpath_cmds cmd,
+ 	    cmd != CMD_REMOVE_WWID &&
+ 	    (filter_devnode(conf->blist_devnode,
+ 			    conf->elist_devnode, dev) > 0)) {
+-		if (cmd == CMD_VALID_PATH)
+-			printf("%s is not a valid multipath device path\n",
+-			       devpath);
+-		goto out;
++		goto print_valid;
+ 	}
+ 
+ 	/*
+@@ -407,7 +414,7 @@ configure (struct config *conf, enum mpath_cmds cmd,
+ 		if (!refwwid) {
+ 			condlog(4, "%s: failed to get wwid", devpath);
+ 			if (failed == 2 && cmd == CMD_VALID_PATH)
+-				printf("%s is not a valid multipath device path\n", devpath);
++				goto print_valid;
+ 			else
+ 				condlog(3, "scope is null");
+ 			goto out;
+@@ -447,9 +454,7 @@ configure (struct config *conf, enum mpath_cmds cmd,
+ 			if (r == 0 ||
+ 			    !find_multipaths_on(conf) ||
+ 			    !ignore_wwids_on(conf)) {
+-				printf("%s %s a valid multipath device path\n",
+-				       devpath, r == 0 ? "is" : "is not");
+-				goto out;
++				goto print_valid;
+ 			}
+ 		}
+ 	}
+@@ -493,9 +498,7 @@ configure (struct config *conf, enum mpath_cmds cmd,
  		 * the refwwid, then the path is valid */
  		if (VECTOR_SIZE(curmp) != 0 || VECTOR_SIZE(pathvec) > 1)
  			r = 0;
-+		else
-+			/* Use r=2 as an indication for "maybe" */
-+			r = 2;
- 		goto print_valid;
+-		printf("%s %s a valid multipath device path\n",
+-		       devpath, r == 0 ? "is" : "is not");
+-		goto out;
++		goto print_valid;
  	}
  
+ 	if (cmd != CMD_CREATE && cmd != CMD_DRY_RUN) {
+@@ -509,6 +512,10 @@ configure (struct config *conf, enum mpath_cmds cmd,
+ 	r = coalesce_paths(&vecs, NULL, refwwid,
+ 			   conf->force_reload, cmd);
+ 
++print_valid:
++	if (cmd == CMD_VALID_PATH)
++		r = print_cmd_valid(devpath, r);
++
+ out:
+ 	if (refwwid)
+ 		FREE(refwwid);
+@@ -844,8 +851,7 @@ main (int argc, char *argv[])
+ 		if (fd == -1) {
+ 			condlog(3, "%s: daemon is not running", dev);
+ 			if (!systemd_service_enabled(dev)) {
+-				printf("%s is not a valid "
+-				       "multipath device path\n", dev);
++				r = print_cmd_valid(dev, 1);
+ 				goto out;
+ 			}
+ 		} else
 -- 
 2.16.1
