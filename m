@@ -1,90 +1,51 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 1/2] libmultipath: hwhandler auto-detection
-	for ALUA
-Date: Wed, 04 Apr 2018 10:04:36 +0200
-Message-ID: <1522829076.3955.24.camel@suse.com>
-References: <20180327215053.3631-1-mwilck@suse.com>
-	<20180327215053.3631-2-mwilck@suse.com>
-	<20180403203132.GF3103@octiron.msp.redhat.com>
-	<1522788809.3801.109.camel@suse.com>
-	<20180403212958.GH3103@octiron.msp.redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180403212958.GH3103@octiron.msp.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>, Hannes
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: [PATCH] dm: fix DAX dependency
+Date: Wed,  4 Apr 2018 11:54:15 +0200
+Message-ID: <20180404095427.2537184-1-arnd@arndb.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Dan Williams <dan.j.williams@intel.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>
+Cc: Arnd Bergmann <arnd@arndb.de>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-T24gVHVlLCAyMDE4LTA0LTAzIGF0IDE2OjI5IC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gT24gVHVlLCBBcHIgMDMsIDIwMTggYXQgMTA6NTM6MjlQTSArMDIwMCwgTWFydGluIFdp
-bGNrIHdyb3RlOgo+ID4gT24gVHVlLCAyMDE4LTA0LTAzIGF0IDE1OjMxIC0wNTAwLCBCZW5qYW1p
-biBNYXJ6aW5za2kgd3JvdGU6Cj4gPiA+IE9uIFR1ZSwgTWFyIDI3LCAyMDE4IGF0IDExOjUwOjUy
-UE0gKzAyMDAsIE1hcnRpbiBXaWxjayB3cm90ZToKPiA+ID4gPiBJZiB0aGUgaGFyZHdhcmUgaGFu
-ZGxlciBpc24ndCBleHBsaWNpdGx5IHNldCwgaW5mZXIgQUxVQQo+ID4gPiA+IHN1cHBvcnQKPiA+
-ID4gPiBmcm9tIHRoZSBwcC0+dHBncyBhdHRyaWJ1dGUuIExpa2V3aXNlLCBpZiBBTFVBIGlzIHNl
-bGVjdGVkLCBidXQKPiA+ID4gPiBub3Qgc3VwcG9ydGVkIGJ5IHRoZSBoYXJkd2FyZSwgZmFsbCBi
-YWNrIHRvIG5vIGhhcmR3YXJlCj4gPiA+ID4gaGFuZGxlci4KPiA+ID4gCj4gPiA+IFdlcmVuJ3Qg
-eW91IHdvcnJpZWQgYmVmb3JlIGFib3V0IHRlbXBvcmFyeSBBTFVBIGZhaWx1cmVzPyBJZiB5b3UK
-PiA+ID4gaGFkCj4gPiA+IGEKPiA+ID4gdGVtcG9yYXJ5IGZhaWx1cmUgd2hpbGUgY29uZmlndXJp
-bmcgYSBkZXZpY2UgdGhhdCB5b3UgZXhwbGljaXRseQo+ID4gPiBzZXQKPiA+ID4gdG8KPiA+ID4g
-YmUgQUxVQSwgdGhlbiB0aGlzIHdvdWxkIGNhdXNlIHRoZSBkZXZpY2UgdG8gYmUgbWlzY29uZmln
-dXJlZD8gCj4gPiAKPiA+IEkgYmVsaWV2ZSB0aGF0IGlmIFRHUFMgaXMgMCwgdGhlIGRldmljZSB3
-aWxsIG5ldmVyIGJlIGFibGUgdG8KPiA+IHN1cHBvcnQKPiA+IEFMVUEuIFRoZSBrZXJuZWwgYWxz
-byBsb29rcyBhdCB0aGUgVFBHUyBiaXRzIGFuZCB3b24ndCB0cnkgQUxVQSBpZgo+ID4gdGhleQo+
-ID4gYXJlIHVuc2V0LiBPbmNlIHRoZSBkZXZpY2UgaXMgY29uZmlndXJlZCBhbmQgYWN0dWFsIEFM
-VUEgUlRQRy9TVFBHCj4gPiBjYWxscyBhcmUgcGVyZm9ybWVkLCB0aGV5IG1heSBmYWlsIGZvciBh
-IHZhcmlldHkgb2YgdGVtcG9yYXJ5Cj4gPiByZWFzb25zIC0KPiA+IEkgd2FudGVkIHRvIGF2b2lk
-IHJlc2V0dGluZyB0aGUgcHJpbyBhbGdvcml0aG0gdG8gImNvbnN0IiBmb3Igc3VjaAo+ID4gY2Fz
-ZXMuIFRoYXQncyBteSB1bmRlcnN0YW5kaW5nLCBjb3JyZWN0IG1lIGlmIEknbSB3cm9uZy4KPiAK
-PiBEZXZpY2VzIHRoYXQgd2VyZSBub3QgY29ycmVjdGx5IHN1cHBvcmluZyBBTFVBIHJldHVybmVk
-ID4gMCBmb3IKPiBnZXRfdGFyZ2V0X3BvcnRfZ3JvdXBfc3VwcG9ydCwgc28gZGV0ZWN0X2FsdWEg
-YWN0dWFsbHkgZG9lcyBhbGwgdGhlCj4gd29yawo+IG5lY2Vzc2FyeSB0byB2ZXJpZnkgdGhhdCBp
-dCBjYW4gZ2V0IGEgcHJpb3JpdHkuIFdpdGhvdXQgZG9pbmcgdGhpcywKPiBtdWx0aXBsZSBkZXZp
-ZWNzIHRoYXQgZGlkbid0IHN1cHBvcnQgQUxVQSB3ZXJlIGJlaW5nIGRldGVjdGVkIGFzCj4gc3Vw
-cG9ydGluZyBBTFVBLgoKU28sIGRldGVjdF9hbHVhKCkgdGVzdHMgVFBHUyAqYW5kKiB0cmllcyBh
-bmQgYWN0dWFsIGFsdWEgY2FsbCwgYW5kIHNldHMKcHAtPnRwZ3MgdG8gYW55dGhpbmcgb3RoZXIg
-dGhhbiBUUEdTX05PTkUgb25seSBpZiB0aGUgbGF0dGVyIGlzCnN1Y2Nlc3NmdWwuIFRoYXQncyBm
-aW5lLiBNeSBwYXRjaCB3YXMgbG9va2luZyBhdCBwcC0+dHBncywgc28gaXQgd2FzCmltcGxpY2l0
-bHkgdXNpbmcgdGhpcyBsb2dpYyBvZiBkZXRlY3RfYWx1YSgpLiBCdXQgZG9lcyB0aGF0IGd1YXJh
-bnRlZQp0aGF0IGZ1dHVyZSBhbHVhLT5nZXRwcmlvKCkgY2FsbHMgd2lsbCBuZXZlciBmYWlsIGF0
-IHNvbWUgbGF0ZXIgcG9pbnQKaW4gdGltZT8KCk1heWJlIEkgbWlzdW5kZXJzdG9vZCB5b3VyIG9y
-aWdpbmFsIHByb3Bvc2l0aW9uLiBXaGF0IEknbSBzYXlpbmcgaXMKdGhhdCByZXNldHRpbmcgdGhl
-IHByaW8gYWxnb3JpdGhtIGZyb20gImFsdWEiIHRvICJjb25zdCIgYmVjYXVzZSBvZiBhbgplcnJv
-ciBjb2RlIGluIGdldF9wcmlvKCkgaXMgd3JvbmcsIGJlY2F1c2UgdGhhdCBlcnJvciBjb2RlIG1h
-eSBiZQp0cmFuc2llbnQuCgpJZiB3ZSBnaXZlICJoYXJkd2FyZV9oYW5kbGVyIiBjb25maWcgb3B0
-aW9ucyBwcmVmZXJlbmNlIG92ZXIgQUxVQQphdXRvZGV0ZWN0aW9uLCBhbmQgdGh1cyBlbmZvcmNl
-IGh3aGFuZGxlciAiMSBhbHVhIiBvbiBzdWNoIGRldmljZXMgdGhhdApoYXZlIG5vIEFMVUEgc3Vw
-cG9ydCwgZG9tYXAoKSBpcyBndWFyYW50ZWVkIHRvIGZhaWwsIGJlY2F1c2UgdGhlIGtlcm5lbApy
-ZWZ1c2VzIHRvIHNldCB1cCBhIG1hcCB3aXRoIGEgZ2l2ZW4gaHdoYW5kbGVyIGlmIGFueSBkZXZp
-Y2UgZG9lc24ndApzdXBwb3J0IHRoYXQgaGFuZGxlci4KCj4gQnkgdXNpbmcgcmV0YWluX2F0dGFj
-aGVkX2h3aGFuZGxlciBhdCBhbGwsIHdlIGFyZSBpbXBsaWNpdGx5Cj4gcmVxdWlyaW5nCj4gdGhl
-IHNjc2lfZGhfYWx1YSBtb2R1bGUgdG8gYmUgbG9hZGVkIGJlZm9yZSBkZXZpY2VzIHdpdGgKPiBp
-bmRldGVybWluYXRlCj4gY29uZmlndXJhdGlvbnMgYXJlIGRpc2NvdmVyZWQgZm9yIHRoZW0gdG8g
-d29yayBjb3JyZWN0bHkuIHJpZ2h0PyBGb3IKPiBpbnN0YW5jZSwgY29tbWl0IDcxNWM0OGQ5M2Rk
-MDA5MzA1MzRjZTZhNTVkMGUzNzA1NDY2ZGY1ZDYgZGlkIHRoaXMKPiBmb3IKPiBuZXRhcHAgZGV2
-aWNlcywgYW5kIHRoYXQgd2FzIGluIDIwMTMuIEkgZG9uJ3Qgc2VlIGhvdyB0aGlzIGlzCj4gZGlm
-ZmVyZW50LgoKWW91J3JlIHJpZ2h0LCB3ZSBhcmUgImltcGxpY2l0bHkgcmVxdWlyaW5nIiB0aGlz
-IHNvcnQtb2YsIGJ1dCB3ZSBoYXZlCm5vIGNvZGUgdGhhdCBlbmZvcmNlcyB0aGUgZWFybHkgbG9h
-ZGluZyBvZiB0aGUgZGV2aWNlIGhhbmRsZXJzLiBXZQpzaG91bGQgYmUgc2hpcHBpbmcgYSBtb2R1
-bGVzLWxvYWQuZCBmaWxlLCBvciBhIG1vZHByb2JlLmQgc29mdGRlcCwgb3IKc29tZXRoaW5nIHNp
-bWlsYXIgdGhhdCB3b3VsZCBlbmZvcmNlIHRoaXMgc2V0dGluZyBpZiB3ZSBfcmVhbGx5XyBkZXBl
-bmQKb24gaXQuICJJbXBsaWNpdCByZXF1aXJlbWVudHMiIGFyZSBiYWQuIFdlIHNob3VsZCBlaXRo
-ZXIgbWFrZSB0aGUKcmVxdWlyZW1lbnQgZXhwbGljaXQsIG9yIG5vdCBoYXJkLWRlcGVuZCBvbiBp
-dC4gU28gZmFyIEkgd2FzIHRoaW5raW5nCnRoZSBsYXR0ZXIuIEFmdGVyIGFsbCwgU0NTSSBkZXZp
-Y2UtaGFuZGxlciBzdXBwb3J0IGlzIGNvbmZpZ3VyYWJsZSBpbgp0aGUga2VybmVsLgoKUmVnYXJk
-cywKTWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLiAr
-NDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJm
-ZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJn
-KQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93
-d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+Building device mapper with CONFIG_DAX=m now results in a link error:
+
+drivers/md/dm.o: In function `dm_put_table_device':
+dm.c:(.text+0x33c): undefined reference to `put_dax'
+drivers/md/dm.o: In function `cleanup_mapped_device':
+dm.c:(.text+0x1054): undefined reference to `kill_dax'
+dm.c:(.text+0x105c): undefined reference to `put_dax'
+drivers/md/dm.o: In function `dm_get_table_device':
+dm.c:(.text+0x2744): undefined reference to `dax_get_by_host'
+drivers/md/dm-table.o: In function `device_dax_write_cache_enabled':
+dm-table.c:(.text+0x1030): undefined reference to `dax_write_cache_enabled'
+drivers/md/dm-table.o: In function `dm_table_set_restrictions':
+dm-table.c:(.text+0x29b8): undefined reference to `dax_write_cache'
+
+This adds a dependency that prevents the invalid configuration, allowing
+a built-in device mapper only if DAX is either built-in as well, or
+completely disabled.
+
+Fixes: 4de1c562f7e9 ("dax, dm: allow device-mapper to operate without dax support")
+Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+---
+The regression only showed up in linux-next at the start of the merge
+window. Any idea what happened?
+---
+ drivers/md/Kconfig | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
+index 49287135b86c..5e5a47c5ff82 100644
+--- a/drivers/md/Kconfig
++++ b/drivers/md/Kconfig
+@@ -200,6 +200,7 @@ config BLK_DEV_DM_BUILTIN
+ 
+ config BLK_DEV_DM
+ 	tristate "Device mapper support"
++	depends on DAX || DAX=n
+ 	select BLK_DEV_DM_BUILTIN
+ 	---help---
+ 	  Device-mapper is a low level volume manager.  It works by allowing
+-- 
+2.9.0
