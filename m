@@ -1,16 +1,18 @@
-From: Hannes Reinecke <hare@suse.de>
+From: Martin Wilck <mwilck@suse.com>
 Subject: Re: [PATCH 1/2] libmultipath: hwhandler auto-detection
 	for ALUA
-Date: Wed, 4 Apr 2018 08:38:35 +0200
-Message-ID: <20180404083835.213875f1@pentland.suse.de>
+Date: Wed, 04 Apr 2018 10:04:36 +0200
+Message-ID: <1522829076.3955.24.camel@suse.com>
 References: <20180327215053.3631-1-mwilck@suse.com>
 	<20180327215053.3631-2-mwilck@suse.com>
 	<20180403203132.GF3103@octiron.msp.redhat.com>
+	<1522788809.3801.109.camel@suse.com>
+	<20180403212958.GH3103@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180403203132.GF3103@octiron.msp.redhat.com>
+In-Reply-To: <20180403212958.GH3103@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,56 +23,68 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>, Hannes
 List-Id: dm-devel.ids
 
-On Tue, 3 Apr 2018 15:31:32 -0500
-"Benjamin Marzinski" <bmarzins@redhat.com> wrote:
-
-> On Tue, Mar 27, 2018 at 11:50:52PM +0200, Martin Wilck wrote:
-> > If the hardware handler isn't explicitly set, infer ALUA support
-> > from the pp->tpgs attribute. Likewise, if ALUA is selected, but
-> > not supported by the hardware, fall back to no hardware handler.  
-> 
-> Weren't you worried before about temporary ALUA failures? If you had a
-> temporary failure while configuring a device that you explicitly set
-> to be ALUA, then this would cause the device to be misconfigured? If
-> the hardware handler isn't set, inferring ALUA is fine. But what is
-> the case where we want to say that a device that is explicitly set to
-> ALUA shouldn't actually be ALUA?  It seem like if there is some
-> uncertaintly, we should just not set the hardware handler, and allow
-> multipath to infer it via the pp->tpgs value.
-> 
-> I'm not strongly against this patch. I just don't see the value in
-> overriding an explicit configuration, if we believe that temporary
-> failures are possible.
-> 
-We _do_ have an definitive guide, namely the TGPS bit.
-If that isn't set it's pretty much pointless to try alua, regardless
-what the configuration says.
-If it's set but ALUA configuration fails we do have an error.
-If it's not set and ALUA configuration fails then it's 'just' a
-misconfiguration.
-
-Which is precisely what bit us with the IPR controller; all devices
-appear as 'IPR', but only for some configuration the TPGS bit is
-set.
-
-And as the hardware handler was set to 'ALUA' the hardware handler
-always tried to attach, but failed for those devices which did not
-support ALUA.
-
-_And_ as we don't have a distinction between 'configuration error' and
-'hardware failure' these devices failed to setup, and booting would
-stop.
-
-So this patch is just how to handle devices which are configured to use
-the ALUA hardware handler, but which do not have the TPGS bit set.
-For these devices attaching ALUA _will_ fail, but that's _actually_
-expected, as the devices never claimed to support alua.
-
-Hence I'm perfectly fine with this patch.
-
-Cheers,
-
-Hannes
+T24gVHVlLCAyMDE4LTA0LTAzIGF0IDE2OjI5IC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cj4gT24gVHVlLCBBcHIgMDMsIDIwMTggYXQgMTA6NTM6MjlQTSArMDIwMCwgTWFydGluIFdp
+bGNrIHdyb3RlOgo+ID4gT24gVHVlLCAyMDE4LTA0LTAzIGF0IDE1OjMxIC0wNTAwLCBCZW5qYW1p
+biBNYXJ6aW5za2kgd3JvdGU6Cj4gPiA+IE9uIFR1ZSwgTWFyIDI3LCAyMDE4IGF0IDExOjUwOjUy
+UE0gKzAyMDAsIE1hcnRpbiBXaWxjayB3cm90ZToKPiA+ID4gPiBJZiB0aGUgaGFyZHdhcmUgaGFu
+ZGxlciBpc24ndCBleHBsaWNpdGx5IHNldCwgaW5mZXIgQUxVQQo+ID4gPiA+IHN1cHBvcnQKPiA+
+ID4gPiBmcm9tIHRoZSBwcC0+dHBncyBhdHRyaWJ1dGUuIExpa2V3aXNlLCBpZiBBTFVBIGlzIHNl
+bGVjdGVkLCBidXQKPiA+ID4gPiBub3Qgc3VwcG9ydGVkIGJ5IHRoZSBoYXJkd2FyZSwgZmFsbCBi
+YWNrIHRvIG5vIGhhcmR3YXJlCj4gPiA+ID4gaGFuZGxlci4KPiA+ID4gCj4gPiA+IFdlcmVuJ3Qg
+eW91IHdvcnJpZWQgYmVmb3JlIGFib3V0IHRlbXBvcmFyeSBBTFVBIGZhaWx1cmVzPyBJZiB5b3UK
+PiA+ID4gaGFkCj4gPiA+IGEKPiA+ID4gdGVtcG9yYXJ5IGZhaWx1cmUgd2hpbGUgY29uZmlndXJp
+bmcgYSBkZXZpY2UgdGhhdCB5b3UgZXhwbGljaXRseQo+ID4gPiBzZXQKPiA+ID4gdG8KPiA+ID4g
+YmUgQUxVQSwgdGhlbiB0aGlzIHdvdWxkIGNhdXNlIHRoZSBkZXZpY2UgdG8gYmUgbWlzY29uZmln
+dXJlZD8gCj4gPiAKPiA+IEkgYmVsaWV2ZSB0aGF0IGlmIFRHUFMgaXMgMCwgdGhlIGRldmljZSB3
+aWxsIG5ldmVyIGJlIGFibGUgdG8KPiA+IHN1cHBvcnQKPiA+IEFMVUEuIFRoZSBrZXJuZWwgYWxz
+byBsb29rcyBhdCB0aGUgVFBHUyBiaXRzIGFuZCB3b24ndCB0cnkgQUxVQSBpZgo+ID4gdGhleQo+
+ID4gYXJlIHVuc2V0LiBPbmNlIHRoZSBkZXZpY2UgaXMgY29uZmlndXJlZCBhbmQgYWN0dWFsIEFM
+VUEgUlRQRy9TVFBHCj4gPiBjYWxscyBhcmUgcGVyZm9ybWVkLCB0aGV5IG1heSBmYWlsIGZvciBh
+IHZhcmlldHkgb2YgdGVtcG9yYXJ5Cj4gPiByZWFzb25zIC0KPiA+IEkgd2FudGVkIHRvIGF2b2lk
+IHJlc2V0dGluZyB0aGUgcHJpbyBhbGdvcml0aG0gdG8gImNvbnN0IiBmb3Igc3VjaAo+ID4gY2Fz
+ZXMuIFRoYXQncyBteSB1bmRlcnN0YW5kaW5nLCBjb3JyZWN0IG1lIGlmIEknbSB3cm9uZy4KPiAK
+PiBEZXZpY2VzIHRoYXQgd2VyZSBub3QgY29ycmVjdGx5IHN1cHBvcmluZyBBTFVBIHJldHVybmVk
+ID4gMCBmb3IKPiBnZXRfdGFyZ2V0X3BvcnRfZ3JvdXBfc3VwcG9ydCwgc28gZGV0ZWN0X2FsdWEg
+YWN0dWFsbHkgZG9lcyBhbGwgdGhlCj4gd29yawo+IG5lY2Vzc2FyeSB0byB2ZXJpZnkgdGhhdCBp
+dCBjYW4gZ2V0IGEgcHJpb3JpdHkuIFdpdGhvdXQgZG9pbmcgdGhpcywKPiBtdWx0aXBsZSBkZXZp
+ZWNzIHRoYXQgZGlkbid0IHN1cHBvcnQgQUxVQSB3ZXJlIGJlaW5nIGRldGVjdGVkIGFzCj4gc3Vw
+cG9ydGluZyBBTFVBLgoKU28sIGRldGVjdF9hbHVhKCkgdGVzdHMgVFBHUyAqYW5kKiB0cmllcyBh
+bmQgYWN0dWFsIGFsdWEgY2FsbCwgYW5kIHNldHMKcHAtPnRwZ3MgdG8gYW55dGhpbmcgb3RoZXIg
+dGhhbiBUUEdTX05PTkUgb25seSBpZiB0aGUgbGF0dGVyIGlzCnN1Y2Nlc3NmdWwuIFRoYXQncyBm
+aW5lLiBNeSBwYXRjaCB3YXMgbG9va2luZyBhdCBwcC0+dHBncywgc28gaXQgd2FzCmltcGxpY2l0
+bHkgdXNpbmcgdGhpcyBsb2dpYyBvZiBkZXRlY3RfYWx1YSgpLiBCdXQgZG9lcyB0aGF0IGd1YXJh
+bnRlZQp0aGF0IGZ1dHVyZSBhbHVhLT5nZXRwcmlvKCkgY2FsbHMgd2lsbCBuZXZlciBmYWlsIGF0
+IHNvbWUgbGF0ZXIgcG9pbnQKaW4gdGltZT8KCk1heWJlIEkgbWlzdW5kZXJzdG9vZCB5b3VyIG9y
+aWdpbmFsIHByb3Bvc2l0aW9uLiBXaGF0IEknbSBzYXlpbmcgaXMKdGhhdCByZXNldHRpbmcgdGhl
+IHByaW8gYWxnb3JpdGhtIGZyb20gImFsdWEiIHRvICJjb25zdCIgYmVjYXVzZSBvZiBhbgplcnJv
+ciBjb2RlIGluIGdldF9wcmlvKCkgaXMgd3JvbmcsIGJlY2F1c2UgdGhhdCBlcnJvciBjb2RlIG1h
+eSBiZQp0cmFuc2llbnQuCgpJZiB3ZSBnaXZlICJoYXJkd2FyZV9oYW5kbGVyIiBjb25maWcgb3B0
+aW9ucyBwcmVmZXJlbmNlIG92ZXIgQUxVQQphdXRvZGV0ZWN0aW9uLCBhbmQgdGh1cyBlbmZvcmNl
+IGh3aGFuZGxlciAiMSBhbHVhIiBvbiBzdWNoIGRldmljZXMgdGhhdApoYXZlIG5vIEFMVUEgc3Vw
+cG9ydCwgZG9tYXAoKSBpcyBndWFyYW50ZWVkIHRvIGZhaWwsIGJlY2F1c2UgdGhlIGtlcm5lbApy
+ZWZ1c2VzIHRvIHNldCB1cCBhIG1hcCB3aXRoIGEgZ2l2ZW4gaHdoYW5kbGVyIGlmIGFueSBkZXZp
+Y2UgZG9lc24ndApzdXBwb3J0IHRoYXQgaGFuZGxlci4KCj4gQnkgdXNpbmcgcmV0YWluX2F0dGFj
+aGVkX2h3aGFuZGxlciBhdCBhbGwsIHdlIGFyZSBpbXBsaWNpdGx5Cj4gcmVxdWlyaW5nCj4gdGhl
+IHNjc2lfZGhfYWx1YSBtb2R1bGUgdG8gYmUgbG9hZGVkIGJlZm9yZSBkZXZpY2VzIHdpdGgKPiBp
+bmRldGVybWluYXRlCj4gY29uZmlndXJhdGlvbnMgYXJlIGRpc2NvdmVyZWQgZm9yIHRoZW0gdG8g
+d29yayBjb3JyZWN0bHkuIHJpZ2h0PyBGb3IKPiBpbnN0YW5jZSwgY29tbWl0IDcxNWM0OGQ5M2Rk
+MDA5MzA1MzRjZTZhNTVkMGUzNzA1NDY2ZGY1ZDYgZGlkIHRoaXMKPiBmb3IKPiBuZXRhcHAgZGV2
+aWNlcywgYW5kIHRoYXQgd2FzIGluIDIwMTMuIEkgZG9uJ3Qgc2VlIGhvdyB0aGlzIGlzCj4gZGlm
+ZmVyZW50LgoKWW91J3JlIHJpZ2h0LCB3ZSBhcmUgImltcGxpY2l0bHkgcmVxdWlyaW5nIiB0aGlz
+IHNvcnQtb2YsIGJ1dCB3ZSBoYXZlCm5vIGNvZGUgdGhhdCBlbmZvcmNlcyB0aGUgZWFybHkgbG9h
+ZGluZyBvZiB0aGUgZGV2aWNlIGhhbmRsZXJzLiBXZQpzaG91bGQgYmUgc2hpcHBpbmcgYSBtb2R1
+bGVzLWxvYWQuZCBmaWxlLCBvciBhIG1vZHByb2JlLmQgc29mdGRlcCwgb3IKc29tZXRoaW5nIHNp
+bWlsYXIgdGhhdCB3b3VsZCBlbmZvcmNlIHRoaXMgc2V0dGluZyBpZiB3ZSBfcmVhbGx5XyBkZXBl
+bmQKb24gaXQuICJJbXBsaWNpdCByZXF1aXJlbWVudHMiIGFyZSBiYWQuIFdlIHNob3VsZCBlaXRo
+ZXIgbWFrZSB0aGUKcmVxdWlyZW1lbnQgZXhwbGljaXQsIG9yIG5vdCBoYXJkLWRlcGVuZCBvbiBp
+dC4gU28gZmFyIEkgd2FzIHRoaW5raW5nCnRoZSBsYXR0ZXIuIEFmdGVyIGFsbCwgU0NTSSBkZXZp
+Y2UtaGFuZGxlciBzdXBwb3J0IGlzIGNvbmZpZ3VyYWJsZSBpbgp0aGUga2VybmVsLgoKUmVnYXJk
+cywKTWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLiAr
+NDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJm
+ZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJn
+KQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93
+d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
