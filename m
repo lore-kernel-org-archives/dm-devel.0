@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v4 10/20] libmultipath: indicate wwid failure in
-	dm_addmap_create()
-Date: Wed,  4 Apr 2018 18:16:17 +0200
-Message-ID: <20180404161627.6244-11-mwilck@suse.com>
+Subject: [PATCH v4 05/20] libmultipath: trigger change uevent on
+	new device creation
+Date: Wed,  4 Apr 2018 18:16:12 +0200
+Message-ID: <20180404161627.6244-6-mwilck@suse.com>
 References: <20180404161627.6244-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,165 +22,112 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: Julian Andres Klode <julian.klode@canonical.com>, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-dm_addmap_create() is where we actually try to set up a new
-multipath map. Depending on the result, mark the wwid as
-failed (or not), and re-trigger an uevent if necessary.
-If a path changes from multipath to non-multipath, use an "add"
-event to make sure LVM2 rules pick it up. Increase log level
-of this event to 3.
+From: Benjamin Marzinski <bmarzins@redhat.com>
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
+When multipath first sees a path device with find_multipaths
+enabled, it can't know if the device should be multipathed. This means
+that it will not claim the device in udev.  If the device is eventually
+multipathed, multipath should trigger a change uevent to update the udev
+database to claim the device.
+
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/configure.c | 37 ++++++++++++++++++++++++++++---------
- libmultipath/configure.h |  2 +-
- libmultipath/devmapper.c |  9 ++++++++-
- libmultipath/structs.h   |  1 +
- multipathd/main.c        |  2 +-
- 5 files changed, 39 insertions(+), 12 deletions(-)
+ libmultipath/configure.c | 26 ++++++++++++++++++++++++--
+ libmultipath/configure.h |  1 +
+ libmultipath/wwids.c     |  2 +-
+ multipath/main.c         |  2 +-
+ multipathd/main.c        |  3 ++-
+ 5 files changed, 29 insertions(+), 5 deletions(-)
 
 diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index c1a50e4..9aa3d21 100644
+index 6df8359..088d69f 100644
 --- a/libmultipath/configure.c
 +++ b/libmultipath/configure.c
-@@ -445,11 +445,18 @@ trigger_udev_change(const struct multipath *mpp)
+@@ -444,6 +444,28 @@ trigger_udev_change(const struct multipath *mpp)
+ 	udev_device_unref(udd);
  }
  
- void
--trigger_paths_udev_change(const struct multipath *mpp)
-+trigger_paths_udev_change(struct multipath *mpp, bool is_mpath)
- {
- 	struct pathgroup * pgp;
- 	struct path * pp;
- 	int i, j;
-+	/*
-+	 * If a path changes from multipath to non-multipath, we must
-+	 * synthesize an artificial "add" event, otherwise the LVM2 rules
-+	 * (69-lvm2-lvmetad.rules) won't pick it up. Otherwise, we'd just
-+	 * irritate ourselves with an "add", so use "change".
-+	 */
-+	const char *action = is_mpath ? "change" : "add";
- 
- 	if (!mpp || !mpp->pg)
- 		return;
-@@ -468,14 +475,21 @@ trigger_paths_udev_change(const struct multipath *mpp)
- 			 */
- 			env = udev_device_get_property_value(
- 				pp->udev, "DM_MULTIPATH_DEVICE_PATH");
--			if (env != NULL && !strcmp(env, "1"))
--					continue;
- 
--			condlog(4, "triggering change uevent for %s", pp->dev);
--			sysfs_attr_set_value(pp->udev, "uevent", "change",
--					     strlen("change"));
-+			if (is_mpath && env != NULL && !strcmp(env, "1"))
-+				continue;
-+			else if (!is_mpath &&
-+				   (env == NULL || !strcmp(env, "0")))
-+				continue;
++void
++trigger_paths_udev_change(const struct multipath *mpp)
++{
++	struct pathgroup * pgp;
++	struct path * pp;
++	int i, j;
 +
-+			condlog(3, "triggering %s uevent for %s (is %smultipath member)",
-+				action, pp->dev, is_mpath ? "" : "no ");
-+			sysfs_attr_set_value(pp->udev, "uevent",
-+					     action, strlen(action));
- 		}
- 	}
++	if (!mpp || !mpp->pg)
++		return;
 +
-+	mpp->needs_paths_uevent = 0;
- }
- 
++	vector_foreach_slot (mpp->pg, pgp, i) {
++		if (!pgp->paths)
++			continue;
++		vector_foreach_slot(pgp->paths, pp, j) {
++			if (!pp->udev)
++				continue;
++			sysfs_attr_set_value(pp->udev, "uevent", "change",
++					     strlen("change"));
++		}
++	}
++}
++
  static int
-@@ -876,8 +890,10 @@ int domap(struct multipath *mpp, char *params, int is_daemon)
+ is_mpp_known_to_udev(const struct multipath *mpp)
+ {
+@@ -842,8 +864,8 @@ int domap(struct multipath *mpp, char *params, int is_daemon)
  		 * succeeded
  		 */
  		mpp->force_udev_reload = 0;
--		if (mpp->action == ACT_CREATE && remember_wwid(mpp->wwid) == 1)
--			trigger_paths_udev_change(mpp);
-+		if (mpp->action == ACT_CREATE &&
-+		    (remember_wwid(mpp->wwid) == 1 ||
-+		     mpp->needs_paths_uevent))
-+			trigger_paths_udev_change(mpp, true);
+-		if (mpp->action == ACT_CREATE)
+-			remember_wwid(mpp->wwid);
++		if (mpp->action == ACT_CREATE && remember_wwid(mpp->wwid) == 1)
++			trigger_paths_udev_change(mpp);
  		if (!is_daemon) {
  			/* multipath client mode */
  			dm_switchgroup(mpp->alias, mpp->bestpg);
-@@ -902,7 +918,10 @@ int domap(struct multipath *mpp, char *params, int is_daemon)
- 		}
- 		dm_setgeometry(mpp);
- 		return DOMAP_OK;
--	}
-+	} else if (r == DOMAP_FAIL && mpp->action == ACT_CREATE &&
-+		   mpp->needs_paths_uevent)
-+		trigger_paths_udev_change(mpp, false);
-+
- 	return DOMAP_FAIL;
- }
- 
 diff --git a/libmultipath/configure.h b/libmultipath/configure.h
-index 545cbc2..8b56d33 100644
+index 27a7e6f..545cbc2 100644
 --- a/libmultipath/configure.h
 +++ b/libmultipath/configure.h
-@@ -37,4 +37,4 @@ int get_refwwid (enum mpath_cmds cmd, char * dev, enum devtypes dev_type,
+@@ -37,3 +37,4 @@ int get_refwwid (enum mpath_cmds cmd, char * dev, enum devtypes dev_type,
  		 vector pathvec, char **wwid);
  int reload_map(struct vectors *vecs, struct multipath *mpp, int refresh, int is_daemon);
  struct udev_device *get_udev_device(const char *dev, enum devtypes dev_type);
--void trigger_paths_udev_change(const struct multipath *mpp);
-+void trigger_paths_udev_change(struct multipath *mpp, bool is_mpath);
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index 2a92105..f2befad 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -22,6 +22,7 @@
- #include "devmapper.h"
- #include "sysfs.h"
- #include "config.h"
-+#include "wwids.h"
- 
- #include "log_pthread.h"
- #include <sys/types.h>
-@@ -415,8 +416,12 @@ int dm_addmap_create (struct multipath *mpp, char * params)
- 		int err;
- 
- 		if (dm_addmap(DM_DEVICE_CREATE, TGT_MPATH, mpp, params, ro,
--			      udev_flags))
-+			      udev_flags)) {
-+			if (unmark_failed_wwid(mpp->wwid) ==
-+			    WWID_FAILED_CHANGED)
-+				mpp->needs_paths_uevent = 1;
- 			return 1;
-+		}
- 		/*
- 		 * DM_DEVICE_CREATE is actually DM_DEV_CREATE + DM_TABLE_LOAD.
- 		 * Failing the second part leaves an empty map. Clean it up.
-@@ -432,6 +437,8 @@ int dm_addmap_create (struct multipath *mpp, char * params)
- 			break;
- 		}
- 	}
-+	if (mark_failed_wwid(mpp->wwid) == WWID_FAILED_CHANGED)
-+		mpp->needs_paths_uevent = 1;
- 	return 0;
++void trigger_paths_udev_change(const struct multipath *mpp);
+diff --git a/libmultipath/wwids.c b/libmultipath/wwids.c
+index b7392bf..11afe09 100644
+--- a/libmultipath/wwids.c
++++ b/libmultipath/wwids.c
+@@ -331,5 +331,5 @@ remember_wwid(char *wwid)
+ 		condlog(3, "wrote wwid %s to wwids file", wwid);
+ 	else
+ 		condlog(4, "wwid %s already in wwids file", wwid);
+-	return 0;
++	return ret;
  }
- 
-diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-index c43f2c3..1d3a34f 100644
---- a/libmultipath/structs.h
-+++ b/libmultipath/structs.h
-@@ -322,6 +322,7 @@ struct multipath {
- 	int max_sectors_kb;
- 	int force_readonly;
- 	int force_udev_reload;
-+	int needs_paths_uevent;
- 	int ghost_delay;
- 	int ghost_delay_tick;
- 	unsigned int dev_loss;
+diff --git a/multipath/main.c b/multipath/main.c
+index ba83771..686b037 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -425,7 +425,7 @@ configure (struct config *conf, enum mpath_cmds cmd,
+ 		}
+ 		if (cmd == CMD_ADD_WWID) {
+ 			r = remember_wwid(refwwid);
+-			if (r == 0)
++			if (r >= 0)
+ 				printf("wwid '%s' added\n", refwwid);
+ 			else
+ 				printf("failed adding '%s' to wwids file\n",
 diff --git a/multipathd/main.c b/multipathd/main.c
-index e6f4e77..7eeb743 100644
+index 7d3d5b1..644de72 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -2325,7 +2325,7 @@ configure (struct vectors * vecs)
+@@ -2324,7 +2324,8 @@ configure (struct vectors * vecs)
+ 
  	sync_maps_state(mpvec);
  	vector_foreach_slot(mpvec, mpp, i){
- 		if (remember_wwid(mpp->wwid) == 1)
--			trigger_paths_udev_change(mpp);
-+			trigger_paths_udev_change(mpp, true);
+-		remember_wwid(mpp->wwid);
++		if (remember_wwid(mpp->wwid) == 1)
++			trigger_paths_udev_change(mpp);
  		update_map_pr(mpp);
  	}
  
