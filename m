@@ -1,12 +1,16 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH] 11-dm-mpath.rules: dont't run "multipath -U"
-	during coldplug
-Date: Fri,  6 Apr 2018 13:45:21 +0200
-Message-ID: <20180406114521.4883-1-mwilck@suse.com>
+From: Zdenek Kabelac <zkabelac@redhat.com>
+Subject: Re: [BUG] dm-thin metadata operation failed due to
+ -ENOSPC returned by dm_pool_alloc_data_block() after processing DISCARD
+ bios
+Date: Fri, 6 Apr 2018 14:26:13 +0200
+Message-ID: <22db43d9-c004-9ab2-1b73-3e5367e3b4da@redhat.com>
+References: <CAAR726JcYQpSSXAhL6=yPmzT0MOZRG_WwjC63q0QSMzT5qNPSg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CAAR726JcYQpSSXAhL6=yPmzT0MOZRG_WwjC63q0QSMzT5qNPSg@mail.gmail.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,37 +20,69 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+To: Dennis Yang <dennisyang@qnap.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-When udevadm trigger is run after switching root, lots of simultaneous uevents
-for both path and multipath devices arrive. In may happen that when "multipath
--U" is called on a dm device, the path's uevents haven't finished yet, thus
-the paths aren't found in the udev db, and multipath -U erroneously concludes
-that there are no usable paths. Avoid that by skipping "multipath -U" during
-coldplug.
+Dne 3.4.2018 v 06:07 Dennis Yang napsal(a):
+> Hi,
+> 
+> Recently we have came across an issue that dm-thin pool will be
+> switched to READ_ONLY mode because dm_pool_alloc_data_block() returns
+> -ENOSPC. AFAIK, this should not happen since alloc_data_block() will
+> check if there is any free space (and commit metadata if it first
+> reports no free space) before it allocates pool block. In addition,
+> total virtual space of all thin volumes is smaller than the pool
+> physical space in my testing environment which makes pool impossible
+> to run out of space.
+> 
+> This issue could be easily reproduced by the following steps.
+> 
+> 1) Create a thin pool and a slightly smaller thin volume
+>> sudo dmsetup create meta --table "0 40000000 linear /dev/sdf 0"
+>> sudo dmsetup create data --table "0 10240000 linear /dev/md125 0"
+>> sudo dd if=/dev/zero of=/dev/mapper/meta bs=1M count=1
+>> sudo dmsetup create pool --table "0 10240000 thin-pool /dev/mapper/meta /dev/mapper/data 1024 0 2 skip_block_zeroing error_if_no_space"
+>> sudo dmsetup message pool 0 "create_thin 0"
+>> sudo dmsetup create thin --table "0 10238976 thin /dev/mapper/pool 0"
+> 
+> 2) Make a filesystem and mount it
+>> sudo mkfs.ext4 -E lazy_itable_init=0,lazy_journal_init=0 /dev/mapper/thin
+>> sudo mount /dev/mapper/thin /mnt
+> 
+> 3) Write a file to mount point until it takes all the space
+>> sudo dd if=/dev/zero of=/mnt/zero.img bs=1M
+> 
+> 4) Remove this file and trim mount point
+>> sudo rm /mnt/zero.img
+>> sudo fstrim /mnt
+> 
+> Repeat step 3 and 4 multiple times and the pool will be switched to
+> READ_ONLY mode and need_checks flag will be set. Kernel message shows
+> the following messages.
+> [ 3952.723937] device-mapper: thin: 252:2: metadata operation
+> 'dm_pool_alloc_data_block' failed: error = -28
+> [ 3952.723940] device-mapper: thin: 252:2: aborting current metadata transaction
+> [ 3952.725860] device-mapper: thin: 252:2: switching pool to read-only mode
+> 
+> This root cause of this issue is that dm-thin will first remove
+> mapping and increase corresponding blocks' reference count to prevent
+> them from being reused before DISCARD bios get processed by the
+> underlying layers. However. increasing blocks' reference count could
+> also increase the nr_allocated_this_transaction in struct sm_disk
+> which makes smd->old_ll.nr_allocated +
+> smd->nr_allocated_this_transaction bigger than smd->old_ll.nr_blocks.
+> In this case, alloc_data_block() will never commit metadata to reset
+> the begin pointer of struct sm_disk, because sm_disk_get_nr_free()
+> always return an underflow value.
+> 
+> If you need more information, please feel free to let me know.
 
-Fixes: "ce5ea6a 11-dm-mpath.rules: multipath -U for READY check"
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- multipath/11-dm-mpath.rules | 4 ++++
- 1 file changed, 4 insertions(+)
+Hi
 
-diff --git a/multipath/11-dm-mpath.rules b/multipath/11-dm-mpath.rules
-index 03ac5da..07320a1 100644
---- a/multipath/11-dm-mpath.rules
-+++ b/multipath/11-dm-mpath.rules
-@@ -26,6 +26,10 @@ ENV{DM_NR_VALID_PATHS}=="0", ENV{MPATH_DEVICE_READY}="0", GOTO="mpath_action"
- ENV{MPATH_SBIN_PATH}="/sbin"
- TEST!="$env{MPATH_SBIN_PATH}/multipath", ENV{MPATH_SBIN_PATH}="/usr/sbin"
- 
-+# Don't run multipath -U during "coldplug" after switching root,
-+# because paths are just being added to the udev db.
-+ACTION=="add", ENV{.MPATH_DEVICE_READY_OLD}=="1", GOTO="paths_ok"
-+
- # Check the map state directly with multipath -U.
- # This doesn't attempt I/O on the device.
- PROGRAM=="$env{MPATH_SBIN_PATH}/multipath -U %k", GOTO="paths_ok"
--- 
-2.16.1
+Just forgotten to mention - tracked through this BZ:
+
+https://bugzilla.redhat.com/1563697
+
+Regards
+
+Zdenek
