@@ -1,16 +1,16 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 1/2] multipath-tools: move COPYING to
-	COPYING.LESSER
-Date: Mon, 09 Apr 2018 21:08:10 +0200
-Message-ID: <1523300890.3525.55.camel@suse.com>
-References: <20180327182819.20163-1-xose.vazquez@gmail.com>
-	<1523289440.3525.27.camel@suse.com>
-	<9ad33b55-17fc-9ed9-ca11-2be0e11a7b1f@gmail.com>
+From: Jens Axboe <axboe@kernel.dk>
+Subject: Re: limits->max_sectors is getting set to 0,
+ why/where? [was: Re: dm: kernel oops by divide error on v4.16+]
+Date: Mon, 9 Apr 2018 13:32:34 -0600
+Message-ID: <db4499d6-05b8-73f3-76d0-a91af91430b0@kernel.dk>
+References: <20180408040005.GA19128@ming.t460p>
+	<20180409155120.GA10990@redhat.com> <20180409183836.GA11256@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <9ad33b55-17fc-9ed9-ca11-2be0e11a7b1f@gmail.com>
+In-Reply-To: <20180409183836.GA11256@redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,46 +20,75 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>, Ming Lei <ming.lei@redhat.com>
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gTW9uLCAyMDE4LTA0LTA5IGF0IDE5OjI5ICswMjAwLCBYb3NlIFZhenF1ZXogUGVyZXogd3Jv
-dGU6Cj4gT24gMDQvMDkvMjAxOCAwNTo1NyBQTSwgTWFydGluIFdpbGNrIHdyb3RlOgo+IAo+ID4g
-VGhlcmUgYXJlID4xMzAgZmlsZXMgaW4gdGhlIG11bHRpcGF0aC10b29scyBzb3VyY2UgY29kZSB3
-aGljaCBkb24ndAo+ID4gaGF2ZSBhIGxpY2Vuc2UgaGVhZGVyLiBTbyBmYXIgbXkgKmFzc3VtcHRp
-b24qIHdhcyB0aGF0IHRoZXNlIGZpbGVzCj4gPiB3ZXJlCj4gPiBjb3ZlcmVkIGJ5IENPUFlJTkcs
-IHdoaWNoIHVzZWQgdG8gYmUgTEdQTHYyLjAuCj4gCj4gVGhleSBhcmUgdW5kZXIgdGhlaXIgX29y
-aWdpbmFsXyBsaWNlbmNlLiBOb3RoaW5nIHdhcyBjaGFuZ2VkIGluc2lkZQo+IHRoZSBmaWxlcy4K
-CldvdWxkIHlvdSBjYXJlIHRvIGVubGlnaHRlbiBtZSB3aGF0IHRoaXMgIm9yaWdpbmFsIGxpY2Vu
-c2UiIG1pZ2h0IGJlPwpUaGUgZmlsZXMgdGhlbXNlbHZlcyBjb250YWluIG5vIGluZm9ybWF0aW9u
-IGFib3V0IGl0LgoKPiA+IEJ5IGNoYW5naW5nIENPUFlJTkcgdG8KPiA+IEdQTHYyLjAsIHlvdSBl
-ZmZlY3RpdmVseSBjaGFuZ2VkIHRoZSBsaWNlbnNlIG9mIGFsbCB0aGVzZSBmaWxlcwo+ID4gZnJv
-bQo+ID4gTFBHTHYyLjAgdG8gR1BMdjIuMAo+IAo+IFRoZXJlIGlzIG5vIGV2aWRlbmNlIG9mIHRo
-YXQgaW4gYW55IHBsYWNlLiBBbGwgcmVmZXJlbmNlcyB0byB0aGUKPiBDT1BZSU5HIGZpbGUgYXJl
-Cj4gZXh0ZXJuYWwgZmlsZXMvY29kZSwgd2l0aCBHUEwgbGljZW5jZS4KClRoaXMgaXMgbm90IGFi
-b3V0IHRoZSBmaWxlcyB5b3UgcmVmZXIgdG8uIFRoZSByZWZlcmVuY2UgaW4gdGhvc2UgZmlsZXMK
-d2FzIG9iaW91c2x5IHdyb25nIHVudGlsIHlvdXIgcGF0Y2ggd2FzIG1lcmdlZC4gKEkgYWRtaXQg
-dGhhdCdzIGEgKzEKZm9yIHlvdXIgcGF0Y2gpLgoKVGhpcyBpcyBhYm91dCB0aGUgZmlsZXMgdGhh
-dCBoYXZlICpubyBsaWNlbnNlIGhlYWRlciouIFdlICptdXN0KiBhc3N1bWUKdGhhdCB0aGV5IGFy
-ZSBjb3ZlcmVkIGJ5IGEgY2VudHJhbCBsaWNlbnNlIGZpbGUgaW4gdGhlIHRvcCBkaXJlY3Rvcnku
-CklmIHdlIGRvbid0IGRvIHRoYXQsIGl0J2QgYmUgcXVlc3Rpb25hYmxlIGlmIHNhaWQgZmlsZXMg
-YXJlCmRpc3RyaWJ1dGFibGUgYXQgYWxsLiBMZWdhbGx5LCB0aGV5J2QgcHJvYmFibHkgbm90IGJl
-IGNvbnNpZGVyZWQgRkxPU1MuCkZpbGVzIHdpdGhvdXQgZXhwbGljaXQgY29weXJpZ2h0IGFyZSBi
-ZSBjb3ZlcmVkIGJ5IHJlZ3VsYXIgY29weXJpZ2h0CmxhdywgbWVhbmluZyB0aGF0IGNvcHlpbmcg
-YW5kIHJlZGlzdHJpYnV0aW9uIGFyZSBfbm90XyBhbGxvd2VkIHVuZGVyCm1vc3QgbGVnaXNsYXRp
-b25zLgoKSSBob3BlIHRoYXQgbWFrZXMgaXQgY2xlYXIgd2h5IHdlIG5lZWQgdG8gYmUgZmlybSB0
-aGF0IHRoZXNlIGZpbGVzIGFyZQpjb3ZlcmVkIGJ5IHRoZSB0b3AgbGljZW5zZSBmaWxlLiBUaGF0
-IGNlbnRyYWwgbGljZW5zZSBmaWxlIHVzZWQgdG8gYmUKQ09QWUlORy4gVGhlIHBvaW50IG9mIG15
-IHBvc3Qgd2FzIHRoYXQgd2UgaGF2ZSAqdHdvKiBzdWNoIGZpbGVzIG5vdywKYW5kIHdpdGhvdXQg
-cmVzb3J0aW5nIHRvIGhpc3RvcnkgaXQncyBpbXBvc3NpYmxlIHRvIHRlbGwgd2hpY2ggZmlsZSBp
-cwpjb3ZlcmVkIGJ5IHdoaWNoIGxpY2Vuc2UgKGFuZCBldmVuIHdpdGggaGlzdG9yeSBpdCdzIGhh
-cmQsIGJ1dCB0aGF0J3MKYW5vdGhlciBwb3N0aW5nKS4KCkhpc3RvcmljYWxseSwgdGhlc2UgZmls
-ZXMgd2VyZSBhZGRlZCB0byB0aGUgdHJlZSBieSBDaHJpc3RvcGhlLCBhbmQKaGUnZCBjb3BpZWQg
-dGhlIExHUEx2Mi4wIHRleHQgaW50byBDT1BZSU5HLCB0aHVzIGl0IHNlZW1zIGxpa2VseSB0aGF0
-CmhlIG1lYW50IHRoZW0gdG8gYmUgdW5kZXIgTEdQTHYyLjAuCgpNYXJ0aW4KCi0tIApEci4gTWFy
-dGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpT
-VVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdy
-YWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5n
-IGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4v
-bGlzdGluZm8vZG0tZGV2ZWw=
+On 4/9/18 12:38 PM, Mike Snitzer wrote:
+> On Mon, Apr 09 2018 at 11:51am -0400,
+> Mike Snitzer <snitzer@redhat.com> wrote:
+> 
+>> On Sun, Apr 08 2018 at 12:00am -0400,
+>> Ming Lei <ming.lei@redhat.com> wrote:
+>>
+>>> Hi,
+>>>
+>>> The following kernel oops(divide error) is triggered when running
+>>> xfstest(generic/347) on ext4.
+>>>
+>>> [  442.632954] run fstests generic/347 at 2018-04-07 18:06:44
+>>> [  443.839480] divide error: 0000 [#1] PREEMPT SMP PTI
+>>> [  443.840201] Dumping ftrace buffer:
+>>> [  443.840692]    (ftrace buffer empty)
+> ...
+>>> [  443.845756] CPU: 1 PID: 29607 Comm: dmsetup Not tainted 4.16.0_f605ba97fb80_master+ #1
+>>> [  443.846968] Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.10.2-2.fc27 04/01/2014
+>>> [  443.848147] RIP: 0010:pool_io_hints+0x77/0x153 [dm_thin_pool]
+> 
+> ...
+> 
+>> I was able to reproduce (in my case RIP was pool_io_hints+0x45)
+>>
+>> Which on my kernel, is:
+>>
+>> crash> dis -l pool_io_hints+0x45
+>> /root/snitm/git/linux/drivers/md/dm-thin.c: 2748
+>> 0xffffffffc0765165 <pool_io_hints+69>:  div    %rdi
+>>
+>> Which is drivers/md/dm-thin.c:is_factor()'s return
+>> !sector_div(block_size, n);
+>>
+>> SO looking at pool_io_hints() it would seem limits->max_sectors is 0 for
+>> this xfstests device... why would that be!?
+>>
+>> Clearly pool_io_hints() could stand to be more defensive with a
+>> !limits->max_sectors negative check but is it ever really valid for
+>> max_sectors to be 0?
+>>
+>> Pretty sure the ultimate bug is outside DM (but not seeing an obvious
+>> place where block core would set max_sectors to 0, all blk-settings.c
+>> uses min_not_zero(), etc).
+> 
+> I successfully ran this test against the linux-dm.git
+> "for-4.17/dm-changes" tag that Linus merged after the block changes:
+>  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-4.17/dm-changes
+> 
+> # ./check tests/generic/347
+> FSTYP         -- ext4
+> PLATFORM      -- Linux/x86_64 thegoat 4.16.0-rc5.snitm
+> MKFS_OPTIONS  -- /dev/mapper/test-xfstests_scratch
+> MOUNT_OPTIONS -- -o acl,user_xattr /dev/mapper/test-xfstests_scratch /scratch
+> 
+> generic/347      65s
+> Ran: generic/347
+> Passed all 1 tests
+> 
+> SO this would seem to implicate some regression in the 4.17 block layer
+> changes.
+
+No immediate ideas come to mind, we didn't have a lot of changes and I
+don't see anything that looks problematic. Maybe you can try and
+bisect it and see what you come up with?
+
+-- 
+Jens Axboe
