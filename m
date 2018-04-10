@@ -1,24 +1,14 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: limits->max_sectors is getting set to 0,
- why/where? [was: Re: dm: kernel oops by divide error on v4.16+]
-Date: Mon, 9 Apr 2018 18:31:22 -0600
-Message-ID: <19ce840a-2466-2af0-394c-eb19c4c10ee4@kernel.dk>
-References: <20180408040005.GA19128@ming.t460p>
-	<20180409155120.GA10990@redhat.com> <20180409183836.GA11256@redhat.com>
-	<db4499d6-05b8-73f3-76d0-a91af91430b0@kernel.dk>
-	<70f1d349-f091-19a2-9ec6-978ac1e7dda0@kernel.dk>
-	<78732cb7-3666-e1b0-e6d3-2a3409a0d4ca@kernel.dk>
-	<CAGXu5j+81yUffU4=7h4goQYx_pWwvv6wtwrLy4sx6H=AGmK3ZQ@mail.gmail.com>
-	<ddc93069-1ccd-d867-6c8d-6fd429bc2080@kernel.dk>
-	<20180409222716.GA6450@ming.t460p>
-	<911ff78b-5b60-e05c-de88-8077d502290a@kernel.dk>
-	<CA+55aFyRyL0WbEvXKSdRyFnYW6KKYr0vartCeK3pkkcLeV3mMA@mail.gmail.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH RFC] multipath-tools: create LICENSES dir
+ with the text of all used licences
+Date: Tue, 10 Apr 2018 09:25:16 +0200
+Message-ID: <1523345116.3525.70.camel@suse.com>
+References: <20180409165104.6936-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CA+55aFyRyL0WbEvXKSdRyFnYW6KKYr0vartCeK3pkkcLeV3mMA@mail.gmail.com>
-Content-Language: en-US
+In-Reply-To: <20180409165104.6936-1-xose.vazquez@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -28,25 +18,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Kees Cook <keescook@chromium.org>, Mike Snitzer <snitzer@redhat.com>, Ming Lei <ming.lei@redhat.com>, linux-block <linux-block@vger.kernel.org>, Chris Mason <clm@fb.com>, dm-devel@redhat.com
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 4/9/18 5:54 PM, Linus Torvalds wrote:
-> On Mon, Apr 9, 2018 at 3:32 PM, Jens Axboe <axboe@kernel.dk> wrote:
->>
->> The resulting min/max and friends would have been trivial to test, but
->> clearly they weren't.
-> 
-> Well, the min/max macros themselves actually were tested in user space by me.
-> 
-> It was the interaction with the unrelated "min_not_zero()" that wasn't ;)
-> 
-> It's easy in hind-sight to say "that's not at all unrelated", but
-> within the context of doing min/max, it was.
-
-I guess we should just be thankful that it didn't cause bigger issues
-than an oops.
-
--- 
-Jens Axboe
+T24gTW9uLCAyMDE4LTA0LTA5IGF0IDE4OjUxICswMjAwLCBYb3NlIFZhenF1ZXogUGVyZXogd3Jv
+dGU6Cj4gTW92ZSBDT1BZSU5HIC0+IExJQ0VOU0VTL0dQTC0yLjAKPiBNb3ZlIENPUFlJTkcuTEVT
+U0VSIC0+IExJQ0VOU0VTL0xHUEwtMi4wCj4gCj4gQWRkIEdQTC0zLjAgYW5kIExHUEwtMi4xIHRv
+IHRoZSBMSUNFTlNFUyBkaXIuCj4gU291cmNlIGRpcmVjdGx5IGZyb206Cj4gaHR0cHM6Ly93d3cu
+Z251Lm9yZy9saWNlbnNlcy9ncGwtMy4wLnR4dAo+IGh0dHBzOi8vd3d3LmdudS5vcmcvbGljZW5z
+ZXMvb2xkLWxpY2Vuc2VzL2xncGwtMi4xLnR4dAo+IAo+IENjOiBNYXJ0aW4gV2lsY2sgPG13aWxj
+a0BzdXNlLmNvbT4KPiBDYzogQ2hyaXN0b3BoZSBWYXJvcXVpIDxjaHJpc3RvcGhlLnZhcm9xdWlA
+b3BlbnN2Yy5jb20+Cj4gQ2M6IGRldmljZS1tYXBwZXIgZGV2ZWxvcG1lbnQgPGRtLWRldmVsQHJl
+ZGhhdC5jb20+Cj4gU2lnbmVkLW9mZi1ieTogWG9zZSBWYXpxdWV6IFBlcmV6IDx4b3NlLnZhenF1
+ZXpAZ21haWwuY29tPgo+IC0tLQoKSSBsaWtlIHRoaXMuCkFja2VkLWJ5OiBNYXJ0aW4gV2lsY2sg
+PG13aWxja0BzdXNlLmNvbT4KCkkgIHN1Z2dlc3QgdG8gYWRkIG15IHBvc3RpbmcgZnJvbSB5ZXN0
+ZXJkYXkgKCJtdWx0aXBhdGgtdG9vbHMgMC43LjYKZm9zc29sb2d5IGxpY2Vuc2UgYXNzZXNzbWVu
+dCIpIGFzICJSRUFETUUubGljZW5zZXMiLgpXaXRoIHRoZXNlIGNoYW5nZXMsIHdlJ2QgYmUgaW4g
+YSBmaW5lIHN0YXRlIGZvciB0aGUgdGltZSBiZWluZy4KCkFjdHVhbCBsaWNlbnNlIGNoYW5nZXMg
+Y2FuIGJlIGNvbnNpZGVyZWQgZm9yIHRoZSBsb25nIHRlcm0sIGJ1dCBkb24ndApuZWVkIHRvIGJl
+IC0gdGhlIGN1cnJlbnQgc2l0dWF0aW9uIGlzIGNvbXBsZXggYnV0IG5vdCBhY3R1YWxseQpwcm9i
+bGVtYXRpYy4gU1BEWCB0YWdzIGNhbiBiZSBhZGRlZCB0byBzb3VyY2UgZmlsZXMgYnkgYW5kIGJ5
+LCBhcyB3ZQpzZWUgZml0LgoKTWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1
+c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjog
+RmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4
+NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhh
+dC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
