@@ -1,14 +1,26 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH RFC] multipath-tools: create LICENSES dir
- with the text of all used licences
-Date: Tue, 10 Apr 2018 09:25:16 +0200
-Message-ID: <1523345116.3525.70.camel@suse.com>
-References: <20180409165104.6936-1-xose.vazquez@gmail.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: multipath-tools licenses (was Re: [PATCH]
+ multipath-tools: replace FSF address with a www pointer)
+Date: Tue, 10 Apr 2018 15:56:35 +0200
+Message-ID: <f79a87b4-3a46-44fa-3181-5733169da15e@gmail.com>
+References: <20180310205002.3318-1-xose.vazquez@gmail.com>
+	<1521495458.3798.138.camel@suse.com>
+	<1a0b44c5-c7a6-85fa-b2dd-1bd542efbb76@gmail.com>
+	<1521837017.13100.106.camel@suse.com>
+	<20180326130447.3114ef2f@pentland.suse.de>
+	<1522067788.19335.55.camel@suse.com>
+	<1522073719.19335.66.camel@suse.com>
+	<20180326160705.GM3103@octiron.msp.redhat.com>
+	<904fd737-b8ff-016f-e33a-5d833ef33c3a@gmail.com>
+	<1522250068.5251.46.camel@suse.com>
+	<e82ecffd-c7ce-b623-d94a-a3867edae136@gmail.com>
+	<1523264475.13030.33.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180409165104.6936-1-xose.vazquez@gmail.com>
+In-Reply-To: <1523264475.13030.33.camel@suse.com>
+Content-Language: en-GB
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,29 +30,20 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@suse.de>, Benjamin Marzinski <bmarzins@redhat.com>, Bart Van Assche <bart.vanassche@sandisk.com>, Gris Ge <fge@redhat.com>, Greg KH <gregkh@linuxfoundation.org>, dm ML <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-T24gTW9uLCAyMDE4LTA0LTA5IGF0IDE4OjUxICswMjAwLCBYb3NlIFZhenF1ZXogUGVyZXogd3Jv
-dGU6Cj4gTW92ZSBDT1BZSU5HIC0+IExJQ0VOU0VTL0dQTC0yLjAKPiBNb3ZlIENPUFlJTkcuTEVT
-U0VSIC0+IExJQ0VOU0VTL0xHUEwtMi4wCj4gCj4gQWRkIEdQTC0zLjAgYW5kIExHUEwtMi4xIHRv
-IHRoZSBMSUNFTlNFUyBkaXIuCj4gU291cmNlIGRpcmVjdGx5IGZyb206Cj4gaHR0cHM6Ly93d3cu
-Z251Lm9yZy9saWNlbnNlcy9ncGwtMy4wLnR4dAo+IGh0dHBzOi8vd3d3LmdudS5vcmcvbGljZW5z
-ZXMvb2xkLWxpY2Vuc2VzL2xncGwtMi4xLnR4dAo+IAo+IENjOiBNYXJ0aW4gV2lsY2sgPG13aWxj
-a0BzdXNlLmNvbT4KPiBDYzogQ2hyaXN0b3BoZSBWYXJvcXVpIDxjaHJpc3RvcGhlLnZhcm9xdWlA
-b3BlbnN2Yy5jb20+Cj4gQ2M6IGRldmljZS1tYXBwZXIgZGV2ZWxvcG1lbnQgPGRtLWRldmVsQHJl
-ZGhhdC5jb20+Cj4gU2lnbmVkLW9mZi1ieTogWG9zZSBWYXpxdWV6IFBlcmV6IDx4b3NlLnZhenF1
-ZXpAZ21haWwuY29tPgo+IC0tLQoKSSBsaWtlIHRoaXMuCkFja2VkLWJ5OiBNYXJ0aW4gV2lsY2sg
-PG13aWxja0BzdXNlLmNvbT4KCkkgIHN1Z2dlc3QgdG8gYWRkIG15IHBvc3RpbmcgZnJvbSB5ZXN0
-ZXJkYXkgKCJtdWx0aXBhdGgtdG9vbHMgMC43LjYKZm9zc29sb2d5IGxpY2Vuc2UgYXNzZXNzbWVu
-dCIpIGFzICJSRUFETUUubGljZW5zZXMiLgpXaXRoIHRoZXNlIGNoYW5nZXMsIHdlJ2QgYmUgaW4g
-YSBmaW5lIHN0YXRlIGZvciB0aGUgdGltZSBiZWluZy4KCkFjdHVhbCBsaWNlbnNlIGNoYW5nZXMg
-Y2FuIGJlIGNvbnNpZGVyZWQgZm9yIHRoZSBsb25nIHRlcm0sIGJ1dCBkb24ndApuZWVkIHRvIGJl
-IC0gdGhlIGN1cnJlbnQgc2l0dWF0aW9uIGlzIGNvbXBsZXggYnV0IG5vdCBhY3R1YWxseQpwcm9i
-bGVtYXRpYy4gU1BEWCB0YWdzIGNhbiBiZSBhZGRlZCB0byBzb3VyY2UgZmlsZXMgYnkgYW5kIGJ5
-LCBhcyB3ZQpzZWUgZml0LgoKTWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1
-c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjog
-RmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4
-NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhh
-dC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+On 04/09/2018 11:01 AM, Martin Wilck wrote:
+> On Fri, 2018-04-06 at 18:10 +0200, Xose Vazquez Perez wrote:
+>>
+>> It would be nice to have the old cvs repo, from 2003-09-18 multipath-
+>> 0.0.1 to
+>> 2005-05-23 multipath-tools-0.4.5, online. Or converted to git.
+> 
+> Found this:
+> 
+> https://web.archive.org/web/20050413224017/http://christophe.varoqui.free.fr/multipath-tools/
+> 
+> It covers 0.1.0-0.4.4.
+
+tar files, there is no cvs history.
