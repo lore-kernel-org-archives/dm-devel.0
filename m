@@ -1,40 +1,81 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH 1/2] multipath-tools: move COPYING to
-	COPYING.LESSER
-Date: Tue, 10 Apr 2018 23:38:19 +0200
-Message-ID: <9c22169e-dfe5-e442-4612-74783e95e026@gmail.com>
-References: <20180327182819.20163-1-xose.vazquez@gmail.com>
-	<1523289440.3525.27.camel@suse.com>
-	<9ad33b55-17fc-9ed9-ca11-2be0e11a7b1f@gmail.com>
-	<1523300890.3525.55.camel@suse.com>
-	<CABr-GneDAcFMVJKfrLJX6fBe5F-e-G_Sh_f1XvSwFH-0umM1Ew@mail.gmail.com>
+From: Kees Cook <keescook@chromium.org>
+Subject: [PATCH] dm/raid1: Remove VLA usage
+Date: Tue, 10 Apr 2018 21:43:15 -0700
+Message-ID: <20180411044315.GA46144@beast>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CABr-GneDAcFMVJKfrLJX6fBe5F-e-G_Sh_f1XvSwFH-0umM1Ew@mail.gmail.com>
-Content-Language: en-GB
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Martin Wilck <mwilck@suse.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alasdair Kergon <agk@redhat.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Tycho Andersen <tycho@tycho.ws>
 List-Id: dm-devel.ids
 
-T24gMDQvMDkvMjAxOCAxMDozOCBQTSwgQ2hyaXN0b3BoZSBWYXJvcXVpIHdyb3RlOgoKPiBJIHNl
-ZSBGU0YgcmVjb21tZW5kcyB0aGUgQ09QWUlORytDT1BZSU5HLkxFU1NFUiBmaWxlIG5hbWVzLCBh
-cyBYb3NlIGltcGxlbWVudGVkLgo+IFdoYXQgaWYgd2UganVzdCBhZGQgYSBMSUNFTlNFIGZpbGUg
-c3RhdGluZyB0aGF0IGZpbGVzIHdpdGggbm8gZXhwbGljaXQgY29weWluZyogCj4gcmVmZXJlbmNl
-IGZhbGwgdW5kZXIgdGhlwqBDT1BZSU5HLkxFU1NFUiA/CkFzIE1hcnRpbiBjaGVja2VkIHJlY2Vu
-dGx5LCB0aGVyZSBhcmUgZm91ciBsaWNlbmNlcyB1c2VkIGluIHRoZSBjb2RlLgpQdXQgYWxsIG9m
-IHRoZW0gaW4gYSBMSUNFTlNFUy8gZGlyZWN0b3J5IGlzIGNsZWFyZXIuCkFuZCBkbyBhIGxpbmsg
-ZnJvbSBMSUNFTlNFUy9MR1BMLTIuMCB0byBDT1BZSU5HLCBvciBMSUNFTlNFLmRlZmF1bHQsIC4u
-Lgp0byBpbmRpY2F0ZSB0aGUgZGVmYXVsdCBvbmUuCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QK
-ZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGlu
-Zm8vZG0tZGV2ZWw=
+On the quest to remove all VLAs from the kernel[1], this avoids VLAs
+in dm-raid1.c by just using the maximum size for the stack arrays.
+The nr_mirrors value was already capped at 9, so this makes it a trivial
+adjustment to the array sizes.
+
+[1] https://lkml.org/lkml/2018/3/7/621
+
+Signed-off-by: Kees Cook <keescook@chromium.org>
+---
+ drivers/md/dm-raid1.c | 10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c
+index 580c49cc8079..5903e492bb34 100644
+--- a/drivers/md/dm-raid1.c
++++ b/drivers/md/dm-raid1.c
+@@ -23,6 +23,8 @@
+ 
+ #define MAX_RECOVERY 1	/* Maximum number of regions recovered in parallel. */
+ 
++#define MAX_NR_MIRRORS	(DM_KCOPYD_MAX_REGIONS + 1)
++
+ #define DM_RAID1_HANDLE_ERRORS	0x01
+ #define DM_RAID1_KEEP_LOG	0x02
+ #define errors_handled(p)	((p)->features & DM_RAID1_HANDLE_ERRORS)
+@@ -255,7 +257,7 @@ static int mirror_flush(struct dm_target *ti)
+ 	unsigned long error_bits;
+ 
+ 	unsigned int i;
+-	struct dm_io_region io[ms->nr_mirrors];
++	struct dm_io_region io[MAX_NR_MIRRORS];
+ 	struct mirror *m;
+ 	struct dm_io_request io_req = {
+ 		.bi_op = REQ_OP_WRITE,
+@@ -651,7 +653,7 @@ static void write_callback(unsigned long error, void *context)
+ static void do_write(struct mirror_set *ms, struct bio *bio)
+ {
+ 	unsigned int i;
+-	struct dm_io_region io[ms->nr_mirrors], *dest = io;
++	struct dm_io_region io[MAX_NR_MIRRORS], *dest = io;
+ 	struct mirror *m;
+ 	struct dm_io_request io_req = {
+ 		.bi_op = REQ_OP_WRITE,
+@@ -1083,7 +1085,7 @@ static int mirror_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	argc -= args_used;
+ 
+ 	if (!argc || sscanf(argv[0], "%u%c", &nr_mirrors, &dummy) != 1 ||
+-	    nr_mirrors < 2 || nr_mirrors > DM_KCOPYD_MAX_REGIONS + 1) {
++	    nr_mirrors < 2 || nr_mirrors > MAX_NR_MIRRORS) {
+ 		ti->error = "Invalid number of mirrors";
+ 		dm_dirty_log_destroy(dl);
+ 		return -EINVAL;
+@@ -1404,7 +1406,7 @@ static void mirror_status(struct dm_target *ti, status_type_t type,
+ 	int num_feature_args = 0;
+ 	struct mirror_set *ms = (struct mirror_set *) ti->private;
+ 	struct dm_dirty_log *log = dm_rh_dirty_log(ms->rh);
+-	char buffer[ms->nr_mirrors + 1];
++	char buffer[MAX_NR_MIRRORS + 1];
+ 
+ 	switch (type) {
+ 	case STATUSTYPE_INFO:
+-- 
+2.7.4
+
+
+-- 
+Kees Cook
+Pixel Security
