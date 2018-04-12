@@ -1,16 +1,16 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH v4 07/20] libmultipath: change
- find_multipaths option to multi-value
-Date: Thu, 12 Apr 2018 13:32:44 -0500
-Message-ID: <20180412183244.GK3103@octiron.msp.redhat.com>
+Subject: Re: [PATCH v4 09/20] libmultipath: functions to indicate
+ mapping failure in /dev/shm
+Date: Thu, 12 Apr 2018 13:33:02 -0500
+Message-ID: <20180412183302.GL3103@octiron.msp.redhat.com>
 References: <20180404161627.6244-1-mwilck@suse.com>
-	<20180404161627.6244-8-mwilck@suse.com>
+	<20180404161627.6244-10-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20180404161627.6244-8-mwilck@suse.com>
+In-Reply-To: <20180404161627.6244-10-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,365 +24,193 @@ To: Martin Wilck <mwilck@suse.com>
 Cc: dm-devel@redhat.com, Julian Andres Klode <julian.klode@canonical.com>
 List-Id: dm-devel.ids
 
-On Wed, Apr 04, 2018 at 06:16:14PM +0200, Martin Wilck wrote:
-> Change the "find_multipaths" option from yes/no to multi-value. This
-> option now covers the effects of "find_multipaths" as it used to be,
-> plus the -i option to multipath (ignore_wwids) and the -n option to
-> multipathd (ignore_new_devs), excluding such combinations of the former
-> options that are dangerous or inconsistent.
+On Wed, Apr 04, 2018 at 06:16:16PM +0200, Martin Wilck wrote:
+> Create a simple API that indicates failure to create a map for a
+> certain WWID. This will allow multipathd to indicate to other tools
+> (in particular, "multipath -u" during udev processing) that
+> an attempt to create a map for a certain wwid failed.
 > 
-> The possible values for "find_multipaths" are now:
-> 
->  - strict: strictly stick to the WWIDs file; never add new maps automatically
->    (new default; upstream behaviour with with find_multipaths "yes" and
->    commit 64e27ec "multipathd: imply -n if find_multipaths is set")
->  - off|no: multipath like "strict", multipathd like "greedy" (previous
->    upstream default)
->  - on|yes: set up multipath if >1 paths are seen (current Red Hat/Ubuntu
->    behavior with find_multipaths "yes")
->  - greedy: set up multipath for all non-blacklisted devices (current SUSE
->    default)
->  - smart: Like "yes", but try to avoid inconsistencies between udev processing
->    and multipathd processing by waiting for path siblings to
->    appear (fully implemented in follow-up patches)
-> 
-> The default has been changed to "strict", because "no" may cause inconsistent
-> behavior between "multipath -u" and multipathd. This is deliberately a
-> conservative choice.
-> 
-> The patch also updates the related man pages.
-> 
+> The indicator is simply the existence of a file under
+> /dev/shm/multipath/failed_wwids.
 
-This patch adds trailing whitespace. Otherwise, it's still fine.
+I'm a little confused about the necessity of a lock file here.  What it
+the race that you are worried about? If two processes try to create a
+file at the same time, surely one of them will succeed. If two processes
+try to delete a file at the same time, it will get deleted.  If one
+process is trying to create a file and one is trying to remove it, the
+outcome depends on the who wins the race. But this is true whether you
+add a lock file to make those actions atomic or not. The same goes with
+stating a file that's being created or removed. As far a I can tell,
+this should work if you simply create an empty file without any locking.
+Are you worried about some odd errno due to a race?
 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+The enums do make things less confusing, though.
 
-> Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+-Ben
+
+> 
 > Signed-off-by: Martin Wilck <mwilck@suse.com>
 > ---
->  libmultipath/config.h      |  2 --
->  libmultipath/defaults.h    |  2 +-
->  libmultipath/dict.c        | 47 ++++++++++++++++++++++++++++++++++++++++++++--
->  libmultipath/structs.h     | 26 +++++++++++++++++++++++++
->  libmultipath/wwids.c       |  8 ++++++--
->  multipath/main.c           |  9 +++++----
->  multipath/multipath.8      |  9 ++++++++-
->  multipath/multipath.conf.5 | 46 +++++++++++++++++++++++++--------------------
->  multipathd/main.c          |  6 +-----
->  multipathd/multipathd.8    |  8 +++++---
->  10 files changed, 123 insertions(+), 40 deletions(-)
+>  libmultipath/defaults.h |   1 +
+>  libmultipath/wwids.c    | 110 ++++++++++++++++++++++++++++++++++++++++++++++++
+>  libmultipath/wwids.h    |  11 +++++
+>  3 files changed, 122 insertions(+)
 > 
-> diff --git a/libmultipath/config.h b/libmultipath/config.h
-> index 329f3ed..c71d972 100644
-> --- a/libmultipath/config.h
-> +++ b/libmultipath/config.h
-> @@ -139,7 +139,6 @@ struct config {
->  	int max_fds;
->  	int force_reload;
->  	int queue_without_daemon;
-> -	int ignore_wwids;
->  	int checker_timeout;
->  	int flush_on_last_del;
->  	int attribute_flags;
-> @@ -168,7 +167,6 @@ struct config {
->  	int strict_timing;
->  	int retrigger_tries;
->  	int retrigger_delay;
-> -	int ignore_new_devs;
->  	int delayed_reconfig;
->  	int uev_wait_timeout;
->  	int skip_kpartx;
 > diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
-> index 2b270ca..690182c 100644
+> index 690182c..19ad2bf 100644
 > --- a/libmultipath/defaults.h
 > +++ b/libmultipath/defaults.h
-> @@ -17,7 +17,7 @@
->  #define DEFAULT_NO_PATH_RETRY	NO_PATH_RETRY_UNDEF
->  #define DEFAULT_VERBOSITY	2
->  #define DEFAULT_REASSIGN_MAPS	0
-> -#define DEFAULT_FIND_MULTIPATHS	0
-> +#define DEFAULT_FIND_MULTIPATHS	FIND_MULTIPATHS_STRICT
->  #define DEFAULT_FAST_IO_FAIL	5
->  #define DEFAULT_DEV_LOSS_TMO	600
->  #define DEFAULT_RETAIN_HWHANDLER RETAIN_HWHANDLER_ON
-> diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-> index ac9216c..e695fdc 100644
-> --- a/libmultipath/dict.c
-> +++ b/libmultipath/dict.c
-> @@ -234,8 +234,51 @@ declare_def_snprint(multipath_dir, print_str)
->  declare_def_handler(partition_delim, set_str)
->  declare_def_snprint(partition_delim, print_str)
+> @@ -53,5 +53,6 @@
+>  #define DEFAULT_WWIDS_FILE	"/etc/multipath/wwids"
+>  #define DEFAULT_PRKEYS_FILE    "/etc/multipath/prkeys"
+>  #define DEFAULT_CONFIG_DIR	"/etc/multipath/conf.d"
+> +#define MULTIPATH_SHM_BASE	"/dev/shm/multipath/"
 >  
-> -declare_def_handler(find_multipaths, set_yes_no)
-> -declare_def_snprint(find_multipaths, print_yes_no)
-> +static const char *find_multipaths_optvals[] = {
-> +	[FIND_MULTIPATHS_OFF] = "off",
-> +	[FIND_MULTIPATHS_ON] = "on",
-> +	[FIND_MULTIPATHS_STRICT] = "strict",
-> +	[FIND_MULTIPATHS_GREEDY] = "greedy",
-> +};
-> +
-> +static int
-> +def_find_multipaths_handler(struct config *conf, vector strvec)
-> +{
-> +	char *buff;
-> +	int i;
-> +
-> +	if (set_yes_no_undef(strvec, &conf->find_multipaths) == 0 &&
-> +	    conf->find_multipaths != YNU_UNDEF)
-> +		return 0;
-> +
-> +	buff = set_value(strvec);
-> +	if (!buff)
-> +		return 1;
-> +
-> +	for (i = FIND_MULTIPATHS_OFF; i < __FIND_MULTIPATHS_LAST; i++) {
-> +		if (find_multipaths_optvals[i] != NULL &&
-> +		    !strcmp(buff, find_multipaths_optvals[i])) {
-> +			conf->find_multipaths = i;
-> +			break;
-> +		}
-> +	}
-> +
-> +	if (conf->find_multipaths == YNU_UNDEF) {
-> +		condlog(0, "illegal value for find_multipaths: %s", buff);
-> +		conf->find_multipaths = DEFAULT_FIND_MULTIPATHS;
-> +	}
-> +
-> +	FREE(buff);
-> +	return 0;
-> +}
-> +
-> +static int
-> +snprint_def_find_multipaths(struct config *conf, char *buff, int len,
-> +			    const void *data)
-> +{
-> +	return print_str(buff, len,
-> +			 find_multipaths_optvals[conf->find_multipaths]);
-> +}
->  
->  declare_def_handler(selector, set_str)
->  declare_def_snprint_defstr(selector, print_str, DEFAULT_SELECTOR)
-> diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-> index 88a4b78..c43f2c3 100644
-> --- a/libmultipath/structs.h
-> +++ b/libmultipath/structs.h
-> @@ -102,6 +102,32 @@ enum yes_no_undef_states {
->  	YNU_YES,
->  };
->  
-> +#define _FIND_MULTIPATHS_F (1 << 1)
-> +#define _FIND_MULTIPATHS_I (1 << 2)
-> +#define _FIND_MULTIPATHS_N (1 << 3)
-> +/*
-> + * _FIND_MULTIPATHS_F must have the same value as YNU_YES.
-> + * Generate a compile time error if that isn't the case.
-> + */
-> +char ___error1___[-(_FIND_MULTIPATHS_F != YNU_YES)];
-> +
-> +#define find_multipaths_on(conf) \
-> +	(!!((conf)->find_multipaths & _FIND_MULTIPATHS_F))
-> +#define ignore_wwids_on(conf) \
-> +	(!!((conf)->find_multipaths & _FIND_MULTIPATHS_I))
-> +#define ignore_new_devs_on(conf) \
-> +	(!!((conf)->find_multipaths & _FIND_MULTIPATHS_N))
-> +
-> +enum find_multipaths_states {
-> +	FIND_MULTIPATHS_UNDEF = YNU_UNDEF,
-> +	FIND_MULTIPATHS_OFF = YNU_NO,
-> +	FIND_MULTIPATHS_ON = _FIND_MULTIPATHS_F,
-> +	FIND_MULTIPATHS_STRICT = _FIND_MULTIPATHS_F|_FIND_MULTIPATHS_N,
-> +	FIND_MULTIPATHS_GREEDY = _FIND_MULTIPATHS_I,
-> +	FIND_MULTIPATHS_SMART = _FIND_MULTIPATHS_F|_FIND_MULTIPATHS_I,
-> +	__FIND_MULTIPATHS_LAST,
-> +};
-> +
->  enum flush_states {
->  	FLUSH_UNDEF = YNU_UNDEF,
->  	FLUSH_DISABLED = YNU_NO,
+>  char * set_default (char * str);
 > diff --git a/libmultipath/wwids.c b/libmultipath/wwids.c
-> index 11afe09..da685be 100644
+> index da685be..c9f5743 100644
 > --- a/libmultipath/wwids.c
 > +++ b/libmultipath/wwids.c
-> @@ -282,8 +282,12 @@ should_multipath(struct path *pp1, vector pathvec, vector mpvec)
->  	struct config *conf;
+> @@ -5,6 +5,7 @@
+>  #include <limits.h>
+>  #include <stdio.h>
+>  #include <sys/types.h>
+> +#include <sys/stat.h>
 >  
->  	conf = get_multipath_config();
-> -	ignore_new_devs = conf->ignore_new_devs;
-> -	find_multipaths = conf->find_multipaths;
-> +	ignore_new_devs = ignore_new_devs_on(conf);
-> +	find_multipaths = find_multipaths_on(conf);
-> +	if (!find_multipaths && !ignore_new_devs) {
-> +		put_multipath_config(conf);
-> +		return 1;
+>  #include "checkers.h"
+>  #include "vector.h"
+> @@ -337,3 +338,112 @@ remember_wwid(char *wwid)
+>  		condlog(4, "wwid %s already in wwids file", wwid);
+>  	return ret;
+>  }
+> +
+> +static const char shm_dir[] = MULTIPATH_SHM_BASE "failed_wwids";
+> +static const char shm_lock[] = ".lock";
+> +static const char shm_header[] = "multipath shm lock file, don't edit";
+> +static char _shm_lock_path[sizeof(shm_dir)+sizeof(shm_lock)];
+> +static const char *shm_lock_path = &_shm_lock_path[0];
+> +
+> +static void init_shm_paths(void)
+> +{
+> +	snprintf(_shm_lock_path, sizeof(_shm_lock_path),
+> +		 "%s/%s", shm_dir, shm_lock);
+> +}
+> +
+> +static pthread_once_t shm_path_once = PTHREAD_ONCE_INIT;
+> +
+> +static int multipath_shm_open(bool rw)
+> +{
+> +	int fd;
+> +	int can_write;
+> +
+> +	pthread_once(&shm_path_once, init_shm_paths);
+> +	fd = open_file(shm_lock_path, &can_write, shm_header);
+> +
+> +	if (fd >= 0 && rw && !can_write) {
+> +		close(fd);
+> +		condlog(1, "failed to open %s for writing", shm_dir);
+> +		return -1;
 > +	}
->  	put_multipath_config(conf);
->  	if (find_multipaths && !ignore_new_devs)
->  		return 1;
-> diff --git a/multipath/main.c b/multipath/main.c
-> index 686b037..2be9b9c 100644
-> --- a/multipath/main.c
-> +++ b/multipath/main.c
-> @@ -441,11 +441,12 @@ configure (struct config *conf, enum mpath_cmds cmd,
->  		 * Paths listed in the wwids file are always considered valid.
->  		 */
->  		if (cmd == CMD_VALID_PATH) {
-> -			if ((!conf->find_multipaths && conf->ignore_wwids) ||
-> -			    check_wwids_file(refwwid, 0) == 0)
-> +			if ((!find_multipaths_on(conf) && ignore_wwids_on(conf))
-> +			    || check_wwids_file(refwwid, 0) == 0)
->  				r = 0;
->  			if (r == 0 ||
-> -			    !conf->find_multipaths || !conf->ignore_wwids) {
-> +			    !find_multipaths_on(conf) ||
-> +			    !ignore_wwids_on(conf)) {
->  				printf("%s %s a valid multipath device path\n",
->  				       devpath, r == 0 ? "is" : "is not");
->  				goto out;
-> @@ -737,7 +738,7 @@ main (int argc, char *argv[])
->  			conf->force_reload = FORCE_RELOAD_YES;
->  			break;
->  		case 'i':
-> -			conf->ignore_wwids = 1;
-> +			conf->find_multipaths |= _FIND_MULTIPATHS_I;
->  			break;
->  		case 't':
->  			r = dump_config(conf);
-> diff --git a/multipath/multipath.8 b/multipath/multipath.8
-> index 56f8703..329658d 100644
-> --- a/multipath/multipath.8
-> +++ b/multipath/multipath.8
-> @@ -94,7 +94,14 @@ Force devmap reload.
->  .
->  .TP
->  .B \-i
-> -Ignore WWIDs file when processing devices.
-> +Ignore WWIDs file when processing devices. If 
-> +\fIfind_multipaths strict\fR or \fIfind_multipaths no\fR is set in
-> +\fImultipath.conf\fR, multipath only considers devices that are
-> +listed in the WWIDs file. This option overrides that behavior. For other values
-> +of \fIfind_multipaths\fR, this option has no effect. See the description of
-> +\fIfind_multipaths\fR in 
-> +.BR multipath.conf (5).
-> +This option should only be used in rare circumstances.
->  .
->  .TP
->  .B \-B
-> diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-> index c4d0789..6965dac 100644
-> --- a/multipath/multipath.conf.5
-> +++ b/multipath/multipath.conf.5
-> @@ -951,28 +951,34 @@ The default is: \fBno\fR
->  .
->  .TP
->  .B find_multipaths
-> -If set to
-> -.I yes
-> -, instead of trying to create a multipath device for every non-blacklisted
-> -path, multipath will only create a device if one of three condidions are
-> -met.
-> -.I 1
-> -There are at least two non-blacklisted paths with the same WWID,
-> -.I 2
-> -the user manually forces the creation, by specifying a device with the multipath
-> -command, or
-> -.I 3
-> -a path has the same WWID as a multipath device that was previously created
-> -while find_multipaths was set (even if that multipath device doesn't currently
-> -exist).
-> -Whenever a multipath device is created with find_multipaths set, multipath will
-> -remember the WWID of the device, so that it will automatically create the
-> -device again, as soon as it sees a path with that WWID. This should allow most
-> -users to have multipath automatically choose the correct paths to make into
-> -multipath devices, without having to edit the blacklist.
-> +This option controls whether multipath and multipathd try to create multipath
-> +maps over non-blacklisted devices they encounter. This matters a) when a device is
-> +encountered by \fBmultipath -u\fR during udev rule processing (a device is
-> +blocked from further processing by higher layers - such as LVM - if and only
-> +if it\'s considered a valid multipath device path), and b) when multipathd
-> +detects a new device. The following values are possible:
->  .RS
-> +.TP 10
-> +.I strict
-> +Both multipath and multipathd treat only such devices as multipath devices
-> +which have been part of a multipath map previously, and which are therefore
-> +listed in the \fBwwids_file\fR. Users can manually set up multipath maps using the
-> +\fBmultipathd add map\fR command. Once set up manually, the map is
-> +remembered in the wwids file and will be set up automatically in the future.
->  .TP
-> -The default is: \fBno\fR
-> +.I no
-> +Multipath behaves like \fBstrict\fR. Multipathd behaves like \fBgreedy\fR.
-> +.TP
-> +.I yes
-> +Both multipathd and multipath treat a device as multipath device if the
-> +conditions for \fBstrict\fR are met, or if at least two non-blacklisted paths
-> +with the same WWID have been detected.
-> +.TP
-> +.I greedy
-> +Both multipathd and multipath treat every non-blacklisted device as multipath
-> +device path.
-> +.TP
-> +The default is: \fBstrict\fR
->  .RE
->  .
->  .
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index 644de72..e6f4e77 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -2405,8 +2405,6 @@ reconfigure (struct vectors * vecs)
->  		conf->verbosity = verbosity;
->  	if (bindings_read_only)
->  		conf->bindings_read_only = bindings_read_only;
-> -	if (ignore_new_devs)
-> -		conf->ignore_new_devs = ignore_new_devs;
->  	uxsock_timeout = conf->uxsock_timeout;
+> +
+> +	return fd;
+> +}
+> +
+> +static void multipath_shm_close(void *arg)
+> +{
+> +	long fd = (long)arg;
+> +
+> +	close(fd);
+> +	unlink(shm_lock_path);
+> +}
+> +
+> +static int _failed_wwid_op(const char *wwid, bool rw,
+> +			   int(*func)(const char*), const char *msg)
+> +{
+> +	char path[PATH_MAX];
+> +	long lockfd;
+> +	int r = -1;
+> +
+> +	if (snprintf(path, sizeof(path), "%s/%s", shm_dir, wwid)
+> +	    >= sizeof(path)) {
+> +		condlog(1, "%s: path name overflow", __func__);
+> +		return -1;
+> +	}
+> +
+> +	lockfd = multipath_shm_open(rw);
+> +	if (lockfd == -1)
+> +		return -1;
+> +
+> +	pthread_cleanup_push(multipath_shm_close, (void*)lockfd);
+> +	r = func(path);
+> +	pthread_cleanup_pop(1);
+> +
+> +	if (r == WWID_FAILED_ERROR)
+> +		condlog(1, "%s: %s: %s", msg, wwid, strerror(errno));
+> +	else if (r == WWID_FAILED_CHANGED)
+> +		condlog(3, "%s: %s", msg, wwid);
+> +	else if (!rw)
+> +		condlog(4, "%s: %s is %s", msg, wwid,
+> +			r == WWID_IS_FAILED ? "failed" : "good");
+> +
+> +	return r;
+> +}
+> +
+> +static int _is_failed(const char *path)
+> +{
+> +	struct stat st;
+> +
+> +	if (lstat(path, &st) == 0)
+> +		return WWID_IS_FAILED;
+> +	else if (errno == ENOENT)
+> +		return WWID_IS_NOT_FAILED;
+> +	else
+> +		return WWID_FAILED_ERROR;
+> +}
+> +
+> +static int _mark_failed(const char *path)
+> +{
+> +	/* Called from _failed_wwid_op: we know that shm_lock_path exists */
+> +	if (_is_failed(path) == WWID_IS_FAILED)
+> +		return WWID_FAILED_UNCHANGED;
+> +	return (link(shm_lock_path, path) == 0 ? WWID_FAILED_CHANGED :
+> +		WWID_FAILED_ERROR);
+> +}
+> +
+> +static int _unmark_failed(const char *path)
+> +{
+> +	if (_is_failed(path) == WWID_IS_NOT_FAILED)
+> +		return WWID_FAILED_UNCHANGED;
+> +	return (unlink(path) == 0 ? WWID_FAILED_CHANGED : WWID_FAILED_ERROR);
+> +}
+> +
+> +#define declare_failed_wwid_op(op, rw) \
+> +int op ## _wwid(const char *wwid) \
+> +{ \
+> +	return _failed_wwid_op(wwid, (rw), _ ## op, #op); \
+> +}
+> +
+> +declare_failed_wwid_op(is_failed, false)
+> +declare_failed_wwid_op(mark_failed, true)
+> +declare_failed_wwid_op(unmark_failed, true)
+> diff --git a/libmultipath/wwids.h b/libmultipath/wwids.h
+> index d9a78b3..0c6ee54 100644
+> --- a/libmultipath/wwids.h
+> +++ b/libmultipath/wwids.h
+> @@ -18,4 +18,15 @@ int check_wwids_file(char *wwid, int write_wwid);
+>  int remove_wwid(char *wwid);
+>  int replace_wwids(vector mp);
 >  
->  	old = rcu_dereference(multipath_conf);
-> @@ -2636,8 +2634,6 @@ child (void * param)
->  		conf->verbosity = verbosity;
->  	if (bindings_read_only)
->  		conf->bindings_read_only = bindings_read_only;
-> -	if (ignore_new_devs)
-> -		conf->ignore_new_devs = ignore_new_devs;
->  	uxsock_timeout = conf->uxsock_timeout;
->  	rcu_assign_pointer(multipath_conf, conf);
->  	if (init_checkers(conf->multipath_dir)) {
-> @@ -2992,7 +2988,7 @@ main (int argc, char *argv[])
->  			bindings_read_only = 1;
->  			break;
->  		case 'n':
-> -			ignore_new_devs = 1;
-> +			condlog(0, "WARNING: ignoring deprecated option -n, use 'ignore_wwids = no' instead");
->  			break;
->  		case 'w':
->  			poll_dmevents = 0;
-> diff --git a/multipathd/multipathd.8 b/multipathd/multipathd.8
-> index 5c96680..e78ac9e 100644
-> --- a/multipathd/multipathd.8
-> +++ b/multipathd/multipathd.8
-> @@ -25,7 +25,6 @@ multipathd \- Multipath daemon.
->  .RB [\| \-v\ \c
->  .IR verbosity \|]
->  .RB [\| \-B \|]
-> -.RB [\| \-n \|]
->  .
->  .
->  .\" ----------------------------------------------------------------------------
-> @@ -73,8 +72,11 @@ be viewed by entering '\fIhelp\fR'. When you are finished entering commands, pre
->  .
->  .TP
->  .B \-n
-> -Ignore new devices. multipathd will not create a multipath device unless the
-> -WWID for the device is already listed in the WWIDs file.
-> +\fBIGNORED\fR. Use the option
-> +\fIfind_multipaths\fR to control the treatment of newly detected devices by
-> +multipathd. See
-> +.BR multipath.conf(5).
-> +.
->  .
->  .
->  .\" ----------------------------------------------------------------------------
+> +enum {
+> +	WWID_IS_NOT_FAILED = 0,
+> +	WWID_IS_FAILED,
+> +	WWID_FAILED_UNCHANGED,
+> +	WWID_FAILED_CHANGED,
+> +	WWID_FAILED_ERROR = -1,
+> +};
+> +
+> +int is_failed_wwid(const char *wwid);
+> +int mark_failed_wwid(const char *wwid);
+> +int unmark_failed_wwid(const char *wwid);
+>  #endif /* _WWIDS_H */
 > -- 
 > 2.16.1
