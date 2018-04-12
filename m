@@ -1,18 +1,15 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH v4 16/20] multipath -u : set
- FIND_MULTIPATHS_WAIT_UNTIL from /dev/shm
-Date: Thu, 12 Apr 2018 16:35:03 -0500
-Message-ID: <20180412213503.GB3103@octiron.msp.redhat.com>
-References: <20180404161627.6244-1-mwilck@suse.com>
-	<20180404161627.6244-17-mwilck@suse.com>
-	<20180412183639.GR3103@octiron.msp.redhat.com>
-	<1523565302.4346.43.camel@suse.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH v3 17/20] multipath -u: test if path is busy
+Date: Fri, 13 Apr 2018 00:17:54 +0200
+Message-ID: <1523571474.4346.107.camel@suse.com>
+References: <20180402195051.26854-1-mwilck@suse.com>
+	<20180402195051.26854-18-mwilck@suse.com>
+	<20180412184109.GS3103@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1523565302.4346.43.camel@suse.com>
+In-Reply-To: <20180412184109.GS3103@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,167 +19,93 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@redhat.com, Julian Andres Klode <julian.klode@canonical.com>
 List-Id: dm-devel.ids
 
-On Thu, Apr 12, 2018 at 10:35:02PM +0200, Martin Wilck wrote:
-> On Thu, 2018-04-12 at 13:36 -0500, Benjamin Marzinski wrote:
-> > On Wed, Apr 04, 2018 at 06:16:23PM +0200, Martin Wilck wrote:
-> > > In "find_multipaths smart" mode, use time stamps under
-> > > /dev/shm/multipath/find_multipaths to track waiting for multipath
-> > > siblings. When a path is first encountered and is "maybe"
-> > > multipath, create a
-> > > file under /dev/shm, set its modification time to the expiry time
-> > > of the
-> > > timer, and set the FIND_MULTIPATHS_WAIT_UNTIL variable. On later
-> > > calls, also set
-> > > FIND_MULTIPATHS_WAIT_UNTIL to the expiry time (but don't change the
-> > > time
-> > > stamp) if it's not expired yet, or 0 if it is expired. Set
-> > > FIND_MULTIPATHS_WAIT_UNTIL even if enough evidence becomes
-> > > available to decide
-> > > if the path needs to be multipathed - this enables the udev rules
-> > > to detect
-> > > that this is a device a timer has been started for, and stop it. By
-> > > using
-> > > /dev/shm, we share information about "smart" timers between initrd
-> > > and root
-> > > file system, and thus only calculate the timeout once.
-> > > =
-
-> > > Signed-off-by: Martin Wilck <mwilck@suse.com>
-> > > ---
-> > >  libmultipath/file.c |   2 +-
-> > >  libmultipath/file.h |   1 +
-> > >  multipath/main.c    | 133
-> > > ++++++++++++++++++++++++++++++++++++++++++++++++++++
-> > >  3 files changed, 135 insertions(+), 1 deletion(-)
-> > > =
-
-> > > +
-> > > +/**
-> > > + * find_multipaths_check_timeout(wwid, tmo)
-> > > + * Helper for "find_multipaths smart"
-> > > + *
-> > > + * @param[in] pp: path to check / record
-> > > + * @param[in] tmo: configured timeout for this WWID, or value <=3D 0
-> > > for checking
-> > > + * @param[out] until: timestamp until we must wait,
-> > > CLOCK_REALTIME, if return
-> > > + *             value is FIND_MULTIPATHS_WAITING
-> > > + * @returns: FIND_MULTIPATHS_WAIT_DONE, if waiting has finished
-> > > + * @returns: FIND_MULTIPATHS_ERROR, if internal error occured
-> > > + * @returns: FIND_MULTIPATHS_NEVER, if tmo is 0 and we didn't wait
-> > > for this
-> > > + *           device
-> > > + * @returns: FIND_MULTIPATHS_WAITING, if timeout hasn't expired
-> > > + */
-> > > +static int find_multipaths_check_timeout(const struct path *pp,
-> > > long tmo,
-> > > +					 struct timespec *until)
-> > > +{
-> > > +	char path[PATH_MAX];
-> > > +	struct timespec now, ftimes[2], tdiff;
-> > > +	struct stat st;
-> > > +	long fd;
-> > > +	int r, err, retries =3D 0;
-> > > +
-> > > +	clock_gettime(CLOCK_REALTIME, &now);
-> > > +
-> > =
-
-> > I'm worried about using pp->dev_t here with no method of removing
-> > these
-> > files.  What happens when a path device, say 8:32 is removed and a
-> > completely new device comes in reusing the same dev_t?
-> =
-
-> Hm, what else should we use? devnode name is even worse, and most other
-> options are a can of worms...  In the worst case, the new device
-> wouldn't be waited for (or not long enough), because the marker existed
-> before it was detected.
-> =
-
-> I could simply add a rule that removes the marker in case of a "remove"
-> uevent, ok?
-
-Fair enough. Nothing really bad happens, and removing the markers on
-remove uevents would solve it.
- =
-
-> > =
-
-> > > +	if (snprintf(path, sizeof(path), "%s/%s", shm_find_mp_dir,
-> > > pp->dev_t)
-> > > +	    >=3D sizeof(path)) {
-> > > +		condlog(1, "%s: path name overflow", __func__);
-> > =
-
-> > shouldn't this be:
-> > 		return FIND_MULTIPATHS_ERROR;
-> =
-
-> Bah, thank for catching it.
-> =
-
-> > >  static int print_cmd_valid(int k, const vector pathvec,
-> > >  			   struct config *conf)
-> > >  {
-> > >  	static const int vals[] =3D { 1, 0, 2 };
-> > > +	int wait =3D FIND_MULTIPATHS_NEVER;
-> > > +	struct timespec until;
-> > > +	struct path *pp;
-> > >  =
-
-> > >  	if (k < 0 || k >=3D sizeof(vals))
-> > >  		return 1;
-> > >  =
-
-> > > +	if (k =3D=3D 2) {
-> > > +		/*
-> > > +		 * Caller ensures that pathvec[0] is the path to
-> > > +		 * examine.
-> > > +		 */
-> > > +		pp =3D VECTOR_SLOT(pathvec, 0);
-> > > +		select_find_multipaths_timeout(conf, pp);
-> > > +		wait =3D find_multipaths_check_timeout(
-> > > +			pp, pp->find_multipaths_timeout, &until);
-> > > +		if (wait !=3D FIND_MULTIPATHS_WAITING)
-> > > +			k =3D 1;
-> > > +	} else if (pathvec !=3D NULL) {
-> > > +		pp =3D VECTOR_SLOT(pathvec, 0);
-> > > +		wait =3D find_multipaths_check_timeout(pp, 0,
-> > > &until);
-> > > +	}
-> > > +	if (wait =3D=3D FIND_MULTIPATHS_WAITING)
-> > > +		printf("FIND_MULTIPATHS_WAIT_UNTIL=3D\"%ld.%06ld\"\n
-> > > ",
-> > > +			       until.tv_sec, until.tv_nsec/1000);
-> > > +	else if (wait =3D=3D FIND_MULTIPATHS_WAIT_DONE)
-> > > +		printf("FIND_MULTIPATHS_WAIT_UNTIL=3D\"0\"\n");
-> > =
-
-> > If we get an error trying to check the timeout, should we just keep
-> > FIND_MULTIPATHS_WAIT_UNTIL the same? Or would it be better to set it
-> > to
-> > 0, and fail the smart claiming?
-> =
-
-> The latter is what we do. We set k=3D1 if find_multipaths_check_timeout()
-> returns anything but FIND_MULTIPATHS_WAITING, resulting in
-> DM_MULTIPATH_DEVICE_PATH=3D"0".
-
-Oops.  I got confused here.
-
--Ben
-
-> Regards
-> Martin
-> =
-
-> -- =
-
-> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-> SUSE Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
-> HRB 21284 (AG N=FCrnberg)
+T24gVGh1LCAyMDE4LTA0LTEyIGF0IDEzOjQxIC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cj4gT24gTW9uLCBBcHIgMDIsIDIwMTggYXQgMDk6NTA6NDhQTSArMDIwMCwgTWFydGluIFdp
+bGNrIHdyb3RlOgo+ID4gRm9yICJmaW5kX211bHRpcGF0aHMgc21hcnQiLCBjaGVjayBpZiBhIHBh
+dGggaXMgYWxyZWFkeSBpbiB1c2UKPiA+IGJlZm9yZSBzZXR0aW5nIERNX01VTFRJUEFUSF9ERVZJ
+Q0VfUEFUSCB0byAxIG9yIDIgKGFuZCB0aHVzLAo+ID4gU1lTVEVNRF9SRUFEWT0wKS4gSWYgd2Ug
+ZG9uJ3QgZG8gdGhpcywgYSBkZXZpY2Ugd2hpY2ggaGFzIGFscmVhZHkKPiA+IGJlZW4KPiA+IG1v
+dW50ZWQgKGUuZy4gZHVyaW5nIGluaXRyZCBwcm9jZXNzaW5nKSBtYXkgYmUgdW5tb3VudGVkIGJ5
+Cj4gPiBzeXN0ZW1kLCBjYXVzaW5nCj4gPiBoYXZvYyB0byB0aGUgYm9vdCBwcm9jZXNzLgo+IAo+
+IEknbSByZXZpZXdpbmcgIHYzIG9mIHRoaXMgcGF0Y2ggYmVjYXVzZSBJIGRvbid0IHNlZSBwYXRj
+aCAxNy8yMCBpbgo+IHlvdXIKPiBlbWFpbHMgZnJvbSB2NC4gQW0gSSBtaXNzaW5nIGFuIGVtYWls
+LCBvciBkaWQgaXQgbm90IGdldCBzZW50PwoKSXQgc2VlbXMgc28sIGl0IGRpZG4ndCByZWFjaCB0
+aGUgZG0tZGV2ZWwgYXJjaGl2ZSBlaXRoZXIuIFN0cmFuZ2UuCkkgZ290IGl0IG9uIG15IHN1c2Uu
+Y29tIGFkZHJlc3MsIHNvIG1heWJlIHNvbWV0aGluZyB3ZW50IHdyb25nIGluIG91cgpvdXRnb2lu
+ZyBzZXJ2ZXIuIEFueXdheSwgdjMvMTcgYW5kIHY0LzE3IGFyZSBpZGVudGljYWwuCgo+IAo+IFNp
+Z25lZC1vZmYtYnk6IE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPgo+ID4gKwo+ID4gKwkJ
+LyoKPiA+ICsJCSAqIElmIG9wZW5pbmcgdGhlIHBhdGggd2l0aCBPX0VYQ0wgZmFpbHMsIHRoZSBw
+YXRoCj4gPiArCQkgKiBpcyBpbiB1c2UgKGUuZy4gbW91bnRlZCBkdXJpbmcgaW5pdHJhbWZzCj4g
+PiBwcm9jZXNzaW5nKS4KPiA+ICsJCSAqIFdlIGtub3cgdGhhdCBpdCdzIG5vdCB1c2VkIGJ5IGRt
+LW11bHRpcGF0aC4KPiA+ICsJCSAqIFdlIG1heSBub3Qgc2V0IFNZU1RFTURfUkVBRFk9MCBvbiBz
+dWNoIGRldmljZXMsCj4gPiBpdAo+ID4gKwkJICogbWlnaHQgY2F1c2Ugc3lzdGVtZCB0byB1bW91
+bnQgdGhlIGRldmljZS4KPiA+ICsJCSAqIFVzZSBPX1JET05MWSwgYmVjYXVzZSB1ZGV2ZCB3b3Vs
+ZCB0cmlnZ2VyCj4gPiBhbm90aGVyCj4gPiArCQkgKiB1ZXZlbnQgZm9yIGNsb3NlLWFmdGVyLXdy
+aXRlLgo+ID4gKwkJICoKPiA+ICsJCSAqIGdldF9yZWZ3d2lkKCkgYWJvdmUgc3RvcmVzIHRoZSBw
+YXRoIHdlIGV4YW1pbmUKPiA+IGluIHNsb3QgMC4KPiA+ICsJCSAqLwo+ID4gKwkJcHAgPSBWRUNU
+T1JfU0xPVChwYXRodmVjLCAwKTsKPiA+ICsJCWZkID0gb3Blbih1ZGV2X2RldmljZV9nZXRfZGV2
+bm9kZShwcC0+dWRldiksCj4gPiArCQkJICBPX1JET05MWXxPX0VYQ0wpOwo+IAo+IEknbSB3b3Jy
+aWVkIGFib3V0IHRoaXMuICBTaW5jZSB3ZSBjYW4ndCBiZSBzdXJlIHRoYXQgaXNfZmFpbGVkX3d3
+aWQoKQo+IHdpbGwgcmVhbGx5IHRlbGwgdXMgdGhhdCBtdWx0aXBhdGhkIGhhcyB0cmllZCB0byBt
+dWx0aXBhdGggdGhlIGRldmljZQo+IGFuZCBmYWlsZWQsIAoKQXMgSSBzYWlkIGFscmVhZHksIEkg
+ZG9uJ3QgdW5kZXJzdGFuZCB3aHkgeW91IHNheSB0aGF0LgoKSSBjYW4gYXNzZXJ0IHRoYXQgaWYg
+aXNfZmFpbGVkX3d3aWQoKSByZXR1cm5zIHRydWUsIG11bHRpcGF0aGQgaGFzCmRlZmluaXRlbHkg
+dHJpZWQgYW5kIGZhaWxlZCBzaW5jZSB0aGUgbGFzdCByZWJvb3QsIGFuZCBubyAob3RoZXIKaW5z
+dGFuY2Ugb2YpIG11bHRpcGF0aGQgb3IgbXVsdGlwYXRoIGhhcyBzdWNjZWVkZWQgc2luY2UgdGhl
+bi4KCklmIGlzX2ZhaWxlZF93d2lkKCkgcmV0dXJucyBmYWxzZSwgaXQncyBwb3NzaWJsZSB0aGF0
+IHRoZSBtYXAgYWxyZWFkeQpleGlzdHMgKHNlZSBwYXRjaCAxOCksIG9yIHRoYXQgcHJldmlvdXMv
+Y3VycmVudCBpbnN0YW5jZXMgb2YgbXVsdGlwYXRoZApzaW1wbHkgZGlkbid0IHRyeSAtICB3ZSBo
+YXZlIHRvIGNoZWNrIGJ5IG90aGVyIG1lYW5zLgoKPiBpdCBpcyB0b3RhbGx5IHBvc3NpYmxlIHRv
+IGdldCBhIG1heWJlIGFmdGVyIG11bHRpcGF0aCBoYXMKPiB0dXJuZWQgdGhlIHBhdGggZGV2aWNl
+IG92ZXIgdG8gdGhlIHJlc3Qgb2YgdGhlIHN5c3RlbS4KCkEgdHJhbnNpdGlvbiBmcm9tICJubyIg
+dG8gIm1heWJlIiBpcyBvbmx5IHBvc3NpYmxlIGlmIGEgc2luZ2xlIHBhdGgsCndoaWNoIGlzbid0
+IGluIHRoZSBXV0lEcyBmaWxlIGFuZCBpc24ndCBwYXJ0IG9mIGEgbXVsdGlwYXRoIG1hcCwKdHJh
+bnNpdGlvbnMgQSkgZnJvbSAiZmFpbGVkIiB0byAgIm5vdCBmYWlsZWQiIG9yIEIpIGZyb20gImJs
+YWNrbGlzdGVkIgp0byAibm90IGJsYWNrbGlzdGVkIi4gQSkgbWVhbnMgdGhhdCBtdWx0aXBhdGhk
+IGhhcyBzdWNjZXNzZnVsbHkgY3JlYXRlZAphIG1hcCwgdGh1cyB0aGUgcGF0aCBpcyBub3cgcGFy
+dCBvZiBhIG1hcCwgYW5kIHdlIHdpbGwgdHJhbnNpdGlvbiB0bwoieWVzIiBhbmQgbm90IHRvICJt
+YXliZSIuIEIpIGlzIHBhdGhvZ2ljYWwgZXhjZXB0IGZvciB0aGUgY29sZHBsdWcKY2FzZS4KCkhv
+d2V2ZXIsIHRyYW5zaXRpb25pbmcgZnJvbSAibm8iIHRvICJ5ZXMiIGluIG11bHRpcGF0aCAtdSBp
+cyBqdXN0IGFzCmJhZCBhcyAibm8iIHRvICJtYXliZSIsIHVubGVzcyB0aGUgZGV2aWNlIGhhcyBh
+bHJlYWR5IGJlZW4gbXVsdGlwYXRoZWQuClRoaXMgaXMgYSBjb21tb24gY2FzZTogYSBzZWNvbmQg
+cGF0aCBhcHBlYXJzIGZvciBhIG9uY2UtcmVsZWFzZWQKZGV2aWNlLiBJIGFncmVlIHRoYXQgd2Ug
+c2hvdWxkbid0IHRyeSBvcGVuKE9fRVhDTCkgaW4gdGhhdCBzaXR1YXRpb24uCgo+IAo+IE9mIGNv
+dXJzZSwgdGhpcyBtZWFucyBJIHdvdWxkIGV4bGN1ZGUgdGhlIHdob2xlIHNlY29uZCAiaWYgKGNt
+ZCA9PQo+IENNRF9WQUxJRF9QQVRIKSIgc2VjdGlvbiBpbiBjb25maWd1cmUoKSB1bmxlc3Mgd2Ug
+a25vdyB0aGF0IGl0IGlzCj4gc2FmZQo+IHRvIGdyYWIgdGhlIGRldmljZS4gIE90aGVyd2lzZSwg
+dGhlcmUgaXMgbm90aGluZyB0byBzdG9wIHVzIGZyb20KPiBjbGFpbWluZyBhIGRldmljZSB0aGF0
+IGlzIGluIHVzZS4gQ2xlYXJseSB0aGF0IGV4Y2x1c2l2ZSBncmFiIGNoZWNrCj4gaXMKPiByYWN5
+IGF0IGFueSB0aW1lIGV4Y2VwdCBvbiBhZGQgZXZlbnRzIG9yIHdoZW4gdGhlIGRldmljZSBhbHJl
+YWR5IGlzCj4gc2V0Cj4gdG8gU1lTVEVNRF9SRUFEWT0wLiAgSSdtIHByZXR0eSBzdXJlIHRoYXQg
+dGhlIGNvbGRwbHVnIGFkZCBldmVudAo+IGFmdGVyCj4gdGhlIHN3aXRjaHJvb3QgaXMgc2FmZSwg
+c2luY2Ugbm90aGluZyB3aWxsIGJlIHJhY2luZyB0byBncmFiIHRoZQo+IGRldmljZQo+IHRoZW4u
+IAo+IAo+IFlvdSd2ZSBhbHJlYWR5IGFncmVlZCB0aGF0IGl0IHNob3VsZCBiZSBmaW5lIHRvIGFs
+bG93IG11bHRpcGF0aGQgdG8KPiB0cnkKPiB0byBjcmVhdGUgYSBtdWx0aXBhdGggZGV2aWNlIG9u
+IHRvcCBvZiBhIG5vbi1jbGFpbWVkIHBhdGgsIHNpbmNlIHdlCj4gY2FuCj4ganVzdCBjbGFpbSBp
+dCBsYXRlciBieSBpc3N1aW5nIGEgdWV2ZW50LiAgSSBmZWVsIGxpa2UgdGhpcyBpcyBqdXN0Cj4g
+YW5vdGhlciBpbnN0YW5jZSBvZiB0aGF0LiAgSWYgdGhpcyBpc24ndCBhIG5ldyBwYXRoLCB3aGVy
+ZSB3ZSBoYXZlCj4gZXhjbHVkZWQgZXZlcnlvbmUgZWxzZSBmcm9tIHVzaW5nIGl0LCB3ZSBjYW4n
+dCBzdWRkZW5seSBjbGFpbSBpdCBqdXN0Cj4gYmVjYXVzZSBhIHNlY29uZCBwYXRoIGFwcGVhcnMu
+IEhvd2V2ZXIsIGlmIG11bHRpcGF0aGQgbWFuYWdlcyB0bwo+IGNyZWF0ZQo+IGEgbXVsdGlwYXRo
+IGRldmljZSBvbiB0b3Agb2YgaXQsIHRoZW4gaXQgd2lsbCBhZGQgdGhlIHd3aWQgdG8gdGhlCj4g
+d3dpZHMKPiBmaWxlLCBhbmQgYmUgYWJsZSB0byBjbGFpbSBpdC4gIEJ1dCBvdGhlcndpc2UsIEkg
+ZG9uJ3QgdGhpbmsgdGhhdCB0aGUKPiBleGNsdXNpdmUgZ3JhYiBpcyBzYWZlIG9yIHJlbGlhYmxl
+IGVub3VnaCB0byBhbGxvdyB1cyB0byBzaW1wbHkgZG8KPiB0aGlzCj4gb24gYW55IHVldmVudC4K
+PiAKPiBJIHdvdWxkIGFkZCBhIG5ldyBvcHRpb24gdG8gbXVsdGlwYXRoLCB0aGF0IHdvcmtzIHdp
+dGggLXUsIHRvIHRlbGwgaXQKPiB0aGF0IG1heWJlcyBhcmUgYWxsb3dlZC4gSWYgZmluZF9tdWx0
+aXBhdGhzID09IEZJTkRfTVVMVElQQVRIU19TTUFSVCwKPiB0aGVuIGl0IHNob3VsZCBub3QgY2xh
+aW0gdGhlIGRldmljZSBpZiBpdCBkb2Vzbid0IGdldCBwb3NpdGl2ZWx5Cj4gY2xhaW1lZAo+IGlu
+IHRoZSBmaXJzdCAiaWYgKGNtZCA9PSBDTURfVkFMSURfUEFUSCkiIHNlY3Rpb24gb2YgY29uZmln
+dXJlKCkuCj4gVGhhdAo+IHdpbGwgc2F2ZSB1cyBmcm9tIGNsYWltaW5nIGRldmljZXMgdGhhdCBh
+cmUgYWxyZWFkeSBpbiB1c2UsIGFuZCBzcGVlZAo+IHRoZSBtdWx0aXBhdGggLXUgY2FsbHMgdXAu
+CgpJIGRvbid0IHRoaW5rIHdlIG5lZWQgYW5vdGhlciBvcHRpb24uIFdlIGNhbiB1c2UgdGhlIHVl
+dmVudCBlbnZpcm9ubWVudAppbiB0aGUgLXUgY2FzZS4KClJlZ2FyZHMsCk1hcnRpbgoKLS0gCkRy
+LiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAy
+MTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFy
+ZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1h
+aWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFp
+bG1hbi9saXN0aW5mby9kbS1kZXZlbA==
