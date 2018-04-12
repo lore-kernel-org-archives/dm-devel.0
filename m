@@ -1,15 +1,16 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH] 11-dm-mpath.rules: dont't run "multipath -U"
- during coldplug
-Date: Thu, 12 Apr 2018 14:52:06 -0500
-Message-ID: <20180412195206.GY3103@octiron.msp.redhat.com>
-References: <20180406114521.4883-1-mwilck@suse.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH v4 09/20] libmultipath: functions to indicate
+ mapping failure in /dev/shm
+Date: Thu, 12 Apr 2018 22:07:13 +0200
+Message-ID: <1523563633.4346.25.camel@suse.com>
+References: <20180404161627.6244-1-mwilck@suse.com>
+	<20180404161627.6244-10-mwilck@suse.com>
+	<20180412183302.GL3103@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20180406114521.4883-1-mwilck@suse.com>
+In-Reply-To: <20180412183302.GL3103@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,41 +20,40 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: dm-devel@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@redhat.com, Julian Andres Klode <julian.klode@canonical.com>
 List-Id: dm-devel.ids
 
-On Fri, Apr 06, 2018 at 01:45:21PM +0200, Martin Wilck wrote:
-> When udevadm trigger is run after switching root, lots of simultaneous uevents
-> for both path and multipath devices arrive. In may happen that when "multipath
-> -U" is called on a dm device, the path's uevents haven't finished yet, thus
-> the paths aren't found in the udev db, and multipath -U erroneously concludes
-> that there are no usable paths. Avoid that by skipping "multipath -U" during
-> coldplug.
-> 
-
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
-
-> Fixes: "ce5ea6a 11-dm-mpath.rules: multipath -U for READY check"
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  multipath/11-dm-mpath.rules | 4 ++++
->  1 file changed, 4 insertions(+)
-> 
-> diff --git a/multipath/11-dm-mpath.rules b/multipath/11-dm-mpath.rules
-> index 03ac5da..07320a1 100644
-> --- a/multipath/11-dm-mpath.rules
-> +++ b/multipath/11-dm-mpath.rules
-> @@ -26,6 +26,10 @@ ENV{DM_NR_VALID_PATHS}=="0", ENV{MPATH_DEVICE_READY}="0", GOTO="mpath_action"
->  ENV{MPATH_SBIN_PATH}="/sbin"
->  TEST!="$env{MPATH_SBIN_PATH}/multipath", ENV{MPATH_SBIN_PATH}="/usr/sbin"
->  
-> +# Don't run multipath -U during "coldplug" after switching root,
-> +# because paths are just being added to the udev db.
-> +ACTION=="add", ENV{.MPATH_DEVICE_READY_OLD}=="1", GOTO="paths_ok"
-> +
->  # Check the map state directly with multipath -U.
->  # This doesn't attempt I/O on the device.
->  PROGRAM=="$env{MPATH_SBIN_PATH}/multipath -U %k", GOTO="paths_ok"
-> -- 
-> 2.16.1
+T24gVGh1LCAyMDE4LTA0LTEyIGF0IDEzOjMzIC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cj4gT24gV2VkLCBBcHIgMDQsIDIwMTggYXQgMDY6MTY6MTZQTSArMDIwMCwgTWFydGluIFdp
+bGNrIHdyb3RlOgo+ID4gQ3JlYXRlIGEgc2ltcGxlIEFQSSB0aGF0IGluZGljYXRlcyBmYWlsdXJl
+IHRvIGNyZWF0ZSBhIG1hcCBmb3IgYQo+ID4gY2VydGFpbiBXV0lELiBUaGlzIHdpbGwgYWxsb3cg
+bXVsdGlwYXRoZCB0byBpbmRpY2F0ZSB0byBvdGhlciB0b29scwo+ID4gKGluIHBhcnRpY3VsYXIs
+ICJtdWx0aXBhdGggLXUiIGR1cmluZyB1ZGV2IHByb2Nlc3NpbmcpIHRoYXQKPiA+IGFuIGF0dGVt
+cHQgdG8gY3JlYXRlIGEgbWFwIGZvciBhIGNlcnRhaW4gd3dpZCBmYWlsZWQuCj4gPiAKPiA+IFRo
+ZSBpbmRpY2F0b3IgaXMgc2ltcGx5IHRoZSBleGlzdGVuY2Ugb2YgYSBmaWxlIHVuZGVyCj4gPiAv
+ZGV2L3NobS9tdWx0aXBhdGgvZmFpbGVkX3d3aWRzLgo+IAo+IEknbSBhIGxpdHRsZSBjb25mdXNl
+ZCBhYm91dCB0aGUgbmVjZXNzaXR5IG9mIGEgbG9jayBmaWxlIGhlcmUuICBXaGF0Cj4gaXQKPiB0
+aGUgcmFjZSB0aGF0IHlvdSBhcmUgd29ycmllZCBhYm91dD8gSWYgdHdvIHByb2Nlc3NlcyB0cnkg
+dG8gY3JlYXRlIGEKPiBmaWxlIGF0IHRoZSBzYW1lIHRpbWUsIHN1cmVseSBvbmUgb2YgdGhlbSB3
+aWxsIHN1Y2NlZWQuIElmIHR3bwo+IHByb2Nlc3Nlcwo+IHRyeSB0byBkZWxldGUgYSBmaWxlIGF0
+IHRoZSBzYW1lIHRpbWUsIGl0IHdpbGwgZ2V0IGRlbGV0ZWQuICBJZiBvbmUKPiBwcm9jZXNzIGlz
+IHRyeWluZyB0byBjcmVhdGUgYSBmaWxlIGFuZCBvbmUgaXMgdHJ5aW5nIHRvIHJlbW92ZSBpdCwK
+PiB0aGUKPiBvdXRjb21lIGRlcGVuZHMgb24gdGhlIHdobyB3aW5zIHRoZSByYWNlLiBCdXQgdGhp
+cyBpcyB0cnVlIHdoZXRoZXIKPiB5b3UKPiBhZGQgYSBsb2NrIGZpbGUgdG8gbWFrZSB0aG9zZSBh
+Y3Rpb25zIGF0b21pYyBvciBub3QuIFRoZSBzYW1lIGdvZXMKPiB3aXRoCj4gc3RhdGluZyBhIGZp
+bGUgdGhhdCdzIGJlaW5nIGNyZWF0ZWQgb3IgcmVtb3ZlZC4gQXMgZmFyIGEgSSBjYW4gdGVsbCwK
+PiB0aGlzIHNob3VsZCB3b3JrIGlmIHlvdSBzaW1wbHkgY3JlYXRlIGFuIGVtcHR5IGZpbGUgd2l0
+aG91dCBhbnkKPiBsb2NraW5nLgo+IEFyZSB5b3Ugd29ycmllZCBhYm91dCBzb21lIG9kZCBlcnJu
+byBkdWUgdG8gYSByYWNlPwoKTXkgdGhpbmtpbmcgd2FzIHRoYXQgaXQncyBnZW5lcmFsbHkgYSBn
+b29kIHRoaW5nIHRvIG1ha2UgZmlsZSBzeXN0ZW0Kb3BlcmF0aW9ucyBsaWtlIHRoaXMgYXRvbWlj
+LCBhbmQgdGhlIHdlbGwtdGVzdGVkIGFuZCBtYXR1cmUgb3Blbl9maWxlKCkKQVBJIHdhcyB0aGVy
+ZSByZWFkeSB0byBiZSB1c2VkLCB0aHVzIEkgZGlkLgoKWW91J3JlIHByb2JhYmx5IHJpZ2h0IHRo
+YXQgdGhlIGxvY2tpbmcgbm90IHN0cmljdGx5IG5lY2Vzc2FyeS4gSSBkb24ndAp0aGluayBpdCBo
+dXJ0cywgcGVyZm9ybWFuY2Utd2lzZSB0aGUgaW1wYWN0IGlzIHF1aXRlIGxvdy4KRG8geW91IHJl
+cXVpcmUgbWUgdG8gY2hhbmdlIHRoaXMsIG9yIGNhbiB3ZSBjaGFuZ2UgaXQgbGF0ZXI/CgpNYXJ0
+aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5
+MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEph
+bmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpk
+bS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRo
+YXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
