@@ -1,16 +1,16 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH v4 09/20] libmultipath: functions to indicate
- mapping failure in /dev/shm
-Date: Thu, 12 Apr 2018 13:33:02 -0500
-Message-ID: <20180412183302.GL3103@octiron.msp.redhat.com>
+Subject: Re: [PATCH v4 10/20] libmultipath: indicate wwid failure
+ in dm_addmap_create()
+Date: Thu, 12 Apr 2018 13:33:43 -0500
+Message-ID: <20180412183343.GM3103@octiron.msp.redhat.com>
 References: <20180404161627.6244-1-mwilck@suse.com>
-	<20180404161627.6244-10-mwilck@suse.com>
+	<20180404161627.6244-11-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20180404161627.6244-10-mwilck@suse.com>
+In-Reply-To: <20180404161627.6244-11-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,193 +24,176 @@ To: Martin Wilck <mwilck@suse.com>
 Cc: dm-devel@redhat.com, Julian Andres Klode <julian.klode@canonical.com>
 List-Id: dm-devel.ids
 
-On Wed, Apr 04, 2018 at 06:16:16PM +0200, Martin Wilck wrote:
-> Create a simple API that indicates failure to create a map for a
-> certain WWID. This will allow multipathd to indicate to other tools
-> (in particular, "multipath -u" during udev processing) that
-> an attempt to create a map for a certain wwid failed.
+On Wed, Apr 04, 2018 at 06:16:17PM +0200, Martin Wilck wrote:
+> dm_addmap_create() is where we actually try to set up a new
+> multipath map. Depending on the result, mark the wwid as
+> failed (or not), and re-trigger an uevent if necessary.
+> If a path changes from multipath to non-multipath, use an "add"
+> event to make sure LVM2 rules pick it up. Increase log level
+> of this event to 3.
 > 
-> The indicator is simply the existence of a file under
-> /dev/shm/multipath/failed_wwids.
 
-I'm a little confused about the necessity of a lock file here.  What it
-the race that you are worried about? If two processes try to create a
-file at the same time, surely one of them will succeed. If two processes
-try to delete a file at the same time, it will get deleted.  If one
-process is trying to create a file and one is trying to remove it, the
-outcome depends on the who wins the race. But this is true whether you
-add a lock file to make those actions atomic or not. The same goes with
-stating a file that's being created or removed. As far a I can tell,
-this should work if you simply create an empty file without any locking.
-Are you worried about some odd errno due to a race?
+By only looking at domap, we will miss instances of multipathd failing
+to create maps earlier in the process. This isn't necessarily wrong. It
+just means that we can't rely on checking
+/dev/shm/multipath/failed_wwids to definitively tell us whether
+multipathd has tried and failed to create the device.
 
-The enums do make things less confusing, though.
-
--Ben
-
-> 
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 > Signed-off-by: Martin Wilck <mwilck@suse.com>
 > ---
->  libmultipath/defaults.h |   1 +
->  libmultipath/wwids.c    | 110 ++++++++++++++++++++++++++++++++++++++++++++++++
->  libmultipath/wwids.h    |  11 +++++
->  3 files changed, 122 insertions(+)
+>  libmultipath/configure.c | 37 ++++++++++++++++++++++++++++---------
+>  libmultipath/configure.h |  2 +-
+>  libmultipath/devmapper.c |  9 ++++++++-
+>  libmultipath/structs.h   |  1 +
+>  multipathd/main.c        |  2 +-
+>  5 files changed, 39 insertions(+), 12 deletions(-)
 > 
-> diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
-> index 690182c..19ad2bf 100644
-> --- a/libmultipath/defaults.h
-> +++ b/libmultipath/defaults.h
-> @@ -53,5 +53,6 @@
->  #define DEFAULT_WWIDS_FILE	"/etc/multipath/wwids"
->  #define DEFAULT_PRKEYS_FILE    "/etc/multipath/prkeys"
->  #define DEFAULT_CONFIG_DIR	"/etc/multipath/conf.d"
-> +#define MULTIPATH_SHM_BASE	"/dev/shm/multipath/"
->  
->  char * set_default (char * str);
-> diff --git a/libmultipath/wwids.c b/libmultipath/wwids.c
-> index da685be..c9f5743 100644
-> --- a/libmultipath/wwids.c
-> +++ b/libmultipath/wwids.c
-> @@ -5,6 +5,7 @@
->  #include <limits.h>
->  #include <stdio.h>
->  #include <sys/types.h>
-> +#include <sys/stat.h>
->  
->  #include "checkers.h"
->  #include "vector.h"
-> @@ -337,3 +338,112 @@ remember_wwid(char *wwid)
->  		condlog(4, "wwid %s already in wwids file", wwid);
->  	return ret;
+> diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+> index c1a50e4..9aa3d21 100644
+> --- a/libmultipath/configure.c
+> +++ b/libmultipath/configure.c
+> @@ -445,11 +445,18 @@ trigger_udev_change(const struct multipath *mpp)
 >  }
-> +
-> +static const char shm_dir[] = MULTIPATH_SHM_BASE "failed_wwids";
-> +static const char shm_lock[] = ".lock";
-> +static const char shm_header[] = "multipath shm lock file, don't edit";
-> +static char _shm_lock_path[sizeof(shm_dir)+sizeof(shm_lock)];
-> +static const char *shm_lock_path = &_shm_lock_path[0];
-> +
-> +static void init_shm_paths(void)
-> +{
-> +	snprintf(_shm_lock_path, sizeof(_shm_lock_path),
-> +		 "%s/%s", shm_dir, shm_lock);
-> +}
-> +
-> +static pthread_once_t shm_path_once = PTHREAD_ONCE_INIT;
-> +
-> +static int multipath_shm_open(bool rw)
-> +{
-> +	int fd;
-> +	int can_write;
-> +
-> +	pthread_once(&shm_path_once, init_shm_paths);
-> +	fd = open_file(shm_lock_path, &can_write, shm_header);
-> +
-> +	if (fd >= 0 && rw && !can_write) {
-> +		close(fd);
-> +		condlog(1, "failed to open %s for writing", shm_dir);
-> +		return -1;
-> +	}
-> +
-> +	return fd;
-> +}
-> +
-> +static void multipath_shm_close(void *arg)
-> +{
-> +	long fd = (long)arg;
-> +
-> +	close(fd);
-> +	unlink(shm_lock_path);
-> +}
-> +
-> +static int _failed_wwid_op(const char *wwid, bool rw,
-> +			   int(*func)(const char*), const char *msg)
-> +{
-> +	char path[PATH_MAX];
-> +	long lockfd;
-> +	int r = -1;
-> +
-> +	if (snprintf(path, sizeof(path), "%s/%s", shm_dir, wwid)
-> +	    >= sizeof(path)) {
-> +		condlog(1, "%s: path name overflow", __func__);
-> +		return -1;
-> +	}
-> +
-> +	lockfd = multipath_shm_open(rw);
-> +	if (lockfd == -1)
-> +		return -1;
-> +
-> +	pthread_cleanup_push(multipath_shm_close, (void*)lockfd);
-> +	r = func(path);
-> +	pthread_cleanup_pop(1);
-> +
-> +	if (r == WWID_FAILED_ERROR)
-> +		condlog(1, "%s: %s: %s", msg, wwid, strerror(errno));
-> +	else if (r == WWID_FAILED_CHANGED)
-> +		condlog(3, "%s: %s", msg, wwid);
-> +	else if (!rw)
-> +		condlog(4, "%s: %s is %s", msg, wwid,
-> +			r == WWID_IS_FAILED ? "failed" : "good");
-> +
-> +	return r;
-> +}
-> +
-> +static int _is_failed(const char *path)
-> +{
-> +	struct stat st;
-> +
-> +	if (lstat(path, &st) == 0)
-> +		return WWID_IS_FAILED;
-> +	else if (errno == ENOENT)
-> +		return WWID_IS_NOT_FAILED;
-> +	else
-> +		return WWID_FAILED_ERROR;
-> +}
-> +
-> +static int _mark_failed(const char *path)
-> +{
-> +	/* Called from _failed_wwid_op: we know that shm_lock_path exists */
-> +	if (_is_failed(path) == WWID_IS_FAILED)
-> +		return WWID_FAILED_UNCHANGED;
-> +	return (link(shm_lock_path, path) == 0 ? WWID_FAILED_CHANGED :
-> +		WWID_FAILED_ERROR);
-> +}
-> +
-> +static int _unmark_failed(const char *path)
-> +{
-> +	if (_is_failed(path) == WWID_IS_NOT_FAILED)
-> +		return WWID_FAILED_UNCHANGED;
-> +	return (unlink(path) == 0 ? WWID_FAILED_CHANGED : WWID_FAILED_ERROR);
-> +}
-> +
-> +#define declare_failed_wwid_op(op, rw) \
-> +int op ## _wwid(const char *wwid) \
-> +{ \
-> +	return _failed_wwid_op(wwid, (rw), _ ## op, #op); \
-> +}
-> +
-> +declare_failed_wwid_op(is_failed, false)
-> +declare_failed_wwid_op(mark_failed, true)
-> +declare_failed_wwid_op(unmark_failed, true)
-> diff --git a/libmultipath/wwids.h b/libmultipath/wwids.h
-> index d9a78b3..0c6ee54 100644
-> --- a/libmultipath/wwids.h
-> +++ b/libmultipath/wwids.h
-> @@ -18,4 +18,15 @@ int check_wwids_file(char *wwid, int write_wwid);
->  int remove_wwid(char *wwid);
->  int replace_wwids(vector mp);
 >  
-> +enum {
-> +	WWID_IS_NOT_FAILED = 0,
-> +	WWID_IS_FAILED,
-> +	WWID_FAILED_UNCHANGED,
-> +	WWID_FAILED_CHANGED,
-> +	WWID_FAILED_ERROR = -1,
-> +};
+>  void
+> -trigger_paths_udev_change(const struct multipath *mpp)
+> +trigger_paths_udev_change(struct multipath *mpp, bool is_mpath)
+>  {
+>  	struct pathgroup * pgp;
+>  	struct path * pp;
+>  	int i, j;
+> +	/*
+> +	 * If a path changes from multipath to non-multipath, we must
+> +	 * synthesize an artificial "add" event, otherwise the LVM2 rules
+> +	 * (69-lvm2-lvmetad.rules) won't pick it up. Otherwise, we'd just
+> +	 * irritate ourselves with an "add", so use "change".
+> +	 */
+> +	const char *action = is_mpath ? "change" : "add";
+>  
+>  	if (!mpp || !mpp->pg)
+>  		return;
+> @@ -468,14 +475,21 @@ trigger_paths_udev_change(const struct multipath *mpp)
+>  			 */
+>  			env = udev_device_get_property_value(
+>  				pp->udev, "DM_MULTIPATH_DEVICE_PATH");
+> -			if (env != NULL && !strcmp(env, "1"))
+> -					continue;
+>  
+> -			condlog(4, "triggering change uevent for %s", pp->dev);
+> -			sysfs_attr_set_value(pp->udev, "uevent", "change",
+> -					     strlen("change"));
+> +			if (is_mpath && env != NULL && !strcmp(env, "1"))
+> +				continue;
+> +			else if (!is_mpath &&
+> +				   (env == NULL || !strcmp(env, "0")))
+> +				continue;
 > +
-> +int is_failed_wwid(const char *wwid);
-> +int mark_failed_wwid(const char *wwid);
-> +int unmark_failed_wwid(const char *wwid);
->  #endif /* _WWIDS_H */
+> +			condlog(3, "triggering %s uevent for %s (is %smultipath member)",
+> +				action, pp->dev, is_mpath ? "" : "no ");
+> +			sysfs_attr_set_value(pp->udev, "uevent",
+> +					     action, strlen(action));
+>  		}
+>  	}
+> +
+> +	mpp->needs_paths_uevent = 0;
+>  }
+>  
+>  static int
+> @@ -876,8 +890,10 @@ int domap(struct multipath *mpp, char *params, int is_daemon)
+>  		 * succeeded
+>  		 */
+>  		mpp->force_udev_reload = 0;
+> -		if (mpp->action == ACT_CREATE && remember_wwid(mpp->wwid) == 1)
+> -			trigger_paths_udev_change(mpp);
+> +		if (mpp->action == ACT_CREATE &&
+> +		    (remember_wwid(mpp->wwid) == 1 ||
+> +		     mpp->needs_paths_uevent))
+> +			trigger_paths_udev_change(mpp, true);
+>  		if (!is_daemon) {
+>  			/* multipath client mode */
+>  			dm_switchgroup(mpp->alias, mpp->bestpg);
+> @@ -902,7 +918,10 @@ int domap(struct multipath *mpp, char *params, int is_daemon)
+>  		}
+>  		dm_setgeometry(mpp);
+>  		return DOMAP_OK;
+> -	}
+> +	} else if (r == DOMAP_FAIL && mpp->action == ACT_CREATE &&
+> +		   mpp->needs_paths_uevent)
+> +		trigger_paths_udev_change(mpp, false);
+> +
+>  	return DOMAP_FAIL;
+>  }
+>  
+> diff --git a/libmultipath/configure.h b/libmultipath/configure.h
+> index 545cbc2..8b56d33 100644
+> --- a/libmultipath/configure.h
+> +++ b/libmultipath/configure.h
+> @@ -37,4 +37,4 @@ int get_refwwid (enum mpath_cmds cmd, char * dev, enum devtypes dev_type,
+>  		 vector pathvec, char **wwid);
+>  int reload_map(struct vectors *vecs, struct multipath *mpp, int refresh, int is_daemon);
+>  struct udev_device *get_udev_device(const char *dev, enum devtypes dev_type);
+> -void trigger_paths_udev_change(const struct multipath *mpp);
+> +void trigger_paths_udev_change(struct multipath *mpp, bool is_mpath);
+> diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+> index 2a92105..f2befad 100644
+> --- a/libmultipath/devmapper.c
+> +++ b/libmultipath/devmapper.c
+> @@ -22,6 +22,7 @@
+>  #include "devmapper.h"
+>  #include "sysfs.h"
+>  #include "config.h"
+> +#include "wwids.h"
+>  
+>  #include "log_pthread.h"
+>  #include <sys/types.h>
+> @@ -415,8 +416,12 @@ int dm_addmap_create (struct multipath *mpp, char * params)
+>  		int err;
+>  
+>  		if (dm_addmap(DM_DEVICE_CREATE, TGT_MPATH, mpp, params, ro,
+> -			      udev_flags))
+> +			      udev_flags)) {
+> +			if (unmark_failed_wwid(mpp->wwid) ==
+> +			    WWID_FAILED_CHANGED)
+> +				mpp->needs_paths_uevent = 1;
+>  			return 1;
+> +		}
+>  		/*
+>  		 * DM_DEVICE_CREATE is actually DM_DEV_CREATE + DM_TABLE_LOAD.
+>  		 * Failing the second part leaves an empty map. Clean it up.
+> @@ -432,6 +437,8 @@ int dm_addmap_create (struct multipath *mpp, char * params)
+>  			break;
+>  		}
+>  	}
+> +	if (mark_failed_wwid(mpp->wwid) == WWID_FAILED_CHANGED)
+> +		mpp->needs_paths_uevent = 1;
+>  	return 0;
+>  }
+>  
+> diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+> index c43f2c3..1d3a34f 100644
+> --- a/libmultipath/structs.h
+> +++ b/libmultipath/structs.h
+> @@ -322,6 +322,7 @@ struct multipath {
+>  	int max_sectors_kb;
+>  	int force_readonly;
+>  	int force_udev_reload;
+> +	int needs_paths_uevent;
+>  	int ghost_delay;
+>  	int ghost_delay_tick;
+>  	unsigned int dev_loss;
+> diff --git a/multipathd/main.c b/multipathd/main.c
+> index e6f4e77..7eeb743 100644
+> --- a/multipathd/main.c
+> +++ b/multipathd/main.c
+> @@ -2325,7 +2325,7 @@ configure (struct vectors * vecs)
+>  	sync_maps_state(mpvec);
+>  	vector_foreach_slot(mpvec, mpp, i){
+>  		if (remember_wwid(mpp->wwid) == 1)
+> -			trigger_paths_udev_change(mpp);
+> +			trigger_paths_udev_change(mpp, true);
+>  		update_map_pr(mpp);
+>  	}
+>  
 > -- 
 > 2.16.1
