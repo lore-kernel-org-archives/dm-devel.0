@@ -1,12 +1,16 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: add RDAC SUN/ArrayStorage to
-	hwtable
-Date: Wed, 11 Apr 2018 15:14:13 +0200
-Message-ID: <20180411131413.3963-1-xose.vazquez@gmail.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH v4 12/20] multipath -u: change output to
+ environment/key format
+Date: Thu, 12 Apr 2018 13:35:10 -0500
+Message-ID: <20180412183510.GO3103@octiron.msp.redhat.com>
+References: <20180404161627.6244-1-mwilck@suse.com>
+	<20180404161627.6244-13-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20180404161627.6244-13-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,41 +20,83 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>, DM ML <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com, Julian Andres Klode <julian.klode@canonical.com>
 List-Id: dm-devel.ids
 
-Already in scsi_dh: https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/scsi/scsi_dh.c#n70
-
-Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: DM ML <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- libmultipath/hwtable.c | 12 ++++++++++++
- 1 file changed, 12 insertions(+)
-
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 88b4700..827e899 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -889,6 +889,18 @@ static struct hwentry default_hw[] = {
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.no_path_retry = 30,
- 	},
-+	{
-+		.vendor        = "SUN",
-+		.product       = "ArrayStorage",
-+		.bl_product    = "Universal Xport",
-+		.pgpolicy      = GROUP_BY_PRIO,
-+		.checker_name  = RDAC,
-+		.features      = "2 pg_init_retries 50",
-+		.hwhandler     = "1 rdac",
-+		.prio_name     = PRIO_RDAC,
-+		.pgfailback    = -FAILBACK_IMMEDIATE,
-+		.no_path_retry = 30,
-+	},
- 	{
- 		/* ZFS Storage Appliances */
- 		.vendor        = "SUN",
--- 
-2.17.0
+On Wed, Apr 04, 2018 at 06:16:19PM +0200, Martin Wilck wrote:
+> ... instead of free format. This provides more flexibility
+> for udev rule processing for the future. Adapt code in multipath.rules.
+> The exit status remains as usual. This affects "multipath -c", too.
+> 
+> The parameters "pathvec" and "conf" for print_cmd_valid are currently
+> unused, but will be in follow-up patches.
+> 
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  multipath/main.c          | 14 ++++++++------
+>  multipath/multipath.rules |  6 +++---
+>  2 files changed, 11 insertions(+), 9 deletions(-)
+> 
+> diff --git a/multipath/main.c b/multipath/main.c
+> index bf28735..59a72ed 100644
+> --- a/multipath/main.c
+> +++ b/multipath/main.c
+> @@ -350,13 +350,15 @@ out:
+>  	return r;
+>  }
+>  
+> -static int print_cmd_valid(const char *devpath, int k)
+> +static int print_cmd_valid(int k, const vector pathvec,
+> +			   struct config *conf)
+>  {
+> -	if (k < 0 || k > 1)
+> +	static const int vals[] = { 1, 0 };
+> +
+> +	if (k < 0 || k >= sizeof(vals))
+>  		return 1;
+>  
+> -	printf("%s is%s a valid multipath device path\n",
+> -	       devpath, k ? "" : " not");
+> +	printf("DM_MULTIPATH_DEVICE_PATH=\"%d\"\n", vals[k]);
+>  	return k == 1;
+>  }
+>  
+> @@ -514,7 +516,7 @@ configure (struct config *conf, enum mpath_cmds cmd,
+>  
+>  print_valid:
+>  	if (cmd == CMD_VALID_PATH)
+> -		r = print_cmd_valid(devpath, r);
+> +		r = print_cmd_valid(r, pathvec, conf);
+>  
+>  out:
+>  	if (refwwid)
+> @@ -851,7 +853,7 @@ main (int argc, char *argv[])
+>  		if (fd == -1) {
+>  			condlog(3, "%s: daemon is not running", dev);
+>  			if (!systemd_service_enabled(dev)) {
+> -				r = print_cmd_valid(dev, 1);
+> +				r = print_cmd_valid(1, NULL, conf);
+>  				goto out;
+>  			}
+>  		} else
+> diff --git a/multipath/multipath.rules b/multipath/multipath.rules
+> index 6f8ee2b..aab64dc 100644
+> --- a/multipath/multipath.rules
+> +++ b/multipath/multipath.rules
+> @@ -19,9 +19,9 @@ LABEL="test_dev"
+>  ENV{MPATH_SBIN_PATH}="/sbin"
+>  TEST!="$env{MPATH_SBIN_PATH}/multipath", ENV{MPATH_SBIN_PATH}="/usr/sbin"
+>  
+> -ENV{DM_MULTIPATH_DEVICE_PATH}!="1", \
+> -	PROGRAM=="$env{MPATH_SBIN_PATH}/multipath -u %k", \
+> -	ENV{DM_MULTIPATH_DEVICE_PATH}="1", ENV{ID_FS_TYPE}="mpath_member", \
+> +# multipath -u sets DM_MULTIPATH_DEVICE_PATH
+> +ENV{DM_MULTIPATH_DEVICE_PATH}!="1", IMPORT{program}="$env{MPATH_SBIN_PATH}/multipath -u %k"
+> +ENV{DM_MULTIPATH_DEVICE_PATH}=="1", ENV{ID_FS_TYPE}="mpath_member", \
+>  	ENV{SYSTEMD_READY}="0"
+>  
+>  LABEL="end_mpath"
+> -- 
+> 2.16.1
