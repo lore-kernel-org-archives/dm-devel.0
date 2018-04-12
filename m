@@ -1,16 +1,19 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH v4 16/20] multipath -u : set
- FIND_MULTIPATHS_WAIT_UNTIL from /dev/shm
-Date: Thu, 12 Apr 2018 22:35:02 +0200
-Message-ID: <1523565302.4346.43.camel@suse.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH v4 10/20] libmultipath: indicate wwid failure
+ in dm_addmap_create()
+Date: Thu, 12 Apr 2018 16:32:11 -0500
+Message-ID: <20180412213211.GA3103@octiron.msp.redhat.com>
 References: <20180404161627.6244-1-mwilck@suse.com>
-	<20180404161627.6244-17-mwilck@suse.com>
-	<20180412183639.GR3103@octiron.msp.redhat.com>
+	<20180404161627.6244-11-mwilck@suse.com>
+	<20180412183343.GM3103@octiron.msp.redhat.com>
+	<1523564202.4346.29.camel@suse.com>
+	<1523564539.4346.34.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180412183639.GR3103@octiron.msp.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1523564539.4346.34.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,92 +23,62 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <mwilck@suse.com>
 Cc: dm-devel@redhat.com, Julian Andres Klode <julian.klode@canonical.com>
 List-Id: dm-devel.ids
 
-T24gVGh1LCAyMDE4LTA0LTEyIGF0IDEzOjM2IC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gT24gV2VkLCBBcHIgMDQsIDIwMTggYXQgMDY6MTY6MjNQTSArMDIwMCwgTWFydGluIFdp
-bGNrIHdyb3RlOgo+ID4gSW4gImZpbmRfbXVsdGlwYXRocyBzbWFydCIgbW9kZSwgdXNlIHRpbWUg
-c3RhbXBzIHVuZGVyCj4gPiAvZGV2L3NobS9tdWx0aXBhdGgvZmluZF9tdWx0aXBhdGhzIHRvIHRy
-YWNrIHdhaXRpbmcgZm9yIG11bHRpcGF0aAo+ID4gc2libGluZ3MuIFdoZW4gYSBwYXRoIGlzIGZp
-cnN0IGVuY291bnRlcmVkIGFuZCBpcyAibWF5YmUiCj4gPiBtdWx0aXBhdGgsIGNyZWF0ZSBhCj4g
-PiBmaWxlIHVuZGVyIC9kZXYvc2htLCBzZXQgaXRzIG1vZGlmaWNhdGlvbiB0aW1lIHRvIHRoZSBl
-eHBpcnkgdGltZQo+ID4gb2YgdGhlCj4gPiB0aW1lciwgYW5kIHNldCB0aGUgRklORF9NVUxUSVBB
-VEhTX1dBSVRfVU5USUwgdmFyaWFibGUuIE9uIGxhdGVyCj4gPiBjYWxscywgYWxzbyBzZXQKPiA+
-IEZJTkRfTVVMVElQQVRIU19XQUlUX1VOVElMIHRvIHRoZSBleHBpcnkgdGltZSAoYnV0IGRvbid0
-IGNoYW5nZSB0aGUKPiA+IHRpbWUKPiA+IHN0YW1wKSBpZiBpdCdzIG5vdCBleHBpcmVkIHlldCwg
-b3IgMCBpZiBpdCBpcyBleHBpcmVkLiBTZXQKPiA+IEZJTkRfTVVMVElQQVRIU19XQUlUX1VOVElM
-IGV2ZW4gaWYgZW5vdWdoIGV2aWRlbmNlIGJlY29tZXMKPiA+IGF2YWlsYWJsZSB0byBkZWNpZGUK
-PiA+IGlmIHRoZSBwYXRoIG5lZWRzIHRvIGJlIG11bHRpcGF0aGVkIC0gdGhpcyBlbmFibGVzIHRo
-ZSB1ZGV2IHJ1bGVzCj4gPiB0byBkZXRlY3QKPiA+IHRoYXQgdGhpcyBpcyBhIGRldmljZSBhIHRp
-bWVyIGhhcyBiZWVuIHN0YXJ0ZWQgZm9yLCBhbmQgc3RvcCBpdC4gQnkKPiA+IHVzaW5nCj4gPiAv
-ZGV2L3NobSwgd2Ugc2hhcmUgaW5mb3JtYXRpb24gYWJvdXQgInNtYXJ0IiB0aW1lcnMgYmV0d2Vl
-biBpbml0cmQKPiA+IGFuZCByb290Cj4gPiBmaWxlIHN5c3RlbSwgYW5kIHRodXMgb25seSBjYWxj
-dWxhdGUgdGhlIHRpbWVvdXQgb25jZS4KPiA+IAo+ID4gU2lnbmVkLW9mZi1ieTogTWFydGluIFdp
-bGNrIDxtd2lsY2tAc3VzZS5jb20+Cj4gPiAtLS0KPiA+ICBsaWJtdWx0aXBhdGgvZmlsZS5jIHwg
-ICAyICstCj4gPiAgbGlibXVsdGlwYXRoL2ZpbGUuaCB8ICAgMSArCj4gPiAgbXVsdGlwYXRoL21h
-aW4uYyAgICB8IDEzMwo+ID4gKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysr
-KysrKysrKysrKysrKwo+ID4gIDMgZmlsZXMgY2hhbmdlZCwgMTM1IGluc2VydGlvbnMoKyksIDEg
-ZGVsZXRpb24oLSkKPiA+IAo+ID4gKwo+ID4gKy8qKgo+ID4gKyAqIGZpbmRfbXVsdGlwYXRoc19j
-aGVja190aW1lb3V0KHd3aWQsIHRtbykKPiA+ICsgKiBIZWxwZXIgZm9yICJmaW5kX211bHRpcGF0
-aHMgc21hcnQiCj4gPiArICoKPiA+ICsgKiBAcGFyYW1baW5dIHBwOiBwYXRoIHRvIGNoZWNrIC8g
-cmVjb3JkCj4gPiArICogQHBhcmFtW2luXSB0bW86IGNvbmZpZ3VyZWQgdGltZW91dCBmb3IgdGhp
-cyBXV0lELCBvciB2YWx1ZSA8PSAwCj4gPiBmb3IgY2hlY2tpbmcKPiA+ICsgKiBAcGFyYW1bb3V0
-XSB1bnRpbDogdGltZXN0YW1wIHVudGlsIHdlIG11c3Qgd2FpdCwKPiA+IENMT0NLX1JFQUxUSU1F
-LCBpZiByZXR1cm4KPiA+ICsgKiAgICAgICAgICAgICB2YWx1ZSBpcyBGSU5EX01VTFRJUEFUSFNf
-V0FJVElORwo+ID4gKyAqIEByZXR1cm5zOiBGSU5EX01VTFRJUEFUSFNfV0FJVF9ET05FLCBpZiB3
-YWl0aW5nIGhhcyBmaW5pc2hlZAo+ID4gKyAqIEByZXR1cm5zOiBGSU5EX01VTFRJUEFUSFNfRVJS
-T1IsIGlmIGludGVybmFsIGVycm9yIG9jY3VyZWQKPiA+ICsgKiBAcmV0dXJuczogRklORF9NVUxU
-SVBBVEhTX05FVkVSLCBpZiB0bW8gaXMgMCBhbmQgd2UgZGlkbid0IHdhaXQKPiA+IGZvciB0aGlz
-Cj4gPiArICogICAgICAgICAgIGRldmljZQo+ID4gKyAqIEByZXR1cm5zOiBGSU5EX01VTFRJUEFU
-SFNfV0FJVElORywgaWYgdGltZW91dCBoYXNuJ3QgZXhwaXJlZAo+ID4gKyAqLwo+ID4gK3N0YXRp
-YyBpbnQgZmluZF9tdWx0aXBhdGhzX2NoZWNrX3RpbWVvdXQoY29uc3Qgc3RydWN0IHBhdGggKnBw
-LAo+ID4gbG9uZyB0bW8sCj4gPiArCQkJCQkgc3RydWN0IHRpbWVzcGVjICp1bnRpbCkKPiA+ICt7
-Cj4gPiArCWNoYXIgcGF0aFtQQVRIX01BWF07Cj4gPiArCXN0cnVjdCB0aW1lc3BlYyBub3csIGZ0
-aW1lc1syXSwgdGRpZmY7Cj4gPiArCXN0cnVjdCBzdGF0IHN0Owo+ID4gKwlsb25nIGZkOwo+ID4g
-KwlpbnQgciwgZXJyLCByZXRyaWVzID0gMDsKPiA+ICsKPiA+ICsJY2xvY2tfZ2V0dGltZShDTE9D
-S19SRUFMVElNRSwgJm5vdyk7Cj4gPiArCj4gCj4gSSdtIHdvcnJpZWQgYWJvdXQgdXNpbmcgcHAt
-PmRldl90IGhlcmUgd2l0aCBubyBtZXRob2Qgb2YgcmVtb3ZpbmcKPiB0aGVzZQo+IGZpbGVzLiAg
-V2hhdCBoYXBwZW5zIHdoZW4gYSBwYXRoIGRldmljZSwgc2F5IDg6MzIgaXMgcmVtb3ZlZCBhbmQg
-YQo+IGNvbXBsZXRlbHkgbmV3IGRldmljZSBjb21lcyBpbiByZXVzaW5nIHRoZSBzYW1lIGRldl90
-PwoKSG0sIHdoYXQgZWxzZSBzaG91bGQgd2UgdXNlPyBkZXZub2RlIG5hbWUgaXMgZXZlbiB3b3Jz
-ZSwgYW5kIG1vc3Qgb3RoZXIKb3B0aW9ucyBhcmUgYSBjYW4gb2Ygd29ybXMuLi4gIEluIHRoZSB3
-b3JzdCBjYXNlLCB0aGUgbmV3IGRldmljZQp3b3VsZG4ndCBiZSB3YWl0ZWQgZm9yIChvciBub3Qg
-bG9uZyBlbm91Z2gpLCBiZWNhdXNlIHRoZSBtYXJrZXIgZXhpc3RlZApiZWZvcmUgaXQgd2FzIGRl
-dGVjdGVkLgoKSSBjb3VsZCBzaW1wbHkgYWRkIGEgcnVsZSB0aGF0IHJlbW92ZXMgdGhlIG1hcmtl
-ciBpbiBjYXNlIG9mIGEgInJlbW92ZSIKdWV2ZW50LCBvaz8KCj4gCj4gPiArCWlmIChzbnByaW50
-ZihwYXRoLCBzaXplb2YocGF0aCksICIlcy8lcyIsIHNobV9maW5kX21wX2RpciwKPiA+IHBwLT5k
-ZXZfdCkKPiA+ICsJICAgID49IHNpemVvZihwYXRoKSkgewo+ID4gKwkJY29uZGxvZygxLCAiJXM6
-IHBhdGggbmFtZSBvdmVyZmxvdyIsIF9fZnVuY19fKTsKPiAKPiBzaG91bGRuJ3QgdGhpcyBiZToK
-PiAJCXJldHVybiBGSU5EX01VTFRJUEFUSFNfRVJST1I7CgpCYWgsIHRoYW5rIGZvciBjYXRjaGlu
-ZyBpdC4KCj4gPiAgc3RhdGljIGludCBwcmludF9jbWRfdmFsaWQoaW50IGssIGNvbnN0IHZlY3Rv
-ciBwYXRodmVjLAo+ID4gIAkJCSAgIHN0cnVjdCBjb25maWcgKmNvbmYpCj4gPiAgewo+ID4gIAlz
-dGF0aWMgY29uc3QgaW50IHZhbHNbXSA9IHsgMSwgMCwgMiB9Owo+ID4gKwlpbnQgd2FpdCA9IEZJ
-TkRfTVVMVElQQVRIU19ORVZFUjsKPiA+ICsJc3RydWN0IHRpbWVzcGVjIHVudGlsOwo+ID4gKwlz
-dHJ1Y3QgcGF0aCAqcHA7Cj4gPiAgCj4gPiAgCWlmIChrIDwgMCB8fCBrID49IHNpemVvZih2YWxz
-KSkKPiA+ICAJCXJldHVybiAxOwo+ID4gIAo+ID4gKwlpZiAoayA9PSAyKSB7Cj4gPiArCQkvKgo+
-ID4gKwkJICogQ2FsbGVyIGVuc3VyZXMgdGhhdCBwYXRodmVjWzBdIGlzIHRoZSBwYXRoIHRvCj4g
-PiArCQkgKiBleGFtaW5lLgo+ID4gKwkJICovCj4gPiArCQlwcCA9IFZFQ1RPUl9TTE9UKHBhdGh2
-ZWMsIDApOwo+ID4gKwkJc2VsZWN0X2ZpbmRfbXVsdGlwYXRoc190aW1lb3V0KGNvbmYsIHBwKTsK
-PiA+ICsJCXdhaXQgPSBmaW5kX211bHRpcGF0aHNfY2hlY2tfdGltZW91dCgKPiA+ICsJCQlwcCwg
-cHAtPmZpbmRfbXVsdGlwYXRoc190aW1lb3V0LCAmdW50aWwpOwo+ID4gKwkJaWYgKHdhaXQgIT0g
-RklORF9NVUxUSVBBVEhTX1dBSVRJTkcpCj4gPiArCQkJayA9IDE7Cj4gPiArCX0gZWxzZSBpZiAo
-cGF0aHZlYyAhPSBOVUxMKSB7Cj4gPiArCQlwcCA9IFZFQ1RPUl9TTE9UKHBhdGh2ZWMsIDApOwo+
-ID4gKwkJd2FpdCA9IGZpbmRfbXVsdGlwYXRoc19jaGVja190aW1lb3V0KHBwLCAwLAo+ID4gJnVu
-dGlsKTsKPiA+ICsJfQo+ID4gKwlpZiAod2FpdCA9PSBGSU5EX01VTFRJUEFUSFNfV0FJVElORykK
-PiA+ICsJCXByaW50ZigiRklORF9NVUxUSVBBVEhTX1dBSVRfVU5USUw9XCIlbGQuJTA2bGRcIlxu
-Cj4gPiAiLAo+ID4gKwkJCSAgICAgICB1bnRpbC50dl9zZWMsIHVudGlsLnR2X25zZWMvMTAwMCk7
-Cj4gPiArCWVsc2UgaWYgKHdhaXQgPT0gRklORF9NVUxUSVBBVEhTX1dBSVRfRE9ORSkKPiA+ICsJ
-CXByaW50ZigiRklORF9NVUxUSVBBVEhTX1dBSVRfVU5USUw9XCIwXCJcbiIpOwo+IAo+IElmIHdl
-IGdldCBhbiBlcnJvciB0cnlpbmcgdG8gY2hlY2sgdGhlIHRpbWVvdXQsIHNob3VsZCB3ZSBqdXN0
-IGtlZXAKPiBGSU5EX01VTFRJUEFUSFNfV0FJVF9VTlRJTCB0aGUgc2FtZT8gT3Igd291bGQgaXQg
-YmUgYmV0dGVyIHRvIHNldCBpdAo+IHRvCj4gMCwgYW5kIGZhaWwgdGhlIHNtYXJ0IGNsYWltaW5n
-PwoKVGhlIGxhdHRlciBpcyB3aGF0IHdlIGRvLiBXZSBzZXQgaz0xIGlmIGZpbmRfbXVsdGlwYXRo
-c19jaGVja190aW1lb3V0KCkKcmV0dXJucyBhbnl0aGluZyBidXQgRklORF9NVUxUSVBBVEhTX1dB
-SVRJTkcsIHJlc3VsdGluZyBpbgpETV9NVUxUSVBBVEhfREVWSUNFX1BBVEg9IjAiLgoKUmVnYXJk
-cwpNYXJ0aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0
-OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZm
-ZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcp
-CgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3
-dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On Thu, Apr 12, 2018 at 10:22:19PM +0200, Martin Wilck wrote:
+> On Thu, 2018-04-12 at 22:16 +0200, Martin Wilck wrote:
+> > On Thu, 2018-04-12 at 13:33 -0500, Benjamin Marzinski wrote:
+> > > On Wed, Apr 04, 2018 at 06:16:17PM +0200, Martin Wilck wrote:
+> > > > dm_addmap_create() is where we actually try to set up a new
+> > > > multipath map. Depending on the result, mark the wwid as
+> > > > failed (or not), and re-trigger an uevent if necessary.
+> > > > If a path changes from multipath to non-multipath, use an "add"
+> > > > event to make sure LVM2 rules pick it up. Increase log level
+> > > > of this event to 3.
+> > > > =
+
+> > > =
+
+> > > By only looking at domap, we will miss instances of multipathd
+> > > failing
+> > > to create maps earlier in the process. This isn't necessarily
+> > > wrong.
+> > > It
+> > > just means that we can't rely on checking
+> > > /dev/shm/multipath/failed_wwids to definitively tell us whether
+> > > multipathd has tried and failed to create the device.
+> > =
+
+> > Sorry, I can't follow you. Where else except in the =
+
+> > domap->dm_addmap_create->dm_addmap() code path do we create maps?
+> > I'm feeling stupid, I really can't see it.
+> =
+
+> If you were referring to other instances of multipathd which have
+> already terminated (e.g. multipathd which ran in initramfs): these
+> leave the failed markers under /dev/shm when they quit. That's the
+> whole point of this patch. A failed marker will only be removed if a)
+> the system is rebooted, or b) another attempt to create the map
+> succeeds, or c) a user removes the marker manually.
+> =
+
+> But I suppose I'm still missing your point.
+
+Any failure in ev_add_path() before the call to domap() could cause
+multipath device creation to fail, without triggering this. For instance
+add_map_with_path() or setup_map() can fail for a host of reasons.
+
+> =
+
+> Cheers,
+> Martin
+> =
+
+> -- =
+
+> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+> SUSE Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
+> HRB 21284 (AG N=FCrnberg)
