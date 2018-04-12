@@ -1,21 +1,18 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 1/2] libmultipath: hwhandler auto-detection
-	for ALUA
-Date: Thu, 12 Apr 2018 14:49:48 -0500
-Message-ID: <20180412194948.GW3103@octiron.msp.redhat.com>
-References: <20180327215053.3631-1-mwilck@suse.com>
-	<20180327215053.3631-2-mwilck@suse.com>
-	<20180403203132.GF3103@octiron.msp.redhat.com>
-	<1522788809.3801.109.camel@suse.com>
-	<20180403212958.GH3103@octiron.msp.redhat.com>
-	<1522829076.3955.24.camel@suse.com>
-	<1523547819.4346.17.camel@suse.com>
+Subject: Re: [PATCH v4 09/20] libmultipath: functions to indicate
+ mapping failure in /dev/shm
+Date: Thu, 12 Apr 2018 16:27:23 -0500
+Message-ID: <20180412212723.GZ3103@octiron.msp.redhat.com>
+References: <20180404161627.6244-1-mwilck@suse.com>
+	<20180404161627.6244-10-mwilck@suse.com>
+	<20180412183302.GL3103@octiron.msp.redhat.com>
+	<1523563633.4346.25.camel@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1523547819.4346.17.camel@suse.com>
+In-Reply-To: <1523563633.4346.25.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,33 +23,55 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Martin Wilck <mwilck@suse.com>
-Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: dm-devel@redhat.com, Julian Andres Klode <julian.klode@canonical.com>
 List-Id: dm-devel.ids
 
-On Thu, Apr 12, 2018 at 05:43:39PM +0200, Martin Wilck wrote:
-> Hi Ben,
+On Thu, Apr 12, 2018 at 10:07:13PM +0200, Martin Wilck wrote:
+> On Thu, 2018-04-12 at 13:33 -0500, Benjamin Marzinski wrote:
+> > On Wed, Apr 04, 2018 at 06:16:16PM +0200, Martin Wilck wrote:
+> > > Create a simple API that indicates failure to create a map for a
+> > > certain WWID. This will allow multipathd to indicate to other tools
+> > > (in particular, "multipath -u" during udev processing) that
+> > > an attempt to create a map for a certain wwid failed.
+> > > =
+
+> > > The indicator is simply the existence of a file under
+> > > /dev/shm/multipath/failed_wwids.
+> > =
+
+> > I'm a little confused about the necessity of a lock file here.  What
+> > it
+> > the race that you are worried about? If two processes try to create a
+> > file at the same time, surely one of them will succeed. If two
+> > processes
+> > try to delete a file at the same time, it will get deleted.  If one
+> > process is trying to create a file and one is trying to remove it,
+> > the
+> > outcome depends on the who wins the race. But this is true whether
+> > you
+> > add a lock file to make those actions atomic or not. The same goes
+> > with
+> > stating a file that's being created or removed. As far a I can tell,
+> > this should work if you simply create an empty file without any
+> > locking.
+> > Are you worried about some odd errno due to a race?
 > =
 
-> I'm unsure what to do. Do you still reject my patch? Or have you been
-> convinced by Hannes and my arguments? =
+> My thinking was that it's generally a good thing to make file system
+> operations like this atomic, and the well-tested and mature open_file()
+> API was there ready to be used, thus I did.
+> =
 
-> Or are you requesting changes? If yes, what? =
+> You're probably right that the locking not strictly necessary. I don't
+> think it hurts, performance-wise the impact is quite low.
+> Do you require me to change this, or can we change it later?
 
+That's fine. I don't see how it can hurt.
 
-I still feel that it's better to make the default config const for
-devices that may or may not be ALUA, and let detect_alua figure it out,
-rather than allowing multipathd to override a specifically requested
-ALUA hardware handler. This is especially true if
-get_target_port_group_support() and get_target_port_group succeed, but
-get_asymmetric_access_state() fails in detect_alua().  But I don't think
-that transient alua errors like this are very likely during multpath
-creation, so I not going to reject the patch.
-
-Reviewed-by: Benjmain Marzinski <bmarzins@redhat.com>
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 
 > =
 
-> Regards,
 > Martin
 > =
 
