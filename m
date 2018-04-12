@@ -1,16 +1,16 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH v4 15/20] libmultipath: implement
-	find_multipaths_timeout
-Date: Thu, 12 Apr 2018 13:35:47 -0500
-Message-ID: <20180412183547.GQ3103@octiron.msp.redhat.com>
+Subject: Re: [PATCH v4 16/20] multipath -u : set
+ FIND_MULTIPATHS_WAIT_UNTIL from /dev/shm
+Date: Thu, 12 Apr 2018 13:36:39 -0500
+Message-ID: <20180412183639.GR3103@octiron.msp.redhat.com>
 References: <20180404161627.6244-1-mwilck@suse.com>
-	<20180404161627.6244-16-mwilck@suse.com>
+	<20180404161627.6244-17-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20180404161627.6244-16-mwilck@suse.com>
+In-Reply-To: <20180404161627.6244-17-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,168 +24,231 @@ To: Martin Wilck <mwilck@suse.com>
 Cc: dm-devel@redhat.com, Julian Andres Klode <julian.klode@canonical.com>
 List-Id: dm-devel.ids
 
-On Wed, Apr 04, 2018 at 06:16:22PM +0200, Martin Wilck wrote:
-> This makes the timeout for "find_multipaths smart" configurable.
-> If the timeout has a negative value (default), it's applied only
-> to "known" hardware which is either in the hwtable or in a "device" section in
-> multipath.conf. For typical non-multipath hardware, which is not in the
-> hwtable, a short timeout of 1s is used, so that boot delays caused by
-> pointlessly waiting e.g. for SATA devices will be minimal.
+On Wed, Apr 04, 2018 at 06:16:23PM +0200, Martin Wilck wrote:
+> In "find_multipaths smart" mode, use time stamps under
+> /dev/shm/multipath/find_multipaths to track waiting for multipath
+> siblings. When a path is first encountered and is "maybe" multipath, create a
+> file under /dev/shm, set its modification time to the expiry time of the
+> timer, and set the FIND_MULTIPATHS_WAIT_UNTIL variable. On later calls, also set
+> FIND_MULTIPATHS_WAIT_UNTIL to the expiry time (but don't change the time
+> stamp) if it's not expired yet, or 0 if it is expired. Set
+> FIND_MULTIPATHS_WAIT_UNTIL even if enough evidence becomes available to decide
+> if the path needs to be multipathed - this enables the udev rules to detect
+> that this is a device a timer has been started for, and stop it. By using
+> /dev/shm, we share information about "smart" timers between initrd and root
+> file system, and thus only calculate the timeout once.
 > 
-> It's expected that a "reasonable" timeout value depends less on the storage
-> hardware itself but on other properties of the data center such as network
-> latencies or distances. find_multipaths_timeout is therefore just a "defaults"
-> section setting.
-> 
-
-This patch adds trailing whitespace, but otherwise,
-
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 > Signed-off-by: Martin Wilck <mwilck@suse.com>
 > ---
->  libmultipath/config.h      |  1 +
->  libmultipath/defaults.h    |  2 ++
->  libmultipath/dict.c        |  6 ++++++
->  libmultipath/propsel.c     | 25 +++++++++++++++++++++++++
->  libmultipath/propsel.h     |  1 +
->  libmultipath/structs.h     |  1 +
->  multipath/multipath.conf.5 | 18 ++++++++++++++++++
->  7 files changed, 54 insertions(+)
+>  libmultipath/file.c |   2 +-
+>  libmultipath/file.h |   1 +
+>  multipath/main.c    | 133 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+>  3 files changed, 135 insertions(+), 1 deletion(-)
 > 
-> diff --git a/libmultipath/config.h b/libmultipath/config.h
-> index c71d972..6e69a37 100644
-> --- a/libmultipath/config.h
-> +++ b/libmultipath/config.h
-> @@ -174,6 +174,7 @@ struct config {
->  	int remove_retries;
->  	int max_sectors_kb;
->  	int ghost_delay;
-> +	int find_multipaths_timeout;
->  	unsigned int version[3];
+> diff --git a/libmultipath/file.c b/libmultipath/file.c
+> index d5165ec..8727f16 100644
+> --- a/libmultipath/file.c
+> +++ b/libmultipath/file.c
+> @@ -36,7 +36,7 @@
+>   * See the file COPYING included with this distribution for more details.
+>   */
 >  
->  	char * multipath_dir;
-> diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
-> index 19ad2bf..d7b87b4 100644
-> --- a/libmultipath/defaults.h
-> +++ b/libmultipath/defaults.h
-> @@ -41,6 +41,8 @@
->  #define DEFAULT_DISABLE_CHANGED_WWIDS 1
->  #define DEFAULT_MAX_SECTORS_KB MAX_SECTORS_KB_UNDEF
->  #define DEFAULT_GHOST_DELAY GHOST_DELAY_OFF
-> +#define DEFAULT_FIND_MULTIPATHS_TIMEOUT -10
-> +#define DEFAULT_UNKNOWN_FIND_MULTIPATHS_TIMEOUT 1
->  
->  #define DEFAULT_CHECKINT	5
->  #define MAX_CHECKINT(a)		(a << 2)
-> diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-> index e695fdc..4be808d 100644
-> --- a/libmultipath/dict.c
-> +++ b/libmultipath/dict.c
-> @@ -485,6 +485,10 @@ declare_hw_snprint(max_sectors_kb, print_nonzero)
->  declare_mp_handler(max_sectors_kb, set_int)
->  declare_mp_snprint(max_sectors_kb, print_nonzero)
->  
-> +declare_def_handler(find_multipaths_timeout, set_int)
-> +declare_def_snprint_defint(find_multipaths_timeout, print_int,
-> +			   DEFAULT_FIND_MULTIPATHS_TIMEOUT)
-> +
->  static int
->  def_config_dir_handler(struct config *conf, vector strvec)
+> -static int
+> +int
+>  ensure_directories_exist(const char *str, mode_t dir_mode)
 >  {
-> @@ -1519,6 +1523,8 @@ init_keywords(vector keywords)
->  	install_keyword("remove_retries", &def_remove_retries_handler, &snprint_def_remove_retries);
->  	install_keyword("max_sectors_kb", &def_max_sectors_kb_handler, &snprint_def_max_sectors_kb);
->  	install_keyword("ghost_delay", &def_ghost_delay_handler, &snprint_def_ghost_delay);
-> +	install_keyword("find_multipaths_timeout", &def_find_multipaths_timeout_handler,
-> +			&snprint_def_find_multipaths_timeout);
->  	__deprecated install_keyword("default_selector", &def_selector_handler, NULL);
->  	__deprecated install_keyword("default_path_grouping_policy", &def_pgpolicy_handler, NULL);
->  	__deprecated install_keyword("default_uid_attribute", &def_uid_attribute_handler, NULL);
-> diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-> index 93974a4..70fb997 100644
-> --- a/libmultipath/propsel.c
-> +++ b/libmultipath/propsel.c
-> @@ -912,3 +912,28 @@ out:
->  	condlog(3, "%s: ghost_delay = %s %s", mp->alias, buff, origin);
->  	return 0;
+>  	char *pathname;
+> diff --git a/libmultipath/file.h b/libmultipath/file.h
+> index 70bffa5..29520c7 100644
+> --- a/libmultipath/file.h
+> +++ b/libmultipath/file.h
+> @@ -6,6 +6,7 @@
+>  #define _FILE_H
+>  
+>  #define FILE_TIMEOUT 30
+> +int ensure_directories_exist(const char *str, mode_t dir_mode);
+>  int open_file(const char *file, int *can_write, const char *header);
+>  
+>  #endif /* _FILE_H */
+> diff --git a/multipath/main.c b/multipath/main.c
+> index f62e18a..126f90f 100644
+> --- a/multipath/main.c
+> +++ b/multipath/main.c
+> @@ -29,6 +29,7 @@
+>  #include <ctype.h>
+>  #include <libudev.h>
+>  #include <syslog.h>
+> +#include <fcntl.h>
+>  
+>  #include "checkers.h"
+>  #include "prio.h"
+> @@ -60,6 +61,9 @@
+>  #include "uxsock.h"
+>  #include "mpath_cmd.h"
+>  #include "foreign.h"
+> +#include "propsel.h"
+> +#include "time-util.h"
+> +#include "file.h"
+>  
+>  int logsink;
+>  struct udev *udev;
+> @@ -350,14 +354,143 @@ out:
+>  	return r;
 >  }
+>  
+> +enum {
+> +	FIND_MULTIPATHS_WAIT_DONE = 0,
+> +	FIND_MULTIPATHS_WAITING = 1,
+> +	FIND_MULTIPATHS_ERROR = -1,
+> +	FIND_MULTIPATHS_NEVER = -2,
+> +};
 > +
-> +int select_find_multipaths_timeout(struct config *conf, struct path *pp)
+> +static const char shm_find_mp_dir[] = MULTIPATH_SHM_BASE "find_multipaths";
+> +static void close_fd(void* arg)
 > +{
-> +	char *origin;
-> +
-> +	pp_set_conf(find_multipaths_timeout);
-> +	pp_set_default(find_multipaths_timeout,
-> +		       DEFAULT_FIND_MULTIPATHS_TIMEOUT);
-> +out:
-> +	/*
-> +	 * If configured value is negative, and this "unkown" hardware
-> +	 * (no hwentry), use very small timeout to avoid delays.
-> +	 */
-> +	if (pp->find_multipaths_timeout < 0) {
-> +		pp->find_multipaths_timeout = - pp->find_multipaths_timeout;
-> +		if (!pp->hwe) {
-> +			pp->find_multipaths_timeout =
-> +				DEFAULT_UNKNOWN_FIND_MULTIPATHS_TIMEOUT;
-> +			origin = "(default for unkown hardware)";
-> +		}
-> +	}
-> +	condlog(3, "%s: timeout for find_multipaths \"smart\" = %ds %s",
-> +		pp->dev, pp->find_multipaths_timeout, origin);
-> +	return 0;
+> +	close((long)arg);
 > +}
-> diff --git a/libmultipath/propsel.h b/libmultipath/propsel.h
-> index 136f906..b6475d0 100644
-> --- a/libmultipath/propsel.h
-> +++ b/libmultipath/propsel.h
-> @@ -8,6 +8,7 @@ int select_hwhandler (struct config *conf, struct multipath * mp);
->  int select_checker(struct config *conf, struct path *pp);
->  int select_getuid (struct config *conf, struct path * pp);
->  int select_prio (struct config *conf, struct path * pp);
-> +int select_find_multipaths_timeout(struct config *conf, struct path * pp);
->  int select_no_path_retry(struct config *conf, struct multipath *mp);
->  int select_flush_on_last_del(struct config *conf, struct multipath *mp);
->  int select_minio(struct config *conf, struct multipath *mp);
-> diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-> index 1d3a34f..eb6a178 100644
-> --- a/libmultipath/structs.h
-> +++ b/libmultipath/structs.h
-> @@ -281,6 +281,7 @@ struct path {
->  	int io_err_disable_reinstate;
->  	int io_err_pathfail_cnt;
->  	int io_err_pathfail_starttime;
-> +	int find_multipaths_timeout;
->  	/* configlet pointers */
->  	struct hwentry * hwe;
->  	struct gen_path generic_path;
-> diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-> index 6965dac..94c419a 100644
-> --- a/multipath/multipath.conf.5
-> +++ b/multipath/multipath.conf.5
-> @@ -983,6 +983,24 @@ The default is: \fBstrict\fR
->  .
->  .
->  .TP
-> +.B find_multipaths_timeout
-> +Timeout, in seconds, to wait for additional paths after detecting the first
-> +one, if \fIfind_multipaths
-> +"smart"\fR (see above) is set. If the value is \fBpositive\fR, this timeout is used for all
-> +unkown, non-blacklisted devices encountered. If the value is \fBnegative\fR
-> +(recommended), it's only
-> +applied to "known" devices that have an entry in multipath's hardware table,
-> +either in the built-in table or in a \fIdevice\fR section; other ("unknown") devices will
-> +use a timeout of only 1 second to avoid booting delays. The value 0 means
-> +"use the built-in default". If \fIfind_multipath\fR has a value
-> +other than \fIsmart\fR, this option has no effect. 
-> +.RS
-> +.TP
-> +The default is: \fB-10\fR (10s for known and 1s for unknown hardware)
-> +.RE
-> +.
-> +.
-> +.TP
->  .B uxsock_timeout
->  CLI receive timeout in milliseconds. For larger systems CLI commands
->  might timeout before the multipathd lock is released and the CLI command
+> +
+> +/**
+> + * find_multipaths_check_timeout(wwid, tmo)
+> + * Helper for "find_multipaths smart"
+> + *
+> + * @param[in] pp: path to check / record
+> + * @param[in] tmo: configured timeout for this WWID, or value <= 0 for checking
+> + * @param[out] until: timestamp until we must wait, CLOCK_REALTIME, if return
+> + *             value is FIND_MULTIPATHS_WAITING
+> + * @returns: FIND_MULTIPATHS_WAIT_DONE, if waiting has finished
+> + * @returns: FIND_MULTIPATHS_ERROR, if internal error occured
+> + * @returns: FIND_MULTIPATHS_NEVER, if tmo is 0 and we didn't wait for this
+> + *           device
+> + * @returns: FIND_MULTIPATHS_WAITING, if timeout hasn't expired
+> + */
+> +static int find_multipaths_check_timeout(const struct path *pp, long tmo,
+> +					 struct timespec *until)
+> +{
+> +	char path[PATH_MAX];
+> +	struct timespec now, ftimes[2], tdiff;
+> +	struct stat st;
+> +	long fd;
+> +	int r, err, retries = 0;
+> +
+> +	clock_gettime(CLOCK_REALTIME, &now);
+> +
+
+I'm worried about using pp->dev_t here with no method of removing these
+files.  What happens when a path device, say 8:32 is removed and a
+completely new device comes in reusing the same dev_t?
+
+> +	if (snprintf(path, sizeof(path), "%s/%s", shm_find_mp_dir, pp->dev_t)
+> +	    >= sizeof(path)) {
+> +		condlog(1, "%s: path name overflow", __func__);
+
+shouldn't this be:
+		return FIND_MULTIPATHS_ERROR;
+
+> +		return -1;
+> +	}
+> +
+> +	if (ensure_directories_exist(path, 0700)) {
+> +		condlog(1, "%s: error creating directories", __func__);
+> +		return FIND_MULTIPATHS_ERROR;
+> +	}
+> +
+> +retry:
+> +	fd = open(path, O_RDONLY);
+> +	if (fd != -1) {
+> +		pthread_cleanup_push(close_fd, (void*)fd);
+> +		r = fstat(fd, &st);
+> +		if (r != 0)
+> +			err = errno;
+> +		pthread_cleanup_pop(1);
+> +
+> +	} else if (tmo > 0) {
+> +		if (errno == ENOENT)
+> +			fd = open(path, O_RDWR|O_EXCL|O_CREAT, 0644);
+> +		if (fd == -1) {
+> +			if (errno == EEXIST && !retries++)
+> +				/* We could have raced with another process */
+> +				goto retry;
+> +			condlog(1, "%s: error opening %s: %s",
+> +				__func__, path, strerror(errno));
+> +			return FIND_MULTIPATHS_ERROR;
+> +		};
+> +
+> +		pthread_cleanup_push(close_fd, (void*)fd);
+> +		/*
+> +		 * We just created the file. Set st_mtim to our desired
+> +		 * expiry time.
+> +		 */
+> +		ftimes[0].tv_sec = 0;
+> +		ftimes[0].tv_nsec = UTIME_OMIT;
+> +		ftimes[1].tv_sec = now.tv_sec + tmo;
+> +		ftimes[1].tv_nsec = now.tv_nsec;
+> +		if (futimens(fd, ftimes) != 0) {
+> +			condlog(1, "%s: error in futimens(%s): %s", __func__,
+> +				path, strerror(errno));
+> +		}
+> +		r = fstat(fd, &st);
+> +		if (r != 0)
+> +			err = errno;
+> +		pthread_cleanup_pop(1);
+> +	} else
+> +		return FIND_MULTIPATHS_NEVER;
+> +
+> +	if (r != 0) {
+> +		condlog(1, "%s: error in fstat for %s: %s", __func__,
+> +			path, strerror(err));
+> +		return FIND_MULTIPATHS_ERROR;
+> +	}
+> +
+> +	timespecsub(&st.st_mtim, &now, &tdiff);
+> +
+> +	if (tdiff.tv_sec <= 0)
+> +		return FIND_MULTIPATHS_WAIT_DONE;
+> +	else {
+> +		*until = tdiff;
+> +		return FIND_MULTIPATHS_WAITING;
+> +	}
+> +}
+> +
+>  static int print_cmd_valid(int k, const vector pathvec,
+>  			   struct config *conf)
+>  {
+>  	static const int vals[] = { 1, 0, 2 };
+> +	int wait = FIND_MULTIPATHS_NEVER;
+> +	struct timespec until;
+> +	struct path *pp;
+>  
+>  	if (k < 0 || k >= sizeof(vals))
+>  		return 1;
+>  
+> +	if (k == 2) {
+> +		/*
+> +		 * Caller ensures that pathvec[0] is the path to
+> +		 * examine.
+> +		 */
+> +		pp = VECTOR_SLOT(pathvec, 0);
+> +		select_find_multipaths_timeout(conf, pp);
+> +		wait = find_multipaths_check_timeout(
+> +			pp, pp->find_multipaths_timeout, &until);
+> +		if (wait != FIND_MULTIPATHS_WAITING)
+> +			k = 1;
+> +	} else if (pathvec != NULL) {
+> +		pp = VECTOR_SLOT(pathvec, 0);
+> +		wait = find_multipaths_check_timeout(pp, 0, &until);
+> +	}
+> +	if (wait == FIND_MULTIPATHS_WAITING)
+> +		printf("FIND_MULTIPATHS_WAIT_UNTIL=\"%ld.%06ld\"\n",
+> +			       until.tv_sec, until.tv_nsec/1000);
+> +	else if (wait == FIND_MULTIPATHS_WAIT_DONE)
+> +		printf("FIND_MULTIPATHS_WAIT_UNTIL=\"0\"\n");
+
+If we get an error trying to check the timeout, should we just keep
+FIND_MULTIPATHS_WAIT_UNTIL the same? Or would it be better to set it to
+0, and fail the smart claiming?
+
+>  	printf("DM_MULTIPATH_DEVICE_PATH=\"%d\"\n", vals[k]);
+>  	return k == 1;
+>  }
 > -- 
 > 2.16.1
