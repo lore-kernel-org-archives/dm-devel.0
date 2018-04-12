@@ -1,19 +1,12 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 1/2] libmultipath: hwhandler auto-detection
-	for ALUA
-Date: Thu, 12 Apr 2018 17:43:39 +0200
-Message-ID: <1523547819.4346.17.camel@suse.com>
-References: <20180327215053.3631-1-mwilck@suse.com>
-	<20180327215053.3631-2-mwilck@suse.com>
-	<20180403203132.GF3103@octiron.msp.redhat.com>
-	<1522788809.3801.109.camel@suse.com>
-	<20180403212958.GH3103@octiron.msp.redhat.com>
-	<1522829076.3955.24.camel@suse.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: remove emacs autoconfig of
+	kpartx/gpt.h
+Date: Thu, 12 Apr 2018 18:17:13 +0200
+Message-ID: <20180412161713.6447-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1522829076.3955.24.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,63 +16,42 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>, Hannes
+Cc: DM ML <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-SGkgQmVuLAoKT24gV2VkLCAyMDE4LTA0LTA0IGF0IDEwOjA0ICswMjAwLCBNYXJ0aW4gV2lsY2sg
-d3JvdGU6Cj4gT24gVHVlLCAyMDE4LTA0LTAzIGF0IDE2OjI5IC0wNTAwLCBCZW5qYW1pbiBNYXJ6
-aW5za2kgd3JvdGU6Cgo+ID4gPiBJIGJlbGlldmUgdGhhdCBpZiBUR1BTIGlzIDAsIHRoZSBkZXZp
-Y2Ugd2lsbCBuZXZlciBiZSBhYmxlIHRvCj4gPiA+IHN1cHBvcnQKPiA+ID4gQUxVQS4gVGhlIGtl
-cm5lbCBhbHNvIGxvb2tzIGF0IHRoZSBUUEdTIGJpdHMgYW5kIHdvbid0IHRyeSBBTFVBCj4gPiA+
-IGlmCj4gPiA+IHRoZXkKPiA+ID4gYXJlIHVuc2V0LiBPbmNlIHRoZSBkZXZpY2UgaXMgY29uZmln
-dXJlZCBhbmQgYWN0dWFsIEFMVUEKPiA+ID4gUlRQRy9TVFBHCj4gPiA+IGNhbGxzIGFyZSBwZXJm
-b3JtZWQsIHRoZXkgbWF5IGZhaWwgZm9yIGEgdmFyaWV0eSBvZiB0ZW1wb3JhcnkKPiA+ID4gcmVh
-c29ucyAtCj4gPiA+IEkgd2FudGVkIHRvIGF2b2lkIHJlc2V0dGluZyB0aGUgcHJpbyBhbGdvcml0
-aG0gdG8gImNvbnN0IiBmb3IKPiA+ID4gc3VjaAo+ID4gPiBjYXNlcy4gVGhhdCdzIG15IHVuZGVy
-c3RhbmRpbmcsIGNvcnJlY3QgbWUgaWYgSSdtIHdyb25nLgo+ID4gCj4gPiBEZXZpY2VzIHRoYXQg
-d2VyZSBub3QgY29ycmVjdGx5IHN1cHBvcmluZyBBTFVBIHJldHVybmVkID4gMCBmb3IKPiA+IGdl
-dF90YXJnZXRfcG9ydF9ncm91cF9zdXBwb3J0LCBzbyBkZXRlY3RfYWx1YSBhY3R1YWxseSBkb2Vz
-IGFsbCB0aGUKPiA+IHdvcmsKPiA+IG5lY2Vzc2FyeSB0byB2ZXJpZnkgdGhhdCBpdCBjYW4gZ2V0
-IGEgcHJpb3JpdHkuIFdpdGhvdXQgZG9pbmcgdGhpcywKPiA+IG11bHRpcGxlIGRldmllY3MgdGhh
-dCBkaWRuJ3Qgc3VwcG9ydCBBTFVBIHdlcmUgYmVpbmcgZGV0ZWN0ZWQgYXMKPiA+IHN1cHBvcnRp
-bmcgQUxVQS4KPiAKPiBTbywgZGV0ZWN0X2FsdWEoKSB0ZXN0cyBUUEdTICphbmQqIHRyaWVzIGFu
-ZCBhY3R1YWwgYWx1YSBjYWxsLCBhbmQKPiBzZXRzCj4gcHAtPnRwZ3MgdG8gYW55dGhpbmcgb3Ro
-ZXIgdGhhbiBUUEdTX05PTkUgb25seSBpZiB0aGUgbGF0dGVyIGlzCj4gc3VjY2Vzc2Z1bC4gVGhh
-dCdzIGZpbmUuIE15IHBhdGNoIHdhcyBsb29raW5nIGF0IHBwLT50cGdzLCBzbyBpdCB3YXMKPiBp
-bXBsaWNpdGx5IHVzaW5nIHRoaXMgbG9naWMgb2YgZGV0ZWN0X2FsdWEoKS4gQnV0IGRvZXMgdGhh
-dCBndWFyYW50ZWUKPiB0aGF0IGZ1dHVyZSBhbHVhLT5nZXRwcmlvKCkgY2FsbHMgd2lsbCBuZXZl
-ciBmYWlsIGF0IHNvbWUgbGF0ZXIgcG9pbnQKPiBpbiB0aW1lPwo+IAo+IE1heWJlIEkgbWlzdW5k
-ZXJzdG9vZCB5b3VyIG9yaWdpbmFsIHByb3Bvc2l0aW9uLiBXaGF0IEknbSBzYXlpbmcgaXMKPiB0
-aGF0IHJlc2V0dGluZyB0aGUgcHJpbyBhbGdvcml0aG0gZnJvbSAiYWx1YSIgdG8gImNvbnN0IiBi
-ZWNhdXNlIG9mCj4gYW4KPiBlcnJvciBjb2RlIGluIGdldF9wcmlvKCkgaXMgd3JvbmcsIGJlY2F1
-c2UgdGhhdCBlcnJvciBjb2RlIG1heSBiZQo+IHRyYW5zaWVudC4KPiAKPiBJZiB3ZSBnaXZlICJo
-YXJkd2FyZV9oYW5kbGVyIiBjb25maWcgb3B0aW9ucyBwcmVmZXJlbmNlIG92ZXIgQUxVQQo+IGF1
-dG9kZXRlY3Rpb24sIGFuZCB0aHVzIGVuZm9yY2UgaHdoYW5kbGVyICIxIGFsdWEiIG9uIHN1Y2gg
-ZGV2aWNlcwo+IHRoYXQKPiBoYXZlIG5vIEFMVUEgc3VwcG9ydCwgZG9tYXAoKSBpcyBndWFyYW50
-ZWVkIHRvIGZhaWwsIGJlY2F1c2UgdGhlCj4ga2VybmVsCj4gcmVmdXNlcyB0byBzZXQgdXAgYSBt
-YXAgd2l0aCBhIGdpdmVuIGh3aGFuZGxlciBpZiBhbnkgZGV2aWNlIGRvZXNuJ3QKPiBzdXBwb3J0
-IHRoYXQgaGFuZGxlci4KPiAKPiA+IEJ5IHVzaW5nIHJldGFpbl9hdHRhY2hlZF9od2hhbmRsZXIg
-YXQgYWxsLCB3ZSBhcmUgaW1wbGljaXRseQo+ID4gcmVxdWlyaW5nCj4gPiB0aGUgc2NzaV9kaF9h
-bHVhIG1vZHVsZSB0byBiZSBsb2FkZWQgYmVmb3JlIGRldmljZXMgd2l0aAo+ID4gaW5kZXRlcm1p
-bmF0ZQo+ID4gY29uZmlndXJhdGlvbnMgYXJlIGRpc2NvdmVyZWQgZm9yIHRoZW0gdG8gd29yayBj
-b3JyZWN0bHkuIHJpZ2h0Pwo+ID4gRm9yCj4gPiBpbnN0YW5jZSwgY29tbWl0IDcxNWM0OGQ5M2Rk
-MDA5MzA1MzRjZTZhNTVkMGUzNzA1NDY2ZGY1ZDYgZGlkIHRoaXMKPiA+IGZvcgo+ID4gbmV0YXBw
-IGRldmljZXMsIGFuZCB0aGF0IHdhcyBpbiAyMDEzLiBJIGRvbid0IHNlZSBob3cgdGhpcyBpcwo+
-ID4gZGlmZmVyZW50Lgo+IAo+IFlvdSdyZSByaWdodCwgd2UgYXJlICJpbXBsaWNpdGx5IHJlcXVp
-cmluZyIgdGhpcyBzb3J0LW9mLCBidXQgd2UgaGF2ZQo+IG5vIGNvZGUgdGhhdCBlbmZvcmNlcyB0
-aGUgZWFybHkgbG9hZGluZyBvZiB0aGUgZGV2aWNlIGhhbmRsZXJzLiBXZQo+IHNob3VsZCBiZSBz
-aGlwcGluZyBhIG1vZHVsZXMtbG9hZC5kIGZpbGUsIG9yIGEgbW9kcHJvYmUuZCBzb2Z0ZGVwLCBv
-cgo+IHNvbWV0aGluZyBzaW1pbGFyIHRoYXQgd291bGQgZW5mb3JjZSB0aGlzIHNldHRpbmcgaWYg
-d2UgX3JlYWxseV8KPiBkZXBlbmQKPiBvbiBpdC4gIkltcGxpY2l0IHJlcXVpcmVtZW50cyIgYXJl
-IGJhZC4gV2Ugc2hvdWxkIGVpdGhlciBtYWtlIHRoZQo+IHJlcXVpcmVtZW50IGV4cGxpY2l0LCBv
-ciBub3QgaGFyZC1kZXBlbmQgb24gaXQuIFNvIGZhciBJIHdhcyB0aGlua2luZwo+IHRoZSBsYXR0
-ZXIuIEFmdGVyIGFsbCwgU0NTSSBkZXZpY2UtaGFuZGxlciBzdXBwb3J0IGlzIGNvbmZpZ3VyYWJs
-ZSBpbgo+IHRoZSBrZXJuZWwuCgpJJ20gdW5zdXJlIHdoYXQgdG8gZG8uIERvIHlvdSBzdGlsbCBy
-ZWplY3QgbXkgcGF0Y2g/IE9yIGhhdmUgeW91IGJlZW4KY29udmluY2VkIGJ5IEhhbm5lcyBhbmQg
-bXkgYXJndW1lbnRzPyAKT3IgYXJlIHlvdSByZXF1ZXN0aW5nIGNoYW5nZXM/IElmIHllcywgd2hh
-dD8gCgpSZWdhcmRzLApNYXJ0aW4KCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5j
-b20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxp
-eCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChB
-RyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNv
-bQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: DM ML <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ kpartx/gpt.h | 19 -------------------
+ 1 file changed, 19 deletions(-)
+
+diff --git a/kpartx/gpt.h b/kpartx/gpt.h
+index 66ce8f1..7bb54b7 100644
+--- a/kpartx/gpt.h
++++ b/kpartx/gpt.h
+@@ -109,22 +109,3 @@ int read_gpt_pt (int fd, struct slice all, struct slice *sp, int ns);
+ 
+ 
+ #endif
+-
+-/*
+- * Overrides for Emacs so that we follow Linus's tabbing style.
+- * Emacs will notice this stuff at the end of the file and automatically
+- * adjust the settings for this buffer only.  This must remain at the end
+- * of the file.
+- * ---------------------------------------------------------------------------
+- * Local variables:
+- * c-indent-level: 4
+- * c-brace-imaginary-offset: 0
+- * c-brace-offset: -4
+- * c-argdecl-indent: 4
+- * c-label-offset: -4
+- * c-continued-statement-offset: 4
+- * c-continued-brace-offset: 0
+- * indent-tabs-mode: nil
+- * tab-width: 8
+- * End:
+- */
+-- 
+2.17.0
