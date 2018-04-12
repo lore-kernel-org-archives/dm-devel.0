@@ -1,16 +1,16 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH v4 16/20] multipath -u : set
- FIND_MULTIPATHS_WAIT_UNTIL from /dev/shm
-Date: Thu, 12 Apr 2018 13:36:39 -0500
-Message-ID: <20180412183639.GR3103@octiron.msp.redhat.com>
+Subject: Re: [PATCH v4 18/20] multipath -u: quick check if path
+	is multipathed
+Date: Thu, 12 Apr 2018 13:46:18 -0500
+Message-ID: <20180412184618.GT3103@octiron.msp.redhat.com>
 References: <20180404161627.6244-1-mwilck@suse.com>
-	<20180404161627.6244-17-mwilck@suse.com>
+	<20180404161627.6244-19-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20180404161627.6244-17-mwilck@suse.com>
+In-Reply-To: <20180404161627.6244-19-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,231 +24,165 @@ To: Martin Wilck <mwilck@suse.com>
 Cc: dm-devel@redhat.com, Julian Andres Klode <julian.klode@canonical.com>
 List-Id: dm-devel.ids
 
-On Wed, Apr 04, 2018 at 06:16:23PM +0200, Martin Wilck wrote:
-> In "find_multipaths smart" mode, use time stamps under
-> /dev/shm/multipath/find_multipaths to track waiting for multipath
-> siblings. When a path is first encountered and is "maybe" multipath, create a
-> file under /dev/shm, set its modification time to the expiry time of the
-> timer, and set the FIND_MULTIPATHS_WAIT_UNTIL variable. On later calls, also set
-> FIND_MULTIPATHS_WAIT_UNTIL to the expiry time (but don't change the time
-> stamp) if it's not expired yet, or 0 if it is expired. Set
-> FIND_MULTIPATHS_WAIT_UNTIL even if enough evidence becomes available to decide
-> if the path needs to be multipathed - this enables the udev rules to detect
-> that this is a device a timer has been started for, and stop it. By using
-> /dev/shm, we share information about "smart" timers between initrd and root
-> file system, and thus only calculate the timeout once.
+On Wed, Apr 04, 2018 at 06:16:25PM +0200, Martin Wilck wrote:
+> With "find_multipaths smart", we accept paths as valid if they are
+> already part of a multipath map. This patch avoids doing a full path
+> and device-mapper map scan for this case, speeding up "multipath -u"
+> considerably.
+
+I feel like this supports my idea from 17/20. I really think that in
+smart mode, the only time we should be claiming a device as multipath is
+on an add event, if it has always been claimed (or pretend claimed) as a
+multipath path, or if it is currently a multipath path. Once we have let
+a uevent go by for a path without setting SYSTEMD_READY=0, anything else
+is free to use it, and we simply can't safely set SYSTEMD_READY=0,
+unless we know that multipathd has already grabbed the device. I feel
+like checking the wwids file should give you confidence that a device
+either currently is a multipath path, or has always been claimed as one.
+However, this patch can fix any loop holes where a device isn't in the
+wwids file, but it multipathed (I don't know of any offhand).
+
+-Ben
+
+
 > 
 > Signed-off-by: Martin Wilck <mwilck@suse.com>
 > ---
->  libmultipath/file.c |   2 +-
->  libmultipath/file.h |   1 +
->  multipath/main.c    | 133 ++++++++++++++++++++++++++++++++++++++++++++++++++++
->  3 files changed, 135 insertions(+), 1 deletion(-)
+>  libmultipath/sysfs.c | 66 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+>  libmultipath/sysfs.h |  2 ++
+>  multipath/main.c     | 14 ++++++++++-
+>  3 files changed, 81 insertions(+), 1 deletion(-)
 > 
-> diff --git a/libmultipath/file.c b/libmultipath/file.c
-> index d5165ec..8727f16 100644
-> --- a/libmultipath/file.c
-> +++ b/libmultipath/file.c
-> @@ -36,7 +36,7 @@
->   * See the file COPYING included with this distribution for more details.
->   */
->  
-> -static int
-> +int
->  ensure_directories_exist(const char *str, mode_t dir_mode)
->  {
->  	char *pathname;
-> diff --git a/libmultipath/file.h b/libmultipath/file.h
-> index 70bffa5..29520c7 100644
-> --- a/libmultipath/file.h
-> +++ b/libmultipath/file.h
-> @@ -6,6 +6,7 @@
->  #define _FILE_H
->  
->  #define FILE_TIMEOUT 30
-> +int ensure_directories_exist(const char *str, mode_t dir_mode);
->  int open_file(const char *file, int *can_write, const char *header);
->  
->  #endif /* _FILE_H */
-> diff --git a/multipath/main.c b/multipath/main.c
-> index f62e18a..126f90f 100644
-> --- a/multipath/main.c
-> +++ b/multipath/main.c
-> @@ -29,6 +29,7 @@
->  #include <ctype.h>
+> diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
+> index 97e0997..589eeaf 100644
+> --- a/libmultipath/sysfs.c
+> +++ b/libmultipath/sysfs.c
+> @@ -27,6 +27,7 @@
+>  #include <string.h>
+>  #include <dirent.h>
 >  #include <libudev.h>
->  #include <syslog.h>
-> +#include <fcntl.h>
+> +#include <fnmatch.h>
 >  
 >  #include "checkers.h"
->  #include "prio.h"
-> @@ -60,6 +61,9 @@
->  #include "uxsock.h"
->  #include "mpath_cmd.h"
->  #include "foreign.h"
-> +#include "propsel.h"
-> +#include "time-util.h"
-> +#include "file.h"
+>  #include "vector.h"
+> @@ -287,3 +288,68 @@ int sysfs_check_holders(char * check_devt, char * new_devt)
 >  
->  int logsink;
->  struct udev *udev;
-> @@ -350,14 +354,143 @@ out:
->  	return r;
+>  	return 0;
 >  }
->  
-> +enum {
-> +	FIND_MULTIPATHS_WAIT_DONE = 0,
-> +	FIND_MULTIPATHS_WAITING = 1,
-> +	FIND_MULTIPATHS_ERROR = -1,
-> +	FIND_MULTIPATHS_NEVER = -2,
-> +};
 > +
-> +static const char shm_find_mp_dir[] = MULTIPATH_SHM_BASE "find_multipaths";
-> +static void close_fd(void* arg)
+> +static int select_dm_devs(const struct dirent *di)
+> +{
+> +	return fnmatch("dm-*", di->d_name, FNM_FILE_NAME) == 0;
+> +}
+> +
+> +static void close_fd(void *arg)
 > +{
 > +	close((long)arg);
 > +}
 > +
-> +/**
-> + * find_multipaths_check_timeout(wwid, tmo)
-> + * Helper for "find_multipaths smart"
-> + *
-> + * @param[in] pp: path to check / record
-> + * @param[in] tmo: configured timeout for this WWID, or value <= 0 for checking
-> + * @param[out] until: timestamp until we must wait, CLOCK_REALTIME, if return
-> + *             value is FIND_MULTIPATHS_WAITING
-> + * @returns: FIND_MULTIPATHS_WAIT_DONE, if waiting has finished
-> + * @returns: FIND_MULTIPATHS_ERROR, if internal error occured
-> + * @returns: FIND_MULTIPATHS_NEVER, if tmo is 0 and we didn't wait for this
-> + *           device
-> + * @returns: FIND_MULTIPATHS_WAITING, if timeout hasn't expired
-> + */
-> +static int find_multipaths_check_timeout(const struct path *pp, long tmo,
-> +					 struct timespec *until)
+> +bool sysfs_is_multipathed(const struct path *pp)
 > +{
-> +	char path[PATH_MAX];
-> +	struct timespec now, ftimes[2], tdiff;
-> +	struct stat st;
-> +	long fd;
-> +	int r, err, retries = 0;
+> +	char pathbuf[PATH_MAX];
+> +	struct dirent **di;
+> +	int n, r, i;
+> +	bool found = false;
 > +
-> +	clock_gettime(CLOCK_REALTIME, &now);
+> +	n = snprintf(pathbuf, sizeof(pathbuf), "/sys/block/%s/holders",
+> +		     pp->dev);
 > +
-
-I'm worried about using pp->dev_t here with no method of removing these
-files.  What happens when a path device, say 8:32 is removed and a
-completely new device comes in reusing the same dev_t?
-
-> +	if (snprintf(path, sizeof(path), "%s/%s", shm_find_mp_dir, pp->dev_t)
-> +	    >= sizeof(path)) {
-> +		condlog(1, "%s: path name overflow", __func__);
-
-shouldn't this be:
-		return FIND_MULTIPATHS_ERROR;
-
-> +		return -1;
+> +	if (n >= sizeof(pathbuf)) {
+> +		condlog(1, "%s: pathname overflow", __func__);
+> +		return false;
 > +	}
 > +
-> +	if (ensure_directories_exist(path, 0700)) {
-> +		condlog(1, "%s: error creating directories", __func__);
-> +		return FIND_MULTIPATHS_ERROR;
+> +	r = scandir(pathbuf, &di, select_dm_devs, alphasort);
+> +	if (r == 0)
+> +		return false;
+> +	else if (r < 0) {
+> +		condlog(1, "%s: error scanning %s", __func__, pathbuf);
+> +		return false;
 > +	}
 > +
-> +retry:
-> +	fd = open(path, O_RDONLY);
-> +	if (fd != -1) {
-> +		pthread_cleanup_push(close_fd, (void*)fd);
-> +		r = fstat(fd, &st);
-> +		if (r != 0)
-> +			err = errno;
-> +		pthread_cleanup_pop(1);
+> +	pthread_cleanup_push(free, di);
+> +	for (i = 0; i < r && !found; i++) {
+> +		long fd;
+> +		int nr;
+> +		char uuid[6];
 > +
-> +	} else if (tmo > 0) {
-> +		if (errno == ENOENT)
-> +			fd = open(path, O_RDWR|O_EXCL|O_CREAT, 0644);
+> +		if (snprintf(pathbuf + n, sizeof(pathbuf) - n,
+> +			     "/%s/dm/uuid", di[i]->d_name)
+> +		    >= sizeof(pathbuf) - n)
+> +			continue;
+> +
+> +		fd = open(pathbuf, O_RDONLY);
 > +		if (fd == -1) {
-> +			if (errno == EEXIST && !retries++)
-> +				/* We could have raced with another process */
-> +				goto retry;
-> +			condlog(1, "%s: error opening %s: %s",
-> +				__func__, path, strerror(errno));
-> +			return FIND_MULTIPATHS_ERROR;
-> +		};
+> +			condlog(1, "%s: error opening %s", __func__, pathbuf);
+> +			continue;
+> +		}
 > +
 > +		pthread_cleanup_push(close_fd, (void*)fd);
-> +		/*
-> +		 * We just created the file. Set st_mtim to our desired
-> +		 * expiry time.
-> +		 */
-> +		ftimes[0].tv_sec = 0;
-> +		ftimes[0].tv_nsec = UTIME_OMIT;
-> +		ftimes[1].tv_sec = now.tv_sec + tmo;
-> +		ftimes[1].tv_nsec = now.tv_nsec;
-> +		if (futimens(fd, ftimes) != 0) {
-> +			condlog(1, "%s: error in futimens(%s): %s", __func__,
-> +				path, strerror(errno));
+> +		nr = read(fd, uuid, sizeof(uuid));
+> +		if (nr == sizeof(uuid) && !memcmp(uuid, "mpath-", sizeof(uuid)))
+> +			found = true;
+> +		else if (nr < 0) {
+> +			condlog(1, "%s: error reading from %s: %s",
+> +				__func__, pathbuf, strerror(errno));
 > +		}
-> +		r = fstat(fd, &st);
-> +		if (r != 0)
-> +			err = errno;
 > +		pthread_cleanup_pop(1);
-> +	} else
-> +		return FIND_MULTIPATHS_NEVER;
-> +
-> +	if (r != 0) {
-> +		condlog(1, "%s: error in fstat for %s: %s", __func__,
-> +			path, strerror(err));
-> +		return FIND_MULTIPATHS_ERROR;
 > +	}
+> +	pthread_cleanup_pop(1);
 > +
-> +	timespecsub(&st.st_mtim, &now, &tdiff);
-> +
-> +	if (tdiff.tv_sec <= 0)
-> +		return FIND_MULTIPATHS_WAIT_DONE;
-> +	else {
-> +		*until = tdiff;
-> +		return FIND_MULTIPATHS_WAITING;
-> +	}
+> +	return found;
 > +}
-> +
->  static int print_cmd_valid(int k, const vector pathvec,
->  			   struct config *conf)
->  {
->  	static const int vals[] = { 1, 0, 2 };
-> +	int wait = FIND_MULTIPATHS_NEVER;
-> +	struct timespec until;
-> +	struct path *pp;
+> diff --git a/libmultipath/sysfs.h b/libmultipath/sysfs.h
+> index 75c0f9c..9ae30b3 100644
+> --- a/libmultipath/sysfs.h
+> +++ b/libmultipath/sysfs.h
+> @@ -4,6 +4,7 @@
 >  
->  	if (k < 0 || k >= sizeof(vals))
->  		return 1;
+>  #ifndef _LIBMULTIPATH_SYSFS_H
+>  #define _LIBMULTIPATH_SYSFS_H
+> +#include <stdbool.h>
 >  
-> +	if (k == 2) {
-> +		/*
-> +		 * Caller ensures that pathvec[0] is the path to
-> +		 * examine.
-> +		 */
-> +		pp = VECTOR_SLOT(pathvec, 0);
-> +		select_find_multipaths_timeout(conf, pp);
-> +		wait = find_multipaths_check_timeout(
-> +			pp, pp->find_multipaths_timeout, &until);
-> +		if (wait != FIND_MULTIPATHS_WAITING)
-> +			k = 1;
-> +	} else if (pathvec != NULL) {
-> +		pp = VECTOR_SLOT(pathvec, 0);
-> +		wait = find_multipaths_check_timeout(pp, 0, &until);
-> +	}
-> +	if (wait == FIND_MULTIPATHS_WAITING)
-> +		printf("FIND_MULTIPATHS_WAIT_UNTIL=\"%ld.%06ld\"\n",
-> +			       until.tv_sec, until.tv_nsec/1000);
-> +	else if (wait == FIND_MULTIPATHS_WAIT_DONE)
-> +		printf("FIND_MULTIPATHS_WAIT_UNTIL=\"0\"\n");
-
-If we get an error trying to check the timeout, should we just keep
-FIND_MULTIPATHS_WAIT_UNTIL the same? Or would it be better to set it to
-0, and fail the smart claiming?
-
->  	printf("DM_MULTIPATH_DEVICE_PATH=\"%d\"\n", vals[k]);
->  	return k == 1;
->  }
+>  ssize_t sysfs_attr_set_value(struct udev_device *dev, const char *attr_name,
+>  			     const char * value, size_t value_len);
+> @@ -13,4 +14,5 @@ ssize_t sysfs_bin_attr_get_value(struct udev_device *dev, const char *attr_name,
+>  				 unsigned char * value, size_t value_len);
+>  int sysfs_get_size (struct path *pp, unsigned long long * size);
+>  int sysfs_check_holders(char * check_devt, char * new_devt);
+> +bool sysfs_is_multipathed(const struct path *pp);
+>  #endif
+> diff --git a/multipath/main.c b/multipath/main.c
+> index a60a5f3..ae46e5a 100644
+> --- a/multipath/main.c
+> +++ b/multipath/main.c
+> @@ -595,6 +595,15 @@ configure (struct config *conf, enum mpath_cmds cmd,
+>  			    !ignore_wwids_on(conf)) {
+>  				goto print_valid;
+>  			}
+> +			/*
+> +			 * Shortcut for find_multipaths smart:
+> +			 * Quick check if path is already multipathed.
+> +			 */
+> +			if (ignore_wwids_on(conf) &&
+> +			    sysfs_is_multipathed(VECTOR_SLOT(pathvec, 0))) {
+> +				r = 0;
+> +				goto print_valid;
+> +			}
+>  		}
+>  	}
+>  
+> @@ -667,7 +676,10 @@ configure (struct config *conf, enum mpath_cmds cmd,
+>  			condlog(3, "%s: path %s is in use: %s",
+>  				__func__, pp->dev,
+>  				strerror(errno));
+> -			r = 1;
+> +			/*
+> +			 * Check if we raced with multipathd
+> +			 */
+> +			r = !sysfs_is_multipathed(VECTOR_SLOT(pathvec, 0));
+>  		}
+>  		goto print_valid;
+>  	}
 > -- 
 > 2.16.1
