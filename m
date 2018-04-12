@@ -1,18 +1,16 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH v4 09/20] libmultipath: functions to indicate
- mapping failure in /dev/shm
-Date: Thu, 12 Apr 2018 16:27:23 -0500
-Message-ID: <20180412212723.GZ3103@octiron.msp.redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH v4 19/20] libmultipath: enable
+	find_multipaths "smart"
+Date: Fri, 13 Apr 2018 00:27:29 +0200
+Message-ID: <1523572049.4346.114.camel@suse.com>
 References: <20180404161627.6244-1-mwilck@suse.com>
-	<20180404161627.6244-10-mwilck@suse.com>
-	<20180412183302.GL3103@octiron.msp.redhat.com>
-	<1523563633.4346.25.camel@suse.com>
+	<20180404161627.6244-20-mwilck@suse.com>
+	<20180412184709.GU3103@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1523563633.4346.25.camel@suse.com>
+In-Reply-To: <20180412184709.GU3103@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,61 +20,54 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@redhat.com, Julian Andres Klode <julian.klode@canonical.com>
 List-Id: dm-devel.ids
 
-On Thu, Apr 12, 2018 at 10:07:13PM +0200, Martin Wilck wrote:
-> On Thu, 2018-04-12 at 13:33 -0500, Benjamin Marzinski wrote:
-> > On Wed, Apr 04, 2018 at 06:16:16PM +0200, Martin Wilck wrote:
-> > > Create a simple API that indicates failure to create a map for a
-> > > certain WWID. This will allow multipathd to indicate to other tools
-> > > (in particular, "multipath -u" during udev processing) that
-> > > an attempt to create a map for a certain wwid failed.
-> > > =
-
-> > > The indicator is simply the existence of a file under
-> > > /dev/shm/multipath/failed_wwids.
-> > =
-
-> > I'm a little confused about the necessity of a lock file here.  What
-> > it
-> > the race that you are worried about? If two processes try to create a
-> > file at the same time, surely one of them will succeed. If two
-> > processes
-> > try to delete a file at the same time, it will get deleted.  If one
-> > process is trying to create a file and one is trying to remove it,
-> > the
-> > outcome depends on the who wins the race. But this is true whether
-> > you
-> > add a lock file to make those actions atomic or not. The same goes
-> > with
-> > stating a file that's being created or removed. As far a I can tell,
-> > this should work if you simply create an empty file without any
-> > locking.
-> > Are you worried about some odd errno due to a race?
-> =
-
-> My thinking was that it's generally a good thing to make file system
-> operations like this atomic, and the well-tested and mature open_file()
-> API was there ready to be used, thus I did.
-> =
-
-> You're probably right that the locking not strictly necessary. I don't
-> think it hurts, performance-wise the impact is quite low.
-> Do you require me to change this, or can we change it later?
-
-That's fine. I don't see how it can hurt.
-
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
-
-> =
-
-> Martin
-> =
-
-> -- =
-
-> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-> SUSE Linux GmbH, GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
-> HRB 21284 (AG N=FCrnberg)
+T24gVGh1LCAyMDE4LTA0LTEyIGF0IDEzOjQ3IC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cj4gT24gV2VkLCBBcHIgMDQsIDIwMTggYXQgMDY6MTY6MjZQTSArMDIwMCwgTWFydGluIFdp
+bGNrIHdyb3RlOgo+ID4gVGhpcyBhY3RpdmF0ZXMgInNtYXJ0IiBwYXRoIGRldGVjdGlvbi4gVGhp
+cyBpcyBzaW1pbGFyIHRvCj4gPiAiZmluZF9tdWx0aXBhdGhzIHllcyIsIGJ1dCBkb2Vzbid0IGdl
+bmVyYWxseSBpZ25vcmUgc2luZ2xlIHBhdGhzCj4gPiB0aGF0IGFyZSBub3QgbGlzdGVkIGluIHRo
+ZSBXV0lEcyBmaWxlLiBSYXRoZXIsIHN1Y2ggcGF0aHMgYXJlCj4gPiB0ZW1wb3JhcmlseSB0cmVh
+dGVkIGxpa2UgbXVsdGlwYXRoIG1lbWJlcnMuIElmIG5vIGFkZGl0aW9uYWwgcGF0aHMKPiA+IGFy
+ZSBkZXRlY3RlZCBhZnRlciBhIGNlcnRhaW4gdGltZSwgdGhlIHBhdGhzIGFyZSByZS1hZGRlZCB0
+byB0aGUKPiA+IHN5c3RlbSBhcyBub24tbXVsdGlwYXRoLiBUaGlzIG5lZWRzIHN1cHBvcnQgYnkg
+dGhlIHVkZXYgcnVsZXMsIHRvCj4gPiBiZSBhZGRlZCBpbiBhIGZvbGxvdy11cCBwYXRjaC4KPiA+
+IAo+ID4gSWYgYSBtdWx0aXBhdGggbWFwIGlzIHN1Y2Nlc3NmdWxseSBzdWNjZXNzZnVsbHkgY3Jl
+YXRlZCwgYW5kIHBhdGhzCj4gPiBhcmUKPiA+IGluIHdhaXRpbmcgc3RhdGUsIHRyaWdnZXIgcGF0
+aCB1ZXZlbnRzIHRvIHVwZGF0ZSB0aGVpciBzdGF0dXMuCj4gPiAKPiA+IFNpZ25lZC1vZmYtYnk6
+IE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPgo+ID4gLS0tCj4gPiAgbGlibXVsdGlwYXRo
+L2NvbmZpZ3VyZS5jICAgfCAxNSArKysrKysrKysrKystLS0KPiA+ICBsaWJtdWx0aXBhdGgvZGlj
+dC5jICAgICAgICB8ICAxICsKPiA+ICBtdWx0aXBhdGgvbXVsdGlwYXRoLmNvbmYuNSB8IDEzICsr
+KysrKysrKysrKysKPiA+ICAzIGZpbGVzIGNoYW5nZWQsIDI2IGluc2VydGlvbnMoKyksIDMgZGVs
+ZXRpb25zKC0pCj4gPiAKPiA+IGRpZmYgLS1naXQgYS9saWJtdWx0aXBhdGgvY29uZmlndXJlLmMg
+Yi9saWJtdWx0aXBhdGgvY29uZmlndXJlLmMKPiA+IGluZGV4IDlhYTNkMjEuLjE3YzJmYTEgMTAw
+NjQ0Cj4gPiAtLS0gYS9saWJtdWx0aXBhdGgvY29uZmlndXJlLmMKPiA+ICsrKyBiL2xpYm11bHRp
+cGF0aC9jb25maWd1cmUuYwo+ID4gQEAgLTEyLDYgKzEyLDcgQEAKPiA+ICAjaW5jbHVkZSA8c3Ry
+aW5nLmg+Cj4gPiAgI2luY2x1ZGUgPHN5cy9maWxlLmg+Cj4gPiAgI2luY2x1ZGUgPGVycm5vLmg+
+Cj4gPiArI2luY2x1ZGUgPGN0eXBlLmg+Cj4gPiAgI2luY2x1ZGUgPGxpYmRldm1hcHBlci5oPgo+
+ID4gICNpbmNsdWRlIDxsaWJ1ZGV2Lmg+Cj4gPiAgI2luY2x1ZGUgIm1wYXRoX2NtZC5oIgo+ID4g
+QEAgLTQ3Niw5ICs0NzcsMTcgQEAgdHJpZ2dlcl9wYXRoc191ZGV2X2NoYW5nZShzdHJ1Y3QgbXVs
+dGlwYXRoCj4gPiAqbXBwLCBib29sIGlzX21wYXRoKQo+ID4gIAkJCWVudiA9IHVkZXZfZGV2aWNl
+X2dldF9wcm9wZXJ0eV92YWx1ZSgKPiA+ICAJCQkJcHAtPnVkZXYsCj4gPiAiRE1fTVVMVElQQVRI
+X0RFVklDRV9QQVRIIik7Cj4gPiAgCj4gPiAtCQkJaWYgKGlzX21wYXRoICYmIGVudiAhPSBOVUxM
+ICYmCj4gPiAhc3RyY21wKGVudiwgIjEiKSkKPiA+IC0JCQkJY29udGludWU7Cj4gPiAtCQkJZWxz
+ZSBpZiAoIWlzX21wYXRoICYmCj4gCj4gSWYgRE1fTVVMVElQQVRIX0RFVklDRV9QQVRIPTEgdGhl
+biB0aGVyZSBoYXMgYWxyZWFkeSBiZWVuIGEgdWV2ZW50Cj4gd2hlcmUKPiB1ZGV2IHJlY29nbml6
+ZWQgdGhhdCB0aGUgZGV2aWNlIHNob3VsZCBiZSBjbGFpbWVkLiAgV291bGRuJ3QgdWRldgo+IGhh
+dmUKPiBzdG9wcGVkIHRoZSB0aW1lciB0aGVuPyAgSSBkb24ndCBzZWUgd2h5IHRoaXMgaXMgbmVj
+ZXNzYXJ5LgoKSSBzZXQgRE1fTVVMVElQQVRIX0RFVklDRV9QQVRIPTEgaW4gdGhlICJwcmV0ZW5k
+X21wYXRoIiBzZWN0aW9uCmluIG11bHRpcGF0aC5ydWxlcyBpbiB0aGUgIm1heWJlIiBjYXNlLiBU
+aGUgdmFsdWUKRE1fTVVMVElQQVRIX0RFVklDRV9QQVRIPTIgaXMgbmV2ZXIgcGFzc2VkIG9uIHRv
+IG90aGVyIHVkZXYgcnVsZXMsCmFuZCBuZXZlciBzZWVuIGJ5IG11bHRpcGF0aGQuCgpUaGUgcmVh
+c29uIEkgZGlkIHRoYXQgd2FzIHRoYXQgcnVsZXMgbWF5IGhhdmUgY2hlY2tzIGxpa2UKJ0RNX01V
+TFRJUEFUSF9ERVZJQ0VfUEFUSCE9IjEiLCAuLi4nIGFuZCBJIHdhbnRlZCB0byBhdm9pZCB0aGVz
+ZSB0byBiZQpydW4gaW4gdGhlICJtYXliZSIgY2FzZSwgd2hpY2gsIGZvciBhbGwgYWN0b3JzIGFi
+b3ZlIG11bHRpcGF0aCwgCnNob3VsZCBiZSB0ZW1wb3JhcmlseSB0cmVhdGVkIGxpa2UgInllcyIu
+CgpJIGhvcGUgdGhpcyBleHBsYWlucyBpdC4KCk1hcnRpbgoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sg
+PG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGludXgg
+R21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRv
+bgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1k
+ZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9k
+bS1kZXZlbA==
