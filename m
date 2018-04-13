@@ -1,14 +1,17 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH] libmultipath: Fix logic in should_multipath
-Date: Fri, 13 Apr 2018 12:28:53 -0500
-Message-ID: <20180413172853.GG3103@octiron.msp.redhat.com>
-References: <20180413172042.11820-1-mwilck@suse.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH v3 17/20] multipath -u: test if path is busy
+Date: Fri, 13 Apr 2018 19:57:03 +0200
+Message-ID: <1523642223.1518.9.camel@suse.com>
+References: <20180402195051.26854-1-mwilck@suse.com>
+	<20180402195051.26854-18-mwilck@suse.com>
+	<20180412184109.GS3103@octiron.msp.redhat.com>
+	<1523571474.4346.107.camel@suse.com>
+	<20180413155335.GC3103@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20180413172042.11820-1-mwilck@suse.com>
+In-Reply-To: <20180413155335.GC3103@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,36 +21,40 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: dm-devel@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@redhat.com, Julian Andres Klode <julian.klode@canonical.com>
 List-Id: dm-devel.ids
 
-On Fri, Apr 13, 2018 at 07:20:42PM +0200, Martin Wilck wrote:
-> Commit d3b71498 missed a negation.
-
-Oops. Thanks for the catch.
-
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
-
-> 
-> Fixes: d3b71498 "multipath: fix rcu thread cancellation hang"
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  libmultipath/wwids.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/libmultipath/wwids.c b/libmultipath/wwids.c
-> index 0ec9f25b..8c21b33f 100644
-> --- a/libmultipath/wwids.c
-> +++ b/libmultipath/wwids.c
-> @@ -284,7 +284,7 @@ should_multipath(struct path *pp1, vector pathvec)
->  	ignore_new_devs = conf->ignore_new_devs;
->  	find_multipaths = conf->find_multipaths;
->  	put_multipath_config(conf);
-> -	if (find_multipaths && !ignore_new_devs)
-> +	if (!find_multipaths && !ignore_new_devs)
->  		return 1;
->  
->  	condlog(4, "checking if %s should be multipathed", pp1->dev);
-> -- 
-> 2.16.1
+T24gRnJpLCAyMDE4LTA0LTEzIGF0IDEwOjUzIC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cj4gT24gRnJpLCBBcHIgMTMsIDIwMTggYXQgMTI6MTc6NTRBTSArMDIwMCwgTWFydGluIFdp
+bGNrIHdyb3RlOgo+ID4gCj4gPiBBcyBJIHNhaWQgYWxyZWFkeSwgSSBkb24ndCB1bmRlcnN0YW5k
+IHdoeSB5b3Ugc2F5IHRoYXQuCj4gPiAKPiA+IEkgY2FuIGFzc2VydCB0aGF0IGlmIGlzX2ZhaWxl
+ZF93d2lkKCkgcmV0dXJucyB0cnVlLCBtdWx0aXBhdGhkIGhhcwo+ID4gZGVmaW5pdGVseSB0cmll
+ZCBhbmQgZmFpbGVkIHNpbmNlIHRoZSBsYXN0IHJlYm9vdCwgYW5kIG5vIChvdGhlcgo+ID4gaW5z
+dGFuY2Ugb2YpIG11bHRpcGF0aGQgb3IgbXVsdGlwYXRoIGhhcyBzdWNjZWVkZWQgc2luY2UgdGhl
+bi4KPiA+IAo+ID4gSWYgaXNfZmFpbGVkX3d3aWQoKSByZXR1cm5zIGZhbHNlLCBpdCdzIHBvc3Np
+YmxlIHRoYXQgdGhlIG1hcAo+ID4gYWxyZWFkeQo+ID4gZXhpc3RzIChzZWUgcGF0Y2ggMTgpLCBv
+ciB0aGF0IHByZXZpb3VzL2N1cnJlbnQgaW5zdGFuY2VzIG9mCj4gPiBtdWx0aXBhdGhkCj4gPiBz
+aW1wbHkgZGlkbid0IHRyeSAtICB3ZSBoYXZlIHRvIGNoZWNrIGJ5IG90aGVyIG1lYW5zLgo+IAo+
+IEkgcHJvYmFibHkgc2hvdWxkbid0IGhhdmUgYnJvdWdodCB1cCBpc19mYWlsZWRfd3dpZCgpIHVw
+IGhlcmUgYXQgYWxsLgo+IEl0IGhhcyByZWFsbHkgbm90aGluZyB0byBkbyB3aXRoIG15IG1haW4g
+cG9pbnQuCj4gCj4gQnV0IGp1c3QgdG8gcmVoYXNoIHRoaXMgYWdhaW4sIHlvdSBkbyBhZ3JlZSB0
+aGF0IG11bHRpcGF0aGQgY2FuIGdldCBhCj4gdWV2ZW50IGZvciBmb3IgYSBwYXRoIGRldmljZSwg
+cmVjb2duaXplIHRoYXQgaXQgc2hvdWxkIGNyZWF0ZSBhCj4gbXVsdGlwYXRoIGRldmljZSBvbiBp
+dCwgYW5kIHRoZW4gZmFpbCBzb21ld2hlcmUgaW4gZXZfYWRkX3BhdGggYmVmb3JlCj4gaXQKPiBn
+ZXQgYXJvdW5kIHRvIGNhbGxpbmcgZG9tYXAsIHJpZ2h0PyBJZiB0aGlzIGhhcHBlbnMsIG11bHRp
+cGF0aGQgd29uJ3QKPiBhdXRvbWF0aWNhbGx5IHRyeSB0byBjcmVhdGUgdGhhdCBkZXZpY2UgYWdh
+aW4gdW50aWwgZWl0aGVyIGl0IGdldHMKPiBhbm90aGVyIGFkZCBldmVudCBmb3IgYSBwYXRoIGlu
+IHRoYXQgZGV2aWNlLCBvciBpdCBpcwo+IHJlY29uZmlndXJlZC4gIEluCj4gdGhpcyBjYXNlIHRo
+ZSBpc19mYWlsZWRfd3dpZCgpIHJlc3VsdCB3b3VsZCBtYWtlIGl0IHNlZW0gbGlrZQo+IG11bHRp
+cGF0aGQKPiBtaWdodCBzdGlsbCBiZSB3YWl0aW5nIHRvIGNyZWF0ZSB0aGlzIGRldmljZSwgd2hl
+biBpbiB0cnV0aCwgdGhhdAo+IHdvbid0Cj4gaGFwcGVuLgoKSSBhZ3JlZS4gKGlzX2ZhaWxlZF93
+d2lkKHJlZnd3aWQpICE9IFdXSURfSVNfRkFJTEVEKSBkb2Vzbid0IHJlYWxseQptZWFuIGEgbG90
+LCBpdCBoYXBwZW5zIGluIG1hbnkgZGlmZmVyZW50IHNpdHVhdGlvbnMuIEx1Y2tpbHkgd2UgdGVz
+dApvbmx5IGZvciAoaXNfZmFpbGVkX3d3aWQocmVmd3dpZCkgPT0gV1dJRF9JU19GQUlMRUQpLCB3
+aGljaCBpcyB3ZWxsLQpkZWZpbmVkLCBhbmQgbWFrZSBmdXJ0aGVyIGNoZWNrcyBvdGhlcndpc2Uu
+CgpSZWdhcmRzCk1hcnRpbgoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4s
+IFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IElt
+ZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7D
+vHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0
+dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
