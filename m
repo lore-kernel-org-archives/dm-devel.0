@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v5 04/22] multipath -u -i: respect entries in
-	WWIDs file
-Date: Fri, 13 Apr 2018 23:59:57 +0200
-Message-ID: <20180413220015.7032-5-mwilck@suse.com>
+Subject: [PATCH v5 01/22] Revert "multipath: ignore -i if
+	find_multipaths is set"
+Date: Fri, 13 Apr 2018 23:59:54 +0200
+Message-ID: <20180413220015.7032-2-mwilck@suse.com>
 References: <20180413220015.7032-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,51 +22,34 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Previously, if find_multipaths was set, devices listed in the WWIDs file
-weren't classified as multipath members by "multipath -u -i" unless they also
-met the "find_multipaths" criteria (at least two paths, or existing map with
-this WWID). Now we classify all paths in the WWIDs file as multipath members, too.
-
-The rationale for this patch is to match the logic that multipathd applies
-by default (i.e. without "-n").
+This reverts commit ffbb886a8a16cb063d669cd76a1e656fd3ec8c4b.
 
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipath/main.c | 19 +++++++++++--------
- 1 file changed, 11 insertions(+), 8 deletions(-)
+ multipath/main.c | 10 ----------
+ 1 file changed, 10 deletions(-)
 
 diff --git a/multipath/main.c b/multipath/main.c
-index d26c7444..ba837710 100644
+index d08c6881..d26c7444 100644
 --- a/multipath/main.c
 +++ b/multipath/main.c
-@@ -437,16 +437,19 @@ configure (struct config *conf, enum mpath_cmds cmd,
- 		 * set, you need to actually check if there are two available
- 		 * paths to determine if this path should be multipathed. To
- 		 * do this, we put off the check until after discovering all
--		 * the paths */
--		if (cmd == CMD_VALID_PATH &&
--		    (!conf->find_multipaths || !conf->ignore_wwids)) {
--			if (conf->ignore_wwids ||
-+		 * the paths.
-+		 * Paths listed in the wwids file are always considered valid.
-+		 */
-+		if (cmd == CMD_VALID_PATH) {
-+			if ((!conf->find_multipaths && conf->ignore_wwids) ||
- 			    check_wwids_file(refwwid, 0) == 0)
- 				r = 0;
--
--			printf("%s %s a valid multipath device path\n",
--			       devpath, r == 0 ? "is" : "is not");
--			goto out;
-+			if (r == 0 ||
-+			    !conf->find_multipaths || !conf->ignore_wwids) {
-+				printf("%s %s a valid multipath device path\n",
-+				       devpath, r == 0 ? "is" : "is not");
-+				goto out;
-+			}
+@@ -776,16 +776,6 @@ main (int argc, char *argv[])
  		}
  	}
  
+-	/*
+-	 * FIXME: new device detection with find_multipaths currently
+-	 * doesn't work reliably.
+-	 */
+-	if (cmd ==  CMD_VALID_PATH &&
+-	    conf->find_multipaths && conf->ignore_wwids) {
+-		condlog(2, "ignoring -i flag because find_multipath is set in multipath.conf");
+-		conf->ignore_wwids = 0;
+-	}
+-
+ 	if (getuid() != 0) {
+ 		fprintf(stderr, "need to be root\n");
+ 		exit(1);
 -- 
 2.16.1
