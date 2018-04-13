@@ -1,16 +1,14 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [PATCH ALT] multipath-tools: add licence info to
-	README
-Date: Fri, 13 Apr 2018 18:27:12 +0200
-Message-ID: <54f7a1a0-717d-40a1-7410-51e980f21420@gmail.com>
-References: <20180413161707.4739-1-xose.vazquez@gmail.com>
-	<b04dd922c74a879f1c4b6de16b3b827c536e9211.camel@wdc.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: [PATCH v5 03/22] libmultipath: should_multipath: keep
+	existing maps
+Date: Fri, 13 Apr 2018 23:59:56 +0200
+Message-ID: <20180413220015.7032-4-mwilck@suse.com>
+References: <20180413220015.7032-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <b04dd922c74a879f1c4b6de16b3b827c536e9211.camel@wdc.com>
-Content-Language: en-GB
+In-Reply-To: <20180413220015.7032-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,23 +18,100 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Bart Van Assche <Bart.VanAssche@wdc.com>
-Cc: "fge@redhat.com" <fge@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "mwilck@suse.com" <mwilck@suse.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-On 04/13/2018 06:18 PM, Bart Van Assche wrote:
+with find_multipaths "yes" and without the "-n" option to multipathd,
+if a path is already multipathed, keep it. The same logic is applied by
+"multipath -u -i".
 
-> On Fri, 2018-04-13 at 18:17 +0200, Xose Vazquez Perez wrote:
->> +Licence
-> 
-> Isn't the preferred spelling "License"?
+To do this, we need to add a "mpvec" parameter to should_multipath().
 
-https://en.oxforddictionaries.com/definition/licence
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ libmultipath/configure.c |  2 +-
+ libmultipath/wwids.c     | 12 +++++++++++-
+ libmultipath/wwids.h     |  2 +-
+ multipathd/main.c        |  2 +-
+ 4 files changed, 14 insertions(+), 4 deletions(-)
 
-licence
-(US license)
-
-Usage:
-Note that in British English licence is the correct spelling for the
-noun, and is also an acceptable variant spelling of the verb.
-In US English both noun and verb are spelled license.
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 51a45d4f..1cd575e4 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -987,7 +987,7 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
+ 			continue;
+ 
+ 		/* If find_multipaths was selected check if the path is valid */
+-		if (!refwwid && !should_multipath(pp1, pathvec)) {
++		if (!refwwid && !should_multipath(pp1, pathvec, curmp)) {
+ 			orphan_path(pp1, "only one path");
+ 			continue;
+ 		}
+diff --git a/libmultipath/wwids.c b/libmultipath/wwids.c
+index 8c21b33f..d0256c2c 100644
+--- a/libmultipath/wwids.c
++++ b/libmultipath/wwids.c
+@@ -15,6 +15,7 @@
+ #include "wwids.h"
+ #include "defaults.h"
+ #include "config.h"
++#include "devmapper.h"
+ 
+ /*
+  * Copyright (c) 2010 Benjamin Marzinski, Redhat
+@@ -274,7 +275,7 @@ out:
+ }
+ 
+ int
+-should_multipath(struct path *pp1, vector pathvec)
++should_multipath(struct path *pp1, vector pathvec, vector mpvec)
+ {
+ 	int i, ignore_new_devs, find_multipaths;
+ 	struct path *pp2;
+@@ -289,6 +290,15 @@ should_multipath(struct path *pp1, vector pathvec)
+ 
+ 	condlog(4, "checking if %s should be multipathed", pp1->dev);
+ 	if (!ignore_new_devs) {
++		char tmp_wwid[WWID_SIZE];
++		struct multipath *mp = find_mp_by_wwid(mpvec, pp1->wwid);
++
++		if (mp != NULL && dm_get_uuid(mp->alias, tmp_wwid) == 0 &&
++		    !strncmp(tmp_wwid, pp1->wwid, WWID_SIZE)) {
++			condlog(3, "wwid %s is already multipathed, keeping it",
++				pp1->wwid);
++			return 1;
++		}
+ 		vector_foreach_slot(pathvec, pp2, i) {
+ 			if (pp1->dev == pp2->dev)
+ 				continue;
+diff --git a/libmultipath/wwids.h b/libmultipath/wwids.h
+index 95270129..d9a78b38 100644
+--- a/libmultipath/wwids.h
++++ b/libmultipath/wwids.h
+@@ -12,7 +12,7 @@
+ "#\n" \
+ "# Valid WWIDs:\n"
+ 
+-int should_multipath(struct path *pp, vector pathvec);
++int should_multipath(struct path *pp, vector pathvec, vector mpvec);
+ int remember_wwid(char *wwid);
+ int check_wwids_file(char *wwid, int write_wwid);
+ int remove_wwid(char *wwid);
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 17175a85..20b6fe02 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -940,7 +940,7 @@ rescan:
+ 		mpp->action = ACT_RELOAD;
+ 		extract_hwe_from_path(mpp);
+ 	} else {
+-		if (!should_multipath(pp, vecs->pathvec)) {
++		if (!should_multipath(pp, vecs->pathvec, vecs->mpvec)) {
+ 			orphan_path(pp, "only one path");
+ 			return 0;
+ 		}
+-- 
+2.16.1
