@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v5 03/22] libmultipath: should_multipath: keep
-	existing maps
-Date: Fri, 13 Apr 2018 23:59:56 +0200
-Message-ID: <20180413220015.7032-4-mwilck@suse.com>
+Subject: [PATCH v5 06/22] libmultipath: trigger path uevent only
+	when necessary
+Date: Fri, 13 Apr 2018 23:59:59 +0200
+Message-ID: <20180413220015.7032-7-mwilck@suse.com>
 References: <20180413220015.7032-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,96 +22,39 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-with find_multipaths "yes" and without the "-n" option to multipathd,
-if a path is already multipathed, keep it. The same logic is applied by
-"multipath -u -i".
-
-To do this, we need to add a "mpvec" parameter to should_multipath().
+Paths that are already classified as DM_MULTIPATH_DEVICE_PATH don't
+need to be retriggered.
 
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/configure.c |  2 +-
- libmultipath/wwids.c     | 12 +++++++++++-
- libmultipath/wwids.h     |  2 +-
- multipathd/main.c        |  2 +-
- 4 files changed, 14 insertions(+), 4 deletions(-)
+ libmultipath/configure.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
 
 diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 51a45d4f..1cd575e4 100644
+index c56e972f..2cae9240 100644
 --- a/libmultipath/configure.c
 +++ b/libmultipath/configure.c
-@@ -987,7 +987,7 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
+@@ -458,8 +458,20 @@ trigger_paths_udev_change(const struct multipath *mpp)
+ 		if (!pgp->paths)
  			continue;
- 
- 		/* If find_multipaths was selected check if the path is valid */
--		if (!refwwid && !should_multipath(pp1, pathvec)) {
-+		if (!refwwid && !should_multipath(pp1, pathvec, curmp)) {
- 			orphan_path(pp1, "only one path");
- 			continue;
- 		}
-diff --git a/libmultipath/wwids.c b/libmultipath/wwids.c
-index 8c21b33f..d0256c2c 100644
---- a/libmultipath/wwids.c
-+++ b/libmultipath/wwids.c
-@@ -15,6 +15,7 @@
- #include "wwids.h"
- #include "defaults.h"
- #include "config.h"
-+#include "devmapper.h"
- 
- /*
-  * Copyright (c) 2010 Benjamin Marzinski, Redhat
-@@ -274,7 +275,7 @@ out:
- }
- 
- int
--should_multipath(struct path *pp1, vector pathvec)
-+should_multipath(struct path *pp1, vector pathvec, vector mpvec)
- {
- 	int i, ignore_new_devs, find_multipaths;
- 	struct path *pp2;
-@@ -289,6 +290,15 @@ should_multipath(struct path *pp1, vector pathvec)
- 
- 	condlog(4, "checking if %s should be multipathed", pp1->dev);
- 	if (!ignore_new_devs) {
-+		char tmp_wwid[WWID_SIZE];
-+		struct multipath *mp = find_mp_by_wwid(mpvec, pp1->wwid);
+ 		vector_foreach_slot(pgp->paths, pp, j) {
++			const char *env;
 +
-+		if (mp != NULL && dm_get_uuid(mp->alias, tmp_wwid) == 0 &&
-+		    !strncmp(tmp_wwid, pp1->wwid, WWID_SIZE)) {
-+			condlog(3, "wwid %s is already multipathed, keeping it",
-+				pp1->wwid);
-+			return 1;
-+		}
- 		vector_foreach_slot(pathvec, pp2, i) {
- 			if (pp1->dev == pp2->dev)
+ 			if (!pp->udev)
  				continue;
-diff --git a/libmultipath/wwids.h b/libmultipath/wwids.h
-index 95270129..d9a78b38 100644
---- a/libmultipath/wwids.h
-+++ b/libmultipath/wwids.h
-@@ -12,7 +12,7 @@
- "#\n" \
- "# Valid WWIDs:\n"
- 
--int should_multipath(struct path *pp, vector pathvec);
-+int should_multipath(struct path *pp, vector pathvec, vector mpvec);
- int remember_wwid(char *wwid);
- int check_wwids_file(char *wwid, int write_wwid);
- int remove_wwid(char *wwid);
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 17175a85..20b6fe02 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -940,7 +940,7 @@ rescan:
- 		mpp->action = ACT_RELOAD;
- 		extract_hwe_from_path(mpp);
- 	} else {
--		if (!should_multipath(pp, vecs->pathvec)) {
-+		if (!should_multipath(pp, vecs->pathvec, vecs->mpvec)) {
- 			orphan_path(pp, "only one path");
- 			return 0;
++			/*
++			 * Paths that are already classified as multipath
++			 * members don't need another uevent.
++			 */
++			env = udev_device_get_property_value(
++				pp->udev, "DM_MULTIPATH_DEVICE_PATH");
++			if (env != NULL && !strcmp(env, "1"))
++				continue;
++
++			condlog(4, "triggering change uevent for %s", pp->dev);
+ 			sysfs_attr_set_value(pp->udev, "uevent", "change",
+ 					     strlen("change"));
  		}
 -- 
 2.16.1
