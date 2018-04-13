@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v5 06/22] libmultipath: trigger path uevent only
-	when necessary
-Date: Fri, 13 Apr 2018 23:59:59 +0200
-Message-ID: <20180413220015.7032-7-mwilck@suse.com>
+Subject: [PATCH v5 08/22] libmultipath: use const char* in
+	open_file()
+Date: Sat, 14 Apr 2018 00:00:01 +0200
+Message-ID: <20180413220015.7032-9-mwilck@suse.com>
 References: <20180413220015.7032-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,39 +22,55 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Paths that are already classified as DM_MULTIPATH_DEVICE_PATH don't
-need to be retriggered.
-
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/configure.c | 12 ++++++++++++
- 1 file changed, 12 insertions(+)
+ libmultipath/file.c | 6 +++---
+ libmultipath/file.h | 2 +-
+ 2 files changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index c56e972f..2cae9240 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -458,8 +458,20 @@ trigger_paths_udev_change(const struct multipath *mpp)
- 		if (!pgp->paths)
- 			continue;
- 		vector_foreach_slot(pgp->paths, pp, j) {
-+			const char *env;
-+
- 			if (!pp->udev)
- 				continue;
-+			/*
-+			 * Paths that are already classified as multipath
-+			 * members don't need another uevent.
-+			 */
-+			env = udev_device_get_property_value(
-+				pp->udev, "DM_MULTIPATH_DEVICE_PATH");
-+			if (env != NULL && !strcmp(env, "1"))
-+				continue;
-+
-+			condlog(4, "triggering change uevent for %s", pp->dev);
- 			sysfs_attr_set_value(pp->udev, "uevent", "change",
- 					     strlen("change"));
- 		}
+diff --git a/libmultipath/file.c b/libmultipath/file.c
+index e4951c92..d5165ec6 100644
+--- a/libmultipath/file.c
++++ b/libmultipath/file.c
+@@ -37,7 +37,7 @@
+  */
+ 
+ static int
+-ensure_directories_exist(char *str, mode_t dir_mode)
++ensure_directories_exist(const char *str, mode_t dir_mode)
+ {
+ 	char *pathname;
+ 	char *end;
+@@ -80,7 +80,7 @@ sigalrm(int sig)
+ }
+ 
+ static int
+-lock_file(int fd, char *file_name)
++lock_file(int fd, const char *file_name)
+ {
+ 	struct sigaction act, oldact;
+ 	sigset_t set, oldset;
+@@ -118,7 +118,7 @@ lock_file(int fd, char *file_name)
+ }
+ 
+ int
+-open_file(char *file, int *can_write, char *header)
++open_file(const char *file, int *can_write, const char *header)
+ {
+ 	int fd;
+ 	struct stat s;
+diff --git a/libmultipath/file.h b/libmultipath/file.h
+index 4f96dbf5..70bffa53 100644
+--- a/libmultipath/file.h
++++ b/libmultipath/file.h
+@@ -6,6 +6,6 @@
+ #define _FILE_H
+ 
+ #define FILE_TIMEOUT 30
+-int open_file(char *file, int *can_write, char *header);
++int open_file(const char *file, int *can_write, const char *header);
+ 
+ #endif /* _FILE_H */
 -- 
 2.16.1
