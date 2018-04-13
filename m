@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v5 09/22] libmultipath: functions to indicate
-	mapping failure in /dev/shm
-Date: Sat, 14 Apr 2018 00:00:02 +0200
-Message-ID: <20180413220015.7032-10-mwilck@suse.com>
+Subject: [PATCH v5 04/22] multipath -u -i: respect entries in
+	WWIDs file
+Date: Fri, 13 Apr 2018 23:59:57 +0200
+Message-ID: <20180413220015.7032-5-mwilck@suse.com>
 References: <20180413220015.7032-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,189 +22,51 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Create a simple API that indicates failure to create a map for a
-certain WWID. This will allow multipathd to indicate to other tools
-(in particular, "multipath -u" during udev processing) that
-an attempt to create a map for a certain wwid failed.
+Previously, if find_multipaths was set, devices listed in the WWIDs file
+weren't classified as multipath members by "multipath -u -i" unless they also
+met the "find_multipaths" criteria (at least two paths, or existing map with
+this WWID). Now we classify all paths in the WWIDs file as multipath members, too.
 
-The indicator is simply the existence of a file under
-/dev/shm/multipath/failed_wwids. This has been chosen because it
-"survives" during pivot-root between initrd and root file system.
+The rationale for this patch is to match the logic that multipathd applies
+by default (i.e. without "-n").
 
-The exact semantics of /dev/shm/multipath/failed_wwids/$WWID is:
-"multipath or multipathd has tried to create this map from its
-members with a DM_DEVICE_CREATE call, and failed on the latest,
-or only, attempt to do so".
-
-In particular, the existence of the file proves that here was at
-least one unsuccessful attempt to create the map since the last
-reboot. On the contrary, the non-existence of this file does not
-indicate a successful attempt - perhaps multipathd never tried to
-set up the map.
-
-Signed-off-by: Martin Wilck <mwilck@suse.com>
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/defaults.h |   1 +
- libmultipath/wwids.c    | 110 ++++++++++++++++++++++++++++++++++++++++++++++++
- libmultipath/wwids.h    |  11 +++++
- 3 files changed, 122 insertions(+)
+ multipath/main.c | 19 +++++++++++--------
+ 1 file changed, 11 insertions(+), 8 deletions(-)
 
-diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
-index 690182c3..19ad2bfc 100644
---- a/libmultipath/defaults.h
-+++ b/libmultipath/defaults.h
-@@ -53,5 +53,6 @@
- #define DEFAULT_WWIDS_FILE	"/etc/multipath/wwids"
- #define DEFAULT_PRKEYS_FILE    "/etc/multipath/prkeys"
- #define DEFAULT_CONFIG_DIR	"/etc/multipath/conf.d"
-+#define MULTIPATH_SHM_BASE	"/dev/shm/multipath/"
+diff --git a/multipath/main.c b/multipath/main.c
+index d26c7444..ba837710 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -437,16 +437,19 @@ configure (struct config *conf, enum mpath_cmds cmd,
+ 		 * set, you need to actually check if there are two available
+ 		 * paths to determine if this path should be multipathed. To
+ 		 * do this, we put off the check until after discovering all
+-		 * the paths */
+-		if (cmd == CMD_VALID_PATH &&
+-		    (!conf->find_multipaths || !conf->ignore_wwids)) {
+-			if (conf->ignore_wwids ||
++		 * the paths.
++		 * Paths listed in the wwids file are always considered valid.
++		 */
++		if (cmd == CMD_VALID_PATH) {
++			if ((!conf->find_multipaths && conf->ignore_wwids) ||
+ 			    check_wwids_file(refwwid, 0) == 0)
+ 				r = 0;
+-
+-			printf("%s %s a valid multipath device path\n",
+-			       devpath, r == 0 ? "is" : "is not");
+-			goto out;
++			if (r == 0 ||
++			    !conf->find_multipaths || !conf->ignore_wwids) {
++				printf("%s %s a valid multipath device path\n",
++				       devpath, r == 0 ? "is" : "is not");
++				goto out;
++			}
+ 		}
+ 	}
  
- char * set_default (char * str);
-diff --git a/libmultipath/wwids.c b/libmultipath/wwids.c
-index 5e9596fe..53e79511 100644
---- a/libmultipath/wwids.c
-+++ b/libmultipath/wwids.c
-@@ -5,6 +5,7 @@
- #include <limits.h>
- #include <stdio.h>
- #include <sys/types.h>
-+#include <sys/stat.h>
- 
- #include "checkers.h"
- #include "vector.h"
-@@ -333,3 +334,112 @@ remember_wwid(char *wwid)
- 		condlog(4, "wwid %s already in wwids file", wwid);
- 	return ret;
- }
-+
-+static const char shm_dir[] = MULTIPATH_SHM_BASE "failed_wwids";
-+static const char shm_lock[] = ".lock";
-+static const char shm_header[] = "multipath shm lock file, don't edit";
-+static char _shm_lock_path[sizeof(shm_dir)+sizeof(shm_lock)];
-+static const char *shm_lock_path = &_shm_lock_path[0];
-+
-+static void init_shm_paths(void)
-+{
-+	snprintf(_shm_lock_path, sizeof(_shm_lock_path),
-+		 "%s/%s", shm_dir, shm_lock);
-+}
-+
-+static pthread_once_t shm_path_once = PTHREAD_ONCE_INIT;
-+
-+static int multipath_shm_open(bool rw)
-+{
-+	int fd;
-+	int can_write;
-+
-+	pthread_once(&shm_path_once, init_shm_paths);
-+	fd = open_file(shm_lock_path, &can_write, shm_header);
-+
-+	if (fd >= 0 && rw && !can_write) {
-+		close(fd);
-+		condlog(1, "failed to open %s for writing", shm_dir);
-+		return -1;
-+	}
-+
-+	return fd;
-+}
-+
-+static void multipath_shm_close(void *arg)
-+{
-+	long fd = (long)arg;
-+
-+	close(fd);
-+	unlink(shm_lock_path);
-+}
-+
-+static int _failed_wwid_op(const char *wwid, bool rw,
-+			   int (*func)(const char *), const char *msg)
-+{
-+	char path[PATH_MAX];
-+	long lockfd;
-+	int r = -1;
-+
-+	if (snprintf(path, sizeof(path), "%s/%s", shm_dir, wwid)
-+	    >= sizeof(path)) {
-+		condlog(1, "%s: path name overflow", __func__);
-+		return -1;
-+	}
-+
-+	lockfd = multipath_shm_open(rw);
-+	if (lockfd == -1)
-+		return -1;
-+
-+	pthread_cleanup_push(multipath_shm_close, (void *)lockfd);
-+	r = func(path);
-+	pthread_cleanup_pop(1);
-+
-+	if (r == WWID_FAILED_ERROR)
-+		condlog(1, "%s: %s: %s", msg, wwid, strerror(errno));
-+	else if (r == WWID_FAILED_CHANGED)
-+		condlog(3, "%s: %s", msg, wwid);
-+	else if (!rw)
-+		condlog(4, "%s: %s is %s", msg, wwid,
-+			r == WWID_IS_FAILED ? "failed" : "good");
-+
-+	return r;
-+}
-+
-+static int _is_failed(const char *path)
-+{
-+	struct stat st;
-+
-+	if (lstat(path, &st) == 0)
-+		return WWID_IS_FAILED;
-+	else if (errno == ENOENT)
-+		return WWID_IS_NOT_FAILED;
-+	else
-+		return WWID_FAILED_ERROR;
-+}
-+
-+static int _mark_failed(const char *path)
-+{
-+	/* Called from _failed_wwid_op: we know that shm_lock_path exists */
-+	if (_is_failed(path) == WWID_IS_FAILED)
-+		return WWID_FAILED_UNCHANGED;
-+	return (link(shm_lock_path, path) == 0 ? WWID_FAILED_CHANGED :
-+		WWID_FAILED_ERROR);
-+}
-+
-+static int _unmark_failed(const char *path)
-+{
-+	if (_is_failed(path) == WWID_IS_NOT_FAILED)
-+		return WWID_FAILED_UNCHANGED;
-+	return (unlink(path) == 0 ? WWID_FAILED_CHANGED : WWID_FAILED_ERROR);
-+}
-+
-+#define declare_failed_wwid_op(op, rw) \
-+int op ## _wwid(const char *wwid) \
-+{ \
-+	return _failed_wwid_op(wwid, (rw), _ ## op, #op); \
-+}
-+
-+declare_failed_wwid_op(is_failed, false)
-+declare_failed_wwid_op(mark_failed, true)
-+declare_failed_wwid_op(unmark_failed, true)
-diff --git a/libmultipath/wwids.h b/libmultipath/wwids.h
-index d9a78b38..0c6ee54d 100644
---- a/libmultipath/wwids.h
-+++ b/libmultipath/wwids.h
-@@ -18,4 +18,15 @@ int check_wwids_file(char *wwid, int write_wwid);
- int remove_wwid(char *wwid);
- int replace_wwids(vector mp);
- 
-+enum {
-+	WWID_IS_NOT_FAILED = 0,
-+	WWID_IS_FAILED,
-+	WWID_FAILED_UNCHANGED,
-+	WWID_FAILED_CHANGED,
-+	WWID_FAILED_ERROR = -1,
-+};
-+
-+int is_failed_wwid(const char *wwid);
-+int mark_failed_wwid(const char *wwid);
-+int unmark_failed_wwid(const char *wwid);
- #endif /* _WWIDS_H */
 -- 
 2.16.1
