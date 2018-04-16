@@ -1,65 +1,60 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH v5 17/22] multipath -u: cleanup logic
-Date: Mon, 16 Apr 2018 15:52:11 -0500
-Message-ID: <20180416205211.GI3103@octiron.msp.redhat.com>
-References: <20180413220015.7032-1-mwilck@suse.com>
-	<20180413220015.7032-18-mwilck@suse.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: slab: introduce the flag SLAB_MINIMIZE_WASTE
+Date: Mon, 16 Apr 2018 17:01:13 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1804161650170.7237@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1803201740280.21066@file01.intranet.prod.int.rdu2.redhat.com> <alpine.LRH.2.02.1803211153320.16017@file01.intranet.prod.int.rdu2.redhat.com> <alpine.DEB.2.20.1803211226350.3174@nuc-kabylake>
+ <alpine.LRH.2.02.1803211425330.26409@file01.intranet.prod.int.rdu2.redhat.com> <20c58a03-90a8-7e75-5fc7-856facfb6c8a@suse.cz> <20180413151019.GA5660@redhat.com> <ee8807ff-d650-0064-70bf-e1d77fa61f5c@suse.cz> <20180416142703.GA22422@redhat.com>
+ <alpine.LRH.2.02.1804161031300.24222@file01.intranet.prod.int.rdu2.redhat.com> <20180416144638.GA22484@redhat.com> <alpine.LRH.2.02.1804161054410.17807@file01.intranet.prod.int.rdu2.redhat.com> <alpine.DEB.2.20.1804161018030.9397@nuc-kabylake>
+ <alpine.LRH.2.02.1804161123400.17807@file01.intranet.prod.int.rdu2.redhat.com> <alpine.DEB.2.20.1804161043430.9622@nuc-kabylake> <alpine.LRH.2.02.1804161532480.19492@file01.intranet.prod.int.rdu2.redhat.com> <b0e6ccf6-06ce-e50b-840e-c8d3072382fd@suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20180413220015.7032-18-mwilck@suse.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: dm-devel@redhat.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <b0e6ccf6-06ce-e50b-840e-c8d3072382fd@suse.cz>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Vlastimil Babka <vbabka@suse.cz>
+Cc: Christopher Lameter <cl@linux.com>, Mike Snitzer <snitzer@redhat.com>, Matthew Wilcox <willy@infradead.org>, Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Sat, Apr 14, 2018 at 12:00:10AM +0200, Martin Wilck wrote:
-> The CMD_VALID_PATH logic is complex and hard to read and understand.
-> This patch cleans it up a bit (preparing for folluw-up patches).
-> It doesn't change any logic.
+
+
+On Mon, 16 Apr 2018, Vlastimil Babka wrote:
+
+> On 04/16/2018 09:36 PM, Mikulas Patocka wrote:
 > 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  multipath/main.c | 12 +++++++-----
->  1 file changed, 7 insertions(+), 5 deletions(-)
+> >>> I need to increase it just for dm-bufio slabs.
+> >>
+> >> If you do this then others will want the same...
+> > 
+> > If others need it, they can turn on the flag SLAB_MINIMIZE_WASTE too.
 > 
-> diff --git a/multipath/main.c b/multipath/main.c
-> index 5d847f08..61ba90a6 100644
-> --- a/multipath/main.c
-> +++ b/multipath/main.c
-> @@ -585,15 +585,17 @@ configure (struct config *conf, enum mpath_cmds cmd,
->  			if (is_failed_wwid(refwwid) == WWID_IS_FAILED) {
->  				r = 1;
->  				goto print_valid;
-> -			} else if ((!find_multipaths_on(conf) &&
-> +			}
-> +			if ((!find_multipaths_on(conf) &&
->  				    ignore_wwids_on(conf)) ||
->  				   check_wwids_file(refwwid, 0) == 0)
->  				r = 0;
-> -			if (r == 0 ||
-> -			    !find_multipaths_on(conf) ||
-> -			    !ignore_wwids_on(conf)) {
-> +			if (!ignore_wwids_on(conf))
->  				goto print_valid;
-> -			}
-> +			/* At this point, either r==0 or find_multipaths_on. */
-> +			if (r == 0)
-> +				goto print_valid;
-> +			/* find_multipaths_on: Fall through to path detection */
->  		}
->  	}
->  
-> -- 
-> 2.16.1
+> I think it should be possible without a new flag. The slub allocator
+> could just balance priorities (performance vs memory efficiency) better.
+> Currently I get the impression that "slub_max_order" is a performance
+> tunable. Let's add another criteria for selecting an order, that would
+> try to pick an order to minimize wasted space below e.g. 10% with some
+> different kind of max order. Pick good defaults, add tunables if you must.
+> 
+> I mean, anyone who's creating a cache for 640KB objects most likely
+> doesn't want to waste another 384KB by each such object. They shouldn't
+> have to add a flag to let the slub allocator figure out that using 2MB
+> pages is the right thing to do here.
+> 
+> Vlastimil
+
+The problem is that higher-order allocations (larger than 32K) are 
+unreliable. So, if you increase page order beyond that, the allocation may 
+randomly fail.
+
+dm-bufio deals gracefully with allocation failure, because it preallocates 
+some buffers with vmalloc, but other subsystems may not deal with it and 
+they cound return ENOMEM randomly or misbehave in other ways. So, the 
+"SLAB_MINIMIZE_WASTE" flag is also saying that the allocation may fail and 
+the caller is prepared to deal with it.
+
+The slub subsystem does actual fallback to low-order when the allocation 
+fails (it allows different order for each slab in the same cache), but 
+slab doesn't fallback and you get NULL if higher-order allocation fails. 
+So, SLAB_MINIMIZE_WASTE is needed for slab because it will just randomly 
+fail with higher order.
+
+Mikulas
