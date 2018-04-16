@@ -1,15 +1,24 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH v5 20/22] multipath -u: test if path is busy
-Date: Mon, 16 Apr 2018 10:00:22 +0200
-Message-ID: <1523865622.8819.0.camel@suse.com>
-References: <20180413220015.7032-1-mwilck@suse.com>
-	<20180413220015.7032-21-mwilck@suse.com>
-	<20180416083246.572b302d@pentland.suse.de>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: slab: introduce the flag SLAB_MINIMIZE_WASTE
+Date: Mon, 16 Apr 2018 14:38:49 +0200
+Message-ID: <ee8807ff-d650-0064-70bf-e1d77fa61f5c@suse.cz>
+References: <20180320173512.GA19669@bombadil.infradead.org>
+	<alpine.DEB.2.20.1803201250480.27540@nuc-kabylake>
+	<alpine.LRH.2.02.1803201510030.21066@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.DEB.2.20.1803201536590.28319@nuc-kabylake>
+	<alpine.LRH.2.02.1803201740280.21066@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.DEB.2.20.1803211024220.2175@nuc-kabylake>
+	<alpine.LRH.2.02.1803211153320.16017@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.DEB.2.20.1803211226350.3174@nuc-kabylake>
+	<alpine.LRH.2.02.1803211425330.26409@file01.intranet.prod.int.rdu2.redhat.com>
+	<20c58a03-90a8-7e75-5fc7-856facfb6c8a@suse.cz>
+	<20180413151019.GA5660@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180416083246.572b302d@pentland.suse.de>
+In-Reply-To: <20180413151019.GA5660@redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,16 +28,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Matthew Wilcox <willy@infradead.org>, Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, David Rientjes <rientjes@google.com>, Christopher Lameter <cl@linux.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>
 List-Id: dm-devel.ids
 
-T24gTW9uLCAyMDE4LTA0LTE2IGF0IDA4OjMyICswMjAwLCBIYW5uZXMgUmVpbmVja2Ugd3JvdGU6
-Cj4gCj4gQnV0IGRvZXNuJ3QgdGhpcyBjYXVzZSB1ZGV2IHRvIGdlbmVyYXRlIGFub3RoZXIgZXZl
-bnQgdXBvbiByZWxlYXNlPwo+IE9yIGlzIHRoYXQgcHJldmVudGVkIGJ5IHRoZSBPX1JET05MWSBz
-ZXR0aW5nPwoKRXhhY3RseSwgdWRldiB0cmlnZ2VycyBvbmx5IG9uICJjbG9zZSBhZnRlciB3cml0
-ZSIgZXZlbnRzLgoKTWFydGluCi0tIApEci4gTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+
-LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExpbnV4IEdtYkgsIEdGOiBGZWxpeCBJ
-bWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24KSFJCIDIxMjg0IChBRyBO
-w7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpo
-dHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On 04/13/2018 05:10 PM, Mike Snitzer wrote:
+> On Fri, Apr 13 2018 at  5:22am -0400,
+> Vlastimil Babka <vbabka@suse.cz> wrote:
+>>
+>> Would this perhaps be a good LSF/MM discussion topic? Mikulas, are you
+>> attending, or anyone else that can vouch for your usecase?
+> 
+> Any further discussion on SLAB_MINIMIZE_WASTE should continue on list.
+> 
+> Mikulas won't be at LSF/MM.  But I included Mikulas' dm-bufio changes
+> that no longer depend on this proposed SLAB_MINIMIZE_WASTE (as part of
+> the 4.17 merge window).
+
+Can you or Mikulas briefly summarize how the dependency is avoided, and
+whether if (something like) SLAB_MINIMIZE_WASTE were implemented, the
+dm-bufio code would happily switch to it, or not?
+
+Thanks,
+Vlastimil
+
+> Mike
+> 
