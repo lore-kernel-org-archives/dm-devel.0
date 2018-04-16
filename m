@@ -1,24 +1,16 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: slab: introduce the flag SLAB_MINIMIZE_WASTE
-Date: Mon, 16 Apr 2018 17:04:12 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1804161703171.7237@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20180320173512.GA19669@bombadil.infradead.org>
-	<alpine.DEB.2.20.1803201250480.27540@nuc-kabylake>
-	<alpine.LRH.2.02.1803201510030.21066@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.DEB.2.20.1803201536590.28319@nuc-kabylake>
-	<alpine.LRH.2.02.1803201740280.21066@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.DEB.2.20.1803211024220.2175@nuc-kabylake>
-	<alpine.LRH.2.02.1803211153320.16017@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.DEB.2.20.1803211226350.3174@nuc-kabylake>
-	<alpine.LRH.2.02.1803211425330.26409@file01.intranet.prod.int.rdu2.redhat.com>
-	<20c58a03-90a8-7e75-5fc7-856facfb6c8a@suse.cz>
-	<20180413151019.GA5660@redhat.com>
-	<ee8807ff-d650-0064-70bf-e1d77fa61f5c@suse.cz>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH v5 19/22] multipath -u: don't grab devices
+ already passed to system
+Date: Mon, 16 Apr 2018 16:29:39 -0500
+Message-ID: <20180416212939.GJ3103@octiron.msp.redhat.com>
+References: <20180413220015.7032-1-mwilck@suse.com>
+	<20180413220015.7032-20-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <ee8807ff-d650-0064-70bf-e1d77fa61f5c@suse.cz>
+Content-Disposition: inline
+In-Reply-To: <20180413220015.7032-20-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -28,36 +20,146 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Vlastimil Babka <vbabka@suse.cz>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Mike Snitzer <snitzer@redhat.com>, Matthew Wilcox <willy@infradead.org>, Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, David Rientjes <rientjes@google.com>, Christopher Lameter <cl@linux.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>
+To: Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-
-
-On Mon, 16 Apr 2018, Vlastimil Babka wrote:
-
-> On 04/13/2018 05:10 PM, Mike Snitzer wrote:
-> > On Fri, Apr 13 2018 at  5:22am -0400,
-> > Vlastimil Babka <vbabka@suse.cz> wrote:
-> >>
-> >> Would this perhaps be a good LSF/MM discussion topic? Mikulas, are you
-> >> attending, or anyone else that can vouch for your usecase?
-> > 
-> > Any further discussion on SLAB_MINIMIZE_WASTE should continue on list.
-> > 
-> > Mikulas won't be at LSF/MM.  But I included Mikulas' dm-bufio changes
-> > that no longer depend on this proposed SLAB_MINIMIZE_WASTE (as part of
-> > the 4.17 merge window).
+On Sat, Apr 14, 2018 at 12:00:12AM +0200, Martin Wilck wrote:
+> Setting SYSTEMD_READY=0 on a device that has previously been passed to
+> systemd is dangerous - already mounted file systems might be unmounted by
+> systemd.
 > 
-> Can you or Mikulas briefly summarize how the dependency is avoided, and
-
-This was Mike's misconception - dm-bufio actually needs the 
-SLAB_MINIMIZE_WASTE patch, otherwise it is wasting memory.
-
-> whether if (something like) SLAB_MINIMIZE_WASTE were implemented, the
-> dm-bufio code would happily switch to it, or not?
+> Avoid that by checking for previously set DM_MULTIPATH_DEVICE_PATH
+> environment variable.
 > 
-> Thanks,
-> Vlastimil
+> This requires to change the exit status of multipath -u - it needs to exit
+> with status 0 even if the path is not a multipath device path, otherwise
+> udev doesn't import the printed key-value pairs. We do this only for
+> "multipath -u"; legacy "multipath -c", which is more likely to be run in user
+> scripts, still exits with 1 for non-multipath devices.
+> 
+> The condition ENV{DM_MULTIPATH_DEVICE_PATH}!="1" before the "multipath -u"
+> statement in multipath.rules needs to be removed. This condition was
+> pointless anyway, because until this patch, DM_MULTIPATH_DEVICE_PATH hadn't
+> been imported from the db and thus was never set, and "multipath -u" was
+> always invoked. We want to keep this behavior.
+> 
 
-Mikulas
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  multipath/main.c          | 46 +++++++++++++++++++++++++++++++++++++++++++++-
+>  multipath/multipath.rules |  5 ++++-
+>  2 files changed, 49 insertions(+), 2 deletions(-)
+> 
+> diff --git a/multipath/main.c b/multipath/main.c
+> index 96e37a7a..573d94f9 100644
+> --- a/multipath/main.c
+> +++ b/multipath/main.c
+> @@ -25,6 +25,7 @@
+>  #include <sys/types.h>
+>  #include <sys/stat.h>
+>  #include <stdio.h>
+> +#include <stdlib.h>
+>  #include <unistd.h>
+>  #include <ctype.h>
+>  #include <libudev.h>
+> @@ -494,6 +495,25 @@ static int print_cmd_valid(int k, const vector pathvec,
+>  	return k == 1;
+>  }
+>  
+> +/*
+> + * Returns true if this device has been handled before,
+> + * and released to systemd.
+> + *
+> + * This must be called before get_refwwid(),
+> + * otherwise udev_device_new_from_environment() will have
+> + * destroyed environ(7).
+> + */
+> +static bool released_to_systemd(void)
+> +{
+> +	static const char dmdp[] = "DM_MULTIPATH_DEVICE_PATH";
+> +	const char *dm_mp_dev_path = getenv(dmdp);
+> +	bool ret;
+> +
+> +	ret = dm_mp_dev_path != NULL && !strcmp(dm_mp_dev_path, "0");
+> +	condlog(4, "%s: %s=%s -> %d", __func__, dmdp, dm_mp_dev_path, ret);
+> +	return ret;
+> +}
+> +
+>  /*
+>   * Return value:
+>   *  -1: Retry
+> @@ -511,6 +531,7 @@ configure (struct config *conf, enum mpath_cmds cmd,
+>  	int di_flag = 0;
+>  	char * refwwid = NULL;
+>  	char * dev = NULL;
+> +	bool released = released_to_systemd();
+>  
+>  	/*
+>  	 * allocate core vectors to store paths and multipaths
+> @@ -602,6 +623,20 @@ configure (struct config *conf, enum mpath_cmds cmd,
+>  				r = 0;
+>  				goto print_valid;
+>  			}
+> +
+> +			/*
+> +			 * DM_MULTIPATH_DEVICE_PATH=="0" means that we have
+> +			 * been called for this device already, and have
+> +			 * released it to systemd. Unless the device is now
+> +			 * already multipathed (see above), we can't try to
+> +			 * grab it, because setting SYSTEMD_READY=0 would
+> +			 * cause file systems to be unmounted.
+> +			 * Leave DM_MULTIPATH_DEVICE_PATH="0".
+> +			 */
+> +			if (released) {
+> +				r = 1;
+> +				goto print_valid;
+> +			}
+>  			if (r == 0)
+>  				goto print_valid;
+>  			/* find_multipaths_on: Fall through to path detection */
+> @@ -641,7 +676,9 @@ configure (struct config *conf, enum mpath_cmds cmd,
+>  
+>  	if (cmd == CMD_VALID_PATH) {
+>  		/* This only happens if find_multipaths and
+> -		 * ignore_wwids is set.
+> +		 * ignore_wwids is set, and the path is not in WWIDs
+> +		 * file, not currently multipathed, and has
+> +		 * never been released to systemd.
+>  		 * If there is currently a multipath device matching
+>  		 * the refwwid, or there is more than one path matching
+>  		 * the refwwid, then the path is valid */
+> @@ -1064,6 +1101,13 @@ out:
+>  	cleanup_prio();
+>  	cleanup_checkers();
+>  
+> +	/*
+> +	 * multipath -u must exit with status 0, otherwise udev won't
+> +	 * import its output.
+> +	 */
+> +	if (cmd == CMD_VALID_PATH && dev_type == DEV_UEVENT && r == 1)
+> +		r = 0;
+> +
+>  	if (dev_type == DEV_UEVENT)
+>  		closelog();
+>  
+> diff --git a/multipath/multipath.rules b/multipath/multipath.rules
+> index 37f4f6d8..ef857271 100644
+> --- a/multipath/multipath.rules
+> +++ b/multipath/multipath.rules
+> @@ -21,8 +21,11 @@ LABEL="test_dev"
+>  ENV{MPATH_SBIN_PATH}="/sbin"
+>  TEST!="$env{MPATH_SBIN_PATH}/multipath", ENV{MPATH_SBIN_PATH}="/usr/sbin"
+>  
+> +# multipath -u needs to know if this device has ever been exported
+> +IMPORT{db}="DM_MULTIPATH_DEVICE_PATH"
+> +
+>  # multipath -u sets DM_MULTIPATH_DEVICE_PATH
+> -ENV{DM_MULTIPATH_DEVICE_PATH}!="1", IMPORT{program}="$env{MPATH_SBIN_PATH}/multipath -u %k"
+> +IMPORT{program}="$env{MPATH_SBIN_PATH}/multipath -u %k"
+>  ENV{DM_MULTIPATH_DEVICE_PATH}=="1", ENV{ID_FS_TYPE}="mpath_member", \
+>  	ENV{SYSTEMD_READY}="0"
+>  
+> -- 
+> 2.16.1
