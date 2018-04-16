@@ -1,15 +1,12 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH v5 22/22] multipath.rules: find_multipaths
-	"smart" logic
-Date: Mon, 16 Apr 2018 08:40:47 +0200
-Message-ID: <20180416084047.58fd6796@pentland.suse.de>
-References: <20180413220015.7032-1-mwilck@suse.com>
-	<20180413220015.7032-23-mwilck@suse.com>
+From: James Bottomley <James.Bottomley@hansenpartnership.com>
+Subject: Patch added to scsi: scsi: scsi_dh: replace too broad
+	"TP9" string with the exact models
+Date: Mon, 16 Apr 2018 00:25:41 -0700 (PDT)
+Message-ID: <20180416072541.7BE5F8EE25E@bedivere.hansenpartnership.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180413220015.7032-23-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,44 +16,42 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: dm-devel@redhat.com
+To: SCSI ML <linux-scsi@vger.kernel.org>, Hannes Reinecke <hare@suse.de>, "Martin K. Petersen" <martin.petersen@oracle.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>martin.petersen@oracle.com, James.Bottomley@hansenpartnership.com, "James E.J. Bottomley" <jejb@linux.vnet.ibm.com>, NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>, DM ML <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Sat, 14 Apr 2018 00:00:15 +0200
-Martin Wilck <mwilck@suse.com> wrote:
+Your commit:
 
-> When the first path to a device appears, we don't know if more paths
-> are going to follow. find_multipath "smart" logic attempts to solve
-> this dilemma by waiting for additional paths for a configurable time
-> before giving up and releasing single paths to upper layers.
-> 
-> These rules apply only if both find_multipaths is set to "smart" in
-> multipath.conf. In this mode, multipath -u sets
-> DM_MULTIPATH_DEVICE_PATH=2 if there's no clear evidence wheteher a
-> given device should be a multipath member (not blacklisted, not
-> listed as "failed", not in WWIDs file, not member of an existing map,
-> only one path seen yet). In this case, "multipath -u" also sets the
-> variable FIND_MULTIPATHS_WAIT_UNIL to a relative time stamp (we need
-> to use relative "monotonic" time stamps because this may be triggered
-> early during boot, before system "calendar" time is correctly
-> initialized).
-> 
-> In the DM_MULTIPATH_DEVICE_PATH=2 case, pretend that the path is
-> multipath member, disallow further processing by systemd (allowing
-> multipathd some time to grab the path), and set a systemd timer to
-> check again after the given timeout. If the path is still not
-> multipathed by then, pass it on to systemd for further processing.
-> 
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
-> ---
->  multipath/multipath.rules | 61
-> ++++++++++++++++++++++++++++++++++++++++++++--- 1 file changed, 58
-> insertions(+), 3 deletions(-)
-> 
-Reviewed-by: Hannes Reinecke <hare@suse.com>
+    scsi: scsi_dh: replace too broad "TP9" string with the exact models
+    
+    SGI/TP9100 is not an RDAC array:
+        ^^^
+    https://git.opensvc.com/gitweb.cgi?p=multipath-tools/.git;a=blob;f=libmultipath/hwtable.c;h=88b4700beb1d8940008020fbe4c3cd97d62f4a56;hb=HEAD#l235
+    
+    This partially reverts commit 35204772ea03 ("[SCSI] scsi_dh_rdac :
+    Consolidate rdac strings together")
+    
+    [mkp: fixed up the new entries to align with rest of struct]
+    
+    Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>
+    Cc: Hannes Reinecke <hare@suse.de>
+    Cc: James E.J. Bottomley <jejb@linux.vnet.ibm.com>
+    Cc: Martin K. Petersen <martin.petersen@oracle.com>
+    Cc: SCSI ML <linux-scsi@vger.kernel.org>
+    Cc: DM ML <dm-devel@redhat.com>
+    Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+    Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
 
-Cheers,
+has been added to the upstream scsi tree
+On branch "misc"
+You can find it here:
 
-Hannes
+http://git.kernel.org/?p=linux/kernel/git/jejb/scsi.git;a=commit;h=72001a0bfb365cf147e1317ab482dd760cb5d120
+
+This patch is scheduled to be pushed when the merge window opens for 4.18
+
+James Bottomley
+
+P.S. If you find this email unwanted, set up a procmail rule junking on
+the header:
+
+X-Git-Tree: SCSI
