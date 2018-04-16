@@ -1,27 +1,16 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: slab: introduce the flag SLAB_MINIMIZE_WASTE
-Date: Mon, 16 Apr 2018 15:36:50 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1804161532480.19492@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1803201740280.21066@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.DEB.2.20.1803211024220.2175@nuc-kabylake>
-	<alpine.LRH.2.02.1803211153320.16017@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.DEB.2.20.1803211226350.3174@nuc-kabylake>
-	<alpine.LRH.2.02.1803211425330.26409@file01.intranet.prod.int.rdu2.redhat.com>
-	<20c58a03-90a8-7e75-5fc7-856facfb6c8a@suse.cz>
-	<20180413151019.GA5660@redhat.com>
-	<ee8807ff-d650-0064-70bf-e1d77fa61f5c@suse.cz>
-	<20180416142703.GA22422@redhat.com>
-	<alpine.LRH.2.02.1804161031300.24222@file01.intranet.prod.int.rdu2.redhat.com>
-	<20180416144638.GA22484@redhat.com>
-	<alpine.LRH.2.02.1804161054410.17807@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.DEB.2.20.1804161018030.9397@nuc-kabylake>
-	<alpine.LRH.2.02.1804161123400.17807@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.DEB.2.20.1804161043430.9622@nuc-kabylake>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH v5 16/22] multipath -u : set
+ FIND_MULTIPATHS_WAIT_UNTIL from /dev/shm
+Date: Mon, 16 Apr 2018 14:40:47 -0500
+Message-ID: <20180416194047.GH3103@octiron.msp.redhat.com>
+References: <20180413220015.7032-1-mwilck@suse.com>
+	<20180413220015.7032-17-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.DEB.2.20.1804161043430.9622@nuc-kabylake>
+Content-Disposition: inline
+In-Reply-To: <20180413220015.7032-17-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -31,40 +20,243 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christopher Lameter <cl@linux.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, Matthew Wilcox <willy@infradead.org>, Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>
+To: Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-
-
-On Mon, 16 Apr 2018, Christopher Lameter wrote:
-
-> On Mon, 16 Apr 2018, Mikulas Patocka wrote:
+On Sat, Apr 14, 2018 at 12:00:09AM +0200, Martin Wilck wrote:
+> In "find_multipaths smart" mode, use time stamps under
+> /dev/shm/multipath/find_multipaths to track waiting for multipath
+> siblings. When a path is first encountered and is "maybe" multipath, create
+> a file under /dev/shm, set its modification time to the expiry time of the
+> timer, and set the FIND_MULTIPATHS_WAIT_UNTIL variable. On later calls,
+> also set FIND_MULTIPATHS_WAIT_UNTIL to the expiry time (but don't change
+> the time stamp) if it's not expired yet, or 0 if it is expired. Set
+> FIND_MULTIPATHS_WAIT_UNTIL even if enough evidence becomes available to
+> decide if the path needs to be multipathed - this enables the udev rules to
+> detect that this is a device a timer has been started for, and stop it. By
+> using /dev/shm, we share information about "smart" timers between initrd
+> and root file system, and thus only calculate the timeout once.
 > 
-> > >
-> > > Or an increase in slab_max_order
-> >
-> > But that will increase it for all slabs (often senselessly - i.e.
-> > kmalloc-4096 would have order 4MB).
+> Because we use major:minor to identify the devices in /dev/shm, and because
+> a removed device might be replaced by a different one with the same
+> major/minor number, add a rule to multipath.rules to remove the
+> find_multipaths marker on remove uevents.
 > 
-> 4MB? Nope.... That is a power of two slab so no wasted space even with
-> order 0.
 
-See this email:
-https://www.redhat.com/archives/dm-devel/2018-March/msg00387.html
-
-If you boot with slub_max_order=10, the kmalloc-8192 cache has 64 pages. 
-So yes, it increases the order of all slab caches (although not up to 
-4MB).
-
-> Its not a senseless increase. The more objects you fit into a slab page
-> the higher the performance of the allocator.
+Reviewed-by: Benjamin Marzinsk <bmarzins@redhat.com>
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  libmultipath/file.c       |   2 +-
+>  libmultipath/file.h       |   1 +
+>  multipath/main.c          | 132 ++++++++++++++++++++++++++++++++++++++++++++++
+>  multipath/multipath.rules |   4 +-
+>  4 files changed, 137 insertions(+), 2 deletions(-)
 > 
-> 
-> > I need to increase it just for dm-bufio slabs.
-> 
-> If you do this then others will want the same...
-
-If others need it, they can turn on the flag SLAB_MINIMIZE_WASTE too.
-
-Mikulas
+> diff --git a/libmultipath/file.c b/libmultipath/file.c
+> index d5165ec6..8727f160 100644
+> --- a/libmultipath/file.c
+> +++ b/libmultipath/file.c
+> @@ -36,7 +36,7 @@
+>   * See the file COPYING included with this distribution for more details.
+>   */
+>  
+> -static int
+> +int
+>  ensure_directories_exist(const char *str, mode_t dir_mode)
+>  {
+>  	char *pathname;
+> diff --git a/libmultipath/file.h b/libmultipath/file.h
+> index 70bffa53..29520c74 100644
+> --- a/libmultipath/file.h
+> +++ b/libmultipath/file.h
+> @@ -6,6 +6,7 @@
+>  #define _FILE_H
+>  
+>  #define FILE_TIMEOUT 30
+> +int ensure_directories_exist(const char *str, mode_t dir_mode);
+>  int open_file(const char *file, int *can_write, const char *header);
+>  
+>  #endif /* _FILE_H */
+> diff --git a/multipath/main.c b/multipath/main.c
+> index f62e18a9..5d847f08 100644
+> --- a/multipath/main.c
+> +++ b/multipath/main.c
+> @@ -29,6 +29,7 @@
+>  #include <ctype.h>
+>  #include <libudev.h>
+>  #include <syslog.h>
+> +#include <fcntl.h>
+>  
+>  #include "checkers.h"
+>  #include "prio.h"
+> @@ -60,6 +61,9 @@
+>  #include "uxsock.h"
+>  #include "mpath_cmd.h"
+>  #include "foreign.h"
+> +#include "propsel.h"
+> +#include "time-util.h"
+> +#include "file.h"
+>  
+>  int logsink;
+>  struct udev *udev;
+> @@ -350,14 +354,142 @@ out:
+>  	return r;
+>  }
+>  
+> +enum {
+> +	FIND_MULTIPATHS_WAIT_DONE = 0,
+> +	FIND_MULTIPATHS_WAITING = 1,
+> +	FIND_MULTIPATHS_ERROR = -1,
+> +	FIND_MULTIPATHS_NEVER = -2,
+> +};
+> +
+> +static const char shm_find_mp_dir[] = MULTIPATH_SHM_BASE "find_multipaths";
+> +static void close_fd(void *arg)
+> +{
+> +	close((long)arg);
+> +}
+> +
+> +/**
+> + * find_multipaths_check_timeout(wwid, tmo)
+> + * Helper for "find_multipaths smart"
+> + *
+> + * @param[in] pp: path to check / record
+> + * @param[in] tmo: configured timeout for this WWID, or value <= 0 for checking
+> + * @param[out] until: timestamp until we must wait, CLOCK_REALTIME, if return
+> + *             value is FIND_MULTIPATHS_WAITING
+> + * @returns: FIND_MULTIPATHS_WAIT_DONE, if waiting has finished
+> + * @returns: FIND_MULTIPATHS_ERROR, if internal error occurred
+> + * @returns: FIND_MULTIPATHS_NEVER, if tmo is 0 and we didn't wait for this
+> + *           device
+> + * @returns: FIND_MULTIPATHS_WAITING, if timeout hasn't expired
+> + */
+> +static int find_multipaths_check_timeout(const struct path *pp, long tmo,
+> +					 struct timespec *until)
+> +{
+> +	char path[PATH_MAX];
+> +	struct timespec now, ftimes[2], tdiff;
+> +	struct stat st;
+> +	long fd;
+> +	int r, err, retries = 0;
+> +
+> +	clock_gettime(CLOCK_REALTIME, &now);
+> +
+> +	if (snprintf(path, sizeof(path), "%s/%s", shm_find_mp_dir, pp->dev_t)
+> +	    >= sizeof(path)) {
+> +		condlog(1, "%s: path name overflow", __func__);
+> +		return FIND_MULTIPATHS_ERROR;
+> +	}
+> +
+> +	if (ensure_directories_exist(path, 0700)) {
+> +		condlog(1, "%s: error creating directories", __func__);
+> +		return FIND_MULTIPATHS_ERROR;
+> +	}
+> +
+> +retry:
+> +	fd = open(path, O_RDONLY);
+> +	if (fd != -1) {
+> +		pthread_cleanup_push(close_fd, (void *)fd);
+> +		r = fstat(fd, &st);
+> +		if (r != 0)
+> +			err = errno;
+> +		pthread_cleanup_pop(1);
+> +
+> +	} else if (tmo > 0) {
+> +		if (errno == ENOENT)
+> +			fd = open(path, O_RDWR|O_EXCL|O_CREAT, 0644);
+> +		if (fd == -1) {
+> +			if (errno == EEXIST && !retries++)
+> +				/* We could have raced with another process */
+> +				goto retry;
+> +			condlog(1, "%s: error opening %s: %s",
+> +				__func__, path, strerror(errno));
+> +			return FIND_MULTIPATHS_ERROR;
+> +		};
+> +
+> +		pthread_cleanup_push(close_fd, (void *)fd);
+> +		/*
+> +		 * We just created the file. Set st_mtim to our desired
+> +		 * expiry time.
+> +		 */
+> +		ftimes[0].tv_sec = 0;
+> +		ftimes[0].tv_nsec = UTIME_OMIT;
+> +		ftimes[1].tv_sec = now.tv_sec + tmo;
+> +		ftimes[1].tv_nsec = now.tv_nsec;
+> +		if (futimens(fd, ftimes) != 0) {
+> +			condlog(1, "%s: error in futimens(%s): %s", __func__,
+> +				path, strerror(errno));
+> +		}
+> +		r = fstat(fd, &st);
+> +		if (r != 0)
+> +			err = errno;
+> +		pthread_cleanup_pop(1);
+> +	} else
+> +		return FIND_MULTIPATHS_NEVER;
+> +
+> +	if (r != 0) {
+> +		condlog(1, "%s: error in fstat for %s: %s", __func__,
+> +			path, strerror(err));
+> +		return FIND_MULTIPATHS_ERROR;
+> +	}
+> +
+> +	timespecsub(&st.st_mtim, &now, &tdiff);
+> +
+> +	if (tdiff.tv_sec <= 0)
+> +		return FIND_MULTIPATHS_WAIT_DONE;
+> +
+> +	*until = tdiff;
+> +	return FIND_MULTIPATHS_WAITING;
+> +}
+> +
+>  static int print_cmd_valid(int k, const vector pathvec,
+>  			   struct config *conf)
+>  {
+>  	static const int vals[] = { 1, 0, 2 };
+> +	int wait = FIND_MULTIPATHS_NEVER;
+> +	struct timespec until;
+> +	struct path *pp;
+>  
+>  	if (k < 0 || k >= sizeof(vals))
+>  		return 1;
+>  
+> +	if (k == 2) {
+> +		/*
+> +		 * Caller ensures that pathvec[0] is the path to
+> +		 * examine.
+> +		 */
+> +		pp = VECTOR_SLOT(pathvec, 0);
+> +		select_find_multipaths_timeout(conf, pp);
+> +		wait = find_multipaths_check_timeout(
+> +			pp, pp->find_multipaths_timeout, &until);
+> +		if (wait != FIND_MULTIPATHS_WAITING)
+> +			k = 1;
+> +	} else if (pathvec != NULL) {
+> +		pp = VECTOR_SLOT(pathvec, 0);
+> +		wait = find_multipaths_check_timeout(pp, 0, &until);
+> +	}
+> +	if (wait == FIND_MULTIPATHS_WAITING)
+> +		printf("FIND_MULTIPATHS_WAIT_UNTIL=\"%ld.%06ld\"\n",
+> +			       until.tv_sec, until.tv_nsec/1000);
+> +	else if (wait == FIND_MULTIPATHS_WAIT_DONE)
+> +		printf("FIND_MULTIPATHS_WAIT_UNTIL=\"0\"\n");
+>  	printf("DM_MULTIPATH_DEVICE_PATH=\"%d\"\n", vals[k]);
+>  	return k == 1;
+>  }
+> diff --git a/multipath/multipath.rules b/multipath/multipath.rules
+> index aab64dc7..37f4f6d8 100644
+> --- a/multipath/multipath.rules
+> +++ b/multipath/multipath.rules
+> @@ -1,7 +1,9 @@
+>  # Set DM_MULTIPATH_DEVICE_PATH if the device should be handled by multipath
+>  SUBSYSTEM!="block", GOTO="end_mpath"
+> -ACTION!="add|change", GOTO="end_mpath"
+>  KERNEL!="sd*|dasd*|nvme*", GOTO="end_mpath"
+> +ACTION=="remove", TEST=="/dev/shm/multipath/find_multipaths/$major:$minor", \
+> +	RUN+="/usr/bin/rm -f /dev/shm/multipath/find_multipaths/$major:$minor"
+> +ACTION!="add|change", GOTO="end_mpath"
+>  
+>  IMPORT{cmdline}="nompath"
+>  ENV{nompath}=="?*", GOTO="end_mpath"
+> -- 
+> 2.16.1
