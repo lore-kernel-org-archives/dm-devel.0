@@ -1,15 +1,15 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH v5 02/22] Revert "multipathd: imply -n if
- find_multipaths is set"
-Date: Mon, 16 Apr 2018 08:07:59 +0200
-Message-ID: <20180416080759.427a8b02@pentland.suse.de>
+Subject: Re: [PATCH v5 03/22] libmultipath: should_multipath:
+ keep existing maps
+Date: Mon, 16 Apr 2018 08:08:55 +0200
+Message-ID: <20180416080855.17b90c5d@pentland.suse.de>
 References: <20180413220015.7032-1-mwilck@suse.com>
-	<20180413220015.7032-3-mwilck@suse.com>
+	<20180413220015.7032-4-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180413220015.7032-3-mwilck@suse.com>
+In-Reply-To: <20180413220015.7032-4-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,16 +23,23 @@ To: Martin Wilck <mwilck@suse.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, 13 Apr 2018 23:59:55 +0200
+On Fri, 13 Apr 2018 23:59:56 +0200
 Martin Wilck <mwilck@suse.com> wrote:
 
-> This reverts commit 64e27ec066a001012f44550f095c93443e91d845.
+> with find_multipaths "yes" and without the "-n" option to multipathd,
+> if a path is already multipathed, keep it. The same logic is applied
+> by "multipath -u -i".
+> 
+> To do this, we need to add a "mpvec" parameter to should_multipath().
 > 
 > Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 > Signed-off-by: Martin Wilck <mwilck@suse.com>
 > ---
->  multipathd/main.c | 4 ----
->  1 file changed, 4 deletions(-)
+>  libmultipath/configure.c |  2 +-
+>  libmultipath/wwids.c     | 12 +++++++++++-
+>  libmultipath/wwids.h     |  2 +-
+>  multipathd/main.c        |  2 +-
+>  4 files changed, 14 insertions(+), 4 deletions(-)
 > 
 
 Reviewed-by: Hannes Reinecke <hare@suse.com>
