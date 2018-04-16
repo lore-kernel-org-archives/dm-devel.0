@@ -1,15 +1,15 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH v5 15/22] libmultipath: implement
- find_multipaths_timeout
-Date: Mon, 16 Apr 2018 08:23:32 +0200
-Message-ID: <20180416082332.16851559@pentland.suse.de>
+Subject: Re: [PATCH v5 16/22] multipath -u : set
+ FIND_MULTIPATHS_WAIT_UNTIL from /dev/shm
+Date: Mon, 16 Apr 2018 08:25:30 +0200
+Message-ID: <20180416082530.1c058593@pentland.suse.de>
 References: <20180413220015.7032-1-mwilck@suse.com>
-	<20180413220015.7032-16-mwilck@suse.com>
+	<20180413220015.7032-17-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180413220015.7032-16-mwilck@suse.com>
+In-Reply-To: <20180413220015.7032-17-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,35 +23,37 @@ To: Martin Wilck <mwilck@suse.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Sat, 14 Apr 2018 00:00:08 +0200
+On Sat, 14 Apr 2018 00:00:09 +0200
 Martin Wilck <mwilck@suse.com> wrote:
 
-> This makes the timeout for "find_multipaths smart" configurable.
-> If the timeout has a negative value (default), it's applied only
-> to "known" hardware which is either in the hwtable or in a "device"
-> section in multipath.conf. For typical non-multipath hardware, which
-> is not in the hwtable, a short timeout of 1s is used, so that boot
-> delays caused by pointlessly waiting e.g. for SATA devices will be
-> minimal.
+> In "find_multipaths smart" mode, use time stamps under
+> /dev/shm/multipath/find_multipaths to track waiting for multipath
+> siblings. When a path is first encountered and is "maybe" multipath,
+> create a file under /dev/shm, set its modification time to the expiry
+> time of the timer, and set the FIND_MULTIPATHS_WAIT_UNTIL variable.
+> On later calls, also set FIND_MULTIPATHS_WAIT_UNTIL to the expiry
+> time (but don't change the time stamp) if it's not expired yet, or 0
+> if it is expired. Set FIND_MULTIPATHS_WAIT_UNTIL even if enough
+> evidence becomes available to decide if the path needs to be
+> multipathed - this enables the udev rules to detect that this is a
+> device a timer has been started for, and stop it. By using /dev/shm,
+> we share information about "smart" timers between initrd and root
+> file system, and thus only calculate the timeout once.
 > 
-> It's expected that a "reasonable" timeout value depends less on the
-> storage hardware itself but on other properties of the data center
-> such as network latencies or distances. find_multipaths_timeout is
-> therefore just a "defaults" section setting.
+> Because we use major:minor to identify the devices in /dev/shm, and
+> because a removed device might be replaced by a different one with
+> the same major/minor number, add a rule to multipath.rules to remove
+> the find_multipaths marker on remove uevents.
 > 
 > Signed-off-by: Martin Wilck <mwilck@suse.com>
-> Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 > ---
->  libmultipath/config.h      |  1 +
->  libmultipath/defaults.h    |  2 ++
->  libmultipath/dict.c        |  7 +++++++
->  libmultipath/propsel.c     | 25 +++++++++++++++++++++++++
->  libmultipath/propsel.h     |  1 +
->  libmultipath/structs.h     |  1 +
->  multipath/multipath.conf.5 | 18 ++++++++++++++++++
->  7 files changed, 55 insertions(+)
+>  libmultipath/file.c       |   2 +-
+>  libmultipath/file.h       |   1 +
+>  multipath/main.c          | 132
+> ++++++++++++++++++++++++++++++++++++++++++++++
+> multipath/multipath.rules |   4 +- 4 files changed, 137
+> insertions(+), 2 deletions(-)
 > 
-
 Reviewed-by: Hannes Reinecke <hare@suse.com>
 
 Cheers,
