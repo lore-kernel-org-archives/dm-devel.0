@@ -1,81 +1,32 @@
-From: Peter Rajnoha <prajnoha@redhat.com>
-Subject: Re: [PATCH RESEND 2/2] lvm2: 69-dm-lvm-metad.rules: set
- systemd vars on "change"
-Date: Tue, 17 Apr 2018 11:48:48 +0200
-Message-ID: <cb503a94-3993-013a-2bd1-4c3a143d055c@redhat.com>
-References: <20180416185341.8588-1-mwilck@suse.com>
-	<20180416185341.8588-3-mwilck@suse.com>
-Reply-To: LVM2 development <lvm-devel@redhat.com>
+From: Christopher Lameter <cl@linux.com>
+Subject: Re: slab: introduce the flag SLAB_MINIMIZE_WASTE
+Date: Tue, 17 Apr 2018 09:40:15 -0500 (CDT)
+Message-ID: <alpine.DEB.2.20.1804170939420.17557@nuc-kabylake>
+References: <alpine.LRH.2.02.1803201740280.21066@file01.intranet.prod.int.rdu2.redhat.com> <alpine.DEB.2.20.1803211226350.3174@nuc-kabylake> <alpine.LRH.2.02.1803211425330.26409@file01.intranet.prod.int.rdu2.redhat.com> <20c58a03-90a8-7e75-5fc7-856facfb6c8a@suse.cz>
+ <20180413151019.GA5660@redhat.com> <ee8807ff-d650-0064-70bf-e1d77fa61f5c@suse.cz> <20180416142703.GA22422@redhat.com> <alpine.LRH.2.02.1804161031300.24222@file01.intranet.prod.int.rdu2.redhat.com> <20180416144638.GA22484@redhat.com>
+ <alpine.LRH.2.02.1804161054410.17807@file01.intranet.prod.int.rdu2.redhat.com> <alpine.DEB.2.20.1804161018030.9397@nuc-kabylake> <alpine.LRH.2.02.1804161123400.17807@file01.intranet.prod.int.rdu2.redhat.com> <alpine.DEB.2.20.1804161043430.9622@nuc-kabylake>
+ <alpine.LRH.2.02.1804161532480.19492@file01.intranet.prod.int.rdu2.redhat.com> <b0e6ccf6-06ce-e50b-840e-c8d3072382fd@suse.cz> <alpine.LRH.2.02.1804161650170.7237@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <lvm-devel-bounces@redhat.com>
-In-Reply-To: <20180416185341.8588-3-mwilck@suse.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/lvm-devel>,
-	<mailto:lvm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/lvm-devel>
-List-Post: <mailto:lvm-devel@redhat.com>
-List-Help: <mailto:lvm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
-	<mailto:lvm-devel-request@redhat.com?subject=subscribe>
-Sender: lvm-devel-bounces@redhat.com
-Errors-To: lvm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: dm-devel@redhat.com, lvm-devel@redhat.com, Hannes Reinecke <hare@suse.de>, Zdenek Kabelac <zkabelac@redhat.com>
+Content-Type: text/plain; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <alpine.LRH.2.02.1804161650170.7237@file01.intranet.prod.int.rdu2.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Vlastimil Babka <vbabka@suse.cz>, Mike Snitzer <snitzer@redhat.com>, Matthew Wilcox <willy@infradead.org>, Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 04/16/2018 08:53 PM, Martin Wilck wrote:
-> The current logic that avoids setting SYSTEMD_ALIAS and SYSTEMD_WANTS
-> on "change" events is flawed in the default "systemd background job"
-> configuration. For systemd, it's important that device properties don't
-> change spuriously.
-> 
-> If an "add" event starts lvm2-pvscan@.service for a device, and a
-> "change" event follows, removing SYSTEMD_ALIAS and SYSTEMD_WANTS from the
-> udev db, information about unit dependencies between the device and the
-> pvscan service can be lost in systemd, in particular if the daemon
-> configuration is reloaded.
-> 
-> Steps to reproduce problem:
-> 
-> - create a device with an LVM PV
-> - remove device
-> - add device (generates "add" and "change" uevents for the device)
->   (at this point SYSTEMD_ALIAS and SYSTEMD_WANTS are clear in udev db)
-> - systemctl daemon-reload
->   (systemd reloads udev db)
-> - vgchange -a n
-> - remove device
-> 
-> => the lvm2-pvscan@.service for the device is still active although the
-> device is gone.
-> 
-> - add device again
-> 
-> => the PV is not detected, because systemd sees the lvm2-pvscan@.service
-> as active and thus doesn't restart it.
-> 
-> The original purpose of this logic was to avoid volumes being scanned
-> over and over again. With systemd background jobs, that isn't necessary,
-> because systemd will not restart the job as long as it's active.
-> 
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  udev/69-dm-lvm-metad.rules.in | 56 +++++++++++++++++++++++++++++++------------
->  udev/Makefile.in              |  4 +++-
->  2 files changed, 44 insertions(+), 16 deletions(-)
-> 
+On Mon, 16 Apr 2018, Mikulas Patocka wrote:
 
-Thanks for the patch! I wasn't aware that systemd is reading those
-variables again from udev db on reload - nice catch! Applied:
+> dm-bufio deals gracefully with allocation failure, because it preallocates
+> some buffers with vmalloc, but other subsystems may not deal with it and
+> they cound return ENOMEM randomly or misbehave in other ways. So, the
+> "SLAB_MINIMIZE_WASTE" flag is also saying that the allocation may fail and
+> the caller is prepared to deal with it.
+>
+> The slub subsystem does actual fallback to low-order when the allocation
+> fails (it allows different order for each slab in the same cache), but
+> slab doesn't fallback and you get NULL if higher-order allocation fails.
+> So, SLAB_MINIMIZE_WASTE is needed for slab because it will just randomly
+> fail with higher order.
 
-https://sourceware.org/git/?p=lvm2.git;a=commit;h=7a7b8a7778aace88c967ee8285485c494ce1f3f8
-
--- 
-Peter
-
---
-lvm-devel mailing list
-lvm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/lvm-devel
+Fix Slab instead of adding a flag that is only useful for one allocator?
