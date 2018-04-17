@@ -1,60 +1,32 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: multipathd will not set the iscsi session tmo after
- iscsi sesstion recovery
-Date: Tue, 17 Apr 2018 14:26:38 -0500
-Message-ID: <20180417192638.GL3103@octiron.msp.redhat.com>
-References: <de942eab-4456-fc6d-d588-79bb7a0513e1@oracle.com>
-	<2a4eb120-d1f6-f7e0-4613-0403eb1ffbba@oracle.com>
+From: Christopher Lameter <cl@linux.com>
+Subject: Re: slab: introduce the flag SLAB_MINIMIZE_WASTE
+Date: Tue, 17 Apr 2018 16:42:24 -0500 (CDT)
+Message-ID: <alpine.DEB.2.20.1804171641390.20702@nuc-kabylake>
+References: <alpine.LRH.2.02.1803201740280.21066@file01.intranet.prod.int.rdu2.redhat.com> <20c58a03-90a8-7e75-5fc7-856facfb6c8a@suse.cz> <20180413151019.GA5660@redhat.com> <ee8807ff-d650-0064-70bf-e1d77fa61f5c@suse.cz> <20180416142703.GA22422@redhat.com>
+ <alpine.LRH.2.02.1804161031300.24222@file01.intranet.prod.int.rdu2.redhat.com> <20180416144638.GA22484@redhat.com> <alpine.LRH.2.02.1804161054410.17807@file01.intranet.prod.int.rdu2.redhat.com> <alpine.DEB.2.20.1804161018030.9397@nuc-kabylake>
+ <alpine.LRH.2.02.1804161123400.17807@file01.intranet.prod.int.rdu2.redhat.com> <alpine.DEB.2.20.1804161043430.9622@nuc-kabylake> <alpine.LRH.2.02.1804161532480.19492@file01.intranet.prod.int.rdu2.redhat.com> <b0e6ccf6-06ce-e50b-840e-c8d3072382fd@suse.cz>
+ <alpine.LRH.2.02.1804161650170.7237@file01.intranet.prod.int.rdu2.redhat.com> <alpine.DEB.2.20.1804170939420.17557@nuc-kabylake> <alpine.LRH.2.02.1804171453190.26973@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <2a4eb120-d1f6-f7e0-4613-0403eb1ffbba@oracle.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "jianchao.wang" <jianchao.w.wang@oracle.com>
-Cc: dm-devel@redhat.com, shinya.narahara@oracle.com
+Content-Type: text/plain; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <alpine.LRH.2.02.1804171453190.26973@file01.intranet.prod.int.rdu2.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Vlastimil Babka <vbabka@suse.cz>, Mike Snitzer <snitzer@redhat.com>, Matthew Wilcox <willy@infradead.org>, Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Tue, Apr 17, 2018 at 10:11:48AM +0800, jianchao.wang wrote:
-> Would anyone please provide some suggestion ?
-> 
-> Thanks in advance
-> Jianchao
-> 
-> On 04/12/2018 04:46 PM, jianchao.wang wrote:
-> > Hi Dear all
-> > 
-> > Our customer complained that the iscsi session tmo parameters doesn't match with
-> > the multipath config.
-> > 
-> > When the iscsi session fails and do the recovery, iscsid will set parameters again.
-> > But this will overwrite the ones which has been set by multipathd.
-> > And multipathd will not set the iscsi session tmo parameters when path down and up.
+On Tue, 17 Apr 2018, Mikulas Patocka wrote:
 
-I would rather see if iscsid could skip reseting the parameters if they have
-been changed outside the program. If not, then multipathd could check
-and reset the parameters whenever a path comes back up.  But if iscsid
-is resetting it there, might it not be resetting it elsewhere?
+> > > The slub subsystem does actual fallback to low-order when the allocation
+> > > fails (it allows different order for each slab in the same cache), but
+> > > slab doesn't fallback and you get NULL if higher-order allocation fails.
+> > > So, SLAB_MINIMIZE_WASTE is needed for slab because it will just randomly
+> > > fail with higher order.
+> >
+> > Fix Slab instead of adding a flag that is only useful for one allocator?
+>
+> Slab assumes that all slabs have the same order, so it's not so easy to
+> fix it.
 
--Ben
-
-> > 
-> > Is there any solution for this ?
-> > 
-> > Thanks
-> > Jianchao
-> > 
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+Well since SLAB uses compound pages one could easily determine the order
+of the page and thus also support multiple page orders there.
