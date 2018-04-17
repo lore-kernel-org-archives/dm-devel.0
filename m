@@ -1,15 +1,15 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH v5 20/22] multipath -u: test if path is busy
-Date: Mon, 16 Apr 2018 18:15:10 -0500
-Message-ID: <20180416231510.GK3103@octiron.msp.redhat.com>
-References: <20180413220015.7032-1-mwilck@suse.com>
-	<20180413220015.7032-21-mwilck@suse.com>
+From: "jianchao.wang" <jianchao.w.wang@oracle.com>
+Subject: Re: multipathd will not set the iscsi session tmo after
+ iscsi sesstion recovery
+Date: Tue, 17 Apr 2018 10:11:48 +0800
+Message-ID: <2a4eb120-d1f6-f7e0-4613-0403eb1ffbba@oracle.com>
+References: <de942eab-4456-fc6d-d588-79bb7a0513e1@oracle.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20180413220015.7032-21-mwilck@suse.com>
+In-Reply-To: <de942eab-4456-fc6d-d588-79bb7a0513e1@oracle.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,84 +19,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: dm-devel@redhat.com
+To: christophe.varoqui@opensvc.com, dm-devel@redhat.com
+Cc: shinya.narahara@oracle.com
 List-Id: dm-devel.ids
 
-On Sat, Apr 14, 2018 at 12:00:13AM +0200, Martin Wilck wrote:
-> For "find_multipaths smart", check if a path is already in use
-> before setting DM_MULTIPATH_DEVICE_PATH to 1 or 2 (and thus,
-> SYSTEMD_READY=0). If we don't do this, a device which has already been
-> mounted (e.g. during initrd processing) may be unmounted by systemd, causing
-> havoc to the boot process.
-> 
+Would anyone please provide some suggestion ?
 
-Reviewed-by: Benjamin Marzinsk <bmarzins@redhat.com>
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  multipath/main.c | 39 ++++++++++++++++++++++++++++++++++++++-
->  1 file changed, 38 insertions(+), 1 deletion(-)
+Thanks in advance
+Jianchao
+
+On 04/12/2018 04:46 PM, jianchao.wang wrote:
+> Hi Dear all
 > 
-> diff --git a/multipath/main.c b/multipath/main.c
-> index 573d94f9..c69e996e 100644
-> --- a/multipath/main.c
-> +++ b/multipath/main.c
-> @@ -675,6 +675,9 @@ configure (struct config *conf, enum mpath_cmds cmd,
->  
->  
->  	if (cmd == CMD_VALID_PATH) {
-> +		struct path *pp;
-> +		int fd;
-> +
->  		/* This only happens if find_multipaths and
->  		 * ignore_wwids is set, and the path is not in WWIDs
->  		 * file, not currently multipathed, and has
-> @@ -682,11 +685,45 @@ configure (struct config *conf, enum mpath_cmds cmd,
->  		 * If there is currently a multipath device matching
->  		 * the refwwid, or there is more than one path matching
->  		 * the refwwid, then the path is valid */
-> -		if (VECTOR_SIZE(curmp) != 0 || VECTOR_SIZE(pathvec) > 1)
-> +		if (VECTOR_SIZE(curmp) != 0) {
-> +			r = 0;
-> +			goto print_valid;
-> +		} else if (VECTOR_SIZE(pathvec) > 1)
->  			r = 0;
->  		else
->  			/* Use r=2 as an indication for "maybe" */
->  			r = 2;
-> +
-> +		/*
-> +		 * If opening the path with O_EXCL fails, the path
-> +		 * is in use (e.g. mounted during initramfs processing).
-> +		 * We know that it's not used by dm-multipath.
-> +		 * We may not set SYSTEMD_READY=0 on such devices, it
-> +		 * might cause systemd to umount the device.
-> +		 * Use O_RDONLY, because udevd would trigger another
-> +		 * uevent for close-after-write.
-> +		 *
-> +		 * The O_EXCL check is potentially dangerous, because it may
-> +		 * race with other tasks trying to access the device. Therefore
-> +		 * this code is only executed if the path hasn't been released
-> +		 * to systemd earlier (see above).
-> +		 *
-> +		 * get_refwwid() above stores the path we examine in slot 0.
-> +		 */
-> +		pp = VECTOR_SLOT(pathvec, 0);
-> +		fd = open(udev_device_get_devnode(pp->udev),
-> +			  O_RDONLY|O_EXCL);
-> +		if (fd >= 0)
-> +			close(fd);
-> +		else {
-> +			condlog(3, "%s: path %s is in use: %s",
-> +				__func__, pp->dev,
-> +				strerror(errno));
-> +			/*
-> +			 * Check if we raced with multipathd
-> +			 */
-> +			r = !sysfs_is_multipathed(VECTOR_SLOT(pathvec, 0));
-> +		}
->  		goto print_valid;
->  	}
->  
-> -- 
-> 2.16.1
+> Our customer complained that the iscsi session tmo parameters doesn't match with
+> the multipath config.
+> 
+> When the iscsi session fails and do the recovery, iscsid will set parameters again.
+> But this will overwrite the ones which has been set by multipathd.
+> And multipathd will not set the iscsi session tmo parameters when path down and up.
+> 
+> Is there any solution for this ?
+> 
+> Thanks
+> Jianchao
+> 
