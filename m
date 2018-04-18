@@ -1,46 +1,42 @@
-From: "jianchao.wang" <jianchao.w.wang@oracle.com>
-Subject: Re: multipathd will not set the iscsi session tmo after
- iscsi sesstion recovery
-Date: Wed, 18 Apr 2018 10:33:26 +0800
-Message-ID: <6bc38e7a-3e9c-3f07-f9f0-abbb16f3c8a3@oracle.com>
-References: <de942eab-4456-fc6d-d588-79bb7a0513e1@oracle.com>
-	<2a4eb120-d1f6-f7e0-4613-0403eb1ffbba@oracle.com>
-	<20180417192638.GL3103@octiron.msp.redhat.com>
+From: Christopher Lameter <cl@linux.com>
+Subject: [PATCH] SLUB: Do not fallback to mininum order if __GFP_NORETRY is
+ set
+Date: Wed, 18 Apr 2018 09:45:39 -0500 (CDT)
+Message-ID: <alpine.DEB.2.20.1804180944180.1062@nuc-kabylake>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180417192638.GL3103@octiron.msp.redhat.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com, shinya.narahara@oracle.com
+Content-Type: text/plain; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Vlastimil Babka <vbabka@suse.cz>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Matthew Wilcox <willy@infradead.org>, Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hi Ben
+Mikulas Patoka wants to ensure that no fallback to lower order happens. I
+think __GFP_NORETRY should work correctly in that case too and not fall
+back.
 
-Thanks for your kindly response.
 
-On 04/18/2018 03:26 AM, Benjamin Marzinski wrote:
->>> When the iscsi session fails and do the recovery, iscsid will set parameters again.
->>> But this will overwrite the ones which has been set by multipathd.
->>> And multipathd will not set the iscsi session tmo parameters when path down and up.
-> I would rather see if iscsid could skip reseting the parameters if they have
-> been changed outside the program. If not, then multipathd could check
-> and reset the parameters whenever a path comes back up.  But if iscsid
-> is resetting it there, might it not be resetting it elsewhere?
 
-As I know, iscsid would only set the parameters during setup the session.
-multipathd + iscsid is common case, it is really worthy to provide a fix
-for the parameter reseting when path up/down.
+Allocating at a smaller order is a retry operation and should not
+be attempted.
 
-Thanks
-Jianchao
+If the caller does not want retries then respect that.
+
+GFP_NORETRY allows callers to ensure that only maximum order
+allocations are attempted.
+
+Signed-off-by: Christoph Lameter <cl@linux.com>
+
+Index: linux/mm/slub.c
+===================================================================
+--- linux.orig/mm/slub.c
++++ linux/mm/slub.c
+@@ -1598,7 +1598,7 @@ static struct page *allocate_slab(struct
+ 		alloc_gfp = (alloc_gfp | __GFP_NOMEMALLOC) & ~(__GFP_RECLAIM|__GFP_NOFAIL);
+
+ 	page = alloc_slab_page(s, alloc_gfp, node, oo);
+-	if (unlikely(!page)) {
++	if (unlikely(!page) && !(flags & __GFP_NORETRY)) {
+ 		oo = s->min;
+ 		alloc_gfp = flags;
+ 		/*
