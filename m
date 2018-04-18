@@ -1,11 +1,17 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-integrity: use kvfree
-Date: Tue, 17 Apr 2018 18:32:26 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1804171831330.2145@file01.intranet.prod.int.rdu2.redhat.com>
+From: "jianchao.wang" <jianchao.w.wang@oracle.com>
+Subject: Re: multipathd will not set the iscsi session tmo after
+ iscsi sesstion recovery
+Date: Wed, 18 Apr 2018 10:33:26 +0800
+Message-ID: <6bc38e7a-3e9c-3f07-f9f0-abbb16f3c8a3@oracle.com>
+References: <de942eab-4456-fc6d-d588-79bb7a0513e1@oracle.com>
+	<2a4eb120-d1f6-f7e0-4613-0403eb1ffbba@oracle.com>
+	<20180417192638.GL3103@octiron.msp.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20180417192638.GL3103@octiron.msp.redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,29 +21,26 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <msnitzer@redhat.com>
-Cc: dm-devel@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@redhat.com, shinya.narahara@oracle.com
 List-Id: dm-devel.ids
 
-Use kvfree instead of kfree because the array is allocated with kvmalloc.
+Hi Ben
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Cc: stable@vger.kernel.org	# v4.12+
+Thanks for your kindly response.
 
----
- drivers/md/dm-integrity.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+On 04/18/2018 03:26 AM, Benjamin Marzinski wrote:
+>>> When the iscsi session fails and do the recovery, iscsid will set parameters again.
+>>> But this will overwrite the ones which has been set by multipathd.
+>>> And multipathd will not set the iscsi session tmo parameters when path down and up.
+> I would rather see if iscsid could skip reseting the parameters if they have
+> been changed outside the program. If not, then multipathd could check
+> and reset the parameters whenever a path comes back up.  But if iscsid
+> is resetting it there, might it not be resetting it elsewhere?
 
-Index: linux-2.6/drivers/md/dm-integrity.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-integrity.c	2018-04-18 00:31:11.000000000 +0200
-+++ linux-2.6/drivers/md/dm-integrity.c	2018-04-18 00:31:11.000000000 +0200
-@@ -2440,7 +2440,7 @@ static void dm_integrity_free_journal_sc
- 	unsigned i;
- 	for (i = 0; i < ic->journal_sections; i++)
- 		kvfree(sl[i]);
--	kfree(sl);
-+	kvfree(sl);
- }
- 
- static struct scatterlist **dm_integrity_alloc_journal_scatterlist(struct dm_integrity_c *ic, struct page_list *pl)
+As I know, iscsid would only set the parameters during setup the session.
+multipathd + iscsid is common case, it is really worthy to provide a fix
+for the parameter reseting when path up/down.
+
+Thanks
+Jianchao
