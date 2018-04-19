@@ -1,28 +1,25 @@
-From: Vlastimil Babka <vbabka@suse.cz>
+From: Andrew Morton <akpm@linux-foundation.org>
 Subject: Re: [PATCH] kvmalloc: always use vmalloc if CONFIG_DEBUG_VM
-Date: Thu, 19 Apr 2018 20:28:30 +0200
-Message-ID: <f0be0592-2839-c87e-0f44-bd10956f7704@suse.cz>
+Date: Thu, 19 Apr 2018 12:47:51 -0700
+Message-ID: <20180419124751.8884e516e99825d83da3d87a@linux-foundation.org>
 References: <alpine.LRH.2.02.1804181029270.19294@file01.intranet.prod.int.rdu2.redhat.com>
- <3e65977e-53cd-bf09-bc4b-0ce40e9091fe@gmail.com>
- <alpine.LRH.2.02.1804181218270.19136@file01.intranet.prod.int.rdu2.redhat.com>
- <20180418.134651.2225112489265654270.davem@davemloft.net>
- <alpine.LRH.2.02.1804181350050.17942@file01.intranet.prod.int.rdu2.redhat.com>
- <alpine.LRH.2.02.1804191207380.31175@file01.intranet.prod.int.rdu2.redhat.com>
+        <3e65977e-53cd-bf09-bc4b-0ce40e9091fe@gmail.com>
+        <alpine.LRH.2.02.1804181218270.19136@file01.intranet.prod.int.rdu2.redhat.com>
+        <20180418.134651.2225112489265654270.davem@davemloft.net>
+        <alpine.LRH.2.02.1804181350050.17942@file01.intranet.prod.int.rdu2.redhat.com>
+        <alpine.LRH.2.02.1804191207380.31175@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <alpine.LRH.2.02.1804191207380.31175@file01.intranet.prod.int.rdu2.redhat.com>
-Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>, David Miller <davem@davemloft.net>, Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org
-Cc: eric.dumazet@gmail.com, edumazet@google.com, bhutchings@solarflare.com, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, mst@redhat.com, jasowang@redhat.com, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, Laura Abbott <labbott@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: David Miller <davem@davemloft.net>, linux-mm@kvack.org, eric.dumazet@gmail.com, edumazet@google.com, bhutchings@solarflare.com, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, mst@redhat.com, jasowang@redhat.com, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, Vlastimil Babka <vbabka@suse.cz>
 List-Id: dm-devel.ids
 
-On 04/19/2018 06:12 PM, Mikulas Patocka wrote:
-> From: Mikulas Patocka <mpatocka@redhat.com>
-> Subject: [PATCH] kvmalloc: always use vmalloc if CONFIG_DEBUG_VM
-> 
+On Thu, 19 Apr 2018 12:12:38 -0400 (EDT) Mikulas Patocka <mpatocka@redhat.com> wrote:
+
 > The kvmalloc function tries to use kmalloc and falls back to vmalloc if
 > kmalloc fails.
 > 
@@ -33,22 +30,14 @@ On 04/19/2018 06:12 PM, Mikulas Patocka wrote:
 > 
 > These bugs are hard to reproduce because vmalloc falls back to kmalloc
 > only if memory is fragmented.
-> 
+
+Yes, that's nasty.
+
 > In order to detect these bugs reliably I submit this patch that changes
 > kvmalloc to always use vmalloc if CONFIG_DEBUG_VM is turned on.
 > 
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
-Hmm AFAIK Fedora uses CONFIG_DEBUG_VM in their kernels. Sure you want to
-impose this on all users? Seems too much for DEBUG_VM to me. Maybe it
-should be hidden under some error injection config?
-
-> ---
->  mm/util.c |    2 ++
->  1 file changed, 2 insertions(+)
-> 
-> Index: linux-2.6/mm/util.c
-> ===================================================================
+> ...
+>
 > --- linux-2.6.orig/mm/util.c	2018-04-18 15:46:23.000000000 +0200
 > +++ linux-2.6/mm/util.c	2018-04-18 16:00:43.000000000 +0200
 > @@ -395,6 +395,7 @@ EXPORT_SYMBOL(vm_mmap);
@@ -64,10 +53,10 @@ should be hidden under some error injection config?
 >  	if (ret || size <= PAGE_SIZE)
 >  		return ret;
 > +#endif
-
-Did you verify that vmalloc does the right thing for sub-page sizes?
-Shouldn't those be exempted?
-
+>  
 >  	return __vmalloc_node_flags_caller(size, node, flags,
 >  			__builtin_return_address(0));
-> 
+
+Well, it doesn't have to be done at compile-time, does it?  We could
+add a knob (in debugfs, presumably) which enables this at runtime. 
+That's far more user-friendly.
