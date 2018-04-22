@@ -1,48 +1,111 @@
-From: Vlastimil Babka <vbabka@suse.cz>
-Subject: Re: [PATCH] SLUB: Do not fallback to mininum order if __GFP_NORETRY
- is set
-Date: Sat, 21 Apr 2018 19:02:07 +0200
-Message-ID: <26580de4-70b5-90f7-b3b9-22f57ba38843@suse.cz>
-References: <alpine.DEB.2.20.1804180944180.1062@nuc-kabylake>
- <20180419110051.GB16083@dhcp22.suse.cz>
- <alpine.DEB.2.20.1804200952230.18006@nuc-kabylake>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH] kvmalloc: always use vmalloc if CONFIG_DEBUG_VM
+Date: Sun, 22 Apr 2018 07:03:56 -0600
+Message-ID: <20180422130356.GG17484@dhcp22.suse.cz>
+References: <3e65977e-53cd-bf09-bc4b-0ce40e9091fe@gmail.com>
+ <alpine.LRH.2.02.1804181218270.19136@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180418.134651.2225112489265654270.davem@davemloft.net>
+ <alpine.LRH.2.02.1804181350050.17942@file01.intranet.prod.int.rdu2.redhat.com>
+ <alpine.LRH.2.02.1804191207380.31175@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180420130852.GC16083@dhcp22.suse.cz>
+ <alpine.LRH.2.02.1804201635180.25408@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180420210200.GH10788@bombadil.infradead.org>
+ <alpine.LRH.2.02.1804201704580.25408@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180421144757.GC14610@bombadil.infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.20.1804200952230.18006@nuc-kabylake>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <20180421144757.GC14610@bombadil.infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christopher Lameter <cl@linux.com>, Michal Hocko <mhocko@kernel.org>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Matthew Wilcox <willy@infradead.org>, Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org
+To: Matthew Wilcox <willy@infradead.org>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, David Miller <davem@davemloft.net>, Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, eric.dumazet@gmail.com, edumazet@google.com, bhutchings@solarflare.com, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, mst@redhat.com, jasowang@redhat.com, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, Vlastimil Babka <vbabka@suse.cz>
 List-Id: dm-devel.ids
 
-On 04/20/2018 04:53 PM, Christopher Lameter wrote:
-> On Thu, 19 Apr 2018, Michal Hocko wrote:
+On Sat 21-04-18 07:47:57, Matthew Wilcox wrote:
+> On Fri, Apr 20, 2018 at 05:21:26PM -0400, Mikulas Patocka wrote:
+> > On Fri, 20 Apr 2018, Matthew Wilcox wrote:
+> > > On Fri, Apr 20, 2018 at 04:54:53PM -0400, Mikulas Patocka wrote:
+> > > > On Fri, 20 Apr 2018, Michal Hocko wrote:
+> > > > > No way. This is just wrong! First of all, you will explode most likely
+> > > > > on many allocations of small sizes. Second, CONFIG_DEBUG_VM tends to be
+> > > > > enabled quite often.
+> > > > 
+> > > > You're an evil person who doesn't want to fix bugs.
+> > > 
+> > > Steady on.  There's no need for that.  Michal isn't evil.  Please
+> > > apologise.
+> > 
+> > I see this attitude from Michal again and again.
 > 
->> Overriding __GFP_NORETRY is just a bad idea. It will make the semantic
->> of the flag just more confusing. Note there are users who use
->> __GFP_NORETRY as a way to suppress heavy memory pressure and/or the OOM
->> killer. You do not want to change the semantic for them.
-> 
-> Redoing the allocation after failing a large order alloc is a retry. I
-> would say its confusing right now because a retry occurs despite
-> specifying GFP_NORETRY,
-> 
->> Besides that the changelog is less than optimal. What is the actual
->> problem? Why somebody doesn't want a fallback? Is there a configuration
->> that could prevent the same?
-> 
-> The problem is that SLUB does not honor GFP_NORETRY. The semantics of
-> GFP_NORETRY are not followed.
+> Fine; then *say that*.  I also see Michal saying "No" a lot.  Sometimes
+> I agree with him, sometimes I don't.  I think he genuinely wants the best
+> code in the kernel, and saying "No" is part of it.
 
-The caller might want SLUB to try hard to get that high-order page that
-will minimize memory waste (e.g. 2MB page for 3 640k objects), and
-__GFP_NORETRY will kill the effort on allocating that high-order page.
+Exactly! We have a lot of legacy herritage and random semantic because
+we were too eager to merge stuff. I think it is time to stop that and
+think twice before merging someothing. If you call that evil then I am
+fine to be evil.
 
-Thus, using __GPF_NORETRY for "please give me a space-optimized object,
-or nothing (because I have a fallback that's better than wasting memory,
-e.g. by using 1MB page for 640kb object)" is not ideal.
+> > He didn't want to fix vmalloc(GFP_NOIO)
+> 
+> I don't remember that conversation, so I don't know whether I agree with
+> his reasoning or not.  But we are supposed to be moving away from GFP_NOIO
+> towards marking regions with memalloc_noio_save() / restore.  If you do
+> that, you won't need vmalloc(GFP_NOIO).
 
-Maybe __GFP_RETRY_MAYFAIL is a better fit? Or perhaps indicate this
-situation to SLUB with e.g. __GFP_COMP, although that's rather ugly?
+It was basically to detect GFP_NOIO context _inside_ vmalloc and use the
+scope API to enforce it there. Does it solve potential problems? Yes it
+does. Does it solve any existing report, no I am not aware of any. Is
+it a good fix longterm? Absolutely no, because the scope API should be
+used _at the place_ where the scope starts rather than a random utility
+function. If we are going the easier way now, we will never teach users
+to use the API properly. And I am willing to risk to keep a broken
+code which we have for years rather than allow a random hack that will
+seemingly fix it.
+
+Btw. I was pretty much explicit with this reasoning when rejecting the
+patch. Do you still call that evil?
+
+> > he didn't want to fix alloc_pages sleeping when __GFP_NORETRY is used.
+> 
+> The GFP flags are a mess, still.
+
+I do not remember that one but __GFP_NORETRY is _allowed_ to sleep. And
+yes I do _agree_ gfp flags are a mess which is really hard to get fixed
+because they are lacking a good design from the very beginning. Fixing
+some of those issues today is a completely PITA.
+
+> > So what should I say? Fix them and 
+> > you won't be evil :-)
+> 
+> No, you should reserve calling somebody evil for truly evil things.
+> 
+> > (he could also fix the oom killer, so that it is triggered when 
+> > free_memory+cache+free_swap goes beyond a threshold and not when you loop 
+> > too long in the allocator)
+> 
+> ... that also doesn't make somebody evil.
+
+And again, it is way much more easier to claim that something will get
+fixed when the reality is much more complicated. I've tried to explain
+those risks as well.
+
+> > I already said that we can change it from CONFIG_DEBUG_VM to 
+> > CONFIG_DEBUG_SG - or to whatever other option you may want, just to make 
+> > sure that it is enabled in distro debug kernels by default.
+> 
+> Yes, and I think that's the right idea.  So send a v2 and ignore the
+> replies that are clearly relating to an earlier version of the patch.
+> Not everybody reads every mail in the thread before responding to one they
+> find interesting.  Yes, ideally, one would, but sometimes one doesn't.
+
+And look here. This is yet another ad-hoc idea. We have many users of
+kvmalloc which have no relation to SG, yet you are going to control
+their behavior by CONFIG_DEBUG_SG? No way! (yeah evil again)
+
+Really, we have a fault injection framework and this sounds like
+something to hook in there.
+-- 
+Michal Hocko
+SUSE Labs
