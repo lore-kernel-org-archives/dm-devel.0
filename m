@@ -1,34 +1,61 @@
-From: Christopher Lameter <cl@linux.com>
-Subject: Re: [PATCH] SLUB: Do not fallback to mininum order if __GFP_NORETRY
- is set
-Date: Mon, 23 Apr 2018 17:41:06 -0500 (CDT)
-Message-ID: <alpine.DEB.2.20.1804231738020.3811@nuc-kabylake>
-References: <alpine.DEB.2.20.1804180944180.1062@nuc-kabylake> <20180419110051.GB16083@dhcp22.suse.cz> <alpine.DEB.2.20.1804200952230.18006@nuc-kabylake> <26580de4-70b5-90f7-b3b9-22f57ba38843@suse.cz>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH] kvmalloc: always use vmalloc if CONFIG_DEBUG_VM
+Date: Mon, 23 Apr 2018 19:20:11 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1804231911280.25912@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20180418.134651.2225112489265654270.davem@davemloft.net>
+	<alpine.LRH.2.02.1804181350050.17942@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.LRH.2.02.1804191207380.31175@file01.intranet.prod.int.rdu2.redhat.com>
+	<20180420130852.GC16083@dhcp22.suse.cz>
+	<alpine.LRH.2.02.1804201635180.25408@file01.intranet.prod.int.rdu2.redhat.com>
+	<20180420210200.GH10788@bombadil.infradead.org>
+	<alpine.LRH.2.02.1804201704580.25408@file01.intranet.prod.int.rdu2.redhat.com>
+	<20180421144757.GC14610@bombadil.infradead.org>
+	<20180422130356.GG17484@dhcp22.suse.cz>
+	<alpine.LRH.2.02.1804231006440.22488@file01.intranet.prod.int.rdu2.redhat.com>
+	<20180423151015.GT17484@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <26580de4-70b5-90f7-b3b9-22f57ba38843@suse.cz>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Vlastimil Babka <vbabka@suse.cz>
-Cc: Michal Hocko <mhocko@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Matthew Wilcox <willy@infradead.org>, Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <virtualization-bounces@lists.linux-foundation.org>
+In-Reply-To: <20180423151015.GT17484@dhcp22.suse.cz>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
+List-Post: <mailto:virtualization@lists.linux-foundation.org>
+List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
+Sender: virtualization-bounces@lists.linux-foundation.org
+Errors-To: virtualization-bounces@lists.linux-foundation.org
+To: Michal Hocko <mhocko@kernel.org>
+Cc: dm-devel@redhat.com, eric.dumazet@gmail.com, mst@redhat.com, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, Matthew Wilcox <willy@infradead.org>, virtualization@lists.linux-foundation.org, linux-mm@kvack.org, edumazet@google.com, bhutchings@solarflare.com, Andrew Morton <akpm@linux-foundation.org>, David Miller <davem@davemloft.net>, Vlastimil Babka <vbabka@suse.cz>
 List-Id: dm-devel.ids
 
-On Sat, 21 Apr 2018, Vlastimil Babka wrote:
 
-> > The problem is that SLUB does not honor GFP_NORETRY. The semantics of
-> > GFP_NORETRY are not followed.
->
-> The caller might want SLUB to try hard to get that high-order page that
-> will minimize memory waste (e.g. 2MB page for 3 640k objects), and
-> __GFP_NORETRY will kill the effort on allocating that high-order page.
 
-Well yes since *_NORETRY says that fallbacks are acceptable.
+On Mon, 23 Apr 2018, Michal Hocko wrote:
 
-> Thus, using __GPF_NORETRY for "please give me a space-optimized object,
-> or nothing (because I have a fallback that's better than wasting memory,
-> e.g. by using 1MB page for 640kb object)" is not ideal.
->
-> Maybe __GFP_RETRY_MAYFAIL is a better fit? Or perhaps indicate this
-> situation to SLUB with e.g. __GFP_COMP, although that's rather ugly?
+> On Mon 23-04-18 10:24:02, Mikulas Patocka wrote:
+> 
+> > > Really, we have a fault injection framework and this sounds like
+> > > something to hook in there.
+> > 
+> > The testing people won't set it up. They install the "kernel-debug" 
+> > package and run the tests in it.
+> > 
+> > If you introduce a hidden option that no one knows about, no one will use 
+> > it.
+> 
+> then make sure people know about it. Fuzzers already do test fault
+> injections.
 
-Yuck. None of that sounds like an intuitive approach.
+I think that in the long term we can introduce a kernel parameter like 
+"debug_level=1", "debug_level=2", "debug_level=3" that will turn on 
+debugging features across all kernel subsystems and we can teach users to 
+use it to diagnose problems.
+
+But it won't work if every subsystem has different debug parameters. There 
+are 192 distinct filenames in debugfs, if we add 193rd one, harly anyone 
+notices it.
+
+Mikulas
