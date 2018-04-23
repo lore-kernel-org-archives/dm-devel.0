@@ -1,28 +1,23 @@
-From: Michal Hocko <mhocko@kernel.org>
+From: Mikulas Patocka <mpatocka@redhat.com>
 Subject: Re: [PATCH] kvmalloc: always use vmalloc if CONFIG_DEBUG_VM
-Date: Sun, 22 Apr 2018 07:03:56 -0600
-Message-ID: <20180422130356.GG17484@dhcp22.suse.cz>
-References: <3e65977e-53cd-bf09-bc4b-0ce40e9091fe@gmail.com>
- <alpine.LRH.2.02.1804181218270.19136@file01.intranet.prod.int.rdu2.redhat.com>
- <20180418.134651.2225112489265654270.davem@davemloft.net>
- <alpine.LRH.2.02.1804181350050.17942@file01.intranet.prod.int.rdu2.redhat.com>
- <alpine.LRH.2.02.1804191207380.31175@file01.intranet.prod.int.rdu2.redhat.com>
- <20180420130852.GC16083@dhcp22.suse.cz>
- <alpine.LRH.2.02.1804201635180.25408@file01.intranet.prod.int.rdu2.redhat.com>
- <20180420210200.GH10788@bombadil.infradead.org>
- <alpine.LRH.2.02.1804201704580.25408@file01.intranet.prod.int.rdu2.redhat.com>
- <20180421144757.GC14610@bombadil.infradead.org>
+Date: Mon, 23 Apr 2018 10:06:08 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1804221733520.7995@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1804181029270.19294@file01.intranet.prod.int.rdu2.redhat.com> <3e65977e-53cd-bf09-bc4b-0ce40e9091fe@gmail.com> <alpine.LRH.2.02.1804181218270.19136@file01.intranet.prod.int.rdu2.redhat.com> <20180418.134651.2225112489265654270.davem@davemloft.net>
+ <alpine.LRH.2.02.1804181350050.17942@file01.intranet.prod.int.rdu2.redhat.com> <alpine.LRH.2.02.1804191207380.31175@file01.intranet.prod.int.rdu2.redhat.com> <20180420130852.GC16083@dhcp22.suse.cz> <alpine.LRH.2.02.1804201635180.25408@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180420210200.GH10788@bombadil.infradead.org> <alpine.LRH.2.02.1804201704580.25408@file01.intranet.prod.int.rdu2.redhat.com> <20180421144757.GC14610@bombadil.infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
 In-Reply-To: <20180421144757.GC14610@bombadil.infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Matthew Wilcox <willy@infradead.org>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, David Miller <davem@davemloft.net>, Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, eric.dumazet@gmail.com, edumazet@google.com, bhutchings@solarflare.com, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, mst@redhat.com, jasowang@redhat.com, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, Vlastimil Babka <vbabka@suse.cz>
+Cc: Michal Hocko <mhocko@kernel.org>, David Miller <davem@davemloft.net>, Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, eric.dumazet@gmail.com, edumazet@google.com, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, mst@redhat.com, jasowang@redhat.com, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, Vlastimil Babka <vbabka@suse.cz>
 List-Id: dm-devel.ids
 
-On Sat 21-04-18 07:47:57, Matthew Wilcox wrote:
+
+
+On Sat, 21 Apr 2018, Matthew Wilcox wrote:
+
 > On Fri, Apr 20, 2018 at 05:21:26PM -0400, Mikulas Patocka wrote:
 > > On Fri, 20 Apr 2018, Matthew Wilcox wrote:
 > > > On Fri, Apr 20, 2018 at 04:54:53PM -0400, Mikulas Patocka wrote:
@@ -41,12 +36,7 @@ On Sat 21-04-18 07:47:57, Matthew Wilcox wrote:
 > Fine; then *say that*.  I also see Michal saying "No" a lot.  Sometimes
 > I agree with him, sometimes I don't.  I think he genuinely wants the best
 > code in the kernel, and saying "No" is part of it.
-
-Exactly! We have a lot of legacy herritage and random semantic because
-we were too eager to merge stuff. I think it is time to stop that and
-think twice before merging someothing. If you call that evil then I am
-fine to be evil.
-
+> 
 > > He didn't want to fix vmalloc(GFP_NOIO)
 > 
 > I don't remember that conversation, so I don't know whether I agree with
@@ -54,42 +44,33 @@ fine to be evil.
 > towards marking regions with memalloc_noio_save() / restore.  If you do
 > that, you won't need vmalloc(GFP_NOIO).
 
-It was basically to detect GFP_NOIO context _inside_ vmalloc and use the
-scope API to enforce it there. Does it solve potential problems? Yes it
-does. Does it solve any existing report, no I am not aware of any. Is
-it a good fix longterm? Absolutely no, because the scope API should be
-used _at the place_ where the scope starts rather than a random utility
-function. If we are going the easier way now, we will never teach users
-to use the API properly. And I am willing to risk to keep a broken
-code which we have for years rather than allow a random hack that will
-seemingly fix it.
+He said the same thing a year ago. And there was small progress. 6 out of 
+27 __vmalloc calls were converted to memalloc_noio_save in a year - 5 in 
+infiniband and 1 in btrfs. (the whole discussion is here 
+http://lkml.iu.edu/hypermail/linux/kernel/1706.3/04681.html )
 
-Btw. I was pretty much explicit with this reasoning when rejecting the
-patch. Do you still call that evil?
+He refuses 15-line patch to fix GFP_NOIO bug because he believes that in 4 
+years, the kernel will be refactored and GFP_NOIO will be eliminated. Why 
+does he have veto over this part of the code? I'd much rather argue with 
+people who have constructive comments about fixing bugs than with him.
+
+(note that even if the refactoring eventually succeeds, it will not be 
+backported to stable branches. The small vmalloc patch could be 
+backported)
 
 > > he didn't want to fix alloc_pages sleeping when __GFP_NORETRY is used.
 > 
 > The GFP flags are a mess, still.
 
-I do not remember that one but __GFP_NORETRY is _allowed_ to sleep. And
-yes I do _agree_ gfp flags are a mess which is really hard to get fixed
-because they are lacking a good design from the very beginning. Fixing
-some of those issues today is a completely PITA.
+That's the problem - the flag doesn't have a clear contract and the 
+developers change behavior ad hoc according to bug reports.
 
-> > So what should I say? Fix them and 
-> > you won't be evil :-)
-> 
+> > So what should I say? Fix them and you won't be evil :-)
+>
 > No, you should reserve calling somebody evil for truly evil things.
-> 
-> > (he could also fix the oom killer, so that it is triggered when 
-> > free_memory+cache+free_swap goes beyond a threshold and not when you loop 
-> > too long in the allocator)
-> 
-> ... that also doesn't make somebody evil.
 
-And again, it is way much more easier to claim that something will get
-fixed when the reality is much more complicated. I've tried to explain
-those risks as well.
+How would you call it? Michal falsely believes that a 15-line patch would 
+prevent him from doing long-term refactoring work and so he refuses it.
 
 > > I already said that we can change it from CONFIG_DEBUG_VM to 
 > > CONFIG_DEBUG_SG - or to whatever other option you may want, just to make 
@@ -100,12 +81,12 @@ those risks as well.
 > Not everybody reads every mail in the thread before responding to one they
 > find interesting.  Yes, ideally, one would, but sometimes one doesn't.
 
-And look here. This is yet another ad-hoc idea. We have many users of
-kvmalloc which have no relation to SG, yet you are going to control
-their behavior by CONFIG_DEBUG_SG? No way! (yeah evil again)
+I sent the CONFIG_DEBUG_SG patch before (I wonder why he didn't repond to 
+it). I'll send a third version of the patch that actually randomly chooses 
+between kmalloc and vmalloc, because some abuses can only be detected with 
+kmalloc and we should test both.
 
-Really, we have a fault injection framework and this sounds like
-something to hook in there.
--- 
-Michal Hocko
-SUSE Labs
+For bisecting, it is better to always fallback to vmalloc, but for general 
+testing, it is better to test both branches.
+
+Mikulas
