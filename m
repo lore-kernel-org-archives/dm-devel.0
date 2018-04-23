@@ -1,78 +1,34 @@
-From: "Michael S. Tsirkin" <mst@redhat.com>
-Subject: Re: [PATCH] kvmalloc: always use vmalloc if CONFIG_DEBUG_VM
-Date: Mon, 23 Apr 2018 18:25:57 +0300
-Message-ID: <20180423181250-mutt-send-email-mst@kernel.org>
-References: <alpine.LRH.2.02.1804181029270.19294@file01.intranet.prod.int.rdu2.redhat.com>
- <3e65977e-53cd-bf09-bc4b-0ce40e9091fe@gmail.com>
- <alpine.LRH.2.02.1804181218270.19136@file01.intranet.prod.int.rdu2.redhat.com>
- <20180418.134651.2225112489265654270.davem@davemloft.net>
- <alpine.LRH.2.02.1804181350050.17942@file01.intranet.prod.int.rdu2.redhat.com>
- <alpine.LRH.2.02.1804191207380.31175@file01.intranet.prod.int.rdu2.redhat.com>
- <20180420114712.GB10788@bombadil.infradead.org>
- <alpine.LRH.2.02.1804200817230.22382@file01.intranet.prod.int.rdu2.redhat.com>
+From: Christopher Lameter <cl@linux.com>
+Subject: Re: [PATCH] SLUB: Do not fallback to mininum order if __GFP_NORETRY
+ is set
+Date: Mon, 23 Apr 2018 17:41:06 -0500 (CDT)
+Message-ID: <alpine.DEB.2.20.1804231738020.3811@nuc-kabylake>
+References: <alpine.DEB.2.20.1804180944180.1062@nuc-kabylake> <20180419110051.GB16083@dhcp22.suse.cz> <alpine.DEB.2.20.1804200952230.18006@nuc-kabylake> <26580de4-70b5-90f7-b3b9-22f57ba38843@suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1804200817230.22382@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <26580de4-70b5-90f7-b3b9-22f57ba38843@suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Matthew Wilcox <willy@infradead.org>, David Miller <davem@davemloft.net>, Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, eric.dumazet@gmail.com, edumazet@google.com, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, jasowang@redhat.com, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, Vlastimil Babka <vbabka@suse.cz>
+To: Vlastimil Babka <vbabka@suse.cz>
+Cc: Michal Hocko <mhocko@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Matthew Wilcox <willy@infradead.org>, Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Fri, Apr 20, 2018 at 08:20:23AM -0400, Mikulas Patocka wrote:
-> 
-> 
-> On Fri, 20 Apr 2018, Matthew Wilcox wrote:
-> 
-> > On Thu, Apr 19, 2018 at 12:12:38PM -0400, Mikulas Patocka wrote:
-> > > Unfortunatelly, some kernel code has bugs - it uses kvmalloc and then
-> > > uses DMA-API on the returned memory or frees it with kfree. Such bugs were
-> > > found in the virtio-net driver, dm-integrity or RHEL7 powerpc-specific
-> > > code.
-> > 
-> > Maybe it's time to have the SG code handle vmalloced pages?  This is
-> > becoming more and more common with vmapped stacks (and some of our
-> > workarounds are hideous -- allocate 4 bytes with kmalloc because we can't
-> > DMA onto the stack any more?).  We already have a few places which do
-> > handle sgs of vmalloced addresses, such as the nx crypto driver:
-> > 
-> >         if (is_vmalloc_addr(start_addr))
-> >                 sg_addr = page_to_phys(vmalloc_to_page(start_addr))
-> >                           + offset_in_page(sg_addr);
-> >         else
-> >                 sg_addr = __pa(sg_addr);
-> > 
-> > and videobuf:
-> > 
-> >                 pg = vmalloc_to_page(virt);
-> >                 if (NULL == pg)
-> >                         goto err;
-> >                 BUG_ON(page_to_pfn(pg) >= (1 << (32 - PAGE_SHIFT)));
-> >                 sg_set_page(&sglist[i], pg, PAGE_SIZE, 0);
-> > 
-> > Yes, there's the potential that we have to produce two SG entries for a
-> > virtually contiguous region if it crosses a page boundary, and our APIs
-> > aren't set up right to make it happen.  But this is something we should
-> > consider fixing ... otherwise we'll end up with dozens of driver hacks.
-> > The videobuf implementation was already copy-and-pasted into the saa7146
-> > driver, for example.
-> 
-> What if the device requires physically contiguous area and the vmalloc 
-> area crosses a page? Will you use a bounce buffer? Where do you allocate 
-> the bounce buffer from? What if you run out of bounce buffers?
-> 
-> Mikulkas
+On Sat, 21 Apr 2018, Vlastimil Babka wrote:
 
-I agree with Matthew here.
+> > The problem is that SLUB does not honor GFP_NORETRY. The semantics of
+> > GFP_NORETRY are not followed.
+>
+> The caller might want SLUB to try hard to get that high-order page that
+> will minimize memory waste (e.g. 2MB page for 3 640k objects), and
+> __GFP_NORETRY will kill the effort on allocating that high-order page.
 
-4 byte variables are typically size aligned so won't cross a boundary.
+Well yes since *_NORETRY says that fallbacks are acceptable.
 
-That's enough for virtio at least. People using structs can force
-alignment.
+> Thus, using __GPF_NORETRY for "please give me a space-optimized object,
+> or nothing (because I have a fallback that's better than wasting memory,
+> e.g. by using 1MB page for 640kb object)" is not ideal.
+>
+> Maybe __GFP_RETRY_MAYFAIL is a better fit? Or perhaps indicate this
+> situation to SLUB with e.g. __GFP_COMP, although that's rather ugly?
 
-We could wrap access in a macro (sizeof(x) >= alignof(x)) to help
-guarantee that.
-
--- 
-MST
+Yuck. None of that sounds like an intuitive approach.
