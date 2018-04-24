@@ -1,91 +1,31 @@
-From: David Rientjes <rientjes@google.com>
+From: Matthew Wilcox <willy@infradead.org>
 Subject: Re: [PATCH v3] kvmalloc: always use vmalloc if CONFIG_DEBUG_SG
-Date: Mon, 23 Apr 2018 19:47:22 -0700 (PDT)
-Message-ID: <alpine.DEB.2.21.1804231945410.58980@chino.kir.corp.google.com>
-References: <alpine.LRH.2.02.1804181218270.19136@file01.intranet.prod.int.rdu2.redhat.com> <20180418.134651.2225112489265654270.davem@davemloft.net> <alpine.LRH.2.02.1804181350050.17942@file01.intranet.prod.int.rdu2.redhat.com>
- <alpine.LRH.2.02.1804191207380.31175@file01.intranet.prod.int.rdu2.redhat.com> <20180420130852.GC16083@dhcp22.suse.cz> <alpine.LRH.2.02.1804201635180.25408@file01.intranet.prod.int.rdu2.redhat.com> <20180420210200.GH10788@bombadil.infradead.org>
- <alpine.LRH.2.02.1804201704580.25408@file01.intranet.prod.int.rdu2.redhat.com> <20180421144757.GC14610@bombadil.infradead.org> <alpine.LRH.2.02.1804221733520.7995@file01.intranet.prod.int.rdu2.redhat.com> <20180423151545.GU17484@dhcp22.suse.cz>
+Date: Mon, 23 Apr 2018 20:46:43 -0700
+Message-ID: <20180424034643.GA26636@bombadil.infradead.org>
+References: <alpine.LRH.2.02.1804181350050.17942@file01.intranet.prod.int.rdu2.redhat.com>
+ <alpine.LRH.2.02.1804191207380.31175@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180420130852.GC16083@dhcp22.suse.cz>
+ <alpine.LRH.2.02.1804201635180.25408@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180420210200.GH10788@bombadil.infradead.org>
+ <alpine.LRH.2.02.1804201704580.25408@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180421144757.GC14610@bombadil.infradead.org>
+ <alpine.LRH.2.02.1804221733520.7995@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180423151545.GU17484@dhcp22.suse.cz>
  <alpine.LRH.2.02.1804232003100.2299@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Return-path: <netdev-owner@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
 In-Reply-To: <alpine.LRH.2.02.1804232003100.2299@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: netdev-owner@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Michal Hocko <mhocko@kernel.org>, Matthew Wilcox <willy@infradead.org>, David Miller <davem@davemloft.net>, Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, eric.dumazet@gmail.com, edumazet@google.com, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, mst@redhat.com, jasowang@redhat.com, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, Vlastimil Babka <vbabka@suse.cz>
+Cc: Michal Hocko <mhocko@kernel.org>, David Miller <davem@davemloft.net>, Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, eric.dumazet@gmail.com, edumazet@google.com, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, mst@redhat.com, jasowang@redhat.com, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, Vlastimil Babka <vbabka@suse.cz>
 List-Id: dm-devel.ids
 
-On Mon, 23 Apr 2018, Mikulas Patocka wrote:
-
-> The kvmalloc function tries to use kmalloc and falls back to vmalloc if
-> kmalloc fails.
-> 
-> Unfortunatelly, some kernel code has bugs - it uses kvmalloc and then
-> uses DMA-API on the returned memory or frees it with kfree. Such bugs were
-> found in the virtio-net driver, dm-integrity or RHEL7 powerpc-specific
-> code.
-> 
-> These bugs are hard to reproduce because kvmalloc falls back to vmalloc
-> only if memory is fragmented.
-> 
-> In order to detect these bugs reliably I submit this patch that changes
-> kvmalloc to fall back to vmalloc with 1/2 probability if CONFIG_DEBUG_SG
-> is turned on. CONFIG_DEBUG_SG is used, because it makes the DMA API layer
-> verify the addresses passed to it, and so the user will get a reliable
-> stacktrace.
-> 
-
-Why not just do it unconditionally?  Sounds better than "50% of the time 
-this will catch bugs".
-
+On Mon, Apr 23, 2018 at 08:06:16PM -0400, Mikulas Patocka wrote:
 > Some bugs (such as buffer overflows) are better detected
 > with kmalloc code, so we must test the kmalloc path too.
-> 
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> 
-> ---
->  mm/util.c |   10 ++++++++++
->  1 file changed, 10 insertions(+)
-> 
-> Index: linux-2.6/mm/util.c
-> ===================================================================
-> --- linux-2.6.orig/mm/util.c	2018-04-23 00:12:05.000000000 +0200
-> +++ linux-2.6/mm/util.c	2018-04-23 17:57:02.000000000 +0200
-> @@ -14,6 +14,7 @@
->  #include <linux/hugetlb.h>
->  #include <linux/vmalloc.h>
->  #include <linux/userfaultfd_k.h>
-> +#include <linux/random.h>
->  
->  #include <asm/sections.h>
->  #include <linux/uaccess.h>
-> @@ -404,6 +405,12 @@ void *kvmalloc_node(size_t size, gfp_t f
->  	 */
->  	WARN_ON_ONCE((flags & GFP_KERNEL) != GFP_KERNEL);
->  
-> +#ifdef CONFIG_DEBUG_SG
-> +	/* Catch bugs when the caller uses DMA API on the result of kvmalloc. */
-> +	if (!(prandom_u32_max(2) & 1))
-> +		goto do_vmalloc;
-> +#endif
-> +
->  	/*
->  	 * We want to attempt a large physically contiguous block first because
->  	 * it is less likely to fragment multiple larger blocks and therefore
-> @@ -427,6 +434,9 @@ void *kvmalloc_node(size_t size, gfp_t f
->  	if (ret || size <= PAGE_SIZE)
->  		return ret;
->  
-> +#ifdef CONFIG_DEBUG_SG
-> +do_vmalloc:
-> +#endif
 
-You can just do
-
-do_vmalloc: __maybe_unused
-
->  	return __vmalloc_node_flags_caller(size, node, flags,
->  			__builtin_return_address(0));
->  }
-> 
-> 
+Well now, this brings up another item for the collective TODO list --
+implement redzone checks for vmalloc.  Unless this is something already
+taken care of by kasan or similar.
