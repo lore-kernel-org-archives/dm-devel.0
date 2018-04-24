@@ -1,51 +1,54 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH v3] kvmalloc: always use vmalloc if CONFIG_DEBUG_SG
-Date: Tue, 24 Apr 2018 14:41:47 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1804241428120.8296@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20180420130852.GC16083@dhcp22.suse.cz> <alpine.LRH.2.02.1804201635180.25408@file01.intranet.prod.int.rdu2.redhat.com> <20180420210200.GH10788@bombadil.infradead.org> <alpine.LRH.2.02.1804201704580.25408@file01.intranet.prod.int.rdu2.redhat.com>
- <20180421144757.GC14610@bombadil.infradead.org> <alpine.LRH.2.02.1804221733520.7995@file01.intranet.prod.int.rdu2.redhat.com> <20180423151545.GU17484@dhcp22.suse.cz> <alpine.LRH.2.02.1804232003100.2299@file01.intranet.prod.int.rdu2.redhat.com>
- <20180424034643.GA26636@bombadil.infradead.org> <alpine.LRH.2.02.1804240818530.28016@file01.intranet.prod.int.rdu2.redhat.com> <20180424171651.GC30577@bombadil.infradead.org>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: [PATCH 1/2] multipathd: add failures path format wildcard
+Date: Tue, 24 Apr 2018 15:15:30 -0500
+Message-ID: <1524600931-14920-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180424171651.GC30577@bombadil.infradead.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Matthew Wilcox <willy@infradead.org>
-Cc: Michal Hocko <mhocko@kernel.org>, David Miller <davem@davemloft.net>, Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, eric.dumazet@gmail.com, edumazet@google.com, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, mst@redhat.com, jasowang@redhat.com, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, Vlastimil Babka <vbabka@suse.cz>, Christoph Lameter <cl@linux.com>, Pekka Enberg <penberg@kernel.org>, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+multipath already tracks this, so it should be able to print it out.
 
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/print.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
 
-On Tue, 24 Apr 2018, Matthew Wilcox wrote:
-
-> On Tue, Apr 24, 2018 at 08:29:14AM -0400, Mikulas Patocka wrote:
-> > 
-> > 
-> > On Mon, 23 Apr 2018, Matthew Wilcox wrote:
-> > 
-> > > On Mon, Apr 23, 2018 at 08:06:16PM -0400, Mikulas Patocka wrote:
-> > > > Some bugs (such as buffer overflows) are better detected
-> > > > with kmalloc code, so we must test the kmalloc path too.
-> > > 
-> > > Well now, this brings up another item for the collective TODO list --
-> > > implement redzone checks for vmalloc.  Unless this is something already
-> > > taken care of by kasan or similar.
-> > 
-> > The kmalloc overflow testing is also not ideal - it rounds the size up to 
-> > the next slab size and detects buffer overflows only at this boundary.
-> > 
-> > Some times ago, I made a "kmalloc guard" patch that places a magic number 
-> > immediatelly after the requested size - so that it can detect overflows at 
-> > byte boundary 
-> > ( https://www.redhat.com/archives/dm-devel/2014-September/msg00018.html )
-> > 
-> > That patch found a bug in crypto code:
-> > ( http://lkml.iu.edu/hypermail/linux/kernel/1409.1/02325.html )
-> 
-> Is it still worth doing this, now we have kasan?
-
-The kmalloc guard has much lower overhead than kasan.
-
-(BTW. when I tried kasan, it oopsed with persistent memory)
-
-Mikulas
+diff --git a/libmultipath/print.c b/libmultipath/print.c
+index d532994..b1844c9 100644
+--- a/libmultipath/print.c
++++ b/libmultipath/print.c
+@@ -632,6 +632,12 @@ snprint_path_foreign (char * buff, size_t len, const struct path * pp)
+ 	return snprintf(buff, len, "%s", "--");
+ }
+ 
++static int
++snprint_path_failures(char * buff, size_t len, const struct path * pp)
++{
++	return snprint_int(buff, len, pp->failcount);
++}
++
+ struct multipath_data mpd[] = {
+ 	{'n', "name",          0, snprint_name},
+ 	{'w', "uuid",          0, snprint_multipath_uuid},
+@@ -680,6 +686,7 @@ struct path_data pd[] = {
+ 	{'r', "target WWPN",   0, snprint_tgt_wwpn},
+ 	{'a', "host adapter",  0, snprint_host_adapter},
+ 	{'G', "foreign",       0, snprint_path_foreign},
++	{'0', "failures",      0, snprint_path_failures},
+ 	{0, NULL, 0 , NULL}
+ };
+ 
+-- 
+2.7.4
