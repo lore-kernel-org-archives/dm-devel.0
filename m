@@ -1,66 +1,47 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [PATCH v3] kvmalloc: always use vmalloc if CONFIG_DEBUG_SG
-Date: Tue, 24 Apr 2018 06:51:21 -0600
-Message-ID: <20180424125121.GA17484@dhcp22.suse.cz>
-References: <alpine.LRH.2.02.1804181350050.17942@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.LRH.2.02.1804191207380.31175@file01.intranet.prod.int.rdu2.redhat.com>
-	<20180420130852.GC16083@dhcp22.suse.cz>
-	<alpine.LRH.2.02.1804201635180.25408@file01.intranet.prod.int.rdu2.redhat.com>
-	<20180420210200.GH10788@bombadil.infradead.org>
-	<alpine.LRH.2.02.1804201704580.25408@file01.intranet.prod.int.rdu2.redhat.com>
-	<20180421144757.GC14610@bombadil.infradead.org>
-	<alpine.LRH.2.02.1804221733520.7995@file01.intranet.prod.int.rdu2.redhat.com>
-	<20180423151545.GU17484@dhcp22.suse.cz>
-	<alpine.LRH.2.02.1804232003100.2299@file01.intranet.prod.int.rdu2.redhat.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: remove "c" from __cpluscplus,
+	misspelled
+Date: Tue, 24 Apr 2018 15:03:40 +0200
+Message-ID: <20180424130340.5067-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <virtualization-bounces@lists.linux-foundation.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1804232003100.2299@file01.intranet.prod.int.rdu2.redhat.com>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
-List-Post: <mailto:virtualization@lists.linux-foundation.org>
-List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
-Sender: virtualization-bounces@lists.linux-foundation.org
-Errors-To: virtualization-bounces@lists.linux-foundation.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com, eric.dumazet@gmail.com, mst@redhat.com, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, Matthew Wilcox <willy@infradead.org>, virtualization@lists.linux-foundation.org, linux-mm@kvack.org, edumazet@google.com, Andrew Morton <akpm@linux-foundation.org>, David Miller <davem@davemloft.net>, Vlastimil Babka <vbabka@suse.cz>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, DM ML <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon 23-04-18 20:06:16, Mikulas Patocka wrote:
-[...]
-> @@ -404,6 +405,12 @@ void *kvmalloc_node(size_t size, gfp_t f
->  	 */
->  	WARN_ON_ONCE((flags & GFP_KERNEL) != GFP_KERNEL);
->  
-> +#ifdef CONFIG_DEBUG_SG
-> +	/* Catch bugs when the caller uses DMA API on the result of kvmalloc. */
-> +	if (!(prandom_u32_max(2) & 1))
-> +		goto do_vmalloc;
-> +#endif
+found by cppcheck(http://cppcheck.sf.net/):
+[libmpathcmd/mpath_cmd.h:24]: (error) Invalid number of character '{' when these macros are defined: '__cpluscplus'.
 
-I really do not think there is anything DEBUG_SG specific here. Why you
-simply do not follow should_failslab path or even reuse the function?
+Cc: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: DM ML <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ libmpathcmd/mpath_cmd.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-> +
->  	/*
->  	 * We want to attempt a large physically contiguous block first because
->  	 * it is less likely to fragment multiple larger blocks and therefore
-> @@ -427,6 +434,9 @@ void *kvmalloc_node(size_t size, gfp_t f
->  	if (ret || size <= PAGE_SIZE)
->  		return ret;
->  
-> +#ifdef CONFIG_DEBUG_SG
-> +do_vmalloc:
-> +#endif
->  	return __vmalloc_node_flags_caller(size, node, flags,
->  			__builtin_return_address(0));
->  }
-
+diff --git a/libmpathcmd/mpath_cmd.h b/libmpathcmd/mpath_cmd.h
+index b57b708..3df2c97 100644
+--- a/libmpathcmd/mpath_cmd.h
++++ b/libmpathcmd/mpath_cmd.h
+@@ -20,7 +20,7 @@
+ #ifndef LIB_MPATH_CMD_H
+ #define LIB_MPATH_CMD_H
+ 
+-#ifdef __cpluscplus
++#ifdef __cplusplus
+ extern "C" {
+ #endif
+ 
 -- 
-Michal Hocko
-SUSE Labs
+2.17.0
