@@ -1,8 +1,9 @@
-From: Michal Hocko <mhocko@kernel.org>
+From: Mikulas Patocka <mpatocka@redhat.com>
 Subject: Re: [PATCH] kvmalloc: always use vmalloc if CONFIG_DEBUG_VM
-Date: Tue, 24 Apr 2018 10:29:55 -0600
-Message-ID: <20180424162955.GN17484@dhcp22.suse.cz>
-References: <alpine.LRH.2.02.1804201635180.25408@file01.intranet.prod.int.rdu2.redhat.com>
+Date: Tue, 24 Apr 2018 12:33:01 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1804241229410.23702@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20180420130852.GC16083@dhcp22.suse.cz>
+	<alpine.LRH.2.02.1804201635180.25408@file01.intranet.prod.int.rdu2.redhat.com>
 	<20180420210200.GH10788@bombadil.infradead.org>
 	<alpine.LRH.2.02.1804201704580.25408@file01.intranet.prod.int.rdu2.redhat.com>
 	<20180421144757.GC14610@bombadil.infradead.org>
@@ -16,7 +17,6 @@ Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <virtualization-bounces@lists.linux-foundation.org>
-Content-Disposition: inline
 In-Reply-To: <20180424161242.GK17484@dhcp22.suse.cz>
 List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
 	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
@@ -27,11 +27,14 @@ List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualizati
 	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
 Sender: virtualization-bounces@lists.linux-foundation.org
 Errors-To: virtualization-bounces@lists.linux-foundation.org
-To: Mikulas Patocka <mpatocka@redhat.com>
+To: Michal Hocko <mhocko@kernel.org>
 Cc: dm-devel@redhat.com, eric.dumazet@gmail.com, mst@redhat.com, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, Matthew Wilcox <willy@infradead.org>, virtualization@lists.linux-foundation.org, linux-mm@kvack.org, edumazet@google.com, Andrew Morton <akpm@linux-foundation.org>, David Miller <davem@davemloft.net>, Vlastimil Babka <vbabka@suse.cz>
 List-Id: dm-devel.ids
 
-On Tue 24-04-18 10:12:42, Michal Hocko wrote:
+
+
+On Tue, 24 Apr 2018, Michal Hocko wrote:
+
 > On Tue 24-04-18 11:30:40, Mikulas Patocka wrote:
 > > 
 > > 
@@ -50,9 +53,8 @@ On Tue 24-04-18 10:12:42, Michal Hocko wrote:
 > is to document the scope of the reclaim recursion critical section. That
 > certainly is not a utility function like vmalloc.
 
-http://lkml.kernel.org/r/20180424162712.GL17484@dhcp22.suse.cz
+That 15-line __vmalloc bugfix doesn't prevent you (or any other kernel 
+developer) from converting the code to the scope API. You make nonsensical 
+excuses.
 
-let's see how it rolls this time.
--- 
-Michal Hocko
-SUSE Labs
+Mikulas
