@@ -1,31 +1,56 @@
-From: Christopher Lameter <cl@linux.com>
-Subject: Re: [PATCH RESEND] slab: introduce the flag SLAB_MINIMIZE_WASTE
-Date: Thu, 26 Apr 2018 13:51:51 -0500 (CDT)
-Message-ID: <alpine.DEB.2.20.1804261350500.6674@nuc-kabylake>
-References: <alpine.LRH.2.02.1803201740280.21066@file01.intranet.prod.int.rdu2.redhat.com> <alpine.DEB.2.20.1803211024220.2175@nuc-kabylake> <alpine.LRH.2.02.1803211153320.16017@file01.intranet.prod.int.rdu2.redhat.com> <alpine.DEB.2.20.1803211226350.3174@nuc-kabylake>
- <alpine.LRH.2.02.1803211425330.26409@file01.intranet.prod.int.rdu2.redhat.com> <20c58a03-90a8-7e75-5fc7-856facfb6c8a@suse.cz> <20180413151019.GA5660@redhat.com> <ee8807ff-d650-0064-70bf-e1d77fa61f5c@suse.cz> <20180416142703.GA22422@redhat.com>
- <alpine.LRH.2.02.1804161031300.24222@file01.intranet.prod.int.rdu2.redhat.com> <20180416144638.GA22484@redhat.com> <alpine.LRH.2.02.1804161530360.19492@file01.intranet.prod.int.rdu2.redhat.com> <alpine.DEB.2.20.1804170940340.17557@nuc-kabylake>
- <alpine.LRH.2.02.1804171454020.26973@file01.intranet.prod.int.rdu2.redhat.com> <alpine.DEB.2.20.1804180952580.1334@nuc-kabylake> <alpine.LRH.2.02.1804251702250.9428@file01.intranet.prod.int.rdu2.redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [dm-devel] [PATCH v5] fault-injection: introduce kvmalloc fallback
+	options
+Date: Thu, 26 Apr 2018 14:54:26 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1804261451120.23716@file01.intranet.prod.int.rdu2.redhat.com>
+References: <1524694663.4100.21.camel@HansenPartnership.com>
+	<alpine.LRH.2.02.1804251830540.25124@file01.intranet.prod.int.rdu2.redhat.com>
+	<20180426125817.GO17484@dhcp22.suse.cz>
+	<alpine.LRH.2.02.1804261006120.32722@file01.intranet.prod.int.rdu2.redhat.com>
+	<1524753932.3226.5.camel@HansenPartnership.com>
+	<alpine.LRH.2.02.1804261100170.12157@file01.intranet.prod.int.rdu2.redhat.com>
+	<1524756256.3226.7.camel@HansenPartnership.com>
+	<alpine.LRH.2.02.1804261142480.21152@file01.intranet.prod.int.rdu2.redhat.com>
+	<20180426184845-mutt-send-email-mst@kernel.org>
+	<alpine.LRH.2.02.1804261202350.24656@file01.intranet.prod.int.rdu2.redhat.com>
+	<20180426214011-mutt-send-email-mst@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.02.1804251702250.9428@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, Vlastimil Babka <vbabka@suse.cz>, Matthew Wilcox <willy@infradead.org>, Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <virtualization-bounces@lists.linux-foundation.org>
+In-Reply-To: <20180426214011-mutt-send-email-mst@kernel.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
+List-Post: <mailto:virtualization@lists.linux-foundation.org>
+List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
+Sender: virtualization-bounces@lists.linux-foundation.org
+Errors-To: virtualization-bounces@lists.linux-foundation.org
+To: "Michael S. Tsirkin" <mst@redhat.com>
+Cc: eric.dumazet@gmail.com, netdev@vger.kernel.org, Randy Dunlap <rdunlap@infradead.org>, linux-kernel@vger.kernel.org, Matthew Wilcox <willy@infradead.org>, Michal Hocko <mhocko@kernel.org>, James Bottomley <James.Bottomley@HansenPartnership.com>, linux-mm@kvack.org, dm-devel@redhat.com, Vlastimil Babka <vbabka@suse.cz>, David Rientjes <rientjes@google.com>, Andrew Morton <akpm@linux-foundation.org>, virtualization@lists.linux-foundation.org, David Miller <davem@davemloft.net>, edumazet@google.com
 List-Id: dm-devel.ids
 
-On Wed, 25 Apr 2018, Mikulas Patocka wrote:
 
-> >
-> > Could yo move that logic into slab_order()? It does something awfully
-> > similar.
->
-> But slab_order (and its caller) limits the order to "max_order" and we
-> want more.
->
-> Perhaps slab_order should be dropped and calculate_order totally
-> rewritten?
 
-Yes you likely need to do something creative with max_order if not with
-more stuff.
+On Thu, 26 Apr 2018, Michael S. Tsirkin wrote:
+
+> On Thu, Apr 26, 2018 at 12:07:25PM -0400, Mikulas Patocka wrote:
+> > > IIUC debug kernels mainly exist so people who experience e.g. memory
+> > > corruption can try and debug the failure. In this case, CONFIG_DEBUG_SG
+> > > will *already* catch a failure early. Nothing special needs to be done.
+> > 
+> > The patch helps people debug such memory coprruptions (such as using DMA 
+> > API on the result of kvmalloc).
+> 
+> That's my point.  I don't think your patch helps debug any memory
+> corruptions.  With CONFIG_DEBUG_SG using DMA API already causes a
+> BUG_ON, that's before any memory can get corrupted.
+
+The patch turns a hard-to-reproduce bug into an easy-to-reproduce bug. 
+
+Obviously we don't want this in production kernels, but in the debug 
+kernels it should be done.
+
+Mikulas
