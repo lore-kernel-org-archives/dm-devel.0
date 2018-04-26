@@ -1,225 +1,123 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH RESEND] slab: introduce the flag SLAB_MINIMIZE_WASTE
-Date: Wed, 25 Apr 2018 19:24:22 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1804251917460.2429@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1803201740280.21066@file01.intranet.prod.int.rdu2.redhat.com> <alpine.DEB.2.20.1803211024220.2175@nuc-kabylake> <alpine.LRH.2.02.1803211153320.16017@file01.intranet.prod.int.rdu2.redhat.com> <alpine.DEB.2.20.1803211226350.3174@nuc-kabylake>
- <alpine.LRH.2.02.1803211425330.26409@file01.intranet.prod.int.rdu2.redhat.com> <20c58a03-90a8-7e75-5fc7-856facfb6c8a@suse.cz> <20180413151019.GA5660@redhat.com> <ee8807ff-d650-0064-70bf-e1d77fa61f5c@suse.cz> <20180416142703.GA22422@redhat.com>
- <alpine.LRH.2.02.1804161031300.24222@file01.intranet.prod.int.rdu2.redhat.com> <20180416144638.GA22484@redhat.com> <alpine.LRH.2.02.1804161530360.19492@file01.intranet.prod.int.rdu2.redhat.com> <alpine.DEB.2.20.1804170940340.17557@nuc-kabylake>
- <alpine.LRH.2.02.1804171454020.26973@file01.intranet.prod.int.rdu2.redhat.com> <alpine.DEB.2.20.1804180952580.1334@nuc-kabylake> <alpine.LRH.2.02.1804251702250.9428@file01.intranet.prod.int.rdu2.redhat.com>
+From: Randy Dunlap <rdunlap@infradead.org>
+Subject: Re: [PATCH] fault-injection: reorder config entries
+Date: Wed, 25 Apr 2018 20:21:24 -0700
+Message-ID: <43c0881e-b411-9999-5411-ae840116a94b@infradead.org>
+References: <20180421144757.GC14610@bombadil.infradead.org>
+ <alpine.LRH.2.02.1804221733520.7995@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180423151545.GU17484@dhcp22.suse.cz>
+ <alpine.LRH.2.02.1804232003100.2299@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180424125121.GA17484@dhcp22.suse.cz>
+ <alpine.LRH.2.02.1804241142340.15660@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180424162906.GM17484@dhcp22.suse.cz>
+ <alpine.LRH.2.02.1804241250350.28995@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180424170349.GQ17484@dhcp22.suse.cz>
+ <alpine.LRH.2.02.1804241319390.28995@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180424173836.GR17484@dhcp22.suse.cz>
+ <alpine.LRH.2.02.1804251601160.30569@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.02.1804251702250.9428@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christopher Lameter <cl@linux.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, Vlastimil Babka <vbabka@suse.cz>, Matthew Wilcox <willy@infradead.org>, Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <alpine.LRH.2.02.1804251601160.30569@file01.intranet.prod.int.rdu2.redhat.com>
+Content-Language: en-US
+Sender: netdev-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>, Michal Hocko <mhocko@kernel.org>
+Cc: Matthew Wilcox <willy@infradead.org>, David Miller <davem@davemloft.net>, Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, eric.dumazet@gmail.com, edumazet@google.com, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, mst@redhat.com, jasowang@redhat.com, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, Vlastimil Babka <vbabka@suse.cz>
 List-Id: dm-devel.ids
 
-
-
-On Wed, 25 Apr 2018, Mikulas Patocka wrote:
-
+On 04/25/2018 01:02 PM, Mikulas Patocka wrote:
+> This patch reorders Kconfig entries, so that menuconfig displays proper 
+> indentation.
 > 
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+Acked-by: Randy Dunlap <rdunlap@infradead.org>
+Tested-by: Randy Dunlap <rdunlap@infradead.org>
+
+Thanks.
+
+> ---
+>  lib/Kconfig.debug |   36 ++++++++++++++++++------------------
+>  1 file changed, 18 insertions(+), 18 deletions(-)
 > 
-> On Wed, 18 Apr 2018, Christopher Lameter wrote:
+> Index: linux-2.6/lib/Kconfig.debug
+> ===================================================================
+> --- linux-2.6.orig/lib/Kconfig.debug	2018-04-16 21:08:36.000000000 +0200
+> +++ linux-2.6/lib/Kconfig.debug	2018-04-25 15:56:16.000000000 +0200
+> @@ -1503,6 +1503,10 @@ config NETDEV_NOTIFIER_ERROR_INJECT
+>  
+>  	  If unsure, say N.
+>  
+> +config FUNCTION_ERROR_INJECTION
+> +	def_bool y
+> +	depends on HAVE_FUNCTION_ERROR_INJECTION && KPROBES
+> +
+>  config FAULT_INJECTION
+>  	bool "Fault-injection framework"
+>  	depends on DEBUG_KERNEL
+> @@ -1510,10 +1514,6 @@ config FAULT_INJECTION
+>  	  Provide fault-injection framework.
+>  	  For more details, see Documentation/fault-injection/.
+>  
+> -config FUNCTION_ERROR_INJECTION
+> -	def_bool y
+> -	depends on HAVE_FUNCTION_ERROR_INJECTION && KPROBES
+> -
+>  config FAILSLAB
+>  	bool "Fault-injection capability for kmalloc"
+>  	depends on FAULT_INJECTION
+> @@ -1544,16 +1544,6 @@ config FAIL_IO_TIMEOUT
+>  	  Only works with drivers that use the generic timeout handling,
+>  	  for others it wont do anything.
+>  
+> -config FAIL_MMC_REQUEST
+> -	bool "Fault-injection capability for MMC IO"
+> -	depends on FAULT_INJECTION_DEBUG_FS && MMC
+> -	help
+> -	  Provide fault-injection capability for MMC IO.
+> -	  This will make the mmc core return data errors. This is
+> -	  useful to test the error handling in the mmc block device
+> -	  and to test how the mmc host driver handles retries from
+> -	  the block device.
+> -
+>  config FAIL_FUTEX
+>  	bool "Fault-injection capability for futexes"
+>  	select DEBUG_FS
+> @@ -1561,6 +1551,12 @@ config FAIL_FUTEX
+>  	help
+>  	  Provide fault-injection capability for futexes.
+>  
+> +config FAULT_INJECTION_DEBUG_FS
+> +	bool "Debugfs entries for fault-injection capabilities"
+> +	depends on FAULT_INJECTION && SYSFS && DEBUG_FS
+> +	help
+> +	  Enable configuration of fault-injection capabilities via debugfs.
+> +
+>  config FAIL_FUNCTION
+>  	bool "Fault-injection capability for functions"
+>  	depends on FAULT_INJECTION_DEBUG_FS && FUNCTION_ERROR_INJECTION
+> @@ -1571,11 +1567,15 @@ config FAIL_FUNCTION
+>  	  an error value and have to handle it. This is useful to test the
+>  	  error handling in various subsystems.
+>  
+> -config FAULT_INJECTION_DEBUG_FS
+> -	bool "Debugfs entries for fault-injection capabilities"
+> -	depends on FAULT_INJECTION && SYSFS && DEBUG_FS
+> +config FAIL_MMC_REQUEST
+> +	bool "Fault-injection capability for MMC IO"
+> +	depends on FAULT_INJECTION_DEBUG_FS && MMC
+>  	help
+> -	  Enable configuration of fault-injection capabilities via debugfs.
+> +	  Provide fault-injection capability for MMC IO.
+> +	  This will make the mmc core return data errors. This is
+> +	  useful to test the error handling in the mmc block device
+> +	  and to test how the mmc host driver handles retries from
+> +	  the block device.
+>  
+>  config FAULT_INJECTION_STACKTRACE_FILTER
+>  	bool "stacktrace filter for fault-injection capabilities"
 > 
-> > On Tue, 17 Apr 2018, Mikulas Patocka wrote:
-> > 
-> > > I can make a slub-only patch with no extra flag (on a freshly booted
-> > > system it increases only the order of caches "TCPv6" and "sighand_cache"
-> > > by one - so it should not have unexpected effects):
-> > >
-> > > Doing a generic solution for slab would be more comlpicated because slab
-> > > assumes that all slabs have the same order, so it can't fall-back to
-> > > lower-order allocations.
-> > 
-> > Well again SLAB uses compound pages and thus would be able to detect the
-> > size of the page. It may be some work but it could be done.
-> > 
-> > >
-> > > Index: linux-2.6/mm/slub.c
-> > > ===================================================================
-> > > --- linux-2.6.orig/mm/slub.c	2018-04-17 19:59:49.000000000 +0200
-> > > +++ linux-2.6/mm/slub.c	2018-04-17 20:58:23.000000000 +0200
-> > > @@ -3252,6 +3252,7 @@ static inline unsigned int slab_order(un
-> > >  static inline int calculate_order(unsigned int size, unsigned int reserved)
-> > >  {
-> > >  	unsigned int order;
-> > > +	unsigned int test_order;
-> > >  	unsigned int min_objects;
-> > >  	unsigned int max_objects;
-> > >
-> > > @@ -3277,7 +3278,7 @@ static inline int calculate_order(unsign
-> > >  			order = slab_order(size, min_objects,
-> > >  					slub_max_order, fraction, reserved);
-> > >  			if (order <= slub_max_order)
-> > > -				return order;
-> > > +				goto ret_order;
-> > >  			fraction /= 2;
-> > >  		}
-> > >  		min_objects--;
-> > > @@ -3289,15 +3290,25 @@ static inline int calculate_order(unsign
-> > >  	 */
-> > >  	order = slab_order(size, 1, slub_max_order, 1, reserved);
-> > 
-> > The slab order is determined in slab_order()
-> > 
-> > >  	if (order <= slub_max_order)
-> > > -		return order;
-> > > +		goto ret_order;
-> > >
-> > >  	/*
-> > >  	 * Doh this slab cannot be placed using slub_max_order.
-> > >  	 */
-> > >  	order = slab_order(size, 1, MAX_ORDER, 1, reserved);
-> > > -	if (order < MAX_ORDER)
-> > > -		return order;
-> > > -	return -ENOSYS;
-> > > +	if (order >= MAX_ORDER)
-> > > +		return -ENOSYS;
-> > > +
-> > > +ret_order:
-> > > +	for (test_order = order + 1; test_order < MAX_ORDER; test_order++) {
-> > > +		unsigned long order_objects = ((PAGE_SIZE << order) - reserved) / size;
-> > > +		unsigned long test_order_objects = ((PAGE_SIZE << test_order) - reserved) / size;
-> > > +		if (test_order_objects > min(32, MAX_OBJS_PER_PAGE))
-> > > +			break;
-> > > +		if (test_order_objects > order_objects << (test_order - order))
-> > > +			order = test_order;
-> > > +	}
-> > > +	return order;
-> > 
-> > Could yo move that logic into slab_order()? It does something awfully
-> > similar.
-> 
-> But slab_order (and its caller) limits the order to "max_order" and we 
-> want more.
-> 
-> Perhaps slab_order should be dropped and calculate_order totally 
-> rewritten?
-> 
-> Mikulas
 
-Do you want this? It deletes slab_order and replaces it with the 
-"minimize_waste" logic directly.
 
-The patch starts with a minimal order for a given size and increases the 
-order if one of these conditions is met:
-* we is below slub_min_order
-* we are below min_objects and slub_max_order
-* we go above slub_max_order only if it minimizes waste and if we don't 
-  increase the object count above 32
-
-It simplifies the code and it is very similar to the old algorithms, most 
-slab caches have the same order, so it shouldn't cause any regressions.
-
-This patch changes order of these slabs:
-TCPv6: 3 -> 4
-sighand_cache: 3 -> 4
-task_struct: 3 -> 4
-
----
- mm/slub.c |   76 +++++++++++++++++++++-----------------------------------------
- 1 file changed, 26 insertions(+), 50 deletions(-)
-
-Index: linux-2.6/mm/slub.c
-===================================================================
---- linux-2.6.orig/mm/slub.c	2018-04-26 00:07:30.000000000 +0200
-+++ linux-2.6/mm/slub.c	2018-04-26 00:21:37.000000000 +0200
-@@ -3224,34 +3224,10 @@ static unsigned int slub_min_objects;
-  * requested a higher mininum order then we start with that one instead of
-  * the smallest order which will fit the object.
-  */
--static inline unsigned int slab_order(unsigned int size,
--		unsigned int min_objects, unsigned int max_order,
--		unsigned int fract_leftover, unsigned int reserved)
--{
--	unsigned int min_order = slub_min_order;
--	unsigned int order;
--
--	if (order_objects(min_order, size, reserved) > MAX_OBJS_PER_PAGE)
--		return get_order(size * MAX_OBJS_PER_PAGE) - 1;
--
--	for (order = max(min_order, (unsigned int)get_order(min_objects * size + reserved));
--			order <= max_order; order++) {
--
--		unsigned int slab_size = (unsigned int)PAGE_SIZE << order;
--		unsigned int rem;
--
--		rem = (slab_size - reserved) % size;
--
--		if (rem <= slab_size / fract_leftover)
--			break;
--	}
--
--	return order;
--}
--
- static inline int calculate_order(unsigned int size, unsigned int reserved)
- {
- 	unsigned int order;
-+	unsigned int test_order;
- 	unsigned int min_objects;
- 	unsigned int max_objects;
- 
-@@ -3269,35 +3245,35 @@ static inline int calculate_order(unsign
- 	max_objects = order_objects(slub_max_order, size, reserved);
- 	min_objects = min(min_objects, max_objects);
- 
--	while (min_objects > 1) {
--		unsigned int fraction;
-+	/* Get the minimum acceptable order for one object */
-+	order = get_order(size + reserved);
-+
-+	for (test_order = order + 1; test_order < MAX_ORDER; test_order++) {
-+		unsigned order_obj = order_objects(order, size, reserved);
-+		unsigned test_order_obj = order_objects(test_order, size, reserved);
-+
-+		/* If there are too many objects, stop searching */
-+		if (test_order_obj > MAX_OBJS_PER_PAGE)
-+			break;
- 
--		fraction = 16;
--		while (fraction >= 4) {
--			order = slab_order(size, min_objects,
--					slub_max_order, fraction, reserved);
--			if (order <= slub_max_order)
--				return order;
--			fraction /= 2;
--		}
--		min_objects--;
-+		/* Always increase up to slub_min_order */
-+		if (test_order <= slub_min_order)
-+			order = test_order;
-+
-+		/* If we are below min_objects and slub_max_order, increase order */
-+		if (order_obj < min_objects && test_order <= slub_max_order)
-+			order = test_order;
-+
-+		/* Increase order even more, but only if it reduces waste */
-+		if (test_order_obj <= 32 &&
-+		    test_order_obj > order_obj << (test_order - order))
-+			order = test_order;
- 	}
- 
--	/*
--	 * We were unable to place multiple objects in a slab. Now
--	 * lets see if we can place a single object there.
--	 */
--	order = slab_order(size, 1, slub_max_order, 1, reserved);
--	if (order <= slub_max_order)
--		return order;
-+	if (order >= MAX_ORDER)
-+		return -ENOSYS;
- 
--	/*
--	 * Doh this slab cannot be placed using slub_max_order.
--	 */
--	order = slab_order(size, 1, MAX_ORDER, 1, reserved);
--	if (order < MAX_ORDER)
--		return order;
--	return -ENOSYS;
-+	return order;
- }
- 
- static void
+-- 
+~Randy
