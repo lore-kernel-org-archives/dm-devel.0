@@ -1,76 +1,64 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [dm-devel] [PATCH v5] fault-injection: introduce kvmalloc fallback
-	options
-Date: Thu, 26 Apr 2018 17:50:20 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1804261726540.13401@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20180421144757.GC14610@bombadil.infradead.org>
-	<20180424162906.GM17484@dhcp22.suse.cz>
-	<alpine.LRH.2.02.1804241250350.28995@file01.intranet.prod.int.rdu2.redhat.com>
-	<20180424170349.GQ17484@dhcp22.suse.cz>
-	<alpine.LRH.2.02.1804241319390.28995@file01.intranet.prod.int.rdu2.redhat.com>
-	<20180424173836.GR17484@dhcp22.suse.cz>
-	<alpine.LRH.2.02.1804251556060.30569@file01.intranet.prod.int.rdu2.redhat.com>
-	<1114eda5-9b1f-4db8-2090-556b4a37c532@infradead.org>
-	<alpine.LRH.2.02.1804251656300.9428@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.DEB.2.21.1804251417470.166306@chino.kir.corp.google.com>
-	<alpine.LRH.2.02.1804251720090.9428@file01.intranet.prod.int.rdu2.redhat.com>
-	<1524694663.4100.21.camel@HansenPartnership.com>
-	<alpine.LRH.2.02.1804251857070.31135@file01.intranet.prod.int.rdu2.redhat.com>
-	<1524697697.4100.23.camel@HansenPartnership.com>
-	<23266.8532.619051.784274@quad.stoffel.home>
+From: "Michael S. Tsirkin" <mst@redhat.com>
+Subject: Re: [dm-devel] [PATCH v5] fault-injection: introduce kvmalloc
+ fallback options
+Date: Fri, 27 Apr 2018 01:21:52 +0300
+Message-ID: <20180427005213-mutt-send-email-mst@kernel.org>
+References: <alpine.LRH.2.02.1804251556060.30569@file01.intranet.prod.int.rdu2.redhat.com>
+ <1114eda5-9b1f-4db8-2090-556b4a37c532@infradead.org>
+ <alpine.LRH.2.02.1804251656300.9428@file01.intranet.prod.int.rdu2.redhat.com>
+ <alpine.DEB.2.21.1804251417470.166306@chino.kir.corp.google.com>
+ <alpine.LRH.2.02.1804251720090.9428@file01.intranet.prod.int.rdu2.redhat.com>
+ <1524694663.4100.21.camel@HansenPartnership.com>
+ <alpine.LRH.2.02.1804251857070.31135@file01.intranet.prod.int.rdu2.redhat.com>
+ <1524697697.4100.23.camel@HansenPartnership.com>
+ <23266.8532.619051.784274@quad.stoffel.home>
+ <alpine.LRH.2.02.1804261726540.13401@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <virtualization-bounces@lists.linux-foundation.org>
-In-Reply-To: <23266.8532.619051.784274@quad.stoffel.home>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
-List-Post: <mailto:virtualization@lists.linux-foundation.org>
-List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
-	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
-Sender: virtualization-bounces@lists.linux-foundation.org
-Errors-To: virtualization-bounces@lists.linux-foundation.org
-To: John Stoffel <john@stoffel.org>
-Cc: Andrew@stoffel.org, eric.dumazet@gmail.com, mst@redhat.com, edumazet@google.com, netdev@vger.kernel.org, Randy Dunlap <rdunlap@infradead.org>, linux-kernel@vger.kernel.org, Matthew Wilcox <willy@infradead.org>, Hocko <mhocko@kernel.org>, James Bottomley <James.Bottomley@HansenPartnership.com>, Michal@stoffel.org, dm-devel@redhat.com, David Miller <davem@davemloft.net>, David Rientjes <rientjes@google.com>, Morton <akpm@linux-foundation.org>, virtualization@lists.linux-foundation.org, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1804261726540.13401@file01.intranet.prod.int.rdu2.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: John Stoffel <john@stoffel.org>, James Bottomley <James.Bottomley@HansenPartnership.com>, Michal@stoffel.org, eric.dumazet@gmail.com, netdev@vger.kernel.org, jasowang@redhat.com, Randy Dunlap <rdunlap@infradead.org>, linux-kernel@vger.kernel.org, Matthew Wilcox <willy@infradead.org>, Hocko <mhocko@kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, Vlastimil Babka <vbabka@suse.cz>, Andrew@stoffel.org, David Rientjes <rientjes@google.com>, Morton <akpm@linux-foundation.org>, virtualization@lists.linux-foundation.org, David Miller <davem@davemloft.net>, edumazet@google.com
 List-Id: dm-devel.ids
 
+On Thu, Apr 26, 2018 at 05:50:20PM -0400, Mikulas Patocka wrote:
+> How is the user or developer supposed to learn about this option, if 
+> he gets no crash at all?
 
+Look in /sys/kernel/debug/fail* ? That actually lets you
+filter by module, process etc.
 
-On Thu, 26 Apr 2018, John Stoffel wrote:
+I think this patch conflates two things:
 
-> >>>>> "James" == James Bottomley <James.Bottomley@HansenPartnership.com> writes:
-> 
-> James> I may be an atypical developer but I'd rather have a root canal
-> James> than browse through menuconfig options.  The way to get people
-> James> to learn about new debugging options is to blog about it (or
-> James> write an lwn.net article) which google will find the next time
-> James> I ask it how I debug XXX.  Google (probably as a service to
-> James> humanity) rarely turns up Kconfig options in response to a
-> James> query.
-> 
-> I agree with James here.  Looking at the SLAB vs SLUB Kconfig entries
-> tells me *nothing* about why I should pick one or the other, as an
-> example.
-> 
-> John
+1. Make kvmalloc use the vmalloc path.
+    This seems a bit narrow.
+    What is special about kvmalloc? IMHO nothing - it's yet another user
+    of __GFP_NORETRY or __GFP_RETRY_MAYFAIL. As any such
+    user, it either recovers correctly or not.
+    So IMHO it's just a case of
+    making __GFP_NORETRY, __GFP_RETRY_MAYFAIL, or both
+    fail once in a while.
+    Seems like a better extension to me than focusing on vmalloc.
+    I think you will find more bugs this way.
 
-I see your point - and I think the misunderstanding is this.
+2. Ability to control this from a separate config
+   option.
 
-This patch is not really helping people to debug existing crashes. It is 
-not like "you get a crash" - "you google for some keywords" - "you get a 
-page that suggests to turn this option on" - "you turn it on and solve the 
-crash".
+   It's still not that clear to me why is this such a
+   hard requirement.  If a distro wants to force specific
+   boot time options, why isn't CONFIG_CMDLINE sufficient?
 
-What this patch really does is that - it makes the kernel deliberately 
-crash in a situation when the code violates the specification, but it 
-would not crash otherwise or it would crash very rarely. It helps to 
-detect specification violations.
+   But assuming it's important to control this kind of
+   fault injection to be controlled from
+   a dedicated menuconfig option, why not the rest of
+   faults?
 
-If the kernel developer (or tester) doesn't use this option, his buggy 
-code won't crash - and if it won't crash, he won't fix the bug or report 
-it. How is the user or developer supposed to learn about this option, if 
-he gets no crash at all?
+IMHO if you split 1/2 up, and generalize, the path upstream
+will be much smoother.
 
-Mikulas
+Hope this helps.
+
+-- 
+MST
