@@ -1,90 +1,43 @@
-From: Christopher Lameter <cl@linux.com>
-Subject: Re: [PATCH RESEND] slab: introduce the flag SLAB_MINIMIZE_WASTE
-Date: Thu, 26 Apr 2018 14:01:06 -0500 (CDT)
-Message-ID: <alpine.DEB.2.20.1804261354230.6674@nuc-kabylake>
-References: <alpine.LRH.2.02.1803201740280.21066@file01.intranet.prod.int.rdu2.redhat.com> <alpine.DEB.2.20.1803211226350.3174@nuc-kabylake> <alpine.LRH.2.02.1803211425330.26409@file01.intranet.prod.int.rdu2.redhat.com> <20c58a03-90a8-7e75-5fc7-856facfb6c8a@suse.cz>
- <20180413151019.GA5660@redhat.com> <ee8807ff-d650-0064-70bf-e1d77fa61f5c@suse.cz> <20180416142703.GA22422@redhat.com> <alpine.LRH.2.02.1804161031300.24222@file01.intranet.prod.int.rdu2.redhat.com> <20180416144638.GA22484@redhat.com>
- <alpine.LRH.2.02.1804161530360.19492@file01.intranet.prod.int.rdu2.redhat.com> <alpine.DEB.2.20.1804170940340.17557@nuc-kabylake> <alpine.LRH.2.02.1804171454020.26973@file01.intranet.prod.int.rdu2.redhat.com> <alpine.DEB.2.20.1804180952580.1334@nuc-kabylake>
- <alpine.LRH.2.02.1804251702250.9428@file01.intranet.prod.int.rdu2.redhat.com> <alpine.LRH.2.02.1804251917460.2429@file01.intranet.prod.int.rdu2.redhat.com>
+From: "Michael S. Tsirkin" <mst@redhat.com>
+Subject: Re: [dm-devel] [PATCH v5] fault-injection: introduce kvmalloc
+ fallback options
+Date: Thu, 26 Apr 2018 22:05:15 +0300
+Message-ID: <20180426220314-mutt-send-email-mst@kernel.org>
+References: <1524694663.4100.21.camel@HansenPartnership.com>
+ <alpine.LRH.2.02.1804251830540.25124@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180426125817.GO17484@dhcp22.suse.cz>
+ <alpine.LRH.2.02.1804261006120.32722@file01.intranet.prod.int.rdu2.redhat.com>
+ <1524753932.3226.5.camel@HansenPartnership.com>
+ <alpine.LRH.2.02.1804261100170.12157@file01.intranet.prod.int.rdu2.redhat.com>
+ <1524756256.3226.7.camel@HansenPartnership.com>
+ <alpine.LRH.2.02.1804261142480.21152@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180426184845-mutt-send-email-mst@kernel.org>
+ <alpine.LRH.2.02.1804261454380.23716@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.02.1804251917460.2429@file01.intranet.prod.int.rdu2.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1804261454380.23716@file01.intranet.prod.int.rdu2.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, Vlastimil Babka <vbabka@suse.cz>, Matthew Wilcox <willy@infradead.org>, Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org
+Cc: James Bottomley <James.Bottomley@HansenPartnership.com>, Michal Hocko <mhocko@kernel.org>, David Rientjes <rientjes@google.com>, dm-devel@redhat.com, eric.dumazet@gmail.com, netdev@vger.kernel.org, jasowang@redhat.com, Randy Dunlap <rdunlap@infradead.org>, linux-kernel@vger.kernel.org, Matthew Wilcox <willy@infradead.org>, linux-mm@kvack.org, edumazet@google.com, Andrew Morton <akpm@linux-foundation.org>, virtualization@lists.linux-foundation.org, David Miller <davem@davemloft.net>, Vlastimil Babka <vbabka@suse.cz>
 List-Id: dm-devel.ids
 
-On Wed, 25 Apr 2018, Mikulas Patocka wrote:
+On Thu, Apr 26, 2018 at 02:58:08PM -0400, Mikulas Patocka wrote:
+> 
+> 
+> On Thu, 26 Apr 2018, Michael S. Tsirkin wrote:
+> 
+> > How do you make sure QA tests a specific corner case? Add it to
+> > the test plan :)
+> 
+> BTW. how many "lines of code" of corporate bureaucracy would that take? :-)
 
-> Do you want this? It deletes slab_order and replaces it with the
-> "minimize_waste" logic directly.
+It's pretty easy at least here at Red Hat.
 
-Well yes that looks better. Now we need to make it easy to read and less
-complicated. Maybe try to keep as much as possible of the old code
-and also the names of variables to make it easier to review?
-
-> It simplifies the code and it is very similar to the old algorithms, most
-> slab caches have the same order, so it shouldn't cause any regressions.
->
-> This patch changes order of these slabs:
-> TCPv6: 3 -> 4
-> sighand_cache: 3 -> 4
-> task_struct: 3 -> 4
-
-Hmmm... order 4 for these caches may cause some concern. These should stay
-under costly order I think. Otherwise allocations are no longer
-guaranteed.
-
-> @@ -3269,35 +3245,35 @@ static inline int calculate_order(unsign
->  	max_objects = order_objects(slub_max_order, size, reserved);
->  	min_objects = min(min_objects, max_objects);
->
-> -	while (min_objects > 1) {
-> -		unsigned int fraction;
-> +	/* Get the minimum acceptable order for one object */
-> +	order = get_order(size + reserved);
-> +
-> +	for (test_order = order + 1; test_order < MAX_ORDER; test_order++) {
-> +		unsigned order_obj = order_objects(order, size, reserved);
-> +		unsigned test_order_obj = order_objects(test_order, size, reserved);
-> +
-> +		/* If there are too many objects, stop searching */
-> +		if (test_order_obj > MAX_OBJS_PER_PAGE)
-> +			break;
->
-> -		fraction = 16;
-> -		while (fraction >= 4) {
-> -			order = slab_order(size, min_objects,
-> -					slub_max_order, fraction, reserved);
-> -			if (order <= slub_max_order)
-> -				return order;
-> -			fraction /= 2;
-> -		}
-> -		min_objects--;
-> +		/* Always increase up to slub_min_order */
-> +		if (test_order <= slub_min_order)
-> +			order = test_order;
-
-Well that is a significant change. In our current scheme the order
-boundart wins.
-
-
-> +
-> +		/* If we are below min_objects and slub_max_order, increase order */
-> +		if (order_obj < min_objects && test_order <= slub_max_order)
-> +			order = test_order;
-> +
-> +		/* Increase order even more, but only if it reduces waste */
-> +		if (test_order_obj <= 32 &&
-
-Where does the 32 come from?
-
-> +		    test_order_obj > order_obj << (test_order - order))
-
-Add more () to make the condition better readable.
-
-> +			order = test_order;
-
-Can we just call test_order order and avoid using the long variable names
-here? Variable names in functions are typically short.
+> > I don't speak for Red Hat, etc.
+> > 
+> > -- 
+> > MST
+> 
+> Mikulas
