@@ -1,51 +1,70 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [dm-devel] [PATCH v5] fault-injection: introduce kvmalloc fallback
- options
-Date: Thu, 26 Apr 2018 11:55:32 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1804261145140.21152@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20180424170349.GQ17484@dhcp22.suse.cz>   <alpine.LRH.2.02.1804241319390.28995@file01.intranet.prod.int.rdu2.redhat.com>   <20180424173836.GR17484@dhcp22.suse.cz>   <alpine.LRH.2.02.1804251556060.30569@file01.intranet.prod.int.rdu2.redhat.com>
-  <1114eda5-9b1f-4db8-2090-556b4a37c532@infradead.org>   <alpine.LRH.2.02.1804251656300.9428@file01.intranet.prod.int.rdu2.redhat.com>   <alpine.DEB.2.21.1804251417470.166306@chino.kir.corp.google.com>   <alpine.LRH.2.02.1804251720090.9428@file01.intranet.prod.int.rdu2.redhat.com>
-  <1524694663.4100.21.camel@HansenPartnership.com>   <alpine.LRH.2.02.1804251830540.25124@file01.intranet.prod.int.rdu2.redhat.com>   <20180426125817.GO17484@dhcp22.suse.cz>   <alpine.LRH.2.02.1804261006120.32722@file01.intranet.prod.int.rdu2.redhat.com>
- <1524753932.3226.5.camel@HansenPartnership.com>  <alpine.LRH.2.02.1804261100170.12157@file01.intranet.prod.int.rdu2.redhat.com> <1524756256.3226.7.camel@HansenPartnership.com>
+From: "Michael S. Tsirkin" <mst@redhat.com>
+Subject: Re: [dm-devel] [PATCH v5] fault-injection: introduce kvmalloc
+ fallback options
+Date: Thu, 26 Apr 2018 18:59:40 +0300
+Message-ID: <20180426184845-mutt-send-email-mst@kernel.org>
+References: <alpine.DEB.2.21.1804251417470.166306@chino.kir.corp.google.com>
+ <alpine.LRH.2.02.1804251720090.9428@file01.intranet.prod.int.rdu2.redhat.com>
+ <1524694663.4100.21.camel@HansenPartnership.com>
+ <alpine.LRH.2.02.1804251830540.25124@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180426125817.GO17484@dhcp22.suse.cz>
+ <alpine.LRH.2.02.1804261006120.32722@file01.intranet.prod.int.rdu2.redhat.com>
+ <1524753932.3226.5.camel@HansenPartnership.com>
+ <alpine.LRH.2.02.1804261100170.12157@file01.intranet.prod.int.rdu2.redhat.com>
+ <1524756256.3226.7.camel@HansenPartnership.com>
+ <alpine.LRH.2.02.1804261142480.21152@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <1524756256.3226.7.camel@HansenPartnership.com>
-Sender: netdev-owner@vger.kernel.org
-To: James Bottomley <James.Bottomley@HansenPartnership.com>
-Cc: Michal Hocko <mhocko@kernel.org>, David Rientjes <rientjes@google.com>, dm-devel@redhat.com, eric.dumazet@gmail.com, mst@redhat.com, netdev@vger.kernel.org, jasowang@redhat.com, Randy Dunlap <rdunlap@infradead.org>, linux-kernel@vger.kernel.org, Matthew Wilcox <willy@infradead.org>, linux-mm@kvack.org, edumazet@google.com, Andrew Morton <akpm@linux-foundation.org>, virtualization@lists.linux-foundation.org, David Miller <davem@davemloft.net>, Vlastimil Babka <vbabka@suse.cz>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1804261142480.21152@file01.intranet.prod.int.rdu2.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: James Bottomley <James.Bottomley@HansenPartnership.com>, Michal Hocko <mhocko@kernel.org>, David Rientjes <rientjes@google.com>, dm-devel@redhat.com, eric.dumazet@gmail.com, netdev@vger.kernel.org, jasowang@redhat.com, Randy Dunlap <rdunlap@infradead.org>, linux-kernel@vger.kernel.org, Matthew Wilcox <willy@infradead.org>, linux-mm@kvack.org, edumazet@google.com, Andrew Morton <akpm@linux-foundation.org>, virtualization@lists.linux-foundation.org, David Miller <davem@davemloft.net>, Vlastimil Babka <vbabka@suse.cz>
 List-Id: dm-devel.ids
 
-
-
-On Thu, 26 Apr 2018, James Bottomley wrote:
-
-> So you're shifting your argument from "I have to do it as a Kconfig
-> option because the distros require it" to "distributions will build
-> separate kernel packages for this, but won't do enabling in a non
-> kernel package"?  To be honest, I think the argument is nuts but I
-> don't really care.  From my point of view it's usually me explaining to
-> people how to debug stuff and "you have to build your own kernel with
-> this Kconfig option" compared to "add this to the kernel command line
-> and reboot" is much more effort for the debugger.
+On Thu, Apr 26, 2018 at 11:44:21AM -0400, Mikulas Patocka wrote:
 > 
-> James
+> 
+> On Thu, 26 Apr 2018, James Bottomley wrote:
+> 
+> > On Thu, 2018-04-26 at 11:05 -0400, Mikulas Patocka wrote:
+> > > 
+> > > On Thu, 26 Apr 2018, James Bottomley wrote:
+> > [...]
+> > > > Perhaps find out beforehand instead of insisting on an approach
+> > > without
+> > > > knowing.  On openSUSE the grub config is built from the files in
+> > > > /etc/grub.d/ so any package can add a kernel option (and various
+> > > > conditions around activating it) simply by adding a new file.
+> > > 
+> > > And then, different versions of the debug kernel will clash when 
+> > > attempting to create the same file.
+> > 
+> > Don't be silly ... there are many ways of coping with that in rpm/dpkg.
+> 
+> I know you can deal with it - but how many lines of code will that 
+> consume? Multiplied by the total number of rpm-based distros.
+> 
+> Mikulas
 
-If you have to explain to the user that he needs to turn it on, it is 
-already wrong.
+I don't think debug kernels should inject faults by default.
 
-In order to find the kvmalloc abuses, it should be tested by as many users 
-as possible. And it could be tested by as many users as possible, if it 
-can be enabled in a VISIBLE place (i.e. menuconfig) - or (in my opinion 
-even better) it should be bound to an CONFIG_ option that is already 
-enabled for debugging kernel - then you won't have to explain anything to 
-the user at all.
+IIUC debug kernels mainly exist so people who experience e.g. memory
+corruption can try and debug the failure. In this case, CONFIG_DEBUG_SG
+will *already* catch a failure early. Nothing special needs to be done.
 
-Hardly anyone - except for people who read this thread - will know about 
-the new commandline parameters or debugfs files.
+There is a much smaller class of people like QA who go actively looking
+for trouble. That's the kind of thing fault injection is good for, and
+IMO you do not want your QA team to test a separate kernel - otherwise
+you are never quite sure whatever was tested will work in the field.
+So a config option won't help them either.
 
-I'm not arguing that the commandline parameter or debugfs files are wrong. 
-They are OK to overridde the default settings for advanced users. But they 
-are useless for common users because common users won't know about them.
+How do you make sure QA tests a specific corner case? Add it to
+the test plan :)
 
-Mikulas
+I don't speak for Red Hat, etc.
+
+-- 
+MST
