@@ -1,202 +1,138 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH RESEND] slab: introduce the flag SLAB_MINIMIZE_WASTE
-Date: Fri, 27 Apr 2018 15:19:31 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1804271513320.16558@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1803201740280.21066@file01.intranet.prod.int.rdu2.redhat.com> <20c58a03-90a8-7e75-5fc7-856facfb6c8a@suse.cz> <20180413151019.GA5660@redhat.com> <ee8807ff-d650-0064-70bf-e1d77fa61f5c@suse.cz> <20180416142703.GA22422@redhat.com>
- <alpine.LRH.2.02.1804161031300.24222@file01.intranet.prod.int.rdu2.redhat.com> <20180416144638.GA22484@redhat.com> <alpine.LRH.2.02.1804161530360.19492@file01.intranet.prod.int.rdu2.redhat.com> <alpine.DEB.2.20.1804170940340.17557@nuc-kabylake>
- <alpine.LRH.2.02.1804171454020.26973@file01.intranet.prod.int.rdu2.redhat.com> <alpine.DEB.2.20.1804180952580.1334@nuc-kabylake> <alpine.LRH.2.02.1804251702250.9428@file01.intranet.prod.int.rdu2.redhat.com> <alpine.LRH.2.02.1804251917460.2429@file01.intranet.prod.int.rdu2.redhat.com>
- <alpine.DEB.2.20.1804261354230.6674@nuc-kabylake> <alpine.LRH.2.02.1804261508430.26980@file01.intranet.prod.int.rdu2.redhat.com> <alpine.DEB.2.20.1804271136390.11686@nuc-kabylake>
+Subject: Re: [dm-devel] [PATCH v5] fault-injection: introduce kvmalloc fallback
+ options
+Date: Fri, 27 Apr 2018 19:20:07 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1804271914200.4345@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1804251556060.30569@file01.intranet.prod.int.rdu2.redhat.com> <1114eda5-9b1f-4db8-2090-556b4a37c532@infradead.org> <alpine.LRH.2.02.1804251656300.9428@file01.intranet.prod.int.rdu2.redhat.com> <alpine.DEB.2.21.1804251417470.166306@chino.kir.corp.google.com>
+ <alpine.LRH.2.02.1804251720090.9428@file01.intranet.prod.int.rdu2.redhat.com> <1524694663.4100.21.camel@HansenPartnership.com> <alpine.LRH.2.02.1804251857070.31135@file01.intranet.prod.int.rdu2.redhat.com> <1524697697.4100.23.camel@HansenPartnership.com>
+ <23266.8532.619051.784274@quad.stoffel.home> <alpine.LRH.2.02.1804261726540.13401@file01.intranet.prod.int.rdu2.redhat.com> <20180427005213-mutt-send-email-mst@kernel.org>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.20.1804271136390.11686@nuc-kabylake>
+In-Reply-To: <20180427005213-mutt-send-email-mst@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christopher Lameter <cl@linux.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, Vlastimil Babka <vbabka@suse.cz>, Matthew Wilcox <willy@infradead.org>, Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org
+To: "Michael S. Tsirkin" <mst@redhat.com>
+Cc: John Stoffel <john@stoffel.org>, James Bottomley <James.Bottomley@HansenPartnership.com>, Michal@stoffel.org, eric.dumazet@gmail.com, netdev@vger.kernel.org, jasowang@redhat.com, Randy Dunlap <rdunlap@infradead.org>, linux-kernel@vger.kernel.org, Matthew Wilcox <willy@infradead.org>, Hocko <mhocko@kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, Vlastimil Babka <vbabka@suse.cz>, Andrew@stoffel.org, David Rientjes <rientjes@google.com>, Morton <akpm@linux-foundation.org>, virtualization@lists.linux-foundation.org, David Miller <davem@davemloft.net>, edumazet@google.com
 List-Id: dm-devel.ids
 
 
 
-On Fri, 27 Apr 2018, Christopher Lameter wrote:
+On Fri, 27 Apr 2018, Michael S. Tsirkin wrote:
 
-> On Thu, 26 Apr 2018, Mikulas Patocka wrote:
+> 2. Ability to control this from a separate config
+>    option.
 > 
-> > > Hmmm... order 4 for these caches may cause some concern. These should stay
-> > > under costly order I think. Otherwise allocations are no longer
-> > > guaranteed.
-> >
-> > You said that slub has fallback to smaller order allocations.
-> 
-> Yes it does...
-> 
-> > The whole purpose of this "minimize waste" approach is to use higher-order
-> > allocations to use memory more efficiently, so it is just doing its job.
-> > (for these 3 caches, order-4 really wastes less memory than order-3 - on
-> > my system TCPv6 and sighand_cache have size 2112, task_struct 2752).
-> 
-> Hmmm... Ok if the others are fine with this as well. I got some pushback
-> there in the past.
-> 
-> > We could improve the fallback code, so that if order-4 allocation fails,
-> > it tries order-3 allocation, and then falls back to order-0. But I think
-> > that these failures are rare enough that it is not a problem.
-> 
-> I also think that would be too many fallbacks.
+>    It's still not that clear to me why is this such a
+>    hard requirement.  If a distro wants to force specific
+>    boot time options, why isn't CONFIG_CMDLINE sufficient?
 
-You are right - it's better to fallback to the minimum possible size, so 
-that the allocation is faster.
-
-> The old code uses the concept of a "fraction" to calculate overhead. The
-> code here uses absolute counts of bytes. Fraction looks better to me.
-
-OK - I reworked the patch using the same "fraction" calculation as before.  
-The existing logic targets 1/16 wasted space, so I used this target in 
-this patch too.
-
-This patch increases only the order of task_struct (from 3 to 4), all the 
-other caches have the same order as before.
-
-Mikulas
+So, try this and turn it on with CONFIG_CMDLINE. But I'm not a 
+blogger and I will not write a blog post about it as James Bottomley 
+suggests :-)
+- so very few users will use it. 
 
 
+fault-injection: introduce kvmalloc fallback options
 
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] slub: use higher order to reduce wasted space
+This patch introduces a fault-injection option "kvmalloc_fallback". This
+option makes kvmalloc randomly fall back to vmalloc.
 
-If we create a slub cache with large object size (larger than
-slub_max_order), the slub subsystem currently rounds up the object size to
-the next power of two.
-
-This is inefficient, because it wastes too much space. We use the slab
-cache as a buffer cache in dm-bufio, in order to use the memory
-efficiently, we need to reduce wasted space.
-
-This patch reworks the slub order calculation algorithm, so that it uses
-higher order allocations if it would reduce wasted space. The slub
-subsystem has fallback if the higher-order allocations fails, so using
-order higher than PAGE_ALLOC_COSTLY_ORDER is ok.
-
-The new algorithm first calculates the minimum order that can be used for
-a give object size and then increases the order according to these
-conditions:
-* if we would overshoot MAX_OBJS_PER_PAGE, don't increase
-* if we are below slub_min_order, increase
-* if we are below slub_max_order and below min_objects, increase
-* we increase above slub_max_order only if it reduces wasted space and if
-  we alrady waste at least 1/16 of the compound page
-
-The new algorithm gives very similar results to the old one, all the
-caches on my system have the same order as before, only the order of
-task_struct (size 2752) is increased from 3 to 4.
+Unfortunately, some kernel code has bugs - it uses kvmalloc and then
+uses DMA-API on the returned memory or frees it with kfree. Such bugs were
+found in the virtio-net driver, dm-integrity or RHEL7 powerpc-specific
+code. This options helps to test for these bugs.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- mm/slub.c |   82 +++++++++++++++++++++++---------------------------------------
- 1 file changed, 31 insertions(+), 51 deletions(-)
+ Documentation/fault-injection/fault-injection.txt |    7 +++++
+ mm/util.c                                         |   30 ++++++++++++++++++++++
+ 2 files changed, 37 insertions(+)
 
-Index: linux-2.6/mm/slub.c
+Index: linux-2.6/Documentation/fault-injection/fault-injection.txt
 ===================================================================
---- linux-2.6.orig/mm/slub.c	2018-04-27 19:30:34.000000000 +0200
-+++ linux-2.6/mm/slub.c	2018-04-27 21:05:53.000000000 +0200
-@@ -3224,34 +3224,10 @@ static unsigned int slub_min_objects;
-  * requested a higher mininum order then we start with that one instead of
-  * the smallest order which will fit the object.
-  */
--static inline unsigned int slab_order(unsigned int size,
--		unsigned int min_objects, unsigned int max_order,
--		unsigned int fract_leftover, unsigned int reserved)
-+static int calculate_order(unsigned int size, unsigned int reserved)
- {
--	unsigned int min_order = slub_min_order;
--	unsigned int order;
--
--	if (order_objects(min_order, size, reserved) > MAX_OBJS_PER_PAGE)
--		return get_order(size * MAX_OBJS_PER_PAGE) - 1;
--
--	for (order = max(min_order, (unsigned int)get_order(min_objects * size + reserved));
--			order <= max_order; order++) {
--
--		unsigned int slab_size = (unsigned int)PAGE_SIZE << order;
--		unsigned int rem;
--
--		rem = (slab_size - reserved) % size;
--
--		if (rem <= slab_size / fract_leftover)
--			break;
--	}
--
--	return order;
--}
--
--static inline int calculate_order(unsigned int size, unsigned int reserved)
--{
--	unsigned int order;
-+	unsigned int best_order;
-+	unsigned int test_order;
- 	unsigned int min_objects;
- 	unsigned int max_objects;
+--- linux-2.6.orig/Documentation/fault-injection/fault-injection.txt	2018-04-28 01:01:25.000000000 +0200
++++ linux-2.6/Documentation/fault-injection/fault-injection.txt	2018-04-28 01:01:25.000000000 +0200
+@@ -15,6 +15,12 @@ o fail_page_alloc
  
-@@ -3269,34 +3245,38 @@ static inline int calculate_order(unsign
- 	max_objects = order_objects(slub_max_order, size, reserved);
- 	min_objects = min(min_objects, max_objects);
+   injects page allocation failures. (alloc_pages(), get_free_pages(), ...)
  
--	while (min_objects > 1) {
--		unsigned int fraction;
-+	/* Get the minimum acceptable order for one object */
-+	best_order = get_order(size + reserved);
++o kvmalloc_fallback
 +
-+	for (test_order = best_order + 1; test_order < MAX_ORDER; test_order++) {
-+		unsigned best_order_obj = order_objects(best_order, size, reserved);
-+		unsigned test_order_obj = order_objects(test_order, size, reserved);
++  makes the function kvmalloc randomly fall back to vmalloc. This could be used
++  to detects bugs such as using DMA-API on the result of kvmalloc or freeing
++  the result of kvmalloc with free.
 +
-+		unsigned best_order_slab_size = (unsigned int)PAGE_SIZE << best_order;
-+		unsigned best_order_rem = (best_order_slab_size - reserved) % size;
-+
-+		/* If there would be too many objects, stop searching */
-+		if (test_order_obj > MAX_OBJS_PER_PAGE)
-+			break;
+ o fail_futex
  
--		fraction = 16;
--		while (fraction >= 4) {
--			order = slab_order(size, min_objects,
--					slub_max_order, fraction, reserved);
--			if (order <= slub_max_order)
--				return order;
--			fraction /= 2;
--		}
--		min_objects--;
-+		/* Always increase up to slub_min_order */
-+		if (test_order <= slub_min_order)
-+			best_order = test_order;
-+
-+		/* If we are below min_objects and slub_max_order, increase the order */
-+		if (best_order_obj < min_objects && test_order <= slub_max_order)
-+			best_order = test_order;
-+
-+		/* Increase the order even more, but only if it reduces waste */
-+		/* If we already waste less than 1/16, don't increase it */
-+		if (best_order_rem >= (best_order_slab_size / 16) &&
-+		    test_order_obj > (best_order_obj << (test_order - best_order)))
-+			best_order = test_order;
- 	}
+   injects futex deadlock and uaddr fault errors.
+@@ -167,6 +173,7 @@ use the boot option:
  
--	/*
--	 * We were unable to place multiple objects in a slab. Now
--	 * lets see if we can place a single object there.
--	 */
--	order = slab_order(size, 1, slub_max_order, 1, reserved);
--	if (order <= slub_max_order)
--		return order;
-+	if (best_order < MAX_ORDER)
-+		return best_order;
+ 	failslab=
+ 	fail_page_alloc=
++	kvmalloc_fallback=
+ 	fail_make_request=
+ 	fail_futex=
+ 	mmc_core.fail_request=<interval>,<probability>,<space>,<times>
+Index: linux-2.6/mm/util.c
+===================================================================
+--- linux-2.6.orig/mm/util.c	2018-04-28 01:01:25.000000000 +0200
++++ linux-2.6/mm/util.c	2018-04-28 01:03:25.000000000 +0200
+@@ -14,6 +14,7 @@
+ #include <linux/hugetlb.h>
+ #include <linux/vmalloc.h>
+ #include <linux/userfaultfd_k.h>
++#include <linux/fault-inject.h>
  
--	/*
--	 * Doh this slab cannot be placed using slub_max_order.
--	 */
--	order = slab_order(size, 1, MAX_ORDER, 1, reserved);
--	if (order < MAX_ORDER)
--		return order;
- 	return -ENOSYS;
+ #include <asm/sections.h>
+ #include <linux/uaccess.h>
+@@ -377,6 +378,29 @@ unsigned long vm_mmap(struct file *file,
  }
+ EXPORT_SYMBOL(vm_mmap);
  
++#ifdef CONFIG_FAULT_INJECTION
++
++static DECLARE_FAULT_ATTR(kvmalloc_fallback);
++
++static int __init setup_kvmalloc_fallback(char *str)
++{
++	kvmalloc_fallback.verbose = 0;
++	return setup_fault_attr(&kvmalloc_fallback, str);
++}
++
++__setup("kvmalloc_fallback=", setup_kvmalloc_fallback);
++
++#ifdef CONFIG_FAULT_INJECTION_DEBUG_FS
++static int __init kvmalloc_fallback_debugfs_init(void)
++{
++	fault_create_debugfs_attr("kvmalloc_fallback", NULL, &kvmalloc_fallback);
++	return 0;
++}
++late_initcall(kvmalloc_fallback_debugfs_init);
++#endif
++
++#endif
++
+ /**
+  * kvmalloc_node - attempt to allocate physically contiguous memory, but upon
+  * failure, fall back to non-contiguous (vmalloc) allocation.
+@@ -404,6 +428,11 @@ void *kvmalloc_node(size_t size, gfp_t f
+ 	 */
+ 	WARN_ON_ONCE((flags & GFP_KERNEL) != GFP_KERNEL);
+ 
++#ifdef CONFIG_FAULT_INJECTION
++	if (should_fail(&kvmalloc_fallback, size))
++		goto do_vmalloc;
++#endif
++
+ 	/*
+ 	 * We want to attempt a large physically contiguous block first because
+ 	 * it is less likely to fragment multiple larger blocks and therefore
+@@ -427,6 +456,7 @@ void *kvmalloc_node(size_t size, gfp_t f
+ 	if (ret || size <= PAGE_SIZE)
+ 		return ret;
+ 
++do_vmalloc: __maybe_unused
+ 	return __vmalloc_node_flags_caller(size, node, flags,
+ 			__builtin_return_address(0));
+ }
