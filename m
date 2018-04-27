@@ -1,96 +1,45 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: Re: [PATCH] dm/raid1: Remove VLA usage
-Date: Thu, 26 Apr 2018 16:31:50 -0700
-Message-ID: <CAGXu5jLUTF0c3DLGjFFnSwJ3FJmiOMYRu3vqTqNVEBQehyn4KA@mail.gmail.com>
-References: <20180411044315.GA46144@beast>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [dm-devel] [PATCH v5] fault-injection: introduce kvmalloc
+ fallback options
+Date: Fri, 27 Apr 2018 10:25:55 +0200
+Message-ID: <20180427082555.GC17484@dhcp22.suse.cz>
+References: <alpine.LRH.2.02.1804251656300.9428@file01.intranet.prod.int.rdu2.redhat.com>
+ <alpine.DEB.2.21.1804251417470.166306@chino.kir.corp.google.com>
+ <alpine.LRH.2.02.1804251720090.9428@file01.intranet.prod.int.rdu2.redhat.com>
+ <1524694663.4100.21.camel@HansenPartnership.com>
+ <alpine.LRH.2.02.1804251857070.31135@file01.intranet.prod.int.rdu2.redhat.com>
+ <1524697697.4100.23.camel@HansenPartnership.com>
+ <23266.8532.619051.784274@quad.stoffel.home>
+ <alpine.LRH.2.02.1804261726540.13401@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180427005213-mutt-send-email-mst@kernel.org>
+ <alpine.LRH.2.02.1804261829190.30599@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180411044315.GA46144@beast>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1804261829190.30599@file01.intranet.prod.int.rdu2.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Alasdair Kergon <agk@redhat.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, LKML <linux-kernel@vger.kernel.org>, dm-devel@redhat.com, Tycho Andersen <tycho@tycho.ws>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: "Michael S. Tsirkin" <mst@redhat.com>, John Stoffel <john@stoffel.org>, James Bottomley <James.Bottomley@HansenPartnership.com>, Michal@stoffel.org, eric.dumazet@gmail.com, netdev@vger.kernel.org, jasowang@redhat.com, Randy Dunlap <rdunlap@infradead.org>, linux-kernel@vger.kernel.org, Matthew Wilcox <willy@infradead.org>, linux-mm@kvack.org, dm-devel@redhat.com, Vlastimil Babka <vbabka@suse.cz>, Andrew@stoffel.org, David Rientjes <rientjes@google.com>, Morton <akpm@linux-foundation.org>, virtualization@lists.linux-foundation.org, David Miller <davem@davemloft.net>, edumazet@google.com
 List-Id: dm-devel.ids
 
-On Tue, Apr 10, 2018 at 9:43 PM, Kees Cook <keescook@chromium.org> wrote:
-> On the quest to remove all VLAs from the kernel[1], this avoids VLAs
-> in dm-raid1.c by just using the maximum size for the stack arrays.
-> The nr_mirrors value was already capped at 9, so this makes it a trivial
-> adjustment to the array sizes.
->
-> [1] https://lkml.org/lkml/2018/3/7/621
->
-> Signed-off-by: Kees Cook <keescook@chromium.org>
+On Thu 26-04-18 18:52:05, Mikulas Patocka wrote:
+> 
+> 
+> On Fri, 27 Apr 2018, Michael S. Tsirkin wrote:
+[...]
+> >    But assuming it's important to control this kind of
+> >    fault injection to be controlled from
+> >    a dedicated menuconfig option, why not the rest of
+> >    faults?
+> 
+> The injected faults cause damage to the user, so there's no point to 
+> enable them by default. vmalloc fallback should not cause any damage 
+> (assuming that the code is correctly written).
 
-Friendly ping... can someone take this, or should this go via another tree?
-
-Thanks!
-
--Kees
-
-> ---
->  drivers/md/dm-raid1.c | 10 ++++++----
->  1 file changed, 6 insertions(+), 4 deletions(-)
->
-> diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c
-> index 580c49cc8079..5903e492bb34 100644
-> --- a/drivers/md/dm-raid1.c
-> +++ b/drivers/md/dm-raid1.c
-> @@ -23,6 +23,8 @@
->
->  #define MAX_RECOVERY 1 /* Maximum number of regions recovered in parallel. */
->
-> +#define MAX_NR_MIRRORS (DM_KCOPYD_MAX_REGIONS + 1)
-> +
->  #define DM_RAID1_HANDLE_ERRORS 0x01
->  #define DM_RAID1_KEEP_LOG      0x02
->  #define errors_handled(p)      ((p)->features & DM_RAID1_HANDLE_ERRORS)
-> @@ -255,7 +257,7 @@ static int mirror_flush(struct dm_target *ti)
->         unsigned long error_bits;
->
->         unsigned int i;
-> -       struct dm_io_region io[ms->nr_mirrors];
-> +       struct dm_io_region io[MAX_NR_MIRRORS];
->         struct mirror *m;
->         struct dm_io_request io_req = {
->                 .bi_op = REQ_OP_WRITE,
-> @@ -651,7 +653,7 @@ static void write_callback(unsigned long error, void *context)
->  static void do_write(struct mirror_set *ms, struct bio *bio)
->  {
->         unsigned int i;
-> -       struct dm_io_region io[ms->nr_mirrors], *dest = io;
-> +       struct dm_io_region io[MAX_NR_MIRRORS], *dest = io;
->         struct mirror *m;
->         struct dm_io_request io_req = {
->                 .bi_op = REQ_OP_WRITE,
-> @@ -1083,7 +1085,7 @@ static int mirror_ctr(struct dm_target *ti, unsigned int argc, char **argv)
->         argc -= args_used;
->
->         if (!argc || sscanf(argv[0], "%u%c", &nr_mirrors, &dummy) != 1 ||
-> -           nr_mirrors < 2 || nr_mirrors > DM_KCOPYD_MAX_REGIONS + 1) {
-> +           nr_mirrors < 2 || nr_mirrors > MAX_NR_MIRRORS) {
->                 ti->error = "Invalid number of mirrors";
->                 dm_dirty_log_destroy(dl);
->                 return -EINVAL;
-> @@ -1404,7 +1406,7 @@ static void mirror_status(struct dm_target *ti, status_type_t type,
->         int num_feature_args = 0;
->         struct mirror_set *ms = (struct mirror_set *) ti->private;
->         struct dm_dirty_log *log = dm_rh_dirty_log(ms->rh);
-> -       char buffer[ms->nr_mirrors + 1];
-> +       char buffer[MAX_NR_MIRRORS + 1];
->
->         switch (type) {
->         case STATUSTYPE_INFO:
-> --
-> 2.7.4
->
->
-> --
-> Kees Cook
-> Pixel Security
-
-
-
+But you want to find those bugs which would BUG_ON easier, so there is a
+risk of harm IIUC and this is not much different than other fault
+injecting paths.
 -- 
-Kees Cook
-Pixel Security
+Michal Hocko
+SUSE Labs
