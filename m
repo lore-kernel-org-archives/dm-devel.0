@@ -1,124 +1,69 @@
-From: Patrick Mitchell <patricklmitchell9@gmail.com>
-Subject: Undo removing a missing PV to a VG,
-	which caused inconsistent metadata
-Date: Fri, 27 Apr 2018 11:23:29 -0400
-Message-ID: <CA+2BD2fc2Fqqefk_c0B83sCsg=+DYS2J9L0y4Q9vcLmcYCmsLg@mail.gmail.com>
+From: Christopher Lameter <cl@linux.com>
+Subject: Re: [PATCH RESEND] slab: introduce the flag SLAB_MINIMIZE_WASTE
+Date: Fri, 27 Apr 2018 11:41:48 -0500 (CDT)
+Message-ID: <alpine.DEB.2.20.1804271136390.11686@nuc-kabylake>
+References: <alpine.LRH.2.02.1803201740280.21066@file01.intranet.prod.int.rdu2.redhat.com> <20c58a03-90a8-7e75-5fc7-856facfb6c8a@suse.cz> <20180413151019.GA5660@redhat.com> <ee8807ff-d650-0064-70bf-e1d77fa61f5c@suse.cz> <20180416142703.GA22422@redhat.com>
+ <alpine.LRH.2.02.1804161031300.24222@file01.intranet.prod.int.rdu2.redhat.com> <20180416144638.GA22484@redhat.com> <alpine.LRH.2.02.1804161530360.19492@file01.intranet.prod.int.rdu2.redhat.com> <alpine.DEB.2.20.1804170940340.17557@nuc-kabylake>
+ <alpine.LRH.2.02.1804171454020.26973@file01.intranet.prod.int.rdu2.redhat.com> <alpine.DEB.2.20.1804180952580.1334@nuc-kabylake> <alpine.LRH.2.02.1804251702250.9428@file01.intranet.prod.int.rdu2.redhat.com> <alpine.LRH.2.02.1804251917460.2429@file01.intranet.prod.int.rdu2.redhat.com>
+ <alpine.DEB.2.20.1804261354230.6674@nuc-kabylake> <alpine.LRH.2.02.1804261508430.26980@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <alpine.LRH.2.02.1804261508430.26980@file01.intranet.prod.int.rdu2.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, Vlastimil Babka <vbabka@suse.cz>, Matthew Wilcox <willy@infradead.org>, Pekka Enberg <penberg@kernel.org>, linux-mm@kvack.org, dm-devel@redhat.com, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-I had (4) platter disks and (1) SSD in a VG lvm.  LV's were either on
-platters or the SSD, none were across both.
+On Thu, 26 Apr 2018, Mikulas Patocka wrote:
 
-Long story short, booted without SSD plugged in, and didn't need
-access to the LV's on the SSD.  Needed to create a temporary LV on the
-platters, and got an error about not being able to create a LV while
-the VG was incomplete, with the SSD missing.  Stupidly ran its advise
-of something like vgreduce --removemissing without reading vgreduce's
-man page.  Thinking this would either be temporary for that boot, or I
-could just easily re-add it later.
+> > Hmmm... order 4 for these caches may cause some concern. These should stay
+> > under costly order I think. Otherwise allocations are no longer
+> > guaranteed.
+>
+> You said that slub has fallback to smaller order allocations.
 
-Still couldn't create the LV on the platter disks, so powered off and
-installed the SSD.
+Yes it does...
 
-I never added any LV's or made any other changes, so I just need to revert the
-metadata change, don't need to merge any changes in.
+> The whole purpose of this "minimize waste" approach is to use higher-order
+> allocations to use memory more efficiently, so it is just doing its job.
+> (for these 3 caches, order-4 really wastes less memory than order-3 - on
+> my system TCPv6 and sighand_cache have size 2112, task_struct 2752).
 
+Hmmm... Ok if the others are fine with this as well. I got some pushback
+there in the past.
 
+> We could improve the fallback code, so that if order-4 allocation fails,
+> it tries order-3 allocation, and then falls back to order-0. But I think
+> that these failures are rare enough that it is not a problem.
 
-pvs does show the SSD partition, with attribute missing.
+I also think that would be too many fallbacks.
 
-vgs does shows all 5 pv's, attribute partial.
+> > > +		/* Increase order even more, but only if it reduces waste */
+> > > +		if (test_order_obj <= 32 &&
+> >
+> > Where does the 32 come from?
+>
+> It is to avoid extremely high order for extremely small slabs.
+>
+> For example, see kmalloc-96.
+> 10922 96-byte objects would fit into 1MiB
+> 21845 96-byte objects would fit into 2MiB
 
-lvs dhows SSD thin pool, partial.  Does NOT show the single thin
-volume that is within the SSD thin pool.  Assuming that makes sense
-since the thin pool isn't activated.
+That is the result of considering absolute byte wastage..
 
-
-How do I permanently re-add the SSD PV to the VG, so the thin pool
-activates, and the thin volume is accessible?
-
-Is there an easy way I can compare the contents of metadata 315 and
-319, verify 315 is exactly what I want, and reload 315 to be the
-current metadata on all PVs?  Or is there a different way to go?
-
-I'm thinking "vgextend --restoremissing" might not be the way to go,
-since there's inconsistent metadata, but maybe that would be OK and it
-would just write a v320 to all 5 PVs.
-
-Should I manually dump the metadata based on offsets shown by pvck,
-find 315, assuming that has the correct information, and run
-vgcfgrestore on that file?  Would that write like a new version 320
-metadata to all 5 PVs?
-
-My system volume's etc doesn't have a backup of metadata 315.  That
-etc backup was written on an ISO CD tmpfs and is now gone.
-
-I'm thinking the journalctl messages below mentioning "vgreduce
---removemissing" and "--activationmode partial" are not at all what I
-want at this point.
+> The algorithm would recognize this one more object that fits into 2MiB
+> slab as "waste reduction" and increase the order to 2MiB - and we don't
+> want this.
+>
+> So, the general reasoning is - if we have 32 objects in a slab, then it is
+> already considered that wasted space is reasonably low and we don't want
+> to increase the order more.
+>
+> Currently, kmalloc-96 uses order-0 - that is reasonable (we already have
+> 42 objects in 4k page, so we don't need to use higher order, even if it
+> wastes one-less object).
 
 
-
-APPLICABLE JOURNALCTL OUTPUT: (hand-typed, booted on ISO CD)
-
-lvm: WARNING: lvmetad is being updated, retrying (setup) for 10 more seconds.
-...
-lvm: WARNING: Not using lvmetad after 10 sec lvmetad_update_wait_time.
-lvm: WARNING: Autoactivation reading from disk instead of lvmetad.
-...
-lvmetad: update_metadata ignoring outdated metadata on PV XYZ seqno
-315 for ABC lvm seqno 319
-lvmetad: PV XYZ has outdated metadata for VG ABC
-lvm: WARNING: Inconsistent metadata found for VG lvm
-lvmetad: Cannot use VG metadata for lvm ABC from PV XDYZ on 66309
-...
-lvm: WARNING: Missing device /dev/nvme0n1p5 reappeared, updating
-metadata for VG lvm to version 319.
-WARNING: Device /dev/nvme0n1p5 still marked missing because of
-allocated data on it, remove volumes and consider vgreduce
---removemissing.
-WARNING: Inconsistent metadata found for VG lvm - updating to use version 319
-...
-lvm: Refusing refresh of partial LV lvm/nvmethin. Use
-'--activationmode partial' to override.
-lvm: lvm: refresh before autoactivation failed.
-...
-lvm: Refusing activation of partial LV lvm/nvmethin.  Use
-'--activationmode partial' to override.
-...
-lvm: 43 logical volume(s) in volume group "lvm" now active
-lvm: autoactivation failed.
-systemd: lvm2-pvscan@8:19.service: Main process exited, code=exited,
-status=5/NOTINSTALLED
-systemd: lvm2-pvscan@8:19.service: Failed with result 'exit-code'.
-systemd: Failed to start LVM2 PV scan on device 8:19.
-lvm: 51 logical volume(s) in volume group "lvm" monitored
-...
-lvm: Not monitoring lvm/disk1thin failed
-...
-lvm: Refusing refresh of partial LV lvm/nvmethin. Use
-'--activationmode partial' to override.
-...
-lvm: Refusing activation of partial LV lvm/nvmethin.  Use
-'--activationmode partial' to override.
-lvm: 43 logical volume(s) in volume group "lvm" now active
-lvm: lvm: autoactivation failed
-systemd: lvm2-pvscan@8:3.service: Main process exited, code=exited,
-status=5/NOTINSTALLED
-systemd: lvm2-pvscan@8:3.service: Failed with result 'exit-code'.
-systemd: Failed to start LVM2 pv scan on device 8:3.
-lvm: Refusing refresh of partial LV lvm/nvmethin. Use
-'--activationmode partial' to override.
+The old code uses the concept of a "fraction" to calculate overhead. The
+code here uses absolute counts of bytes. Fraction looks better to me.
