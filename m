@@ -1,14 +1,13 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [patch 7/8] dm-integrity: flush journal on suspend when
-	using separate device
-Date: Tue, 01 May 2018 15:55:23 +0200
-Message-ID: <20180501135606.772829393@debian.vm>
+Subject: [patch 1/8] dm-integrity: use kvfree
+Date: Tue, 01 May 2018 15:55:17 +0200
+Message-ID: <20180501135559.149016294@debian.vm>
 References: <20180501135516.961417937@debian.vm>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline; filename=dm-integrity-flush-on-suspend.patch
+Content-Disposition: inline; filename=dm-integrity-kvfree.patch
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,38 +21,26 @@ To: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, "
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Flush the journal on suspend when using separate data and metadata device,
-so that the metadata device can be discarded and the table can be reloaded
-with a linear target pointing to the data device.
-
-Note: we deliberately don't flush the journal when using the same device
-for metadata and data, so that the journal replay code is tested.
+Use kvfree instead of kfree because the structure is allocated with
+kvmalloc.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org	# v4.12+
 
 ---
- drivers/md/dm-integrity.c |    4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+ drivers/md/dm-integrity.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 Index: linux-2.6/drivers/md/dm-integrity.c
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-integrity.c	2018-05-01 00:39:27.000000000 +0200
-+++ linux-2.6/drivers/md/dm-integrity.c	2018-05-01 00:39:27.000000000 +0200
-@@ -2000,7 +2000,7 @@ static void integrity_writer(struct work
- 	unsigned prev_free_sectors;
+--- linux-2.6.orig/drivers/md/dm-integrity.c	2018-04-29 23:10:11.000000000 +0200
++++ linux-2.6/drivers/md/dm-integrity.c	2018-04-29 23:10:11.000000000 +0200
+@@ -2440,7 +2440,7 @@ static void dm_integrity_free_journal_sc
+ 	unsigned i;
+ 	for (i = 0; i < ic->journal_sections; i++)
+ 		kvfree(sl[i]);
+-	kfree(sl);
++	kvfree(sl);
+ }
  
- 	/* the following test is not needed, but it tests the replay code */
--	if (READ_ONCE(ic->suspending))
-+	if (READ_ONCE(ic->suspending) && !ic->meta_dev)
- 		return;
- 
- 	spin_lock_irq(&ic->endio_wait.lock);
-@@ -2235,6 +2235,8 @@ static void dm_integrity_postsuspend(str
- 	drain_workqueue(ic->commit_wq);
- 
- 	if (ic->mode == 'J') {
-+		if (ic->meta_dev)
-+			queue_work(ic->writer_wq, &ic->writer_work);
- 		drain_workqueue(ic->writer_wq);
- 		dm_integrity_flush_buffers(ic);
- 	}
+ static struct scatterlist **dm_integrity_alloc_journal_scatterlist(struct dm_integrity_c *ic, struct page_list *pl)
