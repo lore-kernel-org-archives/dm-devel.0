@@ -1,89 +1,94 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [patch 6/8] dm-integrity: use version 2 for separate
-	metadata
-Date: Tue, 01 May 2018 15:55:22 +0200
-Message-ID: <20180501135605.494171664@debian.vm>
-References: <20180501135516.961417937@debian.vm>
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: [PATCH] kvmalloc: always use vmalloc if CONFIG_DEBUG_VM
+Date: Tue, 1 May 2018 17:36:26 -0700
+Message-ID: <20180501173626.4593a87d0d64f6cc9d219d20@linux-foundation.org>
+References: <20180420130852.GC16083@dhcp22.suse.cz>
+	<alpine.LRH.2.02.1804201635180.25408@file01.intranet.prod.int.rdu2.redhat.com>
+	<20180420210200.GH10788@bombadil.infradead.org>
+	<alpine.LRH.2.02.1804201704580.25408@file01.intranet.prod.int.rdu2.redhat.com>
+	<20180421144757.GC14610@bombadil.infradead.org>
+	<alpine.LRH.2.02.1804221733520.7995@file01.intranet.prod.int.rdu2.redhat.com>
+	<20180423151545.GU17484@dhcp22.suse.cz>
+	<alpine.LRH.2.02.1804232006540.2299@file01.intranet.prod.int.rdu2.redhat.com>
+	<20180424133146.GG17484@dhcp22.suse.cz>
+	<alpine.LRH.2.02.1804241107010.31601@file01.intranet.prod.int.rdu2.redhat.com>
+	<20180424161242.GK17484@dhcp22.suse.cz>
+	<alpine.LRH.2.02.1804241229410.23702@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline; filename=dm-integrity-sb-version.patch
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>, Milan Broz <mbroz@redhat.com>
-Cc: dm-devel@redhat.com
+Return-path: <virtualization-bounces@lists.linux-foundation.org>
+In-Reply-To: <alpine.LRH.2.02.1804241229410.23702@file01.intranet.prod.int.rdu2.redhat.com>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
+List-Post: <mailto:virtualization@lists.linux-foundation.org>
+List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
+Sender: virtualization-bounces@lists.linux-foundation.org
+Errors-To: virtualization-bounces@lists.linux-foundation.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@redhat.com, eric.dumazet@gmail.com, mst@redhat.com, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, Matthew Wilcox <willy@infradead.org>, Michal Hocko <mhocko@kernel.org>, linux-mm@kvack.org, edumazet@google.com, virtualization@lists.linux-foundation.org, David Miller <davem@davemloft.net>, Vlastimil Babka <vbabka@suse.cz>
 List-Id: dm-devel.ids
 
-Use version "2" in the superblock when data and metadata devices are
-separate, so that the device is no accidentally read by older kernel
-version.
+On Tue, 24 Apr 2018 12:33:01 -0400 (EDT) Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> 
+> 
+> On Tue, 24 Apr 2018, Michal Hocko wrote:
+> 
+> > On Tue 24-04-18 11:30:40, Mikulas Patocka wrote:
+> > > 
+> > > 
+> > > On Tue, 24 Apr 2018, Michal Hocko wrote:
+> > > 
+> > > > On Mon 23-04-18 20:25:15, Mikulas Patocka wrote:
+> > > > 
+> > > > > Fixing __vmalloc code 
+> > > > > is easy and it doesn't require cooperation with maintainers.
+> > > > 
+> > > > But it is a hack against the intention of the scope api.
+> > > 
+> > > It is not!
+> > 
+> > This discussion simply doesn't make much sense it seems. The scope API
+> > is to document the scope of the reclaim recursion critical section. That
+> > certainly is not a utility function like vmalloc.
+> 
+> That 15-line __vmalloc bugfix doesn't prevent you (or any other kernel 
+> developer) from converting the code to the scope API. You make nonsensical 
+> excuses.
+> 
 
----
- drivers/md/dm-integrity.c |   16 +++++++++++++---
- 1 file changed, 13 insertions(+), 3 deletions(-)
+Fun thread!
 
-Index: linux-2.6/drivers/md/dm-integrity.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-integrity.c	2018-05-01 04:34:46.000000000 +0200
-+++ linux-2.6/drivers/md/dm-integrity.c	2018-05-01 04:34:46.000000000 +0200
-@@ -44,7 +44,8 @@
-  */
- 
- #define SB_MAGIC			"integrt"
--#define SB_VERSION			1
-+#define SB_VERSION_1			1
-+#define SB_VERSION_2			2
- #define SB_SECTORS			8
- #define MAX_SECTORS_PER_BLOCK		8
- 
-@@ -406,6 +407,14 @@ static void wraparound_section(struct dm
- 		*sec_ptr -= ic->journal_sections;
- }
- 
-+static void sb_set_version(struct dm_integrity_c *ic)
-+{
-+	if (ic->meta_dev)
-+		ic->sb->version = SB_VERSION_2;
-+	else
-+		ic->sb->version = SB_VERSION_1;
-+}
-+
- static int sync_rw_sb(struct dm_integrity_c *ic, int op, int op_flags)
- {
- 	struct dm_io_request io_req;
-@@ -2380,7 +2389,6 @@ static int initialize_superblock(struct
- 
- 	memset(ic->sb, 0, SB_SECTORS << SECTOR_SHIFT);
- 	memcpy(ic->sb->magic, SB_MAGIC, 8);
--	ic->sb->version = SB_VERSION;
- 	ic->sb->integrity_tag_size = cpu_to_le16(ic->tag_size);
- 	ic->sb->log2_sectors_per_block = __ffs(ic->sectors_per_block);
- 	if (ic->journal_mac_alg.alg_string)
-@@ -2437,6 +2445,8 @@ try_smaller_buffer:
- 
- 	ic->sb->provided_data_sectors = cpu_to_le64(ic->provided_data_sectors);
- 
-+	sb_set_version(ic);
-+
- 	return 0;
- }
- 
-@@ -3133,7 +3143,7 @@ static int dm_integrity_ctr(struct dm_ta
- 			should_write_sb = true;
- 	}
- 
--	if (ic->sb->version != SB_VERSION) {
-+	if (!ic->sb->version || ic->sb->version > SB_VERSION_2) {
- 		r = -EINVAL;
- 		ti->error = "Unknown version";
- 		goto bad;
+Winding back to the original problem, I'd state it as
+
+- Caller uses kvmalloc() but passes the address into vmalloc-naive
+  DMA API and
+
+- Caller uses kvmalloc() but passes the address into kfree()
+
+Yes?
+
+If so, then...
+
+Is there a way in which, in the kvmalloc-called-kmalloc path, we can
+tag the slab-allocated memory with a "this memory was allocated with
+kvmalloc()" flag?  I *think* there's extra per-object storage available
+with suitable slab/slub debugging options?  Perhaps we could steal one
+bit from the redzone, dunno.
+
+If so then we can
+
+a) set that flag in kvmalloc() if the kmalloc() call succeeded
+
+b) check for that flag in the DMA code, WARN if it is set.
+
+c) in kvfree(), clear that flag before calling kfree()
+
+d) in kfree(), check for that flag and go WARN() if set.
+
+So both potential bugs are detected all the time, dependent upon
+CONFIG_SLUB_DEBUG (and perhaps other slub config options).
