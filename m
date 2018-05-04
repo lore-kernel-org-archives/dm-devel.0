@@ -1,56 +1,73 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [dm-devel] [PATCH v5] fault-injection: introduce kvmalloc fallback
- options
-Date: Thu, 3 May 2018 13:40:48 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1805031333050.28479@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20180421144757.GC14610@bombadil.infradead.org> <20180424173836.GR17484@dhcp22.suse.cz> <alpine.LRH.2.02.1804251556060.30569@file01.intranet.prod.int.rdu2.redhat.com> <1114eda5-9b1f-4db8-2090-556b4a37c532@infradead.org>
- <alpine.LRH.2.02.1804251656300.9428@file01.intranet.prod.int.rdu2.redhat.com> <alpine.DEB.2.21.1804251417470.166306@chino.kir.corp.google.com> <alpine.LRH.2.02.1804251720090.9428@file01.intranet.prod.int.rdu2.redhat.com> <1524694663.4100.21.camel@HansenPartnership.com>
- <alpine.LRH.2.02.1804251857070.31135@file01.intranet.prod.int.rdu2.redhat.com> <1524697697.4100.23.camel@HansenPartnership.com> <23266.8532.619051.784274@quad.stoffel.home> <alpine.LRH.2.02.1804261726540.13401@file01.intranet.prod.int.rdu2.redhat.com>
- <23271.24580.695738.853532@quad.stoffel.home> <alpine.LRH.2.02.1804301622480.4454@file01.intranet.prod.int.rdu2.redhat.com> <23273.48986.516559.317965@quad.stoffel.home>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH REPOST] dm rq: remove BUG_ON(!irqs_disabled)
+	check
+Date: Fri, 4 May 2018 11:53:12 -0400
+Message-ID: <20180504155311.GA4787@redhat.com>
+References: <20180504143639.5300-1-bigeasy@linutronix.de>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <23273.48986.516559.317965@quad.stoffel.home>
-Sender: linux-kernel-owner@vger.kernel.org
-To: John Stoffel <john@stoffel.org>
-Cc: Andrew@stoffel.org, dm-devel@redhat.com, eric.dumazet@gmail.com, mst@redhat.com, netdev@vger.kernel.org, jasowang@redhat.com, Randy Dunlap <rdunlap@infradead.org>, linux-kernel@vger.kernel.org, Matthew Wilcox <willy@infradead.org>, Hocko <mhocko@kernel.org>, James Bottomley <James.Bottomley@HansenPartnership.com>, Michal@stoffel.org, edumazet@google.com, linux-mm@kvack.org, David Rientjes <rientjes@google.com>, Morton <akpm@linux-foundation.org>, virtualization@lists.linux-foundation.org, David Miller <davem@davemloft.net>, Vlastimil Babka <vbabka@suse.cz>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20180504143639.5300-1-bigeasy@linutronix.de>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: Keith Busch <keith.busch@intel.com>, dm-devel@redhat.com, Thomas Gleixner <tglx@linutronix.de>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
+On Fri, May 04 2018 at 10:36am -0400,
+Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
 
-
-On Wed, 2 May 2018, John Stoffel wrote:
-
-> You miss my point, which is that there's no explanation of what the
-> difference is between SLAB and SLUB and which I should choose.  The
-> same goes here.  If the KConfig option doesn't give useful info, it's
-> useless.
-
-So what, we could write explamantion of that option.
-
-> >> Now I also think that Linus has the right idea to not just sprinkle 
-> >> BUG_ONs into the code, just dump and oops and keep going if you can.  
-> >> If it's a filesystem or a device, turn it read only so that people 
-> >> notice right away.
+> In commit 052189a2ec95 ("dm: remove superfluous irq disablement in
+> dm_request_fn") the spin_lock_irq() was replaced with spin_lock() + a
+> check for disabled interrupts. Later the locking part was removed in
+> commit 2eb6e1e3aa87 ("dm: submit stacked requests in irq enabled
+> context") but the BUG_ON() check remained.
 > 
-> Mikulas> This vmalloc fallback is similar to
-> Mikulas> CONFIG_DEBUG_KOBJECT_RELEASE.  CONFIG_DEBUG_KOBJECT_RELEASE
-> Mikulas> changes the behavior of kobject_put in order to cause
-> Mikulas> deliberate crashes (that wouldn't happen otherwise) in
-> Mikulas> drivers that misuse kobject_put. In the same sense, we want
-> Mikulas> to cause deliberate crashes (that wouldn't happen otherwise)
-> Mikulas> in drivers that misuse kvmalloc.
+> Since the original purpose for the "are-irqs-off" check is gone (the
+> ->queue_lock has been removed) remove it.
 > 
-> Mikulas> The crashes will only happen in debugging kernels, not in
-> Mikulas> production kernels.
+> Cc: Keith Busch <keith.busch@intel.com>
+> Cc: Mike Snitzer <snitzer@redhat.com>
+> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> ---
+>  drivers/md/dm-rq.c | 1 -
+>  1 file changed, 1 deletion(-)
 > 
-> Says you.  What about people or distros that enable it
-> unconditionally?  They're going to get all kinds of reports and then
-> turn it off again.  Crashing the system isn't the answer here.  
+> diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+> index bf0b840645cc..1a524f992f72 100644
+> --- a/drivers/md/dm-rq.c
+> +++ b/drivers/md/dm-rq.c
+> @@ -688,7 +688,6 @@ static void dm_old_request_fn(struct request_queue *q)
+>  		/* Establish tio->ti before queuing work (map_tio_request) */
+>  		tio->ti = ti;
+>  		kthread_queue_work(&md->kworker, &tio->work);
+> -		BUG_ON(!irqs_disabled());
+>  	}
+>  }
+>  
+> -- 
+> 2.17.0
+> 
 
-I've made that kvmalloc bug too (in the function 
-dm_integrity_free_journal_scatterlist). I'd much rather like if the kernel 
-crashed (because then - I would fix the bug). The kernel didn't crash and 
-the bug sneaked into the official linux tree, where may be causing random 
-crashes for other users.
+the queue_lock hasn't been removed for the old .request_fn path in block
+core -- which dm_old_request_fn is providing the hook for.
 
-Mikulas
+This BUG_ON() documents that reality.
+
+Commit 2eb6e1e3aa87 made it such that work is queued into an irq enabled
+context.   But it never changed the fact that old block core's
+.request_fn (and as such dm_old_request_fn) is called with irqs
+disabled.
+
+So all said:
+
+Nacked-by: Mike Snitzer <snitzer@redhat.com>
