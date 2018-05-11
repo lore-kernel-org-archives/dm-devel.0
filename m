@@ -1,12 +1,10 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper fixes for 4.17-rc5
-Date: Thu, 10 May 2018 11:56:59 -0400
-Message-ID: <20180510155658.GA20132@redhat.com>
+From: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Subject: [release] multipath-tools 0.7.7
+Date: Fri, 11 May 2018 10:56:28 +0200
+Message-ID: <CABr-Gnf_5ADS_OsKHJO=2zqykUoUkMkXHXOe67SK=MnX_2DbCA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============7563278186643403441=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,55 +14,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Kees Cook <keescook@chromium.org>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Linus,
+--===============7563278186643403441==
+Content-Type: multipart/alternative; boundary="000000000000cc283d056bea4fa8"
 
-The following changes since commit 6da6c0db5316275015e8cc2959f12a17584aeb64:
+--000000000000cc283d056bea4fa8
+Content-Type: text/plain; charset="UTF-8"
 
-  Linux v4.17-rc3 (2018-04-29 14:17:42 -0700)
+Hi,
 
-are available in the Git repository at:
+I merged the reviewed patches from March 27th up to now, and released 0.7.7.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-4.17/dm-fixes
+Thanks,
+Christophe.
 
-for you to fetch changes up to 28700a36232ba61fb6ac59466821546cb25aec69:
+--000000000000cc283d056bea4fa8
+Content-Type: text/html; charset="UTF-8"
 
-  dm thin: update Documentation to clarify when "read_only" is valid (2018-05-10 11:18:49 -0400)
+<div dir="ltr">Hi,<div><br></div><div>I merged the reviewed patches from March 27th up to now, and released 0.7.7.</div><div><br></div><div>Thanks,</div><div>Christophe.</div></div>
 
-Please pull, thanks.
-Mike
+--000000000000cc283d056bea4fa8--
 
-----------------------------------------------------------------
-- A stable fix for DM integrity to use kvfree.
 
-- Fix for a 4.17-rc1 change to dm-bufio's buffer alignment.
+--===============7563278186643403441==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-- Fixes for a few sparse warnings.
 
-- Remove VLA usage in DM mirror target.
-
-- Improve DM thinp Documentation for the "read_only" feature.
-
-----------------------------------------------------------------
-Kees Cook (1):
-      dm mirror: remove VLA usage
-
-Mike Snitzer (3):
-      dm cache background tracker: fix sparse warning
-      dm: fix some sparse warnings and whitespace in dax methods
-      dm thin: update Documentation to clarify when "read_only" is valid
-
-Mikulas Patocka (2):
-      dm integrity: use kvfree for kvmalloc'd memory
-      dm bufio: fix buffer alignment
-
- Documentation/device-mapper/thin-provisioning.txt |  5 ++++-
- drivers/md/dm-bufio.c                             |  5 +++--
- drivers/md/dm-cache-background-tracker.c          |  2 +-
- drivers/md/dm-integrity.c                         |  2 +-
- drivers/md/dm-raid1.c                             | 10 ++++++----
- drivers/md/dm.c                                   |  7 ++++---
- 6 files changed, 19 insertions(+), 12 deletions(-)
+--===============7563278186643403441==--
