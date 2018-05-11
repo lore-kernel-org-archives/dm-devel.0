@@ -1,8 +1,8 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH v2] multipath-tools: replace FSF address with a
-	www pointer
-Date: Fri, 11 May 2018 15:42:43 +0200
-Message-ID: <20180511134243.4210-1-xose.vazquez@gmail.com>
+Subject: [PATCH v3] multipath-tools: Remove trailing/leading
+	whitespaces and reformat code
+Date: Fri, 11 May 2018 15:43:11 +0200
+Message-ID: <20180511134311.4318-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -16,190 +16,156 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>, DM ML <dm-devel@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-Less prone to future modifications, new FSF licences
-point exactly to this url: <http://www.gnu.org/licenses/>.
-And sending a smail to FSF is outdated.
-
-First clean up was done in 5619a39c433ac3d10a88079593cec1aa6472cbeb
-
-Cc: Martin Wilck <mwilck@suse.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: DM ML <dm-devel@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/dm-generic.c   | 4 +---
- libmultipath/dm-generic.h   | 4 +---
- libmultipath/foreign.c      | 4 +---
- libmultipath/foreign.h      | 4 +---
- libmultipath/foreign/nvme.c | 4 +---
- libmultipath/generic.c      | 4 +---
- libmultipath/generic.h      | 4 +---
- tests/dmevents.c            | 2 +-
- tests/parser.c              | 2 +-
- tests/uevent.c              | 2 +-
- tests/util.c                | 2 +-
- 11 files changed, 11 insertions(+), 25 deletions(-)
+v3 rebase.
+---
+ Makefile.inc           | 23 +++++++++++------------
+ kpartx/mac.h           |  2 +-
+ kpartx/test-kpartx     |  2 +-
+ libmpathcmd/Makefile   |  2 +-
+ libmultipath/hwtable.c | 14 +++++++-------
+ libmultipath/print.h   |  2 +-
+ multipathd/main.h      |  6 +++---
+ 7 files changed, 25 insertions(+), 26 deletions(-)
 
-diff --git a/libmultipath/dm-generic.c b/libmultipath/dm-generic.c
-index bdc9ca0..d752991 100644
---- a/libmultipath/dm-generic.c
-+++ b/libmultipath/dm-generic.c
-@@ -12,9 +12,7 @@
-   GNU General Public License for more details.
+diff --git a/Makefile.inc b/Makefile.inc
+index 57a1835..af2f5ba 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -103,21 +103,20 @@ LDFLAGS		= -Wl,-z,relro -Wl,-z,now
+ BIN_LDFLAGS	= -pie
  
-   You should have received a copy of the GNU General Public License
--  along with this program; if not, write to the Free Software
--  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
--  USA.
-+  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-  */
+ # Check whether a function with name $1 has been declared in header file $2.
+-check_func =								       \
+-    $(shell								       \
++check_func = $(shell \
+ 	if grep -Eq "^[^[:blank:]]+[[:blank:]]+$1[[:blank:]]*(.*)*" "$2"; then \
+-	   found=1;							       \
+-	   status="yes";						       \
+-	else								       \
+-	   found=0;							       \
+-	   status="no";							       \
+-	fi;								       \
+-	echo 1>&2 "Checking for $1 in $2 ... $$status";			       \
+-	echo "$$found"							       \
+-    )
++		found=1; \
++		status="yes"; \
++	else \
++		found=0; \
++		status="no"; \
++	fi; \
++	echo 1>&2 "Checking for $1 in $2 ... $$status"; \
++	echo "$$found" \
++	)
  
- #include <stdint.h>
-diff --git a/libmultipath/dm-generic.h b/libmultipath/dm-generic.h
-index 5d59724..986429f 100644
---- a/libmultipath/dm-generic.h
-+++ b/libmultipath/dm-generic.h
-@@ -12,9 +12,7 @@
-   GNU General Public License for more details.
+ # Checker whether a file with name $1 exists
+-check_file = $(shell	\
++check_file = $(shell \
+ 	if [ -f "$1" ]; then \
+ 		found=1; \
+ 		status="yes"; \
+diff --git a/kpartx/mac.h b/kpartx/mac.h
+index a44cf38..55c3ec9 100644
+--- a/kpartx/mac.h
++++ b/kpartx/mac.h
+@@ -24,7 +24,7 @@ struct mac_driver_desc {
+ 	uint16_t  signature;      /* expected to be MAC_DRIVER_MAGIC */
+ 	uint16_t  block_size;
+ 	uint32_t  block_count;
+-    /* ... more stuff */
++	/* ... more stuff */
+ };
  
-   You should have received a copy of the GNU General Public License
--  along with this program; if not, write to the Free Software
--  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
--  USA.
-+  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-  */
- #ifndef _DM_GENERIC_H
- #define _DM_GENERIC_H
-diff --git a/libmultipath/foreign.c b/libmultipath/foreign.c
-index 7217184..80b399b 100644
---- a/libmultipath/foreign.c
-+++ b/libmultipath/foreign.c
-@@ -12,9 +12,7 @@
-   GNU General Public License for more details.
+ #endif
+diff --git a/kpartx/test-kpartx b/kpartx/test-kpartx
+index 9cee20f..d2001dc 100755
+--- a/kpartx/test-kpartx
++++ b/kpartx/test-kpartx
+@@ -131,7 +131,7 @@ step "create DM devices (spans)"
+ # They also serve as DM devices to test partition removal on those.
  
-   You should have received a copy of the GNU General Public License
--  along with this program; if not, write to the Free Software
--  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
--  USA.
-+  along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+ TABLE="\
+-0 $((SIZE/SECTSIZ-OFFS)) linear $DEV1 $OFFS 
++0 $((SIZE/SECTSIZ-OFFS)) linear $DEV1 $OFFS
+ $((SIZE/SECTSIZ-OFFS)) $((SIZE/SECTSIZ-OFFS)) linear $DEV2 $OFFS"
  
- #include <sys/sysmacros.h>
-diff --git a/libmultipath/foreign.h b/libmultipath/foreign.h
-index 973f368..697f12f 100644
---- a/libmultipath/foreign.h
-+++ b/libmultipath/foreign.h
-@@ -12,9 +12,7 @@
-   GNU General Public License for more details.
+ SPAN1=kpt
+diff --git a/libmpathcmd/Makefile b/libmpathcmd/Makefile
+index 53c0899..0f6b816 100644
+--- a/libmpathcmd/Makefile
++++ b/libmpathcmd/Makefile
+@@ -27,7 +27,7 @@ uninstall:
+ 	$(RM) $(DESTDIR)$(includedir)/mpath_cmd.h
  
-   You should have received a copy of the GNU General Public License
--  along with this program; if not, write to the Free Software
--  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
--  USA.
-+  along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
- #ifndef _FOREIGN_H
- #define _FOREIGN_H
-diff --git a/libmultipath/foreign/nvme.c b/libmultipath/foreign/nvme.c
-index 235f75d..280b6bd 100644
---- a/libmultipath/foreign/nvme.c
-+++ b/libmultipath/foreign/nvme.c
-@@ -12,9 +12,7 @@
-   GNU General Public License for more details.
+ clean: dep_clean
+-	$(RM) core *.a *.o *.so *.so.* *.gz 
++	$(RM) core *.a *.o *.so *.so.* *.gz
  
-   You should have received a copy of the GNU General Public License
--  along with this program; if not, write to the Free Software
--  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
--  USA.
-+  along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+ include $(wildcard $(OBJS:.o=.d))
  
- #include <sys/sysmacros.h>
-diff --git a/libmultipath/generic.c b/libmultipath/generic.c
-index 6f7a2cd..0d1e632 100644
---- a/libmultipath/generic.c
-+++ b/libmultipath/generic.c
-@@ -12,9 +12,7 @@
-   GNU General Public License for more details.
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index 827e899..2ca6888 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -78,13 +78,13 @@
+ #endif
  
-   You should have received a copy of the GNU General Public License
--  along with this program; if not, write to the Free Software
--  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
--  USA.
-+  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-  */
- 
- 
-diff --git a/libmultipath/generic.h b/libmultipath/generic.h
-index 7f7fe66..6346ffe 100644
---- a/libmultipath/generic.h
-+++ b/libmultipath/generic.h
-@@ -12,9 +12,7 @@
-   GNU General Public License for more details.
- 
-   You should have received a copy of the GNU General Public License
--  along with this program; if not, write to the Free Software
--  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
--  USA.
-+  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-  */
- #ifndef _GENERIC_H
- #define _GENERIC_H
-diff --git a/tests/dmevents.c b/tests/dmevents.c
-index bba51dc..3399c81 100644
---- a/tests/dmevents.c
-+++ b/tests/dmevents.c
-@@ -12,7 +12,7 @@
-  * GNU General Public License for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-- * along with this program; if not, write to the Free Software
-+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
-  *
-  */
- 
-diff --git a/tests/parser.c b/tests/parser.c
-index a7e7598..29859da 100644
---- a/tests/parser.c
-+++ b/tests/parser.c
-@@ -12,7 +12,7 @@
-  * GNU General Public License for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-- * along with this program; if not, write to the Free Software
-+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
-  *
-  */
- 
-diff --git a/tests/uevent.c b/tests/uevent.c
-index acfcb14..b0d0bfd 100644
---- a/tests/uevent.c
-+++ b/tests/uevent.c
-@@ -12,7 +12,7 @@
-  * GNU General Public License for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-- * along with this program; if not, write to the Free Software
-+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
-  *
-  */
- 
-diff --git a/tests/util.c b/tests/util.c
-index 113b134..839effd 100644
---- a/tests/util.c
-+++ b/tests/util.c
-@@ -12,7 +12,7 @@
-  * GNU General Public License for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-- * along with this program; if not, write to the Free Software
-+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
-  *
-  */
- 
+ static struct hwentry default_hw[] = {
+-       /*
+-	* Generic NVMe
+-	*
+-	* Due to the parsing logic in find_hwe(), generic entries
+-	* have to be put on top of this list, and more specific ones
+-	* below.
+-	*/
++	/*
++	 * Generic NVMe devices
++	 *
++	 * Due to the parsing logic in find_hwe(), generic entries
++	 * have to be put on top of this list, and more specific ones
++	 * below.
++	 */
+ 	{
+ 		.vendor        = "NVME",
+ 		.product       = ".*",
+diff --git a/libmultipath/print.h b/libmultipath/print.h
+index 7ba6438..9b5a23a 100644
+--- a/libmultipath/print.h
++++ b/libmultipath/print.h
+@@ -113,7 +113,7 @@ int _snprint_multipath (const struct gen_multipath *, char *, int,
+ 			const char *, int);
+ #define snprint_multipath(buf, len, fmt, mp, v)				\
+ 	_snprint_multipath(dm_multipath_to_gen(mp), buf, len, fmt,  v)
+-int _snprint_multipath_topology (const struct gen_multipath *, char *, int, 
++int _snprint_multipath_topology (const struct gen_multipath *, char *, int,
+ 				 int verbosity);
+ #define snprint_multipath_topology(buf, len, mpp, v) \
+ 	_snprint_multipath_topology (dm_multipath_to_gen(mpp), buf, len, v)
+diff --git a/multipathd/main.h b/multipathd/main.h
+index af39558..8fd426b 100644
+--- a/multipathd/main.h
++++ b/multipathd/main.h
+@@ -29,11 +29,11 @@ int ev_remove_map (char *, char *, int, struct vectors *);
+ int set_config_state(enum daemon_status);
+ void * mpath_alloc_prin_response(int prin_sa);
+ int prin_do_scsi_ioctl(char *, int rq_servact, struct prin_resp * resp,
+-       int noisy);
++		       int noisy);
+ void dumpHex(const char * , int len, int no_ascii);
+ int prout_do_scsi_ioctl(char * , int rq_servact, int rq_scope,
+-       unsigned int rq_type, struct prout_param_descriptor *param,
+-       int noisy);
++			unsigned int rq_type,
++			struct prout_param_descriptor *param, int noisy);
+ int mpath_pr_event_handle(struct path *pp);
+ void * mpath_pr_event_handler_fn (void * );
+ int update_map_pr(struct multipath *mpp);
 -- 
 2.17.0
