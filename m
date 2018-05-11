@@ -1,11 +1,10 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH v3] multipath-tools: Remove trailing/leading
-	whitespaces and reformat code
-Date: Fri, 11 May 2018 15:43:11 +0200
-Message-ID: <20180511134311.4318-1-xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: fix compilation with musl libc
+Date: Fri, 11 May 2018 18:39:44 +0200
+Message-ID: <20180511163944.16190-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -16,156 +15,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: DM ML <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
-v3 rebase.
----
- Makefile.inc           | 23 +++++++++++------------
- kpartx/mac.h           |  2 +-
- kpartx/test-kpartx     |  2 +-
- libmpathcmd/Makefile   |  2 +-
- libmultipath/hwtable.c | 14 +++++++-------
- libmultipath/print.h   |  2 +-
- multipathd/main.h      |  6 +++---
- 7 files changed, 25 insertions(+), 26 deletions(-)
-
-diff --git a/Makefile.inc b/Makefile.inc
-index 57a1835..af2f5ba 100644
---- a/Makefile.inc
-+++ b/Makefile.inc
-@@ -103,21 +103,20 @@ LDFLAGS		= -Wl,-z,relro -Wl,-z,now
- BIN_LDFLAGS	= -pie
- 
- # Check whether a function with name $1 has been declared in header file $2.
--check_func =								       \
--    $(shell								       \
-+check_func = $(shell \
- 	if grep -Eq "^[^[:blank:]]+[[:blank:]]+$1[[:blank:]]*(.*)*" "$2"; then \
--	   found=1;							       \
--	   status="yes";						       \
--	else								       \
--	   found=0;							       \
--	   status="no";							       \
--	fi;								       \
--	echo 1>&2 "Checking for $1 in $2 ... $$status";			       \
--	echo "$$found"							       \
--    )
-+		found=1; \
-+		status="yes"; \
-+	else \
-+		found=0; \
-+		status="no"; \
-+	fi; \
-+	echo 1>&2 "Checking for $1 in $2 ... $$status"; \
-+	echo "$$found" \
-+	)
- 
- # Checker whether a file with name $1 exists
--check_file = $(shell	\
-+check_file = $(shell \
- 	if [ -f "$1" ]; then \
- 		found=1; \
- 		status="yes"; \
-diff --git a/kpartx/mac.h b/kpartx/mac.h
-index a44cf38..55c3ec9 100644
---- a/kpartx/mac.h
-+++ b/kpartx/mac.h
-@@ -24,7 +24,7 @@ struct mac_driver_desc {
- 	uint16_t  signature;      /* expected to be MAC_DRIVER_MAGIC */
- 	uint16_t  block_size;
- 	uint32_t  block_count;
--    /* ... more stuff */
-+	/* ... more stuff */
- };
- 
- #endif
-diff --git a/kpartx/test-kpartx b/kpartx/test-kpartx
-index 9cee20f..d2001dc 100755
---- a/kpartx/test-kpartx
-+++ b/kpartx/test-kpartx
-@@ -131,7 +131,7 @@ step "create DM devices (spans)"
- # They also serve as DM devices to test partition removal on those.
- 
- TABLE="\
--0 $((SIZE/SECTSIZ-OFFS)) linear $DEV1 $OFFS 
-+0 $((SIZE/SECTSIZ-OFFS)) linear $DEV1 $OFFS
- $((SIZE/SECTSIZ-OFFS)) $((SIZE/SECTSIZ-OFFS)) linear $DEV2 $OFFS"
- 
- SPAN1=kpt
-diff --git a/libmpathcmd/Makefile b/libmpathcmd/Makefile
-index 53c0899..0f6b816 100644
---- a/libmpathcmd/Makefile
-+++ b/libmpathcmd/Makefile
-@@ -27,7 +27,7 @@ uninstall:
- 	$(RM) $(DESTDIR)$(includedir)/mpath_cmd.h
- 
- clean: dep_clean
--	$(RM) core *.a *.o *.so *.so.* *.gz 
-+	$(RM) core *.a *.o *.so *.so.* *.gz
- 
- include $(wildcard $(OBJS:.o=.d))
- 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 827e899..2ca6888 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -78,13 +78,13 @@
- #endif
- 
- static struct hwentry default_hw[] = {
--       /*
--	* Generic NVMe
--	*
--	* Due to the parsing logic in find_hwe(), generic entries
--	* have to be put on top of this list, and more specific ones
--	* below.
--	*/
-+	/*
-+	 * Generic NVMe devices
-+	 *
-+	 * Due to the parsing logic in find_hwe(), generic entries
-+	 * have to be put on top of this list, and more specific ones
-+	 * below.
-+	 */
- 	{
- 		.vendor        = "NVME",
- 		.product       = ".*",
-diff --git a/libmultipath/print.h b/libmultipath/print.h
-index 7ba6438..9b5a23a 100644
---- a/libmultipath/print.h
-+++ b/libmultipath/print.h
-@@ -113,7 +113,7 @@ int _snprint_multipath (const struct gen_multipath *, char *, int,
- 			const char *, int);
- #define snprint_multipath(buf, len, fmt, mp, v)				\
- 	_snprint_multipath(dm_multipath_to_gen(mp), buf, len, fmt,  v)
--int _snprint_multipath_topology (const struct gen_multipath *, char *, int, 
-+int _snprint_multipath_topology (const struct gen_multipath *, char *, int,
- 				 int verbosity);
- #define snprint_multipath_topology(buf, len, mpp, v) \
- 	_snprint_multipath_topology (dm_multipath_to_gen(mpp), buf, len, v)
-diff --git a/multipathd/main.h b/multipathd/main.h
-index af39558..8fd426b 100644
---- a/multipathd/main.h
-+++ b/multipathd/main.h
-@@ -29,11 +29,11 @@ int ev_remove_map (char *, char *, int, struct vectors *);
- int set_config_state(enum daemon_status);
- void * mpath_alloc_prin_response(int prin_sa);
- int prin_do_scsi_ioctl(char *, int rq_servact, struct prin_resp * resp,
--       int noisy);
-+		       int noisy);
- void dumpHex(const char * , int len, int no_ascii);
- int prout_do_scsi_ioctl(char * , int rq_servact, int rq_scope,
--       unsigned int rq_type, struct prout_param_descriptor *param,
--       int noisy);
-+			unsigned int rq_type,
-+			struct prout_param_descriptor *param, int noisy);
- int mpath_pr_event_handle(struct path *pp);
- void * mpath_pr_event_handler_fn (void * );
- int update_map_pr(struct multipath *mpp);
--- 
-2.17.0
+SW4gZmlsZSBpbmNsdWRlZCBmcm9tIGFsaWFzLmM6MTU6CmZpbGUuaDo5OjQ3OiBlcnJvcjogdW5r
+bm93biB0eXBlIG5hbWUg4oCYbW9kZV904oCZOyBkaWQgeW91IG1lYW4g4oCYdGltZV904oCZPwog
+aW50IGVuc3VyZV9kaXJlY3Rvcmllc19leGlzdChjb25zdCBjaGFyICpzdHIsIG1vZGVfdCBkaXJf
+bW9kZSk7CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgXn5+
+fn5+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgdGltZV90
+CgpzeXNmcy5jOiBJbiBmdW5jdGlvbiDigJhzeXNmc19pc19tdWx0aXBhdGhlZOKAmToKc3lzZnMu
+YzozMDQ6MTU6IGVycm9yOiDigJhQQVRIX01BWOKAmSB1bmRlY2xhcmVkIChmaXJzdCB1c2UgaW4g
+dGhpcyBmdW5jdGlvbik7IGRpZCB5b3UgbWVhbiDigJhQQVRIX1VQ4oCZPwogIGNoYXIgcGF0aGJ1
+ZltQQVRIX01BWF07CiAgICAgICAgICAgICAgIF5+fn5+fn5+CiAgICAgICAgICAgICAgIFBBVEhf
+VVAKCkNjOiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4KQ2M6IENocmlzdG9waGUgVmFy
+b3F1aSA8Y2hyaXN0b3BoZS52YXJvcXVpQG9wZW5zdmMuY29tPgpDYzogRE0gTUwgPGRtLWRldmVs
+QHJlZGhhdC5jb20+ClNpZ25lZC1vZmYtYnk6IFhvc2UgVmF6cXVleiBQZXJleiA8eG9zZS52YXpx
+dWV6QGdtYWlsLmNvbT4KLS0tCiBsaWJtdWx0aXBhdGgvZmlsZS5oICB8IDIgKysKIGxpYm11bHRp
+cGF0aC9zeXNmcy5jIHwgMSArCiAyIGZpbGVzIGNoYW5nZWQsIDMgaW5zZXJ0aW9ucygrKQoKZGlm
+ZiAtLWdpdCBhL2xpYm11bHRpcGF0aC9maWxlLmggYi9saWJtdWx0aXBhdGgvZmlsZS5oCmluZGV4
+IDI5NTIwYzcuLjNjNzVjOTAgMTAwNjQ0Ci0tLSBhL2xpYm11bHRpcGF0aC9maWxlLmgKKysrIGIv
+bGlibXVsdGlwYXRoL2ZpbGUuaApAQCAtNSw2ICs1LDggQEAKICNpZm5kZWYgX0ZJTEVfSAogI2Rl
+ZmluZSBfRklMRV9ICiAKKyNpbmNsdWRlIDxzeXMvc3RhdC5oPgorCiAjZGVmaW5lIEZJTEVfVElN
+RU9VVCAzMAogaW50IGVuc3VyZV9kaXJlY3Rvcmllc19leGlzdChjb25zdCBjaGFyICpzdHIsIG1v
+ZGVfdCBkaXJfbW9kZSk7CiBpbnQgb3Blbl9maWxlKGNvbnN0IGNoYXIgKmZpbGUsIGludCAqY2Fu
+X3dyaXRlLCBjb25zdCBjaGFyICpoZWFkZXIpOwpkaWZmIC0tZ2l0IGEvbGlibXVsdGlwYXRoL3N5
+c2ZzLmMgYi9saWJtdWx0aXBhdGgvc3lzZnMuYwppbmRleCBlZTcyZTZhLi4xNmUwYTczIDEwMDY0
+NAotLS0gYS9saWJtdWx0aXBhdGgvc3lzZnMuYworKysgYi9saWJtdWx0aXBhdGgvc3lzZnMuYwpA
+QCAtMjgsNiArMjgsNyBAQAogI2luY2x1ZGUgPGRpcmVudC5oPgogI2luY2x1ZGUgPGxpYnVkZXYu
+aD4KICNpbmNsdWRlIDxmbm1hdGNoLmg+CisjaW5jbHVkZSA8bGltaXRzLmg+CiAKICNpbmNsdWRl
+ICJjaGVja2Vycy5oIgogI2luY2x1ZGUgInZlY3Rvci5oIgotLSAKMi4xNy4wCgotLQpkbS1kZXZl
+bCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29t
+L21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
