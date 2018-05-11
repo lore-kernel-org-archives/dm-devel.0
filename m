@@ -1,12 +1,12 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [release] multipath-tools 0.7.7
-Date: Fri, 11 May 2018 14:17:08 +0200
-Message-ID: <CABr-GncP_Hw0k_P5GniquqU9D_zkvbj9wKgBKhrSadpqNuLxTg@mail.gmail.com>
-References: <98764d47-b869-b980-38a8-2f6c1fc96fe9@gmail.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH v2] multipath-tools: replace FSF address with a
+	www pointer
+Date: Fri, 11 May 2018 15:42:43 +0200
+Message-ID: <20180511134243.4210-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============7035204524319925657=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <98764d47-b869-b980-38a8-2f6c1fc96fe9@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,86 +16,190 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>, DM ML <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============7035204524319925657==
-Content-Type: multipart/alternative; boundary="0000000000006d3bb5056bed1da3"
+Less prone to future modifications, new FSF licences
+point exactly to this url: <http://www.gnu.org/licenses/>.
+And sending a smail to FSF is outdated.
 
---0000000000006d3bb5056bed1da3
-Content-Type: text/plain; charset="UTF-8"
+First clean up was done in 5619a39c433ac3d10a88079593cec1aa6472cbeb
 
-Thanks,
+Cc: Martin Wilck <mwilck@suse.com>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: DM ML <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ libmultipath/dm-generic.c   | 4 +---
+ libmultipath/dm-generic.h   | 4 +---
+ libmultipath/foreign.c      | 4 +---
+ libmultipath/foreign.h      | 4 +---
+ libmultipath/foreign/nvme.c | 4 +---
+ libmultipath/generic.c      | 4 +---
+ libmultipath/generic.h      | 4 +---
+ tests/dmevents.c            | 2 +-
+ tests/parser.c              | 2 +-
+ tests/uevent.c              | 2 +-
+ tests/util.c                | 2 +-
+ 11 files changed, 11 insertions(+), 25 deletions(-)
 
-the tag is now pushed.
-and the first 3 patches are merged.
-
-you can rebase the last one.
-
-Best regards,
-Christophe.
-
-On Fri, May 11, 2018 at 1:37 PM, Xose Vazquez Perez <xose.vazquez@gmail.com>
-wrote:
-
-> Christophe Varoqui wrote:
->
-> > I merged the reviewed patches from March 27th up to now, and released
-> 0.7.7.
->
-> These are missing:
-> [PATCH] multipath-tools: add RDAC SUN/ArrayStorage to hwtable
-> [PATCH] multipath-tools: remove "c" from __cpluscplus, misspelled
-> [PATCH] multipath-tools: remove emacs autoconfig of kpartx/gpt.h
-> [PATCH v2] multipath-tools: Remove trailing/leading whitespaces and
-> reformat code
->
-> And the release is untagged.
->
->
-> Thanks.
->
-
---0000000000006d3bb5056bed1da3
-Content-Type: text/html; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">Thanks,<div><br></div><div>the tag is now pushed.</div><di=
-v>and the first 3 patches are merged.</div><div><br></div><div>you can reba=
-se the last one.</div><div><br></div><div>Best regards,</div><div>Christoph=
-e.</div></div><div class=3D"gmail_extra"><br><div class=3D"gmail_quote">On =
-Fri, May 11, 2018 at 1:37 PM, Xose Vazquez Perez <span dir=3D"ltr">&lt;<a h=
-ref=3D"mailto:xose.vazquez@gmail.com" target=3D"_blank">xose.vazquez@gmail.=
-com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"mar=
-gin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"><span class=3D"=
-">Christophe Varoqui wrote:<br>
-<br>
-&gt; I merged the reviewed patches from March 27th up to now, and released =
-0.7.7.<br>
-<br>
-</span>These are missing:<br>
-[PATCH] multipath-tools: add RDAC SUN/ArrayStorage to hwtable<br>
-[PATCH] multipath-tools: remove &quot;c&quot; from __cpluscplus, misspelled=
-<br>
-[PATCH] multipath-tools: remove emacs autoconfig of kpartx/gpt.h<br>
-[PATCH v2] multipath-tools: Remove trailing/leading whitespaces and reforma=
-t code<br>
-<br>
-And the release is untagged.<br>
-<br>
-<br>
-Thanks.<br>
-</blockquote></div><br></div>
-
---0000000000006d3bb5056bed1da3--
-
-
---===============7035204524319925657==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============7035204524319925657==--
+diff --git a/libmultipath/dm-generic.c b/libmultipath/dm-generic.c
+index bdc9ca0..d752991 100644
+--- a/libmultipath/dm-generic.c
++++ b/libmultipath/dm-generic.c
+@@ -12,9 +12,7 @@
+   GNU General Public License for more details.
+ 
+   You should have received a copy of the GNU General Public License
+-  along with this program; if not, write to the Free Software
+-  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+-  USA.
++  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  */
+ 
+ #include <stdint.h>
+diff --git a/libmultipath/dm-generic.h b/libmultipath/dm-generic.h
+index 5d59724..986429f 100644
+--- a/libmultipath/dm-generic.h
++++ b/libmultipath/dm-generic.h
+@@ -12,9 +12,7 @@
+   GNU General Public License for more details.
+ 
+   You should have received a copy of the GNU General Public License
+-  along with this program; if not, write to the Free Software
+-  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+-  USA.
++  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  */
+ #ifndef _DM_GENERIC_H
+ #define _DM_GENERIC_H
+diff --git a/libmultipath/foreign.c b/libmultipath/foreign.c
+index 7217184..80b399b 100644
+--- a/libmultipath/foreign.c
++++ b/libmultipath/foreign.c
+@@ -12,9 +12,7 @@
+   GNU General Public License for more details.
+ 
+   You should have received a copy of the GNU General Public License
+-  along with this program; if not, write to the Free Software
+-  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+-  USA.
++  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+ 
+ #include <sys/sysmacros.h>
+diff --git a/libmultipath/foreign.h b/libmultipath/foreign.h
+index 973f368..697f12f 100644
+--- a/libmultipath/foreign.h
++++ b/libmultipath/foreign.h
+@@ -12,9 +12,7 @@
+   GNU General Public License for more details.
+ 
+   You should have received a copy of the GNU General Public License
+-  along with this program; if not, write to the Free Software
+-  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+-  USA.
++  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+ #ifndef _FOREIGN_H
+ #define _FOREIGN_H
+diff --git a/libmultipath/foreign/nvme.c b/libmultipath/foreign/nvme.c
+index 235f75d..280b6bd 100644
+--- a/libmultipath/foreign/nvme.c
++++ b/libmultipath/foreign/nvme.c
+@@ -12,9 +12,7 @@
+   GNU General Public License for more details.
+ 
+   You should have received a copy of the GNU General Public License
+-  along with this program; if not, write to the Free Software
+-  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+-  USA.
++  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+ 
+ #include <sys/sysmacros.h>
+diff --git a/libmultipath/generic.c b/libmultipath/generic.c
+index 6f7a2cd..0d1e632 100644
+--- a/libmultipath/generic.c
++++ b/libmultipath/generic.c
+@@ -12,9 +12,7 @@
+   GNU General Public License for more details.
+ 
+   You should have received a copy of the GNU General Public License
+-  along with this program; if not, write to the Free Software
+-  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+-  USA.
++  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  */
+ 
+ 
+diff --git a/libmultipath/generic.h b/libmultipath/generic.h
+index 7f7fe66..6346ffe 100644
+--- a/libmultipath/generic.h
++++ b/libmultipath/generic.h
+@@ -12,9 +12,7 @@
+   GNU General Public License for more details.
+ 
+   You should have received a copy of the GNU General Public License
+-  along with this program; if not, write to the Free Software
+-  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+-  USA.
++  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  */
+ #ifndef _GENERIC_H
+ #define _GENERIC_H
+diff --git a/tests/dmevents.c b/tests/dmevents.c
+index bba51dc..3399c81 100644
+--- a/tests/dmevents.c
++++ b/tests/dmevents.c
+@@ -12,7 +12,7 @@
+  * GNU General Public License for more details.
+  *
+  * You should have received a copy of the GNU General Public License
+- * along with this program; if not, write to the Free Software
++ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  *
+  */
+ 
+diff --git a/tests/parser.c b/tests/parser.c
+index a7e7598..29859da 100644
+--- a/tests/parser.c
++++ b/tests/parser.c
+@@ -12,7 +12,7 @@
+  * GNU General Public License for more details.
+  *
+  * You should have received a copy of the GNU General Public License
+- * along with this program; if not, write to the Free Software
++ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  *
+  */
+ 
+diff --git a/tests/uevent.c b/tests/uevent.c
+index acfcb14..b0d0bfd 100644
+--- a/tests/uevent.c
++++ b/tests/uevent.c
+@@ -12,7 +12,7 @@
+  * GNU General Public License for more details.
+  *
+  * You should have received a copy of the GNU General Public License
+- * along with this program; if not, write to the Free Software
++ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  *
+  */
+ 
+diff --git a/tests/util.c b/tests/util.c
+index 113b134..839effd 100644
+--- a/tests/util.c
++++ b/tests/util.c
+@@ -12,7 +12,7 @@
+  * GNU General Public License for more details.
+  *
+  * You should have received a copy of the GNU General Public License
+- * along with this program; if not, write to the Free Software
++ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  *
+  */
+ 
+-- 
+2.17.0
