@@ -1,11 +1,16 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: fix compilation with musl libc
-Date: Fri, 11 May 2018 18:39:44 +0200
-Message-ID: <20180511163944.16190-1-xose.vazquez@gmail.com>
+Subject: Re: [PATCH 1/2] Allow the compiler to verify consistency
+ of declarations and definitions
+Date: Fri, 11 May 2018 20:20:00 +0200
+Message-ID: <f411f276-9d0b-a249-2b53-57564c7174d3@gmail.com>
+References: <20180319162351.28950-1-bart.vanassche@wdc.com>
+	<20180319162351.28950-2-bart.vanassche@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20180319162351.28950-2-bart.vanassche@wdc.com>
+Content-Language: en-GB
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,34 +20,14 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: DM ML <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
+To: Bart Van Assche <bart.vanassche@wdc.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-SW4gZmlsZSBpbmNsdWRlZCBmcm9tIGFsaWFzLmM6MTU6CmZpbGUuaDo5OjQ3OiBlcnJvcjogdW5r
-bm93biB0eXBlIG5hbWUg4oCYbW9kZV904oCZOyBkaWQgeW91IG1lYW4g4oCYdGltZV904oCZPwog
-aW50IGVuc3VyZV9kaXJlY3Rvcmllc19leGlzdChjb25zdCBjaGFyICpzdHIsIG1vZGVfdCBkaXJf
-bW9kZSk7CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgXn5+
-fn5+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgdGltZV90
-CgpzeXNmcy5jOiBJbiBmdW5jdGlvbiDigJhzeXNmc19pc19tdWx0aXBhdGhlZOKAmToKc3lzZnMu
-YzozMDQ6MTU6IGVycm9yOiDigJhQQVRIX01BWOKAmSB1bmRlY2xhcmVkIChmaXJzdCB1c2UgaW4g
-dGhpcyBmdW5jdGlvbik7IGRpZCB5b3UgbWVhbiDigJhQQVRIX1VQ4oCZPwogIGNoYXIgcGF0aGJ1
-ZltQQVRIX01BWF07CiAgICAgICAgICAgICAgIF5+fn5+fn5+CiAgICAgICAgICAgICAgIFBBVEhf
-VVAKCkNjOiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4KQ2M6IENocmlzdG9waGUgVmFy
-b3F1aSA8Y2hyaXN0b3BoZS52YXJvcXVpQG9wZW5zdmMuY29tPgpDYzogRE0gTUwgPGRtLWRldmVs
-QHJlZGhhdC5jb20+ClNpZ25lZC1vZmYtYnk6IFhvc2UgVmF6cXVleiBQZXJleiA8eG9zZS52YXpx
-dWV6QGdtYWlsLmNvbT4KLS0tCiBsaWJtdWx0aXBhdGgvZmlsZS5oICB8IDIgKysKIGxpYm11bHRp
-cGF0aC9zeXNmcy5jIHwgMSArCiAyIGZpbGVzIGNoYW5nZWQsIDMgaW5zZXJ0aW9ucygrKQoKZGlm
-ZiAtLWdpdCBhL2xpYm11bHRpcGF0aC9maWxlLmggYi9saWJtdWx0aXBhdGgvZmlsZS5oCmluZGV4
-IDI5NTIwYzcuLjNjNzVjOTAgMTAwNjQ0Ci0tLSBhL2xpYm11bHRpcGF0aC9maWxlLmgKKysrIGIv
-bGlibXVsdGlwYXRoL2ZpbGUuaApAQCAtNSw2ICs1LDggQEAKICNpZm5kZWYgX0ZJTEVfSAogI2Rl
-ZmluZSBfRklMRV9ICiAKKyNpbmNsdWRlIDxzeXMvc3RhdC5oPgorCiAjZGVmaW5lIEZJTEVfVElN
-RU9VVCAzMAogaW50IGVuc3VyZV9kaXJlY3Rvcmllc19leGlzdChjb25zdCBjaGFyICpzdHIsIG1v
-ZGVfdCBkaXJfbW9kZSk7CiBpbnQgb3Blbl9maWxlKGNvbnN0IGNoYXIgKmZpbGUsIGludCAqY2Fu
-X3dyaXRlLCBjb25zdCBjaGFyICpoZWFkZXIpOwpkaWZmIC0tZ2l0IGEvbGlibXVsdGlwYXRoL3N5
-c2ZzLmMgYi9saWJtdWx0aXBhdGgvc3lzZnMuYwppbmRleCBlZTcyZTZhLi4xNmUwYTczIDEwMDY0
-NAotLS0gYS9saWJtdWx0aXBhdGgvc3lzZnMuYworKysgYi9saWJtdWx0aXBhdGgvc3lzZnMuYwpA
-QCAtMjgsNiArMjgsNyBAQAogI2luY2x1ZGUgPGRpcmVudC5oPgogI2luY2x1ZGUgPGxpYnVkZXYu
-aD4KICNpbmNsdWRlIDxmbm1hdGNoLmg+CisjaW5jbHVkZSA8bGltaXRzLmg+CiAKICNpbmNsdWRl
-ICJjaGVja2Vycy5oIgogI2luY2x1ZGUgInZlY3Rvci5oIgotLSAKMi4xNy4wCgotLQpkbS1kZXZl
-bCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29t
-L21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On 03/19/2018 05:23 PM, Bart Van Assche wrote:
+
+> Make sure that in every source file the header file is included that
+> declares the functions defined in that source file. This allows the
+> compiler to detect inconsistencies between source and header files.
+A header sanitizing could be done with iwyu:
+https://include-what-you-use.org/
