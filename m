@@ -1,12 +1,15 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: configure hitachi ams2000 and
-	hus100 as full active arrays
-Date: Mon, 14 May 2018 17:30:17 +0200
-Message-ID: <20180514153017.7193-1-xose.vazquez@gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: how to set higher then 128 nr_requests on LV's
+Date: Mon, 14 May 2018 13:53:54 -0400
+Message-ID: <20180514175354.GA15053@redhat.com>
+References: <CAHJ=Ofm_j2B6TeNZR_1GZk40L_fiAqMT=umehupKSnNd+ZHY2A@mail.gmail.com>
+	<20180514161312.GA14685@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20180514161312.GA14685@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,55 +19,50 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: Matthias Rudolph <Matthias.Rudolph@hitachivantara.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, DM-DEV ML <dm-devel@redhat.com>
+To: Pankaj Agarwal <pankaj@releasemanager.in>
+Cc: Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com, linux-lvm@redhat.com
 List-Id: dm-devel.ids
 
-AMS2000 and HUS100 families are active/active arrays.
-
-Based on https://support.hitachivantara.com/download/epcra/df818913.pdf
-and internal hitachi docs.
-
-
-Cc: Matthias Rudolph <Matthias.Rudolph@hitachivantara.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: DM-DEV ML <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- libmultipath/hwtable.c | 10 ++++++++--
- 1 file changed, 8 insertions(+), 2 deletions(-)
-
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 827e899..9705025 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -398,13 +398,13 @@ static struct hwentry default_hw[] = {
- 	 * Mail : matthias.rudolph@hds.com
- 	 */
- 	{
--		/* USP-V, HUS VM, VSP, VSP G1X00 and VSP GX00 families */
-+		/* USP-V, HUS VM, VSP, VSP G1X00 and VSP GX00 families / HP XP */
- 		.vendor        = "(HITACHI|HP)",
- 		.product       = "^OPEN-",
- 		.pgpolicy      = MULTIBUS,
- 	},
- 	{
--		/* AMS 2000 and HUS 100 families */
-+		/* AMS other than AMS 2000 */
- 		.vendor        = "HITACHI",
- 		.product       = "^DF",
- 		.no_path_retry = NO_PATH_RETRY_QUEUE,
-@@ -412,6 +412,12 @@ static struct hwentry default_hw[] = {
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.prio_name     = PRIO_HDS,
- 	},
-+	{
-+		/* AMS 2000 and HUS 100 families */
-+		.vendor        = "HITACHI",
-+		.product       = "^DF600F",
-+		.pgpolicy      = MULTIBUS,
-+	},
- 	/*
- 	 * IBM
- 	 *
--- 
-2.17.0
+T24gTW9uLCBNYXkgMTQgMjAxOCBhdCAxMjoxM3BtIC0wNDAwLApNaWtlIFNuaXR6ZXIgPHNuaXR6
+ZXJAcmVkaGF0LmNvbT4gd3JvdGU6Cgo+IE9uIFN1biwgTWF5IDEzIDIwMTggYXQgIDg6NDdwbSAt
+MDQwMCwKPiBQYW5rYWogQWdhcndhbCA8cGFua2FqQHJlbGVhc2VtYW5hZ2VyLmluPiB3cm90ZToK
+PiAKPiA+ICAgIEhpLAo+ID4gICAgSG93IGRvIGkgc2V0IHRoZSBucl9yZXF1ZXN0IHZhbHVlIGZv
+ciBMVidzIGFzIGl0J3Mgbm90IHdyaXRhYmxlIGxpa2Ugb3RoZXIKPiA+ICAgIGRyaXZlcyBvbiBh
+IGxpbnV4IHN5c3RlbS4KPiA+ICAgIExWJ3MgYXJlIHNldCBhcyBkbS0wIGFuZCBkbS0xIG9uIG15
+IHN5c3RlbS4KPiA+ICAgICAjY2F0IC9zeXMvYmxvY2svZG0tMC9xdWV1ZS9ucl9yZXF1ZXN0cwo+
+ID4gICAgMTI4Cj4gPiAgICAjIGVjaG8gMjU2ID4gL3N5cy9ibG9jay9kbS0wL3F1ZXVlL25yX3Jl
+cXVlc3RzCj4gPiAgICAtYmFzaDogZWNobzogd3JpdGUgZXJyb3I6IEludmFsaWQgYXJndW1lbnQK
+PiAKPiBJbiB0aGUgYmxvY2sgbGF5ZXIsIGJpby1iYXNlZCBkZXZpY2VzIGNhbm5vdCBoYXZlIHRo
+ZWlyIG5yX3JlcXVlc3RzCj4gY2hhbmdlZCwgc2VlOiBibG9jay9ibGstc3lzZnMuYzpxdWV1ZV9y
+ZXF1ZXN0c19zdG9yZSgpCj4gCj4gU28gYW55IGJpby1iYXNlZCBETSBkZXZpY2UgKGUuZy4gbGlu
+ZWFyIHRhcmdldCkgd29uJ3QgYmUgYWxsb3dlZCB0bwo+IGNoYW5nZSBucl9yZXF1ZXN0cy4KPiAK
+PiBUaGUgb25seSB3YXkgdG8gY2hhbmdlIHRoaXMgd291bGQgYmUgZnJvbSB0aGUgYm90dG9tIHVw
+Ogo+IDEpIGNoYW5nZSB0aGUgdW5kZXJseWluZyByZXF1ZXN0LWJhc2VkIGRldmljZShzKSAoZS5n
+LiAvZGV2L3NkYSkKPiAyKSBkbXNldHVwIHN1c3BlbmQgKyBkbXNldHVwIHJlc3VtZSBhbnkgYmlv
+LWJhc2VkIERNIGRldmljZShzKSB0aGF0IGFyZQo+ICAgIHN0YWNrZWQgb250b3Agb2YgdGhlIHJl
+cXVlc3QtYmFzZWQgZGV2aWNlKHMpIHlvdSBjaGFuZ2VkIGluIDEpCj4gICAgLS0gdGhpcyB3aWxs
+IHJlc3RhY2sgdGhlIHF1ZXVlX2xpbWl0cyBmcm9tIHRoZSBib3R0b20gdXA7IHNvIHRoZSBETQo+
+ICAgIGRldmljZSB3aWxsIHRoZW4gcmVmbGVjdCB0aGUgdW5kZXJseWluZyBkZXZpY2VzJyBsaW1p
+dHMuCgpJIHdhcyBtaXN0YWtlbi4gIERNIGNvcmUgKGluIHRoZSBrZXJuZWwpIHdpbGwgb25seSBy
+ZXN0YWNrIHRoZQpxdWV1ZV9saW1pdHMgKG5yX3JlcXVlc3RzIGluY2x1ZGVkKSBpZiBhIG5ldyBE
+TSB0YWJsZSBpcyBsb2FkZWQuCgpTbyBhIHNpbXBsZSBzdXNwZW5kK3Jlc3VtZSB3aWxsIF9ub3Rf
+IGNoYW5nZSB0aGUgYmlvLWJhc2VkIERNIGRldmljZSdzCnF1ZXVlX2xpbWl0czoKCltyb290QHRo
+ZWdvYXQgfl0jIGxzYmxrIC9kZXYvbnVsbGIwCk5BTUUgICBNQUo6TUlOIFJNICBTSVpFIFJPIFRZ
+UEUgTU9VTlRQT0lOVApudWxsYjAgMjUzOjAgICAgMCAgMjUwRyAgMCBkaXNrCuKUlOKUgGZvbyAg
+MjUyOjAgICAgMCAgMjUwRyAgMCBkbQpbcm9vdEB0aGVnb2F0IH5dIyBjYXQgL3N5cy9ibG9jay9u
+dWxsYjAvcXVldWUvbnJfcmVxdWVzdHMKMTI4Cltyb290QHRoZWdvYXQgfl0jIGNhdCAvc3lzL2Js
+b2NrL2RtLTAvcXVldWUvbnJfcmVxdWVzdHMKMTI4Cltyb290QHRoZWdvYXQgfl0jIGVjaG8gNjQg
+PiAvc3lzL2Jsb2NrL251bGxiMC9xdWV1ZS9ucl9yZXF1ZXN0cwpbcm9vdEB0aGVnb2F0IH5dIyBj
+YXQgL3N5cy9ibG9jay9udWxsYjAvcXVldWUvbnJfcmVxdWVzdHMKNjQKW3Jvb3RAdGhlZ29hdCB+
+XSMgY2F0IC9zeXMvYmxvY2svZG0tMC9xdWV1ZS9ucl9yZXF1ZXN0cwoxMjgKW3Jvb3RAdGhlZ29h
+dCB+XSMgZG1zZXR1cCBzdXNwZW5kIGZvbwpbcm9vdEB0aGVnb2F0IH5dIyBkbXNldHVwIHJlc3Vt
+ZSBmb28KW3Jvb3RAdGhlZ29hdCB+XSMgY2F0IC9zeXMvYmxvY2svZG0tMC9xdWV1ZS9ucl9yZXF1
+ZXN0cwoxMjgKClRoZXJlIHdhcyBzb21lIHJlbGF0ZWQgd29yayBzdGFydGVkIGluIHRoaXMgYXJl
+YSBieSBIYW5uZXMgKG5vdyBjYydkKQpkdXJpbmcgTFNGIGxhc3QgbW9udGguICBIZSBhZGRlZCBh
+IGNoYWluLW5vdGlmaWVyIHRvIERNIGRldmljZXMgc28gdGhhdAppZiBhbnkgdW5kZXJseWluZyBk
+ZXZpY2VzIChkZXZpY2VzIHJlZmVyZW5jZWQgaW4gYSBETSBkZXZpY2UncyB0YWJsZSkKd2VyZSBj
+aGFuZ2VkIHRoZW4gdGhlIGVudHVyZSBkZXZpY2Ugc3RhY2sgd291bGQgaGF2ZSBpdHMgbGltaXRz
+CnJlbG9hZGVkLgoKTm90IHN1cmUgd2hlcmUgSGFubmVzIGVuZGVkIHVwIHdpdGggdGhhdC4gIFdv
+dWxkIGxvdmUgdG8gZ2V0IGl0IHBvbGlzaGVkCm5vdyBhbmQgc3RhZ2VkIGZvciA0LjE4IGluY2x1
+c2lvbi4KCkhhbm5lcz8KCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQu
+Y29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
