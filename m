@@ -1,16 +1,10 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [PATCH] dm rq: replace BUG_ON(!irqs_disabled) with
- lockdep's lock annotation
-Date: Mon, 14 May 2018 18:24:07 +0200
-Message-ID: <20180514162407.rigrq3enfic3i7xw@linutronix.de>
-References: <20180504143639.5300-1-bigeasy@linutronix.de>
-	<20180504155311.GA4787@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: how to set higher then 128 nr_requests on LV's
+Date: Mon, 14 May 2018 20:22:32 -0400 (EDT)
+Message-ID: <2bc3e568-9aa9-4bab-a172-51e3458e488a@email.android.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============5044845299948182932=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20180504155311.GA4787@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,48 +14,95 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Keith Busch <keith.busch@intel.com>, dm-devel@redhat.com, Thomas Gleixner <tglx@linutronix.de>, Alasdair Kergon <agk@redhat.com>
+To: Pankaj Agarwal <pankaj@releasemanager.in>
+Cc: Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com, linux-lvm@redhat.com
 List-Id: dm-devel.ids
 
-In commit 052189a2ec95 ("dm: remove superfluous irq disablement in
-dm_request_fn") the spin_lock_irq() was replaced with spin_lock() + a
-check for disabled interrupts. Later the locking part was removed in
-commit 2eb6e1e3aa87 ("dm: submit stacked requests in irq enabled
-context") but the BUG_ON() check remained.
-Mike Snitzer explained that:
-|the queue_lock hasn't been removed for the old .request_fn path in block
-|core -- which dm_old_request_fn is providing the hook for.
-|
-|This BUG_ON() documents that reality.
+--===============5044845299948182932==
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: base64
 
-The BUG_ON() statement checks for disabled interrupts. The better check
-would to let lockdep check if the required lock (queue_lock) is held.
-Lockdep will then validate that the lock is held an complain if this is
-not the case. Since lockdep will see this lock held in IRQ-context it
-will also complain should the interrupts be enabled while lock still
-held or acquired with enabled interrupts. So this !irq_disabled() is not
-required.
-This change helps to avoid the BUG_ON() statement on preempt-rt where
-the lock is a sleeping lock and interrupts are never really disabled.
+PGRpdiBkaXI9J2F1dG8nPk5vLCBpZiB5b3UnZCBsaWtlIHRvIGtlZXAgdGhlIGRldmljZSBhY3Rp
+dmUgdGhlbiB0aGVyZSBpcyBubyBleGlzdGluZyB3YXkgdG8gcmVzdGFja2luZyBhIERvbSBkZXZp
+Y2UncyBxdWV1ZV9saW1pdHMuPGRpdiBkaXI9ImF1dG8iPjxicj48L2Rpdj48ZGl2IGRpcj0iYXV0
+byI+TWlrZTwvZGl2PjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2V4dHJhIj48YnI+PGRpdiBjbGFz
+cz0iZ21haWxfcXVvdGUiPk9uIE1heSAxNCwgMjAxOCA3OjU4IFBNLCBQYW5rYWogQWdhcndhbCAm
+bHQ7cGFua2FqQHJlbGVhc2VtYW5hZ2VyLmluJmd0OyB3cm90ZTo8YnIgdHlwZT0iYXR0cmlidXRp
+b24iPjxibG9ja3F1b3RlIGNsYXNzPSJxdW90ZSIgc3R5bGU9Im1hcmdpbjowIDAgMCAuOGV4O2Jv
+cmRlci1sZWZ0OjFweCAjY2NjIHNvbGlkO3BhZGRpbmctbGVmdDoxZXgiPjxkaXYgZGlyPSJsdHIi
+Pkhhbm5lcyw8ZGl2PjxiciAvPjwvZGl2PjxkaXY+V2hpbGUgeW91IGFyZSB3b3JraW5nIG9uIHRo
+ZSBmZWF0dXJlIGNvZGUsIGlzIHRoZXJlIGEgc2VxdWVuY2Ugb2Ygc3lzdGVtIGNvbW1hbmRzIEkg
+Y2FuIHVzZSA/PC9kaXY+PGRpdj48YnIgLz48L2Rpdj48ZGl2PnRoYW5rcyw8L2Rpdj48ZGl2Pjxi
+ciAvPjwvZGl2PjxkaXY+UGFua2FqPC9kaXY+PGRpdj48YnIgLz48L2Rpdj48ZGl2PjxiciAvPjwv
+ZGl2PjwvZGl2PjxkaXY+PGJyIC8+PGRpdiBjbGFzcz0iZWxpZGVkLXRleHQiPk9uIE1vbiwgTWF5
+IDE0LCAyMDE4IGF0IDE6NTMgUE0sIE1pa2UgU25pdHplciA8c3BhbiBkaXI9Imx0ciI+Jmx0Ozxh
+IGhyZWY9Im1haWx0bzpzbml0emVyJiM2NDtyZWRoYXQuY29tIj5zbml0emVyJiM2NDtyZWRoYXQu
+Y29tPC9hPiZndDs8L3NwYW4+IHdyb3RlOjxiciAvPjxibG9ja3F1b3RlIHN0eWxlPSJtYXJnaW46
+MCAwIDAgMC44ZXg7Ym9yZGVyLWxlZnQ6MXB4ICNjY2Mgc29saWQ7cGFkZGluZy1sZWZ0OjFleCI+
+T24gTW9uLCBNYXkgMTQgMjAxOCBhdCAxMjoxM3BtIC0wNDAwLDxiciAvPg0KTWlrZSBTbml0emVy
+ICZsdDs8YSBocmVmPSJtYWlsdG86c25pdHplciYjNjQ7cmVkaGF0LmNvbSI+c25pdHplciYjNjQ7
+cmVkaGF0LmNvbTwvYT4mZ3Q7IHdyb3RlOjxiciAvPg0KPGJyIC8+DQomZ3Q7IE9uIFN1biwgTWF5
+IDEzIDIwMTggYXTCoCA4OjQ3cG0gLTA0MDAsPGJyIC8+DQomZ3Q7IFBhbmthaiBBZ2Fyd2FsICZs
+dDs8YSBocmVmPSJtYWlsdG86cGFua2FqJiM2NDtyZWxlYXNlbWFuYWdlci5pbiI+cGFua2FqJiM2
+NDtyZWxlYXNlbWFuYWdlci5pbjwvYT4mZ3Q7IHdyb3RlOjxiciAvPg0KJmd0OyA8YnIgLz4NCiZn
+dDsgJmd0O8KgIMKgIEhpLDxiciAvPg0KJmd0OyAmZ3Q7wqAgwqAgSG93IGRvIGkgc2V0IHRoZSBu
+cl9yZXF1ZXN0IHZhbHVlIGZvciBMViYjMzk7cyBhcyBpdCYjMzk7cyBub3Qgd3JpdGFibGUgbGlr
+ZSBvdGhlcjxiciAvPg0KJmd0OyAmZ3Q7wqAgwqAgZHJpdmVzIG9uIGEgbGludXggc3lzdGVtLjxi
+ciAvPg0KJmd0OyAmZ3Q7wqAgwqAgTFYmIzM5O3MgYXJlIHNldCBhcyBkbS0wIGFuZCBkbS0xIG9u
+IG15IHN5c3RlbS48YnIgLz4NCiZndDsgJmd0O8KgIMKgIMKgI2NhdCAvc3lzL2Jsb2NrL2RtLTAv
+cXVldWUvbnJfPHdiciAvPnJlcXVlc3RzPGJyIC8+DQomZ3Q7ICZndDvCoCDCoCAxMjg8YnIgLz4N
+CiZndDsgJmd0O8KgIMKgICMgZWNobyAyNTYgJmd0OyAvc3lzL2Jsb2NrL2RtLTAvcXVldWUvbnJf
+PHdiciAvPnJlcXVlc3RzPGJyIC8+DQomZ3Q7ICZndDvCoCDCoCAtYmFzaDogZWNobzogd3JpdGUg
+ZXJyb3I6IEludmFsaWQgYXJndW1lbnQ8YnIgLz4NCiZndDsgPGJyIC8+DQomZ3Q7IEluIHRoZSBi
+bG9jayBsYXllciwgYmlvLWJhc2VkIGRldmljZXMgY2Fubm90IGhhdmUgdGhlaXIgbnJfcmVxdWVz
+dHM8YnIgLz4NCiZndDsgY2hhbmdlZCwgc2VlOiBibG9jay9ibGstc3lzZnMuYzpxdWV1ZV88d2Jy
+IC8+cmVxdWVzdHNfc3RvcmUoKTxiciAvPg0KJmd0OyA8YnIgLz4NCiZndDsgU28gYW55IGJpby1i
+YXNlZCBETSBkZXZpY2UgKGUuZy4gbGluZWFyIHRhcmdldCkgd29uJiMzOTt0IGJlIGFsbG93ZWQg
+dG88YnIgLz4NCiZndDsgY2hhbmdlIG5yX3JlcXVlc3RzLjxiciAvPg0KJmd0OyA8YnIgLz4NCiZn
+dDsgVGhlIG9ubHkgd2F5IHRvIGNoYW5nZSB0aGlzIHdvdWxkIGJlIGZyb20gdGhlIGJvdHRvbSB1
+cDo8YnIgLz4NCiZndDsgMSkgY2hhbmdlIHRoZSB1bmRlcmx5aW5nIHJlcXVlc3QtYmFzZWQgZGV2
+aWNlKHMpIChlLmcuIC9kZXYvc2RhKTxiciAvPg0KJmd0OyAyKSBkbXNldHVwIHN1c3BlbmQgJiM0
+MzsgZG1zZXR1cCByZXN1bWUgYW55IGJpby1iYXNlZCBETSBkZXZpY2UocykgdGhhdCBhcmU8YnIg
+Lz4NCiZndDvCoCDCoCBzdGFja2VkIG9udG9wIG9mIHRoZSByZXF1ZXN0LWJhc2VkIGRldmljZShz
+KSB5b3UgY2hhbmdlZCBpbiAxKTxiciAvPg0KJmd0O8KgIMKgIC0tIHRoaXMgd2lsbCByZXN0YWNr
+IHRoZSBxdWV1ZV9saW1pdHMgZnJvbSB0aGUgYm90dG9tIHVwOyBzbyB0aGUgRE08YnIgLz4NCiZn
+dDvCoCDCoCBkZXZpY2Ugd2lsbCB0aGVuIHJlZmxlY3QgdGhlIHVuZGVybHlpbmcgZGV2aWNlcyYj
+Mzk7IGxpbWl0cy48YnIgLz4NCjxiciAvPg0KSSB3YXMgbWlzdGFrZW4uwqAgRE0gY29yZSAoaW4g
+dGhlIGtlcm5lbCkgd2lsbCBvbmx5IHJlc3RhY2sgdGhlPGJyIC8+DQpxdWV1ZV9saW1pdHMgKG5y
+X3JlcXVlc3RzIGluY2x1ZGVkKSBpZiBhIG5ldyBETSB0YWJsZSBpcyBsb2FkZWQuPGJyIC8+DQo8
+YnIgLz4NClNvIGEgc2ltcGxlIHN1c3BlbmQmIzQzO3Jlc3VtZSB3aWxsIF9ub3RfIGNoYW5nZSB0
+aGUgYmlvLWJhc2VkIERNIGRldmljZSYjMzk7czxiciAvPg0KcXVldWVfbGltaXRzOjxiciAvPg0K
+PGJyIC8+DQpbcm9vdCYjNjQ7dGhlZ29hdCB+XSMgbHNibGsgL2Rldi9udWxsYjA8YnIgLz4NCk5B
+TUXCoCDCoE1BSjpNSU4gUk3CoCBTSVpFIFJPIFRZUEUgTU9VTlRQT0lOVDxiciAvPg0KbnVsbGIw
+IDI1MzowwqAgwqAgMMKgIDI1MEfCoCAwIGRpc2s8YnIgLz4NCuKUlOKUgGZvb8KgIDI1MjowwqAg
+wqAgMMKgIDI1MEfCoCAwIGRtPGJyIC8+DQpbcm9vdCYjNjQ7dGhlZ29hdCB+XSMgY2F0IC9zeXMv
+YmxvY2svbnVsbGIwL3F1ZXVlL25yXzx3YnIgLz5yZXF1ZXN0czxiciAvPg0KMTI4PGJyIC8+DQpb
+cm9vdCYjNjQ7dGhlZ29hdCB+XSMgY2F0IC9zeXMvYmxvY2svZG0tMC9xdWV1ZS9ucl88d2JyIC8+
+cmVxdWVzdHM8YnIgLz4NCjEyODxiciAvPg0KW3Jvb3QmIzY0O3RoZWdvYXQgfl0jIGVjaG8gNjQg
+Jmd0OyAvc3lzL2Jsb2NrL251bGxiMC9xdWV1ZS9ucl88d2JyIC8+cmVxdWVzdHM8YnIgLz4NClty
+b290JiM2NDt0aGVnb2F0IH5dIyBjYXQgL3N5cy9ibG9jay9udWxsYjAvcXVldWUvbnJfPHdiciAv
+PnJlcXVlc3RzPGJyIC8+DQo2NDxiciAvPg0KW3Jvb3QmIzY0O3RoZWdvYXQgfl0jIGNhdCAvc3lz
+L2Jsb2NrL2RtLTAvcXVldWUvbnJfPHdiciAvPnJlcXVlc3RzPGJyIC8+DQoxMjg8YnIgLz4NClty
+b290JiM2NDt0aGVnb2F0IH5dIyBkbXNldHVwIHN1c3BlbmQgZm9vPGJyIC8+DQpbcm9vdCYjNjQ7
+dGhlZ29hdCB+XSMgZG1zZXR1cCByZXN1bWUgZm9vPGJyIC8+DQpbcm9vdCYjNjQ7dGhlZ29hdCB+
+XSMgY2F0IC9zeXMvYmxvY2svZG0tMC9xdWV1ZS9ucl88d2JyIC8+cmVxdWVzdHM8YnIgLz4NCjEy
+ODxiciAvPg0KPGJyIC8+DQpUaGVyZSB3YXMgc29tZSByZWxhdGVkIHdvcmsgc3RhcnRlZCBpbiB0
+aGlzIGFyZWEgYnkgSGFubmVzIChub3cgY2MmIzM5O2QpPGJyIC8+DQpkdXJpbmcgTFNGIGxhc3Qg
+bW9udGguwqAgSGUgYWRkZWQgYSBjaGFpbi1ub3RpZmllciB0byBETSBkZXZpY2VzIHNvIHRoYXQ8
+YnIgLz4NCmlmIGFueSB1bmRlcmx5aW5nIGRldmljZXMgKGRldmljZXMgcmVmZXJlbmNlZCBpbiBh
+IERNIGRldmljZSYjMzk7cyB0YWJsZSk8YnIgLz4NCndlcmUgY2hhbmdlZCB0aGVuIHRoZSBlbnR1
+cmUgZGV2aWNlIHN0YWNrIHdvdWxkIGhhdmUgaXRzIGxpbWl0czxiciAvPg0KcmVsb2FkZWQuPGJy
+IC8+DQo8YnIgLz4NCk5vdCBzdXJlIHdoZXJlIEhhbm5lcyBlbmRlZCB1cCB3aXRoIHRoYXQuwqAg
+V291bGQgbG92ZSB0byBnZXQgaXQgcG9saXNoZWQ8YnIgLz4NCm5vdyBhbmQgc3RhZ2VkIGZvciA0
+LjE4IGluY2x1c2lvbi48YnIgLz4NCjxiciAvPg0KSGFubmVzPzxiciAvPg0KPC9ibG9ja3F1b3Rl
+PjwvZGl2PjxiciAvPjwvZGl2Pg0KPC9ibG9ja3F1b3RlPjwvZGl2Pjxicj48L2Rpdj4=
 
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
----
- drivers/md/dm-rq.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
-index bf0b840645cc..78a44bb7537f 100644
---- a/drivers/md/dm-rq.c
-+++ b/drivers/md/dm-rq.c
-@@ -688,7 +688,7 @@ static void dm_old_request_fn(struct request_queue *q)
- 		/* Establish tio->ti before queuing work (map_tio_request) */
- 		tio->ti = ti;
- 		kthread_queue_work(&md->kworker, &tio->work);
--		BUG_ON(!irqs_disabled());
-+		lockdep_assert_held(q->queue_lock);
- 	}
- }
- 
--- 
-2.17.0
+--===============5044845299948182932==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============5044845299948182932==--
