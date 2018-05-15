@@ -1,68 +1,71 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: how to set higher then 128 nr_requests on LV's
-Date: Mon, 14 May 2018 13:53:54 -0400
-Message-ID: <20180514175354.GA15053@redhat.com>
-References: <CAHJ=Ofm_j2B6TeNZR_1GZk40L_fiAqMT=umehupKSnNd+ZHY2A@mail.gmail.com>
-	<20180514161312.GA14685@redhat.com>
+From: Joonsoo Kim <iamjoonsoo.kim@lge.com>
+Subject: Re: [PATCH v3] kvmalloc: always use vmalloc if CONFIG_DEBUG_SG
+Date: Tue, 15 May 2018 10:13:11 +0900
+Message-ID: <20180515011311.GA32447@js1304-desktop>
+References: <20180420210200.GH10788@bombadil.infradead.org>
+ <alpine.LRH.2.02.1804201704580.25408@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180421144757.GC14610@bombadil.infradead.org>
+ <alpine.LRH.2.02.1804221733520.7995@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180423151545.GU17484@dhcp22.suse.cz>
+ <alpine.LRH.2.02.1804232003100.2299@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180424034643.GA26636@bombadil.infradead.org>
+ <alpine.LRH.2.02.1804240818530.28016@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180424171651.GC30577@bombadil.infradead.org>
+ <alpine.LRH.2.02.1804241428120.8296@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20180514161312.GA14685@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Pankaj Agarwal <pankaj@releasemanager.in>
-Cc: Hannes Reinecke <hare@suse.com>, dm-devel@redhat.com, linux-lvm@redhat.com
+In-Reply-To: <alpine.LRH.2.02.1804241428120.8296@file01.intranet.prod.int.rdu2.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Matthew Wilcox <willy@infradead.org>, Michal Hocko <mhocko@kernel.org>, David Miller <davem@davemloft.net>, Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, eric.dumazet@gmail.com, edumazet@google.com, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, mst@redhat.com, jasowang@redhat.com, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, Vlastimil Babka <vbabka@suse.cz>, Christoph Lameter <cl@linux.com>, Pekka Enberg <penberg@kernel.org>, David Rientjes <rientjes@google.com>
 List-Id: dm-devel.ids
 
-T24gTW9uLCBNYXkgMTQgMjAxOCBhdCAxMjoxM3BtIC0wNDAwLApNaWtlIFNuaXR6ZXIgPHNuaXR6
-ZXJAcmVkaGF0LmNvbT4gd3JvdGU6Cgo+IE9uIFN1biwgTWF5IDEzIDIwMTggYXQgIDg6NDdwbSAt
-MDQwMCwKPiBQYW5rYWogQWdhcndhbCA8cGFua2FqQHJlbGVhc2VtYW5hZ2VyLmluPiB3cm90ZToK
-PiAKPiA+ICAgIEhpLAo+ID4gICAgSG93IGRvIGkgc2V0IHRoZSBucl9yZXF1ZXN0IHZhbHVlIGZv
-ciBMVidzIGFzIGl0J3Mgbm90IHdyaXRhYmxlIGxpa2Ugb3RoZXIKPiA+ICAgIGRyaXZlcyBvbiBh
-IGxpbnV4IHN5c3RlbS4KPiA+ICAgIExWJ3MgYXJlIHNldCBhcyBkbS0wIGFuZCBkbS0xIG9uIG15
-IHN5c3RlbS4KPiA+ICAgICAjY2F0IC9zeXMvYmxvY2svZG0tMC9xdWV1ZS9ucl9yZXF1ZXN0cwo+
-ID4gICAgMTI4Cj4gPiAgICAjIGVjaG8gMjU2ID4gL3N5cy9ibG9jay9kbS0wL3F1ZXVlL25yX3Jl
-cXVlc3RzCj4gPiAgICAtYmFzaDogZWNobzogd3JpdGUgZXJyb3I6IEludmFsaWQgYXJndW1lbnQK
-PiAKPiBJbiB0aGUgYmxvY2sgbGF5ZXIsIGJpby1iYXNlZCBkZXZpY2VzIGNhbm5vdCBoYXZlIHRo
-ZWlyIG5yX3JlcXVlc3RzCj4gY2hhbmdlZCwgc2VlOiBibG9jay9ibGstc3lzZnMuYzpxdWV1ZV9y
-ZXF1ZXN0c19zdG9yZSgpCj4gCj4gU28gYW55IGJpby1iYXNlZCBETSBkZXZpY2UgKGUuZy4gbGlu
-ZWFyIHRhcmdldCkgd29uJ3QgYmUgYWxsb3dlZCB0bwo+IGNoYW5nZSBucl9yZXF1ZXN0cy4KPiAK
-PiBUaGUgb25seSB3YXkgdG8gY2hhbmdlIHRoaXMgd291bGQgYmUgZnJvbSB0aGUgYm90dG9tIHVw
-Ogo+IDEpIGNoYW5nZSB0aGUgdW5kZXJseWluZyByZXF1ZXN0LWJhc2VkIGRldmljZShzKSAoZS5n
-LiAvZGV2L3NkYSkKPiAyKSBkbXNldHVwIHN1c3BlbmQgKyBkbXNldHVwIHJlc3VtZSBhbnkgYmlv
-LWJhc2VkIERNIGRldmljZShzKSB0aGF0IGFyZQo+ICAgIHN0YWNrZWQgb250b3Agb2YgdGhlIHJl
-cXVlc3QtYmFzZWQgZGV2aWNlKHMpIHlvdSBjaGFuZ2VkIGluIDEpCj4gICAgLS0gdGhpcyB3aWxs
-IHJlc3RhY2sgdGhlIHF1ZXVlX2xpbWl0cyBmcm9tIHRoZSBib3R0b20gdXA7IHNvIHRoZSBETQo+
-ICAgIGRldmljZSB3aWxsIHRoZW4gcmVmbGVjdCB0aGUgdW5kZXJseWluZyBkZXZpY2VzJyBsaW1p
-dHMuCgpJIHdhcyBtaXN0YWtlbi4gIERNIGNvcmUgKGluIHRoZSBrZXJuZWwpIHdpbGwgb25seSBy
-ZXN0YWNrIHRoZQpxdWV1ZV9saW1pdHMgKG5yX3JlcXVlc3RzIGluY2x1ZGVkKSBpZiBhIG5ldyBE
-TSB0YWJsZSBpcyBsb2FkZWQuCgpTbyBhIHNpbXBsZSBzdXNwZW5kK3Jlc3VtZSB3aWxsIF9ub3Rf
-IGNoYW5nZSB0aGUgYmlvLWJhc2VkIERNIGRldmljZSdzCnF1ZXVlX2xpbWl0czoKCltyb290QHRo
-ZWdvYXQgfl0jIGxzYmxrIC9kZXYvbnVsbGIwCk5BTUUgICBNQUo6TUlOIFJNICBTSVpFIFJPIFRZ
-UEUgTU9VTlRQT0lOVApudWxsYjAgMjUzOjAgICAgMCAgMjUwRyAgMCBkaXNrCuKUlOKUgGZvbyAg
-MjUyOjAgICAgMCAgMjUwRyAgMCBkbQpbcm9vdEB0aGVnb2F0IH5dIyBjYXQgL3N5cy9ibG9jay9u
-dWxsYjAvcXVldWUvbnJfcmVxdWVzdHMKMTI4Cltyb290QHRoZWdvYXQgfl0jIGNhdCAvc3lzL2Js
-b2NrL2RtLTAvcXVldWUvbnJfcmVxdWVzdHMKMTI4Cltyb290QHRoZWdvYXQgfl0jIGVjaG8gNjQg
-PiAvc3lzL2Jsb2NrL251bGxiMC9xdWV1ZS9ucl9yZXF1ZXN0cwpbcm9vdEB0aGVnb2F0IH5dIyBj
-YXQgL3N5cy9ibG9jay9udWxsYjAvcXVldWUvbnJfcmVxdWVzdHMKNjQKW3Jvb3RAdGhlZ29hdCB+
-XSMgY2F0IC9zeXMvYmxvY2svZG0tMC9xdWV1ZS9ucl9yZXF1ZXN0cwoxMjgKW3Jvb3RAdGhlZ29h
-dCB+XSMgZG1zZXR1cCBzdXNwZW5kIGZvbwpbcm9vdEB0aGVnb2F0IH5dIyBkbXNldHVwIHJlc3Vt
-ZSBmb28KW3Jvb3RAdGhlZ29hdCB+XSMgY2F0IC9zeXMvYmxvY2svZG0tMC9xdWV1ZS9ucl9yZXF1
-ZXN0cwoxMjgKClRoZXJlIHdhcyBzb21lIHJlbGF0ZWQgd29yayBzdGFydGVkIGluIHRoaXMgYXJl
-YSBieSBIYW5uZXMgKG5vdyBjYydkKQpkdXJpbmcgTFNGIGxhc3QgbW9udGguICBIZSBhZGRlZCBh
-IGNoYWluLW5vdGlmaWVyIHRvIERNIGRldmljZXMgc28gdGhhdAppZiBhbnkgdW5kZXJseWluZyBk
-ZXZpY2VzIChkZXZpY2VzIHJlZmVyZW5jZWQgaW4gYSBETSBkZXZpY2UncyB0YWJsZSkKd2VyZSBj
-aGFuZ2VkIHRoZW4gdGhlIGVudHVyZSBkZXZpY2Ugc3RhY2sgd291bGQgaGF2ZSBpdHMgbGltaXRz
-CnJlbG9hZGVkLgoKTm90IHN1cmUgd2hlcmUgSGFubmVzIGVuZGVkIHVwIHdpdGggdGhhdC4gIFdv
-dWxkIGxvdmUgdG8gZ2V0IGl0IHBvbGlzaGVkCm5vdyBhbmQgc3RhZ2VkIGZvciA0LjE4IGluY2x1
-c2lvbi4KCkhhbm5lcz8KCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQu
-Y29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+Hello, Mikulas.
+
+On Tue, Apr 24, 2018 at 02:41:47PM -0400, Mikulas Patocka wrote:
+> 
+> 
+> On Tue, 24 Apr 2018, Matthew Wilcox wrote:
+> 
+> > On Tue, Apr 24, 2018 at 08:29:14AM -0400, Mikulas Patocka wrote:
+> > > 
+> > > 
+> > > On Mon, 23 Apr 2018, Matthew Wilcox wrote:
+> > > 
+> > > > On Mon, Apr 23, 2018 at 08:06:16PM -0400, Mikulas Patocka wrote:
+> > > > > Some bugs (such as buffer overflows) are better detected
+> > > > > with kmalloc code, so we must test the kmalloc path too.
+> > > > 
+> > > > Well now, this brings up another item for the collective TODO list --
+> > > > implement redzone checks for vmalloc.  Unless this is something already
+> > > > taken care of by kasan or similar.
+> > > 
+> > > The kmalloc overflow testing is also not ideal - it rounds the size up to 
+> > > the next slab size and detects buffer overflows only at this boundary.
+> > > 
+> > > Some times ago, I made a "kmalloc guard" patch that places a magic number 
+> > > immediatelly after the requested size - so that it can detect overflows at 
+> > > byte boundary 
+> > > ( https://www.redhat.com/archives/dm-devel/2014-September/msg00018.html )
+> > > 
+> > > That patch found a bug in crypto code:
+> > > ( http://lkml.iu.edu/hypermail/linux/kernel/1409.1/02325.html )
+> > 
+> > Is it still worth doing this, now we have kasan?
+> 
+> The kmalloc guard has much lower overhead than kasan.
+
+I skimm at your code and it requires rebuilding the kernel.
+I think that if rebuilding is required as the same with the KASAN,
+using the KASAN is better since it has far better coverage for
+detection the bug.
+
+However, I think that if the redzone can be setup tightly
+without rebuild, it would be worth implementing. I have an idea to
+implement it only for the SLUB. Could I try it? (I'm asking this
+because I'm inspired from the above patch.) :)
+Or do you wanna try it?
+
+Thanks.
