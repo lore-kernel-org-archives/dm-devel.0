@@ -1,13 +1,13 @@
 From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH] multipath-tools: configure hitachi ams2000
- and hus100 as full active arrays
-Date: Tue, 15 May 2018 14:58:42 +0200
-Message-ID: <CABr-GncNCnnckXaBO_=6EzHXUTLYvrix_UqNBaS31p3tPXmRjQ@mail.gmail.com>
-References: <20180514153017.7193-1-xose.vazquez@gmail.com>
+Subject: Re: [release] multipath-tools 0.7.7
+Date: Tue, 15 May 2018 15:00:06 +0200
+Message-ID: <CABr-GncyL+Wkt40Sincpz=6p3rxkLAwMrd+D+h3VPGhdBztYpA@mail.gmail.com>
+References: <CABr-Gnf_5ADS_OsKHJO=2zqykUoUkMkXHXOe67SK=MnX_2DbCA@mail.gmail.com>
+	<5AFAB222020000F6002525FA@smtp.nue.novell.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1651790019868940887=="
+Content-Type: multipart/mixed; boundary="===============7765950320005173204=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180514153017.7193-1-xose.vazquez@gmail.com>
+In-Reply-To: <5AFAB222020000F6002525FA@smtp.nue.novell.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,168 +17,98 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: Matthias Rudolph <Matthias.Rudolph@hitachivantara.com>, DM-DEV ML <dm-devel@redhat.com>
+To: Martin Wilck <Martin.Wilck@suse.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============1651790019868940887==
-Content-Type: multipart/alternative; boundary="0000000000007461c5056c3e29a2"
+--===============7765950320005173204==
+Content-Type: multipart/alternative; boundary="0000000000007515c6056c3e2e82"
 
---0000000000007461c5056c3e29a2
+--0000000000007515c6056c3e2e82
 Content-Type: text/plain; charset="UTF-8"
 
-Merged,
-thanks.
+Martin, Xose,
 
-On Mon, May 14, 2018 at 5:30 PM, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Those patches are now merged.
+Thanks for the notification.
+
+On Tue, May 15, 2018 at 12:10 PM, Martin Wilck <Martin.Wilck@suse.com>
 wrote:
 
-> AMS2000 and HUS100 families are active/active arrays.
+> Hello Christophe,
 >
-> Based on https://support.hitachivantara.com/download/epcra/df818913.pdf
-> and internal hitachi docs.
+> Christophe Varoqui <christophe.varoqui@opensvc.com> wrote on 05/11/18
+> 10:57 AM:
+> > Hi,
+> > I merged the reviewed patches from March 27th up to now, and released
+> 0.7.7.
+> > Thanks,
+> > Christophe.
 >
+> Two of my patches seem to be missing:
 >
-> Cc: Matthias Rudolph <Matthias.Rudolph@hitachivantara.com>
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: DM-DEV ML <dm-devel@redhat.com>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> ---
->  libmultipath/hwtable.c | 10 ++++++++--
->  1 file changed, 8 insertions(+), 2 deletions(-)
+>  - libmultipath: don't reject maps with undefined prio
+>    Reviewed by Ben in https://www.redhat.com/archives/dm-devel/2018-March/
+> msg00545.html
 >
-> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-> index 827e899..9705025 100644
-> --- a/libmultipath/hwtable.c
-> +++ b/libmultipath/hwtable.c
-> @@ -398,13 +398,13 @@ static struct hwentry default_hw[] = {
->          * Mail : matthias.rudolph@hds.com
->          */
->         {
-> -               /* USP-V, HUS VM, VSP, VSP G1X00 and VSP GX00 families */
-> +               /* USP-V, HUS VM, VSP, VSP G1X00 and VSP GX00 families /
-> HP XP */
->                 .vendor        = "(HITACHI|HP)",
->                 .product       = "^OPEN-",
->                 .pgpolicy      = MULTIBUS,
->         },
->         {
-> -               /* AMS 2000 and HUS 100 families */
-> +               /* AMS other than AMS 2000 */
->                 .vendor        = "HITACHI",
->                 .product       = "^DF",
->                 .no_path_retry = NO_PATH_RETRY_QUEUE,
-> @@ -412,6 +412,12 @@ static struct hwentry default_hw[] = {
->                 .pgfailback    = -FAILBACK_IMMEDIATE,
->                 .prio_name     = PRIO_HDS,
->         },
-> +       {
-> +               /* AMS 2000 and HUS 100 families */
-> +               .vendor        = "HITACHI",
-> +               .product       = "^DF600F",
-> +               .pgpolicy      = MULTIBUS,
-> +       },
->         /*
->          * IBM
->          *
-> --
-> 2.17.0
+>  - multipathd: handle errors in uxlsnr as fatal
+>    reviewed by Ben in https://www.redhat.com/archives/dm-devel/2018-March/
+> msg00433.html
+>
+> Regards,
+> Martin
+>
 >
 >
 
---0000000000007461c5056c3e29a2
+--0000000000007515c6056c3e2e82
 Content-Type: text/html; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-<div dir=3D"ltr">Merged,<div>thanks.</div></div><div class=3D"gmail_extra">=
-<br><div class=3D"gmail_quote">On Mon, May 14, 2018 at 5:30 PM, Xose Vazque=
-z Perez <span dir=3D"ltr">&lt;<a href=3D"mailto:xose.vazquez@gmail.com" tar=
-get=3D"_blank">xose.vazquez@gmail.com</a>&gt;</span> wrote:<br><blockquote =
+<div dir=3D"ltr"><div>Martin, Xose,</div><div><br></div>Those patches are n=
+ow merged.<div>Thanks for the notification.</div></div><div class=3D"gmail_=
+extra"><br><div class=3D"gmail_quote">On Tue, May 15, 2018 at 12:10 PM, Mar=
+tin Wilck <span dir=3D"ltr">&lt;<a href=3D"mailto:Martin.Wilck@suse.com" ta=
+rget=3D"_blank">Martin.Wilck@suse.com</a>&gt;</span> wrote:<br><blockquote =
 class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid=
-;padding-left:1ex">AMS2000 and HUS100 families are active/active arrays.<br=
->
+;padding-left:1ex">Hello Christophe,<br>
 <br>
-Based on <a href=3D"https://support.hitachivantara.com/download/epcra/df818=
-913.pdf" rel=3D"noreferrer" target=3D"_blank">https://support.<wbr>hitachiv=
-antara.com/download/<wbr>epcra/df818913.pdf</a><br>
-and internal hitachi docs.<br>
+Christophe Varoqui &lt;<a href=3D"mailto:christophe.varoqui@opensvc.com">ch=
+ristophe.varoqui@opensvc.<wbr>com</a>&gt; wrote on 05/11/18 10:57 AM:<br>
+<div><div class=3D"h5">&gt; Hi,<br>
+&gt; I merged the reviewed patches from March 27th up to now, and released =
+0.7.7.<br>
+&gt; Thanks,<br>
+&gt; Christophe.<br>
+<br>
+</div></div>Two of my patches seem to be missing:<br>
+<br>
+=C2=A0- libmultipath: don&#39;t reject maps with undefined prio<br>
+=C2=A0 =C2=A0Reviewed by Ben in <a href=3D"https://www.redhat.com/archives/=
+dm-devel/2018-March/msg00545.html" rel=3D"noreferrer" target=3D"_blank">htt=
+ps://www.redhat.com/<wbr>archives/dm-devel/2018-March/<wbr>msg00545.html</a=
+><br>
+<br>
+=C2=A0- multipathd: handle errors in uxlsnr as fatal<br>
+=C2=A0 =C2=A0reviewed by Ben in <a href=3D"https://www.redhat.com/archives/=
+dm-devel/2018-March/msg00433.html" rel=3D"noreferrer" target=3D"_blank">htt=
+ps://www.redhat.com/<wbr>archives/dm-devel/2018-March/<wbr>msg00433.html</a=
+><br>
+<br>
+Regards,<br>
+Martin<br>
 <br>
 <br>
-Cc: Matthias Rudolph &lt;<a href=3D"mailto:Matthias.Rudolph@hitachivantara.=
-com">Matthias.Rudolph@<wbr>hitachivantara.com</a>&gt;<br>
-Cc: Christophe Varoqui &lt;<a href=3D"mailto:christophe.varoqui@opensvc.com=
-">christophe.varoqui@opensvc.<wbr>com</a>&gt;<br>
-Cc: DM-DEV ML &lt;<a href=3D"mailto:dm-devel@redhat.com">dm-devel@redhat.co=
-m</a>&gt;<br>
-Signed-off-by: Xose Vazquez Perez &lt;<a href=3D"mailto:xose.vazquez@gmail.=
-com">xose.vazquez@gmail.com</a>&gt;<br>
----<br>
-=C2=A0libmultipath/hwtable.c | 10 ++++++++--<br>
-=C2=A01 file changed, 8 insertions(+), 2 deletions(-)<br>
-<br>
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c<br>
-index 827e899..9705025 100644<br>
---- a/libmultipath/hwtable.c<br>
-+++ b/libmultipath/hwtable.c<br>
-@@ -398,13 +398,13 @@ static struct hwentry default_hw[] =3D {<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0* Mail : <a href=3D"mailto:matthias.rudol=
-ph@hds.com">matthias.rudolph@hds.com</a><br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0*/<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 {<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0/* USP-V, HUS VM, V=
-SP, VSP G1X00 and VSP GX00 families */<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0/* USP-V, HUS VM, V=
-SP, VSP G1X00 and VSP GX00 families / HP XP */<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .vendor=C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =3D &quot;(HITACHI|HP)&quot;,<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .product=C2=A0 =C2=
-=A0 =C2=A0 =C2=A0=3D &quot;^OPEN-&quot;,<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .pgpolicy=C2=A0 =C2=
-=A0 =C2=A0 =3D MULTIBUS,<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 },<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 {<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0/* AMS 2000 and HUS=
- 100 families */<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0/* AMS other than A=
-MS 2000 */<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .vendor=C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =3D &quot;HITACHI&quot;,<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .product=C2=A0 =C2=
-=A0 =C2=A0 =C2=A0=3D &quot;^DF&quot;,<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .no_path_retry =3D =
-NO_PATH_RETRY_QUEUE,<br>
-@@ -412,6 +412,12 @@ static struct hwentry default_hw[] =3D {<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .pgfailback=C2=A0 =
-=C2=A0 =3D -FAILBACK_IMMEDIATE,<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .prio_name=C2=A0 =
-=C2=A0 =C2=A0=3D PRIO_HDS,<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 },<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0{<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0/* AMS 2000 and HUS=
- 100 families */<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.vendor=C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =3D &quot;HITACHI&quot;,<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.product=C2=A0 =C2=
-=A0 =C2=A0 =C2=A0=3D &quot;^DF600F&quot;,<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0.pgpolicy=C2=A0 =C2=
-=A0 =C2=A0 =3D MULTIBUS,<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0},<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 /*<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0* IBM<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0*<br>
-<span class=3D"HOEnZb"><font color=3D"#888888">-- <br>
-2.17.0<br>
-<br>
-</font></span></blockquote></div><br></div>
+</blockquote></div><br></div>
 
---0000000000007461c5056c3e29a2--
+--0000000000007515c6056c3e2e82--
 
 
---===============1651790019868940887==
+--===============7765950320005173204==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============1651790019868940887==--
+--===============7765950320005173204==--
