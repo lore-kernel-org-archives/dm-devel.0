@@ -1,50 +1,48 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: Re: dm-thin: Why is DATA_DEV_BLOCK_SIZE_MIN_SECTORS set
- to 64k?
-Date: Fri, 18 May 2018 09:59:37 +0200
-Message-ID: <8bde7e8c-d2c1-c67d-f0ca-5b121053b34f@redhat.com>
-References: <alpine.LRH.2.11.1805172332520.20870@mail.ewheeler.net>
+From: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: dm-writecache
+Date: Fri, 18 May 2018 11:44:54 -0400
+Message-ID: <20180518154454.GA4902@redhat.com>
+References: <alpine.LRH.2.02.1803080824210.2819@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180308145153.GB23262@infradead.org>
+ <CAPcyv4gBUt5NYK2Lx0dMZAnENeSgKm3KaUvY9kkqB+PNPyQu4w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.11.1805172332520.20870@mail.ewheeler.net>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Eric Wheeler <dm-devel@lists.ewheeler.net>, dm-devel@redhat.com
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CAPcyv4gBUt5NYK2Lx0dMZAnENeSgKm3KaUvY9kkqB+PNPyQu4w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Alasdair G. Kergon" <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-nvdimm <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 List-Id: dm-devel.ids
 
-Dne 18.5.2018 v 01:36 Eric Wheeler napsal(a):
-> Hello all,
+On Thu, Mar 08 2018 at 12:08pm -0500,
+Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
+
+> Mikulas sent this useful enhancement to the memcpy_flushcache API:
 > 
-> Is there a technical reason that DATA_DEV_BLOCK_SIZE_MIN_SECTORS is
-> limited to 64k?
+>     https://patchwork.kernel.org/patch/10217655/
 > 
-> I realize that the metadata limits the maximum mappable pool size, so it
-> needs to be bigger for big pools---but it is also the minimum COW size.
-> 
-> Looking at the code this is enforced in pool_ctr() but isn't used anywhere
-> else in the code.  Is it strictly necessary to enforce this minimum?
-> 
+> ...it's in my queue to either push through -tip or add it to the next
+> libnvdimm pull request for 4.17-rc1.
 
+Hi Dan,
 
-Hi
+Seems this never actually went upstream.  I've staged it in
+linux-dm.git's "for-next" for the time being:
+https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.18&id=a7e96990b5ff6206fefdc5bfe74396bb880f7e48
 
-Selection of 64k  was chosen as compromise between used space for metadada, 
-locking contention, kernel memory usage and overall speed performance.
+But do you intend to pick it up for 4.18 inclusion?  If so I'll drop
+it.. would just hate for it to get dropped on the floor by getting lost
+in the shuffle between trees.
 
-If there is a case, where using 4K chunks for snapshot is giving a major 
-advantage, there is still availability to use old snapshot target.
-
-
-Regards
-
-Zdenek
+Please avise, thanks!
+Mike
