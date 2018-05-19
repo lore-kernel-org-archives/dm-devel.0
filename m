@@ -1,58 +1,92 @@
-From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: dm-writecache
-Date: Fri, 18 May 2018 15:10:04 -0700
-Message-ID: <CAPcyv4iO-6QHSb58O3TVUgiZvQ5BBAq=_=yP1kW5oTHkjS3b3Q@mail.gmail.com>
-References: <alpine.LRH.2.02.1803080824210.2819@file01.intranet.prod.int.rdu2.redhat.com>
- <20180308145153.GB23262@infradead.org>
- <CAPcyv4gBUt5NYK2Lx0dMZAnENeSgKm3KaUvY9kkqB+PNPyQu4w@mail.gmail.com>
- <20180518154454.GA4902@redhat.com>
- <CAPcyv4hAZVTE7T7q7YRN6QvxfVR64c3jBpCTu-rCvNAB1-OWSA@mail.gmail.com>
- <alpine.LRH.2.02.1805181514420.28860@file01.intranet.prod.int.rdu2.redhat.com>
- <CAPcyv4jecVBaJb5WeO3FdbJ8xabishbAccORoXN2pHKOvUc2qA@mail.gmail.com>
- <alpine.LRH.2.02.1805181755410.27649@file01.intranet.prod.int.rdu2.redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [patch 1/4] x86: optimize memcpy_flushcache
+Date: Sat, 19 May 2018 07:25:04 +0200
+Message-ID: <20180519052631.730455475@debian.vm>
+References: <20180519052503.325953342@debian.vm>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <alpine.LRH.2.02.1805181755410.27649-Hpncn10jQN4oNljnaZt3ZvA+iT7yCHsGwRM8/txMwJMAicBL8TP8PQ@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Alasdair G. Kergon" <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-nvdimm <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline; filename=memcpy_flushcache-optimization.patch
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, Dan Williams <dan.j.williams@intel.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, May 18, 2018 at 3:00 PM, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
->
->
-> On Fri, 18 May 2018, Dan Williams wrote:
->
->> >> ...and I wonder what the benefit is of the 16-byte case? I would
->> >> assume the bulk of the benefit is limited to the 4 and 8 byte copy
->> >> cases.
->> >
->> > dm-writecache uses 16-byte writes frequently, so it is needed for that.
->> >
->> > If we split 16-byte write to two 8-byte writes, it would degrade
->> > performance for architectures where memcpy_flushcache needs to flush the
->> > cache.
->>
->> My question was how measurable it is to special case 16-byte
->> transfers? I know Ingo is going to ask this question, so it would
->> speed things along if this patch included performance benefit numbers
->> for each special case in the changelog.
->
-> I tested it some times ago - and the movnti instruction has 2% better
-> throughput than the existing memcpy_flushcache function.
->
-> It is doing one 16-byte write for every sector written and one 8-byte
-> write for every sector clean-up. So, the overhead is measurable.
+I use memcpy_flushcache in my persistent memory driver for metadata
+updates and it turns out that the overhead of memcpy_flushcache causes 2%
+performance degradation compared to "movnti" instruction explicitly coded
+using inline assembler.
 
-Awesome, include those measured numbers in the changelog for the next
-spin of the patch.
+This patch recognizes memcpy_flushcache calls with constant short length
+and turns them into inline assembler - so that I don't have to use inline
+assembler in the driver.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+---
+ arch/x86/include/asm/string_64.h |   20 +++++++++++++++++++-
+ arch/x86/lib/usercopy_64.c       |    4 ++--
+ 2 files changed, 21 insertions(+), 3 deletions(-)
+
+Index: linux-2.6/arch/x86/include/asm/string_64.h
+===================================================================
+--- linux-2.6.orig/arch/x86/include/asm/string_64.h	2018-05-18 21:21:15.000000000 +0200
++++ linux-2.6/arch/x86/include/asm/string_64.h	2018-05-18 21:21:15.000000000 +0200
+@@ -147,7 +147,25 @@ memcpy_mcsafe(void *dst, const void *src
+ 
+ #ifdef CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE
+ #define __HAVE_ARCH_MEMCPY_FLUSHCACHE 1
+-void memcpy_flushcache(void *dst, const void *src, size_t cnt);
++void __memcpy_flushcache(void *dst, const void *src, size_t cnt);
++static __always_inline void memcpy_flushcache(void *dst, const void *src, size_t cnt)
++{
++	if (__builtin_constant_p(cnt)) {
++		switch (cnt) {
++			case 4:
++				asm ("movntil %1, %0" : "=m"(*(u32 *)dst) : "r"(*(u32 *)src));
++				return;
++			case 8:
++				asm ("movntiq %1, %0" : "=m"(*(u64 *)dst) : "r"(*(u64 *)src));
++				return;
++			case 16:
++				asm ("movntiq %1, %0" : "=m"(*(u64 *)dst) : "r"(*(u64 *)src));
++				asm ("movntiq %1, %0" : "=m"(*(u64 *)(dst + 8)) : "r"(*(u64 *)(src + 8)));
++				return;
++		}
++	}
++	__memcpy_flushcache(dst, src, cnt);
++}
+ #endif
+ 
+ #endif /* __KERNEL__ */
+Index: linux-2.6/arch/x86/lib/usercopy_64.c
+===================================================================
+--- linux-2.6.orig/arch/x86/lib/usercopy_64.c	2018-05-18 21:21:15.000000000 +0200
++++ linux-2.6/arch/x86/lib/usercopy_64.c	2018-05-18 22:09:49.000000000 +0200
+@@ -133,7 +133,7 @@ long __copy_user_flushcache(void *dst, c
+ 	return rc;
+ }
+ 
+-void memcpy_flushcache(void *_dst, const void *_src, size_t size)
++void __memcpy_flushcache(void *_dst, const void *_src, size_t size)
+ {
+ 	unsigned long dest = (unsigned long) _dst;
+ 	unsigned long source = (unsigned long) _src;
+@@ -196,7 +196,7 @@ void memcpy_flushcache(void *_dst, const
+ 		clean_cache_range((void *) dest, size);
+ 	}
+ }
+-EXPORT_SYMBOL_GPL(memcpy_flushcache);
++EXPORT_SYMBOL_GPL(__memcpy_flushcache);
+ 
+ void memcpy_page_flushcache(char *to, struct page *page, size_t offset,
+ 		size_t len)
