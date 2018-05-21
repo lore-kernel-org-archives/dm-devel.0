@@ -1,13 +1,11 @@
-From: Monty Pavel <monty_pavel@sina.com>
-Subject: [PATCH] dm thin: superblock may write succeed before
- other metadata blocks because of wirting metadata in async mode.
-Date: Mon, 21 May 2018 20:53:36 -0400
-Message-ID: <17806.5268708908$1526895673@news.gmane.org>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: fix help for hds prio
+Date: Mon, 21 May 2018 22:03:55 +0200
+Message-ID: <20180521200355.27364-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,41 +15,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Cc: DM-DEV ML <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-
-If dm_bufio_write_dirty_buffers func is called by __commit_transaction
-func and power loss happens during executing it, coincidencely
-superblock wrote correctly but some metadata blocks didn't. The reason
-is we write all metadata in async mode. We can guarantee that we send
-superblock after other blocks but we cannot guarantee that superblock
-write completely early than other blocks.
-So, We need to commit other metadata blocks before change superblock.
-
-Signed-off-by: Monty Pavel <monty_pavel@sina.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: DM-DEV ML <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- drivers/md/dm-thin-metadata.c |    8 ++++++++
- 1 files changed, 8 insertions(+), 0 deletions(-)
+ multipath/multipath.conf.5 | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
-index 36ef284..897d7d6 100644
---- a/drivers/md/dm-thin-metadata.c
-+++ b/drivers/md/dm-thin-metadata.c
-@@ -813,6 +813,14 @@ static int __commit_transaction(struct dm_pool_metadata *pmd)
- 	if (r)
- 		return r;
- 
-+	r = dm_tm_commit(pmd->tm, sblock);
-+	if (r)
-+		return r;
-+
-+	r = superblock_lock(pmd, &sblock);
-+	if (r)
-+		return r;
-+
- 	disk_super = dm_block_data(sblock);
- 	disk_super->time = cpu_to_le32(pmd->time);
- 	disk_super->data_mapping_root = cpu_to_le64(pmd->root);
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index f689795..af5e109 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -8,7 +8,7 @@
+ .\"
+ .\" ----------------------------------------------------------------------------
+ .
+-.TH MULTIPATH.CONF 5 2017-08-18 Linux
++.TH MULTIPATH.CONF 5 2018-05-21 Linux
+ .
+ .
+ .\" ----------------------------------------------------------------------------
+@@ -309,7 +309,7 @@ Active/Standby mode exclusively.
+ .TP
+ .I hds
+ (Hardware-dependent)
+-Generate the path priority for Hitachi AMS 2000 and HUS 100 families of arrays.
++Generate the path priority for Hitachi AMS families of arrays other than AMS 2000.
+ .TP
+ .I random
+ Generate a random priority between 1 and 10.
 -- 
-1.7.1
+2.17.0
