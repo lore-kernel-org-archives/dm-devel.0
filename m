@@ -1,58 +1,67 @@
-From: Anton Eliasson <anton.eliasson@axis.com>
-Subject: dm-flakey: corrupt_bio_byte broken since Linux 4.0
-Date: Tue, 22 May 2018 14:09:10 +0200
-Message-ID: <63f315c1-6afb-bf71-4cba-3b6c181c7829@axis.com>
+From: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [patch 4/4] dm-writecache: use new API for flushing
+Date: Tue, 22 May 2018 14:41:03 -0400
+Message-ID: <20180522184103.GA25826@redhat.com>
+References: <20180519052503.325953342@debian.vm>
+ <20180519052635.567438191@debian.vm>
+ <20180522063946.GB8054@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-GB
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20180522063946.GB8054-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 List-Id: dm-devel.ids
 
-Hi!
+On Tue, May 22 2018 at  2:39am -0400,
+Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
 
-The corrupt_bio_byte feature of dm-flakey has been broken for a long 
-time. In corrupt_bio_data(), bio_cur_bytes(bio) and bio_data(bio) always 
-return 0 and NULL, so no data corruption is done. I believe this was 
-caused by the integration of blk-mq in Linux 4.0. Through git bisecting 
-I found that for underlying loop devices, this commit broke 
-corrupt_bio_byte:
+> On Sat, May 19, 2018 at 07:25:07AM +0200, Mikulas Patocka wrote:
+> > Use new API for flushing persistent memory.
+> 
+> The sentence doesnt make much sense.  'A new API', 'A better
+> abstraction' maybe?
+> 
+> > 
+> > The problem is this:
+> > * on X86-64, non-temporal stores have the best performance
+> > * ARM64 doesn't have non-temporal stores, so we must flush cache. We
+> >   should flush cache as late as possible, because it performs better this
+> >   way.
+> > 
+> > We introduce functions pmem_memcpy, pmem_flush and pmem_commit. To commit
+> > data persistently, all three functions must be called.
+> > 
+> > The macro pmem_assign may be used instead of pmem_memcpy. pmem_assign
+> > (unlike pmem_memcpy) guarantees that 8-byte values are written atomically.
+> > 
+> > On X86, pmem_memcpy is memcpy_flushcache, pmem_flush is empty and
+> > pmem_commit is wmb.
+> > 
+> > On ARM64, pmem_memcpy is memcpy, pmem_flush is arch_wb_cache_pmem and
+> > pmem_commit is empty.
+> 
+> All these should be provided by the pmem layer, and be properly
+> documented.  And be sorted before adding your new target that uses
+> them.
 
-commit b5dd2f6047ca108001328aac0e8588edd15f1778
-Author: Ming Lei <ming.lei@canonical.com>
-Date:   Wed Dec 31 13:22:57 2014 +0000
+I don't see that as a hard requirement.  Mikulas did the work to figure
+out what is more optimal on x86_64 vs amd64.  It makes a difference for
+his target and that is sufficient to carry it locally until/when it is
+either elevated to pmem.
 
-     block: loop: improve performance via blk-mq
+We cannot even get x86 and swait maintainers to reply to repeat requests
+for review.  Stacking up further deps on pmem isn't high on my list.
 
-For underlying scsi devices it was broken some time before that.  If 
-this conclusion is correct, does anyone have the time to fix dm-flakey 
-by converting it to use blk-mq? I don't think I have the expertise to do 
-it myself.
-
-To test this feature I used the following commands to set up a flakey 
-device that corrupts the first byte of the underlying device on reads:
-
-         dd if=/dev/urandom of=disk bs=1M count=100
-         losetup -f disk
-         dmsetup create -r stuff <<< '0 204800 flakey /dev/loop0 0 1 100 
-5 corrupt_bio_byte 1 r 0 0'
-         dd if=disk count=1 status=none | hexdump
-         dd if=/dev/dm-0 count=1 status=none | hexdump
-
-Expected result is that the output from the two dd invocations differ in 
-the first byte.
-
-Thanks!
-
---
-Anton Eliasson
+Mike
