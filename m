@@ -1,16 +1,12 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [patch 2/4] swait: export the symbols
- __prepare_to_swait and __finish_swait
-Date: Mon, 21 May 2018 23:34:25 -0700
-Message-ID: <20180522063425.GA7854@infradead.org>
-References: <20180519052503.325953342@debian.vm>
-	<20180519052633.037700597@debian.vm>
+From: Anton Eliasson <anton.eliasson@axis.com>
+Subject: dm-flakey: corrupt_bio_byte broken since Linux 4.0
+Date: Tue, 22 May 2018 14:09:10 +0200
+Message-ID: <63f315c1-6afb-bf71-4cba-3b6c181c7829@axis.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20180519052633.037700597@debian.vm>
+Content-Language: en-GB
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,54 +16,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Mike Snitzer <msnitzer@redhat.com>, peterz@infradead.org, wagi@monom.org, dm-devel@redhat.com, tglx@linutronix.de, Dan Williams <dan.j.williams@intel.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Sat, May 19, 2018 at 07:25:05AM +0200, Mikulas Patocka wrote:
-> In order to reduce locking overhead, I use the spinlock in
-> swait_queue_head to protect not only the wait queue, but also the list of
-> events. Consequently, I need to use unlocked functions __prepare_to_swait
-> and __finish_swait. These functions are declared in the file
-> include/linux/swait.h, but they are not exported, and so they are not
-> useable from kernel modules.
+Hi!
 
-Please CC the author and maintainers of the swait code.
+The corrupt_bio_byte feature of dm-flakey has been broken for a long 
+time. In corrupt_bio_data(), bio_cur_bytes(bio) and bio_data(bio) always 
+return 0 and NULL, so no data corruption is done. I believe this was 
+caused by the integration of blk-mq in Linux 4.0. Through git bisecting 
+I found that for underlying loop devices, this commit broke 
+corrupt_bio_byte:
 
-My impression is that this is the wrong thing to do.  The swait code
-is supposed to be simple and self contained, and if you want to do
-anything else use normal waitqueues.
+commit b5dd2f6047ca108001328aac0e8588edd15f1778
+Author: Ming Lei <ming.lei@canonical.com>
+Date:   Wed Dec 31 13:22:57 2014 +0000
 
-> 
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> 
-> ---
->  kernel/sched/swait.c |    2 ++
->  1 file changed, 2 insertions(+)
-> 
-> Index: linux-2.6/kernel/sched/swait.c
-> ===================================================================
-> --- linux-2.6.orig/kernel/sched/swait.c	2018-04-16 21:10:05.000000000 +0200
-> +++ linux-2.6/kernel/sched/swait.c	2018-04-16 21:10:05.000000000 +0200
-> @@ -75,6 +75,7 @@ void __prepare_to_swait(struct swait_que
->  	if (list_empty(&wait->task_list))
->  		list_add(&wait->task_list, &q->task_list);
->  }
-> +EXPORT_SYMBOL(__prepare_to_swait);
->  
->  void prepare_to_swait(struct swait_queue_head *q, struct swait_queue *wait, int state)
->  {
-> @@ -104,6 +105,7 @@ void __finish_swait(struct swait_queue_h
->  	if (!list_empty(&wait->task_list))
->  		list_del_init(&wait->task_list);
->  }
-> +EXPORT_SYMBOL(__finish_swait);
->  
->  void finish_swait(struct swait_queue_head *q, struct swait_queue *wait)
->  {
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
----end quoted text---
+     block: loop: improve performance via blk-mq
+
+For underlying scsi devices it was broken some time before that.  If 
+this conclusion is correct, does anyone have the time to fix dm-flakey 
+by converting it to use blk-mq? I don't think I have the expertise to do 
+it myself.
+
+To test this feature I used the following commands to set up a flakey 
+device that corrupts the first byte of the underlying device on reads:
+
+         dd if=/dev/urandom of=disk bs=1M count=100
+         losetup -f disk
+         dmsetup create -r stuff <<< '0 204800 flakey /dev/loop0 0 1 100 
+5 corrupt_bio_byte 1 r 0 0'
+         dd if=disk count=1 status=none | hexdump
+         dd if=/dev/dm-0 count=1 status=none | hexdump
+
+Expected result is that the output from the two dd invocations differ in 
+the first byte.
+
+Thanks!
+
+--
+Anton Eliasson
