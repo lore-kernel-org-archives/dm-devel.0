@@ -1,51 +1,53 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: fix help for hds prio
-Date: Mon, 21 May 2018 22:03:55 +0200
-Message-ID: <20180521200355.27364-1-xose.vazquez@gmail.com>
+From: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [dm-devel] [patch 4/4] dm-writecache: use new API for flushing
+Date: Mon, 21 May 2018 23:39:46 -0700
+Message-ID: <20180522063946.GB8054@infradead.org>
+References: <20180519052503.325953342@debian.vm>
+ <20180519052635.567438191@debian.vm>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Cc: DM-DEV ML <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20180519052635.567438191-59tzFEB+POEAvxtiuMwx3w@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Mike Snitzer <msnitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 List-Id: dm-devel.ids
 
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: DM-DEV ML <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- multipath/multipath.conf.5 | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+On Sat, May 19, 2018 at 07:25:07AM +0200, Mikulas Patocka wrote:
+> Use new API for flushing persistent memory.
 
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index f689795..af5e109 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -8,7 +8,7 @@
- .\"
- .\" ----------------------------------------------------------------------------
- .
--.TH MULTIPATH.CONF 5 2017-08-18 Linux
-+.TH MULTIPATH.CONF 5 2018-05-21 Linux
- .
- .
- .\" ----------------------------------------------------------------------------
-@@ -309,7 +309,7 @@ Active/Standby mode exclusively.
- .TP
- .I hds
- (Hardware-dependent)
--Generate the path priority for Hitachi AMS 2000 and HUS 100 families of arrays.
-+Generate the path priority for Hitachi AMS families of arrays other than AMS 2000.
- .TP
- .I random
- Generate a random priority between 1 and 10.
--- 
-2.17.0
+The sentence doesnt make much sense.  'A new API', 'A better
+abstraction' maybe?
+
+> 
+> The problem is this:
+> * on X86-64, non-temporal stores have the best performance
+> * ARM64 doesn't have non-temporal stores, so we must flush cache. We
+>   should flush cache as late as possible, because it performs better this
+>   way.
+> 
+> We introduce functions pmem_memcpy, pmem_flush and pmem_commit. To commit
+> data persistently, all three functions must be called.
+> 
+> The macro pmem_assign may be used instead of pmem_memcpy. pmem_assign
+> (unlike pmem_memcpy) guarantees that 8-byte values are written atomically.
+> 
+> On X86, pmem_memcpy is memcpy_flushcache, pmem_flush is empty and
+> pmem_commit is wmb.
+> 
+> On ARM64, pmem_memcpy is memcpy, pmem_flush is arch_wb_cache_pmem and
+> pmem_commit is empty.
+
+All these should be provided by the pmem layer, and be properly
+documented.  And be sorted before adding your new target that uses
+them.
