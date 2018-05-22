@@ -1,53 +1,80 @@
-From: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: Re: [dm-devel] [patch 4/4] dm-writecache: use new API for flushing
-Date: Mon, 21 May 2018 23:39:46 -0700
-Message-ID: <20180522063946.GB8054@infradead.org>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [patch 3/4] dm-writecache
+Date: Mon, 21 May 2018 23:37:36 -0700
+Message-ID: <20180522063736.GA8054@infradead.org>
 References: <20180519052503.325953342@debian.vm>
- <20180519052635.567438191@debian.vm>
+	<20180519052634.307321960@debian.vm>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20180519052635.567438191-59tzFEB+POEAvxtiuMwx3w@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Mike Snitzer <msnitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+In-Reply-To: <20180519052634.307321960@debian.vm>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Mike Snitzer <msnitzer@redhat.com>, Dan Williams <dan.j.williams@intel.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Sat, May 19, 2018 at 07:25:07AM +0200, Mikulas Patocka wrote:
-> Use new API for flushing persistent memory.
+On Sat, May 19, 2018 at 07:25:06AM +0200, Mikulas Patocka wrote:
+> The dm-writecache target.
+> 
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
-The sentence doesnt make much sense.  'A new API', 'A better
-abstraction' maybe?
+You'll need to actually describe your new code in the changelog.
 
-> 
-> The problem is this:
-> * on X86-64, non-temporal stores have the best performance
-> * ARM64 doesn't have non-temporal stores, so we must flush cache. We
->   should flush cache as late as possible, because it performs better this
->   way.
-> 
-> We introduce functions pmem_memcpy, pmem_flush and pmem_commit. To commit
-> data persistently, all three functions must be called.
-> 
-> The macro pmem_assign may be used instead of pmem_memcpy. pmem_assign
-> (unlike pmem_memcpy) guarantees that 8-byte values are written atomically.
-> 
-> On X86, pmem_memcpy is memcpy_flushcache, pmem_flush is empty and
-> pmem_commit is wmb.
-> 
-> On ARM64, pmem_memcpy is memcpy, pmem_flush is arch_wb_cache_pmem and
-> pmem_commit is empty.
+> --- /dev/null	1970-01-01 00:00:00.000000000 +0000
+> +++ linux-2.6/drivers/md/dm-writecache.c	2018-05-17 02:46:44.000000000 +0200
+> @@ -0,0 +1,2414 @@
+> +/*
+> + * Copyright (C) 2018 Red Hat. All rights reserved.
+> + *
+> + * This file is released under the GPL.
+> + */
 
-All these should be provided by the pmem layer, and be properly
-documented.  And be sorted before adding your new target that uses
-them.
+New code needs a SPDX header.
+
+> +/*
+> + * On X86, non-temporal stores are more efficient than cache flushing.
+> + * On ARM64, cache flushing is more efficient.
+> + */
+> +#if defined(CONFIG_X86_64)
+> +#define EAGER_DATA_FLUSH
+> +#define NT_STORE(dest, src)				\
+> +do {							\
+> +	typeof(src) val = (src);			\
+> +	memcpy_flushcache(&(dest), &val, sizeof(src));	\
+> +} while (0)
+> +#else
+> +#define NT_STORE(dest, src)	WRITE_ONCE(dest, src)
+> +#endif
+
+No per-arch hacks in the driver please, this needs a proper Kconfig
+symbol provided from the architectures.
+
+> +struct wc_entry {
+> +	struct rb_node rb_node;
+> +	struct list_head lru;
+> +	unsigned short wc_list_contiguous;
+> +	bool write_in_progress
+> +#if BITS_PER_LONG == 64
+> +		:1
+> +#endif
+> +	;
+> +	unsigned long index
+> +#if BITS_PER_LONG == 64
+> +		:47
+> +#endif
+
+Hacks like this shouldn't normally exist, but if you absolutely
+need them you need to explain why in a comment.
+
+Haven't had time to do a full review due to my backlog, I'll try to
+find some time later today or tomorrow.
