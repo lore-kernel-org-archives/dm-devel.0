@@ -1,84 +1,58 @@
-From: Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [dm-devel] [patch 4/4] dm-writecache: use new API for flushing
-Date: Tue, 22 May 2018 18:53:39 -0400
-Message-ID: <x49r2m3nvyk.fsf@segfault.boston.devel.redhat.com>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [patch 2/4] swait: export the symbols
+ __prepare_to_swait and __finish_swait
+Date: Wed, 23 May 2018 11:21:01 +0200
+Message-ID: <20180523092101.GW12217@hirez.programming.kicks-ass.net>
 References: <20180519052503.325953342@debian.vm>
- <20180519052635.567438191@debian.vm>
- <20180522063946.GB8054@infradead.org>
- <20180522184103.GA25826@redhat.com>
- <CAPcyv4g395RccdEPF=sCu5RdCH9zwD+GvOfSp7-F0Oh64CeDgA@mail.gmail.com>
- <20180522191942.GB25904@redhat.com>
- <CAPcyv4hWswV=VCfB7KatoW_zc-kUUju2jD45N-Gsg4sW-XFe-A@mail.gmail.com>
- <20180522205214.GA26259@redhat.com>
+	<20180519052633.037700597@debian.vm>
+	<20180522063425.GA7854@infradead.org>
+	<20180522185037.GB25826@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <20180522205214.GA26259-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> (Mike Snitzer's message of
- "Tue, 22 May 2018 16:52:17 -0400")
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-nvdimm <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20180522185037.GB25826@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>, wagi@monom.org, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Dan Williams <dan.j.williams@intel.com>, tglx@linutronix.de
 List-Id: dm-devel.ids
 
-Hi, Mike,
+On Tue, May 22, 2018 at 02:52:54PM -0400, Mike Snitzer wrote:
+> On Tue, May 22 2018 at  2:34am -0400,
+> Christoph Hellwig <hch@infradead.org> wrote:
 
-Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> writes:
+> > Please CC the author and maintainers of the swait code.
+> > 
+> > My impression is that this is the wrong thing to do.  The swait code
+> > is supposed to be simple and self contained, and if you want to do
+> > anything else use normal waitqueues.
+> 
+> You said the same thing last time around.  I've since cc'd Peter and
+> Thomas and haven't heard back, see:
+> https://www.redhat.com/archives/dm-devel/2018-May/msg00048.html
 
-> Looking at Mikulas' wrapper API that you and hch are calling into
-> question:
->
-> For ARM it is using arch/arm64/mm/flush.c:arch_wb_cache_pmem().
-> (And ARM does seem to be providing CONFIG_ARCH_HAS_PMEM_API.)
->
-> Whereas x86_64 is using memcpy_flushcache() as provided by
-> CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE.
-> (Yet ARM does provide arch/arm64/lib/uaccess_flushcache.c:memcpy_flushcache)
->
-> Just seems this isn't purely about ARM lacking on an API level (given on
-> x86_64 Mikulas isn't only using CONFIG_ARCH_HAS_PMEM_API).
->
-> Seems this is more to do with x86_64 having efficient Non-temporal
-> stores?
+Yeah, sorry, got lost :/
 
-Yeah, I think you've got that all right.
+> The entire point of exporting these symbols is to allow use of the
+> "simple waitqueue" code to optimize -- without resorting to using normal
+> waitqueues.
 
-> Anyway, I'm still trying to appreciate the details here before I can
-> make any forward progress.
+So I don't immediately object to exporting them; however I do share some
+of hch's concerns. The reason swait exists is to be deterministic (for
+RT) -- something that regular wait code cannot be.
 
-Making data persistent on x64 requires 3 steps:
-1) copy the data into pmem   (store instructions)
-2) flush the cache lines associated with the data (clflush, clflush_opt, clwb)
-3) wait on the flush to complete (sfence)
+And by (ab)using / exporting the wait internal lock you risk loosing
+that. So I don't think the proposed usage is bad, it is possible to
+create badness.
 
-I'm not sure if other architectures require step 3.  Mikulas'
-implementation seems to imply that arm64 doesn't require the fence.
-
-The current pmem api provides:
-
-memcpy*           -- step 1
-memcpy_flushcache -- this combines steps 1 and 2
-dax_flush         -- step 2
-wmb*              -- step 3
-
-* not strictly part of the pmem api
-
-So, if you didn't care about performance, you could write generic code
-that only used memcpy, dax_flush, and wmb (assuming other arches
-actually need the wmb).  What Mikulas did was to abstract out an API
-that could be called by generic code that would work optimally on all
-architectures.
-
-This looks like a worth-while addition to the PMEM API, to me.  Mikulas,
-what do you think about refactoring the code as Christoph suggested?
-
-Cheers,
-Jeff
+So if we're going to export them; someone needs to keep an eye on things
+and ensure the lock isn't abused.
