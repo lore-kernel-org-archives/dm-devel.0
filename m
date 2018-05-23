@@ -1,110 +1,117 @@
-From: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [dm-devel] [patch 4/4] dm-writecache: use new API for flushing
-Date: Wed, 23 May 2018 16:57:13 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1805231639550.17160@file01.intranet.prod.int.rdu2.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v2] swait: export symbols __prepare_to_swait
+ and __finish_swait
+Date: Wed, 23 May 2018 17:51:40 -0400
+Message-ID: <20180523215140.GA32285@redhat.com>
 References: <20180519052503.325953342@debian.vm>
- <20180519052635.567438191@debian.vm> <20180522063946.GB8054@infradead.org>
- <20180522184103.GA25826@redhat.com>
- <CAPcyv4g395RccdEPF=sCu5RdCH9zwD+GvOfSp7-F0Oh64CeDgA@mail.gmail.com>
- <20180522191942.GB25904@redhat.com>
- <CAPcyv4hWswV=VCfB7KatoW_zc-kUUju2jD45N-Gsg4sW-XFe-A@mail.gmail.com>
- <20180522205214.GA26259@redhat.com>
- <x49r2m3nvyk.fsf@segfault.boston.devel.redhat.com>
+	<20180519052633.037700597@debian.vm>
+	<20180522063425.GA7854@infradead.org>
+	<20180522185037.GB25826@redhat.com>
+	<20180523092101.GW12217@hirez.programming.kicks-ass.net>
+	<20180523151011.GA30696@redhat.com>
+	<20180523181046.GA54883@redhat.com>
+	<alpine.LRH.2.02.1805231633060.17160@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <x49r2m3nvyk.fsf-RRHT56Q3PSP4kTEheFKJxxDDeQx5vsVwAInAS/Ez/D0@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-nvdimm <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1805231633060.17160@file01.intranet.prod.int.rdu2.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Peter Zijlstra <peterz@infradead.org>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, wagi@monom.org, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, Dan Williams <dan.j.williams@intel.com>, tglx@linutronix.de
 List-Id: dm-devel.ids
 
+On Wed, May 23 2018 at  4:38pm -0400,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-
-On Tue, 22 May 2018, Jeff Moyer wrote:
-
-> Hi, Mike,
 > 
-> Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> writes:
 > 
-> > Looking at Mikulas' wrapper API that you and hch are calling into
-> > question:
-> >
-> > For ARM it is using arch/arm64/mm/flush.c:arch_wb_cache_pmem().
-> > (And ARM does seem to be providing CONFIG_ARCH_HAS_PMEM_API.)
-> >
-> > Whereas x86_64 is using memcpy_flushcache() as provided by
-> > CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE.
-> > (Yet ARM does provide arch/arm64/lib/uaccess_flushcache.c:memcpy_flushcache)
-> >
-> > Just seems this isn't purely about ARM lacking on an API level (given on
-> > x86_64 Mikulas isn't only using CONFIG_ARCH_HAS_PMEM_API).
-> >
-> > Seems this is more to do with x86_64 having efficient Non-temporal
-> > stores?
+> On Wed, 23 May 2018, Mike Snitzer wrote:
 > 
-> Yeah, I think you've got that all right.
+> > [Peter, in this v2 I switched to using _GPL for the exports and updated
+> > the patch header.  As covered in previous mail, please let me know if
+> > you're OK with me staging this change for 4.18 via linux-dm.git with
+> > your Ack, thanks]
+> > 
+> > From: Mikulas Patocka <mpatocka@redhat.com>
+> > Subject: [PATCH] swait: export symbols __prepare_to_swait and __finish_swait
+> > 
+> > __prepare_to_swait and __finish_swait are declared in
+> > include/linux/swait.h but they are not exported; so they are not useable
+> > from kernel modules.
+> > 
+> > A new consumer of swait (in dm-writecache) reduces its locking overhead
+> > by using the spinlock in swait_queue_head to protect not only the wait
+> > queue, but also the list of events.  Consequently, this swait consuming
+> > kernel module needs to use these unlocked functions.
+> > 
+> > Peter Zijlstra explained:
+> >   "The reason swait exists is to be deterministic (for RT) -- something
+> >   that regular wait code cannot be.
+> >   And by (ab)using / exporting the wait internal lock you risk losing
+> >   that. So I don't think the proposed [dm-writecache] usage is bad, it
+> >   is possible to create badness.
+> >   So if we're going to export them; someone needs to keep an eye on things
+> >   and ensure the lock isn't abused."
+> > 
+> > So while this new use of the wait internal lock doesn't jeopardize the
+> > realtime requirements of swait, these exports do open swait's internal
+> > locking up to being abused.  As such, EXPORT_SYMBOL_GPL is used because
+> > any future consumers of __prepare_to_swait and __finish_swait must
+> > always be thoroughly scrutinized.
+> > 
+> > Cc: Peter Zijlstra <peterz@infradead.org>
+> > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> > Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> > ---
+> >  kernel/sched/swait.c | 2 ++
+> >  1 file changed, 2 insertions(+)
+> > 
+> > diff --git a/kernel/sched/swait.c b/kernel/sched/swait.c
+> > index b6fb2c3b3ff7..5d891b65ada5 100644
+> > --- a/kernel/sched/swait.c
+> > +++ b/kernel/sched/swait.c
+> > @@ -75,6 +75,7 @@ void __prepare_to_swait(struct swait_queue_head *q, struct swait_queue *wait)
+> >  	if (list_empty(&wait->task_list))
+> >  		list_add(&wait->task_list, &q->task_list);
+> >  }
+> > +EXPORT_SYMBOL_GPL(__prepare_to_swait);
+> >  
+> >  void prepare_to_swait(struct swait_queue_head *q, struct swait_queue *wait, int state)
+> >  {
+> > @@ -104,6 +105,7 @@ void __finish_swait(struct swait_queue_head *q, struct swait_queue *wait)
+> >  	if (!list_empty(&wait->task_list))
+> >  		list_del_init(&wait->task_list);
+> >  }
+> > +EXPORT_SYMBOL_GPL(__finish_swait);
+> >  
+> >  void finish_swait(struct swait_queue_head *q, struct swait_queue *wait)
+> >  {
+> > -- 
+> > 2.15.0
 > 
-> > Anyway, I'm still trying to appreciate the details here before I can
-> > make any forward progress.
+> Then - you should export swake_up_locked with EXPORT_SYMBOL_GPL too.
 > 
-> Making data persistent on x64 requires 3 steps:
-> 1) copy the data into pmem   (store instructions)
-> 2) flush the cache lines associated with the data (clflush, clflush_opt, clwb)
-> 3) wait on the flush to complete (sfence)
+> Because swake_up_locked is unusable without __prepare_to_swait and 
+> __finish_swait.
 
-In theory it works this way. In practice, this sequence is useless because 
-the cache flusing instructions are horribly slow.
+Point taken.  But if swake_up_locked is unusable without them it is
+implicitly _GPL once __prepare_to_swait and __finish_swait are exported
+via _GPL.  Which is to say, I don't care to get into the games of
+switching symbols from EXPORT_SYMBOL to EXPORT_SYMBOL_GPL unless
+completely necessary.  Happy to leave well enough alone on this.
 
-So, the dm-writecache driver uses non-temporal stores instead of cache 
-flushing.
+So I consider this v2 perfectly adequate for our needs.  And appreciate
+any additional review/acks.
 
-Now, the problem with arm64 is that it doesn't have non-temporal stores. 
-So, memcpy_flushcache on arm64 does cached stores and flushes the cache 
-afterwards. And this eager flushing is slower than late flushing. On arm4, 
-you want to do cached stores, then do something else, and flush the cache 
-as late as possible.
-
-> I'm not sure if other architectures require step 3.  Mikulas'
-> implementation seems to imply that arm64 doesn't require the fence.
-
-I suppose that arch_wb_cache_pmem() does whatever it needs to do to flush 
-the cache. If not, add something like arch_wb_cache_pmem_commit().
-
-> The current pmem api provides:
-> 
-> memcpy*           -- step 1
-> memcpy_flushcache -- this combines steps 1 and 2
-> dax_flush         -- step 2
-> wmb*              -- step 3
-> 
-> * not strictly part of the pmem api
-> 
-> So, if you didn't care about performance, you could write generic code
-> that only used memcpy, dax_flush, and wmb (assuming other arches
-> actually need the wmb).  What Mikulas did was to abstract out an API
-> that could be called by generic code that would work optimally on all
-> architectures.
-> 
-> This looks like a worth-while addition to the PMEM API, to me.  Mikulas,
-> what do you think about refactoring the code as Christoph suggested?
-
-I sent this patch 
-https://www.redhat.com/archives/dm-devel/2018-May/msg00054.html so that 
-you can take the functions pmem_memcpy, pmem_assign, pmem_flush and 
-pmem_commit and move them to the generic linux headers. If you want to do 
-it, do it.
-
-> Cheers,
-> Jeff
-
-Mikulas
+Thanks,
+Mike
