@@ -1,19 +1,20 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [patch 2/4] swait: export the symbols
- __prepare_to_swait and __finish_swait
-Date: Wed, 23 May 2018 11:10:14 -0400
-Message-ID: <20180523151011.GA30696@redhat.com>
+Subject: [PATCH v2] swait: export symbols __prepare_to_swait and
+ __finish_swait
+Date: Wed, 23 May 2018 14:10:46 -0400
+Message-ID: <20180523181046.GA54883@redhat.com>
 References: <20180519052503.325953342@debian.vm>
 	<20180519052633.037700597@debian.vm>
 	<20180522063425.GA7854@infradead.org>
 	<20180522185037.GB25826@redhat.com>
 	<20180523092101.GW12217@hirez.programming.kicks-ass.net>
+	<20180523151011.GA30696@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20180523092101.GW12217@hirez.programming.kicks-ass.net>
+In-Reply-To: <20180523151011.GA30696@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,50 +28,64 @@ To: Peter Zijlstra <peterz@infradead.org>
 Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>, wagi@monom.org, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Dan Williams <dan.j.williams@intel.com>, tglx@linutronix.de
 List-Id: dm-devel.ids
 
-On Wed, May 23 2018 at  5:21am -0400,
-Peter Zijlstra <peterz@infradead.org> wrote:
+[Peter, in this v2 I switched to using _GPL for the exports and updated
+the patch header.  As covered in previous mail, please let me know if
+you're OK with me staging this change for 4.18 via linux-dm.git with
+your Ack, thanks]
 
-> On Tue, May 22, 2018 at 02:52:54PM -0400, Mike Snitzer wrote:
-> > On Tue, May 22 2018 at  2:34am -0400,
-> > Christoph Hellwig <hch@infradead.org> wrote:
-> 
-> > > Please CC the author and maintainers of the swait code.
-> > > 
-> > > My impression is that this is the wrong thing to do.  The swait code
-> > > is supposed to be simple and self contained, and if you want to do
-> > > anything else use normal waitqueues.
-> > 
-> > You said the same thing last time around.  I've since cc'd Peter and
-> > Thomas and haven't heard back, see:
-> > https://www.redhat.com/archives/dm-devel/2018-May/msg00048.html
-> 
-> Yeah, sorry, got lost :/
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] swait: export symbols __prepare_to_swait and __finish_swait
 
-np
+__prepare_to_swait and __finish_swait are declared in
+include/linux/swait.h but they are not exported; so they are not useable
+from kernel modules.
 
-> > The entire point of exporting these symbols is to allow use of the
-> > "simple waitqueue" code to optimize -- without resorting to using normal
-> > waitqueues.
-> 
-> So I don't immediately object to exporting them; however I do share some
-> of hch's concerns. The reason swait exists is to be deterministic (for
-> RT) -- something that regular wait code cannot be.
-> 
-> And by (ab)using / exporting the wait internal lock you risk loosing
-> that. So I don't think the proposed usage is bad, it is possible to
-> create badness.
+A new consumer of swait (in dm-writecache) reduces its locking overhead
+by using the spinlock in swait_queue_head to protect not only the wait
+queue, but also the list of events.  Consequently, this swait consuming
+kernel module needs to use these unlocked functions.
 
-Understood.
+Peter Zijlstra explained:
+  "The reason swait exists is to be deterministic (for RT) -- something
+  that regular wait code cannot be.
+  And by (ab)using / exporting the wait internal lock you risk losing
+  that. So I don't think the proposed [dm-writecache] usage is bad, it
+  is possible to create badness.
+  So if we're going to export them; someone needs to keep an eye on things
+  and ensure the lock isn't abused."
 
-> So if we're going to export them; someone needs to keep an eye on things
-> and ensure the lock isn't abused.
+So while this new use of the wait internal lock doesn't jeopardize the
+realtime requirements of swait, these exports do open swait's internal
+locking up to being abused.  As such, EXPORT_SYMBOL_GPL is used because
+any future consumers of __prepare_to_swait and __finish_swait must
+always be thoroughly scrutinized.
 
-I'll update the patch header and swait.h to reflect these requirements
-and send out a new patch.
+Cc: Peter Zijlstra <peterz@infradead.org>
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ kernel/sched/swait.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-If you could then reply with your explicit Ack I can stage it for 4.18
-via linux-dm.git to ease cross tree dependencies (given dm-writecache
-depends on these exports) -- provided you're OK with me doing that.
-
-Thanks,
-Mike
+diff --git a/kernel/sched/swait.c b/kernel/sched/swait.c
+index b6fb2c3b3ff7..5d891b65ada5 100644
+--- a/kernel/sched/swait.c
++++ b/kernel/sched/swait.c
+@@ -75,6 +75,7 @@ void __prepare_to_swait(struct swait_queue_head *q, struct swait_queue *wait)
+ 	if (list_empty(&wait->task_list))
+ 		list_add(&wait->task_list, &q->task_list);
+ }
++EXPORT_SYMBOL_GPL(__prepare_to_swait);
+ 
+ void prepare_to_swait(struct swait_queue_head *q, struct swait_queue *wait, int state)
+ {
+@@ -104,6 +105,7 @@ void __finish_swait(struct swait_queue_head *q, struct swait_queue *wait)
+ 	if (!list_empty(&wait->task_list))
+ 		list_del_init(&wait->task_list);
+ }
++EXPORT_SYMBOL_GPL(__finish_swait);
+ 
+ void finish_swait(struct swait_queue_head *q, struct swait_queue *wait)
+ {
+-- 
+2.15.0
