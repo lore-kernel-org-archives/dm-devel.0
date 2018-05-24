@@ -1,22 +1,16 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v2] swait: export symbols __prepare_to_swait
- and __finish_swait
-Date: Thu, 24 May 2018 11:09:51 -0400
-Message-ID: <20180524150950.GA4124@redhat.com>
+Subject: [PATCH v2] x86: optimize memcpy_flushcache
+Date: Thu, 24 May 2018 14:20:15 -0400
+Message-ID: <20180524182013.GA59755@redhat.com>
 References: <20180519052503.325953342@debian.vm>
-	<20180519052633.037700597@debian.vm>
-	<20180522063425.GA7854@infradead.org>
-	<20180522185037.GB25826@redhat.com>
-	<20180523092101.GW12217@hirez.programming.kicks-ass.net>
-	<20180523151011.GA30696@redhat.com>
-	<20180523181046.GA54883@redhat.com>
-	<20180524141012.GH12198@hirez.programming.kicks-ass.net>
+	<20180519052631.730455475@debian.vm>
+	<CAPcyv4jpY0x7kZtT+afAKnHKy8Uy1AC_N_QM7RrELSj_0iNrRw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20180524141012.GH12198@hirez.programming.kicks-ass.net>
+In-Reply-To: <CAPcyv4jpY0x7kZtT+afAKnHKy8Uy1AC_N_QM7RrELSj_0iNrRw@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,47 +20,91 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Peter Zijlstra <peterz@infradead.org>
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>, wagi@monom.org, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Dan Williams <dan.j.williams@intel.com>, tglx@linutronix.de
+To: Ingo Molnar <mingo@kernel.org>, Thomas Gleixner <tglx@linutronix.de>
+Cc: Dan Williams <dan.j.williams@intel.com>, X86 ML <x86@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, May 24 2018 at 10:10am -0400,
-Peter Zijlstra <peterz@infradead.org> wrote:
+[v2: revised header, reformatted asm, reduced indent in switch statement.
+Ingo or Thomas: please review and consider picking this up for 4.18]
 
-> On Wed, May 23, 2018 at 02:10:46PM -0400, Mike Snitzer wrote:
-> > [Peter, in this v2 I switched to using _GPL for the exports and updated
-> > the patch header.  As covered in previous mail, please let me know if
-> > you're OK with me staging this change for 4.18 via linux-dm.git with
-> > your Ack, thanks]
-> > 
-> > From: Mikulas Patocka <mpatocka@redhat.com>
-> > Subject: [PATCH] swait: export symbols __prepare_to_swait and __finish_swait
-> > 
-> > __prepare_to_swait and __finish_swait are declared in
-> > include/linux/swait.h but they are not exported; so they are not useable
-> > from kernel modules.
-> > 
-> > A new consumer of swait (in dm-writecache) reduces its locking overhead
-> > by using the spinlock in swait_queue_head to protect not only the wait
-> > queue, but also the list of events.  Consequently, this swait consuming
-> > kernel module needs to use these unlocked functions.
-> > 
-> > Peter Zijlstra explained:
-> >   "The reason swait exists is to be deterministic (for RT) -- something
-> >   that regular wait code cannot be.
-> >   And by (ab)using / exporting the wait internal lock you risk losing
-> >   that. So I don't think the proposed [dm-writecache] usage is bad, it
-> >   is possible to create badness.
-> >   So if we're going to export them; someone needs to keep an eye on things
-> >   and ensure the lock isn't abused."
-> > 
-> > So while this new use of the wait internal lock doesn't jeopardize the
-> > realtime requirements of swait, these exports do open swait's internal
-> > locking up to being abused.  As such, EXPORT_SYMBOL_GPL is used because
-> > any future consumers of __prepare_to_swait and __finish_swait must
-> > always be thoroughly scrutinized.
-> > 
-> 
-> Acked-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH v2] x86: optimize memcpy_flushcache
 
-Thanks Peter.
+In the context of constant short length stores to persistent memory,
+memcpy_flushcache suffers from a 2% performance degradation compared to
+explicitly using the "movnti" instruction.
+
+Optimize 4, 8, and 16 byte memcpy_flushcache calls to explicitly use the
+movnti instruction with inline assembler.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Reviewed-by: Dan Williams <dan.j.williams@intel.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ arch/x86/include/asm/string_64.h | 28 +++++++++++++++++++++++++++-
+ arch/x86/lib/usercopy_64.c       |  4 ++--
+ 2 files changed, 29 insertions(+), 3 deletions(-)
+
+diff --git a/arch/x86/include/asm/string_64.h b/arch/x86/include/asm/string_64.h
+index 533f74c300c2..aaba83478cdc 100644
+--- a/arch/x86/include/asm/string_64.h
++++ b/arch/x86/include/asm/string_64.h
+@@ -147,7 +147,33 @@ memcpy_mcsafe(void *dst, const void *src, size_t cnt)
+ 
+ #ifdef CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE
+ #define __HAVE_ARCH_MEMCPY_FLUSHCACHE 1
+-void memcpy_flushcache(void *dst, const void *src, size_t cnt);
++void __memcpy_flushcache(void *dst, const void *src, size_t cnt);
++static __always_inline void memcpy_flushcache(void *dst, const void *src, size_t cnt)
++{
++	if (__builtin_constant_p(cnt)) {
++		switch (cnt) {
++		case 4:
++			asm volatile("movntil %1, %0"
++				     : "=m" (*(u32 *)dst)
++				     : "r" (*(u32 *)src));
++			return;
++		case 8:
++			asm volatile("movntiq %1, %0"
++				     : "=m" (*(u64 *)dst)
++				     : "r" (*(u64 *)src));
++			return;
++		case 16:
++			asm volatile("movntiq %1, %0"
++				     : "=m" (*(u64 *)dst)
++				     : "r" (*(u64 *)src));
++			asm volatile("movntiq %1, %0"
++				     : "=m" (*(u64 *)(dst + 8))
++				     : "r" (*(u64 *)(src + 8)));
++			return;
++		}
++	}
++	__memcpy_flushcache(dst, src, cnt);
++}
+ #endif
+ 
+ #endif /* __KERNEL__ */
+diff --git a/arch/x86/lib/usercopy_64.c b/arch/x86/lib/usercopy_64.c
+index 75d3776123cc..26f515aa3529 100644
+--- a/arch/x86/lib/usercopy_64.c
++++ b/arch/x86/lib/usercopy_64.c
+@@ -133,7 +133,7 @@ long __copy_user_flushcache(void *dst, const void __user *src, unsigned size)
+ 	return rc;
+ }
+ 
+-void memcpy_flushcache(void *_dst, const void *_src, size_t size)
++void __memcpy_flushcache(void *_dst, const void *_src, size_t size)
+ {
+ 	unsigned long dest = (unsigned long) _dst;
+ 	unsigned long source = (unsigned long) _src;
+@@ -196,7 +196,7 @@ void memcpy_flushcache(void *_dst, const void *_src, size_t size)
+ 		clean_cache_range((void *) dest, size);
+ 	}
+ }
+-EXPORT_SYMBOL_GPL(memcpy_flushcache);
++EXPORT_SYMBOL_GPL(__memcpy_flushcache);
+ 
+ void memcpy_page_flushcache(char *to, struct page *page, size_t offset,
+ 		size_t len)
+-- 
+2.15.0
