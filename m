@@ -1,7 +1,7 @@
 From: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: [PATCH resend 6/7] dm-snap: remove unnecessary direct_access() stub
-Date: Fri, 25 May 2018 16:00:54 -0600
-Message-ID: <20180525220055.18920-7-ross.zwisler@linux.intel.com>
+Subject: [PATCH resend 3/7] dm: fix test for DAX device support
+Date: Fri, 25 May 2018 16:00:51 -0600
+Message-ID: <20180525220055.18920-4-ross.zwisler@linux.intel.com>
 References: <20180525220055.18920-1-ross.zwisler@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,40 +21,43 @@ To: Toshi Kani <toshi.kani-ZPxbGqLxI0U@public.gmane.org>, Mike Snitzer <snitzer-
 Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 List-Id: dm-devel.ids
 
-This stub was added so that we could use dm-snap with DM_TYPE_DAX_BIO_BASED
-mode devices.  That mode and the transition issues associated with it no
-longer exist, so we can remove this dead code.
+Currently device_supports_dax() just checks to see if the QUEUE_FLAG_DAX
+flag is set on the device's request queue to decide whether or not the
+device supports filesystem DAX.  This is insufficient because there are
+devices like PMEM namespaces in raw mode which have QUEUE_FLAG_DAX set but
+which don't actually support DAX.
+
+This means that you could create a dm-linear device, for example, where the
+first part of the dm-linear device was a PMEM namespace in fsdax mode and
+the second part was a PMEM namespace in raw mode.  Both DM and the
+filesystem you put on that dm-linear device would think the whole device
+supports DAX, which would lead to bad behavior once your raw PMEM namespace
+part using DAX needed struct page for something.
+
+Fix this by using bdev_dax_supported() like filesystems do at mount time.
+This checks for raw mode and also performs other tests like checking to
+make sure the dax_direct_access() path works.
 
 Signed-off-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Fixes: commit 545ed20e6df6 ("dm: add infrastructure for DAX support")
 ---
- drivers/md/dm-snap.c | 8 --------
- 1 file changed, 8 deletions(-)
+ drivers/md/dm-table.c | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
 
-diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index 216035be5661..0143b158d52d 100644
---- a/drivers/md/dm-snap.c
-+++ b/drivers/md/dm-snap.c
-@@ -2305,13 +2305,6 @@ static int origin_map(struct dm_target *ti, struct bio *bio)
- 	return do_origin(o->dev, bio);
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 0589a4da12bb..5bb994b012ca 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -885,9 +885,7 @@ EXPORT_SYMBOL_GPL(dm_table_set_type);
+ static int device_supports_dax(struct dm_target *ti, struct dm_dev *dev,
+ 			       sector_t start, sector_t len, void *data)
+ {
+-	struct request_queue *q = bdev_get_queue(dev->bdev);
+-
+-	return q && blk_queue_dax(q);
++	return bdev_dax_supported(dev->bdev, PAGE_SIZE);
  }
  
--static long origin_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
--		long nr_pages, void **kaddr, pfn_t *pfn)
--{
--	DMWARN("device does not support dax.");
--	return -EIO;
--}
--
- /*
-  * Set the target "max_io_len" field to the minimum of all the snapshots'
-  * chunk sizes.
-@@ -2371,7 +2364,6 @@ static struct target_type origin_target = {
- 	.postsuspend = origin_postsuspend,
- 	.status  = origin_status,
- 	.iterate_devices = origin_iterate_devices,
--	.direct_access = origin_dax_direct_access,
- };
- 
- static struct target_type snapshot_target = {
+ static bool dm_table_supports_dax(struct dm_table *t)
 -- 
 2.14.3
