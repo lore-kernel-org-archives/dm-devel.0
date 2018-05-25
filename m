@@ -1,50 +1,141 @@
-From: Ross Zwisler <ross.zwisler@linux.intel.com>
-Subject: Re: [PATCH 1/7] fs: allow per-device dax status checking for
- filesystems
-Date: Fri, 25 May 2018 09:42:29 -0600
-Message-ID: <20180525154229.GA11044@linux.intel.com>
-References: <20180525025518.11405-1-ross.zwisler@linux.intel.com>
- <20180525025518.11405-2-ross.zwisler@linux.intel.com>
- <20180525050218.GF4507@magnolia>
+From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [patch 4/4] dm-writecache: use new API for flushing
+Date: Fri, 25 May 2018 08:57:27 -0700
+Message-ID: <CAPcyv4j-v5HGBg9JMBXt7UUyw=K_bGC7t5tQGfXM9G4qjOpFjQ@mail.gmail.com>
+References: <20180519052503.325953342@debian.vm>
+ <20180519052635.567438191@debian.vm>
+ <CAPcyv4iEtfuVGPR0QMKcafv2XFwSj3nzxjX8cuXpXe00akAvYA@mail.gmail.com>
+ <alpine.LRH.2.02.1805250213270.13894@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180525125126.GA9275@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180525050218.GF4507@magnolia>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Darrick J. Wong" <darrick.wong@oracle.com>
-Cc: Ross Zwisler <ross.zwisler@linux.intel.com>, Toshi Kani <toshi.kani@hpe.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-nvdimm@lists.01.org, xfs <linux-xfs@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <20180525125126.GA9275-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-nvdimm <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 List-Id: dm-devel.ids
 
-On Thu, May 24, 2018 at 10:02:18PM -0700, Darrick J. Wong wrote:
-> On Thu, May 24, 2018 at 08:55:12PM -0600, Ross Zwisler wrote:
-> > From: "Darrick J. Wong" <darrick.wong@oracle.com>
-> > 
-> > Remove __bdev_dax_supported and change to bdev_dax_supported that takes a
-> > bdev parameter.  This enables multi-device filesystems like xfs to check
-> > that a dax device can work for the particular filesystem.  Once that's
-> > in place, actually fix all the parts of XFS where we need to be able to
-> > distinguish between datadev and rtdev.
-> > 
-> > This patch fixes the problem where we screw up the dax support checking
-> > in xfs if the datadev and rtdev have different dax capabilities.
-> > 
-> > Signed-off-by: Darrick J. Wong <darrick.wong@oracle.com>
-> > Signed-off-by: Ross Zwisler <ross.zwisler@linux.intel.com>
-> 
-> Reviewed-by: Darr...oh, I'm not allowed to do that, am I?
-> 
-> Would you mind (re)sending this to the xfs list so that someone else can
-> review it?
-> 
-> --D
+On Fri, May 25, 2018 at 5:51 AM, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+> On Fri, May 25 2018 at  2:17am -0400,
+> Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+>
+>>
+>>
+>> On Thu, 24 May 2018, Dan Williams wrote:
+>>
+>> > On Fri, May 18, 2018 at 10:25 PM, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+>> > > Use new API for flushing persistent memory.
+>> > >
+>> > > The problem is this:
+>> > > * on X86-64, non-temporal stores have the best performance
+>> > > * ARM64 doesn't have non-temporal stores, so we must flush cache. We
+>> > >   should flush cache as late as possible, because it performs better this
+>> > >   way.
+>> > >
+>> > > We introduce functions pmem_memcpy, pmem_flush and pmem_commit. To commit
+>> > > data persistently, all three functions must be called.
+>> > >
+>> > > The macro pmem_assign may be used instead of pmem_memcpy. pmem_assign
+>> > > (unlike pmem_memcpy) guarantees that 8-byte values are written atomically.
+>> > >
+>> > > On X86, pmem_memcpy is memcpy_flushcache, pmem_flush is empty and
+>> > > pmem_commit is wmb.
+>> > >
+>> > > On ARM64, pmem_memcpy is memcpy, pmem_flush is arch_wb_cache_pmem and
+>> > > pmem_commit is empty.
+>> >
+>> > I don't want to grow driver-local wrappers for pmem. You should use
+>> > memcpy_flushcache directly() and if an architecture does not define
+>> > memcpy_flushcache() then don't allow building dm-writecache, i.e. this
+>> > driver should 'depends on CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE'. I don't
+>> > see a need to add a standalone flush operation if all relevant archs
+>> > provide memcpy_flushcache(). As for commit, I'd say just use wmb()
+>> > directly since all archs define it. Alternatively we could introduce
+>> > memcpy_flushcache_relaxed() to be the un-ordered version of the copy
+>> > routine and memcpy_flushcache() would imply a wmb().
+>>
+>> But memcpy_flushcache() on ARM64 is slow.
+>
+> Yes, Dan can you please take some time to fully appreciate what this
+> small wrapper API is providing (maybe you've done that, but your recent
+> reply is mixed-message).  Seems you're keeping the innovation it
+> provides at arms-length.  Basically the PMEM APIs you've helped
+> construct are lacking, forcing DM developers to own fixing them is an
+> inversion that only serves to stonewall.
+>
+> Please, less time on stonewalling and more time lifting this wrapper
+> API; otherwise the dm-writecache local wrapper API is a near-term means
+> to an end.
+>
+> I revised the dm-writecache patch header yesterday, please review:
+> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.18&id=2105231db61b08752bc4247d2fe7838657700b0d
+> (the last paragraph in particular, I intend to move forward with this
+> wrapper unless someone on the PMEM side of the house steps up and lifts
+> it up between now and when the 4.18 merge window opens)
+>
+> dm: add writecache target
+> The writecache target caches writes on persistent memory or SSD.
+> It is intended for databases or other programs that need extremely low
+> commit latency.
+>
+> The writecache target doesn't cache reads because reads are supposed to
+> be cached in page cache in normal RAM.
+>
+> The following describes the approach used to provide the most efficient
+> flushing of persistent memory on X86_64 vs ARM64:
+>
+> * On X86_64 non-temporal stores (i.e. memcpy_flushcache) are faster
+>   than cached writes and cache flushing.
+>
+> * The ARM64 architecture doesn't have non-temporal stores. So,
+>   memcpy_flushcache on ARM does memcpy (that writes data to the cache)
+>   and then flushes the cache.  But this eager cache flushig is slower
+>   than late cache flushing.
+>
+> The optimal code sequence on ARM to write to persistent memory is to
+> call memcpy, then do something else, and then call arch_wb_cache_pmem as
+> late as possible. And this ARM-optimized code sequence is just horribly
+> slow on X86.
+>
+> This issue can't be "fixed" in ARM-specific source code. The ARM
+> processor have characteristics such that eager cache flushing is slower
+> than late cache flushing - and that's it - you can't change processor
+> behavior.
+>
+> We introduce a wrapper API for flushing persistent memory with functions
+> pmem_memcpy, pmem_flush and pmem_commit. To commit data persistently,
+> all three functions must be called.
+>
+> The macro pmem_assign may be used instead of pmem_memcpy.  pmem_assign
+> (unlike pmem_memcpy) guarantees that 8-byte values are written
+> atomically.
+>
+> On X86_64, pmem_memcpy is memcpy_flushcache, pmem_flush is empty and
+> pmem_commit is wmb.
+>
+> On ARM64, pmem_memcpy is memcpy, pmem_flush is arch_wb_cache_pmem and
+> pmem_commit is empty.
+>
+> It is clear that this wrapper API for flushing persistent memory needs
+> to be elevated out of this dm-writecache driver.  But that can happen
+> later without requiring DM developers to blaze new trails on pmem
+> specific implementation details/quirks (pmem developers need to clean up
+> their APIs given they are already spread across CONFIG_ARCH_HAS_PMEM_API
+> and CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE and they absolutely don't take
+> into account the duality of the different programming models needed to
+> achieve optimal cross-architecture use of persistent memory).
 
-Thanks for the review, Darrick.
-
-I think at one point Dave said that if you touch more than 1 filesystem with a
-series you should just CC linux-fsdevel and omit the individual filesystems?
-I realize that this series only touches ext2 and ext4 a little, but that's
-what I opted for.
-
-Is that sufficient to get to the rest of the XFS developers, or would you like
-a resend adding linux-xfs?
+Right, so again, what is wrong with memcpy_flushcache_relaxed() +
+wmb() or otherwise making memcpy_flushcache() ordered. I do not see
+that as a trailblazing requirement, I see that as typical review and a
+reduction of the operation space that you are proposing.
