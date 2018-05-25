@@ -1,7 +1,7 @@
 From: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: [PATCH 7/7] dm-error: remove unnecessary direct_access() stub
-Date: Thu, 24 May 2018 20:55:18 -0600
-Message-ID: <20180525025518.11405-8-ross.zwisler@linux.intel.com>
+Subject: [PATCH 4/7] dm: prevent DAX mounts if not supported
+Date: Thu, 24 May 2018 20:55:15 -0600
+Message-ID: <20180525025518.11405-5-ross.zwisler@linux.intel.com>
 References: <20180525025518.11405-1-ross.zwisler@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,39 +21,59 @@ To: Toshi Kani <toshi.kani-ZPxbGqLxI0U@public.gmane.org>, Mike Snitzer <snitzer-
 Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 List-Id: dm-devel.ids
 
-This stub was added so that we could use dm-error with
-DM_TYPE_DAX_BIO_BASED mode devices.  That mode and the transition issues
-associated with it no longer exist, so we can remove this dead code.
+Currently the code in dm_dax_direct_access() only checks whether the target
+type has a direct_access() operation defined, not whether the underlying
+block devices all support DAX.  This latter property can be seen by looking
+at whether we set the QUEUE_FLAG_DAX request queue flag when creating the
+DM device.
+
+This is problematic if we have, for example, a dm-linear device made up of
+a PMEM namespace in fsdax mode followed by a ramdisk from BRD.
+QUEUE_FLAG_DAX won't be set on the dm-linear device's request queue, but
+we have a working direct_access() entry point and the first member of the
+dm-linear set *does* support DAX.
+
+This allows the user to create a filesystem on the dm-linear device, and
+then mount it with DAX.  The filesystem's bdev_dax_supported() test will
+pass because it'll operate on the first member of the dm-linear device,
+which happens to be a fsdax PMEM namespace.
+
+All DAX I/O will then fail to that dm-linear device because the lack of
+QUEUE_FLAG_DAX prevents fs_dax_get_by_bdev() from working.  This means that
+the struct dax_device isn't ever set in the filesystem, so
+dax_direct_access() will always return -EOPNOTSUPP.
+
+By failing out of dm_dax_direct_access() if QUEUE_FLAG_DAX isn't set we let
+the filesystem know we don't support DAX at mount time.  The filesystem
+will then silently fall back and remove the dax mount option, causing it to
+work properly.
 
 Signed-off-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Fixes: commit 545ed20e6df6 ("dm: add infrastructure for DAX support")
 ---
- drivers/md/dm-target.c | 7 -------
- 1 file changed, 7 deletions(-)
+ drivers/md/dm.c | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/md/dm-target.c b/drivers/md/dm-target.c
-index 314d17ca6466..c4dbc15f7862 100644
---- a/drivers/md/dm-target.c
-+++ b/drivers/md/dm-target.c
-@@ -140,12 +140,6 @@ static void io_err_release_clone_rq(struct request *clone)
- {
- }
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 0a7b0107ca78..9728433362d1 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1050,14 +1050,13 @@ static long dm_dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff,
  
--static long io_err_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
--		long nr_pages, void **kaddr, pfn_t *pfn)
--{
--	return -EIO;
--}
--
- static struct target_type error_target = {
- 	.name = "error",
- 	.version = {1, 5, 0},
-@@ -155,7 +149,6 @@ static struct target_type error_target = {
- 	.map  = io_err_map,
- 	.clone_and_map_rq = io_err_clone_and_map_rq,
- 	.release_clone_rq = io_err_release_clone_rq,
--	.direct_access = io_err_dax_direct_access,
- };
+ 	if (!ti)
+ 		goto out;
+-	if (!ti->type->direct_access)
++	if (!blk_queue_dax(md->queue))
+ 		goto out;
+ 	len = max_io_len(sector, ti) / PAGE_SECTORS;
+ 	if (len < 1)
+ 		goto out;
+ 	nr_pages = min(len, nr_pages);
+-	if (ti->type->direct_access)
+-		ret = ti->type->direct_access(ti, pgoff, nr_pages, kaddr, pfn);
++	ret = ti->type->direct_access(ti, pgoff, nr_pages, kaddr, pfn);
  
- int __init dm_target_init(void)
+  out:
+ 	dm_put_live_table(md, srcu_idx);
 -- 
 2.14.3
