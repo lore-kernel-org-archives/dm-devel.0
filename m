@@ -1,60 +1,54 @@
-From: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: [PATCH 6/7] dm-snap: remove unnecessary direct_access() stub
-Date: Thu, 24 May 2018 20:55:17 -0600
-Message-ID: <20180525025518.11405-7-ross.zwisler@linux.intel.com>
-References: <20180525025518.11405-1-ross.zwisler@linux.intel.com>
+From: Dan Williams <dan.j.williams@intel.com>
+Subject: Re: [patch 4/4] dm-writecache: use new API for flushing
+Date: Thu, 24 May 2018 20:12:10 -0700
+Message-ID: <CAPcyv4iEtfuVGPR0QMKcafv2XFwSj3nzxjX8cuXpXe00akAvYA@mail.gmail.com>
+References: <20180519052503.325953342@debian.vm>
+	<20180519052635.567438191@debian.vm>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <20180525025518.11405-1-ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Toshi Kani <toshi.kani-ZPxbGqLxI0U@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20180519052635.567438191@debian.vm>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Mike Snitzer <msnitzer@redhat.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-This stub was added so that we could use dm-snap with DM_TYPE_DAX_BIO_BASED
-mode devices.  That mode and the transition issues associated with it no
-longer exist, so we can remove this dead code.
+On Fri, May 18, 2018 at 10:25 PM, Mikulas Patocka <mpatocka@redhat.com> wrote:
+> Use new API for flushing persistent memory.
+>
+> The problem is this:
+> * on X86-64, non-temporal stores have the best performance
+> * ARM64 doesn't have non-temporal stores, so we must flush cache. We
+>   should flush cache as late as possible, because it performs better this
+>   way.
+>
+> We introduce functions pmem_memcpy, pmem_flush and pmem_commit. To commit
+> data persistently, all three functions must be called.
+>
+> The macro pmem_assign may be used instead of pmem_memcpy. pmem_assign
+> (unlike pmem_memcpy) guarantees that 8-byte values are written atomically.
+>
+> On X86, pmem_memcpy is memcpy_flushcache, pmem_flush is empty and
+> pmem_commit is wmb.
+>
+> On ARM64, pmem_memcpy is memcpy, pmem_flush is arch_wb_cache_pmem and
+> pmem_commit is empty.
 
-Signed-off-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
----
- drivers/md/dm-snap.c | 8 --------
- 1 file changed, 8 deletions(-)
-
-diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index 216035be5661..0143b158d52d 100644
---- a/drivers/md/dm-snap.c
-+++ b/drivers/md/dm-snap.c
-@@ -2305,13 +2305,6 @@ static int origin_map(struct dm_target *ti, struct bio *bio)
- 	return do_origin(o->dev, bio);
- }
- 
--static long origin_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
--		long nr_pages, void **kaddr, pfn_t *pfn)
--{
--	DMWARN("device does not support dax.");
--	return -EIO;
--}
--
- /*
-  * Set the target "max_io_len" field to the minimum of all the snapshots'
-  * chunk sizes.
-@@ -2371,7 +2364,6 @@ static struct target_type origin_target = {
- 	.postsuspend = origin_postsuspend,
- 	.status  = origin_status,
- 	.iterate_devices = origin_iterate_devices,
--	.direct_access = origin_dax_direct_access,
- };
- 
- static struct target_type snapshot_target = {
--- 
-2.14.3
+I don't want to grow driver-local wrappers for pmem. You should use
+memcpy_flushcache directly() and if an architecture does not define
+memcpy_flushcache() then don't allow building dm-writecache, i.e. this
+driver should 'depends on CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE'. I don't
+see a need to add a standalone flush operation if all relevant archs
+provide memcpy_flushcache(). As for commit, I'd say just use wmb()
+directly since all archs define it. Alternatively we could introduce
+memcpy_flushcache_relaxed() to be the un-ordered version of the copy
+routine and memcpy_flushcache() would imply a wmb().
