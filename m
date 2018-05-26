@@ -1,18 +1,15 @@
-From: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [patch 4/4] dm-writecache: use new API for flushing
-Date: Sat, 26 May 2018 03:02:52 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1805260246250.15978@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20180519052503.325953342@debian.vm>
- <20180519052635.567438191@debian.vm>
- <CAPcyv4iEtfuVGPR0QMKcafv2XFwSj3nzxjX8cuXpXe00akAvYA@mail.gmail.com>
- <alpine.LRH.2.02.1805250213270.13894@file01.intranet.prod.int.rdu2.redhat.com>
- <20180525125126.GA9275@redhat.com>
- <CAPcyv4j-v5HGBg9JMBXt7UUyw=K_bGC7t5tQGfXM9G4qjOpFjQ@mail.gmail.com>
+From: kbuild test robot <lkp-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 1/7] fs: allow per-device dax status checking for
+ filesystems
+Date: Sat, 26 May 2018 22:07:24 +0800
+Message-ID: <201805262206.iJQ3Ghzx%fengguang.wu@intel.com>
+References: <20180525025518.11405-2-ross.zwisler@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <CAPcyv4j-v5HGBg9JMBXt7UUyw=K_bGC7t5tQGfXM9G4qjOpFjQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <20180525025518.11405-2-ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Content-Disposition: inline
 List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
  <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
 List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
@@ -22,65 +19,115 @@ List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
  <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
 Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-nvdimm <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, kbuild-all-JC7UmRfGjtg@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: dm-devel.ids
 
+Hi Darrick,
 
+I love your patch! Yet something to improve:
 
-On Fri, 25 May 2018, Dan Williams wrote:
+[auto build test ERROR on linus/master]
+[also build test ERROR on v4.17-rc6]
+[cannot apply to dm/for-next]
+[if your patch is applied to the wrong git tree, please drop us a note to help improve the system]
 
-> On Fri, May 25, 2018 at 5:51 AM, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> > On Fri, May 25 2018 at  2:17am -0400,
-> > Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> >
-> >> On Thu, 24 May 2018, Dan Williams wrote:
-> >>
-> >> > I don't want to grow driver-local wrappers for pmem. You should use
-> >> > memcpy_flushcache directly() and if an architecture does not define
-> >> > memcpy_flushcache() then don't allow building dm-writecache, i.e. this
-> >> > driver should 'depends on CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE'. I don't
-> >> > see a need to add a standalone flush operation if all relevant archs
-> >> > provide memcpy_flushcache(). As for commit, I'd say just use wmb()
-> >> > directly since all archs define it. Alternatively we could introduce
-> >> > memcpy_flushcache_relaxed() to be the un-ordered version of the copy
-> >> > routine and memcpy_flushcache() would imply a wmb().
-> >>
-> >> But memcpy_flushcache() on ARM64 is slow.
-> 
-> Right, so again, what is wrong with memcpy_flushcache_relaxed() +
-> wmb() or otherwise making memcpy_flushcache() ordered. I do not see
-> that as a trailblazing requirement, I see that as typical review and a
-> reduction of the operation space that you are proposing.
+url:    https://github.com/0day-ci/linux/commits/Ross-Zwisler/Fix-DM-DAX-handling/20180526-212746
+config: i386-randconfig-x014-201820 (attached as .config)
+compiler: gcc-7 (Debian 7.3.0-16) 7.3.0
+reproduce:
+        # save the attached .config to linux build tree
+        make ARCH=i386 
 
-memcpy_flushcache on ARM64 is generally wrong thing to do, because it is 
-slower than memcpy and explicit cache flush.
+All errors (new ones prefixed by >>):
 
-Suppose that you want to write data to a block device and make it 
-persistent. So you send a WRITE bio and then a FLUSH bio.
+>> drivers//dax/super.c:85:5: error: redefinition of 'bdev_dax_supported'
+    int bdev_dax_supported(struct block_device *bdev, int blocksize)
+        ^~~~~~~~~~~~~~~~~~
+   In file included from drivers//dax/super.c:23:0:
+   include/linux/dax.h:82:19: note: previous definition of 'bdev_dax_supported' was here
+    static inline int bdev_dax_supported(struct block_device *bdev,
+                      ^~~~~~~~~~~~~~~~~~
 
-Now - how to implement these two bios on persistent memory:
+vim +/bdev_dax_supported +85 drivers//dax/super.c
 
-On X86, the WRITE bio does memcpy_flushcache() and the FLUSH bio does 
-wmb() - this is the optimal implementation.
+    74	
+    75	/**
+    76	 * bdev_dax_supported() - Check if the device supports dax for filesystem
+    77	 * @bdev: block device to check
+    78	 * @blocksize: The block size of the device
+    79	 *
+    80	 * This is a library function for filesystems to check if the block device
+    81	 * can be mounted with dax option.
+    82	 *
+    83	 * Return: negative errno if unsupported, 0 if supported.
+    84	 */
+  > 85	int bdev_dax_supported(struct block_device *bdev, int blocksize)
+    86	{
+    87		struct dax_device *dax_dev;
+    88		pgoff_t pgoff;
+    89		int err, id;
+    90		void *kaddr;
+    91		pfn_t pfn;
+    92		long len;
+    93		char buf[BDEVNAME_SIZE];
+    94	
+    95		if (blocksize != PAGE_SIZE) {
+    96			pr_debug("%s: error: unsupported blocksize for dax\n",
+    97					bdevname(bdev, buf));
+    98			return -EINVAL;
+    99		}
+   100	
+   101		err = bdev_dax_pgoff(bdev, 0, PAGE_SIZE, &pgoff);
+   102		if (err) {
+   103			pr_debug("%s: error: unaligned partition for dax\n",
+   104					bdevname(bdev, buf));
+   105			return err;
+   106		}
+   107	
+   108		dax_dev = dax_get_by_host(bdev->bd_disk->disk_name);
+   109		if (!dax_dev) {
+   110			pr_debug("%s: error: device does not support dax\n",
+   111					bdevname(bdev, buf));
+   112			return -EOPNOTSUPP;
+   113		}
+   114	
+   115		id = dax_read_lock();
+   116		len = dax_direct_access(dax_dev, pgoff, 1, &kaddr, &pfn);
+   117		dax_read_unlock(id);
+   118	
+   119		put_dax(dax_dev);
+   120	
+   121		if (len < 1) {
+   122			pr_debug("%s: error: dax access failed (%ld)\n",
+   123					bdevname(bdev, buf), len);
+   124			return len < 0 ? len : -EIO;
+   125		}
+   126	
+   127		if (IS_ENABLED(CONFIG_FS_DAX_LIMITED) && pfn_t_special(pfn)) {
+   128			/*
+   129			 * An arch that has enabled the pmem api should also
+   130			 * have its drivers support pfn_t_devmap()
+   131			 *
+   132			 * This is a developer warning and should not trigger in
+   133			 * production. dax_flush() will crash since it depends
+   134			 * on being able to do (page_address(pfn_to_page())).
+   135			 */
+   136			WARN_ON(IS_ENABLED(CONFIG_ARCH_HAS_PMEM_API));
+   137		} else if (pfn_t_devmap(pfn)) {
+   138			/* pass */;
+   139		} else {
+   140			pr_debug("%s: error: dax support not enabled\n",
+   141					bdevname(bdev, buf));
+   142			return -EOPNOTSUPP;
+   143		}
+   144	
+   145		return 0;
+   146	}
+   147	EXPORT_SYMBOL_GPL(bdev_dax_supported);
+   148	#endif
+   149	
 
-But on ARM64, memcpy_flushcache() is suboptimal. On ARM64, the optimal 
-implementation is that the WRITE bio does just memcpy() and the FLUSH bio 
-does arch_wb_cache_pmem() on the affected range.
-
-Why is memcpy_flushcache() is suboptimal on ARM? The ARM architecture 
-doesn't have non-temporal stores. So, memcpy_flushcache() is implemented 
-as memcpy() followed by a cache flush.
-
-Now - if you flush the cache immediatelly after memcpy, the cache is full 
-of dirty lines and the cache-flushing code has to write these lines back 
-and that is slow.
-
-If you flush the cache some time after memcpy (i.e. when the FLUSH bio is 
-received), the processor already flushed some part of the cache on its 
-own, so the cache-flushing function has less work to do and it is faster.
-
-So the conclusion is - don't use memcpy_flushcache on ARM. This problem 
-cannot be fixed by a better implementation of memcpy_flushcache.
-
-Mikulas
+---
+0-DAY kernel test infrastructure                Open Source Technology Center
+https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
