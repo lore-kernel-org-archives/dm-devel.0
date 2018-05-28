@@ -1,126 +1,54 @@
-From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [patch 4/4] dm-writecache: use new API for flushing
-Date: Mon, 28 May 2018 11:14:18 -0700
-Message-ID: <CAPcyv4jXV4aZ6wqqjVPL8J4LxwTtXnzQCLZ0Wk5oB4_0uxpg7g@mail.gmail.com>
-References: <20180519052503.325953342@debian.vm>
- <20180519052635.567438191@debian.vm>
- <CAPcyv4iEtfuVGPR0QMKcafv2XFwSj3nzxjX8cuXpXe00akAvYA@mail.gmail.com>
- <alpine.LRH.2.02.1805250213270.13894@file01.intranet.prod.int.rdu2.redhat.com>
- <20180525125126.GA9275@redhat.com>
- <CAPcyv4j-v5HGBg9JMBXt7UUyw=K_bGC7t5tQGfXM9G4qjOpFjQ@mail.gmail.com>
- <alpine.LRH.2.02.1805260246250.15978@file01.intranet.prod.int.rdu2.redhat.com>
- <CAPcyv4jwLsCNvNhgvv2DDSZuQsQXYEpKUU_5w1pTnyKj-uDBbQ@mail.gmail.com>
- <alpine.LRH.2.02.1805280922190.13486@file01.intranet.prod.int.rdu2.redhat.com>
+From: Dan Williams <dan.j.williams@intel.com>
+Subject: Re: [PATCH] dm: writecache: add DAX dependency
+Date: Mon, 28 May 2018 11:18:58 -0700
+Message-ID: <CAPcyv4gpMhBaUdy=UY9M0-2QomycGZCo+K6o+Dzjdc4jmPjrkg@mail.gmail.com>
+References: <20180528153834.2268557-1-arnd@arndb.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <alpine.LRH.2.02.1805280922190.13486-Hpncn10jQN4oNljnaZt3ZvA+iT7yCHsGwRM8/txMwJMAicBL8TP8PQ@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-nvdimm <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20180528153834.2268557-1-arnd@arndb.de>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: Mike Snitzer <snitzer@redhat.com>, Matthew Wilcox <mawilcox@microsoft.com>, Heinz Mauelshagen <heinzm@redhat.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-raid <linux-raid@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Ross Zwisler <ross.zwisler@linux.intel.com>, Shaohua Li <shli@kernel.org>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, May 28, 2018 at 6:32 AM, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+On Mon, May 28, 2018 at 8:38 AM, Arnd Bergmann <arnd@arndb.de> wrote:
+> The new dm-writecache driver inconditionally uses the dax
+> subsystem, leading to link errors in some configurations:
 >
+> drivers/md/dm-writecache.o: In function `writecache_ctr':
+> dm-writecache.c:(.text+0x1fdc): undefined reference to `dax_read_lock'
+> dm-writecache.c:(.text+0x2004): undefined reference to `dax_direct_access'
+> dm-writecache.c:(.text+0x21cc): undefined reference to `dax_read_unlock'
 >
-> On Sat, 26 May 2018, Dan Williams wrote:
+> It seems wrong to require DAX in order to build the writecache
+> driver, but that at least avoids randconfig build errors.
 >
->> On Sat, May 26, 2018 at 12:02 AM, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
->> >
->> >
->> > On Fri, 25 May 2018, Dan Williams wrote:
->> >
->> >> On Fri, May 25, 2018 at 5:51 AM, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
->> >> > On Fri, May 25 2018 at  2:17am -0400,
->> >> > Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
->> >> >
->> >> >> On Thu, 24 May 2018, Dan Williams wrote:
->> >> >>
->> >> >> > I don't want to grow driver-local wrappers for pmem. You should use
->> >> >> > memcpy_flushcache directly() and if an architecture does not define
->> >> >> > memcpy_flushcache() then don't allow building dm-writecache, i.e. this
->> >> >> > driver should 'depends on CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE'. I don't
->> >> >> > see a need to add a standalone flush operation if all relevant archs
->> >> >> > provide memcpy_flushcache(). As for commit, I'd say just use wmb()
->> >> >> > directly since all archs define it. Alternatively we could introduce
->> >> >> > memcpy_flushcache_relaxed() to be the un-ordered version of the copy
->> >> >> > routine and memcpy_flushcache() would imply a wmb().
->> >> >>
->> >> >> But memcpy_flushcache() on ARM64 is slow.
->> >>
->> >> Right, so again, what is wrong with memcpy_flushcache_relaxed() +
->> >> wmb() or otherwise making memcpy_flushcache() ordered. I do not see
->> >> that as a trailblazing requirement, I see that as typical review and a
->> >> reduction of the operation space that you are proposing.
->> >
->> > memcpy_flushcache on ARM64 is generally wrong thing to do, because it is
->> > slower than memcpy and explicit cache flush.
->> >
->> > Suppose that you want to write data to a block device and make it
->> > persistent. So you send a WRITE bio and then a FLUSH bio.
->> >
->> > Now - how to implement these two bios on persistent memory:
->> >
->> > On X86, the WRITE bio does memcpy_flushcache() and the FLUSH bio does
->> > wmb() - this is the optimal implementation.
->> >
->> > But on ARM64, memcpy_flushcache() is suboptimal. On ARM64, the optimal
->> > implementation is that the WRITE bio does just memcpy() and the FLUSH bio
->> > does arch_wb_cache_pmem() on the affected range.
->> >
->> > Why is memcpy_flushcache() is suboptimal on ARM? The ARM architecture
->> > doesn't have non-temporal stores. So, memcpy_flushcache() is implemented
->> > as memcpy() followed by a cache flush.
->> >
->> > Now - if you flush the cache immediatelly after memcpy, the cache is full
->> > of dirty lines and the cache-flushing code has to write these lines back
->> > and that is slow.
->> >
->> > If you flush the cache some time after memcpy (i.e. when the FLUSH bio is
->> > received), the processor already flushed some part of the cache on its
->> > own, so the cache-flushing function has less work to do and it is faster.
->> >
->> > So the conclusion is - don't use memcpy_flushcache on ARM. This problem
->> > cannot be fixed by a better implementation of memcpy_flushcache.
->>
->> It sounds like ARM might be better off with mapping its pmem as
->> write-through rather than write-back, and skip the explicit cache
+> Fixes: bb15b431d650 ("dm: add writecache target")
+> Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+> ---
+>  drivers/md/Kconfig | 1 +
+>  1 file changed, 1 insertion(+)
 >
-> I doubt it would perform well - write combining combines the writes into a
-> larger segments - and write-through doesn't.
->
+> diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
+> index 852c7ebe2902..f8ecf2da1edf 100644
+> --- a/drivers/md/Kconfig
+> +++ b/drivers/md/Kconfig
+> @@ -338,6 +338,7 @@ config DM_CACHE_SMQ
+>  config DM_WRITECACHE
+>         tristate "Writecache target"
+>         depends on BLK_DEV_DM
+> +       depends on DAX
 
-Last I checked write-through caching does not disable write combining
-
->> management altogether. You speak of "optimal" and "sub-optimal", but
->> what would be more clear is fio measurements of the relative IOPs and
->> latency profiles of the different approaches. The reason I am
->> continuing to push here is that reducing the operation space from
->> 'copy-flush-commit' to just 'copy' or 'copy-commit' simplifies the
->> maintenance long term.
->
-> I measured it (with nvme backing store) and late cache flushing has 12%
-> better performance than eager flushing with memcpy_flushcache().
-
-I assume what you're seeing is ARM64 over-flushing the amount of dirty
-data so it becomes more efficient to do an amortized flush at the end?
-However, that effectively makes memcpy_flushcache() unusable in the
-way it can be used on x86. You claimed that ARM does not support
-non-temporal stores, but it does, see the STNP instruction. I do not
-want to see arch specific optimizations in drivers, so either
-write-through mappings is a potential answer to remove the need to
-explicitly manage flushing, or just implement STNP hacks in
-memcpy_flushcache() like you did with MOVNT on x86.
-
-> 131836 4k iops - vs - 117016.
-
-To be clear this is memcpy_flushcache() vs memcpy + flush?
+This should probably be depends on DAX && DAX_DRIVER as we at least
+need pmem or dcssblk enabled to provide a dax capable block device for
+DM to claim.
