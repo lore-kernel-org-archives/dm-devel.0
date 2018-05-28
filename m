@@ -1,14 +1,15 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 1/2] libmultipath: print correct default for
- delay_*_checks
-Date: Mon, 28 May 2018 14:28:30 +0200
-Message-ID: <cd7a2c7d68ab481bdf7d1f0d58e5ad6e89d6ebf8.camel@suse.com>
+Subject: Re: [PATCH 2/2] multipath.conf.5: clarify property
+ whitelist handling
+Date: Mon, 28 May 2018 14:30:27 +0200
+Message-ID: <b716cadefe8330754bf51045efd3e63204f21c93.camel@suse.com>
 References: <1526510607-21144-1-git-send-email-bmarzins@redhat.com>
+	<1526510607-21144-2-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1526510607-21144-1-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1526510607-21144-2-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,17 +19,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
+To: dm-devel@redhat.com, Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
 List-Id: dm-devel.ids
 
 T24gV2VkLCAyMDE4LTA1LTE2IGF0IDE3OjQzIC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gVGhlc2Ugb3B0aW9ucyBkZWZhdWx0IHRvICJubyIsIHNvIHRoZXkgc2hvdWxkIGRpc3Bs
-YXkgdGhhdCB3aGVuIHRoZQo+IGNvbmZpZyBpcyBwcmludGVkLgo+IAo+IFNpZ25lZC1vZmYtYnk6
-IEJlbmphbWluIE1hcnppbnNraSA8Ym1hcnppbnNAcmVkaGF0LmNvbT4KPiAtLS0KPiAgbGlibXVs
-dGlwYXRoL2RpY3QuYyB8IDYgKysrKy0tCj4gIDEgZmlsZSBjaGFuZ2VkLCA0IGluc2VydGlvbnMo
-KyksIDIgZGVsZXRpb25zKC0pCj4gCgpSZXZpZXdlZC1ieTogTWFydGluIFdpbGNrIDxtd2lsY2tA
-c3VzZS5jb20+CgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLiAr
-NDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJm
-ZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJn
-KQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93
-d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+dGU6Cj4gU2lnbmVkLW9mZi1ieTogQmVuamFtaW4gTWFyemluc2tpIDxibWFyemluc0ByZWRoYXQu
+Y29tPgo+IC0tLQo+ICBtdWx0aXBhdGgvbXVsdGlwYXRoLmNvbmYuNSB8IDcgKysrLS0tLQo+ICAx
+IGZpbGUgY2hhbmdlZCwgMyBpbnNlcnRpb25zKCspLCA0IGRlbGV0aW9ucygtKQo+IAo+IGRpZmYg
+LS1naXQgYS9tdWx0aXBhdGgvbXVsdGlwYXRoLmNvbmYuNSBiL211bHRpcGF0aC9tdWx0aXBhdGgu
+Y29uZi41Cj4gaW5kZXggZjY4OTc5NS4uOTZkMWI2NiAxMDA2NDQKPiAtLS0gYS9tdWx0aXBhdGgv
+bXVsdGlwYXRoLmNvbmYuNQo+ICsrKyBiL211bHRpcGF0aC9tdWx0aXBhdGguY29uZi41Cj4gQEAg
+LTExODEsMTAgKzExODEsOSBAQCBhbmQKPiAga2V5d29yZHMuIEZvciBhIGZ1bGwgZGVzY3JpcHRp
+b24gb2YgdGhlc2Uga2V5d29yZHMgcGxlYXNlIHNlZSB0aGUKPiBcZklkZXZpY2VzXGZSCj4gIHNl
+Y3Rpb24gZGVzY3JpcHRpb24uCj4gIC5MUAo+IC1UaGUgXGZJcHJvcGVydHlcZlIgYmxhY2tsaXN0
+IGFuZCB3aGl0ZWxpc3QgaGFuZGxpbmcgaXMgZGlmZmVyZW50Cj4gZnJvbSB0aGUgdXN1YWwKPiAt
+aGFuZGxpbmcgaW4gdGhlIHNlbnNlIHRoYXQgdGhlIHdoaXRlbGlzdCBcZkloYXNcZlIgdG8gYmUg
+c2V0LAo+IG90aGVyd2lzZSB0aGUKPiAtZGV2aWNlIHdpbGwgYmUgYmxhY2tsaXN0ZWQuIEluIHRo
+ZXNlIGNhc2VzIHRoZSBtZXNzYWdlCj4gXGZJYmxhY2tsaXN0ZWQsIHVkZXYKPiAtcHJvcGVydHkg
+bWlzc2luZ1xmUiB3aWxsIGJlIGRpc3BsYXllZC4KPiArVGhlIFxmSXByb3BlcnR5XGZSIHdoaXRl
+bGlzdCBoYW5kbGluZyBpcyBkaWZmZXJlbnQgZnJvbSB0aGUgdXN1YWwKPiAraGFuZGxpbmcgaW4g
+dGhlIHNlbnNlIHRoYXQgdGhlIGRldmljZSBcZkloYXNcZlIgdG8gaGF2ZSBhIHVkZXYKPiBwcm9w
+ZXJ0eSB0aGF0Cj4gK21hdGNoZXMgdGhlIHdoaXRlbGlzdCwgb3RoZXJ3aXNlIHRoZSBkZXZpY2Ug
+d2lsbCBiZSBibGFja2xpc3RlZC4gSW4KPiB0aGVzZSBjYXNlcyB0aGUgbWVzc2FnZSBcZklibGFj
+a2xpc3RlZCwgdWRldiBwcm9wZXJ0eSBtaXNzaW5nXGZSIHdpbGwKPiBiZSBkaXNwbGF5ZWQuCgpB
+Q0sgaW4gZ2VuZXJhbCwgYnV0IEknbSBwcmVwYXJpbmcgYSBsYXJnZXIgdXBkYXRlIGZvciB0aGUg
+ZG9jdW1lbnRhdGlvbgpvZiB0aGUgYmxhY2tsaXN0IC8gd2hpdGVsaXN0IGhhbmRsaW5nLCB0byBi
+ZSBzdWJtaXR0ZWQgdmVyeSBzb29uLCB3aGljaAptaWdodCBvYnNvbGV0ZSB0aGlzLgoKTWFydGlu
+CgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTEx
+IDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5l
+IFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0t
+ZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0
+LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
