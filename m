@@ -1,82 +1,41 @@
-From: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [patch 4/4] dm-writecache: use new API for flushing
-Date: Mon, 28 May 2018 09:52:59 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1805280943460.16538@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20180519052503.325953342@debian.vm>
- <20180519052635.567438191@debian.vm> <20180522063946.GB8054@infradead.org>
- <20180522184103.GA25826@redhat.com>
- <CAPcyv4g395RccdEPF=sCu5RdCH9zwD+GvOfSp7-F0Oh64CeDgA@mail.gmail.com>
- <20180522191942.GB25904@redhat.com>
- <CAPcyv4hWswV=VCfB7KatoW_zc-kUUju2jD45N-Gsg4sW-XFe-A@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <CAPcyv4hWswV=VCfB7KatoW_zc-kUUju2jD45N-Gsg4sW-XFe-A-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-nvdimm <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: [PATCH] dm: writecache: add DAX dependency
+Date: Mon, 28 May 2018 17:38:10 +0200
+Message-ID: <20180528153834.2268557-1-arnd@arndb.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>, Shaohua Li <shli@kernel.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
+Cc: Matthew Wilcox <mawilcox@microsoft.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, linux-fsdevel@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Dan Williams <dan.j.williams@intel.com>, Heinz Mauelshagen <heinzm@redhat.com>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
+The new dm-writecache driver inconditionally uses the dax
+subsystem, leading to link errors in some configurations:
 
+drivers/md/dm-writecache.o: In function `writecache_ctr':
+dm-writecache.c:(.text+0x1fdc): undefined reference to `dax_read_lock'
+dm-writecache.c:(.text+0x2004): undefined reference to `dax_direct_access'
+dm-writecache.c:(.text+0x21cc): undefined reference to `dax_read_unlock'
 
-On Tue, 22 May 2018, Dan Williams wrote:
+It seems wrong to require DAX in order to build the writecache
+driver, but that at least avoids randconfig build errors.
 
-> >> Except I'm being responsive.
-> >
-> > Except you're looking to immediately punt to linux-arm-kernel ;)
-> 
-> Well, I'm not, not really. I'm saying drop ARM support, it's not ready.
+Fixes: bb15b431d650 ("dm: add writecache target")
+Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+---
+ drivers/md/Kconfig | 1 +
+ 1 file changed, 1 insertion(+)
 
-This is the worst thing to do - because once late cache flushing is 
-dropped from the dm-writecache target, it could hardly be reintroduced 
-again.
-
-> >> I agree with Christoph that we should
-> >> build pmem helpers at an architecture level and not per-driver. Let's
-> >> make this driver depend on ARCH_HAS_PMEM_API and require ARM to catch
-> >> up to x86 in this space. We already have PowerPC enabling PMEM API, so
-> >> I don't see an unreasonable barrier to ask the same of ARM. This patch
-> >> is not even cc'd to linux-arm-kernel. Has the subject been broached
-> >> with them?
-> >
-> > No idea.  Not by me.
-> >
-> > The thing is, I'm no expert in pmem.  You are.  Coordinating the change
-> > with ARM et al feels unnecessarily limiting and quicky moves outside my
-> > control.
-> >
-> > Serious question: Why can't this code land in this dm-writecache target
-> > and then be lifted (or obsoleted)?
-> 
-> Because we already have an API, and we don't want to promote local
-> solutions to global problems, or carry  unnecessary technical debt.
-> 
-> >
-> > But if you think it worthwhile to force ARM to step up then fine.  That
-> > does limit the availability of using writecache on ARM while they get
-> > the PMEM API together.
-> >
-> > I'll do whatever you want.. just put the smack down and tell me how it
-> > is ;)
-> 
-> I'd say just control the variables you can control. Drop the ARM
-> support if you want to move forward and propose extensions / updates
-
-What do we gain by dropping it?
-
-> to the pmem api for x86 and I'll help push those since I was involved
-> in pushing the x86 pmem api in the first instance. That way you don't
-> need to touch this driver as new archs add their pmem api enabling.
-
-The pmem API is x86-centric - that the problem.
-
-Mikulas
+diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
+index 852c7ebe2902..f8ecf2da1edf 100644
+--- a/drivers/md/Kconfig
++++ b/drivers/md/Kconfig
+@@ -338,6 +338,7 @@ config DM_CACHE_SMQ
+ config DM_WRITECACHE
+ 	tristate "Writecache target"
+ 	depends on BLK_DEV_DM
++	depends on DAX
+ 	---help---
+ 	   The writecache target caches writes on persistent memory or SSD.
+ 	   It is intended for databases or other programs that need extremely
+-- 
+2.9.0
