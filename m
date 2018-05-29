@@ -1,47 +1,53 @@
-From: Muneendra <muneendra.kumar@broadcom.com>
-Subject: [PATCH] Update in the description of
-	marginal_path_err_rate_threshold
-Date: Mon, 28 May 2018 02:25:51 -0700
-Message-ID: <20180528092551.16131-1-muneendra.kumar@broadcom.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm: writecache: add DAX dependency
+Date: Tue, 29 May 2018 09:06:01 -0400
+Message-ID: <20180529130601.GA31628@redhat.com>
+References: <20180528153834.2268557-1-arnd@arndb.de>
+ <CAPcyv4gpMhBaUdy=UY9M0-2QomycGZCo+K6o+Dzjdc4jmPjrkg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: muneendra.kumar@broadcom.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CAPcyv4gpMhBaUdy=UY9M0-2QomycGZCo+K6o+Dzjdc4jmPjrkg@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Dan Williams <dan.j.williams@intel.com>
+Cc: Arnd Bergmann <arnd@arndb.de>, Mikulas Patocka <mpatocka@redhat.com>, Shaohua Li <shli@kernel.org>, Alasdair Kergon <agk@redhat.com>, device-mapper development <dm-devel@redhat.com>, Matthew Wilcox <mawilcox@microsoft.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Heinz Mauelshagen <heinzm@redhat.com>, linux-raid <linux-raid@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-The multipath.conf.5 description of marginal_path_err_rate_threshold,
-states that the path will not reinstate for
-\fImarginal_path_err_recheck_gap_time\fR seconds,
-where it should be marginal_path_err_recheck_gap_time seconds.
+On Mon, May 28 2018 at  2:18pm -0400,
+Dan Williams <dan.j.williams@intel.com> wrote:
 
-Signed-off-by: Muneendra <muneendra.kumar@broadcom.com>
----
- multipath/multipath.conf.5 | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+> On Mon, May 28, 2018 at 8:38 AM, Arnd Bergmann <arnd@arndb.de> wrote:
+> > The new dm-writecache driver inconditionally uses the dax
+> > subsystem, leading to link errors in some configurations:
+> >
+> > drivers/md/dm-writecache.o: In function `writecache_ctr':
+> > dm-writecache.c:(.text+0x1fdc): undefined reference to `dax_read_lock'
+> > dm-writecache.c:(.text+0x2004): undefined reference to `dax_direct_access'
+> > dm-writecache.c:(.text+0x21cc): undefined reference to `dax_read_unlock'
+> >
+> > It seems wrong to require DAX in order to build the writecache
+> > driver, but that at least avoids randconfig build errors.
+> >
+> > Fixes: bb15b431d650 ("dm: add writecache target")
+> > Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+> > ---
+> >  drivers/md/Kconfig | 1 +
+> >  1 file changed, 1 insertion(+)
+> >
+> > diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
+> > index 852c7ebe2902..f8ecf2da1edf 100644
+> > --- a/drivers/md/Kconfig
+> > +++ b/drivers/md/Kconfig
+> > @@ -338,6 +338,7 @@ config DM_CACHE_SMQ
+> >  config DM_WRITECACHE
+> >         tristate "Writecache target"
+> >         depends on BLK_DEV_DM
+> > +       depends on DAX
+> 
+> This should probably be depends on DAX && DAX_DRIVER as we at least
+> need pmem or dcssblk enabled to provide a dax capable block device for
+> DM to claim.
 
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index f689795..9f58520 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -900,7 +900,7 @@ The error rate threshold as a permillage (1/1000). One of the four parameters
- of supporting path check based on accounting IO error such as intermittent
- error. Refer to \fImarginal_path_err_sample_time\fR. If the rate of IO errors
- on a particular path is greater than this parameter, then the path will not
--reinstate for \fImarginal_path_err_rate_threshold\fR seconds unless there is
-+reinstate for \fImarginal_path_err_recheck_gap_time\fR seconds unless there is
- only one active path.
- .RS
- .TP
--- 
-1.8.3.1
+But dm-writecache is meant to be used for normal SSD even if PMEM isn't
+available in the kernel.
