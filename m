@@ -1,59 +1,55 @@
-From: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: [PATCH v2 7/7] dm-error: remove unnecessary direct_access() stub
-Date: Tue, 29 May 2018 13:51:06 -0600
-Message-ID: <20180529195106.14268-8-ross.zwisler@linux.intel.com>
-References: <20180529195106.14268-1-ross.zwisler@linux.intel.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-writecache: fix compilation issue with !DAX
+Date: Tue, 29 May 2018 15:57:40 -0400
+Message-ID: <20180529195740.GA386@redhat.com>
+References: <20180528153834.2268557-1-arnd@arndb.de>
+ <20180529175216.24937-1-ross.zwisler@linux.intel.com>
+ <20180529180823.GA32763@redhat.com>
+ <CAPcyv4iF8oAGDKcWP++-bw5OcfmkSTPHCAw1XZvVRTz4evJvGw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <20180529195106.14268-1-ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Toshi Kani <toshi.kani-ZPxbGqLxI0U@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CAPcyv4iF8oAGDKcWP++-bw5OcfmkSTPHCAw1XZvVRTz4evJvGw@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Dan Williams <dan.j.williams@intel.com>
+Cc: Ross Zwisler <ross.zwisler@linux.intel.com>, Arnd Bergmann <arnd@arndb.de>, Mikulas Patocka <mpatocka@redhat.com>, Shaohua Li <shli@kernel.org>, Alasdair Kergon <agk@redhat.com>, device-mapper development <dm-devel@redhat.com>, Matthew Wilcox <mawilcox@microsoft.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Heinz Mauelshagen <heinzm@redhat.com>, linux-raid <linux-raid@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-This stub was added so that we could use dm-error with
-DM_TYPE_DAX_BIO_BASED mode devices.  That mode and the transition issues
-associated with it no longer exist, so we can remove this dead code.
+On Tue, May 29 2018 at  2:40pm -0400,
+Dan Williams <dan.j.williams@intel.com> wrote:
 
-Signed-off-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
----
- drivers/md/dm-target.c | 7 -------
- 1 file changed, 7 deletions(-)
+> On Tue, May 29, 2018 at 11:08 AM, Mike Snitzer <snitzer@redhat.com> wrote:
+> > On Tue, May 29 2018 at  1:52pm -0400,
+> > Ross Zwisler <ross.zwisler@linux.intel.com> wrote:
+> >
+> >> As reported by Arnd (https://lkml.org/lkml/2018/5/28/1697), dm-writecache
+> >> will fail with link errors in configs where DAX isn't present:
+> >>
+> >> drivers/md/dm-writecache.o: In function `writecache_ctr':
+> >> dm-writecache.c:(.text+0x1fdc): undefined reference to `dax_read_lock'
+> >> dm-writecache.c:(.text+0x2004): undefined reference to `dax_direct_access'
+> >> dm-writecache.c:(.text+0x21cc): undefined reference to `dax_read_unlock'
+> >>
+> >> Fix this by following the lead of the other DM modules and wrapping calls
+> >> to the generic DAX code in #if IS_ENABLED(CONFIG_DAX_DRIVER) blocks.
+> >>
+> >> We also expand the failure case for the 'p' (persistent memory) flag so
+> >> that fails on both architectures that don't support persistent memory and
+> >> on kernels that don't have DAX support configured.  This prevents us from
+> >> ever hitting the BUG() in the persistent_memory_claim() stub.
+> >>
+> >> Signed-off-by: Ross Zwisler <ross.zwisler@linux.intel.com>
+> >> Reported-by: Arnd Bergmann <arnd@arndb.de>
+> >
+> > Thanks, I've picked this up.
+> 
+> ...I assume you're also going to let the 'pmem api' discussion resolve
+> before this all goes upstream?
 
-diff --git a/drivers/md/dm-target.c b/drivers/md/dm-target.c
-index 314d17ca6466..c4dbc15f7862 100644
---- a/drivers/md/dm-target.c
-+++ b/drivers/md/dm-target.c
-@@ -140,12 +140,6 @@ static void io_err_release_clone_rq(struct request *clone)
- {
- }
- 
--static long io_err_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
--		long nr_pages, void **kaddr, pfn_t *pfn)
--{
--	return -EIO;
--}
--
- static struct target_type error_target = {
- 	.name = "error",
- 	.version = {1, 5, 0},
-@@ -155,7 +149,6 @@ static struct target_type error_target = {
- 	.map  = io_err_map,
- 	.clone_and_map_rq = io_err_clone_and_map_rq,
- 	.release_clone_rq = io_err_release_clone_rq,
--	.direct_access = io_err_dax_direct_access,
- };
- 
- int __init dm_target_init(void)
--- 
-2.14.3
+Yeah, I'm going to pivot back to that and put time to it shortly.  If
+dm-writecache has to wait another cycle (so 4.19 inclusion), while
+unfortunate, it wouldn't be the end of the world.
+
+I look forward to your continued help, thanks.
+Mike
