@@ -1,8 +1,7 @@
 From: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: [PATCH v2 2/7] dax: change bdev_dax_supported() to support boolean
- returns
-Date: Tue, 29 May 2018 13:51:01 -0600
-Message-ID: <20180529195106.14268-3-ross.zwisler@linux.intel.com>
+Subject: [PATCH v2 3/7] dm: fix test for DAX device support
+Date: Tue, 29 May 2018 13:51:02 -0600
+Message-ID: <20180529195106.14268-4-ross.zwisler@linux.intel.com>
 References: <20180529195106.14268-1-ross.zwisler@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,189 +18,46 @@ List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
 Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 To: Toshi Kani <toshi.kani-ZPxbGqLxI0U@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-Cc: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 List-Id: dm-devel.ids
 
-From: Dave Jiang <dave.jiang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Currently device_supports_dax() just checks to see if the QUEUE_FLAG_DAX
+flag is set on the device's request queue to decide whether or not the
+device supports filesystem DAX.  This is insufficient because there are
+devices like PMEM namespaces in raw mode which have QUEUE_FLAG_DAX set but
+which don't actually support DAX.
 
-The function return values are confusing with the way the function is
-named. We expect a true or false return value but it actually returns
-0/-errno.  This makes the code very confusing. Changing the return values
-to return a bool where if DAX is supported then return true and no DAX
-support returns false.
+This means that you could create a dm-linear device, for example, where the
+first part of the dm-linear device was a PMEM namespace in fsdax mode and
+the second part was a PMEM namespace in raw mode.  Both DM and the
+filesystem you put on that dm-linear device would think the whole device
+supports DAX, which would lead to bad behavior once your raw PMEM namespace
+part using DAX needed struct page for something.
 
-Signed-off-by: Dave Jiang <dave.jiang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Fix this by using bdev_dax_supported() like filesystems do at mount time.
+This checks for raw mode and also performs other tests like checking to
+make sure the dax_direct_access() path works.
+
 Signed-off-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Fixes: commit 545ed20e6df6 ("dm: add infrastructure for DAX support")
 ---
- drivers/dax/super.c | 16 ++++++++--------
- fs/ext2/super.c     |  3 +--
- fs/ext4/super.c     |  3 +--
- fs/xfs/xfs_ioctl.c  |  4 ++--
- fs/xfs/xfs_super.c  | 12 ++++++------
- include/linux/dax.h |  8 ++++----
- 6 files changed, 22 insertions(+), 24 deletions(-)
+ drivers/md/dm-table.c | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
 
-diff --git a/drivers/dax/super.c b/drivers/dax/super.c
-index 3943feb9a090..1d7bd96511f0 100644
---- a/drivers/dax/super.c
-+++ b/drivers/dax/super.c
-@@ -80,9 +80,9 @@ EXPORT_SYMBOL_GPL(fs_dax_get_by_bdev);
-  * This is a library function for filesystems to check if the block device
-  * can be mounted with dax option.
-  *
-- * Return: negative errno if unsupported, 0 if supported.
-+ * Return: true if supported, false if unsupported
-  */
--int __bdev_dax_supported(struct block_device *bdev, int blocksize)
-+bool __bdev_dax_supported(struct block_device *bdev, int blocksize)
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 0589a4da12bb..5bb994b012ca 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -885,9 +885,7 @@ EXPORT_SYMBOL_GPL(dm_table_set_type);
+ static int device_supports_dax(struct dm_target *ti, struct dm_dev *dev,
+ 			       sector_t start, sector_t len, void *data)
  {
- 	struct dax_device *dax_dev;
- 	pgoff_t pgoff;
-@@ -95,21 +95,21 @@ int __bdev_dax_supported(struct block_device *bdev, int blocksize)
- 	if (blocksize != PAGE_SIZE) {
- 		pr_debug("%s: error: unsupported blocksize for dax\n",
- 				bdevname(bdev, buf));
--		return -EINVAL;
-+		return false;
- 	}
- 
- 	err = bdev_dax_pgoff(bdev, 0, PAGE_SIZE, &pgoff);
- 	if (err) {
- 		pr_debug("%s: error: unaligned partition for dax\n",
- 				bdevname(bdev, buf));
--		return err;
-+		return false;
- 	}
- 
- 	dax_dev = dax_get_by_host(bdev->bd_disk->disk_name);
- 	if (!dax_dev) {
- 		pr_debug("%s: error: device does not support dax\n",
- 				bdevname(bdev, buf));
--		return -EOPNOTSUPP;
-+		return false;
- 	}
- 
- 	id = dax_read_lock();
-@@ -121,7 +121,7 @@ int __bdev_dax_supported(struct block_device *bdev, int blocksize)
- 	if (len < 1) {
- 		pr_debug("%s: error: dax access failed (%ld)\n",
- 				bdevname(bdev, buf), len);
--		return len < 0 ? len : -EIO;
-+		return false;
- 	}
- 
- 	if (IS_ENABLED(CONFIG_FS_DAX_LIMITED) && pfn_t_special(pfn)) {
-@@ -139,10 +139,10 @@ int __bdev_dax_supported(struct block_device *bdev, int blocksize)
- 	} else {
- 		pr_debug("%s: error: dax support not enabled\n",
- 				bdevname(bdev, buf));
--		return -EOPNOTSUPP;
-+		return false;
- 	}
- 
--	return 0;
-+	return true;
- }
- EXPORT_SYMBOL_GPL(__bdev_dax_supported);
- #endif
-diff --git a/fs/ext2/super.c b/fs/ext2/super.c
-index 9627c3054b5c..c09289a42dc5 100644
---- a/fs/ext2/super.c
-+++ b/fs/ext2/super.c
-@@ -961,8 +961,7 @@ static int ext2_fill_super(struct super_block *sb, void *data, int silent)
- 	blocksize = BLOCK_SIZE << le32_to_cpu(sbi->s_es->s_log_block_size);
- 
- 	if (sbi->s_mount_opt & EXT2_MOUNT_DAX) {
--		err = bdev_dax_supported(sb->s_bdev, blocksize);
--		if (err) {
-+		if (!bdev_dax_supported(sb->s_bdev, blocksize)) {
- 			ext2_msg(sb, KERN_ERR,
- 				"DAX unsupported by block device. Turning off DAX.");
- 			sbi->s_mount_opt &= ~EXT2_MOUNT_DAX;
-diff --git a/fs/ext4/super.c b/fs/ext4/super.c
-index 089170e99895..2e1622907f4a 100644
---- a/fs/ext4/super.c
-+++ b/fs/ext4/super.c
-@@ -3732,8 +3732,7 @@ static int ext4_fill_super(struct super_block *sb, void *data, int silent)
- 					" that may contain inline data");
- 			sbi->s_mount_opt &= ~EXT4_MOUNT_DAX;
- 		}
--		err = bdev_dax_supported(sb->s_bdev, blocksize);
--		if (err) {
-+		if (!bdev_dax_supported(sb->s_bdev, blocksize)) {
- 			ext4_msg(sb, KERN_ERR,
- 				"DAX unsupported by block device. Turning off DAX.");
- 			sbi->s_mount_opt &= ~EXT4_MOUNT_DAX;
-diff --git a/fs/xfs/xfs_ioctl.c b/fs/xfs/xfs_ioctl.c
-index 0effd46b965f..2c70a0a4f59f 100644
---- a/fs/xfs/xfs_ioctl.c
-+++ b/fs/xfs/xfs_ioctl.c
-@@ -1103,8 +1103,8 @@ xfs_ioctl_setattr_dax_invalidate(
- 	if (fa->fsx_xflags & FS_XFLAG_DAX) {
- 		if (!(S_ISREG(inode->i_mode) || S_ISDIR(inode->i_mode)))
- 			return -EINVAL;
--		if (bdev_dax_supported(xfs_find_bdev_for_inode(VFS_I(ip)),
--				sb->s_blocksize) < 0)
-+		if (!bdev_dax_supported(xfs_find_bdev_for_inode(VFS_I(ip)),
-+				sb->s_blocksize))
- 			return -EINVAL;
- 	}
- 
-diff --git a/fs/xfs/xfs_super.c b/fs/xfs/xfs_super.c
-index 62188c2a4c36..86915dc40eed 100644
---- a/fs/xfs/xfs_super.c
-+++ b/fs/xfs/xfs_super.c
-@@ -1690,17 +1690,17 @@ xfs_fs_fill_super(
- 		sb->s_flags |= SB_I_VERSION;
- 
- 	if (mp->m_flags & XFS_MOUNT_DAX) {
--		int	error2 = 0;
-+		bool rtdev_is_dax = false, datadev_is_dax;
- 
- 		xfs_warn(mp,
- 		"DAX enabled. Warning: EXPERIMENTAL, use at your own risk");
- 
--		error = bdev_dax_supported(mp->m_ddev_targp->bt_bdev,
--				sb->s_blocksize);
-+		datadev_is_dax = bdev_dax_supported(mp->m_ddev_targp->bt_bdev,
-+			sb->s_blocksize);
- 		if (mp->m_rtdev_targp)
--			error2 = bdev_dax_supported(mp->m_rtdev_targp->bt_bdev,
--					sb->s_blocksize);
--		if (error && error2) {
-+			rtdev_is_dax = bdev_dax_supported(
-+				mp->m_rtdev_targp->bt_bdev, sb->s_blocksize);
-+		if (!rtdev_is_dax && !datadev_is_dax) {
- 			xfs_alert(mp,
- 			"DAX unsupported by block device. Turning off DAX.");
- 			mp->m_flags &= ~XFS_MOUNT_DAX;
-diff --git a/include/linux/dax.h b/include/linux/dax.h
-index 2a4f7295c12b..c99692ddd4b5 100644
---- a/include/linux/dax.h
-+++ b/include/linux/dax.h
-@@ -64,8 +64,8 @@ static inline bool dax_write_cache_enabled(struct dax_device *dax_dev)
- struct writeback_control;
- int bdev_dax_pgoff(struct block_device *, sector_t, size_t, pgoff_t *pgoff);
- #if IS_ENABLED(CONFIG_FS_DAX)
--int __bdev_dax_supported(struct block_device *bdev, int blocksize);
--static inline int bdev_dax_supported(struct block_device *bdev, int blocksize)
-+bool __bdev_dax_supported(struct block_device *bdev, int blocksize);
-+static inline bool bdev_dax_supported(struct block_device *bdev, int blocksize)
- {
- 	return __bdev_dax_supported(bdev, blocksize);
- }
-@@ -84,10 +84,10 @@ struct dax_device *fs_dax_get_by_bdev(struct block_device *bdev);
- int dax_writeback_mapping_range(struct address_space *mapping,
- 		struct block_device *bdev, struct writeback_control *wbc);
- #else
--static inline int bdev_dax_supported(struct block_device *bdev,
-+static inline bool bdev_dax_supported(struct block_device *bdev,
- 		int blocksize)
- {
--	return -EOPNOTSUPP;
-+	return false;
+-	struct request_queue *q = bdev_get_queue(dev->bdev);
+-
+-	return q && blk_queue_dax(q);
++	return bdev_dax_supported(dev->bdev, PAGE_SIZE);
  }
  
- static inline struct dax_device *fs_dax_get_by_host(const char *host)
+ static bool dm_table_supports_dax(struct dm_table *t)
 -- 
 2.14.3
