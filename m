@@ -1,42 +1,88 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: Re: dm-writecache: fix compilation issue with !DAX
-Date: Tue, 29 May 2018 11:40:50 -0700
-Message-ID: <CAPcyv4iF8oAGDKcWP++-bw5OcfmkSTPHCAw1XZvVRTz4evJvGw@mail.gmail.com>
-References: <20180528153834.2268557-1-arnd@arndb.de> <20180529175216.24937-1-ross.zwisler@linux.intel.com>
- <20180529180823.GA32763@redhat.com>
+From: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: [PATCH v2 0/7] Fix DM DAX handling
+Date: Tue, 29 May 2018 13:50:59 -0600
+Message-ID: <20180529195106.14268-1-ross.zwisler@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180529180823.GA32763@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Ross Zwisler <ross.zwisler@linux.intel.com>, Arnd Bergmann <arnd@arndb.de>, Mikulas Patocka <mpatocka@redhat.com>, Shaohua Li <shli@kernel.org>, Alasdair Kergon <agk@redhat.com>, device-mapper development <dm-devel@redhat.com>, Matthew Wilcox <mawilcox@microsoft.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Heinz Mauelshagen <heinzm@redhat.com>, linux-raid <linux-raid@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Toshi Kani <toshi.kani-ZPxbGqLxI0U@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 List-Id: dm-devel.ids
 
-On Tue, May 29, 2018 at 11:08 AM, Mike Snitzer <snitzer@redhat.com> wrote:
-> On Tue, May 29 2018 at  1:52pm -0400,
-> Ross Zwisler <ross.zwisler@linux.intel.com> wrote:
->
->> As reported by Arnd (https://lkml.org/lkml/2018/5/28/1697), dm-writecache
->> will fail with link errors in configs where DAX isn't present:
->>
->> drivers/md/dm-writecache.o: In function `writecache_ctr':
->> dm-writecache.c:(.text+0x1fdc): undefined reference to `dax_read_lock'
->> dm-writecache.c:(.text+0x2004): undefined reference to `dax_direct_access'
->> dm-writecache.c:(.text+0x21cc): undefined reference to `dax_read_unlock'
->>
->> Fix this by following the lead of the other DM modules and wrapping calls
->> to the generic DAX code in #if IS_ENABLED(CONFIG_DAX_DRIVER) blocks.
->>
->> We also expand the failure case for the 'p' (persistent memory) flag so
->> that fails on both architectures that don't support persistent memory and
->> on kernels that don't have DAX support configured.  This prevents us from
->> ever hitting the BUG() in the persistent_memory_claim() stub.
->>
->> Signed-off-by: Ross Zwisler <ross.zwisler@linux.intel.com>
->> Reported-by: Arnd Bergmann <arnd@arndb.de>
->
-> Thanks, I've picked this up.
+Changes from v1:
+ * Reworked patches 1 and 2 so that the __bdev_dax_supported() function
+   stays hidden behind the bdev_dax_supported() wrapper.  This is needed
+   to prevent compilation errors in configs where CONFIG_FS_DAX isn't
+   defined. (0-day)
 
-...I assume you're also going to let the 'pmem api' discussion resolve
-before this all goes upstream?
+ * Added Eric's Reviewed-by to patch 1.  I did this in spite of the
+   bdev_dax_supported() changes because they were minor and I think
+   Eric's review was focused on the XFS parts.
+
+---
+
+This series fixes a few issues that I found with DM's handling of DAX
+devices.  Here are some of the issues I found:
+
+ * We can create a dm-stripe or dm-linear device which is made up of an
+   fsdax PMEM namespace and a raw PMEM namespace but which can hold a
+   filesystem mounted with the -o dax mount option.  DAX operations to
+   the raw PMEM namespace part lack struct page and can fail in
+   interesting/unexpected ways when doing things like fork(), examining
+   memory with gdb, etc.
+
+ * We can create a dm-stripe or dm-linear device which is made up of an
+   fsdax PMEM namespace and a BRD ramdisk which can hold a filesystem
+   mounted with the -o dax mount option.  All I/O to this filesystem
+   will fail.
+
+ * In DM you can't transition a dm target which could possibly support
+   DAX (mode DM_TYPE_DAX_BIO_BASED) to one which can't support DAX
+   (mode DM_TYPE_BIO_BASED), even if you never use DAX.
+
+The first 2 patches in this series are prep work from Darrick and Dave
+which improve bdev_dax_supported().  The last 5 problems fix the above
+mentioned problems in DM.  I feel that this series simplifies the
+handling of DAX devices in DM, and the last 5 DM-related patches have a
+net code reduction of 50 lines.
+
+Darrick J. Wong (1):
+  fs: allow per-device dax status checking for filesystems
+
+Dave Jiang (1):
+  dax: change bdev_dax_supported() to support boolean returns
+
+Ross Zwisler (5):
+  dm: fix test for DAX device support
+  dm: prevent DAX mounts if not supported
+  dm: remove DM_TYPE_DAX_BIO_BASED dm_queue_mode
+  dm-snap: remove unnecessary direct_access() stub
+  dm-error: remove unnecessary direct_access() stub
+
+ drivers/dax/super.c           | 40 ++++++++++++++++++++--------------------
+ drivers/md/dm-ioctl.c         | 16 ++++++----------
+ drivers/md/dm-snap.c          |  8 --------
+ drivers/md/dm-table.c         | 29 +++++++++++------------------
+ drivers/md/dm-target.c        |  7 -------
+ drivers/md/dm.c               |  7 ++-----
+ fs/ext2/super.c               |  3 +--
+ fs/ext4/super.c               |  3 +--
+ fs/xfs/xfs_ioctl.c            |  3 ++-
+ fs/xfs/xfs_iops.c             | 30 +++++++++++++++++++++++++-----
+ fs/xfs/xfs_super.c            | 10 ++++++++--
+ include/linux/dax.h           | 11 ++++++-----
+ include/linux/device-mapper.h |  8 ++++++--
+ 13 files changed, 88 insertions(+), 87 deletions(-)
+
+-- 
+2.14.3
