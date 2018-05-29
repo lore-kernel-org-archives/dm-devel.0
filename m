@@ -1,55 +1,223 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-writecache: fix compilation issue with !DAX
-Date: Tue, 29 May 2018 15:57:40 -0400
-Message-ID: <20180529195740.GA386@redhat.com>
-References: <20180528153834.2268557-1-arnd@arndb.de>
- <20180529175216.24937-1-ross.zwisler@linux.intel.com>
- <20180529180823.GA32763@redhat.com>
- <CAPcyv4iF8oAGDKcWP++-bw5OcfmkSTPHCAw1XZvVRTz4evJvGw@mail.gmail.com>
+From: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v2 2/7] dax: change bdev_dax_supported() to support
+ boolean returns
+Date: Tue, 29 May 2018 14:25:10 -0700
+Message-ID: <20180529212510.GJ30110@magnolia>
+References: <20180529195106.14268-1-ross.zwisler@linux.intel.com>
+ <20180529195106.14268-3-ross.zwisler@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <CAPcyv4iF8oAGDKcWP++-bw5OcfmkSTPHCAw1XZvVRTz4evJvGw@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Dan Williams <dan.j.williams@intel.com>
-Cc: Ross Zwisler <ross.zwisler@linux.intel.com>, Arnd Bergmann <arnd@arndb.de>, Mikulas Patocka <mpatocka@redhat.com>, Shaohua Li <shli@kernel.org>, Alasdair Kergon <agk@redhat.com>, device-mapper development <dm-devel@redhat.com>, Matthew Wilcox <mawilcox@microsoft.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Heinz Mauelshagen <heinzm@redhat.com>, linux-raid <linux-raid@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+In-Reply-To: <20180529195106.14268-3-ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: dm-devel.ids
 
-On Tue, May 29 2018 at  2:40pm -0400,
-Dan Williams <dan.j.williams@intel.com> wrote:
-
-> On Tue, May 29, 2018 at 11:08 AM, Mike Snitzer <snitzer@redhat.com> wrote:
-> > On Tue, May 29 2018 at  1:52pm -0400,
-> > Ross Zwisler <ross.zwisler@linux.intel.com> wrote:
-> >
-> >> As reported by Arnd (https://lkml.org/lkml/2018/5/28/1697), dm-writecache
-> >> will fail with link errors in configs where DAX isn't present:
-> >>
-> >> drivers/md/dm-writecache.o: In function `writecache_ctr':
-> >> dm-writecache.c:(.text+0x1fdc): undefined reference to `dax_read_lock'
-> >> dm-writecache.c:(.text+0x2004): undefined reference to `dax_direct_access'
-> >> dm-writecache.c:(.text+0x21cc): undefined reference to `dax_read_unlock'
-> >>
-> >> Fix this by following the lead of the other DM modules and wrapping calls
-> >> to the generic DAX code in #if IS_ENABLED(CONFIG_DAX_DRIVER) blocks.
-> >>
-> >> We also expand the failure case for the 'p' (persistent memory) flag so
-> >> that fails on both architectures that don't support persistent memory and
-> >> on kernels that don't have DAX support configured.  This prevents us from
-> >> ever hitting the BUG() in the persistent_memory_claim() stub.
-> >>
-> >> Signed-off-by: Ross Zwisler <ross.zwisler@linux.intel.com>
-> >> Reported-by: Arnd Bergmann <arnd@arndb.de>
-> >
-> > Thanks, I've picked this up.
+On Tue, May 29, 2018 at 01:51:01PM -0600, Ross Zwisler wrote:
+> From: Dave Jiang <dave.jiang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 > 
-> ...I assume you're also going to let the 'pmem api' discussion resolve
-> before this all goes upstream?
+> The function return values are confusing with the way the function is
+> named. We expect a true or false return value but it actually returns
+> 0/-errno.  This makes the code very confusing. Changing the return values
+> to return a bool where if DAX is supported then return true and no DAX
+> support returns false.
+> 
+> Signed-off-by: Dave Jiang <dave.jiang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> Signed-off-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 
-Yeah, I'm going to pivot back to that and put time to it shortly.  If
-dm-writecache has to wait another cycle (so 4.19 inclusion), while
-unfortunate, it wouldn't be the end of the world.
+Looks ok, do you want me to pull the first two patches through the xfs
+tree?
 
-I look forward to your continued help, thanks.
-Mike
+Reviewed-by: Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+
+--D
+
+> ---
+>  drivers/dax/super.c | 16 ++++++++--------
+>  fs/ext2/super.c     |  3 +--
+>  fs/ext4/super.c     |  3 +--
+>  fs/xfs/xfs_ioctl.c  |  4 ++--
+>  fs/xfs/xfs_super.c  | 12 ++++++------
+>  include/linux/dax.h |  8 ++++----
+>  6 files changed, 22 insertions(+), 24 deletions(-)
+> 
+> diff --git a/drivers/dax/super.c b/drivers/dax/super.c
+> index 3943feb9a090..1d7bd96511f0 100644
+> --- a/drivers/dax/super.c
+> +++ b/drivers/dax/super.c
+> @@ -80,9 +80,9 @@ EXPORT_SYMBOL_GPL(fs_dax_get_by_bdev);
+>   * This is a library function for filesystems to check if the block device
+>   * can be mounted with dax option.
+>   *
+> - * Return: negative errno if unsupported, 0 if supported.
+> + * Return: true if supported, false if unsupported
+>   */
+> -int __bdev_dax_supported(struct block_device *bdev, int blocksize)
+> +bool __bdev_dax_supported(struct block_device *bdev, int blocksize)
+>  {
+>  	struct dax_device *dax_dev;
+>  	pgoff_t pgoff;
+> @@ -95,21 +95,21 @@ int __bdev_dax_supported(struct block_device *bdev, int blocksize)
+>  	if (blocksize != PAGE_SIZE) {
+>  		pr_debug("%s: error: unsupported blocksize for dax\n",
+>  				bdevname(bdev, buf));
+> -		return -EINVAL;
+> +		return false;
+>  	}
+>  
+>  	err = bdev_dax_pgoff(bdev, 0, PAGE_SIZE, &pgoff);
+>  	if (err) {
+>  		pr_debug("%s: error: unaligned partition for dax\n",
+>  				bdevname(bdev, buf));
+> -		return err;
+> +		return false;
+>  	}
+>  
+>  	dax_dev = dax_get_by_host(bdev->bd_disk->disk_name);
+>  	if (!dax_dev) {
+>  		pr_debug("%s: error: device does not support dax\n",
+>  				bdevname(bdev, buf));
+> -		return -EOPNOTSUPP;
+> +		return false;
+>  	}
+>  
+>  	id = dax_read_lock();
+> @@ -121,7 +121,7 @@ int __bdev_dax_supported(struct block_device *bdev, int blocksize)
+>  	if (len < 1) {
+>  		pr_debug("%s: error: dax access failed (%ld)\n",
+>  				bdevname(bdev, buf), len);
+> -		return len < 0 ? len : -EIO;
+> +		return false;
+>  	}
+>  
+>  	if (IS_ENABLED(CONFIG_FS_DAX_LIMITED) && pfn_t_special(pfn)) {
+> @@ -139,10 +139,10 @@ int __bdev_dax_supported(struct block_device *bdev, int blocksize)
+>  	} else {
+>  		pr_debug("%s: error: dax support not enabled\n",
+>  				bdevname(bdev, buf));
+> -		return -EOPNOTSUPP;
+> +		return false;
+>  	}
+>  
+> -	return 0;
+> +	return true;
+>  }
+>  EXPORT_SYMBOL_GPL(__bdev_dax_supported);
+>  #endif
+> diff --git a/fs/ext2/super.c b/fs/ext2/super.c
+> index 9627c3054b5c..c09289a42dc5 100644
+> --- a/fs/ext2/super.c
+> +++ b/fs/ext2/super.c
+> @@ -961,8 +961,7 @@ static int ext2_fill_super(struct super_block *sb, void *data, int silent)
+>  	blocksize = BLOCK_SIZE << le32_to_cpu(sbi->s_es->s_log_block_size);
+>  
+>  	if (sbi->s_mount_opt & EXT2_MOUNT_DAX) {
+> -		err = bdev_dax_supported(sb->s_bdev, blocksize);
+> -		if (err) {
+> +		if (!bdev_dax_supported(sb->s_bdev, blocksize)) {
+>  			ext2_msg(sb, KERN_ERR,
+>  				"DAX unsupported by block device. Turning off DAX.");
+>  			sbi->s_mount_opt &= ~EXT2_MOUNT_DAX;
+> diff --git a/fs/ext4/super.c b/fs/ext4/super.c
+> index 089170e99895..2e1622907f4a 100644
+> --- a/fs/ext4/super.c
+> +++ b/fs/ext4/super.c
+> @@ -3732,8 +3732,7 @@ static int ext4_fill_super(struct super_block *sb, void *data, int silent)
+>  					" that may contain inline data");
+>  			sbi->s_mount_opt &= ~EXT4_MOUNT_DAX;
+>  		}
+> -		err = bdev_dax_supported(sb->s_bdev, blocksize);
+> -		if (err) {
+> +		if (!bdev_dax_supported(sb->s_bdev, blocksize)) {
+>  			ext4_msg(sb, KERN_ERR,
+>  				"DAX unsupported by block device. Turning off DAX.");
+>  			sbi->s_mount_opt &= ~EXT4_MOUNT_DAX;
+> diff --git a/fs/xfs/xfs_ioctl.c b/fs/xfs/xfs_ioctl.c
+> index 0effd46b965f..2c70a0a4f59f 100644
+> --- a/fs/xfs/xfs_ioctl.c
+> +++ b/fs/xfs/xfs_ioctl.c
+> @@ -1103,8 +1103,8 @@ xfs_ioctl_setattr_dax_invalidate(
+>  	if (fa->fsx_xflags & FS_XFLAG_DAX) {
+>  		if (!(S_ISREG(inode->i_mode) || S_ISDIR(inode->i_mode)))
+>  			return -EINVAL;
+> -		if (bdev_dax_supported(xfs_find_bdev_for_inode(VFS_I(ip)),
+> -				sb->s_blocksize) < 0)
+> +		if (!bdev_dax_supported(xfs_find_bdev_for_inode(VFS_I(ip)),
+> +				sb->s_blocksize))
+>  			return -EINVAL;
+>  	}
+>  
+> diff --git a/fs/xfs/xfs_super.c b/fs/xfs/xfs_super.c
+> index 62188c2a4c36..86915dc40eed 100644
+> --- a/fs/xfs/xfs_super.c
+> +++ b/fs/xfs/xfs_super.c
+> @@ -1690,17 +1690,17 @@ xfs_fs_fill_super(
+>  		sb->s_flags |= SB_I_VERSION;
+>  
+>  	if (mp->m_flags & XFS_MOUNT_DAX) {
+> -		int	error2 = 0;
+> +		bool rtdev_is_dax = false, datadev_is_dax;
+>  
+>  		xfs_warn(mp,
+>  		"DAX enabled. Warning: EXPERIMENTAL, use at your own risk");
+>  
+> -		error = bdev_dax_supported(mp->m_ddev_targp->bt_bdev,
+> -				sb->s_blocksize);
+> +		datadev_is_dax = bdev_dax_supported(mp->m_ddev_targp->bt_bdev,
+> +			sb->s_blocksize);
+>  		if (mp->m_rtdev_targp)
+> -			error2 = bdev_dax_supported(mp->m_rtdev_targp->bt_bdev,
+> -					sb->s_blocksize);
+> -		if (error && error2) {
+> +			rtdev_is_dax = bdev_dax_supported(
+> +				mp->m_rtdev_targp->bt_bdev, sb->s_blocksize);
+> +		if (!rtdev_is_dax && !datadev_is_dax) {
+>  			xfs_alert(mp,
+>  			"DAX unsupported by block device. Turning off DAX.");
+>  			mp->m_flags &= ~XFS_MOUNT_DAX;
+> diff --git a/include/linux/dax.h b/include/linux/dax.h
+> index 2a4f7295c12b..c99692ddd4b5 100644
+> --- a/include/linux/dax.h
+> +++ b/include/linux/dax.h
+> @@ -64,8 +64,8 @@ static inline bool dax_write_cache_enabled(struct dax_device *dax_dev)
+>  struct writeback_control;
+>  int bdev_dax_pgoff(struct block_device *, sector_t, size_t, pgoff_t *pgoff);
+>  #if IS_ENABLED(CONFIG_FS_DAX)
+> -int __bdev_dax_supported(struct block_device *bdev, int blocksize);
+> -static inline int bdev_dax_supported(struct block_device *bdev, int blocksize)
+> +bool __bdev_dax_supported(struct block_device *bdev, int blocksize);
+> +static inline bool bdev_dax_supported(struct block_device *bdev, int blocksize)
+>  {
+>  	return __bdev_dax_supported(bdev, blocksize);
+>  }
+> @@ -84,10 +84,10 @@ struct dax_device *fs_dax_get_by_bdev(struct block_device *bdev);
+>  int dax_writeback_mapping_range(struct address_space *mapping,
+>  		struct block_device *bdev, struct writeback_control *wbc);
+>  #else
+> -static inline int bdev_dax_supported(struct block_device *bdev,
+> +static inline bool bdev_dax_supported(struct block_device *bdev,
+>  		int blocksize)
+>  {
+> -	return -EOPNOTSUPP;
+> +	return false;
+>  }
+>  
+>  static inline struct dax_device *fs_dax_get_by_host(const char *host)
+> -- 
+> 2.14.3
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-xfs" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
