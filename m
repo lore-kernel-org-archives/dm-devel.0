@@ -1,7 +1,7 @@
 From: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: [PATCH v2 3/7] dm: fix test for DAX device support
-Date: Tue, 29 May 2018 13:51:02 -0600
-Message-ID: <20180529195106.14268-4-ross.zwisler@linux.intel.com>
+Subject: [PATCH v2 4/7] dm: prevent DAX mounts if not supported
+Date: Tue, 29 May 2018 13:51:03 -0600
+Message-ID: <20180529195106.14268-5-ross.zwisler@linux.intel.com>
 References: <20180529195106.14268-1-ross.zwisler@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,43 +21,59 @@ To: Toshi Kani <toshi.kani-ZPxbGqLxI0U@public.gmane.org>, Mike Snitzer <snitzer-
 Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 List-Id: dm-devel.ids
 
-Currently device_supports_dax() just checks to see if the QUEUE_FLAG_DAX
-flag is set on the device's request queue to decide whether or not the
-device supports filesystem DAX.  This is insufficient because there are
-devices like PMEM namespaces in raw mode which have QUEUE_FLAG_DAX set but
-which don't actually support DAX.
+Currently the code in dm_dax_direct_access() only checks whether the target
+type has a direct_access() operation defined, not whether the underlying
+block devices all support DAX.  This latter property can be seen by looking
+at whether we set the QUEUE_FLAG_DAX request queue flag when creating the
+DM device.
 
-This means that you could create a dm-linear device, for example, where the
-first part of the dm-linear device was a PMEM namespace in fsdax mode and
-the second part was a PMEM namespace in raw mode.  Both DM and the
-filesystem you put on that dm-linear device would think the whole device
-supports DAX, which would lead to bad behavior once your raw PMEM namespace
-part using DAX needed struct page for something.
+This is problematic if we have, for example, a dm-linear device made up of
+a PMEM namespace in fsdax mode followed by a ramdisk from BRD.
+QUEUE_FLAG_DAX won't be set on the dm-linear device's request queue, but
+we have a working direct_access() entry point and the first member of the
+dm-linear set *does* support DAX.
 
-Fix this by using bdev_dax_supported() like filesystems do at mount time.
-This checks for raw mode and also performs other tests like checking to
-make sure the dax_direct_access() path works.
+This allows the user to create a filesystem on the dm-linear device, and
+then mount it with DAX.  The filesystem's bdev_dax_supported() test will
+pass because it'll operate on the first member of the dm-linear device,
+which happens to be a fsdax PMEM namespace.
+
+All DAX I/O will then fail to that dm-linear device because the lack of
+QUEUE_FLAG_DAX prevents fs_dax_get_by_bdev() from working.  This means that
+the struct dax_device isn't ever set in the filesystem, so
+dax_direct_access() will always return -EOPNOTSUPP.
+
+By failing out of dm_dax_direct_access() if QUEUE_FLAG_DAX isn't set we let
+the filesystem know we don't support DAX at mount time.  The filesystem
+will then silently fall back and remove the dax mount option, causing it to
+work properly.
 
 Signed-off-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 Fixes: commit 545ed20e6df6 ("dm: add infrastructure for DAX support")
 ---
- drivers/md/dm-table.c | 4 +---
- 1 file changed, 1 insertion(+), 3 deletions(-)
+ drivers/md/dm.c | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 0589a4da12bb..5bb994b012ca 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -885,9 +885,7 @@ EXPORT_SYMBOL_GPL(dm_table_set_type);
- static int device_supports_dax(struct dm_target *ti, struct dm_dev *dev,
- 			       sector_t start, sector_t len, void *data)
- {
--	struct request_queue *q = bdev_get_queue(dev->bdev);
--
--	return q && blk_queue_dax(q);
-+	return bdev_dax_supported(dev->bdev, PAGE_SIZE);
- }
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 0a7b0107ca78..9728433362d1 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1050,14 +1050,13 @@ static long dm_dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff,
  
- static bool dm_table_supports_dax(struct dm_table *t)
+ 	if (!ti)
+ 		goto out;
+-	if (!ti->type->direct_access)
++	if (!blk_queue_dax(md->queue))
+ 		goto out;
+ 	len = max_io_len(sector, ti) / PAGE_SECTORS;
+ 	if (len < 1)
+ 		goto out;
+ 	nr_pages = min(len, nr_pages);
+-	if (ti->type->direct_access)
+-		ret = ti->type->direct_access(ti, pgoff, nr_pages, kaddr, pfn);
++	ret = ti->type->direct_access(ti, pgoff, nr_pages, kaddr, pfn);
+ 
+  out:
+ 	dm_put_live_table(md, srcu_idx);
 -- 
 2.14.3
