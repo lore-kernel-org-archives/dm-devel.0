@@ -1,66 +1,74 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-writecache: fix compilation issue with !DAX
-Date: Wed, 30 May 2018 09:13:27 -0400
-Message-ID: <20180530131326.GA2106@redhat.com>
-References: <20180529175216.24937-1-ross.zwisler@linux.intel.com>
- <alpine.LRH.2.02.1805300821510.24812@file01.intranet.prod.int.rdu2.redhat.com>
+From: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [patch 4/4] dm-writecache: use new API for flushing
+Date: Wed, 30 May 2018 09:16:23 -0400
+Message-ID: <20180530131623.GB2106@redhat.com>
+References: <20180519052635.567438191@debian.vm>
+ <CAPcyv4iEtfuVGPR0QMKcafv2XFwSj3nzxjX8cuXpXe00akAvYA@mail.gmail.com>
+ <alpine.LRH.2.02.1805250213270.13894@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180525125126.GA9275@redhat.com>
+ <CAPcyv4j-v5HGBg9JMBXt7UUyw=K_bGC7t5tQGfXM9G4qjOpFjQ@mail.gmail.com>
+ <alpine.LRH.2.02.1805260246250.15978@file01.intranet.prod.int.rdu2.redhat.com>
+ <CAPcyv4jwLsCNvNhgvv2DDSZuQsQXYEpKUU_5w1pTnyKj-uDBbQ@mail.gmail.com>
+ <alpine.LRH.2.02.1805280922190.13486@file01.intranet.prod.int.rdu2.redhat.com>
+ <CAPcyv4jXV4aZ6wqqjVPL8J4LxwTtXnzQCLZ0Wk5oB4_0uxpg7g@mail.gmail.com>
+ <alpine.LRH.2.02.1805300903220.1090@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1805300821510.24812@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Ross Zwisler <ross.zwisler@linux.intel.com>, Arnd Bergmann <arnd@arndb.de>, Shaohua Li <shli@kernel.org>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Matthew Wilcox <mawilcox@microsoft.com>, linux-fsdevel@vger.kernel.org, Dan Williams <dan.j.williams@intel.com>, Heinz Mauelshagen <heinzm@redhat.com>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org
+In-Reply-To: <alpine.LRH.2.02.1805300903220.1090-Hpncn10jQN4oNljnaZt3ZvA+iT7yCHsGwRM8/txMwJMAicBL8TP8PQ@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-nvdimm <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 List-Id: dm-devel.ids
 
-On Wed, May 30 2018 at  8:22am -0400,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
+On Wed, May 30 2018 at  9:07am -0400,
+Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
 
 > 
 > 
-> On Tue, 29 May 2018, Ross Zwisler wrote:
+> On Mon, 28 May 2018, Dan Williams wrote:
 > 
-> > As reported by Arnd (https://lkml.org/lkml/2018/5/28/1697), dm-writecache
-> > will fail with link errors in configs where DAX isn't present:
+> > On Mon, May 28, 2018 at 6:32 AM, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+> > >
+> > > I measured it (with nvme backing store) and late cache flushing has 12%
+> > > better performance than eager flushing with memcpy_flushcache().
 > > 
-> > drivers/md/dm-writecache.o: In function `writecache_ctr':
-> > dm-writecache.c:(.text+0x1fdc): undefined reference to `dax_read_lock'
-> > dm-writecache.c:(.text+0x2004): undefined reference to `dax_direct_access'
-> > dm-writecache.c:(.text+0x21cc): undefined reference to `dax_read_unlock'
+> > I assume what you're seeing is ARM64 over-flushing the amount of dirty
+> > data so it becomes more efficient to do an amortized flush at the end?
+> > However, that effectively makes memcpy_flushcache() unusable in the
+> > way it can be used on x86. You claimed that ARM does not support
+> > non-temporal stores, but it does, see the STNP instruction. I do not
+> > want to see arch specific optimizations in drivers, so either
+> > write-through mappings is a potential answer to remove the need to
+> > explicitly manage flushing, or just implement STNP hacks in
+> > memcpy_flushcache() like you did with MOVNT on x86.
 > > 
-> > Fix this by following the lead of the other DM modules and wrapping calls
-> > to the generic DAX code in #if IS_ENABLED(CONFIG_DAX_DRIVER) blocks.
+> > > 131836 4k iops - vs - 117016.
 > > 
-> > We also expand the failure case for the 'p' (persistent memory) flag so
-> > that fails on both architectures that don't support persistent memory and
-> > on kernels that don't have DAX support configured.  This prevents us from
-> > ever hitting the BUG() in the persistent_memory_claim() stub.
-> > 
-> > Signed-off-by: Ross Zwisler <ross.zwisler@linux.intel.com>
-> > Reported-by: Arnd Bergmann <arnd@arndb.de>
-> > ---
-> >  drivers/md/dm-writecache.c | 16 ++++++++++++----
-> >  1 file changed, 12 insertions(+), 4 deletions(-)
-> > 
-> > diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
-> > index 92af65fdf4af..1c2b53ae1a96 100644
-> > --- a/drivers/md/dm-writecache.c
-> > +++ b/drivers/md/dm-writecache.c
-> > @@ -253,6 +253,7 @@ static void wc_unlock(struct dm_writecache *wc)
-> >  	mutex_unlock(&wc->lock);
-> >  }
-> >  
-> > +#if IS_ENABLED(CONFIG_DAX_DRIVER)
+> > To be clear this is memcpy_flushcache() vs memcpy + flush?
 > 
-> We already have #if(n)def DM_WRITECACHE_ONLY_SSD
+> I found out what caused the difference. I used dax_flush on the version of 
+> dm-writecache that I had on the ARM machine (with the kernel 4.14, because 
+> it is the last version where dax on ramdisk works) - and I thought that 
+> dax_flush flushes the cache, but it doesn't.
 > 
-> There is no need to use another macro for the same purpose.
+> When I replaced dax_flush with arch_wb_cache_pmem, the performance 
+> difference between early flushing and late flushing disappeared.
+> 
+> So I think we can remove this per-architecture switch from dm-writecache.
 
-I removed DM_WRITECACHE_ONLY_SSD because it wasn't needed, this is the
-split out commit that I have since folded in:
-https://git.kernel.org/pub/scm/linux/kernel/git/snitzer/linux.git/commit/?h=dm-4.18-writecache-wip&id=e7fd3d1c05659f7e1295178290fbdaebf36becdc
+That is really great news, can you submit an incremental patch that
+layers ontop of the linux-dm.git 'dm-4.18' branch?
 
-Ross's patch effectively builds ontop of that.
-
+Thanks,
 Mike
