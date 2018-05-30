@@ -1,97 +1,159 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 0/3] Provide more fine grained control over multipathing
-Date: Wed, 30 May 2018 15:59:42 -0400
-Message-ID: <20180530195942.GC6568@redhat.com>
-References: <20180525130535.GA24239@lst.de>
- <20180525135813.GB9591@redhat.com>
- <20180525141211.GA25971@lst.de>
- <20180525145056.GD9591@redhat.com>
- <yq1muwj45sg.fsf@oracle.com>
- <20180529030236.GA28895@redhat.com>
- <20180529072240.np5c62akbr7jqelr@linux-x5ow.site>
- <20180529080952.GA1369@lst.de>
- <20180529232718.GA1730@redhat.com>
- <f4951571-d37d-73cd-1d6c-0ca84647d5ac@kernel.dk>
+From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [patch 4/4] dm-writecache: use new API for flushing
+Date: Wed, 30 May 2018 15:39:18 -0700
+Message-ID: <CAPcyv4gD-ZaXyV1SFAndobUYJOGLkx9rOyb5zNbzJXB_kVCzoA@mail.gmail.com>
+References: <20180519052503.325953342@debian.vm>
+ <20180519052635.567438191@debian.vm>
+ <CAPcyv4iEtfuVGPR0QMKcafv2XFwSj3nzxjX8cuXpXe00akAvYA@mail.gmail.com>
+ <alpine.LRH.2.02.1805250213270.13894@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180525125126.GA9275@redhat.com>
+ <CAPcyv4j-v5HGBg9JMBXt7UUyw=K_bGC7t5tQGfXM9G4qjOpFjQ@mail.gmail.com>
+ <alpine.LRH.2.02.1805260246250.15978@file01.intranet.prod.int.rdu2.redhat.com>
+ <CAPcyv4jwLsCNvNhgvv2DDSZuQsQXYEpKUU_5w1pTnyKj-uDBbQ@mail.gmail.com>
+ <alpine.LRH.2.02.1805280922190.13486@file01.intranet.prod.int.rdu2.redhat.com>
+ <CAPcyv4jXV4aZ6wqqjVPL8J4LxwTtXnzQCLZ0Wk5oB4_0uxpg7g@mail.gmail.com>
+ <alpine.LRH.2.02.1805300903220.1090@file01.intranet.prod.int.rdu2.redhat.com>
+ <CAPcyv4j3pDQ3YMK5Eije0dgGw+1CQYazPJ-zvqfvGF-9O_gVJw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <f4951571-d37d-73cd-1d6c-0ca84647d5ac@kernel.dk>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>
-Cc: Christoph Hellwig <hch@lst.de>, Linus Torvalds <torvalds@linux-foundation.org>, Johannes Thumshirn <jthumshirn@suse.de>, "Martin K. Petersen" <martin.petersen@oracle.com>, Linux NVMe Mailinglist <linux-nvme@lists.infradead.org>, Laurence Oberman <loberman@redhat.com>, Sagi Grimberg <sagi@grimberg.me>, James Smart <james.smart@broadcom.com>, Ewan Milne <emilne@redhat.com>, Linux Kernel Mailinglist <linux-kernel@vger.kernel.org>, Keith Busch <keith.busch@intel.com>, Hannes Reinecke <hare@suse.de>, Martin George <marting@netapp.com>, John Meneghini <John.Meneghini@netapp.com>, dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <CAPcyv4j3pDQ3YMK5Eije0dgGw+1CQYazPJ-zvqfvGF-9O_gVJw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-nvdimm <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 List-Id: dm-devel.ids
 
-On Wed, May 30 2018 at  3:05pm -0400,
-Jens Axboe <axboe@kernel.dk> wrote:
+On Wed, May 30, 2018 at 8:58 AM, Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
+> On Wed, May 30, 2018 at 6:07 AM, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+>>
+>>
+>> On Mon, 28 May 2018, Dan Williams wrote:
+>>
+>>> On Mon, May 28, 2018 at 6:32 AM, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+>>> >
+>>> >
+>>> > On Sat, 26 May 2018, Dan Williams wrote:
+>>> >
+>>> >> On Sat, May 26, 2018 at 12:02 AM, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+>>> >> >
+>>> >> >
+>>> >> > On Fri, 25 May 2018, Dan Williams wrote:
+>>> >> >
+>>> >> >> On Fri, May 25, 2018 at 5:51 AM, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+>>> >> >> > On Fri, May 25 2018 at  2:17am -0400,
+>>> >> >> > Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+>>> >> >> >
+>>> >> >> >> On Thu, 24 May 2018, Dan Williams wrote:
+>>> >> >> >>
+>>> >> >> >> > I don't want to grow driver-local wrappers for pmem. You should use
+>>> >> >> >> > memcpy_flushcache directly() and if an architecture does not define
+>>> >> >> >> > memcpy_flushcache() then don't allow building dm-writecache, i.e. this
+>>> >> >> >> > driver should 'depends on CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE'. I don't
+>>> >> >> >> > see a need to add a standalone flush operation if all relevant archs
+>>> >> >> >> > provide memcpy_flushcache(). As for commit, I'd say just use wmb()
+>>> >> >> >> > directly since all archs define it. Alternatively we could introduce
+>>> >> >> >> > memcpy_flushcache_relaxed() to be the un-ordered version of the copy
+>>> >> >> >> > routine and memcpy_flushcache() would imply a wmb().
+>>> >> >> >>
+>>> >> >> >> But memcpy_flushcache() on ARM64 is slow.
+>>> >> >>
+>>> >> >> Right, so again, what is wrong with memcpy_flushcache_relaxed() +
+>>> >> >> wmb() or otherwise making memcpy_flushcache() ordered. I do not see
+>>> >> >> that as a trailblazing requirement, I see that as typical review and a
+>>> >> >> reduction of the operation space that you are proposing.
+>>> >> >
+>>> >> > memcpy_flushcache on ARM64 is generally wrong thing to do, because it is
+>>> >> > slower than memcpy and explicit cache flush.
+>>> >> >
+>>> >> > Suppose that you want to write data to a block device and make it
+>>> >> > persistent. So you send a WRITE bio and then a FLUSH bio.
+>>> >> >
+>>> >> > Now - how to implement these two bios on persistent memory:
+>>> >> >
+>>> >> > On X86, the WRITE bio does memcpy_flushcache() and the FLUSH bio does
+>>> >> > wmb() - this is the optimal implementation.
+>>> >> >
+>>> >> > But on ARM64, memcpy_flushcache() is suboptimal. On ARM64, the optimal
+>>> >> > implementation is that the WRITE bio does just memcpy() and the FLUSH bio
+>>> >> > does arch_wb_cache_pmem() on the affected range.
+>>> >> >
+>>> >> > Why is memcpy_flushcache() is suboptimal on ARM? The ARM architecture
+>>> >> > doesn't have non-temporal stores. So, memcpy_flushcache() is implemented
+>>> >> > as memcpy() followed by a cache flush.
+>>> >> >
+>>> >> > Now - if you flush the cache immediatelly after memcpy, the cache is full
+>>> >> > of dirty lines and the cache-flushing code has to write these lines back
+>>> >> > and that is slow.
+>>> >> >
+>>> >> > If you flush the cache some time after memcpy (i.e. when the FLUSH bio is
+>>> >> > received), the processor already flushed some part of the cache on its
+>>> >> > own, so the cache-flushing function has less work to do and it is faster.
+>>> >> >
+>>> >> > So the conclusion is - don't use memcpy_flushcache on ARM. This problem
+>>> >> > cannot be fixed by a better implementation of memcpy_flushcache.
+>>> >>
+>>> >> It sounds like ARM might be better off with mapping its pmem as
+>>> >> write-through rather than write-back, and skip the explicit cache
+>>> >
+>>> > I doubt it would perform well - write combining combines the writes into a
+>>> > larger segments - and write-through doesn't.
+>>> >
+>>>
+>>> Last I checked write-through caching does not disable write combining
+>>>
+>>> >> management altogether. You speak of "optimal" and "sub-optimal", but
+>>> >> what would be more clear is fio measurements of the relative IOPs and
+>>> >> latency profiles of the different approaches. The reason I am
+>>> >> continuing to push here is that reducing the operation space from
+>>> >> 'copy-flush-commit' to just 'copy' or 'copy-commit' simplifies the
+>>> >> maintenance long term.
+>>> >
+>>> > I measured it (with nvme backing store) and late cache flushing has 12%
+>>> > better performance than eager flushing with memcpy_flushcache().
+>>>
+>>> I assume what you're seeing is ARM64 over-flushing the amount of dirty
+>>> data so it becomes more efficient to do an amortized flush at the end?
+>>> However, that effectively makes memcpy_flushcache() unusable in the
+>>> way it can be used on x86. You claimed that ARM does not support
+>>> non-temporal stores, but it does, see the STNP instruction. I do not
+>>> want to see arch specific optimizations in drivers, so either
+>>> write-through mappings is a potential answer to remove the need to
+>>> explicitly manage flushing, or just implement STNP hacks in
+>>> memcpy_flushcache() like you did with MOVNT on x86.
+>>>
+>>> > 131836 4k iops - vs - 117016.
+>>>
+>>> To be clear this is memcpy_flushcache() vs memcpy + flush?
+>>
+>> I found out what caused the difference. I used dax_flush on the version of
+>> dm-writecache that I had on the ARM machine (with the kernel 4.14, because
+>> it is the last version where dax on ramdisk works) - and I thought that
+>> dax_flush flushes the cache, but it doesn't.
+>>
+>> When I replaced dax_flush with arch_wb_cache_pmem, the performance
+>> difference between early flushing and late flushing disappeared.
+>>
+>> So I think we can remove this per-architecture switch from dm-writecache.
+>
+> Great find! Thanks for the due diligence. Feel free to add:
+>
+>     Acked-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+>
+> ...on the reworks to unify ARM and x86.
 
-> On 5/29/18 5:27 PM, Mike Snitzer wrote:
-> > On Tue, May 29 2018 at  4:09am -0400,
-> > Christoph Hellwig <hch@lst.de> wrote:
-> > 
-> >> On Tue, May 29, 2018 at 09:22:40AM +0200, Johannes Thumshirn wrote:
-> >>> For a "Plan B" we can still use the global knob that's already in
-> >>> place (even if this reminds me so much about scsi-mq which at least we
-> >>> haven't turned on in fear of performance regressions).
-> >>>
-> >>> Let's drop the discussion here, I don't think it leads to something
-> >>> else than flamewars.
-> >>
-> >> If our plan A doesn't work we can go back to these patches.  For now
-> >> I'd rather have everyone spend their time on making Plan A work then
-> >> preparing for contingencies.  Nothing prevents anyone from using these
-> >> patches already out there if they really want to, but I'd recommend
-> >> people are very careful about doing so as you'll lock yourself into
-> >> a long-term maintainance burden.
-> > 
-> > Restating (for others): this patchset really isn't about contingencies.
-> > It is about choice.
-> > 
-> > Since we're at an impasse, in the hopes of soliciting definitive
-> > feedback from Jens and Linus, I'm going to attempt to reset the
-> > discussion for their entry.
-> > 
-> > In summary, we have a classic example of a maintainer stalemate here:
-> > 1) Christoph, as NVMe co-maintainer, doesn't want to allow native NVMe
-> >    multipath to actively coexist with dm-multipath's NVMe support on the
-> >    same host.
-> > 2) I, as DM maintainer, would like to offer this flexibility to users --
-> >    by giving them opt-in choice to continue using existing dm-multipath
-> >    with NVMe. (also, both Red Hat and SUSE would like to offer this).
-> > 
-> > There is no technical reason why they cannot coexist.  Hence this simple
-> > patchset that was originally offered by Johannes Thumshirn with
-> > contributions from myself.
-> 
-> Here's what I think - flag days tend to suck. They may be more convenient
-> for developers, but they inflict pain on users. Sometimes they prevent
-> them from moving forward, since updates are now gated on external
-> dependencies. Moving forward with a new architecture is great, but
-> proper care has to be given to existing users of multipath, regardless
-> of how few they may be.
-
-As I mentioned at the end of my summary (and in my first reply to this
-0th header): it is on the "other" multipath toolchain to deal with
-switching from "native" to "other" (by writing to 'mpath_personality').
-For dm-multipath, it is multipathd that would trigger the switch from
-"native" to "other" iff user opts-in by configuring multipath.conf to
-own a particular NVMe subsystem's multipathing.
-
-So users very likely won't ever have a need to write to
-'mpath_personality'.  And as such, they'll just default to using
-"native" NVMe multipath.
-
-> This patchset seems pretty clean and minimalist. Realistically, I'm
-> guessing that SUSE and RH will ship it regardless of upstream status.
-
-TBD really.  We are keen to enable CONFIG_NVME_MULTIPATH to allow users
-to use native (as the default!).  But we won't be able to do that unless
-we have this patchset.  Because we really do _need_ to give our users
-the option of continuing to use dm-multipath.
-
-And as the Red Hat employee who would have to port it to each kernel (as
-long as there is a need): _please_ don't make me do that.
-
-PLEASE! ;)
-
-Mike
+One more note. The side effect of not using dax_flush() is that you
+may end up flushing caches on systems where the platform has asserted
+it will take responsibility for flushing caches at power loss. If /
+when those systems become more prevalent we may want to think of a way
+to combine the non-temporal optimization and the cache-flush-bypass
+optimizations. However that is something that can wait for a later
+change beyond 4.18.
