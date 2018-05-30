@@ -1,285 +1,149 @@
-From: Ladvine D Almeida <Ladvine.DAlmeida@synopsys.com>
-Subject: Re: [PATCH] md: dm-crypt: Add Inline Encryption support for dmcrypt
-Date: Wed, 30 May 2018 14:52:07 +0000
-Message-ID: <BD7FB879CC136E419544C8E2AE7B9C3020BB94@IN01WEMBXA.internal.synopsys.com>
-References: <e9120efc-1e25-79c8-6132-9062dd030539@synopsys.com>
- <7a510610-9133-39aa-6841-3925c532f3c0@gmail.com>
+From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [patch 4/4] dm-writecache: use new API for flushing
+Date: Wed, 30 May 2018 08:58:55 -0700
+Message-ID: <CAPcyv4j3pDQ3YMK5Eije0dgGw+1CQYazPJ-zvqfvGF-9O_gVJw@mail.gmail.com>
+References: <20180519052503.325953342@debian.vm>
+ <20180519052635.567438191@debian.vm>
+ <CAPcyv4iEtfuVGPR0QMKcafv2XFwSj3nzxjX8cuXpXe00akAvYA@mail.gmail.com>
+ <alpine.LRH.2.02.1805250213270.13894@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180525125126.GA9275@redhat.com>
+ <CAPcyv4j-v5HGBg9JMBXt7UUyw=K_bGC7t5tQGfXM9G4qjOpFjQ@mail.gmail.com>
+ <alpine.LRH.2.02.1805260246250.15978@file01.intranet.prod.int.rdu2.redhat.com>
+ <CAPcyv4jwLsCNvNhgvv2DDSZuQsQXYEpKUU_5w1pTnyKj-uDBbQ@mail.gmail.com>
+ <alpine.LRH.2.02.1805280922190.13486@file01.intranet.prod.int.rdu2.redhat.com>
+ <CAPcyv4jXV4aZ6wqqjVPL8J4LxwTtXnzQCLZ0Wk5oB4_0uxpg7g@mail.gmail.com>
+ <alpine.LRH.2.02.1805300903220.1090@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Milan Broz <gmazyland@gmail.com>, Ladvine D Almeida <Ladvine.DAlmeida@synopsys.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Manjunath M Bettegowda <Manjunath.MB@synopsys.com>, Prabu Thangamuthu <Prabu.T@synopsys.com>, Tejas Joglekar <Tejas.Joglekar@synopsys.com>, device-mapper development <dm-devel@redhat.com>, Joao Pinto <Joao.Pinto@synopsys.com>
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <alpine.LRH.2.02.1805300903220.1090-Hpncn10jQN4oNljnaZt3ZvA+iT7yCHsGwRM8/txMwJMAicBL8TP8PQ@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-nvdimm <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 List-Id: dm-devel.ids
 
-On Monday 28 May 2018 05:33 PM, Milan Broz wrote:=0A=
-> On 05/28/2018 03:01 PM, Ladvine D Almeida wrote:=0A=
->> This patch adds new option=0A=
->>     -- perform_inline_encrypt=0A=
->> that set the option inside dmcrypt to use inline encryption for=0A=
->> the configured mapping. I want to introduce inline encryption support=0A=
->> in the UFS Host Controller driver. The usage of the same for accomplishi=
-ng=0A=
->> the Full Disk Encryption is done by the following changes in the=0A=
->> dmcrypt subsystem:=0A=
->>     - New function crypt_inline_encrypt_submit() is added to the=0A=
->> dmcrypt which associate the crypto context to the bios which=0A=
->> are submitted by the subsystem.=0A=
->>     - Successful configuration for the inline encryption will result in=
-=0A=
->> the crypto transformation job being bypassed in the dmcrypt layer and th=
-e=0A=
->> actual encryption happens inline to the block device.=0A=
-> I am not sure this is a good idea. Dm-crypt should never ever forward=0A=
-> plaintext sector to underlying device.=0A=
->=0A=
-> And you do not even check that your hw is available in the underlying dev=
-ice!=0A=
->=0A=
-> If you want to use dm-crypt, write a crypto API driver for your crypto hw=
- that defines=0A=
-> specific cipher and let dm-crypt use this cipher (no patches needed in th=
-is case!)=0A=
-=0A=
-Thanks for sharing your review.=0A=
-I am sharing the links for the patches which are related to inline encrypti=
-on below:=0A=
-https://lkml.org/lkml/2018/5/28/1153=0A=
-https://lkml.org/lkml/2018/5/28/1196=0A=
-https://lkml.org/lkml/2018/5/28/1158=0A=
-https://lkml.org/lkml/2018/5/28/1173=0A=
-https://lkml.org/lkml/2018/5/28/1178=0A=
-=0A=
-we have crypto API implementation for the hardware for  XTS algorithm, whic=
-h will get registered when=0A=
-the XTS algorithm capability of the inline encryption engine inside UFS Hos=
-t Controller get detected by the UFS HC=0A=
-driver. dm-crypt will be using this registered cipher.=0A=
- dm-crypt patch is unavoidable because the encrypt/decrypt function cannot =
-perform the transformation=0A=
-when inline encryption engine is involved. Also, it demands forwarding the =
-plaintext sectors to the underlying=0A=
-block device driver and  the crypto transformation happens internally in co=
-ntroller when data transfer happens.=0A=
-=0A=
->=0A=
-> If I read the patch correctly, you do not check any parameters for=0A=
-> compatibility with your hw support (cipher, mode, IV algorithm, key lengt=
-h, sector size ...)=0A=
-=0A=
-I am registering an algorithm with cipher mode, IV size, block size, suppor=
-ted key size etc. for use by dm-crypt=0A=
-as per the hardware capability of inline encryption engine.=0A=
-If any other cipher mode, etc is used during the setup stage, DM-Crypt will=
- work as normal.=0A=
-=0A=
->=0A=
-> It seems like if the "perform_inline_encrypt" option is present, you just=
- submit=0A=
-> the whole bio to your code with new INLINE_ENCRYPTION bit set.=0A=
-=0A=
-when the optional argument "perform_inline_encrypt" is set, we are not unco=
-nditionally sending the bio=0A=
-to the block devices. The steps are explained below:=0A=
-1. user invokes the dm-setup command with the registered cipher "xts" and w=
-ith the optional argument=0A=
-"perform_inline_encrypt".=0A=
-2. dm-setup invokes the setkey function of the newly introduced algorithm, =
-which finds the available key slots=0A=
-to be programmed(UFS Host controller Inline Encryption engine has multiple =
-keyslots), program the key slot,=0A=
-and return the key slot index as return value of the set key function.=0A=
-3. When read/write operation happens, crypt_map() function in dm-crypt vali=
-dates whether there is associated=0A=
-key configuration index for the request. The Bio will be submitted directly=
- in this case only with the associated=0A=
-crypto context.=0A=
-4. Block device driver, eg. UFS host controller driver will create the Tran=
-sfer requests as per this crypto context and=0A=
-encryption happens inside the controller.=0A=
-=0A=
->=0A=
-> What happens, if the cipher in table is different from what your hw is do=
-ing?=0A=
-=0A=
-In this case, the dm-crypt will work as previous. This is because the setke=
-y returns 0.=0A=
-whenever there is key configuration index associated, setkey returns index =
-value(greater than 0). The bios are submitted=0A=
-with that information to underlying block device drivers.=0A=
-Also, care is taken to ensure that fallback will happen incase hardware lac=
-ks the support of any key lengths.=0A=
-=0A=
-Appreciate your suggestions/feedback. We are trying to bring modifications =
-into the subsystem to support controllers with=0A=
-inline encryption capabilities and tried our best to take care of any vulne=
-rabilities or risks associated to same.=0A=
-Inline encryption engines got huge advantage over the accelerators/software=
- algorithms that it removes overhead associated=0A=
-to current implementation like performing transformation on 512 byte chunks=
-, allocation of scatterlists etc.=0A=
-=0A=
->=0A=
-> Milan=0A=
->=0A=
->> Another patch set is sent to the block layer community for=0A=
->> CONFIG_BLK_DEV_INLINE_ENCRYPTION config, which enables changes in the=0A=
->> block layer for adding the bi_ie_private variable to the bio structure.=
-=0A=
->>=0A=
->> Signed-off-by: Ladvine D Almeida <ladvine@synopsys.com>=0A=
->> ---=0A=
->>  drivers/md/dm-crypt.c | 55 ++++++++++++++++++++++++++++++++++++++++++++=
-+++++--=0A=
->>  1 file changed, 53 insertions(+), 2 deletions(-)=0A=
->>=0A=
->> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c=0A=
->> index 44ff473..a9ed567 100644=0A=
->> --- a/drivers/md/dm-crypt.c=0A=
->> +++ b/drivers/md/dm-crypt.c=0A=
->> @@ -39,6 +39,7 @@=0A=
->>  #include <linux/device-mapper.h>=0A=
->>  =0A=
->>  #define DM_MSG_PREFIX "crypt"=0A=
->> +#define REQ_INLINE_ENCRYPTION REQ_DRV=0A=
->>  =0A=
->>  /*=0A=
->>   * context holding the current state of a multi-part conversion=0A=
->> @@ -125,7 +126,8 @@ struct iv_tcw_private {=0A=
->>   * and encrypts / decrypts at the same time.=0A=
->>   */=0A=
->>  enum flags { DM_CRYPT_SUSPENDED, DM_CRYPT_KEY_VALID,=0A=
->> -	     DM_CRYPT_SAME_CPU, DM_CRYPT_NO_OFFLOAD };=0A=
->> +	     DM_CRYPT_SAME_CPU, DM_CRYPT_NO_OFFLOAD,=0A=
->> +		 DM_CRYPT_INLINE_ENCRYPT };=0A=
->>  =0A=
->>  enum cipher_flags {=0A=
->>  	CRYPT_MODE_INTEGRITY_AEAD,	/* Use authenticated mode for cihper */=0A=
->> @@ -215,6 +217,10 @@ struct crypt_config {=0A=
->>  =0A=
->>  	u8 *authenc_key; /* space for keys in authenc() format (if used) */=0A=
->>  	u8 key[0];=0A=
->> +#ifdef CONFIG_BLK_DEV_INLINE_ENCRYPTION=0A=
->> +	void *ie_private; /* crypto context for inline enc drivers */=0A=
->> +	int key_cfg_idx;  /* key configuration index for inline enc */=0A=
->> +#endif=0A=
->>  };=0A=
->>  =0A=
->>  #define MIN_IOS		64=0A=
->> @@ -1470,6 +1476,20 @@ static void crypt_io_init(struct dm_crypt_io *io,=
- struct crypt_config *cc,=0A=
->>  	atomic_set(&io->io_pending, 0);=0A=
->>  }=0A=
->>  =0A=
->> +#ifdef CONFIG_BLK_DEV_INLINE_ENCRYPTION=0A=
->> +static void crypt_inline_encrypt_submit(struct crypt_config *cc,=0A=
->> +	struct dm_target *ti, struct bio *bio)=0A=
->> +{=0A=
->> +	bio_set_dev(bio, cc->dev->bdev);=0A=
->> +	if (bio_sectors(bio))=0A=
->> +		bio->bi_iter.bi_sector =3D cc->start +=0A=
->> +			dm_target_offset(ti, bio->bi_iter.bi_sector);=0A=
->> +	bio->bi_opf |=3D REQ_INLINE_ENCRYPTION;=0A=
->> +	bio->bi_ie_private =3D cc->ie_private;=0A=
->> +	generic_make_request(bio);=0A=
->> +}=0A=
->> +#endif=0A=
->> +=0A=
->>  static void crypt_inc_pending(struct dm_crypt_io *io)=0A=
->>  {=0A=
->>  	atomic_inc(&io->io_pending);=0A=
->> @@ -1960,6 +1980,9 @@ static int crypt_setkey(struct crypt_config *cc)=
-=0A=
->>  =0A=
->>  	/* Ignore extra keys (which are used for IV etc) */=0A=
->>  	subkey_size =3D crypt_subkey_size(cc);=0A=
->> +#ifdef CONFIG_BLK_DEV_INLINE_ENCRYPTION=0A=
->> +	cc->key_cfg_idx =3D -1;=0A=
->> +#endif=0A=
->>  =0A=
->>  	if (crypt_integrity_hmac(cc)) {=0A=
->>  		if (subkey_size < cc->key_mac_size)=0A=
->> @@ -1978,10 +2001,19 @@ static int crypt_setkey(struct crypt_config *cc)=
-=0A=
->>  			r =3D crypto_aead_setkey(cc->cipher_tfm.tfms_aead[i],=0A=
->>  					       cc->key + (i * subkey_size),=0A=
->>  					       subkey_size);=0A=
->> -		else=0A=
->> +		else {=0A=
->>  			r =3D crypto_skcipher_setkey(cc->cipher_tfm.tfms[i],=0A=
->>  						   cc->key + (i * subkey_size),=0A=
->>  						   subkey_size);=0A=
->> +#ifdef CONFIG_BLK_DEV_INLINE_ENCRYPTION=0A=
->> +			if (r > 0) {=0A=
->> +				cc->key_cfg_idx =3D r;=0A=
->> +				cc->ie_private =3D cc->cipher_tfm.tfms[i];=0A=
->> +				r =3D 0;=0A=
->> +			}=0A=
->> +#endif=0A=
->> +		}=0A=
->> +=0A=
->>  		if (r)=0A=
->>  			err =3D r;=0A=
->>  	}=0A=
->> @@ -2654,6 +2686,10 @@ static int crypt_ctr_optional(struct dm_target *t=
-i, unsigned int argc, char **ar=0A=
->>  			cc->sector_shift =3D __ffs(cc->sector_size) - SECTOR_SHIFT;=0A=
->>  		} else if (!strcasecmp(opt_string, "iv_large_sectors"))=0A=
->>  			set_bit(CRYPT_IV_LARGE_SECTORS, &cc->cipher_flags);=0A=
->> +#ifdef CONFIG_BLK_DEV_INLINE_ENCRYPTION=0A=
->> +		else if (!strcasecmp(opt_string, "perform_inline_encrypt"))=0A=
->> +			set_bit(DM_CRYPT_INLINE_ENCRYPT, &cc->flags);=0A=
->> +#endif=0A=
->>  		else {=0A=
->>  			ti->error =3D "Invalid feature arguments";=0A=
->>  			return -EINVAL;=0A=
->> @@ -2892,6 +2928,13 @@ static int crypt_map(struct dm_target *ti, struct=
- bio *bio)=0A=
->>  	if (unlikely(bio->bi_iter.bi_size & (cc->sector_size - 1)))=0A=
->>  		return DM_MAPIO_KILL;=0A=
->>  =0A=
->> +#ifdef CONFIG_BLK_DEV_INLINE_ENCRYPTION=0A=
->> +	if (cc->key_cfg_idx > 0) {=0A=
->> +		crypt_inline_encrypt_submit(cc, ti, bio);=0A=
->> +		return DM_MAPIO_SUBMITTED;=0A=
->> +	}=0A=
->> +#endif=0A=
->> +=0A=
->>  	io =3D dm_per_bio_data(bio, cc->per_bio_data_size);=0A=
->>  	crypt_io_init(io, cc, bio, dm_target_offset(ti, bio->bi_iter.bi_sector=
-));=0A=
->>  =0A=
->> @@ -2954,6 +2997,10 @@ static void crypt_status(struct dm_target *ti, st=
-atus_type_t type,=0A=
->>  		num_feature_args +=3D test_bit(DM_CRYPT_NO_OFFLOAD, &cc->flags);=0A=
->>  		num_feature_args +=3D cc->sector_size !=3D (1 << SECTOR_SHIFT);=0A=
->>  		num_feature_args +=3D test_bit(CRYPT_IV_LARGE_SECTORS, &cc->cipher_fl=
-ags);=0A=
->> +#ifdef CONFIG_BLK_DEV_INLINE_ENCRYPTION=0A=
->> +		num_feature_args +=3D=0A=
->> +			test_bit(DM_CRYPT_INLINE_ENCRYPT, &cc->flags);=0A=
->> +#endif=0A=
->>  		if (cc->on_disk_tag_size)=0A=
->>  			num_feature_args++;=0A=
->>  		if (num_feature_args) {=0A=
->> @@ -2970,6 +3017,10 @@ static void crypt_status(struct dm_target *ti, st=
-atus_type_t type,=0A=
->>  				DMEMIT(" sector_size:%d", cc->sector_size);=0A=
->>  			if (test_bit(CRYPT_IV_LARGE_SECTORS, &cc->cipher_flags))=0A=
->>  				DMEMIT(" iv_large_sectors");=0A=
->> +#ifdef CONFIG_BLK_DEV_INLINE_ENCRYPTION=0A=
->> +			if (test_bit(DM_CRYPT_INLINE_ENCRYPT, &cc->flags))=0A=
->> +				DMEMIT(" perform_inline_encrypt");=0A=
->> +#endif=0A=
->>  		}=0A=
->>  =0A=
->>  		break;=0A=
->>=0A=
->=0A=
-=0A=
-Best Regards,=0A=
-=0A=
-Ladvine=0A=
-=0A=
+On Wed, May 30, 2018 at 6:07 AM, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+>
+>
+> On Mon, 28 May 2018, Dan Williams wrote:
+>
+>> On Mon, May 28, 2018 at 6:32 AM, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+>> >
+>> >
+>> > On Sat, 26 May 2018, Dan Williams wrote:
+>> >
+>> >> On Sat, May 26, 2018 at 12:02 AM, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+>> >> >
+>> >> >
+>> >> > On Fri, 25 May 2018, Dan Williams wrote:
+>> >> >
+>> >> >> On Fri, May 25, 2018 at 5:51 AM, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+>> >> >> > On Fri, May 25 2018 at  2:17am -0400,
+>> >> >> > Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+>> >> >> >
+>> >> >> >> On Thu, 24 May 2018, Dan Williams wrote:
+>> >> >> >>
+>> >> >> >> > I don't want to grow driver-local wrappers for pmem. You should use
+>> >> >> >> > memcpy_flushcache directly() and if an architecture does not define
+>> >> >> >> > memcpy_flushcache() then don't allow building dm-writecache, i.e. this
+>> >> >> >> > driver should 'depends on CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE'. I don't
+>> >> >> >> > see a need to add a standalone flush operation if all relevant archs
+>> >> >> >> > provide memcpy_flushcache(). As for commit, I'd say just use wmb()
+>> >> >> >> > directly since all archs define it. Alternatively we could introduce
+>> >> >> >> > memcpy_flushcache_relaxed() to be the un-ordered version of the copy
+>> >> >> >> > routine and memcpy_flushcache() would imply a wmb().
+>> >> >> >>
+>> >> >> >> But memcpy_flushcache() on ARM64 is slow.
+>> >> >>
+>> >> >> Right, so again, what is wrong with memcpy_flushcache_relaxed() +
+>> >> >> wmb() or otherwise making memcpy_flushcache() ordered. I do not see
+>> >> >> that as a trailblazing requirement, I see that as typical review and a
+>> >> >> reduction of the operation space that you are proposing.
+>> >> >
+>> >> > memcpy_flushcache on ARM64 is generally wrong thing to do, because it is
+>> >> > slower than memcpy and explicit cache flush.
+>> >> >
+>> >> > Suppose that you want to write data to a block device and make it
+>> >> > persistent. So you send a WRITE bio and then a FLUSH bio.
+>> >> >
+>> >> > Now - how to implement these two bios on persistent memory:
+>> >> >
+>> >> > On X86, the WRITE bio does memcpy_flushcache() and the FLUSH bio does
+>> >> > wmb() - this is the optimal implementation.
+>> >> >
+>> >> > But on ARM64, memcpy_flushcache() is suboptimal. On ARM64, the optimal
+>> >> > implementation is that the WRITE bio does just memcpy() and the FLUSH bio
+>> >> > does arch_wb_cache_pmem() on the affected range.
+>> >> >
+>> >> > Why is memcpy_flushcache() is suboptimal on ARM? The ARM architecture
+>> >> > doesn't have non-temporal stores. So, memcpy_flushcache() is implemented
+>> >> > as memcpy() followed by a cache flush.
+>> >> >
+>> >> > Now - if you flush the cache immediatelly after memcpy, the cache is full
+>> >> > of dirty lines and the cache-flushing code has to write these lines back
+>> >> > and that is slow.
+>> >> >
+>> >> > If you flush the cache some time after memcpy (i.e. when the FLUSH bio is
+>> >> > received), the processor already flushed some part of the cache on its
+>> >> > own, so the cache-flushing function has less work to do and it is faster.
+>> >> >
+>> >> > So the conclusion is - don't use memcpy_flushcache on ARM. This problem
+>> >> > cannot be fixed by a better implementation of memcpy_flushcache.
+>> >>
+>> >> It sounds like ARM might be better off with mapping its pmem as
+>> >> write-through rather than write-back, and skip the explicit cache
+>> >
+>> > I doubt it would perform well - write combining combines the writes into a
+>> > larger segments - and write-through doesn't.
+>> >
+>>
+>> Last I checked write-through caching does not disable write combining
+>>
+>> >> management altogether. You speak of "optimal" and "sub-optimal", but
+>> >> what would be more clear is fio measurements of the relative IOPs and
+>> >> latency profiles of the different approaches. The reason I am
+>> >> continuing to push here is that reducing the operation space from
+>> >> 'copy-flush-commit' to just 'copy' or 'copy-commit' simplifies the
+>> >> maintenance long term.
+>> >
+>> > I measured it (with nvme backing store) and late cache flushing has 12%
+>> > better performance than eager flushing with memcpy_flushcache().
+>>
+>> I assume what you're seeing is ARM64 over-flushing the amount of dirty
+>> data so it becomes more efficient to do an amortized flush at the end?
+>> However, that effectively makes memcpy_flushcache() unusable in the
+>> way it can be used on x86. You claimed that ARM does not support
+>> non-temporal stores, but it does, see the STNP instruction. I do not
+>> want to see arch specific optimizations in drivers, so either
+>> write-through mappings is a potential answer to remove the need to
+>> explicitly manage flushing, or just implement STNP hacks in
+>> memcpy_flushcache() like you did with MOVNT on x86.
+>>
+>> > 131836 4k iops - vs - 117016.
+>>
+>> To be clear this is memcpy_flushcache() vs memcpy + flush?
+>
+> I found out what caused the difference. I used dax_flush on the version of
+> dm-writecache that I had on the ARM machine (with the kernel 4.14, because
+> it is the last version where dax on ramdisk works) - and I thought that
+> dax_flush flushes the cache, but it doesn't.
+>
+> When I replaced dax_flush with arch_wb_cache_pmem, the performance
+> difference between early flushing and late flushing disappeared.
+>
+> So I think we can remove this per-architecture switch from dm-writecache.
+
+Great find! Thanks for the due diligence. Feel free to add:
+
+    Acked-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+
+...on the reworks to unify ARM and x86.
