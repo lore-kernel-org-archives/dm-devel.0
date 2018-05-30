@@ -1,97 +1,73 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH] dm-writecache: fix compilation issue with !DAX
-Date: Wed, 30 May 2018 08:22:47 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1805300821510.24812@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20180529175216.24937-1-ross.zwisler@linux.intel.com>
+From: Dan Carpenter <dan.carpenter@oracle.com>
+Subject: [bug report] dm: add writecache target
+Date: Wed, 30 May 2018 15:44:24 +0300
+Message-ID: <20180530124422.uuxdkscr5lkkgcgx@kili.mountain>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180529175216.24937-1-ross.zwisler@linux.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Ross Zwisler <ross.zwisler@linux.intel.com>
-Cc: Arnd Bergmann <arnd@arndb.de>, Shaohua Li <shli@kernel.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Matthew Wilcox <mawilcox@microsoft.com>, linux-fsdevel@vger.kernel.org, Dan Williams <dan.j.williams@intel.com>, Heinz Mauelshagen <heinzm@redhat.com>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: mpatocka@redhat.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+Hello Mikulas Patocka,
 
+The patch 2105231db61b: "dm: add writecache target" from Mar 8, 2018,
+leads to the following static checker warning:
 
-On Tue, 29 May 2018, Ross Zwisler wrote:
+	drivers/md/dm-writecache.c:1868 writecache_ctr()
+	warn: 'wc->dm_io' is an error pointer or valid
 
-> As reported by Arnd (https://lkml.org/lkml/2018/5/28/1697), dm-writecache
-> will fail with link errors in configs where DAX isn't present:
-> 
-> drivers/md/dm-writecache.o: In function `writecache_ctr':
-> dm-writecache.c:(.text+0x1fdc): undefined reference to `dax_read_lock'
-> dm-writecache.c:(.text+0x2004): undefined reference to `dax_direct_access'
-> dm-writecache.c:(.text+0x21cc): undefined reference to `dax_read_unlock'
-> 
-> Fix this by following the lead of the other DM modules and wrapping calls
-> to the generic DAX code in #if IS_ENABLED(CONFIG_DAX_DRIVER) blocks.
-> 
-> We also expand the failure case for the 'p' (persistent memory) flag so
-> that fails on both architectures that don't support persistent memory and
-> on kernels that don't have DAX support configured.  This prevents us from
-> ever hitting the BUG() in the persistent_memory_claim() stub.
-> 
-> Signed-off-by: Ross Zwisler <ross.zwisler@linux.intel.com>
-> Reported-by: Arnd Bergmann <arnd@arndb.de>
-> ---
->  drivers/md/dm-writecache.c | 16 ++++++++++++----
->  1 file changed, 12 insertions(+), 4 deletions(-)
-> 
-> diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
-> index 92af65fdf4af..1c2b53ae1a96 100644
-> --- a/drivers/md/dm-writecache.c
-> +++ b/drivers/md/dm-writecache.c
-> @@ -253,6 +253,7 @@ static void wc_unlock(struct dm_writecache *wc)
->  	mutex_unlock(&wc->lock);
->  }
->  
-> +#if IS_ENABLED(CONFIG_DAX_DRIVER)
+drivers/md/dm-writecache.c
+  1854  
+  1855          wc = kzalloc(sizeof(struct dm_writecache), GFP_KERNEL);
+  1856          if (!wc) {
+  1857                  ti->error = "Cannot allocate writecache structure";
+  1858                  r = -ENOMEM;
+  1859                  goto bad;
+  1860          }
+  1861          ti->private = wc;
+  1862          wc->ti = ti;
+  1863  
+  1864          mutex_init(&wc->lock);
+  1865          writecache_poison_lists(wc);
+  1866          init_swait_queue_head(&wc->freelist_wait);
+  1867          timer_setup(&wc->autocommit_timer, writecache_autocommit_timer, 0);
+  1868  
+  1869          for (i = 0; i < 2; i++) {
+  1870                  atomic_set(&wc->bio_in_progress[i], 0);
+  1871                  init_swait_queue_head(&wc->bio_in_progress_wait[i]);
+  1872          }
+  1873  
+  1874          wc->dm_io = dm_io_client_create();
+  1875          if (!wc->dm_io) {
+                     ^^^^^^^^^
+dm_io_client_create() returns error pointers.
 
-We already have #if(n)def DM_WRITECACHE_ONLY_SSD
+  1876                  r = -ENOMEM;
+  1877                  ti->error = "Unable to allocate dm-io client";
+  1878                  goto bad;
+                        ^^^^^^^^
+I always tell people that one err style error handling is always buggy.
 
-There is no need to use another macro for the same purpose.
+  1879          }
+  1880  
+  1881          wc->writeback_wq = alloc_workqueue("writecache-writeabck", WQ_MEM_RECLAIM, 1);
+  1882          if (!wc->writeback_wq) {
+  1883                  r = -ENOMEM;
+  1884                  ti->error = "Could not allocate writeback workqueue";
+  1885                  goto bad;
+  1886          }
 
-Mikulas
-
->  static int persistent_memory_claim(struct dm_writecache *wc)
->  {
->  	int r;
-> @@ -337,6 +338,12 @@ static int persistent_memory_claim(struct dm_writecache *wc)
->  err1:
->  	return r;
->  }
-> +#else
-> +static int persistent_memory_claim(struct dm_writecache *wc)
-> +{
-> +	BUG();
-> +}
-> +#endif
->  
->  static void persistent_memory_release(struct dm_writecache *wc)
->  {
-> @@ -1901,16 +1908,17 @@ static int writecache_ctr(struct dm_target *ti, unsigned argc, char **argv)
->  	if (!strcasecmp(string, "s")) {
->  		wc->pmem_mode = false;
->  	} else if (!strcasecmp(string, "p")) {
-> -#ifdef CONFIG_ARCH_HAS_PMEM_API
-> +#if defined(CONFIG_ARCH_HAS_PMEM_API) && IS_ENABLED(CONFIG_DAX_DRIVER)
->  		wc->pmem_mode = true;
->  		wc->writeback_fua = true;
->  #else
->  		/*
-> -		 * If the architecture doesn't support persistent memory, this
-> -		 * driver can only be used in SSD-only mode.
-> +		 * If the architecture doesn't support persistent memory or
-> +		 * the kernel doesn't support any DAX drivers, this driver can
-> +		 * only be used in SSD-only mode.
->  		 */
->  		r = -EOPNOTSUPP;
-> -		ti->error = "Persistent memory not supported on this architecture";
-> +		ti->error = "Persistent memory or DAX not supported on this system";
->  		goto bad;
->  #endif
->  	} else {
-> -- 
-> 2.14.3
-> 
+regards,
+dan carpenter
