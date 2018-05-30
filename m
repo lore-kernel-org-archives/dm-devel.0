@@ -1,14 +1,13 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 2/4] swait: export the symbols __prepare_to_swait
-	and __finish_swait
-Date: Wed, 30 May 2018 15:16:56 +0200
-Message-ID: <20180530131820.826510529@debian.vm>
+Subject: [PATCH 3/4] branch-check: fix long->int truncation when
+	profiling branches
+Date: Wed, 30 May 2018 15:16:57 +0200
+Message-ID: <20180530131822.086075870@debian.vm>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline;
-	filename=export-__finish_swait-__prepare_to_swait.patch
+Content-Disposition: inline; filename=branch_check-long.patch
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,39 +18,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, Dan Williams <dan.j.williams@intel.com>
-Cc: dm-devel@redhat.com
+Cc: dm-devel@redhat.com, stable@vger.kernel.org
 List-Id: dm-devel.ids
 
-In order to reduce locking overhead, I use the spinlock in
-swait_queue_head to protect not only the wait queue, but also the list of
-events. Consequently, I need to use unlocked functions __prepare_to_swait
-and __finish_swait. These functions are declared in the file
-include/linux/swait.h, but they are not exported, and so they are not
-useable from kernel modules.
+The function __builtin_expect returns long type (see the gcc
+documentation), and so do macros likely and unlikely. Unfortunatelly, when
+CONFIG_PROFILE_ANNOTATED_BRANCHES is selected, the macros likely and
+unlikely expand to __branch_check__ and __branch_check__ truncates the
+long type to int. This unintended truncation may cause bugs in various
+kernel code (we found a bug in dm-writecache because of it), so it's
+better to fix __branch_check__ to return long.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org
 
 ---
- kernel/sched/swait.c |    2 ++
- 1 file changed, 2 insertions(+)
+ include/linux/compiler.h |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Index: linux-2.6/kernel/sched/swait.c
+Index: linux-2.6/include/linux/compiler.h
 ===================================================================
---- linux-2.6.orig/kernel/sched/swait.c	2018-04-16 21:10:05.000000000 +0200
-+++ linux-2.6/kernel/sched/swait.c	2018-04-16 21:10:05.000000000 +0200
-@@ -75,6 +75,7 @@ void __prepare_to_swait(struct swait_que
- 	if (list_empty(&wait->task_list))
- 		list_add(&wait->task_list, &q->task_list);
- }
-+EXPORT_SYMBOL(__prepare_to_swait);
+--- linux-2.6.orig/include/linux/compiler.h	2018-02-26 20:34:17.000000000 +0100
++++ linux-2.6/include/linux/compiler.h	2018-05-30 14:11:53.000000000 +0200
+@@ -21,7 +21,7 @@ void ftrace_likely_update(struct ftrace_
+ #define unlikely_notrace(x)	__builtin_expect(!!(x), 0)
  
- void prepare_to_swait(struct swait_queue_head *q, struct swait_queue *wait, int state)
- {
-@@ -104,6 +105,7 @@ void __finish_swait(struct swait_queue_h
- 	if (!list_empty(&wait->task_list))
- 		list_del_init(&wait->task_list);
- }
-+EXPORT_SYMBOL(__finish_swait);
- 
- void finish_swait(struct swait_queue_head *q, struct swait_queue *wait)
- {
+ #define __branch_check__(x, expect, is_constant) ({			\
+-			int ______r;					\
++			long ______r;					\
+ 			static struct ftrace_likely_data		\
+ 				__attribute__((__aligned__(4)))		\
+ 				__attribute__((section("_ftrace_annotated_branch"))) \
