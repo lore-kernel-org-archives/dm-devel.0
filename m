@@ -1,167 +1,71 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-writecache changes
-Date: Wed, 30 May 2018 12:11:16 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1805301209430.12334@file01.intranet.prod.int.rdu2.redhat.com>
+From: Jens Axboe <axboe@kernel.dk>
+Subject: Re: [PATCH 0/3] Provide more fine grained control over multipathing
+Date: Wed, 30 May 2018 13:05:46 -0600
+Message-ID: <f4951571-d37d-73cd-1d6c-0ca84647d5ac@kernel.dk>
+References: <20180525125322.15398-1-jthumshirn@suse.de>
+ <20180525130535.GA24239@lst.de> <20180525135813.GB9591@redhat.com>
+ <20180525141211.GA25971@lst.de> <20180525145056.GD9591@redhat.com>
+ <yq1muwj45sg.fsf@oracle.com> <20180529030236.GA28895@redhat.com>
+ <20180529072240.np5c62akbr7jqelr@linux-x5ow.site>
+ <20180529080952.GA1369@lst.de> <20180529232718.GA1730@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <msnitzer@redhat.com>
-Cc: dm-devel@redhat.com
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180529232718.GA1730@redhat.com>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@lst.de>, Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Johannes Thumshirn <jthumshirn@suse.de>, "Martin K. Petersen" <martin.petersen@oracle.com>, Linux NVMe Mailinglist <linux-nvme@lists.infradead.org>, Laurence Oberman <loberman@redhat.com>, Sagi Grimberg <sagi@grimberg.me>, James Smart <james.smart@broadcom.com>, Ewan Milne <emilne@redhat.com>, Linux Kernel Mailinglist <linux-kernel@vger.kernel.org>, Keith Busch <keith.busch@intel.com>, Hannes Reinecke <hare@suse.de>, Martin George <marting@netapp.com>, John Meneghini <John.Meneghini@netapp.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This patch removes the per-architecture abstraction.
+On 5/29/18 5:27 PM, Mike Snitzer wrote:
+> On Tue, May 29 2018 at  4:09am -0400,
+> Christoph Hellwig <hch@lst.de> wrote:
+> 
+>> On Tue, May 29, 2018 at 09:22:40AM +0200, Johannes Thumshirn wrote:
+>>> For a "Plan B" we can still use the global knob that's already in
+>>> place (even if this reminds me so much about scsi-mq which at least we
+>>> haven't turned on in fear of performance regressions).
+>>>
+>>> Let's drop the discussion here, I don't think it leads to something
+>>> else than flamewars.
+>>
+>> If our plan A doesn't work we can go back to these patches.  For now
+>> I'd rather have everyone spend their time on making Plan A work then
+>> preparing for contingencies.  Nothing prevents anyone from using these
+>> patches already out there if they really want to, but I'd recommend
+>> people are very careful about doing so as you'll lock yourself into
+>> a long-term maintainance burden.
+> 
+> Restating (for others): this patchset really isn't about contingencies.
+> It is about choice.
+> 
+> Since we're at an impasse, in the hopes of soliciting definitive
+> feedback from Jens and Linus, I'm going to attempt to reset the
+> discussion for their entry.
+> 
+> In summary, we have a classic example of a maintainer stalemate here:
+> 1) Christoph, as NVMe co-maintainer, doesn't want to allow native NVMe
+>    multipath to actively coexist with dm-multipath's NVMe support on the
+>    same host.
+> 2) I, as DM maintainer, would like to offer this flexibility to users --
+>    by giving them opt-in choice to continue using existing dm-multipath
+>    with NVMe. (also, both Red Hat and SUSE would like to offer this).
+> 
+> There is no technical reason why they cannot coexist.  Hence this simple
+> patchset that was originally offered by Johannes Thumshirn with
+> contributions from myself.
 
-Only pmem_assign is left, because it is more convenient to use than 
-memcpy_flushcache (and also, on architectures that don't support 
-persistent memory, we want to redefine pmem_assign so that it doesn't 
-flush the cache).
+Here's what I think - flag days tend to suck. They may be more convenient
+for developers, but they inflict pain on users. Sometimes they prevent
+them from moving forward, since updates are now gated on external
+dependencies. Moving forward with a new architecture is great, but
+proper care has to be given to existing users of multipath, regardless
+of how few they may be.
 
-It also fixes a test for failure of dm_io_client_create and
-dm_kcopyd_client_create.
+This patchset seems pretty clean and minimalist. Realistically, I'm
+guessing that SUSE and RH will ship it regardless of upstream status.
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
----
- drivers/md/dm-writecache.c |   72 ++++++---------------------------------------
- 1 file changed, 11 insertions(+), 61 deletions(-)
-
-Index: linux-2.6/drivers/md/dm-writecache.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-writecache.c	2018-05-30 17:38:22.000000000 +0200
-+++ linux-2.6/drivers/md/dm-writecache.c	2018-05-30 18:02:13.000000000 +0200
-@@ -34,60 +34,12 @@
- #define BITMAP_GRANULARITY	PAGE_SIZE
- #endif
- 
--/*
-- * API for optimized flushing of persistent memory:
-- * On X86, non-temporal stores are more efficient than cache flushing.
-- * On ARM64, cache flushing is more efficient.
-- *
-- * This API is a candidate for being elevated out of DM but for now
-- * it serves to cleanly allow optimized flushing without excessive
-- * branching throughout this target's code.
-- */
--#if defined(CONFIG_X86_64)
--
--#define __pmem_assign(dest, src, uniq)				\
-+#define pmem_assign(dest, src)					\
- do {								\
- 	typeof(dest) uniq = (src);				\
- 	memcpy_flushcache(&(dest), &uniq, sizeof(dest));	\
- } while (0)
- 
--#define pmem_assign(dest, src)					\
--	__pmem_assign(dest, src, __UNIQUE_ID(pmem_assign))
--
--static void pmem_memcpy(void *dest, void *src, size_t len)
--{
--	memcpy_flushcache(dest, src, len);
--}
--
--static void pmem_flush(void *dest, size_t len)
--{
--}
--
--static void pmem_commit(void)
--{
--	wmb();
--}
--
--#else
--
--#define pmem_assign(dest, src)	WRITE_ONCE(dest, src)
--
--static void pmem_memcpy(void *dest, void *src, size_t len)
--{
--	memcpy(dest, src, len);
--}
--
--static void pmem_flush(void *dest, size_t len)
--{
--	arch_wb_cache_pmem(dest, len);
--}
--
--static void pmem_commit(void)
--{
--}
--
--#endif
--
- #if defined(__HAVE_ARCH_MEMCPY_MCSAFE) && defined(CONFIG_ARCH_HAS_PMEM_API)
- #define DM_WRITECACHE_HANDLE_HARDWARE_ERRORS
- #endif
-@@ -450,17 +402,13 @@ do {									\
- 
- static void writecache_flush_all_metadata(struct dm_writecache *wc)
- {
--	if (WC_MODE_PMEM(wc))
--		pmem_flush(sb(wc), offsetof(struct wc_memory_superblock, entries[wc->n_blocks]));
--	else
-+	if (!WC_MODE_PMEM(wc))
- 		memset(wc->dirty_bitmap, -1, wc->dirty_bitmap_size);
- }
- 
- static void writecache_flush_region(struct dm_writecache *wc, void *ptr, size_t size)
- {
--	if (WC_MODE_PMEM(wc))
--		pmem_flush(ptr, size);
--	else
-+	if (!WC_MODE_PMEM(wc))
- 		__set_bit(((char *)ptr - (char *)wc->memory_map) / BITMAP_GRANULARITY,
- 			  wc->dirty_bitmap);
- }
-@@ -537,7 +485,7 @@ static void ssd_commit_flushed(struct dm
- static void writecache_commit_flushed(struct dm_writecache *wc)
- {
- 	if (WC_MODE_PMEM(wc))
--		pmem_commit();
-+		wmb();
- 	else
- 		ssd_commit_flushed(wc);
- }
-@@ -1090,7 +1038,7 @@ static void bio_copy_block(struct dm_wri
- 			}
- 		} else {
- 			flush_dcache_page(bio_page(bio));
--			pmem_memcpy(data, buf, size);
-+			memcpy_flushcache(data, buf, size);
- 		}
- 
- 		bvec_kunmap_irq(buf, &flags);
-@@ -1872,9 +1820,10 @@ static int writecache_ctr(struct dm_targ
- 	}
- 
- 	wc->dm_io = dm_io_client_create();
--	if (!wc->dm_io) {
--		r = -ENOMEM;
-+	if (IS_ERR(wc->dm_io)) {
-+		r = PTR_ERR(wc->dm_io);
- 		ti->error = "Unable to allocate dm-io client";
-+		wc->dm_io = NULL;
- 		goto bad;
- 	}
- 
-@@ -2096,9 +2045,10 @@ invalid_optional:
- 		}
- 
- 		wc->dm_kcopyd = dm_kcopyd_client_create(&dm_kcopyd_throttle);
--		if (!wc->dm_kcopyd) {
--			r = -ENOMEM;
-+		if (IS_ERR(wc->dm_kcopyd)) {
-+			r = PTR_ERR(wc->dm_kcopyd);
- 			ti->error = "Unable to allocate dm-kcopyd client";
-+			wc->dm_kcopyd = NULL;
- 			goto bad;
- 		}
- 
+-- 
+Jens Axboe
