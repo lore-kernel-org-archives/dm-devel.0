@@ -1,66 +1,43 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH] dm: writecache: fix format string warning
-Date: Wed, 30 May 2018 08:13:17 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1805300807090.24812@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: [PATCH] branch-check: fix long->int truncation when profiling
+ branches
+Date: Wed, 30 May 2018 08:19:22 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1805300818140.24812@file01.intranet.prod.int.rdu2.redhat.com>
 References: <20180528155432.2864616-1-arnd@arndb.de>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180528155432.2864616-1-arnd@arndb.de>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@redhat.com>
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>
 List-Id: dm-devel.ids
 
+The function __builtin_expect returns long type (see the gcc
+documentation), and so do macros likely and unlikely. Unfortunatelly, when
+CONFIG_PROFILE_ANNOTATED_BRANCHES is selected, the macros likely and
+unlikely expand to __branch_check__ and __branch_check__ truncates the
+long type to int. This unintended truncation may cause bugs in various
+kernel code (we found a bug in dm-writecache because of it), so it's
+better to fix __branch_check__ to return long.
 
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org
 
-On Mon, 28 May 2018, Arnd Bergmann wrote:
+---
+ include/linux/compiler.h |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-> The return type of ACCESS_ONCE is configuration dependent and may be either
-> 'int' or 'long int' for the writecache_has_error() macro, so we get a warning
-> like this for either format string:
-
-__builtin_expect returns always long, see the GCC documentation (it used 
-to return int in very old gcc versions such as 2.96).
-
-I think this is a bug in the macro __branch_check__. The variable ______r 
-should be long, but it is int. This bug may cause misbehavior of other 
-kernel parts (i.e. truncation of long value to int), so it should be fixed 
-in __branch_check__ - not in dm-writecache.
-
-Mikulas
-
-> In file included from drivers/md/dm-writecache.c:8:
-> drivers/md/dm-writecache.c: In function 'writecache_status':
-> drivers/md/dm-writecache.c:2227:10: error: format '%ld' expects argument of type 'long int', but argument 4 has type 'int' [-Werror=format=]
->    DMEMIT("%ld %llu %llu %llu", writecache_has_error(wc),
->           ^~~~~~~~~~~~~~~~~~~~
-> include/linux/device-mapper.h:549:46: note: in definition of macro 'DMEMIT'
->       0 : scnprintf(result + sz, maxlen - sz, x))
->                                               ^
-> 
-> The code is otherwise correct, so we just need to shut up the warning,
-> which can be done using an extra type cast.
-> 
-> Fixes: bb15b431d650 ("dm: add writecache target")
-> Signed-off-by: Arnd Bergmann <arnd@arndb.de>
-> ---
->  drivers/md/dm-writecache.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
-> index 1ef06e738eb6..772ac3a57287 100644
-> --- a/drivers/md/dm-writecache.c
-> +++ b/drivers/md/dm-writecache.c
-> @@ -2224,7 +2224,7 @@ static void writecache_status(struct dm_target *ti, status_type_t type,
->  
->  	switch (type) {
->  	case STATUSTYPE_INFO:
-> -		DMEMIT("%ld %llu %llu %llu", writecache_has_error(wc),
-> +		DMEMIT("%ld %llu %llu %llu", (long)writecache_has_error(wc),
->  		       (unsigned long long)wc->n_blocks, (unsigned long long)wc->freelist_size,
->  		       (unsigned long long)wc->writeback_size);
->  		break;
-> -- 
-> 2.9.0
-> 
+Index: linux-2.6/include/linux/compiler.h
+===================================================================
+--- linux-2.6.orig/include/linux/compiler.h	2018-02-26 20:34:17.000000000 +0100
++++ linux-2.6/include/linux/compiler.h	2018-05-30 14:11:53.000000000 +0200
+@@ -21,7 +21,7 @@ void ftrace_likely_update(struct ftrace_
+ #define unlikely_notrace(x)	__builtin_expect(!!(x), 0)
+ 
+ #define __branch_check__(x, expect, is_constant) ({			\
+-			int ______r;					\
++			long ______r;					\
+ 			static struct ftrace_likely_data		\
+ 				__attribute__((__aligned__(4)))		\
+ 				__attribute__((section("_ftrace_annotated_branch"))) \
