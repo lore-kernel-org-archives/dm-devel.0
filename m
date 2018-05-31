@@ -1,27 +1,18 @@
-From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [patch 4/4] dm-writecache: use new API for flushing
-Date: Thu, 31 May 2018 09:39:41 -0700
-Message-ID: <CAPcyv4hr2cVhpLNu66vPgRTwtfxhwW4AdpJJUKBkBfPWKKGv+A@mail.gmail.com>
-References: <20180519052503.325953342@debian.vm>
- <CAPcyv4iEtfuVGPR0QMKcafv2XFwSj3nzxjX8cuXpXe00akAvYA@mail.gmail.com>
- <alpine.LRH.2.02.1805250213270.13894@file01.intranet.prod.int.rdu2.redhat.com>
- <20180525125126.GA9275@redhat.com>
- <CAPcyv4j-v5HGBg9JMBXt7UUyw=K_bGC7t5tQGfXM9G4qjOpFjQ@mail.gmail.com>
- <alpine.LRH.2.02.1805260246250.15978@file01.intranet.prod.int.rdu2.redhat.com>
- <CAPcyv4jwLsCNvNhgvv2DDSZuQsQXYEpKUU_5w1pTnyKj-uDBbQ@mail.gmail.com>
- <alpine.LRH.2.02.1805280922190.13486@file01.intranet.prod.int.rdu2.redhat.com>
- <CAPcyv4jXV4aZ6wqqjVPL8J4LxwTtXnzQCLZ0Wk5oB4_0uxpg7g@mail.gmail.com>
- <alpine.LRH.2.02.1805300903220.1090@file01.intranet.prod.int.rdu2.redhat.com>
- <CAPcyv4j3pDQ3YMK5Eije0dgGw+1CQYazPJ-zvqfvGF-9O_gVJw@mail.gmail.com>
- <CAPcyv4gD-ZaXyV1SFAndobUYJOGLkx9rOyb5zNbzJXB_kVCzoA@mail.gmail.com>
- <alpine.LRH.2.02.1805310416540.30096@file01.intranet.prod.int.rdu2.redhat.com>
- <CAPcyv4gzFbdBbUhPJ6W4mTJWAkvqVw_4FVhVdePEJzc28Sg-Sg@mail.gmail.com>
- <alpine.LRH.2.02.1805311127001.31059@file01.intranet.prod.int.rdu2.redhat.com>
+From: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v2 2/7] dax: change bdev_dax_supported() to support
+ boolean returns
+Date: Thu, 31 May 2018 12:13:32 -0700
+Message-ID: <20180531191332.GB7825@magnolia>
+References: <20180529195106.14268-1-ross.zwisler@linux.intel.com>
+ <20180529195106.14268-3-ross.zwisler@linux.intel.com>
+ <20180529212510.GJ30110@magnolia>
+ <20180529220114.GA13948@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <alpine.LRH.2.02.1805311127001.31059-Hpncn10jQN4oNljnaZt3ZvA+iT7yCHsGwRM8/txMwJMAicBL8TP8PQ@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20180529220114.GA13948-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
  <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
 List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
@@ -31,53 +22,202 @@ List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
  <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
 Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-nvdimm <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Toshi Kani <toshi.kani-ZPxbGqLxI0U@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Dave Jiang <dave.jiang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: dm-devel.ids
 
-On Thu, May 31, 2018 at 8:31 AM, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
->
->
-> On Thu, 31 May 2018, Dan Williams wrote:
->
->> On Thu, May 31, 2018 at 1:19 AM, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
->> >
->> >
->> > On Wed, 30 May 2018, Dan Williams wrote:
->> >
->> >> > Great find! Thanks for the due diligence. Feel free to add:
->> >> >
->> >> >     Acked-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
->> >> >
->> >> > ...on the reworks to unify ARM and x86.
->> >>
->> >> One more note. The side effect of not using dax_flush() is that you
->> >> may end up flushing caches on systems where the platform has asserted
->> >> it will take responsibility for flushing caches at power loss. If /
->> >> when those systems become more prevalent we may want to think of a way
->> >> to combine the non-temporal optimization and the cache-flush-bypass
->> >> optimizations. However that is something that can wait for a later
->> >> change beyond 4.18.
->> >
->> > We could define memcpy_flushpmem, that falls back to memcpy or
->> > memcpy_flushcache, depending on whether the platform flushes the caches at
->> > power loss or not.
->>
->> The problem is that some platforms only power fail protect a subset of
->> the physical address range,
->
-> How can this be? A psysical address may be cached on any CPU, so either
-> there is enough power to flush all the CPUs' caches or there isn't.
->
-> How does the CPU design that protects only a part of physical addresses
-> look like?
+On Tue, May 29, 2018 at 04:01:14PM -0600, Ross Zwisler wrote:
+> On Tue, May 29, 2018 at 02:25:10PM -0700, Darrick J. Wong wrote:
+> > On Tue, May 29, 2018 at 01:51:01PM -0600, Ross Zwisler wrote:
+> > > From: Dave Jiang <dave.jiang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> > > 
+> > > The function return values are confusing with the way the function is
+> > > named. We expect a true or false return value but it actually returns
+> > > 0/-errno.  This makes the code very confusing. Changing the return values
+> > > to return a bool where if DAX is supported then return true and no DAX
+> > > support returns false.
+> > > 
+> > > Signed-off-by: Dave Jiang <dave.jiang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> > > Signed-off-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+> > 
+> > Looks ok, do you want me to pull the first two patches through the xfs
+> > tree?
+> > 
+> > Reviewed-by: Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+> 
+> Thanks for the review.
+> 
+> I'm not sure what's best.  If you do that then Mike will need to have a DM
+> branch for the rest of the series based on your stable commits, yea?
+> 
+> Mike what would you prefer?
 
-It's not necessarily a CPU problem, it may be a problem of having
-enough stored energy to potentially software loops to flush caches.
-There's also the consideration that a general purpose platform may mix
-persistent memory technologies from different vendors where some might
-be flash-backed DRAM and some might be persistent media directly.
+I /was/ about to say that I would pull in the first two patches, but now
+I can't get xfs to mount with pmem at all, and have no way of testing
+this...?
 
-For now I don't think we need to worry about it, but I don't want to
-make the assumption that this property is platform global given the
-history of how persistent memory has been deployed to date.
+# echo 'file drivers/dax/* +p' > /sys/kernel/debug/dynamic_debug/control
+# mount /dev/pmem3 -o rtdev=/dev/pmem4,dax /mnt
+# dmesg
+<snip>
+SGI XFS with ACLs, security attributes, realtime, scrub, debug enabled
+XFS (pmem3): DAX enabled. Warning: EXPERIMENTAL, use at your own risk
+pmem3: error: dax support not enabled
+pmem4: error: dax support not enabled
+XFS (pmem3): DAX unsupported by block device. Turning off DAX.
+XFS (pmem3): Mounting V5 Filesystem
+XFS (pmem3): Ending clean mount
+
+Evidently the pfn it picks up is missing PFN_MAP in flags because
+ND_REGION_PAGEMAP isn't set, and looking at the kernel source, pmem that
+comes in via NFIT never gets that set...?
+
+relevant qemu pmem options:
+
+-object memory-backend-file,id=memnvdimm0,prealloc=no,mem-path=/dev/shm/a.img,share=yes,size=13488881664
+-device nvdimm,node=0,memdev=memnvdimm0,id=nvdimm0,slot=0
+(repeat for five more devices)
+
+<confused>
+
+--D
+
+NFIT table contents:
+
+0000000  4e  46  49  54  78  04  00  00  01  46  42  4f  43  48  53  20
+          N   F   I   T   x 004  \0  \0 001   F   B   O   C   H   S    
+0000016  42  58  50  43  4e  46  49  54  01  00  00  00  42  58  50  43
+          B   X   P   C   N   F   I   T 001  \0  \0  \0   B   X   P   C
+0000032  01  00  00  00  00  00  00  00  00  00  38  00  08  00  03  00
+        001  \0  \0  \0  \0  \0  \0  \0  \0  \0   8  \0  \b  \0 003  \0
+0000048  00  00  00  00  01  00  00  00  79  d3  f0  66  f3  b4  74  40
+         \0  \0  \0  \0 001  \0  \0  \0   y 323 360   f 363 264   t   @
+0000064  ac  43  0d  33  18  b7  8c  db  00  00  00  6c  0a  00  00  00
+        254   C  \r   3 030 267 214 333  \0  \0  \0   l  \n  \0  \0  \0
+0000080  00  00  00  24  03  00  00  00  08  80  00  00  00  00  00  00
+         \0  \0  \0   $ 003  \0  \0  \0  \b 200  \0  \0  \0  \0  \0  \0
+0000096  01  00  30  00  04  00  00  00  00  00  00  00  08  00  09  00
+        001  \0   0  \0 004  \0  \0  \0  \0  \0  \0  \0  \b  \0  \t  \0
+0000112  00  00  00  24  03  00  00  00  00  00  00  00  00  00  00  00
+         \0  \0  \0   $ 003  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0
+0000128  00  00  00  00  00  00  00  00  00  00  01  00  00  00  00  00
+         \0  \0  \0  \0  \0  \0  \0  \0  \0  \0 001  \0  \0  \0  \0  \0
+0000144  04  00  50  00  09  00  86  80  01  00  01  00  00  00  00  00
+        004  \0   P  \0  \t  \0 206 200 001  \0 001  \0  \0  \0  \0  \0
+0000160  00  00  00  00  00  00  00  00  59  34  12  00  01  03  00  00
+         \0  \0  \0  \0  \0  \0  \0  \0   Y   4 022  \0 001 003  \0  \0
+0000176  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+         \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0
+*
+0000224  00  00  38  00  0a  00  03  00  00  00  00  00  00  00  00  00
+         \0  \0   8  \0  \n  \0 003  \0  \0  \0  \0  \0  \0  \0  \0  \0
+0000240  79  d3  f0  66  f3  b4  74  40  ac  43  0d  33  18  b7  8c  db
+          y 323 360   f 363 264   t   @ 254   C  \r   3 030 267 214 333
+0000256  00  00  00  90  0d  00  00  00  00  00  00  24  03  00  00  00
+         \0  \0  \0 220  \r  \0  \0  \0  \0  \0  \0   $ 003  \0  \0  \0
+0000272  08  80  00  00  00  00  00  00  01  00  30  00  05  00  00  00
+         \b 200  \0  \0  \0  \0  \0  \0 001  \0   0  \0 005  \0  \0  \0
+0000288  00  00  00  00  0a  00  0b  00  00  00  00  24  03  00  00  00
+         \0  \0  \0  \0  \n  \0  \v  \0  \0  \0  \0   $ 003  \0  \0  \0
+0000304  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+         \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0
+0000320  00  00  01  00  00  00  00  00  04  00  50  00  0b  00  86  80
+         \0  \0 001  \0  \0  \0  \0  \0 004  \0   P  \0  \v  \0 206 200
+0000336  01  00  01  00  00  00  00  00  00  00  00  00  00  00  00  00
+        001  \0 001  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0
+0000352  5a  34  12  00  01  03  00  00  00  00  00  00  00  00  00  00
+          Z   4 022  \0 001 003  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0
+0000368  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+         \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0
+*
+0000400  00  00  00  00  00  00  00  00  00  00  38  00  0c  00  03  00
+         \0  \0  \0  \0  \0  \0  \0  \0  \0  \0   8  \0  \f  \0 003  \0
+0000416  00  00  00  00  01  00  00  00  79  d3  f0  66  f3  b4  74  40
+         \0  \0  \0  \0 001  \0  \0  \0   y 323 360   f 363 264   t   @
+0000432  ac  43  0d  33  18  b7  8c  db  00  00  00  b4  10  00  00  00
+        254   C  \r   3 030 267 214 333  \0  \0  \0 264 020  \0  \0  \0
+0000448  00  00  00  24  03  00  00  00  08  80  00  00  00  00  00  00
+         \0  \0  \0   $ 003  \0  \0  \0  \b 200  \0  \0  \0  \0  \0  \0
+0000464  01  00  30  00  06  00  00  00  00  00  00  00  0c  00  0d  00
+        001  \0   0  \0 006  \0  \0  \0  \0  \0  \0  \0  \f  \0  \r  \0
+0000480  00  00  00  24  03  00  00  00  00  00  00  00  00  00  00  00
+         \0  \0  \0   $ 003  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0
+0000496  00  00  00  00  00  00  00  00  00  00  01  00  00  00  00  00
+         \0  \0  \0  \0  \0  \0  \0  \0  \0  \0 001  \0  \0  \0  \0  \0
+0000512  04  00  50  00  0d  00  86  80  01  00  01  00  00  00  00  00
+        004  \0   P  \0  \r  \0 206 200 001  \0 001  \0  \0  \0  \0  \0
+0000528  00  00  00  00  00  00  00  00  5b  34  12  00  01  03  00  00
+         \0  \0  \0  \0  \0  \0  \0  \0   [   4 022  \0 001 003  \0  \0
+0000544  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+         \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0
+*
+0000592  00  00  38  00  02  00  03  00  00  00  00  00  00  00  00  00
+         \0  \0   8  \0 002  \0 003  \0  \0  \0  \0  \0  \0  \0  \0  \0
+0000608  79  d3  f0  66  f3  b4  74  40  ac  43  0d  33  18  b7  8c  db
+          y 323 360   f 363 264   t   @ 254   C  \r   3 030 267 214 333
+0000624  00  00  00  00  01  00  00  00  00  00  00  24  03  00  00  00
+         \0  \0  \0  \0 001  \0  \0  \0  \0  \0  \0   $ 003  \0  \0  \0
+0000640  08  80  00  00  00  00  00  00  01  00  30  00  01  00  00  00
+         \b 200  \0  \0  \0  \0  \0  \0 001  \0   0  \0 001  \0  \0  \0
+0000656  00  00  00  00  02  00  03  00  00  00  00  24  03  00  00  00
+         \0  \0  \0  \0 002  \0 003  \0  \0  \0  \0   $ 003  \0  \0  \0
+0000672  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+         \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0
+0000688  00  00  01  00  00  00  00  00  04  00  50  00  03  00  86  80
+         \0  \0 001  \0  \0  \0  \0  \0 004  \0   P  \0 003  \0 206 200
+0000704  01  00  01  00  00  00  00  00  00  00  00  00  00  00  00  00
+        001  \0 001  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0
+0000720  56  34  12  00  01  03  00  00  00  00  00  00  00  00  00  00
+          V   4 022  \0 001 003  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0
+0000736  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+         \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0
+*
+0000768  00  00  00  00  00  00  00  00  00  00  38  00  04  00  03  00
+         \0  \0  \0  \0  \0  \0  \0  \0  \0  \0   8  \0 004  \0 003  \0
+0000784  00  00  00  00  01  00  00  00  79  d3  f0  66  f3  b4  74  40
+         \0  \0  \0  \0 001  \0  \0  \0   y 323 360   f 363 264   t   @
+0000800  ac  43  0d  33  18  b7  8c  db  00  00  00  24  04  00  00  00
+        254   C  \r   3 030 267 214 333  \0  \0  \0   $ 004  \0  \0  \0
+0000816  00  00  00  24  03  00  00  00  08  80  00  00  00  00  00  00
+         \0  \0  \0   $ 003  \0  \0  \0  \b 200  \0  \0  \0  \0  \0  \0
+0000832  01  00  30  00  02  00  00  00  00  00  00  00  04  00  05  00
+        001  \0   0  \0 002  \0  \0  \0  \0  \0  \0  \0 004  \0 005  \0
+0000848  00  00  00  24  03  00  00  00  00  00  00  00  00  00  00  00
+         \0  \0  \0   $ 003  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0
+0000864  00  00  00  00  00  00  00  00  00  00  01  00  00  00  00  00
+         \0  \0  \0  \0  \0  \0  \0  \0  \0  \0 001  \0  \0  \0  \0  \0
+0000880  04  00  50  00  05  00  86  80  01  00  01  00  00  00  00  00
+        004  \0   P  \0 005  \0 206 200 001  \0 001  \0  \0  \0  \0  \0
+0000896  00  00  00  00  00  00  00  00  57  34  12  00  01  03  00  00
+         \0  \0  \0  \0  \0  \0  \0  \0   W   4 022  \0 001 003  \0  \0
+0000912  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+         \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0
+*
+0000960  00  00  38  00  06  00  03  00  00  00  00  00  00  00  00  00
+         \0  \0   8  \0 006  \0 003  \0  \0  \0  \0  \0  \0  \0  \0  \0
+0000976  79  d3  f0  66  f3  b4  74  40  ac  43  0d  33  18  b7  8c  db
+          y 323 360   f 363 264   t   @ 254   C  \r   3 030 267 214 333
+0000992  00  00  00  48  07  00  00  00  00  00  00  24  03  00  00  00
+         \0  \0  \0   H  \a  \0  \0  \0  \0  \0  \0   $ 003  \0  \0  \0
+0001008  08  80  00  00  00  00  00  00  01  00  30  00  03  00  00  00
+         \b 200  \0  \0  \0  \0  \0  \0 001  \0   0  \0 003  \0  \0  \0
+0001024  00  00  00  00  06  00  07  00  00  00  00  24  03  00  00  00
+         \0  \0  \0  \0 006  \0  \a  \0  \0  \0  \0   $ 003  \0  \0  \0
+0001040  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+         \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0
+0001056  00  00  01  00  00  00  00  00  04  00  50  00  07  00  86  80
+         \0  \0 001  \0  \0  \0  \0  \0 004  \0   P  \0  \a  \0 206 200
+0001072  01  00  01  00  00  00  00  00  00  00  00  00  00  00  00  00
+        001  \0 001  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0
+0001088  58  34  12  00  01  03  00  00  00  00  00  00  00  00  00  00
+          X   4 022  \0 001 003  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0
+0001104  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+         \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0  \0
+*
+0001136  00  00  00  00  00  00  00  00
+         \0  \0  \0  \0  \0  \0  \0  \0
+0001144
+
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-xfs" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
