@@ -1,52 +1,157 @@
-From: Wei Yongjun <weiyongjun1@huawei.com>
-Subject: [PATCH -next] dm writecache: fix return value check in writecache_ctr()
-Date: Thu, 31 May 2018 11:53:15 +0000
-Message-ID: <1527767595-76082-1-git-send-email-weiyongjun1@huawei.com>
+From: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [patch 4/4] dm-writecache: use new API for flushing
+Date: Thu, 31 May 2018 08:09:06 -0400
+Message-ID: <20180531120906.GA8456@redhat.com>
+References: <CAPcyv4jXV4aZ6wqqjVPL8J4LxwTtXnzQCLZ0Wk5oB4_0uxpg7g@mail.gmail.com>
+ <alpine.LRH.2.02.1805300903220.1090@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180530131623.GB2106@redhat.com>
+ <alpine.LRH.2.02.1805300919070.11327@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180530132647.GB5157@redhat.com>
+ <alpine.LRH.2.02.1805300929500.11327@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180530135421.GA81788@redhat.com>
+ <alpine.LRH.2.02.1805300959460.16696@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180531033919.GA88973@redhat.com>
+ <alpine.LRH.2.02.1805310412240.30096@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
-Cc: Wei Yongjun <weiyongjun1@huawei.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, kernel-janitors@vger.kernel.org
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1805310412240.30096-Hpncn10jQN4oNljnaZt3ZvA+iT7yCHsGwRM8/txMwJMAicBL8TP8PQ@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-nvdimm <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 List-Id: dm-devel.ids
 
-Function dm_io_client_create() and dm_kcopyd_client_create() return
-ERR_PTR() not NULL in case of error. The NULL test in the return value
-check should be replaced with IS_ERR()
+On Thu, May 31 2018 at  4:16am -0400,
+Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
 
-Fixes: 2105231db61b ("dm: add writecache target")
-Signed-off-by: Wei Yongjun <weiyongjun1@huawei.com>
----
- drivers/md/dm-writecache.c | 10 ++++++----
- 1 file changed, 6 insertions(+), 4 deletions(-)
+> 
+> 
+> On Wed, 30 May 2018, Mike Snitzer wrote:
+> 
+> > On Wed, May 30 2018 at 10:09P -0400,
+> > Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+> >  
+> > > And what about this?
+> > > #define WC_MODE_PMEM(wc)                        ((wc)->pmem_mode)
+> > > 
+> > > The code that I had just allowed the compiler to optimize out 
+> > > persistent-memory code if we have DM_WRITECACHE_ONLY_SSD defined - and you 
+> > > deleted it.
+> > > 
+> > > Most architectures don't have persistent memory and the dm-writecache 
+> > > driver could work in ssd-only mode on them. On these architectures, I 
+> > > define
+> > > #define WC_MODE_PMEM(wc)                        false
+> > > - and the compiler will just automatically remove the tests for that 
+> > > condition and the unused branch. It does also eliminate unused static 
+> > > functions.
+> > 
+> > Here is the patch that I just folded into the rebased version of
+> > dm-writecache now in the dm-4.18 branch.
+> > 
+> > (I rebased ontop of Jens' latest block tree for 4.18 that now includes
+> > the mempool_init changes, etc.)
+> > 
+> > ---
+> >  drivers/md/dm-writecache.c | 17 +++++++++++++++--
+> >  1 file changed, 15 insertions(+), 2 deletions(-)
+> > 
+> > diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
+> > index fcbfaf7c27ec..691b5ffb799f 100644
+> > --- a/drivers/md/dm-writecache.c
+> > +++ b/drivers/md/dm-writecache.c
+> > @@ -34,13 +34,21 @@
+> >  #define BITMAP_GRANULARITY	PAGE_SIZE
+> >  #endif
+> >  
+> > +#if defined(CONFIG_ARCH_HAS_PMEM_API) && IS_ENABLED(CONFIG_DAX_DRIVER)
+> > +#define DM_WRITECACHE_HAS_PMEM
+> > +#endif
+> > +
+> > +#ifdef DM_WRITECACHE_HAS_PMEM
+> >  #define pmem_assign(dest, src)					\
+> >  do {								\
+> >  	typeof(dest) uniq = (src);				\
+> >  	memcpy_flushcache(&(dest), &uniq, sizeof(dest));	\
+> >  } while (0)
+> > +#else
+> > +#define pmem_assign(dest, src)	((dest)) = (src))
+> > +#endif
+> >  
+> > -#if defined(__HAVE_ARCH_MEMCPY_MCSAFE) && defined(CONFIG_ARCH_HAS_PMEM_API)
+> > +#if defined(__HAVE_ARCH_MEMCPY_MCSAFE) && defined(DM_WRITECACHE_HAS_PMEM)
+> >  #define DM_WRITECACHE_HANDLE_HARDWARE_ERRORS
+> >  #endif
+> >  
+> > @@ -87,8 +95,13 @@ struct wc_entry {
+> >  #endif
+> >  };
+> >  
+> > +#ifdef DM_WRITECACHE_HAS_PMEM
+> >  #define WC_MODE_PMEM(wc)			((wc)->pmem_mode)
+> >  #define WC_MODE_FUA(wc)				((wc)->writeback_fua)
+> > +#else
+> > +#define WC_MODE_PMEM(wc)			false
+> > +#define WC_MODE_FUA(wc)				false
+> > +#endif
+> >  #define WC_MODE_SORT_FREELIST(wc)		(!WC_MODE_PMEM(wc))
+> >  
+> >  struct dm_writecache {
+> > @@ -1857,7 +1870,7 @@ static int writecache_ctr(struct dm_target *ti, unsigned argc, char **argv)
+> >  	if (!strcasecmp(string, "s")) {
+> >  		wc->pmem_mode = false;
+> >  	} else if (!strcasecmp(string, "p")) {
+> > -#if defined(CONFIG_ARCH_HAS_PMEM_API) && IS_ENABLED(CONFIG_DAX_DRIVER)
+> > +#ifdef DM_WRITECACHE_HAS_PMEM
+> >  		wc->pmem_mode = true;
+> >  		wc->writeback_fua = true;
+> >  #else
+> > -- 
+> > 2.15.0
+> 
+> OK.
+> 
+> I think that persistent_memory_claim should also be conditioned based on 
+> DM_WRITECACHE_HAS_PMEM - i.e. if we have DM_WRITECACHE_HAS_PMEM, we don't 
+> need to use other ifdefs.
+> 
+> Is there some difference between "#if IS_ENABLED(CONFIG_OPTION)" and
+> "#if defined(CONFIG_OPTION)"?
+
+Not that I'm aware of:
+  #define IS_ENABLED(option) __or(IS_BUILTIN(option), IS_MODULE(option))
+
+Here is the incremental patch I just folded in:
 
 diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
-index 844c4fb..0b2b436 100644
+index fd3bc232b7d6..f2ae02f22c43 100644
 --- a/drivers/md/dm-writecache.c
 +++ b/drivers/md/dm-writecache.c
-@@ -1872,9 +1872,10 @@ static int writecache_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 	}
- 
- 	wc->dm_io = dm_io_client_create();
--	if (!wc->dm_io) {
--		r = -ENOMEM;
-+	if (IS_ERR(wc->dm_io)) {
-+		r = PTR_ERR(wc->dm_io);
- 		ti->error = "Unable to allocate dm-io client";
-+		wc->dm_io = NULL;
- 		goto bad;
- 	}
- 
-@@ -2096,9 +2097,10 @@ static int writecache_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 		}
- 
- 		wc->dm_kcopyd = dm_kcopyd_client_create(&dm_kcopyd_throttle);
--		if (!wc->dm_kcopyd) {
--			r = -ENOMEM;
-+		if (IS_ERR(wc->dm_kcopyd)) {
-+			r = PTR_ERR(wc->dm_kcopyd);
- 			ti->error = "Unable to allocate dm-kcopyd client";
-+			wc->dm_kcopyd = NULL;
- 			goto bad;
- 		}
+@@ -34,7 +34,7 @@
+ #define BITMAP_GRANULARITY     PAGE_SIZE
+ #endif
+
+-#if defined(CONFIG_ARCH_HAS_PMEM_API) && IS_ENABLED(CONFIG_DAX_DRIVER)
++#if IS_ENABLED(CONFIG_ARCH_HAS_PMEM_API) && IS_ENABLED(CONFIG_DAX_DRIVER)
+ #define DM_WRITECACHE_HAS_PMEM
+ #endif
+
+@@ -218,7 +218,7 @@ static void wc_unlock(struct dm_writecache *wc)
+        mutex_unlock(&wc->lock);
+ }
+
+-#if IS_ENABLED(CONFIG_DAX_DRIVER)
++#ifdef DM_WRITECACHE_HAS_PMEM
+ static int persistent_memory_claim(struct dm_writecache *wc)
+ {
+        int r;
