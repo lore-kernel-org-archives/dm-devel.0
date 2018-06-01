@@ -1,186 +1,127 @@
-From: Krzysztof Kozlowski <krzk@kernel.org>
-Subject: [bisect BUG] dm-crypt percpu counter warnings and invalid kernel
- paging request at virtual address
-Date: Fri, 1 Jun 2018 14:55:15 +0200
-Message-ID: <CAJKOXPfSbsu0RGTUFfb+t_uOvQQxa0uDn-nsG+1uuKAq56nVXA@mail.gmail.com>
+From: Eric Biggers <ebiggers3@gmail.com>
+Subject: Re: [dm-devel] [PATCH] md: dm-crypt: Add Inline Encryption support
+ for dmcrypt
+Date: Fri, 1 Jun 2018 09:46:25 -0500
+Message-ID: <20180601144625.GA8111@zzz.localdomain>
+References: <e9120efc-1e25-79c8-6132-9062dd030539@synopsys.com>
+ <7a510610-9133-39aa-6841-3925c532f3c0@gmail.com>
+ <BD7FB879CC136E419544C8E2AE7B9C3020BB94@IN01WEMBXA.internal.synopsys.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <BD7FB879CC136E419544C8E2AE7B9C3020BB94@IN01WEMBXA.internal.synopsys.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Kent Overstreet <kent.overstreet@gmail.com>, Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>, Shaohua Li <shli@fb.com>, linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, "linux-samsung-soc@vger.kernel.org" <linux-samsung-soc@vger.kernel.org>
+To: Ladvine D Almeida <Ladvine.DAlmeida@synopsys.com>
+Cc: Milan Broz <gmazyland@gmail.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Joao Pinto <Joao.Pinto@synopsys.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, Manjunath M Bettegowda <Manjunath.MB@synopsys.com>, Tejas Joglekar <Tejas.Joglekar@synopsys.com>, Prabu Thangamuthu <Prabu.T@synopsys.com>
 List-Id: dm-devel.ids
 
-Hi,
+Hi Ladvine,
 
-Todays linux-next 20180601 fails during dm-crypt tests on Exynos5422
-(ARMv7, Cortex-A7+A15) using crypto HW block from SoC (s5p-aes).
+On Wed, May 30, 2018 at 02:52:07PM +0000, Ladvine D Almeida wrote:
+> On Monday 28 May 2018 05:33 PM, Milan Broz wrote:
+> > On 05/28/2018 03:01 PM, Ladvine D Almeida wrote:
+> >> This patch adds new option
+> >>     -- perform_inline_encrypt
+> >> that set the option inside dmcrypt to use inline encryption for
+> >> the configured mapping. I want to introduce inline encryption support
+> >> in the UFS Host Controller driver. The usage of the same for accomplishing
+> >> the Full Disk Encryption is done by the following changes in the
+> >> dmcrypt subsystem:
+> >>     - New function crypt_inline_encrypt_submit() is added to the
+> >> dmcrypt which associate the crypto context to the bios which
+> >> are submitted by the subsystem.
+> >>     - Successful configuration for the inline encryption will result in
+> >> the crypto transformation job being bypassed in the dmcrypt layer and the
+> >> actual encryption happens inline to the block device.
+> > I am not sure this is a good idea. Dm-crypt should never ever forward
+> > plaintext sector to underlying device.
+> >
+> > And you do not even check that your hw is available in the underlying device!
+> >
+> > If you want to use dm-crypt, write a crypto API driver for your crypto hw that defines
+> > specific cipher and let dm-crypt use this cipher (no patches needed in this case!)
+> 
+> Thanks for sharing your review.
+> I am sharing the links for the patches which are related to inline encryption below:
+> https://lkml.org/lkml/2018/5/28/1153
+> https://lkml.org/lkml/2018/5/28/1196
+> https://lkml.org/lkml/2018/5/28/1158
+> https://lkml.org/lkml/2018/5/28/1173
+> https://lkml.org/lkml/2018/5/28/1178
+> 
+> we have crypto API implementation for the hardware for  XTS algorithm, which will get registered when
+> the XTS algorithm capability of the inline encryption engine inside UFS Host Controller get detected by the UFS HC
+> driver. dm-crypt will be using this registered cipher.
+>  dm-crypt patch is unavoidable because the encrypt/decrypt function cannot perform the transformation
+> when inline encryption engine is involved. Also, it demands forwarding the plaintext sectors to the underlying
+> block device driver and  the crypto transformation happens internally in controller when data transfer happens.
+> 
 
-The test which fails:
-https://github.com/krzk/tools/blob/master/tests/s5p-sss-cryptsetup.sh
+I appreciate that you're working on this, but can you please send the full
+series to the relevant mailing lists, so that everyone has the needed context?
+Single random patches for this are basically impossible to review.  OFC that
+also means including a cover letter that explains the overall problem and your
+solution.  In the Cc list I also recommend including the ext4 maintainer
+Theodore Ts'o <tytso@mit.edu>, who led a discussion at LSFMM 2017 about this
+topic (https://lwn.net/Articles/717754/), and the f2fs maintainer Jaegeuk Kim
+<jaegeuk@kernel.org> who has had to deal with this stuff in an Android device
+kernel, but for another vendor's inline encryption hardware.  I assume your
+solution will work for other vendors too?  I think inline encryption is part of
+the latest UFS specificaton now, so the latest hardware does it in a
+"standardized" way and doesn't require ad-hoc vendor-specific stuff --- right?
+And do you have any plans for inline encryption support with fscrypt (ext4/f2fs
+encryption, a.k.a. what Android calls "File-Based Encryption")?  We need a
+design for inline encryption in the upstream kernel that is sufficiently general
+to work for all these vendors and use cases, not just specific ones.
 
-Effect:
+Just at a quick glance, you also seem to be abusing the crypto API by exposing
+inline encryption capabilities as a skcipher_alg.  With inline encryption by
+definition you can't actually do encryption outside of a block device request;
+as a result, your patch has to use a fallback algorithm to do the actual
+encryption for the skcipher_alg, which makes no sense.  So it is not at all
+clear to me that you should use the crypto API at all, as opposed to having it
+be purely a block layer thing.  (Please also Cc linux-crypto if you are doing
+significant work related to the crypto API.)
 
-[  149.867394] ------------[ cut here ]------------
-[  149.870631] WARNING: CPU: 5 PID: 492 at
-../drivers/md/dm-crypt.c:2225 crypt_dtr+0x1c0/0x1c4 [dm_crypt]
-[  149.880078] Modules linked in: dm_crypt s5p_jpeg exynos_gsc s5p_mfc
-v4l2_mem2mem v4l2_common videobuf2_dma_contig videobuf2_memops
-videobuf2_v4l2 videobuf2_common videodev media
-[  149.895908] CPU: 5 PID: 492 Comm: cryptsetup Tainted: G        W
-     4.17.0-rc4-00159-gae4c15db96d2 #36
-[  149.905328] Hardware name: SAMSUNG EXYNOS (Flattened Device Tree)
-[  149.911398] [<c011291c>] (unwind_backtrace) from [<c010ece8>]
-(show_stack+0x10/0x14)
-[  149.919111] [<c010ece8>] (show_stack) from [<c0a32190>]
-(dump_stack+0x98/0xc4)
-[  149.926307] [<c0a32190>] (dump_stack) from [<c0126fa0>] (__warn+0x10c/0x124)
-[  149.933310] [<c0126fa0>] (__warn) from [<c01270d0>]
-(warn_slowpath_null+0x40/0x48)
-[  149.940862] [<c01270d0>] (warn_slowpath_null) from [<bf28e15c>]
-(crypt_dtr+0x1c0/0x1c4 [dm_crypt])
-[  149.949803] [<bf28e15c>] (crypt_dtr [dm_crypt]) from [<c06f34b8>]
-(dm_table_destroy+0x5c/0xf8)
-[  149.958360] [<c06f34b8>] (dm_table_destroy) from [<c06f0cb0>]
-(__dm_destroy+0x158/0x1b4)
-[  149.966414] [<c06f0cb0>] (__dm_destroy) from [<c06f7988>]
-(dev_remove+0xd4/0x104)
-[  149.973861] [<c06f7988>] (dev_remove) from [<c06f80b4>]
-(ctl_ioctl+0x2e4/0x660)
-[  149.981144] [<c06f80b4>] (ctl_ioctl) from [<c029fcc0>]
-(do_vfs_ioctl+0xb0/0x9e8)
-[  149.988508] [<c029fcc0>] (do_vfs_ioctl) from [<c02a062c>]
-(ksys_ioctl+0x34/0x5c)
-[  149.995874] [<c02a062c>] (ksys_ioctl) from [<c0101000>]
-(ret_fast_syscall+0x0/0x28)
-[  150.061101] ---[ end trace 3e3bc2b7df1963aa ]---
+> >
+> > If I read the patch correctly, you do not check any parameters for
+> > compatibility with your hw support (cipher, mode, IV algorithm, key length, sector size ...)
+> 
+> I am registering an algorithm with cipher mode, IV size, block size, supported key size etc. for use by dm-crypt
+> as per the hardware capability of inline encryption engine.
+> If any other cipher mode, etc is used during the setup stage, DM-Crypt will work as normal.
+> 
+> >
+> > It seems like if the "perform_inline_encrypt" option is present, you just submit
+> > the whole bio to your code with new INLINE_ENCRYPTION bit set.
+> 
+> when the optional argument "perform_inline_encrypt" is set, we are not unconditionally sending the bio
+> to the block devices. The steps are explained below:
+> 1. user invokes the dm-setup command with the registered cipher "xts" and with the optional argument
+> "perform_inline_encrypt".
+> 2. dm-setup invokes the setkey function of the newly introduced algorithm, which finds the available key slots
+> to be programmed(UFS Host controller Inline Encryption engine has multiple keyslots), program the key slot,
+> and return the key slot index as return value of the set key function.
+> 3. When read/write operation happens, crypt_map() function in dm-crypt validates whether there is associated
+> key configuration index for the request. The Bio will be submitted directly in this case only with the associated
+> crypto context.
+> 4. Block device driver, eg. UFS host controller driver will create the Transfer requests as per this crypto context and
+> encryption happens inside the controller.
+> 
+> >
+> > What happens, if the cipher in table is different from what your hw is doing?
+> 
+> In this case, the dm-crypt will work as previous. This is because the setkey returns 0.
+> whenever there is key configuration index associated, setkey returns index value(greater than 0). The bios are submitted
+> with that information to underlying block device drivers.
+> Also, care is taken to ensure that fallback will happen incase hardware lacks the support of any key lengths.
+> 
+> Appreciate your suggestions/feedback. We are trying to bring modifications into the subsystem to support controllers with
+> inline encryption capabilities and tried our best to take care of any vulnerabilities or risks associated to same.
+> Inline encryption engines got huge advantage over the accelerators/software algorithms that it removes overhead associated
+> to current implementation like performing transformation on 512 byte chunks, allocation of scatterlists etc.
 
-[  150.065594] Unable to handle kernel paging request at virtual
-address 2e02f000
-[  150.383043] [<c0483edc>] (percpu_counter_add_batch) from
-[<bf28e378>] (crypt_page_free+0x34/0x3c [dm_crypt])
-[  150.392838] [<bf28e378>] (crypt_page_free [dm_crypt]) from
-[<c0229b18>] (mempool_exit+0x24/0x60)
-[  150.401584] [<c0229b18>] (mempool_exit) from [<bf28e028>]
-(crypt_dtr+0x8c/0x1c4 [dm_crypt])
-[  150.409903] [<bf28e028>] (crypt_dtr [dm_crypt]) from [<c06f34b8>]
-(dm_table_destroy+0x5c/0xf8)
-[  150.418477] [<c06f34b8>] (dm_table_destroy) from [<c06f0cb0>]
-(__dm_destroy+0x158/0x1b4)
-[  150.426533] [<c06f0cb0>] (__dm_destroy) from [<c06f7988>]
-(dev_remove+0xd4/0x104)
-[  150.433982] [<c06f7988>] (dev_remove) from [<c06f80b4>]
-(ctl_ioctl+0x2e4/0x660)
-[  150.441264] [<c06f80b4>] (ctl_ioctl) from [<c029fcc0>]
-(do_vfs_ioctl+0xb0/0x9e8)
-[  150.448628] [<c029fcc0>] (do_vfs_ioctl) from [<c02a062c>]
-(ksys_ioctl+0x34/0x5c)
-[  150.455994] [<c02a062c>] (ksys_ioctl) from [<c0101000>]
-(ret_fast_syscall+0x0/0x28)
+Thanks,
 
----
-
-Full log is here:
-https://krzk.eu/#/builders/1/builds/2117/steps/18/logs/serial0
-
-Bisect could not work reliably because a lot of commits from Kent
-Overstreet just do not compile. Really, non-buildable stuff should not
-be committed...
-
-Anyway bisect points around convert to bioset_init()/mempool_init().
-
-Bisect log:
-git bisect start
-# good: [ecb37ce9baac653cc09e2b631393dde3df82979f] bcache: Move couple
-of functions to sysfs.c
-git bisect good ecb37ce9baac653cc09e2b631393dde3df82979f
-# bad: [ae4c15db96d22776fe188b5271a226f81e85e872] dm: add writecache target
-git bisect bad ae4c15db96d22776fe188b5271a226f81e85e872
-# good: [b7405176b58aa475354f3c0d2ca1c560e9354288] Merge branch
-'nvme-4.18-2' of git://git.infradead.org/nvme into for-4.18/block
-git bisect good b7405176b58aa475354f3c0d2ca1c560e9354288
-# skip: [b906bbb6997785d9ea0bd3f5585537afa6257c43] lightnvm: convert
-to bioset_init()/mempool_init()
-git bisect skip b906bbb6997785d9ea0bd3f5585537afa6257c43
-# skip: [0892fac8719f062f98116ee883230a004a9fce1e] drbd: convert to
-bioset_init()/mempool_init()
-git bisect skip 0892fac8719f062f98116ee883230a004a9fce1e
-# bad: [04c4950d5b373ba712d928592e05e73510785bca] block: fixup
-bioset_integrity_create() call
-git bisect bad 04c4950d5b373ba712d928592e05e73510785bca
-# skip: [64c4bc4de79fec06bb46d9827e7c4df67a025590] pktcdvd: convert to
-bioset_init()/mempool_init()
-git bisect skip 64c4bc4de79fec06bb46d9827e7c4df67a025590
-# skip: [8ac9f7c1fd1d342e82ddf078425423b050652ba0] btrfs: convert to
-bioset_init()/mempool_init()
-git bisect skip 8ac9f7c1fd1d342e82ddf078425423b050652ba0
-# skip: [d19936a26658a7a53edd5619d631ee2c2c3151a2] bcache: convert to
-bioset_init()/mempool_init()
-git bisect skip d19936a26658a7a53edd5619d631ee2c2c3151a2
-# skip: [52190f8abe7f2bf2b4e5f9760cbcc1427ca2136b] fs: convert
-block_dev.c to bioset_init()
-git bisect skip 52190f8abe7f2bf2b4e5f9760cbcc1427ca2136b
-# skip: [338aa96d5661048b3c0cafc6d91876025603cacf] block: convert
-bounce, q->bio_split to bioset_init()/mempool_init()
-git bisect skip 338aa96d5661048b3c0cafc6d91876025603cacf
-# good: [2ab74cd29622c48e9852d85618081c061b6ac6d9] blk-throttle: fix
-potential NULL pointer dereference in throtl_select_dispatch
-git bisect good 2ab74cd29622c48e9852d85618081c061b6ac6d9
-# good: [0b6bad7d669ef2abd3b9e1f8cee1fbd448abbc5c] blk-throttle:
-return proper bool type to caller instead of 0/1
-git bisect good 0b6bad7d669ef2abd3b9e1f8cee1fbd448abbc5c
-# skip: [6f1c819c219f7841079f0f43ab62727a55b0d849] dm: convert to
-bioset_init()/mempool_init()
-git bisect skip 6f1c819c219f7841079f0f43ab62727a55b0d849
-# skip: [a47a28b74a5c7c27bf621276b85ad6c124651236] target: convert to
-bioset_init()/mempool_init()
-git bisect skip a47a28b74a5c7c27bf621276b85ad6c124651236
-# skip: [afeee514ce7f4cab605beedd03be71ebaf0c5fc8] md: convert to
-bioset_init()/mempool_init()
-git bisect skip afeee514ce7f4cab605beedd03be71ebaf0c5fc8
-# skip: [e292d7bc63c8f2adb3dfda27910e805f1b6557f9] xfs: convert to
-bioset_init()/mempool_init()
-git bisect skip e292d7bc63c8f2adb3dfda27910e805f1b6557f9
-# skip: [dad08527525f9a8ac9c7f278864c65f94bc5e9b3] block: Drop bioset_create()
-git bisect skip dad08527525f9a8ac9c7f278864c65f94bc5e9b3
-# only skipped commits left to test
-# possible first bad commit:
-[04c4950d5b373ba712d928592e05e73510785bca] block: fixup
-bioset_integrity_create() call
-# possible first bad commit:
-[dad08527525f9a8ac9c7f278864c65f94bc5e9b3] block: Drop bioset_create()
-# possible first bad commit:
-[e292d7bc63c8f2adb3dfda27910e805f1b6557f9] xfs: convert to
-bioset_init()/mempool_init()
-# possible first bad commit:
-[8ac9f7c1fd1d342e82ddf078425423b050652ba0] btrfs: convert to
-bioset_init()/mempool_init()
-# possible first bad commit:
-[52190f8abe7f2bf2b4e5f9760cbcc1427ca2136b] fs: convert block_dev.c to
-bioset_init()
-# possible first bad commit:
-[a47a28b74a5c7c27bf621276b85ad6c124651236] target: convert to
-bioset_init()/mempool_init()
-# possible first bad commit:
-[6f1c819c219f7841079f0f43ab62727a55b0d849] dm: convert to
-bioset_init()/mempool_init()
-# possible first bad commit:
-[afeee514ce7f4cab605beedd03be71ebaf0c5fc8] md: convert to
-bioset_init()/mempool_init()
-# possible first bad commit:
-[d19936a26658a7a53edd5619d631ee2c2c3151a2] bcache: convert to
-bioset_init()/mempool_init()
-# possible first bad commit:
-[b906bbb6997785d9ea0bd3f5585537afa6257c43] lightnvm: convert to
-bioset_init()/mempool_init()
-# possible first bad commit:
-[64c4bc4de79fec06bb46d9827e7c4df67a025590] pktcdvd: convert to
-bioset_init()/mempool_init()
-# possible first bad commit:
-[0892fac8719f062f98116ee883230a004a9fce1e] drbd: convert to
-bioset_init()/mempool_init()
-# possible first bad commit:
-[338aa96d5661048b3c0cafc6d91876025603cacf] block: convert bounce,
-q->bio_split to bioset_init()/mempool_init()
-
-Best regards,
-Krzysztof
+Eric
