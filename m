@@ -1,16 +1,21 @@
-From: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v2 3/7] dm: fix test for DAX device support
-Date: Fri, 1 Jun 2018 16:46:04 -0400
-Message-ID: <20180601204604.GB1144@redhat.com>
+From: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: Re: [dm-devel] [PATCH v2 2/7] dax: change bdev_dax_supported() to
+ support boolean returns
+Date: Fri, 1 Jun 2018 14:59:50 -0600
+Message-ID: <20180601205950.GA12821@linux.intel.com>
 References: <20180529195106.14268-1-ross.zwisler@linux.intel.com>
- <20180529195106.14268-4-ross.zwisler@linux.intel.com>
- <20180601201924.GA1144@redhat.com>
+ <20180529195106.14268-3-ross.zwisler@linux.intel.com>
+ <20180529212510.GJ30110@magnolia>
+ <20180529220114.GA13948@linux.intel.com>
+ <20180531191332.GB7825@magnolia>
+ <20180531205206.GA12681@redhat.com>
+ <20180531222645.GA6086@magnolia>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20180601201924.GA1144-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <20180531222645.GA6086@magnolia>
 List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
  <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
 List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
@@ -20,58 +25,52 @@ List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
  <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
 Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Cc: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: dm-devel.ids
 
-On Fri, Jun 01 2018 at  4:19P -0400,
-Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-
-> On Tue, May 29 2018 at  3:51P -0400,
-> Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org> wrote:
+On Thu, May 31, 2018 at 03:26:45PM -0700, Darrick J. Wong wrote:
+> On Thu, May 31, 2018 at 04:52:06PM -0400, Mike Snitzer wrote:
+> > On Thu, May 31 2018 at  3:13pm -0400,
+> > Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org> wrote:
+> > 
+> > > On Tue, May 29, 2018 at 04:01:14PM -0600, Ross Zwisler wrote:
+> > > > On Tue, May 29, 2018 at 02:25:10PM -0700, Darrick J. Wong wrote:
+> > > > > On Tue, May 29, 2018 at 01:51:01PM -0600, Ross Zwisler wrote:
+> > > > > > From: Dave Jiang <dave.jiang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> > > > > > 
+> > > > > > The function return values are confusing with the way the function is
+> > > > > > named. We expect a true or false return value but it actually returns
+> > > > > > 0/-errno.  This makes the code very confusing. Changing the return values
+> > > > > > to return a bool where if DAX is supported then return true and no DAX
+> > > > > > support returns false.
+> > > > > > 
+> > > > > > Signed-off-by: Dave Jiang <dave.jiang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> > > > > > Signed-off-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+> > > > > 
+> > > > > Looks ok, do you want me to pull the first two patches through the xfs
+> > > > > tree?
+> > > > > 
+> > > > > Reviewed-by: Darrick J. Wong <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+> > > > 
+> > > > Thanks for the review.
+> > > > 
+> > > > I'm not sure what's best.  If you do that then Mike will need to have a DM
+> > > > branch for the rest of the series based on your stable commits, yea?
+> > > > 
+> > > > Mike what would you prefer?
+> > > 
+> > > I /was/ about to say that I would pull in the first two patches, but now
+> > > I can't get xfs to mount with pmem at all, and have no way of testing
+> > > this...?
+> > 
+> > Once you get this sorted out, please feel free to pull in the first 2.
 > 
-> > Currently device_supports_dax() just checks to see if the QUEUE_FLAG_DAX
-> > flag is set on the device's request queue to decide whether or not the
-> > device supports filesystem DAX.  This is insufficient because there are
-> > devices like PMEM namespaces in raw mode which have QUEUE_FLAG_DAX set but
-> > which don't actually support DAX.
-> 
-> Isn't that a PMEM bug then?
-> 
-> What is the point of setting QUEUE_FLAG_DAX if it cannot be trusted?
->  
-> > This means that you could create a dm-linear device, for example, where the
-> > first part of the dm-linear device was a PMEM namespace in fsdax mode and
-> > the second part was a PMEM namespace in raw mode.  Both DM and the
-> > filesystem you put on that dm-linear device would think the whole device
-> > supports DAX, which would lead to bad behavior once your raw PMEM namespace
-> > part using DAX needed struct page for something.
-> 
-> The PMEM namespace in raw mode shouldn't be setting QUEUE_FLAG_DAX, if
-> it didn't then the stacked-up linear DM wouldn't 
-> 
-> > Fix this by using bdev_dax_supported() like filesystems do at mount time.
-> > This checks for raw mode and also performs other tests like checking to
-> > make sure the dax_direct_access() path works.
-> 
-> Sorry "This" does those things where?
+> Sorted.  It'll be in Friday's for-next.  Ross helped me bang on the pmem
+> devices w/ ndctl to enable fsdax mode and twist qemu until everything
+> worked properly. ;)
 
-I see you meant bdev_dax_supported() does these additional checks.
+For anyone else who would like to simulate persistent memory using QEMU, I've
+added some hints here:
 
-My previous question stands though.  Why is QUEUE_FLAG_DAX getting set
-if the device hasn't already passed these checks?  Shouldn't setting
-QUEUE_FLAG_DAX on request_queue depend on bdev_dax_supported() passing?
-
-But looking at the drivers that do set QUEUE_FLAG_DAX: they
-don't have the bdev readily available.  Anyway, just strikes me as
-bizarre that a driver can set QUEUE_FLAG_DAX without having to have
-ensured bdev_dax_supported() passes (even if not programatically, but
-that the developer has verified the hooks, et al exist).
-
-But I'll give up on this line of questioning..
-
-My dilemma now is: how do I take these changes without first rebasing
-linux-dm.git ontop of Darrick's xfs tree?
-
-I probably should've reviewed faster and been the one to take the entire
-set (with appropriate acks obviously).
+https://nvdimm.wiki.kernel.org/pmem_in_qemu
