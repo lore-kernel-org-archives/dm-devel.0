@@ -1,235 +1,195 @@
-From: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH v2 5/7] dm: remove DM_TYPE_DAX_BIO_BASED dm_queue_mode
-Date: Fri, 1 Jun 2018 18:04:43 -0400
-Message-ID: <20180601220443.GB18712@redhat.com>
-References: <20180529195106.14268-1-ross.zwisler@linux.intel.com>
- <20180529195106.14268-6-ross.zwisler@linux.intel.com>
+From: Kent Overstreet <kent.overstreet@gmail.com>
+Subject: Re: [bisect BUG] dm-crypt percpu counter warnings and invalid kernel
+ paging request at virtual address
+Date: Fri, 1 Jun 2018 18:35:57 -0400
+Message-ID: <20180601223557.GA25942@kmo-pixel>
+References: <CAJKOXPfSbsu0RGTUFfb+t_uOvQQxa0uDn-nsG+1uuKAq56nVXA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20180529195106.14268-6-ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Cc: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <CAJKOXPfSbsu0RGTUFfb+t_uOvQQxa0uDn-nsG+1uuKAq56nVXA@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Krzysztof Kozlowski <krzk@kernel.org>
+Cc: Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>, Shaohua Li <shli@fb.com>, linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, "linux-samsung-soc@vger.kernel.org" <linux-samsung-soc@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Tue, May 29 2018 at  3:51pm -0400,
-Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org> wrote:
-
-> The DM_TYPE_DAX_BIO_BASED dm_queue_mode was introduced to prevent DM
-> devices that could possibly support DAX from transitioning into DM devices
-> that cannot support DAX.
+On Fri, Jun 01, 2018 at 02:55:15PM +0200, Krzysztof Kozlowski wrote:
+> Hi,
 > 
-> For example, the following transition will currently fail:
+> Todays linux-next 20180601 fails during dm-crypt tests on Exynos5422
+> (ARMv7, Cortex-A7+A15) using crypto HW block from SoC (s5p-aes).
 > 
->  dm-linear: [fsdax pmem][fsdax pmem] => [fsdax pmem][fsdax raw]
-> 	      DM_TYPE_DAX_BIO_BASED       DM_TYPE_BIO_BASED
+> The test which fails:
+> https://github.com/krzk/tools/blob/master/tests/s5p-sss-cryptsetup.sh
 > 
-> but these will both succeed:
+> Effect:
 > 
->  dm-linear: [fsdax pmem][brd ramdisk] => [fsdax pmem][fsdax raw]
->  	      DM_TYPE_DAX_BIO_BASED        DM_TYPE_BIO_BASED
+> [  149.867394] ------------[ cut here ]------------
+> [  149.870631] WARNING: CPU: 5 PID: 492 at
+> ../drivers/md/dm-crypt.c:2225 crypt_dtr+0x1c0/0x1c4 [dm_crypt]
+> [  149.880078] Modules linked in: dm_crypt s5p_jpeg exynos_gsc s5p_mfc
+> v4l2_mem2mem v4l2_common videobuf2_dma_contig videobuf2_memops
+> videobuf2_v4l2 videobuf2_common videodev media
+> [  149.895908] CPU: 5 PID: 492 Comm: cryptsetup Tainted: G        W
+>      4.17.0-rc4-00159-gae4c15db96d2 #36
+> [  149.905328] Hardware name: SAMSUNG EXYNOS (Flattened Device Tree)
+> [  149.911398] [<c011291c>] (unwind_backtrace) from [<c010ece8>]
+> (show_stack+0x10/0x14)
+> [  149.919111] [<c010ece8>] (show_stack) from [<c0a32190>]
+> (dump_stack+0x98/0xc4)
+> [  149.926307] [<c0a32190>] (dump_stack) from [<c0126fa0>] (__warn+0x10c/0x124)
+> [  149.933310] [<c0126fa0>] (__warn) from [<c01270d0>]
+> (warn_slowpath_null+0x40/0x48)
+> [  149.940862] [<c01270d0>] (warn_slowpath_null) from [<bf28e15c>]
+> (crypt_dtr+0x1c0/0x1c4 [dm_crypt])
+> [  149.949803] [<bf28e15c>] (crypt_dtr [dm_crypt]) from [<c06f34b8>]
+> (dm_table_destroy+0x5c/0xf8)
+> [  149.958360] [<c06f34b8>] (dm_table_destroy) from [<c06f0cb0>]
+> (__dm_destroy+0x158/0x1b4)
+> [  149.966414] [<c06f0cb0>] (__dm_destroy) from [<c06f7988>]
+> (dev_remove+0xd4/0x104)
+> [  149.973861] [<c06f7988>] (dev_remove) from [<c06f80b4>]
+> (ctl_ioctl+0x2e4/0x660)
+> [  149.981144] [<c06f80b4>] (ctl_ioctl) from [<c029fcc0>]
+> (do_vfs_ioctl+0xb0/0x9e8)
+> [  149.988508] [<c029fcc0>] (do_vfs_ioctl) from [<c02a062c>]
+> (ksys_ioctl+0x34/0x5c)
+> [  149.995874] [<c02a062c>] (ksys_ioctl) from [<c0101000>]
+> (ret_fast_syscall+0x0/0x28)
+> [  150.061101] ---[ end trace 3e3bc2b7df1963aa ]---
 > 
-
-I fail to see how this succeeds given
-drivers/md/dm-ioctl.c:is_valid_type() only allows transitions from:
-
-DM_TYPE_BIO_BASED => DM_TYPE_DAX_BIO_BASED
-
->  dm-linear: [fsdax pmem][fsdax raw] => [fsdax pmem][fsdax pmem]
->  		DM_TYPE_BIO_BASED        DM_TYPE_DAX_BIO_BASED
+> [  150.065594] Unable to handle kernel paging request at virtual
+> address 2e02f000
+> [  150.383043] [<c0483edc>] (percpu_counter_add_batch) from
+> [<bf28e378>] (crypt_page_free+0x34/0x3c [dm_crypt])
+> [  150.392838] [<bf28e378>] (crypt_page_free [dm_crypt]) from
+> [<c0229b18>] (mempool_exit+0x24/0x60)
+> [  150.401584] [<c0229b18>] (mempool_exit) from [<bf28e028>]
+> (crypt_dtr+0x8c/0x1c4 [dm_crypt])
+> [  150.409903] [<bf28e028>] (crypt_dtr [dm_crypt]) from [<c06f34b8>]
+> (dm_table_destroy+0x5c/0xf8)
+> [  150.418477] [<c06f34b8>] (dm_table_destroy) from [<c06f0cb0>]
+> (__dm_destroy+0x158/0x1b4)
+> [  150.426533] [<c06f0cb0>] (__dm_destroy) from [<c06f7988>]
+> (dev_remove+0xd4/0x104)
+> [  150.433982] [<c06f7988>] (dev_remove) from [<c06f80b4>]
+> (ctl_ioctl+0x2e4/0x660)
+> [  150.441264] [<c06f80b4>] (ctl_ioctl) from [<c029fcc0>]
+> (do_vfs_ioctl+0xb0/0x9e8)
+> [  150.448628] [<c029fcc0>] (do_vfs_ioctl) from [<c02a062c>]
+> (ksys_ioctl+0x34/0x5c)
+> [  150.455994] [<c02a062c>] (ksys_ioctl) from [<c0101000>]
+> (ret_fast_syscall+0x0/0x28)
 > 
-> This seems arbitrary, as really the choice on whether to use DAX happens at
-> filesystem mount time.  There's no guarantee that the in the first case
-> (double fsdax pmem) we were using the dax mount option with our file
-> system.
-> 
-> Instead, get rid of DM_TYPE_DAX_BIO_BASED and all the special casing around
-> it, and instead make the request queue's QUEUE_FLAG_DAX be our one source
-> of truth.  If this is set, we can use DAX, and if not, not.  We keep this
-> up to date in table_load() as the table changes.  As with regular block
-> devices the filesystem will then know at mount time whether DAX is a
-> supported mount option or not.
-
-If you don't think you need this specialization that is fine.. but DM
-devices supporting suspending (as part of table reloads) so is there any
-risk that there will be inflight IO (say if someone did 'dmsetup suspend
---noflush').. and then upon reload the device type changed out from
-under us.. anyway, I don't have all the PMEM DAX stuff paged back into
-my head yet.
-
-But this just seems like we really shouldn't be allowing the
-transition from what was DM_TYPE_DAX_BIO_BASED back to DM_TYPE_BIO_BASED
-
-Mike
-
-> Signed-off-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 > ---
->  drivers/md/dm-ioctl.c         | 16 ++++++----------
->  drivers/md/dm-table.c         | 25 ++++++++++---------------
->  drivers/md/dm.c               |  2 --
->  include/linux/device-mapper.h |  8 ++++++--
->  4 files changed, 22 insertions(+), 29 deletions(-)
 > 
-> diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-> index 5acf77de5945..d1f86d0bb2d0 100644
-> --- a/drivers/md/dm-ioctl.c
-> +++ b/drivers/md/dm-ioctl.c
-> @@ -1292,15 +1292,6 @@ static int populate_table(struct dm_table *table,
->  	return dm_table_complete(table);
->  }
->  
-> -static bool is_valid_type(enum dm_queue_mode cur, enum dm_queue_mode new)
-> -{
-> -	if (cur == new ||
-> -	    (cur == DM_TYPE_BIO_BASED && new == DM_TYPE_DAX_BIO_BASED))
-> -		return true;
-> -
-> -	return false;
-> -}
-> -
->  static int table_load(struct file *filp, struct dm_ioctl *param, size_t param_size)
->  {
->  	int r;
-> @@ -1343,12 +1334,17 @@ static int table_load(struct file *filp, struct dm_ioctl *param, size_t param_si
->  			DMWARN("unable to set up device queue for new table.");
->  			goto err_unlock_md_type;
->  		}
-> -	} else if (!is_valid_type(dm_get_md_type(md), dm_table_get_type(t))) {
-> +	} else if (dm_get_md_type(md) != dm_table_get_type(t)) {
->  		DMWARN("can't change device type after initial table load.");
->  		r = -EINVAL;
->  		goto err_unlock_md_type;
->  	}
->  
-> +	if (dm_table_supports_dax(t))
-> +		blk_queue_flag_set(QUEUE_FLAG_DAX, md->queue);
-> +	else
-> +		blk_queue_flag_clear(QUEUE_FLAG_DAX, md->queue);
-> +
->  	dm_unlock_md_type(md);
->  
->  	/* stage inactive table */
-> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-> index 5bb994b012ca..ea5c4a1e6f5b 100644
-> --- a/drivers/md/dm-table.c
-> +++ b/drivers/md/dm-table.c
-> @@ -866,7 +866,6 @@ EXPORT_SYMBOL(dm_consume_args);
->  static bool __table_type_bio_based(enum dm_queue_mode table_type)
->  {
->  	return (table_type == DM_TYPE_BIO_BASED ||
-> -		table_type == DM_TYPE_DAX_BIO_BASED ||
->  		table_type == DM_TYPE_NVME_BIO_BASED);
->  }
->  
-> @@ -888,7 +887,7 @@ static int device_supports_dax(struct dm_target *ti, struct dm_dev *dev,
->  	return bdev_dax_supported(dev->bdev, PAGE_SIZE);
->  }
->  
-> -static bool dm_table_supports_dax(struct dm_table *t)
-> +bool dm_table_supports_dax(struct dm_table *t)
->  {
->  	struct dm_target *ti;
->  	unsigned i;
-> @@ -907,6 +906,7 @@ static bool dm_table_supports_dax(struct dm_table *t)
->  
->  	return true;
->  }
-> +EXPORT_SYMBOL_GPL(dm_table_supports_dax);
->  
->  static bool dm_table_does_not_support_partial_completion(struct dm_table *t);
->  
-> @@ -944,7 +944,6 @@ static int dm_table_determine_type(struct dm_table *t)
->  			/* possibly upgrade to a variant of bio-based */
->  			goto verify_bio_based;
->  		}
-> -		BUG_ON(t->type == DM_TYPE_DAX_BIO_BASED);
->  		BUG_ON(t->type == DM_TYPE_NVME_BIO_BASED);
->  		goto verify_rq_based;
->  	}
-> @@ -981,18 +980,14 @@ static int dm_table_determine_type(struct dm_table *t)
->  verify_bio_based:
->  		/* We must use this table as bio-based */
->  		t->type = DM_TYPE_BIO_BASED;
-> -		if (dm_table_supports_dax(t) ||
-> -		    (list_empty(devices) && live_md_type == DM_TYPE_DAX_BIO_BASED)) {
-> -			t->type = DM_TYPE_DAX_BIO_BASED;
-> -		} else {
-> -			/* Check if upgrading to NVMe bio-based is valid or required */
-> -			tgt = dm_table_get_immutable_target(t);
-> -			if (tgt && !tgt->max_io_len && dm_table_does_not_support_partial_completion(t)) {
-> -				t->type = DM_TYPE_NVME_BIO_BASED;
-> -				goto verify_rq_based; /* must be stacked directly on NVMe (blk-mq) */
-> -			} else if (list_empty(devices) && live_md_type == DM_TYPE_NVME_BIO_BASED) {
-> -				t->type = DM_TYPE_NVME_BIO_BASED;
-> -			}
-> +
-> +		/* Check if upgrading to NVMe bio-based is valid or required */
-> +		tgt = dm_table_get_immutable_target(t);
-> +		if (tgt && !tgt->max_io_len && dm_table_does_not_support_partial_completion(t)) {
-> +			t->type = DM_TYPE_NVME_BIO_BASED;
-> +			goto verify_rq_based; /* must be stacked directly on NVMe (blk-mq) */
-> +		} else if (list_empty(devices) && live_md_type == DM_TYPE_NVME_BIO_BASED) {
-> +			t->type = DM_TYPE_NVME_BIO_BASED;
->  		}
->  		return 0;
->  	}
-> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> index 9728433362d1..0ce06fa292fd 100644
-> --- a/drivers/md/dm.c
-> +++ b/drivers/md/dm.c
-> @@ -2192,7 +2192,6 @@ int dm_setup_md_queue(struct mapped_device *md, struct dm_table *t)
->  		}
->  		break;
->  	case DM_TYPE_BIO_BASED:
-> -	case DM_TYPE_DAX_BIO_BASED:
->  		dm_init_normal_md_queue(md);
->  		blk_queue_make_request(md->queue, dm_make_request);
->  		break;
-> @@ -2910,7 +2909,6 @@ struct dm_md_mempools *dm_alloc_md_mempools(struct mapped_device *md, enum dm_qu
->  
->  	switch (type) {
->  	case DM_TYPE_BIO_BASED:
-> -	case DM_TYPE_DAX_BIO_BASED:
->  	case DM_TYPE_NVME_BIO_BASED:
->  		pool_size = max(dm_get_reserved_bio_based_ios(), min_pool_size);
->  		front_pad = roundup(per_io_data_size, __alignof__(struct dm_target_io)) + offsetof(struct dm_target_io, clone);
-> diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-> index 31fef7c34185..cbf3d7e7ed33 100644
-> --- a/include/linux/device-mapper.h
-> +++ b/include/linux/device-mapper.h
-> @@ -27,8 +27,7 @@ enum dm_queue_mode {
->  	DM_TYPE_BIO_BASED	 = 1,
->  	DM_TYPE_REQUEST_BASED	 = 2,
->  	DM_TYPE_MQ_REQUEST_BASED = 3,
-> -	DM_TYPE_DAX_BIO_BASED	 = 4,
-> -	DM_TYPE_NVME_BIO_BASED	 = 5,
-> +	DM_TYPE_NVME_BIO_BASED	 = 4,
->  };
->  
->  typedef enum { STATUSTYPE_INFO, STATUSTYPE_TABLE } status_type_t;
-> @@ -460,6 +459,11 @@ void dm_table_add_target_callbacks(struct dm_table *t, struct dm_target_callback
->   */
->  void dm_table_set_type(struct dm_table *t, enum dm_queue_mode type);
->  
-> +/*
-> + * Check to see if this target type and all table devices support DAX.
-> + */
-> +bool dm_table_supports_dax(struct dm_table *t);
-> +
->  /*
->   * Finally call this to make the table ready for use.
->   */
-> -- 
-> 2.14.3
+> Full log is here:
+> https://krzk.eu/#/builders/1/builds/2117/steps/18/logs/serial0
 > 
+> Bisect could not work reliably because a lot of commits from Kent
+> Overstreet just do not compile. Really, non-buildable stuff should not
+> be committed...
+
+Sorry, I do compile test stuff but sometimes I screw up...
+
+I'll work on getting a test set up.
+
+> Anyway bisect points around convert to bioset_init()/mempool_init().
+> 
+> Bisect log:
+> git bisect start
+> # good: [ecb37ce9baac653cc09e2b631393dde3df82979f] bcache: Move couple
+> of functions to sysfs.c
+> git bisect good ecb37ce9baac653cc09e2b631393dde3df82979f
+> # bad: [ae4c15db96d22776fe188b5271a226f81e85e872] dm: add writecache target
+> git bisect bad ae4c15db96d22776fe188b5271a226f81e85e872
+> # good: [b7405176b58aa475354f3c0d2ca1c560e9354288] Merge branch
+> 'nvme-4.18-2' of git://git.infradead.org/nvme into for-4.18/block
+> git bisect good b7405176b58aa475354f3c0d2ca1c560e9354288
+> # skip: [b906bbb6997785d9ea0bd3f5585537afa6257c43] lightnvm: convert
+> to bioset_init()/mempool_init()
+> git bisect skip b906bbb6997785d9ea0bd3f5585537afa6257c43
+> # skip: [0892fac8719f062f98116ee883230a004a9fce1e] drbd: convert to
+> bioset_init()/mempool_init()
+> git bisect skip 0892fac8719f062f98116ee883230a004a9fce1e
+> # bad: [04c4950d5b373ba712d928592e05e73510785bca] block: fixup
+> bioset_integrity_create() call
+> git bisect bad 04c4950d5b373ba712d928592e05e73510785bca
+> # skip: [64c4bc4de79fec06bb46d9827e7c4df67a025590] pktcdvd: convert to
+> bioset_init()/mempool_init()
+> git bisect skip 64c4bc4de79fec06bb46d9827e7c4df67a025590
+> # skip: [8ac9f7c1fd1d342e82ddf078425423b050652ba0] btrfs: convert to
+> bioset_init()/mempool_init()
+> git bisect skip 8ac9f7c1fd1d342e82ddf078425423b050652ba0
+> # skip: [d19936a26658a7a53edd5619d631ee2c2c3151a2] bcache: convert to
+> bioset_init()/mempool_init()
+> git bisect skip d19936a26658a7a53edd5619d631ee2c2c3151a2
+> # skip: [52190f8abe7f2bf2b4e5f9760cbcc1427ca2136b] fs: convert
+> block_dev.c to bioset_init()
+> git bisect skip 52190f8abe7f2bf2b4e5f9760cbcc1427ca2136b
+> # skip: [338aa96d5661048b3c0cafc6d91876025603cacf] block: convert
+> bounce, q->bio_split to bioset_init()/mempool_init()
+> git bisect skip 338aa96d5661048b3c0cafc6d91876025603cacf
+> # good: [2ab74cd29622c48e9852d85618081c061b6ac6d9] blk-throttle: fix
+> potential NULL pointer dereference in throtl_select_dispatch
+> git bisect good 2ab74cd29622c48e9852d85618081c061b6ac6d9
+> # good: [0b6bad7d669ef2abd3b9e1f8cee1fbd448abbc5c] blk-throttle:
+> return proper bool type to caller instead of 0/1
+> git bisect good 0b6bad7d669ef2abd3b9e1f8cee1fbd448abbc5c
+> # skip: [6f1c819c219f7841079f0f43ab62727a55b0d849] dm: convert to
+> bioset_init()/mempool_init()
+> git bisect skip 6f1c819c219f7841079f0f43ab62727a55b0d849
+> # skip: [a47a28b74a5c7c27bf621276b85ad6c124651236] target: convert to
+> bioset_init()/mempool_init()
+> git bisect skip a47a28b74a5c7c27bf621276b85ad6c124651236
+> # skip: [afeee514ce7f4cab605beedd03be71ebaf0c5fc8] md: convert to
+> bioset_init()/mempool_init()
+> git bisect skip afeee514ce7f4cab605beedd03be71ebaf0c5fc8
+> # skip: [e292d7bc63c8f2adb3dfda27910e805f1b6557f9] xfs: convert to
+> bioset_init()/mempool_init()
+> git bisect skip e292d7bc63c8f2adb3dfda27910e805f1b6557f9
+> # skip: [dad08527525f9a8ac9c7f278864c65f94bc5e9b3] block: Drop bioset_create()
+> git bisect skip dad08527525f9a8ac9c7f278864c65f94bc5e9b3
+> # only skipped commits left to test
+> # possible first bad commit:
+> [04c4950d5b373ba712d928592e05e73510785bca] block: fixup
+> bioset_integrity_create() call
+> # possible first bad commit:
+> [dad08527525f9a8ac9c7f278864c65f94bc5e9b3] block: Drop bioset_create()
+> # possible first bad commit:
+> [e292d7bc63c8f2adb3dfda27910e805f1b6557f9] xfs: convert to
+> bioset_init()/mempool_init()
+> # possible first bad commit:
+> [8ac9f7c1fd1d342e82ddf078425423b050652ba0] btrfs: convert to
+> bioset_init()/mempool_init()
+> # possible first bad commit:
+> [52190f8abe7f2bf2b4e5f9760cbcc1427ca2136b] fs: convert block_dev.c to
+> bioset_init()
+> # possible first bad commit:
+> [a47a28b74a5c7c27bf621276b85ad6c124651236] target: convert to
+> bioset_init()/mempool_init()
+> # possible first bad commit:
+> [6f1c819c219f7841079f0f43ab62727a55b0d849] dm: convert to
+> bioset_init()/mempool_init()
+> # possible first bad commit:
+> [afeee514ce7f4cab605beedd03be71ebaf0c5fc8] md: convert to
+> bioset_init()/mempool_init()
+> # possible first bad commit:
+> [d19936a26658a7a53edd5619d631ee2c2c3151a2] bcache: convert to
+> bioset_init()/mempool_init()
+> # possible first bad commit:
+> [b906bbb6997785d9ea0bd3f5585537afa6257c43] lightnvm: convert to
+> bioset_init()/mempool_init()
+> # possible first bad commit:
+> [64c4bc4de79fec06bb46d9827e7c4df67a025590] pktcdvd: convert to
+> bioset_init()/mempool_init()
+> # possible first bad commit:
+> [0892fac8719f062f98116ee883230a004a9fce1e] drbd: convert to
+> bioset_init()/mempool_init()
+> # possible first bad commit:
+> [338aa96d5661048b3c0cafc6d91876025603cacf] block: convert bounce,
+> q->bio_split to bioset_init()/mempool_init()
+> 
+> Best regards,
+> Krzysztof
