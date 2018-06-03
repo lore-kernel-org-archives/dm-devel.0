@@ -1,87 +1,74 @@
-From: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [patch 4/4] dm-writecache: use new API for flushing
-Date: Sun, 3 Jun 2018 11:03:13 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1806031103020.5188@file01.intranet.prod.int.rdu2.redhat.com>
-References: <CAPcyv4jXV4aZ6wqqjVPL8J4LxwTtXnzQCLZ0Wk5oB4_0uxpg7g@mail.gmail.com>
- <alpine.LRH.2.02.1805300903220.1090@file01.intranet.prod.int.rdu2.redhat.com>
- <20180530131623.GB2106@redhat.com>
- <alpine.LRH.2.02.1805300919070.11327@file01.intranet.prod.int.rdu2.redhat.com>
- <20180530132647.GB5157@redhat.com>
- <alpine.LRH.2.02.1805300929500.11327@file01.intranet.prod.int.rdu2.redhat.com>
- <20180530135421.GA81788@redhat.com>
- <alpine.LRH.2.02.1805300959460.16696@file01.intranet.prod.int.rdu2.redhat.com>
- <20180530142104.GA5416@redhat.com>
- <alpine.LRH.2.02.1805301023380.21890@file01.intranet.prod.int.rdu2.redhat.com>
- <20180531034216.GB88973@redhat.com>
+From: Dave Chinner <david@fromorbit.com>
+Subject: Re: [PATCH v2 2/7] dax: change bdev_dax_supported() to support
+ boolean returns
+Date: Mon, 4 Jun 2018 08:20:38 +1000
+Message-ID: <20180603222038.GS10363@dastard>
+References: <20180529195106.14268-1-ross.zwisler@linux.intel.com>
+ <20180529195106.14268-3-ross.zwisler@linux.intel.com>
+ <20180529212510.GJ30110@magnolia>
+ <20180529220114.GA13948@linux.intel.com>
+ <20180531191332.GB7825@magnolia>
+ <20180601012657.GQ10363@dastard>
+ <CAPcyv4g6dv9sG9dR-iY+aEfSi2r3ey1dXGbX-nexKsN72t0QMw@mail.gmail.com>
+ <20180601022418.GR10363@dastard>
+ <CAPcyv4iXTsxmQgjoLs2E_8QrLHrFOV_58T7UYf0zPJuB2744qQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <20180531034216.GB88973-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-nvdimm <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CAPcyv4iXTsxmQgjoLs2E_8QrLHrFOV_58T7UYf0zPJuB2744qQ@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Dan Williams <dan.j.williams@intel.com>
+Cc: "Darrick J. Wong" <darrick.wong@oracle.com>, Mike Snitzer <snitzer@redhat.com>, linux-nvdimm <linux-nvdimm@lists.01.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-xfs <linux-xfs@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>
 List-Id: dm-devel.ids
 
+On Thu, May 31, 2018 at 09:02:52PM -0700, Dan Williams wrote:
+> On Thu, May 31, 2018 at 7:24 PM, Dave Chinner <david@fromorbit.com> wrote:
+> > On Thu, May 31, 2018 at 06:57:33PM -0700, Dan Williams wrote:
+> >> > FWIW, XFS+DAX used to just work on this setup (I hadn't even
+> >> > installed ndctl until this morning!) but after changing the kernel
+> >> > it no longer works. That would make it a regression, yes?
 
+[....]
 
-On Wed, 30 May 2018, Mike Snitzer wrote:
+> >> I suspect your kernel does not have CONFIG_ZONE_DEVICE enabled which
+> >> has the following dependencies:
+> >>
+> >>         depends on MEMORY_HOTPLUG
+> >>         depends on MEMORY_HOTREMOVE
+> >>         depends on SPARSEMEM_VMEMMAP
+> >
+> > Filesystem DAX now has a dependency on memory hotplug?
 
-> On Wed, May 30 2018 at 10:46P -0400,
-> Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> 
-> > 
-> > 
-> > On Wed, 30 May 2018, Mike Snitzer wrote:
-> > 
-> > > > > Fine I'll deal with it.  reordering the fields eliminated holes in the
-> > > > > structure and reduced struct members spanning cache lines.
-> > > > 
-> > > > And what about this?
-> > > > #define WC_MODE_PMEM(wc)                        ((wc)->pmem_mode)
-> > > > 
-> > > > The code that I had just allowed the compiler to optimize out 
-> > > > persistent-memory code if we have DM_WRITECACHE_ONLY_SSD defined - and you 
-> > > > deleted it.
-> > > > 
-> > > > Most architectures don't have persistent memory and the dm-writecache 
-> > > > driver could work in ssd-only mode on them. On these architectures, I 
-> > > > define
-> > > > #define WC_MODE_PMEM(wc)                        false
-> > > > - and the compiler will just automatically remove the tests for that 
-> > > > condition and the unused branch. It does also eliminate unused static 
-> > > > functions.
-> > > 
-> > > This level of microoptimization can be backfilled.  But as it was, there
-> > > were too many #defines.  And I'm really not concerned with eliminating
-> > > unused static functions for this case.
-> > 
-> > I don't see why "too many defines" would be a problem.
-> > 
-> > If I compile it with and without pmem support, the difference is 
-> > 15kB-vs-12kB. If we look at just one function (writecache_map), the 
-> > difference is 1595 bytes - vs - 1280 bytes. So, it produces real savings 
-> > in code size.
-> > 
-> > The problem with performance is not caused a condition that always jumps 
-> > the same way (that is predicted by the CPU and it causes no delays in the 
-> > pipeline) - the problem is that a bigger function consumes more i-cache. 
-> > There is no reason to include code that can't be executed.
-> 
-> Please double check you see the reduced code size you're expecting using
-> the latest dm-writecache.c in linux-dm.git's dm-4.18 branch.
-> 
-> Thanks,
-> Mike
+[....]
 
-I checked that - it's OK.
+> > OK, works now I've found the magic config incantantions to turn
+> > everything I now need on.
 
-Mikulas
+By enabling these options, my test VM now has a ~30s pause in the
+boot very soon after the nvdimm subsystem is initialised.
+
+[    1.523718] Serial: 8250/16550 driver, 4 ports, IRQ sharing enabled
+[    1.550353] 00:05: ttyS0 at I/O 0x3f8 (irq = 4, base_baud = 115200) is a 16550A
+[    1.552175] Non-volatile memory driver v1.3
+[    2.332045] tsc: Refined TSC clocksource calibration: 2199.909 MHz
+[    2.333280] clocksource: tsc: mask: 0xffffffffffffffff max_cycles: 0x1fb5dcd4620, max_idle_ns: 440795264143 ns
+[   37.217453] brd: module loaded
+[   37.225423] loop: module loaded
+[   37.228441] virtio_blk virtio2: [vda] 10485760 512-byte logical blocks (5.37 GB/5.00 GiB)
+[   37.245418] virtio_blk virtio3: [vdb] 146800640 512-byte logical blocks (75.2 GB/70.0 GiB)
+[   37.255794] virtio_blk virtio4: [vdc] 1073741824000 512-byte logical blocks (550 TB/500 TiB)
+[   37.265403] nd_pmem namespace1.0: unable to guarantee persistence of writes
+[   37.265618] nd_pmem namespace0.0: unable to guarantee persistence of writes
+
+The system does not appear to be consuming CPU, but it is blocking
+NMIs so I can't get a CPU trace. For a VM that I rely on booting in
+a few seconds because I reboot it tens of times a day, this is a
+problem....
+
+Cheers,
+
+Dave.
+-- 
+Dave Chinner
+david@fromorbit.com
