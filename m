@@ -1,39 +1,87 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: dm-crypt: fix warning in shutdown path
-Date: Sat, 2 Jun 2018 14:10:23 -0600
-Message-ID: <eeea0f12-45d4-d90c-e07e-3f02cdc9994f@kernel.dk>
-References: <20180602174504.1847-1-kent.overstreet@gmail.com>
- <974665e7-fa4a-230b-99d8-e773489cc6bc@kernel.dk>
- <20180602200723.GA23980@redhat.com>
+From: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [patch 4/4] dm-writecache: use new API for flushing
+Date: Sun, 3 Jun 2018 11:03:13 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1806031103020.5188@file01.intranet.prod.int.rdu2.redhat.com>
+References: <CAPcyv4jXV4aZ6wqqjVPL8J4LxwTtXnzQCLZ0Wk5oB4_0uxpg7g@mail.gmail.com>
+ <alpine.LRH.2.02.1805300903220.1090@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180530131623.GB2106@redhat.com>
+ <alpine.LRH.2.02.1805300919070.11327@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180530132647.GB5157@redhat.com>
+ <alpine.LRH.2.02.1805300929500.11327@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180530135421.GA81788@redhat.com>
+ <alpine.LRH.2.02.1805300959460.16696@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180530142104.GA5416@redhat.com>
+ <alpine.LRH.2.02.1805301023380.21890@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180531034216.GB88973@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180602200723.GA23980@redhat.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>, Krzysztof Kozlowski <krzk@kernel.org>
-Cc: Kent Overstreet <kent.overstreet@gmail.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <20180531034216.GB88973-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-nvdimm <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 List-Id: dm-devel.ids
 
-On 6/2/18 2:07 PM, Mike Snitzer wrote:
-> On Sat, Jun 02 2018 at  4:03pm -0400,
-> Jens Axboe <axboe@kernel.dk> wrote:
-> 
->> On 6/2/18 11:45 AM, Kent Overstreet wrote:
->>> The counter for the number of allocated pages includes pages in the
->>> mempool's reserve, so checking that the number of allocated pages is 0
->>> needs to happen after we exit the mempool.
->>
->> Looks good, but needs a fixes line. I'll add one.
-> 
-> Also needs the subject and header updated to reflect that it fixes the
-> crash (Krzysztof please verify):
-> 
-> Reported-by: Krzysztof Kozlowski <krzk@kernel.org>
-> Acked-by: Mike Snitzer <snitzer@redhat.com>
 
-Indeed, I have added that. Thanks Mike.
 
--- 
-Jens Axboe
+On Wed, 30 May 2018, Mike Snitzer wrote:
+
+> On Wed, May 30 2018 at 10:46P -0400,
+> Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+> 
+> > 
+> > 
+> > On Wed, 30 May 2018, Mike Snitzer wrote:
+> > 
+> > > > > Fine I'll deal with it.  reordering the fields eliminated holes in the
+> > > > > structure and reduced struct members spanning cache lines.
+> > > > 
+> > > > And what about this?
+> > > > #define WC_MODE_PMEM(wc)                        ((wc)->pmem_mode)
+> > > > 
+> > > > The code that I had just allowed the compiler to optimize out 
+> > > > persistent-memory code if we have DM_WRITECACHE_ONLY_SSD defined - and you 
+> > > > deleted it.
+> > > > 
+> > > > Most architectures don't have persistent memory and the dm-writecache 
+> > > > driver could work in ssd-only mode on them. On these architectures, I 
+> > > > define
+> > > > #define WC_MODE_PMEM(wc)                        false
+> > > > - and the compiler will just automatically remove the tests for that 
+> > > > condition and the unused branch. It does also eliminate unused static 
+> > > > functions.
+> > > 
+> > > This level of microoptimization can be backfilled.  But as it was, there
+> > > were too many #defines.  And I'm really not concerned with eliminating
+> > > unused static functions for this case.
+> > 
+> > I don't see why "too many defines" would be a problem.
+> > 
+> > If I compile it with and without pmem support, the difference is 
+> > 15kB-vs-12kB. If we look at just one function (writecache_map), the 
+> > difference is 1595 bytes - vs - 1280 bytes. So, it produces real savings 
+> > in code size.
+> > 
+> > The problem with performance is not caused a condition that always jumps 
+> > the same way (that is predicted by the CPU and it causes no delays in the 
+> > pipeline) - the problem is that a bigger function consumes more i-cache. 
+> > There is no reason to include code that can't be executed.
+> 
+> Please double check you see the reduced code size you're expecting using
+> the latest dm-writecache.c in linux-dm.git's dm-4.18 branch.
+> 
+> Thanks,
+> Mike
+
+I checked that - it's OK.
+
+Mikulas
