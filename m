@@ -1,87 +1,51 @@
-From: Hannes Reinecke <hare@suse.de>
+From: Johannes Thumshirn <jthumshirn@suse.de>
 Subject: Re: [PATCH 0/3] Provide more fine grained control over multipathing
-Date: Mon, 4 Jun 2018 08:19:21 +0200
-Message-ID: <20180604081921.3cedecbc@pentland.suse.de>
-References: <20180525125322.15398-1-jthumshirn@suse.de>
-        <20180525130535.GA24239@lst.de>
-        <20180525135813.GB9591@redhat.com>
-        <20180525141211.GA25971@lst.de>
-        <20180525145056.GD9591@redhat.com>
-        <yq1muwj45sg.fsf@oracle.com>
-        <20180529030236.GA28895@redhat.com>
-        <20180529072240.np5c62akbr7jqelr@linux-x5ow.site>
-        <20180529080952.GA1369@lst.de>
-        <20180529232718.GA1730@redhat.com>
-        <f4951571-d37d-73cd-1d6c-0ca84647d5ac@kernel.dk>
+Date: Mon, 4 Jun 2018 09:18:29 +0200
+Message-ID: <20180604071829.tq7wmx4bvk4uzubd@linux-x5ow.site>
+References: <20180525135813.GB9591@redhat.com>
+ <20180525141211.GA25971@lst.de>
+ <20180525145056.GD9591@redhat.com>
+ <yq1muwj45sg.fsf@oracle.com>
+ <20180529030236.GA28895@redhat.com>
+ <20180529072240.np5c62akbr7jqelr@linux-x5ow.site>
+ <20180529080952.GA1369@lst.de>
+ <20180529232718.GA1730@redhat.com>
+ <f4951571-d37d-73cd-1d6c-0ca84647d5ac@kernel.dk>
+ <20180604081921.3cedecbc@pentland.suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <f4951571-d37d-73cd-1d6c-0ca84647d5ac@kernel.dk>
+Content-Disposition: inline
+In-Reply-To: <20180604081921.3cedecbc@pentland.suse.de>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>
-Cc: Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@lst.de>, Linus Torvalds <torvalds@linux-foundation.org>, Johannes Thumshirn <jthumshirn@suse.de>, "Martin K. Petersen" <martin.petersen@oracle.com>, Linux NVMe Mailinglist <linux-nvme@lists.infradead.org>, Laurence Oberman <loberman@redhat.com>, Sagi Grimberg <sagi@grimberg.me>, James Smart <james.smart@broadcom.com>, Ewan Milne <emilne@redhat.com>, Linux Kernel Mailinglist <linux-kernel@vger.kernel.org>, Keith Busch <keith.busch@intel.com>, Martin George <marting@netapp.com>, John Meneghini <John.Meneghini@netapp.com>, dm-devel@redhat.com
+To: Hannes Reinecke <hare@suse.de>
+Cc: Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@lst.de>, Linus Torvalds <torvalds@linux-foundation.org>, "Martin K. Petersen" <martin.petersen@oracle.com>, Linux NVMe Mailinglist <linux-nvme@lists.infradead.org>, Laurence Oberman <loberman@redhat.com>, Sagi Grimberg <sagi@grimberg.me>, James Smart <james.smart@broadcom.com>, Ewan Milne <emilne@redhat.com>, Linux Kernel Mailinglist <linux-kernel@vger.kernel.org>, Keith Busch <keith.busch@intel.com>, Martin George <marting@netapp.com>, John Meneghini <John.Meneghini@netapp.com>, dm-devel@redhat.com, mwilck@suse.de
 List-Id: dm-devel.ids
 
-On Wed, 30 May 2018 13:05:46 -0600
-Jens Axboe <axboe@kernel.dk> wrote:
+On Mon, Jun 04, 2018 at 08:19:21AM +0200, Hannes Reinecke wrote:
+> Without it we're having a choice of disappointing (paying) customers or
+> disappointing the upstream community.
 
-> On 5/29/18 5:27 PM, Mike Snitzer wrote:
-> > On Tue, May 29 2018 at  4:09am -0400,
-> > Christoph Hellwig <hch@lst.de> wrote:
-> >   
-> >> On Tue, May 29, 2018 at 09:22:40AM +0200, Johannes Thumshirn
-> >> wrote:  
-> >>> For a "Plan B" we can still use the global knob that's already in
-> >>> place (even if this reminds me so much about scsi-mq which at
-> >>> least we haven't turned on in fear of performance regressions).
-> >>>
-> >>> Let's drop the discussion here, I don't think it leads to
-> >>> something else than flamewars.  
-> >>
-> >> If our plan A doesn't work we can go back to these patches.  For
-> >> now I'd rather have everyone spend their time on making Plan A
-> >> work then preparing for contingencies.  Nothing prevents anyone
-> >> from using these patches already out there if they really want to,
-> >> but I'd recommend people are very careful about doing so as you'll
-> >> lock yourself into a long-term maintainance burden.  
-> > 
-> > Restating (for others): this patchset really isn't about
-> > contingencies. It is about choice.
-> > 
-> > Since we're at an impasse, in the hopes of soliciting definitive
-> > feedback from Jens and Linus, I'm going to attempt to reset the
-> > discussion for their entry.
-> > 
-> > In summary, we have a classic example of a maintainer stalemate
-> > here: 1) Christoph, as NVMe co-maintainer, doesn't want to allow
-> > native NVMe multipath to actively coexist with dm-multipath's NVMe
-> > support on the same host.
-> > 2) I, as DM maintainer, would like to offer this flexibility to
-> > users -- by giving them opt-in choice to continue using existing
-> > dm-multipath with NVMe. (also, both Red Hat and SUSE would like to
-> > offer this).
-> > 
-> > There is no technical reason why they cannot coexist.  Hence this
-> > simple patchset that was originally offered by Johannes Thumshirn
-> > with contributions from myself.  
-> 
-> Here's what I think - flag days tend to suck. They may be more
-> convenient for developers, but they inflict pain on users. Sometimes
-> they prevent them from moving forward, since updates are now gated on
-> external dependencies. Moving forward with a new architecture is
-> great, but proper care has to be given to existing users of
-> multipath, regardless of how few they may be.
-> 
-> This patchset seems pretty clean and minimalist. Realistically, I'm
-> guessing that SUSE and RH will ship it regardless of upstream status.
-> 
+I personally think (regardless of the fact, that I wrote the patch
+under discussion), using the module parameter is sufficient for these
+kind of customers. For me it's an either/or kind of setting (either
+native or dm-mpath).
 
-Without it we're having a choice of disappointing (paying) customers or
-disappointing the upstream community.
+Downstream distributions could still carry a small patch flipping the
+default to off if they want to maintain backwards compatibility with
+existing dm-mpath setups (which for NVMe I doubt there are many!).
 
-Guess.
+What we really should do is, try to give multipath-tools a 'nvme
+list-subsys' like view of nvme native multipathing (and I think Martin
+W. has already been looking into this a while ago).
 
-Cheers,
 
-Hannes
+   Johannes
+-- 
+Johannes Thumshirn                                          Storage
+jthumshirn@suse.de                                +49 911 74053 689
+SUSE LINUX GmbH, Maxfeldstr. 5, 90409 Nürnberg
+GF: Felix Imendörffer, Jane Smithard, Graham Norton
+HRB 21284 (AG Nürnberg)
+Key fingerprint = EC38 9CAB C2C4 F25D 8600 D0D0 0393 969D 2D76 0850
