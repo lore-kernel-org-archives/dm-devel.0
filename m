@@ -1,40 +1,55 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH] branch-check: fix long->int truncation when profiling
- branches
-Date: Mon, 4 Jun 2018 16:54:44 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1806041653260.18196@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20180528155432.2864616-1-arnd@arndb.de> <alpine.LRH.2.02.1805300818140.24812@file01.intranet.prod.int.rdu2.redhat.com> <20180604165024.3be78887@gandalf.local.home>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [git pull] device mapper changes for 4.18
+Date: Mon, 4 Jun 2018 17:13:44 -0400
+Message-ID: <20180604211343.GB6079@redhat.com>
+References: <20180604153254.GA4793@redhat.com>
+	<CA+55aFyZk6Yeo0DSdakROxXRPvx9HWutbP1TwfoFd6fi-1FSUw@mail.gmail.com>
+	<20180604190922.GA5586@redhat.com>
+	<CA+55aFyEVcS11N_7BwKV=k0RDqAWdMTJyWDpuFmkXy796k26_w@mail.gmail.com>
+	<20180604193653.GC12217@hirez.programming.kicks-ass.net>
+	<CA+55aFwkyzV81yEjoFAcjQ68PXxjZ_k-o+oYMobeVMFuj72OHQ@mail.gmail.com>
+	<20180604195858.GD12217@hirez.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180604165024.3be78887@gandalf.local.home>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Steven Rostedt <rostedt@goodmis.org>
-Cc: Ingo Molnar <mingo@redhat.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20180604195858.GD12217@hirez.programming.kicks-ass.net>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Peter Zijlstra <peterz@infradead.org>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, dm-devel@redhat.com, Linus Torvalds <torvalds@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
+On Mon, Jun 04 2018 at  3:58pm -0400,
+Peter Zijlstra <peterz@infradead.org> wrote:
 
-
-On Mon, 4 Jun 2018, Steven Rostedt wrote:
-
-> On Wed, 30 May 2018 08:19:22 -0400 (EDT)
-> Mikulas Patocka <mpatocka@redhat.com> wrote:
+> On Mon, Jun 04, 2018 at 12:39:11PM -0700, Linus Torvalds wrote:
+> > On Mon, Jun 4, 2018 at 12:37 PM Peter Zijlstra <peterz@infradead.org> wrote:
+> > >
+> > > Would it help if we did s/swake_up/swake_up_one/g ?
+> > >
+> > > Then there would not be an swake_up() to cause confusion.
+> > 
+> > Yes, i think that would already be a big improvement, forcing people
+> > to be aware of the exclusive nature.
 > 
-> > The function __builtin_expect returns long type (see the gcc
-> > documentation), and so do macros likely and unlikely. Unfortunatelly, when
-> > CONFIG_PROFILE_ANNOTATED_BRANCHES is selected, the macros likely and
-> > unlikely expand to __branch_check__ and __branch_check__ truncates the
-> 
-> Nice catch.
-> 
-> > long type to int. This unintended truncation may cause bugs in various
-> > kernel code (we found a bug in dm-writecache because of it), so it's
-> 
-> I'm curious to what that bug was.
+> The below will of course conflict with the merge request under
+> discussion. Also completely untested.
 
-printk("%ld", writecache_has_error(wc))
+No worries there since I'll be resubmitting dm-writecache for 4.19.
 
-... and writecache_has_error was defined as
-#define writecache_has_error(wc)	(unlikely(READ_ONCE((wc)->error)))
-
-Mikulas
+(Mikulas would like to still use swait for the dm-writecache's endio
+thread, since endio_thread_wait only has a single waiter.  I told him to
+convert the other 2, benchmark it with still swait in endio path, then
+convert the one used in endio, benchmark will all converted and we'd
+revisit if there is a compelling performance difference.  But even then
+I'm not sure I want DM on the list of swait consumers... to be
+continued)
