@@ -1,83 +1,87 @@
-From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v2 2/7] dax: change bdev_dax_supported() to support
- boolean returns
-Date: Sun, 3 Jun 2018 18:48:23 -0700
-Message-ID: <CAPcyv4jL5AKgP3io_hBZxkrKzBZq8wtuqk49L48v=XRiOHdoEw@mail.gmail.com>
-References: <20180529195106.14268-1-ross.zwisler@linux.intel.com>
- <20180529195106.14268-3-ross.zwisler@linux.intel.com>
- <20180529212510.GJ30110@magnolia>
- <20180529220114.GA13948@linux.intel.com> <20180531191332.GB7825@magnolia>
- <20180601012657.GQ10363@dastard>
- <CAPcyv4g6dv9sG9dR-iY+aEfSi2r3ey1dXGbX-nexKsN72t0QMw@mail.gmail.com>
- <20180601022418.GR10363@dastard>
- <CAPcyv4iXTsxmQgjoLs2E_8QrLHrFOV_58T7UYf0zPJuB2744qQ@mail.gmail.com>
- <20180603222038.GS10363@dastard> <20180604002525.GI10363@dastard>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 0/3] Provide more fine grained control over multipathing
+Date: Mon, 4 Jun 2018 08:19:21 +0200
+Message-ID: <20180604081921.3cedecbc@pentland.suse.de>
+References: <20180525125322.15398-1-jthumshirn@suse.de>
+        <20180525130535.GA24239@lst.de>
+        <20180525135813.GB9591@redhat.com>
+        <20180525141211.GA25971@lst.de>
+        <20180525145056.GD9591@redhat.com>
+        <yq1muwj45sg.fsf@oracle.com>
+        <20180529030236.GA28895@redhat.com>
+        <20180529072240.np5c62akbr7jqelr@linux-x5ow.site>
+        <20180529080952.GA1369@lst.de>
+        <20180529232718.GA1730@redhat.com>
+        <f4951571-d37d-73cd-1d6c-0ca84647d5ac@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <20180604002525.GI10363@dastard>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
-Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-nvdimm <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, "Darrick J. Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-xfs <linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <f4951571-d37d-73cd-1d6c-0ca84647d5ac@kernel.dk>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@lst.de>, Linus Torvalds <torvalds@linux-foundation.org>, Johannes Thumshirn <jthumshirn@suse.de>, "Martin K. Petersen" <martin.petersen@oracle.com>, Linux NVMe Mailinglist <linux-nvme@lists.infradead.org>, Laurence Oberman <loberman@redhat.com>, Sagi Grimberg <sagi@grimberg.me>, James Smart <james.smart@broadcom.com>, Ewan Milne <emilne@redhat.com>, Linux Kernel Mailinglist <linux-kernel@vger.kernel.org>, Keith Busch <keith.busch@intel.com>, Martin George <marting@netapp.com>, John Meneghini <John.Meneghini@netapp.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Sun, Jun 3, 2018 at 5:25 PM, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org> wrote:
-> On Mon, Jun 04, 2018 at 08:20:38AM +1000, Dave Chinner wrote:
->> On Thu, May 31, 2018 at 09:02:52PM -0700, Dan Williams wrote:
->> > On Thu, May 31, 2018 at 7:24 PM, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org> wrote:
->> > > On Thu, May 31, 2018 at 06:57:33PM -0700, Dan Williams wrote:
->> > >> > FWIW, XFS+DAX used to just work on this setup (I hadn't even
->> > >> > installed ndctl until this morning!) but after changing the kernel
->> > >> > it no longer works. That would make it a regression, yes?
->>
->> [....]
->>
->> > >> I suspect your kernel does not have CONFIG_ZONE_DEVICE enabled which
->> > >> has the following dependencies:
->> > >>
->> > >>         depends on MEMORY_HOTPLUG
->> > >>         depends on MEMORY_HOTREMOVE
->> > >>         depends on SPARSEMEM_VMEMMAP
->> > >
->> > > Filesystem DAX now has a dependency on memory hotplug?
->>
->> [....]
->>
->> > > OK, works now I've found the magic config incantantions to turn
->> > > everything I now need on.
->>
->> By enabling these options, my test VM now has a ~30s pause in the
->> boot very soon after the nvdimm subsystem is initialised.
->>
->> [    1.523718] Serial: 8250/16550 driver, 4 ports, IRQ sharing enabled
->> [    1.550353] 00:05: ttyS0 at I/O 0x3f8 (irq = 4, base_baud = 115200) is a 16550A
->> [    1.552175] Non-volatile memory driver v1.3
->> [    2.332045] tsc: Refined TSC clocksource calibration: 2199.909 MHz
->> [    2.333280] clocksource: tsc: mask: 0xffffffffffffffff max_cycles: 0x1fb5dcd4620, max_idle_ns: 440795264143 ns
->> [   37.217453] brd: module loaded
->> [   37.225423] loop: module loaded
->> [   37.228441] virtio_blk virtio2: [vda] 10485760 512-byte logical blocks (5.37 GB/5.00 GiB)
->> [   37.245418] virtio_blk virtio3: [vdb] 146800640 512-byte logical blocks (75.2 GB/70.0 GiB)
->> [   37.255794] virtio_blk virtio4: [vdc] 1073741824000 512-byte logical blocks (550 TB/500 TiB)
->> [   37.265403] nd_pmem namespace1.0: unable to guarantee persistence of writes
->> [   37.265618] nd_pmem namespace0.0: unable to guarantee persistence of writes
->>
->> The system does not appear to be consuming CPU, but it is blocking
->> NMIs so I can't get a CPU trace. For a VM that I rely on booting in
->> a few seconds because I reboot it tens of times a day, this is a
->> problem....
->
-> And when I turn on KASAN, the kernel fails to boot to a login prompt
-> because:
+On Wed, 30 May 2018 13:05:46 -0600
+Jens Axboe <axboe@kernel.dk> wrote:
 
-What's your qemu and kernel command line? I'll take look at this first
-thing tomorrow.
+> On 5/29/18 5:27 PM, Mike Snitzer wrote:
+> > On Tue, May 29 2018 at  4:09am -0400,
+> > Christoph Hellwig <hch@lst.de> wrote:
+> >   
+> >> On Tue, May 29, 2018 at 09:22:40AM +0200, Johannes Thumshirn
+> >> wrote:  
+> >>> For a "Plan B" we can still use the global knob that's already in
+> >>> place (even if this reminds me so much about scsi-mq which at
+> >>> least we haven't turned on in fear of performance regressions).
+> >>>
+> >>> Let's drop the discussion here, I don't think it leads to
+> >>> something else than flamewars.  
+> >>
+> >> If our plan A doesn't work we can go back to these patches.  For
+> >> now I'd rather have everyone spend their time on making Plan A
+> >> work then preparing for contingencies.  Nothing prevents anyone
+> >> from using these patches already out there if they really want to,
+> >> but I'd recommend people are very careful about doing so as you'll
+> >> lock yourself into a long-term maintainance burden.  
+> > 
+> > Restating (for others): this patchset really isn't about
+> > contingencies. It is about choice.
+> > 
+> > Since we're at an impasse, in the hopes of soliciting definitive
+> > feedback from Jens and Linus, I'm going to attempt to reset the
+> > discussion for their entry.
+> > 
+> > In summary, we have a classic example of a maintainer stalemate
+> > here: 1) Christoph, as NVMe co-maintainer, doesn't want to allow
+> > native NVMe multipath to actively coexist with dm-multipath's NVMe
+> > support on the same host.
+> > 2) I, as DM maintainer, would like to offer this flexibility to
+> > users -- by giving them opt-in choice to continue using existing
+> > dm-multipath with NVMe. (also, both Red Hat and SUSE would like to
+> > offer this).
+> > 
+> > There is no technical reason why they cannot coexist.  Hence this
+> > simple patchset that was originally offered by Johannes Thumshirn
+> > with contributions from myself.  
+> 
+> Here's what I think - flag days tend to suck. They may be more
+> convenient for developers, but they inflict pain on users. Sometimes
+> they prevent them from moving forward, since updates are now gated on
+> external dependencies. Moving forward with a new architecture is
+> great, but proper care has to be given to existing users of
+> multipath, regardless of how few they may be.
+> 
+> This patchset seems pretty clean and minimalist. Realistically, I'm
+> guessing that SUSE and RH will ship it regardless of upstream status.
+> 
+
+Without it we're having a choice of disappointing (paying) customers or
+disappointing the upstream community.
+
+Guess.
+
+Cheers,
+
+Hannes
