@@ -1,69 +1,59 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper changes for 4.18
-Date: Mon, 4 Jun 2018 11:32:55 -0400
-Message-ID: <20180604153254.GA4793@redhat.com>
+From: Randy Dunlap <rdunlap@infradead.org>
+Subject: Re: linux-next: Tree for Jun 4 (md/dm-writecache.c)
+Date: Mon, 4 Jun 2018 09:06:36 -0700
+Message-ID: <0e3fa62d-727e-ccb8-53ae-a6aaa6c506e2@infradead.org>
+References: <20180604215911.75399f6e@canb.auug.org.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: peterz@infradead.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Alasdair G Kergon <agk@redhat.com>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180604215911.75399f6e@canb.auug.org.au>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Stephen Rothwell <sfr@canb.auug.org.au>, Linux-Next Mailing List <linux-next@vger.kernel.org>
+Cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Mikulas Patocka <dm-devel@redhat.com>dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Linus,
+On 06/04/2018 04:59 AM, Stephen Rothwell wrote:
+> Hi all,
+> 
+> Changes since 20180601:
+> 
 
-I've based on linux-block because the new dm-writecache target that is
-in this pull needed to be updated to use the new bioset_init/mempool_init
-interfaces.
+on x86_64:
 
-The following changes since commit 04c4950d5b373ba712d928592e05e73510785bca:
+In file included from ../drivers/md/dm-writecache.c:8:0:
+../drivers/md/dm-writecache.c: In function ‘writecache_status’:
+../include/linux/compiler.h:61:17: warning: format ‘%ld’ expects argument of type ‘long int’, but argument 4 has type ‘int’ [-Wformat=]
+   static struct ftrace_branch_data   \
+                 ^
+../include/linux/device-mapper.h:550:46: note: in definition of macro ‘DMEMIT’
+      0 : scnprintf(result + sz, maxlen - sz, x))
+                                              ^
+../include/linux/compiler.h:48:24: note: in expansion of macro ‘__branch_check__’
+ #  define unlikely(x) (__branch_check__(x, 0, __builtin_constant_p(x)))
+                        ^
+../drivers/md/dm-writecache.c:414:35: note: in expansion of macro ‘unlikely’
+ #define writecache_has_error(wc) (unlikely(READ_ONCE((wc)->error)))
+                                   ^
+../include/linux/compiler.h:56:23: note: in expansion of macro ‘__trace_if’
+ #define if(cond, ...) __trace_if( (cond , ## __VA_ARGS__) )
+                       ^
+../include/linux/compiler.h:251:2: note: in expansion of macro ‘if’
+  if (check)       \
+  ^
+../include/linux/compiler.h:258:22: note: in expansion of macro ‘__READ_ONCE’
+ #define READ_ONCE(x) __READ_ONCE(x, 1)
+                      ^
+../drivers/md/dm-writecache.c:414:44: note: in expansion of macro ‘READ_ONCE’
+ #define writecache_has_error(wc) (unlikely(READ_ONCE((wc)->error)))
+                                            ^
+../drivers/md/dm-writecache.c:2196:32: note: in expansion of macro ‘writecache_has_error’
+   DMEMIT("%ld %llu %llu %llu", writecache_has_error(wc),
+                                ^
 
-  block: fixup bioset_integrity_create() call (2018-05-30 18:51:21 -0600)
+s/%ld/%d/
 
-are available in the Git repository at:
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-4.18/dm-changes
-
-for you to fetch changes up to 1be8d9c3da01a08d1d92064abb91e4610115db11:
-
-  dm: add writecache target (2018-05-31 08:11:42 -0400)
-
-Please pull, thanks!
-Mike
-
-----------------------------------------------------------------
-- Export 2 swait symbols for use by the new DM writecache target.
-
-- Add DM writecache target that offers writeback caching to persistent
-  memory or SSD.
-
-- Small DM core change to give context in error message for why a DM
-  table type transition wasn't allowed.
-
-----------------------------------------------------------------
-Mike Snitzer (1):
-      dm: report which conflicting type caused error during table_load()
-
-Mikulas Patocka (2):
-      swait: export symbols __prepare_to_swait and __finish_swait
-      dm: add writecache target
-
- Documentation/device-mapper/writecache.txt |   68 +
- drivers/md/Kconfig                         |   11 +
- drivers/md/Makefile                        |    1 +
- drivers/md/dm-ioctl.c                      |    3 +-
- drivers/md/dm-writecache.c                 | 2285 ++++++++++++++++++++++++++++
- kernel/sched/swait.c                       |    2 +
- 6 files changed, 2369 insertions(+), 1 deletion(-)
- create mode 100644 Documentation/device-mapper/writecache.txt
- create mode 100644 drivers/md/dm-writecache.c
+-- 
+~Randy
