@@ -1,19 +1,15 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: [git pull] device mapper changes for 4.18
-Date: Mon, 4 Jun 2018 13:40:35 -0700
-Message-ID: <CA+55aFyzXSOXa94FqgAkK2ZG6HPB1WDmD4rYG-xeo=MEpB62Nw@mail.gmail.com>
-References: <20180604153254.GA4793@redhat.com>
-	<CA+55aFyZk6Yeo0DSdakROxXRPvx9HWutbP1TwfoFd6fi-1FSUw@mail.gmail.com>
-	<20180604190922.GA5586@redhat.com>
-	<CA+55aFyEVcS11N_7BwKV=k0RDqAWdMTJyWDpuFmkXy796k26_w@mail.gmail.com>
-	<20180604193653.GC12217@hirez.programming.kicks-ass.net>
-	<CA+55aFwkyzV81yEjoFAcjQ68PXxjZ_k-o+oYMobeVMFuj72OHQ@mail.gmail.com>
-	<20180604195858.GD12217@hirez.programming.kicks-ass.net>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH] branch-check: fix long->int truncation when
+ profiling branches
+Date: Mon, 4 Jun 2018 16:50:24 -0400
+Message-ID: <20180604165024.3be78887@gandalf.local.home>
+References: <20180528155432.2864616-1-arnd@arndb.de>
+	<alpine.LRH.2.02.1805300818140.24812@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180604195858.GD12217@hirez.programming.kicks-ass.net>
+In-Reply-To: <alpine.LRH.2.02.1805300818140.24812@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,90 +19,49 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Peter Zijlstra <peterz@infradead.org>
-Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Alasdair G Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Mike, Arnd Bergmann <arnd@arndb.de>, Snitzer <snitzer@redhat.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Ingo Molnar <mingo@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Jun 4, 2018 at 12:59 PM Peter Zijlstra <peterz@infradead.org> wrote:
->
->
-> The below will of course conflict with the merge request under
-> discussion. Also completely untested.
+On Wed, 30 May 2018 08:19:22 -0400 (EDT)
+Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-Side note: it's not just swake_up() itself.
+> The function __builtin_expect returns long type (see the gcc
+> documentation), and so do macros likely and unlikely. Unfortunatelly, when
+> CONFIG_PROFILE_ANNOTATED_BRANCHES is selected, the macros likely and
+> unlikely expand to __branch_check__ and __branch_check__ truncates the
 
-It's very much the "prepare_to_swait()" logic and the event waiting friends.
+Nice catch.
 
-For a regular non-exclusive wait-queue, this is all reasonably simple.
-Want to wait on an event? Go right ahead. You waiting on it doesn't
-affect anybody else waiting on it.
+> long type to int. This unintended truncation may cause bugs in various
+> kernel code (we found a bug in dm-writecache because of it), so it's
 
-For an swait()  queue, though? What are the semantics of two different
-users doing something like
+I'm curious to what that bug was.
 
-    swait_event_interruptible(wq, <event>);
+> better to fix __branch_check__ to return long.
+> 
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> Cc: stable@vger.kernel.org
 
-when coupled with "swake_up_one()"?
+Anyway, I can pull this in my tree and test it.
 
-The whole notion of "wait until this is true" is not an exclusive wait
-per se. And being "interruptible" means that we definitely can be in
-the situation that we added ourselves to the wait-queue, but then a
-signal happened, so we're going to exit. But what if we were the *one*
-thread who got woken up? We can't just return with an error code,
-because then we've lost a wakeup.
+-- Steve
 
-We do actually have this issue for regular wait-queues too, and I
-think we should try to clarify it there as well:
-
-     wait_event_interruptible_exclusive()
-
-is simply a pretty dangerous thing to do. But at least (again) it has
-that "exclusive()" in the name, so _hopefully_ users think about it.
-The danger is pretty explicit.
-
-The rule for exclusive waits has to be that even if you're
-interruptible, you have to first check the event you're waiting for -
-because you *have* to take it if it's there.
-
-Alternatively, if you're returning with -EINTR or something, and you
-were woken up, you need to do wake_up_one() on the queue you were
-waiting on, but now it's already hard to tell whether you were woken
-up by the event, or by you being interruptible, so that's already more
-complicated (but it's always safe - but might be bad for performance -
-to wake up too much).
-
-So I really wish that all the swait interfaces had more of a red flag.
-Because right now they all look simple, and they really aren't. They
-are all equivalent to the really *complex* cases of the regular
-wait-queues.
-
-Again, the "normal" wait queue interfaces that look simple really
-_are_ simple. It's simply safe to call
-
-        wait_event{_interruptible}(wq, <event>)
-
-and there are absolutely no subtle gotchas.  You're not affecting any
-other waiters, and it's doing exactly what you think it's doing from
-reading the code.
-
-In contrast,
-
-        swait_event(wq, <event>)
-
-is much subtler. You're not just waiting on the event, you're also
-potentially blocking some other waiter, because only one of you will
-be woken up.
-
-So maybe along with "swake_up()" -> "swake_up_one()", we should also
-make all the "swait_event*()" functions be renamed as
-"swait_event*_exclusive()". Same for the "prepare_to_swait()" etc
-cases, add the "_exclusive()" there at the end to mark their special
-semantics.
-
-Then the "swait" functions would actually have the same semantics and
-gotcha's as the (very specialized) subset of regular wait-queue event
-functions.
-
-I think that would cover my worries. Hmm?
-
-                   Linus
+> 
+> ---
+>  include/linux/compiler.h |    2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+> 
+> Index: linux-2.6/include/linux/compiler.h
+> ===================================================================
+> --- linux-2.6.orig/include/linux/compiler.h	2018-02-26 20:34:17.000000000 +0100
+> +++ linux-2.6/include/linux/compiler.h	2018-05-30 14:11:53.000000000 +0200
+> @@ -21,7 +21,7 @@ void ftrace_likely_update(struct ftrace_
+>  #define unlikely_notrace(x)	__builtin_expect(!!(x), 0)
+>  
+>  #define __branch_check__(x, expect, is_constant) ({			\
+> -			int ______r;					\
+> +			long ______r;					\
+>  			static struct ftrace_likely_data		\
+>  				__attribute__((__aligned__(4)))		\
+>  				__attribute__((section("_ftrace_annotated_branch"))) \
