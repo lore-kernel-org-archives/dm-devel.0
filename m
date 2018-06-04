@@ -1,16 +1,16 @@
 From: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: Re: [PATCH v2 4/7] dm: prevent DAX mounts if not supported
-Date: Mon, 4 Jun 2018 17:15:08 -0600
-Message-ID: <20180604231508.GA10666@linux.intel.com>
+Subject: Re: [PATCH v2 5/7] dm: remove DM_TYPE_DAX_BIO_BASED dm_queue_mode
+Date: Mon, 4 Jun 2018 17:24:16 -0600
+Message-ID: <20180604232416.GB10666@linux.intel.com>
 References: <20180529195106.14268-1-ross.zwisler@linux.intel.com>
- <20180529195106.14268-5-ross.zwisler@linux.intel.com>
- <20180601215513.GA18712@redhat.com>
+ <20180529195106.14268-6-ross.zwisler@linux.intel.com>
+ <20180601220443.GB18712@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20180601215513.GA18712-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+In-Reply-To: <20180601220443.GB18712-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
  <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
 List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
@@ -20,114 +20,80 @@ List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
  <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
 Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Toshi Kani <toshi.kani-ZPxbGqLxI0U@public.gmane.org>
+Cc: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-xfs-u79uwXL29TYaXLmJjATzhQ@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: dm-devel.ids
 
-On Fri, Jun 01, 2018 at 05:55:13PM -0400, Mike Snitzer wrote:
+On Fri, Jun 01, 2018 at 06:04:43PM -0400, Mike Snitzer wrote:
 > On Tue, May 29 2018 at  3:51pm -0400,
 > Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org> wrote:
 > 
-> > Currently the code in dm_dax_direct_access() only checks whether the target
-> > type has a direct_access() operation defined, not whether the underlying
-> > block devices all support DAX.  This latter property can be seen by looking
-> > at whether we set the QUEUE_FLAG_DAX request queue flag when creating the
-> > DM device.
-> 
-> Wait... I thought DAX support was all or nothing?
-
-Right, it is, and that's what I'm trying to capture.  The point of this series
-is to make sure that we don't use DAX thru DM if one of the DM members doesn't
-support DAX.
-
-This is a bit tricky, though, because as you've pointed out there are a lot of
-elements that go into a block device actually supporting DAX.  
-
-First, the block device has to have a direct_access() operation defined in its
-struct dax_operations table.  This is a static definition in the drivers,
-though, so it's necessary but not sufficient.  For example, the PMEM driver
-always defines a direct_access() operation, but depending on the mode of the
-namespace (raw, fsdax or sector) it may or may not support DAX.
-
-The next step is that a driver needs to say that he block queue supports
-QUEUE_FLAG_DAX.  This again is necessary but not sufficient.  The PMEM driver
-currently sets this for all namespace modes, but I agree that this should be
-restricted to modes that support DAX.  Even once we do that, though, for the
-block driver this isn't fully sufficient.  We'd really like users to call
-bdev_dax_supported() so it can run some additional tests to make sure that DAX
-will work.
-
-So, the real test that filesystems rely on is bdev_dax_suppported().
-
-The trick is that with DM we need to verify each block device via
-bdev_dax_supported() just like a filesystem would, and then have some way of
-communicating the result of all those checks to the filesystem which is
-eventually mounted on the DM device.  At DAX mount time the filesystem will
-call bdev_dax_supported() on the DM device, but it'll really only check the
-first device.  
-
-So, the strategy is to have DM manually check each member device via
-bdev_dax_supported() then if they all pass set QUEUE_FLAG_DAX.  This then
-becomes our one source of truth on whether or not a DM device supports DAX.
-When the filesystem mounts with DAX support it'll also run
-bdev_dax_supported(), but if we have QUEUE_FLAG_DAX set on the DM device, we
-know that this check will pass.
-
-> > This is problematic if we have, for example, a dm-linear device made up of
-> > a PMEM namespace in fsdax mode followed by a ramdisk from BRD.
-> > QUEUE_FLAG_DAX won't be set on the dm-linear device's request queue, but
-> > we have a working direct_access() entry point and the first member of the
-> > dm-linear set *does* support DAX.
-> 
-> If you don't have a uniformly capable device then it is very dangerous
-> to advertise that the entire device has a certain capability.  That
-> completely bit me in the past with discard (because for every IO I
-> wasn't then checking if the destination device supported discards).
->
-> It is all well and good that you're adding that check here.  But what I
-> don't like is how you're saying QUEUE_FLAG_DAX implies direct_access()
-> operation exists.. yet for raw PMEM namespaces we just discussed how
-> that is a lie.
-
-QUEUE_FLAG_DAX does imply that direct_access() exits.  However, as discussed
-above for a given bdev we really do need to check bdev_dax_supported().
-
-> SO this type of change showcases how the QUEUE_FLAG_DAX doesn't _really_
-> imply direct_access() exists.
-> 
-> > This allows the user to create a filesystem on the dm-linear device, and
-> > then mount it with DAX.  The filesystem's bdev_dax_supported() test will
-> > pass because it'll operate on the first member of the dm-linear device,
-> > which happens to be a fsdax PMEM namespace.
+> > The DM_TYPE_DAX_BIO_BASED dm_queue_mode was introduced to prevent DM
+> > devices that could possibly support DAX from transitioning into DM devices
+> > that cannot support DAX.
 > > 
-> > All DAX I/O will then fail to that dm-linear device because the lack of
-> > QUEUE_FLAG_DAX prevents fs_dax_get_by_bdev() from working.  This means that
-> > the struct dax_device isn't ever set in the filesystem, so
-> > dax_direct_access() will always return -EOPNOTSUPP.
+> > For example, the following transition will currently fail:
+> > 
+> >  dm-linear: [fsdax pmem][fsdax pmem] => [fsdax pmem][fsdax raw]
+> > 	      DM_TYPE_DAX_BIO_BASED       DM_TYPE_BIO_BASED
+> > 
+> > but these will both succeed:
+> > 
+> >  dm-linear: [fsdax pmem][brd ramdisk] => [fsdax pmem][fsdax raw]
+> >  	      DM_TYPE_DAX_BIO_BASED        DM_TYPE_BIO_BASED
+> > 
 > 
-> Now you've lost me... these past 2 paragraphs.  Why can a user mount it
-> is DAX mode?  Because bdev_dax_supported() only accesses the first
-> portion (which happens to have DAX capabilities?)
-
-Right.  bdev_dax_supported() runs all of its checks, and because they are
-running against the first block device in the dm set, they all pass.  But the
-overall DM device does not actually support DAX.
-
-> Isn't this exactly why you should be checking for QUEUE_FLAG_DAX in the
-> caller (bdev_dax_supported)?  Why not use bdev_get_queue() and verify
-> QUEUE_FLAG_DAX is set in there?
-
-I'll look into that for the next revision, thanks.
-
-> > By failing out of dm_dax_direct_access() if QUEUE_FLAG_DAX isn't set we let
-> > the filesystem know we don't support DAX at mount time.  The filesystem
-> > will then silently fall back and remove the dax mount option, causing it to
-> > work properly.
+> I fail to see how this succeeds given
+> drivers/md/dm-ioctl.c:is_valid_type() only allows transitions from:
 > 
-> This shouldn't be needed.  Again, QUEUE_FLAG_DAX wasn't set.. so don't
-> allow code to falsely try operations that should've been gated by the
-> fact it wasn't set.
+> DM_TYPE_BIO_BASED => DM_TYPE_DAX_BIO_BASED
 
-Right, the goal is to make QUEUE_FLAG_DAX our one source of truth for whether
-DM devices support DAX, and not have it half defined by that and half by the
-DM_TYPE_DAX_BIO_BASED.
+Right, sorry, that was a typo.  What I meant was:
+
+> For example, the following transition will currently fail:
+> 
+>  dm-linear: [fsdax pmem][fsdax pmem] => [fsdax pmem][fsdax raw]
+>               DM_TYPE_DAX_BIO_BASED       DM_TYPE_BIO_BASED
+> 
+> but these will both succeed:
+> 
+>  dm-linear: [fsdax pmem][brd ramdisk] => [fsdax pmem][fsdax raw]
+>                 DM_TYPE_BIO_BASED        DM_TYPE_BIO_BASED
+> 
+>  dm-linear: [fsdax pmem][fsdax raw] => [fsdax pmem][fsdax pmem]
+>                 DM_TYPE_BIO_BASED        DM_TYPE_DAX_BIO_BASED
+
+So we allow 2 of the 3 transitions, but the reason that we disallow the third
+isn't fully clear to me.
+
+> >  dm-linear: [fsdax pmem][fsdax raw] => [fsdax pmem][fsdax pmem]
+> >  		DM_TYPE_BIO_BASED        DM_TYPE_DAX_BIO_BASED
+> > 
+> > This seems arbitrary, as really the choice on whether to use DAX happens at
+> > filesystem mount time.  There's no guarantee that the in the first case
+> > (double fsdax pmem) we were using the dax mount option with our file
+> > system.
+> > 
+> > Instead, get rid of DM_TYPE_DAX_BIO_BASED and all the special casing around
+> > it, and instead make the request queue's QUEUE_FLAG_DAX be our one source
+> > of truth.  If this is set, we can use DAX, and if not, not.  We keep this
+> > up to date in table_load() as the table changes.  As with regular block
+> > devices the filesystem will then know at mount time whether DAX is a
+> > supported mount option or not.
+> 
+> If you don't think you need this specialization that is fine.. but DM
+> devices supporting suspending (as part of table reloads) so is there any
+> risk that there will be inflight IO (say if someone did 'dmsetup suspend
+> --noflush').. and then upon reload the device type changed out from
+> under us.. anyway, I don't have all the PMEM DAX stuff paged back into
+> my head yet.
+> 
+> But this just seems like we really shouldn't be allowing the
+> transition from what was DM_TYPE_DAX_BIO_BASED back to DM_TYPE_BIO_BASED
+
+I admit I don't fully understand all the ways that DM supports suspending and
+resuming devices.  Is there actually a case where we can change out the DM
+devices while I/O is running, and somehow end up trying to issue a DAX I/O to
+a device that doesn't support DAX?
+
+Toshi, do you have a test case that shows this somehow?
