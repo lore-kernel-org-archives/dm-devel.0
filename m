@@ -1,43 +1,23 @@
-From: Krzysztof Kozlowski <krzk@kernel.org>
-Subject: Re: dm-crypt: fix warning in shutdown path
-Date: Mon, 4 Jun 2018 11:31:40 +0200
-Message-ID: <CAJKOXPc1BN9KeTfv2t4bzv2iTCne+d19YimQ4UJO-g-qC30Lfg@mail.gmail.com>
-References: <20180602174504.1847-1-kent.overstreet@gmail.com>
- <974665e7-fa4a-230b-99d8-e773489cc6bc@kernel.dk> <20180602200723.GA23980@redhat.com>
- <eeea0f12-45d4-d90c-e07e-3f02cdc9994f@kernel.dk>
+From: Christoph Hellwig <hch@lst.de>
+Subject: Re: [PATCH 0/3] Provide more fine grained control over multipathing
+Date: Mon, 4 Jun 2018 14:59:18 +0200
+Message-ID: <20180604125918.GC30945@lst.de>
+References: <20180525141211.GA25971@lst.de> <20180525145056.GD9591@redhat.com> <yq1muwj45sg.fsf@oracle.com> <20180529030236.GA28895@redhat.com> <20180529072240.np5c62akbr7jqelr@linux-x5ow.site> <20180529080952.GA1369@lst.de> <20180529232718.GA1730@redhat.com> <f4951571-d37d-73cd-1d6c-0ca84647d5ac@kernel.dk> <20180604081921.3cedecbc@pentland.suse.de> <20180604071829.tq7wmx4bvk4uzubd@linux-x5ow.site>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <eeea0f12-45d4-d90c-e07e-3f02cdc9994f@kernel.dk>
+Content-Disposition: inline
+In-Reply-To: <20180604071829.tq7wmx4bvk4uzubd@linux-x5ow.site>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>
-Cc: Mike Snitzer <snitzer@redhat.com>, Kent Overstreet <kent.overstreet@gmail.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+To: Johannes Thumshirn <jthumshirn@suse.de>
+Cc: Hannes Reinecke <hare@suse.de>, Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@lst.de>, Linus Torvalds <torvalds@linux-foundation.org>, "Martin K. Petersen" <martin.petersen@oracle.com>, Linux NVMe Mailinglist <linux-nvme@lists.infradead.org>, Laurence Oberman <loberman@redhat.com>, Sagi Grimberg <sagi@grimberg.me>, James Smart <james.smart@broadcom.com>, Ewan Milne <emilne@redhat.com>, Linux Kernel Mailinglist <linux-kernel@vger.kernel.org>, Keith Busch <keith.busch@intel.com>, Martin George <marting@netapp.com>, John Meneghini <John.Meneghini@netapp.com>, dm-devel@redhat.com, mwilck@suse.de
 List-Id: dm-devel.ids
 
-On Sat, Jun 2, 2018 at 10:10 PM, Jens Axboe <axboe@kernel.dk> wrote:
-> On 6/2/18 2:07 PM, Mike Snitzer wrote:
->> On Sat, Jun 02 2018 at  4:03pm -0400,
->> Jens Axboe <axboe@kernel.dk> wrote:
->>
->>> On 6/2/18 11:45 AM, Kent Overstreet wrote:
->>>> The counter for the number of allocated pages includes pages in the
->>>> mempool's reserve, so checking that the number of allocated pages is 0
->>>> needs to happen after we exit the mempool.
->>>
->>> Looks good, but needs a fixes line. I'll add one.
->>
->> Also needs the subject and header updated to reflect that it fixes the
->> crash (Krzysztof please verify):
->>
->> Reported-by: Krzysztof Kozlowski <krzk@kernel.org>
->> Acked-by: Mike Snitzer <snitzer@redhat.com>
->
-> Indeed, I have added that. Thanks Mike.
+On Mon, Jun 04, 2018 at 09:18:29AM +0200, Johannes Thumshirn wrote:
+> What we really should do is, try to give multipath-tools a 'nvme
+> list-subsys' like view of nvme native multipathing (and I think Martin
+> W. has already been looking into this a while ago).
 
-Thanks for adding tags!
+Which has been merged into multipath-tools a while ago:
 
-This fixes reported issue:
-Tested-by: Krzysztof Kozlowski <krzk@kernel.org>
-
-Best regards,
-Krzysztof
+https://git.opensvc.com/gitweb.cgi?p=multipath-tools/.git;a=commit;h=86553b57b6bd55e0355ac27ae100cce6cc42bee3
