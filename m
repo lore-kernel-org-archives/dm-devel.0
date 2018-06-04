@@ -1,51 +1,43 @@
-From: Johannes Thumshirn <jthumshirn@suse.de>
-Subject: Re: [PATCH 0/3] Provide more fine grained control over multipathing
-Date: Mon, 4 Jun 2018 09:18:29 +0200
-Message-ID: <20180604071829.tq7wmx4bvk4uzubd@linux-x5ow.site>
-References: <20180525135813.GB9591@redhat.com>
- <20180525141211.GA25971@lst.de>
- <20180525145056.GD9591@redhat.com>
- <yq1muwj45sg.fsf@oracle.com>
- <20180529030236.GA28895@redhat.com>
- <20180529072240.np5c62akbr7jqelr@linux-x5ow.site>
- <20180529080952.GA1369@lst.de>
- <20180529232718.GA1730@redhat.com>
- <f4951571-d37d-73cd-1d6c-0ca84647d5ac@kernel.dk>
- <20180604081921.3cedecbc@pentland.suse.de>
+From: Krzysztof Kozlowski <krzk@kernel.org>
+Subject: Re: dm-crypt: fix warning in shutdown path
+Date: Mon, 4 Jun 2018 11:31:40 +0200
+Message-ID: <CAJKOXPc1BN9KeTfv2t4bzv2iTCne+d19YimQ4UJO-g-qC30Lfg@mail.gmail.com>
+References: <20180602174504.1847-1-kent.overstreet@gmail.com>
+ <974665e7-fa4a-230b-99d8-e773489cc6bc@kernel.dk> <20180602200723.GA23980@redhat.com>
+ <eeea0f12-45d4-d90c-e07e-3f02cdc9994f@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180604081921.3cedecbc@pentland.suse.de>
+In-Reply-To: <eeea0f12-45d4-d90c-e07e-3f02cdc9994f@kernel.dk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Hannes Reinecke <hare@suse.de>
-Cc: Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@lst.de>, Linus Torvalds <torvalds@linux-foundation.org>, "Martin K. Petersen" <martin.petersen@oracle.com>, Linux NVMe Mailinglist <linux-nvme@lists.infradead.org>, Laurence Oberman <loberman@redhat.com>, Sagi Grimberg <sagi@grimberg.me>, James Smart <james.smart@broadcom.com>, Ewan Milne <emilne@redhat.com>, Linux Kernel Mailinglist <linux-kernel@vger.kernel.org>, Keith Busch <keith.busch@intel.com>, Martin George <marting@netapp.com>, John Meneghini <John.Meneghini@netapp.com>, dm-devel@redhat.com, mwilck@suse.de
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Mike Snitzer <snitzer@redhat.com>, Kent Overstreet <kent.overstreet@gmail.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Mon, Jun 04, 2018 at 08:19:21AM +0200, Hannes Reinecke wrote:
-> Without it we're having a choice of disappointing (paying) customers or
-> disappointing the upstream community.
+On Sat, Jun 2, 2018 at 10:10 PM, Jens Axboe <axboe@kernel.dk> wrote:
+> On 6/2/18 2:07 PM, Mike Snitzer wrote:
+>> On Sat, Jun 02 2018 at  4:03pm -0400,
+>> Jens Axboe <axboe@kernel.dk> wrote:
+>>
+>>> On 6/2/18 11:45 AM, Kent Overstreet wrote:
+>>>> The counter for the number of allocated pages includes pages in the
+>>>> mempool's reserve, so checking that the number of allocated pages is 0
+>>>> needs to happen after we exit the mempool.
+>>>
+>>> Looks good, but needs a fixes line. I'll add one.
+>>
+>> Also needs the subject and header updated to reflect that it fixes the
+>> crash (Krzysztof please verify):
+>>
+>> Reported-by: Krzysztof Kozlowski <krzk@kernel.org>
+>> Acked-by: Mike Snitzer <snitzer@redhat.com>
+>
+> Indeed, I have added that. Thanks Mike.
 
-I personally think (regardless of the fact, that I wrote the patch
-under discussion), using the module parameter is sufficient for these
-kind of customers. For me it's an either/or kind of setting (either
-native or dm-mpath).
+Thanks for adding tags!
 
-Downstream distributions could still carry a small patch flipping the
-default to off if they want to maintain backwards compatibility with
-existing dm-mpath setups (which for NVMe I doubt there are many!).
+This fixes reported issue:
+Tested-by: Krzysztof Kozlowski <krzk@kernel.org>
 
-What we really should do is, try to give multipath-tools a 'nvme
-list-subsys' like view of nvme native multipathing (and I think Martin
-W. has already been looking into this a while ago).
-
-
-   Johannes
--- 
-Johannes Thumshirn                                          Storage
-jthumshirn@suse.de                                +49 911 74053 689
-SUSE LINUX GmbH, Maxfeldstr. 5, 90409 Nürnberg
-GF: Felix Imendörffer, Jane Smithard, Graham Norton
-HRB 21284 (AG Nürnberg)
-Key fingerprint = EC38 9CAB C2C4 F25D 8600 D0D0 0393 969D 2D76 0850
+Best regards,
+Krzysztof
