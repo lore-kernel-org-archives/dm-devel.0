@@ -1,107 +1,133 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: [git pull] device mapper changes for 4.18
-Date: Mon, 4 Jun 2018 15:16:31 -0700
-Message-ID: <CA+55aFz8WL99++EeU=HjSo=w153zwsFqNaRcQk+nkjf8u_3beQ@mail.gmail.com>
-References: <20180604153254.GA4793@redhat.com>
-	<CA+55aFyZk6Yeo0DSdakROxXRPvx9HWutbP1TwfoFd6fi-1FSUw@mail.gmail.com>
-	<20180604190922.GA5586@redhat.com>
-	<CA+55aFyEVcS11N_7BwKV=k0RDqAWdMTJyWDpuFmkXy796k26_w@mail.gmail.com>
-	<20180604193653.GC12217@hirez.programming.kicks-ass.net>
-	<CA+55aFwkyzV81yEjoFAcjQ68PXxjZ_k-o+oYMobeVMFuj72OHQ@mail.gmail.com>
-	<20180604195858.GD12217@hirez.programming.kicks-ass.net>
-	<20180604211343.GB6079@redhat.com>
-	<CA+55aFwSyiotexs3omf76=Ooo_rJFwdcpw=nF5pMd4bNkvN89A@mail.gmail.com>
-	<alpine.LRH.2.02.1806041734390.11883@file01.intranet.prod.int.rdu2.redhat.com>
+From: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: Re: [PATCH v2 4/7] dm: prevent DAX mounts if not supported
+Date: Mon, 4 Jun 2018 17:15:08 -0600
+Message-ID: <20180604231508.GA10666@linux.intel.com>
+References: <20180529195106.14268-1-ross.zwisler@linux.intel.com>
+ <20180529195106.14268-5-ross.zwisler@linux.intel.com>
+ <20180601215513.GA18712@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.1806041734390.11883@file01.intranet.prod.int.rdu2.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Peter Zijlstra <peterz@infradead.org>, dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20180601215513.GA18712-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: dm-devel.ids
 
-On Mon, Jun 4, 2018 at 2:53 PM Mikulas Patocka <mpatocka@redhat.com> wrote:
+On Fri, Jun 01, 2018 at 05:55:13PM -0400, Mike Snitzer wrote:
+> On Tue, May 29 2018 at  3:51pm -0400,
+> Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org> wrote:
+> 
+> > Currently the code in dm_dax_direct_access() only checks whether the target
+> > type has a direct_access() operation defined, not whether the underlying
+> > block devices all support DAX.  This latter property can be seen by looking
+> > at whether we set the QUEUE_FLAG_DAX request queue flag when creating the
+> > DM device.
+> 
+> Wait... I thought DAX support was all or nothing?
+
+Right, it is, and that's what I'm trying to capture.  The point of this series
+is to make sure that we don't use DAX thru DM if one of the DM members doesn't
+support DAX.
+
+This is a bit tricky, though, because as you've pointed out there are a lot of
+elements that go into a block device actually supporting DAX.  
+
+First, the block device has to have a direct_access() operation defined in its
+struct dax_operations table.  This is a static definition in the drivers,
+though, so it's necessary but not sufficient.  For example, the PMEM driver
+always defines a direct_access() operation, but depending on the mode of the
+namespace (raw, fsdax or sector) it may or may not support DAX.
+
+The next step is that a driver needs to say that he block queue supports
+QUEUE_FLAG_DAX.  This again is necessary but not sufficient.  The PMEM driver
+currently sets this for all namespace modes, but I agree that this should be
+restricted to modes that support DAX.  Even once we do that, though, for the
+block driver this isn't fully sufficient.  We'd really like users to call
+bdev_dax_supported() so it can run some additional tests to make sure that DAX
+will work.
+
+So, the real test that filesystems rely on is bdev_dax_suppported().
+
+The trick is that with DM we need to verify each block device via
+bdev_dax_supported() just like a filesystem would, and then have some way of
+communicating the result of all those checks to the filesystem which is
+eventually mounted on the DM device.  At DAX mount time the filesystem will
+call bdev_dax_supported() on the DM device, but it'll really only check the
+first device.  
+
+So, the strategy is to have DM manually check each member device via
+bdev_dax_supported() then if they all pass set QUEUE_FLAG_DAX.  This then
+becomes our one source of truth on whether or not a DM device supports DAX.
+When the filesystem mounts with DAX support it'll also run
+bdev_dax_supported(), but if we have QUEUE_FLAG_DAX set on the DM device, we
+know that this check will pass.
+
+> > This is problematic if we have, for example, a dm-linear device made up of
+> > a PMEM namespace in fsdax mode followed by a ramdisk from BRD.
+> > QUEUE_FLAG_DAX won't be set on the dm-linear device's request queue, but
+> > we have a working direct_access() entry point and the first member of the
+> > dm-linear set *does* support DAX.
+> 
+> If you don't have a uniformly capable device then it is very dangerous
+> to advertise that the entire device has a certain capability.  That
+> completely bit me in the past with discard (because for every IO I
+> wasn't then checking if the destination device supported discards).
 >
-> I'd be interested - does the kernel deal properly with spurious wake-up? -
-> i.e. suppose that the kernel thread that I created is doing simething else
-> in a completely different subsystem - can I call wake_up_process on it?
-> Could it confuse some unrelated code?
+> It is all well and good that you're adding that check here.  But what I
+> don't like is how you're saying QUEUE_FLAG_DAX implies direct_access()
+> operation exists.. yet for raw PMEM namespaces we just discussed how
+> that is a lie.
 
-We've always had that issue, and yes, we should handle it fine. Code
-that doesn't handle it fine is broken, but I don't think we've ever
-had that situation.
+QUEUE_FLAG_DAX does imply that direct_access() exits.  However, as discussed
+above for a given bdev we really do need to check bdev_dax_supported().
 
-For example, a common case of "spurious" wakeups is when somebody adds
-itself to a wait list, but then ends up doing other things (including
-taking page faults because of user access etc). The wait-list is still
-active, and events on the wait list will still wake people up, even if
-they are sleeping on some *other* list too.
+> SO this type of change showcases how the QUEUE_FLAG_DAX doesn't _really_
+> imply direct_access() exists.
+> 
+> > This allows the user to create a filesystem on the dm-linear device, and
+> > then mount it with DAX.  The filesystem's bdev_dax_supported() test will
+> > pass because it'll operate on the first member of the dm-linear device,
+> > which happens to be a fsdax PMEM namespace.
+> > 
+> > All DAX I/O will then fail to that dm-linear device because the lack of
+> > QUEUE_FLAG_DAX prevents fs_dax_get_by_bdev() from working.  This means that
+> > the struct dax_device isn't ever set in the filesystem, so
+> > dax_direct_access() will always return -EOPNOTSUPP.
+> 
+> Now you've lost me... these past 2 paragraphs.  Why can a user mount it
+> is DAX mode?  Because bdev_dax_supported() only accesses the first
+> portion (which happens to have DAX capabilities?)
 
-In fact, an example of spurious wakeups comes from just using regular
-futexes. We send those locklessly, and you actually can get a futex
-wakeup *after* you thought you removed yourself from the futex queue.
+Right.  bdev_dax_supported() runs all of its checks, and because they are
+running against the first block device in the dm set, they all pass.  But the
+overall DM device does not actually support DAX.
 
-But that's actually only an example of the much more generic issue -
-we've always supported having multiple sources of wakeups, so
-"spurious" wakups have always been a thing.
+> Isn't this exactly why you should be checking for QUEUE_FLAG_DAX in the
+> caller (bdev_dax_supported)?  Why not use bdev_get_queue() and verify
+> QUEUE_FLAG_DAX is set in there?
 
-People are probably not so aware of it, because they've never been an
-actual _problem_.
+I'll look into that for the next revision, thanks.
 
-Why? Our sleep/wake model has never been that "I woke up, so what I
-waited on must be done". Our sleep/wake model has always been one
-where being woken up just means that you go back and repeat the
-checks.
+> > By failing out of dm_dax_direct_access() if QUEUE_FLAG_DAX isn't set we let
+> > the filesystem know we don't support DAX at mount time.  The filesystem
+> > will then silently fall back and remove the dax mount option, causing it to
+> > work properly.
+> 
+> This shouldn't be needed.  Again, QUEUE_FLAG_DAX wasn't set.. so don't
+> allow code to falsely try operations that should've been gated by the
+> fact it wasn't set.
 
-The whole "wait_event()" loop being the most core example of that
-model, but that's actually not the *traditional* model. Our really
-traditional model of waiting for something actually predates
-wait_event(), and is an explicit loop like
-
-    add_to_wait_queue(..);
-    for (;;) {
-        set_task_state(TASK_INTERRUPTIBLE);
-        .. see if we need to sleep, exit if ok ..
-        schedule();
-    }
-    remove_from_wait_queue(..);
-
-so even pretty much from day #1, the whole notion of "spurious wake
-events" is a non-issue.
-
-(We did have a legacy "sleep_on()" interface back in the dark ages,
-but even that was supposed to be used in a loop).
-
-> The commonly used synchronization primitives recheck the condition after
-> wake-up, but it's hard to verify that the whole kernel does it.
-
-See above. We have those spurious wakeups already.
-
-> It looked to me like the standard wait-queues suffers from feature creep
-> (three flags, high number of functions abd macros, it even uses an
-> indirect call to wake something up) - that's why I used swait.
-
-I agree that the standard wait-queues have gotten much more complex
-over the years. But apart from the wait entries being a bit big, they
-actually should not perform badly.,
-
-The real problem with wait-queues is that because of their semantics,
-you *can* end up walking the whole queue, waking up hundreds (or
-thousands) of processes. That can be a latency issue for RT.
-
-But the answer to that tends to be "don't do that then". If you have
-wait-queues that can have thousands of entries, there's likely
-something seriously wrong somewhere. We've had it, but it's very very
-rare.
-
-                        Linus
+Right, the goal is to make QUEUE_FLAG_DAX our one source of truth for whether
+DM devices support DAX, and not have it half defined by that and half by the
+DM_TYPE_DAX_BIO_BASED.
