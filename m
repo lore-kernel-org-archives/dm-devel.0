@@ -1,72 +1,78 @@
-From: Randy Dunlap <rdunlap@infradead.org>
-Subject: Re: linux-next: Tree for Jun 4 (md/dm-writecache.c)
-Date: Mon, 4 Jun 2018 11:27:55 -0700
-Message-ID: <7b566935-a03d-ecab-be2a-10e25e4554f6@infradead.org>
-References: <20180604215911.75399f6e@canb.auug.org.au>
- <0e3fa62d-727e-ccb8-53ae-a6aaa6c506e2@infradead.org>
- <20180604182259.GA5440@redhat.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [git pull] device mapper changes for 4.18
+Date: Mon, 4 Jun 2018 11:54:53 -0700
+Message-ID: <CA+55aFyZk6Yeo0DSdakROxXRPvx9HWutbP1TwfoFd6fi-1FSUw@mail.gmail.com>
+References: <20180604153254.GA4793@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180604182259.GA5440@redhat.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@redhat.com>, Arnd Bergmann <arnd@arndb.de>
-Cc: Stephen Rothwell <sfr@canb.auug.org.au>, Linux-Next Mailing List <linux-next@vger.kernel.org>, dm-devel@redhat.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20180604153254.GA4793@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Peter Zijlstra <peterz@infradead.org>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On 06/04/2018 11:22 AM, Mike Snitzer wrote:
-> On Mon, Jun 04 2018 at 12:06pm -0400,
-> Randy Dunlap <rdunlap@infradead.org> wrote:
-> 
->> On 06/04/2018 04:59 AM, Stephen Rothwell wrote:
->>> Hi all,
->>>
->>> Changes since 20180601:
->>>
->>
->> on x86_64:
->>
->> In file included from ../drivers/md/dm-writecache.c:8:0:
->> ../drivers/md/dm-writecache.c: In function ‘writecache_status’:
->> ../include/linux/compiler.h:61:17: warning: format ‘%ld’ expects argument of type ‘long int’, but argument 4 has type ‘int’ [-Wformat=]
->>    static struct ftrace_branch_data   \
->>                  ^
->> ../include/linux/device-mapper.h:550:46: note: in definition of macro ‘DMEMIT’
->>       0 : scnprintf(result + sz, maxlen - sz, x))
->>                                               ^
->> ../include/linux/compiler.h:48:24: note: in expansion of macro ‘__branch_check__’
->>  #  define unlikely(x) (__branch_check__(x, 0, __builtin_constant_p(x)))
->>                         ^
->> ../drivers/md/dm-writecache.c:414:35: note: in expansion of macro ‘unlikely’
->>  #define writecache_has_error(wc) (unlikely(READ_ONCE((wc)->error)))
->>                                    ^
->> ../include/linux/compiler.h:56:23: note: in expansion of macro ‘__trace_if’
->>  #define if(cond, ...) __trace_if( (cond , ## __VA_ARGS__) )
->>                        ^
->> ../include/linux/compiler.h:251:2: note: in expansion of macro ‘if’
->>   if (check)       \
->>   ^
->> ../include/linux/compiler.h:258:22: note: in expansion of macro ‘__READ_ONCE’
->>  #define READ_ONCE(x) __READ_ONCE(x, 1)
->>                       ^
->> ../drivers/md/dm-writecache.c:414:44: note: in expansion of macro ‘READ_ONCE’
->>  #define writecache_has_error(wc) (unlikely(READ_ONCE((wc)->error)))
->>                                             ^
->> ../drivers/md/dm-writecache.c:2196:32: note: in expansion of macro ‘writecache_has_error’
->>    DMEMIT("%ld %llu %llu %llu", writecache_has_error(wc),
->>                                 ^
->>
->> s/%ld/%d/
-> 
-> AFAICT, this is the correct fix:
-> https://patchwork.kernel.org/patch/10438865/
-> 
-> Not seen any response to it (Steven and Ingo were emailed, Arnd and LKML
-> were cc'd).
+On Mon, Jun 4, 2018 at 8:32 AM Mike Snitzer <snitzer@redhat.com> wrote:
+>
+> - Export 2 swait symbols for use by the new DM writecache target.
 
-Yes, thanks.  That looks good.
+I am *EXTREMELY* unhappy with this.
 
--- 
-~Randy
+The swait interface is pure and utter garbage, and I thought we
+already agreed to just have a big comment telling people not to use
+them.
+
+That seems to not have happened.
+
+The swait() interfaces are pure and utter garbage because they have
+absolutely horrid semantics that are very different from normal
+wait-queues, and there has never been any sign that the swait users
+are actually valid.
+
+In particular, existing users were using swait because of complete
+garbage reasons, like the alleged "win" for KVM, which was just
+because there was only ever one waiter anyway.
+
+Is the new writecache usage really worth it?
+
+Is it even *correct*?
+
+As mentioned, swait semantics are completely buggy, with "swake_up()"
+not at all approximating a normal wake-up. It only wakes *one* user,
+so it's more like an exclusive waiter, except it ends up alway
+sassuming that every waiter is exclusive without any actual marker for
+that.
+
+End result: the interface has some very subtle races, and I'm not at
+all convinced that the new writecache code is aware of this.
+
+In particular, I see what appears to be a bug in writecache_map(): it
+does a writecache_wait_on_freelist(), but it doesn't actually
+guarantee that it will then use the slot that it was woken up for (it
+just does a "continue", which might instead do a
+writecache_find_entry().
+
+So *another* thread that was waiting for a slot will now not be woken
+up, and the thread that *was* woken up didn't actually use the
+freelist entry that it was waiting for.
+
+This is *EXACTLY* the kind of code that should not use swait lists.
+It's buggy, and broken. And it probably works in 99% of all cases by
+pure luck, so it's hard to debug too.
+
+In other words: I'm not pulling this shit. I want people to be *VERY*
+aware of how broken swait queues are. You are *not* to use them unless
+you understand them, and I have yet to find a single person who does.
+
+No way in hell are we exporting that shit.
+
+                   Linus
