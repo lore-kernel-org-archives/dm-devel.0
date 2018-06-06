@@ -1,15 +1,17 @@
 From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 1/2] mpathpersist: add all_tg_pt option
-Date: Wed, 6 Jun 2018 16:56:29 -0500
-Message-ID: <20180606215629.GD3103@octiron.msp.redhat.com>
-References: <1527891722-11132-1-git-send-email-bmarzins@redhat.com>
-	<97cd3d03418bb923941096309db1d3b53e2f89ca.camel@suse.com>
+Subject: Re: [PATCH 2/2] multipath: don't check timestamps
+	without a path
+Date: Wed, 6 Jun 2018 16:57:42 -0500
+Message-ID: <20180606215742.GE3103@octiron.msp.redhat.com>
+References: <1528238421-26087-1-git-send-email-bmarzins@redhat.com>
+	<1528238421-26087-3-git-send-email-bmarzins@redhat.com>
+	<f881e41b92559528558af7f848a060a0ec5d8fa1.camel@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <97cd3d03418bb923941096309db1d3b53e2f89ca.camel@suse.com>
+In-Reply-To: <f881e41b92559528558af7f848a060a0ec5d8fa1.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,80 +22,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Martin Wilck <mwilck@suse.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Vijay Chauhan <vijay.chauhan@netapp.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Jun 06, 2018 at 10:25:36PM +0200, Martin Wilck wrote:
-> On Fri, 2018-06-01 at 17:22 -0500, Benjamin Marzinski wrote:
-> > Some arrays, such as the EMC VNX, don't follow the scsi persistent
-> > reservations spec in making key registrations per I_T NEXUS. Instead,
-> > the registration is shared by all target ports connected to a given
-> > host.  This causes mpathpersist to fail whenever it tries to register
-> > a
-> > key, since it will receive a registration conflict on some of the
-> > paths.
+On Wed, Jun 06, 2018 at 11:26:55AM +0200, Martin Wilck wrote:
+> On Tue, 2018-06-05 at 17:40 -0500, Benjamin Marzinski wrote:
+> > If a path was blacklisted, pathvec could exist but have no path in
+> > it.
+> > print_cmd_valid wasn't checking this before calling
+> > find_multipaths_check_timeout(). This was causing it to dereference a
+> > NULL pointer in these cases.
 > > =
 
-> > To deal with this, mpathpersist needs to track the hosts that it has
-> > done a registration on, and only register once per host. The new
-> > "all_tg_pt" multipath.conf option is used to set which arrays need
-> > this
-> > feature.  I currently don't know if all EMC VNX arrays handle
-> > persistent
-> > reservations like this, or if it is configurable. A future patch will
-> > update the VNX built-in config, if this is indeed their default (or
-> > only) setting.
-> > =
-
-> > Multipathd doesn't need to worry about this. It is often the case
-> > that
-> > when a path device comes back, it will still have the keys registered
-> > to
-> > it. Because of this, multipathd uses register-and-ignore, which means
-> > that it won't cause an error if the registration has already happened
-> > down a different target port.
-> > =
-
+> > Cc: Martin Wilck <mwilck@suse.com>
 > > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 > > ---
-> >  libmpathpersist/mpath_persist.c | 28 ++++++++++++++++++++++------
-> >  libmultipath/config.c           |  2 ++
-> >  libmultipath/config.h           |  2 ++
-> >  libmultipath/defaults.h         |  1 +
-> >  libmultipath/dict.c             | 10 ++++++++++
-> >  libmultipath/propsel.c          | 15 +++++++++++++++
-> >  libmultipath/propsel.h          |  1 +
-> >  libmultipath/structs.h          |  7 +++++++
-> >  multipath/multipath.conf.5      | 11 +++++++++++
-> >  9 files changed, 71 insertions(+), 6 deletions(-)
+> >  multipath/main.c | 4 +---
+> >  1 file changed, 1 insertion(+), 3 deletions(-)
+> > =
+
+> > diff --git a/multipath/main.c b/multipath/main.c
+> > index c69e996..3f0a6aa 100644
+> > --- a/multipath/main.c
+> > +++ b/multipath/main.c
+> > @@ -482,10 +482,8 @@ static int print_cmd_valid(int k, const vector
+> > pathvec,
+> >  			pp, pp->find_multipaths_timeout, &until);
+> >  		if (wait !=3D FIND_MULTIPATHS_WAITING)
+> >  			k =3D 1;
+> > -	} else if (pathvec !=3D NULL) {
+> > -		pp =3D VECTOR_SLOT(pathvec, 0);
+> > +	} else if (pathvec !=3D NULL && (pp =3D VECTOR_SLOT(pathvec,
+> > 0)))
+> >  		wait =3D find_multipaths_check_timeout(pp, 0, &until);
+> > -	}
+> >  	if (wait =3D=3D FIND_MULTIPATHS_WAITING)
+> >  		printf("FIND_MULTIPATHS_WAIT_UNTIL=3D\"%ld.%06ld\"\n",
+> >  			       until.tv_sec, until.tv_nsec/1000);
 > =
 
-> The patch looks good to me, but doesn't this mean that mpathpersist
-> would now also support persistent reservations with the ALL_TG_PT bit
-> set (IIUC, the VNX basically acts as if that bit was always set)? =
+> Thanks for pointing this out. This must be the case where get_refwwid()
+> fails on the path early in configure(), correct?
 
-> =
-
-> If yes, I think the warning in mpath_prout_reg() about this flag could
-> be dropped, and mpathpersist could be extended to support the -Y/
-> --param-alltgpt option, no?
-
-I'm a little fuzzy on the --param-alltgpt option. The initial
-mpathpersist sumbission didn't include support for it, on the grounds
-that supporting it would cause mpathpersist to do a lot of extra work.
-What I did cuts down on the amout of work that mpathpersist has to do.
-If I could clear that up, I'd happily add the option to mpathpersist.
+Yep.
 
 -Ben
 
 > =
 
-> Otherwise, I'd suggest to give this option a different name, because
-> it'd just too easily be confused with ALL_TG_PT from the spec.
-> =
-
-> Regards,
-> Martin
+> Anyway:
+> Reviewed-by: Martin Wilck <mwilck@suse.com>
 > =
 
 > -- =
