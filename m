@@ -1,13 +1,13 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [patch 2/3] dm-writecache: convert wait queue to
-	wake_up_process
-Date: Wed, 06 Jun 2018 17:31:44 +0200
-Message-ID: <20180606153201.708853388@debian.vm>
+Subject: [patch 1/3] dm-writecache: convert swait_queues to
+	wait_queues
+Date: Wed, 06 Jun 2018 17:31:43 +0200
+Message-ID: <20180606153200.530119259@debian.vm>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline; filename=dm-writecache-wake_up_process.patch
+Content-Disposition: inline; filename=dm-writecache-wait.patch
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,112 +21,99 @@ To: Mike Snitzer <msnitzer@redhat.com>
 Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-If there's just one process that can wait on a queue, we can use
-wake_up_process. According to Linus, it is safe to call wake_up_process
-on a process even if the process may be doing something else.
+Convert swait_queues to wait_queues, because there may be multiple
+processes waiting on the queue and swait_queues are inefficient in that
+case (and the code incorrectly uses swake_up where it intends to wake all
+the waiters).
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm-writecache.c |   32 +++++++++++++++-----------------
- 1 file changed, 15 insertions(+), 17 deletions(-)
+ drivers/md/dm-writecache.c |   26 +++++++++++++-------------
+ 1 file changed, 13 insertions(+), 13 deletions(-)
 
 Index: linux-2.6/drivers/md/dm-writecache.c
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-writecache.c	2018-06-05 22:54:49.000000000 +0200
-+++ linux-2.6/drivers/md/dm-writecache.c	2018-06-05 23:02:00.000000000 +0200
-@@ -10,7 +10,6 @@
- #include <linux/init.h>
- #include <linux/vmalloc.h>
- #include <linux/kthread.h>
--#include <linux/swait.h>
- #include <linux/dm-io.h>
- #include <linux/dm-kcopyd.h>
- #include <linux/dax.h>
-@@ -168,7 +167,7 @@ struct dm_writecache {
+--- linux-2.6.orig/drivers/md/dm-writecache.c	2018-06-04 21:45:35.000000000 +0200
++++ linux-2.6/drivers/md/dm-writecache.c	2018-06-04 22:10:35.000000000 +0200
+@@ -129,10 +129,10 @@ struct dm_writecache {
  
- 	struct dm_io_client *dm_io;
+ 	unsigned long autocommit_jiffies;
+ 	struct timer_list autocommit_timer;
+-	struct swait_queue_head freelist_wait;
++	struct wait_queue_head freelist_wait;
  
--	struct swait_queue_head endio_thread_wait;
-+	raw_spinlock_t endio_list_lock;
- 	struct list_head endio_list;
- 	struct task_struct *endio_thread;
+ 	atomic_t bio_in_progress[2];
+-	struct swait_queue_head bio_in_progress_wait[2];
++	struct wait_queue_head bio_in_progress_wait[2];
  
-@@ -1273,10 +1272,11 @@ static void writecache_writeback_endio(s
- 	struct dm_writecache *wc = wb->wc;
- 	unsigned long flags;
+ 	struct dm_target *ti;
+ 	struct dm_dev *dev;
+@@ -408,7 +408,7 @@ static void write_original_sector_seq_co
+ do {									\
+ 	if (!cmpxchg(&(wc)->error, 0, err))				\
+ 		DMERR(msg, ##arg);					\
+-	swake_up(&(wc)->freelist_wait);					\
++	wake_up(&(wc)->freelist_wait);					\
+ } while (0)
  
--	raw_spin_lock_irqsave(&wc->endio_thread_wait.lock, flags);
-+	raw_spin_lock_irqsave(&wc->endio_list_lock, flags);
-+	if (unlikely(list_empty(&wc->endio_list)))
-+		wake_up_process(wc->endio_thread);
- 	list_add_tail(&wb->endio_entry, &wc->endio_list);
--	swake_up_locked(&wc->endio_thread_wait);
--	raw_spin_unlock_irqrestore(&wc->endio_thread_wait.lock, flags);
-+	raw_spin_unlock_irqrestore(&wc->endio_list_lock, flags);
+ #define writecache_has_error(wc)	(unlikely(READ_ONCE((wc)->error)))
+@@ -526,7 +526,7 @@ static void writecache_disk_flush(struct
+ 
+ static void writecache_wait_for_ios(struct dm_writecache *wc, int direction)
+ {
+-	swait_event(wc->bio_in_progress_wait[direction],
++	wait_event(wc->bio_in_progress_wait[direction],
+ 		   !atomic_read(&wc->bio_in_progress[direction]));
  }
  
- static void writecache_copy_endio(int read_err, unsigned long write_err, void *ptr)
-@@ -1286,10 +1286,11 @@ static void writecache_copy_endio(int re
- 
- 	c->error = likely(!(read_err | write_err)) ? 0 : -EIO;
- 
--	raw_spin_lock_irq(&wc->endio_thread_wait.lock);
-+	raw_spin_lock_irq(&wc->endio_list_lock);
-+	if (unlikely(list_empty(&wc->endio_list)))
-+		wake_up_process(wc->endio_thread);
- 	list_add_tail(&c->endio_entry, &wc->endio_list);
--	swake_up_locked(&wc->endio_thread_wait);
--	raw_spin_unlock_irq(&wc->endio_thread_wait.lock);
-+	raw_spin_unlock_irq(&wc->endio_list_lock);
+@@ -658,18 +658,18 @@ static void writecache_free_entry(struct
+ 	writecache_add_to_freelist(wc, e);
+ 	clear_seq_count(wc, e);
+ 	writecache_flush_region(wc, memory_entry(wc, e), sizeof(struct wc_memory_entry));
+-	if (unlikely(swait_active(&wc->freelist_wait)))
+-		swake_up(&wc->freelist_wait);
++	if (unlikely(waitqueue_active(&wc->freelist_wait)))
++		wake_up(&wc->freelist_wait);
  }
  
- static void __writecache_endio_pmem(struct dm_writecache *wc, struct list_head *list)
-@@ -1364,33 +1365,30 @@ static int writecache_endio_thread(void
- 	struct dm_writecache *wc = data;
+ static void writecache_wait_on_freelist(struct dm_writecache *wc)
+ {
+-	DECLARE_SWAITQUEUE(wait);
++	DEFINE_WAIT(wait);
  
- 	while (1) {
--		DECLARE_SWAITQUEUE(wait);
- 		struct list_head list;
+-	prepare_to_swait(&wc->freelist_wait, &wait, TASK_UNINTERRUPTIBLE);
++	prepare_to_wait(&wc->freelist_wait, &wait, TASK_UNINTERRUPTIBLE);
+ 	wc_unlock(wc);
+ 	io_schedule();
+-	finish_swait(&wc->freelist_wait, &wait);
++	finish_wait(&wc->freelist_wait, &wait);
+ 	wc_lock(wc);
+ }
  
--		raw_spin_lock_irq(&wc->endio_thread_wait.lock);
-+		raw_spin_lock_irq(&wc->endio_list_lock);
- continue_locked:
- 		if (!list_empty(&wc->endio_list))
- 			goto pop_from_list;
- 		set_current_state(TASK_INTERRUPTIBLE);
--		__prepare_to_swait(&wc->endio_thread_wait, &wait);
--		raw_spin_unlock_irq(&wc->endio_thread_wait.lock);
-+		raw_spin_unlock_irq(&wc->endio_list_lock);
+@@ -1238,8 +1238,8 @@ static int writecache_end_io(struct dm_t
+ 	if (bio->bi_private != NULL) {
+ 		int dir = bio_data_dir(bio);
+ 		if (atomic_dec_and_test(&wc->bio_in_progress[dir]))
+-			if (unlikely(swait_active(&wc->bio_in_progress_wait[dir])))
+-				swake_up(&wc->bio_in_progress_wait[dir]);
++			if (unlikely(waitqueue_active(&wc->bio_in_progress_wait[dir])))
++				wake_up(&wc->bio_in_progress_wait[dir]);
+ 	}
+ 	return 0;
+ }
+@@ -1823,12 +1823,12 @@ static int writecache_ctr(struct dm_targ
  
- 		if (unlikely(kthread_should_stop())) {
--			finish_swait(&wc->endio_thread_wait, &wait);
-+			set_current_state(TASK_RUNNING);
- 			break;
- 		}
+ 	mutex_init(&wc->lock);
+ 	writecache_poison_lists(wc);
+-	init_swait_queue_head(&wc->freelist_wait);
++	init_waitqueue_head(&wc->freelist_wait);
+ 	timer_setup(&wc->autocommit_timer, writecache_autocommit_timer, 0);
  
- 		schedule();
+ 	for (i = 0; i < 2; i++) {
+ 		atomic_set(&wc->bio_in_progress[i], 0);
+-		init_swait_queue_head(&wc->bio_in_progress_wait[i]);
++		init_waitqueue_head(&wc->bio_in_progress_wait[i]);
+ 	}
  
--		raw_spin_lock_irq(&wc->endio_thread_wait.lock);
--		__finish_swait(&wc->endio_thread_wait, &wait);
-+		raw_spin_lock_irq(&wc->endio_list_lock);
- 		goto continue_locked;
- 
- pop_from_list:
- 		list = wc->endio_list;
- 		list.next->prev = list.prev->next = &list;
- 		INIT_LIST_HEAD(&wc->endio_list);
--		raw_spin_unlock_irq(&wc->endio_thread_wait.lock);
-+		raw_spin_unlock_irq(&wc->endio_list_lock);
- 
- 		if (!WC_MODE_FUA(wc))
- 			writecache_disk_flush(wc, wc->dev);
-@@ -1848,7 +1846,7 @@ static int writecache_ctr(struct dm_targ
- 	INIT_WORK(&wc->writeback_work, writecache_writeback);
- 	INIT_WORK(&wc->flush_work, writecache_flush_work);
- 
--	init_swait_queue_head(&wc->endio_thread_wait);
-+	raw_spin_lock_init(&wc->endio_list_lock);
- 	INIT_LIST_HEAD(&wc->endio_list);
- 	wc->endio_thread = kthread_create(writecache_endio_thread, wc, "writecache_endio");
- 	if (IS_ERR(wc->endio_thread)) {
+ 	wc->dm_io = dm_io_client_create();
