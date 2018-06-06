@@ -1,133 +1,67 @@
-From: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: Re: [PATCH v2 5/7] dm: remove DM_TYPE_DAX_BIO_BASED dm_queue_mode
-Date: Wed, 6 Jun 2018 11:24:21 -0600
-Message-ID: <20180606172421.GA2208@linux.intel.com>
-References: <20180529195106.14268-1-ross.zwisler@linux.intel.com>
- <20180529195106.14268-6-ross.zwisler@linux.intel.com>
- <20180601220443.GB18712@redhat.com>
- <20180604232416.GB10666@linux.intel.com>
- <20180605004558.GB6898@redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 1/2] mpathpersist: add all_tg_pt option
+Date: Wed, 06 Jun 2018 22:25:36 +0200
+Message-ID: <97cd3d03418bb923941096309db1d3b53e2f89ca.camel@suse.com>
+References: <1527891722-11132-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20180605004558.GB6898-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1527891722-11132-1-git-send-email-bmarzins@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Jun 04, 2018 at 08:46:28PM -0400, Mike Snitzer wrote:
-> On Mon, Jun 04 2018 at  7:24pm -0400,
-> Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org> wrote:
-> 
-> > On Fri, Jun 01, 2018 at 06:04:43PM -0400, Mike Snitzer wrote:
-> > > On Tue, May 29 2018 at  3:51pm -0400,
-> > > Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org> wrote:
-> > > 
-> > > > The DM_TYPE_DAX_BIO_BASED dm_queue_mode was introduced to prevent DM
-> > > > devices that could possibly support DAX from transitioning into DM devices
-> > > > that cannot support DAX.
-> > > > 
-> > > > For example, the following transition will currently fail:
-> > > > 
-> > > >  dm-linear: [fsdax pmem][fsdax pmem] => [fsdax pmem][fsdax raw]
-> > > > 	      DM_TYPE_DAX_BIO_BASED       DM_TYPE_BIO_BASED
-> > > > 
-> > > > but these will both succeed:
-> > > > 
-> > > >  dm-linear: [fsdax pmem][brd ramdisk] => [fsdax pmem][fsdax raw]
-> > > >  	      DM_TYPE_DAX_BIO_BASED        DM_TYPE_BIO_BASED
-> > > > 
-> > > 
-> > > I fail to see how this succeeds given
-> > > drivers/md/dm-ioctl.c:is_valid_type() only allows transitions from:
-> > > 
-> > > DM_TYPE_BIO_BASED => DM_TYPE_DAX_BIO_BASED
-> > 
-> > Right, sorry, that was a typo.  What I meant was:
-> > 
-> > > For example, the following transition will currently fail:
-> > > 
-> > >  dm-linear: [fsdax pmem][fsdax pmem] => [fsdax pmem][fsdax raw]
-> > >               DM_TYPE_DAX_BIO_BASED       DM_TYPE_BIO_BASED
-> > > 
-> > > but these will both succeed:
-> > > 
-> > >  dm-linear: [fsdax pmem][brd ramdisk] => [fsdax pmem][fsdax raw]
-> > >                 DM_TYPE_BIO_BASED        DM_TYPE_BIO_BASED
-> > > 
-> > >  dm-linear: [fsdax pmem][fsdax raw] => [fsdax pmem][fsdax pmem]
-> > >                 DM_TYPE_BIO_BASED        DM_TYPE_DAX_BIO_BASED
-> > 
-> > So we allow 2 of the 3 transitions, but the reason that we disallow the third
-> > isn't fully clear to me.
-> > 
-> > > >  dm-linear: [fsdax pmem][fsdax raw] => [fsdax pmem][fsdax pmem]
-> > > >  		DM_TYPE_BIO_BASED        DM_TYPE_DAX_BIO_BASED
-> > > > 
-> > > > This seems arbitrary, as really the choice on whether to use DAX happens at
-> > > > filesystem mount time.  There's no guarantee that the in the first case
-> > > > (double fsdax pmem) we were using the dax mount option with our file
-> > > > system.
-> > > > 
-> > > > Instead, get rid of DM_TYPE_DAX_BIO_BASED and all the special casing around
-> > > > it, and instead make the request queue's QUEUE_FLAG_DAX be our one source
-> > > > of truth.  If this is set, we can use DAX, and if not, not.  We keep this
-> > > > up to date in table_load() as the table changes.  As with regular block
-> > > > devices the filesystem will then know at mount time whether DAX is a
-> > > > supported mount option or not.
-> > > 
-> > > If you don't think you need this specialization that is fine.. but DM
-> > > devices supporting suspending (as part of table reloads) so is there any
-> > > risk that there will be inflight IO (say if someone did 'dmsetup suspend
-> > > --noflush').. and then upon reload the device type changed out from
-> > > under us.. anyway, I don't have all the PMEM DAX stuff paged back into
-> > > my head yet.
-> > > 
-> > > But this just seems like we really shouldn't be allowing the
-> > > transition from what was DM_TYPE_DAX_BIO_BASED back to DM_TYPE_BIO_BASED
-> > 
-> > I admit I don't fully understand all the ways that DM supports suspending and
-> > resuming devices.  Is there actually a case where we can change out the DM
-> > devices while I/O is running, and somehow end up trying to issue a DAX I/O to
-> > a device that doesn't support DAX?
-> 
-> Yes, provided root permissions, it's very easy to dmsetup suspend/load/resume
-> to replace any portion of the DM device's logical address space to map to an
-> entirely different DM target (with a different backing store).  It's
-> pretty intrusive to do such things, but easily done and powerful.
-> 
-> Mike
-
-Hmmm, I don't understand how you can do this if there is a filesystem built on
-your DM device?  Say you have a DM device, either striped or linear, that is
-made up of 2 devices, and then you use dmsetup to replace one of the DM member
-devices with something else.  You've just swapped out half of your LBA space
-with new data, right? 
-
-I don't understand how you can expect a filesystem built on the old DM device
-to still work?  You especially can't do this while the filesystem is mounted -
-all the in-core filesystem metadata would be garbage because the on-media data
-would have totally changed.
-
-So, when dealing with a filesystem, the flow must be:
-
-unmount your filesystem
-redo your DM device, changing out devices
-reformat your filesystem on the new DM device
-remount your filesystem
-
-Right?  If so, then I don't see how a transition of the DM device from
-supporting DAX to not supporting DAX or vice versa could harm us, as we can't
-be doing filesystem I/O at the time when we change the composition of the DM
-device.
+T24gRnJpLCAyMDE4LTA2LTAxIGF0IDE3OjIyIC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cj4gU29tZSBhcnJheXMsIHN1Y2ggYXMgdGhlIEVNQyBWTlgsIGRvbid0IGZvbGxvdyB0aGUg
+c2NzaSBwZXJzaXN0ZW50Cj4gcmVzZXJ2YXRpb25zIHNwZWMgaW4gbWFraW5nIGtleSByZWdpc3Ry
+YXRpb25zIHBlciBJX1QgTkVYVVMuIEluc3RlYWQsCj4gdGhlIHJlZ2lzdHJhdGlvbiBpcyBzaGFy
+ZWQgYnkgYWxsIHRhcmdldCBwb3J0cyBjb25uZWN0ZWQgdG8gYSBnaXZlbgo+IGhvc3QuICBUaGlz
+IGNhdXNlcyBtcGF0aHBlcnNpc3QgdG8gZmFpbCB3aGVuZXZlciBpdCB0cmllcyB0byByZWdpc3Rl
+cgo+IGEKPiBrZXksIHNpbmNlIGl0IHdpbGwgcmVjZWl2ZSBhIHJlZ2lzdHJhdGlvbiBjb25mbGlj
+dCBvbiBzb21lIG9mIHRoZQo+IHBhdGhzLgo+IAo+IFRvIGRlYWwgd2l0aCB0aGlzLCBtcGF0aHBl
+cnNpc3QgbmVlZHMgdG8gdHJhY2sgdGhlIGhvc3RzIHRoYXQgaXQgaGFzCj4gZG9uZSBhIHJlZ2lz
+dHJhdGlvbiBvbiwgYW5kIG9ubHkgcmVnaXN0ZXIgb25jZSBwZXIgaG9zdC4gVGhlIG5ldwo+ICJh
+bGxfdGdfcHQiIG11bHRpcGF0aC5jb25mIG9wdGlvbiBpcyB1c2VkIHRvIHNldCB3aGljaCBhcnJh
+eXMgbmVlZAo+IHRoaXMKPiBmZWF0dXJlLiAgSSBjdXJyZW50bHkgZG9uJ3Qga25vdyBpZiBhbGwg
+RU1DIFZOWCBhcnJheXMgaGFuZGxlCj4gcGVyc2lzdGVudAo+IHJlc2VydmF0aW9ucyBsaWtlIHRo
+aXMsIG9yIGlmIGl0IGlzIGNvbmZpZ3VyYWJsZS4gQSBmdXR1cmUgcGF0Y2ggd2lsbAo+IHVwZGF0
+ZSB0aGUgVk5YIGJ1aWx0LWluIGNvbmZpZywgaWYgdGhpcyBpcyBpbmRlZWQgdGhlaXIgZGVmYXVs
+dCAob3IKPiBvbmx5KSBzZXR0aW5nLgo+IAo+IE11bHRpcGF0aGQgZG9lc24ndCBuZWVkIHRvIHdv
+cnJ5IGFib3V0IHRoaXMuIEl0IGlzIG9mdGVuIHRoZSBjYXNlCj4gdGhhdAo+IHdoZW4gYSBwYXRo
+IGRldmljZSBjb21lcyBiYWNrLCBpdCB3aWxsIHN0aWxsIGhhdmUgdGhlIGtleXMgcmVnaXN0ZXJl
+ZAo+IHRvCj4gaXQuIEJlY2F1c2Ugb2YgdGhpcywgbXVsdGlwYXRoZCB1c2VzIHJlZ2lzdGVyLWFu
+ZC1pZ25vcmUsIHdoaWNoIG1lYW5zCj4gdGhhdCBpdCB3b24ndCBjYXVzZSBhbiBlcnJvciBpZiB0
+aGUgcmVnaXN0cmF0aW9uIGhhcyBhbHJlYWR5IGhhcHBlbmVkCj4gZG93biBhIGRpZmZlcmVudCB0
+YXJnZXQgcG9ydC4KPiAKPiBTaWduZWQtb2ZmLWJ5OiBCZW5qYW1pbiBNYXJ6aW5za2kgPGJtYXJ6
+aW5zQHJlZGhhdC5jb20+Cj4gLS0tCj4gIGxpYm1wYXRocGVyc2lzdC9tcGF0aF9wZXJzaXN0LmMg
+fCAyOCArKysrKysrKysrKysrKysrKysrKysrLS0tLS0tCj4gIGxpYm11bHRpcGF0aC9jb25maWcu
+YyAgICAgICAgICAgfCAgMiArKwo+ICBsaWJtdWx0aXBhdGgvY29uZmlnLmggICAgICAgICAgIHwg
+IDIgKysKPiAgbGlibXVsdGlwYXRoL2RlZmF1bHRzLmggICAgICAgICB8ICAxICsKPiAgbGlibXVs
+dGlwYXRoL2RpY3QuYyAgICAgICAgICAgICB8IDEwICsrKysrKysrKysKPiAgbGlibXVsdGlwYXRo
+L3Byb3BzZWwuYyAgICAgICAgICB8IDE1ICsrKysrKysrKysrKysrKwo+ICBsaWJtdWx0aXBhdGgv
+cHJvcHNlbC5oICAgICAgICAgIHwgIDEgKwo+ICBsaWJtdWx0aXBhdGgvc3RydWN0cy5oICAgICAg
+ICAgIHwgIDcgKysrKysrKwo+ICBtdWx0aXBhdGgvbXVsdGlwYXRoLmNvbmYuNSAgICAgIHwgMTEg
+KysrKysrKysrKysKPiAgOSBmaWxlcyBjaGFuZ2VkLCA3MSBpbnNlcnRpb25zKCspLCA2IGRlbGV0
+aW9ucygtKQoKVGhlIHBhdGNoIGxvb2tzIGdvb2QgdG8gbWUsIGJ1dCBkb2Vzbid0IHRoaXMgbWVh
+biB0aGF0IG1wYXRocGVyc2lzdAp3b3VsZCBub3cgYWxzbyBzdXBwb3J0IHBlcnNpc3RlbnQgcmVz
+ZXJ2YXRpb25zIHdpdGggdGhlIEFMTF9UR19QVCBiaXQKc2V0IChJSVVDLCB0aGUgVk5YIGJhc2lj
+YWxseSBhY3RzIGFzIGlmIHRoYXQgYml0IHdhcyBhbHdheXMgc2V0KT8gCgpJZiB5ZXMsIEkgdGhp
+bmsgdGhlIHdhcm5pbmcgaW4gbXBhdGhfcHJvdXRfcmVnKCkgYWJvdXQgdGhpcyBmbGFnIGNvdWxk
+CmJlIGRyb3BwZWQsIGFuZCBtcGF0aHBlcnNpc3QgY291bGQgYmUgZXh0ZW5kZWQgdG8gc3VwcG9y
+dCB0aGUgLVkvCi0tcGFyYW0tYWxsdGdwdCBvcHRpb24sIG5vPwoKT3RoZXJ3aXNlLCBJJ2Qgc3Vn
+Z2VzdCB0byBnaXZlIHRoaXMgb3B0aW9uIGEgZGlmZmVyZW50IG5hbWUsIGJlY2F1c2UKaXQnZCBq
+dXN0IHRvbyBlYXNpbHkgYmUgY29uZnVzZWQgd2l0aCBBTExfVEdfUFQgZnJvbSB0aGUgc3BlYy4K
+ClJlZ2FyZHMsCk1hcnRpbgoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4s
+IFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IElt
+ZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7D
+vHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0
+dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
