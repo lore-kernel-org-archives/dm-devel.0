@@ -1,12 +1,13 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [patch 3/3] dm-writecache: rework writecache_flush_thread
-Date: Wed, 06 Jun 2018 17:31:45 +0200
-Message-ID: <20180606153202.896526512@debian.vm>
+Subject: [patch 2/3] dm-writecache: convert wait queue to
+	wake_up_process
+Date: Wed, 06 Jun 2018 17:31:44 +0200
+Message-ID: <20180606153201.708853388@debian.vm>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline; filename=dm-writecache-flush-offload.patch
+Content-Disposition: inline; filename=dm-writecache-wake_up_process.patch
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,164 +21,112 @@ To: Mike Snitzer <msnitzer@redhat.com>
 Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-In order to avoid deadlocks due to bio queuing, discard and flush bios
-must be offloaded to a different thread.
-
-writecache_flush_thread was not resistant to spurious wake-up, when it was
-woken up, it was assumed that wc->flush_bio is set.
-
-This patch reworks writecache_flush_thread so that it uses a list of bios
-and thus it is resistant to spurious wake-up.
+If there's just one process that can wait on a queue, we can use
+wake_up_process. According to Linus, it is safe to call wake_up_process
+on a process even if the process may be doing something else.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm-writecache.c |   78 ++++++++++++++++++++++++++++-----------------
- 1 file changed, 50 insertions(+), 28 deletions(-)
+ drivers/md/dm-writecache.c |   32 +++++++++++++++-----------------
+ 1 file changed, 15 insertions(+), 17 deletions(-)
 
 Index: linux-2.6/drivers/md/dm-writecache.c
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-writecache.c	2018-06-06 00:32:05.000000000 +0200
-+++ linux-2.6/drivers/md/dm-writecache.c	2018-06-06 01:16:15.000000000 +0200
-@@ -172,8 +172,7 @@ struct dm_writecache {
+--- linux-2.6.orig/drivers/md/dm-writecache.c	2018-06-05 22:54:49.000000000 +0200
++++ linux-2.6/drivers/md/dm-writecache.c	2018-06-05 23:02:00.000000000 +0200
+@@ -10,7 +10,6 @@
+ #include <linux/init.h>
+ #include <linux/vmalloc.h>
+ #include <linux/kthread.h>
+-#include <linux/swait.h>
+ #include <linux/dm-io.h>
+ #include <linux/dm-kcopyd.h>
+ #include <linux/dax.h>
+@@ -168,7 +167,7 @@ struct dm_writecache {
+ 
+ 	struct dm_io_client *dm_io;
+ 
+-	struct swait_queue_head endio_thread_wait;
++	raw_spinlock_t endio_list_lock;
+ 	struct list_head endio_list;
  	struct task_struct *endio_thread;
  
- 	struct task_struct *flush_thread;
--	struct completion flush_completion;
--	struct bio *flush_bio;
-+	struct bio_list flush_list;
+@@ -1273,10 +1272,11 @@ static void writecache_writeback_endio(s
+ 	struct dm_writecache *wc = wb->wc;
+ 	unsigned long flags;
  
- 	struct dm_kcopyd_client *dm_kcopyd;
- 	unsigned long *dirty_bitmap;
-@@ -1065,35 +1064,48 @@ static int writecache_flush_thread(void
- {
+-	raw_spin_lock_irqsave(&wc->endio_thread_wait.lock, flags);
++	raw_spin_lock_irqsave(&wc->endio_list_lock, flags);
++	if (unlikely(list_empty(&wc->endio_list)))
++		wake_up_process(wc->endio_thread);
+ 	list_add_tail(&wb->endio_entry, &wc->endio_list);
+-	swake_up_locked(&wc->endio_thread_wait);
+-	raw_spin_unlock_irqrestore(&wc->endio_thread_wait.lock, flags);
++	raw_spin_unlock_irqrestore(&wc->endio_list_lock, flags);
+ }
+ 
+ static void writecache_copy_endio(int read_err, unsigned long write_err, void *ptr)
+@@ -1286,10 +1286,11 @@ static void writecache_copy_endio(int re
+ 
+ 	c->error = likely(!(read_err | write_err)) ? 0 : -EIO;
+ 
+-	raw_spin_lock_irq(&wc->endio_thread_wait.lock);
++	raw_spin_lock_irq(&wc->endio_list_lock);
++	if (unlikely(list_empty(&wc->endio_list)))
++		wake_up_process(wc->endio_thread);
+ 	list_add_tail(&c->endio_entry, &wc->endio_list);
+-	swake_up_locked(&wc->endio_thread_wait);
+-	raw_spin_unlock_irq(&wc->endio_thread_wait.lock);
++	raw_spin_unlock_irq(&wc->endio_list_lock);
+ }
+ 
+ static void __writecache_endio_pmem(struct dm_writecache *wc, struct list_head *list)
+@@ -1364,33 +1365,30 @@ static int writecache_endio_thread(void
  	struct dm_writecache *wc = data;
  
--	while (!kthread_should_stop()) {
--		struct bio *bio = wc->flush_bio;
--
--		if (likely(bio)) {
--			if (bio_op(bio) == REQ_OP_DISCARD)
--				writecache_discard(wc, bio->bi_iter.bi_sector, bio_end_sector(bio));
--			else
--				writecache_flush(wc);
--		}
-+	while (1) {
-+		struct bio *bio;
+ 	while (1) {
+-		DECLARE_SWAITQUEUE(wait);
+ 		struct list_head list;
  
-+		wc_lock(wc);
-+		bio = bio_list_pop(&wc->flush_list);
-+		if (bio)
-+			goto process_bio;
+-		raw_spin_lock_irq(&wc->endio_thread_wait.lock);
++		raw_spin_lock_irq(&wc->endio_list_lock);
+ continue_locked:
+ 		if (!list_empty(&wc->endio_list))
+ 			goto pop_from_list;
  		set_current_state(TASK_INTERRUPTIBLE);
--		/* for debugging - catch uninitialized use */
--		wc->flush_bio = (void *)0x600 + POISON_POINTER_DELTA;
--		complete(&wc->flush_completion);
-+		wc_unlock(wc);
-+
-+		if (unlikely(kthread_should_stop())) {
+-		__prepare_to_swait(&wc->endio_thread_wait, &wait);
+-		raw_spin_unlock_irq(&wc->endio_thread_wait.lock);
++		raw_spin_unlock_irq(&wc->endio_list_lock);
+ 
+ 		if (unlikely(kthread_should_stop())) {
+-			finish_swait(&wc->endio_thread_wait, &wait);
 +			set_current_state(TASK_RUNNING);
-+			break;
-+		}
+ 			break;
+ 		}
  
  		schedule();
--	}
  
--	set_current_state(TASK_RUNNING);
-+		continue;
-+
-+process_bio:
-+		if (bio_op(bio) == REQ_OP_DISCARD) {
-+			writecache_discard(wc, bio->bi_iter.bi_sector, bio_end_sector(bio));
-+			wc_unlock(wc);
-+			bio_set_dev(bio, wc->dev->bdev);
-+			generic_make_request(bio);
-+		} else {
-+			writecache_flush(wc);
-+			wc_unlock(wc);
-+			if (writecache_has_error(wc))
-+				bio->bi_status = BLK_STS_IOERR;
-+			bio_endio(bio);
-+		}
-+	}
+-		raw_spin_lock_irq(&wc->endio_thread_wait.lock);
+-		__finish_swait(&wc->endio_thread_wait, &wait);
++		raw_spin_lock_irq(&wc->endio_list_lock);
+ 		goto continue_locked;
  
- 	return 0;
- }
+ pop_from_list:
+ 		list = wc->endio_list;
+ 		list.next->prev = list.prev->next = &list;
+ 		INIT_LIST_HEAD(&wc->endio_list);
+-		raw_spin_unlock_irq(&wc->endio_thread_wait.lock);
++		raw_spin_unlock_irq(&wc->endio_list_lock);
  
- static void writecache_offload_bio(struct dm_writecache *wc, struct bio *bio)
- {
--	wc->flush_bio = bio;
--	reinit_completion(&wc->flush_completion);
--	wake_up_process(wc->flush_thread);
--	wait_for_completion_io(&wc->flush_completion);
-+	if (bio_list_empty(&wc->flush_list))
-+		wake_up_process(wc->flush_thread);
-+	bio_list_add(&wc->flush_list, bio);
- }
+ 		if (!WC_MODE_FUA(wc))
+ 			writecache_disk_flush(wc, wc->dev);
+@@ -1848,7 +1846,7 @@ static int writecache_ctr(struct dm_targ
+ 	INIT_WORK(&wc->writeback_work, writecache_writeback);
+ 	INIT_WORK(&wc->flush_work, writecache_flush_work);
  
- static int writecache_map(struct dm_target *ti, struct bio *bio)
-@@ -1108,11 +1120,15 @@ static int writecache_map(struct dm_targ
- 	if (unlikely(bio->bi_opf & REQ_PREFLUSH)) {
- 		if (writecache_has_error(wc))
- 			goto unlock_error;
--		if (WC_MODE_PMEM(wc))
-+		if (WC_MODE_PMEM(wc)) {
- 			writecache_flush(wc);
--		else
-+			if (writecache_has_error(wc))
-+				goto unlock_error;
-+			goto unlock_ok;
-+		} else {
- 			writecache_offload_bio(wc, bio);
--		goto unlock_ok;
-+			goto unlock_return;
-+		}
- 	}
- 
- 	bio->bi_iter.bi_sector = dm_target_offset(ti, bio->bi_iter.bi_sector);
-@@ -1128,11 +1144,13 @@ static int writecache_map(struct dm_targ
- 	if (unlikely(bio_op(bio) == REQ_OP_DISCARD)) {
- 		if (writecache_has_error(wc))
- 			goto unlock_error;
--		if (WC_MODE_PMEM(wc))
-+		if (WC_MODE_PMEM(wc)) {
- 			writecache_discard(wc, bio->bi_iter.bi_sector, bio_end_sector(bio));
--		else
-+			goto unlock_remap_origin;
-+		} else {
- 			writecache_offload_bio(wc, bio);
--		goto unlock_remap_origin;
-+			goto unlock_return;
-+		}
- 	}
- 
- 	if (bio_data_dir(bio) == READ) {
-@@ -1224,6 +1242,10 @@ unlock_ok:
- 	bio_endio(bio);
- 	return DM_MAPIO_SUBMITTED;
- 
-+unlock_return:
-+	wc_unlock(wc);
-+	return DM_MAPIO_SUBMITTED;
-+
- unlock_error:
- 	wc_unlock(wc);
- 	bio_io_error(bio);
-@@ -2017,7 +2039,7 @@ invalid_optional:
- 		size_t n_blocks, n_metadata_blocks;
- 		uint64_t n_bitmap_bits;
- 
--		init_completion(&wc->flush_completion);
-+		bio_list_init(&wc->flush_list);
- 		wc->flush_thread = kthread_create(writecache_flush_thread, wc, "dm_writecache_flush");
- 		if (IS_ERR(wc->flush_thread)) {
- 			r = PTR_ERR(wc->flush_thread);
-@@ -2025,7 +2047,7 @@ invalid_optional:
- 			ti->error = "Couldn't spawn endio thread";
- 			goto bad;
- 		}
--		writecache_offload_bio(wc, NULL);
-+		wake_up_process(wc->flush_thread);
- 
- 		r = calculate_memory_size(wc->memory_map_size, wc->block_size,
- 					  &n_blocks, &n_metadata_blocks);
+-	init_swait_queue_head(&wc->endio_thread_wait);
++	raw_spin_lock_init(&wc->endio_list_lock);
+ 	INIT_LIST_HEAD(&wc->endio_list);
+ 	wc->endio_thread = kthread_create(writecache_endio_thread, wc, "writecache_endio");
+ 	if (IS_ERR(wc->endio_thread)) {
