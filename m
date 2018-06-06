@@ -1,52 +1,62 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 2/2] multipath: don't check timestamps
-	without a path
-Date: Wed, 06 Jun 2018 11:26:55 +0200
-Message-ID: <f881e41b92559528558af7f848a060a0ec5d8fa1.camel@suse.com>
-References: <1528238421-26087-1-git-send-email-bmarzins@redhat.com>
-	<1528238421-26087-3-git-send-email-bmarzins@redhat.com>
+From: Ladvine D Almeida <Ladvine.DAlmeida@synopsys.com>
+Subject: Re: [PATCH] md: dm-crypt: Add Inline Encryption support for dmcrypt
+Date: Wed, 6 Jun 2018 10:04:14 +0000
+Message-ID: <BD7FB879CC136E419544C8E2AE7B9C3020C5D6@IN01WEMBXA.internal.synopsys.com>
+References: <e9120efc-1e25-79c8-6132-9062dd030539@synopsys.com>
+ <7a510610-9133-39aa-6841-3925c532f3c0@gmail.com>
+ <BD7FB879CC136E419544C8E2AE7B9C3020BB94@IN01WEMBXA.internal.synopsys.com>
+ <20180601081642.GA25973@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1528238421-26087-3-git-send-email-bmarzins@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Christoph Hellwig <hch@infradead.org>, Ladvine D Almeida <Ladvine.DAlmeida@synopsys.com>
+Cc: Milan Broz <gmazyland@gmail.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Manjunath M Bettegowda <Manjunath.MB@synopsys.com>, Prabu Thangamuthu <Prabu.T@synopsys.com>, Tejas Joglekar <Tejas.Joglekar@synopsys.com>, device-mapper development <dm-devel@redhat.com>, Joao Pinto <Joao.Pinto@synopsys.com>, "tytso@mit.edu" <tytso@mit.edu>, "jaegeuk@kernel.org" <jaegeuk@kernel.org>, "linux-crypto@vger.kernel.org" <linux-crypto@vger.kernel.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>
 List-Id: dm-devel.ids
 
-T24gVHVlLCAyMDE4LTA2LTA1IGF0IDE3OjQwIC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gSWYgYSBwYXRoIHdhcyBibGFja2xpc3RlZCwgcGF0aHZlYyBjb3VsZCBleGlzdCBidXQg
-aGF2ZSBubyBwYXRoIGluCj4gaXQuCj4gcHJpbnRfY21kX3ZhbGlkIHdhc24ndCBjaGVja2luZyB0
-aGlzIGJlZm9yZSBjYWxsaW5nCj4gZmluZF9tdWx0aXBhdGhzX2NoZWNrX3RpbWVvdXQoKS4gVGhp
-cyB3YXMgY2F1c2luZyBpdCB0byBkZXJlZmVyZW5jZSBhCj4gTlVMTCBwb2ludGVyIGluIHRoZXNl
-IGNhc2VzLgo+IAo+IENjOiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4KPiBTaWduZWQt
-b2ZmLWJ5OiBCZW5qYW1pbiBNYXJ6aW5za2kgPGJtYXJ6aW5zQHJlZGhhdC5jb20+Cj4gLS0tCj4g
-IG11bHRpcGF0aC9tYWluLmMgfCA0ICstLS0KPiAgMSBmaWxlIGNoYW5nZWQsIDEgaW5zZXJ0aW9u
-KCspLCAzIGRlbGV0aW9ucygtKQo+IAo+IGRpZmYgLS1naXQgYS9tdWx0aXBhdGgvbWFpbi5jIGIv
-bXVsdGlwYXRoL21haW4uYwo+IGluZGV4IGM2OWU5OTYuLjNmMGE2YWEgMTAwNjQ0Cj4gLS0tIGEv
-bXVsdGlwYXRoL21haW4uYwo+ICsrKyBiL211bHRpcGF0aC9tYWluLmMKPiBAQCAtNDgyLDEwICs0
-ODIsOCBAQCBzdGF0aWMgaW50IHByaW50X2NtZF92YWxpZChpbnQgaywgY29uc3QgdmVjdG9yCj4g
-cGF0aHZlYywKPiAgCQkJcHAsIHBwLT5maW5kX211bHRpcGF0aHNfdGltZW91dCwgJnVudGlsKTsK
-PiAgCQlpZiAod2FpdCAhPSBGSU5EX01VTFRJUEFUSFNfV0FJVElORykKPiAgCQkJayA9IDE7Cj4g
-LQl9IGVsc2UgaWYgKHBhdGh2ZWMgIT0gTlVMTCkgewo+IC0JCXBwID0gVkVDVE9SX1NMT1QocGF0
-aHZlYywgMCk7Cj4gKwl9IGVsc2UgaWYgKHBhdGh2ZWMgIT0gTlVMTCAmJiAocHAgPSBWRUNUT1Jf
-U0xPVChwYXRodmVjLAo+IDApKSkKPiAgCQl3YWl0ID0gZmluZF9tdWx0aXBhdGhzX2NoZWNrX3Rp
-bWVvdXQocHAsIDAsICZ1bnRpbCk7Cj4gLQl9Cj4gIAlpZiAod2FpdCA9PSBGSU5EX01VTFRJUEFU
-SFNfV0FJVElORykKPiAgCQlwcmludGYoIkZJTkRfTVVMVElQQVRIU19XQUlUX1VOVElMPVwiJWxk
-LiUwNmxkXCJcbiIsCj4gIAkJCSAgICAgICB1bnRpbC50dl9zZWMsIHVudGlsLnR2X25zZWMvMTAw
-MCk7CgpUaGFua3MgZm9yIHBvaW50aW5nIHRoaXMgb3V0LiBUaGlzIG11c3QgYmUgdGhlIGNhc2Ug
-d2hlcmUgZ2V0X3JlZnd3aWQoKQpmYWlscyBvbiB0aGUgcGF0aCBlYXJseSBpbiBjb25maWd1cmUo
-KSwgY29ycmVjdD8KCkFueXdheToKUmV2aWV3ZWQtYnk6IE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1
-c2UuY29tPgoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5
-ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZl
-ciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykK
-Ci0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3
-LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+On Friday 01 June 2018 09:16 AM, Christoph Hellwig wrote:=0A=
+> On Wed, May 30, 2018 at 02:52:07PM +0000, Ladvine D Almeida wrote:=0A=
+>> when the optional argument "perform_inline_encrypt" is set, we are not u=
+nconditionally sending the bio=0A=
+>> to the block devices. The steps are explained below:=0A=
+>> 1. user invokes the dm-setup command with the registered cipher "xts" an=
+d with the optional argument=0A=
+>> "perform_inline_encrypt".=0A=
+>> 2. dm-setup invokes the setkey function of the newly introduced algorith=
+m, which finds the available key slots=0A=
+>> to be programmed(UFS Host controller Inline Encryption engine has multip=
+le keyslots), program the key slot,=0A=
+>> and return the key slot index as return value of the set key function.=
+=0A=
+>> 3. When read/write operation happens, crypt_map() function in dm-crypt v=
+alidates whether there is associated=0A=
+>> key configuration index for the request. The Bio will be submitted direc=
+tly in this case only with the associated=0A=
+>> crypto context.=0A=
+>> 4. Block device driver, eg. UFS host controller driver will create the T=
+ransfer requests as per this crypto context and=0A=
+>> encryption happens inside the controller.=0A=
+> Why isn't this all controlled by the ufs drivers, using helpers as=0A=
+> required?=0A=
+=0A=
+The idea is to make use of the existing utilities like dmsetup to configure=
+ the keys, mapping etc.=0A=
+=0A=
+>=0A=
+> Also why do we even need this API over just implementing TCG=0A=
+> Opal/Opalite on the device?=0A=
+>=0A=
+TCG Opal/Opalite is FDE solution. right?=0A=
+=0A=
+File Based Encryption is accomplished in the ext4/f2fs layer by invoking th=
+e registered algorithms from LKCF.=0A=
+=0A=
+There is a scope for FBE, if the implementation is crypto API.=0A=
+=0A=
+=0A=
+Regards,=0A=
+=0A=
+Ladvine=0A=
+=0A=
