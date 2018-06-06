@@ -1,12 +1,13 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 4/9] dm-integrity: report size in the status
-Date: Wed, 06 Jun 2018 17:33:11 +0200
-Message-ID: <20180606153434.733864301@debian.vm>
+Subject: [PATCH 7/9] dm-integrity: use version 2 for separate
+	metadata
+Date: Wed, 06 Jun 2018 17:33:14 +0200
+Message-ID: <20180606153438.245720210@debian.vm>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline; filename=dm-integrity-report-size.patch
+Content-Disposition: inline; filename=dm-integrity-sb-version.patch
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,26 +21,68 @@ To: Mike Snitzer <msnitzer@redhat.com>, Milan Broz <mbroz@redhat.com>
 Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-Report provided data sectors in the status.
+Use version "2" in the superblock when data and metadata devices are
+separate, so that the device is no accidentally read by older kernel
+version.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm-integrity.c |    4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+ drivers/md/dm-integrity.c |   16 +++++++++++++---
+ 1 file changed, 13 insertions(+), 3 deletions(-)
 
 Index: linux-2.6/drivers/md/dm-integrity.c
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-integrity.c	2018-06-06 17:08:14.000000000 +0200
-+++ linux-2.6/drivers/md/dm-integrity.c	2018-06-06 17:08:14.000000000 +0200
-@@ -2294,7 +2294,9 @@ static void dm_integrity_status(struct d
+--- linux-2.6.orig/drivers/md/dm-integrity.c	2018-06-06 17:08:23.000000000 +0200
++++ linux-2.6/drivers/md/dm-integrity.c	2018-06-06 17:08:23.000000000 +0200
+@@ -44,7 +44,8 @@
+  */
  
- 	switch (type) {
- 	case STATUSTYPE_INFO:
--		DMEMIT("%llu", (unsigned long long)atomic64_read(&ic->number_of_mismatches));
-+		DMEMIT("%llu %llu",
-+			(unsigned long long)atomic64_read(&ic->number_of_mismatches),
-+			(unsigned long long)ic->provided_data_sectors);
- 		break;
+ #define SB_MAGIC			"integrt"
+-#define SB_VERSION			1
++#define SB_VERSION_1			1
++#define SB_VERSION_2			2
+ #define SB_SECTORS			8
+ #define MAX_SECTORS_PER_BLOCK		8
  
- 	case STATUSTYPE_TABLE: {
+@@ -414,6 +415,14 @@ static void wraparound_section(struct dm
+ 		*sec_ptr -= ic->journal_sections;
+ }
+ 
++static void sb_set_version(struct dm_integrity_c *ic)
++{
++	if (ic->meta_dev)
++		ic->sb->version = SB_VERSION_2;
++	else
++		ic->sb->version = SB_VERSION_1;
++}
++
+ static int sync_rw_sb(struct dm_integrity_c *ic, int op, int op_flags)
+ {
+ 	struct dm_io_request io_req;
+@@ -2431,7 +2440,6 @@ static int initialize_superblock(struct
+ 
+ 	memset(ic->sb, 0, SB_SECTORS << SECTOR_SHIFT);
+ 	memcpy(ic->sb->magic, SB_MAGIC, 8);
+-	ic->sb->version = SB_VERSION;
+ 	ic->sb->integrity_tag_size = cpu_to_le16(ic->tag_size);
+ 	ic->sb->log2_sectors_per_block = __ffs(ic->sectors_per_block);
+ 	if (ic->journal_mac_alg.alg_string)
+@@ -2488,6 +2496,8 @@ try_smaller_buffer:
+ 
+ 	ic->sb->provided_data_sectors = cpu_to_le64(ic->provided_data_sectors);
+ 
++	sb_set_version(ic);
++
+ 	return 0;
+ }
+ 
+@@ -3185,7 +3195,7 @@ static int dm_integrity_ctr(struct dm_ta
+ 			should_write_sb = true;
+ 	}
+ 
+-	if (ic->sb->version != SB_VERSION) {
++	if (!ic->sb->version || ic->sb->version > SB_VERSION_2) {
+ 		r = -EINVAL;
+ 		ti->error = "Unknown version";
+ 		goto bad;
