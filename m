@@ -1,48 +1,78 @@
-From: valdis.kletnieks@vt.edu
-Subject: Re: next-20180605 - kernel tried to execute NX-protected page - exploit attempt?
-Date: Thu, 07 Jun 2018 18:41:35 -0400
-Message-ID: <136327.1528411295@turing-police.cc.vt.edu>
-References: <21051.1528404057@turing-police.cc.vt.edu>
- <20180607211401.GD4481@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH v2] dm-writecache: use low watermark
+Date: Thu, 7 Jun 2018 18:51:09 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1806071848300.22676@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.1806071557500.17754@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; boundary="==_Exmh_1528411294_2703P";
-         micalg=pgp-sha1; protocol="application/pgp-signature"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180607211401.GD4481@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Alasdair Kergon <agk@redhat.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, axboe@kernel.dk
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <alpine.LRH.2.02.1806071557500.17754@file01.intranet.prod.int.rdu2.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <msnitzer@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---==_Exmh_1528411294_2703P
-Content-Type: text/plain; charset=us-ascii
+This is a second version of the patche - it changes the condition in 
+writecache_pop_from_freelist, to avoid wakeup storm if wc->writeback_size 
+is greater than wc->freelist_low_watermark-wc->freelist_high_watermark.
 
-On Thu, 07 Jun 2018 17:14:01 -0400, Mike Snitzer said:
-> Can you please share what you test is?  We've gotten lots of reports
-> with failure following wake_up but I don't have a canned test to trigger
 
-Just a laptop with 16G of RAM, no clear reproducer -  Chrome with a lot of
-tabs, a mail reader, a bunch of SSH windows, and the next thing I know, it's
-locked up good and solid with wreckage in /sys/fs/pstore :)
+From: Mikulas Patocka <mpatocka@redhat.com>
 
-I got bit a third time a little while ago.  Will test the patches and see if
-they help - looks like I'm averaging two hours or so of active use before it
-hits, so it shouldn't take long before I know if the issue is swatted...
+Fix a bug that low watermark was ignored and high watermark was used as
+both low and high.
 
---==_Exmh_1528411294_2703P
-Content-Type: application/pgp-signature
+The patch also verifies that high watermark is greater or equal than low
+watermark - if this condition is violated, the driver would consume too
+much CPU.
 
------BEGIN PGP SIGNATURE-----
-Comment: Exmh version 2.8.0 04/21/2017
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
-iQEVAwUBWxm0no0DS38y7CIcAQIGHAf/XtIUwKadG6TE1Cp4TbsXt0252qnv6N2K
-4SNCOxJdx1wWh3IcMrTc9Ff/iWuABARWhWjOOFsn88tG81WYBVveuF1rmy+vVlX+
-MJ6vTiuJKZDLQxvSn5q/2FA70CnG9OR+Hfih9RTXo9Qqzh5+iLxX6ON/wIgX9big
-ANChJeSh5+dtey5LDDy2mL43BXpLtD2vAxtjnrrk0R2pD9qOHmc7eLoBamrE8qwr
-BTBUjCMtREE1wO+V5ZCUWmS62gVjlh54rgLEe/Zw3Ug8TZcpRghlVlIgvoUE0IqU
-ZlNF8V4422yzu1qDF2moR0YFJxxusamPlxspDOm6+J6JuiHM0X0oKg==
-=mIUo
------END PGP SIGNATURE-----
+---
+ drivers/md/dm-writecache.c |   10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
 
---==_Exmh_1528411294_2703P--
+Index: linux-2.6/drivers/md/dm-writecache.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-writecache.c	2018-06-07 22:37:48.000000000 +0200
++++ linux-2.6/drivers/md/dm-writecache.c	2018-06-07 22:38:18.000000000 +0200
+@@ -644,7 +644,7 @@ static struct wc_entry *writecache_pop_f
+ 		list_del(&e->lru);
+ 	}
+ 	wc->freelist_size--;
+-	if (unlikely(wc->freelist_size <= wc->freelist_high_watermark))
++	if (unlikely(wc->freelist_size + wc->writeback_size <= wc->freelist_high_watermark))
+ 		queue_work(wc->writeback_wq, &wc->writeback_work);
+ 
+ 	return e;
+@@ -1590,7 +1590,7 @@ restart:
+ 	wbl.size = 0;
+ 	while (!list_empty(&wc->lru) &&
+ 	       (wc->writeback_all ||
+-		wc->freelist_size + wc->writeback_size <= wc->freelist_high_watermark)) {
++		wc->freelist_size + wc->writeback_size <= wc->freelist_low_watermark)) {
+ 
+ 		n_walked++;
+ 		if (unlikely(n_walked > WRITEBACK_LATENCY) &&
+@@ -2033,6 +2033,12 @@ invalid_optional:
+ 		}
+ 	}
+ 
++	if (high_wm_percent < low_wm_percent) {
++		r = -EINVAL;
++		ti->error = "High watermark must be greater or equal than low watermark";
++		goto bad;
++	}
++
+ 	if (!WC_MODE_PMEM(wc)) {
+ 		struct dm_io_region region;
+ 		struct dm_io_request req;
