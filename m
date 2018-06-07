@@ -1,15 +1,12 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 1/2] mpathpersist: add all_tg_pt option
-Date: Thu, 07 Jun 2018 09:24:00 +0200
-Message-ID: <86960c65d505dffe2f0d1b7b6db918c6944e9057.camel@suse.com>
-References: <1527891722-11132-1-git-send-email-bmarzins@redhat.com>
-	<97cd3d03418bb923941096309db1d3b53e2f89ca.camel@suse.com>
-	<20180606215629.GD3103@octiron.msp.redhat.com>
+From: Dan Carpenter <dan.carpenter@oracle.com>
+Subject: [PATCH] dm: writecache: fix autocommit_time option
+Date: Thu, 7 Jun 2018 11:28:38 +0300
+Message-ID: <20180607082838.xbrgbboil4kay7zw@kili.mountain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180606215629.GD3103@octiron.msp.redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,34 +16,26 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Vijay Chauhan <vijay.chauhan@netapp.com>
+To: Alasdair Kergon <agk@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@redhat.com, kernel-janitors@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-T24gV2VkLCAyMDE4LTA2LTA2IGF0IDE2OjU2IC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
-dGU6Cj4gT24gV2VkLCBKdW4gMDYsIDIwMTggYXQgMTA6MjU6MzZQTSArMDIwMCwgTWFydGluIFdp
-bGNrIHdyb3RlOgo+ID4gCj4gPiBUaGUgcGF0Y2ggbG9va3MgZ29vZCB0byBtZSwgYnV0IGRvZXNu
-J3QgdGhpcyBtZWFuIHRoYXQgbXBhdGhwZXJzaXN0Cj4gPiB3b3VsZCBub3cgYWxzbyBzdXBwb3J0
-IHBlcnNpc3RlbnQgcmVzZXJ2YXRpb25zIHdpdGggdGhlIEFMTF9UR19QVAo+ID4gYml0Cj4gPiBz
-ZXQgKElJVUMsIHRoZSBWTlggYmFzaWNhbGx5IGFjdHMgYXMgaWYgdGhhdCBiaXQgd2FzIGFsd2F5
-cyBzZXQpPyAKPiA+IAo+ID4gSWYgeWVzLCBJIHRoaW5rIHRoZSB3YXJuaW5nIGluIG1wYXRoX3By
-b3V0X3JlZygpIGFib3V0IHRoaXMgZmxhZwo+ID4gY291bGQKPiA+IGJlIGRyb3BwZWQsIGFuZCBt
-cGF0aHBlcnNpc3QgY291bGQgYmUgZXh0ZW5kZWQgdG8gc3VwcG9ydCB0aGUgLVkvCj4gPiAtLXBh
-cmFtLWFsbHRncHQgb3B0aW9uLCBubz8KPiAKPiBJJ20gYSBsaXR0bGUgZnV6enkgb24gdGhlIC0t
-cGFyYW0tYWxsdGdwdCBvcHRpb24uIFRoZSBpbml0aWFsCj4gbXBhdGhwZXJzaXN0IHN1bWJpc3Np
-b24gZGlkbid0IGluY2x1ZGUgc3VwcG9ydCBmb3IgaXQsIG9uIHRoZSBncm91bmRzCj4gdGhhdCBz
-dXBwb3J0aW5nIGl0IHdvdWxkIGNhdXNlIG1wYXRocGVyc2lzdCB0byBkbyBhIGxvdCBvZiBleHRy
-YQo+IHdvcmsuCj4gV2hhdCBJIGRpZCBjdXRzIGRvd24gb24gdGhlIGFtb3V0IG9mIHdvcmsgdGhh
-dCBtcGF0aHBlcnNpc3QgaGFzIHRvCj4gZG8uCj4gSWYgSSBjb3VsZCBjbGVhciB0aGF0IHVwLCBJ
-J2QgaGFwcGlseSBhZGQgdGhlIG9wdGlvbiB0byBtcGF0aHBlcnNpc3QuCj4gCgpBcmUgeW91IHNh
-eWluZyB5b3UgaW50ZW5kIHRvIGRvIHNvPyBBZ2FpbiwgZnJvbSBhIHVzZXIgcG9pbnQgb2Ygdmll
-dywKd2l0aG91dCBtdWNoIGtub3dsZWRnZSBhYm91dCB3aGF0J3MgZ29pbmcgb24gYmVoaW5kIHRo
-ZSBzY2VuZXMsIHNlZWluZwphbiBhbGxfdGdfcHQgb3B0aW9uIGluIG11bHRpcGF0aC5jb25mIHdv
-dWxkIG1ha2UgbWUgdGhpbmsgdGhhdCBJIGNvdWxkIApzaW1wbHkgc2V0IHRoYXQgb3B0aW9uIGFu
-ZCB0aHVzIGhhdmUgbXVsdGlwYXRoLXRvb2xzIGlzc3VlIFBST1VUCmNvbW1hbmRzIHdpdGggdGhl
-IEFMTF9UR19QVCBiaXQgc2V0LCB3aGljaCBpc24ndCB0cnVlIGF0IHRoaXMgcG9pbnQgaW4KdGlt
-ZS4KCkJlc3QKTWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwg
-VGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1l
-bmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8
-cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0
-cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+The option is in terms of msecs so we should be using msecs_to_jiffies()
+to convert it instead of the other way around.
+
+Fixes: 1be8d9c3da01 ("dm: add writecache target")
+Signed-off-by: Dan Carpenter <dan.carpenter@oracle.com>
+
+diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
+index f2ae02f22c43..c755e8bc6bdd 100644
+--- a/drivers/md/dm-writecache.c
++++ b/drivers/md/dm-writecache.c
+@@ -1995,7 +1995,7 @@ static int writecache_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 				goto invalid_optional;
+ 			if (autocommit_msecs > 3600000)
+ 				goto invalid_optional;
+-			wc->autocommit_jiffies = jiffies_to_msecs(autocommit_msecs);
++			wc->autocommit_jiffies = msecs_to_jiffies(autocommit_msecs);
+ 			wc->autocommit_time_set = true;
+ 		} else if (!strcasecmp(string, "fua")) {
+ 			if (WC_MODE_PMEM(wc)) {
