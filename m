@@ -1,55 +1,52 @@
-From: Ladvine D Almeida <Ladvine.DAlmeida@synopsys.com>
-Subject: Re: [PATCH] block: Add block level changes for inline encryption
-Date: Thu, 7 Jun 2018 06:55:42 +0000
-Message-ID: <BD7FB879CC136E419544C8E2AE7B9C3020C7FA@IN01WEMBXA.internal.synopsys.com>
-References: <d3624fab-e6fc-f14d-c780-db703c809068@synopsys.com>
- <20180601081330.GA13067@infradead.org>
- <BD7FB879CC136E419544C8E2AE7B9C3020C566@IN01WEMBXA.internal.synopsys.com>
- <918609fa-8721-0ee1-801e-4c29b64ac9ae@kernel.dk>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 1/2] mpathpersist: add all_tg_pt option
+Date: Thu, 07 Jun 2018 09:24:00 +0200
+Message-ID: <86960c65d505dffe2f0d1b7b6db918c6944e9057.camel@suse.com>
+References: <1527891722-11132-1-git-send-email-bmarzins@redhat.com>
+	<97cd3d03418bb923941096309db1d3b53e2f89ca.camel@suse.com>
+	<20180606215629.GD3103@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>, Ladvine D Almeida <Ladvine.DAlmeida@synopsys.com>, Christoph Hellwig <hch@infradead.org>
-Cc: Hannes Reinecke <hare@suse.com>, "ming.lei@redhat.com" <ming.lei@redhat.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Manjunath M Bettegowda <Manjunath.MB@synopsys.com>, Prabu Thangamuthu <Prabu.T@synopsys.com>, Tejas Joglekar <Tejas.Joglekar@synopsys.com>, Joao Pinto <Joao.Pinto@synopsys.com>, Johannes Thumshirn <jthumshirn@suse.de>, Milan Broz <gmazyland@gmail.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, device-mapper development <dm-devel@redhat.com>, Eric Biggers <ebiggers3@gmail.com>, Theodore Ts'o <tytso@mit.edu>, Jaegeuk Kim <jaegeuk@kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20180606215629.GD3103@octiron.msp.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Vijay Chauhan <vijay.chauhan@netapp.com>
 List-Id: dm-devel.ids
 
-On Thursday 07 June 2018 02:53 AM, Jens Axboe wrote:=0A=
-> On 6/6/18 1:35 AM, Ladvine D Almeida wrote:=0A=
->> On Friday 01 June 2018 09:13 AM, Christoph Hellwig wrote:=0A=
->>> On Mon, May 28, 2018 at 02:43:09PM +0100, Ladvine D Almeida wrote:=0A=
->>>> This patch introduces new variable under bio structure to=0A=
->>>> facilitate inline encryption. This variable is used to=0A=
->>>> associate I/O requests to crypto information.=0A=
->>> This seems to be missing a whole lot of context.  Where is the whole=0A=
->>> series showing what you are trying to do?=0A=
->>>=0A=
->> Christoph,=0A=
->>=0A=
->> The patches are generated in the below > manner, with a thought of=0A=
->> sending separately to the MAINTAINERS responsible for each.=0A=
-> What both Christoph and I have said is that it's _impossible_ to review=
-=0A=
-> changes when you don't know what is being built on top of it. The block=
-=0A=
-> change, by itself, is utterly useless. The use case needs to be seen.=0A=
-> But apart from that, my comments on why it's doing it completely=0A=
-> backwards still apply, and I've outlined how you need to fix it. The=0A=
-> patch, in its current form, isn't going anywhere.=0A=
->=0A=
-Jens,=0A=
-=0A=
-Since there are implementation level concerns on both device mapper layer a=
-nd block layer, I will investigate=0A=
-=0A=
-more and work on those lines. I can send the full patch series to the relev=
-ant maintainers after addressing the=0A=
-=0A=
-issues.=0A=
-=0A=
-Regards,=0A=
-=0A=
-Ladvine=0A=
-=0A=
+T24gV2VkLCAyMDE4LTA2LTA2IGF0IDE2OjU2IC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3Jv
+dGU6Cj4gT24gV2VkLCBKdW4gMDYsIDIwMTggYXQgMTA6MjU6MzZQTSArMDIwMCwgTWFydGluIFdp
+bGNrIHdyb3RlOgo+ID4gCj4gPiBUaGUgcGF0Y2ggbG9va3MgZ29vZCB0byBtZSwgYnV0IGRvZXNu
+J3QgdGhpcyBtZWFuIHRoYXQgbXBhdGhwZXJzaXN0Cj4gPiB3b3VsZCBub3cgYWxzbyBzdXBwb3J0
+IHBlcnNpc3RlbnQgcmVzZXJ2YXRpb25zIHdpdGggdGhlIEFMTF9UR19QVAo+ID4gYml0Cj4gPiBz
+ZXQgKElJVUMsIHRoZSBWTlggYmFzaWNhbGx5IGFjdHMgYXMgaWYgdGhhdCBiaXQgd2FzIGFsd2F5
+cyBzZXQpPyAKPiA+IAo+ID4gSWYgeWVzLCBJIHRoaW5rIHRoZSB3YXJuaW5nIGluIG1wYXRoX3By
+b3V0X3JlZygpIGFib3V0IHRoaXMgZmxhZwo+ID4gY291bGQKPiA+IGJlIGRyb3BwZWQsIGFuZCBt
+cGF0aHBlcnNpc3QgY291bGQgYmUgZXh0ZW5kZWQgdG8gc3VwcG9ydCB0aGUgLVkvCj4gPiAtLXBh
+cmFtLWFsbHRncHQgb3B0aW9uLCBubz8KPiAKPiBJJ20gYSBsaXR0bGUgZnV6enkgb24gdGhlIC0t
+cGFyYW0tYWxsdGdwdCBvcHRpb24uIFRoZSBpbml0aWFsCj4gbXBhdGhwZXJzaXN0IHN1bWJpc3Np
+b24gZGlkbid0IGluY2x1ZGUgc3VwcG9ydCBmb3IgaXQsIG9uIHRoZSBncm91bmRzCj4gdGhhdCBz
+dXBwb3J0aW5nIGl0IHdvdWxkIGNhdXNlIG1wYXRocGVyc2lzdCB0byBkbyBhIGxvdCBvZiBleHRy
+YQo+IHdvcmsuCj4gV2hhdCBJIGRpZCBjdXRzIGRvd24gb24gdGhlIGFtb3V0IG9mIHdvcmsgdGhh
+dCBtcGF0aHBlcnNpc3QgaGFzIHRvCj4gZG8uCj4gSWYgSSBjb3VsZCBjbGVhciB0aGF0IHVwLCBJ
+J2QgaGFwcGlseSBhZGQgdGhlIG9wdGlvbiB0byBtcGF0aHBlcnNpc3QuCj4gCgpBcmUgeW91IHNh
+eWluZyB5b3UgaW50ZW5kIHRvIGRvIHNvPyBBZ2FpbiwgZnJvbSBhIHVzZXIgcG9pbnQgb2Ygdmll
+dywKd2l0aG91dCBtdWNoIGtub3dsZWRnZSBhYm91dCB3aGF0J3MgZ29pbmcgb24gYmVoaW5kIHRo
+ZSBzY2VuZXMsIHNlZWluZwphbiBhbGxfdGdfcHQgb3B0aW9uIGluIG11bHRpcGF0aC5jb25mIHdv
+dWxkIG1ha2UgbWUgdGhpbmsgdGhhdCBJIGNvdWxkIApzaW1wbHkgc2V0IHRoYXQgb3B0aW9uIGFu
+ZCB0aHVzIGhhdmUgbXVsdGlwYXRoLXRvb2xzIGlzc3VlIFBST1VUCmNvbW1hbmRzIHdpdGggdGhl
+IEFMTF9UR19QVCBiaXQgc2V0LCB3aGljaCBpc24ndCB0cnVlIGF0IHRoaXMgcG9pbnQgaW4KdGlt
+ZS4KCkJlc3QKTWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1c2UuY29tPiwg
+VGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBHRjogRmVsaXggSW1l
+bmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAyMTI4NCAoQUcgTsO8
+cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0
+cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
