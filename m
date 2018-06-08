@@ -1,7 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 24/28] multipath: implement "multipath -T"
-Date: Fri,  8 Jun 2018 12:20:37 +0200
-Message-ID: <20180608102041.22904-25-mwilck@suse.com>
+Subject: [PATCH 15/28] libmultipath: merge hwentries inside a
+	conf file
+Date: Fri,  8 Jun 2018 12:20:28 +0200
+Message-ID: <20180608102041.22904-16-mwilck@suse.com>
 References: <20180608102041.22904-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,150 +22,106 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-This does the same as "multipathd show config local", and is
-provided for convenience.
+Merging hwentries with identical vendor/product/revision is still useful,
+although it's not strictly necessary any more. But such identical entries
+should always be merged, not only if they appear in different configuration
+files. This requires changing the logic of factorize_hwtable.
+
+By setting -DCHECK_BUILTIN_HWTABLE at compile time, the built-in hwtable
+can be checked against duplicates as well.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/config.h |  1 +
- multipath/main.c      | 43 +++++++++++++++++++++++++++----------------
- multipath/multipath.8 |  8 +++++++-
- 3 files changed, 35 insertions(+), 17 deletions(-)
+ libmultipath/config.c | 43 +++++++++++++++++++++----------------------
+ 1 file changed, 21 insertions(+), 22 deletions(-)
 
-diff --git a/libmultipath/config.h b/libmultipath/config.h
-index e1cbd59b..e2fa1852 100644
---- a/libmultipath/config.h
-+++ b/libmultipath/config.h
-@@ -37,6 +37,7 @@ enum mpath_cmds {
- 	CMD_RESET_WWIDS,
- 	CMD_ADD_WWID,
- 	CMD_USABLE_PATHS,
-+	CMD_DUMP_CONFIG,
- };
- 
- enum force_reload_types {
-diff --git a/multipath/main.c b/multipath/main.c
-index 54a98026..ed4f40ef 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -80,6 +80,19 @@ void put_multipath_config(void *arg)
- 	/* Noop for now */
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index 713ac7f3..fb41d620 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -452,7 +452,7 @@ out:
  }
  
-+static int
-+dump_config (struct config *conf, vector hwes, vector mpvec)
-+{
-+	char * reply = snprint_config(conf, NULL, hwes, mpvec);
-+
-+	if (reply != NULL) {
-+		printf("%s", reply);
-+		FREE(reply);
-+		return 0;
-+	} else
-+		return 1;
-+}
-+
- void rcu_register_thread_memb(void) {}
- 
- void rcu_unregister_thread_memb(void) {}
-@@ -112,7 +125,7 @@ usage (char * progname)
- 	fprintf (stderr, "  %s [-a|-c|-w|-W] [-d] [-r] [-i] [-v lvl] [-p pol] [-b fil] [-q] [dev]\n", progname);
- 	fprintf (stderr, "  %s -l|-ll|-f [-v lvl] [-b fil] [-R num] [dev]\n", progname);
- 	fprintf (stderr, "  %s -F [-v lvl] [-R num]\n", progname);
--	fprintf (stderr, "  %s -t\n", progname);
-+	fprintf (stderr, "  %s [-t|-T]\n", progname);
- 	fprintf (stderr, "  %s -h\n", progname);
- 	fprintf (stderr,
- 		"\n"
-@@ -128,6 +141,7 @@ usage (char * progname)
- 		"  -q      allow queue_if_no_path when multipathd is not running\n"
- 		"  -d      dry run, do not create or update devmaps\n"
- 		"  -t      display the currently used multipathd configuration\n"
-+		"  -T      display the multipathd configuration without builtin defaults\n"
- 		"  -r      force devmap reload\n"
- 		"  -i      ignore wwids file\n"
- 		"  -B      treat the bindings file as read only\n"
-@@ -671,6 +685,13 @@ configure (struct config *conf, enum mpath_cmds cmd,
- 
- 	filter_pathvec(pathvec, refwwid);
- 
-+	if (cmd == CMD_DUMP_CONFIG) {
-+		vector hwes = get_used_hwes(pathvec);
-+
-+		dump_config(conf, hwes, curmp);
-+		vector_free(hwes);
-+		goto out;
-+	}
- 
- 	if (cmd == CMD_VALID_PATH) {
- 		struct path *pp;
-@@ -750,19 +771,6 @@ out:
- 	return r;
+ static void
+-factorize_hwtable (vector hw, int n)
++factorize_hwtable (vector hw, int n, const char *table_desc)
+ {
+ 	struct hwentry *hwe1, *hwe2;
+ 	int i, j;
+@@ -462,22 +462,26 @@ restart:
+ 		if (i == n)
+ 			break;
+ 		j = n;
++		/* drop invalid device configs */
++		if (i >= n && (!hwe1->vendor || !hwe1->product)) {
++			condlog(0, "device config in %s missing vendor or product parameter",
++				table_desc);
++			vector_del_slot(hw, i--);
++			free_hwe(hwe1);
++			continue;
++		}
++		j = n > i + 1 ? n : i + 1;
+ 		vector_foreach_slot_after(hw, hwe2, j) {
+-			/* drop invalid device configs */
+-			if (!hwe2->vendor || !hwe2->product) {
+-				condlog(0, "device config missing vendor or product parameter");
+-				vector_del_slot(hw, j--);
+-				free_hwe(hwe2);
+-				continue;
+-			}
+ 			if (hwe_strmatch(hwe2, hwe1) == 0) {
+-				condlog(4, "%s: removing hwentry %s:%s:%s",
++				condlog(i >= n ? 1 : 3,
++					"%s: duplicate device section for %s:%s:%s in %s",
+ 					__func__, hwe1->vendor, hwe1->product,
+-					hwe1->revision);
++					hwe1->revision, table_desc);
+ 				vector_del_slot(hw, i);
+ 				merge_hwe(hwe2, hwe1);
+ 				free_hwe(hwe1);
+-				n -= 1;
++				if (i < n)
++					n -= 1;
+ 				/*
+ 				 * Play safe here; we have modified
+ 				 * the original vector so the outer
+@@ -605,9 +609,8 @@ process_config_dir(struct config *conf, vector keywords, char *dir)
+ 		snprintf(path, LINE_MAX, "%s/%s", dir, namelist[i]->d_name);
+ 		path[LINE_MAX-1] = '\0';
+ 		process_file(conf, path);
+-		if (VECTOR_SIZE(conf->hwtable) > old_hwtable_size)
+-			factorize_hwtable(conf->hwtable, old_hwtable_size);
+-
++		factorize_hwtable(conf->hwtable, old_hwtable_size,
++				  namelist[i]->d_name);
+ 	}
+ 	pthread_cleanup_pop(1);
  }
+@@ -655,6 +658,9 @@ load_config (char * file)
+ 	if (setup_default_hwtable(conf->hwtable))
+ 		goto out;
  
--static int
--dump_config (struct config *conf)
--{
--	char * reply = snprint_config(conf, NULL, NULL, NULL);
++#ifdef CHECK_BUILTIN_HWTABLE
++	factorize_hwtable(conf->hwtable, 0, "builtin");
++#endif
+ 	/*
+ 	 * read the config file
+ 	 */
+@@ -668,14 +674,7 @@ load_config (char * file)
+ 			condlog(0, "error parsing config file");
+ 			goto out;
+ 		}
+-		if (VECTOR_SIZE(conf->hwtable) > builtin_hwtable_size) {
+-			/*
+-			 * remove duplica in hwtable. config file
+-			 * takes precedence over build-in hwtable
+-			 */
+-			factorize_hwtable(conf->hwtable, builtin_hwtable_size);
+-		}
 -
--	if (reply != NULL) {
--		printf("%s", reply);
--		FREE(reply);
--		return 0;
--	} else
--		return 1;
--}
--
- static int
- get_dev_type(char *dev) {
- 	struct stat buf;
-@@ -858,7 +866,7 @@ main (int argc, char *argv[])
- 		exit(1);
- 	multipath_conf = conf;
- 	conf->retrigger_tries = 0;
--	while ((arg = getopt(argc, argv, ":adcChl::FfM:v:p:b:BrR:itquUwW")) != EOF ) {
-+	while ((arg = getopt(argc, argv, ":adcChl::FfM:v:p:b:BrR:itTquUwW")) != EOF ) {
- 		switch(arg) {
- 		case 1: printf("optarg : %s\n",optarg);
- 			break;
-@@ -923,8 +931,11 @@ main (int argc, char *argv[])
- 			conf->find_multipaths |= _FIND_MULTIPATHS_I;
- 			break;
- 		case 't':
--			r = dump_config(conf);
-+			r = dump_config(conf, NULL, NULL);
- 			goto out_free_config;
-+		case 'T':
-+			cmd = CMD_DUMP_CONFIG;
-+			break;
- 		case 'h':
- 			usage(argv[0]);
- 			exit(0);
-diff --git a/multipath/multipath.8 b/multipath/multipath.8
-index 914a8cb2..b5e5292f 100644
---- a/multipath/multipath.8
-+++ b/multipath/multipath.8
-@@ -25,7 +25,7 @@ multipath \- Device mapper target autoconfig.
- .RB [\| \-b\ \c
- .IR bindings_file \|]
- .RB [\| \-d \|]
--.RB [\| \-h | \-l | \-ll | \-f | \-t | \-F | \-B | \-c | \-C | \-q | \-r | \-i | \-a | \-u | \-U | \-w | \-W \|]
-+.RB [\| \-h | \-l | \-ll | \-f | \-t | \-T | \-F | \-B | \-c | \-C | \-q | \-r | \-i | \-a | \-u | \-U | \-w | \-W \|]
- .RB [\| \-p\ \c
- .IR failover | multibus | group_by_serial | group_by_prio | group_by_node_name \|]
- .RB [\| \-R\ \c
-@@ -89,6 +89,12 @@ Flush all unused multipath device maps.
- Display the currently used multipathd configuration.
- .
- .TP
-+.B \-T
-+Display the currently used multipathd configuration, limiting the output to
-+those devices actually present in the system. This can be used a template for
-+creating \fImultipath.conf\fR.
-+.
-+.TP
- .B \-r
- Force devmap reload.
- .
++		factorize_hwtable(conf->hwtable, builtin_hwtable_size, file);
+ 	}
+ 
+ 	conf->processed_main_config = 1;
 -- 
 2.17.0
