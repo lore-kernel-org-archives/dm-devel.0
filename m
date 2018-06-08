@@ -1,7 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 07/28] libmultipath/prio: constify simple getters
-Date: Fri,  8 Jun 2018 12:20:20 +0200
-Message-ID: <20180608102041.22904-8-mwilck@suse.com>
+Subject: [PATCH 19/28] tests/hwtable: implement configuration
+	dump + reload test
+Date: Fri,  8 Jun 2018 12:20:32 +0200
+Message-ID: <20180608102041.22904-20-mwilck@suse.com>
 References: <20180608102041.22904-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,69 +22,175 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-One day we should also constify getprio(), but that requires
-touching all prioritizers.
+In order to test dumping and re-reading the configuration, we modify the
+test_driver() function so that runs the same test three twice:
+
+ 1) with "user-supplied" configuration,
+ 2) using the config dump from 1) (equivalent with "multipath -t" output) as input
+ configuration.
+
+The expectation is that actual paths and maps have same options applied.
+Furthermore, the "multipath -T" output from 2) should be the same as from 1),
+IOW, "multipath -T" in 2) reproduces its input config file exactly.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/prio.c | 8 ++++----
- libmultipath/prio.h | 8 ++++----
- 2 files changed, 8 insertions(+), 8 deletions(-)
+ tests/hwtable.c | 88 +++++++++++++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 86 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/prio.c b/libmultipath/prio.c
-index 7fce9215..17acfd05 100644
---- a/libmultipath/prio.c
-+++ b/libmultipath/prio.c
-@@ -81,7 +81,7 @@ static struct prio * prio_lookup (char * name)
- 	return NULL;
- }
+diff --git a/tests/hwtable.c b/tests/hwtable.c
+index 85215946..85924fb7 100644
+--- a/tests/hwtable.c
++++ b/tests/hwtable.c
+@@ -23,6 +23,7 @@
+ #include "defaults.h"
+ #include "pgpolicies.h"
+ #include "test-lib.h"
++#include "print.h"
  
--int prio_set_args (struct prio * p, char * args)
-+int prio_set_args (struct prio * p, const char * args)
+ #define ARRAY_SIZE(x) (sizeof(x)/sizeof((x)[0]))
+ #define N_CONF_FILES 2
+@@ -358,6 +359,16 @@ static void write_device(FILE *ff, int nkv, const struct key_value *kv)
+ 		conf = NULL;			\
+ 	} while (0)
+ 
++static void replace_config(const struct hwt_state *hwt,
++			   const char *conf_str)
++{
++	FREE_CONFIG(_conf);
++	reset_configs(hwt);
++	fprintf(hwt->config_file, "%s", conf_str);
++	fflush(hwt->config_file);
++	_conf = LOAD_CONFIG(hwt);
++}
++
+ #define TEST_PROP(prop, val) do {				\
+ 		if (val == NULL)				\
+ 			assert_ptr_equal(prop, NULL);		\
+@@ -432,8 +443,58 @@ static const struct key_value npr_queue = { _no_path_retry, "queue" };
+ /***** BEGIN TESTS SECTION *****/
+ 
+ /*
+- * Run the given test case. This will later be extended
+- * to run the test several times in a row.
++ * Dump the configuration, subistitute the dumped configuration
++ * for the current one, and verify that the result is identical.
++ */
++static void replicate_config(const struct hwt_state *hwt)
++{
++	char *cfg1, *cfg2;
++	struct config *conf;
++
++	condlog(1, "--- %s: replicating configuration", __func__);
++
++	conf = get_multipath_config();
++	cfg1 = snprint_config(conf, NULL);
++
++	assert_non_null(cfg1);
++	put_multipath_config(conf);
++
++	replace_config(hwt, cfg1);
++
++	conf = get_multipath_config();
++	cfg2 = snprint_config(conf, NULL);
++	assert_non_null(cfg2);
++	put_multipath_config(conf);
++
++// #define DBG_CONFIG 1
++#ifdef DBG_CONFIG
++#define DUMP_CFG_STR(x) do {						\
++		FILE *tmp = fopen("/tmp/hwtable-" #x ".txt", "w");	\
++		fprintf(tmp, "%s", x);					\
++		fclose(tmp);						\
++	} while (0)
++
++	DUMP_CFG_STR(cfg1);
++	DUMP_CFG_STR(cfg2);
++#endif
++
++#if BROKEN
++	condlog(1, "%s: WARNING: skipping tests for same configuration after dump/reload on %d",
++		__func__, __LINE__);
++#else
++	assert_int_equal(strlen(cfg2), strlen(cfg1));
++	assert_string_equal(cfg2, cfg1);
++#endif
++	free(cfg1);
++	free(cfg2);
++}
++
++/*
++ * Run hwt->test three times; once with the constructed configuration,
++ * once after re-reading the full dumped configuration, and once with the
++ * dumped local configuration.
++ *
++ * Expected: test passes every time.
+  */
+ static void test_driver(void **state)
  {
- 	return snprintf(p->args, PRIO_ARGS_LEN, "%s", args);
- }
-@@ -130,19 +130,19 @@ int prio_getprio (struct prio * p, struct path * pp, unsigned int timeout)
- 	return p->getprio(pp, p->args, timeout);
- }
+@@ -443,6 +504,10 @@ static void test_driver(void **state)
+ 	_conf = LOAD_CONFIG(hwt);
+ 	hwt->test(hwt);
  
--int prio_selected (struct prio * p)
-+int prio_selected (const struct prio * p)
++	replicate_config(hwt);
++	reset_vecs(hwt->vecs);
++	hwt->test(hwt);
++
+ 	reset_vecs(hwt->vecs);
+ 	FREE_CONFIG(_conf);
+ }
+@@ -513,9 +578,18 @@ static int setup_internal_nvme(void **state)
+ /*
+  * Device section with a simple entry qith double quotes ('foo:"bar"')
+  */
++#if BROKEN
++static void test_quoted_hwe(void **state)
++#else
+ static void test_quoted_hwe(const struct hwt_state *hwt)
++#endif
  {
- 	if (!p)
- 		return 0;
- 	return (p->getprio) ? 1 : 0;
+ 	struct path *pp;
++#if BROKEN
++       struct hwt_state *hwt = CHECK_STATE(state);
++
++       _conf = LOAD_CONFIG(hwt);
++#endif
+ 	/* foo:"bar" matches */
+ 	pp = mock_path(vnd_foo.value, prd_baq.value);
+ 	TEST_PROP(prio_name(&pp->prio), prio_emc.value);
+@@ -531,7 +605,11 @@ static int setup_quoted_hwe(void **state)
+ 	const struct key_value kv[] = { vnd_foo, prd_baqq, prio_emc };
+ 
+ 	WRITE_ONE_DEVICE(hwt, kv);
++#if BROKEN
++       condlog(0, "%s: WARNING: skipping conf reload test", __func__);
++#else
+ 	SET_TEST_FUNC(hwt, test_quoted_hwe);
++#endif
+ 	return 0;
  }
  
--char * prio_name (struct prio * p)
-+const char * prio_name (const struct prio * p)
- {
- 	return p->name;
- }
+@@ -1558,7 +1636,9 @@ static int setup_multipath_config_3(void **state)
+ 	}
  
--char * prio_args (struct prio * p)
-+const char * prio_args (const struct prio * p)
- {
- 	return p->args;
- }
-diff --git a/libmultipath/prio.h b/libmultipath/prio.h
-index c97fe397..aa587ccd 100644
---- a/libmultipath/prio.h
-+++ b/libmultipath/prio.h
-@@ -60,10 +60,10 @@ struct prio * add_prio (char *, char *);
- int prio_getprio (struct prio *, struct path *, unsigned int);
- void prio_get (char *, struct prio *, char *, char *);
- void prio_put (struct prio *);
--int prio_selected (struct prio *);
--char * prio_name (struct prio *);
--char * prio_args (struct prio *);
--int prio_set_args (struct prio *, char *);
-+int prio_selected (const struct prio *);
-+const char * prio_name (const struct prio *);
-+const char * prio_args (const struct prio *);
-+int prio_set_args (struct prio *, const char *);
- 
- /* The only function exported by prioritizer dynamic libraries (.so) */
- int getprio(struct path *, char *, unsigned int);
+ define_test(string_hwe)
++#if !BROKEN
+ define_test(quoted_hwe)
++#endif
+ define_test(internal_nvme)
+ define_test(regex_hwe)
+ define_test(regex_string_hwe)
+@@ -1596,7 +1676,11 @@ static int test_hwtable(void)
+ 		cmocka_unit_test(test_sanity_globals),
+ 		test_entry(internal_nvme),
+ 		test_entry(string_hwe),
++#if BROKEN
++		cmocka_unit_test_setup(test_quoted_hwe, setup_quoted_hwe),
++#else
+ 		test_entry(quoted_hwe),
++#endif
+ 		test_entry(regex_hwe),
+ 		test_entry(regex_string_hwe),
+ 		test_entry(regex_string_hwe_dir),
 -- 
 2.17.0
