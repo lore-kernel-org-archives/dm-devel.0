@@ -1,8 +1,7 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 08/28] tests/Makefile: autogenerate list of
-	symbols to be wrapped
-Date: Fri,  8 Jun 2018 12:20:21 +0200
-Message-ID: <20180608102041.22904-9-mwilck@suse.com>
+Subject: [PATCH 13/28] libmultipath: allow more than one hwentry
+Date: Fri,  8 Jun 2018 12:20:26 +0200
+Message-ID: <20180608102041.22904-14-mwilck@suse.com>
 References: <20180608102041.22904-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,69 +21,247 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Rather than manually listing all the -Wl,--wrap=... options, autogenerate
-a list of functions to be wrapped in a cmocka test. Allowing this not only
-for the test file itself but also for additional "test library" source files
-requires some Makefile incantations.
+The previous patch "use vector for for pp->hwe and mp->hwe" changed the
+data structure for hwentries. This patch changes actual behavior by
+allowing more than one hwentry to match a given path (or multipath).
 
-Moreover, no need to list globals.c in dependencies, automatic dependency
-tracking takes care for this (and avoids recompilation of tests that don't
-pull in global.c).
+This fixes several currently broken test cases. The test code is adapted
+accordingly.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- tests/Makefile | 28 ++++++++++++++++++++++------
- 1 file changed, 22 insertions(+), 6 deletions(-)
+ libmultipath/config.c |  1 -
+ tests/hwtable.c       | 64 ++++++++-----------------------------------
+ 2 files changed, 12 insertions(+), 53 deletions(-)
 
-diff --git a/tests/Makefile b/tests/Makefile
-index 1f364110..7439c8c3 100644
---- a/tests/Makefile
-+++ b/tests/Makefile
-@@ -10,23 +10,39 @@ TESTS := uevent parser util dmevents
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index 95a71447..89aad15a 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -136,7 +136,6 @@ find_hwe (const struct _vector *hwtable,
+ 			n++;
+ 		}
+ 		log_match(tmp, vendor, product, revision);
+-		break;
+ 	}
+ 	condlog(n > 1 ? 3 : 4, "%s: found %d hwtable matches for %s:%s:%s",
+ 		__func__, n, vendor, product, revision);
+diff --git a/tests/hwtable.c b/tests/hwtable.c
+index b2a0511a..8b2ed95d 100644
+--- a/tests/hwtable.c
++++ b/tests/hwtable.c
+@@ -610,9 +610,6 @@ static int setup_regex_hwe(void **state)
+  *
+  * Expected: Devices matching both get properties from both, kv2 taking
+  * precedence. Devices matching kv1 only just get props from kv1.
+- *
+- * Current: These entries are currently _NOT_ merged, therefore getuid is
+- * default for kv1 matches, and checker is default on kv2 matches.
+  */
+ static void test_regex_string_hwe(const struct hwt_state *hwt)
+ {
+@@ -646,12 +643,7 @@ static void test_regex_string_hwe(const struct hwt_state *hwt)
+ 	pp = mock_path_flags(vnd_foo.value, prd_bar.value, USE_GETUID);
+ 	TEST_PROP(prio_name(&pp->prio), prio_hds.value);
+ 	TEST_PROP(pp->getuid, gui_foo.value);
+-	/*
+-	 * You'd expect that the two entries above be merged,
+-	 * but that isn't the case if they're in the same input file.
+-	 */
+-	TEST_PROP_BROKEN(_checker, pp->checker.name,
+-			 DEFAULT_CHECKER, chk_hp.value);
++	TEST_PROP(pp->checker.name, chk_hp.value);
+ }
  
- all:	$(TESTS:%=%.out)
+ static int setup_regex_string_hwe(void **state)
+@@ -675,8 +667,6 @@ static int setup_regex_string_hwe(void **state)
+  * Expected: Devices matching kv2 (and thus, both) get properties
+  * from both, kv2 taking precedence.
+  * Devices matching kv1 only just get props from kv1.
+- *
+- * Current: behaves as expected.
+  */
+ static void test_regex_string_hwe_dir(const struct hwt_state *hwt)
+ {
+@@ -711,7 +701,6 @@ static void test_regex_string_hwe_dir(const struct hwt_state *hwt)
+ 	/* Later match takes prio */
+ 	TEST_PROP(prio_name(&pp->prio), prio_hds.value);
+ 	TEST_PROP(pp->getuid, gui_foo.value);
+-	/* This time it's merged */
+ 	TEST_PROP(pp->checker.name, chk_hp.value);
+ }
  
--dmevents-test: dmevents.o ../multipathd/dmevents.c globals.c $(multipathdir)/libmultipath.so
--	@$(CC) -o $@ $< $(LDFLAGS) $(LIBDEPS) -lpthread -ldevmapper -lurcu -Wl,--wrap=open -Wl,--wrap=close -Wl,--wrap=dm_is_mpath -Wl,--wrap=dm_geteventnr -Wl,--wrap=ioctl -Wl,--wrap=libmp_dm_task_create -Wl,--wrap=dm_task_no_open_count -Wl,--wrap=dm_task_run -Wl,--wrap=dm_task_get_names -Wl,--wrap=dm_task_destroy -Wl,--wrap=poll -Wl,--wrap=remove_map_by_alias -Wl,--wrap=update_multipath
-+# test-specific linker flags
-+# XYZ-test-TESTDEPS: test libraries containing __wrap_xyz functions
-+# XYZ-test_OBJDEPS: object files from libraries to link in explicitly
-+#    That may be necessary if functions called from the object file are wrapped
-+#    (wrapping works only for symbols which are undefined after processing a
-+#    linker input file).
-+# XYZ-test_LIBDEPS: Additional libs to link for this test
+@@ -792,19 +781,15 @@ static int setup_regex_2_strings_hwe_dir(void **state)
+  * Expected: Devices matching kv1 (and thus, both) get properties
+  * from both, kv1 taking precedence.
+  * Devices matching kv1 only just get props from kv1.
+- *
+- * Current: kv2 never matches, because kv1 is more generic and encountered
+- * first; thus properties from kv2 aren't used.
+  */
+ static void test_string_regex_hwe_dir(const struct hwt_state *hwt)
+ {
+ 	struct path *pp;
  
--%-test:	%.o globals.c $(multipathdir)/libmultipath.so
--	@$(CC) -o $@ $< $(LDFLAGS) $(LIBDEPS)
-+dmevents-test_LIBDEPS = -lpthread -ldevmapper -lurcu
+ 	/* foo:bar matches kv2 and kv1 */
+-	pp = mock_path_flags(vnd_foo.value, prd_bar.value,
+-			     BROKEN == 1 ? 0 : USE_GETUID);
++	pp = mock_path_flags(vnd_foo.value, prd_bar.value, USE_GETUID);
+ 	TEST_PROP(prio_name(&pp->prio), prio_emc.value);
+-	TEST_PROP_BROKEN(_getuid, pp->getuid, (char *)NULL, gui_foo.value);
++	TEST_PROP(pp->getuid, gui_foo.value);
+ 	TEST_PROP(pp->checker.name, chk_hp.value);
  
- %.out:	%-test
- 	@echo == running $< ==
- 	@LD_LIBRARY_PATH=$(multipathdir):$(mpathcmddir) ./$< >$@
+ 	/* foo:baz matches kv1 */
+@@ -850,8 +835,6 @@ static int setup_string_regex_hwe_dir(void **state)
+  * This could happen in a large multipath.conf file.
+  *
+  * Expected: matching devices get props from both, kv2 taking precedence.
+- *
+- * Current: devices get props from kv2 only.
+  */
+ static void test_2_ident_strings_hwe(const struct hwt_state *hwt)
+ {
+@@ -863,12 +846,11 @@ static void test_2_ident_strings_hwe(const struct hwt_state *hwt)
+ 	TEST_PROP(pp->getuid, NULL);
+ 	TEST_PROP(pp->checker.name, DEFAULT_CHECKER);
  
- clean: dep_clean
--	rm -f $(TESTS:%=%-test) $(TESTS:%=%.out) $(TESTS:%=%.o)
-+	$(RM) $(TESTS:%=%-test) $(TESTS:%=%.out) $(OBJS)
+-	/* foo:bar matches both, but only kv2 is seen */
++	/* foo:bar matches both */
+ 	pp = mock_path_flags(vnd_foo.value, prd_bar.value, USE_GETUID);
+ 	TEST_PROP(prio_name(&pp->prio), prio_hds.value);
+ 	TEST_PROP(pp->getuid, gui_foo.value);
+-	TEST_PROP_BROKEN(_checker, pp->checker.name, DEFAULT_CHECKER,
+-			 chk_hp.value);
++	TEST_PROP(pp->checker.name, chk_hp.value);
+ }
  
--OBJS = $(TESTS:%=%.o)
- .SECONDARY: $(OBJS)
+ static int setup_2_ident_strings_hwe(void **state)
+@@ -903,8 +885,7 @@ static void test_2_ident_strings_both_dir(const struct hwt_state *hwt)
+ 	pp = mock_path_flags(vnd_foo.value, prd_bar.value, USE_GETUID);
+ 	TEST_PROP(prio_name(&pp->prio), prio_hds.value);
+ 	TEST_PROP(pp->getuid, gui_foo.value);
+-	TEST_PROP_BROKEN(_checker, pp->checker.name, DEFAULT_CHECKER,
+-			 chk_hp.value);
++	TEST_PROP(pp->checker.name, chk_hp.value);
+ }
  
- include $(wildcard $(OBJS:.o=.d))
+ static int setup_2_ident_strings_both_dir(void **state)
+@@ -944,8 +925,7 @@ static void test_2_ident_strings_both_dir_w_prev(const struct hwt_state *hwt)
+ 	pp = mock_path_flags(vnd_foo.value, prd_bar.value, USE_GETUID);
+ 	TEST_PROP(prio_name(&pp->prio), prio_hds.value);
+ 	TEST_PROP(pp->getuid, gui_foo.value);
+-	TEST_PROP_BROKEN(_checker, pp->checker.name, DEFAULT_CHECKER,
+-			 chk_hp.value);
++	TEST_PROP(pp->checker.name, chk_hp.value);
+ }
  
- dep_clean:
- 	$(RM) $(OBJS:.o=.d)
-+
-+%.o.wrap:	%.c
-+	@sed -n 's/^.*__wrap_\([a-zA-Z0-9_]*\).*$$/-Wl,--wrap=\1/p' $< | \
-+		sort -u | tr '\n' ' ' >$@
-+
-+# COLON will get expanded during second expansion below
-+COLON:=:
-+.SECONDEXPANSION:
-+%-test:	%.o %.o.wrap $$($$@_OBJDEPS) $$($$@_TESTDEPS) $$($$@_TESTDEPS$$(COLON).o=.o.wrap) \
-+		$(multipathdir)/libmultipath.so Makefile
-+	$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $< $($@_TESTDEPS) $($@_OBJDEPS) \
-+		$(LIBDEPS) $($@_LIBDEPS) \
-+		$(file <$<.wrap) $(foreach dep,$($@_TESTDEPS),$(file <$(dep).wrap))
+ static int setup_2_ident_strings_both_dir_w_prev(void **state)
+@@ -975,8 +955,6 @@ static int setup_2_ident_strings_both_dir_w_prev(void **state)
+  * to kv1 being in the built-in hwtable and kv2 in multipath.conf.
+  *
+  * Expected: matching devices get props from both, kv2 taking precedence.
+- *
+- * Current: behaves as expected.
+  */
+ static void test_2_ident_strings_hwe_dir(const struct hwt_state *hwt)
+ {
+@@ -1011,9 +989,6 @@ static int setup_2_ident_strings_hwe_dir(void **state)
+  * contains an additional, empty entry (kv0).
+  *
+  * Expected: matching devices get props from kv1 and kv2, kv2 taking precedence.
+- *
+- * Current: kv0 and kv1 are merged into kv0, and then ignored because kv2 takes
+- * precedence. Thus the presence of the empty kv0 changes how kv1 is treated.
+  */
+ static void test_3_ident_strings_hwe_dir(const struct hwt_state *hwt)
+ {
+@@ -1029,8 +1004,7 @@ static void test_3_ident_strings_hwe_dir(const struct hwt_state *hwt)
+ 	pp = mock_path_flags(vnd_foo.value, prd_bar.value, USE_GETUID);
+ 	TEST_PROP(prio_name(&pp->prio), prio_hds.value);
+ 	TEST_PROP(pp->getuid, gui_foo.value);
+-	TEST_PROP_BROKEN(_checker, pp->checker.name, DEFAULT_CHECKER,
+-			 chk_hp.value);
++	TEST_PROP(pp->checker.name, chk_hp.value);
+ }
+ 
+ static int setup_3_ident_strings_hwe_dir(void **state)
+@@ -1059,8 +1033,6 @@ static int setup_3_ident_strings_hwe_dir(void **state)
+  * to kv1 being in the built-in hwtable and kv2 in multipath.conf.
+  *
+  * Expected: matching devices get props from both, kv2 taking precedence.
+- *
+- * Current: behaves as expected.
+  */
+ static void test_2_ident_self_matching_re_hwe_dir(const struct hwt_state *hwt)
+ {
+@@ -1096,8 +1068,6 @@ static int setup_2_ident_self_matching_re_hwe_dir(void **state)
+  * kv1 and kv2 are added to the main config file.
+  *
+  * Expected: matching devices get props from both, kv2 taking precedence.
+- *
+- * Current: Devices get properties from kv2 only (kv1 and kv2 are not merged).
+  */
+ static void test_2_ident_self_matching_re_hwe(const struct hwt_state *hwt)
+ {
+@@ -1113,8 +1083,7 @@ static void test_2_ident_self_matching_re_hwe(const struct hwt_state *hwt)
+ 	pp = mock_path_flags(vnd_foo.value, prd_bar.value, USE_GETUID);
+ 	TEST_PROP(prio_name(&pp->prio), prio_hds.value);
+ 	TEST_PROP(pp->getuid, gui_foo.value);
+-	TEST_PROP_BROKEN(_checker, pp->checker.name,
+-			 DEFAULT_CHECKER, chk_hp.value);
++	TEST_PROP(pp->checker.name, chk_hp.value);
+ }
+ 
+ static int setup_2_ident_self_matching_re_hwe(void **state)
+@@ -1135,8 +1104,6 @@ static int setup_2_ident_self_matching_re_hwe(void **state)
+  * This case is more important as you may think, see above.
+  *
+  * Expected: matching devices get props from both, kv2 taking precedence.
+- *
+- * Current: devices get props from kv2 only.
+  */
+ static void
+ test_2_ident_not_self_matching_re_hwe_dir(const struct hwt_state *hwt)
+@@ -1149,12 +1116,11 @@ test_2_ident_not_self_matching_re_hwe_dir(const struct hwt_state *hwt)
+ 	TEST_PROP(pp->getuid, NULL);
+ 	TEST_PROP(pp->checker.name, DEFAULT_CHECKER);
+ 
+-	/* foo:bar matches both, but only kv2 is seen */
++	/* foo:bar matches both */
+ 	pp = mock_path_flags(vnd_foo.value, prd_bar.value, USE_GETUID);
+ 	TEST_PROP(prio_name(&pp->prio), prio_hds.value);
+ 	TEST_PROP(pp->getuid, gui_foo.value);
+-	TEST_PROP_BROKEN(_checker, pp->checker.name,
+-			 DEFAULT_CHECKER, chk_hp.value);
++	TEST_PROP(pp->checker.name, chk_hp.value);
+ }
+ 
+ static int setup_2_ident_not_self_matching_re_hwe_dir(void **state)
+@@ -1223,8 +1189,6 @@ static int setup_2_matching_res_hwe_dir(void **state)
+  * "baz" matches both regex "ba[zy]" and "ba(z|y)"
+  *
+  * Expected: matching devices get properties from both, kv2 taking precedence.
+- *
+- * Current: matching devices get properties from kv2 only.
+  */
+ static void test_2_nonmatching_res_hwe_dir(const struct hwt_state *hwt)
+ {
+@@ -1236,14 +1200,10 @@ static void test_2_nonmatching_res_hwe_dir(const struct hwt_state *hwt)
+ 	TEST_PROP(pp->getuid, NULL);
+ 	TEST_PROP(pp->checker.name, DEFAULT_CHECKER);
+ 
+-	/*
+-	 * foo:baz matches k2 and k1. Yet it sees the value from k2 only.
+-	 */
+ 	pp = mock_path_flags(vnd_foo.value, prd_baz.value, USE_GETUID);
+ 	TEST_PROP(prio_name(&pp->prio), prio_hds.value);
+ 	TEST_PROP(pp->getuid, gui_foo.value);
+-	TEST_PROP_BROKEN(_checker, pp->checker.name,
+-			 DEFAULT_CHECKER, chk_hp.value);
++	TEST_PROP(pp->checker.name, chk_hp.value);
+ }
+ 
+ static int setup_2_nonmatching_res_hwe_dir(void **state)
 -- 
 2.17.0
