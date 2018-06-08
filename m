@@ -1,8 +1,7 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 20/28] libmultipath: allow dumping only "local"
-	hwtable in snprint_config
-Date: Fri,  8 Jun 2018 12:20:33 +0200
-Message-ID: <20180608102041.22904-21-mwilck@suse.com>
+Subject: [PATCH 24/28] multipath: implement "multipath -T"
+Date: Fri,  8 Jun 2018 12:20:37 +0200
+Message-ID: <20180608102041.22904-25-mwilck@suse.com>
 References: <20180608102041.22904-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,212 +21,150 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-This change is key for allowing to dump the "local" multipath configuration
-only, i.e. those entries of the hardware table that match existing devices
-in the system. By passing the output of the new helper function
-get_used_hwes() as the last argument for snprint_config(), only the local
-entries will be dumped.
-
-The rationale is that "multipath -t" output is overwhelmingly long for most
-use cases; in particular it's not useful as a template for creating a local
-configuration.
+This does the same as "multipathd show config local", and is
+provided for convenience.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/print.c       |  8 +++++---
- libmultipath/print.h       |  3 ++-
- libmultipath/structs_vec.c | 19 +++++++++++++++++++
- libmultipath/structs_vec.h |  1 +
- libmultipath/vector.c      | 12 ++++++++++++
- libmultipath/vector.h      |  1 +
- multipath/main.c           |  2 +-
- multipathd/cli_handlers.c  |  8 ++++----
- tests/hwtable.c            |  4 ++--
- 9 files changed, 47 insertions(+), 11 deletions(-)
+ libmultipath/config.h |  1 +
+ multipath/main.c      | 43 +++++++++++++++++++++++++++----------------
+ multipath/multipath.8 |  8 +++++++-
+ 3 files changed, 35 insertions(+), 17 deletions(-)
 
-diff --git a/libmultipath/print.c b/libmultipath/print.c
-index 7d4e2ace..af4c00e2 100644
---- a/libmultipath/print.c
-+++ b/libmultipath/print.c
-@@ -1376,7 +1376,8 @@ snprint_hwentry (const struct config *conf,
- }
+diff --git a/libmultipath/config.h b/libmultipath/config.h
+index e1cbd59b..e2fa1852 100644
+--- a/libmultipath/config.h
++++ b/libmultipath/config.h
+@@ -37,6 +37,7 @@ enum mpath_cmds {
+ 	CMD_RESET_WWIDS,
+ 	CMD_ADD_WWID,
+ 	CMD_USABLE_PATHS,
++	CMD_DUMP_CONFIG,
+ };
  
- static int snprint_hwtable(const struct config *conf,
--			   char *buff, int len, vector hwtable)
-+			   char *buff, int len,
-+			   const struct _vector *hwtable)
- {
- 	int fwd = 0;
- 	int i;
-@@ -1781,7 +1782,8 @@ static int snprint_blacklist_except(const struct config *conf,
- 	return fwd;
- }
- 
--char *snprint_config(const struct config *conf, int *len)
-+char *snprint_config(const struct config *conf, int *len,
-+		     const struct _vector *hwtable)
- {
- 	char *reply;
- 	/* built-in config is >20kB already */
-@@ -1810,7 +1812,7 @@ char *snprint_config(const struct config *conf, int *len)
- 			continue;
- 
- 		c += snprint_hwtable(conf, c, reply + maxlen - c,
--				     conf->hwtable);
-+				     hwtable ? hwtable : conf->hwtable);
- 		if ((c - reply) == maxlen)
- 			continue;
- 
-diff --git a/libmultipath/print.h b/libmultipath/print.h
-index fed80d55..c63e0547 100644
---- a/libmultipath/print.h
-+++ b/libmultipath/print.h
-@@ -119,7 +119,8 @@ int _snprint_multipath_topology (const struct gen_multipath *, char *, int,
- 	_snprint_multipath_topology (dm_multipath_to_gen(mpp), buf, len, v)
- int snprint_multipath_topology_json (char * buff, int len,
- 				const struct vectors * vecs);
--char *snprint_config(const struct config *conf, int *len);
-+char *snprint_config(const struct config *conf, int *len,
-+		     const struct _vector *hwtable);
- int snprint_multipath_map_json (char * buff, int len,
- 				const struct multipath * mpp, int last);
- int snprint_blacklist_report (struct config *, char *, int);
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index 38f04387..f87d69d4 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -445,3 +445,22 @@ void update_queue_mode_add_path(struct multipath *mpp)
- 	}
- 	condlog(2, "%s: remaining active paths: %d", mpp->alias, mpp->nr_active);
- }
-+
-+vector get_used_hwes(const struct _vector *pathvec)
-+{
-+	int i, j;
-+	struct path *pp;
-+	struct hwentry *hwe;
-+	vector v = vector_alloc();
-+
-+	if (v == NULL)
-+		return NULL;
-+
-+	vector_foreach_slot(pathvec, pp, i) {
-+		vector_foreach_slot_backwards(pp->hwe, hwe, j) {
-+			vector_find_or_add_slot(v, hwe);
-+		}
-+	}
-+
-+	return v;
-+}
-diff --git a/libmultipath/structs_vec.h b/libmultipath/structs_vec.h
-index 4220ea33..f7777aaf 100644
---- a/libmultipath/structs_vec.h
-+++ b/libmultipath/structs_vec.h
-@@ -38,5 +38,6 @@ void update_queue_mode_add_path(struct multipath *mpp);
- int update_multipath_table (struct multipath *mpp, vector pathvec,
- 			    int is_daemon);
- int update_multipath_status (struct multipath *mpp);
-+vector get_used_hwes(const struct _vector *pathvec);
- 
- #endif /* _STRUCTS_VEC_H */
-diff --git a/libmultipath/vector.c b/libmultipath/vector.c
-index f741ae08..501cf4c5 100644
---- a/libmultipath/vector.c
-+++ b/libmultipath/vector.c
-@@ -196,3 +196,15 @@ vector_set_slot(vector v, void *value)
- 	i = VECTOR_SIZE(v) - 1;
- 	v->slot[i] = value;
- }
-+
-+int vector_find_or_add_slot(vector v, void *value)
-+{
-+	int n = find_slot(v, value);
-+
-+	if (n >= 0)
-+		return n;
-+	if (vector_alloc_slot(v) == NULL)
-+		return -1;
-+	vector_set_slot(v, value);
-+	return VECTOR_SIZE(v) - 1;
-+}
-diff --git a/libmultipath/vector.h b/libmultipath/vector.h
-index b9450ac8..41d2b896 100644
---- a/libmultipath/vector.h
-+++ b/libmultipath/vector.h
-@@ -82,6 +82,7 @@ extern void vector_set_slot(vector v, void *value);
- extern void vector_del_slot(vector v, int slot);
- extern void *vector_insert_slot(vector v, int slot, void *value);
- int find_slot(vector v, void * addr);
-+int vector_find_or_add_slot(vector v, void *value);
- extern void vector_repack(vector v);
- extern void vector_dump(vector v);
- extern void dump_strvec(vector strvec);
+ enum force_reload_types {
 diff --git a/multipath/main.c b/multipath/main.c
-index 288251c3..87d80dd3 100644
+index 54a98026..ed4f40ef 100644
 --- a/multipath/main.c
 +++ b/multipath/main.c
-@@ -753,7 +753,7 @@ out:
- static int
- dump_config (struct config *conf)
- {
--	char * reply = snprint_config(conf, NULL);
-+	char * reply = snprint_config(conf, NULL, NULL);
- 
- 	if (reply != NULL) {
- 		printf("%s", reply);
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index 6f043d7f..75cc8a9e 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -245,15 +245,15 @@ show_map_json (char ** r, int * len, struct multipath * mpp,
- 	return 0;
+@@ -80,6 +80,19 @@ void put_multipath_config(void *arg)
+ 	/* Noop for now */
  }
  
--int
--show_config (char ** r, int * len)
 +static int
-+show_config (char ** r, int * len, const struct _vector *hwtable)
- {
- 	struct config *conf;
- 	char *reply;
++dump_config (struct config *conf, vector hwes, vector mpvec)
++{
++	char * reply = snprint_config(conf, NULL, hwes, mpvec);
++
++	if (reply != NULL) {
++		printf("%s", reply);
++		FREE(reply);
++		return 0;
++	} else
++		return 1;
++}
++
+ void rcu_register_thread_memb(void) {}
  
- 	conf = get_multipath_config();
- 	pthread_cleanup_push(put_multipath_config, conf);
--	reply = snprint_config(conf, len);
-+	reply = snprint_config(conf, len, hwtable);
- 	pthread_cleanup_pop(1);
- 	if (reply == NULL)
- 		return 1;
-@@ -277,7 +277,7 @@ cli_list_config (void * v, char ** reply, int * len, void * data)
- {
- 	condlog(3, "list config (operator)");
+ void rcu_unregister_thread_memb(void) {}
+@@ -112,7 +125,7 @@ usage (char * progname)
+ 	fprintf (stderr, "  %s [-a|-c|-w|-W] [-d] [-r] [-i] [-v lvl] [-p pol] [-b fil] [-q] [dev]\n", progname);
+ 	fprintf (stderr, "  %s -l|-ll|-f [-v lvl] [-b fil] [-R num] [dev]\n", progname);
+ 	fprintf (stderr, "  %s -F [-v lvl] [-R num]\n", progname);
+-	fprintf (stderr, "  %s -t\n", progname);
++	fprintf (stderr, "  %s [-t|-T]\n", progname);
+ 	fprintf (stderr, "  %s -h\n", progname);
+ 	fprintf (stderr,
+ 		"\n"
+@@ -128,6 +141,7 @@ usage (char * progname)
+ 		"  -q      allow queue_if_no_path when multipathd is not running\n"
+ 		"  -d      dry run, do not create or update devmaps\n"
+ 		"  -t      display the currently used multipathd configuration\n"
++		"  -T      display the multipathd configuration without builtin defaults\n"
+ 		"  -r      force devmap reload\n"
+ 		"  -i      ignore wwids file\n"
+ 		"  -B      treat the bindings file as read only\n"
+@@ -671,6 +685,13 @@ configure (struct config *conf, enum mpath_cmds cmd,
  
--	return show_config(reply, len);
-+	return show_config(reply, len, NULL);
+ 	filter_pathvec(pathvec, refwwid);
+ 
++	if (cmd == CMD_DUMP_CONFIG) {
++		vector hwes = get_used_hwes(pathvec);
++
++		dump_config(conf, hwes, curmp);
++		vector_free(hwes);
++		goto out;
++	}
+ 
+ 	if (cmd == CMD_VALID_PATH) {
+ 		struct path *pp;
+@@ -750,19 +771,6 @@ out:
+ 	return r;
  }
  
- int
-diff --git a/tests/hwtable.c b/tests/hwtable.c
-index 85924fb7..3c3caddd 100644
---- a/tests/hwtable.c
-+++ b/tests/hwtable.c
-@@ -454,7 +454,7 @@ static void replicate_config(const struct hwt_state *hwt)
- 	condlog(1, "--- %s: replicating configuration", __func__);
- 
- 	conf = get_multipath_config();
--	cfg1 = snprint_config(conf, NULL);
-+	cfg1 = snprint_config(conf, NULL, NULL);
- 
- 	assert_non_null(cfg1);
- 	put_multipath_config(conf);
-@@ -462,7 +462,7 @@ static void replicate_config(const struct hwt_state *hwt)
- 	replace_config(hwt, cfg1);
- 
- 	conf = get_multipath_config();
--	cfg2 = snprint_config(conf, NULL);
-+	cfg2 = snprint_config(conf, NULL, NULL);
- 	assert_non_null(cfg2);
- 	put_multipath_config(conf);
- 
+-static int
+-dump_config (struct config *conf)
+-{
+-	char * reply = snprint_config(conf, NULL, NULL, NULL);
+-
+-	if (reply != NULL) {
+-		printf("%s", reply);
+-		FREE(reply);
+-		return 0;
+-	} else
+-		return 1;
+-}
+-
+ static int
+ get_dev_type(char *dev) {
+ 	struct stat buf;
+@@ -858,7 +866,7 @@ main (int argc, char *argv[])
+ 		exit(1);
+ 	multipath_conf = conf;
+ 	conf->retrigger_tries = 0;
+-	while ((arg = getopt(argc, argv, ":adcChl::FfM:v:p:b:BrR:itquUwW")) != EOF ) {
++	while ((arg = getopt(argc, argv, ":adcChl::FfM:v:p:b:BrR:itTquUwW")) != EOF ) {
+ 		switch(arg) {
+ 		case 1: printf("optarg : %s\n",optarg);
+ 			break;
+@@ -923,8 +931,11 @@ main (int argc, char *argv[])
+ 			conf->find_multipaths |= _FIND_MULTIPATHS_I;
+ 			break;
+ 		case 't':
+-			r = dump_config(conf);
++			r = dump_config(conf, NULL, NULL);
+ 			goto out_free_config;
++		case 'T':
++			cmd = CMD_DUMP_CONFIG;
++			break;
+ 		case 'h':
+ 			usage(argv[0]);
+ 			exit(0);
+diff --git a/multipath/multipath.8 b/multipath/multipath.8
+index 914a8cb2..b5e5292f 100644
+--- a/multipath/multipath.8
++++ b/multipath/multipath.8
+@@ -25,7 +25,7 @@ multipath \- Device mapper target autoconfig.
+ .RB [\| \-b\ \c
+ .IR bindings_file \|]
+ .RB [\| \-d \|]
+-.RB [\| \-h | \-l | \-ll | \-f | \-t | \-F | \-B | \-c | \-C | \-q | \-r | \-i | \-a | \-u | \-U | \-w | \-W \|]
++.RB [\| \-h | \-l | \-ll | \-f | \-t | \-T | \-F | \-B | \-c | \-C | \-q | \-r | \-i | \-a | \-u | \-U | \-w | \-W \|]
+ .RB [\| \-p\ \c
+ .IR failover | multibus | group_by_serial | group_by_prio | group_by_node_name \|]
+ .RB [\| \-R\ \c
+@@ -89,6 +89,12 @@ Flush all unused multipath device maps.
+ Display the currently used multipathd configuration.
+ .
+ .TP
++.B \-T
++Display the currently used multipathd configuration, limiting the output to
++those devices actually present in the system. This can be used a template for
++creating \fImultipath.conf\fR.
++.
++.TP
+ .B \-r
+ Force devmap reload.
+ .
 -- 
 2.17.0
