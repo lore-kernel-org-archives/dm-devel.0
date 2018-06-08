@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 21/28] tests/hwtable: add test for local
-	configuration dump
-Date: Fri,  8 Jun 2018 12:20:34 +0200
-Message-ID: <20180608102041.22904-22-mwilck@suse.com>
+Subject: [PATCH 26/28] libmultipath: implement and use blacklist
+	merging
+Date: Fri,  8 Jun 2018 12:20:39 +0200
+Message-ID: <20180608102041.22904-27-mwilck@suse.com>
 References: <20180608102041.22904-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,85 +22,193 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-This adds another test iteration in test_driver(): It now tests:
+Implement removal of invalid and duplicate entries in blacklists.
 
- 1) with "user-supplied" configuration,
- 2) using the full config dump (equivalent with "multipath -t" output),
- 3) using the local config dump as implemented in the previous patch.
-
-Again, the properties of paths and maps should be the same for all 3
-scenarios. For 3), the "multipath -t" output can't be expected to be
-exactly equal to the output in 1), because merging of hwentries may move the
-position of a hwentry down in the hwentry list, and empty "multipath"
-sections are being added.
+With this fix, we can fully enable the config dump/reload test,
+which doesn't fail any more.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- tests/hwtable.c | 33 +++++++++++++++++++++++++++++----
- 1 file changed, 29 insertions(+), 4 deletions(-)
+ libmultipath/blacklist.c | 96 +++++++++++++++++++++++++++++++++-------
+ libmultipath/blacklist.h |  2 +
+ libmultipath/config.c    |  9 ++++
+ tests/hwtable.c          |  5 ---
+ 4 files changed, 91 insertions(+), 21 deletions(-)
 
+diff --git a/libmultipath/blacklist.c b/libmultipath/blacklist.c
+index 91ed7ddf..361c6032 100644
+--- a/libmultipath/blacklist.c
++++ b/libmultipath/blacklist.c
+@@ -416,6 +416,15 @@ filter_property(struct config * conf, struct udev_device * udev)
+ 	return MATCH_PROPERTY_BLIST_MISSING;
+ }
+ 
++static void free_ble(struct blentry *ble)
++{
++	if (!ble)
++		return;
++	regfree(&ble->regex);
++	FREE(ble->str);
++	FREE(ble);
++}
++
+ void
+ free_blacklist (vector blist)
+ {
+@@ -426,15 +435,45 @@ free_blacklist (vector blist)
+ 		return;
+ 
+ 	vector_foreach_slot (blist, ble, i) {
+-		if (ble) {
+-			regfree(&ble->regex);
+-			FREE(ble->str);
+-			FREE(ble);
+-		}
++		free_ble(ble);
+ 	}
+ 	vector_free(blist);
+ }
+ 
++void merge_blacklist(vector blist)
++{
++	struct blentry *bl1, *bl2;
++	int i, j;
++
++	vector_foreach_slot(blist, bl1, i) {
++		j = i + 1;
++		vector_foreach_slot_after(blist, bl2, j) {
++			if (!bl1->str || !bl2->str || strcmp(bl1->str, bl2->str))
++				continue;
++			condlog(3, "%s: duplicate blist entry section for %s",
++				__func__, bl1->str);
++			free_ble(bl2);
++			vector_del_slot(blist, j);
++			j--;
++		}
++	}
++}
++
++static void free_ble_device(struct blentry_device *ble)
++{
++	if (ble) {
++		if (ble->vendor) {
++			regfree(&ble->vendor_reg);
++			FREE(ble->vendor);
++		}
++		if (ble->product) {
++			regfree(&ble->product_reg);
++			FREE(ble->product);
++		}
++		FREE(ble);
++	}
++}
++
+ void
+ free_blacklist_device (vector blist)
+ {
+@@ -445,17 +484,42 @@ free_blacklist_device (vector blist)
+ 		return;
+ 
+ 	vector_foreach_slot (blist, ble, i) {
+-		if (ble) {
+-			if (ble->vendor) {
+-				regfree(&ble->vendor_reg);
+-				FREE(ble->vendor);
+-			}
+-			if (ble->product) {
+-				regfree(&ble->product_reg);
+-				FREE(ble->product);
+-			}
+-			FREE(ble);
+-		}
++		free_ble_device(ble);
+ 	}
+ 	vector_free(blist);
+ }
++
++void merge_blacklist_device(vector blist)
++{
++	struct blentry_device *bl1, *bl2;
++	int i, j;
++
++	vector_foreach_slot(blist, bl1, i) {
++		if (!bl1->vendor && !bl1->product) {
++			free_ble_device(bl1);
++			vector_del_slot(blist, i);
++			i--;
++		}
++	}
++
++	vector_foreach_slot(blist, bl1, i) {
++		j = i + 1;
++		vector_foreach_slot_after(blist, bl2, j) {
++			if ((!bl1->vendor && bl2->vendor) ||
++			    (bl1->vendor && !bl2->vendor) ||
++			    (bl1->vendor && bl2->vendor &&
++			     strcmp(bl1->vendor, bl2->vendor)))
++				continue;
++			if ((!bl1->product && bl2->product) ||
++			    (bl1->product && !bl2->product) ||
++			    (bl1->product && bl2->product &&
++			     strcmp(bl1->product, bl2->product)))
++				continue;
++			condlog(3, "%s: duplicate blist entry section for %s:%s",
++				__func__, bl1->vendor, bl1->product);
++			free_ble_device(bl2);
++			vector_del_slot(blist, j);
++			j--;
++		}
++	}
++}
+diff --git a/libmultipath/blacklist.h b/libmultipath/blacklist.h
+index 443025d2..0b028d46 100644
+--- a/libmultipath/blacklist.h
++++ b/libmultipath/blacklist.h
+@@ -40,5 +40,7 @@ int store_ble (vector, char *, int);
+ int set_ble_device (vector, char *, char *, int);
+ void free_blacklist (vector);
+ void free_blacklist_device (vector);
++void merge_blacklist(vector);
++void merge_blacklist_device(vector);
+ 
+ #endif /* _BLACKLIST_H */
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index c8378f87..28b76dd2 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -817,6 +817,15 @@ load_config (char * file)
+ 	}
+ 
+ 	merge_mptable(conf->mptable);
++	merge_blacklist(conf->blist_devnode);
++	merge_blacklist(conf->blist_property);
++	merge_blacklist(conf->blist_wwid);
++	merge_blacklist_device(conf->blist_device);
++	merge_blacklist(conf->elist_devnode);
++	merge_blacklist(conf->elist_property);
++	merge_blacklist(conf->elist_wwid);
++	merge_blacklist_device(conf->elist_device);
++
+ 	if (conf->bindings_file == NULL)
+ 		conf->bindings_file = set_default(DEFAULT_BINDINGS_FILE);
+ 
 diff --git a/tests/hwtable.c b/tests/hwtable.c
-index 3c3caddd..08ed67d3 100644
+index f6fba14d..7daf71eb 100644
 --- a/tests/hwtable.c
 +++ b/tests/hwtable.c
-@@ -446,21 +446,42 @@ static const struct key_value npr_queue = { _no_path_retry, "queue" };
-  * Dump the configuration, subistitute the dumped configuration
-  * for the current one, and verify that the result is identical.
-  */
--static void replicate_config(const struct hwt_state *hwt)
-+static void replicate_config(const struct hwt_state *hwt, bool local)
- {
- 	char *cfg1, *cfg2;
-+	vector hwtable;
- 	struct config *conf;
+@@ -499,13 +499,8 @@ static void replicate_config(const struct hwt_state *hwt, bool local)
+ 	DUMP_CFG_STR(cfg2);
+ #endif
  
--	condlog(1, "--- %s: replicating configuration", __func__);
-+	condlog(1, "--- %s: replicating %s configuration", __func__,
-+		local ? "local" : "full");
- 
- 	conf = get_multipath_config();
--	cfg1 = snprint_config(conf, NULL, NULL);
-+	if (!local)
-+		/* "full" configuration */
-+		cfg1 = snprint_config(conf, NULL, NULL);
-+	else {
-+		/* "local" configuration */
-+		hwtable = get_used_hwes(hwt->vecs->pathvec);
-+		cfg1 = snprint_config(conf, NULL, hwtable);
-+	}
- 
- 	assert_non_null(cfg1);
- 	put_multipath_config(conf);
- 
- 	replace_config(hwt, cfg1);
- 
-+	/*
-+	 * The local configuration adds multipath entries, and may move device
-+	 * entries for local devices to the end of the list. Identical config
-+	 * strings therefore can't be expected in the "local" case.
-+	 * That doesn't matter. The important thing is that, with the reloaded
-+	 * configuration, the test case still passes.
-+	 */
-+	if (local) {
-+		free(cfg1);
-+		return;
-+	}
-+
- 	conf = get_multipath_config();
- 	cfg2 = snprint_config(conf, NULL, NULL);
- 	assert_non_null(cfg2);
-@@ -504,7 +525,11 @@ static void test_driver(void **state)
- 	_conf = LOAD_CONFIG(hwt);
- 	hwt->test(hwt);
- 
--	replicate_config(hwt);
-+	replicate_config(hwt, false);
-+	reset_vecs(hwt->vecs);
-+	hwt->test(hwt);
-+
-+	replicate_config(hwt, true);
- 	reset_vecs(hwt->vecs);
- 	hwt->test(hwt);
- 
+-#if BROKEN
+-	condlog(1, "%s: WARNING: skipping tests for same configuration after dump/reload on %d",
+-		__func__, __LINE__);
+-#else
+ 	assert_int_equal(strlen(cfg2), strlen(cfg1));
+ 	assert_string_equal(cfg2, cfg1);
+-#endif
+ 	free(cfg1);
+ 	free(cfg2);
+ }
 -- 
 2.17.0
