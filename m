@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 15/28] libmultipath: merge hwentries inside a
-	conf file
-Date: Fri,  8 Jun 2018 12:20:28 +0200
-Message-ID: <20180608102041.22904-16-mwilck@suse.com>
+Subject: [PATCH 17/28] libmultipath: don't merge by regex in
+	setup_default_blist()
+Date: Fri,  8 Jun 2018 12:20:30 +0200
+Message-ID: <20180608102041.22904-18-mwilck@suse.com>
 References: <20180608102041.22904-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,106 +22,75 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Merging hwentries with identical vendor/product/revision is still useful,
-although it's not strictly necessary any more. But such identical entries
-should always be merged, not only if they appear in different configuration
-files. This requires changing the logic of factorize_hwtable.
-
-By setting -DCHECK_BUILTIN_HWTABLE at compile time, the built-in hwtable
-can be checked against duplicates as well.
+The merging of blacklist entries by regular expression leads
+to similar problems as the merging of hwentries. Only merge
+blacklist entries if they're exactly equal.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/config.c | 43 +++++++++++++++++++++----------------------
- 1 file changed, 21 insertions(+), 22 deletions(-)
+ libmultipath/blacklist.c | 23 +++++++++++++++++++++--
+ tests/hwtable.c          |  8 +-------
+ 2 files changed, 22 insertions(+), 9 deletions(-)
 
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index 713ac7f3..fb41d620 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -452,7 +452,7 @@ out:
+diff --git a/libmultipath/blacklist.c b/libmultipath/blacklist.c
+index 34a7e717..91ed7ddf 100644
+--- a/libmultipath/blacklist.c
++++ b/libmultipath/blacklist.c
+@@ -163,6 +163,25 @@ _blacklist_device (const struct _vector *blist, const char * vendor,
+ 	return 0;
  }
  
- static void
--factorize_hwtable (vector hw, int n)
-+factorize_hwtable (vector hw, int n, const char *table_desc)
++static int
++find_blacklist_device (const struct _vector *blist, const char * vendor,
++		       const char * product)
++{
++	int i;
++	struct blentry_device * ble;
++
++	vector_foreach_slot (blist, ble, i) {
++		if (((!vendor && !ble->vendor) ||
++		     (vendor && ble->vendor &&
++		      !strcmp(vendor, ble->vendor))) &&
++		    ((!product && !ble->product) ||
++		     (product && ble->product &&
++		      !strcmp(product, ble->product))))
++			return 1;
++	}
++	return 0;
++}
++
+ int
+ setup_default_blist (struct config * conf)
  {
- 	struct hwentry *hwe1, *hwe2;
- 	int i, j;
-@@ -462,22 +462,26 @@ restart:
- 		if (i == n)
- 			break;
- 		j = n;
-+		/* drop invalid device configs */
-+		if (i >= n && (!hwe1->vendor || !hwe1->product)) {
-+			condlog(0, "device config in %s missing vendor or product parameter",
-+				table_desc);
-+			vector_del_slot(hw, i--);
-+			free_hwe(hwe1);
-+			continue;
-+		}
-+		j = n > i + 1 ? n : i + 1;
- 		vector_foreach_slot_after(hw, hwe2, j) {
--			/* drop invalid device configs */
--			if (!hwe2->vendor || !hwe2->product) {
--				condlog(0, "device config missing vendor or product parameter");
--				vector_del_slot(hw, j--);
--				free_hwe(hwe2);
--				continue;
--			}
- 			if (hwe_strmatch(hwe2, hwe1) == 0) {
--				condlog(4, "%s: removing hwentry %s:%s:%s",
-+				condlog(i >= n ? 1 : 3,
-+					"%s: duplicate device section for %s:%s:%s in %s",
- 					__func__, hwe1->vendor, hwe1->product,
--					hwe1->revision);
-+					hwe1->revision, table_desc);
- 				vector_del_slot(hw, i);
- 				merge_hwe(hwe2, hwe1);
- 				free_hwe(hwe1);
--				n -= 1;
-+				if (i < n)
-+					n -= 1;
- 				/*
- 				 * Play safe here; we have modified
- 				 * the original vector so the outer
-@@ -605,9 +609,8 @@ process_config_dir(struct config *conf, vector keywords, char *dir)
- 		snprintf(path, LINE_MAX, "%s/%s", dir, namelist[i]->d_name);
- 		path[LINE_MAX-1] = '\0';
- 		process_file(conf, path);
--		if (VECTOR_SIZE(conf->hwtable) > old_hwtable_size)
--			factorize_hwtable(conf->hwtable, old_hwtable_size);
--
-+		factorize_hwtable(conf->hwtable, old_hwtable_size,
-+				  namelist[i]->d_name);
- 	}
- 	pthread_cleanup_pop(1);
+@@ -191,8 +210,8 @@ setup_default_blist (struct config * conf)
+ 
+ 	vector_foreach_slot (conf->hwtable, hwe, i) {
+ 		if (hwe->bl_product) {
+-			if (_blacklist_device(conf->blist_device, hwe->vendor,
+-					      hwe->bl_product))
++			if (find_blacklist_device(conf->blist_device,
++						  hwe->vendor, hwe->bl_product))
+ 				continue;
+ 			if (alloc_ble_device(conf->blist_device))
+ 				return 1;
+diff --git a/tests/hwtable.c b/tests/hwtable.c
+index 15f364e4..85215946 100644
+--- a/tests/hwtable.c
++++ b/tests/hwtable.c
+@@ -1399,13 +1399,7 @@ static int setup_product_blacklist(void **state)
+ static void test_product_blacklist_matching(const struct hwt_state *hwt)
+ {
+ 	mock_path_flags(vnd_foo.value, prd_bar.value, BL_BY_DEVICE);
+-#if BROKEN == 1
+-	condlog(1, "%s: WARNING: broken blacklist test on line %d",
+-		__func__, __LINE__ + 1);
+-	mock_path(vnd_foo.value, prd_baz.value);
+-#else
+-	mock_path_blacklisted(vnd_foo.value, prd_baz.value);
+-#endif
++	mock_path_flags(vnd_foo.value, prd_baz.value, BL_BY_DEVICE);
+ 	mock_path(vnd_foo.value, prd_bam.value);
  }
-@@ -655,6 +658,9 @@ load_config (char * file)
- 	if (setup_default_hwtable(conf->hwtable))
- 		goto out;
  
-+#ifdef CHECK_BUILTIN_HWTABLE
-+	factorize_hwtable(conf->hwtable, 0, "builtin");
-+#endif
- 	/*
- 	 * read the config file
- 	 */
-@@ -668,14 +674,7 @@ load_config (char * file)
- 			condlog(0, "error parsing config file");
- 			goto out;
- 		}
--		if (VECTOR_SIZE(conf->hwtable) > builtin_hwtable_size) {
--			/*
--			 * remove duplica in hwtable. config file
--			 * takes precedence over build-in hwtable
--			 */
--			factorize_hwtable(conf->hwtable, builtin_hwtable_size);
--		}
--
-+		factorize_hwtable(conf->hwtable, builtin_hwtable_size, file);
- 	}
- 
- 	conf->processed_main_config = 1;
 -- 
 2.17.0
