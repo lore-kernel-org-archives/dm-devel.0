@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 03/28] libmultipath: remove superfluous
-	conditionals in load_config()
-Date: Fri,  8 Jun 2018 12:20:16 +0200
-Message-ID: <20180608102041.22904-4-mwilck@suse.com>
+Subject: [PATCH 02/28] libmultipath: fix memory leak in
+	process_config_dir()
+Date: Fri,  8 Jun 2018 12:20:15 +0200
+Message-ID: <20180608102041.22904-3-mwilck@suse.com>
 References: <20180608102041.22904-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,42 +22,45 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-In load_config(), conf is freshly allocated, there's no point in checking
-previously set values.
-
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/config.c | 10 +++-------
- 1 file changed, 3 insertions(+), 7 deletions(-)
+ libmultipath/config.c | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
 
 diff --git a/libmultipath/config.c b/libmultipath/config.c
-index 8769441c..ce7bedac 100644
+index 085a3e12..8769441c 100644
 --- a/libmultipath/config.c
 +++ b/libmultipath/config.c
-@@ -607,8 +607,7 @@ load_config (char * file)
- 	/*
- 	 * internal defaults
- 	 */
--	if (!conf->verbosity)
--		conf->verbosity = DEFAULT_VERBOSITY;
-+	conf->verbosity = DEFAULT_VERBOSITY;
+@@ -551,6 +551,11 @@ free_config (struct config * conf)
+ 	FREE(conf);
+ }
  
- 	get_sys_max_fds(&conf->max_fds);
- 	conf->bindings_file = set_default(DEFAULT_BINDINGS_FILE);
-@@ -634,12 +633,9 @@ load_config (char * file)
- 	/*
- 	 * preload default hwtable
- 	 */
--	if (conf->hwtable == NULL) {
--		conf->hwtable = vector_alloc();
--
--		if (!conf->hwtable)
-+	conf->hwtable = vector_alloc();
-+	if (!conf->hwtable)
- 			goto out;
++static void free_namelist(void *nl)
++{
++	free(nl);
++}
++
+ /* if multipath fails to process the config directory, it should continue,
+  * with just a warning message */
+ static void
+@@ -574,7 +579,9 @@ process_config_dir(struct config *conf, vector keywords, char *dir)
+ 			condlog(0, "couldn't open configuration dir '%s': %s",
+ 				dir, strerror(errno));
+ 		return;
 -	}
- 	if (setup_default_hwtable(conf->hwtable))
- 		goto out;
++	} else if (n == 0)
++		return;
++	pthread_cleanup_push(free_namelist, namelist);
+ 	for (i = 0; i < n; i++) {
+ 		if (!strstr(namelist[i]->d_name, ".conf"))
+ 			continue;
+@@ -586,6 +593,7 @@ process_config_dir(struct config *conf, vector keywords, char *dir)
+ 			factorize_hwtable(conf->hwtable, old_hwtable_size);
  
+ 	}
++	pthread_cleanup_pop(1);
+ }
+ 
+ struct config *
 -- 
 2.17.0
