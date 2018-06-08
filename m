@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 04/28] libmultipath/structs.c: constify some
-	functions
-Date: Fri,  8 Jun 2018 12:20:17 +0200
-Message-ID: <20180608102041.22904-5-mwilck@suse.com>
+Subject: [PATCH 08/28] tests/Makefile: autogenerate list of
+	symbols to be wrapped
+Date: Fri,  8 Jun 2018 12:20:21 +0200
+Message-ID: <20180608102041.22904-9-mwilck@suse.com>
 References: <20180608102041.22904-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,140 +22,69 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
+Rather than manually listing all the -Wl,--wrap=... options, autogenerate
+a list of functions to be wrapped in a cmocka test. Allowing this not only
+for the test file itself but also for additional "test library" source files
+requires some Makefile incantations.
+
+Moreover, no need to list globals.c in dependencies, automatic dependency
+tracking takes care for this (and avoids recompilation of tests that don't
+pull in global.c).
+
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/structs.c | 20 ++++++++++----------
- libmultipath/structs.h | 24 ++++++++++++------------
- 2 files changed, 22 insertions(+), 22 deletions(-)
+ tests/Makefile | 28 ++++++++++++++++++++++------
+ 1 file changed, 22 insertions(+), 6 deletions(-)
 
-diff --git a/libmultipath/structs.c b/libmultipath/structs.c
-index 991095cb..6df2f4ec 100644
---- a/libmultipath/structs.c
-+++ b/libmultipath/structs.c
-@@ -353,7 +353,7 @@ store_adaptergroup(vector adapters, struct adapter_group * agp)
- }
+diff --git a/tests/Makefile b/tests/Makefile
+index 1f364110..7439c8c3 100644
+--- a/tests/Makefile
++++ b/tests/Makefile
+@@ -10,23 +10,39 @@ TESTS := uevent parser util dmevents
  
- struct multipath *
--find_mp_by_minor (vector mpvec, int minor)
-+find_mp_by_minor (const struct _vector *mpvec, int minor)
- {
- 	int i;
- 	struct multipath * mpp;
-@@ -372,7 +372,7 @@ find_mp_by_minor (vector mpvec, int minor)
- }
+ all:	$(TESTS:%=%.out)
  
- struct multipath *
--find_mp_by_wwid (vector mpvec, char * wwid)
-+find_mp_by_wwid (const struct _vector *mpvec, const char * wwid)
- {
- 	int i;
- 	struct multipath * mpp;
-@@ -388,7 +388,7 @@ find_mp_by_wwid (vector mpvec, char * wwid)
- }
+-dmevents-test: dmevents.o ../multipathd/dmevents.c globals.c $(multipathdir)/libmultipath.so
+-	@$(CC) -o $@ $< $(LDFLAGS) $(LIBDEPS) -lpthread -ldevmapper -lurcu -Wl,--wrap=open -Wl,--wrap=close -Wl,--wrap=dm_is_mpath -Wl,--wrap=dm_geteventnr -Wl,--wrap=ioctl -Wl,--wrap=libmp_dm_task_create -Wl,--wrap=dm_task_no_open_count -Wl,--wrap=dm_task_run -Wl,--wrap=dm_task_get_names -Wl,--wrap=dm_task_destroy -Wl,--wrap=poll -Wl,--wrap=remove_map_by_alias -Wl,--wrap=update_multipath
++# test-specific linker flags
++# XYZ-test-TESTDEPS: test libraries containing __wrap_xyz functions
++# XYZ-test_OBJDEPS: object files from libraries to link in explicitly
++#    That may be necessary if functions called from the object file are wrapped
++#    (wrapping works only for symbols which are undefined after processing a
++#    linker input file).
++# XYZ-test_LIBDEPS: Additional libs to link for this test
  
- struct multipath *
--find_mp_by_alias (vector mpvec, const char * alias)
-+find_mp_by_alias (const struct _vector *mpvec, const char * alias)
- {
- 	int i;
- 	int len;
-@@ -411,7 +411,7 @@ find_mp_by_alias (vector mpvec, const char * alias)
- }
+-%-test:	%.o globals.c $(multipathdir)/libmultipath.so
+-	@$(CC) -o $@ $< $(LDFLAGS) $(LIBDEPS)
++dmevents-test_LIBDEPS = -lpthread -ldevmapper -lurcu
  
- struct multipath *
--find_mp_by_str (vector mpvec, char * str)
-+find_mp_by_str (const struct _vector *mpvec, const char * str)
- {
- 	int minor;
+ %.out:	%-test
+ 	@echo == running $< ==
+ 	@LD_LIBRARY_PATH=$(multipathdir):$(mpathcmddir) ./$< >$@
  
-@@ -422,7 +422,7 @@ find_mp_by_str (vector mpvec, char * str)
- }
+ clean: dep_clean
+-	rm -f $(TESTS:%=%-test) $(TESTS:%=%.out) $(TESTS:%=%.o)
++	$(RM) $(TESTS:%=%-test) $(TESTS:%=%.out) $(OBJS)
  
- struct path *
--find_path_by_dev (vector pathvec, const char * dev)
-+find_path_by_dev (const struct _vector *pathvec, const char * dev)
- {
- 	int i;
- 	struct path * pp;
-@@ -439,7 +439,7 @@ find_path_by_dev (vector pathvec, const char * dev)
- }
+-OBJS = $(TESTS:%=%.o)
+ .SECONDARY: $(OBJS)
  
- struct path *
--find_path_by_devt (vector pathvec, const char * dev_t)
-+find_path_by_devt (const struct _vector *pathvec, const char * dev_t)
- {
- 	int i;
- 	struct path * pp;
-@@ -455,7 +455,7 @@ find_path_by_devt (vector pathvec, const char * dev_t)
- 	return NULL;
- }
+ include $(wildcard $(OBJS:.o=.d))
  
--int pathcountgr(struct pathgroup *pgp, int state)
-+int pathcountgr(const struct pathgroup *pgp, int state)
- {
- 	struct path *pp;
- 	int count = 0;
-@@ -468,7 +468,7 @@ int pathcountgr(struct pathgroup *pgp, int state)
- 	return count;
- }
- 
--int pathcount(struct multipath *mpp, int state)
-+int pathcount(const struct multipath *mpp, int state)
- {
- 	struct pathgroup *pgp;
- 	int count = 0;
-@@ -481,7 +481,7 @@ int pathcount(struct multipath *mpp, int state)
- 	return count;
- }
- 
--int pathcmp(struct pathgroup *pgp, struct pathgroup *cpgp)
-+int pathcmp(const struct pathgroup *pgp, const struct pathgroup *cpgp)
- {
- 	int i, j;
- 	struct path *pp, *cpp;
-@@ -501,7 +501,7 @@ int pathcmp(struct pathgroup *pgp, struct pathgroup *cpgp)
- }
- 
- struct path *
--first_path (struct multipath * mpp)
-+first_path (const struct multipath * mpp)
- {
- 	struct pathgroup * pgp;
- 	if (!mpp->pg)
-diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-index e424b150..fef416b4 100644
---- a/libmultipath/structs.h
-+++ b/libmultipath/structs.h
-@@ -413,18 +413,18 @@ int store_path (vector pathvec, struct path * pp);
- int store_pathgroup (vector pgvec, struct pathgroup * pgp);
- int add_pathgroup(struct multipath*, struct pathgroup *);
- 
--struct multipath * find_mp_by_alias (vector mp, const char * alias);
--struct multipath * find_mp_by_wwid (vector mp, char * wwid);
--struct multipath * find_mp_by_str (vector mp, char * wwid);
--struct multipath * find_mp_by_minor (vector mp, int minor);
--
--struct path * find_path_by_devt (vector pathvec, const char * devt);
--struct path * find_path_by_dev (vector pathvec, const char * dev);
--struct path * first_path (struct multipath * mpp);
--
--int pathcountgr (struct pathgroup *, int);
--int pathcount (struct multipath *, int);
--int pathcmp (struct pathgroup *, struct pathgroup *);
-+struct multipath * find_mp_by_alias (const struct _vector *mp, const char *alias);
-+struct multipath * find_mp_by_wwid (const struct _vector *mp, const char *wwid);
-+struct multipath * find_mp_by_str (const struct _vector *mp, const char *wwid);
-+struct multipath * find_mp_by_minor (const struct _vector *mp, int minor);
+ dep_clean:
+ 	$(RM) $(OBJS:.o=.d)
 +
-+struct path * find_path_by_devt (const struct _vector *pathvec, const char *devt);
-+struct path * find_path_by_dev (const struct _vector *pathvec, const char *dev);
-+struct path * first_path (const struct multipath *mpp);
++%.o.wrap:	%.c
++	@sed -n 's/^.*__wrap_\([a-zA-Z0-9_]*\).*$$/-Wl,--wrap=\1/p' $< | \
++		sort -u | tr '\n' ' ' >$@
 +
-+int pathcountgr (const struct pathgroup *, int);
-+int pathcount (const struct multipath *, int);
-+int pathcmp (const struct pathgroup *, const struct pathgroup *);
- int add_feature (char **, const char *);
- int remove_feature (char **, const char *);
- 
++# COLON will get expanded during second expansion below
++COLON:=:
++.SECONDEXPANSION:
++%-test:	%.o %.o.wrap $$($$@_OBJDEPS) $$($$@_TESTDEPS) $$($$@_TESTDEPS$$(COLON).o=.o.wrap) \
++		$(multipathdir)/libmultipath.so Makefile
++	$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $< $($@_TESTDEPS) $($@_OBJDEPS) \
++		$(LIBDEPS) $($@_LIBDEPS) \
++		$(file <$<.wrap) $(foreach dep,$($@_TESTDEPS),$(file <$(dep).wrap))
 -- 
 2.17.0
