@@ -1,7 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 01/28] kpartx: no need to use FREE_CONST
-Date: Fri,  8 Jun 2018 12:20:14 +0200
-Message-ID: <20180608102041.22904-2-mwilck@suse.com>
+Subject: [PATCH 11/28] libmultipath: add debug messages to
+	hwentry lookup/merging code
+Date: Fri,  8 Jun 2018 12:20:24 +0200
+Message-ID: <20180608102041.22904-12-mwilck@suse.com>
 References: <20180608102041.22904-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,57 +22,53 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-A function that returns a result of strdup() doesn't need to declare that
-result as const char*.
-
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- kpartx/devmapper.c | 10 +++++-----
- 1 file changed, 5 insertions(+), 5 deletions(-)
+ libmultipath/config.c | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
 
-diff --git a/kpartx/devmapper.c b/kpartx/devmapper.c
-index 8f68a246..f94d70e7 100644
---- a/kpartx/devmapper.c
-+++ b/kpartx/devmapper.c
-@@ -11,7 +11,6 @@
- #include <sys/sysmacros.h>
- #include "devmapper.h"
- 
--#define FREE_CONST(p) do { free((void*)(long)p); p = NULL; } while(0)
- #define _UUID_PREFIX "part"
- #define UUID_PREFIX _UUID_PREFIX "%d-"
- #define _UUID_PREFIX_LEN (sizeof(_UUID_PREFIX) - 1)
-@@ -252,10 +251,11 @@ out:
- 	return r;
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index d2812e4a..9e2f166f 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -103,6 +103,16 @@ out:
+ 	return retval;
  }
  
--static const char *dm_find_uuid(const char *uuid)
-+static char *dm_find_uuid(const char *uuid)
- {
- 	struct dm_task *dmt;
--	const char *name = NULL, *tmp;
-+	char *name = NULL;
-+	const char *tmp;
- 
- 	if ((dmt = dm_task_create(DM_DEVICE_INFO)) == NULL)
- 		return NULL;
-@@ -642,7 +642,7 @@ int dm_find_part(const char *parent, const char *delim, int part,
- {
- 	int r;
- 	char params[PARAMS_SIZE];
--	const char *tmp;
-+	char *tmp;
- 	char *uuid;
- 	int major, minor;
- 	char dev_t[32];
-@@ -696,7 +696,7 @@ int dm_find_part(const char *parent, const char *delim, int part,
- 	} else
- 		*part_uuid = uuid;
- out:
--	FREE_CONST(tmp);
-+	free(tmp);
- 	return r;
- }
- 
++static void _log_match(const char *fn, const struct hwentry *h,
++		       const char *vendor, const char *product,
++		       const char *revision)
++{
++	condlog(4, "%s: found match /%s:%s:%s/ for '%s:%s:%s'", fn,
++		h->vendor, h->product, h->revision,
++		vendor, product, revision);
++}
++#define log_match(h, v, p, r) _log_match(__func__, (h), (v), (p), (r))
++
+ struct hwentry *
+ find_hwe (const struct _vector *hwtable,
+ 	  const char * vendor, const char * product, const char * revision)
+@@ -120,6 +130,7 @@ find_hwe (const struct _vector *hwtable,
+ 		if (hwe_regmatch(tmp, vendor, product, revision))
+ 			continue;
+ 		ret = tmp;
++		log_match(tmp, vendor, product, revision);
+ 		break;
+ 	}
+ 	return ret;
+@@ -457,8 +468,13 @@ restart:
+ 					 hwe2->product, hwe2->revision))
+ 				continue;
+ 			/* dup */
++			log_match(hwe1, hwe2->vendor,
++				  hwe2->product, hwe2->revision);
+ 			merge_hwe(hwe2, hwe1);
+ 			if (hwe_strmatch(hwe2, hwe1) == 0) {
++				condlog(4, "%s: removing hwentry %s:%s:%s",
++					__func__, hwe1->vendor, hwe1->product,
++					hwe1->revision);
+ 				vector_del_slot(hw, i);
+ 				free_hwe(hwe1);
+ 				n -= 1;
 -- 
 2.17.0
