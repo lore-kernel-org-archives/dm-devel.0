@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 22/28] libmultipath: allow printing local maps in
-	snprint_config
-Date: Fri,  8 Jun 2018 12:20:35 +0200
-Message-ID: <20180608102041.22904-23-mwilck@suse.com>
+Subject: [PATCH 20/28] libmultipath: allow dumping only "local"
+	hwtable in snprint_config
+Date: Fri,  8 Jun 2018 12:20:33 +0200
+Message-ID: <20180608102041.22904-21-mwilck@suse.com>
 References: <20180608102041.22904-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,209 +22,210 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-"mulitpatd show config" only dumps multipath sections for maps which are
-present in local configuration files. This patch adds the ability to dump
-"multipath" subsections for every locally detected map, even for those
-that have no local configuration, and at the same time, skip dumping
-multipath configurations for maps that aree not present locally.
+This change is key for allowing to dump the "local" multipath configuration
+only, i.e. those entries of the hardware table that match existing devices
+in the system. By passing the output of the new helper function
+get_used_hwes() as the last argument for snprint_config(), only the local
+entries will be dumped.
 
-This makes it possible for users to generate a multipath.conf template
-matching local devices, and e.g. add explicit alias entries for existing
-maps. If user_friendly_names is in use, a commented-out config line is added
-to the dump output showing the implicitly configured alias, simplifying
-identification of the devices.
-
-This facility is optional and will only be used in new commands added
-in follow-up patches.
+The rationale is that "multipath -t" output is overwhelmingly long for most
+use cases; in particular it's not useful as a template for creating a local
+configuration.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/print.c      | 60 ++++++++++++++++++++++++++++++++++-----
- libmultipath/print.h      |  3 +-
- multipath/main.c          |  2 +-
- multipathd/cli_handlers.c |  2 +-
- tests/hwtable.c           |  6 ++--
- 5 files changed, 60 insertions(+), 13 deletions(-)
+ libmultipath/print.c       |  8 +++++---
+ libmultipath/print.h       |  3 ++-
+ libmultipath/structs_vec.c | 19 +++++++++++++++++++
+ libmultipath/structs_vec.h |  1 +
+ libmultipath/vector.c      | 12 ++++++++++++
+ libmultipath/vector.h      |  1 +
+ multipath/main.c           |  2 +-
+ multipathd/cli_handlers.c  |  8 ++++----
+ tests/hwtable.c            |  4 ++--
+ 9 files changed, 47 insertions(+), 11 deletions(-)
 
 diff --git a/libmultipath/print.c b/libmultipath/print.c
-index af4c00e2..222d2701 100644
+index 7d4e2ace..af4c00e2 100644
 --- a/libmultipath/print.c
 +++ b/libmultipath/print.c
-@@ -1404,12 +1404,16 @@ static int snprint_hwtable(const struct config *conf,
- 
- static int
- snprint_mpentry (const struct config *conf, char * buff, int len,
--		 const struct mpentry * mpe)
-+		 const struct mpentry * mpe, const struct _vector *mpvec)
- {
- 	int i;
- 	int fwd = 0;
- 	struct keyword * kw;
- 	struct keyword * rootkw;
-+	struct multipath *mpp = NULL;
-+
-+	if (mpvec != NULL && (mpp = find_mp_by_wwid(mpvec, mpe->wwid)) == NULL)
-+		return 0;
- 
- 	rootkw = find_keyword(conf->keywords, NULL, "multipath");
- 	if (!rootkw)
-@@ -1424,6 +1428,15 @@ snprint_mpentry (const struct config *conf, char * buff, int len,
- 		if (fwd >= len)
- 			return len;
- 	}
-+	/*
-+	 * This mpp doesn't have alias defined. Add the alias in a comment.
-+	 */
-+	if (mpp != NULL && strcmp(mpp->alias, mpp->wwid)) {
-+		fwd += snprintf(buff + fwd, len - fwd, "\t\t# alias \"%s\"\n",
-+				mpp->alias);
-+		if (fwd >= len)
-+			return len;
-+	}
- 	fwd += snprintf(buff + fwd, len - fwd, "\t}\n");
- 	if (fwd >= len)
- 		return len;
-@@ -1431,7 +1444,7 @@ snprint_mpentry (const struct config *conf, char * buff, int len,
+@@ -1376,7 +1376,8 @@ snprint_hwentry (const struct config *conf,
  }
  
- static int snprint_mptable(const struct config *conf,
--			   char *buff, int len, vector mptable)
-+			   char *buff, int len, const struct _vector *mpvec)
+ static int snprint_hwtable(const struct config *conf,
+-			   char *buff, int len, vector hwtable)
++			   char *buff, int len,
++			   const struct _vector *hwtable)
  {
  	int fwd = 0;
  	int i;
-@@ -1445,11 +1458,43 @@ static int snprint_mptable(const struct config *conf,
- 	fwd += snprintf(buff + fwd, len - fwd, "multipaths {\n");
- 	if (fwd >= len)
- 		return len;
--	vector_foreach_slot (mptable, mpe, i) {
--		fwd += snprint_mpentry(conf, buff + fwd, len - fwd, mpe);
-+	vector_foreach_slot (conf->mptable, mpe, i) {
-+		fwd += snprint_mpentry(conf, buff + fwd, len - fwd, mpe, mpvec);
- 		if (fwd >= len)
- 			return len;
- 	}
-+	if (mpvec != NULL) {
-+		struct multipath *mpp;
-+
-+		vector_foreach_slot(mpvec, mpp, i) {
-+			if (find_mpe(conf->mptable, mpp->wwid) != NULL)
-+				continue;
-+
-+			fwd += snprintf(buff + fwd, len - fwd,
-+					"\tmultipath {\n");
-+			if (fwd >= len)
-+				return len;
-+			fwd += snprintf(buff + fwd, len - fwd,
-+					"\t\twwid \"%s\"\n", mpp->wwid);
-+			if (fwd >= len)
-+				return len;
-+			/*
-+			 * This mpp doesn't have alias defined in
-+			 * multipath.conf - otherwise find_mpe would have
-+			 * found it. Add the alias in a comment.
-+			 */
-+			if (strcmp(mpp->alias, mpp->wwid)) {
-+				fwd += snprintf(buff + fwd, len - fwd,
-+						"\t\t# alias \"%s\"\n",
-+						mpp->alias);
-+				if (fwd >= len)
-+					return len;
-+			}
-+			fwd += snprintf(buff + fwd, len - fwd, "\t}\n");
-+			if (fwd >= len)
-+				return len;
-+		}
-+	}
- 	fwd += snprintf(buff + fwd, len - fwd, "}\n");
- 	if (fwd >= len)
- 		return len;
-@@ -1783,7 +1828,7 @@ static int snprint_blacklist_except(const struct config *conf,
+@@ -1781,7 +1782,8 @@ static int snprint_blacklist_except(const struct config *conf,
+ 	return fwd;
  }
  
- char *snprint_config(const struct config *conf, int *len,
--		     const struct _vector *hwtable)
-+		     const struct _vector *hwtable, const struct _vector *mpvec)
+-char *snprint_config(const struct config *conf, int *len)
++char *snprint_config(const struct config *conf, int *len,
++		     const struct _vector *hwtable)
  {
  	char *reply;
  	/* built-in config is >20kB already */
-@@ -1821,9 +1866,10 @@ char *snprint_config(const struct config *conf, int *len,
+@@ -1810,7 +1812,7 @@ char *snprint_config(const struct config *conf, int *len)
+ 			continue;
+ 
+ 		c += snprint_hwtable(conf, c, reply + maxlen - c,
+-				     conf->hwtable);
++				     hwtable ? hwtable : conf->hwtable);
  		if ((c - reply) == maxlen)
  			continue;
  
--		if (VECTOR_SIZE(conf->mptable) > 0)
-+		if (VECTOR_SIZE(conf->mptable) > 0 ||
-+		    (mpvec != NULL && VECTOR_SIZE(mpvec) > 0))
- 			c += snprint_mptable(conf, c, reply + maxlen - c,
--					     conf->mptable);
-+					     mpvec);
- 
- 		if ((c - reply) < maxlen) {
- 			if (len)
 diff --git a/libmultipath/print.h b/libmultipath/print.h
-index c63e0547..608b7d5f 100644
+index fed80d55..c63e0547 100644
 --- a/libmultipath/print.h
 +++ b/libmultipath/print.h
-@@ -120,7 +120,8 @@ int _snprint_multipath_topology (const struct gen_multipath *, char *, int,
+@@ -119,7 +119,8 @@ int _snprint_multipath_topology (const struct gen_multipath *, char *, int,
+ 	_snprint_multipath_topology (dm_multipath_to_gen(mpp), buf, len, v)
  int snprint_multipath_topology_json (char * buff, int len,
  				const struct vectors * vecs);
- char *snprint_config(const struct config *conf, int *len,
--		     const struct _vector *hwtable);
-+		     const struct _vector *hwtable,
-+		     const struct _vector *mpvec);
+-char *snprint_config(const struct config *conf, int *len);
++char *snprint_config(const struct config *conf, int *len,
++		     const struct _vector *hwtable);
  int snprint_multipath_map_json (char * buff, int len,
  				const struct multipath * mpp, int last);
  int snprint_blacklist_report (struct config *, char *, int);
+diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
+index 38f04387..f87d69d4 100644
+--- a/libmultipath/structs_vec.c
++++ b/libmultipath/structs_vec.c
+@@ -445,3 +445,22 @@ void update_queue_mode_add_path(struct multipath *mpp)
+ 	}
+ 	condlog(2, "%s: remaining active paths: %d", mpp->alias, mpp->nr_active);
+ }
++
++vector get_used_hwes(const struct _vector *pathvec)
++{
++	int i, j;
++	struct path *pp;
++	struct hwentry *hwe;
++	vector v = vector_alloc();
++
++	if (v == NULL)
++		return NULL;
++
++	vector_foreach_slot(pathvec, pp, i) {
++		vector_foreach_slot_backwards(pp->hwe, hwe, j) {
++			vector_find_or_add_slot(v, hwe);
++		}
++	}
++
++	return v;
++}
+diff --git a/libmultipath/structs_vec.h b/libmultipath/structs_vec.h
+index 4220ea33..f7777aaf 100644
+--- a/libmultipath/structs_vec.h
++++ b/libmultipath/structs_vec.h
+@@ -38,5 +38,6 @@ void update_queue_mode_add_path(struct multipath *mpp);
+ int update_multipath_table (struct multipath *mpp, vector pathvec,
+ 			    int is_daemon);
+ int update_multipath_status (struct multipath *mpp);
++vector get_used_hwes(const struct _vector *pathvec);
+ 
+ #endif /* _STRUCTS_VEC_H */
+diff --git a/libmultipath/vector.c b/libmultipath/vector.c
+index f741ae08..501cf4c5 100644
+--- a/libmultipath/vector.c
++++ b/libmultipath/vector.c
+@@ -196,3 +196,15 @@ vector_set_slot(vector v, void *value)
+ 	i = VECTOR_SIZE(v) - 1;
+ 	v->slot[i] = value;
+ }
++
++int vector_find_or_add_slot(vector v, void *value)
++{
++	int n = find_slot(v, value);
++
++	if (n >= 0)
++		return n;
++	if (vector_alloc_slot(v) == NULL)
++		return -1;
++	vector_set_slot(v, value);
++	return VECTOR_SIZE(v) - 1;
++}
+diff --git a/libmultipath/vector.h b/libmultipath/vector.h
+index b9450ac8..41d2b896 100644
+--- a/libmultipath/vector.h
++++ b/libmultipath/vector.h
+@@ -82,6 +82,7 @@ extern void vector_set_slot(vector v, void *value);
+ extern void vector_del_slot(vector v, int slot);
+ extern void *vector_insert_slot(vector v, int slot, void *value);
+ int find_slot(vector v, void * addr);
++int vector_find_or_add_slot(vector v, void *value);
+ extern void vector_repack(vector v);
+ extern void vector_dump(vector v);
+ extern void dump_strvec(vector strvec);
 diff --git a/multipath/main.c b/multipath/main.c
-index 87d80dd3..54a98026 100644
+index 288251c3..87d80dd3 100644
 --- a/multipath/main.c
 +++ b/multipath/main.c
 @@ -753,7 +753,7 @@ out:
  static int
  dump_config (struct config *conf)
  {
--	char * reply = snprint_config(conf, NULL, NULL);
-+	char * reply = snprint_config(conf, NULL, NULL, NULL);
+-	char * reply = snprint_config(conf, NULL);
++	char * reply = snprint_config(conf, NULL, NULL);
  
  	if (reply != NULL) {
  		printf("%s", reply);
 diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index 75cc8a9e..0ac00155 100644
+index 6f043d7f..75cc8a9e 100644
 --- a/multipathd/cli_handlers.c
 +++ b/multipathd/cli_handlers.c
-@@ -253,7 +253,7 @@ show_config (char ** r, int * len, const struct _vector *hwtable)
+@@ -245,15 +245,15 @@ show_map_json (char ** r, int * len, struct multipath * mpp,
+ 	return 0;
+ }
+ 
+-int
+-show_config (char ** r, int * len)
++static int
++show_config (char ** r, int * len, const struct _vector *hwtable)
+ {
+ 	struct config *conf;
+ 	char *reply;
  
  	conf = get_multipath_config();
  	pthread_cleanup_push(put_multipath_config, conf);
--	reply = snprint_config(conf, len, hwtable);
-+	reply = snprint_config(conf, len, hwtable, NULL);
+-	reply = snprint_config(conf, len);
++	reply = snprint_config(conf, len, hwtable);
  	pthread_cleanup_pop(1);
  	if (reply == NULL)
  		return 1;
+@@ -277,7 +277,7 @@ cli_list_config (void * v, char ** reply, int * len, void * data)
+ {
+ 	condlog(3, "list config (operator)");
+ 
+-	return show_config(reply, len);
++	return show_config(reply, len, NULL);
+ }
+ 
+ int
 diff --git a/tests/hwtable.c b/tests/hwtable.c
-index 08ed67d3..1a6b3188 100644
+index 85924fb7..3c3caddd 100644
 --- a/tests/hwtable.c
 +++ b/tests/hwtable.c
-@@ -458,11 +458,11 @@ static void replicate_config(const struct hwt_state *hwt, bool local)
+@@ -454,7 +454,7 @@ static void replicate_config(const struct hwt_state *hwt)
+ 	condlog(1, "--- %s: replicating configuration", __func__);
+ 
  	conf = get_multipath_config();
- 	if (!local)
- 		/* "full" configuration */
--		cfg1 = snprint_config(conf, NULL, NULL);
-+		cfg1 = snprint_config(conf, NULL, NULL, NULL);
- 	else {
- 		/* "local" configuration */
- 		hwtable = get_used_hwes(hwt->vecs->pathvec);
--		cfg1 = snprint_config(conf, NULL, hwtable);
-+		cfg1 = snprint_config(conf, NULL, hwtable, hwt->vecs->mpvec);
- 	}
+-	cfg1 = snprint_config(conf, NULL);
++	cfg1 = snprint_config(conf, NULL, NULL);
  
  	assert_non_null(cfg1);
-@@ -483,7 +483,7 @@ static void replicate_config(const struct hwt_state *hwt, bool local)
- 	}
+ 	put_multipath_config(conf);
+@@ -462,7 +462,7 @@ static void replicate_config(const struct hwt_state *hwt)
+ 	replace_config(hwt, cfg1);
  
  	conf = get_multipath_config();
--	cfg2 = snprint_config(conf, NULL, NULL);
-+	cfg2 = snprint_config(conf, NULL, NULL, NULL);
+-	cfg2 = snprint_config(conf, NULL);
++	cfg2 = snprint_config(conf, NULL, NULL);
  	assert_non_null(cfg2);
  	put_multipath_config(conf);
  
