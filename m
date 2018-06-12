@@ -1,68 +1,42 @@
-From: Jing Xia <jing.xia.mail@gmail.com>
-Subject: [PATCH] dm bufio: Reduce dm_bufio_lock contention
-Date: Tue, 12 Jun 2018 16:03:28 +0800
-Message-ID: <1528790608-19557-1-git-send-email-jing.xia@unisoc.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com
-Cc: linux-kernel@vger.kernel.org
+From: Joe Thornber <thornber@redhat.com>
+Subject: Re: dm-thin: Why is DATA_DEV_BLOCK_SIZE_MIN_SECTORS set
+ to 64k?
+Date: Tue, 12 Jun 2018 16:34:03 +0100
+Message-ID: <20180612153403.bjsv5uzdk2vctc66@reti>
+References: <alpine.LRH.2.11.1805172332520.20870@mail.ewheeler.net>
+	<8bde7e8c-d2c1-c67d-f0ca-5b121053b34f@redhat.com>
+	<alpine.LRH.2.11.1806091847540.28960@mail.ewheeler.net>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.11.1806091847540.28960@mail.ewheeler.net>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Eric Wheeler <dm-devel@lists.ewheeler.net>
+Cc: dm-devel@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
-Performance test in android reports that the phone sometimes gets
-hanged and shows black screen for about several minutes.The sysdump shows:
-1. kswapd and other tasks who enter the direct-reclaim path are waiting
-on the dm_bufio_lock;
-2. the task who gets the dm_bufio_lock is stalled for IO completions,
-the relevant stack trace as :
+On Sat, Jun 09, 2018 at 07:31:54PM +0000, Eric Wheeler wrote:
+> I understand the choice.  What I am asking is this: would it be safe to 
+> let others make their own choice about block size provided they are warned 
+> about the metadata-chunk-size/pool-size limit tradeoff?
+> 
+> If it is safe, can we relax the restriction?  For example, 16k chunks 
+> still enables ~4TB pools, but with 1/4th of the CoW IO overhead on heavily 
+> snapshotted environments.
 
-PID: 22920  TASK: ffffffc0120f1a00  CPU: 1   COMMAND: "kworker/u8:2"
- #0 [ffffffc0282af3d0] __switch_to at ffffff8008085e48
- #1 [ffffffc0282af3f0] __schedule at ffffff8008850cc8
- #2 [ffffffc0282af450] schedule at ffffff8008850f4c
- #3 [ffffffc0282af470] schedule_timeout at ffffff8008853a0c
- #4 [ffffffc0282af520] schedule_timeout_uninterruptible at ffffff8008853aa8
- #5 [ffffffc0282af530] wait_iff_congested at ffffff8008181b40
- #6 [ffffffc0282af5b0] shrink_inactive_list at ffffff8008177c80
- #7 [ffffffc0282af680] shrink_lruvec at ffffff8008178510
- #8 [ffffffc0282af790] mem_cgroup_shrink_node_zone at ffffff80081793bc
- #9 [ffffffc0282af840] mem_cgroup_soft_limit_reclaim at ffffff80081b6040
+Yes, it would be safe.  There are downsides though; all io gets split
+on block size boundaries, so dropping to 16k or smaller could
+seriously increase the cpu usage.  Smaller blocks also means more
+mappings, more metadata, more kernel memory consumption.
 
-This patch aims to reduce the dm_bufio_lock contention when multiple
-tasks do shrink_slab() at the same time.It is acceptable that task
-will be allowed to reclaim from other shrinkers or reclaim from dm-bufio
-next time, rather than stalled for the dm_bufio_lock.
-
-Signed-off-by: Jing Xia <jing.xia@unisoc.com>
-Signed-off-by: Jing Xia <jing.xia.mail@gmail.com>
----
- drivers/md/dm-bufio.c | 13 +++++++++++--
- 1 file changed, 11 insertions(+), 2 deletions(-)
-
-diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
-index c546b56..402a028 100644
---- a/drivers/md/dm-bufio.c
-+++ b/drivers/md/dm-bufio.c
-@@ -1647,10 +1647,19 @@ static unsigned long __scan(struct dm_bufio_client *c, unsigned long nr_to_scan,
- static unsigned long
- dm_bufio_shrink_count(struct shrinker *shrink, struct shrink_control *sc)
- {
-+	unsigned long count;
-+	unsigned long retain_target;
-+
- 	struct dm_bufio_client *c = container_of(shrink, struct dm_bufio_client, shrinker);
--	unsigned long count = READ_ONCE(c->n_buffers[LIST_CLEAN]) +
-+
-+	if (!dm_bufio_trylock(c))
-+		return 0;
-+
-+	count = READ_ONCE(c->n_buffers[LIST_CLEAN]) +
- 			      READ_ONCE(c->n_buffers[LIST_DIRTY]);
--	unsigned long retain_target = get_retain_buffers(c);
-+	retain_target = get_retain_buffers(c);
-+
-+	dm_bufio_unlock(c);
- 
- 	return (count < retain_target) ? 0 : (count - retain_target);
- }
--- 
-1.9.1
+- Joe
