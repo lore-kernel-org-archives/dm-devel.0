@@ -1,97 +1,68 @@
-From: Xiongfeng Wang <wangxiongfeng2@huawei.com>
-Subject: Re: [Query] Failed to create dm-crypt device when using AEAD type
-Date: Tue, 12 Jun 2018 14:18:32 +0800
-Message-ID: <c11a89dc-6ea9-20d1-0b0c-1fc7659b6560@huawei.com>
-References: <33220afd-9a26-6133-ebf0-83b1268c34b7@huawei.com>
- <9aebff4d-71b0-9fe0-2ccc-38c80fc2179a@gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
+From: Jing Xia <jing.xia.mail@gmail.com>
+Subject: [PATCH] dm bufio: Reduce dm_bufio_lock contention
+Date: Tue, 12 Jun 2018 16:03:28 +0800
+Message-ID: <1528790608-19557-1-git-send-email-jing.xia@unisoc.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <9aebff4d-71b0-9fe0-2ccc-38c80fc2179a@gmail.com>
-Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Milan Broz <gmazyland@gmail.com>, agk@redhat.com, snitzer@redhat.com
-Cc: broonie@linaro.org, arnd@arndb.de, joakim.bech@linaro.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+To: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com
+Cc: linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hi Milan,
+Performance test in android reports that the phone sometimes gets
+hanged and shows black screen for about several minutes.The sysdump shows:
+1. kswapd and other tasks who enter the direct-reclaim path are waiting
+on the dm_bufio_lock;
+2. the task who gets the dm_bufio_lock is stalled for IO completions,
+the relevant stack trace as :
 
-Thanks so much! It worked. No integrity errors are printed after I wipe the device.
-I am stuck in these errors for about a week. Thanks again!
+PID: 22920  TASK: ffffffc0120f1a00  CPU: 1   COMMAND: "kworker/u8:2"
+ #0 [ffffffc0282af3d0] __switch_to at ffffff8008085e48
+ #1 [ffffffc0282af3f0] __schedule at ffffff8008850cc8
+ #2 [ffffffc0282af450] schedule at ffffff8008850f4c
+ #3 [ffffffc0282af470] schedule_timeout at ffffff8008853a0c
+ #4 [ffffffc0282af520] schedule_timeout_uninterruptible at ffffff8008853aa8
+ #5 [ffffffc0282af530] wait_iff_congested at ffffff8008181b40
+ #6 [ffffffc0282af5b0] shrink_inactive_list at ffffff8008177c80
+ #7 [ffffffc0282af680] shrink_lruvec at ffffff8008178510
+ #8 [ffffffc0282af790] mem_cgroup_shrink_node_zone at ffffff80081793bc
+ #9 [ffffffc0282af840] mem_cgroup_soft_limit_reclaim at ffffff80081b6040
 
-Regards,
-Xiongfeng
+This patch aims to reduce the dm_bufio_lock contention when multiple
+tasks do shrink_slab() at the same time.It is acceptable that task
+will be allowed to reclaim from other shrinkers or reclaim from dm-bufio
+next time, rather than stalled for the dm_bufio_lock.
 
-On 2018/6/12 13:50, Milan Broz wrote:
-> On 06/12/2018 07:37 AM, Xiongfeng Wang wrote:
->> Hi Dm-crypt maintainers,
->>
->> Recently, I was testing the dm-crypt, but I failed to create dm-crypt device when using AEAD type.
->> I would really appreciate it if you could give some help.
->> The error info is as follows:
->> localhost:~ # export SIZE_INT=997376
->> 8 J 0"ost:~ # dmsetup create integ1 --table "0 $SIZE_INT integrity /dev/sdd2 0 2
->> localhost:~ #
->> dom \host:~ # dmsetup create crypt1 --table "0 $SIZE_INT crypt capi:gcm(aes)-ran
->>>  11ff33c6fb942655efb3e30cf4c0fd95f5ef483afca72166c530ae26151dd83b \
->>>  0 /dev/mapper/integ1 0 1 integrity:28:aead"
->> [ 1746.631559] device-mapper: crypt: Integrity AEAD, tag size 16, IV size 12.
->> [ 1746.649796] device-mapper: crypt: INTEGRITY AEAD ERROR, sector 997248
->> [ 1746.656382] device-mapper: crypt: INTEGRITY AEAD ERROR, sector 997248
->> [ 1746.662826] Buffer I/O error on dev dm-3, logical block 124656, async page read
-> 
-> These errors actually say that it works as expected! :)
-> 
-> If the underlying device has no integrity tags initialized, *every* access to device must generate
-> integrity fail (because integrity tag is just not correct).
-> 
-> And the errors above are perhaps udev scans that are triggered by inotify when new device appears
-> and it tries to find some signatures on uninitialized disk with blkid.
-> 
-> If you use cryptsetup, it will try to wipe the device, alternatively you can use
-> dd (just be sure to use direct-io, page cache can generate some reads that fails as well),
-> so in your case something like this:
-> 
->   # dd if=/dev/zero of=/dev/maper/crypt1 bs=1M oflag=direct
-> 
-> should wipe the device (and store integrity tags).
-> 
-> If you activate your devices again (with the same parameters), no integrity errors should be present.
-> 
-> (I will write more documentation in next weeks regarding all this stuff, we have now better
-> AEAD ciphers in 4.18.)
-> 
-> Thanks,
-> Milan
->  
->>
->> I tested it both on qemu and hardware, and it printed the same error.
->> The error seems always on the last several sectors within the SIZE_INT I designated.
->> When I change the SIZE_INT, the error sector num also change.
->> I think something went wrong in the software, not the hardware.
->>
->> My board don't have AEAD accelerator, so it uses the software implemented cipher.
->> My kernel version is 4.17-rc3.
->>
->> The command is as follows:
->> export SIZE_INT=997376
->> dmsetup create integ1 --table "0 $SIZE_INT integrity /dev/sdd2 0 28 J 0"
->> dmsetup create crypt1 --table "0 $SIZE_INT crypt capi:gcm(aes)-random \
->>  11ff33c6fb942655efb3e30cf4c0fd95f5ef483afca72166c530ae26151dd83b \
->>  0 /dev/mapper/integ1 0 1 integrity:28:aead"
->>
->> This command comes from the commit information of the commit which introduce AEAD.
->> (commit ef43aa38063a6b2b3c6618e28ab35794f4f1fe29
->> dm crypt: add cryptographic data integrity protection (authenticated encryption))
->> I only change 'aes-gcm-random' to 'capi:gcm(aes)-random'
->>
->> Really appreciate it if you could have a look at it, Thanks!
->>
->> Regards,
->> Xiongfeng
->>
->>
-> 
-> .
-> 
+Signed-off-by: Jing Xia <jing.xia@unisoc.com>
+Signed-off-by: Jing Xia <jing.xia.mail@gmail.com>
+---
+ drivers/md/dm-bufio.c | 13 +++++++++++--
+ 1 file changed, 11 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+index c546b56..402a028 100644
+--- a/drivers/md/dm-bufio.c
++++ b/drivers/md/dm-bufio.c
+@@ -1647,10 +1647,19 @@ static unsigned long __scan(struct dm_bufio_client *c, unsigned long nr_to_scan,
+ static unsigned long
+ dm_bufio_shrink_count(struct shrinker *shrink, struct shrink_control *sc)
+ {
++	unsigned long count;
++	unsigned long retain_target;
++
+ 	struct dm_bufio_client *c = container_of(shrink, struct dm_bufio_client, shrinker);
+-	unsigned long count = READ_ONCE(c->n_buffers[LIST_CLEAN]) +
++
++	if (!dm_bufio_trylock(c))
++		return 0;
++
++	count = READ_ONCE(c->n_buffers[LIST_CLEAN]) +
+ 			      READ_ONCE(c->n_buffers[LIST_DIRTY]);
+-	unsigned long retain_target = get_retain_buffers(c);
++	retain_target = get_retain_buffers(c);
++
++	dm_bufio_unlock(c);
+ 
+ 	return (count < retain_target) ? 0 : (count - retain_target);
+ }
+-- 
+1.9.1
