@@ -1,7 +1,7 @@
 From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-Subject: [PATCH v2 3/5] bitmap: Add bitmap_alloc(), bitmap_zalloc() and bitmap_free()
-Date: Fri, 15 Jun 2018 16:20:15 +0300
-Message-ID: <20180615132017.23889-4-andriy.shevchenko@linux.intel.com>
+Subject: [PATCH v2 2/5] bitmap: Drop unnecessary 0 check for u32 array operations
+Date: Fri, 15 Jun 2018 16:20:14 +0300
+Message-ID: <20180615132017.23889-3-andriy.shevchenko@linux.intel.com>
 References: <20180615132017.23889-1-andriy.shevchenko@linux.intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180615132017.23889-1-andriy.shevchenko@linux.intel.com>
@@ -10,72 +10,44 @@ To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-deve
 Cc: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
 List-Id: dm-devel.ids
 
-A lot of code become ugly because of open coding allocations for bitmaps.
+The nbits == 0 is safe to be supplied to the function body, so,
+remove unnecessary checks in bitmap_to_arr32() and bitmap_from_arr32().
 
-Introduce three helpers to allow users be more clear of intention
-and keep their code neat.
-
+Acked-by: Yury Norov <ynorov@caviumnetworks.com>
 Signed-off-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
 ---
- include/linux/bitmap.h |  8 ++++++++
- lib/bitmap.c           | 19 +++++++++++++++++++
- 2 files changed, 27 insertions(+)
+ lib/bitmap.c | 9 +--------
+ 1 file changed, 1 insertion(+), 8 deletions(-)
 
-diff --git a/include/linux/bitmap.h b/include/linux/bitmap.h
-index 1ee46f492267..acf5e8df3504 100644
---- a/include/linux/bitmap.h
-+++ b/include/linux/bitmap.h
-@@ -104,6 +104,14 @@
-  * contain all bit positions from 0 to 'bits' - 1.
-  */
- 
-+/*
-+ * Allocation and deallocation of bitmap.
-+ * Provided in lib/bitmap.c to avoid circular dependency.
-+ */
-+extern unsigned long *bitmap_alloc(unsigned int nbits, gfp_t flags);
-+extern unsigned long *bitmap_zalloc(unsigned int nbits, gfp_t flags);
-+extern void bitmap_free(const unsigned long *bitmap);
-+
- /*
-  * lib/bitmap.c provides these functions:
-  */
 diff --git a/lib/bitmap.c b/lib/bitmap.c
-index 33e95cd359a2..09acf2fd6a35 100644
+index 58f9750e49c6..33e95cd359a2 100644
 --- a/lib/bitmap.c
 +++ b/lib/bitmap.c
-@@ -13,6 +13,7 @@
- #include <linux/bitops.h>
- #include <linux/bug.h>
- #include <linux/kernel.h>
-+#include <linux/slab.h>
- #include <linux/string.h>
- #include <linux/uaccess.h>
+@@ -1132,14 +1132,10 @@ EXPORT_SYMBOL(bitmap_copy_le);
+  *	@buf: array of u32 (in host byte order), the source bitmap
+  *	@nbits: number of bits in @bitmap
+  */
+-void bitmap_from_arr32(unsigned long *bitmap, const u32 *buf,
+-						unsigned int nbits)
++void bitmap_from_arr32(unsigned long *bitmap, const u32 *buf, unsigned int nbits)
+ {
+ 	unsigned int i, halfwords;
  
-@@ -1125,6 +1126,24 @@ void bitmap_copy_le(unsigned long *dst, const unsigned long *src, unsigned int n
- EXPORT_SYMBOL(bitmap_copy_le);
- #endif
+-	if (!nbits)
+-		return;
+-
+ 	halfwords = DIV_ROUND_UP(nbits, 32);
+ 	for (i = 0; i < halfwords; i++) {
+ 		bitmap[i/2] = (unsigned long) buf[i];
+@@ -1163,9 +1159,6 @@ void bitmap_to_arr32(u32 *buf, const unsigned long *bitmap, unsigned int nbits)
+ {
+ 	unsigned int i, halfwords;
  
-+unsigned long *bitmap_alloc(unsigned int nbits, gfp_t flags)
-+{
-+	return kmalloc_array(BITS_TO_LONGS(nbits), sizeof(unsigned long), flags);
-+}
-+EXPORT_SYMBOL(bitmap_alloc);
-+
-+unsigned long *bitmap_zalloc(unsigned int nbits, gfp_t flags)
-+{
-+	return bitmap_alloc(nbits, flags | __GFP_ZERO);
-+}
-+EXPORT_SYMBOL(bitmap_zalloc);
-+
-+void bitmap_free(const unsigned long *bitmap)
-+{
-+	kfree(bitmap);
-+}
-+EXPORT_SYMBOL(bitmap_free);
-+
- #if BITS_PER_LONG == 64
- /**
-  * bitmap_from_arr32 - copy the contents of u32 array of bits to bitmap
+-	if (!nbits)
+-		return;
+-
+ 	halfwords = DIV_ROUND_UP(nbits, 32);
+ 	for (i = 0; i < halfwords; i++) {
+ 		buf[i] = (u32) (bitmap[i/2] & UINT_MAX);
 -- 
 2.17.1
