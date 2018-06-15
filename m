@@ -1,58 +1,81 @@
 From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-Subject: [PATCH v2 0/5] bitmap: Introduce alloc/free helpers
-Date: Fri, 15 Jun 2018 16:20:12 +0300
-Message-ID: <20180615132017.23889-1-andriy.shevchenko@linux.intel.com>
+Subject: [PATCH v2 3/5] bitmap: Add bitmap_alloc(), bitmap_zalloc() and bitmap_free()
+Date: Fri, 15 Jun 2018 16:20:15 +0300
+Message-ID: <20180615132017.23889-4-andriy.shevchenko@linux.intel.com>
+References: <20180615132017.23889-1-andriy.shevchenko@linux.intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180615132017.23889-1-andriy.shevchenko@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, Dmitry Torokhov <dmitry.torokhov@gmail.com>, linux-input@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Yury Norov <ynorov@caviumnetworks.com>, linux-kernel@vger.kernel.org, mika.westerberg@linux.intel.com
 Cc: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
 List-Id: dm-devel.ids
 
-A lot of code is using allocation of bitmaps using BITS_PER_LONG() macro and
-sizeof(unsigned long) operator. The readability suffers because of this.
+A lot of code become ugly because of open coding allocations for bitmaps.
 
-The series introduces three helpers, i.e. bitmap_alloc(), bitmap_zalloc() and
-bitmap_free(), to make it more cleaner.
+Introduce three helpers to allow users be more clear of intention
+and keep their code neat.
 
-Patch 1 is a preparatory to avoid namespace collisions between bitmap API and
-MD bitmap. No functional changes intended.
+Signed-off-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+---
+ include/linux/bitmap.h |  8 ++++++++
+ lib/bitmap.c           | 19 +++++++++++++++++++
+ 2 files changed, 27 insertions(+)
 
-Patch 2 is just orphaned from previous release cycle.
-
-Patch 3 introduces new helpers.
-
-Patches 4 and 5 is just an example how to use new helpers. Locally I have like
-dozen of them against different subsystems and drivers.
-
-Ideally it would go through Input subsystem, thus, needs an Ack from MD maintainer(s).
-
-Since v2:
- - added namespace fix patch against MD bitmap API
- - moved functions to lib/bitmap.c to avoid circular dependencies
- - appended Dmitry's tags
-
-Andy Shevchenko (5):
-  md: Avoid namespace collision with bitmap API
-  bitmap: Drop unnecessary 0 check for u32 array operations
-  bitmap: Add bitmap_alloc(), bitmap_zalloc() and bitmap_free()
-  Input: gpio-keys - Switch to bitmap_zalloc()
-  Input: evdev - Switch to bitmap_zalloc()
-
- drivers/input/evdev.c                         |  16 +-
- drivers/input/keyboard/gpio_keys.c            |   8 +-
- drivers/md/dm-raid.c                          |   6 +-
- drivers/md/md-bitmap.c                        | 301 +++++++++---------
- drivers/md/md-bitmap.h                        |  46 +--
- drivers/md/md-cluster.c                       |  16 +-
- drivers/md/md.c                               |  44 +--
- .../md/persistent-data/dm-space-map-common.c  |   8 +-
- drivers/md/raid1.c                            |  20 +-
- drivers/md/raid10.c                           |  26 +-
- drivers/md/raid5-cache.c                      |   2 +-
- drivers/md/raid5.c                            |  24 +-
- include/linux/bitmap.h                        |   8 +
- lib/bitmap.c                                  |  28 +-
- 14 files changed, 281 insertions(+), 272 deletions(-)
-
+diff --git a/include/linux/bitmap.h b/include/linux/bitmap.h
+index 1ee46f492267..acf5e8df3504 100644
+--- a/include/linux/bitmap.h
++++ b/include/linux/bitmap.h
+@@ -104,6 +104,14 @@
+  * contain all bit positions from 0 to 'bits' - 1.
+  */
+ 
++/*
++ * Allocation and deallocation of bitmap.
++ * Provided in lib/bitmap.c to avoid circular dependency.
++ */
++extern unsigned long *bitmap_alloc(unsigned int nbits, gfp_t flags);
++extern unsigned long *bitmap_zalloc(unsigned int nbits, gfp_t flags);
++extern void bitmap_free(const unsigned long *bitmap);
++
+ /*
+  * lib/bitmap.c provides these functions:
+  */
+diff --git a/lib/bitmap.c b/lib/bitmap.c
+index 33e95cd359a2..09acf2fd6a35 100644
+--- a/lib/bitmap.c
++++ b/lib/bitmap.c
+@@ -13,6 +13,7 @@
+ #include <linux/bitops.h>
+ #include <linux/bug.h>
+ #include <linux/kernel.h>
++#include <linux/slab.h>
+ #include <linux/string.h>
+ #include <linux/uaccess.h>
+ 
+@@ -1125,6 +1126,24 @@ void bitmap_copy_le(unsigned long *dst, const unsigned long *src, unsigned int n
+ EXPORT_SYMBOL(bitmap_copy_le);
+ #endif
+ 
++unsigned long *bitmap_alloc(unsigned int nbits, gfp_t flags)
++{
++	return kmalloc_array(BITS_TO_LONGS(nbits), sizeof(unsigned long), flags);
++}
++EXPORT_SYMBOL(bitmap_alloc);
++
++unsigned long *bitmap_zalloc(unsigned int nbits, gfp_t flags)
++{
++	return bitmap_alloc(nbits, flags | __GFP_ZERO);
++}
++EXPORT_SYMBOL(bitmap_zalloc);
++
++void bitmap_free(const unsigned long *bitmap)
++{
++	kfree(bitmap);
++}
++EXPORT_SYMBOL(bitmap_free);
++
+ #if BITS_PER_LONG == 64
+ /**
+  * bitmap_from_arr32 - copy the contents of u32 array of bits to bitmap
 -- 
 2.17.1
