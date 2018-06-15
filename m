@@ -1,16 +1,17 @@
-From: "Benjamin Marzinski" <bmarzins@redhat.com>
-Subject: Re: [PATCH 15/28] libmultipath: merge hwentries inside a
-	conf file
-Date: Fri, 15 Jun 2018 13:03:32 -0500
-Message-ID: <20180615180332.GL3103@octiron.msp.redhat.com>
-References: <20180608102041.22904-1-mwilck@suse.com>
-	<20180608102041.22904-16-mwilck@suse.com>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: why does __split_and_process_bio use
+	bio_clone_bioset?
+Date: Fri, 15 Jun 2018 00:38:46 -0700
+Message-ID: <20180615073846.GA29726@infradead.org>
+References: <20180614081947.GA23375@infradead.org>
+	<20180614181245.GA1161@redhat.com>
+	<20180614200808.GA46373@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20180608102041.22904-16-mwilck@suse.com>
+In-Reply-To: <20180614200808.GA46373@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,135 +21,14 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Christoph Hellwig <hch@infradead.org>, linux-block@vger.kernel.org, dm-devel@redhat.com, NeilBrown <neilb@suse.com>, Ming Lei <ming.lei@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Jun 08, 2018 at 12:20:28PM +0200, Martin Wilck wrote:
-> Merging hwentries with identical vendor/product/revision is still useful,
-> although it's not strictly necessary any more. But such identical entries
-> should always be merged, not only if they appear in different configuration
-> files. This requires changing the logic of factorize_hwtable.
+On Thu, Jun 14, 2018 at 04:08:09PM -0400, Mike Snitzer wrote:
+> The patch below seems to work fine (given quick testing).. It also has a
+> side-effect of not breaking integrity support (which commit 18a25da8
+> appears to do because it isn't accounting for any of the integrity stuff
+> bio_split, or dm.c:clone_bio, does).
 
-Sorry for my slowness in reviewing these. This one looks wrong to me
- 
-> By setting -DCHECK_BUILTIN_HWTABLE at compile time, the built-in hwtable
-> can be checked against duplicates as well.
-> 
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  libmultipath/config.c | 43 +++++++++++++++++++++----------------------
->  1 file changed, 21 insertions(+), 22 deletions(-)
-> 
-> diff --git a/libmultipath/config.c b/libmultipath/config.c
-> index 713ac7f3..fb41d620 100644
-> --- a/libmultipath/config.c
-> +++ b/libmultipath/config.c
-> @@ -452,7 +452,7 @@ out:
->  }
->  
->  static void
-> -factorize_hwtable (vector hw, int n)
-> +factorize_hwtable (vector hw, int n, const char *table_desc)
->  {
->  	struct hwentry *hwe1, *hwe2;
->  	int i, j;
-> @@ -462,22 +462,26 @@ restart:
->  		if (i == n)
->  			break;
->  		j = n;
-> +		/* drop invalid device configs */
-> +		if (i >= n && (!hwe1->vendor || !hwe1->product)) {
-
-How can i >= n?  vector_foreach_slot() starts i at 0, and then next
-lines are
-
-                if (i == n)
-                        break;
-
-
-> +			condlog(0, "device config in %s missing vendor or product parameter",
-> +				table_desc);
-> +			vector_del_slot(hw, i--);
-
-shouldn't we also decrement n here. I realize that doesn't work well for
-the CHECK_BUILTIN_HWTABLE check, where n is 0, but as I said above, I'm
-pretty sure that will never get here.
-
-> +			free_hwe(hwe1);
-> +			continue;
-> +		}
-> +		j = n > i + 1 ? n : i + 1;
-
-again, n must always be at least i + 1 to get here, so j is always n.
-
->  		vector_foreach_slot_after(hw, hwe2, j) {
-> -			/* drop invalid device configs */
-> -			if (!hwe2->vendor || !hwe2->product) {
-> -				condlog(0, "device config missing vendor or product parameter");
-> -				vector_del_slot(hw, j--);
-> -				free_hwe(hwe2);
-> -				continue;
-> -			}
->  			if (hwe_strmatch(hwe2, hwe1) == 0) {
-> -				condlog(4, "%s: removing hwentry %s:%s:%s",
-> +				condlog(i >= n ? 1 : 3,
-
-this check also looks wrong
-
-> +					"%s: duplicate device section for %s:%s:%s in %s",
->  					__func__, hwe1->vendor, hwe1->product,
-> -					hwe1->revision);
-> +					hwe1->revision, table_desc);
->  				vector_del_slot(hw, i);
->  				merge_hwe(hwe2, hwe1);
->  				free_hwe(hwe1);
-> -				n -= 1;
-> +				if (i < n)
-
-and this one looks unnecessary.
-
-> +					n -= 1;
->  				/*
->  				 * Play safe here; we have modified
->  				 * the original vector so the outer
-> @@ -605,9 +609,8 @@ process_config_dir(struct config *conf, vector keywords, char *dir)
->  		snprintf(path, LINE_MAX, "%s/%s", dir, namelist[i]->d_name);
->  		path[LINE_MAX-1] = '\0';
->  		process_file(conf, path);
-> -		if (VECTOR_SIZE(conf->hwtable) > old_hwtable_size)
-> -			factorize_hwtable(conf->hwtable, old_hwtable_size);
-> -
-> +		factorize_hwtable(conf->hwtable, old_hwtable_size,
-> +				  namelist[i]->d_name);
->  	}
->  	pthread_cleanup_pop(1);
->  }
-> @@ -655,6 +658,9 @@ load_config (char * file)
->  	if (setup_default_hwtable(conf->hwtable))
->  		goto out;
->  
-> +#ifdef CHECK_BUILTIN_HWTABLE
-> +	factorize_hwtable(conf->hwtable, 0, "builtin");
-> +#endif
->  	/*
->  	 * read the config file
->  	 */
-> @@ -668,14 +674,7 @@ load_config (char * file)
->  			condlog(0, "error parsing config file");
->  			goto out;
->  		}
-> -		if (VECTOR_SIZE(conf->hwtable) > builtin_hwtable_size) {
-> -			/*
-> -			 * remove duplica in hwtable. config file
-> -			 * takes precedence over build-in hwtable
-> -			 */
-> -			factorize_hwtable(conf->hwtable, builtin_hwtable_size);
-> -		}
-> -
-> +		factorize_hwtable(conf->hwtable, builtin_hwtable_size, file);
->  	}
->  
->  	conf->processed_main_config = 1;
-> -- 
-> 2.17.0
+Looks sensible to me.  Are you going to queue this up for 4.18?
