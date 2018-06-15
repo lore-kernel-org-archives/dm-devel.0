@@ -1,7 +1,7 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] Fix lintian complaint about bad whatis entry
-Date: Fri, 15 Jun 2018 16:17:40 +0200
-Message-ID: <20180615141740.2118-1-xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: remove unused SCSI_REV_SIZE
+Date: Fri, 15 Jun 2018 16:44:35 +0200
+Message-ID: <20180615144435.4684-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -15,45 +15,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: DM-DEV ML <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, Vincent McIntyre <vincent.mcintyre@csiro.au>
+Cc: DM-DEV ML <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-From: Vincent McIntyre <vincent.mcintyre@csiro.au>
+It was replaced in 00ee0bda40f8b6ac060211c36a419c699af7f778
 
+Cc: Martin Wilck <mwilck@suse.com>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: DM-DEV ML <dm-devel@redhat.com>
-Signed-off-by: Vincent McIntyre <vincent.mcintyre@csiro.au>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmpathpersist/mpath_persistent_reserve_in.3  | 2 +-
- libmpathpersist/mpath_persistent_reserve_out.3 | 2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
+ libmultipath/structs.h | 1 -
+ 1 file changed, 1 deletion(-)
 
-diff --git a/libmpathpersist/mpath_persistent_reserve_in.3 b/libmpathpersist/mpath_persistent_reserve_in.3
-index 5ed0779..4691bde 100644
---- a/libmpathpersist/mpath_persistent_reserve_in.3
-+++ b/libmpathpersist/mpath_persistent_reserve_in.3
-@@ -12,7 +12,7 @@
- .SH NAME
- .\" ----------------------------------------------------------------------------
- .
--mpath_persistent_reserve_in
-+mpath_persistent_reserve_in \- send PRIN command to DM device
- .
- .
- .\" ----------------------------------------------------------------------------
-diff --git a/libmpathpersist/mpath_persistent_reserve_out.3 b/libmpathpersist/mpath_persistent_reserve_out.3
-index e11eb57..55b00b0 100644
---- a/libmpathpersist/mpath_persistent_reserve_out.3
-+++ b/libmpathpersist/mpath_persistent_reserve_out.3
-@@ -12,7 +12,7 @@
- .SH NAME
- .\" ----------------------------------------------------------------------------
- .
--mpath_persistent_reserve_out
-+mpath_persistent_reserve_out \- send PROUT command to DM device
- .
- .
- .\" ----------------------------------------------------------------------------
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index e424b15..1b4e328 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -24,7 +24,6 @@
+ 
+ #define SCSI_VENDOR_SIZE	9
+ #define SCSI_PRODUCT_SIZE	17
+-#define SCSI_REV_SIZE		5
+ #define SCSI_STATE_SIZE		19
+ #define NVME_MODEL_SIZE         41
+ #define NVME_REV_SIZE           9
 -- 
-2.1.4
+2.17.1
