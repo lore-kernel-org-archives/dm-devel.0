@@ -1,75 +1,58 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: dm bufio: Reduce dm_bufio_lock contention
-Date: Fri, 15 Jun 2018 15:09:25 +0200
-Message-ID: <20180615130925.GI24039@dhcp22.suse.cz>
-References: <1528790608-19557-1-git-send-email-jing.xia@unisoc.com>
- <20180612212007.GA22717@redhat.com>
- <alpine.LRH.2.02.1806131001250.15845@file01.intranet.prod.int.rdu2.redhat.com>
- <CAN=25QMQiJ7wvfvYvmZnEnrkeb-SA7_hPj+N2RnO8y-aVO8wOQ@mail.gmail.com>
- <20180614073153.GB9371@dhcp22.suse.cz>
- <alpine.LRH.2.02.1806141424510.30404@file01.intranet.prod.int.rdu2.redhat.com>
- <20180615073201.GB24039@dhcp22.suse.cz>
- <alpine.LRH.2.02.1806150724260.15022@file01.intranet.prod.int.rdu2.redhat.com>
- <20180615115547.GH24039@dhcp22.suse.cz>
- <alpine.LRH.2.02.1806150832100.26650@file01.intranet.prod.int.rdu2.redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+Subject: [PATCH v2 0/5] bitmap: Introduce alloc/free helpers
+Date: Fri, 15 Jun 2018 16:20:12 +0300
+Message-ID: <20180615132017.23889-1-andriy.shevchenko@linux.intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1806150832100.26650@file01.intranet.prod.int.rdu2.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: jing xia <jing.xia.mail@gmail.com>, Mike Snitzer <snitzer@redhat.com>, agk@redhat.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-mm@kvack.org
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, Dmitry Torokhov <dmitry.torokhov@gmail.com>, linux-input@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Yury Norov <ynorov@caviumnetworks.com>, linux-kernel@vger.kernel.org, mika.westerberg@linux.intel.com
+Cc: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
 List-Id: dm-devel.ids
 
-On Fri 15-06-18 08:47:52, Mikulas Patocka wrote:
-> 
-> 
-> On Fri, 15 Jun 2018, Michal Hocko wrote:
-> 
-> > On Fri 15-06-18 07:35:07, Mikulas Patocka wrote:
-> > > 
-> > > Because mempool uses it. Mempool uses allocations with "GFP_NOIO | 
-> > > __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN". An so dm-bufio uses 
-> > > these flags too. dm-bufio is just a big mempool.
-> > 
-> > This doesn't answer my question though. Somebody else is doing it is not
-> > an explanation. Prior to your 41c73a49df31 there was no GFP_NOIO
-> > allocation AFAICS. So why do you really need it now? Why cannot you
-> 
-> dm-bufio always used "GFP_NOIO | __GFP_NORETRY | __GFP_NOMEMALLOC | 
-> __GFP_NOWARN" since the kernel 3.2 when it was introduced.
-> 
-> In the kernel 4.10, dm-bufio was changed so that it does GFP_NOWAIT 
-> allocation, then drops the lock and does GFP_NOIO with the dropped lock 
-> (because someone was likely experiencing the same issue that is reported 
-> in this thread) - there are two commits that change it - 9ea61cac0 and 
-> 41c73a49df31.
+A lot of code is using allocation of bitmaps using BITS_PER_LONG() macro and
+sizeof(unsigned long) operator. The readability suffers because of this.
 
-OK, I see. Is there any fundamental reason why this path has to do one
-round of GFP_IO or it can keep NOWAIT, drop the lock, sleep and retry
-again?
+The series introduces three helpers, i.e. bitmap_alloc(), bitmap_zalloc() and
+bitmap_free(), to make it more cleaner.
 
-[...]
-> > is the same class of problem, honestly, I dunno. And I've already said
-> > that stalling __GFP_NORETRY might be a good way around that but that
-> > needs much more consideration and existing users examination. I am not
-> > aware anybody has done that. Doing changes like that based on a single
-> > user is certainly risky.
-> 
-> Why don't you set any rules how these flags should be used?
+Patch 1 is a preparatory to avoid namespace collisions between bitmap API and
+MD bitmap. No functional changes intended.
 
-It is really hard to change rules during the game. You basically have to
-examine all existing users and that is well beyond my time scope. I've
-tried that where it was possible. E.g. __GFP_REPEAT and turned it into a
-well defined semantic. __GFP_NORETRY is a bigger beast.
+Patch 2 is just orphaned from previous release cycle.
 
-Anyway, I believe that it would be much safer to look at the problem
-from a highlevel perspective. You seem to be focused on __GFP_NORETRY
-little bit too much IMHO. We are not throttling callers which explicitly
-do not want to or cannot - see current_may_throttle. Is it possible that
-both your md and mempool allocators can either (ab)use PF_LESS_THROTTLE
-or use other means? E.g. do you have backing_dev_info at that time?
+Patch 3 introduces new helpers.
+
+Patches 4 and 5 is just an example how to use new helpers. Locally I have like
+dozen of them against different subsystems and drivers.
+
+Ideally it would go through Input subsystem, thus, needs an Ack from MD maintainer(s).
+
+Since v2:
+ - added namespace fix patch against MD bitmap API
+ - moved functions to lib/bitmap.c to avoid circular dependencies
+ - appended Dmitry's tags
+
+Andy Shevchenko (5):
+  md: Avoid namespace collision with bitmap API
+  bitmap: Drop unnecessary 0 check for u32 array operations
+  bitmap: Add bitmap_alloc(), bitmap_zalloc() and bitmap_free()
+  Input: gpio-keys - Switch to bitmap_zalloc()
+  Input: evdev - Switch to bitmap_zalloc()
+
+ drivers/input/evdev.c                         |  16 +-
+ drivers/input/keyboard/gpio_keys.c            |   8 +-
+ drivers/md/dm-raid.c                          |   6 +-
+ drivers/md/md-bitmap.c                        | 301 +++++++++---------
+ drivers/md/md-bitmap.h                        |  46 +--
+ drivers/md/md-cluster.c                       |  16 +-
+ drivers/md/md.c                               |  44 +--
+ .../md/persistent-data/dm-space-map-common.c  |   8 +-
+ drivers/md/raid1.c                            |  20 +-
+ drivers/md/raid10.c                           |  26 +-
+ drivers/md/raid5-cache.c                      |   2 +-
+ drivers/md/raid5.c                            |  24 +-
+ include/linux/bitmap.h                        |   8 +
+ lib/bitmap.c                                  |  28 +-
+ 14 files changed, 281 insertions(+), 272 deletions(-)
+
 -- 
-Michal Hocko
-SUSE Labs
+2.17.1
