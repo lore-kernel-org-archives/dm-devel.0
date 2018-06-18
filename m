@@ -1,40 +1,92 @@
-From: Joe Perches <joe@perches.com>
-Subject: Re: [PATCH v2 5/5] Input: evdev - Switch to bitmap_zalloc()
-Date: Mon, 18 Jun 2018 13:40:20 -0700
-Message-ID: <0ac0c93919e40d0c610419fa12e852e889d490e6.camel@perches.com>
-References: <20180615132017.23889-1-andriy.shevchenko@linux.intel.com>
-         <20180615132017.23889-6-andriy.shevchenko@linux.intel.com>
-         <20180615214231.GA371@yury-thinkpad>
-         <CAHp75VcxYPCLYq1J8qqjPdgDdQnWDgZKkavmyEWD8GNxcW2mWg@mail.gmail.com>
-         <0a3d86d7746792a2f848cef386941fc182653515.camel@perches.com>
-         <8cfbdf809f531f8aa315fe1679c3273858038f41.camel@linux.intel.com>
-         <780cba4e119110f2d2a81e237874592cff4d7868.camel@perches.com>
-         <CAHp75VcJLEmDTe0bCx7UkH4xMH44VUrvuFqdc++OYyE-JKd_cg@mail.gmail.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH] dm: writecache: Use 2-factor allocator
+	arguments
+Date: Mon, 18 Jun 2018 17:12:53 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1806181708060.15433@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20180618175033.GA2627@beast>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAHp75VcJLEmDTe0bCx7UkH4xMH44VUrvuFqdc++OYyE-JKd_cg@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Shevchenko <andy.shevchenko@gmail.com>
-Cc: Andy Shevchenko <andriy.shevchenko@linux.intel.com>, Yury Norov <ynorov@caviumnetworks.com>, agk@redhat.com, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, shli@kernel.org, linux-raid@vger.kernel.org, Dmitry Torokhov <dmitry.torokhov@gmail.com>, linux-input <linux-input@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Mika Westerberg <mika.westerberg@linux.intel.com>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20180618175033.GA2627@beast>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Kees Cook <keescook@chromium.org>
+Cc: dm-devel@redhat.com, Mike Snitzer <msnitzer@redhat.com>, Dan Williams <dan.j.williams@intel.com>, linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, 2018-06-18 at 22:56 +0300, Andy Shevchenko wrote:
-> On Mon, Jun 18, 2018 at 6:49 PM, Joe Perches <joe@perches.com> wrote:
-> > Perhaps bitmap_dup_user [or some better name] could or should
-> > be one of the helpers.
+
+
+On Mon, 18 Jun 2018, Kees Cook wrote:
+
+> This adjusts the allocator calls to use the 2-factor argument style, as
+> already done treewide for better defense against allocator overflows.
+> Additionally adjusts style nit to avoid assignments in test expressions.
 > 
-> Can you help with estimation how many existing users need this kind of
-> functionality? One of them evdev, which has an open coded variant.
+> Signed-off-by: Kees Cook <keescook@chromium.org>
+> ---
+>  drivers/md/dm-writecache.c | 16 ++++++++++------
+>  1 file changed, 10 insertions(+), 6 deletions(-)
+> 
+> diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
+> index 5961c7794ef3..7773f4c75701 100644
+> --- a/drivers/md/dm-writecache.c
+> +++ b/drivers/md/dm-writecache.c
+> @@ -259,7 +259,7 @@ static int persistent_memory_claim(struct dm_writecache *wc)
+>  	if (da != p) {
+>  		long i;
+>  		wc->memory_map = NULL;
+> -		pages = kvmalloc(p * sizeof(struct page *), GFP_KERNEL);
+> +		pages = kvmalloc_array(p, sizeof(struct page *), GFP_KERNEL);
+>  		if (!pages) {
+>  			r = -ENOMEM;
+>  			goto err2;
+> @@ -859,7 +859,8 @@ static int writecache_alloc_entries(struct dm_writecache *wc)
+>  
+>  	if (wc->entries)
+>  		return 0;
+> -	wc->entries = vmalloc(sizeof(struct wc_entry) * wc->n_blocks);
+> +	wc->entries = vmalloc(array_size(sizeof(struct wc_entry),
+> +					 wc->n_blocks));
+>  	if (!wc->entries)
+>  		return -ENOMEM;
+>  	for (b = 0; b < wc->n_blocks; b++) {
+> @@ -1480,10 +1481,13 @@ static void __writecache_writeback_pmem(struct dm_writecache *wc, struct writeba
+>  		bio_set_dev(&wb->bio, wc->dev->bdev);
+>  		wb->bio.bi_iter.bi_sector = read_original_sector(wc, e);
+>  		wb->page_offset = PAGE_SIZE;
+> -		if (max_pages <= WB_LIST_INLINE ||
+> -		    unlikely(!(wb->wc_list = kmalloc(max_pages * sizeof(struct wc_entry *),
+> -						     GFP_NOIO | __GFP_NORETRY |
+> -						     __GFP_NOMEMALLOC | __GFP_NOWARN)))) {
+> +		if (max_pages > WB_LIST_INLINE)
+> +			wb->wc_list = kmalloc_array(max_pages,
+> +						    sizeof(struct wc_entry *),
+> +						    GFP_NOIO | __GFP_NORETRY |
+> +						    __GFP_NOMEMALLOC |
+> +						    __GFP_NOWARN);
+> +		if (max_pages <= WB_LIST_INLINE || !wb->wc_list) {
 
-My estimation via cocci script below is 1 existing user,
-so it's almost certainly not worthwhile.
+The rest of patch is OK - but you shouldn't duplicate the comparison 
+against WB_LIST_INLINE.
 
-$ cat copy_from_user.cocci 
-@@
-unsigned long *p;
-expression e1, e2;
-@@
+Mikulas
 
-*	copy_from_user(p, e1, e2)
+>  			wb->wc_list = wb->wc_list_inline;
+>  			max_pages = WB_LIST_INLINE;
+>  		}
+> -- 
+> 2.17.0
+> 
+> 
+> -- 
+> Kees Cook
+> Pixel Security
+> 
