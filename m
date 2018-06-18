@@ -1,108 +1,112 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v2 RESEND] x86: optimize memcpy_flushcache
-Date: Mon, 18 Jun 2018 09:23:07 -0400
-Message-ID: <20180618132306.GA25431@redhat.com>
-References: <20180519052503.325953342@debian.vm>
-	<20180519052631.730455475@debian.vm>
-	<CAPcyv4jpY0x7kZtT+afAKnHKy8Uy1AC_N_QM7RrELSj_0iNrRw@mail.gmail.com>
-	<20180524182013.GA59755@redhat.com>
+Subject: Re: [PATCH v2 1/5] md: Avoid namespace collision with bitmap API
+Date: Mon, 18 Jun 2018 09:36:37 -0400
+Message-ID: <20180618133637.GB25400@redhat.com>
+References: <20180615132017.23889-2-andriy.shevchenko@linux.intel.com>
+ <201806152251.xRJyWhS2%fengguang.wu@intel.com>
+ <e4524ae9650c308245ecf398a0c27c6f7924be03.camel@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20180524182013.GA59755@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Ingo Molnar <mingo@kernel.org>, Thomas Gleixner <tglx@linutronix.de>
-Cc: Dan Williams <dan.j.williams@intel.com>, X86 ML <x86@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>, device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org
+In-Reply-To: <e4524ae9650c308245ecf398a0c27c6f7924be03.camel@linux.intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+Cc: kbuild test robot <lkp@intel.com>, mika.westerberg@linux.intel.com, Dmitry Torokhov <dmitry.torokhov@gmail.com>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, Yury Norov <ynorov@caviumnetworks.com>, kbuild-all@01.org, linux-input@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Shaohua Li <shli@kernel.org>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH v2] x86: optimize memcpy_flushcache
+On Fri, Jun 15 2018 at 10:58am -0400,
+Andy Shevchenko <andriy.shevchenko@linux.intel.com> wrote:
 
-In the context of constant short length stores to persistent memory,
-memcpy_flushcache suffers from a 2% performance degradation compared to
-explicitly using the "movnti" instruction.
+> On Fri, 2018-06-15 at 23:09 +0800, kbuild test robot wrote:
+> > Hi Andy,
+> > 
+> > I love your patch! Yet something to improve:
+> 
+> Thanks!
+> 
+> I fixed that locally (definitely that module wasn't compiled by
+> default). Though I would wait to gather more comments before sending v3.
+> 
 
-Optimize 4, 8, and 16 byte memcpy_flushcache calls to explicitly use the
-movnti instruction with inline assembler.
+Hi,
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Reviewed-by: Dan Williams <dan.j.williams@intel.com>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- arch/x86/include/asm/string_64.h | 28 +++++++++++++++++++++++++++-
- arch/x86/lib/usercopy_64.c       |  4 ++--
- 2 files changed, 29 insertions(+), 3 deletions(-)
+DM is not MD.  drivers/md/persistent-data/* is only used by DM.
 
-diff --git a/arch/x86/include/asm/string_64.h b/arch/x86/include/asm/string_64.h
-index 533f74c300c2..aaba83478cdc 100644
---- a/arch/x86/include/asm/string_64.h
-+++ b/arch/x86/include/asm/string_64.h
-@@ -147,7 +147,33 @@ memcpy_mcsafe(void *dst, const void *src, size_t cnt)
- 
- #ifdef CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE
- #define __HAVE_ARCH_MEMCPY_FLUSHCACHE 1
--void memcpy_flushcache(void *dst, const void *src, size_t cnt);
-+void __memcpy_flushcache(void *dst, const void *src, size_t cnt);
-+static __always_inline void memcpy_flushcache(void *dst, const void *src, size_t cnt)
-+{
-+	if (__builtin_constant_p(cnt)) {
-+		switch (cnt) {
-+		case 4:
-+			asm volatile("movntil %1, %0"
-+				     : "=m" (*(u32 *)dst)
-+				     : "r" (*(u32 *)src));
-+			return;
-+		case 8:
-+			asm volatile("movntiq %1, %0"
-+				     : "=m" (*(u64 *)dst)
-+				     : "r" (*(u64 *)src));
-+			return;
-+		case 16:
-+			asm volatile("movntiq %1, %0"
-+				     : "=m" (*(u64 *)dst)
-+				     : "r" (*(u64 *)src));
-+			asm volatile("movntiq %1, %0"
-+				     : "=m" (*(u64 *)(dst + 8))
-+				     : "r" (*(u64 *)(src + 8)));
-+			return;
-+		}
-+	}
-+	__memcpy_flushcache(dst, src, cnt);
-+}
- #endif
- 
- #endif /* __KERNEL__ */
-diff --git a/arch/x86/lib/usercopy_64.c b/arch/x86/lib/usercopy_64.c
-index 75d3776123cc..26f515aa3529 100644
---- a/arch/x86/lib/usercopy_64.c
-+++ b/arch/x86/lib/usercopy_64.c
-@@ -133,7 +133,7 @@ long __copy_user_flushcache(void *dst, const void __user *src, unsigned size)
- 	return rc;
- }
- 
--void memcpy_flushcache(void *_dst, const void *_src, size_t size)
-+void __memcpy_flushcache(void *_dst, const void *_src, size_t size)
- {
- 	unsigned long dest = (unsigned long) _dst;
- 	unsigned long source = (unsigned long) _src;
-@@ -196,7 +196,7 @@ void memcpy_flushcache(void *_dst, const void *_src, size_t size)
- 		clean_cache_range((void *) dest, size);
- 	}
- }
--EXPORT_SYMBOL_GPL(memcpy_flushcache);
-+EXPORT_SYMBOL_GPL(__memcpy_flushcache);
- 
- void memcpy_page_flushcache(char *to, struct page *page, size_t offset,
- 		size_t len)
--- 
-2.15.0
+Please rename all the drivers/md/persistent-data/ changes to use a
+"dm_bitmap" prefix.
+
+Thanks,
+Mike
+
+> > [auto build test ERROR on next-20180615]
+> > [also build test ERROR on v4.17]
+> > [cannot apply to md/for-next linus/master dm/for-next v4.17 v4.17-rc7
+> > v4.17-rc6]
+> > [if your patch is applied to the wrong git tree, please drop us a note
+> > to help improve the system]
+> > 
+> > url:    https://github.com/0day-ci/linux/commits/Andy-Shevchenko/bitma
+> > p-Introduce-alloc-free-helpers/20180615-214724
+> > config: i386-randconfig-b0-06141412 (attached as .config)
+> > compiler: gcc-4.9 (Debian 4.9.4-2) 4.9.4
+> > reproduce:
+> >         # save the attached .config to linux build tree
+> >         make ARCH=i386 
+> > 
+> > All errors (new ones prefixed by >>):
+> > 
+> > > > drivers/md/persistent-data/dm-space-map-common.c:111:23: error:
+> > > > 'bitmap_prepare_for_write' undeclared here (not in a function)
+> > 
+> >      .prepare_for_write = bitmap_prepare_for_write,
+> >                           ^
+> > > > drivers/md/persistent-data/dm-space-map-common.c:112:11: error:
+> > > > 'bitmap_check' undeclared here (not in a function)
+> > 
+> >      .check = bitmap_check
+> >               ^
+> >    drivers/md/persistent-data/dm-space-map-common.c:72:13: warning:
+> > 'md_bitmap_prepare_for_write' defined but not used [-Wunused-function]
+> >     static void md_bitmap_prepare_for_write(struct dm_block_validator
+> > *v,
+> >                 ^
+> >    drivers/md/persistent-data/dm-space-map-common.c:84:12: warning:
+> > 'md_bitmap_check' defined but not used [-Wunused-function]
+> >     static int md_bitmap_check(struct dm_block_validator *v,
+> >                ^
+> > 
+> > vim +/bitmap_prepare_for_write +111 drivers/md/persistent-data/dm-
+> > space-map-common.c
+> > 
+> > 3241b1d3 Joe Thornber 2011-10-31  108  
+> > 3241b1d3 Joe Thornber 2011-10-31  109  static struct
+> > dm_block_validator dm_sm_bitmap_validator = {
+> > 3241b1d3 Joe Thornber 2011-10-31  110  	.name = "sm_bitmap",
+> > 3241b1d3 Joe Thornber 2011-10-31 @111  	.prepare_for_write =
+> > bitmap_prepare_for_write,
+> > 3241b1d3 Joe Thornber 2011-10-31 @112  	.check = bitmap_check
+> > 3241b1d3 Joe Thornber 2011-10-31  113  };
+> > 3241b1d3 Joe Thornber 2011-10-31  114  
+> > 
+> > :::::: The code at line 111 was first introduced by commit
+> > :::::: 3241b1d3e0aaafbfcd320f4d71ade629728cc4f4 dm: add persistent
+> > data library
+> > 
+> > :::::: TO: Joe Thornber <thornber@redhat.com>
+> > :::::: CC: Alasdair G Kergon <agk@redhat.com>
+> > 
+> > ---
+> > 0-DAY kernel test infrastructure                Open Source Technology
+> > Center
+> > https://lists.01.org/pipermail/kbuild-all                   Intel
+> > Corporation
+> 
+> -- 
+> Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+> Intel Finland Oy
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
