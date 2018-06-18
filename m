@@ -1,62 +1,117 @@
-From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-Subject: [PATCH v3 0/5] bitmap: Introduce alloc/free helpers
-Date: Mon, 18 Jun 2018 16:09:58 +0300
-Message-ID: <20180618131003.88110-1-andriy.shevchenko@linux.intel.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, Dmitry Torokhov <dmitry.torokhov@gmail.com>, linux-input@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Yury Norov <ynorov@caviumnetworks.com>, linux-kernel@vger.kernel.org, mika.westerberg@linux.intel.com, Joe Perches <joe@perches.com>
-Cc: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+From: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: x86: optimize memcpy_flushcache
+Date: Mon, 18 Jun 2018 09:17:12 -0400
+Message-ID: <20180618131712.GA25400@redhat.com>
+References: <alpine.LRH.2.02.1806180846300.22626@file01.intranet.prod.int.rdu2.redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1806180846300.22626-Hpncn10jQN4oNljnaZt3ZvA+iT7yCHsGwRM8/txMwJMAicBL8TP8PQ@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Cc: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-nvdimm <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 List-Id: dm-devel.ids
 
-A lot of code is using allocation of bitmaps using BITS_PER_LONG() macro and
-sizeof(unsigned long) operator. The readability suffers because of this.
+On Mon, Jun 18 2018 at  8:50am -0400,
+Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
 
-The series introduces three helpers, i.e. bitmap_alloc(), bitmap_zalloc() and
-bitmap_free(), to make it more cleaner.
+> Hi Mike
+> 
+> Could you please push this patch to the kernel 4.18-rc? Dan Williams said 
+> that he will submit it, but he forgot about it.
+> 
+> Without this patch, dm-writecache is suffering 2% penalty because of 
+> memcpy_flushcache overhead.
 
-Patch 1 is a preparatory to avoid namespace collisions between bitmap API and
-MD bitmap. No functional changes intended.
+I cannot send this to Linus directly, it needs to go through the x86
+tree.
 
-Patch 2 is just orphaned from previous release cycle.
+I already tried to get a slightly revised version of this upstream, see:
+https://www.redhat.com/archives/dm-devel/2018-May/msg00080.html
 
-Patch 3 introduces new helpers.
+I'll try a resend.. but the 4.18 merge window is now closed.
 
-Patches 4 and 5 is just an example how to use new helpers. Locally I have like
-dozen of them against different subsystems and drivers.
+Mike
 
-Ideally it would go through Input subsystem, thus, needs an Ack from MD maintainer(s).
 
-Since v2:
-- fix compilation issue in MD bitmap code
-- elaborate changes in commit message of patch 5
-
-Since v1:
-- added namespace fix patch against MD bitmap API
-- moved functions to lib/bitmap.c to avoid circular dependencies
-- appended Dmitry's tags
-
-Andy Shevchenko (5):
-  md: Avoid namespace collision with bitmap API
-  bitmap: Drop unnecessary 0 check for u32 array operations
-  bitmap: Add bitmap_alloc(), bitmap_zalloc() and bitmap_free()
-  Input: gpio-keys - Switch to bitmap_zalloc()
-  Input: evdev - Switch to bitmap API
-
- drivers/input/evdev.c                         |  16 +-
- drivers/input/keyboard/gpio_keys.c            |   8 +-
- drivers/md/dm-raid.c                          |   6 +-
- drivers/md/md-bitmap.c                        | 301 +++++++++---------
- drivers/md/md-bitmap.h                        |  46 +--
- drivers/md/md-cluster.c                       |  16 +-
- drivers/md/md.c                               |  44 +--
- .../md/persistent-data/dm-space-map-common.c  |  12 +-
- drivers/md/raid1.c                            |  20 +-
- drivers/md/raid10.c                           |  26 +-
- drivers/md/raid5-cache.c                      |   2 +-
- drivers/md/raid5.c                            |  24 +-
- include/linux/bitmap.h                        |   8 +
- lib/bitmap.c                                  |  28 +-
- 14 files changed, 283 insertions(+), 274 deletions(-)
-
--- 
-2.17.1
+> From: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> 
+> I use memcpy_flushcache in my persistent memory driver for metadata
+> updates and it turns out that the overhead of memcpy_flushcache causes 2%
+> performance degradation compared to "movnti" instruction explicitly coded
+> using inline assembler.
+> 
+> This patch recognizes memcpy_flushcache calls with constant short length
+> and turns them into inline assembler - so that I don't have to use inline
+> assembler in the driver.
+> 
+> Signed-off-by: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> 
+> ---
+>  arch/x86/include/asm/string_64.h |   20 +++++++++++++++++++-
+>  arch/x86/lib/usercopy_64.c       |    4 ++--
+>  2 files changed, 21 insertions(+), 3 deletions(-)
+> 
+> Index: linux-2.6/arch/x86/include/asm/string_64.h
+> ===================================================================
+> --- linux-2.6.orig/arch/x86/include/asm/string_64.h
+> +++ linux-2.6/arch/x86/include/asm/string_64.h
+> @@ -149,7 +149,25 @@ memcpy_mcsafe(void *dst, const void *src
+>  
+>  #ifdef CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE
+>  #define __HAVE_ARCH_MEMCPY_FLUSHCACHE 1
+> -void memcpy_flushcache(void *dst, const void *src, size_t cnt);
+> +void __memcpy_flushcache(void *dst, const void *src, size_t cnt);
+> +static __always_inline void memcpy_flushcache(void *dst, const void *src, size_t cnt)
+> +{
+> +	if (__builtin_constant_p(cnt)) {
+> +		switch (cnt) {
+> +			case 4:
+> +				asm ("movntil %1, %0" : "=m"(*(u32 *)dst) : "r"(*(u32 *)src));
+> +				return;
+> +			case 8:
+> +				asm ("movntiq %1, %0" : "=m"(*(u64 *)dst) : "r"(*(u64 *)src));
+> +				return;
+> +			case 16:
+> +				asm ("movntiq %1, %0" : "=m"(*(u64 *)dst) : "r"(*(u64 *)src));
+> +				asm ("movntiq %1, %0" : "=m"(*(u64 *)(dst + 8)) : "r"(*(u64 *)(src + 8)));
+> +				return;
+> +		}
+> +	}
+> +	__memcpy_flushcache(dst, src, cnt);
+> +}
+>  #endif
+>  
+>  #endif /* __KERNEL__ */
+> Index: linux-2.6/arch/x86/lib/usercopy_64.c
+> ===================================================================
+> --- linux-2.6.orig/arch/x86/lib/usercopy_64.c
+> +++ linux-2.6/arch/x86/lib/usercopy_64.c
+> @@ -153,7 +153,7 @@ long __copy_user_flushcache(void *dst, c
+>  	return rc;
+>  }
+>  
+> -void memcpy_flushcache(void *_dst, const void *_src, size_t size)
+> +void __memcpy_flushcache(void *_dst, const void *_src, size_t size)
+>  {
+>  	unsigned long dest = (unsigned long) _dst;
+>  	unsigned long source = (unsigned long) _src;
+> @@ -216,7 +216,7 @@ void memcpy_flushcache(void *_dst, const
+>  		clean_cache_range((void *) dest, size);
+>  	}
+>  }
+> -EXPORT_SYMBOL_GPL(memcpy_flushcache);
+> +EXPORT_SYMBOL_GPL(__memcpy_flushcache);
+>  
+>  void memcpy_page_flushcache(char *to, struct page *page, size_t offset,
+>  		size_t len)
