@@ -1,7 +1,7 @@
 From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-Subject: [PATCH v3 2/5] bitmap: Drop unnecessary 0 check for u32 array operations
-Date: Mon, 18 Jun 2018 16:10:00 +0300
-Message-ID: <20180618131003.88110-3-andriy.shevchenko@linux.intel.com>
+Subject: [PATCH v3 5/5] Input: evdev - Switch to bitmap API
+Date: Mon, 18 Jun 2018 16:10:03 +0300
+Message-ID: <20180618131003.88110-6-andriy.shevchenko@linux.intel.com>
 References: <20180618131003.88110-1-andriy.shevchenko@linux.intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180618131003.88110-1-andriy.shevchenko@linux.intel.com>
@@ -10,44 +10,84 @@ To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-deve
 Cc: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
 List-Id: dm-devel.ids
 
-The nbits == 0 is safe to be supplied to the function body, so,
-remove unnecessary checks in bitmap_to_arr32() and bitmap_from_arr32().
+Switch to bitmap API, i.e. bitmap_alloc(), bitmap_zalloc(), to show
+clearly what we are allocating. Besides that it returns pointer of
+bitmap type instead of opaque void *.
 
-Acked-by: Yury Norov <ynorov@caviumnetworks.com>
+While here, replace memcpy() with bitmap_copy() for sake of consistency.
+
+Acked-by: Dmitry Torokhov <dmitry.torokhov@gmail.com>
 Signed-off-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
 ---
- lib/bitmap.c | 9 +--------
- 1 file changed, 1 insertion(+), 8 deletions(-)
+ drivers/input/evdev.c | 16 +++++++---------
+ 1 file changed, 7 insertions(+), 9 deletions(-)
 
-diff --git a/lib/bitmap.c b/lib/bitmap.c
-index 58f9750e49c6..33e95cd359a2 100644
---- a/lib/bitmap.c
-+++ b/lib/bitmap.c
-@@ -1132,14 +1132,10 @@ EXPORT_SYMBOL(bitmap_copy_le);
-  *	@buf: array of u32 (in host byte order), the source bitmap
-  *	@nbits: number of bits in @bitmap
-  */
--void bitmap_from_arr32(unsigned long *bitmap, const u32 *buf,
--						unsigned int nbits)
-+void bitmap_from_arr32(unsigned long *bitmap, const u32 *buf, unsigned int nbits)
- {
- 	unsigned int i, halfwords;
+diff --git a/drivers/input/evdev.c b/drivers/input/evdev.c
+index c81c79d01d93..370206f987f9 100644
+--- a/drivers/input/evdev.c
++++ b/drivers/input/evdev.c
+@@ -481,7 +481,7 @@ static int evdev_release(struct inode *inode, struct file *file)
+ 	evdev_detach_client(evdev, client);
  
--	if (!nbits)
--		return;
--
- 	halfwords = DIV_ROUND_UP(nbits, 32);
- 	for (i = 0; i < halfwords; i++) {
- 		bitmap[i/2] = (unsigned long) buf[i];
-@@ -1163,9 +1159,6 @@ void bitmap_to_arr32(u32 *buf, const unsigned long *bitmap, unsigned int nbits)
- {
- 	unsigned int i, halfwords;
+ 	for (i = 0; i < EV_CNT; ++i)
+-		kfree(client->evmasks[i]);
++		bitmap_free(client->evmasks[i]);
  
--	if (!nbits)
--		return;
--
- 	halfwords = DIV_ROUND_UP(nbits, 32);
- 	for (i = 0; i < halfwords; i++) {
- 		buf[i] = (u32) (bitmap[i/2] & UINT_MAX);
+ 	kvfree(client);
+ 
+@@ -925,17 +925,15 @@ static int evdev_handle_get_val(struct evdev_client *client,
+ {
+ 	int ret;
+ 	unsigned long *mem;
+-	size_t len;
+ 
+-	len = BITS_TO_LONGS(maxbit) * sizeof(unsigned long);
+-	mem = kmalloc(len, GFP_KERNEL);
++	mem = bitmap_alloc(maxbit, GFP_KERNEL);
+ 	if (!mem)
+ 		return -ENOMEM;
+ 
+ 	spin_lock_irq(&dev->event_lock);
+ 	spin_lock(&client->buffer_lock);
+ 
+-	memcpy(mem, bits, len);
++	bitmap_copy(mem, bits, maxbit);
+ 
+ 	spin_unlock(&dev->event_lock);
+ 
+@@ -947,7 +945,7 @@ static int evdev_handle_get_val(struct evdev_client *client,
+ 	if (ret < 0)
+ 		evdev_queue_syn_dropped(client);
+ 
+-	kfree(mem);
++	bitmap_free(mem);
+ 
+ 	return ret;
+ }
+@@ -1003,13 +1001,13 @@ static int evdev_set_mask(struct evdev_client *client,
+ 	if (!cnt)
+ 		return 0;
+ 
+-	mask = kcalloc(sizeof(unsigned long), BITS_TO_LONGS(cnt), GFP_KERNEL);
++	mask = bitmap_zalloc(cnt, GFP_KERNEL);
+ 	if (!mask)
+ 		return -ENOMEM;
+ 
+ 	error = bits_from_user(mask, cnt - 1, codes_size, codes, compat);
+ 	if (error < 0) {
+-		kfree(mask);
++		bitmap_free(mask);
+ 		return error;
+ 	}
+ 
+@@ -1018,7 +1016,7 @@ static int evdev_set_mask(struct evdev_client *client,
+ 	client->evmasks[type] = mask;
+ 	spin_unlock_irqrestore(&client->buffer_lock, flags);
+ 
+-	kfree(oldmask);
++	bitmap_free(oldmask);
+ 
+ 	return 0;
+ }
 -- 
 2.17.1
