@@ -1,68 +1,65 @@
-From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-Subject: Re: [PATCH v3 1/5] md: Avoid namespace collision with bitmap API
-Date: Mon, 18 Jun 2018 16:57:41 +0300
-Message-ID: <49e96a4ecb3566139bef0b36093143077ceafd3f.camel@linux.intel.com>
-References: <20180618131003.88110-1-andriy.shevchenko@linux.intel.com>
-         <20180618131003.88110-2-andriy.shevchenko@linux.intel.com>
-         <20180618134454.GA25547@redhat.com>
+From: Joe Perches <joe@perches.com>
+Subject: Re: [PATCH v2 5/5] Input: evdev - Switch to bitmap_zalloc()
+Date: Mon, 18 Jun 2018 08:49:37 -0700
+Message-ID: <780cba4e119110f2d2a81e237874592cff4d7868.camel@perches.com>
+References: <20180615132017.23889-1-andriy.shevchenko@linux.intel.com>
+         <20180615132017.23889-6-andriy.shevchenko@linux.intel.com>
+         <20180615214231.GA371@yury-thinkpad>
+         <CAHp75VcxYPCLYq1J8qqjPdgDdQnWDgZKkavmyEWD8GNxcW2mWg@mail.gmail.com>
+         <0a3d86d7746792a2f848cef386941fc182653515.camel@perches.com>
+         <8cfbdf809f531f8aa315fe1679c3273858038f41.camel@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="ISO-8859-1"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180618134454.GA25547@redhat.com>
+In-Reply-To: <8cfbdf809f531f8aa315fe1679c3273858038f41.camel@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, Dmitry Torokhov <dmitry.torokhov@gmail.com>, linux-input@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Yury Norov <ynorov@caviumnetworks.com>, linux-kernel@vger.kernel.org, mika.westerberg@linux.intel.com, Joe Perches <joe@perches.com>
+To: Andy Shevchenko <andriy.shevchenko@linux.intel.com>, Andy Shevchenko <andy.shevchenko@gmail.com>, Yury Norov <ynorov@caviumnetworks.com>
+Cc: agk@redhat.com, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, shli@kernel.org, linux-raid@vger.kernel.org, Dmitry Torokhov <dmitry.torokhov@gmail.com>, linux-input <linux-input@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Mika Westerberg <mika.westerberg@linux.intel.com>
 List-Id: dm-devel.ids
 
-On Mon, 2018-06-18 at 09:44 -0400, Mike Snitzer wrote:
-> On Mon, Jun 18 2018 at  9:09am -0400,
-> Andy Shevchenko <andriy.shevchenko@linux.intel.com> wrote:
-> 
-> > bitmap API (include/linux/bitmap.h) has 'bitmap' prefix for its
-> > methods.
+On Mon, 2018-06-18 at 15:02 +0300, Andy Shevchenko wrote:
+> On Sat, 2018-06-16 at 12:16 -0700, Joe Perches wrote:
+> > On Sat, 2018-06-16 at 21:45 +0300, Andy Shevchenko wrote:
+> > > On Sat, Jun 16, 2018 at 12:46 AM Yury Norov <ynorov@caviumnetworks.c
+> > > om> wrote:
+> > > > On Fri, Jun 15, 2018 at 04:20:17PM +0300, Andy Shevchenko wrote:
+> > > > > Switch to bitmap_zalloc() to show clearly what we are
+> > > > > allocating.
+> > > > > Besides that it returns pointer of bitmap type instead of opaque
+> > > > > void *.
+> > > 
+> > > 
+> > > > > +       mem = bitmap_alloc(maxbit, GFP_KERNEL);
+> > > > >         if (!mem)
+> > > > >                 return -ENOMEM;
+> > > > 
+> > > > But in commit message you say you switch to bitmap_zalloc(). IIUC
+> > > > bitmap_alloc() is OK here. But could you please update comment to
+> > > > avoid confusing.
+> > > 
+> > > There are two places, one with alloc, another with zalloc.
+> > > I will clarify this in commit message of next version.
+> > > 
+> > > > > +       mask = bitmap_zalloc(cnt, GFP_KERNEL);
+> > > > >         if (!mask)
+> > > > >                 return -ENOMEM;
+> > > > > 
+> > > > >         error = bits_from_user(mask, cnt - 1, codes_size, codes,
+> > > > > compat);
+> > > > 
+> > > > If my understanding of bits_from_user() correct, here you can also
+> > > > use
+> > > > bitmap_alloc(), true?
 > > 
-> > On the other hand MD bitmap API is special case.
-> > Adding 'md' prefix to it to avoid name space collision.
-> > 
-> > No functional changes intended.
-> > 
-> > Signed-off-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-> > ---
-> >  drivers/md/dm-raid.c                          |   6 +-
-> >  drivers/md/md-bitmap.c                        | 301 +++++++++----
-> > -----
-> >  drivers/md/md-bitmap.h                        |  46 +--
-> >  drivers/md/md-cluster.c                       |  16 +-
-> >  drivers/md/md.c                               |  44 +--
-> >  .../md/persistent-data/dm-space-map-common.c  |  12 +-
-> >  drivers/md/raid1.c                            |  20 +-
-> >  drivers/md/raid10.c                           |  26 +-
-> >  drivers/md/raid5-cache.c                      |   2 +-
-> >  drivers/md/raid5.c                            |  24 +-
-> >  10 files changed, 244 insertions(+), 253 deletions(-)
+> > Also it might be useful to have a separate bitmap_from_user
+> > to alloc and copy.
 > 
-> Seems my previous mail just missed your v3 cutoff but...
+> Maybe. I didn't check if there are such users except this driver.
 > 
-> <snip>
-> 
-> All of these drivers/md/persistent-data/dm-space-map-common.c renames
-> are wrong.
+> Anyway, it's out of scope of the series.
 
-So, let me understand this clear, the naming problem appears in one file
-only. The rest is fine. Correct?
+That seems incorrect as you are introducing alloc/free helpers.
 
->   DM is the only consumer (it is confusing because all DM and
-> MD code lives in drivers/md/ despite only sharing a bit of MD code).
-> 
-> Anyway, please rename bitmap methods in this file to have a
-> "dm_bitmap"
-> prefix instead.  Thanks.
-
-Ah, okay, will do this in v4 later this week.
-
-Thanks for review!
-
--- 
-Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-Intel Finland Oy
+Perhaps bitmap_dup_user [or some better name] could or should
+be one of the helpers.
