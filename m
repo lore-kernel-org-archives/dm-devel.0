@@ -1,70 +1,77 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: [PATCH] dm: writecache: Use 2-factor allocator arguments
-Date: Mon, 18 Jun 2018 10:50:33 -0700
-Message-ID: <20180618175033.GA2627@beast>
+From: Andy Shevchenko <andy.shevchenko@gmail.com>
+Subject: Re: [PATCH v2 5/5] Input: evdev - Switch to bitmap_zalloc()
+Date: Mon, 18 Jun 2018 22:56:57 +0300
+Message-ID: <CAHp75VcJLEmDTe0bCx7UkH4xMH44VUrvuFqdc++OYyE-JKd_cg@mail.gmail.com>
+References: <20180615132017.23889-1-andriy.shevchenko@linux.intel.com>
+ <20180615132017.23889-6-andriy.shevchenko@linux.intel.com>
+ <20180615214231.GA371@yury-thinkpad> <CAHp75VcxYPCLYq1J8qqjPdgDdQnWDgZKkavmyEWD8GNxcW2mWg@mail.gmail.com>
+ <0a3d86d7746792a2f848cef386941fc182653515.camel@perches.com>
+ <8cfbdf809f531f8aa315fe1679c3273858038f41.camel@linux.intel.com> <780cba4e119110f2d2a81e237874592cff4d7868.camel@perches.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
+In-Reply-To: <780cba4e119110f2d2a81e237874592cff4d7868.camel@perches.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, Dan Williams <dan.j.williams@intel.com>, Mike Snitzer <msnitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
+To: Joe Perches <joe@perches.com>
+Cc: Andy Shevchenko <andriy.shevchenko@linux.intel.com>, Yury Norov <ynorov@caviumnetworks.com>, agk@redhat.com, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, shli@kernel.org, linux-raid@vger.kernel.org, Dmitry Torokhov <dmitry.torokhov@gmail.com>, linux-input <linux-input@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Mika Westerberg <mika.westerberg@linux.intel.com>
 List-Id: dm-devel.ids
 
-This adjusts the allocator calls to use the 2-factor argument style, as
-already done treewide for better defense against allocator overflows.
-Additionally adjusts style nit to avoid assignments in test expressions.
+On Mon, Jun 18, 2018 at 6:49 PM, Joe Perches <joe@perches.com> wrote:
+> On Mon, 2018-06-18 at 15:02 +0300, Andy Shevchenko wrote:
+>> On Sat, 2018-06-16 at 12:16 -0700, Joe Perches wrote:
+>> > On Sat, 2018-06-16 at 21:45 +0300, Andy Shevchenko wrote:
+>> > > On Sat, Jun 16, 2018 at 12:46 AM Yury Norov <ynorov@caviumnetworks.c
+>> > > om> wrote:
+>> > > > On Fri, Jun 15, 2018 at 04:20:17PM +0300, Andy Shevchenko wrote:
+>> > > > > Switch to bitmap_zalloc() to show clearly what we are
+>> > > > > allocating.
+>> > > > > Besides that it returns pointer of bitmap type instead of opaque
+>> > > > > void *.
+>> > >
+>> > >
+>> > > > > +       mem = bitmap_alloc(maxbit, GFP_KERNEL);
+>> > > > >         if (!mem)
+>> > > > >                 return -ENOMEM;
+>> > > >
+>> > > > But in commit message you say you switch to bitmap_zalloc(). IIUC
+>> > > > bitmap_alloc() is OK here. But could you please update comment to
+>> > > > avoid confusing.
+>> > >
+>> > > There are two places, one with alloc, another with zalloc.
+>> > > I will clarify this in commit message of next version.
+>> > >
+>> > > > > +       mask = bitmap_zalloc(cnt, GFP_KERNEL);
+>> > > > >         if (!mask)
+>> > > > >                 return -ENOMEM;
+>> > > > >
+>> > > > >         error = bits_from_user(mask, cnt - 1, codes_size, codes,
+>> > > > > compat);
+>> > > >
+>> > > > If my understanding of bits_from_user() correct, here you can also
+>> > > > use
+>> > > > bitmap_alloc(), true?
+>> >
+>> > Also it might be useful to have a separate bitmap_from_user
+>> > to alloc and copy.
+>>
+>> Maybe. I didn't check if there are such users except this driver.
+>>
+>> Anyway, it's out of scope of the series.
+>
+> That seems incorrect as you are introducing alloc/free helpers.
+>
+> Perhaps bitmap_dup_user [or some better name] could or should
+> be one of the helpers.
 
-Signed-off-by: Kees Cook <keescook@chromium.org>
----
- drivers/md/dm-writecache.c | 16 ++++++++++------
- 1 file changed, 10 insertions(+), 6 deletions(-)
+Can you help with estimation how many existing users need this kind of
+functionality? One of them evdev, which has an open coded variant.
 
-diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
-index 5961c7794ef3..7773f4c75701 100644
---- a/drivers/md/dm-writecache.c
-+++ b/drivers/md/dm-writecache.c
-@@ -259,7 +259,7 @@ static int persistent_memory_claim(struct dm_writecache *wc)
- 	if (da != p) {
- 		long i;
- 		wc->memory_map = NULL;
--		pages = kvmalloc(p * sizeof(struct page *), GFP_KERNEL);
-+		pages = kvmalloc_array(p, sizeof(struct page *), GFP_KERNEL);
- 		if (!pages) {
- 			r = -ENOMEM;
- 			goto err2;
-@@ -859,7 +859,8 @@ static int writecache_alloc_entries(struct dm_writecache *wc)
- 
- 	if (wc->entries)
- 		return 0;
--	wc->entries = vmalloc(sizeof(struct wc_entry) * wc->n_blocks);
-+	wc->entries = vmalloc(array_size(sizeof(struct wc_entry),
-+					 wc->n_blocks));
- 	if (!wc->entries)
- 		return -ENOMEM;
- 	for (b = 0; b < wc->n_blocks; b++) {
-@@ -1480,10 +1481,13 @@ static void __writecache_writeback_pmem(struct dm_writecache *wc, struct writeba
- 		bio_set_dev(&wb->bio, wc->dev->bdev);
- 		wb->bio.bi_iter.bi_sector = read_original_sector(wc, e);
- 		wb->page_offset = PAGE_SIZE;
--		if (max_pages <= WB_LIST_INLINE ||
--		    unlikely(!(wb->wc_list = kmalloc(max_pages * sizeof(struct wc_entry *),
--						     GFP_NOIO | __GFP_NORETRY |
--						     __GFP_NOMEMALLOC | __GFP_NOWARN)))) {
-+		if (max_pages > WB_LIST_INLINE)
-+			wb->wc_list = kmalloc_array(max_pages,
-+						    sizeof(struct wc_entry *),
-+						    GFP_NOIO | __GFP_NORETRY |
-+						    __GFP_NOMEMALLOC |
-+						    __GFP_NOWARN);
-+		if (max_pages <= WB_LIST_INLINE || !wb->wc_list) {
- 			wb->wc_list = wb->wc_list_inline;
- 			max_pages = WB_LIST_INLINE;
- 		}
+Also, pay attention to that fact we have already bitmap_parse_user()
+and bitmap_parlelist_user() which are called by several users.
+
+If the estimation will show something like 3+, it would definitely
+make sense, otherwise, I wouldn't like spend time on it.
+
 -- 
-2.17.0
-
-
--- 
-Kees Cook
-Pixel Security
+With Best Regards,
+Andy Shevchenko
