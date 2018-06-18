@@ -1,7 +1,7 @@
 From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-Subject: [PATCH v3 5/5] Input: evdev - Switch to bitmap API
-Date: Mon, 18 Jun 2018 16:10:03 +0300
-Message-ID: <20180618131003.88110-6-andriy.shevchenko@linux.intel.com>
+Subject: [PATCH v3 3/5] bitmap: Add bitmap_alloc(), bitmap_zalloc() and bitmap_free()
+Date: Mon, 18 Jun 2018 16:10:01 +0300
+Message-ID: <20180618131003.88110-4-andriy.shevchenko@linux.intel.com>
 References: <20180618131003.88110-1-andriy.shevchenko@linux.intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180618131003.88110-1-andriy.shevchenko@linux.intel.com>
@@ -10,84 +10,72 @@ To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-deve
 Cc: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
 List-Id: dm-devel.ids
 
-Switch to bitmap API, i.e. bitmap_alloc(), bitmap_zalloc(), to show
-clearly what we are allocating. Besides that it returns pointer of
-bitmap type instead of opaque void *.
+A lot of code become ugly because of open coding allocations for bitmaps.
 
-While here, replace memcpy() with bitmap_copy() for sake of consistency.
+Introduce three helpers to allow users be more clear of intention
+and keep their code neat.
 
-Acked-by: Dmitry Torokhov <dmitry.torokhov@gmail.com>
 Signed-off-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
 ---
- drivers/input/evdev.c | 16 +++++++---------
- 1 file changed, 7 insertions(+), 9 deletions(-)
+ include/linux/bitmap.h |  8 ++++++++
+ lib/bitmap.c           | 19 +++++++++++++++++++
+ 2 files changed, 27 insertions(+)
 
-diff --git a/drivers/input/evdev.c b/drivers/input/evdev.c
-index c81c79d01d93..370206f987f9 100644
---- a/drivers/input/evdev.c
-+++ b/drivers/input/evdev.c
-@@ -481,7 +481,7 @@ static int evdev_release(struct inode *inode, struct file *file)
- 	evdev_detach_client(evdev, client);
+diff --git a/include/linux/bitmap.h b/include/linux/bitmap.h
+index 1ee46f492267..acf5e8df3504 100644
+--- a/include/linux/bitmap.h
++++ b/include/linux/bitmap.h
+@@ -104,6 +104,14 @@
+  * contain all bit positions from 0 to 'bits' - 1.
+  */
  
- 	for (i = 0; i < EV_CNT; ++i)
--		kfree(client->evmasks[i]);
-+		bitmap_free(client->evmasks[i]);
++/*
++ * Allocation and deallocation of bitmap.
++ * Provided in lib/bitmap.c to avoid circular dependency.
++ */
++extern unsigned long *bitmap_alloc(unsigned int nbits, gfp_t flags);
++extern unsigned long *bitmap_zalloc(unsigned int nbits, gfp_t flags);
++extern void bitmap_free(const unsigned long *bitmap);
++
+ /*
+  * lib/bitmap.c provides these functions:
+  */
+diff --git a/lib/bitmap.c b/lib/bitmap.c
+index 33e95cd359a2..09acf2fd6a35 100644
+--- a/lib/bitmap.c
++++ b/lib/bitmap.c
+@@ -13,6 +13,7 @@
+ #include <linux/bitops.h>
+ #include <linux/bug.h>
+ #include <linux/kernel.h>
++#include <linux/slab.h>
+ #include <linux/string.h>
+ #include <linux/uaccess.h>
  
- 	kvfree(client);
+@@ -1125,6 +1126,24 @@ void bitmap_copy_le(unsigned long *dst, const unsigned long *src, unsigned int n
+ EXPORT_SYMBOL(bitmap_copy_le);
+ #endif
  
-@@ -925,17 +925,15 @@ static int evdev_handle_get_val(struct evdev_client *client,
- {
- 	int ret;
- 	unsigned long *mem;
--	size_t len;
- 
--	len = BITS_TO_LONGS(maxbit) * sizeof(unsigned long);
--	mem = kmalloc(len, GFP_KERNEL);
-+	mem = bitmap_alloc(maxbit, GFP_KERNEL);
- 	if (!mem)
- 		return -ENOMEM;
- 
- 	spin_lock_irq(&dev->event_lock);
- 	spin_lock(&client->buffer_lock);
- 
--	memcpy(mem, bits, len);
-+	bitmap_copy(mem, bits, maxbit);
- 
- 	spin_unlock(&dev->event_lock);
- 
-@@ -947,7 +945,7 @@ static int evdev_handle_get_val(struct evdev_client *client,
- 	if (ret < 0)
- 		evdev_queue_syn_dropped(client);
- 
--	kfree(mem);
-+	bitmap_free(mem);
- 
- 	return ret;
- }
-@@ -1003,13 +1001,13 @@ static int evdev_set_mask(struct evdev_client *client,
- 	if (!cnt)
- 		return 0;
- 
--	mask = kcalloc(sizeof(unsigned long), BITS_TO_LONGS(cnt), GFP_KERNEL);
-+	mask = bitmap_zalloc(cnt, GFP_KERNEL);
- 	if (!mask)
- 		return -ENOMEM;
- 
- 	error = bits_from_user(mask, cnt - 1, codes_size, codes, compat);
- 	if (error < 0) {
--		kfree(mask);
-+		bitmap_free(mask);
- 		return error;
- 	}
- 
-@@ -1018,7 +1016,7 @@ static int evdev_set_mask(struct evdev_client *client,
- 	client->evmasks[type] = mask;
- 	spin_unlock_irqrestore(&client->buffer_lock, flags);
- 
--	kfree(oldmask);
-+	bitmap_free(oldmask);
- 
- 	return 0;
- }
++unsigned long *bitmap_alloc(unsigned int nbits, gfp_t flags)
++{
++	return kmalloc_array(BITS_TO_LONGS(nbits), sizeof(unsigned long), flags);
++}
++EXPORT_SYMBOL(bitmap_alloc);
++
++unsigned long *bitmap_zalloc(unsigned int nbits, gfp_t flags)
++{
++	return bitmap_alloc(nbits, flags | __GFP_ZERO);
++}
++EXPORT_SYMBOL(bitmap_zalloc);
++
++void bitmap_free(const unsigned long *bitmap)
++{
++	kfree(bitmap);
++}
++EXPORT_SYMBOL(bitmap_free);
++
+ #if BITS_PER_LONG == 64
+ /**
+  * bitmap_from_arr32 - copy the contents of u32 array of bits to bitmap
 -- 
 2.17.1
