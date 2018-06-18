@@ -1,113 +1,70 @@
-From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH] x86: optimize memcpy_flushcache
-Date: Mon, 18 Jun 2018 09:38:19 -0700
-Message-ID: <CAPcyv4i_xqo1AgF7znUYi+Eo_obTBYA5vMv7=Q0VP755Kmm9bg@mail.gmail.com>
-References: <alpine.LRH.2.02.1806180846300.22626@file01.intranet.prod.int.rdu2.redhat.com>
+From: Kees Cook <keescook@chromium.org>
+Subject: [PATCH] dm: writecache: Use 2-factor allocator arguments
+Date: Mon, 18 Jun 2018 10:50:33 -0700
+Message-ID: <20180618175033.GA2627@beast>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <alpine.LRH.2.02.1806180846300.22626-Hpncn10jQN4oNljnaZt3ZvA+iT7yCHsGwRM8/txMwJMAicBL8TP8PQ@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Mike Snitzer <msnitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-nvdimm <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, Dan Williams <dan.j.williams@intel.com>, Mike Snitzer <msnitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Jun 18, 2018 at 5:50 AM, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> Hi Mike
->
-> Could you please push this patch to the kernel 4.18-rc? Dan Williams said
-> that he will submit it, but he forgot about it.
+This adjusts the allocator calls to use the 2-factor argument style, as
+already done treewide for better defense against allocator overflows.
+Additionally adjusts style nit to avoid assignments in test expressions.
 
-...to be clear I acked it and asked Ingo to take it. Will need a
-resubmit for 4.19.
+Signed-off-by: Kees Cook <keescook@chromium.org>
+---
+ drivers/md/dm-writecache.c | 16 ++++++++++------
+ 1 file changed, 10 insertions(+), 6 deletions(-)
 
-Ingo, see below for a patch to pick up into -tip when you have a chance.
+diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
+index 5961c7794ef3..7773f4c75701 100644
+--- a/drivers/md/dm-writecache.c
++++ b/drivers/md/dm-writecache.c
+@@ -259,7 +259,7 @@ static int persistent_memory_claim(struct dm_writecache *wc)
+ 	if (da != p) {
+ 		long i;
+ 		wc->memory_map = NULL;
+-		pages = kvmalloc(p * sizeof(struct page *), GFP_KERNEL);
++		pages = kvmalloc_array(p, sizeof(struct page *), GFP_KERNEL);
+ 		if (!pages) {
+ 			r = -ENOMEM;
+ 			goto err2;
+@@ -859,7 +859,8 @@ static int writecache_alloc_entries(struct dm_writecache *wc)
+ 
+ 	if (wc->entries)
+ 		return 0;
+-	wc->entries = vmalloc(sizeof(struct wc_entry) * wc->n_blocks);
++	wc->entries = vmalloc(array_size(sizeof(struct wc_entry),
++					 wc->n_blocks));
+ 	if (!wc->entries)
+ 		return -ENOMEM;
+ 	for (b = 0; b < wc->n_blocks; b++) {
+@@ -1480,10 +1481,13 @@ static void __writecache_writeback_pmem(struct dm_writecache *wc, struct writeba
+ 		bio_set_dev(&wb->bio, wc->dev->bdev);
+ 		wb->bio.bi_iter.bi_sector = read_original_sector(wc, e);
+ 		wb->page_offset = PAGE_SIZE;
+-		if (max_pages <= WB_LIST_INLINE ||
+-		    unlikely(!(wb->wc_list = kmalloc(max_pages * sizeof(struct wc_entry *),
+-						     GFP_NOIO | __GFP_NORETRY |
+-						     __GFP_NOMEMALLOC | __GFP_NOWARN)))) {
++		if (max_pages > WB_LIST_INLINE)
++			wb->wc_list = kmalloc_array(max_pages,
++						    sizeof(struct wc_entry *),
++						    GFP_NOIO | __GFP_NORETRY |
++						    __GFP_NOMEMALLOC |
++						    __GFP_NOWARN);
++		if (max_pages <= WB_LIST_INLINE || !wb->wc_list) {
+ 			wb->wc_list = wb->wc_list_inline;
+ 			max_pages = WB_LIST_INLINE;
+ 		}
+-- 
+2.17.0
 
->
-> Without this patch, dm-writecache is suffering 2% penalty because of
-> memcpy_flushcache overhead.
->
-> Mikulas
->
->
->
-> From: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
->
-> I use memcpy_flushcache in my persistent memory driver for metadata
-> updates and it turns out that the overhead of memcpy_flushcache causes 2%
-> performance degradation compared to "movnti" instruction explicitly coded
-> using inline assembler.
->
-> This patch recognizes memcpy_flushcache calls with constant short length
-> and turns them into inline assembler - so that I don't have to use inline
-> assembler in the driver.
->
-> Signed-off-by: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
->
-> ---
->  arch/x86/include/asm/string_64.h |   20 +++++++++++++++++++-
->  arch/x86/lib/usercopy_64.c       |    4 ++--
->  2 files changed, 21 insertions(+), 3 deletions(-)
->
-> Index: linux-2.6/arch/x86/include/asm/string_64.h
-> ===================================================================
-> --- linux-2.6.orig/arch/x86/include/asm/string_64.h
-> +++ linux-2.6/arch/x86/include/asm/string_64.h
-> @@ -149,7 +149,25 @@ memcpy_mcsafe(void *dst, const void *src
->
->  #ifdef CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE
->  #define __HAVE_ARCH_MEMCPY_FLUSHCACHE 1
-> -void memcpy_flushcache(void *dst, const void *src, size_t cnt);
-> +void __memcpy_flushcache(void *dst, const void *src, size_t cnt);
-> +static __always_inline void memcpy_flushcache(void *dst, const void *src, size_t cnt)
-> +{
-> +       if (__builtin_constant_p(cnt)) {
-> +               switch (cnt) {
-> +                       case 4:
-> +                               asm ("movntil %1, %0" : "=m"(*(u32 *)dst) : "r"(*(u32 *)src));
-> +                               return;
-> +                       case 8:
-> +                               asm ("movntiq %1, %0" : "=m"(*(u64 *)dst) : "r"(*(u64 *)src));
-> +                               return;
-> +                       case 16:
-> +                               asm ("movntiq %1, %0" : "=m"(*(u64 *)dst) : "r"(*(u64 *)src));
-> +                               asm ("movntiq %1, %0" : "=m"(*(u64 *)(dst + 8)) : "r"(*(u64 *)(src + 8)));
-> +                               return;
-> +               }
-> +       }
-> +       __memcpy_flushcache(dst, src, cnt);
-> +}
->  #endif
->
->  #endif /* __KERNEL__ */
-> Index: linux-2.6/arch/x86/lib/usercopy_64.c
-> ===================================================================
-> --- linux-2.6.orig/arch/x86/lib/usercopy_64.c
-> +++ linux-2.6/arch/x86/lib/usercopy_64.c
-> @@ -153,7 +153,7 @@ long __copy_user_flushcache(void *dst, c
->         return rc;
->  }
->
-> -void memcpy_flushcache(void *_dst, const void *_src, size_t size)
-> +void __memcpy_flushcache(void *_dst, const void *_src, size_t size)
->  {
->         unsigned long dest = (unsigned long) _dst;
->         unsigned long source = (unsigned long) _src;
-> @@ -216,7 +216,7 @@ void memcpy_flushcache(void *_dst, const
->                 clean_cache_range((void *) dest, size);
->         }
->  }
-> -EXPORT_SYMBOL_GPL(memcpy_flushcache);
-> +EXPORT_SYMBOL_GPL(__memcpy_flushcache);
->
->  void memcpy_page_flushcache(char *to, struct page *page, size_t offset,
->                 size_t len)
+
+-- 
+Kees Cook
+Pixel Security
