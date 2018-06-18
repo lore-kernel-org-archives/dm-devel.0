@@ -1,104 +1,53 @@
-From: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH] x86: optimize memcpy_flushcache
-Date: Mon, 18 Jun 2018 08:50:06 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1806180846300.22626@file01.intranet.prod.int.rdu2.redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Mike Snitzer <msnitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-nvdimm <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+Subject: [PATCH v3 2/5] bitmap: Drop unnecessary 0 check for u32 array operations
+Date: Mon, 18 Jun 2018 16:10:00 +0300
+Message-ID: <20180618131003.88110-3-andriy.shevchenko@linux.intel.com>
+References: <20180618131003.88110-1-andriy.shevchenko@linux.intel.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180618131003.88110-1-andriy.shevchenko@linux.intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, Dmitry Torokhov <dmitry.torokhov@gmail.com>, linux-input@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Yury Norov <ynorov@caviumnetworks.com>, linux-kernel@vger.kernel.org, mika.westerberg@linux.intel.com, Joe Perches <joe@perches.com>
+Cc: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
 List-Id: dm-devel.ids
 
-Hi Mike
+The nbits == 0 is safe to be supplied to the function body, so,
+remove unnecessary checks in bitmap_to_arr32() and bitmap_from_arr32().
 
-Could you please push this patch to the kernel 4.18-rc? Dan Williams said 
-that he will submit it, but he forgot about it.
-
-Without this patch, dm-writecache is suffering 2% penalty because of 
-memcpy_flushcache overhead.
-
-Mikulas
-
-
-
-From: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-
-I use memcpy_flushcache in my persistent memory driver for metadata
-updates and it turns out that the overhead of memcpy_flushcache causes 2%
-performance degradation compared to "movnti" instruction explicitly coded
-using inline assembler.
-
-This patch recognizes memcpy_flushcache calls with constant short length
-and turns them into inline assembler - so that I don't have to use inline
-assembler in the driver.
-
-Signed-off-by: Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-
+Acked-by: Yury Norov <ynorov@caviumnetworks.com>
+Signed-off-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
 ---
- arch/x86/include/asm/string_64.h |   20 +++++++++++++++++++-
- arch/x86/lib/usercopy_64.c       |    4 ++--
- 2 files changed, 21 insertions(+), 3 deletions(-)
+ lib/bitmap.c | 9 +--------
+ 1 file changed, 1 insertion(+), 8 deletions(-)
 
-Index: linux-2.6/arch/x86/include/asm/string_64.h
-===================================================================
---- linux-2.6.orig/arch/x86/include/asm/string_64.h
-+++ linux-2.6/arch/x86/include/asm/string_64.h
-@@ -149,7 +149,25 @@ memcpy_mcsafe(void *dst, const void *src
- 
- #ifdef CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE
- #define __HAVE_ARCH_MEMCPY_FLUSHCACHE 1
--void memcpy_flushcache(void *dst, const void *src, size_t cnt);
-+void __memcpy_flushcache(void *dst, const void *src, size_t cnt);
-+static __always_inline void memcpy_flushcache(void *dst, const void *src, size_t cnt)
-+{
-+	if (__builtin_constant_p(cnt)) {
-+		switch (cnt) {
-+			case 4:
-+				asm ("movntil %1, %0" : "=m"(*(u32 *)dst) : "r"(*(u32 *)src));
-+				return;
-+			case 8:
-+				asm ("movntiq %1, %0" : "=m"(*(u64 *)dst) : "r"(*(u64 *)src));
-+				return;
-+			case 16:
-+				asm ("movntiq %1, %0" : "=m"(*(u64 *)dst) : "r"(*(u64 *)src));
-+				asm ("movntiq %1, %0" : "=m"(*(u64 *)(dst + 8)) : "r"(*(u64 *)(src + 8)));
-+				return;
-+		}
-+	}
-+	__memcpy_flushcache(dst, src, cnt);
-+}
- #endif
- 
- #endif /* __KERNEL__ */
-Index: linux-2.6/arch/x86/lib/usercopy_64.c
-===================================================================
---- linux-2.6.orig/arch/x86/lib/usercopy_64.c
-+++ linux-2.6/arch/x86/lib/usercopy_64.c
-@@ -153,7 +153,7 @@ long __copy_user_flushcache(void *dst, c
- 	return rc;
- }
- 
--void memcpy_flushcache(void *_dst, const void *_src, size_t size)
-+void __memcpy_flushcache(void *_dst, const void *_src, size_t size)
+diff --git a/lib/bitmap.c b/lib/bitmap.c
+index 58f9750e49c6..33e95cd359a2 100644
+--- a/lib/bitmap.c
++++ b/lib/bitmap.c
+@@ -1132,14 +1132,10 @@ EXPORT_SYMBOL(bitmap_copy_le);
+  *	@buf: array of u32 (in host byte order), the source bitmap
+  *	@nbits: number of bits in @bitmap
+  */
+-void bitmap_from_arr32(unsigned long *bitmap, const u32 *buf,
+-						unsigned int nbits)
++void bitmap_from_arr32(unsigned long *bitmap, const u32 *buf, unsigned int nbits)
  {
- 	unsigned long dest = (unsigned long) _dst;
- 	unsigned long source = (unsigned long) _src;
-@@ -216,7 +216,7 @@ void memcpy_flushcache(void *_dst, const
- 		clean_cache_range((void *) dest, size);
- 	}
- }
--EXPORT_SYMBOL_GPL(memcpy_flushcache);
-+EXPORT_SYMBOL_GPL(__memcpy_flushcache);
+ 	unsigned int i, halfwords;
  
- void memcpy_page_flushcache(char *to, struct page *page, size_t offset,
- 		size_t len)
+-	if (!nbits)
+-		return;
+-
+ 	halfwords = DIV_ROUND_UP(nbits, 32);
+ 	for (i = 0; i < halfwords; i++) {
+ 		bitmap[i/2] = (unsigned long) buf[i];
+@@ -1163,9 +1159,6 @@ void bitmap_to_arr32(u32 *buf, const unsigned long *bitmap, unsigned int nbits)
+ {
+ 	unsigned int i, halfwords;
+ 
+-	if (!nbits)
+-		return;
+-
+ 	halfwords = DIV_ROUND_UP(nbits, 32);
+ 	for (i = 0; i < halfwords; i++) {
+ 		buf[i] = (u32) (bitmap[i/2] & UINT_MAX);
+-- 
+2.17.1
