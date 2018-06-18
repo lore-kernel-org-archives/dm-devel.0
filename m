@@ -1,278 +1,63 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: dm bufio: Reduce dm_bufio_lock contention
-Date: Mon, 18 Jun 2018 18:11:26 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1806181003560.4201@file01.intranet.prod.int.rdu2.redhat.com>
-References: <1528790608-19557-1-git-send-email-jing.xia@unisoc.com>
-	<20180612212007.GA22717@redhat.com>
-	<alpine.LRH.2.02.1806131001250.15845@file01.intranet.prod.int.rdu2.redhat.com>
-	<CAN=25QMQiJ7wvfvYvmZnEnrkeb-SA7_hPj+N2RnO8y-aVO8wOQ@mail.gmail.com>
-	<20180614073153.GB9371@dhcp22.suse.cz>
-	<alpine.LRH.2.02.1806141424510.30404@file01.intranet.prod.int.rdu2.redhat.com>
-	<20180615073201.GB24039@dhcp22.suse.cz>
-	<alpine.LRH.2.02.1806150724260.15022@file01.intranet.prod.int.rdu2.redhat.com>
-	<20180615115547.GH24039@dhcp22.suse.cz>
-	<alpine.LRH.2.02.1806150832100.26650@file01.intranet.prod.int.rdu2.redhat.com>
-	<20180615130925.GI24039@dhcp22.suse.cz>
+From: Andy Shevchenko <andy.shevchenko@gmail.com>
+Subject: Re: [PATCH v3 3/5] bitmap: Add bitmap_alloc(), bitmap_zalloc() and bitmap_free()
+Date: Tue, 19 Jun 2018 01:52:13 +0300
+Message-ID: <CAHp75VdoL=qTBKMp+FB=RdNRqbZgv9=hJ=kYAAAYFTUpxFAr6g@mail.gmail.com>
+References: <20180618131003.88110-1-andriy.shevchenko@linux.intel.com>
+ <20180618131003.88110-4-andriy.shevchenko@linux.intel.com>
+ <20180618141404.68124daab97bd0f3a3051544@linux-foundation.org> <CAKdAkRTHOORds7aEauv4rp3_=PnGi=Nv-VS3-nAb9MztJPKG=Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180615130925.GI24039@dhcp22.suse.cz>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Michal Hocko <mhocko@kernel.org>
-Cc: Mike Snitzer <snitzer@redhat.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, dm-devel@redhat.com, jing xia <jing.xia.mail@gmail.com>, agk@redhat.com
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAKdAkRTHOORds7aEauv4rp3_=PnGi=Nv-VS3-nAb9MztJPKG=Q@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Dmitry Torokhov <dmitry.torokhov@gmail.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Andy Shevchenko <andriy.shevchenko@linux.intel.com>, agk@redhat.com, Mike Snitzer <snitzer@redhat.com>, device-mapper development <dm-devel@redhat.com>, shli@kernel.org, linux-raid@vger.kernel.org, "linux-input@vger.kernel.org" <linux-input@vger.kernel.org>, Yury Norov <ynorov@caviumnetworks.com>, lkml <linux-kernel@vger.kernel.org>, Mika Westerberg <mika.westerberg@linux.intel.com>, Joe Perches <joe@perches.com>
 List-Id: dm-devel.ids
 
-
-
-On Fri, 15 Jun 2018, Michal Hocko wrote:
-
-> On Fri 15-06-18 08:47:52, Mikulas Patocka wrote:
-> > 
-> > 
-> > On Fri, 15 Jun 2018, Michal Hocko wrote:
-> > 
-> > > On Fri 15-06-18 07:35:07, Mikulas Patocka wrote:
-> > > > 
-> > > > Because mempool uses it. Mempool uses allocations with "GFP_NOIO | 
-> > > > __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN". An so dm-bufio uses 
-> > > > these flags too. dm-bufio is just a big mempool.
-> > > 
-> > > This doesn't answer my question though. Somebody else is doing it is not
-> > > an explanation. Prior to your 41c73a49df31 there was no GFP_NOIO
-> > > allocation AFAICS. So why do you really need it now? Why cannot you
-> > 
-> > dm-bufio always used "GFP_NOIO | __GFP_NORETRY | __GFP_NOMEMALLOC | 
-> > __GFP_NOWARN" since the kernel 3.2 when it was introduced.
-> > 
-> > In the kernel 4.10, dm-bufio was changed so that it does GFP_NOWAIT 
-> > allocation, then drops the lock and does GFP_NOIO with the dropped lock 
-> > (because someone was likely experiencing the same issue that is reported 
-> > in this thread) - there are two commits that change it - 9ea61cac0 and 
-> > 41c73a49df31.
-> 
-> OK, I see. Is there any fundamental reason why this path has to do one
-> round of GFP_IO or it can keep NOWAIT, drop the lock, sleep and retry
-> again?
-
-If the process is woken up, there was some buffer added to the freelist, 
-or refcount of some buffer was dropped to 0. In this case, we don't want 
-to drop the lock and use GFP_NOIO, because the freed buffer may disappear 
-when we drop the lock.
-
-> [...]
-> > > is the same class of problem, honestly, I dunno. And I've already said
-> > > that stalling __GFP_NORETRY might be a good way around that but that
-> > > needs much more consideration and existing users examination. I am not
-> > > aware anybody has done that. Doing changes like that based on a single
-> > > user is certainly risky.
-> > 
-> > Why don't you set any rules how these flags should be used?
-> 
-> It is really hard to change rules during the game. You basically have to
-> examine all existing users and that is well beyond my time scope. I've
-> tried that where it was possible. E.g. __GFP_REPEAT and turned it into a
-> well defined semantic. __GFP_NORETRY is a bigger beast.
-> 
-> Anyway, I believe that it would be much safer to look at the problem
-> from a highlevel perspective. You seem to be focused on __GFP_NORETRY
-> little bit too much IMHO. We are not throttling callers which explicitly
-> do not want to or cannot - see current_may_throttle. Is it possible that
-> both your md and mempool allocators can either (ab)use PF_LESS_THROTTLE
-> or use other means? E.g. do you have backing_dev_info at that time?
-> -- 
-> Michal Hocko
-> SUSE Labs
-
-I grepped the kernel for __GFP_NORETRY and triaged them. I found 16 cases 
-without a fallback - those are bugs that make various functions randomly 
-return -ENOMEM.
-
-Most of the callers provide callback.
-
-There is another strange flag - __GFP_RETRY_MAYFAIL - it provides two 
-different functions - if the allocation is larger than 
-PAGE_ALLOC_COSTLY_ORDER, it retries the allocation as if it were smaller. 
-If the allocations is smaller than PAGE_ALLOC_COSTLY_ORDER, 
-__GFP_RETRY_MAYFAIL will avoid the oom killer (larger order allocations 
-don't trigger the oom killer at all).
-
-So, perhaps __GFP_RETRY_MAYFAIL could be used instead of __GFP_NORETRY in 
-the cases where the caller wants to avoid trigerring the oom killer (the 
-problem is that __GFP_NORETRY causes random failure even in no-oom 
-situations but __GFP_RETRY_MAYFAIL doesn't).
-
-
-So my suggestion is - fix these obvious bugs when someone allocates memory 
-with __GFP_NORETRY without any fallback - and then, __GFP_NORETRY could be 
-just changed to return NULL instead of sleeping.
-
-
-
-
-arch/arm/mm/dma-mapping.c - fallback to a smaller size without __GFP_NORETRY
-
-arch/mips/mm/dma-default.c - says that it uses __GFP_NORETRY to avoid the 
-oom killer, provides no fallback - it seems to be a BUG
-
-arch/sparc/mm/tsb.c - fallback to a smaller size without __GFP_NORETRY
-
-arch/x86/include/asm/floppy.h - __GFP_NORETRY doesn't seem to serve any 
-purpose, it may cause random failures during initialization, can be 
-removed - BUG
-
-arch/powerpc/mm/mmu_context_iommu.c - uses it just during moving pages, 
-there's no problem with failure
-
-arch/powerpc/platforms/pseries/cmm.c - a vm balloon driver, no problem 
-with failure
-
-block/bio.c - falls back to mempool
-
-block/blk-mq.c - errorneous use of __GFP_NORETRY during initialization, it 
-falls back to a smaller size, but doesn't drop the __GFP_NORETRY flag 
-(BUG)
-
-drivers/gpu/drm/i915/i915_gem.c - it starts with __GFP_NORETRY and on 
-failure, it ORs it with __GFP_RETRY_MAYFAIL (which of these conflicting 
-flags wins?)
-
-drivers/gpu/drm/i915/i915_gem_gtt.c - __GFP_NORETRY is used during 
-initialization (BUG), it shouldn't be used
-
-drivers/gpu/drm/i915/i915_gem_execbuffer.c - fallback to a smaller size without __GFP_NORETRY
-
-drivers/gpu/drm/i915/i915_gem_internal.c - fallback to a smaller size without __GFP_NORETRY
-size
-
-drivers/gpu/drm/i915/i915_gem_userptr.c - seems to provide fallback
-
-drivers/gpu/drm/i915/i915_gpu_error.c - fallback to a smaller size without __GFP_NORETRY
-
-drivers/gpu/drm/etnaviv/etnaviv_dump.c - coredump on error path, no 
-problem if it fails
-
-drivers/gpu/drm/ttm/ttm_page_alloc.c - uses __GFP_NORETRY for transparent 
-hugepages, no problem with failure
-
-drivers/gpu/drm/ttm/ttm_page_alloc_dma.c - uses __GFP_NORETRY for 
-transparent hugepages, no problem with failure
-
-drivers/gpu/drm/msm/msm_gem_submit.c - uses __GFP_NORETRY to process ioctl 
-and lacks a fallback - it is a BUG - __GFP_NORETRY should be dropped
-
-drivers/hv/hv_balloon.c - a vm balloon driver, no problem with failure
-
-drivers/crypto/chelsio/chtls/chtls_io.c - fallback to a smaller size without __GFP_NORETRY
-
-drivers/xen/balloon.c - a vm balloon driver, no problem with failure
-
-drivers/mtd/mtdcore.c - fallback to a smaller size without __GFP_NORETRY
-
-drivers/md/dm-verity-target.c - skips prefetch on failure, no problem
-
-drivers/md/dm-writecache.c - falls back to a smaller i/os on failure
-
-drivers/md/dm-bufio.c - reserves some buffers on creation and falls back 
-to them
-
-drivers/md/dm-integrity.c - falls back to sector-by-sector verification
-
-drivers/md/dm-kcopyd.c - falls back to reserved pages
-
-drivers/md/dm-crypt.c - falls back to mempool
-
-drivers/iommu/dma-iommu.c - fallback to a smaller size without __GFP_NORETRY
-
-drivers/mmc/core/mmc_test.c - fallback to a smaller size, but doesn't drop 
-__GFP_NORETRY - BUG
-
-drivers/staging/android/ion/ion_system_heap.c - fallback to a smaller size without __GFP_NORETRY
-
-fs/cachefiles/ - uses __GFP_NORETRY extensively - since this is just a 
-cache, so failure supposedly shouldn't be problem - but it's hard to 
-verify the whole driver that it handles failures properly
-
-fs/xfs/xfs_buf.c - uses __GFP_NORETRY only on readahead
-
-fs/fscache/cookie.c - no fallback, but if it fails, the caller will just 
-invalidate the cache entry - no problem
-
-fs/fscache/page.c - like above - failure will just inhibit caching
-
-fs/nfs/write.c - fails only if allowed by the arugment never_fail
-
-include/linux/kexec.h - no fallback - it seems to be a BUG
-
-include/linux/pagemap.h - uses __GFP_NORETRY only on readahead
-
-kernel/bpf/syscall.c - it says it need __GFP_NORETRY to avoid oom killer - 
-provides no fallback, so it seems to be BUG
-
-kernel/events/ring_buffer.c - falls back to a smaller size, but doesn't drop 
-__GFP_NORETRY - BUG
-
-kernel/groups.c - falls back to vmalloc (should it use kvmalloc?)
-
-kernel/trace/ring_buffer.c - no fallback - BUG
-
-kernel/trace/trace.c - no fallback - BUG
-
-kernel/power/swap.c - falls back, but there is useless WARN_ON_ONCE(1) on 
-the fallback path
-
-lib/debugobjects.c - turns off debugging on alloaction failure
-
-lib/rhashtable.c - uses __GFP_NORETRY only with GFP_ATOMIC - __GFP_NORETRY 
-is useless
-
-mm/hugetlb.c - no problem if hugepage allocation fails
-
-mm/mempool.c - falls back to mempool
-
-mm/kmemleak.c - disables kmemleak on allocation failure
-
-mm/page_alloc.c/__page_frag_cache_refill - fallback to a smaller size without __GFP_NORETRY
-
-mm/zswap.c/zswap_pool_create - used during pool creation - probably a BUG
-mm/zswap.c/zswap_frontswap_store - used when compressing a page - probably 
-ok to fail
-
-mm/memcontrol.c - I don't know if it is a bug
-
-mm/shmem.c - used during hugepage allocation - ok to fail
-
-mm/slub.c - fallback to a smaller size without __GFP_NORETRY
-
-mm/util.c - fallback to vmalloc
-
-net/packet/af_packet.c - fallback without __GFP_NORETRY
-
-net/xdp/xsk_queue.c - no fallback - BUG
-
-net/core/skbuff.c - fallback to a smaller size without __GFP_NORETRY
-
-net/core/sock.c - fallback to a smaller size without __GFP_NORETRY
-
-net/netlink/af_netlink.c - it's ok to fail when decreasing the size of skb
-
-net/smc/smc_core.c - falls back to a smaller size, but doesn't drop 
-__GFP_NORETRY - BUG
-
-net/netfilter/x_tables.c - __GFP_NORETRY is used to avoid the oom killer
-- provides no fallback - it seems to be a BUG
-
-security/integrity/ima/ima_crypto.c - fallback to a smaller size without __GFP_NORETRY
-
-sound/core/memalloc.c - __GFP_NORETRY is used to avoid the oom killer
-- provides no fallback - it seems to be a BUG
-
-Mikulas
+On Tue, Jun 19, 2018 at 1:01 AM, Dmitry Torokhov
+<dmitry.torokhov@gmail.com> wrote:
+> On Mon, Jun 18, 2018 at 2:14 PM Andrew Morton <akpm@linux-foundation.org> wrote:
+>>
+>> On Mon, 18 Jun 2018 16:10:01 +0300 Andy Shevchenko <andriy.shevchenko@linux.intel.com> wrote:
+>>
+>> > A lot of code become ugly because of open coding allocations for bitmaps.
+>> >
+>> > Introduce three helpers to allow users be more clear of intention
+>> > and keep their code neat.
+>> >
+>> > ...
+>> >
+>> > +unsigned long *bitmap_alloc(unsigned int nbits, gfp_t flags)
+>> > +{
+>> > +     return kmalloc_array(BITS_TO_LONGS(nbits), sizeof(unsigned long), flags);
+>> > +}
+>> > +EXPORT_SYMBOL(bitmap_alloc);
+>> > +
+>> > +unsigned long *bitmap_zalloc(unsigned int nbits, gfp_t flags)
+>> > +{
+>> > +     return bitmap_alloc(nbits, flags | __GFP_ZERO);
+>> > +}
+>> > +EXPORT_SYMBOL(bitmap_zalloc);
+>> > +
+>> > +void bitmap_free(const unsigned long *bitmap)
+>> > +{
+>> > +     kfree(bitmap);
+>> > +}
+>> > +EXPORT_SYMBOL(bitmap_free);
+>> > +
+>>
+>> I suggest these functions are small and simple enough to justify
+>> inlining them.
+>>
+>
+> We can't as we end up including bitmap.h (by the way of cpumask.h)
+> form slab.h, so we gen circular dependency. Maybe if we removed memcg
+> stuff from slab.h so we do not need to include workqueue.h...
+
+I will look at it. It might be doable.
+Though I dunno what MM people would say about this. Anyone's name
+comes to your mind to ask?
+
+-- 
+With Best Regards,
+Andy Shevchenko
