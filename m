@@ -1,71 +1,52 @@
-From: Andy Shevchenko <andy.shevchenko@gmail.com>
-Subject: Re: [PATCH v3 3/5] bitmap: Add bitmap_alloc(), bitmap_zalloc() and bitmap_free()
-Date: Tue, 19 Jun 2018 02:18:48 +0300
-Message-ID: <CAHp75VcQWO36SVmYOJQyVo8uCoA2Wec_CWw2sjRyCd73TfCpTQ@mail.gmail.com>
-References: <20180618131003.88110-1-andriy.shevchenko@linux.intel.com>
- <20180618131003.88110-4-andriy.shevchenko@linux.intel.com>
- <20180618141404.68124daab97bd0f3a3051544@linux-foundation.org>
- <CAKdAkRTHOORds7aEauv4rp3_=PnGi=Nv-VS3-nAb9MztJPKG=Q@mail.gmail.com> <20180618161056.e52efd0e8bd36211e60705a2@linux-foundation.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180618161056.e52efd0e8bd36211e60705a2@linux-foundation.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Dmitry Torokhov <dmitry.torokhov@gmail.com>, Andy Shevchenko <andriy.shevchenko@linux.intel.com>, agk@redhat.com, Mike Snitzer <snitzer@redhat.com>, device-mapper development <dm-devel@redhat.com>, shli@kernel.org, linux-raid@vger.kernel.org, "linux-input@vger.kernel.org" <linux-input@vger.kernel.org>, Yury Norov <ynorov@caviumnetworks.com>, lkml <linux-kernel@vger.kernel.org>, Mika Westerberg <mika.westerberg@linux.intel.com>, Joe Perches <joe@perches.com>
+From: Christoph Hellwig <hch@lst.de>
+Subject: [PATCH 1/6] dm: use bio_split() when splitting out the already processed bio
+Date: Tue, 19 Jun 2018 06:52:11 +0200
+Message-ID: <20180619045216.21130-2-hch@lst.de>
+References: <20180619045216.21130-1-hch@lst.de>
+Return-path: <stable-owner@vger.kernel.org>
+In-Reply-To: <20180619045216.21130-1-hch@lst.de>
+Sender: stable-owner@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Ming Lei <ming.lei@redhat.com>, Boaz Harrosh <ooo@electrozaur.com>, linux-block@vger.kernel.org, linux-bcache@vger.kernel.org, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, stable@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Tue, Jun 19, 2018 at 2:10 AM, Andrew Morton
-<akpm@linux-foundation.org> wrote:
-> On Mon, 18 Jun 2018 15:01:43 -0700 Dmitry Torokhov <dmitry.torokhov@gmail.com> wrote:
->
->> > > +unsigned long *bitmap_alloc(unsigned int nbits, gfp_t flags)
->> > > +{
->> > > +     return kmalloc_array(BITS_TO_LONGS(nbits), sizeof(unsigned long), flags);
->> > > +}
->> > > +EXPORT_SYMBOL(bitmap_alloc);
->> > > +
->> > > +unsigned long *bitmap_zalloc(unsigned int nbits, gfp_t flags)
->> > > +{
->> > > +     return bitmap_alloc(nbits, flags | __GFP_ZERO);
->> > > +}
->> > > +EXPORT_SYMBOL(bitmap_zalloc);
->> > > +
->> > > +void bitmap_free(const unsigned long *bitmap)
->> > > +{
->> > > +     kfree(bitmap);
->> > > +}
->> > > +EXPORT_SYMBOL(bitmap_free);
->> > > +
->> >
->> > I suggest these functions are small and simple enough to justify
->> > inlining them.
->> >
->>
->> We can't as we end up including bitmap.h (by the way of cpumask.h)
->> form slab.h, so we gen circular dependency.
->
-> That info should have been in the changelog,
+From: Mike Snitzer <snitzer@redhat.com>
 
-I put it in cover letter, though it perhaps better to have in commit
-message itself.
+Use of bio_clone_bioset() is inefficient if there is no need to clone
+the original bio's bio_vec array.  Best to use the bio_clone_fast()
+variant.  Also, just using bio_advance() is only part of what is needed
+to properly setup the clone -- it doesn't account for the various
+bio_integrity() related work that also needs to be performed (see
+bio_split).
 
-> and probably a code
-> comment.
+Address both of these issues by switching from bio_clone_bioset() to
+bio_split().
 
-This is done in header file. You meant C-file?
+Fixes: 18a25da8 ("dm: ensure bio submission follows a depth-first tree walk")
+Cc: stable@vger.kernel.org # 4.15+, requires removal of '&' before md->queue->bio_split
+Reported-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: NeilBrown <neilb@suse.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm.c | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
 
-
->> Maybe if we removed memcg
->> stuff from slab.h so we do not need to include workqueue.h...
->
-> Or move the basic slab API stuff out of slab.h into a new header.  Or
-> create a new, standalone work_struct.h - that looks pretty simple.
-
-Latter one seems requires least effort without potentially breaking things.
-I take it as your suggestion, though I would still give a glance if it
-is possible to split exactly memcg part out of slab.
-
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index e65429a29c06..a3b103e8e3ce 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1606,10 +1606,9 @@ static blk_qc_t __split_and_process_bio(struct mapped_device *md,
+ 				 * the usage of io->orig_bio in dm_remap_zone_report()
+ 				 * won't be affected by this reassignment.
+ 				 */
+-				struct bio *b = bio_clone_bioset(bio, GFP_NOIO,
+-								 &md->queue->bio_split);
++				struct bio *b = bio_split(bio, bio_sectors(bio) - ci.sector_count,
++							  GFP_NOIO, &md->queue->bio_split);
+ 				ci.io->orig_bio = b;
+-				bio_advance(bio, (bio_sectors(bio) - ci.sector_count) << 9);
+ 				bio_chain(b, bio);
+ 				ret = generic_make_request(bio);
+ 				break;
 -- 
-With Best Regards,
-Andy Shevchenko
+2.17.1
