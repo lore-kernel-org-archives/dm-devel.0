@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 4/6] block: remove bio_clone_kmalloc
-Date: Tue, 19 Jun 2018 06:52:14 +0200
-Message-ID: <20180619045216.21130-5-hch@lst.de>
+Subject: [PATCH 2/6] bcache: don't clone bio in bch_data_verify
+Date: Tue, 19 Jun 2018 06:52:12 +0200
+Message-ID: <20180619045216.21130-3-hch@lst.de>
 References: <20180619045216.21130-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,29 +21,34 @@ To: Jens Axboe <axboe@kernel.dk>
 Cc: linux-block@vger.kernel.org, Boaz Harrosh <ooo@electrozaur.com>, linux-bcache@vger.kernel.org, dm-devel@redhat.com, Ming Lei <ming.lei@redhat.com>
 List-Id: dm-devel.ids
 
-Unused now.
+We immediately overwrite the biovec array, so instead just allocate
+a new bio and copy over the disk, setor and size.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- include/linux/bio.h | 6 ------
- 1 file changed, 6 deletions(-)
+ drivers/md/bcache/debug.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
 
-diff --git a/include/linux/bio.h b/include/linux/bio.h
-index f08f5fe7bd08..430807f9f44b 100644
---- a/include/linux/bio.h
-+++ b/include/linux/bio.h
-@@ -443,12 +443,6 @@ static inline struct bio *bio_kmalloc(gfp_t gfp_mask, unsigned int nr_iovecs)
- 	return bio_alloc_bioset(gfp_mask, nr_iovecs, NULL);
- }
+diff --git a/drivers/md/bcache/debug.c b/drivers/md/bcache/debug.c
+index d030ce3025a6..04d146711950 100644
+--- a/drivers/md/bcache/debug.c
++++ b/drivers/md/bcache/debug.c
+@@ -110,11 +110,15 @@ void bch_data_verify(struct cached_dev *dc, struct bio *bio)
+ 	struct bio_vec bv, cbv;
+ 	struct bvec_iter iter, citer = { 0 };
  
--static inline struct bio *bio_clone_kmalloc(struct bio *bio, gfp_t gfp_mask)
--{
--	return bio_clone_bioset(bio, gfp_mask, NULL);
--
--}
--
- extern blk_qc_t submit_bio(struct bio *);
+-	check = bio_clone_kmalloc(bio, GFP_NOIO);
++	check = bio_kmalloc(GFP_NOIO, bio_segments(bio));
+ 	if (!check)
+ 		return;
++	check->bi_disk = bio->bi_disk;
+ 	check->bi_opf = REQ_OP_READ;
++	check->bi_iter.bi_sector = bio->bi_iter.bi_sector;
++	check->bi_iter.bi_size = bio->bi_iter.bi_size;
  
- extern void bio_endio(struct bio *);
++	bch_bio_map(check, NULL);
+ 	if (bch_bio_alloc_pages(check, GFP_NOIO))
+ 		goto out_put;
+ 
 -- 
 2.17.1
