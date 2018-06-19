@@ -1,13 +1,11 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 5/6] md: remove a bogus comment
-Date: Tue, 19 Jun 2018 06:52:15 +0200
-Message-ID: <20180619045216.21130-6-hch@lst.de>
-References: <20180619045216.21130-1-hch@lst.de>
+Subject: [RFC] kill bio_clone_kmalloc and bio_clone_bioset
+Date: Tue, 19 Jun 2018 06:52:10 +0200
+Message-ID: <20180619045216.21130-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180619045216.21130-1-hch@lst.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,28 +19,14 @@ To: Jens Axboe <axboe@kernel.dk>
 Cc: linux-block@vger.kernel.org, Boaz Harrosh <ooo@electrozaur.com>, linux-bcache@vger.kernel.org, dm-devel@redhat.com, Ming Lei <ming.lei@redhat.com>
 List-Id: dm-devel.ids
 
-The function name mentioned doesn't exist, and the code next to it
-doesn't match the description either.
+Hi all,
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
----
- drivers/md/md.c | 4 ----
- 1 file changed, 4 deletions(-)
+this series removes all but one users of the traditional deep bio clone,
+and then moves bio_clone_bioset to its only caller so that we get rid
+of the deep bio cloning in the block layer API.
 
-diff --git a/drivers/md/md.c b/drivers/md/md.c
-index 29b0cd9ec951..81f458514ac0 100644
---- a/drivers/md/md.c
-+++ b/drivers/md/md.c
-@@ -204,10 +204,6 @@ static int start_readonly;
-  */
- static bool create_on_open = true;
- 
--/* bio_clone_mddev
-- * like bio_clone_bioset, but with a local bio set
-- */
--
- struct bio *bio_alloc_mddev(gfp_t gfp_mask, int nr_iovecs,
- 			    struct mddev *mddev)
- {
--- 
-2.17.1
+Patch 1 is already in the device mapper queue for 4.18, so we should
+wait for that to go in before the series is applied.  The series is
+inteded as preparation work for the multi-page biovecs so that it doesn't
+have to deal with the difference between single page or larger bio vecs
+for cloning.
