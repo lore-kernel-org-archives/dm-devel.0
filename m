@@ -1,66 +1,96 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: dm bufio: Reduce dm_bufio_lock contention
-Date: Tue, 19 Jun 2018 12:43:12 +0200
-Message-ID: <20180619104312.GD13685@dhcp22.suse.cz>
-References: <alpine.LRH.2.02.1806131001250.15845@file01.intranet.prod.int.rdu2.redhat.com>
- <CAN=25QMQiJ7wvfvYvmZnEnrkeb-SA7_hPj+N2RnO8y-aVO8wOQ@mail.gmail.com>
- <20180614073153.GB9371@dhcp22.suse.cz>
- <alpine.LRH.2.02.1806141424510.30404@file01.intranet.prod.int.rdu2.redhat.com>
- <20180615073201.GB24039@dhcp22.suse.cz>
- <alpine.LRH.2.02.1806150724260.15022@file01.intranet.prod.int.rdu2.redhat.com>
- <20180615115547.GH24039@dhcp22.suse.cz>
- <alpine.LRH.2.02.1806150832100.26650@file01.intranet.prod.int.rdu2.redhat.com>
- <20180615130925.GI24039@dhcp22.suse.cz>
- <alpine.LRH.2.02.1806181003560.4201@file01.intranet.prod.int.rdu2.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm thin: superblock may write succeed before other
+ metadata blocks because of wirting metadata in async mode.
+Date: Tue, 19 Jun 2018 09:11:06 -0400
+Message-ID: <20180619131106.GA31018@redhat.com>
+References: <20180522005336.GA30152@yyp.>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1806181003560.4201@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: jing xia <jing.xia.mail@gmail.com>, Mike Snitzer <snitzer@redhat.com>, agk@redhat.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-mm@kvack.org
+In-Reply-To: <20180522005336.GA30152@yyp.>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Monty Pavel <monty_pavel@sina.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon 18-06-18 18:11:26, Mikulas Patocka wrote:
-[...]
-> I grepped the kernel for __GFP_NORETRY and triaged them. I found 16 cases 
-> without a fallback - those are bugs that make various functions randomly 
-> return -ENOMEM.
+On Mon, May 21 2018 at  8:53pm -0400,
+Monty Pavel <monty_pavel@sina.com> wrote:
 
-Well, maybe those are just optimistic attempts to allocate memory and
-have a fallback somewhere else. So I would be careful calling them
-outright bugs. But maybe you are right.
-
-> Most of the callers provide callback.
 > 
-> There is another strange flag - __GFP_RETRY_MAYFAIL - it provides two 
-> different functions - if the allocation is larger than 
-> PAGE_ALLOC_COSTLY_ORDER, it retries the allocation as if it were smaller. 
-> If the allocations is smaller than PAGE_ALLOC_COSTLY_ORDER, 
-> __GFP_RETRY_MAYFAIL will avoid the oom killer (larger order allocations 
-> don't trigger the oom killer at all).
+> If dm_bufio_write_dirty_buffers func is called by __commit_transaction
+> func and power loss happens during executing it, coincidencely
+> superblock wrote correctly but some metadata blocks didn't. The reason
+> is we write all metadata in async mode. We can guarantee that we send
+> superblock after other blocks but we cannot guarantee that superblock
+> write completely early than other blocks.
+> So, We need to commit other metadata blocks before change superblock.
+> 
+> Signed-off-by: Monty Pavel <monty_pavel@sina.com>
+> ---
+>  drivers/md/dm-thin-metadata.c |    8 ++++++++
+>  1 files changed, 8 insertions(+), 0 deletions(-)
+> 
+> diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
+> index 36ef284..897d7d6 100644
+> --- a/drivers/md/dm-thin-metadata.c
+> +++ b/drivers/md/dm-thin-metadata.c
+> @@ -813,6 +813,14 @@ static int __commit_transaction(struct dm_pool_metadata *pmd)
+>  	if (r)
+>  		return r;
+>  
+> +	r = dm_tm_commit(pmd->tm, sblock);
+> +	if (r)
+> +		return r;
+> +
+> +	r = superblock_lock(pmd, &sblock);
+> +	if (r)
+> +		return r;
+> +
+>  	disk_super = dm_block_data(sblock);
+>  	disk_super->time = cpu_to_le32(pmd->time);
+>  	disk_super->data_mapping_root = cpu_to_le64(pmd->root);
+> -- 
+> 1.7.1
 
-Well, the primary purpose of this flag is to provide a consistent
-failure behavior for all requests regardless of the size.
+Have you actually found this patch to be effective?  It should be
+unnecessary.  But I must admit that in looking at the related code I
+couldn't convince myself it was.
 
-> So, perhaps __GFP_RETRY_MAYFAIL could be used instead of __GFP_NORETRY in 
-> the cases where the caller wants to avoid trigerring the oom killer (the 
-> problem is that __GFP_NORETRY causes random failure even in no-oom 
-> situations but __GFP_RETRY_MAYFAIL doesn't).
+But then Joe pointed me to this comment block from
+dm-transaction-manager.h:
 
-myabe yes.
+/*
+ * We use a 2-phase commit here.
+ *
+ * i) Make all changes for the transaction *except* for the superblock.
+ * Then call dm_tm_pre_commit() to flush them to disk.
+ *
+ * ii) Lock your superblock.  Update.  Then call dm_tm_commit() which will
+ * unlock the superblock and flush it.  No other blocks should be updated
+ * during this period.  Care should be taken to never unlock a partially
+ * updated superblock; perform any operations that could fail *before* you
+ * take the superblock lock.
+ */
+int dm_tm_pre_commit(struct dm_transaction_manager *tm);
+int dm_tm_commit(struct dm_transaction_manager *tm, struct dm_block *superblock);
 
-> So my suggestion is - fix these obvious bugs when someone allocates memory 
-> with __GFP_NORETRY without any fallback - and then, __GFP_NORETRY could be 
-> just changed to return NULL instead of sleeping.
+So given __commit_transaction() is using dm_tm_pre_commit() prior to the
+dm_tm_commit() to flush the superblock -- it would seem that there isn't
+any conceptual potential for corruption.
 
-No real objection to fixing wrong __GFP_NORETRY usage. But __GFP_NORETRY
-can sleep. Nothing will really change in that regards.  It does a
-reclaim and that _might_ sleep.
+If you've found the dm_tm_pre_commit() to be lacking (whereby not all
+metadata getting flushed to disk before the superblock) then please
+explain your findings.
 
-But seriously, isn't the best way around the throttling issue to use
-PF_LESS_THROTTLE?
--- 
-Michal Hocko
-SUSE Labs
+Thanks,
+Mike
