@@ -1,54 +1,66 @@
-From: Boaz Harrosh <ooo@electrozaur.com>
-Subject: Re: [PATCH 3/6] exofs: use bio_clone_fast in
-	_write_mirror
-Date: Tue, 19 Jun 2018 10:54:27 +0300
-Message-ID: <8ddd6c9c-0e80-d02c-0539-95566e228841@electrozaur.com>
-References: <20180619045216.21130-1-hch@lst.de>
-	<20180619045216.21130-4-hch@lst.de>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: dm bufio: Reduce dm_bufio_lock contention
+Date: Tue, 19 Jun 2018 12:43:12 +0200
+Message-ID: <20180619104312.GD13685@dhcp22.suse.cz>
+References: <alpine.LRH.2.02.1806131001250.15845@file01.intranet.prod.int.rdu2.redhat.com>
+ <CAN=25QMQiJ7wvfvYvmZnEnrkeb-SA7_hPj+N2RnO8y-aVO8wOQ@mail.gmail.com>
+ <20180614073153.GB9371@dhcp22.suse.cz>
+ <alpine.LRH.2.02.1806141424510.30404@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180615073201.GB24039@dhcp22.suse.cz>
+ <alpine.LRH.2.02.1806150724260.15022@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180615115547.GH24039@dhcp22.suse.cz>
+ <alpine.LRH.2.02.1806150832100.26650@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180615130925.GI24039@dhcp22.suse.cz>
+ <alpine.LRH.2.02.1806181003560.4201@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180619045216.21130-4-hch@lst.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>
-Cc: linux-block@vger.kernel.org, linux-bcache@vger.kernel.org, dm-devel@redhat.com, Ming Lei <ming.lei@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1806181003560.4201@file01.intranet.prod.int.rdu2.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: jing xia <jing.xia.mail@gmail.com>, Mike Snitzer <snitzer@redhat.com>, agk@redhat.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-mm@kvack.org
 List-Id: dm-devel.ids
 
-On 19/06/18 07:52, Christoph Hellwig wrote:
-> The mirroring code never changes the bio data or biovecs.  This means
-> we can reuse the biovec allocation easily instead of duplicating it.
-> 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
+On Mon 18-06-18 18:11:26, Mikulas Patocka wrote:
+[...]
+> I grepped the kernel for __GFP_NORETRY and triaged them. I found 16 cases 
+> without a fallback - those are bugs that make various functions randomly 
+> return -ENOMEM.
 
-Thank you yes that's much better
-ACK-by Boaz Harrosh <ooo@electrozaur.com>
+Well, maybe those are just optimistic attempts to allocate memory and
+have a fallback somewhere else. So I would be careful calling them
+outright bugs. But maybe you are right.
 
-> ---
->  fs/exofs/ore.c | 4 ++--
->  1 file changed, 2 insertions(+), 2 deletions(-)
+> Most of the callers provide callback.
 > 
-> diff --git a/fs/exofs/ore.c b/fs/exofs/ore.c
-> index 1b8b44637e70..5331a15a61f1 100644
-> --- a/fs/exofs/ore.c
-> +++ b/fs/exofs/ore.c
-> @@ -873,8 +873,8 @@ static int _write_mirror(struct ore_io_state *ios, int cur_comp)
->  			struct bio *bio;
->  
->  			if (per_dev != master_dev) {
-> -				bio = bio_clone_kmalloc(master_dev->bio,
-> -							GFP_KERNEL);
-> +				bio = bio_clone_fast(master_dev->bio,
-> +						     GFP_KERNEL, NULL);
->  				if (unlikely(!bio)) {
->  					ORE_DBGMSG(
->  					      "Failed to allocate BIO size=%u\n",
-> 
+> There is another strange flag - __GFP_RETRY_MAYFAIL - it provides two 
+> different functions - if the allocation is larger than 
+> PAGE_ALLOC_COSTLY_ORDER, it retries the allocation as if it were smaller. 
+> If the allocations is smaller than PAGE_ALLOC_COSTLY_ORDER, 
+> __GFP_RETRY_MAYFAIL will avoid the oom killer (larger order allocations 
+> don't trigger the oom killer at all).
+
+Well, the primary purpose of this flag is to provide a consistent
+failure behavior for all requests regardless of the size.
+
+> So, perhaps __GFP_RETRY_MAYFAIL could be used instead of __GFP_NORETRY in 
+> the cases where the caller wants to avoid trigerring the oom killer (the 
+> problem is that __GFP_NORETRY causes random failure even in no-oom 
+> situations but __GFP_RETRY_MAYFAIL doesn't).
+
+myabe yes.
+
+> So my suggestion is - fix these obvious bugs when someone allocates memory 
+> with __GFP_NORETRY without any fallback - and then, __GFP_NORETRY could be 
+> just changed to return NULL instead of sleeping.
+
+No real objection to fixing wrong __GFP_NORETRY usage. But __GFP_NORETRY
+can sleep. Nothing will really change in that regards.  It does a
+reclaim and that _might_ sleep.
+
+But seriously, isn't the best way around the throttling issue to use
+PF_LESS_THROTTLE?
+-- 
+Michal Hocko
+SUSE Labs
