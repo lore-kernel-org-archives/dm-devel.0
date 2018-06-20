@@ -1,79 +1,135 @@
-From: Christophe Leroy <christophe.leroy@c-s.fr>
-Subject: Re: [PATCH 11/11] crypto: skcipher: Remove VLA usage for
- SKCIPHER_REQUEST_ON_STACK
-Date: Wed, 20 Jun 2018 20:22:34 +0000
-Message-ID: <6537de88-cd81-1c96-afc0-45af17a07729@c-s.fr>
-References: <20180620190408.45104-1-keescook@chromium.org>
- <20180620190408.45104-12-keescook@chromium.org>
+From: Dmitry Torokhov <dmitry.torokhov@gmail.com>
+Subject: Re: [PATCH v2 5/5] Input: evdev - Switch to bitmap_zalloc()
+Date: Wed, 20 Jun 2018 13:26:53 -0700
+Message-ID: <20180620202653.GA75925@dtor-ws>
+References: <20180615132017.23889-1-andriy.shevchenko@linux.intel.com>
+ <20180615132017.23889-6-andriy.shevchenko@linux.intel.com>
+ <20180615214231.GA371@yury-thinkpad>
+ <20180619183316.GI71788@dtor-ws>
+ <20180620081321.GB19364@yury-thinkpad>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180620190408.45104-12-keescook@chromium.org>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <20180620081321.GB19364@yury-thinkpad>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>, Herbert Xu <herbert@gondor.apana.org.au>
-Cc: "Gustavo A. R. Silva" <gustavo@embeddedor.com>, Alasdair Kergon <agk@redhat.com>, Arnd Bergmann <arnd@arndb.de>, Eric Biggers <ebiggers@google.com>, Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Lars Persson <larper@axis.com>, Mike Snitzer <snitzer@redhat.com>, Rabin Vincent <rabinv@axis.com>, Tim Chen <tim.c.chen@linux.intel.com>, "David S. Miller" <davem@davemloft.net>, linux-crypto@vger.kernel.org, qat-linux@intel.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+To: Yury Norov <ynorov@caviumnetworks.com>
+Cc: Andy Shevchenko <andriy.shevchenko@linux.intel.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, linux-input@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, mika.westerberg@linux.intel.com
 List-Id: dm-devel.ids
 
-
-
-On 06/20/2018 07:04 PM, Kees Cook wrote:
-> In the quest to remove all stack VLA usage from the kernel[1], this
-> caps the skcipher request size similar to other limits and adds a sanity
-> check at registration.
+On Wed, Jun 20, 2018 at 11:13:21AM +0300, Yury Norov wrote:
+> On Tue, Jun 19, 2018 at 11:33:16AM -0700, Dmitry Torokhov wrote:
+> > External Email
+> > 
+> > On Sat, Jun 16, 2018 at 12:42:31AM +0300, Yury Norov wrote:
+> > > Hi Andy,
+> > >
+> > > On Fri, Jun 15, 2018 at 04:20:17PM +0300, Andy Shevchenko wrote:
+> > > > Switch to bitmap_zalloc() to show clearly what we are allocating.
+> > > > Besides that it returns pointer of bitmap type instead of opaque void *.
+> > > >
+> > > > Acked-by: Dmitry Torokhov <dmitry.torokhov@gmail.com>
+> > > > Signed-off-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+> > > > ---
+> > > >  drivers/input/evdev.c | 16 +++++++---------
+> > > >  1 file changed, 7 insertions(+), 9 deletions(-)
+> > > >
+> > > > diff --git a/drivers/input/evdev.c b/drivers/input/evdev.c
+> > > > index c81c79d01d93..370206f987f9 100644
+> > > > --- a/drivers/input/evdev.c
+> > > > +++ b/drivers/input/evdev.c
+> > > > @@ -481,7 +481,7 @@ static int evdev_release(struct inode *inode, struct file *file)
+> > > >         evdev_detach_client(evdev, client);
+> > > >
+> > > >         for (i = 0; i < EV_CNT; ++i)
+> > > > -               kfree(client->evmasks[i]);
+> > > > +               bitmap_free(client->evmasks[i]);
+> > > >
+> > > >         kvfree(client);
+> > > >
+> > > > @@ -925,17 +925,15 @@ static int evdev_handle_get_val(struct evdev_client *client,
+> > > >  {
+> > > >         int ret;
+> > > >         unsigned long *mem;
+> > > > -       size_t len;
+> > > >
+> > > > -       len = BITS_TO_LONGS(maxbit) * sizeof(unsigned long);
+> > > > -       mem = kmalloc(len, GFP_KERNEL);
+> > > > +       mem = bitmap_alloc(maxbit, GFP_KERNEL);
+> > > >         if (!mem)
+> > > >                 return -ENOMEM;
+> > >
+> > > But in commit message you say you switch to bitmap_zalloc(). IIUC
+> > > bitmap_alloc() is OK here. But could you please update comment to
+> > > avoid confusing.
+> > >
+> > > >
+> > > >         spin_lock_irq(&dev->event_lock);
+> > > >         spin_lock(&client->buffer_lock);
+> > > >
+> > > > -       memcpy(mem, bits, len);
+> > > > +       bitmap_copy(mem, bits, maxbit);
+> > > >
+> > > >         spin_unlock(&dev->event_lock);
+> > > >
+> > > > @@ -947,7 +945,7 @@ static int evdev_handle_get_val(struct evdev_client *client,
+> > > >         if (ret < 0)
+> > > >                 evdev_queue_syn_dropped(client);
+> > > >
+> > > > -       kfree(mem);
+> > > > +       bitmap_free(mem);
+> > > >
+> > > >         return ret;
+> > > >  }
+> > > > @@ -1003,13 +1001,13 @@ static int evdev_set_mask(struct evdev_client *client,
+> > > >         if (!cnt)
+> > > >                 return 0;
+> > > >
+> > > > -       mask = kcalloc(sizeof(unsigned long), BITS_TO_LONGS(cnt), GFP_KERNEL);
+> > > > +       mask = bitmap_zalloc(cnt, GFP_KERNEL);
+> > > >         if (!mask)
+> > > >                 return -ENOMEM;
+> > > >
+> > > >         error = bits_from_user(mask, cnt - 1, codes_size, codes, compat);
+> > >
+> > > If my understanding of bits_from_user() correct, here you can also use
+> > > bitmap_alloc(), true?
+> > 
+> > bits_from_user() copies as much as user supplied, we want to zero out
+> > the tail to make sure there is no garbage, so we want to use
+> > kcalloc/kzalloc/bitmap_zalloc here.
 > 
-> [1] https://lkml.kernel.org/r/CA+55aFzCG-zNmZwX4A2FQpadafLfEzK6CC=qPXydAacU1RqZWA@mail.gmail.com
-> 
-> Signed-off-by: Kees Cook <keescook@chromium.org>
+> I don't understand that. Tail bits of bitmap (i.e. after last used bit
+> till the end of last word) are always ignored by kernel code and there's
+> no matter what was stored in that bits.
 
-crypto/echainiv.c: In function ‘echainiv_encrypt’:
-crypto/echainiv.c:88:1: warning: the frame size of 2120 bytes is larger 
-than 1024 bytes [-Wframe-larger-than=]
-crypto/authenc.c: In function ‘crypto_authenc_copy_assoc’:
-crypto/authenc.c:197:1: warning: the frame size of 2120 bytes is larger 
-than 1024 bytes [-Wframe-larger-than=]
-crypto/authencesn.c: In function ‘crypto_authenc_esn_copy’:
-crypto/authencesn.c:194:1: warning: the frame size of 2120 bytes is 
-larger than 1024 bytes [-Wframe-larger-than=]
-crypto/algif_aead.c: In function ‘crypto_aead_copy_sgl’:
-crypto/algif_aead.c:90:1: warning: the frame size of 2120 bytes is 
-larger than 1024 bytes [-Wframe-larger-than=]
+Users can supply as little as one long word worth of data (codes_size =
+maxlen = 4). You really do not want the rest of the mask you will be
+applying to contain random heap garbage.
 
-Christophe
+> 
+> (With the exception of copying bitmap from kernel to userspace. For this
+> case we have bitmap_copy_clear_tail() to avoid unintended exposing kernel
+> data to user.)
+> 
+> If you know any bitmap function that don't ignore tail bits, this is a
+> bug and should be fixed.
+> 
+> By the way, bits_from_user() is bad-designed because it takes 2 size
+> arguments - maxbit and maxlen, and should be reworked. There's a
+> single user of this function, and I suspect, it can be switched to
+> existing core API, like bitmap_from_arr32().
 
-> ---
->   include/crypto/internal/skcipher.h | 1 +
->   include/crypto/skcipher.h          | 4 +++-
->   2 files changed, 4 insertions(+), 1 deletion(-)
-> 
-> diff --git a/include/crypto/internal/skcipher.h b/include/crypto/internal/skcipher.h
-> index e42f7063f245..5035482cbe68 100644
-> --- a/include/crypto/internal/skcipher.h
-> +++ b/include/crypto/internal/skcipher.h
-> @@ -130,6 +130,7 @@ static inline struct crypto_skcipher *crypto_spawn_skcipher(
->   static inline void crypto_skcipher_set_reqsize(
->   	struct crypto_skcipher *skcipher, unsigned int reqsize)
->   {
-> +	BUG_ON(reqsize > SKCIPHER_MAX_REQSIZE);
->   	skcipher->reqsize = reqsize;
->   }
->   
-> diff --git a/include/crypto/skcipher.h b/include/crypto/skcipher.h
-> index 2f327f090c3e..25294d0089b2 100644
-> --- a/include/crypto/skcipher.h
-> +++ b/include/crypto/skcipher.h
-> @@ -139,9 +139,11 @@ struct skcipher_alg {
->   	struct crypto_alg base;
->   };
->   
-> +#define SKCIPHER_MAX_REQSIZE	(PAGE_SIZE / 8)
-> +
->   #define SKCIPHER_REQUEST_ON_STACK(name, tfm) \
->   	char __##name##_desc[sizeof(struct skcipher_request) + \
-> -		crypto_skcipher_reqsize(tfm)] CRYPTO_MINALIGN_ATTR; \
-> +		SKCIPHER_MAX_REQSIZE] CRYPTO_MINALIGN_ATTR; \
->   	struct skcipher_request *name = (void *)__##name##_desc
->   
->   /**
-> 
+I'm afraid you suspect wrong, as (unfortunately, but it is ABI now) we
+are not dealing with masks consisting of u32 or u64 elements, but
+"unsigned long" elements, which change size depending on 32/64 bit
+architecture and whether we are dealing with compat or native userspace.
+
+It also needs both maxbit and maxlen, because one is kernel's limit
+while the other is limit from userspace POV and you need to reconcile
+both to make sure you do not overrun buffers on either side.
+
+Thanks.
+
+-- 
+Dmitry
