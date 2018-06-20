@@ -1,18 +1,14 @@
 From: Yury Norov <ynorov@caviumnetworks.com>
-Subject: Re: [PATCH v2 5/5] Input: evdev - Switch to
-	bitmap_zalloc()
-Date: Wed, 20 Jun 2018 11:13:21 +0300
-Message-ID: <20180620081321.GB19364@yury-thinkpad>
-References: <20180615132017.23889-1-andriy.shevchenko@linux.intel.com>
-	<20180615132017.23889-6-andriy.shevchenko@linux.intel.com>
-	<20180615214231.GA371@yury-thinkpad>
-	<20180619183316.GI71788@dtor-ws>
+Subject: Re: [PATCH v3 0/5] bitmap: Introduce alloc/free helpers
+Date: Wed, 20 Jun 2018 10:33:41 +0300
+Message-ID: <20180620072721.GA19364@yury-thinkpad>
+References: <20180618131003.88110-1-andriy.shevchenko@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20180619183316.GI71788@dtor-ws>
+In-Reply-To: <20180618131003.88110-1-andriy.shevchenko@linux.intel.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,105 +18,79 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Dmitry Torokhov <dmitry.torokhov@gmail.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, mika.westerberg@linux.intel.com, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-input@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Andy Shevchenko <andriy.shevchenko@linux.intel.com>, Shaohua Li <shli@kernel.org>, Alasdair Kergon <agk@redhat.com>
+To: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, mika.westerberg@linux.intel.com, Dmitry Torokhov <dmitry.torokhov@gmail.com>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-input@vger.kernel.org, Joe Perches <joe@perches.com>, Andrew Morton <akpm@linux-foundation.org>, Shaohua Li <shli@kernel.org>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Jun 19, 2018 at 11:33:16AM -0700, Dmitry Torokhov wrote:
+On Mon, Jun 18, 2018 at 04:09:58PM +0300, Andy Shevchenko wrote:
 > External Email
 > 
-> On Sat, Jun 16, 2018 at 12:42:31AM +0300, Yury Norov wrote:
-> > Hi Andy,
-> >
-> > On Fri, Jun 15, 2018 at 04:20:17PM +0300, Andy Shevchenko wrote:
-> > > Switch to bitmap_zalloc() to show clearly what we are allocating.
-> > > Besides that it returns pointer of bitmap type instead of opaque void *.
-> > >
-> > > Acked-by: Dmitry Torokhov <dmitry.torokhov@gmail.com>
-> > > Signed-off-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-> > > ---
-> > >  drivers/input/evdev.c | 16 +++++++---------
-> > >  1 file changed, 7 insertions(+), 9 deletions(-)
-> > >
-> > > diff --git a/drivers/input/evdev.c b/drivers/input/evdev.c
-> > > index c81c79d01d93..370206f987f9 100644
-> > > --- a/drivers/input/evdev.c
-> > > +++ b/drivers/input/evdev.c
-> > > @@ -481,7 +481,7 @@ static int evdev_release(struct inode *inode, struct file *file)
-> > >         evdev_detach_client(evdev, client);
-> > >
-> > >         for (i = 0; i < EV_CNT; ++i)
-> > > -               kfree(client->evmasks[i]);
-> > > +               bitmap_free(client->evmasks[i]);
-> > >
-> > >         kvfree(client);
-> > >
-> > > @@ -925,17 +925,15 @@ static int evdev_handle_get_val(struct evdev_client *client,
-> > >  {
-> > >         int ret;
-> > >         unsigned long *mem;
-> > > -       size_t len;
-> > >
-> > > -       len = BITS_TO_LONGS(maxbit) * sizeof(unsigned long);
-> > > -       mem = kmalloc(len, GFP_KERNEL);
-> > > +       mem = bitmap_alloc(maxbit, GFP_KERNEL);
-> > >         if (!mem)
-> > >                 return -ENOMEM;
-> >
-> > But in commit message you say you switch to bitmap_zalloc(). IIUC
-> > bitmap_alloc() is OK here. But could you please update comment to
-> > avoid confusing.
-> >
-> > >
-> > >         spin_lock_irq(&dev->event_lock);
-> > >         spin_lock(&client->buffer_lock);
-> > >
-> > > -       memcpy(mem, bits, len);
-> > > +       bitmap_copy(mem, bits, maxbit);
-> > >
-> > >         spin_unlock(&dev->event_lock);
-> > >
-> > > @@ -947,7 +945,7 @@ static int evdev_handle_get_val(struct evdev_client *client,
-> > >         if (ret < 0)
-> > >                 evdev_queue_syn_dropped(client);
-> > >
-> > > -       kfree(mem);
-> > > +       bitmap_free(mem);
-> > >
-> > >         return ret;
-> > >  }
-> > > @@ -1003,13 +1001,13 @@ static int evdev_set_mask(struct evdev_client *client,
-> > >         if (!cnt)
-> > >                 return 0;
-> > >
-> > > -       mask = kcalloc(sizeof(unsigned long), BITS_TO_LONGS(cnt), GFP_KERNEL);
-> > > +       mask = bitmap_zalloc(cnt, GFP_KERNEL);
-> > >         if (!mask)
-> > >                 return -ENOMEM;
-> > >
-> > >         error = bits_from_user(mask, cnt - 1, codes_size, codes, compat);
-> >
-> > If my understanding of bits_from_user() correct, here you can also use
-> > bitmap_alloc(), true?
+> A lot of code is using allocation of bitmaps using BITS_PER_LONG() macro and
+> sizeof(unsigned long) operator. The readability suffers because of this.
 > 
-> bits_from_user() copies as much as user supplied, we want to zero out
-> the tail to make sure there is no garbage, so we want to use
-> kcalloc/kzalloc/bitmap_zalloc here.
+> The series introduces three helpers, i.e. bitmap_alloc(), bitmap_zalloc() and
+> bitmap_free(), to make it more cleaner.
 
-I don't understand that. Tail bits of bitmap (i.e. after last used bit
-till the end of last word) are always ignored by kernel code and there's
-no matter what was stored in that bits.
+tools/include/linux/bitmap.h already has bitmap_alloc(),
+and it corresponds to bitmap_zalloc() in this patch. It may 
+cause problems in future if people will copy functions that
+use bitmap_alloc between kernel code and tools. So I think
+we have to propagate this API to tools and update existing
+users of bitmap_alloc() in tools.
 
-(With the exception of copying bitmap from kernel to userspace. For this
-case we have bitmap_copy_clear_tail() to avoid unintended exposing kernel
-data to user.)
-
-If you know any bitmap function that don't ignore tail bits, this is a
-bug and should be fixed.
-
-By the way, bits_from_user() is bad-designed because it takes 2 size
-arguments - maxbit and maxlen, and should be reworked. There's a
-single user of this function, and I suspect, it can be switched to
-existing core API, like bitmap_from_arr32().
+What about code that calls specific alloc functions, like
+memblock_virt_alloc() and pcpu_mem_zalloc() in mm/percpu.c,
+or devm_kcalloc() in drivers/dma/edma.c? If we are going to
+unify bitmap allocations in kernel, we should think about
+unification of that cases too. Should it be additional
+flag or optional pointer to the exact allocator in
+bitmap_{,z}alloc()?
 
 Yury
+ 
+> Patch 1 is a preparatory to avoid namespace collisions between bitmap API and
+> MD bitmap. No functional changes intended.
+> 
+> Patch 2 is just orphaned from previous release cycle.
+> 
+> Patch 3 introduces new helpers.
+> 
+> Patches 4 and 5 is just an example how to use new helpers. Locally I have like
+> dozen of them against different subsystems and drivers.
+> 
+> Ideally it would go through Input subsystem, thus, needs an Ack from MD maintainer(s).
+> 
+> Since v2:
+> - fix compilation issue in MD bitmap code
+> - elaborate changes in commit message of patch 5
+> 
+> Since v1:
+> - added namespace fix patch against MD bitmap API
+> - moved functions to lib/bitmap.c to avoid circular dependencies
+> - appended Dmitry's tags
+> 
+> Andy Shevchenko (5):
+>   md: Avoid namespace collision with bitmap API
+>   bitmap: Drop unnecessary 0 check for u32 array operations
+>   bitmap: Add bitmap_alloc(), bitmap_zalloc() and bitmap_free()
+>   Input: gpio-keys - Switch to bitmap_zalloc()
+>   Input: evdev - Switch to bitmap API
+> 
+>  drivers/input/evdev.c                         |  16 +-
+>  drivers/input/keyboard/gpio_keys.c            |   8 +-
+>  drivers/md/dm-raid.c                          |   6 +-
+>  drivers/md/md-bitmap.c                        | 301 +++++++++---------
+>  drivers/md/md-bitmap.h                        |  46 +--
+>  drivers/md/md-cluster.c                       |  16 +-
+>  drivers/md/md.c                               |  44 +--
+>  .../md/persistent-data/dm-space-map-common.c  |  12 +-
+>  drivers/md/raid1.c                            |  20 +-
+>  drivers/md/raid10.c                           |  26 +-
+>  drivers/md/raid5-cache.c                      |   2 +-
+>  drivers/md/raid5.c                            |  24 +-
+>  include/linux/bitmap.h                        |   8 +
+>  lib/bitmap.c                                  |  28 +-
+>  14 files changed, 283 insertions(+), 274 deletions(-)
+> 
+> --
+> 2.17.1
