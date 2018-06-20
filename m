@@ -1,99 +1,102 @@
-From: Dmitry Torokhov <dmitry.torokhov@gmail.com>
-Subject: Re: [PATCH v2 5/5] Input: evdev - Switch to bitmap_zalloc()
-Date: Tue, 19 Jun 2018 11:33:16 -0700
-Message-ID: <20180619183316.GI71788@dtor-ws>
-References: <20180615132017.23889-1-andriy.shevchenko@linux.intel.com>
- <20180615132017.23889-6-andriy.shevchenko@linux.intel.com>
- <20180615214231.GA371@yury-thinkpad>
+From: monty <monty_pavel@sina.com>
+Subject: Re: dm thin: superblock may write succeed before other
+ metadata blocks because of wirting metadata in async mode.
+Date: Wed, 20 Jun 2018 13:03:57 -0400
+Message-ID: <33593.1905931377$1529459641@news.gmane.org>
+References: <20180522005336.GA30152@yyp.> <20180619131106.GA31018@redhat.com>
+	<20180619144300.lhygtljn5aoazr5h@reti>
+	<20180619150032.GA31378@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20180615214231.GA371@yury-thinkpad>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Yury Norov <ynorov@caviumnetworks.com>
-Cc: Andy Shevchenko <andriy.shevchenko@linux.intel.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, linux-input@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, mika.westerberg@linux.intel.com
+In-Reply-To: <20180619150032.GA31378@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, thornber@redhat.com
 List-Id: dm-devel.ids
 
-On Sat, Jun 16, 2018 at 12:42:31AM +0300, Yury Norov wrote:
-> Hi Andy,
-> 
-> On Fri, Jun 15, 2018 at 04:20:17PM +0300, Andy Shevchenko wrote:
-> > Switch to bitmap_zalloc() to show clearly what we are allocating.
-> > Besides that it returns pointer of bitmap type instead of opaque void *.
-> > 
-> > Acked-by: Dmitry Torokhov <dmitry.torokhov@gmail.com>
-> > Signed-off-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-> > ---
-> >  drivers/input/evdev.c | 16 +++++++---------
-> >  1 file changed, 7 insertions(+), 9 deletions(-)
-> > 
-> > diff --git a/drivers/input/evdev.c b/drivers/input/evdev.c
-> > index c81c79d01d93..370206f987f9 100644
-> > --- a/drivers/input/evdev.c
-> > +++ b/drivers/input/evdev.c
-> > @@ -481,7 +481,7 @@ static int evdev_release(struct inode *inode, struct file *file)
-> >         evdev_detach_client(evdev, client);
-> > 
-> >         for (i = 0; i < EV_CNT; ++i)
-> > -               kfree(client->evmasks[i]);
-> > +               bitmap_free(client->evmasks[i]);
-> > 
-> >         kvfree(client);
-> > 
-> > @@ -925,17 +925,15 @@ static int evdev_handle_get_val(struct evdev_client *client,
-> >  {
-> >         int ret;
-> >         unsigned long *mem;
-> > -       size_t len;
-> > 
-> > -       len = BITS_TO_LONGS(maxbit) * sizeof(unsigned long);
-> > -       mem = kmalloc(len, GFP_KERNEL);
-> > +       mem = bitmap_alloc(maxbit, GFP_KERNEL);
-> >         if (!mem)
-> >                 return -ENOMEM;
-> 
-> But in commit message you say you switch to bitmap_zalloc(). IIUC
-> bitmap_alloc() is OK here. But could you please update comment to
-> avoid confusing.
-> 
-> > 
-> >         spin_lock_irq(&dev->event_lock);
-> >         spin_lock(&client->buffer_lock);
-> > 
-> > -       memcpy(mem, bits, len);
-> > +       bitmap_copy(mem, bits, maxbit);
-> > 
-> >         spin_unlock(&dev->event_lock);
-> > 
-> > @@ -947,7 +945,7 @@ static int evdev_handle_get_val(struct evdev_client *client,
-> >         if (ret < 0)
-> >                 evdev_queue_syn_dropped(client);
-> > 
-> > -       kfree(mem);
-> > +       bitmap_free(mem);
-> > 
-> >         return ret;
-> >  }
-> > @@ -1003,13 +1001,13 @@ static int evdev_set_mask(struct evdev_client *client,
-> >         if (!cnt)
-> >                 return 0;
-> > 
-> > -       mask = kcalloc(sizeof(unsigned long), BITS_TO_LONGS(cnt), GFP_KERNEL);
-> > +       mask = bitmap_zalloc(cnt, GFP_KERNEL);
-> >         if (!mask)
-> >                 return -ENOMEM;
-> > 
-> >         error = bits_from_user(mask, cnt - 1, codes_size, codes, compat);
-> 
-> If my understanding of bits_from_user() correct, here you can also use
-> bitmap_alloc(), true?
 
-bits_from_user() copies as much as user supplied, we want to zero out
-the tail to make sure there is no garbage, so we want to use
-kcalloc/kzalloc/bitmap_zalloc here.
+On Tue, Jun 19, 2018 at 11:00:32AM -0400, Mike Snitzer wrote:
+> 
+> On Tue, Jun 19 2018 at 10:43am -0400,
+> Joe Thornber <thornber@redhat.com> wrote:
+> 
+> > On Tue, Jun 19, 2018 at 09:11:06AM -0400, Mike Snitzer wrote:
+> > > On Mon, May 21 2018 at  8:53pm -0400,
+> > > Monty Pavel <monty_pavel@sina.com> wrote:
+> > > 
+> > > > 
+> > > > If dm_bufio_write_dirty_buffers func is called by __commit_transaction
+> > > > func and power loss happens during executing it, coincidencely
+> > > > superblock wrote correctly but some metadata blocks didn't. The reason
+> > > > is we write all metadata in async mode. We can guarantee that we send
+> > > > superblock after other blocks but we cannot guarantee that superblock
+> > > > write completely early than other blocks.
+> > > > So, We need to commit other metadata blocks before change superblock.
+> > > > 
+> > > > Signed-off-by: Monty Pavel <monty_pavel@sina.com>
+> > > > ---
+> > > >  drivers/md/dm-thin-metadata.c |    8 ++++++++
+> > > >  1 files changed, 8 insertions(+), 0 deletions(-)
+> > > > 
+> > > > diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
+> > > > index 36ef284..897d7d6 100644
+> > > > --- a/drivers/md/dm-thin-metadata.c
+> > > > +++ b/drivers/md/dm-thin-metadata.c
+> > > > @@ -813,6 +813,14 @@ static int __commit_transaction(struct dm_pool_metadata *pmd)
+> > > >  	if (r)
+> > > >  		return r;
+> > > >  
+> > > > +	r = dm_tm_commit(pmd->tm, sblock);
+> > > > +	if (r)
+> > > > +		return r;
+> > > > +
+> > > > +	r = superblock_lock(pmd, &sblock);
+> > > > +	if (r)
+> > > > +		return r;
+> > > > +
+> > > >  	disk_super = dm_block_data(sblock);
+> > > >  	disk_super->time = cpu_to_le32(pmd->time);
+> > > >  	disk_super->data_mapping_root = cpu_to_le64(pmd->root);
+> > 
+> > I don't believe you've tested this; sblock is passed to dm_tm_commit()
+> > uninitialised, and you didn't even bother to remove the later (and correct)
+> > call to dm_tm_commit().
+> 
+> I pointed out to Joe that the patch, in isolation, is decieving.  It
+> _looks_ like sblock may be uninitialized, etc.  But once the patch is
+> applied and you look at the entirety of __commit_transaction() it is
+> clear that you're reusing the existing superblock_lock() to safely
+> accomplish your additional call to dm_tm_commit().
+> 
+> > What is the issue that started you looking in this area?
+> 
+> Right, as my previous reply asked: please clarify if you _know_ your
+> patch fixes an actual problem you've experienced.  The more details the
+> better.
+> 
+> Thanks,
+> Mike
+> 
+Hi, Mike and Joe. Thanks for your reply. I read __commit_transaction
+many times and didn't find any problem of 2-phase commit. I use
+md-raid1(PCIe nvme and md-raid5) in write-behind mode to store dm-thin
+metadata.
+Test case:
+1. I do copy-diff test on thin device and then reboot my machine.
+2. Rebuild our device stack and exec "vgchang -ay".
+The thin-pool can not be established(details_root become a bitmap node
+and metadata's bitmap_root become a btree_node).
 
-Thanks.
-
--- 
-Dmitry
+Thanks,
+Monty
