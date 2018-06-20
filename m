@@ -1,128 +1,111 @@
-From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-Subject: Re: [PATCH v3 0/5] bitmap: Introduce alloc/free helpers
-Date: Wed, 20 Jun 2018 13:16:16 +0300
-Message-ID: <cb3ad166233d0b0e8ecc8fbc3bdf37fbb7a4c74e.camel@linux.intel.com>
-References: <20180618131003.88110-1-andriy.shevchenko@linux.intel.com>
-         <20180620072721.GA19364@yury-thinkpad>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm thin: superblock may write succeed before other
+ metadata blocks because of wirting metadata in async mode.
+Date: Wed, 20 Jun 2018 10:51:17 -0400
+Message-ID: <20180620145117.GA4323@redhat.com>
+References: <20180522005336.GA30152@yyp.> <20180619131106.GA31018@redhat.com>
+	<20180619144300.lhygtljn5aoazr5h@reti>
+	<20180619150032.GA31378@redhat.com> <20180620170357.GA5838@yyp.>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180620072721.GA19364@yury-thinkpad>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Yury Norov <ynorov@caviumnetworks.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, Dmitry Torokhov <dmitry.torokhov@gmail.com>, linux-input@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, mika.westerberg@linux.intel.com, Joe Perches <joe@perches.com>
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20180620170357.GA5838@yyp.>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: monty <monty_pavel@sina.com>
+Cc: dm-devel@redhat.com, thornber@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, 2018-06-20 at 10:33 +0300, Yury Norov wrote:
-> On Mon, Jun 18, 2018 at 04:09:58PM +0300, Andy Shevchenko wrote:
-> > External Email
-> > 
-> > A lot of code is using allocation of bitmaps using BITS_PER_LONG()
-> > macro and
-> > sizeof(unsigned long) operator. The readability suffers because of
-> > this.
-> > 
-> > The series introduces three helpers, i.e. bitmap_alloc(),
-> > bitmap_zalloc() and
-> > bitmap_free(), to make it more cleaner.
-> 
-
-> tools/include/linux/bitmap.h already has bitmap_alloc(),
-
-TBH, I don't give a crap about tools. They invented something that might
-or might not follow kernel APIs. At the end, it's a user space.
-
-> and it corresponds to bitmap_zalloc() in this patch. It may 
-> cause problems in future if people will copy functions that
-> use bitmap_alloc between kernel code and tools. So I think
-> we have to propagate this API to tools and update existing
-> users of bitmap_alloc() in tools.
-
-Propose a patch then. Perhaps I need to inform tools people about new
-API coming, but that's all what I can do. Existing something in tools/
-does not and should not prevent extending / changing kernel internal
-APIs.
-
-> What about code that calls specific alloc functions, like
-> memblock_virt_alloc() and pcpu_mem_zalloc() in mm/percpu.c,
-
-What about it? It's not in scope of this API for sure. The above
-mentioned functions have a very limited area of usage.
-Your example also a bit complicated, since it's not allocating _just_ a
-bitmap, but a structure _with_ embedded bitmap.
-
-> or devm_kcalloc() in drivers/dma/edma.c?
-
-There is no such file in the tree. You perhaps referred to
-drivers/dma/ti/edma.c.
-
-Yes, this is a candidate to convert later on if anyone wants to do it
-(with introducing devm_bitmap_alloc() / devm_bitmap_zalloc() helpers).
-
->  If we are going to
-> unify bitmap allocations in kernel, we should think about
-> unification of that cases too. Should it be additional
-> flag or optional pointer to the exact allocator in
-> bitmap_{,z}alloc()?
-
-So, I prefer one step at a time. Especially taking into consideration
-the problems I have to solve now with those simplest helpers I proposed.
+On Wed, Jun 20 2018 at  1:03pm -0400,
+monty <monty_pavel@sina.com> wrote:
 
 > 
-> Yury
->  
-> > Patch 1 is a preparatory to avoid namespace collisions between
-> > bitmap API and
-> > MD bitmap. No functional changes intended.
+> On Tue, Jun 19, 2018 at 11:00:32AM -0400, Mike Snitzer wrote:
 > > 
-> > Patch 2 is just orphaned from previous release cycle.
+> > On Tue, Jun 19 2018 at 10:43am -0400,
+> > Joe Thornber <thornber@redhat.com> wrote:
 > > 
-> > Patch 3 introduces new helpers.
+> > > On Tue, Jun 19, 2018 at 09:11:06AM -0400, Mike Snitzer wrote:
+> > > > On Mon, May 21 2018 at  8:53pm -0400,
+> > > > Monty Pavel <monty_pavel@sina.com> wrote:
+> > > > 
+> > > > > 
+> > > > > If dm_bufio_write_dirty_buffers func is called by __commit_transaction
+> > > > > func and power loss happens during executing it, coincidencely
+> > > > > superblock wrote correctly but some metadata blocks didn't. The reason
+> > > > > is we write all metadata in async mode. We can guarantee that we send
+> > > > > superblock after other blocks but we cannot guarantee that superblock
+> > > > > write completely early than other blocks.
+> > > > > So, We need to commit other metadata blocks before change superblock.
+> > > > > 
+> > > > > Signed-off-by: Monty Pavel <monty_pavel@sina.com>
+> > > > > ---
+> > > > >  drivers/md/dm-thin-metadata.c |    8 ++++++++
+> > > > >  1 files changed, 8 insertions(+), 0 deletions(-)
+> > > > > 
+> > > > > diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
+> > > > > index 36ef284..897d7d6 100644
+> > > > > --- a/drivers/md/dm-thin-metadata.c
+> > > > > +++ b/drivers/md/dm-thin-metadata.c
+> > > > > @@ -813,6 +813,14 @@ static int __commit_transaction(struct dm_pool_metadata *pmd)
+> > > > >  	if (r)
+> > > > >  		return r;
+> > > > >  
+> > > > > +	r = dm_tm_commit(pmd->tm, sblock);
+> > > > > +	if (r)
+> > > > > +		return r;
+> > > > > +
+> > > > > +	r = superblock_lock(pmd, &sblock);
+> > > > > +	if (r)
+> > > > > +		return r;
+> > > > > +
+> > > > >  	disk_super = dm_block_data(sblock);
+> > > > >  	disk_super->time = cpu_to_le32(pmd->time);
+> > > > >  	disk_super->data_mapping_root = cpu_to_le64(pmd->root);
+> > > 
+> > > I don't believe you've tested this; sblock is passed to dm_tm_commit()
+> > > uninitialised, and you didn't even bother to remove the later (and correct)
+> > > call to dm_tm_commit().
 > > 
-> > Patches 4 and 5 is just an example how to use new helpers. Locally I
-> > have like
-> > dozen of them against different subsystems and drivers.
+> > I pointed out to Joe that the patch, in isolation, is decieving.  It
+> > _looks_ like sblock may be uninitialized, etc.  But once the patch is
+> > applied and you look at the entirety of __commit_transaction() it is
+> > clear that you're reusing the existing superblock_lock() to safely
+> > accomplish your additional call to dm_tm_commit().
 > > 
-> > Ideally it would go through Input subsystem, thus, needs an Ack from
-> > MD maintainer(s).
+> > > What is the issue that started you looking in this area?
 > > 
-> > Since v2:
-> > - fix compilation issue in MD bitmap code
-> > - elaborate changes in commit message of patch 5
+> > Right, as my previous reply asked: please clarify if you _know_ your
+> > patch fixes an actual problem you've experienced.  The more details the
+> > better.
 > > 
-> > Since v1:
-> > - added namespace fix patch against MD bitmap API
-> > - moved functions to lib/bitmap.c to avoid circular dependencies
-> > - appended Dmitry's tags
+> > Thanks,
+> > Mike
 > > 
-> > Andy Shevchenko (5):
-> >   md: Avoid namespace collision with bitmap API
-> >   bitmap: Drop unnecessary 0 check for u32 array operations
-> >   bitmap: Add bitmap_alloc(), bitmap_zalloc() and bitmap_free()
-> >   Input: gpio-keys - Switch to bitmap_zalloc()
-> >   Input: evdev - Switch to bitmap API
-> > 
-> >  drivers/input/evdev.c                         |  16 +-
-> >  drivers/input/keyboard/gpio_keys.c            |   8 +-
-> >  drivers/md/dm-raid.c                          |   6 +-
-> >  drivers/md/md-bitmap.c                        | 301 +++++++++----
-> > -----
-> >  drivers/md/md-bitmap.h                        |  46 +--
-> >  drivers/md/md-cluster.c                       |  16 +-
-> >  drivers/md/md.c                               |  44 +--
-> >  .../md/persistent-data/dm-space-map-common.c  |  12 +-
-> >  drivers/md/raid1.c                            |  20 +-
-> >  drivers/md/raid10.c                           |  26 +-
-> >  drivers/md/raid5-cache.c                      |   2 +-
-> >  drivers/md/raid5.c                            |  24 +-
-> >  include/linux/bitmap.h                        |   8 +
-> >  lib/bitmap.c                                  |  28 +-
-> >  14 files changed, 283 insertions(+), 274 deletions(-)
-> > 
-> > --
-> > 2.17.1
+> Hi, Mike and Joe. Thanks for your reply. I read __commit_transaction
+> many times and didn't find any problem of 2-phase commit. I use
+> md-raid1(PCIe nvme and md-raid5) in write-behind mode to store dm-thin
+> metadata.
+> Test case:
+> 1. I do copy-diff test on thin device and then reboot my machine.
+> 2. Rebuild our device stack and exec "vgchang -ay".
+> The thin-pool can not be established(details_root become a bitmap node
+> and metadata's bitmap_root become a btree_node).
 
--- 
-Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-Intel Finland Oy
+But are you saying your double commit in __commit_transaction() serves
+as a workaround for the corruption you're seeing?
+
+Is it just a case where raid5's writebehind mode is _not_ safe for your
+storage config?  By "reboot" do you mean a clean shutdown?  Or a forced
+powerfail scenario?
+
+Mike
