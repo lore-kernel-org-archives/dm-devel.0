@@ -1,45 +1,39 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 4.17.0-rc3 1/2] dm: Reduce line length
-Date: Thu, 21 Jun 2018 08:26:00 -0400
-Message-ID: <20180621122600.GA9973@redhat.com>
-References: <20180621120231.GA5346@umar>
+From: Ingo Molnar <mingo@kernel.org>
+Subject: Re: [PATCH v2 RESEND] x86: optimize memcpy_flushcache
+Date: Thu, 21 Jun 2018 16:31:40 +0200
+Message-ID: <20180621143140.GA14095@gmail.com>
+References: <20180519052503.325953342@debian.vm>
+ <20180519052631.730455475@debian.vm>
+ <CAPcyv4jpY0x7kZtT+afAKnHKy8Uy1AC_N_QM7RrELSj_0iNrRw@mail.gmail.com>
+ <20180524182013.GA59755@redhat.com>
+ <20180618132306.GA25431@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20180621120231.GA5346@umar>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Ssemagoye Umar Munddu <ssemagoyeumar@gmail.com>
-Cc: dm-devel@redhat.com, agk@redhat.com
+In-Reply-To: <20180618132306.GA25431@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>, Mikulas Patocka <mpatocka@redhat.com>, Dan Williams <dan.j.williams@intel.com>, device-mapper development <dm-devel@redhat.com>, X86 ML <x86@kernel.org>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Thu, Jun 21 2018 at  8:02am -0400,
-Ssemagoye Umar Munddu <ssemagoyeumar@gmail.com> wrote:
 
-> Signed-off-by: Ssemagoye Umar Munddu <ssemagoyeumar@gmail.com>
-> ---
->  drivers/md/dm.c | 187 +++++++++++++++++++++++++++++++++++++-------------------
->  1 file changed, 123 insertions(+), 64 deletions(-)
+* Mike Snitzer <snitzer@redhat.com> wrote:
 
-There is absolutely no way I'm taking this.
+> From: Mikulas Patocka <mpatocka@redhat.com>
+> Subject: [PATCH v2] x86: optimize memcpy_flushcache
+> 
+> In the context of constant short length stores to persistent memory,
+> memcpy_flushcache suffers from a 2% performance degradation compared to
+> explicitly using the "movnti" instruction.
+> 
+> Optimize 4, 8, and 16 byte memcpy_flushcache calls to explicitly use the
+> movnti instruction with inline assembler.
 
-I'm fine with DM code extending beyond 80 columns if it helps with
-reading the code.  All you've done is make a mess of everything in
-pursuit of satisfying a one-size-fits-all tool.
-
-Worse, if I were to take this change, it'd step all over the git history
-of the code.
-
-So, PLEASE do not submit any more patches like this for DM.
+Linus requested asm optimizations to include actual benchmarks, so it would be 
+nice to describe how this was tested, on what hardware, and what the before/after 
+numbers are.
 
 Thanks,
-Mike
+
+	Ingo
