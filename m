@@ -1,60 +1,72 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: Re: [PATCH 04/11] dm verity fec: Remove VLA usage
-Date: Thu, 21 Jun 2018 13:19:42 -0700
-Message-ID: <CAGXu5j+nMXYL6F7A218yfu+AqroqcdMU-J3ibozaK=Nzza0Y8Q@mail.gmail.com>
-References: <20180620190408.45104-1-keescook@chromium.org> <20180620190408.45104-5-keescook@chromium.org>
- <20180621023054.5jx5s3jzap3soe6e@gondor.apana.org.au>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+From: John Pittman <jpittman@redhat.com>
+Subject: [PATCH] dm cache: require io_mode cache feature selection to be mutually exclusive
+Date: Thu, 21 Jun 2018 17:35:33 -0400
+Message-ID: <1529616933-11644-1-git-send-email-jpittman@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180621023054.5jx5s3jzap3soe6e@gondor.apana.org.au>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: "Gustavo A. R. Silva" <gustavo@embeddedor.com>, Alasdair Kergon <agk@redhat.com>, Arnd Bergmann <arnd@arndb.de>, Eric Biggers <ebiggers@google.com>, Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Lars Persson <larper@axis.com>, Mike Snitzer <snitzer@redhat.com>, Rabin Vincent <rabinv@axis.com>, Tim Chen <tim.c.chen@linux.intel.com>, "David S. Miller" <davem@davemloft.net>, linux-crypto <linux-crypto@vger.kernel.org>, qat-linux@intel.com, dm-devel@redhat.com, LKML <linux-kernel@vger.kernel.org>
+To: snitzer@redhat.com
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, loberman@redhat.com, John Pittman <jpittman@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Jun 20, 2018 at 7:30 PM, Herbert Xu <herbert@gondor.apana.org.au> wrote:
-> On Wed, Jun 20, 2018 at 12:04:01PM -0700, Kees Cook wrote:
->> In the quest to remove all stack VLA usage from the kernel[1], this
->> uses the newly defined max digest size macro. Also adds a sanity-check
->> at use-time.
->>
->> [1] https://lkml.kernel.org/r/CA+55aFzCG-zNmZwX4A2FQpadafLfEzK6CC=qPXydAacU1RqZWA@mail.gmail.com
->>
->> Signed-off-by: Kees Cook <keescook@chromium.org>
->> ---
->>  drivers/md/dm-verity-fec.c | 5 ++++-
->>  1 file changed, 4 insertions(+), 1 deletion(-)
->>
->> diff --git a/drivers/md/dm-verity-fec.c b/drivers/md/dm-verity-fec.c
->> index 684af08d0747..0dfcc52835bc 100644
->> --- a/drivers/md/dm-verity-fec.c
->> +++ b/drivers/md/dm-verity-fec.c
->> @@ -212,12 +212,15 @@ static int fec_read_bufs(struct dm_verity *v, struct dm_verity_io *io,
->>       struct dm_verity_fec_io *fio = fec_io(io);
->>       u64 block, ileaved;
->>       u8 *bbuf, *rs_block;
->> -     u8 want_digest[v->digest_size];
->> +     u8 want_digest[AHASH_MAX_DIGESTSIZE];
->>       unsigned n, k;
->>
->>       if (neras)
->>               *neras = 0;
->>
->> +     if (WARN_ON(v->digest_size < sizeof(want_digest)))
->> +             return -EINVAL;
->
-> How about verifying digest_size in the ahash API when algorithms
-> are registered?
+Due to commit 629d0a8a1a10 ("dm cache metadata: add "metadata2" feature"),
+when creating a dm cache device, more than one io_mode can be selected.
+As the io_mode selections are incompatible with one another, we should 
+force them to be selected exclusively.  Add simple ctr to check for 
+more than one io_mode selection.
 
-That happens already in ahash_prepare_alg() (and see the tweak in
-patch 3 "crypto: ahash: Remove VLA usage"), but I wanted to keep these
-run-time checks to avoid any problems in the future of things change.
-As it's marked as "unlikely" internal to WARN_ON, this shouldn't have
-a performance impact.
+Signed-off-by: John Pittman <jpittman@redhat.com>
+---
+ drivers/md/dm-cache-target.c | 19 +++++++++++++++----
+ 1 file changed, 15 insertions(+), 4 deletions(-)
 
--Kees
-
+diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
+index ce14a3d..45e3bed 100644
+--- a/drivers/md/dm-cache-target.c
++++ b/drivers/md/dm-cache-target.c
+@@ -2250,7 +2250,7 @@ static int parse_features(struct cache_args *ca, struct dm_arg_set *as,
+ 		{0, 2, "Invalid number of cache feature arguments"},
+ 	};
+ 
+-	int r;
++	int r, mode_ctr = 0;
+ 	unsigned argc;
+ 	const char *arg;
+ 	struct cache_features *cf = &ca->features;
+@@ -2264,14 +2264,20 @@ static int parse_features(struct cache_args *ca, struct dm_arg_set *as,
+ 	while (argc--) {
+ 		arg = dm_shift_arg(as);
+ 
+-		if (!strcasecmp(arg, "writeback"))
++		if (!strcasecmp(arg, "writeback")) {
+ 			cf->io_mode = CM_IO_WRITEBACK;
++			mode_ctr++;
++		}
+ 
+-		else if (!strcasecmp(arg, "writethrough"))
++		else if (!strcasecmp(arg, "writethrough")) {
+ 			cf->io_mode = CM_IO_WRITETHROUGH;
++			mode_ctr++;
++		}
+ 
+-		else if (!strcasecmp(arg, "passthrough"))
++		else if (!strcasecmp(arg, "passthrough")) {
+ 			cf->io_mode = CM_IO_PASSTHROUGH;
++			mode_ctr++;
++		}
+ 
+ 		else if (!strcasecmp(arg, "metadata2"))
+ 			cf->metadata_version = 2;
+@@ -2282,6 +2288,11 @@ static int parse_features(struct cache_args *ca, struct dm_arg_set *as,
+ 		}
+ 	}
+ 
++	if (mode_ctr > 1) {
++		*error = "Invalid number of cache io_mode features requested";
++		return -EINVAL;
++	}
++
+ 	return 0;
+ }
+ 
 -- 
-Kees Cook
-Pixel Security
+2.7.5
