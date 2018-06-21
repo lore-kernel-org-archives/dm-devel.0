@@ -1,125 +1,56 @@
-From: monty <monty_pavel@sina.com>
-Subject: Re: dm thin: superblock may write succeed before other
- metadata blocks because of wirting metadata in async mode.
-Date: Thu, 21 Jun 2018 12:54:54 -0400
-Message-ID: <47936.7960048423$1529545495@news.gmane.org>
-References: <20180522005336.GA30152@yyp.> <20180619131106.GA31018@redhat.com>
-	<20180619144300.lhygtljn5aoazr5h@reti>
-	<20180619150032.GA31378@redhat.com> <20180620170357.GA5838@yyp.>
-	<20180620145117.GA4323@redhat.com>
+From: Andy Shevchenko <andy.shevchenko@gmail.com>
+Subject: Re: [PATCH v3 3/5] bitmap: Add bitmap_alloc(), bitmap_zalloc() and bitmap_free()
+Date: Thu, 21 Jun 2018 05:13:39 +0300
+Message-ID: <CAHp75Vei2_V7h4oKAU+uoCG2gUJH6uXtg9zVqQ_vnyr5KEmNYw@mail.gmail.com>
+References: <20180618131003.88110-1-andriy.shevchenko@linux.intel.com>
+ <20180618131003.88110-4-andriy.shevchenko@linux.intel.com>
+ <20180618141404.68124daab97bd0f3a3051544@linux-foundation.org>
+ <CAKdAkRTHOORds7aEauv4rp3_=PnGi=Nv-VS3-nAb9MztJPKG=Q@mail.gmail.com> <20180618161056.e52efd0e8bd36211e60705a2@linux-foundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20180620145117.GA4323@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, thornber@redhat.com
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180618161056.e52efd0e8bd36211e60705a2@linux-foundation.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: Dmitry Torokhov <dmitry.torokhov@gmail.com>, Andy Shevchenko <andriy.shevchenko@linux.intel.com>, agk@redhat.com, Mike Snitzer <snitzer@redhat.com>, device-mapper development <dm-devel@redhat.com>, shli@kernel.org, linux-raid@vger.kernel.org, "linux-input@vger.kernel.org" <linux-input@vger.kernel.org>, Yury Norov <ynorov@caviumnetworks.com>, lkml <linux-kernel@vger.kernel.org>, Mika Westerberg <mika.westerberg@linux.intel.com>, Joe Perches <joe@perches.com>
 List-Id: dm-devel.ids
 
+On Tue, Jun 19, 2018 at 2:10 AM, Andrew Morton
+<akpm@linux-foundation.org> wrote:
+> On Mon, 18 Jun 2018 15:01:43 -0700 Dmitry Torokhov <dmitry.torokhov@gmail.com> wrote:
 
-On Wed, Jun 20, 2018 at 10:51:17AM -0400, Mike Snitzer wrote:
-> 
-> On Wed, Jun 20 2018 at  1:03pm -0400,
-> monty <monty_pavel@sina.com> wrote:
-> 
-> > 
-> > On Tue, Jun 19, 2018 at 11:00:32AM -0400, Mike Snitzer wrote:
-> > > 
-> > > On Tue, Jun 19 2018 at 10:43am -0400,
-> > > Joe Thornber <thornber@redhat.com> wrote:
-> > > 
-> > > > On Tue, Jun 19, 2018 at 09:11:06AM -0400, Mike Snitzer wrote:
-> > > > > On Mon, May 21 2018 at  8:53pm -0400,
-> > > > > Monty Pavel <monty_pavel@sina.com> wrote:
-> > > > > 
-> > > > > > 
-> > > > > > If dm_bufio_write_dirty_buffers func is called by __commit_transaction
-> > > > > > func and power loss happens during executing it, coincidencely
-> > > > > > superblock wrote correctly but some metadata blocks didn't. The reason
-> > > > > > is we write all metadata in async mode. We can guarantee that we send
-> > > > > > superblock after other blocks but we cannot guarantee that superblock
-> > > > > > write completely early than other blocks.
-> > > > > > So, We need to commit other metadata blocks before change superblock.
-> > > > > > 
-> > > > > > Signed-off-by: Monty Pavel <monty_pavel@sina.com>
-> > > > > > ---
-> > > > > >  drivers/md/dm-thin-metadata.c |    8 ++++++++
-> > > > > >  1 files changed, 8 insertions(+), 0 deletions(-)
-> > > > > > 
-> > > > > > diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
-> > > > > > index 36ef284..897d7d6 100644
-> > > > > > --- a/drivers/md/dm-thin-metadata.c
-> > > > > > +++ b/drivers/md/dm-thin-metadata.c
-> > > > > > @@ -813,6 +813,14 @@ static int __commit_transaction(struct dm_pool_metadata *pmd)
-> > > > > >  	if (r)
-> > > > > >  		return r;
-> > > > > >  
-> > > > > > +	r = dm_tm_commit(pmd->tm, sblock);
-> > > > > > +	if (r)
-> > > > > > +		return r;
-> > > > > > +
-> > > > > > +	r = superblock_lock(pmd, &sblock);
-> > > > > > +	if (r)
-> > > > > > +		return r;
-> > > > > > +
-> > > > > >  	disk_super = dm_block_data(sblock);
-> > > > > >  	disk_super->time = cpu_to_le32(pmd->time);
-> > > > > >  	disk_super->data_mapping_root = cpu_to_le64(pmd->root);
-> > > > 
-> > > > I don't believe you've tested this; sblock is passed to dm_tm_commit()
-> > > > uninitialised, and you didn't even bother to remove the later (and correct)
-> > > > call to dm_tm_commit().
-> > > 
-> > > I pointed out to Joe that the patch, in isolation, is decieving.  It
-> > > _looks_ like sblock may be uninitialized, etc.  But once the patch is
-> > > applied and you look at the entirety of __commit_transaction() it is
-> > > clear that you're reusing the existing superblock_lock() to safely
-> > > accomplish your additional call to dm_tm_commit().
-> > > 
-> > > > What is the issue that started you looking in this area?
-> > > 
-> > > Right, as my previous reply asked: please clarify if you _know_ your
-> > > patch fixes an actual problem you've experienced.  The more details the
-> > > better.
-> > > 
-> > > Thanks,
-> > > Mike
-> > > 
-> > Hi, Mike and Joe. Thanks for your reply. I read __commit_transaction
-> > many times and didn't find any problem of 2-phase commit. I use
-> > md-raid1(PCIe nvme and md-raid5) in write-behind mode to store dm-thin
-> > metadata.
-> > Test case:
-> > 1. I do copy-diff test on thin device and then reboot my machine.
-> > 2. Rebuild our device stack and exec "vgchang -ay".
-> > The thin-pool can not be established(details_root become a bitmap node
-> > and metadata's bitmap_root become a btree_node).
-> 
-> But are you saying your double commit in __commit_transaction() serves
-> as a workaround for the corruption you're seeing?
-> 
-> Is it just a case where raid5's writebehind mode is _not_ safe for your
-> storage config?  By "reboot" do you mean a clean shutdown?  Or a forced
-> powerfail scenario?
-> 
-> Mike
-> 
-Reboot my machine means exec reboot command.
-My patch seems unnecessary, because 2-phase commit have ensure that
-committing superblock after other metadata have written to metadata
-device.
-This problem is hard to recreate, it didn't happen after applying the
-patch above. I will check my device stack if there is any possible that
-superblock write complete early than other metadata block.
+>> We can't as we end up including bitmap.h (by the way of cpumask.h)
+>> form slab.h, so we gen circular dependency.
+>
 
-Monty
+It's not just so easy. See below.
+
+> That info should have been in the changelog, and probably a code
+> comment.
+>
+>> Maybe if we removed memcg
+>> stuff from slab.h so we do not need to include workqueue.h...
+>
+> Or move the basic slab API stuff out of slab.h into a new header.  Or
+> create a new, standalone work_struct.h - that looks pretty simple.
+
+I tried to move out work_struct, it didn't help. There are actually
+several circular dependencies that ends in bitmap.h either way or
+another.
+
+First one is
+
+slab.h -> gfp.h -> mmzone.h -> nodemask.h -> bitmap.h
+
+And so on...
+
+Splitting out kXalloc stuff to a separate header won't help, I think,
+because of the above.
+Splitting out struct work_struct is just a tip of an iceberg.
+Splitting out memcg stuff won't help in the similar way.
+
+I'm all ears for (a better) solution.
+
+-- 
+With Best Regards,
+Andy Shevchenko
