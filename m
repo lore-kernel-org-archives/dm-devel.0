@@ -1,56 +1,63 @@
-From: Andy Shevchenko <andy.shevchenko@gmail.com>
-Subject: Re: [PATCH v3 3/5] bitmap: Add bitmap_alloc(), bitmap_zalloc() and bitmap_free()
-Date: Thu, 21 Jun 2018 05:13:39 +0300
-Message-ID: <CAHp75Vei2_V7h4oKAU+uoCG2gUJH6uXtg9zVqQ_vnyr5KEmNYw@mail.gmail.com>
-References: <20180618131003.88110-1-andriy.shevchenko@linux.intel.com>
- <20180618131003.88110-4-andriy.shevchenko@linux.intel.com>
- <20180618141404.68124daab97bd0f3a3051544@linux-foundation.org>
- <CAKdAkRTHOORds7aEauv4rp3_=PnGi=Nv-VS3-nAb9MztJPKG=Q@mail.gmail.com> <20180618161056.e52efd0e8bd36211e60705a2@linux-foundation.org>
+From: Herbert Xu <herbert@gondor.apana.org.au>
+Subject: Re: [PATCH 04/11] dm verity fec: Remove VLA usage
+Date: Thu, 21 Jun 2018 10:30:54 +0800
+Message-ID: <20180621023054.5jx5s3jzap3soe6e@gondor.apana.org.au>
+References: <20180620190408.45104-1-keescook@chromium.org>
+	<20180620190408.45104-5-keescook@chromium.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180618161056.e52efd0e8bd36211e60705a2@linux-foundation.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Dmitry Torokhov <dmitry.torokhov@gmail.com>, Andy Shevchenko <andriy.shevchenko@linux.intel.com>, agk@redhat.com, Mike Snitzer <snitzer@redhat.com>, device-mapper development <dm-devel@redhat.com>, shli@kernel.org, linux-raid@vger.kernel.org, "linux-input@vger.kernel.org" <linux-input@vger.kernel.org>, Yury Norov <ynorov@caviumnetworks.com>, lkml <linux-kernel@vger.kernel.org>, Mika Westerberg <mika.westerberg@linux.intel.com>, Joe Perches <joe@perches.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20180620190408.45104-5-keescook@chromium.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Kees Cook <keescook@chromium.org>
+Cc: Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Mike Snitzer <snitzer@redhat.com>, Arnd Bergmann <arnd@arndb.de>, Eric Biggers <ebiggers@google.com>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, qat-linux@intel.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-crypto@vger.kernel.org, Lars Persson <larper@axis.com>, Tim Chen <tim.c.chen@linux.intel.com>, "David S. Miller" <davem@davemloft.net>, Alasdair Kergon <agk@redhat.com>, Rabin Vincent <rabinv@axis.com>
 List-Id: dm-devel.ids
 
-On Tue, Jun 19, 2018 at 2:10 AM, Andrew Morton
-<akpm@linux-foundation.org> wrote:
-> On Mon, 18 Jun 2018 15:01:43 -0700 Dmitry Torokhov <dmitry.torokhov@gmail.com> wrote:
+On Wed, Jun 20, 2018 at 12:04:01PM -0700, Kees Cook wrote:
+> In the quest to remove all stack VLA usage from the kernel[1], this
+> uses the newly defined max digest size macro. Also adds a sanity-check
+> at use-time.
+> 
+> [1] https://lkml.kernel.org/r/CA+55aFzCG-zNmZwX4A2FQpadafLfEzK6CC=qPXydAacU1RqZWA@mail.gmail.com
+> 
+> Signed-off-by: Kees Cook <keescook@chromium.org>
+> ---
+>  drivers/md/dm-verity-fec.c | 5 ++++-
+>  1 file changed, 4 insertions(+), 1 deletion(-)
+> 
+> diff --git a/drivers/md/dm-verity-fec.c b/drivers/md/dm-verity-fec.c
+> index 684af08d0747..0dfcc52835bc 100644
+> --- a/drivers/md/dm-verity-fec.c
+> +++ b/drivers/md/dm-verity-fec.c
+> @@ -212,12 +212,15 @@ static int fec_read_bufs(struct dm_verity *v, struct dm_verity_io *io,
+>  	struct dm_verity_fec_io *fio = fec_io(io);
+>  	u64 block, ileaved;
+>  	u8 *bbuf, *rs_block;
+> -	u8 want_digest[v->digest_size];
+> +	u8 want_digest[AHASH_MAX_DIGESTSIZE];
+>  	unsigned n, k;
+>  
+>  	if (neras)
+>  		*neras = 0;
+>  
+> +	if (WARN_ON(v->digest_size < sizeof(want_digest)))
+> +		return -EINVAL;
 
->> We can't as we end up including bitmap.h (by the way of cpumask.h)
->> form slab.h, so we gen circular dependency.
->
+How about verifying digest_size in the ahash API when algorithms
+are registered?
 
-It's not just so easy. See below.
-
-> That info should have been in the changelog, and probably a code
-> comment.
->
->> Maybe if we removed memcg
->> stuff from slab.h so we do not need to include workqueue.h...
->
-> Or move the basic slab API stuff out of slab.h into a new header.  Or
-> create a new, standalone work_struct.h - that looks pretty simple.
-
-I tried to move out work_struct, it didn't help. There are actually
-several circular dependencies that ends in bitmap.h either way or
-another.
-
-First one is
-
-slab.h -> gfp.h -> mmzone.h -> nodemask.h -> bitmap.h
-
-And so on...
-
-Splitting out kXalloc stuff to a separate header won't help, I think,
-because of the above.
-Splitting out struct work_struct is just a tip of an iceberg.
-Splitting out memcg stuff won't help in the similar way.
-
-I'm all ears for (a better) solution.
-
+Cheers,
 -- 
-With Best Regards,
-Andy Shevchenko
+Email: Herbert Xu <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
