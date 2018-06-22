@@ -1,40 +1,175 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: dm bufio: Reduce dm_bufio_lock contention
-Date: Fri, 22 Jun 2018 15:10:13 +0200
-Message-ID: <20180622131013.GA10465@dhcp22.suse.cz>
-References: <20180615073201.GB24039@dhcp22.suse.cz>
- <alpine.LRH.2.02.1806150724260.15022@file01.intranet.prod.int.rdu2.redhat.com>
- <20180615115547.GH24039@dhcp22.suse.cz>
- <alpine.LRH.2.02.1806150832100.26650@file01.intranet.prod.int.rdu2.redhat.com>
- <20180615130925.GI24039@dhcp22.suse.cz>
- <alpine.LRH.2.02.1806181003560.4201@file01.intranet.prod.int.rdu2.redhat.com>
- <20180619104312.GD13685@dhcp22.suse.cz>
- <alpine.LRH.2.02.1806191228110.25656@file01.intranet.prod.int.rdu2.redhat.com>
- <20180622090151.GS10465@dhcp22.suse.cz>
- <alpine.LRH.2.02.1806220828040.8072@file01.intranet.prod.int.rdu2.redhat.com>
+From: Bart Van Assche <bart.vanassche@wdc.com>
+Subject: [PATCH] dm-zoned: Avoid triggering reclaim from inside
+	dmz_map()
+Date: Fri, 22 Jun 2018 08:06:16 -0700
+Message-ID: <20180622150616.5937-1-bart.vanassche@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1806220828040.8072@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: jing xia <jing.xia.mail@gmail.com>, Mike Snitzer <snitzer@redhat.com>, agk@redhat.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-mm@kvack.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Bart Van Assche <bart.vanassche@wdc.com>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Damien Le Moal <Damien.LeMoal@wdc.com>
 List-Id: dm-devel.ids
 
-On Fri 22-06-18 08:44:52, Mikulas Patocka wrote:
-> On Fri, 22 Jun 2018, Michal Hocko wrote:
-[...]
-> > Why? How are you going to audit all the callers that the behavior makes
-> > sense and moreover how are you going to ensure that future usage will
-> > still make sense. The more subtle side effects gfp flags have the harder
-> > they are to maintain.
-> 
-> I did audit them - see the previous email in this thread: 
-> https://www.redhat.com/archives/dm-devel/2018-June/thread.html
+This patch avoids that lockdep reports the following:
 
-I do not see any mention about throttling expectations for those users.
-You have focused only on the allocation failure fallback AFAIR
+======================================================
+WARNING: possible circular locking dependency detected
+4.18.0-rc1 #62 Not tainted
+------------------------------------------------------
+kswapd0/84 is trying to acquire lock:
+00000000c313516d (&xfs_nondir_ilock_class){++++}, at: xfs_free_eofblocks+0xa2/0x1e0
+
+but task is already holding lock:
+00000000591c83ae (fs_reclaim){+.+.}, at: __fs_reclaim_acquire+0x5/0x30
+
+which lock already depends on the new lock.
+
+the existing dependency chain (in reverse order) is:
+
+-> #2 (fs_reclaim){+.+.}:
+  kmem_cache_alloc+0x2c/0x2b0
+  radix_tree_node_alloc.constprop.19+0x3d/0xc0
+  __radix_tree_create+0x161/0x1c0
+  __radix_tree_insert+0x45/0x210
+  dmz_map+0x245/0x2d0 [dm_zoned]
+  __map_bio+0x40/0x260
+  __split_and_process_non_flush+0x116/0x220
+  __split_and_process_bio+0x81/0x180
+  __dm_make_request.isra.32+0x5a/0x100
+  generic_make_request+0x36e/0x690
+  submit_bio+0x6c/0x140
+  mpage_readpages+0x19e/0x1f0
+  read_pages+0x6d/0x1b0
+  __do_page_cache_readahead+0x21b/0x2d0
+  force_page_cache_readahead+0xc4/0x100
+  generic_file_read_iter+0x7c6/0xd20
+  __vfs_read+0x102/0x180
+  vfs_read+0x9b/0x140
+  ksys_read+0x55/0xc0
+  do_syscall_64+0x5a/0x1f0
+  entry_SYSCALL_64_after_hwframe+0x49/0xbe
+
+-> #1 (&dmz->chunk_lock){+.+.}:
+  dmz_map+0x133/0x2d0 [dm_zoned]
+  __map_bio+0x40/0x260
+  __split_and_process_non_flush+0x116/0x220
+  __split_and_process_bio+0x81/0x180
+  __dm_make_request.isra.32+0x5a/0x100
+  generic_make_request+0x36e/0x690
+  submit_bio+0x6c/0x140
+  _xfs_buf_ioapply+0x31c/0x590
+  xfs_buf_submit_wait+0x73/0x520
+  xfs_buf_read_map+0x134/0x2f0
+  xfs_trans_read_buf_map+0xc3/0x580
+  xfs_read_agf+0xa5/0x1e0
+  xfs_alloc_read_agf+0x59/0x2b0
+  xfs_alloc_pagf_init+0x27/0x60
+  xfs_bmap_longest_free_extent+0x43/0xb0
+  xfs_bmap_btalloc_nullfb+0x7f/0xf0
+  xfs_bmap_btalloc+0x428/0x7c0
+  xfs_bmapi_write+0x598/0xcc0
+  xfs_iomap_write_allocate+0x15a/0x330
+  xfs_map_blocks+0x1cf/0x3f0
+  xfs_do_writepage+0x15f/0x7b0
+  write_cache_pages+0x1ca/0x540
+  xfs_vm_writepages+0x65/0xa0
+  do_writepages+0x48/0xf0
+  __writeback_single_inode+0x58/0x730
+  writeback_sb_inodes+0x249/0x5c0
+  wb_writeback+0x11e/0x550
+  wb_workfn+0xa3/0x670
+  process_one_work+0x228/0x670
+  worker_thread+0x3c/0x390
+  kthread+0x11c/0x140
+  ret_from_fork+0x3a/0x50
+
+-> #0 (&xfs_nondir_ilock_class){++++}:
+  down_read_nested+0x43/0x70
+  xfs_free_eofblocks+0xa2/0x1e0
+  xfs_fs_destroy_inode+0xac/0x270
+  dispose_list+0x51/0x80
+  prune_icache_sb+0x52/0x70
+  super_cache_scan+0x127/0x1a0
+  shrink_slab.part.47+0x1bd/0x590
+  shrink_node+0x3b5/0x470
+  balance_pgdat+0x158/0x3b0
+  kswapd+0x1ba/0x600
+  kthread+0x11c/0x140
+  ret_from_fork+0x3a/0x50
+
+other info that might help us debug this:
+
+Chain exists of:
+  &xfs_nondir_ilock_class --> &dmz->chunk_lock --> fs_reclaim
+
+Possible unsafe locking scenario:
+
+     CPU0                    CPU1
+     ----                    ----
+lock(fs_reclaim);
+                             lock(&dmz->chunk_lock);
+                             lock(fs_reclaim);
+lock(&xfs_nondir_ilock_class);
+
+*** DEADLOCK ***
+
+3 locks held by kswapd0/84:
+ #0: 00000000591c83ae (fs_reclaim){+.+.}, at: __fs_reclaim_acquire+0x5/0x30
+ #1: 000000000f8208f5 (shrinker_rwsem){++++}, at: shrink_slab.part.47+0x3f/0x590
+ #2: 00000000cacefa54 (&type->s_umount_key#43){.+.+}, at: trylock_super+0x16/0x50
+
+stack backtrace:
+CPU: 7 PID: 84 Comm: kswapd0 Not tainted 4.18.0-rc1 #62
+Hardware name: Supermicro Super Server/X10SRL-F, BIOS 2.0 12/17/2015
+Call Trace:
+ dump_stack+0x85/0xcb
+ print_circular_bug.isra.36+0x1ce/0x1db
+ __lock_acquire+0x124e/0x1310
+ lock_acquire+0x9f/0x1f0
+ down_read_nested+0x43/0x70
+ xfs_free_eofblocks+0xa2/0x1e0
+ xfs_fs_destroy_inode+0xac/0x270
+ dispose_list+0x51/0x80
+ prune_icache_sb+0x52/0x70
+ super_cache_scan+0x127/0x1a0
+ shrink_slab.part.47+0x1bd/0x590
+ shrink_node+0x3b5/0x470
+ balance_pgdat+0x158/0x3b0
+ kswapd+0x1ba/0x600
+ kthread+0x11c/0x140
+ ret_from_fork+0x3a/0x50
+
+Reported-by: Masato Suzuki <masato.suzuki@wdc.com>
+Fixes: 4218a9554653 ("dm zoned: use GFP_NOIO in I/O path")
+Signed-off-by: Bart Van Assche <bart.vanassche@wdc.com>
+Cc: Damien Le Moal <Damien.LeMoal@wdc.com>
+Cc: Mikulas Patocka <mpatocka@redhat.com>
+---
+ drivers/md/dm-zoned-target.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
+index 3c0e45f4dcf5..a44183ff4be0 100644
+--- a/drivers/md/dm-zoned-target.c
++++ b/drivers/md/dm-zoned-target.c
+@@ -787,7 +787,7 @@ static int dmz_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 
+ 	/* Chunk BIO work */
+ 	mutex_init(&dmz->chunk_lock);
+-	INIT_RADIX_TREE(&dmz->chunk_rxtree, GFP_KERNEL);
++	INIT_RADIX_TREE(&dmz->chunk_rxtree, GFP_NOIO);
+ 	dmz->chunk_wq = alloc_workqueue("dmz_cwq_%s", WQ_MEM_RECLAIM | WQ_UNBOUND,
+ 					0, dev->name);
+ 	if (!dmz->chunk_wq) {
 -- 
-Michal Hocko
-SUSE Labs
+2.17.1
