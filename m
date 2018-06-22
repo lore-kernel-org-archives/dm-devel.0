@@ -1,88 +1,61 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: dm bufio: Reduce dm_bufio_lock contention
-Date: Thu, 21 Jun 2018 21:17:24 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1806191228110.25656@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1806131001250.15845@file01.intranet.prod.int.rdu2.redhat.com> <CAN=25QMQiJ7wvfvYvmZnEnrkeb-SA7_hPj+N2RnO8y-aVO8wOQ@mail.gmail.com> <20180614073153.GB9371@dhcp22.suse.cz> <alpine.LRH.2.02.1806141424510.30404@file01.intranet.prod.int.rdu2.redhat.com>
- <20180615073201.GB24039@dhcp22.suse.cz> <alpine.LRH.2.02.1806150724260.15022@file01.intranet.prod.int.rdu2.redhat.com> <20180615115547.GH24039@dhcp22.suse.cz> <alpine.LRH.2.02.1806150832100.26650@file01.intranet.prod.int.rdu2.redhat.com>
- <20180615130925.GI24039@dhcp22.suse.cz> <alpine.LRH.2.02.1806181003560.4201@file01.intranet.prod.int.rdu2.redhat.com> <20180619104312.GD13685@dhcp22.suse.cz>
+Subject: Re: [PATCH v2 RESEND] x86: optimize memcpy_flushcache
+Date: Thu, 21 Jun 2018 21:19:27 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1806211224470.19940@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20180519052503.325953342@debian.vm>
+	<20180519052631.730455475@debian.vm>
+	<CAPcyv4jpY0x7kZtT+afAKnHKy8Uy1AC_N_QM7RrELSj_0iNrRw@mail.gmail.com>
+	<20180524182013.GA59755@redhat.com>
+	<20180618132306.GA25431@redhat.com>
+	<20180621143140.GA14095@gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180619104312.GD13685@dhcp22.suse.cz>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: jing xia <jing.xia.mail@gmail.com>, Mike Snitzer <snitzer@redhat.com>, agk@redhat.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-mm@kvack.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20180621143140.GA14095@gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Ingo Molnar <mingo@kernel.org>
+Cc: Mike Snitzer <snitzer@redhat.com>, X86 ML <x86@kernel.org>, linux-kernel@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Dan Williams <dan.j.williams@intel.com>
 List-Id: dm-devel.ids
 
 
 
-On Tue, 19 Jun 2018, Michal Hocko wrote:
+On Thu, 21 Jun 2018, Ingo Molnar wrote:
 
-> On Mon 18-06-18 18:11:26, Mikulas Patocka wrote:
-> [...]
-> > I grepped the kernel for __GFP_NORETRY and triaged them. I found 16 cases 
-> > without a fallback - those are bugs that make various functions randomly 
-> > return -ENOMEM.
 > 
-> Well, maybe those are just optimistic attempts to allocate memory and
-> have a fallback somewhere else. So I would be careful calling them
-> outright bugs. But maybe you are right.
-
-I was trying to find the fallback code when I triaged them and maked as 
-"BUG" those cases where I didn't find it. You can search harder and 
-perhaps you'll find something that I didn't.
-
-> > Most of the callers provide callback.
+> * Mike Snitzer <snitzer@redhat.com> wrote:
+> 
+> > From: Mikulas Patocka <mpatocka@redhat.com>
+> > Subject: [PATCH v2] x86: optimize memcpy_flushcache
 > > 
-> > There is another strange flag - __GFP_RETRY_MAYFAIL - it provides two 
-> > different functions - if the allocation is larger than 
-> > PAGE_ALLOC_COSTLY_ORDER, it retries the allocation as if it were smaller. 
-> > If the allocations is smaller than PAGE_ALLOC_COSTLY_ORDER, 
-> > __GFP_RETRY_MAYFAIL will avoid the oom killer (larger order allocations 
-> > don't trigger the oom killer at all).
+> > In the context of constant short length stores to persistent memory,
+> > memcpy_flushcache suffers from a 2% performance degradation compared to
+> > explicitly using the "movnti" instruction.
+> > 
+> > Optimize 4, 8, and 16 byte memcpy_flushcache calls to explicitly use the
+> > movnti instruction with inline assembler.
 > 
-> Well, the primary purpose of this flag is to provide a consistent
-> failure behavior for all requests regardless of the size.
+> Linus requested asm optimizations to include actual benchmarks, so it would be 
+> nice to describe how this was tested, on what hardware, and what the before/after 
+> numbers are.
 > 
-> > So, perhaps __GFP_RETRY_MAYFAIL could be used instead of __GFP_NORETRY in 
-> > the cases where the caller wants to avoid trigerring the oom killer (the 
-> > problem is that __GFP_NORETRY causes random failure even in no-oom 
-> > situations but __GFP_RETRY_MAYFAIL doesn't).
+> Thanks,
 > 
-> myabe yes.
-> 
-> > So my suggestion is - fix these obvious bugs when someone allocates memory 
-> > with __GFP_NORETRY without any fallback - and then, __GFP_NORETRY could be 
-> > just changed to return NULL instead of sleeping.
-> 
-> No real objection to fixing wrong __GFP_NORETRY usage. But __GFP_NORETRY
-> can sleep. Nothing will really change in that regards.  It does a
-> reclaim and that _might_ sleep.
-> 
-> But seriously, isn't the best way around the throttling issue to use
-> PF_LESS_THROTTLE?
+> 	Ingo
 
-Yes - it could be done by setting PF_LESS_THROTTLE. But I think it would 
-be better to change it just in one place than to add PF_LESS_THROTTLE to 
-every block device driver (because adding it to every block driver results 
-in more code).
+It was tested on 4-core skylake machine with persistent memory being 
+emulated using the memmap kernel option. The dm-writecache target used the 
+emulated persistent memory as a cache and sata SSD as a backing device. 
+The patch results in 2% improved throughput when writing data using dd.
 
-What about this patch? If __GFP_NORETRY and __GFP_FS is not set (i.e. the 
-request comes from a block device driver or a filesystem), we should not 
-sleep.
+I don't have access to the machine anymore.
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Cc: stable@vger.kernel.org
-
-Index: linux-2.6/mm/vmscan.c
-===================================================================
---- linux-2.6.orig/mm/vmscan.c
-+++ linux-2.6/mm/vmscan.c
-@@ -2674,6 +2674,7 @@ static bool shrink_node(pg_data_t *pgdat
- 		 * the LRU too quickly.
- 		 */
- 		if (!sc->hibernation_mode && !current_is_kswapd() &&
-+		   (sc->gfp_mask & (__GFP_NORETRY | __GFP_FS)) != __GFP_NORETRY &&
- 		   current_may_throttle() && pgdat_memcg_congested(pgdat, root))
- 			wait_iff_congested(BLK_RW_ASYNC, HZ/10);
- 
+Mikulas
