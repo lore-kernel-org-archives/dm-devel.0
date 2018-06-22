@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 3/6] libmpathpersist: fix stack overflow in
-	mpath_format_readfullstatus()
-Date: Sat, 23 Jun 2018 01:15:13 +0200
-Message-ID: <20180622231516.18806-3-mwilck@suse.com>
+Subject: [PATCH 6/6] libmultipath: fix gcc 8.1 "truncated output"
+	warnings
+Date: Sat, 23 Jun 2018 01:15:16 +0200
+Message-ID: <20180622231516.18806-6-mwilck@suse.com>
 References: <20180622231516.18806-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,41 +22,57 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com, Eli Qiao <taget@linux.vnet.ibm.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Some storage arrays return corrupt data in response to READ FULL STATUS
-PRIN commands. This may lead to stack overflow if the values aren't
-sanitized.
+gcc 8.1 was warning about a possibly truncated output in snprintf.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmpathpersist/mpath_pr_ioctl.c | 9 +++++++++
- 1 file changed, 9 insertions(+)
+ libmultipath/sysfs.c | 4 ++--
+ libmultipath/util.c  | 4 ++--
+ 2 files changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/libmpathpersist/mpath_pr_ioctl.c b/libmpathpersist/mpath_pr_ioctl.c
-index bcbb9691..347f21b2 100644
---- a/libmpathpersist/mpath_pr_ioctl.c
-+++ b/libmpathpersist/mpath_pr_ioctl.c
-@@ -241,6 +241,13 @@ void mpath_format_readfullstatus(struct prin_resp *pr_buff, int len, int noisy)
- 		fdesc.rtpi = get_unaligned_be16(&p[18]);
+diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
+index 16e0a737..b7dacaad 100644
+--- a/libmultipath/sysfs.c
++++ b/libmultipath/sysfs.c
+@@ -239,7 +239,7 @@ sysfs_get_size (struct path *pp, unsigned long long * size)
+ int sysfs_check_holders(char * check_devt, char * new_devt)
+ {
+ 	unsigned int major, new_minor, table_minor;
+-	char path[PATH_SIZE], check_dev[PATH_SIZE];
++	char path[PATH_MAX], check_dev[PATH_SIZE];
+ 	char * table_name;
+ 	DIR *dirfd;
+ 	struct dirent *holder;
+@@ -256,7 +256,7 @@ int sysfs_check_holders(char * check_devt, char * new_devt)
  
- 		tid_len_len = get_unaligned_be32(&p[20]);
-+		if (tid_len_len + 24 + k >= additional_length) {
-+			condlog(0,
-+				"%s: corrupt PRIN response: status descriptor end %d exceeds length %d",
-+				__func__, tid_len_len + k + 24,
-+				additional_length);
-+			tid_len_len = additional_length - k - 24;
-+		}
+ 	condlog(3, "%s: checking holder", check_dev);
  
- 		if (tid_len_len > 0)
- 			decode_transport_id( &fdesc, &p[24], tid_len_len);
-@@ -272,6 +279,8 @@ decode_transport_id(struct prin_fulldescr *fdesc, unsigned char * p, int length)
- 			break;
- 		case MPATH_PROTOCOL_ID_ISCSI:
- 			num = get_unaligned_be16(&p[2]);
-+			if (num >= sizeof(fdesc->trnptid.iscsi_name))
-+				num = sizeof(fdesc->trnptid.iscsi_name);
- 			memcpy(&fdesc->trnptid.iscsi_name, &p[4], num);
- 			jump = (((num + 4) < 24) ? 24 : num + 4);
- 			break;
+-	snprintf(path, PATH_SIZE, "/sys/block/%s/holders", check_dev);
++	snprintf(path, sizeof(path), "/sys/block/%s/holders", check_dev);
+ 	dirfd = opendir(path);
+ 	if (dirfd == NULL) {
+ 		condlog(3, "%s: failed to open directory %s (%d)",
+diff --git a/libmultipath/util.c b/libmultipath/util.c
+index 7251ad08..aff74281 100644
+--- a/libmultipath/util.c
++++ b/libmultipath/util.c
+@@ -329,7 +329,7 @@ setup_thread_attr(pthread_attr_t *attr, size_t stacksize, int detached)
+ 
+ int systemd_service_enabled_in(const char *dev, const char *prefix)
+ {
+-	char path[PATH_SIZE], file[PATH_SIZE], service[PATH_SIZE];
++	char path[PATH_SIZE], file[PATH_MAX], service[PATH_SIZE];
+ 	DIR *dirfd;
+ 	struct dirent *d;
+ 	int found = 0;
+@@ -356,7 +356,7 @@ int systemd_service_enabled_in(const char *dev, const char *prefix)
+ 		p = d->d_name + strlen(d->d_name) - 6;
+ 		if (strcmp(p, ".wants"))
+ 			continue;
+-		snprintf(file, PATH_SIZE, "%s/%s/%s",
++		snprintf(file, sizeof(file), "%s/%s/%s",
+ 			 path, d->d_name, service);
+ 		if (stat(file, &stbuf) == 0) {
+ 			condlog(3, "%s: found %s", dev, file);
 -- 
 2.17.1
