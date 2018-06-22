@@ -1,14 +1,16 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 1/6] libmpathpersist: remove duplicate test
- in readfullstatus
-Date: Sat, 23 Jun 2018 01:18:10 +0200
-Message-ID: <bd980fc50ab6cc8fbe99305b51958562b0176a25.camel@suse.com>
+From: Bart Van Assche <bart.vanassche@wdc.com>
+Subject: Re: [PATCH 4/6] libmpathpersist: fix byte swapping for
+ big endian systems
+Date: Fri, 22 Jun 2018 16:19:17 -0700
+Message-ID: <ea8fc535-4602-b326-73c8-7e0b18243181@wdc.com>
 References: <20180622231516.18806-1-mwilck@suse.com>
+	<20180622231516.18806-4-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180622231516.18806-1-mwilck@suse.com>
+In-Reply-To: <20180622231516.18806-4-mwilck@suse.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,15 +20,22 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com
+To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, Eli Qiao <taget@linux.vnet.ibm.com>
 List-Id: dm-devel.ids
 
-T24gU2F0LCAyMDE4LTA2LTIzIGF0IDAxOjE1ICswMjAwLCBNYXJ0aW4gV2lsY2sgd3JvdGU6Cj4g
-U2lnbmVkLW9mZi1ieTogTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+CgppbiByZXBsaWVz
-LCBwbGVhc2UgcmVtb3ZlIEVsaSBmcm9tIGNjLCBoaXMgZW1haWwgYm91bmNlcy4KCk1hcnRpbgoK
-LS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3
-NDA1MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlciwgSmFuZSBT
-bWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRl
-dmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5j
-b20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+On 06/22/18 16:16, Martin Wilck wrote:
+> -			sa_key = 0;
+> -			for (i = 0; i < 8; ++i){
+> -				if (i > 0)
+> -					sa_key <<= 8;
+> -				sa_key |= paramp->sa_key[i];
+> -			}
+> +			sa_key = be64_to_cpu(*(uint64_t *)&paramp->sa_key[0]);
+
+Have you considered to use get_unaligned_be64() instead of the above 
+construct with casts?
+
+Thanks,
+
+Bart.
