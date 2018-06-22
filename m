@@ -1,103 +1,78 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: dm bufio: Reduce dm_bufio_lock contention
-Date: Fri, 22 Jun 2018 14:57:10 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1806221447050.2717@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1806150724260.15022@file01.intranet.prod.int.rdu2.redhat.com> <20180615115547.GH24039@dhcp22.suse.cz> <alpine.LRH.2.02.1806150832100.26650@file01.intranet.prod.int.rdu2.redhat.com> <20180615130925.GI24039@dhcp22.suse.cz>
- <alpine.LRH.2.02.1806181003560.4201@file01.intranet.prod.int.rdu2.redhat.com> <20180619104312.GD13685@dhcp22.suse.cz> <alpine.LRH.2.02.1806191228110.25656@file01.intranet.prod.int.rdu2.redhat.com> <20180622090151.GS10465@dhcp22.suse.cz>
- <20180622090935.GT10465@dhcp22.suse.cz> <alpine.LRH.2.02.1806220845190.8072@file01.intranet.prod.int.rdu2.redhat.com> <20180622130524.GZ10465@dhcp22.suse.cz>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [dm:for-next 6/8] drivers/md/dm-writecache.c:862:24:
+ error: implicit declaration of function 'array_size';
+ did you mean '__ua_size'?
+Date: Fri, 22 Jun 2018 14:57:48 -0400
+Message-ID: <20180622185748.GA17114@redhat.com>
+References: <201806230219.0aYv3WPK%fengguang.wu@intel.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180622130524.GZ10465@dhcp22.suse.cz>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: jing xia <jing.xia.mail@gmail.com>, Mike Snitzer <snitzer@redhat.com>, agk@redhat.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-mm@kvack.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <201806230219.0aYv3WPK%fengguang.wu@intel.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: kbuild test robot <lkp@intel.com>
+Cc: dm-devel@redhat.com, Kees Cook <keescook@chromium.org>, kbuild-all@01.org
 List-Id: dm-devel.ids
 
+sorry for the noise, I forgot to rebase to v4.18-rc1 before picking this
+change up.  since fixed and pushed out.
 
+On Fri, Jun 22 2018 at  2:40pm -0400,
+kbuild test robot <lkp@intel.com> wrote:
 
-On Fri, 22 Jun 2018, Michal Hocko wrote:
-
-> On Fri 22-06-18 08:52:09, Mikulas Patocka wrote:
-> > 
-> > 
-> > On Fri, 22 Jun 2018, Michal Hocko wrote:
-> > 
-> > > On Fri 22-06-18 11:01:51, Michal Hocko wrote:
-> > > > On Thu 21-06-18 21:17:24, Mikulas Patocka wrote:
-> > > [...]
-> > > > > What about this patch? If __GFP_NORETRY and __GFP_FS is not set (i.e. the 
-> > > > > request comes from a block device driver or a filesystem), we should not 
-> > > > > sleep.
-> > > > 
-> > > > Why? How are you going to audit all the callers that the behavior makes
-> > > > sense and moreover how are you going to ensure that future usage will
-> > > > still make sense. The more subtle side effects gfp flags have the harder
-> > > > they are to maintain.
-> > > 
-> > > So just as an excercise. Try to explain the above semantic to users. We
-> > > currently have the following.
-> > > 
-> > >  * __GFP_NORETRY: The VM implementation will try only very lightweight
-> > >  *   memory direct reclaim to get some memory under memory pressure (thus
-> > >  *   it can sleep). It will avoid disruptive actions like OOM killer. The
-> > >  *   caller must handle the failure which is quite likely to happen under
-> > >  *   heavy memory pressure. The flag is suitable when failure can easily be
-> > >  *   handled at small cost, such as reduced throughput
-> > > 
-> > >  * __GFP_FS can call down to the low-level FS. Clearing the flag avoids the
-> > >  *   allocator recursing into the filesystem which might already be holding
-> > >  *   locks.
-> > > 
-> > > So how are you going to explain gfp & (__GFP_NORETRY | ~__GFP_FS)? What
-> > > is the actual semantic without explaining the whole reclaim or force
-> > > users to look into the code to understand that? What about GFP_NOIO |
-> > > __GFP_NORETRY? What does it mean to that "should not sleep". Do all
-> > > shrinkers have to follow that as well?
-> > 
-> > My reasoning was that there is broken code that uses __GFP_NORETRY and 
-> > assumes that it can't fail - so conditioning the change on !__GFP_FS would 
-> > minimize the diruption to the broken code.
-> > 
-> > Anyway - if you want to test only on __GFP_NORETRY (and fix those 16 
-> > broken cases that assume that __GFP_NORETRY can't fail), I'm OK with that.
+> tree:   https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git for-next
+> head:   696ee10fad76d6ec15f256e6dc2c08aa2c706890
+> commit: 5174624414ac49495a08eca4ee584dac193c0eb7 [6/8] dm writecache: use 2-factor allocator arguments
+> config: mips-allyesconfig (attached as .config)
+> compiler: mips-linux-gnu-gcc (Debian 7.2.0-11) 7.2.0
+> reproduce:
+>         wget https://raw.githubusercontent.com/intel/lkp-tests/master/sbin/make.cross -O ~/bin/make.cross
+>         chmod +x ~/bin/make.cross
+>         git checkout 5174624414ac49495a08eca4ee584dac193c0eb7
+>         # save the attached .config to linux build tree
+>         GCC_VERSION=7.2.0 make.cross ARCH=mips 
 > 
-> As I've already said, this is a subtle change which is really hard to
-> reason about. Throttling on congestion has its meaning and reason. Look
-> at why we are doing that in the first place. You cannot simply say this
-
-So - explain why is throttling needed. You support throttling, I don't, so 
-you have to explain it :)
-
-> is ok based on your specific usecase. We do have means to achieve that.
-> It is explicit and thus it will be applied only where it makes sense.
-> You keep repeating that implicit behavior change for everybody is
-> better.
-
-I don't want to change it for everybody. I want to change it for block 
-device drivers. I don't care what you do with non-block drivers.
-
-> I guess we will not agree on that part. I consider it a hack
-> rather than a systematic solution. I can easily imagine that we just
-> find out other call sites that would cause over reclaim or similar
-
-If a __GFP_NORETRY allocation does overreclaim - it could be fixed by 
-returning NULL instead of doing overreclaim. The specification says that 
-callers must handle failure of __GFP_NORETRY allocations.
-
-So yes - if you think that just skipping throttling on __GFP_NORETRY could 
-cause excessive CPU consumption trying to reclaim unreclaimable pages or 
-something like that - then you can add more points where the __GFP_NORETRY 
-is failed with NULL to avoid the excessive CPU consumption.
-
-> problems because they are not throttled on too many dirty pages due to
-> congested storage. What are we going to then? Add another magic gfp
-> flag? Really, try to not add even more subtle side effects for gfp
-> flags. We _do_ have ways to accomplish what your particular usecase
-> requires.
+> All errors (new ones prefixed by >>):
 > 
-> -- 
-> Michal Hocko
-> SUSE Labs
-
-Mikulas
+>    drivers/md/dm-writecache.c: In function 'writecache_alloc_entries':
+> >> drivers/md/dm-writecache.c:862:24: error: implicit declaration of function 'array_size'; did you mean '__ua_size'? [-Werror=implicit-function-declaration]
+>      wc->entries = vmalloc(array_size(sizeof(struct wc_entry), wc->n_blocks));
+>                            ^~~~~~~~~~
+>                            __ua_size
+>    cc1: some warnings being treated as errors
+> 
+> vim +862 drivers/md/dm-writecache.c
+> 
+>    855	
+>    856	static int writecache_alloc_entries(struct dm_writecache *wc)
+>    857	{
+>    858		size_t b;
+>    859	
+>    860		if (wc->entries)
+>    861			return 0;
+>  > 862		wc->entries = vmalloc(array_size(sizeof(struct wc_entry), wc->n_blocks));
+>    863		if (!wc->entries)
+>    864			return -ENOMEM;
+>    865		for (b = 0; b < wc->n_blocks; b++) {
+>    866			struct wc_entry *e = &wc->entries[b];
+>    867			e->index = b;
+>    868			e->write_in_progress = false;
+>    869		}
+>    870	
+>    871		return 0;
+>    872	}
+>    873	
+> 
+> ---
+> 0-DAY kernel test infrastructure                Open Source Technology Center
+> https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
