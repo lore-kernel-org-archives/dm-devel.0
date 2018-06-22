@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 2/6] libmpathpersist: fix typo in
-	mpath_format_readfullstatus
-Date: Sat, 23 Jun 2018 01:15:12 +0200
-Message-ID: <20180622231516.18806-2-mwilck@suse.com>
+Subject: [PATCH 5/6] (lib)mpathpersist: use O_RDONLY file
+	descriptors
+Date: Sat, 23 Jun 2018 01:15:15 +0200
+Message-ID: <20180622231516.18806-5-mwilck@suse.com>
 References: <20180622231516.18806-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,23 +22,54 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bma
 Cc: dm-devel@redhat.com, Eli Qiao <taget@linux.vnet.ibm.com>, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
+udevd catches close-after-write inotify events and generates "change"
+uvents for such devices, which may cause extra unnecessary and unwanted
+udev activity.
+
+Therefore use O_RDONLY file descriptors for PRIN and PROUT commands. This
+works just as well as O_WRONLY. sg_persist has supported the --readonly option
+for years.
+
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmpathpersist/mpath_pr_ioctl.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmpathpersist/mpath_pr_ioctl.c | 4 ++--
+ mpathpersist/main.c              | 2 +-
+ 2 files changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/libmpathpersist/mpath_pr_ioctl.c b/libmpathpersist/mpath_pr_ioctl.c
-index dcdb530d..bcbb9691 100644
+index 76271ff1..e641ce62 100644
 --- a/libmpathpersist/mpath_pr_ioctl.c
 +++ b/libmpathpersist/mpath_pr_ioctl.c
-@@ -218,7 +218,7 @@ void mpath_format_readfullstatus(struct prin_resp *pr_buff, int len, int noisy)
+@@ -52,7 +52,7 @@ int prout_do_scsi_ioctl(char * dev, int rq_servact, int rq_scope,
+ 	int fd = -1;
  
- 	if (pr_buff->prin_descriptor.prin_readfd.number_of_descriptor == 0)
- 	{
--		condlog(3, "No registration or resrvation found.");
-+		condlog(3, "No registration or reservation found.");
- 		return;
+ 	snprintf(devname, FILE_NAME_SIZE, "/dev/%s",dev);
+-	fd = open(devname, O_WRONLY);
++	fd = open(devname, O_RDONLY);
+ 	if(fd < 0){
+ 		condlog (1, "%s: unable to open device.", dev);
+ 		return MPATH_PR_FILE_ERROR;
+@@ -308,7 +308,7 @@ int prin_do_scsi_ioctl(char * dev, int rq_servact, struct prin_resp * resp, int
+ 	{MPATH_PRIN_CMD, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+ 
+ 	snprintf(devname, FILE_NAME_SIZE, "/dev/%s",dev);
+-	fd = open(devname, O_WRONLY);
++	fd = open(devname, O_RDONLY);
+ 	if(fd < 0){
+ 		condlog(0, "%s: Unable to open device ", dev);
+ 		return MPATH_PR_FILE_ERROR;
+diff --git a/mpathpersist/main.c b/mpathpersist/main.c
+index 5b37f3ae..34caa16c 100644
+--- a/mpathpersist/main.c
++++ b/mpathpersist/main.c
+@@ -380,7 +380,7 @@ int main (int argc, char * argv[])
  	}
  
+ 	/* open device */
+-	if ((fd = open (device_name, O_WRONLY)) < 0)
++	if ((fd = open (device_name, O_RDONLY)) < 0)
+ 	{
+ 		fprintf (stderr, "%s: error opening file (rw) fd=%d\n",
+ 				device_name, fd);
 -- 
 2.17.1
