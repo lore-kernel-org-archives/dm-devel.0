@@ -1,23 +1,11 @@
 From: Bart Van Assche <bart.vanassche@wdc.com>
-Subject: [PATCH] dm-zoned: Avoid triggering reclaim from inside
-	dmz_map()
-Date: Fri, 22 Jun 2018 08:06:16 -0700
-Message-ID: <20180622150616.5937-1-bart.vanassche@wdc.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Subject: [PATCH v2] dm-zoned: Avoid triggering reclaim from inside dmz_map()
+Date: Fri, 22 Jun 2018 08:09:11 -0700
+Message-ID: <20180622150911.6066-1-bart.vanassche@wdc.com>
+Return-path: <stable-owner@vger.kernel.org>
+Sender: stable-owner@vger.kernel.org
 To: Mike Snitzer <snitzer@redhat.com>
-Cc: Bart Van Assche <bart.vanassche@wdc.com>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Damien Le Moal <Damien.LeMoal@wdc.com>
+Cc: dm-devel@redhat.com, Bart Van Assche <bart.vanassche@wdc.com>, Damien Le Moal <Damien.LeMoal@wdc.com>, Mikulas Patocka <mpatocka@redhat.com>, stable@vger.kernel.org
 List-Id: dm-devel.ids
 
 This patch avoids that lockdep reports the following:
@@ -154,7 +142,11 @@ Fixes: 4218a9554653 ("dm zoned: use GFP_NOIO in I/O path")
 Signed-off-by: Bart Van Assche <bart.vanassche@wdc.com>
 Cc: Damien Le Moal <Damien.LeMoal@wdc.com>
 Cc: Mikulas Patocka <mpatocka@redhat.com>
+Cc: <stable@vger.kernel.org>
 ---
+
+Changes compared to v1: added "Cc: stable"
+
  drivers/md/dm-zoned-target.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
