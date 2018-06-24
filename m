@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 09/10] multipathd: fix buffer size in
-	cli_getprkey()
-Date: Sun, 24 Jun 2018 21:09:43 +0200
-Message-ID: <20180624190944.27158-10-mwilck@suse.com>
+Subject: [PATCH v3 08/10] libmultipath: fix gcc 8.1 "truncated
+	output" warnings
+Date: Sun, 24 Jun 2018 21:09:42 +0200
+Message-ID: <20180624190944.27158-9-mwilck@suse.com>
 References: <20180624190944.27158-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,34 +22,57 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Bart Van Assche <Bart.V
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-gcc 8.1 warned about this.
+gcc 8.1 was warning about a possibly truncated output in snprintf.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/cli_handlers.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ libmultipath/sysfs.c | 4 ++--
+ libmultipath/util.c  | 4 ++--
+ 2 files changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index 47830e1c..5682b5c2 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -1449,7 +1449,7 @@ cli_getprkey(void * v, char ** reply, int * len, void * data)
- 	if (!mpp)
- 		return 1;
+diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
+index 16e0a737..b7dacaad 100644
+--- a/libmultipath/sysfs.c
++++ b/libmultipath/sysfs.c
+@@ -239,7 +239,7 @@ sysfs_get_size (struct path *pp, unsigned long long * size)
+ int sysfs_check_holders(char * check_devt, char * new_devt)
+ {
+ 	unsigned int major, new_minor, table_minor;
+-	char path[PATH_SIZE], check_dev[PATH_SIZE];
++	char path[PATH_MAX], check_dev[PATH_SIZE];
+ 	char * table_name;
+ 	DIR *dirfd;
+ 	struct dirent *holder;
+@@ -256,7 +256,7 @@ int sysfs_check_holders(char * check_devt, char * new_devt)
  
--	*reply = malloc(20);
-+	*reply = malloc(26);
+ 	condlog(3, "%s: checking holder", check_dev);
  
- 	if (!get_be64(mpp->reservation_key)) {
- 		sprintf(*reply, "none\n");
-@@ -1458,7 +1458,7 @@ cli_getprkey(void * v, char ** reply, int * len, void * data)
- 	}
- 	if (mpp->sa_flags & MPATH_F_APTPL_MASK)
- 		flagstr = ":aptpl";
--	snprintf(*reply, 20, "0x%" PRIx64 "%s\n",
-+	snprintf(*reply, 26, "0x%" PRIx64 "%s\n",
- 		 get_be64(mpp->reservation_key), flagstr);
- 	(*reply)[19] = '\0';
- 	*len = strlen(*reply) + 1;
+-	snprintf(path, PATH_SIZE, "/sys/block/%s/holders", check_dev);
++	snprintf(path, sizeof(path), "/sys/block/%s/holders", check_dev);
+ 	dirfd = opendir(path);
+ 	if (dirfd == NULL) {
+ 		condlog(3, "%s: failed to open directory %s (%d)",
+diff --git a/libmultipath/util.c b/libmultipath/util.c
+index 8d8fcc81..347af5b0 100644
+--- a/libmultipath/util.c
++++ b/libmultipath/util.c
+@@ -331,7 +331,7 @@ setup_thread_attr(pthread_attr_t *attr, size_t stacksize, int detached)
+ 
+ int systemd_service_enabled_in(const char *dev, const char *prefix)
+ {
+-	char path[PATH_SIZE], file[PATH_SIZE], service[PATH_SIZE];
++	char path[PATH_SIZE], file[PATH_MAX], service[PATH_SIZE];
+ 	DIR *dirfd;
+ 	struct dirent *d;
+ 	int found = 0;
+@@ -358,7 +358,7 @@ int systemd_service_enabled_in(const char *dev, const char *prefix)
+ 		p = d->d_name + strlen(d->d_name) - 6;
+ 		if (strcmp(p, ".wants"))
+ 			continue;
+-		snprintf(file, PATH_SIZE, "%s/%s/%s",
++		snprintf(file, sizeof(file), "%s/%s/%s",
+ 			 path, d->d_name, service);
+ 		if (stat(file, &stbuf) == 0) {
+ 			condlog(3, "%s: found %s", dev, file);
 -- 
 2.17.1
