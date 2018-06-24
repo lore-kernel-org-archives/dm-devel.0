@@ -1,15 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Latest multipath-tools push
-Date: Sun, 24 Jun 2018 21:01:25 +0200
-Message-ID: <08fa1c027c1fe7baed7146a71ee7809db198af49.camel@suse.com>
-References: <20180521200355.27364-1-xose.vazquez@gmail.com>
-	<2cc1bd1b-5f70-f5d1-46bb-17afebd105b1@gmail.com>
-	<CABr-GnenUmE-vBO_Ys2S1y6tAJiB9a4VkGC7d7y6Zf28JpOBOA@mail.gmail.com>
+Subject: [PATCH v3 02/10] libmpathpersist: fix typo in
+	mpath_format_readfullstatus
+Date: Sun, 24 Jun 2018 21:09:36 +0200
+Message-ID: <20180624190944.27158-3-mwilck@suse.com>
+References: <20180624190944.27158-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CABr-GnenUmE-vBO_Ys2S1y6tAJiB9a4VkGC7d7y6Zf28JpOBOA@mail.gmail.com>
+In-Reply-To: <20180624190944.27158-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,19 +18,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Bart Van Assche <Bart.VanAssche@sandisk.com>, Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-SGVsbG8gQ2hyaXN0b3BoZSwKClNvcnJ5LCBJJ3ZlIG1pc3NlZCB5b3VyIGxhc3QgcHVzaC4gSSds
-bCByZS1wb3N0IG15IGxhdGVzdCBzZXJpZXMKcmViYXNlZC4KCkkgdGhpbmsgeW91IG1pc3NlZCBv
-bmUgcGF0Y2ggZnJvbSBCZW46CgogLSAgbGlibXVsdGlwYXRoOiBwcmludCBjb3JyZWN0IGRlZmF1
-bHQgZm9yIGRlbGF5XypfY2hlY2tzLCAKICAgIChodHRwczovL3d3dy5yZWRoYXQuY29tL2FyY2hp
-dmVzL2RtLWRldmVsLzIwMTgtTWF5L21zZzAwMDQwLmh0bWwpCgpNb3JvdmVyLCBJIHRob3VnaHQg
-QmVuIHdhcyBhYm91dCB0byBzdWJtaXQgYW4gdXBkYXRlZCB2ZXJzaW9uIG9mIGhpcwpwYXRjaCAi
-bXBhdGhwZXJzaXN0OiBhZGQgYWxsX3RnX3B0IG9wdGlvbiI7IGJ1dCB0aGF0J3MganVzdCBhIG5p
-dC4KClJlZ2FyZHMsCk1hcnRpbgoKLS0gCkRyLiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNv
-bT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAyMTA3ClNVU0UgTGludXggR21iSCwgR0Y6IEZlbGl4
-IEltZW5kw7ZyZmZlciwgSmFuZSBTbWl0aGFyZCwgR3JhaGFtIE5vcnRvbgpIUkIgMjEyODQgKEFH
-IE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29t
-Cmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ libmpathpersist/mpath_pr_ioctl.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libmpathpersist/mpath_pr_ioctl.c b/libmpathpersist/mpath_pr_ioctl.c
+index dcdb530d..bcbb9691 100644
+--- a/libmpathpersist/mpath_pr_ioctl.c
++++ b/libmpathpersist/mpath_pr_ioctl.c
+@@ -218,7 +218,7 @@ void mpath_format_readfullstatus(struct prin_resp *pr_buff, int len, int noisy)
+ 
+ 	if (pr_buff->prin_descriptor.prin_readfd.number_of_descriptor == 0)
+ 	{
+-		condlog(3, "No registration or resrvation found.");
++		condlog(3, "No registration or reservation found.");
+ 		return;
+ 	}
+ 
+-- 
+2.17.1
