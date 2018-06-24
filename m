@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 10/10] libmultipath: avoid error messages from
-	RDAC check
-Date: Sun, 24 Jun 2018 21:09:44 +0200
-Message-ID: <20180624190944.27158-11-mwilck@suse.com>
+Subject: [PATCH v3 09/10] multipathd: fix buffer size in
+	cli_getprkey()
+Date: Sun, 24 Jun 2018 21:09:43 +0200
+Message-ID: <20180624190944.27158-10-mwilck@suse.com>
 References: <20180624190944.27158-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,27 +22,34 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Bart Van Assche <Bart.V
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-VPD pages are only valid for SCSI devices, so we should disable
-the RDAC detection for non-SCSI devices. Otherwise we'll get
-an error about VPD inquiry failed.
+gcc 8.1 warned about this.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/propsel.c | 2 ++
- 1 file changed, 2 insertions(+)
+ multipathd/cli_handlers.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index f0847dba..af3ed622 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -466,6 +466,8 @@ check_rdac(struct path * pp)
- 	int len;
- 	char buff[44];
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index 47830e1c..5682b5c2 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -1449,7 +1449,7 @@ cli_getprkey(void * v, char ** reply, int * len, void * data)
+ 	if (!mpp)
+ 		return 1;
  
-+	if (pp->bus != SYSFS_BUS_SCSI)
-+		return 0;
- 	len = get_vpd_sgio(pp->fd, 0xC9, buff, 44);
- 	if (len <= 0)
- 		return 0;
+-	*reply = malloc(20);
++	*reply = malloc(26);
+ 
+ 	if (!get_be64(mpp->reservation_key)) {
+ 		sprintf(*reply, "none\n");
+@@ -1458,7 +1458,7 @@ cli_getprkey(void * v, char ** reply, int * len, void * data)
+ 	}
+ 	if (mpp->sa_flags & MPATH_F_APTPL_MASK)
+ 		flagstr = ":aptpl";
+-	snprintf(*reply, 20, "0x%" PRIx64 "%s\n",
++	snprintf(*reply, 26, "0x%" PRIx64 "%s\n",
+ 		 get_be64(mpp->reservation_key), flagstr);
+ 	(*reply)[19] = '\0';
+ 	*len = strlen(*reply) + 1;
 -- 
 2.17.1
