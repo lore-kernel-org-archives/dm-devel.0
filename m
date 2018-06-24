@@ -1,8 +1,8 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 01/10] libmpathpersist: remove duplicate test
-	in readfullstatus
-Date: Sun, 24 Jun 2018 21:09:35 +0200
-Message-ID: <20180624190944.27158-2-mwilck@suse.com>
+Subject: [PATCH v3 04/10] libmultipath: add
+	(get|put)_unaligned_be64
+Date: Sun, 24 Jun 2018 21:09:38 +0200
+Message-ID: <20180624190944.27158-5-mwilck@suse.com>
 References: <20180624190944.27158-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,25 +24,40 @@ List-Id: dm-devel.ids
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmpathpersist/mpath_pr_ioctl.c | 6 ------
- 1 file changed, 6 deletions(-)
+ libmultipath/unaligned.h | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
 
-diff --git a/libmpathpersist/mpath_pr_ioctl.c b/libmpathpersist/mpath_pr_ioctl.c
-index 6dd74031..dcdb530d 100644
---- a/libmpathpersist/mpath_pr_ioctl.c
-+++ b/libmpathpersist/mpath_pr_ioctl.c
-@@ -216,12 +216,6 @@ void mpath_format_readfullstatus(struct prin_resp *pr_buff, int len, int noisy)
- 	mpath_reverse_uint32_byteorder(&pr_buff->prin_descriptor.prin_readfd.prgeneration);
- 	mpath_reverse_uint32_byteorder(&pr_buff->prin_descriptor.prin_readfd.number_of_descriptor);
+diff --git a/libmultipath/unaligned.h b/libmultipath/unaligned.h
+index 14ec8b23..68c07742 100644
+--- a/libmultipath/unaligned.h
++++ b/libmultipath/unaligned.h
+@@ -17,6 +17,14 @@ static inline uint32_t get_unaligned_be32(void *ptr)
+ 	return p[0] << 24 | p[1] << 16 | p[2] << 8 | p[3];
+ }
  
--	if (0 == pr_buff->prin_descriptor.prin_readfd.number_of_descriptor)
--	{
--		return ;
--	}
--
--
- 	if (pr_buff->prin_descriptor.prin_readfd.number_of_descriptor == 0)
- 	{
- 		condlog(3, "No registration or resrvation found.");
++static inline uint64_t get_unaligned_be64(void *ptr)
++{
++	uint32_t low = get_unaligned_be32(ptr + 4);
++	uint64_t high = get_unaligned_be32(ptr);
++
++	return high << 32 | low;
++}
++
+ static inline void put_unaligned_be16(uint16_t val, void *ptr)
+ {
+ 	uint8_t *p = ptr;
+@@ -35,4 +43,12 @@ static inline void put_unaligned_be32(uint32_t val, void *ptr)
+ 	p[3] = val;
+ }
+ 
++static inline void put_unaligned_be64(uint64_t val, void *ptr)
++{
++	uint8_t *p = ptr;
++
++	put_unaligned_be32(val >> 32, p);
++	put_unaligned_be32(val, p + 4);
++}
++
+ #endif /* _UNALIGNED_H_ */
 -- 
 2.17.1
