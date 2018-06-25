@@ -1,78 +1,115 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v3 08/10] libmultipath: fix gcc 8.1 "truncated
-	output" warnings
-Date: Sun, 24 Jun 2018 21:09:42 +0200
-Message-ID: <20180624190944.27158-9-mwilck@suse.com>
-References: <20180624190944.27158-1-mwilck@suse.com>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: dm bufio: Reduce dm_bufio_lock contention
+Date: Mon, 25 Jun 2018 11:09:57 +0200
+Message-ID: <20180625090957.GF28965@dhcp22.suse.cz>
+References: <alpine.LRH.2.02.1806150832100.26650@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180615130925.GI24039@dhcp22.suse.cz>
+ <alpine.LRH.2.02.1806181003560.4201@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180619104312.GD13685@dhcp22.suse.cz>
+ <alpine.LRH.2.02.1806191228110.25656@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180622090151.GS10465@dhcp22.suse.cz>
+ <20180622090935.GT10465@dhcp22.suse.cz>
+ <alpine.LRH.2.02.1806220845190.8072@file01.intranet.prod.int.rdu2.redhat.com>
+ <20180622130524.GZ10465@dhcp22.suse.cz>
+ <alpine.LRH.2.02.1806221447050.2717@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180624190944.27158-1-mwilck@suse.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Bart Van Assche <Bart.VanAssche@sandisk.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1806221447050.2717@file01.intranet.prod.int.rdu2.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: jing xia <jing.xia.mail@gmail.com>, Mike Snitzer <snitzer@redhat.com>, agk@redhat.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-mm@kvack.org
 List-Id: dm-devel.ids
 
-gcc 8.1 was warning about a possibly truncated output in snprintf.
+On Fri 22-06-18 14:57:10, Mikulas Patocka wrote:
+> 
+> 
+> On Fri, 22 Jun 2018, Michal Hocko wrote:
+> 
+> > On Fri 22-06-18 08:52:09, Mikulas Patocka wrote:
+> > > 
+> > > 
+> > > On Fri, 22 Jun 2018, Michal Hocko wrote:
+> > > 
+> > > > On Fri 22-06-18 11:01:51, Michal Hocko wrote:
+> > > > > On Thu 21-06-18 21:17:24, Mikulas Patocka wrote:
+> > > > [...]
+> > > > > > What about this patch? If __GFP_NORETRY and __GFP_FS is not set (i.e. the 
+> > > > > > request comes from a block device driver or a filesystem), we should not 
+> > > > > > sleep.
+> > > > > 
+> > > > > Why? How are you going to audit all the callers that the behavior makes
+> > > > > sense and moreover how are you going to ensure that future usage will
+> > > > > still make sense. The more subtle side effects gfp flags have the harder
+> > > > > they are to maintain.
+> > > > 
+> > > > So just as an excercise. Try to explain the above semantic to users. We
+> > > > currently have the following.
+> > > > 
+> > > >  * __GFP_NORETRY: The VM implementation will try only very lightweight
+> > > >  *   memory direct reclaim to get some memory under memory pressure (thus
+> > > >  *   it can sleep). It will avoid disruptive actions like OOM killer. The
+> > > >  *   caller must handle the failure which is quite likely to happen under
+> > > >  *   heavy memory pressure. The flag is suitable when failure can easily be
+> > > >  *   handled at small cost, such as reduced throughput
+> > > > 
+> > > >  * __GFP_FS can call down to the low-level FS. Clearing the flag avoids the
+> > > >  *   allocator recursing into the filesystem which might already be holding
+> > > >  *   locks.
+> > > > 
+> > > > So how are you going to explain gfp & (__GFP_NORETRY | ~__GFP_FS)? What
+> > > > is the actual semantic without explaining the whole reclaim or force
+> > > > users to look into the code to understand that? What about GFP_NOIO |
+> > > > __GFP_NORETRY? What does it mean to that "should not sleep". Do all
+> > > > shrinkers have to follow that as well?
+> > > 
+> > > My reasoning was that there is broken code that uses __GFP_NORETRY and 
+> > > assumes that it can't fail - so conditioning the change on !__GFP_FS would 
+> > > minimize the diruption to the broken code.
+> > > 
+> > > Anyway - if you want to test only on __GFP_NORETRY (and fix those 16 
+> > > broken cases that assume that __GFP_NORETRY can't fail), I'm OK with that.
+> > 
+> > As I've already said, this is a subtle change which is really hard to
+> > reason about. Throttling on congestion has its meaning and reason. Look
+> > at why we are doing that in the first place. You cannot simply say this
+> 
+> So - explain why is throttling needed. You support throttling, I don't, so 
+> you have to explain it :)
+> 
+> > is ok based on your specific usecase. We do have means to achieve that.
+> > It is explicit and thus it will be applied only where it makes sense.
+> > You keep repeating that implicit behavior change for everybody is
+> > better.
+> 
+> I don't want to change it for everybody. I want to change it for block 
+> device drivers. I don't care what you do with non-block drivers.
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- libmultipath/sysfs.c | 4 ++--
- libmultipath/util.c  | 4 ++--
- 2 files changed, 4 insertions(+), 4 deletions(-)
+Well, it is usually onus of the patch submitter to justify any change.
+But let me be nice on you, for once. This throttling is triggered only
+if we all the pages we have encountered during the reclaim attempt are
+dirty and that means that we are rushing through the LRU list quicker
+than flushers are able to clean. If we didn't throttle we could hit
+stronger reclaim priorities (aka scan more to reclaim memory) and
+reclaim more pages as a result.
 
-diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
-index 16e0a737..b7dacaad 100644
---- a/libmultipath/sysfs.c
-+++ b/libmultipath/sysfs.c
-@@ -239,7 +239,7 @@ sysfs_get_size (struct path *pp, unsigned long long * size)
- int sysfs_check_holders(char * check_devt, char * new_devt)
- {
- 	unsigned int major, new_minor, table_minor;
--	char path[PATH_SIZE], check_dev[PATH_SIZE];
-+	char path[PATH_MAX], check_dev[PATH_SIZE];
- 	char * table_name;
- 	DIR *dirfd;
- 	struct dirent *holder;
-@@ -256,7 +256,7 @@ int sysfs_check_holders(char * check_devt, char * new_devt)
- 
- 	condlog(3, "%s: checking holder", check_dev);
- 
--	snprintf(path, PATH_SIZE, "/sys/block/%s/holders", check_dev);
-+	snprintf(path, sizeof(path), "/sys/block/%s/holders", check_dev);
- 	dirfd = opendir(path);
- 	if (dirfd == NULL) {
- 		condlog(3, "%s: failed to open directory %s (%d)",
-diff --git a/libmultipath/util.c b/libmultipath/util.c
-index 8d8fcc81..347af5b0 100644
---- a/libmultipath/util.c
-+++ b/libmultipath/util.c
-@@ -331,7 +331,7 @@ setup_thread_attr(pthread_attr_t *attr, size_t stacksize, int detached)
- 
- int systemd_service_enabled_in(const char *dev, const char *prefix)
- {
--	char path[PATH_SIZE], file[PATH_SIZE], service[PATH_SIZE];
-+	char path[PATH_SIZE], file[PATH_MAX], service[PATH_SIZE];
- 	DIR *dirfd;
- 	struct dirent *d;
- 	int found = 0;
-@@ -358,7 +358,7 @@ int systemd_service_enabled_in(const char *dev, const char *prefix)
- 		p = d->d_name + strlen(d->d_name) - 6;
- 		if (strcmp(p, ".wants"))
- 			continue;
--		snprintf(file, PATH_SIZE, "%s/%s/%s",
-+		snprintf(file, sizeof(file), "%s/%s/%s",
- 			 path, d->d_name, service);
- 		if (stat(file, &stbuf) == 0) {
- 			condlog(3, "%s: found %s", dev, file);
+> > I guess we will not agree on that part. I consider it a hack
+> > rather than a systematic solution. I can easily imagine that we just
+> > find out other call sites that would cause over reclaim or similar
+> 
+> If a __GFP_NORETRY allocation does overreclaim - it could be fixed by 
+> returning NULL instead of doing overreclaim. The specification says that 
+> callers must handle failure of __GFP_NORETRY allocations.
+> 
+> So yes - if you think that just skipping throttling on __GFP_NORETRY could 
+> cause excessive CPU consumption trying to reclaim unreclaimable pages or 
+> something like that - then you can add more points where the __GFP_NORETRY 
+> is failed with NULL to avoid the excessive CPU consumption.
+
+Which is exactly something I do not want to do. Spread __GFP_NORETRY all
+over the reclaim code. Especially for something we already have means
+for...
 -- 
-2.17.1
+Michal Hocko
+SUSE Labs
