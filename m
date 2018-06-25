@@ -1,115 +1,289 @@
-From: Michal Hocko <mhocko@kernel.org>
+From: Mikulas Patocka <mpatocka@redhat.com>
 Subject: Re: dm bufio: Reduce dm_bufio_lock contention
-Date: Mon, 25 Jun 2018 16:14:34 +0200
-Message-ID: <20180625141434.GO28965@dhcp22.suse.cz>
+Date: Mon, 25 Jun 2018 10:42:30 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1806251037250.17405@file01.intranet.prod.int.rdu2.redhat.com>
 References: <alpine.LRH.2.02.1806181003560.4201@file01.intranet.prod.int.rdu2.redhat.com>
- <20180619104312.GD13685@dhcp22.suse.cz>
- <alpine.LRH.2.02.1806191228110.25656@file01.intranet.prod.int.rdu2.redhat.com>
- <20180622090151.GS10465@dhcp22.suse.cz>
- <20180622090935.GT10465@dhcp22.suse.cz>
- <alpine.LRH.2.02.1806220845190.8072@file01.intranet.prod.int.rdu2.redhat.com>
- <20180622130524.GZ10465@dhcp22.suse.cz>
- <alpine.LRH.2.02.1806221447050.2717@file01.intranet.prod.int.rdu2.redhat.com>
- <20180625090957.GF28965@dhcp22.suse.cz>
- <alpine.LRH.2.02.1806250941380.11092@file01.intranet.prod.int.rdu2.redhat.com>
+	<20180619104312.GD13685@dhcp22.suse.cz>
+	<alpine.LRH.2.02.1806191228110.25656@file01.intranet.prod.int.rdu2.redhat.com>
+	<20180622090151.GS10465@dhcp22.suse.cz>
+	<20180622090935.GT10465@dhcp22.suse.cz>
+	<alpine.LRH.2.02.1806220845190.8072@file01.intranet.prod.int.rdu2.redhat.com>
+	<20180622130524.GZ10465@dhcp22.suse.cz>
+	<alpine.LRH.2.02.1806221447050.2717@file01.intranet.prod.int.rdu2.redhat.com>
+	<20180625090957.GF28965@dhcp22.suse.cz>
+	<alpine.LRH.2.02.1806250941380.11092@file01.intranet.prod.int.rdu2.redhat.com>
+	<20180625141434.GO28965@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1806250941380.11092@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: jing xia <jing.xia.mail@gmail.com>, Mike Snitzer <snitzer@redhat.com>, agk@redhat.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-mm@kvack.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20180625141434.GO28965@dhcp22.suse.cz>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Michal Hocko <mhocko@kernel.org>
+Cc: Mike Snitzer <snitzer@redhat.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, dm-devel@redhat.com, jing xia <jing.xia.mail@gmail.com>, agk@redhat.com
 List-Id: dm-devel.ids
 
-On Mon 25-06-18 09:53:34, Mikulas Patocka wrote:
-> y
+
+
+On Mon, 25 Jun 2018, Michal Hocko wrote:
+
+> > And the throttling in dm-bufio prevents kswapd from making forward 
+> > progress, causing this situation...
 > 
-> On Mon, 25 Jun 2018, Michal Hocko wrote:
+> Which is what we have PF_THROTTLE_LESS for. Geez, do we have to go in
+> circles like that? Are you even listening?
 > 
-> > On Fri 22-06-18 14:57:10, Mikulas Patocka wrote:
-> > > 
-> > > 
-> > > On Fri, 22 Jun 2018, Michal Hocko wrote:
-> > > 
-> > > > On Fri 22-06-18 08:52:09, Mikulas Patocka wrote:
-> > > > > 
-> > > > > 
-> > > > > On Fri, 22 Jun 2018, Michal Hocko wrote:
-> > > > > 
-> > > > > > On Fri 22-06-18 11:01:51, Michal Hocko wrote:
-> > > > > > > On Thu 21-06-18 21:17:24, Mikulas Patocka wrote:
-> > > > > > [...]
-> > > > > > > > What about this patch? If __GFP_NORETRY and __GFP_FS is not set (i.e. the 
-> > > > > > > > request comes from a block device driver or a filesystem), we should not 
-> > > > > > > > sleep.
-> > > > > > > 
-> > > > > > > Why? How are you going to audit all the callers that the behavior makes
-> > > > > > > sense and moreover how are you going to ensure that future usage will
-> > > > > > > still make sense. The more subtle side effects gfp flags have the harder
-> > > > > > > they are to maintain.
-> > > > > > 
-> > > > > > So just as an excercise. Try to explain the above semantic to users. We
-> > > > > > currently have the following.
-> > > > > > 
-> > > > > >  * __GFP_NORETRY: The VM implementation will try only very lightweight
-> > > > > >  *   memory direct reclaim to get some memory under memory pressure (thus
-> > > > > >  *   it can sleep). It will avoid disruptive actions like OOM killer. The
-> > > > > >  *   caller must handle the failure which is quite likely to happen under
-> > > > > >  *   heavy memory pressure. The flag is suitable when failure can easily be
-> > > > > >  *   handled at small cost, such as reduced throughput
-> > > > > > 
-> > > > > >  * __GFP_FS can call down to the low-level FS. Clearing the flag avoids the
-> > > > > >  *   allocator recursing into the filesystem which might already be holding
-> > > > > >  *   locks.
-> > > > > > 
-> > > > > > So how are you going to explain gfp & (__GFP_NORETRY | ~__GFP_FS)? What
-> > > > > > is the actual semantic without explaining the whole reclaim or force
-> > > > > > users to look into the code to understand that? What about GFP_NOIO |
-> > > > > > __GFP_NORETRY? What does it mean to that "should not sleep". Do all
-> > > > > > shrinkers have to follow that as well?
-> > > > > 
-> > > > > My reasoning was that there is broken code that uses __GFP_NORETRY and 
-> > > > > assumes that it can't fail - so conditioning the change on !__GFP_FS would 
-> > > > > minimize the diruption to the broken code.
-> > > > > 
-> > > > > Anyway - if you want to test only on __GFP_NORETRY (and fix those 16 
-> > > > > broken cases that assume that __GFP_NORETRY can't fail), I'm OK with that.
-> > > > 
-> > > > As I've already said, this is a subtle change which is really hard to
-> > > > reason about. Throttling on congestion has its meaning and reason. Look
-> > > > at why we are doing that in the first place. You cannot simply say this
-> > > 
-> > > So - explain why is throttling needed. You support throttling, I don't, so 
-> > > you have to explain it :)
-> > > 
-> > > > is ok based on your specific usecase. We do have means to achieve that.
-> > > > It is explicit and thus it will be applied only where it makes sense.
-> > > > You keep repeating that implicit behavior change for everybody is
-> > > > better.
-> > > 
-> > > I don't want to change it for everybody. I want to change it for block 
-> > > device drivers. I don't care what you do with non-block drivers.
-> > 
-> > Well, it is usually onus of the patch submitter to justify any change.
-> > But let me be nice on you, for once. This throttling is triggered only
-> > if we all the pages we have encountered during the reclaim attempt are
-> > dirty and that means that we are rushing through the LRU list quicker
-> > than flushers are able to clean. If we didn't throttle we could hit
-> > stronger reclaim priorities (aka scan more to reclaim memory) and
-> > reclaim more pages as a result.
+> [...]
 > 
-> And the throttling in dm-bufio prevents kswapd from making forward 
-> progress, causing this situation...
+> > And so what do you want to do to prevent block drivers from sleeping?
+> 
+> use the existing means we have.
+> -- 
+> Michal Hocko
+> SUSE Labs
 
-Which is what we have PF_THROTTLE_LESS for. Geez, do we have to go in
-circles like that? Are you even listening?
+So - do you want this patch?
 
-[...]
+There is no behavior difference between changing the allocator (so that it 
+implies PF_THROTTLE_LESS for block drivers) and chaning all the block 
+drivers to explicitly set PF_THROTTLE_LESS.
 
-> And so what do you want to do to prevent block drivers from sleeping?
+But if you insist that the allocator can't be changed, we have to repeat 
+the same code over and over again in the block drivers.
 
-use the existing means we have.
--- 
-Michal Hocko
-SUSE Labs
+Mikulas
+
+
+
+---
+ block/bio.c                   |    4 ++++
+ drivers/md/dm-bufio.c         |   14 +++++++++++---
+ drivers/md/dm-crypt.c         |    8 ++++++++
+ drivers/md/dm-integrity.c     |    4 ++++
+ drivers/md/dm-kcopyd.c        |    3 +++
+ drivers/md/dm-verity-target.c |    4 ++++
+ drivers/md/dm-writecache.c    |    4 ++++
+ mm/mempool.c                  |    4 ++++
+ 8 files changed, 42 insertions(+), 3 deletions(-)
+
+Index: linux-2.6/mm/mempool.c
+===================================================================
+--- linux-2.6.orig/mm/mempool.c	2018-06-25 16:32:19.210000000 +0200
++++ linux-2.6/mm/mempool.c	2018-06-25 16:32:19.200000000 +0200
+@@ -369,6 +369,7 @@ void *mempool_alloc(mempool_t *pool, gfp
+ 	unsigned long flags;
+ 	wait_queue_entry_t wait;
+ 	gfp_t gfp_temp;
++	unsigned old_flags;
+ 
+ 	VM_WARN_ON_ONCE(gfp_mask & __GFP_ZERO);
+ 	might_sleep_if(gfp_mask & __GFP_DIRECT_RECLAIM);
+@@ -381,7 +382,10 @@ void *mempool_alloc(mempool_t *pool, gfp
+ 
+ repeat_alloc:
+ 
++	old_flags = current->flags & PF_LESS_THROTTLE;
++	current->flags |= PF_LESS_THROTTLE;
+ 	element = pool->alloc(gfp_temp, pool->pool_data);
++	current->flags = (current->flags & ~PF_LESS_THROTTLE) | old_flags;
+ 	if (likely(element != NULL))
+ 		return element;
+ 
+Index: linux-2.6/block/bio.c
+===================================================================
+--- linux-2.6.orig/block/bio.c	2018-06-25 16:32:19.210000000 +0200
++++ linux-2.6/block/bio.c	2018-06-25 16:32:19.200000000 +0200
+@@ -217,6 +217,7 @@ fallback:
+ 	} else {
+ 		struct biovec_slab *bvs = bvec_slabs + *idx;
+ 		gfp_t __gfp_mask = gfp_mask & ~(__GFP_DIRECT_RECLAIM | __GFP_IO);
++		unsigned old_flags;
+ 
+ 		/*
+ 		 * Make this allocation restricted and don't dump info on
+@@ -229,7 +230,10 @@ fallback:
+ 		 * Try a slab allocation. If this fails and __GFP_DIRECT_RECLAIM
+ 		 * is set, retry with the 1-entry mempool
+ 		 */
++		old_flags = current->flags & PF_LESS_THROTTLE;
++		current->flags |= PF_LESS_THROTTLE;
+ 		bvl = kmem_cache_alloc(bvs->slab, __gfp_mask);
++		current->flags = (current->flags & ~PF_LESS_THROTTLE) | old_flags;
+ 		if (unlikely(!bvl && (gfp_mask & __GFP_DIRECT_RECLAIM))) {
+ 			*idx = BVEC_POOL_MAX;
+ 			goto fallback;
+Index: linux-2.6/drivers/md/dm-bufio.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-bufio.c	2018-06-25 16:32:19.210000000 +0200
++++ linux-2.6/drivers/md/dm-bufio.c	2018-06-25 16:32:19.200000000 +0200
+@@ -356,6 +356,7 @@ static void __cache_size_refresh(void)
+ static void *alloc_buffer_data(struct dm_bufio_client *c, gfp_t gfp_mask,
+ 			       unsigned char *data_mode)
+ {
++	void *ptr;
+ 	if (unlikely(c->slab_cache != NULL)) {
+ 		*data_mode = DATA_MODE_SLAB;
+ 		return kmem_cache_alloc(c->slab_cache, gfp_mask);
+@@ -363,9 +364,14 @@ static void *alloc_buffer_data(struct dm
+ 
+ 	if (c->block_size <= KMALLOC_MAX_SIZE &&
+ 	    gfp_mask & __GFP_NORETRY) {
++		unsigned old_flags;
+ 		*data_mode = DATA_MODE_GET_FREE_PAGES;
+-		return (void *)__get_free_pages(gfp_mask,
++		old_flags = current->flags & PF_LESS_THROTTLE;
++		current->flags |= PF_LESS_THROTTLE;
++		ptr = (void *)__get_free_pages(gfp_mask,
+ 						c->sectors_per_block_bits - (PAGE_SHIFT - SECTOR_SHIFT));
++		current->flags = (current->flags & ~PF_LESS_THROTTLE) | old_flags;
++		return ptr;
+ 	}
+ 
+ 	*data_mode = DATA_MODE_VMALLOC;
+@@ -381,8 +387,10 @@ static void *alloc_buffer_data(struct dm
+ 	 */
+ 	if (gfp_mask & __GFP_NORETRY) {
+ 		unsigned noio_flag = memalloc_noio_save();
+-		void *ptr = __vmalloc(c->block_size, gfp_mask, PAGE_KERNEL);
+-
++		unsigned old_flags = current->flags & PF_LESS_THROTTLE;
++		current->flags |= PF_LESS_THROTTLE;
++		ptr = __vmalloc(c->block_size, gfp_mask, PAGE_KERNEL);
++		current->flags = (current->flags & ~PF_LESS_THROTTLE) | old_flags;
+ 		memalloc_noio_restore(noio_flag);
+ 		return ptr;
+ 	}
+Index: linux-2.6/drivers/md/dm-integrity.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-integrity.c	2018-06-25 16:32:19.210000000 +0200
++++ linux-2.6/drivers/md/dm-integrity.c	2018-06-25 16:32:52.600000000 +0200
+@@ -1317,6 +1317,7 @@ static void integrity_metadata(struct wo
+ 	int r;
+ 
+ 	if (ic->internal_hash) {
++		unsigned old_flags;
+ 		struct bvec_iter iter;
+ 		struct bio_vec bv;
+ 		unsigned digest_size = crypto_shash_digestsize(ic->internal_hash);
+@@ -1330,8 +1331,11 @@ static void integrity_metadata(struct wo
+ 		if (unlikely(ic->mode == 'R'))
+ 			goto skip_io;
+ 
++		old_flags = current->flags & PF_LESS_THROTTLE;
++		current->flags |= PF_LESS_THROTTLE;
+ 		checksums = kmalloc((PAGE_SIZE >> SECTOR_SHIFT >> ic->sb->log2_sectors_per_block) * ic->tag_size + extra_space,
+ 				    GFP_NOIO | __GFP_NORETRY | __GFP_NOWARN);
++		current->flags = (current->flags & ~PF_LESS_THROTTLE) | old_flags;
+ 		if (!checksums)
+ 			checksums = checksums_onstack;
+ 
+Index: linux-2.6/drivers/md/dm-kcopyd.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-kcopyd.c	2018-06-25 16:32:19.210000000 +0200
++++ linux-2.6/drivers/md/dm-kcopyd.c	2018-06-25 16:32:19.200000000 +0200
+@@ -245,7 +245,10 @@ static int kcopyd_get_pages(struct dm_kc
+ 	*pages = NULL;
+ 
+ 	do {
++		unsigned old_flags = current->flags & PF_LESS_THROTTLE;
++		current->flags |= PF_LESS_THROTTLE;
+ 		pl = alloc_pl(__GFP_NOWARN | __GFP_NORETRY | __GFP_KSWAPD_RECLAIM);
++		current->flags = (current->flags & ~PF_LESS_THROTTLE) | old_flags;
+ 		if (unlikely(!pl)) {
+ 			/* Use reserved pages */
+ 			pl = kc->pages;
+Index: linux-2.6/drivers/md/dm-verity-target.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-verity-target.c	2018-06-25 16:32:19.210000000 +0200
++++ linux-2.6/drivers/md/dm-verity-target.c	2018-06-25 16:32:19.200000000 +0200
+@@ -596,9 +596,13 @@ no_prefetch_cluster:
+ static void verity_submit_prefetch(struct dm_verity *v, struct dm_verity_io *io)
+ {
+ 	struct dm_verity_prefetch_work *pw;
++	unsigned old_flags;
+ 
++	old_flags = current->flags & PF_LESS_THROTTLE;
++	current->flags |= PF_LESS_THROTTLE;
+ 	pw = kmalloc(sizeof(struct dm_verity_prefetch_work),
+ 		GFP_NOIO | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN);
++	current->flags = (current->flags & ~PF_LESS_THROTTLE) | old_flags;
+ 
+ 	if (!pw)
+ 		return;
+Index: linux-2.6/drivers/md/dm-writecache.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-writecache.c	2018-06-25 16:32:19.210000000 +0200
++++ linux-2.6/drivers/md/dm-writecache.c	2018-06-25 16:32:19.200000000 +0200
+@@ -1467,6 +1467,7 @@ static void __writecache_writeback_pmem(
+ 	unsigned max_pages;
+ 
+ 	while (wbl->size) {
++		unsigned old_flags;
+ 		wbl->size--;
+ 		e = container_of(wbl->list.prev, struct wc_entry, lru);
+ 		list_del(&e->lru);
+@@ -1480,6 +1481,8 @@ static void __writecache_writeback_pmem(
+ 		bio_set_dev(&wb->bio, wc->dev->bdev);
+ 		wb->bio.bi_iter.bi_sector = read_original_sector(wc, e);
+ 		wb->page_offset = PAGE_SIZE;
++		old_flags = current->flags & PF_LESS_THROTTLE;
++		current->flags |= PF_LESS_THROTTLE;
+ 		if (max_pages <= WB_LIST_INLINE ||
+ 		    unlikely(!(wb->wc_list = kmalloc(max_pages * sizeof(struct wc_entry *),
+ 						     GFP_NOIO | __GFP_NORETRY |
+@@ -1487,6 +1490,7 @@ static void __writecache_writeback_pmem(
+ 			wb->wc_list = wb->wc_list_inline;
+ 			max_pages = WB_LIST_INLINE;
+ 		}
++		current->flags = (current->flags & ~PF_LESS_THROTTLE) | old_flags;
+ 
+ 		BUG_ON(!wc_add_block(wb, e, GFP_NOIO));
+ 
+Index: linux-2.6/drivers/md/dm-crypt.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-crypt.c	2018-06-25 16:32:19.210000000 +0200
++++ linux-2.6/drivers/md/dm-crypt.c	2018-06-25 16:33:55.810000000 +0200
+@@ -2181,12 +2181,16 @@ static void *crypt_page_alloc(gfp_t gfp_
+ {
+ 	struct crypt_config *cc = pool_data;
+ 	struct page *page;
++	unsigned old_flags;
+ 
+ 	if (unlikely(percpu_counter_compare(&cc->n_allocated_pages, dm_crypt_pages_per_client) >= 0) &&
+ 	    likely(gfp_mask & __GFP_NORETRY))
+ 		return NULL;
+ 
++	old_flags = current->flags & PF_LESS_THROTTLE;
++	current->flags |= PF_LESS_THROTTLE;
+ 	page = alloc_page(gfp_mask);
++	current->flags = (current->flags & ~PF_LESS_THROTTLE) | old_flags;
+ 	if (likely(page != NULL))
+ 		percpu_counter_add(&cc->n_allocated_pages, 1);
+ 
+@@ -2893,7 +2897,10 @@ static int crypt_map(struct dm_target *t
+ 
+ 	if (cc->on_disk_tag_size) {
+ 		unsigned tag_len = cc->on_disk_tag_size * (bio_sectors(bio) >> cc->sector_shift);
++		unsigned old_flags;
+ 
++		old_flags = current->flags & PF_LESS_THROTTLE;
++		current->flags |= PF_LESS_THROTTLE;
+ 		if (unlikely(tag_len > KMALLOC_MAX_SIZE) ||
+ 		    unlikely(!(io->integrity_metadata = kmalloc(tag_len,
+ 				GFP_NOIO | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN)))) {
+@@ -2902,6 +2909,7 @@ static int crypt_map(struct dm_target *t
+ 			io->integrity_metadata = mempool_alloc(&cc->tag_pool, GFP_NOIO);
+ 			io->integrity_metadata_from_pool = true;
+ 		}
++		current->flags = (current->flags & ~PF_LESS_THROTTLE) | old_flags;
+ 	}
+ 
+ 	if (crypt_integrity_aead(cc))
