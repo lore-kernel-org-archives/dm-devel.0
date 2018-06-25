@@ -1,50 +1,82 @@
-From: Joe Perches <joe@perches.com>
-Subject: Re: [PATCH v2 01/11] crypto: xcbc: Remove VLA usage
-Date: Mon, 25 Jun 2018 14:38:43 -0700
-Message-ID: <14ea0f2845d9f826c8b2117badfa346423e0f1cf.camel@perches.com>
-References: <20180625211026.15819-1-keescook@chromium.org>
-         <20180625211026.15819-2-keescook@chromium.org>
-         <4d9f90abbf87539d3588f88117806f76c6826030.camel@perches.com>
-         <CAGXu5jLbRdZVFqqzKEndogOktfTecBDxyUPvb-=+mgTmQ65v0Q@mail.gmail.com>
+From: "Benjamin Marzinski" <bmarzins@redhat.com>
+Subject: Re: [PATCH v3 00/10] libmpathpersist fixes and some more
+Date: Mon, 25 Jun 2018 17:32:15 -0500
+Message-ID: <20180625223215.GR3103@octiron.msp.redhat.com>
+References: <20180624190944.27158-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAGXu5jLbRdZVFqqzKEndogOktfTecBDxyUPvb-=+mgTmQ65v0Q@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, linux-crypto <linux-crypto@vger.kernel.org>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, Arnd Bergmann <arnd@arndb.de>, Eric Biggers <ebiggers@google.com>, Alasdair Kergon <agk@redhat.com>, Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Lars Persson <larper@axis.com>, Mike Snitzer <snitzer@redhat.com>, Rabin Vincent <rabinv@axis.com>, Tim Chen <tim.c.chen@linux.intel.com>, qat-linux@intel.com, dm-devel@redhat.com, LKML <linux-kernel@vger.kernel.org>
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20180624190944.27158-1-mwilck@suse.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com, Bart Van Assche <Bart.VanAssche@sandisk.com>
 List-Id: dm-devel.ids
 
-On Mon, 2018-06-25 at 14:32 -0700, Kees Cook wrote:
-> On Mon, Jun 25, 2018 at 2:23 PM, Joe Perches <joe@perches.com> wrote:
-> > On Mon, 2018-06-25 at 14:10 -0700, Kees Cook wrote:
-> > > In the quest to remove all stack VLA usage from the kernel[1], this uses
-> > > the maximum blocksize and adds a sanity check. For xcbc, the blocksize
-> > > must always be 16, so use that, since it's already being enforced during
-> > > instantiation.
-> > 
-> > Is it time yet to change this warning from 'make W=3' to W=1?
-[]
-> I was going to skip the churn since I intend to make the default build
-> use -Wvla for the next merge window (assuming we've killed all the
-> VLAs by then).
-
-Good.
-
-Even if not all VLAs are removed, making the
-warning default on is fine by me.
-
-Getting others to do some of the work you've
-been doing would be good too.
-
-> After crypto, only fs/ntfs remains, and I have that
-> half done already. There are a couple more still under some
-> development back-and-forth.
+On Sun, Jun 24, 2018 at 09:09:34PM +0200, Martin Wilck wrote:
+> Hi Christophe,
 > 
-> I'm not _opposed_ to this change, but I'd rather just make it the
-> default. And then the next cycle, I'd want it to be -Werror=vla, but I
-> may get shouted down. ;)
+> this is v3 of my small set of libmpathpersist fixes. It's based
+> on your latest push. Sorry again for missing that.
+> 
+> Changes wrt v2:
+>  - rebased to latest upstream (39ad8dc8)
+>  - added another gcc 8.1 fix, and another small patch I hadn't
+>    submitted yet
+> 
+> Changes wrt v1:
+>  - introduce and use get_unaligned_be64 (Bart van Assche)
+>  - add test for (get|put)_unaligned_bexx functions
+> 
+> Note: we have both the "unaligned" and the "beXY_to_cpu" APIs
+> now, for essentially the same purpose. I wonder if we should
+> settle on a single API instead. I am unsure if beXY_to_cpu() has
+> alignment issues on some architectures (I don't think there are
+> issues on our current main target platforms). If yes, I believe that
+> we'd be on the safe side using the "unaligned" API.
+> Anyway, that could be done in a follow-up patch.
+> 
+> Thanks,
+> Martin
 
-Yup, you should get shouted down there.
-I think -Werror=<anything> is poor form.
+ACK for the set.
+
+-Ben
+
+> 
+> Martin Wilck (10):
+>   libmpathpersist: remove duplicate test in readfullstatus
+>   libmpathpersist: fix typo in mpath_format_readfullstatus
+>   libmpathpersist: fix stack overflow in mpath_format_readfullstatus()
+>   libmultipath: add (get|put)_unaligned_be64
+>   multipath-tools/tests: add tests for get_unaligned_beXX
+>   libmpathpersist: fix byte swapping for big endian systems
+>   (lib)mpathpersist: use O_RDONLY file descriptors
+>   libmultipath: fix gcc 8.1 "truncated output" warnings
+>   multipathd: fix buffer size in cli_getprkey()
+>   libmultipath: avoid error messages from RDAC check
+> 
+>  libmpathpersist/mpath_persist.c  |  8 +--
+>  libmpathpersist/mpath_pr_ioctl.c | 75 +++++++++----------------
+>  libmultipath/propsel.c           |  2 +
+>  libmultipath/sysfs.c             |  4 +-
+>  libmultipath/unaligned.h         | 16 ++++++
+>  libmultipath/util.c              |  4 +-
+>  mpathpersist/main.c              |  2 +-
+>  multipathd/cli_handlers.c        |  4 +-
+>  tests/Makefile                   |  2 +-
+>  tests/unaligned.c                | 96 ++++++++++++++++++++++++++++++++
+>  10 files changed, 150 insertions(+), 63 deletions(-)
+>  create mode 100644 tests/unaligned.c
+> 
+> -- 
+> 2.17.1
