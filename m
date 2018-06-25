@@ -1,69 +1,62 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: dm bufio: Reduce dm_bufio_lock contention
-Date: Mon, 25 Jun 2018 16:57:33 +0200
-Message-ID: <20180625145733.GP28965@dhcp22.suse.cz>
-References: <alpine.LRH.2.02.1806191228110.25656@file01.intranet.prod.int.rdu2.redhat.com>
- <20180622090151.GS10465@dhcp22.suse.cz>
- <20180622090935.GT10465@dhcp22.suse.cz>
- <alpine.LRH.2.02.1806220845190.8072@file01.intranet.prod.int.rdu2.redhat.com>
- <20180622130524.GZ10465@dhcp22.suse.cz>
- <alpine.LRH.2.02.1806221447050.2717@file01.intranet.prod.int.rdu2.redhat.com>
- <20180625090957.GF28965@dhcp22.suse.cz>
- <alpine.LRH.2.02.1806250941380.11092@file01.intranet.prod.int.rdu2.redhat.com>
- <20180625141434.GO28965@dhcp22.suse.cz>
- <alpine.LRH.2.02.1806251037250.17405@file01.intranet.prod.int.rdu2.redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: [PATCH] multipathd: fix mpp->hwe handling on path removal
+Date: Mon, 25 Jun 2018 17:10:20 +0200
+Message-ID: <20180625151020.31927-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1806251037250.17405@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: jing xia <jing.xia.mail@gmail.com>, Mike Snitzer <snitzer@redhat.com>, agk@redhat.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-mm@kvack.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-On Mon 25-06-18 10:42:30, Mikulas Patocka wrote:
-> 
-> 
-> On Mon, 25 Jun 2018, Michal Hocko wrote:
-> 
-> > > And the throttling in dm-bufio prevents kswapd from making forward 
-> > > progress, causing this situation...
-> > 
-> > Which is what we have PF_THROTTLE_LESS for. Geez, do we have to go in
-> > circles like that? Are you even listening?
-> > 
-> > [...]
-> > 
-> > > And so what do you want to do to prevent block drivers from sleeping?
-> > 
-> > use the existing means we have.
-> > -- 
-> > Michal Hocko
-> > SUSE Labs
-> 
-> So - do you want this patch?
-> 
-> There is no behavior difference between changing the allocator (so that it 
-> implies PF_THROTTLE_LESS for block drivers) and chaning all the block 
-> drivers to explicitly set PF_THROTTLE_LESS.
+In my previous patch f0462f0c8338, I overlooked that during path removal,
+the path that mpp->hwe references may be removed and and thus mpp->hwe
+may become stale. Fix it.
 
-As long as you can reliably detect those users. And using gfp_mask is
-about the worst way to achieve that because users tend to be creative
-when it comes to using gfp mask. PF_THROTTLE_LESS in general is a
-way to tell the allocator that _you_ are the one to help the reclaim by
-cleaning data.
+Fixes: f0462f0c8338 "libmultipath: use vector for for pp->hwe and mp->hwe"
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ multipathd/main.c | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
 
-> But if you insist that the allocator can't be changed, we have to repeat 
-> the same code over and over again in the block drivers.
-
-I am not familiar with the patched code but mempool change at least
-makes sense (bvec_alloc seems to fallback to mempool which then makes
-sense as well). If others in md/ do the same thing
-
-I would just use current_restore_flags rather than open code it.
-
-Thanks!
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 72f06b56..cc493c18 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1076,6 +1076,14 @@ ev_remove_path (struct path *pp, struct vectors * vecs, int need_do_map)
+ 				mpp->alias);
+ 			goto fail;
+ 		}
++
++		/*
++		 * Make sure mpp->hwe doesn't point to freed memory
++		 * We call extract_hwe_from_path() below to restore mpp->hwe
++		 */
++		if (mpp->hwe == pp->hwe)
++			mpp->hwe = NULL;
++
+ 		if ((i = find_slot(mpp->paths, (void *)pp)) != -1)
+ 			vector_del_slot(mpp->paths, i);
+ 
+@@ -1109,6 +1117,9 @@ ev_remove_path (struct path *pp, struct vectors * vecs, int need_do_map)
+ 			 */
+ 		}
+ 
++		if (mpp->hwe == NULL)
++			extract_hwe_from_path(mpp);
++
+ 		if (setup_map(mpp, params, PARAMS_SIZE, vecs)) {
+ 			condlog(0, "%s: failed to setup map for"
+ 				" removal of path %s", mpp->alias, pp->dev);
 -- 
-Michal Hocko
-SUSE Labs
+2.17.1
