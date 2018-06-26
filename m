@@ -1,75 +1,86 @@
-From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-Subject: Re: [PATCH v3 3/5] bitmap: Add bitmap_alloc(), bitmap_zalloc() and
- bitmap_free()
-Date: Tue, 26 Jun 2018 14:13:42 +0300
-Message-ID: <c5756465375e091a528b8c68fae3d8f3061454bf.camel@linux.intel.com>
-References: <20180618131003.88110-1-andriy.shevchenko@linux.intel.com>
-         <20180618131003.88110-4-andriy.shevchenko@linux.intel.com>
-         <20180618141404.68124daab97bd0f3a3051544@linux-foundation.org>
-         <CAKdAkRTHOORds7aEauv4rp3_=PnGi=Nv-VS3-nAb9MztJPKG=Q@mail.gmail.com>
-         <20180618161056.e52efd0e8bd36211e60705a2@linux-foundation.org>
-         <CAHp75Vei2_V7h4oKAU+uoCG2gUJH6uXtg9zVqQ_vnyr5KEmNYw@mail.gmail.com>
-         <20180622184613.GC92912@dtor-ws>
+From: Harald Braumann <harry-bxs7j/2bvUasTnJN9+BGXg@public.gmane.org>
+Subject: Re: dm-integrity standalone - lack of metadata
+Date: Tue, 26 Jun 2018 14:30:09 +0200
+Message-ID: <4A07D9DC-3CD9-48AC-9952-A083DF1F8E03@unheit.net>
+References: <20180624095348.GA819@nn.nn>
+ <c2d97932-69f0-20aa-e66a-fd6be5b5eda3@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180622184613.GC92912@dtor-ws>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Dmitry Torokhov <dmitry.torokhov@gmail.com>, Andy Shevchenko <andy.shevchenko@gmail.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, agk@redhat.com, Mike Snitzer <snitzer@redhat.com>, device-mapper development <dm-devel@redhat.com>, shli@kernel.org, linux-raid@vger.kernel.org, "linux-input@vger.kernel.org" <linux-input@vger.kernel.org>, Yury Norov <ynorov@caviumnetworks.com>, lkml <linux-kernel@vger.kernel.org>, Mika Westerberg <mika.westerberg@linux.intel.com>, Joe Perches <joe@perches.com>
+Return-path: <dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org>
+In-Reply-To: <c2d97932-69f0-20aa-e66a-fd6be5b5eda3-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+List-Unsubscribe: <https://www.saout.de/mailman/options/dm-crypt>,
+ <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=unsubscribe>
+List-Archive: <https://www.saout.de/pipermail/dm-crypt/>
+List-Post: <mailto:dm-crypt-4q3lyFh4P1g@public.gmane.org>
+List-Help: <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=help>
+List-Subscribe: <https://www.saout.de/mailman/listinfo/dm-crypt>,
+ <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=subscribe>
+Errors-To: dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org
+Sender: "dm-crypt" <dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org>
+To: Milan Broz <gmazyland-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, dm-crypt-4q3lyFh4P1g@public.gmane.org, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-On Fri, 2018-06-22 at 11:46 -0700, Dmitry Torokhov wrote:
-> On Thu, Jun 21, 2018 at 05:13:39AM +0300, Andy Shevchenko wrote:
-> > On Tue, Jun 19, 2018 at 2:10 AM, Andrew Morton
-> > <akpm@linux-foundation.org> wrote:
-> > > On Mon, 18 Jun 2018 15:01:43 -0700 Dmitry Torokhov <dmitry.torokho
-> > > v@gmail.com> wrote:
-> > > > We can't as we end up including bitmap.h (by the way of
-> > > > cpumask.h)
-> > > > form slab.h, so we gen circular dependency.
-> > 
-> > It's not just so easy. See below.
-> > 
-> > > That info should have been in the changelog, and probably a code
-> > > comment.
-> > > 
-> > > > Maybe if we removed memcg
-> > > > stuff from slab.h so we do not need to include workqueue.h...
-> > > 
-> > > Or move the basic slab API stuff out of slab.h into a new
-> > > header.  Or
-> > > create a new, standalone work_struct.h - that looks pretty simple.
-> > 
-> > I tried to move out work_struct, it didn't help. There are actually
-> > several circular dependencies that ends in bitmap.h either way or
-> > another.
-> > 
-> > First one is
-> > 
-> > slab.h -> gfp.h -> mmzone.h -> nodemask.h -> bitmap.h
-> > 
-> > And so on...
-> > 
-> > Splitting out kXalloc stuff to a separate header won't help, I
-> > think,
-> > because of the above.
-> > Splitting out struct work_struct is just a tip of an iceberg.
-> > Splitting out memcg stuff won't help in the similar way.
-> > 
-> > I'm all ears for (a better) solution.
-> 
-> I think ultimately we'd want to untangle this, but allocating bitmaps
-> is
-> not in any hot paths so having them as non-inlined functions should
-> not
-> hurt us that much for time being.
 
-Perhaps I can elaborate a bit in a commit message.
 
-Thanks for review!
+On 24 June 2018 13:01:06 CEST, Milan Broz <gmazyland-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+>(added cc to dm-devel annd Mikulas)
 
--- 
-Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-Intel Finland Oy
+>On 06/24/2018 11:53 AM, Harald Braumann wrote:
+>> However, the superblock lacks some crucial information:
+
+>yes, I agree. The reason is that dm-integrity was in the first
+>place designed for authenticated encryption (to store auth tags).
+>Then additional metadata ia stored in LUKS2 header.
+I understand.
+
+>For the rest I just I have not enough energy (and real-world use cases)
+>to convince Mikulas that we need attributes below in superblock (as the
+>dm-integrity
+>code is written mostly by him).
+>At least for the algorithm I mention this idea several times ;-)
+OK, good. I was just afraid that there might be some technical reason and this was out of the question.
+
+>> integritysetup format /dev/sdb2 -v --integrity crc32c --sector-size
+>> 4096
+>> => 39.6 MiB/s
+>>
+>> Format with --no-wipe, open the target and use dd:
+>> dd if=/dev/zero of=/dev/mapper/int bs=1M
+>> => 63 MiB/s
+>> 
+>> Same as above, but opening without journal (which really isn't
+>> required for that step, even if the final target should be journaled):
+>> => 135 MiB/s
+
+>Internal wipe also uses activation without journal, it is slow probably
+>because we use direct-io (can you add oflag=direct to your dd command?
+>Is it the same speed as integritysetup wipe?)
+Sorry, I haven't gotten around to it, yet. 
+
+>> /etc/udev/rules.d/70-dm-integrity.rules:
+>> 
+>> ACTION!="add", GOTO="dm_integrity_end"
+>> SUBSYSTEM!="block", GOTO="dm_integrity_end"
+>> ENV{ID_FS_TYPE}!="DM_integrity", GOTO="dm_integrity_end"
+>> 
+>> RUN+="/sbin/integritysetup open $devnode $kernel-integrity
+>--integrity crc32c --integrity-no-journal"
+>> 
+>> LABEL="dm_integrity_end"
+
+>This is not the best way - integritysetup itself need udev
+>synchronization, so it will
+>race here with udev.
+Could you elaborate on that? How does it need udev and could I add anything to the rules to ensure proper synchronization?
+
+>I think we need similar system like /etc/crypttab (or extend crypttab
+>of integrity targets).
+Thats what I wanted to avoid. I would like it to work like LVM where volumes can be set up automatically with just metadata stored on the device itself.
+
+Best regards
+harry
+_______________________________________________
+dm-crypt mailing list
+dm-crypt-4q3lyFh4P1g@public.gmane.org
+https://www.saout.de/mailman/listinfo/dm-crypt
