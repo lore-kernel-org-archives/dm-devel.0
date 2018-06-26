@@ -1,7 +1,7 @@
-From: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+From: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Subject: Re: [PATCH v3 1/3] pmem: only set QUEUE_FLAG_DAX for fsdax mode
-Date: Tue, 26 Jun 2018 13:12:35 -0600
-Message-ID: <20180626191235.GB18273@linux.intel.com>
+Date: Tue, 26 Jun 2018 15:13:46 -0400
+Message-ID: <20180626191346.GA7233@redhat.com>
 References: <20180626175932.8899-1-ross.zwisler@linux.intel.com>
  <20180626175932.8899-2-ross.zwisler@linux.intel.com>
  <CAPcyv4iWgPnHmBKhUvhManC6UL9CkLqN_d8vBo6KmcPJdPzuUw@mail.gmail.com>
@@ -23,10 +23,12 @@ List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
 Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-nvdimm <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, stable <stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-xfs <linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: linux-nvdimm <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, stable <stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-xfs <linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: dm-devel.ids
 
-On Tue, Jun 26, 2018 at 12:07:40PM -0700, Dan Williams wrote:
+On Tue, Jun 26 2018 at  3:07pm -0400,
+Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
+
 > On Tue, Jun 26, 2018 at 11:58 AM, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
 > > On Tue, Jun 26 2018 at  2:52pm -0400,
 > > Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
@@ -58,5 +60,9 @@ On Tue, Jun 26, 2018 at 12:07:40PM -0700, Dan Williams wrote:
 > is not a regression. It does not identify which commit it is repairing
 > or the user visible failure mode.
 
-Ah, do I need a Fixes: tag for patch 2, then?  That one *does* need to go to
-stable, I think.
+So you're taking issue with making stacked dax configs work in older
+kernels?  That's fine.  We can drop the stable cc if you like.
+
+But I mean we intended for this to work.. so the Fixes commit references
+can easily be added, e.g.: 545ed20e6df68a4d2584a29a2a28ee8b2f7e9547
+("dm: add infrastructure for DAX support")
