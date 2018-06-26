@@ -1,48 +1,49 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: update Hitachi maintainer email
-Date: Tue, 26 Jun 2018 15:52:31 +0200
-Message-ID: <20180626135231.10793-1-xose.vazquez@gmail.com>
+From: Kees Cook <keescook@chromium.org>
+Subject: Re: [PATCH v2 11/11] crypto: skcipher: Remove VLA usage for SKCIPHER_REQUEST_ON_STACK
+Date: Tue, 26 Jun 2018 09:45:09 -0700
+Message-ID: <CAGXu5jKYb-0NNvOcN79hzqU7O6vCFhMTBDGBL8Knuoc-YHamPg@mail.gmail.com>
+References: <20180625211026.15819-1-keescook@chromium.org> <20180625211026.15819-12-keescook@chromium.org>
+ <20180626092041.mxfg4lxcvxfivzc2@gondor.apana.org.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Cc: Matthias Rudolph <Matthias.Rudolph@hitachivantara.com>, Matthias Rudolph <matthias.rudolph@hds.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>, DM-DEV ML <dm-devel@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180626092041.mxfg4lxcvxfivzc2@gondor.apana.org.au>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: "David S. Miller" <davem@davemloft.net>, linux-crypto <linux-crypto@vger.kernel.org>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, Arnd Bergmann <arnd@arndb.de>, Eric Biggers <ebiggers@google.com>, Alasdair Kergon <agk@redhat.com>, Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Lars Persson <larper@axis.com>, Mike Snitzer <snitzer@redhat.com>, Rabin Vincent <rabinv@axis.com>, Tim Chen <tim.c.chen@linux.intel.com>, qat-linux@intel.com, dm-devel@redhat.com, LKML <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Cc: Matthias Rudolph <Matthias.Rudolph@hitachivantara.com>
-Cc: Matthias Rudolph <matthias.rudolph@hds.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: DM-DEV ML <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- libmultipath/hwtable.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+On Tue, Jun 26, 2018 at 2:20 AM, Herbert Xu <herbert@gondor.apana.org.au> wrote:
+> On Mon, Jun 25, 2018 at 02:10:26PM -0700, Kees Cook wrote:
+>> In the quest to remove all stack VLA usage from the kernel[1], this
+>> caps the skcipher request size similar to other limits and adds a
+>> sanity check at registration. In a manual review of the callers of
+>> crypto_skcipher_set_reqsize(), the largest was 384:
+>>
+>> 4     sun4i_cipher_req_ctx
+>> 6     safexcel_cipher_req
+>> 8     cryptd_skcipher_request_ctx
+>> 80    cipher_req_ctx
+>> 80    skcipher_request
+>> 96    crypto_rfc3686_req_ctx
+>> 104   nitrox_kcrypt_request
+>> 144   mv_cesa_skcipher_std_req
+>> 384   rctx
+>>
+>> [1] https://lkml.kernel.org/r/CA+55aFzCG-zNmZwX4A2FQpadafLfEzK6CC=qPXydAacU1RqZWA@mail.gmail.com
+>>
+>> Cc: Herbert Xu <herbert@gondor.apana.org.au>
+>> Cc: "David S. Miller" <davem@davemloft.net>
+>> Cc: linux-crypto@vger.kernel.org
+>> Signed-off-by: Kees Cook <keescook@chromium.org>
+>
+> This has the same issue as the ahash reqsize patch.
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 287d501..07dd6b6 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -392,10 +392,10 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = 10,
- 	},
- 	/*
--	 * Hitachi
-+	 * Hitachi Vantara
- 	 *
- 	 * Maintainer : Matthias Rudolph
--	 * Mail : matthias.rudolph@hds.com
-+	 * Mail : Matthias.Rudolph@hitachivantara.com
- 	 */
- 	{
- 		/* USP-V, HUS VM, VSP, VSP G1X00 and VSP GX00 families / HP XP */
+Which are likely to be wrapped together? Should I take this to 512 or
+something else?
+
+-Kees
+
 -- 
-2.17.1
+Kees Cook
+Pixel Security
