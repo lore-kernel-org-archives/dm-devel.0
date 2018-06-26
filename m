@@ -1,7 +1,7 @@
 From: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: [PATCH v3 1/3] pmem: only set QUEUE_FLAG_DAX for fsdax mode
-Date: Tue, 26 Jun 2018 11:59:30 -0600
-Message-ID: <20180626175932.8899-2-ross.zwisler@linux.intel.com>
+Subject: [PATCH v3 2/3] dax: bdev_dax_supported() check for QUEUE_FLAG_DAX
+Date: Tue, 26 Jun 2018 11:59:31 -0600
+Message-ID: <20180626175932.8899-3-ross.zwisler@linux.intel.com>
 References: <20180626175932.8899-1-ross.zwisler@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,31 +21,44 @@ To: Toshi Kani <toshi.kani-ZPxbGqLxI0U@public.gmane.org>, Mike Snitzer <snitzer-
 Cc: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: dm-devel.ids
 
-QUEUE_FLAG_DAX is an indication that a given block device supports
-filesystem DAX and should not be set for PMEM namespaces which are in "raw"
-or "sector" modes.  These namespaces lack struct page and are prevented
-from participating in filesystem DAX.
+Add an explicit check for QUEUE_FLAG_DAX to __bdev_dax_supported().  This
+is needed for DM configurations where the first element in the dm-linear or
+dm-stripe target supports DAX, but other elements do not.  Without this
+check __bdev_dax_supported() will pass for such devices, letting a
+filesystem on that device mount with the DAX option.
 
 Signed-off-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 Suggested-by: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Cc: stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 ---
- drivers/nvdimm/pmem.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ drivers/dax/super.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
-diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
-index 68940356cad3..8b1fd7f1a224 100644
---- a/drivers/nvdimm/pmem.c
-+++ b/drivers/nvdimm/pmem.c
-@@ -414,7 +414,8 @@ static int pmem_attach_disk(struct device *dev,
- 	blk_queue_logical_block_size(q, pmem_sector_size(ndns));
- 	blk_queue_max_hw_sectors(q, UINT_MAX);
- 	blk_queue_flag_set(QUEUE_FLAG_NONROT, q);
--	blk_queue_flag_set(QUEUE_FLAG_DAX, q);
-+	if (pmem->pfn_flags & PFN_MAP)
-+		blk_queue_flag_set(QUEUE_FLAG_DAX, q);
- 	q->queuedata = pmem;
+diff --git a/drivers/dax/super.c b/drivers/dax/super.c
+index 903d9c473749..45276abf03aa 100644
+--- a/drivers/dax/super.c
++++ b/drivers/dax/super.c
+@@ -86,6 +86,7 @@ bool __bdev_dax_supported(struct block_device *bdev, int blocksize)
+ {
+ 	struct dax_device *dax_dev;
+ 	bool dax_enabled = false;
++	struct request_queue *q;
+ 	pgoff_t pgoff;
+ 	int err, id;
+ 	void *kaddr;
+@@ -99,6 +100,13 @@ bool __bdev_dax_supported(struct block_device *bdev, int blocksize)
+ 		return false;
+ 	}
  
- 	disk = alloc_disk_node(0, nid);
++	q = bdev_get_queue(bdev);
++	if (!q || !blk_queue_dax(q)) {
++		pr_debug("%s: error: request queue doesn't support dax\n",
++				bdevname(bdev, buf));
++		return false;
++	}
++
+ 	err = bdev_dax_pgoff(bdev, 0, PAGE_SIZE, &pgoff);
+ 	if (err) {
+ 		pr_debug("%s: error: unaligned partition for dax\n",
 -- 
 2.14.4
