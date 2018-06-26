@@ -1,13 +1,16 @@
-From: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: [PATCH v4 3/3] dm: prevent DAX mounts if not supported
-Date: Tue, 26 Jun 2018 13:01:29 -0600
-Message-ID: <20180626190129.18112-1-ross.zwisler@linux.intel.com>
-References: <20180626175932.8899-4-ross.zwisler@linux.intel.com>
+From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v3 1/3] pmem: only set QUEUE_FLAG_DAX for fsdax mode
+Date: Tue, 26 Jun 2018 12:07:40 -0700
+Message-ID: <CAPcyv4h6HO6fs6k7QMD77jkz2djCeWCtWomCdNb0-1Q4VKanqw@mail.gmail.com>
+References: <20180626175932.8899-1-ross.zwisler@linux.intel.com>
+ <20180626175932.8899-2-ross.zwisler@linux.intel.com>
+ <CAPcyv4iWgPnHmBKhUvhManC6UL9CkLqN_d8vBo6KmcPJdPzuUw@mail.gmail.com>
+ <20180626185830.GA7171@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-reply-to: <20180626175932.8899-4-ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+In-Reply-To: <20180626185830.GA7171-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
  <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
 List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
@@ -17,73 +20,37 @@ List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
  <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
 Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Toshi Kani <toshi.kani-ZPxbGqLxI0U@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-Cc: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: linux-nvdimm <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, stable <stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-xfs <linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: dm-devel.ids
 
-Currently device_supports_dax() just checks to see if the QUEUE_FLAG_DAX
-flag is set on the device's request queue to decide whether or not the
-device supports filesystem DAX.  Really we should be using
-bdev_dax_supported() like filesystems do at mount time.  This performs
-other tests like checking to make sure the dax_direct_access() path works.
+On Tue, Jun 26, 2018 at 11:58 AM, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+> On Tue, Jun 26 2018 at  2:52pm -0400,
+> Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
+>
+>> On Tue, Jun 26, 2018 at 10:59 AM, Ross Zwisler
+>> <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org> wrote:
+>> > QUEUE_FLAG_DAX is an indication that a given block device supports
+>> > filesystem DAX and should not be set for PMEM namespaces which are in "raw"
+>> > or "sector" modes.  These namespaces lack struct page and are prevented
+>> > from participating in filesystem DAX.
+>> >
+>> > Signed-off-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+>> > Suggested-by: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+>> > Cc: stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+>>
+>> Why is this cc: stable? What is the user visible impact of this change
+>> especially given the requirement to validate QUEUE_FLAG_DAX with
+>> bdev_dax_supported()? Patch looks good, but it's just a cosmetic fixup
+>> afaics.
+>
+> This isn't cosmetic when you consider that stacking up a DM device is
+> looking at this flag to determine whether a table does or does _not_
+> support DAX.
+>
+> So this patch, in conjunction with the other changes in the series, is
+> certainly something I'd consider appropriate for stable.
 
-Conditionally set QUEUE_FLAG_DAX on the DM device's request queue based on
-whether all underlying devices support DAX.  Now that bdev_dax_supported()
-explicitly checks for this flag, this will ensure that filesystems built
-upon DM devices will only be able to mount with DAX if all underlying
-devices also support DAX.
-
-Signed-off-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Fixes: commit 545ed20e6df6 ("dm: add infrastructure for DAX support")
-Cc: stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-
----
-
-Changes in v4:
- * Set/clear QUEUE_FLAG_DAX in dm_table_set_restrictions(). (Mike)
----
- drivers/md/dm-table.c | 7 ++++---
- drivers/md/dm.c       | 3 +--
- 2 files changed, 5 insertions(+), 5 deletions(-)
-
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 938766794c2e..3d0e2c198f06 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -885,9 +885,7 @@ EXPORT_SYMBOL_GPL(dm_table_set_type);
- static int device_supports_dax(struct dm_target *ti, struct dm_dev *dev,
- 			       sector_t start, sector_t len, void *data)
- {
--	struct request_queue *q = bdev_get_queue(dev->bdev);
--
--	return q && blk_queue_dax(q);
-+	return bdev_dax_supported(dev->bdev, PAGE_SIZE);
- }
- 
- static bool dm_table_supports_dax(struct dm_table *t)
-@@ -1907,6 +1905,9 @@ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
- 
- 	if (dm_table_supports_dax(t))
- 		blk_queue_flag_set(QUEUE_FLAG_DAX, q);
-+	else
-+		blk_queue_flag_clear(QUEUE_FLAG_DAX, q);
-+
- 	if (dm_table_supports_dax_write_cache(t))
- 		dax_write_cache(t->md->dax_dev, true);
- 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index e65429a29c06..bef5a3f243ed 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1056,8 +1056,7 @@ static long dm_dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff,
- 	if (len < 1)
- 		goto out;
- 	nr_pages = min(len, nr_pages);
--	if (ti->type->direct_access)
--		ret = ti->type->direct_access(ti, pgoff, nr_pages, kaddr, pfn);
-+	ret = ti->type->direct_access(ti, pgoff, nr_pages, kaddr, pfn);
- 
-  out:
- 	dm_put_live_table(md, srcu_idx);
--- 
-2.14.4
+I think this classifies as something that never worked correctly and
+is not a regression. It does not identify which commit it is repairing
+or the user visible failure mode.
