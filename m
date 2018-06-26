@@ -1,127 +1,79 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-thin metadata operation failed due to -ENOSPC
- returned by dm_pool_alloc_data_block() after processing DISCARD bios
-Date: Tue, 26 Jun 2018 16:26:11 -0400
-Message-ID: <20180626202611.GA7525@redhat.com>
-References: <CAAR726JcYQpSSXAhL6=yPmzT0MOZRG_WwjC63q0QSMzT5qNPSg@mail.gmail.com>
-	<20180626200155.GA7427@redhat.com>
+From: "Kani, Toshi" <toshi.kani-ZPxbGqLxI0U@public.gmane.org>
+Subject: Re: [PATCH v3 1/3] pmem: only set QUEUE_FLAG_DAX for fsdax mode
+Date: Tue, 26 Jun 2018 20:54:03 +0000
+Message-ID: <1530046327.14039.273.camel@hpe.com>
+References: <20180626175932.8899-1-ross.zwisler@linux.intel.com>
+ <20180626175932.8899-2-ross.zwisler@linux.intel.com>
+ <CAPcyv4iWgPnHmBKhUvhManC6UL9CkLqN_d8vBo6KmcPJdPzuUw@mail.gmail.com>
+ <20180626185830.GA7171@redhat.com>
+ <CAPcyv4h6HO6fs6k7QMD77jkz2djCeWCtWomCdNb0-1Q4VKanqw@mail.gmail.com>
+ <20180626191346.GA7233@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20180626200155.GA7427@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Dennis Yang <dennisyang@qnap.com>
-Cc: ejt@redhat.com, device-mapper development <dm-devel@redhat.com>
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <20180626191346.GA7233-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Language: en-US
+Content-ID: <3D1889CB4901114A9FD8D1212F7DAD23-mmYPd6ayCNGroOM5E8FhRbjFIynDaujOfM0AETQt39g@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: "dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org" <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org" <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: dm-devel.ids
 
-On Tue, Jun 26 2018 at  4:01pm -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
-
-> On Tue, Apr 03 2018 at 12:07am -0400,
-> Dennis Yang <dennisyang@qnap.com> wrote:
+On Tue, 2018-06-26 at 15:13 -0400, Mike Snitzer wrote:
+> On Tue, Jun 26 2018 at  3:07pm -0400,
+> Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
 > 
-> > Hi,
+> > On Tue, Jun 26, 2018 at 11:58 AM, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+> > > On Tue, Jun 26 2018 at  2:52pm -0400,
+> > > Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
+> > > 
+> > > > On Tue, Jun 26, 2018 at 10:59 AM, Ross Zwisler
+> > > > <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org> wrote:
+> > > > > QUEUE_FLAG_DAX is an indication that a given block device supports
+> > > > > filesystem DAX and should not be set for PMEM namespaces which are in "raw"
+> > > > > or "sector" modes.  These namespaces lack struct page and are prevented
+> > > > > from participating in filesystem DAX.
+> > > > > 
+> > > > > Signed-off-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+> > > > > Suggested-by: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> > > > > Cc: stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> > > > 
+> > > > Why is this cc: stable? What is the user visible impact of this change
+> > > > especially given the requirement to validate QUEUE_FLAG_DAX with
+> > > > bdev_dax_supported()? Patch looks good, but it's just a cosmetic fixup
+> > > > afaics.
+> > > 
+> > > This isn't cosmetic when you consider that stacking up a DM device is
+> > > looking at this flag to determine whether a table does or does _not_
+> > > support DAX.
+> > > 
+> > > So this patch, in conjunction with the other changes in the series, is
+> > > certainly something I'd consider appropriate for stable.
 > > 
-> > Recently we have came across an issue that dm-thin pool will be
-> > switched to READ_ONLY mode because dm_pool_alloc_data_block() returns
-> > -ENOSPC. AFAIK, this should not happen since alloc_data_block() will
-> > check if there is any free space (and commit metadata if it first
-> > reports no free space) before it allocates pool block. In addition,
-> > total virtual space of all thin volumes is smaller than the pool
-> > physical space in my testing environment which makes pool impossible
-> > to run out of space.
-> > 
-> > This issue could be easily reproduced by the following steps.
-> > 
-> > 1) Create a thin pool and a slightly smaller thin volume
-> > > sudo dmsetup create meta --table "0 40000000 linear /dev/sdf 0"
-> > > sudo dmsetup create data --table "0 10240000 linear /dev/md125 0"
-> > > sudo dd if=/dev/zero of=/dev/mapper/meta bs=1M count=1
-> > > sudo dmsetup create pool --table "0 10240000 thin-pool /dev/mapper/meta /dev/mapper/data 1024 0 2 skip_block_zeroing error_if_no_space"
-> > > sudo dmsetup message pool 0 "create_thin 0"
-> > > sudo dmsetup create thin --table "0 10238976 thin /dev/mapper/pool 0"
-> > 
-> > 2) Make a filesystem and mount it
-> > > sudo mkfs.ext4 -E lazy_itable_init=0,lazy_journal_init=0 /dev/mapper/thin
-> > > sudo mount /dev/mapper/thin /mnt
-> > 
-> > 3) Write a file to mount point until it takes all the space
-> > > sudo dd if=/dev/zero of=/mnt/zero.img bs=1M
-> > 
-> > 4) Remove this file and trim mount point
-> > > sudo rm /mnt/zero.img
-> > > sudo fstrim /mnt
-> > 
-> > Repeat step 3 and 4 multiple times and the pool will be switched to
-> > READ_ONLY mode and need_checks flag will be set. Kernel message shows
-> > the following messages.
-> > [ 3952.723937] device-mapper: thin: 252:2: metadata operation
-> > 'dm_pool_alloc_data_block' failed: error = -28
-> > [ 3952.723940] device-mapper: thin: 252:2: aborting current metadata transaction
-> > [ 3952.725860] device-mapper: thin: 252:2: switching pool to read-only mode
-> > 
-> > This root cause of this issue is that dm-thin will first remove
-> > mapping and increase corresponding blocks' reference count to prevent
-> > them from being reused before DISCARD bios get processed by the
-> > underlying layers. However. increasing blocks' reference count could
-> > also increase the nr_allocated_this_transaction in struct sm_disk
-> > which makes smd->old_ll.nr_allocated +
-> > smd->nr_allocated_this_transaction bigger than smd->old_ll.nr_blocks.
-> > In this case, alloc_data_block() will never commit metadata to reset
-> > the begin pointer of struct sm_disk, because sm_disk_get_nr_free()
-> > always return an underflow value.
-> > 
-> > If you need more information, please feel free to let me know.
+> > I think this classifies as something that never worked correctly and
+> > is not a regression. It does not identify which commit it is repairing
+> > or the user visible failure mode.
 > 
-> FYI, I just staged the following fix:
-> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.18&id=2b21877316f3a517554c1b34e6b32f4d1ad10493
+> So you're taking issue with making stacked dax configs work in older
+> kernels?  That's fine.  We can drop the stable cc if you like.
+> 
+> But I mean we intended for this to work.. so the Fixes commit references
+> can easily be added, e.g.: 545ed20e6df68a4d2584a29a2a28ee8b2f7e9547
+> ("dm: add infrastructure for DAX support")
 
-(following output is with a debugging patch to print process_discard_bio
-extents)
+When this dm change was made, the pmem driver supported DAX for both raw
+and memory modes (note: sector mode does not use the pmem driver).  I
+think the issue was introduced when we dropped DAX support from raw
+mode.
 
-Using the test in the report, with the referenced patch applied, without
-waiting for fstrim to complete:
-
-[  734.449585] device-mapper: thin: process_discard_bio: begin=0 end=319
-[  734.474426] XFS (dm-6): Mounting V5 Filesystem
-[  734.481787] XFS (dm-6): Ending clean mount
-[  734.577167] device-mapper: thin: process_discard_bio: begin=50 end=319
-[  734.587850] device-mapper: thin: 253:4: switching pool to out-of-data-space (queue IO) mode
-[  736.484991] device-mapper: thin: 253:4: switching pool to write mode
-[  737.586929] device-mapper: thin: process_discard_bio: begin=50 end=319
-[  737.597587] device-mapper: thin: 253:4: switching pool to out-of-data-space (queue IO) mode
-[  739.560326] device-mapper: thin: 253:4: switching pool to write mode
-[  740.651914] device-mapper: thin: process_discard_bio: begin=50 end=319
-[  740.662223] device-mapper: thin: 253:4: switching pool to out-of-data-space (queue IO) mode
-[  742.628723] device-mapper: thin: 253:4: switching pool to write mode
-[  743.727873] device-mapper: thin: process_discard_bio: begin=50 end=319
-[  743.738578] device-mapper: thin: 253:4: switching pool to out-of-data-space (queue IO) mode
-[  745.700557] device-mapper: thin: 253:4: switching pool to write mode
-[  746.799316] device-mapper: thin: process_discard_bio: begin=50 end=319
-[  746.809928] device-mapper: thin: 253:4: switching pool to out-of-data-space (queue IO) mode
-[  748.772334] device-mapper: thin: 253:4: switching pool to write mode
-[  749.876049] device-mapper: thin: process_discard_bio: begin=50 end=319
-[  749.916739] XFS (dm-6): Unmounting Filesystem
-
-with sleep after fstrim:
-
-[ 1462.939299] device-mapper: thin: process_discard_bio: begin=0 end=319
-[ 1462.968260] XFS (dm-6): Mounting V5 Filesystem
-[ 1462.976490] XFS (dm-6): Ending clean mount
-[ 1463.074625] device-mapper: thin: process_discard_bio: begin=50 end=319
-[ 1468.177317] device-mapper: thin: process_discard_bio: begin=50 end=319
-[ 1473.271058] device-mapper: thin: process_discard_bio: begin=50 end=319
-[ 1478.364355] device-mapper: thin: process_discard_bio: begin=50 end=319
-[ 1483.456330] device-mapper: thin: process_discard_bio: begin=50 end=319
-[ 1488.553290] device-mapper: thin: process_discard_bio: begin=50 end=319
-[ 1493.593228] XFS (dm-6): Unmounting Filesystem
+Thanks,
+-Toshi
