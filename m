@@ -1,11 +1,13 @@
 From: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: [PATCH v5 0/3] Fix DM DAX handling
-Date: Tue, 26 Jun 2018 16:30:38 -0600
-Message-ID: <20180626223041.15653-1-ross.zwisler@linux.intel.com>
+Subject: [PATCH v5 1/3] pmem: only set QUEUE_FLAG_DAX for fsdax mode
+Date: Tue, 26 Jun 2018 16:30:39 -0600
+Message-ID: <20180626223041.15653-2-ross.zwisler@linux.intel.com>
+References: <20180626223041.15653-1-ross.zwisler@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <20180626223041.15653-1-ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
  <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
 List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
@@ -19,39 +21,31 @@ To: Toshi Kani <toshi.kani-ZPxbGqLxI0U@public.gmane.org>, Mike Snitzer <snitzer-
 Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 List-Id: dm-devel.ids
 
-This series fixes a few issues that I found with DM's handling of DAX
-devices.  Here are some of the issues I found:
+QUEUE_FLAG_DAX is an indication that a given block device supports
+filesystem DAX and should not be set for PMEM namespaces which are in "raw"
+mode.  These namespaces lack struct page and are prevented from
+participating in filesystem DAX as of commit 569d0365f571 "dax: require
+'struct page' by default for filesystem dax".
 
- * We can create a dm-stripe or dm-linear device which is made up of an
-   fsdax PMEM namespace and a raw PMEM namespace but which can hold a
-   filesystem mounted with the -o dax mount option.  DAX operations to
-   the raw PMEM namespace part lack struct page and can fail in
-   interesting/unexpected ways when doing things like fork(), examining
-   memory with gdb, etc.
-
- * We can create a dm-stripe or dm-linear device which is made up of an
-   fsdax PMEM namespace and a BRD ramdisk which can hold a filesystem
-   mounted with the -o dax mount option.  All I/O to this filesystem
-   will fail.
-
+Signed-off-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Suggested-by: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 ---
-
-Changes since v4:
- * No code changes.
- * Updated the changelogs for patches 1 and 3.
- * Removed the Cc: stable from patch 1.
- * Added a Fixes: tag to patch 2.
-
-Ross Zwisler (3):
-  pmem: only set QUEUE_FLAG_DAX for fsdax mode
-  dax: bdev_dax_supported() check for QUEUE_FLAG_DAX
-  dm: prevent DAX mounts if not supported
-
- drivers/dax/super.c   | 8 ++++++++
- drivers/md/dm-table.c | 7 ++++---
- drivers/md/dm.c       | 3 +--
  drivers/nvdimm/pmem.c | 3 ++-
- 4 files changed, 15 insertions(+), 6 deletions(-)
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
+diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
+index 68940356cad3..8b1fd7f1a224 100644
+--- a/drivers/nvdimm/pmem.c
++++ b/drivers/nvdimm/pmem.c
+@@ -414,7 +414,8 @@ static int pmem_attach_disk(struct device *dev,
+ 	blk_queue_logical_block_size(q, pmem_sector_size(ndns));
+ 	blk_queue_max_hw_sectors(q, UINT_MAX);
+ 	blk_queue_flag_set(QUEUE_FLAG_NONROT, q);
+-	blk_queue_flag_set(QUEUE_FLAG_DAX, q);
++	if (pmem->pfn_flags & PFN_MAP)
++		blk_queue_flag_set(QUEUE_FLAG_DAX, q);
+ 	q->queuedata = pmem;
+ 
+ 	disk = alloc_disk_node(0, nid);
 -- 
 2.14.4
