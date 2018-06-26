@@ -1,7 +1,7 @@
 From: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: [PATCH v3 2/3] dax: bdev_dax_supported() check for QUEUE_FLAG_DAX
-Date: Tue, 26 Jun 2018 11:59:31 -0600
-Message-ID: <20180626175932.8899-3-ross.zwisler@linux.intel.com>
+Subject: [PATCH v3 3/3] dm: prevent DAX mounts if not supported
+Date: Tue, 26 Jun 2018 11:59:32 -0600
+Message-ID: <20180626175932.8899-4-ross.zwisler@linux.intel.com>
 References: <20180626175932.8899-1-ross.zwisler@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,44 +21,100 @@ To: Toshi Kani <toshi.kani-ZPxbGqLxI0U@public.gmane.org>, Mike Snitzer <snitzer-
 Cc: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: dm-devel.ids
 
-Add an explicit check for QUEUE_FLAG_DAX to __bdev_dax_supported().  This
-is needed for DM configurations where the first element in the dm-linear or
-dm-stripe target supports DAX, but other elements do not.  Without this
-check __bdev_dax_supported() will pass for such devices, letting a
-filesystem on that device mount with the DAX option.
+Currently device_supports_dax() just checks to see if the QUEUE_FLAG_DAX
+flag is set on the device's request queue to decide whether or not the
+device supports filesystem DAX.  Really we should be using
+bdev_dax_supported() like filesystems do at mount time.  This performs
+other tests like checking to make sure the dax_direct_access() path works.
+
+Conditionally set QUEUE_FLAG_DAX on the DM device's request queue based on
+whether all underlying devices support DAX.  Now that bdev_dax_supported()
+explicitly checks for this flag, this will ensure that filesystems built
+upon DM devices will only be able to mount with DAX if all underlying
+devices also support DAX.
 
 Signed-off-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Suggested-by: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Fixes: commit 545ed20e6df6 ("dm: add infrastructure for DAX support")
 Cc: stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 ---
- drivers/dax/super.c | 8 ++++++++
- 1 file changed, 8 insertions(+)
+ drivers/md/dm-ioctl.c         | 5 +++++
+ drivers/md/dm-table.c         | 7 +++----
+ drivers/md/dm.c               | 3 +--
+ include/linux/device-mapper.h | 5 +++++
+ 4 files changed, 14 insertions(+), 6 deletions(-)
 
-diff --git a/drivers/dax/super.c b/drivers/dax/super.c
-index 903d9c473749..45276abf03aa 100644
---- a/drivers/dax/super.c
-+++ b/drivers/dax/super.c
-@@ -86,6 +86,7 @@ bool __bdev_dax_supported(struct block_device *bdev, int blocksize)
- {
- 	struct dax_device *dax_dev;
- 	bool dax_enabled = false;
-+	struct request_queue *q;
- 	pgoff_t pgoff;
- 	int err, id;
- 	void *kaddr;
-@@ -99,6 +100,13 @@ bool __bdev_dax_supported(struct block_device *bdev, int blocksize)
- 		return false;
+diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
+index b810ea77e6b1..0055bdbee5b1 100644
+--- a/drivers/md/dm-ioctl.c
++++ b/drivers/md/dm-ioctl.c
+@@ -1350,6 +1350,11 @@ static int table_load(struct file *filp, struct dm_ioctl *param, size_t param_si
+ 		goto err_unlock_md_type;
  	}
  
-+	q = bdev_get_queue(bdev);
-+	if (!q || !blk_queue_dax(q)) {
-+		pr_debug("%s: error: request queue doesn't support dax\n",
-+				bdevname(bdev, buf));
-+		return false;
-+	}
++	if (dm_table_supports_dax(t))
++		blk_queue_flag_set(QUEUE_FLAG_DAX, md->queue);
++	else
++		blk_queue_flag_clear(QUEUE_FLAG_DAX, md->queue);
 +
- 	err = bdev_dax_pgoff(bdev, 0, PAGE_SIZE, &pgoff);
- 	if (err) {
- 		pr_debug("%s: error: unaligned partition for dax\n",
+ 	dm_unlock_md_type(md);
+ 
+ 	/* stage inactive table */
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 938766794c2e..c673b4a51fb2 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -885,12 +885,10 @@ EXPORT_SYMBOL_GPL(dm_table_set_type);
+ static int device_supports_dax(struct dm_target *ti, struct dm_dev *dev,
+ 			       sector_t start, sector_t len, void *data)
+ {
+-	struct request_queue *q = bdev_get_queue(dev->bdev);
+-
+-	return q && blk_queue_dax(q);
++	return bdev_dax_supported(dev->bdev, PAGE_SIZE);
+ }
+ 
+-static bool dm_table_supports_dax(struct dm_table *t)
++bool dm_table_supports_dax(struct dm_table *t)
+ {
+ 	struct dm_target *ti;
+ 	unsigned i;
+@@ -909,6 +907,7 @@ static bool dm_table_supports_dax(struct dm_table *t)
+ 
+ 	return true;
+ }
++EXPORT_SYMBOL_GPL(dm_table_supports_dax);
+ 
+ static bool dm_table_does_not_support_partial_completion(struct dm_table *t);
+ 
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index e65429a29c06..bef5a3f243ed 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1056,8 +1056,7 @@ static long dm_dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff,
+ 	if (len < 1)
+ 		goto out;
+ 	nr_pages = min(len, nr_pages);
+-	if (ti->type->direct_access)
+-		ret = ti->type->direct_access(ti, pgoff, nr_pages, kaddr, pfn);
++	ret = ti->type->direct_access(ti, pgoff, nr_pages, kaddr, pfn);
+ 
+  out:
+ 	dm_put_live_table(md, srcu_idx);
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index 6fb0808e87c8..45ea9e1f9af9 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -461,6 +461,11 @@ void dm_table_add_target_callbacks(struct dm_table *t, struct dm_target_callback
+  */
+ void dm_table_set_type(struct dm_table *t, enum dm_queue_mode type);
+ 
++/*
++ * Check to see if this target type and all table devices support DAX.
++ */
++bool dm_table_supports_dax(struct dm_table *t);
++
+ /*
+  * Finally call this to make the table ready for use.
+  */
 -- 
 2.14.4
