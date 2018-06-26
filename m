@@ -1,74 +1,51 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: Re: [dm-devel] [PATCH v2 10/11] crypto: ahash: Remove VLA usage for AHASH_REQUEST_ON_STACK
-Date: Tue, 26 Jun 2018 10:02:31 -0700
-Message-ID: <CAGXu5j+2UEUMJ0RL_XDm+Z2jBaPgshbiKaKmrYTQiP7yB2eKng@mail.gmail.com>
-References: <20180625211026.15819-1-keescook@chromium.org> <20180625211026.15819-11-keescook@chromium.org>
- <20180625225609.GA181665@gmail.com> <20180626091958.zy3m24sjukfbn7av@gondor.apana.org.au>
+From: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: [PATCH v3 1/3] pmem: only set QUEUE_FLAG_DAX for fsdax mode
+Date: Tue, 26 Jun 2018 11:59:30 -0600
+Message-ID: <20180626175932.8899-2-ross.zwisler@linux.intel.com>
+References: <20180626175932.8899-1-ross.zwisler@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180626091958.zy3m24sjukfbn7av@gondor.apana.org.au>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: Eric Biggers <ebiggers3@gmail.com>, Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Arnd Bergmann <arnd@arndb.de>, Eric Biggers <ebiggers@google.com>, Mike Snitzer <snitzer@redhat.com>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, qat-linux@intel.com, LKML <linux-kernel@vger.kernel.org>, dm-devel@redhat.com, linux-crypto <linux-crypto@vger.kernel.org>, Lars Persson <larper@axis.com>, Tim Chen <tim.c.chen@linux.intel.com>, "David S. Miller" <davem@davemloft.net>, Alasdair Kergon <agk@redhat.com>, Rabin Vincent <rabinv@axis.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <20180626175932.8899-1-ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Toshi Kani <toshi.kani-ZPxbGqLxI0U@public.gmane.org>, Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Cc: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: dm-devel.ids
 
-On Tue, Jun 26, 2018 at 2:19 AM, Herbert Xu <herbert@gondor.apana.org.au> wrote:
-> On Mon, Jun 25, 2018 at 03:56:09PM -0700, Eric Biggers wrote:
->>
->> > diff --git a/include/crypto/internal/hash.h b/include/crypto/internal/hash.h
->> > index a0b0ad9d585e..d96ae5f52125 100644
->> > --- a/include/crypto/internal/hash.h
->> > +++ b/include/crypto/internal/hash.h
->> > @@ -142,6 +142,7 @@ static inline struct ahash_alg *__crypto_ahash_alg(struct crypto_alg *alg)
->> >  static inline void crypto_ahash_set_reqsize(struct crypto_ahash *tfm,
->> >                                         unsigned int reqsize)
->> >  {
->> > +   BUG_ON(reqsize > AHASH_MAX_REQSIZE);
->> >     tfm->reqsize = reqsize;
->> >  }
->>
->> This isn't accounting for the cases where a hash algorithm is "wrapped" with
->> another one, which increases the request size.  For example, "sha512_mb" ends up
->> with a request size of
->
-> I think this patch is on the wrong track.  The stack requests are
-> only ever meant to be used for synchronous algorithms (IOW shash
-> algorithms) and were a quick-and-dirty fix for legacy users.
->
-> So either check SHASH_MAX_REQSIZE or just convert the users to
-> kmalloc or even better make them real async users.
+QUEUE_FLAG_DAX is an indication that a given block device supports
+filesystem DAX and should not be set for PMEM namespaces which are in "raw"
+or "sector" modes.  These namespaces lack struct page and are prevented
+from participating in filesystem DAX.
 
-There is no SHASH_MAX_REQSIZE?
+Signed-off-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Suggested-by: Mike Snitzer <snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+---
+ drivers/nvdimm/pmem.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-As for users of AHASH_REQUEST_ON_STACK, I see:
-
-$ git grep AHASH_REQUEST_ON_STACK
-arch/x86/power/hibernate_64.c:          AHASH_REQUEST_ON_STACK(req, tfm);
-crypto/ccm.c:   AHASH_REQUEST_ON_STACK(ahreq, ctx->mac);
-drivers/block/drbd/drbd_worker.c:       AHASH_REQUEST_ON_STACK(req, tfm);
-drivers/block/drbd/drbd_worker.c:       AHASH_REQUEST_ON_STACK(req, tfm);
-drivers/md/dm-crypt.c:  AHASH_REQUEST_ON_STACK(req, essiv->hash_tfm);
-drivers/net/ppp/ppp_mppe.c:     AHASH_REQUEST_ON_STACK(req, state->sha1);
-drivers/staging/rtl8192e/rtllib_crypt_tkip.c:
-AHASH_REQUEST_ON_STACK(req, tfm_michael);
-drivers/staging/rtl8192u/ieee80211/ieee80211_crypt_tkip.c:
-AHASH_REQUEST_ON_STACK(req, tfm_michael);
-net/wireless/lib80211_crypt_tkip.c:     AHASH_REQUEST_ON_STACK(req,
-tfm_michael);
-
-Regardless, I'll take a closer look at these.
-
-The other patches leading up to the REQSIZE ones, though, I think are
-ready to go? They're distinct from the last two, so the first 9
-patches could be applied and I'll continue to improve the two REQSIZE
-ones? If that sounds okay, do you want me to resend just first 9, or
-do you want to take them from this series?
-
-Thanks!
-
--Kees
-
+diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
+index 68940356cad3..8b1fd7f1a224 100644
+--- a/drivers/nvdimm/pmem.c
++++ b/drivers/nvdimm/pmem.c
+@@ -414,7 +414,8 @@ static int pmem_attach_disk(struct device *dev,
+ 	blk_queue_logical_block_size(q, pmem_sector_size(ndns));
+ 	blk_queue_max_hw_sectors(q, UINT_MAX);
+ 	blk_queue_flag_set(QUEUE_FLAG_NONROT, q);
+-	blk_queue_flag_set(QUEUE_FLAG_DAX, q);
++	if (pmem->pfn_flags & PFN_MAP)
++		blk_queue_flag_set(QUEUE_FLAG_DAX, q);
+ 	q->queuedata = pmem;
+ 
+ 	disk = alloc_disk_node(0, nid);
 -- 
-Kees Cook
-Pixel Security
+2.14.4
