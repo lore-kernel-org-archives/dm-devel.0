@@ -1,41 +1,60 @@
-From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH] x86: optimize memcpy_flushcache
-Date: Wed, 27 Jun 2018 06:03:09 -0700
-Message-ID: <CAPcyv4hzfy0pvniMz4-PcaAXo6kFC=n4hyPzd=0v-JxCsUhMhQ@mail.gmail.com>
-References: <alpine.LRH.2.02.1806180846300.22626@file01.intranet.prod.int.rdu2.redhat.com>
- <CAPcyv4i_xqo1AgF7znUYi+Eo_obTBYA5vMv7=Q0VP755Kmm9bg@mail.gmail.com>
- <CACTTzNbu5FNXiyDeSBgTZCE7x=aNKQWvMLnhy5rkE51JJV9Rzg@mail.gmail.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: why command of multipath send reinstate message to
+ all dm's paths
+Date: Wed, 27 Jun 2018 15:58:28 +0200
+Message-ID: <e2b2de951f0db73aaf188b12c34f7cf0a9a34aa7.camel@suse.com>
+References: <F0921BF66894AB498DE908B06C95871AB06F952B@nkgeml513-mbx.china.huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <CACTTzNbu5FNXiyDeSBgTZCE7x=aNKQWvMLnhy5rkE51JJV9Rzg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Yigal Korman <yigal-/8YdC2HfS5554TAoqtyWWQ@public.gmane.org>
-Cc: Mike Snitzer <msnitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-nvdimm <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, X86 ML <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mikulas Patocka <mpatocka-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, pmem <pmem-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <F0921BF66894AB498DE908B06C95871AB06F952B@nkgeml513-mbx.china.huawei.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Jiaojianbing <jiaojianbing@huawei.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "Yangjie (S)" <yangjieyj.yang@huawei.com>, "Zhangyanfei (UVP)" <yanfei.zhang@huawei.com>
 List-Id: dm-devel.ids
 
-On Wed, Jun 27, 2018 at 4:23 AM, Yigal Korman <yigal-/8YdC2HfS5554TAoqtyWWQ@public.gmane.org> wrote:
-> Hi,
-> I'm a bit late on this but I have a question about the original patch -
-> I thought that in order for movnt (movntil, movntiq) to push the data
-> into the persistency domain (ADR),
-> one must work with length that is multiple of cacheline size,
-> otherwise the write-combine buffers remain partially
-> filled and you need to commit them with a fence (sfence) - which ruins
-> the whole performance gain you got here.
-> Am I wrong, are the write-combine buffers are part of the ADR domain
-> or something?
-
-The intent is to allow a batch of memcpy_flushcache() calls followed
-by a single sfence. Specifying a multiple of a cacheline size does not
-necessarily help as sfence is still needed to make sure that the movnt
-result has reached the ADR-safe domain.
+Smlhb2ppYW5iaW5nLAoKT24gV2VkLCAyMDE4LTA2LTI3IGF0IDA3OjU4ICswMDAwLCBKaWFvamlh
+bmJpbmcgd3JvdGU6Cgo+IERlYXIgQ2hyaXN0b3BoZSwKPiB3aGVuIGRtLTEwNSBpcyBpbiBvbmUg
+c3RhdGUgb2YgYmVsb3csIHBhdGhzIG9mIGRtLTEwNSB3aWxsIGNoYW5nZSB0bwo+IGFjdGl2ZSBp
+ZiB3ZSBydW4gY29tbWFuZCBvZiBtdWx0aXBhdGguCgpDb3VsZCB5b3UgYmUgbW9yZSBzcGVjaWZp
+YyBwbGVhc2U/IFdoYXQgbXVsdGlwYXRoIGNvbW1hbmQgZGlkIHlvdSBydW4/CldoaWNoIHZlcnNp
+b24gb2YgbXVsdGlwYXRoLXRvb2xzIGFyZSB5b3UgcnVubmluZz8KCj4gIEkgY2hlY2sgY29kZSBv
+ZiBtdWx0aXBhdGgsIGl0IHNlbmRzIG1lc3NnZSAicmVpbnN0YXRlX3BhdGggcGF0aG5hbWUiCj4g
+dG8ga2VybmVsIGluIHJvdXRpbmUgcmVpbnN0YXRlX3BhdGhzIHdoZW4gc3RhdHVzIG9mIHBhdGhn
+cm91cCA9Cj4gIlBHU1RBVEVfRU5BQkxFRC9QR1NUQVRFX1VOREVGIiBhbmQgcGF0aCdzIHN0YXRl
+ID0gIlBTVEFURV9GQUlMRUQiLgo+IHdoeSBjb21tYW5kIG9mIG11bHRpcGF0aCBkbyBhYm92ZSBh
+Y3Rpb24gdG8gYWxsIGRtIGRldmljZXM/IGFjdHVhbGx5LAo+IHBhcnRzIG9mIHRoZXNlIHBhdGhz
+IGFyZSBhbHJlYWR5IG9mZmxpbmUgb3IgZmFpbGVkIHdoaWNoIGNhbid0IGJlCj4gcmVjb3ZlcmVk
+LiBNYXliZSB3ZSBjYW4gY2hlY2sgdGhlc2UgZGV2aWNlcydzIHN0YXR1cyBieSBzZW5kaW5nIGlv
+IHRvCj4gdGhlc2Ugc2QgZGV2aWNlIGF0IGZpcnN0LiBhY2NvcmRpbmcgdG8gcmV0dXJuIG9mIGlv
+LCBtdWx0aXBhdGggc2VuZAo+IHJlaW5zdGF0ZSB0byBydW5uaW5nIGRldmljZXMgYW5kIGRvIG5v
+dGhpbmcgdG8gZmFpbGVkIGRldmljZXM/CgpJIHNlZSB0aGlzIGNvZGUgaW4gcmVpbnN0YXRlX3Bh
+dGhzKCk6CgoJCXZlY3Rvcl9mb3JlYWNoX3Nsb3QgKHBncC0+cGF0aHMsIHBwLCBqKSB7CgkJCWlm
+IChwcC0+c3RhdGUgIT0gUEFUSF9VUCAmJgoJCQkgICAgKHBncC0+c3RhdHVzID09IFBHU1RBVEVf
+RElTQUJMRUQgfHwKCQkJICAgICBwZ3AtPnN0YXR1cyA9PSBQR1NUQVRFX0FDVElWRSkpCgkJCQlj
+b250aW51ZTsKCgkJCWlmIChwcC0+ZG1zdGF0ZSA9PSBQU1RBVEVfRkFJTEVEKSB7CgkJCQlpZiAo
+ZG1fcmVpbnN0YXRlX3BhdGgobXBwLT5hbGlhcywgcHAtPmRldl90KSkKCQkJCQljb25kbG9nKDAs
+ICIlczogZXJyb3IgcmVpbnN0YXRpbmciLAoJCQkJCQlwcC0+ZGV2KTsKCQkJfQoJCX0KClRoZSBy
+ZWluc3RhdGUgY29tbWFuZCBpcyBvbmx5IHNlbnQgZm9yIHBhdGhzIHdoaWNoIGFyZSBlaXRoZXIg
+aW4KUEFUSF9VUCBzdGF0ZSwgb3IgYmVsb25nIHRvIGFuIFBHU1RBVEVfRU5BQkxFRCBwYXRoIGdy
+b3VwLiBJIGFkbWl0IEknbQp1bnN1cmUgd2h5IGFsbCB3ZSB0cnkgdG8gcmVpbnN0YXRlIHBhdGhz
+IHRoYXQgd2Uga25vdyBhcmUgZG93bi4gVGhpcyBpcwoxMy15ZWFyLW9sZCBjb2RlLgoKSW50ZXJz
+dGluZ2x5LCB0aGUgc3RhdGUgb2YgeW91ciBwYXRocyBjaGFuZ2VzIGZyb20gImZhdWx0eSBvZmZs
+aW5lIiB0bwoicmVhZHkgcnVubmluZyIuIFNvIGl0IGFwcGVhcnMgdGhhdCB0aGVzZSBwYXRocyBh
+cmUgYWN0dWFsbHkgX25vdF8gZG93bgogSnVzdCB0aGUgcmVpbnN0YXRlIHNlZW1zIGhhcyBmYWls
+ZWQgb24gdGhlbS4KCm11bHRpcGF0aGQgLXYzIGxvZ3MgYW5kIHBvc3NpYmx5IGtlcm5lbCBsb2dz
+IHdvdWxkIGJlIGhlbHBmdWwgdG8KdW5kZXJzdGFuZCB3aGF0IHdhcyBnb2luZyBvbiBpbiB0aGF0
+IHNpdHVhdGlvbi4KClJlZ2FyZHMKTWFydGluCgotLSAKRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNr
+QHN1c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcKU1VTRSBMaW51eCBHbWJILCBH
+RjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRoYXJkLCBHcmFoYW0gTm9ydG9uCkhSQiAy
+MTI4NCAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJl
+ZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
