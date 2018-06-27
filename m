@@ -1,81 +1,83 @@
 From: Kees Cook <keescook@chromium.org>
-Subject: Re: [PATCH v2 11/11] crypto: skcipher: Remove VLA usage for SKCIPHER_REQUEST_ON_STACK
-Date: Wed, 27 Jun 2018 11:31:09 -0700
-Message-ID: <CAGXu5jJ2Z=YP+fNsvy+6a_BpC1ibZf6tOzZuPHk=Qx1qNVvOZw@mail.gmail.com>
-References: <20180625211026.15819-1-keescook@chromium.org> <20180625211026.15819-12-keescook@chromium.org>
- <20180626092041.mxfg4lxcvxfivzc2@gondor.apana.org.au> <CAGXu5jKYb-0NNvOcN79hzqU7O6vCFhMTBDGBL8Knuoc-YHamPg@mail.gmail.com>
- <20180627143622.ntksjxsymo4yw6dz@gondor.apana.org.au>
+Subject: Re: [PATCH] dm: writecache: Use 2-factor allocator arguments
+Date: Wed, 27 Jun 2018 14:48:10 -0700
+Message-ID: <CAGXu5j+Su3fObnuzntQ7Tp8W6jfMt1hc=h-3Xhidgx--Nau1Ew@mail.gmail.com>
+References: <20180618175033.GA2627@beast>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180627143622.ntksjxsymo4yw6dz@gondor.apana.org.au>
+In-Reply-To: <20180618175033.GA2627@beast>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: "David S. Miller" <davem@davemloft.net>, linux-crypto <linux-crypto@vger.kernel.org>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, Arnd Bergmann <arnd@arndb.de>, Eric Biggers <ebiggers@google.com>, Alasdair Kergon <agk@redhat.com>, Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Lars Persson <larper@axis.com>, Mike Snitzer <snitzer@redhat.com>, Rabin Vincent <rabinv@axis.com>, Tim Chen <tim.c.chen@linux.intel.com>, qat-linux@intel.com, dm-devel@redhat.com, LKML <linux-kernel@vger.kernel.org>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: LKML <linux-kernel@vger.kernel.org>, dm-devel@redhat.com, Dan Williams <dan.j.williams@intel.com>, Mike Snitzer <msnitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Jun 27, 2018 at 7:36 AM, Herbert Xu <herbert@gondor.apana.org.au> wrote:
-> On Tue, Jun 26, 2018 at 09:45:09AM -0700, Kees Cook wrote:
->>
->> Which are likely to be wrapped together? Should I take this to 512 or
->> something else?
+On Mon, Jun 18, 2018 at 10:50 AM, Kees Cook <keescook@chromium.org> wrote:
+> This adjusts the allocator calls to use the 2-factor argument style, as
+> already done treewide for better defense against allocator overflows.
+> Additionally adjusts style nit to avoid assignments in test expressions.
 >
-> The situation is similar to ahash.  While they're using the same
-> skcipher interface, the underlying algorithms must all be
-> synchronous.  In fact, if they're not then they're buggy.
->
-> Therefore it makes no sense to use the general skcipher request
-> size as a threshold.  You should look at synchronous skcipher
-> algorithms only.
+> Signed-off-by: Kees Cook <keescook@chromium.org>
 
-I might be catching on... so from this list, I should only "count" the
-synchronous ones as being wrappable? The skcipher list is actually
-pretty short:
-
-crypto/cryptd.c:        crypto_skcipher_set_reqsize(
-crypto/cryptd.c-                tfm, sizeof(struct
-cryptd_skcipher_request_ctx));
-
-The above is, AIUI, unwrapped, so I only need to count sizeof(struct
-cryptd_skcipher_request_ctx)?
-
-These are "simple" wrappers:
-
-crypto/lrw.c:   crypto_skcipher_set_reqsize(tfm,
-crypto_skcipher_reqsize(cipher) +
-crypto/lrw.c-                                    sizeof(struct rctx));
-
-crypto/simd.c-  reqsize = sizeof(struct skcipher_request);
-crypto/simd.c-  reqsize += crypto_skcipher_reqsize(&cryptd_tfm->base);
-crypto/simd.c:  crypto_skcipher_set_reqsize(tfm, reqsize);
-
-crypto/xts.c:   crypto_skcipher_set_reqsize(tfm,
-crypto_skcipher_reqsize(child) +
-crypto/xts.c-                                    sizeof(struct rctx));
-
-But what are the "legitimate" existing crypto_skcipher_reqsize() values here?
-
-These are "complex" wrappers, with cts even adding blocksize to the mix...
-
-crypto/ctr.c-   align = crypto_skcipher_alignmask(tfm);
-crypto/ctr.c-   align &= ~(crypto_tfm_ctx_alignment() - 1);
-crypto/ctr.c-   reqsize = align + sizeof(struct crypto_rfc3686_req_ctx) +
-crypto/ctr.c-             crypto_skcipher_reqsize(cipher);
-crypto/ctr.c:   crypto_skcipher_set_reqsize(tfm, reqsize);
-
-crypto/cts.c-   align = crypto_skcipher_alignmask(tfm);
-crypto/cts.c-   bsize = crypto_skcipher_blocksize(cipher);
-crypto/cts.c-   reqsize = ALIGN(sizeof(struct crypto_cts_reqctx) +
-crypto/cts.c-                   crypto_skcipher_reqsize(cipher),
-crypto/cts.c-                   crypto_tfm_ctx_alignment()) +
-crypto/cts.c-             (align & ~(crypto_tfm_ctx_alignment() - 1)) + bsize;
-crypto/cts.c-
-crypto/cts.c:   crypto_skcipher_set_reqsize(tfm, reqsize);
-
-What values might be expected here? It seems the entire blocksize
-needs to be included as well...
+Friendly ping -- I'd like to make sure this makes it into 4.18. All
+other 2-factor allocations have been fixed in the kernel.
 
 -Kees
+
+> ---
+>  drivers/md/dm-writecache.c | 16 ++++++++++------
+>  1 file changed, 10 insertions(+), 6 deletions(-)
+>
+> diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
+> index 5961c7794ef3..7773f4c75701 100644
+> --- a/drivers/md/dm-writecache.c
+> +++ b/drivers/md/dm-writecache.c
+> @@ -259,7 +259,7 @@ static int persistent_memory_claim(struct dm_writecache *wc)
+>         if (da != p) {
+>                 long i;
+>                 wc->memory_map = NULL;
+> -               pages = kvmalloc(p * sizeof(struct page *), GFP_KERNEL);
+> +               pages = kvmalloc_array(p, sizeof(struct page *), GFP_KERNEL);
+>                 if (!pages) {
+>                         r = -ENOMEM;
+>                         goto err2;
+> @@ -859,7 +859,8 @@ static int writecache_alloc_entries(struct dm_writecache *wc)
+>
+>         if (wc->entries)
+>                 return 0;
+> -       wc->entries = vmalloc(sizeof(struct wc_entry) * wc->n_blocks);
+> +       wc->entries = vmalloc(array_size(sizeof(struct wc_entry),
+> +                                        wc->n_blocks));
+>         if (!wc->entries)
+>                 return -ENOMEM;
+>         for (b = 0; b < wc->n_blocks; b++) {
+> @@ -1480,10 +1481,13 @@ static void __writecache_writeback_pmem(struct dm_writecache *wc, struct writeba
+>                 bio_set_dev(&wb->bio, wc->dev->bdev);
+>                 wb->bio.bi_iter.bi_sector = read_original_sector(wc, e);
+>                 wb->page_offset = PAGE_SIZE;
+> -               if (max_pages <= WB_LIST_INLINE ||
+> -                   unlikely(!(wb->wc_list = kmalloc(max_pages * sizeof(struct wc_entry *),
+> -                                                    GFP_NOIO | __GFP_NORETRY |
+> -                                                    __GFP_NOMEMALLOC | __GFP_NOWARN)))) {
+> +               if (max_pages > WB_LIST_INLINE)
+> +                       wb->wc_list = kmalloc_array(max_pages,
+> +                                                   sizeof(struct wc_entry *),
+> +                                                   GFP_NOIO | __GFP_NORETRY |
+> +                                                   __GFP_NOMEMALLOC |
+> +                                                   __GFP_NOWARN);
+> +               if (max_pages <= WB_LIST_INLINE || !wb->wc_list) {
+>                         wb->wc_list = wb->wc_list_inline;
+>                         max_pages = WB_LIST_INLINE;
+>                 }
+> --
+> 2.17.0
+>
+>
+> --
+> Kees Cook
+> Pixel Security
+
+
 
 -- 
 Kees Cook
