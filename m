@@ -1,114 +1,80 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: Re: [PATCH v2 11/11] crypto: skcipher: Remove VLA usage for SKCIPHER_REQUEST_ON_STACK
-Date: Wed, 27 Jun 2018 17:10:05 -0700
-Message-ID: <CAGXu5jKas=OyJPsrMthxjEykG=FkHDW84dO4bKGpj-50JjUYwQ@mail.gmail.com>
-References: <20180625211026.15819-1-keescook@chromium.org> <20180625211026.15819-12-keescook@chromium.org>
- <20180626092041.mxfg4lxcvxfivzc2@gondor.apana.org.au> <CAGXu5jKYb-0NNvOcN79hzqU7O6vCFhMTBDGBL8Knuoc-YHamPg@mail.gmail.com>
- <20180627143622.ntksjxsymo4yw6dz@gondor.apana.org.au> <CAGXu5jJ2Z=YP+fNsvy+6a_BpC1ibZf6tOzZuPHk=Qx1qNVvOZw@mail.gmail.com>
- <20180627222749.xa5333caq5vaa7st@gondor.apana.org.au>
+From: Jiaojianbing <jiaojianbing@huawei.com>
+Subject: =?utf-8?b?562U5aSNOiAgd2h5IGNvbW1hbmQgb2YgbXVsdGlwYXRo?=
+ =?utf-8?q?_send_reinstate_message_to_all_dm=27s_paths?=
+Date: Thu, 28 Jun 2018 06:35:42 +0000
+Message-ID: <F0921BF66894AB498DE908B06C95871AB06F9785@nkgeml513-mbx.china.huawei.com>
+References: <F0921BF66894AB498DE908B06C95871AB06F952B@nkgeml513-mbx.china.huawei.com>
+	<e2b2de951f0db73aaf188b12c34f7cf0a9a34aa7.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180627222749.xa5333caq5vaa7st@gondor.apana.org.au>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: "David S. Miller" <davem@davemloft.net>, linux-crypto <linux-crypto@vger.kernel.org>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, Arnd Bergmann <arnd@arndb.de>, Eric Biggers <ebiggers@google.com>, Alasdair Kergon <agk@redhat.com>, Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Lars Persson <larper@axis.com>, Mike Snitzer <snitzer@redhat.com>, Rabin Vincent <rabinv@axis.com>, Tim Chen <tim.c.chen@linux.intel.com>, qat-linux@intel.com, dm-devel@redhat.com, LKML <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <e2b2de951f0db73aaf188b12c34f7cf0a9a34aa7.camel@suse.com>
+Content-Language: zh-CN
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Martin Wilck <mwilck@suse.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "Yangjie (S)" <yangjieyj.yang@huawei.com>, "Zhangyanfei (UVP)" <yanfei.zhang@huawei.com>
 List-Id: dm-devel.ids
 
-On Wed, Jun 27, 2018 at 3:27 PM, Herbert Xu <herbert@gondor.apana.org.au> wrote:
-> On Wed, Jun 27, 2018 at 11:31:09AM -0700, Kees Cook wrote:
->> crypto/lrw.c:   crypto_skcipher_set_reqsize(tfm,
->> crypto_skcipher_reqsize(cipher) +
->> crypto/lrw.c-                                    sizeof(struct rctx));
->> ...
->> crypto/cts.c-   align = crypto_skcipher_alignmask(tfm);
->> crypto/cts.c-   bsize = crypto_skcipher_blocksize(cipher);
->> crypto/cts.c-   reqsize = ALIGN(sizeof(struct crypto_cts_reqctx) +
->> crypto/cts.c-                   crypto_skcipher_reqsize(cipher),
->> crypto/cts.c-                   crypto_tfm_ctx_alignment()) +
->> crypto/cts.c-             (align & ~(crypto_tfm_ctx_alignment() - 1)) + bsize;
->> crypto/cts.c-
->> crypto/cts.c:   crypto_skcipher_set_reqsize(tfm, reqsize);
->>
->> What values might be expected here? It seems the entire blocksize
->> needs to be included as well...
->
-> But otherwise yes these are the ones that count.
-
-In both cases here, what is "cipher"? i.e. what ciphers could lrw be
-wrapping, and what ciphers could cts be wrapping, so that I can
-examine the blocksizes, etc?
-
-FWIW, looking at the non-ASYNC wrappers, I see only:
-
-crypto/ctr.c
-crypto/cts.c
-crypto/lrw.c
-crypto/xts.c
-drivers/crypto/sunxi-ss/sun4i-ss-cipher.c
-
-Building in all crypto things and running tcrypt with an instrumented
-crypto_skcipher_set_reqsize, I see:
-
-# dmesg | grep skcipher_set_req | cut -c16- | sort -u | sort +1 -n
-crypto_skcipher_set_reqsize: 8
-crypto_skcipher_set_reqsize: 88
-crypto_skcipher_set_reqsize: 184
-crypto_skcipher_set_reqsize: 256
-crypto_skcipher_set_reqsize: 472
-
-The 472 maps to lrw with its 384 struct rctx:
-
-[  553.843884] tcrypt: testing lrw(twofish)
-[  553.844479] crypto_skcipher_set_reqsize: 8
-[  553.845076] crypto_skcipher_set_reqsize: 88
-[  553.845658] crypto_skcipher_set_reqsize: 472
-
-[  553.860578] tcrypt: testing lrw(serpent)
-[  553.861349] crypto_skcipher_set_reqsize: 8
-[  553.861960] crypto_skcipher_set_reqsize: 88
-[  553.862534] crypto_skcipher_set_reqsize: 472
-
-[  553.871676] tcrypt: testing lrw(aes)
-[  553.872398] crypto_skcipher_set_reqsize: 8
-[  553.873002] crypto_skcipher_set_reqsize: 88
-[  553.873574] crypto_skcipher_set_reqsize: 472
-
-[  553.957282] tcrypt: testing lrw(cast6)
-[  553.958098] crypto_skcipher_set_reqsize: 8
-[  553.958691] crypto_skcipher_set_reqsize: 88
-[  553.959311] crypto_skcipher_set_reqsize: 472
-
-[  553.982514] tcrypt: testing lrw(camellia)
-[  553.983308] crypto_skcipher_set_reqsize: 8
-[  553.983907] crypto_skcipher_set_reqsize: 88
-[  553.984470] crypto_skcipher_set_reqsize: 472
-
-And while I'm using tcrypt, ahash shows:
-
-44
-124
-336
-368
-528
-536
-568
-616
-648
-728
-808
-
-The largest seems to be sha512:
-
-[  553.883440] tcrypt: testing sha512
-[  553.884179] sha512_mb: crypto_ahash_set_reqsize: 528
-[  553.884904] crypto_ahash_set_reqsize: 728
-[  553.885449] sha512_mb: crypto_ahash_set_reqsize: 808
-
-So ... should I use 472 for skcipher and 808 for ahash?
-
--Kees
-
--- 
-Kees Cook
-Pixel Security
+PiA+IERlYXIgQ2hyaXN0b3BoZSwKPiA+IHdoZW4gZG0tMTA1IGlzIGluIG9uZSBzdGF0ZSBvZiBi
+ZWxvdywgcGF0aHMgb2YgZG0tMTA1IHdpbGwgY2hhbmdlIHRvCj4gPiBhY3RpdmUgaWYgd2UgcnVu
+IGNvbW1hbmQgb2YgbXVsdGlwYXRoLgo+IAo+IENvdWxkIHlvdSBiZSBtb3JlIHNwZWNpZmljIHBs
+ZWFzZT8gV2hhdCBtdWx0aXBhdGggY29tbWFuZCBkaWQgeW91IHJ1bj8KPiBXaGljaCB2ZXJzaW9u
+IG9mIG11bHRpcGF0aC10b29scyBhcmUgeW91IHJ1bm5pbmc/Cgpjb21tYW5kIGlzICJtdWx0aXBh
+dGgiLCB3aGljaCBjYW4gcnVuIGluIHNoZWxsIGFzIGJlbG93OgojbXVsdGlwYXRoCgpBbmQgdGhl
+IHZlcnNpb246ICBtdWx0aXBhdGgtdG9vbHMgdjAuNC45ICgwNS8zMywgMjAxNikKCj4gPiAgSSBj
+aGVjayBjb2RlIG9mIG11bHRpcGF0aCwgaXQgc2VuZHMgbWVzc2dlICJyZWluc3RhdGVfcGF0aCBw
+YXRobmFtZSIKPiA+IHRvIGtlcm5lbCBpbiByb3V0aW5lIHJlaW5zdGF0ZV9wYXRocyB3aGVuIHN0
+YXR1cyBvZiBwYXRoZ3JvdXAgPQo+ID4gIlBHU1RBVEVfRU5BQkxFRC9QR1NUQVRFX1VOREVGIiBh
+bmQgcGF0aCdzIHN0YXRlID0gIlBTVEFURV9GQUlMRUQiLgo+ID4gd2h5IGNvbW1hbmQgb2YgbXVs
+dGlwYXRoIGRvIGFib3ZlIGFjdGlvbiB0byBhbGwgZG0gZGV2aWNlcz8gYWN0dWFsbHksCj4gPiBw
+YXJ0cyBvZiB0aGVzZSBwYXRocyBhcmUgYWxyZWFkeSBvZmZsaW5lIG9yIGZhaWxlZCB3aGljaCBj
+YW4ndCBiZQo+ID4gcmVjb3ZlcmVkLiBNYXliZSB3ZSBjYW4gY2hlY2sgdGhlc2UgZGV2aWNlcydz
+IHN0YXR1cyBieSBzZW5kaW5nIGlvIHRvCj4gPiB0aGVzZSBzZCBkZXZpY2UgYXQgZmlyc3QuIGFj
+Y29yZGluZyB0byByZXR1cm4gb2YgaW8sIG11bHRpcGF0aCBzZW5kCj4gPiByZWluc3RhdGUgdG8g
+cnVubmluZyBkZXZpY2VzIGFuZCBkbyBub3RoaW5nIHRvIGZhaWxlZCBkZXZpY2VzPwo+IAo+IEkg
+c2VlIHRoaXMgY29kZSBpbiByZWluc3RhdGVfcGF0aHMoKToKPiAKPiAJCXZlY3Rvcl9mb3JlYWNo
+X3Nsb3QgKHBncC0+cGF0aHMsIHBwLCBqKSB7Cj4gCQkJaWYgKHBwLT5zdGF0ZSAhPSBQQVRIX1VQ
+ICYmCj4gCQkJICAgIChwZ3AtPnN0YXR1cyA9PSBQR1NUQVRFX0RJU0FCTEVEIHx8Cj4gCQkJICAg
+ICBwZ3AtPnN0YXR1cyA9PSBQR1NUQVRFX0FDVElWRSkpCj4gCQkJCWNvbnRpbnVlOwo+IAo+IAkJ
+CWlmIChwcC0+ZG1zdGF0ZSA9PSBQU1RBVEVfRkFJTEVEKSB7Cj4gCQkJCWlmIChkbV9yZWluc3Rh
+dGVfcGF0aChtcHAtPmFsaWFzLCBwcC0+ZGV2X3QpKQo+IAkJCQkJY29uZGxvZygwLCAiJXM6IGVy
+cm9yIHJlaW5zdGF0aW5nIiwKPiAJCQkJCQlwcC0+ZGV2KTsKPiAJCQl9Cj4gCQl9Cj4gCj4gVGhl
+IHJlaW5zdGF0ZSBjb21tYW5kIGlzIG9ubHkgc2VudCBmb3IgcGF0aHMgd2hpY2ggYXJlIGVpdGhl
+ciBpbiBQQVRIX1VQCj4gc3RhdGUsIG9yIGJlbG9uZyB0byBhbiBQR1NUQVRFX0VOQUJMRUQgcGF0
+aCBncm91cC4gSSBhZG1pdCBJJ20gdW5zdXJlIHdoeQo+IGFsbCB3ZSB0cnkgdG8gcmVpbnN0YXRl
+IHBhdGhzIHRoYXQgd2Uga25vdyBhcmUgZG93bi4gVGhpcyBpcyAxMy15ZWFyLW9sZCBjb2RlLgo+
+IAo+IEludGVyc3RpbmdseSwgdGhlIHN0YXRlIG9mIHlvdXIgcGF0aHMgY2hhbmdlcyBmcm9tICJm
+YXVsdHkgb2ZmbGluZSIgdG8gInJlYWR5Cj4gcnVubmluZyIuIFNvIGl0IGFwcGVhcnMgdGhhdCB0
+aGVzZSBwYXRocyBhcmUgYWN0dWFsbHkgX25vdF8gZG93biAgSnVzdCB0aGUKPiByZWluc3RhdGUg
+c2VlbXMgaGFzIGZhaWxlZCBvbiB0aGVtLgo+IAo+IG11bHRpcGF0aGQgLXYzIGxvZ3MgYW5kIHBv
+c3NpYmx5IGtlcm5lbCBsb2dzIHdvdWxkIGJlIGhlbHBmdWwgdG8gdW5kZXJzdGFuZAo+IHdoYXQg
+d2FzIGdvaW5nIG9uIGluIHRoYXQgc2l0dWF0aW9uLgoKICAgIFNvcnJ5LCBtYXliZSBteSB0d28g
+bXVsdGlwYXRoIHN0YXR1cyBzYW1wbGUgY29uZnVzZWQgeW91LiBUaGV5IGFyZSBqdXN0IHNhbXBs
+ZS4gQWN0dWFsbHksIEkgcnVuIGNvbW1hbmQgInJlc2Nhbi1zY3NpLWJ1cyIgdG8KY2xlYXIgYWxs
+IG1hcHBlZCBzY3NpIGRldmljZXMgYnkgaXNjc2lkIGluIGhvc3Qgd2hlbiBhbGwgb2YgTFVOUyBp
+biByZW1vdGUgSVBTQU4gYXJlIHJlbW92ZWQuIApJbiBwcm9jZXNzIG9mIHJ1bm5pbmcgcmVzY2Fu
+LXNjc2ktYnVzLCBpZiBjb21tYW5kICJtdWx0aXBhdGgiIGlzIHJ1bm5pbmcsIHRoZSBzdGF0dXMg
+b2YgZG0ncyBwYXRoIHdpbGwgY2hhbmdlIGZyb20gCmZhaWxlZCB0byBhY3RpdmUgaW4gc29tZSBt
+b21lbnQgYXMgYmVsb3cuIElmIElPIGlzIHNlbnQgdG8gZG0tMTA1LCB0aGUgcHJvY2VzcyB3aG8g
+c2VuZHMgaW8gd2lsbCBiZSBpbiBEIHN0YXRlLgojIG11bHRpcGF0aCAtbGwKMzZkMGQwNGIxMDBi
+OGNiYTY2NWExODdmMDAwMDAwMGY5IGRtLTEwNSBIVUFXRUkgICxYU0cxCnNpemU9MS4wRyBmZWF0
+dXJlcz0nMSBxdWV1ZV9pZl9ub19wYXRoJyBod2hhbmRsZXI9JzAnIHdwPXJ3CmAtKy0gcG9saWN5
+PSdzZXJ2aWNlLXRpbWUgMCcgcHJpbz0xIHN0YXR1cz1hY3RpdmUKICBgLSAxODowOjA6MTAxIHNk
+a3UgNjc6Mjg4ICBhY3RpdmUgZmF1bHR5IHJ1bm5pbmcKCiAgSSB3YW50IHRvIGtub3cgd2hldGhl
+ciBjb21tYW5kICJtdWx0aXBhdGgiIGlzIHJlYXNvbmFibGUgaW4gcmVpbnN0YXRlX3BhdGhzKCku
+IEFuZCBtYXliZSB3ZSBzaG91bGQgbm90IGNhbGwgIm11bHRpcGF0aCIgaW4gcHJvY2VzcyBvZiBy
+dW5uaW5nIHJlc2Nhbi1zY3NpLWJ1cyA/Cgo+IFJlZ2FyZHMKPiBNYXJ0aW4KPiAKPiAtLQo+IERy
+LiBNYXJ0aW4gV2lsY2sgPG13aWxja0BzdXNlLmNvbT4sIFRlbC4gKzQ5ICgwKTkxMSA3NDA1MyAy
+MTA3IFNVU0UgTGludXgKPiBHbWJILCBHRjogRmVsaXggSW1lbmTDtnJmZmVyLCBKYW5lIFNtaXRo
+YXJkLCBHcmFoYW0gTm9ydG9uIEhSQiAyMTI4NCAoQUcKPiBOw7xybmJlcmcpCgoKLS0KZG0tZGV2
+ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNv
+bS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
