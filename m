@@ -1,17 +1,12 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re:
- =?utf-8?b?562U5aSNOiAgd2h5IGNvbW1hbmQgb2YgbXVsdGlwYXRo?=
- =?utf-8?q?_send_reinstate_message_to_all_dm=27s_paths?=
-Date: Thu, 28 Jun 2018 09:38:49 +0200
-Message-ID: <86cd2783019e5a6fa8c97a13716273146fd9e434.camel@suse.com>
-References: <F0921BF66894AB498DE908B06C95871AB06F952B@nkgeml513-mbx.china.huawei.com>
-	<e2b2de951f0db73aaf188b12c34f7cf0a9a34aa7.camel@suse.com>
-	<F0921BF66894AB498DE908B06C95871AB06F9785@nkgeml513-mbx.china.huawei.com>
+Subject: [PATCH 1/2] multipath: don't start multipathd
+	unnecessarily
+Date: Thu, 28 Jun 2018 12:34:45 +0200
+Message-ID: <20180628103446.16817-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <F0921BF66894AB498DE908B06C95871AB06F9785@nkgeml513-mbx.china.huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,109 +16,53 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jiaojianbing <jiaojianbing@huawei.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>, Hannes Reinecke <hare@suse.de>, Benjamin Marzinski <bmarzins@redhat.com>, Douglas Gilbert <dgilbert@interlog.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "Yangjie (S)" <yangjieyj.yang@huawei.com>, "Zhangyanfei (UVP)" <yanfei.zhang@huawei.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-W0kndmUgYWRkZWQgSGFubmVzLCBCZW4gYW5kIERvdWdsYXMgdG8gdGhlIHJlY2VwaWVudCBsaXN0
-IHRvIGZpbGwgaW4Ka25vd2xlZGdlIGZyb20gdGhlIHBhc3QgdGhhdCBJIG1heSBsYWNrXS4KCnRs
-O2RyIHN1bW1hcnk6IFdlJ3ZlIGdvdCAzIGlzc3VlczoKCiAxKSBXaHkgZG9lcyBtdWx0aXBhdGgs
-IGluIHJlaW5zdGF0ZV9wYXRocygpLCB0cnkgdG8gcmVpbnN0YXRlIHBhdGhzCndoaWNoIGFyZSBr
-bm93biB0byBiZSBkb3duPwogMikgcmVzY2FuLXNjc2ktYnVzLnNoIGNhbiBjYWxsICJtdWx0aXBh
-dGgiIGV2ZW4gaWYgIi1tIiBzd2l0Y2ggaXMgbm90CnVzZWQgKHRoYXQgbG9va3MgbGlrZSBhIGJ1
-ZyB0byBtZSkuCiAzKSBJbiBKaWFvamlhbmJpbmcncyBlbnZpcm9ubWVudCwgZGVhZCBwYXRocyB0
-aGF0IGhhdmUgYmVlbiByZW1vdmVkIG9uCnRoZSB0YXJnZXQgYW5kIHdlcmUgYWxyZWFkeSBtYXJr
-ZWQgIm9mZmxpbmUiIG1heSBhcHBlYXIgYXMgInJ1bm5pbmciCmFmdGVyIHJlc2Nhbi1zY3NpLWJ1
-cy5zaCBpbnZvY2F0aW9uLgoKRnVydGhlcm1vcmUsCiA0KSBwZXJoYXBzIHJlc2Nhbi1zY3NpLWJ1
-cy5zaCBzaG91bGQgcmVwbGFjZSBzdWJvcHRpbWFsICJtdWx0aXBhdGgiCmNhbGxzIHdpdGggbXVs
-dGlwYXRoZCBjbGkgY29tbWFuZHMgKG9yIGJldHRlciBldmVuLCB3ZSBtdWx0aXBhdGgtdG9vbHMK
-cGVvcGxlIHNob3VsZCBldmVudHVhbGx5IGZpbmlzaCB0aGUgImRlbGVnYXRlIHRvIG11bHRpcGF0
-aGQiIHdvcmspLgoKCk9uIFRodSwgMjAxOC0wNi0yOCBhdCAwNjozNSArMDAwMCwgSmlhb2ppYW5i
-aW5nIHdyb3RlOgo+ID4gPiBEZWFyIENocmlzdG9waGUsCj4gPiA+IHdoZW4gZG0tMTA1IGlzIGlu
-IG9uZSBzdGF0ZSBvZiBiZWxvdywgcGF0aHMgb2YgZG0tMTA1IHdpbGwgY2hhbmdlCj4gPiA+IHRv
-Cj4gPiA+IGFjdGl2ZSBpZiB3ZSBydW4gY29tbWFuZCBvZiBtdWx0aXBhdGguCj4gPiAKPiA+IENv
-dWxkIHlvdSBiZSBtb3JlIHNwZWNpZmljIHBsZWFzZT8gV2hhdCBtdWx0aXBhdGggY29tbWFuZCBk
-aWQgeW91Cj4gPiBydW4/Cj4gPiBXaGljaCB2ZXJzaW9uIG9mIG11bHRpcGF0aC10b29scyBhcmUg
-eW91IHJ1bm5pbmc/Cj4gCj4gY29tbWFuZCBpcyAibXVsdGlwYXRoIiwgd2hpY2ggY2FuIHJ1biBp
-biBzaGVsbCBhcyBiZWxvdzoKPiAjbXVsdGlwYXRoCgouLi4gYW5kIGlmIEkgdW5kZXJzdGFuZCBj
-b3JyZWN0bHksIG9yaWdpbmFsbHkgdGhlIHByb2JsZW0gb2NjdXJlZCB3aGlsZQpydW5uaW5nIHJl
-c2Nhbl9zY3NpX2J1cy5zaC4gUGxlYXNlIGFsc28gc3RhdGUgdGhlIHZlcnNpb24gb2Ygc2czX3V0
-aWxzCnlvdSBhcmUgdXNpbmcuCgo+IAo+IEFuZCB0aGUgdmVyc2lvbjogIG11bHRpcGF0aC10b29s
-cyB2MC40LjkgKDA1LzMzLCAyMDE2KQoKV2VsbCwgdGhhdCdzIGFuY2llbnQuIEJ1dCBsYXRlc3Qg
-bXVsdGlwYXRoLXRvb2xzIHN0aWxsIGhhcyB0aGUgc2FtZQpjb2RlLgoKPiAKPiA+ID4gIEkgY2hl
-Y2sgY29kZSBvZiBtdWx0aXBhdGgsIGl0IHNlbmRzIG1lc3NnZSAicmVpbnN0YXRlX3BhdGgKPiA+
-ID4gcGF0aG5hbWUiCj4gPiA+IHRvIGtlcm5lbCBpbiByb3V0aW5lIHJlaW5zdGF0ZV9wYXRocyB3
-aGVuIHN0YXR1cyBvZiBwYXRoZ3JvdXAgPQo+ID4gPiAiUEdTVEFURV9FTkFCTEVEL1BHU1RBVEVf
-VU5ERUYiIGFuZCBwYXRoJ3Mgc3RhdGUgPQo+ID4gPiAiUFNUQVRFX0ZBSUxFRCIuCj4gPiA+IHdo
-eSBjb21tYW5kIG9mIG11bHRpcGF0aCBkbyBhYm92ZSBhY3Rpb24gdG8gYWxsIGRtIGRldmljZXM/
-Cj4gPiA+IGFjdHVhbGx5LAo+ID4gPiBwYXJ0cyBvZiB0aGVzZSBwYXRocyBhcmUgYWxyZWFkeSBv
-ZmZsaW5lIG9yIGZhaWxlZCB3aGljaCBjYW4ndCBiZQo+ID4gPiByZWNvdmVyZWQuIE1heWJlIHdl
-IGNhbiBjaGVjayB0aGVzZSBkZXZpY2VzJ3Mgc3RhdHVzIGJ5IHNlbmRpbmcKPiA+ID4gaW8gdG8K
-PiA+ID4gdGhlc2Ugc2QgZGV2aWNlIGF0IGZpcnN0LiBhY2NvcmRpbmcgdG8gcmV0dXJuIG9mIGlv
-LCBtdWx0aXBhdGgKPiA+ID4gc2VuZAo+ID4gPiByZWluc3RhdGUgdG8gcnVubmluZyBkZXZpY2Vz
-IGFuZCBkbyBub3RoaW5nIHRvIGZhaWxlZCBkZXZpY2VzPwo+ID4gCj4gPiBJIHNlZSB0aGlzIGNv
-ZGUgaW4gcmVpbnN0YXRlX3BhdGhzKCk6Cj4gPiAKPiA+IAkJdmVjdG9yX2ZvcmVhY2hfc2xvdCAo
-cGdwLT5wYXRocywgcHAsIGopIHsKPiA+IAkJCWlmIChwcC0+c3RhdGUgIT0gUEFUSF9VUCAmJgo+
-ID4gCQkJICAgIChwZ3AtPnN0YXR1cyA9PSBQR1NUQVRFX0RJU0FCTEVEIHx8Cj4gPiAJCQkgICAg
-IHBncC0+c3RhdHVzID09IFBHU1RBVEVfQUNUSVZFKSkKPiA+IAkJCQljb250aW51ZTsKPiA+IAo+
-ID4gCQkJaWYgKHBwLT5kbXN0YXRlID09IFBTVEFURV9GQUlMRUQpIHsKPiA+IAkJCQlpZiAoZG1f
-cmVpbnN0YXRlX3BhdGgobXBwLT5hbGlhcywgcHAtCj4gPiA+ZGV2X3QpKQo+ID4gCQkJCQljb25k
-bG9nKDAsICIlczogZXJyb3IKPiA+IHJlaW5zdGF0aW5nIiwKPiA+IAkJCQkJCXBwLT5kZXYpOwo+
-ID4gCQkJfQo+ID4gCQl9Cj4gPiAKPiA+IFRoZSByZWluc3RhdGUgY29tbWFuZCBpcyBvbmx5IHNl
-bnQgZm9yIHBhdGhzIHdoaWNoIGFyZSBlaXRoZXIgaW4KPiA+IFBBVEhfVVAKPiA+IHN0YXRlLCBv
-ciBiZWxvbmcgdG8gYW4gUEdTVEFURV9FTkFCTEVEIHBhdGggZ3JvdXAuIEkgYWRtaXQgSSdtCj4g
-PiB1bnN1cmUgd2h5Cj4gPiBhbGwgd2UgdHJ5IHRvIHJlaW5zdGF0ZSBwYXRocyB0aGF0IHdlIGtu
-b3cgYXJlIGRvd24uIFRoaXMgaXMgMTMtCj4gPiB5ZWFyLW9sZCBjb2RlLgo+ID4gCj4gPiBJbnRl
-cnN0aW5nbHksIHRoZSBzdGF0ZSBvZiB5b3VyIHBhdGhzIGNoYW5nZXMgZnJvbSAiZmF1bHR5IG9m
-ZmxpbmUiCj4gPiB0byAicmVhZHkKPiA+IHJ1bm5pbmciLiBTbyBpdCBhcHBlYXJzIHRoYXQgdGhl
-c2UgcGF0aHMgYXJlIGFjdHVhbGx5IF9ub3RfCj4gPiBkb3duICBKdXN0IHRoZQo+ID4gcmVpbnN0
-YXRlIHNlZW1zIGhhcyBmYWlsZWQgb24gdGhlbS4KPiA+IAo+ID4gbXVsdGlwYXRoZCAtdjMgbG9n
-cyBhbmQgcG9zc2libHkga2VybmVsIGxvZ3Mgd291bGQgYmUgaGVscGZ1bCB0bwo+ID4gdW5kZXJz
-dGFuZAo+ID4gd2hhdCB3YXMgZ29pbmcgb24gaW4gdGhhdCBzaXR1YXRpb24uCj4gCj4gICAgIFNv
-cnJ5LCBtYXliZSBteSB0d28gbXVsdGlwYXRoIHN0YXR1cyBzYW1wbGUgY29uZnVzZWQgeW91LiBU
-aGV5Cj4gYXJlIGp1c3Qgc2FtcGxlLiBBY3R1YWxseSwgSSBydW4gY29tbWFuZCAicmVzY2FuLXNj
-c2ktYnVzIiB0bwo+IGNsZWFyIGFsbCBtYXBwZWQgc2NzaSBkZXZpY2VzIGJ5IGlzY3NpZCBpbiBo
-b3N0IHdoZW4gYWxsIG9mIExVTlMgaW4KPiByZW1vdGUgSVBTQU4gYXJlIHJlbW92ZWQuIAo+IElu
-IHByb2Nlc3Mgb2YgcnVubmluZyByZXNjYW4tc2NzaS1idXMsIGlmIGNvbW1hbmQgIm11bHRpcGF0
-aCIgaXMKPiBydW5uaW5nLCB0aGUgc3RhdHVzIG9mIGRtJ3MgcGF0aCB3aWxsIGNoYW5nZSBmcm9t
-IAo+IGZhaWxlZCB0byBhY3RpdmUgaW4gc29tZSBtb21lbnQgYXMgYmVsb3cuIElmIElPIGlzIHNl
-bnQgdG8gZG0tMTA1LAo+IHRoZSBwcm9jZXNzIHdobyBzZW5kcyBpbyB3aWxsIGJlIGluIEQgc3Rh
-dGUuCj4gIyBtdWx0aXBhdGggLWxsCj4gMzZkMGQwNGIxMDBiOGNiYTY2NWExODdmMDAwMDAwMGY5
-IGRtLTEwNSBIVUFXRUkgICxYU0cxCj4gc2l6ZT0xLjBHIGZlYXR1cmVzPScxIHF1ZXVlX2lmX25v
-X3BhdGgnIGh3aGFuZGxlcj0nMCcgd3A9cncKPiBgLSstIHBvbGljeT0nc2VydmljZS10aW1lIDAn
-IHByaW89MSBzdGF0dXM9YWN0aXZlCj4gICBgLSAxODowOjA6MTAxIHNka3UgNjc6Mjg4ICBhY3Rp
-dmUgZmF1bHR5IHJ1bm5pbmcKClRoZSBzdHJhbmdlIHBhcnQgaGVyZSBpcyB0aGF0IHRoZSBkZXZp
-Y2UgaXMgY29uc2lkZXJlZCAicnVubmluZyIuIFRoaXMKaXMgdGhlIHN0YXRlIG9mIHRoZSBrZXJu
-ZWwgZGV2aWNlLiBJZiB0aGUgTFVOcyBhcmUgYWN0dWFsbHkgX3JlbW92ZWRfCmFzIHlvdSBzYXks
-IHRoZSBkZXZpY2Ugc2hvdWxkIGJlIGdvbmUsIG9yIGF0IGxlYXN0IG1hcmtlZCAib2ZmbGluZSIu
-IAoKQXBwYXJlbnRseSB0aGUgU0NTSSBidXMgU0NBTiB2aWEgaVNDU0kgc3RpbGwgc2hvd2VkIHRo
-ZSBMVU4gaW4gYQp3b3JrYWJsZSBzdGF0ZS4gRm9yIG11bHRpcGF0aCB0aGlzIHRyYW5zbGF0ZXMg
-dG8gUEFUSF9VUC4gVGh1cyBldmVuIGlmCnRoZSBhYm92ZSBjb2RlIGRpZG4ndCBoYXZlIHRoZSAo
-cGdwLT5zdGF0dXMgPT0gUEdTVEFURV9ESVNBQkxFRCB8fCBwZ3AtCj5zdGF0dXMgPT0gUEdTVEFU
-RV9BQ1RJVkUpIGNsYXVzZSwgdGhlIHJlaW5zdGF0ZSB3b3VsZCBoYXZlIGJlZW4KYXR0ZW1wdGVk
-IGJ5IG11bHRpcGF0aC4gVGhpcyBsb29rcyBsaWtlIGEgbG93LWxldmVsIHByb2JsZW0gaW4geW91
-cgpTQ1NJIG9yIGlTQ1NJIGxheWVyIHRvIG1lLgoKVGhpcyBsb29rcyBsaWtlIHRoZSBhY3R1YWwg
-cHJvYmxlbSB0byBtZS4gbXVsdGlwYXRoIGFzaWRlLCBpZiB0aGUgcGF0aAphcHBlYXJzIHRvIGJl
-ICJydW5uaW5nIiwgYW55IExpbnV4IHByb2Nlc3MgY291bGQgdHJ5IHRvIHNlbmQgSU8gZG93biB0
-bwppdCBhbmQgYmUgc3R1Y2ssIGFzIHlvdSBzYXkuCgo+IAo+ICAgSSB3YW50IHRvIGtub3cgd2hl
-dGhlciBjb21tYW5kICJtdWx0aXBhdGgiIGlzIHJlYXNvbmFibGUgaW4KPiByZWluc3RhdGVfcGF0
-aHMoKS4KCgo+ID4gQW5kIG1heWJlIHdlIHNob3VsZCBub3QgY2FsbCAibXVsdGlwYXRoIiBpbiBw
-cm9jZXNzIG9mIHJ1bm5pbmcKPiByZXNjYW4tc2NzaS1idXMgPwoKTm9ybWFsbHkgcmVzY2FuLXNj
-c2ktYnVzLnNoIHNob3VsZCBjYWxsICJtdWx0aXBhdGgiIG9ubHkgaWYgdGhlIAoiLW18LS1tdWx0
-aXBhdGgiIHN3aXRjaCB3YXMgdXNlZC4gSSBxdWlja2x5IHNjYW5uZWQgdGhyb3VnaCB0aGUgY29k
-ZQphbmQgZGlkbid0IGZpbmQgYSBjYWxsIHRvICJtdWx0aXBhdGgiICh3aXRoIG5vIG9wdGlvbnMp
-IHdoaWNoIHdhc24ndApndWFyZGVkIGJ5IHRoZSBbIC1uICIkbXBfZW5hYmxlIiBdIGNvbmRpdGlv
-bi4gKEZUUjogdGhlcmUgaXMgYSBjYWxsIHRvCiJtdWx0aXBhdGggLWYiIGZyb20gbWFpbi0+Zmx1
-c2htcGF0aHMgaWYgIi1mfC0tZmx1c2giIGlzIHNldCkuCgpBZ2FpbiwgcGxlYXNlIGRvdWJsZS1j
-aGVjayB5b3VyIHZlcnNpb24gb2Ygc2czX3V0aWxzLCBhbmQgcGVyaGFwcyBydW4KImJhc2ggLXgg
-cmVzY2FuLXNjc2ktYnVzLnNoIiB0byBmaWd1cmUgb3V0IHRoZSBjYWxsIGNoYWluIHdoaWNoIHJ1
-bnMKdGhlICJtdWx0aXBhdGgiIGNvbW1hbmQuCgpUaGFua3MsCk1hcnRpbgoKPiAKPiA+IFJlZ2Fy
-ZHMKPiA+IE1hcnRpbgo+ID4gCj4gPiAtLQo+ID4gRHIuIE1hcnRpbiBXaWxjayA8bXdpbGNrQHN1
-c2UuY29tPiwgVGVsLiArNDkgKDApOTExIDc0MDUzIDIxMDcgU1VTRQo+ID4gTGludXgKPiA+IEdt
-YkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBOb3J0b24g
-SFJCIDIxMjg0Cj4gPiAoQUcKPiA+IE7DvHJuYmVyZykKPiAKPiAKCi0tIApEci4gTWFydGluIFdp
-bGNrIDxtd2lsY2tAc3VzZS5jb20+LCBUZWwuICs0OSAoMCk5MTEgNzQwNTMgMjEwNwpTVVNFIExp
-bnV4IEdtYkgsIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIsIEphbmUgU21pdGhhcmQsIEdyYWhhbSBO
-b3J0b24KSFJCIDIxMjg0IChBRyBOw7xybmJlcmcpCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QK
-ZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGlu
-Zm8vZG0tZGV2ZWw=
+When multipathd is off, but systemd is monitoring the multipathd socket,
+mpath_connect() has the side effect of starting multipathd. That's
+superfluous if we aren't going to pass the command at hand to multipathd.
+So, only try to open the socket if the command at hand is a candidate
+for delegation.
+
+Note: Despite this, some day in the future, we may decide to delegate
+almost everything to multipathd.
+
+Fixes: 506d253b "multipath: delegate dangerous commands to multipathd"
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ multipath/main.c | 11 ++++++-----
+ 1 file changed, 6 insertions(+), 5 deletions(-)
+
+diff --git a/multipath/main.c b/multipath/main.c
+index ed4f40ef..a0f3bde0 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -803,10 +803,6 @@ int delegate_to_multipathd(enum mpath_cmds cmd, const char *dev,
+ 	char command[1024], *p, *reply = NULL;
+ 	int n, r = 0;
+ 
+-	fd = mpath_connect();
+-	if (fd == -1)
+-		return 0;
+-
+ 	p = command;
+ 	*p = '\0';
+ 	n = sizeof(command);
+@@ -819,7 +815,12 @@ int delegate_to_multipathd(enum mpath_cmds cmd, const char *dev,
+ 	if (strlen(command) == 0)
+ 		/* No command found, no need to delegate */
+ 		return 0;
+-	else if (p >= command + sizeof(command)) {
++
++	fd = mpath_connect();
++	if (fd == -1)
++		return 0;
++
++	if (p >= command + sizeof(command)) {
+ 		condlog(0, "internal error - command buffer overflow");
+ 		r = -1;
+ 		goto out;
+-- 
+2.17.1
