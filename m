@@ -1,88 +1,63 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [git pull] device mapper fixes for 4.18-rc3
-Date: Thu, 28 Jun 2018 17:34:16 -0400
-Message-ID: <20180628213416.GA20090@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Bart Van Assche <bart.vanassche@wdc.com>, dm-devel@redhat.com, Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, Ross Zwisler <ross.zwisler@linux.intel.com>
+From: Kees Cook <keescook@chromium.org>
+Subject: [PATCH v3 3/9] crypto: shash: Remove VLA usage
+Date: Thu, 28 Jun 2018 17:28:37 -0700
+Message-ID: <20180629002843.31095-4-keescook@chromium.org>
+References: <20180629002843.31095-1-keescook@chromium.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180629002843.31095-1-keescook@chromium.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: Kees Cook <keescook@chromium.org>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, Arnd Bergmann <arnd@arndb.de>, Eric Biggers <ebiggers@google.com>, Alasdair Kergon <agk@redhat.com>, Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Lars Persson <larper@axis.com>, Mike Snitzer <snitzer@redhat.com>, Rabin Vincent <rabinv@axis.com>, Tim Chen <tim.c.chen@linux.intel.com>, "David S. Miller" <davem@davemloft.net>, linux-crypto@vger.kernel.org, qat-linux@intel.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hi Linus,
+In the quest to remove all stack VLA usage from the kernel[1], this
+removes the VLAs in SHASH_DESC_ON_STACK (via crypto_shash_descsize())
+by using the maximum allowable size (which is now more clearly captured
+in a macro). Similar limits are turned into macros as well.
 
-The following changes since commit ce397d215ccd07b8ae3f71db689aedb85d56ab40:
+[1] https://lkml.kernel.org/r/CA+55aFzCG-zNmZwX4A2FQpadafLfEzK6CC=qPXydAacU1RqZWA@mail.gmail.com
 
-  Linux 4.18-rc1 (2018-06-17 08:04:49 +0900)
+Signed-off-by: Kees Cook <keescook@chromium.org>
+---
+ crypto/shash.c        | 6 +++---
+ include/crypto/hash.h | 6 +++++-
+ 2 files changed, 8 insertions(+), 4 deletions(-)
 
-are available in the Git repository at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-4.18/dm-fixes
-
-for you to fetch changes up to dbc626597c39b24cefce09fbd8e9dea85869a801:
-
-  dm: prevent DAX mounts if not supported (2018-06-28 16:06:14 -0400)
-
-Please pull, thanks.
-Mike
-
-----------------------------------------------------------------
-- Fix dm core to use more efficient bio_split() instead of
-  bio_clone_bioset().  Also fixes splitting bio that has integrity
-  payload.
-
-- Three fixes related to properly validating DAX capabilities of a
-  stacked DM device that will advertise DAX support.
-
-- Update DM writecache target to use 2-factor allocator arguments.  Kees
-  says this is the last related change for 4.18.
-
-- Fix DM zoned target to use GFP_NOIO to avoid triggering reclaim during
-  IO submission (caught by lockdep).
-
-- Fix DM thinp to gracefully recover from running out of data space
-  while a previous async discard completes (whereby freeing space).
-
-- Fix DM thinp's metadata transaction commit to avoid needless work.
-
-----------------------------------------------------------------
-Arnd Bergmann (1):
-      dm raid: don't use 'const' in function return
-
-Bart Van Assche (1):
-      dm zoned: avoid triggering reclaim from inside dmz_map()
-
-Kees Cook (1):
-      dm writecache: use 2-factor allocator arguments
-
-Mike Snitzer (3):
-      dm: use bio_split() when splitting out the already processed bio
-      dm thin metadata: remove needless work from __commit_transaction
-      dm thin: handle running out of data space vs concurrent discard
-
-Ross Zwisler (3):
-      pmem: only set QUEUE_FLAG_DAX for fsdax mode
-      dax: check for QUEUE_FLAG_DAX in bdev_dax_supported()
-      dm: prevent DAX mounts if not supported
-
- drivers/dax/super.c           |  8 ++++++++
- drivers/md/dm-raid.c          |  2 +-
- drivers/md/dm-table.c         |  7 ++++---
- drivers/md/dm-thin-metadata.c |  9 ---------
- drivers/md/dm-thin.c          | 11 +++++++++--
- drivers/md/dm-writecache.c    | 10 +++++-----
- drivers/md/dm-zoned-target.c  |  2 +-
- drivers/md/dm.c               |  8 +++-----
- drivers/nvdimm/pmem.c         |  3 ++-
- 9 files changed, 33 insertions(+), 27 deletions(-)
+diff --git a/crypto/shash.c b/crypto/shash.c
+index 5d732c6bb4b2..ab6902c6dae7 100644
+--- a/crypto/shash.c
++++ b/crypto/shash.c
+@@ -458,9 +458,9 @@ static int shash_prepare_alg(struct shash_alg *alg)
+ {
+ 	struct crypto_alg *base = &alg->base;
+ 
+-	if (alg->digestsize > PAGE_SIZE / 8 ||
+-	    alg->descsize > PAGE_SIZE / 8 ||
+-	    alg->statesize > PAGE_SIZE / 8)
++	if (alg->digestsize > SHASH_MAX_DIGESTSIZE ||
++	    alg->descsize > SHASH_MAX_DESCSIZE ||
++	    alg->statesize > SHASH_MAX_STATESIZE)
+ 		return -EINVAL;
+ 
+ 	base->cra_type = &crypto_shash_type;
+diff --git a/include/crypto/hash.h b/include/crypto/hash.h
+index 76e432cab75d..804e87a9510e 100644
+--- a/include/crypto/hash.h
++++ b/include/crypto/hash.h
+@@ -151,9 +151,13 @@ struct shash_desc {
+ 	void *__ctx[] CRYPTO_MINALIGN_ATTR;
+ };
+ 
++#define SHASH_MAX_DIGESTSIZE    512
++#define SHASH_MAX_DESCSIZE      512
++#define SHASH_MAX_STATESIZE     512
++
+ #define SHASH_DESC_ON_STACK(shash, ctx)				  \
+ 	char __##shash##_desc[sizeof(struct shash_desc) +	  \
+-		crypto_shash_descsize(ctx)] CRYPTO_MINALIGN_ATTR; \
++		SHASH_MAX_DESCSIZE] CRYPTO_MINALIGN_ATTR; \
+ 	struct shash_desc *shash = (struct shash_desc *)__##shash##_desc
+ 
+ /**
+-- 
+2.17.1
