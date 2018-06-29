@@ -1,11 +1,15 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-writecache: support offset
-Date: Thu, 28 Jun 2018 21:00:14 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1806282059330.30794@file01.intranet.prod.int.rdu2.redhat.com>
+From: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Subject: Re: Latest multipath-tools push
+Date: Fri, 29 Jun 2018 04:37:28 +0200
+Message-ID: <CABr-GndbDO=2gG1O5UnZ0+R=sgvHEZ59m2NkxqXYQg=fC2Hueg@mail.gmail.com>
+References: <20180521200355.27364-1-xose.vazquez@gmail.com>
+	<2cc1bd1b-5f70-f5d1-46bb-17afebd105b1@gmail.com>
+	<CABr-GnenUmE-vBO_Ys2S1y6tAJiB9a4VkGC7d7y6Zf28JpOBOA@mail.gmail.com>
+	<08fa1c027c1fe7baed7146a71ee7809db198af49.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============2858897416158423401=="
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <08fa1c027c1fe7baed7146a71ee7809db198af49.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,153 +19,96 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <msnitzer@redhat.com>, David Teigland <teigland@redhat.com>
-Cc: dm-devel@redhat.com
+To: Martin Wilck <mwilck@suse.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Add a parameter "start_sector". It is offset in the unit of  512-byte
-sectors from the start of the cache device. The sectors below the offset
-are unused and they may be used for userspace metadata.
+--===============2858897416158423401==
+Content-Type: multipart/alternative; boundary="000000000000372270056fbebbcf"
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+--000000000000372270056fbebbcf
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
----
- Documentation/device-mapper/writecache.txt |    2 +
- drivers/md/dm-writecache.c                 |   43 +++++++++++++++++++----------
- 2 files changed, 31 insertions(+), 14 deletions(-)
+Thanks for pointing out the missed patch.
+It is now merged.
 
-Index: linux-2.6/drivers/md/dm-writecache.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-writecache.c	2018-06-27 20:54:00.000000000 +0200
-+++ linux-2.6/drivers/md/dm-writecache.c	2018-06-29 02:57:46.260000000 +0200
-@@ -136,6 +136,7 @@ struct dm_writecache {
- 	struct dm_target *ti;
- 	struct dm_dev *dev;
- 	struct dm_dev *ssd_dev;
-+	sector_t start_sector;
- 	void *memory_map;
- 	uint64_t memory_map_size;
- 	size_t metadata_sectors;
-@@ -293,6 +294,10 @@ static int persistent_memory_claim(struc
- 	}
- 
- 	dax_read_unlock(id);
-+
-+	wc->memory_map += (size_t)wc->start_sector << SECTOR_SHIFT;
-+	wc->memory_map_size -= (size_t)wc->start_sector << SECTOR_SHIFT;
-+
- 	return 0;
- err3:
- 	kvfree(pages);
-@@ -311,7 +316,7 @@ static int persistent_memory_claim(struc
- static void persistent_memory_release(struct dm_writecache *wc)
- {
- 	if (wc->memory_vmapped)
--		vunmap(wc->memory_map);
-+		vunmap(wc->memory_map - ((size_t)wc->start_sector << SECTOR_SHIFT));
- }
- 
- static struct page *persistent_memory_page(void *addr)
-@@ -359,7 +364,7 @@ static void *memory_data(struct dm_write
- 
- static sector_t cache_sector(struct dm_writecache *wc, struct wc_entry *e)
- {
--	return wc->metadata_sectors +
-+	return wc->start_sector + wc->metadata_sectors +
- 		((sector_t)e->index << (wc->block_size_bits - SECTOR_SHIFT));
- }
- 
-@@ -471,6 +476,7 @@ static void ssd_commit_flushed(struct dm
- 		if (unlikely(region.sector + region.count > wc->metadata_sectors))
- 			region.count = wc->metadata_sectors - region.sector;
- 
-+		region.sector += wc->start_sector;
- 		atomic_inc(&endio.count);
- 		req.bi_op = REQ_OP_WRITE;
- 		req.bi_op_flags = REQ_SYNC;
-@@ -1946,14 +1952,6 @@ static int writecache_ctr(struct dm_targ
- 	}
- 	wc->memory_map_size = i_size_read(wc->ssd_dev->bdev->bd_inode);
- 
--	if (WC_MODE_PMEM(wc)) {
--		r = persistent_memory_claim(wc);
--		if (r) {
--			ti->error = "Unable to map persistent memory for cache";
--			goto bad;
--		}
--	}
--
- 	/*
- 	 * Parse the cache block size
- 	 */
-@@ -1982,7 +1980,16 @@ static int writecache_ctr(struct dm_targ
- 
- 	while (opt_params) {
- 		string = dm_shift_arg(&as), opt_params--;
--		if (!strcasecmp(string, "high_watermark") && opt_params >= 1) {
-+		if (!strcasecmp(string, "start_sector") && opt_params >= 1) {
-+			unsigned long long start_sector;
-+			string = dm_shift_arg(&as), opt_params--;
-+			if (sscanf(string, "%llu%c", &start_sector, &dummy) != 1)
-+				goto invalid_optional;
-+			wc->start_sector = start_sector;
-+			if (wc->start_sector != start_sector ||
-+			    wc->start_sector >= wc->memory_map_size >> SECTOR_SHIFT)
-+				goto invalid_optional;
-+		} else if (!strcasecmp(string, "high_watermark") && opt_params >= 1) {
- 			string = dm_shift_arg(&as), opt_params--;
- 			if (sscanf(string, "%d%c", &high_wm_percent, &dummy) != 1)
- 				goto invalid_optional;
-@@ -2039,12 +2046,20 @@ invalid_optional:
- 		goto bad;
- 	}
- 
--	if (!WC_MODE_PMEM(wc)) {
-+	if (WC_MODE_PMEM(wc)) {
-+		r = persistent_memory_claim(wc);
-+		if (r) {
-+			ti->error = "Unable to map persistent memory for cache";
-+			goto bad;
-+		}
-+	} else {
- 		struct dm_io_region region;
- 		struct dm_io_request req;
- 		size_t n_blocks, n_metadata_blocks;
- 		uint64_t n_bitmap_bits;
- 
-+		wc->memory_map_size -= (uint64_t)wc->start_sector << SECTOR_SHIFT;
-+
- 		bio_list_init(&wc->flush_list);
- 		wc->flush_thread = kthread_create(writecache_flush_thread, wc, "dm_writecache_flush");
- 		if (IS_ERR(wc->flush_thread)) {
-@@ -2097,7 +2112,7 @@ invalid_optional:
- 		}
- 
- 		region.bdev = wc->ssd_dev->bdev;
--		region.sector = 0;
-+		region.sector = wc->start_sector;
- 		region.count = wc->metadata_sectors;
- 		req.bi_op = REQ_OP_READ;
- 		req.bi_op_flags = REQ_SYNC;
-@@ -2265,7 +2280,7 @@ static void writecache_status(struct dm_
- 
- static struct target_type writecache_target = {
- 	.name			= "writecache",
--	.version		= {1, 0, 0},
-+	.version		= {1, 1, 0},
- 	.module			= THIS_MODULE,
- 	.ctr			= writecache_ctr,
- 	.dtr			= writecache_dtr,
-Index: linux-2.6/Documentation/device-mapper/writecache.txt
-===================================================================
---- linux-2.6.orig/Documentation/device-mapper/writecache.txt	2018-06-18 01:11:41.400000000 +0200
-+++ linux-2.6/Documentation/device-mapper/writecache.txt	2018-06-29 02:57:04.360000000 +0200
-@@ -15,6 +15,8 @@ Constructor parameters:
-    size)
- 5. the number of optional parameters (the parameters with an argument
-    count as two)
-+	start_sector n		(default: 0)
-+		offset from the start of cache device in 512-byte sectors
- 	high_watermark n	(default: 50)
- 		start writeback when the number of used blocks reach this
- 		watermark
+Sorry I did not communicate enough on the last merge ... I was in a
+pre-vacation rush to empty the patch queue.
+
+On Sun, Jun 24, 2018 at 9:01 PM Martin Wilck <mwilck@suse.com> wrote:
+
+> Hello Christophe,
+>
+> Sorry, I've missed your last push. I'll re-post my latest series
+> rebased.
+>
+> I think you missed one patch from Ben:
+>
+>  -  libmultipath: print correct default for delay_*_checks,
+>     (https://www.redhat.com/archives/dm-devel/2018-May/msg00040.html)
+>
+> Morover, I thought Ben was about to submit an updated version of his
+> patch "mpathpersist: add all_tg_pt option"; but that's just a nit.
+>
+> Regards,
+> Martin
+>
+> --
+> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+> SUSE Linux GmbH, GF: Felix Imend=C3=B6rffer, Jane Smithard, Graham Norton
+> HRB 21284 (AG N=C3=BCrnberg)
+>
+>
+
+--000000000000372270056fbebbcf
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Thanks for pointing out the missed patch.<div>It is now me=
+rged.</div><div><br></div><div>Sorry I did not communicate enough on the la=
+st merge ... I was in a pre-vacation rush to empty the patch queue.</div></=
+div><br><div class=3D"gmail_quote"><div dir=3D"ltr">On Sun, Jun 24, 2018 at=
+ 9:01 PM Martin Wilck &lt;<a href=3D"mailto:mwilck@suse.com">mwilck@suse.co=
+m</a>&gt; wrote:<br></div><blockquote class=3D"gmail_quote" style=3D"margin=
+:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex">Hello Christophe,<=
+br>
+<br>
+Sorry, I&#39;ve missed your last push. I&#39;ll re-post my latest series<br=
+>
+rebased.<br>
+<br>
+I think you missed one patch from Ben:<br>
+<br>
+=C2=A0-=C2=A0 libmultipath: print correct default for delay_*_checks, <br>
+=C2=A0 =C2=A0 (<a href=3D"https://www.redhat.com/archives/dm-devel/2018-May=
+/msg00040.html" rel=3D"noreferrer" target=3D"_blank">https://www.redhat.com=
+/archives/dm-devel/2018-May/msg00040.html</a>)<br>
+<br>
+Morover, I thought Ben was about to submit an updated version of his<br>
+patch &quot;mpathpersist: add all_tg_pt option&quot;; but that&#39;s just a=
+ nit.<br>
+<br>
+Regards,<br>
+Martin<br>
+<br>
+-- <br>
+Dr. Martin Wilck &lt;<a href=3D"mailto:mwilck@suse.com" target=3D"_blank">m=
+wilck@suse.com</a>&gt;, Tel. +49 (0)911 74053 2107<br>
+SUSE Linux GmbH, GF: Felix Imend=C3=B6rffer, Jane Smithard, Graham Norton<b=
+r>
+HRB 21284 (AG N=C3=BCrnberg)<br>
+<br>
+</blockquote></div>
+
+--000000000000372270056fbebbcf--
+
+
+--===============2858897416158423401==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============2858897416158423401==--
