@@ -1,75 +1,167 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: [PATCH v3 0/9] Crypto: Remove VLA usage (part 1)
-Date: Thu, 28 Jun 2018 17:28:34 -0700
-Message-ID: <20180629002843.31095-1-keescook@chromium.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: Kees Cook <keescook@chromium.org>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, Arnd Bergmann <arnd@arndb.de>, Eric Biggers <ebiggers@google.com>, Alasdair Kergon <agk@redhat.com>, Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Lars Persson <larper@axis.com>, Mike Snitzer <snitzer@redhat.com>, Rabin Vincent <rabinv@axis.com>, Tim Chen <tim.c.chen@linux.intel.com>, "David S. Miller" <davem@davemloft.net>, linux-crypto@vger.kernel.org, qat-linux@intel.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm-writecache: support offset
+Date: Thu, 28 Jun 2018 21:00:14 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1806282059330.30794@file01.intranet.prod.int.rdu2.redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <msnitzer@redhat.com>, David Teigland <teigland@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-v3:
-- drop *_REQUEST_ON_STACK patches. The rest of this series is pretty
-  straight-forward, and I'd like to get them tested in -next while
-  we continue to chip away at the *_REQUEST_ON_STACK VLA removal patches
-  separately. "Part 2" will continue with those.
+Add a parameter "start_sector". It is offset in the unit of  512-byte
+sectors from the start of the cache device. The sectors below the offset
+are unused and they may be used for userspace metadata.
 
-v2:
-- use 512 instead of PAGE_SIZE / 8 to avoid bloat on large-page archs.
-- swtich xcbc to "16" max universally.
-- fix typo in bounds check for dm buffer size.
-- examine actual reqsizes for skcipher and ahash instead of guessing.
-- improve names and comments for alg maxes
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
+---
+ Documentation/device-mapper/writecache.txt |    2 +
+ drivers/md/dm-writecache.c                 |   43 +++++++++++++++++++----------
+ 2 files changed, 31 insertions(+), 14 deletions(-)
 
-This is nearly the last of the VLA removals[1], but it's one of the
-largest because crypto gets used in lots of places. After looking
-through code, usage, reading the threads Gustavo started, and comparing
-the use-cases to the other VLA removals that have landed in the kernel,
-I think this series is likely the best way forward to shut the door on
-VLAs forever.
-
-As background, the crypto stack usage is for callers to do an immediate
-bit of work that doesn't allocate new memory. This means that other VLA
-removal techniques (like just using kmalloc) aren't workable, and the
-next common technique is needed: examination of maximum stack usage and
-the addition of sanity checks. This series does that, and in several
-cases, these maximums were already implicit in the code.
-
-This series is intended to land via the crypto tree, though it touches
-dm as well, since there are dependent patches (new crypto #defines
-being used).
-
-Thanks!
-
--Kees
-
-[1] https://lkml.kernel.org/r/CA+55aFzCG-zNmZwX4A2FQpadafLfEzK6CC=qPXydAacU1RqZWA@mail.gmail.com
-
-Kees Cook (9):
-  crypto: xcbc: Remove VLA usage
-  crypto: cbc: Remove VLA usage
-  crypto: shash: Remove VLA usage
-  dm integrity: Remove VLA usage
-  crypto: ahash: Remove VLA usage
-  dm verity fec: Remove VLA usage
-  crypto alg: Introduce generic max blocksize and alignmask
-  crypto: qat: Remove VLA usage
-  crypto: shash: Remove VLA usage in unaligned hashing
-
- crypto/ahash.c                           |  4 ++--
- crypto/algapi.c                          |  7 ++++++-
- crypto/algif_hash.c                      |  2 +-
- crypto/shash.c                           | 25 +++++++++++-------------
- crypto/xcbc.c                            |  9 +++++++--
- drivers/crypto/qat/qat_common/qat_algs.c |  8 ++++++--
- drivers/md/dm-integrity.c                | 23 ++++++++++++++++------
- drivers/md/dm-verity-fec.c               |  5 ++++-
- include/crypto/algapi.h                  |  4 +++-
- include/crypto/cbc.h                     |  4 +++-
- include/crypto/hash.h                    |  9 ++++++++-
- include/linux/compiler-gcc.h             |  1 -
- 12 files changed, 68 insertions(+), 33 deletions(-)
-
--- 
-2.17.1
+Index: linux-2.6/drivers/md/dm-writecache.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-writecache.c	2018-06-27 20:54:00.000000000 +0200
++++ linux-2.6/drivers/md/dm-writecache.c	2018-06-29 02:57:46.260000000 +0200
+@@ -136,6 +136,7 @@ struct dm_writecache {
+ 	struct dm_target *ti;
+ 	struct dm_dev *dev;
+ 	struct dm_dev *ssd_dev;
++	sector_t start_sector;
+ 	void *memory_map;
+ 	uint64_t memory_map_size;
+ 	size_t metadata_sectors;
+@@ -293,6 +294,10 @@ static int persistent_memory_claim(struc
+ 	}
+ 
+ 	dax_read_unlock(id);
++
++	wc->memory_map += (size_t)wc->start_sector << SECTOR_SHIFT;
++	wc->memory_map_size -= (size_t)wc->start_sector << SECTOR_SHIFT;
++
+ 	return 0;
+ err3:
+ 	kvfree(pages);
+@@ -311,7 +316,7 @@ static int persistent_memory_claim(struc
+ static void persistent_memory_release(struct dm_writecache *wc)
+ {
+ 	if (wc->memory_vmapped)
+-		vunmap(wc->memory_map);
++		vunmap(wc->memory_map - ((size_t)wc->start_sector << SECTOR_SHIFT));
+ }
+ 
+ static struct page *persistent_memory_page(void *addr)
+@@ -359,7 +364,7 @@ static void *memory_data(struct dm_write
+ 
+ static sector_t cache_sector(struct dm_writecache *wc, struct wc_entry *e)
+ {
+-	return wc->metadata_sectors +
++	return wc->start_sector + wc->metadata_sectors +
+ 		((sector_t)e->index << (wc->block_size_bits - SECTOR_SHIFT));
+ }
+ 
+@@ -471,6 +476,7 @@ static void ssd_commit_flushed(struct dm
+ 		if (unlikely(region.sector + region.count > wc->metadata_sectors))
+ 			region.count = wc->metadata_sectors - region.sector;
+ 
++		region.sector += wc->start_sector;
+ 		atomic_inc(&endio.count);
+ 		req.bi_op = REQ_OP_WRITE;
+ 		req.bi_op_flags = REQ_SYNC;
+@@ -1946,14 +1952,6 @@ static int writecache_ctr(struct dm_targ
+ 	}
+ 	wc->memory_map_size = i_size_read(wc->ssd_dev->bdev->bd_inode);
+ 
+-	if (WC_MODE_PMEM(wc)) {
+-		r = persistent_memory_claim(wc);
+-		if (r) {
+-			ti->error = "Unable to map persistent memory for cache";
+-			goto bad;
+-		}
+-	}
+-
+ 	/*
+ 	 * Parse the cache block size
+ 	 */
+@@ -1982,7 +1980,16 @@ static int writecache_ctr(struct dm_targ
+ 
+ 	while (opt_params) {
+ 		string = dm_shift_arg(&as), opt_params--;
+-		if (!strcasecmp(string, "high_watermark") && opt_params >= 1) {
++		if (!strcasecmp(string, "start_sector") && opt_params >= 1) {
++			unsigned long long start_sector;
++			string = dm_shift_arg(&as), opt_params--;
++			if (sscanf(string, "%llu%c", &start_sector, &dummy) != 1)
++				goto invalid_optional;
++			wc->start_sector = start_sector;
++			if (wc->start_sector != start_sector ||
++			    wc->start_sector >= wc->memory_map_size >> SECTOR_SHIFT)
++				goto invalid_optional;
++		} else if (!strcasecmp(string, "high_watermark") && opt_params >= 1) {
+ 			string = dm_shift_arg(&as), opt_params--;
+ 			if (sscanf(string, "%d%c", &high_wm_percent, &dummy) != 1)
+ 				goto invalid_optional;
+@@ -2039,12 +2046,20 @@ invalid_optional:
+ 		goto bad;
+ 	}
+ 
+-	if (!WC_MODE_PMEM(wc)) {
++	if (WC_MODE_PMEM(wc)) {
++		r = persistent_memory_claim(wc);
++		if (r) {
++			ti->error = "Unable to map persistent memory for cache";
++			goto bad;
++		}
++	} else {
+ 		struct dm_io_region region;
+ 		struct dm_io_request req;
+ 		size_t n_blocks, n_metadata_blocks;
+ 		uint64_t n_bitmap_bits;
+ 
++		wc->memory_map_size -= (uint64_t)wc->start_sector << SECTOR_SHIFT;
++
+ 		bio_list_init(&wc->flush_list);
+ 		wc->flush_thread = kthread_create(writecache_flush_thread, wc, "dm_writecache_flush");
+ 		if (IS_ERR(wc->flush_thread)) {
+@@ -2097,7 +2112,7 @@ invalid_optional:
+ 		}
+ 
+ 		region.bdev = wc->ssd_dev->bdev;
+-		region.sector = 0;
++		region.sector = wc->start_sector;
+ 		region.count = wc->metadata_sectors;
+ 		req.bi_op = REQ_OP_READ;
+ 		req.bi_op_flags = REQ_SYNC;
+@@ -2265,7 +2280,7 @@ static void writecache_status(struct dm_
+ 
+ static struct target_type writecache_target = {
+ 	.name			= "writecache",
+-	.version		= {1, 0, 0},
++	.version		= {1, 1, 0},
+ 	.module			= THIS_MODULE,
+ 	.ctr			= writecache_ctr,
+ 	.dtr			= writecache_dtr,
+Index: linux-2.6/Documentation/device-mapper/writecache.txt
+===================================================================
+--- linux-2.6.orig/Documentation/device-mapper/writecache.txt	2018-06-18 01:11:41.400000000 +0200
++++ linux-2.6/Documentation/device-mapper/writecache.txt	2018-06-29 02:57:04.360000000 +0200
+@@ -15,6 +15,8 @@ Constructor parameters:
+    size)
+ 5. the number of optional parameters (the parameters with an argument
+    count as two)
++	start_sector n		(default: 0)
++		offset from the start of cache device in 512-byte sectors
+ 	high_watermark n	(default: 50)
+ 		start writeback when the number of used blocks reach this
+ 		watermark
