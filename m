@@ -1,106 +1,46 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: Latest multipath-tools push
-Date: Fri, 29 Jun 2018 16:56:59 +0700
-Message-ID: <CABr-GncLK5u9Zhe1GJ3yST=pJgg4XQVSusRCYw5jAx32xxHfbA@mail.gmail.com>
-References: <20180521200355.27364-1-xose.vazquez@gmail.com>
-	<2cc1bd1b-5f70-f5d1-46bb-17afebd105b1@gmail.com>
-	<CABr-GnenUmE-vBO_Ys2S1y6tAJiB9a4VkGC7d7y6Zf28JpOBOA@mail.gmail.com>
-	<08fa1c027c1fe7baed7146a71ee7809db198af49.camel@suse.com>
-	<CABr-GndbDO=2gG1O5UnZ0+R=sgvHEZ59m2NkxqXYQg=fC2Hueg@mail.gmail.com>
-	<6ed9d23ae94d07a3feefad6b032a8615af467b95.camel@suse.com>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH v3 4/9] dm integrity: Remove VLA usage
+Date: Fri, 29 Jun 2018 22:43:34 +0200
+Message-ID: <CAK8P3a3F2y8B3a5zhYyG2KSMmSx5L3J3C_0sV-Csa0zPOzYJhA@mail.gmail.com>
+References: <20180629002843.31095-1-keescook@chromium.org> <20180629002843.31095-5-keescook@chromium.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============4560558424744206383=="
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <6ed9d23ae94d07a3feefad6b032a8615af467b95.camel@suse.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180629002843.31095-5-keescook@chromium.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Kees Cook <keescook@chromium.org>
+Cc: Herbert Xu <herbert@gondor.apana.org.au>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, Eric Biggers <ebiggers@google.com>, Alasdair Kergon <agk@redhat.com>, Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Lars Persson <larper@axis.com>, Mike Snitzer <snitzer@redhat.com>, Rabin Vincent <rabinv@axis.com>, Tim Chen <tim.c.chen@linux.intel.com>, "David S. Miller" <davem@davemloft.net>, "open list:HARDWARE RANDOM NUMBER GENERATOR CORE" <linux-crypto@vger.kernel.org>, qat-linux@intel.com, dm-devel@redhat.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
---===============4560558424744206383==
-Content-Type: multipart/alternative; boundary="000000000000df9208056fc4de5c"
+On Fri, Jun 29, 2018 at 2:28 AM, Kees Cook <keescook@chromium.org> wrote:
 
---000000000000df9208056fc4de5c
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+> diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
+> index 86438b2f10dd..85e8ce1625a2 100644
+> --- a/drivers/md/dm-integrity.c
+> +++ b/drivers/md/dm-integrity.c
+> @@ -521,7 +521,12 @@ static void section_mac(struct dm_integrity_c *ic, unsigned section, __u8 result
+>                 }
+>                 memset(result + size, 0, JOURNAL_MAC_SIZE - size);
+>         } else {
+> -               __u8 digest[size];
+> +               __u8 digest[SHASH_MAX_DIGESTSIZE];
+> +
+> +               if (WARN_ON(size > sizeof(digest))) {
+> +                       dm_integrity_io_error(ic, "digest_size", -EINVAL);
+> +                       goto err;
+> +               }
 
-I expect a new merge the 3rd week of july, then a new tag.
+I'm still slightly worried that some patches like this one could make
+things worse
+and lead to an actual stack overflow. You define SHASH_MAX_DIGESTSIZE
+as '512', which is still quite a lot to put on the kernel stack. The
+function also
+uses SHASH_DESC_ON_STACK(), so now you have two copies. Then you
+could call shash_final_unaligned(), which seems to put a third copy on
+the stack,
+so replacing each one with a fixed-size buffer adds quite a bit of bloat.
 
-Le ven. 29 juin 2018 =C3=A0 14:36, Martin Wilck <mwilck@suse.com> a =C3=A9c=
-rit :
+Is there actually a digest that can be used in dm-integrity with more than 64
+byte output (matching JOURNAL_MAC_SIZE) here?
 
-> Hi Christophe,
->
-> On Fri, 2018-06-29 at 04:37 +0200, Christophe Varoqui wrote:
-> > Thanks for pointing out the missed patch.
-> > It is now merged.
->
-> thanks a lot. Are you planning to tag a new version soon?
->
-> >
-> > Sorry I did not communicate enough on the last merge ... I was in a
-> > pre-vacation rush to empty the patch queue.
->
-> no problem,
-> Martin
->
-> --
-> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-> SUSE Linux GmbH, GF: Felix Imend=C3=B6rffer, Jane Smithard, Graham Norton
-> HRB 21284 (AG N=C3=BCrnberg)
->
->
-
---000000000000df9208056fc4de5c
-Content-Type: text/html; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"auto">I expect a new merge the 3rd week of july, then a new tag=
-.</div><br><div class=3D"gmail_quote"><div dir=3D"ltr">Le ven. 29 juin 2018=
- =C3=A0 14:36, Martin Wilck &lt;<a href=3D"mailto:mwilck@suse.com">mwilck@s=
-use.com</a>&gt; a =C3=A9crit=C2=A0:<br></div><blockquote class=3D"gmail_quo=
-te" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex"=
->Hi Christophe,<br>
-<br>
-On Fri, 2018-06-29 at 04:37 +0200, Christophe Varoqui wrote:<br>
-&gt; Thanks for pointing out the missed patch.<br>
-&gt; It is now merged.<br>
-<br>
-thanks a lot. Are you planning to tag a new version soon?<br>
-<br>
-&gt; <br>
-&gt; Sorry I did not communicate enough on the last merge ... I was in a<br=
->
-&gt; pre-vacation rush to empty the patch queue.<br>
-<br>
-no problem,<br>
-Martin<br>
-<br>
--- <br>
-Dr. Martin Wilck &lt;<a href=3D"mailto:mwilck@suse.com" target=3D"_blank" r=
-el=3D"noreferrer">mwilck@suse.com</a>&gt;, Tel. +49 (0)911 74053 2107<br>
-SUSE Linux GmbH, GF: Felix Imend=C3=B6rffer, Jane Smithard, Graham Norton<b=
-r>
-HRB 21284 (AG N=C3=BCrnberg)<br>
-<br>
-</blockquote></div>
-
---000000000000df9208056fc4de5c--
-
-
---===============4560558424744206383==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============4560558424744206383==--
+       Arnd
