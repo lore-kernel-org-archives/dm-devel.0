@@ -1,7 +1,7 @@
 From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-Subject: [PATCH v4 3/5] bitmap: Add bitmap_alloc(), bitmap_zalloc() and bitmap_free()
-Date: Sat, 30 Jun 2018 23:17:48 +0300
-Message-ID: <20180630201750.2588-4-andriy.shevchenko@linux.intel.com>
+Subject: [PATCH v4 4/5] Input: gpio-keys - Switch to bitmap_zalloc()
+Date: Sat, 30 Jun 2018 23:17:49 +0300
+Message-ID: <20180630201750.2588-5-andriy.shevchenko@linux.intel.com>
 References: <20180630201750.2588-1-andriy.shevchenko@linux.intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180630201750.2588-1-andriy.shevchenko@linux.intel.com>
@@ -10,77 +10,54 @@ To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-deve
 Cc: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
 List-Id: dm-devel.ids
 
-A lot of code become ugly because of open coding allocations for bitmaps.
+Switch to bitmap_zalloc() to show clearly what we are allocating.
+Besides that it returns pointer of bitmap type instead of opaque void *.
 
-Introduce three helpers to allow users be more clear of intention
-and keep their code neat.
-
-Note, due to multiple circular dependencies we may not provide
-the helpers as inliners. For now we keep them exported and, perhaps,
-at some point in the future we will sort out header inclusion and
-inheritance.
-
+Acked-by: Dmitry Torokhov <dmitry.torokhov@gmail.com>
 Signed-off-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
 ---
- include/linux/bitmap.h |  8 ++++++++
- lib/bitmap.c           | 19 +++++++++++++++++++
- 2 files changed, 27 insertions(+)
+ drivers/input/keyboard/gpio_keys.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/include/linux/bitmap.h b/include/linux/bitmap.h
-index 1ee46f492267..acf5e8df3504 100644
---- a/include/linux/bitmap.h
-+++ b/include/linux/bitmap.h
-@@ -104,6 +104,14 @@
-  * contain all bit positions from 0 to 'bits' - 1.
-  */
+diff --git a/drivers/input/keyboard/gpio_keys.c b/drivers/input/keyboard/gpio_keys.c
+index 052e37675086..492a971b95b5 100644
+--- a/drivers/input/keyboard/gpio_keys.c
++++ b/drivers/input/keyboard/gpio_keys.c
+@@ -196,7 +196,7 @@ static ssize_t gpio_keys_attr_show_helper(struct gpio_keys_drvdata *ddata,
+ 	ssize_t ret;
+ 	int i;
  
-+/*
-+ * Allocation and deallocation of bitmap.
-+ * Provided in lib/bitmap.c to avoid circular dependency.
-+ */
-+extern unsigned long *bitmap_alloc(unsigned int nbits, gfp_t flags);
-+extern unsigned long *bitmap_zalloc(unsigned int nbits, gfp_t flags);
-+extern void bitmap_free(const unsigned long *bitmap);
-+
- /*
-  * lib/bitmap.c provides these functions:
-  */
-diff --git a/lib/bitmap.c b/lib/bitmap.c
-index 33e95cd359a2..09acf2fd6a35 100644
---- a/lib/bitmap.c
-+++ b/lib/bitmap.c
-@@ -13,6 +13,7 @@
- #include <linux/bitops.h>
- #include <linux/bug.h>
- #include <linux/kernel.h>
-+#include <linux/slab.h>
- #include <linux/string.h>
- #include <linux/uaccess.h>
+-	bits = kcalloc(BITS_TO_LONGS(n_events), sizeof(*bits), GFP_KERNEL);
++	bits = bitmap_zalloc(n_events, GFP_KERNEL);
+ 	if (!bits)
+ 		return -ENOMEM;
  
-@@ -1125,6 +1126,24 @@ void bitmap_copy_le(unsigned long *dst, const unsigned long *src, unsigned int n
- EXPORT_SYMBOL(bitmap_copy_le);
- #endif
+@@ -216,7 +216,7 @@ static ssize_t gpio_keys_attr_show_helper(struct gpio_keys_drvdata *ddata,
+ 	buf[ret++] = '\n';
+ 	buf[ret] = '\0';
  
-+unsigned long *bitmap_alloc(unsigned int nbits, gfp_t flags)
-+{
-+	return kmalloc_array(BITS_TO_LONGS(nbits), sizeof(unsigned long), flags);
-+}
-+EXPORT_SYMBOL(bitmap_alloc);
-+
-+unsigned long *bitmap_zalloc(unsigned int nbits, gfp_t flags)
-+{
-+	return bitmap_alloc(nbits, flags | __GFP_ZERO);
-+}
-+EXPORT_SYMBOL(bitmap_zalloc);
-+
-+void bitmap_free(const unsigned long *bitmap)
-+{
-+	kfree(bitmap);
-+}
-+EXPORT_SYMBOL(bitmap_free);
-+
- #if BITS_PER_LONG == 64
- /**
-  * bitmap_from_arr32 - copy the contents of u32 array of bits to bitmap
+-	kfree(bits);
++	bitmap_free(bits);
+ 
+ 	return ret;
+ }
+@@ -240,7 +240,7 @@ static ssize_t gpio_keys_attr_store_helper(struct gpio_keys_drvdata *ddata,
+ 	ssize_t error;
+ 	int i;
+ 
+-	bits = kcalloc(BITS_TO_LONGS(n_events), sizeof(*bits), GFP_KERNEL);
++	bits = bitmap_zalloc(n_events, GFP_KERNEL);
+ 	if (!bits)
+ 		return -ENOMEM;
+ 
+@@ -284,7 +284,7 @@ static ssize_t gpio_keys_attr_store_helper(struct gpio_keys_drvdata *ddata,
+ 	mutex_unlock(&ddata->disable_lock);
+ 
+ out:
+-	kfree(bits);
++	bitmap_free(bits);
+ 	return error;
+ }
+ 
 -- 
 2.18.0
