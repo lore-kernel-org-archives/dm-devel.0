@@ -1,111 +1,86 @@
-From: Eric Biggers <ebiggers3@gmail.com>
-Subject: Re: [dm-devel] [PATCH v3 9/9] crypto: shash: Remove VLA usage in
- unaligned hashing
-Date: Sat, 30 Jun 2018 00:03:01 -0700
-Message-ID: <20180630070301.GA1706@sol.localdomain>
-References: <20180629002843.31095-1-keescook@chromium.org>
- <20180629002843.31095-10-keescook@chromium.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+Subject: [PATCH v4 1/5] dm: Avoid namespace collision with bitmap API
+Date: Sat, 30 Jun 2018 23:17:46 +0300
+Message-ID: <20180630201750.2588-2-andriy.shevchenko@linux.intel.com>
+References: <20180630201750.2588-1-andriy.shevchenko@linux.intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180629002843.31095-10-keescook@chromium.org>
+In-Reply-To: <20180630201750.2588-1-andriy.shevchenko@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>, Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Arnd Bergmann <arnd@arndb.de>, Eric Biggers <ebiggers@google.com>, Mike Snitzer <snitzer@redhat.com>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, qat-linux@intel.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-crypto@vger.kernel.org, Lars Persson <larper@axis.com>, Tim Chen <tim.c.chen@linux.intel.com>, "David S. Miller" <davem@davemloft.net>, Alasdair Kergon <agk@redhat.com>, Rabin Vincent <rabinv@axis.com>
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, Dmitry Torokhov <dmitry.torokhov@gmail.com>, linux-input@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Yury Norov <ynorov@caviumnetworks.com>, linux-kernel@vger.kernel.org, mika.westerberg@linux.intel.com, Joe Perches <joe@perches.com>
+Cc: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
 List-Id: dm-devel.ids
 
-On Thu, Jun 28, 2018 at 05:28:43PM -0700, Kees Cook wrote:
-> In the quest to remove all stack VLA usage from the kernel[1], this uses
-> the newly defined max alignment to perform unaligned hashing to avoid
-> VLAs, and drops the helper function while adding sanity checks on the
-> resulting buffer sizes. Additionally, the __aligned_largest macro is
-> removed since this helper was the only user.
-> 
-> [1] https://lkml.kernel.org/r/CA+55aFzCG-zNmZwX4A2FQpadafLfEzK6CC=qPXydAacU1RqZWA@mail.gmail.com
-> 
-> Signed-off-by: Kees Cook <keescook@chromium.org>
-> ---
->  crypto/shash.c               | 19 ++++++++-----------
->  include/linux/compiler-gcc.h |  1 -
->  2 files changed, 8 insertions(+), 12 deletions(-)
-> 
-> diff --git a/crypto/shash.c b/crypto/shash.c
-> index ab6902c6dae7..8081c5e03770 100644
-> --- a/crypto/shash.c
-> +++ b/crypto/shash.c
-> @@ -73,13 +73,6 @@ int crypto_shash_setkey(struct crypto_shash *tfm, const u8 *key,
->  }
->  EXPORT_SYMBOL_GPL(crypto_shash_setkey);
->  
-> -static inline unsigned int shash_align_buffer_size(unsigned len,
-> -						   unsigned long mask)
-> -{
-> -	typedef u8 __aligned_largest u8_aligned;
-> -	return len + (mask & ~(__alignof__(u8_aligned) - 1));
-> -}
-> -
->  static int shash_update_unaligned(struct shash_desc *desc, const u8 *data,
->  				  unsigned int len)
->  {
-> @@ -88,11 +81,13 @@ static int shash_update_unaligned(struct shash_desc *desc, const u8 *data,
->  	unsigned long alignmask = crypto_shash_alignmask(tfm);
->  	unsigned int unaligned_len = alignmask + 1 -
->  				     ((unsigned long)data & alignmask);
-> -	u8 ubuf[shash_align_buffer_size(unaligned_len, alignmask)]
-> -		__aligned_largest;
-> +	u8 ubuf[MAX_ALGAPI_ALIGNMASK + 1];
->  	u8 *buf = PTR_ALIGN(&ubuf[0], alignmask + 1);
->  	int err;
->  
-> +	if (WARN_ON(buf + unaligned_len > ubuf + sizeof(ubuf)))
-> +		return -EINVAL;
-> +
+bitmap API (include/linux/bitmap.h) has 'bitmap' prefix for its methods.
 
-How is 'ubuf' guaranteed to be large enough?  You removed the __aligned
-attribute, so 'ubuf' can have any alignment.  So the aligned pointer 'buf' may
-be as high as '&ubuf[alignmask]'.  Then, up to 'alignmask' bytes of data will be
-copied into 'buf'... resulting in up to '2 * alignmask' bytes needed in 'ubuf'.
-But you've only guaranteed 'alignmask + 1' bytes.
+On the other hand DM bitmap API is special case.
+Adding 'dm' prefix to it to avoid potential name space collision.
 
->  	if (unaligned_len > len)
->  		unaligned_len = len;
->  
-> @@ -124,11 +119,13 @@ static int shash_final_unaligned(struct shash_desc *desc, u8 *out)
->  	unsigned long alignmask = crypto_shash_alignmask(tfm);
->  	struct shash_alg *shash = crypto_shash_alg(tfm);
->  	unsigned int ds = crypto_shash_digestsize(tfm);
-> -	u8 ubuf[shash_align_buffer_size(ds, alignmask)]
-> -		__aligned_largest;
-> +	u8 ubuf[SHASH_MAX_DIGESTSIZE];
->  	u8 *buf = PTR_ALIGN(&ubuf[0], alignmask + 1);
->  	int err;
->  
-> +	if (WARN_ON(buf + ds > ubuf + sizeof(ubuf)))
-> +		return -EINVAL;
-> +
+No functional changes intended.
 
-Similar problem here.  Wouldn't 'ubuf' need to be of size 'alignmask + ds'?
+Suggested-by: Mike Snitzer <snitzer@redhat.com>
+Signed-off-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+---
+ .../md/persistent-data/dm-space-map-common.c  | 20 +++++++++----------
+ 1 file changed, 10 insertions(+), 10 deletions(-)
 
->  	err = shash->final(desc, buf);
->  	if (err)
->  		goto out;
-> diff --git a/include/linux/compiler-gcc.h b/include/linux/compiler-gcc.h
-> index f1a7492a5cc8..1f1cdef36a82 100644
-> --- a/include/linux/compiler-gcc.h
-> +++ b/include/linux/compiler-gcc.h
-> @@ -125,7 +125,6 @@
->   */
->  #define __pure			__attribute__((pure))
->  #define __aligned(x)		__attribute__((aligned(x)))
-> -#define __aligned_largest	__attribute__((aligned))
->  #define __printf(a, b)		__attribute__((format(printf, a, b)))
->  #define __scanf(a, b)		__attribute__((format(scanf, a, b)))
->  #define __attribute_const__	__attribute__((__const__))
-> -- 
-> 2.17.1
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+diff --git a/drivers/md/persistent-data/dm-space-map-common.c b/drivers/md/persistent-data/dm-space-map-common.c
+index 829b4ce057d8..0a3b8ae4a29c 100644
+--- a/drivers/md/persistent-data/dm-space-map-common.c
++++ b/drivers/md/persistent-data/dm-space-map-common.c
+@@ -69,9 +69,9 @@ static struct dm_block_validator index_validator = {
+  */
+ #define BITMAP_CSUM_XOR 240779
+ 
+-static void bitmap_prepare_for_write(struct dm_block_validator *v,
+-				     struct dm_block *b,
+-				     size_t block_size)
++static void dm_bitmap_prepare_for_write(struct dm_block_validator *v,
++					struct dm_block *b,
++					size_t block_size)
+ {
+ 	struct disk_bitmap_header *disk_header = dm_block_data(b);
+ 
+@@ -81,9 +81,9 @@ static void bitmap_prepare_for_write(struct dm_block_validator *v,
+ 						       BITMAP_CSUM_XOR));
+ }
+ 
+-static int bitmap_check(struct dm_block_validator *v,
+-			struct dm_block *b,
+-			size_t block_size)
++static int dm_bitmap_check(struct dm_block_validator *v,
++			   struct dm_block *b,
++			   size_t block_size)
+ {
+ 	struct disk_bitmap_header *disk_header = dm_block_data(b);
+ 	__le32 csum_disk;
+@@ -108,8 +108,8 @@ static int bitmap_check(struct dm_block_validator *v,
+ 
+ static struct dm_block_validator dm_sm_bitmap_validator = {
+ 	.name = "sm_bitmap",
+-	.prepare_for_write = bitmap_prepare_for_write,
+-	.check = bitmap_check
++	.prepare_for_write = dm_bitmap_prepare_for_write,
++	.check = dm_bitmap_check,
+ };
+ 
+ /*----------------------------------------------------------------*/
+@@ -124,7 +124,7 @@ static void *dm_bitmap_data(struct dm_block *b)
+ 
+ #define WORD_MASK_HIGH 0xAAAAAAAAAAAAAAAAULL
+ 
+-static unsigned bitmap_word_used(void *addr, unsigned b)
++static unsigned dm_bitmap_word_used(void *addr, unsigned b)
+ {
+ 	__le64 *words_le = addr;
+ 	__le64 *w_le = words_le + (b >> ENTRIES_SHIFT);
+@@ -170,7 +170,7 @@ static int sm_find_free(void *addr, unsigned begin, unsigned end,
+ {
+ 	while (begin < end) {
+ 		if (!(begin & (ENTRIES_PER_WORD - 1)) &&
+-		    bitmap_word_used(addr, begin)) {
++		    dm_bitmap_word_used(addr, begin)) {
+ 			begin += ENTRIES_PER_WORD;
+ 			continue;
+ 		}
+-- 
+2.18.0
