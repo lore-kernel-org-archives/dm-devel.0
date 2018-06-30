@@ -1,8 +1,8 @@
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: add directio path_checker for
-	DASD devices
-Date: Sun,  1 Jul 2018 00:50:01 +0200
-Message-ID: <20180630225001.15354-1-xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: add info about how to enable
+	ALUA in ONTAP
+Date: Sun,  1 Jul 2018 01:02:55 +0200
+Message-ID: <20180630230255.15709-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -19,35 +19,25 @@ Errors-To: dm-devel-bounces@redhat.com
 Cc: DM-DEV ML <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-tur(default) is only for SCSI devices.
-
-CC: Hannes Reinecke <hare@suse.de>
+Cc: Martin George <marting@netapp.com>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: DM-DEV ML <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 2 ++
- 1 file changed, 2 insertions(+)
+ README.alua | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 8499c2f..f012dea 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -625,6 +625,7 @@ static struct hwentry default_hw[] = {
- 		.uid_attribute = "ID_UID",
- 		.no_path_retry = NO_PATH_RETRY_QUEUE,
- 		.pgpolicy      = MULTIBUS,
-+		.checker_name  = DIRECTIO,
- 	},
- 	{
- 		/* DS6000/DS8000 DASD FBA */
-@@ -634,6 +635,7 @@ static struct hwentry default_hw[] = {
- 		.uid_attribute = "ID_UID",
- 		.no_path_retry = NO_PATH_RETRY_QUEUE,
- 		.pgpolicy      = MULTIBUS,
-+		.checker_name  = DIRECTIO,
- 	},
- 	{
- 		/* Power RAID */
+diff --git a/README.alua b/README.alua
+index e39debd..340ccba 100644
+--- a/README.alua
++++ b/README.alua
+@@ -15,3 +15,7 @@ To enable ALUA, the following options should be changed:
+ 
+ - LSI/Engenio/NetApp RDAC class, as NetApp SANtricity E/EF Series and OEM arrays:
+    "Select operating system:" should be changed to "Linux DM-MP (Kernel 3.10 or later)".
++
++- NetApp ONTAP:
++   To check ALUA state: "igroup show -v <igroup_name>", and to enable ALUA:
++   "igroup set <igroup_name> alua yes".
 -- 
 2.17.1
