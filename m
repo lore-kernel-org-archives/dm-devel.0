@@ -1,63 +1,53 @@
-From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-Subject: [PATCH v4 4/5] Input: gpio-keys - Switch to bitmap_zalloc()
-Date: Sat, 30 Jun 2018 23:17:49 +0300
-Message-ID: <20180630201750.2588-5-andriy.shevchenko@linux.intel.com>
-References: <20180630201750.2588-1-andriy.shevchenko@linux.intel.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180630201750.2588-1-andriy.shevchenko@linux.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, Dmitry Torokhov <dmitry.torokhov@gmail.com>, linux-input@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Yury Norov <ynorov@caviumnetworks.com>, linux-kernel@vger.kernel.org, mika.westerberg@linux.intel.com, Joe Perches <joe@perches.com>
-Cc: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: add directio path_checker for
+	DASD devices
+Date: Sun,  1 Jul 2018 00:50:01 +0200
+Message-ID: <20180630225001.15354-1-xose.vazquez@gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Cc: DM-DEV ML <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-Switch to bitmap_zalloc() to show clearly what we are allocating.
-Besides that it returns pointer of bitmap type instead of opaque void *.
+tur(default) is only for SCSI devices.
 
-Acked-by: Dmitry Torokhov <dmitry.torokhov@gmail.com>
-Signed-off-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+CC: Hannes Reinecke <hare@suse.de>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: DM-DEV ML <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- drivers/input/keyboard/gpio_keys.c | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+ libmultipath/hwtable.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/drivers/input/keyboard/gpio_keys.c b/drivers/input/keyboard/gpio_keys.c
-index 052e37675086..492a971b95b5 100644
---- a/drivers/input/keyboard/gpio_keys.c
-+++ b/drivers/input/keyboard/gpio_keys.c
-@@ -196,7 +196,7 @@ static ssize_t gpio_keys_attr_show_helper(struct gpio_keys_drvdata *ddata,
- 	ssize_t ret;
- 	int i;
- 
--	bits = kcalloc(BITS_TO_LONGS(n_events), sizeof(*bits), GFP_KERNEL);
-+	bits = bitmap_zalloc(n_events, GFP_KERNEL);
- 	if (!bits)
- 		return -ENOMEM;
- 
-@@ -216,7 +216,7 @@ static ssize_t gpio_keys_attr_show_helper(struct gpio_keys_drvdata *ddata,
- 	buf[ret++] = '\n';
- 	buf[ret] = '\0';
- 
--	kfree(bits);
-+	bitmap_free(bits);
- 
- 	return ret;
- }
-@@ -240,7 +240,7 @@ static ssize_t gpio_keys_attr_store_helper(struct gpio_keys_drvdata *ddata,
- 	ssize_t error;
- 	int i;
- 
--	bits = kcalloc(BITS_TO_LONGS(n_events), sizeof(*bits), GFP_KERNEL);
-+	bits = bitmap_zalloc(n_events, GFP_KERNEL);
- 	if (!bits)
- 		return -ENOMEM;
- 
-@@ -284,7 +284,7 @@ static ssize_t gpio_keys_attr_store_helper(struct gpio_keys_drvdata *ddata,
- 	mutex_unlock(&ddata->disable_lock);
- 
- out:
--	kfree(bits);
-+	bitmap_free(bits);
- 	return error;
- }
- 
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index 8499c2f..f012dea 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -625,6 +625,7 @@ static struct hwentry default_hw[] = {
+ 		.uid_attribute = "ID_UID",
+ 		.no_path_retry = NO_PATH_RETRY_QUEUE,
+ 		.pgpolicy      = MULTIBUS,
++		.checker_name  = DIRECTIO,
+ 	},
+ 	{
+ 		/* DS6000/DS8000 DASD FBA */
+@@ -634,6 +635,7 @@ static struct hwentry default_hw[] = {
+ 		.uid_attribute = "ID_UID",
+ 		.no_path_retry = NO_PATH_RETRY_QUEUE,
+ 		.pgpolicy      = MULTIBUS,
++		.checker_name  = DIRECTIO,
+ 	},
+ 	{
+ 		/* Power RAID */
 -- 
-2.18.0
+2.17.1
