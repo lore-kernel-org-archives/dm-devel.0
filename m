@@ -1,163 +1,63 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH] multipath-tools: reformat maintainer info
-Date: Sun,  1 Jul 2018 17:55:38 +0200
-Message-ID: <20180701155538.5300-1-xose.vazquez@gmail.com>
+From: Kees Cook <keescook@chromium.org>
+Subject: Re: [dm-devel] [PATCH v3 9/9] crypto: shash: Remove VLA usage in
+ unaligned hashing
+Date: Sun, 1 Jul 2018 10:04:59 -0700
+Message-ID: <CAGXu5jJ9eqETPdrvUZrV9bhnNQA6LwBuk+V5MeQrAS_M=_VX+Q@mail.gmail.com>
+References: <20180629002843.31095-1-keescook@chromium.org> <20180629002843.31095-10-keescook@chromium.org>
+ <20180630070301.GA1706@sol.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Cc: DM-DEV ML <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180630070301.GA1706@sol.localdomain>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Eric Biggers <ebiggers3@gmail.com>
+Cc: Herbert Xu <herbert@gondor.apana.org.au>, Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Arnd Bergmann <arnd@arndb.de>, Eric Biggers <ebiggers@google.com>, Mike Snitzer <snitzer@redhat.com>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, qat-linux@intel.com, LKML <linux-kernel@vger.kernel.org>, dm-devel@redhat.com, linux-crypto <linux-crypto@vger.kernel.org>, Lars Persson <larper@axis.com>, Tim Chen <tim.c.chen@linux.intel.com>, "David S. Miller" <davem@davemloft.net>, Alasdair Kergon <agk@redhat.com>, Rabin Vincent <rabinv@axis.com>
 List-Id: dm-devel.ids
 
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: DM-DEV ML <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- libmultipath/hwtable.c | 39 +++++++++++++--------------------------
- 1 file changed, 13 insertions(+), 26 deletions(-)
+On Sat, Jun 30, 2018 at 12:03 AM, Eric Biggers <ebiggers3@gmail.com> wrote:
+> On Thu, Jun 28, 2018 at 05:28:43PM -0700, Kees Cook wrote:
+>> @@ -88,11 +81,13 @@ static int shash_update_unaligned(struct shash_desc *desc, const u8 *data,
+>>       unsigned long alignmask = crypto_shash_alignmask(tfm);
+>>       unsigned int unaligned_len = alignmask + 1 -
+>>                                    ((unsigned long)data & alignmask);
+>> -     u8 ubuf[shash_align_buffer_size(unaligned_len, alignmask)]
+>> -             __aligned_largest;
+>> +     u8 ubuf[MAX_ALGAPI_ALIGNMASK + 1];
+>>       u8 *buf = PTR_ALIGN(&ubuf[0], alignmask + 1);
+>>       int err;
+>>
+>> +     if (WARN_ON(buf + unaligned_len > ubuf + sizeof(ubuf)))
+>> +             return -EINVAL;
+>> +
+>
+> How is 'ubuf' guaranteed to be large enough?  You removed the __aligned
+> attribute, so 'ubuf' can have any alignment.  So the aligned pointer 'buf' may
+> be as high as '&ubuf[alignmask]'.  Then, up to 'alignmask' bytes of data will be
+> copied into 'buf'... resulting in up to '2 * alignmask' bytes needed in 'ubuf'.
+> But you've only guaranteed 'alignmask + 1' bytes.
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index f012dea..478bf16 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -38,8 +38,7 @@
- 	 *
- 	 * COMPANY_NAME
- 	 *
--	 * Maintainer : XXX
--	 * Mail : XXX
-+	 * Maintainer: XXX <email>
- 	 */
- 	{
- 		/* Product Name */
-@@ -96,8 +95,7 @@ static struct hwentry default_hw[] = {
- 	/*
- 	 * Apple
- 	 *
--	 * Maintainer : Shyam Sundar
--	 * Mail : g.shyamsundar@yahoo.co.in
-+	 * Maintainer: Shyam Sundar <g.shyamsundar@yahoo.co.in>
- 	 */
- 	{
- 		/* Xserve RAID */
-@@ -342,8 +340,7 @@ static struct hwentry default_hw[] = {
- 		/*
- 		 * SC Series, formerly Compellent
- 		 *
--		 * Maintainer : Sean McGinnis
--		 * Mail : sean_mcginnis@dell.com
-+		 * Maintainer: Sean McGinnis <sean_mcginnis@dell.com>
- 		 */
- 		.vendor        = "COMPELNT",
- 		.product       = "Compellent Vol",
-@@ -406,8 +403,7 @@ static struct hwentry default_hw[] = {
- 	/*
- 	 * Hitachi Vantara
- 	 *
--	 * Maintainer : Matthias Rudolph
--	 * Mail : Matthias.Rudolph@hitachivantara.com
-+	 * Maintainer: Matthias Rudolph <Matthias.Rudolph@hitachivantara.com>
- 	 */
- 	{
- 		/* USP-V, HUS VM, VSP, VSP G1X00 and VSP GX00 families / HP XP */
-@@ -433,8 +429,7 @@ static struct hwentry default_hw[] = {
- 	/*
- 	 * IBM
- 	 *
--	 * Maintainer : Hannes Reinecke
--	 * Mail : hare@suse.de
-+	 * Maintainer: Hannes Reinecke <hare@suse.de>
- 	 */
- 	{
- 		/* ProFibre 4000R */
-@@ -681,8 +676,7 @@ static struct hwentry default_hw[] = {
- 		/*
- 		 * IBM Power Virtual SCSI Devices
- 		 *
--		 * Maintainer : Brian King
--		 * Mail : brking@linux.vnet.ibm.com
-+		 * Maintainer: Brian King <brking@linux.vnet.ibm.com>
- 		 */
- 	{
- 		/* AIX VDASD */
-@@ -714,8 +708,7 @@ static struct hwentry default_hw[] = {
- 		/*
- 		 * ONTAP family
- 		 *
--		 * Maintainer : Martin George
--		 * Mail : marting@netapp.com
-+		 * Maintainer: Martin George <marting@netapp.com>
- 		 */
- 		.vendor        = "NETAPP",
- 		.product       = "LUN",
-@@ -731,8 +724,7 @@ static struct hwentry default_hw[] = {
- 		/*
- 		 * SANtricity(RDAC) family
- 		 *
--		 * Maintainer : NetApp RDAC team
--		 * Mail : ng-eseries-upstream-maintainers@netapp.com
-+		 * Maintainer: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>
- 		 */
- 		.vendor        = "(NETAPP|LSI|ENGENIO)",
- 		.product       = "INF-01-00",
-@@ -749,8 +741,7 @@ static struct hwentry default_hw[] = {
- 		/*
- 		 * SolidFir family
- 		 *
--		 * Maintainer : PJ Waskiewicz
--		 * Mail : pj.waskiewicz@netapp.com
-+		 * Maintainer: PJ Waskiewicz <pj.waskiewicz@netapp.com>
- 		 */
- 		.vendor        = "SolidFir",
- 		.product       = "SSD SAN",
-@@ -771,8 +762,7 @@ static struct hwentry default_hw[] = {
- 	/*
- 	 * Nexenta
- 	 *
--	 * Maintainer : Yacine Kheddache
--	 * Mail : yacine@alyseo.com
-+	 * Maintainer: Yacine Kheddache <yacine@alyseo.com>
- 	 */
- 	{
- 		/* COMSTAR */
-@@ -799,8 +789,7 @@ static struct hwentry default_hw[] = {
- 		/*
- 		 * Pillar Data / Oracle FS
- 		 *
--		 * Maintainer : Srinivasan Ramani
--		 * Mail : srinivas.ramani@oracle.com
-+		 * Maintainer: Srinivasan Ramani <srinivas.ramani@oracle.com>
- 		 */
- 	{
- 		/* Axiom */
-@@ -941,8 +930,7 @@ static struct hwentry default_hw[] = {
- 	/*
- 	 * Pivot3
- 	 *
--	 * Maintainer : Bart Brooks
--	 * Mail : bartb@pivot3.com
-+	 * Maintainer: Bart Brooks <bartb@pivot3.com>
- 	 */
- 	{
- 		/* Raige */
-@@ -1039,8 +1027,7 @@ static struct hwentry default_hw[] = {
- 	/*
- 	 * Infinidat
- 	 *
--	 * Maintainer: Arnon Yaari
--	 * Mail: arnony@infinidat.com
-+	 * Maintainer: Arnon Yaari <arnony@infinidat.com>
- 	 */
- 	{
- 		/* InfiniBox */
+Hm, good point. Adding __aligned(MAX_ALGAPI_ALIGNMASK + 1) looks to
+fix this, yes?
+
+Also, if __aligned() is used here, can't PTR_ALIGN() be dropped? (I
+think you pointed this out earlier.)
+
+Also, is "unaligned_len" being calculated correctly? Let's say
+alignmask is 63. If data is binary ...111111, then unaligned_len will
+be 64 - 63 == 1, which is fine: we copy 1 byte out, bump the address
+by 1, and we're happily aligned to ...000000. If data is ...000000,
+then unaligned_len will be 64. But it should be 0. Shouldn't this be:
+
+unsigned int unaligned_len;
+
+unaligned_len = (unsigned long)data & alignmask;
+if (unaligned_len)
+    unaligned_len = alignmask + 1 - unaligned_len;
+
+And then ubuf only needs to be MAX_ALGAPI_ALIGNMASK, without the +1?
+
+-Kees
+
 -- 
-2.17.1
+Kees Cook
+Pixel Security
