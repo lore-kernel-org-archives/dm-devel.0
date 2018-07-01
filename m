@@ -1,45 +1,33 @@
 From: Herbert Xu <herbert@gondor.apana.org.au>
-Subject: Re: [PATCH v2 11/11] crypto: skcipher: Remove VLA usage
- for SKCIPHER_REQUEST_ON_STACK
-Date: Sun, 1 Jul 2018 14:24:19 +0800
-Message-ID: <20180701062419.3opt7mnljf76hi4k@gondor.apana.org.au>
-References: <20180625211026.15819-1-keescook@chromium.org>
-	<20180625211026.15819-12-keescook@chromium.org>
-	<20180626092041.mxfg4lxcvxfivzc2@gondor.apana.org.au>
-	<CAGXu5jKYb-0NNvOcN79hzqU7O6vCFhMTBDGBL8Knuoc-YHamPg@mail.gmail.com>
-	<20180627143622.ntksjxsymo4yw6dz@gondor.apana.org.au>
-	<CAGXu5jJ2Z=YP+fNsvy+6a_BpC1ibZf6tOzZuPHk=Qx1qNVvOZw@mail.gmail.com>
-	<20180627222749.xa5333caq5vaa7st@gondor.apana.org.au>
-	<CAGXu5jKas=OyJPsrMthxjEykG=FkHDW84dO4bKGpj-50JjUYwQ@mail.gmail.com>
+Subject: Re: [PATCH v3 4/9] dm integrity: Remove VLA usage
+Date: Sun, 1 Jul 2018 14:29:14 +0800
+Message-ID: <20180701062914.nihtpl5ekf7nytat@gondor.apana.org.au>
+References: <20180629002843.31095-1-keescook@chromium.org>
+ <20180629002843.31095-5-keescook@chromium.org>
+ <CAK8P3a3F2y8B3a5zhYyG2KSMmSx5L3J3C_0sV-Csa0zPOzYJhA@mail.gmail.com>
+ <CAGXu5j+MLs-Jj7VCcpKS8Yo6MFAf=Nyf3jYsCbBoXnhtEvn4+g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAGXu5jKas=OyJPsrMthxjEykG=FkHDW84dO4bKGpj-50JjUYwQ@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+In-Reply-To: <CAGXu5j+MLs-Jj7VCcpKS8Yo6MFAf=Nyf3jYsCbBoXnhtEvn4+g@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
 To: Kees Cook <keescook@chromium.org>
-Cc: Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Mike Snitzer <snitzer@redhat.com>, Arnd Bergmann <arnd@arndb.de>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, Eric Biggers <ebiggers@google.com>, qat-linux@intel.com, LKML <linux-kernel@vger.kernel.org>, dm-devel@redhat.com, linux-crypto <linux-crypto@vger.kernel.org>, Lars Persson <larper@axis.com>, Tim Chen <tim.c.chen@linux.intel.com>, "David S. Miller" <davem@davemloft.net>, Alasdair Kergon <agk@redhat.com>, Rabin Vincent <rabinv@axis.com>
+Cc: Arnd Bergmann <arnd@arndb.de>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, Eric Biggers <ebiggers@google.com>, Alasdair Kergon <agk@redhat.com>, Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Lars Persson <larper@axis.com>, Mike Snitzer <snitzer@redhat.com>, Rabin Vincent <rabinv@axis.com>, Tim Chen <tim.c.chen@linux.intel.com>, "David S. Miller" <davem@davemloft.net>, "open list:HARDWARE RANDOM NUMBER GENERATOR CORE" <linux-crypto@vger.kernel.org>, qat-linux@intel.com, dm-devel@redhat.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 List-Id: dm-devel.ids
 
-On Wed, Jun 27, 2018 at 05:10:05PM -0700, Kees Cook wrote:
+On Fri, Jun 29, 2018 at 02:56:37PM -0700, Kees Cook wrote:
 >
-> In both cases here, what is "cipher"? i.e. what ciphers could lrw be
-> wrapping, and what ciphers could cts be wrapping, so that I can
-> examine the blocksizes, etc?
+> This conversion was following the existing check (PAGE_SIZE / 8), and
+> not via an analysis of alg.digestsize users. Let me double-check. For
+> predefined stuff, it looks like the largest is:
+> 
+> SKEIN1024_DIGEST_BIT_SIZE/8 == 128
 
-A cipher is a simple cipher like aes that operates on a single
-block.
+This should be removed.  We shouldn't allow generic or new crypto
+algorithms in staging.
 
-Cheers,
+Thanks,
 -- 
 Email: Herbert Xu <herbert@gondor.apana.org.au>
 Home Page: http://gondor.apana.org.au/~herbert/
