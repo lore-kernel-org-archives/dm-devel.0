@@ -1,34 +1,163 @@
-From: Herbert Xu <herbert@gondor.apana.org.au>
-Subject: Re: [PATCH v3 4/9] dm integrity: Remove VLA usage
-Date: Sun, 1 Jul 2018 14:29:14 +0800
-Message-ID: <20180701062914.nihtpl5ekf7nytat@gondor.apana.org.au>
-References: <20180629002843.31095-1-keescook@chromium.org>
- <20180629002843.31095-5-keescook@chromium.org>
- <CAK8P3a3F2y8B3a5zhYyG2KSMmSx5L3J3C_0sV-Csa0zPOzYJhA@mail.gmail.com>
- <CAGXu5j+MLs-Jj7VCcpKS8Yo6MFAf=Nyf3jYsCbBoXnhtEvn4+g@mail.gmail.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: reformat maintainer info
+Date: Sun,  1 Jul 2018 17:55:38 +0200
+Message-ID: <20180701155538.5300-1-xose.vazquez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAGXu5j+MLs-Jj7VCcpKS8Yo6MFAf=Nyf3jYsCbBoXnhtEvn4+g@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>
-Cc: Arnd Bergmann <arnd@arndb.de>, "Gustavo A. R. Silva" <gustavo@embeddedor.com>, Eric Biggers <ebiggers@google.com>, Alasdair Kergon <agk@redhat.com>, Giovanni Cabiddu <giovanni.cabiddu@intel.com>, Lars Persson <larper@axis.com>, Mike Snitzer <snitzer@redhat.com>, Rabin Vincent <rabinv@axis.com>, Tim Chen <tim.c.chen@linux.intel.com>, "David S. Miller" <davem@davemloft.net>, "open list:HARDWARE RANDOM NUMBER GENERATOR CORE" <linux-crypto@vger.kernel.org>, qat-linux@intel.com, dm-devel@redhat.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Cc: DM-DEV ML <dm-devel@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
 List-Id: dm-devel.ids
 
-On Fri, Jun 29, 2018 at 02:56:37PM -0700, Kees Cook wrote:
->
-> This conversion was following the existing check (PAGE_SIZE / 8), and
-> not via an analysis of alg.digestsize users. Let me double-check. For
-> predefined stuff, it looks like the largest is:
-> 
-> SKEIN1024_DIGEST_BIT_SIZE/8 == 128
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: DM-DEV ML <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ libmultipath/hwtable.c | 39 +++++++++++++--------------------------
+ 1 file changed, 13 insertions(+), 26 deletions(-)
 
-This should be removed.  We shouldn't allow generic or new crypto
-algorithms in staging.
-
-Thanks,
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index f012dea..478bf16 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -38,8 +38,7 @@
+ 	 *
+ 	 * COMPANY_NAME
+ 	 *
+-	 * Maintainer : XXX
+-	 * Mail : XXX
++	 * Maintainer: XXX <email>
+ 	 */
+ 	{
+ 		/* Product Name */
+@@ -96,8 +95,7 @@ static struct hwentry default_hw[] = {
+ 	/*
+ 	 * Apple
+ 	 *
+-	 * Maintainer : Shyam Sundar
+-	 * Mail : g.shyamsundar@yahoo.co.in
++	 * Maintainer: Shyam Sundar <g.shyamsundar@yahoo.co.in>
+ 	 */
+ 	{
+ 		/* Xserve RAID */
+@@ -342,8 +340,7 @@ static struct hwentry default_hw[] = {
+ 		/*
+ 		 * SC Series, formerly Compellent
+ 		 *
+-		 * Maintainer : Sean McGinnis
+-		 * Mail : sean_mcginnis@dell.com
++		 * Maintainer: Sean McGinnis <sean_mcginnis@dell.com>
+ 		 */
+ 		.vendor        = "COMPELNT",
+ 		.product       = "Compellent Vol",
+@@ -406,8 +403,7 @@ static struct hwentry default_hw[] = {
+ 	/*
+ 	 * Hitachi Vantara
+ 	 *
+-	 * Maintainer : Matthias Rudolph
+-	 * Mail : Matthias.Rudolph@hitachivantara.com
++	 * Maintainer: Matthias Rudolph <Matthias.Rudolph@hitachivantara.com>
+ 	 */
+ 	{
+ 		/* USP-V, HUS VM, VSP, VSP G1X00 and VSP GX00 families / HP XP */
+@@ -433,8 +429,7 @@ static struct hwentry default_hw[] = {
+ 	/*
+ 	 * IBM
+ 	 *
+-	 * Maintainer : Hannes Reinecke
+-	 * Mail : hare@suse.de
++	 * Maintainer: Hannes Reinecke <hare@suse.de>
+ 	 */
+ 	{
+ 		/* ProFibre 4000R */
+@@ -681,8 +676,7 @@ static struct hwentry default_hw[] = {
+ 		/*
+ 		 * IBM Power Virtual SCSI Devices
+ 		 *
+-		 * Maintainer : Brian King
+-		 * Mail : brking@linux.vnet.ibm.com
++		 * Maintainer: Brian King <brking@linux.vnet.ibm.com>
+ 		 */
+ 	{
+ 		/* AIX VDASD */
+@@ -714,8 +708,7 @@ static struct hwentry default_hw[] = {
+ 		/*
+ 		 * ONTAP family
+ 		 *
+-		 * Maintainer : Martin George
+-		 * Mail : marting@netapp.com
++		 * Maintainer: Martin George <marting@netapp.com>
+ 		 */
+ 		.vendor        = "NETAPP",
+ 		.product       = "LUN",
+@@ -731,8 +724,7 @@ static struct hwentry default_hw[] = {
+ 		/*
+ 		 * SANtricity(RDAC) family
+ 		 *
+-		 * Maintainer : NetApp RDAC team
+-		 * Mail : ng-eseries-upstream-maintainers@netapp.com
++		 * Maintainer: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>
+ 		 */
+ 		.vendor        = "(NETAPP|LSI|ENGENIO)",
+ 		.product       = "INF-01-00",
+@@ -749,8 +741,7 @@ static struct hwentry default_hw[] = {
+ 		/*
+ 		 * SolidFir family
+ 		 *
+-		 * Maintainer : PJ Waskiewicz
+-		 * Mail : pj.waskiewicz@netapp.com
++		 * Maintainer: PJ Waskiewicz <pj.waskiewicz@netapp.com>
+ 		 */
+ 		.vendor        = "SolidFir",
+ 		.product       = "SSD SAN",
+@@ -771,8 +762,7 @@ static struct hwentry default_hw[] = {
+ 	/*
+ 	 * Nexenta
+ 	 *
+-	 * Maintainer : Yacine Kheddache
+-	 * Mail : yacine@alyseo.com
++	 * Maintainer: Yacine Kheddache <yacine@alyseo.com>
+ 	 */
+ 	{
+ 		/* COMSTAR */
+@@ -799,8 +789,7 @@ static struct hwentry default_hw[] = {
+ 		/*
+ 		 * Pillar Data / Oracle FS
+ 		 *
+-		 * Maintainer : Srinivasan Ramani
+-		 * Mail : srinivas.ramani@oracle.com
++		 * Maintainer: Srinivasan Ramani <srinivas.ramani@oracle.com>
+ 		 */
+ 	{
+ 		/* Axiom */
+@@ -941,8 +930,7 @@ static struct hwentry default_hw[] = {
+ 	/*
+ 	 * Pivot3
+ 	 *
+-	 * Maintainer : Bart Brooks
+-	 * Mail : bartb@pivot3.com
++	 * Maintainer: Bart Brooks <bartb@pivot3.com>
+ 	 */
+ 	{
+ 		/* Raige */
+@@ -1039,8 +1027,7 @@ static struct hwentry default_hw[] = {
+ 	/*
+ 	 * Infinidat
+ 	 *
+-	 * Maintainer: Arnon Yaari
+-	 * Mail: arnony@infinidat.com
++	 * Maintainer: Arnon Yaari <arnony@infinidat.com>
+ 	 */
+ 	{
+ 		/* InfiniBox */
 -- 
-Email: Herbert Xu <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+2.17.1
