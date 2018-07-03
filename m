@@ -1,8 +1,7 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] block: fix infinite loop if the device loses
- discard capability
-Date: Tue, 3 Jul 2018 13:34:22 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1807031332250.22443@file01.intranet.prod.int.rdu2.redhat.com>
+Subject: [PATCH] block: make discard killable
+Date: Tue, 3 Jul 2018 13:35:49 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1807031334400.22443@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -20,47 +19,102 @@ To: Axboe <axboe@kernel.dk>
 Cc: linux-block@vger.kernel.org, Mike Snitzer <msnitzer@redhat.com>, dm-devel@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
-If __blkdev_issue_discard is in progress and a device mapper device is
-reloaded with a table that doesn't support discard,
-q->limits.max_discard_sectors is set to zero. This results in infinite
-loop in __blkdev_issue_discard.
+Discarding can take very long time for some device mapper targets, this
+patch makes it possible to kill a process that issues the BLKDISCARD
+ioctl.
 
-This patch checks if max_discard_sectors is zero and aborts with
--EOPNOTSUPP.
+Note that some filesystems call blkdev_issue_discard or
+__blkdev_issue_discard directly, they may not be prepared to handle the
+failure, so this patch introduces a flag BLKDEV_DISCARD_KILLABLE that is
+only set when the discard is initiated by an ioctl.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Tested-by: Zdenek Kabelac <mpatocka@redhat.com>
-Cc: stable@vger.kernel.org
 
 ---
- block/blk-lib.c |   10 ++++++++++
- 1 file changed, 10 insertions(+)
+ block/blk-lib.c        |   13 +++++++++++--
+ block/ioctl.c          |    4 ++--
+ include/linux/blkdev.h |    1 +
+ 3 files changed, 14 insertions(+), 4 deletions(-)
 
 Index: linux-2.6/block/blk-lib.c
 ===================================================================
---- linux-2.6.orig/block/blk-lib.c	2018-06-18 01:08:49.500000000 +0200
-+++ linux-2.6/block/blk-lib.c	2018-06-29 20:09:27.670000000 +0200
-@@ -68,6 +68,8 @@ int __blkdev_issue_discard(struct block_
+--- linux-2.6.orig/block/blk-lib.c	2018-06-29 20:10:55.540000000 +0200
++++ linux-2.6/block/blk-lib.c	2018-06-29 23:12:24.520000000 +0200
+@@ -7,6 +7,7 @@
+ #include <linux/bio.h>
+ #include <linux/blkdev.h>
+ #include <linux/scatterlist.h>
++#include <linux/sched/signal.h>
+ 
+ #include "blk.h"
+ 
+@@ -33,6 +34,7 @@ int __blkdev_issue_discard(struct block_
+ 	unsigned int op;
+ 	int alignment;
+ 	sector_t bs_mask;
++	int r;
+ 
+ 	if (!q)
+ 		return -ENXIO;
+@@ -68,8 +70,10 @@ int __blkdev_issue_discard(struct block_
  		 */
  		req_sects = min_t(sector_t, nr_sects,
  					q->limits.max_discard_sectors);
-+		if (!req_sects)
-+			goto fail;
+-		if (!req_sects)
++		if (!req_sects) {
++			r = -EOPNOTSUPP;
+ 			goto fail;
++		}
  		if (req_sects > UINT_MAX >> 9)
  			req_sects = UINT_MAX >> 9;
  
-@@ -105,6 +107,14 @@ int __blkdev_issue_discard(struct block_
+@@ -96,6 +100,11 @@ int __blkdev_issue_discard(struct block_
+ 		nr_sects -= req_sects;
+ 		sector = end_sect;
  
- 	*biop = bio;
- 	return 0;
++		if (flags & BLKDEV_DISCARD_KILLABLE && fatal_signal_pending(current)) {
++			r = -EINTR;
++			goto fail;
++		}
 +
-+fail:
-+	if (bio) {
-+		submit_bio_wait(bio);
-+		bio_put(bio);
-+	}
-+	*biop = NULL;
-+	return -EOPNOTSUPP;
+ 		/*
+ 		 * We can loop for a long time in here, if someone does
+ 		 * full device discards (like mkfs). Be nice and allow
+@@ -114,7 +123,7 @@ fail:
+ 		bio_put(bio);
+ 	}
+ 	*biop = NULL;
+-	return -EOPNOTSUPP;
++	return r;
  }
  EXPORT_SYMBOL(__blkdev_issue_discard);
  
+Index: linux-2.6/block/ioctl.c
+===================================================================
+--- linux-2.6.orig/block/ioctl.c	2018-05-31 18:04:38.068000000 +0200
++++ linux-2.6/block/ioctl.c	2018-06-29 23:06:07.180000000 +0200
+@@ -522,10 +522,10 @@ int blkdev_ioctl(struct block_device *bd
+ 	case BLKROSET:
+ 		return blkdev_roset(bdev, mode, cmd, arg);
+ 	case BLKDISCARD:
+-		return blk_ioctl_discard(bdev, mode, arg, 0);
++		return blk_ioctl_discard(bdev, mode, arg, BLKDEV_DISCARD_KILLABLE);
+ 	case BLKSECDISCARD:
+ 		return blk_ioctl_discard(bdev, mode, arg,
+-				BLKDEV_DISCARD_SECURE);
++				BLKDEV_DISCARD_SECURE | BLKDEV_DISCARD_KILLABLE);
+ 	case BLKZEROOUT:
+ 		return blk_ioctl_zeroout(bdev, mode, arg);
+ 	case BLKREPORTZONE:
+Index: linux-2.6/include/linux/blkdev.h
+===================================================================
+--- linux-2.6.orig/include/linux/blkdev.h	2018-06-18 01:09:22.040000000 +0200
++++ linux-2.6/include/linux/blkdev.h	2018-06-29 23:09:50.010000000 +0200
+@@ -1390,6 +1390,7 @@ extern int blkdev_issue_write_same(struc
+ 		sector_t nr_sects, gfp_t gfp_mask, struct page *page);
+ 
+ #define BLKDEV_DISCARD_SECURE	(1 << 0)	/* issue a secure erase */
++#define BLKDEV_DISCARD_KILLABLE	(1 << 1)	/* allow killing the process */
+ 
+ extern int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
+ 		sector_t nr_sects, gfp_t gfp_mask, unsigned long flags);
