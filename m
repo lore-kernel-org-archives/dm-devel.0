@@ -1,17 +1,15 @@
 From: Milan Broz <gmazyland@gmail.com>
-Subject: Re: [PATCH 9/9] dm-integrity: recalculate checksums
-Date: Tue, 3 Jul 2018 16:53:33 +0200
-Message-ID: <e494f8d6-1b82-c346-c375-dc2b8dbd15d2@gmail.com>
-References: <20180606153440.580394316@debian.vm>
-	<30799a62-b825-4ce4-7b10-044ce8e030da@redhat.com>
-	<7af22076-53fe-67d0-fa6e-09acbb145f36@gmail.com>
-	<alpine.LRH.2.02.1806271046370.17497@file01.intranet.prod.int.rdu2.redhat.com>
-	<20180703132115.GA28076@redhat.com>
+Subject: Re: [dm-crypt] dm-integrity standalone - lack of metadata
+Date: Tue, 3 Jul 2018 17:02:57 +0200
+Message-ID: <056a42e5-d673-1a91-49e7-18fe9ce2ef7c@gmail.com>
+References: <20180624095348.GA819@nn.nn>
+	<c2d97932-69f0-20aa-e66a-fd6be5b5eda3@gmail.com>
+	<alpine.LRH.2.02.1806251403500.26995@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20180703132115.GA28076@redhat.com>
+In-Reply-To: <alpine.LRH.2.02.1806251403500.26995@file01.intranet.prod.int.rdu2.redhat.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -22,39 +20,49 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-crypt@saout.de, Harald Braumann <harry@unheit.net>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 07/03/2018 03:21 PM, Mike Snitzer wrote:
->>
->> Should we even have the possibility to stop recalculating?
->>
->> If the device was recalculating and we activate it without the 
->> "recalculate" flag, what should it do? If the user reads data that haven't 
->> been recalculated yet, we could:
->> 1. return an error
->> 2. ignore the non-recalculated checksum and return data
->> 3. continue with recalculating even if the flag "recalculate" is not present
->>
->> In my opinion, the option 3 is the best. Option 1 makes the device 
->> unreliable and option 2 makes the device silently lose the integrity 
->> protection.
+On 06/25/2018 08:05 PM, Mikulas Patocka wrote:
+> On Sun, 24 Jun 2018, Milan Broz wrote:
 > 
-> Yes, option 3.  But you could even error out on table load; though that
-> may be too unforgiving.. reality is userspace needs to account for
-> staying in recalculating mode until it is complete.
+>> (added cc to dm-devel annd Mikulas)
+>>
+>> Hi,
+>>
+>> On 06/24/2018 11:53 AM, Harald Braumann wrote:
+>>> Hi!
+>>>
+>>> I'm using the dm-integrity target standalone with crc32c for component
+>>> devices of a RAID. I don't use journaling, because the perfomance hit
+>>> is too big and I don't really need it in that case.
+>>>
+>>> I want to automatically activate these targets using udev
+>>> rules (see below). However, the superblock lacks some crucial
+>>> information:
+>>
+>>
+>> yes, I agree. The reason is that dm-integrity was in the first
+>> place designed for authenticated encryption (to store auth tags).
+>> Then additional metadata ia stored in LUKS2 header.
+>>
+>> For the rest I just I have not enough energy (and real-world use cases)
+>> to convince Mikulas that we need attributes below in superblock (as the dm-integrity
+>> code is written mostly by him).
+> 
+> You can write whatever you want to the end of the superblock. If 
+> kernelspace allocates superblock entries from the beginning and userspace 
+> allocates them from the end, they won't cross each other.
 
-I do not think table load error is the way to go.
+This is really hackish solution :)
 
-Can we activate dmintegrity read-only (for example with read-only backend device)
-that is not yet fully recalculated?
+I think the superblock should be either maintained inside kernel or in userspace.
 
-This can needed in some recovery scenarios... (But her we can use recovery mode).
+Or at least kernel superblock should define area reserved for userspace
+(IOW the area that kernel guarantees to be never overwritten by kernel driver).
 
-> But to do that they'd need to monitor (similar to how snapshot-merge
-> polls progress?)
-
-For veritysetup I will just add this to "status" command output.
+I really do not want to define any userspace-only attributes until there
+is some plan how (and if) to integrate plain dm-integrity devices.
 
 Milan
