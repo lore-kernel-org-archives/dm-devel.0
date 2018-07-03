@@ -1,16 +1,12 @@
-From: Milan Broz <gmazyland@gmail.com>
-Subject: Re: [dm-crypt] dm-integrity standalone - lack of metadata
-Date: Tue, 3 Jul 2018 17:02:57 +0200
-Message-ID: <056a42e5-d673-1a91-49e7-18fe9ce2ef7c@gmail.com>
-References: <20180624095348.GA819@nn.nn>
-	<c2d97932-69f0-20aa-e66a-fd6be5b5eda3@gmail.com>
-	<alpine.LRH.2.02.1806251403500.26995@file01.intranet.prod.int.rdu2.redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] block: fix infinite loop if the device loses
+ discard capability
+Date: Tue, 3 Jul 2018 13:34:22 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1807031332250.22443@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.1806251403500.26995@file01.intranet.prod.int.rdu2.redhat.com>
-Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,49 +16,51 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-crypt@saout.de, Harald Braumann <harry@unheit.net>, device-mapper development <dm-devel@redhat.com>
+To: Axboe <axboe@kernel.dk>
+Cc: linux-block@vger.kernel.org, Mike Snitzer <msnitzer@redhat.com>, dm-devel@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
-On 06/25/2018 08:05 PM, Mikulas Patocka wrote:
-> On Sun, 24 Jun 2018, Milan Broz wrote:
-> 
->> (added cc to dm-devel annd Mikulas)
->>
->> Hi,
->>
->> On 06/24/2018 11:53 AM, Harald Braumann wrote:
->>> Hi!
->>>
->>> I'm using the dm-integrity target standalone with crc32c for component
->>> devices of a RAID. I don't use journaling, because the perfomance hit
->>> is too big and I don't really need it in that case.
->>>
->>> I want to automatically activate these targets using udev
->>> rules (see below). However, the superblock lacks some crucial
->>> information:
->>
->>
->> yes, I agree. The reason is that dm-integrity was in the first
->> place designed for authenticated encryption (to store auth tags).
->> Then additional metadata ia stored in LUKS2 header.
->>
->> For the rest I just I have not enough energy (and real-world use cases)
->> to convince Mikulas that we need attributes below in superblock (as the dm-integrity
->> code is written mostly by him).
-> 
-> You can write whatever you want to the end of the superblock. If 
-> kernelspace allocates superblock entries from the beginning and userspace 
-> allocates them from the end, they won't cross each other.
+If __blkdev_issue_discard is in progress and a device mapper device is
+reloaded with a table that doesn't support discard,
+q->limits.max_discard_sectors is set to zero. This results in infinite
+loop in __blkdev_issue_discard.
 
-This is really hackish solution :)
+This patch checks if max_discard_sectors is zero and aborts with
+-EOPNOTSUPP.
 
-I think the superblock should be either maintained inside kernel or in userspace.
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Tested-by: Zdenek Kabelac <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org
 
-Or at least kernel superblock should define area reserved for userspace
-(IOW the area that kernel guarantees to be never overwritten by kernel driver).
+---
+ block/blk-lib.c |   10 ++++++++++
+ 1 file changed, 10 insertions(+)
 
-I really do not want to define any userspace-only attributes until there
-is some plan how (and if) to integrate plain dm-integrity devices.
-
-Milan
+Index: linux-2.6/block/blk-lib.c
+===================================================================
+--- linux-2.6.orig/block/blk-lib.c	2018-06-18 01:08:49.500000000 +0200
++++ linux-2.6/block/blk-lib.c	2018-06-29 20:09:27.670000000 +0200
+@@ -68,6 +68,8 @@ int __blkdev_issue_discard(struct block_
+ 		 */
+ 		req_sects = min_t(sector_t, nr_sects,
+ 					q->limits.max_discard_sectors);
++		if (!req_sects)
++			goto fail;
+ 		if (req_sects > UINT_MAX >> 9)
+ 			req_sects = UINT_MAX >> 9;
+ 
+@@ -105,6 +107,14 @@ int __blkdev_issue_discard(struct block_
+ 
+ 	*biop = bio;
+ 	return 0;
++
++fail:
++	if (bio) {
++		submit_bio_wait(bio);
++		bio_put(bio);
++	}
++	*biop = NULL;
++	return -EOPNOTSUPP;
+ }
+ EXPORT_SYMBOL(__blkdev_issue_discard);
+ 
