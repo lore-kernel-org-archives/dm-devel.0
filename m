@@ -1,13 +1,16 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 8/9] dm-integrity: flush journal on suspend when
-	using separate device
-Date: Tue, 03 Jul 2018 20:13:32 +0200
-Message-ID: <20180703181403.120604960@debian-a64.vm>
+Subject: Re: [dm-crypt] dm-integrity standalone - lack of metadata
+Date: Tue, 3 Jul 2018 14:21:46 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1807031419260.22443@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20180624095348.GA819@nn.nn>
+	<c2d97932-69f0-20aa-e66a-fd6be5b5eda3@gmail.com>
+	<alpine.LRH.2.02.1806251403500.26995@file01.intranet.prod.int.rdu2.redhat.com>
+	<056a42e5-d673-1a91-49e7-18fe9ce2ef7c@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline; filename=dm-integrity-flush-on-suspend.patch
+In-Reply-To: <056a42e5-d673-1a91-49e7-18fe9ce2ef7c@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,42 +20,58 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Milan Broz <mbroz@redhat.com>, Mike Snitzer <msnitzer@redhat.com>
-Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>
+To: Milan Broz <gmazyland@gmail.com>
+Cc: dm-crypt@saout.de, Harald Braumann <harry@unheit.net>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Flush the journal on suspend when using separate data and metadata device,
-so that the metadata device can be discarded and the table can be reloaded
-with a linear target pointing to the data device.
 
-Note: we deliberately don't flush the journal when using the same device
-for metadata and data, so that the journal replay code is tested.
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+On Tue, 3 Jul 2018, Milan Broz wrote:
 
----
- drivers/md/dm-integrity.c |    4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+> On 06/25/2018 08:05 PM, Mikulas Patocka wrote:
+> > On Sun, 24 Jun 2018, Milan Broz wrote:
+> > 
+> >> (added cc to dm-devel annd Mikulas)
+> >>
+> >> Hi,
+> >>
+> >> On 06/24/2018 11:53 AM, Harald Braumann wrote:
+> >>> Hi!
+> >>>
+> >>> I'm using the dm-integrity target standalone with crc32c for component
+> >>> devices of a RAID. I don't use journaling, because the perfomance hit
+> >>> is too big and I don't really need it in that case.
+> >>>
+> >>> I want to automatically activate these targets using udev
+> >>> rules (see below). However, the superblock lacks some crucial
+> >>> information:
+> >>
+> >>
+> >> yes, I agree. The reason is that dm-integrity was in the first
+> >> place designed for authenticated encryption (to store auth tags).
+> >> Then additional metadata ia stored in LUKS2 header.
+> >>
+> >> For the rest I just I have not enough energy (and real-world use cases)
+> >> to convince Mikulas that we need attributes below in superblock (as the dm-integrity
+> >> code is written mostly by him).
+> > 
+> > You can write whatever you want to the end of the superblock. If 
+> > kernelspace allocates superblock entries from the beginning and userspace 
+> > allocates them from the end, they won't cross each other.
+> 
+> This is really hackish solution :)
 
-Index: linux-2.6/drivers/md/dm-integrity.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-integrity.c	2018-06-29 23:14:06.750000000 +0200
-+++ linux-2.6/drivers/md/dm-integrity.c	2018-06-29 23:14:06.740000000 +0200
-@@ -2055,7 +2055,7 @@ static void integrity_writer(struct work
- 	unsigned prev_free_sectors;
- 
- 	/* the following test is not needed, but it tests the replay code */
--	if (READ_ONCE(ic->suspending))
-+	if (READ_ONCE(ic->suspending) && !ic->meta_dev)
- 		return;
- 
- 	spin_lock_irq(&ic->endio_wait.lock);
-@@ -2290,6 +2290,8 @@ static void dm_integrity_postsuspend(str
- 	drain_workqueue(ic->commit_wq);
- 
- 	if (ic->mode == 'J') {
-+		if (ic->meta_dev)
-+			queue_work(ic->writer_wq, &ic->writer_work);
- 		drain_workqueue(ic->writer_wq);
- 		dm_integrity_flush_buffers(ic);
- 	}
+Then - there's an "offset" argument - you can use it and create your own 
+superblock before the offset.
+
+> I think the superblock should be either maintained inside kernel or in userspace.
+> 
+> Or at least kernel superblock should define area reserved for userspace
+> (IOW the area that kernel guarantees to be never overwritten by kernel driver).
+> 
+> I really do not want to define any userspace-only attributes until there
+> is some plan how (and if) to integrate plain dm-integrity devices.
+> 
+> Milan
+
+Mikulas
