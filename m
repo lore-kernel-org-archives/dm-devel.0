@@ -1,15 +1,14 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH 9/9] dm-integrity: recalculate checksums
-Date: Mon, 2 Jul 2018 21:07:27 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.1806271046370.17497@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20180606153440.580394316@debian.vm>
-	<30799a62-b825-4ce4-7b10-044ce8e030da@redhat.com>
-	<7af22076-53fe-67d0-fa6e-09acbb145f36@gmail.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: [PATCH 2/3] libmultipath: alua: retry RTPG for NOT_READY
+	and UNIT_ATTENTION
+Date: Tue,  3 Jul 2018 09:57:06 +0200
+Message-ID: <20180703075707.834-2-mwilck@suse.com>
+References: <20180703075707.834-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <7af22076-53fe-67d0-fa6e-09acbb145f36@gmail.com>
+In-Reply-To: <20180703075707.834-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,53 +18,148 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Milan Broz <gmazyland@gmail.com>
-Cc: Mike Snitzer <msnitzer@redhat.com>, device-mapper development <dm-devel@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
+Use similar logic as the kernel for retrying ALUA commands to
+avoid misinterpreting temporary failures as fatal errors.
 
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ libmultipath/prioritizers/alua_rtpg.c | 59 +++++++++++++++++++++++----
+ 1 file changed, 50 insertions(+), 9 deletions(-)
 
-On Sun, 17 Jun 2018, Milan Broz wrote:
-
-> Hi Mikulas,
-> 
-> I have some questions for the last dm-integrity recalculation patch (copied below).
-> 
-> - The "recalculate" dm table attribute is never visible in "dmsetup table",
-> it is parsed only on table dm-ioctl input.
-> I think if sb flags has SB_FLAG_RECALCULATING, it should appear there.
-
-I'll fix it - I will return the value from the target line.
-
-> - So, SB_FLAG_RECALCULATING bit is persistent and never disappears?
-> Is it intentional, that after recalculation is done, it is not cleared?
-> (Is it because or later resize recalc the rest of block?)
-
-It is intentional, because someone may extend the device and then, 
-recalculating must continue.
-
-> - What about monitoring progress - for now, we can only read superblock
-> and parse recalc_sector (not sure if you want this). What about status line option?
-
-I will add the progress counter to the status line.
-
-> - How can I stop/restart recalculation (activate device without it / clear sb flag)?
-> Shouldn't this be connected to the presence of "recalculate" flag in mapping table?
-
-Should we even have the possibility to stop recalculating?
-
-If the device was recalculating and we activate it without the 
-"recalculate" flag, what should it do? If the user reads data that haven't 
-been recalculated yet, we could:
-1. return an error
-2. ignore the non-recalculated checksum and return data
-3. continue with recalculating even if the flag "recalculate" is not present
-
-In my opinion, the option 3 is the best. Option 1 makes the device 
-unreliable and option 2 makes the device silently lose the integrity 
-protection.
-
-> Thanks,
-> Milan
-
-Mikulas
+diff --git a/libmultipath/prioritizers/alua_rtpg.c b/libmultipath/prioritizers/alua_rtpg.c
+index ce405b55..34b5f3ce 100644
+--- a/libmultipath/prioritizers/alua_rtpg.c
++++ b/libmultipath/prioritizers/alua_rtpg.c
+@@ -69,10 +69,20 @@ print_hex(unsigned char *p, unsigned long len)
+ #define SCSI_COMMAND_TERMINATED 0x22
+ #define SG_ERR_DRIVER_SENSE     0x08
+ #define RECOVERED_ERROR 0x01
++#define NOT_READY 0x2
++#define UNIT_ATTENTION 0x6
++
++enum scsi_disposition {
++	SCSI_GOOD = 0,
++	SCSI_ERROR,
++	SCSI_RETRY,
++};
+ 
+ static int
+-scsi_error(struct sg_io_hdr *hdr)
++scsi_error(struct sg_io_hdr *hdr, int opcode)
+ {
++	int sense_key, asc, ascq;
++
+ 	/* Treat SG_ERR here to get rid of sg_err.[ch] */
+ 	hdr->status &= 0x7e;
+ 
+@@ -81,29 +91,44 @@ scsi_error(struct sg_io_hdr *hdr)
+ 		(hdr->host_status == 0)   &&
+ 		(hdr->driver_status == 0)
+ 	) {
+-		return 0;
++		return SCSI_GOOD;
+ 	}
+ 
++	sense_key = asc = ascq = -1;
+ 	if (
+ 		(hdr->status == SCSI_CHECK_CONDITION)    ||
+ 		(hdr->status == SCSI_COMMAND_TERMINATED) ||
+ 		((hdr->driver_status & 0xf) == SG_ERR_DRIVER_SENSE)
+ 	) {
+ 		if (hdr->sbp && (hdr->sb_len_wr > 2)) {
+-			int		sense_key;
+ 			unsigned char *	sense_buffer = hdr->sbp;
+ 
+-			if (sense_buffer[0] & 0x2)
++			if (sense_buffer[0] & 0x2) {
+ 				sense_key = sense_buffer[1] & 0xf;
+-			else
++				if (hdr->sb_len_wr > 3)
++					asc = sense_buffer[2];
++				if (hdr->sb_len_wr > 4)
++					ascq = sense_buffer[3];
++			} else {
+ 				sense_key = sense_buffer[2] & 0xf;
++				if (hdr->sb_len_wr > 13)
++					asc = sense_buffer[12];
++				if (hdr->sb_len_wr > 14)
++					ascq = sense_buffer[13];
++			}
+ 
+ 			if (sense_key == RECOVERED_ERROR)
+-				return 0;
++				return SCSI_GOOD;
+ 		}
+ 	}
+ 
+-	return 1;
++	PRINT_DEBUG("alua: SCSI error for command %02x: status %02x, sense %02x/%02x/%02x",
++		    opcode, hdr->status, sense_key, asc, ascq);
++
++	if (sense_key == UNIT_ATTENTION || sense_key == NOT_READY)
++		return SCSI_RETRY;
++	else
++		return SCSI_ERROR;
+ }
+ 
+ /*
+@@ -116,7 +141,9 @@ do_inquiry(int fd, int evpd, unsigned int codepage,
+ 	struct inquiry_command	cmd;
+ 	struct sg_io_hdr	hdr;
+ 	unsigned char		sense[SENSE_BUFF_LEN];
++	int rc, retry_count = 3;
+ 
++retry:
+ 	memset(&cmd, 0, sizeof(cmd));
+ 	cmd.op = OPERATION_CODE_INQUIRY;
+ 	if (evpd) {
+@@ -142,9 +169,15 @@ do_inquiry(int fd, int evpd, unsigned int codepage,
+ 		return -RTPG_INQUIRY_FAILED;
+ 	}
+ 
+-	if (scsi_error(&hdr)) {
++	rc = scsi_error(&hdr, OPERATION_CODE_INQUIRY);
++	if (rc == SCSI_ERROR) {
+ 		PRINT_DEBUG("do_inquiry: SCSI error!");
+ 		return -RTPG_INQUIRY_FAILED;
++	} else if (rc == SCSI_RETRY) {
++		if (--retry_count >= 0)
++			goto retry;
++		PRINT_DEBUG("do_inquiry: retries exhausted!");
++		return -RTPG_INQUIRY_FAILED;
+ 	}
+ 	PRINT_HEX((unsigned char *) resp, resplen);
+ 
+@@ -265,7 +298,9 @@ do_rtpg(int fd, void* resp, long resplen, unsigned int timeout)
+ 	struct rtpg_command	cmd;
+ 	struct sg_io_hdr	hdr;
+ 	unsigned char		sense[SENSE_BUFF_LEN];
++	int retry_count = 3, rc;
+ 
++retry:
+ 	memset(&cmd, 0, sizeof(cmd));
+ 	cmd.op			= OPERATION_CODE_RTPG;
+ 	rtpg_command_set_service_action(&cmd);
+@@ -286,9 +321,15 @@ do_rtpg(int fd, void* resp, long resplen, unsigned int timeout)
+ 	if (ioctl(fd, SG_IO, &hdr) < 0)
+ 		return -RTPG_RTPG_FAILED;
+ 
+-	if (scsi_error(&hdr)) {
++	rc = scsi_error(&hdr, OPERATION_CODE_RTPG);
++	if (rc == SCSI_ERROR) {
+ 		PRINT_DEBUG("do_rtpg: SCSI error!");
+ 		return -RTPG_RTPG_FAILED;
++	} else if (rc == SCSI_RETRY) {
++		if (--retry_count >= 0)
++			goto retry;
++		PRINT_DEBUG("do_rtpg: retries exhausted!");
++		return -RTPG_RTPG_FAILED;
+ 	}
+ 	PRINT_HEX(resp, resplen);
+ 
+-- 
+2.17.1
