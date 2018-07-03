@@ -1,12 +1,17 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 1/3] libmultipath: alua_rtpg: use condlog for
-	error messages
-Date: Tue,  3 Jul 2018 09:57:05 +0200
-Message-ID: <20180703075707.834-1-mwilck@suse.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 9/9] dm-integrity: recalculate checksums
+Date: Tue, 3 Jul 2018 09:21:16 -0400
+Message-ID: <20180703132115.GA28076@redhat.com>
+References: <20180606153440.580394316@debian.vm>
+	<30799a62-b825-4ce4-7b10-044ce8e030da@redhat.com>
+	<7af22076-53fe-67d0-fa6e-09acbb145f36@gmail.com>
+	<alpine.LRH.2.02.1806271046370.17497@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.02.1806271046370.17497@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,143 +21,62 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Milan Broz <gmazyland@gmail.com>
 List-Id: dm-devel.ids
 
-Map the PRINT_DEBUG macro of the ALUA code to a condlog call, to
-be able to better debug SCSI error conditions.
+On Mon, Jul 02 2018 at  9:07pm -0400,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- libmultipath/prioritizers/alua_rtpg.c | 34 +++++++++++----------------
- 1 file changed, 14 insertions(+), 20 deletions(-)
+> 
+> 
+> On Sun, 17 Jun 2018, Milan Broz wrote:
+> 
+> > Hi Mikulas,
+> > 
+> > I have some questions for the last dm-integrity recalculation patch (copied below).
+> > 
+> > - The "recalculate" dm table attribute is never visible in "dmsetup table",
+> > it is parsed only on table dm-ioctl input.
+> > I think if sb flags has SB_FLAG_RECALCULATING, it should appear there.
+> 
+> I'll fix it - I will return the value from the target line.
+> 
+> > - So, SB_FLAG_RECALCULATING bit is persistent and never disappears?
+> > Is it intentional, that after recalculation is done, it is not cleared?
+> > (Is it because or later resize recalc the rest of block?)
+> 
+> It is intentional, because someone may extend the device and then, 
+> recalculating must continue.
+> 
+> > - What about monitoring progress - for now, we can only read superblock
+> > and parse recalc_sector (not sure if you want this). What about status line option?
+> 
+> I will add the progress counter to the status line.
 
-diff --git a/libmultipath/prioritizers/alua_rtpg.c b/libmultipath/prioritizers/alua_rtpg.c
-index e4315020..ce405b55 100644
---- a/libmultipath/prioritizers/alua_rtpg.c
-+++ b/libmultipath/prioritizers/alua_rtpg.c
-@@ -27,20 +27,14 @@
- #include "../prio.h"
- #include "../discovery.h"
- #include "../unaligned.h"
-+#include "../debug.h"
- #include "alua_rtpg.h"
- 
- #define SENSE_BUFF_LEN  32
- #define SGIO_TIMEOUT     60000
- 
--/*
-- * Macro used to print debug messaged.
-- */
--#if DEBUG > 0
- #define PRINT_DEBUG(f, a...) \
--		fprintf(stderr, "DEBUG: " f, ##a)
--#else
--#define PRINT_DEBUG(f, a...)
--#endif
-+	condlog(4, "alua: " f, ##a)
- 
- /*
-  * Optionally print the commands sent and the data received a hex dump.
-@@ -144,12 +138,12 @@ do_inquiry(int fd, int evpd, unsigned int codepage,
- 	hdr.timeout		= get_prio_timeout(timeout, SGIO_TIMEOUT);
- 
- 	if (ioctl(fd, SG_IO, &hdr) < 0) {
--		PRINT_DEBUG("do_inquiry: IOCTL failed!\n");
-+		PRINT_DEBUG("do_inquiry: IOCTL failed!");
- 		return -RTPG_INQUIRY_FAILED;
- 	}
- 
- 	if (scsi_error(&hdr)) {
--		PRINT_DEBUG("do_inquiry: SCSI error!\n");
-+		PRINT_DEBUG("do_inquiry: SCSI error!");
- 		return -RTPG_INQUIRY_FAILED;
- 	}
- 	PRINT_HEX((unsigned char *) resp, resplen);
-@@ -189,7 +183,7 @@ get_sysfs_pg83(struct path *pp, unsigned char *buff, int buflen)
- 	}
- 
- 	if (!parent || sysfs_get_vpd(parent, 0x83, buff, buflen) <= 0) {
--		PRINT_DEBUG("failed to read sysfs vpd pg83\n");
-+		PRINT_DEBUG("failed to read sysfs vpd pg83");
- 		return -1;
- 	}
- 	return 0;
-@@ -208,7 +202,7 @@ get_target_port_group(struct path * pp, unsigned int timeout)
- 	buf = (unsigned char *)malloc(buflen);
- 	if (!buf) {
- 		PRINT_DEBUG("malloc failed: could not allocate"
--			     "%u bytes\n", buflen);
-+			     "%u bytes", buflen);
- 		return -RTPG_RTPG_FAILED;
- 	}
- 
-@@ -230,7 +224,7 @@ get_target_port_group(struct path * pp, unsigned int timeout)
- 			buf = (unsigned char *)malloc(scsi_buflen);
- 			if (!buf) {
- 				PRINT_DEBUG("malloc failed: could not allocate"
--					    "%u bytes\n", scsi_buflen);
-+					    "%u bytes", scsi_buflen);
- 				return -RTPG_RTPG_FAILED;
- 			}
- 			buflen = scsi_buflen;
-@@ -248,7 +242,7 @@ get_target_port_group(struct path * pp, unsigned int timeout)
- 			struct vpd83_tpg_dscr *p;
- 			if (rc != -RTPG_NO_TPG_IDENTIFIER) {
- 				PRINT_DEBUG("get_target_port_group: more "
--					    "than one TPG identifier found!\n");
-+					    "than one TPG identifier found!");
- 				continue;
- 			}
- 			p  = (struct vpd83_tpg_dscr *)dscr->data;
-@@ -258,7 +252,7 @@ get_target_port_group(struct path * pp, unsigned int timeout)
- 
- 	if (rc == -RTPG_NO_TPG_IDENTIFIER) {
- 		PRINT_DEBUG("get_target_port_group: "
--			    "no TPG identifier found!\n");
-+			    "no TPG identifier found!");
- 	}
- out:
- 	free(buf);
-@@ -293,7 +287,7 @@ do_rtpg(int fd, void* resp, long resplen, unsigned int timeout)
- 		return -RTPG_RTPG_FAILED;
- 
- 	if (scsi_error(&hdr)) {
--		PRINT_DEBUG("do_rtpg: SCSI error!\n");
-+		PRINT_DEBUG("do_rtpg: SCSI error!");
- 		return -RTPG_RTPG_FAILED;
- 	}
- 	PRINT_HEX(resp, resplen);
-@@ -315,7 +309,7 @@ get_asymmetric_access_state(int fd, unsigned int tpg, unsigned int timeout)
- 	buf = (unsigned char *)malloc(buflen);
- 	if (!buf) {
- 		PRINT_DEBUG ("malloc failed: could not allocate"
--			"%u bytes\n", buflen);
-+			"%u bytes", buflen);
- 		return -RTPG_RTPG_FAILED;
- 	}
- 	memset(buf, 0, buflen);
-@@ -330,7 +324,7 @@ get_asymmetric_access_state(int fd, unsigned int tpg, unsigned int timeout)
- 		buf = (unsigned char *)malloc(scsi_buflen);
- 		if (!buf) {
- 			PRINT_DEBUG ("malloc failed: could not allocate"
--				"%u bytes\n", scsi_buflen);
-+				"%u bytes", scsi_buflen);
- 			return -RTPG_RTPG_FAILED;
- 		}
- 		buflen = scsi_buflen;
-@@ -347,9 +341,9 @@ get_asymmetric_access_state(int fd, unsigned int tpg, unsigned int timeout)
- 			if (rc != -RTPG_TPG_NOT_FOUND) {
- 				PRINT_DEBUG("get_asymmetric_access_state: "
- 					"more than one entry with same port "
--					"group.\n");
-+					"group.");
- 			} else {
--				PRINT_DEBUG("pref=%i\n", dscr->b0);
-+				condlog(5, "pref=%i", dscr->b0);
- 				rc = rtpg_tpg_dscr_get_aas(dscr);
- 			}
- 		}
--- 
-2.17.1
+SO like <completed>/<total> ?
+
+> > - How can I stop/restart recalculation (activate device without it / clear sb flag)?
+> > Shouldn't this be connected to the presence of "recalculate" flag in mapping table?
+> 
+> Should we even have the possibility to stop recalculating?
+> 
+> If the device was recalculating and we activate it without the 
+> "recalculate" flag, what should it do? If the user reads data that haven't 
+> been recalculated yet, we could:
+> 1. return an error
+> 2. ignore the non-recalculated checksum and return data
+> 3. continue with recalculating even if the flag "recalculate" is not present
+> 
+> In my opinion, the option 3 is the best. Option 1 makes the device 
+> unreliable and option 2 makes the device silently lose the integrity 
+> protection.
+
+Yes, option 3.  But you could even error out on table load; though that
+may be too unforgiving.. reality is userspace needs to account for
+staying in recalculating mode until it is complete.
+
+But to do that they'd need to monitor (similar to how snapshot-merge
+polls progress?)
+
+Mike
