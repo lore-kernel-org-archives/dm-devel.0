@@ -1,30 +1,71 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v4 1/5] dm: Avoid namespace collision with bitmap API
-Date: Mon, 2 Jul 2018 15:11:47 -0400
-Message-ID: <20180702191146.GA22796@redhat.com>
-References: <20180630201750.2588-1-andriy.shevchenko@linux.intel.com>
- <20180630201750.2588-2-andriy.shevchenko@linux.intel.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH 9/9] dm-integrity: recalculate checksums
+Date: Mon, 2 Jul 2018 21:07:27 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.1806271046370.17497@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20180606153440.580394316@debian.vm>
+	<30799a62-b825-4ce4-7b10-044ce8e030da@redhat.com>
+	<7af22076-53fe-67d0-fa6e-09acbb145f36@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180630201750.2588-2-andriy.shevchenko@linux.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-Cc: Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, Shaohua Li <shli@kernel.org>, linux-raid@vger.kernel.org, Dmitry Torokhov <dmitry.torokhov@gmail.com>, linux-input@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Yury Norov <ynorov@caviumnetworks.com>, linux-kernel@vger.kernel.org, mika.westerberg@linux.intel.com, Joe Perches <joe@perches.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <7af22076-53fe-67d0-fa6e-09acbb145f36@gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Milan Broz <gmazyland@gmail.com>
+Cc: Mike Snitzer <msnitzer@redhat.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Sat, Jun 30 2018 at  4:17pm -0400,
-Andy Shevchenko <andriy.shevchenko@linux.intel.com> wrote:
 
-> bitmap API (include/linux/bitmap.h) has 'bitmap' prefix for its methods.
-> 
-> On the other hand DM bitmap API is special case.
-> Adding 'dm' prefix to it to avoid potential name space collision.
-> 
-> No functional changes intended.
-> 
-> Suggested-by: Mike Snitzer <snitzer@redhat.com>
-> Signed-off-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
 
-Acked-by: Mike Snitzer <snitzer@redhat.com>
+On Sun, 17 Jun 2018, Milan Broz wrote:
+
+> Hi Mikulas,
+> 
+> I have some questions for the last dm-integrity recalculation patch (copied below).
+> 
+> - The "recalculate" dm table attribute is never visible in "dmsetup table",
+> it is parsed only on table dm-ioctl input.
+> I think if sb flags has SB_FLAG_RECALCULATING, it should appear there.
+
+I'll fix it - I will return the value from the target line.
+
+> - So, SB_FLAG_RECALCULATING bit is persistent and never disappears?
+> Is it intentional, that after recalculation is done, it is not cleared?
+> (Is it because or later resize recalc the rest of block?)
+
+It is intentional, because someone may extend the device and then, 
+recalculating must continue.
+
+> - What about monitoring progress - for now, we can only read superblock
+> and parse recalc_sector (not sure if you want this). What about status line option?
+
+I will add the progress counter to the status line.
+
+> - How can I stop/restart recalculation (activate device without it / clear sb flag)?
+> Shouldn't this be connected to the presence of "recalculate" flag in mapping table?
+
+Should we even have the possibility to stop recalculating?
+
+If the device was recalculating and we activate it without the 
+"recalculate" flag, what should it do? If the user reads data that haven't 
+been recalculated yet, we could:
+1. return an error
+2. ignore the non-recalculated checksum and return data
+3. continue with recalculating even if the flag "recalculate" is not present
+
+In my opinion, the option 3 is the best. Option 1 makes the device 
+unreliable and option 2 makes the device silently lose the integrity 
+protection.
+
+> Thanks,
+> Milan
+
+Mikulas
